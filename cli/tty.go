@@ -16,44 +16,50 @@ import (
 
 // TTY is the type the terminal dependency of the editor needs to satisfy.
 type TTY interface {
-	// Configures the terminal at the beginning of Editor.ReadCode. It returns a
-	// restore function to be called at the end of Editor.ReadCode and any
-	// error. Errors are always considered fatal and will make ReadCode abort;
-	// non-fatal errors should be handled by Setup itself (e.g. by showing a
-	// warning message) instead of being returned.
+	// Setup sets up the terminal for the CLI app.
+	//
+	// This method returns a restore function that undoes the setup, and any
+	// error during setup. It only returns fatal errors that make the terminal
+	// unsuitable for later operations; non-fatal errors may be reported by
+	// showing a warning message, but not returned.
+	//
+	// This method should be called before any other method is called.
 	Setup() (restore func(), err error)
 
-	// Starts the delivery of terminal events and returns a channel on which
-	// events are made available.
+	// StartInput starts the delivery of terminal events and returns a channel
+	// on which events are made available.
 	StartInput() <-chan term.Event
-	// Sets the "raw input" mode of the terminal. The raw input mode is
-	// applicable when terminal events are delivered as escape sequences; the
-	// raw input mode will cause those escape sequences to be interpreted as
-	// individual key events. If the concept is not applicable, this method is a
-	// no-op.
+	// SetRawInput sets the raw input mode of the terminal.
+	//
+	// The raw input mode is applicable when terminal events are represented
+	// as escape sequences on a low level; the raw input mode will then cause
+	// those escape sequences to be interpreted as individual key events.
+	//
+	// If the concept of raw input method is not applicable to the terminal,
+	// this method is a no-op.
 	SetRawInput(raw bool)
-	// Causes input delivery to be stopped. When this function returns, the
-	// channel previously returned by StartInput should no longer deliver
-	// events.
+	// StopInput causes input delivery to be stopped. When this function
+	// returns, the channel previously returned by StartInput will no longer
+	// deliver input events.
 	StopInput()
 
-	// Returns the height and width of the terminal.
+	// NotifySignals start relaying signals and returns a channel on which
+	// signals are delivered.
+	NotifySignals() <-chan os.Signal
+	// StopSignals stops the relaying of signals. After this function returns,
+	// the channel returned by NotifySignals will no longer deliver signals.
+	StopSignals()
+
+	// Size returns the height and width of the terminal.
 	Size() (h, w int)
 
-	// Returns the current buffer. The initial value of the current buffer is
-	// nil.
+	// Buffer returns the current buffer. The initial value of the current
+	// buffer is nil.
 	Buffer() *ui.Buffer
-	// Resets the current buffer to nil without actuating any redraw.
+	// ResetBuffer resets the current buffer to nil without actuating any redraw.
 	ResetBuffer()
-	// Updates the current buffer and draw it to the terminal.
+	// UpdateBuffer updates the current buffer and draw it to the terminal.
 	UpdateBuffer(bufNotes, bufMain *ui.Buffer, full bool) error
-
-	// Start relaying signals and returns a channel on which signals are
-	// delivered.
-	NotifySignals() <-chan os.Signal
-	// Stops the relaying of signals. After this function returns, the
-	// channel returned by NotifySignals will not deliver any more values.
-	StopSignals()
 }
 
 type aTTY struct {
@@ -192,11 +198,8 @@ func (t *fakeTTY) StartInput() <-chan term.Event {
 // Nop.
 func (t *fakeTTY) SetRawInput(b bool) {}
 
-// Nop.
+// Closes t.eventCh.
 func (t *fakeTTY) StopInput() { close(t.eventCh) }
-
-// Nop.
-func (t *fakeTTY) Newline() {}
 
 // Returns the last recorded buffer.
 func (t *fakeTTY) Buffer() *ui.Buffer { return t.bufs[len(t.bufs)-1] }
@@ -229,7 +232,14 @@ func (t *fakeTTY) recordNotesBuf(buf *ui.Buffer) {
 // TTYCtrl is an interface for controlling a fake terminal.
 type TTYCtrl struct{ *fakeTTY }
 
-// SetSetup changes the return values of the Setup method of the fake terminal.
+// GetTTYCtrl takes a TTY and returns a TTYCtrl and true, if the TTY is a fake
+// terminal. Otherwise it returns an invalid TTYCtrl and false.
+func GetTTYCtrl(t TTY) (TTYCtrl, bool) {
+	fake, ok := t.(*fakeTTY)
+	return TTYCtrl{fake}, ok
+}
+
+// SetSetup sets the return values of the Setup method of the fake terminal.
 func (t TTYCtrl) SetSetup(restore func(), err error) {
 	t.setup = func() (func(), error) {
 		return restore, err

@@ -1,7 +1,7 @@
+// Package cli implements a generic interactive line editor.
 package cli
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -70,23 +70,6 @@ type State struct {
 	Notes []string
 	// A widget to show under the codearea widget.
 	Listing el.Widget
-}
-
-// Note appends a new note.
-func (s *State) Note(note string) {
-	s.Notes = append(s.Notes, note)
-}
-
-// Notef is equivalent to calling Note with fmt.Sprintf(format, a...).
-func (s *State) Notef(format string, a ...interface{}) {
-	s.Note(fmt.Sprintf(format, a...))
-}
-
-// PopNotes returns s.Notes and resets s.Notes to an empty slice.
-func (s *State) PopNotes() []string {
-	notes := s.Notes
-	s.Notes = nil
-	return notes
 }
 
 // NewApp creates a new App from the given specification.
@@ -210,8 +193,8 @@ func (a *app) redraw(flag redrawFlag) {
 	var notes []string
 	var listing el.Renderer
 	a.MutateState(func(s *State) {
-		notes = s.PopNotes()
-		listing = s.Listing
+		notes, listing = s.Notes, s.Listing
+		s.Notes = nil
 	})
 
 	bufNotes := renderNotes(notes, width)
@@ -359,6 +342,6 @@ func (a *app) CommitCode(code string) {
 }
 
 func (a *app) Notify(note string) {
-	a.MutateState(func(s *State) { s.Note(note) })
+	a.MutateState(func(s *State) { s.Notes = append(s.Notes, note) })
 	a.Redraw()
 }

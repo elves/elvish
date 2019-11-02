@@ -115,6 +115,17 @@ func TestFakeTTY_Buffer(t *testing.T) {
 	}
 }
 
+func TestGetTTYCtrl(t *testing.T) {
+	fakeTTY, ttyCtrl := NewFakeTTY()
+	if got, ok := GetTTYCtrl(fakeTTY); got != ttyCtrl || !ok {
+		t.Errorf("-> %v, %v, want %v, %v", got, ok, ttyCtrl, true)
+	}
+	realTTY := NewStdTTY()
+	if _, ok := GetTTYCtrl(realTTY); ok {
+		t.Errorf("-> _, true, want _, false")
+	}
+}
+
 func TestGetUITestTimeout(t *testing.T) {
 	original := os.Getenv(uiTimeoutEnvName)
 	defer os.Setenv(uiTimeoutEnvName, original)

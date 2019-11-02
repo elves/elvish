@@ -96,7 +96,7 @@ func (ed *loop) Input(ev event) {
 }
 
 // Return requests the main loop to return. It never blocks. If Return has been
-// called before during this loop before, it has no effect.
+// called before during the current loop iteration, it has no effect.
 func (ed *loop) Return(buffer string, err error) {
 	select {
 	case ed.returnCh <- loopReturn{buffer, err}:
@@ -104,16 +104,16 @@ func (ed *loop) Return(buffer string, err error) {
 	}
 }
 
-// HasReturned returns whether Return has been called during this loop.
+// HasReturned returns whether Return has been called during the current loop
+// iteration.
 func (ed *loop) HasReturned() bool {
 	return len(ed.returnCh) == 1
 }
 
-// Run runs the event loop, until an event causes HandleCb to return quit =
-// true. It is generic and delegates all concrete work to callbacks. It is fully
-// serial: it does not spawn any goroutines and never calls two callbacks in
-// parallel, so the callbacks may manipulate shared states without
-// synchronization.
+// Run runs the event loop, until the Return method is called. It is generic
+// and delegates all concrete work to callbacks. It is fully serial: it does
+// not spawn any goroutines and never calls two callbacks in parallel, so the
+// callbacks may manipulate shared states without synchronization.
 func (ed *loop) Run() (buffer string, err error) {
 	for {
 		var flag redrawFlag
