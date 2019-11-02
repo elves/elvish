@@ -129,7 +129,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 
 	tty.SetSize(10, 5) // Width = 5 to make it easy to test
 
-	codeCh, _ := ed.ReadCodeAsync()
+	codeCh, _ := ReadCodeAsync(ed)
 
 	wantBuf := ui.NewBufferBuilder(5).
 		WritePlain(strings.Repeat("a", 10)).Buffer()
@@ -152,7 +152,7 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	tty.Inject(term.KeyEvent{Rune: 'b'})
 	tty.Inject(term.KeyEvent{Rune: 'c'})
 
-	codeCh, _ := ed.ReadCodeAsync()
+	codeCh, _ := ReadCodeAsync(ed)
 
 	wantBuf := ui.NewBufferBuilder(80).
 		WriteStringSGR("abc", "31" /* SGR for red foreground */).
@@ -176,7 +176,7 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 
-	codeCh, _ := ed.ReadCodeAsync()
+	codeCh, _ := ReadCodeAsync(ed)
 
 	wantBuf := ui.NewBufferBuilder(80).
 		WritePlain("> a").
@@ -193,7 +193,7 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 
-	codeCh, _ := ed.ReadCodeAsync()
+	codeCh, _ := ReadCodeAsync(ed)
 
 	wantBuf := ui.NewBufferBuilder(4).
 		WritePlain("a").SetDotToCursor().WritePlain("  R").Buffer()
@@ -207,7 +207,7 @@ func TestReadCode_TriggersPrompt(t *testing.T) {
 	ed, _ := setupWithSpec(AppSpec{
 		Prompt: testPrompt{trigger: func(bool) { called++ }}})
 
-	codeCh, _ := ed.ReadCodeAsync()
+	codeCh, _ := ReadCodeAsync(ed)
 	cleanup(ed, codeCh)
 
 	if called != 1 {
@@ -224,7 +224,7 @@ func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
 
 	ed, tty := setupWithSpec(AppSpec{Prompt: prompt})
 
-	codeCh, _ := ed.ReadCodeAsync()
+	codeCh, _ := ReadCodeAsync(ed)
 	bufOldPrompt := ui.NewBufferBuilder(80).
 		WritePlain("old").SetDotToCursor().Buffer()
 	// Wait until old prompt is rendered
@@ -246,7 +246,7 @@ func TestReadCode_SupportsPersistentRPrompt(t *testing.T) {
 func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 	ed, tty := setup()
 
-	codeCh, _ := ed.ReadCodeAsync()
+	codeCh, _ := ReadCodeAsync(ed)
 
 	// Sanity-check initial state.
 	initBuf := ui.NewBufferBuilder(80).Buffer()
@@ -271,7 +271,7 @@ func TestReadCode_PutCursorBelowCodeAreaInFinalRedraw(t *testing.T) {
 		State: State{
 			Listing: layout.Label{Content: styled.Plain("listing")}}})
 
-	codeCh, _ := a.ReadCodeAsync()
+	codeCh, _ := ReadCodeAsync(a)
 
 	// Wait until the initial draw, to ensure that we are indeed observing a
 	// different state later.
@@ -292,7 +292,7 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 
-	codeCh, errCh := ed.ReadCodeAsync()
+	codeCh, errCh := ReadCodeAsync(ed)
 
 	wantBuf := ui.NewBufferBuilder(80).WritePlain("a").
 		SetDotToCursor().Buffer()
@@ -316,7 +316,7 @@ func TestReadCode_ResetsOnSIGINT(t *testing.T) {
 
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 
-	codeCh, _ := ed.ReadCodeAsync()
+	codeCh, _ := ReadCodeAsync(ed)
 	wantBuf := ui.NewBufferBuilder(80).WritePlain("a").
 		SetDotToCursor().Buffer()
 	tty.TestBuffer(t, wantBuf)
@@ -335,7 +335,7 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 		CodeAreaState: codearea.State{
 			CodeBuffer: codearea.CodeBuffer{Content: content, Dot: len(content)}}})
 
-	codeCh, _ := ed.ReadCodeAsync()
+	codeCh, _ := ReadCodeAsync(ed)
 
 	wantBuf := ui.NewBufferBuilder(80).WritePlain("1234567890").
 		SetDotToCursor().Buffer()

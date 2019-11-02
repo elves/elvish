@@ -15,7 +15,7 @@ import (
 func TestStart(t *testing.T) {
 	tty, ttyCtrl := cli.NewFakeTTY()
 	app := cli.NewApp(cli.AppSpec{TTY: tty})
-	codeCh, _ := app.ReadCodeAsync()
+	codeCh, _ := cli.ReadCodeAsync(app)
 	defer func() {
 		app.CommitEOF()
 		<-codeCh

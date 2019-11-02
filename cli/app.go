@@ -27,10 +27,6 @@ type App interface {
 	// ReadCode requests the App to read code from the terminal by running an
 	// event loop. This function is not re-entrant.
 	ReadCode() (string, error)
-	// ReadCodeAsync is an asynchronous version of ReadCode. It returns
-	// immediately with two channels that will get the return values of
-	// ReadCode. Mainly useful in tests.
-	ReadCodeAsync() (<-chan string, <-chan error)
 	// Redraw requests a redraw. It never blocks and can be called regardless of
 	// whether the App is active or not.
 	Redraw()
@@ -313,7 +309,12 @@ func (a *app) ReadCode() (string, error) {
 	return a.loop.Run()
 }
 
-func (a *app) ReadCodeAsync() (<-chan string, <-chan error) {
+// ReadCodeAsync is an asynchronous version of App.ReadCode. Instead of
+// blocking, it returns immediately with two channels that will deliver the
+// return values of ReadCode when ReadCode returns.
+//
+// This function is mainly useful in tests.
+func ReadCodeAsync(a App) (<-chan string, <-chan error) {
 	codeCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	go func() {

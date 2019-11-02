@@ -15,7 +15,7 @@ import (
 func setup() (cli.App, cli.TTYCtrl, func()) {
 	tty, ttyCtrl := cli.NewFakeTTY()
 	app := cli.NewApp(cli.AppSpec{TTY: tty})
-	codeCh, _ := app.ReadCodeAsync()
+	codeCh, _ := cli.ReadCodeAsync(app)
 	return app, ttyCtrl, func() {
 		app.CommitEOF()
 		<-codeCh

@@ -80,7 +80,7 @@ func setup() (cli.App, cli.TTYCtrl, func()) {
 	tty, ttyCtrl := cli.NewFakeTTY()
 	ttyCtrl.SetSize(24, 40)
 	app := cli.NewApp(cli.AppSpec{TTY: tty})
-	codeCh, _ := app.ReadCodeAsync()
+	codeCh, _ := cli.ReadCodeAsync(app)
 	return app, ttyCtrl, func() {
 		app.CommitEOF()
 		<-codeCh

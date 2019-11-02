@@ -17,7 +17,7 @@ func setup() (cli.App, cli.TTYCtrl, func()) {
 	// Use a smaller TTY size to make diffs easier to see.
 	ttyCtrl.SetSize(20, 50)
 	app := cli.NewApp(cli.AppSpec{TTY: tty})
-	codeCh, _ := app.ReadCodeAsync()
+	codeCh, _ := cli.ReadCodeAsync(app)
 	return app, ttyCtrl, func() {
 		app.CommitEOF()
 		<-codeCh
