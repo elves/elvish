@@ -13,9 +13,10 @@ import (
 
 func setupConfigAPI() (cli.AppSpec, *eval.Evaler, eval.Ns) {
 	appSpec := cli.AppSpec{}
+	nt := &fakeNotifier{}
 	ev := eval.NewEvaler()
 	ns := eval.Ns{}
-	initConfigAPI(&appSpec, ev, ns)
+	initConfigAPI(&appSpec, nt, ev, ns)
 	return appSpec, ev, ns
 }
 

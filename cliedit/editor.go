@@ -35,16 +35,18 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	// bootstrapping of initPrompts, which expects a notifier.
 	var app cli.App
 	initHighlighter(&appSpec, ev)
-	initConfigAPI(&appSpec, ev, ns)
+	initConfigAPI(&appSpec, appNotifier{&app}, ev, ns)
 	initPrompts(&appSpec, appNotifier{&app}, ev, ns)
-	evalDefaultBinding(ev, ns)
 	app = cli.NewApp(appSpec)
 
 	initListings(app, ev, ns, st, fuser)
 	initNavigation(app, ev, ns)
 	initCompletion(app, ev, ns)
 	initHistWalk(app, ev, ns, fuser)
+
 	initBuiltins(app, ns)
+	evalDefaultBinding(ev, ns)
+
 	return &Editor{app, ns}
 }
 

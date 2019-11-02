@@ -12,11 +12,11 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func initConfigAPI(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
+func initConfigAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns) {
 	initMaxHeight(appSpec, ns)
 	initBeforeReadline(appSpec, ev, ns)
 	initAfterReadline(appSpec, ev, ns)
-	initCodeAreaConfigs(appSpec, ev, ns)
+	initInsertConfigs(appSpec, nt, ev, ns)
 }
 
 func initMaxHeight(appSpec *cli.AppSpec, ns eval.Ns) {
@@ -77,15 +77,13 @@ func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	}
 }
 
-func initCodeAreaConfigs(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
+func initInsertConfigs(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns) {
 	abbr := vals.EmptyMap
 	abbrVar := vars.FromPtr(&abbr)
 	appSpec.CodeArea.Abbreviations = makeMapIterator(abbrVar)
 
 	binding := newBindingVar(emptyBindingMap)
-	/*
-		appSpec.CodeArea.OverlayHandler = newMapBinding(app, ev, binding)
-	*/
+	appSpec.CodeArea.OverlayHandler = newMapBinding(nt, ev, binding)
 
 	quotePaste := newBoolVar(false)
 	appSpec.CodeArea.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }
