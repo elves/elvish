@@ -128,10 +128,19 @@ var renderTests = []el.RenderTest{
 			WriteStringSGR("x", "4").WritePlain("e"),
 	},
 	{
-		Name: "ignore invalid pending code",
+		Name: "ignore invalid pending code 1",
 		Given: New(Spec{State: State{
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
 			PendingCode: PendingCode{From: 2, To: 1, Content: "x"},
+		}}),
+		Width: 10, Height: 24,
+		Want: bb(10).WritePlain("code").SetDotToCursor(),
+	},
+	{
+		Name: "ignore invalid pending code 2",
+		Given: New(Spec{State: State{
+			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
+			PendingCode: PendingCode{From: 5, To: 6, Content: "x"},
 		}}),
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("code").SetDotToCursor(),

@@ -32,7 +32,8 @@ func getView(w *widget) *view {
 }
 
 func patchPendingCode(c CodeBuffer, p PendingCode) (CodeBuffer, int, int) {
-	if p.From > p.To {
+	if p.From > p.To || p.From < 0 || p.To > len(c.Content) {
+		// Invalid PendingCode.
 		return c, 0, 0
 	}
 	if p.From == p.To && p.Content == "" {
