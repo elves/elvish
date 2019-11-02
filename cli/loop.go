@@ -66,93 +66,93 @@ func newLoop() *loop {
 }
 
 // HandleCb sets the handle callback. It must be called before any Read call.
-func (ed *loop) HandleCb(cb handleCb) {
-	ed.handleCb = cb
+func (lp *loop) HandleCb(cb handleCb) {
+	lp.handleCb = cb
 }
 
 // RedrawCb sets the redraw callback. It must be called before any Read call.
-func (ed *loop) RedrawCb(cb redrawCb) {
-	ed.redrawCb = cb
+func (lp *loop) RedrawCb(cb redrawCb) {
+	lp.redrawCb = cb
 }
 
 // Redraw requests a redraw. If full is true, a full redraw is requested. It
 // never blocks.
-func (ed *loop) Redraw(full bool) {
-	ed.redrawMutex.Lock()
-	defer ed.redrawMutex.Unlock()
+func (lp *loop) Redraw(full bool) {
+	lp.redrawMutex.Lock()
+	defer lp.redrawMutex.Unlock()
 	if full {
-		ed.redrawFull = true
+		lp.redrawFull = true
 	}
 	select {
-	case ed.redrawCh <- struct{}{}:
+	case lp.redrawCh <- struct{}{}:
 	default:
 	}
 }
 
 // Input provides an input event. It may block if the internal event buffer is
 // full.
-func (ed *loop) Input(ev event) {
-	ed.inputCh <- ev
+func (lp *loop) Input(ev event) {
+	lp.inputCh <- ev
 }
 
 // Return requests the main loop to return. It never blocks. If Return has been
 // called before during the current loop iteration, it has no effect.
-func (ed *loop) Return(buffer string, err error) {
+func (lp *loop) Return(buffer string, err error) {
 	select {
-	case ed.returnCh <- loopReturn{buffer, err}:
+	case lp.returnCh <- loopReturn{buffer, err}:
 	default:
 	}
 }
 
 // HasReturned returns whether Return has been called during the current loop
 // iteration.
-func (ed *loop) HasReturned() bool {
-	return len(ed.returnCh) == 1
+func (lp *loop) HasReturned() bool {
+	return len(lp.returnCh) == 1
 }
 
 // Run runs the event loop, until the Return method is called. It is generic
 // and delegates all concrete work to callbacks. It is fully serial: it does
 // not spawn any goroutines and never calls two callbacks in parallel, so the
 // callbacks may manipulate shared states without synchronization.
-func (ed *loop) Run() (buffer string, err error) {
+func (lp *loop) Run() (buffer string, err error) {
 	for {
 		var flag redrawFlag
-		if ed.extractRedrawFull() {
+		if lp.extractRedrawFull() {
 			flag |= fullRedraw
 		}
-		ed.redrawCb(flag)
+		lp.redrawCb(flag)
 		select {
-		case event := <-ed.inputCh:
+		case event := <-lp.inputCh:
 			// Consume all events in the channel to minimize redraws.
 		consumeAllEvents:
 			for {
-				ed.handleCb(event)
+				lp.handleCb(event)
 				select {
-				case ret := <-ed.returnCh:
-					ed.redrawCb(finalRedraw)
+				case ret := <-lp.returnCh:
+					lp.redrawCb(finalRedraw)
 					return ret.buffer, ret.err
 				default:
 				}
 				select {
-				case event = <-ed.inputCh:
+				case event = <-lp.inputCh:
 					// Continue the loop of consuming all events.
 				default:
 					break consumeAllEvents
 				}
 			}
-		case ret := <-ed.returnCh:
-			ed.redrawCb(finalRedraw)
+		case ret := <-lp.returnCh:
+			lp.redrawCb(finalRedraw)
 			return ret.buffer, ret.err
-		case <-ed.redrawCh:
+		case <-lp.redrawCh:
 		}
 	}
 }
 
-func (ed *loop) extractRedrawFull() bool {
-	ed.redrawMutex.Lock()
-	defer ed.redrawMutex.Unlock()
+func (lp *loop) extractRedrawFull() bool {
+	lp.redrawMutex.Lock()
+	defer lp.redrawMutex.Unlock()
 
-	full := ed.redrawFull
-	ed.redrawFull = false
+	full := lp.redrawFull
+	lp.redrawFull = false
 	return full
 }

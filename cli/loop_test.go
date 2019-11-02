@@ -10,18 +10,18 @@ import (
 func TestRead_PassesInputEventsToHandler(t *testing.T) {
 	var handlerGotEvents []event
 
-	ed := newLoop()
-	ed.HandleCb(func(e event) {
+	lp := newLoop()
+	lp.HandleCb(func(e event) {
 		handlerGotEvents = append(handlerGotEvents, e)
 		if e == "^D" {
-			ed.Return("", nil)
+			lp.Return("", nil)
 		}
 	})
 
 	inputPassedEvents := []event{"foo", "bar", "lorem", "ipsum", "^D"}
-	supplyInputs(ed, inputPassedEvents...)
+	supplyInputs(lp, inputPassedEvents...)
 
-	_, _ = ed.Run()
+	_, _ = lp.Run()
 	if !reflect.DeepEqual(handlerGotEvents, inputPassedEvents) {
 		t.Errorf("Handler got events %v, expect same as events passed to input (%v)",
 			handlerGotEvents, inputPassedEvents)
@@ -57,15 +57,15 @@ func testReadCallsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wan
 		drawSeq++
 	}
 
-	ed := newLoop()
-	ed.HandleCb(quitOn(ed, "^D", "", nil))
+	lp := newLoop()
+	lp.HandleCb(quitOn(lp, "^D", "", nil))
 	go func() {
 		<-doneCh
-		ed.Input("^D")
+		lp.Input("^D")
 	}()
-	ed.RedrawCb(drawer)
-	ed.Redraw(full)
-	_, _ = ed.Run()
+	lp.RedrawCb(drawer)
+	lp.Redraw(full)
+	_, _ = lp.Run()
 	if gotRedrawFlag != wantRedrawFlag {
 		t.Errorf("Drawer got flag %v, want %v", gotRedrawFlag, wantRedrawFlag)
 	}
