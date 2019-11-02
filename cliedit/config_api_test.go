@@ -51,14 +51,13 @@ func TestInitAPI_AfterReadline(t *testing.T) {
 	}
 }
 
-/*
 func TestInitAPI_Insert_Abbr(t *testing.T) {
-	app, _, ns := setupAPI()
+	appSpec, _, ns := setupConfigAPI()
 	m := vals.MakeMap("xx", "xx full", "yy", "yy full")
 	getNs(ns, "insert")["abbr"].Set(m)
 
 	collected := vals.EmptyMap
-	app.CodeArea.Abbreviations(func(a, f string) {
+	appSpec.Abbreviations(func(a, f string) {
 		collected = collected.Assoc(a, f)
 	})
 
@@ -68,20 +67,19 @@ func TestInitAPI_Insert_Abbr(t *testing.T) {
 }
 
 func TestInitAPI_Insert_Binding(t *testing.T) {
-	app, _, ns := setupAPI()
-	testKeyBinding(t, getNs(ns, "insert")["binding"], app.CodeArea.OverlayHandler)
+	appSpec, _, ns := setupConfigAPI()
+	testKeyBinding(t, getNs(ns, "insert")["binding"], appSpec.OverlayHandler)
 }
 
 func TestInitAPI_Insert_QuotePaste(t *testing.T) {
-	app, _, ns := setupAPI()
+	appSpec, _, ns := setupConfigAPI()
 	for _, quote := range []bool{false, true} {
 		getNs(ns, "insert")["quote-paste"].Set(quote)
-		if got := app.CodeArea.QuotePaste(); got != quote {
+		if got := appSpec.QuotePaste(); got != quote {
 			t.Errorf("quote paste = %v, want %v", got, quote)
 		}
 	}
 }
-*/
 
 func testKeyBinding(t *testing.T, v vars.Var, h el.Handler) {
 	t.Helper()
@@ -102,12 +100,4 @@ func testKeyBinding(t *testing.T, v vars.Var, h el.Handler) {
 	if called != 1 {
 		t.Errorf("handler called %d times, want once", called)
 	}
-}
-
-func getNs(ns eval.Ns, name string) eval.Ns {
-	return ns[name+eval.NsSuffix].Get().(eval.Ns)
-}
-
-func getFn(ns eval.Ns, name string) eval.Callable {
-	return ns[name+eval.FnSuffix].Get().(eval.Callable)
 }

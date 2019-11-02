@@ -34,3 +34,11 @@ func evalf(ev *eval.Evaler, format string, args ...interface{}) {
 		panic(err)
 	}
 }
+
+func getNs(ns eval.Ns, name string) eval.Ns {
+	return ns[name+eval.NsSuffix].Get().(eval.Ns)
+}
+
+func getFn(ns eval.Ns, name string) eval.Callable {
+	return ns[name+eval.FnSuffix].Get().(eval.Callable)
+}
