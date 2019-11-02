@@ -22,9 +22,9 @@ type Editor struct {
 }
 
 // NewEditor creates a new editor from input and output terminal files.
-func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
+func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
-	appSpec := cli.AppSpec{TTY: cli.NewTTY(in, out)}
+	appSpec := cli.AppSpec{TTY: tty}
 
 	fuser, err := histutil.NewFuser(st)
 	if err != nil {
