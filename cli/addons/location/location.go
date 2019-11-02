@@ -61,6 +61,7 @@ func Start(app cli.App, cfg Config) {
 		},
 	})
 	app.MutateState(func(s *cli.State) { s.Listing = w })
+	app.Redraw()
 }
 
 func filter(dirs []storedefs.Dir, p string) items {

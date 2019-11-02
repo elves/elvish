@@ -81,6 +81,7 @@ func Start(app cli.App, cfg Config) {
 		},
 	})
 	app.MutateState(func(s *cli.State) { s.Listing = w })
+	app.Redraw()
 }
 
 type items struct {
