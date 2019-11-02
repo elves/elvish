@@ -44,7 +44,8 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	initCompletion(app, ev, ns)
 	initHistWalk(app, ev, ns, fuser)
 
-	initBuiltins(app, ns)
+	initBufferBuiltins(app, ns)
+	initMiscBuiltins(app, ns)
 	evalDefaultBinding(ev, ns)
 
 	return &Editor{app, ns}

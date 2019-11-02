@@ -12,11 +12,6 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func initBuiltins(app cli.App, ns eval.Ns) {
-	initMiscBuiltins(app, ns)
-	initBufferBuiltins(app, ns)
-}
-
 //elvdoc:fn binding-map
 //
 // Converts a normal map into a binding map.

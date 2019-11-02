@@ -1,12 +1,61 @@
 package cliedit
 
 import (
+	"fmt"
+	"io"
 	"testing"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/cli/el/layout"
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/tt"
 )
+
+func TestBindingMap(t *testing.T) {
+	// TODO
+}
+
+func TestCommitCode(t *testing.T) {
+	app, ns, ev := setupForBuiltins()
+	initMiscBuiltins(app, ns)
+	codeCh, errCh := cli.ReadCodeAsync(app)
+
+	evalf(ev, `edit:commit-code "test code"`)
+	if code := <-codeCh; code != "test code" {
+		t.Errorf("got code %q, want %q", code, "test code")
+	}
+	if err := <-errCh; err != nil {
+		t.Errorf("got err %v, want nil", err)
+	}
+}
+
+func TestCommitEOF(t *testing.T) {
+	app, ns, ev := setupForBuiltins()
+	initMiscBuiltins(app, ns)
+	_, errCh := cli.ReadCodeAsync(app)
+
+	evalf(ev, `edit:commit-eof`)
+	if err := <-errCh; err != io.EOF {
+		t.Errorf("got err %v, want %v", err, io.EOF)
+	}
+}
+
+func TestCloseListing(t *testing.T) {
+	app, ns, ev := setupForBuiltins()
+	initMiscBuiltins(app, ns)
+	codeCh, _ := cli.ReadCodeAsync(app)
+	defer func() {
+		app.CommitEOF()
+		<-codeCh
+	}()
+	app.MutateState(func(s *cli.State) { s.Listing = layout.Empty{} })
+
+	evalf(ev, `edit:close-listing`)
+	if listing := app.CopyState().Listing; listing != nil {
+		t.Errorf("got listing %v, want nil", listing)
+	}
+}
 
 var bufferBuiltinsTests = []struct {
 	name      string
@@ -36,20 +85,37 @@ var bufferBuiltinsTests = []struct {
 }
 
 func TestBufferBuiltins(t *testing.T) {
-	app := cli.NewApp(cli.AppSpec{})
-	builtins := bufferBuiltins(app)
+	app, ns, ev := setupForBuiltins()
+	initBufferBuiltins(app, ns)
 
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {
 			app.CodeArea().MutateState(func(s *codearea.State) {
 				s.CodeBuffer = test.bufBefore
 			})
-			fn := builtins[test.name].(func())
-			fn()
+			evalf(ev, "edit:%s", test.name)
 			if buf := app.CodeArea().CopyState().CodeBuffer; buf != test.bufAfter {
 				t.Errorf("got buf %v, want %v", buf, test.bufAfter)
 			}
 		})
+	}
+}
+
+func setupForBuiltins() (cli.App, eval.Ns, *eval.Evaler) {
+	app := cli.NewApp(cli.AppSpec{})
+	ns := eval.Ns{}
+	ev := eval.NewEvaler()
+	ev.InstallModule("edit", ns)
+	evalf(ev, "use edit")
+	return app, ns, ev
+}
+
+func evalf(ev *eval.Evaler, format string, args ...interface{}) {
+	code := fmt.Sprintf(format, args...)
+	// TODO: Should use a difference source type
+	err := ev.EvalSourceInTTY(eval.NewInteractiveSource(code))
+	if err != nil {
+		panic(err)
 	}
 }
 
