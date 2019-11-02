@@ -15,7 +15,11 @@ import (
 
 //elvdoc:fn completion:start
 //
-// Start the completion mode
+// Start the completion mode.
+
+//elvdoc:fn completion:close
+//
+// Closes the completion mode UI.
 
 func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	bindingVar := newBindingVar(emptyBindingMap)
@@ -25,6 +29,7 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 			"binding": bindingVar,
 		}.AddGoFns("<edit:completion>", map[string]interface{}{
 			"start": func() { completionStart(app, ev, binding) },
+			"close": func() { completion.Close(app) },
 		}))
 }
 

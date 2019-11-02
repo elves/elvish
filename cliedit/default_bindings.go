@@ -45,7 +45,7 @@ navigation:binding = (binding-map [
 ])
 
 completion:binding = (binding-map [
-  &Ctrl-'['= $close-listing~
+  &Ctrl-'['= $completion:close~
 ])
 
 history:binding = (binding-map [
