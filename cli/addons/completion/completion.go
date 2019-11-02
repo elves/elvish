@@ -59,7 +59,7 @@ func Start(app cli.App, cfg Config) {
 		},
 	})
 	app.MutateAppState(func(s *cli.State) { s.Listing = w })
-	app.Redraw(false)
+	app.Redraw()
 }
 
 // Close closes the completion UI.
@@ -67,7 +67,7 @@ func Close(app cli.App) {
 	app.CodeArea().MutateCodeAreaState(
 		func(s *codearea.State) { s.PendingCode = codearea.PendingCode{} })
 	app.MutateAppState(func(s *cli.State) { s.Listing = nil })
-	app.Redraw(false)
+	app.Redraw()
 }
 
 type items []Item

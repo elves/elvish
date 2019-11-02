@@ -31,7 +31,7 @@ func TestHistWalk(t *testing.T) {
 		s.CodeBuffer = codearea.CodeBuffer{Content: "ls", Dot: 2}
 	})
 
-	app.Redraw(false)
+	app.Redraw()
 	buf0 := ui.NewBufferBuilder(40).WritePlain("ls").SetDotToCursor().Buffer()
 	ttyCtrl.TestBuffer(t, buf0)
 

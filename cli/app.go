@@ -33,7 +33,7 @@ type App interface {
 	ReadCodeAsync() (<-chan string, <-chan error)
 	// Redraw requests a redraw. It never blocks and can be called regardless of
 	// whether the App is active or not.
-	Redraw(full bool)
+	Redraw()
 	// CommitEOF causes the main loop to exit with EOF. If this method is called
 	// when an event is being handled, the main loop will exit after the handler
 	// returns.
@@ -123,7 +123,7 @@ func (a *app) handle(e event) {
 			a.resetAllStates()
 			a.triggerPrompts(true)
 		case sys.SIGWINCH:
-			a.Redraw(true)
+			a.RedrawFull()
 		}
 	case term.Event:
 		if listing := a.CopyAppState().Listing; listing != nil {
@@ -255,7 +255,7 @@ func (a *app) ReadCode() (string, error) {
 			for {
 				select {
 				case <-ch:
-					a.Redraw(false)
+					a.Redraw()
 				case <-stopRelayLateUpdates:
 					return
 				}
@@ -293,8 +293,13 @@ func (a *app) ReadCodeAsync() (<-chan string, <-chan error) {
 	return codeCh, errCh
 }
 
-func (a *app) Redraw(full bool) {
-	a.loop.Redraw(full)
+func (a *app) Redraw() {
+	a.loop.Redraw(false)
+}
+
+func (a *app) RedrawFull() {
+	// This is currently not exposed, but can be exposed later if the need arises.
+	a.loop.Redraw(true)
 }
 
 func (a *app) CommitEOF() {
@@ -307,5 +312,5 @@ func (a *app) CommitCode(code string) {
 
 func (a *app) Notify(note string) {
 	a.MutateAppState(func(s *State) { s.Note(note) })
-	a.Redraw(false)
+	a.Redraw()
 }

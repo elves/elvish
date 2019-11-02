@@ -81,7 +81,7 @@ func Start(app cli.App, cfg Config) {
 	})
 	updateState(w, cursor, "")
 	app.MutateAppState(func(s *cli.State) { s.Listing = w })
-	app.Redraw(false)
+	app.Redraw()
 }
 
 func updateState(w colview.Widget, cursor Cursor, selectName string) {

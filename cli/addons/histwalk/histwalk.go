@@ -74,7 +74,7 @@ func Start(app cli.App, cfg Config) {
 	w.init()
 	w.onWalk()
 	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
-	app.Redraw(false)
+	app.Redraw()
 }
 
 // Prev walks to the previous entry in history. It returns ErrHistWalkInactive
