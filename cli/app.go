@@ -49,8 +49,18 @@ type App interface {
 type app struct {
 	loop *loop
 
+	TTY               TTY
+	MaxHeight         func() int
+	RPromptPersistent func() bool
+	BeforeReadline    func()
+	AfterReadline     func(string)
+	Highlighter       Highlighter
+	Prompt            Prompt
+	RPrompt           Prompt
+
 	StateMutex sync.RWMutex
-	AppSpec
+	State      State
+
 	codeArea codearea.Widget
 }
 
@@ -81,13 +91,55 @@ func (s *State) PopNotes() []string {
 
 // NewApp creates a new App from the given specification.
 func NewApp(spec AppSpec) App {
-	var a app
-	fixSpec(&spec)
-	spec.CodeArea.OnSubmit = a.CommitCode
 	lp := newLoop()
-	a = app{loop: lp, AppSpec: spec, codeArea: codearea.New(spec.CodeArea)}
+	a := app{
+		loop:              lp,
+		TTY:               spec.TTY,
+		MaxHeight:         spec.MaxHeight,
+		RPromptPersistent: spec.RPromptPersistent,
+		BeforeReadline:    spec.BeforeReadline,
+		AfterReadline:     spec.AfterReadline,
+		Highlighter:       spec.Highlighter,
+		Prompt:            spec.Prompt,
+		RPrompt:           spec.RPrompt,
+	}
+	if a.TTY == nil {
+		a.TTY, _ = NewFakeTTY()
+	}
+	if a.MaxHeight == nil {
+		a.MaxHeight = func() int { return -1 }
+	}
+	if a.RPromptPersistent == nil {
+		a.RPromptPersistent = func() bool { return false }
+	}
+	if a.BeforeReadline == nil {
+		a.BeforeReadline = func() {}
+	}
+	if a.AfterReadline == nil {
+		a.AfterReadline = func(string) {}
+	}
+	if a.Highlighter == nil {
+		a.Highlighter = dummyHighlighter{}
+	}
+	if a.Prompt == nil {
+		a.Prompt = constPrompt{}
+	}
+	if a.RPrompt == nil {
+		a.RPrompt = constPrompt{}
+	}
 	lp.HandleCb(a.handle)
 	lp.RedrawCb(a.redraw)
+
+	a.codeArea = codearea.New(codearea.Spec{
+		OverlayHandler: spec.OverlayHandler,
+		Highlighter:    a.Highlighter.Get,
+		Prompt:         a.Prompt.Get,
+		RPrompt:        a.RPrompt.Get,
+		Abbreviations:  spec.Abbreviations,
+		QuotePaste:     spec.QuotePaste,
+		OnSubmit:       a.CommitCode,
+	})
+
 	return &a
 }
 
@@ -140,14 +192,8 @@ func (a *app) handle(e event) {
 }
 
 func (a *app) triggerPrompts(force bool) {
-	prompt := a.AppSpec.Prompt
-	rprompt := a.AppSpec.RPrompt
-	if prompt != nil {
-		prompt.Trigger(force)
-	}
-	if rprompt != nil {
-		rprompt.Trigger(force)
-	}
+	a.Prompt.Trigger(force)
+	a.RPrompt.Trigger(force)
 }
 
 var transformerForPending = "underline"
@@ -155,7 +201,7 @@ var transformerForPending = "underline"
 func (a *app) redraw(flag redrawFlag) {
 	// Get the dimensions available.
 	height, width := a.TTY.Size()
-	if maxHeight := a.AppSpec.MaxHeight(); maxHeight > 0 && maxHeight < height {
+	if maxHeight := a.MaxHeight(); maxHeight > 0 && maxHeight < height {
 		height = maxHeight
 	}
 

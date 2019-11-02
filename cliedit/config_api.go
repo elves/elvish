@@ -80,13 +80,13 @@ func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 func initInsertConfigs(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns) {
 	abbr := vals.EmptyMap
 	abbrVar := vars.FromPtr(&abbr)
-	appSpec.CodeArea.Abbreviations = makeMapIterator(abbrVar)
+	appSpec.Abbreviations = makeMapIterator(abbrVar)
 
 	binding := newBindingVar(emptyBindingMap)
-	appSpec.CodeArea.OverlayHandler = newMapBinding(nt, ev, binding)
+	appSpec.OverlayHandler = newMapBinding(nt, ev, binding)
 
 	quotePaste := newBoolVar(false)
-	appSpec.CodeArea.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }
+	appSpec.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }
 
 	ns.AddNs("insert", eval.Ns{
 		"abbr":        abbrVar,

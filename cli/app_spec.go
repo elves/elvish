@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/styled"
 )
 
@@ -12,45 +12,16 @@ type AppSpec struct {
 	RPromptPersistent func() bool
 	BeforeReadline    func()
 	AfterReadline     func(string)
-	Highlighter       Highlighter
-	Prompt            Prompt
-	RPrompt           Prompt
-	CodeArea          codearea.Spec
+
+	Highlighter Highlighter
+	Prompt      Prompt
+	RPrompt     Prompt
+
+	OverlayHandler el.Handler
+	Abbreviations  func(f func(abbr, full string))
+	QuotePaste     func() bool
 
 	State State
-}
-
-func fixSpec(spec *AppSpec) {
-	if spec.TTY == nil {
-		spec.TTY, _ = NewFakeTTY()
-	}
-	if spec.MaxHeight == nil {
-		spec.MaxHeight = func() int { return -1 }
-	}
-	if spec.RPromptPersistent == nil {
-		spec.RPromptPersistent = func() bool { return false }
-	}
-	if spec.BeforeReadline == nil {
-		spec.BeforeReadline = func() {}
-	}
-	if spec.AfterReadline == nil {
-		spec.AfterReadline = func(string) {}
-	}
-	if spec.Highlighter == nil {
-		spec.Highlighter = dummyHighlighter{}
-	} else {
-		spec.CodeArea.Highlighter = spec.Highlighter.Get
-	}
-	if spec.Prompt == nil {
-		spec.Prompt = constPrompt{}
-	} else {
-		spec.CodeArea.Prompt = spec.Prompt.Get
-	}
-	if spec.RPrompt == nil {
-		spec.RPrompt = constPrompt{}
-	} else {
-		spec.CodeArea.RPrompt = spec.RPrompt.Get
-	}
 }
 
 // Highlighter represents a code highlighter whose result can be delivered
