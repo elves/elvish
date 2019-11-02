@@ -2,6 +2,7 @@ package cli
 
 import (
 	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/styled"
 )
 
@@ -21,7 +22,8 @@ type AppSpec struct {
 	Abbreviations  func(f func(abbr, full string))
 	QuotePaste     func() bool
 
-	State State
+	CodeAreaState codearea.State
+	State         State
 }
 
 // Highlighter represents a code highlighter whose result can be delivered

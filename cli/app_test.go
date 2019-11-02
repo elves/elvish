@@ -44,12 +44,11 @@ func TestReadCode_CallsRestore(t *testing.T) {
 }
 
 func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
-	ed, tty := setup()
+	ed, tty := setupWithSpec(AppSpec{
+		CodeAreaState: codearea.State{
+			CodeBuffer: codearea.CodeBuffer{Content: "some code"}}})
 
 	tty.Inject(term.KeyEvent{Rune: '\n'})
-	ed.CodeArea().MutateState(func(s *codearea.State) {
-		s.CodeBuffer.Content = "some code"
-	})
 
 	ed.ReadCode()
 
@@ -122,14 +121,13 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 }
 
 func TestReadCode_RespectsMaxHeight(t *testing.T) {
-	ed, tty := setupWithSpec(AppSpec{MaxHeight: func() int { return 2 }})
+	ed, tty := setupWithSpec(AppSpec{
+		MaxHeight: func() int { return 2 },
+		CodeAreaState: codearea.State{
+			// The code needs 3 lines to completely show.
+			CodeBuffer: codearea.CodeBuffer{Content: strings.Repeat("a", 15)}}})
 
 	tty.SetSize(10, 5) // Width = 5 to make it easy to test
-
-	// The code needs 3 lines to completely show.
-	ed.CodeArea().MutateState(func(s *codearea.State) {
-		s.CodeBuffer.Content = strings.Repeat("a", 15)
-	})
 
 	codeCh, _ := ed.ReadCodeAsync()
 
@@ -267,13 +265,11 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 }
 
 func TestReadCode_PutCursorBelowCodeAreaInFinalRedraw(t *testing.T) {
-	a, tty := setup()
-	a.CodeArea().MutateState(func(s *codearea.State) {
-		s.CodeBuffer.Content = "some code"
-	})
-	a.MutateState(func(s *State) {
-		s.Listing = layout.Label{Content: styled.Plain("listing")}
-	})
+	a, tty := setupWithSpec(AppSpec{
+		CodeAreaState: codearea.State{
+			CodeBuffer: codearea.CodeBuffer{Content: "some code"}},
+		State: State{
+			Listing: layout.Label{Content: styled.Plain("listing")}}})
 
 	codeCh, _ := a.ReadCodeAsync()
 
@@ -334,14 +330,10 @@ func TestReadCode_ResetsOnSIGINT(t *testing.T) {
 }
 
 func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
-	ed, tty := setup()
-
 	content := "1234567890"
-	ed.CodeArea().MutateState(func(s *codearea.State) {
-		s.CodeBuffer = codearea.CodeBuffer{
-			Content: content, Dot: len(content),
-		}
-	})
+	ed, tty := setupWithSpec(AppSpec{
+		CodeAreaState: codearea.State{
+			CodeBuffer: codearea.CodeBuffer{Content: content, Dot: len(content)}}})
 
 	codeCh, _ := ed.ReadCodeAsync()
 

@@ -102,6 +102,7 @@ func NewApp(spec AppSpec) App {
 		Highlighter:       spec.Highlighter,
 		Prompt:            spec.Prompt,
 		RPrompt:           spec.RPrompt,
+		State:             spec.State,
 	}
 	if a.TTY == nil {
 		a.TTY, _ = NewFakeTTY()
@@ -138,6 +139,7 @@ func NewApp(spec AppSpec) App {
 		Abbreviations:  spec.Abbreviations,
 		QuotePaste:     spec.QuotePaste,
 		OnSubmit:       a.CommitCode,
+		State:          spec.CodeAreaState,
 	})
 
 	return &a
