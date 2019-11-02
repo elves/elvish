@@ -9,7 +9,7 @@ go:
 env:
   global:
     - CGO_ENABLED=0
-    - ELVISH_TEST_UI_TIMEOUT=20s
+    - ELVISH_TEST_UI_TIMEOUT=5s
   jobs:
     - GO111MODULE=off
     - GO111MODULE=on
