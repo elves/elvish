@@ -58,6 +58,12 @@ var formTests = []emitTests{
 	{"xabc", []styling{{0, 4, styleForBadCommand}}},
 	{"'xa'", []styling{{0, 4, styleForBadCommand}}},
 
+	// "while"
+	// Highlighting "else"
+	{"while $false { } else { }", []styling{
+		{0, 5, styleForGoodCommand},
+		{17, 21, styleForSep["else"]}}},
+
 	// "for".
 	// Highlighting variable.
 	//012345678901

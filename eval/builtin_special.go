@@ -447,18 +447,28 @@ func compileWhile(cp *compiler, fn *parse.Form) effectOpBody {
 	args := cp.walkArgs(fn)
 	condNode := args.next()
 	bodyNode := args.nextMustLambda()
+	elseNode := args.nextMustLambdaIfAfter("else")
 	args.mustEnd()
 
-	return &whileOp{cp.compoundOp(condNode), cp.primaryOp(bodyNode)}
+	condOp := cp.compoundOp(condNode)
+	bodyOp := cp.primaryOp(bodyNode)
+	var elseOp valuesOp
+	if elseNode != nil {
+		elseOp = cp.primaryOp(elseNode)
+	}
+
+	return &whileOp{condOp, bodyOp, elseOp}
 }
 
 type whileOp struct {
-	condOp, bodyOp valuesOp
+	condOp, bodyOp, elseOp valuesOp
 }
 
 func (op *whileOp) invoke(fm *Frame) error {
 	body := op.bodyOp.execlambdaOp(fm)
+	elseBody := op.elseOp.execlambdaOp(fm)
 
+	iterated := false
 	for {
 		condValues, err := op.condOp.exec(fm.fork("while cond"))
 		if err != nil {
@@ -467,6 +477,7 @@ func (op *whileOp) invoke(fm *Frame) error {
 		if !allTrue(condValues) {
 			break
 		}
+		iterated = true
 		err = fm.fork("while").Call(body, NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(*Exception)
@@ -478,6 +489,10 @@ func (op *whileOp) invoke(fm *Frame) error {
 				return err
 			}
 		}
+	}
+
+	if op.elseOp.body != nil && !iterated {
+		return elseBody.Call(fm.fork("while else"), NoArgs, NoOpts)
 	}
 	return nil
 }
