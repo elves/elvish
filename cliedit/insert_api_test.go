@@ -12,7 +12,7 @@ func TestInsert_Abbr(t *testing.T) {
 	codeCh, _, stop := start(ed)
 	defer stop()
 
-	evalf(ev, `edit:insert:abbr = [&x=full]`)
+	evalf(ev, `edit:abbr = [&x=full]`)
 	ttyCtrl.Inject(term.K('x'), term.K('\n'))
 
 	if code := <-codeCh; code != "full" {

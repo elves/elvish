@@ -2,25 +2,25 @@ package cliedit
 
 // Elvish code for default bindings, assuming the editor ns as the global ns.
 const defaultBindingsElv = `
-insert:binding = (binding-map [
-  &Left=  $move-left~
-  &Right= $move-right~
+insert:binding = (binding-table [
+  &Left=  $move-dot-left~
+  &Right= $move-dot-right~
 
-  &Ctrl-Left=  $move-left-word~
-  &Ctrl-Right= $move-right-word~
-  &Alt-Left=   $move-left-word~
-  &Alt-Right=  $move-right-word~
-  &Alt-b=      $move-left-word~
-  &Alt-f=      $move-right-word~
+  &Ctrl-Left=  $move-dot-left-word~
+  &Ctrl-Right= $move-dot-right-word~
+  &Alt-Left=   $move-dot-left-word~
+  &Alt-Right=  $move-dot-right-word~
+  &Alt-b=      $move-dot-left-word~
+  &Alt-f=      $move-dot-right-word~
 
-  &Home= $move-sol~
-  &End=  $move-eol~
+  &Home= $move-dot-sol~
+  &End=  $move-dot-eol~
 
-  &Backspace= $kill-left~
-  &Delete=    $kill-right~
-  &Ctrl-W=    $kill-left-word~
-  &Ctrl-U=    $kill-sol~
-  &Ctrl-K=    $kill-eol~
+  &Backspace= $kill-rune-left~
+  &Delete=    $kill-rune-right~
+  &Ctrl-W=    $kill-word-left~
+  &Ctrl-U=    $kill-line-left~
+  &Ctrl-K=    $kill-line-right~
 
   &Alt-,=  $lastcmd:start~
   &Ctrl-R= $histlist:start~
@@ -32,7 +32,7 @@ insert:binding = (binding-map [
   &Ctrl-D=  $commit-eof~
 ])
 
-listing:binding = (binding-map [
+listing:binding = (binding-table [
   &Up=        $listing:up~
   &Down=      $listing:down~
   &Tab=       $listing:down-cycle~
@@ -40,15 +40,15 @@ listing:binding = (binding-map [
   &Ctrl-'['=  $close-listing~
 ])
 
-navigation:binding = (binding-map [
+navigation:binding = (binding-table [
   &Ctrl-'['= $close-listing~
 ])
 
-completion:binding = (binding-map [
+completion:binding = (binding-table [
   &Ctrl-'['= $completion:close~
 ])
 
-history:binding = (binding-map [
+history:binding = (binding-table [
   &Up=       $history:up~
   &Down=     $history:down~
   &Ctrl-'['= $history:close~

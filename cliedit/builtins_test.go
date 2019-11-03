@@ -15,10 +15,10 @@ func TestBindingMap(t *testing.T) {
 	defer cleanup()
 
 	evalf(ev, `called = $false`)
-	evalf(ev, `m = (edit:binding-map [&a={ called = $true }])`)
+	evalf(ev, `m = (edit:binding-table [&a={ called = $true }])`)
 	_, ok := ev.Global["m"].Get().(bindingMap)
 	if !ok {
-		t.Errorf("edit:binding-map did not create bindingMap variable")
+		t.Errorf("edit:binding-table did not create bindingMap variable")
 	}
 }
 
@@ -65,22 +65,22 @@ var bufferBuiltinsTests = []struct {
 	bufAfter  codearea.CodeBuffer
 }{
 	{
-		"move-left",
+		"move-dot-left",
 		codearea.CodeBuffer{Content: "ab", Dot: 1},
 		codearea.CodeBuffer{Content: "ab", Dot: 0},
 	},
 	{
-		"move-right",
+		"move-dot-right",
 		codearea.CodeBuffer{Content: "ab", Dot: 1},
 		codearea.CodeBuffer{Content: "ab", Dot: 2},
 	},
 	{
-		"kill-left",
+		"kill-rune-left",
 		codearea.CodeBuffer{Content: "ab", Dot: 1},
 		codearea.CodeBuffer{Content: "b", Dot: 0},
 	},
 	{
-		"kill-right",
+		"kill-rune-right",
 		codearea.CodeBuffer{Content: "ab", Dot: 1},
 		codearea.CodeBuffer{Content: "a", Dot: 1},
 	},

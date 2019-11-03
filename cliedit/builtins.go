@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-//elvdoc:fn binding-map
+//elvdoc:fn binding-table
 //
 // Converts a normal map into a binding map.
 
@@ -36,7 +36,7 @@ func closeListing(app cli.App) {
 
 func initMiscBuiltins(app cli.App, ns eval.Ns) {
 	ns.AddGoFns("<edit>", map[string]interface{}{
-		"binding-map":   eddefs.MakeBindingMap,
+		"binding-table":   eddefs.MakeBindingMap,
 		"commit-code":   app.CommitCode,
 		"commit-eof":    app.CommitEOF,
 		"close-listing": func() { closeListing(app) },
@@ -44,30 +44,30 @@ func initMiscBuiltins(app cli.App, ns eval.Ns) {
 }
 
 var bufferBuiltinsData = map[string]func(*codearea.CodeBuffer){
-	"move-left":             makeMove(moveDotLeft),
-	"move-right":            makeMove(moveDotRight),
-	"move-left-word":        makeMove(moveDotLeftWord),
-	"move-right-word":       makeMove(moveDotRightWord),
-	"move-left-small-word":  makeMove(moveDotLeftWord),
-	"move-right-small-word": makeMove(moveDotRightSmallWord),
-	"move-left-alnum-word":  makeMove(moveDotLeftAlnumWord),
-	"move-right-alnum-word": makeMove(moveDotRightAlnumWord),
-	"move-sol":              makeMove(moveDotSOL),
-	"move-eol":              makeMove(moveDotEOL),
+	"move-dot-left":             makeMove(moveDotLeft),
+	"move-dot-right":            makeMove(moveDotRight),
+	"move-dot-left-word":        makeMove(moveDotLeftWord),
+	"move-dot-right-word":       makeMove(moveDotRightWord),
+	"move-dot-left-small-word":  makeMove(moveDotLeftWord),
+	"move-dot-right-small-word": makeMove(moveDotRightSmallWord),
+	"move-dot-left-alnum-word":  makeMove(moveDotLeftAlnumWord),
+	"move-dot-right-alnum-word": makeMove(moveDotRightAlnumWord),
+	"move-dot-sol":              makeMove(moveDotSOL),
+	"move-dot-eol":              makeMove(moveDotEOL),
 
-	"move-up":   makeMove(moveDotUp),
-	"move-down": makeMove(moveDotDown),
+	"move-dot-up":   makeMove(moveDotUp),
+	"move-dot-down": makeMove(moveDotDown),
 
-	"kill-left":             makeKill(moveDotLeft),
-	"kill-right":            makeKill(moveDotRight),
-	"kill-left-word":        makeKill(moveDotLeftWord),
-	"kill-right-word":       makeKill(moveDotRightWord),
-	"kill-left-small-word":  makeKill(moveDotLeftWord),
-	"kill-right-small-word": makeKill(moveDotRightSmallWord),
+	"kill-rune-left":        makeKill(moveDotLeft),
+	"kill-rune-right":       makeKill(moveDotRight),
+	"kill-word-left":        makeKill(moveDotLeftWord),
+	"kill-word-right":       makeKill(moveDotRightWord),
+	"kill-small-word-left":  makeKill(moveDotLeftWord),
+	"kill-small-word-right": makeKill(moveDotRightSmallWord),
 	"kill-left-alnum-word":  makeKill(moveDotLeftAlnumWord),
 	"kill-right-alnum-word": makeKill(moveDotRightAlnumWord),
-	"kill-sol":              makeKill(moveDotSOL),
-	"kill-eol":              makeKill(moveDotEOL),
+	"kill-line-left":        makeKill(moveDotSOL),
+	"kill-line-right":       makeKill(moveDotEOL),
 }
 
 func initBufferBuiltins(app cli.App, ns eval.Ns) {
@@ -116,12 +116,12 @@ func makeKill(m pureMover) func(*codearea.CodeBuffer) {
 
 // Implementation of pure movers.
 
-//elvdoc:fn move-left
+//elvdoc:fn move-dot-left
 //
 // Moves the dot left one rune. Does nothing if the dot is at the beginning of
 // the buffer.
 
-//elvdoc:fn kill-left
+//elvdoc:fn kill-rune-left
 //
 // Kills one rune left of the dot. Does nothing if the dot is at the beginning of
 // the buffer.
@@ -131,12 +131,12 @@ func moveDotLeft(buffer string, dot int) int {
 	return dot - w
 }
 
-//elvdoc:fn move-right
+//elvdoc:fn move-dot-right
 //
 // Moves the dot right one rune. Does nothing if the dot is at the end of the
 // buffer.
 
-//elvdoc:fn kill-left
+//elvdoc:fn kill-rune-left
 //
 // Kills one rune right of the dot. Does nothing if the dot is at the end of the
 // buffer.
@@ -146,11 +146,11 @@ func moveDotRight(buffer string, dot int) int {
 	return dot + w
 }
 
-//elvdoc:fn move-sol
+//elvdoc:fn move-dot-sol
 //
 // Moves the dot to the start of the current line.
 
-//elvdoc:fn kill-sol
+//elvdoc:fn kill-line-left
 //
 // Deletes the text between the dot and the start of the current line.
 
@@ -158,11 +158,11 @@ func moveDotSOL(buffer string, dot int) int {
 	return util.FindLastSOL(buffer[:dot])
 }
 
-//elvdoc:fn move-eol
+//elvdoc:fn move-dot-eol
 //
 // Moves the dot to the end of the current line.
 
-//elvdoc:fn kill-eol
+//elvdoc:fn kill-line-right
 //
 // Deletes the text between the dot and the end of the current line.
 
@@ -170,7 +170,7 @@ func moveDotEOL(buffer string, dot int) int {
 	return util.FindFirstEOL(buffer[dot:]) + dot
 }
 
-//elvdoc:fn move-up
+//elvdoc:fn move-dot-up
 //
 // Moves the dot up one line, trying to preserve the visual horizontal position.
 // Does nothing if dot is already on the first line of the buffer.
@@ -187,7 +187,7 @@ func moveDotUp(buffer string, dot int) int {
 	return prevSOL + len(util.TrimWcwidth(buffer[prevSOL:prevEOL], width))
 }
 
-//elvdoc:fn move-down
+//elvdoc:fn move-dot-down
 //
 // Moves the dot down one line, trying to preserve the visual horizontal
 // position. Does nothing if dot is already on the last line of the buffer.
@@ -207,11 +207,11 @@ func moveDotDown(buffer string, dot int) int {
 
 // TODO(xiaq): Document the concepts of words, small words and alnum words.
 
-//elvdoc:fn move-left-word
+//elvdoc:fn move-dot-left-word
 //
 // Moves the dot to the beginning of the last word to the left of the dot.
 
-//elvdoc:fn kill-left-word
+//elvdoc:fn kill-word-left
 //
 // Deletes the the last word to the left of the dot.
 
@@ -219,11 +219,11 @@ func moveDotLeftWord(buffer string, dot int) int {
 	return moveDotLeftGeneralWord(categorizeWord, buffer, dot)
 }
 
-//elvdoc:fn move-right-word
+//elvdoc:fn move-dot-right-word
 //
 // Moves the dot to the beginning of the first word to the right of the dot.
 
-//elvdoc:fn kill-right-word
+//elvdoc:fn kill-word-right
 //
 // Deletes the the first word to the right of the dot.
 
@@ -240,11 +240,11 @@ func categorizeWord(r rune) int {
 	}
 }
 
-//elvdoc:fn move-left-small-word
+//elvdoc:fn move-dot-left-small-word
 //
 // Moves the dot to the beginning of the last small word to the left of the dot.
 
-//elvdoc:fn kill-left-small-word
+//elvdoc:fn kill-small-word-left
 //
 // Deletes the the last small word to the left of the dot.
 
@@ -252,11 +252,11 @@ func moveDotLeftSmallWord(buffer string, dot int) int {
 	return moveDotLeftGeneralWord(categorizeSmallWord, buffer, dot)
 }
 
-//elvdoc:fn move-right-small-word
+//elvdoc:fn move-dot-right-small-word
 //
 // Moves the dot to the beginning of the first small word to the right of the dot.
 
-//elvdoc:fn kill-right-small-word
+//elvdoc:fn kill-small-word-right
 //
 // Deletes the the first small word to the right of the dot.
 
@@ -275,11 +275,11 @@ func categorizeSmallWord(r rune) int {
 	}
 }
 
-//elvdoc:fn move-left-alnum-word
+//elvdoc:fn move-dot-left-alnum-word
 //
 // Moves the dot to the beginning of the last alnum word to the left of the dot.
 
-//elvdoc:fn kill-left-alnum-word
+//elvdoc:fn kill-alnum-word-left
 //
 // Deletes the the last alnum word to the left of the dot.
 
@@ -287,11 +287,11 @@ func moveDotLeftAlnumWord(buffer string, dot int) int {
 	return moveDotLeftGeneralWord(categorizeAlnum, buffer, dot)
 }
 
-//elvdoc:fn move-right-alnum-word
+//elvdoc:fn move-dot-right-alnum-word
 //
 // Moves the dot to the beginning of the first alnum word to the right of the dot.
 
-//elvdoc:fn kill-right-alnum-word
+//elvdoc:fn kill-alnum-word-right
 //
 // Deletes the the first alnum word to the right of the dot.
 

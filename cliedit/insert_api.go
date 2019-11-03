@@ -19,8 +19,8 @@ func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.N
 	quotePaste := newBoolVar(false)
 	appSpec.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }
 
+	ns.Add("abbr", abbrVar)
 	ns.AddNs("insert", eval.Ns{
-		"abbr":        abbrVar,
 		"binding":     binding,
 		"quote-paste": quotePaste,
 	})
