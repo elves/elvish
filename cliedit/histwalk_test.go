@@ -22,7 +22,7 @@ func TestHistWalk(t *testing.T) {
 	defer stop()
 
 	ttyCtrl.Inject(term.K(ui.Up))
-	wantBuf := bb().
+	wantBufWalk := bb().
 		WriteStyled(styled.MarkLines(
 			"~> echo a", styles,
 			"   GGGG--",
@@ -31,5 +31,13 @@ func TestHistWalk(t *testing.T) {
 			" HISTORY #1 ", styles,
 			"mmmmmmmmmmmm",
 		)).Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	ttyCtrl.TestBuffer(t, wantBufWalk)
+
+	ttyCtrl.Inject(term.K(ui.Enter))
+	wantBufDone := bb().
+		WriteStyled(styled.MarkLines(
+			"~> echo a", styles,
+			"   gggg  ",
+		)).SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, wantBufDone)
 }

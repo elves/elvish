@@ -15,10 +15,11 @@ func initHistWalk(app cli.App, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fuse
 		eval.Ns{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:history>", map[string]interface{}{
-			"start": func() { histWalkStart(app, fuser, binding) },
-			"up":    func() error { return histwalk.Prev(app) },
-			"down":  func() error { return histwalk.Next(app) },
-			"close": func() { histwalk.Close(app) },
+			"start":  func() { histWalkStart(app, fuser, binding) },
+			"up":     func() error { return histwalk.Prev(app) },
+			"down":   func() error { return histwalk.Next(app) },
+			"accept": func() { histwalk.Accept(app) },
+			"close":  func() { histwalk.Close(app) },
 		}))
 }
 

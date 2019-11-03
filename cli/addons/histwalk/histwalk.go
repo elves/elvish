@@ -92,15 +92,33 @@ func Next(app cli.App) error {
 // Close closes the histwalk addon. It does nothing if the histwalk addon is not
 // active.
 func Close(app cli.App) {
+	if closeAddon(app) {
+		app.CodeArea().MutateState(func(s *codearea.State) {
+			s.PendingCode = codearea.PendingCode{}
+		})
+	}
+}
+
+// Accept closes the histwalk addon, accepting the current shown command. It does
+// nothing if the histwalk addon is not active.
+func Accept(app cli.App) {
+	if closeAddon(app) {
+		app.CodeArea().MutateState(func(s *codearea.State) {
+			s.ApplyPending()
+		})
+	}
+}
+
+func closeAddon(app cli.App) bool {
+	var closed bool
 	app.MutateState(func(s *cli.State) {
 		if _, ok := s.Listing.(*widget); !ok {
 			return
 		}
 		s.Listing = nil
-		app.CodeArea().MutateState(func(s *codearea.State) {
-			s.PendingCode = codearea.PendingCode{}
-		})
+		closed = true
 	})
+	return closed
 }
 
 func walk(app cli.App, f func(*widget) error) error {

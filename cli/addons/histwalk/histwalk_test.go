@@ -21,12 +21,6 @@ func TestHistWalk(t *testing.T) {
 	app, ttyCtrl, cleanup := setup()
 	defer cleanup()
 
-	db := &histutil.TestDB{
-		//                 0       1        2         3        4         5
-		AllCmds: []string{"echo", "ls -l", "echo a", "ls -a", "echo a", "ls -a"},
-	}
-	walker := histutil.NewWalker(db, -1, nil, "ls")
-
 	app.CodeArea().MutateState(func(s *codearea.State) {
 		s.CodeBuffer = codearea.CodeBuffer{Content: "ls", Dot: 2}
 	})
@@ -35,14 +29,23 @@ func TestHistWalk(t *testing.T) {
 	buf0 := ui.NewBufferBuilder(40).WritePlain("ls").SetDotToCursor().Buffer()
 	ttyCtrl.TestBuffer(t, buf0)
 
-	Start(app, Config{
-		Walker: walker,
-		Binding: el.MapHandler{
-			term.K(ui.Up):        func() { Prev(app) },
-			term.K(ui.Down):      func() { Next(app) },
-			term.K('[', ui.Ctrl): func() { Close(app) },
-		},
-	})
+	getCfg := func() Config {
+		db := &histutil.TestDB{
+			//                 0       1        2         3        4         5
+			AllCmds: []string{"echo", "ls -l", "echo a", "ls -a", "echo a", "ls -a"},
+		}
+		return Config{
+			Walker: histutil.NewWalker(db, -1, nil, "ls"),
+			Binding: el.MapHandler{
+				term.K(ui.Up):        func() { Prev(app) },
+				term.K(ui.Down):      func() { Next(app) },
+				term.K('[', ui.Ctrl): func() { Close(app) },
+				term.K(ui.Enter):     func() { Accept(app) },
+			},
+		}
+	}
+
+	Start(app, getCfg())
 	buf5 := makeBuf(
 		styled.MarkLines(
 			"ls -a", styles,
@@ -66,6 +69,13 @@ func TestHistWalk(t *testing.T) {
 
 	ttyCtrl.Inject(term.K('[', ui.Ctrl))
 	ttyCtrl.TestBuffer(t, buf0)
+
+	// Start over and accept.
+	Start(app, getCfg())
+	ttyCtrl.TestBuffer(t, buf5)
+	ttyCtrl.Inject(term.K(ui.Enter))
+	bufAccepted := ui.NewBufferBuilder(40).WritePlain("ls -a").SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, bufAccepted)
 }
 
 func makeBuf(codeArea styled.Text, modeline string) *ui.Buffer {
