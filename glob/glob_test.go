@@ -3,7 +3,6 @@ package glob
 import (
 	"os"
 	"reflect"
-	"runtime"
 	"sort"
 	"testing"
 
@@ -54,22 +53,16 @@ var globCases = []globCase{
 	// TODO Test cases against dotfiles.
 }
 
-func init() {
-	// Add tests for absolute paths. This is platform-dependent and may break if
-	// the directories used change during testing.
-	var dirs []string
-	if runtime.GOOS == "windows" {
-		dirs = []string{`C:/`, `C:/Windows/`}
-	} else {
-		dirs = []string{"/", "/usr/"}
-	}
-	for _, dir := range dirs {
-		globCases = append(globCases, globCase{dir + "*", util.FullNames(dir)})
-	}
+func TestGlob_Relative(t *testing.T) {
+	testGlob(t, false)
 }
 
-func TestGlob(t *testing.T) {
-	_, cleanup := util.InTestDir()
+func TestGlob_Absolute(t *testing.T) {
+	testGlob(t, true)
+}
+
+func testGlob(t *testing.T, abs bool) {
+	dir, cleanup := util.InTestDir()
 	defer cleanup()
 
 	for _, dir := range append(mkdirs, mkdirDots...) {
@@ -86,15 +79,29 @@ func TestGlob(t *testing.T) {
 		f.Close()
 	}
 	for _, tc := range globCases {
-		names := []string{}
-		Glob(tc.pattern, func(name string) bool {
-			names = append(names, name)
+		pattern := tc.pattern
+		if abs {
+			pattern = dir + "/" + pattern
+		}
+		wantResults := make([]string, len(tc.want))
+		for i, result := range tc.want {
+			if abs {
+				wantResults[i] = dir + "/" + result
+			} else {
+				wantResults[i] = result
+			}
+		}
+		sort.Strings(wantResults)
+
+		results := []string{}
+		Glob(pattern, func(name string) bool {
+			results = append(results, name)
 			return true
 		})
-		sort.Strings(names)
-		sort.Strings(tc.want)
-		if !reflect.DeepEqual(names, tc.want) {
-			t.Errorf(`Glob(%q, "") => %v, want %v`, tc.pattern, names, tc.want)
+		sort.Strings(results)
+
+		if !reflect.DeepEqual(results, wantResults) {
+			t.Errorf(`Glob(%q) => %v, want %v`, pattern, results, wantResults)
 		}
 	}
 }
