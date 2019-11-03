@@ -3,7 +3,6 @@ package cliedit
 import (
 	"testing"
 
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
@@ -17,7 +16,7 @@ func TestCompletion(t *testing.T) {
 	defer cleanup()
 
 	feedInput(ttyCtrl, "echo \t")
-	wantBuf := ui.NewBufferBuilder(40).
+	wantBuf := bb().
 		WriteStyled(styled.MarkLines(
 			"~> echo a ", styles,
 			"   gggg --",

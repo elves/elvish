@@ -23,7 +23,7 @@ var styles = map[rune]string{
 
 const (
 	testTTYHeight = 24
-	testTTYWidth  = 40
+	testTTYWidth  = 60
 )
 
 func bb() *ui.BufferBuilder { return ui.NewBufferBuilder(testTTYWidth) }
