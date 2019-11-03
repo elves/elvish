@@ -3,101 +3,99 @@ package cliedit
 import (
 	"testing"
 
-	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vals"
-	"github.com/elves/elvish/eval/vars"
 )
 
-func setupConfigAPI() (cli.AppSpec, *eval.Evaler, eval.Ns) {
-	appSpec := cli.AppSpec{}
-	nt := &fakeNotifier{}
-	ev := eval.NewEvaler()
-	ns := eval.Ns{}
-	initConfigAPI(&appSpec, nt, ev, ns)
-	return appSpec, ev, ns
-}
-
 func TestInitAPI_BeforeReadline(t *testing.T) {
-	appSpec, _, ns := setupConfigAPI()
+	ed, _, ev, _, cleanup := setup()
+	defer cleanup()
 
-	var called int
-	ns["before-readline"].Set(vals.MakeList(eval.NewGoFn("[test]", func() {
-		called++
-	})))
-	appSpec.BeforeReadline()
-	if called != 1 {
-		t.Errorf("before-readline called %d times, want once", called)
+	evalf(ev, `called = 0`)
+	evalf(ev, `edit:before-readline = [ { called = (+ $called 1) } ]`)
+
+	_, _, stop := start(ed)
+	stop()
+
+	// TODO(xiaq): Test more precisely when before-readline is called.
+	if called := ev.Global["called"].Get(); called != 1.0 {
+		t.Errorf("called = %v, want 1", called)
 	}
 }
 
 func TestInitAPI_AfterReadline(t *testing.T) {
-	appSpec, _, ns := setupConfigAPI()
+	ed, _, ev, _, cleanup := setup()
+	defer cleanup()
 
-	var called int
-	var calledWith string
-	ns["after-readline"].Set(vals.MakeList(eval.NewGoFn("[test]", func(s string) {
-		called++
-		calledWith = s
-	})))
-	appSpec.AfterReadline("code")
-	if called != 1 {
-		t.Errorf("after-readline called %d times, want once", called)
+	evalf(ev, `called = 0`)
+	evalf(ev, `called-with = ''`)
+	evalf(ev, `edit:after-readline = [
+	             [code]{ called = (+ $called 1); called-with = $code } ]`)
+
+	ed.app.CodeArea().MutateState(func(s *codearea.State) {
+		s.CodeBuffer.InsertAtDot("test code")
+	})
+	_, _, stop := start(ed)
+	stop()
+
+	// TODO(xiaq): Test more precisely when after-readline is called.
+	if called := ev.Global["called"].Get(); called != 1.0 {
+		t.Errorf("called = %v, want 1", called)
 	}
-	if calledWith != "code" {
-		t.Errorf("after-readline called with %q, want %q", calledWith, "code")
+	if calledWith := ev.Global["called-with"].Get(); calledWith != "test code" {
+		t.Errorf("called = %q, want %q", calledWith, "test code")
 	}
 }
 
 func TestInitAPI_Insert_Abbr(t *testing.T) {
-	appSpec, _, ns := setupConfigAPI()
-	m := vals.MakeMap("xx", "xx full", "yy", "yy full")
-	getNs(ns, "insert")["abbr"].Set(m)
+	ed, ttyCtrl, ev, _, cleanup := setup()
+	defer cleanup()
+	codeCh, _, stop := start(ed)
+	defer stop()
 
-	collected := vals.EmptyMap
-	appSpec.Abbreviations(func(a, f string) {
-		collected = collected.Assoc(a, f)
-	})
+	evalf(ev, `edit:insert:abbr = [&x=full]`)
+	ttyCtrl.Inject(term.K('x'), term.K('\n'))
 
-	if !vals.Equal(m, collected) {
-		t.Errorf("Callback collected %v, var set %v", collected, m)
+	if code := <-codeCh; code != "full" {
+		t.Errorf("abbreviation expanded to %q, want %q", code, "full")
 	}
 }
 
 func TestInitAPI_Insert_Binding(t *testing.T) {
-	appSpec, _, ns := setupConfigAPI()
-	testKeyBinding(t, getNs(ns, "insert")["binding"], appSpec.OverlayHandler)
+	ed, ttyCtrl, ev, _, cleanup := setup()
+	defer cleanup()
+
+	evalf(ev, `called = 0`)
+	evalf(ev, `edit:insert:binding[x] = { called = (+ $called 1) }`)
+
+	codeCh, _, _ := start(ed)
+	ttyCtrl.Inject(term.K('x'), term.K('\n'))
+	code := <-codeCh
+
+	if code != "" {
+		t.Errorf("code = %q, want %q", code, "")
+	}
+	if called := ev.Global["called"].Get(); called != 1.0 {
+		t.Errorf("called = %v, want 1", called)
+	}
 }
 
 func TestInitAPI_Insert_QuotePaste(t *testing.T) {
-	appSpec, _, ns := setupConfigAPI()
-	for _, quote := range []bool{false, true} {
-		getNs(ns, "insert")["quote-paste"].Set(quote)
-		if got := appSpec.QuotePaste(); got != quote {
-			t.Errorf("quote paste = %v, want %v", got, quote)
-		}
-	}
-}
+	ed, ttyCtrl, ev, _, cleanup := setup()
+	defer cleanup()
 
-func testKeyBinding(t *testing.T, v vars.Var, h el.Handler) {
-	t.Helper()
+	evalf(ev, `edit:insert:quote-paste = $true`)
 
-	var called int
-	binding, err := emptyBindingMap.Assoc(
-		"a", eval.NewGoFn("[binding]", func() { called++ }))
-	if err != nil {
-		panic(err)
-	}
-	v.Set(binding)
+	codeCh, _, _ := start(ed)
+	ttyCtrl.Inject(
+		term.PasteSetting(true),
+		term.K('>'),
+		term.PasteSetting(false),
+		term.K('\n'))
+	code := <-codeCh
 
-	handled := h.Handle(term.K('a'))
-
-	if !handled {
-		t.Errorf("handled = false, want true")
-	}
-	if called != 1 {
-		t.Errorf("handler called %d times, want once", called)
+	wantCode := `'>'`
+	if code != wantCode {
+		t.Errorf("Got code %q, want %q", code, wantCode)
 	}
 }

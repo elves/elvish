@@ -7,7 +7,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
@@ -18,35 +19,33 @@ import (
 
 // High-level sanity test.
 
+func feedInput(ttyCtrl cli.TTYCtrl, s string) {
+	for _, r := range s {
+		ttyCtrl.Inject(term.K(r))
+	}
+}
+
 func TestHighlighter(t *testing.T) {
-	spec, ns, ev := preparePreApp()
-	initHighlighter(&spec, ev)
-	app, ttyCtrl := prepareApp(spec, ns, ev)
+	_, cleanupDir := eval.InTempHome()
+	defer cleanupDir()
+	_, ttyCtrl, _, _, cleanup := setupStarted()
+	defer cleanup()
 
-	stop := run(app)
-	defer stop()
-
-	app.CodeArea().MutateState(func(s *codearea.State) {
-		s.CodeBuffer.InsertAtDot("put $true")
-	})
-	app.Redraw()
+	feedInput(ttyCtrl, "put $true")
 	wantBuf1 := bb().
 		WriteStyled(styled.MarkLines(
-			"put $true", styles,
-			"ggg vvvvv",
+			"~> put $true", styles,
+			"   ggg vvvvv",
 		)).
 		SetDotToCursor().
 		Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf1)
 
-	app.CodeArea().MutateState(func(s *codearea.State) {
-		s.CodeBuffer.InsertAtDot("x")
-	})
-	app.Redraw()
+	feedInput(ttyCtrl, "x")
 	wantBuf2 := bb().
 		WriteStyled(styled.MarkLines(
-			"put $truex", styles,
-			"ggg eeeeee",
+			"~> put $truex", styles,
+			"   ggg eeeeee",
 		)).
 		SetDotToCursor().
 		Newline().

@@ -15,9 +15,10 @@ func TestBindingMap(t *testing.T) {
 }
 
 func TestCommitCode(t *testing.T) {
-	app, _, ns, ev := prepare()
-	initMiscBuiltins(app, ns)
-	codeCh, errCh := cli.ReadCodeAsync(app)
+	ed, _, ev, _, cleanup := setup()
+	defer cleanup()
+	codeCh, errCh, stop := start(ed)
+	defer stop()
 
 	evalf(ev, `edit:commit-code "test code"`)
 	if code := <-codeCh; code != "test code" {
@@ -29,9 +30,10 @@ func TestCommitCode(t *testing.T) {
 }
 
 func TestCommitEOF(t *testing.T) {
-	app, _, ns, ev := prepare()
-	initMiscBuiltins(app, ns)
-	_, errCh := cli.ReadCodeAsync(app)
+	ed, _, ev, _, cleanup := setup()
+	defer cleanup()
+	_, errCh, stop := start(ed)
+	defer stop()
 
 	evalf(ev, `edit:commit-eof`)
 	if err := <-errCh; err != io.EOF {
@@ -40,14 +42,13 @@ func TestCommitEOF(t *testing.T) {
 }
 
 func TestCloseListing(t *testing.T) {
-	app, _, ns, ev := prepare()
-	initMiscBuiltins(app, ns)
-	stop := run(app)
-	defer stop()
-	app.MutateState(func(s *cli.State) { s.Listing = layout.Empty{} })
+	ed, _, ev, _, cleanup := setupStarted()
+	defer cleanup()
 
+	ed.app.MutateState(func(s *cli.State) { s.Listing = layout.Empty{} })
 	evalf(ev, `edit:close-listing`)
-	if listing := app.CopyState().Listing; listing != nil {
+
+	if listing := ed.app.CopyState().Listing; listing != nil {
 		t.Errorf("got listing %v, want nil", listing)
 	}
 }
@@ -80,10 +81,9 @@ var bufferBuiltinsTests = []struct {
 }
 
 func TestBufferBuiltins(t *testing.T) {
-	app, _, ns, ev := prepare()
-	initBufferBuiltins(app, ns)
-	stop := run(app)
-	defer stop()
+	ed, _, ev, _, cleanup := setupStarted()
+	app := ed.app
+	defer cleanup()
 
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {
