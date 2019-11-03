@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/store"
@@ -26,6 +27,12 @@ const (
 )
 
 func bb() *ui.BufferBuilder { return ui.NewBufferBuilder(testTTYWidth) }
+
+func feedInput(ttyCtrl cli.TTYCtrl, s string) {
+	for _, r := range s {
+		ttyCtrl.Inject(term.K(r))
+	}
+}
 
 func evalf(ev *eval.Evaler, format string, args ...interface{}) {
 	code := fmt.Sprintf(format, args...)

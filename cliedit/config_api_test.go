@@ -3,7 +3,6 @@ package cliedit
 import (
 	"testing"
 
-	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/term"
 )
 
@@ -24,7 +23,7 @@ func TestInitAPI_BeforeReadline(t *testing.T) {
 }
 
 func TestInitAPI_AfterReadline(t *testing.T) {
-	ed, _, ev, _, cleanup := setup()
+	ed, ttyCtrl, ev, _, cleanup := setup()
 	defer cleanup()
 
 	evalf(ev, `called = 0`)
@@ -32,11 +31,9 @@ func TestInitAPI_AfterReadline(t *testing.T) {
 	evalf(ev, `edit:after-readline = [
 	             [code]{ called = (+ $called 1); called-with = $code } ]`)
 
-	ed.app.CodeArea().MutateState(func(s *codearea.State) {
-		s.CodeBuffer.InsertAtDot("test code")
-	})
-	_, _, stop := start(ed)
-	stop()
+	codeCh, _, _ := start(ed)
+	feedInput(ttyCtrl, "test code\n")
+	<-codeCh
 
 	// TODO(xiaq): Test more precisely when after-readline is called.
 	if called := ev.Global["called"].Get(); called != 1.0 {

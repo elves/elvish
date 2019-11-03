@@ -7,8 +7,6 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
@@ -18,12 +16,6 @@ import (
 )
 
 // High-level sanity test.
-
-func feedInput(ttyCtrl cli.TTYCtrl, s string) {
-	for _, r := range s {
-		ttyCtrl.Inject(term.K(r))
-	}
-}
 
 func TestHighlighter(t *testing.T) {
 	_, cleanupDir := eval.InTempHome()
