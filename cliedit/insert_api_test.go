@@ -58,3 +58,24 @@ func TestInsert_QuotePaste(t *testing.T) {
 		t.Errorf("Got code %q, want %q", code, wantCode)
 	}
 }
+
+func TestToggleQuotePaste(t *testing.T) {
+	_, _, ev, cleanup := setup()
+	defer cleanup()
+
+	evalf(ev, `v0 = $edit:insert:quote-paste`)
+	evalf(ev, `edit:toggle-quote-paste`)
+	evalf(ev, `v1 = $edit:insert:quote-paste`)
+	evalf(ev, `edit:toggle-quote-paste`)
+	evalf(ev, `v2 = $edit:insert:quote-paste`)
+
+	v0 := ev.Global["v0"].Get().(bool)
+	v1 := ev.Global["v1"].Get().(bool)
+	v2 := ev.Global["v2"].Get().(bool)
+	if v1 == v0 {
+		t.Errorf("got v1 = v0")
+	}
+	if v2 == v1 {
+		t.Errorf("got v2 = v1")
+	}
+}

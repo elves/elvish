@@ -19,7 +19,12 @@ func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.N
 	quotePaste := newBoolVar(false)
 	appSpec.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }
 
+	toggleQuotePaste := func() {
+		quotePaste.Set(!quotePaste.Get().(bool))
+	}
+
 	ns.Add("abbr", abbrVar)
+	ns.AddGoFn("<edit>", "toggle-quote-paste", toggleQuotePaste)
 	ns.AddNs("insert", eval.Ns{
 		"binding":     binding,
 		"quote-paste": quotePaste,
