@@ -27,7 +27,7 @@ func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
 	var ed editor
 	if sys.IsATTY(os.Stdin) {
 		if newEdit {
-			newed := cliedit.NewEditor(cli.NewStdTTY(), ev, ev.DaemonClient)
+			newed := cliedit.NewEditor(cli.StdTTY, ev, ev.DaemonClient)
 			ev.Global.AddNs("edit", newed.Ns())
 			ed = newed
 		} else {

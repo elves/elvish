@@ -120,7 +120,7 @@ func TestGetTTYCtrl(t *testing.T) {
 	if got, ok := GetTTYCtrl(fakeTTY); got != ttyCtrl || !ok {
 		t.Errorf("-> %v, %v, want %v, %v", got, ok, ttyCtrl, true)
 	}
-	realTTY := NewStdTTY()
+	realTTY := StdTTY
 	if _, ok := GetTTYCtrl(realTTY); ok {
 		t.Errorf("-> _, true, want _, false")
 	}

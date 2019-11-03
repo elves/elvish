@@ -9,7 +9,7 @@ import (
 )
 
 func TestTTYSignal(t *testing.T) {
-	tty := NewStdTTY()
+	tty := StdTTY
 	sigch := tty.NotifySignals()
 
 	err := unix.Kill(unix.Getpid(), unix.SIGUSR1)

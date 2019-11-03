@@ -62,6 +62,9 @@ type TTY interface {
 	UpdateBuffer(bufNotes, bufMain *ui.Buffer, full bool) error
 }
 
+// StdTTY is the terminal connected to inputs from stdin and output to stderr.
+var StdTTY = NewTTY(os.Stdin, os.Stderr)
+
 type aTTY struct {
 	in, out *os.File
 	r       term.Reader
@@ -74,11 +77,6 @@ const sigsChanBufferSize = 256
 // NewTTY returns a new TTY from input and output terminal files.
 func NewTTY(in, out *os.File) TTY {
 	return &aTTY{in, out, nil, term.NewWriter(out), nil}
-}
-
-// NewStdIOTTY returns a new TTY from stdin and stderr.
-func NewStdTTY() TTY {
-	return NewTTY(os.Stdin, os.Stderr)
 }
 
 func (t *aTTY) Setup() (func(), error) {
