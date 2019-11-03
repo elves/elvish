@@ -52,13 +52,13 @@ func (ev testEvaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
 }
 
 func setupFs() func() {
-	return util.SetupTestDir(util.Dir{
+	return util.InTestDirWithSetup(util.Dir{
 		"exe":     util.File{Perm: 0755, Content: ""},
 		"non-exe": "",
 		"d": util.Dir{
 			"exe": util.File{Perm: 0755, Content: ""},
 		},
-	}, "")
+	})
 }
 
 func TestComplete(t *testing.T) {

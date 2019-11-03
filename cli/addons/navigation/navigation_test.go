@@ -2,6 +2,7 @@ package navigation
 
 import (
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/elves/elvish/cli"
@@ -37,7 +38,11 @@ func TestNavigation_FakeFS(t *testing.T) {
 }
 
 func TestNavigation_RealFS(t *testing.T) {
-	cleanupFs := util.SetupTestDir(testDir, "d")
+	cleanupFs := util.InTestDirWithSetup(testDir)
+	err := os.Chdir("d")
+	if err != nil {
+		panic(err)
+	}
 	defer cleanupFs()
 	testNavigation(t, nil)
 }

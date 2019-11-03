@@ -81,29 +81,29 @@ var testDir = Dir{
 	},
 }
 
-func TestSetupTestDir_CreatesFiles(t *testing.T) {
-	cleanup := SetupTestDir(Dir{
+func TestInTestDirWithSetup_CreatesFiles(t *testing.T) {
+	cleanup := InTestDirWithSetup(Dir{
 		"a": "a content",
 		"b": "b content",
-	}, "")
+	})
 	defer cleanup()
 
 	testFileContent(t, "a", "a content")
 	testFileContent(t, "b", "b content")
 }
 
-func TestSetupTestDir_CreatesFileWithPerm(t *testing.T) {
-	cleanup := SetupTestDir(Dir{
+func TestInTestDirWithSetup_CreatesFileWithPerm(t *testing.T) {
+	cleanup := InTestDirWithSetup(Dir{
 		"a": File{0755, "a content"},
-	}, "")
+	})
 	defer cleanup()
 
 	testFileContent(t, "a", "a content")
 	testFilePerm(t, "a", 0755)
 }
 
-func TestSetupTestDir_CreatesDirectories(t *testing.T) {
-	cleanup := SetupTestDir(Dir{
+func TestInTestDirWithSetup_CreatesDirectories(t *testing.T) {
+	cleanup := InTestDirWithSetup(Dir{
 		"d": Dir{
 			"d1": "d1 content",
 			"d2": "d2 content",
@@ -111,23 +111,12 @@ func TestSetupTestDir_CreatesDirectories(t *testing.T) {
 				"dd1": "dd1 content",
 			},
 		},
-	}, "")
+	})
 	defer cleanup()
 
 	testFileContent(t, "d/d1", "d1 content")
 	testFileContent(t, "d/d2", "d2 content")
 	testFileContent(t, "d/dd/dd1", "dd1 content")
-}
-
-func TestSetupTestDir_ChangesDirectory(t *testing.T) {
-	cleanup := SetupTestDir(Dir{
-		"d": Dir{
-			"d1": "d1 content",
-		},
-	}, "d")
-	defer cleanup()
-
-	testFileContent(t, "d1", "d1 content")
 }
 
 func getWd() string {

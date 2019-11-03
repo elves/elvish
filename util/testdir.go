@@ -59,17 +59,15 @@ type File struct {
 	Content string
 }
 
-// SetupTestDir sets up a temporary directory using the given layout. If wd is
-// not empty, it also changes into the given subdirectory. It returns a cleanup
-// function to remove the temporary directory and restore the working directory.
+// InTestDirWithSetup sets up a temporary directory using the given layout. If
+// wd is not empty, it also changes into the given subdirectory. It returns a
+// cleanup function to remove the temporary directory and restore the working
+// directory.
 //
 // It panics if there are any errors.
-func SetupTestDir(dir Dir, wd string) func() {
+func InTestDirWithSetup(dir Dir) func() {
 	_, cleanup := InTestDir()
 	ApplyDir(dir)
-	if wd != "" {
-		mustChdir(wd)
-	}
 	return cleanup
 }
 
