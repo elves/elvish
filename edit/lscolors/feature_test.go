@@ -10,6 +10,7 @@ import (
 
 func TestDetermineFeature(t *testing.T) {
 	test := func(fname string, mh bool, wantedFeature feature) {
+		t.Helper()
 		feature, err := determineFeature(fname, mh)
 		if err != nil {
 			t.Errorf("determineFeature(%q, %v) returns error %v, want no error",
@@ -46,8 +47,12 @@ func TestDetermineFeature(t *testing.T) {
 
 	if runtime.GOOS != "windows" {
 		// Multiple hard links.
-		os.Link("a", "a2")
-		test("a", true, featureMultiHardLink)
+		err := os.Link("a", "a2")
+		if err != nil {
+			t.Logf("Failed to create hard link: %v; skipping hard link test", err)
+		} else {
+			test("a", true, featureMultiHardLink)
+		}
 	}
 
 	// Don't test for multiple hard links.
@@ -78,5 +83,8 @@ func create(fname string, perm os.FileMode) {
 	if err != nil {
 		panic(err)
 	}
+	// The following call works around a termux bug where os.OpenFile does not
+	// set the permission bits for group and other correctly.
+	f.Chmod(perm)
 	f.Close()
 }
