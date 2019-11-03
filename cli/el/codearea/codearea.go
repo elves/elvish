@@ -46,7 +46,7 @@ type Spec struct {
 	// not quoting pasted texts.
 	QuotePaste func() bool
 	// A function that is called on the submit event.
-	OnSubmit func(code string)
+	OnSubmit func()
 
 	// State. When used in New, this field specifies the initial state.
 	State State
@@ -111,13 +111,11 @@ func dummyAbbreviations(func(a, f string)) {}
 
 func dummyQuotePaste() bool { return false }
 
-func dummyOnSubmit(string) {}
+func dummyOnSubmit() {}
 
 // Submit emits a submit event with the current code content.
 func (w *widget) Submit() {
-	w.StateMutex.RLock()
-	defer w.StateMutex.RUnlock()
-	w.OnSubmit(w.State.CodeBuffer.Content)
+	w.OnSubmit()
 }
 
 // Render renders the code area, including the prompt and rprompt, highlighted

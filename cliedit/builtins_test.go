@@ -78,7 +78,10 @@ func TestReturnCode(t *testing.T) {
 	defer cleanup()
 	codeCh, errCh, _ := start(ed)
 
-	evalf(ev, `edit:return-code "test code"`)
+	ed.app.CodeArea().MutateState(func(s *codearea.State) {
+		s.CodeBuffer.Content = "test code"
+	})
+	evalf(ev, `edit:return-code`)
 	if code := <-codeCh; code != "test code" {
 		t.Errorf("got code %q, want %q", code, "test code")
 	}

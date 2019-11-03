@@ -340,13 +340,13 @@ func TestHandle_AbbreviationExpansionInterruptedByExternalMutation(t *testing.T)
 }
 
 func TestHandle_EnterEmitsSubmit(t *testing.T) {
-	var submitted string
+	submitted := false
 	w := New(Spec{
-		OnSubmit: func(code string) { submitted = code },
+		OnSubmit: func() { submitted = true },
 		State:    State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}})
 	w.Handle(term.K('\n'))
-	if submitted != "code" {
-		t.Errorf("code not submitted")
+	if submitted != true {
+		t.Errorf("OnSubmit not triggered")
 	}
 }
 

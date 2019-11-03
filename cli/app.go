@@ -34,10 +34,10 @@ type App interface {
 	// when an event is being handled, the main loop will exit after the handler
 	// returns.
 	CommitEOF()
-	// CommitCode causes the main loop to exit with the given code content. If
+	// CommitCode causes the main loop to exit with the current code content. If
 	// this method is called when an event is being handled, the main loop will
 	// exit after the handler returns.
-	CommitCode(code string)
+	CommitCode()
 	// Notify adds a note and requests a redraw.
 	Notify(note string)
 }
@@ -338,7 +338,8 @@ func (a *app) CommitEOF() {
 	a.loop.Return("", io.EOF)
 }
 
-func (a *app) CommitCode(code string) {
+func (a *app) CommitCode() {
+	code := a.codeArea.CopyState().CodeBuffer.Content
 	a.loop.Return(code, nil)
 }
 
