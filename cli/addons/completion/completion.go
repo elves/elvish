@@ -43,7 +43,7 @@ func Start(app cli.App, cfg Config) {
 			OnSelect: func(it listbox.Items, i int) {
 				text := it.(items)[i].ToInsert
 				app.CodeArea().MutateState(func(s *codearea.State) {
-					s.PendingCode = codearea.PendingCode{
+					s.Pending = codearea.Pending{
 						From: cfg.Replace.From, To: cfg.Replace.To, Content: text}
 				})
 			},
@@ -65,7 +65,7 @@ func Start(app cli.App, cfg Config) {
 // Close closes the completion UI.
 func Close(app cli.App) {
 	app.CodeArea().MutateState(
-		func(s *codearea.State) { s.PendingCode = codearea.PendingCode{} })
+		func(s *codearea.State) { s.Pending = codearea.Pending{} })
 	app.MutateState(func(s *cli.State) { s.Listing = nil })
 	app.Redraw()
 }

@@ -29,12 +29,12 @@ func initStateAPI(app cli.App, ns eval.Ns) {
 			return err
 		}
 		app.CodeArea().MutateState(func(s *codearea.State) {
-			s.CodeBuffer.Dot = dot
+			s.Buffer.Dot = dot
 		})
 		return nil
 	}
 	getDot := func() interface{} {
-		return vals.FromGo(app.CodeArea().CopyState().CodeBuffer.Dot)
+		return vals.FromGo(app.CodeArea().CopyState().Buffer.Dot)
 	}
 	ns.Add("-dot", vars.FromSetGet(setDot, getDot))
 
@@ -45,12 +45,12 @@ func initStateAPI(app cli.App, ns eval.Ns) {
 			return err
 		}
 		app.CodeArea().MutateState(func(s *codearea.State) {
-			s.CodeBuffer = codearea.CodeBuffer{Content: content, Dot: len(content)}
+			s.Buffer = codearea.Buffer{Content: content, Dot: len(content)}
 		})
 		return nil
 	}
 	getContent := func() interface{} {
-		return vals.FromGo(app.CodeArea().CopyState().CodeBuffer.Content)
+		return vals.FromGo(app.CodeArea().CopyState().Buffer.Content)
 	}
 	ns.Add("current-command", vars.FromSetGet(setContent, getContent))
 }

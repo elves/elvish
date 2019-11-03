@@ -84,7 +84,7 @@ func initMiscBuiltins(app cli.App, ns eval.Ns) {
 	})
 }
 
-var bufferBuiltinsData = map[string]func(*codearea.CodeBuffer){
+var bufferBuiltinsData = map[string]func(*codearea.Buffer){
 	"move-dot-left":             makeMove(moveDotLeft),
 	"move-dot-right":            makeMove(moveDotRight),
 	"move-dot-left-word":        makeMove(moveDotLeftWord),
@@ -122,7 +122,7 @@ func bufferBuiltins(app cli.App) map[string]interface{} {
 		fn2 := fn
 		m[name] = func() {
 			app.CodeArea().MutateState(func(s *codearea.State) {
-				fn2(&s.CodeBuffer)
+				fn2(&s.Buffer)
 			})
 		}
 	}
@@ -134,14 +134,14 @@ func bufferBuiltins(app cli.App) map[string]interface{} {
 // the editor state.
 type pureMover func(buffer string, dot int) int
 
-func makeMove(m pureMover) func(*codearea.CodeBuffer) {
-	return func(buf *codearea.CodeBuffer) {
+func makeMove(m pureMover) func(*codearea.Buffer) {
+	return func(buf *codearea.Buffer) {
 		buf.Dot = m(buf.Content, buf.Dot)
 	}
 }
 
-func makeKill(m pureMover) func(*codearea.CodeBuffer) {
-	return func(buf *codearea.CodeBuffer) {
+func makeKill(m pureMover) func(*codearea.Buffer) {
+	return func(buf *codearea.Buffer) {
 		newDot := m(buf.Content, buf.Dot)
 		if newDot < buf.Dot {
 			// Dot moved to the left: remove text between new dot and old dot,

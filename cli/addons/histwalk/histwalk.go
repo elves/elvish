@@ -65,8 +65,8 @@ func Start(app cli.App, cfg Config) {
 	w := widget{binding: cfg.Binding, walker: walker}
 	w.onWalk = func() {
 		app.CodeArea().MutateState(func(s *codearea.State) {
-			s.PendingCode = codearea.PendingCode{
-				From: len(prefix), To: len(s.CodeBuffer.Content),
+			s.Pending = codearea.Pending{
+				From: len(prefix), To: len(s.Buffer.Content),
 				Content: walker.CurrentCmd()[len(prefix):],
 			}
 		})
@@ -94,7 +94,7 @@ func Next(app cli.App) error {
 func Close(app cli.App) {
 	if closeAddon(app) {
 		app.CodeArea().MutateState(func(s *codearea.State) {
-			s.PendingCode = codearea.PendingCode{}
+			s.Pending = codearea.Pending{}
 		})
 	}
 }

@@ -65,7 +65,7 @@ func (w *widget) Handle(event term.Event) bool {
 		return true
 	}
 	if w.codeArea.Handle(event) {
-		filter := w.codeArea.CopyState().CodeBuffer.Content
+		filter := w.codeArea.CopyState().Buffer.Content
 		if filter != w.lastFilter {
 			w.OnFilter(w, filter)
 			w.lastFilter = filter

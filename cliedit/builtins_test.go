@@ -79,7 +79,7 @@ func TestReturnCode(t *testing.T) {
 	codeCh, errCh, _ := start(ed)
 
 	ed.app.CodeArea().MutateState(func(s *codearea.State) {
-		s.CodeBuffer.Content = "test code"
+		s.Buffer.Content = "test code"
 	})
 	evalf(ev, `edit:return-code`)
 	if code := <-codeCh; code != "test code" {
@@ -114,28 +114,28 @@ func TestWordify(t *testing.T) {
 
 var bufferBuiltinsTests = []struct {
 	name      string
-	bufBefore codearea.CodeBuffer
-	bufAfter  codearea.CodeBuffer
+	bufBefore codearea.Buffer
+	bufAfter  codearea.Buffer
 }{
 	{
 		"move-dot-left",
-		codearea.CodeBuffer{Content: "ab", Dot: 1},
-		codearea.CodeBuffer{Content: "ab", Dot: 0},
+		codearea.Buffer{Content: "ab", Dot: 1},
+		codearea.Buffer{Content: "ab", Dot: 0},
 	},
 	{
 		"move-dot-right",
-		codearea.CodeBuffer{Content: "ab", Dot: 1},
-		codearea.CodeBuffer{Content: "ab", Dot: 2},
+		codearea.Buffer{Content: "ab", Dot: 1},
+		codearea.Buffer{Content: "ab", Dot: 2},
 	},
 	{
 		"kill-rune-left",
-		codearea.CodeBuffer{Content: "ab", Dot: 1},
-		codearea.CodeBuffer{Content: "b", Dot: 0},
+		codearea.Buffer{Content: "ab", Dot: 1},
+		codearea.Buffer{Content: "b", Dot: 0},
 	},
 	{
 		"kill-rune-right",
-		codearea.CodeBuffer{Content: "ab", Dot: 1},
-		codearea.CodeBuffer{Content: "a", Dot: 1},
+		codearea.Buffer{Content: "ab", Dot: 1},
+		codearea.Buffer{Content: "a", Dot: 1},
 	},
 }
 
@@ -147,10 +147,10 @@ func TestBufferBuiltins(t *testing.T) {
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {
 			app.CodeArea().MutateState(func(s *codearea.State) {
-				s.CodeBuffer = test.bufBefore
+				s.Buffer = test.bufBefore
 			})
 			evalf(ev, "edit:%s", test.name)
-			if buf := app.CodeArea().CopyState().CodeBuffer; buf != test.bufAfter {
+			if buf := app.CodeArea().CopyState().Buffer; buf != test.bufAfter {
 				t.Errorf("got buf %v, want %v", buf, test.bufAfter)
 			}
 		})

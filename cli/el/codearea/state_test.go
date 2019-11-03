@@ -12,9 +12,9 @@ func TestApplyPending(t *testing.T) {
 		return s
 	}
 	tt.Test(t, tt.Fn("applyPending", applyPending), tt.Table{
-		tt.Args(State{CodeBuffer{}, PendingCode{0, 0, "ls"}}).
-			Rets(State{CodeBuffer{Content: "ls", Dot: 2}, PendingCode{}}),
-		tt.Args(State{CodeBuffer{"x", 1}, PendingCode{0, 0, "ls"}}).
-			Rets(State{CodeBuffer{Content: "lsx", Dot: 3}, PendingCode{}}),
+		tt.Args(State{Buffer{}, Pending{0, 0, "ls"}}).
+			Rets(State{Buffer{Content: "ls", Dot: 2}, Pending{}}),
+		tt.Args(State{Buffer{"x", 1}, Pending{0, 0, "ls"}}).
+			Rets(State{Buffer{Content: "lsx", Dot: 3}, Pending{}}),
 	})
 }

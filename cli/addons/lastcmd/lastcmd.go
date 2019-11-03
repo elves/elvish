@@ -59,7 +59,7 @@ func Start(app cli.App, cfg Config) {
 
 	accept := func(text string) {
 		app.CodeArea().MutateState(func(s *codearea.State) {
-			s.CodeBuffer.InsertAtDot(text)
+			s.Buffer.InsertAtDot(text)
 		})
 		app.MutateState(func(s *cli.State) { s.Listing = nil })
 	}

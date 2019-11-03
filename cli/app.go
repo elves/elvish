@@ -303,7 +303,7 @@ func (a *app) ReadCode() (string, error) {
 	// BeforeReadline and AfterReadline hooks.
 	a.BeforeReadline()
 	defer func() {
-		a.AfterReadline(a.codeArea.CopyState().CodeBuffer.Content)
+		a.AfterReadline(a.codeArea.CopyState().Buffer.Content)
 	}()
 
 	return a.loop.Run()
@@ -339,7 +339,7 @@ func (a *app) CommitEOF() {
 }
 
 func (a *app) CommitCode() {
-	code := a.codeArea.CopyState().CodeBuffer.Content
+	code := a.codeArea.CopyState().Buffer.Content
 	a.loop.Return(code, nil)
 }
 

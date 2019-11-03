@@ -46,13 +46,13 @@ func TestReadCode_CallsRestore(t *testing.T) {
 func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
-			CodeBuffer: codearea.CodeBuffer{Content: "some code"}}})
+			Buffer: codearea.Buffer{Content: "some code"}}})
 
 	tty.Inject(term.KeyEvent{Rune: '\n'})
 
 	a.ReadCode()
 
-	if code := a.CodeArea().CopyState().CodeBuffer.Content; code != "" {
+	if code := a.CodeArea().CopyState().Buffer.Content; code != "" {
 		t.Errorf("Editor state has code %q, want empty", code)
 	}
 }
@@ -125,7 +125,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 		MaxHeight: func() int { return 2 },
 		CodeAreaState: codearea.State{
 			// The code needs 3 lines to completely show.
-			CodeBuffer: codearea.CodeBuffer{Content: strings.Repeat("a", 15)}}})
+			Buffer: codearea.Buffer{Content: strings.Repeat("a", 15)}}})
 
 	tty.SetSize(10, 5) // Width = 5 to make it easy to test
 
@@ -267,7 +267,7 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 func TestReadCode_PutCursorBelowCodeAreaInFinalRedraw(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
-			CodeBuffer: codearea.CodeBuffer{Content: "some code"}},
+			Buffer: codearea.Buffer{Content: "some code"}},
 		State: State{
 			Listing: layout.Label{Content: styled.Plain("listing")}}})
 
@@ -333,7 +333,7 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	content := "1234567890"
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
-			CodeBuffer: codearea.CodeBuffer{Content: content, Dot: len(content)}}})
+			Buffer: codearea.Buffer{Content: content, Dot: len(content)}}})
 
 	codeCh, _ := ReadCodeAsync(a)
 

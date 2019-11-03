@@ -24,7 +24,7 @@ func initHistWalk(app cli.App, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fuse
 }
 
 func histWalkStart(app cli.App, fuser *histutil.Fuser, binding el.Handler) {
-	buf := app.CodeArea().CopyState().CodeBuffer
+	buf := app.CodeArea().CopyState().Buffer
 	walker := fuser.Walker(buf.Content[:buf.Dot])
 	histwalk.Start(app, histwalk.Config{Binding: binding, Walker: walker})
 }

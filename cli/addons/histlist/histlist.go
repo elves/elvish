@@ -48,7 +48,7 @@ func Start(app cli.App, cfg Config) {
 			OnAccept: func(it listbox.Items, i int) {
 				text := it.(items)[i].Text
 				app.CodeArea().MutateState(func(s *codearea.State) {
-					buf := &s.CodeBuffer
+					buf := &s.Buffer
 					if buf.Content == "" {
 						buf.InsertAtDot(text)
 					} else {

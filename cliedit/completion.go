@@ -34,7 +34,7 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 }
 
 func completionStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
-	buf := app.CodeArea().CopyState().CodeBuffer
+	buf := app.CodeArea().CopyState().Buffer
 	result, err := complete.Complete(
 		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot},
 		complete.Config{

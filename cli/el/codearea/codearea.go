@@ -62,7 +62,7 @@ type widget struct {
 	inserts string
 	// Value of State.CodeBuffer when handleKeyEvent was last called. Used for
 	// detecting whether insertion has been interrupted.
-	lastCodeBuffer CodeBuffer
+	lastCodeBuffer Buffer
 	// Whether the widget is in the middle of bracketed pasting.
 	pasting bool
 	// Buffer for keeping Pasted text during bracketed pasting.
@@ -159,7 +159,7 @@ func (w *widget) CopyState() State {
 
 func (w *widget) resetInserts() {
 	w.inserts = ""
-	w.lastCodeBuffer = CodeBuffer{}
+	w.lastCodeBuffer = Buffer{}
 }
 
 func (w *widget) handlePasteSetting(start bool) bool {
@@ -171,7 +171,7 @@ func (w *widget) handlePasteSetting(start bool) bool {
 		if w.QuotePaste() {
 			text = parse.Quote(text)
 		}
-		w.MutateState(func(s *State) { s.CodeBuffer.InsertAtDot(text) })
+		w.MutateState(func(s *State) { s.Buffer.InsertAtDot(text) })
 
 		w.pasting = false
 		w.pasteBuffer = bytes.Buffer{}
@@ -200,10 +200,10 @@ func (w *widget) handleKeyEvent(key ui.Key) bool {
 	case ui.K(ui.Backspace):
 		w.resetInserts()
 		w.MutateState(func(s *State) {
-			c := &s.CodeBuffer
+			c := &s.Buffer
 			// Remove the last rune.
 			_, chop := utf8.DecodeLastRuneInString(c.Content[:c.Dot])
-			*c = CodeBuffer{
+			*c = Buffer{
 				Content: c.Content[:c.Dot-chop] + c.Content[c.Dot:],
 				Dot:     c.Dot - chop,
 			}
@@ -216,15 +216,15 @@ func (w *widget) handleKeyEvent(key ui.Key) bool {
 		}
 		w.StateMutex.Lock()
 		defer w.StateMutex.Unlock()
-		if w.lastCodeBuffer != w.State.CodeBuffer {
+		if w.lastCodeBuffer != w.State.Buffer {
 			// Something has happened between the last insert and this one;
 			// reset the state.
 			w.resetInserts()
 		}
 		s := string(key.Rune)
-		w.State.CodeBuffer.InsertAtDot(s)
+		w.State.Buffer.InsertAtDot(s)
 		w.inserts += s
-		w.lastCodeBuffer = w.State.CodeBuffer
+		w.lastCodeBuffer = w.State.Buffer
 		var abbr, full string
 		// Try to expand an abbreviation, preferring the longest one
 		w.Abbreviations(func(a, f string) {
@@ -233,8 +233,8 @@ func (w *widget) handleKeyEvent(key ui.Key) bool {
 			}
 		})
 		if len(abbr) > 0 {
-			c := &w.State.CodeBuffer
-			*c = CodeBuffer{
+			c := &w.State.Buffer
+			*c = Buffer{
 				Content: c.Content[:c.Dot-len(abbr)] + full + c.Content[c.Dot:],
 				Dot:     c.Dot - len(abbr) + len(full),
 			}

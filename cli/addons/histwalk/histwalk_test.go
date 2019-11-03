@@ -22,7 +22,7 @@ func TestHistWalk(t *testing.T) {
 	defer cleanup()
 
 	app.CodeArea().MutateState(func(s *codearea.State) {
-		s.CodeBuffer = codearea.CodeBuffer{Content: "ls", Dot: 2}
+		s.Buffer = codearea.Buffer{Content: "ls", Dot: 2}
 	})
 
 	app.Redraw()

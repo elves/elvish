@@ -17,7 +17,7 @@ var renderTests = []el.RenderTest{
 		Given: New(Spec{
 			CodeArea: codearea.Spec{
 				State: codearea.State{
-					CodeBuffer: codearea.CodeBuffer{Content: "filter", Dot: 6}}},
+					Buffer: codearea.Buffer{Content: "filter", Dot: 6}}},
 			ListBox: listbox.Spec{
 				State: listbox.State{Items: listbox.TestItems{NItems: 2}}}}),
 		Width: 10, Height: 24,
@@ -31,7 +31,7 @@ var renderTests = []el.RenderTest{
 		Given: New(Spec{
 			CodeArea: codearea.Spec{
 				State: codearea.State{
-					CodeBuffer: codearea.CodeBuffer{Content: "filter", Dot: 6}}},
+					Buffer: codearea.Buffer{Content: "filter", Dot: 6}}},
 			OnFilter: func(w Widget, filter string) {
 				w.ListBox().Reset(listbox.TestItems{NItems: 2}, 0)
 			}}),
@@ -70,7 +70,7 @@ func TestHandle(t *testing.T) {
 	if !handled {
 		t.Errorf("codearea did not handle letter key")
 	}
-	if w.CodeArea().CopyState().CodeBuffer.Content != "a" {
+	if w.CodeArea().CopyState().Buffer.Content != "a" {
 		t.Errorf("codearea state not changed")
 	}
 	if lastFilter != "a" {
