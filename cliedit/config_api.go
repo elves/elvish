@@ -9,14 +9,12 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
-	"github.com/xiaq/persistent/hashmap"
 )
 
-func initConfigAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns) {
+func initConfigAPI(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	initMaxHeight(appSpec, ns)
 	initBeforeReadline(appSpec, ev, ns)
 	initAfterReadline(appSpec, ev, ns)
-	initInsertConfigs(appSpec, nt, ev, ns)
 }
 
 func initMaxHeight(appSpec *cli.AppSpec, ns eval.Ns) {
@@ -73,38 +71,6 @@ func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 				{File: os.Stdin}, {File: os.Stdout}, {File: os.Stderr}}
 			fm := eval.NewTopFrame(ev, eval.NewInternalSource(name), ports)
 			fm.Call(fn, []interface{}{code}, eval.NoOpts)
-		}
-	}
-}
-
-func initInsertConfigs(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns) {
-	abbr := vals.EmptyMap
-	abbrVar := vars.FromPtr(&abbr)
-	appSpec.Abbreviations = makeMapIterator(abbrVar)
-
-	binding := newBindingVar(emptyBindingMap)
-	appSpec.OverlayHandler = newMapBinding(nt, ev, binding)
-
-	quotePaste := newBoolVar(false)
-	appSpec.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }
-
-	ns.AddNs("insert", eval.Ns{
-		"abbr":        abbrVar,
-		"binding":     binding,
-		"quote-paste": quotePaste,
-	})
-}
-
-func makeMapIterator(mv vars.PtrVar) func(func(a, b string)) {
-	return func(f func(a, b string)) {
-		for it := mv.GetRaw().(hashmap.Map).Iterator(); it.HasElem(); it.Next() {
-			k, v := it.Elem()
-			ks, kok := k.(string)
-			vs, vok := v.(string)
-			if !kok || !vok {
-				continue
-			}
-			f(ks, vs)
 		}
 	}
 }

@@ -1,3 +1,8 @@
+// Package edit implements the line editor for Elvish.
+//
+// The line editor is based on the cli package, which implements a general,
+// Elvish-agnostic line editor, and multiple "addon" packages. This package
+// glues them together and provides Elvish bindings for them.
 package cliedit
 
 import (
@@ -35,7 +40,8 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	// bootstrapping of initPrompts, which expects a notifier.
 	var app cli.App
 	initHighlighter(&appSpec, ev)
-	initConfigAPI(&appSpec, appNotifier{&app}, ev, ns)
+	initConfigAPI(&appSpec, ev, ns)
+	initInsertAPI(&appSpec, appNotifier{&app}, ev, ns)
 	initPrompts(&appSpec, appNotifier{&app}, ev, ns)
 	app = cli.NewApp(appSpec)
 
