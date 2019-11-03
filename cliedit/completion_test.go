@@ -24,7 +24,7 @@ func TestCompletion(t *testing.T) {
 	wantBuf := ui.NewBufferBuilder(40).
 		WriteStyled(styled.MarkLines(
 			"~> echo a ", styles,
-			"        --",
+			"   gggg --",
 			"COMPLETING argument ", styles,
 			"mmmmmmmmmmmmmmmmmmm ")).
 		SetDotToCursor().
