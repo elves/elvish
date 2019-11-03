@@ -8,23 +8,15 @@ import (
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/edit/eddefs"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/parse/parseutil"
 	"github.com/elves/elvish/util"
 )
 
 //elvdoc:fn binding-table
 //
 // Converts a normal map into a binding map.
-
-//elvdoc:fn commit-code
-//
-// Causes the Elvish REPL to end the current read iteration and evaluate the
-// code it just read. Internally, this works by raising a special exception.
-
-//elvdoc:fn commit-eof
-//
-// Causes the Elvish REPL to terminate. Internally, this works by raising a
-// special exception.
 
 //elvdoc:fn close-listing
 //
@@ -34,12 +26,61 @@ func closeListing(app cli.App) {
 	app.MutateState(func(s *cli.State) { s.Listing = nil })
 }
 
+//elvdoc:fn end-of-history
+//
+// Adds a notification saying "End of history".
+
+func endOfHistory(app cli.App) {
+	app.Notify("End of history")
+}
+
+//elvdoc:fn key
+//
+// ```elvish
+// edit:key $string
+// ```
+//
+// Parses a string into a key.
+
+//elvdoc:fn redraw
+//
+// Triggers a redraw.
+
+//elvdoc:fn return-code
+//
+// Causes the Elvish REPL to end the current read iteration and evaluate the
+// code it just read. Internally, this works by raising a special exception.
+
+//elvdoc:fn return-eof
+//
+// Causes the Elvish REPL to terminate. Internally, this works by raising a
+// special exception.
+
+//elvdoc:fn wordify
+//
+//
+// ```elvish
+// edit:wordify $code
+// ```
+// Breaks Elvish code into words.
+
+func wordify(fm *eval.Frame, code string) {
+	out := fm.OutputChan()
+	for _, s := range parseutil.Wordify(code) {
+		out <- s
+	}
+}
+
 func initMiscBuiltins(app cli.App, ns eval.Ns) {
 	ns.AddGoFns("<edit>", map[string]interface{}{
-		"binding-table":   eddefs.MakeBindingMap,
-		"commit-code":   app.CommitCode,
-		"commit-eof":    app.CommitEOF,
-		"close-listing": func() { closeListing(app) },
+		"binding-table":  eddefs.MakeBindingMap,
+		"close-listing":  func() { closeListing(app) },
+		"end-of-history": func() { endOfHistory(app) },
+		"key":            ui.ToKey,
+		"redraw":         app.Redraw,
+		"return-code":    app.CommitCode,
+		"return-eof":     app.CommitEOF,
+		"wordify":        wordify,
 	})
 }
 

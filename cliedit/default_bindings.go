@@ -29,7 +29,7 @@ insert:binding = (binding-table [
   &Tab=    $completion:start~
   &Up=     $history:start~
 
-  &Ctrl-D=  $commit-eof~
+  &Ctrl-D=  $return-eof~
 ])
 
 listing:binding = (binding-table [

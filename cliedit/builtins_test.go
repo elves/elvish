@@ -7,6 +7,10 @@ import (
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/layout"
+	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
 )
 
@@ -22,31 +26,6 @@ func TestBindingMap(t *testing.T) {
 	}
 }
 
-func TestCommitCode(t *testing.T) {
-	ed, _, ev, cleanup := setup()
-	defer cleanup()
-	codeCh, errCh, _ := start(ed)
-
-	evalf(ev, `edit:commit-code "test code"`)
-	if code := <-codeCh; code != "test code" {
-		t.Errorf("got code %q, want %q", code, "test code")
-	}
-	if err := <-errCh; err != nil {
-		t.Errorf("got err %v, want nil", err)
-	}
-}
-
-func TestCommitEOF(t *testing.T) {
-	ed, _, ev, cleanup := setup()
-	defer cleanup()
-	_, errCh, _ := start(ed)
-
-	evalf(ev, `edit:commit-eof`)
-	if err := <-errCh; err != io.EOF {
-		t.Errorf("got err %v, want %v", err, io.EOF)
-	}
-}
-
 func TestCloseListing(t *testing.T) {
 	ed, _, ev, cleanup := setupStarted()
 	defer cleanup()
@@ -56,6 +35,77 @@ func TestCloseListing(t *testing.T) {
 
 	if listing := ed.app.CopyState().Listing; listing != nil {
 		t.Errorf("got listing %v, want nil", listing)
+	}
+}
+
+func TestEndOfHistory(t *testing.T) {
+	_, ttyCtrl, ev, cleanup := setupStarted()
+	defer cleanup()
+
+	evalf(ev, `edit:end-of-history`)
+	wantNotesBuf := bb().WritePlain("End of history").Buffer()
+	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
+}
+
+func TestKey(t *testing.T) {
+	_, _, ev, cleanup := setup()
+	defer cleanup()
+
+	evalf(ev, `k = (edit:key a)`)
+	wantK := ui.K('a')
+	if k := ev.Global["k"].Get(); k != wantK {
+		t.Errorf("$k is %v, want %v", k, wantK)
+	}
+}
+
+func TestRedraw(t *testing.T) {
+	_, cleanupFs := eval.InTempHome()
+	defer cleanupFs()
+	_, ttyCtrl, ev, cleanup := setupStarted()
+	defer cleanup()
+
+	evalf(ev, `edit:current-command = echo`)
+	evalf(ev, `edit:redraw`)
+	wantBuf := bb().WriteStyled(styled.MarkLines(
+		"~> echo", styles,
+		"   gggg",
+	)).SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf)
+}
+
+func TestReturnCode(t *testing.T) {
+	ed, _, ev, cleanup := setup()
+	defer cleanup()
+	codeCh, errCh, _ := start(ed)
+
+	evalf(ev, `edit:return-code "test code"`)
+	if code := <-codeCh; code != "test code" {
+		t.Errorf("got code %q, want %q", code, "test code")
+	}
+	if err := <-errCh; err != nil {
+		t.Errorf("got err %v, want nil", err)
+	}
+}
+
+func TestReturnEOF(t *testing.T) {
+	ed, _, ev, cleanup := setup()
+	defer cleanup()
+	_, errCh, _ := start(ed)
+
+	evalf(ev, `edit:return-eof`)
+	if err := <-errCh; err != io.EOF {
+		t.Errorf("got err %v, want %v", err, io.EOF)
+	}
+}
+
+func TestWordify(t *testing.T) {
+	_, _, ev, cleanup := setup()
+	defer cleanup()
+
+	evalf(ev, `@words = (edit:wordify 'ls str [list]')`)
+	wantWords := vals.MakeList("ls", "str", "[list]")
+	if words := ev.Global["words"].Get(); !vals.Equal(words, wantWords) {
+		t.Errorf("$words is %v, want %v", words, wantWords)
 	}
 }
 
