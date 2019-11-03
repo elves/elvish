@@ -11,14 +11,21 @@ import (
 )
 
 func TestBindingMap(t *testing.T) {
-	// TODO: Add test when it is easier to check outputs of code evaluation.
+	_, _, ev, cleanup := setup()
+	defer cleanup()
+
+	evalf(ev, `called = $false`)
+	evalf(ev, `m = (edit:binding-map [&a={ called = $true }])`)
+	_, ok := ev.Global["m"].Get().(bindingMap)
+	if !ok {
+		t.Errorf("edit:binding-map did not create bindingMap variable")
+	}
 }
 
 func TestCommitCode(t *testing.T) {
-	ed, _, ev, _, cleanup := setup()
+	ed, _, ev, cleanup := setup()
 	defer cleanup()
-	codeCh, errCh, stop := start(ed)
-	defer stop()
+	codeCh, errCh, _ := start(ed)
 
 	evalf(ev, `edit:commit-code "test code"`)
 	if code := <-codeCh; code != "test code" {
@@ -30,10 +37,9 @@ func TestCommitCode(t *testing.T) {
 }
 
 func TestCommitEOF(t *testing.T) {
-	ed, _, ev, _, cleanup := setup()
+	ed, _, ev, cleanup := setup()
 	defer cleanup()
-	_, errCh, stop := start(ed)
-	defer stop()
+	_, errCh, _ := start(ed)
 
 	evalf(ev, `edit:commit-eof`)
 	if err := <-errCh; err != io.EOF {
@@ -42,7 +48,7 @@ func TestCommitEOF(t *testing.T) {
 }
 
 func TestCloseListing(t *testing.T) {
-	ed, _, ev, _, cleanup := setupStarted()
+	ed, _, ev, cleanup := setupStarted()
 	defer cleanup()
 
 	ed.app.MutateState(func(s *cli.State) { s.Listing = layout.Empty{} })
@@ -81,7 +87,7 @@ var bufferBuiltinsTests = []struct {
 }
 
 func TestBufferBuiltins(t *testing.T) {
-	ed, _, ev, _, cleanup := setupStarted()
+	ed, _, ev, cleanup := setupStarted()
 	app := ed.app
 	defer cleanup()
 

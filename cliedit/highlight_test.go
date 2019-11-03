@@ -20,7 +20,7 @@ import (
 func TestHighlighter(t *testing.T) {
 	_, cleanupDir := eval.InTempHome()
 	defer cleanupDir()
-	_, ttyCtrl, _, _, cleanup := setupStarted()
+	_, ttyCtrl, _, cleanup := setupStarted()
 	defer cleanup()
 
 	feedInput(ttyCtrl, "put $true")

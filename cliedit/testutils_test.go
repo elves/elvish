@@ -15,10 +15,11 @@ var styles = map[rune]string{
 	'-': "underlined",
 	'm': "bold lightgray bg-magenta", // mode line
 	'#': "inverse",
-	'g': "green",   // good
-	'b': "red",     // bad
-	'v': "magenta", // variables
-	'e': "bg-red",  // error
+	'g': "green",            // good
+	'G': "green underlined", // good with underline
+	'b': "red",              // bad
+	'v': "magenta",          // variables
+	'e': "bg-red",           // error
 }
 
 const (
@@ -43,22 +44,28 @@ func evalf(ev *eval.Evaler, format string, args ...interface{}) {
 	}
 }
 
-func setup() (*Editor, cli.TTYCtrl, *eval.Evaler, storedefs.Store, func()) {
+func setup() (*Editor, cli.TTYCtrl, *eval.Evaler, func()) {
+	// TODO(xiaq): Use an in-memory implementation when that is possible.
+	st, cleanup := store.MustGetTempStore()
+	ed, ttyCtrl, ev := setupWithStore(st)
+	return ed, ttyCtrl, ev, cleanup
+}
+
+func setupWithStore(st storedefs.Store) (*Editor, cli.TTYCtrl, *eval.Evaler) {
 	tty, ttyCtrl := cli.NewFakeTTY()
 	ttyCtrl.SetSize(testTTYHeight, testTTYWidth)
 	ev := eval.NewEvaler()
-	st, cleanupStore := store.MustGetTempStore()
 	ed := NewEditor(tty, ev, st)
 	ev.InstallModule("edit", ed.Ns())
 	evalf(ev, "use edit")
 	evalf(ev, "edit:rprompt = { }")
-	return ed, ttyCtrl, ev, st, cleanupStore
+	return ed, ttyCtrl, ev
 }
 
-func setupStarted() (*Editor, cli.TTYCtrl, *eval.Evaler, storedefs.Store, func()) {
-	ed, ttyCtrl, ev, st, cleanup := setup()
+func setupStarted() (*Editor, cli.TTYCtrl, *eval.Evaler, func()) {
+	ed, ttyCtrl, ev, cleanup := setup()
 	_, _, stop := start(ed)
-	return ed, ttyCtrl, ev, st, func() {
+	return ed, ttyCtrl, ev, func() {
 		stop()
 		cleanup()
 	}

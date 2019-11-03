@@ -7,7 +7,7 @@ import (
 )
 
 func TestInitAPI_BeforeReadline(t *testing.T) {
-	ed, _, ev, _, cleanup := setup()
+	ed, _, ev, cleanup := setup()
 	defer cleanup()
 
 	evalf(ev, `called = 0`)
@@ -23,7 +23,7 @@ func TestInitAPI_BeforeReadline(t *testing.T) {
 }
 
 func TestInitAPI_AfterReadline(t *testing.T) {
-	ed, ttyCtrl, ev, _, cleanup := setup()
+	ed, ttyCtrl, ev, cleanup := setup()
 	defer cleanup()
 
 	evalf(ev, `called = 0`)
@@ -45,7 +45,7 @@ func TestInitAPI_AfterReadline(t *testing.T) {
 }
 
 func TestInitAPI_Insert_Abbr(t *testing.T) {
-	ed, ttyCtrl, ev, _, cleanup := setup()
+	ed, ttyCtrl, ev, cleanup := setup()
 	defer cleanup()
 	codeCh, _, stop := start(ed)
 	defer stop()
@@ -59,7 +59,7 @@ func TestInitAPI_Insert_Abbr(t *testing.T) {
 }
 
 func TestInitAPI_Insert_Binding(t *testing.T) {
-	ed, ttyCtrl, ev, _, cleanup := setup()
+	ed, ttyCtrl, ev, cleanup := setup()
 	defer cleanup()
 
 	evalf(ev, `called = 0`)
@@ -78,7 +78,7 @@ func TestInitAPI_Insert_Binding(t *testing.T) {
 }
 
 func TestInitAPI_Insert_QuotePaste(t *testing.T) {
-	ed, ttyCtrl, ev, _, cleanup := setup()
+	ed, ttyCtrl, ev, cleanup := setup()
 	defer cleanup()
 
 	evalf(ev, `edit:insert:quote-paste = $true`)

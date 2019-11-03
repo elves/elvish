@@ -12,7 +12,7 @@ func TestCompletion(t *testing.T) {
 	_, cleanupDir := eval.InTempHome()
 	util.ApplyDir(util.Dir{"a": "", "b": ""})
 	defer cleanupDir()
-	_, ttyCtrl, _, _, cleanup := setupStarted()
+	_, ttyCtrl, _, cleanup := setupStarted()
 	defer cleanup()
 
 	feedInput(ttyCtrl, "echo \t")
