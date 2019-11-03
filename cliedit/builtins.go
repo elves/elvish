@@ -46,7 +46,7 @@ func endOfHistory(app cli.App) {
 //
 // Triggers a redraw.
 
-//elvdoc:fn return-code
+//elvdoc:fn return-line
 //
 // Causes the Elvish REPL to end the current read iteration and evaluate the
 // code it just read. Internally, this works by raising a special exception.
@@ -78,7 +78,7 @@ func initMiscBuiltins(app cli.App, ns eval.Ns) {
 		"end-of-history": func() { endOfHistory(app) },
 		"key":            ui.ToKey,
 		"redraw":         app.Redraw,
-		"return-code":    app.CommitCode,
+		"return-line":    app.CommitCode,
 		"return-eof":     app.CommitEOF,
 		"wordify":        wordify,
 	})
