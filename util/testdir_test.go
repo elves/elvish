@@ -92,18 +92,6 @@ func TestInTestDirWithSetup_CreatesFiles(t *testing.T) {
 	testFileContent(t, "b", "b content")
 }
 
-func TestInTestDirWithSetup_CreatesFileWithPerm(t *testing.T) {
-	cleanup := InTestDirWithSetup(Dir{
-		// For some unknown reason, termux on Android does not set the
-		// group and other permission bits correctly, so we use 700 here.
-		"a": File{0700, "a content"},
-	})
-	defer cleanup()
-
-	testFileContent(t, "a", "a content")
-	testFilePerm(t, "a", 0700)
-}
-
 func TestInTestDirWithSetup_CreatesDirectories(t *testing.T) {
 	cleanup := InTestDirWithSetup(Dir{
 		"d": Dir{
@@ -142,21 +130,5 @@ func testFileContent(t *testing.T, filename string, wantContent string) {
 	}
 	if string(content) != wantContent {
 		t.Errorf("File %v is %q, want %q", filename, content, wantContent)
-	}
-}
-
-func testFilePerm(t *testing.T, filename string, wantPerm os.FileMode) {
-	t.Helper()
-	info, err := os.Stat(filename)
-	if err != nil {
-		t.Errorf("Could not stat %v: %v", filename, err)
-		return
-	}
-	if perm := info.Mode().Perm(); perm != wantPerm {
-		t.Errorf("File %v has perm %o, want %o", filename, perm, wantPerm)
-		wd, err := os.Getwd()
-		if err == nil {
-			t.Logf("pwd is %v", wd)
-		}
 	}
 }
