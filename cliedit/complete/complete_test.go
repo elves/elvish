@@ -88,7 +88,7 @@ func TestComplete(t *testing.T) {
 	}
 
 	allFileNameItems := []completion.Item{
-		{ToShow: "d", ToInsert: "d/"},
+		{ToShow: "d", ToInsert: withPathSeparator("d")},
 		{ToShow: "exe", ToInsert: "exe "},
 		{ToShow: "non-exe", ToInsert: "non-exe "},
 	}
@@ -164,7 +164,7 @@ func TestComplete(t *testing.T) {
 			&Result{
 				Name: "command", Replace: r(0, 2),
 				Items: []completion.Item{
-					{ToShow: "./d", ToInsert: "./d/"},
+					{ToShow: "./d", ToInsert: withPathSeparator("./d")},
 					{ToShow: "./exe", ToInsert: "./exe "},
 				}},
 			nil),
@@ -216,7 +216,7 @@ func TestComplete(t *testing.T) {
 				&Result{
 					Name: "redir", Replace: r(4, 5),
 					Items: []completion.Item{
-						{ToShow: "d", ToInsert: "d/"},
+						{ToShow: "d", ToInsert: withPathSeparator("d")},
 						{ToShow: "d2", ToInsert: "d2/"},
 					}},
 				nil,
@@ -230,3 +230,5 @@ func cb(s string) CodeBuffer { return CodeBuffer{s, len(s)} }
 func c(s string) completion.Item { return completion.Item{ToShow: s, ToInsert: s} }
 
 func r(i, j int) diag.Ranging { return diag.Ranging{From: i, To: j} }
+
+func withPathSeparator(d string) string { return d + parse.Quote(string(os.PathSeparator)) }
