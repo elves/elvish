@@ -53,10 +53,10 @@ func (ev testEvaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
 
 func setupFs() func() {
 	return util.InTestDirWithSetup(util.Dir{
-		"exe":     util.File{Perm: 0755, Content: ""},
+		"a.exe":   util.File{Perm: 0755, Content: ""},
 		"non-exe": "",
 		"d": util.Dir{
-			"exe": util.File{Perm: 0755, Content: ""},
+			"a.exe": util.File{Perm: 0755, Content: ""},
 		},
 	})
 }
@@ -89,7 +89,7 @@ func TestComplete(t *testing.T) {
 
 	allFileNameItems := []completion.Item{
 		{ToShow: "d", ToInsert: withPathSeparator("d")},
-		{ToShow: "exe", ToInsert: "exe "},
+		{ToShow: "a.exe", ToInsert: "a.exe "},
 		{ToShow: "non-exe", ToInsert: "non-exe "},
 	}
 
@@ -108,7 +108,7 @@ func TestComplete(t *testing.T) {
 		Args(cb("ls e"), cfg).Rets(
 			&Result{
 				Name: "argument", Replace: r(3, 4),
-				Items: []completion.Item{{ToShow: "exe", ToInsert: "exe "}}},
+				Items: []completion.Item{{ToShow: "a.exe", ToInsert: "a.exe "}}},
 			nil),
 		// Custom arg completer, new argument
 		Args(cb("ls a "), cfgWithCompleteArg).Rets(
@@ -159,16 +159,6 @@ func TestComplete(t *testing.T) {
 				Items: []completion.Item{c("e:ls"), c("e:make")}},
 			nil),
 
-		// Complete local external commands.
-		Args(cb("./"), cfg).Rets(
-			&Result{
-				Name: "command", Replace: r(0, 2),
-				Items: []completion.Item{
-					{ToShow: "./d", ToInsert: withPathSeparator("./d")},
-					{ToShow: "./exe", ToInsert: "./exe "},
-				}},
-			nil),
-
 		// TODO(xiaq): Add tests for completing indicies.
 
 		// Complete filenames for redirection.
@@ -179,7 +169,7 @@ func TestComplete(t *testing.T) {
 			&Result{
 				Name: "redir", Replace: r(4, 5),
 				Items: []completion.Item{
-					{ToShow: "exe", ToInsert: "exe "},
+					{ToShow: "a.exe", ToInsert: "a.exe "},
 				}},
 			nil),
 
@@ -203,8 +193,8 @@ func TestComplete(t *testing.T) {
 			nil),
 	})
 
-	// Symlinks are only available on UNIX.
-	if goos := runtime.GOOS; goos != "windows" && goos != "plan9" {
+	// Symlinks and executable bits are not available on Windows.
+	if goos := runtime.GOOS; goos != "windows" {
 		err := os.Symlink("d", "d2")
 		if err != nil {
 			panic(err)
@@ -221,6 +211,19 @@ func TestComplete(t *testing.T) {
 					}},
 				nil,
 			),
+
+			// Complete local external commands.
+			//
+			// TODO(xiaq): Make this test applicable to Windows by using a
+			// different criteria for executable files on Window.
+			Args(cb("./"), cfg).Rets(
+				&Result{
+					Name: "command", Replace: r(0, 2),
+					Items: []completion.Item{
+						{ToShow: "./d", ToInsert: withPathSeparator("./d")},
+						{ToShow: "./a.exe", ToInsert: "./a.exe "},
+					}},
+				nil),
 		})
 	}
 }
