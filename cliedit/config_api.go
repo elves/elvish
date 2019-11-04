@@ -27,25 +27,7 @@ func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	hook := newListVar(vals.EmptyList)
 	ns["before-readline"] = hook
 	appSpec.BeforeReadline = func() {
-		i := -1
-		hook := hook.GetRaw().(vals.List)
-		for it := hook.Iterator(); it.HasElem(); it.Next() {
-			i++
-			name := fmt.Sprintf("$before-readline[%d]", i)
-			fn, ok := it.Elem().(eval.Callable)
-			if !ok {
-				// TODO(xiaq): This is not testable as it depends on stderr.
-				// Make it testable.
-				diag.Complainf("%s not function", name)
-				continue
-			}
-			// TODO(xiaq): This should use stdPorts, but stdPorts is currently
-			// unexported from eval.
-			ports := []*eval.Port{
-				{File: os.Stdin}, {File: os.Stdout}, {File: os.Stderr}}
-			fm := eval.NewTopFrame(ev, eval.NewInternalSource(name), ports)
-			fm.Call(fn, eval.NoArgs, eval.NoOpts)
-		}
+		callHooks(ev, "$<edit>:before-readline", hook.Get().(vals.List))
 	}
 }
 
@@ -53,25 +35,28 @@ func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	hook := newListVar(vals.EmptyList)
 	ns["after-readline"] = hook
 	appSpec.AfterReadline = func(code string) {
-		i := -1
-		hook := hook.GetRaw().(vals.List)
-		for it := hook.Iterator(); it.HasElem(); it.Next() {
-			i++
-			name := fmt.Sprintf("$after-readline[%d]", i)
-			fn, ok := it.Elem().(eval.Callable)
-			if !ok {
-				// TODO(xiaq): This is not testable as it depends on stderr.
-				// Make it testable.
-				diag.Complainf("%s not function", name)
-				continue
-			}
-			// TODO(xiaq): This should use stdPorts, but stdPorts is currently
-			// unexported from eval.
-			ports := []*eval.Port{
-				{File: os.Stdin}, {File: os.Stdout}, {File: os.Stderr}}
-			fm := eval.NewTopFrame(ev, eval.NewInternalSource(name), ports)
-			fm.Call(fn, []interface{}{code}, eval.NoOpts)
+		callHooks(ev, "$<edit>:after-readline", hook.Get().(vals.List), code)
+	}
+}
+
+func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}) {
+	i := -1
+	for it := hook.Iterator(); it.HasElem(); it.Next() {
+		i++
+		name := fmt.Sprintf("%s[%d]", name, i)
+		fn, ok := it.Elem().(eval.Callable)
+		if !ok {
+			// TODO(xiaq): This is not testable as it depends on stderr.
+			// Make it testable.
+			diag.Complainf("%s not function", name)
+			continue
 		}
+		// TODO(xiaq): This should use stdPorts, but stdPorts is currently
+		// unexported from eval.
+		ports := []*eval.Port{
+			{File: os.Stdin}, {File: os.Stdout}, {File: os.Stderr}}
+		fm := eval.NewTopFrame(ev, eval.NewInternalSource(name), ports)
+		fm.Call(fn, args, eval.NoOpts)
 	}
 }
 
