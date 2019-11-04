@@ -39,7 +39,7 @@ upload-coverage-codecov: _cover/all
 	codecov -f $<
 
 upload-coverage-coveralls: _cover/all
-	goveralls -coverprofile $< -parallel
+	goveralls -coverprofile $< -parallel -service $${TRAVIS:+travis-ci} $${APPVEYOR:+appveyor}
 
 coverage-travis: get-codecov-uploader get-coveralls-uploader upload-coverage-codecov upload-coverage-coveralls
 coverage-appveyor: upload-coverage-codecov upload-coverage-coveralls
