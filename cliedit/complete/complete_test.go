@@ -88,8 +88,8 @@ func TestComplete(t *testing.T) {
 	}
 
 	allFileNameItems := []completion.Item{
-		{ToShow: "d", ToInsert: withPathSeparator("d")},
 		{ToShow: "a.exe", ToInsert: "a.exe "},
+		{ToShow: "d", ToInsert: withPathSeparator("d")},
 		{ToShow: "non-exe", ToInsert: "non-exe "},
 	}
 
@@ -105,7 +105,7 @@ func TestComplete(t *testing.T) {
 				Name: "argument", Replace: r(3, 3),
 				Items: allFileNameItems},
 			nil),
-		Args(cb("ls e"), cfg).Rets(
+		Args(cb("ls a"), cfg).Rets(
 			&Result{
 				Name: "argument", Replace: r(3, 4),
 				Items: []completion.Item{{ToShow: "a.exe", ToInsert: "a.exe "}}},
@@ -165,7 +165,7 @@ func TestComplete(t *testing.T) {
 		Args(cb("p >"), cfg).Rets(
 			&Result{Name: "redir", Replace: r(3, 3), Items: allFileNameItems},
 			nil),
-		Args(cb("p > e"), cfg).Rets(
+		Args(cb("p > a"), cfg).Rets(
 			&Result{
 				Name: "redir", Replace: r(4, 5),
 				Items: []completion.Item{
@@ -220,8 +220,9 @@ func TestComplete(t *testing.T) {
 				&Result{
 					Name: "command", Replace: r(0, 2),
 					Items: []completion.Item{
-						{ToShow: "./d", ToInsert: withPathSeparator("./d")},
 						{ToShow: "./a.exe", ToInsert: "./a.exe "},
+						{ToShow: "./d", ToInsert: withPathSeparator("./d")},
+						{ToShow: "./d2", ToInsert: withPathSeparator("./d2")},
 					}},
 				nil),
 		})
