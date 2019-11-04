@@ -8,9 +8,9 @@ install:
   - set PATH=%GOPATH%\bin;c:\go\bin;C:\msys64\usr\bin;%PATH%
   - go version
   - go env
-  # - choco install codecov
-  # - go get github.com/mattn/goveralls
 build_script:
   - make test
-# deploy_script:
-#  - make coverage-appveyor
+deploy_script:
+  - choco install codecov
+  - go get github.com/mattn/goveralls
+  - make coverage-appveyor
