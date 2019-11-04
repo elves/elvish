@@ -3,6 +3,7 @@ package cliedit
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/elves/elvish/eval"
@@ -10,45 +11,49 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-/*
-func TestMakePrompt_ElvishVariableLinksToPromptConfig(t *testing.T) {
-	ev := eval.NewEvaler()
-	// NewEditor calls makePrompt
-	ed := NewEditor(devNull, devNull, ev, testStore)
-	ev.Global.AddNs("ed", ed.Ns())
-	ev.EvalSourceInTTY(eval.NewScriptSource(
-		"[t]", "[t]", "ed:prompt = { put 'CUSTOM PROMPT' }"))
+func TestPrompt(t *testing.T) {
+	_, cleanupFs := eval.InTempHome()
+	defer cleanupFs()
+	ed, ttyCtrl, ev, cleanup := setup()
+	defer cleanup()
 
-	// TODO: Use p.Get() and avoid type assertion
-	p := ed.app.Prompt.(*prompt.Prompt)
-	content := p.Config().Raw.Compute()
-
-	want := styled.Plain("CUSTOM PROMPT")
-	if !reflect.DeepEqual(content, want) {
-		t.Errorf("got content %v, want %v", content, want)
-	}
+	evalf(ev, `edit:prompt = { put '>>> ' }`)
+	_, _, stop := start(ed)
+	defer stop()
+	wantBuf := bb().WritePlain(">>> ").SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf)
 }
-*/
+
+func TestRPrompt(t *testing.T) {
+	_, cleanupFs := eval.InTempHome()
+	defer cleanupFs()
+	ed, ttyCtrl, ev, cleanup := setup()
+	defer cleanup()
+
+	evalf(ev, `edit:rprompt = { put 'RRR' }`)
+	_, _, stop := start(ed)
+	defer stop()
+	wantBuf := bb().WritePlain("~> ").SetDotToCursor().
+		WritePlain(strings.Repeat(" ", testTTYWidth-6) + "RRR").Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf)
+}
 
 func TestDefaultPromptForNonRoot(t *testing.T) {
 	f := getDefaultPrompt(false)
-	wd := util.Getwd()
-	testCallPromptStatic(t, f, styled.Text{
-		styled.PlainSegment(wd), styled.PlainSegment("> ")})
+	testCallPromptStatic(t, f,
+		styled.Plain(util.Getwd()).ConcatText(styled.Plain("> ")))
 }
 
 func TestDefaultPromptForRoot(t *testing.T) {
 	f := getDefaultPrompt(true)
-	wd := util.Getwd()
-	testCallPromptStatic(t, f, styled.Text{
-		styled.PlainSegment(wd),
-		&styled.Segment{styled.Style{Foreground: "red"}, "# "}})
+	testCallPromptStatic(t, f,
+		styled.Plain(util.Getwd()).ConcatText(styled.MakeText("# ", "red")))
 }
 
 func TestDefaultRPrompt(t *testing.T) {
 	f := getDefaultRPrompt("elf", "endor")
 	testCallPromptStatic(t, f,
-		styled.Transform(styled.Plain("elf@endor"), "inverse"))
+		styled.MakeText("elf@endor", "inverse"))
 }
 
 func testCallPromptStatic(t *testing.T, f eval.Callable, want styled.Text) {

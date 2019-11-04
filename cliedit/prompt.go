@@ -18,15 +18,15 @@ import (
 
 func initPrompts(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns) {
 	promptVal, rpromptVal := getDefaultPromptVals()
-	promptVar := vars.FromPtr(&promptVal)
-	rpromptVar := vars.FromPtr(&rpromptVal)
-	ns["prompt"] = promptVar
-	ns["rprompt"] = rpromptVar
-	appSpec.Prompt = prompt.New(func() styled.Text {
-		return callPrompt(nt, ev, promptVar.Get().(eval.Callable))
-	})
-	appSpec.RPrompt = prompt.New(func() styled.Text {
-		return callPrompt(nt, ev, rpromptVar.Get().(eval.Callable))
+	initPrompt(&appSpec.Prompt, "prompt", promptVal, nt, ev, ns)
+	initPrompt(&appSpec.RPrompt, "rprompt", rpromptVal, nt, ev, ns)
+}
+
+func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *eval.Evaler, ns eval.Ns) {
+	theVar := vars.FromPtr(&val)
+	ns[name] = theVar
+	*p = prompt.New(func() styled.Text {
+		return callPrompt(nt, ev, theVar.Get().(eval.Callable))
 	})
 }
 
@@ -51,17 +51,15 @@ func getDefaultPrompt(isRoot bool) eval.Callable {
 	if isRoot {
 		p = styled.Transform(styled.Plain("# "), "red")
 	}
-	return eval.NewGoFn("default prompt", func(fm *eval.Frame) {
-		out := fm.OutputChan()
-		out <- string(util.Getwd())
-		out <- p
+	return eval.NewGoFn("default prompt", func(fm *eval.Frame) styled.Text {
+		return styled.Plain(util.Getwd()).ConcatText(p)
 	})
 }
 
 func getDefaultRPrompt(username, hostname string) eval.Callable {
 	rp := styled.Transform(styled.Plain(username+"@"+hostname), "inverse")
-	return eval.NewGoFn("default rprompt", func(fm *eval.Frame) {
-		fm.OutputChan() <- rp
+	return eval.NewGoFn("default rprompt", func() styled.Text {
+		return rp
 	})
 }
 
