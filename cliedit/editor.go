@@ -53,6 +53,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	initBufferBuiltins(app, ns)
 	initMiscBuiltins(app, ns)
 	initStateAPI(app, ns)
+	initStoreAPI(app, ns, st)
 	evalDefaultBinding(ev, ns)
 
 	return &Editor{app, ns}
