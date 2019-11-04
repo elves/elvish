@@ -18,8 +18,6 @@ import (
 // High-level sanity test.
 
 func TestHighlighter(t *testing.T) {
-	_, cleanupDir := eval.InTempHome()
-	defer cleanupDir()
 	_, ttyCtrl, _, cleanup := setupStarted()
 	defer cleanup()
 

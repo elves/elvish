@@ -12,8 +12,6 @@ import (
 )
 
 func TestPrompt(t *testing.T) {
-	_, cleanupFs := eval.InTempHome()
-	defer cleanupFs()
 	ed, ttyCtrl, ev, cleanup := setup()
 	defer cleanup()
 
@@ -25,8 +23,6 @@ func TestPrompt(t *testing.T) {
 }
 
 func TestRPrompt(t *testing.T) {
-	_, cleanupFs := eval.InTempHome()
-	defer cleanupFs()
 	ed, ttyCtrl, ev, cleanup := setup()
 	defer cleanup()
 

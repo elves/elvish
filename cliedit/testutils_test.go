@@ -46,12 +46,16 @@ func evalf(ev *eval.Evaler, format string, args ...interface{}) {
 
 func setup() (*Editor, cli.TTYCtrl, *eval.Evaler, func()) {
 	// TODO(xiaq): Use an in-memory implementation when that is possible.
-	st, cleanup := store.MustGetTempStore()
-	ed, ttyCtrl, ev := setupWithStore(st)
-	return ed, ttyCtrl, ev, cleanup
+	st, cleanupStore := store.MustGetTempStore()
+	ed, ttyCtrl, ev, cleanupFs := setupWithStore(st)
+	return ed, ttyCtrl, ev, func() {
+		cleanupFs()
+		cleanupStore()
+	}
 }
 
-func setupWithStore(st storedefs.Store) (*Editor, cli.TTYCtrl, *eval.Evaler) {
+func setupWithStore(st storedefs.Store) (*Editor, cli.TTYCtrl, *eval.Evaler, func()) {
+	_, cleanup := eval.InTempHome()
 	tty, ttyCtrl := cli.NewFakeTTY()
 	ttyCtrl.SetSize(testTTYHeight, testTTYWidth)
 	ev := eval.NewEvaler()
@@ -59,7 +63,7 @@ func setupWithStore(st storedefs.Store) (*Editor, cli.TTYCtrl, *eval.Evaler) {
 	ev.InstallModule("edit", ed.Ns())
 	evalf(ev, "use edit")
 	evalf(ev, "edit:rprompt = { }")
-	return ed, ttyCtrl, ev
+	return ed, ttyCtrl, ev, cleanup
 }
 
 func setupStarted() (*Editor, cli.TTYCtrl, *eval.Evaler, func()) {

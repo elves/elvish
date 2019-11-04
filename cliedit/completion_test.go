@@ -3,17 +3,14 @@ package cliedit
 import (
 	"testing"
 
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
 
 func TestCompletion(t *testing.T) {
-	_, cleanupDir := eval.InTempHome()
-	util.ApplyDir(util.Dir{"a": "", "b": ""})
-	defer cleanupDir()
 	_, ttyCtrl, _, cleanup := setupStarted()
 	defer cleanup()
+	util.ApplyDir(util.Dir{"a": "", "b": ""})
 
 	feedInput(ttyCtrl, "echo \t")
 	wantBuf := bb().

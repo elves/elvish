@@ -5,19 +5,17 @@ import (
 
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/styled"
 )
 
 func TestHistWalk(t *testing.T) {
-	_, cleanupFs := eval.InTempHome()
-	defer cleanupFs()
-	st, cleanup := store.MustGetTempStore()
-	defer cleanup()
+	st, cleanupStore := store.MustGetTempStore()
+	defer cleanupStore()
 	st.AddCmd("echo a")
 
-	ed, ttyCtrl, _ := setupWithStore(st)
+	ed, ttyCtrl, _, cleanup := setupWithStore(st)
+	defer cleanup()
 	_, _, stop := start(ed)
 	defer stop()
 
