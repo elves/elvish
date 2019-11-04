@@ -1,7 +1,4 @@
 platform: x64
-branches:
-  only:
-    - master
 clone_folder: c:\gopath\src\github.com\elves\elvish
 environment:
   GOPATH: c:\gopath
@@ -11,8 +8,8 @@ install:
   - set PATH=%GOPATH%\bin;c:\go\bin;C:\msys64\usr\bin;%PATH%
   - go version
   - go env
-  - choco install codecov
-  - go get github.com/mattn/goveralls
+  # - choco install codecov
+  # - go get github.com/mattn/goveralls
 build_script:
   - make test
 # deploy_script:
