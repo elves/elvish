@@ -4,6 +4,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/elves/elvish/util"
@@ -63,6 +64,7 @@ func TestGlob_Absolute(t *testing.T) {
 
 func testGlob(t *testing.T, abs bool) {
 	dir, cleanup := util.InTestDir()
+	dir = strings.ReplaceAll(dir, string(os.PathSeparator), "/")
 	defer cleanup()
 
 	for _, dir := range append(mkdirs, mkdirDots...) {
