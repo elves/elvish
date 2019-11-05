@@ -11,4 +11,4 @@ install:
 build_script:
   - make test
 deploy_script:
-  - make upload-coverage-codecov upload-coverage-coveralls
+  - make upload-coverage-codecov
