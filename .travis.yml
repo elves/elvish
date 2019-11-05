@@ -18,11 +18,11 @@ jobs:
     # NOTE: Coverages are not enabled for pull requests yet
     - stage: deploy
       name: Generate and upload Linux coverage profiles
-      script: make coverage-travis
+      script: make upload-coverage-codecov upload-coverage-coveralls
       if: type = push
       os: linux
     - name: Generate and upload macOS coverage profiles
-      script: make coverage-travis
+      script: make upload-coverage-codecov
       if: type = push
       os: osx
     - name: Build and upload binaries to bintray

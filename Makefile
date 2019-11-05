@@ -29,22 +29,15 @@ _cover/all: $(PKG_COVERS)
 	echo mode: $(COVER_MODE) > $@
 	for f in $(PKG_COVERS); do test -f $$f && sed '1d; s|\\|/|g' $$f >> $@ || true; done
 
-get-codecov-uploader:
-	curl -s https://codecov.io/bash -o codecov.bash
-
-get-coveralls-uploader:
-	go get $(GOVERALLS)
-
 upload-coverage-codecov: _cover/all
-	codecov -f $<
+	curl -s https://codecov.io/bash -o codecov.bash
+	bash codecov.bash -f $<
 
 upload-coverage-coveralls: _cover/all
-	goveralls -coverprofile $< -parallel -service $${TRAVIS:+travis-ci} $${APPVEYOR:+appveyor}
-
-coverage-travis: get-codecov-uploader get-coveralls-uploader upload-coverage-codecov upload-coverage-coveralls
-coverage-appveyor: upload-coverage-codecov upload-coverage-coveralls
+	go get $(GOVERALLS)
+	goveralls -coverprofile $<
 
 binaries-travis:
 	./_tools/binaries-travis.sh
 
-.PHONY: default get buildall generate test testmain get-codecov-uploader get-coveralls-uploader upload-coverage-codecov upload-coverage-coveralls binaries-travis
+.PHONY: default get buildall generate test testmain upload-coverage-codecov upload-coverage-coveralls binaries-travis
