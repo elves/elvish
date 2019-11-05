@@ -27,7 +27,7 @@ _cover/%.cover: %
 
 _cover/all: $(PKG_COVERS)
 	echo mode: $(COVER_MODE) > $@
-	for f in $(PKG_COVERS); do test -f $$f && sed '1d; s|\|/|g' $$f >> $@ || true; done
+	for f in $(PKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 
 upload-coverage-codecov: _cover/all
 	curl -s https://codecov.io/bash -o codecov.bash
