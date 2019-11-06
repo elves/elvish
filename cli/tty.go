@@ -269,14 +269,26 @@ func (t TTYCtrl) InjectSignal(sigs ...os.Signal) {
 // seconds, and fails the test if it doesn't
 func (t TTYCtrl) TestBuffer(tt *testing.T, b *ui.Buffer) {
 	tt.Helper()
-	testBuffer(tt, b, t.bufCh, t.LastBuffer)
+	ok := testBuffer(tt, b, t.bufCh)
+	if !ok {
+		tt.Logf("Last buffer: %s", t.LastBuffer().TTYString())
+	}
 }
 
 // TestNotesBuffer verifies that a notes buffer will appear within the timeout of 4
 // seconds, and fails the test if it doesn't
 func (t TTYCtrl) TestNotesBuffer(tt *testing.T, b *ui.Buffer) {
 	tt.Helper()
-	testBuffer(tt, b, t.notesBufCh, t.LastNotesBuffer)
+	ok := testBuffer(tt, b, t.notesBufCh)
+	if !ok {
+		bufs := t.NotesBufferHistory()
+		tt.Logf("There has been %d notes buffers. None-nil ones are:", len(bufs))
+		for i, buf := range bufs {
+			if buf != nil {
+				tt.Logf("#%d:\n%s", i, buf.TTYString())
+			}
+		}
+	}
 }
 
 // BufferHistory returns a slice of all buffers that have appeared.
@@ -301,7 +313,7 @@ func (t TTYCtrl) LastNotesBuffer() *ui.Buffer {
 }
 
 // Tests that an expected buffer will appear within the timeout.
-func testBuffer(t *testing.T, want *ui.Buffer, ch <-chan *ui.Buffer, last func() *ui.Buffer) {
+func testBuffer(t *testing.T, want *ui.Buffer, ch <-chan *ui.Buffer) bool {
 	t.Helper()
 
 	timeout := time.After(getUITestTimeout())
@@ -309,13 +321,12 @@ func testBuffer(t *testing.T, want *ui.Buffer, ch <-chan *ui.Buffer, last func()
 		select {
 		case buf := <-ch:
 			if reflect.DeepEqual(buf, want) {
-				return
+				return true
 			}
 		case <-timeout:
 			t.Errorf("Wanted buffer not shown")
 			t.Logf("Want: %s", want.TTYString())
-			t.Logf("Last buffer: %s", last().TTYString())
-			return
+			return false
 		}
 	}
 }
