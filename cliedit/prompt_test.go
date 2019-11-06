@@ -1,39 +1,59 @@
 package cliedit
 
 import (
-	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/styled"
-	"github.com/elves/elvish/util"
 )
 
-func TestPrompt(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setup()
+func TestPrompt_ValueOutput(t *testing.T) {
+	ttyCtrl, cleanup := setupWithRC(
+		`edit:prompt = { put 'val'; styled '> ' red }`)
 	defer cleanup()
 
-	evalf(ev, `edit:prompt = { put '>>> ' }`)
-	_, _, stop := start(ed)
-	defer stop()
-	wantBuf := bb().WritePlain(">>> ").SetDotToCursor().Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	ttyCtrl.TestBuffer(t,
+		bb().WritePlain("val").WriteStyled(styled.MakeText("> ", "red")).
+			SetDotToCursor().Buffer())
+}
+
+func TestPrompt_ByteOutput(t *testing.T) {
+	ttyCtrl, cleanup := setupWithRC(`edit:prompt = { put 'bytes> ' }`)
+	defer cleanup()
+
+	ttyCtrl.TestBuffer(t,
+		bb().WritePlain("bytes> ").SetDotToCursor().Buffer())
+}
+
+func TestPrompt_NotifiesInvalidValueOutput(t *testing.T) {
+	ttyCtrl, cleanup := setupWithRC(`edit:prompt = { put good [bad] good2 }`)
+	defer cleanup()
+
+	ttyCtrl.TestBuffer(t,
+		bb().WritePlain("goodgood2").SetDotToCursor().Buffer())
+	ttyCtrl.TestNotesBuffer(t, bb().
+		WritePlain("invalid output type from prompt: list").Buffer())
+}
+
+func TestPrompt_NotifiesException(t *testing.T) {
+	ttyCtrl, cleanup := setupWithRC(`edit:prompt = { fail ERROR }`)
+	defer cleanup()
+
+	ttyCtrl.TestNotesBuffer(t, bb().
+		WritePlain("prompt function error: ERROR").Buffer())
 }
 
 func TestRPrompt(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setup()
+	ttyCtrl, cleanup := setupWithRC(`edit:rprompt = { put 'RRR' }`)
 	defer cleanup()
 
-	evalf(ev, `edit:rprompt = { put 'RRR' }`)
-	_, _, stop := start(ed)
-	defer stop()
-	wantBuf := bb().WritePlain("~> ").SetDotToCursor().
-		WritePlain(strings.Repeat(" ", testTTYWidth-6) + "RRR").Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	ttyCtrl.TestBuffer(t,
+		bb().WritePlain("~> ").SetDotToCursor().
+			WritePlain(strings.Repeat(" ", testTTYWidth-6)+"RRR").Buffer())
 }
 
 func TestPromptEagerness(t *testing.T) {
@@ -72,68 +92,71 @@ func TestPromptStaleThreshold(t *testing.T) {
 	ttyCtrl.TestBuffer(t, wantBufFresh)
 }
 
+func TestPromptStaleTransform(t *testing.T) {
+	ed, ttyCtrl, ev, cleanup := setup()
+	defer cleanup()
+
+	evalf(ev, `edit:prompt = { esleep 0.1; put '> ' }`)
+	evalf(ev, `edit:prompt-stale-threshold = 0.05`)
+	evalf(ev, `edit:prompt-stale-transform = [a]{ put S; put $a; put S }`)
+	_, _, stop := start(ed)
+	defer stop()
+
+	wantBufStale := bb().
+		WriteStyled(styled.Plain("S???> S")).SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, wantBufStale)
+}
+
 func TestDefaultPromptForNonRoot(t *testing.T) {
-	f := getDefaultPrompt(false)
-	testCallPromptStatic(t, f,
-		styled.Plain(util.Getwd()).ConcatText(styled.Plain("> ")))
+	ed, ttyCtrl, ev, cleanup := setup()
+	defer cleanup()
+	ev.Global["f"] = vars.NewReadOnly(getDefaultPrompt(false))
+	evalf(ev, `edit:prompt = $f`)
+
+	_, _, stop := start(ed)
+	defer stop()
+
+	wantBuf := bb().WritePlain("~> ").SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf)
 }
 
 func TestDefaultPromptForRoot(t *testing.T) {
-	f := getDefaultPrompt(true)
-	testCallPromptStatic(t, f,
-		styled.Plain(util.Getwd()).ConcatText(styled.MakeText("# ", "red")))
+	ed, ttyCtrl, ev, cleanup := setup()
+	defer cleanup()
+	ev.Global["f"] = vars.NewReadOnly(getDefaultPrompt(true))
+	evalf(ev, `edit:prompt = $f`)
+
+	_, _, stop := start(ed)
+	defer stop()
+
+	wantBuf := bb().WritePlain("~").
+		WriteStyled(styled.MakeText("# ", "red")).SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf)
 }
 
 func TestDefaultRPrompt(t *testing.T) {
-	f := getDefaultRPrompt("elf", "endor")
-	testCallPromptStatic(t, f,
-		styled.MakeText("elf@endor", "inverse"))
+	ed, ttyCtrl, ev, cleanup := setup()
+	defer cleanup()
+	ev.Global["f"] = vars.NewReadOnly(getDefaultRPrompt("elf", "host"))
+	evalf(ev, `edit:rprompt = $f`)
+
+	_, _, stop := start(ed)
+	defer stop()
+
+	wantBuf := bb().WritePlain("~> ").SetDotToCursor().
+		WritePlain(strings.Repeat(" ", 49)).
+		WriteStyled(styled.MakeText("elf@host", "inverse")).Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf)
 }
 
-func testCallPromptStatic(t *testing.T, f eval.Callable, want styled.Text) {
-	content := callPrompt(&fakeNotifier{}, eval.NewEvaler(), f)
-	if !reflect.DeepEqual(content, want) {
-		t.Errorf("get prompt result %v, want %v", content, want)
+func setupWithRC(codes ...string) (cli.TTYCtrl, func()) {
+	ed, ttyCtrl, ev, cleanup := setup()
+	for _, code := range codes {
+		evalf(ev, `%s`, code)
 	}
-}
-
-func TestCallPrompt_ConvertsValueOutput(t *testing.T) {
-	testCallPrompt(t, "put PROMPT", styled.Plain("PROMPT"), false)
-	testCallPrompt(t, "styled PROMPT red",
-		styled.Transform(styled.Plain("PROMPT"), "red"), false)
-}
-
-func TestCallPrompt_ErrorsOnInvalidValueOutput(t *testing.T) {
-	testCallPrompt(t, "put good; put [bad]", styled.Plain("good"), true)
-}
-
-func TestCallPrompt_ErrorsOnException(t *testing.T) {
-	testCallPrompt(t, "fail error", nil, true)
-}
-
-func TestCallPrompt_ConvertsBytesOutput(t *testing.T) {
-	testCallPrompt(t, "print PROMPT", styled.Plain("PROMPT"), false)
-}
-
-func testCallPrompt(t *testing.T, fsrc string, want styled.Text, wantErr bool) {
-	ev := eval.NewEvaler()
-	ev.EvalSourceInTTY(eval.NewScriptSource(
-		"[t]", "[t]", fmt.Sprintf("f = { %s }", fsrc)))
-	f := ev.Global["f"].Get().(eval.Callable)
-	nt := &fakeNotifier{}
-
-	content := callPrompt(nt, ev, f)
-	if !reflect.DeepEqual(content, want) {
-		t.Errorf("get prompt result %v, want %v", content, want)
-	}
-
-	if wantErr {
-		if len(nt.notes) == 0 {
-			t.Errorf("got no error, want errors")
-		}
-	} else {
-		if len(nt.notes) > 0 {
-			t.Errorf("got errors %v, want none", nt.notes)
-		}
+	_, _, stop := start(ed)
+	return ttyCtrl, func() {
+		stop()
+		cleanup()
 	}
 }

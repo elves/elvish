@@ -64,4 +64,5 @@ func newIntVar(i int) vars.PtrVar            { return vars.FromPtr(&i) }
 func newFloatVar(f float64) vars.PtrVar      { return vars.FromPtr(&f) }
 func newBoolVar(b bool) vars.PtrVar          { return vars.FromPtr(&b) }
 func newListVar(l vals.List) vars.PtrVar     { return vars.FromPtr(&l) }
+func newFnVar(c eval.Callable) vars.PtrVar   { return vars.FromPtr(&c) }
 func newBindingVar(b bindingMap) vars.PtrVar { return vars.FromPtr(&b) }
