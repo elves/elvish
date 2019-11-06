@@ -57,14 +57,11 @@ func TestRPrompt(t *testing.T) {
 }
 
 func TestPromptEagerness(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setup()
+	ttyCtrl, cleanup := setupWithRC(
+		`i = 0`,
+		`edit:prompt = { i = (+ $i 1); put $i'> ' }`,
+		`edit:-prompt-eagerness = 10`)
 	defer cleanup()
-
-	evalf(ev, `i = 0`)
-	evalf(ev, `edit:prompt = { i = (+ $i 1); put $i'> ' }`)
-	evalf(ev, `edit:-prompt-eagerness = 10`)
-	_, _, stop := start(ed)
-	defer stop()
 
 	wantBuf1 := bb().WritePlain("1> ").SetDotToCursor().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf1)
@@ -76,13 +73,10 @@ func TestPromptEagerness(t *testing.T) {
 }
 
 func TestPromptStaleThreshold(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setup()
+	ttyCtrl, cleanup := setupWithRC(
+		`edit:prompt = { esleep 0.1; put '> ' }`,
+		`edit:prompt-stale-threshold = 0.05`)
 	defer cleanup()
-
-	evalf(ev, `edit:prompt = { esleep 0.1; put '> ' }`)
-	evalf(ev, `edit:prompt-stale-threshold = 0.05`)
-	_, _, stop := start(ed)
-	defer stop()
 
 	wantBufStale := bb().
 		WriteStyled(styled.MakeText("???> ", "inverse")).SetDotToCursor().Buffer()
@@ -93,14 +87,11 @@ func TestPromptStaleThreshold(t *testing.T) {
 }
 
 func TestPromptStaleTransform(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setup()
+	ttyCtrl, cleanup := setupWithRC(
+		`edit:prompt = { esleep 0.1; put '> ' }`,
+		`edit:prompt-stale-threshold = 0.05`,
+		`edit:prompt-stale-transform = [a]{ put S; put $a; put S }`)
 	defer cleanup()
-
-	evalf(ev, `edit:prompt = { esleep 0.1; put '> ' }`)
-	evalf(ev, `edit:prompt-stale-threshold = 0.05`)
-	evalf(ev, `edit:prompt-stale-transform = [a]{ put S; put $a; put S }`)
-	_, _, stop := start(ed)
-	defer stop()
 
 	wantBufStale := bb().
 		WriteStyled(styled.Plain("S???> S")).SetDotToCursor().Buffer()
