@@ -25,9 +25,9 @@ func initPrompts(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns)
 func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *eval.Evaler, ns eval.Ns) {
 	theVar := vars.FromPtr(&val)
 	ns[name] = theVar
-	*p = prompt.New(func() styled.Text {
+	*p = prompt.New(prompt.Config{Compute: func() styled.Text {
 		return callPrompt(nt, ev, theVar.Get().(eval.Callable))
-	})
+	}})
 }
 
 func getDefaultPromptVals() (prompt, rprompt eval.Callable) {

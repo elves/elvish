@@ -25,6 +25,19 @@ type Prompt struct {
 	lastMutex sync.RWMutex
 }
 
+// Config keeps configurations for the prompt.
+type Config struct {
+	// The function that computes the prompt.
+	Compute func() styled.Text
+	// Function to transform stale prompts.
+	StaleTransform func(styled.Text) styled.Text
+	// Threshold for a prompt to be considered as stale.
+	StaleThreshold func() time.Duration
+	// How eager the prompt should be updated. When >= 5, updated when directory
+	// is changed. When >= 10, always update. Default is 5.
+	Eagerness func() int
+}
+
 func defaultStaleTransform(t styled.Text) styled.Text {
 	return styled.Transform(t, "inverse")
 }
@@ -33,45 +46,51 @@ const defaultStaleThreshold = 200 * time.Millisecond
 
 const defaultEagerness = 5
 
-var initialContent = styled.Plain("???> ")
+var unknownContent = styled.Plain("???> ")
 
 // New makes a new prompt.
-func New(fn func() styled.Text) *Prompt {
+func New(cfg Config) *Prompt {
+	if cfg.Compute == nil {
+		cfg.Compute = func() styled.Text { return unknownContent }
+	}
+	if cfg.StaleTransform == nil {
+		cfg.StaleTransform = defaultStaleTransform
+	}
+	if cfg.StaleThreshold == nil {
+		cfg.StaleThreshold = func() time.Duration { return defaultStaleThreshold }
+	}
+	if cfg.Eagerness == nil {
+		cfg.Eagerness = func() int { return defaultEagerness }
+	}
 	p := &Prompt{
-		Config{Raw: RawConfig{
-			fn, defaultStaleTransform, defaultStaleThreshold, defaultEagerness}},
+		cfg,
 		"", make(chan struct{}, 1), make(chan styled.Text, 1),
-		initialContent, sync.RWMutex{}}
+		unknownContent, sync.RWMutex{}}
 	// TODO: Don't keep a goroutine running.
 	go p.loop()
 	return p
 }
 
-// Config returns the config for the prompt.
-func (p *Prompt) Config() *Config {
-	return &p.config
-}
-
 func (p *Prompt) loop() {
-	content := initialContent
+	content := unknownContent
 	ch := make(chan styled.Text)
 	for range p.updateReq {
 		go func() {
-			ch <- p.config.Compute()()
+			ch <- p.config.Compute()
 		}()
 
 		select {
 		case <-time.After(p.config.StaleThreshold()):
 			// The prompt callback did not finish within the threshold. Send the
 			// previous content, marked as stale.
-			p.send(p.config.StaleTransform()(content))
+			p.send(p.config.StaleTransform(content))
 			content = <-ch
 
 			select {
 			case <-p.updateReq:
 				// If another update is already requested by the time we finish,
 				// keep marking the prompt as stale. This reduces flickering.
-				p.send(p.config.StaleTransform()(content))
+				p.send(p.config.StaleTransform(content))
 				p.queueUpdate()
 			default:
 				p.send(content)
