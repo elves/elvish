@@ -61,6 +61,7 @@ func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}
 }
 
 func newIntVar(i int) vars.PtrVar            { return vars.FromPtr(&i) }
+func newFloatVar(f float64) vars.PtrVar      { return vars.FromPtr(&f) }
 func newBoolVar(b bool) vars.PtrVar          { return vars.FromPtr(&b) }
 func newListVar(l vals.List) vars.PtrVar     { return vars.FromPtr(&l) }
 func newBindingVar(b bindingMap) vars.PtrVar { return vars.FromPtr(&b) }

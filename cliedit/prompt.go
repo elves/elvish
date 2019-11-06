@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/user"
 	"sync"
+	"time"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/prompt"
@@ -23,11 +24,23 @@ func initPrompts(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns)
 }
 
 func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *eval.Evaler, ns eval.Ns) {
-	theVar := vars.FromPtr(&val)
-	ns[name] = theVar
-	*p = prompt.New(prompt.Config{Compute: func() styled.Text {
-		return callPrompt(nt, ev, theVar.Get().(eval.Callable))
-	}})
+	computeVar := vars.FromPtr(&val)
+	ns[name] = computeVar
+	eagernessVar := newIntVar(5)
+	ns["-"+name+"-eagerness"] = eagernessVar
+	staleThresholdVar := newFloatVar(0.2)
+	ns[name+"-stale-threshold"] = staleThresholdVar
+
+	*p = prompt.New(prompt.Config{
+		Compute: func() styled.Text {
+			return callPrompt(nt, ev, computeVar.Get().(eval.Callable))
+		},
+		Eagerness: func() int { return eagernessVar.GetRaw().(int) },
+		StaleThreshold: func() time.Duration {
+			seconds := staleThresholdVar.GetRaw().(float64)
+			return time.Duration(seconds * float64(time.Second))
+		},
+	})
 }
 
 func getDefaultPromptVals() (prompt, rprompt eval.Callable) {

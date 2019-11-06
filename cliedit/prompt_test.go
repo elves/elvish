@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/elves/elvish/cli/term"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
@@ -32,6 +34,42 @@ func TestRPrompt(t *testing.T) {
 	wantBuf := bb().WritePlain("~> ").SetDotToCursor().
 		WritePlain(strings.Repeat(" ", testTTYWidth-6) + "RRR").Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
+}
+
+func TestPromptEagerness(t *testing.T) {
+	ed, ttyCtrl, ev, cleanup := setup()
+	defer cleanup()
+
+	evalf(ev, `i = 0`)
+	evalf(ev, `edit:prompt = { i = (+ $i 1); put $i'> ' }`)
+	evalf(ev, `edit:-prompt-eagerness = 10`)
+	_, _, stop := start(ed)
+	defer stop()
+
+	wantBuf1 := bb().WritePlain("1> ").SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf1)
+	// With eagerness = 10, any key press will cause the prompt to be
+	// recomputed.
+	ttyCtrl.Inject(term.K(ui.Backspace))
+	wantBuf2 := bb().WritePlain("2> ").SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf2)
+}
+
+func TestPromptStaleThreshold(t *testing.T) {
+	ed, ttyCtrl, ev, cleanup := setup()
+	defer cleanup()
+
+	evalf(ev, `edit:prompt = { esleep 0.1; put '> ' }`)
+	evalf(ev, `edit:prompt-stale-threshold = 0.05`)
+	_, _, stop := start(ed)
+	defer stop()
+
+	wantBufStale := bb().
+		WriteStyled(styled.MakeText("???> ", "inverse")).SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, wantBufStale)
+
+	wantBufFresh := bb().WritePlain("> ").SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, wantBufFresh)
 }
 
 func TestDefaultPromptForNonRoot(t *testing.T) {
