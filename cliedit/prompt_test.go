@@ -7,12 +7,13 @@ import (
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/styled"
 )
 
 func TestPrompt_ValueOutput(t *testing.T) {
-	ttyCtrl, cleanup := setupWithRC(
+	ttyCtrl, _, cleanup := setupWithRC(
 		`edit:prompt = { put 'val'; styled '> ' red }`)
 	defer cleanup()
 
@@ -22,7 +23,7 @@ func TestPrompt_ValueOutput(t *testing.T) {
 }
 
 func TestPrompt_ByteOutput(t *testing.T) {
-	ttyCtrl, cleanup := setupWithRC(`edit:prompt = { put 'bytes> ' }`)
+	ttyCtrl, _, cleanup := setupWithRC(`edit:prompt = { put 'bytes> ' }`)
 	defer cleanup()
 
 	ttyCtrl.TestBuffer(t,
@@ -30,7 +31,7 @@ func TestPrompt_ByteOutput(t *testing.T) {
 }
 
 func TestPrompt_NotifiesInvalidValueOutput(t *testing.T) {
-	ttyCtrl, cleanup := setupWithRC(`edit:prompt = { put good [bad] good2 }`)
+	ttyCtrl, _, cleanup := setupWithRC(`edit:prompt = { put good [bad] good2 }`)
 	defer cleanup()
 
 	ttyCtrl.TestBuffer(t,
@@ -40,7 +41,7 @@ func TestPrompt_NotifiesInvalidValueOutput(t *testing.T) {
 }
 
 func TestPrompt_NotifiesException(t *testing.T) {
-	ttyCtrl, cleanup := setupWithRC(`edit:prompt = { fail ERROR }`)
+	ttyCtrl, _, cleanup := setupWithRC(`edit:prompt = { fail ERROR }`)
 	defer cleanup()
 
 	ttyCtrl.TestNotesBuffer(t, bb().
@@ -48,7 +49,7 @@ func TestPrompt_NotifiesException(t *testing.T) {
 }
 
 func TestRPrompt(t *testing.T) {
-	ttyCtrl, cleanup := setupWithRC(`edit:rprompt = { put 'RRR' }`)
+	ttyCtrl, _, cleanup := setupWithRC(`edit:rprompt = { put 'RRR' }`)
 	defer cleanup()
 
 	ttyCtrl.TestBuffer(t,
@@ -57,7 +58,7 @@ func TestRPrompt(t *testing.T) {
 }
 
 func TestPromptEagerness(t *testing.T) {
-	ttyCtrl, cleanup := setupWithRC(
+	ttyCtrl, _, cleanup := setupWithRC(
 		`i = 0`,
 		`edit:prompt = { i = (+ $i 1); put $i'> ' }`,
 		`edit:-prompt-eagerness = 10`)
@@ -73,8 +74,9 @@ func TestPromptEagerness(t *testing.T) {
 }
 
 func TestPromptStaleThreshold(t *testing.T) {
-	ttyCtrl, cleanup := setupWithRC(
-		`edit:prompt = { esleep 0.1; put '> ' }`,
+	ttyCtrl, ev, cleanup := setupWithRC(
+		`pipe = (pipe)`,
+		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
 		`edit:prompt-stale-threshold = 0.05`)
 	defer cleanup()
 
@@ -82,13 +84,16 @@ func TestPromptStaleThreshold(t *testing.T) {
 		WriteStyled(styled.MakeText("???> ", "inverse")).SetDotToCursor().Buffer()
 	ttyCtrl.TestBuffer(t, wantBufStale)
 
+	evalf(ev, `pwclose $pipe`)
 	wantBufFresh := bb().WritePlain("> ").SetDotToCursor().Buffer()
 	ttyCtrl.TestBuffer(t, wantBufFresh)
+	evalf(ev, `prclose $pipe`)
 }
 
 func TestPromptStaleTransform(t *testing.T) {
-	ttyCtrl, cleanup := setupWithRC(
-		`edit:prompt = { esleep 0.1; put '> ' }`,
+	ttyCtrl, ev, cleanup := setupWithRC(
+		`pipe = (pipe)`,
+		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
 		`edit:prompt-stale-threshold = 0.05`,
 		`edit:prompt-stale-transform = [a]{ put S; put $a; put S }`)
 	defer cleanup()
@@ -96,6 +101,8 @@ func TestPromptStaleTransform(t *testing.T) {
 	wantBufStale := bb().
 		WriteStyled(styled.Plain("S???> S")).SetDotToCursor().Buffer()
 	ttyCtrl.TestBuffer(t, wantBufStale)
+	evalf(ev, `pwclose $pipe`)
+	evalf(ev, `prclose $pipe`)
 }
 
 func TestDefaultPromptForNonRoot(t *testing.T) {
@@ -140,13 +147,13 @@ func TestDefaultRPrompt(t *testing.T) {
 	ttyCtrl.TestBuffer(t, wantBuf)
 }
 
-func setupWithRC(codes ...string) (cli.TTYCtrl, func()) {
+func setupWithRC(codes ...string) (cli.TTYCtrl, *eval.Evaler, func()) {
 	ed, ttyCtrl, ev, cleanup := setup()
 	for _, code := range codes {
 		evalf(ev, `%s`, code)
 	}
 	_, _, stop := start(ed)
-	return ttyCtrl, func() {
+	return ttyCtrl, ev, func() {
 		stop()
 		cleanup()
 	}
