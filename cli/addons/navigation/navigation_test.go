@@ -117,6 +117,23 @@ func TestErrorInParent(t *testing.T) {
 func TestErrorInDeepMode(t *testing.T) {
 }
 
+func TestGetSelectedName(t *testing.T) {
+	app, _, cleanup := setupApp()
+	defer cleanup()
+
+	wantName := ""
+	if name := SelectedName(app); name != wantName {
+		t.Errorf("Got name %q, want %q", name, wantName)
+	}
+
+	Start(app, Config{Cursor: getTestCursor()})
+
+	wantName = "d1"
+	if name := SelectedName(app); name != wantName {
+		t.Errorf("Got name %q, want %q", name, wantName)
+	}
+}
+
 func testNavigation(t *testing.T, c Cursor) {
 	app, ttyCtrl, cleanup := setupApp()
 	defer cleanup()

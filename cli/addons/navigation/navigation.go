@@ -84,6 +84,25 @@ func Start(app cli.App, cfg Config) {
 	app.Redraw()
 }
 
+// SelectedName returns the currently selected name in the navigation addon. It
+// returns an empty string if the navigation addon is not active.
+func SelectedName(app cli.App) string {
+	colView, ok := app.CopyState().Listing.(colview.Widget)
+	if !ok {
+		return ""
+	}
+	listBox, ok := colView.CopyState().Columns[1].(listbox.Widget)
+	if !ok {
+		return ""
+	}
+	state := listBox.CopyState()
+	items, ok := state.Items.(fileItems)
+	if !ok {
+		return ""
+	}
+	return items[state.Selected].Name()
+}
+
 func updateState(w colview.Widget, cursor Cursor, selectName string) {
 	var parentCol, currentCol el.Widget
 
