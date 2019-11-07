@@ -23,12 +23,12 @@ jobs:
       script: make upload-coverage-codecov upload-coverage-coveralls
       if: type = push
       os: linux
-    - state: deploy
+    - stage: deploy
       name: Generate and upload coverage to codecov
       script: make upload-coverage-codecov
       if: type = push
       os: osx
-    - state: deploy
+    - stage: deploy
       name: Build and upload binaries to bintray
       script: make binaries-travis
       if: type = push
