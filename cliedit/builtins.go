@@ -18,6 +18,14 @@ import (
 //
 // Converts a normal map into a binding map.
 
+//elvdoc:fn -dump-buf
+//
+// Dumps the current UI buffer as HTML.
+
+func dumpBuf(tty cli.TTY) string {
+	return bufToHTML(tty.Buffer())
+}
+
 //elvdoc:fn close-listing
 //
 // Closes any active listing.
@@ -71,10 +79,11 @@ func wordify(fm *eval.Frame, code string) {
 	}
 }
 
-func initMiscBuiltins(app cli.App, ns eval.Ns) {
+func initMiscBuiltins(app cli.App, tty cli.TTY, ns eval.Ns) {
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"binding-table":  eddefs.MakeBindingMap,
 		"close-listing":  func() { closeListing(app) },
+		"-dump-buf":      func() string { return dumpBuf(tty) },
 		"end-of-history": func() { endOfHistory(app) },
 		"key":            ui.ToKey,
 		"redraw":         app.Redraw,

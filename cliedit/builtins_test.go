@@ -37,6 +37,23 @@ func TestCloseListing(t *testing.T) {
 	}
 }
 
+func TestDumpBuf(t *testing.T) {
+	_, ttyCtrl, ev, cleanup := setupStarted()
+	defer cleanup()
+
+	feedInput(ttyCtrl, "echo")
+	wantBuf := bb().WritePlain("~> ").
+		WriteStyled(styled.MakeText("echo", "green")).SetDotToCursor().Buffer()
+	// Wait until the buffer we want has shown up.
+	ttyCtrl.TestBuffer(t, wantBuf)
+
+	evalf(ev, `html = (edit:-dump-buf)`)
+	wantHTML := `~&gt; <span class="sgr-32">echo</span>` + "\n"
+	if html := ev.Global["html"].Get().(string); html != wantHTML {
+		t.Errorf("dumped HTML %q, want %q", html, wantHTML)
+	}
+}
+
 func TestEndOfHistory(t *testing.T) {
 	_, ttyCtrl, ev, cleanup := setupStarted()
 	defer cleanup()
