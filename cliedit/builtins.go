@@ -6,10 +6,12 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/cliutil"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/parse/parseutil"
 	"github.com/elves/elvish/util"
 )
@@ -57,12 +59,41 @@ func endOfHistory(app cli.App) {
 //elvdoc:fn return-line
 //
 // Causes the Elvish REPL to end the current read iteration and evaluate the
-// code it just read. Internally, this works by raising a special exception.
+// code it just read.
 
 //elvdoc:fn return-eof
 //
 // Causes the Elvish REPL to terminate. Internally, this works by raising a
 // special exception.
+
+//elvdoc:fn smart-enter
+//
+// Inserts a literal newline if the code before the dot is not syntactically
+// complete Elvish code. Accepts the current line otherwise.
+
+func smartEnter(app cli.App) {
+	// TODO(xiaq): Fix the race condition.
+	buf := cliutil.GetCodeBuffer(app)
+	if isSyntaxComplete(buf.Content[:buf.Dot]) {
+		app.CommitCode()
+	} else {
+		app.CodeArea().MutateState(func(s *codearea.State) {
+			s.Buffer.InsertAtDot("\n")
+		})
+	}
+}
+
+func isSyntaxComplete(code string) bool {
+	_, err := parse.AsChunk("[interactive]", code)
+	if err != nil {
+		for _, e := range err.(parse.MultiError).Entries {
+			if e.Context.Begin == len(code) {
+				return false
+			}
+		}
+	}
+	return true
+}
 
 //elvdoc:fn wordify
 //
@@ -92,6 +123,7 @@ func initMiscBuiltins(app cli.App, ns eval.Ns) {
 		"redraw":         app.Redraw,
 		"return-line":    app.CommitCode,
 		"return-eof":     app.CommitEOF,
+		"smart-enter":    func() { smartEnter(app) },
 		"wordify":        wordify,
 	})
 }

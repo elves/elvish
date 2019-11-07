@@ -3,8 +3,10 @@ package cliedit
 import (
 	"io"
 	"testing"
+	"time"
 
 	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/cliutil"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/edit/ui"
@@ -112,6 +114,37 @@ func TestReturnEOF(t *testing.T) {
 	evalf(ev, `edit:return-eof`)
 	if err := <-errCh; err != io.EOF {
 		t.Errorf("got err %v, want %v", err, io.EOF)
+	}
+}
+
+func TestSmartEnter_InsertsNewlineWhenIncomplete(t *testing.T) {
+	ed, _, ev, cleanup := setupStarted()
+	defer cleanup()
+
+	cliutil.SetCodeBuffer(ed.app, codearea.Buffer{Content: "put [", Dot: 5})
+	evalf(ev, `edit:smart-enter`)
+	wantBuf := codearea.Buffer{Content: "put [\n", Dot: 6}
+	if buf := cliutil.GetCodeBuffer(ed.app); buf != wantBuf {
+		t.Errorf("got code buffer %v, want %v", buf, wantBuf)
+	}
+}
+
+func TestSmartEnter_AcceptsCodeWhenComplete(t *testing.T) {
+	ed, _, ev, cleanup := setup()
+	defer cleanup()
+	codeCh, _, stop := start(ed)
+	defer stop()
+
+	cliutil.SetCodeBuffer(ed.app, codearea.Buffer{Content: "put", Dot: 3})
+	evalf(ev, `edit:smart-enter`)
+	wantCode := "put"
+	select {
+	case code := <-codeCh:
+		if code != wantCode {
+			t.Errorf("got return code %q, want %q", code, wantCode)
+		}
+	case <-time.After(time.Second):
+		t.Errorf("timed out after 1 second")
 	}
 }
 

@@ -29,6 +29,7 @@ insert:binding = (binding-table [
   &Tab=    $completion:start~
   &Up=     $history:start~
 
+  &Enter=   $smart-enter~
   &Ctrl-D=  $return-eof~
 ])
 
