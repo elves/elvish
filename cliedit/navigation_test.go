@@ -25,7 +25,8 @@ func TestNavigation(t *testing.T) {
 		'-': "inverse",
 	}
 	wantBuf := bb().
-		WritePlain("~/d> ").Newline().SetDotToCursor().
+		WritePlain("~" + string(os.PathSeparator) + "d> ").
+		Newline().SetDotToCursor().
 		WriteStyled(styled.MarkLines(
 			" d       a                    ", styles,
 			"####### --------------------- ",
