@@ -12,8 +12,15 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/el/textview"
+	"github.com/elves/elvish/cli/term"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 )
+
+type widget struct{ inner colview.Widget }
+
+func (w widget) Handle(e term.Event) bool   { return w.inner.Handle(e) }
+func (w widget) Render(a, b int) *ui.Buffer { return w.inner.Render(a, b) }
 
 // Config contains the configuration needed for the navigation functionality.
 type Config struct {
@@ -80,27 +87,19 @@ func Start(app cli.App, cfg Config) {
 		OnRight:        onRight,
 	})
 	updateState(w, cursor, "")
-	app.MutateState(func(s *cli.State) { s.Listing = w })
+	app.MutateState(func(s *cli.State) { s.Listing = widget{w} })
 	app.Redraw()
 }
 
 // SelectedName returns the currently selected name in the navigation addon. It
 // returns an empty string if the navigation addon is not active.
 func SelectedName(app cli.App) string {
-	colView, ok := app.CopyState().Listing.(colview.Widget)
+	w, ok := app.CopyState().Listing.(widget)
 	if !ok {
 		return ""
 	}
-	listBox, ok := colView.CopyState().Columns[1].(listbox.Widget)
-	if !ok {
-		return ""
-	}
-	state := listBox.CopyState()
-	items, ok := state.Items.(fileItems)
-	if !ok {
-		return ""
-	}
-	return items[state.Selected].Name()
+	state := w.inner.CopyState().Columns[1].(listbox.Widget).CopyState()
+	return state.Items.(fileItems)[state.Selected].Name()
 }
 
 func updateState(w colview.Widget, cursor Cursor, selectName string) {
