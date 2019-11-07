@@ -79,11 +79,14 @@ func wordify(fm *eval.Frame, code string) {
 	}
 }
 
-func initMiscBuiltins(app cli.App, tty cli.TTY, ns eval.Ns) {
+func initDumpBuf(tty cli.TTY, ns eval.Ns) {
+	ns.AddGoFn("<edit>", "-dump-buf", func() string { return dumpBuf(tty) })
+}
+
+func initMiscBuiltins(app cli.App, ns eval.Ns) {
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"binding-table":  eddefs.MakeBindingMap,
 		"close-listing":  func() { closeListing(app) },
-		"-dump-buf":      func() string { return dumpBuf(tty) },
 		"end-of-history": func() { endOfHistory(app) },
 		"key":            ui.ToKey,
 		"redraw":         app.Redraw,
