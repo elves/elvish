@@ -13,8 +13,10 @@ env:
     - GO111MODULE=off
 jobs:
   include:
-    - state: test
-      os: osx
+    - os: osx
+      go: 1.13.x
+    - os: osx
+      go: 1.12.x
     # TODO(xiaq): Enable coverage reports for pull requests
     - stage: deploy
       name: Generate and upload coverage to codecov and coveralls
