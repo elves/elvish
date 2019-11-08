@@ -11,8 +11,8 @@ type AppSpec struct {
 	TTY               TTY
 	MaxHeight         func() int
 	RPromptPersistent func() bool
-	BeforeReadline    func()
-	AfterReadline     func(string)
+	BeforeReadline    []func()
+	AfterReadline     []func(string)
 
 	Highlighter Highlighter
 	Prompt      Prompt

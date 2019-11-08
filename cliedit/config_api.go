@@ -26,17 +26,17 @@ func initMaxHeight(appSpec *cli.AppSpec, ns eval.Ns) {
 func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	hook := newListVar(vals.EmptyList)
 	ns["before-readline"] = hook
-	appSpec.BeforeReadline = func() {
+	appSpec.BeforeReadline = append(appSpec.BeforeReadline, func() {
 		callHooks(ev, "$<edit>:before-readline", hook.Get().(vals.List))
-	}
+	})
 }
 
 func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	hook := newListVar(vals.EmptyList)
 	ns["after-readline"] = hook
-	appSpec.AfterReadline = func(code string) {
+	appSpec.AfterReadline = append(appSpec.AfterReadline, func(code string) {
 		callHooks(ev, "$<edit>:after-readline", hook.Get().(vals.List), code)
-	}
+	})
 }
 
 func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}) {

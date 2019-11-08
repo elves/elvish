@@ -121,7 +121,9 @@ func TestReadCode_PassesInputEventsToCodeArea(t *testing.T) {
 
 func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 	called := 0
-	a, tty := setupWithSpec(AppSpec{BeforeReadline: func() { called++ }})
+	a, tty := setupWithSpec(AppSpec{
+		BeforeReadline: []func(){func() { called++ }},
+	})
 
 	// Causes BasicMode to quit
 	tty.Inject(term.KeyEvent{Rune: '\n'})
@@ -137,10 +139,11 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 	called := 0
 	code := ""
 	a, tty := setupWithSpec(AppSpec{
-		AfterReadline: func(s string) {
+		AfterReadline: []func(string){func(s string) {
 			called++
 			code = s
-		}})
+		}},
+	})
 
 	// Causes BasicMode to write state.Code and then quit
 	tty.Inject(term.KeyEvent{Rune: 'a'})

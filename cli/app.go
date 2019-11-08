@@ -47,8 +47,8 @@ type app struct {
 	TTY               TTY
 	MaxHeight         func() int
 	RPromptPersistent func() bool
-	BeforeReadline    func()
-	AfterReadline     func(string)
+	BeforeReadline    []func()
+	AfterReadline     []func(string)
 	Highlighter       Highlighter
 	Prompt            Prompt
 	RPrompt           Prompt
@@ -90,12 +90,6 @@ func NewApp(spec AppSpec) App {
 	}
 	if a.RPromptPersistent == nil {
 		a.RPromptPersistent = func() bool { return false }
-	}
-	if a.BeforeReadline == nil {
-		a.BeforeReadline = func() {}
-	}
-	if a.AfterReadline == nil {
-		a.AfterReadline = func(string) {}
 	}
 	if a.Highlighter == nil {
 		a.Highlighter = dummyHighlighter{}
@@ -304,9 +298,14 @@ func (a *app) ReadCode() (string, error) {
 	defer a.resetAllStates()
 
 	// BeforeReadline and AfterReadline hooks.
-	a.BeforeReadline()
+	for _, f := range a.BeforeReadline {
+		f()
+	}
 	defer func() {
-		a.AfterReadline(a.codeArea.CopyState().Buffer.Content)
+		content := a.codeArea.CopyState().Buffer.Content
+		for _, f := range a.AfterReadline {
+			f(content)
+		}
 	}()
 
 	return a.loop.Run()
