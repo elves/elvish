@@ -105,6 +105,37 @@ func TestPromptStaleTransform(t *testing.T) {
 	evalf(ev, `prclose $pipe`)
 }
 
+func TestRPromptPersistent_True(t *testing.T) {
+	wantBufFinal := bb().
+		WritePlain("~> " + strings.Repeat(" ", testTTYWidth-6) + "RRR").
+		Newline().SetDotToCursor().
+		Buffer()
+	testRPromptPersistent(t, `edit:rprompt-persistent = $true`, wantBufFinal)
+}
+
+func TestRPromptPersistent_False(t *testing.T) {
+	wantBufFinal := bb().
+		WritePlain("~> "). // no rprompt
+		Newline().SetDotToCursor().
+		Buffer()
+	testRPromptPersistent(t, `edit:rprompt-persistent = $false`, wantBufFinal)
+}
+
+func testRPromptPersistent(t *testing.T, code string, wantBufFinal *ui.Buffer) {
+	ttyCtrl, _, cleanup := setupWithRC(`edit:rprompt = { put RRR }`, code)
+	defer cleanup()
+
+	// Make sure that the UI has stablized before hitting Enter.
+	wantBufStable := bb().
+		WritePlain("~> ").SetDotToCursor().
+		WritePlain(strings.Repeat(" ", testTTYWidth-6) + "RRR").
+		Buffer()
+	ttyCtrl.TestBuffer(t, wantBufStable)
+	ttyCtrl.Inject(term.K('\n'))
+
+	ttyCtrl.TestBuffer(t, wantBufFinal)
+}
+
 func TestDefaultPromptForNonRoot(t *testing.T) {
 	ed, ttyCtrl, ev, cleanup := setup()
 	defer cleanup()

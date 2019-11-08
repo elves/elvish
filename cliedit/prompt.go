@@ -21,6 +21,10 @@ func initPrompts(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns)
 	promptVal, rpromptVal := getDefaultPromptVals()
 	initPrompt(&appSpec.Prompt, "prompt", promptVal, nt, ev, ns)
 	initPrompt(&appSpec.RPrompt, "rprompt", rpromptVal, nt, ev, ns)
+
+	rpromptPersistentVar := newBoolVar(false)
+	appSpec.RPromptPersistent = func() bool { return rpromptPersistentVar.Get().(bool) }
+	ns["rprompt-persistent"] = rpromptPersistentVar
 }
 
 func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *eval.Evaler, ns eval.Ns) {
