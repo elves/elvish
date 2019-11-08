@@ -271,7 +271,17 @@ func (t TTYCtrl) TestBuffer(tt *testing.T, b *ui.Buffer) {
 	tt.Helper()
 	ok := testBuffer(tt, b, t.bufCh)
 	if !ok {
-		tt.Logf("Last buffer: %s", t.LastBuffer().TTYString())
+		lastBuf := t.LastBuffer()
+		tt.Logf("Last buffer: %s", lastBuf.TTYString())
+		if lastBuf == nil {
+			bufs := t.BufferHistory()
+			for i := len(bufs) - 1; i >= 0; i-- {
+				if bufs[i] != nil {
+					tt.Logf("Last non-nil buffer: %s", bufs[i].TTYString())
+					return
+				}
+			}
+		}
 	}
 }
 

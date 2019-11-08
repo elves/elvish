@@ -9,7 +9,6 @@ import (
 
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/codearea"
-	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
@@ -196,18 +195,22 @@ func (a *app) redraw(flag redrawFlag) {
 	bufNotes := renderNotes(notes, width)
 	isFinalRedraw := flag&finalRedraw != 0
 	if isFinalRedraw {
-		// This is a bit of hack to achieve two things desirable for the final
-		// redraw: put the cursor below the code area, and make sure it is on a
-		// new empty line.
-		listing = layout.Empty{}
-	}
-	bufMain := renderApp(a.codeArea, listing, width, height)
+		hideRPrompt := !a.RPromptPersistent()
+		if hideRPrompt {
+			a.codeArea.MutateState(func(s *codearea.State) { s.HideRPrompt = true })
+		}
+		bufMain := renderApp(a.codeArea, nil /* listing */, width, height)
+		if hideRPrompt {
+			a.codeArea.MutateState(func(s *codearea.State) { s.HideRPrompt = false })
+		}
+		// Insert a newline after the buffer and position the cursor there.
+		bufMain.Extend(ui.NewBuffer(width), true)
 
-	// Apply buffers.
-	a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
-
-	if isFinalRedraw {
+		a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 		a.TTY.ResetBuffer()
+	} else {
+		bufMain := renderApp(a.codeArea, listing, width, height)
+		a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 	}
 }
 

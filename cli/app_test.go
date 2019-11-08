@@ -57,6 +57,44 @@ func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
 	}
 }
 
+func TestReadCode_FinalRedrawWithRPrompt(t *testing.T) {
+	a, tty := setupWithSpec(AppSpec{
+		CodeAreaState: codearea.State{
+			Buffer: codearea.Buffer{Content: "code"}},
+		RPrompt:           constPrompt{styled.Plain("R")},
+		RPromptPersistent: func() bool { return true },
+	})
+
+	tty.SetSize(24, 60)
+	tty.Inject(term.KeyEvent{Rune: '\n'})
+	a.ReadCode()
+
+	wantBuf := ui.NewBufferBuilder(60).
+		WritePlain("code" + strings.Repeat(" ", 55) + "R").
+		Newline().SetDotToCursor(). // cursor on newline in final redraw
+		Buffer()
+	tty.TestBuffer(t, wantBuf)
+}
+
+func TestReadCode_FinalRedrawWithoutRPrompt(t *testing.T) {
+	a, tty := setupWithSpec(AppSpec{
+		CodeAreaState: codearea.State{
+			Buffer: codearea.Buffer{Content: "code"}},
+		RPrompt:           constPrompt{styled.Plain("R")},
+		RPromptPersistent: func() bool { return false },
+	})
+
+	tty.SetSize(24, 60)
+	tty.Inject(term.KeyEvent{Rune: '\n'})
+	a.ReadCode()
+
+	wantBuf := ui.NewBufferBuilder(60).
+		WritePlain("code").         // no rprompt
+		Newline().SetDotToCursor(). // cursor on newline in final redraw
+		Buffer()
+	tty.TestBuffer(t, wantBuf)
+}
+
 func TestReadCode_PassesInputEventsToPopup(t *testing.T) {
 	/*
 		a, tty := setup()
@@ -237,10 +275,6 @@ func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
 	tty.TestBuffer(t, bufNewPrompt)
 
 	cleanup(a, codeCh)
-}
-
-func TestReadCode_SupportsPersistentRPrompt(t *testing.T) {
-	// TODO
 }
 
 func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
