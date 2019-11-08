@@ -28,7 +28,12 @@ func getView(w *widget) *view {
 		styledCode = parts[0].ConcatText(pending).ConcatText(parts[2])
 	}
 
-	return &view{w.Prompt(), w.RPrompt(), styledCode, code.Dot, errors}
+	var rprompt styled.Text
+	if !s.HideRPrompt {
+		rprompt = w.RPrompt()
+	}
+
+	return &view{w.Prompt(), rprompt, styledCode, code.Dot, errors}
 }
 
 func patchPending(c Buffer, p Pending) (Buffer, int, int) {

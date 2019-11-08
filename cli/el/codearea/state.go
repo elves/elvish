@@ -3,8 +3,9 @@ package codearea
 // State keeps the state of the widget. Its access must be synchronized through
 // the mutex.
 type State struct {
-	Buffer  Buffer
-	Pending Pending
+	Buffer      Buffer
+	Pending     Pending
+	HideRPrompt bool
 }
 
 // Buffer represents the state of the buffer.

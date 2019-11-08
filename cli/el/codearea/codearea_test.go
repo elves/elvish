@@ -58,6 +58,16 @@ var renderTests = []el.RenderTest{
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("~>code").SetDotToCursor().WritePlain("  RP"),
 	},
+
+	{
+		Name: "prompt explicitly hidden ",
+		Given: New(Spec{
+			Prompt:  ConstPrompt(styled.Plain("~>")),
+			RPrompt: ConstPrompt(styled.Plain("RP")),
+			State:   State{Buffer: Buffer{Content: "code", Dot: 4}, HideRPrompt: true}}),
+		Width: 10, Height: 24,
+		Want: bb(10).WritePlain("~>code").SetDotToCursor(),
+	},
 	{
 		Name: "rprompt too long",
 		Given: New(Spec{
