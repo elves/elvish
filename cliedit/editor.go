@@ -36,6 +36,13 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 		// TODO(xiaq): Report the error.
 	}
 
+	if fuser != nil {
+		appSpec.AfterReadline = []func(string){func(code string) {
+			fuser.AddCmd(code)
+			// TODO(xiaq): Handle the error.
+		}}
+	}
+
 	// Make a variable for the app first. This is to work around the
 	// bootstrapping of initPrompts, which expects a notifier.
 	var app cli.App
