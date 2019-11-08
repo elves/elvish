@@ -16,130 +16,127 @@ import (
 )
 
 func TestBindingMap(t *testing.T) {
-	_, _, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	evalf(ev, `called = $false`)
-	evalf(ev, `m = (edit:binding-table [&a={ called = $true }])`)
-	_, ok := ev.Global["m"].Get().(bindingMap)
+	evals(f.Evaler, `called = $false`)
+	evals(f.Evaler, `m = (edit:binding-table [&a={ called = $true }])`)
+	_, ok := getGlobal(f.Evaler, "m").(bindingMap)
 	if !ok {
 		t.Errorf("edit:binding-table did not create bindingMap variable")
 	}
 }
 
 func TestCloseListing(t *testing.T) {
-	ed, _, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	ed.app.MutateState(func(s *cli.State) { s.Listing = layout.Empty{} })
-	evalf(ev, `edit:close-listing`)
+	f.Editor.app.MutateState(func(s *cli.State) { s.Listing = layout.Empty{} })
+	evals(f.Evaler, `edit:close-listing`)
 
-	if listing := ed.app.CopyState().Listing; listing != nil {
+	if listing := f.Editor.app.CopyState().Listing; listing != nil {
 		t.Errorf("got listing %v, want nil", listing)
 	}
 }
 
 func TestDumpBuf(t *testing.T) {
-	_, ttyCtrl, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	feedInput(ttyCtrl, "echo")
+	feedInput(f.TTYCtrl, "echo")
 	wantBuf := bb().WritePlain("~> ").
 		WriteStyled(styled.MakeText("echo", "green")).SetDotToCursor().Buffer()
 	// Wait until the buffer we want has shown up.
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTYCtrl.TestBuffer(t, wantBuf)
 
-	evalf(ev, `html = (edit:-dump-buf)`)
+	evals(f.Evaler, `html = (edit:-dump-buf)`)
 	wantHTML := `~&gt; <span class="sgr-32">echo</span>` + "\n"
-	if html := ev.Global["html"].Get().(string); html != wantHTML {
+	if html := getGlobal(f.Evaler, "html").(string); html != wantHTML {
 		t.Errorf("dumped HTML %q, want %q", html, wantHTML)
 	}
 }
 
 func TestEndOfHistory(t *testing.T) {
-	_, ttyCtrl, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	evalf(ev, `edit:end-of-history`)
+	evals(f.Evaler, `edit:end-of-history`)
 	wantNotesBuf := bb().WritePlain("End of history").Buffer()
-	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
+	f.TTYCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
 func TestKey(t *testing.T) {
-	_, _, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	evalf(ev, `k = (edit:key a)`)
+	evals(f.Evaler, `k = (edit:key a)`)
 	wantK := ui.K('a')
-	if k := ev.Global["k"].Get(); k != wantK {
+	if k := f.Evaler.Global["k"].Get(); k != wantK {
 		t.Errorf("$k is %v, want %v", k, wantK)
 	}
 }
 
 func TestRedraw(t *testing.T) {
-	_, ttyCtrl, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	evalf(ev, `edit:current-command = echo`)
-	evalf(ev, `edit:redraw`)
+	evals(f.Evaler, `edit:current-command = echo`)
+	evals(f.Evaler, `edit:redraw`)
 	wantBuf := bb().WriteStyled(styled.MarkLines(
 		"~> echo", styles,
 		"   gggg",
 	)).SetDotToCursor().Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
 func TestReturnCode(t *testing.T) {
-	ed, _, ev, cleanup := setupUnstarted()
-	defer cleanup()
-	codeCh, errCh, _ := start(ed)
+	f := setup()
+	defer f.Cleanup()
 
-	ed.app.CodeArea().MutateState(func(s *codearea.State) {
+	f.Editor.app.CodeArea().MutateState(func(s *codearea.State) {
 		s.Buffer.Content = "test code"
 	})
-	evalf(ev, `edit:return-line`)
-	if code := <-codeCh; code != "test code" {
+	evals(f.Evaler, `edit:return-line`)
+	code, err := f.Wait()
+	if code != "test code" {
 		t.Errorf("got code %q, want %q", code, "test code")
 	}
-	if err := <-errCh; err != nil {
+	if err != nil {
 		t.Errorf("got err %v, want nil", err)
 	}
 }
 
 func TestReturnEOF(t *testing.T) {
-	ed, _, ev, cleanup := setupUnstarted()
-	defer cleanup()
-	_, errCh, _ := start(ed)
+	f := setup()
+	defer f.Cleanup()
 
-	evalf(ev, `edit:return-eof`)
-	if err := <-errCh; err != io.EOF {
+	evals(f.Evaler, `edit:return-eof`)
+	if _, err := f.Wait(); err != io.EOF {
 		t.Errorf("got err %v, want %v", err, io.EOF)
 	}
 }
 
 func TestSmartEnter_InsertsNewlineWhenIncomplete(t *testing.T) {
-	ed, _, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	cliutil.SetCodeBuffer(ed.app, codearea.Buffer{Content: "put [", Dot: 5})
-	evalf(ev, `edit:smart-enter`)
+	cliutil.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "put [", Dot: 5})
+	evals(f.Evaler, `edit:smart-enter`)
 	wantBuf := codearea.Buffer{Content: "put [\n", Dot: 6}
-	if buf := cliutil.GetCodeBuffer(ed.app); buf != wantBuf {
+	if buf := cliutil.GetCodeBuffer(f.Editor.app); buf != wantBuf {
 		t.Errorf("got code buffer %v, want %v", buf, wantBuf)
 	}
 }
 
 func TestSmartEnter_AcceptsCodeWhenComplete(t *testing.T) {
-	ed, _, ev, cleanup := setupUnstarted()
-	defer cleanup()
-	codeCh, _, stop := start(ed)
-	defer stop()
+	f := setup()
+	defer f.Cleanup()
 
-	cliutil.SetCodeBuffer(ed.app, codearea.Buffer{Content: "put", Dot: 3})
-	evalf(ev, `edit:smart-enter`)
+	cliutil.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "put", Dot: 3})
+	evals(f.Evaler, `edit:smart-enter`)
 	wantCode := "put"
 	select {
-	case code := <-codeCh:
+	case code := <-f.codeCh:
 		if code != wantCode {
 			t.Errorf("got return code %q, want %q", code, wantCode)
 		}
@@ -149,12 +146,12 @@ func TestSmartEnter_AcceptsCodeWhenComplete(t *testing.T) {
 }
 
 func TestWordify(t *testing.T) {
-	_, _, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	evalf(ev, `@words = (edit:wordify 'ls str [list]')`)
+	evals(f.Evaler, `@words = (edit:wordify 'ls str [list]')`)
 	wantWords := vals.MakeList("ls", "str", "[list]")
-	if words := ev.Global["words"].Get(); !vals.Equal(words, wantWords) {
+	if words := f.Evaler.Global["words"].Get(); !vals.Equal(words, wantWords) {
 		t.Errorf("$words is %v, want %v", words, wantWords)
 	}
 }
@@ -187,16 +184,16 @@ var bufferBuiltinsTests = []struct {
 }
 
 func TestBufferBuiltins(t *testing.T) {
-	ed, _, ev, cleanup := setup()
-	app := ed.app
-	defer cleanup()
+	f := setup()
+	app := f.Editor.app
+	defer f.Cleanup()
 
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {
 			app.CodeArea().MutateState(func(s *codearea.State) {
 				s.Buffer = test.bufBefore
 			})
-			evalf(ev, "edit:%s", test.name)
+			evals(f.Evaler, "edit:"+test.name)
 			if buf := app.CodeArea().CopyState().Buffer; buf != test.bufAfter {
 				t.Errorf("got buf %v, want %v", buf, test.bufAfter)
 			}

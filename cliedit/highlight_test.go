@@ -18,10 +18,10 @@ import (
 // High-level sanity test.
 
 func TestHighlighter(t *testing.T) {
-	_, ttyCtrl, _, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	feedInput(ttyCtrl, "put $true")
+	feedInput(f.TTYCtrl, "put $true")
 	wantBuf1 := bb().
 		WriteStyled(styled.MarkLines(
 			"~> put $true", styles,
@@ -29,9 +29,9 @@ func TestHighlighter(t *testing.T) {
 		)).
 		SetDotToCursor().
 		Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf1)
+	f.TTYCtrl.TestBuffer(t, wantBuf1)
 
-	feedInput(ttyCtrl, "x")
+	feedInput(f.TTYCtrl, "x")
 	wantBuf2 := bb().
 		WriteStyled(styled.MarkLines(
 			"~> put $truex", styles,
@@ -41,7 +41,7 @@ func TestHighlighter(t *testing.T) {
 		Newline().
 		WritePlain("compilation error: 4-10 in [tty]: variable $truex not found").
 		Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf2)
+	f.TTYCtrl.TestBuffer(t, wantBuf2)
 }
 
 // Fine-grained tests against the highlighter.

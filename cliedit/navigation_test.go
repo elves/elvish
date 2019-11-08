@@ -11,15 +11,16 @@ import (
 )
 
 func TestNavigation(t *testing.T) {
-	_, ttyCtrl, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
+
 	util.ApplyDir(util.Dir{"d": util.Dir{"a": ""}})
 	err := os.Chdir("d")
 	if err != nil {
 		panic(err)
 	}
 
-	ttyCtrl.Inject(term.K('N', ui.Ctrl))
+	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))
 	styles := map[rune]string{
 		'#': "blue inverse",
 		'-': "inverse",
@@ -32,11 +33,11 @@ func TestNavigation(t *testing.T) {
 			"####### --------------------- ",
 		)).
 		Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTYCtrl.TestBuffer(t, wantBuf)
 
-	evalf(ev, `file = $edit:selected-file`)
+	evals(f.Evaler, `file = $edit:selected-file`)
 	wantFile := "a"
-	if file := ev.Global["file"].Get().(string); file != wantFile {
+	if file := f.Evaler.Global["file"].Get().(string); file != wantFile {
 		t.Errorf("Got $edit:selected-file %q, want %q", file, wantFile)
 	}
 }

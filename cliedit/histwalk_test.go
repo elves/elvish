@@ -5,21 +5,18 @@ import (
 
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/styled"
 )
 
 func TestHistWalk(t *testing.T) {
-	st, cleanupStore := store.MustGetTempStore()
-	defer cleanupStore()
-	st.AddCmd("echo a")
+	f := setupWithOpt(setupOpt{
+		StoreOp: func(s storedefs.Store) {
+			s.AddCmd("echo a")
+		}})
+	defer f.Cleanup()
 
-	ed, ttyCtrl, _, cleanup := setupWithStore(st)
-	defer cleanup()
-	_, _, stop := start(ed)
-	defer stop()
-
-	ttyCtrl.Inject(term.K(ui.Up))
+	f.TTYCtrl.Inject(term.K(ui.Up))
 	wantBufWalk := bb().
 		WriteStyled(styled.MarkLines(
 			"~> echo a", styles,
@@ -29,13 +26,13 @@ func TestHistWalk(t *testing.T) {
 			" HISTORY #1 ", styles,
 			"mmmmmmmmmmmm",
 		)).Buffer()
-	ttyCtrl.TestBuffer(t, wantBufWalk)
+	f.TTYCtrl.TestBuffer(t, wantBufWalk)
 
-	ttyCtrl.Inject(term.K(ui.Enter))
+	f.TTYCtrl.Inject(term.K(ui.Enter))
 	wantBufDone := bb().
 		WriteStyled(styled.MarkLines(
 			"~> echo a", styles,
 			"   gggg  ",
 		)).SetDotToCursor().Buffer()
-	ttyCtrl.TestBuffer(t, wantBufDone)
+	f.TTYCtrl.TestBuffer(t, wantBufDone)
 }

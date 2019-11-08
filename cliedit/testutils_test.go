@@ -1,8 +1,6 @@
 package cliedit
 
 import (
-	"fmt"
-
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
@@ -29,73 +27,106 @@ const (
 
 func bb() *ui.BufferBuilder { return ui.NewBufferBuilder(testTTYWidth) }
 
+type setupOpt struct {
+	// Don't start the editor.
+	Unstarted bool
+	// Operation on the store before creating the editor.
+	StoreOp func(storedefs.Store)
+}
+
+type fixture struct {
+	Editor  *Editor
+	TTYCtrl cli.TTYCtrl
+	Evaler  *eval.Evaler
+	Store   storedefs.Store
+
+	codeCh   <-chan string
+	errCh    <-chan error
+	cleanups []func()
+}
+
+func setup() *fixture {
+	return setupWithOpt(setupOpt{})
+}
+
+func setupWithRC(codes ...string) *fixture {
+	f := setupWithOpt(setupOpt{Unstarted: true})
+	evals(f.Evaler, codes...)
+	f.Start()
+	return f
+}
+
+func setupWithOpt(opt setupOpt) *fixture {
+	st, cleanupStore := store.MustGetTempStore()
+	if opt.StoreOp != nil {
+		opt.StoreOp(st)
+	}
+	_, cleanupFs := eval.InTempHome()
+	tty, ttyCtrl := cli.NewFakeTTY()
+	ttyCtrl.SetSize(testTTYHeight, testTTYWidth)
+	ev := eval.NewEvaler()
+	ed := NewEditor(tty, ev, st)
+	ev.InstallModule("edit", ed.Ns())
+	evals(ev,
+		`use edit`,
+		// This will simplify most tests against the terminal.
+		"edit:rprompt = { }")
+	f := &fixture{ed, ttyCtrl, ev, st, nil, nil, []func(){cleanupStore, cleanupFs}}
+	if !opt.Unstarted {
+		f.Start()
+	}
+	return f
+}
+
+func (f *fixture) Start() {
+	codeCh := make(chan string, 1)
+	errCh := make(chan error, 1)
+	go func() {
+		code, err := f.Editor.ReadLine()
+		// Write to the channels and close them. This means that the first read
+		// from those channels will get the return value, and subsequent reads
+		// will get the zero value of string and error. This means that the Wait
+		// method can be called multiple times, and only the first call blocks
+		// until the editor stops, and subsequent calls are no-ops.
+		codeCh <- code
+		close(codeCh)
+		errCh <- err
+		close(errCh)
+	}()
+	f.codeCh, f.errCh = codeCh, errCh
+	f.cleanups = append(f.cleanups, func() { f.StopAndWait() })
+}
+
+func (f *fixture) StopAndWait() (string, error) {
+	f.Editor.app.CommitEOF()
+	return f.Wait()
+}
+
+func (f *fixture) Wait() (string, error) {
+	return <-f.codeCh, <-f.errCh
+}
+
+func (f *fixture) Cleanup() {
+	for i := len(f.cleanups) - 1; i >= 0; i-- {
+		f.cleanups[i]()
+	}
+}
+
+func getGlobal(ev *eval.Evaler, name string) interface{} {
+	return ev.Global[name].Get()
+}
+
 func feedInput(ttyCtrl cli.TTYCtrl, s string) {
 	for _, r := range s {
 		ttyCtrl.Inject(term.K(r))
 	}
 }
 
-func evalf(ev *eval.Evaler, format string, args ...interface{}) {
-	code := fmt.Sprintf(format, args...)
-	// TODO: Should use a difference source type
-	err := ev.EvalSourceInTTY(eval.NewInteractiveSource(code))
-	if err != nil {
-		panic(err)
-	}
-}
-
-func setupUnstarted() (*Editor, cli.TTYCtrl, *eval.Evaler, func()) {
-	// TODO(xiaq): Use an in-memory implementation when that is possible.
-	st, cleanupStore := store.MustGetTempStore()
-	ed, ttyCtrl, ev, cleanupFs := setupWithStore(st)
-	return ed, ttyCtrl, ev, func() {
-		cleanupFs()
-		cleanupStore()
-	}
-}
-
-func setupWithStore(st storedefs.Store) (*Editor, cli.TTYCtrl, *eval.Evaler, func()) {
-	_, cleanup := eval.InTempHome()
-	tty, ttyCtrl := cli.NewFakeTTY()
-	ttyCtrl.SetSize(testTTYHeight, testTTYWidth)
-	ev := eval.NewEvaler()
-	ed := NewEditor(tty, ev, st)
-	ev.InstallModule("edit", ed.Ns())
-	evalf(ev, "use edit")
-	evalf(ev, "edit:rprompt = { }")
-	return ed, ttyCtrl, ev, cleanup
-}
-
-func setup() (*Editor, cli.TTYCtrl, *eval.Evaler, func()) {
-	ed, ttyCtrl, ev, cleanup := setupUnstarted()
-	_, _, stop := start(ed)
-	return ed, ttyCtrl, ev, func() {
-		stop()
-		cleanup()
-	}
-}
-
-func start(ed *Editor) (<-chan string, <-chan error, func()) {
-	codeCh := make(chan string, 1)
-	errCh := make(chan error, 1)
-	go func() {
-		code, err := ed.ReadLine()
-		// Write to the channels and close them. This means that the first read
-		// from those channels will get the return value, and subsequent reads
-		// will get the zero value of string and error. This in turn implies
-		// that:
-		//
-		// 1) The caller of start can read the return value from the channel
-		//    before it calls the stop callback.
-		// 2) As long as the code has reached this point, the read from the stop
-		//    callback will not block.
-		codeCh <- code
-		close(codeCh)
-		errCh <- err
-		close(errCh)
-	}()
-	return codeCh, errCh, func() {
-		ed.app.CommitEOF()
-		<-codeCh
+func evals(ev *eval.Evaler, codes ...string) {
+	for _, code := range codes {
+		err := ev.EvalSourceInTTY(eval.NewInteractiveSource(code))
+		if err != nil {
+			panic(err)
+		}
 	}
 }

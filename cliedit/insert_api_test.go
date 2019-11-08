@@ -7,71 +7,67 @@ import (
 )
 
 func TestInsert_Abbr(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setupUnstarted()
-	defer cleanup()
-	codeCh, _, stop := start(ed)
-	defer stop()
+	f := setup()
+	defer f.Cleanup()
 
-	evalf(ev, `edit:abbr = [&x=full]`)
-	ttyCtrl.Inject(term.K('x'), term.K('\n'))
+	evals(f.Evaler, `edit:abbr = [&x=full]`)
+	f.TTYCtrl.Inject(term.K('x'), term.K('\n'))
 
-	if code := <-codeCh; code != "full" {
+	if code := <-f.codeCh; code != "full" {
 		t.Errorf("abbreviation expanded to %q, want %q", code, "full")
 	}
 }
 
 func TestInsert_Binding(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setupUnstarted()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	evalf(ev, `called = 0`)
-	evalf(ev, `edit:insert:binding[x] = { called = (+ $called 1) }`)
+	evals(f.Evaler,
+		`called = 0`,
+		`edit:insert:binding[x] = { called = (+ $called 1) }`)
 
-	codeCh, _, _ := start(ed)
-	ttyCtrl.Inject(term.K('x'), term.K('\n'))
-	code := <-codeCh
+	f.TTYCtrl.Inject(term.K('x'), term.K('\n'))
 
-	if code != "" {
+	if code := <-f.codeCh; code != "" {
 		t.Errorf("code = %q, want %q", code, "")
 	}
-	if called := ev.Global["called"].Get(); called != 1.0 {
+	if called := f.Evaler.Global["called"].Get(); called != 1.0 {
 		t.Errorf("called = %v, want 1", called)
 	}
 }
 
 func TestInsert_QuotePaste(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setupUnstarted()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	evalf(ev, `edit:insert:quote-paste = $true`)
+	evals(f.Evaler, `edit:insert:quote-paste = $true`)
 
-	codeCh, _, _ := start(ed)
-	ttyCtrl.Inject(
+	f.TTYCtrl.Inject(
 		term.PasteSetting(true),
 		term.K('>'),
 		term.PasteSetting(false),
 		term.K('\n'))
-	code := <-codeCh
 
 	wantCode := `'>'`
-	if code != wantCode {
+	if code := <-f.codeCh; code != wantCode {
 		t.Errorf("Got code %q, want %q", code, wantCode)
 	}
 }
 
 func TestToggleQuotePaste(t *testing.T) {
-	_, _, ev, cleanup := setupUnstarted()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	evalf(ev, `v0 = $edit:insert:quote-paste`)
-	evalf(ev, `edit:toggle-quote-paste`)
-	evalf(ev, `v1 = $edit:insert:quote-paste`)
-	evalf(ev, `edit:toggle-quote-paste`)
-	evalf(ev, `v2 = $edit:insert:quote-paste`)
+	evals(f.Evaler,
+		`v0 = $edit:insert:quote-paste`,
+		`edit:toggle-quote-paste`,
+		`v1 = $edit:insert:quote-paste`,
+		`edit:toggle-quote-paste`,
+		`v2 = $edit:insert:quote-paste`)
 
-	v0 := ev.Global["v0"].Get().(bool)
-	v1 := ev.Global["v1"].Get().(bool)
-	v2 := ev.Global["v2"].Get().(bool)
+	v0 := getGlobal(f.Evaler, "v0").(bool)
+	v1 := getGlobal(f.Evaler, "v1").(bool)
+	v2 := getGlobal(f.Evaler, "v2").(bool)
 	if v1 == v0 {
 		t.Errorf("got v1 = v0")
 	}

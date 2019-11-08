@@ -8,42 +8,42 @@ import (
 )
 
 func TestInsertAtDot(t *testing.T) {
-	ed, _, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	cliutil.SetCodeBuffer(ed.app, codearea.Buffer{Content: "ab", Dot: 1})
-	evalf(ev, `edit:insert-at-dot XYZ`)
+	cliutil.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "ab", Dot: 1})
+	evals(f.Evaler, `edit:insert-at-dot XYZ`)
 
-	testCodeBuffer(t, ed, codearea.Buffer{Content: "aXYZb", Dot: 4})
+	testCodeBuffer(t, f.Editor, codearea.Buffer{Content: "aXYZb", Dot: 4})
 }
 
 func TestReplaceInput(t *testing.T) {
-	ed, _, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	cliutil.SetCodeBuffer(ed.app, codearea.Buffer{Content: "ab", Dot: 1})
-	evalf(ev, `edit:replace-input XYZ`)
+	cliutil.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "ab", Dot: 1})
+	evals(f.Evaler, `edit:replace-input XYZ`)
 
-	testCodeBuffer(t, ed, codearea.Buffer{Content: "XYZ", Dot: 3})
+	testCodeBuffer(t, f.Editor, codearea.Buffer{Content: "XYZ", Dot: 3})
 }
 
 func TestDot(t *testing.T) {
-	ed, _, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	cliutil.SetCodeBuffer(ed.app, codearea.Buffer{Content: "code", Dot: 4})
-	evalf(ev, `edit:-dot = 0`)
+	cliutil.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "code", Dot: 4})
+	evals(f.Evaler, `edit:-dot = 0`)
 
-	testCodeBuffer(t, ed, codearea.Buffer{Content: "code", Dot: 0})
+	testCodeBuffer(t, f.Editor, codearea.Buffer{Content: "code", Dot: 0})
 }
 
 func TestCurrentCommand(t *testing.T) {
-	ed, _, ev, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 
-	evalf(ev, `edit:current-command = code`)
+	evals(f.Evaler, `edit:current-command = code`)
 
-	testCodeBuffer(t, ed, codearea.Buffer{Content: "code", Dot: 4})
+	testCodeBuffer(t, f.Editor, codearea.Buffer{Content: "code", Dot: 4})
 }
 
 func testCodeBuffer(t *testing.T, ed *Editor, wantBuf codearea.Buffer) {

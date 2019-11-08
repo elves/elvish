@@ -8,11 +8,11 @@ import (
 )
 
 func TestCompletion(t *testing.T) {
-	_, ttyCtrl, _, cleanup := setup()
-	defer cleanup()
+	f := setup()
+	defer f.Cleanup()
 	util.ApplyDir(util.Dir{"a": "", "b": ""})
 
-	feedInput(ttyCtrl, "echo \t")
+	feedInput(f.TTYCtrl, "echo \t")
 	wantBuf := bb().
 		WriteStyled(styled.MarkLines(
 			"~> echo a ", styles,
@@ -26,5 +26,5 @@ func TestCompletion(t *testing.T) {
 			"#   ",
 		)).
 		Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
