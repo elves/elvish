@@ -87,14 +87,14 @@ func Start(app cli.App, cfg Config) {
 		OnRight:        onRight,
 	})
 	updateState(w, cursor, "")
-	app.MutateState(func(s *cli.State) { s.Listing = widget{w} })
+	app.MutateState(func(s *cli.State) { s.Addon = widget{w} })
 	app.Redraw()
 }
 
 // SelectedName returns the currently selected name in the navigation addon. It
 // returns an empty string if the navigation addon is not active.
 func SelectedName(app cli.App) string {
-	w, ok := app.CopyState().Listing.(widget)
+	w, ok := app.CopyState().Addon.(widget)
 	if !ok {
 		return ""
 	}

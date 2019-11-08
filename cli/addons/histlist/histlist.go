@@ -55,7 +55,7 @@ func Start(app cli.App, cfg Config) {
 						buf.InsertAtDot("\n" + text)
 					}
 				})
-				app.MutateState(func(s *cli.State) { s.Listing = nil })
+				app.MutateState(func(s *cli.State) { s.Addon = nil })
 			},
 		},
 		OnFilter: func(w combobox.Widget, p string) {
@@ -64,7 +64,7 @@ func Start(app cli.App, cfg Config) {
 		},
 	})
 
-	app.MutateState(func(s *cli.State) { s.Listing = w })
+	app.MutateState(func(s *cli.State) { s.Addon = w })
 	app.Redraw()
 }
 

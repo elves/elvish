@@ -31,10 +31,10 @@ func TestCloseListing(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	f.Editor.app.MutateState(func(s *cli.State) { s.Listing = layout.Empty{} })
+	f.Editor.app.MutateState(func(s *cli.State) { s.Addon = layout.Empty{} })
 	evals(f.Evaler, `edit:close-listing`)
 
-	if listing := f.Editor.app.CopyState().Listing; listing != nil {
+	if listing := f.Editor.app.CopyState().Addon; listing != nil {
 		t.Errorf("got listing %v, want nil", listing)
 	}
 }

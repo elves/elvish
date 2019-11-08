@@ -73,7 +73,7 @@ func Start(app cli.App, cfg Config) {
 	}
 	w.init()
 	w.onWalk()
-	app.MutateState(func(s *cli.State) { s.Listing = &w })
+	app.MutateState(func(s *cli.State) { s.Addon = &w })
 	app.Redraw()
 }
 
@@ -112,10 +112,10 @@ func Accept(app cli.App) {
 func closeAddon(app cli.App) bool {
 	var closed bool
 	app.MutateState(func(s *cli.State) {
-		if _, ok := s.Listing.(*widget); !ok {
+		if _, ok := s.Addon.(*widget); !ok {
 			return
 		}
-		s.Listing = nil
+		s.Addon = nil
 		closed = true
 	})
 	return closed
@@ -134,6 +134,6 @@ func walk(app cli.App, f func(*widget) error) error {
 }
 
 func getWidget(app cli.App) (*widget, bool) {
-	w, ok := app.CopyState().Listing.(*widget)
+	w, ok := app.CopyState().Addon.(*widget)
 	return w, ok
 }

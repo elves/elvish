@@ -64,7 +64,7 @@ type State struct {
 	// Notes that have been added since the last redraw.
 	Notes []string
 	// A widget to show under the codearea widget.
-	Listing el.Widget
+	Addon el.Widget
 }
 
 // NewApp creates a new App from the given specification.
@@ -152,7 +152,7 @@ func (a *app) handle(e event) {
 			a.RedrawFull()
 		}
 	case term.Event:
-		if listing := a.CopyState().Listing; listing != nil {
+		if listing := a.CopyState().Addon; listing != nil {
 			listing.Handle(e)
 		} else {
 			a.codeArea.Handle(e)
@@ -182,7 +182,7 @@ func (a *app) redraw(flag redrawFlag) {
 	var notes []string
 	var listing el.Renderer
 	a.MutateState(func(s *State) {
-		notes, listing = s.Notes, s.Listing
+		notes, listing = s.Notes, s.Addon
 		s.Notes = nil
 	})
 

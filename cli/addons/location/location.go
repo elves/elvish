@@ -53,14 +53,14 @@ func Start(app cli.App, cfg Config) {
 				if err != nil {
 					app.Notify(err.Error())
 				}
-				app.MutateState(func(s *cli.State) { s.Listing = nil })
+				app.MutateState(func(s *cli.State) { s.Addon = nil })
 			},
 		},
 		OnFilter: func(w combobox.Widget, p string) {
 			w.ListBox().Reset(filter(dirs, p), 0)
 		},
 	})
-	app.MutateState(func(s *cli.State) { s.Listing = w })
+	app.MutateState(func(s *cli.State) { s.Addon = w })
 	app.Redraw()
 }
 

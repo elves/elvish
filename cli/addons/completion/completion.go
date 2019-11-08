@@ -51,14 +51,14 @@ func Start(app cli.App, cfg Config) {
 				app.CodeArea().MutateState(func(s *codearea.State) {
 					s.ApplyPending()
 				})
-				app.MutateState(func(s *cli.State) { s.Listing = nil })
+				app.MutateState(func(s *cli.State) { s.Addon = nil })
 			},
 		},
 		OnFilter: func(w combobox.Widget, p string) {
 			w.ListBox().Reset(filter(cfg.Items, p), 0)
 		},
 	})
-	app.MutateState(func(s *cli.State) { s.Listing = w })
+	app.MutateState(func(s *cli.State) { s.Addon = w })
 	app.Redraw()
 }
 
@@ -66,7 +66,7 @@ func Start(app cli.App, cfg Config) {
 func Close(app cli.App) {
 	app.CodeArea().MutateState(
 		func(s *codearea.State) { s.Pending = codearea.Pending{} })
-	app.MutateState(func(s *cli.State) { s.Listing = nil })
+	app.MutateState(func(s *cli.State) { s.Addon = nil })
 	app.Redraw()
 }
 

@@ -61,7 +61,7 @@ func Start(app cli.App, cfg Config) {
 		app.CodeArea().MutateState(func(s *codearea.State) {
 			s.Buffer.InsertAtDot(text)
 		})
-		app.MutateState(func(s *cli.State) { s.Listing = nil })
+		app.MutateState(func(s *cli.State) { s.Addon = nil })
 	}
 	w := combobox.New(combobox.Spec{
 		CodeArea: codearea.Spec{Prompt: layout.ModePrompt("LASTCMD", true)},
@@ -80,7 +80,7 @@ func Start(app cli.App, cfg Config) {
 			}
 		},
 	})
-	app.MutateState(func(s *cli.State) { s.Listing = w })
+	app.MutateState(func(s *cli.State) { s.Addon = w })
 	app.Redraw()
 }
 

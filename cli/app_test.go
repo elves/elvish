@@ -306,7 +306,7 @@ func TestReadCode_PutCursorBelowCodeAreaInFinalRedraw(t *testing.T) {
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "some code"}},
 		State: State{
-			Listing: layout.Label{Content: styled.Plain("listing")}}})
+			Addon: layout.Label{Content: styled.Plain("listing")}}})
 
 	codeCh, _ := ReadCodeAsync(a)
 
