@@ -16,6 +16,11 @@ import (
 	"github.com/elves/elvish/sys"
 )
 
+const (
+	testTTYHeight = 24
+	testTTYWidth  = 60
+)
+
 func TestReadCode_AbortsOnSetupError(t *testing.T) {
 	a, tty := setup()
 
@@ -34,7 +39,7 @@ func TestReadCode_CallsRestore(t *testing.T) {
 
 	restoreCalled := 0
 	tty.SetSetup(func() { restoreCalled++ }, nil)
-	tty.Inject(term.KeyEvent{Rune: '\n'})
+	tty.Inject(term.K('\n'))
 
 	a.ReadCode()
 
@@ -48,7 +53,7 @@ func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "some code"}}})
 
-	tty.Inject(term.KeyEvent{Rune: '\n'})
+	tty.Inject(term.K('\n'))
 
 	a.ReadCode()
 
@@ -65,12 +70,11 @@ func TestReadCode_FinalRedrawWithRPrompt(t *testing.T) {
 		RPromptPersistent: func() bool { return true },
 	})
 
-	tty.SetSize(24, 60)
-	tty.Inject(term.KeyEvent{Rune: '\n'})
+	tty.Inject(term.K('\n'))
 	a.ReadCode()
 
-	wantBuf := ui.NewBufferBuilder(60).
-		WritePlain("code" + strings.Repeat(" ", 55) + "R").
+	wantBuf := bb().
+		WritePlain("code" + strings.Repeat(" ", testTTYWidth-5) + "R").
 		Newline().SetDotToCursor(). // cursor on newline in final redraw
 		Buffer()
 	tty.TestBuffer(t, wantBuf)
@@ -84,11 +88,10 @@ func TestReadCode_FinalRedrawWithoutRPrompt(t *testing.T) {
 		RPromptPersistent: func() bool { return false },
 	})
 
-	tty.SetSize(24, 60)
-	tty.Inject(term.KeyEvent{Rune: '\n'})
+	tty.Inject(term.K('\n'))
 	a.ReadCode()
 
-	wantBuf := ui.NewBufferBuilder(60).
+	wantBuf := bb().
 		WritePlain("code").         // no rprompt
 		Newline().SetDotToCursor(). // cursor on newline in final redraw
 		Buffer()
@@ -101,9 +104,9 @@ func TestReadCode_PassesInputEventsToPopup(t *testing.T) {
 
 		m := &fakeMode{maxKeys: 3}
 		a.state.Raw.Mode = m
-		tty.Inject(term.KeyEvent{Rune: 'a'})
-		tty.Inject(term.KeyEvent{Rune: 'b'})
-		tty.Inject(term.KeyEvent{Rune: 'c'})
+		tty.Inject(term.K('a'))
+		tty.Inject(term.K('b'))
+		tty.Inject(term.K('c'))
 
 		a.ReadCode()
 
@@ -125,9 +128,7 @@ func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 		BeforeReadline: []func(){func() { called++ }},
 	})
 
-	// Causes BasicMode to quit
-	tty.Inject(term.KeyEvent{Rune: '\n'})
-
+	tty.Inject(term.K('\n'))
 	a.ReadCode()
 
 	if called != 1 {
@@ -145,11 +146,7 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 		}},
 	})
 
-	// Causes BasicMode to write state.Code and then quit
-	tty.Inject(term.KeyEvent{Rune: 'a'})
-	tty.Inject(term.KeyEvent{Rune: 'b'})
-	tty.Inject(term.KeyEvent{Rune: 'c'})
-	tty.Inject(term.KeyEvent{Rune: '\n'})
+	feedInput(tty, "abc\n")
 
 	a.ReadCode()
 
@@ -179,8 +176,6 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	cleanup(a, codeCh)
 }
 
-var bufChTimeout = 1 * time.Second
-
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		Highlighter: testHighlighter{
@@ -189,13 +184,11 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 			},
 		}})
 
-	tty.Inject(term.KeyEvent{Rune: 'a'})
-	tty.Inject(term.KeyEvent{Rune: 'b'})
-	tty.Inject(term.KeyEvent{Rune: 'c'})
+	feedInput(tty, "abc")
 
 	codeCh, _ := ReadCodeAsync(a)
 
-	wantBuf := ui.NewBufferBuilder(80).
+	wantBuf := bb().
 		WriteStringSGR("abc", "31" /* SGR for red foreground */).
 		SetDotToCursor().Buffer()
 	tty.TestBuffer(t, wantBuf)
@@ -215,32 +208,31 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		Prompt: constPrompt{styled.Plain("> ")}})
 
-	tty.Inject(term.KeyEvent{Rune: 'a'})
-
 	codeCh, _ := ReadCodeAsync(a)
+	defer cleanup(a, codeCh)
 
-	wantBuf := ui.NewBufferBuilder(80).
+	tty.Inject(term.K('a'))
+
+	wantBuf := bb().
 		WritePlain("> a").
 		SetDotToCursor().Buffer()
 	tty.TestBuffer(t, wantBuf)
-
-	cleanup(a, codeCh)
 }
 
 func TestReadCode_RendersRPrompt(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		RPrompt: constPrompt{styled.Plain("R")}})
-	tty.SetSize(80, 4) // Set a width of 4 for easier testing.
-
-	tty.Inject(term.KeyEvent{Rune: 'a'})
 
 	codeCh, _ := ReadCodeAsync(a)
+	defer cleanup(a, codeCh)
 
-	wantBuf := ui.NewBufferBuilder(4).
-		WritePlain("a").SetDotToCursor().WritePlain("  R").Buffer()
+	tty.Inject(term.K('a'))
+
+	wantBuf := bb().
+		WritePlain("a").SetDotToCursor().
+		WritePlain(strings.Repeat(" ", testTTYWidth-2)).
+		WritePlain("R").Buffer()
 	tty.TestBuffer(t, wantBuf)
-
-	cleanup(a, codeCh)
 }
 
 func TestReadCode_TriggersPrompt(t *testing.T) {
@@ -266,18 +258,18 @@ func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{Prompt: prompt})
 
 	codeCh, _ := ReadCodeAsync(a)
-	bufOldPrompt := ui.NewBufferBuilder(80).
+	defer cleanup(a, codeCh)
+
+	bufOldPrompt := bb().
 		WritePlain("old").SetDotToCursor().Buffer()
 	// Wait until old prompt is rendered
 	tty.TestBuffer(t, bufOldPrompt)
 
 	promptContent = "new"
 	prompt.lateUpdates <- nil
-	bufNewPrompt := ui.NewBufferBuilder(80).
+	bufNewPrompt := bb().
 		WritePlain("new").SetDotToCursor().Buffer()
 	tty.TestBuffer(t, bufNewPrompt)
-
-	cleanup(a, codeCh)
 }
 
 func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
@@ -286,12 +278,12 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 	codeCh, _ := ReadCodeAsync(a)
 
 	// Sanity-check initial state.
-	initBuf := ui.NewBufferBuilder(80).Buffer()
+	initBuf := bb().Buffer()
 	tty.TestBuffer(t, initBuf)
 
 	a.Notify("note")
 
-	wantNotesBuf := ui.NewBufferBuilder(80).WritePlain("note").Buffer()
+	wantNotesBuf := bb().WritePlain("note").Buffer()
 	tty.TestNotesBuffer(t, wantNotesBuf)
 
 	if n := len(a.CopyState().Notes); n > 0 {
@@ -301,25 +293,26 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 	cleanup(a, codeCh)
 }
 
-func TestReadCode_PutCursorBelowCodeAreaInFinalRedraw(t *testing.T) {
+func TestReadCode_FinalRedraw(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "some code"}},
 		State: State{
-			Addon: layout.Label{Content: styled.Plain("listing")}}})
+			Addon: layout.Label{Content: styled.Plain("addon")}}})
 
 	codeCh, _ := ReadCodeAsync(a)
 
 	// Wait until the initial draw, to ensure that we are indeed observing a
 	// different state later.
-	wantBuf := ui.NewBufferBuilder(80).
+	wantBuf := bb().
 		WritePlain("some code").
-		Newline().SetDotToCursor().WritePlain("listing").Buffer()
+		Newline().SetDotToCursor().WritePlain("addon").Buffer()
 	tty.TestBuffer(t, wantBuf)
 
 	cleanup(a, codeCh)
 
-	wantFinalBuf := ui.NewBufferBuilder(80).
+	// Final redraw hides the addon, and puts the cursor on a new line.
+	wantFinalBuf := bb().
 		WritePlain("some code").Newline().SetDotToCursor().Buffer()
 	tty.TestBuffer(t, wantFinalBuf)
 }
@@ -327,11 +320,11 @@ func TestReadCode_PutCursorBelowCodeAreaInFinalRedraw(t *testing.T) {
 func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 	a, tty := setup()
 
-	tty.Inject(term.KeyEvent{Rune: 'a'})
+	tty.Inject(term.K('a'))
 
 	codeCh, errCh := ReadCodeAsync(a)
 
-	wantBuf := ui.NewBufferBuilder(80).WritePlain("a").
+	wantBuf := bb().WritePlain("a").
 		SetDotToCursor().Buffer()
 	tty.TestBuffer(t, wantBuf)
 
@@ -351,16 +344,16 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 func TestReadCode_ResetsOnSIGINT(t *testing.T) {
 	a, tty := setup()
 
-	tty.Inject(term.KeyEvent{Rune: 'a'})
+	tty.Inject(term.K('a'))
 
 	codeCh, _ := ReadCodeAsync(a)
-	wantBuf := ui.NewBufferBuilder(80).WritePlain("a").
+	wantBuf := bb().WritePlain("a").
 		SetDotToCursor().Buffer()
 	tty.TestBuffer(t, wantBuf)
 
 	tty.InjectSignal(syscall.SIGINT)
 
-	wantBuf = ui.NewBufferBuilder(80).Buffer()
+	wantBuf = bb().Buffer()
 	tty.TestBuffer(t, wantBuf)
 
 	cleanup(a, codeCh)
@@ -373,8 +366,9 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 			Buffer: codearea.Buffer{Content: content, Dot: len(content)}}})
 
 	codeCh, _ := ReadCodeAsync(a)
+	defer cleanup(a, codeCh)
 
-	wantBuf := ui.NewBufferBuilder(80).WritePlain("1234567890").
+	wantBuf := bb().WritePlain("1234567890").
 		SetDotToCursor().Buffer()
 	tty.TestBuffer(t, wantBuf)
 
@@ -384,8 +378,6 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	wantBuf = ui.NewBufferBuilder(4).WritePlain("1234567890").
 		SetDotToCursor().Buffer()
 	tty.TestBuffer(t, wantBuf)
-
-	cleanup(a, codeCh)
 }
 
 func setup() (App, TTYCtrl) {
@@ -394,13 +386,24 @@ func setup() (App, TTYCtrl) {
 
 func setupWithSpec(spec AppSpec) (App, TTYCtrl) {
 	tty, ttyControl := NewFakeTTY()
+	ttyControl.SetSize(testTTYHeight, testTTYWidth)
 	spec.TTY = tty
 	a := NewApp(spec)
 	return a, ttyControl
+}
+
+func bb() *ui.BufferBuilder {
+	return ui.NewBufferBuilder(testTTYWidth)
 }
 
 func cleanup(a App, codeCh <-chan string) {
 	a.CommitEOF()
 	// Make sure that ReadCode has exited
 	<-codeCh
+}
+
+func feedInput(ttyCtrl TTYCtrl, input string) {
+	for _, r := range input {
+		ttyCtrl.Inject(term.K(r))
+	}
 }
