@@ -8,7 +8,7 @@ import (
 )
 
 func TestCompletion(t *testing.T) {
-	_, ttyCtrl, _, cleanup := setupStarted()
+	_, ttyCtrl, _, cleanup := setup()
 	defer cleanup()
 	util.ApplyDir(util.Dir{"a": "", "b": ""})
 

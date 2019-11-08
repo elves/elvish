@@ -8,7 +8,7 @@ import (
 )
 
 func TestInsertAtDot(t *testing.T) {
-	ed, _, ev, cleanup := setupStarted()
+	ed, _, ev, cleanup := setup()
 	defer cleanup()
 
 	cliutil.SetCodeBuffer(ed.app, codearea.Buffer{Content: "ab", Dot: 1})
@@ -18,7 +18,7 @@ func TestInsertAtDot(t *testing.T) {
 }
 
 func TestReplaceInput(t *testing.T) {
-	ed, _, ev, cleanup := setupStarted()
+	ed, _, ev, cleanup := setup()
 	defer cleanup()
 
 	cliutil.SetCodeBuffer(ed.app, codearea.Buffer{Content: "ab", Dot: 1})
@@ -28,7 +28,7 @@ func TestReplaceInput(t *testing.T) {
 }
 
 func TestDot(t *testing.T) {
-	ed, _, ev, cleanup := setupStarted()
+	ed, _, ev, cleanup := setup()
 	defer cleanup()
 
 	cliutil.SetCodeBuffer(ed.app, codearea.Buffer{Content: "code", Dot: 4})
@@ -38,7 +38,7 @@ func TestDot(t *testing.T) {
 }
 
 func TestCurrentCommand(t *testing.T) {
-	ed, _, ev, cleanup := setupStarted()
+	ed, _, ev, cleanup := setup()
 	defer cleanup()
 
 	evalf(ev, `edit:current-command = code`)

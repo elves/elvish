@@ -7,7 +7,7 @@ import (
 )
 
 func TestInsert_Abbr(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setup()
+	ed, ttyCtrl, ev, cleanup := setupUnstarted()
 	defer cleanup()
 	codeCh, _, stop := start(ed)
 	defer stop()
@@ -21,7 +21,7 @@ func TestInsert_Abbr(t *testing.T) {
 }
 
 func TestInsert_Binding(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setup()
+	ed, ttyCtrl, ev, cleanup := setupUnstarted()
 	defer cleanup()
 
 	evalf(ev, `called = 0`)
@@ -40,7 +40,7 @@ func TestInsert_Binding(t *testing.T) {
 }
 
 func TestInsert_QuotePaste(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setup()
+	ed, ttyCtrl, ev, cleanup := setupUnstarted()
 	defer cleanup()
 
 	evalf(ev, `edit:insert:quote-paste = $true`)
@@ -60,7 +60,7 @@ func TestInsert_QuotePaste(t *testing.T) {
 }
 
 func TestToggleQuotePaste(t *testing.T) {
-	_, _, ev, cleanup := setup()
+	_, _, ev, cleanup := setupUnstarted()
 	defer cleanup()
 
 	evalf(ev, `v0 = $edit:insert:quote-paste`)

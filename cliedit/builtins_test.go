@@ -28,7 +28,7 @@ func TestBindingMap(t *testing.T) {
 }
 
 func TestCloseListing(t *testing.T) {
-	ed, _, ev, cleanup := setupStarted()
+	ed, _, ev, cleanup := setup()
 	defer cleanup()
 
 	ed.app.MutateState(func(s *cli.State) { s.Listing = layout.Empty{} })
@@ -40,7 +40,7 @@ func TestCloseListing(t *testing.T) {
 }
 
 func TestDumpBuf(t *testing.T) {
-	_, ttyCtrl, ev, cleanup := setupStarted()
+	_, ttyCtrl, ev, cleanup := setup()
 	defer cleanup()
 
 	feedInput(ttyCtrl, "echo")
@@ -57,7 +57,7 @@ func TestDumpBuf(t *testing.T) {
 }
 
 func TestEndOfHistory(t *testing.T) {
-	_, ttyCtrl, ev, cleanup := setupStarted()
+	_, ttyCtrl, ev, cleanup := setup()
 	defer cleanup()
 
 	evalf(ev, `edit:end-of-history`)
@@ -77,7 +77,7 @@ func TestKey(t *testing.T) {
 }
 
 func TestRedraw(t *testing.T) {
-	_, ttyCtrl, ev, cleanup := setupStarted()
+	_, ttyCtrl, ev, cleanup := setup()
 	defer cleanup()
 
 	evalf(ev, `edit:current-command = echo`)
@@ -90,7 +90,7 @@ func TestRedraw(t *testing.T) {
 }
 
 func TestReturnCode(t *testing.T) {
-	ed, _, ev, cleanup := setup()
+	ed, _, ev, cleanup := setupUnstarted()
 	defer cleanup()
 	codeCh, errCh, _ := start(ed)
 
@@ -107,7 +107,7 @@ func TestReturnCode(t *testing.T) {
 }
 
 func TestReturnEOF(t *testing.T) {
-	ed, _, ev, cleanup := setup()
+	ed, _, ev, cleanup := setupUnstarted()
 	defer cleanup()
 	_, errCh, _ := start(ed)
 
@@ -118,7 +118,7 @@ func TestReturnEOF(t *testing.T) {
 }
 
 func TestSmartEnter_InsertsNewlineWhenIncomplete(t *testing.T) {
-	ed, _, ev, cleanup := setupStarted()
+	ed, _, ev, cleanup := setup()
 	defer cleanup()
 
 	cliutil.SetCodeBuffer(ed.app, codearea.Buffer{Content: "put [", Dot: 5})
@@ -130,7 +130,7 @@ func TestSmartEnter_InsertsNewlineWhenIncomplete(t *testing.T) {
 }
 
 func TestSmartEnter_AcceptsCodeWhenComplete(t *testing.T) {
-	ed, _, ev, cleanup := setup()
+	ed, _, ev, cleanup := setupUnstarted()
 	defer cleanup()
 	codeCh, _, stop := start(ed)
 	defer stop()
@@ -187,7 +187,7 @@ var bufferBuiltinsTests = []struct {
 }
 
 func TestBufferBuiltins(t *testing.T) {
-	ed, _, ev, cleanup := setupStarted()
+	ed, _, ev, cleanup := setup()
 	app := ed.app
 	defer cleanup()
 

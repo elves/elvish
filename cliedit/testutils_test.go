@@ -44,7 +44,7 @@ func evalf(ev *eval.Evaler, format string, args ...interface{}) {
 	}
 }
 
-func setup() (*Editor, cli.TTYCtrl, *eval.Evaler, func()) {
+func setupUnstarted() (*Editor, cli.TTYCtrl, *eval.Evaler, func()) {
 	// TODO(xiaq): Use an in-memory implementation when that is possible.
 	st, cleanupStore := store.MustGetTempStore()
 	ed, ttyCtrl, ev, cleanupFs := setupWithStore(st)
@@ -66,8 +66,8 @@ func setupWithStore(st storedefs.Store) (*Editor, cli.TTYCtrl, *eval.Evaler, fun
 	return ed, ttyCtrl, ev, cleanup
 }
 
-func setupStarted() (*Editor, cli.TTYCtrl, *eval.Evaler, func()) {
-	ed, ttyCtrl, ev, cleanup := setup()
+func setup() (*Editor, cli.TTYCtrl, *eval.Evaler, func()) {
+	ed, ttyCtrl, ev, cleanup := setupUnstarted()
 	_, _, stop := start(ed)
 	return ed, ttyCtrl, ev, func() {
 		stop()

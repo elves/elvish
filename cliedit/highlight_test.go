@@ -18,7 +18,7 @@ import (
 // High-level sanity test.
 
 func TestHighlighter(t *testing.T) {
-	_, ttyCtrl, _, cleanup := setupStarted()
+	_, ttyCtrl, _, cleanup := setup()
 	defer cleanup()
 
 	feedInput(ttyCtrl, "put $true")

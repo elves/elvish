@@ -21,7 +21,7 @@ func TestBeforeReadline(t *testing.T) {
 }
 
 func TestAfterReadline(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setup()
+	ed, ttyCtrl, ev, cleanup := setupUnstarted()
 	defer cleanup()
 	evalf(ev, `called = 0`)
 	evalf(ev, `called-with = ''`)

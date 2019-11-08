@@ -137,7 +137,7 @@ func testRPromptPersistent(t *testing.T, code string, wantBufFinal *ui.Buffer) {
 }
 
 func TestDefaultPromptForNonRoot(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setup()
+	ed, ttyCtrl, ev, cleanup := setupUnstarted()
 	defer cleanup()
 	ev.Global["f"] = vars.NewReadOnly(getDefaultPrompt(false))
 	evalf(ev, `edit:prompt = $f`)
@@ -150,7 +150,7 @@ func TestDefaultPromptForNonRoot(t *testing.T) {
 }
 
 func TestDefaultPromptForRoot(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setup()
+	ed, ttyCtrl, ev, cleanup := setupUnstarted()
 	defer cleanup()
 	ev.Global["f"] = vars.NewReadOnly(getDefaultPrompt(true))
 	evalf(ev, `edit:prompt = $f`)
@@ -164,7 +164,7 @@ func TestDefaultPromptForRoot(t *testing.T) {
 }
 
 func TestDefaultRPrompt(t *testing.T) {
-	ed, ttyCtrl, ev, cleanup := setup()
+	ed, ttyCtrl, ev, cleanup := setupUnstarted()
 	defer cleanup()
 	ev.Global["f"] = vars.NewReadOnly(getDefaultRPrompt("elf", "host"))
 	evalf(ev, `edit:rprompt = $f`)
@@ -179,7 +179,7 @@ func TestDefaultRPrompt(t *testing.T) {
 }
 
 func setupWithRC(codes ...string) (cli.TTYCtrl, *eval.Evaler, func()) {
-	ed, ttyCtrl, ev, cleanup := setup()
+	ed, ttyCtrl, ev, cleanup := setupUnstarted()
 	for _, code := range codes {
 		evalf(ev, `%s`, code)
 	}

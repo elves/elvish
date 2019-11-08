@@ -11,7 +11,7 @@ import (
 )
 
 func TestNavigation(t *testing.T) {
-	_, ttyCtrl, ev, cleanup := setupStarted()
+	_, ttyCtrl, ev, cleanup := setup()
 	defer cleanup()
 	util.ApplyDir(util.Dir{"d": util.Dir{"a": ""}})
 	err := os.Chdir("d")
