@@ -5,16 +5,16 @@ import (
 )
 
 func TestBeforeReadline(t *testing.T) {
-	ed, _, ev, cleanup := setup()
+	ttyCtrl, ev, cleanup := setupWithRC(
+		`called = 0`,
+		`edit:before-readline = [ { called = (+ $called 1) } ]`)
 	defer cleanup()
 
-	evalf(ev, `called = 0`)
-	evalf(ev, `edit:before-readline = [ { called = (+ $called 1) } ]`)
+	// Wait for UI to stablize so that we can be sure that before-readline hooks
+	// have been called.
+	wantBufStable := bb().WritePlain("~> ").SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, wantBufStable)
 
-	_, _, stop := start(ed)
-	stop()
-
-	// TODO(xiaq): Test more precisely when before-readline is called.
 	if called := ev.Global["called"].Get(); called != 1.0 {
 		t.Errorf("called = %v, want 1", called)
 	}
@@ -23,17 +23,24 @@ func TestBeforeReadline(t *testing.T) {
 func TestAfterReadline(t *testing.T) {
 	ed, ttyCtrl, ev, cleanup := setup()
 	defer cleanup()
-
 	evalf(ev, `called = 0`)
 	evalf(ev, `called-with = ''`)
 	evalf(ev, `edit:after-readline = [
 	             [code]{ called = (+ $called 1); called-with = $code } ]`)
 
 	codeCh, _, _ := start(ed)
+	// Wait for UI to stablize so that we can be sure that after-readline hooks
+	// are *not* called.
+	wantBufStable := bb().WritePlain("~> ").SetDotToCursor().Buffer()
+	ttyCtrl.TestBuffer(t, wantBufStable)
+	if called := ev.Global["called"].Get(); called != "0" {
+		t.Errorf("called = %v, want 0", called)
+	}
+
+	// Input "test code", press Enter and wait until the editor is done.
 	feedInput(ttyCtrl, "test code\n")
 	<-codeCh
 
-	// TODO(xiaq): Test more precisely when after-readline is called.
 	if called := ev.Global["called"].Get(); called != 1.0 {
 		t.Errorf("called = %v, want 1", called)
 	}
