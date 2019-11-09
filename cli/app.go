@@ -63,8 +63,19 @@ type app struct {
 type State struct {
 	// Notes that have been added since the last redraw.
 	Notes []string
-	// A widget to show under the codearea widget.
+	// An addon widget. When non-nil, it is shown under the codearea widget and
+	// terminal events are handled by it.
+	//
+	// The addon widget may implement the Focuser interface, in which case the
+	// Focus method is used to determine whether the cursor should be placed on
+	// the addon widget during each render. If the widget does not implement the
+	// Focuser interface, the cursor is always placed on the addon widget.
 	Addon el.Widget
+}
+
+// Focuser is an interface that addon widgets may implement.
+type Focuser interface {
+	Focus() bool
 }
 
 // NewApp creates a new App from the given specification.
@@ -180,9 +191,9 @@ func (a *app) redraw(flag redrawFlag) {
 	}
 
 	var notes []string
-	var listing el.Renderer
+	var addon el.Renderer
 	a.MutateState(func(s *State) {
-		notes, listing = s.Notes, s.Addon
+		notes, addon = s.Notes, s.Addon
 		s.Notes = nil
 	})
 
@@ -193,7 +204,7 @@ func (a *app) redraw(flag redrawFlag) {
 		if hideRPrompt {
 			a.codeArea.MutateState(func(s *codearea.State) { s.HideRPrompt = true })
 		}
-		bufMain := renderApp(a.codeArea, nil /* listing */, width, height)
+		bufMain := renderApp(a.codeArea, nil /* addon */, width, height)
 		if hideRPrompt {
 			a.codeArea.MutateState(func(s *codearea.State) { s.HideRPrompt = false })
 		}
@@ -203,7 +214,7 @@ func (a *app) redraw(flag redrawFlag) {
 		a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 		a.TTY.ResetBuffer()
 	} else {
-		bufMain := renderApp(a.codeArea, listing, width, height)
+		bufMain := renderApp(a.codeArea, addon, width, height)
 		a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 	}
 }
@@ -225,11 +236,15 @@ func renderNotes(notes []string, width int) *ui.Buffer {
 }
 
 // Renders the codearea, and uses the rest of the height for the listing.
-func renderApp(codeArea, listing el.Renderer, width, height int) *ui.Buffer {
+func renderApp(codeArea, addon el.Renderer, width, height int) *ui.Buffer {
 	buf := codeArea.Render(width, height)
-	if listing != nil && len(buf.Lines) < height {
-		bufListing := listing.Render(width, height-len(buf.Lines))
-		buf.Extend(bufListing, true)
+	if addon != nil && len(buf.Lines) < height {
+		bufListing := addon.Render(width, height-len(buf.Lines))
+		focus := true
+		if focuser, ok := addon.(Focuser); ok {
+			focus = focuser.Focus()
+		}
+		buf.Extend(bufListing, focus)
 	}
 	return buf
 }

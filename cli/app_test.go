@@ -358,6 +358,34 @@ func TestAddon_HandlesEvents(t *testing.T) {
 	tty.TestBuffer(t, wantBuf)
 }
 
+type testAddon struct {
+	layout.Empty
+	focus bool
+}
+
+func (a testAddon) Focus() bool { return a.focus }
+
+func TestAddon_ControlsFocus(t *testing.T) {
+	addon := testAddon{}
+	a, tty := setupWithSpec(AppSpec{State: State{Addon: &addon}})
+
+	codeCh, _ := ReadCodeAsync(a)
+	defer cleanup(a, codeCh)
+
+	wantBuf := bb().
+		SetDotToCursor(). // main code area has focus
+		Newline().Buffer()
+	tty.TestBuffer(t, wantBuf)
+
+	addon.focus = true
+	a.Redraw()
+
+	wantBuf = bb().
+		Newline().SetDotToCursor(). // addon has focus
+		Buffer()
+	tty.TestBuffer(t, wantBuf)
+}
+
 // Misc features.
 
 func TestMaxHeight(t *testing.T) {
