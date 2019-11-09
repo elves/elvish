@@ -5,18 +5,19 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-// plainItem is a minimal implementation of rawItem.
-type plainItem string
+// PlainItem is a simple implementation of RawItem.
+type PlainItem string
 
-func (p plainItem) String() string { return string(p) }
+func (p PlainItem) String() string { return string(p) }
 
-func (p plainItem) Cook(q parse.PrimaryType) completion.Item {
+func (p PlainItem) Cook(q parse.PrimaryType) completion.Item {
 	s := string(p)
 	quoted, _ := parse.QuoteAs(s, q)
 	return completion.Item{ToInsert: quoted, ToShow: s}
 }
 
-// noQuoteItem is a rawItem that does not quote when cooked.
+// noQuoteItem is a RawItem implementation that does not quote when cooked. This
+// type is not exposed, since argument generators never need this.
 type noQuoteItem string
 
 func (nq noQuoteItem) String() string { return string(nq) }
@@ -26,19 +27,19 @@ func (nq noQuoteItem) Cook(parse.PrimaryType) completion.Item {
 	return completion.Item{ToInsert: s, ToShow: s}
 }
 
-// complexItem is an implementation of rawItem that offers ustomization options.
-type complexItem struct {
-	stem          string // Used in the code and the menu.
-	codeSuffix    string // Appended to the code.
-	displaySuffix string // Appended to the display.
+// ComplexItem is an implementation of RawItem that offers customization options.
+type ComplexItem struct {
+	Stem          string // Used in the code and the menu.
+	CodeSuffix    string // Appended to the code.
+	DisplaySuffix string // Appended to the display.
 }
 
-func (c *complexItem) String() string { return c.stem }
+func (c ComplexItem) String() string { return c.Stem }
 
-func (c *complexItem) Cook(q parse.PrimaryType) completion.Item {
-	quoted, _ := parse.QuoteAs(c.stem, q)
+func (c ComplexItem) Cook(q parse.PrimaryType) completion.Item {
+	quoted, _ := parse.QuoteAs(c.Stem, q)
 	return completion.Item{
-		ToInsert: quoted + c.codeSuffix,
-		ToShow:   c.stem + c.displaySuffix,
+		ToInsert: quoted + c.CodeSuffix,
+		ToShow:   c.Stem + c.DisplaySuffix,
 	}
 }

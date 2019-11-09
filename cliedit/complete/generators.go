@@ -30,7 +30,7 @@ func generateCommands(seed string, ev PureEvaler) ([]RawItem, error) {
 	}
 
 	var cands []RawItem
-	addPlainItem := func(s string) { cands = append(cands, plainItem(s)) }
+	addPlainItem := func(s string) { cands = append(cands, PlainItem(s)) }
 
 	if strings.HasPrefix(seed, "e:") {
 		// Generate all external commands with the e: prefix, and be done.
@@ -109,8 +109,8 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 			}
 		}
 
-		items = append(items, &complexItem{
-			stem: full, codeSuffix: suffix,
+		items = append(items, ComplexItem{
+			Stem: full, CodeSuffix: suffix,
 			// style: ui.StylesFromString(lsColor.GetStyle(full)),
 		})
 	}
@@ -122,7 +122,7 @@ func generateIndicies(v interface{}) []RawItem {
 	var items []RawItem
 	vals.IterateKeys(v, func(k interface{}) bool {
 		if kstring, ok := k.(string); ok {
-			items = append(items, plainItem(kstring))
+			items = append(items, PlainItem(kstring))
 		}
 		return true
 	})
