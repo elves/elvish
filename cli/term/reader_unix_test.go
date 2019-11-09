@@ -10,14 +10,6 @@ import (
 	"github.com/elves/elvish/edit/ui"
 )
 
-func setupTest() (r, w *os.File, rd Reader) {
-	r, w, err := os.Pipe()
-	if err != nil {
-		panic(err)
-	}
-	return r, w, NewReader(r)
-}
-
 var eventTests = []struct {
 	input string
 	want  Event
@@ -127,36 +119,22 @@ var eventTests = []struct {
 }
 
 func TestReader_ReadEvents(t *testing.T) {
-	r, w, reader := setupTest()
-	defer r.Close()
-	defer w.Close()
-	reader.Start()
-	defer reader.Close()
-	defer reader.Stop()
+	_, w, reader, cleanup := setupTest()
+	defer cleanup()
 
 	for _, test := range eventTests {
 		w.WriteString(test.input)
-		select {
-		case event := <-reader.EventChan():
-			if event != test.want {
-				t.Errorf("Reader reads event %v, want %v", event, test.want)
-			}
-		case <-time.After(time.Second):
-			t.Errorf("Reader timed out")
-		}
+		testEvents(t, reader, test.want)
 	}
 }
 
 func TestReader_StopMakesUnderlyingFileAvailable(t *testing.T) {
-	r, w, reader := setupTest()
-	defer r.Close()
-	defer w.Close()
-	reader.Start()
+	r, w, cleanup := setupPipe()
+	defer cleanup()
+	reader := NewReader(r)
 	defer reader.Close()
 
-	// tests that after calling Stop, the
-	// Reader no longer attempts to read from the underlying file, so it is
-	// available for use by others.
+	reader.Start()
 	reader.Stop()
 
 	// Verify that the reader has indeed stopped: write something via w,
@@ -175,12 +153,8 @@ func TestReader_StopMakesUnderlyingFileAvailable(t *testing.T) {
 }
 
 func TestReader_StartAfterStopIndeedStarts(t *testing.T) {
-	r, w, reader := setupTest()
-	defer r.Close()
-	defer w.Close()
-	reader.Start()
-	defer reader.Close()
-	defer reader.Stop()
+	_, w, reader, cleanup := setupTest()
+	defer cleanup()
 
 	for i := 0; i < 100; i++ {
 		// Test that calling Start very shortly after Stop puts the Reader
@@ -223,12 +197,8 @@ var setRawTests = []struct {
 }
 
 func TestReader_SetRaw(t *testing.T) {
-	r, w, reader := setupTest()
-	defer r.Close()
-	defer w.Close()
-	reader.Start()
-	defer reader.Close()
-	defer reader.Stop()
+	_, w, reader, cleanup := setupTest()
+	defer cleanup()
 
 	for _, test := range setRawTests {
 		t.Run(test.name, func(t *testing.T) {
@@ -236,6 +206,30 @@ func TestReader_SetRaw(t *testing.T) {
 			w.WriteString(test.input)
 			testEvents(t, reader, test.want...)
 		})
+	}
+}
+
+// Test utilities.
+
+func setupTest() (r, w *os.File, rd Reader, cleanup func()) {
+	r, w, cleanupPipe := setupPipe()
+	reader := NewReader(r)
+	reader.Start()
+	return r, w, reader, func() {
+		reader.Stop()
+		reader.Close()
+		cleanupPipe()
+	}
+}
+
+func setupPipe() (r, w *os.File, cleanup func()) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		panic(err)
+	}
+	return r, w, func() {
+		r.Close()
+		w.Close()
 	}
 }
 
