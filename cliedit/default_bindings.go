@@ -22,6 +22,8 @@ insert:binding = (binding-table [
   &Ctrl-U=    $kill-line-left~
   &Ctrl-K=    $kill-line-right~
 
+  &Ctrl-V= $insert-raw~
+
   &Alt-,=  $lastcmd:start~
   &Ctrl-R= $histlist:start~
   &Ctrl-L= $location:start~

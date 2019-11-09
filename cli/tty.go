@@ -149,6 +149,8 @@ type fakeTTY struct {
 	bufs, notesBufs []*ui.Buffer
 	// Channel that NotifySignals returns. Can be used to inject signals.
 	sigCh chan os.Signal
+	// Argument that SetRawInput got.
+	raw int
 
 	sizeMutex sync.RWMutex
 	// Predefined sizes.
@@ -190,7 +192,9 @@ func (t *fakeTTY) StartInput() <-chan term.Event {
 }
 
 // Nop.
-func (t *fakeTTY) SetRawInput(int) {}
+func (t *fakeTTY) SetRawInput(n int) {
+	t.raw = n
+}
 
 // Closes t.eventCh.
 func (t *fakeTTY) StopInput() { close(t.eventCh) }
@@ -259,6 +263,12 @@ func (t TTYCtrl) InjectSignal(sigs ...os.Signal) {
 	for _, sig := range sigs {
 		t.sigCh <- sig
 	}
+}
+
+// RawInput returns the argument in the last call to the SetRawInput method of
+// the TTY.
+func (t TTYCtrl) RawInput() int {
+	return t.raw
 }
 
 // TestBuffer verifies that a buffer will appear within the timeout of 4

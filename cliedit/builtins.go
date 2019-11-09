@@ -44,6 +44,15 @@ func endOfHistory(app cli.App) {
 	app.Notify("End of history")
 }
 
+//elvdoc:fn insert-raw
+//
+// Requests the next terminal input to be inserted uninterpreted.
+
+func insertRaw(tty cli.TTY) {
+	tty.SetRawInput(1)
+	// TODO(xiaq): Indicate on the UI.
+}
+
 //elvdoc:fn key
 //
 // ```elvish
@@ -110,8 +119,11 @@ func wordify(fm *eval.Frame, code string) {
 	}
 }
 
-func initDumpBuf(tty cli.TTY, ns eval.Ns) {
-	ns.AddGoFn("<edit>", "-dump-buf", func() string { return dumpBuf(tty) })
+func initTTYBuiltins(tty cli.TTY, ns eval.Ns) {
+	ns.AddGoFns("<edit>", map[string]interface{}{
+		"-dump-buf":  func() string { return dumpBuf(tty) },
+		"insert-raw": func() { insertRaw(tty) },
+	})
 }
 
 func initMiscBuiltins(app cli.App, ns eval.Ns) {

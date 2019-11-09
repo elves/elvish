@@ -56,6 +56,19 @@ func TestDumpBuf(t *testing.T) {
 	}
 }
 
+func TestInsertRaw(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	// Since we do not use real terminals in the test, we cannot have a
+	// realistic test case against actual raw inputs. However, we can still
+	// check that the builtin command does call the SetRawInput method with 1.
+	evals(f.Evaler, `edit:insert-raw`)
+	if raw := f.TTYCtrl.RawInput(); raw != 1 {
+		t.Errorf("RawInput() -> %d, want 1", raw)
+	}
+}
+
 func TestEndOfHistory(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()

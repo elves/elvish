@@ -34,6 +34,14 @@ func TestFakeTTY_Size(t *testing.T) {
 	}
 }
 
+func TestFakeTTY_SetRawInput(t *testing.T) {
+	tty, ttyCtrl := NewFakeTTY()
+	tty.SetRawInput(2)
+	if raw := ttyCtrl.RawInput(); raw != 2 {
+		t.Errorf("RawInput() -> %v, want 2", raw)
+	}
+}
+
 func TestFakeTTY_Events(t *testing.T) {
 	tty, ttyCtrl := NewFakeTTY()
 	events := tty.StartInput()
