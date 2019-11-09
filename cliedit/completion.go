@@ -1,12 +1,16 @@
 package cliedit
 
 import (
+	"fmt"
+
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/addons/completion"
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cliedit/complete"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hash"
 )
 
 //elvdoc:var completion:binding
@@ -16,7 +20,7 @@ import (
 //elvdoc:fn complete-filename
 //
 // ```elvish
-// edit:complete-filename @args
+// edit:complete-filename $args...
 // ```
 //
 // Produces a list of filenames found in the directory of the last argument. All
@@ -47,6 +51,27 @@ import (
 // ▶ (edit:complex-candidate .elvish/rc.elv &code-suffix=' ' &display-suffix='' &style='')
 // ```
 
+//elvdoc:fn complex-candidate
+//
+// ```elvish
+// edit:complex-candidate $stem &code-suffix='' &display-suffix=''
+// ```
+
+type complexCandidateOpts struct {
+	CodeSuffix    string
+	DisplaySuffix string
+}
+
+func (*complexCandidateOpts) SetDefaultOptions() {}
+
+func complexCandidate(opts complexCandidateOpts, stem string) complexItem {
+	return complexItem{
+		Stem:          stem,
+		CodeSuffix:    opts.CodeSuffix,
+		DisplaySuffix: opts.DisplaySuffix,
+	}
+}
+
 //elvdoc:fn completion:start
 //
 // Start the completion mode.
@@ -60,6 +85,7 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	binding := newMapBinding(app, ev, bindingVar)
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
+		"complex-candidate": complexCandidate,
 	})
 	ns.AddNs("completion",
 		eval.Ns{
@@ -87,19 +113,67 @@ func completionStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
 		Binding: binding})
 }
 
+// A wrapper type implementing Elvish value methods.
+type complexItem complete.ComplexItem
+
+func (c complexItem) Index(k interface{}) (interface{}, bool) {
+	switch k {
+	case "stem":
+		return c.Stem, true
+	case "code-suffix":
+		return c.CodeSuffix, true
+	case "display-suffix":
+		return c.DisplaySuffix, true
+	}
+	return nil, false
+}
+
+func (c complexItem) IterateKeys(f func(interface{}) bool) {
+	util.Feed(f, "stem", "code-suffix", "display-suffix")
+}
+
+func (c complexItem) Kind() string { return "map" }
+
+func (c complexItem) Equal(a interface{}) bool {
+	rhs, ok := a.(complexItem)
+	return ok && c.Stem == rhs.Stem &&
+		c.CodeSuffix == rhs.CodeSuffix && c.DisplaySuffix == rhs.DisplaySuffix
+}
+
+func (c complexItem) Hash() uint32 {
+	h := hash.DJBInit
+	h = hash.DJBCombine(h, hash.String(c.Stem))
+	h = hash.DJBCombine(h, hash.String(c.CodeSuffix))
+	h = hash.DJBCombine(h, hash.String(c.DisplaySuffix))
+	return h
+}
+
+func (c complexItem) Repr(indent int) string {
+	// TODO(xiaq): Pretty-print when indent >= 0
+	return fmt.Sprintf("(edit:complex-candidate %s &code-suffix=%s &display-suffix=%s)",
+		parse.Quote(c.Stem), parse.Quote(c.CodeSuffix), parse.Quote(c.DisplaySuffix))
+}
+
 type wrappedArgGenerator func(*eval.Frame, ...string) error
 
 // Wraps an ArgGenerator into a function that can be then passed to
 // eval.NewGoFn.
 func wrapArgGenerator(gen complete.ArgGenerator) wrappedArgGenerator {
 	return func(fm *eval.Frame, args ...string) error {
-		rawCands, err := gen(args)
+		rawItems, err := gen(args)
 		if err != nil {
 			return err
 		}
 		ch := fm.OutputChan()
-		for _, rawCand := range rawCands {
-			ch <- rawCand
+		for _, rawItem := range rawItems {
+			switch rawItem := rawItem.(type) {
+			case complete.ComplexItem:
+				ch <- complexItem(rawItem)
+			case complete.PlainItem:
+				ch <- string(rawItem)
+			default:
+				ch <- rawItem
+			}
 		}
 		return nil
 	}

@@ -3,7 +3,6 @@ package cliedit
 import (
 	"testing"
 
-	"github.com/elves/elvish/cliedit/complete"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
@@ -38,10 +37,42 @@ func TestCompleteFilename(t *testing.T) {
 
 	evals(f.Evaler, `@cands = (edit:complete-filename ls ./d/a)`)
 	wantCands := vals.MakeList(
-		complete.ComplexItem{Stem: "./d/a", CodeSuffix: " "},
-		complete.ComplexItem{Stem: "./d/b", CodeSuffix: " "})
+		complexItem{Stem: "./d/a", CodeSuffix: " "},
+		complexItem{Stem: "./d/b", CodeSuffix: " "})
 	if cands := getGlobal(f.Evaler, "cands"); !vals.Equal(cands, wantCands) {
 		t.Errorf("got cands %s, want %s",
 			vals.Repr(cands, vals.NoPretty), vals.Repr(wantCands, vals.NoPretty))
 	}
+}
+
+func TestComplexCandidate(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	evals(f.Evaler,
+		`cand  = (edit:complex-candidate a/b/c &code-suffix=' ' &display-suffix='x')`,
+		// Identical to $cand.
+		`cand2 = (edit:complex-candidate a/b/c &code-suffix=' ' &display-suffix='x')`,
+		// Different from $cand.
+		`cand3 = (edit:complex-candidate a/b/c)`,
+		`kind  = (kind-of $cand)`,
+		`@keys = (keys $cand)`,
+		`repr  = (repr $cand)`,
+		`eq2   = (eq $cand $cand2)`,
+		`eq2h  = [&$cand=$true][$cand2]`,
+		`eq3   = (eq $cand $cand3)`,
+		`stem code-suffix display-suffix = $cand[stem code-suffix display-suffix]`,
+	)
+	testGlobals(t, f.Evaler, map[string]interface{}{
+		"kind": "map",
+		"keys": vals.MakeList("stem", "code-suffix", "display-suffix"),
+		"repr": "(edit:complex-candidate a/b/c &code-suffix=' ' &display-suffix=x)",
+		"eq2":  true,
+		"eq2h": true,
+		"eq3":  false,
+
+		"stem":           "a/b/c",
+		"code-suffix":    " ",
+		"display-suffix": "x",
+	})
 }

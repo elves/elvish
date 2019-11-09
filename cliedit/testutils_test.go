@@ -1,10 +1,14 @@
 package cliedit
 
 import (
+	"fmt"
+	"testing"
+
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/store/storedefs"
 )
@@ -112,10 +116,6 @@ func (f *fixture) Cleanup() {
 	}
 }
 
-func getGlobal(ev *eval.Evaler, name string) interface{} {
-	return ev.Global[name].Get()
-}
-
 func feedInput(ttyCtrl cli.TTYCtrl, s string) {
 	for _, r := range s {
 		ttyCtrl.Inject(term.K(r))
@@ -126,7 +126,26 @@ func evals(ev *eval.Evaler, codes ...string) {
 	for _, code := range codes {
 		err := ev.EvalSourceInTTY(eval.NewInteractiveSource(code))
 		if err != nil {
-			panic(err)
+			panic(fmt.Errorf("eval %q: %s", code, err))
 		}
+	}
+}
+
+func getGlobal(ev *eval.Evaler, name string) interface{} {
+	return ev.Global[name].Get()
+}
+
+func testGlobals(t *testing.T, ev *eval.Evaler, wantVals map[string]interface{}) {
+	t.Helper()
+	for name, wantVal := range wantVals {
+		testGlobal(t, ev, name, wantVal)
+	}
+}
+
+func testGlobal(t *testing.T, ev *eval.Evaler, name string, wantVal interface{}) {
+	t.Helper()
+	if val := getGlobal(ev, name); !vals.Equal(val, wantVal) {
+		t.Errorf("$%s = %s, want %s",
+			name, vals.Repr(val, vals.NoPretty), vals.Repr(wantVal, vals.NoPretty))
 	}
 }
