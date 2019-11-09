@@ -17,7 +17,7 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 	if fuser != nil {
 		histStore = fuserWrapper{fuser}
 	}
-	dirStore := dirStore{ev}
+	dirStore := dirStore{ev, st}
 
 	// Common binding and the listing: module.
 	lsMap := newBindingVar(emptyBindingMap)
@@ -43,7 +43,8 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 		eval.Ns{
 			"binding": histlistMap,
 		}.AddGoFn("<edit:histlist>", "start", func() {
-			histlist.Start(app, histlist.Config{histlistBinding, histStore})
+			histlist.Start(app, histlist.Config{
+				Binding: histlistBinding, Store: histStore})
 		}))
 
 	lastcmdMap := newBindingVar(emptyBindingMap)
@@ -53,7 +54,8 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 			"binding": lastcmdMap,
 		}.AddGoFn("<edit:lastcmd>", "start", func() {
 			// TODO: Specify wordifier
-			lastcmd.Start(app, lastcmd.Config{lastcmdBinding, histStore, nil})
+			lastcmd.Start(app, lastcmd.Config{
+				Binding: lastcmdBinding, Store: histStore})
 		}))
 
 	locationMap := newBindingVar(emptyBindingMap)
@@ -62,7 +64,8 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 		eval.Ns{
 			"binding": locationMap,
 		}.AddGoFn("<edit:location>", "start", func() {
-			location.Start(app, location.Config{locationBinding, dirStore})
+			location.Start(app, location.Config{
+				Binding: locationBinding, Store: dirStore})
 		}))
 }
 
@@ -111,6 +114,7 @@ func (f fuserWrapper) AddCmd(cmd histutil.Entry) (int, error) {
 // Wraps an Evaler to implement the cli.DirStore interface.
 type dirStore struct {
 	ev *eval.Evaler
+	st storedefs.Store
 }
 
 func (d dirStore) Chdir(path string) error {
@@ -118,5 +122,5 @@ func (d dirStore) Chdir(path string) error {
 }
 
 func (d dirStore) Dirs() ([]storedefs.Dir, error) {
-	return d.ev.DaemonClient.Dirs(map[string]struct{}{})
+	return d.st.Dirs(map[string]struct{}{})
 }

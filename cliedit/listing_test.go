@@ -1,5 +1,15 @@
 package cliedit
 
+import (
+	"testing"
+
+	"github.com/elves/elvish/cli/el/layout"
+	"github.com/elves/elvish/cli/term"
+	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/store/storedefs"
+	"github.com/elves/elvish/styled"
+)
+
 /*
 func TestInitListing_Binding(t *testing.T) {
 	// Test that the binding variable in the returned namespace indeed refers to
@@ -11,102 +21,65 @@ func TestInitListing_Binding(t *testing.T) {
 }
 */
 
-// TODO: Test the builtin functions. As a prerequisite, we need to make listing
-// mode's state observable, and expose fakeItems and fakeAcceptableItems of the
-// listing package.
+// Smoke tests for individual addons.
 
-/*
-func TestHistlist_Start(t *testing.T) {
-	ed := &fakeApp{}
-	ev := eval.NewEvaler()
-	lsMode := listing.Mode{}
-	lsBinding := emptyBindingMap
-	// TODO: Move this into common setup.
-	histFuser, err := histutil.NewFuser(testStore)
-	if err != nil {
-		panic(err)
-	}
+func TestHistlistAddon(t *testing.T) {
+	f := setupWithOpt(setupOpt{StoreOp: func(s storedefs.Store) {
+		s.AddCmd("echo 1")
+		s.AddCmd("echo 2")
+	}})
+	f.TTYCtrl.SetSize(24, 30) // Set width to 30
+	defer f.Cleanup()
 
-	ns := initHistlist(ed, ev, histFuser.AllCmds, &lsMode, &lsBinding)
-
-	// Call <edit:histlist>:start.
-	fm := eval.NewTopFrame(ev, eval.NewInternalSource("[test]"), nil)
-	fm.Call(getFn(ns, "start"), eval.NoArgs, eval.NoOpts)
-
-	// Verify that the current mode supports listing.
-	lister, ok := ed.state.Mode().(clitypes.Lister)
-	if !ok {
-		t.Errorf("Mode is not Lister after <edit:histlist>:start")
-	}
-	// Verify the actual listing.
-	buf := ui.Render(lister.List(10), 30)
-	wantBuf := ui.NewBufferBuilder(30).
-		WriteString("   0 echo hello world", "7").Buffer()
-	if !reflect.DeepEqual(buf, wantBuf) {
-		t.Errorf("Rendered listing is %v, want %v", buf, wantBuf)
-	}
+	f.TTYCtrl.Inject(term.K('R', ui.Ctrl))
+	wantBuf := bbAddon("HISTLIST").
+		WriteStyled(styled.MarkLines(
+			"   0 echo 1",
+			"   1 echo 2                   ", styles,
+			"##############################",
+		)).Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
-func TestInitLastCmd_Start(t *testing.T) {
-	ed := &fakeApp{}
-	ev := eval.NewEvaler()
-	lsMode := listing.Mode{}
-	lsBinding := emptyBindingMap
+func TestLastCmdAddon(t *testing.T) {
+	f := setupWithOpt(setupOpt{StoreOp: func(s storedefs.Store) {
+		s.AddCmd("echo hello world")
+	}})
+	f.TTYCtrl.SetSize(24, 30) // Set width to 30
+	defer f.Cleanup()
 
-	ns := initLastcmd(ed, ev, testStore, &lsMode, &lsBinding)
-
-	// Call <edit:listing>:start.
-	fm := eval.NewTopFrame(ev, eval.NewInternalSource("[test]"), nil)
-	fm.Call(getFn(ns, "start"), nil, eval.NoOpts)
-
-	// Verify that the current mode supports listing.
-	lister, ok := ed.state.Mode().(clitypes.Lister)
-	if !ok {
-		t.Errorf("Mode is not Lister after <edit:lastcmd>:start")
-	}
-	// Verify the listing.
-	buf := ui.Render(lister.List(10), 20)
-	wantBuf := ui.NewBufferBuilder(20).
-		WriteString("    echo hello world", "7").Newline().
-		WriteUnstyled("  0 echo").Newline().
-		WriteUnstyled("  1 hello").Newline().
-		WriteUnstyled("  2 world").Buffer()
-	if !reflect.DeepEqual(buf, wantBuf) {
-		t.Errorf("Rendered listing is %v, want %v", buf, wantBuf)
-	}
+	f.TTYCtrl.Inject(term.K(',', ui.Alt))
+	wantBuf := bbAddon("LASTCMD").
+		WriteStyled(styled.MarkLines(
+			"    echo hello world          ", styles,
+			"##############################",
+			"  0 echo",
+			"  1 hello",
+			"  2 world",
+		)).Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
-func TestLocation_Start(t *testing.T) {
-	ed := &fakeApp{}
-	ev := eval.NewEvaler()
-	lsMode := listing.Mode{}
-	lsBinding := emptyBindingMap
-	getDirs := func() ([]storedefs.Dir, error) {
-		return []storedefs.Dir{
-			{Path: "/usr/bin", Score: 20},
-			{Path: "/home/elf", Score: 10},
-		}, nil
-	}
-	cd := func(string) error { return nil }
+func TestLocationAddon(t *testing.T) {
+	f := setupWithOpt(setupOpt{StoreOp: func(s storedefs.Store) {
+		s.AddDir("/usr/bin", 1)
+		s.AddDir("/home/elf", 1)
+	}})
+	f.TTYCtrl.SetSize(24, 30) // Set width to 30
+	defer f.Cleanup()
 
-	ns := initLocation(ed, ev, getDirs, cd, &lsMode, &lsBinding)
-
-	// Call <edit:location>:start.
-	fm := eval.NewTopFrame(ev, eval.NewInternalSource("[test]"), nil)
-	fm.Call(getFn(ns, "start"), eval.NoArgs, eval.NoOpts)
-
-	// Verify that the current mode supports listing.
-	lister, ok := ed.state.Mode().(clitypes.Lister)
-	if !ok {
-		t.Errorf("Mode is not Lister after <edit:location>:start")
-	}
-	// Verify the actual listing.
-	buf := ui.Render(lister.List(10), 30)
-	wantBuf := ui.NewBufferBuilder(30).
-		WriteString(" 20 /usr/bin", "7").Newline().
-		WriteString(" 10 /home/elf", "").Buffer()
-	if !reflect.DeepEqual(buf, wantBuf) {
-		t.Errorf("Rendered listing is %v, want %v", buf, wantBuf)
-	}
+	f.TTYCtrl.Inject(term.K('L', ui.Ctrl))
+	wantBuf := bbAddon("LOCATION").
+		WriteStyled(styled.MarkLines(
+			" 10 /home/elf                 ", styles,
+			"##############################",
+			" 10 /usr/bin",
+		)).Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
-*/
+
+func bbAddon(name string) *ui.BufferBuilder {
+	return ui.NewBufferBuilder(30).
+		WritePlain("~> ").Newline().
+		WriteStyled(layout.ModeLine(name, true)).SetDotToCursor().Newline()
+}
