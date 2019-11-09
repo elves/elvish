@@ -27,18 +27,12 @@ type context struct {
 
 func completeArg(n parse.Node, cfg Config) (*context, []RawItem, error) {
 	ev := cfg.PureEvaler
-	completeArg := cfg.CompleteArg
-	if completeArg == nil {
-		completeArg = func(args []string) ([]RawItem, error) {
-			return generateFileNames(args[len(args)-1], false)
-		}
-	}
 	if sep, ok := n.(*parse.Sep); ok {
 		if form, ok := sep.Parent().(*parse.Form); ok && form.Head != nil {
 			// Case 1: starting a new argument.
 			ctx := &context{"argument", "", parse.Bareword, range0(n.Range().To)}
 			args := purelyEvalForm(form, "", n.Range().To, ev)
-			items, err := completeArg(args)
+			items, err := cfg.ArgGenerator(args)
 			return ctx, items, err
 		}
 	}
@@ -49,7 +43,7 @@ func completeArg(n parse.Node, cfg Config) (*context, []RawItem, error) {
 					// Case 2: in an incomplete argument.
 					ctx := &context{"argument", seed, primary.Type, compound.Range()}
 					args := purelyEvalForm(form, seed, compound.Range().From, ev)
-					items, err := completeArg(args)
+					items, err := cfg.ArgGenerator(args)
 					return ctx, items, err
 				}
 			}

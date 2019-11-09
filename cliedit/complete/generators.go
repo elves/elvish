@@ -15,6 +15,14 @@ import (
 
 var quotedPathSeparator = parse.Quote(string(filepath.Separator))
 
+// GenerateFileNames returns filename candidates that are suitable for completing
+// the last argument. It can be used in Config.ArgGenerator.
+func GenerateFileNames(args []string) ([]RawItem, error) {
+	return generateFileNames(args[len(args)-1], false)
+}
+
+// Internal generators, used from completers.
+
 func generateCommands(seed string, ev PureEvaler) ([]RawItem, error) {
 	if util.DontSearch(seed) {
 		// Completing a local external command name.

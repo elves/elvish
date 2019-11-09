@@ -19,12 +19,19 @@ var errNoCompletion = errors.New("no completion")
 type Config struct {
 	// A function for filtering raw candidates. If nil, no filtering is done.
 	Filter func(ctxName, seed string, rawItems []RawItem) []RawItem
-	// A function for completing arguments. If nil, only file names are completed.
-	CompleteArg func(args []string) ([]RawItem, error)
+	// Used to generate candidates for a command argument. Defaults to
+	// Filenames.
+	ArgGenerator ArgGenerator
 	// An interface to access the runtime. Must not be nil.
 	PureEvaler PureEvaler
 }
 
+// ArgGenerator is the type of function that generates raw candidates for a
+// command argument. It takes all the existing arguments, the last being the
+// argument to complete, and returns raw candidates or an error.
+type ArgGenerator func(args []string) ([]RawItem, error)
+
+// Result keeps the result of the completion algorithm.
 type Result struct {
 	Name    string
 	Replace diag.Ranging
@@ -37,6 +44,8 @@ type RawItem interface {
 	Cook(parse.PrimaryType) completion.Item
 }
 
+// PureEvaler encapsulates the functionality the completion algorithm needs from
+// the language runtime.
 type PureEvaler interface {
 	EachExternal(func(cmd string))
 	EachSpecial(func(special string))
@@ -57,6 +66,10 @@ type CodeBuffer struct {
 // Complete runs the code completion algorithm in the given context, and returns
 // the completion type, items and any error encountered.
 func Complete(code CodeBuffer, cfg Config) (*Result, error) {
+	if cfg.ArgGenerator == nil {
+		cfg.ArgGenerator = GenerateFileNames
+	}
+
 	// Ignore the error; the function always returns a valid *ChunkNode.
 	chunk, _ := parse.AsChunk("[interactive]", code.Content)
 	leaf := parseutil.FindLeafNode(chunk, code.Dot)

@@ -79,9 +79,9 @@ func TestComplete(t *testing.T) {
 		},
 	}
 
-	cfgWithCompleteArg := Config{
+	cfgWithArgGenerator := Config{
 		PureEvaler: cfg.PureEvaler,
-		CompleteArg: func(args []string) ([]RawItem, error) {
+		ArgGenerator: func(args []string) ([]RawItem, error) {
 			item := noQuoteItem(fmt.Sprintf("%#v", args))
 			return []RawItem{item}, nil
 		},
@@ -111,12 +111,12 @@ func TestComplete(t *testing.T) {
 				Items: []completion.Item{{ToShow: "a.exe", ToInsert: "a.exe "}}},
 			nil),
 		// Custom arg completer, new argument
-		Args(cb("ls a "), cfgWithCompleteArg).Rets(
+		Args(cb("ls a "), cfgWithArgGenerator).Rets(
 			&Result{
 				Name: "argument", Replace: r(5, 5),
 				Items: []completion.Item{c(`[]string{"ls", "a", ""}`)}},
 			nil),
-		Args(cb("ls a b"), cfgWithCompleteArg).Rets(
+		Args(cb("ls a b"), cfgWithArgGenerator).Rets(
 			&Result{
 				Name: "argument", Replace: r(5, 6),
 				Items: []completion.Item{c(`[]string{"ls", "a", "b"}`)}},
