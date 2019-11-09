@@ -19,13 +19,11 @@ func TestCommandHistory(t *testing.T) {
 
 	// TODO(xiaq): Test session history too.
 	evals(f.Evaler, `@cmds = (edit:command-history)`)
-	wantCmds := vals.MakeList(
-		vals.MakeMap("id", "0", "cmd", "echo 1"),
-		vals.MakeMap("id", "1", "cmd", "echo 2"))
-	if cmds := getGlobal(f.Evaler, "cmds").(vals.List); !vals.Equal(cmds, wantCmds) {
-		t.Errorf("got $cmd = %v, want %v",
-			vals.Repr(cmds, vals.NoPretty), vals.Repr(wantCmds, vals.NoPretty))
-	}
+	testGlobal(t, f.Evaler,
+		"cmds",
+		vals.MakeList(
+			vals.MakeMap("id", "0", "cmd", "echo 1"),
+			vals.MakeMap("id", "1", "cmd", "echo 2")))
 }
 
 func TestInsertLastWord(t *testing.T) {

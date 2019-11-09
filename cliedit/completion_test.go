@@ -36,13 +36,11 @@ func TestCompleteFilename(t *testing.T) {
 	util.ApplyDir(util.Dir{"d": util.Dir{"a": "", "b": ""}})
 
 	evals(f.Evaler, `@cands = (edit:complete-filename ls ./d/a)`)
-	wantCands := vals.MakeList(
-		complexItem{Stem: "./d/a", CodeSuffix: " "},
-		complexItem{Stem: "./d/b", CodeSuffix: " "})
-	if cands := getGlobal(f.Evaler, "cands"); !vals.Equal(cands, wantCands) {
-		t.Errorf("got cands %s, want %s",
-			vals.Repr(cands, vals.NoPretty), vals.Repr(wantCands, vals.NoPretty))
-	}
+	testGlobal(t, f.Evaler,
+		"cands",
+		vals.MakeList(
+			complexItem{Stem: "./d/a", CodeSuffix: " "},
+			complexItem{Stem: "./d/b", CodeSuffix: " "}))
 }
 
 func TestComplexCandidate(t *testing.T) {

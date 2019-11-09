@@ -15,9 +15,7 @@ func TestBeforeReadline(t *testing.T) {
 	wantBufStable := bb().WritePlain("~> ").SetDotToCursor().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufStable)
 
-	if called := getGlobal(f.Evaler, "called"); called != 1.0 {
-		t.Errorf("called = %v, want 1", called)
-	}
+	testGlobal(t, f.Evaler, "called", 1.0)
 }
 
 func TestAfterReadline(t *testing.T) {
@@ -33,18 +31,14 @@ func TestAfterReadline(t *testing.T) {
 	// are *not* called.
 	wantBufStable := bb().WritePlain("~> ").SetDotToCursor().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufStable)
-	if called := getGlobal(f.Evaler, "called"); called != "0" {
-		t.Errorf("called = %v, want 0", called)
-	}
+	testGlobal(t, f.Evaler, "called", "0")
 
 	// Input "test code", press Enter and wait until the editor is done.
 	feedInput(f.TTYCtrl, "test code\n")
 	f.Wait()
 
-	if called := getGlobal(f.Evaler, "called"); called != 1.0 {
-		t.Errorf("called = %v, want 1", called)
-	}
-	if calledWith := getGlobal(f.Evaler, "called-with"); calledWith != "test code" {
-		t.Errorf("called = %q, want %q", calledWith, "test code")
-	}
+	testGlobals(t, f.Evaler, map[string]interface{}{
+		"called":      1.0,
+		"called-with": "test code",
+	})
 }

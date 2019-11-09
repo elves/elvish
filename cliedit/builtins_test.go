@@ -50,10 +50,9 @@ func TestDumpBuf(t *testing.T) {
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 
 	evals(f.Evaler, `html = (edit:-dump-buf)`)
-	wantHTML := `~&gt; <span class="sgr-32">echo</span>` + "\n"
-	if html := getGlobal(f.Evaler, "html").(string); html != wantHTML {
-		t.Errorf("dumped HTML %q, want %q", html, wantHTML)
-	}
+	testGlobal(t, f.Evaler,
+		"html",
+		`~&gt; <span class="sgr-32">echo</span>`+"\n")
 }
 
 func TestInsertRaw(t *testing.T) {
