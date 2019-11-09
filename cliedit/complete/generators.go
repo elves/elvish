@@ -57,8 +57,7 @@ func generateCommands(seed string, ev PureEvaler) ([]RawItem, error) {
 			case strings.HasSuffix(varname, eval.NsSuffix):
 				addPlainItem(ns + varname)
 			default:
-				name := ns + varname
-				cands = append(cands, &complexItem{name, " = ", " = "})
+				cands = append(cands, noQuoteItem(ns+varname+" = "))
 			}
 		})
 	}
