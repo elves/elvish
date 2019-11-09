@@ -29,15 +29,11 @@ type TTY interface {
 	// StartInput starts the delivery of terminal events and returns a channel
 	// on which events are made available.
 	StartInput() <-chan term.Event
-	// SetRawInput sets the raw input mode of the terminal.
-	//
-	// The raw input mode is applicable when terminal events are represented
-	// as escape sequences on a low level; the raw input mode will then cause
-	// those escape sequences to be interpreted as individual key events.
-	//
-	// If the concept of raw input method is not applicable to the terminal,
-	// this method is a no-op.
-	SetRawInput(raw bool)
+	// SetRawInput requests the next n underlying events to be read uninterpreted. It
+	// is applicable to environments where events are represented as a special
+	// sequences, such as VT100. It is a no-op if events are delivered as whole
+	// units by the terminal, such as Windows consoles.
+	SetRawInput(n int)
 	// StopInput causes input delivery to be stopped. When this function
 	// returns, the channel previously returned by StartInput will no longer
 	// deliver input events.
@@ -99,8 +95,8 @@ func (t *aTTY) StartInput() <-chan term.Event {
 	return t.r.EventChan()
 }
 
-func (t *aTTY) SetRawInput(raw bool) {
-	t.r.SetRaw(raw)
+func (t *aTTY) SetRawInput(n int) {
+	t.r.SetRaw(n)
 }
 
 func (t *aTTY) StopInput() {
@@ -194,7 +190,7 @@ func (t *fakeTTY) StartInput() <-chan term.Event {
 }
 
 // Nop.
-func (t *fakeTTY) SetRawInput(b bool) {}
+func (t *fakeTTY) SetRawInput(int) {}
 
 // Closes t.eventCh.
 func (t *fakeTTY) StopInput() { close(t.eventCh) }

@@ -24,9 +24,6 @@ type MouseEvent struct {
 	Mod    ui.Mod
 }
 
-// RawRune represents a rune read in raw mode.
-type RawRune rune
-
 // CursorPosition represents a report of the current cursor position from the
 // terminal driver, usually as a response from a cursor position request.
 type CursorPosition Pos
@@ -48,7 +45,6 @@ type NonfatalErrorEvent struct{ Err error }
 func (KeyEvent) isEvent()   {}
 func (MouseEvent) isEvent() {}
 
-func (RawRune) isEvent()        {}
 func (CursorPosition) isEvent() {}
 func (PasteSetting) isEvent()   {}
 

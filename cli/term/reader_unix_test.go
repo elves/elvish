@@ -201,3 +201,54 @@ func TestReader_StartAfterStopIndeedStarts(t *testing.T) {
 		}
 	}
 }
+
+var setRawTests = []struct {
+	name  string
+	raw   int
+	input string
+	want  []Event
+}{
+	{"ctrl key",
+		1, "\001", []Event{K('\001')}},
+	{"normal key not affected",
+		1, "x", []Event{K('x')}},
+	{"sequence with a single leading Esc",
+		1, "\033OA", []Event{K('\033'), K('O'), K('A')}},
+	{"sequence with multiple leading Esc, n = 1",
+		1, "\033\033OA", []Event{K('\033'), K(ui.Up)}},
+	{"sequence with multiple leading Esc, n > 1",
+		2, "\033\033OA", []Event{K('\033'), K('\033'), K('O'), K('A')}},
+	{"n = -1",
+		-1, "\033a\033b", []Event{K('\033'), K('a'), K('\033'), K('b')}},
+}
+
+func TestReader_SetRaw(t *testing.T) {
+	r, w, reader := setupTest()
+	defer r.Close()
+	defer w.Close()
+	reader.Start()
+	defer reader.Close()
+	defer reader.Stop()
+
+	for _, test := range setRawTests {
+		t.Run(test.name, func(t *testing.T) {
+			reader.SetRaw(test.raw)
+			w.WriteString(test.input)
+			testEvents(t, reader, test.want...)
+		})
+	}
+}
+
+func testEvents(t *testing.T, r Reader, wantEvents ...Event) {
+	t.Helper()
+	for _, wantEvent := range wantEvents {
+		select {
+		case event := <-r.EventChan():
+			if event != wantEvent {
+				t.Errorf("Reader reads event %v, want %v", event, wantEvent)
+			}
+		case <-time.After(time.Second):
+			t.Errorf("Reader timed out while waiting for event %v", wantEvent)
+		}
+	}
+}

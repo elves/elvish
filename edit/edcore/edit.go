@@ -484,8 +484,6 @@ MainLoop:
 					topaste = parse.Quote(topaste)
 				}
 				ed.InsertAtDot(topaste)
-			case term.RawRune:
-				insertRaw(ed, rune(event))
 			case term.KeyEvent:
 				k := ui.Key(event)
 			lookupKey:

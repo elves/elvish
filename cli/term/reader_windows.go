@@ -38,7 +38,7 @@ func newReader(file *os.File) Reader {
 		console, make(chan Event), stopEvent, nil, nil}
 }
 
-func (r *reader) SetRaw(bool) {
+func (r *reader) SetRaw(int) {
 	// NOP on Windows.
 }
 

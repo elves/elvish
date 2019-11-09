@@ -13,13 +13,12 @@ type rawInsert struct {
 }
 
 func (ed *editor) startInsertRaw() {
-	ed.reader.SetRaw(true)
+	ed.reader.SetRaw(1)
 	ed.mode = rawInsert{}
 }
 
 func insertRaw(ed *editor, r rune) {
 	ed.InsertAtDot(string(r))
-	ed.reader.SetRaw(false)
 	ed.SetModeInsert()
 }
 
