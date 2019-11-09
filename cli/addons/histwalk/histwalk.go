@@ -53,6 +53,8 @@ func (w *widget) Handle(event term.Event) bool {
 	return w.binding.Handle(event)
 }
 
+func (w *widget) Focus() bool { return false }
+
 // Start starts the histwalk addon.
 func Start(app cli.App, cfg Config) {
 	if cfg.Walker == nil {

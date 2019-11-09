@@ -80,8 +80,8 @@ func TestHistWalk(t *testing.T) {
 
 func makeBuf(codeArea styled.Text, modeline string) *ui.Buffer {
 	return ui.NewBufferBuilder(40).
-		WriteStyled(codeArea).
-		Newline().SetDotToCursor().
+		WriteStyled(codeArea).SetDotToCursor().
+		Newline().
 		WriteStyled(layout.ModeLine(modeline, false)).
 		Buffer()
 }

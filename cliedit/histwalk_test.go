@@ -21,7 +21,7 @@ func TestHistWalk(t *testing.T) {
 		WriteStyled(styled.MarkLines(
 			"~> echo a", styles,
 			"   GGGG--",
-		)).Newline().SetDotToCursor().
+		)).SetDotToCursor().Newline().
 		WriteStyled(styled.MarkLines(
 			" HISTORY #1 ", styles,
 			"mmmmmmmmmmmm",
