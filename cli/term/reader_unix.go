@@ -335,13 +335,13 @@ var g3Seq = map[rune]ui.Key{
 	// Ctrl-Shift-modified arrow keys; however, this doesn't seem to be true for
 	// urxvt 9.22 packaged by Debian; those keys simply send the same sequence
 	// as Ctrl-modified keys (\eO[abcd]).
-	'A': {ui.Up, 0}, 'B': {ui.Down, 0}, 'C': {ui.Right, 0}, 'D': {ui.Left, 0},
-	'H': {ui.Home, 0}, 'F': {ui.End, 0}, 'M': {ui.Insert, 0},
+	'A': ui.K(ui.Up), 'B': ui.K(ui.Down), 'C': ui.K(ui.Right), 'D': ui.K(ui.Left),
+	'H': ui.K(ui.Home), 'F': ui.K(ui.End), 'M': ui.K(ui.Insert),
 	// urxvt
-	'a': {ui.Up, ui.Ctrl}, 'b': {ui.Down, ui.Ctrl},
-	'c': {ui.Right, ui.Ctrl}, 'd': {ui.Left, ui.Ctrl},
+	'a': ui.K(ui.Up, ui.Ctrl), 'b': ui.K(ui.Down, ui.Ctrl),
+	'c': ui.K(ui.Right, ui.Ctrl), 'd': ui.K(ui.Left, ui.Ctrl),
 	// xterm, urxvt, tmux
-	'P': {ui.F1, 0}, 'Q': {ui.F2, 0}, 'R': {ui.F3, 0}, 'S': {ui.F4, 0},
+	'P': ui.K(ui.F1), 'Q': ui.K(ui.F2), 'R': ui.K(ui.F3), 'S': ui.K(ui.F4),
 }
 
 // Tables for CSI-style key sequences. A CSI sequence is \e[ followed by zero or
@@ -362,14 +362,14 @@ var g3Seq = map[rune]ui.Key{
 // 1 and the second identifying the modifier. For instance, \e[1;5A is Ctrl-Up.
 var csiSeqByLast = map[rune]ui.Key{
 	// xterm, urxvt, tmux
-	'A': {ui.Up, 0}, 'B': {ui.Down, 0}, 'C': {ui.Right, 0}, 'D': {ui.Left, 0},
+	'A': ui.K(ui.Up), 'B': ui.K(ui.Down), 'C': ui.K(ui.Right), 'D': ui.K(ui.Left),
 	// urxvt
-	'a': {ui.Up, ui.Shift}, 'b': {ui.Down, ui.Shift},
-	'c': {ui.Right, ui.Shift}, 'd': {ui.Left, ui.Shift},
+	'a': ui.K(ui.Up, ui.Shift), 'b': ui.K(ui.Down, ui.Shift),
+	'c': ui.K(ui.Right, ui.Shift), 'd': ui.K(ui.Left, ui.Shift),
 	// xterm (Terminal.app only sends those in alternate screen)
-	'H': {ui.Home, 0}, 'F': {ui.End, 0},
+	'H': ui.K(ui.Home), 'F': ui.K(ui.End),
 	// xterm, urxvt, tmux
-	'Z': {ui.Tab, ui.Shift},
+	'Z': ui.K(ui.Tab, ui.Shift),
 }
 
 // CSI-style key sequences ending with '~' with by one or two numerical
@@ -437,7 +437,7 @@ func parseCSI(nums []int, last rune, seq string) ui.Key {
 	case '~':
 		if len(nums) == 1 || len(nums) == 2 {
 			if r, ok := csiSeqTilde[nums[0]]; ok {
-				k := ui.Key{r, 0}
+				k := ui.K(r)
 				if len(nums) == 1 {
 					// Unmodified: \e[5~ (e.g. PageUp)
 					return k
@@ -447,7 +447,7 @@ func parseCSI(nums []int, last rune, seq string) ui.Key {
 			}
 		} else if len(nums) == 3 && nums[0] == 27 {
 			if r, ok := csiSeqTilde27[nums[2]]; ok {
-				k := ui.Key{r, 0}
+				k := ui.K(r)
 				return xtermModify(k, nums[1], seq)
 			}
 		}
@@ -464,7 +464,7 @@ func parseCSI(nums []int, last rune, seq string) ui.Key {
 				case '@':
 					mod = ui.Shift | ui.Ctrl
 				}
-				return ui.Key{r, mod}
+				return ui.K(r, mod)
 			}
 		}
 	}
