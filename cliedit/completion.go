@@ -13,6 +13,40 @@ import (
 //
 // Keybinding for the completion mode.
 
+//elvdoc:fn complete-filename
+//
+// ```elvish
+// edit:complete-filename @args
+// ```
+//
+// Produces a list of filenames found in the directory of the last argument. All
+// other arguments are ignored. If the last argument does not contain a path
+// (either absolute or relative to the current directory), then the current
+// directory is used. Relevant files are output as `edit:complex-candidate`
+// objects.
+//
+// This function is the default handler for any commands without
+// explicit handlers in `$edit:completion:arg-completer`. See [Argument
+// Completer](#argument-completer).
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> edit:complete-filename ''
+// ▶ (edit:complex-candidate Applications &code-suffix=/ &display-suffix='' &style='01;34')
+// ▶ (edit:complex-candidate Books &code-suffix=/ &display-suffix='' &style='01;34')
+// ▶ (edit:complex-candidate Desktop &code-suffix=/ &display-suffix='' &style='01;34')
+// ▶ (edit:complex-candidate Docsafe &code-suffix=/ &display-suffix='' &style='01;34')
+// ▶ (edit:complex-candidate Documents &code-suffix=/ &display-suffix='' &style='01;34')
+// ...
+// ~> edit:complete-filename .elvish/
+// ▶ (edit:complex-candidate .elvish/aliases &code-suffix=/ &display-suffix='' &style='01;34')
+// ▶ (edit:complex-candidate .elvish/db &code-suffix=' ' &display-suffix='' &style='')
+// ▶ (edit:complex-candidate .elvish/epm-installed &code-suffix=' ' &display-suffix='' &style='')
+// ▶ (edit:complex-candidate .elvish/lib &code-suffix=/ &display-suffix='' &style='01;34')
+// ▶ (edit:complex-candidate .elvish/rc.elv &code-suffix=' ' &display-suffix='' &style='')
+// ```
+
 //elvdoc:fn completion:start
 //
 // Start the completion mode.
@@ -24,6 +58,9 @@ import (
 func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar)
+	ns.AddGoFns("<edit>", map[string]interface{}{
+		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
+	})
 	ns.AddNs("completion",
 		eval.Ns{
 			"binding": bindingVar,
@@ -48,6 +85,24 @@ func completionStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
 	completion.Start(app, completion.Config{
 		Name: result.Name, Replace: result.Replace, Items: result.Items,
 		Binding: binding})
+}
+
+type wrappedArgGenerator func(*eval.Frame, ...string) error
+
+// Wraps an ArgGenerator into a function that can be then passed to
+// eval.NewGoFn.
+func wrapArgGenerator(gen complete.ArgGenerator) wrappedArgGenerator {
+	return func(fm *eval.Frame, args ...string) error {
+		rawCands, err := gen(args)
+		if err != nil {
+			return err
+		}
+		ch := fm.OutputChan()
+		for _, rawCand := range rawCands {
+			ch <- rawCand
+		}
+		return nil
+	}
 }
 
 type pureEvaler struct{ ev *eval.Evaler }
