@@ -174,7 +174,7 @@ func TestSIGWINCH_TriggersRedraw(t *testing.T) {
 
 // Code area.
 
-func TestEvent_HandledByCodeArea(t *testing.T) {
+func TestCodeArea_HandlesEvents(t *testing.T) {
 	a, tty := setup()
 	codeCh, _ := ReadCodeAsync(a)
 	defer cleanup(a, codeCh)
@@ -193,20 +193,54 @@ func TestHighlighter(t *testing.T) {
 
 	codeCh, _ := ReadCodeAsync(a)
 	defer cleanup(a, codeCh)
-	feedInput(tty, "abc")
+	feedInput(tty, "code")
 
 	wantBuf := bb().
-		WriteStyled(styled.MakeText("abc", "red")).
+		WriteStyled(styled.MakeText("code", "red")).
 		SetDotToCursor().Buffer()
 	tty.TestBuffer(t, wantBuf)
 }
 
 func TestHighlighter_Errors(t *testing.T) {
-	// TODO
+	a, tty := setupWithSpec(AppSpec{
+		Highlighter: testHighlighter{
+			get: func(code string) (styled.Text, []error) {
+				errors := []error{errors.New("ERR 1"), errors.New("ERR 2")}
+				return styled.Plain(code), errors
+			},
+		}})
+
+	codeCh, _ := ReadCodeAsync(a)
+	defer cleanup(a, codeCh)
+	feedInput(tty, "code")
+
+	wantBuf := bb().
+		WritePlain("code").SetDotToCursor().Newline().
+		WritePlain("ERR 1").Newline().
+		WritePlain("ERR 2").Buffer()
+	tty.TestBuffer(t, wantBuf)
 }
 
 func TestHighlighter_LateUpdate(t *testing.T) {
-	// TODO
+	style := ""
+	hl := testHighlighter{
+		get: func(code string) (styled.Text, []error) {
+			return styled.MakeText(code, style), nil
+		},
+		lateUpdates: make(chan styled.Text),
+	}
+	a, tty := setupWithSpec(AppSpec{Highlighter: hl})
+
+	codeCh, _ := ReadCodeAsync(a)
+	defer cleanup(a, codeCh)
+	feedInput(tty, "code")
+
+	tty.TestBuffer(t, bb().WritePlain("code").SetDotToCursor().Buffer())
+
+	style = "red"
+	hl.lateUpdates <- nil
+	tty.TestBuffer(t, bb().WriteStyled(
+		styled.MakeText("code", "red")).SetDotToCursor().Buffer())
 }
 
 func TestPrompt(t *testing.T) {
@@ -307,25 +341,21 @@ func TestRPrompt_NotPersistent(t *testing.T) {
 
 // Addon.
 
-func TestReadCode_PassesInputEventsToAddon(t *testing.T) {
-	/*
-		a, tty := setup()
+func TestAddon_HandlesEvents(t *testing.T) {
+	a, tty := setupWithSpec(AppSpec{
+		State: State{
+			Addon: codearea.New(codearea.Spec{
+				Prompt: func() styled.Text { return styled.Plain("addon> ") },
+			})}})
 
-		m := &fakeMode{maxKeys: 3}
-		a.state.Raw.Mode = m
-		tty.Inject(term.K('a'))
-		tty.Inject(term.K('b'))
-		tty.Inject(term.K('c'))
+	codeCh, _ := ReadCodeAsync(a)
+	defer cleanup(a, codeCh)
+	feedInput(tty, "input")
 
-		a.ReadCode()
-
-		wantKeysHandled := []ui.Key{
-			{Rune: 'a'}, {Rune: 'b'}, {Rune: 'c'},
-		}
-		if !reflect.DeepEqual(m.keysHandled, wantKeysHandled) {
-			t.Errorf("Mode gets keys %v, want %v", m.keysHandled, wantKeysHandled)
-		}
-	*/
+	wantBuf := bb().Newline(). // empty main code area
+					WritePlain("addon> input").SetDotToCursor(). // addon
+					Buffer()
+	tty.TestBuffer(t, wantBuf)
 }
 
 // Misc features.
