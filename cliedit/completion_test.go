@@ -75,24 +75,18 @@ func TestComplexCandidate(t *testing.T) {
 	})
 }
 
-func TestMatchPrefix(t *testing.T) {
+func TestMatchers(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
 	evals(f.Evaler,
-		`@results = (edit:match-prefix a [a b ab ba a1 b2 [a b]])`)
-	testGlobal(t, f.Evaler,
-		"results",
-		vals.MakeList(true, false, true, false, true, false, false))
-}
-
-func TestMatchSubstr(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
-
-	evals(f.Evaler,
-		`@results = (edit:match-substr a [a b ab ba a1 b2 [a b]])`)
-	testGlobal(t, f.Evaler,
-		"results",
-		vals.MakeList(true, false, true, true, true, false, true))
+		`@prefix = (edit:match-prefix ab [ab abc cab acb ba [ab] [a b] [b a]])`,
+		`@substr = (edit:match-substr ab [ab abc cab acb ba [ab] [a b] [b a]])`,
+		`@subseq = (edit:match-subseq ab [ab abc cab acb ba [ab] [a b] [b a]])`,
+	)
+	testGlobals(t, f.Evaler, map[string]interface{}{
+		"prefix": vals.MakeList(true, true, false, false, false, false, false, false),
+		"substr": vals.MakeList(true, true, true, false, false, true, false, false),
+		"subseq": vals.MakeList(true, true, true, true, false, true, true, false),
+	})
 }

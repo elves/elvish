@@ -92,6 +92,16 @@ func complexCandidate(opts complexCandidateOpts, stem string) complexItem {
 // }
 // ```
 
+//elvdoc:fn match-subseq
+//
+// ```elvish
+// edit:match-subseq $seed $inputs?
+// ```
+//
+// For each input, outputs whether the input has $seed as a
+// [subsequence](https://en.wikipedia.org/wiki/Subsequence). Uses the result of
+// `to-string` for non-string inputs.
+
 //elvdoc:fn match-substr
 //
 // ```elvish
@@ -141,6 +151,7 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
 		"complex-candidate": complexCandidate,
 		"match-prefix":      wrapMatcher(strings.HasPrefix),
+		"match-subseq":      wrapMatcher(util.HasSubseq),
 		"match-substr":      wrapMatcher(strings.Contains),
 	})
 	ns.AddNs("completion",
