@@ -11,22 +11,29 @@ import (
 	"github.com/elves/elvish/parse/parseutil"
 )
 
+// An error returned by Complete if the config has not supplied a PureEvaler.
+var errNoPureEvaler = errors.New("no PureEvaler supplied")
+
 // An error returned by Complete as well as the completers if there is no
 // applicable completion.
 var errNoCompletion = errors.New("no completion")
 
 // Config stores the configuration required for code completion.
 type Config struct {
+	// An interface to access the runtime. Complete will return an error if this
+	// is nil.
+	PureEvaler PureEvaler
 	// A function for filtering raw candidates. If nil, no filtering is done.
-	Filter func(ctxName, seed string, rawItems []RawItem) []RawItem
+	Filterer Filterer
 	// Used to generate candidates for a command argument. Defaults to
 	// Filenames.
 	ArgGenerator ArgGenerator
-	// An interface to access the runtime. Must not be nil.
-	PureEvaler PureEvaler
 }
 
-// ArgGenerator is the type of function that generates raw candidates for a
+// Filterer is the type of functions that filter raw candidates.
+type Filterer func(ctxName, seed string, rawItems []RawItem) []RawItem
+
+// ArgGenerator is the type of functions that generate raw candidates for a
 // command argument. It takes all the existing arguments, the last being the
 // argument to complete, and returns raw candidates or an error.
 type ArgGenerator func(args []string) ([]RawItem, error)
@@ -66,6 +73,12 @@ type CodeBuffer struct {
 // Complete runs the code completion algorithm in the given context, and returns
 // the completion type, items and any error encountered.
 func Complete(code CodeBuffer, cfg Config) (*Result, error) {
+	if cfg.PureEvaler == nil {
+		return nil, errNoPureEvaler
+	}
+	if cfg.Filterer == nil {
+		cfg.Filterer = FilterPrefix
+	}
 	if cfg.ArgGenerator == nil {
 		cfg.ArgGenerator = GenerateFileNames
 	}
@@ -78,9 +91,7 @@ func Complete(code CodeBuffer, cfg Config) (*Result, error) {
 		if err == errNoCompletion {
 			continue
 		}
-		if cfg.Filter != nil {
-			rawItems = cfg.Filter(ctx.name, ctx.seed, rawItems)
-		}
+		rawItems = cfg.Filterer(ctx.name, ctx.seed, rawItems)
 		items := make([]completion.Item, len(rawItems))
 		for i, rawCand := range rawItems {
 			items[i] = rawCand.Cook(ctx.quote)

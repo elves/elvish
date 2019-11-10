@@ -2,7 +2,7 @@ package complete
 
 import "strings"
 
-func PrefixFilter(ctxName, seed string, items []RawItem) []RawItem {
+func FilterPrefix(ctxName, seed string, items []RawItem) []RawItem {
 	var filtered []RawItem
 	for _, cand := range items {
 		if strings.HasPrefix(cand.String(), seed) {

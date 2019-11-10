@@ -101,7 +101,6 @@ func completionStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
 	result, err := complete.Complete(
 		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot},
 		complete.Config{
-			Filter:     complete.PrefixFilter,
 			PureEvaler: pureEvaler{ev},
 		})
 	if err != nil {

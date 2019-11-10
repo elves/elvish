@@ -66,7 +66,7 @@ func TestComplete(t *testing.T) {
 	defer cleanupFs()
 
 	cfg := Config{
-		Filter: PrefixFilter,
+		Filterer: FilterPrefix,
 		PureEvaler: testEvaler{
 			externals: []string{"ls", "make"},
 			specials:  []string{"if", "for"},
@@ -79,8 +79,11 @@ func TestComplete(t *testing.T) {
 		},
 	}
 
-	cfgWithArgGenerator := Config{
+	argGeneratorDebugCfg := Config{
 		PureEvaler: cfg.PureEvaler,
+		Filterer: func(ctxName, seed string, items []RawItem) []RawItem {
+			return items
+		},
 		ArgGenerator: func(args []string) ([]RawItem, error) {
 			item := noQuoteItem(fmt.Sprintf("%#v", args))
 			return []RawItem{item}, nil
@@ -99,6 +102,10 @@ func TestComplete(t *testing.T) {
 	}
 
 	tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
+		// No PureEvaler.
+		Args(cb(""), Config{}).Rets(
+			(*Result)(nil),
+			errNoPureEvaler),
 		// Complete arguments using the fallback filename completer.
 		Args(cb("ls "), cfg).Rets(
 			&Result{
@@ -111,12 +118,12 @@ func TestComplete(t *testing.T) {
 				Items: []completion.Item{{ToShow: "a.exe", ToInsert: "a.exe "}}},
 			nil),
 		// Custom arg completer, new argument
-		Args(cb("ls a "), cfgWithArgGenerator).Rets(
+		Args(cb("ls a "), argGeneratorDebugCfg).Rets(
 			&Result{
 				Name: "argument", Replace: r(5, 5),
 				Items: []completion.Item{c(`[]string{"ls", "a", ""}`)}},
 			nil),
-		Args(cb("ls a b"), cfgWithArgGenerator).Rets(
+		Args(cb("ls a b"), argGeneratorDebugCfg).Rets(
 			&Result{
 				Name: "argument", Replace: r(5, 6),
 				Items: []completion.Item{c(`[]string{"ls", "a", "b"}`)}},
