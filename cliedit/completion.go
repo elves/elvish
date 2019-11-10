@@ -76,6 +76,22 @@ func complexCandidate(opts complexCandidateOpts, stem string) complexItem {
 //
 // Start the completion mode.
 
+func completionStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
+	buf := app.CodeArea().CopyState().Buffer
+	result, err := complete.Complete(
+		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot},
+		complete.Config{
+			PureEvaler: pureEvaler{ev},
+		})
+	if err != nil {
+		app.Notify(err.Error())
+		return
+	}
+	completion.Start(app, completion.Config{
+		Name: result.Name, Replace: result.Replace, Items: result.Items,
+		Binding: binding})
+}
+
 //elvdoc:fn completion:close
 //
 // Closes the completion mode UI.
@@ -94,22 +110,6 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 			"start": func() { completionStart(app, ev, binding) },
 			"close": func() { completion.Close(app) },
 		}))
-}
-
-func completionStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
-	buf := app.CodeArea().CopyState().Buffer
-	result, err := complete.Complete(
-		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot},
-		complete.Config{
-			PureEvaler: pureEvaler{ev},
-		})
-	if err != nil {
-		app.Notify(err.Error())
-		return
-	}
-	completion.Start(app, completion.Config{
-		Name: result.Name, Replace: result.Replace, Items: result.Items,
-		Binding: binding})
 }
 
 // A wrapper type implementing Elvish value methods.
