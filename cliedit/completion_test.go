@@ -74,3 +74,25 @@ func TestComplexCandidate(t *testing.T) {
 		"display-suffix": "x",
 	})
 }
+
+func TestMatchPrefix(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	evals(f.Evaler,
+		`@results = (edit:match-prefix a [a b ab ba a1 b2 [a b]])`)
+	testGlobal(t, f.Evaler,
+		"results",
+		vals.MakeList(true, false, true, false, true, false, false))
+}
+
+func TestMatchSubstr(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	evals(f.Evaler,
+		`@results = (edit:match-substr a [a b ab ba a1 b2 [a b]])`)
+	testGlobal(t, f.Evaler,
+		"results",
+		vals.MakeList(true, false, true, true, true, false, true))
+}

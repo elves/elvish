@@ -2,12 +2,14 @@ package cliedit
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/addons/completion"
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cliedit/complete"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hash"
@@ -72,6 +74,42 @@ func complexCandidate(opts complexCandidateOpts, stem string) complexItem {
 	}
 }
 
+//elvdoc:fn match-prefix
+//
+// ```elvish
+// edit:match-prefix $seed $inputs?
+// ```
+//
+// For each input, outputs whether the input has $seed as a prefix. Uses the
+// result of `to-string` for non-string inputs.
+//
+// Roughly equivalent to the following Elvish function, but more efficient:
+//
+// ```elvish
+// use str
+// fn match-prefix [seed @input]{
+//   each [x]{ str:has-prefix (to-string $x) $seed } $@input
+// }
+// ```
+
+//elvdoc:fn match-substr
+//
+// ```elvish
+// edit:match-substr $seed $inputs?
+// ```
+//
+// For each input, outputs whether the input has $seed as a substring. Uses the
+// result of `to-string` for non-string inputs.
+//
+// Roughly equivalent to the following Elvish function, but more efficient:
+//
+// ```elvish
+// use str
+// fn match-substr [seed @input]{
+//   each [x]{ str:has-contains (to-string $x) $seed } $@input
+// }
+// ```
+
 //elvdoc:fn completion:start
 //
 // Start the completion mode.
@@ -102,6 +140,8 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
 		"complex-candidate": complexCandidate,
+		"match-prefix":      wrapMatcher(strings.HasPrefix),
+		"match-substr":      wrapMatcher(strings.Contains),
 	})
 	ns.AddNs("completion",
 		eval.Ns{
@@ -175,6 +215,29 @@ func wrapArgGenerator(gen complete.ArgGenerator) wrappedArgGenerator {
 			}
 		}
 		return nil
+	}
+}
+
+// The type for a native Go matcher. This is not equivalent to the Elvish
+// counterpart, which streams input and output. This is because we can actually
+// afford calling a Go function for each item, so omitting the streaming
+// behavior makes the implementation easier.
+//
+// Native Go matchers are wrapped into Elvish matchers, but never the other way
+// around.
+//
+// This type is satisfied by strings.Contains and strings.HasPrefix; they are
+// wrapped into match-substr and match-prefix respectively.
+type matcher func(text, seed string) bool
+
+type wrappedMatcher func(fm *eval.Frame, seed string, inputs eval.Inputs)
+
+func wrapMatcher(m matcher) wrappedMatcher {
+	return func(fm *eval.Frame, seed string, input eval.Inputs) {
+		out := fm.OutputChan()
+		input(func(v interface{}) {
+			out <- m(vals.ToString(v), seed)
+		})
 	}
 }
 
