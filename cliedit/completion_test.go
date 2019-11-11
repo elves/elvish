@@ -75,6 +75,66 @@ func TestComplexCandidate(t *testing.T) {
 	})
 }
 
+func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	evals(f.Evaler,
+		`foo-args = []`,
+		`fn foo { }`,
+		`edit:completion:arg-completer[foo] = [@args]{
+		   foo-args = $args
+		   put val1
+		   edit:complex-candidate val2 &display-suffix=_
+		 }`)
+
+	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
+	wantBuf := bb().
+		WriteStyled(styled.MarkLines(
+			"~> foo foo1 foo2 val1", styles,
+			"   ggg           ----",
+			"COMPLETING argument ", styles,
+			"mmmmmmmmmmmmmmmmmmm ")).
+		SetDotToCursor().
+		Newline().
+		WriteStyled(styled.MarkLines(
+			"val1  val2_", styles,
+			"####       ",
+		)).
+		Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBuf)
+	testGlobal(t, f.Evaler,
+		"foo-args", vals.MakeList("foo", "foo1", "foo2", ""))
+}
+
+func TestCompletionArgCompleter_BytesOutput(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	evals(f.Evaler,
+		`fn foo { }`,
+		`edit:completion:arg-completer[foo] = [@args]{
+		   echo val1
+		   echo val2
+		 }`)
+
+	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
+	wantBuf := bb().
+		WriteStyled(styled.MarkLines(
+			"~> foo foo1 foo2 val1", styles,
+			"   ggg           ----",
+			"COMPLETING argument ", styles,
+			"mmmmmmmmmmmmmmmmmmm ")).
+		SetDotToCursor().
+		Newline().
+		WriteStyled(styled.MarkLines(
+			"val1  val2", styles,
+			"####      ",
+		)).
+		Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBuf)
+}
+
 func TestCompletionMatcher(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()

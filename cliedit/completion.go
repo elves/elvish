@@ -1,9 +1,11 @@
 package cliedit
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/addons/completion"
@@ -15,6 +17,10 @@ import (
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hash"
 )
+
+//elvdoc:var completion:arg-completer
+//
+// A map containing argument completers.
 
 //elvdoc:var completion:binding
 //
@@ -150,6 +156,7 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar)
 	matcherMapVar := newMapVar(vals.EmptyMap)
+	argGeneratorMapVar := newMapVar(vals.EmptyMap)
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
 		"complex-candidate": complexCandidate,
@@ -159,13 +166,17 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	})
 	ns.AddNs("completion",
 		eval.Ns{
-			"binding": bindingVar,
-			"matcher": matcherMapVar,
+			"arg-completer": argGeneratorMapVar,
+			"binding":       bindingVar,
+			"matcher":       matcherMapVar,
 		}.AddGoFns("<edit:completion>", map[string]interface{}{
 			"start": func() {
 				completionStart(app, binding, complete.Config{
 					PureEvaler: pureEvaler{ev},
-					Filterer:   adaptMatcherMap(app, ev, matcherMapVar.Get().(vals.Map)),
+					Filterer: adaptMatcherMap(
+						app, ev, matcherMapVar.Get().(vals.Map)),
+					ArgGenerator: adaptArgGeneratorMap(
+						ev, argGeneratorMapVar.Get().(vals.Map)),
 				})
 			},
 			"close": func() { completion.Close(app) },
@@ -264,9 +275,10 @@ func wrapMatcher(m matcher) wrappedMatcher {
 // Adapts $edit:completion:matcher into a Filterer.
 func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer {
 	return func(ctxName, seed string, rawItems []complete.RawItem) []complete.RawItem {
-		matcher, err := getMatcher(m, ctxName)
-		if err != nil {
-			nt.Notify(fmt.Sprintf("%s, falling back to prefix matching", err))
+		matcher, ok := lookupFn(m, ctxName)
+		if !ok {
+			nt.Notify(fmt.Sprintf(
+				"matcher for %s not a function, falling back to prefix matching", ctxName))
 		}
 		if matcher == nil {
 			return complete.FilterPrefix(ctxName, seed, rawItems)
@@ -311,20 +323,75 @@ func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer
 	}
 }
 
-func getMatcher(m vals.Map, ctxName string) (eval.Callable, error) {
+func adaptArgGeneratorMap(ev *eval.Evaler, m vals.Map) complete.ArgGenerator {
+	return func(args []string) ([]complete.RawItem, error) {
+		gen, ok := lookupFn(m, args[0])
+		if !ok {
+			return nil, fmt.Errorf("arg completer for %s not a function", args[0])
+		}
+		if gen == nil {
+			return complete.GenerateFileNames(args)
+		}
+		argValues := make([]interface{}, len(args))
+		for i, arg := range args {
+			argValues[i] = arg
+		}
+		ports := []*eval.Port{
+			eval.DevNullClosedChan,
+			{}, // Will be replaced in CaptureOutput
+			{File: os.Stderr},
+		}
+		var output []complete.RawItem
+		var outputMutex sync.Mutex
+		collect := func(item complete.RawItem) {
+			outputMutex.Lock()
+			defer outputMutex.Unlock()
+			output = append(output, item)
+		}
+		valueCb := func(ch <-chan interface{}) {
+			for v := range ch {
+				switch v := v.(type) {
+				case string:
+					collect(complete.PlainItem(v))
+				case complexItem:
+					collect(complete.ComplexItem(v))
+				default:
+					collect(complete.PlainItem(vals.ToString(v)))
+				}
+			}
+		}
+		bytesCb := func(r *os.File) {
+			buffered := bufio.NewReader(r)
+			for {
+				line, err := buffered.ReadString('\n')
+				if line != "" {
+					collect(complete.PlainItem(strings.TrimSuffix(line, "\n")))
+				}
+				if err != nil {
+					break
+				}
+			}
+		}
+		fm := eval.NewTopFrame(ev, eval.NewInternalSource("[editor arg generator]"), ports)
+		err := fm.CallWithOutputCallback(gen, argValues, eval.NoOpts, valueCb, bytesCb)
+		return output, err
+	}
+}
+
+func lookupFn(m vals.Map, ctxName string) (eval.Callable, bool) {
 	val, ok := m.Index(ctxName)
 	if !ok {
 		val, ok = m.Index("")
 	}
 	if !ok {
 		// No matcher, but not an error either
-		return nil, nil
+		return nil, true
 	}
 	fn, ok := val.(eval.Callable)
 	if !ok {
-		return nil, fmt.Errorf("matcher for %s not a function", ctxName)
+		return nil, false
 	}
-	return fn, nil
+	return fn, true
 }
 
 type pureEvaler struct{ ev *eval.Evaler }
