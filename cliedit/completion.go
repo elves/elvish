@@ -159,6 +159,7 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	argGeneratorMapVar := newMapVar(vals.EmptyMap)
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
+		"complete-getopt":   completeGetopt,
 		"complex-candidate": complexCandidate,
 		"match-prefix":      wrapMatcher(strings.HasPrefix),
 		"match-subseq":      wrapMatcher(util.HasSubseq),
