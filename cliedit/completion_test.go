@@ -75,7 +75,30 @@ func TestComplexCandidate(t *testing.T) {
 	})
 }
 
-func TestMatchers(t *testing.T) {
+func TestCompletionMatcher(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+	util.ApplyDir(util.Dir{"foo": "", "oof": ""})
+
+	evals(f.Evaler, `edit:completion:matcher[''] = $edit:match-substr~`)
+	feedInput(f.TTYCtrl, "echo f\t")
+	wantBuf := bb().
+		WriteStyled(styled.MarkLines(
+			"~> echo foo ", styles,
+			"   gggg ----",
+			"COMPLETING argument ", styles,
+			"mmmmmmmmmmmmmmmmmmm ")).
+		SetDotToCursor().
+		Newline().
+		WriteStyled(styled.MarkLines(
+			"foo  oof", styles,
+			"###     ",
+		)).
+		Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBuf)
+}
+
+func TestBuiltinMatchers(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 

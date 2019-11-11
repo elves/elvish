@@ -2,6 +2,7 @@ package cliedit
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/elves/elvish/cli"
@@ -18,6 +19,10 @@ import (
 //elvdoc:var completion:binding
 //
 // Keybinding for the completion mode.
+
+//elvdoc:var completion:matcher
+//
+// A map mapping from context names to matcher functions.
 
 //elvdoc:fn complete-filename
 //
@@ -124,13 +129,10 @@ func complexCandidate(opts complexCandidateOpts, stem string) complexItem {
 //
 // Start the completion mode.
 
-func completionStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
+func completionStart(app cli.App, binding el.Handler, cfg complete.Config) {
 	buf := app.CodeArea().CopyState().Buffer
 	result, err := complete.Complete(
-		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot},
-		complete.Config{
-			PureEvaler: pureEvaler{ev},
-		})
+		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot}, cfg)
 	if err != nil {
 		app.Notify(err.Error())
 		return
@@ -147,6 +149,7 @@ func completionStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
 func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar)
+	matcherMapVar := newMapVar(vals.EmptyMap)
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
 		"complex-candidate": complexCandidate,
@@ -157,8 +160,14 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	ns.AddNs("completion",
 		eval.Ns{
 			"binding": bindingVar,
+			"matcher": matcherMapVar,
 		}.AddGoFns("<edit:completion>", map[string]interface{}{
-			"start": func() { completionStart(app, ev, binding) },
+			"start": func() {
+				completionStart(app, binding, complete.Config{
+					PureEvaler: pureEvaler{ev},
+					Filterer:   adaptMatcherMap(app, ev, matcherMapVar.Get().(vals.Map)),
+				})
+			},
 			"close": func() { completion.Close(app) },
 		}))
 }
@@ -250,6 +259,72 @@ func wrapMatcher(m matcher) wrappedMatcher {
 			out <- m(vals.ToString(v), seed)
 		})
 	}
+}
+
+// Adapts $edit:completion:matcher into a Filterer.
+func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer {
+	return func(ctxName, seed string, rawItems []complete.RawItem) []complete.RawItem {
+		matcher, err := getMatcher(m, ctxName)
+		if err != nil {
+			nt.Notify(fmt.Sprintf("%s, falling back to prefix matching", err))
+		}
+		if matcher == nil {
+			return complete.FilterPrefix(ctxName, seed, rawItems)
+		}
+		input := make(chan interface{})
+		stopInputFeeder := make(chan struct{})
+		defer close(stopInputFeeder)
+		// Feed a string representing all raw candidates to the input channel.
+		go func() {
+			defer close(input)
+			for _, rawItem := range rawItems {
+				select {
+				case input <- rawItem.String():
+				case <-stopInputFeeder:
+					return
+				}
+			}
+		}()
+		ports := []*eval.Port{
+			{Chan: input, File: eval.DevNull},
+			{}, // Will be replaced in CaptureOutput
+			{File: os.Stderr},
+		}
+		fm := eval.NewTopFrame(ev, eval.NewInternalSource("[editor matcher]"), ports)
+		outputs, err := fm.CaptureOutput(matcher, []interface{}{seed}, eval.NoOpts)
+		if err != nil {
+			nt.Notify(fmt.Sprintf("[matcher error] %s", err))
+			// Continue with whatever values have been output
+		}
+		if len(outputs) != len(rawItems) {
+			nt.Notify(fmt.Sprintf(
+				"matcher has output %v values, not equal to %v inputs",
+				len(outputs), len(rawItems)))
+		}
+		filtered := []complete.RawItem{}
+		for i := 0; i < len(rawItems) && i < len(outputs); i++ {
+			if vals.Bool(outputs[i]) {
+				filtered = append(filtered, rawItems[i])
+			}
+		}
+		return filtered
+	}
+}
+
+func getMatcher(m vals.Map, ctxName string) (eval.Callable, error) {
+	val, ok := m.Index(ctxName)
+	if !ok {
+		val, ok = m.Index("")
+	}
+	if !ok {
+		// No matcher, but not an error either
+		return nil, nil
+	}
+	fn, ok := val.(eval.Callable)
+	if !ok {
+		return nil, fmt.Errorf("matcher for %s not a function", ctxName)
+	}
+	return fn, nil
 }
 
 type pureEvaler struct{ ev *eval.Evaler }
