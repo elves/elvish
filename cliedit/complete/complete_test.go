@@ -65,7 +65,8 @@ func TestComplete(t *testing.T) {
 	cleanupFs := setupFs()
 	defer cleanupFs()
 
-	cfg := Config{
+	var cfg Config
+	cfg = Config{
 		Filterer: FilterPrefix,
 		PureEvaler: testEvaler{
 			externals: []string{"ls", "make"},
@@ -76,6 +77,12 @@ func TestComplete(t *testing.T) {
 				"ns2:": []string{"ipsum"},
 			},
 			namespaces: []string{"ns1:", "ns2:"},
+		},
+		ArgGenerator: func(args []string) ([]RawItem, error) {
+			if len(args) >= 2 && args[0] == "sudo" {
+				return GenerateForSudo(cfg, args)
+			}
+			return GenerateFileNames(args)
 		},
 	}
 
@@ -106,7 +113,7 @@ func TestComplete(t *testing.T) {
 		Args(cb(""), Config{}).Rets(
 			(*Result)(nil),
 			errNoPureEvaler),
-		// Complete arguments using the fallback filename completer.
+		// Complete arguments using GenerateFileNames.
 		Args(cb("ls "), cfg).Rets(
 			&Result{
 				Name: "argument", Replace: r(3, 3),
@@ -116,6 +123,18 @@ func TestComplete(t *testing.T) {
 			&Result{
 				Name: "argument", Replace: r(3, 4),
 				Items: []completion.Item{{ToShow: "a.exe", ToInsert: "a.exe "}}},
+			nil),
+		// GenerateForSudo completing external commands.
+		Args(cb("sudo "), cfg).Rets(
+			&Result{
+				Name: "argument", Replace: r(5, 5),
+				Items: []completion.Item{c("ls"), c("make")}},
+			nil),
+		// GenerateForSudo completing non-command arguments.
+		Args(cb("sudo ls "), cfg).Rets(
+			&Result{
+				Name: "argument", Replace: r(8, 8),
+				Items: allFileNameItems},
 			nil),
 		// Custom arg completer, new argument
 		Args(cb("ls a "), argGeneratorDebugCfg).Rets(
@@ -206,6 +225,11 @@ func TestComplete(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
+		allLocalCommandItems := []completion.Item{
+			{ToShow: "./a.exe", ToInsert: "./a.exe "},
+			{ToShow: "./d", ToInsert: withPathSeparator("./d")},
+			{ToShow: "./d2", ToInsert: withPathSeparator("./d2")},
+		}
 		tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
 			// Filename completion treats symlink to directories as directories.
 			//       01234
@@ -226,11 +250,13 @@ func TestComplete(t *testing.T) {
 			Args(cb("./"), cfg).Rets(
 				&Result{
 					Name: "command", Replace: r(0, 2),
-					Items: []completion.Item{
-						{ToShow: "./a.exe", ToInsert: "./a.exe "},
-						{ToShow: "./d", ToInsert: withPathSeparator("./d")},
-						{ToShow: "./d2", ToInsert: withPathSeparator("./d2")},
-					}},
+					Items: allLocalCommandItems},
+				nil),
+			// After sudo.
+			Args(cb("sudo ./"), cfg).Rets(
+				&Result{
+					Name: "argument", Replace: r(5, 7),
+					Items: allLocalCommandItems},
 				nil),
 		})
 	}

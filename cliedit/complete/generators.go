@@ -21,7 +21,30 @@ func GenerateFileNames(args []string) ([]RawItem, error) {
 	return generateFileNames(args[len(args)-1], false)
 }
 
+// GenerateForSudo generates candidates for sudo.
+func GenerateForSudo(cfg Config, args []string) ([]RawItem, error) {
+	switch {
+	case len(args) < 2:
+		return nil, errNoCompletion
+	case len(args) == 2:
+		// Complete external commands.
+		return generateExternalCommands(args[1], cfg.PureEvaler)
+	default:
+		return cfg.ArgGenerator(args[1:])
+	}
+}
+
 // Internal generators, used from completers.
+
+func generateExternalCommands(seed string, ev PureEvaler) ([]RawItem, error) {
+	if util.DontSearch(seed) {
+		// Completing a local external command name.
+		return generateFileNames(seed, true)
+	}
+	var items []RawItem
+	ev.EachExternal(func(s string) { items = append(items, PlainItem(s)) })
+	return items, nil
+}
 
 func generateCommands(seed string, ev PureEvaler) ([]RawItem, error) {
 	if util.DontSearch(seed) {
