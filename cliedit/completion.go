@@ -157,9 +157,22 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	binding := newMapBinding(app, ev, bindingVar)
 	matcherMapVar := newMapVar(vals.EmptyMap)
 	argGeneratorMapVar := newMapVar(vals.EmptyMap)
+	getCfg := func() complete.Config {
+		return complete.Config{
+			PureEvaler: pureEvaler{ev},
+			Filterer: adaptMatcherMap(
+				app, ev, matcherMapVar.Get().(vals.Map)),
+			ArgGenerator: adaptArgGeneratorMap(
+				ev, argGeneratorMapVar.Get().(vals.Map)),
+		}
+	}
+	generateForSudo := func(args []string) ([]complete.RawItem, error) {
+		return complete.GenerateForSudo(getCfg(), args)
+	}
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
 		"complete-getopt":   completeGetopt,
+		"complete-sudo":     wrapArgGenerator(generateForSudo),
 		"complex-candidate": complexCandidate,
 		"match-prefix":      wrapMatcher(strings.HasPrefix),
 		"match-subseq":      wrapMatcher(util.HasSubseq),
@@ -171,15 +184,7 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 			"binding":       bindingVar,
 			"matcher":       matcherMapVar,
 		}.AddGoFns("<edit:completion>", map[string]interface{}{
-			"start": func() {
-				completionStart(app, binding, complete.Config{
-					PureEvaler: pureEvaler{ev},
-					Filterer: adaptMatcherMap(
-						app, ev, matcherMapVar.Get().(vals.Map)),
-					ArgGenerator: adaptArgGeneratorMap(
-						ev, argGeneratorMapVar.Get().(vals.Map)),
-				})
-			},
+			"start": func() { completionStart(app, binding, getCfg()) },
 			"close": func() { completion.Close(app) },
 		}))
 }

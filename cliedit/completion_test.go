@@ -135,6 +135,20 @@ func TestCompletionArgCompleter_BytesOutput(t *testing.T) {
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
+func TestCompleteSudo(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	evals(f.Evaler,
+		`fn foo { }`,
+		`edit:completion:arg-completer[foo] = [@args]{
+		   echo val1
+		   echo val2
+		 }`,
+		`@cands = (edit:complete-sudo sudo foo '')`)
+	testGlobal(t, f.Evaler, "cands", vals.MakeList("val1", "val2"))
+}
+
 func TestCompletionMatcher(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
