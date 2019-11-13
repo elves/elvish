@@ -36,11 +36,13 @@ func Start(app cli.App, cfg Config) {
 		app.Notify("no dir history store")
 		return
 	}
+
 	dirs, err := cfg.Store.Dirs(map[string]struct{}{})
 	if err != nil {
 		app.Notify("db error: " + err.Error())
 		return
 	}
+	l := list{dirs}
 
 	w := combobox.New(combobox.Spec{
 		CodeArea: codearea.Spec{
@@ -49,7 +51,7 @@ func Start(app cli.App, cfg Config) {
 		ListBox: listbox.Spec{
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
-				err := cfg.Store.Chdir(it.(items)[i].Path)
+				err := cfg.Store.Chdir(it.(list).dirs[i].Path)
 				if err != nil {
 					app.Notify(err.Error())
 				}
@@ -57,30 +59,32 @@ func Start(app cli.App, cfg Config) {
 			},
 		},
 		OnFilter: func(w combobox.Widget, p string) {
-			w.ListBox().Reset(filter(dirs, p), 0)
+			w.ListBox().Reset(l.filter(p), 0)
 		},
 	})
 	app.MutateState(func(s *cli.State) { s.Addon = w })
 	app.Redraw()
 }
 
-func filter(dirs []storedefs.Dir, p string) items {
+type list struct {
+	dirs []storedefs.Dir
+}
+
+func (l list) filter(p string) list {
 	if p == "" {
-		return dirs
+		return l
 	}
-	var entries []storedefs.Dir
-	for _, dir := range dirs {
+	var filteredDirs []storedefs.Dir
+	for _, dir := range l.dirs {
 		if strings.Contains(dir.Path, p) {
-			entries = append(entries, dir)
+			filteredDirs = append(filteredDirs, dir)
 		}
 	}
-	return items(entries)
+	return list{filteredDirs}
 }
 
-type items []storedefs.Dir
-
-func (it items) Show(i int) styled.Text {
-	return styled.Plain(fmt.Sprintf("%3.0f %s", it[i].Score, it[i].Path))
+func (l list) Show(i int) styled.Text {
+	return styled.Plain(fmt.Sprintf("%3.0f %s", l.dirs[i].Score, l.dirs[i].Path))
 }
 
-func (it items) Len() int { return len(it) }
+func (l list) Len() int { return len(l.dirs) }
