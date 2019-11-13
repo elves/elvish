@@ -4,6 +4,7 @@ package location
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/elves/elvish/cli"
@@ -14,6 +15,7 @@ import (
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/util"
 )
 
 // Config is the configuration to start the location history feature.
@@ -42,7 +44,8 @@ func Start(app cli.App, cfg Config) {
 		app.Notify("db error: " + err.Error())
 		return
 	}
-	l := list{dirs}
+	home, _ := util.GetHome("")
+	l := list{dirs, home}
 
 	w := combobox.New(combobox.Spec{
 		CodeArea: codearea.Spec{
@@ -68,6 +71,7 @@ func Start(app cli.App, cfg Config) {
 
 type list struct {
 	dirs []storedefs.Dir
+	home string
 }
 
 func (l list) filter(p string) list {
@@ -76,15 +80,25 @@ func (l list) filter(p string) list {
 	}
 	var filteredDirs []storedefs.Dir
 	for _, dir := range l.dirs {
-		if strings.Contains(dir.Path, p) {
+		if strings.Contains(showPath(dir.Path, l.home), p) {
 			filteredDirs = append(filteredDirs, dir)
 		}
 	}
-	return list{filteredDirs}
+	return list{filteredDirs, l.home}
 }
 
 func (l list) Show(i int) styled.Text {
-	return styled.Plain(fmt.Sprintf("%3.0f %s", l.dirs[i].Score, l.dirs[i].Path))
+	return styled.Plain(fmt.Sprintf("%3.0f %s",
+		l.dirs[i].Score, showPath(l.dirs[i].Path, l.home)))
 }
 
 func (l list) Len() int { return len(l.dirs) }
+
+func showPath(path, home string) string {
+	if path == home {
+		return "~"
+	} else if strings.HasPrefix(path, home+string(os.PathSeparator)) {
+		return "~" + path[len(home):]
+	}
+	return path
+}

@@ -2,12 +2,14 @@ package location
 
 import (
 	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/styled"
 )
@@ -69,14 +71,16 @@ func TestStart_StoreError(t *testing.T) {
 }
 
 func TestStart_OK(t *testing.T) {
+	home, cleanupHome := eval.InTempHome()
+	defer cleanupHome()
 	app, ttyCtrl, teardown := setup()
 	defer teardown()
 
 	errChdir := errors.New("mock chdir error")
 	chdirCh := make(chan string, 100)
 	dirs := []storedefs.Dir{
-		{Path: "/home/elf/go", Score: 200},
-		{Path: "/home/elf", Score: 100},
+		{Path: filepath.Join(home, "go"), Score: 200},
+		{Path: home, Score: 100},
 		{Path: "/tmp", Score: 50},
 	}
 	Start(app, Config{Store: testStore{
@@ -95,8 +99,8 @@ func TestStart_OK(t *testing.T) {
 		// items sorted by score in descending order; first selected
 		Newline().
 		WriteStyled(styled.MakeText(
-			"200 /home/elf/go"+strings.Repeat(" ", 34), "inverse")).
-		Newline().WritePlain("100 /home/elf").
+			"200 "+filepath.Join("~", "go")+strings.Repeat(" ", 42), "inverse")).
+		Newline().WritePlain("100 ~").
 		Newline().WritePlain(" 50 /tmp").
 		Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
