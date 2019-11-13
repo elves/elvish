@@ -26,7 +26,7 @@ type Config struct {
 
 // Store defines the interface for interacting with the directory history.
 type Store interface {
-	Dirs() ([]storedefs.Dir, error)
+	Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error)
 	Chdir(dir string) error
 }
 
@@ -36,7 +36,7 @@ func Start(app cli.App, cfg Config) {
 		app.Notify("no dir history store")
 		return
 	}
-	dirs, err := cfg.Store.Dirs()
+	dirs, err := cfg.Store.Dirs(map[string]struct{}{})
 	if err != nil {
 		app.Notify("db error: " + err.Error())
 		return

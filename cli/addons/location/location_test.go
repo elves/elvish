@@ -25,15 +25,15 @@ func setup() (cli.App, cli.TTYCtrl, func()) {
 }
 
 type testStore struct {
-	dirs  func() ([]storedefs.Dir, error)
+	dirs  func(blacklist map[string]struct{}) ([]storedefs.Dir, error)
 	chdir func(dir string) error
 }
 
-func (ts testStore) Dirs() ([]storedefs.Dir, error) {
+func (ts testStore) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	if ts.dirs == nil {
 		return nil, nil
 	}
-	return ts.dirs()
+	return ts.dirs(blacklist)
 }
 
 func (ts testStore) Chdir(dir string) error {
@@ -59,7 +59,7 @@ func TestStart_StoreError(t *testing.T) {
 	defer teardown()
 
 	mockError := errors.New("mock error")
-	Start(app, Config{Store: testStore{dirs: func() ([]storedefs.Dir, error) {
+	Start(app, Config{Store: testStore{dirs: func(map[string]struct{}) ([]storedefs.Dir, error) {
 		return nil, mockError
 	}}})
 
@@ -80,7 +80,7 @@ func TestStart_OK(t *testing.T) {
 		{Path: "/tmp", Score: 50},
 	}
 	Start(app, Config{Store: testStore{
-		dirs:  func() ([]storedefs.Dir, error) { return dirs, nil },
+		dirs:  func(blacklist map[string]struct{}) ([]storedefs.Dir, error) { return dirs, nil },
 		chdir: func(dir string) error { chdirCh <- dir; return errChdir },
 	}})
 

@@ -121,6 +121,6 @@ func (d dirStore) Chdir(path string) error {
 	return d.ev.Chdir(path)
 }
 
-func (d dirStore) Dirs() ([]storedefs.Dir, error) {
-	return d.st.Dirs(map[string]struct{}{})
+func (d dirStore) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
+	return d.st.Dirs(blacklist)
 }
