@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -14,28 +15,21 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-func setup() (cli.App, cli.TTYCtrl, func()) {
-	tty, ttyCtrl := cli.NewFakeTTY()
-	// Use a smaller TTY size to make diffs easier to see.
-	ttyCtrl.SetSize(20, 50)
-	app := cli.NewApp(cli.AppSpec{TTY: tty})
-	codeCh, _ := cli.ReadCodeAsync(app)
-	return app, ttyCtrl, func() {
-		app.CommitEOF()
-		<-codeCh
-	}
-}
-
 type testStore struct {
-	dirs  func(blacklist map[string]struct{}) ([]storedefs.Dir, error)
-	chdir func(dir string) error
+	storedDirs []storedefs.Dir
+	dirsError  error
+	chdir      func(dir string) error
 }
 
 func (ts testStore) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
-	if ts.dirs == nil {
-		return nil, nil
+	dirs := []storedefs.Dir{}
+	for _, dir := range ts.storedDirs {
+		if _, ok := blacklist[dir.Path]; ok {
+			continue
+		}
+		dirs = append(dirs, dir)
 	}
-	return ts.dirs(blacklist)
+	return dirs, ts.dirsError
 }
 
 func (ts testStore) Chdir(dir string) error {
@@ -51,8 +45,7 @@ func TestStart_NoStore(t *testing.T) {
 
 	Start(app, Config{})
 
-	wantNotesBuf := ui.NewBufferBuilder(50).
-		WritePlain("no dir history store").Buffer()
+	wantNotesBuf := bb().WritePlain("no dir history store").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
@@ -60,21 +53,17 @@ func TestStart_StoreError(t *testing.T) {
 	app, ttyCtrl, teardown := setup()
 	defer teardown()
 
-	mockError := errors.New("mock error")
-	Start(app, Config{Store: testStore{dirs: func(map[string]struct{}) ([]storedefs.Dir, error) {
-		return nil, mockError
-	}}})
+	Start(app, Config{Store: testStore{dirsError: errors.New("ERROR")}})
 
-	wantNotesBuf := ui.NewBufferBuilder(50).
-		WritePlain("db error: mock error").Buffer()
+	wantNotesBuf := bb().WritePlain("db error: ERROR").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
 func TestStart_OK(t *testing.T) {
 	home, cleanupHome := eval.InTempHome()
 	defer cleanupHome()
-	app, ttyCtrl, teardown := setup()
-	defer teardown()
+	app, ttyCtrl, cleanup := setup()
+	defer cleanup()
 
 	errChdir := errors.New("mock chdir error")
 	chdirCh := make(chan string, 100)
@@ -84,19 +73,13 @@ func TestStart_OK(t *testing.T) {
 		{Path: "/tmp", Score: 50},
 	}
 	Start(app, Config{Store: testStore{
-		dirs:  func(blacklist map[string]struct{}) ([]storedefs.Dir, error) { return dirs, nil },
-		chdir: func(dir string) error { chdirCh <- dir; return errChdir },
+		storedDirs: dirs,
+		chdir:      func(dir string) error { chdirCh <- dir; return errChdir },
 	}})
 
 	// Test UI.
-	wantBuf := ui.NewBufferBuilder(50).
-		// empty codearea
-		Newline().
-		// combobox prompt
-		WriteStyled(
-			styled.MakeText("LOCATION", "bold", "lightgray", "bg-magenta")).
-		WritePlain(" ").SetDotToCursor().
-		// items sorted by score in descending order; first selected
+	wantBuf := bb().Newline().
+		WriteStyled(layout.ModeLine("LOCATION", true)).SetDotToCursor().
 		Newline().
 		WriteStyled(styled.MakeText(
 			"200 "+filepath.Join("~", "go")+strings.Repeat(" ", 42), "inverse")).
@@ -107,14 +90,9 @@ func TestStart_OK(t *testing.T) {
 
 	// Test filtering.
 	ttyCtrl.Inject(term.K('t'), term.K('m'), term.K('p'))
-	wantBuf = ui.NewBufferBuilder(50).
-		// empty codearea
-		Newline().
-		// combobox prompt
-		WriteStyled(
-			styled.MakeText("LOCATION", "bold", "lightgray", "bg-magenta")).
-		WritePlain(" tmp").SetDotToCursor().
-		// items sorted by score in descending order; first selected
+	wantBuf = bb().Newline().
+		WriteStyled(layout.ModeLine("LOCATION", true)).SetDotToCursor().
+		WritePlain("tmp").SetDotToCursor().
 		Newline().
 		WriteStyled(styled.MakeText(
 			" 50 /tmp"+strings.Repeat(" ", 42), "inverse")).
@@ -124,13 +102,29 @@ func TestStart_OK(t *testing.T) {
 	// Test accepting.
 	ttyCtrl.Inject(term.K(ui.Enter))
 	// There should be no change to codearea after accepting.
-	wantBuf = ui.NewBufferBuilder(50).Buffer()
+	wantBuf = bb().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
 	// Error from Chdir should be sent to notes.
-	wantNotesBuf := ui.NewBufferBuilder(50).WritePlain("mock chdir error").Buffer()
+	wantNotesBuf := bb().WritePlain("mock chdir error").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 	// Chdir should be called.
 	if got := <-chdirCh; got != "/tmp" {
 		t.Errorf("Chdir called with %s, want /tmp", got)
 	}
+}
+
+func setup() (cli.App, cli.TTYCtrl, func()) {
+	tty, ttyCtrl := cli.NewFakeTTY()
+	// Use a smaller TTY size to make diffs easier to see.
+	ttyCtrl.SetSize(20, 50)
+	app := cli.NewApp(cli.AppSpec{TTY: tty})
+	codeCh, _ := cli.ReadCodeAsync(app)
+	return app, ttyCtrl, func() {
+		app.CommitEOF()
+		<-codeCh
+	}
+}
+
+func bb() *ui.BufferBuilder {
+	return ui.NewBufferBuilder(50)
 }
