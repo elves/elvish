@@ -63,16 +63,22 @@ func TestLastCmdAddon(t *testing.T) {
 func TestLocationAddon(t *testing.T) {
 	f := setupWithOpt(setupOpt{StoreOp: func(s storedefs.Store) {
 		s.AddDir("/usr/bin", 1)
+		s.AddDir("/tmp", 1)
 		s.AddDir("/home/elf", 1)
 	}})
 	f.TTYCtrl.SetSize(24, 30) // Set width to 30
 	defer f.Cleanup()
 
+	evals(f.Evaler,
+		`edit:location:pinned = [/opt]`,
+		`edit:location:hidden = [/tmp]`)
 	f.TTYCtrl.Inject(term.K('L', ui.Ctrl))
+
 	wantBuf := bbAddon("LOCATION").
 		WriteStyled(styled.MarkLines(
-			" 10 /home/elf                 ", styles,
+			"  * /opt                      ", styles,
 			"##############################",
+			" 10 /home/elf",
 			" 10 /usr/bin",
 		)).Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)

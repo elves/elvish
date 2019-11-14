@@ -9,6 +9,8 @@ import (
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/store/storedefs"
 )
 
@@ -60,12 +62,19 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 
 	locationMap := newBindingVar(emptyBindingMap)
 	locationBinding := newMapBinding(app, ev, locationMap, lsMap)
+	pinnedVar := newListVar(vals.EmptyList)
+	hiddenVar := newListVar(vals.EmptyList)
 	ns.AddNs("location",
 		eval.Ns{
 			"binding": locationMap,
+			"hidden":  hiddenVar,
+			"pinned":  pinnedVar,
 		}.AddGoFn("<edit:location>", "start", func() {
 			location.Start(app, location.Config{
-				Binding: locationBinding, Store: dirStore})
+				Binding: locationBinding, Store: dirStore,
+				IteratePinned: adaptToIterateString(pinnedVar),
+				IterateHidden: adaptToIterateString(hiddenVar),
+			})
 		}))
 }
 
@@ -98,6 +107,24 @@ func listingSelect(app cli.App, f func(listbox.State) int) {
 		return
 	}
 	w.ListBox().Select(f)
+}
+
+//elvdoc:var location:hidden
+//
+// A list of directories to hide in the location addon.
+
+//elvdoc:var location:pinned
+//
+// A list of directories to always show at the top of the list of the location
+// addon.
+
+func adaptToIterateString(variable vars.Var) func(func(string)) {
+	return func(f func(s string)) {
+		vals.Iterate(variable.Get(), func(v interface{}) bool {
+			f(vals.ToString(v))
+			return true
+		})
+	}
 }
 
 // Wraps the histutil.Fuser interface to implement histutil.Store. This is a
