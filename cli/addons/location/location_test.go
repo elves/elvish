@@ -59,6 +59,56 @@ func TestStart_StoreError(t *testing.T) {
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
+func TestStart_Hidden(t *testing.T) {
+	app, ttyCtrl, cleanup := setup()
+	defer cleanup()
+
+	dirs := []storedefs.Dir{
+		{Path: "/usr/bin", Score: 200},
+		{Path: "/usr", Score: 100},
+		{Path: "/tmp", Score: 50},
+	}
+	Start(app, Config{
+		Store:         testStore{storedDirs: dirs},
+		IterateHidden: func(f func(string)) { f("/usr") },
+	})
+	// Test UI.
+	wantBuf := bb().Newline().
+		WriteStyled(layout.ModeLine("LOCATION", true)).SetDotToCursor().
+		Newline().
+		WriteStyled(
+			styled.MakeText("200 /usr/bin"+strings.Repeat(" ", 38), "inverse")).
+		Newline().WritePlain(" 50 /tmp").
+		Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf)
+}
+
+func TestStart_Pinned(t *testing.T) {
+	app, ttyCtrl, cleanup := setup()
+	defer cleanup()
+
+	dirs := []storedefs.Dir{
+		{Path: "/usr/bin", Score: 200},
+		{Path: "/usr", Score: 100},
+		{Path: "/tmp", Score: 50},
+	}
+	Start(app, Config{
+		Store:         testStore{storedDirs: dirs},
+		IteratePinned: func(f func(string)) { f("/home"); f("/usr") },
+	})
+	// Test UI.
+	wantBuf := bb().Newline().
+		WriteStyled(layout.ModeLine("LOCATION", true)).SetDotToCursor().
+		Newline().
+		WriteStyled(
+			styled.MakeText("  * /home"+strings.Repeat(" ", 41), "inverse")).
+		Newline().WritePlain("  * /usr").
+		Newline().WritePlain("200 /usr/bin").
+		Newline().WritePlain(" 50 /tmp").
+		Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf)
+}
+
 func TestStart_OK(t *testing.T) {
 	home, cleanupHome := eval.InTempHome()
 	defer cleanupHome()

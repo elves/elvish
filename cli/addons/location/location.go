@@ -4,6 +4,7 @@ package location
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
@@ -24,6 +25,12 @@ type Config struct {
 	Binding el.Handler
 	// Store provides the directory history and the function to change directory.
 	Store Store
+	// IteratePinned specifies pinned directories by calling the given function
+	// with all pinned directories.
+	IteratePinned func(func(string))
+	// IterateHidden specifies hidden directories by calling the given function
+	// with all hidden directories.
+	IterateHidden func(func(string))
 }
 
 // Store defines the interface for interacting with the directory history.
@@ -32,6 +39,9 @@ type Store interface {
 	Chdir(dir string) error
 }
 
+// A special score for pinned directories.
+var pinnedScore = math.Inf(1)
+
 // Start starts the directory history feature.
 func Start(app cli.App, cfg Config) {
 	if cfg.Store == nil {
@@ -39,11 +49,26 @@ func Start(app cli.App, cfg Config) {
 		return
 	}
 
-	dirs, err := cfg.Store.Dirs(map[string]struct{}{})
+	dirs := []storedefs.Dir{}
+	blacklist := map[string]struct{}{}
+	if cfg.IteratePinned != nil {
+		cfg.IteratePinned(func(s string) {
+			blacklist[s] = struct{}{}
+			dirs = append(dirs, storedefs.Dir{Score: pinnedScore, Path: s})
+		})
+	}
+	if cfg.IterateHidden != nil {
+		cfg.IterateHidden(func(s string) { blacklist[s] = struct{}{} })
+	}
+	storedDirs, err := cfg.Store.Dirs(blacklist)
 	if err != nil {
 		app.Notify("db error: " + err.Error())
-		return
+		if len(dirs) == 0 {
+			return
+		}
 	}
+	dirs = append(dirs, storedDirs...)
+
 	home, _ := util.GetHome("")
 	l := list{dirs, home}
 
@@ -88,11 +113,18 @@ func (l list) filter(p string) list {
 }
 
 func (l list) Show(i int) styled.Text {
-	return styled.Plain(fmt.Sprintf("%3.0f %s",
-		l.dirs[i].Score, showPath(l.dirs[i].Path, l.home)))
+	return styled.Plain(fmt.Sprintf("%s %s",
+		showScore(l.dirs[i].Score), showPath(l.dirs[i].Path, l.home)))
 }
 
 func (l list) Len() int { return len(l.dirs) }
+
+func showScore(f float64) string {
+	if f == pinnedScore {
+		return "  *"
+	}
+	return fmt.Sprintf("%3.0f", f)
+}
 
 func showPath(path, home string) string {
 	if path == home {
