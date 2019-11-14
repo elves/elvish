@@ -2,6 +2,7 @@ package combobox
 
 import (
 	"testing"
+	"time"
 
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/codearea"
@@ -90,5 +91,24 @@ func TestHandle(t *testing.T) {
 	handled = w.Handle(term.K('D', ui.Ctrl))
 	if handled {
 		t.Errorf("key unhandled by codearea and listbox got handled")
+	}
+}
+
+func TestRefilter(t *testing.T) {
+	onFilter := make(chan string, 100)
+	w := New(Spec{
+		OnFilter: func(w Widget, filter string) {
+			onFilter <- filter
+		}})
+	<-onFilter // Ignore the initial OnFilter call.
+	w.CodeArea().MutateState(func(s *codearea.State) { s.Buffer.Content = "new" })
+	w.Refilter()
+	select {
+	case f := <-onFilter:
+		if f != "new" {
+			t.Errorf("OnFilter called with %q, want 'new'", f)
+		}
+	case <-time.After(time.Second):
+		t.Errorf("OnFilter not called by Refilter")
 	}
 }

@@ -13,8 +13,12 @@ import (
 // Widget represents a combobox widget.
 type Widget interface {
 	el.Widget
+	// Returns the embedded codearea widget.
 	CodeArea() codearea.Widget
+	// Returns the embedded listbox widget.
 	ListBox() listbox.Widget
+	// Forces the filtering to rerun.
+	Refilter()
 }
 
 // Spec specifies the configuration and initial state for Widget.
@@ -73,6 +77,10 @@ func (w *widget) Handle(event term.Event) bool {
 		return true
 	}
 	return false
+}
+
+func (w *widget) Refilter() {
+	w.OnFilter(w, w.codeArea.CopyState().Buffer.Content)
 }
 
 func (w *widget) CodeArea() codearea.Widget { return w.codeArea }
