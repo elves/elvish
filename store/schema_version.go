@@ -13,14 +13,12 @@ const SchemaVersion = 1
 const BucketSchema = "schema"
 
 func init() {
-	initDB["record schema version"] = func(db *bolt.DB) error {
-		return db.Update(func(tx *bolt.Tx) error {
-			b, err := tx.CreateBucketIfNotExists([]byte(BucketSchema))
-			if err != nil {
-				return err
-			}
-			return b.Put([]byte("schema"), []byte(strconv.FormatUint(uint64(SchemaVersion), 10)))
-		})
+	initDB["record schema version"] = func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(BucketSchema))
+		if err != nil {
+			return err
+		}
+		return b.Put([]byte("schema"), []byte(strconv.FormatUint(uint64(SchemaVersion), 10)))
 	}
 }
 

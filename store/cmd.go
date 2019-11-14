@@ -9,11 +9,9 @@ import (
 )
 
 func init() {
-	initDB["initialize command history table"] = func(db *bolt.DB) error {
-		return db.Update(func(tx *bolt.Tx) error {
-			_, err := tx.CreateBucketIfNotExists([]byte(BucketCmd))
-			return err
-		})
+	initDB["initialize command history table"] = func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(BucketCmd))
+		return err
 	}
 }
 
