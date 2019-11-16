@@ -17,6 +17,7 @@ type testStore struct {
 	storedDirs []storedefs.Dir
 	dirsError  error
 	chdir      func(dir string) error
+	wd         string
 }
 
 func (ts testStore) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
@@ -35,6 +36,10 @@ func (ts testStore) Chdir(dir string) error {
 		return nil
 	}
 	return ts.chdir(dir)
+}
+
+func (ts testStore) Getwd() (string, error) {
+	return ts.wd, nil
 }
 
 func TestStart_NoStore(t *testing.T) {
@@ -98,6 +103,22 @@ func TestStart_Pinned(t *testing.T) {
 		"  * /usr",
 		"200 /usr/bin",
 		" 50 /tmp")
+	ttyCtrl.TestBuffer(t, wantBuf)
+}
+
+func TestStart_HideWd(t *testing.T) {
+	app, ttyCtrl, cleanup := setup()
+	defer cleanup()
+
+	dirs := []storedefs.Dir{
+		{Path: "/home", Score: 200},
+		{Path: "/tmp", Score: 50},
+	}
+	Start(app, Config{Store: testStore{storedDirs: dirs, wd: "/home"}})
+	// Test UI.
+	wantBuf := listingBuf(
+		"",
+		" 50 /tmp", "<- selected")
 	ttyCtrl.TestBuffer(t, wantBuf)
 }
 

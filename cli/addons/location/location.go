@@ -31,12 +31,16 @@ type Config struct {
 	// IterateHidden specifies hidden directories by calling the given function
 	// with all hidden directories.
 	IterateHidden func(func(string))
+	// IterateWorksapce specifies workspace configuration by calling the given
+	// function with all pairs of name and pattern.
+	IterateWorkspace func(func(name, pattern string))
 }
 
 // Store defines the interface for interacting with the directory history.
 type Store interface {
 	Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error)
 	Chdir(dir string) error
+	Getwd() (string, error)
 }
 
 // A special score for pinned directories.
@@ -59,6 +63,10 @@ func Start(app cli.App, cfg Config) {
 	}
 	if cfg.IterateHidden != nil {
 		cfg.IterateHidden(func(s string) { blacklist[s] = struct{}{} })
+	}
+	wd, err := cfg.Store.Getwd()
+	if err == nil {
+		blacklist[wd] = struct{}{}
 	}
 	storedDirs, err := cfg.Store.Dirs(blacklist)
 	if err != nil {

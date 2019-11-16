@@ -1,6 +1,8 @@
 package cliedit
 
 import (
+	"os"
+
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/addons/histlist"
 	"github.com/elves/elvish/cli/addons/lastcmd"
@@ -179,4 +181,8 @@ func (d dirStore) Chdir(path string) error {
 
 func (d dirStore) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	return d.st.Dirs(blacklist)
+}
+
+func (d dirStore) Getwd() (string, error) {
+	return os.Getwd()
 }
