@@ -41,12 +41,33 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 
 	histlistMap := newBindingVar(emptyBindingMap)
 	histlistBinding := newMapBinding(app, ev, histlistMap, lsMap)
+	dedup := newBoolVar(true)
+	caseSensitive := newBoolVar(true)
 	ns.AddNs("histlist",
 		eval.Ns{
 			"binding": histlistMap,
-		}.AddGoFn("<edit:histlist>", "start", func() {
-			histlist.Start(app, histlist.Config{
-				Binding: histlistBinding, Store: histStore})
+		}.AddGoFns("<edit:histlist>", map[string]interface{}{
+			"start": func() {
+				histlist.Start(app, histlist.Config{
+					Binding: histlistBinding, Store: histStore,
+					CaseSensitive: func() bool {
+						return caseSensitive.Get().(bool)
+					},
+					Dedup: func() bool {
+						return dedup.Get().(bool)
+					},
+				})
+			},
+			"toggle-case-sensitivity": func() {
+				caseSensitive.Set(!caseSensitive.Get().(bool))
+				listingRefilter(app)
+				app.Redraw()
+			},
+			"toggle-dedup": func() {
+				dedup.Set(!dedup.Get().(bool))
+				listingRefilter(app)
+				app.Redraw()
+			},
 		}))
 
 	lastcmdMap := newBindingVar(emptyBindingMap)
@@ -107,6 +128,14 @@ func listingSelect(app cli.App, f func(listbox.State) int) {
 		return
 	}
 	w.ListBox().Select(f)
+}
+
+func listingRefilter(app cli.App) {
+	w, ok := app.CopyState().Addon.(combobox.Widget)
+	if !ok {
+		return
+	}
+	w.Refilter()
 }
 
 //elvdoc:var location:hidden

@@ -25,8 +25,9 @@ func TestInitListing_Binding(t *testing.T) {
 
 func TestHistlistAddon(t *testing.T) {
 	f := setupWithOpt(setupOpt{StoreOp: func(s storedefs.Store) {
-		s.AddCmd("echo 1")
-		s.AddCmd("echo 2")
+		s.AddCmd("ls")
+		s.AddCmd("echo")
+		s.AddCmd("ls")
 	}})
 	f.TTYCtrl.SetSize(24, 30) // Set width to 30
 	defer f.Cleanup()
@@ -34,8 +35,28 @@ func TestHistlistAddon(t *testing.T) {
 	f.TTYCtrl.Inject(term.K('R', ui.Ctrl))
 	wantBuf := bbAddon(" HISTORY (dedup on) ").
 		WriteStyled(styled.MarkLines(
-			"   0 echo 1",
-			"   1 echo 2                   ", styles,
+			"   1 echo",
+			"   2 ls                       ", styles,
+			"##############################",
+		)).Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBuf)
+
+	evals(f.Evaler, `edit:histlist:toggle-dedup`)
+	wantBuf = bbAddon(" HISTORY ").
+		WriteStyled(styled.MarkLines(
+			"   0 ls",
+			"   1 echo",
+			"   2 ls                       ", styles,
+			"##############################",
+		)).Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBuf)
+
+	evals(f.Evaler, `edit:histlist:toggle-case-sensitivity`)
+	wantBuf = bbAddon(" HISTORY (case-insensitive) ").
+		WriteStyled(styled.MarkLines(
+			"   0 ls",
+			"   1 echo",
+			"   2 ls                       ", styles,
 			"##############################",
 		)).Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)

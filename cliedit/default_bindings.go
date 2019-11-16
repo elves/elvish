@@ -43,6 +43,10 @@ listing:binding = (binding-table [
   &Ctrl-'['=  $close-listing~
 ])
 
+histlist:binding = (binding-table [
+  &Ctrl-D= $histlist:toggle-dedup~
+])
+
 navigation:binding = (binding-table [
   &Ctrl-'['= $close-listing~
 ])
