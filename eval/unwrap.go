@@ -110,9 +110,9 @@ func (u ValueUnwrapper) Fd() (int, error) {
 	case "stderr":
 		return 2, nil
 	default:
-		i, errInt := u.NonNegativeInt()
-		if errInt != nil {
-			return 0, fmt.Errorf("Fd must be standard stream names or integer; got %s", s)
+		i, err := u.NonNegativeInt()
+		if err != nil {
+			return 0, u.ctx.errorpf(u.begin, u.end, "fd must be standard stream name or integer; got %s", s)
 		}
 		return i, nil
 	}
@@ -125,7 +125,7 @@ func (u ValueUnwrapper) FdOrClose() (int, error) {
 	}
 	fd, errFd := u.Fd()
 	if errFd != nil {
-		return 0, fmt.Errorf("redirection source must be standard stream names or integer; got %s", s)
+		return 0, u.ctx.errorpf(u.begin, u.end, "redirection source must be standard stream name or integer; got %s", s)
 	}
 	return fd, nil
 }
