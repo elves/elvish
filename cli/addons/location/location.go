@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/elves/elvish/cli"
@@ -31,9 +33,8 @@ type Config struct {
 	// IterateHidden specifies hidden directories by calling the given function
 	// with all hidden directories.
 	IterateHidden func(func(string))
-	// IterateWorksapce specifies workspace configuration by calling the given
-	// function with all pairs of name and pattern.
-	IterateWorkspace func(func(name, pattern string))
+	// IterateWorksapce specifies workspace configuration.
+	IterateWorkspaces WorkspaceIterator
 }
 
 // Store defines the interface for interacting with the directory history.
@@ -55,6 +56,8 @@ func Start(app cli.App, cfg Config) {
 
 	dirs := []storedefs.Dir{}
 	blacklist := map[string]struct{}{}
+	wsKind, wsRoot := "", ""
+
 	if cfg.IteratePinned != nil {
 		cfg.IteratePinned(func(s string) {
 			blacklist[s] = struct{}{}
@@ -67,6 +70,9 @@ func Start(app cli.App, cfg Config) {
 	wd, err := cfg.Store.Getwd()
 	if err == nil {
 		blacklist[wd] = struct{}{}
+		if cfg.IterateWorkspaces != nil {
+			wsKind, wsRoot = cfg.IterateWorkspaces.Parse(wd)
+		}
 	}
 	storedDirs, err := cfg.Store.Dirs(blacklist)
 	if err != nil {
@@ -75,7 +81,13 @@ func Start(app cli.App, cfg Config) {
 			return
 		}
 	}
-	dirs = append(dirs, storedDirs...)
+	for _, dir := range storedDirs {
+		if filepath.IsAbs(dir.Path) {
+			dirs = append(dirs, dir)
+		} else if wsKind != "" && hasPathPrefix(dir.Path, wsKind) {
+			dirs = append(dirs, dir)
+		}
+	}
 
 	home, _ := util.GetHome("")
 	l := list{dirs, home}
@@ -87,7 +99,11 @@ func Start(app cli.App, cfg Config) {
 		ListBox: listbox.Spec{
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
-				err := cfg.Store.Chdir(it.(list).dirs[i].Path)
+				path := it.(list).dirs[i].Path
+				if strings.HasPrefix(path, wsKind) {
+					path = wsRoot + path[len(wsKind):]
+				}
+				err := cfg.Store.Chdir(path)
 				if err != nil {
 					app.Notify(err.Error())
 				}
@@ -100,6 +116,39 @@ func Start(app cli.App, cfg Config) {
 	})
 	app.MutateState(func(s *cli.State) { s.Addon = w })
 	app.Redraw()
+}
+
+func hasPathPrefix(path, prefix string) bool {
+	return path == prefix ||
+		strings.HasPrefix(path, prefix+string(filepath.Separator))
+}
+
+// WorkspaceIterator is a function that iterates all workspaces by calling
+// the passed function with the name and pattern of each kind of workspace.
+// Iteration should stop when the called function returns false.
+type WorkspaceIterator func(func(kind, pattern string) bool)
+
+// Parse returns whether the path matches any kind of workspace. If there is
+// a match, it returns the kind of the workspace and the root. It there is no
+// match, it returns "", "".
+func (ws WorkspaceIterator) Parse(path string) (kind, root string) {
+	var foundKind, foundRoot string
+	ws(func(kind, pattern string) bool {
+		if !strings.HasPrefix(pattern, "^") {
+			pattern = "^" + pattern
+		}
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			// TODO(xiaq): Surface the error.
+			return true
+		}
+		if root := re.FindString(path); root != "" {
+			foundKind, foundRoot = kind, root
+			return false
+		}
+		return true
+	})
+	return foundKind, foundRoot
 }
 
 type list struct {

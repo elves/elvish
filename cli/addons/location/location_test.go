@@ -122,6 +122,49 @@ func TestStart_HideWd(t *testing.T) {
 	ttyCtrl.TestBuffer(t, wantBuf)
 }
 
+func TestStart_Workspace(t *testing.T) {
+	app, ttyCtrl, cleanup := setup()
+	defer cleanup()
+
+	chdir := ""
+	dirs := []storedefs.Dir{
+		{Path: "home/src", Score: 200},
+		{Path: "ws1/src", Score: 150},
+		{Path: "ws2/bin", Score: 100},
+		{Path: "/tmp", Score: 50},
+	}
+	Start(app, Config{
+		Store: testStore{
+			storedDirs: dirs,
+			wd:         "/home/elf/bin",
+			chdir: func(dir string) error {
+				chdir = dir
+				return nil
+			},
+		},
+		IterateWorkspaces: func(f func(kind, pattern string) bool) {
+			// Invalid patterns are ignored.
+			f("ws1", "/usr/[^/+")
+			f("home", "/home/[^/]+")
+			f("ws2", "/tmp/[^/]+")
+		},
+	})
+
+	wantBuf := listingBuf(
+		"",
+		"200 home/src", "<- selected",
+		" 50 /tmp")
+	ttyCtrl.TestBuffer(t, wantBuf)
+
+	ttyCtrl.Inject(term.K(ui.Enter))
+	wantBuf = bb().Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf)
+	wantChdir := "/home/elf/src"
+	if chdir != wantChdir {
+		t.Errorf("got chdir %q, want %q", chdir, wantChdir)
+	}
+}
+
 func TestStart_OK(t *testing.T) {
 	home, cleanupHome := eval.InTempHome()
 	defer cleanupHome()
