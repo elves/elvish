@@ -32,7 +32,7 @@ func TestHistlistAddon(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K('R', ui.Ctrl))
-	wantBuf := bbAddon("HISTLIST").
+	wantBuf := bbAddon(" HISTORY (dedup on) ").
 		WriteStyled(styled.MarkLines(
 			"   0 echo 1",
 			"   1 echo 2                   ", styles,

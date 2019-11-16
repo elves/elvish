@@ -50,7 +50,7 @@ func TestStart_OK(t *testing.T) {
 	// Test UI.
 	ttyCtrl.TestBuffer(t,
 		makeListingBuf(
-			"",
+			" HISTORY (dedup on) ", "",
 			"   0 foo",
 			"   1 bar",
 			"   2 baz"))
@@ -59,7 +59,7 @@ func TestStart_OK(t *testing.T) {
 	ttyCtrl.Inject(term.K('b'))
 	ttyCtrl.TestBuffer(t,
 		makeListingBuf(
-			"b",
+			" HISTORY (dedup on) ", "b",
 			"   1 bar",
 			"   2 baz"))
 
@@ -94,7 +94,7 @@ func TestStart_Dedup(t *testing.T) {
 	Start(app, Config{Store: store, Dedup: func() bool { return false }})
 	ttyCtrl.TestBuffer(t,
 		makeListingBuf(
-			"",
+			" HISTORY ", "",
 			"   0 ls",
 			"   1 echo",
 			"   2 ls"))
@@ -104,7 +104,7 @@ func TestStart_Dedup(t *testing.T) {
 	Start(app, Config{Store: store, Dedup: func() bool { return true }})
 	ttyCtrl.TestBuffer(t,
 		makeListingBuf(
-			"",
+			" HISTORY (dedup on) ", "",
 			"   1 echo",
 			"   2 ls"))
 }
@@ -122,7 +122,7 @@ func TestStart_CaseSensitive(t *testing.T) {
 	ttyCtrl.Inject(term.K('l'))
 	ttyCtrl.TestBuffer(t,
 		makeListingBuf(
-			"l",
+			" HISTORY (dedup on) ", "l",
 			"   0 ls"))
 	app.MutateState(func(s *cli.State) { s.Addon = nil })
 
@@ -131,7 +131,7 @@ func TestStart_CaseSensitive(t *testing.T) {
 	ttyCtrl.Inject(term.K('l'))
 	ttyCtrl.TestBuffer(t,
 		makeListingBuf(
-			"l",
+			" HISTORY (dedup on) (case-insensitive) ", "l",
 			"   0 ls",
 			"   1 LS"))
 }
@@ -149,9 +149,9 @@ func setup() (cli.App, cli.TTYCtrl, func()) {
 
 func bb() *ui.BufferBuilder { return ui.NewBufferBuilder(50) }
 
-func makeListingBuf(filter string, lines ...string) *ui.Buffer {
+func makeListingBuf(mode, filter string, lines ...string) *ui.Buffer {
 	b := bb().Newline().
-		WriteStyled(layout.ModeLine("HISTLIST", true)).
+		WriteStyled(layout.ModeLine(mode, true)).
 		WritePlain(filter).SetDotToCursor()
 	for i, line := range lines {
 		b.Newline()

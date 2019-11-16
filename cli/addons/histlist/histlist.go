@@ -60,7 +60,16 @@ func Start(app cli.App, cfg Config) {
 	cmdItems := items{cmds, last}
 
 	w := combobox.New(combobox.Spec{
-		CodeArea: codearea.Spec{Prompt: layout.ModePrompt("HISTLIST", true)},
+		CodeArea: codearea.Spec{Prompt: func() styled.Text {
+			content := " HISTORY "
+			if cfg.Dedup() {
+				content += "(dedup on) "
+			}
+			if !cfg.CaseSensitive() {
+				content += "(case-insensitive) "
+			}
+			return layout.ModeLine(content, true)
+		}},
 		ListBox: listbox.Spec{
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
