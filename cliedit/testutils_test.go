@@ -43,6 +43,7 @@ type fixture struct {
 	TTYCtrl cli.TTYCtrl
 	Evaler  *eval.Evaler
 	Store   storedefs.Store
+	Home    string
 
 	codeCh   <-chan string
 	errCh    <-chan error
@@ -65,7 +66,7 @@ func setupWithOpt(opt setupOpt) *fixture {
 	if opt.StoreOp != nil {
 		opt.StoreOp(st)
 	}
-	_, cleanupFs := eval.InTempHome()
+	home, cleanupFs := eval.InTempHome()
 	tty, ttyCtrl := cli.NewFakeTTY()
 	ttyCtrl.SetSize(testTTYHeight, testTTYWidth)
 	ev := eval.NewEvaler()
@@ -75,7 +76,9 @@ func setupWithOpt(opt setupOpt) *fixture {
 		`use edit`,
 		// This will simplify most tests against the terminal.
 		"edit:rprompt = { }")
-	f := &fixture{ed, ttyCtrl, ev, st, nil, nil, []func(){cleanupStore, cleanupFs}}
+	f := &fixture{
+		Editor: ed, TTYCtrl: ttyCtrl, Evaler: ev, Store: st, Home: home,
+		cleanups: []func(){cleanupStore, cleanupFs}}
 	if !opt.Unstarted {
 		f.Start()
 	}

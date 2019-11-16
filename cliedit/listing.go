@@ -14,6 +14,7 @@ import (
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/store/storedefs"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, fuser *histutil.Fuser) {
@@ -87,18 +88,35 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 	locationBinding := newMapBinding(app, ev, locationMap, lsMap)
 	pinnedVar := newListVar(vals.EmptyList)
 	hiddenVar := newListVar(vals.EmptyList)
+	workspacesVar := newMapVar(vals.EmptyMap)
+	wsIterator := location.WorkspaceIterator(
+		adaptToIterateStringPair(workspacesVar))
 	ns.AddNs("location",
 		eval.Ns{
-			"binding": locationMap,
-			"hidden":  hiddenVar,
-			"pinned":  pinnedVar,
+			"binding":    locationMap,
+			"hidden":     hiddenVar,
+			"pinned":     pinnedVar,
+			"workspaces": workspacesVar,
 		}.AddGoFn("<edit:location>", "start", func() {
 			location.Start(app, location.Config{
 				Binding: locationBinding, Store: dirStore,
-				IteratePinned: adaptToIterateString(pinnedVar),
-				IterateHidden: adaptToIterateString(hiddenVar),
+				IteratePinned:     adaptToIterateString(pinnedVar),
+				IterateHidden:     adaptToIterateString(hiddenVar),
+				IterateWorkspaces: wsIterator,
 			})
 		}))
+	ev.AddAfterChdir(func(string) {
+		wd, err := os.Getwd()
+		if err != nil {
+			// TODO(xiaq): Surface the error.
+			return
+		}
+		st.AddDir(wd, 1)
+		kind, root := wsIterator.Parse(wd)
+		if kind != "" {
+			st.AddDir(kind+wd[len(root):], 1)
+		}
+	})
 }
 
 //elvdoc:fn listing:up
@@ -149,12 +167,33 @@ func listingRefilter(app cli.App) {
 // A list of directories to always show at the top of the list of the location
 // addon.
 
+//elvdoc:var location:workspaces
+//
+// A map mapping types of workspaces to their patterns.
+
 func adaptToIterateString(variable vars.Var) func(func(string)) {
 	return func(f func(s string)) {
 		vals.Iterate(variable.Get(), func(v interface{}) bool {
 			f(vals.ToString(v))
 			return true
 		})
+	}
+}
+
+func adaptToIterateStringPair(variable vars.Var) func(func(string, string) bool) {
+	return func(f func(a, b string) bool) {
+		m := variable.Get().(hashmap.Map)
+		for it := m.Iterator(); it.HasElem(); it.Next() {
+			k, v := it.Elem()
+			ks, kok := k.(string)
+			vs, vok := v.(string)
+			if kok && vok {
+				next := f(ks, vs)
+				if !next {
+					break
+				}
+			}
+		}
 	}
 }
 
