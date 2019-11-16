@@ -123,8 +123,8 @@ func (u ValueUnwrapper) FdOrClose() (int, error) {
 	if err == nil && s == "-" {
 		return -1, nil
 	}
-	fd, errFd := u.Fd()
-	if errFd != nil {
+	fd, err := u.Fd()
+	if err != nil {
 		return 0, u.ctx.errorpf(u.begin, u.end, "redirection source must be standard stream name or integer; got %s", s)
 	}
 	return fd, nil
