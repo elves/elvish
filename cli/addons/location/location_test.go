@@ -3,7 +3,6 @@ package location
 import (
 	"errors"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/elves/elvish/cli"
@@ -12,7 +11,6 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/store/storedefs"
-	"github.com/elves/elvish/styled"
 )
 
 type testStore struct {
@@ -73,13 +71,10 @@ func TestStart_Hidden(t *testing.T) {
 		IterateHidden: func(f func(string)) { f("/usr") },
 	})
 	// Test UI.
-	wantBuf := bb().Newline().
-		WriteStyled(layout.ModeLine("LOCATION", true)).SetDotToCursor().
-		Newline().
-		WriteStyled(
-			styled.MakeText("200 /usr/bin"+strings.Repeat(" ", 38), "inverse")).
-		Newline().WritePlain(" 50 /tmp").
-		Buffer()
+	wantBuf := listingBuf(
+		"",
+		"200 /usr/bin", "<- selected",
+		" 50 /tmp")
 	ttyCtrl.TestBuffer(t, wantBuf)
 }
 
@@ -97,15 +92,12 @@ func TestStart_Pinned(t *testing.T) {
 		IteratePinned: func(f func(string)) { f("/home"); f("/usr") },
 	})
 	// Test UI.
-	wantBuf := bb().Newline().
-		WriteStyled(layout.ModeLine("LOCATION", true)).SetDotToCursor().
-		Newline().
-		WriteStyled(
-			styled.MakeText("  * /home"+strings.Repeat(" ", 41), "inverse")).
-		Newline().WritePlain("  * /usr").
-		Newline().WritePlain("200 /usr/bin").
-		Newline().WritePlain(" 50 /tmp").
-		Buffer()
+	wantBuf := listingBuf(
+		"",
+		"  * /home", "<- selected",
+		"  * /usr",
+		"200 /usr/bin",
+		" 50 /tmp")
 	ttyCtrl.TestBuffer(t, wantBuf)
 }
 
@@ -128,25 +120,19 @@ func TestStart_OK(t *testing.T) {
 	}})
 
 	// Test UI.
-	wantBuf := bb().Newline().
-		WriteStyled(layout.ModeLine("LOCATION", true)).SetDotToCursor().
-		Newline().
-		WriteStyled(styled.MakeText(
-			"200 "+filepath.Join("~", "go")+strings.Repeat(" ", 42), "inverse")).
-		Newline().WritePlain("100 ~").
-		Newline().WritePlain(" 50 /tmp").
-		Buffer()
+	wantBuf := listingBuf(
+		"",
+		"200 "+filepath.Join("~", "go"), "<- selected",
+		"100 ~",
+		" 50 /tmp")
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test filtering.
 	ttyCtrl.Inject(term.K('t'), term.K('m'), term.K('p'))
-	wantBuf = bb().Newline().
-		WriteStyled(layout.ModeLine("LOCATION", true)).SetDotToCursor().
-		WritePlain("tmp").SetDotToCursor().
-		Newline().
-		WriteStyled(styled.MakeText(
-			" 50 /tmp"+strings.Repeat(" ", 42), "inverse")).
-		Buffer()
+
+	wantBuf = listingBuf(
+		"tmp",
+		" 50 /tmp", "<- selected")
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test accepting.
@@ -177,4 +163,11 @@ func setup() (cli.App, cli.TTYCtrl, func()) {
 
 func bb() *ui.BufferBuilder {
 	return ui.NewBufferBuilder(50)
+}
+
+func listingBuf(filter string, lines ...string) *ui.Buffer {
+	b := bb()
+	b.Newline() // empty code area
+	layout.WriteListing(b, "LOCATION", filter, lines...)
+	return b.Buffer()
 }
