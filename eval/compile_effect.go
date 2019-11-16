@@ -357,8 +357,8 @@ func allTrue(vs []interface{}) bool {
 }
 
 func (cp *compiler) assignment(n *parse.Assignment) effectOpBody {
-	variablesOp, restOp := cp.lvaluesOp(n.Left)
 	valuesOp := cp.compoundOp(n.Right)
+	variablesOp, restOp := cp.lvaluesOp(n.Left)
 	return &assignmentOp{variablesOp, restOp, valuesOp}
 }
 
