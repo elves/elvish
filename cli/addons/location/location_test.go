@@ -3,6 +3,8 @@ package location
 import (
 	"errors"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/elves/elvish/cli"
@@ -67,19 +69,19 @@ func TestStart_Hidden(t *testing.T) {
 	defer cleanup()
 
 	dirs := []storedefs.Dir{
-		{Path: "/usr/bin", Score: 200},
-		{Path: "/usr", Score: 100},
-		{Path: "/tmp", Score: 50},
+		{Path: fix("/usr/bin"), Score: 200},
+		{Path: fix("/usr"), Score: 100},
+		{Path: fix("/tmp"), Score: 50},
 	}
 	Start(app, Config{
 		Store:         testStore{storedDirs: dirs},
-		IterateHidden: func(f func(string)) { f("/usr") },
+		IterateHidden: func(f func(string)) { f(fix("/usr")) },
 	})
 	// Test UI.
 	wantBuf := listingBuf(
 		"",
-		"200 /usr/bin", "<- selected",
-		" 50 /tmp")
+		"200 "+fix("/usr/bin"), "<- selected",
+		" 50 "+fix("/tmp"))
 	ttyCtrl.TestBuffer(t, wantBuf)
 }
 
@@ -88,21 +90,21 @@ func TestStart_Pinned(t *testing.T) {
 	defer cleanup()
 
 	dirs := []storedefs.Dir{
-		{Path: "/usr/bin", Score: 200},
-		{Path: "/usr", Score: 100},
-		{Path: "/tmp", Score: 50},
+		{Path: fix("/usr/bin"), Score: 200},
+		{Path: fix("/usr"), Score: 100},
+		{Path: fix("/tmp"), Score: 50},
 	}
 	Start(app, Config{
 		Store:         testStore{storedDirs: dirs},
-		IteratePinned: func(f func(string)) { f("/home"); f("/usr") },
+		IteratePinned: func(f func(string)) { f(fix("/home")); f(fix("/usr")) },
 	})
 	// Test UI.
 	wantBuf := listingBuf(
 		"",
-		"  * /home", "<- selected",
-		"  * /usr",
-		"200 /usr/bin",
-		" 50 /tmp")
+		"  * "+fix("/home"), "<- selected",
+		"  * "+fix("/usr"),
+		"200 "+fix("/usr/bin"),
+		" 50 "+fix("/tmp"))
 	ttyCtrl.TestBuffer(t, wantBuf)
 }
 
@@ -111,14 +113,14 @@ func TestStart_HideWd(t *testing.T) {
 	defer cleanup()
 
 	dirs := []storedefs.Dir{
-		{Path: "/home", Score: 200},
-		{Path: "/tmp", Score: 50},
+		{Path: fix("/home"), Score: 200},
+		{Path: fix("/tmp"), Score: 50},
 	}
-	Start(app, Config{Store: testStore{storedDirs: dirs, wd: "/home"}})
+	Start(app, Config{Store: testStore{storedDirs: dirs, wd: fix("/home")}})
 	// Test UI.
 	wantBuf := listingBuf(
 		"",
-		" 50 /tmp", "<- selected")
+		" 50 "+fix("/tmp"), "<- selected")
 	ttyCtrl.TestBuffer(t, wantBuf)
 }
 
@@ -128,38 +130,45 @@ func TestStart_Workspace(t *testing.T) {
 
 	chdir := ""
 	dirs := []storedefs.Dir{
-		{Path: "home/src", Score: 200},
-		{Path: "ws1/src", Score: 150},
-		{Path: "ws2/bin", Score: 100},
-		{Path: "/tmp", Score: 50},
+		{Path: fix("home/src"), Score: 200},
+		{Path: fix("ws1/src"), Score: 150},
+		{Path: fix("ws2/bin"), Score: 100},
+		{Path: fix("/tmp"), Score: 50},
 	}
 	Start(app, Config{
 		Store: testStore{
 			storedDirs: dirs,
-			wd:         "/home/elf/bin",
+			wd:         fix("/home/elf/bin"),
 			chdir: func(dir string) error {
 				chdir = dir
 				return nil
 			},
 		},
 		IterateWorkspaces: func(f func(kind, pattern string) bool) {
-			// Invalid patterns are ignored.
-			f("ws1", "/usr/[^/+")
-			f("home", "/home/[^/]+")
-			f("ws2", "/tmp/[^/]+")
+			if runtime.GOOS == "windows" {
+				// Invalid patterns are ignored.
+				f("ws1", `C:\\usr\\[^\\+`)
+				f("home", `C:\\home\\[^\\]+`)
+				f("ws2", `C:\\tmp\[^\]+`)
+			} else {
+				// Invalid patterns are ignored.
+				f("ws1", "/usr/[^/+")
+				f("home", "/home/[^/]+")
+				f("ws2", "/tmp/[^/]+")
+			}
 		},
 	})
 
 	wantBuf := listingBuf(
 		"",
-		"200 home/src", "<- selected",
-		" 50 /tmp")
+		"200 "+fix("home/src"), "<- selected",
+		" 50 "+fix("/tmp"))
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	ttyCtrl.Inject(term.K(ui.Enter))
 	wantBuf = bb().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
-	wantChdir := "/home/elf/src"
+	wantChdir := fix("/home/elf/src")
 	if chdir != wantChdir {
 		t.Errorf("got chdir %q, want %q", chdir, wantChdir)
 	}
@@ -176,7 +185,7 @@ func TestStart_OK(t *testing.T) {
 	dirs := []storedefs.Dir{
 		{Path: filepath.Join(home, "go"), Score: 200},
 		{Path: home, Score: 100},
-		{Path: "/tmp", Score: 50},
+		{Path: fix("/tmp"), Score: 50},
 	}
 	Start(app, Config{Store: testStore{
 		storedDirs: dirs,
@@ -188,7 +197,7 @@ func TestStart_OK(t *testing.T) {
 		"",
 		"200 "+filepath.Join("~", "go"), "<- selected",
 		"100 ~",
-		" 50 /tmp")
+		" 50 "+fix("/tmp"))
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test filtering.
@@ -196,7 +205,7 @@ func TestStart_OK(t *testing.T) {
 
 	wantBuf = listingBuf(
 		"tmp",
-		" 50 /tmp", "<- selected")
+		" 50 "+fix("/tmp"), "<- selected")
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test accepting.
@@ -208,8 +217,9 @@ func TestStart_OK(t *testing.T) {
 	wantNotesBuf := bb().WritePlain("mock chdir error").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 	// Chdir should be called.
-	if got := <-chdirCh; got != "/tmp" {
-		t.Errorf("Chdir called with %s, want /tmp", got)
+	wantChdir := fix("/tmp")
+	if got := <-chdirCh; got != wantChdir {
+		t.Errorf("Chdir called with %s, want %s", got, wantChdir)
 	}
 }
 
@@ -234,4 +244,14 @@ func listingBuf(filter string, lines ...string) *ui.Buffer {
 	b.Newline() // empty code area
 	layout.WriteListing(b, "LOCATION", filter, lines...)
 	return b.Buffer()
+}
+
+func fix(path string) string {
+	if runtime.GOOS != "windows" {
+		return path
+	}
+	if path[0] == '/' {
+		path = "C:" + path
+	}
+	return strings.ReplaceAll(path, "/", "\\")
 }
