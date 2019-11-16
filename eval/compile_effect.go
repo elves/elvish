@@ -493,7 +493,7 @@ func (op *redirOp) invoke(fm *Frame) error {
 	} else {
 		var err error
 		// dst must be a valid fd
-		dst, err = fm.ExecAndUnwrap("Fd", op.dstOp).One().NonNegativeInt()
+		dst, err = fm.ExecAndUnwrap("Fd", op.dstOp).One().Fd()
 		if err != nil {
 			return err
 		}

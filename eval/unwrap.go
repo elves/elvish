@@ -97,12 +97,37 @@ func (u ValueUnwrapper) NonNegativeInt() (int, error) {
 	return i, u.err
 }
 
+func (u ValueUnwrapper) Fd() (int, error) {
+	s, err := u.String()
+	if err != nil {
+		return 0, err
+	}
+	switch s {
+	case "stdin":
+		return 0, nil
+	case "stdout":
+		return 1, nil
+	case "stderr":
+		return 2, nil
+	default:
+		i, err := u.NonNegativeInt()
+		if err != nil {
+			return 0, u.ctx.errorpf(u.begin, u.end, "fd must be standard stream name or integer; got %s", s)
+		}
+		return i, nil
+	}
+}
+
 func (u ValueUnwrapper) FdOrClose() (int, error) {
 	s, err := u.String()
 	if err == nil && s == "-" {
 		return -1, nil
 	}
-	return u.NonNegativeInt()
+	fd, err := u.Fd()
+	if err != nil {
+		return 0, u.ctx.errorpf(u.begin, u.end, "redirection source must be standard stream name or integer; got %s", s)
+	}
+	return fd, nil
 }
 
 func (u ValueUnwrapper) Callable() (Callable, error) {
