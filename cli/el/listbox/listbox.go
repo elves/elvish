@@ -169,6 +169,7 @@ func (w *widget) renderVertical(width, height int) *ui.Buffer {
 		} else {
 			s.First, firstCrop = getVerticalWindow(*s, height)
 		}
+		s.Height = height
 		state = *s
 	})
 
@@ -307,11 +308,27 @@ func Prev(s State) int {
 	return fixIndex(s.Selected-1, s.Items.Len())
 }
 
+// PrevPage moves the selection to the item one page before. It is only
+// meaningful in vertical layout and suitable as an argument to Widget.Select.
+//
+// TODO(xiaq): This does not correctly with multi-line items.
+func PrevPage(s State) int {
+	return fixIndex(s.Selected-s.Height, s.Items.Len())
+}
+
 // Next moves the selection to the previous item, or does nothing if the
 // last item is currently selected. It is a suitable as an argument to
 // Widget.Select.
 func Next(s State) int {
 	return fixIndex(s.Selected+1, s.Items.Len())
+}
+
+// NextPage moves the selection to the item one page after. It is only
+// meaningful in vertical layout and suitable as an argument to Widget.Select.
+//
+// TODO(xiaq): This does not correctly with multi-line items.
+func NextPage(s State) int {
+	return fixIndex(s.Selected+s.Height, s.Items.Len())
 }
 
 // PrevWrap moves the selection to the previous item, or to the last item if

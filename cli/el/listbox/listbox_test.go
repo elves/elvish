@@ -138,6 +138,9 @@ func TestRender_Vertical_MutatesState(t *testing.T) {
 	if first := state.First; first != 3 {
 		t.Errorf("State.First = %d, want 3", first)
 	}
+	if height := state.Height; height != 3 {
+		t.Errorf("State.Height = %d, want 3", height)
+	}
 }
 
 var renderHorizontalTests = []el.RenderTest{
@@ -370,6 +373,11 @@ func TestSelect_ChangeState(t *testing.T) {
 		{"NextWrap from 9", 9, NextWrap, 0},
 		{"NextWrap from 10", 10, NextWrap, 0},
 
+		{"NextPage from -1", -1, NextPage, 2},
+		{"NextPage from 0", 0, NextPage, 3},
+		{"NextPage from 9", 9, NextPage, 9},
+		{"NextPage from 10", 10, NextPage, 9},
+
 		{"Prev from -1", -1, Prev, 0},
 		{"Prev from 0", 0, Prev, 0},
 		{"Prev from 9", 9, Prev, 8},
@@ -379,6 +387,11 @@ func TestSelect_ChangeState(t *testing.T) {
 		{"PrevWrap from 0", 0, PrevWrap, 9},
 		{"PrevWrap from 9", 9, PrevWrap, 8},
 		{"PrevWrap from 10", 10, PrevWrap, 9},
+
+		{"PrevPage from -1", -1, PrevPage, 0},
+		{"PrevPage from 0", 0, PrevPage, 0},
+		{"PrevPage from 9", 9, PrevPage, 6},
+		{"PrevPage from 10", 10, PrevPage, 7},
 
 		{"Left from -1", -1, Left, 0},
 		{"Left from 0", 0, Left, 0},
