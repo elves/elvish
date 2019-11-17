@@ -23,6 +23,8 @@ type Widget interface {
 	CopyState() State
 	// MutateState calls the given the function while locking StateMutex.
 	MutateState(f func(*State))
+	// Submit triggers the OnSubmit callback.
+	Submit()
 }
 
 // Spec specifies the configuration and initial state for Widget.
