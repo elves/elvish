@@ -52,6 +52,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	initPrompts(&appSpec, appNotifier{&app}, ev, ns)
 	app = cli.NewApp(appSpec)
 
+	initCommandAPI(app, ev, ns)
 	initListings(app, ev, ns, st, fuser)
 	initNavigation(app, ev, ns)
 	initCompletion(app, ev, ns)

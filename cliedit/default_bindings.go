@@ -35,6 +35,20 @@ insert:binding = (binding-table [
   &Ctrl-D=  $return-eof~
 ])
 
+command:binding = (binding-table [
+ &'$'= $move-dot-eol~
+ &0=   $move-dot-sol~
+ &D=   $kill-line-right~
+ &b=   $move-dot-left-word~
+ &h=   $move-dot-left~
+ &i=   $listing:close~
+ &j=   $move-dot-down~
+ &k=   $move-dot-up~
+ &l=   $move-dot-right~
+ &w=   $move-dot-right-word~
+ &x=   $kill-rune-right~
+])
+
 listing:binding = (binding-table [
   &Up=        $listing:up~
   &Down=      $listing:down~
