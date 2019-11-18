@@ -72,7 +72,7 @@ func renderView(v *view, buf *ui.BufferBuilder) {
 	parts := v.code.Partition(v.dot)
 	buf.
 		WriteStyled(parts[0]).
-		SetDotToCursor().
+		SetDotHere().
 		WriteStyled(parts[1])
 
 	buf.EagerWrap = false

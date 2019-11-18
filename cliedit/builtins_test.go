@@ -45,7 +45,7 @@ func TestDumpBuf(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "echo")
 	wantBuf := bb().WritePlain("~> ").
-		WriteStyled(styled.MakeText("echo", "green")).SetDotToCursor().Buffer()
+		WriteStyled(styled.MakeText("echo", "green")).SetDotHere().Buffer()
 	// Wait until the buffer we want has shown up.
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 
@@ -97,7 +97,7 @@ func TestRedraw(t *testing.T) {
 	wantBuf := bb().WriteStyled(styled.MarkLines(
 		"~> echo", styles,
 		"   gggg",
-	)).SetDotToCursor().Buffer()
+	)).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 

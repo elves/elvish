@@ -26,7 +26,7 @@ func TestHistWalk(t *testing.T) {
 	})
 
 	app.Redraw()
-	buf0 := ui.NewBufferBuilder(40).WritePlain("ls").SetDotToCursor().Buffer()
+	buf0 := ui.NewBufferBuilder(40).WritePlain("ls").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, buf0)
 
 	getCfg := func() Config {
@@ -74,13 +74,13 @@ func TestHistWalk(t *testing.T) {
 	Start(app, getCfg())
 	ttyCtrl.TestBuffer(t, buf5)
 	ttyCtrl.Inject(term.K(ui.Enter))
-	bufAccepted := ui.NewBufferBuilder(40).WritePlain("ls -a").SetDotToCursor().Buffer()
+	bufAccepted := ui.NewBufferBuilder(40).WritePlain("ls -a").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, bufAccepted)
 }
 
 func makeBuf(codeArea styled.Text, modeline string) *ui.Buffer {
 	return ui.NewBufferBuilder(40).
-		WriteStyled(codeArea).SetDotToCursor().
+		WriteStyled(codeArea).SetDotHere().
 		Newline().
 		WriteStyled(layout.ModeLine(modeline, false)).
 		Buffer()

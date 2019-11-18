@@ -56,7 +56,7 @@ func (bb *BufferBuilder) SetDot(dot Pos) *BufferBuilder {
 	return bb
 }
 
-func (bb *BufferBuilder) SetDotToCursor() *BufferBuilder {
+func (bb *BufferBuilder) SetDotHere() *BufferBuilder {
 	return bb.SetDot(bb.Cursor())
 }
 

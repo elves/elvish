@@ -27,7 +27,7 @@ func TestNavigation(t *testing.T) {
 	}
 	wantBuf := bb().
 		WritePlain("~" + string(os.PathSeparator) + "d> ").
-		Newline().SetDotToCursor().
+		Newline().SetDotHere().
 		WriteStyled(styled.MarkLines(
 			" d       a                    ", styles,
 			"####### --------------------- ",

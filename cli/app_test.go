@@ -105,14 +105,14 @@ func TestFinalRedraw(t *testing.T) {
 	// Wait until the stable state.
 	wantBuf := bb().
 		WritePlain("code").
-		Newline().SetDotToCursor().WritePlain("addon").Buffer()
+		Newline().SetDotHere().WritePlain("addon").Buffer()
 	tty.TestBuffer(t, wantBuf)
 
 	cleanup(a, codeCh)
 
 	// Final redraw hides the addon, and puts the cursor on a new line.
 	wantFinalBuf := bb().
-		WritePlain("code").Newline().SetDotToCursor().Buffer()
+		WritePlain("code").Newline().SetDotHere().Buffer()
 	tty.TestBuffer(t, wantFinalBuf)
 }
 
@@ -125,7 +125,7 @@ func TestSIGHUP_ReturnsEOF(t *testing.T) {
 
 	_, errCh := ReadCodeAsync(a)
 	// Wait until the initial redraw.
-	tty.TestBuffer(t, bb().WritePlain("a").SetDotToCursor().Buffer())
+	tty.TestBuffer(t, bb().WritePlain("a").SetDotHere().Buffer())
 
 	tty.InjectSignal(syscall.SIGHUP)
 
@@ -146,7 +146,7 @@ func TestSIGINT_ResetsState(t *testing.T) {
 	defer cleanup(a, codeCh)
 	// Ensure that the terminal shows an non-empty state.
 	feedInput(tty, "code")
-	tty.TestBuffer(t, bb().WritePlain("code").SetDotToCursor().Buffer())
+	tty.TestBuffer(t, bb().WritePlain("code").SetDotHere().Buffer())
 
 	tty.InjectSignal(syscall.SIGINT)
 
@@ -161,7 +161,7 @@ func TestSIGWINCH_TriggersRedraw(t *testing.T) {
 
 	// Ensure that the terminal shows the input with the intial width.
 	feedInput(tty, "1234567890")
-	tty.TestBuffer(t, bb().WritePlain("1234567890").SetDotToCursor().Buffer())
+	tty.TestBuffer(t, bb().WritePlain("1234567890").SetDotHere().Buffer())
 
 	// Emulate a window size change.
 	tty.SetSize(24, 4)
@@ -169,7 +169,7 @@ func TestSIGWINCH_TriggersRedraw(t *testing.T) {
 
 	// Test that the editor has redrawn using the new width.
 	tty.TestBuffer(t, ui.NewBufferBuilder(4).
-		WritePlain("1234567890").SetDotToCursor().Buffer())
+		WritePlain("1234567890").SetDotHere().Buffer())
 }
 
 // Code area.
@@ -180,7 +180,7 @@ func TestCodeArea_HandlesEvents(t *testing.T) {
 	defer cleanup(a, codeCh)
 
 	feedInput(tty, "code")
-	tty.TestBuffer(t, bb().WritePlain("code").SetDotToCursor().Buffer())
+	tty.TestBuffer(t, bb().WritePlain("code").SetDotHere().Buffer())
 }
 
 func TestHighlighter(t *testing.T) {
@@ -197,7 +197,7 @@ func TestHighlighter(t *testing.T) {
 
 	wantBuf := bb().
 		WriteStyled(styled.MakeText("code", "red")).
-		SetDotToCursor().Buffer()
+		SetDotHere().Buffer()
 	tty.TestBuffer(t, wantBuf)
 }
 
@@ -215,7 +215,7 @@ func TestHighlighter_Errors(t *testing.T) {
 	feedInput(tty, "code")
 
 	wantBuf := bb().
-		WritePlain("code").SetDotToCursor().Newline().
+		WritePlain("code").SetDotHere().Newline().
 		WritePlain("ERR 1").Newline().
 		WritePlain("ERR 2").Buffer()
 	tty.TestBuffer(t, wantBuf)
@@ -235,12 +235,12 @@ func TestHighlighter_LateUpdate(t *testing.T) {
 	defer cleanup(a, codeCh)
 	feedInput(tty, "code")
 
-	tty.TestBuffer(t, bb().WritePlain("code").SetDotToCursor().Buffer())
+	tty.TestBuffer(t, bb().WritePlain("code").SetDotHere().Buffer())
 
 	style = "red"
 	hl.lateUpdates <- nil
 	tty.TestBuffer(t, bb().WriteStyled(
-		styled.MakeText("code", "red")).SetDotToCursor().Buffer())
+		styled.MakeText("code", "red")).SetDotHere().Buffer())
 }
 
 func TestPrompt(t *testing.T) {
@@ -252,7 +252,7 @@ func TestPrompt(t *testing.T) {
 
 	tty.Inject(term.K('a'))
 
-	tty.TestBuffer(t, bb().WritePlain("> a").SetDotToCursor().Buffer())
+	tty.TestBuffer(t, bb().WritePlain("> a").SetDotHere().Buffer())
 }
 
 func TestPrompt_Trigger(t *testing.T) {
@@ -280,11 +280,11 @@ func TestPrompt_LateUpdate(t *testing.T) {
 	defer cleanup(a, codeCh)
 
 	// Wait until old prompt is rendered
-	tty.TestBuffer(t, bb().WritePlain("old").SetDotToCursor().Buffer())
+	tty.TestBuffer(t, bb().WritePlain("old").SetDotHere().Buffer())
 
 	promptContent = "new"
 	prompt.lateUpdates <- nil
-	tty.TestBuffer(t, bb().WritePlain("new").SetDotToCursor().Buffer())
+	tty.TestBuffer(t, bb().WritePlain("new").SetDotHere().Buffer())
 }
 
 func TestRPrompt(t *testing.T) {
@@ -297,7 +297,7 @@ func TestRPrompt(t *testing.T) {
 	tty.Inject(term.K('a'))
 
 	wantBuf := bb().
-		WritePlain("a").SetDotToCursor().
+		WritePlain("a").SetDotHere().
 		WritePlain(strings.Repeat(" ", testTTYWidth-2)).
 		WritePlain("R").Buffer()
 	tty.TestBuffer(t, wantBuf)
@@ -316,7 +316,7 @@ func TestRPrompt_Persistent(t *testing.T) {
 
 	wantBuf := bb().
 		WritePlain("code" + strings.Repeat(" ", testTTYWidth-5) + "R").
-		Newline().SetDotToCursor(). // cursor on newline in final redraw
+		Newline().SetDotHere(). // cursor on newline in final redraw
 		Buffer()
 	tty.TestBuffer(t, wantBuf)
 }
@@ -334,7 +334,7 @@ func TestRPrompt_NotPersistent(t *testing.T) {
 
 	wantBuf := bb().
 		WritePlain("code").         // no rprompt
-		Newline().SetDotToCursor(). // cursor on newline in final redraw
+		Newline().SetDotHere(). // cursor on newline in final redraw
 		Buffer()
 	tty.TestBuffer(t, wantBuf)
 }
@@ -353,7 +353,7 @@ func TestAddon_HandlesEvents(t *testing.T) {
 	feedInput(tty, "input")
 
 	wantBuf := bb().Newline(). // empty main code area
-					WritePlain("addon> input").SetDotToCursor(). // addon
+					WritePlain("addon> input").SetDotHere(). // addon
 					Buffer()
 	tty.TestBuffer(t, wantBuf)
 }
@@ -373,7 +373,7 @@ func TestAddon_ControlsFocus(t *testing.T) {
 	defer cleanup(a, codeCh)
 
 	wantBuf := bb().
-		SetDotToCursor(). // main code area has focus
+		SetDotHere(). // main code area has focus
 		Newline().Buffer()
 	tty.TestBuffer(t, wantBuf)
 
@@ -381,7 +381,7 @@ func TestAddon_ControlsFocus(t *testing.T) {
 	a.Redraw()
 
 	wantBuf = bb().
-		Newline().SetDotToCursor(). // addon has focus
+		Newline().SetDotHere(). // addon has focus
 		Buffer()
 	tty.TestBuffer(t, wantBuf)
 }

@@ -16,7 +16,7 @@ const Selected = "<- selected"
 // signals that the argument before it is the selected line.
 func WriteListing(b *ui.BufferBuilder, name, filter string, lines ...string) {
 	b.WriteStyled(ModeLine(name, true)).
-		WritePlain(filter).SetDotToCursor()
+		WritePlain(filter).SetDotHere()
 	for i, line := range lines {
 		switch {
 		case line == Selected:

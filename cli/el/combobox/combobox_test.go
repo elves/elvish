@@ -23,7 +23,7 @@ var renderTests = []el.RenderTest{
 				State: listbox.State{Items: listbox.TestItems{NItems: 2}}}}),
 		Width: 10, Height: 24,
 		Want: ui.NewBufferBuilder(10).
-			WritePlain("filter").SetDotToCursor().
+			WritePlain("filter").SetDotHere().
 			Newline().WriteStyled(styled.MakeText("item 0    ", "inverse")).
 			Newline().WritePlain("item 1"),
 	},
@@ -38,7 +38,7 @@ var renderTests = []el.RenderTest{
 			}}),
 		Width: 10, Height: 24,
 		Want: ui.NewBufferBuilder(10).
-			WritePlain("filter").SetDotToCursor().
+			WritePlain("filter").SetDotHere().
 			Newline().WriteStyled(styled.MakeText("item 0    ", "inverse")).
 			Newline().WritePlain("item 1"),
 	},

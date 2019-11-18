@@ -18,7 +18,7 @@ func TestWriteListing(t *testing.T) {
 	buf := b.Buffer()
 	wantBuf := ui.NewBufferBuilder(10).
 		WriteStyled(ModeLine(" LIST ", true)).
-		WritePlain("f").SetDotToCursor().
+		WritePlain("f").SetDotHere().
 		Newline().WritePlain("line 1").
 		Newline().WriteStyled(styled.MakeText("line 2    ", "inverse")).
 		Newline().WritePlain("line 3").

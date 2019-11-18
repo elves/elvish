@@ -37,7 +37,7 @@ func TestRender(t *testing.T) {
 					WriteStringSGR("M", styleForMode.String()).
 					WriteSpacesSGR(1, "").
 					WriteStringSGR("f", styleForFilter.String()).
-					SetDotToCursor().
+					SetDotHere().
 					Buffer()),
 
 		// Width left for scrollbar is 5
@@ -47,7 +47,7 @@ func TestRender(t *testing.T) {
 					WriteStringSGR("M", styleForMode.String()).
 					WriteSpacesSGR(1, "").
 					WriteStringSGR("f", styleForFilter.String()).
-					SetDotToCursor().
+					SetDotHere().
 					WriteSpacesSGR(1, "").
 					WriteRuneSGR(' ', styleForScrollBarThumb.String()).
 					WriteStringSGR("━━━━", styleForScrollBarArea.String()).

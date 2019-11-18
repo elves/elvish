@@ -58,7 +58,7 @@ func (ml modeLineRenderer) Render(bb *BufferBuilder) {
 	bb.WriteStringSGR(ml.title, styleForMode.String())
 	bb.WriteSpacesSGR(1, "")
 	bb.WriteStringSGR(ml.filter, styleForFilter.String())
-	bb.SetDotToCursor()
+	bb.SetDotHere()
 }
 
 // NewModeLineWithScrollBarRenderer returns a Renderer for a mode line with a

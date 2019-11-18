@@ -36,7 +36,7 @@ func TestStart(t *testing.T) {
 		WriteStyled(styled.MakeText("foo", "underlined")). // code area
 		Newline().
 		WriteStyled(layout.ModeLine("COMPLETING WORD", true)).
-		SetDotToCursor().
+		SetDotHere().
 		Newline().WriteStyled(styled.MakeText("foo", "inverse")). // Selected entry
 		WritePlain("  foo bar").
 		Buffer()
@@ -48,7 +48,7 @@ func TestStart(t *testing.T) {
 		WriteStyled(styled.MakeText("'foo bar'", "underlined")). // code area
 		Newline().
 		WriteStyled(layout.ModeLine("COMPLETING WORD", true)).
-		WritePlain("ba").SetDotToCursor().
+		WritePlain("ba").SetDotHere().
 		Newline().WriteStyled(styled.MakeText("foo bar", "inverse")). // Selected entry
 		Buffer()
 	ttyCtrl.TestBuffer(t, wantBufFiltering)
@@ -56,7 +56,7 @@ func TestStart(t *testing.T) {
 	// Test the OnAccept handler.
 	ttyCtrl.Inject(term.K(ui.Enter))
 	wantBufAccepted := ui.NewBufferBuilder(80).
-		WritePlain("'foo bar'").SetDotToCursor().Buffer()
+		WritePlain("'foo bar'").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBufAccepted)
 
 	// Test Close first we need to start over.

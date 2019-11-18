@@ -294,7 +294,7 @@ var bufferTTYStringTests = []struct {
 	},
 	{
 		NewBufferBuilder(4).
-			WritePlain("AB").SetDotToCursor().
+			WritePlain("AB").SetDotHere().
 			WriteStringSGR("C", "1").
 			WriteStringSGR("D", "7").
 			Newline().

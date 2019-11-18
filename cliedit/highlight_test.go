@@ -27,7 +27,7 @@ func TestHighlighter(t *testing.T) {
 			"~> put $true", styles,
 			"   ggg vvvvv",
 		)).
-		SetDotToCursor().
+		SetDotHere().
 		Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf1)
 
@@ -37,7 +37,7 @@ func TestHighlighter(t *testing.T) {
 			"~> put $truex", styles,
 			"   ggg eeeeee",
 		)).
-		SetDotToCursor().
+		SetDotHere().
 		Newline().
 		WritePlain("compilation error: 4-10 in [tty]: variable $truex not found").
 		Buffer()

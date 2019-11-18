@@ -71,7 +71,7 @@ func TestStart_OK(t *testing.T) {
 		WriteStyled(styled.MakeText("LASTCMD",
 			"bold", "lightgray", "bg-magenta")).
 		WritePlain(" ").
-		SetDotToCursor().
+		SetDotHere().
 		// first entry is selected
 		Newline().WriteStyled(
 		styled.MakeText("    foo,bar,baz"+strings.Repeat(" ", 65), "inverse")).
@@ -91,7 +91,7 @@ func TestStart_OK(t *testing.T) {
 		WriteStyled(styled.MakeText("LASTCMD",
 			"bold", "lightgray", "bg-magenta")).
 		WritePlain(" -").
-		SetDotToCursor().
+		SetDotHere().
 		// first entry is selected
 		Newline().WriteStyled(
 		styled.MakeText(" -3 foo"+strings.Repeat(" ", 73), "inverse")).
@@ -104,7 +104,7 @@ func TestStart_OK(t *testing.T) {
 	// Test automatic submission.
 	ttyCtrl.Inject(term.K('2')) // -2 bar
 	wantBuf = ui.NewBufferBuilder(80).
-		WritePlain("bar").SetDotToCursor().Buffer()
+		WritePlain("bar").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test submission by Enter.
@@ -119,7 +119,7 @@ func TestStart_OK(t *testing.T) {
 	})
 	ttyCtrl.Inject(term.K(ui.Enter))
 	wantBuf = ui.NewBufferBuilder(80).
-		WritePlain("foo,bar,baz").SetDotToCursor().Buffer()
+		WritePlain("foo,bar,baz").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Default wordifier.
@@ -130,6 +130,6 @@ func TestStart_OK(t *testing.T) {
 	Start(app, Config{Store: store})
 	ttyCtrl.Inject(term.K('0'))
 	wantBuf = ui.NewBufferBuilder(80).
-		WritePlain("foo").SetDotToCursor().Buffer()
+		WritePlain("foo").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
 }

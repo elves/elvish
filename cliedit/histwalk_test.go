@@ -21,7 +21,7 @@ func TestHistWalk(t *testing.T) {
 		WriteStyled(styled.MarkLines(
 			"~> echo a", styles,
 			"   GGGG--",
-		)).SetDotToCursor().Newline().
+		)).SetDotHere().Newline().
 		WriteStyled(styled.MarkLines(
 			" HISTORY #1 ", styles,
 			"mmmmmmmmmmmm",
@@ -33,6 +33,6 @@ func TestHistWalk(t *testing.T) {
 		WriteStyled(styled.MarkLines(
 			"~> echo a", styles,
 			"   gggg  ",
-		)).SetDotToCursor().Buffer()
+		)).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufDone)
 }

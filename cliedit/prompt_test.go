@@ -16,7 +16,7 @@ func TestPrompt_ValueOutput(t *testing.T) {
 
 	f.TTYCtrl.TestBuffer(t,
 		bb().WritePlain("val").WriteStyled(styled.MakeText("> ", "red")).
-			SetDotToCursor().Buffer())
+			SetDotHere().Buffer())
 }
 
 func TestPrompt_ByteOutput(t *testing.T) {
@@ -24,7 +24,7 @@ func TestPrompt_ByteOutput(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.TestBuffer(t,
-		bb().WritePlain("bytes> ").SetDotToCursor().Buffer())
+		bb().WritePlain("bytes> ").SetDotHere().Buffer())
 }
 
 func TestPrompt_NotifiesInvalidValueOutput(t *testing.T) {
@@ -32,7 +32,7 @@ func TestPrompt_NotifiesInvalidValueOutput(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.TestBuffer(t,
-		bb().WritePlain("goodgood2").SetDotToCursor().Buffer())
+		bb().WritePlain("goodgood2").SetDotHere().Buffer())
 	f.TTYCtrl.TestNotesBuffer(t, bb().
 		WritePlain("invalid output type from prompt: list").Buffer())
 }
@@ -50,7 +50,7 @@ func TestRPrompt(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.TestBuffer(t,
-		bb().WritePlain("~> ").SetDotToCursor().
+		bb().WritePlain("~> ").SetDotHere().
 			WritePlain(strings.Repeat(" ", testTTYWidth-6)+"RRR").Buffer())
 }
 
@@ -61,12 +61,12 @@ func TestPromptEagerness(t *testing.T) {
 		`edit:-prompt-eagerness = 10`)
 	defer f.Cleanup()
 
-	wantBuf1 := bb().WritePlain("1> ").SetDotToCursor().Buffer()
+	wantBuf1 := bb().WritePlain("1> ").SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf1)
 	// With eagerness = 10, any key press will cause the prompt to be
 	// recomputed.
 	f.TTYCtrl.Inject(term.K(ui.Backspace))
-	wantBuf2 := bb().WritePlain("2> ").SetDotToCursor().Buffer()
+	wantBuf2 := bb().WritePlain("2> ").SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf2)
 }
 
@@ -78,11 +78,11 @@ func TestPromptStaleThreshold(t *testing.T) {
 	defer f.Cleanup()
 
 	wantBufStale := bb().
-		WriteStyled(styled.MakeText("???> ", "inverse")).SetDotToCursor().Buffer()
+		WriteStyled(styled.MakeText("???> ", "inverse")).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufStale)
 
 	evals(f.Evaler, `pwclose $pipe`)
-	wantBufFresh := bb().WritePlain("> ").SetDotToCursor().Buffer()
+	wantBufFresh := bb().WritePlain("> ").SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufFresh)
 	evals(f.Evaler, `prclose $pipe`)
 }
@@ -96,7 +96,7 @@ func TestPromptStaleTransform(t *testing.T) {
 	defer f.Cleanup()
 
 	wantBufStale := bb().
-		WriteStyled(styled.Plain("S???> S")).SetDotToCursor().Buffer()
+		WriteStyled(styled.Plain("S???> S")).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufStale)
 	evals(f.Evaler, `pwclose $pipe`)
 	evals(f.Evaler, `prclose $pipe`)
@@ -105,7 +105,7 @@ func TestPromptStaleTransform(t *testing.T) {
 func TestRPromptPersistent_True(t *testing.T) {
 	wantBufFinal := bb().
 		WritePlain("~> " + strings.Repeat(" ", testTTYWidth-6) + "RRR").
-		Newline().SetDotToCursor().
+		Newline().SetDotHere().
 		Buffer()
 	testRPromptPersistent(t, `edit:rprompt-persistent = $true`, wantBufFinal)
 }
@@ -113,7 +113,7 @@ func TestRPromptPersistent_True(t *testing.T) {
 func TestRPromptPersistent_False(t *testing.T) {
 	wantBufFinal := bb().
 		WritePlain("~> "). // no rprompt
-		Newline().SetDotToCursor().
+		Newline().SetDotHere().
 		Buffer()
 	testRPromptPersistent(t, `edit:rprompt-persistent = $false`, wantBufFinal)
 }
@@ -124,7 +124,7 @@ func testRPromptPersistent(t *testing.T, code string, wantBufFinal *ui.Buffer) {
 
 	// Make sure that the UI has stablized before hitting Enter.
 	wantBufStable := bb().
-		WritePlain("~> ").SetDotToCursor().
+		WritePlain("~> ").SetDotHere().
 		WritePlain(strings.Repeat(" ", testTTYWidth-6) + "RRR").
 		Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufStable)
@@ -141,7 +141,7 @@ func TestDefaultPromptForNonRoot(t *testing.T) {
 
 	f.Start()
 
-	wantBuf := bb().WritePlain("~> ").SetDotToCursor().Buffer()
+	wantBuf := bb().WritePlain("~> ").SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
@@ -154,7 +154,7 @@ func TestDefaultPromptForRoot(t *testing.T) {
 	f.Start()
 
 	wantBuf := bb().WritePlain("~").
-		WriteStyled(styled.MakeText("# ", "red")).SetDotToCursor().Buffer()
+		WriteStyled(styled.MakeText("# ", "red")).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
@@ -166,7 +166,7 @@ func TestDefaultRPrompt(t *testing.T) {
 
 	f.Start()
 
-	wantBuf := bb().WritePlain("~> ").SetDotToCursor().
+	wantBuf := bb().WritePlain("~> ").SetDotHere().
 		WritePlain(strings.Repeat(" ", 49)).
 		WriteStyled(styled.MakeText("elf@host", "inverse")).Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)

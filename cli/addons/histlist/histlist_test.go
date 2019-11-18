@@ -67,7 +67,7 @@ func TestStart_OK(t *testing.T) {
 	ttyCtrl.Inject(term.K(ui.Enter))
 	wantBufAccepted1 := bb().
 		// codearea now contains selected entry
-		WritePlain("baz").SetDotToCursor().Buffer()
+		WritePlain("baz").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBufAccepted1)
 
 	// Test accepting when there is already some text.
@@ -77,7 +77,7 @@ func TestStart_OK(t *testing.T) {
 	wantBufAccepted2 := bb().
 		WritePlain("baz").
 		// codearea now contains newly inserted entry on a separate line
-		Newline().WritePlain("baz2").SetDotToCursor().Buffer()
+		Newline().WritePlain("baz2").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBufAccepted2)
 }
 
@@ -152,7 +152,7 @@ func bb() *ui.BufferBuilder { return ui.NewBufferBuilder(50) }
 func makeListingBuf(mode, filter string, lines ...string) *ui.Buffer {
 	b := bb().Newline().
 		WriteStyled(layout.ModeLine(mode, true)).
-		WritePlain(filter).SetDotToCursor()
+		WritePlain(filter).SetDotHere()
 	for i, line := range lines {
 		b.Newline()
 		if i < len(lines)-1 {

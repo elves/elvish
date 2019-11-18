@@ -20,7 +20,7 @@ func TestCompletionAddon(t *testing.T) {
 			"   gggg --",
 			"COMPLETING argument ", styles,
 			"mmmmmmmmmmmmmmmmmmm ")).
-		SetDotToCursor().
+		SetDotHere().
 		Newline().
 		WriteStyled(styled.MarkLines(
 			"a  b", styles,
@@ -95,7 +95,7 @@ func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
 			"   ggg           ----",
 			"COMPLETING argument ", styles,
 			"mmmmmmmmmmmmmmmmmmm ")).
-		SetDotToCursor().
+		SetDotHere().
 		Newline().
 		WriteStyled(styled.MarkLines(
 			"val1  val2_", styles,
@@ -125,7 +125,7 @@ func TestCompletionArgCompleter_BytesOutput(t *testing.T) {
 			"   ggg           ----",
 			"COMPLETING argument ", styles,
 			"mmmmmmmmmmmmmmmmmmm ")).
-		SetDotToCursor().
+		SetDotHere().
 		Newline().
 		WriteStyled(styled.MarkLines(
 			"val1  val2", styles,
@@ -162,7 +162,7 @@ func TestCompletionMatcher(t *testing.T) {
 			"   gggg ----",
 			"COMPLETING argument ", styles,
 			"mmmmmmmmmmmmmmmmmmm ")).
-		SetDotToCursor().
+		SetDotHere().
 		Newline().
 		WriteStyled(styled.MarkLines(
 			"foo  oof", styles,

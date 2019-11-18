@@ -212,7 +212,7 @@ func testNavigation(t *testing.T, c Cursor) {
 
 func makeBuf(navRegion styled.Text) *ui.Buffer {
 	return ui.NewBufferBuilder(40).
-		Newline().SetDotToCursor().
+		Newline().SetDotHere().
 		WriteStyled(navRegion).Buffer()
 }
 
