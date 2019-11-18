@@ -1,19 +1,19 @@
-package styled
+package ui
 
-import "github.com/elves/elvish/edit/ui"
+import "github.com/elves/elvish/styled"
 
-// ToLegacyType converts the Text to a slice of *ui.Styled.
-func (t Text) ToLegacyType() []*ui.Styled {
-	out := make([]*ui.Styled, len(t))
+// FromNewStyledText converts a styled.Text to a slice of *Styled.
+func FromNewStyledText(t styled.Text) []*Styled {
+	out := make([]*Styled, len(t))
 	for i, seg := range t {
-		out[i] = seg.ToLegacyType()
+		out[i] = FromNewStyledSegment(seg)
 	}
 	return out
 }
 
-// ToLegacyType converts the *Segment to a *ui.Styled.
-func (s Segment) ToLegacyType() *ui.Styled {
-	legacy := &ui.Styled{Text: s.Text}
+// FromNewStyledSegment converts a *styled.Segment to a *Styled.
+func FromNewStyledSegment(s *styled.Segment) *Styled {
+	legacy := &Styled{Text: s.Text}
 	addLegacyStyle := func(style string) {
 		legacy.Styles = append(legacy.Styles, style)
 	}

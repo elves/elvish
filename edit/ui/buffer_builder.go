@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 
+	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
 
@@ -134,15 +135,9 @@ func (bb *BufferBuilder) WriteSpacesSGR(w int, style string) *BufferBuilder {
 	return bb.WriteStringSGR(strings.Repeat(" ", w), style)
 }
 
-// StyledText is an interface satisfied by styled.Text. This package cannot
-// import the styled package as that would result in an import cycle.
-type StyledText interface {
-	ToLegacyType() []*Styled
-}
-
 // WriteLegacyStyleds writes a styled text.
-func (bb *BufferBuilder) WriteStyled(t StyledText) *BufferBuilder {
-	return bb.WriteLegacyStyleds(t.ToLegacyType())
+func (bb *BufferBuilder) WriteStyled(t styled.Text) *BufferBuilder {
+	return bb.WriteLegacyStyleds(FromNewStyledText(t))
 }
 
 // WriteLegacyStyleds writes a slice of (legacy) styled structs.

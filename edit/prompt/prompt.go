@@ -221,7 +221,7 @@ func callAndGetStyled(ed eddefs.Editor, fn eval.Callable, ports []*eval.Port) []
 				add(s)
 			} else if s, ok := v.(styled.Text); ok {
 				for _, seg := range s {
-					add(seg.ToLegacyType())
+					add(ui.FromNewStyledSegment(seg))
 				}
 			} else {
 				add(&ui.Styled{vals.ToString(v), ui.Styles{}})
