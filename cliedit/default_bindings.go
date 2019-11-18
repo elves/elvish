@@ -28,7 +28,7 @@ insert:binding = (binding-table [
   &Ctrl-R= $histlist:start~
   &Ctrl-L= $location:start~
   &Ctrl-N= $navigation:start~
-  &Tab=    $completion:start~
+  &Tab=    $completion:smart-start~
   &Up=     $history:start~
 
   &Enter=   $smart-enter~

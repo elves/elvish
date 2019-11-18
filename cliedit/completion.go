@@ -6,10 +6,12 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/addons/completion"
 	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cliedit/complete"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
@@ -135,13 +137,47 @@ func complexCandidate(opts complexCandidateOpts, stem string) complexItem {
 //
 // Start the completion mode.
 
-func completionStart(app cli.App, binding el.Handler, cfg complete.Config) {
+//elvdoc:fn completion:smart-start
+//
+// Starts the completion mode. However, if all the candidates share a non-empty
+// prefix and that prefix starts with the seed, inserts the prefix instead.
+
+func completionStart(app cli.App, binding el.Handler, cfg complete.Config, smart bool) {
 	buf := app.CodeArea().CopyState().Buffer
 	result, err := complete.Complete(
 		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot}, cfg)
 	if err != nil {
 		app.Notify(err.Error())
 		return
+	}
+	if smart {
+		prefix := ""
+		for i, item := range result.Items {
+			if i == 0 {
+				prefix = item.ToInsert
+				continue
+			}
+			prefix = commonPrefix(prefix, item.ToInsert)
+			if prefix == "" {
+				break
+			}
+		}
+		if prefix != "" {
+			insertedPrefix := false
+			app.CodeArea().MutateState(func(s *codearea.State) {
+				rep := s.Buffer.Content[result.Replace.From:result.Replace.To]
+				if len(prefix) > len(rep) && strings.HasPrefix(prefix, rep) {
+					s.Pending = codearea.Pending{
+						Content: prefix,
+						From:    result.Replace.From, To: result.Replace.To}
+					s.ApplyPending()
+					insertedPrefix = true
+				}
+			})
+			if insertedPrefix {
+				return
+			}
+		}
 	}
 	completion.Start(app, completion.Config{
 		Name: result.Name, Replace: result.Replace, Items: result.Items,
@@ -157,7 +193,7 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	binding := newMapBinding(app, ev, bindingVar)
 	matcherMapVar := newMapVar(vals.EmptyMap)
 	argGeneratorMapVar := newMapVar(vals.EmptyMap)
-	getCfg := func() complete.Config {
+	cfg := func() complete.Config {
 		return complete.Config{
 			PureEvaler: pureEvaler{ev},
 			Filterer: adaptMatcherMap(
@@ -167,7 +203,7 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 		}
 	}
 	generateForSudo := func(args []string) ([]complete.RawItem, error) {
-		return complete.GenerateForSudo(getCfg(), args)
+		return complete.GenerateForSudo(cfg(), args)
 	}
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
@@ -184,15 +220,16 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 			"binding":       bindingVar,
 			"matcher":       matcherMapVar,
 		}.AddGoFns("<edit:completion>", map[string]interface{}{
-			"accept":     func() { listingAccept(app) },
-			"start":      func() { completionStart(app, binding, getCfg()) },
-			"close":      func() { completion.Close(app) },
-			"up":         func() { listingUp(app) },
-			"down":       func() { listingDown(app) },
-			"up-cycle":   func() { listingUpCycle(app) },
-			"down-cycle": func() { listingDownCycle(app) },
-			"left":       func() { listingLeft(app) },
-			"right":      func() { listingRight(app) },
+			"accept":      func() { listingAccept(app) },
+			"smart-start": func() { completionStart(app, binding, cfg(), true) },
+			"start":       func() { completionStart(app, binding, cfg(), false) },
+			"close":       func() { completion.Close(app) },
+			"up":          func() { listingUp(app) },
+			"down":        func() { listingDown(app) },
+			"up-cycle":    func() { listingUpCycle(app) },
+			"down-cycle":  func() { listingDownCycle(app) },
+			"left":        func() { listingLeft(app) },
+			"right":       func() { listingRight(app) },
 		}))
 }
 
@@ -260,6 +297,20 @@ func wrapArgGenerator(gen complete.ArgGenerator) wrappedArgGenerator {
 		}
 		return nil
 	}
+}
+
+func commonPrefix(s1, s2 string) string {
+	for i, r := range s1 {
+		if s2 == "" {
+			break
+		}
+		r2, n2 := utf8.DecodeRuneInString(s2)
+		if r2 != r {
+			return s1[:i]
+		}
+		s2 = s2[n2:]
+	}
+	return s1
 }
 
 // The type for a native Go matcher. This is not equivalent to the Elvish

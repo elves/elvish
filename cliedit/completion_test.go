@@ -29,6 +29,37 @@ func TestCompletionAddon(t *testing.T) {
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
+func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+	util.ApplyDir(util.Dir{"foo1": "", "foo2": "", "foo": "", "fox": ""})
+
+	feedInput(f.TTYCtrl, "echo \t")
+	wantBuf := bb().
+		WriteMarkedLines(
+			"~> echo fo", styles,
+			"   gggg").
+		SetDotHere().
+		Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBuf)
+
+	feedInput(f.TTYCtrl, "\t")
+	wantBuf = bb().
+		WriteMarkedLines(
+			"~> echo foo ", styles,
+			"   gggg ----",
+			"COMPLETING argument ", styles,
+			"mmmmmmmmmmmmmmmmmmm ").
+		SetDotHere().
+		Newline().
+		WriteMarkedLines(
+			"foo  foo1  foo2  fox", styles,
+			"###                 ",
+		).
+		Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBuf)
+}
+
 func TestCompleteFilename(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
@@ -83,21 +114,21 @@ func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
 		`fn foo { }`,
 		`edit:completion:arg-completer[foo] = [@args]{
 		   foo-args = $args
-		   put val1
-		   edit:complex-candidate val2 &display-suffix=_
+		   put 1val
+		   edit:complex-candidate 2val &display-suffix=_
 		 }`)
 
 	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
 	wantBuf := bb().
 		WriteMarkedLines(
-			"~> foo foo1 foo2 val1", styles,
+			"~> foo foo1 foo2 1val", styles,
 			"   ggg           ----",
 			"COMPLETING argument ", styles,
 			"mmmmmmmmmmmmmmmmmmm ").
 		SetDotHere().
 		Newline().
 		WriteMarkedLines(
-			"val1  val2_", styles,
+			"1val  2val_", styles,
 			"####       ",
 		).
 		Buffer()
@@ -113,21 +144,21 @@ func TestCompletionArgCompleter_BytesOutput(t *testing.T) {
 	evals(f.Evaler,
 		`fn foo { }`,
 		`edit:completion:arg-completer[foo] = [@args]{
-		   echo val1
-		   echo val2
+		   echo 1val
+		   echo 2val
 		 }`)
 
 	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
 	wantBuf := bb().
 		WriteMarkedLines(
-			"~> foo foo1 foo2 val1", styles,
+			"~> foo foo1 foo2 1val", styles,
 			"   ggg           ----",
 			"COMPLETING argument ", styles,
 			"mmmmmmmmmmmmmmmmmmm ").
 		SetDotHere().
 		Newline().
 		WriteMarkedLines(
-			"val1  val2", styles,
+			"1val  2val", styles,
 			"####      ",
 		).
 		Buffer()
