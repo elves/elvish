@@ -10,7 +10,6 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
 	"github.com/elves/elvish/util"
 )
@@ -23,20 +22,20 @@ func TestHighlighter(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "put $true")
 	wantBuf1 := bb().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"~> put $true", styles,
 			"   ggg vvvvv",
-		)).
+		).
 		SetDotHere().
 		Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf1)
 
 	feedInput(f.TTYCtrl, "x")
 	wantBuf2 := bb().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"~> put $truex", styles,
 			"   ggg eeeeee",
-		)).
+		).
 		SetDotHere().
 		Newline().
 		WritePlain("compilation error: 4-10 in [tty]: variable $truex not found").

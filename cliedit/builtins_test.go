@@ -11,7 +11,6 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval/vals"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
 )
 
@@ -45,7 +44,7 @@ func TestDumpBuf(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "echo")
 	wantBuf := bb().WritePlain("~> ").
-		WriteStyled(styled.MakeText("echo", "green")).SetDotHere().Buffer()
+		WriteString("echo", "green").SetDotHere().Buffer()
 	// Wait until the buffer we want has shown up.
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 
@@ -94,10 +93,10 @@ func TestRedraw(t *testing.T) {
 
 	evals(f.Evaler, `edit:current-command = echo`)
 	evals(f.Evaler, `edit:redraw`)
-	wantBuf := bb().WriteStyled(styled.MarkLines(
+	wantBuf := bb().WriteMarkedLines(
 		"~> echo", styles,
 		"   gggg",
-	)).SetDotHere().Buffer()
+	).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 

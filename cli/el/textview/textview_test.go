@@ -7,7 +7,6 @@ import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/styled"
 )
 
 var bb = ui.NewBufferBuilder
@@ -49,9 +48,9 @@ var renderTests = []el.RenderTest{
 		Width: 10, Height: 2,
 		Want: bb(10).
 			WritePlain("line 1   ").
-			WriteStyled(styled.MakeText(" ", "inverse", "magenta")).Newline().
+			WriteString(" ", "inverse", "magenta").Newline().
 			WritePlain("line 2   ").
-			WriteStyled(styled.MakeText("│", "magenta")).Buffer(),
+			WriteString("│", "magenta").Buffer(),
 	},
 	{
 		Name: "State.First adjusted to fit text",

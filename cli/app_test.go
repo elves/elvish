@@ -196,7 +196,7 @@ func TestHighlighter(t *testing.T) {
 	feedInput(tty, "code")
 
 	wantBuf := bb().
-		WriteStyled(styled.MakeText("code", "red")).
+		WriteString("code", "red").
 		SetDotHere().Buffer()
 	tty.TestBuffer(t, wantBuf)
 }
@@ -333,7 +333,7 @@ func TestRPrompt_NotPersistent(t *testing.T) {
 	a.ReadCode()
 
 	wantBuf := bb().
-		WritePlain("code").         // no rprompt
+		WritePlain("code").     // no rprompt
 		Newline().SetDotHere(). // cursor on newline in final redraw
 		Buffer()
 	tty.TestBuffer(t, wantBuf)

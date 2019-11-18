@@ -9,7 +9,6 @@ import (
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/styled"
 )
 
 var renderTests = []el.RenderTest{
@@ -24,7 +23,7 @@ var renderTests = []el.RenderTest{
 		Width: 10, Height: 24,
 		Want: ui.NewBufferBuilder(10).
 			WritePlain("filter").SetDotHere().
-			Newline().WriteStyled(styled.MakeText("item 0    ", "inverse")).
+			Newline().WriteString("item 0    ", "inverse").
 			Newline().WritePlain("item 1"),
 	},
 	{
@@ -39,7 +38,7 @@ var renderTests = []el.RenderTest{
 		Width: 10, Height: 24,
 		Want: ui.NewBufferBuilder(10).
 			WritePlain("filter").SetDotHere().
-			Newline().WriteStyled(styled.MakeText("item 0    ", "inverse")).
+			Newline().WriteString("item 0    ", "inverse").
 			Newline().WritePlain("item 1"),
 	},
 }

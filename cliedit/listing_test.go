@@ -7,7 +7,6 @@ import (
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/store/storedefs"
-	"github.com/elves/elvish/styled"
 )
 
 /*
@@ -34,31 +33,31 @@ func TestHistlistAddon(t *testing.T) {
 
 	f.TTYCtrl.Inject(term.K('R', ui.Ctrl))
 	wantBuf := bbAddon(" HISTORY (dedup on) ").
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"   1 echo",
 			"   2 ls                       ", styles,
 			"##############################",
-		)).Buffer()
+		).Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 
 	evals(f.Evaler, `edit:histlist:toggle-dedup`)
 	wantBuf = bbAddon(" HISTORY ").
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"   0 ls",
 			"   1 echo",
 			"   2 ls                       ", styles,
 			"##############################",
-		)).Buffer()
+		).Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 
 	evals(f.Evaler, `edit:histlist:toggle-case-sensitivity`)
 	wantBuf = bbAddon(" HISTORY (case-insensitive) ").
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"   0 ls",
 			"   1 echo",
 			"   2 ls                       ", styles,
 			"##############################",
-		)).Buffer()
+		).Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
@@ -71,13 +70,13 @@ func TestLastCmdAddon(t *testing.T) {
 
 	f.TTYCtrl.Inject(term.K(',', ui.Alt))
 	wantBuf := bbAddon("LASTCMD").
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"    echo hello world          ", styles,
 			"##############################",
 			"  0 echo",
 			"  1 hello",
 			"  2 world",
-		)).Buffer()
+		).Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 

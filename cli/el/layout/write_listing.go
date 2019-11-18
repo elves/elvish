@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/styled"
 )
 
 // Selected is a special value in the argument to WriteListing, signalling that
@@ -24,7 +23,7 @@ func WriteListing(b *ui.BufferBuilder, name, filter string, lines ...string) {
 		case i < len(lines)-1 && lines[i+1] == Selected:
 			b.Newline()
 			padded := fmt.Sprintf("%-*s", b.Width, line)
-			b.WriteStyled(styled.MakeText(padded, "inverse"))
+			b.WriteString(padded, "inverse")
 		default:
 			b.Newline()
 			b.WritePlain(line)

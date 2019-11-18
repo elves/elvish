@@ -7,7 +7,6 @@ import (
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
 )
 
@@ -42,10 +41,10 @@ var renderTests = []el.RenderTest{
 		Want: ui.NewBufferBuilder(11).
 			// first line
 			WritePlain("x0  ").
-			WriteStyled(styled.MakeText("y0 ", "inverse")).
+			WriteString("y0 ", "inverse").
 			WritePlain(" z0").
 			// second line
-			Newline().WriteStyled(styled.MakeText("x1 ", "inverse")).
+			Newline().WriteString("x1 ", "inverse").
 			WritePlain("     z1").
 			// third line
 			Newline().WritePlain("        z2"),

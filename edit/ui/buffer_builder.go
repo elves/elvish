@@ -118,9 +118,9 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 }
 
 // WriteString is equivalent to calling WriteStyled with styled.MakeText(text,
-// style).
-func (bb *BufferBuilder) WriteString(text, style string) *BufferBuilder {
-	return bb.WriteStyled(styled.MakeText(text, style))
+// style...).
+func (bb *BufferBuilder) WriteString(text string, styles ...string) *BufferBuilder {
+	return bb.WriteStyled(styled.MakeText(text, styles...))
 }
 
 // WriteMarkedLines is equivalent to calling WriteStyled with

@@ -9,7 +9,6 @@ import (
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/styled"
 )
 
 func TestStart(t *testing.T) {
@@ -33,11 +32,11 @@ func TestStart(t *testing.T) {
 
 	// Test that the completion combobox is shown correctly.
 	wantBufStarted := ui.NewBufferBuilder(80).
-		WriteStyled(styled.MakeText("foo", "underlined")). // code area
+		WriteString("foo", "underlined"). // code area
 		Newline().
 		WriteStyled(layout.ModeLine("COMPLETING WORD", true)).
 		SetDotHere().
-		Newline().WriteStyled(styled.MakeText("foo", "inverse")). // Selected entry
+		Newline().WriteString("foo", "inverse"). // Selected entry
 		WritePlain("  foo bar").
 		Buffer()
 	ttyCtrl.TestBuffer(t, wantBufStarted)
@@ -45,11 +44,11 @@ func TestStart(t *testing.T) {
 	// Test the OnFilter handler.
 	ttyCtrl.Inject(term.K('b'), term.K('a'))
 	wantBufFiltering := ui.NewBufferBuilder(80).
-		WriteStyled(styled.MakeText("'foo bar'", "underlined")). // code area
+		WriteString("'foo bar'", "underlined"). // code area
 		Newline().
 		WriteStyled(layout.ModeLine("COMPLETING WORD", true)).
 		WritePlain("ba").SetDotHere().
-		Newline().WriteStyled(styled.MakeText("foo bar", "inverse")). // Selected entry
+		Newline().WriteString("foo bar", "inverse"). // Selected entry
 		Buffer()
 	ttyCtrl.TestBuffer(t, wantBufFiltering)
 

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/eval/vals"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
 
@@ -15,17 +14,17 @@ func TestCompletionAddon(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "echo \t")
 	wantBuf := bb().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"~> echo a ", styles,
 			"   gggg --",
 			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ")).
+			"mmmmmmmmmmmmmmmmmmm ").
 		SetDotHere().
 		Newline().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"a  b", styles,
 			"#   ",
-		)).
+		).
 		Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
@@ -90,17 +89,17 @@ func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
 	wantBuf := bb().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"~> foo foo1 foo2 val1", styles,
 			"   ggg           ----",
 			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ")).
+			"mmmmmmmmmmmmmmmmmmm ").
 		SetDotHere().
 		Newline().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"val1  val2_", styles,
 			"####       ",
-		)).
+		).
 		Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 	testGlobal(t, f.Evaler,
@@ -120,17 +119,17 @@ func TestCompletionArgCompleter_BytesOutput(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
 	wantBuf := bb().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"~> foo foo1 foo2 val1", styles,
 			"   ggg           ----",
 			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ")).
+			"mmmmmmmmmmmmmmmmmmm ").
 		SetDotHere().
 		Newline().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"val1  val2", styles,
 			"####      ",
-		)).
+		).
 		Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
@@ -157,17 +156,17 @@ func TestCompletionMatcher(t *testing.T) {
 	evals(f.Evaler, `edit:completion:matcher[''] = $edit:match-substr~`)
 	feedInput(f.TTYCtrl, "echo f\t")
 	wantBuf := bb().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"~> echo foo ", styles,
 			"   gggg ----",
 			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ")).
+			"mmmmmmmmmmmmmmmmmmm ").
 		SetDotHere().
 		Newline().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"foo  oof", styles,
 			"###     ",
-		)).
+		).
 		Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }

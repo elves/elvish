@@ -6,7 +6,6 @@ import (
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/store/storedefs"
-	"github.com/elves/elvish/styled"
 )
 
 func TestHistWalk(t *testing.T) {
@@ -18,21 +17,21 @@ func TestHistWalk(t *testing.T) {
 
 	f.TTYCtrl.Inject(term.K(ui.Up))
 	wantBufWalk := bb().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"~> echo a", styles,
 			"   GGGG--",
-		)).SetDotHere().Newline().
-		WriteStyled(styled.MarkLines(
+		).SetDotHere().Newline().
+		WriteMarkedLines(
 			" HISTORY #1 ", styles,
 			"mmmmmmmmmmmm",
-		)).Buffer()
+		).Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufWalk)
 
 	f.TTYCtrl.Inject(term.K(ui.Enter))
 	wantBufDone := bb().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			"~> echo a", styles,
 			"   gggg  ",
-		)).SetDotHere().Buffer()
+		).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufDone)
 }

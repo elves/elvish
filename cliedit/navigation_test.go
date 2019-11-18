@@ -6,7 +6,6 @@ import (
 
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
 
@@ -26,12 +25,12 @@ func TestNavigation(t *testing.T) {
 		'-': "inverse",
 	}
 	wantBuf := bb().
-		WritePlain("~" + string(os.PathSeparator) + "d> ").
+		WritePlain("~"+string(os.PathSeparator)+"d> ").
 		Newline().SetDotHere().
-		WriteStyled(styled.MarkLines(
+		WriteMarkedLines(
 			" d       a                    ", styles,
 			"####### --------------------- ",
-		)).
+		).
 		Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 
