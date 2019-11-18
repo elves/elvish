@@ -12,7 +12,6 @@ import (
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/store/storedefs"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
 
@@ -31,12 +30,12 @@ func TestLocationAddon(t *testing.T) {
 	f.TTYCtrl.Inject(term.K('L', ui.Ctrl))
 
 	wantBuf := bbAddon("LOCATION").
-		WriteMarkedLines((
+		WriteMarkedLines(
 			`  * C:\opt                    `, styles,
 			"##############################",
 			` 10 C:\home\elf`,
 			` 10 C:\usr\bin`,
-		)).Buffer()
+		).Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
@@ -66,11 +65,11 @@ func TestLocationAddon_Workspace(t *testing.T) {
 	wantBuf := ui.NewBufferBuilder(30).
 		WritePlain(`~\ws1\tmp> `).Newline().
 		WriteStyled(layout.ModeLine("LOCATION", true)).SetDotHere().Newline().
-		WriteMarkedLines((
+		WriteMarkedLines(
 			` 10 ws\bin                    `, styles,
 			"##############################",
 			` 10 C:\usr\bin`,
-		)).Buffer()
+		).Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 
 	f.TTYCtrl.Inject(term.K(ui.Enter))
