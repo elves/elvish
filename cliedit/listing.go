@@ -30,15 +30,17 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 		eval.Ns{
 			"binding": lsMap,
 		}.AddGoFns("<edit:listing>:", map[string]interface{}{
-			"close":      func() { closeListing(app) },
-			"up":         func() { listingUp(app) },
-			"down":       func() { listingDown(app) },
-			"up-cycle":   func() { listingUpCycle(app) },
-			"down-cycle": func() { listingDownCycle(app) },
+			"accept":       func() { listingAccept(app) },
+			"accept-close": func() { listingAcceptClose(app) },
+			"close":        func() { closeListing(app) },
+			"up":           func() { listingUp(app) },
+			"down":         func() { listingDown(app) },
+			"up-cycle":     func() { listingUpCycle(app) },
+			"down-cycle":   func() { listingDownCycle(app) },
+			"page-up":      func() { listingPageUp(app) },
+			"page-down":    func() { listingPageDown(app) },
 			/*
 				"toggle-filtering": cli.ListingToggleFiltering,
-				"accept":           cli.ListingAccept,
-				"accept-close":     cli.ListingAcceptClose,
 			*/
 		}))
 
@@ -119,28 +121,73 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 	})
 }
 
+//elvdoc:fn listing:accept
+//
+// Accepts the current selected listing item.
+
+func listingAccept(app cli.App) {
+	w, ok := app.CopyState().Addon.(combobox.Widget)
+	if !ok {
+		return
+	}
+	w.CodeArea().Submit()
+}
+
+//elvdoc:fn listing:accept-close
+//
+// Accepts the current selected listing item and closes the listing.
+
+func listingAcceptClose(app cli.App) {
+	listingAccept(app)
+	closeListing(app)
+}
+
 //elvdoc:fn listing:up
 //
 // Moves the cursor up in listing mode.
 
+func listingUp(app cli.App) { listingSelect(app, listbox.Prev) }
+
 //elvdoc:fn listing:down
 //
 // Moves the cursor down in listing mode.
+
+func listingDown(app cli.App) { listingSelect(app, listbox.Next) }
 
 //elvdoc:fn listing:up-cycle
 //
 // Moves the cursor up in listing mode, or to the last item if the first item is
 // currently selected.
 
+func listingUpCycle(app cli.App) { listingSelect(app, listbox.PrevWrap) }
+
 //elvdoc:fn listing:down-cycle
 //
 // Moves the cursor down in listing mode, or to the first item if the last item is
 // currently selected.
 
-func listingUp(app cli.App)        { listingSelect(app, listbox.Prev) }
-func listingDown(app cli.App)      { listingSelect(app, listbox.Next) }
-func listingUpCycle(app cli.App)   { listingSelect(app, listbox.PrevWrap) }
 func listingDownCycle(app cli.App) { listingSelect(app, listbox.NextWrap) }
+
+//elvdoc:fn listing:page-up
+// Moves the cursor up one page.
+
+func listingPageUp(app cli.App) { listingSelect(app, listbox.PrevPage) }
+
+//elvdoc:fn listing:page-down
+// Moves the cursor down one page.
+
+func listingPageDown(app cli.App) { listingSelect(app, listbox.NextPage) }
+
+//elvdoc:fn listing:left
+// Moves the cursor left in listing mode.
+
+func listingLeft(app cli.App) { listingSelect(app, listbox.Left) }
+
+//elvdoc:fn listing:right
+//
+// Moves the cursor right in listing mode.
+
+func listingRight(app cli.App) { listingSelect(app, listbox.Right) }
 
 func listingSelect(app cli.App, f func(listbox.State) int) {
 	w, ok := app.CopyState().Addon.(combobox.Widget)

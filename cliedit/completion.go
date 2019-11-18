@@ -184,8 +184,15 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 			"binding":       bindingVar,
 			"matcher":       matcherMapVar,
 		}.AddGoFns("<edit:completion>", map[string]interface{}{
-			"start": func() { completionStart(app, binding, getCfg()) },
-			"close": func() { completion.Close(app) },
+			"accept":     func() { listingAccept(app) },
+			"start":      func() { completionStart(app, binding, getCfg()) },
+			"close":      func() { completion.Close(app) },
+			"up":         func() { listingUp(app) },
+			"down":       func() { listingDown(app) },
+			"up-cycle":   func() { listingUpCycle(app) },
+			"down-cycle": func() { listingDownCycle(app) },
+			"left":       func() { listingLeft(app) },
+			"right":      func() { listingRight(app) },
 		}))
 }
 

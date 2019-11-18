@@ -53,6 +53,12 @@ navigation:binding = (binding-table [
 
 completion:binding = (binding-table [
   &Ctrl-'['= $completion:close~
+  &Down=     $completion:down~
+  &Up=       $completion:up~
+  &Tab=      $completion:down-cycle~
+  &Shift-Tab=$completion:up-cycle~
+  &Left=     $completion:left~
+  &Right=    $completion:right~
 ])
 
 history:binding = (binding-table [
