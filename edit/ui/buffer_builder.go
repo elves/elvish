@@ -117,6 +117,18 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 	return bb
 }
 
+// WriteString is equivalent to calling WriteStyled with styled.MakeText(text,
+// style).
+func (bb *BufferBuilder) WriteString(text, style string) *BufferBuilder {
+	return bb.WriteStyled(styled.MakeText(text, style))
+}
+
+// WriteMarkedLines is equivalent to calling WriteStyled with
+// styled.MarkLines(args...).
+func (bb *BufferBuilder) WriteMarkedLines(args ...interface{}) *BufferBuilder {
+	return bb.WriteStyled(styled.MarkLines(args...))
+}
+
 // WriteStringSGR writes a string to a buffer with a SGR style.
 func (bb *BufferBuilder) WriteStringSGR(text, style string) *BufferBuilder {
 	for _, r := range text {
