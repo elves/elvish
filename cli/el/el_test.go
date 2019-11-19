@@ -57,3 +57,27 @@ func TestMapHandler(t *testing.T) {
 		t.Errorf("should not handle")
 	}
 }
+
+func TestFuncHandler(t *testing.T) {
+	eventCh := make(chan term.Event, 1)
+	h := FuncHandler(func(event term.Event) bool {
+		eventCh <- event
+		return event == term.K('a')
+	})
+
+	handled := h.Handle(term.K('a'))
+	if !handled {
+		t.Errorf("should handle")
+	}
+	if <-eventCh != term.K('a') {
+		t.Errorf("should call func")
+	}
+
+	handled = h.Handle(term.K('b'))
+	if handled {
+		t.Errorf("should not handle")
+	}
+	if <-eventCh != term.K('b') {
+		t.Errorf("should call func")
+	}
+}

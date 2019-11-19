@@ -44,3 +44,11 @@ func (m MapHandler) Handle(event term.Event) bool {
 	}
 	return ok
 }
+
+// FuncHandler is a function-based implementation of Handler.
+type FuncHandler func(term.Event) bool
+
+// Handle handles the event by calling the function.
+func (f FuncHandler) Handle(event term.Event) bool {
+	return f(event)
+}
