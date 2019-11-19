@@ -78,12 +78,46 @@ func TestHistWalk(t *testing.T) {
 	ttyCtrl.TestBuffer(t, bufAccepted)
 }
 
+func TestHistWalk_NoWalker(t *testing.T) {
+	app, ttyCtrl, cleanup := setup()
+	defer cleanup()
+
+	Start(app, Config{})
+	ttyCtrl.TestNotesBuffer(t, bb().WritePlain("no history walker").Buffer())
+}
+
+func TestHistWalk_FallbackHandler(t *testing.T) {
+	app, ttyCtrl, cleanup := setup()
+	defer cleanup()
+
+	db := &histutil.TestDB{
+		AllCmds: []string{"ls"},
+	}
+	Start(app, Config{
+		Walker: histutil.NewWalker(db, -1, nil, ""),
+	})
+	wantBuf := makeBuf(
+		styled.MarkLines(
+			"ls", styles,
+			"--",
+		),
+		" HISTORY #0 ")
+	ttyCtrl.TestBuffer(t, wantBuf)
+
+	ttyCtrl.Inject(term.K(ui.Backspace))
+	ttyCtrl.TestBuffer(t, bb().WritePlain("l").SetDotHere().Buffer())
+}
+
 func makeBuf(codeArea styled.Text, modeline string) *ui.Buffer {
-	return ui.NewBufferBuilder(40).
+	return bb().
 		WriteStyled(codeArea).SetDotHere().
 		Newline().
 		WriteStyled(layout.ModeLine(modeline, false)).
 		Buffer()
+}
+
+func bb() *ui.BufferBuilder {
+	return ui.NewBufferBuilder(40)
 }
 
 func setup() (cli.App, cli.TTYCtrl, func()) {

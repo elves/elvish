@@ -25,35 +25,38 @@ type Config struct {
 }
 
 type widget struct {
-	binding el.Handler
-	walker  histutil.Walker
-	onWalk  func()
-}
-
-func (w *widget) init() {
-	if w.binding == nil {
-		w.binding = el.DummyHandler{}
-	}
-	if w.onWalk == nil {
-		w.onWalk = func() {}
-	}
+	app cli.App
+	Config
 }
 
 func (w *widget) Render(width, height int) *ui.Buffer {
-	w.init()
 	content := layout.ModeLine(
-		fmt.Sprintf(" HISTORY #%d ", w.walker.CurrentSeq()), false)
+		fmt.Sprintf(" HISTORY #%d ", w.Walker.CurrentSeq()), false)
 	buf := ui.NewBufferBuilder(width).WriteStyled(content).Buffer()
 	buf.TrimToLines(0, height)
 	return buf
 }
 
 func (w *widget) Handle(event term.Event) bool {
-	w.init()
-	return w.binding.Handle(event)
+	handled := w.Binding.Handle(event)
+	if handled {
+		return true
+	}
+	Accept(w.app)
+	return w.app.CodeArea().Handle(event)
 }
 
 func (w *widget) Focus() bool { return false }
+
+func (w *widget) onWalk() {
+	prefix := w.Walker.Prefix()
+	w.app.CodeArea().MutateState(func(s *codearea.State) {
+		s.Pending = codearea.Pending{
+			From: len(prefix), To: len(s.Buffer.Content),
+			Content: w.Walker.CurrentCmd()[len(prefix):],
+		}
+	})
+}
 
 // Start starts the histwalk addon.
 func Start(app cli.App, cfg Config) {
@@ -61,19 +64,12 @@ func Start(app cli.App, cfg Config) {
 		app.Notify("no history walker")
 		return
 	}
-	walker := cfg.Walker
-	prefix := walker.Prefix()
-	walker.Prev()
-	w := widget{binding: cfg.Binding, walker: walker}
-	w.onWalk = func() {
-		app.CodeArea().MutateState(func(s *codearea.State) {
-			s.Pending = codearea.Pending{
-				From: len(prefix), To: len(s.Buffer.Content),
-				Content: walker.CurrentCmd()[len(prefix):],
-			}
-		})
+	if cfg.Binding == nil {
+		cfg.Binding = el.DummyHandler{}
 	}
-	w.init()
+	walker := cfg.Walker
+	walker.Prev()
+	w := widget{app: app, Config: cfg}
 	w.onWalk()
 	app.MutateState(func(s *cli.State) { s.Addon = &w })
 	app.Redraw()
@@ -82,13 +78,13 @@ func Start(app cli.App, cfg Config) {
 // Prev walks to the previous entry in history. It returns ErrHistWalkInactive
 // if the histwalk addon is not active.
 func Prev(app cli.App) error {
-	return walk(app, func(w *widget) error { return w.walker.Prev() })
+	return walk(app, func(w *widget) error { return w.Walker.Prev() })
 }
 
 // Next walks to the next entry in history. It returns ErrHistWalkInactive if
 // the histwalk addon is not active.
 func Next(app cli.App) error {
-	return walk(app, func(w *widget) error { return w.walker.Next() })
+	return walk(app, func(w *widget) error { return w.Walker.Next() })
 }
 
 // Close closes the histwalk addon. It does nothing if the histwalk addon is not
