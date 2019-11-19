@@ -13,7 +13,6 @@ import (
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/store/storedefs"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
 
