@@ -6,8 +6,11 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/addons/stub"
 	"github.com/elves/elvish/cli/cliutil"
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -48,9 +51,24 @@ func endOfHistory(app cli.App) {
 //
 // Requests the next terminal input to be inserted uninterpreted.
 
-func insertRaw(tty cli.TTY) {
+func insertRaw(app cli.App, tty cli.TTY) {
 	tty.SetRawInput(1)
-	// TODO(xiaq): Indicate on the UI.
+	stub.Start(app, stub.Config{
+		Binding: el.FuncHandler(func(event term.Event) bool {
+			switch event := event.(type) {
+			case term.KeyEvent:
+				app.CodeArea().MutateState(func(s *codearea.State) {
+					s.Buffer.InsertAtDot(string(event.Rune))
+				})
+				closeListing(app)
+				return true
+			default:
+				return false
+			}
+		}),
+		Name:  " RAW ",
+		Focus: false,
+	})
 }
 
 //elvdoc:fn key
@@ -119,10 +137,10 @@ func wordify(fm *eval.Frame, code string) {
 	}
 }
 
-func initTTYBuiltins(tty cli.TTY, ns eval.Ns) {
+func initTTYBuiltins(app cli.App, tty cli.TTY, ns eval.Ns) {
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"-dump-buf":  func() string { return dumpBuf(tty) },
-		"insert-raw": func() { insertRaw(tty) },
+		"insert-raw": func() { insertRaw(app, tty) },
 	})
 }
 

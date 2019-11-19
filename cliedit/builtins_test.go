@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/cli/cliutil"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/layout"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/tt"
@@ -58,13 +59,26 @@ func TestInsertRaw(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
+	f.TTYCtrl.Inject(term.K('V', ui.Ctrl))
+	wantBuf := bb().WritePlain("~> ").SetDotHere().
+		Newline().WriteStyled(layout.ModeLine(" RAW ", false)).Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBuf)
 	// Since we do not use real terminals in the test, we cannot have a
 	// realistic test case against actual raw inputs. However, we can still
 	// check that the builtin command does call the SetRawInput method with 1.
-	evals(f.Evaler, `edit:insert-raw`)
 	if raw := f.TTYCtrl.RawInput(); raw != 1 {
 		t.Errorf("RawInput() -> %d, want 1", raw)
 	}
+
+	// Raw mode does not respond to non-key events.
+	f.TTYCtrl.Inject(term.MouseEvent{})
+	f.TTYCtrl.TestBuffer(t, wantBuf)
+
+	// Raw mode is dismissed after a single key event.
+	f.TTYCtrl.Inject(term.K('+'))
+	wantBuf = bb().WritePlain("~> ").WriteString("+", "green").
+		SetDotHere().Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
 func TestEndOfHistory(t *testing.T) {
