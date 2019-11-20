@@ -58,6 +58,28 @@ func TestHistWalk_DownOrQuit(t *testing.T) {
 	f.TTYCtrl.TestBuffer(t, wantBufClosed)
 }
 
+func TestHistory_FastForward(t *testing.T) {
+	f := setupWithOpt(setupOpt{
+		StoreOp: func(s storedefs.Store) {
+			s.AddCmd("echo a")
+		}})
+	defer f.Cleanup()
+
+	f.Store.AddCmd("echo b")
+	evals(f.Evaler, `edit:history:fast-forward`)
+	f.TTYCtrl.Inject(term.K(ui.Up))
+	wantBufWalk := bb().
+		WriteMarkedLines(
+			"~> echo b", styles,
+			"   GGGG--",
+		).SetDotHere().Newline().
+		WriteMarkedLines(
+			" HISTORY #2 ", styles,
+			"mmmmmmmmmmmm",
+		).Buffer()
+	f.TTYCtrl.TestBuffer(t, wantBufWalk)
+}
+
 func startHistwalkTest(t *testing.T) *fixture {
 	// The part of the test shared by all tests.
 	f := setupWithOpt(setupOpt{

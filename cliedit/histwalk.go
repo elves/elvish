@@ -28,6 +28,8 @@ func initHistWalk(app cli.App, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fuse
 			},
 			"accept": func() { histwalk.Accept(app) },
 			"close":  func() { histwalk.Close(app) },
+
+			"fast-forward": fuser.FastForward,
 		}))
 }
 
