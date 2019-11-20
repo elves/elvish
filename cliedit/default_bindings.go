@@ -81,6 +81,9 @@ history:binding = (binding-table [
   &Ctrl-'['= $history:close~
 ])
 
+lastcmd:binding = (binding-table [
+  &Alt-,=  $listing:accept~
+])
 #  &Up=        $listing:up~
 #  &Down=      $listing:down~
 #  &Tab=       $listing:down-cycle~
