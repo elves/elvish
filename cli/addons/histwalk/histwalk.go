@@ -76,13 +76,15 @@ func Start(app cli.App, cfg Config) {
 }
 
 // Prev walks to the previous entry in history. It returns ErrHistWalkInactive
-// if the histwalk addon is not active.
+// if the histwalk addon is not active, and histutil.ErrEndOfHistory if it would
+// go over the end.
 func Prev(app cli.App) error {
 	return walk(app, func(w *widget) error { return w.Walker.Prev() })
 }
 
 // Next walks to the next entry in history. It returns ErrHistWalkInactive if
-// the histwalk addon is not active.
+// the histwalk addon is not active, and histutil.ErrEndOfHistory if it would go
+// over the end.
 func Next(app cli.App) error {
 	return walk(app, func(w *widget) error { return w.Walker.Next() })
 }

@@ -77,7 +77,7 @@ completion:binding = (binding-table [
 
 history:binding = (binding-table [
   &Up=       $history:up~
-  &Down=     $history:down~
+  &Down=     $history:down-or-quit~
   &Enter=    $history:accept~
   &Ctrl-'['= $history:close~
 ])
