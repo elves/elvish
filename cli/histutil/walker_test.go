@@ -25,7 +25,6 @@ func TestWalker(t *testing.T) {
 	wantOK(w.Prev())
 	wantCurrent(5, "ls a")
 	wantErr(w.Next(), ErrEndOfHistory)
-	wantOK(w.Prev())
 	wantCurrent(5, "ls a")
 
 	wantOK(w.Prev())
