@@ -31,7 +31,7 @@ func TestHistWalk_Accept(t *testing.T) {
 	f := startHistwalkTest(t)
 	defer f.Cleanup()
 
-	f.TTYCtrl.Inject(term.K(ui.Enter))
+	f.TTYCtrl.Inject(term.K(ui.Right))
 	wantBufDone := bb().
 		WriteMarkedLines(
 			"~> echo a", styles,
