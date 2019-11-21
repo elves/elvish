@@ -18,17 +18,10 @@ import (
 )
 
 func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, fuser *histutil.Fuser) {
-	var histStore histutil.Store
-	if fuser != nil {
-		histStore = fuserWrapper{fuser}
-	}
-	dirStore := dirStore{ev, st}
-
-	// Common binding and the listing: module.
-	lsMap := newBindingVar(emptyBindingMap)
+	bindingVar := newBindingVar(emptyBindingMap)
 	ns.AddNs("listing",
 		eval.Ns{
-			"binding": lsMap,
+			"binding": bindingVar,
 		}.AddGoFns("<edit:listing>:", map[string]interface{}{
 			"accept":       func() { listingAccept(app) },
 			"accept-close": func() { listingAcceptClose(app) },
@@ -44,17 +37,28 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 			*/
 		}))
 
-	histlistMap := newBindingVar(emptyBindingMap)
-	histlistBinding := newMapBinding(app, ev, histlistMap, lsMap)
+	var histStore histutil.Store
+	if fuser != nil {
+		histStore = fuserWrapper{fuser}
+	}
+
+	initHistlist(app, ev, ns, histStore, bindingVar)
+	initLastcmd(app, ev, ns, histStore, bindingVar)
+	initLocation(app, ev, ns, st, bindingVar)
+}
+
+func initHistlist(app cli.App, ev *eval.Evaler, ns eval.Ns, histStore histutil.Store, commonBindingVar vars.PtrVar) {
+	bindingVar := newBindingVar(emptyBindingMap)
+	binding := newMapBinding(app, ev, bindingVar, commonBindingVar)
 	dedup := newBoolVar(true)
 	caseSensitive := newBoolVar(true)
 	ns.AddNs("histlist",
 		eval.Ns{
-			"binding": histlistMap,
+			"binding": bindingVar,
 		}.AddGoFns("<edit:histlist>", map[string]interface{}{
 			"start": func() {
 				histlist.Start(app, histlist.Config{
-					Binding: histlistBinding, Store: histStore,
+					Binding: binding, Store: histStore,
 					CaseSensitive: func() bool {
 						return caseSensitive.Get().(bool)
 					},
@@ -74,37 +78,43 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 				app.Redraw()
 			},
 		}))
+}
 
-	lastcmdMap := newBindingVar(emptyBindingMap)
-	lastcmdBinding := newMapBinding(app, ev, lastcmdMap, lsMap)
+func initLastcmd(app cli.App, ev *eval.Evaler, ns eval.Ns, histStore histutil.Store, commonBindingVar vars.PtrVar) {
+	bindingVar := newBindingVar(emptyBindingMap)
+	binding := newMapBinding(app, ev, bindingVar, commonBindingVar)
 	ns.AddNs("lastcmd",
 		eval.Ns{
-			"binding": lastcmdMap,
+			"binding": bindingVar,
 		}.AddGoFn("<edit:lastcmd>", "start", func() {
 			// TODO: Specify wordifier
 			lastcmd.Start(app, lastcmd.Config{
-				Binding: lastcmdBinding, Store: histStore})
+				Binding: binding, Store: histStore})
 		}))
+}
 
-	locationMap := newBindingVar(emptyBindingMap)
-	locationBinding := newMapBinding(app, ev, locationMap, lsMap)
+func initLocation(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, commonBindingVar vars.PtrVar) {
+	bindingVar := newBindingVar(emptyBindingMap)
 	pinnedVar := newListVar(vals.EmptyList)
 	hiddenVar := newListVar(vals.EmptyList)
 	workspacesVar := newMapVar(vals.EmptyMap)
-	wsIterator := location.WorkspaceIterator(
+
+	binding := newMapBinding(app, ev, bindingVar, commonBindingVar)
+	workspaceIterator := location.WorkspaceIterator(
 		adaptToIterateStringPair(workspacesVar))
+
 	ns.AddNs("location",
 		eval.Ns{
-			"binding":    locationMap,
+			"binding":    bindingVar,
 			"hidden":     hiddenVar,
 			"pinned":     pinnedVar,
 			"workspaces": workspacesVar,
 		}.AddGoFn("<edit:location>", "start", func() {
 			location.Start(app, location.Config{
-				Binding: locationBinding, Store: dirStore,
+				Binding: binding, Store: dirStore{ev, st},
 				IteratePinned:     adaptToIterateString(pinnedVar),
 				IterateHidden:     adaptToIterateString(hiddenVar),
-				IterateWorkspaces: wsIterator,
+				IterateWorkspaces: workspaceIterator,
 			})
 		}))
 	ev.AddAfterChdir(func(string) {
@@ -114,7 +124,7 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 			return
 		}
 		st.AddDir(wd, 1)
-		kind, root := wsIterator.Parse(wd)
+		kind, root := workspaceIterator.Parse(wd)
 		if kind != "" {
 			st.AddDir(kind+wd[len(root):], 1)
 		}
