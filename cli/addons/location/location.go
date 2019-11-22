@@ -160,13 +160,37 @@ func (l list) filter(p string) list {
 	if p == "" {
 		return l
 	}
+	re := makeRegexpForPattern(p)
 	var filteredDirs []storedefs.Dir
 	for _, dir := range l.dirs {
-		if strings.Contains(showPath(dir.Path, l.home), p) {
+		if re.MatchString(showPath(dir.Path, l.home)) {
 			filteredDirs = append(filteredDirs, dir)
 		}
 	}
 	return list{filteredDirs, l.home}
+}
+
+var (
+	quotedPathSep = regexp.QuoteMeta(string(os.PathSeparator))
+	emptyRe       = regexp.MustCompile("")
+)
+
+func makeRegexpForPattern(p string) *regexp.Regexp {
+	var b strings.Builder
+	b.WriteString("(?i).*") // Ignore case, unanchored
+	for i, seg := range strings.Split(p, string(os.PathSeparator)) {
+		if i > 0 {
+			b.WriteString(".*" + quotedPathSep + ".*")
+		}
+		b.WriteString(regexp.QuoteMeta(seg))
+	}
+	b.WriteString(".*")
+	re, err := regexp.Compile(b.String())
+	if err != nil {
+		// TODO: Log the error.
+		return emptyRe
+	}
+	return re
 }
 
 func (l list) Show(i int) styled.Text {

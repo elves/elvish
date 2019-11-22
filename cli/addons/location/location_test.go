@@ -2,6 +2,7 @@ package location
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -185,7 +186,7 @@ func TestStart_OK(t *testing.T) {
 	dirs := []storedefs.Dir{
 		{Path: filepath.Join(home, "go"), Score: 200},
 		{Path: home, Score: 100},
-		{Path: fix("/tmp"), Score: 50},
+		{Path: fix("/tmp/foo/bar/lorem/ipsum"), Score: 50},
 	}
 	Start(app, Config{Store: testStore{
 		storedDirs: dirs,
@@ -197,15 +198,15 @@ func TestStart_OK(t *testing.T) {
 		"",
 		"200 "+filepath.Join("~", "go"), "<- selected",
 		"100 ~",
-		" 50 "+fix("/tmp"))
+		" 50 "+fix("/tmp/foo/bar/lorem/ipsum"))
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test filtering.
-	ttyCtrl.Inject(term.K('t'), term.K('m'), term.K('p'))
+	ttyCtrl.Inject(term.K('f'), term.K(os.PathSeparator), term.K('l'))
 
 	wantBuf = listingBuf(
-		"tmp",
-		" 50 "+fix("/tmp"), "<- selected")
+		"f"+string(os.PathSeparator)+"l",
+		" 50 "+fix("/tmp/foo/bar/lorem/ipsum"), "<- selected")
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test accepting.
@@ -217,7 +218,7 @@ func TestStart_OK(t *testing.T) {
 	wantNotesBuf := bb().WritePlain("mock chdir error").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 	// Chdir should be called.
-	wantChdir := fix("/tmp")
+	wantChdir := fix("/tmp/foo/bar/lorem/ipsum")
 	if got := <-chdirCh; got != wantChdir {
 		t.Errorf("Chdir called with %s, want %s", got, wantChdir)
 	}
