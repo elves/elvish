@@ -63,6 +63,14 @@ histlist:binding = (binding-table [
 
 navigation:binding = (binding-table [
   &Ctrl-'['= $close-listing~
+  &Left=     $navigation:left~
+  &Right=    $navigation:right~
+  &Up=       $navigation:up~
+  &Down=     $navigation:down~
+  &PageUp=   $navigation:page-up~
+  &PageDown= $navigation:page-down~
+  &Alt-Up=   $navigation:file-preview-up~
+  &Alt-Down= $navigation:file-preview-down~
 ])
 
 completion:binding = (binding-table [
@@ -84,6 +92,7 @@ history:binding = (binding-table [
 lastcmd:binding = (binding-table [
   &Alt-,=  $listing:accept~
 ])
+
 #  &Up=        $listing:up~
 #  &Down=      $listing:down~
 #  &Tab=       $listing:down-cycle~

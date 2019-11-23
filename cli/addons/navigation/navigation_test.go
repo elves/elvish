@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
@@ -17,12 +18,15 @@ var styles = map[rune]string{
 	'+': "blue",
 	'#': "inverse blue",
 	'x': "red",
+
+	't': "magenta",
+	'T': "magenta inverse",
 }
 
 var testDir = util.Dir{
 	"a": "",
 	"d": util.Dir{
-		"d1": "content\td1",
+		"d1": "content\td1\nline 2",
 		"d2": util.Dir{
 			"d21": "content d21",
 			"d22": "content d22",
@@ -105,13 +109,12 @@ func TestErrorInParent(t *testing.T) {
 	buf := makeBuf(styled.MarkLines(
 		"ERR   d1            content    d1", styles,
 		"xxx  --------------",
-		"      d2           ", styles,
+		"      d2            line 2", styles,
 		"     ++++++++++++++",
 		"      d3           ", styles,
 		"     ++++++++++++++",
 	))
 	ttyCtrl.TestBuffer(t, buf)
-
 }
 
 func TestErrorInDeepMode(t *testing.T) {
@@ -145,15 +148,27 @@ func testNavigation(t *testing.T, c Cursor) {
 	d1Buf := makeBuf(styled.MarkLines(
 		" a    d1            content    d1", styles,
 		"     --------------",
-		" d    d2           ", styles,
+		" d    d2            line 2", styles,
 		"#### ++++++++++++++",
 		" f    d3           ", styles,
 		"     ++++++++++++++",
 	))
 	ttyCtrl.TestBuffer(t, d1Buf)
 
+	// Test scrolling of preview.
+	ScrollPreview(app, 1)
+	d1Buf2 := makeBuf(styled.MarkLines(
+		" a    d1            line 2             │", styles,
+		"     --------------                    t",
+		" d    d2                               │", styles,
+		"#### ++++++++++++++                    t",
+		" f    d3                                ", styles,
+		"     ++++++++++++++                    T",
+	))
+	ttyCtrl.TestBuffer(t, d1Buf2)
+
 	// Test handling of selection change and directory preview.
-	ttyCtrl.Inject(term.K(ui.Down))
+	Select(app, listbox.Next)
 	d2Buf := makeBuf(styled.MarkLines(
 		" a    d1             d21                ", styles,
 		"                    --------------------",
@@ -164,8 +179,8 @@ func testNavigation(t *testing.T, c Cursor) {
 	))
 	ttyCtrl.TestBuffer(t, d2Buf)
 
-	// Test handling of Right.
-	ttyCtrl.Inject(term.K(ui.Right))
+	// Test handling of Descend.
+	Descend(app)
 	d21Buf := makeBuf(styled.MarkLines(
 		" d1   d21           content d21", styles,
 		"     --------------",
@@ -176,21 +191,23 @@ func testNavigation(t *testing.T, c Cursor) {
 	))
 	ttyCtrl.TestBuffer(t, d21Buf)
 
-	// Test handling of Left, and that the current column selects the directory
-	// we just ascended from, thus reverting to wantBuf1.
-	ttyCtrl.Inject(term.K(ui.Left))
+	// Test handling of Ascend, and that the current column selects the
+	// directory we just ascended from, thus reverting to wantBuf1.
+	Ascend(app)
 	ttyCtrl.TestBuffer(t, d2Buf)
 
-	// Test handling of Right on a regular file, i.e. do nothing. First move the
-	// cursor to d1, which is a regular file.
-	ttyCtrl.Inject(term.K(ui.Up))
+	// Test handling of Descend on a regular file, i.e. do nothing. First move
+	// the cursor to d1, which is a regular file.
+	Select(app, listbox.Prev)
 	ttyCtrl.TestBuffer(t, d1Buf)
-	// Now inject Right and verify that the buffer has not changed.
-	ttyCtrl.Inject(term.K(ui.Right))
+	// Now descend, and verify that the buffer has not changed.
+	Descend(app)
 	ttyCtrl.TestBuffer(t, d1Buf)
 
 	// Test handling of empty directories. First move into d3, an empty directory.
-	ttyCtrl.Inject(term.K(ui.Down), term.K(ui.Down), term.K(ui.Right))
+	Select(app, listbox.Next)
+	Select(app, listbox.Next)
+	Descend(app)
 	d3NoneBuf := makeBuf(styled.MarkLines(
 		" d1                 ",
 		" d2 ", styles,
@@ -199,14 +216,14 @@ func testNavigation(t *testing.T, c Cursor) {
 		"####",
 	))
 	ttyCtrl.TestBuffer(t, d3NoneBuf)
-	// Test that Up does nothing.
-	ttyCtrl.Inject(term.K(ui.Up))
+	// Test that selecting the previous does nothing.
+	Select(app, listbox.Prev)
 	ttyCtrl.TestBuffer(t, d3NoneBuf)
-	// Test that Down does nothing.
-	ttyCtrl.Inject(term.K(ui.Down))
+	// Test that selecting the next does nothing.
+	Select(app, listbox.Next)
 	ttyCtrl.TestBuffer(t, d3NoneBuf)
-	// Test that Right does nothing.
-	ttyCtrl.Inject(term.K(ui.Right))
+	// Test that Descend does nothing.
+	Descend(app)
 	ttyCtrl.TestBuffer(t, d3NoneBuf)
 }
 
@@ -222,7 +239,7 @@ func makeNotesBuf(content styled.Text) *ui.Buffer {
 
 func setupApp() (cli.App, cli.TTYCtrl, func()) {
 	tty, ttyCtrl := cli.NewFakeTTY()
-	ttyCtrl.SetSize(24, 40)
+	ttyCtrl.SetSize(4, 40)
 	app := cli.NewApp(cli.AppSpec{TTY: tty})
 	codeCh, _ := cli.ReadCodeAsync(app)
 	return app, ttyCtrl, func() {

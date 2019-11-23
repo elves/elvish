@@ -3,6 +3,7 @@ package cliedit
 import (
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/addons/navigation"
+	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
 )
@@ -36,7 +37,18 @@ func initNavigation(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	ns.AddNs("navigation",
 		eval.Ns{
 			"binding": bindingVar,
-		}.AddGoFn("<edit:navigation>", "start", func() {
-			navigation.Start(app, navigation.Config{Binding: binding})
+		}.AddGoFns("<edit:navigation>", map[string]interface{}{
+			"start": func() {
+				navigation.Start(app, navigation.Config{Binding: binding})
+			},
+			"left":      func() { navigation.Ascend(app) },
+			"right":     func() { navigation.Descend(app) },
+			"up":        func() { navigation.Select(app, listbox.Prev) },
+			"down":      func() { navigation.Select(app, listbox.Next) },
+			"page-up":   func() { navigation.Select(app, listbox.PrevPage) },
+			"page-down": func() { navigation.Select(app, listbox.NextPage) },
+
+			"file-preview-up":   func() { navigation.ScrollPreview(app, -1) },
+			"file-preview-down": func() { navigation.ScrollPreview(app, 1) },
 		}))
 }

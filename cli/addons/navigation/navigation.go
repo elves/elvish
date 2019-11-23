@@ -231,3 +231,47 @@ func sanitize(content string) string {
 	}
 	return sb.String()
 }
+
+// Select changes the selection if the navigation addon is currently active.
+func Select(app cli.App, f func(listbox.State) int) {
+	actOnWidget(app, func(w widget) {
+		if listBox, ok := w.inner.CopyState().Columns[1].(listbox.Widget); ok {
+			listBox.Select(f)
+			app.Redraw()
+		}
+	})
+}
+
+// ScrollPreview scrolls the preview if the navigation addon is currently
+// active.
+func ScrollPreview(app cli.App, delta int) {
+	actOnWidget(app, func(w widget) {
+		if textView, ok := w.inner.CopyState().Columns[2].(textview.Widget); ok {
+			textView.ScrollBy(delta)
+			app.Redraw()
+		}
+	})
+}
+
+// Ascend ascends in the navigation addon if it is active.
+func Ascend(app cli.App) {
+	actOnWidget(app, func(w widget) {
+		w.inner.Left()
+		app.Redraw()
+	})
+}
+
+// Descend descends in the navigation addon if it is active.
+func Descend(app cli.App) {
+	actOnWidget(app, func(w widget) {
+		w.inner.Right()
+		app.Redraw()
+	})
+}
+
+func actOnWidget(app cli.App, f func(widget)) {
+	w, ok := app.CopyState().Addon.(widget)
+	if ok {
+		f(w)
+	}
+}
