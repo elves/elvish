@@ -19,24 +19,46 @@ func TestNavigation(t *testing.T) {
 		panic(err)
 	}
 
-	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))
 	styles := map[rune]string{
 		'#': "blue inverse",
 		'-': "inverse",
 	}
-	wantBuf := bb().
-		WritePlain("~"+string(os.PathSeparator)+"d> ").
-		Newline().SetDotHere().
-		WriteMarkedLines(
-			" d       a                    ", styles,
-			"####### --------------------- ",
-		).
-		Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	makeBuf := func(moreCode string, markedLines ...interface{}) *ui.Buffer {
+		b := bb().
+			WritePlain("~"+string(os.PathSeparator)+"d> ").
+			WriteString("put", "green").
+			WritePlain(moreCode)
+		if len(markedLines) > 0 {
+			b.Newline().SetDotHere().WriteMarkedLines(markedLines...)
+		} else {
+			b.SetDotHere()
+		}
+		return b.Buffer()
+	}
 
+	// Test navigation addon UI.
+	feedInput(f.TTYCtrl, "put")
+	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))
+	f.TTYCtrl.TestBuffer(t, makeBuf("",
+		" d       a                    ", styles,
+		"####### --------------------- ",
+	))
+
+	// Test $edit:selected-file.
 	evals(f.Evaler, `file = $edit:selected-file`)
 	wantFile := "a"
 	if file := f.Evaler.Global["file"].Get().(string); file != wantFile {
 		t.Errorf("Got $edit:selected-file %q, want %q", file, wantFile)
 	}
+
+	// Test Alt-Enter: inserts filename without quitting.
+	f.TTYCtrl.Inject(term.K(ui.Enter, ui.Alt))
+	f.TTYCtrl.TestBuffer(t, makeBuf(" a",
+		" d       a                    ", styles,
+		"####### --------------------- ",
+	))
+
+	// Test Enter: inserts filename and quits.
+	f.TTYCtrl.Inject(term.K(ui.Enter))
+	f.TTYCtrl.TestBuffer(t, makeBuf(" a a"))
 }

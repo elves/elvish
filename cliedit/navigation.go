@@ -6,6 +6,7 @@ import (
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
+	"github.com/elves/elvish/parse"
 )
 
 //elvdoc:var selected-file
@@ -20,6 +21,23 @@ import (
 //elvdoc:fn navigation:start
 //
 // Start the navigation mode.
+
+//elvdoc:fn navigation:insert-selected
+//
+// Inserts the selected filename.
+
+func navInsertSelected(app cli.App) {
+	insertAtDot(app, " "+parse.Quote(navigation.SelectedName(app)))
+}
+
+//elvdoc:fn navigation:insert-selected-and-quit
+//
+// Inserts the selected filename and closes the navigation addon.
+
+func navInsertSelectedAndQuit(app cli.App) {
+	navInsertSelected(app)
+	closeListing(app)
+}
 
 func initNavigation(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	bindingVar := newBindingVar(emptyBindingMap)
@@ -50,5 +68,8 @@ func initNavigation(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 
 			"file-preview-up":   func() { navigation.ScrollPreview(app, -1) },
 			"file-preview-down": func() { navigation.ScrollPreview(app, 1) },
+
+			"insert-selected":          func() { navInsertSelected(app) },
+			"insert-selected-and-quit": func() { navInsertSelectedAndQuit(app) },
 		}))
 }

@@ -71,6 +71,8 @@ navigation:binding = (binding-table [
   &PageDown= $navigation:page-down~
   &Alt-Up=   $navigation:file-preview-up~
   &Alt-Down= $navigation:file-preview-down~
+  &Enter=    $navigation:insert-selected-and-quit~
+  &Alt-Enter= $navigation:insert-selected~
 ])
 
 completion:binding = (binding-table [
