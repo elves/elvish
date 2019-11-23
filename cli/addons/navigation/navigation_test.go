@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
@@ -229,8 +230,8 @@ func testNavigation(t *testing.T, c Cursor) {
 
 func makeBuf(navRegion styled.Text) *ui.Buffer {
 	return ui.NewBufferBuilder(40).
-		Newline().SetDotHere().
-		WriteStyled(navRegion).Buffer()
+		Newline().WriteStyled(layout.ModeLine(" NAVIGATING ", true)).SetDotHere().
+		Newline().WriteStyled(navRegion).Buffer()
 }
 
 func makeNotesBuf(content styled.Text) *ui.Buffer {
@@ -239,7 +240,7 @@ func makeNotesBuf(content styled.Text) *ui.Buffer {
 
 func setupApp() (cli.App, cli.TTYCtrl, func()) {
 	tty, ttyCtrl := cli.NewFakeTTY()
-	ttyCtrl.SetSize(4, 40)
+	ttyCtrl.SetSize(5, 40)
 	app := cli.NewApp(cli.AppSpec{TTY: tty})
 	codeCh, _ := cli.ReadCodeAsync(app)
 	return app, ttyCtrl, func() {

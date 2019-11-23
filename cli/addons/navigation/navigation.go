@@ -8,6 +8,7 @@ import (
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/colview"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/el/listbox"
@@ -17,10 +18,19 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-type widget struct{ inner colview.Widget }
+type widget struct {
+	codeArea codearea.Widget
+	colView  colview.Widget
+}
 
-func (w widget) Handle(e term.Event) bool   { return w.inner.Handle(e) }
-func (w widget) Render(a, b int) *ui.Buffer { return w.inner.Render(a, b) }
+func (w widget) Handle(e term.Event) bool { return w.colView.Handle(e) }
+
+func (w widget) Render(width, height int) *ui.Buffer {
+	buf := w.codeArea.Render(width, height)
+	bufColView := w.colView.Render(width, height-len(buf.Lines))
+	buf.Extend(bufColView, false)
+	return buf
+}
 
 // Config contains the configuration needed for the navigation functionality.
 type Config struct {
@@ -80,14 +90,19 @@ func Start(app cli.App, cfg Config) {
 			updateState(w, cursor, "")
 		}
 	}
-	w := colview.New(colview.Spec{
-		OverlayHandler: cfg.Binding,
-		Weights:        func(n int) []int { return []int{1, 3, 4} },
-		OnLeft:         onLeft,
-		OnRight:        onRight,
-	})
-	updateState(w, cursor, "")
-	app.MutateState(func(s *cli.State) { s.Addon = widget{w} })
+	w := widget{
+		codeArea: codearea.New(codearea.Spec{
+			Prompt: layout.ModePrompt(" NAVIGATING ", true),
+		}),
+		colView: colview.New(colview.Spec{
+			OverlayHandler: cfg.Binding,
+			Weights:        func(n int) []int { return []int{1, 3, 4} },
+			OnLeft:         onLeft,
+			OnRight:        onRight,
+		}),
+	}
+	updateState(w.colView, cursor, "")
+	app.MutateState(func(s *cli.State) { s.Addon = w })
 	app.Redraw()
 }
 
@@ -98,7 +113,7 @@ func SelectedName(app cli.App) string {
 	if !ok {
 		return ""
 	}
-	state := w.inner.CopyState().Columns[1].(listbox.Widget).CopyState()
+	state := w.colView.CopyState().Columns[1].(listbox.Widget).CopyState()
 	return state.Items.(fileItems)[state.Selected].Name()
 }
 
@@ -235,7 +250,7 @@ func sanitize(content string) string {
 // Select changes the selection if the navigation addon is currently active.
 func Select(app cli.App, f func(listbox.State) int) {
 	actOnWidget(app, func(w widget) {
-		if listBox, ok := w.inner.CopyState().Columns[1].(listbox.Widget); ok {
+		if listBox, ok := w.colView.CopyState().Columns[1].(listbox.Widget); ok {
 			listBox.Select(f)
 			app.Redraw()
 		}
@@ -246,7 +261,7 @@ func Select(app cli.App, f func(listbox.State) int) {
 // active.
 func ScrollPreview(app cli.App, delta int) {
 	actOnWidget(app, func(w widget) {
-		if textView, ok := w.inner.CopyState().Columns[2].(textview.Widget); ok {
+		if textView, ok := w.colView.CopyState().Columns[2].(textview.Widget); ok {
 			textView.ScrollBy(delta)
 			app.Redraw()
 		}
@@ -256,7 +271,7 @@ func ScrollPreview(app cli.App, delta int) {
 // Ascend ascends in the navigation addon if it is active.
 func Ascend(app cli.App) {
 	actOnWidget(app, func(w widget) {
-		w.inner.Left()
+		w.colView.Left()
 		app.Redraw()
 	})
 }
@@ -264,7 +279,7 @@ func Ascend(app cli.App) {
 // Descend descends in the navigation addon if it is active.
 func Descend(app cli.App) {
 	actOnWidget(app, func(w widget) {
-		w.inner.Right()
+		w.colView.Right()
 		app.Redraw()
 	})
 }

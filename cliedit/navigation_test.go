@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/util"
@@ -29,7 +30,9 @@ func TestNavigation(t *testing.T) {
 			WriteString("put", "green").
 			WritePlain(moreCode)
 		if len(markedLines) > 0 {
-			b.Newline().SetDotHere().WriteMarkedLines(markedLines...)
+			b.Newline().
+				WriteStyled(layout.ModeLine(" NAVIGATING ", true)).SetDotHere().
+				Newline().WriteMarkedLines(markedLines...)
 		} else {
 			b.SetDotHere()
 		}
