@@ -119,9 +119,6 @@ func TestErrorInParent(t *testing.T) {
 	ttyCtrl.TestBuffer(t, buf)
 }
 
-func TestErrorInDeepMode(t *testing.T) {
-}
-
 func TestGetSelectedName(t *testing.T) {
 	app, _, cleanup := setupApp()
 	defer cleanup()

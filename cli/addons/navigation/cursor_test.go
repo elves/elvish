@@ -2,7 +2,6 @@ package navigation
 
 import (
 	"errors"
-	"os"
 
 	"github.com/elves/elvish/util"
 )
@@ -82,7 +81,7 @@ func getDirFile(root util.Dir, path []string) (File, error) {
 	if err != nil {
 		return nil, err
 	}
-	if f.Mode()&os.ModeDir == 0 {
+	if !f.IsDir() {
 		return nil, errNoSuchDir
 	}
 	return f, nil
@@ -95,14 +94,12 @@ type testFile struct {
 
 func (f testFile) Name() string { return f.name }
 
-func (f testFile) Mode() os.FileMode {
-	if _, ok := f.data.(util.Dir); ok {
-		return os.ModeDir
-	}
-	return 0
+func (f testFile) IsDir() bool {
+	_, ok := f.data.(util.Dir)
+	return ok
 }
 
-func (f testFile) DeepMode() (os.FileMode, error) { return f.Mode(), nil }
+func (f testFile) IsDirDeep() bool { return f.IsDir() }
 
 func (f testFile) Read() ([]File, []byte, error) {
 	if dir, ok := f.data.(util.Dir); ok {

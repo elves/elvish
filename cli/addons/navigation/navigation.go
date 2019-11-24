@@ -114,16 +114,8 @@ func (w *widget) descend() {
 		return
 	}
 	selected := state.Items.(fileItems)[state.Selected]
-	if !selected.Mode().IsDir() {
-		// Check if the file is a symlink to a directory.
-		mode, err := selected.DeepMode()
-		if err != nil {
-			w.app.Notify(err.Error())
-			return
-		}
-		if !mode.IsDir() {
-			return
-		}
+	if !selected.IsDirDeep() {
+		return
 	}
 	err := w.Cursor.Descend(selected.Name())
 	if err != nil {
@@ -313,7 +305,7 @@ type fileItems []File
 
 func (it fileItems) Show(i int) styled.Text {
 	// TODO: Support lsColors
-	if it[i].Mode().IsDir() {
+	if it[i].IsDir() {
 		return styled.MakeText(it[i].Name(), "blue")
 	}
 	return styled.Plain(it[i].Name())

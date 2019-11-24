@@ -25,10 +25,11 @@ type Cursor interface {
 type File interface {
 	// Name returns the name of the file.
 	Name() string
-	// Mode returns the file's mode and permissions.
-	Mode() os.FileMode
-	// DeepMode returns the file's mode and permissions, resolving symlinks.
-	DeepMode() (os.FileMode, error)
+	// IsDir returns whether the file itself is a directory.
+	IsDir() bool
+	// IsDirDeep returns whether the file is itself a directory or a symlink to
+	// a directory.
+	IsDirDeep() bool
 	// Read returns either a list of File's if the File represents a directory,
 	// a (possibly incomplete) slice of bytes if the File represents a normal
 	// file, or an error if the File cannot be read.
@@ -65,10 +66,10 @@ func (c osCursor) Descend(name string) error { return os.Chdir(name) }
 
 type emptyDir struct{}
 
-func (emptyDir) Name() string                   { return "" }
-func (emptyDir) Mode() os.FileMode              { return os.ModeDir }
-func (emptyDir) DeepMode() (os.FileMode, error) { return os.ModeDir, nil }
-func (emptyDir) Read() ([]File, []byte, error)  { return []File{}, nil, nil }
+func (emptyDir) Name() string                  { return "" }
+func (emptyDir) IsDir() bool                   { return true }
+func (emptyDir) IsDirDeep() bool               { return false }
+func (emptyDir) Read() ([]File, []byte, error) { return []File{}, nil, nil }
 
 type file struct {
 	name string
@@ -76,15 +77,15 @@ type file struct {
 	mode os.FileMode
 }
 
-func (f file) Name() string      { return f.name }
-func (f file) Mode() os.FileMode { return f.mode }
+func (f file) Name() string { return f.name }
+func (f file) IsDir() bool  { return f.mode.IsDir() }
 
-func (f file) DeepMode() (os.FileMode, error) {
-	info, err := os.Stat(f.path)
-	if err != nil {
-		return 0, err
+func (f file) IsDirDeep() bool {
+	if f.IsDir() {
+		return true
 	}
-	return info.Mode(), nil
+	info, err := os.Stat(f.path)
+	return err == nil && info.IsDir()
 }
 
 const previewBytes = 64 * 1024
