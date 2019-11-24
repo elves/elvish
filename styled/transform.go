@@ -13,60 +13,60 @@ func Transform(t Text, transformer string) Text {
 	}
 	t = t.Clone()
 	for _, seg := range t {
-		f(seg)
+		f(&seg.Style)
 	}
 	return t
 }
 
 // FindTransformer finds the named transformer, a function that mutates a
-// *Segment. If the name is not a valid transformer, it returns nil.
-func FindTransformer(name string) func(*Segment) {
+// *Style. If the name is not a valid transformer, it returns nil.
+func FindTransformer(name string) func(*Style) {
 	switch {
 	// Catch special colors early
 	case name == "default":
-		return func(s *Segment) { s.Foreground = "" }
+		return func(s *Style) { s.Foreground = "" }
 	case name == "bg-default":
-		return func(s *Segment) { s.Background = "" }
+		return func(s *Style) { s.Background = "" }
 	case strings.HasPrefix(name, "bg-"):
 		if color := name[len("bg-"):]; isValidColorName(color) {
-			return func(s *Segment) { s.Background = color }
+			return func(s *Style) { s.Background = color }
 		}
 	case strings.HasPrefix(name, "no-"):
 		if f := boolFieldAccessor(name[len("no-"):]); f != nil {
-			return func(s *Segment) { *f(s) = false }
+			return func(s *Style) { *f(s) = false }
 		}
 	case strings.HasPrefix(name, "toggle-"):
 		if f := boolFieldAccessor(name[len("toggle-"):]); f != nil {
-			return func(s *Segment) {
+			return func(s *Style) {
 				p := f(s)
 				*p = !*p
 			}
 		}
 	default:
 		if isValidColorName(name) {
-			return func(s *Segment) { s.Foreground = name }
+			return func(s *Style) { s.Foreground = name }
 		}
 		if f := boolFieldAccessor(name); f != nil {
-			return func(s *Segment) { *f(s) = true }
+			return func(s *Style) { *f(s) = true }
 		}
 	}
 	return nil
 }
 
-func boolFieldAccessor(name string) func(*Segment) *bool {
+func boolFieldAccessor(name string) func(*Style) *bool {
 	switch name {
 	case "bold":
-		return func(s *Segment) *bool { return &s.Bold }
+		return func(s *Style) *bool { return &s.Bold }
 	case "dim":
-		return func(s *Segment) *bool { return &s.Dim }
+		return func(s *Style) *bool { return &s.Dim }
 	case "italic":
-		return func(s *Segment) *bool { return &s.Italic }
+		return func(s *Style) *bool { return &s.Italic }
 	case "underlined":
-		return func(s *Segment) *bool { return &s.Underlined }
+		return func(s *Style) *bool { return &s.Underlined }
 	case "blink":
-		return func(s *Segment) *bool { return &s.Blink }
+		return func(s *Style) *bool { return &s.Blink }
 	case "inverse":
-		return func(s *Segment) *bool { return &s.Inverse }
+		return func(s *Style) *bool { return &s.Inverse }
 	default:
 		return nil
 	}

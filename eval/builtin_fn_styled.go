@@ -72,7 +72,7 @@ func Styled(fm *Frame, input interface{}, transformers ...interface{}) (styled.T
 				return nil, fmt.Errorf("%s is not a valid style transformer", parse.Quote(transformer))
 			}
 			for _, seg := range text {
-				transformerFn(seg)
+				transformerFn(&seg.Style)
 			}
 		case Callable:
 			for i, seg := range text {

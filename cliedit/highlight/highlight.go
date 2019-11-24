@@ -77,7 +77,7 @@ func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, 
 		}
 		seg := styled.PlainSegment(regionCode)
 		if transformer != "" {
-			styled.FindTransformer(transformer)(seg)
+			styled.FindTransformer(transformer)(&seg.Style)
 		}
 
 		text = append(text, seg)
@@ -99,7 +99,7 @@ func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, 
 				} else {
 					transformer = transformerForBadCommand
 				}
-				styled.FindTransformer(transformer)(newText[cmdRegion.seg])
+				styled.FindTransformer(transformer)(&newText[cmdRegion.seg].Style)
 			}
 			lateCb(newText)
 		}()

@@ -2,6 +2,8 @@ package styled
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 // Style specifies how something (mostly a string) shall be displayed.
@@ -95,4 +97,45 @@ func isValidColorName(col string) bool {
 	default:
 		return false
 	}
+}
+
+var sgrTransformer = map[int]string{
+	1:  "bold",
+	2:  "dim",
+	4:  "underlined",
+	5:  "blink",
+	7:  "inverse",
+	30: "black",
+	31: "red",
+	32: "green",
+	33: "brown",
+	34: "blue",
+	35: "magenta",
+	36: "cyan",
+	37: "white",
+	40: "bg-black",
+	41: "bg-red",
+	42: "bg-green",
+	43: "bg-brown",
+	44: "bg-blue",
+	45: "bg-magenta",
+	46: "bg-cyan",
+	47: "bg-lightgray",
+}
+
+// StyleFromSGR builds a Style from a ECMA-48 Set Graphics Rendition sequence, .
+// a semicolon-delimited string of valid attribute codes Invalid codes are     .
+// ignored                                                                     .
+func StyleFromSGR(s string) Style {
+	style := Style{}
+	for _, part := range strings.Split(s, ";") {
+		code, err := strconv.Atoi(part)
+		if err != nil {
+			continue
+		}
+		if transform, ok := sgrTransformer[code]; ok {
+			FindTransformer(transform)(&style)
+		}
+	}
+	return style
 }
