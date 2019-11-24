@@ -73,6 +73,7 @@ navigation:binding = (binding-table [
   &Alt-Down= $navigation:file-preview-down~
   &Enter=    $navigation:insert-selected-and-quit~
   &Alt-Enter= $navigation:insert-selected~
+  &Ctrl-F=   $navigation:toggle-filter~
 ])
 
 completion:binding = (binding-table [

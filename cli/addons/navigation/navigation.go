@@ -4,6 +4,7 @@ package navigation
 import (
 	"sort"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/elves/elvish/cli"
@@ -18,20 +19,6 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-type widget struct {
-	codeArea codearea.Widget
-	colView  colview.Widget
-}
-
-func (w widget) Handle(e term.Event) bool { return w.colView.Handle(e) }
-
-func (w widget) Render(width, height int) *ui.Buffer {
-	buf := w.codeArea.Render(width, height)
-	bufColView := w.colView.Render(width, height-len(buf.Lines))
-	buf.Extend(bufColView, false)
-	return buf
-}
-
 // Config contains the configuration needed for the navigation functionality.
 type Config struct {
 	// Key binding.
@@ -40,68 +27,139 @@ type Config struct {
 	Cursor Cursor
 }
 
+type state struct {
+	Filtering bool
+}
+
+type widget struct {
+	Config
+	app        cli.App
+	codeArea   codearea.Widget
+	colView    colview.Widget
+	lastFilter string
+	stateMutex sync.RWMutex
+	state      state
+}
+
+func (w *widget) MutateState(f func(*state)) {
+	w.stateMutex.Lock()
+	defer w.stateMutex.Unlock()
+	f(&w.state)
+}
+
+func (w *widget) CopyState() state {
+	w.stateMutex.RLock()
+	defer w.stateMutex.RUnlock()
+	return w.state
+}
+
+func (w *widget) Handle(event term.Event) bool {
+	if w.colView.Handle(event) {
+		return true
+	}
+	if w.CopyState().Filtering {
+		if w.codeArea.Handle(event) {
+			filter := w.codeArea.CopyState().Buffer.Content
+			if filter != w.lastFilter {
+				w.refilter(filter)
+				w.lastFilter = filter
+			}
+			return true
+		} else {
+			return false
+		}
+	} else {
+		return w.app.CodeArea().Handle(event)
+	}
+}
+
+func (w *widget) Render(width, height int) *ui.Buffer {
+	buf := w.codeArea.Render(width, height)
+	bufColView := w.colView.Render(width, height-len(buf.Lines))
+	buf.Extend(bufColView, false)
+	return buf
+}
+
+func (w *widget) Focus() bool {
+	return w.CopyState().Filtering
+}
+
+func (w *widget) refilter(f string) {
+	updateState(w.colView, w.Cursor, f, "")
+}
+
+func (w *widget) ascend() {
+	// Remember the name of the current directory before ascending.
+	currentName := ""
+	current, err := w.Cursor.Current()
+	if err == nil {
+		currentName = current.Name()
+	}
+
+	err = w.Cursor.Ascend()
+	if err != nil {
+		w.app.Notify(err.Error())
+	} else {
+		w.codeArea.MutateState(func(s *codearea.State) {
+			s.Buffer = codearea.Buffer{}
+		})
+		updateState(w.colView, w.Cursor, "", currentName)
+	}
+}
+
+func (w *widget) descend() {
+	currentCol, ok := w.colView.CopyState().Columns[1].(listbox.Widget)
+	if !ok {
+		return
+	}
+	state := currentCol.CopyState()
+	if state.Items.Len() == 0 {
+		return
+	}
+	selected := state.Items.(fileItems)[state.Selected]
+	if !selected.Mode().IsDir() {
+		// Check if the file is a symlink to a directory.
+		mode, err := selected.DeepMode()
+		if err != nil {
+			w.app.Notify(err.Error())
+			return
+		}
+		if !mode.IsDir() {
+			return
+		}
+	}
+	err := w.Cursor.Descend(selected.Name())
+	if err != nil {
+		w.app.Notify(err.Error())
+	} else {
+		w.codeArea.MutateState(func(s *codearea.State) {
+			s.Buffer = codearea.Buffer{}
+		})
+		updateState(w.colView, w.Cursor, "", "")
+	}
+}
+
 // Start starts the navigation function.
 func Start(app cli.App, cfg Config) {
-	cursor := cfg.Cursor
-	if cursor == nil {
-		cursor = NewOSCursor()
+	if cfg.Cursor == nil {
+		cfg.Cursor = NewOSCursor()
 	}
 
-	onLeft := func(w colview.Widget) {
-		// Remember the name of the current directory before ascending.
-		currentName := ""
-		current, err := cursor.Current()
-		if err == nil {
-			currentName = current.Name()
-		}
-
-		err = cursor.Ascend()
-		if err != nil {
-			app.Notify(err.Error())
-		} else {
-			updateState(w, cursor, currentName)
-		}
-	}
-	onRight := func(w colview.Widget) {
-		currentCol, ok := w.CopyState().Columns[1].(listbox.Widget)
-		if !ok {
-			return
-		}
-		state := currentCol.CopyState()
-		if state.Items.Len() == 0 {
-			return
-		}
-		selected := state.Items.(fileItems)[state.Selected]
-		if !selected.Mode().IsDir() {
-			// Check if the file is a symlink to a directory.
-			mode, err := selected.DeepMode()
-			if err != nil {
-				app.Notify(err.Error())
-				return
-			}
-			if !mode.IsDir() {
-				return
-			}
-		}
-		err := cursor.Descend(selected.Name())
-		if err != nil {
-			app.Notify(err.Error())
-		} else {
-			updateState(w, cursor, "")
-		}
-	}
-	w := widget{
+	var w *widget
+	w = &widget{
+		Config: cfg,
+		app:    app,
 		codeArea: codearea.New(codearea.Spec{
 			Prompt: layout.ModePrompt(" NAVIGATING ", true),
 		}),
 		colView: colview.New(colview.Spec{
 			OverlayHandler: cfg.Binding,
 			Weights:        func(n int) []int { return []int{1, 3, 4} },
-			OnLeft:         onLeft,
-			OnRight:        onRight,
+			OnLeft:         func(colview.Widget) { w.ascend() },
+			OnRight:        func(colview.Widget) { w.descend() },
 		}),
 	}
-	updateState(w.colView, cursor, "")
+	updateState(w.colView, w.Cursor, "", "")
 	app.MutateState(func(s *cli.State) { s.Addon = w })
 	app.Redraw()
 }
@@ -109,7 +167,7 @@ func Start(app cli.App, cfg Config) {
 // SelectedName returns the currently selected name in the navigation addon. It
 // returns an empty string if the navigation addon is not active.
 func SelectedName(app cli.App) string {
-	w, ok := app.CopyState().Addon.(widget)
+	w, ok := app.CopyState().Addon.(*widget)
 	if !ok {
 		return ""
 	}
@@ -117,7 +175,7 @@ func SelectedName(app cli.App) string {
 	return state.Items.(fileItems)[state.Selected].Name()
 }
 
-func updateState(w colview.Widget, cursor Cursor, selectName string) {
+func updateState(w colview.Widget, cursor Cursor, filter, selectName string) {
 	var parentCol, currentCol el.Widget
 
 	w.MutateState(func(s *colview.State) {
@@ -130,17 +188,18 @@ func updateState(w colview.Widget, cursor Cursor, selectName string) {
 
 	parent, err := cursor.Parent()
 	if err == nil {
-		parentCol = makeWidget(parent)
+		parentCol = makeCol(parent)
 	} else {
-		parentCol = makeErrWidget(err)
+		parentCol = makeErrCol(err)
 	}
 
 	current, err := cursor.Current()
 	if err == nil {
-		currentCol = makeWidgetWithOnSelect(
+		currentCol = makeColInner(
 			current,
+			filter,
 			func(it listbox.Items, i int) {
-				previewCol := makeWidget(it.(fileItems)[i])
+				previewCol := makeCol(it.(fileItems)[i])
 				w.MutateState(func(s *colview.State) {
 					s.Columns[2] = previewCol
 				})
@@ -150,7 +209,7 @@ func updateState(w colview.Widget, cursor Cursor, selectName string) {
 			tryToSelectName(currentCol, selectName)
 		}
 	} else {
-		currentCol = makeErrWidget(err)
+		currentCol = makeErrCol(err)
 		tryToSelectNothing(parentCol)
 	}
 
@@ -191,17 +250,26 @@ func tryToSelectName(w el.Widget, name string) {
 	})
 }
 
-func makeWidget(f File) el.Widget {
-	return makeWidgetWithOnSelect(f, nil)
+func makeCol(f File) el.Widget {
+	return makeColInner(f, "", nil)
 }
 
-func makeWidgetWithOnSelect(f File, onSelect func(listbox.Items, int)) el.Widget {
+func makeColInner(f File, filter string, onSelect func(listbox.Items, int)) el.Widget {
 	files, content, err := f.Read()
 	if err != nil {
-		return makeErrWidget(err)
+		return makeErrCol(err)
 	}
 
 	if files != nil {
+		if filter != "" {
+			var filtered []File
+			for _, file := range files {
+				if strings.Contains(file.Name(), filter) {
+					filtered = append(filtered, file)
+				}
+			}
+			files = filtered
+		}
 		sort.Slice(files, func(i, j int) bool {
 			return files[i].Name() < files[j].Name()
 		})
@@ -218,7 +286,7 @@ func makeWidgetWithOnSelect(f File, onSelect func(listbox.Items, int)) el.Widget
 	})
 }
 
-func makeErrWidget(err error) el.Widget {
+func makeErrCol(err error) el.Widget {
 	return layout.Label{Content: styled.MakeText(err.Error(), "red")}
 }
 
@@ -249,7 +317,7 @@ func sanitize(content string) string {
 
 // Select changes the selection if the navigation addon is currently active.
 func Select(app cli.App, f func(listbox.State) int) {
-	actOnWidget(app, func(w widget) {
+	actOnWidget(app, func(w *widget) {
 		if listBox, ok := w.colView.CopyState().Columns[1].(listbox.Widget); ok {
 			listBox.Select(f)
 			app.Redraw()
@@ -260,7 +328,7 @@ func Select(app cli.App, f func(listbox.State) int) {
 // ScrollPreview scrolls the preview if the navigation addon is currently
 // active.
 func ScrollPreview(app cli.App, delta int) {
-	actOnWidget(app, func(w widget) {
+	actOnWidget(app, func(w *widget) {
 		if textView, ok := w.colView.CopyState().Columns[2].(textview.Widget); ok {
 			textView.ScrollBy(delta)
 			app.Redraw()
@@ -270,7 +338,7 @@ func ScrollPreview(app cli.App, delta int) {
 
 // Ascend ascends in the navigation addon if it is active.
 func Ascend(app cli.App) {
-	actOnWidget(app, func(w widget) {
+	actOnWidget(app, func(w *widget) {
 		w.colView.Left()
 		app.Redraw()
 	})
@@ -278,14 +346,24 @@ func Ascend(app cli.App) {
 
 // Descend descends in the navigation addon if it is active.
 func Descend(app cli.App) {
-	actOnWidget(app, func(w widget) {
+	actOnWidget(app, func(w *widget) {
 		w.colView.Right()
 		app.Redraw()
 	})
 }
 
-func actOnWidget(app cli.App, f func(widget)) {
-	w, ok := app.CopyState().Addon.(widget)
+// MutateFiltering changes the filtering status of the navigation addon if it is
+// active.
+func MutateFiltering(app cli.App, f func(bool) bool) {
+	actOnWidget(app, func(w *widget) {
+		w.stateMutex.Lock()
+		defer w.stateMutex.Unlock()
+		w.state.Filtering = f(w.state.Filtering)
+	})
+}
+
+func actOnWidget(app cli.App, f func(*widget)) {
+	w, ok := app.CopyState().Addon.(*widget)
 	if ok {
 		f(w)
 	}

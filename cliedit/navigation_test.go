@@ -28,13 +28,11 @@ func TestNavigation(t *testing.T) {
 		b := bb().
 			WritePlain("~"+string(os.PathSeparator)+"d> ").
 			WriteString("put", "green").
-			WritePlain(moreCode)
+			WritePlain(moreCode).SetDotHere()
 		if len(markedLines) > 0 {
 			b.Newline().
-				WriteStyled(layout.ModeLine(" NAVIGATING ", true)).SetDotHere().
+				WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
 				Newline().WriteMarkedLines(markedLines...)
-		} else {
-			b.SetDotHere()
 		}
 		return b.Buffer()
 	}

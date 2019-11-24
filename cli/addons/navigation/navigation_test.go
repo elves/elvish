@@ -205,7 +205,22 @@ func testNavigation(t *testing.T, c Cursor) {
 	Descend(app)
 	ttyCtrl.TestBuffer(t, d1Buf)
 
-	// Test handling of empty directories. First move into d3, an empty directory.
+	// Test filtering; current column shows d1, d2, d3 before filtering.
+	MutateFiltering(app, func(bool) bool { return true })
+	ttyCtrl.Inject(term.K('3'))
+	ttyCtrl.TestBuffer(t, makeFilteringBuf("3",
+		styled.MarkLines(
+			" a    d3            ", styles,
+			"     ##############",
+			" d  ", styles,
+			"####",
+			" f  ", styles,
+			"    ",
+		)))
+	MutateFiltering(app, func(bool) bool { return false })
+
+	// Now move into d3, an empty directory. Test that the filter has been
+	// cleared.
 	Select(app, listbox.Next)
 	Select(app, listbox.Next)
 	Descend(app)
@@ -217,20 +232,27 @@ func testNavigation(t *testing.T, c Cursor) {
 		"####",
 	))
 	ttyCtrl.TestBuffer(t, d3NoneBuf)
-	// Test that selecting the previous does nothing.
+	// Test that selecting the previous does nothing in an empty directory.
 	Select(app, listbox.Prev)
 	ttyCtrl.TestBuffer(t, d3NoneBuf)
-	// Test that selecting the next does nothing.
+	// Test that selecting the next does nothing in an empty directory.
 	Select(app, listbox.Next)
 	ttyCtrl.TestBuffer(t, d3NoneBuf)
-	// Test that Descend does nothing.
+	// Test that Descend does nothing in an empty directory.
 	Descend(app)
 	ttyCtrl.TestBuffer(t, d3NoneBuf)
 }
 
 func makeBuf(navRegion styled.Text) *ui.Buffer {
+	return ui.NewBufferBuilder(40).SetDotHere().
+		Newline().WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
+		Newline().WriteStyled(navRegion).Buffer()
+}
+
+func makeFilteringBuf(filter string, navRegion styled.Text) *ui.Buffer {
 	return ui.NewBufferBuilder(40).
-		Newline().WriteStyled(layout.ModeLine(" NAVIGATING ", true)).SetDotHere().
+		Newline().WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
+		WritePlain(filter).SetDotHere().
 		Newline().WriteStyled(navRegion).Buffer()
 }
 
