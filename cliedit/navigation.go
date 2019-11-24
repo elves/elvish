@@ -39,7 +39,7 @@ func navInsertSelectedAndQuit(app cli.App) {
 	closeListing(app)
 }
 
-//elvdoc:fn navigation:toggle-filter
+//elvdoc:fn navigation:trigger-filter
 //
 // Toggles the filtering status of the navigation addon.
 
@@ -47,7 +47,7 @@ func navToggleFilter(app cli.App) {
 	navigation.MutateFiltering(app, func(b bool) bool { return !b })
 }
 
-//elvdoc:fn navigation:toggle-show-hidden
+//elvdoc:fn navigation:trigger-shown-hidden
 //
 // Toggles whether the navigation addon should be showing hidden files.
 
@@ -88,7 +88,7 @@ func initNavigation(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 			"insert-selected":          func() { navInsertSelected(app) },
 			"insert-selected-and-quit": func() { navInsertSelectedAndQuit(app) },
 
-			"toggle-filter":      func() { navToggleFilter(app) },
-			"toggle-show-hidden": func() { navToggleShowHidden(app) },
+			"trigger-filter":       func() { navToggleFilter(app) },
+			"trigger-shown-hidden": func() { navToggleShowHidden(app) },
 		}))
 }
