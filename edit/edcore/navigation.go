@@ -8,8 +8,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/cli/lscolors"
 	"github.com/elves/elvish/edit/eddefs"
-	"github.com/elves/elvish/edit/lscolors"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/elves/elvish/edit/lscolors"
+	"github.com/elves/elvish/cli/lscolors"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/parse"
 )
