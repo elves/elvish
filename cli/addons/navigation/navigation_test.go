@@ -32,7 +32,8 @@ var testDir = util.Dir{
 			"d21": "content d21",
 			"d22": "content d22",
 		},
-		"d3": util.Dir{},
+		"d3":  util.Dir{},
+		".dh": "hidden",
 	},
 	"f": "",
 }
@@ -165,6 +166,8 @@ func testNavigation(t *testing.T, c Cursor) {
 		"#### ++++++++++++++                    t",
 		" f    d3                                ", styles,
 		"     ++++++++++++++                    T",
+		"                                        ", styles,
+		"                                       T",
 	))
 	ttyCtrl.TestBuffer(t, d1Buf2)
 
@@ -204,6 +207,19 @@ func testNavigation(t *testing.T, c Cursor) {
 	// Now descend, and verify that the buffer has not changed.
 	Descend(app)
 	ttyCtrl.TestBuffer(t, d1Buf)
+
+	// Test showing hidden.
+	MutateShowHidden(app, func(bool) bool { return true })
+	ttyCtrl.TestBuffer(t, makeShowHiddenBuf(styled.MarkLines(
+		" a    .dh           content    d1",
+		" d    d1            line 2", styles,
+		"#### --------------",
+		" f    d2           ", styles,
+		"     ++++++++++++++",
+		"      d3           ", styles,
+		"     ++++++++++++++",
+	)))
+	MutateShowHidden(app, func(bool) bool { return false })
 
 	// Test filtering; current column shows d1, d2, d3 before filtering.
 	MutateFiltering(app, func(bool) bool { return true })
@@ -249,6 +265,12 @@ func makeBuf(navRegion styled.Text) *ui.Buffer {
 		Newline().WriteStyled(navRegion).Buffer()
 }
 
+func makeShowHiddenBuf(navRegion styled.Text) *ui.Buffer {
+	return ui.NewBufferBuilder(40).SetDotHere().
+		Newline().WriteStyled(layout.ModeLine(" NAVIGATING (show hidden) ", true)).
+		Newline().WriteStyled(navRegion).Buffer()
+}
+
 func makeFilteringBuf(filter string, navRegion styled.Text) *ui.Buffer {
 	return ui.NewBufferBuilder(40).
 		Newline().WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
@@ -262,7 +284,7 @@ func makeNotesBuf(content styled.Text) *ui.Buffer {
 
 func setupApp() (cli.App, cli.TTYCtrl, func()) {
 	tty, ttyCtrl := cli.NewFakeTTY()
-	ttyCtrl.SetSize(5, 40)
+	ttyCtrl.SetSize(6, 40)
 	app := cli.NewApp(cli.AppSpec{TTY: tty})
 	codeCh, _ := cli.ReadCodeAsync(app)
 	return app, ttyCtrl, func() {

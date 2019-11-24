@@ -74,6 +74,7 @@ navigation:binding = (binding-table [
   &Enter=    $navigation:insert-selected-and-quit~
   &Alt-Enter= $navigation:insert-selected~
   &Ctrl-F=   $navigation:toggle-filter~
+  &Ctrl-H=   $navigation:toggle-show-hidden~
 ])
 
 completion:binding = (binding-table [

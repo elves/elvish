@@ -28,7 +28,8 @@ type Config struct {
 }
 
 type state struct {
-	Filtering bool
+	Filtering  bool
+	ShowHidden bool
 }
 
 type widget struct {
@@ -61,8 +62,8 @@ func (w *widget) Handle(event term.Event) bool {
 		if w.codeArea.Handle(event) {
 			filter := w.codeArea.CopyState().Buffer.Content
 			if filter != w.lastFilter {
-				w.refilter(filter)
 				w.lastFilter = filter
+				updateState(w, "")
 			}
 			return true
 		} else {
@@ -84,10 +85,6 @@ func (w *widget) Focus() bool {
 	return w.CopyState().Filtering
 }
 
-func (w *widget) refilter(f string) {
-	updateState(w.colView, w.Cursor, f, "")
-}
-
 func (w *widget) ascend() {
 	// Remember the name of the current directory before ascending.
 	currentName := ""
@@ -103,7 +100,7 @@ func (w *widget) ascend() {
 		w.codeArea.MutateState(func(s *codearea.State) {
 			s.Buffer = codearea.Buffer{}
 		})
-		updateState(w.colView, w.Cursor, "", currentName)
+		updateState(w, currentName)
 	}
 }
 
@@ -135,7 +132,7 @@ func (w *widget) descend() {
 		w.codeArea.MutateState(func(s *codearea.State) {
 			s.Buffer = codearea.Buffer{}
 		})
-		updateState(w.colView, w.Cursor, "", "")
+		updateState(w, "")
 	}
 }
 
@@ -150,7 +147,13 @@ func Start(app cli.App, cfg Config) {
 		Config: cfg,
 		app:    app,
 		codeArea: codearea.New(codearea.Spec{
-			Prompt: layout.ModePrompt(" NAVIGATING ", true),
+			Prompt: func() styled.Text {
+				if w.CopyState().ShowHidden {
+					return layout.ModeLine(" NAVIGATING (show hidden) ", true)
+				} else {
+					return layout.ModeLine(" NAVIGATING ", true)
+				}
+			},
 		}),
 		colView: colview.New(colview.Spec{
 			OverlayHandler: cfg.Binding,
@@ -159,26 +162,39 @@ func Start(app cli.App, cfg Config) {
 			OnRight:        func(colview.Widget) { w.descend() },
 		}),
 	}
-	updateState(w.colView, w.Cursor, "", "")
+	updateState(w, "")
 	app.MutateState(func(s *cli.State) { s.Addon = w })
 	app.Redraw()
 }
 
 // SelectedName returns the currently selected name in the navigation addon. It
-// returns an empty string if the navigation addon is not active.
+// returns an empty string if the navigation addon is not active, or if there is
+// no selected name.
 func SelectedName(app cli.App) string {
 	w, ok := app.CopyState().Addon.(*widget)
 	if !ok {
 		return ""
 	}
-	state := w.colView.CopyState().Columns[1].(listbox.Widget).CopyState()
-	return state.Items.(fileItems)[state.Selected].Name()
+	col, ok := w.colView.CopyState().Columns[1].(listbox.Widget)
+	if !ok {
+		return ""
+	}
+	state := col.CopyState()
+	if 0 <= state.Selected && state.Selected < state.Items.Len() {
+		return state.Items.(fileItems)[state.Selected].Name()
+	}
+	return ""
 }
 
-func updateState(w colview.Widget, cursor Cursor, filter, selectName string) {
+func updateState(w *widget, selectName string) {
+	colView := w.colView
+	cursor := w.Cursor
+	filter := w.lastFilter
+	showHidden := w.CopyState().ShowHidden
+
 	var parentCol, currentCol el.Widget
 
-	w.MutateState(func(s *colview.State) {
+	colView.MutateState(func(s *colview.State) {
 		*s = colview.State{
 			Columns: []el.Widget{
 				layout.Empty{}, layout.Empty{}, layout.Empty{}},
@@ -188,7 +204,7 @@ func updateState(w colview.Widget, cursor Cursor, filter, selectName string) {
 
 	parent, err := cursor.Parent()
 	if err == nil {
-		parentCol = makeCol(parent)
+		parentCol = makeCol(parent, showHidden)
 	} else {
 		parentCol = makeErrCol(err)
 	}
@@ -198,9 +214,10 @@ func updateState(w colview.Widget, cursor Cursor, filter, selectName string) {
 		currentCol = makeColInner(
 			current,
 			filter,
+			showHidden,
 			func(it listbox.Items, i int) {
-				previewCol := makeCol(it.(fileItems)[i])
-				w.MutateState(func(s *colview.State) {
+				previewCol := makeCol(it.(fileItems)[i], showHidden)
+				colView.MutateState(func(s *colview.State) {
 					s.Columns[2] = previewCol
 				})
 			})
@@ -213,7 +230,7 @@ func updateState(w colview.Widget, cursor Cursor, filter, selectName string) {
 		tryToSelectNothing(parentCol)
 	}
 
-	w.MutateState(func(s *colview.State) {
+	colView.MutateState(func(s *colview.State) {
 		s.Columns[0] = parentCol
 		s.Columns[1] = currentCol
 	})
@@ -250,21 +267,23 @@ func tryToSelectName(w el.Widget, name string) {
 	})
 }
 
-func makeCol(f File) el.Widget {
-	return makeColInner(f, "", nil)
+func makeCol(f File, showHidden bool) el.Widget {
+	return makeColInner(f, "", showHidden, nil)
 }
 
-func makeColInner(f File, filter string, onSelect func(listbox.Items, int)) el.Widget {
+func makeColInner(f File, filter string, showHidden bool, onSelect func(listbox.Items, int)) el.Widget {
 	files, content, err := f.Read()
 	if err != nil {
 		return makeErrCol(err)
 	}
 
 	if files != nil {
-		if filter != "" {
+		if filter != "" || !showHidden {
 			var filtered []File
 			for _, file := range files {
-				if strings.Contains(file.Name(), filter) {
+				name := file.Name()
+				hidden := len(name) > 0 && name[0] == '.'
+				if strings.Contains(name, filter) && (showHidden || !hidden) {
 					filtered = append(filtered, file)
 				}
 			}
@@ -356,9 +375,18 @@ func Descend(app cli.App) {
 // active.
 func MutateFiltering(app cli.App, f func(bool) bool) {
 	actOnWidget(app, func(w *widget) {
-		w.stateMutex.Lock()
-		defer w.stateMutex.Unlock()
-		w.state.Filtering = f(w.state.Filtering)
+		w.MutateState(func(s *state) { s.Filtering = f(s.Filtering) })
+		app.Redraw()
+	})
+}
+
+// MutateFiltering changes whether the navigation addon should show file whose
+// names start with ".".
+func MutateShowHidden(app cli.App, f func(bool) bool) {
+	actOnWidget(app, func(w *widget) {
+		w.MutateState(func(s *state) { s.ShowHidden = f(s.ShowHidden) })
+		updateState(w, SelectedName(app))
+		app.Redraw()
 	})
 }
 
