@@ -8,7 +8,7 @@ import (
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/histutil"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/styled"
 )
 

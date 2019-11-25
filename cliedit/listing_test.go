@@ -5,7 +5,7 @@ import (
 
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/store/storedefs"
 )
 
@@ -80,8 +80,8 @@ func TestLastCmdAddon(t *testing.T) {
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
-func bbAddon(name string) *ui.BufferBuilder {
-	return ui.NewBufferBuilder(30).
+func bbAddon(name string) *term.BufferBuilder {
+	return term.NewBufferBuilder(30).
 		Write("~> ").Newline().
 		WriteStyled(layout.ModeLine(name, true)).SetDotHere().Newline()
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/elves/elvish/cli/el/combobox"
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/styled"
 )
 

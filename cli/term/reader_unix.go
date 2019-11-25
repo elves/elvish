@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 )
 
 // DefaultSeqTimeout is the amount of time within which runes that make up an

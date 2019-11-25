@@ -11,7 +11,7 @@ import (
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/store/storedefs"
 )
@@ -236,11 +236,11 @@ func setup() (cli.App, cli.TTYCtrl, func()) {
 	}
 }
 
-func bb() *ui.BufferBuilder {
-	return ui.NewBufferBuilder(50)
+func bb() *term.BufferBuilder {
+	return term.NewBufferBuilder(50)
 }
 
-func listingBuf(filter string, lines ...string) *ui.Buffer {
+func listingBuf(filter string, lines ...string) *term.Buffer {
 	b := bb()
 	b.Newline() // empty code area
 	layout.WriteListing(b, "LOCATION", filter, lines...)

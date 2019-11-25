@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/styled"
 )
 
@@ -147,9 +147,9 @@ func setup() (cli.App, cli.TTYCtrl, func()) {
 	}
 }
 
-func bb() *ui.BufferBuilder { return ui.NewBufferBuilder(50) }
+func bb() *term.BufferBuilder { return term.NewBufferBuilder(50) }
 
-func makeListingBuf(mode, filter string, lines ...string) *ui.Buffer {
+func makeListingBuf(mode, filter string, lines ...string) *term.Buffer {
 	b := bb().Newline().
 		WriteStyled(layout.ModeLine(mode, true)).
 		Write(filter).SetDotHere()

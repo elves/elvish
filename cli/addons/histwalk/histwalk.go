@@ -11,7 +11,6 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 )
 
 var ErrHistWalkInactive = errors.New("the histwalk addon is not active")
@@ -29,10 +28,10 @@ type widget struct {
 	Config
 }
 
-func (w *widget) Render(width, height int) *ui.Buffer {
+func (w *widget) Render(width, height int) *term.Buffer {
 	content := layout.ModeLine(
 		fmt.Sprintf(" HISTORY #%d ", w.Walker.CurrentSeq()), false)
-	buf := ui.NewBufferBuilder(width).WriteStyled(content).Buffer()
+	buf := term.NewBufferBuilder(width).WriteStyled(content).Buffer()
 	buf.TrimToLines(0, height)
 	return buf
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/tt"
 )
 
@@ -15,7 +15,7 @@ var renderTests = []el.RenderTest{
 		Name:  "colview no column",
 		Given: New(Spec{}),
 		Width: 10, Height: 24,
-		Want: &ui.Buffer{Width: 10},
+		Want: &term.Buffer{Width: 10},
 	},
 	{
 		Name: "colview width < number of columns",
@@ -26,7 +26,7 @@ var renderTests = []el.RenderTest{
 			},
 		}}),
 		Width: 3, Height: 24,
-		Want: &ui.Buffer{Width: 3},
+		Want: &term.Buffer{Width: 3},
 	},
 	{
 		Name: "colview normal",
@@ -38,7 +38,7 @@ var renderTests = []el.RenderTest{
 			},
 		}}),
 		Width: 11, Height: 24,
-		Want: ui.NewBufferBuilder(11).
+		Want: term.NewBufferBuilder(11).
 			// first line
 			Write("x0  ").
 			Write("y0 ", "inverse").

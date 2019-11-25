@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/sys"
 )
 
@@ -51,11 +50,11 @@ type TTY interface {
 
 	// Buffer returns the current buffer. The initial value of the current
 	// buffer is nil.
-	Buffer() *ui.Buffer
+	Buffer() *term.Buffer
 	// ResetBuffer resets the current buffer to nil without actuating any redraw.
 	ResetBuffer()
 	// UpdateBuffer updates the current buffer and draw it to the terminal.
-	UpdateBuffer(bufNotes, bufMain *ui.Buffer, full bool) error
+	UpdateBuffer(bufNotes, bufMain *term.Buffer, full bool) error
 }
 
 // StdTTY is the terminal connected to inputs from stdin and output to stderr.
@@ -105,7 +104,7 @@ func (t *aTTY) StopInput() {
 	t.r = nil
 }
 
-func (t *aTTY) Buffer() *ui.Buffer {
+func (t *aTTY) Buffer() *term.Buffer {
 	return t.w.CurrentBuffer()
 }
 
@@ -113,7 +112,7 @@ func (t *aTTY) ResetBuffer() {
 	t.w.ResetCurrentBuffer()
 }
 
-func (t *aTTY) UpdateBuffer(bufNotes, bufMain *ui.Buffer, full bool) error {
+func (t *aTTY) UpdateBuffer(bufNotes, bufMain *term.Buffer, full bool) error {
 	return t.w.CommitBuffer(bufNotes, bufMain, full)
 }
 
@@ -144,9 +143,9 @@ type fakeTTY struct {
 	// Channel that StartRead returns. Can be used to inject additional events.
 	eventCh chan term.Event
 	// Channel for publishing updates of the main buffer and notes buffer.
-	bufCh, notesBufCh chan *ui.Buffer
+	bufCh, notesBufCh chan *term.Buffer
 	// Records history of the main buffer and notes buffer.
-	bufs, notesBufs []*ui.Buffer
+	bufs, notesBufs []*term.Buffer
 	// Channel that NotifySignals returns. Can be used to inject signals.
 	sigCh chan os.Signal
 	// Argument that SetRawInput got.
@@ -162,8 +161,8 @@ func NewFakeTTY() (TTY, TTYCtrl) {
 	tty := &fakeTTY{
 		eventCh:    make(chan term.Event, fakeTTYEvents),
 		sigCh:      make(chan os.Signal, fakeTTYSignals),
-		bufCh:      make(chan *ui.Buffer, fakeTTYBufferUpdates),
-		notesBufCh: make(chan *ui.Buffer, fakeTTYBufferUpdates),
+		bufCh:      make(chan *term.Buffer, fakeTTYBufferUpdates),
+		notesBufCh: make(chan *term.Buffer, fakeTTYBufferUpdates),
 		height:     24, width: 80,
 	}
 	return tty, TTYCtrl{tty}
@@ -200,14 +199,14 @@ func (t *fakeTTY) SetRawInput(n int) {
 func (t *fakeTTY) StopInput() { close(t.eventCh) }
 
 // Returns the last recorded buffer.
-func (t *fakeTTY) Buffer() *ui.Buffer { return t.bufs[len(t.bufs)-1] }
+func (t *fakeTTY) Buffer() *term.Buffer { return t.bufs[len(t.bufs)-1] }
 
 // Records a nil buffer.
 func (t *fakeTTY) ResetBuffer() { t.recordBuf(nil) }
 
 // UpdateBuffer records a new pair of buffers, i.e. sending them to their
 // respective channels and appending them to their respective slices.
-func (t *fakeTTY) UpdateBuffer(bufNotes, buf *ui.Buffer, _ bool) error {
+func (t *fakeTTY) UpdateBuffer(bufNotes, buf *term.Buffer, _ bool) error {
 	t.recordNotesBuf(bufNotes)
 	t.recordBuf(buf)
 	return nil
@@ -217,12 +216,12 @@ func (t *fakeTTY) NotifySignals() <-chan os.Signal { return t.sigCh }
 
 func (t *fakeTTY) StopSignals() { close(t.sigCh) }
 
-func (t *fakeTTY) recordBuf(buf *ui.Buffer) {
+func (t *fakeTTY) recordBuf(buf *term.Buffer) {
 	t.bufs = append(t.bufs, buf)
 	t.bufCh <- buf
 }
 
-func (t *fakeTTY) recordNotesBuf(buf *ui.Buffer) {
+func (t *fakeTTY) recordNotesBuf(buf *term.Buffer) {
 	t.notesBufs = append(t.notesBufs, buf)
 	t.notesBufCh <- buf
 }
@@ -273,7 +272,7 @@ func (t TTYCtrl) RawInput() int {
 
 // TestBuffer verifies that a buffer will appear within the timeout of 4
 // seconds, and fails the test if it doesn't
-func (t TTYCtrl) TestBuffer(tt *testing.T, b *ui.Buffer) {
+func (t TTYCtrl) TestBuffer(tt *testing.T, b *term.Buffer) {
 	tt.Helper()
 	ok := testBuffer(tt, b, t.bufCh)
 	if !ok {
@@ -293,7 +292,7 @@ func (t TTYCtrl) TestBuffer(tt *testing.T, b *ui.Buffer) {
 
 // TestNotesBuffer verifies that a notes buffer will appear within the timeout of 4
 // seconds, and fails the test if it doesn't
-func (t TTYCtrl) TestNotesBuffer(tt *testing.T, b *ui.Buffer) {
+func (t TTYCtrl) TestNotesBuffer(tt *testing.T, b *term.Buffer) {
 	tt.Helper()
 	ok := testBuffer(tt, b, t.notesBufCh)
 	if !ok {
@@ -308,10 +307,10 @@ func (t TTYCtrl) TestNotesBuffer(tt *testing.T, b *ui.Buffer) {
 }
 
 // BufferHistory returns a slice of all buffers that have appeared.
-func (t TTYCtrl) BufferHistory() []*ui.Buffer { return t.bufs }
+func (t TTYCtrl) BufferHistory() []*term.Buffer { return t.bufs }
 
 // LastBuffer returns the last buffer that has appeared.
-func (t TTYCtrl) LastBuffer() *ui.Buffer {
+func (t TTYCtrl) LastBuffer() *term.Buffer {
 	if len(t.bufs) == 0 {
 		return nil
 	}
@@ -319,9 +318,9 @@ func (t TTYCtrl) LastBuffer() *ui.Buffer {
 }
 
 // NotesBufferHistory returns a slice of all notes buffers that have appeared.
-func (t TTYCtrl) NotesBufferHistory() []*ui.Buffer { return t.notesBufs }
+func (t TTYCtrl) NotesBufferHistory() []*term.Buffer { return t.notesBufs }
 
-func (t TTYCtrl) LastNotesBuffer() *ui.Buffer {
+func (t TTYCtrl) LastNotesBuffer() *term.Buffer {
 	if len(t.notesBufs) == 0 {
 		return nil
 	}
@@ -329,7 +328,7 @@ func (t TTYCtrl) LastNotesBuffer() *ui.Buffer {
 }
 
 // Tests that an expected buffer will appear within the timeout.
-func testBuffer(t *testing.T, want *ui.Buffer, ch <-chan *ui.Buffer) bool {
+func testBuffer(t *testing.T, want *term.Buffer, ch <-chan *term.Buffer) bool {
 	t.Helper()
 
 	timeout := time.After(getUITestTimeout())

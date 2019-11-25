@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/styled"
 )
@@ -118,7 +118,7 @@ func TestRPromptPersistent_False(t *testing.T) {
 	testRPromptPersistent(t, `edit:rprompt-persistent = $false`, wantBufFinal)
 }
 
-func testRPromptPersistent(t *testing.T, code string, wantBufFinal *ui.Buffer) {
+func testRPromptPersistent(t *testing.T, code string, wantBufFinal *term.Buffer) {
 	f := setupWithRC(`edit:rprompt = { put RRR }`, code)
 	defer f.Cleanup()
 

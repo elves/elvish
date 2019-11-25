@@ -10,7 +10,7 @@ import (
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/lscolors"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
@@ -259,27 +259,27 @@ func testNavigation(t *testing.T, c Cursor) {
 	ttyCtrl.TestBuffer(t, d3NoneBuf)
 }
 
-func makeBuf(navRegion styled.Text) *ui.Buffer {
-	return ui.NewBufferBuilder(40).SetDotHere().
+func makeBuf(navRegion styled.Text) *term.Buffer {
+	return term.NewBufferBuilder(40).SetDotHere().
 		Newline().WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
 		Newline().WriteStyled(navRegion).Buffer()
 }
 
-func makeShowHiddenBuf(navRegion styled.Text) *ui.Buffer {
-	return ui.NewBufferBuilder(40).SetDotHere().
+func makeShowHiddenBuf(navRegion styled.Text) *term.Buffer {
+	return term.NewBufferBuilder(40).SetDotHere().
 		Newline().WriteStyled(layout.ModeLine(" NAVIGATING (show hidden) ", true)).
 		Newline().WriteStyled(navRegion).Buffer()
 }
 
-func makeFilteringBuf(filter string, navRegion styled.Text) *ui.Buffer {
-	return ui.NewBufferBuilder(40).
+func makeFilteringBuf(filter string, navRegion styled.Text) *term.Buffer {
+	return term.NewBufferBuilder(40).
 		Newline().WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
 		Write(filter).SetDotHere().
 		Newline().WriteStyled(navRegion).Buffer()
 }
 
-func makeNotesBuf(content styled.Text) *ui.Buffer {
-	return ui.NewBufferBuilder(40).WriteStyled(content).Buffer()
+func makeNotesBuf(content styled.Text) *term.Buffer {
+	return term.NewBufferBuilder(40).WriteStyled(content).Buffer()
 }
 
 func setup() (cli.App, cli.TTYCtrl, func()) {

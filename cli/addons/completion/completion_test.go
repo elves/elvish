@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/diag"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/styled"
 )
 
@@ -34,7 +34,7 @@ func TestStart(t *testing.T) {
 	Start(app, cfg)
 
 	// Test that the completion combobox is shown correctly.
-	wantBufStarted := ui.NewBufferBuilder(40).
+	wantBufStarted := term.NewBufferBuilder(40).
 		Write("foo", "underlined"). // code area
 		Newline().
 		WriteStyled(layout.ModeLine("COMPLETING WORD", true)).
@@ -47,7 +47,7 @@ func TestStart(t *testing.T) {
 
 	// Test the OnFilter handler.
 	ttyCtrl.Inject(term.K('b'), term.K('a'))
-	wantBufFiltering := ui.NewBufferBuilder(40).
+	wantBufFiltering := term.NewBufferBuilder(40).
 		Write("'foo bar'", "underlined"). // code area
 		Newline().
 		WriteStyled(layout.ModeLine("COMPLETING WORD", true)).
@@ -58,7 +58,7 @@ func TestStart(t *testing.T) {
 
 	// Test the OnAccept handler.
 	ttyCtrl.Inject(term.K(ui.Enter))
-	wantBufAccepted := ui.NewBufferBuilder(40).
+	wantBufAccepted := term.NewBufferBuilder(40).
 		Write("'foo bar'").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBufAccepted)
 
@@ -68,6 +68,6 @@ func TestStart(t *testing.T) {
 	Start(app, cfg)
 	ttyCtrl.TestBuffer(t, wantBufStarted)
 	Close(app)
-	wantBufClosed := ui.NewBufferBuilder(40).Buffer()
+	wantBufClosed := term.NewBufferBuilder(40).Buffer()
 	ttyCtrl.TestBuffer(t, wantBufClosed)
 }

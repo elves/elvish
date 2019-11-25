@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -58,7 +58,7 @@ func New(spec Spec) Widget {
 	return &widget{Spec: spec}
 }
 
-func (w *widget) Render(width, height int) *ui.Buffer {
+func (w *widget) Render(width, height int) *term.Buffer {
 	lines, first := w.getStateForRender(height)
 	needScrollbar := w.Scrollable && (first > 0 || first+height < len(lines))
 	textWidth := width
@@ -66,7 +66,7 @@ func (w *widget) Render(width, height int) *ui.Buffer {
 		textWidth--
 	}
 
-	bb := ui.NewBufferBuilder(textWidth)
+	bb := term.NewBufferBuilder(textWidth)
 	for i := first; i < first+height && i < len(lines); i++ {
 		if i > first {
 			bb.Newline()

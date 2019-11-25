@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 )
 
 var renderTests = []el.RenderTest{
@@ -21,7 +21,7 @@ var renderTests = []el.RenderTest{
 			ListBox: listbox.Spec{
 				State: listbox.State{Items: listbox.TestItems{NItems: 2}}}}),
 		Width: 10, Height: 24,
-		Want: ui.NewBufferBuilder(10).
+		Want: term.NewBufferBuilder(10).
 			Write("filter").SetDotHere().
 			Newline().Write("item 0    ", "inverse").
 			Newline().Write("item 1"),
@@ -36,7 +36,7 @@ var renderTests = []el.RenderTest{
 				w.ListBox().Reset(listbox.TestItems{NItems: 2}, 0)
 			}}),
 		Width: 10, Height: 24,
-		Want: ui.NewBufferBuilder(10).
+		Want: term.NewBufferBuilder(10).
 			Write("filter").SetDotHere().
 			Newline().Write("item 0    ", "inverse").
 			Newline().Write("item 1"),

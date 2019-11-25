@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 )
 
 func TestFakeTTY_Setup(t *testing.T) {
@@ -71,12 +70,12 @@ func TestFakeTTY_Signals(t *testing.T) {
 }
 
 func TestFakeTTY_Buffer(t *testing.T) {
-	bufNotes1 := ui.NewBufferBuilder(10).Write("notes 1").Buffer()
-	buf1 := ui.NewBufferBuilder(10).Write("buf 1").Buffer()
-	bufNotes2 := ui.NewBufferBuilder(10).Write("notes 2").Buffer()
-	buf2 := ui.NewBufferBuilder(10).Write("buf 2").Buffer()
-	bufNotes3 := ui.NewBufferBuilder(10).Write("notes 3").Buffer()
-	buf3 := ui.NewBufferBuilder(10).Write("buf 3").Buffer()
+	bufNotes1 := term.NewBufferBuilder(10).Write("notes 1").Buffer()
+	buf1 := term.NewBufferBuilder(10).Write("buf 1").Buffer()
+	bufNotes2 := term.NewBufferBuilder(10).Write("notes 2").Buffer()
+	buf2 := term.NewBufferBuilder(10).Write("buf 2").Buffer()
+	bufNotes3 := term.NewBufferBuilder(10).Write("notes 3").Buffer()
+	buf3 := term.NewBufferBuilder(10).Write("buf 3").Buffer()
 
 	tty, ttyCtrl := NewFakeTTY()
 
@@ -113,8 +112,8 @@ func TestFakeTTY_Buffer(t *testing.T) {
 	ttyCtrl.TestNotesBuffer(t, bufNotes3)
 	// Cannot test the failure branch as that will fail the test
 
-	wantBufs := []*ui.Buffer{buf1, buf2, buf3}
-	wantNotesBufs := []*ui.Buffer{bufNotes1, bufNotes2, bufNotes3}
+	wantBufs := []*term.Buffer{buf1, buf2, buf3}
+	wantNotesBufs := []*term.Buffer{bufNotes1, bufNotes2, bufNotes3}
 	if !reflect.DeepEqual(ttyCtrl.BufferHistory(), wantBufs) {
 		t.Errorf("BufferHistory did not return {buf1, buf2}")
 	}

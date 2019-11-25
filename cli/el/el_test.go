@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 )
 
@@ -17,8 +16,8 @@ type testWidget struct {
 	handled []term.Event
 }
 
-func (w *testWidget) Render(width, height int) *ui.Buffer {
-	buf := ui.NewBufferBuilder(width).WriteStyled(w.text).Buffer()
+func (w *testWidget) Render(width, height int) *term.Buffer {
+	buf := term.NewBufferBuilder(width).WriteStyled(w.text).Buffer()
 	buf.TrimToLines(0, height)
 	return buf
 }

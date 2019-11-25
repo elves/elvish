@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-
-	"github.com/elves/elvish/edit/ui"
 )
 
 var logWriterDetail = false
@@ -14,21 +12,21 @@ type Writer interface {
 	// Newline writes a newline to the terminal.
 	Newline()
 	// CurrentBuffer returns the current buffer.
-	CurrentBuffer() *ui.Buffer
+	CurrentBuffer() *Buffer
 	// ResetCurrentBuffer resets the current buffer.
 	ResetCurrentBuffer()
 	// CommitBuffer updates the terminal display to reflect current buffer.
-	CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error
+	CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error
 }
 
 // writer renders the editor UI.
 type writer struct {
 	file   *os.File
-	curBuf *ui.Buffer
+	curBuf *Buffer
 }
 
 func NewWriter(f *os.File) Writer {
-	return &writer{f, &ui.Buffer{}}
+	return &writer{f, &Buffer{}}
 }
 
 func (w *writer) Newline() {
@@ -36,19 +34,19 @@ func (w *writer) Newline() {
 }
 
 // CurrentBuffer returns the current buffer.
-func (w *writer) CurrentBuffer() *ui.Buffer {
+func (w *writer) CurrentBuffer() *Buffer {
 	return w.curBuf
 }
 
 // ResetCurrentBuffer resets the current buffer.
 func (w *writer) ResetCurrentBuffer() {
-	w.curBuf = &ui.Buffer{}
+	w.curBuf = &Buffer{}
 }
 
 // deltaPos calculates the escape sequence needed to move the cursor from one
 // position to another. It use relative movements to move to the destination
 // line and absolute movement to move to the destination column.
-func deltaPos(from, to ui.Pos) []byte {
+func deltaPos(from, to Pos) []byte {
 	buf := new(bytes.Buffer)
 	if from.Line < to.Line {
 		// move down
@@ -65,7 +63,7 @@ func deltaPos(from, to ui.Pos) []byte {
 }
 
 // CommitBuffer updates the terminal display to reflect current buffer.
-func (w *writer) CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
+func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 	if buf.Width != w.curBuf.Width && w.curBuf.Lines != nil {
 		// Width change, force full refresh
 		w.curBuf.Lines = nil
@@ -98,7 +96,7 @@ func (w *writer) CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 		}
 	}
 
-	writeCells := func(cs []ui.Cell) {
+	writeCells := func(cs []Cell) {
 		for _, c := range cs {
 			switchStyle(c.Style)
 			bytesBuf.WriteString(c.Text)
@@ -134,12 +132,12 @@ func (w *writer) CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 		// No need to update current line
 		if !fullRefresh && i < len(w.curBuf.Lines) {
 			var eq bool
-			if eq, j = ui.CompareCells(line, w.curBuf.Lines[i]); eq {
+			if eq, j = CompareCells(line, w.curBuf.Lines[i]); eq {
 				continue
 			}
 		}
 		// Move to the first differing column if necessary.
-		firstCol := ui.CellsWidth(line[:j])
+		firstCol := CellsWidth(line[:j])
 		if firstCol != 0 {
 			fmt.Fprintf(bytesBuf, "\033[%dC", firstCol)
 		}

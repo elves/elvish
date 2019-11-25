@@ -15,7 +15,6 @@ import (
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/el/textview"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 )
 
@@ -74,7 +73,7 @@ func (w *widget) Handle(event term.Event) bool {
 	}
 }
 
-func (w *widget) Render(width, height int) *ui.Buffer {
+func (w *widget) Render(width, height int) *term.Buffer {
 	buf := w.codeArea.Render(width, height)
 	bufColView := w.colView.Render(width, height-len(buf.Lines))
 	buf.Extend(bufColView, false)

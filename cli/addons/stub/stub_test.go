@@ -8,7 +8,6 @@ import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 )
 
 func TestRendering(t *testing.T) {
@@ -60,4 +59,4 @@ func setup() (cli.App, cli.TTYCtrl, func()) {
 	}
 }
 
-func bb() *ui.BufferBuilder { return ui.NewBufferBuilder(40) }
+func bb() *term.BufferBuilder { return term.NewBufferBuilder(40) }

@@ -7,7 +7,6 @@ import (
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 )
 
 // Widget represents a combobox widget.
@@ -54,7 +53,7 @@ func New(spec Spec) Widget {
 }
 
 // Render renders the codearea and the listbox below it.
-func (w *widget) Render(width, height int) *ui.Buffer {
+func (w *widget) Render(width, height int) *term.Buffer {
 	buf := w.codeArea.Render(width, height)
 	bufListBox := w.listBox.Render(width, height-len(buf.Lines))
 	buf.Extend(bufListBox, false)

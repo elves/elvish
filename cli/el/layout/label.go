@@ -2,7 +2,6 @@ package layout
 
 import (
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 )
 
@@ -12,9 +11,9 @@ type Label struct {
 }
 
 // Render shows the content. If the given box is too small, the text is cropped.
-func (l Label) Render(width, height int) *ui.Buffer {
+func (l Label) Render(width, height int) *term.Buffer {
 	// TODO: Optimize by stopping as soon as $height rows are written.
-	bb := ui.NewBufferBuilder(width)
+	bb := term.NewBufferBuilder(width)
 	bb.WriteStyled(l.Content)
 	b := bb.Buffer()
 	b.TrimToLines(0, height)

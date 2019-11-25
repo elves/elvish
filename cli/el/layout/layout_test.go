@@ -6,18 +6,17 @@ import (
 
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 )
 
-var bb = ui.NewBufferBuilder
+var bb = term.NewBufferBuilder
 
 var renderTests = []struct {
 	name     string
 	renderer el.Renderer
 	width    int
 	height   int
-	wantBuf  *ui.BufferBuilder
+	wantBuf  *term.BufferBuilder
 }{
 	{
 		"empty widget",

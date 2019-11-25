@@ -10,7 +10,6 @@ import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
@@ -209,7 +208,7 @@ func (a *app) redraw(flag redrawFlag) {
 			a.codeArea.MutateState(func(s *codearea.State) { s.HideRPrompt = false })
 		}
 		// Insert a newline after the buffer and position the cursor there.
-		bufMain.Extend(ui.NewBuffer(width), true)
+		bufMain.Extend(term.NewBuffer(width), true)
 
 		a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 		a.TTY.ResetBuffer()
@@ -221,11 +220,11 @@ func (a *app) redraw(flag redrawFlag) {
 
 // Renders notes. This does not respect height so that overflow notes end up in
 // the scrollback buffer.
-func renderNotes(notes []string, width int) *ui.Buffer {
+func renderNotes(notes []string, width int) *term.Buffer {
 	if len(notes) == 0 {
 		return nil
 	}
-	bb := ui.NewBufferBuilder(width)
+	bb := term.NewBufferBuilder(width)
 	for i, note := range notes {
 		if i > 0 {
 			bb.Newline()
@@ -236,7 +235,7 @@ func renderNotes(notes []string, width int) *ui.Buffer {
 }
 
 // Renders the codearea, and uses the rest of the height for the listing.
-func renderApp(codeArea, addon el.Renderer, width, height int) *ui.Buffer {
+func renderApp(codeArea, addon el.Renderer, width, height int) *term.Buffer {
 	buf := codeArea.Render(width, height)
 	if addon != nil && len(buf.Lines) < height {
 		bufListing := addon.Render(width, height-len(buf.Lines))

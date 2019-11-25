@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/styled"
 )
 
@@ -85,7 +85,7 @@ func New(spec Spec) Widget {
 
 var styleForSelected = "inverse"
 
-func (w *widget) Render(width, height int) *ui.Buffer {
+func (w *widget) Render(width, height int) *term.Buffer {
 	if w.Horizontal {
 		return w.renderHorizontal(width, height)
 	}
@@ -94,7 +94,7 @@ func (w *widget) Render(width, height int) *ui.Buffer {
 
 const colGap = 2
 
-func (w *widget) renderHorizontal(width, height int) *ui.Buffer {
+func (w *widget) renderHorizontal(width, height int) *term.Buffer {
 	var state State
 	w.mutate(func(s *State) {
 		if s.Items == nil || s.Items.Len() == 0 {
@@ -115,7 +115,7 @@ func (w *widget) renderHorizontal(width, height int) *ui.Buffer {
 	items, selected, first := state.Items, state.Selected, state.First
 	n := items.Len()
 
-	buf := ui.NewBuffer(0)
+	buf := term.NewBuffer(0)
 	remainedWidth := width
 	hasCropped := false
 	last := first
@@ -160,7 +160,7 @@ func (w *widget) renderHorizontal(width, height int) *ui.Buffer {
 	return buf
 }
 
-func (w *widget) renderVertical(width, height int) *ui.Buffer {
+func (w *widget) renderVertical(width, height int) *term.Buffer {
 	var state State
 	var firstCrop int
 	w.mutate(func(s *State) {
@@ -222,8 +222,8 @@ type croppedLines struct {
 	extendStyle bool
 }
 
-func (c croppedLines) Render(width, height int) *ui.Buffer {
-	bb := ui.NewBufferBuilder(width)
+func (c croppedLines) Render(width, height int) *term.Buffer {
+	bb := term.NewBufferBuilder(width)
 	leftSpacing := styled.Plain(strings.Repeat(" ", c.padding))
 	rightSpacing := styled.Plain(strings.Repeat(" ", width-c.padding))
 	// selectedPadding := styled.Transform(padding, styleForSelected)

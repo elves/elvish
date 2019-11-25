@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/eddefs"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"

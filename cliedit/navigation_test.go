@@ -8,7 +8,7 @@ import (
 
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -28,7 +28,7 @@ func TestNavigation(t *testing.T) {
 		'#': "blue inverse",
 		'-': "inverse",
 	}
-	makeBuf := func(moreCode string, markedLines ...interface{}) *ui.Buffer {
+	makeBuf := func(moreCode string, markedLines ...interface{}) *term.Buffer {
 		b := bb().
 			Write("~"+string(os.PathSeparator)+"d> ").
 			Write("put", "green").

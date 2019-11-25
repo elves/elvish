@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 )
 
 // RenderTest is a test case to be used in TestRenderer.
@@ -14,7 +13,7 @@ type RenderTest struct {
 	Given  Renderer
 	Width  int
 	Height int
-	Want   interface{ Buffer() *ui.Buffer }
+	Want   interface{ Buffer() *term.Buffer }
 }
 
 // TestRender runs the given Renderer tests.

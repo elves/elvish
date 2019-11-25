@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 )
 
@@ -18,7 +17,7 @@ func TestTestRender(t *testing.T) {
 			Given: &testWidget{text: styled.Plain("test")},
 			Width: 10, Height: 10,
 
-			Want: ui.NewBufferBuilder(10).Write("test"),
+			Want: term.NewBufferBuilder(10).Write("test"),
 		},
 	})
 }

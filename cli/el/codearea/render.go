@@ -1,7 +1,7 @@
 package codearea
 
 import (
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
@@ -61,7 +61,7 @@ func patchPending(c Buffer, p Pending) (Buffer, int, int) {
 	return Buffer{Content: newContent, Dot: newDot}, p.From, p.From + len(p.Content)
 }
 
-func renderView(v *view, buf *ui.BufferBuilder) {
+func renderView(v *view, buf *term.BufferBuilder) {
 	buf.EagerWrap = true
 
 	buf.WriteStyled(v.prompt)
@@ -95,7 +95,7 @@ func renderView(v *view, buf *ui.BufferBuilder) {
 	}
 }
 
-func truncateToHeight(b *ui.Buffer, maxHeight int) {
+func truncateToHeight(b *term.Buffer, maxHeight int) {
 	switch {
 	case len(b.Lines) <= maxHeight:
 		// We can show all line; do nothing.

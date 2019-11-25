@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/styled"
 )
 
@@ -36,7 +36,7 @@ func TestStart_NoStore(t *testing.T) {
 	defer cleanup()
 
 	Start(app, Config{})
-	wantNotesBuf := ui.NewBufferBuilder(80).Write("no history store").Buffer()
+	wantNotesBuf := term.NewBufferBuilder(80).Write("no history store").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
@@ -45,7 +45,7 @@ func TestStart_StoreError(t *testing.T) {
 	defer cleanup()
 
 	Start(app, Config{Store: faultyStore{}})
-	wantNotesBuf := ui.NewBufferBuilder(80).
+	wantNotesBuf := term.NewBufferBuilder(80).
 		Write("db error: mock error").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
@@ -64,7 +64,7 @@ func TestStart_OK(t *testing.T) {
 	})
 
 	// Test UI.
-	wantBuf := ui.NewBufferBuilder(80).
+	wantBuf := term.NewBufferBuilder(80).
 		// empty codearea
 		Newline().
 		// combobox codearea
@@ -84,7 +84,7 @@ func TestStart_OK(t *testing.T) {
 
 	// Test negative filtering.
 	ttyCtrl.Inject(term.K('-'))
-	wantBuf = ui.NewBufferBuilder(80).
+	wantBuf = term.NewBufferBuilder(80).
 		// empty codearea
 		Newline().
 		// combobox codearea
@@ -103,7 +103,7 @@ func TestStart_OK(t *testing.T) {
 
 	// Test automatic submission.
 	ttyCtrl.Inject(term.K('2')) // -2 bar
-	wantBuf = ui.NewBufferBuilder(80).
+	wantBuf = term.NewBufferBuilder(80).
 		Write("bar").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
 
@@ -118,7 +118,7 @@ func TestStart_OK(t *testing.T) {
 		},
 	})
 	ttyCtrl.Inject(term.K(ui.Enter))
-	wantBuf = ui.NewBufferBuilder(80).
+	wantBuf = term.NewBufferBuilder(80).
 		Write("foo,bar,baz").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
 
@@ -129,7 +129,7 @@ func TestStart_OK(t *testing.T) {
 	store.AddCmd(histutil.Entry{Text: "foo bar baz", Seq: 1})
 	Start(app, Config{Store: store})
 	ttyCtrl.Inject(term.K('0'))
-	wantBuf = ui.NewBufferBuilder(80).
+	wantBuf = term.NewBufferBuilder(80).
 		Write("foo").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
 }

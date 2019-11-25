@@ -7,11 +7,11 @@ import (
 
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/styled"
 )
 
-var bb = ui.NewBufferBuilder
+var bb = term.NewBufferBuilder
 
 var renderTests = []el.RenderTest{
 	{

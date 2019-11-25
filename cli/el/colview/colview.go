@@ -6,7 +6,7 @@ import (
 
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 )
 
 // Widget is a colview widget.
@@ -94,19 +94,19 @@ const colGap = 1
 
 // Render renders all the columns side by side, putting the dot in the focused
 // column.
-func (w *widget) Render(width, height int) *ui.Buffer {
+func (w *widget) Render(width, height int) *term.Buffer {
 	state := w.CopyState()
 	ncols := len(state.Columns)
 	if ncols == 0 {
 		// No column.
-		return &ui.Buffer{Width: width}
+		return &term.Buffer{Width: width}
 	}
 	if width < ncols {
 		// To narrow; give up by rendering nothing.
-		return &ui.Buffer{Width: width}
+		return &term.Buffer{Width: width}
 	}
 	colWidths := distribute(width-(ncols-1)*colGap, w.Weights(ncols))
-	var buf ui.Buffer
+	var buf term.Buffer
 	for i, col := range state.Columns {
 		if i > 0 {
 			buf.Width += colGap

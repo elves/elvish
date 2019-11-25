@@ -10,7 +10,7 @@ import (
 
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/styled"
 )
@@ -122,9 +122,9 @@ func (w *widget) Submit() {
 
 // Render renders the code area, including the prompt and rprompt, highlighted
 // code, the cursor, and compilation errors in the code content.
-func (w *widget) Render(width, height int) *ui.Buffer {
+func (w *widget) Render(width, height int) *term.Buffer {
 	view := getView(w)
-	bb := ui.NewBufferBuilder(width)
+	bb := term.NewBufferBuilder(width)
 	renderView(view, bb)
 	b := bb.Buffer()
 	truncateToHeight(b, height)

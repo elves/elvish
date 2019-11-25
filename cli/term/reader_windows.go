@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/sys"
 	"golang.org/x/sys/windows"
 )

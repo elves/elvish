@@ -4,18 +4,18 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/cli/term"
 )
 
 func TestWriteListing(t *testing.T) {
-	b := ui.NewBufferBuilder(10)
+	b := term.NewBufferBuilder(10)
 	WriteListing(
 		b, " LIST ", "f",
 		"line 1",
 		"line 2", Selected,
 		"line 3")
 	buf := b.Buffer()
-	wantBuf := ui.NewBufferBuilder(10).
+	wantBuf := term.NewBufferBuilder(10).
 		WriteStyled(ModeLine(" LIST ", true)).
 		Write("f").SetDotHere().
 		Newline().Write("line 1").

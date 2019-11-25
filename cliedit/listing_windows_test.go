@@ -10,7 +10,7 @@ import (
 
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
 )
@@ -62,7 +62,7 @@ func TestLocationAddon_Workspace(t *testing.T) {
 			regexp.QuoteMeta(f.Home)+`\\'ws.]`)
 
 	f.TTYCtrl.Inject(term.K('L', ui.Ctrl))
-	wantBuf := ui.NewBufferBuilder(30).
+	wantBuf := term.NewBufferBuilder(30).
 		Write(`~\ws1\tmp> `).Newline().
 		WriteStyled(layout.ModeLine("LOCATION", true)).SetDotHere().Newline().
 		WriteMarkedLines(
@@ -73,7 +73,7 @@ func TestLocationAddon_Workspace(t *testing.T) {
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 
 	f.TTYCtrl.Inject(term.K(ui.Enter))
-	wantBuf = ui.NewBufferBuilder(30).
+	wantBuf = term.NewBufferBuilder(30).
 		Write(`~\ws1\bin> `).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }

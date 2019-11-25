@@ -5,12 +5,12 @@ import (
 	"html"
 	"strings"
 
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/cli/term"
 )
 
 // TODO(xiaq): Move this into the ui package.
 
-func bufToHTML(b *ui.Buffer) string {
+func bufToHTML(b *term.Buffer) string {
 	var sb strings.Builder
 	for _, line := range b.Lines {
 		style := ""

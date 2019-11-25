@@ -1,4 +1,4 @@
-package ui
+package term
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ type Cell struct {
 	Style string
 }
 
-// Pos is the position within a buffer.
+// Pos is a line/column position.
 type Pos struct {
 	Line, Col int
 }

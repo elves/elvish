@@ -2,7 +2,7 @@ package layout
 
 import (
 	"github.com/elves/elvish/cli/el"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/styled"
 )
 
@@ -13,7 +13,7 @@ type VScrollbarContainer struct {
 	Scrollbar VScrollbar
 }
 
-func (v VScrollbarContainer) Render(width, height int) *ui.Buffer {
+func (v VScrollbarContainer) Render(width, height int) *term.Buffer {
 	buf := v.Content.Render(width-1, height)
 	buf.ExtendRight(v.Scrollbar.Render(1, height))
 	return buf
@@ -31,9 +31,9 @@ var (
 	vscrollbarTrough = styled.MakeText("│", "magenta")
 )
 
-func (v VScrollbar) Render(width, height int) *ui.Buffer {
+func (v VScrollbar) Render(width, height int) *term.Buffer {
 	posLow, posHigh := findScrollInterval(v.Total, v.Low, v.High, height)
-	bb := ui.NewBufferBuilder(1)
+	bb := term.NewBufferBuilder(1)
 	for i := 0; i < height; i++ {
 		if i > 0 {
 			bb.Newline()
@@ -59,9 +59,9 @@ var (
 	hscrollbarTrough = styled.MakeText("━", "magenta")
 )
 
-func (h HScrollbar) Render(width, height int) *ui.Buffer {
+func (h HScrollbar) Render(width, height int) *term.Buffer {
 	posLow, posHigh := findScrollInterval(h.Total, h.Low, h.High, width)
-	bb := ui.NewBufferBuilder(width)
+	bb := term.NewBufferBuilder(width)
 	for i := 0; i < width; i++ {
 		if posLow <= i && i < posHigh {
 			bb.WriteStyled(hscrollbarThumb)

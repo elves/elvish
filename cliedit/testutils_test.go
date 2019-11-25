@@ -6,7 +6,6 @@ import (
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/store"
@@ -29,7 +28,7 @@ const (
 	testTTYWidth  = 60
 )
 
-func bb() *ui.BufferBuilder { return ui.NewBufferBuilder(testTTYWidth) }
+func bb() *term.BufferBuilder { return term.NewBufferBuilder(testTTYWidth) }
 
 type setupOpt struct {
 	// Don't start the editor.

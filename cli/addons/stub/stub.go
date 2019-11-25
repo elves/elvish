@@ -7,7 +7,6 @@ import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 )
 
 // Config keeps the configuration for the stub addon.
@@ -24,8 +23,8 @@ type widget struct {
 	Config
 }
 
-func (w *widget) Render(width, height int) *ui.Buffer {
-	buf := ui.NewBufferBuilder(width).
+func (w *widget) Render(width, height int) *term.Buffer {
+	buf := term.NewBufferBuilder(width).
 		WriteStyled(layout.ModeLine(w.Name, false)).SetDotHere().Buffer()
 	buf.TrimToLines(0, height)
 	return buf

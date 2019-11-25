@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/styled"
 )
 
@@ -26,7 +26,7 @@ func TestHistWalk(t *testing.T) {
 	})
 
 	app.Redraw()
-	buf0 := ui.NewBufferBuilder(40).Write("ls").SetDotHere().Buffer()
+	buf0 := term.NewBufferBuilder(40).Write("ls").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, buf0)
 
 	getCfg := func() Config {
@@ -74,7 +74,7 @@ func TestHistWalk(t *testing.T) {
 	Start(app, getCfg())
 	ttyCtrl.TestBuffer(t, buf5)
 	ttyCtrl.Inject(term.K(ui.Enter))
-	bufAccepted := ui.NewBufferBuilder(40).Write("ls -a").SetDotHere().Buffer()
+	bufAccepted := term.NewBufferBuilder(40).Write("ls -a").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, bufAccepted)
 }
 
@@ -108,7 +108,7 @@ func TestHistWalk_FallbackHandler(t *testing.T) {
 	ttyCtrl.TestBuffer(t, bb().Write("l").SetDotHere().Buffer())
 }
 
-func makeBuf(codeArea styled.Text, modeline string) *ui.Buffer {
+func makeBuf(codeArea styled.Text, modeline string) *term.Buffer {
 	return bb().
 		WriteStyled(codeArea).SetDotHere().
 		Newline().
@@ -116,8 +116,8 @@ func makeBuf(codeArea styled.Text, modeline string) *ui.Buffer {
 		Buffer()
 }
 
-func bb() *ui.BufferBuilder {
-	return ui.NewBufferBuilder(40)
+func bb() *term.BufferBuilder {
+	return term.NewBufferBuilder(40)
 }
 
 func setup() (cli.App, cli.TTYCtrl, func()) {

@@ -3,7 +3,6 @@ package el
 
 import (
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 )
 
 // Widget is the basic component of UI; it knows how to handle events and how to
@@ -16,7 +15,7 @@ type Widget interface {
 // Renderer wraps the Render method.
 type Renderer interface {
 	// Render onto a region of bound width and height.
-	Render(width, height int) *ui.Buffer
+	Render(width, height int) *term.Buffer
 }
 
 // Handler wraps the Handle method.

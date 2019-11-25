@@ -12,7 +12,6 @@ import (
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
@@ -168,7 +167,7 @@ func TestSIGWINCH_TriggersRedraw(t *testing.T) {
 	tty.InjectSignal(sys.SIGWINCH)
 
 	// Test that the editor has redrawn using the new width.
-	tty.TestBuffer(t, ui.NewBufferBuilder(4).
+	tty.TestBuffer(t, term.NewBufferBuilder(4).
 		Write("1234567890").SetDotHere().Buffer())
 }
 
@@ -398,7 +397,7 @@ func TestMaxHeight(t *testing.T) {
 	codeCh, _ := ReadCodeAsync(a)
 	defer cleanup(a, codeCh)
 
-	wantBuf := ui.NewBufferBuilder(5).
+	wantBuf := term.NewBufferBuilder(5).
 		Write(strings.Repeat("a", 10)). // Only show 2 lines due to MaxHeight.
 		Buffer()
 	tty.TestBuffer(t, wantBuf)
@@ -439,8 +438,8 @@ func setupWithSpec(spec AppSpec) (App, TTYCtrl) {
 	return a, ttyControl
 }
 
-func bb() *ui.BufferBuilder {
-	return ui.NewBufferBuilder(testTTYWidth)
+func bb() *term.BufferBuilder {
+	return term.NewBufferBuilder(testTTYWidth)
 }
 
 func cleanup(a App, codeCh <-chan string) {

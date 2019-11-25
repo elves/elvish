@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 )
 
 var eventTests = []struct {
