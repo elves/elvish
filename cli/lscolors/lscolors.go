@@ -97,7 +97,7 @@ func parseLsColor(s string) *colorist {
 		}
 		value = strings.Join(filterValues, ";")
 		if strings.HasPrefix(key, "*.") {
-			lc.styleForExt[key[2:]] = value
+			lc.styleForExt[key[1:]] = value
 		} else {
 			feature, ok := featureForName[key]
 			if !ok {
