@@ -7,9 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/elves/elvish/cli/lscolors"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
 
@@ -102,7 +104,7 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 		return nil, fmt.Errorf("cannot list directory %s: %v", dirToRead, err)
 	}
 
-	// lsColor := lscolors.GetColorist()
+	lsColor := lscolors.GetColorist()
 
 	// Make candidates out of elements that match the file component.
 	for _, info := range infos {
@@ -134,7 +136,7 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 
 		items = append(items, ComplexItem{
 			Stem: full, CodeSuffix: suffix,
-			// style: ui.StylesFromString(lsColor.GetStyle(full)),
+			DisplayStyle: styled.StyleFromSGR(lsColor.GetStyle(full)),
 		})
 	}
 

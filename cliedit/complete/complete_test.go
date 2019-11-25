@@ -7,9 +7,11 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/addons/completion"
+	"github.com/elves/elvish/cli/lscolors"
 	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
 	"github.com/elves/elvish/util"
 )
@@ -62,6 +64,9 @@ func setupFs() func() {
 }
 
 func TestComplete(t *testing.T) {
+	restore := util.WithTempEnv("LS_COLORS", "di=34")
+	defer restore()
+
 	cleanupFs := setupFs()
 	defer cleanupFs()
 
@@ -97,10 +102,9 @@ func TestComplete(t *testing.T) {
 		},
 	}
 
+	pathSep := string(os.PathSeparator)
 	allFileNameItems := []completion.Item{
-		{ToShow: "a.exe", ToInsert: "a.exe "},
-		{ToShow: "d", ToInsert: withPathSeparator("d")},
-		{ToShow: "non-exe", ToInsert: "non-exe "},
+		fc("a.exe", " "), fc("d", pathSep), fc("non-exe", " "),
 	}
 
 	allCommandItems := []completion.Item{
@@ -122,7 +126,7 @@ func TestComplete(t *testing.T) {
 		Args(cb("ls a"), cfg).Rets(
 			&Result{
 				Name: "argument", Replace: r(3, 4),
-				Items: []completion.Item{{ToShow: "a.exe", ToInsert: "a.exe "}}},
+				Items: []completion.Item{fc("a.exe", " ")}},
 			nil),
 		// GenerateForSudo completing external commands.
 		Args(cb("sudo "), cfg).Rets(
@@ -194,9 +198,7 @@ func TestComplete(t *testing.T) {
 		Args(cb("p > a"), cfg).Rets(
 			&Result{
 				Name: "redir", Replace: r(4, 5),
-				Items: []completion.Item{
-					{ToShow: "a.exe", ToInsert: "a.exe "},
-				}},
+				Items: []completion.Item{fc("a.exe", " ")}},
 			nil),
 
 		// Completing variables.
@@ -226,9 +228,7 @@ func TestComplete(t *testing.T) {
 			panic(err)
 		}
 		allLocalCommandItems := []completion.Item{
-			{ToShow: "./a.exe", ToInsert: "./a.exe "},
-			{ToShow: "./d", ToInsert: withPathSeparator("./d")},
-			{ToShow: "./d2", ToInsert: withPathSeparator("./d2")},
+			fc("./a.exe", " "), fc("./d", "/"), fc("./d2", "/"),
 		}
 		tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
 			// Filename completion treats symlink to directories as directories.
@@ -236,10 +236,7 @@ func TestComplete(t *testing.T) {
 			Args(cb("p > d"), cfg).Rets(
 				&Result{
 					Name: "redir", Replace: r(4, 5),
-					Items: []completion.Item{
-						{ToShow: "d", ToInsert: withPathSeparator("d")},
-						{ToShow: "d2", ToInsert: "d2/"},
-					}},
+					Items: []completion.Item{fc("d", "/"), fc("d2", "/")}},
 				nil,
 			),
 
@@ -265,6 +262,11 @@ func TestComplete(t *testing.T) {
 func cb(s string) CodeBuffer { return CodeBuffer{s, len(s)} }
 
 func c(s string) completion.Item { return completion.Item{ToShow: s, ToInsert: s} }
+
+func fc(s, suffix string) completion.Item {
+	return completion.Item{ToShow: s, ToInsert: s + suffix,
+		ShowStyle: styled.StyleFromSGR(lscolors.GetColorist().GetStyle(s))}
+}
 
 func r(i, j int) diag.Ranging { return diag.Ranging{From: i, To: j} }
 
