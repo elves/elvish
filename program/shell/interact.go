@@ -5,16 +5,13 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/signal"
 	"path/filepath"
-	"syscall"
 	"time"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/cliedit"
 	"github.com/elves/elvish/diag"
-	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
@@ -22,19 +19,13 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
+func interact(ev *eval.Evaler, dataDir string, norc bool) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(os.Stdin) {
-		if newEdit {
-			newed := cliedit.NewEditor(cli.StdTTY, ev, ev.DaemonClient)
-			ev.Global.AddNs("edit", newed.Ns())
-			ed = newed
-		} else {
-			sigch := make(chan os.Signal)
-			signal.Notify(sigch, syscall.SIGHUP, syscall.SIGINT, sys.SIGWINCH)
-			ed = edit.NewEditor(os.Stdin, os.Stderr, sigch, ev)
-		}
+		newed := cliedit.NewEditor(cli.StdTTY, ev, ev.DaemonClient)
+		ev.Global.AddNs("edit", newed.Ns())
+		ed = newed
 	} else {
 		ed = newMinEditor(os.Stdin, os.Stderr)
 	}
