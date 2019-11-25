@@ -38,7 +38,9 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 
 	if fuser != nil {
 		appSpec.AfterReadline = []func(string){func(code string) {
-			fuser.AddCmd(code)
+			if code != "" {
+				fuser.AddCmd(code)
+			}
 			// TODO(xiaq): Handle the error.
 		}}
 	}
