@@ -13,6 +13,8 @@ import (
 func TestNavigation(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
+	restoreEnv := util.WithTempEnv("LS_COLORS", "di=34")
+	defer restoreEnv()
 
 	util.ApplyDir(util.Dir{"d": util.Dir{"a": ""}})
 	err := os.Chdir("d")
