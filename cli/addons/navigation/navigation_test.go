@@ -274,7 +274,7 @@ func makeShowHiddenBuf(navRegion styled.Text) *ui.Buffer {
 func makeFilteringBuf(filter string, navRegion styled.Text) *ui.Buffer {
 	return ui.NewBufferBuilder(40).
 		Newline().WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
-		WritePlain(filter).SetDotHere().
+		Write(filter).SetDotHere().
 		Newline().WriteStyled(navRegion).Buffer()
 }
 

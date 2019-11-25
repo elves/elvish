@@ -40,14 +40,14 @@ var renderTests = []el.RenderTest{
 		Width: 11, Height: 24,
 		Want: ui.NewBufferBuilder(11).
 			// first line
-			WritePlain("x0  ").
-			WriteString("y0 ", "inverse").
-			WritePlain(" z0").
+			Write("x0  ").
+			Write("y0 ", "inverse").
+			Write(" z0").
 			// second line
-			Newline().WriteString("x1 ", "inverse").
-			WritePlain("     z1").
+			Newline().Write("x1 ", "inverse").
+			Write("     z1").
 			// third line
-			Newline().WritePlain("        z2"),
+			Newline().Write("        z2"),
 	},
 }
 

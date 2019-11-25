@@ -18,7 +18,7 @@ func TestStart_NoStore(t *testing.T) {
 	defer cleanup()
 
 	Start(app, Config{})
-	wantNotesBuf := bb().WritePlain("no history store").Buffer()
+	wantNotesBuf := bb().Write("no history store").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
@@ -33,7 +33,7 @@ func TestStart_StoreError(t *testing.T) {
 	defer cleanup()
 
 	Start(app, Config{Store: faultyStore{}})
-	wantNotesBuf := bb().WritePlain("db error: mock error").Buffer()
+	wantNotesBuf := bb().Write("db error: mock error").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
@@ -67,7 +67,7 @@ func TestStart_OK(t *testing.T) {
 	ttyCtrl.Inject(term.K(ui.Enter))
 	wantBufAccepted1 := bb().
 		// codearea now contains selected entry
-		WritePlain("baz").SetDotHere().Buffer()
+		Write("baz").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBufAccepted1)
 
 	// Test accepting when there is already some text.
@@ -75,9 +75,9 @@ func TestStart_OK(t *testing.T) {
 	Start(app, Config{Store: store})
 	ttyCtrl.Inject(term.K(ui.Enter))
 	wantBufAccepted2 := bb().
-		WritePlain("baz").
+		Write("baz").
 		// codearea now contains newly inserted entry on a separate line
-		Newline().WritePlain("baz2").SetDotHere().Buffer()
+		Newline().Write("baz2").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBufAccepted2)
 }
 
@@ -152,11 +152,11 @@ func bb() *ui.BufferBuilder { return ui.NewBufferBuilder(50) }
 func makeListingBuf(mode, filter string, lines ...string) *ui.Buffer {
 	b := bb().Newline().
 		WriteStyled(layout.ModeLine(mode, true)).
-		WritePlain(filter).SetDotHere()
+		Write(filter).SetDotHere()
 	for i, line := range lines {
 		b.Newline()
 		if i < len(lines)-1 {
-			b.WritePlain(line)
+			b.Write(line)
 		} else {
 			b.WriteStyled(
 				styled.MakeText(fmt.Sprintf("%-50s", line), "inverse"))

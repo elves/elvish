@@ -71,12 +71,12 @@ func TestFakeTTY_Signals(t *testing.T) {
 }
 
 func TestFakeTTY_Buffer(t *testing.T) {
-	bufNotes1 := ui.NewBufferBuilder(10).WritePlain("notes 1").Buffer()
-	buf1 := ui.NewBufferBuilder(10).WritePlain("buf 1").Buffer()
-	bufNotes2 := ui.NewBufferBuilder(10).WritePlain("notes 2").Buffer()
-	buf2 := ui.NewBufferBuilder(10).WritePlain("buf 2").Buffer()
-	bufNotes3 := ui.NewBufferBuilder(10).WritePlain("notes 3").Buffer()
-	buf3 := ui.NewBufferBuilder(10).WritePlain("buf 3").Buffer()
+	bufNotes1 := ui.NewBufferBuilder(10).Write("notes 1").Buffer()
+	buf1 := ui.NewBufferBuilder(10).Write("buf 1").Buffer()
+	bufNotes2 := ui.NewBufferBuilder(10).Write("notes 2").Buffer()
+	buf2 := ui.NewBufferBuilder(10).Write("buf 2").Buffer()
+	bufNotes3 := ui.NewBufferBuilder(10).Write("notes 3").Buffer()
+	buf3 := ui.NewBufferBuilder(10).Write("buf 3").Buffer()
 
 	tty, ttyCtrl := NewFakeTTY()
 

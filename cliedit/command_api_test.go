@@ -16,11 +16,11 @@ func TestCommandMode(t *testing.T) {
 	feedInput(f.TTYCtrl, "echo")
 	f.TTYCtrl.Inject(term.K('[', ui.Ctrl))
 	f.TTYCtrl.TestBuffer(t,
-		bb().WritePlain("~> ").WriteString("echo", "green").SetDotHere().
+		bb().Write("~> ").Write("echo", "green").SetDotHere().
 			Newline().WriteStyled(layout.ModeLine(" COMMAND ", false)).Buffer())
 
 	f.TTYCtrl.Inject(term.K('b'))
 	f.TTYCtrl.TestBuffer(t,
-		bb().WritePlain("~> ").SetDotHere().WriteString("echo", "green").
+		bb().Write("~> ").SetDotHere().Write("echo", "green").
 			Newline().WriteStyled(layout.ModeLine(" COMMAND ", false)).Buffer())
 }

@@ -10,7 +10,7 @@ func TestBufToHTML(t *testing.T) {
 	tt.Test(t, tt.Fn("bufToHTML", bufToHTML), tt.Table{
 		// Just plain text.
 		tt.Args(
-			bb().WritePlain("abc").Buffer(),
+			bb().Write("abc").Buffer(),
 		).Rets(
 			`abc` + "\n",
 		),
@@ -24,7 +24,7 @@ func TestBufToHTML(t *testing.T) {
 		tt.Args(
 			bb().
 				WriteStringSGR("abc", "31").
-				WritePlain(" def ").
+				Write(" def ").
 				WriteStringSGR("xyz", "1").
 				Buffer(),
 		).Rets(
@@ -34,7 +34,7 @@ func TestBufToHTML(t *testing.T) {
 		tt.Args(
 			bb().
 				WriteStringSGR("abc", "31").
-				Newline().WritePlain("def").
+				Newline().Write("def").
 				Newline().WriteStringSGR("xyz", "1").
 				Buffer(),
 		).Rets(

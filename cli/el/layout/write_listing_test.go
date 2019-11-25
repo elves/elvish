@@ -17,10 +17,10 @@ func TestWriteListing(t *testing.T) {
 	buf := b.Buffer()
 	wantBuf := ui.NewBufferBuilder(10).
 		WriteStyled(ModeLine(" LIST ", true)).
-		WritePlain("f").SetDotHere().
-		Newline().WritePlain("line 1").
-		Newline().WriteString("line 2    ", "inverse").
-		Newline().WritePlain("line 3").
+		Write("f").SetDotHere().
+		Newline().Write("line 1").
+		Newline().Write("line 2    ", "inverse").
+		Newline().Write("line 3").
 		Buffer()
 	if !reflect.DeepEqual(buf, wantBuf) {
 		t.Errorf("Buf differs")

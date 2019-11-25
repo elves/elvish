@@ -18,7 +18,7 @@ func TestTestRender(t *testing.T) {
 			Given: &testWidget{text: styled.Plain("test")},
 			Width: 10, Height: 10,
 
-			Want: ui.NewBufferBuilder(10).WritePlain("test"),
+			Want: ui.NewBufferBuilder(10).Write("test"),
 		},
 	})
 }

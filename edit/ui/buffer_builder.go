@@ -117,9 +117,9 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 	return bb
 }
 
-// WriteString is equivalent to calling WriteStyled with styled.MakeText(text,
+// Write is equivalent to calling WriteStyled with styled.MakeText(text,
 // style...).
-func (bb *BufferBuilder) WriteString(text string, styles ...string) *BufferBuilder {
+func (bb *BufferBuilder) Write(text string, styles ...string) *BufferBuilder {
 	return bb.WriteStyled(styled.MakeText(text, styles...))
 }
 
@@ -135,11 +135,6 @@ func (bb *BufferBuilder) WriteStringSGR(text, style string) *BufferBuilder {
 		bb.WriteRuneSGR(r, style)
 	}
 	return bb
-}
-
-// WritePlain writes unstyled plain string.
-func (bb *BufferBuilder) WritePlain(text string) *BufferBuilder {
-	return bb.WriteStringSGR(text, "")
 }
 
 // WriteSpacesSGR writes w spaces with an SGR style.

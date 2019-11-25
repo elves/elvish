@@ -230,7 +230,7 @@ func renderNotes(notes []string, width int) *ui.Buffer {
 		if i > 0 {
 			bb.Newline()
 		}
-		bb.WritePlain(note)
+		bb.Write(note)
 	}
 	return bb.Buffer()
 }

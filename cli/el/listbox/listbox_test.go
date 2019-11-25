@@ -16,7 +16,7 @@ var renderVerticalTests = []el.RenderTest{
 		Name:  "placeholder when Items is nil",
 		Given: New(Spec{Placeholder: styled.Plain("nothing")}),
 		Width: 10, Height: 3,
-		Want: bb(10).WritePlain("nothing"),
+		Want: bb(10).Write("nothing"),
 	},
 	{
 		Name: "placeholder when NItems is 0",
@@ -24,33 +24,33 @@ var renderVerticalTests = []el.RenderTest{
 			Placeholder: styled.Plain("nothing"),
 			State:       State{Items: TestItems{}}}),
 		Width: 10, Height: 3,
-		Want: bb(10).WritePlain("nothing"),
+		Want: bb(10).Write("nothing"),
 	},
 	{
 		Name:  "all items when there is enough height",
 		Given: New(Spec{State: State{Items: TestItems{NItems: 2}, Selected: 0}}),
 		Width: 10, Height: 3,
 		Want: bb(10).
-			WriteString("item 0    ", "inverse").
-			Newline().WritePlain("item 1"),
+			Write("item 0    ", "inverse").
+			Newline().Write("item 1"),
 	},
 	{
 		Name:  "long lines cropped",
 		Given: New(Spec{State: State{Items: TestItems{NItems: 2}, Selected: 0}}),
 		Width: 4, Height: 3,
 		Want: bb(4).
-			WriteString("item", "inverse").
-			Newline().WritePlain("item"),
+			Write("item", "inverse").
+			Newline().Write("item"),
 	},
 	{
 		Name:  "scrollbar when not showing all items",
 		Given: New(Spec{State: State{Items: TestItems{NItems: 4}, Selected: 0}}),
 		Width: 10, Height: 2,
 		Want: bb(10).
-			WriteString("item 0   ", "inverse").
-			WriteString(" ", "inverse", "magenta").
-			Newline().WritePlain("item 1   ").
-			WriteString("│", "magenta"),
+			Write("item 0   ", "inverse").
+			Write(" ", "inverse", "magenta").
+			Newline().Write("item 1   ").
+			Write("│", "magenta"),
 	},
 	{
 		Name: "scrollbar when not showing last item in full",
@@ -59,12 +59,12 @@ var renderVerticalTests = []el.RenderTest{
 				Items: TestItems{Prefix: "item\n", NItems: 2}, Selected: 0}}),
 		Width: 10, Height: 3,
 		Want: bb(10).
-			WriteString("item     ", "inverse").
-			WriteString(" ", "inverse", "magenta").
-			Newline().WriteString("0        ", "inverse").
-			WriteString(" ", "inverse", "magenta").
-			Newline().WritePlain("item     ").
-			WriteString(" ", "inverse", "magenta"),
+			Write("item     ", "inverse").
+			Write(" ", "inverse", "magenta").
+			Newline().Write("0        ", "inverse").
+			Write(" ", "inverse", "magenta").
+			Newline().Write("item     ").
+			Write(" ", "inverse", "magenta"),
 	},
 	{
 		Name: "scrollbar when not showing only item in full",
@@ -73,8 +73,8 @@ var renderVerticalTests = []el.RenderTest{
 				Items: TestItems{Prefix: "item\n", NItems: 1}, Selected: 0}}),
 		Width: 10, Height: 1,
 		Want: bb(10).
-			WriteString("item     ", "inverse").
-			WriteString(" ", "inverse", "magenta"),
+			Write("item     ", "inverse").
+			Write(" ", "inverse", "magenta"),
 	},
 	{
 		Name: "padding",
@@ -86,10 +86,10 @@ var renderVerticalTests = []el.RenderTest{
 		Width: 4, Height: 4,
 
 		Want: bb(4).
-			WriteString(" it ", "inverse").Newline().
-			WriteString(" 0  ", "inverse").Newline().
-			WritePlain(" it").Newline().
-			WritePlain(" 1").Buffer(),
+			Write(" it ", "inverse").Newline().
+			Write(" 0  ", "inverse").Newline().
+			Write(" it").Newline().
+			Write(" 1").Buffer(),
 	},
 	{
 		Name: "not extending style",
@@ -100,12 +100,12 @@ var renderVerticalTests = []el.RenderTest{
 		Width: 6, Height: 2,
 
 		Want: bb(6).
-			WriteString(" ", "inverse").
-			WriteString("x0", "blue", "bg-green", "inverse").
-			WriteString("   ", "inverse").
+			Write(" ", "inverse").
+			Write("x0", "blue", "bg-green", "inverse").
+			Write("   ", "inverse").
 			Newline().
-			WritePlain(" ").
-			WriteString("x1", "blue", "bg-green").
+			Write(" ").
+			Write("x1", "blue", "bg-green").
 			Buffer(),
 	},
 	{
@@ -117,9 +117,9 @@ var renderVerticalTests = []el.RenderTest{
 		Width: 6, Height: 2,
 
 		Want: bb(6).
-			WriteString(" x0   ", "blue", "bg-green", "inverse").
+			Write(" x0   ", "blue", "bg-green", "inverse").
 			Newline().
-			WriteString(" x1   ", "blue", "bg-green").
+			Write(" x1   ", "blue", "bg-green").
 			Buffer(),
 	},
 }
@@ -148,7 +148,7 @@ var renderHorizontalTests = []el.RenderTest{
 		Name:  "placeholder when Items is nil",
 		Given: New(Spec{Horizontal: true, Placeholder: styled.Plain("nothing")}),
 		Width: 10, Height: 3,
-		Want: bb(10).WritePlain("nothing"),
+		Want: bb(10).Write("nothing"),
 	},
 	{
 		Name: "placeholder when NItems is 0",
@@ -156,7 +156,7 @@ var renderHorizontalTests = []el.RenderTest{
 			Horizontal: true, Placeholder: styled.Plain("nothing"),
 			State: State{Items: TestItems{}}}),
 		Width: 10, Height: 3,
-		Want: bb(10).WritePlain("nothing"),
+		Want: bb(10).Write("nothing"),
 	},
 	{
 		Name: "all items when there is enough space, using minimal height",
@@ -166,10 +166,10 @@ var renderHorizontalTests = []el.RenderTest{
 		Width: 14, Height: 3,
 		// Available height is 3, but only need 2 lines.
 		Want: bb(14).
-			WriteString("item 0", "inverse").
-			WritePlain("  ").
-			WritePlain("item 2").
-			Newline().WritePlain("item 1  item 3"),
+			Write("item 0", "inverse").
+			Write("  ").
+			Write("item 2").
+			Newline().Write("item 1  item 3"),
 	},
 	{
 		Name: "padding",
@@ -178,10 +178,10 @@ var renderHorizontalTests = []el.RenderTest{
 			State: State{Items: TestItems{NItems: 4, Prefix: "x"}, Selected: 0}}),
 		Width: 14, Height: 3,
 		Want: bb(14).
-			WriteString(" x0 ", "inverse").
-			WritePlain("  ").
-			WritePlain(" x2").
-			Newline().WritePlain(" x1    x3"),
+			Write(" x0 ", "inverse").
+			Write("  ").
+			Write(" x2").
+			Newline().Write(" x1    x3"),
 	},
 	{
 		Name: "extending style",
@@ -191,9 +191,9 @@ var renderHorizontalTests = []el.RenderTest{
 				NItems: 2, Prefix: "x", Styles: "blue bg-green"}}}),
 		Width: 14, Height: 3,
 		Want: bb(14).
-			WriteString(" x0 ", "blue", "bg-green", "inverse").
-			WritePlain("  ").
-			WriteString(" x1 ", "blue", "bg-green"),
+			Write(" x0 ", "blue", "bg-green", "inverse").
+			Write("  ").
+			Write(" x1 ", "blue", "bg-green"),
 	},
 	{
 		Name: "long lines cropped, with full scrollbar",
@@ -202,9 +202,9 @@ var renderHorizontalTests = []el.RenderTest{
 			State:      State{Items: TestItems{NItems: 2}, Selected: 0}}),
 		Width: 4, Height: 3,
 		Want: bb(4).
-			WriteString("item", "inverse").
-			Newline().WritePlain("item").
-			Newline().WriteString("    ", "magenta", "inverse"),
+			Write("item", "inverse").
+			Newline().Write("item").
+			Newline().Write("    ", "magenta", "inverse"),
 	},
 	{
 		Name: "scrollbar when not showing all items",
@@ -213,11 +213,11 @@ var renderHorizontalTests = []el.RenderTest{
 			State:      State{Items: TestItems{NItems: 4}, Selected: 0}}),
 		Width: 6, Height: 3,
 		Want: bb(6).
-			WriteString("item 0", "inverse").
-			Newline().WritePlain("item 1").
+			Write("item 0", "inverse").
+			Newline().Write("item 1").
 			Newline().
-			WriteString("   ", "inverse", "magenta").
-			WriteString("━━━", "magenta"),
+			Write("   ", "inverse", "magenta").
+			Write("━━━", "magenta"),
 	},
 	{
 		Name: "scrollbar when not showing all items",
@@ -226,10 +226,10 @@ var renderHorizontalTests = []el.RenderTest{
 			State:      State{Items: TestItems{NItems: 4}, Selected: 0}}),
 		Width: 10, Height: 3,
 		Want: bb(10).
-			WriteString("item 0", "inverse").WritePlain("  it").
-			Newline().WritePlain("item 1  it").
+			Write("item 0", "inverse").Write("  it").
+			Newline().Write("item 1  it").
 			Newline().
-			WriteString("          ", "inverse", "magenta"),
+			Write("          ", "inverse", "magenta"),
 	},
 }
 

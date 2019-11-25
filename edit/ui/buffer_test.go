@@ -270,7 +270,7 @@ func TestBufferExtendRight(t *testing.T) {
 }
 
 func TestBufferBuffer(t *testing.T) {
-	b := NewBufferBuilder(4).WritePlain("text").Buffer()
+	b := NewBufferBuilder(4).Write("text").Buffer()
 	if b.Buffer() != b {
 		t.Errorf("Buffer did not return itself")
 	}
@@ -282,9 +282,9 @@ var bufferTTYStringTests = []struct {
 }{
 	{
 		NewBufferBuilder(4).
-			WritePlain("ABCD").
+			Write("ABCD").
 			Newline().
-			WritePlain("XY").
+			Write("XY").
 			Buffer(),
 		"Width = 4, Dot = (0, 0)\n" +
 			"┌────┐\n" +
@@ -294,7 +294,7 @@ var bufferTTYStringTests = []struct {
 	},
 	{
 		NewBufferBuilder(4).
-			WritePlain("AB").SetDotHere().
+			Write("AB").SetDotHere().
 			WriteStringSGR("C", "1").
 			WriteStringSGR("D", "7").
 			Newline().

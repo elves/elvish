@@ -18,9 +18,9 @@ var renderTests = []el.RenderTest{
 			Lines: []string{"line 1", "line 2", "line 3"}}}),
 		Width: 10, Height: 4,
 		Want: bb(10).
-			WritePlain("line 1").Newline().
-			WritePlain("line 2").Newline().
-			WritePlain("line 3").Buffer(),
+			Write("line 1").Newline().
+			Write("line 2").Newline().
+			Write("line 3").Buffer(),
 	},
 	{
 		Name: "text cropped horizontally",
@@ -28,7 +28,7 @@ var renderTests = []el.RenderTest{
 			Lines: []string{"a very long line"}}}),
 		Width: 10, Height: 4,
 		Want: bb(10).
-			WritePlain("a very lon").Buffer(),
+			Write("a very lon").Buffer(),
 	},
 	{
 		Name: "text cropped vertically",
@@ -36,8 +36,8 @@ var renderTests = []el.RenderTest{
 			Lines: []string{"line 1", "line 2", "line 3"}}}),
 		Width: 10, Height: 2,
 		Want: bb(10).
-			WritePlain("line 1").Newline().
-			WritePlain("line 2").Buffer(),
+			Write("line 1").Newline().
+			Write("line 2").Buffer(),
 	},
 	{
 		Name: "text cropped vertically, with scrollbar",
@@ -47,10 +47,10 @@ var renderTests = []el.RenderTest{
 				Lines: []string{"line 1", "line 2", "line 3", "line 4"}}}),
 		Width: 10, Height: 2,
 		Want: bb(10).
-			WritePlain("line 1   ").
-			WriteString(" ", "inverse", "magenta").Newline().
-			WritePlain("line 2   ").
-			WriteString("│", "magenta").Buffer(),
+			Write("line 1   ").
+			Write(" ", "inverse", "magenta").Newline().
+			Write("line 2   ").
+			Write("│", "magenta").Buffer(),
 	},
 	{
 		Name: "State.First adjusted to fit text",
@@ -59,9 +59,9 @@ var renderTests = []el.RenderTest{
 			Lines: []string{"line 1", "line 2", "line 3"}}}),
 		Width: 10, Height: 3,
 		Want: bb(10).
-			WritePlain("line 1").Newline().
-			WritePlain("line 2").Newline().
-			WritePlain("line 3").Buffer(),
+			Write("line 1").Newline().
+			Write("line 2").Newline().
+			Write("line 3").Buffer(),
 	},
 }
 

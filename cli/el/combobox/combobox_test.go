@@ -22,9 +22,9 @@ var renderTests = []el.RenderTest{
 				State: listbox.State{Items: listbox.TestItems{NItems: 2}}}}),
 		Width: 10, Height: 24,
 		Want: ui.NewBufferBuilder(10).
-			WritePlain("filter").SetDotHere().
-			Newline().WriteString("item 0    ", "inverse").
-			Newline().WritePlain("item 1"),
+			Write("filter").SetDotHere().
+			Newline().Write("item 0    ", "inverse").
+			Newline().Write("item 1"),
 	},
 	{
 		Name: "calling filter before rendering",
@@ -37,9 +37,9 @@ var renderTests = []el.RenderTest{
 			}}),
 		Width: 10, Height: 24,
 		Want: ui.NewBufferBuilder(10).
-			WritePlain("filter").SetDotHere().
-			Newline().WriteString("item 0    ", "inverse").
-			Newline().WritePlain("item 1"),
+			Write("filter").SetDotHere().
+			Newline().Write("item 0    ", "inverse").
+			Newline().Write("item 1"),
 	},
 }
 

@@ -33,21 +33,21 @@ var renderTests = []el.RenderTest{
 		Given: New(Spec{State: State{
 			Buffer: Buffer{Content: "code", Dot: 0}}}),
 		Width: 10, Height: 24,
-		Want: bb(10).SetDotHere().WritePlain("code"),
+		Want: bb(10).SetDotHere().Write("code"),
 	},
 	{
 		Name: "code only with dot at middle",
 		Given: New(Spec{State: State{
 			Buffer: Buffer{Content: "code", Dot: 2}}}),
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("co").SetDotHere().WritePlain("de"),
+		Want: bb(10).Write("co").SetDotHere().Write("de"),
 	},
 	{
 		Name: "code only with dot at end",
 		Given: New(Spec{State: State{
 			Buffer: Buffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("code").SetDotHere(),
+		Want: bb(10).Write("code").SetDotHere(),
 	},
 	{
 		Name: "prompt, code and rprompt",
@@ -56,7 +56,7 @@ var renderTests = []el.RenderTest{
 			RPrompt: ConstPrompt(styled.Plain("RP")),
 			State:   State{Buffer: Buffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("~>code").SetDotHere().WritePlain("  RP"),
+		Want: bb(10).Write("~>code").SetDotHere().Write("  RP"),
 	},
 
 	{
@@ -66,7 +66,7 @@ var renderTests = []el.RenderTest{
 			RPrompt: ConstPrompt(styled.Plain("RP")),
 			State:   State{Buffer: Buffer{Content: "code", Dot: 4}, HideRPrompt: true}}),
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("~>code").SetDotHere(),
+		Want: bb(10).Write("~>code").SetDotHere(),
 	},
 	{
 		Name: "rprompt too long",
@@ -75,7 +75,7 @@ var renderTests = []el.RenderTest{
 			RPrompt: ConstPrompt(styled.Plain("1234")),
 			State:   State{Buffer: Buffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("~>code").SetDotHere(),
+		Want: bb(10).Write("~>code").SetDotHere(),
 	},
 	{
 		Name: "highlighted code",
@@ -97,8 +97,8 @@ var renderTests = []el.RenderTest{
 			},
 			State: State{Buffer: Buffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("> code").SetDotHere().
-			Newline().WritePlain("static error"),
+		Want: bb(10).Write("> code").SetDotHere().
+			Newline().Write("static error"),
 	},
 	{
 		Name: "pending code inserting at the dot",
@@ -107,7 +107,7 @@ var renderTests = []el.RenderTest{
 			Pending: Pending{From: 4, To: 4, Content: "x"},
 		}}),
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("code").WriteStringSGR("x", "4").SetDotHere(),
+		Want: bb(10).Write("code").WriteStringSGR("x", "4").SetDotHere(),
 	},
 	{
 		Name: "pending code replacing at the dot",
@@ -116,7 +116,7 @@ var renderTests = []el.RenderTest{
 			Pending: Pending{From: 2, To: 4, Content: "x"},
 		}}),
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("co").WriteStringSGR("x", "4").SetDotHere(),
+		Want: bb(10).Write("co").WriteStringSGR("x", "4").SetDotHere(),
 	},
 	{
 		Name: "pending code to the left of the dot",
@@ -125,7 +125,7 @@ var renderTests = []el.RenderTest{
 			Pending: Pending{From: 1, To: 3, Content: "x"},
 		}}),
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("c").WriteStringSGR("x", "4").WritePlain("e").SetDotHere(),
+		Want: bb(10).Write("c").WriteStringSGR("x", "4").Write("e").SetDotHere(),
 	},
 	{
 		Name: "pending code to the right of the cursor",
@@ -134,8 +134,8 @@ var renderTests = []el.RenderTest{
 			Pending: Pending{From: 2, To: 3, Content: "x"},
 		}}),
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("c").SetDotHere().WritePlain("o").
-			WriteStringSGR("x", "4").WritePlain("e"),
+		Want: bb(10).Write("c").SetDotHere().Write("o").
+			WriteStringSGR("x", "4").Write("e"),
 	},
 	{
 		Name: "ignore invalid pending code 1",
@@ -144,7 +144,7 @@ var renderTests = []el.RenderTest{
 			Pending: Pending{From: 2, To: 1, Content: "x"},
 		}}),
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("code").SetDotHere(),
+		Want: bb(10).Write("code").SetDotHere(),
 	},
 	{
 		Name: "ignore invalid pending code 2",
@@ -153,7 +153,7 @@ var renderTests = []el.RenderTest{
 			Pending: Pending{From: 5, To: 6, Content: "x"},
 		}}),
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("code").SetDotHere(),
+		Want: bb(10).Write("code").SetDotHere(),
 	},
 	{
 		Name: "prioritize lines before the cursor with small height",
@@ -161,7 +161,7 @@ var renderTests = []el.RenderTest{
 			Buffer: Buffer{Content: "a\nb\nc\nd", Dot: 3},
 		}}),
 		Width: 10, Height: 2,
-		Want: bb(10).WritePlain("a").Newline().WritePlain("b").SetDotHere(),
+		Want: bb(10).Write("a").Newline().Write("b").SetDotHere(),
 	},
 	{
 		Name: "show only the cursor line when height is 1",
@@ -169,7 +169,7 @@ var renderTests = []el.RenderTest{
 			Buffer: Buffer{Content: "a\nb\nc\nd", Dot: 3},
 		}}),
 		Width: 10, Height: 1,
-		Want: bb(10).WritePlain("b").SetDotHere(),
+		Want: bb(10).Write("b").SetDotHere(),
 	},
 	{
 		Name: "show lines after the cursor when all lines before the cursor are shown",
@@ -177,8 +177,8 @@ var renderTests = []el.RenderTest{
 			Buffer: Buffer{Content: "a\nb\nc\nd", Dot: 3},
 		}}),
 		Width: 10, Height: 3,
-		Want: bb(10).WritePlain("a").Newline().WritePlain("b").SetDotHere().
-			Newline().WritePlain("c"),
+		Want: bb(10).Write("a").Newline().Write("b").SetDotHere().
+			Newline().Write("c"),
 	},
 }
 

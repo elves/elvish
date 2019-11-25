@@ -90,7 +90,7 @@ func renderView(v *view, buf *ui.BufferBuilder) {
 	if len(v.errors) > 0 {
 		for _, err := range v.errors {
 			buf.Newline()
-			buf.WritePlain(err.Error())
+			buf.Write(err.Error())
 		}
 	}
 }

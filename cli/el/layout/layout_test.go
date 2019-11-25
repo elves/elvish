@@ -29,13 +29,13 @@ var renderTests = []struct {
 		"Label showing all",
 		Label{styled.Plain("label")},
 		10, 24,
-		bb(10).WritePlain("label"),
+		bb(10).Write("label"),
 	},
 	{
 		"Label cropping",
 		Label{styled.Plain("label")},
 		4, 1,
-		bb(4).WritePlain("labe"),
+		bb(4).Write("labe"),
 	},
 	{
 		"VScrollbar showing full thumb",
@@ -66,8 +66,8 @@ var renderTests = []struct {
 		VScrollbarContainer{Label{styled.Plain("abcd1234")},
 			VScrollbar{4, 0, 1}},
 		5, 2,
-		bb(5).WritePlain("abcd").WriteStyled(vscrollbarThumb).
-			Newline().WritePlain("1234").WriteStyled(vscrollbarTrough),
+		bb(5).Write("abcd").WriteStyled(vscrollbarThumb).
+			Newline().Write("1234").WriteStyled(vscrollbarTrough),
 	},
 	{
 		"HScrollbar showing full thumb",

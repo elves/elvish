@@ -30,9 +30,9 @@ func TestNavigation(t *testing.T) {
 	}
 	makeBuf := func(moreCode string, markedLines ...interface{}) *ui.Buffer {
 		b := bb().
-			WritePlain("~"+string(os.PathSeparator)+"d> ").
-			WriteString("put", "green").
-			WritePlain(moreCode).SetDotHere()
+			Write("~"+string(os.PathSeparator)+"d> ").
+			Write("put", "green").
+			Write(moreCode).SetDotHere()
 		if len(markedLines) > 0 {
 			b.Newline().
 				WriteStyled(layout.ModeLine(" NAVIGATING ", true)).

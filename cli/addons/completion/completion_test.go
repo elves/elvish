@@ -35,31 +35,31 @@ func TestStart(t *testing.T) {
 
 	// Test that the completion combobox is shown correctly.
 	wantBufStarted := ui.NewBufferBuilder(40).
-		WriteString("foo", "underlined"). // code area
+		Write("foo", "underlined"). // code area
 		Newline().
 		WriteStyled(layout.ModeLine("COMPLETING WORD", true)).
 		SetDotHere().
-		Newline().WriteString("foo", "inverse"). // Selected entry
-		WritePlain("  ").
-		WriteString("foo bar", "blue").
+		Newline().Write("foo", "inverse"). // Selected entry
+		Write("  ").
+		Write("foo bar", "blue").
 		Buffer()
 	ttyCtrl.TestBuffer(t, wantBufStarted)
 
 	// Test the OnFilter handler.
 	ttyCtrl.Inject(term.K('b'), term.K('a'))
 	wantBufFiltering := ui.NewBufferBuilder(40).
-		WriteString("'foo bar'", "underlined"). // code area
+		Write("'foo bar'", "underlined"). // code area
 		Newline().
 		WriteStyled(layout.ModeLine("COMPLETING WORD", true)).
-		WritePlain("ba").SetDotHere().
-		Newline().WriteString("foo bar", "blue", "inverse"). // Selected entry
+		Write("ba").SetDotHere().
+		Newline().Write("foo bar", "blue", "inverse"). // Selected entry
 		Buffer()
 	ttyCtrl.TestBuffer(t, wantBufFiltering)
 
 	// Test the OnAccept handler.
 	ttyCtrl.Inject(term.K(ui.Enter))
 	wantBufAccepted := ui.NewBufferBuilder(40).
-		WritePlain("'foo bar'").SetDotHere().Buffer()
+		Write("'foo bar'").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBufAccepted)
 
 	// Test Close first we need to start over.

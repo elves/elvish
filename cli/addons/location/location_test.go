@@ -51,7 +51,7 @@ func TestStart_NoStore(t *testing.T) {
 
 	Start(app, Config{})
 
-	wantNotesBuf := bb().WritePlain("no dir history store").Buffer()
+	wantNotesBuf := bb().Write("no dir history store").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
@@ -61,7 +61,7 @@ func TestStart_StoreError(t *testing.T) {
 
 	Start(app, Config{Store: testStore{dirsError: errors.New("ERROR")}})
 
-	wantNotesBuf := bb().WritePlain("db error: ERROR").Buffer()
+	wantNotesBuf := bb().Write("db error: ERROR").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
@@ -215,7 +215,7 @@ func TestStart_OK(t *testing.T) {
 	wantBuf = bb().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
 	// Error from Chdir should be sent to notes.
-	wantNotesBuf := bb().WritePlain("mock chdir error").Buffer()
+	wantNotesBuf := bb().Write("mock chdir error").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 	// Chdir should be called.
 	wantChdir := fix("/tmp/foo/bar/lorem/ipsum")

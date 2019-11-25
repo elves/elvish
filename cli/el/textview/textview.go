@@ -71,7 +71,7 @@ func (w *widget) Render(width, height int) *ui.Buffer {
 		if i > first {
 			bb.Newline()
 		}
-		bb.WritePlain(util.TrimWcwidth(lines[i], textWidth))
+		bb.Write(util.TrimWcwidth(lines[i], textWidth))
 	}
 	buf := bb.Buffer()
 

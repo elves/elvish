@@ -44,8 +44,8 @@ func TestDumpBuf(t *testing.T) {
 	defer f.Cleanup()
 
 	feedInput(f.TTYCtrl, "echo")
-	wantBuf := bb().WritePlain("~> ").
-		WriteString("echo", "green").SetDotHere().Buffer()
+	wantBuf := bb().Write("~> ").
+		Write("echo", "green").SetDotHere().Buffer()
 	// Wait until the buffer we want has shown up.
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 
@@ -60,7 +60,7 @@ func TestInsertRaw(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K('V', ui.Ctrl))
-	wantBuf := bb().WritePlain("~> ").SetDotHere().
+	wantBuf := bb().Write("~> ").SetDotHere().
 		Newline().WriteStyled(layout.ModeLine(" RAW ", false)).Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 	// Since we do not use real terminals in the test, we cannot have a
@@ -76,7 +76,7 @@ func TestInsertRaw(t *testing.T) {
 
 	// Raw mode is dismissed after a single key event.
 	f.TTYCtrl.Inject(term.K('+'))
-	wantBuf = bb().WritePlain("~> ").WriteString("+", "green").
+	wantBuf = bb().Write("~> ").Write("+", "green").
 		SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
@@ -86,7 +86,7 @@ func TestEndOfHistory(t *testing.T) {
 	defer f.Cleanup()
 
 	evals(f.Evaler, `edit:end-of-history`)
-	wantNotesBuf := bb().WritePlain("End of history").Buffer()
+	wantNotesBuf := bb().Write("End of history").Buffer()
 	f.TTYCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 

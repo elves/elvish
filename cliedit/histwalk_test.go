@@ -13,7 +13,7 @@ func TestHistWalk_Up_EndOfHistory(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K(ui.Up))
-	wantNotesBuf := bb().WritePlain("end of history").Buffer()
+	wantNotesBuf := bb().Write("end of history").Buffer()
 	f.TTYCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
@@ -23,7 +23,7 @@ func TestHistWalk_Down_EndOfHistory(t *testing.T) {
 
 	// Not bound by default, so we need to use evals.
 	evals(f.Evaler, `edit:history:down`)
-	wantNotesBuf := bb().WritePlain("end of history").Buffer()
+	wantNotesBuf := bb().Write("end of history").Buffer()
 	f.TTYCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
@@ -45,7 +45,7 @@ func TestHistWalk_Close(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K('[', ui.Ctrl))
-	wantBufClosed := bb().WritePlain("~> ").SetDotHere().Buffer()
+	wantBufClosed := bb().Write("~> ").SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufClosed)
 }
 
@@ -54,7 +54,7 @@ func TestHistWalk_DownOrQuit(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K(ui.Down))
-	wantBufClosed := bb().WritePlain("~> ").SetDotHere().Buffer()
+	wantBufClosed := bb().Write("~> ").SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufClosed)
 }
 

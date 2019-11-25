@@ -82,6 +82,6 @@ func TestLastCmdAddon(t *testing.T) {
 
 func bbAddon(name string) *ui.BufferBuilder {
 	return ui.NewBufferBuilder(30).
-		WritePlain("~> ").Newline().
+		Write("~> ").Newline().
 		WriteStyled(layout.ModeLine(name, true)).SetDotHere().Newline()
 }

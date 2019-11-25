@@ -26,7 +26,7 @@ func TestHistWalk(t *testing.T) {
 	})
 
 	app.Redraw()
-	buf0 := ui.NewBufferBuilder(40).WritePlain("ls").SetDotHere().Buffer()
+	buf0 := ui.NewBufferBuilder(40).Write("ls").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, buf0)
 
 	getCfg := func() Config {
@@ -74,7 +74,7 @@ func TestHistWalk(t *testing.T) {
 	Start(app, getCfg())
 	ttyCtrl.TestBuffer(t, buf5)
 	ttyCtrl.Inject(term.K(ui.Enter))
-	bufAccepted := ui.NewBufferBuilder(40).WritePlain("ls -a").SetDotHere().Buffer()
+	bufAccepted := ui.NewBufferBuilder(40).Write("ls -a").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, bufAccepted)
 }
 
@@ -83,7 +83,7 @@ func TestHistWalk_NoWalker(t *testing.T) {
 	defer cleanup()
 
 	Start(app, Config{})
-	ttyCtrl.TestNotesBuffer(t, bb().WritePlain("no history walker").Buffer())
+	ttyCtrl.TestNotesBuffer(t, bb().Write("no history walker").Buffer())
 }
 
 func TestHistWalk_FallbackHandler(t *testing.T) {
@@ -105,7 +105,7 @@ func TestHistWalk_FallbackHandler(t *testing.T) {
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	ttyCtrl.Inject(term.K(ui.Backspace))
-	ttyCtrl.TestBuffer(t, bb().WritePlain("l").SetDotHere().Buffer())
+	ttyCtrl.TestBuffer(t, bb().Write("l").SetDotHere().Buffer())
 }
 
 func makeBuf(codeArea styled.Text, modeline string) *ui.Buffer {

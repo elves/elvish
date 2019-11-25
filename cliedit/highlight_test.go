@@ -38,7 +38,7 @@ func TestHighlighter(t *testing.T) {
 		).
 		SetDotHere().
 		Newline().
-		WritePlain("compilation error: 4-10 in [tty]: variable $truex not found").
+		Write("compilation error: 4-10 in [tty]: variable $truex not found").
 		Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf2)
 }
