@@ -2,7 +2,9 @@ package navigation
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/elves/elvish/cli"
@@ -29,8 +31,9 @@ var testDir = util.Dir{
 	"d": util.Dir{
 		"d1": "content\td1\nline 2",
 		"d2": util.Dir{
-			"d21": "content d21",
-			"d22": "content d22",
+			"d21":     "content d21",
+			"d22":     "content d22",
+			"d23.exe": "",
 		},
 		"d3":  util.Dir{},
 		".dh": "hidden",
@@ -50,11 +53,12 @@ func TestNavigation_RealFS(t *testing.T) {
 		panic(err)
 	}
 	defer cleanupFs()
+	fmt.Println("ext", path.Ext("d2/d23.exe"))
 	testNavigation(t, nil)
 }
 
 func TestErrorInAscend(t *testing.T) {
-	app, ttyCtrl, cleanup := setupApp()
+	app, ttyCtrl, cleanup := setup()
 	defer cleanup()
 
 	c := getTestCursor()
@@ -66,7 +70,7 @@ func TestErrorInAscend(t *testing.T) {
 }
 
 func TestErrorInDescend(t *testing.T) {
-	app, ttyCtrl, cleanup := setupApp()
+	app, ttyCtrl, cleanup := setup()
 	defer cleanup()
 
 	c := getTestCursor()
@@ -79,7 +83,7 @@ func TestErrorInDescend(t *testing.T) {
 }
 
 func TestErrorInCurrent(t *testing.T) {
-	app, ttyCtrl, cleanup := setupApp()
+	app, ttyCtrl, cleanup := setup()
 	defer cleanup()
 
 	c := getTestCursor()
@@ -101,7 +105,7 @@ func TestErrorInCurrent(t *testing.T) {
 }
 
 func TestErrorInParent(t *testing.T) {
-	app, ttyCtrl, cleanup := setupApp()
+	app, ttyCtrl, cleanup := setup()
 	defer cleanup()
 
 	c := getTestCursor()
@@ -120,7 +124,7 @@ func TestErrorInParent(t *testing.T) {
 }
 
 func TestGetSelectedName(t *testing.T) {
-	app, _, cleanup := setupApp()
+	app, _, cleanup := setup()
 	defer cleanup()
 
 	wantName := ""
@@ -137,7 +141,7 @@ func TestGetSelectedName(t *testing.T) {
 }
 
 func testNavigation(t *testing.T, c Cursor) {
-	app, ttyCtrl, cleanup := setupApp()
+	app, ttyCtrl, cleanup := setup()
 	defer cleanup()
 
 	Start(app, Config{Cursor: c})
@@ -168,15 +172,16 @@ func testNavigation(t *testing.T, c Cursor) {
 	))
 	ttyCtrl.TestBuffer(t, d1Buf2)
 
-	// Test handling of selection change and directory preview.
+	// Test handling of selection change and directory preview. Also test
+	// LS_COLORS.
 	Select(app, listbox.Next)
 	d2Buf := makeBuf(styled.MarkLines(
 		" a    d1             d21                ", styles,
 		"                    --------------------",
 		" d    d2             d22                ", styles,
 		"#### ##############",
-		" f    d3           ", styles,
-		"     ++++++++++++++",
+		" f    d3             d23.exe            ", styles,
+		"     ++++++++++++++ xxxxxxxxxxxxxxxxxxxx",
 	))
 	ttyCtrl.TestBuffer(t, d2Buf)
 
@@ -187,8 +192,8 @@ func testNavigation(t *testing.T, c Cursor) {
 		"     --------------",
 		" d2   d22          ", styles,
 		"####",
-		" d3 ", styles,
-		"++++",
+		" d3   d23.exe      ", styles,
+		"++++ xxxxxxxxxxxxxx",
 	))
 	ttyCtrl.TestBuffer(t, d21Buf)
 
@@ -279,7 +284,10 @@ func makeNotesBuf(content styled.Text) *ui.Buffer {
 	return ui.NewBufferBuilder(40).WriteStyled(content).Buffer()
 }
 
-func setupApp() (cli.App, cli.TTYCtrl, func()) {
+func setup() (cli.App, cli.TTYCtrl, func()) {
+	oldLsColors := os.Getenv("LS_COLORS")
+	// Directories are blue, *.exe files are red.
+	os.Setenv("LS_COLORS", "di=34:*.exe=31")
 	tty, ttyCtrl := cli.NewFakeTTY()
 	ttyCtrl.SetSize(6, 40)
 	app := cli.NewApp(cli.AppSpec{TTY: tty})
@@ -287,6 +295,7 @@ func setupApp() (cli.App, cli.TTYCtrl, func()) {
 	return app, ttyCtrl, func() {
 		app.CommitEOF()
 		<-codeCh
+		os.Setenv("LS_COLORS", oldLsColors)
 	}
 }
 

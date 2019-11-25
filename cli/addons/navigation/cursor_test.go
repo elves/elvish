@@ -2,7 +2,9 @@ package navigation
 
 import (
 	"errors"
+	"strings"
 
+	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
 
@@ -81,7 +83,7 @@ func getDirFile(root util.Dir, path []string) (File, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !f.IsDir() {
+	if !f.IsDirDeep() {
 		return nil, errNoSuchDir
 	}
 	return f, nil
@@ -94,12 +96,22 @@ type testFile struct {
 
 func (f testFile) Name() string { return f.name }
 
-func (f testFile) IsDir() bool {
+func (f testFile) ShowName() styled.Text {
+	// The style matches that of LS_COLORS in the test code.
+	switch {
+	case f.IsDirDeep():
+		return styled.MakeText(f.name, "blue")
+	case strings.HasSuffix(f.name, ".exe"):
+		return styled.MakeText(f.name, "red")
+	default:
+		return styled.Plain(f.name)
+	}
+}
+
+func (f testFile) IsDirDeep() bool {
 	_, ok := f.data.(util.Dir)
 	return ok
 }
-
-func (f testFile) IsDirDeep() bool { return f.IsDir() }
 
 func (f testFile) Read() ([]File, []byte, error) {
 	if dir, ok := f.data.(util.Dir); ok {

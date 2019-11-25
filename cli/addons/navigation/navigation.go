@@ -304,11 +304,7 @@ func makeErrCol(err error) el.Widget {
 type fileItems []File
 
 func (it fileItems) Show(i int) styled.Text {
-	// TODO: Support lsColors
-	if it[i].IsDir() {
-		return styled.MakeText(it[i].Name(), "blue")
-	}
-	return styled.Plain(it[i].Name())
+	return it[i].ShowName()
 }
 
 func (it fileItems) Len() int { return len(it) }

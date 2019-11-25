@@ -6,6 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"unicode/utf8"
+
+	"github.com/elves/elvish/cli/lscolors"
+	"github.com/elves/elvish/styled"
 )
 
 // Cursor represents a cursor for navigating in a potentially virtual filesystem.
@@ -25,8 +28,8 @@ type Cursor interface {
 type File interface {
 	// Name returns the name of the file.
 	Name() string
-	// IsDir returns whether the file itself is a directory.
-	IsDir() bool
+	// ShowName returns a styled filename.
+	ShowName() styled.Text
 	// IsDirDeep returns whether the file is itself a directory or a symlink to
 	// a directory.
 	IsDirDeep() bool
@@ -37,16 +40,16 @@ type File interface {
 }
 
 // NewOSCursor returns a Cursor backed by the OS.
-func NewOSCursor() Cursor { return osCursor{} }
+func NewOSCursor() Cursor { return osCursor{lscolors.GetColorist()} }
 
-type osCursor struct{}
+type osCursor struct{ colorist lscolors.Colorist }
 
 func (c osCursor) Current() (File, error) {
 	abs, err := filepath.Abs(".")
 	if err != nil {
 		return nil, err
 	}
-	return file{filepath.Base(abs), abs, os.ModeDir}, nil
+	return file{filepath.Base(abs), abs, os.ModeDir, c.colorist}, nil
 }
 
 func (c osCursor) Parent() (File, error) {
@@ -57,7 +60,7 @@ func (c osCursor) Parent() (File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return file{filepath.Base(abs), abs, os.ModeDir}, nil
+	return file{filepath.Base(abs), abs, os.ModeDir, c.colorist}, nil
 }
 
 func (c osCursor) Ascend() error { return os.Chdir("..") }
@@ -67,21 +70,28 @@ func (c osCursor) Descend(name string) error { return os.Chdir(name) }
 type emptyDir struct{}
 
 func (emptyDir) Name() string                  { return "" }
-func (emptyDir) IsDir() bool                   { return true }
-func (emptyDir) IsDirDeep() bool               { return false }
+func (emptyDir) ShowName() styled.Text         { return nil }
+func (emptyDir) IsDirDeep() bool               { return true }
 func (emptyDir) Read() ([]File, []byte, error) { return []File{}, nil, nil }
 
 type file struct {
-	name string
-	path string
-	mode os.FileMode
+	name     string
+	path     string
+	mode     os.FileMode
+	colorist lscolors.Colorist
 }
 
 func (f file) Name() string { return f.name }
-func (f file) IsDir() bool  { return f.mode.IsDir() }
+
+func (f file) ShowName() styled.Text {
+	sgrStyle := f.colorist.GetStyle(f.path)
+	return styled.Text{&styled.Segment{
+		Style: styled.StyleFromSGR(sgrStyle), Text: f.name}}
+}
 
 func (f file) IsDirDeep() bool {
-	if f.IsDir() {
+	if f.mode.IsDir() {
+		// File itself is a directory; return true and save a stat call.
 		return true
 	}
 	info, err := os.Stat(f.path)
@@ -131,6 +141,7 @@ func (f file) Read() ([]File, []byte, error) {
 				info.Name(),
 				filepath.Join(f.path, info.Name()),
 				info.Mode(),
+				f.colorist,
 			}
 		}
 		return files, nil, err
