@@ -64,8 +64,8 @@ func setupFs() func() {
 }
 
 func TestComplete(t *testing.T) {
-	restore := util.WithTempEnv("LS_COLORS", "di=34")
-	defer restore()
+	restoreLsColors := lscolors.WithTestLsColors()
+	defer restoreLsColors()
 
 	cleanupFs := setupFs()
 	defer cleanupFs()
@@ -102,7 +102,7 @@ func TestComplete(t *testing.T) {
 		},
 	}
 
-	pathSep := string(os.PathSeparator)
+	pathSep := parse.Quote(string(os.PathSeparator))
 	allFileNameItems := []completion.Item{
 		fc("a.exe", " "), fc("d", pathSep), fc("non-exe", " "),
 	}

@@ -2,14 +2,13 @@ package navigation
 
 import (
 	"errors"
-	"fmt"
 	"os"
-	"path"
 	"testing"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/el/listbox"
+	"github.com/elves/elvish/cli/lscolors"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
@@ -33,7 +32,7 @@ var testDir = util.Dir{
 		"d2": util.Dir{
 			"d21":     "content d21",
 			"d22":     "content d22",
-			"d23.exe": "",
+			"d23.png": "",
 		},
 		"d3":  util.Dir{},
 		".dh": "hidden",
@@ -53,7 +52,6 @@ func TestNavigation_RealFS(t *testing.T) {
 		panic(err)
 	}
 	defer cleanupFs()
-	fmt.Println("ext", path.Ext("d2/d23.exe"))
 	testNavigation(t, nil)
 }
 
@@ -180,7 +178,7 @@ func testNavigation(t *testing.T, c Cursor) {
 		"                    --------------------",
 		" d    d2             d22                ", styles,
 		"#### ##############",
-		" f    d3             d23.exe            ", styles,
+		" f    d3             d23.png            ", styles,
 		"     ++++++++++++++ xxxxxxxxxxxxxxxxxxxx",
 	))
 	ttyCtrl.TestBuffer(t, d2Buf)
@@ -192,7 +190,7 @@ func testNavigation(t *testing.T, c Cursor) {
 		"     --------------",
 		" d2   d22          ", styles,
 		"####",
-		" d3   d23.exe      ", styles,
+		" d3   d23.png      ", styles,
 		"++++ xxxxxxxxxxxxxx",
 	))
 	ttyCtrl.TestBuffer(t, d21Buf)
@@ -285,9 +283,7 @@ func makeNotesBuf(content styled.Text) *ui.Buffer {
 }
 
 func setup() (cli.App, cli.TTYCtrl, func()) {
-	oldLsColors := os.Getenv("LS_COLORS")
-	// Directories are blue, *.exe files are red.
-	os.Setenv("LS_COLORS", "di=34:*.exe=31")
+	restoreLsColors := lscolors.WithTestLsColors()
 	tty, ttyCtrl := cli.NewFakeTTY()
 	ttyCtrl.SetSize(6, 40)
 	app := cli.NewApp(cli.AppSpec{TTY: tty})
@@ -295,7 +291,7 @@ func setup() (cli.App, cli.TTYCtrl, func()) {
 	return app, ttyCtrl, func() {
 		app.CommitEOF()
 		<-codeCh
-		os.Setenv("LS_COLORS", oldLsColors)
+		restoreLsColors()
 	}
 }
 

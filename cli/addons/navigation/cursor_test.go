@@ -101,7 +101,7 @@ func (f testFile) ShowName() styled.Text {
 	switch {
 	case f.IsDirDeep():
 		return styled.MakeText(f.name, "blue")
-	case strings.HasSuffix(f.name, ".exe"):
+	case strings.HasSuffix(f.name, ".png"):
 		return styled.MakeText(f.name, "red")
 	default:
 		return styled.Plain(f.name)

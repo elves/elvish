@@ -10,12 +10,11 @@ import (
 func TestLsColors(t *testing.T) {
 	_, cleanup := util.InTestDir()
 	defer cleanup()
-	savedLsColors := os.Getenv("LS_COLORS")
-	defer os.Setenv("LS_COLORS", savedLsColors)
+	restoreLsColors := WithTestLsColors()
+	defer restoreLsColors()
 
-	// Test both feature-based and extension-based coloring. Directory is blue,
-	// .png files are red.
-	os.Setenv("LS_COLORS", "di=34:*.png=31")
+	// Test both feature-based and extension-based coloring.
+
 	colorist := GetColorist()
 
 	os.Mkdir("dir", 0755)

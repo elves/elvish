@@ -43,6 +43,11 @@ const (
 	executable    = 0111 // Executable
 )
 
+func F(name string) string {
+	f, _ := determineFeature(name, false)
+	return f.String()
+}
+
 func determineFeature(fname string, mh bool) (feature, error) {
 	stat, err := os.Lstat(fname)
 

@@ -4,6 +4,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/elves/elvish/cli/lscolors"
+
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
@@ -13,8 +15,8 @@ import (
 func TestNavigation(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
-	restoreEnv := util.WithTempEnv("LS_COLORS", "di=34")
-	defer restoreEnv()
+	restoreLsColors := lscolors.WithTestLsColors()
+	defer restoreLsColors()
 
 	util.ApplyDir(util.Dir{"d": util.Dir{"a": ""}})
 	err := os.Chdir("d")
