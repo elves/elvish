@@ -2,7 +2,7 @@ platform: x64
 clone_folder: c:\gopath\src\github.com\elves\elvish
 environment:
   GOPATH: c:\gopath
-  ELVISH_TEST_UI_TIMEOUT: 5s
+  ELVISH_TEST_UI_TIMEOUT: 10s
 install:
   - echo %PATH%
   - echo %GOPATH%
