@@ -18,13 +18,12 @@ var bufferBuilderWritesTests = []struct {
 		&Buffer{Width: 10, Lines: Lines{Line{Cell{"a", "1"}}}}},
 	// Writing control character.
 	{NewBufferBuilder(10), "\033", "",
-		&Buffer{Width: 10, Lines: Lines{
-			Line{Cell{"^[", styleForControlChar.String()}}}}},
+		&Buffer{Width: 10, Lines: Lines{Line{Cell{"^[", "7"}}}}},
 	// Writing styled control character.
 	{NewBufferBuilder(10), "a\033b", "1",
 		&Buffer{Width: 10, Lines: Lines{Line{
 			Cell{"a", "1"},
-			Cell{"^[", "1;" + styleForControlChar.String()},
+			Cell{"^[", "1;7"},
 			Cell{"b", "1"}}}}},
 	// Writing text containing a newline.
 	{NewBufferBuilder(10), "a\nb", "1",

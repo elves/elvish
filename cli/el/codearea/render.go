@@ -82,7 +82,7 @@ func renderView(v *view, buf *ui.BufferBuilder) {
 	if rpromptWidth := styledWcswidth(v.rprompt); rpromptWidth > 0 {
 		padding := buf.Width - buf.Col - rpromptWidth
 		if padding >= 1 {
-			buf.WriteSpacesSGR(padding, "")
+			buf.WriteSpaces(padding)
 			buf.WriteStyled(v.rprompt)
 		}
 	}

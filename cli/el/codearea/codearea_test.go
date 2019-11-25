@@ -26,7 +26,7 @@ var renderTests = []el.RenderTest{
 		Given: New(Spec{
 			RPrompt: ConstPrompt(styled.MakeText("RP", "inverse"))}),
 		Width: 10, Height: 24,
-		Want: bb(10).SetDotHere().WriteSpacesSGR(8, "").WriteStringSGR("RP", "7"),
+		Want: bb(10).SetDotHere().WriteSpaces(8).WriteStringSGR("RP", "7"),
 	},
 	{
 		Name: "code only with dot at beginning",

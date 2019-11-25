@@ -84,8 +84,6 @@ func (bb *BufferBuilder) Newline() *BufferBuilder {
 	return bb
 }
 
-var styleForControlChar = Styles{"inverse"}
-
 // WriteRuneSGR writes a single rune to a buffer with an SGR style, wrapping the
 // line when needed. If the rune is a control character, it will be written
 // using the caret notation (like ^X) and gets the additional style of
@@ -97,10 +95,11 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 	}
 	c := Cell{string(r), style}
 	if r < 0x20 || r == 0x7f {
+		// Always show control characters in reverse video.
 		if style != "" {
-			style = style + ";" + styleForControlChar.String()
+			style = style + ";7"
 		} else {
-			style = styleForControlChar.String()
+			style = "7"
 		}
 		c = Cell{"^" + string(r^0x40), style}
 	}
@@ -123,6 +122,11 @@ func (bb *BufferBuilder) Write(text string, styles ...string) *BufferBuilder {
 	return bb.WriteStyled(styled.MakeText(text, styles...))
 }
 
+// WriteSpaces writes w spaces with the given styles.
+func (bb *BufferBuilder) WriteSpaces(w int, styles ...string) *BufferBuilder {
+	return bb.Write(strings.Repeat(" ", w), styles...)
+}
+
 // WriteMarkedLines is equivalent to calling WriteStyled with
 // styled.MarkLines(args...).
 func (bb *BufferBuilder) WriteMarkedLines(args ...interface{}) *BufferBuilder {
@@ -137,20 +141,10 @@ func (bb *BufferBuilder) WriteStringSGR(text, style string) *BufferBuilder {
 	return bb
 }
 
-// WriteSpacesSGR writes w spaces with an SGR style.
-func (bb *BufferBuilder) WriteSpacesSGR(w int, style string) *BufferBuilder {
-	return bb.WriteStringSGR(strings.Repeat(" ", w), style)
-}
-
-// WriteLegacyStyleds writes a styled text.
+// WriteStyled writes a styled text.
 func (bb *BufferBuilder) WriteStyled(t styled.Text) *BufferBuilder {
-	return bb.WriteLegacyStyleds(FromNewStyledText(t))
-}
-
-// WriteLegacyStyleds writes a slice of (legacy) styled structs.
-func (bb *BufferBuilder) WriteLegacyStyleds(ss []*Styled) *BufferBuilder {
-	for _, s := range ss {
-		bb.WriteStringSGR(s.Text, s.Styles.String())
+	for _, seg := range t {
+		bb.WriteStringSGR(seg.Text, sgrFromStyle(seg.Style))
 	}
 	return bb
 }
