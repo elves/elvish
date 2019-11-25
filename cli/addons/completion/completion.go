@@ -55,6 +55,7 @@ func Start(app cli.App, cfg Config) {
 				})
 				app.MutateState(func(s *cli.State) { s.Addon = nil })
 			},
+			ExtendStyle: true,
 		},
 		OnFilter: func(w combobox.Widget, p string) {
 			w.ListBox().Reset(filter(cfg.Items, p), 0)
