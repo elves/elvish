@@ -19,6 +19,8 @@ import (
 type Item struct {
 	// Used in the UI and for filtering.
 	ToShow string
+	// Style to use in the UI.
+	ShowStyle styled.Style
 	// Used when inserting a candidate.
 	ToInsert string
 }
@@ -82,6 +84,8 @@ func filter(all []Item, p string) items {
 	return filtered
 }
 
-func (it items) Show(i int) styled.Text { return styled.Plain(it[i].ToShow) }
+func (it items) Show(i int) styled.Text {
+	return styled.Text{&styled.Segment{Style: it[i].ShowStyle, Text: it[i].ToShow}}
+}
 
 func (it items) Len() int { return len(it) }
