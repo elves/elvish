@@ -88,7 +88,7 @@ func (f *fixture) Start() {
 	codeCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	go func() {
-		code, err := f.Editor.ReadLine()
+		code, err := f.Editor.ReadCode()
 		// Write to the channels and close them. This means that the first read
 		// from those channels will get the return value, and subsequent reads
 		// will get the zero value of string and error. This means that the Wait

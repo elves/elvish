@@ -19,8 +19,6 @@ import (
 //
 // This currently implements the same interface as *Editor in the old edit
 // package to ease transition.
-//
-// TODO: Rename ReadLine to ReadCode and remove Close.
 type Editor struct {
 	app cli.App
 	ns  eval.Ns
@@ -95,8 +93,8 @@ func evalDefaultBinding(ev *eval.Evaler, ns eval.Ns) {
 	}
 }
 
-// ReadLine reads input from the user.
-func (ed *Editor) ReadLine() (string, error) {
+// ReadCode reads input from the user.
+func (ed *Editor) ReadCode() (string, error) {
 	return ed.app.ReadCode()
 }
 
@@ -104,6 +102,3 @@ func (ed *Editor) ReadLine() (string, error) {
 func (ed *Editor) Ns() eval.Ns {
 	return ed.ns
 }
-
-// Close is a no-op.
-func (ed *Editor) Close() {}

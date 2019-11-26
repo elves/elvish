@@ -1,7 +1,6 @@
 package shell
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -29,7 +28,6 @@ func interact(ev *eval.Evaler, dataDir string, norc bool) {
 	} else {
 		ed = newMinEditor(os.Stdin, os.Stderr)
 	}
-	defer ed.Close()
 
 	// Source rc.elv.
 	if !norc && dataDir != "" {
@@ -41,26 +39,21 @@ func interact(ev *eval.Evaler, dataDir string, norc bool) {
 
 	term.Sanitize(os.Stdin, os.Stderr)
 
-	// Build readLine function.
-	readLine := ed.ReadLine
-
 	cooldown := time.Second
-	usingBasic := false
 	cmdNum := 0
 
 	for {
 		cmdNum++
 
-		line, err := readLine()
+		line, err := ed.ReadCode()
 
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			fmt.Println("Editor error:", err)
-			if !usingBasic {
+			if _, isMinEditor := ed.(*minEditor); !isMinEditor {
 				fmt.Println("Falling back to basic line editor")
-				readLine = basicReadLine
-				usingBasic = true
+				ed = newMinEditor(os.Stdin, os.Stderr)
 			} else {
 				fmt.Println("Don't know what to do, pid is", os.Getpid())
 				fmt.Println("Restarting editor in", cooldown)
@@ -129,9 +122,4 @@ func extractExports(ns eval.Ns, stderr io.Writer) {
 		}
 		ns.Add(name, vars.FromInit(v))
 	}
-}
-
-func basicReadLine() (string, error) {
-	stdin := bufio.NewReaderSize(os.Stdin, 0)
-	return stdin.ReadString('\n')
 }
