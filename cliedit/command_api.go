@@ -11,7 +11,7 @@ import (
 // Starts the command mode.
 
 func initCommandAPI(app cli.App, ev *eval.Evaler, ns eval.Ns) {
-	bindingVar := newBindingVar(emptyBindingMap)
+	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar)
 	ns.AddNs("command",
 		eval.Ns{

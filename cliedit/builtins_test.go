@@ -10,20 +10,20 @@ import (
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/tt"
+	"github.com/elves/elvish/ui"
 )
 
-func TestBindingMap(t *testing.T) {
+func TestBindingTable(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
 	evals(f.Evaler, `called = $false`)
 	evals(f.Evaler, `m = (edit:binding-table [&a={ called = $true }])`)
-	_, ok := getGlobal(f.Evaler, "m").(bindingMap)
+	_, ok := getGlobal(f.Evaler, "m").(BindingMap)
 	if !ok {
-		t.Errorf("edit:binding-table did not create bindingMap variable")
+		t.Errorf("edit:binding-table did not create BindingMap variable")
 	}
 }
 

@@ -9,7 +9,7 @@ import (
 )
 
 func initHistWalk(app cli.App, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fuser) {
-	bindingVar := newBindingVar(emptyBindingMap)
+	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar)
 	ns.AddNs("history",
 		eval.Ns{

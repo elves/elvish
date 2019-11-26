@@ -1,4 +1,4 @@
-package eddefs
+package cliedit
 
 import "testing"
 

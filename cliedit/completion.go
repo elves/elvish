@@ -189,7 +189,7 @@ func completionStart(app cli.App, binding el.Handler, cfg complete.Config, smart
 // Closes the completion mode UI.
 
 func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
-	bindingVar := newBindingVar(emptyBindingMap)
+	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar)
 	matcherMapVar := newMapVar(vals.EmptyMap)
 	argGeneratorMapVar := newMapVar(vals.EmptyMap)

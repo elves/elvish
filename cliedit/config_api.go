@@ -66,4 +66,4 @@ func newBoolVar(b bool) vars.PtrVar          { return vars.FromPtr(&b) }
 func newListVar(l vals.List) vars.PtrVar     { return vars.FromPtr(&l) }
 func newMapVar(m vals.Map) vars.PtrVar       { return vars.FromPtr(&m) }
 func newFnVar(c eval.Callable) vars.PtrVar   { return vars.FromPtr(&c) }
-func newBindingVar(b bindingMap) vars.PtrVar { return vars.FromPtr(&b) }
+func newBindingVar(b BindingMap) vars.PtrVar { return vars.FromPtr(&b) }

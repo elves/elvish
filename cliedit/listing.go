@@ -18,7 +18,7 @@ import (
 )
 
 func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, fuser *histutil.Fuser) {
-	bindingVar := newBindingVar(emptyBindingMap)
+	bindingVar := newBindingVar(EmptyBindingMap)
 	ns.AddNs("listing",
 		eval.Ns{
 			"binding": bindingVar,
@@ -48,7 +48,7 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 }
 
 func initHistlist(app cli.App, ev *eval.Evaler, ns eval.Ns, histStore histutil.Store, commonBindingVar vars.PtrVar) {
-	bindingVar := newBindingVar(emptyBindingMap)
+	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar, commonBindingVar)
 	dedup := newBoolVar(true)
 	caseSensitive := newBoolVar(true)
@@ -81,7 +81,7 @@ func initHistlist(app cli.App, ev *eval.Evaler, ns eval.Ns, histStore histutil.S
 }
 
 func initLastcmd(app cli.App, ev *eval.Evaler, ns eval.Ns, histStore histutil.Store, commonBindingVar vars.PtrVar) {
-	bindingVar := newBindingVar(emptyBindingMap)
+	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar, commonBindingVar)
 	ns.AddNs("lastcmd",
 		eval.Ns{
@@ -94,7 +94,7 @@ func initLastcmd(app cli.App, ev *eval.Evaler, ns eval.Ns, histStore histutil.St
 }
 
 func initLocation(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, commonBindingVar vars.PtrVar) {
-	bindingVar := newBindingVar(emptyBindingMap)
+	bindingVar := newBindingVar(EmptyBindingMap)
 	pinnedVar := newListVar(vals.EmptyList)
 	hiddenVar := newListVar(vals.EmptyList)
 	workspacesVar := newMapVar(vals.EmptyMap)

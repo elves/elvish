@@ -1,13 +1,13 @@
-package eddefs
+package cliedit
 
 import (
 	"errors"
 	"sort"
 
-	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/ui"
 	"github.com/xiaq/persistent/hashmap"
 )
 

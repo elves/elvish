@@ -56,7 +56,7 @@ func navToggleShowHidden(app cli.App) {
 }
 
 func initNavigation(app cli.App, ev *eval.Evaler, ns eval.Ns) {
-	bindingVar := newBindingVar(emptyBindingMap)
+	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar)
 
 	selectedFileVar := vars.FromGet(func() interface{} {

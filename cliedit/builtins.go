@@ -11,11 +11,10 @@ import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/eddefs"
-	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/parse/parseutil"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -146,7 +145,7 @@ func initTTYBuiltins(app cli.App, tty cli.TTY, ns eval.Ns) {
 
 func initMiscBuiltins(app cli.App, ns eval.Ns) {
 	ns.AddGoFns("<edit>", map[string]interface{}{
-		"binding-table":  eddefs.MakeBindingMap,
+		"binding-table":  MakeBindingMap,
 		"close-listing":  func() { closeListing(app) },
 		"end-of-history": func() { endOfHistory(app) },
 		"key":            ui.ToKey,
