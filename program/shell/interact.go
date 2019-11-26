@@ -18,26 +18,26 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func interact(ev *eval.Evaler, dataDir string, norc bool) {
+func interact(fds [3]*os.File, ev *eval.Evaler, dataDir string, norc bool) {
 	// Build Editor.
 	var ed editor
-	if sys.IsATTY(os.Stdin) {
+	if sys.IsATTY(fds[0]) {
 		newed := cliedit.NewEditor(cli.StdTTY, ev, ev.DaemonClient)
 		ev.Builtin.AddNs("edit", newed.Ns())
 		ed = newed
 	} else {
-		ed = newMinEditor(os.Stdin, os.Stderr)
+		ed = newMinEditor(fds[0], fds[2])
 	}
 
 	// Source rc.elv.
 	if !norc && dataDir != "" {
-		err := sourceRC(ev, dataDir)
+		err := sourceRC(fds[2], ev, dataDir)
 		if err != nil {
 			diag.PPrintError(err)
 		}
 	}
 
-	term.Sanitize(os.Stdin, os.Stderr)
+	term.Sanitize(fds[0], fds[2])
 
 	cooldown := time.Second
 	cmdNum := 0
@@ -50,13 +50,13 @@ func interact(ev *eval.Evaler, dataDir string, norc bool) {
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			fmt.Println("Editor error:", err)
+			fmt.Fprintln(fds[2], "Editor error:", err)
 			if _, isMinEditor := ed.(*minEditor); !isMinEditor {
-				fmt.Println("Falling back to basic line editor")
-				ed = newMinEditor(os.Stdin, os.Stderr)
+				fmt.Fprintln(fds[2], "Falling back to basic line editor")
+				ed = newMinEditor(fds[0], fds[2])
 			} else {
-				fmt.Println("Don't know what to do, pid is", os.Getpid())
-				fmt.Println("Restarting editor in", cooldown)
+				fmt.Fprintln(fds[2], "Don't know what to do, pid is", os.Getpid())
+				fmt.Fprintln(fds[2], "Restarting editor in", cooldown)
 				time.Sleep(cooldown)
 				if cooldown < time.Minute {
 					cooldown *= 2
@@ -69,14 +69,14 @@ func interact(ev *eval.Evaler, dataDir string, norc bool) {
 		cooldown = time.Second
 
 		err = ev.EvalSourceInTTY(eval.NewInteractiveSource(line))
-		term.Sanitize(os.Stdin, os.Stderr)
+		term.Sanitize(fds[0], fds[2])
 		if err != nil {
 			diag.PPrintError(err)
 		}
 	}
 }
 
-func sourceRC(ev *eval.Evaler, dataDir string) error {
+func sourceRC(stderr *os.File, ev *eval.Evaler, dataDir string) error {
 	absPath, err := filepath.Abs(filepath.Join(dataDir, "rc.elv"))
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -89,7 +89,7 @@ func sourceRC(ev *eval.Evaler, dataDir string) error {
 	if err != nil {
 		return err
 	}
-	extractExports(ev.Global, os.Stderr)
+	extractExports(ev.Global, stderr)
 	return nil
 }
 

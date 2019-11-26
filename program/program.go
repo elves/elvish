@@ -116,14 +116,15 @@ func Main(allArgs []string) int {
 		fmt.Fprintln(os.Stderr, err)
 	}
 
-	return FindProgram(flag).Main(flag.Args())
+	return FindProgram(flag).Main(
+		[3]*os.File{os.Stdin, os.Stdout, os.Stderr}, flag.Args())
 }
 
 // Program represents a subprogram.
 type Program interface {
-	// Main calls the subprogram with arguments. The return value will be used
-	// as the exit status of the entire program.
-	Main(args []string) int
+	// Main runs the subprogram, with given standard files and arguments. The
+	// return value will be used as the exit status of the entire program.
+	Main(fds [3]*os.File, args []string) int
 }
 
 // FindProgram finds a suitable Program according to flags. It does not have any
@@ -153,8 +154,13 @@ func FindProgram(flag *flagSet) Program {
 		if flag.CodeInArg {
 			return ShowCorrectUsage{"-c cannot be used together with -web", flag}
 		}
-		return web.New(flag.Bin, flag.Sock, flag.DB, flag.Port)
+		return &web.Web{
+			BinPath: flag.Bin, SockPath: flag.Sock, DbPath: flag.DB,
+			Port: flag.Port}
 	default:
-		return shell.New(flag.Bin, flag.Sock, flag.DB, flag.CodeInArg, flag.CompileOnly, flag.NoRc, flag.JSON)
+		return &shell.Shell{
+			BinPath: flag.Bin, SockPath: flag.Sock, DbPath: flag.DB,
+			Cmd: flag.CodeInArg, CompileOnly: flag.CompileOnly,
+			NoRc: flag.NoRc, JSON: flag.JSON}
 	}
 }

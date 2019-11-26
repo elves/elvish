@@ -27,13 +27,9 @@ type Shell struct {
 	JSON        bool
 }
 
-func New(binpath, sockpath, dbpath string, cmd, compileonly, norc, json bool) *Shell {
-	return &Shell{binpath, sockpath, dbpath, cmd, compileonly, norc, json}
-}
-
 // Main runs Elvish using the default terminal interface. It blocks until Elvish
 // quits, and returns the exit code.
-func (sh *Shell) Main(args []string) int {
+func (sh *Shell) Main(fds [3]*os.File, args []string) int {
 	defer rescue()
 
 	restoreTTY := term.SetupGlobal()
@@ -42,20 +38,20 @@ func (sh *Shell) Main(args []string) int {
 	ev, dataDir := runtime.InitRuntime(sh.BinPath, sh.SockPath, sh.DbPath)
 	defer runtime.CleanupRuntime(ev)
 
-	handleSignals()
+	handleSignals(fds[2])
 
 	if len(args) > 0 {
 		err := script(ev, args, sh.Cmd, sh.CompileOnly)
 		if err != nil {
 			if sh.CompileOnly && sh.JSON {
-				fmt.Printf("%s\n", errorToJSON(err))
+				fmt.Fprintf(fds[1], "%s\n", errorToJSON(err))
 			} else {
 				diag.PPrintError(err)
 			}
 			return 2
 		}
 	} else {
-		interact(ev, dataDir, sh.NoRc)
+		interact(fds, ev, dataDir, sh.NoRc)
 	}
 
 	return 0
@@ -66,20 +62,20 @@ func rescue() {
 	r := recover()
 	if r != nil {
 		println()
-		fmt.Println(r)
+		println(r)
 		print(sys.DumpStack())
 		println("\nexecing recovery shell /bin/sh")
 		syscall.Exec("/bin/sh", []string{"/bin/sh"}, os.Environ())
 	}
 }
 
-func handleSignals() {
+func handleSignals(stderr *os.File) {
 	sigs := make(chan os.Signal)
 	signal.Notify(sigs)
 	go func() {
 		for sig := range sigs {
 			logger.Println("signal", sig)
-			handleSignal(sig)
+			handleSignal(sig, stderr)
 		}
 	}()
 }
