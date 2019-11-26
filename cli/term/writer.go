@@ -9,8 +9,6 @@ import (
 var logWriterDetail = false
 
 type Writer interface {
-	// Newline writes a newline to the terminal.
-	Newline()
 	// CurrentBuffer returns the current buffer.
 	CurrentBuffer() *Buffer
 	// ResetCurrentBuffer resets the current buffer.
@@ -27,10 +25,6 @@ type writer struct {
 
 func NewWriter(f *os.File) Writer {
 	return &writer{f, &Buffer{}}
-}
-
-func (w *writer) Newline() {
-	w.file.WriteString("\n")
 }
 
 // CurrentBuffer returns the current buffer.
