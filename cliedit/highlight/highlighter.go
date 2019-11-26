@@ -16,7 +16,7 @@ type Highlighter struct {
 }
 
 type state struct {
-	sync.RWMutex
+	sync.Mutex
 	code       string
 	styledCode styled.Text
 	errors     []error
@@ -28,12 +28,11 @@ func NewHighlighter(cfg Config) *Highlighter {
 
 // Get returns the highlighted code and static errors found in the code.
 func (hl *Highlighter) Get(code string) (styled.Text, []error) {
-	hl.state.RLock()
+	hl.state.Lock()
+	defer hl.state.Unlock()
 	if code == hl.state.code {
-		hl.state.RUnlock()
 		return hl.state.styledCode, hl.state.errors
 	}
-	hl.state.RUnlock()
 
 	lateCb := func(styledCode styled.Text) {
 		hl.state.Lock()
@@ -51,8 +50,6 @@ func (hl *Highlighter) Get(code string) (styled.Text, []error) {
 
 	styledCode, errors := highlight(code, hl.cfg, lateCb)
 
-	hl.state.Lock()
-	defer hl.state.Unlock()
 	hl.state.code = code
 	hl.state.styledCode = styledCode
 	hl.state.errors = errors
