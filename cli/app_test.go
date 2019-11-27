@@ -3,12 +3,12 @@ package cli
 import (
 	"errors"
 	"io"
-	"reflect"
 	"strings"
 	"syscall"
 	"testing"
 	"time"
 
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
@@ -23,7 +23,7 @@ const (
 
 // Lifecycle aspects.
 
-func TestSetup_ErrorAbortsReadCode(t *testing.T) {
+func TestReadCode_AbortsWhenTTYSetupReturnsError(t *testing.T) {
 	a, tty := setup()
 	setupErr := errors.New("a fake error")
 	tty.SetSetup(func() {}, setupErr)
@@ -35,12 +35,12 @@ func TestSetup_ErrorAbortsReadCode(t *testing.T) {
 	}
 }
 
-func TestSetup_RestoreIsCalled(t *testing.T) {
+func TestReadCode_RestoresTTYBeforeReturning(t *testing.T) {
 	a, tty := setup()
 	restoreCalled := 0
 	tty.SetSetup(func() { restoreCalled++ }, nil)
 
-	tty.Inject(term.K('\n'))
+	a.CommitCode()
 	a.ReadCode()
 
 	if restoreCalled != 1 {
@@ -48,12 +48,12 @@ func TestSetup_RestoreIsCalled(t *testing.T) {
 	}
 }
 
-func TestState_IsResetBeforeReadCodeReturns(t *testing.T) {
-	a, tty := setupWithSpec(AppSpec{
+func TestReadCode_ResetsStateBeforeReturning(t *testing.T) {
+	a, _ := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "some code"}}})
 
-	tty.Inject(term.K('\n'))
+	a.CommitCode()
 	a.ReadCode()
 
 	if code := a.CodeArea().CopyState().Buffer.Content; code != "" {
@@ -61,39 +61,46 @@ func TestState_IsResetBeforeReadCodeReturns(t *testing.T) {
 	}
 }
 
-func TestBeforeReadline(t *testing.T) {
-	called := 0
-	a, tty := setupWithSpec(AppSpec{
-		BeforeReadline: []func(){func() { called++ }},
+func TestReadCode_CallsBeforeReadline(t *testing.T) {
+	callCh := make(chan bool, 1)
+	a, _ := setupWithSpec(AppSpec{
+		BeforeReadline: []func(){func() { callCh <- true }},
 	})
 
-	tty.Inject(term.K('\n'))
-	a.ReadCode()
+	codeCh, _ := ReadCodeAsync(a)
 
-	if called != 1 {
-		t.Errorf("BeforeReadline hook called %d times, want 1", called)
+	select {
+	case <-callCh:
+		// OK, do nothing.
+	case <-time.After(time.Second):
+		t.Errorf("BeforeReadline not called")
 	}
+
+	cleanup(a, codeCh)
 }
 
-func TestAfterReadline(t *testing.T) {
-	calledWith := []string{}
+func TestReadCode_CallsAfterReadline(t *testing.T) {
+	callCh := make(chan string, 1)
 	a, tty := setupWithSpec(AppSpec{
-		AfterReadline: []func(string){func(s string) {
-			calledWith = append(calledWith, s)
-		}},
+		AfterReadline: []func(string){func(s string) { callCh <- s }},
 	})
 
 	feedInput(tty, "abc\n")
-
 	a.ReadCode()
 
-	wantCalledWith := []string{"abc"}
-	if !reflect.DeepEqual(calledWith, wantCalledWith) {
-		t.Errorf("AfterReadline hook called with %v, want %v", calledWith, wantCalledWith)
+	select {
+	case calledWith := <-callCh:
+		wantCalledWith := "abc"
+		if calledWith != wantCalledWith {
+			t.Errorf("AfterReadline hook called with %v, want %v",
+				calledWith, wantCalledWith)
+		}
+	case <-time.After(time.Second):
+		t.Errorf("AfterReadline not called")
 	}
 }
 
-func TestFinalRedraw(t *testing.T) {
+func TestReadCode_FinalRedraw(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "code"}},
@@ -117,7 +124,7 @@ func TestFinalRedraw(t *testing.T) {
 
 // Signals.
 
-func TestSIGHUP_ReturnsEOF(t *testing.T) {
+func TestReadCode_ReturnsEOFOnSIGHUP(t *testing.T) {
 	a, tty := setup()
 
 	tty.Inject(term.K('a'))
@@ -138,7 +145,7 @@ func TestSIGHUP_ReturnsEOF(t *testing.T) {
 	}
 }
 
-func TestSIGINT_ResetsState(t *testing.T) {
+func TestReadCode_ResetsStateOnSIGINT(t *testing.T) {
 	a, tty := setup()
 
 	codeCh, _ := ReadCodeAsync(a)
@@ -153,7 +160,7 @@ func TestSIGINT_ResetsState(t *testing.T) {
 	tty.TestBuffer(t, bb().Buffer())
 }
 
-func TestSIGWINCH_TriggersRedraw(t *testing.T) {
+func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	a, tty := setup()
 	codeCh, _ := ReadCodeAsync(a)
 	defer cleanup(a, codeCh)
@@ -173,7 +180,7 @@ func TestSIGWINCH_TriggersRedraw(t *testing.T) {
 
 // Code area.
 
-func TestCodeArea_HandlesEvents(t *testing.T) {
+func TestReadCode_LetsCodeAreaHandleEvents(t *testing.T) {
 	a, tty := setup()
 	codeCh, _ := ReadCodeAsync(a)
 	defer cleanup(a, codeCh)
@@ -182,7 +189,7 @@ func TestCodeArea_HandlesEvents(t *testing.T) {
 	tty.TestBuffer(t, bb().Write("code").SetDotHere().Buffer())
 }
 
-func TestHighlighter(t *testing.T) {
+func TestReadCode_ShowsHighlightedCode(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		Highlighter: testHighlighter{
 			get: func(code string) (styled.Text, []error) {
@@ -200,7 +207,7 @@ func TestHighlighter(t *testing.T) {
 	tty.TestBuffer(t, wantBuf)
 }
 
-func TestHighlighter_Errors(t *testing.T) {
+func TestReadCode_ShowsErrorsFromHighlighter(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		Highlighter: testHighlighter{
 			get: func(code string) (styled.Text, []error) {
@@ -220,7 +227,7 @@ func TestHighlighter_Errors(t *testing.T) {
 	tty.TestBuffer(t, wantBuf)
 }
 
-func TestHighlighter_LateUpdate(t *testing.T) {
+func TestReadCode_RedrawsOnLateUpdateFromHighlighter(t *testing.T) {
 	style := ""
 	hl := testHighlighter{
 		get: func(code string) (styled.Text, []error) {
@@ -242,7 +249,7 @@ func TestHighlighter_LateUpdate(t *testing.T) {
 		styled.MakeText("code", "red")).SetDotHere().Buffer())
 }
 
-func TestPrompt(t *testing.T) {
+func TestReadCode_ShowsPrompt(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		Prompt: constPrompt{styled.Plain("> ")}})
 
@@ -254,7 +261,7 @@ func TestPrompt(t *testing.T) {
 	tty.TestBuffer(t, bb().Write("> a").SetDotHere().Buffer())
 }
 
-func TestPrompt_Trigger(t *testing.T) {
+func TestReadCode_CallsPromptTrigger(t *testing.T) {
 	called := 0
 	a, _ := setupWithSpec(AppSpec{
 		Prompt: testPrompt{trigger: func(bool) { called++ }}})
@@ -267,7 +274,7 @@ func TestPrompt_Trigger(t *testing.T) {
 	}
 }
 
-func TestPrompt_LateUpdate(t *testing.T) {
+func TestReadCode_RedrawsOnLateUpdateFromPrompt(t *testing.T) {
 	promptContent := "old"
 	prompt := testPrompt{
 		get:         func() styled.Text { return styled.Plain(promptContent) },
@@ -286,7 +293,7 @@ func TestPrompt_LateUpdate(t *testing.T) {
 	tty.TestBuffer(t, bb().Write("new").SetDotHere().Buffer())
 }
 
-func TestRPrompt(t *testing.T) {
+func TestReadCode_ShowsRPrompt(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		RPrompt: constPrompt{styled.Plain("R")}})
 
@@ -302,7 +309,7 @@ func TestRPrompt(t *testing.T) {
 	tty.TestBuffer(t, wantBuf)
 }
 
-func TestRPrompt_Persistent(t *testing.T) {
+func TestReadCode_ShowsRPromptInFinalRedrawIfPersistent(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "code"}},
@@ -320,7 +327,7 @@ func TestRPrompt_Persistent(t *testing.T) {
 	tty.TestBuffer(t, wantBuf)
 }
 
-func TestRPrompt_NotPersistent(t *testing.T) {
+func TestReadCode_HidesRPromptInFinalRedrawIfNotPersistent(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "code"}},
@@ -340,7 +347,7 @@ func TestRPrompt_NotPersistent(t *testing.T) {
 
 // Addon.
 
-func TestAddon_HandlesEvents(t *testing.T) {
+func TestReadCode_LetsAddonHandleEvents(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		State: State{
 			Addon: codearea.New(codearea.Spec{
@@ -364,7 +371,7 @@ type testAddon struct {
 
 func (a testAddon) Focus() bool { return a.focus }
 
-func TestAddon_ControlsFocus(t *testing.T) {
+func TestReadCode_RespectsAddonFocusMethod(t *testing.T) {
 	addon := testAddon{}
 	a, tty := setupWithSpec(AppSpec{State: State{Addon: &addon}})
 
@@ -387,7 +394,7 @@ func TestAddon_ControlsFocus(t *testing.T) {
 
 // Misc features.
 
-func TestMaxHeight(t *testing.T) {
+func TestReadCode_TrimsBufferToMaxHeight(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		MaxHeight: func() int { return 2 },
 		CodeAreaState: codearea.State{
@@ -403,19 +410,35 @@ func TestMaxHeight(t *testing.T) {
 	tty.TestBuffer(t, wantBuf)
 }
 
-func TestNotes(t *testing.T) {
-	a, tty := setup()
+func TestReadCode_ShowNotes(t *testing.T) {
+	// Set up with a binding where 'a' can block indefinitely. This is useful
+	// for testing the behavior of writing multiple notes.
+	inHandler := make(chan struct{})
+	unblock := make(chan struct{})
+	a, tty := setupWithSpec(AppSpec{
+		OverlayHandler: el.MapHandler{
+			term.K('a'): func() {
+				inHandler <- struct{}{}
+				<-unblock
+			},
+		}})
 	codeCh, _ := ReadCodeAsync(a)
 	defer cleanup(a, codeCh)
 
 	// Wait until initial draw.
 	tty.TestBuffer(t, bb().Buffer())
 
+	// Make sure that the app is blocked within an event handler.
+	tty.Inject(term.K('a'))
+	<-inHandler
+
+	// Write two notes, and unblock the event handler
 	a.Notify("note")
+	a.Notify("note 2")
+	unblock <- struct{}{}
 
 	// Test that the note is rendered onto the notes buffer.
-	wantNotesBuf := bb().
-		Write("note").Buffer()
+	wantNotesBuf := bb().Write("note").Newline().Write("note 2").Buffer()
 	tty.TestNotesBuffer(t, wantNotesBuf)
 
 	// Test that notes are flushed after being rendered.
