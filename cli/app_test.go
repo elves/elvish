@@ -447,6 +447,12 @@ func TestReadCode_ShowNotes(t *testing.T) {
 	}
 }
 
+func TestCode_DoesNotCrashWithNilTTY(t *testing.T) {
+	a := NewApp(AppSpec{TTY: nil})
+	codeCh, _ := ReadCodeAsync(a)
+	defer cleanup(a, codeCh)
+}
+
 // Test utilities.
 
 func setup() (App, TTYCtrl) {

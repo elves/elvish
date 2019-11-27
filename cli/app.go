@@ -170,8 +170,6 @@ func (a *app) handle(e event) {
 		if !a.loop.HasReturned() {
 			a.triggerPrompts(false)
 		}
-	default:
-		panic("unreachable")
 	}
 }
 
