@@ -316,7 +316,7 @@ func commonPrefix(s1, s2 string) string {
 // The type for a native Go matcher. This is not equivalent to the Elvish
 // counterpart, which streams input and output. This is because we can actually
 // afford calling a Go function for each item, so omitting the streaming
-// behavior makes the implementation easier.
+// behavior makes the implementation simpler.
 //
 // Native Go matchers are wrapped into Elvish matchers, but never the other way
 // around.
@@ -325,14 +325,30 @@ func commonPrefix(s1, s2 string) string {
 // wrapped into match-substr and match-prefix respectively.
 type matcher func(text, seed string) bool
 
-type wrappedMatcher func(fm *eval.Frame, seed string, inputs eval.Inputs)
+type matcherOpts struct {
+	IgnoreCase bool
+	SmartCase  bool
+}
+
+func (*matcherOpts) SetDefaultOptions() {}
+
+type wrappedMatcher func(fm *eval.Frame, opts matcherOpts, seed string, inputs eval.Inputs)
 
 func wrapMatcher(m matcher) wrappedMatcher {
-	return func(fm *eval.Frame, seed string, input eval.Inputs) {
+	return func(fm *eval.Frame, opts matcherOpts, seed string, inputs eval.Inputs) {
 		out := fm.OutputChan()
-		input(func(v interface{}) {
-			out <- m(vals.ToString(v), seed)
-		})
+		if opts.IgnoreCase || (opts.SmartCase && seed == strings.ToLower(seed)) {
+			if opts.IgnoreCase {
+				seed = strings.ToLower(seed)
+			}
+			inputs(func(v interface{}) {
+				out <- m(strings.ToLower(vals.ToString(v)), seed)
+			})
+		} else {
+			inputs(func(v interface{}) {
+				out <- m(vals.ToString(v), seed)
+			})
+		}
 	}
 }
 

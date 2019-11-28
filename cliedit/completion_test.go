@@ -217,3 +217,23 @@ func TestBuiltinMatchers(t *testing.T) {
 		"subseq": vals.MakeList(true, true, true, true, false, true, true, false),
 	})
 }
+
+func TestBuiltinMatchers_Options(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	// The two options work identically on all the builtin matchers, so we only
+	// test for match-prefix for simplicity.
+	evals(f.Evaler,
+		`@a = (edit:match-prefix &ignore-case ab [abc aBc AbC])`,
+		`@b = (edit:match-prefix &ignore-case aB [abc aBc AbC])`,
+		`@c = (edit:match-prefix &smart-case  ab [abc aBc Abc])`,
+		`@d = (edit:match-prefix &smart-case  aB [abc aBc AbC])`,
+	)
+	testGlobals(t, f.Evaler, map[string]interface{}{
+		"a": vals.MakeList(true, true, true),
+		"b": vals.MakeList(true, true, true),
+		"c": vals.MakeList(true, true, true),
+		"d": vals.MakeList(false, true, false),
+	})
+}
