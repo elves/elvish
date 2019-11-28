@@ -76,8 +76,15 @@ func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 	bytesBuf.WriteString("\r")
 
 	if fullRefresh {
-		// Do an erase.
-		bytesBuf.WriteString("\033[J")
+		// Erase from here. We may be in the top right corner of the screen; if
+		// we simply do an erase here, tmux will save the current screen in the
+		// scrollback buffer (presumably as a heuristics to detect full-screen
+		// applications), but that is not something we want. So we write a space
+		// first, and then erase, before rewinding back.
+		//
+		// Source code for tmux behavior:
+		// https://github.com/tmux/tmux/blob/5f5f029e3b3a782dc616778739b2801b00b17c0e/screen-write.c#L1139
+		bytesBuf.WriteString(" \033[J\r")
 	}
 
 	// style of last written cell.
