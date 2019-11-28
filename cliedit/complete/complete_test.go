@@ -102,6 +102,13 @@ func TestComplete(t *testing.T) {
 		},
 	}
 
+	dupCfg := Config{
+		PureEvaler: cfg.PureEvaler,
+		ArgGenerator: func([]string) ([]RawItem, error) {
+			return []RawItem{PlainItem("a"), PlainItem("b"), PlainItem("a")}, nil
+		},
+	}
+
 	pathSep := parse.Quote(string(os.PathSeparator))
 	allFileNameItems := []completion.Item{
 		fc("a.exe", " "), fc("d", pathSep), fc("non-exe", " "),
@@ -117,6 +124,15 @@ func TestComplete(t *testing.T) {
 		Args(cb(""), Config{}).Rets(
 			(*Result)(nil),
 			errNoPureEvaler),
+		// Candidates are deduplicated.
+		Args(cb("ls "), dupCfg).Rets(
+			&Result{
+				Name: "argument", Replace: r(3, 3),
+				Items: []completion.Item{
+					c("a"), c("b"),
+				},
+			},
+			nil),
 		// Complete arguments using GenerateFileNames.
 		Args(cb("ls "), cfg).Rets(
 			&Result{

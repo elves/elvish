@@ -99,7 +99,18 @@ func Complete(code CodeBuffer, cfg Config) (*Result, error) {
 		sort.Slice(items, func(i, j int) bool {
 			return items[i].ToShow < items[j].ToShow
 		})
+		items = dedup(items)
 		return &Result{Name: ctx.name, Items: items, Replace: ctx.interval}, nil
 	}
 	return nil, errNoCompletion
+}
+
+func dedup(items []completion.Item) []completion.Item {
+	var result []completion.Item
+	for i, item := range items {
+		if i == 0 || item.ToInsert != items[i-1].ToInsert {
+			result = append(result, item)
+		}
+	}
+	return result
 }
