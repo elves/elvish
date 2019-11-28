@@ -83,57 +83,90 @@ func TestHighlighter_CheckErrors(t *testing.T) {
 	})
 }
 
-const lateTimeout = 100 * time.Millisecond
-
-func TestHighlighter_HasCommand_LateResult(t *testing.T) {
-	// Make a highlighter whose HasCommand callback only recognizes "ls".
-	hl := NewHighlighter(Config{
-		HasCommand: func(cmd string) bool { return cmd == "ls" }})
-
-	test := func(code string, wantInitial, wantLate styled.Text) {
-		initial, _ := hl.Get(code)
-		if !reflect.DeepEqual(wantInitial, initial) {
-			t.Errorf("want %v from initial Get, got %v", wantInitial, initial)
-		}
-		select {
-		case late := <-hl.LateUpdates():
-			if !reflect.DeepEqual(wantLate, late) {
-				t.Errorf("want %v from LateUpdates, got %v", wantLate, late)
-			}
-			late, _ = hl.Get(code)
-			if !reflect.DeepEqual(wantLate, late) {
-				t.Errorf("want %v from late Get, got %v", wantLate, late)
-			}
-		case <-time.After(lateTimeout):
-			t.Errorf("want %v from LateUpdates, but timed out after %v",
-				wantLate, lateTimeout)
-		}
-	}
-
-	test("ls",
-		styled.Plain("ls"),
-		styled.MakeText("ls", "green"))
-	test("echo",
-		styled.Plain("echo"),
-		styled.MakeText("echo", "red"))
+type c struct {
+	given       string
+	wantInitial styled.Text
+	wantLate    styled.Text
+	mustLate    bool
 }
 
-const (
-	// The delay to deliver the result for the first highlight after the second
-	// highlight has been requested.
-	hlDelay = 10 * time.Millisecond
-	// The duration to wait to make sure that the first highlight has completed
-	// and there is nothing delivered on LateUpdates. The test will wait this
-	// long to make sure that the late update is dropped, so it shouldn't be too
-	// large.
-	hlWait = 50 * time.Millisecond
-)
+const lateTimeout = 100 * time.Millisecond
+
+func testThat(t *testing.T, hl *Highlighter, c c) {
+	initial, _ := hl.Get(c.given)
+	if !reflect.DeepEqual(c.wantInitial, initial) {
+		t.Errorf("want %v from initial Get, got %v", c.wantInitial, initial)
+	}
+	if c.wantLate == nil {
+		return
+	}
+	select {
+	case late := <-hl.LateUpdates():
+		if !reflect.DeepEqual(c.wantLate, late) {
+			t.Errorf("want %v from LateUpdates, got %v", c.wantLate, late)
+		}
+		late, _ = hl.Get(c.given)
+		if !reflect.DeepEqual(c.wantLate, late) {
+			t.Errorf("want %v from late Get, got %v", c.wantLate, late)
+		}
+	case <-time.After(lateTimeout):
+		t.Errorf("want %v from LateUpdates, but timed out after %v",
+			c.wantLate, lateTimeout)
+	}
+}
+
+func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
+	// When the HasCommand callback takes longer than maxBlockForLate, late
+	// results are delivered asynchronously.
+	maxBlockForLate = 1 * time.Millisecond
+	hl := NewHighlighter(Config{
+		// HasCommand is slow and only recognizes "ls".
+		HasCommand: func(cmd string) bool {
+			time.Sleep(10 * time.Millisecond)
+			return cmd == "ls"
+		}})
+
+	testThat(t, hl, c{
+		given:       "ls",
+		wantInitial: styled.Plain("ls"),
+		wantLate:    styled.MakeText("ls", "green"),
+	})
+	testThat(t, hl, c{
+		given:       "echo",
+		wantInitial: styled.Plain("echo"),
+		wantLate:    styled.MakeText("echo", "red"),
+	})
+}
+
+func TestHighlighter_HasCommand_LateResult_Sync(t *testing.T) {
+	// When the HasCommand callback takes shorter than maxBlockForLate, late
+	// results are delivered asynchronously.
+	maxBlockForLate = 100 * time.Millisecond
+	hl := NewHighlighter(Config{
+		// HasCommand is fast and only recognizes "ls".
+		HasCommand: func(cmd string) bool {
+			time.Sleep(1 * time.Millisecond)
+			return cmd == "ls"
+		}})
+
+	testThat(t, hl, c{
+		given:       "ls",
+		wantInitial: styled.MakeText("ls", "green"),
+	})
+	testThat(t, hl, c{
+		given:       "echo",
+		wantInitial: styled.MakeText("echo", "red"),
+	})
+}
 
 func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	// When late results are delivered out of order, the ones that do not match
 	// the current code are dropped. In this test, hl.Get is called with "l"
 	// first and then "ls". The late result for "l" is delivered after that of
 	// "ls" and is dropped.
+
+	// Make sure that the HasCommand callback takes longer than maxBlockForLate.
+	maxBlockForLate = 1 * time.Millisecond
 
 	hlSecond := make(chan struct{})
 	hl := NewHighlighter(Config{
@@ -142,9 +175,10 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 				// Make sure that the second highlight has been requested before
 				// returning.
 				<-hlSecond
-				time.Sleep(hlDelay)
+				time.Sleep(10 * time.Millisecond)
 				return false
 			}
+			time.Sleep(10 * time.Millisecond)
 			close(hlSecond)
 			return cmd == "ls"
 		}})
@@ -167,8 +201,8 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	select {
 	case late := <-hl.LateUpdates():
 		t.Errorf("want nothing from LateUpdates, got %v", late)
-	case <-time.After(hlWait):
-		// No late updates; test passed.
+	case <-time.After(50 * time.Millisecond):
+		// We have waited for 50 ms and there are no late updates; test passes.
 	}
 }
 

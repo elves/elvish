@@ -2,6 +2,8 @@
 package highlight
 
 import (
+	"time"
+
 	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/styled"
@@ -19,6 +21,10 @@ type cmdRegion struct {
 	seg int
 	cmd string
 }
+
+// The maximum wait time to block for late results. This is not configurable
+// yet, but can be changed in test cases.
+var maxBlockForLate = 10 * time.Millisecond
 
 // Highlights a piece of Elvish code.
 func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, []error) {
@@ -88,8 +94,9 @@ func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, 
 		text = append(text, styled.PlainSegment(code[lastEnd:]))
 	}
 
-	// Style command regions asynchronously, and call lateCb with the results.
 	if cfg.HasCommand != nil && len(cmdRegions) > 0 {
+		// Launch a goroutine to style command regions asynchronously.
+		lateCh := make(chan styled.Text)
 		go func() {
 			newText := text.Clone()
 			for _, cmdRegion := range cmdRegions {
@@ -101,9 +108,20 @@ func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, 
 				}
 				styled.FindTransformer(transformer)(&newText[cmdRegion.seg].Style)
 			}
-			lateCb(newText)
+			lateCh <- newText
 		}()
+		// Block a short while for the late text to arrive, in order to reduce
+		// flickering. Otherwise, return the text already computed, and pass the
+		// late result to lateCb in another goroutine.
+		select {
+		case late := <-lateCh:
+			return late, errors
+		case <-time.After(maxBlockForLate):
+			go func() {
+				lateCb(<-lateCh)
+			}()
+			return text, errors
+		}
 	}
-
 	return text, errors
 }
