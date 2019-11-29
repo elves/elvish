@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/cliutil"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
@@ -145,10 +144,10 @@ func TestSmartEnter_InsertsNewlineWhenIncomplete(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	cliutil.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "put [", Dot: 5})
+	cli.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "put [", Dot: 5})
 	evals(f.Evaler, `edit:smart-enter`)
 	wantBuf := codearea.Buffer{Content: "put [\n", Dot: 6}
-	if buf := cliutil.GetCodeBuffer(f.Editor.app); buf != wantBuf {
+	if buf := cli.CodeBuffer(f.Editor.app); buf != wantBuf {
 		t.Errorf("got code buffer %v, want %v", buf, wantBuf)
 	}
 }
@@ -157,7 +156,7 @@ func TestSmartEnter_AcceptsCodeWhenComplete(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	cliutil.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "put", Dot: 3})
+	cli.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "put", Dot: 3})
 	evals(f.Evaler, `edit:smart-enter`)
 	wantCode := "put"
 	select {

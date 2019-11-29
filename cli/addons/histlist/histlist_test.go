@@ -9,8 +9,8 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 func TestStart_NoStore(t *testing.T) {

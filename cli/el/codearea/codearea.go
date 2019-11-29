@@ -10,9 +10,9 @@ import (
 
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // Widget supports code-editing functions. It implements the clitypes.Widget

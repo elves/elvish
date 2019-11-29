@@ -7,7 +7,6 @@ import (
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/addons/stub"
-	"github.com/elves/elvish/cli/cliutil"
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/term"
@@ -99,7 +98,7 @@ func insertRaw(app cli.App, tty cli.TTY) {
 
 func smartEnter(app cli.App) {
 	// TODO(xiaq): Fix the race condition.
-	buf := cliutil.GetCodeBuffer(app)
+	buf := cli.CodeBuffer(app)
 	if isSyntaxComplete(buf.Content[:buf.Dot]) {
 		app.CommitCode()
 	} else {

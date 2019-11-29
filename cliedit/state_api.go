@@ -2,7 +2,6 @@ package cliedit
 
 import (
 	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/cliutil"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
@@ -33,7 +32,7 @@ func insertAtDot(app cli.App, text string) {
 // Equivalent to assigning `$text` to `$edit:current-command`.
 
 func replaceInput(app cli.App, text string) {
-	cliutil.SetCodeBuffer(app, codearea.Buffer{Content: text, Dot: len(text)})
+	cli.SetCodeBuffer(app, codearea.Buffer{Content: text, Dot: len(text)})
 }
 
 //elvdoc:var -dot
@@ -81,7 +80,7 @@ func initStateAPI(app cli.App, ns eval.Ns) {
 		return nil
 	}
 	getCurrentCommand := func() interface{} {
-		return vals.FromGo(cliutil.GetCodeBuffer(app).Content)
+		return vals.FromGo(cli.CodeBuffer(app).Content)
 	}
 	ns.Add("current-command", vars.FromSetGet(setCurrentCommand, getCurrentCommand))
 }

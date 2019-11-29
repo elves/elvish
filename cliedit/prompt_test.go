@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 func TestPrompt_ValueOutput(t *testing.T) {

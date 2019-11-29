@@ -5,8 +5,8 @@ import (
 
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/store/storedefs"
+	"github.com/elves/elvish/ui"
 )
 
 /*

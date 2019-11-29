@@ -3,7 +3,7 @@ package cliedit
 import (
 	"testing"
 
-	"github.com/elves/elvish/cli/cliutil"
+	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/store/storedefs"
@@ -35,7 +35,7 @@ func TestInsertLastWord(t *testing.T) {
 
 	evals(f.Evaler, "edit:insert-last-word")
 	wantBuf := codearea.Buffer{Content: "bar", Dot: 3}
-	if buf := cliutil.GetCodeBuffer(f.Editor.app); buf != wantBuf {
+	if buf := cli.CodeBuffer(f.Editor.app); buf != wantBuf {
 		t.Errorf("buf = %v, want %v", buf, wantBuf)
 	}
 }

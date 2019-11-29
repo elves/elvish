@@ -323,22 +323,6 @@ func (a *app) ReadCode() (string, error) {
 	return a.loop.Run()
 }
 
-// ReadCodeAsync is an asynchronous version of App.ReadCode. Instead of
-// blocking, it returns immediately with two channels that will deliver the
-// return values of ReadCode when ReadCode returns.
-//
-// This function is mainly useful in tests.
-func ReadCodeAsync(a App) (<-chan string, <-chan error) {
-	codeCh := make(chan string, 1)
-	errCh := make(chan error, 1)
-	go func() {
-		code, err := a.ReadCode()
-		codeCh <- code
-		errCh <- err
-	}()
-	return codeCh, errCh
-}
-
 func (a *app) Redraw() {
 	a.loop.Redraw(false)
 }

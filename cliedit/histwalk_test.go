@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/store/storedefs"
+	"github.com/elves/elvish/ui"
 )
 
 func TestHistWalk_Up_EndOfHistory(t *testing.T) {
