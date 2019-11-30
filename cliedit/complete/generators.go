@@ -11,7 +11,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -136,7 +136,7 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 
 		items = append(items, ComplexItem{
 			Stem: full, CodeSuffix: suffix,
-			DisplayStyle: styled.StyleFromSGR(lsColor.GetStyle(full)),
+			DisplayStyle: ui.StyleFromSGR(lsColor.GetStyle(full)),
 		})
 	}
 

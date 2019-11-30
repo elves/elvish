@@ -3,7 +3,7 @@ package complete
 import (
 	"github.com/elves/elvish/cli/addons/completion"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // PlainItem is a simple implementation of RawItem.
@@ -30,10 +30,10 @@ func (nq noQuoteItem) Cook(parse.PrimaryType) completion.Item {
 
 // ComplexItem is an implementation of RawItem that offers customization options.
 type ComplexItem struct {
-	Stem          string       // Used in the code and the menu.
-	CodeSuffix    string       // Appended to the code.
-	DisplaySuffix string       // Appended to the display.
-	DisplayStyle  styled.Style // Use for displaying.
+	Stem          string   // Used in the code and the menu.
+	CodeSuffix    string   // Appended to the code.
+	DisplaySuffix string   // Appended to the display.
+	DisplayStyle  ui.Style // Use for displaying.
 }
 
 func (c ComplexItem) String() string { return c.Stem }

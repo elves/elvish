@@ -9,7 +9,6 @@ import (
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/ui"
 )
 
@@ -68,13 +67,13 @@ func TestStart_OK(t *testing.T) {
 		// empty codearea
 		Newline().
 		// combobox codearea
-		WriteStyled(styled.MakeText("LASTCMD",
+		WriteStyled(ui.MakeText("LASTCMD",
 			"bold", "lightgray", "bg-magenta")).
 		Write(" ").
 		SetDotHere().
 		// first entry is selected
 		Newline().WriteStyled(
-		styled.MakeText("    foo,bar,baz"+strings.Repeat(" ", 65), "inverse")).
+		ui.MakeText("    foo,bar,baz"+strings.Repeat(" ", 65), "inverse")).
 		// unselected entries
 		Newline().Write("  0 foo").
 		Newline().Write("  1 bar").
@@ -88,13 +87,13 @@ func TestStart_OK(t *testing.T) {
 		// empty codearea
 		Newline().
 		// combobox codearea
-		WriteStyled(styled.MakeText("LASTCMD",
+		WriteStyled(ui.MakeText("LASTCMD",
 			"bold", "lightgray", "bg-magenta")).
 		Write(" -").
 		SetDotHere().
 		// first entry is selected
 		Newline().WriteStyled(
-		styled.MakeText(" -3 foo"+strings.Repeat(" ", 73), "inverse")).
+		ui.MakeText(" -3 foo"+strings.Repeat(" ", 73), "inverse")).
 		// unselected entries
 		Newline().Write(" -2 bar").
 		Newline().Write(" -1 baz").

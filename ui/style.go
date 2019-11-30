@@ -1,4 +1,4 @@
-package styled
+package ui
 
 import (
 	"fmt"

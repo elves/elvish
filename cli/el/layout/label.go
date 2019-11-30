@@ -2,12 +2,12 @@ package layout
 
 import (
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // Label is a Renderer that writes out a text.
 type Label struct {
-	Content styled.Text
+	Content ui.Text
 }
 
 // Render shows the content. If the given box is too small, the text is cropped.

@@ -2,15 +2,15 @@ package codearea
 
 import (
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
 
 // View model, calculated from State and used for rendering.
 type view struct {
-	prompt  styled.Text
-	rprompt styled.Text
-	code    styled.Text
+	prompt  ui.Text
+	rprompt ui.Text
+	code    ui.Text
 	dot     int
 	errors  []error
 }
@@ -24,11 +24,11 @@ func getView(w *widget) *view {
 	if pFrom < pTo {
 		// Apply pendingStyle to [pFrom, pTo)
 		parts := styledCode.Partition(pFrom, pTo)
-		pending := styled.Transform(parts[1], pendingStyle)
+		pending := ui.TransformText(parts[1], pendingStyle)
 		styledCode = parts[0].ConcatText(pending).ConcatText(parts[2])
 	}
 
-	var rprompt styled.Text
+	var rprompt ui.Text
 	if !s.HideRPrompt {
 		rprompt = w.RPrompt()
 	}
@@ -109,7 +109,7 @@ func truncateToHeight(b *term.Buffer, maxHeight int) {
 	}
 }
 
-func styledWcswidth(t styled.Text) int {
+func styledWcswidth(t ui.Text) int {
 	w := 0
 	for _, seg := range t {
 		w += util.Wcswidth(seg.Text)

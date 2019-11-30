@@ -15,7 +15,7 @@ import (
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/el/textview"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // Config contains the configuration needed for the navigation functionality.
@@ -138,7 +138,7 @@ func Start(app cli.App, cfg Config) {
 		Config: cfg,
 		app:    app,
 		codeArea: codearea.New(codearea.Spec{
-			Prompt: func() styled.Text {
+			Prompt: func() ui.Text {
 				if w.CopyState().ShowHidden {
 					return layout.ModeLine(" NAVIGATING (show hidden) ", true)
 				} else {
@@ -297,12 +297,12 @@ func makeColInner(f File, filter string, showHidden bool, onSelect func(listbox.
 }
 
 func makeErrCol(err error) el.Widget {
-	return layout.Label{Content: styled.MakeText(err.Error(), "red")}
+	return layout.Label{Content: ui.MakeText(err.Error(), "red")}
 }
 
 type fileItems []File
 
-func (it fileItems) Show(i int) styled.Text {
+func (it fileItems) Show(i int) ui.Text {
 	return it[i].ShowName()
 }
 

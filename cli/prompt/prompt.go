@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // Prompt implements a prompt that is executed asynchronously.
@@ -18,9 +18,9 @@ type Prompt struct {
 	// Channel for update requests.
 	updateReq chan struct{}
 	// Channel on which prompt contents are delivered.
-	ch chan styled.Text
+	ch chan ui.Text
 	// Last computed prompt content.
-	last styled.Text
+	last ui.Text
 	// Mutex for guarding access to the last field.
 	lastMutex sync.RWMutex
 }
@@ -28,9 +28,9 @@ type Prompt struct {
 // Config keeps configurations for the prompt.
 type Config struct {
 	// The function that computes the prompt.
-	Compute func() styled.Text
+	Compute func() ui.Text
 	// Function to transform stale prompts.
-	StaleTransform func(styled.Text) styled.Text
+	StaleTransform func(ui.Text) ui.Text
 	// Threshold for a prompt to be considered as stale.
 	StaleThreshold func() time.Duration
 	// How eager the prompt should be updated. When >= 5, updated when directory
@@ -38,20 +38,20 @@ type Config struct {
 	Eagerness func() int
 }
 
-func defaultStaleTransform(t styled.Text) styled.Text {
-	return styled.Transform(t, "inverse")
+func defaultStaleTransform(t ui.Text) ui.Text {
+	return ui.TransformText(t, "inverse")
 }
 
 const defaultStaleThreshold = 200 * time.Millisecond
 
 const defaultEagerness = 5
 
-var unknownContent = styled.Plain("???> ")
+var unknownContent = ui.PlainText("???> ")
 
 // New makes a new prompt.
 func New(cfg Config) *Prompt {
 	if cfg.Compute == nil {
-		cfg.Compute = func() styled.Text { return unknownContent }
+		cfg.Compute = func() ui.Text { return unknownContent }
 	}
 	if cfg.StaleTransform == nil {
 		cfg.StaleTransform = defaultStaleTransform
@@ -64,7 +64,7 @@ func New(cfg Config) *Prompt {
 	}
 	p := &Prompt{
 		cfg,
-		"", make(chan struct{}, 1), make(chan styled.Text, 1),
+		"", make(chan struct{}, 1), make(chan ui.Text, 1),
 		unknownContent, sync.RWMutex{}}
 	// TODO: Don't keep a goroutine running.
 	go p.loop()
@@ -73,7 +73,7 @@ func New(cfg Config) *Prompt {
 
 func (p *Prompt) loop() {
 	content := unknownContent
-	ch := make(chan styled.Text)
+	ch := make(chan ui.Text)
 	for range p.updateReq {
 		go func() {
 			ch <- p.config.Compute()
@@ -109,14 +109,14 @@ func (p *Prompt) Trigger(force bool) {
 }
 
 // Get returns the current content of the prompt.
-func (p *Prompt) Get() styled.Text {
+func (p *Prompt) Get() ui.Text {
 	p.lastMutex.RLock()
 	defer p.lastMutex.RUnlock()
 	return p.last
 }
 
 // LateUpdates returns a channel on which late updates are made available.
-func (p *Prompt) LateUpdates() <-chan styled.Text {
+func (p *Prompt) LateUpdates() <-chan ui.Text {
 	return p.ch
 }
 
@@ -127,7 +127,7 @@ func (p *Prompt) queueUpdate() {
 	}
 }
 
-func (p *Prompt) send(content styled.Text) {
+func (p *Prompt) send(content ui.Text) {
 	p.lastMutex.Lock()
 	p.last = content
 	p.lastMutex.Unlock()

@@ -10,8 +10,8 @@ import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
+	"github.com/elves/elvish/ui"
 )
 
 // App represents a CLI app.
@@ -281,7 +281,7 @@ func (a *app) ReadCode() (string, error) {
 	// Relay late updates from prompt, rprompt and highlighter.
 	stopRelayLateUpdates := make(chan struct{})
 	defer close(stopRelayLateUpdates)
-	relayLateUpdates := func(ch <-chan styled.Text) {
+	relayLateUpdates := func(ch <-chan ui.Text) {
 		if ch == nil {
 			return
 		}

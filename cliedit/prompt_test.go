@@ -6,7 +6,6 @@ import (
 
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/eval/vars"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/ui"
 )
 
@@ -96,7 +95,7 @@ func TestPromptStaleTransform(t *testing.T) {
 	defer f.Cleanup()
 
 	wantBufStale := bb().
-		WriteStyled(styled.Plain("S???> S")).SetDotHere().Buffer()
+		WriteStyled(ui.PlainText("S???> S")).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufStale)
 	evals(f.Evaler, `pwclose $pipe`)
 	evals(f.Evaler, `prclose $pipe`)

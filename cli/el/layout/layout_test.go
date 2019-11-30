@@ -6,7 +6,7 @@ import (
 
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 var bb = term.NewBufferBuilder
@@ -26,13 +26,13 @@ var renderTests = []struct {
 	},
 	{
 		"Label showing all",
-		Label{styled.Plain("label")},
+		Label{ui.PlainText("label")},
 		10, 24,
 		bb(10).Write("label"),
 	},
 	{
 		"Label cropping",
-		Label{styled.Plain("label")},
+		Label{ui.PlainText("label")},
 		4, 1,
 		bb(4).Write("labe"),
 	},
@@ -62,7 +62,7 @@ var renderTests = []struct {
 	},
 	{
 		"VScrollbarContainer",
-		VScrollbarContainer{Label{styled.Plain("abcd1234")},
+		VScrollbarContainer{Label{ui.PlainText("abcd1234")},
 			VScrollbar{4, 0, 1}},
 		5, 2,
 		bb(5).Write("abcd").WriteStyled(vscrollbarThumb).
@@ -107,7 +107,7 @@ func TestRender(t *testing.T) {
 }
 
 var nopHandlers = []el.Handler{
-	Empty{}, Label{styled.Plain("label")},
+	Empty{}, Label{ui.PlainText("label")},
 }
 
 func TestHandle(t *testing.T) {

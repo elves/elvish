@@ -3,7 +3,7 @@ package term
 import (
 	"strings"
 
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -116,10 +116,10 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 	return bb
 }
 
-// Write is equivalent to calling WriteStyled with styled.MakeText(text,
+// Write is equivalent to calling WriteStyled with ui.MakeText(text,
 // style...).
 func (bb *BufferBuilder) Write(text string, styles ...string) *BufferBuilder {
-	return bb.WriteStyled(styled.MakeText(text, styles...))
+	return bb.WriteStyled(ui.MakeText(text, styles...))
 }
 
 // WriteSpaces writes w spaces with the given styles.
@@ -128,9 +128,9 @@ func (bb *BufferBuilder) WriteSpaces(w int, styles ...string) *BufferBuilder {
 }
 
 // WriteMarkedLines is equivalent to calling WriteStyled with
-// styled.MarkLines(args...).
+// ui.MarkLines(args...).
 func (bb *BufferBuilder) WriteMarkedLines(args ...interface{}) *BufferBuilder {
-	return bb.WriteStyled(styled.MarkLines(args...))
+	return bb.WriteStyled(ui.MarkLines(args...))
 }
 
 // WriteStringSGR writes a string to a buffer with a SGR style.
@@ -142,7 +142,7 @@ func (bb *BufferBuilder) WriteStringSGR(text, style string) *BufferBuilder {
 }
 
 // WriteStyled writes a styled text.
-func (bb *BufferBuilder) WriteStyled(t styled.Text) *BufferBuilder {
+func (bb *BufferBuilder) WriteStyled(t ui.Text) *BufferBuilder {
 	for _, seg := range t {
 		bb.WriteStringSGR(seg.Text, sgrFromStyle(seg.Style))
 	}

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -14,15 +14,15 @@ func TestPrompt_DefaultCompute(t *testing.T) {
 	prompt := New(Config{})
 
 	prompt.Trigger(false)
-	testUpdate(t, prompt, styled.Plain("???> "))
+	testUpdate(t, prompt, ui.PlainText("???> "))
 }
 
 func TestPrompt_ShowsComputedPrompt(t *testing.T) {
 	prompt := New(Config{
-		Compute: func() styled.Text { return styled.Plain(">>> ") }})
+		Compute: func() ui.Text { return ui.PlainText(">>> ") }})
 
 	prompt.Trigger(false)
-	testUpdate(t, prompt, styled.Plain(">>> "))
+	testUpdate(t, prompt, ui.PlainText(">>> "))
 }
 
 func TestPrompt_StalePrompt(t *testing.T) {
@@ -37,39 +37,39 @@ func TestPrompt_StalePrompt(t *testing.T) {
 	prompt.Trigger(true)
 	// The compute function is blocked, so a stale version of the intial
 	// "unknown" prompt will be shown.
-	testUpdate(t, prompt, styled.MakeText("???> ", "inverse"))
+	testUpdate(t, prompt, ui.MakeText("???> ", "inverse"))
 
 	// The compute function will now return.
 	unblock()
 	// The returned prompt will now be used.
-	testUpdate(t, prompt, styled.Plain("1> "))
+	testUpdate(t, prompt, ui.PlainText("1> "))
 
 	// Force a refresh.
 	prompt.Trigger(true)
 	// The compute function will now be blocked again, so after a while a stale
 	// version of the previous prompt will be shown.
-	testUpdate(t, prompt, styled.MakeText("1> ", "inverse"))
+	testUpdate(t, prompt, ui.MakeText("1> ", "inverse"))
 
 	// Unblock the compute function.
 	unblock()
 	// The new prompt will now be shown.
-	testUpdate(t, prompt, styled.Plain("2> "))
+	testUpdate(t, prompt, ui.PlainText("2> "))
 
 	// Force a refresh.
 	prompt.Trigger(true)
 	// Make sure that the compute function is run and stuck.
-	testUpdate(t, prompt, styled.MakeText("2> ", "inverse"))
+	testUpdate(t, prompt, ui.MakeText("2> ", "inverse"))
 	// Queue another two refreshes before the compute function can return.
 	prompt.Trigger(true)
 	prompt.Trigger(true)
 	unblock()
 	// Now the new prompt should be marked stale immediately.
-	testUpdate(t, prompt, styled.MakeText("3> ", "inverse"))
+	testUpdate(t, prompt, ui.MakeText("3> ", "inverse"))
 	unblock()
 	// However, the the two refreshes we requested early only trigger one
 	// re-computation, because they are requested while the compute function is
 	// stuck, so they can be safely merged.
-	testUpdate(t, prompt, styled.Plain("4> "))
+	testUpdate(t, prompt, ui.PlainText("4> "))
 }
 
 func TestPrompt_Eagerness0(t *testing.T) {
@@ -80,7 +80,7 @@ func TestPrompt_Eagerness0(t *testing.T) {
 
 	// A forced refresh is always respected.
 	prompt.Trigger(true)
-	testUpdate(t, prompt, styled.Plain("1> "))
+	testUpdate(t, prompt, ui.PlainText("1> "))
 
 	// A unforced refresh is not respected.
 	prompt.Trigger(false)
@@ -94,7 +94,7 @@ func TestPrompt_Eagerness0(t *testing.T) {
 
 	// Only force updates are respected.
 	prompt.Trigger(true)
-	testUpdate(t, prompt, styled.Plain("2> "))
+	testUpdate(t, prompt, ui.PlainText("2> "))
 }
 
 func TestPrompt_Eagerness5(t *testing.T) {
@@ -105,7 +105,7 @@ func TestPrompt_Eagerness5(t *testing.T) {
 
 	// The initial trigger is respected because there was no previous pwd.
 	prompt.Trigger(false)
-	testUpdate(t, prompt, styled.Plain("1> "))
+	testUpdate(t, prompt, ui.PlainText("1> "))
 
 	// No update because the pwd has not changed.
 	prompt.Trigger(false)
@@ -115,7 +115,7 @@ func TestPrompt_Eagerness5(t *testing.T) {
 	_, cleanup := util.InTestDir()
 	defer cleanup()
 	prompt.Trigger(false)
-	testUpdate(t, prompt, styled.Plain("2> "))
+	testUpdate(t, prompt, ui.PlainText("2> "))
 }
 
 func TestPrompt_Eagerness10(t *testing.T) {
@@ -126,24 +126,24 @@ func TestPrompt_Eagerness10(t *testing.T) {
 
 	// The initial trigger is respected.
 	prompt.Trigger(false)
-	testUpdate(t, prompt, styled.Plain("1> "))
+	testUpdate(t, prompt, ui.PlainText("1> "))
 
 	// Subsequent triggers, force or not, are also respected.
 	prompt.Trigger(false)
-	testUpdate(t, prompt, styled.Plain("2> "))
+	testUpdate(t, prompt, ui.PlainText("2> "))
 	prompt.Trigger(true)
-	testUpdate(t, prompt, styled.Plain("3> "))
+	testUpdate(t, prompt, ui.PlainText("3> "))
 	prompt.Trigger(false)
-	testUpdate(t, prompt, styled.Plain("4> "))
+	testUpdate(t, prompt, ui.PlainText("4> "))
 }
 
-func blockedAutoIncPrompt() (func() styled.Text, func()) {
+func blockedAutoIncPrompt() (func() ui.Text, func()) {
 	unblockChan := make(chan struct{})
 	i := 0
-	compute := func() styled.Text {
+	compute := func() ui.Text {
 		<-unblockChan
 		i++
-		return styled.Plain(fmt.Sprintf("%d> ", i))
+		return ui.PlainText(fmt.Sprintf("%d> ", i))
 	}
 	unblock := func() {
 		unblockChan <- struct{}{}
@@ -151,15 +151,15 @@ func blockedAutoIncPrompt() (func() styled.Text, func()) {
 	return compute, unblock
 }
 
-func autoIncPrompt() func() styled.Text {
+func autoIncPrompt() func() ui.Text {
 	i := 0
-	return func() styled.Text {
+	return func() ui.Text {
 		i++
-		return styled.Plain(fmt.Sprintf("%d> ", i))
+		return ui.PlainText(fmt.Sprintf("%d> ", i))
 	}
 }
 
-func testUpdate(t *testing.T, p *Prompt, wantUpdate styled.Text) {
+func testUpdate(t *testing.T, p *Prompt, wantUpdate ui.Text) {
 	t.Helper()
 	select {
 	case update := <-p.LateUpdates():

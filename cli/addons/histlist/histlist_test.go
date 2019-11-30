@@ -9,7 +9,6 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/ui"
 )
 
@@ -159,7 +158,7 @@ func makeListingBuf(mode, filter string, lines ...string) *term.Buffer {
 			b.Write(line)
 		} else {
 			b.WriteStyled(
-				styled.MakeText(fmt.Sprintf("%-50s", line), "inverse"))
+				ui.MakeText(fmt.Sprintf("%-50s", line), "inverse"))
 		}
 	}
 	return b.Buffer()

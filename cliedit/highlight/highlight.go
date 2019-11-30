@@ -6,7 +6,7 @@ import (
 
 	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // Config keeps configuration for highlighting code.
@@ -27,7 +27,7 @@ type cmdRegion struct {
 var maxBlockForLate = 10 * time.Millisecond
 
 // Highlights a piece of Elvish code.
-func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, []error) {
+func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error) {
 	var errors []error
 	var errorRegions []region
 
@@ -54,7 +54,7 @@ func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, 
 		}
 	}
 
-	var text styled.Text
+	var text ui.Text
 	regions := getRegionsInner(n)
 	regions = append(regions, errorRegions...)
 	regions = fixRegions(regions)
@@ -64,7 +64,7 @@ func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, 
 	for _, r := range regions {
 		if r.begin > lastEnd {
 			// Add inter-region text.
-			text = append(text, styled.PlainSegment(code[lastEnd:r.begin]))
+			text = append(text, ui.PlainTextSegment(code[lastEnd:r.begin]))
 		}
 
 		regionCode := code[r.begin:r.end]
@@ -81,9 +81,9 @@ func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, 
 		} else {
 			transformer = transformerFor[r.typ]
 		}
-		seg := styled.PlainSegment(regionCode)
+		seg := ui.PlainTextSegment(regionCode)
 		if transformer != "" {
-			styled.FindTransformer(transformer)(&seg.Style)
+			ui.FindTransformer(transformer)(&seg.Style)
 		}
 
 		text = append(text, seg)
@@ -91,12 +91,12 @@ func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, 
 	}
 	if len(code) > lastEnd {
 		// Add text after the last region as unstyled.
-		text = append(text, styled.PlainSegment(code[lastEnd:]))
+		text = append(text, ui.PlainTextSegment(code[lastEnd:]))
 	}
 
 	if cfg.HasCommand != nil && len(cmdRegions) > 0 {
 		// Launch a goroutine to style command regions asynchronously.
-		lateCh := make(chan styled.Text)
+		lateCh := make(chan ui.Text)
 		go func() {
 			newText := text.Clone()
 			for _, cmdRegion := range cmdRegions {
@@ -106,7 +106,7 @@ func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, 
 				} else {
 					transformer = transformerForBadCommand
 				}
-				styled.FindTransformer(transformer)(&newText[cmdRegion.seg].Style)
+				ui.FindTransformer(transformer)(&newText[cmdRegion.seg].Style)
 			}
 			lateCh <- newText
 		}()

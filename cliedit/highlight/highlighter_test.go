@@ -7,8 +7,8 @@ import (
 
 	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
+	"github.com/elves/elvish/ui"
 )
 
 var any = anyMatcher{}
@@ -27,18 +27,18 @@ func TestHighlighter_HighlightRegions(t *testing.T) {
 
 	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
 		Args("ls").Rets(
-			styled.MarkLines(
+			ui.MarkLines(
 				"ls", styles,
 				"GG",
 			),
 			noErrors),
 		Args(" ls\n").Rets(
-			styled.MarkLines(
+			ui.MarkLines(
 				" ls\n", styles,
 				" GG"),
 			noErrors),
 		Args("ls $x 'y'").Rets(
-			styled.MarkLines(
+			ui.MarkLines(
 				"ls $x 'y'", styles,
 				"GG vv qqq"),
 			noErrors),
@@ -50,7 +50,7 @@ func TestHighlighter_ParseErrors(t *testing.T) {
 	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
 		// Parse error is highlighted and returned
 		Args("ls ]").Rets(
-			styled.MarkLines(
+			ui.MarkLines(
 				"ls ]", styles,
 				"GG x"),
 			matchErrors(parseErrorMatcher{3, 4})),
@@ -65,7 +65,7 @@ func TestHighlighter_CheckErrors(t *testing.T) {
 	// Make a highlighter whose Check callback returns checkError.
 	hl := NewHighlighter(Config{
 		Check: func(*parse.Chunk) error { return checkError }})
-	getWithCheckError := func(code string, err error) (styled.Text, []error) {
+	getWithCheckError := func(code string, err error) (ui.Text, []error) {
 		checkError = err
 		return hl.Get(code)
 	}
@@ -73,7 +73,7 @@ func TestHighlighter_CheckErrors(t *testing.T) {
 	tt.Test(t, tt.Fn("getWithCheckError", getWithCheckError), tt.Table{
 		// Check error is highlighted and returned
 		Args("code 1", fakeCheckError{5, 6}).Rets(
-			styled.MarkLines(
+			ui.MarkLines(
 				"code 1", styles,
 				"GGGG x"),
 			[]error{fakeCheckError{5, 6}}),
@@ -85,8 +85,8 @@ func TestHighlighter_CheckErrors(t *testing.T) {
 
 type c struct {
 	given       string
-	wantInitial styled.Text
-	wantLate    styled.Text
+	wantInitial ui.Text
+	wantLate    ui.Text
 	mustLate    bool
 }
 
@@ -128,13 +128,13 @@ func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
 
 	testThat(t, hl, c{
 		given:       "ls",
-		wantInitial: styled.Plain("ls"),
-		wantLate:    styled.MakeText("ls", "green"),
+		wantInitial: ui.PlainText("ls"),
+		wantLate:    ui.MakeText("ls", "green"),
 	})
 	testThat(t, hl, c{
 		given:       "echo",
-		wantInitial: styled.Plain("echo"),
-		wantLate:    styled.MakeText("echo", "red"),
+		wantInitial: ui.PlainText("echo"),
+		wantLate:    ui.MakeText("echo", "red"),
 	})
 }
 
@@ -151,11 +151,11 @@ func TestHighlighter_HasCommand_LateResult_Sync(t *testing.T) {
 
 	testThat(t, hl, c{
 		given:       "ls",
-		wantInitial: styled.MakeText("ls", "green"),
+		wantInitial: ui.MakeText("ls", "green"),
 	})
 	testThat(t, hl, c{
 		given:       "echo",
-		wantInitial: styled.MakeText("echo", "red"),
+		wantInitial: ui.MakeText("echo", "red"),
 	})
 }
 
@@ -188,8 +188,8 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	initial, _ := hl.Get("ls")
 	late := <-hl.LateUpdates()
 
-	wantInitial := styled.Plain("ls")
-	wantLate := styled.MakeText("ls", "green")
+	wantInitial := ui.PlainText("ls")
+	wantLate := ui.MakeText("ls", "green")
 	if !reflect.DeepEqual(wantInitial, initial) {
 		t.Errorf("want %v from initial Get, got %v", wantInitial, initial)
 	}

@@ -3,7 +3,7 @@ package highlight
 import (
 	"sync"
 
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 const latesBufferSize = 128
@@ -12,29 +12,29 @@ const latesBufferSize = 128
 type Highlighter struct {
 	cfg   Config
 	state state
-	lates chan styled.Text
+	lates chan ui.Text
 }
 
 type state struct {
 	sync.Mutex
 	code       string
-	styledCode styled.Text
+	styledCode ui.Text
 	errors     []error
 }
 
 func NewHighlighter(cfg Config) *Highlighter {
-	return &Highlighter{cfg, state{}, make(chan styled.Text, latesBufferSize)}
+	return &Highlighter{cfg, state{}, make(chan ui.Text, latesBufferSize)}
 }
 
 // Get returns the highlighted code and static errors found in the code.
-func (hl *Highlighter) Get(code string) (styled.Text, []error) {
+func (hl *Highlighter) Get(code string) (ui.Text, []error) {
 	hl.state.Lock()
 	defer hl.state.Unlock()
 	if code == hl.state.code {
 		return hl.state.styledCode, hl.state.errors
 	}
 
-	lateCb := func(styledCode styled.Text) {
+	lateCb := func(styledCode ui.Text) {
 		hl.state.Lock()
 		if hl.state.code != code {
 			// Late result was delivered after code has changed. Unlock and
@@ -57,6 +57,6 @@ func (hl *Highlighter) Get(code string) (styled.Text, []error) {
 }
 
 // LateUpdates returns a channel for notifying late updates.
-func (hl *Highlighter) LateUpdates() <-chan styled.Text {
+func (hl *Highlighter) LateUpdates() <-chan ui.Text {
 	return hl.lates
 }

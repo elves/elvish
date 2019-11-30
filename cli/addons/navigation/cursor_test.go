@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -96,15 +96,15 @@ type testFile struct {
 
 func (f testFile) Name() string { return f.name }
 
-func (f testFile) ShowName() styled.Text {
+func (f testFile) ShowName() ui.Text {
 	// The style matches that of LS_COLORS in the test code.
 	switch {
 	case f.IsDirDeep():
-		return styled.MakeText(f.name, "blue")
+		return ui.MakeText(f.name, "blue")
 	case strings.HasSuffix(f.name, ".png"):
-		return styled.MakeText(f.name, "red")
+		return ui.MakeText(f.name, "red")
 	default:
-		return styled.Plain(f.name)
+		return ui.PlainText(f.name)
 	}
 }
 

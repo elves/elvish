@@ -1,4 +1,4 @@
-package styled
+package ui
 
 import (
 	"bytes"
@@ -12,16 +12,16 @@ import (
 // Text contains of a list of styled Segments.
 type Text []*Segment
 
-// Plain returns an unstyled Text.
-func Plain(s string) Text {
-	return Text{PlainSegment(s)}
+// PlainText returns an unstyled Text.
+func PlainText(s string) Text {
+	return Text{PlainTextSegment(s)}
 }
 
 // MakeText makes a text by taking a string and applying the given transformers.
 func MakeText(s string, transformers ...string) Text {
-	t := Plain(s)
+	t := PlainText(s)
 	for _, transformer := range transformers {
-		t = Transform(t, transformer)
+		t = TransformText(t, transformer)
 	}
 	return t
 }

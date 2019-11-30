@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // State keeps the state of the widget. Its access must be synchronized through
@@ -19,7 +19,7 @@ type State struct {
 // Items is an interface for accessing multiple items.
 type Items interface {
 	// Show renders the item at the given zero-based index.
-	Show(i int) styled.Text
+	Show(i int) ui.Text
 	// Len returns the number of items.
 	Len() int
 }
@@ -33,12 +33,12 @@ type TestItems struct {
 
 // Show returns a plain text consisting of the prefix and i. If the prefix is
 // empty, it defaults to "item ".
-func (it TestItems) Show(i int) styled.Text {
+func (it TestItems) Show(i int) ui.Text {
 	prefix := it.Prefix
 	if prefix == "" {
 		prefix = "item "
 	}
-	return styled.MakeText(
+	return ui.MakeText(
 		fmt.Sprintf("%s%d", prefix, i), strings.Split(it.Styles, " ")...)
 }
 

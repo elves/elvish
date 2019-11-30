@@ -10,7 +10,6 @@ import (
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/lscolors"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
@@ -64,7 +63,7 @@ func TestErrorInAscend(t *testing.T) {
 	Start(app, Config{Cursor: c})
 
 	ttyCtrl.Inject(term.K(ui.Left))
-	ttyCtrl.TestNotesBuffer(t, makeNotesBuf(styled.Plain("cannot ascend")))
+	ttyCtrl.TestNotesBuffer(t, makeNotesBuf(ui.PlainText("cannot ascend")))
 }
 
 func TestErrorInDescend(t *testing.T) {
@@ -77,7 +76,7 @@ func TestErrorInDescend(t *testing.T) {
 
 	ttyCtrl.Inject(term.K(ui.Down))
 	ttyCtrl.Inject(term.K(ui.Right))
-	ttyCtrl.TestNotesBuffer(t, makeNotesBuf(styled.Plain("cannot descend")))
+	ttyCtrl.TestNotesBuffer(t, makeNotesBuf(ui.PlainText("cannot descend")))
 }
 
 func TestErrorInCurrent(t *testing.T) {
@@ -88,7 +87,7 @@ func TestErrorInCurrent(t *testing.T) {
 	c.currentErr = errors.New("ERR")
 	Start(app, Config{Cursor: c})
 
-	buf := makeBuf(styled.MarkLines(
+	buf := makeBuf(ui.MarkLines(
 		" a   ERR            ", styles,
 		"     xxx",
 		" d  ", styles,
@@ -110,7 +109,7 @@ func TestErrorInParent(t *testing.T) {
 	c.parentErr = errors.New("ERR")
 	Start(app, Config{Cursor: c})
 
-	buf := makeBuf(styled.MarkLines(
+	buf := makeBuf(ui.MarkLines(
 		"ERR   d1            content    d1", styles,
 		"xxx  --------------",
 		"      d2            line 2", styles,
@@ -146,7 +145,7 @@ func testNavigation(t *testing.T, c Cursor) {
 
 	// Test initial UI and file preview.
 	// NOTE: Buffers are named after the file that is now being selected.
-	d1Buf := makeBuf(styled.MarkLines(
+	d1Buf := makeBuf(ui.MarkLines(
 		" a    d1            content    d1", styles,
 		"     --------------",
 		" d    d2            line 2", styles,
@@ -158,7 +157,7 @@ func testNavigation(t *testing.T, c Cursor) {
 
 	// Test scrolling of preview.
 	ScrollPreview(app, 1)
-	d1Buf2 := makeBuf(styled.MarkLines(
+	d1Buf2 := makeBuf(ui.MarkLines(
 		" a    d1            line 2             │", styles,
 		"     --------------                    t",
 		" d    d2                               │", styles,
@@ -173,7 +172,7 @@ func testNavigation(t *testing.T, c Cursor) {
 	// Test handling of selection change and directory preview. Also test
 	// LS_COLORS.
 	Select(app, listbox.Next)
-	d2Buf := makeBuf(styled.MarkLines(
+	d2Buf := makeBuf(ui.MarkLines(
 		" a    d1             d21                ", styles,
 		"                    --------------------",
 		" d    d2             d22                ", styles,
@@ -185,7 +184,7 @@ func testNavigation(t *testing.T, c Cursor) {
 
 	// Test handling of Descend.
 	Descend(app)
-	d21Buf := makeBuf(styled.MarkLines(
+	d21Buf := makeBuf(ui.MarkLines(
 		" d1   d21           content d21", styles,
 		"     --------------",
 		" d2   d22          ", styles,
@@ -210,7 +209,7 @@ func testNavigation(t *testing.T, c Cursor) {
 
 	// Test showing hidden.
 	MutateShowHidden(app, func(bool) bool { return true })
-	ttyCtrl.TestBuffer(t, makeShowHiddenBuf(styled.MarkLines(
+	ttyCtrl.TestBuffer(t, makeShowHiddenBuf(ui.MarkLines(
 		" a    .dh           content    d1",
 		" d    d1            line 2", styles,
 		"#### --------------",
@@ -225,7 +224,7 @@ func testNavigation(t *testing.T, c Cursor) {
 	MutateFiltering(app, func(bool) bool { return true })
 	ttyCtrl.Inject(term.K('3'))
 	ttyCtrl.TestBuffer(t, makeFilteringBuf("3",
-		styled.MarkLines(
+		ui.MarkLines(
 			" a    d3            ", styles,
 			"     ##############",
 			" d  ", styles,
@@ -240,7 +239,7 @@ func testNavigation(t *testing.T, c Cursor) {
 	Select(app, listbox.Next)
 	Select(app, listbox.Next)
 	Descend(app)
-	d3NoneBuf := makeBuf(styled.MarkLines(
+	d3NoneBuf := makeBuf(ui.MarkLines(
 		" d1                 ",
 		" d2 ", styles,
 		"++++",
@@ -259,26 +258,26 @@ func testNavigation(t *testing.T, c Cursor) {
 	ttyCtrl.TestBuffer(t, d3NoneBuf)
 }
 
-func makeBuf(navRegion styled.Text) *term.Buffer {
+func makeBuf(navRegion ui.Text) *term.Buffer {
 	return term.NewBufferBuilder(40).SetDotHere().
 		Newline().WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
 		Newline().WriteStyled(navRegion).Buffer()
 }
 
-func makeShowHiddenBuf(navRegion styled.Text) *term.Buffer {
+func makeShowHiddenBuf(navRegion ui.Text) *term.Buffer {
 	return term.NewBufferBuilder(40).SetDotHere().
 		Newline().WriteStyled(layout.ModeLine(" NAVIGATING (show hidden) ", true)).
 		Newline().WriteStyled(navRegion).Buffer()
 }
 
-func makeFilteringBuf(filter string, navRegion styled.Text) *term.Buffer {
+func makeFilteringBuf(filter string, navRegion ui.Text) *term.Buffer {
 	return term.NewBufferBuilder(40).
 		Newline().WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
 		Write(filter).SetDotHere().
 		Newline().WriteStyled(navRegion).Buffer()
 }
 
-func makeNotesBuf(content styled.Text) *term.Buffer {
+func makeNotesBuf(content ui.Text) *term.Buffer {
 	return term.NewBufferBuilder(40).WriteStyled(content).Buffer()
 }
 

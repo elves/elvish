@@ -14,7 +14,6 @@ import (
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/ui"
-	"github.com/elves/elvish/styled"
 )
 
 var (
@@ -27,12 +26,12 @@ func makeWidget() el.Widget {
 	w := &combobox.Widget{
 		CodeArea: codearea.Widget{
 			Prompt: codearea.ConstPrompt(
-				styled.MakeText(" NUMBER ", "bold", "bg-magenta").
-					ConcatText(styled.Plain(" "))),
+				ui.MakeText(" NUMBER ", "bold", "bg-magenta").
+					ConcatText(ui.PlainText(" "))),
 		},
 		ListBox: listbox.Widget{
 			State:       listbox.MakeState(&items, false),
-			Placeholder: styled.Plain("(no items)"),
+			Placeholder: ui.PlainText("(no items)"),
 			Horizontal:  *horizontal,
 		},
 	}

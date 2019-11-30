@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // Unable to test the failure branches, as we cannot construct a valid
@@ -14,7 +14,7 @@ func TestTestRender(t *testing.T) {
 	TestRender(t, []RenderTest{
 		{
 			Name:  "test",
-			Given: &testWidget{text: styled.Plain("test")},
+			Given: &testWidget{text: ui.PlainText("test")},
 			Width: 10, Height: 10,
 
 			Want: term.NewBufferBuilder(10).Write("test"),

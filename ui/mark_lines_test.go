@@ -1,4 +1,4 @@
-package styled
+package ui
 
 import (
 	"testing"
@@ -12,15 +12,15 @@ func TestMarkLines(t *testing.T) {
 		'x': "blue bg-green",
 	}
 	tt.Test(t, tt.Fn("MarkLines", MarkLines), tt.Table{
-		tt.Args("foo  bar foobar").Rets(Plain("foo  bar foobar")),
+		tt.Args("foo  bar foobar").Rets(PlainText("foo  bar foobar")),
 		tt.Args(
 			"foo  bar foobar", stylesheet,
 			"---  xxx ------",
 		).Rets(
 			MakeText("foo", "reverse").
-				ConcatText(Plain("  ")).
+				ConcatText(PlainText("  ")).
 				ConcatText(MakeText("bar", "blue", "bg-green")).
-				ConcatText(Plain(" ")).
+				ConcatText(PlainText(" ")).
 				ConcatText(MakeText("foobar", "reverse")),
 		),
 		tt.Args(
@@ -28,7 +28,7 @@ func TestMarkLines(t *testing.T) {
 			"---",
 		).Rets(
 			MakeText("foo", "reverse").
-				ConcatText(Plain("  bar foobar")),
+				ConcatText(PlainText("  bar foobar")),
 		),
 		tt.Args(
 			"plain1",
@@ -37,17 +37,17 @@ func TestMarkLines(t *testing.T) {
 			"---  xxx ------",
 			"plain3",
 		).Rets(
-			Plain("plain1").
-				ConcatText(Plain("\n")).
-				ConcatText(Plain("plain2")).
-				ConcatText(Plain("\n")).
+			PlainText("plain1").
+				ConcatText(PlainText("\n")).
+				ConcatText(PlainText("plain2")).
+				ConcatText(PlainText("\n")).
 				ConcatText(MakeText("foo", "reverse")).
-				ConcatText(Plain("  ")).
+				ConcatText(PlainText("  ")).
 				ConcatText(MakeText("bar", "blue", "bg-green")).
-				ConcatText(Plain(" ")).
+				ConcatText(PlainText(" ")).
 				ConcatText(MakeText("foobar", "reverse")).
-				ConcatText(Plain("\n")).
-				ConcatText(Plain("plain3")),
+				ConcatText(PlainText("\n")).
+				ConcatText(PlainText("plain3")),
 		),
 	})
 }

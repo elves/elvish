@@ -14,7 +14,7 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/histutil"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // Config is the configuration for starting lastcmd.
@@ -110,7 +110,7 @@ func filter(allEntries []entry, p string) items {
 	return items{negFilter, entries}
 }
 
-func (it items) Show(i int) styled.Text {
+func (it items) Show(i int) ui.Text {
 	index := ""
 	entry := it.entries[i]
 	if it.negFilter {
@@ -121,7 +121,7 @@ func (it items) Show(i int) styled.Text {
 	// NOTE: We now use a hardcoded width of 3 for the index, which will work as
 	// long as the command has less than 1000 words (when filter is positive) or
 	// 100 words (when filter is negative).
-	return styled.Plain(fmt.Sprintf("%3s %s", index, entry.content))
+	return ui.PlainText(fmt.Sprintf("%3s %s", index, entry.content))
 }
 
 func (it items) Len() int { return len(it.entries) }

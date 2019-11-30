@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/codearea"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // AppSpec specifies the configuration and initial state for an App.
@@ -30,31 +30,31 @@ type AppSpec struct {
 // asynchronously.
 type Highlighter interface {
 	// Get returns the highlighted code and any static errors.
-	Get(code string) (styled.Text, []error)
+	Get(code string) (ui.Text, []error)
 	// LateUpdates returns a channel for delivering late updates.
-	LateUpdates() <-chan styled.Text
+	LateUpdates() <-chan ui.Text
 }
 
 // A Highlighter implementation that always returns plain text.
 type dummyHighlighter struct{}
 
-func (dummyHighlighter) Get(code string) (styled.Text, []error) {
-	return styled.Plain(code), nil
+func (dummyHighlighter) Get(code string) (ui.Text, []error) {
+	return ui.PlainText(code), nil
 }
 
-func (dummyHighlighter) LateUpdates() <-chan styled.Text { return nil }
+func (dummyHighlighter) LateUpdates() <-chan ui.Text { return nil }
 
 // A Highlighter implementation useful for testing.
 type testHighlighter struct {
-	get         func(code string) (styled.Text, []error)
-	lateUpdates chan styled.Text
+	get         func(code string) (ui.Text, []error)
+	lateUpdates chan ui.Text
 }
 
-func (hl testHighlighter) Get(code string) (styled.Text, []error) {
+func (hl testHighlighter) Get(code string) (ui.Text, []error) {
 	return hl.get(code)
 }
 
-func (hl testHighlighter) LateUpdates() <-chan styled.Text {
+func (hl testHighlighter) LateUpdates() <-chan ui.Text {
 	return hl.lateUpdates
 }
 
@@ -65,23 +65,23 @@ type Prompt interface {
 	// SIGINT that resets the editor.
 	Trigger(force bool)
 	// Get returns the current prompt.
-	Get() styled.Text
+	Get() ui.Text
 	// LastUpdates returns a channel for delivering late updates.
-	LateUpdates() <-chan styled.Text
+	LateUpdates() <-chan ui.Text
 }
 
-// A Prompt implementation that always return the same styled.Text.
-type constPrompt struct{ t styled.Text }
+// A Prompt implementation that always return the same ui.Text.
+type constPrompt struct{ t ui.Text }
 
-func (constPrompt) Trigger(force bool)              {}
-func (p constPrompt) Get() styled.Text              { return p.t }
-func (constPrompt) LateUpdates() <-chan styled.Text { return nil }
+func (constPrompt) Trigger(force bool)          {}
+func (p constPrompt) Get() ui.Text              { return p.t }
+func (constPrompt) LateUpdates() <-chan ui.Text { return nil }
 
 // A Prompt implementation useful for testing.
 type testPrompt struct {
 	trigger     func(force bool)
-	get         func() styled.Text
-	lateUpdates chan styled.Text
+	get         func() ui.Text
+	lateUpdates chan ui.Text
 }
 
 func (p testPrompt) Trigger(force bool) {
@@ -90,13 +90,13 @@ func (p testPrompt) Trigger(force bool) {
 	}
 }
 
-func (p testPrompt) Get() styled.Text {
+func (p testPrompt) Get() ui.Text {
 	if p.get != nil {
 		return p.get()
 	}
 	return nil
 }
 
-func (p testPrompt) LateUpdates() <-chan styled.Text {
+func (p testPrompt) LateUpdates() <-chan ui.Text {
 	return p.lateUpdates
 }

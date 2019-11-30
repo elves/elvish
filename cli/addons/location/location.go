@@ -17,7 +17,7 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/store/storedefs"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -193,8 +193,8 @@ func makeRegexpForPattern(p string) *regexp.Regexp {
 	return re
 }
 
-func (l list) Show(i int) styled.Text {
-	return styled.Plain(fmt.Sprintf("%s %s",
+func (l list) Show(i int) ui.Text {
+	return ui.PlainText(fmt.Sprintf("%s %s",
 		showScore(l.dirs[i].Score), showPath(l.dirs[i].Path, l.home)))
 }
 

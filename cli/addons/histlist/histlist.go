@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/histutil"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // Config contains configurations to start history listing.
@@ -60,7 +60,7 @@ func Start(app cli.App, cfg Config) {
 	cmdItems := items{cmds, last}
 
 	w := combobox.New(combobox.Spec{
-		CodeArea: codearea.Spec{Prompt: func() styled.Text {
+		CodeArea: codearea.Spec{Prompt: func() ui.Text {
 			content := " HISTORY "
 			if cfg.Dedup() {
 				content += "(dedup on) "
@@ -123,10 +123,10 @@ func (it items) filter(p string, dedup, caseSensitive bool) items {
 	return items{filtered, nil}
 }
 
-func (it items) Show(i int) styled.Text {
+func (it items) Show(i int) ui.Text {
 	entry := it.entries[i]
 	// TODO: The alignment of the index works up to 10000 entries.
-	return styled.Plain(fmt.Sprintf("%4d %s", entry.Seq, entry.Text))
+	return ui.PlainText(fmt.Sprintf("%4d %s", entry.Seq, entry.Text))
 }
 
 func (it items) Len() int { return len(it.entries) }

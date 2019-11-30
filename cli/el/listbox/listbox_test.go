@@ -5,7 +5,6 @@ import (
 
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/ui"
 )
 
@@ -14,14 +13,14 @@ var bb = term.NewBufferBuilder
 var renderVerticalTests = []el.RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
-		Given: New(Spec{Placeholder: styled.Plain("nothing")}),
+		Given: New(Spec{Placeholder: ui.PlainText("nothing")}),
 		Width: 10, Height: 3,
 		Want: bb(10).Write("nothing"),
 	},
 	{
 		Name: "placeholder when NItems is 0",
 		Given: New(Spec{
-			Placeholder: styled.Plain("nothing"),
+			Placeholder: ui.PlainText("nothing"),
 			State:       State{Items: TestItems{}}}),
 		Width: 10, Height: 3,
 		Want: bb(10).Write("nothing"),
@@ -146,14 +145,14 @@ func TestRender_Vertical_MutatesState(t *testing.T) {
 var renderHorizontalTests = []el.RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
-		Given: New(Spec{Horizontal: true, Placeholder: styled.Plain("nothing")}),
+		Given: New(Spec{Horizontal: true, Placeholder: ui.PlainText("nothing")}),
 		Width: 10, Height: 3,
 		Want: bb(10).Write("nothing"),
 	},
 	{
 		Name: "placeholder when NItems is 0",
 		Given: New(Spec{
-			Horizontal: true, Placeholder: styled.Plain("nothing"),
+			Horizontal: true, Placeholder: ui.PlainText("nothing"),
 			State: State{Items: TestItems{}}}),
 		Width: 10, Height: 3,
 		Want: bb(10).Write("nothing"),

@@ -7,7 +7,6 @@ import (
 
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/ui"
 )
 
@@ -17,14 +16,14 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "prompt only",
 		Given: New(Spec{
-			Prompt: ConstPrompt(styled.MakeText("~>", "bold"))}),
+			Prompt: ConstPrompt(ui.MakeText("~>", "bold"))}),
 		Width: 10, Height: 24,
 		Want: bb(10).WriteStringSGR("~>", "1").SetDotHere(),
 	},
 	{
 		Name: "rprompt only",
 		Given: New(Spec{
-			RPrompt: ConstPrompt(styled.MakeText("RP", "inverse"))}),
+			RPrompt: ConstPrompt(ui.MakeText("RP", "inverse"))}),
 		Width: 10, Height: 24,
 		Want: bb(10).SetDotHere().WriteSpaces(8).WriteStringSGR("RP", "7"),
 	},
@@ -52,8 +51,8 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "prompt, code and rprompt",
 		Given: New(Spec{
-			Prompt:  ConstPrompt(styled.Plain("~>")),
-			RPrompt: ConstPrompt(styled.Plain("RP")),
+			Prompt:  ConstPrompt(ui.PlainText("~>")),
+			RPrompt: ConstPrompt(ui.PlainText("RP")),
 			State:   State{Buffer: Buffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).Write("~>code").SetDotHere().Write("  RP"),
@@ -62,8 +61,8 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "prompt explicitly hidden ",
 		Given: New(Spec{
-			Prompt:  ConstPrompt(styled.Plain("~>")),
-			RPrompt: ConstPrompt(styled.Plain("RP")),
+			Prompt:  ConstPrompt(ui.PlainText("~>")),
+			RPrompt: ConstPrompt(ui.PlainText("RP")),
 			State:   State{Buffer: Buffer{Content: "code", Dot: 4}, HideRPrompt: true}}),
 		Width: 10, Height: 24,
 		Want: bb(10).Write("~>code").SetDotHere(),
@@ -71,8 +70,8 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "rprompt too long",
 		Given: New(Spec{
-			Prompt:  ConstPrompt(styled.Plain("~>")),
-			RPrompt: ConstPrompt(styled.Plain("1234")),
+			Prompt:  ConstPrompt(ui.PlainText("~>")),
+			RPrompt: ConstPrompt(ui.PlainText("1234")),
 			State:   State{Buffer: Buffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).Write("~>code").SetDotHere(),
@@ -80,8 +79,8 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "highlighted code",
 		Given: New(Spec{
-			Highlighter: func(code string) (styled.Text, []error) {
-				return styled.MakeText(code, "bold"), nil
+			Highlighter: func(code string) (ui.Text, []error) {
+				return ui.MakeText(code, "bold"), nil
 			},
 			State: State{Buffer: Buffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
@@ -90,10 +89,10 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "static errors in code",
 		Given: New(Spec{
-			Prompt: ConstPrompt(styled.Plain("> ")),
-			Highlighter: func(code string) (styled.Text, []error) {
+			Prompt: ConstPrompt(ui.PlainText("> ")),
+			Highlighter: func(code string) (ui.Text, []error) {
 				err := errors.New("static error")
-				return styled.Plain(code), []error{err}
+				return ui.PlainText(code), []error{err}
 			},
 			State: State{Buffer: Buffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,

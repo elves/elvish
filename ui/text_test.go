@@ -1,4 +1,4 @@
-package styled
+package ui
 
 import (
 	"testing"
@@ -10,8 +10,8 @@ import (
 
 var Args = tt.Args
 
-func TestPlain(t *testing.T) {
-	tt.Test(t, tt.Fn("Plain", Plain), tt.Table{
+func TestPlainText(t *testing.T) {
+	tt.Test(t, tt.Fn("PlainText", PlainText), tt.Table{
 		Args("test").Rets(Text{&Segment{Text: "test"}}),
 		Args("").Rets(Text{&Segment{}}),
 	})

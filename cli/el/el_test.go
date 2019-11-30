@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 type testWidget struct {
 	// Text to render.
-	text styled.Text
+	text ui.Text
 	// Which events to accept.
 	accepted []term.Event
 	// A record of events that have been handled.

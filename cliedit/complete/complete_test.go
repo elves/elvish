@@ -11,8 +11,8 @@ import (
 	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -281,7 +281,7 @@ func c(s string) completion.Item { return completion.Item{ToShow: s, ToInsert: s
 
 func fc(s, suffix string) completion.Item {
 	return completion.Item{ToShow: s, ToInsert: s + suffix,
-		ShowStyle: styled.StyleFromSGR(lscolors.GetColorist().GetStyle(s))}
+		ShowStyle: ui.StyleFromSGR(lscolors.GetColorist().GetStyle(s))}
 }
 
 func r(i, j int) diag.Ranging { return diag.Ranging{From: i, To: j} }

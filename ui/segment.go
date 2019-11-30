@@ -1,4 +1,4 @@
-package styled
+package ui
 
 import (
 	"bytes"
@@ -15,8 +15,8 @@ type Segment struct {
 	Text string
 }
 
-// PlainSegment returns an Segment containing the given text with no style.
-func PlainSegment(s string) *Segment {
+// PlainTextSegment returns an Segment containing the given text with no style.
+func PlainTextSegment(s string) *Segment {
 	return &Segment{Text: s}
 }
 

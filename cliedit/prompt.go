@@ -13,7 +13,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -39,7 +39,7 @@ func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *
 	ns[name+"-stale-transform"] = staleTransformVar
 
 	*p = prompt.New(prompt.Config{
-		Compute: func() styled.Text {
+		Compute: func() ui.Text {
 			return callForStyledText(nt, ev, computeVar.Get().(eval.Callable))
 		},
 		Eagerness: func() int { return eagernessVar.GetRaw().(int) },
@@ -47,7 +47,7 @@ func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *
 			seconds := staleThresholdVar.GetRaw().(float64)
 			return time.Duration(seconds * float64(time.Second))
 		},
-		StaleTransform: func(original styled.Text) styled.Text {
+		StaleTransform: func(original ui.Text) ui.Text {
 			return callForStyledText(nt, ev, staleTransformVar.Get().(eval.Callable), original)
 		},
 	})
@@ -70,32 +70,32 @@ func getDefaultPromptVals() (prompt, rprompt eval.Callable) {
 }
 
 func getDefaultPrompt(isRoot bool) eval.Callable {
-	p := styled.Plain("> ")
+	p := ui.PlainText("> ")
 	if isRoot {
-		p = styled.Transform(styled.Plain("# "), "red")
+		p = ui.TransformText(ui.PlainText("# "), "red")
 	}
-	return eval.NewGoFn("default prompt", func() styled.Text {
-		return styled.Plain(util.Getwd()).ConcatText(p)
+	return eval.NewGoFn("default prompt", func() ui.Text {
+		return ui.PlainText(util.Getwd()).ConcatText(p)
 	})
 }
 
 func getDefaultRPrompt(username, hostname string) eval.Callable {
-	rp := styled.Transform(styled.Plain(username+"@"+hostname), "inverse")
-	return eval.NewGoFn("default rprompt", func() styled.Text {
+	rp := ui.TransformText(ui.PlainText(username+"@"+hostname), "inverse")
+	return eval.NewGoFn("default rprompt", func() ui.Text {
 		return rp
 	})
 }
 
-func defaultStaleTransform(original styled.Text) styled.Text {
-	return styled.Transform(original, "inverse")
+func defaultStaleTransform(original ui.Text) ui.Text {
+	return ui.TransformText(original, "inverse")
 }
 
 // callPrompt calls a function with the given arguments and closed input, and
 // concatenates its outputs to a styled text. Used to call prompts and stale
 // transformers.
-func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...interface{}) styled.Text {
+func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...interface{}) ui.Text {
 	var (
-		result      styled.Text
+		result      ui.Text
 		resultMutex sync.Mutex
 	)
 	add := func(v interface{}) {
@@ -106,7 +106,7 @@ func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...i
 			nt.Notify(fmt.Sprintf(
 				"invalid output type from prompt: %s", vals.Kind(v)))
 		} else {
-			result = newResult.(styled.Text)
+			result = newResult.(ui.Text)
 		}
 	}
 

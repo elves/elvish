@@ -8,7 +8,6 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/diag"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/ui"
 )
 
@@ -28,7 +27,7 @@ func TestStart(t *testing.T) {
 		Items: []Item{
 			{ToShow: "foo", ToInsert: "foo"},
 			{ToShow: "foo bar", ToInsert: "'foo bar'",
-				ShowStyle: styled.Style{Foreground: "blue"}},
+				ShowStyle: ui.Style{Foreground: "blue"}},
 		},
 	}
 	Start(app, cfg)

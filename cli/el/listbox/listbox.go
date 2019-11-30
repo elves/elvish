@@ -9,7 +9,6 @@ import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/ui"
 )
 
@@ -37,7 +36,7 @@ type Spec struct {
 	// A Handler that takes precedence over the default handling of events.
 	OverlayHandler el.Handler
 	// A placeholder to show when there are no items.
-	Placeholder styled.Text
+	Placeholder ui.Text
 	// A function to call when the selected item has changed.
 	OnSelect func(it Items, i int)
 	// A function called on the accept event.
@@ -122,7 +121,7 @@ func (w *widget) renderHorizontal(width, height int) *term.Buffer {
 	for i := first; i < n; i += height {
 		selectedRow := -1
 		// Render the column starting from i.
-		col := make([]styled.Text, 0, height)
+		col := make([]ui.Text, 0, height)
 		for j := i; j < i+height && j < n; j++ {
 			last = j
 			item := items.Show(j)
@@ -179,7 +178,7 @@ func (w *widget) renderVertical(width, height int) *term.Buffer {
 
 	items, selected, first := state.Items, state.Selected, state.First
 	n := items.Len()
-	allLines := []styled.Text{}
+	allLines := []ui.Text{}
 	hasCropped := firstCrop > 0
 
 	var i, selectFrom, selectTo int
@@ -215,7 +214,7 @@ func (w *widget) renderVertical(width, height int) *term.Buffer {
 }
 
 type croppedLines struct {
-	lines       []styled.Text
+	lines       []ui.Text
 	padding     int
 	selectFrom  int
 	selectTo    int
@@ -224,9 +223,9 @@ type croppedLines struct {
 
 func (c croppedLines) Render(width, height int) *term.Buffer {
 	bb := term.NewBufferBuilder(width)
-	leftSpacing := styled.Plain(strings.Repeat(" ", c.padding))
-	rightSpacing := styled.Plain(strings.Repeat(" ", width-c.padding))
-	// selectedPadding := styled.Transform(padding, styleForSelected)
+	leftSpacing := ui.PlainText(strings.Repeat(" ", c.padding))
+	rightSpacing := ui.PlainText(strings.Repeat(" ", width-c.padding))
+	// selectedPadding := ui.TransformText(padding, styleForSelected)
 	for i, line := range c.lines {
 		if i > 0 {
 			bb.Newline()
@@ -248,7 +247,7 @@ func (c croppedLines) Render(width, height int) *term.Buffer {
 			acc = acc.ConcatText(right).TrimWcwidth(width)
 		}
 		if selected {
-			acc = styled.Transform(acc, styleForSelected)
+			acc = ui.TransformText(acc, styleForSelected)
 		}
 
 		bb.WriteStyled(acc)

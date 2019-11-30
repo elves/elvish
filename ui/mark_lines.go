@@ -1,4 +1,4 @@
-package styled
+package ui
 
 import (
 	"strings"
@@ -37,7 +37,7 @@ func MarkLines(args ...interface{}) Text {
 			continue
 		}
 		if i > 0 {
-			text = text.ConcatText(Plain("\n"))
+			text = text.ConcatText(PlainText("\n"))
 		}
 		if i+2 < len(args) {
 			if stylesheet, ok := args[i+1].(map[rune]string); ok {
@@ -48,7 +48,7 @@ func MarkLines(args ...interface{}) Text {
 				}
 			}
 		}
-		text = text.ConcatText(Plain(line))
+		text = text.ConcatText(PlainText(line))
 	}
 	return text
 }
@@ -66,7 +66,7 @@ func MarkText(line string, stylesheet map[rune]string, style string) Text {
 		line = line[i:]
 	}
 	if len(line) > 0 {
-		text = text.ConcatText(Plain(line))
+		text = text.ConcatText(PlainText(line))
 	}
 	return text
 }

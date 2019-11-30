@@ -11,7 +11,6 @@ import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/ui"
 )
 
@@ -34,11 +33,11 @@ type Spec struct {
 	// A function that highlights the given code and returns any errors it has
 	// found when highlighting. If this function is not given, the Widget does
 	// not highlight the code nor show any errors.
-	Highlighter func(code string) (styled.Text, []error)
+	Highlighter func(code string) (ui.Text, []error)
 	// Prompt callback.
-	Prompt func() styled.Text
+	Prompt func() ui.Text
 	// Right-prompt callback.
-	RPrompt func() styled.Text
+	RPrompt func() ui.Text
 	// A function that calls the callback with string pairs for abbreviations
 	// and their expansions. If this function is not given, the Widget does not
 	// expand any abbreviations.
@@ -99,15 +98,15 @@ func New(spec Spec) Widget {
 
 // ConstPrompt returns a prompt callback that always writes the same styled
 // text.
-func ConstPrompt(content styled.Text) func() styled.Text {
-	return func() styled.Text { return content }
+func ConstPrompt(content ui.Text) func() ui.Text {
+	return func() ui.Text { return content }
 }
 
-func dummyHighlighter(code string) (styled.Text, []error) {
-	return styled.Plain(code), nil
+func dummyHighlighter(code string) (ui.Text, []error) {
+	return ui.PlainText(code), nil
 }
 
-func dummyPrompt() styled.Text { return nil }
+func dummyPrompt() ui.Text { return nil }
 
 func dummyAbbreviations(func(a, f string)) {}
 

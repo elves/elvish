@@ -8,7 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/cli/lscolors"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // Cursor represents a cursor for navigating in a potentially virtual filesystem.
@@ -29,7 +29,7 @@ type File interface {
 	// Name returns the name of the file.
 	Name() string
 	// ShowName returns a styled filename.
-	ShowName() styled.Text
+	ShowName() ui.Text
 	// IsDirDeep returns whether the file is itself a directory or a symlink to
 	// a directory.
 	IsDirDeep() bool
@@ -70,7 +70,7 @@ func (c osCursor) Descend(name string) error { return os.Chdir(name) }
 type emptyDir struct{}
 
 func (emptyDir) Name() string                  { return "" }
-func (emptyDir) ShowName() styled.Text         { return nil }
+func (emptyDir) ShowName() ui.Text             { return nil }
 func (emptyDir) IsDirDeep() bool               { return true }
 func (emptyDir) Read() ([]File, []byte, error) { return []File{}, nil, nil }
 
@@ -83,10 +83,10 @@ type file struct {
 
 func (f file) Name() string { return f.name }
 
-func (f file) ShowName() styled.Text {
+func (f file) ShowName() ui.Text {
 	sgrStyle := f.colorist.GetStyle(f.path)
-	return styled.Text{&styled.Segment{
-		Style: styled.StyleFromSGR(sgrStyle), Text: f.name}}
+	return ui.Text{&ui.Segment{
+		Style: ui.StyleFromSGR(sgrStyle), Text: f.name}}
 }
 
 func (f file) IsDirDeep() bool {

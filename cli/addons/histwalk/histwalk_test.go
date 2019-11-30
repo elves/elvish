@@ -9,7 +9,6 @@ import (
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/ui"
 )
 
@@ -47,7 +46,7 @@ func TestHistWalk(t *testing.T) {
 
 	Start(app, getCfg())
 	buf5 := makeBuf(
-		styled.MarkLines(
+		ui.MarkLines(
 			"ls -a", styles,
 			"  ---",
 		),
@@ -57,7 +56,7 @@ func TestHistWalk(t *testing.T) {
 	ttyCtrl.Inject(term.K(ui.Up))
 	// Skips item #3 as it is a duplicate.
 	buf1 := makeBuf(
-		styled.MarkLines(
+		ui.MarkLines(
 			"ls -l", styles,
 			"  ---",
 		),
@@ -97,7 +96,7 @@ func TestHistWalk_FallbackHandler(t *testing.T) {
 		Walker: histutil.NewWalker(db, -1, nil, ""),
 	})
 	wantBuf := makeBuf(
-		styled.MarkLines(
+		ui.MarkLines(
 			"ls", styles,
 			"--",
 		),
@@ -108,7 +107,7 @@ func TestHistWalk_FallbackHandler(t *testing.T) {
 	ttyCtrl.TestBuffer(t, bb().Write("l").SetDotHere().Buffer())
 }
 
-func makeBuf(codeArea styled.Text, modeline string) *term.Buffer {
+func makeBuf(codeArea ui.Text, modeline string) *term.Buffer {
 	return bb().
 		WriteStyled(codeArea).SetDotHere().
 		Newline().

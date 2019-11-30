@@ -3,7 +3,7 @@ package layout
 import (
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // VScrollbarContainer is a Renderer consisting of content and a vertical
@@ -27,8 +27,8 @@ type VScrollbar struct {
 }
 
 var (
-	vscrollbarThumb  = styled.MakeText(" ", "magenta", "inverse")
-	vscrollbarTrough = styled.MakeText("│", "magenta")
+	vscrollbarThumb  = ui.MakeText(" ", "magenta", "inverse")
+	vscrollbarTrough = ui.MakeText("│", "magenta")
 )
 
 func (v VScrollbar) Render(width, height int) *term.Buffer {
@@ -55,8 +55,8 @@ type HScrollbar struct {
 }
 
 var (
-	hscrollbarThumb  = styled.MakeText(" ", "magenta", "inverse")
-	hscrollbarTrough = styled.MakeText("━", "magenta")
+	hscrollbarThumb  = ui.MakeText(" ", "magenta", "inverse")
+	hscrollbarTrough = ui.MakeText("━", "magenta")
 )
 
 func (h HScrollbar) Render(width, height int) *term.Buffer {

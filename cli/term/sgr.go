@@ -3,7 +3,7 @@ package term
 import (
 	"strings"
 
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 var (
@@ -55,7 +55,7 @@ const (
 	sgrForInverse    = "7"
 )
 
-func sgrFromStyle(s styled.Style) string {
+func sgrFromStyle(s ui.Style) string {
 	var codes []string
 	add := func(code string) {
 		if code != "" {
