@@ -18,7 +18,7 @@ func highlight(code string) ui.Text {
 		if unicode.IsDigit(r) {
 			style = "green"
 		}
-		t = append(t, ui.NewText(string(r), style)...)
+		t = append(t, ui.T(string(r), style)...)
 	}
 	return t
 }

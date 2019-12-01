@@ -13,14 +13,14 @@ var bb = term.NewBufferBuilder
 var renderVerticalTests = []el.RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
-		Given: New(Spec{Placeholder: ui.NewText("nothing")}),
+		Given: New(Spec{Placeholder: ui.T("nothing")}),
 		Width: 10, Height: 3,
 		Want: bb(10).Write("nothing"),
 	},
 	{
 		Name: "placeholder when NItems is 0",
 		Given: New(Spec{
-			Placeholder: ui.NewText("nothing"),
+			Placeholder: ui.T("nothing"),
 			State:       State{Items: TestItems{}}}),
 		Width: 10, Height: 3,
 		Want: bb(10).Write("nothing"),
@@ -148,14 +148,14 @@ func TestRender_Vertical_MutatesState(t *testing.T) {
 var renderHorizontalTests = []el.RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
-		Given: New(Spec{Horizontal: true, Placeholder: ui.NewText("nothing")}),
+		Given: New(Spec{Horizontal: true, Placeholder: ui.T("nothing")}),
 		Width: 10, Height: 3,
 		Want: bb(10).Write("nothing"),
 	},
 	{
 		Name: "placeholder when NItems is 0",
 		Given: New(Spec{
-			Horizontal: true, Placeholder: ui.NewText("nothing"),
+			Horizontal: true, Placeholder: ui.T("nothing"),
 			State: State{Items: TestItems{}}}),
 		Width: 10, Height: 3,
 		Want: bb(10).Write("nothing"),

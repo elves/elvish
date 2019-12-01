@@ -70,17 +70,17 @@ func getDefaultPromptVals() (prompt, rprompt eval.Callable) {
 }
 
 func getDefaultPrompt(isRoot bool) eval.Callable {
-	p := ui.NewText("> ")
+	p := ui.T("> ")
 	if isRoot {
-		p = ui.NewText("# ", ui.Red)
+		p = ui.T("# ", ui.Red)
 	}
 	return eval.NewGoFn("default prompt", func() ui.Text {
-		return ui.NewText(util.Getwd()).ConcatText(p)
+		return ui.T(util.Getwd()).ConcatText(p)
 	})
 }
 
 func getDefaultRPrompt(username, hostname string) eval.Callable {
-	rp := ui.NewText(username+"@"+hostname, ui.Inverse)
+	rp := ui.T(username+"@"+hostname, ui.Inverse)
 	return eval.NewGoFn("default rprompt", func() ui.Text {
 		return rp
 	})

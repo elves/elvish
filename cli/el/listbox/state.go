@@ -37,7 +37,7 @@ func (it TestItems) Show(i int) ui.Text {
 	if prefix == "" {
 		prefix = "item "
 	}
-	return ui.NewText(fmt.Sprintf("%s%d", prefix, i), it.Style)
+	return ui.T(fmt.Sprintf("%s%d", prefix, i), it.Style)
 }
 
 // Len returns it.NItems.

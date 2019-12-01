@@ -46,7 +46,7 @@ const defaultStaleThreshold = 200 * time.Millisecond
 
 const defaultEagerness = 5
 
-var unknownContent = ui.NewText("???> ")
+var unknownContent = ui.T("???> ")
 
 // New makes a new prompt.
 func New(cfg Config) *Prompt {

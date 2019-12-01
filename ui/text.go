@@ -12,7 +12,9 @@ import (
 // Text contains of a list of styled Segments.
 type Text []*Segment
 
-func NewText(s string, ts ...Styling) Text {
+// T constructs a new Text with the given content and the given Styling's
+// applied.
+func T(s string, ts ...Styling) Text {
 	return StyleText(Text{&Segment{Text: s}}, ts...)
 }
 

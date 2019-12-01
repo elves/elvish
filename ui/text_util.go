@@ -33,7 +33,7 @@ func MarkLines(args ...interface{}) Text {
 			continue
 		}
 		if i > 0 {
-			text = text.ConcatText(NewText("\n"))
+			text = text.ConcatText(T("\n"))
 		}
 		if i+2 < len(args) {
 			if stylesheet, ok := args[i+1].(map[rune]Styling); ok {
@@ -44,7 +44,7 @@ func MarkLines(args ...interface{}) Text {
 				}
 			}
 		}
-		text = text.ConcatText(NewText(line))
+		text = text.ConcatText(T(line))
 	}
 	return text
 }
@@ -57,11 +57,11 @@ func MarkText(line string, stylesheet map[rune]Styling, style string) Text {
 	styleRuns := toRuns(style)
 	for _, styleRun := range styleRuns {
 		i := bytesForFirstNRunes(line, styleRun.n)
-		text = text.ConcatText(NewText(line[:i], stylesheet[styleRun.r]))
+		text = text.ConcatText(T(line[:i], stylesheet[styleRun.r]))
 		line = line[i:]
 	}
 	if len(line) > 0 {
-		text = text.ConcatText(NewText(line))
+		text = text.ConcatText(T(line))
 	}
 	return text
 }

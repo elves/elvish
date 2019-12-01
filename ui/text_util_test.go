@@ -12,23 +12,23 @@ func TestMarkLines(t *testing.T) {
 		'x': JoinStylings(Blue, GreenBackground),
 	}
 	tt.Test(t, tt.Fn("MarkLines", MarkLines), tt.Table{
-		tt.Args("foo  bar foobar").Rets(NewText("foo  bar foobar")),
+		tt.Args("foo  bar foobar").Rets(T("foo  bar foobar")),
 		tt.Args(
 			"foo  bar foobar", stylesheet,
 			"---  xxx ------",
 		).Rets(
-			NewText("foo", Inverse).
-				ConcatText(NewText("  ")).
-				ConcatText(NewText("bar", Blue, GreenBackground)).
-				ConcatText(NewText(" ")).
-				ConcatText(NewText("foobar", Inverse)),
+			T("foo", Inverse).
+				ConcatText(T("  ")).
+				ConcatText(T("bar", Blue, GreenBackground)).
+				ConcatText(T(" ")).
+				ConcatText(T("foobar", Inverse)),
 		),
 		tt.Args(
 			"foo  bar foobar", stylesheet,
 			"---",
 		).Rets(
-			NewText("foo", Inverse).
-				ConcatText(NewText("  bar foobar")),
+			T("foo", Inverse).
+				ConcatText(T("  bar foobar")),
 		),
 		tt.Args(
 			"plain1",
@@ -37,17 +37,17 @@ func TestMarkLines(t *testing.T) {
 			"---  xxx ------",
 			"plain3",
 		).Rets(
-			NewText("plain1").
-				ConcatText(NewText("\n")).
-				ConcatText(NewText("plain2")).
-				ConcatText(NewText("\n")).
-				ConcatText(NewText("foo", Inverse)).
-				ConcatText(NewText("  ")).
-				ConcatText(NewText("bar", Blue, GreenBackground)).
-				ConcatText(NewText(" ")).
-				ConcatText(NewText("foobar", Inverse)).
-				ConcatText(NewText("\n")).
-				ConcatText(NewText("plain3")),
+			T("plain1").
+				ConcatText(T("\n")).
+				ConcatText(T("plain2")).
+				ConcatText(T("\n")).
+				ConcatText(T("foo", Inverse)).
+				ConcatText(T("  ")).
+				ConcatText(T("bar", Blue, GreenBackground)).
+				ConcatText(T(" ")).
+				ConcatText(T("foobar", Inverse)).
+				ConcatText(T("\n")).
+				ConcatText(T("plain3")),
 		),
 	})
 }

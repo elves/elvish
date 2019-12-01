@@ -14,7 +14,7 @@ func TestTestRender(t *testing.T) {
 	TestRender(t, []RenderTest{
 		{
 			Name:  "test",
-			Given: &testWidget{text: ui.NewText("test")},
+			Given: &testWidget{text: ui.T("test")},
 			Width: 10, Height: 10,
 
 			Want: term.NewBufferBuilder(10).Write("test"),

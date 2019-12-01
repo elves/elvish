@@ -10,8 +10,8 @@ import (
 
 var Args = tt.Args
 
-func TestMakeText(t *testing.T) {
-	tt.Test(t, tt.Fn("NewText", NewText), tt.Table{
+func TestT(t *testing.T) {
+	tt.Test(t, tt.Fn("T", T), tt.Table{
 		Args("test").Rets(Text{&Segment{Text: "test"}}),
 		Args("test red", Red).Rets(Text{&Segment{
 			Text: "test red", Style: Style{Foreground: "red"}}}),

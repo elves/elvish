@@ -158,7 +158,7 @@ func makeListingBuf(mode, filter string, lines ...string) *term.Buffer {
 			b.Write(line)
 		} else {
 			b.WriteStyled(
-				ui.NewText(fmt.Sprintf("%-50s", line), ui.Inverse))
+				ui.T(fmt.Sprintf("%-50s", line), ui.Inverse))
 		}
 	}
 	return b.Buffer()

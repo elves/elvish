@@ -100,11 +100,11 @@ func (f testFile) ShowName() ui.Text {
 	// The style matches that of LS_COLORS in the test code.
 	switch {
 	case f.IsDirDeep():
-		return ui.NewText(f.name, ui.Blue)
+		return ui.T(f.name, ui.Blue)
 	case strings.HasSuffix(f.name, ".png"):
-		return ui.NewText(f.name, ui.Red)
+		return ui.T(f.name, ui.Red)
 	default:
-		return ui.NewText(f.name)
+		return ui.T(f.name)
 	}
 }
 
