@@ -55,6 +55,7 @@ var (
 	LightCyan            = setForeground("lightcyan")
 	White                = setForeground("white")
 
+	FgDefault      = setForeground("")
 	FgBlack        = setForeground("black")
 	FgRed          = setForeground("red")
 	FgGreen        = setForeground("green")
@@ -72,6 +73,7 @@ var (
 	FgLightCyan    = setForeground("lightcyan")
 	FgWhite        = setForeground("white")
 
+	BgDefault      = setBackground("default")
 	BgBlack        = setBackground("black")
 	BgRed          = setBackground("red")
 	BgGreen        = setBackground("green")
@@ -138,56 +140,66 @@ func (t jointStyling) transform(s *Style) {
 	}
 }
 
-// FindStyling finds the named transformer, a function that mutates a
-// *Style. If the name is not a valid transformer, it returns nil.
-func FindStyling(name string) func(*Style) {
+// ParseStyling parses a text representation of Styling, which are kebab
+// case counterparts to the names of the builtin Styling's. For example,
+// ToggleInverse is expressed as "toggle-inverse".
+//
+// Multiple stylings can be joined by spaces, which is equivalent to calling
+// JoinStylings.
+//
+// If the given string is invalid, ParseStyling returns nil.
+func ParseStyling(s string) Styling {
+	if !strings.ContainsRune(s, ' ') {
+		return parseOneStyling(s)
+	}
+	var joint jointStyling
+	for _, subs := range strings.Split(s, " ") {
+		parsed := parseOneStyling(subs)
+		if parsed == nil {
+			return nil
+		}
+		joint = append(joint, parseOneStyling(subs))
+	}
+	return joint
+}
+
+var boolFieldAccessor = map[string]func(*Style) *bool{
+	"bold":       accessBold,
+	"dim":        accessDim,
+	"italic":     accessItalic,
+	"underlined": accessUnderlined,
+	"blink":      accessBlink,
+	"inverse":    accessInverse,
+}
+
+func parseOneStyling(name string) Styling {
 	switch {
-	// Catch special colors early
-	case name == "default":
-		return func(s *Style) { s.Foreground = "" }
+	case name == "default" || name == "fg-default":
+		return FgDefault
+	case strings.HasPrefix(name, "fg-"):
+		if color := name[len("fg-"):]; isValidColorName(color) {
+			return setForeground(color)
+		}
+	case isValidColorName(name):
+		return setForeground(name)
 	case name == "bg-default":
-		return func(s *Style) { s.Background = "" }
+		return BgDefault
 	case strings.HasPrefix(name, "bg-"):
 		if color := name[len("bg-"):]; isValidColorName(color) {
-			return func(s *Style) { s.Background = color }
+			return setBackground(color)
 		}
 	case strings.HasPrefix(name, "no-"):
-		if f := boolFieldAccessor(name[len("no-"):]); f != nil {
-			return func(s *Style) { *f(s) = false }
+		if f, ok := boolFieldAccessor[name[len("no-"):]]; ok {
+			return boolOff(f)
 		}
 	case strings.HasPrefix(name, "toggle-"):
-		if f := boolFieldAccessor(name[len("toggle-"):]); f != nil {
-			return func(s *Style) {
-				p := f(s)
-				*p = !*p
-			}
+		if f, ok := boolFieldAccessor[name[len("toggle-"):]]; ok {
+			return boolToggle(f)
 		}
 	default:
-		if isValidColorName(name) {
-			return func(s *Style) { s.Foreground = name }
-		}
-		if f := boolFieldAccessor(name); f != nil {
-			return func(s *Style) { *f(s) = true }
+		if f, ok := boolFieldAccessor[name]; ok {
+			return boolOn(f)
 		}
 	}
 	return nil
-}
-
-func boolFieldAccessor(name string) func(*Style) *bool {
-	switch name {
-	case "bold":
-		return func(s *Style) *bool { return &s.Bold }
-	case "dim":
-		return func(s *Style) *bool { return &s.Dim }
-	case "italic":
-		return func(s *Style) *bool { return &s.Italic }
-	case "underlined":
-		return func(s *Style) *bool { return &s.Underlined }
-	case "blink":
-		return func(s *Style) *bool { return &s.Blink }
-	case "inverse":
-		return func(s *Style) *bool { return &s.Inverse }
-	default:
-		return nil
-	}
 }

@@ -45,9 +45,9 @@ func styledSegment(options RawOptions, input interface{}) (*ui.Segment, error) {
 	}, nil
 }
 
-// Styled turns a string, a ui.Segment or a ui.Text into a ui.Text.
-// This is done by applying a range of transformers to the input.
-func Styled(fm *Frame, input interface{}, transformers ...interface{}) (ui.Text, error) {
+// Styled turns a string, a ui.Segment or a ui.Text into a ui.Text by applying
+// the given stylings.
+func Styled(fm *Frame, input interface{}, stylings ...interface{}) (ui.Text, error) {
 	var text ui.Text
 
 	switch input := input.(type) {
@@ -64,34 +64,32 @@ func Styled(fm *Frame, input interface{}, transformers ...interface{}) (ui.Text,
 		return nil, fmt.Errorf("expected string, styled segment or styled text; got %s", vals.Kind(input))
 	}
 
-	for _, transformer := range transformers {
-		switch transformer := transformer.(type) {
+	for _, styling := range stylings {
+		switch styling := styling.(type) {
 		case string:
-			transformerFn := ui.FindStyling(transformer)
-			if transformerFn == nil {
-				return nil, fmt.Errorf("%s is not a valid style transformer", parse.Quote(transformer))
+			parsedStyling := ui.ParseStyling(styling)
+			if parsedStyling == nil {
+				return nil, fmt.Errorf("%s is not a valid style transformer", parse.Quote(styling))
 			}
-			for _, seg := range text {
-				transformerFn(&seg.Style)
-			}
+			text = ui.StyleText(text, parsedStyling)
 		case Callable:
 			for i, seg := range text {
-				vs, err := fm.CaptureOutput(transformer, []interface{}{seg}, NoOpts)
+				vs, err := fm.CaptureOutput(styling, []interface{}{seg}, NoOpts)
 				if err != nil {
 					return nil, err
 				}
 
 				if n := len(vs); n != 1 {
-					return nil, fmt.Errorf("style transformers must return a single styled segment; got %d values", n)
-				} else if transformedSegment, ok := vs[0].(*ui.Segment); !ok {
-					return nil, fmt.Errorf("style transformers must return a styled segment; got %s", vals.Kind(vs[0]))
+					return nil, fmt.Errorf("styling function must return a single segment; got %d values", n)
+				} else if styledSegment, ok := vs[0].(*ui.Segment); !ok {
+					return nil, fmt.Errorf("styling function must return a segment; got %s", vals.Kind(vs[0]))
 				} else {
-					text[i] = transformedSegment
+					text[i] = styledSegment
 				}
 			}
 
 		default:
-			return nil, fmt.Errorf("need string or callable; got %s", vals.Kind(transformer))
+			return nil, fmt.Errorf("need string or callable; got %s", vals.Kind(styling))
 		}
 	}
 

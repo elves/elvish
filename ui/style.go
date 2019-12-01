@@ -99,28 +99,28 @@ func isValidColorName(col string) bool {
 	}
 }
 
-var sgrStyling = map[int]string{
-	1:  "bold",
-	2:  "dim",
-	4:  "underlined",
-	5:  "blink",
-	7:  "inverse",
-	30: "black",
-	31: "red",
-	32: "green",
-	33: "brown",
-	34: "blue",
-	35: "magenta",
-	36: "cyan",
-	37: "white",
-	40: "bg-black",
-	41: "bg-red",
-	42: "bg-green",
-	43: "bg-brown",
-	44: "bg-blue",
-	45: "bg-magenta",
-	46: "bg-cyan",
-	47: "bg-lightgray",
+var sgrStyling = map[int]Styling{
+	1:  Bold,
+	2:  Dim,
+	4:  Underlined,
+	5:  Blink,
+	7:  Inverse,
+	30: Black,
+	31: Red,
+	32: Green,
+	33: Yellow,
+	34: Blue,
+	35: Magenta,
+	36: Cyan,
+	37: White,
+	40: BgBlack,
+	41: BgRed,
+	42: BgGreen,
+	43: BgYellow,
+	44: BgBlue,
+	45: BgMagenta,
+	46: BgCyan,
+	47: BgLightGray,
 }
 
 // StyleFromSGR builds a Style from a ECMA-48 Set Graphics Rendition sequence, .
@@ -133,8 +133,8 @@ func StyleFromSGR(s string) Style {
 		if err != nil {
 			continue
 		}
-		if transform, ok := sgrStyling[code]; ok {
-			FindStyling(transform)(&style)
+		if styling, ok := sgrStyling[code]; ok {
+			styling.transform(&style)
 		}
 	}
 	return style
