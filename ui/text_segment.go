@@ -15,11 +15,6 @@ type Segment struct {
 	Text string
 }
 
-// PlainTextSegment returns an Segment containing the given text with no style.
-func PlainTextSegment(s string) *Segment {
-	return &Segment{Text: s}
-}
-
 // Kind returns "styled-segment".
 func (*Segment) Kind() string { return "styled-segment" }
 

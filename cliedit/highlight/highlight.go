@@ -64,7 +64,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	for _, r := range regions {
 		if r.begin > lastEnd {
 			// Add inter-region text.
-			text = append(text, ui.PlainTextSegment(code[lastEnd:r.begin]))
+			text = append(text, &ui.Segment{Text: code[lastEnd:r.begin]})
 		}
 
 		regionCode := code[r.begin:r.end]
@@ -81,7 +81,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 		} else {
 			transformer = transformerFor[r.typ]
 		}
-		seg := ui.PlainTextSegment(regionCode)
+		seg := &ui.Segment{Text: regionCode}
 		if transformer != "" {
 			ui.FindTransformer(transformer)(&seg.Style)
 		}
@@ -91,7 +91,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	}
 	if len(code) > lastEnd {
 		// Add text after the last region as unstyled.
-		text = append(text, ui.PlainTextSegment(code[lastEnd:]))
+		text = append(text, &ui.Segment{Text: code[lastEnd:]})
 	}
 
 	if cfg.HasCommand != nil && len(cmdRegions) > 0 {

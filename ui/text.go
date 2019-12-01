@@ -14,7 +14,7 @@ type Text []*Segment
 
 // PlainText returns an unstyled Text.
 func PlainText(s string) Text {
-	return Text{PlainTextSegment(s)}
+	return Text{&Segment{Text: s}}
 }
 
 // MakeText makes a text by taking a string and applying the given transformers.

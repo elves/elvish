@@ -8,6 +8,7 @@ import (
 
 // String returns a string representation of the styled text. This now always
 // assumes VT-style terminal output.
+//
 // TODO: Make string conversion sensible to environment, e.g. use HTML when
 // output is web.
 func (t Text) String() string {
