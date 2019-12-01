@@ -35,7 +35,7 @@ func TestStart_NoStore(t *testing.T) {
 	defer cleanup()
 
 	Start(app, Config{})
-	wantNotesBuf := term.NewBufferBuilder(80).Write("no history store").Buffer()
+	wantNotesBuf := term.NewBufferBuilder(50).Write("no history store").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
@@ -44,7 +44,7 @@ func TestStart_StoreError(t *testing.T) {
 	defer cleanup()
 
 	Start(app, Config{Store: faultyStore{}})
-	wantNotesBuf := term.NewBufferBuilder(80).
+	wantNotesBuf := term.NewBufferBuilder(50).
 		Write("db error: mock error").Buffer()
 	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
@@ -63,17 +63,15 @@ func TestStart_OK(t *testing.T) {
 	})
 
 	// Test UI.
-	wantBuf := term.NewBufferBuilder(80).
+	wantBuf := term.NewBufferBuilder(50).
 		// empty codearea
 		Newline().
 		// combobox codearea
-		WriteStyled(ui.T("LASTCMD",
-			ui.Bold, ui.LightGray, ui.BgMagenta)).
+		Write("LASTCMD", ui.Bold, ui.LightGray, ui.BgMagenta).
 		Write(" ").
 		SetDotHere().
 		// first entry is selected
-		Newline().WriteStyled(
-		ui.T("    foo,bar,baz"+strings.Repeat(" ", 65), ui.Inverse)).
+		Newline().Write("    foo,bar,baz"+strings.Repeat(" ", 35), ui.Inverse).
 		// unselected entries
 		Newline().Write("  0 foo").
 		Newline().Write("  1 bar").
@@ -83,17 +81,15 @@ func TestStart_OK(t *testing.T) {
 
 	// Test negative filtering.
 	ttyCtrl.Inject(term.K('-'))
-	wantBuf = term.NewBufferBuilder(80).
+	wantBuf = term.NewBufferBuilder(50).
 		// empty codearea
 		Newline().
 		// combobox codearea
-		WriteStyled(ui.T("LASTCMD",
-			ui.Bold, ui.LightGray, ui.BgMagenta)).
+		Write("LASTCMD", ui.Bold, ui.LightGray, ui.BgMagenta).
 		Write(" -").
 		SetDotHere().
 		// first entry is selected
-		Newline().WriteStyled(
-		ui.T(" -3 foo"+strings.Repeat(" ", 73), ui.Inverse)).
+		Newline().Write(" -3 foo"+strings.Repeat(" ", 43), ui.Inverse).
 		// unselected entries
 		Newline().Write(" -2 bar").
 		Newline().Write(" -1 baz").
@@ -102,7 +98,7 @@ func TestStart_OK(t *testing.T) {
 
 	// Test automatic submission.
 	ttyCtrl.Inject(term.K('2')) // -2 bar
-	wantBuf = term.NewBufferBuilder(80).
+	wantBuf = term.NewBufferBuilder(50).
 		Write("bar").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
 
@@ -117,7 +113,7 @@ func TestStart_OK(t *testing.T) {
 		},
 	})
 	ttyCtrl.Inject(term.K(ui.Enter))
-	wantBuf = term.NewBufferBuilder(80).
+	wantBuf = term.NewBufferBuilder(50).
 		Write("foo,bar,baz").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
 
@@ -128,7 +124,7 @@ func TestStart_OK(t *testing.T) {
 	store.AddCmd(histutil.Entry{Text: "foo bar baz", Seq: 1})
 	Start(app, Config{Store: store})
 	ttyCtrl.Inject(term.K('0'))
-	wantBuf = term.NewBufferBuilder(80).
+	wantBuf = term.NewBufferBuilder(50).
 		Write("foo").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBuf)
 }

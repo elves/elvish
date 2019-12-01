@@ -13,7 +13,6 @@ import (
 
 func TestStart(t *testing.T) {
 	tty, ttyCtrl := cli.NewFakeTTY()
-	ttyCtrl.SetSize(24, 40)
 	app := cli.NewApp(cli.AppSpec{TTY: tty})
 	codeCh, _ := cli.ReadCodeAsync(app)
 	defer func() {
@@ -33,7 +32,7 @@ func TestStart(t *testing.T) {
 	Start(app, cfg)
 
 	// Test that the completion combobox is shown correctly.
-	wantBufStarted := term.NewBufferBuilder(40).
+	wantBufStarted := term.NewBufferBuilder(50).
 		Write("foo", ui.Underlined). // code area
 		Newline().
 		WriteStyled(layout.ModeLine("COMPLETING WORD", true)).
@@ -46,7 +45,7 @@ func TestStart(t *testing.T) {
 
 	// Test the OnFilter handler.
 	ttyCtrl.Inject(term.K('b'), term.K('a'))
-	wantBufFiltering := term.NewBufferBuilder(40).
+	wantBufFiltering := term.NewBufferBuilder(50).
 		Write("'foo bar'", ui.Underlined). // code area
 		Newline().
 		WriteStyled(layout.ModeLine("COMPLETING WORD", true)).
@@ -57,7 +56,7 @@ func TestStart(t *testing.T) {
 
 	// Test the OnAccept handler.
 	ttyCtrl.Inject(term.K(ui.Enter))
-	wantBufAccepted := term.NewBufferBuilder(40).
+	wantBufAccepted := term.NewBufferBuilder(50).
 		Write("'foo bar'").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, wantBufAccepted)
 
@@ -67,6 +66,6 @@ func TestStart(t *testing.T) {
 	Start(app, cfg)
 	ttyCtrl.TestBuffer(t, wantBufStarted)
 	Close(app)
-	wantBufClosed := term.NewBufferBuilder(40).Buffer()
+	wantBufClosed := term.NewBufferBuilder(50).Buffer()
 	ttyCtrl.TestBuffer(t, wantBufClosed)
 }

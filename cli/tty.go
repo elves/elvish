@@ -156,14 +156,21 @@ type fakeTTY struct {
 	height, width int
 }
 
-// NewFakeTTY creates a new FakeTTY and a handle for controlling it.
+// Initial size of fake TTY.
+const (
+	FakeTTYHeight = 20
+	FakeTTYWidth  = 50
+)
+
+// NewFakeTTY creates a new FakeTTY and a handle for controlling it. The initial
+// size of the terminal is FakeTTYHeight and FakeTTYWidth.
 func NewFakeTTY() (TTY, TTYCtrl) {
 	tty := &fakeTTY{
 		eventCh:    make(chan term.Event, fakeTTYEvents),
 		sigCh:      make(chan os.Signal, fakeTTYSignals),
 		bufCh:      make(chan *term.Buffer, fakeTTYBufferUpdates),
 		notesBufCh: make(chan *term.Buffer, fakeTTYBufferUpdates),
-		height:     24, width: 80,
+		height:     FakeTTYHeight, width: FakeTTYWidth,
 	}
 	return tty, TTYCtrl{tty}
 }
