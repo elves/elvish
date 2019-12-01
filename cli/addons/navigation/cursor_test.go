@@ -104,7 +104,7 @@ func (f testFile) ShowName() ui.Text {
 	case strings.HasSuffix(f.name, ".png"):
 		return ui.MakeText(f.name, "red")
 	default:
-		return ui.PlainText(f.name)
+		return ui.MakeText(f.name)
 	}
 }
 

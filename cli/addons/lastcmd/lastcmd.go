@@ -121,7 +121,7 @@ func (it items) Show(i int) ui.Text {
 	// NOTE: We now use a hardcoded width of 3 for the index, which will work as
 	// long as the command has less than 1000 words (when filter is positive) or
 	// 100 words (when filter is negative).
-	return ui.PlainText(fmt.Sprintf("%3s %s", index, entry.content))
+	return ui.MakeText(fmt.Sprintf("%3s %s", index, entry.content))
 }
 
 func (it items) Len() int { return len(it.entries) }

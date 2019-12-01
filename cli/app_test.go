@@ -105,7 +105,7 @@ func TestReadCode_FinalRedraw(t *testing.T) {
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "code"}},
 		State: State{
-			Addon: layout.Label{Content: ui.PlainText("addon")}}})
+			Addon: layout.Label{Content: ui.MakeText("addon")}}})
 	codeCh, _ := ReadCodeAsync(a)
 
 	// Wait until the stable state.
@@ -212,7 +212,7 @@ func TestReadCode_ShowsErrorsFromHighlighter(t *testing.T) {
 		Highlighter: testHighlighter{
 			get: func(code string) (ui.Text, []error) {
 				errors := []error{errors.New("ERR 1"), errors.New("ERR 2")}
-				return ui.PlainText(code), errors
+				return ui.MakeText(code), errors
 			},
 		}})
 
@@ -251,7 +251,7 @@ func TestReadCode_RedrawsOnLateUpdateFromHighlighter(t *testing.T) {
 
 func TestReadCode_ShowsPrompt(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
-		Prompt: constPrompt{ui.PlainText("> ")}})
+		Prompt: constPrompt{ui.MakeText("> ")}})
 
 	codeCh, _ := ReadCodeAsync(a)
 	defer cleanup(a, codeCh)
@@ -277,7 +277,7 @@ func TestReadCode_CallsPromptTrigger(t *testing.T) {
 func TestReadCode_RedrawsOnLateUpdateFromPrompt(t *testing.T) {
 	promptContent := "old"
 	prompt := testPrompt{
-		get:         func() ui.Text { return ui.PlainText(promptContent) },
+		get:         func() ui.Text { return ui.MakeText(promptContent) },
 		lateUpdates: make(chan ui.Text),
 	}
 	a, tty := setupWithSpec(AppSpec{Prompt: prompt})
@@ -295,7 +295,7 @@ func TestReadCode_RedrawsOnLateUpdateFromPrompt(t *testing.T) {
 
 func TestReadCode_ShowsRPrompt(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
-		RPrompt: constPrompt{ui.PlainText("R")}})
+		RPrompt: constPrompt{ui.MakeText("R")}})
 
 	codeCh, _ := ReadCodeAsync(a)
 	defer cleanup(a, codeCh)
@@ -313,7 +313,7 @@ func TestReadCode_ShowsRPromptInFinalRedrawIfPersistent(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "code"}},
-		RPrompt:           constPrompt{ui.PlainText("R")},
+		RPrompt:           constPrompt{ui.MakeText("R")},
 		RPromptPersistent: func() bool { return true },
 	})
 
@@ -331,7 +331,7 @@ func TestReadCode_HidesRPromptInFinalRedrawIfNotPersistent(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "code"}},
-		RPrompt:           constPrompt{ui.PlainText("R")},
+		RPrompt:           constPrompt{ui.MakeText("R")},
 		RPromptPersistent: func() bool { return false },
 	})
 
@@ -351,7 +351,7 @@ func TestReadCode_LetsAddonHandleEvents(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		State: State{
 			Addon: codearea.New(codearea.Spec{
-				Prompt: func() ui.Text { return ui.PlainText("addon> ") },
+				Prompt: func() ui.Text { return ui.MakeText("addon> ") },
 			})}})
 
 	codeCh, _ := ReadCodeAsync(a)

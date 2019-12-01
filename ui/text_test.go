@@ -10,13 +10,6 @@ import (
 
 var Args = tt.Args
 
-func TestPlainText(t *testing.T) {
-	tt.Test(t, tt.Fn("PlainText", PlainText), tt.Table{
-		Args("test").Rets(Text{&Segment{Text: "test"}}),
-		Args("").Rets(Text{&Segment{}}),
-	})
-}
-
 func TestMakeText(t *testing.T) {
 	tt.Test(t, tt.Fn("MakeText", MakeText), tt.Table{
 		Args("test").Rets(Text{&Segment{Text: "test"}}),

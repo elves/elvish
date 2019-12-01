@@ -14,15 +14,15 @@ func TestPrompt_DefaultCompute(t *testing.T) {
 	prompt := New(Config{})
 
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.PlainText("???> "))
+	testUpdate(t, prompt, ui.MakeText("???> "))
 }
 
 func TestPrompt_ShowsComputedPrompt(t *testing.T) {
 	prompt := New(Config{
-		Compute: func() ui.Text { return ui.PlainText(">>> ") }})
+		Compute: func() ui.Text { return ui.MakeText(">>> ") }})
 
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.PlainText(">>> "))
+	testUpdate(t, prompt, ui.MakeText(">>> "))
 }
 
 func TestPrompt_StalePrompt(t *testing.T) {
@@ -42,7 +42,7 @@ func TestPrompt_StalePrompt(t *testing.T) {
 	// The compute function will now return.
 	unblock()
 	// The returned prompt will now be used.
-	testUpdate(t, prompt, ui.PlainText("1> "))
+	testUpdate(t, prompt, ui.MakeText("1> "))
 
 	// Force a refresh.
 	prompt.Trigger(true)
@@ -53,7 +53,7 @@ func TestPrompt_StalePrompt(t *testing.T) {
 	// Unblock the compute function.
 	unblock()
 	// The new prompt will now be shown.
-	testUpdate(t, prompt, ui.PlainText("2> "))
+	testUpdate(t, prompt, ui.MakeText("2> "))
 
 	// Force a refresh.
 	prompt.Trigger(true)
@@ -69,7 +69,7 @@ func TestPrompt_StalePrompt(t *testing.T) {
 	// However, the the two refreshes we requested early only trigger one
 	// re-computation, because they are requested while the compute function is
 	// stuck, so they can be safely merged.
-	testUpdate(t, prompt, ui.PlainText("4> "))
+	testUpdate(t, prompt, ui.MakeText("4> "))
 }
 
 func TestPrompt_Eagerness0(t *testing.T) {
@@ -80,7 +80,7 @@ func TestPrompt_Eagerness0(t *testing.T) {
 
 	// A forced refresh is always respected.
 	prompt.Trigger(true)
-	testUpdate(t, prompt, ui.PlainText("1> "))
+	testUpdate(t, prompt, ui.MakeText("1> "))
 
 	// A unforced refresh is not respected.
 	prompt.Trigger(false)
@@ -94,7 +94,7 @@ func TestPrompt_Eagerness0(t *testing.T) {
 
 	// Only force updates are respected.
 	prompt.Trigger(true)
-	testUpdate(t, prompt, ui.PlainText("2> "))
+	testUpdate(t, prompt, ui.MakeText("2> "))
 }
 
 func TestPrompt_Eagerness5(t *testing.T) {
@@ -105,7 +105,7 @@ func TestPrompt_Eagerness5(t *testing.T) {
 
 	// The initial trigger is respected because there was no previous pwd.
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.PlainText("1> "))
+	testUpdate(t, prompt, ui.MakeText("1> "))
 
 	// No update because the pwd has not changed.
 	prompt.Trigger(false)
@@ -115,7 +115,7 @@ func TestPrompt_Eagerness5(t *testing.T) {
 	_, cleanup := util.InTestDir()
 	defer cleanup()
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.PlainText("2> "))
+	testUpdate(t, prompt, ui.MakeText("2> "))
 }
 
 func TestPrompt_Eagerness10(t *testing.T) {
@@ -126,15 +126,15 @@ func TestPrompt_Eagerness10(t *testing.T) {
 
 	// The initial trigger is respected.
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.PlainText("1> "))
+	testUpdate(t, prompt, ui.MakeText("1> "))
 
 	// Subsequent triggers, force or not, are also respected.
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.PlainText("2> "))
+	testUpdate(t, prompt, ui.MakeText("2> "))
 	prompt.Trigger(true)
-	testUpdate(t, prompt, ui.PlainText("3> "))
+	testUpdate(t, prompt, ui.MakeText("3> "))
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.PlainText("4> "))
+	testUpdate(t, prompt, ui.MakeText("4> "))
 }
 
 func blockedAutoIncPrompt() (func() ui.Text, func()) {
@@ -143,7 +143,7 @@ func blockedAutoIncPrompt() (func() ui.Text, func()) {
 	compute := func() ui.Text {
 		<-unblockChan
 		i++
-		return ui.PlainText(fmt.Sprintf("%d> ", i))
+		return ui.MakeText(fmt.Sprintf("%d> ", i))
 	}
 	unblock := func() {
 		unblockChan <- struct{}{}
@@ -155,7 +155,7 @@ func autoIncPrompt() func() ui.Text {
 	i := 0
 	return func() ui.Text {
 		i++
-		return ui.PlainText(fmt.Sprintf("%d> ", i))
+		return ui.MakeText(fmt.Sprintf("%d> ", i))
 	}
 }
 

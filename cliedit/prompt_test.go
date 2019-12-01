@@ -95,7 +95,7 @@ func TestPromptStaleTransform(t *testing.T) {
 	defer f.Cleanup()
 
 	wantBufStale := bb().
-		WriteStyled(ui.PlainText("S???> S")).SetDotHere().Buffer()
+		WriteStyled(ui.MakeText("S???> S")).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufStale)
 	evals(f.Evaler, `pwclose $pipe`)
 	evals(f.Evaler, `prclose $pipe`)

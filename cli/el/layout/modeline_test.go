@@ -22,6 +22,6 @@ func testModeLine(t *testing.T, fn *tt.FnToTest) {
 			ui.MakeText("TEST", "bold", "lightgray", "bg-magenta")),
 		tt.Args("TEST", true).Rets(
 			ui.MakeText("TEST", "bold", "lightgray", "bg-magenta").
-				ConcatText(ui.PlainText(" "))),
+				ConcatText(ui.MakeText(" "))),
 	})
 }

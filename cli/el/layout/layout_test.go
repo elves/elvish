@@ -26,13 +26,13 @@ var renderTests = []struct {
 	},
 	{
 		"Label showing all",
-		Label{ui.PlainText("label")},
+		Label{ui.MakeText("label")},
 		10, 24,
 		bb(10).Write("label"),
 	},
 	{
 		"Label cropping",
-		Label{ui.PlainText("label")},
+		Label{ui.MakeText("label")},
 		4, 1,
 		bb(4).Write("labe"),
 	},
@@ -62,7 +62,7 @@ var renderTests = []struct {
 	},
 	{
 		"VScrollbarContainer",
-		VScrollbarContainer{Label{ui.PlainText("abcd1234")},
+		VScrollbarContainer{Label{ui.MakeText("abcd1234")},
 			VScrollbar{4, 0, 1}},
 		5, 2,
 		bb(5).Write("abcd").WriteStyled(vscrollbarThumb).
@@ -107,7 +107,7 @@ func TestRender(t *testing.T) {
 }
 
 var nopHandlers = []el.Handler{
-	Empty{}, Label{ui.PlainText("label")},
+	Empty{}, Label{ui.MakeText("label")},
 }
 
 func TestHandle(t *testing.T) {

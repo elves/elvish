@@ -128,12 +128,12 @@ func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
 
 	testThat(t, hl, c{
 		given:       "ls",
-		wantInitial: ui.PlainText("ls"),
+		wantInitial: ui.MakeText("ls"),
 		wantLate:    ui.MakeText("ls", "green"),
 	})
 	testThat(t, hl, c{
 		given:       "echo",
-		wantInitial: ui.PlainText("echo"),
+		wantInitial: ui.MakeText("echo"),
 		wantLate:    ui.MakeText("echo", "red"),
 	})
 }
@@ -188,7 +188,7 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	initial, _ := hl.Get("ls")
 	late := <-hl.LateUpdates()
 
-	wantInitial := ui.PlainText("ls")
+	wantInitial := ui.MakeText("ls")
 	wantLate := ui.MakeText("ls", "green")
 	if !reflect.DeepEqual(wantInitial, initial) {
 		t.Errorf("want %v from initial Get, got %v", wantInitial, initial)

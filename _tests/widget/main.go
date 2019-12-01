@@ -27,11 +27,11 @@ func makeWidget() el.Widget {
 		CodeArea: codearea.Widget{
 			Prompt: codearea.ConstPrompt(
 				ui.MakeText(" NUMBER ", "bold", "bg-magenta").
-					ConcatText(ui.PlainText(" "))),
+					ConcatText(ui.MakeText(" "))),
 		},
 		ListBox: listbox.Widget{
 			State:       listbox.MakeState(&items, false),
-			Placeholder: ui.PlainText("(no items)"),
+			Placeholder: ui.MakeText("(no items)"),
 			Horizontal:  *horizontal,
 		},
 	}

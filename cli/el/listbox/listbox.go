@@ -223,8 +223,8 @@ type croppedLines struct {
 
 func (c croppedLines) Render(width, height int) *term.Buffer {
 	bb := term.NewBufferBuilder(width)
-	leftSpacing := ui.PlainText(strings.Repeat(" ", c.padding))
-	rightSpacing := ui.PlainText(strings.Repeat(" ", width-c.padding))
+	leftSpacing := ui.MakeText(strings.Repeat(" ", c.padding))
+	rightSpacing := ui.MakeText(strings.Repeat(" ", width-c.padding))
 	// selectedPadding := ui.TransformText(padding, styleForSelected)
 	for i, line := range c.lines {
 		if i > 0 {

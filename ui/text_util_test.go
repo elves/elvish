@@ -12,15 +12,15 @@ func TestMarkLines(t *testing.T) {
 		'x': "blue bg-green",
 	}
 	tt.Test(t, tt.Fn("MarkLines", MarkLines), tt.Table{
-		tt.Args("foo  bar foobar").Rets(PlainText("foo  bar foobar")),
+		tt.Args("foo  bar foobar").Rets(MakeText("foo  bar foobar")),
 		tt.Args(
 			"foo  bar foobar", stylesheet,
 			"---  xxx ------",
 		).Rets(
 			MakeText("foo", "reverse").
-				ConcatText(PlainText("  ")).
+				ConcatText(MakeText("  ")).
 				ConcatText(MakeText("bar", "blue", "bg-green")).
-				ConcatText(PlainText(" ")).
+				ConcatText(MakeText(" ")).
 				ConcatText(MakeText("foobar", "reverse")),
 		),
 		tt.Args(
@@ -28,7 +28,7 @@ func TestMarkLines(t *testing.T) {
 			"---",
 		).Rets(
 			MakeText("foo", "reverse").
-				ConcatText(PlainText("  bar foobar")),
+				ConcatText(MakeText("  bar foobar")),
 		),
 		tt.Args(
 			"plain1",
@@ -37,17 +37,17 @@ func TestMarkLines(t *testing.T) {
 			"---  xxx ------",
 			"plain3",
 		).Rets(
-			PlainText("plain1").
-				ConcatText(PlainText("\n")).
-				ConcatText(PlainText("plain2")).
-				ConcatText(PlainText("\n")).
+			MakeText("plain1").
+				ConcatText(MakeText("\n")).
+				ConcatText(MakeText("plain2")).
+				ConcatText(MakeText("\n")).
 				ConcatText(MakeText("foo", "reverse")).
-				ConcatText(PlainText("  ")).
+				ConcatText(MakeText("  ")).
 				ConcatText(MakeText("bar", "blue", "bg-green")).
-				ConcatText(PlainText(" ")).
+				ConcatText(MakeText(" ")).
 				ConcatText(MakeText("foobar", "reverse")).
-				ConcatText(PlainText("\n")).
-				ConcatText(PlainText("plain3")),
+				ConcatText(MakeText("\n")).
+				ConcatText(MakeText("plain3")),
 		),
 	})
 }

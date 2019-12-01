@@ -39,7 +39,7 @@ type Highlighter interface {
 type dummyHighlighter struct{}
 
 func (dummyHighlighter) Get(code string) (ui.Text, []error) {
-	return ui.PlainText(code), nil
+	return ui.MakeText(code), nil
 }
 
 func (dummyHighlighter) LateUpdates() <-chan ui.Text { return nil }

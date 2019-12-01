@@ -51,8 +51,8 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "prompt, code and rprompt",
 		Given: New(Spec{
-			Prompt:  ConstPrompt(ui.PlainText("~>")),
-			RPrompt: ConstPrompt(ui.PlainText("RP")),
+			Prompt:  ConstPrompt(ui.MakeText("~>")),
+			RPrompt: ConstPrompt(ui.MakeText("RP")),
 			State:   State{Buffer: Buffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).Write("~>code").SetDotHere().Write("  RP"),
@@ -61,8 +61,8 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "prompt explicitly hidden ",
 		Given: New(Spec{
-			Prompt:  ConstPrompt(ui.PlainText("~>")),
-			RPrompt: ConstPrompt(ui.PlainText("RP")),
+			Prompt:  ConstPrompt(ui.MakeText("~>")),
+			RPrompt: ConstPrompt(ui.MakeText("RP")),
 			State:   State{Buffer: Buffer{Content: "code", Dot: 4}, HideRPrompt: true}}),
 		Width: 10, Height: 24,
 		Want: bb(10).Write("~>code").SetDotHere(),
@@ -70,8 +70,8 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "rprompt too long",
 		Given: New(Spec{
-			Prompt:  ConstPrompt(ui.PlainText("~>")),
-			RPrompt: ConstPrompt(ui.PlainText("1234")),
+			Prompt:  ConstPrompt(ui.MakeText("~>")),
+			RPrompt: ConstPrompt(ui.MakeText("1234")),
 			State:   State{Buffer: Buffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).Write("~>code").SetDotHere(),
@@ -89,10 +89,10 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "static errors in code",
 		Given: New(Spec{
-			Prompt: ConstPrompt(ui.PlainText("> ")),
+			Prompt: ConstPrompt(ui.MakeText("> ")),
 			Highlighter: func(code string) (ui.Text, []error) {
 				err := errors.New("static error")
-				return ui.PlainText(code), []error{err}
+				return ui.MakeText(code), []error{err}
 			},
 			State: State{Buffer: Buffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,

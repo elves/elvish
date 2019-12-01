@@ -126,7 +126,7 @@ func (it items) filter(p string, dedup, caseSensitive bool) items {
 func (it items) Show(i int) ui.Text {
 	entry := it.entries[i]
 	// TODO: The alignment of the index works up to 10000 entries.
-	return ui.PlainText(fmt.Sprintf("%4d %s", entry.Seq, entry.Text))
+	return ui.MakeText(fmt.Sprintf("%4d %s", entry.Seq, entry.Text))
 }
 
 func (it items) Len() int { return len(it.entries) }

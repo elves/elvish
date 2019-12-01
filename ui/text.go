@@ -12,14 +12,9 @@ import (
 // Text contains of a list of styled Segments.
 type Text []*Segment
 
-// PlainText returns an unstyled Text.
-func PlainText(s string) Text {
-	return Text{&Segment{Text: s}}
-}
-
 // MakeText makes a text by taking a string and applying the given transformers.
 func MakeText(s string, transformers ...string) Text {
-	t := PlainText(s)
+	t := Text{&Segment{Text: s}}
 	for _, transformer := range transformers {
 		t = TransformText(t, transformer)
 	}
