@@ -67,13 +67,13 @@ func TestStart_OK(t *testing.T) {
 		// empty codearea
 		Newline().
 		// combobox codearea
-		WriteStyled(ui.MakeText("LASTCMD",
-			"bold", "lightgray", "bg-magenta")).
+		WriteStyled(ui.NewText("LASTCMD",
+			ui.Bold, ui.LightGray, ui.MagentaBackground)).
 		Write(" ").
 		SetDotHere().
 		// first entry is selected
 		Newline().WriteStyled(
-		ui.MakeText("    foo,bar,baz"+strings.Repeat(" ", 65), "inverse")).
+		ui.NewText("    foo,bar,baz"+strings.Repeat(" ", 65), ui.Inverse)).
 		// unselected entries
 		Newline().Write("  0 foo").
 		Newline().Write("  1 bar").
@@ -87,13 +87,13 @@ func TestStart_OK(t *testing.T) {
 		// empty codearea
 		Newline().
 		// combobox codearea
-		WriteStyled(ui.MakeText("LASTCMD",
-			"bold", "lightgray", "bg-magenta")).
+		WriteStyled(ui.NewText("LASTCMD",
+			ui.Bold, ui.LightGray, ui.MagentaBackground)).
 		Write(" -").
 		SetDotHere().
 		// first entry is selected
 		Newline().WriteStyled(
-		ui.MakeText(" -3 foo"+strings.Repeat(" ", 73), "inverse")).
+		ui.NewText(" -3 foo"+strings.Repeat(" ", 73), ui.Inverse)).
 		// unselected entries
 		Newline().Write(" -2 bar").
 		Newline().Write(" -1 baz").

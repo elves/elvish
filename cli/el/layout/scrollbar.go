@@ -27,8 +27,8 @@ type VScrollbar struct {
 }
 
 var (
-	vscrollbarThumb  = ui.MakeText(" ", "magenta", "inverse")
-	vscrollbarTrough = ui.MakeText("│", "magenta")
+	vscrollbarThumb  = ui.NewText(" ", ui.Magenta, ui.Inverse)
+	vscrollbarTrough = ui.NewText("│", ui.Magenta)
 )
 
 func (v VScrollbar) Render(width, height int) *term.Buffer {
@@ -55,8 +55,8 @@ type HScrollbar struct {
 }
 
 var (
-	hscrollbarThumb  = ui.MakeText(" ", "magenta", "inverse")
-	hscrollbarTrough = ui.MakeText("━", "magenta")
+	hscrollbarThumb  = ui.NewText(" ", ui.Magenta, ui.Inverse)
+	hscrollbarTrough = ui.NewText("━", ui.Magenta)
 )
 
 func (h HScrollbar) Render(width, height int) *term.Buffer {

@@ -63,7 +63,7 @@ func TestErrorInAscend(t *testing.T) {
 	Start(app, Config{Cursor: c})
 
 	ttyCtrl.Inject(term.K(ui.Left))
-	ttyCtrl.TestNotesBuffer(t, makeNotesBuf(ui.MakeText("cannot ascend")))
+	ttyCtrl.TestNotesBuffer(t, makeNotesBuf(ui.NewText("cannot ascend")))
 }
 
 func TestErrorInDescend(t *testing.T) {
@@ -76,7 +76,7 @@ func TestErrorInDescend(t *testing.T) {
 
 	ttyCtrl.Inject(term.K(ui.Down))
 	ttyCtrl.Inject(term.K(ui.Right))
-	ttyCtrl.TestNotesBuffer(t, makeNotesBuf(ui.MakeText("cannot descend")))
+	ttyCtrl.TestNotesBuffer(t, makeNotesBuf(ui.NewText("cannot descend")))
 }
 
 func TestErrorInCurrent(t *testing.T) {

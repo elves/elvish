@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/cli/term"
+	"github.com/elves/elvish/ui"
 )
 
 // Selected is a special value in the argument to WriteListing, signalling that
@@ -23,7 +24,7 @@ func WriteListing(b *term.BufferBuilder, name, filter string, lines ...string) {
 		case i < len(lines)-1 && lines[i+1] == Selected:
 			b.Newline()
 			padded := fmt.Sprintf("%-*s", b.Width, line)
-			b.Write(padded, "inverse")
+			b.Write(padded, ui.Inverse)
 		default:
 			b.Newline()
 			b.Write(line)

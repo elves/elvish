@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/term"
+	"github.com/elves/elvish/ui"
 )
 
 func TestWriteListing(t *testing.T) {
@@ -19,7 +20,7 @@ func TestWriteListing(t *testing.T) {
 		WriteStyled(ModeLine(" LIST ", true)).
 		Write("f").SetDotHere().
 		Newline().Write("line 1").
-		Newline().Write("line 2    ", "inverse").
+		Newline().Write("line 2    ", ui.Inverse).
 		Newline().Write("line 3").
 		Buffer()
 	if !reflect.DeepEqual(buf, wantBuf) {

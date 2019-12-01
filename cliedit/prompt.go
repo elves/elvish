@@ -70,24 +70,24 @@ func getDefaultPromptVals() (prompt, rprompt eval.Callable) {
 }
 
 func getDefaultPrompt(isRoot bool) eval.Callable {
-	p := ui.MakeText("> ")
+	p := ui.NewText("> ")
 	if isRoot {
-		p = ui.TransformText(ui.MakeText("# "), "red")
+		p = ui.NewText("# ", ui.Red)
 	}
 	return eval.NewGoFn("default prompt", func() ui.Text {
-		return ui.MakeText(util.Getwd()).ConcatText(p)
+		return ui.NewText(util.Getwd()).ConcatText(p)
 	})
 }
 
 func getDefaultRPrompt(username, hostname string) eval.Callable {
-	rp := ui.TransformText(ui.MakeText(username+"@"+hostname), "inverse")
+	rp := ui.NewText(username+"@"+hostname, ui.Inverse)
 	return eval.NewGoFn("default rprompt", func() ui.Text {
 		return rp
 	})
 }
 
 func defaultStaleTransform(original ui.Text) ui.Text {
-	return ui.TransformText(original, "inverse")
+	return ui.Transform(original, ui.Inverse)
 }
 
 // callPrompt calls a function with the given arguments and closed input, and

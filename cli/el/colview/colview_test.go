@@ -41,10 +41,10 @@ var renderTests = []el.RenderTest{
 		Want: term.NewBufferBuilder(11).
 			// first line
 			Write("x0  ").
-			Write("y0 ", "inverse").
+			Write("y0 ", ui.Inverse).
 			Write(" z0").
 			// second line
-			Newline().Write("x1 ", "inverse").
+			Newline().Write("x1 ", ui.Inverse).
 			Write("     z1").
 			// third line
 			Newline().Write("        z2"),

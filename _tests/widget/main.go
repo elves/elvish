@@ -26,12 +26,12 @@ func makeWidget() el.Widget {
 	w := &combobox.Widget{
 		CodeArea: codearea.Widget{
 			Prompt: codearea.ConstPrompt(
-				ui.MakeText(" NUMBER ", "bold", "bg-magenta").
-					ConcatText(ui.MakeText(" "))),
+				ui.NewText(" NUMBER ", "bold", "bg-magenta").
+					ConcatText(ui.NewText(" "))),
 		},
 		ListBox: listbox.Widget{
 			State:       listbox.MakeState(&items, false),
-			Placeholder: ui.MakeText("(no items)"),
+			Placeholder: ui.NewText("(no items)"),
 			Horizontal:  *horizontal,
 		},
 	}

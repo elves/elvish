@@ -48,9 +48,9 @@ var renderTests = []el.RenderTest{
 		Width: 10, Height: 2,
 		Want: bb(10).
 			Write("line 1   ").
-			Write(" ", "inverse", "magenta").Newline().
+			Write(" ", ui.Inverse, ui.Magenta).Newline().
 			Write("line 2   ").
-			Write("│", "magenta").Buffer(),
+			Write("│", ui.Magenta).Buffer(),
 	},
 	{
 		Name: "State.First adjusted to fit text",

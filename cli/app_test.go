@@ -105,7 +105,7 @@ func TestReadCode_FinalRedraw(t *testing.T) {
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "code"}},
 		State: State{
-			Addon: layout.Label{Content: ui.MakeText("addon")}}})
+			Addon: layout.Label{Content: ui.NewText("addon")}}})
 	codeCh, _ := ReadCodeAsync(a)
 
 	// Wait until the stable state.
@@ -193,7 +193,7 @@ func TestReadCode_ShowsHighlightedCode(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		Highlighter: testHighlighter{
 			get: func(code string) (ui.Text, []error) {
-				return ui.MakeText(code, "red"), nil
+				return ui.NewText(code, ui.Red), nil
 			},
 		}})
 
@@ -202,7 +202,7 @@ func TestReadCode_ShowsHighlightedCode(t *testing.T) {
 	feedInput(tty, "code")
 
 	wantBuf := bb().
-		Write("code", "red").
+		Write("code", ui.Red).
 		SetDotHere().Buffer()
 	tty.TestBuffer(t, wantBuf)
 }
@@ -212,7 +212,7 @@ func TestReadCode_ShowsErrorsFromHighlighter(t *testing.T) {
 		Highlighter: testHighlighter{
 			get: func(code string) (ui.Text, []error) {
 				errors := []error{errors.New("ERR 1"), errors.New("ERR 2")}
-				return ui.MakeText(code), errors
+				return ui.NewText(code), errors
 			},
 		}})
 
@@ -228,10 +228,10 @@ func TestReadCode_ShowsErrorsFromHighlighter(t *testing.T) {
 }
 
 func TestReadCode_RedrawsOnLateUpdateFromHighlighter(t *testing.T) {
-	style := ""
+	var style ui.Transformer
 	hl := testHighlighter{
 		get: func(code string) (ui.Text, []error) {
-			return ui.MakeText(code, style), nil
+			return ui.NewText(code, style), nil
 		},
 		lateUpdates: make(chan ui.Text),
 	}
@@ -243,15 +243,15 @@ func TestReadCode_RedrawsOnLateUpdateFromHighlighter(t *testing.T) {
 
 	tty.TestBuffer(t, bb().Write("code").SetDotHere().Buffer())
 
-	style = "red"
+	style = ui.Red
 	hl.lateUpdates <- nil
 	tty.TestBuffer(t, bb().WriteStyled(
-		ui.MakeText("code", "red")).SetDotHere().Buffer())
+		ui.NewText("code", ui.Red)).SetDotHere().Buffer())
 }
 
 func TestReadCode_ShowsPrompt(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
-		Prompt: constPrompt{ui.MakeText("> ")}})
+		Prompt: constPrompt{ui.NewText("> ")}})
 
 	codeCh, _ := ReadCodeAsync(a)
 	defer cleanup(a, codeCh)
@@ -277,7 +277,7 @@ func TestReadCode_CallsPromptTrigger(t *testing.T) {
 func TestReadCode_RedrawsOnLateUpdateFromPrompt(t *testing.T) {
 	promptContent := "old"
 	prompt := testPrompt{
-		get:         func() ui.Text { return ui.MakeText(promptContent) },
+		get:         func() ui.Text { return ui.NewText(promptContent) },
 		lateUpdates: make(chan ui.Text),
 	}
 	a, tty := setupWithSpec(AppSpec{Prompt: prompt})
@@ -295,7 +295,7 @@ func TestReadCode_RedrawsOnLateUpdateFromPrompt(t *testing.T) {
 
 func TestReadCode_ShowsRPrompt(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
-		RPrompt: constPrompt{ui.MakeText("R")}})
+		RPrompt: constPrompt{ui.NewText("R")}})
 
 	codeCh, _ := ReadCodeAsync(a)
 	defer cleanup(a, codeCh)
@@ -313,7 +313,7 @@ func TestReadCode_ShowsRPromptInFinalRedrawIfPersistent(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "code"}},
-		RPrompt:           constPrompt{ui.MakeText("R")},
+		RPrompt:           constPrompt{ui.NewText("R")},
 		RPromptPersistent: func() bool { return true },
 	})
 
@@ -331,7 +331,7 @@ func TestReadCode_HidesRPromptInFinalRedrawIfNotPersistent(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "code"}},
-		RPrompt:           constPrompt{ui.MakeText("R")},
+		RPrompt:           constPrompt{ui.NewText("R")},
 		RPromptPersistent: func() bool { return false },
 	})
 
@@ -351,7 +351,7 @@ func TestReadCode_LetsAddonHandleEvents(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		State: State{
 			Addon: codearea.New(codearea.Spec{
-				Prompt: func() ui.Text { return ui.MakeText("addon> ") },
+				Prompt: func() ui.Text { return ui.NewText("addon> ") },
 			})}})
 
 	codeCh, _ := ReadCodeAsync(a)

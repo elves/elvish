@@ -14,7 +14,7 @@ func TestPrompt_ValueOutput(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.TestBuffer(t,
-		bb().Write("val").Write("> ", "red").
+		bb().Write("val").Write("> ", ui.Red).
 			SetDotHere().Buffer())
 }
 
@@ -77,7 +77,7 @@ func TestPromptStaleThreshold(t *testing.T) {
 	defer f.Cleanup()
 
 	wantBufStale := bb().
-		Write("???> ", "inverse").SetDotHere().Buffer()
+		Write("???> ", ui.Inverse).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufStale)
 
 	evals(f.Evaler, `pwclose $pipe`)
@@ -95,7 +95,7 @@ func TestPromptStaleTransform(t *testing.T) {
 	defer f.Cleanup()
 
 	wantBufStale := bb().
-		WriteStyled(ui.MakeText("S???> S")).SetDotHere().Buffer()
+		WriteStyled(ui.NewText("S???> S")).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBufStale)
 	evals(f.Evaler, `pwclose $pipe`)
 	evals(f.Evaler, `prclose $pipe`)
@@ -153,7 +153,7 @@ func TestDefaultPromptForRoot(t *testing.T) {
 	f.Start()
 
 	wantBuf := bb().Write("~").
-		Write("# ", "red").SetDotHere().Buffer()
+		Write("# ", ui.Red).SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
@@ -167,6 +167,6 @@ func TestDefaultRPrompt(t *testing.T) {
 
 	wantBuf := bb().Write("~> ").SetDotHere().
 		Write(strings.Repeat(" ", 49)).
-		Write("elf@host", "inverse").Buffer()
+		Write("elf@host", ui.Inverse).Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }

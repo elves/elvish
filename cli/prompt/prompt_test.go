@@ -14,15 +14,15 @@ func TestPrompt_DefaultCompute(t *testing.T) {
 	prompt := New(Config{})
 
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.MakeText("???> "))
+	testUpdate(t, prompt, ui.NewText("???> "))
 }
 
 func TestPrompt_ShowsComputedPrompt(t *testing.T) {
 	prompt := New(Config{
-		Compute: func() ui.Text { return ui.MakeText(">>> ") }})
+		Compute: func() ui.Text { return ui.NewText(">>> ") }})
 
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.MakeText(">>> "))
+	testUpdate(t, prompt, ui.NewText(">>> "))
 }
 
 func TestPrompt_StalePrompt(t *testing.T) {
@@ -37,39 +37,39 @@ func TestPrompt_StalePrompt(t *testing.T) {
 	prompt.Trigger(true)
 	// The compute function is blocked, so a stale version of the intial
 	// "unknown" prompt will be shown.
-	testUpdate(t, prompt, ui.MakeText("???> ", "inverse"))
+	testUpdate(t, prompt, ui.NewText("???> ", ui.Inverse))
 
 	// The compute function will now return.
 	unblock()
 	// The returned prompt will now be used.
-	testUpdate(t, prompt, ui.MakeText("1> "))
+	testUpdate(t, prompt, ui.NewText("1> "))
 
 	// Force a refresh.
 	prompt.Trigger(true)
 	// The compute function will now be blocked again, so after a while a stale
 	// version of the previous prompt will be shown.
-	testUpdate(t, prompt, ui.MakeText("1> ", "inverse"))
+	testUpdate(t, prompt, ui.NewText("1> ", ui.Inverse))
 
 	// Unblock the compute function.
 	unblock()
 	// The new prompt will now be shown.
-	testUpdate(t, prompt, ui.MakeText("2> "))
+	testUpdate(t, prompt, ui.NewText("2> "))
 
 	// Force a refresh.
 	prompt.Trigger(true)
 	// Make sure that the compute function is run and stuck.
-	testUpdate(t, prompt, ui.MakeText("2> ", "inverse"))
+	testUpdate(t, prompt, ui.NewText("2> ", ui.Inverse))
 	// Queue another two refreshes before the compute function can return.
 	prompt.Trigger(true)
 	prompt.Trigger(true)
 	unblock()
 	// Now the new prompt should be marked stale immediately.
-	testUpdate(t, prompt, ui.MakeText("3> ", "inverse"))
+	testUpdate(t, prompt, ui.NewText("3> ", ui.Inverse))
 	unblock()
 	// However, the the two refreshes we requested early only trigger one
 	// re-computation, because they are requested while the compute function is
 	// stuck, so they can be safely merged.
-	testUpdate(t, prompt, ui.MakeText("4> "))
+	testUpdate(t, prompt, ui.NewText("4> "))
 }
 
 func TestPrompt_Eagerness0(t *testing.T) {
@@ -80,7 +80,7 @@ func TestPrompt_Eagerness0(t *testing.T) {
 
 	// A forced refresh is always respected.
 	prompt.Trigger(true)
-	testUpdate(t, prompt, ui.MakeText("1> "))
+	testUpdate(t, prompt, ui.NewText("1> "))
 
 	// A unforced refresh is not respected.
 	prompt.Trigger(false)
@@ -94,7 +94,7 @@ func TestPrompt_Eagerness0(t *testing.T) {
 
 	// Only force updates are respected.
 	prompt.Trigger(true)
-	testUpdate(t, prompt, ui.MakeText("2> "))
+	testUpdate(t, prompt, ui.NewText("2> "))
 }
 
 func TestPrompt_Eagerness5(t *testing.T) {
@@ -105,7 +105,7 @@ func TestPrompt_Eagerness5(t *testing.T) {
 
 	// The initial trigger is respected because there was no previous pwd.
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.MakeText("1> "))
+	testUpdate(t, prompt, ui.NewText("1> "))
 
 	// No update because the pwd has not changed.
 	prompt.Trigger(false)
@@ -115,7 +115,7 @@ func TestPrompt_Eagerness5(t *testing.T) {
 	_, cleanup := util.InTestDir()
 	defer cleanup()
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.MakeText("2> "))
+	testUpdate(t, prompt, ui.NewText("2> "))
 }
 
 func TestPrompt_Eagerness10(t *testing.T) {
@@ -126,15 +126,15 @@ func TestPrompt_Eagerness10(t *testing.T) {
 
 	// The initial trigger is respected.
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.MakeText("1> "))
+	testUpdate(t, prompt, ui.NewText("1> "))
 
 	// Subsequent triggers, force or not, are also respected.
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.MakeText("2> "))
+	testUpdate(t, prompt, ui.NewText("2> "))
 	prompt.Trigger(true)
-	testUpdate(t, prompt, ui.MakeText("3> "))
+	testUpdate(t, prompt, ui.NewText("3> "))
 	prompt.Trigger(false)
-	testUpdate(t, prompt, ui.MakeText("4> "))
+	testUpdate(t, prompt, ui.NewText("4> "))
 }
 
 func blockedAutoIncPrompt() (func() ui.Text, func()) {
@@ -143,7 +143,7 @@ func blockedAutoIncPrompt() (func() ui.Text, func()) {
 	compute := func() ui.Text {
 		<-unblockChan
 		i++
-		return ui.MakeText(fmt.Sprintf("%d> ", i))
+		return ui.NewText(fmt.Sprintf("%d> ", i))
 	}
 	unblock := func() {
 		unblockChan <- struct{}{}
@@ -155,7 +155,7 @@ func autoIncPrompt() func() ui.Text {
 	i := 0
 	return func() ui.Text {
 		i++
-		return ui.MakeText(fmt.Sprintf("%d> ", i))
+		return ui.NewText(fmt.Sprintf("%d> ", i))
 	}
 }
 

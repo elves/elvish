@@ -44,7 +44,7 @@ func TestDumpBuf(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "echo")
 	wantBuf := bb().Write("~> ").
-		Write("echo", "green").SetDotHere().Buffer()
+		Write("echo", ui.Green).SetDotHere().Buffer()
 	// Wait until the buffer we want has shown up.
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 
@@ -75,7 +75,7 @@ func TestInsertRaw(t *testing.T) {
 
 	// Raw mode is dismissed after a single key event.
 	f.TTYCtrl.Inject(term.K('+'))
-	wantBuf = bb().Write("~> ").Write("+", "green").
+	wantBuf = bb().Write("~> ").Write("+", ui.Green).
 		SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }

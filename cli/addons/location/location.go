@@ -194,7 +194,7 @@ func makeRegexpForPattern(p string) *regexp.Regexp {
 }
 
 func (l list) Show(i int) ui.Text {
-	return ui.MakeText(fmt.Sprintf("%s %s",
+	return ui.NewText(fmt.Sprintf("%s %s",
 		showScore(l.dirs[i].Score), showPath(l.dirs[i].Path, l.home)))
 }
 

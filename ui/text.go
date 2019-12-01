@@ -12,6 +12,10 @@ import (
 // Text contains of a list of styled Segments.
 type Text []*Segment
 
+func NewText(s string, ts ...Transformer) Text {
+	return Transform(Text{&Segment{Text: s}}, ts...)
+}
+
 // MakeText makes a text by taking a string and applying the given transformers.
 func MakeText(s string, transformers ...string) Text {
 	t := Text{&Segment{Text: s}}

@@ -23,7 +23,7 @@ var renderTests = []el.RenderTest{
 		Width: 10, Height: 24,
 		Want: term.NewBufferBuilder(10).
 			Write("filter").SetDotHere().
-			Newline().Write("item 0    ", "inverse").
+			Newline().Write("item 0    ", ui.Inverse).
 			Newline().Write("item 1"),
 	},
 	{
@@ -38,7 +38,7 @@ var renderTests = []el.RenderTest{
 		Width: 10, Height: 24,
 		Want: term.NewBufferBuilder(10).
 			Write("filter").SetDotHere().
-			Newline().Write("item 0    ", "inverse").
+			Newline().Write("item 0    ", ui.Inverse).
 			Newline().Write("item 1"),
 	},
 }

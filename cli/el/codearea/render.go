@@ -15,7 +15,7 @@ type view struct {
 	errors  []error
 }
 
-const pendingStyle = "underlined"
+var pendingStyle = ui.Underlined
 
 func getView(w *widget) *view {
 	s := w.CopyState()
@@ -24,7 +24,7 @@ func getView(w *widget) *view {
 	if pFrom < pTo {
 		// Apply pendingStyle to [pFrom, pTo)
 		parts := styledCode.Partition(pFrom, pTo)
-		pending := ui.TransformText(parts[1], pendingStyle)
+		pending := ui.Transform(parts[1], pendingStyle)
 		styledCode = parts[0].ConcatText(pending).ConcatText(parts[2])
 	}
 

@@ -82,7 +82,7 @@ func New(spec Spec) Widget {
 	return &widget{Spec: spec}
 }
 
-var styleForSelected = "inverse"
+var styleForSelected = ui.Inverse
 
 func (w *widget) Render(width, height int) *term.Buffer {
 	if w.Horizontal {
@@ -223,9 +223,8 @@ type croppedLines struct {
 
 func (c croppedLines) Render(width, height int) *term.Buffer {
 	bb := term.NewBufferBuilder(width)
-	leftSpacing := ui.MakeText(strings.Repeat(" ", c.padding))
-	rightSpacing := ui.MakeText(strings.Repeat(" ", width-c.padding))
-	// selectedPadding := ui.TransformText(padding, styleForSelected)
+	leftSpacing := ui.NewText(strings.Repeat(" ", c.padding))
+	rightSpacing := ui.NewText(strings.Repeat(" ", width-c.padding))
 	for i, line := range c.lines {
 		if i > 0 {
 			bb.Newline()
@@ -247,7 +246,7 @@ func (c croppedLines) Render(width, height int) *term.Buffer {
 			acc = acc.ConcatText(right).TrimWcwidth(width)
 		}
 		if selected {
-			acc = ui.TransformText(acc, styleForSelected)
+			acc = ui.Transform(acc, styleForSelected)
 		}
 
 		bb.WriteStyled(acc)

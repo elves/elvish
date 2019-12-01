@@ -2,7 +2,6 @@ package listbox
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/elves/elvish/ui"
 )
@@ -27,7 +26,7 @@ type Items interface {
 // TestItems is an implementation of Items useful for testing.
 type TestItems struct {
 	Prefix string
-	Styles string
+	Style  ui.Transformer
 	NItems int
 }
 
@@ -38,8 +37,7 @@ func (it TestItems) Show(i int) ui.Text {
 	if prefix == "" {
 		prefix = "item "
 	}
-	return ui.MakeText(
-		fmt.Sprintf("%s%d", prefix, i), strings.Split(it.Styles, " ")...)
+	return ui.NewText(fmt.Sprintf("%s%d", prefix, i), it.Style)
 }
 
 // Len returns it.NItems.

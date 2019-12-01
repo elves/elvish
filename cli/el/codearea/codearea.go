@@ -103,7 +103,7 @@ func ConstPrompt(content ui.Text) func() ui.Text {
 }
 
 func dummyHighlighter(code string) (ui.Text, []error) {
-	return ui.MakeText(code), nil
+	return ui.NewText(code), nil
 }
 
 func dummyPrompt() ui.Text { return nil }

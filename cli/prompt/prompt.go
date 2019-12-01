@@ -39,14 +39,14 @@ type Config struct {
 }
 
 func defaultStaleTransform(t ui.Text) ui.Text {
-	return ui.TransformText(t, "inverse")
+	return ui.Transform(t, ui.Inverse)
 }
 
 const defaultStaleThreshold = 200 * time.Millisecond
 
 const defaultEagerness = 5
 
-var unknownContent = ui.MakeText("???> ")
+var unknownContent = ui.NewText("???> ")
 
 // New makes a new prompt.
 func New(cfg Config) *Prompt {

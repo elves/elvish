@@ -31,7 +31,7 @@ func TestNavigation(t *testing.T) {
 	makeBuf := func(moreCode string, markedLines ...interface{}) *term.Buffer {
 		b := bb().
 			Write("~"+string(os.PathSeparator)+"d> ").
-			Write("put", "green").
+			Write("put", ui.Green).
 			Write(moreCode).SetDotHere()
 		if len(markedLines) > 0 {
 			b.Newline().

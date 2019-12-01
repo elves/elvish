@@ -4,9 +4,9 @@ import "github.com/elves/elvish/ui"
 
 // ModeLine returns a text styled as a modeline.
 func ModeLine(content string, space bool) ui.Text {
-	t := ui.MakeText(content, "bold", "lightgray", "bg-magenta")
+	t := ui.NewText(content, ui.Bold, ui.LightGray, ui.MagentaBackground)
 	if space {
-		t = t.ConcatText(ui.MakeText(" "))
+		t = t.ConcatText(ui.NewText(" "))
 	}
 	return t
 }

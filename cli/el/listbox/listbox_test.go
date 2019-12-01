@@ -13,14 +13,14 @@ var bb = term.NewBufferBuilder
 var renderVerticalTests = []el.RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
-		Given: New(Spec{Placeholder: ui.MakeText("nothing")}),
+		Given: New(Spec{Placeholder: ui.NewText("nothing")}),
 		Width: 10, Height: 3,
 		Want: bb(10).Write("nothing"),
 	},
 	{
 		Name: "placeholder when NItems is 0",
 		Given: New(Spec{
-			Placeholder: ui.MakeText("nothing"),
+			Placeholder: ui.NewText("nothing"),
 			State:       State{Items: TestItems{}}}),
 		Width: 10, Height: 3,
 		Want: bb(10).Write("nothing"),
@@ -30,7 +30,7 @@ var renderVerticalTests = []el.RenderTest{
 		Given: New(Spec{State: State{Items: TestItems{NItems: 2}, Selected: 0}}),
 		Width: 10, Height: 3,
 		Want: bb(10).
-			Write("item 0    ", "inverse").
+			Write("item 0    ", ui.Inverse).
 			Newline().Write("item 1"),
 	},
 	{
@@ -38,7 +38,7 @@ var renderVerticalTests = []el.RenderTest{
 		Given: New(Spec{State: State{Items: TestItems{NItems: 2}, Selected: 0}}),
 		Width: 4, Height: 3,
 		Want: bb(4).
-			Write("item", "inverse").
+			Write("item", ui.Inverse).
 			Newline().Write("item"),
 	},
 	{
@@ -46,10 +46,10 @@ var renderVerticalTests = []el.RenderTest{
 		Given: New(Spec{State: State{Items: TestItems{NItems: 4}, Selected: 0}}),
 		Width: 10, Height: 2,
 		Want: bb(10).
-			Write("item 0   ", "inverse").
-			Write(" ", "inverse", "magenta").
+			Write("item 0   ", ui.Inverse).
+			Write(" ", ui.Inverse, ui.Magenta).
 			Newline().Write("item 1   ").
-			Write("│", "magenta"),
+			Write("│", ui.Magenta),
 	},
 	{
 		Name: "scrollbar when not showing last item in full",
@@ -58,12 +58,12 @@ var renderVerticalTests = []el.RenderTest{
 				Items: TestItems{Prefix: "item\n", NItems: 2}, Selected: 0}}),
 		Width: 10, Height: 3,
 		Want: bb(10).
-			Write("item     ", "inverse").
-			Write(" ", "inverse", "magenta").
-			Newline().Write("0        ", "inverse").
-			Write(" ", "inverse", "magenta").
+			Write("item     ", ui.Inverse).
+			Write(" ", ui.Inverse, ui.Magenta).
+			Newline().Write("0        ", ui.Inverse).
+			Write(" ", ui.Inverse, ui.Magenta).
 			Newline().Write("item     ").
-			Write(" ", "inverse", "magenta"),
+			Write(" ", ui.Inverse, ui.Magenta),
 	},
 	{
 		Name: "scrollbar when not showing only item in full",
@@ -72,8 +72,8 @@ var renderVerticalTests = []el.RenderTest{
 				Items: TestItems{Prefix: "item\n", NItems: 1}, Selected: 0}}),
 		Width: 10, Height: 1,
 		Want: bb(10).
-			Write("item     ", "inverse").
-			Write(" ", "inverse", "magenta"),
+			Write("item     ", ui.Inverse).
+			Write(" ", ui.Inverse, ui.Magenta),
 	},
 	{
 		Name: "padding",
@@ -85,8 +85,8 @@ var renderVerticalTests = []el.RenderTest{
 		Width: 4, Height: 4,
 
 		Want: bb(4).
-			Write(" it ", "inverse").Newline().
-			Write(" 0  ", "inverse").Newline().
+			Write(" it ", ui.Inverse).Newline().
+			Write(" 0  ", ui.Inverse).Newline().
 			Write(" it").Newline().
 			Write(" 1").Buffer(),
 	},
@@ -95,16 +95,18 @@ var renderVerticalTests = []el.RenderTest{
 		Given: New(Spec{
 			Padding: 1,
 			State: State{
-				Items: TestItems{Prefix: "x", NItems: 2, Styles: "blue bg-green"}}}),
+				Items: TestItems{
+					Prefix: "x", NItems: 2,
+					Style: ui.JoinTransformers(ui.Blue, ui.GreenBackground)}}}),
 		Width: 6, Height: 2,
 
 		Want: bb(6).
-			Write(" ", "inverse").
-			Write("x0", "blue", "bg-green", "inverse").
-			Write("   ", "inverse").
+			Write(" ", ui.Inverse).
+			Write("x0", ui.Blue, ui.GreenBackground, ui.Inverse).
+			Write("   ", ui.Inverse).
 			Newline().
 			Write(" ").
-			Write("x1", "blue", "bg-green").
+			Write("x1", ui.Blue, ui.GreenBackground).
 			Buffer(),
 	},
 	{
@@ -112,13 +114,14 @@ var renderVerticalTests = []el.RenderTest{
 		Given: New(Spec{
 			Padding: 1, ExtendStyle: true,
 			State: State{Items: TestItems{
-				Prefix: "x", NItems: 2, Styles: "blue bg-green"}}}),
+				Prefix: "x", NItems: 2,
+				Style: ui.JoinTransformers(ui.Blue, ui.GreenBackground)}}}),
 		Width: 6, Height: 2,
 
 		Want: bb(6).
-			Write(" x0   ", "blue", "bg-green", "inverse").
+			Write(" x0   ", ui.Blue, ui.GreenBackground, ui.Inverse).
 			Newline().
-			Write(" x1   ", "blue", "bg-green").
+			Write(" x1   ", ui.Blue, ui.GreenBackground).
 			Buffer(),
 	},
 }
@@ -145,14 +148,14 @@ func TestRender_Vertical_MutatesState(t *testing.T) {
 var renderHorizontalTests = []el.RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
-		Given: New(Spec{Horizontal: true, Placeholder: ui.MakeText("nothing")}),
+		Given: New(Spec{Horizontal: true, Placeholder: ui.NewText("nothing")}),
 		Width: 10, Height: 3,
 		Want: bb(10).Write("nothing"),
 	},
 	{
 		Name: "placeholder when NItems is 0",
 		Given: New(Spec{
-			Horizontal: true, Placeholder: ui.MakeText("nothing"),
+			Horizontal: true, Placeholder: ui.NewText("nothing"),
 			State: State{Items: TestItems{}}}),
 		Width: 10, Height: 3,
 		Want: bb(10).Write("nothing"),
@@ -165,7 +168,7 @@ var renderHorizontalTests = []el.RenderTest{
 		Width: 14, Height: 3,
 		// Available height is 3, but only need 2 lines.
 		Want: bb(14).
-			Write("item 0", "inverse").
+			Write("item 0", ui.Inverse).
 			Write("  ").
 			Write("item 2").
 			Newline().Write("item 1  item 3"),
@@ -177,7 +180,7 @@ var renderHorizontalTests = []el.RenderTest{
 			State: State{Items: TestItems{NItems: 4, Prefix: "x"}, Selected: 0}}),
 		Width: 14, Height: 3,
 		Want: bb(14).
-			Write(" x0 ", "inverse").
+			Write(" x0 ", ui.Inverse).
 			Write("  ").
 			Write(" x2").
 			Newline().Write(" x1    x3"),
@@ -187,12 +190,13 @@ var renderHorizontalTests = []el.RenderTest{
 		Given: New(Spec{
 			Horizontal: true, Padding: 1, ExtendStyle: true,
 			State: State{Items: TestItems{
-				NItems: 2, Prefix: "x", Styles: "blue bg-green"}}}),
+				NItems: 2, Prefix: "x",
+				Style: ui.JoinTransformers(ui.Blue, ui.GreenBackground)}}}),
 		Width: 14, Height: 3,
 		Want: bb(14).
-			Write(" x0 ", "blue", "bg-green", "inverse").
+			Write(" x0 ", ui.Blue, ui.GreenBackground, ui.Inverse).
 			Write("  ").
-			Write(" x1 ", "blue", "bg-green"),
+			Write(" x1 ", ui.Blue, ui.GreenBackground),
 	},
 	{
 		Name: "long lines cropped, with full scrollbar",
@@ -201,9 +205,9 @@ var renderHorizontalTests = []el.RenderTest{
 			State:      State{Items: TestItems{NItems: 2}, Selected: 0}}),
 		Width: 4, Height: 3,
 		Want: bb(4).
-			Write("item", "inverse").
+			Write("item", ui.Inverse).
 			Newline().Write("item").
-			Newline().Write("    ", "magenta", "inverse"),
+			Newline().Write("    ", ui.Magenta, ui.Inverse),
 	},
 	{
 		Name: "scrollbar when not showing all items",
@@ -212,11 +216,11 @@ var renderHorizontalTests = []el.RenderTest{
 			State:      State{Items: TestItems{NItems: 4}, Selected: 0}}),
 		Width: 6, Height: 3,
 		Want: bb(6).
-			Write("item 0", "inverse").
+			Write("item 0", ui.Inverse).
 			Newline().Write("item 1").
 			Newline().
-			Write("   ", "inverse", "magenta").
-			Write("━━━", "magenta"),
+			Write("   ", ui.Inverse, ui.Magenta).
+			Write("━━━", ui.Magenta),
 	},
 	{
 		Name: "scrollbar when not showing all items",
@@ -225,10 +229,10 @@ var renderHorizontalTests = []el.RenderTest{
 			State:      State{Items: TestItems{NItems: 4}, Selected: 0}}),
 		Width: 10, Height: 3,
 		Want: bb(10).
-			Write("item 0", "inverse").Write("  it").
+			Write("item 0", ui.Inverse).Write("  it").
 			Newline().Write("item 1  it").
 			Newline().
-			Write("          ", "inverse", "magenta"),
+			Write("          ", ui.Inverse, ui.Magenta),
 	},
 }
 
