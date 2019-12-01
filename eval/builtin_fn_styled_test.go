@@ -79,7 +79,7 @@ func TestStyledConcat(t *testing.T) {
 	)
 }
 
-func TestFunctionalStyleTransformers(t *testing.T) {
+func TestFunctionalStyleStylings(t *testing.T) {
 	// lambda
 	Test(t,
 		That("print (styled abc [s]{ put $s })").Prints("abc"),

@@ -228,7 +228,7 @@ func TestReadCode_ShowsErrorsFromHighlighter(t *testing.T) {
 }
 
 func TestReadCode_RedrawsOnLateUpdateFromHighlighter(t *testing.T) {
-	var style ui.Transformer
+	var style ui.Styling
 	hl := testHighlighter{
 		get: func(code string) (ui.Text, []error) {
 			return ui.NewText(code, style), nil

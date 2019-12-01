@@ -17,7 +17,7 @@ package ui
 //
 //   var stylesheet = map[rune]string{
 //       '-': Reverse,
-//       'x': JoinTransformers(Blue, GreenBackground),
+//       'x': JoinStylings(Blue, GreenBackground),
 //   }
 //   var text = FromMarkedLines(
 //       "foo      bar      foobar", stylesheet,
@@ -36,7 +36,7 @@ func MarkLines(args ...interface{}) Text {
 			text = text.ConcatText(NewText("\n"))
 		}
 		if i+2 < len(args) {
-			if stylesheet, ok := args[i+1].(map[rune]Transformer); ok {
+			if stylesheet, ok := args[i+1].(map[rune]Styling); ok {
 				if style, ok := args[i+2].(string); ok {
 					text = text.ConcatText(MarkText(line, stylesheet, style))
 					i += 2
@@ -52,7 +52,7 @@ func MarkLines(args ...interface{}) Text {
 // MarkText applies styles to all the runes in the line, using the runes in
 // the style string. The stylesheet argument specifies which style each rune
 // represents.
-func MarkText(line string, stylesheet map[rune]Transformer, style string) Text {
+func MarkText(line string, stylesheet map[rune]Styling, style string) Text {
 	var text Text
 	styleRuns := toRuns(style)
 	for _, styleRun := range styleRuns {

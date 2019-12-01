@@ -118,12 +118,12 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 
 // Write is equivalent to calling WriteStyled with ui.NewText(text,
 // style...).
-func (bb *BufferBuilder) Write(text string, ts ...ui.Transformer) *BufferBuilder {
+func (bb *BufferBuilder) Write(text string, ts ...ui.Styling) *BufferBuilder {
 	return bb.WriteStyled(ui.NewText(text, ts...))
 }
 
 // WriteSpaces writes w spaces with the given styles.
-func (bb *BufferBuilder) WriteSpaces(w int, ts ...ui.Transformer) *BufferBuilder {
+func (bb *BufferBuilder) WriteSpaces(w int, ts ...ui.Styling) *BufferBuilder {
 	return bb.Write(strings.Repeat(" ", w), ts...)
 }
 

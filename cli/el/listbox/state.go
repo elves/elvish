@@ -26,7 +26,7 @@ type Items interface {
 // TestItems is an implementation of Items useful for testing.
 type TestItems struct {
 	Prefix string
-	Style  ui.Transformer
+	Style  ui.Styling
 	NItems int
 }
 

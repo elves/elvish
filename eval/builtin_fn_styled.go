@@ -67,7 +67,7 @@ func Styled(fm *Frame, input interface{}, transformers ...interface{}) (ui.Text,
 	for _, transformer := range transformers {
 		switch transformer := transformer.(type) {
 		case string:
-			transformerFn := ui.FindTransformer(transformer)
+			transformerFn := ui.FindStyling(transformer)
 			if transformerFn == nil {
 				return nil, fmt.Errorf("%s is not a valid style transformer", parse.Quote(transformer))
 			}

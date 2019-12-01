@@ -87,7 +87,7 @@ func getDefaultRPrompt(username, hostname string) eval.Callable {
 }
 
 func defaultStaleTransform(original ui.Text) ui.Text {
-	return ui.Transform(original, ui.Inverse)
+	return ui.StyleText(original, ui.Inverse)
 }
 
 // callPrompt calls a function with the given arguments and closed input, and

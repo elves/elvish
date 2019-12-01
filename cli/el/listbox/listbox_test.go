@@ -97,7 +97,7 @@ var renderVerticalTests = []el.RenderTest{
 			State: State{
 				Items: TestItems{
 					Prefix: "x", NItems: 2,
-					Style: ui.JoinTransformers(ui.Blue, ui.GreenBackground)}}}),
+					Style: ui.JoinStylings(ui.Blue, ui.GreenBackground)}}}),
 		Width: 6, Height: 2,
 
 		Want: bb(6).
@@ -115,7 +115,7 @@ var renderVerticalTests = []el.RenderTest{
 			Padding: 1, ExtendStyle: true,
 			State: State{Items: TestItems{
 				Prefix: "x", NItems: 2,
-				Style: ui.JoinTransformers(ui.Blue, ui.GreenBackground)}}}),
+				Style: ui.JoinStylings(ui.Blue, ui.GreenBackground)}}}),
 		Width: 6, Height: 2,
 
 		Want: bb(6).
@@ -191,7 +191,7 @@ var renderHorizontalTests = []el.RenderTest{
 			Horizontal: true, Padding: 1, ExtendStyle: true,
 			State: State{Items: TestItems{
 				NItems: 2, Prefix: "x",
-				Style: ui.JoinTransformers(ui.Blue, ui.GreenBackground)}}}),
+				Style: ui.JoinStylings(ui.Blue, ui.GreenBackground)}}}),
 		Width: 14, Height: 3,
 		Want: bb(14).
 			Write(" x0 ", ui.Blue, ui.GreenBackground, ui.Inverse).

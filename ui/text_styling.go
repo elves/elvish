@@ -4,27 +4,28 @@ import (
 	"strings"
 )
 
-// Transformer specifies how to transform a Style, Segment or Text.
-type Transformer interface{ transform(*Style) }
+// Styling specifies how to change a Style. It can also be applied to a Segment
+// or Text.
+type Styling interface{ transform(*Style) }
 
-// Transform applies the given Transformer's to a Text. It does not mutate the
-// given Text.
-func Transform(t Text, ts ...Transformer) Text {
+// StyleText returns a new Text with the given Styling's applied. It does not
+// modify the given Text.
+func StyleText(t Text, ts ...Styling) Text {
 	newt := make(Text, len(t))
 	for i, seg := range t {
-		newt[i] = TransformSegment(seg, ts...)
+		newt[i] = StyleSegment(seg, ts...)
 	}
 	return newt
 }
 
-// TransformSegment transforms a Segment according to the given Transformer's.
-// It does not mutate the given Segment.
-func TransformSegment(seg *Segment, ts ...Transformer) *Segment {
-	return &Segment{Text: seg.Text, Style: TransformStyle(seg.Style, ts...)}
+// StyleSegment returns a new Segment with the given Styling's applied. It does
+// not modify the given Segment.
+func StyleSegment(seg *Segment, ts ...Styling) *Segment {
+	return &Segment{Text: seg.Text, Style: ApplyStyling(seg.Style, ts...)}
 }
 
-// TransformStyle transforms a Style according to the given Transformer's.
-func TransformStyle(s Style, ts ...Transformer) Style {
+// ApplyStyling returns a new Style with the given Styling's applied.
+func ApplyStyling(s Style, ts ...Styling) Style {
 	for _, t := range ts {
 		if t != nil {
 			t.transform(&s)
@@ -33,26 +34,26 @@ func TransformStyle(s Style, ts ...Transformer) Style {
 	return s
 }
 
-// JoinTransformers joins several transformers into one.
-func JoinTransformers(ts ...Transformer) Transformer { return jointTransformer(ts) }
+// JoinStylings joins several transformers into one.
+func JoinStylings(ts ...Styling) Styling { return jointStyling(ts) }
 
 var (
-	Black        Transformer = setForeground("black")
-	Red                      = setForeground("red")
-	Green                    = setForeground("green")
-	Yellow                   = setForeground("yellow")
-	Blue                     = setForeground("blue")
-	Magenta                  = setForeground("magenta")
-	Cyan                     = setForeground("cyan")
-	LightGray                = setForeground("lightgray")
-	Gray                     = setForeground("gray")
-	LightRed                 = setForeground("lightred")
-	LightGreen               = setForeground("lightgreen")
-	LightYellow              = setForeground("lightyellow")
-	LightBlue                = setForeground("lightblue")
-	LightMagenta             = setForeground("lightmagenta")
-	LightCyan                = setForeground("lightcyan")
-	White                    = setForeground("white")
+	Black        Styling = setForeground("black")
+	Red                  = setForeground("red")
+	Green                = setForeground("green")
+	Yellow               = setForeground("yellow")
+	Blue                 = setForeground("blue")
+	Magenta              = setForeground("magenta")
+	Cyan                 = setForeground("cyan")
+	LightGray            = setForeground("lightgray")
+	Gray                 = setForeground("gray")
+	LightRed             = setForeground("lightred")
+	LightGreen           = setForeground("lightgreen")
+	LightYellow          = setForeground("lightyellow")
+	LightBlue            = setForeground("lightblue")
+	LightMagenta         = setForeground("lightmagenta")
+	LightCyan            = setForeground("lightcyan")
+	White                = setForeground("white")
 
 	BlackForeground        = setForeground("black")
 	RedForeground          = setForeground("red")
@@ -129,17 +130,17 @@ func accessUnderlined(s *Style) *bool { return &s.Underlined }
 func accessBlink(s *Style) *bool      { return &s.Blink }
 func accessInverse(s *Style) *bool    { return &s.Inverse }
 
-type jointTransformer []Transformer
+type jointStyling []Styling
 
-func (t jointTransformer) transform(s *Style) {
+func (t jointStyling) transform(s *Style) {
 	for _, t := range t {
 		t.transform(s)
 	}
 }
 
-// FindTransformer finds the named transformer, a function that mutates a
+// FindStyling finds the named transformer, a function that mutates a
 // *Style. If the name is not a valid transformer, it returns nil.
-func FindTransformer(name string) func(*Style) {
+func FindStyling(name string) func(*Style) {
 	switch {
 	// Catch special colors early
 	case name == "default":

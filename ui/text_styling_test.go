@@ -6,8 +6,8 @@ import (
 	"github.com/elves/elvish/tt"
 )
 
-func TestTransformText(t *testing.T) {
-	tt.Test(t, tt.Fn("Transform", Transform), tt.Table{
+func TestStyleText(t *testing.T) {
+	tt.Test(t, tt.Fn("StyleText", StyleText), tt.Table{
 		// Foreground color
 		tt.Args(NewText("foo"), Red).
 			Rets(Text{&Segment{Style{Foreground: "red"}, "foo"}}),
@@ -59,6 +59,6 @@ func TestTransformText(t *testing.T) {
 		// Inverse.
 		tt.Args(NewText("foo"), Inverse).
 			Rets(Text{&Segment{Style{Inverse: true}, "foo"}}),
-		// TODO: Test nil transformer.
+		// TODO: Test nil styling.
 	})
 }

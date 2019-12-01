@@ -39,7 +39,7 @@ type Config struct {
 }
 
 func defaultStaleTransform(t ui.Text) ui.Text {
-	return ui.Transform(t, ui.Inverse)
+	return ui.StyleText(t, ui.Inverse)
 }
 
 const defaultStaleThreshold = 200 * time.Millisecond

@@ -24,8 +24,8 @@ func TestNavigation(t *testing.T) {
 		panic(err)
 	}
 
-	styles := map[rune]ui.Transformer{
-		'#': ui.JoinTransformers(ui.Blue, ui.Inverse),
+	styles := map[rune]ui.Styling{
+		'#': ui.JoinStylings(ui.Blue, ui.Inverse),
 		'-': ui.Inverse,
 	}
 	makeBuf := func(moreCode string, markedLines ...interface{}) *term.Buffer {

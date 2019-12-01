@@ -12,8 +12,8 @@ import (
 // Text contains of a list of styled Segments.
 type Text []*Segment
 
-func NewText(s string, ts ...Transformer) Text {
-	return Transform(Text{&Segment{Text: s}}, ts...)
+func NewText(s string, ts ...Styling) Text {
+	return StyleText(Text{&Segment{Text: s}}, ts...)
 }
 
 // Kind returns "styled-text".

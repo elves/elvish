@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/ui"
 )
 
-var styles = map[rune]ui.Transformer{
+var styles = map[rune]ui.Styling{
 	'-': ui.Underlined,
 }
 

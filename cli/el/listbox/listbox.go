@@ -82,7 +82,7 @@ func New(spec Spec) Widget {
 	return &widget{Spec: spec}
 }
 
-var styleForSelected = ui.Inverse
+var stylingForSelected = ui.Inverse
 
 func (w *widget) Render(width, height int) *term.Buffer {
 	if w.Horizontal {
@@ -246,7 +246,7 @@ func (c croppedLines) Render(width, height int) *term.Buffer {
 			acc = acc.ConcatText(right).TrimWcwidth(width)
 		}
 		if selected {
-			acc = ui.Transform(acc, styleForSelected)
+			acc = ui.StyleText(acc, stylingForSelected)
 		}
 
 		bb.WriteStyled(acc)

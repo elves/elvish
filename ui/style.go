@@ -99,7 +99,7 @@ func isValidColorName(col string) bool {
 	}
 }
 
-var sgrTransformer = map[int]string{
+var sgrStyling = map[int]string{
 	1:  "bold",
 	2:  "dim",
 	4:  "underlined",
@@ -133,8 +133,8 @@ func StyleFromSGR(s string) Style {
 		if err != nil {
 			continue
 		}
-		if transform, ok := sgrTransformer[code]; ok {
-			FindTransformer(transform)(&style)
+		if transform, ok := sgrStyling[code]; ok {
+			FindStyling(transform)(&style)
 		}
 	}
 	return style
