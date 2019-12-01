@@ -20,10 +20,7 @@ func TestHistWalk(t *testing.T) {
 	app, ttyCtrl, cleanup := setup()
 	defer cleanup()
 
-	app.CodeArea().MutateState(func(s *codearea.State) {
-		s.Buffer = codearea.Buffer{Content: "ls", Dot: 2}
-	})
-
+	cli.SetCodeBuffer(app, codearea.Buffer{Content: "ls", Dot: 2})
 	app.Redraw()
 	buf0 := term.NewBufferBuilder(40).Write("ls").SetDotHere().Buffer()
 	ttyCtrl.TestBuffer(t, buf0)
@@ -83,6 +80,24 @@ func TestHistWalk_NoWalker(t *testing.T) {
 
 	Start(app, Config{})
 	ttyCtrl.TestNotesBuffer(t, bb().Write("no history walker").Buffer())
+}
+
+func TestHistWalk_NoMatch(t *testing.T) {
+	app, ttyCtrl, cleanup := setup()
+	defer cleanup()
+
+	cli.SetCodeBuffer(app, codearea.Buffer{Content: "ls", Dot: 2})
+	app.Redraw()
+	buf0 := term.NewBufferBuilder(40).Write("ls").SetDotHere().Buffer()
+	ttyCtrl.TestBuffer(t, buf0)
+
+	db := &histutil.TestDB{AllCmds: []string{"echo 1", "echo 2"}}
+	cfg := Config{Walker: histutil.NewWalker(db, -1, nil, "ls")}
+	Start(app, cfg)
+	// Test that an error message has been written to the notes buffer.
+	ttyCtrl.TestNotesBuffer(t, bb().Write("end of history").Buffer())
+	// Test that buffer has not changed - histwalk addon is not active.
+	ttyCtrl.TestBuffer(t, buf0)
 }
 
 func TestHistWalk_FallbackHandler(t *testing.T) {

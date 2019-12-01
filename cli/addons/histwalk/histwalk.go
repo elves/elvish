@@ -67,7 +67,11 @@ func Start(app cli.App, cfg Config) {
 		cfg.Binding = el.DummyHandler{}
 	}
 	walker := cfg.Walker
-	walker.Prev()
+	err := walker.Prev()
+	if err != nil {
+		app.Notify(err.Error())
+		return
+	}
 	w := widget{app: app, Config: cfg}
 	w.onWalk()
 	app.MutateState(func(s *cli.State) { s.Addon = &w })
