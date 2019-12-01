@@ -97,16 +97,16 @@ var renderVerticalTests = []el.RenderTest{
 			State: State{
 				Items: TestItems{
 					Prefix: "x", NItems: 2,
-					Style: ui.JoinStylings(ui.Blue, ui.GreenBackground)}}}),
+					Style: ui.JoinStylings(ui.Blue, ui.BgGreen)}}}),
 		Width: 6, Height: 2,
 
 		Want: bb(6).
 			Write(" ", ui.Inverse).
-			Write("x0", ui.Blue, ui.GreenBackground, ui.Inverse).
+			Write("x0", ui.Blue, ui.BgGreen, ui.Inverse).
 			Write("   ", ui.Inverse).
 			Newline().
 			Write(" ").
-			Write("x1", ui.Blue, ui.GreenBackground).
+			Write("x1", ui.Blue, ui.BgGreen).
 			Buffer(),
 	},
 	{
@@ -115,13 +115,13 @@ var renderVerticalTests = []el.RenderTest{
 			Padding: 1, ExtendStyle: true,
 			State: State{Items: TestItems{
 				Prefix: "x", NItems: 2,
-				Style: ui.JoinStylings(ui.Blue, ui.GreenBackground)}}}),
+				Style: ui.JoinStylings(ui.Blue, ui.BgGreen)}}}),
 		Width: 6, Height: 2,
 
 		Want: bb(6).
-			Write(" x0   ", ui.Blue, ui.GreenBackground, ui.Inverse).
+			Write(" x0   ", ui.Blue, ui.BgGreen, ui.Inverse).
 			Newline().
-			Write(" x1   ", ui.Blue, ui.GreenBackground).
+			Write(" x1   ", ui.Blue, ui.BgGreen).
 			Buffer(),
 	},
 }
@@ -191,12 +191,12 @@ var renderHorizontalTests = []el.RenderTest{
 			Horizontal: true, Padding: 1, ExtendStyle: true,
 			State: State{Items: TestItems{
 				NItems: 2, Prefix: "x",
-				Style: ui.JoinStylings(ui.Blue, ui.GreenBackground)}}}),
+				Style: ui.JoinStylings(ui.Blue, ui.BgGreen)}}}),
 		Width: 14, Height: 3,
 		Want: bb(14).
-			Write(" x0 ", ui.Blue, ui.GreenBackground, ui.Inverse).
+			Write(" x0 ", ui.Blue, ui.BgGreen, ui.Inverse).
 			Write("  ").
-			Write(" x1 ", ui.Blue, ui.GreenBackground),
+			Write(" x1 ", ui.Blue, ui.BgGreen),
 	},
 	{
 		Name: "long lines cropped, with full scrollbar",

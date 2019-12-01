@@ -17,7 +17,7 @@ package ui
 //
 //   var stylesheet = map[rune]string{
 //       '-': Reverse,
-//       'x': JoinStylings(Blue, GreenBackground),
+//       'x': JoinStylings(Blue, BgGreen),
 //   }
 //   var text = FromMarkedLines(
 //       "foo      bar      foobar", stylesheet,

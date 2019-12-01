@@ -68,7 +68,7 @@ func TestStart_OK(t *testing.T) {
 		Newline().
 		// combobox codearea
 		WriteStyled(ui.T("LASTCMD",
-			ui.Bold, ui.LightGray, ui.MagentaBackground)).
+			ui.Bold, ui.LightGray, ui.BgMagenta)).
 		Write(" ").
 		SetDotHere().
 		// first entry is selected
@@ -88,7 +88,7 @@ func TestStart_OK(t *testing.T) {
 		Newline().
 		// combobox codearea
 		WriteStyled(ui.T("LASTCMD",
-			ui.Bold, ui.LightGray, ui.MagentaBackground)).
+			ui.Bold, ui.LightGray, ui.BgMagenta)).
 		Write(" -").
 		SetDotHere().
 		// first entry is selected

@@ -15,7 +15,7 @@ var any = anyMatcher{}
 var noErrors []error
 
 var styles = map[rune]ui.Styling{
-	'x': ui.RedBackground,
+	'x': ui.BgRed,
 	'v': ui.Magenta,
 	'q': ui.Yellow,
 	'G': ui.Green,

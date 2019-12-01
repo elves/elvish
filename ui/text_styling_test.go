@@ -23,7 +23,7 @@ func TestStyleText(t *testing.T) {
 				&Segment{Style{Foreground: "red"}, "bar"},
 			}),
 		// Background color
-		tt.Args(T("foo"), RedBackground).
+		tt.Args(T("foo"), BgRed).
 			Rets(Text{&Segment{Style{Background: "red"}, "foo"}}),
 		// Bold, false -> true
 		tt.Args(T("foo"), Bold).

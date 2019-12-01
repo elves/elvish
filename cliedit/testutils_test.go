@@ -15,13 +15,13 @@ import (
 
 var styles = map[rune]ui.Styling{
 	'-': ui.Underlined,
-	'm': ui.JoinStylings(ui.Bold, ui.LightGray, ui.MagentaBackground), // mode line
+	'm': ui.JoinStylings(ui.Bold, ui.LightGray, ui.BgMagenta), // mode line
 	'#': ui.Inverse,
-	'g': ui.Green,                                     // good
+	'g': ui.Green,                                 // good
 	'G': ui.JoinStylings(ui.Green, ui.Underlined), // good with underline
-	'b': ui.Red,                                       // bad
-	'v': ui.Magenta,                                   // variables
-	'e': ui.RedBackground,                             // error
+	'b': ui.Red,                                   // bad
+	'v': ui.Magenta,                               // variables
+	'e': ui.BgRed,                                 // error
 }
 
 const (
