@@ -68,7 +68,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 		}
 
 		regionCode := code[r.begin:r.end]
-		transformer := ""
+		var styling ui.Styling
 		if r.typ == commandRegion {
 			if cfg.HasCommand != nil {
 				// Do not highlight now, but collect the index of the region and the
@@ -76,14 +76,14 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 				cmdRegions = append(cmdRegions, cmdRegion{len(text), regionCode})
 			} else {
 				// Treat all commands as good commands.
-				transformer = transformerForGoodCommand
+				styling = stylingForGoodCommand
 			}
 		} else {
-			transformer = transformerFor[r.typ]
+			styling = stylingFor[r.typ]
 		}
 		seg := &ui.Segment{Text: regionCode}
-		if transformer != "" {
-			ui.FindStyling(transformer)(&seg.Style)
+		if styling != nil {
+			seg = ui.StyleSegment(seg, styling)
 		}
 
 		text = append(text, seg)
@@ -100,13 +100,14 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 		go func() {
 			newText := text.Clone()
 			for _, cmdRegion := range cmdRegions {
-				transformer := ""
+				var styling ui.Styling
 				if cfg.HasCommand(cmdRegion.cmd) {
-					transformer = transformerForGoodCommand
+					styling = stylingForGoodCommand
 				} else {
-					transformer = transformerForBadCommand
+					styling = stylingForBadCommand
 				}
-				ui.FindStyling(transformer)(&newText[cmdRegion.seg].Style)
+				seg := &newText[cmdRegion.seg]
+				*seg = ui.StyleSegment(*seg, styling)
 			}
 			lateCh <- newText
 		}()

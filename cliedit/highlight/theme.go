@@ -1,35 +1,37 @@
 package highlight
 
-var transformerFor = map[string]string{
-	barewordRegion:     "",
-	singleQuotedRegion: "yellow",
-	doubleQuotedRegion: "yellow",
-	variableRegion:     "magenta",
-	wildcardRegion:     "",
-	tildeRegion:        "",
+import "github.com/elves/elvish/ui"
 
-	commentRegion: "cyan",
+var stylingFor = map[string]ui.Styling{
+	barewordRegion:     nil,
+	singleQuotedRegion: ui.Yellow,
+	doubleQuotedRegion: ui.Yellow,
+	variableRegion:     ui.Magenta,
+	wildcardRegion:     nil,
+	tildeRegion:        nil,
 
-	">":  "green",
-	">>": "green",
-	"<":  "green",
-	"?>": "green",
-	"|":  "green",
-	"?(": "bold",
-	"(":  "bold",
-	")":  "bold",
-	"[":  "bold",
-	"]":  "bold",
-	"{":  "bold",
-	"}":  "bold",
-	"&":  "bold",
+	commentRegion: ui.Cyan,
 
-	commandRegion: "green",
-	keywordRegion: "yellow",
-	errorRegion:   "bg-red",
+	">":  ui.Green,
+	">>": ui.Green,
+	"<":  ui.Green,
+	"?>": ui.Green,
+	"|":  ui.Green,
+	"?(": ui.Bold,
+	"(":  ui.Bold,
+	")":  ui.Bold,
+	"[":  ui.Bold,
+	"]":  ui.Bold,
+	"{":  ui.Bold,
+	"}":  ui.Bold,
+	"&":  ui.Bold,
+
+	commandRegion: ui.Green,
+	keywordRegion: ui.Yellow,
+	errorRegion:   ui.BgRed,
 }
 
 var (
-	transformerForGoodCommand = "green"
-	transformerForBadCommand  = "red"
+	stylingForGoodCommand = ui.Green
+	stylingForBadCommand  = ui.Red
 )
