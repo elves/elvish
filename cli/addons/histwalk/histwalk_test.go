@@ -12,8 +12,8 @@ import (
 	"github.com/elves/elvish/ui"
 )
 
-var styles = map[rune]string{
-	'-': "underlined",
+var styles = map[rune]ui.Transformer{
+	'-': ui.Underlined,
 }
 
 func TestHistWalk(t *testing.T) {

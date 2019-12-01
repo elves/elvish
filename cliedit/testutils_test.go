@@ -10,17 +10,18 @@ import (
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/store/storedefs"
+	"github.com/elves/elvish/ui"
 )
 
-var styles = map[rune]string{
-	'-': "underlined",
-	'm': "bold lightgray bg-magenta", // mode line
-	'#': "inverse",
-	'g': "green",            // good
-	'G': "green underlined", // good with underline
-	'b': "red",              // bad
-	'v': "magenta",          // variables
-	'e': "bg-red",           // error
+var styles = map[rune]ui.Transformer{
+	'-': ui.Underlined,
+	'm': ui.JoinTransformers(ui.Bold, ui.LightGray, ui.MagentaBackground), // mode line
+	'#': ui.Inverse,
+	'g': ui.Green,                                     // good
+	'G': ui.JoinTransformers(ui.Green, ui.Underlined), // good with underline
+	'b': ui.Red,                                       // bad
+	'v': ui.Magenta,                                   // variables
+	'e': ui.RedBackground,                             // error
 }
 
 const (

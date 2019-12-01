@@ -16,15 +16,6 @@ func NewText(s string, ts ...Transformer) Text {
 	return Transform(Text{&Segment{Text: s}}, ts...)
 }
 
-// MakeText makes a text by taking a string and applying the given transformers.
-func MakeText(s string, transformers ...string) Text {
-	t := Text{&Segment{Text: s}}
-	for _, transformer := range transformers {
-		t = TransformText(t, transformer)
-	}
-	return t
-}
-
 // Kind returns "styled-text".
 func (Text) Kind() string { return "styled-text" }
 

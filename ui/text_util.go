@@ -1,9 +1,5 @@
 package ui
 
-import (
-	"strings"
-)
-
 // MarkLines provides a way to construct a styled text by separating the content
 // and the styling.
 //
@@ -20,8 +16,8 @@ import (
 // alignment across those lines. An example:
 //
 //   var stylesheet = map[rune]string{
-//       '-': 'reverse',
-//       'x': 'blue bg-green',
+//       '-': Reverse,
+//       'x': JoinTransformers(Blue, GreenBackground),
 //   }
 //   var text = FromMarkedLines(
 //       "foo      bar      foobar", stylesheet,
@@ -37,10 +33,10 @@ func MarkLines(args ...interface{}) Text {
 			continue
 		}
 		if i > 0 {
-			text = text.ConcatText(MakeText("\n"))
+			text = text.ConcatText(NewText("\n"))
 		}
 		if i+2 < len(args) {
-			if stylesheet, ok := args[i+1].(map[rune]string); ok {
+			if stylesheet, ok := args[i+1].(map[rune]Transformer); ok {
 				if style, ok := args[i+2].(string); ok {
 					text = text.ConcatText(MarkText(line, stylesheet, style))
 					i += 2
@@ -48,25 +44,24 @@ func MarkLines(args ...interface{}) Text {
 				}
 			}
 		}
-		text = text.ConcatText(MakeText(line))
+		text = text.ConcatText(NewText(line))
 	}
 	return text
 }
 
 // MarkText applies styles to all the runes in the line, using the runes in
 // the style string. The stylesheet argument specifies which style each rune
-// represents. The styles can be space-separated list of transformers.
-func MarkText(line string, stylesheet map[rune]string, style string) Text {
+// represents.
+func MarkText(line string, stylesheet map[rune]Transformer, style string) Text {
 	var text Text
 	styleRuns := toRuns(style)
 	for _, styleRun := range styleRuns {
 		i := bytesForFirstNRunes(line, styleRun.n)
-		text = text.ConcatText(
-			MakeText(line[:i], strings.Split(stylesheet[styleRun.r], " ")...))
+		text = text.ConcatText(NewText(line[:i], stylesheet[styleRun.r]))
 		line = line[i:]
 	}
 	if len(line) > 0 {
-		text = text.ConcatText(MakeText(line))
+		text = text.ConcatText(NewText(line))
 	}
 	return text
 }

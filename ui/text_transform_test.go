@@ -7,60 +7,58 @@ import (
 )
 
 func TestTransformText(t *testing.T) {
-	tt.Test(t, tt.Fn("TransformText", TransformText), tt.Table{
+	tt.Test(t, tt.Fn("Transform", Transform), tt.Table{
 		// Foreground color
-		tt.Args(MakeText("foo"), "red").
+		tt.Args(NewText("foo"), Red).
 			Rets(Text{&Segment{Style{Foreground: "red"}, "foo"}}),
 		// Override existing foreground
-		tt.Args(Text{&Segment{Style{Foreground: "green"}, "foo"}}, "red").
+		tt.Args(Text{&Segment{Style{Foreground: "green"}, "foo"}}, Red).
 			Rets(Text{&Segment{Style{Foreground: "red"}, "foo"}}),
 		// Multiple segments
 		tt.Args(Text{
 			&Segment{Style{}, "foo"},
-			&Segment{Style{Foreground: "green"}, "bar"}}, "red").
+			&Segment{Style{Foreground: "green"}, "bar"}}, Red).
 			Rets(Text{
 				&Segment{Style{Foreground: "red"}, "foo"},
 				&Segment{Style{Foreground: "red"}, "bar"},
 			}),
 		// Background color
-		tt.Args(MakeText("foo"), "bg-red").
+		tt.Args(NewText("foo"), RedBackground).
 			Rets(Text{&Segment{Style{Background: "red"}, "foo"}}),
 		// Bold, false -> true
-		tt.Args(MakeText("foo"), "bold").
+		tt.Args(NewText("foo"), Bold).
 			Rets(Text{&Segment{Style{Bold: true}, "foo"}}),
 		// Bold, true -> true
-		tt.Args(Text{&Segment{Style{Bold: true}, "foo"}}, "bold").
+		tt.Args(Text{&Segment{Style{Bold: true}, "foo"}}, Bold).
 			Rets(Text{&Segment{Style{Bold: true}, "foo"}}),
 		// No Bold, true -> false
-		tt.Args(Text{&Segment{Style{Bold: true}, "foo"}}, "no-bold").
+		tt.Args(Text{&Segment{Style{Bold: true}, "foo"}}, NoBold).
 			Rets(Text{&Segment{Style{}, "foo"}}),
 		// No Bold, false -> false
-		tt.Args(MakeText("foo"), "no-bold").Rets(MakeText("foo")),
+		tt.Args(NewText("foo"), NoBold).Rets(NewText("foo")),
 		// Toggle Bold, true -> false
-		tt.Args(Text{&Segment{Style{Bold: true}, "foo"}}, "toggle-bold").
+		tt.Args(Text{&Segment{Style{Bold: true}, "foo"}}, ToggleBold).
 			Rets(Text{&Segment{Style{}, "foo"}}),
 		// Toggle Bold, false -> true
-		tt.Args(MakeText("foo"), "toggle-bold").
+		tt.Args(NewText("foo"), ToggleBold).
 			Rets(Text{&Segment{Style{Bold: true}, "foo"}}),
 		// For the remaining bool transformers, we only check one case; the rest
 		// should be similar to "bold".
 		// Dim.
-		tt.Args(MakeText("foo"), "dim").
+		tt.Args(NewText("foo"), Dim).
 			Rets(Text{&Segment{Style{Dim: true}, "foo"}}),
 		// Italic.
-		tt.Args(MakeText("foo"), "italic").
+		tt.Args(NewText("foo"), Italic).
 			Rets(Text{&Segment{Style{Italic: true}, "foo"}}),
 		// Underlined.
-		tt.Args(MakeText("foo"), "underlined").
+		tt.Args(NewText("foo"), Underlined).
 			Rets(Text{&Segment{Style{Underlined: true}, "foo"}}),
 		// Blink.
-		tt.Args(MakeText("foo"), "blink").
+		tt.Args(NewText("foo"), Blink).
 			Rets(Text{&Segment{Style{Blink: true}, "foo"}}),
 		// Inverse.
-		tt.Args(MakeText("foo"), "inverse").
+		tt.Args(NewText("foo"), Inverse).
 			Rets(Text{&Segment{Style{Inverse: true}, "foo"}}),
-		// Invalid transformer
-		tt.Args(MakeText("foo"), "invalid").
-			Rets(Text{&Segment{Text: "foo"}}),
+		// TODO: Test nil transformer.
 	})
 }

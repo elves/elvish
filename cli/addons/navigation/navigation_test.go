@@ -14,14 +14,14 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var styles = map[rune]string{
-	'-': "inverse",
-	'+': "blue",
-	'#': "inverse blue",
-	'x': "red",
+var styles = map[rune]ui.Transformer{
+	'-': ui.Inverse,
+	'+': ui.Blue,
+	'#': ui.JoinTransformers(ui.Inverse, ui.Blue),
+	'x': ui.Red,
 
-	't': "magenta",
-	'T': "magenta inverse",
+	't': ui.Magenta,
+	'T': ui.JoinTransformers(ui.Magenta, ui.Inverse),
 }
 
 var testDir = util.Dir{

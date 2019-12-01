@@ -137,20 +137,6 @@ func (t jointTransformer) transform(s *Style) {
 	}
 }
 
-// TransformText transforms a Text according to a transformer. It does nothing
-// if the transformer is not valid.
-func TransformText(t Text, transformer string) Text {
-	f := FindTransformer(transformer)
-	if f == nil {
-		return t
-	}
-	t = t.Clone()
-	for _, seg := range t {
-		f(&seg.Style)
-	}
-	return t
-}
-
 // FindTransformer finds the named transformer, a function that mutates a
 // *Style. If the name is not a valid transformer, it returns nil.
 func FindTransformer(name string) func(*Style) {

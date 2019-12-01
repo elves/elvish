@@ -7,28 +7,28 @@ import (
 )
 
 func TestMarkLines(t *testing.T) {
-	stylesheet := map[rune]string{
-		'-': "reverse",
-		'x': "blue bg-green",
+	stylesheet := map[rune]Transformer{
+		'-': Inverse,
+		'x': JoinTransformers(Blue, GreenBackground),
 	}
 	tt.Test(t, tt.Fn("MarkLines", MarkLines), tt.Table{
-		tt.Args("foo  bar foobar").Rets(MakeText("foo  bar foobar")),
+		tt.Args("foo  bar foobar").Rets(NewText("foo  bar foobar")),
 		tt.Args(
 			"foo  bar foobar", stylesheet,
 			"---  xxx ------",
 		).Rets(
-			MakeText("foo", "reverse").
-				ConcatText(MakeText("  ")).
-				ConcatText(MakeText("bar", "blue", "bg-green")).
-				ConcatText(MakeText(" ")).
-				ConcatText(MakeText("foobar", "reverse")),
+			NewText("foo", Inverse).
+				ConcatText(NewText("  ")).
+				ConcatText(NewText("bar", Blue, GreenBackground)).
+				ConcatText(NewText(" ")).
+				ConcatText(NewText("foobar", Inverse)),
 		),
 		tt.Args(
 			"foo  bar foobar", stylesheet,
 			"---",
 		).Rets(
-			MakeText("foo", "reverse").
-				ConcatText(MakeText("  bar foobar")),
+			NewText("foo", Inverse).
+				ConcatText(NewText("  bar foobar")),
 		),
 		tt.Args(
 			"plain1",
@@ -37,17 +37,17 @@ func TestMarkLines(t *testing.T) {
 			"---  xxx ------",
 			"plain3",
 		).Rets(
-			MakeText("plain1").
-				ConcatText(MakeText("\n")).
-				ConcatText(MakeText("plain2")).
-				ConcatText(MakeText("\n")).
-				ConcatText(MakeText("foo", "reverse")).
-				ConcatText(MakeText("  ")).
-				ConcatText(MakeText("bar", "blue", "bg-green")).
-				ConcatText(MakeText(" ")).
-				ConcatText(MakeText("foobar", "reverse")).
-				ConcatText(MakeText("\n")).
-				ConcatText(MakeText("plain3")),
+			NewText("plain1").
+				ConcatText(NewText("\n")).
+				ConcatText(NewText("plain2")).
+				ConcatText(NewText("\n")).
+				ConcatText(NewText("foo", Inverse)).
+				ConcatText(NewText("  ")).
+				ConcatText(NewText("bar", Blue, GreenBackground)).
+				ConcatText(NewText(" ")).
+				ConcatText(NewText("foobar", Inverse)).
+				ConcatText(NewText("\n")).
+				ConcatText(NewText("plain3")),
 		),
 	})
 }

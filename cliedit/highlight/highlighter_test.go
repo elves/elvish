@@ -14,12 +14,12 @@ import (
 var any = anyMatcher{}
 var noErrors []error
 
-var styles = map[rune]string{
-	'x': "bg-red",
-	'v': "magenta",
-	'q': "yellow",
-	'G': "green",
-	'B': "red",
+var styles = map[rune]ui.Transformer{
+	'x': ui.RedBackground,
+	'v': ui.Magenta,
+	'q': ui.Yellow,
+	'G': ui.Green,
+	'B': ui.Red,
 }
 
 func TestHighlighter_HighlightRegions(t *testing.T) {

@@ -11,11 +11,11 @@ import (
 var Args = tt.Args
 
 func TestMakeText(t *testing.T) {
-	tt.Test(t, tt.Fn("MakeText", MakeText), tt.Table{
+	tt.Test(t, tt.Fn("NewText", NewText), tt.Table{
 		Args("test").Rets(Text{&Segment{Text: "test"}}),
-		Args("test red", "red").Rets(Text{&Segment{
+		Args("test red", Red).Rets(Text{&Segment{
 			Text: "test red", Style: Style{Foreground: "red"}}}),
-		Args("test red", "red", "bold").Rets(Text{&Segment{
+		Args("test red", Red, Bold).Rets(Text{&Segment{
 			Text: "test red", Style: Style{Foreground: "red", Bold: true}}}),
 	})
 }
