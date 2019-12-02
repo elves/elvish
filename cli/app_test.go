@@ -16,11 +16,6 @@ import (
 	"github.com/elves/elvish/ui"
 )
 
-const (
-	testTTYHeight = 24
-	testTTYWidth  = 60
-)
-
 // Lifecycle aspects.
 
 func TestReadCode_AbortsWhenTTYSetupReturnsError(t *testing.T) {
@@ -304,7 +299,7 @@ func TestReadCode_ShowsRPrompt(t *testing.T) {
 
 	wantBuf := bb().
 		Write("a").SetDotHere().
-		Write(strings.Repeat(" ", testTTYWidth-2)).
+		Write(strings.Repeat(" ", FakeTTYWidth-2)).
 		Write("R").Buffer()
 	tty.TestBuffer(t, wantBuf)
 }
@@ -321,7 +316,7 @@ func TestReadCode_ShowsRPromptInFinalRedrawIfPersistent(t *testing.T) {
 	a.ReadCode()
 
 	wantBuf := bb().
-		Write("code" + strings.Repeat(" ", testTTYWidth-5) + "R").
+		Write("code" + strings.Repeat(" ", FakeTTYWidth-5) + "R").
 		Newline().SetDotHere(). // cursor on newline in final redraw
 		Buffer()
 	tty.TestBuffer(t, wantBuf)
@@ -461,14 +456,13 @@ func setup() (App, TTYCtrl) {
 
 func setupWithSpec(spec AppSpec) (App, TTYCtrl) {
 	tty, ttyControl := NewFakeTTY()
-	ttyControl.SetSize(testTTYHeight, testTTYWidth)
 	spec.TTY = tty
 	a := NewApp(spec)
 	return a, ttyControl
 }
 
 func bb() *term.BufferBuilder {
-	return term.NewBufferBuilder(testTTYWidth)
+	return term.NewBufferBuilder(FakeTTYWidth)
 }
 
 func cleanup(a App, codeCh <-chan string) {
