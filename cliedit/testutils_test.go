@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/ui"
@@ -31,13 +32,6 @@ const (
 
 func bb() *term.BufferBuilder { return term.NewBufferBuilder(testTTYWidth) }
 
-type setupOpt struct {
-	// Don't start the editor.
-	Unstarted bool
-	// Operation on the store before creating the editor.
-	StoreOp func(storedefs.Store)
-}
-
 type fixture struct {
 	Editor  *Editor
 	TTYCtrl cli.TTYCtrl
@@ -50,22 +44,27 @@ type fixture struct {
 	cleanups []func()
 }
 
-func setup() *fixture {
-	return setupWithOpt(setupOpt{})
+func rc(codes ...string) func(*fixture) {
+	return func(f *fixture) { evals(f.Evaler, codes...) }
 }
 
-func setupWithRC(codes ...string) *fixture {
-	f := setupWithOpt(setupOpt{Unstarted: true})
-	evals(f.Evaler, codes...)
-	f.Start()
-	return f
-}
-
-func setupWithOpt(opt setupOpt) *fixture {
-	st, cleanupStore := store.MustGetTempStore()
-	if opt.StoreOp != nil {
-		opt.StoreOp(st)
+func assign(name string, val interface{}) func(*fixture) {
+	return func(f *fixture) {
+		f.Evaler.Global["temp"] = vars.NewReadOnly(val)
+		evals(f.Evaler, name+` = $temp`)
 	}
+}
+
+func storeOp(storeFn func(storedefs.Store)) func(*fixture) {
+	return func(f *fixture) {
+		storeFn(f.Store)
+		// TODO(xiaq): Don't depend on this Elvish API.
+		evals(f.Evaler, "edit:history:fast-forward")
+	}
+}
+
+func setup(beforeStart ...func(*fixture)) *fixture {
+	st, cleanupStore := store.MustGetTempStore()
 	home, cleanupFs := eval.InTempHome()
 	tty, ttyCtrl := cli.NewFakeTTY()
 	ttyCtrl.SetSize(testTTYHeight, testTTYWidth)
@@ -79,9 +78,10 @@ func setupWithOpt(opt setupOpt) *fixture {
 	f := &fixture{
 		Editor: ed, TTYCtrl: ttyCtrl, Evaler: ev, Store: st, Home: home,
 		cleanups: []func(){cleanupStore, cleanupFs}}
-	if !opt.Unstarted {
-		f.Start()
+	for _, fn := range beforeStart {
+		fn(f)
 	}
+	f.Start()
 	return f
 }
 

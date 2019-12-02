@@ -5,12 +5,11 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/ui"
 )
 
 func TestPrompt_ValueOutput(t *testing.T) {
-	f := setupWithRC(`edit:prompt = { put 'val'; styled '> ' red }`)
+	f := setup(rc(`edit:prompt = { put 'val'; styled '> ' red }`))
 	defer f.Cleanup()
 
 	f.TTYCtrl.TestBuffer(t,
@@ -19,7 +18,7 @@ func TestPrompt_ValueOutput(t *testing.T) {
 }
 
 func TestPrompt_ByteOutput(t *testing.T) {
-	f := setupWithRC(`edit:prompt = { put 'bytes> ' }`)
+	f := setup(rc(`edit:prompt = { put 'bytes> ' }`))
 	defer f.Cleanup()
 
 	f.TTYCtrl.TestBuffer(t,
@@ -27,7 +26,7 @@ func TestPrompt_ByteOutput(t *testing.T) {
 }
 
 func TestPrompt_NotifiesInvalidValueOutput(t *testing.T) {
-	f := setupWithRC(`edit:prompt = { put good [bad] good2 }`)
+	f := setup(rc(`edit:prompt = { put good [bad] good2 }`))
 	defer f.Cleanup()
 
 	f.TTYCtrl.TestBuffer(t,
@@ -37,7 +36,7 @@ func TestPrompt_NotifiesInvalidValueOutput(t *testing.T) {
 }
 
 func TestPrompt_NotifiesException(t *testing.T) {
-	f := setupWithRC(`edit:prompt = { fail ERROR }`)
+	f := setup(rc(`edit:prompt = { fail ERROR }`))
 	defer f.Cleanup()
 
 	f.TTYCtrl.TestNotesBuffer(t, bb().
@@ -45,7 +44,7 @@ func TestPrompt_NotifiesException(t *testing.T) {
 }
 
 func TestRPrompt(t *testing.T) {
-	f := setupWithRC(`edit:rprompt = { put 'RRR' }`)
+	f := setup(rc(`edit:rprompt = { put 'RRR' }`))
 	defer f.Cleanup()
 
 	f.TTYCtrl.TestBuffer(t,
@@ -54,10 +53,10 @@ func TestRPrompt(t *testing.T) {
 }
 
 func TestPromptEagerness(t *testing.T) {
-	f := setupWithRC(
+	f := setup(rc(
 		`i = 0`,
 		`edit:prompt = { i = (+ $i 1); put $i'> ' }`,
-		`edit:-prompt-eagerness = 10`)
+		`edit:-prompt-eagerness = 10`))
 	defer f.Cleanup()
 
 	wantBuf1 := bb().Write("1> ").SetDotHere().Buffer()
@@ -70,10 +69,10 @@ func TestPromptEagerness(t *testing.T) {
 }
 
 func TestPromptStaleThreshold(t *testing.T) {
-	f := setupWithRC(
+	f := setup(rc(
 		`pipe = (pipe)`,
 		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
-		`edit:prompt-stale-threshold = 0.05`)
+		`edit:prompt-stale-threshold = 0.05`))
 	defer f.Cleanup()
 
 	wantBufStale := bb().
@@ -87,11 +86,11 @@ func TestPromptStaleThreshold(t *testing.T) {
 }
 
 func TestPromptStaleTransform(t *testing.T) {
-	f := setupWithRC(
+	f := setup(rc(
 		`pipe = (pipe)`,
 		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
 		`edit:prompt-stale-threshold = 0.05`,
-		`edit:prompt-stale-transform = [a]{ put S; put $a; put S }`)
+		`edit:prompt-stale-transform = [a]{ put S; put $a; put S }`))
 	defer f.Cleanup()
 
 	wantBufStale := bb().
@@ -118,7 +117,7 @@ func TestRPromptPersistent_False(t *testing.T) {
 }
 
 func testRPromptPersistent(t *testing.T, code string, wantBufFinal *term.Buffer) {
-	f := setupWithRC(`edit:rprompt = { put RRR }`, code)
+	f := setup(rc(`edit:rprompt = { put RRR }`, code))
 	defer f.Cleanup()
 
 	// Make sure that the UI has stablized before hitting Enter.
@@ -133,24 +132,16 @@ func testRPromptPersistent(t *testing.T, code string, wantBufFinal *term.Buffer)
 }
 
 func TestDefaultPromptForNonRoot(t *testing.T) {
-	f := setupWithOpt(setupOpt{Unstarted: true})
+	f := setup(assign("edit:prompt", getDefaultPrompt(false)))
 	defer f.Cleanup()
-	f.Evaler.Global["f"] = vars.NewReadOnly(getDefaultPrompt(false))
-	evals(f.Evaler, `edit:prompt = $f`)
-
-	f.Start()
 
 	wantBuf := bb().Write("~> ").SetDotHere().Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 }
 
 func TestDefaultPromptForRoot(t *testing.T) {
-	f := setupWithOpt(setupOpt{Unstarted: true})
+	f := setup(assign("edit:prompt", getDefaultPrompt(true)))
 	defer f.Cleanup()
-	f.Evaler.Global["f"] = vars.NewReadOnly(getDefaultPrompt(true))
-	evals(f.Evaler, `edit:prompt = $f`)
-
-	f.Start()
 
 	wantBuf := bb().Write("~").
 		Write("# ", ui.Red).SetDotHere().Buffer()
@@ -158,12 +149,8 @@ func TestDefaultPromptForRoot(t *testing.T) {
 }
 
 func TestDefaultRPrompt(t *testing.T) {
-	f := setupWithOpt(setupOpt{Unstarted: true})
+	f := setup(assign("edit:rprompt", getDefaultRPrompt("elf", "host")))
 	defer f.Cleanup()
-	f.Evaler.Global["f"] = vars.NewReadOnly(getDefaultRPrompt("elf", "host"))
-	evals(f.Evaler, `edit:rprompt = $f`)
-
-	f.Start()
 
 	wantBuf := bb().Write("~> ").SetDotHere().
 		Write(strings.Repeat(" ", 49)).

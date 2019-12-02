@@ -10,11 +10,10 @@ import (
 )
 
 func TestCommandHistory(t *testing.T) {
-	f := setupWithOpt(setupOpt{
-		StoreOp: func(s storedefs.Store) {
-			s.AddCmd("echo 1")
-			s.AddCmd("echo 2")
-		}})
+	f := setup(storeOp(func(s storedefs.Store) {
+		s.AddCmd("echo 1")
+		s.AddCmd("echo 2")
+	}))
 	defer f.Cleanup()
 
 	// TODO(xiaq): Test session history too.
@@ -27,10 +26,9 @@ func TestCommandHistory(t *testing.T) {
 }
 
 func TestInsertLastWord(t *testing.T) {
-	f := setupWithOpt(setupOpt{
-		StoreOp: func(s storedefs.Store) {
-			s.AddCmd("echo foo bar")
-		}})
+	f := setup(storeOp(func(s storedefs.Store) {
+		s.AddCmd("echo foo bar")
+	}))
 	defer f.Cleanup()
 
 	evals(f.Evaler, "edit:insert-last-word")

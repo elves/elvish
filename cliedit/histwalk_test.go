@@ -59,10 +59,9 @@ func TestHistWalk_DownOrQuit(t *testing.T) {
 }
 
 func TestHistory_FastForward(t *testing.T) {
-	f := setupWithOpt(setupOpt{
-		StoreOp: func(s storedefs.Store) {
-			s.AddCmd("echo a")
-		}})
+	f := setup(storeOp(func(s storedefs.Store) {
+		s.AddCmd("echo a")
+	}))
 	defer f.Cleanup()
 
 	f.Store.AddCmd("echo b")
@@ -82,10 +81,9 @@ func TestHistory_FastForward(t *testing.T) {
 
 func startHistwalkTest(t *testing.T) *fixture {
 	// The part of the test shared by all tests.
-	f := setupWithOpt(setupOpt{
-		StoreOp: func(s storedefs.Store) {
-			s.AddCmd("echo a")
-		}})
+	f := setup(storeOp(func(s storedefs.Store) {
+		s.AddCmd("echo a")
+	}))
 
 	f.TTYCtrl.Inject(term.K(ui.Up))
 	wantBufWalk := bb().

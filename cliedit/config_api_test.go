@@ -5,9 +5,9 @@ import (
 )
 
 func TestBeforeReadline(t *testing.T) {
-	f := setupWithRC(
+	f := setup(rc(
 		`called = 0`,
-		`edit:before-readline = [ { called = (+ $called 1) } ]`)
+		`edit:before-readline = [ { called = (+ $called 1) } ]`))
 	defer f.Cleanup()
 
 	// Wait for UI to stablize so that we can be sure that before-readline hooks

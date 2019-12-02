@@ -23,11 +23,11 @@ func TestInitListing_Binding(t *testing.T) {
 // Smoke tests for individual addons.
 
 func TestHistlistAddon(t *testing.T) {
-	f := setupWithOpt(setupOpt{StoreOp: func(s storedefs.Store) {
+	f := setup(storeOp(func(s storedefs.Store) {
 		s.AddCmd("ls")
 		s.AddCmd("echo")
 		s.AddCmd("ls")
-	}})
+	}))
 	f.TTYCtrl.SetSize(24, 30) // Set width to 30
 	defer f.Cleanup()
 
@@ -62,9 +62,9 @@ func TestHistlistAddon(t *testing.T) {
 }
 
 func TestLastCmdAddon(t *testing.T) {
-	f := setupWithOpt(setupOpt{StoreOp: func(s storedefs.Store) {
+	f := setup(storeOp(func(s storedefs.Store) {
 		s.AddCmd("echo hello world")
-	}})
+	}))
 	f.TTYCtrl.SetSize(24, 30) // Set width to 30
 	defer f.Cleanup()
 
