@@ -1,4 +1,4 @@
-package cli
+package cli_test
 
 import (
 	"errors"
@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/layout"
@@ -246,7 +247,7 @@ func TestReadCode_RedrawsOnLateUpdateFromHighlighter(t *testing.T) {
 
 func TestReadCode_ShowsPrompt(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
-		Prompt: constPrompt{ui.T("> ")}})
+		Prompt: ConstPrompt{ui.T("> ")}})
 
 	codeCh, _ := ReadCodeAsync(a)
 	defer cleanup(a, codeCh)
@@ -290,7 +291,7 @@ func TestReadCode_RedrawsOnLateUpdateFromPrompt(t *testing.T) {
 
 func TestReadCode_ShowsRPrompt(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
-		RPrompt: constPrompt{ui.T("R")}})
+		RPrompt: ConstPrompt{ui.T("R")}})
 
 	codeCh, _ := ReadCodeAsync(a)
 	defer cleanup(a, codeCh)
@@ -308,7 +309,7 @@ func TestReadCode_ShowsRPromptInFinalRedrawIfPersistent(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "code"}},
-		RPrompt:           constPrompt{ui.T("R")},
+		RPrompt:           ConstPrompt{ui.T("R")},
 		RPromptPersistent: func() bool { return true },
 	})
 
@@ -326,7 +327,7 @@ func TestReadCode_HidesRPromptInFinalRedrawIfNotPersistent(t *testing.T) {
 	a, tty := setupWithSpec(AppSpec{
 		CodeAreaState: codearea.State{
 			Buffer: codearea.Buffer{Content: "code"}},
-		RPrompt:           constPrompt{ui.T("R")},
+		RPrompt:           ConstPrompt{ui.T("R")},
 		RPromptPersistent: func() bool { return false },
 	})
 
@@ -475,4 +476,42 @@ func feedInput(ttyCtrl TTYCtrl, input string) {
 	for _, r := range input {
 		ttyCtrl.Inject(term.K(r))
 	}
+}
+
+// A Highlighter implementation useful for testing.
+type testHighlighter struct {
+	get         func(code string) (ui.Text, []error)
+	lateUpdates chan ui.Text
+}
+
+func (hl testHighlighter) Get(code string) (ui.Text, []error) {
+	return hl.get(code)
+}
+
+func (hl testHighlighter) LateUpdates() <-chan ui.Text {
+	return hl.lateUpdates
+}
+
+// A Prompt implementation useful for testing.
+type testPrompt struct {
+	trigger     func(force bool)
+	get         func() ui.Text
+	lateUpdates chan ui.Text
+}
+
+func (p testPrompt) Trigger(force bool) {
+	if p.trigger != nil {
+		p.trigger(force)
+	}
+}
+
+func (p testPrompt) Get() ui.Text {
+	if p.get != nil {
+		return p.get()
+	}
+	return nil
+}
+
+func (p testPrompt) LateUpdates() <-chan ui.Text {
+	return p.lateUpdates
 }

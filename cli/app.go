@@ -105,10 +105,10 @@ func NewApp(spec AppSpec) App {
 		a.Highlighter = dummyHighlighter{}
 	}
 	if a.Prompt == nil {
-		a.Prompt = constPrompt{}
+		a.Prompt = ConstPrompt{}
 	}
 	if a.RPrompt == nil {
-		a.RPrompt = constPrompt{}
+		a.RPrompt = ConstPrompt{}
 	}
 	lp.HandleCb(a.handle)
 	lp.RedrawCb(a.redraw)

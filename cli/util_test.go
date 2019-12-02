@@ -1,8 +1,9 @@
-package cli
+package cli_test
 
 import (
 	"testing"
 
+	. "github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/el/codearea"
 )
 

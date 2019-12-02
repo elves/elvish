@@ -1,10 +1,11 @@
 // +build !windows,!plan9
 
-package cli
+package cli_test
 
 import (
 	"testing"
 
+	. "github.com/elves/elvish/cli"
 	"golang.org/x/sys/unix"
 )
 

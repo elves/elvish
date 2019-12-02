@@ -44,20 +44,6 @@ func (dummyHighlighter) Get(code string) (ui.Text, []error) {
 
 func (dummyHighlighter) LateUpdates() <-chan ui.Text { return nil }
 
-// A Highlighter implementation useful for testing.
-type testHighlighter struct {
-	get         func(code string) (ui.Text, []error)
-	lateUpdates chan ui.Text
-}
-
-func (hl testHighlighter) Get(code string) (ui.Text, []error) {
-	return hl.get(code)
-}
-
-func (hl testHighlighter) LateUpdates() <-chan ui.Text {
-	return hl.lateUpdates
-}
-
 // Prompt represents a prompt whose result can be delivered asynchronously.
 type Prompt interface {
 	// Trigger requests a re-computation of the prompt. The force flag is set
@@ -70,33 +56,9 @@ type Prompt interface {
 	LateUpdates() <-chan ui.Text
 }
 
-// A Prompt implementation that always return the same ui.Text.
-type constPrompt struct{ t ui.Text }
+// ConstPrompt is a Prompt implementation that always return the same ui.Text.
+type ConstPrompt struct{ Content ui.Text }
 
-func (constPrompt) Trigger(force bool)          {}
-func (p constPrompt) Get() ui.Text              { return p.t }
-func (constPrompt) LateUpdates() <-chan ui.Text { return nil }
-
-// A Prompt implementation useful for testing.
-type testPrompt struct {
-	trigger     func(force bool)
-	get         func() ui.Text
-	lateUpdates chan ui.Text
-}
-
-func (p testPrompt) Trigger(force bool) {
-	if p.trigger != nil {
-		p.trigger(force)
-	}
-}
-
-func (p testPrompt) Get() ui.Text {
-	if p.get != nil {
-		return p.get()
-	}
-	return nil
-}
-
-func (p testPrompt) LateUpdates() <-chan ui.Text {
-	return p.lateUpdates
-}
+func (ConstPrompt) Trigger(force bool)          {}
+func (p ConstPrompt) Get() ui.Text              { return p.Content }
+func (ConstPrompt) LateUpdates() <-chan ui.Text { return nil }
