@@ -17,11 +17,11 @@ import (
 var styles = map[rune]ui.Styling{
 	'-': ui.Inverse,
 	'+': ui.Blue,
-	'#': ui.JoinStylings(ui.Inverse, ui.Blue),
+	'#': ui.Stylings(ui.Inverse, ui.Blue),
 	'x': ui.Red,
 
 	't': ui.Magenta,
-	'T': ui.JoinStylings(ui.Magenta, ui.Inverse),
+	'T': ui.Stylings(ui.Magenta, ui.Inverse),
 }
 
 var testDir = util.Dir{

@@ -16,13 +16,13 @@ import (
 
 var styles = map[rune]ui.Styling{
 	'-': ui.Underlined,
-	'm': ui.JoinStylings(ui.Bold, ui.LightGray, ui.BgMagenta), // mode line
+	'm': ui.Stylings(ui.Bold, ui.LightGray, ui.BgMagenta), // mode line
 	'#': ui.Inverse,
-	'g': ui.Green,                                 // good
-	'G': ui.JoinStylings(ui.Green, ui.Underlined), // good with underline
-	'b': ui.Red,                                   // bad
-	'v': ui.Magenta,                               // variables
-	'e': ui.BgRed,                                 // error
+	'g': ui.Green,                             // good
+	'G': ui.Stylings(ui.Green, ui.Underlined), // good with underline
+	'b': ui.Red,                               // bad
+	'v': ui.Magenta,                           // variables
+	'e': ui.BgRed,                             // error
 }
 
 const (

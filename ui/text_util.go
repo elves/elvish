@@ -17,7 +17,7 @@ package ui
 //
 //   var stylesheet = map[rune]string{
 //       '-': Reverse,
-//       'x': JoinStylings(Blue, BgGreen),
+//       'x': Stylings(Blue, BgGreen),
 //   }
 //   var text = FromMarkedLines(
 //       "foo      bar      foobar", stylesheet,
@@ -49,10 +49,13 @@ func MarkLines(args ...interface{}) Text {
 	return text
 }
 
+// RuneStylesheet maps runes to stylings.
+type RuneStylesheet map[rune]Styling
+
 // MarkText applies styles to all the runes in the line, using the runes in
 // the style string. The stylesheet argument specifies which style each rune
 // represents.
-func MarkText(line string, stylesheet map[rune]Styling, style string) Text {
+func MarkText(line string, stylesheet RuneStylesheet, style string) Text {
 	var text Text
 	styleRuns := toRuns(style)
 	for _, styleRun := range styleRuns {

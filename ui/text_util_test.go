@@ -9,7 +9,7 @@ import (
 func TestMarkLines(t *testing.T) {
 	stylesheet := map[rune]Styling{
 		'-': Inverse,
-		'x': JoinStylings(Blue, BgGreen),
+		'x': Stylings(Blue, BgGreen),
 	}
 	tt.Test(t, tt.Fn("MarkLines", MarkLines), tt.Table{
 		tt.Args("foo  bar foobar").Rets(T("foo  bar foobar")),

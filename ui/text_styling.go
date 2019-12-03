@@ -34,8 +34,8 @@ func ApplyStyling(s Style, ts ...Styling) Style {
 	return s
 }
 
-// JoinStylings joins several transformers into one.
-func JoinStylings(ts ...Styling) Styling { return jointStyling(ts) }
+// Stylings joins several transformers into one.
+func Stylings(ts ...Styling) Styling { return jointStyling(ts) }
 
 var (
 	Black        Styling = setForeground("black")
@@ -145,7 +145,7 @@ func (t jointStyling) transform(s *Style) {
 // ToggleInverse is expressed as "toggle-inverse".
 //
 // Multiple stylings can be joined by spaces, which is equivalent to calling
-// JoinStylings.
+// Stylings.
 //
 // If the given string is invalid, ParseStyling returns nil.
 func ParseStyling(s string) Styling {
