@@ -81,7 +81,7 @@ var bufferBuilderTests = []struct {
 		"WriteMarkedLines",
 		NewBufferBuilder(10).WriteMarkedLines(
 			"foo ", styles,
-			"--  ", DotHere,
+			"--  ", DotHere, "\n",
 			"",
 			"bar",
 		),

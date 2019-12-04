@@ -32,9 +32,6 @@ func MarkLines(args ...interface{}) Text {
 			// TODO(xiaq): Surface the error.
 			continue
 		}
-		if i > 0 {
-			text = text.ConcatText(T("\n"))
-		}
 		if i+2 < len(args) {
 			if stylesheet, ok := args[i+1].(map[rune]Styling); ok {
 				if style, ok := args[i+2].(string); ok {

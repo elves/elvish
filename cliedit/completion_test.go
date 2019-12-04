@@ -3,6 +3,7 @@ package cliedit
 import (
 	"testing"
 
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/util"
 )
@@ -15,13 +16,10 @@ func TestCompletionAddon(t *testing.T) {
 	feedInput(f.TTYCtrl, "echo \t")
 	wantBuf := bb().
 		WriteMarkedLines(
-			"~> echo a ", styles,
+			"~> echo a \n", styles,
 			"   gggg --",
 			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ").
-		SetDotHere().
-		Newline().
-		WriteMarkedLines(
+			"mmmmmmmmmmmmmmmmmmm ", term.DotHere, "\n",
 			"a  b", styles,
 			"#   ",
 		).
@@ -38,15 +36,14 @@ func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
 	wantBuf := bb().
 		WriteMarkedLines(
 			"~> echo fo", styles,
-			"   gggg").
-		SetDotHere().
+			"   gggg", term.DotHere).
 		Buffer()
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 
 	feedInput(f.TTYCtrl, "\t")
 	wantBuf = bb().
 		WriteMarkedLines(
-			"~> echo foo ", styles,
+			"~> echo foo \n", styles,
 			"   gggg ----",
 			"COMPLETING argument ", styles,
 			"mmmmmmmmmmmmmmmmmmm ").
@@ -121,13 +118,10 @@ func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
 	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
 	wantBuf := bb().
 		WriteMarkedLines(
-			"~> foo foo1 foo2 1val", styles,
+			"~> foo foo1 foo2 1val\n", styles,
 			"   ggg           ----",
 			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ").
-		SetDotHere().
-		Newline().
-		WriteMarkedLines(
+			"mmmmmmmmmmmmmmmmmmm ", term.DotHere, "\n",
 			"1val  2val_", styles,
 			"####       ",
 		).
@@ -151,13 +145,10 @@ func TestCompletionArgCompleter_BytesOutput(t *testing.T) {
 	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
 	wantBuf := bb().
 		WriteMarkedLines(
-			"~> foo foo1 foo2 1val", styles,
+			"~> foo foo1 foo2 1val\n", styles,
 			"   ggg           ----",
 			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ").
-		SetDotHere().
-		Newline().
-		WriteMarkedLines(
+			"mmmmmmmmmmmmmmmmmmm ", term.DotHere, "\n",
 			"1val  2val", styles,
 			"####      ",
 		).
@@ -188,13 +179,10 @@ func TestCompletionMatcher(t *testing.T) {
 	feedInput(f.TTYCtrl, "echo f\t")
 	wantBuf := bb().
 		WriteMarkedLines(
-			"~> echo foo ", styles,
+			"~> echo foo \n", styles,
 			"   gggg ----",
 			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ").
-		SetDotHere().
-		Newline().
-		WriteMarkedLines(
+			"mmmmmmmmmmmmmmmmmmm ", term.DotHere, "\n",
 			"foo  oof", styles,
 			"###     ",
 		).

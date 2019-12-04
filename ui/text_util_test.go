@@ -33,14 +33,12 @@ func TestMarkLines(t *testing.T) {
 		tt.Args(
 			"plain1",
 			"plain2",
-			"foo  bar foobar", stylesheet,
+			"foo  bar foobar\n", stylesheet,
 			"---  xxx ------",
 			"plain3",
 		).Rets(
 			T("plain1").
-				ConcatText(T("\n")).
 				ConcatText(T("plain2")).
-				ConcatText(T("\n")).
 				ConcatText(T("foo", Inverse)).
 				ConcatText(T("  ")).
 				ConcatText(T("bar", Blue, BgGreen)).

@@ -88,9 +88,9 @@ func TestErrorInCurrent(t *testing.T) {
 	Start(app, Config{Cursor: c})
 
 	buf := makeBuf(ui.MarkLines(
-		" a   ERR            ", styles,
+		" a   ERR            \n", styles,
 		"     xxx",
-		" d  ", styles,
+		" d  \n", styles,
 		"++++",
 		" f  ",
 	))
@@ -110,9 +110,9 @@ func TestErrorInParent(t *testing.T) {
 	Start(app, Config{Cursor: c})
 
 	buf := makeBuf(ui.MarkLines(
-		"ERR   d1            content    d1", styles,
+		"ERR   d1            content    d1\n", styles,
 		"xxx  --------------",
-		"      d2            line 2", styles,
+		"      d2            line 2\n", styles,
 		"     ++++++++++++++",
 		"      d3           ", styles,
 		"     ++++++++++++++",
@@ -146,9 +146,9 @@ func testNavigation(t *testing.T, c Cursor) {
 	// Test initial UI and file preview.
 	// NOTE: Buffers are named after the file that is now being selected.
 	d1Buf := makeBuf(ui.MarkLines(
-		" a    d1            content    d1", styles,
+		" a    d1            content    d1\n", styles,
 		"     --------------",
-		" d    d2            line 2", styles,
+		" d    d2            line 2\n", styles,
 		"#### ++++++++++++++",
 		" f    d3           ", styles,
 		"     ++++++++++++++",
@@ -158,11 +158,11 @@ func testNavigation(t *testing.T, c Cursor) {
 	// Test scrolling of preview.
 	ScrollPreview(app, 1)
 	d1Buf2 := makeBuf(ui.MarkLines(
-		" a    d1            line 2             │", styles,
+		" a    d1            line 2             │\n", styles,
 		"     --------------                    t",
-		" d    d2                               │", styles,
+		" d    d2                               │\n", styles,
 		"#### ++++++++++++++                    t",
-		" f    d3                                ", styles,
+		" f    d3                                \n", styles,
 		"     ++++++++++++++                    T",
 		"                                        ", styles,
 		"                                       T",
@@ -173,9 +173,9 @@ func testNavigation(t *testing.T, c Cursor) {
 	// LS_COLORS.
 	Select(app, listbox.Next)
 	d2Buf := makeBuf(ui.MarkLines(
-		" a    d1             d21                ", styles,
+		" a    d1             d21                \n", styles,
 		"                    --------------------",
-		" d    d2             d22                ", styles,
+		" d    d2             d22                \n", styles,
 		"#### ##############",
 		" f    d3             d23.png            ", styles,
 		"     ++++++++++++++ xxxxxxxxxxxxxxxxxxxx",
@@ -185,9 +185,9 @@ func testNavigation(t *testing.T, c Cursor) {
 	// Test handling of Descend.
 	Descend(app)
 	d21Buf := makeBuf(ui.MarkLines(
-		" d1   d21           content d21", styles,
+		" d1   d21           content d21\n", styles,
 		"     --------------",
-		" d2   d22          ", styles,
+		" d2   d22          \n", styles,
 		"####",
 		" d3   d23.png      ", styles,
 		"++++ xxxxxxxxxxxxxx",
@@ -210,10 +210,10 @@ func testNavigation(t *testing.T, c Cursor) {
 	// Test showing hidden.
 	MutateShowHidden(app, func(bool) bool { return true })
 	ttyCtrl.TestBuffer(t, makeShowHiddenBuf(ui.MarkLines(
-		" a    .dh           content    d1",
-		" d    d1            line 2", styles,
+		" a    .dh           content    d1\n",
+		" d    d1            line 2\n", styles,
 		"#### --------------",
-		" f    d2           ", styles,
+		" f    d2           \n", styles,
 		"     ++++++++++++++",
 		"      d3           ", styles,
 		"     ++++++++++++++",
@@ -225,9 +225,9 @@ func testNavigation(t *testing.T, c Cursor) {
 	ttyCtrl.Inject(term.K('3'))
 	ttyCtrl.TestBuffer(t, makeFilteringBuf("3",
 		ui.MarkLines(
-			" a    d3            ", styles,
+			" a    d3            \n", styles,
 			"     ##############",
-			" d  ", styles,
+			" d  \n", styles,
 			"####",
 			" f  ", styles,
 			"    ",
@@ -240,8 +240,8 @@ func testNavigation(t *testing.T, c Cursor) {
 	Select(app, listbox.Next)
 	Descend(app)
 	d3NoneBuf := makeBuf(ui.MarkLines(
-		" d1                 ",
-		" d2 ", styles,
+		" d1                 \n",
+		" d2 \n", styles,
 		"++++",
 		" d3 ", styles,
 		"####",
