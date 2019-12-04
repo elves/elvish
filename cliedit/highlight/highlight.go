@@ -26,7 +26,7 @@ func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []e
 
 	n, errParse := parse.AsChunk("[interactive]", code)
 	if errParse != nil {
-		for _, err := range errParse.(parse.MultiError).Entries {
+		for _, err := range errParse.(*parse.MultiError).Entries {
 			if err.Context.Begin != len(code) {
 				errors = append(errors, err)
 			}
