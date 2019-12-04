@@ -7,7 +7,7 @@ import (
 )
 
 func TestMarkLines(t *testing.T) {
-	stylesheet := map[rune]Styling{
+	stylesheet := RuneStylesheet{
 		'-': Inverse,
 		'x': Stylings(Blue, BgGreen),
 	}

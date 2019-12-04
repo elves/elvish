@@ -1,5 +1,8 @@
 package ui
 
+// RuneStylesheet maps runes to stylings.
+type RuneStylesheet map[rune]Styling
+
 // MarkLines provides a way to construct a styled text by separating the content
 // and the styling.
 //
@@ -33,7 +36,7 @@ func MarkLines(args ...interface{}) Text {
 			continue
 		}
 		if i+2 < len(args) {
-			if stylesheet, ok := args[i+1].(map[rune]Styling); ok {
+			if stylesheet, ok := args[i+1].(RuneStylesheet); ok {
 				if style, ok := args[i+2].(string); ok {
 					text = text.ConcatText(MarkText(line, stylesheet, style))
 					i += 2
@@ -45,9 +48,6 @@ func MarkLines(args ...interface{}) Text {
 	}
 	return text
 }
-
-// RuneStylesheet maps runes to stylings.
-type RuneStylesheet map[rune]Styling
 
 // MarkText applies styles to all the runes in the line, using the runes in
 // the style string. The stylesheet argument specifies which style each rune

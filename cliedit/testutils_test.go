@@ -14,7 +14,7 @@ import (
 	"github.com/elves/elvish/ui"
 )
 
-var styles = map[rune]ui.Styling{
+var styles = ui.RuneStylesheet{
 	'-': ui.Underlined,
 	'm': ui.Stylings(ui.Bold, ui.LightGray, ui.BgMagenta), // mode line
 	'#': ui.Inverse,

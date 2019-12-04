@@ -68,7 +68,7 @@ func TestBufferBuilderWrites(t *testing.T) {
 	}
 }
 
-var styles = map[rune]ui.Styling{
+var styles = ui.RuneStylesheet{
 	'-': ui.Underlined,
 }
 

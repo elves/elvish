@@ -24,7 +24,7 @@ func TestNavigation(t *testing.T) {
 		panic(err)
 	}
 
-	styles := map[rune]ui.Styling{
+	styles := ui.RuneStylesheet{
 		'#': ui.Stylings(ui.Blue, ui.Inverse),
 		'-': ui.Inverse,
 	}

@@ -14,7 +14,7 @@ import (
 var any = anyMatcher{}
 var noErrors []error
 
-var styles = map[rune]ui.Styling{
+var styles = ui.RuneStylesheet{
 	'x': ui.BgRed,
 	'v': ui.Magenta,
 	'q': ui.Yellow,
