@@ -22,7 +22,7 @@ func TestHighlighter(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "put $true")
 	wantBuf1 := bb().
-		WriteMarkedLines(
+		MarkLines(
 			"~> put $true", styles,
 			"   ggg vvvvv",
 		).
@@ -32,7 +32,7 @@ func TestHighlighter(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "x")
 	wantBuf2 := bb().
-		WriteMarkedLines(
+		MarkLines(
 			"~> put $truex", styles,
 			"   ggg eeeeee",
 		).

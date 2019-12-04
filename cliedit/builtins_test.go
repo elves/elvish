@@ -106,7 +106,7 @@ func TestRedraw(t *testing.T) {
 
 	evals(f.Evaler, `edit:current-command = echo`)
 	evals(f.Evaler, `edit:redraw`)
-	wantBuf := bb().WriteMarkedLines(
+	wantBuf := bb().MarkLines(
 		"~> echo", styles,
 		"   gggg",
 	).SetDotHere().Buffer()

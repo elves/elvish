@@ -15,7 +15,7 @@ func TestCompletionAddon(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "echo \t")
 	wantBuf := bb().
-		WriteMarkedLines(
+		MarkLines(
 			"~> echo a \n", styles,
 			"   gggg --",
 			"COMPLETING argument ", styles,
@@ -34,7 +34,7 @@ func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "echo \t")
 	wantBuf := bb().
-		WriteMarkedLines(
+		MarkLines(
 			"~> echo fo", styles,
 			"   gggg", term.DotHere).
 		Buffer()
@@ -42,14 +42,14 @@ func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "\t")
 	wantBuf = bb().
-		WriteMarkedLines(
+		MarkLines(
 			"~> echo foo \n", styles,
 			"   gggg ----",
 			"COMPLETING argument ", styles,
 			"mmmmmmmmmmmmmmmmmmm ").
 		SetDotHere().
 		Newline().
-		WriteMarkedLines(
+		MarkLines(
 			"foo  foo1  foo2  fox", styles,
 			"###                 ",
 		).
@@ -117,7 +117,7 @@ func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
 	wantBuf := bb().
-		WriteMarkedLines(
+		MarkLines(
 			"~> foo foo1 foo2 1val\n", styles,
 			"   ggg           ----",
 			"COMPLETING argument ", styles,
@@ -144,7 +144,7 @@ func TestCompletionArgCompleter_BytesOutput(t *testing.T) {
 
 	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
 	wantBuf := bb().
-		WriteMarkedLines(
+		MarkLines(
 			"~> foo foo1 foo2 1val\n", styles,
 			"   ggg           ----",
 			"COMPLETING argument ", styles,
@@ -178,7 +178,7 @@ func TestCompletionMatcher(t *testing.T) {
 	evals(f.Evaler, `edit:completion:matcher[''] = $edit:match-substr~`)
 	feedInput(f.TTYCtrl, "echo f\t")
 	wantBuf := bb().
-		WriteMarkedLines(
+		MarkLines(
 			"~> echo foo \n", styles,
 			"   gggg ----",
 			"COMPLETING argument ", styles,

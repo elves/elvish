@@ -33,7 +33,7 @@ func TestHistWalk_Accept(t *testing.T) {
 
 	f.TTYCtrl.Inject(term.K(ui.Right))
 	wantBufDone := bb().
-		WriteMarkedLines(
+		MarkLines(
 			"~> echo a", styles,
 			"   gggg  ",
 		).SetDotHere().Buffer()
@@ -68,11 +68,11 @@ func TestHistory_FastForward(t *testing.T) {
 	evals(f.Evaler, `edit:history:fast-forward`)
 	f.TTYCtrl.Inject(term.K(ui.Up))
 	wantBufWalk := bb().
-		WriteMarkedLines(
+		MarkLines(
 			"~> echo b", styles,
 			"   GGGG--",
 		).SetDotHere().Newline().
-		WriteMarkedLines(
+		MarkLines(
 			" HISTORY #2 ", styles,
 			"mmmmmmmmmmmm",
 		).Buffer()
@@ -87,11 +87,11 @@ func startHistwalkTest(t *testing.T) *fixture {
 
 	f.TTYCtrl.Inject(term.K(ui.Up))
 	wantBufWalk := bb().
-		WriteMarkedLines(
+		MarkLines(
 			"~> echo a", styles,
 			"   GGGG--",
 		).SetDotHere().Newline().
-		WriteMarkedLines(
+		MarkLines(
 			" HISTORY #1 ", styles,
 			"mmmmmmmmmmmm",
 		).Buffer()

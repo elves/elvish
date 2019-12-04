@@ -116,8 +116,7 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 	return bb
 }
 
-// Write is equivalent to calling WriteStyled with ui.T(text,
-// style...).
+// Write is equivalent to calling WriteStyled with ui.T(text, style...).
 func (bb *BufferBuilder) Write(text string, ts ...ui.Styling) *BufferBuilder {
 	return bb.WriteStyled(ui.T(text, ts...))
 }
@@ -127,14 +126,12 @@ func (bb *BufferBuilder) WriteSpaces(w int, ts ...ui.Styling) *BufferBuilder {
 	return bb.Write(strings.Repeat(" ", w), ts...)
 }
 
-// DotHere is a special argument to WriteMarkedLines to mark the position of the
-// dot.
+// DotHere is a special argument to MarkLines to mark the position of the dot.
 var DotHere = struct{ x struct{} }{}
 
-// WriteMarkedLines is like calling WriteStyled with ui.MarkLines(args...), but
-// accepts an additional special parameter DotHere to mark the position of the
-// dot.
-func (bb *BufferBuilder) WriteMarkedLines(args ...interface{}) *BufferBuilder {
+// MarkLines is like calling WriteStyled with ui.MarkLines(args...), but accepts
+// an additional special parameter DotHere to mark the position of the dot.
+func (bb *BufferBuilder) MarkLines(args ...interface{}) *BufferBuilder {
 	for i, arg := range args {
 		if arg == DotHere {
 			return bb.WriteStyled(ui.MarkLines(args[:i]...)).

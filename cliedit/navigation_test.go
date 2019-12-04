@@ -36,7 +36,7 @@ func TestNavigation(t *testing.T) {
 		if len(markedLines) > 0 {
 			b.Newline().
 				WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
-				Newline().WriteMarkedLines(markedLines...)
+				Newline().MarkLines(markedLines...)
 		}
 		return b.Buffer()
 	}

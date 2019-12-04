@@ -78,8 +78,8 @@ var bufferBuilderTests = []struct {
 	wantBuf *Buffer
 }{
 	{
-		"WriteMarkedLines",
-		NewBufferBuilder(10).WriteMarkedLines(
+		"MarkLines",
+		NewBufferBuilder(10).MarkLines(
 			"foo ", styles,
 			"--  ", DotHere, "\n",
 			"",

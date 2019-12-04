@@ -31,7 +31,7 @@ func TestLocationAddon(t *testing.T) {
 	f.TTYCtrl.Inject(term.K('L', ui.Ctrl))
 
 	wantBuf := bbAddon("LOCATION").
-		WriteMarkedLines(
+		MarkLines(
 			"  * /opt                      \n", styles,
 			"##############################",
 			" 10 /home/elf\n",
@@ -65,7 +65,7 @@ func TestLocationAddon_Workspace(t *testing.T) {
 	wantBuf := term.NewBufferBuilder(30).
 		Write("~/ws1/tmp> ").Newline().
 		WriteStyled(layout.ModeLine("LOCATION", true)).SetDotHere().Newline().
-		WriteMarkedLines(
+		MarkLines(
 			" 10 ws/bin                    \n", styles,
 			"##############################",
 			" 10 /usr/bin",

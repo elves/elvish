@@ -33,7 +33,7 @@ func TestHistlistAddon(t *testing.T) {
 
 	f.TTYCtrl.Inject(term.K('R', ui.Ctrl))
 	wantBuf := bbAddon(" HISTORY (dedup on) ").
-		WriteMarkedLines(
+		MarkLines(
 			"   1 echo\n",
 			"   2 ls                       ", styles,
 			"##############################",
@@ -42,7 +42,7 @@ func TestHistlistAddon(t *testing.T) {
 
 	evals(f.Evaler, `edit:histlist:toggle-dedup`)
 	wantBuf = bbAddon(" HISTORY ").
-		WriteMarkedLines(
+		MarkLines(
 			"   0 ls\n",
 			"   1 echo\n",
 			"   2 ls                       ", styles,
@@ -52,7 +52,7 @@ func TestHistlistAddon(t *testing.T) {
 
 	evals(f.Evaler, `edit:histlist:toggle-case-sensitivity`)
 	wantBuf = bbAddon(" HISTORY (case-insensitive) ").
-		WriteMarkedLines(
+		MarkLines(
 			"   0 ls\n",
 			"   1 echo\n",
 			"   2 ls                       ", styles,
@@ -70,7 +70,7 @@ func TestLastCmdAddon(t *testing.T) {
 
 	f.TTYCtrl.Inject(term.K(',', ui.Alt))
 	wantBuf := bbAddon("LASTCMD").
-		WriteMarkedLines(
+		MarkLines(
 			"    echo hello world          \n", styles,
 			"##############################",
 			"  0 echo\n",
