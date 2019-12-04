@@ -1,12 +1,18 @@
 // Package apptest provides utilities for testing cli.App.
 package apptest
 
-import "github.com/elves/elvish/cli"
+import (
+	"testing"
+
+	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/term"
+)
 
 // Fixture is a test fixture.
 type Fixture struct {
 	App    cli.App
 	TTY    cli.TTYCtrl
+	width  int
 	codeCh <-chan string
 	errCh  <-chan error
 }
@@ -21,7 +27,8 @@ func Setup(fns ...func(*cli.AppSpec, cli.TTYCtrl)) *Fixture {
 	}
 	app := cli.NewApp(spec)
 	codeCh, errCh := start(app)
-	return &Fixture{app, ttyCtrl, codeCh, errCh}
+	_, width := tty.Size()
+	return &Fixture{app, ttyCtrl, width, codeCh, errCh}
 }
 
 // WithSpec takes a function that operates on *cli.AppSpec, and wraps it into a
@@ -59,4 +66,16 @@ func (f *Fixture) Wait() (string, error) {
 func (f *Fixture) Stop() {
 	f.App.CommitEOF()
 	f.Wait()
+}
+
+// MakeBuffer is a helper for building a buffer. It is equivalent to
+// term.NewBufferBuilder(width of terminal).MarkLines(args...).Buffer().
+func (f *Fixture) MakeBuffer(args ...interface{}) *term.Buffer {
+	return term.NewBufferBuilder(f.width).MarkLines(args...).Buffer()
+}
+
+// TestTTY is equivalent to f.TTY.TestBuffer(f.MakeBuffer(args...)).
+func (f *Fixture) TestTTY(t *testing.T, args ...interface{}) {
+	t.Helper()
+	f.TTY.TestBuffer(t, f.MakeBuffer(args...))
 }

@@ -4,15 +4,17 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/cli/term"
 )
 
 func TestFixture(t *testing.T) {
 	f := Setup(
 		WithSpec(func(spec *cli.AppSpec) {
-			spec.CodeAreaState.Buffer.Content = "test"
+			spec.CodeAreaState.Buffer = codearea.Buffer{Content: "test", Dot: 4}
 		}),
 		WithTTY(func(tty cli.TTYCtrl) {
-			tty.SetSize(99, 100)
+			tty.SetSize(20, 30) // h = 20, w = 30
 		}),
 	)
 	defer f.Stop()
@@ -21,7 +23,14 @@ func TestFixture(t *testing.T) {
 	if cli.CodeBuffer(f.App).Content != "test" {
 		t.Errorf("WithSpec did not work")
 	}
-	// TODO: Verify the WithTTY function too.
+
+	buf := f.MakeBuffer()
+	// Verify that the WithTTY function has taken effect.
+	if buf.Width != 30 {
+		t.Errorf("WithTTY did not work")
+	}
+
+	f.TestTTY(t, "test", term.DotHere)
 
 	f.App.CommitCode()
 	if code, err := f.Wait(); code != "test" || err != nil {
