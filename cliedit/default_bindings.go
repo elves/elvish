@@ -25,6 +25,7 @@ insert:binding = (binding-table [
   &Ctrl-V= $insert-raw~
 
   &Alt-,=  $lastcmd:start~
+  &Alt-.=  $insert-last-word~
   &Ctrl-R= $histlist:start~
   &Ctrl-L= $location:start~
   &Ctrl-N= $navigation:start~
