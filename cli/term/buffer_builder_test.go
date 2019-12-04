@@ -3,6 +3,8 @@ package term
 import (
 	"reflect"
 	"testing"
+
+	"github.com/elves/elvish/ui"
 )
 
 var bufferBuilderWritesTests = []struct {
@@ -63,5 +65,40 @@ func TestBufferBuilderWrites(t *testing.T) {
 			t.Errorf("buf.writes(%q, %q) makes it %v, want %v",
 				test.text, test.style, buf, test.want)
 		}
+	}
+}
+
+var styles = map[rune]ui.Styling{
+	'-': ui.Underlined,
+}
+
+var bufferBuilderTests = []struct {
+	name    string
+	builder *BufferBuilder
+	wantBuf *Buffer
+}{
+	{
+		"WriteMarkedLines",
+		NewBufferBuilder(10).WriteMarkedLines(
+			"foo ", styles,
+			"--  ", DotHere,
+			"",
+			"bar",
+		),
+		&Buffer{Width: 10, Dot: Pos{0, 4}, Lines: Lines{
+			Line{Cell{"f", "4"}, Cell{"o", "4"}, Cell{"o", ""}, Cell{" ", ""}},
+			Line{Cell{"b", ""}, Cell{"a", ""}, Cell{"r", ""}},
+		}},
+	},
+}
+
+func TestBufferBuilder(t *testing.T) {
+	for _, test := range bufferBuilderTests {
+		t.Run(test.name, func(t *testing.T) {
+			buf := test.builder.Buffer()
+			if !reflect.DeepEqual(buf, test.wantBuf) {
+				t.Errorf("Got buf %v, want %v", buf, test.wantBuf)
+			}
+		})
 	}
 }

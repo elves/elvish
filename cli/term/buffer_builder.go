@@ -127,9 +127,20 @@ func (bb *BufferBuilder) WriteSpaces(w int, ts ...ui.Styling) *BufferBuilder {
 	return bb.Write(strings.Repeat(" ", w), ts...)
 }
 
-// WriteMarkedLines is equivalent to calling WriteStyled with
-// ui.MarkLines(args...).
+// DotHere is a special argument to WriteMarkedLines to mark the position of the
+// dot.
+var DotHere = struct{ x struct{} }{}
+
+// WriteMarkedLines is like calling WriteStyled with ui.MarkLines(args...), but
+// accepts an additional special parameter DotHere to mark the position of the
+// dot.
 func (bb *BufferBuilder) WriteMarkedLines(args ...interface{}) *BufferBuilder {
+	for i, arg := range args {
+		if arg == DotHere {
+			return bb.WriteStyled(ui.MarkLines(args[:i]...)).
+				SetDotHere().WriteStyled(ui.MarkLines(args[i+1:]...))
+		}
+	}
 	return bb.WriteStyled(ui.MarkLines(args...))
 }
 
