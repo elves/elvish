@@ -10,11 +10,11 @@ import (
 )
 
 var styles = ui.RuneStylesheet{
-	'-': ui.Underlined,
+	'_': ui.Underlined,
 	'*': ui.Stylings(ui.Bold, ui.LightGray, ui.BgMagenta),
-	'#': ui.Inverse,
-	'b': ui.Blue,
-	'B': ui.Stylings(ui.Inverse, ui.Blue),
+	'+': ui.Inverse,
+	'/': ui.Blue,
+	'#': ui.Stylings(ui.Inverse, ui.Blue),
 }
 
 func setupStarted(t *testing.T) *Fixture {
@@ -30,11 +30,11 @@ func setupStarted(t *testing.T) *Fixture {
 	})
 	f.TestTTY(t,
 		"foo\n", styles,
-		"---",
+		"___",
 		"COMPLETING WORD ", styles,
 		"*************** ", term.DotHere, "\n",
 		"foo  foo bar", styles,
-		"###  bbbbbbb",
+		"+++  ///////",
 	)
 	return f
 }
@@ -46,11 +46,11 @@ func TestFilter(t *testing.T) {
 	f.TTY.Inject(term.K('b'), term.K('a'))
 	f.TestTTY(t,
 		"'foo bar'\n", styles,
-		"---------",
+		"_________",
 		"COMPLETING WORD ba", styles,
 		"***************   ", term.DotHere, "\n",
 		"foo bar", styles,
-		"BBBBBBB",
+		"#######",
 	)
 }
 
