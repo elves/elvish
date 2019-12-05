@@ -32,6 +32,9 @@ func TestFixture(t *testing.T) {
 
 	f.TestTTY(t, "test", term.DotHere)
 
+	f.App.Notify("something")
+	f.TestTTYNotes(t, "something")
+
 	f.App.CommitCode()
 	if code, err := f.Wait(); code != "test" || err != nil {
 		t.Errorf("Wait returned %q, %v", code, err)

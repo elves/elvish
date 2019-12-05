@@ -79,3 +79,9 @@ func (f *Fixture) TestTTY(t *testing.T, args ...interface{}) {
 	t.Helper()
 	f.TTY.TestBuffer(t, f.MakeBuffer(args...))
 }
+
+// TestTTYNotes is equivalent to f.TTY.TestNotesBuffer(f.MakeBuffer(args...)).
+func (f *Fixture) TestTTYNotes(t *testing.T, args ...interface{}) {
+	t.Helper()
+	f.TTY.TestNotesBuffer(t, f.MakeBuffer(args...))
+}
