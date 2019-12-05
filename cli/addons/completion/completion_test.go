@@ -17,7 +17,7 @@ var styles = ui.RuneStylesheet{
 	'B': ui.Stylings(ui.Inverse, ui.Blue),
 }
 
-func setup(t *testing.T) *Fixture {
+func setupStarted(t *testing.T) *Fixture {
 	f := Setup()
 	Start(f.App, Config{
 		Name:    "WORD",
@@ -40,7 +40,7 @@ func setup(t *testing.T) *Fixture {
 }
 
 func TestFilter(t *testing.T) {
-	f := setup(t)
+	f := setupStarted(t)
 	defer f.Stop()
 
 	f.TTY.Inject(term.K('b'), term.K('a'))
@@ -55,7 +55,7 @@ func TestFilter(t *testing.T) {
 }
 
 func TestAccept(t *testing.T) {
-	f := setup(t)
+	f := setupStarted(t)
 	defer f.Stop()
 
 	f.TTY.Inject(term.K(ui.Enter))
@@ -63,9 +63,16 @@ func TestAccept(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	f := setup(t)
+	f := setupStarted(t)
 	defer f.Stop()
 
 	Close(f.App)
 	f.TestTTY(t /* nothing */)
+}
+
+func TestStart_NoItems(t *testing.T) {
+	f := Setup()
+	defer f.Stop()
+	Start(f.App, Config{Items: []Item{}})
+	f.TestTTYNotes(t, "no candidates")
 }

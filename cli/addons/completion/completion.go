@@ -35,6 +35,10 @@ type Config struct {
 
 // Start starts the completion UI.
 func Start(app cli.App, cfg Config) {
+	if len(cfg.Items) == 0 {
+		app.Notify("no candidates")
+		return
+	}
 	w := combobox.New(combobox.Spec{
 		CodeArea: codearea.Spec{
 			Prompt: layout.ModePrompt("COMPLETING "+cfg.Name, true),
