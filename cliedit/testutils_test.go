@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/apptest"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
@@ -39,9 +40,9 @@ type fixture struct {
 	Store   storedefs.Store
 	Home    string
 
-	codeCh   <-chan string
-	errCh    <-chan error
-	cleanups []func()
+	codeCh  <-chan string
+	errCh   <-chan error
+	cleanup func()
 }
 
 func rc(codes ...string) func(*fixture) {
@@ -75,38 +76,18 @@ func setup(beforeStart ...func(*fixture)) *fixture {
 		`use edit`,
 		// This will simplify most tests against the terminal.
 		"edit:rprompt = { }")
-	f := &fixture{
-		Editor: ed, TTYCtrl: ttyCtrl, Evaler: ev, Store: st, Home: home,
-		cleanups: []func(){cleanupStore, cleanupFs}}
+	f := &fixture{Editor: ed, TTYCtrl: ttyCtrl, Evaler: ev, Store: st, Home: home}
 	for _, fn := range beforeStart {
 		fn(f)
 	}
-	f.Start()
+	f.codeCh, f.errCh = apptest.StartReadCode(f.Editor.ReadCode)
+	f.cleanup = func() {
+		f.Editor.app.CommitEOF()
+		f.Wait()
+		cleanupFs()
+		cleanupStore()
+	}
 	return f
-}
-
-func (f *fixture) Start() {
-	codeCh := make(chan string, 1)
-	errCh := make(chan error, 1)
-	go func() {
-		code, err := f.Editor.ReadCode()
-		// Write to the channels and close them. This means that the first read
-		// from those channels will get the return value, and subsequent reads
-		// will get the zero value of string and error. This means that the Wait
-		// method can be called multiple times, and only the first call blocks
-		// until the editor stops, and subsequent calls are no-ops.
-		codeCh <- code
-		close(codeCh)
-		errCh <- err
-		close(errCh)
-	}()
-	f.codeCh, f.errCh = codeCh, errCh
-	f.cleanups = append(f.cleanups, func() { f.StopAndWait() })
-}
-
-func (f *fixture) StopAndWait() (string, error) {
-	f.Editor.app.CommitEOF()
-	return f.Wait()
 }
 
 func (f *fixture) Wait() (string, error) {
@@ -114,9 +95,7 @@ func (f *fixture) Wait() (string, error) {
 }
 
 func (f *fixture) Cleanup() {
-	for i := len(f.cleanups) - 1; i >= 0; i-- {
-		f.cleanups[i]()
-	}
+	f.cleanup()
 }
 
 func feedInput(ttyCtrl cli.TTYCtrl, s string) {

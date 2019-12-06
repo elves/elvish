@@ -39,7 +39,7 @@ func Setup(fns ...func(*cli.AppSpec, cli.TTYCtrl)) *Fixture {
 		fn(&spec, ttyCtrl)
 	}
 	app := cli.NewApp(spec)
-	codeCh, errCh := start(app)
+	codeCh, errCh := StartReadCode(app.ReadCode)
 	_, width := tty.Size()
 	return &Fixture{app, ttyCtrl, width, codeCh, errCh}
 }
@@ -54,19 +54,6 @@ func WithSpec(f func(*cli.AppSpec)) func(*cli.AppSpec, cli.TTYCtrl) {
 // suitable for passing to Setup.
 func WithTTY(f func(cli.TTYCtrl)) func(*cli.AppSpec, cli.TTYCtrl) {
 	return func(_ *cli.AppSpec, tty cli.TTYCtrl) { f(tty) }
-}
-
-func start(app cli.App) (<-chan string, <-chan error) {
-	codeCh := make(chan string, 1)
-	errCh := make(chan error, 1)
-	go func() {
-		code, err := app.ReadCode()
-		codeCh <- code
-		errCh <- err
-		close(codeCh)
-		close(errCh)
-	}()
-	return codeCh, errCh
 }
 
 // Wait waits for ReaCode to finish, and returns its return values.
@@ -97,4 +84,20 @@ func (f *Fixture) TestTTY(t *testing.T, args ...interface{}) {
 func (f *Fixture) TestTTYNotes(t *testing.T, args ...interface{}) {
 	t.Helper()
 	f.TTY.TestNotesBuffer(t, f.MakeBuffer(args...))
+}
+
+// StartReadCode starts the given function asynchronously. It returns two
+// channels; when the function returns, the return values will be delivered on
+// those two channels and the two channels will be closed.
+func StartReadCode(readCode func() (string, error)) (<-chan string, <-chan error) {
+	codeCh := make(chan string, 1)
+	errCh := make(chan error, 1)
+	go func() {
+		code, err := readCode()
+		codeCh <- code
+		errCh <- err
+		close(codeCh)
+		close(errCh)
+	}()
+	return codeCh, errCh
 }
