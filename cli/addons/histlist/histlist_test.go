@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli"
+	. "github.com/elves/elvish/cli/apptest"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/term"
@@ -13,12 +14,11 @@ import (
 )
 
 func TestStart_NoStore(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
-	Start(app, Config{})
-	wantNotesBuf := bb().Write("no history store").Buffer()
-	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
+	Start(f.App, Config{})
+	f.TestTTYNotes(t, "no history store")
 }
 
 type faultyStore struct{}
@@ -28,26 +28,25 @@ var mockError = errors.New("mock error")
 func (s faultyStore) AllCmds() ([]histutil.Entry, error) { return nil, mockError }
 
 func TestStart_StoreError(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
-	Start(app, Config{Store: faultyStore{}})
-	wantNotesBuf := bb().Write("db error: mock error").Buffer()
-	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
+	Start(f.App, Config{Store: faultyStore{}})
+	f.TestTTYNotes(t, "db error: mock error")
 }
 
 func TestStart_OK(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	store := histutil.NewMemoryStore()
 	store.AddCmd(histutil.Entry{Text: "foo", Seq: 0})
 	store.AddCmd(histutil.Entry{Text: "bar", Seq: 1})
 	store.AddCmd(histutil.Entry{Text: "baz", Seq: 2})
-	Start(app, Config{Store: store})
+	Start(f.App, Config{Store: store})
 
 	// Test UI.
-	ttyCtrl.TestBuffer(t,
+	f.TTY.TestBuffer(t,
 		makeListingBuf(
 			" HISTORY (dedup on) ", "",
 			"   0 foo",
@@ -55,34 +54,29 @@ func TestStart_OK(t *testing.T) {
 			"   2 baz"))
 
 	// Test filtering.
-	ttyCtrl.Inject(term.K('b'))
-	ttyCtrl.TestBuffer(t,
+	f.TTY.Inject(term.K('b'))
+	f.TTY.TestBuffer(t,
 		makeListingBuf(
 			" HISTORY (dedup on) ", "b",
 			"   1 bar",
 			"   2 baz"))
 
 	// Test accepting.
-	ttyCtrl.Inject(term.K(ui.Enter))
-	wantBufAccepted1 := bb().
-		// codearea now contains selected entry
-		Write("baz").SetDotHere().Buffer()
-	ttyCtrl.TestBuffer(t, wantBufAccepted1)
+	f.TTY.Inject(term.K(ui.Enter))
+	f.TestTTY(t, "baz", term.DotHere)
 
 	// Test accepting when there is already some text.
 	store.AddCmd(histutil.Entry{Text: "baz2"})
-	Start(app, Config{Store: store})
-	ttyCtrl.Inject(term.K(ui.Enter))
-	wantBufAccepted2 := bb().
-		Write("baz").
+	Start(f.App, Config{Store: store})
+	f.TTY.Inject(term.K(ui.Enter))
+	f.TestTTY(t, "baz",
 		// codearea now contains newly inserted entry on a separate line
-		Newline().Write("baz2").SetDotHere().Buffer()
-	ttyCtrl.TestBuffer(t, wantBufAccepted2)
+		"\n", "baz2", term.DotHere)
 }
 
 func TestStart_Dedup(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	store := histutil.NewMemoryStore()
 	store.AddCmd(histutil.Entry{Text: "ls", Seq: 0})
@@ -90,18 +84,18 @@ func TestStart_Dedup(t *testing.T) {
 	store.AddCmd(histutil.Entry{Text: "ls", Seq: 2})
 
 	// No dedup
-	Start(app, Config{Store: store, Dedup: func() bool { return false }})
-	ttyCtrl.TestBuffer(t,
+	Start(f.App, Config{Store: store, Dedup: func() bool { return false }})
+	f.TTY.TestBuffer(t,
 		makeListingBuf(
 			" HISTORY ", "",
 			"   0 ls",
 			"   1 echo",
 			"   2 ls"))
-	app.MutateState(func(s *cli.State) { s.Addon = nil })
+	f.App.MutateState(func(s *cli.State) { s.Addon = nil })
 
 	// With dedup
-	Start(app, Config{Store: store, Dedup: func() bool { return true }})
-	ttyCtrl.TestBuffer(t,
+	Start(f.App, Config{Store: store, Dedup: func() bool { return true }})
+	f.TTY.TestBuffer(t,
 		makeListingBuf(
 			" HISTORY (dedup on) ", "",
 			"   1 echo",
@@ -109,41 +103,30 @@ func TestStart_Dedup(t *testing.T) {
 }
 
 func TestStart_CaseSensitive(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	store := histutil.NewMemoryStore()
 	store.AddCmd(histutil.Entry{Text: "ls", Seq: 0})
 	store.AddCmd(histutil.Entry{Text: "LS", Seq: 1})
 
 	// Case sensitive
-	Start(app, Config{Store: store, CaseSensitive: func() bool { return true }})
-	ttyCtrl.Inject(term.K('l'))
-	ttyCtrl.TestBuffer(t,
+	Start(f.App, Config{Store: store, CaseSensitive: func() bool { return true }})
+	f.TTY.Inject(term.K('l'))
+	f.TTY.TestBuffer(t,
 		makeListingBuf(
 			" HISTORY (dedup on) ", "l",
 			"   0 ls"))
-	app.MutateState(func(s *cli.State) { s.Addon = nil })
+	f.App.MutateState(func(s *cli.State) { s.Addon = nil })
 
 	// Case insensitive
-	Start(app, Config{Store: store, CaseSensitive: func() bool { return false }})
-	ttyCtrl.Inject(term.K('l'))
-	ttyCtrl.TestBuffer(t,
+	Start(f.App, Config{Store: store, CaseSensitive: func() bool { return false }})
+	f.TTY.Inject(term.K('l'))
+	f.TTY.TestBuffer(t,
 		makeListingBuf(
 			" HISTORY (dedup on) (case-insensitive) ", "l",
 			"   0 ls",
 			"   1 LS"))
-}
-
-func setup() (cli.App, cli.TTYCtrl, func()) {
-	tty, ttyCtrl := cli.NewFakeTTY()
-	ttyCtrl.SetSize(24, 50)
-	app := cli.NewApp(cli.AppSpec{TTY: tty})
-	codeCh, _ := cli.ReadCodeAsync(app)
-	return app, ttyCtrl, func() {
-		app.CommitEOF()
-		<-codeCh
-	}
 }
 
 func bb() *term.BufferBuilder { return term.NewBufferBuilder(50) }

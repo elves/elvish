@@ -9,11 +9,6 @@ import (
 	"github.com/elves/elvish/ui"
 )
 
-var styles = ui.RuneStylesheet{
-	'*': ui.Stylings(ui.Bold, ui.LightGray, ui.BgMagenta),
-	'!': ui.Red,
-}
-
 func setupStarted(t *testing.T) *Fixture {
 	f := Setup()
 	Start(f.App, Config{
@@ -27,7 +22,7 @@ func setupStarted(t *testing.T) *Fixture {
 	})
 	f.TestTTY(t,
 		term.DotHere, "\n",
-		" INSTANT \n", styles,
+		" INSTANT \n", Styles,
 		"*********",
 		"result of\n",
 		"",
@@ -42,7 +37,7 @@ func TestUpdate(t *testing.T) {
 	f.TTY.Inject(term.K('a'))
 	bufA := f.MakeBuffer(
 		"a", term.DotHere, "\n",
-		" INSTANT \n", styles,
+		" INSTANT \n", Styles,
 		"*********",
 		"result of\n",
 		"a",
@@ -60,10 +55,10 @@ func TestError(t *testing.T) {
 	f.TTY.Inject(term.K('!'))
 	f.TestTTY(t,
 		"!", term.DotHere, "\n",
-		" INSTANT \n", styles,
+		" INSTANT \n", Styles,
 		"*********",
 		// Error shown.
-		"error\n", styles,
+		"error\n", Styles,
 		"!!!!!",
 		// Buffer not updated.
 		"result of\n",

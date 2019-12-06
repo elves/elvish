@@ -9,14 +9,6 @@ import (
 	"github.com/elves/elvish/ui"
 )
 
-var styles = ui.RuneStylesheet{
-	'_': ui.Underlined,
-	'*': ui.Stylings(ui.Bold, ui.LightGray, ui.BgMagenta),
-	'+': ui.Inverse,
-	'/': ui.Blue,
-	'#': ui.Stylings(ui.Inverse, ui.Blue),
-}
-
 func setupStarted(t *testing.T) *Fixture {
 	f := Setup()
 	Start(f.App, Config{
@@ -29,11 +21,11 @@ func setupStarted(t *testing.T) *Fixture {
 		},
 	})
 	f.TestTTY(t,
-		"foo\n", styles,
+		"foo\n", Styles,
 		"___",
-		"COMPLETING WORD ", styles,
+		"COMPLETING WORD ", Styles,
 		"*************** ", term.DotHere, "\n",
-		"foo  foo bar", styles,
+		"foo  foo bar", Styles,
 		"+++  ///////",
 	)
 	return f
@@ -45,11 +37,11 @@ func TestFilter(t *testing.T) {
 
 	f.TTY.Inject(term.K('b'), term.K('a'))
 	f.TestTTY(t,
-		"'foo bar'\n", styles,
+		"'foo bar'\n", Styles,
 		"_________",
-		"COMPLETING WORD ba", styles,
+		"COMPLETING WORD ba", Styles,
 		"***************   ", term.DotHere, "\n",
-		"foo bar", styles,
+		"foo bar", Styles,
 		"#######",
 	)
 }

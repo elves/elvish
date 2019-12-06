@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elves/elvish/cli"
+	. "github.com/elves/elvish/cli/apptest"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/eval"
@@ -46,35 +46,33 @@ func (ts testStore) Getwd() (string, error) {
 }
 
 func TestStart_NoStore(t *testing.T) {
-	app, ttyCtrl, teardown := setup()
-	defer teardown()
+	f := Setup()
+	defer f.Stop()
 
-	Start(app, Config{})
+	Start(f.App, Config{})
 
-	wantNotesBuf := bb().Write("no dir history store").Buffer()
-	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
+	f.TestTTYNotes(t, "no dir history store")
 }
 
 func TestStart_StoreError(t *testing.T) {
-	app, ttyCtrl, teardown := setup()
-	defer teardown()
+	f := Setup()
+	defer f.Stop()
 
-	Start(app, Config{Store: testStore{dirsError: errors.New("ERROR")}})
+	Start(f.App, Config{Store: testStore{dirsError: errors.New("ERROR")}})
 
-	wantNotesBuf := bb().Write("db error: ERROR").Buffer()
-	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
+	f.TestTTYNotes(t, "db error: ERROR")
 }
 
 func TestStart_Hidden(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	dirs := []storedefs.Dir{
 		{Path: fix("/usr/bin"), Score: 200},
 		{Path: fix("/usr"), Score: 100},
 		{Path: fix("/tmp"), Score: 50},
 	}
-	Start(app, Config{
+	Start(f.App, Config{
 		Store:         testStore{storedDirs: dirs},
 		IterateHidden: func(f func(string)) { f(fix("/usr")) },
 	})
@@ -83,19 +81,19 @@ func TestStart_Hidden(t *testing.T) {
 		"",
 		"200 "+fix("/usr/bin"), "<- selected",
 		" 50 "+fix("/tmp"))
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTY.TestBuffer(t, wantBuf)
 }
 
 func TestStart_Pinned(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	dirs := []storedefs.Dir{
 		{Path: fix("/usr/bin"), Score: 200},
 		{Path: fix("/usr"), Score: 100},
 		{Path: fix("/tmp"), Score: 50},
 	}
-	Start(app, Config{
+	Start(f.App, Config{
 		Store:         testStore{storedDirs: dirs},
 		IteratePinned: func(f func(string)) { f(fix("/home")); f(fix("/usr")) },
 	})
@@ -106,28 +104,28 @@ func TestStart_Pinned(t *testing.T) {
 		"  * "+fix("/usr"),
 		"200 "+fix("/usr/bin"),
 		" 50 "+fix("/tmp"))
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTY.TestBuffer(t, wantBuf)
 }
 
 func TestStart_HideWd(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	dirs := []storedefs.Dir{
 		{Path: fix("/home"), Score: 200},
 		{Path: fix("/tmp"), Score: 50},
 	}
-	Start(app, Config{Store: testStore{storedDirs: dirs, wd: fix("/home")}})
+	Start(f.App, Config{Store: testStore{storedDirs: dirs, wd: fix("/home")}})
 	// Test UI.
 	wantBuf := listingBuf(
 		"",
 		" 50 "+fix("/tmp"), "<- selected")
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTY.TestBuffer(t, wantBuf)
 }
 
 func TestStart_Workspace(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	chdir := ""
 	dirs := []storedefs.Dir{
@@ -136,7 +134,7 @@ func TestStart_Workspace(t *testing.T) {
 		{Path: fix("ws2/bin"), Score: 100},
 		{Path: fix("/tmp"), Score: 50},
 	}
-	Start(app, Config{
+	Start(f.App, Config{
 		Store: testStore{
 			storedDirs: dirs,
 			wd:         fix("/home/elf/bin"),
@@ -164,11 +162,10 @@ func TestStart_Workspace(t *testing.T) {
 		"",
 		"200 "+fix("home/src"), "<- selected",
 		" 50 "+fix("/tmp"))
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTY.TestBuffer(t, wantBuf)
 
-	ttyCtrl.Inject(term.K(ui.Enter))
-	wantBuf = bb().Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTY.Inject(term.K(ui.Enter))
+	f.TestTTY(t /* nothing */)
 	wantChdir := fix("/home/elf/src")
 	if chdir != wantChdir {
 		t.Errorf("got chdir %q, want %q", chdir, wantChdir)
@@ -178,8 +175,8 @@ func TestStart_Workspace(t *testing.T) {
 func TestStart_OK(t *testing.T) {
 	home, cleanupHome := eval.InTempHome()
 	defer cleanupHome()
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	errChdir := errors.New("mock chdir error")
 	chdirCh := make(chan string, 100)
@@ -188,7 +185,7 @@ func TestStart_OK(t *testing.T) {
 		{Path: home, Score: 100},
 		{Path: fix("/tmp/foo/bar/lorem/ipsum"), Score: 50},
 	}
-	Start(app, Config{Store: testStore{
+	Start(f.App, Config{Store: testStore{
 		storedDirs: dirs,
 		chdir:      func(dir string) error { chdirCh <- dir; return errChdir },
 	}})
@@ -199,24 +196,22 @@ func TestStart_OK(t *testing.T) {
 		"200 "+filepath.Join("~", "go"), "<- selected",
 		"100 ~",
 		" 50 "+fix("/tmp/foo/bar/lorem/ipsum"))
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTY.TestBuffer(t, wantBuf)
 
 	// Test filtering.
-	ttyCtrl.Inject(term.K('f'), term.K(os.PathSeparator), term.K('l'))
+	f.TTY.Inject(term.K('f'), term.K(os.PathSeparator), term.K('l'))
 
 	wantBuf = listingBuf(
 		"f"+string(os.PathSeparator)+"l",
 		" 50 "+fix("/tmp/foo/bar/lorem/ipsum"), "<- selected")
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTY.TestBuffer(t, wantBuf)
 
 	// Test accepting.
-	ttyCtrl.Inject(term.K(ui.Enter))
+	f.TTY.Inject(term.K(ui.Enter))
 	// There should be no change to codearea after accepting.
-	wantBuf = bb().Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t /* nothing */)
 	// Error from Chdir should be sent to notes.
-	wantNotesBuf := bb().Write("mock chdir error").Buffer()
-	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
+	f.TestTTYNotes(t, "mock chdir error")
 	// Chdir should be called.
 	wantChdir := fix("/tmp/foo/bar/lorem/ipsum")
 	if got := <-chdirCh; got != wantChdir {
@@ -224,24 +219,8 @@ func TestStart_OK(t *testing.T) {
 	}
 }
 
-func setup() (cli.App, cli.TTYCtrl, func()) {
-	tty, ttyCtrl := cli.NewFakeTTY()
-	// Use a smaller TTY size to make diffs easier to see.
-	ttyCtrl.SetSize(20, 50)
-	app := cli.NewApp(cli.AppSpec{TTY: tty})
-	codeCh, _ := cli.ReadCodeAsync(app)
-	return app, ttyCtrl, func() {
-		app.CommitEOF()
-		<-codeCh
-	}
-}
-
-func bb() *term.BufferBuilder {
-	return term.NewBufferBuilder(50)
-}
-
 func listingBuf(filter string, lines ...string) *term.Buffer {
-	b := bb()
+	b := term.NewBufferBuilder(50)
 	b.Newline() // empty code area
 	layout.WriteListing(b, "LOCATION", filter, lines...)
 	return b.Buffer()

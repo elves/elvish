@@ -5,22 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elves/elvish/cli"
+	. "github.com/elves/elvish/cli/apptest"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/ui"
 )
-
-func setup() (cli.App, cli.TTYCtrl, func()) {
-	tty, ttyCtrl := cli.NewFakeTTY()
-	app := cli.NewApp(cli.AppSpec{TTY: tty})
-	codeCh, _ := cli.ReadCodeAsync(app)
-	return app, ttyCtrl, func() {
-		app.CommitEOF()
-		<-codeCh
-	}
-}
 
 type faultyStore struct{}
 
@@ -31,31 +21,28 @@ func (s faultyStore) LastCmd() (histutil.Entry, error) {
 }
 
 func TestStart_NoStore(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
-	Start(app, Config{})
-	wantNotesBuf := term.NewBufferBuilder(50).Write("no history store").Buffer()
-	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
+	Start(f.App, Config{})
+	f.TestTTYNotes(t, "no history store")
 }
 
 func TestStart_StoreError(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
-	Start(app, Config{Store: faultyStore{}})
-	wantNotesBuf := term.NewBufferBuilder(50).
-		Write("db error: mock error").Buffer()
-	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
+	Start(f.App, Config{Store: faultyStore{}})
+	f.TestTTYNotes(t, "db error: mock error")
 }
 
 func TestStart_OK(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	store := histutil.NewMemoryStore()
 	store.AddCmd(histutil.Entry{Text: "foo,bar,baz", Seq: 0})
-	Start(app, Config{
+	Start(f.App, Config{
 		Store: store,
 		Wordifier: func(cmd string) []string {
 			return strings.Split(cmd, ",")
@@ -63,68 +50,52 @@ func TestStart_OK(t *testing.T) {
 	})
 
 	// Test UI.
-	wantBuf := term.NewBufferBuilder(50).
-		// empty codearea
-		Newline().
-		// combobox codearea
-		Write("LASTCMD", ui.Bold, ui.LightGray, ui.BgMagenta).
-		Write(" ").
-		SetDotHere().
-		// first entry is selected
-		Newline().Write("    foo,bar,baz"+strings.Repeat(" ", 35), ui.Inverse).
-		// unselected entries
-		Newline().Write("  0 foo").
-		Newline().Write("  1 bar").
-		Newline().Write("  2 baz").
-		Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"\n", // empty code area
+		"LASTCMD ", Styles,
+		"******* ", term.DotHere, "\n",
+		"    foo,bar,baz                                   \n", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+		"  0 foo\n",
+		"  1 bar\n",
+		"  2 baz",
+	)
 
 	// Test negative filtering.
-	ttyCtrl.Inject(term.K('-'))
-	wantBuf = term.NewBufferBuilder(50).
-		// empty codearea
-		Newline().
-		// combobox codearea
-		Write("LASTCMD", ui.Bold, ui.LightGray, ui.BgMagenta).
-		Write(" -").
-		SetDotHere().
-		// first entry is selected
-		Newline().Write(" -3 foo"+strings.Repeat(" ", 43), ui.Inverse).
-		// unselected entries
-		Newline().Write(" -2 bar").
-		Newline().Write(" -1 baz").
-		Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTY.Inject(term.K('-'))
+	f.TestTTY(t,
+		"\n", // empty code area
+		"LASTCMD -", Styles,
+		"******* ", term.DotHere, "\n",
+		" -3 foo                                           \n", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+		" -2 bar\n",
+		" -1 baz",
+	)
 
 	// Test automatic submission.
-	ttyCtrl.Inject(term.K('2')) // -2 bar
-	wantBuf = term.NewBufferBuilder(50).
-		Write("bar").SetDotHere().Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTY.Inject(term.K('2')) // -2 bar
+	f.TestTTY(t, "bar", term.DotHere)
 
 	// Test submission by Enter.
-	app.CodeArea().MutateState(func(s *codearea.State) {
+	f.App.CodeArea().MutateState(func(s *codearea.State) {
 		*s = codearea.State{}
 	})
-	Start(app, Config{
+	Start(f.App, Config{
 		Store: store,
 		Wordifier: func(cmd string) []string {
 			return strings.Split(cmd, ",")
 		},
 	})
-	ttyCtrl.Inject(term.K(ui.Enter))
-	wantBuf = term.NewBufferBuilder(50).
-		Write("foo,bar,baz").SetDotHere().Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	f.TTY.Inject(term.K(ui.Enter))
+	f.TestTTY(t, "foo,bar,baz", term.DotHere)
 
 	// Default wordifier.
-	app.CodeArea().MutateState(func(s *codearea.State) {
+	f.App.CodeArea().MutateState(func(s *codearea.State) {
 		*s = codearea.State{}
 	})
 	store.AddCmd(histutil.Entry{Text: "foo bar baz", Seq: 1})
-	Start(app, Config{Store: store})
-	ttyCtrl.Inject(term.K('0'))
-	wantBuf = term.NewBufferBuilder(50).
-		Write("foo").SetDotHere().Buffer()
-	ttyCtrl.TestBuffer(t, wantBuf)
+	Start(f.App, Config{Store: store})
+	f.TTY.Inject(term.K('0'))
+	f.TestTTY(t, "foo", term.DotHere)
 }

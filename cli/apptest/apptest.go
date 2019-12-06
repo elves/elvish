@@ -6,7 +6,18 @@ import (
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/term"
+	"github.com/elves/elvish/ui"
 )
+
+// Common stylesheet.
+var Styles = ui.RuneStylesheet{
+	'_': ui.Underlined,
+	'*': ui.Stylings(ui.Bold, ui.LightGray, ui.BgMagenta),
+	'+': ui.Inverse,
+	'/': ui.Blue,
+	'#': ui.Stylings(ui.Inverse, ui.Blue),
+	'!': ui.Red,
+}
 
 // Fixture is a test fixture.
 type Fixture struct {

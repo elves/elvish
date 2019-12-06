@@ -4,42 +4,45 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/cli"
+	. "github.com/elves/elvish/cli/apptest"
 	"github.com/elves/elvish/cli/el"
-	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 )
 
 func TestRendering(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
-	Start(app, Config{Name: " STUB "})
-	modeline := layout.ModeLine(" STUB ", false)
-	ttyCtrl.TestBuffer(t,
-		bb().SetDotHere().Newline().WriteStyled(modeline).Buffer())
+	Start(f.App, Config{Name: " STUB "})
+	f.TestTTY(t,
+		"", term.DotHere, "\n",
+		" STUB ", Styles,
+		"******",
+	)
 }
 
 func TestFocus(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
-	Start(app, Config{Name: " STUB ", Focus: true})
-	modeline := layout.ModeLine(" STUB ", false)
-	ttyCtrl.TestBuffer(t,
-		bb().Newline().WriteStyled(modeline).SetDotHere().Buffer())
+	Start(f.App, Config{Name: " STUB ", Focus: true})
+	f.TestTTY(t,
+		"\n",
+		" STUB ", Styles,
+		"******", term.DotHere,
+	)
 }
 
 func TestHandling(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	bindingCalled := make(chan bool)
-	Start(app, Config{
+	Start(f.App, Config{
 		Binding: el.MapHandler{term.K('a'): func() { bindingCalled <- true }},
 	})
 
-	ttyCtrl.Inject(term.K('a'))
+	f.TTY.Inject(term.K('a'))
 	select {
 	case <-bindingCalled:
 		// OK
@@ -47,16 +50,3 @@ func TestHandling(t *testing.T) {
 		t.Errorf("Handler not called after 1s")
 	}
 }
-
-func setup() (cli.App, cli.TTYCtrl, func()) {
-	tty, ttyCtrl := cli.NewFakeTTY()
-	ttyCtrl.SetSize(24, 40)
-	app := cli.NewApp(cli.AppSpec{TTY: tty})
-	codeCh, _ := cli.ReadCodeAsync(app)
-	return app, ttyCtrl, func() {
-		app.CommitEOF()
-		<-codeCh
-	}
-}
-
-func bb() *term.BufferBuilder { return term.NewBufferBuilder(40) }

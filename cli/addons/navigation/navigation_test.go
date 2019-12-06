@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli"
+	. "github.com/elves/elvish/cli/apptest"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/lscolors"
@@ -55,28 +56,28 @@ func TestNavigation_RealFS(t *testing.T) {
 }
 
 func TestErrorInAscend(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	c := getTestCursor()
 	c.ascendErr = errors.New("cannot ascend")
-	Start(app, Config{Cursor: c})
+	Start(f.App, Config{Cursor: c})
 
-	ttyCtrl.Inject(term.K(ui.Left))
-	ttyCtrl.TestNotesBuffer(t, makeNotesBuf(ui.T("cannot ascend")))
+	f.TTY.Inject(term.K(ui.Left))
+	f.TestTTYNotes(t, "cannot ascend")
 }
 
 func TestErrorInDescend(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	c := getTestCursor()
 	c.descendErr = errors.New("cannot descend")
-	Start(app, Config{Cursor: c})
+	Start(f.App, Config{Cursor: c})
 
-	ttyCtrl.Inject(term.K(ui.Down))
-	ttyCtrl.Inject(term.K(ui.Right))
-	ttyCtrl.TestNotesBuffer(t, makeNotesBuf(ui.T("cannot descend")))
+	f.TTY.Inject(term.K(ui.Down))
+	f.TTY.Inject(term.K(ui.Right))
+	f.TestTTYNotes(t, "cannot descend")
 }
 
 func TestErrorInCurrent(t *testing.T) {
@@ -121,18 +122,18 @@ func TestErrorInParent(t *testing.T) {
 }
 
 func TestGetSelectedName(t *testing.T) {
-	app, _, cleanup := setup()
-	defer cleanup()
+	f := Setup()
+	defer f.Stop()
 
 	wantName := ""
-	if name := SelectedName(app); name != wantName {
+	if name := SelectedName(f.App); name != wantName {
 		t.Errorf("Got name %q, want %q", name, wantName)
 	}
 
-	Start(app, Config{Cursor: getTestCursor()})
+	Start(f.App, Config{Cursor: getTestCursor()})
 
 	wantName = "d1"
-	if name := SelectedName(app); name != wantName {
+	if name := SelectedName(f.App); name != wantName {
 		t.Errorf("Got name %q, want %q", name, wantName)
 	}
 }
