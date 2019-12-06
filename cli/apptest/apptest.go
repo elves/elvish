@@ -17,6 +17,8 @@ var Styles = ui.RuneStylesheet{
 	'/': ui.Blue,
 	'#': ui.Stylings(ui.Inverse, ui.Blue),
 	'!': ui.Red,
+	'-': ui.Magenta,
+	'X': ui.Stylings(ui.Inverse, ui.Magenta),
 }
 
 // Fixture is a test fixture.

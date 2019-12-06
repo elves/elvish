@@ -7,23 +7,12 @@ import (
 
 	"github.com/elves/elvish/cli"
 	. "github.com/elves/elvish/cli/apptest"
-	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/lscolors"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
 )
-
-var styles = ui.RuneStylesheet{
-	'-': ui.Inverse,
-	'+': ui.Blue,
-	'#': ui.Stylings(ui.Inverse, ui.Blue),
-	'x': ui.Red,
-
-	't': ui.Magenta,
-	'T': ui.Stylings(ui.Magenta, ui.Inverse),
-}
 
 var testDir = util.Dir{
 	"a": "",
@@ -38,21 +27,6 @@ var testDir = util.Dir{
 		".dh": "hidden",
 	},
 	"f": "",
-}
-
-func TestNavigation_FakeFS(t *testing.T) {
-	cursor := getTestCursor()
-	testNavigation(t, cursor)
-}
-
-func TestNavigation_RealFS(t *testing.T) {
-	cleanupFs := util.InTestDirWithSetup(testDir)
-	err := os.Chdir("d")
-	if err != nil {
-		panic(err)
-	}
-	defer cleanupFs()
-	testNavigation(t, nil)
 }
 
 func TestErrorInAscend(t *testing.T) {
@@ -81,44 +55,52 @@ func TestErrorInDescend(t *testing.T) {
 }
 
 func TestErrorInCurrent(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
+	f, cleanup := setup()
 	defer cleanup()
+	defer f.Stop()
 
 	c := getTestCursor()
 	c.currentErr = errors.New("ERR")
-	Start(app, Config{Cursor: c})
+	Start(f.App, Config{Cursor: c})
 
-	buf := makeBuf(ui.MarkLines(
-		" a   ERR            \n", styles,
-		"     xxx",
-		" d  \n", styles,
-		"++++",
+	buf := f.MakeBuffer(
+		"", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" a   ERR            \n", Styles,
+		"     !!!",
+		" d  \n", Styles,
+		"////",
 		" f  ",
-	))
-	ttyCtrl.TestBuffer(t, buf)
+	)
+
+	f.TTY.TestBuffer(t, buf)
 
 	// Test that Right does nothing.
-	ttyCtrl.Inject(term.K(ui.Right))
-	ttyCtrl.TestBuffer(t, buf)
+	f.TTY.Inject(term.K(ui.Right))
+	f.TTY.TestBuffer(t, buf)
 }
 
 func TestErrorInParent(t *testing.T) {
-	app, ttyCtrl, cleanup := setup()
+	f, cleanup := setup()
 	defer cleanup()
+	defer f.Stop()
 
 	c := getTestCursor()
 	c.parentErr = errors.New("ERR")
-	Start(app, Config{Cursor: c})
+	Start(f.App, Config{Cursor: c})
 
-	buf := makeBuf(ui.MarkLines(
-		"ERR   d1            content    d1\n", styles,
-		"xxx  --------------",
-		"      d2            line 2\n", styles,
-		"     ++++++++++++++",
-		"      d3           ", styles,
-		"     ++++++++++++++",
-	))
-	ttyCtrl.TestBuffer(t, buf)
+	f.TestTTY(t,
+		"", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		"ERR   d1            content    d1\n", Styles,
+		"!!!  ++++++++++++++",
+		"      d2            line 2\n", Styles,
+		"     //////////////",
+		"      d3           ", Styles,
+		"     //////////////",
+	)
 }
 
 func TestGetSelectedName(t *testing.T) {
@@ -138,161 +120,165 @@ func TestGetSelectedName(t *testing.T) {
 	}
 }
 
-func testNavigation(t *testing.T, c Cursor) {
-	app, ttyCtrl, cleanup := setup()
-	defer cleanup()
+func TestNavigation_FakeFS(t *testing.T) {
+	cursor := getTestCursor()
+	testNavigation(t, cursor)
+}
 
-	Start(app, Config{Cursor: c})
+func TestNavigation_RealFS(t *testing.T) {
+	cleanupFs := util.InTestDirWithSetup(testDir)
+	err := os.Chdir("d")
+	if err != nil {
+		panic(err)
+	}
+	defer cleanupFs()
+	testNavigation(t, nil)
+}
+
+func testNavigation(t *testing.T, c Cursor) {
+	f, cleanup := setup()
+	defer cleanup()
+	defer f.Stop()
+
+	Start(f.App, Config{Cursor: c})
 
 	// Test initial UI and file preview.
 	// NOTE: Buffers are named after the file that is now being selected.
-	d1Buf := makeBuf(ui.MarkLines(
-		" a    d1            content    d1\n", styles,
-		"     --------------",
-		" d    d2            line 2\n", styles,
-		"#### ++++++++++++++",
-		" f    d3           ", styles,
+	d1Buf := f.MakeBuffer(
+		"", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" a    d1            content    d1\n", Styles,
 		"     ++++++++++++++",
-	))
-	ttyCtrl.TestBuffer(t, d1Buf)
+		" d    d2            line 2\n", Styles,
+		"#### //////////////",
+		" f    d3           ", Styles,
+		"     //////////////",
+	)
+	f.TTY.TestBuffer(t, d1Buf)
 
 	// Test scrolling of preview.
-	ScrollPreview(app, 1)
-	d1Buf2 := makeBuf(ui.MarkLines(
-		" a    d1            line 2             │\n", styles,
-		"     --------------                    t",
-		" d    d2                               │\n", styles,
-		"#### ++++++++++++++                    t",
-		" f    d3                                \n", styles,
-		"     ++++++++++++++                    T",
-		"                                        ", styles,
-		"                                       T",
-	))
-	ttyCtrl.TestBuffer(t, d1Buf2)
+	ScrollPreview(f.App, 1)
+	d1Buf2 := f.MakeBuffer(
+		"", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" a    d1            line 2             │\n", Styles,
+		"     ++++++++++++++                    -",
+		" d    d2                               │\n", Styles,
+		"#### //////////////                    -",
+		" f    d3                                \n", Styles,
+		"     //////////////                    X",
+		"                                        ", Styles,
+		"                                       X",
+	)
+	f.TTY.TestBuffer(t, d1Buf2)
 
 	// Test handling of selection change and directory preview. Also test
 	// LS_COLORS.
-	Select(app, listbox.Next)
-	d2Buf := makeBuf(ui.MarkLines(
-		" a    d1             d21                \n", styles,
-		"                    --------------------",
-		" d    d2             d22                \n", styles,
+	Select(f.App, listbox.Next)
+	d2Buf := f.MakeBuffer(
+		"", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" a    d1             d21                \n", Styles,
+		"                    ++++++++++++++++++++",
+		" d    d2             d22                \n", Styles,
 		"#### ##############",
-		" f    d3             d23.png            ", styles,
-		"     ++++++++++++++ xxxxxxxxxxxxxxxxxxxx",
-	))
-	ttyCtrl.TestBuffer(t, d2Buf)
+		" f    d3             d23.png            ", Styles,
+		"     ////////////// !!!!!!!!!!!!!!!!!!!!",
+	)
+	f.TTY.TestBuffer(t, d2Buf)
 
 	// Test handling of Descend.
-	Descend(app)
-	d21Buf := makeBuf(ui.MarkLines(
-		" d1   d21           content d21\n", styles,
-		"     --------------",
-		" d2   d22          \n", styles,
+	Descend(f.App)
+	d21Buf := f.MakeBuffer(
+		"", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" d1   d21           content d21\n", Styles,
+		"     ++++++++++++++",
+		" d2   d22          \n", Styles,
 		"####",
-		" d3   d23.png      ", styles,
-		"++++ xxxxxxxxxxxxxx",
-	))
-	ttyCtrl.TestBuffer(t, d21Buf)
+		" d3   d23.png      ", Styles,
+		"//// !!!!!!!!!!!!!!",
+	)
+	f.TTY.TestBuffer(t, d21Buf)
 
 	// Test handling of Ascend, and that the current column selects the
 	// directory we just ascended from, thus reverting to wantBuf1.
-	Ascend(app)
-	ttyCtrl.TestBuffer(t, d2Buf)
+	Ascend(f.App)
+	f.TTY.TestBuffer(t, d2Buf)
 
 	// Test handling of Descend on a regular file, i.e. do nothing. First move
 	// the cursor to d1, which is a regular file.
-	Select(app, listbox.Prev)
-	ttyCtrl.TestBuffer(t, d1Buf)
+	Select(f.App, listbox.Prev)
+	f.TTY.TestBuffer(t, d1Buf)
 	// Now descend, and verify that the buffer has not changed.
-	Descend(app)
-	ttyCtrl.TestBuffer(t, d1Buf)
+	Descend(f.App)
+	f.TTY.TestBuffer(t, d1Buf)
 
 	// Test showing hidden.
-	MutateShowHidden(app, func(bool) bool { return true })
-	ttyCtrl.TestBuffer(t, makeShowHiddenBuf(ui.MarkLines(
+	MutateShowHidden(f.App, func(bool) bool { return true })
+	f.TestTTY(t,
+		"", term.DotHere, "\n",
+		" NAVIGATING (show hidden)  \n", Styles,
+		"************************** ",
 		" a    .dh           content    d1\n",
-		" d    d1            line 2\n", styles,
-		"#### --------------",
-		" f    d2           \n", styles,
-		"     ++++++++++++++",
-		"      d3           ", styles,
-		"     ++++++++++++++",
-	)))
-	MutateShowHidden(app, func(bool) bool { return false })
+		" d    d1            line 2\n", Styles,
+		"#### ++++++++++++++",
+		" f    d2           \n", Styles,
+		"     //////////////",
+		"      d3           ", Styles,
+		"     //////////////",
+	)
+	MutateShowHidden(f.App, func(bool) bool { return false })
 
 	// Test filtering; current column shows d1, d2, d3 before filtering.
-	MutateFiltering(app, func(bool) bool { return true })
-	ttyCtrl.Inject(term.K('3'))
-	ttyCtrl.TestBuffer(t, makeFilteringBuf("3",
-		ui.MarkLines(
-			" a    d3            \n", styles,
-			"     ##############",
-			" d  \n", styles,
-			"####",
-			" f  ", styles,
-			"    ",
-		)))
-	MutateFiltering(app, func(bool) bool { return false })
+	MutateFiltering(f.App, func(bool) bool { return true })
+	f.TTY.Inject(term.K('3'))
+	f.TestTTY(t,
+		"\n",
+		" NAVIGATING  3", Styles,
+		"************  ", term.DotHere, "\n",
+		" a    d3            \n", Styles,
+		"     ##############",
+		" d  \n", Styles,
+		"####",
+		" f  ",
+	)
+	MutateFiltering(f.App, func(bool) bool { return false })
 
 	// Now move into d3, an empty directory. Test that the filter has been
 	// cleared.
-	Select(app, listbox.Next)
-	Select(app, listbox.Next)
-	Descend(app)
-	d3NoneBuf := makeBuf(ui.MarkLines(
+	Select(f.App, listbox.Next)
+	Select(f.App, listbox.Next)
+	Descend(f.App)
+	d3NoneBuf := f.MakeBuffer(
+		"", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
 		" d1                 \n",
-		" d2 \n", styles,
-		"++++",
-		" d3 ", styles,
+		" d2 \n", Styles,
+		"////",
+		" d3 ", Styles,
 		"####",
-	))
-	ttyCtrl.TestBuffer(t, d3NoneBuf)
+	)
+	f.TTY.TestBuffer(t, d3NoneBuf)
 	// Test that selecting the previous does nothing in an empty directory.
-	Select(app, listbox.Prev)
-	ttyCtrl.TestBuffer(t, d3NoneBuf)
+	Select(f.App, listbox.Prev)
+	f.TTY.TestBuffer(t, d3NoneBuf)
 	// Test that selecting the next does nothing in an empty directory.
-	Select(app, listbox.Next)
-	ttyCtrl.TestBuffer(t, d3NoneBuf)
+	Select(f.App, listbox.Next)
+	f.TTY.TestBuffer(t, d3NoneBuf)
 	// Test that Descend does nothing in an empty directory.
-	Descend(app)
-	ttyCtrl.TestBuffer(t, d3NoneBuf)
+	Descend(f.App)
+	f.TTY.TestBuffer(t, d3NoneBuf)
 }
 
-func makeBuf(navRegion ui.Text) *term.Buffer {
-	return term.NewBufferBuilder(40).SetDotHere().
-		Newline().WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
-		Newline().WriteStyled(navRegion).Buffer()
-}
-
-func makeShowHiddenBuf(navRegion ui.Text) *term.Buffer {
-	return term.NewBufferBuilder(40).SetDotHere().
-		Newline().WriteStyled(layout.ModeLine(" NAVIGATING (show hidden) ", true)).
-		Newline().WriteStyled(navRegion).Buffer()
-}
-
-func makeFilteringBuf(filter string, navRegion ui.Text) *term.Buffer {
-	return term.NewBufferBuilder(40).
-		Newline().WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
-		Write(filter).SetDotHere().
-		Newline().WriteStyled(navRegion).Buffer()
-}
-
-func makeNotesBuf(content ui.Text) *term.Buffer {
-	return term.NewBufferBuilder(40).WriteStyled(content).Buffer()
-}
-
-func setup() (cli.App, cli.TTYCtrl, func()) {
-	restoreLsColors := lscolors.WithTestLsColors()
-	tty, ttyCtrl := cli.NewFakeTTY()
-	ttyCtrl.SetSize(6, 40)
-	app := cli.NewApp(cli.AppSpec{TTY: tty})
-	codeCh, _ := cli.ReadCodeAsync(app)
-	return app, ttyCtrl, func() {
-		app.CommitEOF()
-		<-codeCh
-		restoreLsColors()
-	}
+func setup() (*Fixture, func()) {
+	restore := lscolors.WithTestLsColors()
+	return Setup(WithTTY(func(tty cli.TTYCtrl) { tty.SetSize(6, 40) })), restore
 }
 
 func getTestCursor() *testCursor {
