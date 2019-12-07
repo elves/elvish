@@ -15,11 +15,10 @@ var any = anyMatcher{}
 var noErrors []error
 
 var styles = ui.RuneStylesheet{
-	'x': ui.BgRed,
-	'v': ui.Magenta,
-	'q': ui.Yellow,
-	'G': ui.Green,
-	'B': ui.Red,
+	'?':  ui.BgRed,
+	'$':  ui.Magenta,
+	'\'': ui.Yellow,
+	'v':  ui.Green,
 }
 
 func TestHighlighter_HighlightRegions(t *testing.T) {
@@ -29,18 +28,18 @@ func TestHighlighter_HighlightRegions(t *testing.T) {
 		Args("ls").Rets(
 			ui.MarkLines(
 				"ls", styles,
-				"GG",
+				"vv",
 			),
 			noErrors),
 		Args(" ls\n").Rets(
 			ui.MarkLines(
 				" ls\n", styles,
-				" GG"),
+				" vv"),
 			noErrors),
 		Args("ls $x 'y'").Rets(
 			ui.MarkLines(
 				"ls $x 'y'", styles,
-				"GG vv qqq"),
+				"vv $$ '''"),
 			noErrors),
 	})
 }
@@ -52,7 +51,7 @@ func TestHighlighter_ParseErrors(t *testing.T) {
 		Args("ls ]").Rets(
 			ui.MarkLines(
 				"ls ]", styles,
-				"GG x"),
+				"vv ?"),
 			matchErrors(parseErrorMatcher{3, 4})),
 		// Errors at the end are ignored
 		Args("ls $").Rets(any, noErrors),
@@ -75,7 +74,7 @@ func TestHighlighter_CheckErrors(t *testing.T) {
 		Args("code 1", fakeCheckError{5, 6}).Rets(
 			ui.MarkLines(
 				"code 1", styles,
-				"GGGG x"),
+				"vvvv ?"),
 			[]error{fakeCheckError{5, 6}}),
 		// Check errors at the end are ignored
 		Args("code 2", fakeCheckError{6, 6}).
