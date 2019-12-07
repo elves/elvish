@@ -12,26 +12,9 @@ import (
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/store/storedefs"
-	"github.com/elves/elvish/ui"
 )
 
-var styles = ui.RuneStylesheet{
-	'-': ui.Underlined,
-	'm': ui.Stylings(ui.Bold, ui.LightGray, ui.BgMagenta), // mode line
-	'#': ui.Inverse,
-	'g': ui.Green,                             // good
-	'G': ui.Stylings(ui.Green, ui.Underlined), // good with underline
-	'b': ui.Red,                               // bad
-	'v': ui.Magenta,                           // variables
-	'e': ui.BgRed,                             // error
-}
-
-const (
-	testTTYHeight = 24
-	testTTYWidth  = 60
-)
-
-func bb() *term.BufferBuilder { return term.NewBufferBuilder(testTTYWidth) }
+var Styles = apptest.Styles
 
 type fixture struct {
 	Editor  *Editor
@@ -40,6 +23,7 @@ type fixture struct {
 	Store   storedefs.Store
 	Home    string
 
+	width   int
 	codeCh  <-chan string
 	errCh   <-chan error
 	cleanup func()
@@ -64,11 +48,10 @@ func storeOp(storeFn func(storedefs.Store)) func(*fixture) {
 	}
 }
 
-func setup(beforeStart ...func(*fixture)) *fixture {
+func setup(fns ...func(*fixture)) *fixture {
 	st, cleanupStore := store.MustGetTempStore()
 	home, cleanupFs := eval.InTempHome()
 	tty, ttyCtrl := cli.NewFakeTTY()
-	ttyCtrl.SetSize(testTTYHeight, testTTYWidth)
 	ev := eval.NewEvaler()
 	ed := NewEditor(tty, ev, st)
 	ev.InstallModule("edit", ed.Ns())
@@ -77,9 +60,10 @@ func setup(beforeStart ...func(*fixture)) *fixture {
 		// This will simplify most tests against the terminal.
 		"edit:rprompt = { }")
 	f := &fixture{Editor: ed, TTYCtrl: ttyCtrl, Evaler: ev, Store: st, Home: home}
-	for _, fn := range beforeStart {
+	for _, fn := range fns {
 		fn(f)
 	}
+	_, f.width = tty.Size()
 	f.codeCh, f.errCh = apptest.StartReadCode(f.Editor.ReadCode)
 	f.cleanup = func() {
 		f.Editor.app.CommitEOF()
@@ -96,6 +80,20 @@ func (f *fixture) Wait() (string, error) {
 
 func (f *fixture) Cleanup() {
 	f.cleanup()
+}
+
+func (f *fixture) MakeBuffer(args ...interface{}) *term.Buffer {
+	return term.NewBufferBuilder(f.width).MarkLines(args...).Buffer()
+}
+
+func (f *fixture) TestTTY(t *testing.T, args ...interface{}) {
+	t.Helper()
+	f.TTYCtrl.TestBuffer(t, f.MakeBuffer(args...))
+}
+
+func (f *fixture) TestTTYNotes(t *testing.T, args ...interface{}) {
+	t.Helper()
+	f.TTYCtrl.TestNotesBuffer(t, f.MakeBuffer(args...))
 }
 
 func feedInput(ttyCtrl cli.TTYCtrl, s string) {

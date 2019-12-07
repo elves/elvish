@@ -13,8 +13,7 @@ func TestHistWalk_Up_EndOfHistory(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K(ui.Up))
-	wantNotesBuf := bb().Write("end of history").Buffer()
-	f.TTYCtrl.TestNotesBuffer(t, wantNotesBuf)
+	f.TestTTYNotes(t, "end of history")
 }
 
 func TestHistWalk_Down_EndOfHistory(t *testing.T) {
@@ -23,8 +22,7 @@ func TestHistWalk_Down_EndOfHistory(t *testing.T) {
 
 	// Not bound by default, so we need to use evals.
 	evals(f.Evaler, `edit:history:down`)
-	wantNotesBuf := bb().Write("end of history").Buffer()
-	f.TTYCtrl.TestNotesBuffer(t, wantNotesBuf)
+	f.TestTTYNotes(t, "end of history")
 }
 
 func TestHistWalk_Accept(t *testing.T) {
@@ -32,12 +30,10 @@ func TestHistWalk_Accept(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K(ui.Right))
-	wantBufDone := bb().
-		MarkLines(
-			"~> echo a", styles,
-			"   gggg  ",
-		).SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBufDone)
+	f.TestTTY(t,
+		"~> echo a", Styles,
+		"   vvvv  ", term.DotHere,
+	)
 }
 
 func TestHistWalk_Close(t *testing.T) {
@@ -45,8 +41,7 @@ func TestHistWalk_Close(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K('[', ui.Ctrl))
-	wantBufClosed := bb().Write("~> ").SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBufClosed)
+	f.TestTTY(t, "~> ", term.DotHere)
 }
 
 func TestHistWalk_DownOrQuit(t *testing.T) {
@@ -54,8 +49,7 @@ func TestHistWalk_DownOrQuit(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K(ui.Down))
-	wantBufClosed := bb().Write("~> ").SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBufClosed)
+	f.TestTTY(t, "~> ", term.DotHere)
 }
 
 func TestHistory_FastForward(t *testing.T) {
@@ -67,16 +61,12 @@ func TestHistory_FastForward(t *testing.T) {
 	f.Store.AddCmd("echo b")
 	evals(f.Evaler, `edit:history:fast-forward`)
 	f.TTYCtrl.Inject(term.K(ui.Up))
-	wantBufWalk := bb().
-		MarkLines(
-			"~> echo b", styles,
-			"   GGGG--",
-		).SetDotHere().Newline().
-		MarkLines(
-			" HISTORY #2 ", styles,
-			"mmmmmmmmmmmm",
-		).Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBufWalk)
+	f.TestTTY(t,
+		"~> echo b", Styles,
+		"   VVVV__", term.DotHere, "\n",
+		" HISTORY #2 ", Styles,
+		"************",
+	)
 }
 
 func startHistwalkTest(t *testing.T) *fixture {
@@ -86,15 +76,11 @@ func startHistwalkTest(t *testing.T) *fixture {
 	}))
 
 	f.TTYCtrl.Inject(term.K(ui.Up))
-	wantBufWalk := bb().
-		MarkLines(
-			"~> echo a", styles,
-			"   GGGG--",
-		).SetDotHere().Newline().
-		MarkLines(
-			" HISTORY #1 ", styles,
-			"mmmmmmmmmmmm",
-		).Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBufWalk)
+	f.TestTTY(t,
+		"~> echo a", Styles,
+		"   VVVV__", term.DotHere, "\n",
+		" HISTORY #1 ", Styles,
+		"************",
+	)
 	return f
 }

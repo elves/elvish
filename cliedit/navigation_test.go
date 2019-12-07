@@ -6,7 +6,6 @@ import (
 
 	"github.com/elves/elvish/cli/lscolors"
 
-	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/ui"
 	"github.com/elves/elvish/util"
@@ -24,30 +23,18 @@ func TestNavigation(t *testing.T) {
 		panic(err)
 	}
 
-	styles := ui.RuneStylesheet{
-		'#': ui.Stylings(ui.Blue, ui.Inverse),
-		'-': ui.Inverse,
-	}
-	makeBuf := func(moreCode string, markedLines ...interface{}) *term.Buffer {
-		b := bb().
-			Write("~"+string(os.PathSeparator)+"d> ").
-			Write("put", ui.Green).
-			Write(moreCode).SetDotHere()
-		if len(markedLines) > 0 {
-			b.Newline().
-				WriteStyled(layout.ModeLine(" NAVIGATING ", true)).
-				Newline().MarkLines(markedLines...)
-		}
-		return b.Buffer()
-	}
-
 	// Test navigation addon UI.
 	feedInput(f.TTYCtrl, "put")
 	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))
-	f.TTYCtrl.TestBuffer(t, makeBuf("",
-		" d       a                    ", styles,
-		"####### --------------------- ",
-	))
+	f.TestTTY(t,
+		"~"+string(os.PathSeparator)+"d> ",
+		"put", Styles,
+		"vvv", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" d      a                 ", Styles,
+		"###### ++++++++++++++++++ ",
+	)
 
 	// Test $edit:selected-file.
 	evals(f.Evaler, `file = $edit:selected-file`)
@@ -58,12 +45,21 @@ func TestNavigation(t *testing.T) {
 
 	// Test Alt-Enter: inserts filename without quitting.
 	f.TTYCtrl.Inject(term.K(ui.Enter, ui.Alt))
-	f.TTYCtrl.TestBuffer(t, makeBuf(" a",
-		" d       a                    ", styles,
-		"####### --------------------- ",
-	))
+	f.TestTTY(t,
+		"~"+string(os.PathSeparator)+"d> ",
+		"put a", Styles,
+		"vvv ", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" d      a                 ", Styles,
+		"###### ++++++++++++++++++ ",
+	)
 
 	// Test Enter: inserts filename and quits.
 	f.TTYCtrl.Inject(term.K(ui.Enter))
-	f.TTYCtrl.TestBuffer(t, makeBuf(" a a"))
+	f.TestTTY(t,
+		"~"+string(os.PathSeparator)+"d> ",
+		"put a a", Styles,
+		"vvv    ", term.DotHere,
+	)
 }

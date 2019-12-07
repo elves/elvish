@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
@@ -21,26 +22,17 @@ func TestHighlighter(t *testing.T) {
 	defer f.Cleanup()
 
 	feedInput(f.TTYCtrl, "put $true")
-	wantBuf1 := bb().
-		MarkLines(
-			"~> put $true", styles,
-			"   ggg vvvvv",
-		).
-		SetDotHere().
-		Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf1)
+	f.TestTTY(t,
+		"~> put $true", Styles,
+		"   vvv $$$$$", term.DotHere,
+	)
 
 	feedInput(f.TTYCtrl, "x")
-	wantBuf2 := bb().
-		MarkLines(
-			"~> put $truex", styles,
-			"   ggg eeeeee",
-		).
-		SetDotHere().
-		Newline().
-		Write("compilation error: 4-10 in [tty]: variable $truex not found").
-		Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf2)
+	f.TestTTY(t,
+		"~> put $truex", Styles,
+		"   vvv ??????", term.DotHere, "\n",
+		"compilation error: 4-10 in [tty]: variable $truex not found",
+	)
 }
 
 // Fine-grained tests against the highlighter.

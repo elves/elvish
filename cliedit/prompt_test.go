@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/ui"
 )
@@ -12,44 +13,38 @@ func TestPrompt_ValueOutput(t *testing.T) {
 	f := setup(rc(`edit:prompt = { put 'val'; styled '> ' red }`))
 	defer f.Cleanup()
 
-	f.TTYCtrl.TestBuffer(t,
-		bb().Write("val").Write("> ", ui.Red).
-			SetDotHere().Buffer())
+	f.TestTTY(t,
+		"val> ", Styles,
+		"   !!", term.DotHere)
 }
 
 func TestPrompt_ByteOutput(t *testing.T) {
 	f := setup(rc(`edit:prompt = { put 'bytes> ' }`))
 	defer f.Cleanup()
 
-	f.TTYCtrl.TestBuffer(t,
-		bb().Write("bytes> ").SetDotHere().Buffer())
+	f.TestTTY(t, "bytes> ", term.DotHere)
 }
 
 func TestPrompt_NotifiesInvalidValueOutput(t *testing.T) {
 	f := setup(rc(`edit:prompt = { put good [bad] good2 }`))
 	defer f.Cleanup()
 
-	f.TTYCtrl.TestBuffer(t,
-		bb().Write("goodgood2").SetDotHere().Buffer())
-	f.TTYCtrl.TestNotesBuffer(t, bb().
-		Write("invalid output type from prompt: list").Buffer())
+	f.TestTTY(t, "goodgood2", term.DotHere)
+	f.TestTTYNotes(t, "invalid output type from prompt: list")
 }
 
 func TestPrompt_NotifiesException(t *testing.T) {
 	f := setup(rc(`edit:prompt = { fail ERROR }`))
 	defer f.Cleanup()
 
-	f.TTYCtrl.TestNotesBuffer(t, bb().
-		Write("prompt function error: ERROR").Buffer())
+	f.TestTTYNotes(t, "prompt function error: ERROR")
 }
 
 func TestRPrompt(t *testing.T) {
 	f := setup(rc(`edit:rprompt = { put 'RRR' }`))
 	defer f.Cleanup()
 
-	f.TTYCtrl.TestBuffer(t,
-		bb().Write("~> ").SetDotHere().
-			Write(strings.Repeat(" ", testTTYWidth-6)+"RRR").Buffer())
+	f.TestTTY(t, "~> ", term.DotHere, strings.Repeat(" ", cli.FakeTTYWidth-6)+"RRR")
 }
 
 func TestPromptEagerness(t *testing.T) {
@@ -59,13 +54,11 @@ func TestPromptEagerness(t *testing.T) {
 		`edit:-prompt-eagerness = 10`))
 	defer f.Cleanup()
 
-	wantBuf1 := bb().Write("1> ").SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf1)
+	f.TestTTY(t, "1> ", term.DotHere)
 	// With eagerness = 10, any key press will cause the prompt to be
 	// recomputed.
 	f.TTYCtrl.Inject(term.K(ui.Backspace))
-	wantBuf2 := bb().Write("2> ").SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf2)
+	f.TestTTY(t, "2> ", term.DotHere)
 }
 
 func TestPromptStaleThreshold(t *testing.T) {
@@ -75,13 +68,12 @@ func TestPromptStaleThreshold(t *testing.T) {
 		`edit:prompt-stale-threshold = 0.05`))
 	defer f.Cleanup()
 
-	wantBufStale := bb().
-		Write("???> ", ui.Inverse).SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBufStale)
+	f.TestTTY(t,
+		"???> ", Styles,
+		"+++++", term.DotHere)
 
 	evals(f.Evaler, `pwclose $pipe`)
-	wantBufFresh := bb().Write("> ").SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBufFresh)
+	f.TestTTY(t, "> ", term.DotHere)
 	evals(f.Evaler, `prclose $pipe`)
 }
 
@@ -93,67 +85,61 @@ func TestPromptStaleTransform(t *testing.T) {
 		`edit:prompt-stale-transform = [a]{ put S; put $a; put S }`))
 	defer f.Cleanup()
 
-	wantBufStale := bb().
-		WriteStyled(ui.T("S???> S")).SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBufStale)
+	f.TestTTY(t, "S???> S", term.DotHere)
 	evals(f.Evaler, `pwclose $pipe`)
 	evals(f.Evaler, `prclose $pipe`)
 }
 
 func TestRPromptPersistent_True(t *testing.T) {
-	wantBufFinal := bb().
-		Write("~> " + strings.Repeat(" ", testTTYWidth-6) + "RRR").
-		Newline().SetDotHere().
-		Buffer()
-	testRPromptPersistent(t, `edit:rprompt-persistent = $true`, wantBufFinal)
+	testRPromptPersistent(t, `edit:rprompt-persistent = $true`,
+		"~> "+strings.Repeat(" ", cli.FakeTTYWidth-6)+"RRR",
+		"\n", term.DotHere,
+	)
 }
 
 func TestRPromptPersistent_False(t *testing.T) {
-	wantBufFinal := bb().
-		Write("~> "). // no rprompt
-		Newline().SetDotHere().
-		Buffer()
-	testRPromptPersistent(t, `edit:rprompt-persistent = $false`, wantBufFinal)
+	testRPromptPersistent(t, `edit:rprompt-persistent = $false`,
+		"~> ", // no rprompt
+		"\n", term.DotHere,
+	)
 }
 
-func testRPromptPersistent(t *testing.T, code string, wantBufFinal *term.Buffer) {
+func testRPromptPersistent(t *testing.T, code string, finalBuf ...interface{}) {
 	f := setup(rc(`edit:rprompt = { put RRR }`, code))
 	defer f.Cleanup()
 
 	// Make sure that the UI has stablized before hitting Enter.
-	wantBufStable := bb().
-		Write("~> ").SetDotHere().
-		Write(strings.Repeat(" ", testTTYWidth-6) + "RRR").
-		Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBufStable)
-	f.TTYCtrl.Inject(term.K('\n'))
+	f.TestTTY(t,
+		"~> ", term.DotHere,
+		strings.Repeat(" ", cli.FakeTTYWidth-6), "RRR",
+	)
 
-	f.TTYCtrl.TestBuffer(t, wantBufFinal)
+	f.TTYCtrl.Inject(term.K('\n'))
+	f.TestTTY(t, finalBuf...)
 }
 
 func TestDefaultPromptForNonRoot(t *testing.T) {
 	f := setup(assign("edit:prompt", getDefaultPrompt(false)))
 	defer f.Cleanup()
 
-	wantBuf := bb().Write("~> ").SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t, "~> ", term.DotHere)
 }
 
 func TestDefaultPromptForRoot(t *testing.T) {
 	f := setup(assign("edit:prompt", getDefaultPrompt(true)))
 	defer f.Cleanup()
 
-	wantBuf := bb().Write("~").
-		Write("# ", ui.Red).SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~# ", Styles,
+		" !!", term.DotHere)
 }
 
 func TestDefaultRPrompt(t *testing.T) {
 	f := setup(assign("edit:rprompt", getDefaultRPrompt("elf", "host")))
 	defer f.Cleanup()
 
-	wantBuf := bb().Write("~> ").SetDotHere().
-		Write(strings.Repeat(" ", 49)).
-		Write("elf@host", ui.Inverse).Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> ", term.DotHere, strings.Repeat(" ", 39),
+		"elf@host", Styles,
+		"++++++++")
 }

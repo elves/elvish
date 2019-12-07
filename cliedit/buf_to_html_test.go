@@ -3,6 +3,7 @@ package cliedit
 import (
 	"testing"
 
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/tt"
 )
 
@@ -44,3 +45,5 @@ func TestBufToHTML(t *testing.T) {
 		),
 	})
 }
+
+func bb() *term.BufferBuilder { return term.NewBufferBuilder(20) }

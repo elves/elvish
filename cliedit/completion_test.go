@@ -14,17 +14,14 @@ func TestCompletionAddon(t *testing.T) {
 	util.ApplyDir(util.Dir{"a": "", "b": ""})
 
 	feedInput(f.TTYCtrl, "echo \t")
-	wantBuf := bb().
-		MarkLines(
-			"~> echo a \n", styles,
-			"   gggg --",
-			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ", term.DotHere, "\n",
-			"a  b", styles,
-			"#   ",
-		).
-		Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> echo a \n", Styles,
+		"   vvvv __",
+		"COMPLETING argument ", Styles,
+		"******************* ", term.DotHere, "\n",
+		"a  b", Styles,
+		"+   ",
+	)
 }
 
 func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
@@ -33,28 +30,20 @@ func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
 	util.ApplyDir(util.Dir{"foo1": "", "foo2": "", "foo": "", "fox": ""})
 
 	feedInput(f.TTYCtrl, "echo \t")
-	wantBuf := bb().
-		MarkLines(
-			"~> echo fo", styles,
-			"   gggg", term.DotHere).
-		Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> echo fo", Styles,
+		"   vvvv", term.DotHere,
+	)
 
 	feedInput(f.TTYCtrl, "\t")
-	wantBuf = bb().
-		MarkLines(
-			"~> echo foo \n", styles,
-			"   gggg ----",
-			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ").
-		SetDotHere().
-		Newline().
-		MarkLines(
-			"foo  foo1  foo2  fox", styles,
-			"###                 ",
-		).
-		Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> echo foo \n", Styles,
+		"   vvvv ____",
+		"COMPLETING argument ", Styles,
+		"******************* ", term.DotHere, "\n",
+		"foo  foo1  foo2  fox", Styles,
+		"+++                 ",
+	)
 }
 
 func TestCompleteFilename(t *testing.T) {
@@ -116,17 +105,14 @@ func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
 		 }`)
 
 	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
-	wantBuf := bb().
-		MarkLines(
-			"~> foo foo1 foo2 1val\n", styles,
-			"   ggg           ----",
-			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ", term.DotHere, "\n",
-			"1val  2val_", styles,
-			"####       ",
-		).
-		Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> foo foo1 foo2 1val\n", Styles,
+		"   vvv           ____",
+		"COMPLETING argument ", Styles,
+		"******************* ", term.DotHere, "\n",
+		"1val  2val_", Styles,
+		"++++       ",
+	)
 	testGlobal(t, f.Evaler,
 		"foo-args", vals.MakeList("foo", "foo1", "foo2", ""))
 }
@@ -143,17 +129,14 @@ func TestCompletionArgCompleter_BytesOutput(t *testing.T) {
 		 }`)
 
 	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
-	wantBuf := bb().
-		MarkLines(
-			"~> foo foo1 foo2 1val\n", styles,
-			"   ggg           ----",
-			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ", term.DotHere, "\n",
-			"1val  2val", styles,
-			"####      ",
-		).
-		Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> foo foo1 foo2 1val\n", Styles,
+		"   vvv           ____",
+		"COMPLETING argument ", Styles,
+		"******************* ", term.DotHere, "\n",
+		"1val  2val", Styles,
+		"++++      ",
+	)
 }
 
 func TestCompleteSudo(t *testing.T) {
@@ -177,17 +160,14 @@ func TestCompletionMatcher(t *testing.T) {
 
 	evals(f.Evaler, `edit:completion:matcher[''] = $edit:match-substr~`)
 	feedInput(f.TTYCtrl, "echo f\t")
-	wantBuf := bb().
-		MarkLines(
-			"~> echo foo \n", styles,
-			"   gggg ----",
-			"COMPLETING argument ", styles,
-			"mmmmmmmmmmmmmmmmmmm ", term.DotHere, "\n",
-			"foo  oof", styles,
-			"###     ",
-		).
-		Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> echo foo \n", Styles,
+		"   vvvv ____",
+		"COMPLETING argument ", Styles,
+		"******************* ", term.DotHere, "\n",
+		"foo  oof", Styles,
+		"+++     ",
+	)
 }
 
 func TestBuiltinMatchers(t *testing.T) {

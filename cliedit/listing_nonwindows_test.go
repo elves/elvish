@@ -9,7 +9,6 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/ui"
@@ -22,7 +21,6 @@ func TestLocationAddon(t *testing.T) {
 		s.AddDir("/tmp", 1)
 		s.AddDir("/home/elf", 1)
 	}))
-	f.TTYCtrl.SetSize(24, 30) // Set width to 30
 	defer f.Cleanup()
 
 	evals(f.Evaler,
@@ -30,14 +28,15 @@ func TestLocationAddon(t *testing.T) {
 		`edit:location:hidden = [/tmp]`)
 	f.TTYCtrl.Inject(term.K('L', ui.Ctrl))
 
-	wantBuf := bbAddon("LOCATION").
-		MarkLines(
-			"  * /opt                      \n", styles,
-			"##############################",
-			" 10 /home/elf\n",
-			" 10 /usr/bin",
-		).Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> \n",
+		"LOCATION ", Styles,
+		"******** ", term.DotHere, "\n",
+		"  * /opt                                          \n", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+		" 10 /home/elf\n",
+		" 10 /usr/bin",
+	)
 }
 
 func TestLocationAddon_Workspace(t *testing.T) {
@@ -56,26 +55,22 @@ func TestLocationAddon_Workspace(t *testing.T) {
 	if err != nil {
 		t.Skip("chdir:", err)
 	}
-	f.TTYCtrl.SetSize(24, 30) // Set width to 30
 
 	evals(f.Evaler,
 		`edit:location:workspaces = [&ws=$E:HOME/ws.]`)
 
 	f.TTYCtrl.Inject(term.K('L', ui.Ctrl))
-	wantBuf := term.NewBufferBuilder(30).
-		Write("~/ws1/tmp> ").Newline().
-		WriteStyled(layout.ModeLine("LOCATION", true)).SetDotHere().Newline().
-		MarkLines(
-			" 10 ws/bin                    \n", styles,
-			"##############################",
-			" 10 /usr/bin",
-		).Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~/ws1/tmp> \n",
+		"LOCATION ", Styles,
+		"******** ", term.DotHere, "\n",
+		" 10 ws/bin                                        \n", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+		" 10 /usr/bin",
+	)
 
 	f.TTYCtrl.Inject(term.K(ui.Enter))
-	wantBuf = term.NewBufferBuilder(30).
-		Write("~/ws1/bin> ").SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t, "~/ws1/bin> ", term.DotHere)
 }
 
 func TestLocation_AddDir(t *testing.T) {

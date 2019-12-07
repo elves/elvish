@@ -43,10 +43,11 @@ func TestDumpBuf(t *testing.T) {
 	defer f.Cleanup()
 
 	feedInput(f.TTYCtrl, "echo")
-	wantBuf := bb().Write("~> ").
-		Write("echo", ui.Green).SetDotHere().Buffer()
 	// Wait until the buffer we want has shown up.
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> echo", Styles,
+		"   vvvv", term.DotHere,
+	)
 
 	evals(f.Evaler, `html = (edit:-dump-buf)`)
 	testGlobal(t, f.Evaler,
@@ -59,8 +60,11 @@ func TestInsertRaw(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K('V', ui.Ctrl))
-	wantBuf := bb().Write("~> ").SetDotHere().
-		Newline().WriteStyled(layout.ModeLine(" RAW ", false)).Buffer()
+	wantBuf := f.MakeBuffer(
+		"~> ", term.DotHere, "\n",
+		" RAW ", Styles,
+		"*****",
+	)
 	f.TTYCtrl.TestBuffer(t, wantBuf)
 	// Since we do not use real terminals in the test, we cannot have a
 	// realistic test case against actual raw inputs. However, we can still
@@ -75,9 +79,10 @@ func TestInsertRaw(t *testing.T) {
 
 	// Raw mode is dismissed after a single key event.
 	f.TTYCtrl.Inject(term.K('+'))
-	wantBuf = bb().Write("~> ").Write("+", ui.Green).
-		SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> +", Styles,
+		"   v", term.DotHere,
+	)
 }
 
 func TestEndOfHistory(t *testing.T) {
@@ -85,8 +90,7 @@ func TestEndOfHistory(t *testing.T) {
 	defer f.Cleanup()
 
 	evals(f.Evaler, `edit:end-of-history`)
-	wantNotesBuf := bb().Write("End of history").Buffer()
-	f.TTYCtrl.TestNotesBuffer(t, wantNotesBuf)
+	f.TestTTYNotes(t, "End of history")
 }
 
 func TestKey(t *testing.T) {
@@ -106,11 +110,9 @@ func TestRedraw(t *testing.T) {
 
 	evals(f.Evaler, `edit:current-command = echo`)
 	evals(f.Evaler, `edit:redraw`)
-	wantBuf := bb().MarkLines(
-		"~> echo", styles,
-		"   gggg",
-	).SetDotHere().Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> echo", Styles,
+		"   vvvv", term.DotHere)
 }
 
 func TestReturnCode(t *testing.T) {

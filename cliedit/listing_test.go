@@ -3,7 +3,6 @@ package cliedit
 import (
 	"testing"
 
-	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/ui"
@@ -28,60 +27,56 @@ func TestHistlistAddon(t *testing.T) {
 		s.AddCmd("echo")
 		s.AddCmd("ls")
 	}))
-	f.TTYCtrl.SetSize(24, 30) // Set width to 30
 	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K('R', ui.Ctrl))
-	wantBuf := bbAddon(" HISTORY (dedup on) ").
-		MarkLines(
-			"   1 echo\n",
-			"   2 ls                       ", styles,
-			"##############################",
-		).Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> \n",
+		" HISTORY (dedup on)  ", Styles,
+		"******************** ", term.DotHere, "\n",
+		"   1 echo\n",
+		"   2 ls                                           ", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+	)
 
 	evals(f.Evaler, `edit:histlist:toggle-dedup`)
-	wantBuf = bbAddon(" HISTORY ").
-		MarkLines(
-			"   0 ls\n",
-			"   1 echo\n",
-			"   2 ls                       ", styles,
-			"##############################",
-		).Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> \n",
+		" HISTORY  ", Styles,
+		"********* ", term.DotHere, "\n",
+		"   0 ls\n",
+		"   1 echo\n",
+		"   2 ls                                           ", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+	)
 
 	evals(f.Evaler, `edit:histlist:toggle-case-sensitivity`)
-	wantBuf = bbAddon(" HISTORY (case-insensitive) ").
-		MarkLines(
-			"   0 ls\n",
-			"   1 echo\n",
-			"   2 ls                       ", styles,
-			"##############################",
-		).Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
+	f.TestTTY(t,
+		"~> \n",
+		" HISTORY (case-insensitive)  ", Styles,
+		"**************************** ", term.DotHere, "\n",
+		"   0 ls\n",
+		"   1 echo\n",
+		"   2 ls                                           ", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+	)
 }
 
 func TestLastCmdAddon(t *testing.T) {
 	f := setup(storeOp(func(s storedefs.Store) {
 		s.AddCmd("echo hello world")
 	}))
-	f.TTYCtrl.SetSize(24, 30) // Set width to 30
 	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K(',', ui.Alt))
-	wantBuf := bbAddon("LASTCMD").
-		MarkLines(
-			"    echo hello world          \n", styles,
-			"##############################",
-			"  0 echo\n",
-			"  1 hello\n",
-			"  2 world",
-		).Buffer()
-	f.TTYCtrl.TestBuffer(t, wantBuf)
-}
-
-func bbAddon(name string) *term.BufferBuilder {
-	return term.NewBufferBuilder(30).
-		Write("~> ").Newline().
-		WriteStyled(layout.ModeLine(name, true)).SetDotHere().Newline()
+	f.TestTTY(t,
+		"~> \n",
+		"LASTCMD ", Styles,
+		"******* ", term.DotHere, "\n",
+		"    echo hello world                              \n", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+		"  0 echo\n",
+		"  1 hello\n",
+		"  2 world",
+	)
 }
