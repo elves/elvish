@@ -20,7 +20,6 @@ func TestLocationAddon(t *testing.T) {
 		s.AddDir(`C:\tmp`, 1)
 		s.AddDir(`C:\home\elf`, 1)
 	}))
-	f.TTYCtrl.SetSize(24, 30) // Set width to 30
 	defer f.Cleanup()
 
 	evals(f.Evaler,
@@ -55,7 +54,6 @@ func TestLocationAddon_Workspace(t *testing.T) {
 	if err != nil {
 		t.Skip("chdir:", err)
 	}
-	f.TTYCtrl.SetSize(24, 30) // Set width to 30
 
 	evals(f.Evaler,
 		`edit:location:workspaces = [&ws='`+
