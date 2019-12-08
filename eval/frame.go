@@ -192,6 +192,12 @@ func (fm *Frame) CallWithOutputCallback(fn Callable, args []interface{}, opts ma
 	return pcaptureOutputInner(fm, effectOp{funcOp(opFunc), -1, -1}, valuesCb, bytesCb)
 }
 
+// ExecWithOutputCallback executes an Op, feeding the outputs to the given
+// callbacks.
+func (fm *Frame) ExecWithOutputCallback(op Op, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
+	return pcaptureOutputInner(fm, op.Inner, valuesCb, bytesCb)
+}
+
 func catch(perr *error, fm *Frame) {
 	// NOTE: We have to duplicate instead of calling util.Catch here, since
 	// recover can only catch a panic when called directly from a deferred

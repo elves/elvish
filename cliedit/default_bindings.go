@@ -98,19 +98,9 @@ lastcmd:binding = (binding-table [
   &Alt-,=  $listing:accept~
 ])
 
-#  &Up=        $listing:up~
-#  &Down=      $listing:down~
-#  &Tab=       $listing:down-cycle~
-#  &Shift-Tab= $listing:up-cycle~
-#
-#  &Ctrl-F=    $listing:toggle-filtering~
-#
-#  &Alt-Enter= $listing:accept~
-#  &Enter=     $listing:accept-close~
-#  &Alt-,=     $listing:accept-close~
-#  &Ctrl-'['=  $reset-mode~
-#
-#  &Default=   $listing:default~
+-instant:binding = (binding-table [
+  &Ctrl-'['= $listing:close~
+])
 `
 
 // vi: set et:

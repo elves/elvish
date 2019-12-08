@@ -57,6 +57,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	initNavigation(app, ev, ns)
 	initCompletion(app, ev, ns)
 	initHistWalk(app, ev, ns, fuser)
+	initInstant(app, ev, ns)
 
 	initBufferBuiltins(app, ns)
 	initTTYBuiltins(app, tty, ns)
