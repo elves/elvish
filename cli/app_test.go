@@ -73,6 +73,19 @@ func TestReadCode_CallsBeforeReadline(t *testing.T) {
 	}
 }
 
+func TestReadCode_CallsBeforeReadlineBeforePromptTrigger(t *testing.T) {
+	callCh := make(chan string, 2)
+	f := Setup(WithSpec(func(spec *AppSpec) {
+		spec.BeforeReadline = []func(){func() { callCh <- "hook" }}
+		spec.Prompt = testPrompt{trigger: func(bool) { callCh <- "prompt" }}
+	}))
+	defer f.Stop()
+
+	if first := <-callCh; first != "hook" {
+		t.Errorf("BeforeReadline hook not called before prompt trigger")
+	}
+}
+
 func TestReadCode_CallsAfterReadline(t *testing.T) {
 	callCh := make(chan string, 1)
 	f := Setup(WithSpec(func(spec *AppSpec) {

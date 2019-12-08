@@ -247,6 +247,17 @@ func renderApp(codeArea, addon el.Renderer, width, height int) *term.Buffer {
 }
 
 func (a *app) ReadCode() (string, error) {
+	for _, f := range a.BeforeReadline {
+		f()
+	}
+	defer func() {
+		content := a.codeArea.CopyState().Buffer.Content
+		for _, f := range a.AfterReadline {
+			f(content)
+		}
+		a.resetAllStates()
+	}()
+
 	restore, err := a.TTY.Setup()
 	if err != nil {
 		return "", err
@@ -305,20 +316,6 @@ func (a *app) ReadCode() (string, error) {
 
 	// Trigger an initial prompt update.
 	a.triggerPrompts(true)
-
-	// Reset state before returning.
-	defer a.resetAllStates()
-
-	// BeforeReadline and AfterReadline hooks.
-	for _, f := range a.BeforeReadline {
-		f()
-	}
-	defer func() {
-		content := a.codeArea.CopyState().Buffer.Content
-		for _, f := range a.AfterReadline {
-			f(content)
-		}
-	}()
 
 	return a.loop.Run()
 }
