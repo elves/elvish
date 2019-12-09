@@ -273,7 +273,7 @@ func atEnd(e error, n int) bool {
 	switch e := e.(type) {
 	case *eval.CompilationError:
 		return e.Context.Begin == n
-	case parse.MultiError:
+	case *parse.MultiError:
 		for _, entry := range e.Entries {
 			if entry.Context.Begin != n {
 				return false

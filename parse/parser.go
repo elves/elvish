@@ -65,7 +65,7 @@ func (ps *parser) done() {
 // Assembles all parsing errors as one, or returns nil if there were no errors.
 func (ps *parser) assembleError() error {
 	if len(ps.errors.Entries) > 0 {
-		return ps.errors
+		return &ps.errors
 	}
 	return nil
 }

@@ -23,7 +23,7 @@ func (me *MultiError) add(msg string, ctx *diag.SourceRange) {
 }
 
 // Error returns a string representation of the error.
-func (me MultiError) Error() string {
+func (me *MultiError) Error() string {
 	switch len(me.Entries) {
 	case 0:
 		return "no parse error"
@@ -44,7 +44,7 @@ func (me MultiError) Error() string {
 }
 
 // PPrint pretty-prints the error.
-func (me MultiError) PPrint(indent string) string {
+func (me *MultiError) PPrint(indent string) string {
 	switch len(me.Entries) {
 	case 0:
 		return "no parse error"
