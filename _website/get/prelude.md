@@ -64,7 +64,7 @@ Alternatively, prebuilt packages can be obtained from [Arch Linux CN repository]
 
 ```elvish
 # Add archlinuxcn repository
-printf "[archlinuxcn]\nServer = http://repo.archlinuxcn.org/$arch" | sudo tee -a /etc/pacman.conf
+printf '[archlinuxcn]\nServer = http://repo.archlinuxcn.org/$arch\n' | sudo tee -a /etc/pacman.conf
 # Install keyring
 pacman -Sy archlinuxcn-keyring
 pacman -S elvish
