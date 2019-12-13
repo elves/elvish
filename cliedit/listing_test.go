@@ -80,3 +80,26 @@ func TestLastCmdAddon(t *testing.T) {
 		"  2 world",
 	)
 }
+
+func TestCustomListing(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	evals(f.Evaler,
+		`items = [[&to-filter=echo &to-accept=echo &to-show=echo]
+		          [&to-filter=put  &to-accept=put  &to-show=put]]`,
+		`edit:listing:start-custom $items &accept=$edit:insert-at-dot~ &caption=A`)
+	f.TestTTY(t,
+		"~> \n",
+		"A ", Styles,
+		"* ", term.DotHere, "\n",
+		"echo                                              \n", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+		"put",
+	)
+	f.TTYCtrl.Inject(term.K('\n'))
+	f.TestTTY(t,
+		"~> echo", Styles,
+		"   vvvv", term.DotHere,
+	)
+}

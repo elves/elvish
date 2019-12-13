@@ -37,7 +37,7 @@ func (b mapBinding) Handle(e term.Event) bool {
 	if f == nil {
 		return false
 	}
-	callBinding(b.nt, b.ev, f)
+	callWithNotifyPorts(b.nt, b.ev, f)
 	return true
 }
 
@@ -59,7 +59,7 @@ func indexLayeredBindings(k ui.Key, bindings ...BindingMap) eval.Callable {
 
 var bindingSource = eval.NewInternalSource("[editor binding]")
 
-func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable) {
+func callWithNotifyPorts(nt notifier, ev *eval.Evaler, f eval.Callable, args ...interface{}) {
 	// TODO(xiaq): Use CallWithOutputCallback when it supports redirecting the
 	// stderr port.
 	notifyPort, cleanup := makeNotifyPort(nt.Notify)
@@ -67,7 +67,7 @@ func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable) {
 	ports := []*eval.Port{eval.DevNullClosedChan, notifyPort, notifyPort}
 	frame := eval.NewTopFrame(ev, bindingSource, ports)
 
-	err := frame.Call(f, nil, eval.NoOpts)
+	err := frame.Call(f, args, eval.NoOpts)
 	if err != nil {
 		// TODO(xiaq): Make the stack trace available.
 		nt.Notify("[binding error] " + err.Error())
