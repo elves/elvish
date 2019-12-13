@@ -27,8 +27,8 @@ func TestBasicUI(t *testing.T) {
 		"****** ", term.DotHere, "\n",
 		"foo                                               \n", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
-		"bar", Styles,
-		"vvv",
+		"bar                                               ", Styles,
+		"vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
 	)
 }
 
@@ -71,8 +71,8 @@ func TestAccept_NotClosingListing(t *testing.T) {
 		"********* ", term.DotHere, "\n",
 		"foo                                               \n", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
-		"bar", Styles,
-		"vvv",
+		"bar                                               ", Styles,
+		"vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
 	)
 }
 

@@ -64,6 +64,7 @@ func Start(app cli.App, cfg Config) {
 			OnAccept: func(it listbox.Items, i int) {
 				accept(it.(items)[i].ToAccept)
 			},
+			ExtendStyle: true,
 		},
 		OnFilter: func(w combobox.Widget, q string) {
 			it, selected := cfg.GetItems(q)
