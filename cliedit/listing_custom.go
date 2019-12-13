@@ -1,7 +1,10 @@
 package cliedit
 
 import (
+	"bufio"
+	"os"
 	"strings"
+	"sync"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/addons/listing"
@@ -26,41 +29,89 @@ func (*customListingOpts) SetDefaultOptions() {}
 //
 // Starts a custom listing addon.
 
-func listingStartCustom(app cli.App, ev *eval.Evaler, opts customListingOpts, items vals.List) {
+func listingStartCustom(app cli.App, fm *eval.Frame, opts customListingOpts, items interface{}) {
 	var binding el.Handler
 	if opts.Binding.Map != nil {
-		binding = newMapBinding(app, ev, vars.FromPtr(&opts.Binding))
+		binding = newMapBinding(app, fm.Evaler, vars.FromPtr(&opts.Binding))
 	}
+	var getItems func(string) []listing.Item
+	if fn, isFn := items.(eval.Callable); isFn {
+		getItems = func(q string) []listing.Item {
+			var items []listing.Item
+			var itemsMutex sync.Mutex
+			collect := func(item listing.Item) {
+				itemsMutex.Lock()
+				defer itemsMutex.Unlock()
+				items = append(items, item)
+			}
+			valuesCb := func(ch <-chan interface{}) {
+				for v := range ch {
+					if item, itemOk := getListingItem(v); itemOk {
+						collect(item)
+					}
+				}
+			}
+			bytesCb := func(r *os.File) {
+				buffered := bufio.NewReader(r)
+				for {
+					line, err := buffered.ReadString('\n')
+					if line != "" {
+						s := strings.TrimSuffix(line, "\n")
+						collect(listing.Item{ToAccept: s, ToShow: ui.T(s)})
+					}
+					if err != nil {
+						break
+					}
+				}
+			}
+			err := fm.CallWithOutputCallback(
+				fn, []interface{}{q}, eval.NoOpts, valuesCb, bytesCb)
+			// TODO(xiaq): Report the error.
+			_ = err
+			return items
+		}
+	} else {
+		getItems = func(q string) []listing.Item {
+			convertedItems := []listing.Item{}
+			vals.Iterate(items, func(v interface{}) bool {
+				toFilter, toFilterOk := getToFilter(v)
+				item, itemOk := getListingItem(v)
+				if toFilterOk && itemOk && strings.Contains(toFilter, q) {
+					// TODO(xiaq): Report type error when ok is false.
+					convertedItems = append(convertedItems, item)
+				}
+				return true
+			})
+			return convertedItems
+		}
+	}
+
 	listing.Start(app, listing.Config{
 		Binding: binding,
 		Caption: opts.Caption,
 		GetItems: func(q string) ([]listing.Item, int) {
-			parsedItems := []listing.Item{}
-			vals.Iterate(items, func(v interface{}) bool {
-				toFilter, item, ok := indexListingItem(v)
-				if ok && strings.Contains(toFilter, q) {
-					// TODO(xiaq): Report type error when ok is false.
-					parsedItems = append(parsedItems, item)
-				}
-				return true
-			})
+			items := getItems(q)
 			selected := 0
 			if opts.KeepBottom {
-				selected = len(parsedItems) - 1
+				selected = len(items) - 1
 			}
-			return parsedItems, selected
+			return items, selected
 		},
 		Accept: func(s string) bool {
-			callWithNotifyPorts(app, ev, opts.Accept, s)
+			callWithNotifyPorts(app, fm.Evaler, opts.Accept, s)
 			return false
 		},
 		AutoAccept: opts.AutoAccept,
 	})
 }
 
-func indexListingItem(v interface{}) (toFilter string, item listing.Item, ok bool) {
+func getToFilter(v interface{}) (string, bool) {
 	toFilterValue, _ := vals.Index(v, "to-filter")
 	toFilter, toFilterOk := toFilterValue.(string)
+	return toFilter, toFilterOk
+}
+
+func getListingItem(v interface{}) (item listing.Item, ok bool) {
 	toAcceptValue, _ := vals.Index(v, "to-accept")
 	toAccept, toAcceptOk := toAcceptValue.(string)
 	toShowValue, _ := vals.Index(v, "to-show")
@@ -69,7 +120,5 @@ func indexListingItem(v interface{}) (toFilter string, item listing.Item, ok boo
 		toShow = ui.T(toShowString)
 		toShowOk = true
 	}
-	return toFilter,
-		listing.Item{ToAccept: toAccept, ToShow: toShow},
-		toFilterOk && toAcceptOk && toShowOk
+	return listing.Item{ToAccept: toAccept, ToShow: toShow}, toAcceptOk && toShowOk
 }

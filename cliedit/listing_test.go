@@ -81,13 +81,13 @@ func TestLastCmdAddon(t *testing.T) {
 	)
 }
 
-func TestCustomListing(t *testing.T) {
+func TestCustomListing_PassingList(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
 	evals(f.Evaler,
-		`items = [[&to-filter=echo &to-accept=echo &to-show=echo]
-		          [&to-filter=put  &to-accept=put  &to-show=put]]`,
+		`items = [[&to-filter=1 &to-accept=echo &to-show=echo]
+		          [&to-filter=2  &to-accept=put &to-show=(styled put green)]]`,
 		`edit:listing:start-custom $items &accept=$edit:insert-at-dot~ &caption=A`)
 	f.TestTTY(t,
 		"~> \n",
@@ -95,11 +95,51 @@ func TestCustomListing(t *testing.T) {
 		"* ", term.DotHere, "\n",
 		"echo                                              \n", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
-		"put",
+		"put                                               ", Styles,
+		"vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
 	)
+	// Filter - "put" will be selected.
+	f.TTYCtrl.Inject(term.K('2'))
+	// Accept.
 	f.TTYCtrl.Inject(term.K('\n'))
 	f.TestTTY(t,
-		"~> echo", Styles,
-		"   vvvv", term.DotHere,
+		"~> put", Styles,
+		"   vvv", term.DotHere,
+	)
+}
+
+func TestCustomListing_PassingValueCallback(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	evals(f.Evaler,
+		`f = [q]{ put [&to-accept='q '$q &to-show=(styled 'q '$q blue)] }`,
+		`edit:listing:start-custom $f &accept=$edit:insert-at-dot~ &caption=A`)
+	// Query.
+	f.TTYCtrl.Inject(term.K('x'))
+	f.TestTTY(t,
+		"~> \n",
+		"A x", Styles,
+		"*  ", term.DotHere, "\n",
+		"q x                                               ", Styles,
+		"##################################################",
+	)
+}
+
+func TestCustomListing_PassingBytesCallback(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	evals(f.Evaler,
+		`f = [q]{ echo 'q '$q }`,
+		`edit:listing:start-custom $f &accept=$edit:insert-at-dot~ &caption=A`)
+	// Query.
+	f.TTYCtrl.Inject(term.K('x'))
+	f.TestTTY(t,
+		"~> \n",
+		"A x", Styles,
+		"*  ", term.DotHere, "\n",
+		"q x                                               ", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 	)
 }

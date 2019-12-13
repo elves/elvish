@@ -32,8 +32,8 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 			"down-cycle":   func() { listingDownCycle(app) },
 			"page-up":      func() { listingPageUp(app) },
 			"page-down":    func() { listingPageDown(app) },
-			"start-custom": func(fm *eval.Frame, opts customListingOpts, items vals.List) {
-				listingStartCustom(app, fm.Evaler, opts, items)
+			"start-custom": func(fm *eval.Frame, opts customListingOpts, items interface{}) {
+				listingStartCustom(app, fm, opts, items)
 			},
 			/*
 				"toggle-filtering": cli.ListingToggleFiltering,
