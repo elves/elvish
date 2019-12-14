@@ -12,11 +12,9 @@ var ErrNoVar = errors.New("no such variable")
 const BucketSharedVar = "shared_var"
 
 func init() {
-	initDB["initialize shared variable table"] = func(db *bolt.DB) error {
-		return db.Update(func(tx *bolt.Tx) error {
-			_, err := tx.CreateBucketIfNotExists([]byte(BucketSharedVar))
-			return err
-		})
+	initDB["initialize shared variable table"] = func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(BucketSharedVar))
+		return err
 	}
 }
 

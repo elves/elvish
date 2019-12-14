@@ -1,108 +1,184 @@
 package prompt
 
 import (
+	"fmt"
 	"reflect"
-	"strconv"
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
+	"github.com/elves/elvish/util"
 )
 
-func TestPrompt_DeliversResultOnLateUpdates(t *testing.T) {
-	content := styled.Plain("prompt> ")
-	prompt := New(func() styled.Text { return content })
-	prompt.Trigger(false)
-	update := <-prompt.LateUpdates()
-	if !reflect.DeepEqual(update, content) {
-		t.Errorf("want update %v, got %v", content, update)
-	}
+func TestPrompt_DefaultCompute(t *testing.T) {
+	prompt := New(Config{})
 
-	current := prompt.Get()
-	if !reflect.DeepEqual(current, content) {
-		t.Errorf("want current %v, got %v", content, current)
-	}
+	prompt.Trigger(false)
+	testUpdate(t, prompt, ui.T("???> "))
 }
 
-func TestPrompt_DeliversStaleLastPromptsOnLateUpdates(t *testing.T) {
-	unblockPrompt := make(chan struct{})
-	content := styled.Plain("prompt> ")
-	prompt := New(func() styled.Text {
-		<-unblockPrompt
-		return content
-	})
+func TestPrompt_ShowsComputedPrompt(t *testing.T) {
+	prompt := New(Config{
+		Compute: func() ui.Text { return ui.T(">>> ") }})
+
 	prompt.Trigger(false)
-
-	update := <-prompt.LateUpdates()
-	staleUnknown := styled.Transform(initialContent, "inverse")
-	if !reflect.DeepEqual(update, staleUnknown) {
-		t.Errorf("want update %v, got %v", staleUnknown, update)
-	}
-
-	unblockPrompt <- struct{}{}
-
-	update = <-prompt.LateUpdates()
-	if !reflect.DeepEqual(update, content) {
-		t.Errorf("want update %v, got %v", content, update)
-	}
-
-	current := prompt.Get()
-	if !reflect.DeepEqual(current, content) {
-		t.Errorf("want current %v, got %v", content, current)
-	}
+	testUpdate(t, prompt, ui.T(">>> "))
 }
 
-func TestPrompt_DeliversStaleCurrentPromptsOnLateUpdates(t *testing.T) {
-	unblockPrompt := make(chan struct{})
-	content := styled.Plain("prompt> ")
-	prompt := New(func() styled.Text {
-		<-unblockPrompt
-		return content
+func TestPrompt_StalePrompt(t *testing.T) {
+	compute, unblock := blockedAutoIncPrompt()
+	prompt := New(Config{
+		Compute: compute,
+		StaleThreshold: func() time.Duration {
+			return 10 * time.Millisecond
+		},
 	})
-	prompt.Trigger(false)
-
-	update := <-prompt.LateUpdates()
-	staleUnknown := styled.Transform(initialContent, "inverse")
-	if !reflect.DeepEqual(update, staleUnknown) {
-		t.Errorf("want update %v, got %v", staleUnknown, update)
-	}
 
 	prompt.Trigger(true)
-	unblockPrompt <- struct{}{}
+	// The compute function is blocked, so a stale version of the intial
+	// "unknown" prompt will be shown.
+	testUpdate(t, prompt, ui.T("???> ", ui.Inverse))
 
-	update = <-prompt.LateUpdates()
-	wantContent := styled.Transform(content, "inverse")
-	if !reflect.DeepEqual(update, wantContent) {
-		t.Errorf("want update %v, got %v", wantContent, update)
+	// The compute function will now return.
+	unblock()
+	// The returned prompt will now be used.
+	testUpdate(t, prompt, ui.T("1> "))
+
+	// Force a refresh.
+	prompt.Trigger(true)
+	// The compute function will now be blocked again, so after a while a stale
+	// version of the previous prompt will be shown.
+	testUpdate(t, prompt, ui.T("1> ", ui.Inverse))
+
+	// Unblock the compute function.
+	unblock()
+	// The new prompt will now be shown.
+	testUpdate(t, prompt, ui.T("2> "))
+
+	// Force a refresh.
+	prompt.Trigger(true)
+	// Make sure that the compute function is run and stuck.
+	testUpdate(t, prompt, ui.T("2> ", ui.Inverse))
+	// Queue another two refreshes before the compute function can return.
+	prompt.Trigger(true)
+	prompt.Trigger(true)
+	unblock()
+	// Now the new prompt should be marked stale immediately.
+	testUpdate(t, prompt, ui.T("3> ", ui.Inverse))
+	unblock()
+	// However, the the two refreshes we requested early only trigger one
+	// re-computation, because they are requested while the compute function is
+	// stuck, so they can be safely merged.
+	testUpdate(t, prompt, ui.T("4> "))
+}
+
+func TestPrompt_Eagerness0(t *testing.T) {
+	prompt := New(Config{
+		Compute:   autoIncPrompt(),
+		Eagerness: func() int { return 0 },
+	})
+
+	// A forced refresh is always respected.
+	prompt.Trigger(true)
+	testUpdate(t, prompt, ui.T("1> "))
+
+	// A unforced refresh is not respected.
+	prompt.Trigger(false)
+	testNoUpdate(t, prompt)
+
+	// No update even if pwd has changed.
+	_, cleanup := util.InTestDir()
+	defer cleanup()
+	prompt.Trigger(false)
+	testNoUpdate(t, prompt)
+
+	// Only force updates are respected.
+	prompt.Trigger(true)
+	testUpdate(t, prompt, ui.T("2> "))
+}
+
+func TestPrompt_Eagerness5(t *testing.T) {
+	prompt := New(Config{
+		Compute:   autoIncPrompt(),
+		Eagerness: func() int { return 5 },
+	})
+
+	// The initial trigger is respected because there was no previous pwd.
+	prompt.Trigger(false)
+	testUpdate(t, prompt, ui.T("1> "))
+
+	// No update because the pwd has not changed.
+	prompt.Trigger(false)
+	testNoUpdate(t, prompt)
+
+	// Update because the pwd has changed.
+	_, cleanup := util.InTestDir()
+	defer cleanup()
+	prompt.Trigger(false)
+	testUpdate(t, prompt, ui.T("2> "))
+}
+
+func TestPrompt_Eagerness10(t *testing.T) {
+	prompt := New(Config{
+		Compute:   autoIncPrompt(),
+		Eagerness: func() int { return 10 },
+	})
+
+	// The initial trigger is respected.
+	prompt.Trigger(false)
+	testUpdate(t, prompt, ui.T("1> "))
+
+	// Subsequent triggers, force or not, are also respected.
+	prompt.Trigger(false)
+	testUpdate(t, prompt, ui.T("2> "))
+	prompt.Trigger(true)
+	testUpdate(t, prompt, ui.T("3> "))
+	prompt.Trigger(false)
+	testUpdate(t, prompt, ui.T("4> "))
+}
+
+func blockedAutoIncPrompt() (func() ui.Text, func()) {
+	unblockChan := make(chan struct{})
+	i := 0
+	compute := func() ui.Text {
+		<-unblockChan
+		i++
+		return ui.T(fmt.Sprintf("%d> ", i))
 	}
+	unblock := func() {
+		unblockChan <- struct{}{}
+	}
+	return compute, unblock
+}
 
-	unblockPrompt <- struct{}{}
-
-	update = <-prompt.LateUpdates()
-	if !reflect.DeepEqual(update, content) {
-		t.Errorf("want update %v, got %v", content, update)
+func autoIncPrompt() func() ui.Text {
+	i := 0
+	return func() ui.Text {
+		i++
+		return ui.T(fmt.Sprintf("%d> ", i))
 	}
 }
 
-func TestPrompt_DoesNotRecomputeWhenInSameDir(t *testing.T) {
-	i := 0
-	prompt := New(func() styled.Text {
-		i++
-		return styled.Plain(strconv.Itoa(i))
-	})
-
-	prompt.Trigger(false)
-
-	update := <-prompt.LateUpdates()
-	wantPrompt := styled.Plain("1")
-	if !reflect.DeepEqual(update, wantPrompt) {
-		t.Errorf("want update %v, got %v", wantPrompt, update)
-	}
-
-	prompt.Trigger(false)
-
+func testUpdate(t *testing.T, p *Prompt, wantUpdate ui.Text) {
+	t.Helper()
 	select {
-	case update = <-prompt.LateUpdates():
+	case update := <-p.LateUpdates():
+		if !reflect.DeepEqual(update, wantUpdate) {
+			t.Errorf("got late update %v, want %v", update, wantUpdate)
+		}
+	case <-time.After(time.Second):
+		t.Errorf("no late update after 1 second")
+	}
+	current := p.Get()
+	if !reflect.DeepEqual(current, wantUpdate) {
+		t.Errorf("got current %v, want %v", current, wantUpdate)
+	}
+}
+
+func testNoUpdate(t *testing.T, p *Prompt) {
+	t.Helper()
+	select {
+	case update := <-p.LateUpdates():
 		t.Errorf("unexpected update %v", update)
 	case <-time.After(10 * time.Millisecond):
 		// OK

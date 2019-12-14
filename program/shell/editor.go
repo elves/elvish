@@ -9,8 +9,7 @@ import (
 )
 
 type editor interface {
-	ReadLine() (string, error)
-	Close()
+	ReadCode() (string, error)
 }
 
 type minEditor struct {
@@ -22,7 +21,7 @@ func newMinEditor(in, out *os.File) *minEditor {
 	return &minEditor{bufio.NewReader(in), out}
 }
 
-func (ed *minEditor) ReadLine() (string, error) {
+func (ed *minEditor) ReadCode() (string, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		wd = "?"
@@ -32,7 +31,4 @@ func (ed *minEditor) ReadLine() (string, error) {
 	// Chop off the trailing \r on Windows.
 	line = strings.TrimRight(line, "\r\n")
 	return line, err
-}
-
-func (editor *minEditor) Close() {
 }

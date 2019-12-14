@@ -5,9 +5,10 @@ package term
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/ui"
 )
 
 // DefaultSeqTimeout is the amount of time within which runes that make up an
@@ -20,7 +21,9 @@ const DefaultSeqTimeout = 10 * time.Millisecond
 type reader struct {
 	ar         *runeReader
 	seqTimeout time.Duration
-	raw        bool
+
+	rawMutex sync.Mutex
+	raw      int
 
 	eventChan   chan Event
 	stopChan    chan struct{}
@@ -29,28 +32,38 @@ type reader struct {
 
 func newReader(f *os.File) *reader {
 	rd := &reader{
-		newRuneReader(f),
-		DefaultSeqTimeout,
-		false,
-		make(chan Event),
-		nil,
-		nil,
+		ar:         newRuneReader(f),
+		seqTimeout: DefaultSeqTimeout,
+		eventChan:  make(chan Event),
 	}
 	return rd
 }
 
-// SetRaw turns the raw option on or off. If the reader is in the middle of
-// reading one event, it takes effect after this event is fully read.
-func (rd *reader) SetRaw(raw bool) {
-	rd.raw = raw
+func (rd *reader) SetRaw(n int) {
+	rd.rawMutex.Lock()
+	defer rd.rawMutex.Unlock()
+	rd.raw = n
 }
 
-// EventChan returns the channel onto which the Reader writes what it has read.
+// Returns whether the next rune should be read raw.
+func (rd *reader) getRaw() bool {
+	rd.rawMutex.Lock()
+	defer rd.rawMutex.Unlock()
+	switch {
+	case rd.raw == 0:
+		return false
+	case rd.raw < 0:
+		return true
+	default:
+		rd.raw--
+		return true
+	}
+}
+
 func (rd *reader) EventChan() <-chan Event {
 	return rd.eventChan
 }
 
-// Start starts the Reader.
 func (rd *reader) Start() {
 	rd.stopChan = make(chan struct{})
 	rd.stopAckChan = make(chan struct{})
@@ -64,8 +77,8 @@ func (rd *reader) run() {
 	for {
 		select {
 		case r := <-rd.ar.Chan():
-			if rd.raw {
-				rd.send(RawRune(r))
+			if rd.getRaw() {
+				rd.send(K(r))
 			} else {
 				event, seqError, ioError := rd.readOne(r)
 				if event != nil {
@@ -94,7 +107,7 @@ func (rd *reader) run() {
 	}
 }
 
-// send tries to send an event, unless stop was requested. If stop was requested
+// Tries to send an event, unless stop was requested. If stop was requested
 // before, it does nothing; hence it is safe to use after stop.
 func (rd *reader) send(event Event) {
 	select {
@@ -103,15 +116,12 @@ func (rd *reader) send(event Event) {
 	}
 }
 
-// Stop stops the Reader.
 func (rd *reader) Stop() {
 	rd.ar.Stop()
 	close(rd.stopChan)
 	<-rd.stopAckChan
 }
 
-// Close releases files associated with the Reader. It does not close the file
-// used to create it.
 func (rd *reader) Close() {
 	close(rd.eventChan)
 	rd.ar.Close()
@@ -120,7 +130,7 @@ func (rd *reader) Close() {
 // Used by readRune in readOne to signal end of current sequence.
 const runeEndOfSeq rune = -1
 
-// readOne attempts to read one key or CPR, led by a rune already read.
+// Tries to read one key or CPR, led by a rune already read.
 func (rd *reader) readOne(r rune) (event Event, seqError, ioError error) {
 	currentSeq := string(r)
 
@@ -270,8 +280,8 @@ func (rd *reader) readOne(r rune) (event Event, seqError, ioError error) {
 			// An 'O' follows. G3 style function key sequence: read one rune.
 			r = readRune()
 			if r == runeEndOfSeq {
-				// Nothing follows after 'O'. Taken as Alt-o.
-				event = KeyEvent{'o', ui.Alt}
+				// Nothing follows after 'O'. Taken as Alt-O.
+				event = KeyEvent{'O', ui.Alt}
 				return
 			}
 			k, ok := g3Seq[r]
@@ -296,25 +306,27 @@ func (rd *reader) readOne(r rune) (event Event, seqError, ioError error) {
 	return
 }
 
-// ctrlModify determines whether a rune corresponds to a Ctrl-modified key and
-// returns the ui.Key the rune represents.
+// Determines whether a rune corresponds to a Ctrl-modified key and returns the
+// ui.Key the rune represents.
 func ctrlModify(r rune) ui.Key {
 	switch r {
+	// TODO(xiaq): Are the following special cases universal?
 	case 0x0:
-		return ui.Key{'`', ui.Ctrl} // ^@
+		return ui.K('`', ui.Ctrl) // ^@
 	case 0x1e:
-		return ui.Key{'6', ui.Ctrl} // ^^
+		return ui.K('6', ui.Ctrl) // ^^
 	case 0x1f:
-		return ui.Key{'/', ui.Ctrl} // ^_
+		return ui.K('/', ui.Ctrl) // ^_
 	case ui.Tab, ui.Enter, ui.Backspace: // ^I ^J ^?
-		return ui.Key{r, 0}
+		// Ambiguous Ctrl keys; prefer the non-Ctrl form as they are more likely.
+		return ui.K(r)
 	default:
 		// Regular ui.Ctrl sequences.
 		if 0x1 <= r && r <= 0x1d {
-			return ui.Key{r + 0x40, ui.Ctrl}
+			return ui.K(r+0x40, ui.Ctrl)
 		}
 	}
-	return ui.Key{r, 0}
+	return ui.K(r)
 }
 
 // Tables for key sequences. Comments document which terminal emulators are
@@ -333,13 +345,13 @@ var g3Seq = map[rune]ui.Key{
 	// Ctrl-Shift-modified arrow keys; however, this doesn't seem to be true for
 	// urxvt 9.22 packaged by Debian; those keys simply send the same sequence
 	// as Ctrl-modified keys (\eO[abcd]).
-	'A': {ui.Up, 0}, 'B': {ui.Down, 0}, 'C': {ui.Right, 0}, 'D': {ui.Left, 0},
-	'H': {ui.Home, 0}, 'F': {ui.End, 0}, 'M': {ui.Insert, 0},
+	'A': ui.K(ui.Up), 'B': ui.K(ui.Down), 'C': ui.K(ui.Right), 'D': ui.K(ui.Left),
+	'H': ui.K(ui.Home), 'F': ui.K(ui.End), 'M': ui.K(ui.Insert),
 	// urxvt
-	'a': {ui.Up, ui.Ctrl}, 'b': {ui.Down, ui.Ctrl},
-	'c': {ui.Right, ui.Ctrl}, 'd': {ui.Left, ui.Ctrl},
+	'a': ui.K(ui.Up, ui.Ctrl), 'b': ui.K(ui.Down, ui.Ctrl),
+	'c': ui.K(ui.Right, ui.Ctrl), 'd': ui.K(ui.Left, ui.Ctrl),
 	// xterm, urxvt, tmux
-	'P': {ui.F1, 0}, 'Q': {ui.F2, 0}, 'R': {ui.F3, 0}, 'S': {ui.F4, 0},
+	'P': ui.K(ui.F1), 'Q': ui.K(ui.F2), 'R': ui.K(ui.F3), 'S': ui.K(ui.F4),
 }
 
 // Tables for CSI-style key sequences. A CSI sequence is \e[ followed by zero or
@@ -357,22 +369,23 @@ var g3Seq = map[rune]ui.Key{
 
 // CSI-style key sequences identified by the last rune. For instance, \e[A is
 // Up. When modified, two numerical arguments are added, the first always beging
-// 1 and the second identifying the modifier. For instance, \e1;5A is Ctrl-Up.
+// 1 and the second identifying the modifier. For instance, \e[1;5A is Ctrl-Up.
 var csiSeqByLast = map[rune]ui.Key{
 	// xterm, urxvt, tmux
-	'A': {ui.Up, 0}, 'B': {ui.Down, 0}, 'C': {ui.Right, 0}, 'D': {ui.Left, 0},
+	'A': ui.K(ui.Up), 'B': ui.K(ui.Down), 'C': ui.K(ui.Right), 'D': ui.K(ui.Left),
 	// urxvt
-	'a': {ui.Up, ui.Shift}, 'b': {ui.Down, ui.Shift},
-	'c': {ui.Right, ui.Shift}, 'd': {ui.Left, ui.Shift},
+	'a': ui.K(ui.Up, ui.Shift), 'b': ui.K(ui.Down, ui.Shift),
+	'c': ui.K(ui.Right, ui.Shift), 'd': ui.K(ui.Left, ui.Shift),
 	// xterm (Terminal.app only sends those in alternate screen)
-	'H': {ui.Home, 0}, 'F': {ui.End, 0},
+	'H': ui.K(ui.Home), 'F': ui.K(ui.End),
 	// xterm, urxvt, tmux
-	'Z': {ui.Tab, ui.Shift},
+	'Z': ui.K(ui.Tab, ui.Shift),
 }
 
-// CSI-style key sequences ending with '~' and identified by one numerical
-// argument. For instance, \e[3~ is Delete. When modified, an additional
-// argument identifies the modifier; for instance, \e[3;5~ is Ctrl-Delete.
+// CSI-style key sequences ending with '~' with by one or two numerical
+// arguments. The first argument identifies the key, and the optional second
+// argument identifies the modifier. For instance, \e[3~ is Delete, and \e[3;5~
+// is Ctrl-Delete.
 //
 // An alternative encoding of the modifier key, only known to be used by urxvt
 // (or for that matter, likely also rxvt) is to change the last rune: '$' for
@@ -434,7 +447,7 @@ func parseCSI(nums []int, last rune, seq string) ui.Key {
 	case '~':
 		if len(nums) == 1 || len(nums) == 2 {
 			if r, ok := csiSeqTilde[nums[0]]; ok {
-				k := ui.Key{r, 0}
+				k := ui.K(r)
 				if len(nums) == 1 {
 					// Unmodified: \e[5~ (e.g. PageUp)
 					return k
@@ -444,7 +457,7 @@ func parseCSI(nums []int, last rune, seq string) ui.Key {
 			}
 		} else if len(nums) == 3 && nums[0] == 27 {
 			if r, ok := csiSeqTilde27[nums[2]]; ok {
-				k := ui.Key{r, 0}
+				k := ui.K(r)
 				return xtermModify(k, nums[1], seq)
 			}
 		}
@@ -461,7 +474,7 @@ func parseCSI(nums []int, last rune, seq string) ui.Key {
 				case '@':
 					mod = ui.Shift | ui.Ctrl
 				}
-				return ui.Key{r, mod}
+				return ui.K(r, mod)
 			}
 		}
 	}

@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/sys"
+	"github.com/elves/elvish/ui"
 	"golang.org/x/sys/windows"
 )
 
@@ -38,7 +38,7 @@ func newReader(file *os.File) Reader {
 		console, make(chan Event), stopEvent, nil, nil}
 }
 
-func (r *reader) SetRaw(bool) {
+func (r *reader) SetRaw(int) {
 	// NOP on Windows.
 }
 

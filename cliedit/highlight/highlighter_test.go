@@ -7,116 +7,156 @@ import (
 
 	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
+	"github.com/elves/elvish/ui"
 )
 
 var any = anyMatcher{}
 var noErrors []error
 
+var styles = ui.RuneStylesheet{
+	'?':  ui.BgRed,
+	'$':  ui.Magenta,
+	'\'': ui.Yellow,
+	'v':  ui.Green,
+}
+
 func TestHighlighter_HighlightRegions(t *testing.T) {
-	hl := NewHighlighter(Dep{})
+	hl := NewHighlighter(Config{})
 
 	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
-		Args("ls").Rets(styled.Text{
-			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
-		}, noErrors),
-		Args(" ls\n").Rets(styled.Text{
-			styled.PlainSegment(" "),
-			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
-			styled.PlainSegment("\n"),
-		}, noErrors),
-		Args("ls $x 'y'").Rets(styled.Text{
-			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
-			styled.PlainSegment(" "),
-			&styled.Segment{styled.Style{Foreground: "magenta"}, "$x"},
-			styled.PlainSegment(" "),
-			&styled.Segment{styled.Style{Foreground: "yellow"}, "'y'"},
-		}, noErrors),
+		Args("ls").Rets(
+			ui.MarkLines(
+				"ls", styles,
+				"vv",
+			),
+			noErrors),
+		Args(" ls\n").Rets(
+			ui.MarkLines(
+				" ls\n", styles,
+				" vv"),
+			noErrors),
+		Args("ls $x 'y'").Rets(
+			ui.MarkLines(
+				"ls $x 'y'", styles,
+				"vv $$ '''"),
+			noErrors),
 	})
 }
 
 func TestHighlighter_ParseErrors(t *testing.T) {
-	hl := NewHighlighter(Dep{})
+	hl := NewHighlighter(Config{})
 	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
-		// Parse error
-		Args("ls ]").Rets(any, matchErrors(parseErrorMatcher{3, 4})),
-		// Errors at the end are elided
+		// Parse error is highlighted and returned
+		Args("ls ]").Rets(
+			ui.MarkLines(
+				"ls ]", styles,
+				"vv ?"),
+			matchErrors(parseErrorMatcher{3, 4})),
+		// Errors at the end are ignored
 		Args("ls $").Rets(any, noErrors),
 		Args("ls [").Rets(any, noErrors),
-
-		// TODO: Test for highlighting errored regions
-		// TODO: Test for multiple parse errors
 	})
 }
 
-func TestHighlighter_Check(t *testing.T) {
+func TestHighlighter_CheckErrors(t *testing.T) {
 	var checkError error
 	// Make a highlighter whose Check callback returns checkError.
-	hl := NewHighlighter(Dep{
+	hl := NewHighlighter(Config{
 		Check: func(*parse.Chunk) error { return checkError }})
-
-	checkError = fakeCheckError{0, 2}
-	_, errors := hl.Get("code")
-	if !reflect.DeepEqual(errors, []error{checkError}) {
-		t.Errorf("Got errors %v, want %v", errors, []error{checkError})
+	getWithCheckError := func(code string, err error) (ui.Text, []error) {
+		checkError = err
+		return hl.Get(code)
 	}
 
-	// Errors at the end are elided
-	checkError = fakeCheckError{6, 6}
-	_, errors = hl.Get("code 2")
-	if len(errors) != 0 {
-		t.Errorf("Got errors %v, want 0 error", errors)
-	}
+	tt.Test(t, tt.Fn("getWithCheckError", getWithCheckError), tt.Table{
+		// Check error is highlighted and returned
+		Args("code 1", fakeCheckError{5, 6}).Rets(
+			ui.MarkLines(
+				"code 1", styles,
+				"vvvv ?"),
+			[]error{fakeCheckError{5, 6}}),
+		// Check errors at the end are ignored
+		Args("code 2", fakeCheckError{6, 6}).
+			Rets(any, noErrors),
+	})
+}
+
+type c struct {
+	given       string
+	wantInitial ui.Text
+	wantLate    ui.Text
+	mustLate    bool
 }
 
 const lateTimeout = 100 * time.Millisecond
 
-func TestHighlighter_HasCommand_LateResult(t *testing.T) {
-	// Make a highlighter whose HasCommand callback only recognizes "ls".
-	hl := NewHighlighter(Dep{
-		HasCommand: func(cmd string) bool { return cmd == "ls" }})
-
-	test := func(code string, wantInitial, wantLate styled.Text) {
-		initial, _ := hl.Get(code)
-		if !reflect.DeepEqual(wantInitial, initial) {
-			t.Errorf("want %v from initial Get, got %v", wantInitial, initial)
-		}
-		select {
-		case late := <-hl.LateUpdates():
-			if !reflect.DeepEqual(wantLate, late) {
-				t.Errorf("want %v from LateUpdates, got %v", wantLate, late)
-			}
-			late, _ = hl.Get(code)
-			if !reflect.DeepEqual(wantLate, late) {
-				t.Errorf("want %v from late Get, got %v", wantLate, late)
-			}
-		case <-time.After(lateTimeout):
-			t.Errorf("want %v from LateUpdates, but timed out after %v",
-				wantLate, lateTimeout)
-		}
+func testThat(t *testing.T, hl *Highlighter, c c) {
+	initial, _ := hl.Get(c.given)
+	if !reflect.DeepEqual(c.wantInitial, initial) {
+		t.Errorf("want %v from initial Get, got %v", c.wantInitial, initial)
 	}
-
-	test("ls",
-		styled.Plain("ls"),
-		styled.Text{
-			&styled.Segment{styled.Style{Foreground: "green"}, "ls"}})
-	test("echo",
-		styled.Plain("echo"),
-		styled.Text{
-			&styled.Segment{styled.Style{Foreground: "red"}, "echo"}})
+	if c.wantLate == nil {
+		return
+	}
+	select {
+	case late := <-hl.LateUpdates():
+		if !reflect.DeepEqual(c.wantLate, late) {
+			t.Errorf("want %v from LateUpdates, got %v", c.wantLate, late)
+		}
+		late, _ = hl.Get(c.given)
+		if !reflect.DeepEqual(c.wantLate, late) {
+			t.Errorf("want %v from late Get, got %v", c.wantLate, late)
+		}
+	case <-time.After(lateTimeout):
+		t.Errorf("want %v from LateUpdates, but timed out after %v",
+			c.wantLate, lateTimeout)
+	}
 }
 
-const (
-	// The delay to deliver the result for the first highlight after the second
-	// highlight has been requested.
-	hlDelay = 10 * time.Millisecond
-	// The duration to wait to make sure that the first highlight has completed
-	// and there is nothing delivered on LateUpdates. The test will wait this
-	// long to make sure that the late update is dropped, so it shouldn't be too
-	// large.
-	hlWait = 50 * time.Millisecond
-)
+func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
+	// When the HasCommand callback takes longer than maxBlockForLate, late
+	// results are delivered asynchronously.
+	maxBlockForLate = 1 * time.Millisecond
+	hl := NewHighlighter(Config{
+		// HasCommand is slow and only recognizes "ls".
+		HasCommand: func(cmd string) bool {
+			time.Sleep(10 * time.Millisecond)
+			return cmd == "ls"
+		}})
+
+	testThat(t, hl, c{
+		given:       "ls",
+		wantInitial: ui.T("ls"),
+		wantLate:    ui.T("ls", ui.Green),
+	})
+	testThat(t, hl, c{
+		given:       "echo",
+		wantInitial: ui.T("echo"),
+		wantLate:    ui.T("echo", ui.Red),
+	})
+}
+
+func TestHighlighter_HasCommand_LateResult_Sync(t *testing.T) {
+	// When the HasCommand callback takes shorter than maxBlockForLate, late
+	// results are delivered asynchronously.
+	maxBlockForLate = 100 * time.Millisecond
+	hl := NewHighlighter(Config{
+		// HasCommand is fast and only recognizes "ls".
+		HasCommand: func(cmd string) bool {
+			time.Sleep(1 * time.Millisecond)
+			return cmd == "ls"
+		}})
+
+	testThat(t, hl, c{
+		given:       "ls",
+		wantInitial: ui.T("ls", ui.Green),
+	})
+	testThat(t, hl, c{
+		given:       "echo",
+		wantInitial: ui.T("echo", ui.Red),
+	})
+}
 
 func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	// When late results are delivered out of order, the ones that do not match
@@ -124,16 +164,20 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	// first and then "ls". The late result for "l" is delivered after that of
 	// "ls" and is dropped.
 
+	// Make sure that the HasCommand callback takes longer than maxBlockForLate.
+	maxBlockForLate = 1 * time.Millisecond
+
 	hlSecond := make(chan struct{})
-	hl := NewHighlighter(Dep{
+	hl := NewHighlighter(Config{
 		HasCommand: func(cmd string) bool {
 			if cmd == "l" {
 				// Make sure that the second highlight has been requested before
 				// returning.
 				<-hlSecond
-				time.Sleep(hlDelay)
+				time.Sleep(10 * time.Millisecond)
 				return false
 			}
+			time.Sleep(10 * time.Millisecond)
 			close(hlSecond)
 			return cmd == "ls"
 		}})
@@ -143,9 +187,8 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	initial, _ := hl.Get("ls")
 	late := <-hl.LateUpdates()
 
-	wantInitial := styled.Plain("ls")
-	wantLate := styled.Text{
-		&styled.Segment{styled.Style{Foreground: "green"}, "ls"}}
+	wantInitial := ui.T("ls")
+	wantLate := ui.T("ls", ui.Green)
 	if !reflect.DeepEqual(wantInitial, initial) {
 		t.Errorf("want %v from initial Get, got %v", wantInitial, initial)
 	}
@@ -157,8 +200,8 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	select {
 	case late := <-hl.LateUpdates():
 		t.Errorf("want nothing from LateUpdates, got %v", late)
-	case <-time.After(hlWait):
-		// No late updates; test passed.
+	case <-time.After(50 * time.Millisecond):
+		// We have waited for 50 ms and there are no late updates; test passes.
 	}
 }
 

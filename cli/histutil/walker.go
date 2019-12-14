@@ -115,12 +115,9 @@ func (w *walker) push(cmd string, seq int) {
 
 // Next reverses Prev.
 func (w *walker) Next() error {
-	if w.top <= 0 {
+	if w.top <= 1 {
 		return ErrEndOfHistory
 	}
 	w.top--
-	if w.top == 0 {
-		return ErrEndOfHistory
-	}
 	return nil
 }

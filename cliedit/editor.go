@@ -1,14 +1,16 @@
+// Package edit implements the line editor for Elvish.
+//
+// The line editor is based on the cli package, which implements a general,
+// Elvish-agnostic line editor, and multiple "addon" packages. This package
+// glues them together and provides Elvish bindings for them.
 package cliedit
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/histutil"
-	"github.com/elves/elvish/cliedit/highlight"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
 )
@@ -17,101 +19,53 @@ import (
 //
 // This currently implements the same interface as *Editor in the old edit
 // package to ease transition.
-//
-// TODO: Rename ReadLine to ReadCode and remove Close.
 type Editor struct {
-	app *cli.App
+	app cli.App
 	ns  eval.Ns
 }
 
-// Wraps the histutil.Fuser interface to implement histutil.Store. This is a
-// bandaid as we cannot change the implementation of Fuser without breaking its
-// other users. Eventually Fuser should implement Store directly.
-type fuserWrapper struct {
-	*histutil.Fuser
-}
-
-func (f fuserWrapper) AddCmd(cmd histutil.Entry) (int, error) {
-	return f.Fuser.AddCmd(cmd.Text)
-}
-
-// Wraps an Evaler to implement the cli.DirStore interface.
-type dirStore struct {
-	ev *eval.Evaler
-}
-
-func (d dirStore) Chdir(path string) error {
-	return d.ev.Chdir(path)
-}
-
-func (d dirStore) Dirs() ([]storedefs.Dir, error) {
-	return d.ev.DaemonClient.Dirs(map[string]struct{}{})
-}
-
 // NewEditor creates a new editor from input and output terminal files.
-func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
+func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
-	cfg := &cli.AppConfig{}
-	// TODO: Remove the forward declaration. Currently this is needed by
-	// makePrompt only.
-	var app *cli.App
+	appSpec := cli.AppSpec{TTY: tty}
 
-	cfg.Highlighter = highlight.NewHighlighter(
-		highlight.Dep{Check: makeCheck(ev), HasCommand: makeHasCommand(ev)})
-
-	cfg.DirStore = dirStore{ev}
-
-	histFuser, err := histutil.NewFuser(st)
-	if err == nil {
-		_ = histFuser
-		cfg.HistoryStore = fuserWrapper{histFuser}
-	} else {
-		fmt.Fprintln(out, "failed to initialize history facilities")
+	fuser, err := histutil.NewFuser(st)
+	if err != nil {
+		// TODO(xiaq): Report the error.
 	}
 
-	ns.Add("max-height", vars.FromPtr(&cfg.MaxHeight))
+	if fuser != nil {
+		appSpec.AfterReadline = []func(string){func(code string) {
+			if code != "" {
+				fuser.AddCmd(code)
+			}
+			// TODO(xiaq): Handle the error.
+		}}
+	}
 
-	// TODO: BindingMap should pass event context to event handlers
-	ns.AddGoFns("<edit>", map[string]interface{}{
-		"binding-map": makeBindingMap,
-		"commit-code": cli.CommitCode,
-		"commit-eof":  cli.CommitEOF,
-		"reset-mode":  cli.ResetMode,
-	}).AddGoFns("<edit>", bufferBuiltins)
+	// Make a variable for the app first. This is to work around the
+	// bootstrapping of initPrompts, which expects a notifier.
+	var app cli.App
+	initHighlighter(&appSpec, ev)
+	initConfigAPI(&appSpec, ev, ns)
+	initInsertAPI(&appSpec, appNotifier{&app}, ev, ns)
+	initPrompts(&appSpec, appNotifier{&app}, ev, ns)
+	app = cli.NewApp(appSpec)
 
-	// Elvish hook APIs
-	var beforeReadline func()
-	ns["before-readline"], beforeReadline = initBeforeReadline(ev)
-	var afterReadline func(string)
-	ns["after-readline"], afterReadline = initAfterReadline(ev)
-	cfg.BeforeReadline = []func(){beforeReadline}
-	cfg.AfterReadline = []func(string){afterReadline}
+	initCommandAPI(app, ev, ns)
+	initListings(app, ev, ns, st, fuser)
+	initNavigation(app, ev, ns)
+	initCompletion(app, ev, ns)
+	initHistWalk(app, ev, ns, fuser)
+	initInstant(app, ev, ns)
 
-	// Prompts
-	cfg.Prompt = makePrompt(app, ev, ns, defaultPrompt, "prompt")
-	cfg.RPrompt = makePrompt(app, ev, ns, defaultRPrompt, "rprompt")
-
-	// Insert mode
-	insertNs := initInsert(ev, &cfg.InsertModeConfig)
-	ns.AddNs("insert", insertNs)
-
-	// Listing modes.
-	lsBinding, lsNs := initListing()
-	ns.AddNs("listing", lsNs)
-
-	lastcmdNs := initLastcmd(ev, lsBinding, &cfg.LastcmdModeConfig)
-	ns.AddNs("lastcmd", lastcmdNs)
-
-	histlistNs := initHistlist(ev, lsBinding, &cfg.HistlistModeConfig)
-	ns.AddNs("histlist", histlistNs)
-
-	locationNs := initLocation(ev, lsBinding, &cfg.LocationModeConfig)
-	ns.AddNs("location", locationNs)
-
-	// Evaluate default bindings.
+	initBufferBuiltins(app, ns)
+	initTTYBuiltins(app, tty, ns)
+	initMiscBuiltins(app, ns)
+	initStateAPI(app, ns)
+	initStoreAPI(app, ns, fuser)
 	evalDefaultBinding(ev, ns)
 
-	app = cli.NewAppFromFiles(cfg, in, out)
 	return &Editor{app, ns}
 }
 
@@ -140,8 +94,8 @@ func evalDefaultBinding(ev *eval.Evaler, ns eval.Ns) {
 	}
 }
 
-// ReadLine reads input from the user.
-func (ed *Editor) ReadLine() (string, error) {
+// ReadCode reads input from the user.
+func (ed *Editor) ReadCode() (string, error) {
 	return ed.app.ReadCode()
 }
 
@@ -149,6 +103,3 @@ func (ed *Editor) ReadLine() (string, error) {
 func (ed *Editor) Ns() eval.Ns {
 	return ed.ns
 }
-
-// Close is a no-op.
-func (ed *Editor) Close() {}

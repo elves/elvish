@@ -15,8 +15,8 @@ type ShowHelp struct {
 	flag *flagSet
 }
 
-func (s ShowHelp) Main([]string) int {
-	usage(os.Stdout, s.flag)
+func (s ShowHelp) Main(fds [3]*os.File, _ []string) int {
+	usage(fds[1], s.flag)
 	return 0
 }
 
@@ -25,16 +25,16 @@ type ShowCorrectUsage struct {
 	flag    *flagSet
 }
 
-func (s ShowCorrectUsage) Main([]string) int {
-	usage(os.Stderr, s.flag)
+func (s ShowCorrectUsage) Main(fds [3]*os.File, _ []string) int {
+	usage(fds[1], s.flag)
 	return 2
 }
 
 // ShowVersion shows the version.
 type ShowVersion struct{}
 
-func (ShowVersion) Main([]string) int {
-	fmt.Println(buildinfo.Version)
+func (ShowVersion) Main(fds [3]*os.File, _ []string) int {
+	fmt.Fprintln(fds[1], buildinfo.Version)
 	return 0
 }
 
@@ -43,16 +43,17 @@ type ShowBuildInfo struct {
 	JSON bool
 }
 
-func (info ShowBuildInfo) Main([]string) int {
+func (info ShowBuildInfo) Main(fds [3]*os.File, _ []string) int {
 	if info.JSON {
-		fmt.Printf(`{"version": %s, "goversion": %s, "reproducible": %v}`,
+		fmt.Fprintf(fds[1],
+			`{"version": %s, "goversion": %s, "reproducible": %v}`+"\n",
 			quoteJSON(buildinfo.Version), quoteJSON(runtime.Version()),
 			buildinfo.Reproducible)
-		fmt.Println()
+		fmt.Fprintln(fds[1])
 	} else {
-		fmt.Println("Version:", buildinfo.Version)
-		fmt.Println("Go version:", runtime.Version())
-		fmt.Println("Reproducible build:", buildinfo.Reproducible)
+		fmt.Fprintln(fds[1], "Version:", buildinfo.Version)
+		fmt.Fprintln(fds[1], "Go version:", runtime.Version())
+		fmt.Fprintln(fds[1], "Reproducible build:", buildinfo.Reproducible)
 	}
 	return 0
 }
@@ -62,7 +63,7 @@ type Daemon struct {
 	inner *daemon.Daemon
 }
 
-func (d Daemon) Main([]string) int {
+func (d Daemon) Main(fds [3]*os.File, _ []string) int {
 	err := d.inner.Main(daemonsvc.Serve)
 	if err != nil {
 		logger.Println("daemon error:", err)

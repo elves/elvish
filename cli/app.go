@@ -1,118 +1,344 @@
+// Package cli implements a generic interactive line editor.
 package cli
 
 import (
+	"io"
 	"os"
 	"sync"
+	"syscall"
 
-	"github.com/elves/elvish/cli/clicore"
-	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/cli/histlist"
-	"github.com/elves/elvish/cli/histutil"
-	"github.com/elves/elvish/cli/lastcmd"
-	"github.com/elves/elvish/cli/listing"
-	"github.com/elves/elvish/cli/location"
-	"github.com/elves/elvish/store/storedefs"
+	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/cli/term"
+	"github.com/elves/elvish/sys"
+	"github.com/elves/elvish/ui"
 )
 
 // App represents a CLI app.
-type App struct {
-	core *clicore.App
-	cfg  *AppConfig
-
-	Insert   clitypes.Mode
-	Listing  *listing.Mode
-	Histlist *histlist.Mode
-	Lastcmd  *lastcmd.Mode
-	Location *location.Mode
+type App interface {
+	// MutateState mutates the state of the app.
+	MutateState(f func(*State))
+	// CopyState returns a copy of the a state.
+	CopyState() State
+	// CodeArea returns the codearea widget of the app.
+	CodeArea() codearea.Widget
+	// ReadCode requests the App to read code from the terminal by running an
+	// event loop. This function is not re-entrant.
+	ReadCode() (string, error)
+	// Redraw requests a redraw. It never blocks and can be called regardless of
+	// whether the App is active or not.
+	Redraw()
+	// CommitEOF causes the main loop to exit with EOF. If this method is called
+	// when an event is being handled, the main loop will exit after the handler
+	// returns.
+	CommitEOF()
+	// CommitCode causes the main loop to exit with the current code content. If
+	// this method is called when an event is being handled, the main loop will
+	// exit after the handler returns.
+	CommitCode()
+	// Notify adds a note and requests a redraw.
+	Notify(note string)
 }
 
-// AppConfig is a struct containing configurations for initializing an App. It
-// must not be copied once used.
-type AppConfig struct {
-	Mutex sync.RWMutex
+type app struct {
+	loop *loop
 
-	MaxHeight int
+	TTY               TTY
+	MaxHeight         func() int
+	RPromptPersistent func() bool
+	BeforeReadline    []func()
+	AfterReadline     []func(string)
+	Highlighter       Highlighter
+	Prompt            Prompt
+	RPrompt           Prompt
 
-	BeforeReadline []func()
-	AfterReadline  []func(string)
+	StateMutex sync.RWMutex
+	State      State
 
-	Highlighter Highlighter
-
-	Prompt, RPrompt   Prompt
-	RPromptPersistent bool
-
-	HistoryStore histutil.Store
-	DirStore     DirStore
-
-	Wordifier Wordifier
-
-	InsertModeConfig   InsertModeConfig
-	HistlistModeConfig HistlistModeConfig
-	LastcmdModeConfig  LastcmdModeConfig
-	LocationModeConfig LocationModeConfig
+	codeArea codearea.Widget
 }
 
-// DirStore defines the interface for interacting with the directory history.
-type DirStore interface {
-	Dirs() ([]storedefs.Dir, error)
-	Chdir(dir string) error
+// State represents mutable state of an App.
+type State struct {
+	// Notes that have been added since the last redraw.
+	Notes []string
+	// An addon widget. When non-nil, it is shown under the codearea widget and
+	// terminal events are handled by it.
+	//
+	// The addon widget may implement the Focuser interface, in which case the
+	// Focus method is used to determine whether the cursor should be placed on
+	// the addon widget during each render. If the widget does not implement the
+	// Focuser interface, the cursor is always placed on the addon widget.
+	Addon el.Widget
 }
 
-// Wordifier is the type of a function that turns code into words.
-type Wordifier func(code string) []string
-
-// NewAppFromStdIO creates a new App that reads from stdin and writes to stderr.
-func NewAppFromStdIO(cfg *AppConfig) *App {
-	return NewAppFromFiles(cfg, os.Stdin, os.Stderr)
+// Focuser is an interface that addon widgets may implement.
+type Focuser interface {
+	Focus() bool
 }
 
-// NewAppFromFiles creates a new App from the input and output files.
-func NewAppFromFiles(cfg *AppConfig, in, out *os.File) *App {
-	return NewApp(cfg, clicore.NewTTY(in, out), clicore.NewSignalSource())
-}
-
-// NewApp creates a new App.
-func NewApp(cfg *AppConfig, t clicore.TTY, sigs clicore.SignalSource) *App {
-	coreApp := clicore.NewApp(t, sigs)
-	app := &App{
-		core: coreApp,
-		cfg:  cfg,
+// NewApp creates a new App from the given specification.
+func NewApp(spec AppSpec) App {
+	lp := newLoop()
+	a := app{
+		loop:              lp,
+		TTY:               spec.TTY,
+		MaxHeight:         spec.MaxHeight,
+		RPromptPersistent: spec.RPromptPersistent,
+		BeforeReadline:    spec.BeforeReadline,
+		AfterReadline:     spec.AfterReadline,
+		Highlighter:       spec.Highlighter,
+		Prompt:            spec.Prompt,
+		RPrompt:           spec.RPrompt,
+		State:             spec.State,
 	}
-	coreApp.Config = coreConfig{app}
+	if a.TTY == nil {
+		a.TTY, _ = NewFakeTTY()
+	}
+	if a.MaxHeight == nil {
+		a.MaxHeight = func() int { return -1 }
+	}
+	if a.RPromptPersistent == nil {
+		a.RPromptPersistent = func() bool { return false }
+	}
+	if a.Highlighter == nil {
+		a.Highlighter = dummyHighlighter{}
+	}
+	if a.Prompt == nil {
+		a.Prompt = ConstPrompt{}
+	}
+	if a.RPrompt == nil {
+		a.RPrompt = ConstPrompt{}
+	}
+	lp.HandleCb(a.handle)
+	lp.RedrawCb(a.redraw)
 
-	app.Insert = newInsertMode(app)
-	app.Listing = &listing.Mode{}
-	app.Histlist = newHistlist(app)
-	app.Lastcmd = newLastcmd(app)
-	app.Location = newLocation(app)
+	a.codeArea = codearea.New(codearea.Spec{
+		OverlayHandler: spec.OverlayHandler,
+		Highlighter:    a.Highlighter.Get,
+		Prompt:         a.Prompt.Get,
+		RPrompt:        a.RPrompt.Get,
+		Abbreviations:  spec.Abbreviations,
+		QuotePaste:     spec.QuotePaste,
+		OnSubmit:       a.CommitCode,
+		State:          spec.CodeAreaState,
+	})
 
-	return app
+	return &a
 }
 
-// ReadCode causes the App to read from terminal.
-func (app *App) ReadCode() (string, error) {
-	return app.core.ReadCode()
+func (a *app) MutateState(f func(*State)) {
+	a.StateMutex.Lock()
+	defer a.StateMutex.Unlock()
+	f(&a.State)
 }
 
-// ReadCodeAsync is like ReadCode, but returns immediately with two channels
-// that will get the return values of ReadCode. Useful in tests.
-func (app *App) ReadCodeAsync() (<-chan string, <-chan error) {
-	codeCh := make(chan string, 1)
-	errCh := make(chan error, 1)
-	go func() {
-		code, err := app.ReadCode()
-		codeCh <- code
-		errCh <- err
+func (a *app) CopyState() State {
+	a.StateMutex.RLock()
+	defer a.StateMutex.RUnlock()
+	return a.State
+}
+
+func (a *app) CodeArea() codearea.Widget {
+	return a.codeArea
+}
+
+func (a *app) resetAllStates() {
+	a.MutateState(func(s *State) { *s = State{} })
+	a.codeArea.MutateState(
+		func(s *codearea.State) { *s = codearea.State{} })
+}
+
+func (a *app) handle(e event) {
+	switch e := e.(type) {
+	case os.Signal:
+		switch e {
+		case syscall.SIGHUP:
+			a.loop.Return("", io.EOF)
+		case syscall.SIGINT:
+			a.resetAllStates()
+			a.triggerPrompts(true)
+		case sys.SIGWINCH:
+			a.RedrawFull()
+		}
+	case term.Event:
+		if listing := a.CopyState().Addon; listing != nil {
+			listing.Handle(e)
+		} else {
+			a.codeArea.Handle(e)
+		}
+		if !a.loop.HasReturned() {
+			a.triggerPrompts(false)
+		}
+	}
+}
+
+func (a *app) triggerPrompts(force bool) {
+	a.Prompt.Trigger(force)
+	a.RPrompt.Trigger(force)
+}
+
+var transformerForPending = "underline"
+
+func (a *app) redraw(flag redrawFlag) {
+	// Get the dimensions available.
+	height, width := a.TTY.Size()
+	if maxHeight := a.MaxHeight(); maxHeight > 0 && maxHeight < height {
+		height = maxHeight
+	}
+
+	var notes []string
+	var addon el.Renderer
+	a.MutateState(func(s *State) {
+		notes, addon = s.Notes, s.Addon
+		s.Notes = nil
+	})
+
+	bufNotes := renderNotes(notes, width)
+	isFinalRedraw := flag&finalRedraw != 0
+	if isFinalRedraw {
+		hideRPrompt := !a.RPromptPersistent()
+		if hideRPrompt {
+			a.codeArea.MutateState(func(s *codearea.State) { s.HideRPrompt = true })
+		}
+		bufMain := renderApp(a.codeArea, nil /* addon */, width, height)
+		if hideRPrompt {
+			a.codeArea.MutateState(func(s *codearea.State) { s.HideRPrompt = false })
+		}
+		// Insert a newline after the buffer and position the cursor there.
+		bufMain.Extend(term.NewBuffer(width), true)
+
+		a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
+		a.TTY.ResetBuffer()
+	} else {
+		bufMain := renderApp(a.codeArea, addon, width, height)
+		a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
+	}
+}
+
+// Renders notes. This does not respect height so that overflow notes end up in
+// the scrollback buffer.
+func renderNotes(notes []string, width int) *term.Buffer {
+	if len(notes) == 0 {
+		return nil
+	}
+	bb := term.NewBufferBuilder(width)
+	for i, note := range notes {
+		if i > 0 {
+			bb.Newline()
+		}
+		bb.Write(note)
+	}
+	return bb.Buffer()
+}
+
+// Renders the codearea, and uses the rest of the height for the listing.
+func renderApp(codeArea, addon el.Renderer, width, height int) *term.Buffer {
+	buf := codeArea.Render(width, height)
+	if addon != nil && len(buf.Lines) < height {
+		bufListing := addon.Render(width, height-len(buf.Lines))
+		focus := true
+		if focuser, ok := addon.(Focuser); ok {
+			focus = focuser.Focus()
+		}
+		buf.Extend(bufListing, focus)
+	}
+	return buf
+}
+
+func (a *app) ReadCode() (string, error) {
+	for _, f := range a.BeforeReadline {
+		f()
+	}
+	defer func() {
+		content := a.codeArea.CopyState().Buffer.Content
+		for _, f := range a.AfterReadline {
+			f(content)
+		}
+		a.resetAllStates()
 	}()
-	return codeCh, errCh
+
+	restore, err := a.TTY.Setup()
+	if err != nil {
+		return "", err
+	}
+	defer restore()
+
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
+	// Relay input events.
+	eventCh := a.TTY.StartInput()
+	defer a.TTY.StopInput()
+	wg.Add(1)
+	go func() {
+		for event := range eventCh {
+			a.loop.Input(event)
+		}
+		wg.Done()
+	}()
+
+	// Relay signals.
+	sigCh := a.TTY.NotifySignals()
+	defer a.TTY.StopSignals()
+	wg.Add(1)
+	go func() {
+		for sig := range sigCh {
+			a.loop.Input(sig)
+		}
+		wg.Done()
+	}()
+
+	// Relay late updates from prompt, rprompt and highlighter.
+	stopRelayLateUpdates := make(chan struct{})
+	defer close(stopRelayLateUpdates)
+	relayLateUpdates := func(ch <-chan ui.Text) {
+		if ch == nil {
+			return
+		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-ch:
+					a.Redraw()
+				case <-stopRelayLateUpdates:
+					return
+				}
+			}
+		}()
+	}
+
+	relayLateUpdates(a.Prompt.LateUpdates())
+	relayLateUpdates(a.RPrompt.LateUpdates())
+	relayLateUpdates(a.Highlighter.LateUpdates())
+
+	// Trigger an initial prompt update.
+	a.triggerPrompts(true)
+
+	return a.loop.Run()
 }
 
-// Notify adds a note and requests a redraw.
-func (app *App) Notify(note string) {
-	app.core.Notify(note)
+func (a *app) Redraw() {
+	a.loop.Redraw(false)
 }
 
-// State returns the state of the App.
-func (app *App) State() *clitypes.State {
-	return app.core.State()
+func (a *app) RedrawFull() {
+	// This is currently not exposed, but can be exposed later if the need arises.
+	a.loop.Redraw(true)
+}
+
+func (a *app) CommitEOF() {
+	a.loop.Return("", io.EOF)
+}
+
+func (a *app) CommitCode() {
+	code := a.codeArea.CopyState().Buffer.Content
+	a.loop.Return(code, nil)
+}
+
+func (a *app) Notify(note string) {
+	a.MutateState(func(s *State) { s.Notes = append(s.Notes, note) })
+	a.Redraw()
 }

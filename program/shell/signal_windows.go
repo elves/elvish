@@ -4,5 +4,5 @@ import (
 	"os"
 )
 
-func handleSignal(_ os.Signal) {
+func handleSignal(os.Signal, *os.File) {
 }

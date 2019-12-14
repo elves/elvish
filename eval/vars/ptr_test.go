@@ -8,6 +8,9 @@ func TestFromPtr(t *testing.T) {
 	if g := variable.Get(); g != "10" {
 		t.Errorf(`Getting ptrVariable returns %v, want "10"`, g)
 	}
+	if g := variable.GetRaw(); g != 10 {
+		t.Errorf("GetRaw -> %v, want 10", g)
+	}
 	err := variable.Set("20")
 	if err != nil {
 		t.Errorf(`Setting ptrVariable with "20" returns error %v`, err)

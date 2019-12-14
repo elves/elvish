@@ -1,4 +1,4 @@
-// Package prompt provides an implementation of the clicore.Prompt interface.
+// Package prompt provides an implementation of the cli.Prompt interface.
 package prompt
 
 import (
@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 // Prompt implements a prompt that is executed asynchronously.
@@ -18,60 +18,79 @@ type Prompt struct {
 	// Channel for update requests.
 	updateReq chan struct{}
 	// Channel on which prompt contents are delivered.
-	ch chan styled.Text
+	ch chan ui.Text
 	// Last computed prompt content.
-	last styled.Text
+	last ui.Text
 	// Mutex for guarding access to the last field.
 	lastMutex sync.RWMutex
 }
 
-func defaultStaleTransform(t styled.Text) styled.Text {
-	return styled.Transform(t, "inverse")
+// Config keeps configurations for the prompt.
+type Config struct {
+	// The function that computes the prompt.
+	Compute func() ui.Text
+	// Function to transform stale prompts.
+	StaleTransform func(ui.Text) ui.Text
+	// Threshold for a prompt to be considered as stale.
+	StaleThreshold func() time.Duration
+	// How eager the prompt should be updated. When >= 5, updated when directory
+	// is changed. When >= 10, always update. Default is 5.
+	Eagerness func() int
+}
+
+func defaultStaleTransform(t ui.Text) ui.Text {
+	return ui.StyleText(t, ui.Inverse)
 }
 
 const defaultStaleThreshold = 200 * time.Millisecond
 
 const defaultEagerness = 5
 
-var initialContent = styled.Plain("???> ")
+var unknownContent = ui.T("???> ")
 
 // New makes a new prompt.
-func New(fn func() styled.Text) *Prompt {
+func New(cfg Config) *Prompt {
+	if cfg.Compute == nil {
+		cfg.Compute = func() ui.Text { return unknownContent }
+	}
+	if cfg.StaleTransform == nil {
+		cfg.StaleTransform = defaultStaleTransform
+	}
+	if cfg.StaleThreshold == nil {
+		cfg.StaleThreshold = func() time.Duration { return defaultStaleThreshold }
+	}
+	if cfg.Eagerness == nil {
+		cfg.Eagerness = func() int { return defaultEagerness }
+	}
 	p := &Prompt{
-		Config{Raw: RawConfig{
-			fn, defaultStaleTransform, defaultStaleThreshold, defaultEagerness}},
-		"", make(chan struct{}, 1), make(chan styled.Text, 1),
-		initialContent, sync.RWMutex{}}
+		cfg,
+		"", make(chan struct{}, 1), make(chan ui.Text, 1),
+		unknownContent, sync.RWMutex{}}
 	// TODO: Don't keep a goroutine running.
 	go p.loop()
 	return p
 }
 
-// Config returns the config for the prompt.
-func (p *Prompt) Config() *Config {
-	return &p.config
-}
-
 func (p *Prompt) loop() {
-	content := initialContent
-	ch := make(chan styled.Text)
+	content := unknownContent
+	ch := make(chan ui.Text)
 	for range p.updateReq {
 		go func() {
-			ch <- p.config.Compute()()
+			ch <- p.config.Compute()
 		}()
 
 		select {
 		case <-time.After(p.config.StaleThreshold()):
 			// The prompt callback did not finish within the threshold. Send the
 			// previous content, marked as stale.
-			p.send(p.config.StaleTransform()(content))
+			p.send(p.config.StaleTransform(content))
 			content = <-ch
 
 			select {
 			case <-p.updateReq:
 				// If another update is already requested by the time we finish,
 				// keep marking the prompt as stale. This reduces flickering.
-				p.send(p.config.StaleTransform()(content))
+				p.send(p.config.StaleTransform(content))
 				p.queueUpdate()
 			default:
 				p.send(content)
@@ -90,14 +109,14 @@ func (p *Prompt) Trigger(force bool) {
 }
 
 // Get returns the current content of the prompt.
-func (p *Prompt) Get() styled.Text {
+func (p *Prompt) Get() ui.Text {
 	p.lastMutex.RLock()
 	defer p.lastMutex.RUnlock()
 	return p.last
 }
 
 // LateUpdates returns a channel on which late updates are made available.
-func (p *Prompt) LateUpdates() <-chan styled.Text {
+func (p *Prompt) LateUpdates() <-chan ui.Text {
 	return p.ch
 }
 
@@ -108,7 +127,7 @@ func (p *Prompt) queueUpdate() {
 	}
 }
 
-func (p *Prompt) send(content styled.Text) {
+func (p *Prompt) send(content ui.Text) {
 	p.lastMutex.Lock()
 	p.last = content
 	p.lastMutex.Unlock()

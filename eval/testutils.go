@@ -256,6 +256,8 @@ func MustWriteFile(filename string, data []byte, perm os.FileMode) {
 
 // InTempHome is like util.InTestDir, but it also sets HOME to the temporary
 // directory and restores the original HOME in cleanup.
+//
+// TODO(xiaq): Move this into the util package.
 func InTempHome() (string, func()) {
 	oldHome := os.Getenv("HOME")
 	tmpHome, cleanup := util.InTestDir()

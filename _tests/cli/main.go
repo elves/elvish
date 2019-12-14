@@ -8,18 +8,17 @@ import (
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/histutil"
-	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
-func highlight(code string) styled.Text {
-	t := styled.Text{}
+func highlight(code string) ui.Text {
+	t := ui.Text{}
 	for _, r := range code {
 		style := ""
 		if unicode.IsDigit(r) {
 			style = "green"
 		}
-		t = append(t, styled.MakeText(string(r), style)...)
+		t = append(t, ui.T(string(r), style)...)
 	}
 	return t
 }

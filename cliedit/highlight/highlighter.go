@@ -3,39 +3,38 @@ package highlight
 import (
 	"sync"
 
-	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/ui"
 )
 
 const latesBufferSize = 128
 
 // Highlighter is a code highlighter that can deliver results asynchronously.
 type Highlighter struct {
-	dep   Dep
+	cfg   Config
 	state state
-	lates chan styled.Text
+	lates chan ui.Text
 }
 
 type state struct {
-	sync.RWMutex
+	sync.Mutex
 	code       string
-	styledCode styled.Text
+	styledCode ui.Text
 	errors     []error
 }
 
-func NewHighlighter(dep Dep) *Highlighter {
-	return &Highlighter{dep, state{}, make(chan styled.Text, latesBufferSize)}
+func NewHighlighter(cfg Config) *Highlighter {
+	return &Highlighter{cfg, state{}, make(chan ui.Text, latesBufferSize)}
 }
 
 // Get returns the highlighted code and static errors found in the code.
-func (hl *Highlighter) Get(code string) (styled.Text, []error) {
-	hl.state.RLock()
+func (hl *Highlighter) Get(code string) (ui.Text, []error) {
+	hl.state.Lock()
+	defer hl.state.Unlock()
 	if code == hl.state.code {
-		hl.state.RUnlock()
 		return hl.state.styledCode, hl.state.errors
 	}
-	hl.state.RUnlock()
 
-	lateCb := func(styledCode styled.Text) {
+	lateCb := func(styledCode ui.Text) {
 		hl.state.Lock()
 		if hl.state.code != code {
 			// Late result was delivered after code has changed. Unlock and
@@ -49,10 +48,8 @@ func (hl *Highlighter) Get(code string) (styled.Text, []error) {
 		hl.lates <- styledCode
 	}
 
-	styledCode, errors := highlight(code, hl.dep, lateCb)
+	styledCode, errors := highlight(code, hl.cfg, lateCb)
 
-	hl.state.Lock()
-	defer hl.state.Unlock()
 	hl.state.code = code
 	hl.state.styledCode = styledCode
 	hl.state.errors = errors
@@ -60,6 +57,6 @@ func (hl *Highlighter) Get(code string) (styled.Text, []error) {
 }
 
 // LateUpdates returns a channel for notifying late updates.
-func (hl *Highlighter) LateUpdates() <-chan styled.Text {
+func (hl *Highlighter) LateUpdates() <-chan ui.Text {
 	return hl.lates
 }

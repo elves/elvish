@@ -1,30 +1,23 @@
 package cliedit
 
 import (
+	"reflect"
 	"testing"
 )
 
-/*
-func TestNs(t *testing.T) {
-	ev := eval.NewEvaler()
-	ed := NewEditor(devNull, devNull, ev, testStore)
-	ev.Global.AddNs("edit", ed.Ns())
+func TestAddsHistoryAfterAccepting(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
 
-	ev.EvalSourceInTTY(eval.NewScriptSource("[t]", "[t]", "edit:max-height = 20"))
-	if ed.app.Config.Raw.MaxHeight != 20 {
-		t.Errorf("Failed to set MaxHeight to 20 via binding")
+	feedInput(f.TTYCtrl, "echo x\n")
+	f.Wait()
+
+	cmds, err := f.Store.Cmds(0, 100)
+	if err != nil {
+		panic(err)
 	}
-}
-*/
-
-func TestAddCmdAfterReadline(t *testing.T) {
-	// TODO
-}
-
-func TestInsertMode(t *testing.T) {
-	// TODO
-}
-
-func TestDefaultBinding(t *testing.T) {
-	// TODO
+	wantCmds := []string{"echo x"}
+	if !reflect.DeepEqual(cmds, wantCmds) {
+		t.Errorf("got cmds %v, want %v", cmds, wantCmds)
+	}
 }

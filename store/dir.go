@@ -17,11 +17,9 @@ const (
 const BucketDir = "dir"
 
 func init() {
-	initDB["initialize directory history table"] = func(db *bolt.DB) error {
-		return db.Update(func(tx *bolt.Tx) error {
-			_, err := tx.CreateBucketIfNotExists([]byte(BucketDir))
-			return err
-		})
+	initDB["initialize directory history table"] = func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(BucketDir))
+		return err
 	}
 }
 

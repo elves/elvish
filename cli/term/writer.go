@@ -4,51 +4,43 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-
-	"github.com/elves/elvish/edit/ui"
 )
 
 var logWriterDetail = false
 
 type Writer interface {
-	// Newline writes a newline to the terminal.
-	Newline()
 	// CurrentBuffer returns the current buffer.
-	CurrentBuffer() *ui.Buffer
+	CurrentBuffer() *Buffer
 	// ResetCurrentBuffer resets the current buffer.
 	ResetCurrentBuffer()
 	// CommitBuffer updates the terminal display to reflect current buffer.
-	CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error
+	CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error
 }
 
 // writer renders the editor UI.
 type writer struct {
 	file   *os.File
-	curBuf *ui.Buffer
+	curBuf *Buffer
 }
 
 func NewWriter(f *os.File) Writer {
-	return &writer{f, &ui.Buffer{}}
-}
-
-func (w *writer) Newline() {
-	w.file.WriteString("\n")
+	return &writer{f, &Buffer{}}
 }
 
 // CurrentBuffer returns the current buffer.
-func (w *writer) CurrentBuffer() *ui.Buffer {
+func (w *writer) CurrentBuffer() *Buffer {
 	return w.curBuf
 }
 
 // ResetCurrentBuffer resets the current buffer.
 func (w *writer) ResetCurrentBuffer() {
-	w.curBuf = &ui.Buffer{}
+	w.curBuf = &Buffer{}
 }
 
 // deltaPos calculates the escape sequence needed to move the cursor from one
 // position to another. It use relative movements to move to the destination
 // line and absolute movement to move to the destination column.
-func deltaPos(from, to ui.Pos) []byte {
+func deltaPos(from, to Pos) []byte {
 	buf := new(bytes.Buffer)
 	if from.Line < to.Line {
 		// move down
@@ -65,7 +57,7 @@ func deltaPos(from, to ui.Pos) []byte {
 }
 
 // CommitBuffer updates the terminal display to reflect current buffer.
-func (w *writer) CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
+func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 	if buf.Width != w.curBuf.Width && w.curBuf.Lines != nil {
 		// Width change, force full refresh
 		w.curBuf.Lines = nil
@@ -84,8 +76,15 @@ func (w *writer) CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 	bytesBuf.WriteString("\r")
 
 	if fullRefresh {
-		// Do an erase.
-		bytesBuf.WriteString("\033[J")
+		// Erase from here. We may be in the top right corner of the screen; if
+		// we simply do an erase here, tmux will save the current screen in the
+		// scrollback buffer (presumably as a heuristics to detect full-screen
+		// applications), but that is not something we want. So we write a space
+		// first, and then erase, before rewinding back.
+		//
+		// Source code for tmux behavior:
+		// https://github.com/tmux/tmux/blob/5f5f029e3b3a782dc616778739b2801b00b17c0e/screen-write.c#L1139
+		bytesBuf.WriteString(" \033[J\r")
 	}
 
 	// style of last written cell.
@@ -98,11 +97,9 @@ func (w *writer) CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 		}
 	}
 
-	writeCells := func(cs []ui.Cell) {
+	writeCells := func(cs []Cell) {
 		for _, c := range cs {
-			if c.Width > 0 {
-				switchStyle(c.Style)
-			}
+			switchStyle(c.Style)
 			bytesBuf.WriteString(c.Text)
 		}
 	}
@@ -136,12 +133,12 @@ func (w *writer) CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 		// No need to update current line
 		if !fullRefresh && i < len(w.curBuf.Lines) {
 			var eq bool
-			if eq, j = ui.CompareCells(line, w.curBuf.Lines[i]); eq {
+			if eq, j = CompareCells(line, w.curBuf.Lines[i]); eq {
 				continue
 			}
 		}
 		// Move to the first differing column if necessary.
-		firstCol := ui.CellsWidth(line[:j])
+		firstCol := CellsWidth(line[:j])
 		if firstCol != 0 {
 			fmt.Fprintf(bytesBuf, "\033[%dC", firstCol)
 		}

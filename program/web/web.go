@@ -34,11 +34,7 @@ type ExecuteResponse struct {
 	Err       string
 }
 
-func New(binpath, sockpath, dbpath string, port int) *Web {
-	return &Web{binpath, sockpath, dbpath, port}
-}
-
-func (web *Web) Main([]string) int {
+func (web *Web) Main(fds [3]*os.File, _ []string) int {
 	ev, _ := runtime.InitRuntime(web.BinPath, web.SockPath, web.DbPath)
 	defer runtime.CleanupRuntime(ev)
 

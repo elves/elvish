@@ -14,7 +14,7 @@ import (
 )
 
 var logger = util.GetLogger("[store] ")
-var initDB = map[string](func(*bolt.DB) error){}
+var initDB = map[string](func(*bolt.Tx) error){}
 
 var ErrInvalidBucket = errors.New("invalid bucket")
 
@@ -63,11 +63,17 @@ func NewStoreDB(db *bolt.DB) (*Store, error) {
 	if SchemaUpToDate(db) {
 		logger.Println("DB schema up to date")
 	} else {
-		for name, fn := range initDB {
-			err := fn(db)
-			if err != nil {
-				return nil, fmt.Errorf("failed to %s: %v", name, err)
+		err := db.Update(func(tx *bolt.Tx) error {
+			for name, fn := range initDB {
+				err := fn(tx)
+				if err != nil {
+					return fmt.Errorf("failed to %s: %v", name, err)
+				}
 			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
 		}
 	}
 

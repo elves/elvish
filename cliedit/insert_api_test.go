@@ -1,92 +1,77 @@
 package cliedit
 
 import (
-	"github.com/elves/elvish/eval"
+	"testing"
+
+	"github.com/elves/elvish/cli/term"
 )
 
-var abbrData = [][2]string{{"xx", "xx full"}, {"yy", "yy full"}}
+func TestInsert_Abbr(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
 
-/*
-func TestInitInsert_Abbr(t *testing.T) {
-	m, ns := initInsert(&fakeApp{}, eval.NewEvaler())
+	evals(f.Evaler, `edit:abbr = [&x=full]`)
+	f.TTYCtrl.Inject(term.K('x'), term.K('\n'))
 
-	abbrValue := vals.EmptyMap
-	for _, pair := range abbrData {
-		abbrValue = abbrValue.Assoc(pair[0], pair[1])
-	}
-	ns["abbr"].Set(abbrValue)
-
-	var cbData [][2]string
-	m.AbbrIterate(func(a, f string) {
-		cbData = append(cbData, [2]string{a, f})
-	})
-
-	if !reflect.DeepEqual(cbData, abbrData) {
-		t.Errorf("Callback called with %v, want %v", cbData, abbrData)
+	if code := <-f.codeCh; code != "full" {
+		t.Errorf("abbreviation expanded to %q, want %q", code, "full")
 	}
 }
 
-func TestInitInsert_Binding(t *testing.T) {
-	m, ns := initInsert(&fakeApp{}, eval.NewEvaler())
-	called := 0
-	binding, err := emptyBindingMap.Assoc("a",
-		eval.NewGoFn("test binding", func() { called++ }))
-	if err != nil {
-		panic(err)
+func TestInsert_Binding(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	evals(f.Evaler,
+		`called = 0`,
+		`edit:insert:binding[x] = { called = (+ $called 1) }`)
+
+	f.TTYCtrl.Inject(term.K('x'), term.K('\n'))
+
+	if code := <-f.codeCh; code != "" {
+		t.Errorf("code = %q, want %q", code, "")
 	}
-	ns["binding"].Set(binding)
-
-	m.HandleEvent(tty.KeyEvent{Rune: 'a'}, &clitypes.State{})
-
-	if called != 1 {
-		t.Errorf("Handler called %d times, want once", called)
-	}
-}
-
-func TestInitInsert_QuotePaste(t *testing.T) {
-	m, ns := initInsert(&fakeApp{}, eval.NewEvaler())
-
-	ns["quote-paste"].Set(true)
-
-	if !m.Config.QuotePaste() {
-		t.Errorf("QuotePaste not set via namespae")
+	if called := f.Evaler.Global["called"].Get(); called != 1.0 {
+		t.Errorf("called = %v, want 1", called)
 	}
 }
 
+func TestInsert_QuotePaste(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
 
-func TestInitInsert_Start(t *testing.T) {
-	ed := &fakeApp{}
-	ev := eval.NewEvaler()
-	m, ns := initInsert(ed, ev)
+	evals(f.Evaler, `edit:insert:quote-paste = $true`)
 
-	fm := eval.NewTopFrame(ev, eval.NewInternalSource("[test]"), nil)
-	fm.Call(getFn(ns, "start"), nil, eval.NoOpts)
+	f.TTYCtrl.Inject(
+		term.PasteSetting(true),
+		term.K('>'),
+		term.PasteSetting(false),
+		term.K('\n'))
 
-	if ed.state.Mode() != m {
-		t.Errorf("state is not insert mode after calling start")
+	wantCode := `'>'`
+	if code := <-f.codeCh; code != wantCode {
+		t.Errorf("Got code %q, want %q", code, wantCode)
 	}
 }
 
-func TestInitInsert_DefaultHandler(t *testing.T) {
-	ed := &fakeApp{}
-	ev := eval.NewEvaler()
-	_, ns := initInsert(ed, ev)
+func TestToggleQuotePaste(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
 
-	// Pretend that we are executing a binding for "a".
-	ed.state.SetBindingKey(ui.Key{Rune: 'a'})
+	evals(f.Evaler,
+		`v0 = $edit:insert:quote-paste`,
+		`edit:toggle-quote-paste`,
+		`v1 = $edit:insert:quote-paste`,
+		`edit:toggle-quote-paste`,
+		`v2 = $edit:insert:quote-paste`)
 
-	// Call <edit:insert>:default-binding.
-	fm := eval.NewTopFrame(ev, eval.NewInternalSource("[test]"), nil)
-	fm.Call(getFn(ns, "default-handler"), nil, eval.NoOpts)
-
-	// Verify that the default handler has executed, inserting "a".
-	if ed.state.Raw.Code != "a" {
-		t.Errorf("state.Raw.Code = %q, want %q", ed.state.Raw.Code, "a")
+	v0 := getGlobal(f.Evaler, "v0").(bool)
+	v1 := getGlobal(f.Evaler, "v1").(bool)
+	v2 := getGlobal(f.Evaler, "v2").(bool)
+	if v1 == v0 {
+		t.Errorf("got v1 = v0")
 	}
-}
-
-*/
-
-func getFn(ns eval.Ns, name string) eval.Callable {
-	return ns[name+eval.FnSuffix].Get().(eval.Callable)
+	if v2 == v1 {
+		t.Errorf("got v2 = v1")
+	}
 }

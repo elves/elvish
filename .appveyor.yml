@@ -2,15 +2,14 @@ platform: x64
 clone_folder: c:\gopath\src\github.com\elves\elvish
 environment:
   GOPATH: c:\gopath
+  ELVISH_TEST_UI_TIMEOUT: 10s
 install:
   - echo %PATH%
   - echo %GOPATH%
   - set PATH=%GOPATH%\bin;c:\go\bin;C:\msys64\usr\bin;%PATH%
   - go version
   - go env
-  # - choco install codecov
-  # - go get github.com/mattn/goveralls
 build_script:
   - make test
-# deploy_script:
-#  - make coverage-appveyor
+deploy_script:
+  - make upload-coverage-codecov

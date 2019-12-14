@@ -69,6 +69,46 @@ func TestInTestDir_CleanupChangesBackToOldWd(t *testing.T) {
 	}
 }
 
+var testDir = Dir{
+	"a": "a content",
+	"b": "b content",
+	"c": "",
+	"d": Dir{
+		"d1": "d1 content",
+		"dd": Dir{
+			"dd1": "dd1 content",
+		},
+	},
+}
+
+func TestInTestDirWithSetup_CreatesFiles(t *testing.T) {
+	cleanup := InTestDirWithSetup(Dir{
+		"a": "a content",
+		"b": "b content",
+	})
+	defer cleanup()
+
+	testFileContent(t, "a", "a content")
+	testFileContent(t, "b", "b content")
+}
+
+func TestInTestDirWithSetup_CreatesDirectories(t *testing.T) {
+	cleanup := InTestDirWithSetup(Dir{
+		"d": Dir{
+			"d1": "d1 content",
+			"d2": "d2 content",
+			"dd": Dir{
+				"dd1": "dd1 content",
+			},
+		},
+	})
+	defer cleanup()
+
+	testFileContent(t, "d/d1", "d1 content")
+	testFileContent(t, "d/d2", "d2 content")
+	testFileContent(t, "d/dd/dd1", "dd1 content")
+}
+
 func getWd() string {
 	dir, err := os.Getwd()
 	if err != nil {
@@ -79,4 +119,16 @@ func getWd() string {
 		panic(err)
 	}
 	return dir
+}
+
+func testFileContent(t *testing.T, filename string, wantContent string) {
+	t.Helper()
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		t.Errorf("Could not read %v: %v", filename, err)
+		return
+	}
+	if string(content) != wantContent {
+		t.Errorf("File %v is %q, want %q", filename, content, wantContent)
+	}
 }

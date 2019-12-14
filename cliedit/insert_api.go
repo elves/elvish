@@ -8,40 +8,39 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func initInsert(ev *eval.Evaler, cfg *cli.InsertModeConfig) eval.Ns {
-	// Underlying abbreviation map and binding map.
+func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns) {
 	abbr := vals.EmptyMap
-	binding := emptyBindingMap
+	abbrVar := vars.FromPtr(&abbr)
+	appSpec.Abbreviations = makeMapIterator(abbrVar)
 
-	cfg.Binding = newMapBinding(ev, &binding)
-	cfg.Abbrs = newMapStringPairs(&abbr)
+	binding := newBindingVar(EmptyBindingMap)
+	appSpec.OverlayHandler = newMapBinding(nt, ev, binding)
 
-	ns := eval.Ns{
-		"binding":     vars.FromPtr(&binding),
-		"abbr":        vars.FromPtr(&abbr),
-		"quote-paste": vars.FromPtr(&cfg.QuotePaste),
-	}.AddGoFns("<edit:insert>:", map[string]interface{}{
-		"start":           cli.StartInsert,
-		"default-handler": cli.DefaultInsert,
+	quotePaste := newBoolVar(false)
+	appSpec.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }
+
+	toggleQuotePaste := func() {
+		quotePaste.Set(!quotePaste.Get().(bool))
+	}
+
+	ns.Add("abbr", abbrVar)
+	ns.AddGoFn("<edit>", "toggle-quote-paste", toggleQuotePaste)
+	ns.AddNs("insert", eval.Ns{
+		"binding":     binding,
+		"quote-paste": quotePaste,
 	})
-
-	return ns
 }
 
-func newMapStringPairs(m *hashmap.Map) cli.StringPairs {
-	return mapStringPairs{m}
-}
-
-type mapStringPairs struct{ m *hashmap.Map }
-
-func (s mapStringPairs) IterateStringPairs(f func(a, b string)) {
-	for it := (*s.m).Iterator(); it.HasElem(); it.Next() {
-		k, v := it.Elem()
-		ks, kok := k.(string)
-		vs, vok := v.(string)
-		if !kok || !vok {
-			continue
+func makeMapIterator(mv vars.PtrVar) func(func(a, b string)) {
+	return func(f func(a, b string)) {
+		for it := mv.GetRaw().(hashmap.Map).Iterator(); it.HasElem(); it.Next() {
+			k, v := it.Elem()
+			ks, kok := k.(string)
+			vs, vok := v.(string)
+			if !kok || !vok {
+				continue
+			}
+			f(ks, vs)
 		}
-		f(ks, vs)
 	}
 }
