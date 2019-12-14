@@ -98,7 +98,9 @@ func listingStartCustom(app cli.App, fm *eval.Frame, opts customListingOpts, ite
 			return items, selected
 		},
 		Accept: func(s string) bool {
-			callWithNotifyPorts(app, fm.Evaler, opts.Accept, s)
+			if opts.Accept != nil {
+				callWithNotifyPorts(app, fm.Evaler, opts.Accept, s)
+			}
 			return false
 		},
 		AutoAccept: opts.AutoAccept,

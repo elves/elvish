@@ -114,7 +114,7 @@ func TestCustomListing_PassingValueCallback(t *testing.T) {
 
 	evals(f.Evaler,
 		`f = [q]{ put [&to-accept='q '$q &to-show=(styled 'q '$q blue)] }`,
-		`edit:listing:start-custom $f &accept=$edit:insert-at-dot~ &caption=A`)
+		`edit:listing:start-custom $f &caption=A`)
 	// Query.
 	f.TTYCtrl.Inject(term.K('x'))
 	f.TestTTY(t,
@@ -124,6 +124,9 @@ func TestCustomListing_PassingValueCallback(t *testing.T) {
 		"q x                                               ", Styles,
 		"##################################################",
 	)
+	// No-op accept.
+	f.TTYCtrl.Inject(term.K('\n'))
+	f.TestTTY(t, "~> ", term.DotHere)
 }
 
 func TestCustomListing_PassingBytesCallback(t *testing.T) {
