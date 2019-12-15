@@ -3,7 +3,6 @@ package cliedit
 import (
 	"io"
 	"testing"
-	"time"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/el/codearea"
@@ -154,20 +153,15 @@ func TestSmartEnter_InsertsNewlineWhenIncomplete(t *testing.T) {
 	}
 }
 
-func TestSmartEnter_AcceptsCodeWhenComplete(t *testing.T) {
+func TestSmartEnter_AcceptsCodeWhenWholeBufferIsComplete(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	cli.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "put", Dot: 3})
+	cli.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "put []", Dot: 5})
 	evals(f.Evaler, `edit:smart-enter`)
-	wantCode := "put"
-	select {
-	case code := <-f.codeCh:
-		if code != wantCode {
-			t.Errorf("got return code %q, want %q", code, wantCode)
-		}
-	case <-time.After(time.Second):
-		t.Errorf("timed out after 1 second")
+	wantCode := "put []"
+	if code, _ := f.Wait(); code != wantCode {
+		t.Errorf("got return code %q, want %q", code, wantCode)
 	}
 }
 

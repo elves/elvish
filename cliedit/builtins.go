@@ -93,13 +93,13 @@ func insertRaw(app cli.App, tty cli.TTY) {
 
 //elvdoc:fn smart-enter
 //
-// Inserts a literal newline if the code before the dot is not syntactically
-// complete Elvish code. Accepts the current line otherwise.
+// Inserts a literal newline if the current code is not syntactically complete
+// Elvish code. Accepts the current line otherwise.
 
 func smartEnter(app cli.App) {
 	// TODO(xiaq): Fix the race condition.
 	buf := cli.CodeBuffer(app)
-	if isSyntaxComplete(buf.Content[:buf.Dot]) {
+	if isSyntaxComplete(buf.Content) {
 		app.CommitCode()
 	} else {
 		app.CodeArea().MutateState(func(s *codearea.State) {
