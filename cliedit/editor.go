@@ -58,6 +58,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	initCompletion(app, ev, ns)
 	initHistWalk(app, ev, ns, fuser)
 	initInstant(app, ev, ns)
+	initMinibuf(app, ev, ns)
 
 	initBufferBuiltins(app, ns)
 	initTTYBuiltins(app, tty, ns)

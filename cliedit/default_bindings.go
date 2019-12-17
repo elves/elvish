@@ -31,6 +31,7 @@ insert:binding = (binding-table [
   &Ctrl-N= $navigation:start~
   &Tab=    $completion:smart-start~
   &Up=     $history:start~
+  &Alt-x=  $minibuf:start~
 
   &Enter=   $smart-enter~
   &Ctrl-D=  $return-eof~
