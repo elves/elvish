@@ -9,11 +9,11 @@ import (
 )
 
 var completers = []completer{
-	completeArg,
 	completeCommand,
 	completeIndex,
 	completeRedir,
 	completeVariable,
+	completeArg,
 }
 
 type completer func(parse.Node, Config) (*context, []RawItem, error)
