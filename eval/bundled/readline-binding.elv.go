@@ -34,7 +34,6 @@ b=[k f]{ edit:completion:binding[$k] = $f } {
     $b Ctrl-F $edit:completion:right~
     $b Ctrl-N $edit:completion:down~
     $b Ctrl-P $edit:completion:up~
-    $b Alt-f  $edit:completion:trigger-filter~
 }
 
 b=[k f]{ edit:navigation:binding[$k] = $f } {
@@ -48,7 +47,7 @@ b=[k f]{ edit:navigation:binding[$k] = $f } {
 b=[k f]{ edit:history:binding[$k] = $f } {
     $b Ctrl-N $edit:history:down-or-quit~
     $b Ctrl-P $edit:history:up~
-    $b Ctrl-G $edit:insert:start~
+    $b Ctrl-G $edit:close-listing~
 }
 
 b=[k f]{ edit:listing:binding[$k] = $f } {
@@ -56,7 +55,7 @@ b=[k f]{ edit:listing:binding[$k] = $f } {
     $b Ctrl-P $edit:listing:up~
     $b Ctrl-V $edit:listing:page-down~
     $b Alt-v  $edit:listing:page-up~
-    $b Ctrl-G $edit:insert:start~
+    $b Ctrl-G $edit:close-listing~
 }
 
 b=[k f]{ edit:histlist:binding[$k] = $f } {
