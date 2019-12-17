@@ -21,7 +21,7 @@ func initInstant(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	ns.AddNs("-instant",
 		eval.Ns{
 			"binding": bindingVar,
-		}.AddGoFns("<edit:-instant>", map[string]interface{}{
+		}.AddGoFns("<edit:-instant>:", map[string]interface{}{
 			"start": func() { instantStart(app, ev, binding) },
 		}))
 }
