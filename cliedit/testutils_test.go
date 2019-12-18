@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/apptest"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/eval"
@@ -18,7 +17,7 @@ var Styles = apptest.Styles
 
 type fixture struct {
 	Editor  *Editor
-	TTYCtrl cli.TTYCtrl
+	TTYCtrl apptest.TTYCtrl
 	Evaler  *eval.Evaler
 	Store   storedefs.Store
 	Home    string
@@ -51,7 +50,7 @@ func storeOp(storeFn func(storedefs.Store)) func(*fixture) {
 func setup(fns ...func(*fixture)) *fixture {
 	st, cleanupStore := store.MustGetTempStore()
 	home, cleanupFs := eval.InTempHome()
-	tty, ttyCtrl := cli.NewFakeTTY()
+	tty, ttyCtrl := apptest.NewFakeTTY()
 	ev := eval.NewEvaler()
 	ed := NewEditor(tty, ev, st)
 	ev.InstallModule("edit", ed.Ns())
@@ -96,7 +95,7 @@ func (f *fixture) TestTTYNotes(t *testing.T, args ...interface{}) {
 	f.TTYCtrl.TestNotesBuffer(t, f.MakeBuffer(args...))
 }
 
-func feedInput(ttyCtrl cli.TTYCtrl, s string) {
+func feedInput(ttyCtrl apptest.TTYCtrl, s string) {
 	for _, r := range s {
 		ttyCtrl.Inject(term.K(r))
 	}

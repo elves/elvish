@@ -93,7 +93,7 @@ func NewApp(spec AppSpec) App {
 		State:             spec.State,
 	}
 	if a.TTY == nil {
-		a.TTY, _ = NewFakeTTY()
+		a.TTY = StdTTY
 	}
 	if a.MaxHeight == nil {
 		a.MaxHeight = func() int { return -1 }

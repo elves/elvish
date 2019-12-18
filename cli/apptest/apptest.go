@@ -28,7 +28,7 @@ var Styles = ui.RuneStylesheet{
 // Fixture is a test fixture.
 type Fixture struct {
 	App    cli.App
-	TTY    cli.TTYCtrl
+	TTY    TTYCtrl
 	width  int
 	codeCh <-chan string
 	errCh  <-chan error
@@ -36,8 +36,8 @@ type Fixture struct {
 
 // Setup sets up a test fixture. It contains an App whose ReadCode method has
 // been started asynchronously.
-func Setup(fns ...func(*cli.AppSpec, cli.TTYCtrl)) *Fixture {
-	tty, ttyCtrl := cli.NewFakeTTY()
+func Setup(fns ...func(*cli.AppSpec, TTYCtrl)) *Fixture {
+	tty, ttyCtrl := NewFakeTTY()
 	spec := cli.AppSpec{TTY: tty}
 	for _, fn := range fns {
 		fn(&spec, ttyCtrl)
@@ -50,14 +50,14 @@ func Setup(fns ...func(*cli.AppSpec, cli.TTYCtrl)) *Fixture {
 
 // WithSpec takes a function that operates on *cli.AppSpec, and wraps it into a
 // form suitable for passing to Setup.
-func WithSpec(f func(*cli.AppSpec)) func(*cli.AppSpec, cli.TTYCtrl) {
-	return func(spec *cli.AppSpec, _ cli.TTYCtrl) { f(spec) }
+func WithSpec(f func(*cli.AppSpec)) func(*cli.AppSpec, TTYCtrl) {
+	return func(spec *cli.AppSpec, _ TTYCtrl) { f(spec) }
 }
 
-// WithTTY takes a function that operates on cli.TTYCtrl, and wraps it to a form
+// WithTTY takes a function that operates on TTYCtrl, and wraps it to a form
 // suitable for passing to Setup.
-func WithTTY(f func(cli.TTYCtrl)) func(*cli.AppSpec, cli.TTYCtrl) {
-	return func(_ *cli.AppSpec, tty cli.TTYCtrl) { f(tty) }
+func WithTTY(f func(TTYCtrl)) func(*cli.AppSpec, TTYCtrl) {
+	return func(_ *cli.AppSpec, tty TTYCtrl) { f(tty) }
 }
 
 // Wait waits for ReaCode to finish, and returns its return values.

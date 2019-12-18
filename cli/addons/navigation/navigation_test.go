@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/elves/elvish/cli"
 	. "github.com/elves/elvish/cli/apptest"
 	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/lscolors"
@@ -278,7 +277,7 @@ func testNavigation(t *testing.T, c Cursor) {
 
 func setup() (*Fixture, func()) {
 	restore := lscolors.WithTestLsColors()
-	return Setup(WithTTY(func(tty cli.TTYCtrl) { tty.SetSize(6, 40) })), restore
+	return Setup(WithTTY(func(tty TTYCtrl) { tty.SetSize(6, 40) })), restore
 }
 
 func getTestCursor() *testCursor {

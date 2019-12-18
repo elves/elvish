@@ -13,7 +13,7 @@ func TestFixture(t *testing.T) {
 		WithSpec(func(spec *cli.AppSpec) {
 			spec.CodeAreaState.Buffer = codearea.Buffer{Content: "test", Dot: 4}
 		}),
-		WithTTY(func(tty cli.TTYCtrl) {
+		WithTTY(func(tty TTYCtrl) {
 			tty.SetSize(20, 30) // h = 20, w = 30
 		}),
 	)
