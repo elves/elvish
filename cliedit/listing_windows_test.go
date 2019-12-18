@@ -29,8 +29,8 @@ func TestLocationAddon(t *testing.T) {
 
 	f.TestTTY(t,
 		"~> \n",
-		"LOCATION ", Styles,
-		"******** ", term.DotHere, "\n",
+		" LOCATION  ", Styles,
+		"********** ", term.DotHere, "\n",
 		`  * C:\opt                                        `+"\n", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 		` 10 C:\home\elf`+"\n",
@@ -62,8 +62,8 @@ func TestLocationAddon_Workspace(t *testing.T) {
 	f.TTYCtrl.Inject(term.K('L', ui.Ctrl))
 	f.TestTTY(t,
 		`~\ws1\tmp> `+"\n",
-		"LOCATION ", Styles,
-		"******** ", term.DotHere, "\n",
+		" LOCATION  ", Styles,
+		"********** ", term.DotHere, "\n",
 		` 10 ws\bin                                        `+"\n", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 		` 10 C:\usr\bin`,

@@ -94,7 +94,7 @@ func Start(app cli.App, cfg Config) {
 
 	w := combobox.New(combobox.Spec{
 		CodeArea: codearea.Spec{
-			Prompt: layout.ModePrompt("LOCATION", true),
+			Prompt: layout.ModePrompt(" LOCATION ", true),
 		},
 		ListBox: listbox.Spec{
 			OverlayHandler: cfg.Binding,

@@ -222,7 +222,7 @@ func TestStart_OK(t *testing.T) {
 func listingBuf(filter string, lines ...string) *term.Buffer {
 	b := term.NewBufferBuilder(50)
 	b.Newline() // empty code area
-	layout.WriteListing(b, "LOCATION", filter, lines...)
+	layout.WriteListing(b, " LOCATION ", filter, lines...)
 	return b.Buffer()
 }
 

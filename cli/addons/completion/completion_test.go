@@ -23,8 +23,8 @@ func setupStarted(t *testing.T) *Fixture {
 	f.TestTTY(t,
 		"foo\n", Styles,
 		"___",
-		"COMPLETING WORD ", Styles,
-		"*************** ", term.DotHere, "\n",
+		" COMPLETING WORD  ", Styles,
+		"***************** ", term.DotHere, "\n",
 		"foo  foo bar", Styles,
 		"+++  ///////",
 	)
@@ -39,8 +39,8 @@ func TestFilter(t *testing.T) {
 	f.TestTTY(t,
 		"'foo bar'\n", Styles,
 		"_________",
-		"COMPLETING WORD ba", Styles,
-		"***************   ", term.DotHere, "\n",
+		" COMPLETING WORD  ba", Styles,
+		"*****************   ", term.DotHere, "\n",
 		"foo bar", Styles,
 		"#######",
 	)

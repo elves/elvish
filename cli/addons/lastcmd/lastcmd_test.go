@@ -52,8 +52,8 @@ func TestStart_OK(t *testing.T) {
 	// Test UI.
 	f.TestTTY(t,
 		"\n", // empty code area
-		"LASTCMD ", Styles,
-		"******* ", term.DotHere, "\n",
+		" LASTCMD  ", Styles,
+		"********* ", term.DotHere, "\n",
 		"    foo,bar,baz                                   \n", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 		"  0 foo\n",
@@ -65,8 +65,8 @@ func TestStart_OK(t *testing.T) {
 	f.TTY.Inject(term.K('-'))
 	f.TestTTY(t,
 		"\n", // empty code area
-		"LASTCMD -", Styles,
-		"******* ", term.DotHere, "\n",
+		" LASTCMD  -", Styles,
+		"*********  ", term.DotHere, "\n",
 		" -3 foo                                           \n", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 		" -2 bar\n",

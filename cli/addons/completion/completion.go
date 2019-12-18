@@ -41,7 +41,7 @@ func Start(app cli.App, cfg Config) {
 	}
 	w := combobox.New(combobox.Spec{
 		CodeArea: codearea.Spec{
-			Prompt: layout.ModePrompt("COMPLETING "+cfg.Name, true),
+			Prompt: layout.ModePrompt(" COMPLETING "+cfg.Name+" ", true),
 		},
 		ListBox: listbox.Spec{
 			Horizontal:     true,

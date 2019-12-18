@@ -71,8 +71,8 @@ func TestLastCmdAddon(t *testing.T) {
 	f.TTYCtrl.Inject(term.K(',', ui.Alt))
 	f.TestTTY(t,
 		"~> \n",
-		"LASTCMD ", Styles,
-		"******* ", term.DotHere, "\n",
+		" LASTCMD  ", Styles,
+		"********* ", term.DotHere, "\n",
 		"    echo hello world                              \n", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 		"  0 echo\n",
