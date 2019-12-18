@@ -16,9 +16,6 @@ import (
 )
 
 // Editor is the interface line editor for Elvish.
-//
-// This currently implements the same interface as *Editor in the old edit
-// package to ease transition.
 type Editor struct {
 	app cli.App
 	ns  eval.Ns
