@@ -72,7 +72,7 @@ func getDefaultPromptVals() (prompt, rprompt eval.Callable) {
 func getDefaultPrompt(isRoot bool) eval.Callable {
 	p := ui.T("> ")
 	if isRoot {
-		p = ui.T("# ", ui.Red)
+		p = ui.T("# ", ui.FgRed)
 	}
 	return eval.NewGoFn("default prompt", func() ui.Text {
 		return ui.T(util.Getwd()).ConcatText(p)

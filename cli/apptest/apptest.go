@@ -12,17 +12,17 @@ import (
 // Common stylesheet.
 var Styles = ui.RuneStylesheet{
 	'_': ui.Underlined,
-	'*': ui.Stylings(ui.Bold, ui.LightGray, ui.BgMagenta),
+	'*': ui.Stylings(ui.Bold, ui.FgLightGray, ui.BgMagenta),
 	'+': ui.Inverse,
-	'/': ui.Blue,
-	'#': ui.Stylings(ui.Inverse, ui.Blue),
-	'!': ui.Red,
+	'/': ui.FgBlue,
+	'#': ui.Stylings(ui.Inverse, ui.FgBlue),
+	'!': ui.FgRed,
 	'?': ui.BgRed,
-	'-': ui.Magenta,
-	'X': ui.Stylings(ui.Inverse, ui.Magenta),
-	'v': ui.Green,
-	'V': ui.Stylings(ui.Underlined, ui.Green),
-	'$': ui.Magenta,
+	'-': ui.FgMagenta,
+	'X': ui.Stylings(ui.Inverse, ui.FgMagenta),
+	'v': ui.FgGreen,
+	'V': ui.Stylings(ui.Underlined, ui.FgGreen),
+	'$': ui.FgMagenta,
 }
 
 // Fixture is a test fixture.

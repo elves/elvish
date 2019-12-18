@@ -9,15 +9,15 @@ import (
 func TestStyleText(t *testing.T) {
 	tt.Test(t, tt.Fn("StyleText", StyleText), tt.Table{
 		// Foreground color
-		tt.Args(T("foo"), Red).
+		tt.Args(T("foo"), FgRed).
 			Rets(Text{&Segment{Style{Foreground: "red"}, "foo"}}),
 		// Override existing foreground
-		tt.Args(Text{&Segment{Style{Foreground: "green"}, "foo"}}, Red).
+		tt.Args(Text{&Segment{Style{Foreground: "green"}, "foo"}}, FgRed).
 			Rets(Text{&Segment{Style{Foreground: "red"}, "foo"}}),
 		// Multiple segments
 		tt.Args(Text{
 			&Segment{Style{}, "foo"},
-			&Segment{Style{Foreground: "green"}, "bar"}}, Red).
+			&Segment{Style{Foreground: "green"}, "bar"}}, FgRed).
 			Rets(Text{
 				&Segment{Style{Foreground: "red"}, "foo"},
 				&Segment{Style{Foreground: "red"}, "bar"},

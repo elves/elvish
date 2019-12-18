@@ -297,7 +297,7 @@ func makeColInner(f File, filter string, showHidden bool, onSelect func(listbox.
 }
 
 func makeErrCol(err error) el.Widget {
-	return layout.Label{Content: ui.T(err.Error(), ui.Red)}
+	return layout.Label{Content: ui.T(err.Error(), ui.FgRed)}
 }
 
 type fileItems []File

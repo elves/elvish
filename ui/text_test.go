@@ -13,9 +13,9 @@ var Args = tt.Args
 func TestT(t *testing.T) {
 	tt.Test(t, tt.Fn("T", T), tt.Table{
 		Args("test").Rets(Text{&Segment{Text: "test"}}),
-		Args("test red", Red).Rets(Text{&Segment{
+		Args("test red", FgRed).Rets(Text{&Segment{
 			Text: "test red", Style: Style{Foreground: "red"}}}),
-		Args("test red", Red, Bold).Rets(Text{&Segment{
+		Args("test red", FgRed, Bold).Rets(Text{&Segment{
 			Text: "test red", Style: Style{Foreground: "red", Bold: true}}}),
 	})
 }

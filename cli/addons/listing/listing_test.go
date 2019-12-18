@@ -10,7 +10,7 @@ import (
 )
 
 func fooAndGreenBar(string) ([]Item, int) {
-	return []Item{{"foo", ui.T("foo")}, {"bar", ui.T("bar", ui.Green)}}, 0
+	return []Item{{"foo", ui.T("foo")}, {"bar", ui.T("bar", ui.FgGreen)}}, 0
 }
 
 func TestBasicUI(t *testing.T) {

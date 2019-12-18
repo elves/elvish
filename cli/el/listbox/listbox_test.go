@@ -47,9 +47,9 @@ var renderVerticalTests = []el.RenderTest{
 		Width: 10, Height: 2,
 		Want: bb(10).
 			Write("item 0   ", ui.Inverse).
-			Write(" ", ui.Inverse, ui.Magenta).
+			Write(" ", ui.Inverse, ui.FgMagenta).
 			Newline().Write("item 1   ").
-			Write("│", ui.Magenta),
+			Write("│", ui.FgMagenta),
 	},
 	{
 		Name: "scrollbar when not showing last item in full",
@@ -59,11 +59,11 @@ var renderVerticalTests = []el.RenderTest{
 		Width: 10, Height: 3,
 		Want: bb(10).
 			Write("item     ", ui.Inverse).
-			Write(" ", ui.Inverse, ui.Magenta).
+			Write(" ", ui.Inverse, ui.FgMagenta).
 			Newline().Write("0        ", ui.Inverse).
-			Write(" ", ui.Inverse, ui.Magenta).
+			Write(" ", ui.Inverse, ui.FgMagenta).
 			Newline().Write("item     ").
-			Write(" ", ui.Inverse, ui.Magenta),
+			Write(" ", ui.Inverse, ui.FgMagenta),
 	},
 	{
 		Name: "scrollbar when not showing only item in full",
@@ -73,7 +73,7 @@ var renderVerticalTests = []el.RenderTest{
 		Width: 10, Height: 1,
 		Want: bb(10).
 			Write("item     ", ui.Inverse).
-			Write(" ", ui.Inverse, ui.Magenta),
+			Write(" ", ui.Inverse, ui.FgMagenta),
 	},
 	{
 		Name: "padding",
@@ -97,16 +97,16 @@ var renderVerticalTests = []el.RenderTest{
 			State: State{
 				Items: TestItems{
 					Prefix: "x", NItems: 2,
-					Style: ui.Stylings(ui.Blue, ui.BgGreen)}}}),
+					Style: ui.Stylings(ui.FgBlue, ui.BgGreen)}}}),
 		Width: 6, Height: 2,
 
 		Want: bb(6).
 			Write(" ", ui.Inverse).
-			Write("x0", ui.Blue, ui.BgGreen, ui.Inverse).
+			Write("x0", ui.FgBlue, ui.BgGreen, ui.Inverse).
 			Write("   ", ui.Inverse).
 			Newline().
 			Write(" ").
-			Write("x1", ui.Blue, ui.BgGreen).
+			Write("x1", ui.FgBlue, ui.BgGreen).
 			Buffer(),
 	},
 	{
@@ -115,13 +115,13 @@ var renderVerticalTests = []el.RenderTest{
 			Padding: 1, ExtendStyle: true,
 			State: State{Items: TestItems{
 				Prefix: "x", NItems: 2,
-				Style: ui.Stylings(ui.Blue, ui.BgGreen)}}}),
+				Style: ui.Stylings(ui.FgBlue, ui.BgGreen)}}}),
 		Width: 6, Height: 2,
 
 		Want: bb(6).
-			Write(" x0   ", ui.Blue, ui.BgGreen, ui.Inverse).
+			Write(" x0   ", ui.FgBlue, ui.BgGreen, ui.Inverse).
 			Newline().
-			Write(" x1   ", ui.Blue, ui.BgGreen).
+			Write(" x1   ", ui.FgBlue, ui.BgGreen).
 			Buffer(),
 	},
 }
@@ -191,12 +191,12 @@ var renderHorizontalTests = []el.RenderTest{
 			Horizontal: true, Padding: 1, ExtendStyle: true,
 			State: State{Items: TestItems{
 				NItems: 2, Prefix: "x",
-				Style: ui.Stylings(ui.Blue, ui.BgGreen)}}}),
+				Style: ui.Stylings(ui.FgBlue, ui.BgGreen)}}}),
 		Width: 14, Height: 3,
 		Want: bb(14).
-			Write(" x0 ", ui.Blue, ui.BgGreen, ui.Inverse).
+			Write(" x0 ", ui.FgBlue, ui.BgGreen, ui.Inverse).
 			Write("  ").
-			Write(" x1 ", ui.Blue, ui.BgGreen),
+			Write(" x1 ", ui.FgBlue, ui.BgGreen),
 	},
 	{
 		Name: "long lines cropped, with full scrollbar",
@@ -207,7 +207,7 @@ var renderHorizontalTests = []el.RenderTest{
 		Want: bb(4).
 			Write("item", ui.Inverse).
 			Newline().Write("item").
-			Newline().Write("    ", ui.Magenta, ui.Inverse),
+			Newline().Write("    ", ui.FgMagenta, ui.Inverse),
 	},
 	{
 		Name: "scrollbar when not showing all items",
@@ -219,8 +219,8 @@ var renderHorizontalTests = []el.RenderTest{
 			Write("item 0", ui.Inverse).
 			Newline().Write("item 1").
 			Newline().
-			Write("   ", ui.Inverse, ui.Magenta).
-			Write("━━━", ui.Magenta),
+			Write("   ", ui.Inverse, ui.FgMagenta).
+			Write("━━━", ui.FgMagenta),
 	},
 	{
 		Name: "scrollbar when not showing all items",
@@ -232,7 +232,7 @@ var renderHorizontalTests = []el.RenderTest{
 			Write("item 0", ui.Inverse).Write("  it").
 			Newline().Write("item 1  it").
 			Newline().
-			Write("          ", ui.Inverse, ui.Magenta),
+			Write("          ", ui.Inverse, ui.FgMagenta),
 	},
 }
 

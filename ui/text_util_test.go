@@ -9,7 +9,7 @@ import (
 func TestMarkLines(t *testing.T) {
 	stylesheet := RuneStylesheet{
 		'-': Inverse,
-		'x': Stylings(Blue, BgGreen),
+		'x': Stylings(FgBlue, BgGreen),
 	}
 	tt.Test(t, tt.Fn("MarkLines", MarkLines), tt.Table{
 		tt.Args("foo  bar foobar").Rets(T("foo  bar foobar")),
@@ -19,7 +19,7 @@ func TestMarkLines(t *testing.T) {
 		).Rets(
 			T("foo", Inverse).
 				ConcatText(T("  ")).
-				ConcatText(T("bar", Blue, BgGreen)).
+				ConcatText(T("bar", FgBlue, BgGreen)).
 				ConcatText(T(" ")).
 				ConcatText(T("foobar", Inverse)),
 		),
@@ -41,7 +41,7 @@ func TestMarkLines(t *testing.T) {
 				ConcatText(T("plain2")).
 				ConcatText(T("foo", Inverse)).
 				ConcatText(T("  ")).
-				ConcatText(T("bar", Blue, BgGreen)).
+				ConcatText(T("bar", FgBlue, BgGreen)).
 				ConcatText(T(" ")).
 				ConcatText(T("foobar", Inverse)).
 				ConcatText(T("\n")).

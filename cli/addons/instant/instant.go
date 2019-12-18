@@ -31,7 +31,7 @@ func (w *widget) Render(width, height int) *term.Buffer {
 	bb := term.NewBufferBuilder(width).
 		WriteStyled(layout.ModeLine(" INSTANT ", false)).SetDotHere()
 	if w.lastErr != nil {
-		bb.Newline().Write(w.lastErr.Error(), ui.Red)
+		bb.Newline().Write(w.lastErr.Error(), ui.FgRed)
 	}
 	buf := bb.Buffer()
 	if len(buf.Lines) >= height {

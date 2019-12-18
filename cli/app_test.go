@@ -189,13 +189,13 @@ func TestReadCode_ShowsHighlightedCode(t *testing.T) {
 	f := Setup(withHighlighter(
 		testHighlighter{
 			get: func(code string) (ui.Text, []error) {
-				return ui.T(code, ui.Red), nil
+				return ui.T(code, ui.FgRed), nil
 			},
 		}))
 	defer f.Stop()
 
 	feedInput(f.TTY, "code")
-	wantBuf := bb().Write("code", ui.Red).SetDotHere().Buffer()
+	wantBuf := bb().Write("code", ui.FgRed).SetDotHere().Buffer()
 	f.TTY.TestBuffer(t, wantBuf)
 }
 
@@ -233,9 +233,9 @@ func TestReadCode_RedrawsOnLateUpdateFromHighlighter(t *testing.T) {
 
 	f.TTY.TestBuffer(t, bb().Write("code").SetDotHere().Buffer())
 
-	styling = ui.Red
+	styling = ui.FgRed
 	hl.lateUpdates <- nil
-	f.TTY.TestBuffer(t, bb().Write("code", ui.Red).SetDotHere().Buffer())
+	f.TTY.TestBuffer(t, bb().Write("code", ui.FgRed).SetDotHere().Buffer())
 }
 
 func withHighlighter(hl Highlighter) func(*AppSpec, TTYCtrl) {

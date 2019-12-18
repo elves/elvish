@@ -38,23 +38,6 @@ func ApplyStyling(s Style, ts ...Styling) Style {
 func Stylings(ts ...Styling) Styling { return jointStyling(ts) }
 
 var (
-	Black        Styling = setForeground("black")
-	Red                  = setForeground("red")
-	Green                = setForeground("green")
-	Yellow               = setForeground("yellow")
-	Blue                 = setForeground("blue")
-	Magenta              = setForeground("magenta")
-	Cyan                 = setForeground("cyan")
-	LightGray            = setForeground("lightgray")
-	Gray                 = setForeground("gray")
-	LightRed             = setForeground("lightred")
-	LightGreen           = setForeground("lightgreen")
-	LightYellow          = setForeground("lightyellow")
-	LightBlue            = setForeground("lightblue")
-	LightMagenta         = setForeground("lightmagenta")
-	LightCyan            = setForeground("lightcyan")
-	White                = setForeground("white")
-
 	FgDefault      = setForeground("")
 	FgBlack        = setForeground("black")
 	FgRed          = setForeground("red")

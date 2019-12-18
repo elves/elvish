@@ -4,19 +4,19 @@ import "github.com/elves/elvish/ui"
 
 var stylingFor = map[string]ui.Styling{
 	barewordRegion:     nil,
-	singleQuotedRegion: ui.Yellow,
-	doubleQuotedRegion: ui.Yellow,
-	variableRegion:     ui.Magenta,
+	singleQuotedRegion: ui.FgYellow,
+	doubleQuotedRegion: ui.FgYellow,
+	variableRegion:     ui.FgMagenta,
 	wildcardRegion:     nil,
 	tildeRegion:        nil,
 
-	commentRegion: ui.Cyan,
+	commentRegion: ui.FgCyan,
 
-	">":  ui.Green,
-	">>": ui.Green,
-	"<":  ui.Green,
-	"?>": ui.Green,
-	"|":  ui.Green,
+	">":  ui.FgGreen,
+	">>": ui.FgGreen,
+	"<":  ui.FgGreen,
+	"?>": ui.FgGreen,
+	"|":  ui.FgGreen,
 	"?(": ui.Bold,
 	"(":  ui.Bold,
 	")":  ui.Bold,
@@ -26,12 +26,12 @@ var stylingFor = map[string]ui.Styling{
 	"}":  ui.Bold,
 	"&":  ui.Bold,
 
-	commandRegion: ui.Green,
-	keywordRegion: ui.Yellow,
+	commandRegion: ui.FgGreen,
+	keywordRegion: ui.FgYellow,
 	errorRegion:   ui.BgRed,
 }
 
 var (
-	stylingForGoodCommand = ui.Green
-	stylingForBadCommand  = ui.Red
+	stylingForGoodCommand = ui.FgGreen
+	stylingForBadCommand  = ui.FgRed
 )

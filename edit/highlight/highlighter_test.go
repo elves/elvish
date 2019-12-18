@@ -16,9 +16,9 @@ var noErrors []error
 
 var styles = ui.RuneStylesheet{
 	'?':  ui.BgRed,
-	'$':  ui.Magenta,
-	'\'': ui.Yellow,
-	'v':  ui.Green,
+	'$':  ui.FgMagenta,
+	'\'': ui.FgYellow,
+	'v':  ui.FgGreen,
 }
 
 func TestHighlighter_HighlightRegions(t *testing.T) {
@@ -128,12 +128,12 @@ func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
 	testThat(t, hl, c{
 		given:       "ls",
 		wantInitial: ui.T("ls"),
-		wantLate:    ui.T("ls", ui.Green),
+		wantLate:    ui.T("ls", ui.FgGreen),
 	})
 	testThat(t, hl, c{
 		given:       "echo",
 		wantInitial: ui.T("echo"),
-		wantLate:    ui.T("echo", ui.Red),
+		wantLate:    ui.T("echo", ui.FgRed),
 	})
 }
 
@@ -150,11 +150,11 @@ func TestHighlighter_HasCommand_LateResult_Sync(t *testing.T) {
 
 	testThat(t, hl, c{
 		given:       "ls",
-		wantInitial: ui.T("ls", ui.Green),
+		wantInitial: ui.T("ls", ui.FgGreen),
 	})
 	testThat(t, hl, c{
 		given:       "echo",
-		wantInitial: ui.T("echo", ui.Red),
+		wantInitial: ui.T("echo", ui.FgRed),
 	})
 }
 
@@ -188,7 +188,7 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	late := <-hl.LateUpdates()
 
 	wantInitial := ui.T("ls")
-	wantLate := ui.T("ls", ui.Green)
+	wantLate := ui.T("ls", ui.FgGreen)
 	if !reflect.DeepEqual(wantInitial, initial) {
 		t.Errorf("want %v from initial Get, got %v", wantInitial, initial)
 	}
