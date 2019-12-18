@@ -9,7 +9,7 @@ import (
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/cliedit"
+	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
@@ -22,7 +22,7 @@ func interact(fds [3]*os.File, ev *eval.Evaler, dataDir string, norc bool) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(fds[0]) {
-		newed := cliedit.NewEditor(cli.StdTTY, ev, ev.DaemonClient)
+		newed := edit.NewEditor(cli.StdTTY, ev, ev.DaemonClient)
 		ev.Builtin.AddNs("edit", newed.Ns())
 		ed = newed
 	} else {
