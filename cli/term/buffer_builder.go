@@ -152,7 +152,7 @@ func (bb *BufferBuilder) WriteStringSGR(text, style string) *BufferBuilder {
 // WriteStyled writes a styled text.
 func (bb *BufferBuilder) WriteStyled(t ui.Text) *BufferBuilder {
 	for _, seg := range t {
-		bb.WriteStringSGR(seg.Text, sgrFromStyle(seg.Style))
+		bb.WriteStringSGR(seg.Text, seg.Style.SGR())
 	}
 	return bb
 }

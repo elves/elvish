@@ -19,9 +19,9 @@ func TestModePrompt(t *testing.T) {
 func testModeLine(t *testing.T, fn *tt.FnToTest) {
 	tt.Test(t, fn, tt.Table{
 		tt.Args("TEST", false).Rets(
-			ui.T("TEST", ui.Bold, ui.FgLightGray, ui.BgMagenta)),
+			ui.T("TEST", ui.Bold, ui.FgWhite, ui.BgMagenta)),
 		tt.Args("TEST", true).Rets(
-			ui.T("TEST", ui.Bold, ui.FgLightGray, ui.BgMagenta).
+			ui.T("TEST", ui.Bold, ui.FgWhite, ui.BgMagenta).
 				ConcatText(ui.T(" "))),
 	})
 }

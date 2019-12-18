@@ -17,7 +17,7 @@ func setupStarted(t *testing.T) *Fixture {
 		Items: []Item{
 			{ToShow: "foo", ToInsert: "foo"},
 			{ToShow: "foo bar", ToInsert: "'foo bar'",
-				ShowStyle: ui.Style{Foreground: "blue"}},
+				ShowStyle: ui.Style{Foreground: ui.Blue}},
 		},
 	})
 	f.TestTTY(t,

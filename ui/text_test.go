@@ -14,9 +14,9 @@ func TestT(t *testing.T) {
 	tt.Test(t, tt.Fn("T", T), tt.Table{
 		Args("test").Rets(Text{&Segment{Text: "test"}}),
 		Args("test red", FgRed).Rets(Text{&Segment{
-			Text: "test red", Style: Style{Foreground: "red"}}}),
+			Text: "test red", Style: Style{Foreground: Red}}}),
 		Args("test red", FgRed, Bold).Rets(Text{&Segment{
-			Text: "test red", Style: Style{Foreground: "red", Bold: true}}}),
+			Text: "test red", Style: Style{Foreground: Red, Bold: true}}}),
 	})
 }
 
@@ -26,8 +26,8 @@ var (
 	text2 = Text{red("lorem"), blue("foobar")}
 )
 
-func red(s string) *Segment  { return &Segment{Style{Foreground: "red"}, s} }
-func blue(s string) *Segment { return &Segment{Style{Foreground: "blue"}, s} }
+func red(s string) *Segment  { return &Segment{Style{Foreground: Red}, s} }
+func blue(s string) *Segment { return &Segment{Style{Foreground: Blue}, s} }
 
 var partitionTests = tt.Table{
 	Args(text0).Rets([]Text{nil}),

@@ -10,21 +10,21 @@ func TestStyleText(t *testing.T) {
 	tt.Test(t, tt.Fn("StyleText", StyleText), tt.Table{
 		// Foreground color
 		tt.Args(T("foo"), FgRed).
-			Rets(Text{&Segment{Style{Foreground: "red"}, "foo"}}),
+			Rets(Text{&Segment{Style{Foreground: Red}, "foo"}}),
 		// Override existing foreground
-		tt.Args(Text{&Segment{Style{Foreground: "green"}, "foo"}}, FgRed).
-			Rets(Text{&Segment{Style{Foreground: "red"}, "foo"}}),
+		tt.Args(Text{&Segment{Style{Foreground: Green}, "foo"}}, FgRed).
+			Rets(Text{&Segment{Style{Foreground: Red}, "foo"}}),
 		// Multiple segments
 		tt.Args(Text{
 			&Segment{Style{}, "foo"},
-			&Segment{Style{Foreground: "green"}, "bar"}}, FgRed).
+			&Segment{Style{Foreground: Green}, "bar"}}, FgRed).
 			Rets(Text{
-				&Segment{Style{Foreground: "red"}, "foo"},
-				&Segment{Style{Foreground: "red"}, "bar"},
+				&Segment{Style{Foreground: Red}, "foo"},
+				&Segment{Style{Foreground: Red}, "bar"},
 			}),
 		// Background color
 		tt.Args(T("foo"), BgRed).
-			Rets(Text{&Segment{Style{Background: "red"}, "foo"}}),
+			Rets(Text{&Segment{Style{Background: Red}, "foo"}}),
 		// Bold, false -> true
 		tt.Args(T("foo"), Bold).
 			Rets(Text{&Segment{Style{Bold: true}, "foo"}}),

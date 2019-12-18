@@ -38,41 +38,45 @@ func ApplyStyling(s Style, ts ...Styling) Style {
 func Stylings(ts ...Styling) Styling { return jointStyling(ts) }
 
 var (
-	FgDefault      = setForeground("")
-	FgBlack        = setForeground("black")
-	FgRed          = setForeground("red")
-	FgGreen        = setForeground("green")
-	FgYellow       = setForeground("yellow")
-	FgBlue         = setForeground("blue")
-	FgMagenta      = setForeground("magenta")
-	FgCyan         = setForeground("cyan")
-	FgLightGray    = setForeground("lightgray")
-	FgGray         = setForeground("gray")
-	FgLightRed     = setForeground("lightred")
-	FgLightGreen   = setForeground("lightgreen")
-	FgLightYellow  = setForeground("lightyellow")
-	FgLightBlue    = setForeground("lightblue")
-	FgLightMagenta = setForeground("lightmagenta")
-	FgLightCyan    = setForeground("lightcyan")
-	FgWhite        = setForeground("white")
+	FgDefault = setForeground{nil}
 
-	BgDefault      = setBackground("default")
-	BgBlack        = setBackground("black")
-	BgRed          = setBackground("red")
-	BgGreen        = setBackground("green")
-	BgYellow       = setBackground("yellow")
-	BgBlue         = setBackground("blue")
-	BgMagenta      = setBackground("magenta")
-	BgCyan         = setBackground("cyan")
-	BgLightGray    = setBackground("lightgray")
-	BgGray         = setBackground("gray")
-	BgLightRed     = setBackground("lightred")
-	BgLightGreen   = setBackground("lightgreen")
-	BgLightYellow  = setBackground("lightyellow")
-	BgLightBlue    = setBackground("lightblue")
-	BgLightMagenta = setBackground("lightmagenta")
-	BgLightCyan    = setBackground("lightcyan")
-	BgWhite        = setBackground("white")
+	FgBlack   = setForeground{Black}
+	FgRed     = setForeground{Red}
+	FgGreen   = setForeground{Green}
+	FgYellow  = setForeground{Yellow}
+	FgBlue    = setForeground{Blue}
+	FgMagenta = setForeground{Magenta}
+	FgCyan    = setForeground{Cyan}
+	FgWhite   = setForeground{White}
+
+	FgBrightBlack   = setForeground{BrightBlack}
+	FgBrightRed     = setForeground{BrightRed}
+	FgBrightGreen   = setForeground{BrightGreen}
+	FgBrightYellow  = setForeground{BrightYellow}
+	FgBrightBlue    = setForeground{BrightBlue}
+	FgBrightMagenta = setForeground{BrightMagenta}
+	FgBrightCyan    = setForeground{BrightCyan}
+	FgBrightWhite   = setForeground{BrightWhite}
+
+	BgDefault = setBackground{nil}
+
+	BgBlack   = setBackground{Black}
+	BgRed     = setBackground{Red}
+	BgGreen   = setBackground{Green}
+	BgYellow  = setBackground{Yellow}
+	BgBlue    = setBackground{Blue}
+	BgMagenta = setBackground{Magenta}
+	BgCyan    = setBackground{Cyan}
+	BgWhite   = setBackground{White}
+
+	BgBrightBlack   = setBackground{BrightBlack}
+	BgBrightRed     = setBackground{BrightRed}
+	BgBrightGreen   = setBackground{BrightGreen}
+	BgBrightYellow  = setBackground{BrightYellow}
+	BgBrightBlue    = setBackground{BrightBlue}
+	BgBrightMagenta = setBackground{BrightMagenta}
+	BgBrightCyan    = setBackground{BrightCyan}
+	BgBrightWhite   = setBackground{BrightWhite}
 
 	Bold       = boolOn(accessBold)
 	Dim        = boolOn(accessDim)
@@ -96,14 +100,14 @@ var (
 	ToggleInverse    = boolToggle(accessInverse)
 )
 
-type setForeground string
-type setBackground string
+type setForeground struct{ c Color }
+type setBackground struct{ c Color }
 type boolOn func(*Style) *bool
 type boolOff func(*Style) *bool
 type boolToggle func(*Style) *bool
 
-func (t setForeground) transform(s *Style) { s.Foreground = string(t) }
-func (t setBackground) transform(s *Style) { s.Background = string(t) }
+func (t setForeground) transform(s *Style) { s.Foreground = t.c }
+func (t setBackground) transform(s *Style) { s.Background = t.c }
 func (t boolOn) transform(s *Style)        { *t(s) = true }
 func (t boolOff) transform(s *Style)       { *t(s) = false }
 func (t boolToggle) transform(s *Style)    { p := t(s); *p = !*p }
@@ -160,16 +164,14 @@ func parseOneStyling(name string) Styling {
 	case name == "default" || name == "fg-default":
 		return FgDefault
 	case strings.HasPrefix(name, "fg-"):
-		if color := name[len("fg-"):]; isValidColorName(color) {
-			return setForeground(color)
+		if color := parseColor(name[len("fg-"):]); color != nil {
+			return setForeground{color}
 		}
-	case isValidColorName(name):
-		return setForeground(name)
 	case name == "bg-default":
 		return BgDefault
 	case strings.HasPrefix(name, "bg-"):
-		if color := name[len("bg-"):]; isValidColorName(color) {
-			return setBackground(color)
+		if color := parseColor(name[len("bg-"):]); color != nil {
+			return setBackground{color}
 		}
 	case strings.HasPrefix(name, "no-"):
 		if f, ok := boolFieldAccessor[name[len("no-"):]]; ok {
@@ -182,6 +184,9 @@ func parseOneStyling(name string) Styling {
 	default:
 		if f, ok := boolFieldAccessor[name]; ok {
 			return boolOn(f)
+		}
+		if color := parseColor(name); color != nil {
+			return setForeground{color}
 		}
 	}
 	return nil

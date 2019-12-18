@@ -64,7 +64,7 @@ func TestStyledConcat(t *testing.T) {
 		// segment+segment
 		That("print (styled-segment abc &bg-color=red)(styled-segment abc &fg-color=red)").Prints("\033[41mabc\033[m\033[31mabc\033[m"),
 		// segment+text
-		That("print (styled-segment abc &underlined=$true)(styled abc lightcyan)").Prints("\033[4mabc\033[m\033[96mabc\033[m"),
+		That("print (styled-segment abc &underlined=$true)(styled abc bright-cyan)").Prints("\033[4mabc\033[m\033[96mabc\033[m"),
 	)
 
 	Test(t,
@@ -73,7 +73,7 @@ func TestStyledConcat(t *testing.T) {
 		// text+string
 		That("print (styled abc blink)abc").Prints("\033[5mabc\033[mabc"),
 		// text+segment
-		That("print (styled abc inverse)(styled-segment abc &bg-color=white)").Prints("\033[7mabc\033[m\033[107mabc\033[m"),
+		That("print (styled abc inverse)(styled-segment abc &bg-color=white)").Prints("\033[7mabc\033[m\033[47mabc\033[m"),
 		// text+text
 		That("print (styled abc bold)(styled abc dim)").Prints("\033[1mabc\033[m\033[2mabc\033[m"),
 	)
@@ -112,7 +112,7 @@ func TestStyledIndexing(t *testing.T) {
 	Test(t,
 		That("put (styled abc red)[0][bold]").Puts(false),
 		That("put (styled abc red)[0][bg-color]").Puts("default"),
-		That("t = (styled-segment abc &underlined=$true)(styled abc lightcyan); put $t[1][fg-color]").Puts("lightcyan"),
-		That("t = (styled-segment abc &underlined=$true)(styled abc lightcyan); put $t[1][underlined]").Puts(false),
+		That("t = (styled-segment abc &underlined=$true)(styled abc bright-cyan); put $t[1][fg-color]").Puts("bright-cyan"),
+		That("t = (styled-segment abc &underlined=$true)(styled abc bright-cyan); put $t[1][underlined]").Puts(false),
 	)
 }

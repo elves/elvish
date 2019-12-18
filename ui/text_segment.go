@@ -56,9 +56,15 @@ func (s *Segment) Index(k interface{}) (v interface{}, ok bool) {
 	case "text":
 		v = s.Text
 	case "fg-color":
-		v = s.Foreground
+		if s.Foreground == nil {
+			return "default", true
+		}
+		return s.Foreground.String(), true
 	case "bg-color":
-		v = s.Background
+		if s.Background == nil {
+			return "default", true
+		}
+		return s.Background.String(), true
 	case "bold":
 		v = s.Bold
 	case "dim":
