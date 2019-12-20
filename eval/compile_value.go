@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"strings"
 	"sync"
 
@@ -139,7 +138,10 @@ func doTilde(v interface{}) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		return path.Join(dir, rest), nil
+		// We do not use path.Join, as it removes trailing slashes.
+		//
+		// TODO(xiaq): Make this correct on Windows.
+		return dir + "/" + rest, nil
 	case GlobPattern:
 		if len(v.Segments) == 0 {
 			return nil, ErrBadGlobPattern

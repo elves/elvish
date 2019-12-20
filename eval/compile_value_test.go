@@ -96,7 +96,9 @@ func TestCompileValue(t *testing.T) {
 
 		// Tilde
 		// -----
-		That("h=$E:HOME; E:HOME=/foo; put ~ ~/src; E:HOME=$h").Puts("/foo", "/foo/src"),
+		That("E:HOME=/foo put ~").Puts("/foo"),
+		That("E:HOME=/foo put ~/src").Puts("/foo/src"),
+		That("E:HOME=/foo put ~/src/").Puts("/foo/src/"),
 
 		// Closure
 		// -------
