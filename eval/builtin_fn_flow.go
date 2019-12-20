@@ -51,7 +51,6 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 			return
 		}
 		newFm := fm.fork("closure of each")
-		newFm.ports[0] = DevNullClosedChan
 		ex := newFm.Call(f, []interface{}{v}, NoOpts)
 		newFm.Close()
 
