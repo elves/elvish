@@ -37,7 +37,7 @@ func (me *MultiError) Error() string {
 			if i > 0 {
 				fmt.Fprint(sb, "; ")
 			}
-			fmt.Fprintf(sb, "%d-%d: %s", e.Context.Begin, e.Context.End, e.Message)
+			fmt.Fprintf(sb, "%d-%d: %s", e.Context.From, e.Context.To, e.Message)
 		}
 		return sb.String()
 	}
@@ -65,7 +65,7 @@ func (me *MultiError) PPrint(indent string) string {
 
 func (e *Error) Error() string {
 	return fmt.Sprintf("parse error: %d-%d in %s: %s",
-		e.Context.Begin, e.Context.End, e.Context.Name, e.Message)
+		e.Context.From, e.Context.To, e.Context.Name, e.Message)
 }
 
 func (e *Error) PPrint(indent string) string {

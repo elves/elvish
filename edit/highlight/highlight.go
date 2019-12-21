@@ -34,11 +34,11 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	n, errParse := parse.AsChunk("[interactive]", code)
 	if errParse != nil {
 		for _, err := range errParse.(*parse.MultiError).Entries {
-			if err.Context.Begin != len(code) {
+			if err.Context.From != len(code) {
 				errors = append(errors, err)
 				errorRegions = append(errorRegions,
 					region{
-						err.Context.Begin, err.Context.End,
+						err.Context.From, err.Context.To,
 						semanticRegion, errorRegion})
 			}
 		}

@@ -232,7 +232,7 @@ type parseErrorMatcher struct{ begin, end int }
 
 func (m parseErrorMatcher) Match(v tt.RetValue) bool {
 	err := v.(*parse.Error)
-	return m.begin == err.Context.Begin && m.end == err.Context.End
+	return m.begin == err.Context.From && m.end == err.Context.To
 }
 
 // Fake check error, used in tests for check callback.

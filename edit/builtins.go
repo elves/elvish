@@ -112,7 +112,7 @@ func isSyntaxComplete(code string) bool {
 	_, err := parse.AsChunk("[interactive]", code)
 	if err != nil {
 		for _, e := range err.(*parse.MultiError).Entries {
-			if e.Context.Begin == len(code) {
+			if e.Context.From == len(code) {
 				return false
 			}
 		}

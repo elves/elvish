@@ -14,20 +14,14 @@ import (
 type Context struct {
 	Name   string
 	Source string
-	Begin  int
-	End    int
+	Ranging
 
 	savedPPrintInfo *rangePPrintInfo
 }
 
 // NewContext creates a new Context.
-func NewContext(name, source string, begin, end int) *Context {
-	return &Context{name, source, begin, end, nil}
-}
-
-// Range returns the range of the Context.
-func (sr *Context) Range() Ranging {
-	return Ranging{sr.Begin, sr.End}
+func NewContext(name, source string, from, to int) *Context {
+	return &Context{name, source, Ranging{from, to}, nil}
 }
 
 // Information about the source range that are needed for pretty-printing.
@@ -60,9 +54,9 @@ func (sr *Context) pprintInfo() *rangePPrintInfo {
 		return sr.savedPPrintInfo
 	}
 
-	before := sr.Source[:sr.Begin]
-	culprit := sr.Source[sr.Begin:sr.End]
-	after := sr.Source[sr.End:]
+	before := sr.Source[:sr.From]
+	culprit := sr.Source[sr.From:sr.To]
+	after := sr.Source[sr.To:]
 
 	head := lastLine(before)
 	beginLine := strings.Count(before, "\n") + 1
@@ -103,10 +97,10 @@ func (sr *Context) PPrintCompact(sourceIndent string) string {
 }
 
 func (sr *Context) checkPosition() error {
-	if sr.Begin == -1 {
+	if sr.From == -1 {
 		return fmt.Errorf("%s, unknown position", sr.Name)
-	} else if sr.Begin < 0 || sr.End > len(sr.Source) || sr.Begin > sr.End {
-		return fmt.Errorf("%s, invalid position %d-%d", sr.Name, sr.Begin, sr.End)
+	} else if sr.From < 0 || sr.To > len(sr.Source) || sr.From > sr.To {
+		return fmt.Errorf("%s, invalid position %d-%d", sr.Name, sr.From, sr.To)
 	}
 	return nil
 }

@@ -12,7 +12,7 @@ type Error struct {
 // Error returns a plain text representation of the error.
 func (e *Error) Error() string {
 	return fmt.Sprintf("%s: %d-%d in %s: %s",
-		e.Type, e.Context.Begin, e.Context.End, e.Context.Name, e.Message)
+		e.Type, e.Context.From, e.Context.To, e.Context.Name, e.Message)
 }
 
 // Range returns the range of the error.
