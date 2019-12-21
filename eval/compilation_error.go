@@ -5,7 +5,7 @@ import "github.com/elves/elvish/diag"
 const compilationErrorType = "compilation error"
 
 // NewCompilationError creates a new compilation error.
-func NewCompilationError(message string, context diag.SourceRange) error {
+func NewCompilationError(message string, context diag.Context) error {
 	return &diag.Error{
 		Type: compilationErrorType, Message: message, Context: context}
 }

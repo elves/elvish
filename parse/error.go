@@ -15,10 +15,10 @@ type MultiError struct {
 // Error represents one parse error.
 type Error struct {
 	Message string
-	Context diag.SourceRange
+	Context diag.Context
 }
 
-func (me *MultiError) add(msg string, ctx *diag.SourceRange) {
+func (me *MultiError) add(msg string, ctx *diag.Context) {
 	me.Entries = append(me.Entries, &Error{msg, *ctx})
 }
 

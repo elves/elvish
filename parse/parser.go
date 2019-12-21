@@ -104,7 +104,7 @@ func (ps *parser) backup() {
 }
 
 func (ps *parser) errorp(begin, end int, e error) {
-	ps.errors.add(e.Error(), diag.NewSourceRange(ps.srcName, ps.src, begin, end))
+	ps.errors.add(e.Error(), diag.NewContext(ps.srcName, ps.src, begin, end))
 }
 
 func (ps *parser) error(e error) {

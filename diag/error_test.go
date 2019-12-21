@@ -9,7 +9,7 @@ func TestError(t *testing.T) {
 	err := &Error{
 		Type:    "some error",
 		Message: "bad list",
-		Context: *parseSourceRange("echo [x]", "[", "]", true),
+		Context: *parseContext("echo [x]", "[", "]", true),
 	}
 
 	wantErrorString := "some error: 5-8 in [test]: bad list"

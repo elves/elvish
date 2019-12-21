@@ -8,10 +8,10 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// SourceRange is a range of text in a source code. It is typically used for
+// Context is a range of text in a source code. It is typically used for
 // errors that can be associated with a part of the source code, like parse
 // errors and a traceback entry.
-type SourceRange struct {
+type Context struct {
 	Name   string
 	Source string
 	Begin  int
@@ -20,13 +20,13 @@ type SourceRange struct {
 	savedPPrintInfo *rangePPrintInfo
 }
 
-// NewSourceRange creates a new SourceRange.
-func NewSourceRange(name, source string, begin, end int) *SourceRange {
-	return &SourceRange{name, source, begin, end, nil}
+// NewContext creates a new Context.
+func NewContext(name, source string, begin, end int) *Context {
+	return &Context{name, source, begin, end, nil}
 }
 
-// Range returns the range of the SourceRange.
-func (sr *SourceRange) Range() Ranging {
+// Range returns the range of the Context.
+func (sr *Context) Range() Ranging {
 	return Ranging{sr.Begin, sr.End}
 }
 
@@ -55,7 +55,7 @@ var (
 	culpritPlaceHolder = "^"
 )
 
-func (sr *SourceRange) pprintInfo() *rangePPrintInfo {
+func (sr *Context) pprintInfo() *rangePPrintInfo {
 	if sr.savedPPrintInfo != nil {
 		return sr.savedPPrintInfo
 	}
@@ -82,7 +82,7 @@ func (sr *SourceRange) pprintInfo() *rangePPrintInfo {
 }
 
 // PPrint pretty-prints a SourceContext.
-func (sr *SourceRange) PPrint(sourceIndent string) string {
+func (sr *Context) PPrint(sourceIndent string) string {
 	if err := sr.checkPosition(); err != nil {
 		return err.Error()
 	}
@@ -92,7 +92,7 @@ func (sr *SourceRange) PPrint(sourceIndent string) string {
 
 // PPrintCompact pretty-prints a SourceContext, with no line break between the
 // source position range description and relevant source excerpt.
-func (sr *SourceRange) PPrintCompact(sourceIndent string) string {
+func (sr *Context) PPrintCompact(sourceIndent string) string {
 	if err := sr.checkPosition(); err != nil {
 		return err.Error()
 	}
@@ -102,7 +102,7 @@ func (sr *SourceRange) PPrintCompact(sourceIndent string) string {
 	return desc + sr.relevantSource(sourceIndent+descIndent)
 }
 
-func (sr *SourceRange) checkPosition() error {
+func (sr *Context) checkPosition() error {
 	if sr.Begin == -1 {
 		return fmt.Errorf("%s, unknown position", sr.Name)
 	} else if sr.Begin < 0 || sr.End > len(sr.Source) || sr.Begin > sr.End {
@@ -111,7 +111,7 @@ func (sr *SourceRange) checkPosition() error {
 	return nil
 }
 
-func (sr *SourceRange) lineRange() string {
+func (sr *Context) lineRange() string {
 	info := sr.pprintInfo()
 
 	if info.BeginLine == info.EndLine {
@@ -120,7 +120,7 @@ func (sr *SourceRange) lineRange() string {
 	return fmt.Sprintf("line %d-%d:", info.BeginLine, info.EndLine)
 }
 
-func (sr *SourceRange) relevantSource(sourceIndent string) string {
+func (sr *Context) relevantSource(sourceIndent string) string {
 	info := sr.pprintInfo()
 
 	var buf bytes.Buffer

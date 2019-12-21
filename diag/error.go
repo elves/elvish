@@ -6,7 +6,7 @@ import "fmt"
 type Error struct {
 	Type    string
 	Message string
-	Context SourceRange
+	Context Context
 }
 
 // Error returns a plain text representation of the error.
