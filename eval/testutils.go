@@ -1,4 +1,4 @@
-// Framework for testing Elvish script. This file does not file a _test.go
+// Framework for testing Elvish script. This file does not have a _test.go
 // suffix so that it can be used from other packages that also want to test the
 // modules they implement (e.g. edit: and re:).
 //
