@@ -12,9 +12,9 @@ import (
 
 func TestErrorsToJSON(t *testing.T) {
 	tt.Test(t, tt.Fn("errorToJSON", errorToJSON), tt.Table{
-		tt.Args(&eval.CompilationError{
-			Message: "ERR",
-			Context: diag.SourceRange{Name: "file", Begin: 5, End: 7}},
+		tt.Args(eval.NewCompilationError(
+			"ERR",
+			diag.SourceRange{Name: "file", Begin: 5, End: 7}),
 		).Rets(
 			[]byte(`[{"fileName":"file","start":5,"end":7,"message":"ERR"}]`),
 		),

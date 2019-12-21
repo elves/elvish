@@ -241,13 +241,14 @@ func (ev *Evaler) EvalInTTY(op Op) error {
 }
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it
-// always has type CompilationError.
+// can be passed to GetCompilationError to retrieve more details.
 func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (Op, error) {
 	return ev.CompileWithGlobal(n, src, ev.Global)
 }
 
 // CompileWithGlobal compiles Elvish code in an alternative global scope. If the
-// error is not nil, it always has type CompilationError.
+// error is not nil, it can be passed to GetCompilationError to retrieve more
+// details.
 //
 // TODO(xiaq): To use the Op created, the caller must create a Frame and mutate
 // its local scope manually. Consider restructuring the API to make that

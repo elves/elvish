@@ -3,7 +3,7 @@ package shell
 import (
 	"encoding/json"
 
-	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/parse"
 )
 
@@ -24,7 +24,7 @@ type simpleErrorInJSON struct {
 func errorToJSON(err error) []byte {
 	var e interface{}
 	switch err := err.(type) {
-	case *eval.CompilationError:
+	case *diag.Error:
 		e = []interface{}{
 			errorInJSON{err.Context.Name, err.Context.Begin, err.Context.End, err.Message},
 		}
