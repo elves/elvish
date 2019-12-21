@@ -49,14 +49,14 @@ var (
 	culpritPlaceHolder = "^"
 )
 
-func (sr *Context) pprintInfo() *rangePPrintInfo {
-	if sr.savedPPrintInfo != nil {
-		return sr.savedPPrintInfo
+func (c *Context) pprintInfo() *rangePPrintInfo {
+	if c.savedPPrintInfo != nil {
+		return c.savedPPrintInfo
 	}
 
-	before := sr.Source[:sr.From]
-	culprit := sr.Source[sr.From:sr.To]
-	after := sr.Source[sr.To:]
+	before := c.Source[:c.From]
+	culprit := c.Source[c.From:c.To]
+	after := c.Source[c.To:]
 
 	head := lastLine(before)
 	beginLine := strings.Count(before, "\n") + 1
@@ -71,42 +71,42 @@ func (sr *Context) pprintInfo() *rangePPrintInfo {
 
 	endLine := beginLine + strings.Count(culprit, "\n")
 
-	sr.savedPPrintInfo = &rangePPrintInfo{head, culprit, tail, beginLine, endLine}
-	return sr.savedPPrintInfo
+	c.savedPPrintInfo = &rangePPrintInfo{head, culprit, tail, beginLine, endLine}
+	return c.savedPPrintInfo
 }
 
 // PPrint pretty-prints a SourceContext.
-func (sr *Context) PPrint(sourceIndent string) string {
-	if err := sr.checkPosition(); err != nil {
+func (c *Context) PPrint(sourceIndent string) string {
+	if err := c.checkPosition(); err != nil {
 		return err.Error()
 	}
-	return (sr.Name + ", " + sr.lineRange() +
-		"\n" + sourceIndent + sr.relevantSource(sourceIndent))
+	return (c.Name + ", " + c.lineRange() +
+		"\n" + sourceIndent + c.relevantSource(sourceIndent))
 }
 
 // PPrintCompact pretty-prints a SourceContext, with no line break between the
 // source position range description and relevant source excerpt.
-func (sr *Context) PPrintCompact(sourceIndent string) string {
-	if err := sr.checkPosition(); err != nil {
+func (c *Context) PPrintCompact(sourceIndent string) string {
+	if err := c.checkPosition(); err != nil {
 		return err.Error()
 	}
-	desc := sr.Name + ", " + sr.lineRange() + " "
+	desc := c.Name + ", " + c.lineRange() + " "
 	// Extra indent so that following lines line up with the first line.
 	descIndent := strings.Repeat(" ", util.Wcswidth(desc))
-	return desc + sr.relevantSource(sourceIndent+descIndent)
+	return desc + c.relevantSource(sourceIndent+descIndent)
 }
 
-func (sr *Context) checkPosition() error {
-	if sr.From == -1 {
-		return fmt.Errorf("%s, unknown position", sr.Name)
-	} else if sr.From < 0 || sr.To > len(sr.Source) || sr.From > sr.To {
-		return fmt.Errorf("%s, invalid position %d-%d", sr.Name, sr.From, sr.To)
+func (c *Context) checkPosition() error {
+	if c.From == -1 {
+		return fmt.Errorf("%s, unknown position", c.Name)
+	} else if c.From < 0 || c.To > len(c.Source) || c.From > c.To {
+		return fmt.Errorf("%s, invalid position %d-%d", c.Name, c.From, c.To)
 	}
 	return nil
 }
 
-func (sr *Context) lineRange() string {
-	info := sr.pprintInfo()
+func (c *Context) lineRange() string {
+	info := c.pprintInfo()
 
 	if info.BeginLine == info.EndLine {
 		return fmt.Sprintf("line %d:", info.BeginLine)
@@ -114,8 +114,8 @@ func (sr *Context) lineRange() string {
 	return fmt.Sprintf("line %d-%d:", info.BeginLine, info.EndLine)
 }
 
-func (sr *Context) relevantSource(sourceIndent string) string {
-	info := sr.pprintInfo()
+func (c *Context) relevantSource(sourceIndent string) string {
+	info := c.pprintInfo()
 
 	var buf bytes.Buffer
 	buf.WriteString(info.Head)
