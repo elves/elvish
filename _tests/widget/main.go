@@ -7,13 +7,13 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/el"
-	"github.com/elves/elvish/cli/el/codearea"
-	"github.com/elves/elvish/cli/el/combobox"
-	"github.com/elves/elvish/cli/el/listbox"
-	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/ui"
+	"github.com/elves/elvish/pkg/cli"
+	"github.com/elves/elvish/pkg/cli/el"
+	"github.com/elves/elvish/pkg/cli/el/codearea"
+	"github.com/elves/elvish/pkg/cli/el/combobox"
+	"github.com/elves/elvish/pkg/cli/el/listbox"
+	"github.com/elves/elvish/pkg/cli/term"
+	"github.com/elves/elvish/pkg/ui"
 )
 
 var (

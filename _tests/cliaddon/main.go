@@ -4,10 +4,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/addons/navigation"
-	"github.com/elves/elvish/cli/el"
-	"github.com/elves/elvish/cli/term"
+	"github.com/elves/elvish/pkg/cli"
+	"github.com/elves/elvish/pkg/cli/addons/navigation"
+	"github.com/elves/elvish/pkg/cli/el"
+	"github.com/elves/elvish/pkg/cli/term"
 )
 
 func main() {

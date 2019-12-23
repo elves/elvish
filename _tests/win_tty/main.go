@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/elves/elvish/sys"
+	"github.com/elves/elvish/pkg/sys"
 	"golang.org/x/sys/windows"
 )
 

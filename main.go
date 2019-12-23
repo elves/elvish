@@ -7,7 +7,7 @@ package main
 import (
 	"os"
 
-	"github.com/elves/elvish/program"
+	"github.com/elves/elvish/pkg/program"
 )
 
 func main() {

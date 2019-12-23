@@ -6,10 +6,10 @@ import (
 	"io"
 	"unicode"
 
-	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/el"
-	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/ui"
+	"github.com/elves/elvish/pkg/cli"
+	"github.com/elves/elvish/pkg/cli/el"
+	"github.com/elves/elvish/pkg/cli/term"
+	"github.com/elves/elvish/pkg/ui"
 )
 
 type highlighter struct{}
