@@ -13,7 +13,7 @@ get:
 	go get -ldflags "-X github.com/elves/elvish/buildinfo.Version=$(VERSION)" .
 
 buildall:
-	./_tools/buildall.sh
+	./tools/buildall.sh
 
 generate:
 	go generate ./...
@@ -38,6 +38,6 @@ upload-coverage-coveralls: _cover/all
 	goveralls -coverprofile $<
 
 binaries-travis:
-	./_tools/binaries-travis.sh
+	./tools/binaries-travis.sh
 
 .PHONY: default get buildall generate test testmain upload-coverage-codecov upload-coverage-coveralls binaries-travis

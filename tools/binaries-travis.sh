@@ -12,7 +12,7 @@ if [ "$TRAVIS_BRANCH" = master ]; then
 else
     export VERSION=$TRAVIS_BRANCH
 fi
-MANIFEST=_bin/manifest ./_tools/buildall.sh
+MANIFEST=_bin/manifest ./tools/buildall.sh
 
 echo "Deleting old HEAD"
 curl -X DELETE -u$BINTRAY_CREDENTIAL \
