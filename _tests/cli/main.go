@@ -7,34 +7,34 @@ import (
 	"unicode"
 
 	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/histutil"
+	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/ui"
 )
 
-func highlight(code string) ui.Text {
+type highlighter struct{}
+
+func (highlighter) Get(code string) (ui.Text, []error) {
 	t := ui.Text{}
 	for _, r := range code {
-		style := ""
+		var style ui.Styling
 		if unicode.IsDigit(r) {
-			style = "green"
+			style = ui.FgGreen
 		}
 		t = append(t, ui.T(string(r), style)...)
 	}
-	return t
+	return t, nil
 }
 
+func (highlighter) LateUpdates() <-chan ui.Text { return nil }
+
 func main() {
-	app := cli.NewAppFromStdIO(&cli.AppConfig{
-		Prompt:       cli.NewConstPlainPrompt("> "),
-		Highlighter:  cli.NewFuncHighlighterNoError(highlight),
-		HistoryStore: histutil.NewMemoryStore(),
-		InsertModeConfig: cli.InsertModeConfig{
-			Binding: cli.NewMapBinding(map[ui.Key]cli.KeyHandler{
-				ui.K('D', ui.Ctrl): cli.CommitEOF,
-				ui.K('R', ui.Ctrl): cli.StartHistlist,
-				ui.K(',', ui.Alt):  cli.StartLastcmd,
-				ui.Default:         cli.DefaultInsert,
-			}),
+	var app cli.App
+	app = cli.NewApp(cli.AppSpec{
+		Prompt:      cli.ConstPrompt{Content: ui.T("> ")},
+		Highlighter: highlighter{},
+		OverlayHandler: el.MapHandler{
+			term.K('D', ui.Ctrl): func() { app.CommitEOF() },
 		},
 	})
 

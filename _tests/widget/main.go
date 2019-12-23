@@ -23,23 +23,23 @@ var (
 
 func makeWidget() el.Widget {
 	items := listbox.TestItems{Prefix: "list item "}
-	w := &combobox.Widget{
-		CodeArea: codearea.Widget{
+	w := combobox.New(combobox.Spec{
+		CodeArea: codearea.Spec{
 			Prompt: codearea.ConstPrompt(
-				ui.T(" NUMBER ", "bold", "bg-magenta").
+				ui.T(" NUMBER ", ui.Bold, ui.BgMagenta).
 					ConcatText(ui.T(" "))),
 		},
-		ListBox: listbox.Widget{
-			State:       listbox.MakeState(&items, false),
+		ListBox: listbox.Spec{
+			State:       listbox.State{Items: &items},
 			Placeholder: ui.T("(no items)"),
 			Horizontal:  *horizontal,
 		},
-	}
-	w.OnFilter = func(filter string) {
-		if n, err := strconv.Atoi(filter); err == nil {
-			items.NItems = n
-		}
-	}
+		OnFilter: func(w combobox.Widget, filter string) {
+			if n, err := strconv.Atoi(filter); err == nil {
+				items.NItems = n
+			}
+		},
+	})
 	return w
 }
 
@@ -65,7 +65,7 @@ func main() {
 		event := <-events
 		handled := widget.Handle(event)
 		if !handled && event == term.K('D', ui.Ctrl) {
-			tty.UpdateBuffer(nil, ui.NewBufferBuilder(w).Buffer(), true)
+			tty.UpdateBuffer(nil, term.NewBufferBuilder(w).Buffer(), true)
 			break
 		}
 	}

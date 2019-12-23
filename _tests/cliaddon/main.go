@@ -11,10 +11,10 @@ import (
 )
 
 func main() {
-	app := cli.NewApp(cli.NewStdTTY())
+	app := cli.NewApp(cli.AppSpec{})
 	navigation.Start(app, navigation.Config{
 		Binding: el.MapHandler{
-			term.K('x'): func() { app.CommitCode("") },
+			term.K('x'): func() { app.CommitCode() },
 		},
 	})
 
