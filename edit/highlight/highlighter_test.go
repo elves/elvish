@@ -117,7 +117,7 @@ func testThat(t *testing.T, hl *Highlighter, c c) {
 func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
 	// When the HasCommand callback takes longer than maxBlockForLate, late
 	// results are delivered asynchronously.
-	maxBlockForLate = 1 * time.Millisecond
+	MaxBlockForLate = 1 * time.Millisecond
 	hl := NewHighlighter(Config{
 		// HasCommand is slow and only recognizes "ls".
 		HasCommand: func(cmd string) bool {
@@ -140,7 +140,7 @@ func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
 func TestHighlighter_HasCommand_LateResult_Sync(t *testing.T) {
 	// When the HasCommand callback takes shorter than maxBlockForLate, late
 	// results are delivered asynchronously.
-	maxBlockForLate = 100 * time.Millisecond
+	MaxBlockForLate = 100 * time.Millisecond
 	hl := NewHighlighter(Config{
 		// HasCommand is fast and only recognizes "ls".
 		HasCommand: func(cmd string) bool {
@@ -165,7 +165,7 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	// "ls" and is dropped.
 
 	// Make sure that the HasCommand callback takes longer than maxBlockForLate.
-	maxBlockForLate = 1 * time.Millisecond
+	MaxBlockForLate = 1 * time.Millisecond
 
 	hlSecond := make(chan struct{})
 	hl := NewHighlighter(Config{
