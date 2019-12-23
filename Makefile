@@ -1,6 +1,6 @@
 PKG_BASE := github.com/elves/elvish
 PKGS := $(shell go list ./... | sed 's|^$(PKG_BASE)|.|')
-PKG_COVERS := $(shell go list ./... | sed 's|^$(PKG_BASE)|.|' | grep -v '^\.$$' | sed 's/^\./_cover/' | sed 's/$$/.cover/')
+PKG_COVERS := $(shell go list ./... | sed 's|^$(PKG_BASE)|.|' | grep -v '^\.$$' | sed 's/^\./cover/' | sed 's/$$/.cover/')
 COVER_MODE := set
 VERSION := $(shell git describe --tags --always --dirty=-dirty)
 
@@ -21,19 +21,19 @@ generate:
 test:
 	go test $(PKGS)
 
-_cover/%.cover: %
+cover/%.cover: %
 	mkdir -p $(dir $@)
 	go test -coverprofile=$@ -covermode=$(COVER_MODE) ./$<
 
-_cover/all: $(PKG_COVERS)
+cover/all: $(PKG_COVERS)
 	echo mode: $(COVER_MODE) > $@
 	for f in $(PKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 
-upload-coverage-codecov: _cover/all
+upload-coverage-codecov: cover/all
 	curl -s https://codecov.io/bash -o codecov.bash
 	bash codecov.bash -f $<
 
-upload-coverage-coveralls: _cover/all
+upload-coverage-coveralls: cover/all
 	go get $(GOVERALLS)
 	goveralls -coverprofile $<
 
