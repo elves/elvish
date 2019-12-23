@@ -10,12 +10,12 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/edit/highlight"
-	"github.com/elves/elvish/parse"
 )
 
 var (
-	scanner = bufio.NewScanner(os.Stdin)
-	lineno  = 0
+	scanner     = bufio.NewScanner(os.Stdin)
+	lineno      = 0
+	highlighter = highlight.NewHighlighter(highlight.Config{})
 )
 
 func scan() bool {
@@ -99,52 +99,33 @@ func convertTranscript(transcript string) string {
 }
 
 func convert(text string, bad bool) string {
-	n, err := parse.AsChunk("highlight", text)
-	if err != nil && !bad {
-		log.Printf("parsing %q: %v", text, err)
+	highlighted, errs := highlighter.Get(text)
+	if len(errs) != 0 && !bad {
+		log.Printf("parsing %q: %v", text, errs)
 	}
 
-	styling := highlight.Styling{}
+	var buf strings.Builder
 
-	e := highlight.Emitter{
-		func(s string) bool {
-			return true
-		},
-		styling.Add,
-	}
-	e.EmitAll(n)
-
-	var buf bytes.Buffer
-
-	openedSpan := false
-	currentStyle := ""
-
-	applier := styling.Apply()
-	for i, r := range text {
-		applier.At(i)
-		style := applier.Get()
-		if style != currentStyle {
-			if openedSpan {
-				buf.WriteString("</span>")
-			}
-			var classes []string
-			for _, c := range strings.Split(style, ";") {
-				if c != "" {
-					classes = append(classes, "sgr-"+c)
-				}
-			}
-			fmt.Fprintf(&buf, `<span class="%s">`, strings.Join(classes, " "))
-			openedSpan = true
-			currentStyle = style
+	for _, seg := range highlighted {
+		var classes []string
+		for _, sgrCode := range strings.Split(seg.Style.SGR(), ";") {
+			classes = append(classes, "sgr-"+sgrCode)
 		}
-		if r == '\n' {
-			buf.WriteString("<br>")
-		} else {
-			buf.WriteString(html.EscapeString(string(r)))
+		jointClass := strings.Join(classes, " ")
+		if len(jointClass) > 0 {
+			fmt.Fprintf(&buf, `<span class="%s">`, jointClass)
+		}
+		for _, r := range seg.Text {
+			if r == '\n' {
+				buf.WriteString("<br>")
+			} else {
+				buf.WriteString(html.EscapeString(string(r)))
+			}
+		}
+		if len(jointClass) > 0 {
+			buf.WriteString("</span>")
 		}
 	}
-	if openedSpan {
-		buf.WriteString("</span>")
-	}
+
 	return buf.String()
 }
