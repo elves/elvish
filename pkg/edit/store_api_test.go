@@ -32,7 +32,7 @@ func TestInsertLastWord(t *testing.T) {
 	defer f.Cleanup()
 
 	evals(f.Evaler, "edit:insert-last-word")
-	wantBuf := codearea.Buffer{Content: "bar", Dot: 3}
+	wantBuf := codearea.CodeBuffer{Content: "bar", Dot: 3}
 	if buf := cli.CodeBuffer(f.Editor.app); buf != wantBuf {
 		t.Errorf("buf = %v, want %v", buf, wantBuf)
 	}

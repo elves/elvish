@@ -9,21 +9,21 @@ import (
 	"github.com/elves/elvish/pkg/ui"
 )
 
-// Widget is a colview widget.
-type Widget interface {
+// ColView is a Widget that arranges several widgets in a column.
+type ColView interface {
 	el.Widget
 	// MutateState mutates the state.
-	MutateState(f func(*State))
+	MutateState(f func(*ColViewState))
 	// CopyState returns a copy of the state.
-	CopyState() State
+	CopyState() ColViewState
 	// Left triggers the OnLeft callback.
 	Left()
 	// Right triggers the OnRight callback.
 	Right()
 }
 
-// Spec specifies the configuration and initial state.
-type Spec struct {
+// ColViewSpec specifies the configuration and initial state for ColView.
+type ColViewSpec struct {
 	// An overlay handler.
 	OverlayHandler el.Handler
 	// A function that takes the number of columns and return weights for the
@@ -32,29 +32,29 @@ type Spec struct {
 	Weights func(n int) []int
 	// A function called when the Left method of Widget is called, or when Left
 	// is pressed and unhandled.
-	OnLeft func(w Widget)
+	OnLeft func(w ColView)
 	// A function called when the Right method of Widget is called, or when
 	// Right is pressed and unhandled.
-	OnRight func(w Widget)
+	OnRight func(w ColView)
 
 	// State. Specifies the initial state when used in New.
-	State State
+	State ColViewState
 }
 
-// State keeps the state of the colview widget.
-type State struct {
+// ColViewState keeps the mutable state of the ColView widget.
+type ColViewState struct {
 	Columns     []el.Widget
 	FocusColumn int
 }
 
-type widget struct {
+type colView struct {
 	// Mutex for synchronizing access to State.
 	StateMutex sync.RWMutex
-	Spec
+	ColViewSpec
 }
 
-// New creates a Widget from the given specification.
-func New(spec Spec) Widget {
+// NewColView creates a new ColView from the given spec.
+func NewColView(spec ColViewSpec) ColView {
 	if spec.OverlayHandler == nil {
 		spec.OverlayHandler = el.DummyHandler{}
 	}
@@ -62,12 +62,12 @@ func New(spec Spec) Widget {
 		spec.Weights = equalWeights
 	}
 	if spec.OnLeft == nil {
-		spec.OnLeft = func(Widget) {}
+		spec.OnLeft = func(ColView) {}
 	}
 	if spec.OnRight == nil {
-		spec.OnRight = func(Widget) {}
+		spec.OnRight = func(ColView) {}
 	}
-	return &widget{Spec: spec}
+	return &colView{ColViewSpec: spec}
 }
 
 func equalWeights(n int) []int {
@@ -78,13 +78,13 @@ func equalWeights(n int) []int {
 	return weights
 }
 
-func (w *widget) MutateState(f func(*State)) {
+func (w *colView) MutateState(f func(*ColViewState)) {
 	w.StateMutex.Lock()
 	defer w.StateMutex.Unlock()
 	f(&w.State)
 }
 
-func (w *widget) CopyState() State {
+func (w *colView) CopyState() ColViewState {
 	w.StateMutex.RLock()
 	defer w.StateMutex.RUnlock()
 	return w.State
@@ -94,7 +94,7 @@ const colGap = 1
 
 // Render renders all the columns side by side, putting the dot in the focused
 // column.
-func (w *widget) Render(width, height int) *term.Buffer {
+func (w *colView) Render(width, height int) *term.Buffer {
 	state := w.CopyState()
 	ncols := len(state.Columns)
 	if ncols == 0 {
@@ -119,7 +119,7 @@ func (w *widget) Render(width, height int) *term.Buffer {
 
 // Handle handles the event first by consulting the overlay handler, and then
 // delegating the event to the currently focused column.
-func (w *widget) Handle(event term.Event) bool {
+func (w *colView) Handle(event term.Event) bool {
 	if w.OverlayHandler.Handle(event) {
 		return true
 	}
@@ -142,11 +142,11 @@ func (w *widget) Handle(event term.Event) bool {
 	}
 }
 
-func (w *widget) Left() {
+func (w *colView) Left() {
 	w.OnLeft(w)
 }
 
-func (w *widget) Right() {
+func (w *colView) Right() {
 	w.OnRight(w)
 }
 

@@ -44,7 +44,7 @@ func TestInstantAddon_ByteOutput(t *testing.T) {
 
 	// We don't want to trigger the evaluation of "e", "ec", and "ech", so we
 	// start with a non-empty code buffer.
-	cli.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "echo ", Dot: 5})
+	cli.SetCodeBuffer(f.Editor.app, codearea.CodeBuffer{Content: "echo ", Dot: 5})
 	evals(f.Evaler, "edit:-instant:start")
 	f.TestTTY(t,
 		"~> echo ", Styles,

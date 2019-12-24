@@ -13,13 +13,13 @@ import (
 var renderTests = []el.RenderTest{
 	{
 		Name:  "colview no column",
-		Given: New(Spec{}),
+		Given: NewColView(ColViewSpec{}),
 		Width: 10, Height: 24,
 		Want: &term.Buffer{Width: 10},
 	},
 	{
 		Name: "colview width < number of columns",
-		Given: New(Spec{State: State{
+		Given: NewColView(ColViewSpec{State: ColViewState{
 			Columns: []el.Widget{
 				makeListbox("x", 2, 0), makeListbox("y", 1, 0),
 				makeListbox("z", 3, 0), makeListbox("w", 1, 0),
@@ -30,7 +30,7 @@ var renderTests = []el.RenderTest{
 	},
 	{
 		Name: "colview normal",
-		Given: New(Spec{State: State{
+		Given: NewColView(ColViewSpec{State: ColViewState{
 			Columns: []el.Widget{
 				makeListbox("x", 2, 1),
 				makeListbox("y", 1, 0),
@@ -52,8 +52,8 @@ var renderTests = []el.RenderTest{
 }
 
 func makeListbox(prefix string, n, selected int) el.Widget {
-	return listbox.New(listbox.Spec{
-		State: listbox.State{
+	return listbox.NewListBox(listbox.ListBoxSpec{
+		State: listbox.ListBoxState{
 			Items:    listbox.TestItems{Prefix: prefix, NItems: n},
 			Selected: selected,
 		}})
@@ -67,18 +67,18 @@ func TestHandle(t *testing.T) {
 	// Channel for recording the place an event was handled. -1 for the widget
 	// itself, column index for column.
 	handledBy := make(chan int, 10)
-	w := New(Spec{
+	w := NewColView(ColViewSpec{
 		OverlayHandler: el.MapHandler{
 			term.K('a'): func() { handledBy <- -1 },
 		},
-		State: State{
+		State: ColViewState{
 			Columns: []el.Widget{
-				listbox.New(listbox.Spec{
+				listbox.NewListBox(listbox.ListBoxSpec{
 					OverlayHandler: el.MapHandler{
 						term.K('a'): func() { handledBy <- 0 },
 						term.K('b'): func() { handledBy <- 0 },
 					}}),
-				listbox.New(listbox.Spec{
+				listbox.NewListBox(listbox.ListBoxSpec{
 					OverlayHandler: el.MapHandler{
 						term.K('a'): func() { handledBy <- 1 },
 						term.K('b'): func() { handledBy <- 1 },
@@ -86,8 +86,8 @@ func TestHandle(t *testing.T) {
 			},
 			FocusColumn: 1,
 		},
-		OnLeft:  func(Widget) { handledBy <- 100 },
-		OnRight: func(Widget) { handledBy <- 101 },
+		OnLeft:  func(ColView) { handledBy <- 100 },
+		OnRight: func(ColView) { handledBy <- 101 },
 	})
 
 	expectHandled := func(event term.Event, wantBy int) {
@@ -120,7 +120,7 @@ func TestHandle(t *testing.T) {
 	// No one to handle the event.
 	expectUnhandled(term.K('c'))
 	// No focused column: event unhandled
-	w.MutateState(func(s *State) { s.FocusColumn = -1 })
+	w.MutateState(func(s *ColViewState) { s.FocusColumn = -1 })
 	expectUnhandled(term.K('b'))
 }
 

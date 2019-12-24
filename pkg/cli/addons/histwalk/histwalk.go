@@ -49,8 +49,8 @@ func (w *widget) Focus() bool { return false }
 
 func (w *widget) onWalk() {
 	prefix := w.Walker.Prefix()
-	w.app.CodeArea().MutateState(func(s *codearea.State) {
-		s.Pending = codearea.Pending{
+	w.app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+		s.Pending = codearea.PendingCode{
 			From: len(prefix), To: len(s.Buffer.Content),
 			Content: w.Walker.CurrentCmd()[len(prefix):],
 		}
@@ -96,8 +96,8 @@ func Next(app cli.App) error {
 // active.
 func Close(app cli.App) {
 	if closeAddon(app) {
-		app.CodeArea().MutateState(func(s *codearea.State) {
-			s.Pending = codearea.Pending{}
+		app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+			s.Pending = codearea.PendingCode{}
 		})
 	}
 }
@@ -106,7 +106,7 @@ func Close(app cli.App) {
 // nothing if the histwalk addon is not active.
 func Accept(app cli.App) {
 	if closeAddon(app) {
-		app.CodeArea().MutateState(func(s *codearea.State) {
+		app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 			s.ApplyPending()
 		})
 	}

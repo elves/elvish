@@ -22,7 +22,7 @@ type AppSpec struct {
 	Abbreviations  func(f func(abbr, full string))
 	QuotePaste     func() bool
 
-	CodeAreaState codearea.State
+	CodeAreaState codearea.CodeAreaState
 	State         State
 }
 

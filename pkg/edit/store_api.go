@@ -46,7 +46,7 @@ func insertLastWord(app cli.App, fuser *histutil.Fuser) error {
 	}
 	words := parseutil.Wordify(cmd.Text)
 	if len(words) > 0 {
-		app.CodeArea().MutateState(func(s *codearea.State) {
+		app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 			s.Buffer.InsertAtDot(words[len(words)-1])
 		})
 	}

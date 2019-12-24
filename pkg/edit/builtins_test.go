@@ -118,7 +118,7 @@ func TestReturnCode(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	f.Editor.app.CodeArea().MutateState(func(s *codearea.State) {
+	f.Editor.app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 		s.Buffer.Content = "test code"
 	})
 	evals(f.Evaler, `edit:return-line`)
@@ -145,9 +145,9 @@ func TestSmartEnter_InsertsNewlineWhenIncomplete(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	cli.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "put [", Dot: 5})
+	cli.SetCodeBuffer(f.Editor.app, codearea.CodeBuffer{Content: "put [", Dot: 5})
 	evals(f.Evaler, `edit:smart-enter`)
-	wantBuf := codearea.Buffer{Content: "put [\n", Dot: 6}
+	wantBuf := codearea.CodeBuffer{Content: "put [\n", Dot: 6}
 	if buf := cli.CodeBuffer(f.Editor.app); buf != wantBuf {
 		t.Errorf("got code buffer %v, want %v", buf, wantBuf)
 	}
@@ -157,7 +157,7 @@ func TestSmartEnter_AcceptsCodeWhenWholeBufferIsComplete(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	cli.SetCodeBuffer(f.Editor.app, codearea.Buffer{Content: "put []", Dot: 5})
+	cli.SetCodeBuffer(f.Editor.app, codearea.CodeBuffer{Content: "put []", Dot: 5})
 	evals(f.Evaler, `edit:smart-enter`)
 	wantCode := "put []"
 	if code, _ := f.Wait(); code != wantCode {
@@ -178,28 +178,28 @@ func TestWordify(t *testing.T) {
 
 var bufferBuiltinsTests = []struct {
 	name      string
-	bufBefore codearea.Buffer
-	bufAfter  codearea.Buffer
+	bufBefore codearea.CodeBuffer
+	bufAfter  codearea.CodeBuffer
 }{
 	{
 		"move-dot-left",
-		codearea.Buffer{Content: "ab", Dot: 1},
-		codearea.Buffer{Content: "ab", Dot: 0},
+		codearea.CodeBuffer{Content: "ab", Dot: 1},
+		codearea.CodeBuffer{Content: "ab", Dot: 0},
 	},
 	{
 		"move-dot-right",
-		codearea.Buffer{Content: "ab", Dot: 1},
-		codearea.Buffer{Content: "ab", Dot: 2},
+		codearea.CodeBuffer{Content: "ab", Dot: 1},
+		codearea.CodeBuffer{Content: "ab", Dot: 2},
 	},
 	{
 		"kill-rune-left",
-		codearea.Buffer{Content: "ab", Dot: 1},
-		codearea.Buffer{Content: "b", Dot: 0},
+		codearea.CodeBuffer{Content: "ab", Dot: 1},
+		codearea.CodeBuffer{Content: "b", Dot: 0},
 	},
 	{
 		"kill-rune-right",
-		codearea.Buffer{Content: "ab", Dot: 1},
-		codearea.Buffer{Content: "a", Dot: 1},
+		codearea.CodeBuffer{Content: "ab", Dot: 1},
+		codearea.CodeBuffer{Content: "a", Dot: 1},
 	},
 }
 
@@ -210,7 +210,7 @@ func TestBufferBuiltins(t *testing.T) {
 
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {
-			app.CodeArea().MutateState(func(s *codearea.State) {
+			app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 				s.Buffer = test.bufBefore
 			})
 			evals(f.Evaler, "edit:"+test.name)

@@ -22,7 +22,7 @@ type Config struct {
 type widget struct {
 	Config
 	app      cli.App
-	textView textview.Widget
+	textView textview.TextView
 	lastCode string
 	lastErr  error
 }
@@ -64,8 +64,8 @@ func (w *widget) update(force bool) {
 	output, err := w.Execute(code)
 	w.lastErr = err
 	if err == nil {
-		w.textView.MutateState(func(s *textview.State) {
-			*s = textview.State{Lines: output, First: 0}
+		w.textView.MutateState(func(s *textview.TextViewState) {
+			*s = textview.TextViewState{Lines: output, First: 0}
 		})
 	}
 }
@@ -82,7 +82,7 @@ func Start(app cli.App, cfg Config) {
 	w := widget{
 		Config:   cfg,
 		app:      app,
-		textView: textview.New(textview.Spec{Scrollable: true}),
+		textView: textview.NewTextView(textview.TextViewSpec{Scrollable: true}),
 	}
 	app.MutateState(func(s *cli.State) { s.Addon = &w })
 	w.update(true)

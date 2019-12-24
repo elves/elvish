@@ -78,8 +78,8 @@ func TestStart_OK(t *testing.T) {
 	f.TestTTY(t, "bar", term.DotHere)
 
 	// Test submission by Enter.
-	f.App.CodeArea().MutateState(func(s *codearea.State) {
-		*s = codearea.State{}
+	f.App.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+		*s = codearea.CodeAreaState{}
 	})
 	Start(f.App, Config{
 		Store: store,
@@ -91,8 +91,8 @@ func TestStart_OK(t *testing.T) {
 	f.TestTTY(t, "foo,bar,baz", term.DotHere)
 
 	// Default wordifier.
-	f.App.CodeArea().MutateState(func(s *codearea.State) {
-		*s = codearea.State{}
+	f.App.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+		*s = codearea.CodeAreaState{}
 	})
 	store.AddCmd(histutil.Entry{Text: "foo bar baz", Seq: 1})
 	Start(f.App, Config{Store: store})

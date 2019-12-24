@@ -58,20 +58,20 @@ func Start(app cli.App, cfg Config) {
 	}
 
 	accept := func(text string) {
-		app.CodeArea().MutateState(func(s *codearea.State) {
+		app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 			s.Buffer.InsertAtDot(text)
 		})
 		app.MutateState(func(s *cli.State) { s.Addon = nil })
 	}
-	w := combobox.New(combobox.Spec{
-		CodeArea: codearea.Spec{Prompt: layout.ModePrompt(" LASTCMD ", true)},
-		ListBox: listbox.Spec{
+	w := combobox.NewComboBox(combobox.ComboBoxSpec{
+		CodeArea: codearea.CodeAreaSpec{Prompt: layout.ModePrompt(" LASTCMD ", true)},
+		ListBox: listbox.ListBoxSpec{
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
 				accept(it.(items).entries[i].content)
 			},
 		},
-		OnFilter: func(w combobox.Widget, p string) {
+		OnFilter: func(w combobox.ComboBox, p string) {
 			items := filter(entries, p)
 			if len(items.entries) == 1 {
 				accept(items.entries[0].content)

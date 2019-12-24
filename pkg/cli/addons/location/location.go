@@ -92,11 +92,11 @@ func Start(app cli.App, cfg Config) {
 	home, _ := util.GetHome("")
 	l := list{dirs, home}
 
-	w := combobox.New(combobox.Spec{
-		CodeArea: codearea.Spec{
+	w := combobox.NewComboBox(combobox.ComboBoxSpec{
+		CodeArea: codearea.CodeAreaSpec{
 			Prompt: layout.ModePrompt(" LOCATION ", true),
 		},
-		ListBox: listbox.Spec{
+		ListBox: listbox.ListBoxSpec{
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
 				path := it.(list).dirs[i].Path
@@ -110,7 +110,7 @@ func Start(app cli.App, cfg Config) {
 				app.MutateState(func(s *cli.State) { s.Addon = nil })
 			},
 		},
-		OnFilter: func(w combobox.Widget, p string) {
+		OnFilter: func(w combobox.ComboBox, p string) {
 			w.ListBox().Reset(l.filter(p), 0)
 		},
 	})

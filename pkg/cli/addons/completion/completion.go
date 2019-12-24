@@ -39,29 +39,29 @@ func Start(app cli.App, cfg Config) {
 		app.Notify("no candidates")
 		return
 	}
-	w := combobox.New(combobox.Spec{
-		CodeArea: codearea.Spec{
+	w := combobox.NewComboBox(combobox.ComboBoxSpec{
+		CodeArea: codearea.CodeAreaSpec{
 			Prompt: layout.ModePrompt(" COMPLETING "+cfg.Name+" ", true),
 		},
-		ListBox: listbox.Spec{
+		ListBox: listbox.ListBoxSpec{
 			Horizontal:     true,
 			OverlayHandler: cfg.Binding,
 			OnSelect: func(it listbox.Items, i int) {
 				text := it.(items)[i].ToInsert
-				app.CodeArea().MutateState(func(s *codearea.State) {
-					s.Pending = codearea.Pending{
+				app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+					s.Pending = codearea.PendingCode{
 						From: cfg.Replace.From, To: cfg.Replace.To, Content: text}
 				})
 			},
 			OnAccept: func(it listbox.Items, i int) {
-				app.CodeArea().MutateState(func(s *codearea.State) {
+				app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 					s.ApplyPending()
 				})
 				app.MutateState(func(s *cli.State) { s.Addon = nil })
 			},
 			ExtendStyle: true,
 		},
-		OnFilter: func(w combobox.Widget, p string) {
+		OnFilter: func(w combobox.ComboBox, p string) {
 			w.ListBox().Reset(filter(cfg.Items, p), 0)
 		},
 	})
@@ -72,7 +72,7 @@ func Start(app cli.App, cfg Config) {
 // Close closes the completion UI.
 func Close(app cli.App) {
 	app.CodeArea().MutateState(
-		func(s *codearea.State) { s.Pending = codearea.Pending{} })
+		func(s *codearea.CodeAreaState) { s.Pending = codearea.PendingCode{} })
 	app.MutateState(func(s *cli.State) { s.Addon = nil })
 	app.Redraw()
 }

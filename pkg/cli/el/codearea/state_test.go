@@ -7,20 +7,20 @@ import (
 )
 
 func TestApplyPending(t *testing.T) {
-	applyPending := func(s State) State {
+	applyPending := func(s CodeAreaState) CodeAreaState {
 		s.ApplyPending()
 		return s
 	}
 	tt.Test(t, tt.Fn("applyPending", applyPending), tt.Table{
-		tt.Args(State{Buffer: Buffer{}, Pending: Pending{0, 0, "ls"}}).
-			Rets(State{Buffer: Buffer{Content: "ls", Dot: 2}, Pending: Pending{}}),
-		tt.Args(State{Buffer: Buffer{"x", 1}, Pending: Pending{0, 0, "ls"}}).
-			Rets(State{Buffer: Buffer{Content: "lsx", Dot: 3}, Pending: Pending{}}),
+		tt.Args(CodeAreaState{Buffer: CodeBuffer{}, Pending: PendingCode{0, 0, "ls"}}).
+			Rets(CodeAreaState{Buffer: CodeBuffer{Content: "ls", Dot: 2}, Pending: PendingCode{}}),
+		tt.Args(CodeAreaState{Buffer: CodeBuffer{"x", 1}, Pending: PendingCode{0, 0, "ls"}}).
+			Rets(CodeAreaState{Buffer: CodeBuffer{Content: "lsx", Dot: 3}, Pending: PendingCode{}}),
 		// No-op when Pending is empty.
-		tt.Args(State{Buffer: Buffer{"x", 1}}).
-			Rets(State{Buffer: Buffer{Content: "x", Dot: 1}}),
+		tt.Args(CodeAreaState{Buffer: CodeBuffer{"x", 1}}).
+			Rets(CodeAreaState{Buffer: CodeBuffer{Content: "x", Dot: 1}}),
 		// HideRPrompt is kept intact.
-		tt.Args(State{Buffer: Buffer{"x", 1}, HideRPrompt: true}).
-			Rets(State{Buffer: Buffer{Content: "x", Dot: 1}, HideRPrompt: true}),
+		tt.Args(CodeAreaState{Buffer: CodeBuffer{"x", 1}, HideRPrompt: true}).
+			Rets(CodeAreaState{Buffer: CodeBuffer{Content: "x", Dot: 1}, HideRPrompt: true}),
 	})
 }

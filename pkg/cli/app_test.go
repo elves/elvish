@@ -53,7 +53,7 @@ func TestReadCode_ResetsStateBeforeReturning(t *testing.T) {
 
 	f.Stop()
 
-	if code := CodeBuffer(f.App); code != (codearea.Buffer{}) {
+	if code := CodeBuffer(f.App); code != (codearea.CodeBuffer{}) {
 		t.Errorf("Editor state has CodeBuffer %v, want empty", code)
 	}
 }
@@ -337,7 +337,7 @@ func TestReadCode_HidesRPromptInFinalRedrawIfNotPersistent(t *testing.T) {
 
 func TestReadCode_LetsAddonHandleEvents(t *testing.T) {
 	f := Setup(WithSpec(func(spec *AppSpec) {
-		spec.State.Addon = codearea.New(codearea.Spec{
+		spec.State.Addon = codearea.NewCodeArea(codearea.CodeAreaSpec{
 			Prompt: func() ui.Text { return ui.T("addon> ") },
 		})
 	}))

@@ -6,9 +6,8 @@ import (
 	"github.com/elves/elvish/pkg/ui"
 )
 
-// State keeps the state of the widget. Its access must be synchronized through
-// the mutex.
-type State struct {
+// ListBoxState keeps the mutable state ListBox.
+type ListBoxState struct {
 	Items    Items
 	Selected int
 	First    int

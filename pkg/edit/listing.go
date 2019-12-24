@@ -139,7 +139,7 @@ func initLocation(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 // Accepts the current selected listing item.
 
 func listingAccept(app cli.App) {
-	w, ok := app.CopyState().Addon.(combobox.Widget)
+	w, ok := app.CopyState().Addon.(combobox.ComboBox)
 	if !ok {
 		return
 	}
@@ -202,8 +202,8 @@ func listingLeft(app cli.App) { listingSelect(app, listbox.Left) }
 
 func listingRight(app cli.App) { listingSelect(app, listbox.Right) }
 
-func listingSelect(app cli.App, f func(listbox.State) int) {
-	w, ok := app.CopyState().Addon.(combobox.Widget)
+func listingSelect(app cli.App, f func(listbox.ListBoxState) int) {
+	w, ok := app.CopyState().Addon.(combobox.ComboBox)
 	if !ok {
 		return
 	}
@@ -211,7 +211,7 @@ func listingSelect(app cli.App, f func(listbox.State) int) {
 }
 
 func listingRefilter(app cli.App) {
-	w, ok := app.CopyState().Addon.(combobox.Widget)
+	w, ok := app.CopyState().Addon.(combobox.ComboBox)
 	if !ok {
 		return
 	}

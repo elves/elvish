@@ -9,28 +9,28 @@ import (
 	"github.com/elves/elvish/pkg/cli/term"
 )
 
-// Widget represents a combobox widget.
-type Widget interface {
+// ComboBox is a Widget that combines a ListBox and a CodeArea.
+type ComboBox interface {
 	el.Widget
 	// Returns the embedded codearea widget.
-	CodeArea() codearea.Widget
+	CodeArea() codearea.CodeArea
 	// Returns the embedded listbox widget.
-	ListBox() listbox.Widget
+	ListBox() listbox.ListBox
 	// Forces the filtering to rerun.
 	Refilter()
 }
 
-// Spec specifies the configuration and initial state for Widget.
-type Spec struct {
-	CodeArea codearea.Spec
-	ListBox  listbox.Spec
-	OnFilter func(Widget, string)
+// ComboBoxSpec specifies the configuration and initial state for ComboBox.
+type ComboBoxSpec struct {
+	CodeArea codearea.CodeAreaSpec
+	ListBox  listbox.ListBoxSpec
+	OnFilter func(ComboBox, string)
 }
 
-type widget struct {
-	codeArea codearea.Widget
-	listBox  listbox.Widget
-	OnFilter func(Widget, string)
+type comboBox struct {
+	codeArea codearea.CodeArea
+	listBox  listbox.ListBox
+	OnFilter func(ComboBox, string)
 
 	// Whether filtering has ever been done.
 	hasFiltered bool
@@ -38,14 +38,14 @@ type widget struct {
 	lastFilter string
 }
 
-// New creates a Widget with the given specification.
-func New(spec Spec) Widget {
+// NewComboBox creates a new ComboBox from the given spec.
+func NewComboBox(spec ComboBoxSpec) ComboBox {
 	if spec.OnFilter == nil {
-		spec.OnFilter = func(Widget, string) {}
+		spec.OnFilter = func(ComboBox, string) {}
 	}
-	w := &widget{
-		codeArea: codearea.New(spec.CodeArea),
-		listBox:  listbox.New(spec.ListBox),
+	w := &comboBox{
+		codeArea: codearea.NewCodeArea(spec.CodeArea),
+		listBox:  listbox.NewListBox(spec.ListBox),
 		OnFilter: spec.OnFilter,
 	}
 	w.OnFilter(w, "")
@@ -53,7 +53,7 @@ func New(spec Spec) Widget {
 }
 
 // Render renders the codearea and the listbox below it.
-func (w *widget) Render(width, height int) *term.Buffer {
+func (w *comboBox) Render(width, height int) *term.Buffer {
 	buf := w.codeArea.Render(width, height)
 	bufListBox := w.listBox.Render(width, height-len(buf.Lines))
 	buf.Extend(bufListBox, false)
@@ -63,7 +63,7 @@ func (w *widget) Render(width, height int) *term.Buffer {
 // Handle first lets the listbox handle the event, and if it is unhandled, lets
 // the codearea handle it. If the codearea has handled the event and the code
 // content has changed, it calls OnFilter with the new content.
-func (w *widget) Handle(event term.Event) bool {
+func (w *comboBox) Handle(event term.Event) bool {
 	if w.listBox.Handle(event) {
 		return true
 	}
@@ -78,9 +78,9 @@ func (w *widget) Handle(event term.Event) bool {
 	return false
 }
 
-func (w *widget) Refilter() {
+func (w *comboBox) Refilter() {
 	w.OnFilter(w, w.codeArea.CopyState().Buffer.Content)
 }
 
-func (w *widget) CodeArea() codearea.Widget { return w.codeArea }
-func (w *widget) ListBox() listbox.Widget   { return w.listBox }
+func (w *comboBox) CodeArea() codearea.CodeArea { return w.codeArea }
+func (w *comboBox) ListBox() listbox.ListBox    { return w.listBox }

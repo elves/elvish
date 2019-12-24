@@ -11,7 +11,7 @@ import (
 func TestFixture(t *testing.T) {
 	f := Setup(
 		WithSpec(func(spec *cli.AppSpec) {
-			spec.CodeAreaState.Buffer = codearea.Buffer{Content: "test", Dot: 4}
+			spec.CodeAreaState.Buffer = codearea.CodeBuffer{Content: "test", Dot: 4}
 		}),
 		WithTTY(func(tty TTYCtrl) {
 			tty.SetSize(20, 30) // h = 20, w = 30

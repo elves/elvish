@@ -55,7 +55,7 @@ func insertRaw(app cli.App, tty cli.TTY) {
 		Binding: el.FuncHandler(func(event term.Event) bool {
 			switch event := event.(type) {
 			case term.KeyEvent:
-				app.CodeArea().MutateState(func(s *codearea.State) {
+				app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 					s.Buffer.InsertAtDot(string(event.Rune))
 				})
 				closeListing(app)
@@ -102,7 +102,7 @@ func smartEnter(app cli.App) {
 	if isSyntaxComplete(buf.Content) {
 		app.CommitCode()
 	} else {
-		app.CodeArea().MutateState(func(s *codearea.State) {
+		app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 			s.Buffer.InsertAtDot("\n")
 		})
 	}
@@ -156,7 +156,7 @@ func initMiscBuiltins(app cli.App, ns eval.Ns) {
 	})
 }
 
-var bufferBuiltinsData = map[string]func(*codearea.Buffer){
+var bufferBuiltinsData = map[string]func(*codearea.CodeBuffer){
 	"move-dot-left":             makeMove(moveDotLeft),
 	"move-dot-right":            makeMove(moveDotRight),
 	"move-dot-left-word":        makeMove(moveDotLeftWord),
@@ -193,7 +193,7 @@ func bufferBuiltins(app cli.App) map[string]interface{} {
 		// Make a lexically scoped copy of fn.
 		fn2 := fn
 		m[name] = func() {
-			app.CodeArea().MutateState(func(s *codearea.State) {
+			app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 				fn2(&s.Buffer)
 			})
 		}
@@ -206,14 +206,14 @@ func bufferBuiltins(app cli.App) map[string]interface{} {
 // the editor state.
 type pureMover func(buffer string, dot int) int
 
-func makeMove(m pureMover) func(*codearea.Buffer) {
-	return func(buf *codearea.Buffer) {
+func makeMove(m pureMover) func(*codearea.CodeBuffer) {
+	return func(buf *codearea.CodeBuffer) {
 		buf.Dot = m(buf.Content, buf.Dot)
 	}
 }
 
-func makeKill(m pureMover) func(*codearea.Buffer) {
-	return func(buf *codearea.Buffer) {
+func makeKill(m pureMover) func(*codearea.CodeBuffer) {
+	return func(buf *codearea.CodeBuffer) {
 		newDot := m(buf.Content, buf.Dot)
 		if newDot < buf.Dot {
 			// Dot moved to the left: remove text between new dot and old dot,

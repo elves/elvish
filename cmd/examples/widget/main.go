@@ -23,18 +23,18 @@ var (
 
 func makeWidget() el.Widget {
 	items := listbox.TestItems{Prefix: "list item "}
-	w := combobox.New(combobox.Spec{
-		CodeArea: codearea.Spec{
+	w := combobox.NewComboBox(combobox.ComboBoxSpec{
+		CodeArea: codearea.CodeAreaSpec{
 			Prompt: codearea.ConstPrompt(
 				ui.T(" NUMBER ", ui.Bold, ui.BgMagenta).
 					ConcatText(ui.T(" "))),
 		},
-		ListBox: listbox.Spec{
-			State:       listbox.State{Items: &items},
+		ListBox: listbox.ListBoxSpec{
+			State:       listbox.ListBoxState{Items: &items},
 			Placeholder: ui.T("(no items)"),
 			Horizontal:  *horizontal,
 		},
-		OnFilter: func(w combobox.Widget, filter string) {
+		OnFilter: func(w combobox.ComboBox, filter string) {
 			if n, err := strconv.Atoi(filter); err == nil {
 				items.NItems = n
 			}

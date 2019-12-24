@@ -17,7 +17,7 @@ type view struct {
 
 var stylingForPending = ui.Underlined
 
-func getView(w *widget) *view {
+func getView(w *codeArea) *view {
 	s := w.CopyState()
 	code, pFrom, pTo := patchPending(s.Buffer, s.Pending)
 	styledCode, errors := w.Highlighter(code.Content)
@@ -36,7 +36,7 @@ func getView(w *widget) *view {
 	return &view{w.Prompt(), rprompt, styledCode, code.Dot, errors}
 }
 
-func patchPending(c Buffer, p Pending) (Buffer, int, int) {
+func patchPending(c CodeBuffer, p PendingCode) (CodeBuffer, int, int) {
 	if p.From > p.To || p.From < 0 || p.To > len(c.Content) {
 		// Invalid Pending.
 		return c, 0, 0
@@ -58,7 +58,7 @@ func patchPending(c Buffer, p Pending) (Buffer, int, int) {
 		// the dot.
 		newDot = c.Dot - (p.To - p.From) + len(p.Content)
 	}
-	return Buffer{Content: newContent, Dot: newDot}, p.From, p.From + len(p.Content)
+	return CodeBuffer{Content: newContent, Dot: newDot}, p.From, p.From + len(p.Content)
 }
 
 func renderView(v *view, buf *term.BufferBuilder) {

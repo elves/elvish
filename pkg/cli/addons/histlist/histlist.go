@@ -59,8 +59,8 @@ func Start(app cli.App, cfg Config) {
 	}
 	cmdItems := items{cmds, last}
 
-	w := combobox.New(combobox.Spec{
-		CodeArea: codearea.Spec{Prompt: func() ui.Text {
+	w := combobox.NewComboBox(combobox.ComboBoxSpec{
+		CodeArea: codearea.CodeAreaSpec{Prompt: func() ui.Text {
 			content := " HISTORY "
 			if cfg.Dedup() {
 				content += "(dedup on) "
@@ -70,11 +70,11 @@ func Start(app cli.App, cfg Config) {
 			}
 			return layout.ModeLine(content, true)
 		}},
-		ListBox: listbox.Spec{
+		ListBox: listbox.ListBoxSpec{
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
 				text := it.(items).entries[i].Text
-				app.CodeArea().MutateState(func(s *codearea.State) {
+				app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 					buf := &s.Buffer
 					if buf.Content == "" {
 						buf.InsertAtDot(text)
@@ -85,7 +85,7 @@ func Start(app cli.App, cfg Config) {
 				app.MutateState(func(s *cli.State) { s.Addon = nil })
 			},
 		},
-		OnFilter: func(w combobox.Widget, p string) {
+		OnFilter: func(w combobox.ComboBox, p string) {
 			it := cmdItems.filter(p, cfg.Dedup(), cfg.CaseSensitive())
 			w.ListBox().Reset(it, it.Len()-1)
 		},

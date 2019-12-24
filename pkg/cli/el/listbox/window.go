@@ -24,7 +24,7 @@ var respectDistance = 2
 //
 // * Among all values satisfying the above conditions, the value of first is
 //   the one closest to lastFirst.
-func getVerticalWindow(state State, height int) (first, crop int) {
+func getVerticalWindow(state ListBoxState, height int) (first, crop int) {
 	items, selected, lastFirst := state.Items, state.Selected, state.First
 	n := items.Len()
 	if selected < 0 {
@@ -97,7 +97,7 @@ func getVerticalWindow(state State, height int) (first, crop int) {
 
 // Determines the window to show in horizontal layout. It returns the first item
 // to show and the amount of height required.
-func getHorizontalWindow(state State, padding, width, height int) (int, int) {
+func getHorizontalWindow(state ListBoxState, padding, width, height int) (int, int) {
 	items := state.Items
 	n := items.Len()
 	// Lower bound of number of items that can fit in a row.

@@ -21,7 +21,7 @@ func initMinibuf(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 }
 
 func minibufStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
-	w := codearea.New(codearea.Spec{
+	w := codearea.NewCodeArea(codearea.CodeAreaSpec{
 		Prompt:         layout.ModePrompt(" MINIBUF ", true),
 		OverlayHandler: binding,
 		OnSubmit:       func() { minibufSubmit(app, ev) },
@@ -33,7 +33,7 @@ func minibufStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
 }
 
 func minibufSubmit(app cli.App, ev *eval.Evaler) {
-	codeArea, ok := cli.Addon(app).(codearea.Widget)
+	codeArea, ok := cli.Addon(app).(codearea.CodeArea)
 	if !ok {
 		return
 	}

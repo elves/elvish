@@ -164,10 +164,10 @@ func completionStart(app cli.App, binding el.Handler, cfg complete.Config, smart
 		}
 		if prefix != "" {
 			insertedPrefix := false
-			app.CodeArea().MutateState(func(s *codearea.State) {
+			app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 				rep := s.Buffer.Content[result.Replace.From:result.Replace.To]
 				if len(prefix) > len(rep) && strings.HasPrefix(prefix, rep) {
-					s.Pending = codearea.Pending{
+					s.Pending = codearea.PendingCode{
 						Content: prefix,
 						From:    result.Replace.From, To: result.Replace.To}
 					s.ApplyPending()

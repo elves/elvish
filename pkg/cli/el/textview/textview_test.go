@@ -14,7 +14,7 @@ var bb = term.NewBufferBuilder
 var renderTests = []el.RenderTest{
 	{
 		Name: "text fits entirely",
-		Given: New(Spec{State: State{
+		Given: NewTextView(TextViewSpec{State: TextViewState{
 			Lines: []string{"line 1", "line 2", "line 3"}}}),
 		Width: 10, Height: 4,
 		Want: bb(10).
@@ -24,7 +24,7 @@ var renderTests = []el.RenderTest{
 	},
 	{
 		Name: "text cropped horizontally",
-		Given: New(Spec{State: State{
+		Given: NewTextView(TextViewSpec{State: TextViewState{
 			Lines: []string{"a very long line"}}}),
 		Width: 10, Height: 4,
 		Want: bb(10).
@@ -32,7 +32,7 @@ var renderTests = []el.RenderTest{
 	},
 	{
 		Name: "text cropped vertically",
-		Given: New(Spec{State: State{
+		Given: NewTextView(TextViewSpec{State: TextViewState{
 			Lines: []string{"line 1", "line 2", "line 3"}}}),
 		Width: 10, Height: 2,
 		Want: bb(10).
@@ -41,9 +41,9 @@ var renderTests = []el.RenderTest{
 	},
 	{
 		Name: "text cropped vertically, with scrollbar",
-		Given: New(Spec{
+		Given: NewTextView(TextViewSpec{
 			Scrollable: true,
-			State: State{
+			State: TextViewState{
 				Lines: []string{"line 1", "line 2", "line 3", "line 4"}}}),
 		Width: 10, Height: 2,
 		Want: bb(10).
@@ -54,7 +54,7 @@ var renderTests = []el.RenderTest{
 	},
 	{
 		Name: "State.First adjusted to fit text",
-		Given: New(Spec{State: State{
+		Given: NewTextView(TextViewSpec{State: TextViewState{
 			First: 2,
 			Lines: []string{"line 1", "line 2", "line 3"}}}),
 		Width: 10, Height: 3,
@@ -72,55 +72,55 @@ func TestRender(t *testing.T) {
 var handleTests = []el.HandleTest{
 	{
 		Name: "up doing nothing when not scrollable",
-		Given: New(Spec{
-			State: State{Lines: []string{"1", "2", "3", "4"}, First: 1}}),
+		Given: NewTextView(TextViewSpec{
+			State: TextViewState{Lines: []string{"1", "2", "3", "4"}, First: 1}}),
 		Event: term.K(ui.Up),
 
 		WantUnhandled: true,
 	},
 	{
 		Name: "up moving window up when scrollable",
-		Given: New(Spec{
+		Given: NewTextView(TextViewSpec{
 			Scrollable: true,
-			State:      State{Lines: []string{"1", "2", "3", "4"}, First: 1}}),
+			State:      TextViewState{Lines: []string{"1", "2", "3", "4"}, First: 1}}),
 		Event: term.K(ui.Up),
 
-		WantNewState: State{Lines: []string{"1", "2", "3", "4"}, First: 0},
+		WantNewState: TextViewState{Lines: []string{"1", "2", "3", "4"}, First: 0},
 	},
 	{
 		Name: "up doing nothing when already at top",
-		Given: New(Spec{
+		Given: NewTextView(TextViewSpec{
 			Scrollable: true,
-			State:      State{Lines: []string{"1", "2", "3", "4"}, First: 0}}),
+			State:      TextViewState{Lines: []string{"1", "2", "3", "4"}, First: 0}}),
 		Event: term.K(ui.Up),
 
-		WantNewState: State{Lines: []string{"1", "2", "3", "4"}, First: 0},
+		WantNewState: TextViewState{Lines: []string{"1", "2", "3", "4"}, First: 0},
 	},
 	{
 		Name: "down moving window down when scrollable",
-		Given: New(Spec{
+		Given: NewTextView(TextViewSpec{
 			Scrollable: true,
-			State:      State{Lines: []string{"1", "2", "3", "4"}, First: 1}}),
+			State:      TextViewState{Lines: []string{"1", "2", "3", "4"}, First: 1}}),
 		Event: term.K(ui.Down),
 
-		WantNewState: State{Lines: []string{"1", "2", "3", "4"}, First: 2},
+		WantNewState: TextViewState{Lines: []string{"1", "2", "3", "4"}, First: 2},
 	},
 	{
 		Name: "down doing nothing when already at bottom",
-		Given: New(Spec{
+		Given: NewTextView(TextViewSpec{
 			Scrollable: true,
-			State:      State{Lines: []string{"1", "2", "3", "4"}, First: 3}}),
+			State:      TextViewState{Lines: []string{"1", "2", "3", "4"}, First: 3}}),
 		Event: term.K(ui.Down),
 
-		WantNewState: State{Lines: []string{"1", "2", "3", "4"}, First: 3},
+		WantNewState: TextViewState{Lines: []string{"1", "2", "3", "4"}, First: 3},
 	},
 	{
 		Name: "overlay",
-		Given: New(Spec{
+		Given: NewTextView(TextViewSpec{
 			OverlayHandler: el.MapHandler{term.K('a'): func() {}}}),
 		Event: term.K('a'),
 
-		WantNewState: State{},
+		WantNewState: TextViewState{},
 	},
 }
 
@@ -129,8 +129,8 @@ func TestHandle(t *testing.T) {
 }
 
 func TestCopyState(t *testing.T) {
-	state := State{Lines: []string{"a", "b", "c"}, First: 1}
-	w := New(Spec{State: state})
+	state := TextViewState{Lines: []string{"a", "b", "c"}, First: 1}
+	w := NewTextView(TextViewSpec{State: state})
 	copied := w.CopyState()
 	if !reflect.DeepEqual(copied, state) {
 		t.Errorf("Got copied state %v, want %v", copied, state)

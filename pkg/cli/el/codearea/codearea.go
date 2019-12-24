@@ -14,20 +14,19 @@ import (
 	"github.com/elves/elvish/pkg/ui"
 )
 
-// Widget supports code-editing functions. It implements the clitypes.Widget
-// interface. An empty Widget is directly usable.
-type Widget interface {
+// CodeArea is a Widget for displaying and editing code.
+type CodeArea interface {
 	el.Widget
 	// CopyState returns a copy of the state.
-	CopyState() State
+	CopyState() CodeAreaState
 	// MutateState calls the given the function while locking StateMutex.
-	MutateState(f func(*State))
+	MutateState(f func(*CodeAreaState))
 	// Submit triggers the OnSubmit callback.
 	Submit()
 }
 
-// Spec specifies the configuration and initial state for Widget.
-type Spec struct {
+// CodeAreaSpec specifies the configuration and initial state for CodeArea.
+type CodeAreaSpec struct {
 	// A Handler that takes precedence over the default handling of events.
 	OverlayHandler el.Handler
 	// A function that highlights the given code and returns any errors it has
@@ -50,28 +49,28 @@ type Spec struct {
 	OnSubmit func()
 
 	// State. When used in New, this field specifies the initial state.
-	State State
+	State CodeAreaState
 }
 
-type widget struct {
+type codeArea struct {
 	// Mutex for synchronizing access to State.
 	StateMutex sync.RWMutex
 	// Configuration and state.
-	Spec
+	CodeAreaSpec
 
 	// Consecutively inserted text. Used for expanding abbreviations.
 	inserts string
 	// Value of State.CodeBuffer when handleKeyEvent was last called. Used for
 	// detecting whether insertion has been interrupted.
-	lastCodeBuffer Buffer
+	lastCodeBuffer CodeBuffer
 	// Whether the widget is in the middle of bracketed pasting.
 	pasting bool
 	// Buffer for keeping Pasted text during bracketed pasting.
 	pasteBuffer bytes.Buffer
 }
 
-// New creates a new codearea widget from the given Spec.
-func New(spec Spec) Widget {
+// NewCodeArea creates a new CodeArea from the given spec.
+func NewCodeArea(spec CodeAreaSpec) CodeArea {
 	if spec.OverlayHandler == nil {
 		spec.OverlayHandler = el.DummyHandler{}
 	}
@@ -93,7 +92,7 @@ func New(spec Spec) Widget {
 	if spec.OnSubmit == nil {
 		spec.OnSubmit = dummyOnSubmit
 	}
-	return &widget{Spec: spec}
+	return &codeArea{CodeAreaSpec: spec}
 }
 
 // ConstPrompt returns a prompt callback that always writes the same styled
@@ -115,13 +114,13 @@ func dummyQuotePaste() bool { return false }
 func dummyOnSubmit() {}
 
 // Submit emits a submit event with the current code content.
-func (w *widget) Submit() {
+func (w *codeArea) Submit() {
 	w.OnSubmit()
 }
 
 // Render renders the code area, including the prompt and rprompt, highlighted
 // code, the cursor, and compilation errors in the code content.
-func (w *widget) Render(width, height int) *term.Buffer {
+func (w *codeArea) Render(width, height int) *term.Buffer {
 	view := getView(w)
 	bb := term.NewBufferBuilder(width)
 	renderView(view, bb)
@@ -132,7 +131,7 @@ func (w *widget) Render(width, height int) *term.Buffer {
 
 // Handle handles KeyEvent's of non-function keys, as well as PasteSetting
 // events.
-func (w *widget) Handle(event term.Event) bool {
+func (w *codeArea) Handle(event term.Event) bool {
 	if w.OverlayHandler.Handle(event) {
 		return true
 	}
@@ -146,24 +145,24 @@ func (w *widget) Handle(event term.Event) bool {
 	return false
 }
 
-func (w *widget) MutateState(f func(*State)) {
+func (w *codeArea) MutateState(f func(*CodeAreaState)) {
 	w.StateMutex.Lock()
 	defer w.StateMutex.Unlock()
 	f(&w.State)
 }
 
-func (w *widget) CopyState() State {
+func (w *codeArea) CopyState() CodeAreaState {
 	w.StateMutex.RLock()
 	defer w.StateMutex.RUnlock()
 	return w.State
 }
 
-func (w *widget) resetInserts() {
+func (w *codeArea) resetInserts() {
 	w.inserts = ""
-	w.lastCodeBuffer = Buffer{}
+	w.lastCodeBuffer = CodeBuffer{}
 }
 
-func (w *widget) handlePasteSetting(start bool) bool {
+func (w *codeArea) handlePasteSetting(start bool) bool {
 	w.resetInserts()
 	if start {
 		w.pasting = true
@@ -172,7 +171,7 @@ func (w *widget) handlePasteSetting(start bool) bool {
 		if w.QuotePaste() {
 			text = parse.Quote(text)
 		}
-		w.MutateState(func(s *State) { s.Buffer.InsertAtDot(text) })
+		w.MutateState(func(s *CodeAreaState) { s.Buffer.InsertAtDot(text) })
 
 		w.pasting = false
 		w.pasteBuffer = bytes.Buffer{}
@@ -180,7 +179,7 @@ func (w *widget) handlePasteSetting(start bool) bool {
 	return true
 }
 
-func (w *widget) handleKeyEvent(key ui.Key) bool {
+func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 	isFuncKey := key.Mod != 0 || key.Rune < 0
 	if w.pasting {
 		if isFuncKey {
@@ -200,11 +199,11 @@ func (w *widget) handleKeyEvent(key ui.Key) bool {
 		return true
 	case ui.K(ui.Backspace):
 		w.resetInserts()
-		w.MutateState(func(s *State) {
+		w.MutateState(func(s *CodeAreaState) {
 			c := &s.Buffer
 			// Remove the last rune.
 			_, chop := utf8.DecodeLastRuneInString(c.Content[:c.Dot])
-			*c = Buffer{
+			*c = CodeBuffer{
 				Content: c.Content[:c.Dot-chop] + c.Content[c.Dot:],
 				Dot:     c.Dot - chop,
 			}
@@ -235,7 +234,7 @@ func (w *widget) handleKeyEvent(key ui.Key) bool {
 		})
 		if len(abbr) > 0 {
 			c := &w.State.Buffer
-			*c = Buffer{
+			*c = CodeBuffer{
 				Content: c.Content[:c.Dot-len(abbr)] + full + c.Content[c.Dot:],
 				Dot:     c.Dot - len(abbr) + len(full),
 			}

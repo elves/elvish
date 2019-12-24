@@ -20,7 +20,7 @@ type App interface {
 	// CopyState returns a copy of the a state.
 	CopyState() State
 	// CodeArea returns the codearea widget of the app.
-	CodeArea() codearea.Widget
+	CodeArea() codearea.CodeArea
 	// ReadCode requests the App to read code from the terminal by running an
 	// event loop. This function is not re-entrant.
 	ReadCode() (string, error)
@@ -54,7 +54,7 @@ type app struct {
 	StateMutex sync.RWMutex
 	State      State
 
-	codeArea codearea.Widget
+	codeArea codearea.CodeArea
 }
 
 // State represents mutable state of an App.
@@ -112,7 +112,7 @@ func NewApp(spec AppSpec) App {
 	lp.HandleCb(a.handle)
 	lp.RedrawCb(a.redraw)
 
-	a.codeArea = codearea.New(codearea.Spec{
+	a.codeArea = codearea.NewCodeArea(codearea.CodeAreaSpec{
 		OverlayHandler: spec.OverlayHandler,
 		Highlighter:    a.Highlighter.Get,
 		Prompt:         a.Prompt.Get,
@@ -138,14 +138,14 @@ func (a *app) CopyState() State {
 	return a.State
 }
 
-func (a *app) CodeArea() codearea.Widget {
+func (a *app) CodeArea() codearea.CodeArea {
 	return a.codeArea
 }
 
 func (a *app) resetAllStates() {
 	a.MutateState(func(s *State) { *s = State{} })
 	a.codeArea.MutateState(
-		func(s *codearea.State) { *s = codearea.State{} })
+		func(s *codearea.CodeAreaState) { *s = codearea.CodeAreaState{} })
 }
 
 func (a *app) handle(e event) {
@@ -198,11 +198,11 @@ func (a *app) redraw(flag redrawFlag) {
 	if isFinalRedraw {
 		hideRPrompt := !a.RPromptPersistent()
 		if hideRPrompt {
-			a.codeArea.MutateState(func(s *codearea.State) { s.HideRPrompt = true })
+			a.codeArea.MutateState(func(s *codearea.CodeAreaState) { s.HideRPrompt = true })
 		}
 		bufMain := renderApp(a.codeArea, nil /* addon */, width, height)
 		if hideRPrompt {
-			a.codeArea.MutateState(func(s *codearea.State) { s.HideRPrompt = false })
+			a.codeArea.MutateState(func(s *codearea.CodeAreaState) { s.HideRPrompt = false })
 		}
 		// Insert a newline after the buffer and position the cursor there.
 		bufMain.Extend(term.NewBuffer(width), true)

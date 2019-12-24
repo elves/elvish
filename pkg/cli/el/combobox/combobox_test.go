@@ -14,12 +14,12 @@ import (
 var renderTests = []el.RenderTest{
 	{
 		Name: "rendering codearea and listbox",
-		Given: New(Spec{
-			CodeArea: codearea.Spec{
-				State: codearea.State{
-					Buffer: codearea.Buffer{Content: "filter", Dot: 6}}},
-			ListBox: listbox.Spec{
-				State: listbox.State{Items: listbox.TestItems{NItems: 2}}}}),
+		Given: NewComboBox(ComboBoxSpec{
+			CodeArea: codearea.CodeAreaSpec{
+				State: codearea.CodeAreaState{
+					Buffer: codearea.CodeBuffer{Content: "filter", Dot: 6}}},
+			ListBox: listbox.ListBoxSpec{
+				State: listbox.ListBoxState{Items: listbox.TestItems{NItems: 2}}}}),
 		Width: 10, Height: 24,
 		Want: term.NewBufferBuilder(10).
 			Write("filter").SetDotHere().
@@ -28,11 +28,11 @@ var renderTests = []el.RenderTest{
 	},
 	{
 		Name: "calling filter before rendering",
-		Given: New(Spec{
-			CodeArea: codearea.Spec{
-				State: codearea.State{
-					Buffer: codearea.Buffer{Content: "filter", Dot: 6}}},
-			OnFilter: func(w Widget, filter string) {
+		Given: NewComboBox(ComboBoxSpec{
+			CodeArea: codearea.CodeAreaSpec{
+				State: codearea.CodeAreaState{
+					Buffer: codearea.CodeBuffer{Content: "filter", Dot: 6}}},
+			OnFilter: func(w ComboBox, filter string) {
 				w.ListBox().Reset(listbox.TestItems{NItems: 2}, 0)
 			}}),
 		Width: 10, Height: 24,
@@ -50,13 +50,13 @@ func TestRender(t *testing.T) {
 func TestHandle(t *testing.T) {
 	var onFilterCalled bool
 	var lastFilter string
-	w := New(Spec{
-		OnFilter: func(w Widget, filter string) {
+	w := NewComboBox(ComboBoxSpec{
+		OnFilter: func(w ComboBox, filter string) {
 			onFilterCalled = true
 			lastFilter = filter
 		},
-		ListBox: listbox.Spec{
-			State: listbox.State{Items: listbox.TestItems{NItems: 2}}}})
+		ListBox: listbox.ListBoxSpec{
+			State: listbox.ListBoxState{Items: listbox.TestItems{NItems: 2}}}})
 
 	handled := w.Handle(term.K(ui.Down))
 	if !handled {
@@ -95,12 +95,12 @@ func TestHandle(t *testing.T) {
 
 func TestRefilter(t *testing.T) {
 	onFilter := make(chan string, 100)
-	w := New(Spec{
-		OnFilter: func(w Widget, filter string) {
+	w := NewComboBox(ComboBoxSpec{
+		OnFilter: func(w ComboBox, filter string) {
 			onFilter <- filter
 		}})
 	<-onFilter // Ignore the initial OnFilter call.
-	w.CodeArea().MutateState(func(s *codearea.State) { s.Buffer.Content = "new" })
+	w.CodeArea().MutateState(func(s *codearea.CodeAreaState) { s.Buffer.Content = "new" })
 	w.Refilter()
 	select {
 	case f := <-onFilter:

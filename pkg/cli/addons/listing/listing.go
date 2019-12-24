@@ -55,18 +55,18 @@ func Start(app cli.App, cfg Config) {
 			cli.SetAddon(app, nil)
 		}
 	}
-	w := combobox.New(combobox.Spec{
-		CodeArea: codearea.Spec{
+	w := combobox.NewComboBox(combobox.ComboBoxSpec{
+		CodeArea: codearea.CodeAreaSpec{
 			Prompt: layout.ModePrompt(cfg.Caption, true),
 		},
-		ListBox: listbox.Spec{
+		ListBox: listbox.ListBoxSpec{
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
 				accept(it.(items)[i].ToAccept)
 			},
 			ExtendStyle: true,
 		},
-		OnFilter: func(w combobox.Widget, q string) {
+		OnFilter: func(w combobox.ComboBox, q string) {
 			it, selected := cfg.GetItems(q)
 			w.ListBox().Reset(items(it), selected)
 			if cfg.AutoAccept && len(it) == 1 {

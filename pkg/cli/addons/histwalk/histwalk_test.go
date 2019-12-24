@@ -16,7 +16,7 @@ func TestHistWalk(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	cli.SetCodeBuffer(f.App, codearea.Buffer{Content: "ls", Dot: 2})
+	cli.SetCodeBuffer(f.App, codearea.CodeBuffer{Content: "ls", Dot: 2})
 	f.App.Redraw()
 	buf0 := f.MakeBuffer("ls", term.DotHere)
 	f.TTY.TestBuffer(t, buf0)
@@ -81,7 +81,7 @@ func TestHistWalk_NoMatch(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	cli.SetCodeBuffer(f.App, codearea.Buffer{Content: "ls", Dot: 2})
+	cli.SetCodeBuffer(f.App, codearea.CodeBuffer{Content: "ls", Dot: 2})
 	f.App.Redraw()
 	buf0 := f.MakeBuffer("ls", term.DotHere)
 	f.TTY.TestBuffer(t, buf0)

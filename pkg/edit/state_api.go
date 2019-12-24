@@ -18,7 +18,7 @@ import (
 // inserted text.
 
 func insertAtDot(app cli.App, text string) {
-	app.CodeArea().MutateState(func(s *codearea.State) {
+	app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 		s.Buffer.InsertAtDot(text)
 	})
 }
@@ -32,7 +32,7 @@ func insertAtDot(app cli.App, text string) {
 // Equivalent to assigning `$text` to `$edit:current-command`.
 
 func replaceInput(app cli.App, text string) {
-	cli.SetCodeBuffer(app, codearea.Buffer{Content: text, Dot: len(text)})
+	cli.SetCodeBuffer(app, codearea.CodeBuffer{Content: text, Dot: len(text)})
 }
 
 //elvdoc:var -dot
@@ -60,7 +60,7 @@ func initStateAPI(app cli.App, ns eval.Ns) {
 		if err != nil {
 			return err
 		}
-		app.CodeArea().MutateState(func(s *codearea.State) {
+		app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
 			s.Buffer.Dot = dot
 		})
 		return nil
