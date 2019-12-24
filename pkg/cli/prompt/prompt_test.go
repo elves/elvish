@@ -162,16 +162,13 @@ func autoIncPrompt() func() ui.Text {
 func testUpdate(t *testing.T, p *Prompt, wantUpdate ui.Text) {
 	t.Helper()
 	select {
-	case update := <-p.LateUpdates():
+	case <-p.LateUpdates():
+		update := p.Get()
 		if !reflect.DeepEqual(update, wantUpdate) {
-			t.Errorf("got late update %v, want %v", update, wantUpdate)
+			t.Errorf("got updated %v, want %v", update, wantUpdate)
 		}
 	case <-time.After(time.Second):
 		t.Errorf("no late update after 1 second")
-	}
-	current := p.Get()
-	if !reflect.DeepEqual(current, wantUpdate) {
-		t.Errorf("got current %v, want %v", current, wantUpdate)
 	}
 }
 

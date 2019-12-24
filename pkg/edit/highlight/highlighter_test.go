@@ -100,11 +100,8 @@ func testThat(t *testing.T, hl *Highlighter, c c) {
 		return
 	}
 	select {
-	case late := <-hl.LateUpdates():
-		if !reflect.DeepEqual(c.wantLate, late) {
-			t.Errorf("want %v from LateUpdates, got %v", c.wantLate, late)
-		}
-		late, _ = hl.Get(c.given)
+	case <-hl.LateUpdates():
+		late, _ := hl.Get(c.given)
 		if !reflect.DeepEqual(c.wantLate, late) {
 			t.Errorf("want %v from late Get, got %v", c.wantLate, late)
 		}
@@ -184,17 +181,12 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 
 	hl.Get("l")
 
-	initial, _ := hl.Get("ls")
-	late := <-hl.LateUpdates()
-
-	wantInitial := ui.T("ls")
-	wantLate := ui.T("ls", ui.FgGreen)
-	if !reflect.DeepEqual(wantInitial, initial) {
-		t.Errorf("want %v from initial Get, got %v", wantInitial, initial)
-	}
-	if !reflect.DeepEqual(wantLate, late) {
-		t.Errorf("want %v from late Get, got %v", wantLate, late)
-	}
+	testThat(t, hl, c{
+		given:       "ls",
+		wantInitial: ui.T("ls"),
+		wantLate:    ui.T("ls", ui.FgGreen),
+		mustLate:    true,
+	})
 
 	// Make sure that no more late updates are delivered.
 	select {

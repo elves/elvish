@@ -18,7 +18,7 @@ type Prompt struct {
 	// Channel for update requests.
 	updateReq chan struct{}
 	// Channel on which prompt contents are delivered.
-	ch chan ui.Text
+	ch chan struct{}
 	// Last computed prompt content.
 	last ui.Text
 	// Mutex for guarding access to the last field.
@@ -64,7 +64,7 @@ func New(cfg Config) *Prompt {
 	}
 	p := &Prompt{
 		cfg,
-		"", make(chan struct{}, 1), make(chan ui.Text, 1),
+		"", make(chan struct{}, 1), make(chan struct{}, 1),
 		unknownContent, sync.RWMutex{}}
 	// TODO: Don't keep a goroutine running.
 	go p.loop()
@@ -83,20 +83,20 @@ func (p *Prompt) loop() {
 		case <-time.After(p.config.StaleThreshold()):
 			// The prompt callback did not finish within the threshold. Send the
 			// previous content, marked as stale.
-			p.send(p.config.StaleTransform(content))
+			p.update(p.config.StaleTransform(content))
 			content = <-ch
 
 			select {
 			case <-p.updateReq:
 				// If another update is already requested by the time we finish,
 				// keep marking the prompt as stale. This reduces flickering.
-				p.send(p.config.StaleTransform(content))
+				p.update(p.config.StaleTransform(content))
 				p.queueUpdate()
 			default:
-				p.send(content)
+				p.update(content)
 			}
 		case content = <-ch:
-			p.send(content)
+			p.update(content)
 		}
 	}
 }
@@ -116,7 +116,7 @@ func (p *Prompt) Get() ui.Text {
 }
 
 // LateUpdates returns a channel on which late updates are made available.
-func (p *Prompt) LateUpdates() <-chan ui.Text {
+func (p *Prompt) LateUpdates() <-chan struct{} {
 	return p.ch
 }
 
@@ -127,11 +127,11 @@ func (p *Prompt) queueUpdate() {
 	}
 }
 
-func (p *Prompt) send(content ui.Text) {
+func (p *Prompt) update(content ui.Text) {
 	p.lastMutex.Lock()
 	p.last = content
 	p.lastMutex.Unlock()
-	p.ch <- content
+	p.ch <- struct{}{}
 }
 
 func (p *Prompt) shouldUpdate() bool {

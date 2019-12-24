@@ -32,7 +32,7 @@ type Highlighter interface {
 	// Get returns the highlighted code and any static errors.
 	Get(code string) (ui.Text, []error)
 	// LateUpdates returns a channel for delivering late updates.
-	LateUpdates() <-chan ui.Text
+	LateUpdates() <-chan struct{}
 }
 
 // A Highlighter implementation that always returns plain text.
@@ -42,7 +42,7 @@ func (dummyHighlighter) Get(code string) (ui.Text, []error) {
 	return ui.T(code), nil
 }
 
-func (dummyHighlighter) LateUpdates() <-chan ui.Text { return nil }
+func (dummyHighlighter) LateUpdates() <-chan struct{} { return nil }
 
 // Prompt represents a prompt whose result can be delivered asynchronously.
 type Prompt interface {
@@ -52,13 +52,13 @@ type Prompt interface {
 	Trigger(force bool)
 	// Get returns the current prompt.
 	Get() ui.Text
-	// LastUpdates returns a channel for delivering late updates.
-	LateUpdates() <-chan ui.Text
+	// LastUpdates returns a channel for notifying late updates.
+	LateUpdates() <-chan struct{}
 }
 
 // ConstPrompt is a Prompt implementation that always return the same ui.Text.
 type ConstPrompt struct{ Content ui.Text }
 
-func (ConstPrompt) Trigger(force bool)          {}
-func (p ConstPrompt) Get() ui.Text              { return p.Content }
-func (ConstPrompt) LateUpdates() <-chan ui.Text { return nil }
+func (ConstPrompt) Trigger(force bool)           {}
+func (p ConstPrompt) Get() ui.Text               { return p.Content }
+func (ConstPrompt) LateUpdates() <-chan struct{} { return nil }

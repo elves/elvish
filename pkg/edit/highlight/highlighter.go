@@ -12,7 +12,7 @@ const latesBufferSize = 128
 type Highlighter struct {
 	cfg   Config
 	state state
-	lates chan ui.Text
+	lates chan struct{}
 }
 
 type state struct {
@@ -23,7 +23,7 @@ type state struct {
 }
 
 func NewHighlighter(cfg Config) *Highlighter {
-	return &Highlighter{cfg, state{}, make(chan ui.Text, latesBufferSize)}
+	return &Highlighter{cfg, state{}, make(chan struct{}, latesBufferSize)}
 }
 
 // Get returns the highlighted code and static errors found in the code.
@@ -45,7 +45,7 @@ func (hl *Highlighter) Get(code string) (ui.Text, []error) {
 		hl.state.styledCode = styledCode
 		// The channel send below might block, so unlock the state first.
 		hl.state.Unlock()
-		hl.lates <- styledCode
+		hl.lates <- struct{}{}
 	}
 
 	styledCode, errors := highlight(code, hl.cfg, lateCb)
@@ -57,6 +57,6 @@ func (hl *Highlighter) Get(code string) (ui.Text, []error) {
 }
 
 // LateUpdates returns a channel for notifying late updates.
-func (hl *Highlighter) LateUpdates() <-chan ui.Text {
+func (hl *Highlighter) LateUpdates() <-chan struct{} {
 	return hl.lates
 }

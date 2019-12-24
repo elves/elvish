@@ -224,7 +224,7 @@ func TestReadCode_RedrawsOnLateUpdateFromHighlighter(t *testing.T) {
 		get: func(code string) (ui.Text, []error) {
 			return ui.T(code, styling), nil
 		},
-		lateUpdates: make(chan ui.Text),
+		lateUpdates: make(chan struct{}),
 	}
 	f := Setup(withHighlighter(hl))
 	defer f.Stop()
@@ -234,7 +234,7 @@ func TestReadCode_RedrawsOnLateUpdateFromHighlighter(t *testing.T) {
 	f.TTY.TestBuffer(t, bb().Write("code").SetDotHere().Buffer())
 
 	styling = ui.FgRed
-	hl.lateUpdates <- nil
+	hl.lateUpdates <- struct{}{}
 	f.TTY.TestBuffer(t, bb().Write("code", ui.FgRed).SetDotHere().Buffer())
 }
 
@@ -271,7 +271,7 @@ func TestReadCode_RedrawsOnLateUpdateFromPrompt(t *testing.T) {
 	promptContent := "old"
 	prompt := testPrompt{
 		get:         func() ui.Text { return ui.T(promptContent) },
-		lateUpdates: make(chan ui.Text),
+		lateUpdates: make(chan struct{}),
 	}
 	f := Setup(WithSpec(func(spec *AppSpec) { spec.Prompt = prompt }))
 	defer f.Stop()
@@ -280,7 +280,7 @@ func TestReadCode_RedrawsOnLateUpdateFromPrompt(t *testing.T) {
 	f.TTY.TestBuffer(t, bb().Write("old").SetDotHere().Buffer())
 
 	promptContent = "new"
-	prompt.lateUpdates <- nil
+	prompt.lateUpdates <- struct{}{}
 	f.TTY.TestBuffer(t, bb().Write("new").SetDotHere().Buffer())
 }
 
@@ -451,14 +451,14 @@ func feedInput(ttyCtrl TTYCtrl, input string) {
 // A Highlighter implementation useful for testing.
 type testHighlighter struct {
 	get         func(code string) (ui.Text, []error)
-	lateUpdates chan ui.Text
+	lateUpdates chan struct{}
 }
 
 func (hl testHighlighter) Get(code string) (ui.Text, []error) {
 	return hl.get(code)
 }
 
-func (hl testHighlighter) LateUpdates() <-chan ui.Text {
+func (hl testHighlighter) LateUpdates() <-chan struct{} {
 	return hl.lateUpdates
 }
 
@@ -466,7 +466,7 @@ func (hl testHighlighter) LateUpdates() <-chan ui.Text {
 type testPrompt struct {
 	trigger     func(force bool)
 	get         func() ui.Text
-	lateUpdates chan ui.Text
+	lateUpdates chan struct{}
 }
 
 func (p testPrompt) Trigger(force bool) {
@@ -482,6 +482,6 @@ func (p testPrompt) Get() ui.Text {
 	return nil
 }
 
-func (p testPrompt) LateUpdates() <-chan ui.Text {
+func (p testPrompt) LateUpdates() <-chan struct{} {
 	return p.lateUpdates
 }

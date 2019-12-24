@@ -26,7 +26,7 @@ func (highlighter) Get(code string) (ui.Text, []error) {
 	return t, nil
 }
 
-func (highlighter) LateUpdates() <-chan ui.Text { return nil }
+func (highlighter) LateUpdates() <-chan struct{} { return nil }
 
 func main() {
 	var app cli.App
