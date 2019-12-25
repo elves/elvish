@@ -175,7 +175,7 @@ var bufferBuiltinsData = map[string]func(*codearea.Buffer){
 	"kill-rune-right":       makeKill(moveDotRight),
 	"kill-word-left":        makeKill(moveDotLeftWord),
 	"kill-word-right":       makeKill(moveDotRightWord),
-	"kill-small-word-left":  makeKill(moveDotLeftWord),
+	"kill-small-word-left":  makeKill(moveDotLeftSmallWord),
 	"kill-small-word-right": makeKill(moveDotRightSmallWord),
 	"kill-left-alnum-word":  makeKill(moveDotLeftAlnumWord),
 	"kill-right-alnum-word": makeKill(moveDotRightAlnumWord),
