@@ -9,7 +9,7 @@ import (
 
 // A net/rpc service for the daemon.
 type service struct {
-	store store.Service
+	store store.Store
 	err   error
 }
 

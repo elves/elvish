@@ -15,7 +15,7 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st store.Service, fuser *histutil.Fuser) {
+func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st store.Store, fuser *histutil.Fuser) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	ns.AddNs("listing",
 		eval.Ns{
@@ -94,7 +94,7 @@ func initLastcmd(app cli.App, ev *eval.Evaler, ns eval.Ns, histStore histutil.St
 		}))
 }
 
-func initLocation(app cli.App, ev *eval.Evaler, ns eval.Ns, st store.Service, commonBindingVar vars.PtrVar) {
+func initLocation(app cli.App, ev *eval.Evaler, ns eval.Ns, st store.Store, commonBindingVar vars.PtrVar) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	pinnedVar := newListVar(vals.EmptyList)
 	hiddenVar := newListVar(vals.EmptyList)
@@ -269,7 +269,7 @@ func (f fuserWrapper) AddCmd(cmd histutil.Entry) (int, error) {
 // Wraps an Evaler to implement the cli.DirStore interface.
 type dirStore struct {
 	ev *eval.Evaler
-	st store.Service
+	st store.Store
 }
 
 func (d dirStore) Chdir(path string) error {

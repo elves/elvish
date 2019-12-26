@@ -20,7 +20,7 @@ var initDB = map[string](func(*bolt.Tx) error){}
 // Waits.Add(1) in the main goroutine before spawning another goroutine, and
 // call Waits.Done() in the spawned goroutine after the operation is finished.
 type DBStore interface {
-	Service
+	Store
 
 	Waits() *sync.WaitGroup
 	Close() error

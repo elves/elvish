@@ -2,8 +2,15 @@ package store
 
 import "errors"
 
-// Service is an interface satisfied by the storage service.
-type Service interface {
+// NoBlacklist is an empty blacklist, to be used in GetDirs.
+var NoBlacklist = map[string]struct{}{}
+
+// ErrNoMatchingCmd is the error returned when a LastCmd or FirstCmd query
+// completes with no result.
+var ErrNoMatchingCmd = errors.New("no matching command line")
+
+// Store is an interface satisfied by the storage service.
+type Store interface {
 	NextCmdSeq() (int, error)
 	AddCmd(text string) (int, error)
 	DelCmd(seq int) error
@@ -20,13 +27,6 @@ type Service interface {
 	SetSharedVar(name, value string) error
 	DelSharedVar(name string) error
 }
-
-// NoBlacklist is an empty blacklist, to be used in GetDirs.
-var NoBlacklist = map[string]struct{}{}
-
-// ErrNoMatchingCmd is the error returned when a LastCmd or FirstCmd query
-// completes with no result.
-var ErrNoMatchingCmd = errors.New("no matching command line")
 
 // Dir is an entry in the directory history.
 type Dir struct {

@@ -9,7 +9,7 @@ import (
 )
 
 func TestCommandHistory(t *testing.T) {
-	f := setup(storeOp(func(s store.Service) {
+	f := setup(storeOp(func(s store.Store) {
 		s.AddCmd("echo 1")
 		s.AddCmd("echo 2")
 	}))
@@ -25,7 +25,7 @@ func TestCommandHistory(t *testing.T) {
 }
 
 func TestInsertLastWord(t *testing.T) {
-	f := setup(storeOp(func(s store.Service) {
+	f := setup(storeOp(func(s store.Store) {
 		s.AddCmd("echo foo bar")
 	}))
 	defer f.Cleanup()

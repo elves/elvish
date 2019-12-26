@@ -21,7 +21,7 @@ var (
 
 // Client represents a daemon client.
 type Client interface {
-	store.Service
+	store.Store
 
 	ResetConn() error
 	Close() error

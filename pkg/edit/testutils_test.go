@@ -18,7 +18,7 @@ type fixture struct {
 	Editor  *Editor
 	TTYCtrl apptest.TTYCtrl
 	Evaler  *eval.Evaler
-	Store   store.Service
+	Store   store.Store
 	Home    string
 
 	width   int
@@ -38,7 +38,7 @@ func assign(name string, val interface{}) func(*fixture) {
 	}
 }
 
-func storeOp(storeFn func(store.Service)) func(*fixture) {
+func storeOp(storeFn func(store.Store)) func(*fixture) {
 	return func(f *fixture) {
 		storeFn(f.Store)
 		// TODO(xiaq): Don't depend on this Elvish API.

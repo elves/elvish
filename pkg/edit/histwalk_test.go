@@ -53,7 +53,7 @@ func TestHistWalk_DownOrQuit(t *testing.T) {
 }
 
 func TestHistory_FastForward(t *testing.T) {
-	f := setup(storeOp(func(s store.Service) {
+	f := setup(storeOp(func(s store.Store) {
 		s.AddCmd("echo a")
 	}))
 	defer f.Cleanup()
@@ -71,7 +71,7 @@ func TestHistory_FastForward(t *testing.T) {
 
 func startHistwalkTest(t *testing.T) *fixture {
 	// The part of the test shared by all tests.
-	f := setup(storeOp(func(s store.Service) {
+	f := setup(storeOp(func(s store.Store) {
 		s.AddCmd("echo a")
 	}))
 

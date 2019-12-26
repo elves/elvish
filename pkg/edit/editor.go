@@ -22,7 +22,7 @@ type Editor struct {
 }
 
 // NewEditor creates a new editor from input and output terminal files.
-func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Service) *Editor {
+func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 	ns := eval.NewNs()
 	appSpec := cli.AppSpec{TTY: tty}
 

@@ -22,7 +22,7 @@ func TestInitListing_Binding(t *testing.T) {
 // Smoke tests for individual addons.
 
 func TestHistlistAddon(t *testing.T) {
-	f := setup(storeOp(func(s store.Service) {
+	f := setup(storeOp(func(s store.Store) {
 		s.AddCmd("ls")
 		s.AddCmd("echo")
 		s.AddCmd("ls")
@@ -63,7 +63,7 @@ func TestHistlistAddon(t *testing.T) {
 }
 
 func TestLastCmdAddon(t *testing.T) {
-	f := setup(storeOp(func(s store.Service) {
+	f := setup(storeOp(func(s store.Store) {
 		s.AddCmd("echo hello world")
 	}))
 	defer f.Cleanup()
