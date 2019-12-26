@@ -1,4 +1,4 @@
-package layout
+package cli
 
 import (
 	"github.com/elves/elvish/pkg/cli/term"

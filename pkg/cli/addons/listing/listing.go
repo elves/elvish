@@ -3,18 +3,13 @@ package listing
 
 import (
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/combobox"
-	"github.com/elves/elvish/pkg/cli/el/layout"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
 	"github.com/elves/elvish/pkg/ui"
 )
 
 // Config is the configuration to start the custom listing addon.
 type Config struct {
 	// Keybinding.
-	Binding el.Handler
+	Binding cli.Handler
 	// Caption of the listing. If empty, defaults to " LISTING ".
 	Caption string
 	// A function that takes the query string and returns a list of Item's and
@@ -55,18 +50,18 @@ func Start(app cli.App, cfg Config) {
 			cli.SetAddon(app, nil)
 		}
 	}
-	w := combobox.NewComboBox(combobox.ComboBoxSpec{
-		CodeArea: codearea.CodeAreaSpec{
-			Prompt: layout.ModePrompt(cfg.Caption, true),
+	w := cli.NewComboBox(cli.ComboBoxSpec{
+		CodeArea: cli.CodeAreaSpec{
+			Prompt: cli.ModePrompt(cfg.Caption, true),
 		},
-		ListBox: listbox.ListBoxSpec{
+		ListBox: cli.ListBoxSpec{
 			OverlayHandler: cfg.Binding,
-			OnAccept: func(it listbox.Items, i int) {
+			OnAccept: func(it cli.Items, i int) {
 				accept(it.(items)[i].ToAccept)
 			},
 			ExtendStyle: true,
 		},
-		OnFilter: func(w combobox.ComboBox, q string) {
+		OnFilter: func(w cli.ComboBox, q string) {
 			it, selected := cfg.GetItems(q)
 			w.ListBox().Reset(items(it), selected)
 			if cfg.AutoAccept && len(it) == 1 {

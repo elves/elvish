@@ -1,19 +1,16 @@
-package layout
+package cli
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
 )
 
-var bb = term.NewBufferBuilder
-
-var renderTests = []struct {
+var layoutRenderTests = []struct {
 	name     string
-	renderer el.Renderer
+	renderer Renderer
 	width    int
 	height   int
 	wantBuf  *term.BufferBuilder
@@ -94,8 +91,8 @@ var renderTests = []struct {
 	},
 }
 
-func TestRender(t *testing.T) {
-	for _, test := range renderTests {
+func TestLayout_Render(t *testing.T) {
+	for _, test := range layoutRenderTests {
 		t.Run(test.name, func(t *testing.T) {
 			buf := test.renderer.Render(test.width, test.height)
 			wantBuf := test.wantBuf.Buffer()
@@ -106,11 +103,11 @@ func TestRender(t *testing.T) {
 	}
 }
 
-var nopHandlers = []el.Handler{
+var nopHandlers = []Handler{
 	Empty{}, Label{ui.T("label")},
 }
 
-func TestHandle(t *testing.T) {
+func TestLayout_Handle(t *testing.T) {
 	for _, handler := range nopHandlers {
 		handled := handler.Handle(term.K('a'))
 		if handled {

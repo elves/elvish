@@ -1,17 +1,15 @@
-// Package colview provides a widget for arranging several widgets in a column.
-package colview
+package cli
 
 import (
 	"sync"
 
-	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
 )
 
 // ColView is a Widget that arranges several widgets in a column.
 type ColView interface {
-	el.Widget
+	Widget
 	// MutateState mutates the state.
 	MutateState(f func(*ColViewState))
 	// CopyState returns a copy of the state.
@@ -25,7 +23,7 @@ type ColView interface {
 // ColViewSpec specifies the configuration and initial state for ColView.
 type ColViewSpec struct {
 	// An overlay handler.
-	OverlayHandler el.Handler
+	OverlayHandler Handler
 	// A function that takes the number of columns and return weights for the
 	// widths of the columns. The returned slice must have a size of n. If this
 	// function is nil, all the columns will have the same weight.
@@ -43,7 +41,7 @@ type ColViewSpec struct {
 
 // ColViewState keeps the mutable state of the ColView widget.
 type ColViewState struct {
-	Columns     []el.Widget
+	Columns     []Widget
 	FocusColumn int
 }
 
@@ -56,7 +54,7 @@ type colView struct {
 // NewColView creates a new ColView from the given spec.
 func NewColView(spec ColViewSpec) ColView {
 	if spec.OverlayHandler == nil {
-		spec.OverlayHandler = el.DummyHandler{}
+		spec.OverlayHandler = DummyHandler{}
 	}
 	if spec.Weights == nil {
 		spec.Weights = equalWeights
@@ -90,7 +88,7 @@ func (w *colView) CopyState() ColViewState {
 	return w.State
 }
 
-const colGap = 1
+const colViewColGap = 1
 
 // Render renders all the columns side by side, putting the dot in the focused
 // column.
@@ -105,11 +103,11 @@ func (w *colView) Render(width, height int) *term.Buffer {
 		// To narrow; give up by rendering nothing.
 		return &term.Buffer{Width: width}
 	}
-	colWidths := distribute(width-(ncols-1)*colGap, w.Weights(ncols))
+	colWidths := distribute(width-(ncols-1)*colViewColGap, w.Weights(ncols))
 	var buf term.Buffer
 	for i, col := range state.Columns {
 		if i > 0 {
-			buf.Width += colGap
+			buf.Width += colViewColGap
 		}
 		bufCol := col.Render(colWidths[i], height)
 		buf.ExtendRight(bufCol)

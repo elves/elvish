@@ -1,5 +1,4 @@
-// Package el defines interfaces for CLI UI elements and related utilities.
-package el
+package cli
 
 import (
 	"github.com/elves/elvish/pkg/cli/term"

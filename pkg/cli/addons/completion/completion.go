@@ -6,11 +6,6 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/combobox"
-	"github.com/elves/elvish/pkg/cli/el/layout"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/ui"
 )
@@ -27,7 +22,7 @@ type Item struct {
 
 // Config keeps the configuration for the completion UI.
 type Config struct {
-	Binding el.Handler
+	Binding cli.Handler
 	Name    string
 	Replace diag.Ranging
 	Items   []Item
@@ -39,29 +34,29 @@ func Start(app cli.App, cfg Config) {
 		app.Notify("no candidates")
 		return
 	}
-	w := combobox.NewComboBox(combobox.ComboBoxSpec{
-		CodeArea: codearea.CodeAreaSpec{
-			Prompt: layout.ModePrompt(" COMPLETING "+cfg.Name+" ", true),
+	w := cli.NewComboBox(cli.ComboBoxSpec{
+		CodeArea: cli.CodeAreaSpec{
+			Prompt: cli.ModePrompt(" COMPLETING "+cfg.Name+" ", true),
 		},
-		ListBox: listbox.ListBoxSpec{
+		ListBox: cli.ListBoxSpec{
 			Horizontal:     true,
 			OverlayHandler: cfg.Binding,
-			OnSelect: func(it listbox.Items, i int) {
+			OnSelect: func(it cli.Items, i int) {
 				text := it.(items)[i].ToInsert
-				app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
-					s.Pending = codearea.PendingCode{
+				app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
+					s.Pending = cli.PendingCode{
 						From: cfg.Replace.From, To: cfg.Replace.To, Content: text}
 				})
 			},
-			OnAccept: func(it listbox.Items, i int) {
-				app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+			OnAccept: func(it cli.Items, i int) {
+				app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 					s.ApplyPending()
 				})
 				app.MutateState(func(s *cli.State) { s.Addon = nil })
 			},
 			ExtendStyle: true,
 		},
-		OnFilter: func(w combobox.ComboBox, p string) {
+		OnFilter: func(w cli.ComboBox, p string) {
 			w.ListBox().Reset(filter(cfg.Items, p), 0)
 		},
 	})
@@ -72,7 +67,7 @@ func Start(app cli.App, cfg Config) {
 // Close closes the completion UI.
 func Close(app cli.App) {
 	app.CodeArea().MutateState(
-		func(s *codearea.CodeAreaState) { s.Pending = codearea.PendingCode{} })
+		func(s *cli.CodeAreaState) { s.Pending = cli.PendingCode{} })
 	app.MutateState(func(s *cli.State) { s.Addon = nil })
 	app.Redraw()
 }

@@ -6,14 +6,13 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/addons/navigation"
-	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/cli/term"
 )
 
 func main() {
 	app := cli.NewApp(cli.AppSpec{})
 	navigation.Start(app, navigation.Config{
-		Binding: el.MapHandler{
+		Binding: cli.MapHandler{
 			term.K('x'): func() { app.CommitCode() },
 		},
 	})

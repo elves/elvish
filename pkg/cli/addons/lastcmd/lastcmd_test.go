@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/elves/elvish/pkg/cli"
 	. "github.com/elves/elvish/pkg/cli/apptest"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
 	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
@@ -78,8 +78,8 @@ func TestStart_OK(t *testing.T) {
 	f.TestTTY(t, "bar", term.DotHere)
 
 	// Test submission by Enter.
-	f.App.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
-		*s = codearea.CodeAreaState{}
+	f.App.CodeArea().MutateState(func(s *cli.CodeAreaState) {
+		*s = cli.CodeAreaState{}
 	})
 	Start(f.App, Config{
 		Store: store,
@@ -91,8 +91,8 @@ func TestStart_OK(t *testing.T) {
 	f.TestTTY(t, "foo,bar,baz", term.DotHere)
 
 	// Default wordifier.
-	f.App.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
-		*s = codearea.CodeAreaState{}
+	f.App.CodeArea().MutateState(func(s *cli.CodeAreaState) {
+		*s = cli.CodeAreaState{}
 	})
 	store.AddCmd(histutil.Entry{Text: "foo bar baz", Seq: 1})
 	Start(f.App, Config{Store: store})

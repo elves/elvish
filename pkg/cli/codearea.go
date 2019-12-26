@@ -1,5 +1,4 @@
-// Package codearea implements a widget for showing and editing code in CLI.
-package codearea
+package cli
 
 import (
 	"bytes"
@@ -8,7 +7,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/ui"
@@ -16,7 +14,7 @@ import (
 
 // CodeArea is a Widget for displaying and editing code.
 type CodeArea interface {
-	el.Widget
+	Widget
 	// CopyState returns a copy of the state.
 	CopyState() CodeAreaState
 	// MutateState calls the given the function while locking StateMutex.
@@ -28,7 +26,7 @@ type CodeArea interface {
 // CodeAreaSpec specifies the configuration and initial state for CodeArea.
 type CodeAreaSpec struct {
 	// A Handler that takes precedence over the default handling of events.
-	OverlayHandler el.Handler
+	OverlayHandler Handler
 	// A function that highlights the given code and returns any errors it has
 	// found when highlighting. If this function is not given, the Widget does
 	// not highlight the code nor show any errors.
@@ -113,7 +111,7 @@ type codeArea struct {
 // NewCodeArea creates a new CodeArea from the given spec.
 func NewCodeArea(spec CodeAreaSpec) CodeArea {
 	if spec.OverlayHandler == nil {
-		spec.OverlayHandler = el.DummyHandler{}
+		spec.OverlayHandler = DummyHandler{}
 	}
 	if spec.Highlighter == nil {
 		spec.Highlighter = func(s string) (ui.Text, []error) { return ui.T(s), nil }

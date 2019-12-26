@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/elves/elvish/pkg/cli"
 	. "github.com/elves/elvish/pkg/cli/apptest"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
 	"github.com/elves/elvish/pkg/cli/lscolors"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
@@ -175,7 +175,7 @@ func testNavigation(t *testing.T, c Cursor) {
 
 	// Test handling of selection change and directory preview. Also test
 	// LS_COLORS.
-	Select(f.App, listbox.Next)
+	Select(f.App, cli.Next)
 	d2Buf := f.MakeBuffer(
 		"", term.DotHere, "\n",
 		" NAVIGATING  \n", Styles,
@@ -211,7 +211,7 @@ func testNavigation(t *testing.T, c Cursor) {
 
 	// Test handling of Descend on a regular file, i.e. do nothing. First move
 	// the cursor to d1, which is a regular file.
-	Select(f.App, listbox.Prev)
+	Select(f.App, cli.Prev)
 	f.TTY.TestBuffer(t, d1Buf)
 	// Now descend, and verify that the buffer has not changed.
 	Descend(f.App)
@@ -250,8 +250,8 @@ func testNavigation(t *testing.T, c Cursor) {
 
 	// Now move into d3, an empty directory. Test that the filter has been
 	// cleared.
-	Select(f.App, listbox.Next)
-	Select(f.App, listbox.Next)
+	Select(f.App, cli.Next)
+	Select(f.App, cli.Next)
 	Descend(f.App)
 	d3NoneBuf := f.MakeBuffer(
 		"", term.DotHere, "\n",
@@ -265,10 +265,10 @@ func testNavigation(t *testing.T, c Cursor) {
 	)
 	f.TTY.TestBuffer(t, d3NoneBuf)
 	// Test that selecting the previous does nothing in an empty directory.
-	Select(f.App, listbox.Prev)
+	Select(f.App, cli.Prev)
 	f.TTY.TestBuffer(t, d3NoneBuf)
 	// Test that selecting the next does nothing in an empty directory.
-	Select(f.App, listbox.Next)
+	Select(f.App, cli.Next)
 	f.TTY.TestBuffer(t, d3NoneBuf)
 	// Test that Descend does nothing in an empty directory.
 	Descend(f.App)

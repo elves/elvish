@@ -1,35 +1,30 @@
-// Package combobox implements the combobox widget, a combination of a listbox
-// and a codearea.
-package combobox
+package cli
 
 import (
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
 	"github.com/elves/elvish/pkg/cli/term"
 )
 
 // ComboBox is a Widget that combines a ListBox and a CodeArea.
 type ComboBox interface {
-	el.Widget
+	Widget
 	// Returns the embedded codearea widget.
-	CodeArea() codearea.CodeArea
+	CodeArea() CodeArea
 	// Returns the embedded listbox widget.
-	ListBox() listbox.ListBox
+	ListBox() ListBox
 	// Forces the filtering to rerun.
 	Refilter()
 }
 
 // ComboBoxSpec specifies the configuration and initial state for ComboBox.
 type ComboBoxSpec struct {
-	CodeArea codearea.CodeAreaSpec
-	ListBox  listbox.ListBoxSpec
+	CodeArea CodeAreaSpec
+	ListBox  ListBoxSpec
 	OnFilter func(ComboBox, string)
 }
 
 type comboBox struct {
-	codeArea codearea.CodeArea
-	listBox  listbox.ListBox
+	codeArea CodeArea
+	listBox  ListBox
 	OnFilter func(ComboBox, string)
 
 	// Whether filtering has ever been done.
@@ -44,8 +39,8 @@ func NewComboBox(spec ComboBoxSpec) ComboBox {
 		spec.OnFilter = func(ComboBox, string) {}
 	}
 	w := &comboBox{
-		codeArea: codearea.NewCodeArea(spec.CodeArea),
-		listBox:  listbox.NewListBox(spec.ListBox),
+		codeArea: NewCodeArea(spec.CodeArea),
+		listBox:  NewListBox(spec.ListBox),
 		OnFilter: spec.OnFilter,
 	}
 	w.OnFilter(w, "")
@@ -82,5 +77,5 @@ func (w *comboBox) Refilter() {
 	w.OnFilter(w, w.codeArea.CopyState().Buffer.Content)
 }
 
-func (w *comboBox) CodeArea() codearea.CodeArea { return w.codeArea }
-func (w *comboBox) ListBox() listbox.ListBox    { return w.listBox }
+func (w *comboBox) CodeArea() CodeArea { return w.codeArea }
+func (w *comboBox) ListBox() ListBox   { return w.listBox }

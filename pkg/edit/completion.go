@@ -10,8 +10,6 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/addons/completion"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
 	"github.com/elves/elvish/pkg/edit/complete"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
@@ -142,7 +140,7 @@ func complexCandidate(opts complexCandidateOpts, stem string) complexItem {
 // Starts the completion mode. However, if all the candidates share a non-empty
 // prefix and that prefix starts with the seed, inserts the prefix instead.
 
-func completionStart(app cli.App, binding el.Handler, cfg complete.Config, smart bool) {
+func completionStart(app cli.App, binding cli.Handler, cfg complete.Config, smart bool) {
 	buf := app.CodeArea().CopyState().Buffer
 	result, err := complete.Complete(
 		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot}, cfg)
@@ -164,10 +162,10 @@ func completionStart(app cli.App, binding el.Handler, cfg complete.Config, smart
 		}
 		if prefix != "" {
 			insertedPrefix := false
-			app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+			app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 				rep := s.Buffer.Content[result.Replace.From:result.Replace.To]
 				if len(prefix) > len(rep) && strings.HasPrefix(prefix, rep) {
-					s.Pending = codearea.PendingCode{
+					s.Pending = cli.PendingCode{
 						Content: prefix,
 						From:    result.Replace.From, To: result.Replace.To}
 					s.ApplyPending()

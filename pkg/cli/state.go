@@ -1,4 +1,4 @@
-package listbox
+package cli
 
 import (
 	"fmt"

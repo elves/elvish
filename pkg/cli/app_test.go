@@ -10,9 +10,6 @@ import (
 
 	. "github.com/elves/elvish/pkg/cli"
 	. "github.com/elves/elvish/pkg/cli/apptest"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/layout"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/sys"
 	"github.com/elves/elvish/pkg/ui"
@@ -53,7 +50,7 @@ func TestReadCode_ResetsStateBeforeReturning(t *testing.T) {
 
 	f.Stop()
 
-	if code := CodeBuffer(f.App); code != (codearea.CodeBuffer{}) {
+	if code := GetCodeBuffer(f.App); code != (CodeBuffer{}) {
 		t.Errorf("Editor state has CodeBuffer %v, want empty", code)
 	}
 }
@@ -110,7 +107,7 @@ func TestReadCode_CallsAfterReadline(t *testing.T) {
 func TestReadCode_FinalRedraw(t *testing.T) {
 	f := Setup(WithSpec(func(spec *AppSpec) {
 		spec.CodeAreaState.Buffer.Content = "code"
-		spec.State.Addon = layout.Label{Content: ui.T("addon")}
+		spec.State.Addon = Label{Content: ui.T("addon")}
 	}))
 
 	// Wait until the stable state.
@@ -337,7 +334,7 @@ func TestReadCode_HidesRPromptInFinalRedrawIfNotPersistent(t *testing.T) {
 
 func TestReadCode_LetsAddonHandleEvents(t *testing.T) {
 	f := Setup(WithSpec(func(spec *AppSpec) {
-		spec.State.Addon = codearea.NewCodeArea(codearea.CodeAreaSpec{
+		spec.State.Addon = NewCodeArea(CodeAreaSpec{
 			Prompt: func() ui.Text { return ui.T("addon> ") },
 		})
 	}))
@@ -352,7 +349,7 @@ func TestReadCode_LetsAddonHandleEvents(t *testing.T) {
 }
 
 type testAddon struct {
-	layout.Empty
+	Empty
 	focus bool
 }
 
@@ -400,7 +397,7 @@ func TestReadCode_ShowNotes(t *testing.T) {
 	inHandler := make(chan struct{})
 	unblock := make(chan struct{})
 	f := Setup(WithSpec(func(spec *AppSpec) {
-		spec.OverlayHandler = el.MapHandler{
+		spec.OverlayHandler = MapHandler{
 			term.K('a'): func() {
 				inHandler <- struct{}{}
 				<-unblock

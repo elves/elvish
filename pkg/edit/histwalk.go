@@ -3,7 +3,6 @@ package edit
 import (
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/addons/histwalk"
-	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/eval"
 )
@@ -33,7 +32,7 @@ func initHistWalk(app cli.App, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fuse
 		}))
 }
 
-func histWalkStart(app cli.App, fuser *histutil.Fuser, binding el.Handler) {
+func histWalkStart(app cli.App, fuser *histutil.Fuser, binding cli.Handler) {
 	buf := app.CodeArea().CopyState().Buffer
 	walker := fuser.Walker(buf.Content[:buf.Dot])
 	histwalk.Start(app, histwalk.Config{Binding: binding, Walker: walker})

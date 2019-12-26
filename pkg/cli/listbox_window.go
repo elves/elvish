@@ -1,4 +1,4 @@
-package listbox
+package cli
 
 import "github.com/elves/elvish/pkg/util"
 
@@ -7,7 +7,7 @@ import "github.com/elves/elvish/pkg/util"
 // too small or if the selected item is near the top or bottom of the list.
 var respectDistance = 2
 
-// Determines the index of the first item to show in vertical layout.
+// Determines the index of the first item to show in vertical mode.
 //
 // This function does not return the full window, but just the first item to
 // show, and how many initial lines to crop. The window determined by this
@@ -95,13 +95,13 @@ func getVerticalWindow(state ListBoxState, height int) (first, crop int) {
 	return 0, 0
 }
 
-// Determines the window to show in horizontal layout. It returns the first item
+// Determines the window to show in horizontal  It returns the first item
 // to show and the amount of height required.
 func getHorizontalWindow(state ListBoxState, padding, width, height int) (int, int) {
 	items := state.Items
 	n := items.Len()
 	// Lower bound of number of items that can fit in a row.
-	perRow := (width + colGap) / (maxWidth(items, padding, 0, n) + colGap)
+	perRow := (width + listBoxColGap) / (maxWidth(items, padding, 0, n) + listBoxColGap)
 	if perRow == 0 {
 		// We trim items that are too wide, so there is at least one item per row.
 		perRow = 1
@@ -119,7 +119,7 @@ func getHorizontalWindow(state ListBoxState, padding, width, height int) (int, i
 	first := selected / height * height
 	usedWidth := maxWidth(items, padding, first, first+height)
 	for ; first > lastFirst; first -= height {
-		usedWidth += maxWidth(items, padding, first-height, first) + colGap
+		usedWidth += maxWidth(items, padding, first-height, first) + listBoxColGap
 		if usedWidth > width {
 			break
 		}

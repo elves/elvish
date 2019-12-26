@@ -7,7 +7,6 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	. "github.com/elves/elvish/pkg/cli/apptest"
-	"github.com/elves/elvish/pkg/cli/el/layout"
 	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
@@ -133,7 +132,7 @@ func bb() *term.BufferBuilder { return term.NewBufferBuilder(50) }
 
 func makeListingBuf(mode, filter string, lines ...string) *term.Buffer {
 	b := bb().Newline().
-		WriteStyled(layout.ModeLine(mode, true)).
+		WriteStyled(cli.ModeLine(mode, true)).
 		Write(filter).SetDotHere()
 	for i, line := range lines {
 		b.Newline()

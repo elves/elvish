@@ -1,4 +1,4 @@
-package codearea
+package cli
 
 import (
 	"github.com/elves/elvish/pkg/cli/term"

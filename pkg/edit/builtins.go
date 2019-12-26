@@ -7,8 +7,6 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/addons/stub"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/parse"
@@ -52,10 +50,10 @@ func endOfHistory(app cli.App) {
 func insertRaw(app cli.App, tty cli.TTY) {
 	tty.SetRawInput(1)
 	stub.Start(app, stub.Config{
-		Binding: el.FuncHandler(func(event term.Event) bool {
+		Binding: cli.FuncHandler(func(event term.Event) bool {
 			switch event := event.(type) {
 			case term.KeyEvent:
-				app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+				app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 					s.Buffer.InsertAtDot(string(event.Rune))
 				})
 				closeListing(app)
@@ -98,11 +96,11 @@ func insertRaw(app cli.App, tty cli.TTY) {
 
 func smartEnter(app cli.App) {
 	// TODO(xiaq): Fix the race condition.
-	buf := cli.CodeBuffer(app)
+	buf := cli.GetCodeBuffer(app)
 	if isSyntaxComplete(buf.Content) {
 		app.CommitCode()
 	} else {
-		app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+		app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 			s.Buffer.InsertAtDot("\n")
 		})
 	}
@@ -156,7 +154,7 @@ func initMiscBuiltins(app cli.App, ns eval.Ns) {
 	})
 }
 
-var bufferBuiltinsData = map[string]func(*codearea.CodeBuffer){
+var bufferBuiltinsData = map[string]func(*cli.CodeBuffer){
 	"move-dot-left":             makeMove(moveDotLeft),
 	"move-dot-right":            makeMove(moveDotRight),
 	"move-dot-left-word":        makeMove(moveDotLeftWord),
@@ -193,7 +191,7 @@ func bufferBuiltins(app cli.App) map[string]interface{} {
 		// Make a lexically scoped copy of fn.
 		fn2 := fn
 		m[name] = func() {
-			app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+			app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 				fn2(&s.Buffer)
 			})
 		}
@@ -206,14 +204,14 @@ func bufferBuiltins(app cli.App) map[string]interface{} {
 // the editor state.
 type pureMover func(buffer string, dot int) int
 
-func makeMove(m pureMover) func(*codearea.CodeBuffer) {
-	return func(buf *codearea.CodeBuffer) {
+func makeMove(m pureMover) func(*cli.CodeBuffer) {
+	return func(buf *cli.CodeBuffer) {
 		buf.Dot = m(buf.Content, buf.Dot)
 	}
 }
 
-func makeKill(m pureMover) func(*codearea.CodeBuffer) {
-	return func(buf *codearea.CodeBuffer) {
+func makeKill(m pureMover) func(*cli.CodeBuffer) {
+	return func(buf *cli.CodeBuffer) {
 		newDot := m(buf.Content, buf.Dot)
 		if newDot < buf.Dot {
 			// Dot moved to the left: remove text between new dot and old dot,

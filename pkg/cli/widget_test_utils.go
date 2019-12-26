@@ -1,4 +1,4 @@
-package el
+package cli
 
 import (
 	"reflect"

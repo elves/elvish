@@ -1,16 +1,13 @@
-package listbox
+package cli
 
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
 )
 
-var bb = term.NewBufferBuilder
-
-var renderVerticalTests = []el.RenderTest{
+var listBoxRenderVerticalTests = []RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
 		Given: NewListBox(ListBoxSpec{Placeholder: ui.T("nothing")}),
@@ -126,11 +123,11 @@ var renderVerticalTests = []el.RenderTest{
 	},
 }
 
-func TestRender_Vertical(t *testing.T) {
-	el.TestRender(t, renderVerticalTests)
+func TestListBox_Render_Vertical(t *testing.T) {
+	TestRender(t, listBoxRenderVerticalTests)
 }
 
-func TestRender_Vertical_MutatesState(t *testing.T) {
+func TestListBox_Render_Vertical_MutatesState(t *testing.T) {
 	// Calling Render alters the First field to reflect the first item rendered.
 	w := NewListBox(ListBoxSpec{
 		State: ListBoxState{Items: TestItems{NItems: 10}, Selected: 4, First: 0}})
@@ -145,7 +142,7 @@ func TestRender_Vertical_MutatesState(t *testing.T) {
 	}
 }
 
-var renderHorizontalTests = []el.RenderTest{
+var listBoxRenderHorizontalTests = []RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
 		Given: NewListBox(ListBoxSpec{Horizontal: true, Placeholder: ui.T("nothing")}),
@@ -236,11 +233,11 @@ var renderHorizontalTests = []el.RenderTest{
 	},
 }
 
-func TestRender_Horizontal(t *testing.T) {
-	el.TestRender(t, renderHorizontalTests)
+func TestListBox_Render_Horizontal(t *testing.T) {
+	TestRender(t, listBoxRenderHorizontalTests)
 }
 
-func TestRender_Horizontal_MutatesState(t *testing.T) {
+func TestListBox_Render_Horizontal_MutatesState(t *testing.T) {
 	// Calling Render alters the First field to reflect the first item rendered.
 	w := NewListBox(ListBoxSpec{
 		Horizontal: true,
@@ -257,7 +254,7 @@ func TestRender_Horizontal_MutatesState(t *testing.T) {
 	}
 }
 
-var handleTests = []el.HandleTest{
+var listBoxHandleTests = []HandleTest{
 	{
 		Name:  "up moving selection up",
 		Given: NewListBox(ListBoxSpec{State: ListBoxState{Items: TestItems{NItems: 10}, Selected: 1}}),
@@ -316,10 +313,10 @@ var handleTests = []el.HandleTest{
 	},
 	{
 		Name: "overlay handler",
-		Given: addOverlay(
-			NewListBox(ListBoxSpec{State: ListBoxState{Items: TestItems{NItems: 10}, Selected: 5}}),
-			func(w *listBox) el.Handler {
-				return el.MapHandler{
+		Given: listBoxWithOverlay(
+			ListBoxSpec{State: ListBoxState{Items: TestItems{NItems: 10}, Selected: 5}},
+			func(w *listBox) Handler {
+				return MapHandler{
 					term.K('a'): func() { w.State.Selected = 0 },
 				}
 			}),
@@ -329,17 +326,18 @@ var handleTests = []el.HandleTest{
 	},
 }
 
-func addOverlay(w ListBox, overlay func(*listBox) el.Handler) *listBox {
+func listBoxWithOverlay(spec ListBoxSpec, overlay func(*listBox) Handler) *listBox {
+	w := NewListBox(spec)
 	ww := w.(*listBox)
 	ww.OverlayHandler = overlay(ww)
 	return ww
 }
 
-func TestHandle(t *testing.T) {
-	el.TestHandle(t, handleTests)
+func TestListBox_Handle(t *testing.T) {
+	TestHandle(t, listBoxHandleTests)
 }
 
-func TestHandle_EnterEmitsAccept(t *testing.T) {
+func TestListBox_Handle_EnterEmitsAccept(t *testing.T) {
 	var acceptedItems Items
 	var acceptedIndex int
 	w := NewListBox(ListBoxSpec{
@@ -358,7 +356,7 @@ func TestHandle_EnterEmitsAccept(t *testing.T) {
 	}
 }
 
-func TestSelect_ChangeState(t *testing.T) {
+func TestListBox_Select_ChangeState(t *testing.T) {
 	// number of items = 10, height = 3
 	var tests = []struct {
 		name   string
@@ -421,7 +419,7 @@ func TestSelect_ChangeState(t *testing.T) {
 	}
 }
 
-func TestSelect_CallOnSelect(t *testing.T) {
+func TestListBox_Select_CallOnSelect(t *testing.T) {
 	it := TestItems{NItems: 10}
 	gotItemsCh := make(chan Items, 10)
 	gotSelectedCh := make(chan int, 10)

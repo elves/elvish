@@ -1,20 +1,16 @@
-// Package listbox implements a widget for displaying and navigating a list of
-// items.
-package listbox
+package cli
 
 import (
 	"strings"
 	"sync"
 
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/layout"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
 )
 
 // ListBox is a list for displaying and selecting from a list of items.
 type ListBox interface {
-	el.Widget
+	Widget
 	// CopyState returns a copy of the state.
 	CopyState() ListBoxState
 	// Reset resets the state of the widget with the given items and index of
@@ -32,14 +28,14 @@ type ListBox interface {
 // ListBoxSpec specifies the configuration and initial state for ListBox.
 type ListBoxSpec struct {
 	// A Handler that takes precedence over the default handling of events.
-	OverlayHandler el.Handler
+	OverlayHandler Handler
 	// A placeholder to show when there are no items.
 	Placeholder ui.Text
 	// A function to call when the selected item has changed.
 	OnSelect func(it Items, i int)
 	// A function called on the accept event.
 	OnAccept func(it Items, i int)
-	// Whether the listbox should be rendered in a horizontal layout. Note that
+	// Whether the listbox should be rendered in a horizontal  Note that
 	// in the horizontal layout, items must have only one line.
 	Horizontal bool
 	// The minimal amount of space to reserve for left and right sides of each
@@ -64,7 +60,7 @@ type listBox struct {
 // NewListBox creates a new ListBox from the given spec.
 func NewListBox(spec ListBoxSpec) ListBox {
 	if spec.OverlayHandler == nil {
-		spec.OverlayHandler = el.DummyHandler{}
+		spec.OverlayHandler = DummyHandler{}
 	}
 	if spec.OnAccept == nil {
 		spec.OnAccept = func(Items, int) {}
@@ -89,7 +85,7 @@ func (w *listBox) Render(width, height int) *term.Buffer {
 	return w.renderVertical(width, height)
 }
 
-const colGap = 2
+const listBoxColGap = 2
 
 func (w *listBox) renderHorizontal(width, height int) *term.Buffer {
 	var state ListBoxState
@@ -106,7 +102,7 @@ func (w *listBox) renderHorizontal(width, height int) *term.Buffer {
 	})
 
 	if state.Items == nil || state.Items.Len() == 0 {
-		return layout.Label{Content: w.Placeholder}.Render(width, height)
+		return Label{Content: w.Placeholder}.Render(width, height)
 	}
 
 	items, selected, first := state.Items, state.Selected, state.First
@@ -142,16 +138,16 @@ func (w *listBox) renderHorizontal(width, height int) *term.Buffer {
 		buf.ExtendRight(colBuf)
 
 		remainedWidth -= colWidth
-		if remainedWidth <= colGap {
+		if remainedWidth <= listBoxColGap {
 			break
 		}
-		remainedWidth -= colGap
-		buf.Width += colGap
+		remainedWidth -= listBoxColGap
+		buf.Width += listBoxColGap
 	}
 	// We may not have used all the width required; force buffer width.
 	buf.Width = width
 	if first != 0 || last != n-1 || hasCropped {
-		scrollbar := layout.HScrollbar{Total: n, Low: first, High: last + 1}
+		scrollbar := HScrollbar{Total: n, Low: first, High: last + 1}
 		buf.Extend(scrollbar.Render(width, 1), false)
 	}
 	return buf
@@ -171,7 +167,7 @@ func (w *listBox) renderVertical(width, height int) *term.Buffer {
 	})
 
 	if state.Items == nil || state.Items.Len() == 0 {
-		return layout.Label{Content: w.Placeholder}.Render(width, height)
+		return Label{Content: w.Placeholder}.Render(width, height)
 	}
 
 	items, selected, first := state.Items, state.Selected, state.First
@@ -199,13 +195,13 @@ func (w *listBox) renderVertical(width, height int) *term.Buffer {
 		allLines = append(allLines, lines...)
 	}
 
-	var rd el.Renderer = croppedLines{
+	var rd Renderer = croppedLines{
 		lines: allLines, padding: w.Padding,
 		selectFrom: selectFrom, selectTo: selectTo, extendStyle: w.ExtendStyle}
 	if first > 0 || i < n || hasCropped {
-		rd = layout.VScrollbarContainer{
+		rd = VScrollbarContainer{
 			Content:   rd,
-			Scrollbar: layout.VScrollbar{Total: n, Low: first, High: i},
+			Scrollbar: VScrollbar{Total: n, Low: first, High: i},
 		}
 	}
 	return rd.Render(width, height)

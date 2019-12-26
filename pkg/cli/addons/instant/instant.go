@@ -4,9 +4,6 @@ package instant
 
 import (
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/layout"
-	"github.com/elves/elvish/pkg/cli/el/textview"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
 )
@@ -14,7 +11,7 @@ import (
 // Config keeps the configuration for the instant addon.
 type Config struct {
 	// Keybinding.
-	Binding el.Handler
+	Binding cli.Handler
 	// The function to execute code and returns the output.
 	Execute func(code string) ([]string, error)
 }
@@ -22,14 +19,14 @@ type Config struct {
 type widget struct {
 	Config
 	app      cli.App
-	textView textview.TextView
+	textView cli.TextView
 	lastCode string
 	lastErr  error
 }
 
 func (w *widget) Render(width, height int) *term.Buffer {
 	bb := term.NewBufferBuilder(width).
-		WriteStyled(layout.ModeLine(" INSTANT ", false)).SetDotHere()
+		WriteStyled(cli.ModeLine(" INSTANT ", false)).SetDotHere()
 	if w.lastErr != nil {
 		bb.Newline().Write(w.lastErr.Error(), ui.FgRed)
 	}
@@ -64,8 +61,8 @@ func (w *widget) update(force bool) {
 	output, err := w.Execute(code)
 	w.lastErr = err
 	if err == nil {
-		w.textView.MutateState(func(s *textview.TextViewState) {
-			*s = textview.TextViewState{Lines: output, First: 0}
+		w.textView.MutateState(func(s *cli.TextViewState) {
+			*s = cli.TextViewState{Lines: output, First: 0}
 		})
 	}
 }
@@ -77,12 +74,12 @@ func Start(app cli.App, cfg Config) {
 		return
 	}
 	if cfg.Binding == nil {
-		cfg.Binding = el.DummyHandler{}
+		cfg.Binding = cli.DummyHandler{}
 	}
 	w := widget{
 		Config:   cfg,
 		app:      app,
-		textView: textview.NewTextView(textview.TextViewSpec{Scrollable: true}),
+		textView: cli.NewTextView(cli.TextViewSpec{Scrollable: true}),
 	}
 	app.MutateState(func(s *cli.State) { s.Addon = &w })
 	w.update(true)

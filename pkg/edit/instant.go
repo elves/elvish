@@ -9,7 +9,6 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/addons/instant"
-	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
@@ -26,7 +25,7 @@ func initInstant(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 		}))
 }
 
-func instantStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
+func instantStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
 	execute := func(code string) ([]string, error) {
 		src := eval.NewInteractiveSource(code)
 		n, err := parse.AsChunk("[instant]", code)

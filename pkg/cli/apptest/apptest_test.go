@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
 	"github.com/elves/elvish/pkg/cli/term"
 )
 
 func TestFixture(t *testing.T) {
 	f := Setup(
 		WithSpec(func(spec *cli.AppSpec) {
-			spec.CodeAreaState.Buffer = codearea.CodeBuffer{Content: "test", Dot: 4}
+			spec.CodeAreaState.Buffer = cli.CodeBuffer{Content: "test", Dot: 4}
 		}),
 		WithTTY(func(tty TTYCtrl) {
 			tty.SetSize(20, 30) // h = 20, w = 30
@@ -20,7 +19,7 @@ func TestFixture(t *testing.T) {
 	defer f.Stop()
 
 	// Verify that the functions passed to Setup have taken effect.
-	if cli.CodeBuffer(f.App).Content != "test" {
+	if cli.GetCodeBuffer(f.App).Content != "test" {
 		t.Errorf("WithSpec did not work")
 	}
 

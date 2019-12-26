@@ -59,7 +59,7 @@ type File struct {
 	Content string
 }
 
-// InTestDirWithSetup sets up a temporary directory using the given layout. If
+// InTestDirWithSetup sets up a temporary directory using the given cli. If
 // wd is not empty, it also changes into the given subdirectory. It returns a
 // cleanup function to remove the temporary directory and restore the working
 // directory.

@@ -1,4 +1,4 @@
-package layout
+package cli
 
 import "github.com/elves/elvish/pkg/ui"
 
@@ -12,7 +12,7 @@ func ModeLine(content string, space bool) ui.Text {
 }
 
 // ModePrompt returns a callback suitable as the prompt in the codearea of a
-// combobox.
+//
 func ModePrompt(content string, space bool) func() ui.Text {
 	p := ModeLine(content, space)
 	return func() ui.Text { return p }

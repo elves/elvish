@@ -5,8 +5,6 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	. "github.com/elves/elvish/pkg/cli/apptest"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
 	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
@@ -16,7 +14,7 @@ func TestHistWalk(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	cli.SetCodeBuffer(f.App, codearea.CodeBuffer{Content: "ls", Dot: 2})
+	cli.SetCodeBuffer(f.App, cli.CodeBuffer{Content: "ls", Dot: 2})
 	f.App.Redraw()
 	buf0 := f.MakeBuffer("ls", term.DotHere)
 	f.TTY.TestBuffer(t, buf0)
@@ -28,7 +26,7 @@ func TestHistWalk(t *testing.T) {
 		}
 		return Config{
 			Walker: histutil.NewWalker(db, -1, nil, "ls"),
-			Binding: el.MapHandler{
+			Binding: cli.MapHandler{
 				term.K(ui.Up):        func() { Prev(f.App) },
 				term.K(ui.Down):      func() { Next(f.App) },
 				term.K('[', ui.Ctrl): func() { Close(f.App) },
@@ -81,7 +79,7 @@ func TestHistWalk_NoMatch(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	cli.SetCodeBuffer(f.App, codearea.CodeBuffer{Content: "ls", Dot: 2})
+	cli.SetCodeBuffer(f.App, cli.CodeBuffer{Content: "ls", Dot: 2})
 	f.App.Redraw()
 	buf0 := f.MakeBuffer("ls", term.DotHere)
 	f.TTY.TestBuffer(t, buf0)

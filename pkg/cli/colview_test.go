@@ -1,16 +1,14 @@
-package colview
+package cli
 
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/tt"
 	"github.com/elves/elvish/pkg/ui"
 )
 
-var renderTests = []el.RenderTest{
+var colViewRenderTests = []RenderTest{
 	{
 		Name:  "colview no column",
 		Given: NewColView(ColViewSpec{}),
@@ -20,7 +18,7 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "colview width < number of columns",
 		Given: NewColView(ColViewSpec{State: ColViewState{
-			Columns: []el.Widget{
+			Columns: []Widget{
 				makeListbox("x", 2, 0), makeListbox("y", 1, 0),
 				makeListbox("z", 3, 0), makeListbox("w", 1, 0),
 			},
@@ -31,7 +29,7 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "colview normal",
 		Given: NewColView(ColViewSpec{State: ColViewState{
-			Columns: []el.Widget{
+			Columns: []Widget{
 				makeListbox("x", 2, 1),
 				makeListbox("y", 1, 0),
 				makeListbox("z", 3, -1),
@@ -51,35 +49,35 @@ var renderTests = []el.RenderTest{
 	},
 }
 
-func makeListbox(prefix string, n, selected int) el.Widget {
-	return listbox.NewListBox(listbox.ListBoxSpec{
-		State: listbox.ListBoxState{
-			Items:    listbox.TestItems{Prefix: prefix, NItems: n},
+func makeListbox(prefix string, n, selected int) Widget {
+	return NewListBox(ListBoxSpec{
+		State: ListBoxState{
+			Items:    TestItems{Prefix: prefix, NItems: n},
 			Selected: selected,
 		}})
 }
 
-func TestRender(t *testing.T) {
-	el.TestRender(t, renderTests)
+func TestColView_Render(t *testing.T) {
+	TestRender(t, colViewRenderTests)
 }
 
-func TestHandle(t *testing.T) {
+func TestColView_Handle(t *testing.T) {
 	// Channel for recording the place an event was handled. -1 for the widget
 	// itself, column index for column.
 	handledBy := make(chan int, 10)
 	w := NewColView(ColViewSpec{
-		OverlayHandler: el.MapHandler{
+		OverlayHandler: MapHandler{
 			term.K('a'): func() { handledBy <- -1 },
 		},
 		State: ColViewState{
-			Columns: []el.Widget{
-				listbox.NewListBox(listbox.ListBoxSpec{
-					OverlayHandler: el.MapHandler{
+			Columns: []Widget{
+				NewListBox(ListBoxSpec{
+					OverlayHandler: MapHandler{
 						term.K('a'): func() { handledBy <- 0 },
 						term.K('b'): func() { handledBy <- 0 },
 					}}),
-				listbox.NewListBox(listbox.ListBoxSpec{
-					OverlayHandler: el.MapHandler{
+				NewListBox(ListBoxSpec{
+					OverlayHandler: MapHandler{
 						term.K('a'): func() { handledBy <- 1 },
 						term.K('b'): func() { handledBy <- 1 },
 					}}),

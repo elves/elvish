@@ -6,9 +6,6 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/layout"
 	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/cli/term"
 )
@@ -18,7 +15,7 @@ var ErrHistWalkInactive = errors.New("the histwalk addon is not active")
 // Config keeps the configuration for the histwalk addon.
 type Config struct {
 	// Keybinding.
-	Binding el.Handler
+	Binding cli.Handler
 	// The history walker.
 	Walker histutil.Walker
 }
@@ -29,7 +26,7 @@ type widget struct {
 }
 
 func (w *widget) Render(width, height int) *term.Buffer {
-	content := layout.ModeLine(
+	content := cli.ModeLine(
 		fmt.Sprintf(" HISTORY #%d ", w.Walker.CurrentSeq()), false)
 	buf := term.NewBufferBuilder(width).WriteStyled(content).Buffer()
 	buf.TrimToLines(0, height)
@@ -49,8 +46,8 @@ func (w *widget) Focus() bool { return false }
 
 func (w *widget) onWalk() {
 	prefix := w.Walker.Prefix()
-	w.app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
-		s.Pending = codearea.PendingCode{
+	w.app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
+		s.Pending = cli.PendingCode{
 			From: len(prefix), To: len(s.Buffer.Content),
 			Content: w.Walker.CurrentCmd()[len(prefix):],
 		}
@@ -64,7 +61,7 @@ func Start(app cli.App, cfg Config) {
 		return
 	}
 	if cfg.Binding == nil {
-		cfg.Binding = el.DummyHandler{}
+		cfg.Binding = cli.DummyHandler{}
 	}
 	walker := cfg.Walker
 	err := walker.Prev()
@@ -96,8 +93,8 @@ func Next(app cli.App) error {
 // active.
 func Close(app cli.App) {
 	if closeAddon(app) {
-		app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
-			s.Pending = codearea.PendingCode{}
+		app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
+			s.Pending = cli.PendingCode{}
 		})
 	}
 }
@@ -106,7 +103,7 @@ func Close(app cli.App) {
 // nothing if the histwalk addon is not active.
 func Accept(app cli.App) {
 	if closeAddon(app) {
-		app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+		app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 			s.ApplyPending()
 		})
 	}

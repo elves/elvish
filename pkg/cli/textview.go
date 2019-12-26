@@ -1,12 +1,8 @@
-// Package textview implements a widget for displaying text with vertical
-// scrolling.
-package textview
+package cli
 
 import (
 	"sync"
 
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/layout"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
 	"github.com/elves/elvish/pkg/util"
@@ -18,7 +14,7 @@ import (
 // NOTE: This widget now always crops long lines. In future it should support
 // wrapping and horizontal scrolling.
 type TextView interface {
-	el.Widget
+	Widget
 	// ScrollBy scrolls the widget by the given delta. Positive values scroll
 	// down, and negative values scroll up.
 	ScrollBy(delta int)
@@ -31,7 +27,7 @@ type TextView interface {
 // TextViewSpec specifies the configuration and initial state for a Widget.
 type TextViewSpec struct {
 	// A Handler that takes precedence over the default handling of events.
-	OverlayHandler el.Handler
+	OverlayHandler Handler
 	// If true, a vertical scrollbar will be shown when there are more lines
 	// that can be displayed, and the widget responds to Up and Down keys.
 	Scrollable bool
@@ -54,7 +50,7 @@ type textView struct {
 // NewTextView builds a TextView from the given spec.
 func NewTextView(spec TextViewSpec) TextView {
 	if spec.OverlayHandler == nil {
-		spec.OverlayHandler = el.DummyHandler{}
+		spec.OverlayHandler = DummyHandler{}
 	}
 	return &textView{TextViewSpec: spec}
 }
@@ -77,7 +73,7 @@ func (w *textView) Render(width, height int) *term.Buffer {
 	buf := bb.Buffer()
 
 	if needScrollbar {
-		scrollbar := layout.VScrollbar{
+		scrollbar := VScrollbar{
 			Total: len(lines), Low: first, High: first + height}
 		buf.ExtendRight(scrollbar.Render(1, height))
 	}

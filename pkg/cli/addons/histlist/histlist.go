@@ -6,11 +6,6 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/combobox"
-	"github.com/elves/elvish/pkg/cli/el/layout"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
 	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/ui"
 )
@@ -18,7 +13,7 @@ import (
 // Config contains configurations to start history listing.
 type Config struct {
 	// Binding provides key binding.
-	Binding el.Handler
+	Binding cli.Handler
 	// Store provides the source of all commands.
 	Store Store
 	// Dedup is called to determine whether deduplication should be done.
@@ -59,8 +54,8 @@ func Start(app cli.App, cfg Config) {
 	}
 	cmdItems := items{cmds, last}
 
-	w := combobox.NewComboBox(combobox.ComboBoxSpec{
-		CodeArea: codearea.CodeAreaSpec{Prompt: func() ui.Text {
+	w := cli.NewComboBox(cli.ComboBoxSpec{
+		CodeArea: cli.CodeAreaSpec{Prompt: func() ui.Text {
 			content := " HISTORY "
 			if cfg.Dedup() {
 				content += "(dedup on) "
@@ -68,13 +63,13 @@ func Start(app cli.App, cfg Config) {
 			if !cfg.CaseSensitive() {
 				content += "(case-insensitive) "
 			}
-			return layout.ModeLine(content, true)
+			return cli.ModeLine(content, true)
 		}},
-		ListBox: listbox.ListBoxSpec{
+		ListBox: cli.ListBoxSpec{
 			OverlayHandler: cfg.Binding,
-			OnAccept: func(it listbox.Items, i int) {
+			OnAccept: func(it cli.Items, i int) {
 				text := it.(items).entries[i].Text
-				app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+				app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 					buf := &s.Buffer
 					if buf.Content == "" {
 						buf.InsertAtDot(text)
@@ -85,7 +80,7 @@ func Start(app cli.App, cfg Config) {
 				app.MutateState(func(s *cli.State) { s.Addon = nil })
 			},
 		},
-		OnFilter: func(w combobox.ComboBox, p string) {
+		OnFilter: func(w cli.ComboBox, p string) {
 			it := cmdItems.filter(p, cfg.Dedup(), cfg.CaseSensitive())
 			w.ListBox().Reset(it, it.Len()-1)
 		},

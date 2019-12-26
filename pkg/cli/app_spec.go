@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
 	"github.com/elves/elvish/pkg/ui"
 )
 
@@ -18,11 +16,11 @@ type AppSpec struct {
 	Prompt      Prompt
 	RPrompt     Prompt
 
-	OverlayHandler el.Handler
+	OverlayHandler Handler
 	Abbreviations  func(f func(abbr, full string))
 	QuotePaste     func() bool
 
-	CodeAreaState codearea.CodeAreaState
+	CodeAreaState CodeAreaState
 	State         State
 }
 

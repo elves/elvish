@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/elves/elvish/pkg/cli"
 	. "github.com/elves/elvish/pkg/cli/apptest"
-	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/cli/term"
 )
 
@@ -39,7 +39,7 @@ func TestHandling(t *testing.T) {
 
 	bindingCalled := make(chan bool)
 	Start(f.App, Config{
-		Binding: el.MapHandler{term.K('a'): func() { bindingCalled <- true }},
+		Binding: cli.MapHandler{term.K('a'): func() { bindingCalled <- true }},
 	})
 
 	f.TTY.Inject(term.K('a'))

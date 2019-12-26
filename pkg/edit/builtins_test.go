@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/layout"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/tt"
@@ -29,7 +27,7 @@ func TestCloseListing(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	f.Editor.app.MutateState(func(s *cli.State) { s.Addon = layout.Empty{} })
+	f.Editor.app.MutateState(func(s *cli.State) { s.Addon = cli.Empty{} })
 	evals(f.Evaler, `edit:close-listing`)
 
 	if listing := f.Editor.app.CopyState().Addon; listing != nil {
@@ -118,7 +116,7 @@ func TestReturnCode(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	f.Editor.app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+	f.Editor.app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 		s.Buffer.Content = "test code"
 	})
 	evals(f.Evaler, `edit:return-line`)
@@ -145,10 +143,10 @@ func TestSmartEnter_InsertsNewlineWhenIncomplete(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	cli.SetCodeBuffer(f.Editor.app, codearea.CodeBuffer{Content: "put [", Dot: 5})
+	cli.SetCodeBuffer(f.Editor.app, cli.CodeBuffer{Content: "put [", Dot: 5})
 	evals(f.Evaler, `edit:smart-enter`)
-	wantBuf := codearea.CodeBuffer{Content: "put [\n", Dot: 6}
-	if buf := cli.CodeBuffer(f.Editor.app); buf != wantBuf {
+	wantBuf := cli.CodeBuffer{Content: "put [\n", Dot: 6}
+	if buf := cli.GetCodeBuffer(f.Editor.app); buf != wantBuf {
 		t.Errorf("got code buffer %v, want %v", buf, wantBuf)
 	}
 }
@@ -157,7 +155,7 @@ func TestSmartEnter_AcceptsCodeWhenWholeBufferIsComplete(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	cli.SetCodeBuffer(f.Editor.app, codearea.CodeBuffer{Content: "put []", Dot: 5})
+	cli.SetCodeBuffer(f.Editor.app, cli.CodeBuffer{Content: "put []", Dot: 5})
 	evals(f.Evaler, `edit:smart-enter`)
 	wantCode := "put []"
 	if code, _ := f.Wait(); code != wantCode {
@@ -178,28 +176,28 @@ func TestWordify(t *testing.T) {
 
 var bufferBuiltinsTests = []struct {
 	name      string
-	bufBefore codearea.CodeBuffer
-	bufAfter  codearea.CodeBuffer
+	bufBefore cli.CodeBuffer
+	bufAfter  cli.CodeBuffer
 }{
 	{
 		"move-dot-left",
-		codearea.CodeBuffer{Content: "ab", Dot: 1},
-		codearea.CodeBuffer{Content: "ab", Dot: 0},
+		cli.CodeBuffer{Content: "ab", Dot: 1},
+		cli.CodeBuffer{Content: "ab", Dot: 0},
 	},
 	{
 		"move-dot-right",
-		codearea.CodeBuffer{Content: "ab", Dot: 1},
-		codearea.CodeBuffer{Content: "ab", Dot: 2},
+		cli.CodeBuffer{Content: "ab", Dot: 1},
+		cli.CodeBuffer{Content: "ab", Dot: 2},
 	},
 	{
 		"kill-rune-left",
-		codearea.CodeBuffer{Content: "ab", Dot: 1},
-		codearea.CodeBuffer{Content: "b", Dot: 0},
+		cli.CodeBuffer{Content: "ab", Dot: 1},
+		cli.CodeBuffer{Content: "b", Dot: 0},
 	},
 	{
 		"kill-rune-right",
-		codearea.CodeBuffer{Content: "ab", Dot: 1},
-		codearea.CodeBuffer{Content: "a", Dot: 1},
+		cli.CodeBuffer{Content: "ab", Dot: 1},
+		cli.CodeBuffer{Content: "a", Dot: 1},
 	},
 }
 
@@ -210,7 +208,7 @@ func TestBufferBuiltins(t *testing.T) {
 
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {
-			app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+			app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 				s.Buffer = test.bufBefore
 			})
 			evals(f.Evaler, "edit:"+test.name)

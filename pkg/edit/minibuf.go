@@ -2,9 +2,6 @@ package edit
 
 import (
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/layout"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/parse"
 )
@@ -20,9 +17,9 @@ func initMinibuf(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 		}))
 }
 
-func minibufStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
-	w := codearea.NewCodeArea(codearea.CodeAreaSpec{
-		Prompt:         layout.ModePrompt(" MINIBUF ", true),
+func minibufStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
+	w := cli.NewCodeArea(cli.CodeAreaSpec{
+		Prompt:         cli.ModePrompt(" MINIBUF ", true),
 		OverlayHandler: binding,
 		OnSubmit:       func() { minibufSubmit(app, ev) },
 		// TODO: Add Highlighter. Right now the async highlighter is not
@@ -33,7 +30,7 @@ func minibufStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
 }
 
 func minibufSubmit(app cli.App, ev *eval.Evaler) {
-	codeArea, ok := cli.Addon(app).(codearea.CodeArea)
+	codeArea, ok := cli.Addon(app).(cli.CodeArea)
 	if !ok {
 		return
 	}

@@ -8,10 +8,6 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/combobox"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
 )
@@ -21,20 +17,20 @@ var (
 	horizontal = flag.Bool("horizontal", false, "use horizontal listbox layout")
 )
 
-func makeWidget() el.Widget {
-	items := listbox.TestItems{Prefix: "list item "}
-	w := combobox.NewComboBox(combobox.ComboBoxSpec{
-		CodeArea: codearea.CodeAreaSpec{
+func makeWidget() cli.Widget {
+	items := cli.TestItems{Prefix: "list item "}
+	w := cli.NewComboBox(cli.ComboBoxSpec{
+		CodeArea: cli.CodeAreaSpec{
 			Prompt: func() ui.Text {
 				return ui.T(" NUMBER ", ui.Bold, ui.BgMagenta).ConcatText(ui.T(" "))
 			},
 		},
-		ListBox: listbox.ListBoxSpec{
-			State:       listbox.ListBoxState{Items: &items},
+		ListBox: cli.ListBoxSpec{
+			State:       cli.ListBoxState{Items: &items},
 			Placeholder: ui.T("(no items)"),
 			Horizontal:  *horizontal,
 		},
-		OnFilter: func(w combobox.ComboBox, filter string) {
+		OnFilter: func(w cli.ComboBox, filter string) {
 			if n, err := strconv.Atoi(filter); err == nil {
 				items.NItems = n
 			}

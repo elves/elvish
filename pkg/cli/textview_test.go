@@ -1,17 +1,14 @@
-package textview
+package cli
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
 )
 
-var bb = term.NewBufferBuilder
-
-var renderTests = []el.RenderTest{
+var textViewRenderTests = []RenderTest{
 	{
 		Name: "text fits entirely",
 		Given: NewTextView(TextViewSpec{State: TextViewState{
@@ -65,11 +62,11 @@ var renderTests = []el.RenderTest{
 	},
 }
 
-func TestRender(t *testing.T) {
-	el.TestRender(t, renderTests)
+func TestTextView_Render(t *testing.T) {
+	TestRender(t, textViewRenderTests)
 }
 
-var handleTests = []el.HandleTest{
+var textViewHandleTests = []HandleTest{
 	{
 		Name: "up doing nothing when not scrollable",
 		Given: NewTextView(TextViewSpec{
@@ -117,18 +114,18 @@ var handleTests = []el.HandleTest{
 	{
 		Name: "overlay",
 		Given: NewTextView(TextViewSpec{
-			OverlayHandler: el.MapHandler{term.K('a'): func() {}}}),
+			OverlayHandler: MapHandler{term.K('a'): func() {}}}),
 		Event: term.K('a'),
 
 		WantNewState: TextViewState{},
 	},
 }
 
-func TestHandle(t *testing.T) {
-	el.TestHandle(t, handleTests)
+func TestTextView_Handle(t *testing.T) {
+	TestHandle(t, textViewHandleTests)
 }
 
-func TestCopyState(t *testing.T) {
+func TestTextView_CopyState(t *testing.T) {
 	state := TextViewState{Lines: []string{"a", "b", "c"}, First: 1}
 	w := NewTextView(TextViewSpec{State: state})
 	copied := w.CopyState()

@@ -8,12 +8,6 @@ import (
 	"unicode"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/colview"
-	"github.com/elves/elvish/pkg/cli/el/layout"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
-	"github.com/elves/elvish/pkg/cli/el/textview"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
 )
@@ -21,7 +15,7 @@ import (
 // Config contains the configuration needed for the navigation functionality.
 type Config struct {
 	// Key binding.
-	Binding el.Handler
+	Binding cli.Handler
 	// Underlying filesystem.
 	Cursor Cursor
 }
@@ -34,8 +28,8 @@ type state struct {
 type widget struct {
 	Config
 	app        cli.App
-	codeArea   codearea.CodeArea
-	colView    colview.ColView
+	codeArea   cli.CodeArea
+	colView    cli.ColView
 	lastFilter string
 	stateMutex sync.RWMutex
 	state      state
@@ -96,15 +90,15 @@ func (w *widget) ascend() {
 	if err != nil {
 		w.app.Notify(err.Error())
 	} else {
-		w.codeArea.MutateState(func(s *codearea.CodeAreaState) {
-			s.Buffer = codearea.CodeBuffer{}
+		w.codeArea.MutateState(func(s *cli.CodeAreaState) {
+			s.Buffer = cli.CodeBuffer{}
 		})
 		updateState(w, currentName)
 	}
 }
 
 func (w *widget) descend() {
-	currentCol, ok := w.colView.CopyState().Columns[1].(listbox.ListBox)
+	currentCol, ok := w.colView.CopyState().Columns[1].(cli.ListBox)
 	if !ok {
 		return
 	}
@@ -120,8 +114,8 @@ func (w *widget) descend() {
 	if err != nil {
 		w.app.Notify(err.Error())
 	} else {
-		w.codeArea.MutateState(func(s *codearea.CodeAreaState) {
-			s.Buffer = codearea.CodeBuffer{}
+		w.codeArea.MutateState(func(s *cli.CodeAreaState) {
+			s.Buffer = cli.CodeBuffer{}
 		})
 		updateState(w, "")
 	}
@@ -137,20 +131,20 @@ func Start(app cli.App, cfg Config) {
 	w = &widget{
 		Config: cfg,
 		app:    app,
-		codeArea: codearea.NewCodeArea(codearea.CodeAreaSpec{
+		codeArea: cli.NewCodeArea(cli.CodeAreaSpec{
 			Prompt: func() ui.Text {
 				if w.CopyState().ShowHidden {
-					return layout.ModeLine(" NAVIGATING (show hidden) ", true)
+					return cli.ModeLine(" NAVIGATING (show hidden) ", true)
 				} else {
-					return layout.ModeLine(" NAVIGATING ", true)
+					return cli.ModeLine(" NAVIGATING ", true)
 				}
 			},
 		}),
-		colView: colview.NewColView(colview.ColViewSpec{
+		colView: cli.NewColView(cli.ColViewSpec{
 			OverlayHandler: cfg.Binding,
 			Weights:        func(n int) []int { return []int{1, 3, 4} },
-			OnLeft:         func(colview.ColView) { w.ascend() },
-			OnRight:        func(colview.ColView) { w.descend() },
+			OnLeft:         func(cli.ColView) { w.ascend() },
+			OnRight:        func(cli.ColView) { w.descend() },
 		}),
 	}
 	updateState(w, "")
@@ -166,7 +160,7 @@ func SelectedName(app cli.App) string {
 	if !ok {
 		return ""
 	}
-	col, ok := w.colView.CopyState().Columns[1].(listbox.ListBox)
+	col, ok := w.colView.CopyState().Columns[1].(cli.ListBox)
 	if !ok {
 		return ""
 	}
@@ -183,12 +177,12 @@ func updateState(w *widget, selectName string) {
 	filter := w.lastFilter
 	showHidden := w.CopyState().ShowHidden
 
-	var parentCol, currentCol el.Widget
+	var parentCol, currentCol cli.Widget
 
-	colView.MutateState(func(s *colview.ColViewState) {
-		*s = colview.ColViewState{
-			Columns: []el.Widget{
-				layout.Empty{}, layout.Empty{}, layout.Empty{}},
+	colView.MutateState(func(s *cli.ColViewState) {
+		*s = cli.ColViewState{
+			Columns: []cli.Widget{
+				cli.Empty{}, cli.Empty{}, cli.Empty{}},
 			FocusColumn: 1,
 		}
 	})
@@ -206,9 +200,9 @@ func updateState(w *widget, selectName string) {
 			current,
 			filter,
 			showHidden,
-			func(it listbox.Items, i int) {
+			func(it cli.Items, i int) {
 				previewCol := makeCol(it.(fileItems)[i], showHidden)
-				colView.MutateState(func(s *colview.ColViewState) {
+				colView.MutateState(func(s *cli.ColViewState) {
 					s.Columns[2] = previewCol
 				})
 			})
@@ -221,30 +215,30 @@ func updateState(w *widget, selectName string) {
 		tryToSelectNothing(parentCol)
 	}
 
-	colView.MutateState(func(s *colview.ColViewState) {
+	colView.MutateState(func(s *cli.ColViewState) {
 		s.Columns[0] = parentCol
 		s.Columns[1] = currentCol
 	})
 }
 
-// Selects nothing if the widget is a listbox.
-func tryToSelectNothing(w el.Widget) {
-	list, ok := w.(listbox.ListBox)
+// Selects nothing if the widget is a cli.
+func tryToSelectNothing(w cli.Widget) {
+	list, ok := w.(cli.ListBox)
 	if !ok {
 		return
 	}
-	list.Select(func(listbox.ListBoxState) int { return -1 })
+	list.Select(func(cli.ListBoxState) int { return -1 })
 }
 
 // Selects the item with the given name, if the widget is a listbox with
 // fileItems and has such an item.
-func tryToSelectName(w el.Widget, name string) {
-	list, ok := w.(listbox.ListBox)
+func tryToSelectName(w cli.Widget, name string) {
+	list, ok := w.(cli.ListBox)
 	if !ok {
 		// Do nothing
 		return
 	}
-	list.Select(func(state listbox.ListBoxState) int {
+	list.Select(func(state cli.ListBoxState) int {
 		items, ok := state.Items.(fileItems)
 		if !ok {
 			return 0
@@ -258,11 +252,11 @@ func tryToSelectName(w el.Widget, name string) {
 	})
 }
 
-func makeCol(f File, showHidden bool) el.Widget {
+func makeCol(f File, showHidden bool) cli.Widget {
 	return makeColInner(f, "", showHidden, nil)
 }
 
-func makeColInner(f File, filter string, showHidden bool, onSelect func(listbox.Items, int)) el.Widget {
+func makeColInner(f File, filter string, showHidden bool, onSelect func(cli.Items, int)) cli.Widget {
 	files, content, err := f.Read()
 	if err != nil {
 		return makeErrCol(err)
@@ -283,21 +277,21 @@ func makeColInner(f File, filter string, showHidden bool, onSelect func(listbox.
 		sort.Slice(files, func(i, j int) bool {
 			return files[i].Name() < files[j].Name()
 		})
-		return listbox.NewListBox(listbox.ListBoxSpec{
+		return cli.NewListBox(cli.ListBoxSpec{
 			Padding: 1, ExtendStyle: true, OnSelect: onSelect,
-			State: listbox.ListBoxState{Items: fileItems(files)},
+			State: cli.ListBoxState{Items: fileItems(files)},
 		})
 	}
 
 	lines := strings.Split(sanitize(string(content)), "\n")
-	return textview.NewTextView(textview.TextViewSpec{
-		State:      textview.TextViewState{Lines: lines},
+	return cli.NewTextView(cli.TextViewSpec{
+		State:      cli.TextViewState{Lines: lines},
 		Scrollable: true,
 	})
 }
 
-func makeErrCol(err error) el.Widget {
-	return layout.Label{Content: ui.T(err.Error(), ui.FgRed)}
+func makeErrCol(err error) cli.Widget {
+	return cli.Label{Content: ui.T(err.Error(), ui.FgRed)}
 }
 
 type fileItems []File
@@ -322,9 +316,9 @@ func sanitize(content string) string {
 }
 
 // Select changes the selection if the navigation addon is currently active.
-func Select(app cli.App, f func(listbox.ListBoxState) int) {
+func Select(app cli.App, f func(cli.ListBoxState) int) {
 	actOnWidget(app, func(w *widget) {
-		if listBox, ok := w.colView.CopyState().Columns[1].(listbox.ListBox); ok {
+		if listBox, ok := w.colView.CopyState().Columns[1].(cli.ListBox); ok {
 			listBox.Select(f)
 			app.Redraw()
 		}
@@ -335,7 +329,7 @@ func Select(app cli.App, f func(listbox.ListBoxState) int) {
 // active.
 func ScrollPreview(app cli.App, delta int) {
 	actOnWidget(app, func(w *widget) {
-		if textView, ok := w.colView.CopyState().Columns[2].(textview.TextView); ok {
+		if textView, ok := w.colView.CopyState().Columns[2].(cli.TextView); ok {
 			textView.ScrollBy(delta)
 			app.Redraw()
 		}

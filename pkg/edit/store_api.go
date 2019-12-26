@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
 	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
@@ -46,7 +45,7 @@ func insertLastWord(app cli.App, fuser *histutil.Fuser) error {
 	}
 	words := parseutil.Wordify(cmd.Text)
 	if len(words) > 0 {
-		app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+		app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 			s.Buffer.InsertAtDot(words[len(words)-1])
 		})
 	}

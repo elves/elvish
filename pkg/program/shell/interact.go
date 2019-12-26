@@ -9,8 +9,8 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/edit"
 	"github.com/elves/elvish/pkg/diag"
+	"github.com/elves/elvish/pkg/edit"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"

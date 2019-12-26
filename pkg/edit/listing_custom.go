@@ -8,7 +8,6 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/addons/listing"
-	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
@@ -30,7 +29,7 @@ func (*customListingOpts) SetDefaultOptions() {}
 // Starts a custom listing addon.
 
 func listingStartCustom(app cli.App, fm *eval.Frame, opts customListingOpts, items interface{}) {
-	var binding el.Handler
+	var binding cli.Handler
 	if opts.Binding.Map != nil {
 		binding = newMapBinding(app, fm.Evaler, vars.FromPtr(&opts.Binding))
 	}

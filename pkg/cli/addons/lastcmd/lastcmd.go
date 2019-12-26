@@ -8,11 +8,6 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/combobox"
-	"github.com/elves/elvish/pkg/cli/el/layout"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
 	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/ui"
 )
@@ -20,7 +15,7 @@ import (
 // Config is the configuration for starting lastcmd.
 type Config struct {
 	// Binding provides key binding.
-	Binding el.Handler
+	Binding cli.Handler
 	// Store provides the source for the last command.
 	Store Store
 	// Wordifier breaks a command into words.
@@ -58,20 +53,20 @@ func Start(app cli.App, cfg Config) {
 	}
 
 	accept := func(text string) {
-		app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+		app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 			s.Buffer.InsertAtDot(text)
 		})
 		app.MutateState(func(s *cli.State) { s.Addon = nil })
 	}
-	w := combobox.NewComboBox(combobox.ComboBoxSpec{
-		CodeArea: codearea.CodeAreaSpec{Prompt: layout.ModePrompt(" LASTCMD ", true)},
-		ListBox: listbox.ListBoxSpec{
+	w := cli.NewComboBox(cli.ComboBoxSpec{
+		CodeArea: cli.CodeAreaSpec{Prompt: cli.ModePrompt(" LASTCMD ", true)},
+		ListBox: cli.ListBoxSpec{
 			OverlayHandler: cfg.Binding,
-			OnAccept: func(it listbox.Items, i int) {
+			OnAccept: func(it cli.Items, i int) {
 				accept(it.(items).entries[i].content)
 			},
 		},
-		OnFilter: func(w combobox.ComboBox, p string) {
+		OnFilter: func(w cli.ComboBox, p string) {
 			items := filter(entries, p)
 			if len(items.entries) == 1 {
 				accept(items.entries[0].content)

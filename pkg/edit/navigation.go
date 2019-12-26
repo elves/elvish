@@ -3,7 +3,6 @@ package edit
 import (
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/addons/navigation"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
@@ -77,10 +76,10 @@ func initNavigation(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 			},
 			"left":      func() { navigation.Ascend(app) },
 			"right":     func() { navigation.Descend(app) },
-			"up":        func() { navigation.Select(app, listbox.Prev) },
-			"down":      func() { navigation.Select(app, listbox.Next) },
-			"page-up":   func() { navigation.Select(app, listbox.PrevPage) },
-			"page-down": func() { navigation.Select(app, listbox.NextPage) },
+			"up":        func() { navigation.Select(app, cli.Prev) },
+			"down":      func() { navigation.Select(app, cli.Next) },
+			"page-up":   func() { navigation.Select(app, cli.PrevPage) },
+			"page-down": func() { navigation.Select(app, cli.NextPage) },
 
 			"file-preview-up":   func() { navigation.ScrollPreview(app, -1) },
 			"file-preview-down": func() { navigation.ScrollPreview(app, 1) },

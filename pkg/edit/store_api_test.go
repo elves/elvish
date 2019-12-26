@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/store/storedefs"
 )
@@ -32,8 +31,8 @@ func TestInsertLastWord(t *testing.T) {
 	defer f.Cleanup()
 
 	evals(f.Evaler, "edit:insert-last-word")
-	wantBuf := codearea.CodeBuffer{Content: "bar", Dot: 3}
-	if buf := cli.CodeBuffer(f.Editor.app); buf != wantBuf {
+	wantBuf := cli.CodeBuffer{Content: "bar", Dot: 3}
+	if buf := cli.GetCodeBuffer(f.Editor.app); buf != wantBuf {
 		t.Errorf("buf = %v, want %v", buf, wantBuf)
 	}
 }

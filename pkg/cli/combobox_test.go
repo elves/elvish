@@ -1,25 +1,22 @@
-package combobox
+package cli
 
 import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
 )
 
-var renderTests = []el.RenderTest{
+var comboBoxRenderTests = []RenderTest{
 	{
 		Name: "rendering codearea and listbox",
 		Given: NewComboBox(ComboBoxSpec{
-			CodeArea: codearea.CodeAreaSpec{
-				State: codearea.CodeAreaState{
-					Buffer: codearea.CodeBuffer{Content: "filter", Dot: 6}}},
-			ListBox: listbox.ListBoxSpec{
-				State: listbox.ListBoxState{Items: listbox.TestItems{NItems: 2}}}}),
+			CodeArea: CodeAreaSpec{
+				State: CodeAreaState{
+					Buffer: CodeBuffer{Content: "filter", Dot: 6}}},
+			ListBox: ListBoxSpec{
+				State: ListBoxState{Items: TestItems{NItems: 2}}}}),
 		Width: 10, Height: 24,
 		Want: term.NewBufferBuilder(10).
 			Write("filter").SetDotHere().
@@ -29,11 +26,11 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "calling filter before rendering",
 		Given: NewComboBox(ComboBoxSpec{
-			CodeArea: codearea.CodeAreaSpec{
-				State: codearea.CodeAreaState{
-					Buffer: codearea.CodeBuffer{Content: "filter", Dot: 6}}},
+			CodeArea: CodeAreaSpec{
+				State: CodeAreaState{
+					Buffer: CodeBuffer{Content: "filter", Dot: 6}}},
 			OnFilter: func(w ComboBox, filter string) {
-				w.ListBox().Reset(listbox.TestItems{NItems: 2}, 0)
+				w.ListBox().Reset(TestItems{NItems: 2}, 0)
 			}}),
 		Width: 10, Height: 24,
 		Want: term.NewBufferBuilder(10).
@@ -43,11 +40,11 @@ var renderTests = []el.RenderTest{
 	},
 }
 
-func TestRender(t *testing.T) {
-	el.TestRender(t, renderTests)
+func TestComboBox_Render(t *testing.T) {
+	TestRender(t, comboBoxRenderTests)
 }
 
-func TestHandle(t *testing.T) {
+func TestComboBox_Handle(t *testing.T) {
 	var onFilterCalled bool
 	var lastFilter string
 	w := NewComboBox(ComboBoxSpec{
@@ -55,8 +52,8 @@ func TestHandle(t *testing.T) {
 			onFilterCalled = true
 			lastFilter = filter
 		},
-		ListBox: listbox.ListBoxSpec{
-			State: listbox.ListBoxState{Items: listbox.TestItems{NItems: 2}}}})
+		ListBox: ListBoxSpec{
+			State: ListBoxState{Items: TestItems{NItems: 2}}}})
 
 	handled := w.Handle(term.K(ui.Down))
 	if !handled {
@@ -100,7 +97,7 @@ func TestRefilter(t *testing.T) {
 			onFilter <- filter
 		}})
 	<-onFilter // Ignore the initial OnFilter call.
-	w.CodeArea().MutateState(func(s *codearea.CodeAreaState) { s.Buffer.Content = "new" })
+	w.CodeArea().MutateState(func(s *CodeAreaState) { s.Buffer.Content = "new" })
 	w.Refilter()
 	select {
 	case f := <-onFilter:

@@ -4,15 +4,13 @@ package stub
 
 import (
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/layout"
 	"github.com/elves/elvish/pkg/cli/term"
 )
 
 // Config keeps the configuration for the stub addon.
 type Config struct {
 	// Keybinding.
-	Binding el.Handler
+	Binding cli.Handler
 	// Name to show in the modeline.
 	Name string
 	// Whether the addon widget gets the focus.
@@ -25,7 +23,7 @@ type widget struct {
 
 func (w *widget) Render(width, height int) *term.Buffer {
 	buf := term.NewBufferBuilder(width).
-		WriteStyled(layout.ModeLine(w.Name, false)).SetDotHere().Buffer()
+		WriteStyled(cli.ModeLine(w.Name, false)).SetDotHere().Buffer()
 	buf.TrimToLines(0, height)
 	return buf
 }
@@ -41,7 +39,7 @@ func (w *widget) Focus() bool {
 // Start starts the stub addon.
 func Start(app cli.App, cfg Config) {
 	if cfg.Binding == nil {
-		cfg.Binding = el.DummyHandler{}
+		cfg.Binding = cli.DummyHandler{}
 	}
 	w := widget{cfg}
 	app.MutateState(func(s *cli.State) { s.Addon = &w })

@@ -7,8 +7,6 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/sys"
 )
@@ -20,7 +18,7 @@ type App interface {
 	// CopyState returns a copy of the a state.
 	CopyState() State
 	// CodeArea returns the codearea widget of the app.
-	CodeArea() codearea.CodeArea
+	CodeArea() CodeArea
 	// ReadCode requests the App to read code from the terminal by running an
 	// event loop. This function is not re-entrant.
 	ReadCode() (string, error)
@@ -54,7 +52,7 @@ type app struct {
 	StateMutex sync.RWMutex
 	State      State
 
-	codeArea codearea.CodeArea
+	codeArea CodeArea
 }
 
 // State represents mutable state of an App.
@@ -68,7 +66,7 @@ type State struct {
 	// Focus method is used to determine whether the cursor should be placed on
 	// the addon widget during each render. If the widget does not implement the
 	// Focuser interface, the cursor is always placed on the addon widget.
-	Addon el.Widget
+	Addon Widget
 }
 
 // Focuser is an interface that addon widgets may implement.
@@ -112,7 +110,7 @@ func NewApp(spec AppSpec) App {
 	lp.HandleCb(a.handle)
 	lp.RedrawCb(a.redraw)
 
-	a.codeArea = codearea.NewCodeArea(codearea.CodeAreaSpec{
+	a.codeArea = NewCodeArea(CodeAreaSpec{
 		OverlayHandler: spec.OverlayHandler,
 		Highlighter:    a.Highlighter.Get,
 		Prompt:         a.Prompt.Get,
@@ -138,14 +136,14 @@ func (a *app) CopyState() State {
 	return a.State
 }
 
-func (a *app) CodeArea() codearea.CodeArea {
+func (a *app) CodeArea() CodeArea {
 	return a.codeArea
 }
 
 func (a *app) resetAllStates() {
 	a.MutateState(func(s *State) { *s = State{} })
 	a.codeArea.MutateState(
-		func(s *codearea.CodeAreaState) { *s = codearea.CodeAreaState{} })
+		func(s *CodeAreaState) { *s = CodeAreaState{} })
 }
 
 func (a *app) handle(e event) {
@@ -187,7 +185,7 @@ func (a *app) redraw(flag redrawFlag) {
 	}
 
 	var notes []string
-	var addon el.Renderer
+	var addon Renderer
 	a.MutateState(func(s *State) {
 		notes, addon = s.Notes, s.Addon
 		s.Notes = nil
@@ -198,11 +196,11 @@ func (a *app) redraw(flag redrawFlag) {
 	if isFinalRedraw {
 		hideRPrompt := !a.RPromptPersistent()
 		if hideRPrompt {
-			a.codeArea.MutateState(func(s *codearea.CodeAreaState) { s.HideRPrompt = true })
+			a.codeArea.MutateState(func(s *CodeAreaState) { s.HideRPrompt = true })
 		}
 		bufMain := renderApp(a.codeArea, nil /* addon */, width, height)
 		if hideRPrompt {
-			a.codeArea.MutateState(func(s *codearea.CodeAreaState) { s.HideRPrompt = false })
+			a.codeArea.MutateState(func(s *CodeAreaState) { s.HideRPrompt = false })
 		}
 		// Insert a newline after the buffer and position the cursor there.
 		bufMain.Extend(term.NewBuffer(width), true)
@@ -232,7 +230,7 @@ func renderNotes(notes []string, width int) *term.Buffer {
 }
 
 // Renders the codearea, and uses the rest of the height for the listing.
-func renderApp(codeArea, addon el.Renderer, width, height int) *term.Buffer {
+func renderApp(codeArea, addon Renderer, width, height int) *term.Buffer {
 	buf := codeArea.Render(width, height)
 	if addon != nil && len(buf.Lines) < height {
 		bufListing := addon.Render(width, height-len(buf.Lines))

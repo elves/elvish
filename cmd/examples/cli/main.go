@@ -7,7 +7,6 @@ import (
 	"unicode"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
 )
@@ -33,7 +32,7 @@ func main() {
 	app = cli.NewApp(cli.AppSpec{
 		Prompt:      cli.NewConstPrompt(ui.T("> ")),
 		Highlighter: highlighter{},
-		OverlayHandler: el.MapHandler{
+		OverlayHandler: cli.MapHandler{
 			term.K('D', ui.Ctrl): func() { app.CommitEOF() },
 		},
 	})

@@ -1,11 +1,10 @@
-package codearea
+package cli
 
 import (
 	"errors"
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/tt"
 	"github.com/elves/elvish/pkg/ui"
@@ -15,7 +14,7 @@ var bb = term.NewBufferBuilder
 
 func p(t ui.Text) func() ui.Text { return func() ui.Text { return t } }
 
-var renderTests = []el.RenderTest{
+var codeAreaRenderTests = []RenderTest{
 	{
 		Name: "prompt only",
 		Given: NewCodeArea(CodeAreaSpec{
@@ -184,11 +183,11 @@ var renderTests = []el.RenderTest{
 	},
 }
 
-func TestRender(t *testing.T) {
-	el.TestRender(t, renderTests)
+func TestCodeArea_Render(t *testing.T) {
+	TestRender(t, codeAreaRenderTests)
 }
 
-var handleTests = []el.HandleTest{
+var codeAreaHandleTests = []HandleTest{
 	{
 		Name:         "simple inserts",
 		Given:        NewCodeArea(CodeAreaSpec{}),
@@ -296,8 +295,8 @@ var handleTests = []el.HandleTest{
 	},
 	{
 		Name: "overlay handler",
-		Given: addOverlay(NewCodeArea(CodeAreaSpec{}), func(w *codeArea) el.Handler {
-			return el.MapHandler{
+		Given: codeAreaWithOverlay(CodeAreaSpec{}, func(w *codeArea) Handler {
+			return MapHandler{
 				term.K('a'): func() { w.State.Buffer.InsertAtDot("b") },
 			}
 		}),
@@ -306,19 +305,20 @@ var handleTests = []el.HandleTest{
 	},
 }
 
-// A utility for building a Widget with an OverlayHandler as a single
+func TestCodeArea_Handle(t *testing.T) {
+	TestHandle(t, codeAreaHandleTests)
+}
+
+// A utility for building a CodeArea with an OverlayHandler as a single
 // expression.
-func addOverlay(w CodeArea, overlay func(*codeArea) el.Handler) CodeArea {
+func codeAreaWithOverlay(spec CodeAreaSpec, f func(*codeArea) Handler) CodeArea {
+	w := NewCodeArea(spec)
 	ww := w.(*codeArea)
-	ww.OverlayHandler = overlay(ww)
+	ww.OverlayHandler = f(ww)
 	return w
 }
 
-func TestHandle(t *testing.T) {
-	el.TestHandle(t, handleTests)
-}
-
-var unhandledEvents = []term.Event{
+var codeAreaUnhandledEvents = []term.Event{
 	// Mouse events are unhandled
 	term.MouseEvent{},
 	// Function keys are unhandled (except Backspace)
@@ -326,9 +326,9 @@ var unhandledEvents = []term.Event{
 	term.K('X', ui.Ctrl),
 }
 
-func TestHandle_UnhandledEvents(t *testing.T) {
+func TestCodeArea_Handle_UnhandledEvents(t *testing.T) {
 	w := NewCodeArea(CodeAreaSpec{})
-	for _, event := range unhandledEvents {
+	for _, event := range codeAreaUnhandledEvents {
 		handled := w.Handle(event)
 		if handled {
 			t.Errorf("event %v got handled", event)
@@ -336,7 +336,7 @@ func TestHandle_UnhandledEvents(t *testing.T) {
 	}
 }
 
-func TestHandle_AbbreviationExpansionInterruptedByExternalMutation(t *testing.T) {
+func TestCodeArea_Handle_AbbreviationExpansionInterruptedByExternalMutation(t *testing.T) {
 	w := NewCodeArea(CodeAreaSpec{
 		Abbreviations: func(f func(abbr, full string)) {
 			f("dn", "/dev/null")
@@ -351,7 +351,7 @@ func TestHandle_AbbreviationExpansionInterruptedByExternalMutation(t *testing.T)
 	}
 }
 
-func TestHandle_EnterEmitsSubmit(t *testing.T) {
+func TestCodeArea_Handle_EnterEmitsSubmit(t *testing.T) {
 	submitted := false
 	w := NewCodeArea(CodeAreaSpec{
 		OnSubmit: func() { submitted = true },
@@ -362,14 +362,14 @@ func TestHandle_EnterEmitsSubmit(t *testing.T) {
 	}
 }
 
-func TestHandle_DefaultNoopSubmit(t *testing.T) {
+func TestCodeArea_Handle_DefaultNoopSubmit(t *testing.T) {
 	w := NewCodeArea(CodeAreaSpec{State: CodeAreaState{
 		Buffer: CodeBuffer{Content: "code", Dot: 4}}})
 	w.Handle(term.K('\n'))
 	// No panic, we are good
 }
 
-func TestState(t *testing.T) {
+func TestCodeArea_State(t *testing.T) {
 	w := NewCodeArea(CodeAreaSpec{})
 	w.MutateState(func(s *CodeAreaState) { s.Buffer.Content = "code" })
 	if w.CopyState().Buffer.Content != "code" {
@@ -377,7 +377,7 @@ func TestState(t *testing.T) {
 	}
 }
 
-func TestApplyPending(t *testing.T) {
+func TestCodeAreaState_ApplyPending(t *testing.T) {
 	applyPending := func(s CodeAreaState) CodeAreaState {
 		s.ApplyPending()
 		return s

@@ -3,8 +3,8 @@ package listing
 import (
 	"testing"
 
+	"github.com/elves/elvish/pkg/cli"
 	. "github.com/elves/elvish/pkg/cli/apptest"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
 )
@@ -39,7 +39,7 @@ func TestAccept_ClosingListing(t *testing.T) {
 	Start(f.App, Config{
 		GetItems: fooAndGreenBar,
 		Accept: func(t string) bool {
-			f.App.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+			f.App.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 				s.Buffer.InsertAtDot(t)
 			})
 			return false
@@ -57,7 +57,7 @@ func TestAccept_NotClosingListing(t *testing.T) {
 	Start(f.App, Config{
 		GetItems: fooAndGreenBar,
 		Accept: func(t string) bool {
-			f.App.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+			f.App.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 				s.Buffer.InsertAtDot(t)
 			})
 			return true
@@ -100,7 +100,7 @@ func TestAutoAccept(t *testing.T) {
 			return []Item{{"bar", ui.T("bar")}}, 0
 		},
 		Accept: func(t string) bool {
-			f.App.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+			f.App.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 				s.Buffer.InsertAtDot(t)
 			})
 			return false

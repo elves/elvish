@@ -7,8 +7,6 @@ import (
 	"github.com/elves/elvish/pkg/cli/addons/histlist"
 	"github.com/elves/elvish/pkg/cli/addons/lastcmd"
 	"github.com/elves/elvish/pkg/cli/addons/location"
-	"github.com/elves/elvish/pkg/cli/el/combobox"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
 	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
@@ -139,7 +137,7 @@ func initLocation(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, 
 // Accepts the current selected listing item.
 
 func listingAccept(app cli.App) {
-	w, ok := app.CopyState().Addon.(combobox.ComboBox)
+	w, ok := app.CopyState().Addon.(cli.ComboBox)
 	if !ok {
 		return
 	}
@@ -159,51 +157,51 @@ func listingAcceptClose(app cli.App) {
 //
 // Moves the cursor up in listing mode.
 
-func listingUp(app cli.App) { listingSelect(app, listbox.Prev) }
+func listingUp(app cli.App) { listingSelect(app, cli.Prev) }
 
 //elvdoc:fn listing:down
 //
 // Moves the cursor down in listing mode.
 
-func listingDown(app cli.App) { listingSelect(app, listbox.Next) }
+func listingDown(app cli.App) { listingSelect(app, cli.Next) }
 
 //elvdoc:fn listing:up-cycle
 //
 // Moves the cursor up in listing mode, or to the last item if the first item is
 // currently selected.
 
-func listingUpCycle(app cli.App) { listingSelect(app, listbox.PrevWrap) }
+func listingUpCycle(app cli.App) { listingSelect(app, cli.PrevWrap) }
 
 //elvdoc:fn listing:down-cycle
 //
 // Moves the cursor down in listing mode, or to the first item if the last item is
 // currently selected.
 
-func listingDownCycle(app cli.App) { listingSelect(app, listbox.NextWrap) }
+func listingDownCycle(app cli.App) { listingSelect(app, cli.NextWrap) }
 
 //elvdoc:fn listing:page-up
 // Moves the cursor up one page.
 
-func listingPageUp(app cli.App) { listingSelect(app, listbox.PrevPage) }
+func listingPageUp(app cli.App) { listingSelect(app, cli.PrevPage) }
 
 //elvdoc:fn listing:page-down
 // Moves the cursor down one page.
 
-func listingPageDown(app cli.App) { listingSelect(app, listbox.NextPage) }
+func listingPageDown(app cli.App) { listingSelect(app, cli.NextPage) }
 
 //elvdoc:fn listing:left
 // Moves the cursor left in listing mode.
 
-func listingLeft(app cli.App) { listingSelect(app, listbox.Left) }
+func listingLeft(app cli.App) { listingSelect(app, cli.Left) }
 
 //elvdoc:fn listing:right
 //
 // Moves the cursor right in listing mode.
 
-func listingRight(app cli.App) { listingSelect(app, listbox.Right) }
+func listingRight(app cli.App) { listingSelect(app, cli.Right) }
 
-func listingSelect(app cli.App, f func(listbox.ListBoxState) int) {
-	w, ok := app.CopyState().Addon.(combobox.ComboBox)
+func listingSelect(app cli.App, f func(cli.ListBoxState) int) {
+	w, ok := app.CopyState().Addon.(cli.ComboBox)
 	if !ok {
 		return
 	}
@@ -211,7 +209,7 @@ func listingSelect(app cli.App, f func(listbox.ListBoxState) int) {
 }
 
 func listingRefilter(app cli.App) {
-	w, ok := app.CopyState().Addon.(combobox.ComboBox)
+	w, ok := app.CopyState().Addon.(cli.ComboBox)
 	if !ok {
 		return
 	}

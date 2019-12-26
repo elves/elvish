@@ -11,11 +11,6 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
-	"github.com/elves/elvish/pkg/cli/el/combobox"
-	"github.com/elves/elvish/pkg/cli/el/layout"
-	"github.com/elves/elvish/pkg/cli/el/listbox"
 	"github.com/elves/elvish/pkg/store/storedefs"
 	"github.com/elves/elvish/pkg/ui"
 	"github.com/elves/elvish/pkg/util"
@@ -24,7 +19,7 @@ import (
 // Config is the configuration to start the location history feature.
 type Config struct {
 	// Binding is the key binding.
-	Binding el.Handler
+	Binding cli.Handler
 	// Store provides the directory history and the function to change directory.
 	Store Store
 	// IteratePinned specifies pinned directories by calling the given function
@@ -92,13 +87,13 @@ func Start(app cli.App, cfg Config) {
 	home, _ := util.GetHome("")
 	l := list{dirs, home}
 
-	w := combobox.NewComboBox(combobox.ComboBoxSpec{
-		CodeArea: codearea.CodeAreaSpec{
-			Prompt: layout.ModePrompt(" LOCATION ", true),
+	w := cli.NewComboBox(cli.ComboBoxSpec{
+		CodeArea: cli.CodeAreaSpec{
+			Prompt: cli.ModePrompt(" LOCATION ", true),
 		},
-		ListBox: listbox.ListBoxSpec{
+		ListBox: cli.ListBoxSpec{
 			OverlayHandler: cfg.Binding,
-			OnAccept: func(it listbox.Items, i int) {
+			OnAccept: func(it cli.Items, i int) {
 				path := it.(list).dirs[i].Path
 				if strings.HasPrefix(path, wsKind) {
 					path = wsRoot + path[len(wsKind):]
@@ -110,7 +105,7 @@ func Start(app cli.App, cfg Config) {
 				app.MutateState(func(s *cli.State) { s.Addon = nil })
 			},
 		},
-		OnFilter: func(w combobox.ComboBox, p string) {
+		OnFilter: func(w cli.ComboBox, p string) {
 			w.ListBox().Reset(l.filter(p), 0)
 		},
 	})

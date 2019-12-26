@@ -2,7 +2,6 @@ package edit
 
 import (
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/el/codearea"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
@@ -18,7 +17,7 @@ import (
 // inserted text.
 
 func insertAtDot(app cli.App, text string) {
-	app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+	app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 		s.Buffer.InsertAtDot(text)
 	})
 }
@@ -32,7 +31,7 @@ func insertAtDot(app cli.App, text string) {
 // Equivalent to assigning `$text` to `$edit:current-command`.
 
 func replaceInput(app cli.App, text string) {
-	cli.SetCodeBuffer(app, codearea.CodeBuffer{Content: text, Dot: len(text)})
+	cli.SetCodeBuffer(app, cli.CodeBuffer{Content: text, Dot: len(text)})
 }
 
 //elvdoc:var -dot
@@ -60,7 +59,7 @@ func initStateAPI(app cli.App, ns eval.Ns) {
 		if err != nil {
 			return err
 		}
-		app.CodeArea().MutateState(func(s *codearea.CodeAreaState) {
+		app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 			s.Buffer.Dot = dot
 		})
 		return nil
@@ -80,7 +79,7 @@ func initStateAPI(app cli.App, ns eval.Ns) {
 		return nil
 	}
 	getCurrentCommand := func() interface{} {
-		return vals.FromGo(cli.CodeBuffer(app).Content)
+		return vals.FromGo(cli.GetCodeBuffer(app).Content)
 	}
 	ns.Add("current-command", vars.FromSetGet(setCurrentCommand, getCurrentCommand))
 }
