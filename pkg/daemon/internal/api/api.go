@@ -1,16 +1,13 @@
+// Package api defines types and constants useful for the API between the daemon
+// service and client.
 package api
 
 import (
 	"github.com/elves/elvish/pkg/store/storedefs"
 )
 
-const (
-	// ServiceName is the name of the RPC service exposed by the daemon.
-	ServiceName = "Daemon"
-
-	// Version is the API version. It should be bumped any time the API changes.
-	Version = -94
-)
+// ServiceName is the name of the RPC service exposed by the daemon.
+const ServiceName = "Daemon"
 
 // Basic requests.
 

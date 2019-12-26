@@ -20,7 +20,7 @@ func (s *service) Version(req *api.VersionRequest, res *api.VersionResponse) err
 	if s.err != nil {
 		return s.err
 	}
-	res.Version = api.Version
+	res.Version = Version
 	return nil
 }
 
