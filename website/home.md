@@ -73,7 +73,7 @@ language. It runs on Linux, BSDs, macOS and Windows.
       <h2>Command History</h2>
       <p>
         Want to find the magical <code>ffmpeg</code> command that you used to
-        transcode a video file two months ago, but it is burried under a
+        transcode a video file two months ago, but it is buried under a
         million other commands?
       </p>
       <p>
