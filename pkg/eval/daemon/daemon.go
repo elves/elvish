@@ -16,7 +16,7 @@ import (
 var errDontKnowHowToSpawnDaemon = errors.New("don't know how to spawn daemon")
 
 // Ns makes the daemon: namespace.
-func Ns(daemon *daemon.Client, spawner *daemonp.Daemon) eval.Ns {
+func Ns(daemon daemon.Client, spawner *daemonp.Daemon) eval.Ns {
 	getPid := func() (string, error) {
 		pid, err := daemon.Pid()
 		return string(strconv.Itoa(pid)), err

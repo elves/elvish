@@ -100,7 +100,7 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 	return ev, dataDir
 }
 
-func connectToDaemon(sockpath string, spawner *daemonp.Daemon) (*daemon.Client, error) {
+func connectToDaemon(sockpath string, spawner *daemonp.Daemon) (daemon.Client, error) {
 	cl := daemon.NewClient(sockpath)
 	status, err := detectDaemon(sockpath, cl)
 	shouldSpawn := false
@@ -171,7 +171,7 @@ func connectToDaemon(sockpath string, spawner *daemonp.Daemon) (*daemon.Client, 
 	return cl, fmt.Errorf("daemon unreachable after waiting for %s", daemonWaitLoops*daemonWaitPerLoop)
 }
 
-func detectDaemon(sockpath string, cl *daemon.Client) (daemonStatus, error) {
+func detectDaemon(sockpath string, cl daemon.Client) (daemonStatus, error) {
 	_, err := os.Stat(sockpath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -197,7 +197,7 @@ func detectDaemon(sockpath string, cl *daemon.Client) (daemonStatus, error) {
 	return daemonOK, nil
 }
 
-func killDaemon(cl *daemon.Client) error {
+func killDaemon(cl daemon.Client) error {
 	pid, err := cl.Pid()
 	if err != nil {
 		return fmt.Errorf("cannot get pid of daemon: %v", err)

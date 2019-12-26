@@ -58,7 +58,7 @@ type Evaler struct {
 	// Dependencies.
 	//
 	// TODO: Remove these dependency by providing more general extension points.
-	DaemonClient *daemon.Client
+	DaemonClient daemon.Client
 	Editor       Editor
 }
 
@@ -148,7 +148,7 @@ func (ev *Evaler) AddAfterChdir(f func(string)) {
 }
 
 // InstallDaemonClient installs a daemon client to the Evaler.
-func (ev *Evaler) InstallDaemonClient(client *daemon.Client) {
+func (ev *Evaler) InstallDaemonClient(client daemon.Client) {
 	ev.DaemonClient = client
 }
 

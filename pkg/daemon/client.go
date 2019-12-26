@@ -18,24 +18,34 @@ var (
 	ErrDaemonUnreachable = errors.New("daemon offline")
 )
 
-// Client is a client to the Elvish daemon. A nil *Client is safe to use.
-type Client struct {
+// Client represents a daemon client.
+type Client interface {
+	storedefs.Store
+
+	ResetConn() error
+	Close() error
+
+	Pid() (int, error)
+	SockPath() string
+	Version() (int, error)
+}
+
+// Implementation of the Client interface.
+type client struct {
 	sockPath  string
 	rpcClient *rpc.Client
 	waits     sync.WaitGroup
 }
 
-var _ storedefs.Store = (*Client)(nil)
-
 // NewClient creates a new Client instance that talks to the socket. Connection
 // creation is deferred to the first request.
-func NewClient(sockPath string) *Client {
-	return &Client{sockPath, nil, sync.WaitGroup{}}
+func NewClient(sockPath string) Client {
+	return &client{sockPath, nil, sync.WaitGroup{}}
 }
 
 // SockPath returns the socket path that the Client talks to. If the client is
 // nil, it returns an empty string.
-func (c *Client) SockPath() string {
+func (c *client) SockPath() string {
 	if c == nil {
 		return ""
 	}
@@ -44,7 +54,7 @@ func (c *Client) SockPath() string {
 
 // ResetConn resets the current connection. A new connection will be established
 // the next time a request is made. If the client is nil, it does nothing.
-func (c *Client) ResetConn() error {
+func (c *client) ResetConn() error {
 	if c == nil || c.rpcClient == nil {
 		return nil
 	}
@@ -55,7 +65,7 @@ func (c *Client) ResetConn() error {
 
 // Close waits for all outstanding requests to finish and close the connection.
 // If the client is nil, it does nothing and returns nil.
-func (c *Client) Close() error {
+func (c *client) Close() error {
 	if c == nil {
 		return nil
 	}
@@ -63,7 +73,7 @@ func (c *Client) Close() error {
 	return c.ResetConn()
 }
 
-func (c *Client) call(f string, req, res interface{}) error {
+func (c *client) call(f string, req, res interface{}) error {
 	if c == nil {
 		return ErrClientNotInitialized
 	}
@@ -95,104 +105,104 @@ func (c *Client) call(f string, req, res interface{}) error {
 // number of RPC calls grow above some threshold, a code generator should be
 // written to generate them.
 
-func (c *Client) Version() (int, error) {
+func (c *client) Version() (int, error) {
 	req := &VersionRequest{}
 	res := &VersionResponse{}
 	err := c.call("Version", req, res)
 	return res.Version, err
 }
 
-func (c *Client) Pid() (int, error) {
+func (c *client) Pid() (int, error) {
 	req := &PidRequest{}
 	res := &PidResponse{}
 	err := c.call("Pid", req, res)
 	return res.Pid, err
 }
 
-func (c *Client) NextCmdSeq() (int, error) {
+func (c *client) NextCmdSeq() (int, error) {
 	req := &NextCmdRequest{}
 	res := &NextCmdSeqResponse{}
 	err := c.call("NextCmdSeq", req, res)
 	return res.Seq, err
 }
 
-func (c *Client) AddCmd(text string) (int, error) {
+func (c *client) AddCmd(text string) (int, error) {
 	req := &AddCmdRequest{text}
 	res := &AddCmdResponse{}
 	err := c.call("AddCmd", req, res)
 	return res.Seq, err
 }
 
-func (c *Client) DelCmd(seq int) error {
+func (c *client) DelCmd(seq int) error {
 	req := &DelCmdRequest{seq}
 	res := &DelCmdResponse{}
 	err := c.call("DelCmd", req, res)
 	return err
 }
 
-func (c *Client) Cmd(seq int) (string, error) {
+func (c *client) Cmd(seq int) (string, error) {
 	req := &CmdRequest{seq}
 	res := &CmdResponse{}
 	err := c.call("Cmd", req, res)
 	return res.Text, err
 }
 
-func (c *Client) Cmds(from, upto int) ([]string, error) {
+func (c *client) Cmds(from, upto int) ([]string, error) {
 	req := &CmdsRequest{from, upto}
 	res := &CmdsResponse{}
 	err := c.call("Cmds", req, res)
 	return res.Cmds, err
 }
 
-func (c *Client) NextCmd(from int, prefix string) (int, string, error) {
+func (c *client) NextCmd(from int, prefix string) (int, string, error) {
 	req := &NextCmdRequest{from, prefix}
 	res := &NextCmdResponse{}
 	err := c.call("NextCmd", req, res)
 	return res.Seq, res.Text, err
 }
 
-func (c *Client) PrevCmd(upto int, prefix string) (int, string, error) {
+func (c *client) PrevCmd(upto int, prefix string) (int, string, error) {
 	req := &PrevCmdRequest{upto, prefix}
 	res := &PrevCmdResponse{}
 	err := c.call("PrevCmd", req, res)
 	return res.Seq, res.Text, err
 }
 
-func (c *Client) AddDir(dir string, incFactor float64) error {
+func (c *client) AddDir(dir string, incFactor float64) error {
 	req := &AddDirRequest{dir, incFactor}
 	res := &AddDirResponse{}
 	err := c.call("AddDir", req, res)
 	return err
 }
 
-func (c *Client) DelDir(dir string) error {
+func (c *client) DelDir(dir string) error {
 	req := &DelDirRequest{dir}
 	res := &DelDirResponse{}
 	err := c.call("DelDir", req, res)
 	return err
 }
 
-func (c *Client) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
+func (c *client) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	req := &DirsRequest{blacklist}
 	res := &DirsResponse{}
 	err := c.call("Dirs", req, res)
 	return res.Dirs, err
 }
 
-func (c *Client) SharedVar(name string) (string, error) {
+func (c *client) SharedVar(name string) (string, error) {
 	req := &SharedVarRequest{name}
 	res := &SharedVarResponse{}
 	err := c.call("SharedVar", req, res)
 	return res.Value, err
 }
 
-func (c *Client) SetSharedVar(name, value string) error {
+func (c *client) SetSharedVar(name, value string) error {
 	req := &SetSharedVarRequest{name, value}
 	res := &SetSharedVarResponse{}
 	return c.call("SetSharedVar", req, res)
 }
 
-func (c *Client) DelSharedVar(name string) error {
+func (c *client) DelSharedVar(name string) error {
 	req := &DelSharedVarRequest{}
 	res := &DelSharedVarResponse{}
 	return c.call("DelSharedVar", req, res)
