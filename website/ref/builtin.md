@@ -1057,6 +1057,36 @@ this does not imply that `$value`s are all distinct. Examples:
 
 \$cf eq
 
+## only-bytes
+
+```elvish
+only-bytes
+```
+
+Passes byte input to output, and discards value inputs.
+
+Example:
+
+```elvish-transcript
+~> { put value; echo bytes } | only-bytes
+bytes
+```
+
+## only-values
+
+```elvish
+only-values
+```
+
+Passes value input to output, and discards byte inputs.
+
+Example:
+
+```elvish-transcript
+~> { put value; echo bytes } | only-values
+▶ value
+```
+
 ## ord
 
 ```elvish
@@ -1558,7 +1588,7 @@ Construct a styled text by applying the supplied transformers to the supplied
 object. `$object` can be either a string, a styled segment (see below), a styled
 text or an arbitrary concatenation of them. A `$style-transformer` is either:
 
--   The name of a builtin style transformer:
+-   The name of a builtin style transformer, which may be one of the following:
 
     -   On of the attribute names `bold`, `dim`, `italic`, `underlined`, `blink`
         or `inverse` for setting the corresponding attribute
@@ -1568,10 +1598,19 @@ text or an arbitrary concatenation of them. A `$style-transformer` is either:
     -   An attribute name prefixed by `toggle-` for toggling the attribute
         between set and unset
 
-    -   One of the color names `black`, `red`, `green`, `yellow`, `blue`,
-        `magenta`, `cyan`, `lightgray`, `gray`, `lightred`, `lightgreen`,
-        `lightyellow`, `lightblue`, `lightmagenta`, `lightcyan` or `white` for
-        setting the text color
+    -   A color name for setting the text color, which may be one of the
+        following:
+
+        -   One of the 8 basic ANSI colors: `black`, `red`, `green`, `yellow`,
+            `blue`, `magenta`, `cyan` and `white`
+
+        -   The bright variant of the 8 basic ANSI colors, with a `bright-`
+            prefix
+
+        -   Any color from the xterm 256-color palette, as `colorX` (such as
+            `color12`)
+
+        -   A 24-bit RGB color, as `#RRGGBB`, such as `#778899`.
 
     -   A color name prefixed by `bg-` to set the background color
 
@@ -1912,6 +1951,12 @@ The boolean false value.
 ## \$ok
 
 The special value used by `?()` to signal absence of exceptions.
+
+## \$nil
+
+A special value useful for representing the lack of values.
+
+**WARNING**: Due to a bug, `$nil` cannot be used as a map key now.
 
 ## \$num-bg-jobs
 

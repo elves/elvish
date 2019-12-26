@@ -108,13 +108,12 @@ The three syntaxes above all evaluate to strings, and they are interchangeable.
 For instance, `xyz`, `'xyz'` and `"xyz"` are different syntaxes for the same
 string, and they are always equivalent.
 
-Elvish does **not** have a separate number type. For instance, in the command
-`+ 1 2`, both `1` and `2` are strings, and it is the command `+` that knows to
-treat its arguments as numbers. This design is driven by syntax -- because
-barewords are always treated as strings, and digits are barewords, we cannot
-treat words like `1` as number literals. At some point the language may get a
-dedicated number type (or several number types), but they will likely need to be
-constructed explicitly, e.g. `(number 1)`.
+Elvish does have a dedicated `float64` number type, but it does not have a
+literal syntax; instead it needs to be constructed using a function call, as in
+`put (float64 42)`; the argument `42` is a string. For convenience, all Elvish
+functions that expect number arguments also accept strings that can be parsed as
+a number, so explicit number constructors are not needed often.
+
 
 # List and Map
 
@@ -1055,13 +1054,16 @@ The most common form of redirections opens a file and associates it with an FD.
 The form consists of an optional destination FD (like `2`), a redirection
 operator (like `>`) and a filename (like `error.log`):
 
--   The **destination fd** determines which FD to modify. If absent, it is
-    determined from the redirection operator. If present, there must be no space
-    between the fd and the redirection operator. (Otherwise Elvish parses it as
-    an argument.)
+-   The **destination fd** determines which FD to modify. It can be given either
+    as a number, or one of `stdin`, `stdout` and `stderr`. There must be no
+    space between the FD and the redirection operator; otherwise Elvish will
+    parse it as an argument.
+
+    The destination FD can be omitted, in which case it is inferred from the
+    redirection operator.
 
 -   The **redirection operator** determines the mode to open the file, and the
-    destination fd if it is not explicitly specified.
+    destination FD if it is not explicitly specified.
 
 -   The **filename** names the file to open.
 
@@ -1094,10 +1096,10 @@ Try '/bin/ls --help' for more information.
 ```
 
 Redirections can also be used for closing or duplicating FDs. Instead of writing
-a filename, use `&n` (where `n` is a number) for duplicating, or `&-` for
-closing. In this case, the redirection operator only determines the default
-destination FD (and is totally irrevelant if a destination FD is specified).
-Examples:
+a filename, use `&fd` (where `fd` is a number, or any of `stdin`, `stdout` and
+`stderr`) for duplicating, or `&-` for closing. In this case, the redirection
+operator only determines the default destination FD (and is totally irrevelant
+if a destination FD is specified). Examples:
 
 ```elvish-transcript
 ~> ls >&- # close stdout
@@ -1541,16 +1543,12 @@ namespace. The following code
 e:echo $E:PATH
 ```
 
-uses the `echo` command from the `e` namespace and the `PATH` variable from the
-`E` namespace.
+uses the `echo` command from the `e:` namespace and the `PATH` variable from the
+`E:` namespace. The colon is considered part of the namespace name.
 
-Names of namespaces can contain colons themselves. For instance, in `$x:y:z` the
-namespace is `x:y`. More precisely, when parsing command names and variable
-names, everything up to the last colon is considered to be the namespace.
-
-A convention used in articles is when referring to a namespace is to add a
-trailing colon: for instance, `edit:` means "the namespace `edit`". This is
-remniscent to the syntax but is not syntactically valid.
+Namespaces may be nested; for example, calling `edit:location:start` first finds
+the `edit:` namespace, and then the `location:` namespace inside it, and then
+call the `start` function within the nested namespace.
 
 ## Special Namespaces
 
@@ -1577,14 +1575,14 @@ The following namespaces have special meanings to the language:
     You don't need to use this explicitly unless you have defined names that
     shadows builtin counterparts.
 
-## Pre-Imported Modules
+## Pre-Defined Modules
 
 Namespaces that are not special (i,e. one of the above) are also called
 **modules**. Aside from these special namespaces, Elvish also comes with the
 following modules:
 
 -   `edit:` for accessing the Elvish editor. This module is available in
-    interactive mode.
+    interactive mode and does not need importing.
 
     See [reference](edit.html).
 
@@ -1618,61 +1616,41 @@ mod a loading
 f from mod a
 ```
 
-The argument to `use` is called the **usespec** and will be explained in more
-details below. In the simplest case, it is simply the module name.
-
-Modules are evaluated in a separate scope. That means that functions and
-variables defined in the module does not pollute the default namespace, and vice
-versa. For instance, if you define `ls` as a wrapper function in `rc.elv`:
-
-```elvish
-fn ls [@a]{
-    e:ls --color=auto $@a
-}
-```
-
-That definition is not visible in module files: `ls` will still refer to the
-external command `ls`, unless you shadow it in the very same module.
-
-## Modules in Nested Directories
-
-It is often useful to put modules under directories. When importing such
-modules, you can control which (trailing) parts becomes the module name.
-
-For instance, if you have the following content in `x/y/z.elv` (relative to
-`~/.elvish/lib`, of course):
-
-```elvish
-fn f {
-    echo 'In a deeply nested module'
-}
-```
-
-It is possible to import the module as `z`, `y:z`, or `x:y:z`:
+Modules in nested directories can also be imported. For example, if you have
+defined a module in `~/.elvish/lib/x/y/z.elv`, you can import it by using `use
+x/y/z`, and the resulting namespace will be `z:`:
 
 ```elvish-transcript
-~> use x/y/z # imports as "z"
+~> cat .elvish/lib/x/y/z.elv
+fn f {
+  echo "f from x/y/z"
+}
+~> use x/y/z
 ~> z:f
-In a deeply nested module
-~> use x/y:z # imports as "y:z"
-~> y:z:f
-In a deeply nested module
-~> use x:y:z # imports as "x:y:z"
-~> x:y:z:f
-In a deeply nested module
+f from x/y/z
 ```
 
-To be precise:
+In general, if you import a module from a nested directory, the resulting
+namespace will be the same as the file name (without the `.elv` extension).
 
--   The path of the module to import is derived by replacing all `:` with `/`
-    and adding `.elv`. In the above example, all of `x/y/z`, `x/y:z` and `x:y:z`
-    have the same path `x/y/z.elv` and refer to the same module
+## Aliasing
 
--   The part after the last `/` becomes the module name.
+You can import a module as a namespace of your choice by specifying a second
+argument to `use`. For example, to import `x/y/z` as a `xyz` namespace, you can
+use `use x/y/z xyz`:
 
-## Lexical Scoping of Imports
+```elvish-transcript
+~> use x/y/z xyz
+~> xyz:f
+f from x/y/z
+```
 
-Namespace imports are also lexically scoped. For instance, if you `use` a module
+This is especially useful when you need to import several modules that are in
+different directories but have the same file name.
+
+## Scoping of Imports
+
+Namespace imports are lexically scoped. For instance, if you `use` a module
 within an inner scope, it is not available outside that scope:
 
 ```elvish
@@ -1682,6 +1660,20 @@ within an inner scope, it is not available outside that scope:
 }
 some-mod:some-func # not valid
 ```
+
+The imported modules themselves are also evaluated in a separate scope. That
+means that functions and variables defined in the module does not pollute the
+default namespace, and vice versa. For instance, if you define `ls` as a wrapper
+function in `rc.elv`:
+
+```elvish
+fn ls [@a]{
+    e:ls --color=auto $@a
+}
+```
+
+That definition is not visible in module files: `ls` will still refer to the
+external command `ls`, unless you shadow it in the very same module.
 
 ## Re-Importing
 
@@ -1697,13 +1689,13 @@ echo importing
 The following code only prints one `importing`:
 
 ```elvish
-{ use a:b }
-use a:b # only brings mod into the lexical scope
+{ use a/b }
+use a/b # only brings mod into the lexical scope
 ```
 
 As does the following:
 
 ```elvish
 use a/b
-use a:b
+use a/b
 ```
