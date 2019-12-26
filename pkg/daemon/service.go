@@ -4,12 +4,12 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/pkg/daemon/internal/api"
-	"github.com/elves/elvish/pkg/store/storedefs"
+	"github.com/elves/elvish/pkg/store"
 )
 
 // A net/rpc service for the daemon.
 type service struct {
-	store storedefs.Store
+	store store.Service
 	err   error
 }
 

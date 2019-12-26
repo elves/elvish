@@ -2,8 +2,6 @@ package store
 
 import (
 	"testing"
-
-	"github.com/elves/elvish/pkg/store/storedefs"
 )
 
 var (
@@ -19,13 +17,13 @@ var (
 		{false, 5, "echo", 4, "echo bar", nil},
 		{false, 5, "put", 3, "put lorem", nil},
 		{false, 4, "echo", 1, "echo foo", nil},
-		{false, 3, "f", 0, "", storedefs.ErrNoMatchingCmd},
-		{false, 1, "", 0, "", storedefs.ErrNoMatchingCmd},
+		{false, 3, "f", 0, "", ErrNoMatchingCmd},
+		{false, 1, "", 0, "", ErrNoMatchingCmd},
 
 		{true, 1, "echo", 1, "echo foo", nil},
 		{true, 1, "put", 2, "put bar", nil},
 		{true, 2, "echo", 4, "echo bar", nil},
-		{true, 4, "put", 0, "", storedefs.ErrNoMatchingCmd},
+		{true, 4, "put", 0, "", ErrNoMatchingCmd},
 	}
 )
 
@@ -76,8 +74,8 @@ func TestCmd(t *testing.T) {
 	if err := tStore.DelCmd(1); err != nil {
 		t.Error("Failed to remove cmd")
 	}
-	if seq, err := tStore.Cmd(1); err != storedefs.ErrNoMatchingCmd {
+	if seq, err := tStore.Cmd(1); err != ErrNoMatchingCmd {
 		t.Errorf("Cmd(1) => (%v, %v), want (%v, %v)",
-			seq, err, "", storedefs.ErrNoMatchingCmd)
+			seq, err, "", ErrNoMatchingCmd)
 	}
 }

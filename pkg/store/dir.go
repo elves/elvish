@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/boltdb/bolt"
-	"github.com/elves/elvish/pkg/store/storedefs"
 )
 
 const (
@@ -30,7 +29,7 @@ func unmarshalScore(data []byte) float64 {
 }
 
 // AddDir adds a directory to the directory history.
-func (s *store) AddDir(d string, incFactor float64) error {
+func (s *dbStore) AddDir(d string, incFactor float64) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketDir))
 
@@ -51,7 +50,7 @@ func (s *store) AddDir(d string, incFactor float64) error {
 }
 
 // AddDir adds a directory and its score to history.
-func (s *store) AddDirRaw(d string, score float64) error {
+func (s *dbStore) AddDirRaw(d string, score float64) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketDir))
 		return b.Put([]byte(d), marshalScore(score))
@@ -59,7 +58,7 @@ func (s *store) AddDirRaw(d string, score float64) error {
 }
 
 // DelDir deletes a directory record from history.
-func (s *store) DelDir(d string) error {
+func (s *dbStore) DelDir(d string) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketDir))
 		return b.Delete([]byte(d))
@@ -68,8 +67,8 @@ func (s *store) DelDir(d string) error {
 
 // Dirs lists all directories in the directory history whose names are not
 // in the blacklist. The results are ordered by scores in descending order.
-func (s *store) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
-	var dirs []storedefs.Dir
+func (s *dbStore) Dirs(blacklist map[string]struct{}) ([]Dir, error) {
+	var dirs []Dir
 
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketDir))
@@ -79,7 +78,7 @@ func (s *store) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 			if _, ok := blacklist[d]; ok {
 				continue
 			}
-			dirs = append(dirs, storedefs.Dir{
+			dirs = append(dirs, Dir{
 				Path:  d,
 				Score: unmarshalScore(v),
 			})
@@ -90,7 +89,7 @@ func (s *store) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	return dirs, err
 }
 
-type dirList []storedefs.Dir
+type dirList []Dir
 
 func (dl dirList) Len() int {
 	return len(dl)

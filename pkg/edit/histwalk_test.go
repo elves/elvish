@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/store/storedefs"
+	"github.com/elves/elvish/pkg/store"
 	"github.com/elves/elvish/pkg/ui"
 )
 
@@ -53,7 +53,7 @@ func TestHistWalk_DownOrQuit(t *testing.T) {
 }
 
 func TestHistory_FastForward(t *testing.T) {
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(storeOp(func(s store.Service) {
 		s.AddCmd("echo a")
 	}))
 	defer f.Cleanup()
@@ -71,7 +71,7 @@ func TestHistory_FastForward(t *testing.T) {
 
 func startHistwalkTest(t *testing.T) *fixture {
 	// The part of the test shared by all tests.
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(storeOp(func(s store.Service) {
 		s.AddCmd("echo a")
 	}))
 

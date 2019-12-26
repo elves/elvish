@@ -5,11 +5,11 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/store/storedefs"
+	"github.com/elves/elvish/pkg/store"
 )
 
 func TestCommandHistory(t *testing.T) {
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(storeOp(func(s store.Service) {
 		s.AddCmd("echo 1")
 		s.AddCmd("echo 2")
 	}))
@@ -25,7 +25,7 @@ func TestCommandHistory(t *testing.T) {
 }
 
 func TestInsertLastWord(t *testing.T) {
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(storeOp(func(s store.Service) {
 		s.AddCmd("echo foo bar")
 	}))
 	defer f.Cleanup()

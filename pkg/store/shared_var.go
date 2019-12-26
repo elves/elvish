@@ -17,7 +17,7 @@ func init() {
 }
 
 // SharedVar gets the value of a shared variable.
-func (s *store) SharedVar(n string) (string, error) {
+func (s *dbStore) SharedVar(n string) (string, error) {
 	var value string
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketSharedVar))
@@ -32,7 +32,7 @@ func (s *store) SharedVar(n string) (string, error) {
 }
 
 // SetSharedVar sets the value of a shared variable.
-func (s *store) SetSharedVar(n, v string) error {
+func (s *dbStore) SetSharedVar(n, v string) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketSharedVar))
 		return b.Put([]byte(n), []byte(v))
@@ -40,7 +40,7 @@ func (s *store) SetSharedVar(n, v string) error {
 }
 
 // DelSharedVar deletes a shared variable.
-func (s *store) DelSharedVar(n string) error {
+func (s *dbStore) DelSharedVar(n string) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketSharedVar))
 		return b.Delete([]byte(n))

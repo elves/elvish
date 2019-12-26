@@ -3,18 +3,16 @@ package store
 import (
 	"reflect"
 	"testing"
-
-	"github.com/elves/elvish/pkg/store/storedefs"
 )
 
 var (
 	dirsToAdd  = []string{"/usr/local", "/usr", "/usr/bin", "/usr"}
 	black      = map[string]struct{}{"/usr/local": {}}
-	wantedDirs = []storedefs.Dir{
+	wantedDirs = []Dir{
 		{"/usr", scoreIncrement*scoreDecay*scoreDecay + scoreIncrement},
 		{"/usr/bin", scoreIncrement * scoreDecay}}
 	dirToDel           = "/usr"
-	wantedDirsAfterDel = []storedefs.Dir{
+	wantedDirsAfterDel = []Dir{
 		{"/usr/bin", scoreIncrement * scoreDecay}}
 )
 

@@ -12,19 +12,19 @@ import (
 	. "github.com/elves/elvish/pkg/cli/apptest"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/store/storedefs"
+	"github.com/elves/elvish/pkg/store"
 	"github.com/elves/elvish/pkg/ui"
 )
 
 type testStore struct {
-	storedDirs []storedefs.Dir
+	storedDirs []store.Dir
 	dirsError  error
 	chdir      func(dir string) error
 	wd         string
 }
 
-func (ts testStore) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
-	dirs := []storedefs.Dir{}
+func (ts testStore) Dirs(blacklist map[string]struct{}) ([]store.Dir, error) {
+	dirs := []store.Dir{}
 	for _, dir := range ts.storedDirs {
 		if _, ok := blacklist[dir.Path]; ok {
 			continue
@@ -67,7 +67,7 @@ func TestStart_Hidden(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	dirs := []storedefs.Dir{
+	dirs := []store.Dir{
 		{Path: fix("/usr/bin"), Score: 200},
 		{Path: fix("/usr"), Score: 100},
 		{Path: fix("/tmp"), Score: 50},
@@ -88,7 +88,7 @@ func TestStart_Pinned(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	dirs := []storedefs.Dir{
+	dirs := []store.Dir{
 		{Path: fix("/usr/bin"), Score: 200},
 		{Path: fix("/usr"), Score: 100},
 		{Path: fix("/tmp"), Score: 50},
@@ -111,7 +111,7 @@ func TestStart_HideWd(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	dirs := []storedefs.Dir{
+	dirs := []store.Dir{
 		{Path: fix("/home"), Score: 200},
 		{Path: fix("/tmp"), Score: 50},
 	}
@@ -128,7 +128,7 @@ func TestStart_Workspace(t *testing.T) {
 	defer f.Stop()
 
 	chdir := ""
-	dirs := []storedefs.Dir{
+	dirs := []store.Dir{
 		{Path: fix("home/src"), Score: 200},
 		{Path: fix("ws1/src"), Score: 150},
 		{Path: fix("ws2/bin"), Score: 100},
@@ -180,7 +180,7 @@ func TestStart_OK(t *testing.T) {
 
 	errChdir := errors.New("mock chdir error")
 	chdirCh := make(chan string, 100)
-	dirs := []storedefs.Dir{
+	dirs := []store.Dir{
 		{Path: filepath.Join(home, "go"), Score: 200},
 		{Path: home, Score: 100},
 		{Path: fix("/tmp/foo/bar/lorem/ipsum"), Score: 50},

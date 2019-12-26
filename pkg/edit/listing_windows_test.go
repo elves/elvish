@@ -9,13 +9,13 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/store/storedefs"
+	"github.com/elves/elvish/pkg/store"
 	"github.com/elves/elvish/pkg/ui"
 	"github.com/elves/elvish/pkg/util"
 )
 
 func TestLocationAddon(t *testing.T) {
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(storeOp(func(s store.Store) {
 		s.AddDir(`C:\usr\bin`, 1)
 		s.AddDir(`C:\tmp`, 1)
 		s.AddDir(`C:\home\elf`, 1)
@@ -39,7 +39,7 @@ func TestLocationAddon(t *testing.T) {
 }
 
 func TestLocationAddon_Workspace(t *testing.T) {
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(storeOp(func(s store.Store) {
 		s.AddDir(`C:\usr\bin`, 1)
 		s.AddDir(`ws\bin`, 1)
 		s.AddDir(`other-ws\bin`, 1)

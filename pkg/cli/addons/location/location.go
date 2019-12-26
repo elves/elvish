@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/store/storedefs"
+	"github.com/elves/elvish/pkg/store"
 	"github.com/elves/elvish/pkg/ui"
 	"github.com/elves/elvish/pkg/util"
 )
@@ -34,7 +34,7 @@ type Config struct {
 
 // Store defines the interface for interacting with the directory history.
 type Store interface {
-	Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error)
+	Dirs(blacklist map[string]struct{}) ([]store.Dir, error)
 	Chdir(dir string) error
 	Getwd() (string, error)
 }
@@ -49,14 +49,14 @@ func Start(app cli.App, cfg Config) {
 		return
 	}
 
-	dirs := []storedefs.Dir{}
+	dirs := []store.Dir{}
 	blacklist := map[string]struct{}{}
 	wsKind, wsRoot := "", ""
 
 	if cfg.IteratePinned != nil {
 		cfg.IteratePinned(func(s string) {
 			blacklist[s] = struct{}{}
-			dirs = append(dirs, storedefs.Dir{Score: pinnedScore, Path: s})
+			dirs = append(dirs, store.Dir{Score: pinnedScore, Path: s})
 		})
 	}
 	if cfg.IterateHidden != nil {
@@ -147,7 +147,7 @@ func (ws WorkspaceIterator) Parse(path string) (kind, root string) {
 }
 
 type list struct {
-	dirs []storedefs.Dir
+	dirs []store.Dir
 	home string
 }
 
@@ -156,7 +156,7 @@ func (l list) filter(p string) list {
 		return l
 	}
 	re := makeRegexpForPattern(p)
-	var filteredDirs []storedefs.Dir
+	var filteredDirs []store.Dir
 	for _, dir := range l.dirs {
 		if re.MatchString(showPath(dir.Path, l.home)) {
 			filteredDirs = append(filteredDirs, dir)

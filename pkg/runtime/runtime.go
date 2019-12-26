@@ -17,7 +17,7 @@ import (
 	storemod "github.com/elves/elvish/pkg/eval/store"
 	"github.com/elves/elvish/pkg/eval/str"
 	daemonp "github.com/elves/elvish/pkg/program/daemon"
-	"github.com/elves/elvish/pkg/store/storedefs"
+	"github.com/elves/elvish/pkg/store"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -54,7 +54,7 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 	var err error
 
 	// Determine data directory.
-	dataDir, err = storedefs.EnsureDataDir()
+	dataDir, err = store.EnsureDataDir()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "warning: cannot create data directory ~/.elvish")
 	} else {

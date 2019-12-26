@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 
 	"github.com/boltdb/bolt"
-	"github.com/elves/elvish/pkg/store/storedefs"
 )
 
 func init() {
@@ -16,7 +15,7 @@ func init() {
 }
 
 // NextCmdSeq returns the next sequence number of the command history.
-func (s *store) NextCmdSeq() (int, error) {
+func (s *dbStore) NextCmdSeq() (int, error) {
 	var seq uint64
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketCmd))
@@ -27,7 +26,7 @@ func (s *store) NextCmdSeq() (int, error) {
 }
 
 // AddCmd adds a new command to the command history.
-func (s *store) AddCmd(cmd string) (int, error) {
+func (s *dbStore) AddCmd(cmd string) (int, error) {
 	var (
 		seq uint64
 		err error
@@ -44,7 +43,7 @@ func (s *store) AddCmd(cmd string) (int, error) {
 }
 
 // DelCmd deletes a command history item with the given sequence number.
-func (s *store) DelCmd(seq int) error {
+func (s *dbStore) DelCmd(seq int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketCmd))
 		return b.Delete(marshalSeq(uint64(seq)))
@@ -52,12 +51,12 @@ func (s *store) DelCmd(seq int) error {
 }
 
 // Cmd queries the command history item with the specified sequence number.
-func (s *store) Cmd(seq int) (string, error) {
+func (s *dbStore) Cmd(seq int) (string, error) {
 	var cmd string
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketCmd))
 		if v := b.Get(marshalSeq(uint64(seq))); v == nil {
-			return storedefs.ErrNoMatchingCmd
+			return ErrNoMatchingCmd
 		} else {
 			cmd = string(v)
 		}
@@ -68,7 +67,7 @@ func (s *store) Cmd(seq int) (string, error) {
 
 // IterateCmds iterates all the commands in the specified range, and calls the
 // callback with the content of each command sequentially.
-func (s *store) IterateCmds(from, upto int, f func(string) bool) error {
+func (s *dbStore) IterateCmds(from, upto int, f func(string) bool) error {
 	return s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketCmd))
 		c := b.Cursor()
@@ -82,7 +81,7 @@ func (s *store) IterateCmds(from, upto int, f func(string) bool) error {
 }
 
 // Cmds returns the contents of all commands within the specified range.
-func (s *store) Cmds(from, upto int) ([]string, error) {
+func (s *dbStore) Cmds(from, upto int) ([]string, error) {
 	var cmds []string
 	err := s.IterateCmds(from, upto, func(cmd string) bool {
 		cmds = append(cmds, cmd)
@@ -93,7 +92,7 @@ func (s *store) Cmds(from, upto int) ([]string, error) {
 
 // NextCmd finds the first command after the given sequence number (inclusive)
 // with the given prefix.
-func (s *store) NextCmd(from int, prefix string) (int, string, error) {
+func (s *dbStore) NextCmd(from int, prefix string) (int, string, error) {
 	var (
 		seq   int
 		cmd   string
@@ -115,7 +114,7 @@ func (s *store) NextCmd(from int, prefix string) (int, string, error) {
 	})
 
 	if !found {
-		return 0, "", storedefs.ErrNoMatchingCmd
+		return 0, "", ErrNoMatchingCmd
 	}
 
 	return seq, cmd, err
@@ -123,7 +122,7 @@ func (s *store) NextCmd(from int, prefix string) (int, string, error) {
 
 // PrevCmd finds the last command before the given sequence number (exclusive)
 // with the given prefix.
-func (s *store) PrevCmd(upto int, prefix string) (int, string, error) {
+func (s *dbStore) PrevCmd(upto int, prefix string) (int, string, error) {
 	var (
 		seq   int
 		cmd   string
@@ -157,7 +156,7 @@ func (s *store) PrevCmd(upto int, prefix string) (int, string, error) {
 	})
 
 	if !found {
-		return 0, "", storedefs.ErrNoMatchingCmd
+		return 0, "", ErrNoMatchingCmd
 	}
 
 	return seq, cmd, err

@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/elves/elvish/pkg/daemon/internal/api"
-	"github.com/elves/elvish/pkg/store/storedefs"
+	"github.com/elves/elvish/pkg/store"
 )
 
 const retriesOnShutdown = 3
@@ -21,7 +21,7 @@ var (
 
 // Client represents a daemon client.
 type Client interface {
-	storedefs.Store
+	store.Service
 
 	ResetConn() error
 	Close() error
@@ -183,7 +183,7 @@ func (c *client) DelDir(dir string) error {
 	return err
 }
 
-func (c *client) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
+func (c *client) Dirs(blacklist map[string]struct{}) ([]store.Dir, error) {
 	req := &api.DirsRequest{blacklist}
 	res := &api.DirsResponse{}
 	err := c.call("Dirs", req, res)

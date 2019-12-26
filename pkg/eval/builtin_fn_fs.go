@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/store/storedefs"
+	"github.com/elves/elvish/pkg/store"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -64,7 +64,7 @@ func dirs(fm *Frame) error {
 	if fm.DaemonClient == nil {
 		return ErrStoreNotConnected
 	}
-	dirs, err := fm.DaemonClient.Dirs(storedefs.NoBlacklist)
+	dirs, err := fm.DaemonClient.Dirs(store.NoBlacklist)
 	if err != nil {
 		return err
 	}

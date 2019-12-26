@@ -1,4 +1,4 @@
-package storedefs
+package store
 
 import (
 	"errors"

@@ -11,11 +11,11 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
-	"github.com/elves/elvish/pkg/store/storedefs"
+	"github.com/elves/elvish/pkg/store"
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, fuser *histutil.Fuser) {
+func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st store.Service, fuser *histutil.Fuser) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	ns.AddNs("listing",
 		eval.Ns{
@@ -94,7 +94,7 @@ func initLastcmd(app cli.App, ev *eval.Evaler, ns eval.Ns, histStore histutil.St
 		}))
 }
 
-func initLocation(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, commonBindingVar vars.PtrVar) {
+func initLocation(app cli.App, ev *eval.Evaler, ns eval.Ns, st store.Service, commonBindingVar vars.PtrVar) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	pinnedVar := newListVar(vals.EmptyList)
 	hiddenVar := newListVar(vals.EmptyList)
@@ -269,14 +269,14 @@ func (f fuserWrapper) AddCmd(cmd histutil.Entry) (int, error) {
 // Wraps an Evaler to implement the cli.DirStore interface.
 type dirStore struct {
 	ev *eval.Evaler
-	st storedefs.Store
+	st store.Service
 }
 
 func (d dirStore) Chdir(path string) error {
 	return d.ev.Chdir(path)
 }
 
-func (d dirStore) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
+func (d dirStore) Dirs(blacklist map[string]struct{}) ([]store.Dir, error) {
 	return d.st.Dirs(blacklist)
 }
 

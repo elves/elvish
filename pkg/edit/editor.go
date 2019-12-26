@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/store/storedefs"
+	"github.com/elves/elvish/pkg/store"
 )
 
 // Editor is the interface line editor for Elvish.
@@ -22,7 +22,7 @@ type Editor struct {
 }
 
 // NewEditor creates a new editor from input and output terminal files.
-func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
+func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Service) *Editor {
 	ns := eval.NewNs()
 	appSpec := cli.AppSpec{TTY: tty}
 

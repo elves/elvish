@@ -10,7 +10,6 @@ import (
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/store"
-	"github.com/elves/elvish/pkg/store/storedefs"
 )
 
 var Styles = apptest.Styles
@@ -19,7 +18,7 @@ type fixture struct {
 	Editor  *Editor
 	TTYCtrl apptest.TTYCtrl
 	Evaler  *eval.Evaler
-	Store   storedefs.Store
+	Store   store.Service
 	Home    string
 
 	width   int
@@ -39,7 +38,7 @@ func assign(name string, val interface{}) func(*fixture) {
 	}
 }
 
-func storeOp(storeFn func(storedefs.Store)) func(*fixture) {
+func storeOp(storeFn func(store.Service)) func(*fixture) {
 	return func(f *fixture) {
 		storeFn(f.Store)
 		// TODO(xiaq): Don't depend on this Elvish API.

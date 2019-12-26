@@ -3,7 +3,7 @@
 package api
 
 import (
-	"github.com/elves/elvish/pkg/store/storedefs"
+	"github.com/elves/elvish/pkg/store"
 )
 
 // ServiceName is the name of the RPC service exposed by the daemon.
@@ -103,7 +103,7 @@ type DirsRequest struct {
 }
 
 type DirsResponse struct {
-	Dirs []storedefs.Dir
+	Dirs []store.Dir
 }
 
 // SharedVar requests.
