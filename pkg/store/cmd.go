@@ -10,18 +10,16 @@ import (
 
 func init() {
 	initDB["initialize command history table"] = func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(BucketCmd))
+		_, err := tx.CreateBucketIfNotExists([]byte(bucketCmd))
 		return err
 	}
 }
-
-const BucketCmd = "cmd"
 
 // NextCmdSeq returns the next sequence number of the command history.
 func (s *store) NextCmdSeq() (int, error) {
 	var seq uint64
 	err := s.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BucketCmd))
+		b := tx.Bucket([]byte(bucketCmd))
 		seq = b.Sequence() + 1
 		return nil
 	})
@@ -35,7 +33,7 @@ func (s *store) AddCmd(cmd string) (int, error) {
 		err error
 	)
 	err = s.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BucketCmd))
+		b := tx.Bucket([]byte(bucketCmd))
 		seq, err = b.NextSequence()
 		if err != nil {
 			return err
@@ -48,7 +46,7 @@ func (s *store) AddCmd(cmd string) (int, error) {
 // DelCmd deletes a command history item with the given sequence number.
 func (s *store) DelCmd(seq int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BucketCmd))
+		b := tx.Bucket([]byte(bucketCmd))
 		return b.Delete(marshalSeq(uint64(seq)))
 	})
 }
@@ -57,7 +55,7 @@ func (s *store) DelCmd(seq int) error {
 func (s *store) Cmd(seq int) (string, error) {
 	var cmd string
 	err := s.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BucketCmd))
+		b := tx.Bucket([]byte(bucketCmd))
 		if v := b.Get(marshalSeq(uint64(seq))); v == nil {
 			return storedefs.ErrNoMatchingCmd
 		} else {
@@ -72,7 +70,7 @@ func (s *store) Cmd(seq int) (string, error) {
 // callback with the content of each command sequentially.
 func (s *store) IterateCmds(from, upto int, f func(string) bool) error {
 	return s.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BucketCmd))
+		b := tx.Bucket([]byte(bucketCmd))
 		c := b.Cursor()
 		for k, v := c.Seek(marshalSeq(uint64(from))); k != nil && unmarshalSeq(k) < uint64(upto); k, v = c.Next() {
 			if !f(string(v)) {
@@ -102,7 +100,7 @@ func (s *store) NextCmd(from int, prefix string) (int, string, error) {
 		found bool
 	)
 	err := s.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BucketCmd))
+		b := tx.Bucket([]byte(bucketCmd))
 		c := b.Cursor()
 		p := []byte(prefix)
 		for k, v := c.Seek(marshalSeq(uint64(from))); k != nil; k, v = c.Next() {
@@ -133,7 +131,7 @@ func (s *store) PrevCmd(upto int, prefix string) (int, string, error) {
 	)
 
 	err := s.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BucketCmd))
+		b := tx.Bucket([]byte(bucketCmd))
 		c := b.Cursor()
 		p := []byte(prefix)
 

@@ -14,11 +14,9 @@ const (
 	scorePrecision = 6
 )
 
-const BucketDir = "dir"
-
 func init() {
 	initDB["initialize directory history table"] = func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(BucketDir))
+		_, err := tx.CreateBucketIfNotExists([]byte(bucketDir))
 		return err
 	}
 }
@@ -34,7 +32,7 @@ func unmarshalScore(data []byte) float64 {
 // AddDir adds a directory to the directory history.
 func (s *store) AddDir(d string, incFactor float64) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BucketDir))
+		b := tx.Bucket([]byte(bucketDir))
 
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -55,7 +53,7 @@ func (s *store) AddDir(d string, incFactor float64) error {
 // AddDir adds a directory and its score to history.
 func (s *store) AddDirRaw(d string, score float64) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BucketDir))
+		b := tx.Bucket([]byte(bucketDir))
 		return b.Put([]byte(d), marshalScore(score))
 	})
 }
@@ -63,7 +61,7 @@ func (s *store) AddDirRaw(d string, score float64) error {
 // DelDir deletes a directory record from history.
 func (s *store) DelDir(d string) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BucketDir))
+		b := tx.Bucket([]byte(bucketDir))
 		return b.Delete([]byte(d))
 	})
 }
@@ -74,7 +72,7 @@ func (s *store) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	var dirs []storedefs.Dir
 
 	err := s.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BucketDir))
+		b := tx.Bucket([]byte(bucketDir))
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			d := string(k)

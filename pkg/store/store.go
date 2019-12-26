@@ -2,7 +2,6 @@
 package store
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -15,8 +14,6 @@ import (
 
 var logger = util.GetLogger("[store] ")
 var initDB = map[string](func(*bolt.Tx) error){}
-
-var ErrInvalidBucket = errors.New("invalid bucket")
 
 // DBStore is the permanent storage backend for elvish. It is not thread-safe.
 // In particular, the store may be closed while another goroutine is still
