@@ -28,7 +28,8 @@ import (
 
 //elvdoc:var completion:matcher
 //
-// A map mapping from context names to matcher functions.
+// A map mapping from context names to matcher functions. See the
+// [Matcher](#matcher) section.
 
 //elvdoc:fn complete-filename
 //

@@ -7,6 +7,11 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 )
 
+//elvdoc:fn history:fast-forward
+//
+// Import command history entries that happened after the current session
+// started.
+
 func initHistWalk(app cli.App, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fuser) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar)

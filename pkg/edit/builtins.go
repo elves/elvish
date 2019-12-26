@@ -21,7 +21,15 @@ import (
 
 //elvdoc:fn -dump-buf
 //
-// Dumps the current UI buffer as HTML.
+// Dumps the current UI buffer as HTML. This command is used to generate
+// "ttyshots" on the [website](https://elv.sh).
+//
+// Example:
+//
+// ```elvish
+// ttyshot = ~/a.html
+// edit:insert:binding[Ctrl-X] = { edit:-dump-buf > $tty }
+// ```
 
 func dumpBuf(tty cli.TTY) string {
 	return bufToHTML(tty.Buffer())

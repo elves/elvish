@@ -17,6 +17,15 @@ func initConfigAPI(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	initAfterReadline(appSpec, ev, ns)
 }
 
+//elvdoc:var max-height
+//
+// Maximum height the editor is allowed to use, defaults to `+Inf`.
+//
+// By default, the height of the editor is only restricted by the terminal
+// height. Some modes like location mode can use a lot of lines; as a result,
+// it can often occupy the entire terminal, and push up your scrollback buffer.
+// Change this variable to a finite number to restrict the height of the editor.
+
 func initMaxHeight(appSpec *cli.AppSpec, ns eval.Ns) {
 	maxHeight := newIntVar(-1)
 	appSpec.MaxHeight = func() int { return maxHeight.GetRaw().(int) }
