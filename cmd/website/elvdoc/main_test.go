@@ -13,27 +13,31 @@ import (
 var extractTests = []struct {
 	name    string
 	src     string
+	ns      string
 	wantDoc string
 }{
-	{"Empty source", "", ""},
-	{"Source without elvdoc", "package x\n// not elvdoc", ""},
+	{name: "Empty source", src: "", wantDoc: ""},
+	{name: "Source without elvdoc", src: "package x\n// not elvdoc", wantDoc: ""},
 
-	{"Source with doc-fn",
-		`package x
+	{
+		name: "Source with doc-fn",
+		src: `package x
 
 //elvdoc:fn cd
 //
 // Changes directory.
 `,
-		`# Functions
+		wantDoc: `# Functions
 
 ## cd
 
 Changes directory.
-`},
+`,
+	},
 
-	{"Source with multiple doc-fn",
-		`package x
+	{
+		name: "Source with multiple doc-fn",
+		src: `package x
 
 //elvdoc:fn b
 // B.
@@ -44,7 +48,7 @@ Changes directory.
 //elvdoc:fn c
 // C.
 `,
-		`# Functions
+		wantDoc: `# Functions
 
 ## a
 A.
@@ -57,8 +61,9 @@ C.
 `,
 	},
 
-	{"Source with both doc-fn and var-fn",
-		`package x
+	{
+		name: "Source with both doc-fn and var-fn",
+		src: `package x
 
 //elvdoc:fn a
 // A.
@@ -66,7 +71,7 @@ C.
 //elvdoc:var b
 // B.
 `,
-		`# Variables
+		wantDoc: `# Variables
 
 ## $b
 B.
@@ -79,24 +84,48 @@ A.
 `,
 	},
 
-	{"Source without trailing newline",
-		`package x
+	{
+		name: "Source without trailing newline",
+		src: `package x
 
 //elvdoc:fn a
-// A.`, `# Functions
+// A.`,
+		wantDoc: `# Functions
 
 ## a
 A.
 `,
 	},
-}
+	{
+		name: "Source with both doc-fn and var-fn",
+		src: `package x
+
+//elvdoc:fn a
+// A.
+
+//elvdoc:var b
+// B.
+`,
+		ns: "ns:",
+		wantDoc: `# Variables
+
+## $ns:b
+B.
+
+
+# Functions
+
+## ns:a
+A.
+`,
+	}}
 
 func TestExtract(t *testing.T) {
 	for _, test := range extractTests {
 		t.Run(test.name, func(t *testing.T) {
 			r := strings.NewReader(test.src)
 			w := new(strings.Builder)
-			extract(r, w)
+			extract(r, test.ns, w)
 			compare(t, w.String(), test.wantDoc)
 		})
 	}

@@ -22,6 +22,7 @@ func run(args []string, in io.Reader, out io.Writer) {
 	var (
 		directory = flags.Bool("dir", false, "read from .go files in directories")
 		filter    = flags.Bool("filter", false, "act as a Markdown file filter")
+		ns        = flags.String("ns", "", "namespace prefix")
 	)
 
 	err := flags.Parse(args)
@@ -32,14 +33,14 @@ func run(args []string, in io.Reader, out io.Writer) {
 
 	switch {
 	case *directory:
-		extractDirs(args, out)
+		extractDirs(args, *ns, out)
 	case *filter:
 		// NOTE: Ignores arguments.
 		filterMarkdown(in, out)
 	case len(args) > 0:
-		extractFiles(args, out)
+		extractFiles(args, *ns, out)
 	default:
-		extract(in, out)
+		extract(in, *ns, out)
 	}
 }
 
@@ -63,21 +64,21 @@ func filterMarkdown(in io.Reader, out io.Writer) {
 	}
 }
 
-func extractDirs(dirs []string, out io.Writer) {
+func extractDirs(dirs []string, ns string, out io.Writer) {
 	var files []string
 	for _, dir := range dirs {
 		files = append(files, goFilesInDirectory(dir)...)
 	}
-	extractFiles(files, out)
+	extractFiles(files, ns, out)
 }
 
-func extractFiles(files []string, out io.Writer) {
+func extractFiles(files []string, ns string, out io.Writer) {
 	reader, cleanup, err := multiFile(files)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer cleanup()
-	extract(reader, out)
+	extract(reader, ns, out)
 }
 
 // Returns all .go files in the given directory.
@@ -117,7 +118,7 @@ func multiFile(names []string) (io.Reader, func(), error) {
 	}, nil
 }
 
-func extract(r io.Reader, w io.Writer) {
+func extract(r io.Reader, ns string, w io.Writer) {
 	bufr := bufio.NewReader(r)
 
 	fnDocs := make(map[string]string)
@@ -162,10 +163,10 @@ func extract(r io.Reader, w io.Writer) {
 			switch {
 			case strings.HasPrefix(line, varDocPrefix):
 				varName := line[len(varDocPrefix) : len(line)-1]
-				varDocs["$"+varName], err = readCommentBlock()
+				varDocs["$"+ns+varName], err = readCommentBlock()
 			case strings.HasPrefix(line, fnDocPrefix):
 				fnName := line[len(fnDocPrefix) : len(line)-1]
-				fnDocs[fnName], err = readCommentBlock()
+				fnDocs[ns+fnName], err = readCommentBlock()
 			}
 		}
 
