@@ -85,6 +85,9 @@ func sourceRC(stderr *os.File, ev *eval.Evaler, dataDir string) error {
 		return fmt.Errorf("cannot get full path of rc.elv: %v", err)
 	}
 	code, err := readFileUTF8(absPath)
+	if err != nil {
+		return err
+	}
 	err = ev.EvalSourceInTTY(eval.NewScriptSource("rc.elv", absPath, code))
 	if err != nil {
 		return err
