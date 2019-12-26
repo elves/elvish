@@ -5,6 +5,7 @@ import (
 	"net/rpc"
 	"sync"
 
+	"github.com/elves/elvish/pkg/daemon/internal/api"
 	"github.com/elves/elvish/pkg/store/storedefs"
 )
 
@@ -89,7 +90,7 @@ func (c *client) call(f string, req, res interface{}) error {
 			c.rpcClient = rpc.NewClient(conn)
 		}
 
-		err := c.rpcClient.Call(ServiceName+"."+f, req, res)
+		err := c.rpcClient.Call(api.ServiceName+"."+f, req, res)
 		if err == rpc.ErrShutdown {
 			// Clear rpcClient so as to reconnect next time
 			c.rpcClient = nil
@@ -106,104 +107,104 @@ func (c *client) call(f string, req, res interface{}) error {
 // written to generate them.
 
 func (c *client) Version() (int, error) {
-	req := &VersionRequest{}
-	res := &VersionResponse{}
+	req := &api.VersionRequest{}
+	res := &api.VersionResponse{}
 	err := c.call("Version", req, res)
 	return res.Version, err
 }
 
 func (c *client) Pid() (int, error) {
-	req := &PidRequest{}
-	res := &PidResponse{}
+	req := &api.PidRequest{}
+	res := &api.PidResponse{}
 	err := c.call("Pid", req, res)
 	return res.Pid, err
 }
 
 func (c *client) NextCmdSeq() (int, error) {
-	req := &NextCmdRequest{}
-	res := &NextCmdSeqResponse{}
+	req := &api.NextCmdRequest{}
+	res := &api.NextCmdSeqResponse{}
 	err := c.call("NextCmdSeq", req, res)
 	return res.Seq, err
 }
 
 func (c *client) AddCmd(text string) (int, error) {
-	req := &AddCmdRequest{text}
-	res := &AddCmdResponse{}
+	req := &api.AddCmdRequest{text}
+	res := &api.AddCmdResponse{}
 	err := c.call("AddCmd", req, res)
 	return res.Seq, err
 }
 
 func (c *client) DelCmd(seq int) error {
-	req := &DelCmdRequest{seq}
-	res := &DelCmdResponse{}
+	req := &api.DelCmdRequest{seq}
+	res := &api.DelCmdResponse{}
 	err := c.call("DelCmd", req, res)
 	return err
 }
 
 func (c *client) Cmd(seq int) (string, error) {
-	req := &CmdRequest{seq}
-	res := &CmdResponse{}
+	req := &api.CmdRequest{seq}
+	res := &api.CmdResponse{}
 	err := c.call("Cmd", req, res)
 	return res.Text, err
 }
 
 func (c *client) Cmds(from, upto int) ([]string, error) {
-	req := &CmdsRequest{from, upto}
-	res := &CmdsResponse{}
+	req := &api.CmdsRequest{from, upto}
+	res := &api.CmdsResponse{}
 	err := c.call("Cmds", req, res)
 	return res.Cmds, err
 }
 
 func (c *client) NextCmd(from int, prefix string) (int, string, error) {
-	req := &NextCmdRequest{from, prefix}
-	res := &NextCmdResponse{}
+	req := &api.NextCmdRequest{from, prefix}
+	res := &api.NextCmdResponse{}
 	err := c.call("NextCmd", req, res)
 	return res.Seq, res.Text, err
 }
 
 func (c *client) PrevCmd(upto int, prefix string) (int, string, error) {
-	req := &PrevCmdRequest{upto, prefix}
-	res := &PrevCmdResponse{}
+	req := &api.PrevCmdRequest{upto, prefix}
+	res := &api.PrevCmdResponse{}
 	err := c.call("PrevCmd", req, res)
 	return res.Seq, res.Text, err
 }
 
 func (c *client) AddDir(dir string, incFactor float64) error {
-	req := &AddDirRequest{dir, incFactor}
-	res := &AddDirResponse{}
+	req := &api.AddDirRequest{dir, incFactor}
+	res := &api.AddDirResponse{}
 	err := c.call("AddDir", req, res)
 	return err
 }
 
 func (c *client) DelDir(dir string) error {
-	req := &DelDirRequest{dir}
-	res := &DelDirResponse{}
+	req := &api.DelDirRequest{dir}
+	res := &api.DelDirResponse{}
 	err := c.call("DelDir", req, res)
 	return err
 }
 
 func (c *client) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
-	req := &DirsRequest{blacklist}
-	res := &DirsResponse{}
+	req := &api.DirsRequest{blacklist}
+	res := &api.DirsResponse{}
 	err := c.call("Dirs", req, res)
 	return res.Dirs, err
 }
 
 func (c *client) SharedVar(name string) (string, error) {
-	req := &SharedVarRequest{name}
-	res := &SharedVarResponse{}
+	req := &api.SharedVarRequest{name}
+	res := &api.SharedVarResponse{}
 	err := c.call("SharedVar", req, res)
 	return res.Value, err
 }
 
 func (c *client) SetSharedVar(name, value string) error {
-	req := &SetSharedVarRequest{name, value}
-	res := &SetSharedVarResponse{}
+	req := &api.SetSharedVarRequest{name, value}
+	res := &api.SetSharedVarResponse{}
 	return c.call("SetSharedVar", req, res)
 }
 
 func (c *client) DelSharedVar(name string) error {
-	req := &DelSharedVarRequest{}
-	res := &DelSharedVarResponse{}
+	req := &api.DelSharedVarRequest{}
+	res := &api.DelSharedVarResponse{}
 	return c.call("DelSharedVar", req, res)
 }

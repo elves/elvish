@@ -3,6 +3,7 @@ package daemon
 import (
 	"syscall"
 
+	"github.com/elves/elvish/pkg/daemon/internal/api"
 	"github.com/elves/elvish/pkg/store/storedefs"
 )
 
@@ -15,21 +16,21 @@ type service struct {
 // Implementations of RPC methods.
 
 // Version returns the API version number.
-func (s *service) Version(req *VersionRequest, res *VersionResponse) error {
+func (s *service) Version(req *api.VersionRequest, res *api.VersionResponse) error {
 	if s.err != nil {
 		return s.err
 	}
-	res.Version = Version
+	res.Version = api.Version
 	return nil
 }
 
 // Pid returns the process ID of the daemon.
-func (s *service) Pid(req *PidRequest, res *PidResponse) error {
+func (s *service) Pid(req *api.PidRequest, res *api.PidResponse) error {
 	res.Pid = syscall.Getpid()
 	return nil
 }
 
-func (s *service) NextCmdSeq(req *NextCmdSeqRequest, res *NextCmdSeqResponse) error {
+func (s *service) NextCmdSeq(req *api.NextCmdSeqRequest, res *api.NextCmdSeqResponse) error {
 	if s.err != nil {
 		return s.err
 	}
@@ -38,7 +39,7 @@ func (s *service) NextCmdSeq(req *NextCmdSeqRequest, res *NextCmdSeqResponse) er
 	return err
 }
 
-func (s *service) AddCmd(req *AddCmdRequest, res *AddCmdResponse) error {
+func (s *service) AddCmd(req *api.AddCmdRequest, res *api.AddCmdResponse) error {
 	if s.err != nil {
 		return s.err
 	}
@@ -47,7 +48,7 @@ func (s *service) AddCmd(req *AddCmdRequest, res *AddCmdResponse) error {
 	return err
 }
 
-func (s *service) DelCmd(req *DelCmdRequest, res *DelCmdResponse) error {
+func (s *service) DelCmd(req *api.DelCmdRequest, res *api.DelCmdResponse) error {
 	if s.err != nil {
 		return s.err
 	}
@@ -55,7 +56,7 @@ func (s *service) DelCmd(req *DelCmdRequest, res *DelCmdResponse) error {
 	return err
 }
 
-func (s *service) Cmd(req *CmdRequest, res *CmdResponse) error {
+func (s *service) Cmd(req *api.CmdRequest, res *api.CmdResponse) error {
 	if s.err != nil {
 		return s.err
 	}
@@ -64,7 +65,7 @@ func (s *service) Cmd(req *CmdRequest, res *CmdResponse) error {
 	return err
 }
 
-func (s *service) Cmds(req *CmdsRequest, res *CmdsResponse) error {
+func (s *service) Cmds(req *api.CmdsRequest, res *api.CmdsResponse) error {
 	if s.err != nil {
 		return s.err
 	}
@@ -73,7 +74,7 @@ func (s *service) Cmds(req *CmdsRequest, res *CmdsResponse) error {
 	return err
 }
 
-func (s *service) NextCmd(req *NextCmdRequest, res *NextCmdResponse) error {
+func (s *service) NextCmd(req *api.NextCmdRequest, res *api.NextCmdResponse) error {
 	if s.err != nil {
 		return s.err
 	}
@@ -82,7 +83,7 @@ func (s *service) NextCmd(req *NextCmdRequest, res *NextCmdResponse) error {
 	return err
 }
 
-func (s *service) PrevCmd(req *PrevCmdRequest, res *PrevCmdResponse) error {
+func (s *service) PrevCmd(req *api.PrevCmdRequest, res *api.PrevCmdResponse) error {
 	if s.err != nil {
 		return s.err
 	}
@@ -91,21 +92,21 @@ func (s *service) PrevCmd(req *PrevCmdRequest, res *PrevCmdResponse) error {
 	return err
 }
 
-func (s *service) AddDir(req *AddDirRequest, res *AddDirResponse) error {
+func (s *service) AddDir(req *api.AddDirRequest, res *api.AddDirResponse) error {
 	if s.err != nil {
 		return s.err
 	}
 	return s.store.AddDir(req.Dir, req.IncFactor)
 }
 
-func (s *service) DelDir(req *DelDirRequest, res *DelDirResponse) error {
+func (s *service) DelDir(req *api.DelDirRequest, res *api.DelDirResponse) error {
 	if s.err != nil {
 		return s.err
 	}
 	return s.store.DelDir(req.Dir)
 }
 
-func (s *service) Dirs(req *DirsRequest, res *DirsResponse) error {
+func (s *service) Dirs(req *api.DirsRequest, res *api.DirsResponse) error {
 	if s.err != nil {
 		return s.err
 	}
@@ -114,7 +115,7 @@ func (s *service) Dirs(req *DirsRequest, res *DirsResponse) error {
 	return err
 }
 
-func (s *service) SharedVar(req *SharedVarRequest, res *SharedVarResponse) error {
+func (s *service) SharedVar(req *api.SharedVarRequest, res *api.SharedVarResponse) error {
 	if s.err != nil {
 		return s.err
 	}
@@ -123,14 +124,14 @@ func (s *service) SharedVar(req *SharedVarRequest, res *SharedVarResponse) error
 	return err
 }
 
-func (s *service) SetSharedVar(req *SetSharedVarRequest, res *SetSharedVarResponse) error {
+func (s *service) SetSharedVar(req *api.SetSharedVarRequest, res *api.SetSharedVarResponse) error {
 	if s.err != nil {
 		return s.err
 	}
 	return s.store.SetSharedVar(req.Name, req.Value)
 }
 
-func (s *service) DelSharedVar(req *DelSharedVarRequest, res *DelSharedVarResponse) error {
+func (s *service) DelSharedVar(req *api.DelSharedVarRequest, res *api.DelSharedVarResponse) error {
 	if s.err != nil {
 		return s.err
 	}

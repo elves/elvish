@@ -7,6 +7,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/elves/elvish/pkg/daemon/internal/api"
 	"github.com/elves/elvish/pkg/store"
 )
 
@@ -55,7 +56,7 @@ func Serve(sockpath, dbpath string) {
 	}()
 
 	svc := &service{st, err}
-	rpc.RegisterName(ServiceName, svc)
+	rpc.RegisterName(api.ServiceName, svc)
 
 	logger.Println("starting to serve RPC calls")
 

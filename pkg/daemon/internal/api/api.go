@@ -1,4 +1,4 @@
-package daemon
+package api
 
 import (
 	"github.com/elves/elvish/pkg/store/storedefs"
