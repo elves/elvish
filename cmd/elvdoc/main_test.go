@@ -128,17 +128,13 @@ Function 2 from a.
 `)
 }
 
-func TestRun_Recursive(t *testing.T) {
+func TestRun_Directory(t *testing.T) {
 	teardown := setup()
 	defer teardown()
 
 	w := new(strings.Builder)
-	run([]string{"-R", "."}, io.MultiReader(), w)
+	run([]string{"-dir", "."}, io.MultiReader(), w)
 	compare(t, w.String(), `# Variables
-
-## subpkg:v
-
-Variable v from subpkg/a.
 
 ## v1
 
@@ -158,10 +154,6 @@ Function 1 from b.
 ## f2
 
 Function 2 from a.
-
-## subpkg:f
-
-Function f from subpkg/a.
 `)
 }
 
@@ -200,6 +192,7 @@ func setup() func() {
 //
 // This won't appear because it is not in a .go file.
 `)
+	// Subdirectories are ignored with -dir.
 	writeFile("subpkg/a.go", `package subpkg
 //elvdoc:fn subpkg:f
 //

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -17,30 +18,33 @@ func main() {
 }
 
 var (
-	recursive = flag.Bool("R", false, "recursively read from all .go files")
+	directory = flag.Bool("dir", false, "read from .go files in directories")
 )
 
 func run(args []string, in io.Reader, out io.Writer) {
 	flag.CommandLine.Parse(args)
 	args = flag.Args()
-	if *recursive {
-		var paths []string
-		for _, dir := range args {
-			morePaths := getAllGoFiles(dir)
-			paths = append(paths, morePaths...)
-		}
-		extractFromFiles(paths, out)
+	if *directory {
+		extractDirs(args, out)
 	} else {
 		if len(args) == 0 {
 			extract(in, out)
 		} else {
-			extractFromFiles(args, out)
+			extractFiles(args, out)
 		}
 	}
 }
 
-func extractFromFiles(paths []string, out io.Writer) {
-	reader, cleanup, err := multiFile(paths)
+func extractDirs(dirs []string, out io.Writer) {
+	var files []string
+	for _, dir := range dirs {
+		files = append(files, goFilesInDirectory(dir)...)
+	}
+	extractFiles(files, out)
+}
+
+func extractFiles(files []string, out io.Writer) {
+	reader, cleanup, err := multiFile(files)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,23 +52,22 @@ func extractFromFiles(paths []string, out io.Writer) {
 	extract(reader, out)
 }
 
-func getAllGoFiles(dir string) []string {
-	var paths []string
-	err := filepath.Walk(dir, func(path string, _ os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if filepath.Ext(path) == ".go" {
-			paths = append(paths, path)
-		}
-		return nil
-	})
+// Returns all .go files in the given directory.
+func goFilesInDirectory(dir string) []string {
+	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Fatalf("walk %v: %v", dir, err)
+	}
+	var paths []string
+	for _, file := range files {
+		if filepath.Ext(file.Name()) == ".go" {
+			paths = append(paths, filepath.Join(dir, file.Name()))
+		}
 	}
 	return paths
 }
 
+// Makes a reader that concatenates multiple files.
 func multiFile(names []string) (io.Reader, func(), error) {
 	readers := make([]io.Reader, len(names))
 	closers := make([]io.Closer, len(names))
