@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	ttyshot = "$ttyshot "
-	cf      = "$cf "
-	dl      = "$dl "
+	ttyshot = "@ttyshot "
+	cf      = "@cf "
+	dl      = "@dl "
 )
 
 func main() {

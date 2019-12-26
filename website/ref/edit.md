@@ -17,7 +17,7 @@ same time. Each mode has its own UI and keybindings. For instance, the default
 (triggered by <span class="key">Tab</span> by default) shows you all candidates
 for completion, and you can use arrow keys to navigate those candidates.
 
-$ttyshot completion-mode
+@ttyshot completion-mode
 
 Each mode has its own submodule under `edit:`. For instance, builtin functions
 and configuration variables for the completion mode can be found in the
@@ -379,4 +379,4 @@ Then every time you accept a chunk of code (and thus leaving the editor),
 Elvish session, or after a chunk of code is executed, `going to read` is
 printed.
 
-$elvdoc -ns edit: -dir ../pkg/edit
+@elvdoc -ns edit: -dir ../pkg/edit

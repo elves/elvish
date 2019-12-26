@@ -123,7 +123,7 @@ The command is short, but still, it can become a chore if you want to run it
 repeatedly. Fortunately, Elvish remembers all the commands you have typed; you
 can just ask Elvish to recall it by pressing <span class="key">Up</span>:
 
-$ttyshot fundamentals/history-1
+@ttyshot fundamentals/history-1
 
 This will give you the last command you have run. However, it may have been a
 while when you have last run the `randint` command, and this will not give you
@@ -132,7 +132,7 @@ until you find the command, or you you can give Elvish a hint by typing some
 characters from the command line you want, e.g. `ra`, before pressing <span
 class="key">Up</span>:
 
-$ttyshot fundamentals/history-2
+@ttyshot fundamentals/history-2
 
 Another way to rerun commands is saving them in a **script**, which is simply a
 text file containing the commands you want to run. Using your favorite text

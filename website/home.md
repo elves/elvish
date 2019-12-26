@@ -26,7 +26,7 @@ language. It runs on Linux, BSDs, macOS and Windows.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
-      $ttyshot pipelines
+      @ttyshot pipelines
     </div>
   </div> </div>
 
@@ -45,7 +45,7 @@ language. It runs on Linux, BSDs, macOS and Windows.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
-      $ttyshot control-structures
+      @ttyshot control-structures
     </div>
   </div> </div>
 
@@ -64,7 +64,7 @@ language. It runs on Linux, BSDs, macOS and Windows.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
-      $ttyshot location-mode
+      @ttyshot location-mode
     </div>
   </div> </div>
 
@@ -83,7 +83,7 @@ language. It runs on Linux, BSDs, macOS and Windows.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
-      $ttyshot histlist-mode
+      @ttyshot histlist-mode
     </div>
   </div> </div>
 
@@ -102,7 +102,7 @@ language. It runs on Linux, BSDs, macOS and Windows.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
-      $ttyshot navigation-mode
+      @ttyshot navigation-mode
     </div>
   </div> </div>
 </div> </div>

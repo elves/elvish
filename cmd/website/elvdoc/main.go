@@ -44,7 +44,7 @@ func run(args []string, in io.Reader, out io.Writer) {
 	}
 }
 
-const markdownLeader = "$elvdoc "
+const markdownLeader = "@elvdoc "
 
 var emptyReader = &strings.Reader{}
 
