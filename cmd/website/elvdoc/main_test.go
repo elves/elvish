@@ -217,7 +217,7 @@ func TestRun_Filter(t *testing.T) {
 
 	in := strings.NewReader(`Some text.
 
-$elvdoc a.go
+@elvdoc a.go
 
 Some more text.`)
 	out := new(strings.Builder)
