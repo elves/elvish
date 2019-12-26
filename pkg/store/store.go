@@ -18,22 +18,26 @@ var initDB = map[string](func(*bolt.Tx) error){}
 
 var ErrInvalidBucket = errors.New("invalid bucket")
 
-// Store is the permanent storage backend for elvish. It is not thread-safe. In
-// particular, the store may be closed while another goroutine is still
+// DBStore is the permanent storage backend for elvish. It is not thread-safe.
+// In particular, the store may be closed while another goroutine is still
 // accessing the store. To prevent bad things from happening, every time the
 // main goroutine spawns a new goroutine to operate on the store, it should call
 // Waits.Add(1) in the main goroutine before spawning another goroutine, and
 // call Waits.Done() in the spawned goroutine after the operation is finished.
-type Store struct {
+type DBStore interface {
+	storedefs.Store
+
+	Waits() *sync.WaitGroup
+	Close() error
+}
+
+type store struct {
 	db *bolt.DB
 	// Waits is used for registering outstanding operations on the store.
 	waits sync.WaitGroup
 }
 
-var _ storedefs.Store = (*Store)(nil)
-
-// DefaultDB returns the default database for storage.
-func DefaultDB(dbname string) (*bolt.DB, error) {
+func dbWithDefaultOptions(dbname string) (*bolt.DB, error) {
 	db, err := bolt.Open(dbname, 0644,
 		&bolt.Options{
 			Timeout: 1 * time.Second,
@@ -41,21 +45,20 @@ func DefaultDB(dbname string) (*bolt.DB, error) {
 	return db, err
 }
 
-// NewStore creates a new Store with the default database.
-func NewStore(dbname string) (*Store, error) {
-	db, err := DefaultDB(dbname)
+// NewStore creates a new Store from the given file.
+func NewStore(dbname string) (DBStore, error) {
+	db, err := dbWithDefaultOptions(dbname)
 	if err != nil {
 		return nil, err
 	}
-	return NewStoreDB(db)
+	return NewStoreFromDB(db)
 }
 
-// NewStoreDB creates a new Store with a custom database. The database must be
-// a Bolt database.
-func NewStoreDB(db *bolt.DB) (*Store, error) {
+// NewStoreFromDB creates a new Store from a bolt DB.
+func NewStoreFromDB(db *bolt.DB) (DBStore, error) {
 	logger.Println("initializing store")
 	defer logger.Println("initialized store")
-	st := &Store{
+	st := &store{
 		db:    db,
 		waits: sync.WaitGroup{},
 	}
@@ -82,13 +85,13 @@ func NewStoreDB(db *bolt.DB) (*Store, error) {
 
 // Waits returns a WaitGroup used to register outstanding storage requests when
 // making calls asynchronously.
-func (s *Store) Waits() *sync.WaitGroup {
+func (s *store) Waits() *sync.WaitGroup {
 	return &s.waits
 }
 
 // Close waits for all outstanding operations to finish, and closes the
 // database.
-func (s *Store) Close() error {
+func (s *store) Close() error {
 	if s == nil || s.db == nil {
 		return nil
 	}

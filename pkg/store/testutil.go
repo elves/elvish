@@ -8,17 +8,12 @@ import (
 
 // MustGetTempStore returns a Store backed by a temporary file, and a cleanup
 // function that should be called when the Store is no longer used.
-func MustGetTempStore() (*Store, func()) {
+func MustGetTempStore() (DBStore, func()) {
 	f, err := ioutil.TempFile("", "elvish.test")
 	if err != nil {
 		panic(fmt.Sprintf("Failed to open temp file: %v", err))
 	}
-	db, err := DefaultDB(f.Name())
-	if err != nil {
-		panic(fmt.Sprintf("Failed to create Store instance: %v", err))
-	}
-
-	st, err := NewStoreDB(db)
+	st, err := NewStore(f.Name())
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create Store instance: %v", err))
 	}

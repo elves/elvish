@@ -7,7 +7,7 @@ import (
 
 // This file sets up the test fixture.
 
-var tStore *Store
+var tStore DBStore
 
 func TestMain(m *testing.M) {
 	st, cleanup := MustGetTempStore()

@@ -32,7 +32,7 @@ func unmarshalScore(data []byte) float64 {
 }
 
 // AddDir adds a directory to the directory history.
-func (s *Store) AddDir(d string, incFactor float64) error {
+func (s *store) AddDir(d string, incFactor float64) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BucketDir))
 
@@ -53,7 +53,7 @@ func (s *Store) AddDir(d string, incFactor float64) error {
 }
 
 // AddDir adds a directory and its score to history.
-func (s *Store) AddDirRaw(d string, score float64) error {
+func (s *store) AddDirRaw(d string, score float64) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BucketDir))
 		return b.Put([]byte(d), marshalScore(score))
@@ -61,7 +61,7 @@ func (s *Store) AddDirRaw(d string, score float64) error {
 }
 
 // DelDir deletes a directory record from history.
-func (s *Store) DelDir(d string) error {
+func (s *store) DelDir(d string) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BucketDir))
 		return b.Delete([]byte(d))
@@ -70,7 +70,7 @@ func (s *Store) DelDir(d string) error {
 
 // Dirs lists all directories in the directory history whose names are not
 // in the blacklist. The results are ordered by scores in descending order.
-func (s *Store) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
+func (s *store) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	var dirs []storedefs.Dir
 
 	err := s.db.View(func(tx *bolt.Tx) error {
