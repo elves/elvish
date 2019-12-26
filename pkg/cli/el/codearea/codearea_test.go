@@ -7,23 +7,26 @@ import (
 
 	"github.com/elves/elvish/pkg/cli/el"
 	"github.com/elves/elvish/pkg/cli/term"
+	"github.com/elves/elvish/pkg/tt"
 	"github.com/elves/elvish/pkg/ui"
 )
 
 var bb = term.NewBufferBuilder
 
+func p(t ui.Text) func() ui.Text { return func() ui.Text { return t } }
+
 var renderTests = []el.RenderTest{
 	{
 		Name: "prompt only",
 		Given: NewCodeArea(CodeAreaSpec{
-			Prompt: ConstPrompt(ui.T("~>", ui.Bold))}),
+			Prompt: p(ui.T("~>", ui.Bold))}),
 		Width: 10, Height: 24,
 		Want: bb(10).WriteStringSGR("~>", "1").SetDotHere(),
 	},
 	{
 		Name: "rprompt only",
 		Given: NewCodeArea(CodeAreaSpec{
-			RPrompt: ConstPrompt(ui.T("RP", ui.Inverse))}),
+			RPrompt: p(ui.T("RP", ui.Inverse))}),
 		Width: 10, Height: 24,
 		Want: bb(10).SetDotHere().WriteSpaces(8).WriteStringSGR("RP", "7"),
 	},
@@ -51,8 +54,8 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "prompt, code and rprompt",
 		Given: NewCodeArea(CodeAreaSpec{
-			Prompt:  ConstPrompt(ui.T("~>")),
-			RPrompt: ConstPrompt(ui.T("RP")),
+			Prompt:  p(ui.T("~>")),
+			RPrompt: p(ui.T("RP")),
 			State:   CodeAreaState{Buffer: CodeBuffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).Write("~>code").SetDotHere().Write("  RP"),
@@ -61,8 +64,8 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "prompt explicitly hidden ",
 		Given: NewCodeArea(CodeAreaSpec{
-			Prompt:  ConstPrompt(ui.T("~>")),
-			RPrompt: ConstPrompt(ui.T("RP")),
+			Prompt:  p(ui.T("~>")),
+			RPrompt: p(ui.T("RP")),
 			State:   CodeAreaState{Buffer: CodeBuffer{Content: "code", Dot: 4}, HideRPrompt: true}}),
 		Width: 10, Height: 24,
 		Want: bb(10).Write("~>code").SetDotHere(),
@@ -70,8 +73,8 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "rprompt too long",
 		Given: NewCodeArea(CodeAreaSpec{
-			Prompt:  ConstPrompt(ui.T("~>")),
-			RPrompt: ConstPrompt(ui.T("1234")),
+			Prompt:  p(ui.T("~>")),
+			RPrompt: p(ui.T("1234")),
 			State:   CodeAreaState{Buffer: CodeBuffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).Write("~>code").SetDotHere(),
@@ -89,7 +92,7 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "static errors in code",
 		Given: NewCodeArea(CodeAreaSpec{
-			Prompt: ConstPrompt(ui.T("> ")),
+			Prompt: p(ui.T("> ")),
 			Highlighter: func(code string) (ui.Text, []error) {
 				err := errors.New("static error")
 				return ui.T(code), []error{err}
@@ -372,4 +375,23 @@ func TestState(t *testing.T) {
 	if w.CopyState().Buffer.Content != "code" {
 		t.Errorf("state not mutated")
 	}
+}
+
+func TestApplyPending(t *testing.T) {
+	applyPending := func(s CodeAreaState) CodeAreaState {
+		s.ApplyPending()
+		return s
+	}
+	tt.Test(t, tt.Fn("applyPending", applyPending), tt.Table{
+		tt.Args(CodeAreaState{Buffer: CodeBuffer{}, Pending: PendingCode{0, 0, "ls"}}).
+			Rets(CodeAreaState{Buffer: CodeBuffer{Content: "ls", Dot: 2}, Pending: PendingCode{}}),
+		tt.Args(CodeAreaState{Buffer: CodeBuffer{"x", 1}, Pending: PendingCode{0, 0, "ls"}}).
+			Rets(CodeAreaState{Buffer: CodeBuffer{Content: "lsx", Dot: 3}, Pending: PendingCode{}}),
+		// No-op when Pending is empty.
+		tt.Args(CodeAreaState{Buffer: CodeBuffer{"x", 1}}).
+			Rets(CodeAreaState{Buffer: CodeBuffer{Content: "x", Dot: 1}}),
+		// HideRPrompt is kept intact.
+		tt.Args(CodeAreaState{Buffer: CodeBuffer{"x", 1}, HideRPrompt: true}).
+			Rets(CodeAreaState{Buffer: CodeBuffer{Content: "x", Dot: 1}, HideRPrompt: true}),
+	})
 }

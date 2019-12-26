@@ -52,6 +52,47 @@ type CodeAreaSpec struct {
 	State CodeAreaState
 }
 
+// CodeAreaState keeps the mutable state of the CodeArea widget.
+type CodeAreaState struct {
+	Buffer      CodeBuffer
+	Pending     PendingCode
+	HideRPrompt bool
+}
+
+// CodeBuffer represents the buffer of the CodeArea widget.
+type CodeBuffer struct {
+	// Content of the buffer.
+	Content string
+	// Position of the dot (more commonly known as the cursor), as a byte index
+	// into Content.
+	Dot int
+}
+
+// PendingCode represents pending code, such as during completion.
+type PendingCode struct {
+	// Beginning index of the text area that the pending code replaces, as a
+	// byte index into RawState.Code.
+	From int
+	// End index of the text area that the pending code replaces, as a byte
+	// index into RawState.Code.
+	To int
+	// The content of the pending code.
+	Content string
+}
+
+// ApplyPending applies pending code to the code buffer, and resets pending code.
+func (s *CodeAreaState) ApplyPending() {
+	s.Buffer, _, _ = patchPending(s.Buffer, s.Pending)
+	s.Pending = PendingCode{}
+}
+
+func (c *CodeBuffer) InsertAtDot(text string) {
+	*c = CodeBuffer{
+		Content: c.Content[:c.Dot] + text + c.Content[c.Dot:],
+		Dot:     c.Dot + len(text),
+	}
+}
+
 type codeArea struct {
 	// Mutex for synchronizing access to State.
 	StateMutex sync.RWMutex
@@ -75,43 +116,25 @@ func NewCodeArea(spec CodeAreaSpec) CodeArea {
 		spec.OverlayHandler = el.DummyHandler{}
 	}
 	if spec.Highlighter == nil {
-		spec.Highlighter = dummyHighlighter
+		spec.Highlighter = func(s string) (ui.Text, []error) { return ui.T(s), nil }
 	}
 	if spec.Prompt == nil {
-		spec.Prompt = dummyPrompt
+		spec.Prompt = func() ui.Text { return nil }
 	}
 	if spec.RPrompt == nil {
-		spec.RPrompt = dummyPrompt
+		spec.RPrompt = func() ui.Text { return nil }
 	}
 	if spec.Abbreviations == nil {
-		spec.Abbreviations = dummyAbbreviations
+		spec.Abbreviations = func(func(a, f string)) {}
 	}
 	if spec.QuotePaste == nil {
-		spec.QuotePaste = dummyQuotePaste
+		spec.QuotePaste = func() bool { return false }
 	}
 	if spec.OnSubmit == nil {
-		spec.OnSubmit = dummyOnSubmit
+		spec.OnSubmit = func() {}
 	}
 	return &codeArea{CodeAreaSpec: spec}
 }
-
-// ConstPrompt returns a prompt callback that always writes the same styled
-// text.
-func ConstPrompt(content ui.Text) func() ui.Text {
-	return func() ui.Text { return content }
-}
-
-func dummyHighlighter(code string) (ui.Text, []error) {
-	return ui.T(code), nil
-}
-
-func dummyPrompt() ui.Text { return nil }
-
-func dummyAbbreviations(func(a, f string)) {}
-
-func dummyQuotePaste() bool { return false }
-
-func dummyOnSubmit() {}
 
 // Submit emits a submit event with the current code content.
 func (w *codeArea) Submit() {

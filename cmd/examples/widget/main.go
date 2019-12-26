@@ -25,9 +25,9 @@ func makeWidget() el.Widget {
 	items := listbox.TestItems{Prefix: "list item "}
 	w := combobox.NewComboBox(combobox.ComboBoxSpec{
 		CodeArea: codearea.CodeAreaSpec{
-			Prompt: codearea.ConstPrompt(
-				ui.T(" NUMBER ", ui.Bold, ui.BgMagenta).
-					ConcatText(ui.T(" "))),
+			Prompt: func() ui.Text {
+				return ui.T(" NUMBER ", ui.Bold, ui.BgMagenta).ConcatText(ui.T(" "))
+			},
 		},
 		ListBox: listbox.ListBoxSpec{
 			State:       listbox.ListBoxState{Items: &items},
