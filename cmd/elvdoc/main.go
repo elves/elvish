@@ -17,21 +17,49 @@ func main() {
 	run(os.Args[1:], os.Stdin, os.Stdout)
 }
 
-var (
-	directory = flag.Bool("dir", false, "read from .go files in directories")
-)
-
 func run(args []string, in io.Reader, out io.Writer) {
-	flag.CommandLine.Parse(args)
-	args = flag.Args()
-	if *directory {
+	flags := flag.NewFlagSet("", flag.ExitOnError)
+	var (
+		directory = flags.Bool("dir", false, "read from .go files in directories")
+		filter    = flags.Bool("filter", false, "act as a Markdown file filter")
+	)
+
+	err := flags.Parse(args)
+	if err != nil {
+		log.Fatal(err)
+	}
+	args = flags.Args()
+
+	switch {
+	case *directory:
 		extractDirs(args, out)
-	} else {
-		if len(args) == 0 {
-			extract(in, out)
+	case *filter:
+		// NOTE: Ignores arguments.
+		filterMarkdown(in, out)
+	case len(args) > 0:
+		extractFiles(args, out)
+	default:
+		extract(in, out)
+	}
+}
+
+const markdownLeader = "$elvdoc "
+
+var emptyReader = &strings.Reader{}
+
+func filterMarkdown(in io.Reader, out io.Writer) {
+	scanner := bufio.NewScanner(in)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if arg := strings.TrimPrefix(line, markdownLeader); arg != line {
+			args := strings.Fields(arg)
+			run(args, emptyReader, out)
 		} else {
-			extractFiles(args, out)
+			fmt.Fprintln(out, line)
 		}
+	}
+	if err := scanner.Err(); err != nil && err != io.EOF {
+		log.Fatal(err)
 	}
 }
 

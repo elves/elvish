@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -108,7 +107,7 @@ func TestRun_MultipleFiles(t *testing.T) {
 	defer teardown()
 
 	w := new(strings.Builder)
-	run([]string{"a.go", "b.go"}, io.MultiReader(), w)
+	run([]string{"a.go", "b.go"}, emptyReader, w)
 	compare(t, w.String(), `# Variables
 
 ## v2
@@ -133,7 +132,7 @@ func TestRun_Directory(t *testing.T) {
 	defer teardown()
 
 	w := new(strings.Builder)
-	run([]string{"-dir", "."}, io.MultiReader(), w)
+	run([]string{"-dir", "."}, emptyReader, w)
 	compare(t, w.String(), `# Variables
 
 ## v1
@@ -154,6 +153,29 @@ Function 1 from b.
 ## f2
 
 Function 2 from a.
+`)
+}
+
+func TestRun_Filter(t *testing.T) {
+	teardown := setup()
+	defer teardown()
+
+	in := strings.NewReader(`Some text.
+
+$elvdoc a.go
+
+Some more text.`)
+	out := new(strings.Builder)
+	run([]string{"-filter"}, in, out)
+	compare(t, out.String(), `Some text.
+
+# Functions
+
+## f2
+
+Function 2 from a.
+
+Some more text.
 `)
 }
 
