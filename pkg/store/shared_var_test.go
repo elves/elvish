@@ -7,10 +7,10 @@ func TestSharedVar(t *testing.T) {
 	value1 := "lorem ipsum"
 	value2 := "o mores, o tempora"
 
-	// Getting an nonexistent variable should return ErrNoVar.
+	// Getting an nonexistent variable should return ErrNoSharedVar.
 	_, err := tStore.SharedVar(varname)
-	if err != ErrNoVar {
-		t.Error("want ErrNoVar, got", err)
+	if err != ErrNoSharedVar {
+		t.Error("want ErrNoSharedVar, got", err)
 	}
 
 	// Setting a variable for the first time creates it.
@@ -33,13 +33,13 @@ func TestSharedVar(t *testing.T) {
 		t.Errorf("want %q and no error, got %q and %v", value2, v, err)
 	}
 
-	// After deleting a variable, access to it cause ErrNoVar.
+	// After deleting a variable, access to it cause ErrNoSharedVar.
 	err = tStore.DelSharedVar(varname)
 	if err != nil {
 		t.Error("want no error, got", err)
 	}
 	_, err = tStore.SharedVar(varname)
-	if err != ErrNoVar {
-		t.Error("want ErrNoVar, got", err)
+	if err != ErrNoSharedVar {
+		t.Error("want ErrNoSharedVar, got", err)
 	}
 }

@@ -6,8 +6,8 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-// ErrNoVar is returned by (*Store).GetSharedVar when there is no such variable.
-var ErrNoVar = errors.New("no such variable")
+// ErrNoSharedVar is returned by Store.SharedVar when there is no such variable.
+var ErrNoSharedVar = errors.New("no such shared variable")
 
 func init() {
 	initDB["initialize shared variable table"] = func(tx *bolt.Tx) error {
@@ -22,7 +22,7 @@ func (s *store) SharedVar(n string) (string, error) {
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketSharedVar))
 		if v := b.Get([]byte(n)); v == nil {
-			return ErrNoVar
+			return ErrNoSharedVar
 		} else {
 			value = string(v)
 			return nil
