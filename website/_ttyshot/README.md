@@ -1,9 +1,9 @@
 This directory contains "ttyshots" -- they are like screenshots, but taken on
-terminals. They are taken with Elvish's undocumented `edit:-dump-buf`
-function. To take one, use the following procedure:
+terminals. They are taken with Elvish's undocumented `edit:-dump-buf` function.
+To take one, use the following procedure:
 
-1.  Modify `edit:rprompt` to pretend that the username is `elf` and the
-    hostname is `host`:
+1.  Modify `edit:rprompt` to pretend that the username is `elf` and the hostname
+    is `host`:
 
     ```elvish
     edit:rprompt = (constantly (styled 'elf@host' inverse))

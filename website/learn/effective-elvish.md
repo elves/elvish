@@ -2,25 +2,24 @@
 
 Elvish is not an entirely new language. Its programming techniques have two
 primary sources: traditional Unix shells and functional programming languages,
-both dating back to many decades ago. However, the way Elvish combines those
-two paradigms is unique in many ways, which enables new ways to write code.
+both dating back to many decades ago. However, the way Elvish combines those two
+paradigms is unique in many ways, which enables new ways to write code.
 
-This document is an advanced tutorial focusing on how to write idiomatic
-Elvish code, code that is concise and clear, and takes full advantage of
-Elvish's features.
+This document is an advanced tutorial focusing on how to write idiomatic Elvish
+code, code that is concise and clear, and takes full advantage of Elvish's
+features.
 
-An appropriate adjective for idiomatic Elvish code, like *Pythonic* for Python
-or *Rubyesque* for Ruby, is **Elven**. In [Roguelike
-games](https://en.wikipedia.org/wiki/Roguelike), Elven items are known to be
-high-quality, artful and resilient. So is Elven code.
-
+An appropriate adjective for idiomatic Elvish code, like _Pythonic_ for Python
+or _Rubyesque_ for Ruby, is **Elven**. In
+[Roguelike games](https://en.wikipedia.org/wiki/Roguelike), Elven items are
+known to be high-quality, artful and resilient. So is Elven code.
 
 # Style
 
 ## Naming
 
-Use `dash-delimited-words` for names of variables and functions. Underscores
-are allowed in variable and function names, but their use should be limited to
+Use `dash-delimited-words` for names of variables and functions. Underscores are
+allowed in variable and function names, but their use should be limited to
 environment variables (e.g. `$E:LC_ALL`) and external commands (e.g. `pkg_add`).
 
 When building a module, use a leading dash to communicate that a variable or
@@ -35,9 +34,9 @@ Indent by two spaces.
 
 ## Code Blocks
 
-In Elvish, code blocks in control structures are delimited by curly braces.
-This is perhaps the most visible difference of Elvish from most other shells
-like bash, zsh or fish. The following bash code:
+In Elvish, code blocks in control structures are delimited by curly braces. This
+is perhaps the most visible difference of Elvish from most other shells like
+bash, zsh or fish. The following bash code:
 
 ```bash
 if true; then
@@ -78,20 +77,19 @@ This is because in Elvish, control structures like `if` follow the same syntax
 as normal commands, hence newlines terminate them. To make the code block part
 of the `if` command, it must appear on the same line.
 
-
 # Using the Pipeline
 
-Elvish is equipped with a powerful tool for passing data: the pipeline. Like
-in traditional shells, it is an intuitive notation for data processing: data
-flows from left to right, undergoing one transformation after another. Unlike
-in traditional shells, it is not restricted to unstructured bytes: all Elvish
-values, including lists, maps and even closures, can flow in the pipeline.
-This section documents how to make the most use of pipelines.
+Elvish is equipped with a powerful tool for passing data: the pipeline. Like in
+traditional shells, it is an intuitive notation for data processing: data flows
+from left to right, undergoing one transformation after another. Unlike in
+traditional shells, it is not restricted to unstructured bytes: all Elvish
+values, including lists, maps and even closures, can flow in the pipeline. This
+section documents how to make the most use of pipelines.
 
 ## Returning Values with Structured Output
 
 Unlike functions in most other programming languages, Elvish commands do not
-have return values. Instead, they can write to *structured output*, which is
+have return values. Instead, they can write to _structured output_, which is
 similar to the traditional byte-based stdout, but preserves all internal
 structures of aribitrary Elvish values. The most fundamental command that does
 this is `put`:
@@ -104,8 +102,8 @@ this is `put`:
 ▶ foo
 ```
 
-This is hardly impressive - you can output and recover simple strings using
-good old byte-based output as well. But let's try this:
+This is hardly impressive - you can output and recover simple strings using good
+old byte-based output as well. But let's try this:
 
 ```elvish-transcript
 ~> put "a\nb" [foo bar]
@@ -123,8 +121,8 @@ newline, and the second value is a list. When we capture the output, we get
 those exact values back. Passing structured data is difficult with byte-based
 output, but trivial with value output.
 
-Besides `put`, many other builtin commands also write to structured output,
-like `splits`:
+Besides `put`, many other builtin commands also write to structured output, like
+`splits`:
 
 ```elvish-transcript
 ~> splits , foo,bar
@@ -136,9 +134,9 @@ like `splits`:
 ```
 
 User-defined functions behave in the same way: they "return" values by writing
-to structured stdout. Without realizing that "return values" are just outputs
-in Elvish, it is easy to think of `put` as **the** command to "return" values
-and write code like this:
+to structured stdout. Without realizing that "return values" are just outputs in
+Elvish, it is easy to think of `put` as **the** command to "return" values and
+write code like this:
 
 ```elvish-transcript
 ~> fn split-by-comma [s]{ put (splits , $s) }
@@ -147,8 +145,7 @@ and write code like this:
 ▶ bar
 ```
 
-The `split-by-comma` function works, but it can be written more concisely
-as:
+The `split-by-comma` function works, but it can be written more concisely as:
 
 ```elvish-transcript
 ~> fn split-by-comma [s]{ splits , $s }
@@ -157,8 +154,8 @@ as:
 ▶ bar
 ```
 
-In fact, the pattern `put (some-cmd)` is almost always redundant and
-equivalent to just `some-command`.
+In fact, the pattern `put (some-cmd)` is almost always redundant and equivalent
+to just `some-command`.
 
 Similarly, it is seldom necessary to write `echo (some-cmd)`: it is almost
 always equivalent to just `some-cmd`. As an exercise, try simplifying the
@@ -185,8 +182,8 @@ bytes
 ```
 
 This also illustrates that the output capture operator `(...)` works with both
-byte and value outputs, and it can recover the output sent to `echo`. When
-byte output contains multiple lines, each line becomes one value:
+byte and value outputs, and it can recover the output sent to `echo`. When byte
+output contains multiple lines, each line becomes one value:
 
 ```elvish-transcript
 ~> x = [(echo "lorem\nipsum")]
@@ -208,9 +205,9 @@ example:
 ▶ IPSUM
 ```
 
-This line-oriented processing of byte input is consistent with traditional
-Unix tools like `grep`, `sed` and `awk`. In fact, it is easy to write your own
-`grep` in Elvish:
+This line-oriented processing of byte input is consistent with traditional Unix
+tools like `grep`, `sed` and `awk`. In fact, it is easy to write your own `grep`
+in Elvish:
 
 ```elvish-transcript
 ~> use re
@@ -225,8 +222,8 @@ lorem
 456
 ```
 
-(Note that it is more concise to write `mygrep ... < in.txt`, but due to [a
-bug](https://github.com/elves/elvish/issues/600) this does not work.)
+(Note that it is more concise to write `mygrep ... < in.txt`, but due to
+[a bug](https://github.com/elves/elvish/issues/600) this does not work.)
 
 However, this line-oriented behavior is not always desirable: not all Unix
 commands output newline-separated data. When you want to get the output as is,
@@ -275,9 +272,9 @@ any byte; this makes Elvish suitable for working with binary data. (Also, note
 that the `find` command terminates its output with a NUL byte, hence we see a
 trailing empty string in the output.)
 
-One side note: In the first example, we saw that `bytes` appeared before `value`.
-This is not guaranteed: byte output and value output are separate, it is
-possible to get `value` before `bytes` in more complex cases. Writes to one
+One side note: In the first example, we saw that `bytes` appeared before
+`value`. This is not guaranteed: byte output and value output are separate, it
+is possible to get `value` before `bytes` in more complex cases. Writes to one
 component, however, always have their orders preserved, so in `put x; put y`,
 `x` will always appear before `y`.
 
@@ -285,8 +282,8 @@ component, however, always have their orders preserved, so in `put x; put y`,
 
 If you have experience with Lisp, you will discover that you can write Elvish
 code very similar to Lisp. For instance, to split a string containing
-comma-separated value, reduplicate each value (using commas as separators),
-and rejoin them with semicolons, you can write:
+comma-separated value, reduplicate each value (using commas as separators), and
+rejoin them with semicolons, you can write:
 
 ```elvish-transcript
 ~> csv = a,b,foo,bar
@@ -312,10 +309,10 @@ program at hand, there is a much better way to write it:
 
 Besides having fewer pairs of parentheses (and brackets), this program is also
 more readable, because the data flows from left to right, and there is no
-nesting. You can see that `$csv` is first split by commas, then each value
-gets reduplicated, and then finally everything is joined by semicolons. It
-matches exactly how you would describe the algorithm in spoken English -- or
-for that matter, any spoken language!
+nesting. You can see that `$csv` is first split by commas, then each value gets
+reduplicated, and then finally everything is joined by semicolons. It matches
+exactly how you would describe the algorithm in spoken English -- or for that
+matter, any spoken language!
 
 Both versions work, because commands like `each` and `joins` that work with
 multiple inputs can take their inputs in two ways: they can take the inputs as
@@ -352,13 +349,13 @@ Exception: want 2 arguments, got 1
 [tty], line 1: joins ' ' [a,b c,d] | splits ,
 ```
 
-This is because the `splits` command only ever works with one input (one
-string to split), and was not implemented to support taking input from
-pipeline; hence it always takes 2 arguments and we got an exception.
+This is because the `splits` command only ever works with one input (one string
+to split), and was not implemented to support taking input from pipeline; hence
+it always takes 2 arguments and we got an exception.
 
-It is easy to remedy this situation however. The `all` command passes its
-input to its output, and by capturing its output, we can turn the input into
-an argument:
+It is easy to remedy this situation however. The `all` command passes its input
+to its output, and by capturing its output, we can turn the input into an
+argument:
 
 ```elvish-transcript
 ~> joins ' ' [a,b c,d] | splits , (all)
@@ -372,10 +369,10 @@ an argument:
 In the previous subsection, we remarked that commands like `splits` and `each`
 write multiple output values instead of one list. Why?
 
-This has to do with another advantage of passing data through the pipeline: in
-a pipeline, all commands are executed in parallel. A command in a pipeline
-does not need to wait for its previous command to finish running before it can
-start processing data. Try this in your terminal:
+This has to do with another advantage of passing data through the pipeline: in a
+pipeline, all commands are executed in parallel. A command in a pipeline does
+not need to wait for its previous command to finish running before it can start
+processing data. Try this in your terminal:
 
 ```elvish-transcript
 ~> each $str:to-upper~ | each [x]{ put $x$x }
@@ -388,31 +385,30 @@ xyz
 ```
 
 You will notice that as soon as you press Enter after typing `abc`, the output
-`ABCABC` is shown. As soon as one input is available, it goes through the
-entire pipeline, each command doing its work. This gives you immediate
-feedback, and makes good use of multi-core CPUs on modern computers. Pipelines
-are like assembly lines in the manufacturing industry.
+`ABCABC` is shown. As soon as one input is available, it goes through the entire
+pipeline, each command doing its work. This gives you immediate feedback, and
+makes good use of multi-core CPUs on modern computers. Pipelines are like
+assembly lines in the manufacturing industry.
 
-If instead of passing multiple values, we pass a list through the pipeline:
-that means that each command will now be waiting for its previous command to
-do all the processing and pack the results in a list before it can start doing
+If instead of passing multiple values, we pass a list through the pipeline: that
+means that each command will now be waiting for its previous command to do all
+the processing and pack the results in a list before it can start doing
 anything. Now, although the commands themselves are run in parallel, they all
 need to be waiting for their previous commands to finish before they can start
 doing real work.
 
-This is why commands like `each` and `splits` produce multiple values instead
-of one list. When writing your functions, try to make them produce multiple
-values as well: they will cooperate better with builtin commands, and they can
-benefit from the efficiency of parallel computations.
-
+This is why commands like `each` and `splits` produce multiple values instead of
+one list. When writing your functions, try to make them produce multiple values
+as well: they will cooperate better with builtin commands, and they can benefit
+from the efficiency of parallel computations.
 
 # Working with Multiple Values
 
 In Elvish, many constructs can evaluate to multiple values. This can be
 surprising if you are not familiar with it.
 
-To start with, output captures evaluate to all the captured values, instead of
-a list:
+To start with, output captures evaluate to all the captured values, instead of a
+list:
 
 ```elvish-transcript
 ~> splits , a,b,c
@@ -424,10 +420,10 @@ Exception: arity mismatch
 [tty], line 1: li = (splits , a,b,c)
 ```
 
-The assignment fails with "arity mismatch" because the right hand side
-evaluates to 3 values, but you are attempting to assign them to just one
-variable. If you want to capture the results into a list, you have to
-explicitly do so, either by constructing a list or using rest variables:
+The assignment fails with "arity mismatch" because the right hand side evaluates
+to 3 values, but you are attempting to assign them to just one variable. If you
+want to capture the results into a list, you have to explicitly do so, either by
+constructing a list or using rest variables:
 
 ```elvish-transcript
 ~> li = [(splits , a,b,c)]
@@ -438,18 +434,17 @@ explicitly do so, either by constructing a list or using rest variables:
 
 ## Assigning Multiple Variables
 
-
 # To Be Continued...
 
 As of writing, Elvish is neither stable nor complete. The builtin libraries
-still have missing pieces, the package manager is in its early days, and
-things like a type system and macros have been proposed and considered, but
-not yet worked on. Deciding best practices for using feature *x* can be a bit
-tricky when that feature *x* doesn't yet exist!
+still have missing pieces, the package manager is in its early days, and things
+like a type system and macros have been proposed and considered, but not yet
+worked on. Deciding best practices for using feature _x_ can be a bit tricky
+when that feature _x_ doesn't yet exist!
 
-The current version of the document is what the lead developer of Elvish
-(@xiaq) has collected as best practices for writing Elvish code in early 2018,
-between the release of Elvish 0.11 and 0.12. They apply to aspects of the
-Elvish language that are relatively complete and stable; but as Elvish
-evolves, the document will co-evolve. You are invited to revisit this document
-once in a while!
+The current version of the document is what the lead developer of Elvish (@xiaq)
+has collected as best practices for writing Elvish code in early 2018, between
+the release of Elvish 0.11 and 0.12. They apply to aspects of the Elvish
+language that are relatively complete and stable; but as Elvish evolves, the
+document will co-evolve. You are invited to revisit this document once in a
+while!

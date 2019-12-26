@@ -1,8 +1,6 @@
 Prebuilt, statically linked binaries for some common platforms are provided
-below.
-If your environment is not listed above, you may still be able to build Elvish
-from [source](https://github.com/elves/elvish).
-For users in China, the
+below. If your environment is not listed above, you may still be able to build
+Elvish from [source](https://github.com/elves/elvish). For users in China, the
 [mirror](https://mirrors.tuna.tsinghua.edu.cn/elvish) hosted by TUNA may be
 faster.
 
@@ -53,14 +51,17 @@ maintain backward compatibility from version to version.
   </tr>
 </table>
 
-
 # OS-Specific Packages
 
 ## Arch Linux
 
-Elvish PKGBUILDs are available in AUR. Install [`elvish`](https://aur.archlinux.org/packages/elvish/) (latest version) or [`elvish-git`](https://aur.archlinux.org/packages/elvish-git/) (HEAD) using your favorite AUR helper.
+Elvish PKGBUILDs are available in AUR. Install
+[`elvish`](https://aur.archlinux.org/packages/elvish/) (latest version) or
+[`elvish-git`](https://aur.archlinux.org/packages/elvish-git/) (HEAD) using your
+favorite AUR helper.
 
-Alternatively, prebuilt packages can be obtained from [Arch Linux CN repository](https://www.archlinuxcn.org/archlinux-cn-repo-and-mirror/):
+Alternatively, prebuilt packages can be obtained from
+[Arch Linux CN repository](https://www.archlinuxcn.org/archlinux-cn-repo-and-mirror/):
 
 ```elvish
 # Add archlinuxcn repository
@@ -72,7 +73,8 @@ pacman -S elvish
 
 ## Fedora
 
-RPM packages are available from [the FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository):
+RPM packages are available from
+[the FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository):
 
 ```elvish
 # Add FZUG repo
@@ -83,11 +85,11 @@ dnf install elvish
 
 ## Debian / Ubuntu
 
-Elvish is packaged by [Debian](https://packages.debian.org/elvish) since
-buster and by [Ubuntu](http://packages.ubuntu.com/elvish) since 17.10.
+Elvish is packaged by [Debian](https://packages.debian.org/elvish) since buster
+and by [Ubuntu](http://packages.ubuntu.com/elvish) since 17.10.
 
-However, packages in official repositories are likely outdated. You can
-install the latest release from
+However, packages in official repositories are likely outdated. You can install
+the latest release from
 [PPA](https://launchpad.net/~zhsj/+archive/ubuntu/elvish):
 
 ```elvish
@@ -144,7 +146,8 @@ doas pkg_add elvish
 
 ## NixOS (nix)
 
-Elvish is packaged in [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/shells/elvish/default.nix):
+Elvish is packaged in
+[nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/shells/elvish/default.nix):
 
 ```elvish
 # Install latest release
@@ -153,8 +156,8 @@ nix-env -i elvish
 
 # Old versions
 
-The following old versions are no longer supported. They are only listed
-here for historical interest.
+The following old versions are no longer supported. They are only listed here
+for historical interest.
 
 <table>
   <tr>

@@ -1,4 +1,5 @@
-**Elvish** is a friendly interactive shell and an expressive programming language. It runs on Linux, BSDs, macOS and Windows.
+**Elvish** is a friendly interactive shell and an expressive programming
+language. It runs on Linux, BSDs, macOS and Windows.
 
 <div id="no-js">
   <h1>Demos</h1>
@@ -112,23 +113,23 @@
 
 # <i class="icon-rocket"></i> Run Elvish
 
-*   [Download](get/) a binary
+-   [Download](get/) a binary
 
-*   [Source code](https://github.com/elves/elvish) on GitHub
+-   [Source code](https://github.com/elves/elvish) on GitHub
 
-*   [Try Elvish](https://try.elv.sh) directly from the browser (coming soon!)
+-   [Try Elvish](https://try.elv.sh) directly from the browser (coming soon!)
 
 # <i class="icon-sitemap"></i> Use this Site
 
 Start your Elvish journey in this very website!
 
-*   [Learn](learn/) the fundamentals and interesting topics
+-   [Learn](learn/) the fundamentals and interesting topics
 
-*   Peruse the definitive [reference](ref/) documents
+-   Peruse the definitive [reference](ref/) documents
 
-*   Read the [blog](blog/) for news, tips, and developers' musings
+-   Read the [blog](blog/) for news, tips, and developers' musings
 
-*   Subscribe to the [feed](feed.atom) to keep updated
+-   Subscribe to the [feed](feed.atom) to keep updated
 
 </div>
 
@@ -139,18 +140,18 @@ Start your Elvish journey in this very website!
 Join any of the following channels -- they are all all bridged together thanks
 to [matterbridge](https://github.com/42wim/matterbridge)!
 
-*   IRC: [#elvish](https://webchat.freenode.net/?channels=elvish) on Freenode
+-   IRC: [#elvish](https://webchat.freenode.net/?channels=elvish) on Freenode
 
-*   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
+-   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
 
-*   Telegram: [@elvish](https://telegram.me/elvish)
+-   Telegram: [@elvish](https://telegram.me/elvish)
 
 # <i class="icon-link-ext"></i> More Resources
 
-*   [Awesome Elvish](https://github.com/elves/awesome-elvish): Official list
-    of unofficial Elvish modules
+-   [Awesome Elvish](https://github.com/elves/awesome-elvish): Official list of
+    unofficial Elvish modules
 
-*   [@RealElvishShell](https://twitter.com/realelvishshell) on Twitter
+-   [@RealElvishShell](https://twitter.com/realelvishshell) on Twitter
 
 </div>
 

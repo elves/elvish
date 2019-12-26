@@ -8,18 +8,18 @@ expressions and replacement patterns.
 
 # Functions
 
-Function usages notations follow the same convention as the [builtin module
-doc](builtin.html).
+Function usages notations follow the same convention as the
+[builtin module doc](builtin.html).
 
 The following options are supported by multiple functions in this module:
 
-*   `&posix` (defaults to `$false`): Use POSIX ERE syntax. See also
+-   `&posix` (defaults to `$false`): Use POSIX ERE syntax. See also
     [doc](http://godoc.org/regexp#CompilePOSIX) in Go package.
 
-*   `&longest` (defaults to `$false`): Prefer leftmost-longest match. See also
+-   `&longest` (defaults to `$false`): Prefer leftmost-longest match. See also
     [doc](http://godoc.org/regexp#Regexp.Longest) in Go package.
 
-*   `&max` (defaults to -1): If non-negative, maximum number of results.
+-   `&max` (defaults to -1): If non-negative, maximum number of results.
 
 ## find
 
@@ -29,12 +29,12 @@ re:find &posix=$false &longest=$false &max=-1 $pattern $source
 
 Find all matches of `$pattern` in `$source`.
 
-Each match is represented by a map-like value `$m`; `$m[text]`, `$m[start]`
-and `$m[end]` are the text, start and end positions (as byte indicies into
-`$source`) of the match; `$m[groups]` is a list of submatches for capture
-groups in the pattern. A submatch has a similar structure to a match, except
-that it does not have a `group` key. The entire pattern is an implicit capture
-group, and it always appears first.
+Each match is represented by a map-like value `$m`; `$m[text]`, `$m[start]` and
+`$m[end]` are the text, start and end positions (as byte indicies into
+`$source`) of the match; `$m[groups]` is a list of submatches for capture groups
+in the pattern. A submatch has a similar structure to a match, except that it
+does not have a `group` key. The entire pattern is an implicit capture group,
+and it always appears first.
 
 Examples:
 
@@ -79,19 +79,19 @@ The replacement `$repl` can be either
     `${name}` patterns to refer to capture groups, where `name` consists of
     letters, digits and underscores. Numbered patterns like `$1` refer to
     capture groups by their order, while named patterns like `$stem` refer to
-    capture groups by their names (specified using the syntax
-    `(?P<name>...)`). Use `$$` for a literal dollar sign. The name is taken as
-    long as possible; for instance, `$1a` is the same as `${1a}`.
+    capture groups by their names (specified using the syntax `(?P<name>...)`).
+    Use `$$` for a literal dollar sign. The name is taken as long as possible;
+    for instance, `$1a` is the same as `${1a}`.
 
-    See also doc of Go's regexp package on the [template
-    syntax](https://godoc.org/regexp#Regexp.Expand).
+    See also doc of Go's regexp package on the
+    [template syntax](https://godoc.org/regexp#Regexp.Expand).
 
 2.  A function that takes a string argument and outputs a string. For each
-    match, the function is called with the content of the match, and its
-    output is used as the replacement.
+    match, the function is called with the content of the match, and its output
+    is used as the replacement.
 
-If `$literal` is true, `$repl` must be a string and is treated literally
-instead of as a pattern.
+If `$literal` is true, `$repl` must be a string and is treated literally instead
+of as a pattern.
 
 Example:
 

@@ -2,10 +2,10 @@
 
 # Introduction
 
-The builtin module contains facilities that are potentially useful to all
-users. It occupies the `builtin:` namespace. You rarely have to explicitly
-specify the namespace though, since it is one of the namespaces consulted when
-resolving unqualified names.
+The builtin module contains facilities that are potentially useful to all users.
+It occupies the `builtin:` namespace. You rarely have to explicitly specify the
+namespace though, since it is one of the namespaces consulted when resolving
+unqualified names.
 
 ## Usage Notation
 
@@ -17,8 +17,8 @@ and are described as:
 repeat $n $v
 ```
 
-Optional arguments are represented with a trailing `?`, while variadic
-arguments with a trailing `...`. For instance, the `count` command takes an optional list:
+Optional arguments are represented with a trailing `?`, while variadic arguments
+with a trailing `...`. For instance, the `count` command takes an optional list:
 
 ```elvish
 count $input-list?
@@ -39,11 +39,10 @@ echo &sep=' ' $value...
 
 (When you calling functions, options are always optional.)
 
-
 ## Supplying Input
 
-Some builtin functions, e.g. `count` and `each`, can take their input in one
-of two ways:
+Some builtin functions, e.g. `count` and `each`, can take their input in one of
+two ways:
 
 1. From pipe:
 
@@ -85,57 +84,54 @@ that a command can take its input in one of two ways above: this fact is not
 repeated below.
 
 **Note**: You should prefer the first form, unless using it requires explicit
-`put` commands. Avoid `count [(some-command)]` or `each $some-func
-[(some-command)]`; they are, most of the time, equivalent to `some-command |
-count` or `some-command | each $some-func`.
+`put` commands. Avoid `count [(some-command)]` or
+`each $some-func [(some-command)]`; they are, most of the time, equivalent to
+`some-command | count` or `some-command | each $some-func`.
 
 **Rationale**: An alternative way to design this is to make (say) `count` take
 an arbitrary number of arguments, and count its arguments; when there is 0
-argument, count inputs. However, this leads to problems in code like `count
-*`; the intention is clearly to count the number of files in the current
-directory, but when the current directory is empty, `count` will wait for
-inputs. Hence it is required to put the input in a list: `count [*]`
-unambiguously supplies input in the argument, even if there is no file.
+argument, count inputs. However, this leads to problems in code like `count *`;
+the intention is clearly to count the number of files in the current directory,
+but when the current directory is empty, `count` will wait for inputs. Hence it
+is required to put the input in a list: `count [*]` unambiguously supplies input
+in the argument, even if there is no file.
 
 ## Numerical Commands
 
 Commands that operate on numbers are quite flexible about the format of the
 numbers. Integers can be specified as decimals (e.g. `233`) or hexadecimals
 (e.g. `0xE9`) and floating-point numbers can be specified using the scientific
-notation (e.g. `2.33e2`). These are different strings, but equal when
-considered as commands.
+notation (e.g. `2.33e2`). These are different strings, but equal when considered
+as commands.
 
 Elvish has no special syntax or data type for numbers. Instead, they are just
 strings. For this reason, builtin commands for strings and numbers are
-completely separate. For instance, the numerical equality command is `==`,
-while the string equality command is `==s`. Another example is the `+`
-builtin, which only operates on numbers and does not function as a string
-concatenation commands.
-
+completely separate. For instance, the numerical equality command is `==`, while
+the string equality command is `==s`. Another example is the `+` builtin, which
+only operates on numbers and does not function as a string concatenation
+commands.
 
 ## Predicates
 
-Predicates are functions that write exactly one output that is either `$true`
-or `$false`. They are described like "Determine ..." or "Test ...". See
-[`is`](#is) for one example.
-
+Predicates are functions that write exactly one output that is either `$true` or
+`$false`. They are described like "Determine ..." or "Test ...". See [`is`](#is)
+for one example.
 
 ## "Do Not Use" Functions and Variables
 
 The name of some variables and functions have a leading `-`. This is a
-convention to say that it is subject to change and should not be depended
-upon. They are either only useful for debug purposes, or have known issues in
-the interface or implementation, and in the worst case will make Elvish crash.
+convention to say that it is subject to change and should not be depended upon.
+They are either only useful for debug purposes, or have known issues in the
+interface or implementation, and in the worst case will make Elvish crash.
 (Before 1.0, all features are subject to change, but those ones are sure to be
 changed.)
 
 Those functions and variables are documented near the end of the respective
 sections. Their known problem is also discussed.
 
-
 # Builtin Functions
 
-## + - * /
+## + - \* /
 
 ```elvish
 + $summand...
@@ -144,8 +140,8 @@ sections. Their known problem is also discussed.
 / $dividend $divisor...
 ```
 
-Basic arithmetic operations of adding, subtraction, multiplication and
-division respectively.
+Basic arithmetic operations of adding, subtraction, multiplication and division
+respectively.
 
 All of them can take multiple arguments:
 
@@ -160,18 +156,18 @@ All of them can take multiple arguments:
 ▶ 0.05714285714285715
 ```
 
-When given one element, they all output their sole argument (given that it
-is a valid number). When given no argument,
+When given one element, they all output their sole argument (given that it is a
+valid number). When given no argument,
 
-*   `+` outputs 0, and `*` outputs 1. You can think that they both have
-    a "hidden" argument of 0 or 1, which does not alter their behaviors (in
-    mathematical terms, 0 and 1 are [identity
-    elements](https://en.wikipedia.org/wiki/Identity_element) of addition and
-    multiplication, respectively).
+-   `+` outputs 0, and `*` outputs 1. You can think that they both have a
+    "hidden" argument of 0 or 1, which does not alter their behaviors (in
+    mathematical terms, 0 and 1 are
+    [identity elements](https://en.wikipedia.org/wiki/Identity_element) of
+    addition and multiplication, respectively).
 
-*   `-` throws an exception.
+-   `-` throws an exception.
 
-*   `/` becomes a synonym for `cd /`, due to the implicit cd feature. (The
+-   `/` becomes a synonym for `cd /`, due to the implicit cd feature. (The
     implicit cd feature will probably change to avoid this oddity).
 
 ## %
@@ -218,8 +214,8 @@ Number comparisons. All of them accept an arbitrary number of arguments:
 
 1.  When given fewer than two arguments, all output `$true`.
 
-2.  When given two arguments, output whether the two arguments satisfy the
-    named relationship.
+2.  When given two arguments, output whether the two arguments satisfy the named
+    relationship.
 
 3.  When given more than two arguments, output whether every adjacent pair of
     numbers satisfy the named relationship.
@@ -238,7 +234,7 @@ Examples:
 ```
 
 As a consequence of rule 3, the `!=` command outputs `$true` as long as any
-*adjacent* pair of numbers are not equal, even if some numbers that are not
+_adjacent_ pair of numbers are not equal, even if some numbers that are not
 adjacent are equal:
 
 ```elvish-transcript
@@ -247,7 +243,6 @@ adjacent are equal:
 ~> != 5 6 5
 ▶ $true
 ```
-
 
 ## &lt;s &lt;=s ==s !=s &gt;s &gt;=s
 
@@ -272,7 +267,6 @@ given multiple arguments. Examples:
 ▶ $true
 ```
 
-
 ## all
 
 ```elvish
@@ -281,8 +275,8 @@ all
 
 Pass inputs, both bytes and values, to the output.
 
-This is an identity function in pipelines: `a | all | b` is equivalent to `a |
-b`. It is mainly useful for turning inputs into arguments, like:
+This is an identity function in pipelines: `a | all | b` is equivalent to
+`a | b`. It is mainly useful for turning inputs into arguments, like:
 
 ```elvish-transcript
 ~> put 'lorem,ipsum' | splits , (all)
@@ -301,7 +295,6 @@ bar
 ▶ [foo bar]
 ```
 
-
 ## assoc
 
 ```elvish
@@ -311,9 +304,8 @@ assoc $container $k $v
 Output a slightly modified version of `$container`, such that its value at `$k`
 is `$v`. Applies to both lists and to maps.
 
-When `$container` is a list, `$k` may be a negative index. However, slice is
-not yet supported.
-
+When `$container` is a list, `$k` may be a negative index. However, slice is not
+yet supported.
 
 ```elvish-transcript
 ~> assoc [foo bar quux] 0 lorem
@@ -328,8 +320,7 @@ not yet supported.
 
 Etymology: [Clojure](https://clojuredocs.org/clojure.core/assoc).
 
-$cf dissoc
-
+\$cf dissoc
 
 ## bool
 
@@ -338,8 +329,8 @@ bool $value
 ```
 
 Convert a value to boolean. In Elvish, only `$false` and errors are booleanly
-false. Everything else, including 0, empty strings and empty lists, is
-booleanly true:
+false. Everything else, including 0, empty strings and empty lists, is booleanly
+true:
 
 ```elvish-transcript
 ~> bool $true
@@ -358,7 +349,7 @@ booleanly true:
 ▶ $true
 ```
 
-$cf not
+\$cf not
 
 ## cd
 
@@ -369,7 +360,6 @@ cd $dirname
 Change directory.
 
 Note that Elvish's `cd` does not support `cd -`.
-
 
 ## chr
 
@@ -388,8 +378,7 @@ Outputs a string consisting of the given Unicode codepoints. Example:
 
 Etymology: [Python](https://docs.python.org/3/library/functions.html#chr).
 
-$cf ord
-
+\$cf ord
 
 ## constantly
 
@@ -423,7 +412,6 @@ every time you invoke `$f`, `uname` will be called.
 
 Etymology: [Clojure](https://clojuredocs.org/clojure.core/constantly).
 
-
 ## count
 
 ```elvish
@@ -445,16 +433,14 @@ Examples:
 ▶ 100
 ```
 
-
 ## dir-history
 
 ```elvish
 dir-history
 ```
 
-Return a list containing the directory history. Each element is a map
-with two keys: `path` and `score`. The list is sorted by descending
-score.
+Return a list containing the directory history. Each element is a map with two
+keys: `path` and `score`. The list is sorted by descending score.
 
 Example:
 
@@ -479,7 +465,7 @@ Output a slightly modified version of `$map`, with the key `$k` removed. If
 ▶ [&lorem=ipsum &foo=bar]
 ```
 
-$cf assoc
+\$cf assoc
 
 ## drop
 
@@ -505,8 +491,7 @@ Example:
 
 Etymology: Haskell.
 
-$cf take
-
+\$cf take
 
 ## each
 
@@ -526,12 +511,11 @@ Call `$f` on all inputs. Examples:
 ▶ ips
 ```
 
-$cf peach
+\$cf peach
 
 Etymology: Various languages, as `for each`. Happens to have the same name as
 the iteration construct of
 [Factor](http://docs.factorcode.org/content/word-each,sequences.html).
-
 
 ## eawk
 
@@ -567,7 +551,6 @@ lorem
 ▶ 1
 ```
 
-
 ## echo
 
 ```elvish
@@ -591,10 +574,9 @@ Notes: The `echo` builtin does not treat `-e` or `-n` specially. For instance,
 `echo -n` just prints `-n`. Use double-quoted strings to print special
 characters, and `print` to suppress the trailing newline.
 
-$cf print
+\$cf print
 
 Etymology: Bourne sh.
-
 
 ## eq
 
@@ -602,8 +584,8 @@ Etymology: Bourne sh.
 eq $values...
 ```
 
-Determine whether all `$value`s are structurally equivalent. Writes `$true`
-when given no or one argument.
+Determine whether all `$value`s are structurally equivalent. Writes `$true` when
+given no or one argument.
 
 ```elvish-transcript
 ~> eq a a
@@ -616,10 +598,9 @@ when given no or one argument.
 ▶ $false
 ```
 
-$cf is not-eq
+\$cf is not-eq
 
 Etymology: [Perl](https://perldoc.perl.org/perlop.html#Equality-Operators).
-
 
 ## exec
 
@@ -627,9 +608,7 @@ Etymology: [Perl](https://perldoc.perl.org/perlop.html#Equality-Operators).
 exec $command?
 ```
 
-Replace the Elvish process with an external `$command`, defaulting to
-`elvish`.
-
+Replace the Elvish process with an external `$command`, defaulting to `elvish`.
 
 ## exit
 
@@ -657,10 +636,9 @@ Example:
 ▶ [x]
 ```
 
-Etymology: [PHP](http://php.net/manual/en/function.explode.php). PHP's
-`explode` is actually equivalent to Elvish's `splits`, but the author liked
-the name too much to not use it.
-
+Etymology: [PHP](http://php.net/manual/en/function.explode.php). PHP's `explode`
+is actually equivalent to Elvish's `splits`, but the author liked the name too
+much to not use it.
 
 ## external
 
@@ -675,7 +653,7 @@ Construct a callable value for the external program `$program`. Example:
 ~> $x ls # opens the manpage for ls
 ```
 
-$cf has-external search-external
+\$cf has-external search-external
 
 ## fail
 
@@ -700,7 +678,6 @@ do `fail [&cause=xxx]` (this will, ironically, throw a different exception
 complaining that you cannot throw a map). This is subject to change. Builtins
 will likely also throw structured exceptions in future.
 
-
 ## fclose
 
 ```elvish
@@ -709,8 +686,7 @@ fclose $file
 
 Close a file opened with `fopen`.
 
-$cf fopen
-
+\$cf fopen
 
 ## fopen
 
@@ -732,8 +708,7 @@ a file.
 ~> fclose $f
 ```
 
-$cf fclose
-
+\$cf fclose
 
 ## from-json
 
@@ -766,8 +741,7 @@ Examples:
 ▶ [&k=v]
 ```
 
-$cf to-json
-
+\$cf to-json
 
 ## get-env
 
@@ -786,8 +760,7 @@ Exception: non-existent environment variable
 [tty], line 1: get-env NO_SUCH_ENV
 ```
 
-$cf has-env set-env unset-env
-
+\$cf has-env set-env unset-env
 
 ## has-env
 
@@ -804,8 +777,7 @@ Test whether an environment variable exists. Examples:
 ▶ $false
 ```
 
-$cf get-env set-env unset-env
-
+\$cf get-env set-env unset-env
 
 ## has-external
 
@@ -823,8 +795,7 @@ might differ):
 ▶ $false
 ```
 
-$cf external search-external
-
+\$cf external search-external
 
 ## has-key
 
@@ -832,9 +803,9 @@ $cf external search-external
 has-key $container $key
 ```
 
-Determine whether `$key` is a key in `$container`. A key could be a map key or an index on a list or string. This 
-includes a range of indexes.
- 
+Determine whether `$key` is a key in `$container`. A key could be a map key or
+an index on a list or string. This includes a range of indexes.
+
 Examples, maps:
 
 ```elvish-transcript
@@ -910,7 +881,7 @@ Determine whether `$suffix` is a suffix of `$string`. Examples:
 has-value $container $value
 ```
 
-Determine whether `$value` is a value in `$container`. 
+Determine whether `$value` is a value in `$container`.
 
 Examples, maps:
 
@@ -961,10 +932,9 @@ The definition of identity is subject to change. Do not rely on its behavior.
 ▶ $false
 ```
 
-$cf eq
+\$cf eq
 
 Etymology: [Python](https://docs.python.org/3/reference/expressions.html#is).
-
 
 ## joins
 
@@ -982,13 +952,12 @@ Join inputs with `$sep`. Examples:
 ```
 
 The suffix "s" means "string" and also serves to avoid colliding with the
-well-known [join](https://en.wikipedia.org/wiki/join_(Unix)) utility.
+well-known [join](<https://en.wikipedia.org/wiki/join_(Unix)>) utility.
 
 Etymology: Various languages as `join`, in particular
 [Python](https://docs.python.org/3.6/library/stdtypes.html#str.join).
 
-$cf splits
-
+\$cf splits
 
 ## keys
 
@@ -1008,7 +977,6 @@ Example:
 ```
 
 Note that there is no guaranteed order for the keys of a map.
-
 
 ## kind-of
 
@@ -1043,9 +1011,8 @@ Examples:
 ~> nop &k=v
 ```
 
-Etymology: Various languages, in particular NOP in [assembly
-languages](https://en.wikipedia.org/wiki/NOP).
-
+Etymology: Various languages, in particular NOP in
+[assembly languages](https://en.wikipedia.org/wiki/NOP).
 
 ## not
 
@@ -1068,8 +1035,7 @@ Boolean negation. Examples:
 
 **NOTE**: `and` and `or` are implemented as special commands.
 
-$cf bool
-
+\$cf bool
 
 ## not-eq
 
@@ -1089,8 +1055,7 @@ this does not imply that `$value`s are all distinct. Examples:
 ▶ $false
 ```
 
-$cf eq
-
+\$cf eq
 
 ## ord
 
@@ -1112,10 +1077,9 @@ The output format is subject to change.
 
 Etymology: [Python](https://docs.python.org/3/library/functions.html#ord).
 
-$cf chr
+\$cf chr
 
-
-## path-*
+## path-\*
 
 ```elvish
 path-abs $path
@@ -1148,12 +1112,11 @@ Example (your output will differ):
 ▶ 14
 ```
 
-This command is intended for homogeneous processing of possibly unbound data.
-If you need to do a fixed number of heterogeneous things in parallel, use
+This command is intended for homogeneous processing of possibly unbound data. If
+you need to do a fixed number of heterogeneous things in parallel, use
 `run-parallel`.
 
-$cf each run-parallel
-
+\$cf each run-parallel
 
 ## pipe
 
@@ -1168,9 +1131,9 @@ input to a pipe with `<`, the read FD is used. When redirecting command output
 to a pipe with `>`, the write FD is used. It is not supported to redirect both
 input and output with `<>` to a pipe.
 
-Pipes have an OS-dependent buffer, so writing to a pipe without an active
-reader does not necessarily block. Pipes **must** be explicitly closed with
-`prclose` and `pwclose`.
+Pipes have an OS-dependent buffer, so writing to a pipe without an active reader
+does not necessarily block. Pipes **must** be explicitly closed with `prclose`
+and `pwclose`.
 
 Putting values into pipes will cause those values to be discarded.
 
@@ -1187,8 +1150,7 @@ lorem ipsum
 # $p should be closed with prclose and pwclose afterwards
 ```
 
-$cf prclose pwclose
-
+\$cf prclose pwclose
 
 ## prclose
 
@@ -1198,8 +1160,7 @@ prclose $pipe
 
 Close the read end of a pipe.
 
-$cf pwclose pipe
-
+\$cf pwclose pipe
 
 ## put
 
@@ -1222,8 +1183,8 @@ Examples:
 ```
 
 Etymology: Various languages, in particular
-[C](https://manpages.debian.org/stretch/manpages-dev/puts.3.en.html) and [Ruby](https://ruby-doc.org/core-2.2.2/IO.html#method-i-puts) as `puts`.
-
+[C](https://manpages.debian.org/stretch/manpages-dev/puts.3.en.html) and
+[Ruby](https://ruby-doc.org/core-2.2.2/IO.html#method-i-puts) as `puts`.
 
 ## pprint
 
@@ -1250,7 +1211,7 @@ Pretty-print representations of Elvish values. Examples:
 
 The output format is subject to change.
 
-$cf repr
+\$cf repr
 
 ## print
 
@@ -1260,13 +1221,12 @@ print &sep=' ' $value...
 
 Like `echo`, just without the newline.
 
-$cf echo
+\$cf echo
 
 Etymology: Various languages, in particular
 [Perl](https://perldoc.perl.org/functions/print.html) and
-[zsh](http://zsh.sourceforge.net/Doc/Release/Shell-Builtin-Commands.html),
-whose `print`s do not print a trailing newline.
-
+[zsh](http://zsh.sourceforge.net/Doc/Release/Shell-Builtin-Commands.html), whose
+`print`s do not print a trailing newline.
 
 ## pwclose
 
@@ -1276,8 +1236,7 @@ pwclose $pipe
 
 Close the write end of a pipe.
 
-$cf prclose pipe
-
+\$cf prclose pipe
 
 ## range
 
@@ -1320,7 +1279,6 @@ Beware floating point oddities:
 Etymology:
 [Python](https://docs.python.org/3/library/functions.html#func-range).
 
-
 ## rand
 
 ```elvish
@@ -1347,7 +1305,6 @@ Output a pseudo-random integer in the interval [$low, $high). Example:
    randint 1 7
 ▶ 6
 ```
-
 
 ## repeat
 
@@ -1377,9 +1334,9 @@ replaces &max=-1 $old $repl $source
 Replace all occurrences of `$old` with `$repl` in `$source`. If `$max` is
 non-negative, it determines the max number of substitutions.
 
-**Note**: `replaces` does not support searching by regular
-expressions, `$old` is always interpreted as a plain string. Use
-[re:replace](re.html#replace) if you need to search by regex.
+**Note**: `replaces` does not support searching by regular expressions, `$old`
+is always interpreted as a plain string. Use [re:replace](re.html#replace) if
+you need to search by regex.
 
 ## repr
 
@@ -1395,10 +1352,9 @@ newline. Example:
 [foo 'lorem ipsum'] "aha\n"
 ```
 
-$cf pprint
+\$cf pprint
 
 Etymology: [Python](https://docs.python.org/3/library/functions.html#repr).
-
 
 ## resolve
 
@@ -1406,8 +1362,8 @@ Etymology: [Python](https://docs.python.org/3/library/functions.html#repr).
 resolve $command
 ```
 
-Resolve `$command`. Command resolution is described in the [language
-reference](language.html). (TODO: actually describe it there.)
+Resolve `$command`. Command resolution is described in the
+[language reference](language.html). (TODO: actually describe it there.)
 
 Example:
 
@@ -1421,7 +1377,6 @@ Example:
 ▶ <external cat>
 ```
 
-
 ## run-parallel
 
 ```elvish
@@ -1430,15 +1385,14 @@ run-parallel $callable ...
 
 Run several callables in parallel, and wait for all of them to finish.
 
-If one or more callables throw exceptions, the other callables continue
-running, and a composite exception is thrown when all callables finish
-execution.
+If one or more callables throw exceptions, the other callables continue running,
+and a composite exception is thrown when all callables finish execution.
 
 The behavior of `run-parallel` is consistent with the behavior of pipelines,
 except that it does not perform any redirections.
 
-Here is an example that lets you pipe the stdout and stderr of a command to
-two different commands:
+Here is an example that lets you pipe the stdout and stderr of a command to two
+different commands:
 
 ```elvish
 pout = (pipe)
@@ -1460,8 +1414,7 @@ This command is intended for doing a fixed number of heterogeneous things in
 parallel. If you need homogeneous parallel processing of possibly unbound data,
 use `peach` instead.
 
-$cf peach
-
+\$cf peach
 
 ## search-external
 
@@ -1477,8 +1430,7 @@ found. Example (your output might vary):
 ▶ /bin/cat
 ```
 
-$cf external has-external
-
+\$cf external has-external
 
 ## set-env
 
@@ -1494,8 +1446,7 @@ Sets an environment variable to the given value. Example:
 ▶ foobar
 ```
 
-$cf get-env has-env unset-env
-
+\$cf get-env has-env unset-env
 
 ## slurp
 
@@ -1516,7 +1467,6 @@ Example:
 Etymology: Perl, as
 [`File::Slurp`](http://search.cpan.org/~uri/File-Slurp-9999.19/lib/File/Slurp.pm).
 
-
 ## splits
 
 ```elvish
@@ -1535,15 +1485,14 @@ codepoints.
 ▶ 好
 ```
 
-**Note**: `splits` does not support splitting by regular expressions,
-`$sep` is always interpreted as a plain string. Use
-[re:split](re.html#split) if you need to split by regex.
+**Note**: `splits` does not support splitting by regular expressions, `$sep` is
+always interpreted as a plain string. Use [re:split](re.html#split) if you need
+to split by regex.
 
 Etymology: Various languages as `split`, in particular
 [Python](https://docs.python.org/3.6/library/stdtypes.html#str.split).
 
-$cf joins
-
+\$cf joins
 
 ## src
 
@@ -1551,18 +1500,18 @@ $cf joins
 src
 ```
 
-Output a map-like value describing the current source being evaluated. The
-value contains the following fields:
+Output a map-like value describing the current source being evaluated. The value
+contains the following fields:
 
-*   `type`, which can be one of `interactive`, `script` or `module`;
+-   `type`, which can be one of `interactive`, `script` or `module`;
 
-*   `name`, which is set to the name under which a script is executed or a
+-   `name`, which is set to the name under which a script is executed or a
     module is imported. It is an empty string when `type` = `interactive`;
 
-*   `path`, which is the path to the current source. It is an empty string
-    when `type` = `interactive`;
+-   `path`, which is the path to the current source. It is an empty string when
+    `type` = `interactive`;
 
-*   `code`, which is the full body of the current source.
+-   `code`, which is the full body of the current source.
 
 Examples:
 
@@ -1599,7 +1548,6 @@ function**. Example:
 ▶ "fn f { put (src)[type name path code] }\n"
 ```
 
-
 ## styled
 
 ```elvish
@@ -1610,39 +1558,40 @@ Construct a styled text by applying the supplied transformers to the supplied
 object. `$object` can be either a string, a styled segment (see below), a styled
 text or an arbitrary concatenation of them. A `$style-transformer` is either:
 
-* The name of a builtin style transformer:
+-   The name of a builtin style transformer:
 
-  * On of the attribute names `bold`, `dim`, `italic`, `underlined`, `blink` or
-    `inverse` for setting the corresponding attribute
+    -   On of the attribute names `bold`, `dim`, `italic`, `underlined`, `blink`
+        or `inverse` for setting the corresponding attribute
 
-  * An attribute name prefixed by `no-` for unsetting the attribute
+    -   An attribute name prefixed by `no-` for unsetting the attribute
 
-  * An attribute name prefixed by `toggle-` for toggling the attribute between set
-    and unset
+    -   An attribute name prefixed by `toggle-` for toggling the attribute
+        between set and unset
 
-  * One of the color names `black`, `red`, `green`, `yellow`, `blue`, `magenta`,
-    `cyan`, `lightgray`, `gray`, `lightred`, `lightgreen`, `lightyellow`,
-    `lightblue`, `lightmagenta`, `lightcyan` or `white` for setting the text color
+    -   One of the color names `black`, `red`, `green`, `yellow`, `blue`,
+        `magenta`, `cyan`, `lightgray`, `gray`, `lightred`, `lightgreen`,
+        `lightyellow`, `lightblue`, `lightmagenta`, `lightcyan` or `white` for
+        setting the text color
 
-  * A color name prefixed by `bg-` to set the background color
+    -   A color name prefixed by `bg-` to set the background color
 
-* A lambda that receives a styled segment as the only argument and returns a
-  single styled segment
+-   A lambda that receives a styled segment as the only argument and returns a
+    single styled segment
 
-* A function with the same properties as the lambda (provided via the
-  `$transformer~` syntax)
+-   A function with the same properties as the lambda (provided via the
+    `$transformer~` syntax)
 
-When a styled text is converted to a string the corresponding [ANSI SGR code](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_.28Select_Graphic_Rendition.29_parameters)
+When a styled text is converted to a string the corresponding
+[ANSI SGR code](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_.28Select_Graphic_Rendition.29_parameters)
 is built to render the style.
 
-A styled text is nothing more than a wrapper around a list of styled segments. They
-can be accessed by indexing into it.
+A styled text is nothing more than a wrapper around a list of styled segments.
+They can be accessed by indexing into it.
 
 ```elvish
 s = (styled abc red)(styled def green)
 put $s[0] $s[1]
 ```
-
 
 ## styled-segment
 
@@ -1659,8 +1608,8 @@ fn my-awesome-style-transformer [seg]{ styled-segment $seg &bold=(not $seg[dim])
 styled abc $my-awesome-style-transformer~
 ```
 
-As just seen the properties of styled segments can be inspected by indexing into it.
-Valid indices are the same as the options to `styled-segment` plus `text`.
+As just seen the properties of styled segments can be inspected by indexing into
+it. Valid indices are the same as the options to `styled-segment` plus `text`.
 
 ```elvish
 s = (styled-segment abc &bold)
@@ -1669,15 +1618,14 @@ put $s[fg-color]
 put $s[bold]
 ```
 
-
 ## take
 
 ```elvish
 take $n $input-list?
 ```
 
-Retain the first `$n` input elements. If `$n` is larger than the number of
-input elements, the entire input is retained. Examples:
+Retain the first `$n` input elements. If `$n` is larger than the number of input
+elements, the entire input is retained. Examples:
 
 ```elvish-transcript
 ~> take 3 [a b c d e]
@@ -1691,9 +1639,7 @@ input elements, the entire input is retained. Examples:
 ▶ 1
 ```
 
-
 Etymology: Haskell.
-
 
 ## tilde-abbr
 
@@ -1701,8 +1647,8 @@ Etymology: Haskell.
 tilde-abbr $path
 ```
 
-If `$path` represents a path under the home directory, replace the
-home directory with `~`.  Examples:
+If `$path` represents a path under the home directory, replace the home
+directory with `~`. Examples:
 
 ```elvish-transcript
 ~> echo $E:HOME
@@ -1715,15 +1661,13 @@ home directory with `~`.  Examples:
 ▶ '~/a/b'
 ```
 
-
 ## to-json
 
 ```elvish
 to-json
 ```
 
-Takes structured stdin, convert it to JSON and puts the result on bytes
-stdout.
+Takes structured stdin, convert it to JSON and puts the result on bytes stdout.
 
 ```elvish-transcript
 ~> put a | to-json
@@ -1734,7 +1678,7 @@ stdout.
 {"lorem":"ipsum"}
 ```
 
-$cf from-json
+\$cf from-json
 
 ## to-string
 
@@ -1750,7 +1694,6 @@ Convert arguments to string values.
 ▶ '[a]'
 ▶ '[&k=v]'
 ```
-
 
 ## unset-env
 
@@ -1769,8 +1712,7 @@ Unset an environment variable. Example:
 ▶ ''
 ```
 
-$cf has-env get-env set-env
-
+\$cf has-env get-env set-env
 
 ## wcswidth
 
@@ -1789,7 +1731,6 @@ Output the width of `$string` when displayed on the terminal. Examples:
 ▶ 10
 ```
 
-
 ## -gc
 
 ```elvish
@@ -1799,7 +1740,6 @@ Output the width of `$string` when displayed on the terminal. Examples:
 Force the Go garbage collector to run.
 
 This is only useful for debug purposes.
-
 
 ## -ifaddrs
 
@@ -1821,18 +1761,15 @@ Direct internal debug logs to the named file.
 
 This is only useful for debug purposes.
 
-
 ## -stack
 
 ```elvish
 -stack
 ```
 
-
 Print a stack trace.
 
 This is only useful for debug purposes.
-
 
 ## -source
 
@@ -1854,10 +1791,10 @@ executing x.elv
 bar
 ```
 
-Note that while in the example, you can reference `$foo` after sourcing
-`x.elv`, putting the `-source` command and reference to `$foo` in the **same
-code chunk** (e.g. by using <span class="key">Alt-Enter</span> to insert a
-literal Enter, or using `;`) is invalid:
+Note that while in the example, you can reference `$foo` after sourcing `x.elv`,
+putting the `-source` command and reference to `$foo` in the **same code chunk**
+(e.g. by using <span class="key">Alt-Enter</span> to insert a literal Enter, or
+using `;`) is invalid:
 
 ```elvish-transcript
 ~> # A new Elvish session
@@ -1871,10 +1808,10 @@ Compilation error: variable $foo not found
 ```
 
 This is because the reading of the file is done in the evaluation phase, while
-the check for variables happens at the compilation phase (before evaluation).
-So the compiler has no evidence showing that `$foo` is actually valid, and
-will complain. (See [here](../learn/unique-semantics.html#execution-phases) for
-a more detailed description of execution phases.)
+the check for variables happens at the compilation phase (before evaluation). So
+the compiler has no evidence showing that `$foo` is actually valid, and will
+complain. (See [here](../learn/unique-semantics.html#execution-phases) for a
+more detailed description of execution phases.)
 
 To work around this, you can add a forward declaration for `$foo`:
 
@@ -1887,7 +1824,6 @@ foo = bar
 executing x.elv
 bar
 ```
-
 
 ## -time
 
@@ -1902,9 +1838,9 @@ Run the callable, and write the time used to run it. Example:
 1.006060647s
 ```
 
-When the callable also produces outputs, they are a bit tricky to separate
-from the output of `-time`. The easiest workaround is to redirect the output
-into a temporary file:
+When the callable also produces outputs, they are a bit tricky to separate from
+the output of `-time`. The easiest workaround is to redirect the output into a
+temporary file:
 
 ```elvish-transcript
 ~> f = (mktemp)
@@ -1915,20 +1851,19 @@ output
 ~> rm $f
 ```
 
-
 # Builtin Variables
 
-## $_
+## \$\_
 
 A blackhole variable.
 
-Values assigned to it will be discarded. Trying to use its value (like `put
-$_`) causes an exception.
+Values assigned to it will be discarded. Trying to use its value (like `put $_`)
+causes an exception.
 
-## $after-chdir
+## \$after-chdir
 
-A list of functions to run after changing directory. These functions are
-always called with directory to change it, which might be a relative path. The
+A list of functions to run after changing directory. These functions are always
+called with directory to change it, which might be a relative path. The
 following example also shows `$before-chdir`:
 
 ```elvish-transcript
@@ -1943,9 +1878,9 @@ Changed to local, pwd is /usr/local
 /usr/local>
 ```
 
-$cf before-chdir
+\$cf before-chdir
 
-## $args
+## \$args
 
 A list containing command-line arguments. Analogous to `argv` in some other
 languages. Examples:
@@ -1961,43 +1896,43 @@ languages. Examples:
 As demonstrated above, this variable does not contain the name of the script
 used to invoke it. For that information, use the `src` command.
 
-$cf src
+\$cf src
 
-## $before-chdir
+## \$before-chdir
 
-A list of functions to run before changing directory. These functions are
-always called with the new working directory.
+A list of functions to run before changing directory. These functions are always
+called with the new working directory.
 
-$cf after-chdir
+\$cf after-chdir
 
-## $false
+## \$false
 
 The boolean false value.
 
-## $ok
+## \$ok
 
 The special value used by `?()` to signal absence of exceptions.
 
-## $num-bg-jobs
+## \$num-bg-jobs
 
 Number of background jobs.
 
-## $notify-bg-job-success
+## \$notify-bg-job-success
 
 Whether to notify success of background jobs, defaulting to `$true`.
 
 Failures of background jobs are always notified.
 
-## $paths
+## \$paths
 
 A list of search paths, kept in sync with `$E:PATH`. It is easier to use than
 `$E:PATH`.
 
-## $pid
+## \$pid
 
 The process ID of the current Elvish process.
 
-## $pwd
+## \$pwd
 
 The present working directory. Setting this variable has the same effect as
 `cd`. This variable is most useful in temporary assignment.
@@ -2017,11 +1952,11 @@ for x [*/] {
 
 Etymology: the `pwd` command.
 
-## $true
+## \$true
 
 The boolean true value.
 
-## $value-out-indicator
+## \$value-out-indicator
 
 A string put before value outputs (such as those of of `put`). Defaults to
 `'▶ '`. Example:

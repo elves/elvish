@@ -6,7 +6,6 @@ This tutorial introduces the fundamentals of shell programming with Elvish.
 Familiarity with other shells or programming languages is useful but not
 required.
 
-
 # Commands and strings
 
 Let's begin with the traditional "hello world" program:
@@ -17,9 +16,8 @@ Hello, world!
 ```
 
 Here, we call the `echo` **command** with two **arguments**: `Hello,` and
-`world!`. The `echo` command prints them both, inserting a space in between
-and adding a newline at the end, and voilà, we get back the message `Hello,
-world!`.
+`world!`. The `echo` command prints them both, inserting a space in between and
+adding a newline at the end, and voilà, we get back the message `Hello, world!`.
 
 ## Quoting the argument
 
@@ -47,11 +45,9 @@ themselves are not part of the argument.
 
 On contrary, the `Hello,` and `world!` arguments are implicitly delimited by
 spaces (instead of explicitly by quotes); as such, they are known as
-**barewords**. Some special characters also delimit barewords, which we will
-see later. Barewords are useful to write command names, filenames and
-command-line switches, which usually do not contain spaces or special
-characters.
-
+**barewords**. Some special characters also delimit barewords, which we will see
+later. Barewords are useful to write command names, filenames and command-line
+switches, which usually do not contain spaces or special characters.
 
 ## Editing the command line
 
@@ -59,19 +55,18 @@ TODO
 
 ## Builtin and external commands
 
-We demonstrated the basic command structure using `echo`, a very simple
-command. The same structure applies to all the commands. For instance, Elvish
-comes with a `randint` command that takes two arguments `a` and `b` and
-generates a random integer in the range a...b-1. You can use the command as a
-digital dice:
+We demonstrated the basic command structure using `echo`, a very simple command.
+The same structure applies to all the commands. For instance, Elvish comes with
+a `randint` command that takes two arguments `a` and `b` and generates a random
+integer in the range a...b-1. You can use the command as a digital dice:
 
 ```elvish-transcript
 ~> randint 1 7
 ▶ 3
 ```
 
-Arithmetic operations are also commands. Like other commands, the command
-names comes first, making the syntax a bit different from common mathematical
+Arithmetic operations are also commands. Like other commands, the command names
+comes first, making the syntax a bit different from common mathematical
 notations:
 
 ```elvish-transcript
@@ -86,8 +81,8 @@ are [many more](../ref/builtin.html) of them.
 
 Another kind of commands is **external commands**. They are separate programs
 from Elvish, and either come with the operating system or are installed by you
-manually. Chances are you have already used some of them, like `ls` for
-listing files, or `cat` for showing files.
+manually. Chances are you have already used some of them, like `ls` for listing
+files, or `cat` for showing files.
 
 There are really a myriad of external commands; to start with, you can manage
 code repositories with [git](https://git-scm.com), convert documents with
@@ -95,12 +90,12 @@ code repositories with [git](https://git-scm.com), convert documents with
 [ImageImagick](https://www.imagemagick.org/script/index.php), transcode videos
 with [ffmpeg](http://ffmpeg.org), test the security of websites with
 [nmap](https://nmap.org) and analyze network traffic with
-[tcpdump](http://www.tcpdump.org). Many free and open-source software come
-with a command-line interface.
+[tcpdump](http://www.tcpdump.org). Many free and open-source software come with
+a command-line interface.
 
 Here we show you how to obtain the latest version of Elvish entirely from the
-command line: we use `curl` to download the binary and its checksum, `shasum`
-to check the checksum, and `chmod` to make it executable (assuming that you are
+command line: we use `curl` to download the binary and its checksum, `shasum` to
+check the checksum, and `chmod` to make it executable (assuming that you are
 running macOS on x86-64):
 
 ```elvish-transcript
@@ -125,10 +120,10 @@ can just retype the command:
 ```
 
 The command is short, but still, it can become a chore if you want to run it
-repeatedly. Fortunately, Elvish remembers all the commands you have typed;
-you can just ask Elvish to recall it by pressing <span class="key">Up</span>:
+repeatedly. Fortunately, Elvish remembers all the commands you have typed; you
+can just ask Elvish to recall it by pressing <span class="key">Up</span>:
 
-$ttyshot fundamentals/history-1
+\$ttyshot fundamentals/history-1
 
 This will give you the last command you have run. However, it may have been a
 while when you have last run the `randint` command, and this will not give you
@@ -137,10 +132,10 @@ until you find the command, or you you can give Elvish a hint by typing some
 characters from the command line you want, e.g. `ra`, before pressing <span
 class="key">Up</span>:
 
-$ttyshot fundamentals/history-2
+\$ttyshot fundamentals/history-2
 
-Another way to rerun commands is saving them in a **script**, which is simply
-a text file containing the commands you want to run. Using your favorite text
+Another way to rerun commands is saving them in a **script**, which is simply a
+text file containing the commands you want to run. Using your favorite text
 editor, save the command to `dice.elv` under your home directory:
 
 ```elvish
@@ -157,7 +152,6 @@ After saving the script, you can run it with:
 
 Since the above command runs `elvish` explicitly, it works in other shells as
 well, not just from Elvish itself.
-
 
 # Variables and lists
 
@@ -179,9 +173,9 @@ Which works until you want a different message. One way to solve this is using
 Hello, John!
 ```
 
-The command `echo Hello, $name!` uses the `$name` variable you just assigned
-in the previous command. To greet a different person, you can just change the
-value of the variable, and the command doesn't need to change:
+The command `echo Hello, $name!` uses the `$name` variable you just assigned in
+the previous command. To greet a different person, you can just change the value
+of the variable, and the command doesn't need to change:
 
 ```elvish-transcript
 ~> name = Jane
@@ -189,8 +183,8 @@ value of the variable, and the command doesn't need to change:
 Hello, Jane!
 ```
 
-Using variables has another advantage: after defining a variable, you can use
-it as many times as you want:
+Using variables has another advantage: after defining a variable, you can use it
+as many times as you want:
 
 ```elvish-transcript
 ~> name = Jane
@@ -203,14 +197,13 @@ Bye, Jane!
 Now, if you change the value of `$name`, the output of both commands will
 change.
 
-
 ## Environment variables
 
-In the examples above, we have assigned value of `$name` ourselves. We can
-also make the `$name` variable automatically take the name of the current
-user, which is usually kept in an **environment variable** called `USER`. In
-Elvish, environment variables are used like other variables, except that they
-have an `E:` at the front of the name:
+In the examples above, we have assigned value of `$name` ourselves. We can also
+make the `$name` variable automatically take the name of the current user, which
+is usually kept in an **environment variable** called `USER`. In Elvish,
+environment variables are used like other variables, except that they have an
+`E:` at the front of the name:
 
 ```elvish-transcript
 ~> echo Hello, $E:USER!
@@ -223,9 +216,9 @@ The outputs will likely differ on your machine.
 
 ## Lists and indexing
 
-The values we have stored in variables so far are all strings. It is possible
-to store a **list** of values in one variable; a list can be written by
-surrounding some values with `[` and `]`. For example:
+The values we have stored in variables so far are all strings. It is possible to
+store a **list** of values in one variable; a list can be written by surrounding
+some values with `[` and `]`. For example:
 
 ```elvish-transcript
 ~> list = [linux bsd macos windows]
@@ -233,10 +226,9 @@ surrounding some values with `[` and `]`. For example:
 [linux bsd macos windows]
 ```
 
-Each element of this list has an **index**, starting from 0. In the list
-above, the index of `linux` is 0, that of `bsd` is 1, and so on. We can
-retrieve an element by writing its index after the list, also surrounded by
-`[` and `]`:
+Each element of this list has an **index**, starting from 0. In the list above,
+the index of `linux` is 0, that of `bsd` is 1, and so on. We can retrieve an
+element by writing its index after the list, also surrounded by `[` and `]`:
 
 ```elvish-transcript
 ~> echo $list[0] is at index 0
@@ -277,11 +269,11 @@ We can also supply additional arguments:
 ▶ 4
 ```
 
-But this hasn't made any difference, because well, our `dice.elv` script
-doesn't make use of the arguments.
+But this hasn't made any difference, because well, our `dice.elv` script doesn't
+make use of the arguments.
 
-The arguments are kept in a `$args` variable, as a list. Let's try put this
-into a `show-args.elv` file in your home directory:
+The arguments are kept in a `$args` variable, as a list. Let's try put this into
+a `show-args.elv` file in your home directory:
 
 ```elvish
 echo $args
@@ -299,8 +291,8 @@ And we can run it:
 ```
 
 Since `$args` is a list, we can retrieve the individual elements with
-`$args[0]`, `$args[1]`, etc.. Let's rewrite our greet-and-bye script, taking
-the name as an argument. Put this in `greet-and-bye.elv`:
+`$args[0]`, `$args[1]`, etc.. Let's rewrite our greet-and-bye script, taking the
+name as an argument. Put this in `greet-and-bye.elv`:
 
 ```
 name = $args[0]
@@ -321,23 +313,24 @@ Bye, John!
 
 # Output capture and multiple values
 
-Environment variables are not the only way to learn about a computer system;
-we can also gain more information by invoking commands. The `uname` command
-tells you which operation system the computer is running; for instance, if you
-are running Linux, it prints `Linux` (unsurprisingly):
+Environment variables are not the only way to learn about a computer system; we
+can also gain more information by invoking commands. The `uname` command tells
+you which operation system the computer is running; for instance, if you are
+running Linux, it prints `Linux` (unsurprisingly):
 
 ```elvish-transcript
 ~> uname
 Linux
 ```
 
-(If you are running macOS, `uname` will print `Darwin`, the [open-source
-core](https://en.wikipedia.org/wiki/Darwin_(operating_system)) of macOS.)
+(If you are running macOS, `uname` will print `Darwin`, the
+[open-source core](<https://en.wikipedia.org/wiki/Darwin_(operating_system)>) of
+macOS.)
 
 Let's try to integrate this information into our "hello" message. The Elvish
-command-line allows us to run multiple commands in a batch, as long as they
-are separated by semicolons. We can build the message by running multiple
-commands, using `uname` for the OS part:
+command-line allows us to run multiple commands in a batch, as long as they are
+separated by semicolons. We can build the message by running multiple commands,
+using `uname` for the OS part:
 
 ```elvish-transcript
 ~> echo Hello, $E:USER, ; uname ; echo user!
@@ -346,8 +339,8 @@ Linux
 user!
 ```
 
-This has the undesirable effect that "Linux" appears on its own line. Instead
-of running this command directly, we can first **capture** its output in a
+This has the undesirable effect that "Linux" appears on its own line. Instead of
+running this command directly, we can first **capture** its output in a
 variable:
 
 ```elvish-transcript
@@ -356,8 +349,8 @@ variable:
 Hello, elf, Linux user!
 ```
 
-You can also use the output capture construct directly as an argument to
-`echo`, without storing the result in a variable first:
+You can also use the output capture construct directly as an argument to `echo`,
+without storing the result in a variable first:
 
 ```elvish-transcript
 ~> echo Hello, $E:USER, (uname) user!
@@ -374,7 +367,6 @@ than one operation:
    * (+ 3 4) (- 100 94)
 ▶ 42
 ```
-
 
 <!--
 # Hello, everyone!
@@ -507,4 +499,3 @@ What I want to get into this document:
 
 Write for readers with a moderate knowledge of a POSIXy shell (bash, zsh, ...)
 -->
-
