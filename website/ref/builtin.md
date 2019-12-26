@@ -320,7 +320,7 @@ yet supported.
 
 Etymology: [Clojure](https://clojuredocs.org/clojure.core/assoc).
 
-\$cf dissoc
+$cf dissoc
 
 ## bool
 
@@ -349,7 +349,7 @@ true:
 ▶ $true
 ```
 
-\$cf not
+$cf not
 
 ## cd
 
@@ -378,7 +378,7 @@ Outputs a string consisting of the given Unicode codepoints. Example:
 
 Etymology: [Python](https://docs.python.org/3/library/functions.html#chr).
 
-\$cf ord
+$cf ord
 
 ## constantly
 
@@ -465,7 +465,7 @@ Output a slightly modified version of `$map`, with the key `$k` removed. If
 ▶ [&lorem=ipsum &foo=bar]
 ```
 
-\$cf assoc
+$cf assoc
 
 ## drop
 
@@ -491,7 +491,7 @@ Example:
 
 Etymology: Haskell.
 
-\$cf take
+$cf take
 
 ## each
 
@@ -511,7 +511,7 @@ Call `$f` on all inputs. Examples:
 ▶ ips
 ```
 
-\$cf peach
+$cf peach
 
 Etymology: Various languages, as `for each`. Happens to have the same name as
 the iteration construct of
@@ -574,7 +574,7 @@ Notes: The `echo` builtin does not treat `-e` or `-n` specially. For instance,
 `echo -n` just prints `-n`. Use double-quoted strings to print special
 characters, and `print` to suppress the trailing newline.
 
-\$cf print
+$cf print
 
 Etymology: Bourne sh.
 
@@ -598,7 +598,7 @@ given no or one argument.
 ▶ $false
 ```
 
-\$cf is not-eq
+$cf is not-eq
 
 Etymology: [Perl](https://perldoc.perl.org/perlop.html#Equality-Operators).
 
@@ -653,7 +653,7 @@ Construct a callable value for the external program `$program`. Example:
 ~> $x ls # opens the manpage for ls
 ```
 
-\$cf has-external search-external
+$cf has-external search-external
 
 ## fail
 
@@ -686,7 +686,7 @@ fclose $file
 
 Close a file opened with `fopen`.
 
-\$cf fopen
+$cf fopen
 
 ## fopen
 
@@ -708,7 +708,7 @@ a file.
 ~> fclose $f
 ```
 
-\$cf fclose
+$cf fclose
 
 ## from-json
 
@@ -741,7 +741,7 @@ Examples:
 ▶ [&k=v]
 ```
 
-\$cf to-json
+$cf to-json
 
 ## get-env
 
@@ -760,7 +760,7 @@ Exception: non-existent environment variable
 [tty], line 1: get-env NO_SUCH_ENV
 ```
 
-\$cf has-env set-env unset-env
+$cf has-env set-env unset-env
 
 ## has-env
 
@@ -777,7 +777,7 @@ Test whether an environment variable exists. Examples:
 ▶ $false
 ```
 
-\$cf get-env set-env unset-env
+$cf get-env set-env unset-env
 
 ## has-external
 
@@ -795,7 +795,7 @@ might differ):
 ▶ $false
 ```
 
-\$cf external search-external
+$cf external search-external
 
 ## has-key
 
@@ -932,7 +932,7 @@ The definition of identity is subject to change. Do not rely on its behavior.
 ▶ $false
 ```
 
-\$cf eq
+$cf eq
 
 Etymology: [Python](https://docs.python.org/3/reference/expressions.html#is).
 
@@ -957,7 +957,7 @@ well-known [join](<https://en.wikipedia.org/wiki/join_(Unix)>) utility.
 Etymology: Various languages as `join`, in particular
 [Python](https://docs.python.org/3.6/library/stdtypes.html#str.join).
 
-\$cf splits
+$cf splits
 
 ## keys
 
@@ -1035,7 +1035,7 @@ Boolean negation. Examples:
 
 **NOTE**: `and` and `or` are implemented as special commands.
 
-\$cf bool
+$cf bool
 
 ## not-eq
 
@@ -1055,7 +1055,7 @@ this does not imply that `$value`s are all distinct. Examples:
 ▶ $false
 ```
 
-\$cf eq
+$cf eq
 
 ## only-bytes
 
@@ -1107,7 +1107,7 @@ The output format is subject to change.
 
 Etymology: [Python](https://docs.python.org/3/library/functions.html#ord).
 
-\$cf chr
+$cf chr
 
 ## path-\*
 
@@ -1146,7 +1146,7 @@ This command is intended for homogeneous processing of possibly unbound data. If
 you need to do a fixed number of heterogeneous things in parallel, use
 `run-parallel`.
 
-\$cf each run-parallel
+$cf each run-parallel
 
 ## pipe
 
@@ -1180,7 +1180,7 @@ lorem ipsum
 # $p should be closed with prclose and pwclose afterwards
 ```
 
-\$cf prclose pwclose
+$cf prclose pwclose
 
 ## prclose
 
@@ -1190,7 +1190,7 @@ prclose $pipe
 
 Close the read end of a pipe.
 
-\$cf pwclose pipe
+$cf pwclose pipe
 
 ## put
 
@@ -1241,7 +1241,7 @@ Pretty-print representations of Elvish values. Examples:
 
 The output format is subject to change.
 
-\$cf repr
+$cf repr
 
 ## print
 
@@ -1251,7 +1251,7 @@ print &sep=' ' $value...
 
 Like `echo`, just without the newline.
 
-\$cf echo
+$cf echo
 
 Etymology: Various languages, in particular
 [Perl](https://perldoc.perl.org/functions/print.html) and
@@ -1266,7 +1266,7 @@ pwclose $pipe
 
 Close the write end of a pipe.
 
-\$cf prclose pipe
+$cf prclose pipe
 
 ## range
 
@@ -1382,7 +1382,7 @@ newline. Example:
 [foo 'lorem ipsum'] "aha\n"
 ```
 
-\$cf pprint
+$cf pprint
 
 Etymology: [Python](https://docs.python.org/3/library/functions.html#repr).
 
@@ -1444,7 +1444,7 @@ This command is intended for doing a fixed number of heterogeneous things in
 parallel. If you need homogeneous parallel processing of possibly unbound data,
 use `peach` instead.
 
-\$cf peach
+$cf peach
 
 ## search-external
 
@@ -1460,7 +1460,7 @@ found. Example (your output might vary):
 ▶ /bin/cat
 ```
 
-\$cf external has-external
+$cf external has-external
 
 ## set-env
 
@@ -1476,7 +1476,7 @@ Sets an environment variable to the given value. Example:
 ▶ foobar
 ```
 
-\$cf get-env has-env unset-env
+$cf get-env has-env unset-env
 
 ## slurp
 
@@ -1522,7 +1522,7 @@ to split by regex.
 Etymology: Various languages as `split`, in particular
 [Python](https://docs.python.org/3.6/library/stdtypes.html#str.split).
 
-\$cf joins
+$cf joins
 
 ## src
 
@@ -1717,7 +1717,7 @@ Takes structured stdin, convert it to JSON and puts the result on bytes stdout.
 {"lorem":"ipsum"}
 ```
 
-\$cf from-json
+$cf from-json
 
 ## to-string
 
@@ -1751,7 +1751,7 @@ Unset an environment variable. Example:
 ▶ ''
 ```
 
-\$cf has-env get-env set-env
+$cf has-env get-env set-env
 
 ## wcswidth
 
@@ -1917,7 +1917,7 @@ Changed to local, pwd is /usr/local
 /usr/local>
 ```
 
-\$cf before-chdir
+$cf before-chdir
 
 ## \$args
 
@@ -1935,14 +1935,14 @@ languages. Examples:
 As demonstrated above, this variable does not contain the name of the script
 used to invoke it. For that information, use the `src` command.
 
-\$cf src
+$cf src
 
 ## \$before-chdir
 
 A list of functions to run before changing directory. These functions are always
 called with the new working directory.
 
-\$cf after-chdir
+$cf after-chdir
 
 ## \$false
 

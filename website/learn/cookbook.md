@@ -31,13 +31,13 @@ started quickly:
 
     Here is a terminalshot of the alternative prompts:
 
-    \$ttyshot unicode-prompts
+    $ttyshot unicode-prompts
 
 -   Press <span class="key">▲&#xfe0e;</span> to search through history. It uses
     what you have typed to do prefix match. To cancel, press <span
     class="key">Escape</span>.
 
-    \$ttyshot history-mode
+    $ttyshot history-mode
 
 -   Press <span class="key">Tab</span> to start completion. Use arrow keys
     <span class="key">▲&#xfe0e;</span> <span class="key">▼&#xfe0e;</span>
@@ -48,7 +48,7 @@ started quickly:
     class="key">Escape.</span> It even comes with a scrollbar! :) In fact, all
     interactive modes show a scrollbar when there is more output to see.
 
-    \$ttyshot completion-mode
+    $ttyshot completion-mode
 
 -   You can make completion case-insensitive with the following code:
 
@@ -72,7 +72,7 @@ started quickly:
     modes, <span class="key">Escape</span> gets you back to the default (insert)
     mode.
 
-    \$ttyshot navigation-mode
+    $ttyshot navigation-mode
 
 -   Try typing `echo [` and press <span class="key">Enter</span>. Elvish knows
     that the command is unfinished due to the unclosed `[` and inserts a newline
@@ -87,11 +87,11 @@ started quickly:
     `cd` into it. Press <span
     class="key">Escape</span> to cancel.
 
-    \$ttyshot location-mode
+    $ttyshot location-mode
 
     Type to filter:
 
-    \$ttyshot location-mode-filter
+    $ttyshot location-mode-filter
 
     The filtering algorithm is tailored for matching paths; you need only type a
     prefix of each component. In the screenshot, x/p/v matches
@@ -106,7 +106,7 @@ started quickly:
 
     This is showing me trying to fix a forgotten `sudo`:
 
-    \$ttyshot lastcmd
+    $ttyshot lastcmd
 
 # Language Recipes
 
