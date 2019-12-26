@@ -244,7 +244,7 @@ func withHighlighter(hl Highlighter) func(*AppSpec, TTYCtrl) {
 
 func TestReadCode_ShowsPrompt(t *testing.T) {
 	f := Setup(WithSpec(func(spec *AppSpec) {
-		spec.Prompt = ConstPrompt{ui.T("> ")}
+		spec.Prompt = NewConstPrompt(ui.T("> "))
 	}))
 	defer f.Stop()
 
@@ -286,7 +286,7 @@ func TestReadCode_RedrawsOnLateUpdateFromPrompt(t *testing.T) {
 
 func TestReadCode_ShowsRPrompt(t *testing.T) {
 	f := Setup(WithSpec(func(spec *AppSpec) {
-		spec.RPrompt = ConstPrompt{ui.T("R")}
+		spec.RPrompt = NewConstPrompt(ui.T("R"))
 	}))
 	defer f.Stop()
 
@@ -302,7 +302,7 @@ func TestReadCode_ShowsRPrompt(t *testing.T) {
 func TestReadCode_ShowsRPromptInFinalRedrawIfPersistent(t *testing.T) {
 	f := Setup(WithSpec(func(spec *AppSpec) {
 		spec.CodeAreaState.Buffer.Content = "code"
-		spec.RPrompt = ConstPrompt{ui.T("R")}
+		spec.RPrompt = NewConstPrompt(ui.T("R"))
 		spec.RPromptPersistent = func() bool { return true }
 	}))
 	defer f.Stop()
@@ -319,7 +319,7 @@ func TestReadCode_ShowsRPromptInFinalRedrawIfPersistent(t *testing.T) {
 func TestReadCode_HidesRPromptInFinalRedrawIfNotPersistent(t *testing.T) {
 	f := Setup(WithSpec(func(spec *AppSpec) {
 		spec.CodeAreaState.Buffer.Content = "code"
-		spec.RPrompt = ConstPrompt{ui.T("R")}
+		spec.RPrompt = NewConstPrompt(ui.T("R"))
 		spec.RPromptPersistent = func() bool { return false }
 	}))
 	defer f.Stop()

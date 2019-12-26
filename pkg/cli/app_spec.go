@@ -56,9 +56,13 @@ type Prompt interface {
 	LateUpdates() <-chan struct{}
 }
 
-// ConstPrompt is a Prompt implementation that always return the same ui.Text.
-type ConstPrompt struct{ Content ui.Text }
+// NewConstPrompt returns a Prompt that always shows the given text.
+func NewConstPrompt(t ui.Text) Prompt {
+	return constPrompt{t}
+}
 
-func (ConstPrompt) Trigger(force bool)           {}
-func (p ConstPrompt) Get() ui.Text               { return p.Content }
-func (ConstPrompt) LateUpdates() <-chan struct{} { return nil }
+type constPrompt struct{ Content ui.Text }
+
+func (constPrompt) Trigger(force bool)           {}
+func (p constPrompt) Get() ui.Text               { return p.Content }
+func (constPrompt) LateUpdates() <-chan struct{} { return nil }

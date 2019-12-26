@@ -31,7 +31,7 @@ func (highlighter) LateUpdates() <-chan struct{} { return nil }
 func main() {
 	var app cli.App
 	app = cli.NewApp(cli.AppSpec{
-		Prompt:      cli.ConstPrompt{Content: ui.T("> ")},
+		Prompt:      cli.NewConstPrompt(ui.T("> ")),
 		Highlighter: highlighter{},
 		OverlayHandler: el.MapHandler{
 			term.K('D', ui.Ctrl): func() { app.CommitEOF() },
