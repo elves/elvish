@@ -211,8 +211,8 @@ So for instance if you want to be able to use
 <span class="key">Ctrl-P</span> for this, you need to modify both bindings:
 
 ```elvish
-edit:insert:binding[Up] = { edit:history:start }
-edit:history:binding[Up] = { edit:history:up }
+edit:insert:binding[Ctrl-P] =  { edit:history:start }
+edit:history:binding[Ctrl-P] = { edit:history:up }
 ```
 
 
