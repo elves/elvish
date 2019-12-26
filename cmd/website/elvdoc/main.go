@@ -184,7 +184,10 @@ func extract(r io.Reader, ns string, w io.Writer) {
 		for k := range m {
 			names = append(names, k)
 		}
-		sort.Strings(names)
+		sort.Slice(names,
+			func(i, j int) bool {
+				return symbolForSort(names[i]) < symbolForSort(names[j])
+			})
 		for _, name := range names {
 			fmt.Fprintln(w)
 			fmt.Fprintf(w, "## %s\n", name)
@@ -204,4 +207,12 @@ func extract(r io.Reader, ns string, w io.Writer) {
 		}
 		write("Functions", fnDocs)
 	}
+}
+
+func symbolForSort(s string) string {
+	// If there is a leading dash, move it to the end.
+	if strings.HasPrefix(s, "-") {
+		return s[1:] + "-"
+	}
+	return s
 }

@@ -36,6 +36,31 @@ Changes directory.
 	},
 
 	{
+		name: "Source with unstable symbols",
+		src: `package x
+
+//elvdoc:fn -b
+// -B.
+
+//elvdoc:fn a
+// A.
+
+//elvdoc:fn b
+// B.
+`,
+		wantDoc: `# Functions
+
+## a
+A.
+
+## b
+B.
+
+## -b
+-B.
+`,
+	},
+	{
 		name: "Source with multiple doc-fn",
 		src: `package x
 
