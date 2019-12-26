@@ -18,4 +18,5 @@ mydir=$(dirname "$0")
 
 $mydir/highlight.bin < $1 |
   $mydir/macros.bin |
+  $mydir/elvdoc.bin -filter |
   pandoc -f gfm+smart --data-dir=$mydir/pandoc-data --metadata title=${1%.md} -o $2 $opts

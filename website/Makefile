@@ -5,7 +5,7 @@ PUBLISH_DIR := ./_publish
 MDS := home.md $(wildcard [^_]*/*.md)
 HTMLS := $(MDS:.md=.html)
 
-TOOLS := highlight macros
+TOOLS := highlight macros elvdoc
 
 default: gen
 
