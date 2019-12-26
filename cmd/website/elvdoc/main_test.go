@@ -48,15 +48,16 @@ Changes directory.
 //elvdoc:fn b
 // B.
 `,
+		ns: "ns:",
 		wantDoc: `# Functions
 
-## a
+## ns:a
 A.
 
-## b
+## ns:b
 B.
 
-## -b
+## ns:-b
 -B.
 `,
 	},

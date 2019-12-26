@@ -163,10 +163,10 @@ func extract(r io.Reader, ns string, w io.Writer) {
 			switch {
 			case strings.HasPrefix(line, varDocPrefix):
 				varName := line[len(varDocPrefix) : len(line)-1]
-				varDocs["$"+ns+varName], err = readCommentBlock()
+				varDocs[varName], err = readCommentBlock()
 			case strings.HasPrefix(line, fnDocPrefix):
 				fnName := line[len(fnDocPrefix) : len(line)-1]
-				fnDocs[ns+fnName], err = readCommentBlock()
+				fnDocs[fnName], err = readCommentBlock()
 			}
 		}
 
@@ -178,7 +178,7 @@ func extract(r io.Reader, ns string, w io.Writer) {
 		}
 	}
 
-	write := func(heading string, m map[string]string) {
+	write := func(heading, prefix string, m map[string]string) {
 		fmt.Fprintf(w, "# %s\n", heading)
 		names := make([]string, 0, len(m))
 		for k := range m {
@@ -190,7 +190,7 @@ func extract(r io.Reader, ns string, w io.Writer) {
 			})
 		for _, name := range names {
 			fmt.Fprintln(w)
-			fmt.Fprintf(w, "## %s\n", name)
+			fmt.Fprintf(w, "## %s\n", prefix+name)
 			// The body is guaranteed to have a trailing newline, hence Fprint
 			// instead of Fprintln.
 			fmt.Fprint(w, m[name])
@@ -198,14 +198,14 @@ func extract(r io.Reader, ns string, w io.Writer) {
 	}
 
 	if len(varDocs) > 0 {
-		write("Variables", varDocs)
+		write("Variables", "$"+ns, varDocs)
 	}
 	if len(fnDocs) > 0 {
 		if len(varDocs) > 0 {
 			fmt.Fprintln(w)
 			fmt.Fprintln(w)
 		}
-		write("Functions", fnDocs)
+		write("Functions", ns, fnDocs)
 	}
 }
 
