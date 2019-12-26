@@ -162,7 +162,7 @@ func extract(r io.Reader, w io.Writer) {
 			switch {
 			case strings.HasPrefix(line, varDocPrefix):
 				varName := line[len(varDocPrefix) : len(line)-1]
-				varDocs[varName], err = readCommentBlock()
+				varDocs["$"+varName], err = readCommentBlock()
 			case strings.HasPrefix(line, fnDocPrefix):
 				fnName := line[len(fnDocPrefix) : len(line)-1]
 				fnDocs[fnName], err = readCommentBlock()

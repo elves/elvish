@@ -63,7 +63,7 @@ C.
 //elvdoc:fn a
 // A.
 
-//elvdoc:var $b
+//elvdoc:var b
 // B.
 `,
 		`# Variables
@@ -110,7 +110,7 @@ func TestRun_MultipleFiles(t *testing.T) {
 	run([]string{"a.go", "b.go"}, emptyReader, w)
 	compare(t, w.String(), `# Variables
 
-## v2
+## $v2
 
 Variable 2 from b.
 
@@ -135,11 +135,11 @@ func TestRun_Directory(t *testing.T) {
 	run([]string{"-dir", "."}, emptyReader, w)
 	compare(t, w.String(), `# Variables
 
-## v1
+## $v1
 
 Variable 1 from c.
 
-## v2
+## $v2
 
 Variable 2 from b.
 
@@ -180,6 +180,7 @@ Some more text.
 }
 
 func compare(t *testing.T, got, want string) {
+	t.Helper()
 	if got != want {
 		t.Errorf("\n<<<<< Got\n%s\n=====\n%s\n>>>>> Want", got, want)
 	}
