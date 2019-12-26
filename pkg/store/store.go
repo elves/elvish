@@ -63,24 +63,16 @@ func NewStoreFromDB(db *bolt.DB) (DBStore, error) {
 		waits: sync.WaitGroup{},
 	}
 
-	if SchemaUpToDate(db) {
-		logger.Println("DB schema up to date")
-	} else {
-		err := db.Update(func(tx *bolt.Tx) error {
-			for name, fn := range initDB {
-				err := fn(tx)
-				if err != nil {
-					return fmt.Errorf("failed to %s: %v", name, err)
-				}
+	err := db.Update(func(tx *bolt.Tx) error {
+		for name, fn := range initDB {
+			err := fn(tx)
+			if err != nil {
+				return fmt.Errorf("failed to %s: %v", name, err)
 			}
-			return nil
-		})
-		if err != nil {
-			return nil, err
 		}
-	}
-
-	return st, nil
+		return nil
+	})
+	return st, err
 }
 
 // Waits returns a WaitGroup used to register outstanding storage requests when
