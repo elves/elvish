@@ -1,13 +1,17 @@
 package histutil
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/elves/elvish/pkg/store"
+)
 
 // DB is the interface of the storage database.
 type DB interface {
 	NextCmdSeq() (int, error)
 	AddCmd(cmd string) (int, error)
 	Cmds(from, upto int) ([]string, error)
-	PrevCmd(upto int, prefix string) (int, string, error)
+	PrevCmd(upto int, prefix string) (store.Cmd, error)
 }
 
 // TestDB is an implementation of the DB interface that can be used for testing.
@@ -39,17 +43,17 @@ func (s *TestDB) Cmds(from, upto int) ([]string, error) {
 	return s.AllCmds[from:upto], s.error()
 }
 
-func (s *TestDB) PrevCmd(upto int, prefix string) (int, string, error) {
+func (s *TestDB) PrevCmd(upto int, prefix string) (store.Cmd, error) {
 	if s.OneOffError != nil {
-		return -1, "", s.error()
+		return store.Cmd{}, s.error()
 	}
 	if upto < 0 || upto > len(s.AllCmds) {
 		upto = len(s.AllCmds)
 	}
 	for i := upto - 1; i >= 0; i-- {
 		if strings.HasPrefix(s.AllCmds[i], prefix) {
-			return i, s.AllCmds[i], nil
+			return store.Cmd{Text: s.AllCmds[i], Seq: i}, nil
 		}
 	}
-	return -1, "", ErrEndOfHistory
+	return store.Cmd{}, ErrEndOfHistory
 }

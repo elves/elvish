@@ -9,6 +9,7 @@ import (
 	. "github.com/elves/elvish/pkg/cli/apptest"
 	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/cli/term"
+	"github.com/elves/elvish/pkg/store"
 	"github.com/elves/elvish/pkg/ui"
 )
 
@@ -16,8 +17,8 @@ type faultyStore struct{}
 
 var mockError = errors.New("mock error")
 
-func (s faultyStore) LastCmd() (histutil.Entry, error) {
-	return histutil.Entry{}, mockError
+func (s faultyStore) LastCmd() (store.Cmd, error) {
+	return store.Cmd{}, mockError
 }
 
 func TestStart_NoStore(t *testing.T) {
@@ -40,10 +41,10 @@ func TestStart_OK(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	store := histutil.NewMemoryStore()
-	store.AddCmd(histutil.Entry{Text: "foo,bar,baz", Seq: 0})
+	st := histutil.NewMemoryStore()
+	st.AddCmd(store.Cmd{Text: "foo,bar,baz", Seq: 0})
 	Start(f.App, Config{
-		Store: store,
+		Store: st,
 		Wordifier: func(cmd string) []string {
 			return strings.Split(cmd, ",")
 		},
@@ -82,7 +83,7 @@ func TestStart_OK(t *testing.T) {
 		*s = cli.CodeAreaState{}
 	})
 	Start(f.App, Config{
-		Store: store,
+		Store: st,
 		Wordifier: func(cmd string) []string {
 			return strings.Split(cmd, ",")
 		},
@@ -94,8 +95,8 @@ func TestStart_OK(t *testing.T) {
 	f.App.CodeArea().MutateState(func(s *cli.CodeAreaState) {
 		*s = cli.CodeAreaState{}
 	})
-	store.AddCmd(histutil.Entry{Text: "foo bar baz", Seq: 1})
-	Start(f.App, Config{Store: store})
+	st.AddCmd(store.Cmd{Text: "foo bar baz", Seq: 1})
+	Start(f.App, Config{Store: st})
 	f.TTY.Inject(term.K('0'))
 	f.TestTTY(t, "foo", term.DotHere)
 }

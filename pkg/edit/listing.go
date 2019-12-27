@@ -262,7 +262,7 @@ type fuserWrapper struct {
 	*histutil.Fuser
 }
 
-func (f fuserWrapper) AddCmd(cmd histutil.Entry) (int, error) {
+func (f fuserWrapper) AddCmd(cmd store.Cmd) (int, error) {
 	return f.Fuser.AddCmd(cmd.Text)
 }
 

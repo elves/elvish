@@ -155,18 +155,18 @@ func (c *client) Cmds(from, upto int) ([]string, error) {
 	return res.Cmds, err
 }
 
-func (c *client) NextCmd(from int, prefix string) (int, string, error) {
+func (c *client) NextCmd(from int, prefix string) (store.Cmd, error) {
 	req := &api.NextCmdRequest{from, prefix}
 	res := &api.NextCmdResponse{}
 	err := c.call("NextCmd", req, res)
-	return res.Seq, res.Text, err
+	return store.Cmd{Text: res.Text, Seq: res.Seq}, err
 }
 
-func (c *client) PrevCmd(upto int, prefix string) (int, string, error) {
+func (c *client) PrevCmd(upto int, prefix string) (store.Cmd, error) {
 	req := &api.PrevCmdRequest{upto, prefix}
 	res := &api.PrevCmdResponse{}
 	err := c.call("PrevCmd", req, res)
-	return res.Seq, res.Text, err
+	return store.Cmd{Text: res.Text, Seq: res.Seq}, err
 }
 
 func (c *client) AddDir(dir string, incFactor float64) error {

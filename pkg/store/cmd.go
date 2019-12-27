@@ -92,43 +92,27 @@ func (s *dbStore) Cmds(from, upto int) ([]string, error) {
 
 // NextCmd finds the first command after the given sequence number (inclusive)
 // with the given prefix.
-func (s *dbStore) NextCmd(from int, prefix string) (int, string, error) {
-	var (
-		seq   int
-		cmd   string
-		found bool
-	)
+func (s *dbStore) NextCmd(from int, prefix string) (Cmd, error) {
+	var cmd Cmd
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketCmd))
 		c := b.Cursor()
 		p := []byte(prefix)
 		for k, v := c.Seek(marshalSeq(uint64(from))); k != nil; k, v = c.Next() {
 			if bytes.HasPrefix(v, p) {
-				seq = int(unmarshalSeq(k))
-				cmd = string(v)
-				found = true
-				break
+				cmd = Cmd{Text: string(v), Seq: int(unmarshalSeq(k))}
+				return nil
 			}
 		}
-		return nil
+		return ErrNoMatchingCmd
 	})
-
-	if !found {
-		return 0, "", ErrNoMatchingCmd
-	}
-
-	return seq, cmd, err
+	return cmd, err
 }
 
 // PrevCmd finds the last command before the given sequence number (exclusive)
 // with the given prefix.
-func (s *dbStore) PrevCmd(upto int, prefix string) (int, string, error) {
-	var (
-		seq   int
-		cmd   string
-		found bool
-	)
-
+func (s *dbStore) PrevCmd(upto int, prefix string) (Cmd, error) {
+	var cmd Cmd
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketCmd))
 		c := b.Cursor()
@@ -138,7 +122,7 @@ func (s *dbStore) PrevCmd(upto int, prefix string) (int, string, error) {
 		if k == nil { // upto > LAST
 			k, v = c.Last()
 			if k == nil {
-				return nil
+				return ErrNoMatchingCmd
 			}
 		} else {
 			k, v = c.Prev() // upto exists, find the previous one
@@ -146,20 +130,13 @@ func (s *dbStore) PrevCmd(upto int, prefix string) (int, string, error) {
 
 		for ; k != nil; k, v = c.Prev() {
 			if bytes.HasPrefix(v, p) {
-				seq = int(unmarshalSeq(k))
-				cmd = string(v)
-				found = true
-				break
+				cmd = Cmd{Text: string(v), Seq: int(unmarshalSeq(k))}
+				return nil
 			}
 		}
-		return nil
+		return ErrNoMatchingCmd
 	})
-
-	if !found {
-		return 0, "", ErrNoMatchingCmd
-	}
-
-	return seq, cmd, err
+	return cmd, err
 }
 
 func marshalSeq(seq uint64) []byte {

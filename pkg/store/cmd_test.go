@@ -62,12 +62,11 @@ func TestCmd(t *testing.T) {
 			f = tStore.NextCmd
 			funcname = "tStore.NextCmd"
 		}
-		seq, cmd, err := f(tt.seq, tt.prefix)
-		if seq != tt.wantedSeq || cmd != tt.wantedCmd || err != tt.wantedErr {
-			t.Errorf("%s(%v, %v) => (%v, %v, %v), want (%v, %v, %v)",
-				funcname, tt.seq, tt.prefix,
-				seq, cmd, err,
-				tt.wantedSeq, tt.wantedCmd, tt.wantedErr)
+		cmd, err := f(tt.seq, tt.prefix)
+		wantedCmd := Cmd{Text: tt.wantedCmd, Seq: tt.wantedSeq}
+		if cmd != wantedCmd || err != tt.wantedErr {
+			t.Errorf("%s(%v, %v) => (%v, %v), want (%v, %v)",
+				funcname, tt.seq, tt.prefix, cmd, err, wantedCmd, tt.wantedErr)
 		}
 	}
 

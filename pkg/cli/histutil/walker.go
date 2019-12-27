@@ -22,7 +22,7 @@ type Walker interface {
 type walker struct {
 	store       DB
 	storeUpper  int
-	sessionCmds []Entry
+	sessionCmds []store.Cmd
 	prefix      string
 
 	// The next element to fetch from the session history. If equal to -1, the
@@ -37,7 +37,7 @@ type walker struct {
 	inStack map[string]bool
 }
 
-func NewWalker(store DB, upper int, cmds []Entry, prefix string) Walker {
+func NewWalker(store DB, upper int, cmds []store.Cmd, prefix string) Walker {
 	return &walker{store, upper, cmds, prefix,
 		len(cmds) - 1, 0, nil, nil, map[string]bool{}}
 }
@@ -65,7 +65,7 @@ func (w *walker) CurrentCmd() string {
 
 // Prev walks to the previous matching history entry, skipping all duplicates.
 func (w *walker) Prev() error {
-	// Entry comes from the stack.
+	// store.Cmd comes from the stack.
 	if w.top < len(w.stack) {
 		w.top++
 		return nil
@@ -88,19 +88,16 @@ func (w *walker) Prev() error {
 		seq = w.seq[len(w.seq)-1]
 	}
 	for {
-		var (
-			cmd string
-			err error
-		)
-		seq, cmd, err = w.store.PrevCmd(seq, w.prefix)
+		cmd, err := w.store.PrevCmd(seq, w.prefix)
+		seq = cmd.Seq
 		if err != nil {
 			if err.Error() == store.ErrNoMatchingCmd.Error() {
 				err = ErrEndOfHistory
 			}
 			return err
 		}
-		if !w.inStack[cmd] {
-			w.push(cmd, seq)
+		if !w.inStack[cmd.Text] {
+			w.push(cmd.Text, seq)
 			return nil
 		}
 	}

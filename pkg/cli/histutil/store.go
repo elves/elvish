@@ -1,6 +1,10 @@
 package histutil
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/elves/elvish/pkg/store"
+)
 
 var errStoreIsEmpty = errors.New("store is empty")
 
@@ -9,17 +13,11 @@ type Store interface {
 	// AddCmd adds a new command history entry and returns its sequence number.
 	// Depending on the implementation, the Store might respect cmd.Seq and
 	// return it as is, or allocate another sequence number.
-	AddCmd(cmd Entry) (int, error)
+	AddCmd(cmd store.Cmd) (int, error)
 	// AllCmds returns all commands kept in the store.
-	AllCmds() ([]Entry, error)
+	AllCmds() ([]store.Cmd, error)
 	// LastCmd returns the last command in the store.
-	LastCmd() (Entry, error)
-}
-
-// Entry represents a command history item.
-type Entry struct {
-	Text string
-	Seq  int
+	LastCmd() (store.Cmd, error)
 }
 
 // NewMemoryStore returns a Store that stores command history in memory.
@@ -27,20 +25,20 @@ func NewMemoryStore() Store {
 	return &memoryStore{}
 }
 
-type memoryStore struct{ cmds []Entry }
+type memoryStore struct{ cmds []store.Cmd }
 
-func (s *memoryStore) AllCmds() ([]Entry, error) {
+func (s *memoryStore) AllCmds() ([]store.Cmd, error) {
 	return s.cmds, nil
 }
 
-func (s *memoryStore) AddCmd(cmd Entry) (int, error) {
+func (s *memoryStore) AddCmd(cmd store.Cmd) (int, error) {
 	s.cmds = append(s.cmds, cmd)
 	return cmd.Seq, nil
 }
 
-func (s *memoryStore) LastCmd() (Entry, error) {
+func (s *memoryStore) LastCmd() (store.Cmd, error) {
 	if len(s.cmds) == 0 {
-		return Entry{}, errStoreIsEmpty
+		return store.Cmd{}, errStoreIsEmpty
 	}
 	return s.cmds[len(s.cmds)-1], nil
 }
@@ -65,25 +63,24 @@ type dbStore struct {
 	upper int
 }
 
-func (s dbStore) AllCmds() ([]Entry, error) {
+func (s dbStore) AllCmds() ([]store.Cmd, error) {
 	// TODO: Return the actual command sequence in the DB. The DB currently
 	// doesn't have an RPC method for that.
 	cmds, err := s.db.Cmds(0, s.upper)
 	if err != nil {
 		return nil, err
 	}
-	entries := make([]Entry, len(cmds))
+	entries := make([]store.Cmd, len(cmds))
 	for i, cmd := range cmds {
-		entries[i] = Entry{cmd, i}
+		entries[i] = store.Cmd{cmd, i}
 	}
 	return entries, nil
 }
 
-func (s dbStore) AddCmd(cmd Entry) (int, error) {
+func (s dbStore) AddCmd(cmd store.Cmd) (int, error) {
 	return s.db.AddCmd(cmd.Text)
 }
 
-func (s dbStore) LastCmd() (Entry, error) {
-	seq, text, err := s.db.PrevCmd(s.upper, "")
-	return Entry{text, seq}, err
+func (s dbStore) LastCmd() (store.Cmd, error) {
+	return s.db.PrevCmd(s.upper, "")
 }

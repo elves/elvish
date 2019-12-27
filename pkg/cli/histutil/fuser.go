@@ -2,6 +2,8 @@ package histutil
 
 import (
 	"sync"
+
+	"github.com/elves/elvish/pkg/store"
 )
 
 // Fuser provides a view of command history that is fused from the shared
@@ -52,17 +54,17 @@ func (f *Fuser) AddCmd(cmd string) (int, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
-	seq, err := f.shared.AddCmd(Entry{Text: cmd})
+	seq, err := f.shared.AddCmd(store.Cmd{Text: cmd})
 	if err != nil {
 		return -1, err
 	}
-	f.session.AddCmd(Entry{Text: cmd, Seq: seq})
+	f.session.AddCmd(store.Cmd{Text: cmd, Seq: seq})
 	return seq, nil
 }
 
 // AllCmds returns all visible commands, consisting of commands that were
 // already in the database at startup, plus the per-session history.
-func (f *Fuser) AllCmds() ([]Entry, error) {
+func (f *Fuser) AllCmds() ([]store.Cmd, error) {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 
@@ -75,7 +77,7 @@ func (f *Fuser) AllCmds() ([]Entry, error) {
 }
 
 // LastCmd returns the last command within the fused view.
-func (f *Fuser) LastCmd() (Entry, error) {
+func (f *Fuser) LastCmd() (store.Cmd, error) {
 	cmd, err := f.session.LastCmd()
 	if err != errStoreIsEmpty {
 		return cmd, err
@@ -84,7 +86,7 @@ func (f *Fuser) LastCmd() (Entry, error) {
 }
 
 // SessionCmds returns the per-session history.
-func (f *Fuser) SessionCmds() []Entry {
+func (f *Fuser) SessionCmds() []store.Cmd {
 	cmds, _ := f.session.AllCmds()
 	return cmds
 }

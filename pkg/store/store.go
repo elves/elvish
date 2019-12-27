@@ -17,8 +17,8 @@ type Store interface {
 	DelCmd(seq int) error
 	Cmd(seq int) (string, error)
 	Cmds(from, upto int) ([]string, error)
-	NextCmd(from int, prefix string) (int, string, error)
-	PrevCmd(upto int, prefix string) (int, string, error)
+	NextCmd(from int, prefix string) (Cmd, error)
+	PrevCmd(upto int, prefix string) (Cmd, error)
 
 	AddDir(dir string, incFactor float64) error
 	DelDir(dir string) error
@@ -33,4 +33,10 @@ type Store interface {
 type Dir struct {
 	Path  string
 	Score float64
+}
+
+// Cmd is an entry in the command history.
+type Cmd struct {
+	Text string
+	Seq  int
 }

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+
+	"github.com/elves/elvish/pkg/store"
 )
 
 var mockError = errors.New("mock error")
@@ -21,7 +23,7 @@ func TestFusuer_AddCmd(t *testing.T) {
 	f.AddCmd("session 1")
 
 	wantDBCmds := []string{"store 1", "session 1"}
-	wantSessionCmds := []Entry{{"session 1", 1}}
+	wantSessionCmds := []store.Cmd{{"session 1", 1}}
 	if !reflect.DeepEqual(db.AllCmds, wantDBCmds) {
 		t.Errorf("DB commands = %v, want %v", db.AllCmds, wantDBCmds)
 	}
@@ -67,7 +69,7 @@ func TestFuser_AllCmds(t *testing.T) {
 	if err != nil {
 		t.Errorf("AllCmds -> error %v, want nil", err)
 	}
-	wantCmds := []Entry{
+	wantCmds := []store.Cmd{
 		{"store 1", 0}, {"session 1", 1}, {"session 2", 4}}
 	if !reflect.DeepEqual(cmds, wantCmds) {
 		t.Errorf("AllCmds -> %v, want %v", cmds, wantCmds)
@@ -91,7 +93,7 @@ func TestFuser_LastCmd_FromDB(t *testing.T) {
 
 	cmd, _ := f.LastCmd()
 
-	wantCmd := Entry{"store 1", 0}
+	wantCmd := store.Cmd{"store 1", 0}
 	if cmd != wantCmd {
 		t.Errorf("LastCmd -> %v, want %v", cmd, wantCmd)
 	}
@@ -118,7 +120,7 @@ func TestFuser_LastCmd_FromSession(t *testing.T) {
 	db.OneOffError = mockError
 	cmd, _ := f.LastCmd()
 
-	wantCmd := Entry{"session 1", 1}
+	wantCmd := store.Cmd{"session 1", 1}
 	if cmd != wantCmd {
 		t.Errorf("LastCmd -> %v, want %v", cmd, wantCmd)
 	}
@@ -138,7 +140,7 @@ func TestFuser_FastForward(t *testing.T) {
 	f.FastForward()
 	db.AddCmd("other session 4")
 
-	wantCmds := []Entry{
+	wantCmds := []store.Cmd{
 		{"store 1", 0}, {"session 1", 1}, {"other session 1", 2},
 		{"other session 2", 3}, {"session 2", 4}, {"other session 3", 5}}
 	cmds, _ := f.AllCmds()

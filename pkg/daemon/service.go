@@ -78,8 +78,8 @@ func (s *service) NextCmd(req *api.NextCmdRequest, res *api.NextCmdResponse) err
 	if s.err != nil {
 		return s.err
 	}
-	seq, text, err := s.store.NextCmd(req.From, req.Prefix)
-	res.Seq, res.Text = seq, text
+	cmd, err := s.store.NextCmd(req.From, req.Prefix)
+	res.Seq, res.Text = cmd.Seq, cmd.Text
 	return err
 }
 
@@ -87,8 +87,8 @@ func (s *service) PrevCmd(req *api.PrevCmdRequest, res *api.PrevCmdResponse) err
 	if s.err != nil {
 		return s.err
 	}
-	seq, text, err := s.store.PrevCmd(req.Upto, req.Prefix)
-	res.Seq, res.Text = seq, text
+	cmd, err := s.store.PrevCmd(req.Upto, req.Prefix)
+	res.Seq, res.Text = cmd.Seq, cmd.Text
 	return err
 }
 

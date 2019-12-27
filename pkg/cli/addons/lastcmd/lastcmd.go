@@ -9,6 +9,7 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/histutil"
+	"github.com/elves/elvish/pkg/store"
 	"github.com/elves/elvish/pkg/ui"
 )
 
@@ -24,7 +25,7 @@ type Config struct {
 
 // Store wraps the LastCmd method. It is a subset of histutil.Store.
 type Store interface {
-	LastCmd() (histutil.Entry, error)
+	LastCmd() (store.Cmd, error)
 }
 
 var _ = Store(histutil.Store(nil))

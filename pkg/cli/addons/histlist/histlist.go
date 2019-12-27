@@ -7,6 +7,7 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/histutil"
+	"github.com/elves/elvish/pkg/store"
 	"github.com/elves/elvish/pkg/ui"
 )
 
@@ -26,7 +27,7 @@ type Config struct {
 
 // Store wraps the AllCmds method. It is a subset of histutil.Store.
 type Store interface {
-	AllCmds() ([]histutil.Entry, error)
+	AllCmds() ([]store.Cmd, error)
 }
 
 var _ = Store(histutil.Store(nil))
@@ -91,7 +92,7 @@ func Start(app cli.App, cfg Config) {
 }
 
 type items struct {
-	entries []histutil.Entry
+	entries []store.Cmd
 	last    map[string]int
 }
 
@@ -102,7 +103,7 @@ func (it items) filter(p string, dedup, caseSensitive bool) items {
 	if !caseSensitive {
 		p = strings.ToLower(p)
 	}
-	var filtered []histutil.Entry
+	var filtered []store.Cmd
 	for i, entry := range it.entries {
 		text := entry.Text
 		if dedup && it.last[text] != i {

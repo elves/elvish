@@ -74,7 +74,7 @@ func TestWalker(t *testing.T) {
 
 	// Walker with session history.
 	w = NewWalker(walkerStore, -1,
-		[]Entry{{"ls -l", 7}, {"ls -v", 10}, {"echo haha", 12}}, "ls")
+		[]store.Cmd{{"ls -l", 7}, {"ls -v", 10}, {"echo haha", 12}}, "ls")
 	wantOK(w.Prev())
 	wantCurrent(10, "ls -v")
 
