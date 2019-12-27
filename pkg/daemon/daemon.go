@@ -10,4 +10,4 @@ import "github.com/elves/elvish/pkg/util"
 var logger = util.GetLogger("[daemon] ")
 
 // Version is the API version. It should be bumped any time the API changes.
-const Version = -94
+const Version = -93

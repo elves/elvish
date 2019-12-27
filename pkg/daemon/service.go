@@ -74,6 +74,15 @@ func (s *service) Cmds(req *api.CmdsRequest, res *api.CmdsResponse) error {
 	return err
 }
 
+func (s *service) CmdsWithSeq(req *api.CmdsWithSeqRequest, res *api.CmdsWithSeqResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	cmds, err := s.store.CmdsWithSeq(req.From, req.Upto)
+	res.Cmds = cmds
+	return err
+}
+
 func (s *service) NextCmd(req *api.NextCmdRequest, res *api.NextCmdResponse) error {
 	if s.err != nil {
 		return s.err

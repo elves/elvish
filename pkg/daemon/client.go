@@ -155,6 +155,13 @@ func (c *client) Cmds(from, upto int) ([]string, error) {
 	return res.Cmds, err
 }
 
+func (c *client) CmdsWithSeq(from, upto int) ([]store.Cmd, error) {
+	req := &api.CmdsWithSeqRequest{from, upto}
+	res := &api.CmdsWithSeqResponse{}
+	err := c.call("Cmds", req, res)
+	return res.Cmds, err
+}
+
 func (c *client) NextCmd(from int, prefix string) (store.Cmd, error) {
 	req := &api.NextCmdRequest{from, prefix}
 	res := &api.NextCmdResponse{}

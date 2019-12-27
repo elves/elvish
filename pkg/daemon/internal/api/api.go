@@ -63,6 +63,15 @@ type CmdsResponse struct {
 	Cmds []string
 }
 
+type CmdsWithSeqRequest struct {
+	From int
+	Upto int
+}
+
+type CmdsWithSeqResponse struct {
+	Cmds []store.Cmd
+}
+
 type NextCmdRequest struct {
 	From   int
 	Prefix string
