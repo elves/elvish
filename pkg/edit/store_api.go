@@ -15,7 +15,16 @@ var errStoreOffline = errors.New("store offline")
 
 //elvdoc:fn command-history
 //
-// Outputs the entire command history.
+// Outputs the entire command history as a stream of maps. Each map has a `id`
+// key that identifies the sequence number of the entry, and a `cmd` key that
+// identifies the content.
+//
+// Use indexing to extract individual entries. For example, to extract the
+// content of the last command, do this:
+//
+// ```elvish
+// edit:command-history | put [(all)][-1][cmd]
+// ```
 
 func commandHistory(fuser *histutil.Fuser, ch chan<- interface{}) error {
 	if fuser == nil {
