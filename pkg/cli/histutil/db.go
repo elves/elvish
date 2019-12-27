@@ -10,7 +10,7 @@ import (
 type DB interface {
 	NextCmdSeq() (int, error)
 	AddCmd(cmd string) (int, error)
-	Cmds(from, upto int) ([]string, error)
+	CmdsWithSeq(from, upto int) ([]store.Cmd, error)
 	PrevCmd(upto int, prefix string) (store.Cmd, error)
 }
 
@@ -39,8 +39,12 @@ func (s *TestDB) AddCmd(cmd string) (int, error) {
 	return len(s.AllCmds) - 1, nil
 }
 
-func (s *TestDB) Cmds(from, upto int) ([]string, error) {
-	return s.AllCmds[from:upto], s.error()
+func (s *TestDB) CmdsWithSeq(from, upto int) ([]store.Cmd, error) {
+	var cmds []store.Cmd
+	for i := from; i < upto; i++ {
+		cmds = append(cmds, store.Cmd{Text: s.AllCmds[i], Seq: i})
+	}
+	return cmds, s.error()
 }
 
 func (s *TestDB) PrevCmd(upto int, prefix string) (store.Cmd, error) {

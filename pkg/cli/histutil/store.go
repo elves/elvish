@@ -64,17 +64,7 @@ type dbStore struct {
 }
 
 func (s dbStore) AllCmds() ([]store.Cmd, error) {
-	// TODO: Return the actual command sequence in the DB. The DB currently
-	// doesn't have an RPC method for that.
-	cmds, err := s.db.Cmds(0, s.upper)
-	if err != nil {
-		return nil, err
-	}
-	entries := make([]store.Cmd, len(cmds))
-	for i, cmd := range cmds {
-		entries[i] = store.Cmd{cmd, i}
-	}
-	return entries, nil
+	return s.db.CmdsWithSeq(0, s.upper)
 }
 
 func (s dbStore) AddCmd(cmd store.Cmd) (int, error) {

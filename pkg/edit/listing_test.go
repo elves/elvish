@@ -34,8 +34,8 @@ func TestHistlistAddon(t *testing.T) {
 		"~> \n",
 		" HISTORY (dedup on)  ", Styles,
 		"******************** ", term.DotHere, "\n",
-		"   1 echo\n",
-		"   2 ls                                           ", Styles,
+		"   2 echo\n",
+		"   3 ls                                           ", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 	)
 
@@ -44,9 +44,9 @@ func TestHistlistAddon(t *testing.T) {
 		"~> \n",
 		" HISTORY  ", Styles,
 		"********* ", term.DotHere, "\n",
-		"   0 ls\n",
-		"   1 echo\n",
-		"   2 ls                                           ", Styles,
+		"   1 ls\n",
+		"   2 echo\n",
+		"   3 ls                                           ", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 	)
 
@@ -55,9 +55,9 @@ func TestHistlistAddon(t *testing.T) {
 		"~> \n",
 		" HISTORY (case-insensitive)  ", Styles,
 		"**************************** ", term.DotHere, "\n",
-		"   0 ls\n",
-		"   1 echo\n",
-		"   2 ls                                           ", Styles,
+		"   1 ls\n",
+		"   2 echo\n",
+		"   3 ls                                           ", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 	)
 }
