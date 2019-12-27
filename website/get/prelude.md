@@ -34,19 +34,19 @@ maintain backward compatibility from version to version.
   </tr>
   <tr>
     <td>
-      0.12 (<a href="/blog/0.12-release-notes.html">Release Note</a>)
+      0.13 (<a href="/blog/0.13-release-notes.html">Release Note</a>)
     </td>
     <td>
-      @dl Linux linux-amd64/elvish-v0.12.tar.gz
-      @dl macOS darwin-amd64/elvish-v0.12.tar.gz
-      @dl Windows windows-amd64/elvish-v0.12.zip
+      @dl Linux linux-amd64/elvish-v0.13.tar.gz
+      @dl macOS darwin-amd64/elvish-v0.13.tar.gz
+      @dl Windows windows-amd64/elvish-v0.13.zip
     </td>
     <td>
-      @dl Linux linux-386/elvish-v0.12.tar.gz
-      @dl Windows windows-386/elvish-v0.12.zip
+      @dl Linux linux-386/elvish-v0.13.tar.gz
+      @dl Windows windows-386/elvish-v0.13.zip
     </td>
     <td>
-      @dl Linux linux-arm64/elvish-v0.12.tar.gz
+      @dl Linux linux-arm64/elvish-v0.13.tar.gz
     </td>
   </tr>
 </table>
@@ -165,6 +165,23 @@ for historical interest.
     <th>x86-64</th>
     <th>x86</th>
     <th>ARMv8</th>
+  </tr>
+  <tr>
+    <td>
+      0.12 (<a href="/blog/0.12-release-notes.html">Release Note</a>)
+    </td>
+    <td>
+      @dl Linux linux-amd64/elvish-v0.12.tar.gz
+      @dl macOS darwin-amd64/elvish-v0.12.tar.gz
+      @dl Windows windows-amd64/elvish-v0.12.zip
+    </td>
+    <td>
+      @dl Linux linux-386/elvish-v0.12.tar.gz
+      @dl Windows windows-386/elvish-v0.12.zip
+    </td>
+    <td>
+      @dl Linux linux-arm64/elvish-v0.12.tar.gz
+    </td>
   </tr>
   <tr>
     <td>
