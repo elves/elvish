@@ -17,6 +17,7 @@ insert:binding = (binding-table [
   &End=  $move-dot-eol~
 
   &Backspace= $kill-rune-left~
+  &Ctrl-H=    $kill-rune-left~
   &Delete=    $kill-rune-right~
   &Ctrl-W=    $kill-word-left~
   &Ctrl-U=    $kill-line-left~
