@@ -36,22 +36,22 @@ rprompt is the same other than the variable name: just replace `prompt` with
 
 To customize the prompt, assign a function to `edit:prompt`. The function may
 write value outputs or byte outputs. Value outputs may be either strings or
-`edit:styled` values; they are joiend with no spaces in between. Byte outputs
-are output as-is, including any newlines, but control characters will be
-escaped: you should use `edit:styled` to output styled text. If you mix value
-and byte outputs, the order in which they appear is non-deterministic.
+`styled` values; they are joiend with no spaces in between. Byte outputs are
+output as-is, including any newlines, but control characters will be escaped:
+you should use `styled` to output styled text. If you mix value and byte
+outputs, the order in which they appear is non-deterministic.
 
 The default prompt and rprompt are equivalent to:
 
 ```elvish
 edit:prompt = { tilde-abbr $pwd; put '> ' }
-edit:rprompt = (constantly (edit:styled (whoami)@(hostname) inverse))
+edit:rprompt = (constantly (styled (whoami)@(hostname) inverse))
 ```
 
 More prompt functions:
 
 ```elvish-transcript
-~> edit:prompt = { tilde-abbr $pwd; edit:styled '> ' green }
+~> edit:prompt = { tilde-abbr $pwd; styled '> ' green }
 ~> # ">" is now green
 ~> edit:prompt = { echo '$' }
 $
