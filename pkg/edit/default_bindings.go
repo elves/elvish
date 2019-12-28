@@ -103,6 +103,10 @@ lastcmd:binding = (binding-table [
 -instant:binding = (binding-table [
   &Ctrl-'['= $listing:close~
 ])
+
+minibuf:binding = (binding-table [
+  &Ctrl-'['= $listing:close~
+])
 `
 
 // vi: set et:
