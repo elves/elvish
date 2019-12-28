@@ -12,16 +12,8 @@ import (
 )
 
 func TestNavigation(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
-	restoreLsColors := lscolors.WithTestLsColors()
-	defer restoreLsColors()
-
-	util.ApplyDir(util.Dir{"d": util.Dir{"a": ""}})
-	err := os.Chdir("d")
-	if err != nil {
-		panic(err)
-	}
+	f, cleanup := setupNav()
+	defer cleanup()
 
 	// Test navigation addon UI.
 	feedInput(f.TTYCtrl, "put")
@@ -62,4 +54,35 @@ func TestNavigation(t *testing.T) {
 		"put a a", Styles,
 		"vvv    ", term.DotHere,
 	)
+}
+
+func TestNavigation_WidthRatio(t *testing.T) {
+	f, cleanup := setupNav()
+	defer cleanup()
+
+	evals(f.Evaler, `@edit:navigation:width-ratio = 1 1 1`)
+	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))
+	f.TestTTY(t,
+		"~"+string(os.PathSeparator)+"d> ", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" d                a               ", Styles,
+		"################ ++++++++++++++++ ",
+	)
+}
+
+func setupNav() (*fixture, func()) {
+	f := setup()
+	restoreLsColors := lscolors.WithTestLsColors()
+
+	util.ApplyDir(util.Dir{"d": util.Dir{"a": ""}})
+	err := os.Chdir("d")
+	if err != nil {
+		panic(err)
+	}
+
+	return f, func() {
+		restoreLsColors()
+		f.Cleanup()
+	}
 }
