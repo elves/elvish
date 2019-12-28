@@ -218,7 +218,7 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 			"arg-completer": argGeneratorMapVar,
 			"binding":       bindingVar,
 			"matcher":       matcherMapVar,
-		}.AddGoFns("<edit:completion>", map[string]interface{}{
+		}.AddGoFns("<edit:completion>:", map[string]interface{}{
 			"accept":      func() { listingAccept(app) },
 			"smart-start": func() { completionStart(app, binding, cfg(), true) },
 			"start":       func() { completionStart(app, binding, cfg(), false) },
