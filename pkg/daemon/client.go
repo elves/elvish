@@ -158,7 +158,7 @@ func (c *client) Cmds(from, upto int) ([]string, error) {
 func (c *client) CmdsWithSeq(from, upto int) ([]store.Cmd, error) {
 	req := &api.CmdsWithSeqRequest{from, upto}
 	res := &api.CmdsWithSeqResponse{}
-	err := c.call("Cmds", req, res)
+	err := c.call("CmdsWithSeq", req, res)
 	return res.Cmds, err
 }
 
