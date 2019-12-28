@@ -102,6 +102,30 @@ func TestErrorInParent(t *testing.T) {
 	)
 }
 
+func TestWidthRatio(t *testing.T) {
+	f, cleanup := setup()
+	defer cleanup()
+	defer f.Stop()
+
+	c := getTestCursor()
+	Start(f.App, Config{
+		Cursor:     c,
+		WidthRatio: func() [3]int { return [3]int{1, 1, 1} },
+	})
+
+	f.TestTTY(t,
+		"", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" a            d1           content    d1\n", Styles,
+		"             +++++++++++++",
+		" d            d2           line 2\n", Styles,
+		"############ /////////////",
+		" f            d3          ", Styles,
+		"             /////////////",
+	)
+}
+
 func TestGetSelectedName(t *testing.T) {
 	f := Setup()
 	defer f.Stop()

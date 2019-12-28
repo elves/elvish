@@ -18,6 +18,9 @@ type Config struct {
 	Binding cli.Handler
 	// Underlying filesystem.
 	Cursor Cursor
+	// A function that returns the relative weights of the widths of the 3
+	// columns. If unspecified, the ratio is 1:3:4.
+	WidthRatio func() [3]int
 }
 
 type state struct {
@@ -126,6 +129,9 @@ func Start(app cli.App, cfg Config) {
 	if cfg.Cursor == nil {
 		cfg.Cursor = NewOSCursor()
 	}
+	if cfg.WidthRatio == nil {
+		cfg.WidthRatio = func() [3]int { return [3]int{1, 3, 4} }
+	}
 
 	var w *widget
 	w = &widget{
@@ -142,9 +148,12 @@ func Start(app cli.App, cfg Config) {
 		}),
 		colView: cli.NewColView(cli.ColViewSpec{
 			OverlayHandler: cfg.Binding,
-			Weights:        func(n int) []int { return []int{1, 3, 4} },
-			OnLeft:         func(cli.ColView) { w.ascend() },
-			OnRight:        func(cli.ColView) { w.descend() },
+			Weights: func(int) []int {
+				a := cfg.WidthRatio()
+				return a[:]
+			},
+			OnLeft:  func(cli.ColView) { w.ascend() },
+			OnRight: func(cli.ColView) { w.descend() },
 		}),
 	}
 	updateState(w, "")
