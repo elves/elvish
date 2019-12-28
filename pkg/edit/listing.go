@@ -141,7 +141,7 @@ func listingAccept(app cli.App) {
 	if !ok {
 		return
 	}
-	w.CodeArea().Submit()
+	w.ListBox().Accept()
 }
 
 //elvdoc:fn listing:accept-close
