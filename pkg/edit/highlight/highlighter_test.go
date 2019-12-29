@@ -223,12 +223,12 @@ func matchErrors(m ...tt.Matcher) errorsMatcher { return errorsMatcher{m} }
 type parseErrorMatcher struct{ begin, end int }
 
 func (m parseErrorMatcher) Match(v tt.RetValue) bool {
-	err := v.(*parse.Error)
+	err := v.(*diag.Error)
 	return m.begin == err.Context.From && m.end == err.Context.To
 }
 
 // Fake check error, used in tests for check callback.
 type fakeCheckError struct{ from, to int }
 
-func (e fakeCheckError) Range() diag.Ranging { return diag.Ranging{e.from, e.to} }
+func (e fakeCheckError) Range() diag.Ranging { return diag.Ranging{From: e.from, To: e.to} }
 func (fakeCheckError) Error() string         { return "fake check error" }

@@ -7,19 +7,16 @@ import (
 	"github.com/elves/elvish/pkg/diag"
 )
 
+const parseErrorType = "parse error"
+
 // MultiError stores multiple Error's and can pretty print them.
 type MultiError struct {
-	Entries []*Error
-}
-
-// Error represents one parse error.
-type Error struct {
-	Message string
-	Context diag.Context
+	Entries []*diag.Error
 }
 
 func (me *MultiError) add(msg string, ctx *diag.Context) {
-	me.Entries = append(me.Entries, &Error{msg, *ctx})
+	err := &diag.Error{Type: parseErrorType, Message: msg, Context: *ctx}
+	me.Entries = append(me.Entries, err)
 }
 
 // Error returns a string representation of the error.
@@ -61,16 +58,4 @@ func (me *MultiError) PPrint(indent string) string {
 		}
 		return sb.String()
 	}
-}
-
-func (e *Error) Error() string {
-	return fmt.Sprintf("parse error: %d-%d in %s: %s",
-		e.Context.From, e.Context.To, e.Context.Name, e.Message)
-}
-
-func (e *Error) PPrint(indent string) string {
-	sb := new(strings.Builder)
-	fmt.Fprintf(sb, "Parse error: \033[31;1m%s\033[m\n", e.Message)
-	sb.WriteString(e.Context.PPrintCompact(indent + "  "))
-	return sb.String()
 }

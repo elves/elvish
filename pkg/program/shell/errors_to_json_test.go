@@ -18,7 +18,7 @@ func TestErrorsToJSON(t *testing.T) {
 		).Rets(
 			[]byte(`[{"fileName":"file","start":5,"end":7,"message":"ERR"}]`),
 		),
-		tt.Args(&parse.MultiError{Entries: []*parse.Error{
+		tt.Args(&parse.MultiError{Entries: []*diag.Error{
 			{
 				Message: "ERR1",
 				Context: diag.Context{Name: "file1", Ranging: diag.Ranging{From: 5, To: 7}}},
