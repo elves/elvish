@@ -10,7 +10,7 @@ default: test get
 
 # TODO(xiaq): Add -trimpath when we require Go >= 1.13.
 get:
-	go get -ldflags "-X github.com/elves/elvish/buildinfo.Version=$(VERSION)" .
+	go get -ldflags "-X github.com/elves/elvish/pkg/buildinfo.Version=$(VERSION)" .
 
 buildall:
 	./tools/buildall.sh
