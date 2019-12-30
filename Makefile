@@ -30,8 +30,9 @@ cover/all: $(PKG_COVERS)
 	for f in $(PKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 
 upload-coverage-codecov: cover/all
-	curl -s https://codecov.io/bash -o codecov.bash
-	bash codecov.bash -f $<
+	curl -s https://codecov.io/bash -o codecov.bash && \
+    	bash codecov.bash -f $< || \
+    	true
 
 upload-coverage-coveralls: cover/all
 	go get $(GOVERALLS)
