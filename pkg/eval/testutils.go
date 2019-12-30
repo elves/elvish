@@ -109,30 +109,22 @@ func Test(t *testing.T, tests ...TestCase) {
 // with NewEvaler and passed to the setup function.
 func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
 	for _, tt := range tests {
-		ev := NewEvaler()
-		setup(ev)
-		out, bytesOut, err := evalAndCollect(t, ev, []string{tt.text}, len(tt.want.out))
+		t.Run(tt.text, func(t *testing.T) {
+			ev := NewEvaler()
+			defer ev.Close()
+			setup(ev)
+			out, bytesOut, err := evalAndCollect(t, ev, []string{tt.text}, len(tt.want.out))
 
-		first := true
-		errorf := func(format string, args ...interface{}) {
-			if first {
-				first = false
-				t.Errorf("eval(%q) fails:", tt.text)
+			if !matchOut(tt.want.out, out) {
+				t.Errorf("got value output %v, want %v", out, tt.want.out)
 			}
-			t.Errorf("  "+format, args...)
-		}
-
-		if !matchOut(tt.want.out, out) {
-			errorf("got out=%v, want %v", out, tt.want.out)
-		}
-		if !bytes.Equal(tt.want.bytesOut, bytesOut) {
-			errorf("got bytesOut=%q, want %q", bytesOut, tt.want.bytesOut)
-		}
-		if !matchErr(tt.want.err, err) {
-			errorf("got err=%v, want %v", err, tt.want.err)
-		}
-
-		ev.Close()
+			if !bytes.Equal(tt.want.bytesOut, bytesOut) {
+				t.Errorf("got bytes output %q, want %q", bytesOut, tt.want.bytesOut)
+			}
+			if !matchErr(tt.want.err, err) {
+				t.Errorf("got err %v, want %v", err, tt.want.err)
+			}
+		})
 	}
 }
 
