@@ -51,6 +51,18 @@ func endOfHistory(app cli.App) {
 	app.Notify("End of history")
 }
 
+type redrawOpts struct{ Full bool }
+
+func (redrawOpts) SetDefaultOptions() {}
+
+func redraw(app cli.App, opts redrawOpts) {
+	if opts.Full {
+		app.RedrawFull()
+	} else {
+		app.Redraw()
+	}
+}
+
 //elvdoc:fn insert-raw
 //
 // Requests the next terminal input to be inserted uninterpreted.
@@ -83,9 +95,14 @@ func insertRaw(app cli.App, tty cli.TTY) {
 //
 // Parses a string into a key.
 
-//elvdoc:fn redraw
+//elvdoc:fn redraw &full=$false
 //
 // Triggers a redraw.
+//
+// The `&full` option controls whether to do a full redraw. By default, all
+// redraws performed by the line editor are incremental redraws, updating only
+// the part of the screen that has changed from the last redraw. A full redraw
+// updates the entire command line.
 
 //elvdoc:fn return-line
 //
@@ -154,7 +171,7 @@ func initMiscBuiltins(app cli.App, ns eval.Ns) {
 		"close-listing":  func() { closeListing(app) },
 		"end-of-history": func() { endOfHistory(app) },
 		"key":            ui.ToKey,
-		"redraw":         app.Redraw,
+		"redraw":         func(opts redrawOpts) { redraw(app, opts) },
 		"return-line":    app.CommitCode,
 		"return-eof":     app.CommitEOF,
 		"smart-enter":    func() { smartEnter(app) },

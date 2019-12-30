@@ -105,8 +105,14 @@ func TestRedraw(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	evals(f.Evaler, `edit:current-command = echo`)
-	evals(f.Evaler, `edit:redraw`)
+	evals(f.Evaler,
+		`edit:current-command = echo`,
+		`edit:redraw`)
+	f.TestTTY(t,
+		"~> echo", Styles,
+		"   vvvv", term.DotHere)
+	evals(f.Evaler, `edit:redraw &full=$true`)
+	// TODO(xiaq): Test that this is actually a full redraw.
 	f.TestTTY(t,
 		"~> echo", Styles,
 		"   vvvv", term.DotHere)

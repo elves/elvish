@@ -25,6 +25,9 @@ type App interface {
 	// Redraw requests a redraw. It never blocks and can be called regardless of
 	// whether the App is active or not.
 	Redraw()
+	// RedrawFull requests a full redraw. It never blocks and can be called
+	// regardless of whether the App is active or not.
+	RedrawFull()
 	// CommitEOF causes the main loop to exit with EOF. If this method is called
 	// when an event is being handled, the main loop will exit after the handler
 	// returns.
@@ -336,7 +339,6 @@ func (a *app) Redraw() {
 }
 
 func (a *app) RedrawFull() {
-	// This is currently not exposed, but can be exposed later if the need arises.
 	a.loop.Redraw(true)
 }
 
