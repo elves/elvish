@@ -17,6 +17,9 @@ func init() {
 		// Value output
 		"put": put,
 
+		// Bytes input
+		"read-upto": readUpto,
+
 		// Bytes output
 		"print":  print,
 		"echo":   echo,
@@ -55,6 +58,29 @@ func put(fm *Frame, args ...interface{}) {
 	for _, a := range args {
 		out <- a
 	}
+}
+
+func readUpto(fm *Frame, last string) (string, error) {
+	if len(last) != 1 {
+		return "", ErrArgs
+	}
+	in := fm.InputFile()
+	var buf []byte
+	for {
+		var b [1]byte
+		_, err := in.Read(b[:])
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return "", err
+		}
+		buf = append(buf, b[0])
+		if b[0] == last[0] {
+			break
+		}
+	}
+	return string(buf), nil
 }
 
 type printOpts struct{ Sep string }

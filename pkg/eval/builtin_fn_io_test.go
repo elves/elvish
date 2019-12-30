@@ -11,6 +11,12 @@ func TestBuiltinFnIO(t *testing.T) {
 		That(`put foo bar`).Puts("foo", "bar"),
 		That(`put $nil`).Puts(nil),
 
+		That("print abcd | read-upto c").Puts("abc"),
+		// read-upto does not consume more than needed
+		That("print abcd | { read-upto c; slurp }").Puts("abc", "d"),
+		// read-upto reads up to EOF
+		That("print abcd | read-upto z").Puts("abcd"),
+
 		That(`print [foo bar]`).Prints("[foo bar]"),
 		That(`print foo bar &sep=,`).Prints("foo,bar"),
 		That(`echo [foo bar]`).Prints("[foo bar]\n"),
