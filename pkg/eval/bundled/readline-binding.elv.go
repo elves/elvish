@@ -14,7 +14,7 @@ b=[k f]{ edit:insert:binding[$k] = $f } {
     $b Ctrl-E $edit:move-dot-eol~
     $b Ctrl-F $edit:move-dot-right~
     $b Ctrl-H $edit:kill-rune-left~
-    $b Ctrl-L { clear > /dev/tty }
+    $b Ctrl-L { clear > /dev/tty; edit:redraw &full=$true }
     $b Ctrl-N $edit:end-of-history~
     # TODO: ^O
     $b Ctrl-P $edit:history:start~
