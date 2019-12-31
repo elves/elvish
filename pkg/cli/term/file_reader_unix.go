@@ -17,12 +17,6 @@ var (
 	errTimeout = errors.New("timed out")
 )
 
-type byteReaderWithTimeout interface {
-	// ReadByte reads a single byte from the underlying file. May return
-	// errStopped to signal that Stop was called during the read.
-	ReadByte(timeout time.Duration) (byte, error)
-}
-
 // A helper for reading from a file.
 type fileReader interface {
 	byteReaderWithTimeout
@@ -49,7 +43,7 @@ type bReader struct {
 
 const maxNoProgress = 10
 
-func (r *bReader) ReadByte(timeout time.Duration) (byte, error) {
+func (r *bReader) ReadByteWithTimeout(timeout time.Duration) (byte, error) {
 	for {
 		ready, err := sys.WaitForRead(timeout, r.file, r.rStop)
 		if err != nil {
