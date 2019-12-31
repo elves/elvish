@@ -10,17 +10,17 @@ import (
 	"time"
 )
 
-func TestFileReader_ReadByte(t *testing.T) {
+func TestFileReader_ReadByteWithTimeout(t *testing.T) {
 	r, w, cleanup := setupFileReader()
 	defer cleanup()
 
 	content := []byte("0123456789")
 	w.Write(content)
 
-	// Test successful ReadByte calls.
+	// Test successful ReadByteWithTimeout calls.
 	for i := 0; i < len(content); i++ {
 		t.Run(fmt.Sprintf("byte %d", i), func(t *testing.T) {
-			b, err := r.ReadByte(-1)
+			b, err := r.ReadByteWithTimeout(-1)
 			if err != nil {
 				t.Errorf("got err %v, want nil", err)
 			}
@@ -31,22 +31,22 @@ func TestFileReader_ReadByte(t *testing.T) {
 	}
 }
 
-func TestFileReader_ReadByte_EOF(t *testing.T) {
+func TestFileReader_ReadByteWithTimeout_EOF(t *testing.T) {
 	r, w, cleanup := setupFileReader()
 	defer cleanup()
 
 	w.Close()
-	_, err := r.ReadByte(-1)
+	_, err := r.ReadByteWithTimeout(-1)
 	if err != io.EOF {
 		t.Errorf("got byte %v, want %v", err, io.EOF)
 	}
 }
 
-func TestFileReader_ReadByte_Timeout(t *testing.T) {
+func TestFileReader_ReadByteWithTimeout_Timeout(t *testing.T) {
 	r, _, cleanup := setupFileReader()
 	defer cleanup()
 
-	_, err := r.ReadByte(time.Millisecond)
+	_, err := r.ReadByteWithTimeout(time.Millisecond)
 	if err != errTimeout {
 		t.Errorf("got err %v, want %v", err, errTimeout)
 	}
@@ -58,7 +58,7 @@ func TestFileReader_Stop(t *testing.T) {
 
 	errCh := make(chan error, 1)
 	go func() {
-		_, err := r.ReadByte(-1)
+		_, err := r.ReadByteWithTimeout(-1)
 		errCh <- err
 	}()
 	r.Stop()
