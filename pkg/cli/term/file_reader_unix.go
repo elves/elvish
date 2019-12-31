@@ -43,7 +43,7 @@ const maxNoProgress = 10
 
 func (r *bReader) ReadByte() (byte, error) {
 	for {
-		ready, err := sys.WaitForRead(r.file, r.rStop)
+		ready, err := sys.WaitForRead(-1, r.file, r.rStop)
 		if err != nil {
 			if err == syscall.EINTR {
 				continue
