@@ -46,7 +46,7 @@ func TestSelect(t *testing.T) {
 		unix.Close(p1[1])
 		unix.Close(p2[1])
 	}()
-	e := Select(maxfd+1, fs, nil, nil)
+	e := Select(maxfd+1, fs, nil, nil, -1)
 	if e != nil {
 		t.Errorf("Select(%v, %v, nil, nil) => %v, want <nil>",
 			maxfd+1, fs, e)
