@@ -86,6 +86,9 @@ func sourceRC(stderr *os.File, ev *eval.Evaler, dataDir string) error {
 	}
 	code, err := readFileUTF8(absPath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return err
 	}
 	err = ev.EvalSourceInTTY(eval.NewScriptSource("rc.elv", absPath, code))
