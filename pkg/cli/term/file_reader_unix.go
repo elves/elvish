@@ -7,17 +7,25 @@ import (
 	"io"
 	"os"
 	"syscall"
+	"time"
 
 	"github.com/elves/elvish/pkg/sys"
 )
 
-var errStopped = errors.New("stopped")
+var (
+	errStopped = errors.New("stopped")
+	errTimeout = errors.New("timed out")
+)
+
+type byteReaderWithTimeout interface {
+	// ReadByte reads a single byte from the underlying file. May return
+	// errStopped to signal that Stop was called during the read.
+	ReadByte(timeout time.Duration) (byte, error)
+}
 
 // A helper for reading from a file.
 type fileReader interface {
-	// ReadByte reads a single byte from the underlying file. May return
-	// errStopped to signal that Stop was called during the read.
-	ReadByte() (byte, error)
+	byteReaderWithTimeout
 	// Stop stops any outstanding read.
 	Stop() error
 	// Close releases new resources allocated for the fileReader. It does not
@@ -41,9 +49,9 @@ type bReader struct {
 
 const maxNoProgress = 10
 
-func (r *bReader) ReadByte() (byte, error) {
+func (r *bReader) ReadByte(timeout time.Duration) (byte, error) {
 	for {
-		ready, err := sys.WaitForRead(-1, r.file, r.rStop)
+		ready, err := sys.WaitForRead(timeout, r.file, r.rStop)
 		if err != nil {
 			if err == syscall.EINTR {
 				continue
@@ -52,6 +60,9 @@ func (r *bReader) ReadByte() (byte, error) {
 		}
 		if ready[1] {
 			return 0, errStopped
+		}
+		if !ready[0] {
+			return 0, errTimeout
 		}
 		var b [1]byte
 		nr, err := r.file.Read(b[:])
