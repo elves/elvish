@@ -64,7 +64,7 @@ func (ar *runeReader) run() {
 	var buf [1]byte
 
 	for {
-		ready, err := sys.WaitForRead(ar.file, ar.rStop)
+		ready, err := sys.WaitForRead(-1, ar.file, ar.rStop)
 		if err != nil {
 			if err == syscall.EINTR {
 				continue
