@@ -16,7 +16,7 @@ func TestWaitForRead(t *testing.T) {
 	defer closeAll(r0, w0, r1, w1)
 
 	w0.WriteString("x")
-	ready, err := WaitForRead(r0, r1)
+	ready, err := WaitForRead(-1, r0, r1)
 	if err != nil {
 		t.Error("WaitForRead errors:", err)
 	}
