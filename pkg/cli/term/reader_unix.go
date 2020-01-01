@@ -19,8 +19,7 @@ const DefaultSeqTimeout = 10 * time.Millisecond
 
 // reader reads terminal escape sequences and decodes them into events.
 type reader struct {
-	ar         *runeReader
-	seqTimeout time.Duration
+	fr fileReader
 
 	rawMutex sync.Mutex
 	raw      int
@@ -31,10 +30,14 @@ type reader struct {
 }
 
 func newReader(f *os.File) *reader {
+	fr, err := newFileReader(f)
+	if err != nil {
+		// TODO(xiaq): Do not panic.
+		panic(err)
+	}
 	rd := &reader{
-		ar:         newRuneReader(f),
-		seqTimeout: DefaultSeqTimeout,
-		eventChan:  make(chan Event),
+		fr:        fr,
+		eventChan: make(chan Event),
 	}
 	return rd
 }
@@ -67,42 +70,33 @@ func (rd *reader) EventChan() <-chan Event {
 func (rd *reader) Start() {
 	rd.stopChan = make(chan struct{})
 	rd.stopAckChan = make(chan struct{})
-	rd.ar.Start()
 	go rd.run()
 }
 
 func (rd *reader) run() {
-	// NOTE: Stop may be called at any time. All channel reads and sends should
-	// be wrapped in a select and have a "case <-rd.stopChan" clause.
 	for {
-		select {
-		case r := <-rd.ar.Chan():
+		r, err := readRune(rd.fr, -1)
+		if err == nil {
 			if rd.getRaw() {
 				rd.send(K(r))
 			} else {
-				event, seqError, ioError := rd.readOne(r)
-				if event != nil {
-					rd.send(event)
-				}
-				if seqError != nil {
-					rd.send(NonfatalErrorEvent{seqError})
-				}
-				if ioError != nil {
-					rd.send(FatalErrorEvent{ioError})
-					<-rd.stopChan
+				var ev Event
+				ev, err = readEvent(rd.fr, r)
+				if ev != nil {
+					rd.send(ev)
 				}
 			}
-		case err := <-rd.ar.ErrorChan():
-			rd.send(FatalErrorEvent{err})
-			<-rd.stopChan
-		case <-rd.stopChan:
 		}
-
-		select {
-		case <-rd.stopChan:
-			close(rd.stopAckChan)
-			return
-		default:
+		if err != nil {
+			if err == errStopped {
+				close(rd.stopAckChan)
+				return
+			}
+			if isReadErrorRecoverable(err) {
+				rd.send(NonfatalErrorEvent{err})
+			} else {
+				rd.send(FatalErrorEvent{err})
+			}
 		}
 	}
 }
@@ -117,47 +111,68 @@ func (rd *reader) send(event Event) {
 }
 
 func (rd *reader) Stop() {
-	rd.ar.Stop()
+	rd.fr.Stop()
 	close(rd.stopChan)
 	<-rd.stopAckChan
 }
 
 func (rd *reader) Close() {
 	close(rd.eventChan)
-	rd.ar.Close()
+	rd.fr.Close()
 }
 
 // Used by readRune in readOne to signal end of current sequence.
 const runeEndOfSeq rune = -1
 
-// Tries to read one key or CPR, led by a rune already read.
-func (rd *reader) readOne(r rune) (event Event, seqError, ioError error) {
-	currentSeq := string(r)
+type seqError struct {
+	msg string
+	seq string
+}
 
-	badSeq := func(msg string) {
-		seqError = fmt.Errorf("%s: %q", msg, currentSeq)
+func (err seqError) Error() string {
+	return fmt.Sprintf("%s: %q", err.msg, err.seq)
+}
+
+// Returns whether an error returned by readEvent is recoverable.
+func isReadErrorRecoverable(err error) bool {
+	if _, ok := err.(seqError); ok {
+		return true
+	}
+	return err == errStopped || err == errTimeout
+}
+
+// Timeout for bytes in escape sequences. Modern terminal emulators send escape
+// sequences very fast, so 10ms is more than sufficient. SSH connections on a
+// slow link might be problematic though.
+var keySeqTimeout = 10 * time.Millisecond
+
+func readEvent(rd byteReaderWithTimeout, r rune) (event Event, err error) {
+	if r == -1 {
+		r, err = readRune(rd, -1)
+		if err != nil {
+			return
+		}
 	}
 
-	// readRune attempts to read a rune within a timeout of EscSequenceTimeout.
-	// It may return runeEndOfSeq when the read timed out, an error was
-	// encountered (in which case it sets ioError) or when stopped. In all three
-	// cases, the reader should terminate the current sequence. If the current
-	// sequence is valid, it should set event. If not, it should set seqError by
-	// calling badSeq.
+	currentSeq := string(r)
+	// Attempts to read a rune within a timeout of keySeqTimeout. It returns
+	// runeEndOfSeq if there is any error; the caller should terminate the
+	// current sequence when it sees that value.
 	readRune :=
 		func() rune {
-			select {
-			case r := <-rd.ar.Chan():
-				currentSeq += string(r)
-				return r
-			case ioError = <-rd.ar.ErrorChan():
-				return runeEndOfSeq
-			case <-time.After(rd.seqTimeout):
-				return runeEndOfSeq
-			case <-rd.stopChan:
+			r, e := readRune(rd, keySeqTimeout)
+			if e != nil {
+				if e == errTimeout {
+					e = nil
+				}
 				return runeEndOfSeq
 			}
+			currentSeq += string(r)
+			return r
 		}
+	badSeq := func(msg string) {
+		err = seqError{msg, currentSeq}
+	}
 
 	switch r {
 	case 0x1b: // ^[ Escape
