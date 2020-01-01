@@ -22,14 +22,13 @@ type TTY interface {
 	// This method should be called before any other method is called.
 	Setup() (restore func(), err error)
 
-	// StartInput starts the delivery of terminal events and returns a channel
-	// on which events are made available.
-	StartInput() <-chan term.Event
-	// SetRawInput requests the next n underlying events to be read uninterpreted. It
+	ReadEvent() (term.Event, error)
+	// SetRawInput requests the next n ReadEvent calls to read raw events. It
 	// is applicable to environments where events are represented as a special
 	// sequences, such as VT100. It is a no-op if events are delivered as whole
 	// units by the terminal, such as Windows consoles.
 	SetRawInput(n int)
+
 	// StopInput causes input delivery to be stopped. When this function
 	// returns, the channel previously returned by StartInput will no longer
 	// deliver input events.
@@ -88,32 +87,14 @@ func (t *aTTY) Size() (h, w int) {
 	return sys.GetWinsize(t.out)
 }
 
-func (t *aTTY) StartInput() <-chan term.Event {
-	t.r = term.NewReader(t.in)
-	eventCh := make(chan term.Event, 128)
-	go func() {
-		defer close(eventCh)
-		for {
-			var ev term.Event
-			var err error
-			if t.consumeRaw() {
-				ev, err = t.r.ReadRawEvent()
-			} else {
-				ev, err = t.r.ReadEvent()
-			}
-			if err == nil {
-				eventCh <- ev
-			} else if err == term.ErrStopped {
-				return
-			} else if term.IsReadErrorRecoverable(err) {
-				eventCh <- term.NonfatalErrorEvent{err}
-			} else {
-				eventCh <- term.FatalErrorEvent{err}
-				return
-			}
-		}
-	}()
-	return eventCh
+func (t *aTTY) ReadEvent() (term.Event, error) {
+	if t.r == nil {
+		t.r = term.NewReader(t.in)
+	}
+	if t.consumeRaw() {
+		return t.r.ReadRawEvent()
+	}
+	return t.r.ReadEvent()
 }
 
 func (t *aTTY) consumeRaw() bool {
@@ -133,7 +114,9 @@ func (t *aTTY) SetRawInput(n int) {
 }
 
 func (t *aTTY) StopInput() {
-	t.r.Close()
+	if t.r != nil {
+		t.r.Close()
+	}
 	t.r = nil
 }
 

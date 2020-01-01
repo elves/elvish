@@ -50,7 +50,6 @@ func main() {
 		return
 	}
 	defer restore()
-	events := tty.StartInput()
 	defer tty.StopInput()
 	for {
 		h, w := tty.Size()
@@ -58,7 +57,12 @@ func main() {
 			h = *maxHeight
 		}
 		tty.UpdateBuffer(nil, widget.Render(w, h), false)
-		event := <-events
+		event, err := tty.ReadEvent()
+		if err != nil {
+			errBuf := term.NewBufferBuilder(w).Write(err.Error(), ui.FgRed).Buffer()
+			tty.UpdateBuffer(nil, errBuf, true)
+			break
+		}
 		handled := widget.Handle(event)
 		if !handled && event == term.K('D', ui.Ctrl) {
 			tty.UpdateBuffer(nil, term.NewBufferBuilder(w).Buffer(), true)

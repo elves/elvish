@@ -44,16 +44,12 @@ func TestFakeTTY_SetRawInput(t *testing.T) {
 
 func TestFakeTTY_Events(t *testing.T) {
 	tty, ttyCtrl := NewFakeTTY()
-	events := tty.StartInput()
 	ttyCtrl.Inject(term.K('a'), term.K('b'))
-	if event := <-events; event != term.K('a') {
-		t.Errorf("Got event %v, want K('a')", event)
+	if event, err := tty.ReadEvent(); event != term.K('a') || err != nil {
+		t.Errorf("Got (%v, %v), want (%v, nil)", event, err, term.K('a'))
 	}
-	if event := <-events; event != term.K('b') {
+	if event := <-ttyCtrl.EventCh(); event != term.K('b') {
 		t.Errorf("Got event %v, want K('b')", event)
-	}
-	if ch := ttyCtrl.EventCh(); ch != events {
-		t.Errorf("EventCh return value is not the same as that of StartInput")
 	}
 }
 

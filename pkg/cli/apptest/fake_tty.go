@@ -74,10 +74,9 @@ func (t *fakeTTY) Size() (h, w int) {
 	return t.height, t.width
 }
 
-// Returns t.eventCh. Events may be injected onto the channel by using the
-// TTYCtrl.
-func (t *fakeTTY) StartInput() <-chan term.Event {
-	return t.eventCh
+// Returns next event from t.eventCh.
+func (t *fakeTTY) ReadEvent() (term.Event, error) {
+	return <-t.eventCh, nil
 }
 
 // Nop.

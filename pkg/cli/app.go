@@ -41,7 +41,8 @@ type App interface {
 }
 
 type app struct {
-	loop *loop
+	loop    *loop
+	reqRead chan struct{}
 
 	TTY               TTY
 	MaxHeight         func() int
@@ -169,6 +170,7 @@ func (a *app) handle(e event) {
 		}
 		if !a.loop.HasReturned() {
 			a.triggerPrompts(false)
+			a.reqRead <- struct{}{}
 		}
 	}
 }
@@ -268,14 +270,26 @@ func (a *app) ReadCode() (string, error) {
 	defer wg.Wait()
 
 	// Relay input events.
-	eventCh := a.TTY.StartInput()
+	a.reqRead = make(chan struct{}, 1)
+	a.reqRead <- struct{}{}
+	defer close(a.reqRead)
 	defer a.TTY.StopInput()
 	wg.Add(1)
 	go func() {
-		for event := range eventCh {
-			a.loop.Input(event)
+		defer wg.Done()
+		for range a.reqRead {
+			event, err := a.TTY.ReadEvent()
+			if err == nil {
+				a.loop.Input(event)
+			} else if err == term.ErrStopped {
+				return
+			} else if term.IsReadErrorRecoverable(err) {
+				a.loop.Input(term.NonfatalErrorEvent{err})
+			} else {
+				a.loop.Input(term.FatalErrorEvent{err})
+				return
+			}
 		}
-		wg.Done()
 	}()
 
 	// Relay signals.
