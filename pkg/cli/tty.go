@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/sys"
@@ -61,13 +62,16 @@ type aTTY struct {
 	r       term.Reader
 	w       term.Writer
 	sigCh   chan os.Signal
+
+	rawMutex sync.Mutex
+	raw      int
 }
 
 const sigsChanBufferSize = 256
 
 // NewTTY returns a new TTY from input and output terminal files.
 func NewTTY(in, out *os.File) TTY {
-	return &aTTY{in, out, nil, term.NewWriter(out), nil}
+	return &aTTY{in: in, out: out, w: term.NewWriter(out)}
 }
 
 func (t *aTTY) Setup() (func(), error) {
@@ -86,16 +90,49 @@ func (t *aTTY) Size() (h, w int) {
 
 func (t *aTTY) StartInput() <-chan term.Event {
 	t.r = term.NewReader(t.in)
-	t.r.Start()
-	return t.r.EventChan()
+	eventCh := make(chan term.Event, 128)
+	go func() {
+		defer close(eventCh)
+		for {
+			var ev term.Event
+			var err error
+			if t.consumeRaw() {
+				ev, err = t.r.ReadRawEvent()
+			} else {
+				ev, err = t.r.ReadEvent()
+			}
+			if err == nil {
+				eventCh <- ev
+			} else if err == term.ErrStopped {
+				return
+			} else if term.IsReadErrorRecoverable(err) {
+				eventCh <- term.NonfatalErrorEvent{err}
+			} else {
+				eventCh <- term.FatalErrorEvent{err}
+				return
+			}
+		}
+	}()
+	return eventCh
+}
+
+func (t *aTTY) consumeRaw() bool {
+	t.rawMutex.Lock()
+	defer t.rawMutex.Unlock()
+	if t.raw <= 0 {
+		return false
+	}
+	t.raw--
+	return true
 }
 
 func (t *aTTY) SetRawInput(n int) {
-	t.r.SetRaw(n)
+	t.rawMutex.Lock()
+	defer t.rawMutex.Unlock()
+	t.raw = n
 }
 
 func (t *aTTY) StopInput() {
-	t.r.Stop()
 	t.r.Close()
 	t.r = nil
 }

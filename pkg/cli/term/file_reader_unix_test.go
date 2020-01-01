@@ -63,12 +63,12 @@ func TestFileReader_Stop(t *testing.T) {
 	}()
 	r.Stop()
 
-	if err := <-errCh; err != errStopped {
-		t.Errorf("got err %v, want %v", err, errStopped)
+	if err := <-errCh; err != ErrStopped {
+		t.Errorf("got err %v, want %v", err, ErrStopped)
 	}
 }
 
-func setupFileReader() (reader fileReader, writer io.WriteCloser, cleanup func()) {
+func setupFileReader() (reader fileReader, writer *os.File, cleanup func()) {
 	pr, pw, err := os.Pipe()
 	if err != nil {
 		panic(err)

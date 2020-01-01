@@ -1,10 +1,11 @@
 package term
 
 import (
-	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/elves/elvish/pkg/sys"
@@ -17,14 +18,12 @@ const DefaultSeqTimeout = 10 * time.Millisecond
 
 type reader struct {
 	console   windows.Handle
-	eventChan chan Event
-
-	stopEvent   windows.Handle
-	stopChan    chan struct{}
-	stopAckChan chan struct{}
+	stopEvent windows.Handle
+	// A mutex that is held during ReadEvent.
+	mutex sync.Mutex
 }
 
-// NewReader creates a new Reader instance.
+// Creates a new Reader instance.
 func newReader(file *os.File) Reader {
 	console, err := windows.GetStdHandle(windows.STD_INPUT_HANDLE)
 	if err != nil {
@@ -34,102 +33,53 @@ func newReader(file *os.File) Reader {
 	if err != nil {
 		panic(fmt.Errorf("CreateEvent: %v", err))
 	}
-	return &reader{
-		console, make(chan Event), stopEvent, nil, nil}
+	return &reader{console: console, stopEvent: stopEvent}
 }
 
-func (r *reader) SetRaw(int) {
-	// NOP on Windows.
-}
-
-func (r *reader) EventChan() <-chan Event {
-	return r.eventChan
-}
-
-func (r *reader) Start() {
-	r.stopChan = make(chan struct{})
-	r.stopAckChan = make(chan struct{})
-	go r.run()
-}
-
-var errNr0 = errors.New("ReadConsoleInput reads 0 input")
-
-func (r *reader) run() {
+func (r *reader) ReadEvent() (Event, error) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 	handles := []windows.Handle{r.console, r.stopEvent}
 	for {
 		triggered, _, err := sys.WaitForMultipleObjects(handles, false, sys.INFINITE)
 		if err != nil {
-			r.fatal(err)
-			return
+			return nil, err
 		}
 		if triggered == 1 {
-			<-r.stopChan
-			close(r.stopAckChan)
-			return
+			return nil, ErrStopped
 		}
 
 		var buf [1]sys.InputRecord
 		nr, err := sys.ReadConsoleInput(r.console, buf[:])
 		if nr == 0 {
-			r.fatal(errNr0)
-			return
+			return nil, io.ErrNoProgress
 		}
 		if err != nil {
-			r.fatal(err)
-			return
+			return nil, err
 		}
 		event := convertEvent(buf[0].GetEvent())
 		if event != nil {
-			r.send(event)
+			return event, nil
 		}
+		// Got an event that should be ignored; keep going.
 	}
 }
 
-func (r *reader) nonFatal(err error) {
-	r.send(NonfatalErrorEvent{err})
+func (r *reader) ReadRawEvent() (Event, error) {
+	return r.ReadEvent()
 }
 
-func (r *reader) fatal(err error) {
-	if !r.send(FatalErrorEvent{err}) {
-		<-r.stopChan
-		close(r.stopAckChan)
-		r.resetStopEvent()
-	}
-}
-
-func (r *reader) send(event Event) (stopped bool) {
-	select {
-	case r.eventChan <- event:
-		return false
-	case <-r.stopChan:
-		close(r.stopAckChan)
-		r.resetStopEvent()
-		return true
-	}
-}
-
-func (r *reader) resetStopEvent() {
-	err := windows.ResetEvent(r.stopEvent)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func (r *reader) Stop() {
+func (r *reader) Close() {
 	err := windows.SetEvent(r.stopEvent)
 	if err != nil {
 		log.Println("SetEvent:", err)
 	}
-	close(r.stopChan)
-	<-r.stopAckChan
-}
-
-func (r *reader) Close() {
-	err := windows.CloseHandle(r.stopEvent)
+	r.mutex.Lock()
+	r.mutex.Unlock()
+	err = windows.CloseHandle(r.stopEvent)
 	if err != nil {
 		log.Println("Closing stopEvent handle for reader:", err)
 	}
-	close(r.eventChan)
 }
 
 // A subset of virtual key codes listed in
