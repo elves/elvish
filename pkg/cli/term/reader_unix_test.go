@@ -3,14 +3,12 @@
 package term
 
 import (
-	"os"
 	"testing"
-	"time"
 
 	"github.com/elves/elvish/pkg/ui"
 )
 
-var eventTests = []struct {
+var readEventTests = []struct {
 	input string
 	want  Event
 }{
@@ -118,133 +116,20 @@ var eventTests = []struct {
 	{"\033[<16;3;4M", MouseEvent{Pos{4, 3}, true, 0, ui.Ctrl}},
 }
 
-func TestReader_ReadEvents(t *testing.T) {
-	_, w, reader, cleanup := setupTest()
+func TestReadEvent(t *testing.T) {
+	r, w, cleanup := setupFileReader()
 	defer cleanup()
 
-	for _, test := range eventTests {
+	for _, test := range readEventTests {
 		t.Run(test.input, func(t *testing.T) {
 			w.WriteString(test.input)
-			testEvents(t, reader, test.want)
-		})
-	}
-}
-
-func TestReader_StopMakesUnderlyingFileAvailable(t *testing.T) {
-	r, w, cleanup := setupPipe()
-	defer cleanup()
-	reader := NewReader(r)
-	defer reader.Close()
-
-	reader.Start()
-	reader.Stop()
-
-	// Verify that the reader has indeed stopped: write something via w,
-	// and get it back via r.
-	written := "lorem ipsum"
-	w.WriteString(written)
-	var buf [32]byte
-	nr, err := r.Read(buf[:])
-	if err != nil {
-		panic(err)
-	}
-	got := string(buf[:nr])
-	if got != written {
-		t.Errorf("got %q, want %q", got, written)
-	}
-}
-
-func TestReader_StartAfterStopIndeedStarts(t *testing.T) {
-	_, w, reader, cleanup := setupTest()
-	defer cleanup()
-
-	for i := 0; i < 100; i++ {
-		// Test that calling Start very shortly after Stop puts the Reader
-		// in the correct started state. This test is for ensuring that the
-		// operations do not have race conditions.
-		reader.Stop()
-		reader.Start()
-
-		w.WriteString("a")
-		select {
-		case event := <-reader.EventChan():
-			wantEvent := K('a')
-			if event != wantEvent {
-				t.Errorf("After Stop and Start, Reader reads %v, want %v", event, wantEvent)
+			ev, err := readEvent(r)
+			if ev != test.want {
+				t.Errorf("got event %v, want %v", ev, test.want)
 			}
-		case <-time.After(time.Second):
-			t.Errorf("After Stop and Start, Reader timed out")
-		}
-	}
-}
-
-var setRawTests = []struct {
-	name  string
-	raw   int
-	input string
-	want  []Event
-}{
-	{"ctrl key",
-		1, "\001", []Event{K('\001')}},
-	{"normal key not affected",
-		1, "x", []Event{K('x')}},
-	{"sequence with a single leading Esc",
-		1, "\033OA", []Event{K('\033'), K('O'), K('A')}},
-	{"sequence with multiple leading Esc, n = 1",
-		1, "\033\033OA", []Event{K('\033'), K(ui.Up)}},
-	{"sequence with multiple leading Esc, n > 1",
-		2, "\033\033OA", []Event{K('\033'), K('\033'), K('O'), K('A')}},
-	{"n = -1",
-		-1, "\033a\033b", []Event{K('\033'), K('a'), K('\033'), K('b')}},
-}
-
-func TestReader_SetRaw(t *testing.T) {
-	_, w, reader, cleanup := setupTest()
-	defer cleanup()
-
-	for _, test := range setRawTests {
-		t.Run(test.name, func(t *testing.T) {
-			reader.SetRaw(test.raw)
-			w.WriteString(test.input)
-			testEvents(t, reader, test.want...)
-		})
-	}
-}
-
-// Test utilities.
-
-func setupTest() (r, w *os.File, rd Reader, cleanup func()) {
-	r, w, cleanupPipe := setupPipe()
-	reader := NewReader(r)
-	reader.Start()
-	return r, w, reader, func() {
-		reader.Stop()
-		reader.Close()
-		cleanupPipe()
-	}
-}
-
-func setupPipe() (r, w *os.File, cleanup func()) {
-	r, w, err := os.Pipe()
-	if err != nil {
-		panic(err)
-	}
-	return r, w, func() {
-		r.Close()
-		w.Close()
-	}
-}
-
-func testEvents(t *testing.T, r Reader, wantEvents ...Event) {
-	t.Helper()
-	for _, wantEvent := range wantEvents {
-		select {
-		case event := <-r.EventChan():
-			if event != wantEvent {
-				t.Errorf("Reader reads event %v, want %v", event, wantEvent)
+			if err != nil {
+				t.Errorf("got err %v, want %v", err, nil)
 			}
-		case <-time.After(time.Second):
-			t.Errorf("Reader timed out while waiting for event %v", wantEvent)
-		}
+		})
 	}
 }

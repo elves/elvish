@@ -1,24 +1,39 @@
 package term
 
-import "os"
+import (
+	"errors"
+	"fmt"
+	"os"
+)
 
-// Reader reads terminal events and makes them available on a channel.
+// Reader reads events from the terminal.
 type Reader interface {
-	// Start starts the Reader.
-	Start()
-	// EventChan returns the channel onto which the Reader writes events that it
-	// has read.
-	EventChan() <-chan Event
-	// SetRaw requests the next n underlying events to be read uninterpreted. It
-	// is applicable to environments where events are represented as a special
-	// sequences, such as VT100. It is a no-op if events are delivered as whole
-	// units by the terminal, such as Windows consoles.
-	SetRaw(n int)
-	// Stop stops the Reader.
-	Stop()
-	// Close releases resources associated with the Reader. It does not affect
-	// resources that were used to create it.
+	// ReadEvent reads a single event from the terminal.
+	ReadEvent() (Event, error)
+	// ReadRawEvent reads a single raw event from the terminal. The concept of
+	// raw events is applicable where terminal events are represented as escape
+	// sequences sequences, such as most modern Unix terminal emulators. If
+	// the concept is not applicable, such as in the Windows console, it is
+	// equivalent to ReadEvent.
+	ReadRawEvent() (Event, error)
+	// Close releases resources associated with the Reader. Any outstanding
+	// ReadEvent or ReadRawEvent call will be aborted, returning ErrStopped.
 	Close()
+}
+
+// ErrStopped is returned by Reader when Close is called during a ReadEvent or
+// ReadRawEvent method.
+var ErrStopped = errors.New("stopped")
+
+var errTimeout = errors.New("timed out")
+
+type seqError struct {
+	msg string
+	seq string
+}
+
+func (err seqError) Error() string {
+	return fmt.Sprintf("%s: %q", err.msg, err.seq)
 }
 
 // NewReader creates a new Reader on the given terminal file.
@@ -27,4 +42,13 @@ type Reader interface {
 // initialize Reader panics.
 func NewReader(f *os.File) Reader {
 	return newReader(f)
+}
+
+// IsReadErrorRecoverable returns whether an error returned by Reader is
+// recoverable.
+func IsReadErrorRecoverable(err error) bool {
+	if _, ok := err.(seqError); ok {
+		return true
+	}
+	return err == ErrStopped || err == errTimeout
 }

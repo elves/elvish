@@ -3,30 +3,15 @@
 package term
 
 import (
-	"fmt"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/elves/elvish/pkg/ui"
 )
 
-// DefaultSeqTimeout is the amount of time within which runes that make up an
-// escape sequence are supposed to follow each other. Modern terminal emulators
-// send escape sequences very fast, so 10ms is more than sufficient. SSH
-// connections on a slow link might be problematic though.
-const DefaultSeqTimeout = 10 * time.Millisecond
-
 // reader reads terminal escape sequences and decodes them into events.
 type reader struct {
 	fr fileReader
-
-	rawMutex sync.Mutex
-	raw      int
-
-	eventChan   chan Event
-	stopChan    chan struct{}
-	stopAckChan chan struct{}
 }
 
 func newReader(f *os.File) *reader {
@@ -35,123 +20,36 @@ func newReader(f *os.File) *reader {
 		// TODO(xiaq): Do not panic.
 		panic(err)
 	}
-	rd := &reader{
-		fr:        fr,
-		eventChan: make(chan Event),
-	}
-	return rd
+	return &reader{fr}
 }
 
-func (rd *reader) SetRaw(n int) {
-	rd.rawMutex.Lock()
-	defer rd.rawMutex.Unlock()
-	rd.raw = n
+func (rd *reader) ReadEvent() (Event, error) {
+	return readEvent(rd.fr)
 }
 
-// Returns whether the next rune should be read raw.
-func (rd *reader) getRaw() bool {
-	rd.rawMutex.Lock()
-	defer rd.rawMutex.Unlock()
-	switch {
-	case rd.raw == 0:
-		return false
-	case rd.raw < 0:
-		return true
-	default:
-		rd.raw--
-		return true
-	}
-}
-
-func (rd *reader) EventChan() <-chan Event {
-	return rd.eventChan
-}
-
-func (rd *reader) Start() {
-	rd.stopChan = make(chan struct{})
-	rd.stopAckChan = make(chan struct{})
-	go rd.run()
-}
-
-func (rd *reader) run() {
-	for {
-		r, err := readRune(rd.fr, -1)
-		if err == nil {
-			if rd.getRaw() {
-				rd.send(K(r))
-			} else {
-				var ev Event
-				ev, err = readEvent(rd.fr, r)
-				if ev != nil {
-					rd.send(ev)
-				}
-			}
-		}
-		if err != nil {
-			if err == errStopped {
-				close(rd.stopAckChan)
-				return
-			}
-			if isReadErrorRecoverable(err) {
-				rd.send(NonfatalErrorEvent{err})
-			} else {
-				rd.send(FatalErrorEvent{err})
-			}
-		}
-	}
-}
-
-// Tries to send an event, unless stop was requested. If stop was requested
-// before, it does nothing; hence it is safe to use after stop.
-func (rd *reader) send(event Event) {
-	select {
-	case rd.eventChan <- event:
-	case <-rd.stopChan:
-	}
-}
-
-func (rd *reader) Stop() {
-	rd.fr.Stop()
-	close(rd.stopChan)
-	<-rd.stopAckChan
+func (rd *reader) ReadRawEvent() (Event, error) {
+	r, err := readRune(rd.fr, -1)
+	return K(r), err
 }
 
 func (rd *reader) Close() {
-	close(rd.eventChan)
+	rd.fr.Stop()
 	rd.fr.Close()
 }
 
 // Used by readRune in readOne to signal end of current sequence.
 const runeEndOfSeq rune = -1
 
-type seqError struct {
-	msg string
-	seq string
-}
-
-func (err seqError) Error() string {
-	return fmt.Sprintf("%s: %q", err.msg, err.seq)
-}
-
-// Returns whether an error returned by readEvent is recoverable.
-func isReadErrorRecoverable(err error) bool {
-	if _, ok := err.(seqError); ok {
-		return true
-	}
-	return err == errStopped || err == errTimeout
-}
-
 // Timeout for bytes in escape sequences. Modern terminal emulators send escape
 // sequences very fast, so 10ms is more than sufficient. SSH connections on a
 // slow link might be problematic though.
 var keySeqTimeout = 10 * time.Millisecond
 
-func readEvent(rd byteReaderWithTimeout, r rune) (event Event, err error) {
-	if r == -1 {
-		r, err = readRune(rd, -1)
-		if err != nil {
-			return
-		}
+func readEvent(rd byteReaderWithTimeout) (event Event, err error) {
+	var r rune
+	r, err = readRune(rd, -1)
+	if err != nil {
+		return
 	}
 
 	currentSeq := string(r)

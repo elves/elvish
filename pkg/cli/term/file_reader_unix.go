@@ -3,24 +3,19 @@
 package term
 
 import (
-	"errors"
 	"io"
 	"os"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/elves/elvish/pkg/sys"
 )
 
-var (
-	errStopped = errors.New("stopped")
-	errTimeout = errors.New("timed out")
-)
-
 // A helper for reading from a file.
 type fileReader interface {
 	byteReaderWithTimeout
-	// Stop stops any outstanding read.
+	// Stop stops any outstanding read call. It blocks until the read returns.
 	Stop() error
 	// Close releases new resources allocated for the fileReader. It does not
 	// close the underlying file.
@@ -32,18 +27,22 @@ func newFileReader(file *os.File) (fileReader, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &bReader{file, rStop, wStop}, nil
+	return &bReader{file: file, rStop: rStop, wStop: wStop}, nil
 }
 
 type bReader struct {
 	file  *os.File
 	rStop *os.File
 	wStop *os.File
+	// A mutex that is held when Read is in process.
+	mutex sync.Mutex
 }
 
 const maxNoProgress = 10
 
 func (r *bReader) ReadByteWithTimeout(timeout time.Duration) (byte, error) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 	for {
 		ready, err := sys.WaitForRead(timeout, r.file, r.rStop)
 		if err != nil {
@@ -55,7 +54,7 @@ func (r *bReader) ReadByteWithTimeout(timeout time.Duration) (byte, error) {
 		if ready[1] {
 			var b [1]byte
 			r.rStop.Read(b[:])
-			return 0, errStopped
+			return 0, ErrStopped
 		}
 		if !ready[0] {
 			return 0, errTimeout
@@ -74,6 +73,8 @@ func (r *bReader) ReadByteWithTimeout(timeout time.Duration) (byte, error) {
 
 func (r *bReader) Stop() error {
 	_, err := r.wStop.Write([]byte{'q'})
+	r.mutex.Lock()
+	r.mutex.Unlock()
 	return err
 }
 
