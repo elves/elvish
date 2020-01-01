@@ -13,11 +13,11 @@ import (
 
 const (
 	// Maximum number of buffer updates FakeTTY expect to see.
-	fakeTTYBufferUpdates = 1024
+	fakeTTYBufferUpdates = 4096
 	// Maximum number of events FakeTTY produces.
-	fakeTTYEvents = 1024
+	fakeTTYEvents = 4096
 	// Maximum number of signals FakeTTY produces.
-	fakeTTYSignals = 1024
+	fakeTTYSignals = 4096
 )
 
 // An implementation of the cli.TTY interface that is useful in tests.
@@ -145,6 +145,11 @@ func (t TTYCtrl) Inject(events ...term.Event) {
 	for _, event := range events {
 		t.eventCh <- event
 	}
+}
+
+// EventCh returns the underlying channel for delivering events.
+func (t TTYCtrl) EventCh() chan term.Event {
+	return t.eventCh
 }
 
 // InjectSignal injects signals.
