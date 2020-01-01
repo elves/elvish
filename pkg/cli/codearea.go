@@ -153,10 +153,6 @@ func (w *codeArea) Render(width, height int) *term.Buffer {
 // Handle handles KeyEvent's of non-function keys, as well as PasteSetting
 // events.
 func (w *codeArea) Handle(event term.Event) bool {
-	if w.OverlayHandler.Handle(event) {
-		return true
-	}
-
 	switch event := event.(type) {
 	case term.PasteSetting:
 		return w.handlePasteSetting(bool(event))
@@ -209,6 +205,9 @@ func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 		} else {
 			w.pasteBuffer.WriteRune(key.Rune)
 		}
+		return true
+	}
+	if w.OverlayHandler.Handle(term.KeyEvent(key)) {
 		return true
 	}
 	// We only implement essential keybindings here. Other keybindings can be
