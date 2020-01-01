@@ -46,13 +46,14 @@ func TestFakeTTY_Events(t *testing.T) {
 	tty, ttyCtrl := NewFakeTTY()
 	events := tty.StartInput()
 	ttyCtrl.Inject(term.K('a'), term.K('b'))
-	event := <-events
-	if event != term.K('a') {
+	if event := <-events; event != term.K('a') {
 		t.Errorf("Got event %v, want K('a')", event)
 	}
-	event = <-events
-	if event != term.K('b') {
+	if event := <-events; event != term.K('b') {
 		t.Errorf("Got event %v, want K('b')", event)
+	}
+	if ch := ttyCtrl.EventCh(); ch != events {
+		t.Errorf("EventCh return value is not the same as that of StartInput")
 	}
 }
 

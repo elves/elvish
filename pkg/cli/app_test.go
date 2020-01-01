@@ -428,9 +428,41 @@ func TestReadCode_ShowNotes(t *testing.T) {
 	}
 }
 
-func TestCode_DoesNotCrashWithNilTTY(t *testing.T) {
+func TestReadCode_DoesNotCrashWithNilTTY(t *testing.T) {
 	f := Setup(WithSpec(func(spec *AppSpec) { spec.TTY = nil }))
 	defer f.Stop()
+}
+
+// Other properties.
+
+func TestReadCode_DoesNotLockWithALotOfInputsWithNewlines(t *testing.T) {
+	// Regression test for #887
+	f := Setup(WithTTY(func(tty TTYCtrl) {
+		for i := 0; i < 1000; i++ {
+			tty.Inject(term.K('#'), term.K('\n'))
+		}
+	}))
+	terminated := make(chan struct{})
+	go func() {
+		f.Wait()
+		close(terminated)
+	}()
+	select {
+	case <-terminated:
+	// OK
+	case <-time.After(time.Second):
+		t.Errorf("ReadCode did not terminate within 1s")
+	}
+}
+
+func TestReadCode_DoesNotReadMoreEventsThanNeeded(t *testing.T) {
+	f := Setup()
+	defer f.Stop()
+	f.TTY.Inject(term.K('a'), term.K('\n'), term.K('b'))
+	f.Wait()
+	if event := <-f.TTY.EventCh(); event != term.K('b') {
+		t.Errorf("got event %v, want %v", event, term.K('b'))
+	}
 }
 
 // Test utilities.
