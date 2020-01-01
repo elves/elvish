@@ -123,8 +123,10 @@ func TestReader_ReadEvents(t *testing.T) {
 	defer cleanup()
 
 	for _, test := range eventTests {
-		w.WriteString(test.input)
-		testEvents(t, reader, test.want)
+		t.Run(test.input, func(t *testing.T) {
+			w.WriteString(test.input)
+			testEvents(t, reader, test.want)
+		})
 	}
 }
 

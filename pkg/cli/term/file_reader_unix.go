@@ -53,6 +53,8 @@ func (r *bReader) ReadByteWithTimeout(timeout time.Duration) (byte, error) {
 			return 0, err
 		}
 		if ready[1] {
+			var b [1]byte
+			r.rStop.Read(b[:])
 			return 0, errStopped
 		}
 		if !ready[0] {
