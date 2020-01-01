@@ -459,7 +459,10 @@ func TestReadCode_DoesNotReadMoreEventsThanNeeded(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 	f.TTY.Inject(term.K('a'), term.K('\n'), term.K('b'))
-	f.Wait()
+	code, err := f.Wait()
+	if code != "a" || err != nil {
+		t.Errorf("got (%q, %v), want (%q, nil)", code, err, "a")
+	}
 	if event := <-f.TTY.EventCh(); event != term.K('b') {
 		t.Errorf("got event %v, want %v", event, term.K('b'))
 	}
