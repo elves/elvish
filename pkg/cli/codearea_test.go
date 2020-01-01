@@ -303,6 +303,16 @@ var codeAreaHandleTests = []HandleTest{
 		Events:       []term.Event{term.K('a')},
 		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "b", Dot: 1}},
 	},
+	{
+		// Regression test for #890.
+		Name: "overlay handler does not apply when pasting",
+		Given: codeAreaWithOverlay(CodeAreaSpec{}, func(w *codeArea) Handler {
+			return MapHandler{term.K('\n'): func() {}}
+		}),
+		Events: []term.Event{
+			term.PasteSetting(true), term.K('\n'), term.PasteSetting(false)},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "\n", Dot: 1}},
+	},
 }
 
 func TestCodeArea_Handle(t *testing.T) {
