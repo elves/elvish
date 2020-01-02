@@ -162,6 +162,15 @@ whitespaces. Whitespaces are allowed after `=`, but not before `=`. Examples:
 
 An empty map is written as `[&]`.
 
+If you only specify a key without `=` or a value that follows it, the value will
+be `$true`. However, if you keep `=` but don't specify any value after it, the
+value will be an empty string. Example:
+
+```elvish-transcript
+~> echo [&a &b=]
+[&a=$true &b='']
+```
+
 # Variable
 
 Variables are named holders of values. The following characters can be used in
@@ -1044,6 +1053,14 @@ as map pairs. They are separated by inline whitespaces:
 ```elvish-transcript
 ~> echo &sep=, a b c # seq=, is an option; a b c are arguments
 a,b,c
+```
+
+Like in maps, `&key` is equivalent to `&key=$true`:
+
+```elvish-transcript
+~> fn f [&opt=$false]{ put $opt }
+~> f &opt
+▶ $true
 ```
 
 ## Redirections
