@@ -387,7 +387,9 @@ func fixIndex(i, n int) int {
 
 func (w *listBox) Accept() {
 	state := w.CopyState()
-	w.OnAccept(state.Items, state.Selected)
+	if 0 <= state.Selected && state.Selected < state.Items.Len() {
+		w.OnAccept(state.Items, state.Selected)
+	}
 }
 
 func (w *listBox) mutate(f func(s *ListBoxState)) {

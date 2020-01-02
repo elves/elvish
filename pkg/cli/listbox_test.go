@@ -452,3 +452,32 @@ func TestListBox_Select_CallOnSelect(t *testing.T) {
 	w.Select(func(ListBoxState) int { return 0 })
 	verifyOnSelect(0)
 }
+
+func TestListBox_Accept_IndexCheck(t *testing.T) {
+	tests := []struct {
+		name         string
+		nItems       int
+		selected     int
+		shouldAccept bool
+	}{
+		{"index in range", 1, 0, true},
+		{"index exceeds left boundary", 1, -1, false},
+		{"index exceeds right boundary", 0, 0, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := NewListBox(ListBoxSpec{
+				OnAccept: func(it Items, i int) {
+					if !tt.shouldAccept {
+						t.Error("should not accept this state")
+					}
+				},
+				State: ListBoxState{
+					Items:    TestItems{NItems: tt.nItems},
+					Selected: tt.selected,
+				},
+			})
+			w.Accept()
+		})
+	}
+}
