@@ -31,8 +31,8 @@ cover/all: $(PKG_COVERS)
 
 upload-coverage-codecov: cover/all
 	curl -s https://codecov.io/bash -o codecov.bash && \
-    	bash codecov.bash -f $< || \
-    	true
+		bash codecov.bash -f $< || \
+		true
 
 upload-coverage-coveralls: cover/all
 	go get $(GOVERALLS)
