@@ -43,6 +43,9 @@ func ConvertListIndex(rawIndex interface{}, n int) (*ListIndex, error) {
 		if index < 0 {
 			index += n
 		}
+		if !(0 <= index && index < n) {
+			return nil, errIndexOutOfRange
+		}
 		return &ListIndex{false, index, 0}, nil
 	case string:
 		slice, i, j, err := parseListIndex(rawIndex, n)
