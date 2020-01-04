@@ -74,6 +74,7 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 
 	ev := eval.NewEvaler()
 	ev.SetLibDir(filepath.Join(dataDir, "lib"))
+	ev.InstallModule("math", eval.MathNs)
 	ev.InstallModule("re", re.Ns)
 	ev.InstallModule("str", str.Ns)
 	if sockpath != "" && dbpath != "" {
