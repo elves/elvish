@@ -76,7 +76,7 @@ func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
 		if sigil != "" {
 			return nil
 		}
-		ec := NewTopFrame(ev, NewInternalSource("[purely eval]"), nil)
+		ec := NewTopFrame(ev, NewInternalGoSource("[purely eval]"), nil)
 		variable := ec.ResolveVar(qname)
 		if variable != nil {
 			return variable.Get()

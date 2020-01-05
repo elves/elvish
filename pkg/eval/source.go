@@ -34,8 +34,10 @@ func NewModuleSource(name, path, code string) *Source {
 	return &Source{moduleSource, name, path, code}
 }
 
-func NewInternalSource(name string) *Source {
-	return &Source{internalSource, name, name, ""}
+// NewInternalGoSource returns a Source for use as a placeholder when calling Elvish
+// functions from Go code. It has no associated code.
+func NewInternalGoSource(name string) *Source {
+	return &Source{internalGoSource, name, name, ""}
 }
 
 func (src *Source) describePath() string {
@@ -97,7 +99,7 @@ type sourceType int
 const (
 	// A special value used for the Frame when calling Elvish functions from Go.
 	// This is the only sourceType without associated code.
-	internalSource sourceType = iota
+	internalGoSource sourceType = iota
 	// Code entered interactively.
 	interactiveSource
 	// Code from the main script.
@@ -108,7 +110,7 @@ const (
 
 func (t sourceType) String() string {
 	switch t {
-	case internalSource:
+	case internalGoSource:
 		return "internal"
 	case interactiveSource:
 		return "interactive"

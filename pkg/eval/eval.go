@@ -121,7 +121,7 @@ func adaptChdirHook(name string, ev *Evaler, pfns *vector.Vector) func(string) {
 				continue
 			}
 			fm := NewTopFrame(ev,
-				NewInternalSource("["+name+" hook]"), stdPorts.ports[:])
+				NewInternalGoSource("["+name+" hook]"), stdPorts.ports[:])
 			err := fm.Call(fn, []interface{}{path}, NoOpts)
 			if err != nil {
 				// TODO: Stack trace

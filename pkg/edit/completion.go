@@ -381,7 +381,7 @@ func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer
 			{}, // Will be replaced in CaptureOutput
 			{File: os.Stderr},
 		}
-		fm := eval.NewTopFrame(ev, eval.NewInternalSource("[editor matcher]"), ports)
+		fm := eval.NewTopFrame(ev, eval.NewInternalGoSource("[editor matcher]"), ports)
 		outputs, err := fm.CaptureOutput(matcher, []interface{}{seed}, eval.NoOpts)
 		if err != nil {
 			nt.Notify(fmt.Sprintf("[matcher error] %s", err))
@@ -451,7 +451,7 @@ func adaptArgGeneratorMap(ev *eval.Evaler, m vals.Map) complete.ArgGenerator {
 				}
 			}
 		}
-		fm := eval.NewTopFrame(ev, eval.NewInternalSource("[editor arg generator]"), ports)
+		fm := eval.NewTopFrame(ev, eval.NewInternalGoSource("[editor arg generator]"), ports)
 		err := fm.CallWithOutputCallback(gen, argValues, eval.NoOpts, valueCb, bytesCb)
 		return output, err
 	}

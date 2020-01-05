@@ -81,7 +81,7 @@ func BenchmarkOutputCaptureMixed(b *testing.B) {
 func benchmarkOutputCapture(op effectOp, n int) {
 	ev := NewEvaler()
 	defer ev.Close()
-	ec := NewTopFrame(ev, NewInternalSource("[benchmark]"), []*Port{{}, {}, {}})
+	ec := NewTopFrame(ev, NewInternalGoSource("[benchmark]"), []*Port{{}, {}, {}})
 	for i := 0; i < n; i++ {
 		pcaptureOutput(ec, op)
 	}
