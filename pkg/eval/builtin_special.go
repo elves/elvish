@@ -258,7 +258,7 @@ func (op useOp) invoke(fm *Frame) error {
 func use(fm *Frame, modname, modpath string) error {
 	resolvedPath := ""
 	if strings.HasPrefix(modpath, "./") || strings.HasPrefix(modpath, "../") {
-		if fm.srcMeta.typ != SrcModule {
+		if fm.srcMeta.typ != moduleSource {
 			return ErrRelativeUseNotFromMod
 		}
 		// Resolve relative modpath.

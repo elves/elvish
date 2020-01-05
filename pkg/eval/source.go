@@ -12,7 +12,7 @@ import (
 
 // Source describes a piece of source code.
 type Source struct {
-	typ  SrcType
+	typ  sourceType
 	name string
 	path string
 	code string
@@ -21,25 +21,25 @@ type Source struct {
 // NewInteractiveSource returns a Source for a piece of code entered
 // interactively.
 func NewInteractiveSource(code string) *Source {
-	return &Source{SrcInteractive, "", "", code}
+	return &Source{interactiveSource, "", "", code}
 }
 
 // NewScriptSource returns a Source for a piece of code used as a script.
 func NewScriptSource(name, path, code string) *Source {
-	return &Source{SrcScript, name, path, code}
+	return &Source{scriptSource, name, path, code}
 }
 
 // NewModuleSource returns a Source for a piece of code used as a module.
 func NewModuleSource(name, path, code string) *Source {
-	return &Source{SrcModule, name, path, code}
+	return &Source{moduleSource, name, path, code}
 }
 
 func NewInternalSource(name string) *Source {
-	return &Source{SrcInternal, name, name, ""}
+	return &Source{internalSource, name, name, ""}
 }
 
 func (src *Source) describePath() string {
-	if src.typ == SrcInteractive {
+	if src.typ == interactiveSource {
 		return "[tty]"
 	}
 	return src.path
@@ -91,29 +91,30 @@ func (src *Source) IterateKeys(f func(interface{}) bool) {
 	util.Feed(f, "type", "name", "path", "code")
 }
 
-// SrcType records the type of a piece of source code.
-type SrcType int
+// sourceType records the type of a piece of source code.
+type sourceType int
 
 const (
-	// SrcInternal is a special SrcType for internal operations.
-	SrcInternal SrcType = iota
-	// SrcInteractive is the type of source code entered interactively.
-	SrcInteractive
-	// SrcScript is the type of source code used as a script.
-	SrcScript
-	// SrcModule is the type of source code used as a module.
-	SrcModule
+	// A special value used for the Frame when calling Elvish functions from Go.
+	// This is the only sourceType without associated code.
+	internalSource sourceType = iota
+	// Code entered interactively.
+	interactiveSource
+	// Code from the main script.
+	scriptSource
+	// Code from
+	moduleSource
 )
 
-func (t SrcType) String() string {
+func (t sourceType) String() string {
 	switch t {
-	case SrcInternal:
+	case internalSource:
 		return "internal"
-	case SrcInteractive:
+	case interactiveSource:
 		return "interactive"
-	case SrcScript:
+	case scriptSource:
 		return "script"
-	case SrcModule:
+	case moduleSource:
 		return "module"
 	default:
 		return "bad type " + strconv.Itoa(int(t))
