@@ -33,6 +33,6 @@ func TestIterateKeys(t *testing.T) {
 		Args(testStructMap{}).Rets(vs("name", "score-number")),
 		Args(keysIterator{vs("lorem", "ipsum")}).Rets(vs("lorem", "ipsum")),
 		Args(nonKeysIterator{}).Rets(
-			any, cannotIterateKeysOf{"!!vals.nonKeysIterator"}),
+			Any, cannotIterateKeysOf{"!!vals.nonKeysIterator"}),
 	})
 }

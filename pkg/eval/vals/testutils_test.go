@@ -2,13 +2,6 @@ package vals
 
 import "github.com/elves/elvish/pkg/tt"
 
-// anyType matches anything.
-type anyType struct{}
-
-var any = anyType{}
-
-func (anyType) Match(tt.RetValue) bool { return true }
-
 // equalMatcher matches the return value using Equal.
 type equalMatcher struct {
 	r interface{}

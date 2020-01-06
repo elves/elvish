@@ -19,7 +19,7 @@ func TestIndex(t *testing.T) {
 		Args("abc", 0.0).Rets("a", nil),
 		Args("你好", "0").Rets("你", nil),
 		Args("你好", "3").Rets("好", nil),
-		Args("你好", "2").Rets(any, errIndexNotAtRuneBoundary),
+		Args("你好", "2").Rets(Any, errIndexNotAtRuneBoundary),
 		Args("abc", "1:2").Rets("b", nil),
 		Args("abc", "1:").Rets("bc", nil),
 		Args("abc", ":").Rets("abc", nil),
@@ -32,15 +32,15 @@ func TestIndex(t *testing.T) {
 		// Simple indicies: 0 <= i < n.
 		Args(li4, "0").Rets("foo", nil),
 		Args(li4, "3").Rets("ipsum", nil),
-		Args(li0, "0").Rets(any, errIndexOutOfRange),
-		Args(li4, "4").Rets(any, errIndexOutOfRange),
-		Args(li4, "5").Rets(any, errIndexOutOfRange),
+		Args(li0, "0").Rets(Any, errIndexOutOfRange),
+		Args(li4, "4").Rets(Any, errIndexOutOfRange),
+		Args(li4, "5").Rets(Any, errIndexOutOfRange),
 		// Negative indices: -n <= i < 0.
 		Args(li4, "-1").Rets("ipsum", nil),
 		Args(li4, "-4").Rets("foo", nil),
-		Args(li4, "-5").Rets(any, errIndexOutOfRange), // Out of range.
+		Args(li4, "-5").Rets(Any, errIndexOutOfRange), // Out of range.
 		// Decimal indicies are not allowed even if the value is an integer.
-		Args(li4, "0.0").Rets(any, errIndexMustBeInteger),
+		Args(li4, "0.0").Rets(Any, errIndexMustBeInteger),
 
 		// Float64 indicies are allowed as long as they are integers.
 		Args(li4, 0.0).Rets("foo", nil),
@@ -48,7 +48,7 @@ func TestIndex(t *testing.T) {
 		Args(li4, 5.0).Rets(nil, errIndexOutOfRange),
 		Args(li4, -1.0).Rets("ipsum", nil),
 		Args(li4, -5.0).Rets(nil, errIndexOutOfRange),
-		Args(li4, 0.5).Rets(any, errIndexMustBeInteger),
+		Args(li4, 0.5).Rets(Any, errIndexMustBeInteger),
 
 		// Slice indicies: 0 <= i <= j <= n.
 		Args(li4, "1:3").Rets(eq(MakeList("bar", "lorem")), nil),
@@ -71,15 +71,15 @@ func TestIndex(t *testing.T) {
 		Args(li4, "3:2").Rets(nil, errIndexOutOfRange),
 
 		// Malformed list indices.
-		Args(li4, "a").Rets(any, errIndexMustBeInteger),
+		Args(li4, "a").Rets(Any, errIndexMustBeInteger),
 		// TODO(xiaq): Make the error more accurate.
-		Args(li4, "1:3:2").Rets(any, errIndexMustBeInteger),
+		Args(li4, "1:3:2").Rets(Any, errIndexMustBeInteger),
 
 		// Map indicies
 		// ============
 
 		Args(m, "foo").Rets("bar", nil),
-		Args(m, "bad").Rets(any, NoSuchKey("bad")),
+		Args(m, "bad").Rets(Any, NoSuchKey("bad")),
 
 		// StructMap indicies
 		Args(testStructMap{"foo", 1.0}, "name").Rets("foo", nil),

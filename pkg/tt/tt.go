@@ -103,6 +103,13 @@ type Matcher interface {
 	Match(RetValue) bool
 }
 
+// Any is a Matcher that matches any value.
+var Any Matcher = anyMatcher{}
+
+type anyMatcher struct{}
+
+func (anyMatcher) Match(RetValue) bool { return true }
+
 func match(matchers, actual []interface{}) bool {
 	for i, matcher := range matchers {
 		if !matchOne(matcher, actual[i]) {

@@ -33,14 +33,14 @@ func TestScanToGo(t *testing.T) {
 		Args(nil, nil).Rets(nil),
 
 		Args(0.5, 0).Rets(0, errMustBeInteger),
-		Args("x", someType{}).Rets(any, wrongType{"!!vals.someType", "string"}),
-		Args(someType{}, 0).Rets(any, errMustBeInteger),
-		Args("x", 0).Rets(any, cannotParseAs{"integer", "x"}),
-		Args(someType{}, 0.0).Rets(any, errMustBeNumber),
-		Args("x", 0.0).Rets(any, cannotParseAs{"number", "x"}),
-		Args(someType{}, ' ').Rets(any, errMustBeString),
-		Args("\xc3\x28", ' ').Rets(any, errMustBeValidUTF8), // Invalid UTF8
-		Args("ab", ' ').Rets(any, errMustHaveSingleRune),
+		Args("x", someType{}).Rets(Any, wrongType{"!!vals.someType", "string"}),
+		Args(someType{}, 0).Rets(Any, errMustBeInteger),
+		Args("x", 0).Rets(Any, cannotParseAs{"integer", "x"}),
+		Args(someType{}, 0.0).Rets(Any, errMustBeNumber),
+		Args("x", 0.0).Rets(Any, cannotParseAs{"number", "x"}),
+		Args(someType{}, ' ').Rets(Any, errMustBeString),
+		Args("\xc3\x28", ' ').Rets(Any, errMustBeValidUTF8), // Invalid UTF8
+		Args("ab", ' ').Rets(Any, errMustHaveSingleRune),
 	})
 }
 
