@@ -231,10 +231,9 @@ func toJSON(fm *Frame, inputs Inputs) error {
 	return errEncode
 }
 
-func fopen(fm *Frame, name string) (vals.File, error) {
+func fopen(name string) (vals.File, error) {
 	// TODO support opening files for writing etc as well.
-	f, err := os.Open(name)
-	return f, err
+	return os.Open(name)
 }
 
 func fclose(f vals.File) error {
