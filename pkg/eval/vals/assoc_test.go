@@ -41,7 +41,7 @@ var assocTests = tt.Table{
 	Args(testStructMap{"foo", 1.0}, "score-number", "2.0").
 		Rets(testStructMap{"foo", 2.0}, nil),
 	Args(testStructMap{"foo", 1.0}, "score-number", "bad number").
-		Rets(nil, anyError),
+		Rets(nil, cannotParseAs{"number", `'bad number'`}),
 
 	Args(customAssocer{}, "x", "y").Rets("custom result", errCustomAssoc),
 

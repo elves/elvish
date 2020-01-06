@@ -22,6 +22,15 @@ type RConcatter interface {
 // concatenation is not implemented. See Concat for how it is used.
 var ErrConcatNotImplemented = errors.New("concat not implemented")
 
+type cannotConcat struct {
+	lhsKind string
+	rhsKind string
+}
+
+func (err cannotConcat) Error() string {
+	return fmt.Sprintf("cannot concatenate %s and %s", err.lhsKind, err.rhsKind)
+}
+
 // Concat concatenates two values. If both operands are strings, it returns lhs
 // + rhs, nil. If the left operand implements Concatter, it calls
 // lhs.Concat(rhs). If lhs doesn't implement the interface or returned
@@ -46,7 +55,7 @@ func Concat(lhs, rhs interface{}) (interface{}, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("unsupported concat: %s and %s", Kind(lhs), Kind(rhs))
+	return nil, cannotConcat{Kind(lhs), Kind(rhs)}
 }
 
 func tryConcatBuiltins(lhs, rhs interface{}) (interface{}, bool) {

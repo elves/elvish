@@ -11,16 +11,6 @@ var any = anyType{}
 
 func (anyType) Match(tt.RetValue) bool { return true }
 
-// anyErrorType matches any value that satisfies the error interface.
-type anyErrorType struct{}
-
-var anyError = anyErrorType{}
-
-func (e anyErrorType) Match(a tt.RetValue) bool {
-	_, ok := a.(error)
-	return ok
-}
-
 // equalMatcher matches the return value using Equal.
 type equalMatcher struct {
 	r interface{}

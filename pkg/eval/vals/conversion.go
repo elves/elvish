@@ -24,6 +24,32 @@ import (
 // float64(1.0) or rune('1'). Conversion in this direction depends on the
 // destination type.
 
+type wrongType struct {
+	wantKind string
+	gotKind  string
+}
+
+func (err wrongType) Error() string {
+	return fmt.Sprintf("wrong type: need %s, got %s", err.wantKind, err.gotKind)
+}
+
+type cannotParseAs struct {
+	want string
+	repr string
+}
+
+func (err cannotParseAs) Error() string {
+	return fmt.Sprintf("cannot parse as %s: %s", err.want, err.repr)
+}
+
+var (
+	errMustBeString       = errors.New("must be string")
+	errMustBeValidUTF8    = errors.New("must be valid UTF-8")
+	errMustHaveSingleRune = errors.New("must have a single rune")
+	errMustBeNumber       = errors.New("must be number")
+	errMustBeInteger      = errors.New("must be integer")
+)
+
 // ScanToGo converts an Elvish value to a Go value. the pointer points to. It
 // uses the type of the pointer to determine the destination type, and puts the
 // converted value in the location the pointer points to. Conversion only
@@ -56,12 +82,11 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 		// Do a generic `*ptr = src` via reflection
 		ptrType := TypeOf(ptr)
 		if ptrType.Kind() != reflect.Ptr {
-			return fmt.Errorf("need pointer to scan into, got %T", ptr)
+			return fmt.Errorf("internal bug: need pointer to scan to, got %T", ptr)
 		}
 		dstType := ptrType.Elem()
 		if !TypeOf(src).AssignableTo(dstType) {
-			return fmt.Errorf("need %s, got %s",
-				Kind(reflect.Zero(dstType).Interface()), Kind(src))
+			return wrongType{Kind(reflect.Zero(dstType).Interface()), Kind(src)}
 		}
 		ValueOf(ptr).Elem().Set(ValueOf(src))
 		return nil
@@ -100,13 +125,11 @@ func elvToFloat(arg interface{}) (float64, error) {
 		if err == nil {
 			return float64(i), err
 		}
-		return 0, err
+		return 0, cannotParseAs{"number", Repr(arg, -1)}
 	default:
-		return 0, fmt.Errorf("must be float64 or string")
+		return 0, errMustBeNumber
 	}
 }
-
-var errMustBeInteger = errors.New("must be integer")
 
 func elvToInt(arg interface{}) (int, error) {
 	switch arg := arg.(type) {
@@ -118,10 +141,10 @@ func elvToInt(arg interface{}) (int, error) {
 		return i, nil
 	case string:
 		num, err := strconv.ParseInt(arg, 0, 0)
-		if err != nil {
-			return 0, err
+		if err == nil {
+			return int(num), nil
 		}
-		return int(num), nil
+		return 0, cannotParseAs{"integer", Repr(arg, -1)}
 	default:
 		return 0, errMustBeInteger
 	}
@@ -130,15 +153,15 @@ func elvToInt(arg interface{}) (int, error) {
 func elvToRune(arg interface{}) (rune, error) {
 	ss, ok := arg.(string)
 	if !ok {
-		return -1, fmt.Errorf("must be string")
+		return -1, errMustBeString
 	}
 	s := ss
 	r, size := utf8.DecodeRuneInString(s)
 	if r == utf8.RuneError {
-		return -1, fmt.Errorf("string is not valid UTF-8")
+		return -1, errMustBeValidUTF8
 	}
 	if size != len(s) {
-		return -1, fmt.Errorf("string has multiple runes")
+		return -1, errMustHaveSingleRune
 	}
 	return r, nil
 }

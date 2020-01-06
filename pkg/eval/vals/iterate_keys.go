@@ -1,7 +1,6 @@
 package vals
 
 import (
-	"errors"
 	"reflect"
 )
 
@@ -10,6 +9,12 @@ type KeysIterator interface {
 	// IterateKeys calls the passed function with each key within the receiver.
 	// The iteration is aborted if the function returns false.
 	IterateKeys(func(v interface{}) bool)
+}
+
+type cannotIterateKeysOf struct{ kind string }
+
+func (err cannotIterateKeysOf) Error() string {
+	return "cannot iterate keys of " + err.kind
 }
 
 // IterateKeys iterates the keys of the supplied value, calling the supplied
@@ -35,7 +40,7 @@ func IterateKeys(v interface{}, f func(interface{}) bool) error {
 	case KeysIterator:
 		v.IterateKeys(f)
 	default:
-		return errors.New(Kind(v) + " cannot have its keys iterated")
+		return cannotIterateKeysOf{Kind(v)}
 	}
 	return nil
 }

@@ -32,14 +32,14 @@ var scanToGoTests = tt.Table{
 	Args(nil, nil).Rets(nil),
 
 	Args(0.5, 0).Rets(0, errMustBeInteger),
-	Args("x", someType{}).Rets(any, anyError),
-	Args(someType{}, 0).Rets(any, anyError),
-	Args("x", 0).Rets(any, anyError),
-	Args(someType{}, 0.0).Rets(any, anyError),
-	Args("x", 0.0).Rets(any, anyError),
-	Args(someType{}, ' ').Rets(any, anyError),
-	Args("\xc3\x28", ' ').Rets(any, anyError), // Invalid UTF8
-	Args("ab", ' ').Rets(any, anyError),
+	Args("x", someType{}).Rets(any, wrongType{"!!vals.someType", "string"}),
+	Args(someType{}, 0).Rets(any, errMustBeInteger),
+	Args("x", 0).Rets(any, cannotParseAs{"integer", "x"}),
+	Args(someType{}, 0.0).Rets(any, errMustBeNumber),
+	Args("x", 0.0).Rets(any, cannotParseAs{"number", "x"}),
+	Args(someType{}, ' ').Rets(any, errMustBeString),
+	Args("\xc3\x28", ' ').Rets(any, errMustBeValidUTF8), // Invalid UTF8
+	Args("ab", ' ').Rets(any, errMustHaveSingleRune),
 }
 
 func TestScanToGo(t *testing.T) {

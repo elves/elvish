@@ -1,7 +1,6 @@
 package vals
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/elves/elvish/pkg/tt"
@@ -33,7 +32,7 @@ func TestIterateKeys(t *testing.T) {
 		Args(MakeMap("k1", "v1", "k2", "v2")).Rets(vs("k1", "k2"), nil),
 		Args(testStructMap{}).Rets(vs("name", "score-number")),
 		Args(keysIterator{vs("lorem", "ipsum")}).Rets(vs("lorem", "ipsum")),
-		Args(nonKeysIterator{}).Rets(any,
-			errors.New("!!vals.nonKeysIterator cannot have its keys iterated")),
+		Args(nonKeysIterator{}).Rets(
+			any, cannotIterateKeysOf{"!!vals.nonKeysIterator"}),
 	})
 }

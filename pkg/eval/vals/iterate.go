@@ -1,15 +1,15 @@
 package vals
 
-import (
-	"errors"
-)
-
 // Iterator wraps the Iterate method.
 type Iterator interface {
 	// Iterate calls the passed function with each value within the receiver.
 	// The iteration is aborted if the function returns false.
 	Iterate(func(v interface{}) bool)
 }
+
+type cannotIterate struct{ kind string }
+
+func (err cannotIterate) Error() string { return "cannot iterate " + err.kind }
 
 // CanIterate returns whether the value can be iterated. If CanIterate(v) is
 // true, calling Iterate(v, f) will not result in an error.
@@ -44,7 +44,7 @@ func Iterate(v interface{}, f func(interface{}) bool) error {
 	case Iterator:
 		v.Iterate(f)
 	default:
-		return errors.New(Kind(v) + " cannot be iterated")
+		return cannotIterate{Kind(v)}
 	}
 	return nil
 }

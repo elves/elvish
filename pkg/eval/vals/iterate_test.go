@@ -1,7 +1,6 @@
 package vals
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/elves/elvish/pkg/tt"
@@ -32,8 +31,7 @@ func TestCollect(t *testing.T) {
 		Args("foo").Rets(vs("f", "o", "o"), nil),
 		Args(MakeList("foo", "bar")).Rets(vs("foo", "bar"), nil),
 		Args(iterator{vs("a", "b")}).Rets(vs("a", "b"), nil),
-		Args(nonIterator{}).Rets(vs(),
-			errors.New("!!vals.nonIterator cannot be iterated")),
+		Args(nonIterator{}).Rets(vs(), cannotIterate{"!!vals.nonIterator"}),
 	})
 }
 

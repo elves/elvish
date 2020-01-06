@@ -39,7 +39,7 @@ var indexTests = tt.Table{
 	Args(li4, "-4").Rets("foo", nil),
 	Args(li4, "-5").Rets(any, errIndexOutOfRange), // Out of range.
 	// Decimal indicies are not allowed even if the value is an integer.
-	Args(li4, "0.0").Rets(any, anyError),
+	Args(li4, "0.0").Rets(any, errIndexMustBeInteger),
 
 	// Float64 indicies are allowed as long as they are integers.
 	Args(li4, 0.0).Rets("foo", nil),
@@ -70,14 +70,15 @@ var indexTests = tt.Table{
 	Args(li4, "3:2").Rets(nil, errIndexOutOfRange),
 
 	// Malformed list indices.
-	Args(li4, "a").Rets(any, anyError),
-	Args(li4, "1:3:2").Rets(any, anyError),
+	Args(li4, "a").Rets(any, errIndexMustBeInteger),
+	// TODO(xiaq): Make the error more accurate.
+	Args(li4, "1:3:2").Rets(any, errIndexMustBeInteger),
 
 	// Map indicies
 	// ============
 
 	Args(m, "foo").Rets("bar", nil),
-	Args(m, "bad").Rets(any, anyError),
+	Args(m, "bad").Rets(any, NoSuchKey("bad")),
 
 	// StructMap indicies
 	Args(testStructMap{"foo", 1.0}, "name").Rets("foo", nil),
