@@ -51,19 +51,19 @@ func TestIndex(t *testing.T) {
 		Args(li4, 0.5).Rets(Any, errIndexMustBeInteger),
 
 		// Slice indicies: 0 <= i <= j <= n.
-		Args(li4, "1:3").Rets(eq(MakeList("bar", "lorem")), nil),
-		Args(li4, "3:4").Rets(eq(MakeList("ipsum")), nil),
-		Args(li4, "0:0").Rets(eq(EmptyList), nil), // i == j == 0 is allowed
-		Args(li4, "4:4").Rets(eq(EmptyList), nil), // i == j == n is allowed
+		Args(li4, "1:3").Rets(Eq(MakeList("bar", "lorem")), nil),
+		Args(li4, "3:4").Rets(Eq(MakeList("ipsum")), nil),
+		Args(li4, "0:0").Rets(Eq(EmptyList), nil), // i == j == 0 is allowed
+		Args(li4, "4:4").Rets(Eq(EmptyList), nil), // i == j == n is allowed
 		// i defaults to 0
-		Args(li4, ":2").Rets(eq(MakeList("foo", "bar")), nil),
-		Args(li4, ":-1").Rets(eq(MakeList("foo", "bar", "lorem")), nil),
+		Args(li4, ":2").Rets(Eq(MakeList("foo", "bar")), nil),
+		Args(li4, ":-1").Rets(Eq(MakeList("foo", "bar", "lorem")), nil),
 		// j defaults to n
-		Args(li4, "3:").Rets(eq(MakeList("ipsum")), nil),
-		Args(li4, "-2:").Rets(eq(MakeList("lorem", "ipsum")), nil),
+		Args(li4, "3:").Rets(Eq(MakeList("ipsum")), nil),
+		Args(li4, "-2:").Rets(Eq(MakeList("lorem", "ipsum")), nil),
 		// Both indices can be omitted.
-		Args(li0, ":").Rets(eq(li0), nil),
-		Args(li4, ":").Rets(eq(li4), nil),
+		Args(li0, ":").Rets(Eq(li0), nil),
+		Args(li4, ":").Rets(Eq(li4), nil),
 
 		// Index out of range.
 		Args(li4, "-5:1").Rets(nil, errIndexOutOfRange),

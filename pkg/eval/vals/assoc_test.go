@@ -23,9 +23,9 @@ func TestAssoc(t *testing.T) {
 		Args("0123", "x", "y").Rets(nil, errIndexMustBeInteger),
 
 		Args(MakeList("0", "1", "2", "3"), "0", "foo").Rets(
-			eq(MakeList("foo", "1", "2", "3")), nil),
+			Eq(MakeList("foo", "1", "2", "3")), nil),
 		Args(MakeList("0", "1", "2", "3"), 0.0, "foo").Rets(
-			eq(MakeList("foo", "1", "2", "3")), nil),
+			Eq(MakeList("foo", "1", "2", "3")), nil),
 		Args(MakeList("0"), MakeList("0"), "1").Rets(nil, errIndexMustBeInteger),
 		Args(MakeList("0"), "1", "x").Rets(nil, errIndexOutOfRange),
 		// TODO: Support list assoc with slice
@@ -33,9 +33,9 @@ func TestAssoc(t *testing.T) {
 			nil, errAssocWithSlice),
 
 		Args(MakeMap("k", "v", "k2", "v2"), "k", "newv").Rets(
-			eq(MakeMap("k", "newv", "k2", "v2")), nil),
+			Eq(MakeMap("k", "newv", "k2", "v2")), nil),
 		Args(MakeMap("k", "v"), "k2", "v2").Rets(
-			eq(MakeMap("k", "v", "k2", "v2")), nil),
+			Eq(MakeMap("k", "v", "k2", "v2")), nil),
 
 		Args(testStructMap{"foo", 1.0}, "name", "bar").
 			Rets(testStructMap{"bar", 1.0}, nil),
