@@ -3,7 +3,7 @@ package vals
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/tt"
+	. "github.com/elves/elvish/pkg/tt"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -28,7 +28,7 @@ func (k keysIterator) IterateKeys(f func(interface{}) bool) {
 type nonKeysIterator struct{}
 
 func TestIterateKeys(t *testing.T) {
-	tt.Test(t, tt.Fn("iterateKeys", iterateKeys), tt.Table{
+	Test(t, Fn("iterateKeys", iterateKeys), Table{
 		Args(MakeMap("k1", "v1", "k2", "v2")).Rets(vs("k1", "k2"), nil),
 		Args(testStructMap{}).Rets(vs("name", "score-number")),
 		Args(keysIterator{vs("lorem", "ipsum")}).Rets(vs("lorem", "ipsum")),

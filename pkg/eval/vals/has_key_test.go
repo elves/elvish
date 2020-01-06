@@ -3,7 +3,7 @@ package vals
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/tt"
+	. "github.com/elves/elvish/pkg/tt"
 )
 
 type hasKeyer struct{ key interface{} }
@@ -11,7 +11,7 @@ type hasKeyer struct{ key interface{} }
 func (h hasKeyer) HasKey(k interface{}) bool { return k == h.key }
 
 func TestHasKey(t *testing.T) {
-	tt.Test(t, tt.Fn("HasKey", HasKey), tt.Table{
+	Test(t, Fn("HasKey", HasKey), Table{
 		// Map
 		Args(MakeMap("k", "v"), "k").Rets(true),
 		Args(MakeMap("k", "v"), "bad").Rets(false),

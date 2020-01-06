@@ -3,7 +3,7 @@ package vals
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/tt"
+	. "github.com/elves/elvish/pkg/tt"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -18,7 +18,7 @@ func (i iterator) Iterate(f func(interface{}) bool) {
 type nonIterator struct{}
 
 func TestCanIterate(t *testing.T) {
-	tt.Test(t, tt.Fn("CanIterate", CanIterate), tt.Table{
+	Test(t, Fn("CanIterate", CanIterate), Table{
 		Args("foo").Rets(true),
 		Args(MakeList("foo", "bar")).Rets(true),
 		Args(iterator{vs("a", "b")}).Rets(true),
@@ -27,7 +27,7 @@ func TestCanIterate(t *testing.T) {
 }
 
 func TestCollect(t *testing.T) {
-	tt.Test(t, tt.Fn("Collect", Collect), tt.Table{
+	Test(t, Fn("Collect", Collect), Table{
 		Args("foo").Rets(vs("f", "o", "o"), nil),
 		Args(MakeList("foo", "bar")).Rets(vs("foo", "bar"), nil),
 		Args(iterator{vs("a", "b")}).Rets(vs("a", "b"), nil),
@@ -35,4 +35,4 @@ func TestCollect(t *testing.T) {
 	})
 }
 
-// Iterate is tested indirectly by the test against Iterate.
+// Iterate is tested indirectly by the test against Collect.

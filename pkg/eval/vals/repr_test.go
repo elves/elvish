@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/elves/elvish/pkg/tt"
+	. "github.com/elves/elvish/pkg/tt"
 )
 
 type reprer struct{}
@@ -17,7 +17,7 @@ type nonReprer struct{}
 func repr(a interface{}) string { return Repr(a, NoPretty) }
 
 func TestRepr(t *testing.T) {
-	tt.Test(t, tt.Fn("repr", repr), tt.Table{
+	Test(t, Fn("repr", repr), Table{
 		Args(nil).Rets("$nil"),
 		Args(false).Rets("$false"),
 		Args(true).Rets("$true"),

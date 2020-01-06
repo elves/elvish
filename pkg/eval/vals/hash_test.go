@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/elves/elvish/pkg/tt"
+	. "github.com/elves/elvish/pkg/tt"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -16,7 +16,7 @@ func (hasher) Hash() uint32 { return 42 }
 type nonHasher struct{}
 
 func TestHash(t *testing.T) {
-	tt.Test(t, tt.Fn("Hash", Hash), tt.Table{
+	Test(t, Fn("Hash", Hash), Table{
 		Args(false).Rets(uint32(0)),
 		Args(true).Rets(uint32(1)),
 		Args(1.0).Rets(hash.UInt64(math.Float64bits(1.0))),

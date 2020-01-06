@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/elves/elvish/pkg/tt"
+	. "github.com/elves/elvish/pkg/tt"
 )
 
 // An implementation for Concatter that accepts strings, returns a special
@@ -31,7 +31,7 @@ func (rconcatter) RConcat(lhs interface{}) (interface{}, error) {
 }
 
 func TestConcat(t *testing.T) {
-	tt.Test(t, tt.Fn("Concat", Concat), tt.Table{
+	Test(t, Fn("Concat", Concat), Table{
 		Args("foo", "bar").Rets("foobar", nil),
 		Args("foo", 2.0).Rets("foo2", nil),
 		Args(2.0, "foo").Rets("2foo", nil),
