@@ -22,6 +22,5 @@ func TestKind(t *testing.T) {
 		Args(xtype(0)).Rets("!!vals.xtype"),
 
 		Args(os.Stdin).Rets("file"),
-		Args(NewPipe(os.Stdin, os.Stdout)).Rets("pipe"),
 	})
 }
