@@ -16,11 +16,10 @@ func TestPipe(t *testing.T) {
 	defer r.Close()
 	defer w.Close()
 
-	TestValue(t, NewPipe(r, w), Want{
-		Kind:       "pipe",
-		Hash:       hash.DJB(hash.UIntPtr(r.Fd()), hash.UIntPtr(w.Fd())),
-		Repr:       fmt.Sprintf("<pipe{%v %v}>", r.Fd(), w.Fd()),
-		EqualTo:    NewPipe(r, w),
-		NotEqualTo: []interface{}{123, "a string", NewPipe(w, r)},
-	})
+	TestValue(t, NewPipe(r, w)).
+		HasKind("pipe").
+		HasHash(hash.DJB(hash.UIntPtr(r.Fd()), hash.UIntPtr(w.Fd()))).
+		HasRepr(fmt.Sprintf("<pipe{%v %v}>", r.Fd(), w.Fd())).
+		IsEqualTo(NewPipe(r, w)).
+		IsNotEqualTo(123, "a string", NewPipe(w, r))
 }
