@@ -12,7 +12,7 @@ func TestCompileEffect(t *testing.T) {
 		// Outputs of pipelines in a chunk are concatenated
 		That("put x; put y; put z").Puts("x", "y", "z"),
 		// A failed pipeline cause the whole chunk to fail
-		That("put a; e:false; put b").Puts("a").Errors(),
+		That("put a; e:false; put b").Puts("a").ThrowsAny(),
 
 		// Pipelines
 		// ---------

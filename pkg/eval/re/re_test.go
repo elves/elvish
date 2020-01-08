@@ -16,7 +16,7 @@ func TestRe(t *testing.T) {
 		That("re:match '[a-z]' A").Puts(false),
 
 		// Invalid pattern in re:match
-		That("re:match '(' x").Errors(),
+		That("re:match '(' x").ThrowsAny(),
 
 		That("re:find . ab").Puts(
 			matchStruct{"a", 0, 1, vals.MakeList(submatchStruct{"a", 0, 1})},
@@ -34,7 +34,7 @@ func TestRe(t *testing.T) {
 			Puts("a", "0", "1", vals.MakeList(submatchStruct{"a", 0, 1})),
 
 		// Invalid pattern in re:find
-		That("re:find '(' x").Errors(),
+		That("re:find '(' x").ThrowsAny(),
 
 		// Without any flag, finds ax
 		That("put (re:find 'a(x|xy)' axy)[text]").Puts("ax"),
@@ -47,20 +47,20 @@ func TestRe(t *testing.T) {
 		That("re:replace '(ba|z)sh' [x]{ put [&bash=BaSh &zsh=ZsH][$x] } 'bash and zsh'").Puts("BaSh and ZsH"),
 
 		// Invalid pattern in re:replace
-		That("re:replace '(' x bash").Errors(),
+		That("re:replace '(' x bash").ThrowsAny(),
 		// Replacement function outputs more than one value
-		That("re:replace x [x]{ put a b } xx").Errors(),
+		That("re:replace x [x]{ put a b } xx").ThrowsAny(),
 		// Replacement function outputs non-string value
-		That("re:replace x [x]{ put [] } xx").Errors(),
+		That("re:replace x [x]{ put [] } xx").ThrowsAny(),
 		// Replacement is not string or function
-		That("re:replace x [] xx").Errors(),
+		That("re:replace x [] xx").ThrowsAny(),
 		// Replacement is function when &literal is set
-		That("re:replace &literal x [_]{ put y } xx").Errors(),
+		That("re:replace &literal x [_]{ put y } xx").ThrowsAny(),
 
 		That("re:split : /usr/sbin:/usr/bin:/bin").Puts("/usr/sbin", "/usr/bin", "/bin"),
 		That("re:split &max=2 : /usr/sbin:/usr/bin:/bin").Puts("/usr/sbin", "/usr/bin:/bin"),
 		// Invalid pattern in re:split
-		That("re:split '(' x").Errors(),
+		That("re:split '(' x").ThrowsAny(),
 
 		That("re:quote a.txt").Puts(`a\.txt`),
 		That("re:quote '(*)'").Puts(`\(\*\)`),

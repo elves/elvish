@@ -36,13 +36,13 @@ func TestMiscEval(t *testing.T) {
 
 func TestMultipleEval(t *testing.T) {
 	texts := []string{"x=hello", "put $x"}
-	outs, _, err := evalAndCollect(t, NewEvaler(), texts, 1)
+	r := evalAndCollect(t, NewEvaler(), texts)
 	wantOuts := []interface{}{"hello"}
-	if err != nil {
-		t.Errorf("eval %s => %v, want nil", texts, err)
+	if r.exception != nil {
+		t.Errorf("eval %s => %v, want nil", texts, r.exception)
 	}
-	if !reflect.DeepEqual(outs, wantOuts) {
-		t.Errorf("eval %s outputs %v, want %v", texts, outs, wantOuts)
+	if !reflect.DeepEqual(r.valueOut, wantOuts) {
+		t.Errorf("eval %s outputs %v, want %v", texts, r.valueOut, wantOuts)
 	}
 }
 

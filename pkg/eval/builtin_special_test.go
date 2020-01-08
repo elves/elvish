@@ -26,21 +26,21 @@ func TestBuiltinSpecial(t *testing.T) {
 		That("try { nop } except { put bad } else { put good }").Puts("good"),
 		That("try { e:false } except - { put bad } else { put good }").
 			Puts("bad"),
-		That("try { fail tr }").ErrorsWith(errors.New("tr")),
+		That("try { fail tr }").Throws(errors.New("tr")),
 		That("try { fail tr } finally { put final }").
-			Puts("final").ErrorsWith(errors.New("tr")),
+			Puts("final").Throws(errors.New("tr")),
 		That("try { fail tr } except { fail ex } finally { put final }").
-			Puts("final").ErrorsWith(errors.New("ex")),
+			Puts("final").Throws(errors.New("ex")),
 		That("try { fail tr } except { put ex } finally { fail final }").
-			Puts("ex").ErrorsWith(errors.New("final")),
+			Puts("ex").Throws(errors.New("final")),
 		That("try { fail tr } except { fail ex } finally { fail final }").
-			ErrorsWith(errors.New("final")),
+			Throws(errors.New("final")),
 
 		// while
 		That("x=0; while (< $x 4) { put $x; x=(+ $x 1) }").
 			Puts("0", 1.0, 2.0, 3.0),
 		That("x = 0; while (< $x 4) { put $x; break }").Puts("0"),
-		That("x = 0; while (< $x 4) { fail haha }").Errors(),
+		That("x = 0; while (< $x 4) { fail haha }").ThrowsAny(),
 		That("x = 0; while (< $x 4) { put $x; x=(+ $x 1) } else { put bad }").
 			Puts("0", 1.0, 2.0, 3.0),
 		That("while $false { put bad } else { put good }").Puts("good"),
@@ -111,7 +111,7 @@ func TestUse(t *testing.T) {
 
 		// Variables defined in the default global scope is invisible from
 		// modules
-		That("x = foo; use put-x").Errors(),
+		That("x = foo; use put-x").ThrowsAny(),
 
 		// TODO: Test module namespace
 	)

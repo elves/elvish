@@ -31,18 +31,18 @@ import (
 
 // TestCase is a test case for Test.
 type TestCase struct {
-	text string
-	want
+	code string
+	want result
 }
 
-type want struct {
-	out      []interface{}
-	bytesOut []byte
-	err      error
+type result struct {
+	valueOut  []interface{}
+	bytesOut  []byte
+	exception error
 }
 
-// A special value for want.err to indicate that any error, as long as not nil,
-// is OK
+// A special value for want.exception to indicate that any error, as long as not
+// nil, is a match.
 var errAny = errors.New("any error")
 
 // The following functions and methods are used to build Test structs. They are
@@ -51,8 +51,8 @@ var errAny = errors.New("any error")
 // That("put x").Puts("x")
 
 // That returns a new Test with the specified source code.
-func That(text string) TestCase {
-	return TestCase{text: text}
+func That(code string) TestCase {
+	return TestCase{code: code}
 }
 
 // DoesNothing returns t unchanged. It is used to mark that a piece of code
@@ -62,41 +62,41 @@ func (t TestCase) DoesNothing() TestCase {
 	return t
 }
 
-// Puts returns an altered Test that requires the source code to produce the
+// Puts returns an altered TestCase that requires the source code to produce the
 // specified values in the value channel when evaluated.
 func (t TestCase) Puts(vs ...interface{}) TestCase {
-	t.want.out = vs
+	t.want.valueOut = vs
 	return t
 }
 
-// PutsStrings returns an altered Test that requires the source code to produce
+// PutsStrings returns an altered TestCase that requires the source code to produce
 // the specified strings in the value channel when evaluated.
 func (t TestCase) PutsStrings(ss []string) TestCase {
-	t.want.out = make([]interface{}, len(ss))
+	t.want.valueOut = make([]interface{}, len(ss))
 	for i, s := range ss {
-		t.want.out[i] = s
+		t.want.valueOut[i] = s
 	}
 	return t
 }
 
-// Prints returns an altered test that requires the source code to produce
+// Prints returns an altered TestCase that requires the source code to produce
 // the specified output in the byte pipe when evaluated.
 func (t TestCase) Prints(s string) TestCase {
 	t.want.bytesOut = []byte(s)
 	return t
 }
 
-// ErrorsWith returns an altered Test that requires the source code to result in
-// the specified error when evaluted.
-func (t TestCase) ErrorsWith(err error) TestCase {
-	t.want.err = err
+// Throws returns an altered TestCase that requires the source code to throw the
+// specified exception when evaluted.
+func (t TestCase) Throws(err error) TestCase {
+	t.want.exception = err
 	return t
 }
 
-// Errors returns an altered Test that requires the source code to result in any
-// error when evaluated.
-func (t TestCase) Errors() TestCase {
-	return t.ErrorsWith(errAny)
+// ThrowsAny returns an altered TestCase that requires the source code to throw
+// any exception when evaluated.
+func (t TestCase) ThrowsAny() TestCase {
+	return t.Throws(errAny)
 }
 
 // Test runs test cases. For each test case, a new Evaler is created with
@@ -109,35 +109,36 @@ func Test(t *testing.T, tests ...TestCase) {
 // with NewEvaler and passed to the setup function.
 func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
 	for _, tt := range tests {
-		t.Run(tt.text, func(t *testing.T) {
+		t.Run(tt.code, func(t *testing.T) {
 			ev := NewEvaler()
 			defer ev.Close()
 			setup(ev)
-			out, bytesOut, err := evalAndCollect(t, ev, []string{tt.text}, len(tt.want.out))
 
-			if !matchOut(tt.want.out, out) {
-				t.Errorf("got value output %v, want %v", out, tt.want.out)
+			r := evalAndCollect(t, ev, []string{tt.code})
+
+			if !matchOut(tt.want.valueOut, r.valueOut) {
+				t.Errorf("got value out %v, want %v", r.valueOut, tt.want.valueOut)
 			}
-			if !bytes.Equal(tt.want.bytesOut, bytesOut) {
-				t.Errorf("got bytes output %q, want %q", bytesOut, tt.want.bytesOut)
+			if !bytes.Equal(tt.want.bytesOut, r.bytesOut) {
+				t.Errorf("got bytes out %q, want %q", r.bytesOut, tt.want.bytesOut)
 			}
-			if !matchErr(tt.want.err, err) {
-				t.Errorf("got err %v, want %v", err, tt.want.err)
+			if !matchErr(tt.want.exception, r.exception) {
+				t.Errorf("got exception %v, want %v", r.exception, tt.want.exception)
 			}
 		})
 	}
 }
 
-func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]interface{}, []byte, error) {
+func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
+	var r result
 	// Collect byte output
-	bytesOut := []byte{}
 	pr, pw, _ := os.Pipe()
 	bytesDone := make(chan struct{})
 	go func() {
 		for {
 			var buf [64]byte
 			nr, err := pr.Read(buf[:])
-			bytesOut = append(bytesOut, buf[:nr]...)
+			r.bytesOut = append(r.bytesOut, buf[:nr]...)
 			if err != nil {
 				break
 			}
@@ -145,23 +146,17 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]int
 		close(bytesDone)
 	}()
 
-	// Channel output
-	outs := []interface{}{}
-
-	// Eval error. Only that of the last text is saved.
-	var ex error
-
 	for i, text := range texts {
 		name := fmt.Sprintf("test%d.elv", i)
 		src := NewScriptSource(name, name, text)
 
 		op := mustParseAndCompile(t, ev, src)
 
-		outCh := make(chan interface{}, chsize)
+		outCh := make(chan interface{}, 1024)
 		outDone := make(chan struct{})
 		go func() {
 			for v := range outCh {
-				outs = append(outs, v)
+				r.valueOut = append(r.valueOut, v)
 			}
 			close(outDone)
 		}()
@@ -172,7 +167,8 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]int
 			{File: os.Stderr, Chan: BlackholeChan},
 		}
 
-		ex = ev.Eval(op, ports)
+		// NOTE: Only the exception of the last code is saved.
+		r.exception = ev.Eval(op, ports)
 		close(outCh)
 		<-outDone
 	}
@@ -181,7 +177,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]int
 	<-bytesDone
 	pr.Close()
 
-	return outs, bytesOut, ex
+	return r
 }
 
 func mustParseAndCompile(t *testing.T, ev *Evaler, src *Source) Op {

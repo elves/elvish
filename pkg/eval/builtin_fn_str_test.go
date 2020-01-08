@@ -20,11 +20,11 @@ func TestBuiltinFnStr(t *testing.T) {
 		That(`ord 你好`).Puts("0x4f60", "0x597d"),
 		That(`chr 0x61`).Puts("a"),
 		That(`chr 0x4f60 0x597d`).Puts("你好"),
-		That(`chr -1`).Errors(),
+		That(`chr -1`).ThrowsAny(),
 
 		That(`base 16 42 233`).Puts("2a", "e9"),
-		That(`base 1 1`).Errors(),   // no base-1
-		That(`base 37 10`).Errors(), // no letter for base-37
+		That(`base 1 1`).ThrowsAny(),   // no base-1
+		That(`base 37 10`).ThrowsAny(), // no letter for base-37
 		That(`wcswidth 你好`).Puts("4"),
 		That(`-override-wcwidth x 10; wcswidth 1x2x; -override-wcwidth x 1`).
 			Puts("22"),

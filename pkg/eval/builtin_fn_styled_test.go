@@ -7,7 +7,7 @@ import (
 
 func TestStyledString(t *testing.T) {
 	Test(t,
-		That("print (styled abc hopefully-never-exists)").ErrorsWith(errors.New("hopefully-never-exists is not a valid style transformer")),
+		That("print (styled abc hopefully-never-exists)").Throws(errors.New("hopefully-never-exists is not a valid style transformer")),
 		That("print (styled abc bold)").Prints("\033[1mabc\033[m"),
 		That("print (styled abc red cyan)").Prints("\033[36mabc\033[m"),
 		That("print (styled abc bg-green)").Prints("\033[42mabc\033[m"),
