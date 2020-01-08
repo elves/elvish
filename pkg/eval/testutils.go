@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval/vals"
@@ -52,9 +53,10 @@ var errAny = errors.New("any error")
 //
 // That("put x").Puts("x")
 
-// That returns a new Test with the specified source code.
-func That(code string) TestCase {
-	return TestCase{code: code}
+// That returns a new Test with the specified source code. Multiple arguments
+// are joined with newlines.
+func That(lines ...string) TestCase {
+	return TestCase{code: strings.Join(lines, "\n")}
 }
 
 // DoesNothing returns t unchanged. It is used to mark that a piece of code

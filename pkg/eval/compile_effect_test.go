@@ -24,6 +24,13 @@ func TestCompileEffect(t *testing.T) {
 		That(`put 233 42 19 | each [x]{+ $x 10}`).Puts(243.0, 52.0, 29.0),
 		// Pipeline draining.
 		That(`range 100 | put x`).Puts("x"),
+		// Background pipeline.
+		That(
+			"notify-bg-job-success = $false",
+			"p = (pipe)",
+			"{ print foo > $p; pwclose $p }&",
+			"slurp < $p",
+			"prclose $p").Puts("foo"),
 		// TODO: Add a useful hybrid pipeline sample
 
 		// Assignments
