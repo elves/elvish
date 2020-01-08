@@ -36,13 +36,15 @@ type TestCase struct {
 }
 
 type result struct {
-	valueOut  []interface{}
-	bytesOut  []byte
-	exception error
+	valueOut []interface{}
+	bytesOut []byte
+
+	compilationError error
+	exception        error
 }
 
-// A special value for want.exception to indicate that any error, as long as not
-// nil, is a match.
+// A special value for want.{compilationError,exception} to indicate that any
+// error, as long as not nil, is a match.
 var errAny = errors.New("any error")
 
 // The following functions and methods are used to build Test structs. They are
@@ -99,6 +101,13 @@ func (t TestCase) ThrowsAny() TestCase {
 	return t.Throws(errAny)
 }
 
+// DoesNotCompile returns an altered TestCase that requires the source code to
+// fail compilation.
+func (t TestCase) DoesNotCompile() TestCase {
+	t.want.compilationError = errAny
+	return t
+}
+
 // Test runs test cases. For each test case, a new Evaler is created with
 // NewEvaler.
 func Test(t *testing.T, tests ...TestCase) {
@@ -122,6 +131,10 @@ func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
 			if !bytes.Equal(tt.want.bytesOut, r.bytesOut) {
 				t.Errorf("got bytes out %q, want %q", r.bytesOut, tt.want.bytesOut)
 			}
+			if !matchErr(tt.want.compilationError, r.compilationError) {
+				t.Errorf("got compilation error %v, want %v",
+					r.compilationError, tt.want.compilationError)
+			}
 			if !matchErr(tt.want.exception, r.exception) {
 				t.Errorf("got exception %v, want %v", r.exception, tt.want.exception)
 			}
@@ -131,7 +144,7 @@ func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
 
 func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 	var r result
-	// Collect byte output
+	// Collect byte output.
 	pr, pw, _ := os.Pipe()
 	bytesDone := make(chan struct{})
 	go func() {
@@ -150,7 +163,16 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 		name := fmt.Sprintf("test%d.elv", i)
 		src := NewScriptSource(name, name, text)
 
-		op := mustParseAndCompile(t, ev, src)
+		n, err := parse.AsChunk(src.name, src.code)
+		if err != nil {
+			t.Fatalf("Parse(%q) error: %s", src.code, err)
+		}
+		op, err := ev.Compile(n, src)
+		if err != nil {
+			// NOTE: Only the compilation error of the last code is saved.
+			r.compilationError = err
+			continue
+		}
 
 		outCh := make(chan interface{}, 1024)
 		outDone := make(chan struct{})
@@ -167,7 +189,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 			{File: os.Stderr, Chan: BlackholeChan},
 		}
 
-		// NOTE: Only the exception of the last code is saved.
+		// NOTE: Only the exception of the last code that compiles is saved.
 		r.exception = ev.Eval(op, ports)
 		close(outCh)
 		<-outDone
@@ -178,18 +200,6 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 	pr.Close()
 
 	return r
-}
-
-func mustParseAndCompile(t *testing.T, ev *Evaler, src *Source) Op {
-	n, err := parse.AsChunk(src.name, src.code)
-	if err != nil {
-		t.Fatalf("Parse(%q) error: %s", src.code, err)
-	}
-	op, err := ev.Compile(n, src)
-	if err != nil {
-		t.Fatalf("Compile(Parse(%q)) error: %s", src.code, err)
-	}
-	return op
 }
 
 func matchOut(want, got []interface{}) bool {
