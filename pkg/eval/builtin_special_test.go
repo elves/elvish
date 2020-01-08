@@ -11,9 +11,32 @@ import (
 
 func TestBuiltinSpecial(t *testing.T) {
 	Test(t,
-		// del
+		// del - deleting variable
+		That("x = 1; del $x; echo $x").DoesNotCompile(),
+		That("x = 1; del $:x; echo $x").DoesNotCompile(),
+		That("x = 1; del $local:x; echo $x").DoesNotCompile(),
+		// del - deleting element
 		That("x = [&k=v &k2=v2]; del x[k2]; keys $x").Puts("k"),
 		That("x = [[&k=v &k2=v2]]; del x[0][k2]; keys $x[0]").Puts("k"),
+		// del - wrong use of del
+		That("del x").DoesNotCompile(),
+		That("del x[0]").DoesNotCompile(),
+		That("ab = 1; del a'b'").DoesNotCompile(),
+		That("del a:b").DoesNotCompile(),
+		That("x = 1; del $x").DoesNotCompile(),
+		That("del [a]").DoesNotCompile(),
+		That("x = []; del @x").DoesNotCompile(),
+
+		// and
+		That("and $true $false").Puts(false),
+		// and - short circuit
+		That("x = a; and $false (x = b); put $x").Puts(false, "a"),
+
+		// or
+		That("or $true $false").Puts(true),
+		That("or a b").Puts("a"),
+		// or - short circuit
+		That("x = a; or $true (x = b); put $x").Puts(true, "a"),
 
 		// if
 		That("if true { put then }").Puts("then"),
@@ -35,6 +58,8 @@ func TestBuiltinSpecial(t *testing.T) {
 			Puts("ex").Throws(errors.New("final")),
 		That("try { fail tr } except { fail ex } finally { fail final }").
 			Throws(errors.New("final")),
+		// try - wrong use
+		That("try { nop } except @a { }").DoesNotCompile(),
 
 		// while
 		That("x=0; while (< $x 4) { put $x; x=(+ $x 1) }").
@@ -114,5 +139,9 @@ func TestUse(t *testing.T) {
 		That("x = foo; use put-x").ThrowsAny(),
 
 		// TODO: Test module namespace
+
+		// Wrong uses of "use".
+		That("use").DoesNotCompile(),
+		That("use a b c").DoesNotCompile(),
 	)
 }
