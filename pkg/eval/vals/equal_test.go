@@ -28,14 +28,20 @@ func TestEqual(t *testing.T) {
 
 		Args(os.Stdin, os.Stdin).Rets(true),
 		Args(os.Stdin, os.Stderr).Rets(false),
+		Args(os.Stdin, "").Rets(false),
+		Args(os.Stdin, 0).Rets(false),
 
 		Args(MakeList("a", "b"), MakeList("a", "b")).Rets(true),
 		Args(MakeList("a", "b"), MakeList("a")).Rets(false),
 		Args(MakeList("a", "b"), MakeList("a", "c")).Rets(false),
+		Args(MakeList("a", "b"), "").Rets(false),
+		Args(MakeList("a", "b"), 1.0).Rets(false),
 
 		Args(MakeMap("k", "v"), MakeMap("k", "v")).Rets(true),
 		Args(MakeMap("k", "v"), MakeMap("k2", "v")).Rets(false),
 		Args(MakeMap("k", "v", "k2", "v2"), MakeMap("k", "v")).Rets(false),
+		Args(MakeMap("k", "v"), "").Rets(false),
+		Args(MakeMap("k", "v"), 1.0).Rets(false),
 
 		Args(customEqualer{true}, 2).Rets(true),
 		Args(customEqualer{false}, 2).Rets(false),

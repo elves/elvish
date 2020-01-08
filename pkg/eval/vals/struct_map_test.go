@@ -14,6 +14,13 @@ type testStructMap struct {
 
 func (testStructMap) IsStructMap(StructMapMarker) {}
 
+type testStructMap2 struct {
+	Name        string  `json:"name"`
+	ScoreNumber float64 `json:"score-number"`
+}
+
+func (testStructMap2) IsStructMap(StructMapMarker) {}
+
 func TestStructMap(t *testing.T) {
 	TestValue(t, testStructMap{}).
 		Kind("structmap").
@@ -22,8 +29,12 @@ func TestStructMap(t *testing.T) {
 		Len(2).
 		Equal(testStructMap{}).
 		NotEqual("a", MakeMap(), testStructMap{"a", 1.0}).
+		// StructMap's are nominally typed. This may change in future.
+		NotEqual(testStructMap2{}).
 		HasKey("name", "score-number").
-		HasNoKey("bad").
+		HasNoKey("bad", 1.0).
+		IndexError("bad", NoSuchKey("bad")).
+		IndexError(1.0, NoSuchKey(1.0)).
 		AllKeys("name", "score-number").
 		Index("name", "").
 		Index("score-number", 0.0)
@@ -37,9 +48,12 @@ func TestStructMap(t *testing.T) {
 		NotEqual(
 			"a", MakeMap("name", "", "score-number", 1.0),
 			testStructMap{}, testStructMap{"a", 2.0}, testStructMap{"b", 1.0}).
+		// Keys are tested above, thus omitted here.
 		Index("name", "a").
 		Index("score-number", 1.0).
 		Assoc("name", "b", testStructMap{"b", 1.0}).
 		Assoc("score-number", 2.0, testStructMap{"a", 2.0}).
-		AssocError("score-number", "not-num", cannotParseAs{"number", "not-num"})
+		AssocError("score-number", "not-num", cannotParseAs{"number", "not-num"}).
+		AssocError("new-key", "", errStructMapKey).
+		AssocError(1.0 /* non-string key */, "", errStructMapKey)
 }
