@@ -17,7 +17,6 @@ func TestKind(t *testing.T) {
 		Args(os.Stdin).Rets("file"),
 		Args(EmptyList).Rets("list"),
 		Args(EmptyMap).Rets("map"),
-		Args(testStructMap{}).Rets("structmap"),
 
 		Args(xtype(0)).Rets("!!vals.xtype"),
 

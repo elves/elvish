@@ -29,8 +29,6 @@ func TestRepr(t *testing.T) {
 		Args(MakeList("foo", "bar")).Rets("[foo bar]"),
 		Args(EmptyMap).Rets("[&]"),
 		Args(MakeMap("foo", "bar")).Rets("[&foo=bar]"),
-		Args(testStructMap{"name", 1.0}).Rets(
-			"[&name=name &score-number=(float64 1)]"),
 		Args(reprer{}).Rets("<reprer>"),
 		Args(nonReprer{}).Rets("<unknown {}>"),
 	})

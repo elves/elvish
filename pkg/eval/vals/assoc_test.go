@@ -37,13 +37,6 @@ func TestAssoc(t *testing.T) {
 		Args(MakeMap("k", "v"), "k2", "v2").Rets(
 			Eq(MakeMap("k", "v", "k2", "v2")), nil),
 
-		Args(testStructMap{"foo", 1.0}, "name", "bar").
-			Rets(testStructMap{"bar", 1.0}, nil),
-		Args(testStructMap{"foo", 1.0}, "score-number", "2.0").
-			Rets(testStructMap{"foo", 2.0}, nil),
-		Args(testStructMap{"foo", 1.0}, "score-number", "bad number").
-			Rets(nil, cannotParseAs{"number", `'bad number'`}),
-
 		Args(customAssocer{}, "x", "y").Rets("custom result", errCustomAssoc),
 
 		Args(struct{}{}, "x", "y").Rets(nil, errAssocUnsupported),

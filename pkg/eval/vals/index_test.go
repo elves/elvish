@@ -80,9 +80,5 @@ func TestIndex(t *testing.T) {
 
 		Args(m, "foo").Rets("bar", nil),
 		Args(m, "bad").Rets(Any, NoSuchKey("bad")),
-
-		// StructMap indicies
-		Args(testStructMap{"foo", 1.0}, "name").Rets("foo", nil),
-		Args(testStructMap{"foo", 1.0}, "bad").Rets(nil, NoSuchKey("bad")),
 	})
 }

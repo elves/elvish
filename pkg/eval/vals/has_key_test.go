@@ -15,9 +15,6 @@ func TestHasKey(t *testing.T) {
 		// Map
 		Args(MakeMap("k", "v"), "k").Rets(true),
 		Args(MakeMap("k", "v"), "bad").Rets(false),
-		// StructMap
-		Args(testStructMap{}, "name").Rets(true),
-		Args(testStructMap{}, "bad").Rets(false),
 		// HasKeyer
 		Args(hasKeyer{"valid"}, "valid").Rets(true),
 		Args(hasKeyer{"valid"}, "invalid").Rets(false),

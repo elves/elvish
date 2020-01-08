@@ -25,8 +25,6 @@ func TestHash(t *testing.T) {
 		Args(MakeList("foo", "bar")).Rets(hash.DJB(Hash("foo"), Hash("bar"))),
 		Args(MakeMap("foo", "bar")).
 			Rets(hash.DJB(Hash("foo"), Hash("bar"))),
-		Args(testStructMap{"name", 1.0}).
-			Rets(hash.DJB(Hash("name"), Hash(1.0))),
 		Args(hasher{}).Rets(uint32(42)),
 		Args(nonHasher{}).Rets(uint32(0)),
 	})
