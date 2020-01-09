@@ -45,11 +45,11 @@ type flagSet struct {
 	Bin, DB, Sock string
 }
 
-func newFlagSet() *flagSet {
+func newFlagSet(stderr io.Writer) *flagSet {
 	f := flagSet{}
 	f.Init("elvish", flag.ContinueOnError)
 	f.Usage = func() {
-		usage(os.Stderr, &f)
+		usage(stderr, &f)
 	}
 
 	f.StringVar(&f.Log, "log", "", "a file to write debug log to")
@@ -89,7 +89,7 @@ func usage(out io.Writer, f *flagSet) {
 }
 
 func Main(fds [3]*os.File, args []string) int {
-	flag := newFlagSet()
+	flag := newFlagSet(fds[2])
 	err := flag.Parse(args[1:])
 	if err != nil {
 		// Error and usage messages are already shown.

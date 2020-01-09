@@ -19,7 +19,6 @@ var findProgramTests = []struct {
 	args    []string
 	checker func(Program) bool
 }{
-	{[]string{"-help"}, isShowHelp},
 	{[]string{}, isShell},
 	{[]string{"-c", "echo"}, func(p Program) bool {
 		return p.(*shell.Shell).Cmd
@@ -28,13 +27,10 @@ var findProgramTests = []struct {
 		return p.(*shell.Shell).CompileOnly
 	}},
 	{[]string{"-web"}, isWeb},
-	{[]string{"-web", "x"}, isShowCorrectUsage},
-	{[]string{"-web", "-c"}, isShowCorrectUsage},
 	{[]string{"-web", "-port", "233"}, func(p Program) bool {
 		return p.(*web.Web).Port == 233
 	}},
 	{[]string{"-daemon"}, isDaemon},
-	{[]string{"-daemon", "x"}, isShowCorrectUsage},
 
 	{[]string{"-bin", "/elvish"}, func(p Program) bool {
 		return p.(*shell.Shell).BinPath == "/elvish"
@@ -67,13 +63,9 @@ var findProgramTests = []struct {
 	}},
 }
 
-func isShowHelp(p Program) bool         { _, ok := p.(ShowHelp); return ok }
-func isShowCorrectUsage(p Program) bool { _, ok := p.(ShowCorrectUsage); return ok }
-func isShowVersion(p Program) bool      { _, ok := p.(ShowVersion); return ok }
-func isShowBuildInfo(p Program) bool    { _, ok := p.(ShowBuildInfo); return ok }
-func isDaemon(p Program) bool           { _, ok := p.(Daemon); return ok }
-func isWeb(p Program) bool              { _, ok := p.(*web.Web); return ok }
-func isShell(p Program) bool            { _, ok := p.(*shell.Shell); return ok }
+func isDaemon(p Program) bool { _, ok := p.(Daemon); return ok }
+func isWeb(p Program) bool    { _, ok := p.(*web.Web); return ok }
+func isShell(p Program) bool  { _, ok := p.(*shell.Shell); return ok }
 
 func TestFindProgram(t *testing.T) {
 	for i, test := range findProgramTests {
@@ -86,7 +78,7 @@ func TestFindProgram(t *testing.T) {
 }
 
 func parse(args []string) *flagSet {
-	f := newFlagSet()
+	f := newFlagSet(os.Stderr)
 	err := f.Parse(args)
 	if err != nil {
 		panic(fmt.Sprintln("bad flags in test", args))
@@ -94,12 +86,18 @@ func parse(args []string) *flagSet {
 	return f
 }
 
-var programTests = []struct {
-	run        []string
-	stdin      string
-	wantStdout string
-	wantStderr string
-}{
+type programTest struct {
+	run   []string
+	stdin string
+
+	wantExit         int
+	wantStdout       string
+	wantStderr       string
+	wantStdoutPrefix string
+	wantStderrPrefix string
+}
+
+var programTests = []programTest{
 	{
 		run:        elvish("-version"),
 		wantStdout: buildinfo.Version + "\n",
@@ -125,6 +123,15 @@ var programTests = []struct {
 			buildinfo.Reproducible == "true",
 		}) + "\n",
 	},
+	{
+		run:              elvish("-help"),
+		wantStdoutPrefix: "Usage: elvish [flags] [script]",
+	},
+	// Bad usages.
+	badUsage("-bad-flag"),    // bad flag
+	badUsage("-web", "x"),    // -web doesn't take arguments
+	badUsage("-web", "-c"),   // -web doesn't support -c
+	badUsage("-daemon", "x"), // -daemon doesn't take arguments
 }
 
 func elvish(args ...string) []string {
@@ -139,6 +146,14 @@ func mustToJSON(v interface{}) string {
 	return string(b)
 }
 
+func badUsage(args ...string) programTest {
+	return programTest{
+		run:              elvish(args...),
+		wantStderrPrefix: "Usage: elvish [flags] [script]",
+		wantExit:         2,
+	}
+}
+
 func TestPrograms(t *testing.T) {
 	for _, test := range programTests {
 		t.Run(strings.Join(test.run, " "), func(t *testing.T) {
@@ -149,22 +164,33 @@ func TestPrograms(t *testing.T) {
 			fd0w.WriteString(test.stdin)
 			fd0w.Close()
 
-			Main([3]*os.File{fd0, fd1, fd2}, test.run)
+			exit := Main([3]*os.File{fd0, fd1, fd2}, test.run)
 			fd0.Close()
 			fd1.Close()
 			fd2.Close()
 
-			if stdout := mustReadAllAndClose(fd1r); stdout != test.wantStdout {
-				t.Errorf("Stdout mismatch")
-				t.Logf("Got:\n%s", stdout)
-				t.Logf("Want:\n%s", test.wantStdout)
-			}
-			if stderr := mustReadAllAndClose(fd2r); stderr != test.wantStderr {
-				t.Errorf("Stderr mismatch")
-				t.Logf("Got:\n%s", stderr)
-				t.Logf("Want:\n%s", test.wantStderr)
+			stdout := mustReadAllAndClose(fd1r)
+			stderr := mustReadAllAndClose(fd2r)
+			testOutput(t, "stdout", stdout, test.wantStdout, test.wantStdoutPrefix)
+			testOutput(t, "stderr", stderr, test.wantStderr, test.wantStderrPrefix)
+			if exit != test.wantExit {
+				t.Errorf("got exit %d, want %d", exit, test.wantExit)
 			}
 		})
+	}
+}
+
+func testOutput(t *testing.T, name, got, want, wantPrefix string) {
+	if wantPrefix != "" {
+		if !strings.HasPrefix(got, wantPrefix) {
+			t.Errorf("%s mismatch", name)
+			t.Logf("got:\n%s", got)
+			t.Logf("want prefix:\n%s", wantPrefix)
+		}
+	} else if got != want {
+		t.Errorf("%s mismatch", name)
+		t.Logf("got:\n%s", got)
+		t.Logf("want:\n%s", want)
 	}
 }
 

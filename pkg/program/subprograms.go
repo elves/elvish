@@ -26,7 +26,7 @@ type ShowCorrectUsage struct {
 }
 
 func (s ShowCorrectUsage) Main(fds [3]*os.File, _ []string) int {
-	usage(fds[1], s.flag)
+	usage(fds[2], s.flag)
 	return 2
 }
 
