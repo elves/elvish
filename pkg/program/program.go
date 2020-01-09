@@ -88,9 +88,9 @@ func usage(out io.Writer, f *flagSet) {
 	f.PrintDefaults()
 }
 
-func Main(allArgs []string) int {
+func Main(fds [3]*os.File, args []string) int {
 	flag := newFlagSet()
-	err := flag.Parse(allArgs[1:])
+	err := flag.Parse(args[1:])
 	if err != nil {
 		// Error and usage messages are already shown.
 		return 2
@@ -116,8 +116,7 @@ func Main(allArgs []string) int {
 		fmt.Fprintln(os.Stderr, err)
 	}
 
-	return FindProgram(flag).Main(
-		[3]*os.File{os.Stdin, os.Stdout, os.Stderr}, flag.Args())
+	return FindProgram(flag).Main(fds, flag.Args())
 }
 
 // Program represents a subprogram.

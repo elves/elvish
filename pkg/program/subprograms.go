@@ -46,10 +46,9 @@ type ShowBuildInfo struct {
 func (info ShowBuildInfo) Main(fds [3]*os.File, _ []string) int {
 	if info.JSON {
 		fmt.Fprintf(fds[1],
-			`{"version": %s, "goversion": %s, "reproducible": %v}`+"\n",
+			`{"version":%s,"goversion":%s,"reproducible":%v}`+"\n",
 			quoteJSON(buildinfo.Version), quoteJSON(runtime.Version()),
 			buildinfo.Reproducible)
-		fmt.Fprintln(fds[1])
 	} else {
 		fmt.Fprintln(fds[1], "Version:", buildinfo.Version)
 		fmt.Fprintln(fds[1], "Go version:", runtime.Version())

@@ -1,9 +1,16 @@
 package program
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"runtime"
+	"strings"
 	"testing"
 
+	"github.com/elves/elvish/pkg/buildinfo"
 	"github.com/elves/elvish/pkg/program/shell"
 	"github.com/elves/elvish/pkg/program/web"
 )
@@ -13,11 +20,6 @@ var findProgramTests = []struct {
 	checker func(Program) bool
 }{
 	{[]string{"-help"}, isShowHelp},
-	{[]string{"-version"}, isShowVersion},
-	{[]string{"-buildinfo"}, isShowBuildInfo},
-	{[]string{"-buildinfo", "-json"}, func(p Program) bool {
-		return p.(ShowBuildInfo).JSON
-	}},
 	{[]string{}, isShell},
 	{[]string{"-c", "echo"}, func(p Program) bool {
 		return p.(*shell.Shell).Cmd
@@ -90,4 +92,95 @@ func parse(args []string) *flagSet {
 		panic(fmt.Sprintln("bad flags in test", args))
 	}
 	return f
+}
+
+var programTests = []struct {
+	run        []string
+	stdin      string
+	wantStdout string
+	wantStderr string
+}{
+	{
+		run:        elvish("-version"),
+		wantStdout: buildinfo.Version + "\n",
+	},
+	{
+		run: elvish("-buildinfo"),
+		wantStdout: fmt.Sprintf(
+			"Version: %v\nGo version: %v\nReproducible build: %v\n",
+			buildinfo.Version,
+			runtime.Version(),
+			buildinfo.Reproducible,
+		),
+	},
+	{
+		run: elvish("-buildinfo", "-json"),
+		wantStdout: mustToJSON(struct {
+			Version      string `json:"version"`
+			GoVersion    string `json:"goversion"`
+			Reproducible bool   `json:"reproducible"`
+		}{
+			buildinfo.Version,
+			runtime.Version(),
+			buildinfo.Reproducible == "true",
+		}) + "\n",
+	},
+}
+
+func elvish(args ...string) []string {
+	return append([]string{"elvish"}, args...)
+}
+
+func mustToJSON(v interface{}) string {
+	b, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
+}
+
+func TestPrograms(t *testing.T) {
+	for _, test := range programTests {
+		t.Run(strings.Join(test.run, " "), func(t *testing.T) {
+			fd0, fd0w := mustMakePipe()
+			fd1r, fd1 := mustMakePipe()
+			fd2r, fd2 := mustMakePipe()
+
+			fd0w.WriteString(test.stdin)
+			fd0w.Close()
+
+			Main([3]*os.File{fd0, fd1, fd2}, test.run)
+			fd0.Close()
+			fd1.Close()
+			fd2.Close()
+
+			if stdout := mustReadAllAndClose(fd1r); stdout != test.wantStdout {
+				t.Errorf("Stdout mismatch")
+				t.Logf("Got:\n%s", stdout)
+				t.Logf("Want:\n%s", test.wantStdout)
+			}
+			if stderr := mustReadAllAndClose(fd2r); stderr != test.wantStderr {
+				t.Errorf("Stderr mismatch")
+				t.Logf("Got:\n%s", stderr)
+				t.Logf("Want:\n%s", test.wantStderr)
+			}
+		})
+	}
+}
+
+func mustMakePipe() (r, w *os.File) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		panic(err)
+	}
+	return r, w
+}
+
+func mustReadAllAndClose(r io.ReadCloser) string {
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		panic(err)
+	}
+	r.Close()
+	return string(b)
 }
