@@ -131,16 +131,16 @@ type Program interface {
 func FindProgram(flag *flagSet) Program {
 	switch {
 	case flag.Help:
-		return ShowHelp{flag}
+		return helpProgram{flag}
 	case flag.Version:
-		return ShowVersion{}
+		return versionProgram{}
 	case flag.BuildInfo:
-		return ShowBuildInfo{flag.JSON}
+		return buildInfoProgram{flag.JSON}
 	case flag.Daemon:
 		if len(flag.Args()) > 0 {
-			return ShowCorrectUsage{"arguments are not allowed with -daemon", flag}
+			return badUsageProgram{"arguments are not allowed with -daemon", flag}
 		}
-		return Daemon{inner: &daemon.Daemon{
+		return daemonProgram{&daemon.Daemon{
 			BinPath:       flag.Bin,
 			DbPath:        flag.DB,
 			SockPath:      flag.Sock,
@@ -148,10 +148,10 @@ func FindProgram(flag *flagSet) Program {
 		}}
 	case flag.Web:
 		if len(flag.Args()) > 0 {
-			return ShowCorrectUsage{"arguments are not allowed with -web", flag}
+			return badUsageProgram{"arguments are not allowed with -web", flag}
 		}
 		if flag.CodeInArg {
-			return ShowCorrectUsage{"-c cannot be used together with -web", flag}
+			return badUsageProgram{"-c cannot be used together with -web", flag}
 		}
 		return &web.Web{
 			BinPath: flag.Bin, SockPath: flag.Sock, DbPath: flag.DB,
