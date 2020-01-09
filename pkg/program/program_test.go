@@ -128,10 +128,10 @@ var programTests = []programTest{
 		wantStdoutPrefix: "Usage: elvish [flags] [script]",
 	},
 	// Bad usages.
-	badUsage("-bad-flag"),    // bad flag
-	badUsage("-web", "x"),    // -web doesn't take arguments
-	badUsage("-web", "-c"),   // -web doesn't support -c
-	badUsage("-daemon", "x"), // -daemon doesn't take arguments
+	badUsage("flag provided but not defined: -bad-flag", "-bad-flag"),
+	badUsage("arguments are not allowed with -web", "-web", "x"),
+	badUsage("-c cannot be used together with -web", "-web", "-c"),
+	badUsage("arguments are not allowed with -daemon", "-daemon", "x"),
 }
 
 func elvish(args ...string) []string {
@@ -146,10 +146,10 @@ func mustToJSON(v interface{}) string {
 	return string(b)
 }
 
-func badUsage(args ...string) programTest {
+func badUsage(prefix string, args ...string) programTest {
 	return programTest{
 		run:              elvish(args...),
-		wantStderrPrefix: "Usage: elvish [flags] [script]",
+		wantStderrPrefix: prefix + "\nUsage: elvish [flags] [script]",
 		wantExit:         2,
 	}
 }

@@ -48,9 +48,8 @@ type flagSet struct {
 func newFlagSet(stderr io.Writer) *flagSet {
 	f := flagSet{}
 	f.Init("elvish", flag.ContinueOnError)
-	f.Usage = func() {
-		usage(stderr, &f)
-	}
+	f.SetOutput(stderr)
+	f.Usage = func() { usage(stderr, &f) }
 
 	f.StringVar(&f.Log, "log", "", "a file to write debug log to")
 	f.StringVar(&f.LogPrefix, "logprefix", "", "the prefix for the daemon log file")
@@ -75,17 +74,6 @@ func newFlagSet(stderr io.Writer) *flagSet {
 	f.StringVar(&f.Sock, "sock", "", "path to the daemon socket")
 
 	return &f
-}
-
-// usage prints usage to the specified output. It modifies the flagSet; there is
-// no API for getting the current output of a flag.FlagSet, so we can neither
-// use the current output of f to output our own usage string, nor restore the
-// previous value of f's output.
-func usage(out io.Writer, f *flagSet) {
-	f.SetOutput(out)
-	fmt.Fprintln(out, "Usage: elvish [flags] [script]")
-	fmt.Fprintln(out, "Supported flags:")
-	f.PrintDefaults()
 }
 
 func Main(fds [3]*os.File, args []string) int {
