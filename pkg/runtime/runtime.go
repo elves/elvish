@@ -14,7 +14,7 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	daemonmod "github.com/elves/elvish/pkg/eval/daemon"
 	"github.com/elves/elvish/pkg/eval/re"
-	storemod "github.com/elves/elvish/pkg/eval/store"
+	"github.com/elves/elvish/pkg/eval/store"
 	"github.com/elves/elvish/pkg/eval/str"
 	daemonp "github.com/elves/elvish/pkg/program/daemon"
 	"github.com/elves/elvish/pkg/util"
@@ -46,8 +46,9 @@ const (
 
 var errInvalidDB = errors.New("daemon reported that database is invalid. If you upgraded Elvish from a pre-0.10 version, you need to upgrade your database by following instructions in https://github.com/elves/upgrade-db-for-0.10/")
 
-// InitRuntime initializes the runtime. The caller is responsible for calling
-// CleanupRuntime at some point.
+// InitRuntime initializes the runtime, and returns an Evaler and the path of
+// the data directory. The caller should call CleanupRuntime when the Evaler is
+// no longer needed.
 func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 	var dataDir string
 	var err error
@@ -94,7 +95,7 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 		// Even if error is not nil, we install daemon-related functionalities
 		// anyway. Daemon may eventually come online and become functional.
 		ev.InstallDaemonClient(client)
-		ev.InstallModule("store", storemod.Ns(client))
+		ev.InstallModule("store", store.Ns(client))
 		ev.InstallModule("daemon", daemonmod.Ns(client, spawner))
 	}
 	return ev, dataDir
@@ -219,8 +220,3 @@ func CleanupRuntime(ev *eval.Evaler) {
 	}
 	ev.Close()
 }
-
-var (
-	ErrBadOwner      = errors.New("bad owner")
-	ErrBadPermission = errors.New("bad permission")
-)

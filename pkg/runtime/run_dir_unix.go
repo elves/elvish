@@ -3,10 +3,16 @@
 package runtime
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"syscall"
+)
+
+var (
+	errBadOwner      = errors.New("bad owner")
+	errBadPermission = errors.New("bad permission")
 )
 
 // getSecureRunDir stats elvish-$uid under the default temp dir, creating it if
@@ -31,10 +37,10 @@ func getSecureRunDir() (string, error) {
 func checkExclusiveAccess(info os.FileInfo, uid int) error {
 	stat := info.Sys().(*syscall.Stat_t)
 	if int(stat.Uid) != uid {
-		return ErrBadOwner
+		return errBadOwner
 	}
 	if stat.Mode&077 != 0 {
-		return ErrBadPermission
+		return errBadPermission
 	}
 	return nil
 }
