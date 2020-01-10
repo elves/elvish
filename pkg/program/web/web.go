@@ -13,7 +13,7 @@ import (
 
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/runtime"
+	"github.com/elves/elvish/pkg/program/shell"
 )
 
 type Web struct {
@@ -35,8 +35,8 @@ type ExecuteResponse struct {
 }
 
 func (web *Web) Main(fds [3]*os.File, _ []string) int {
-	ev, _ := runtime.InitRuntime(web.BinPath, web.SockPath, web.DbPath)
-	defer runtime.CleanupRuntime(ev)
+	ev, _ := shell.InitRuntime(web.BinPath, web.SockPath, web.DbPath)
+	defer shell.CleanupRuntime(ev)
 
 	h := httpHandler{ev}
 

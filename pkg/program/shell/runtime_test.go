@@ -1,4 +1,4 @@
-package runtime
+package shell
 
 import "testing"
 

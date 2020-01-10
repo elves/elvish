@@ -1,5 +1,4 @@
-// Package runtime assembles the Elvish runtime.
-package runtime
+package shell
 
 import (
 	"errors"
@@ -17,10 +16,7 @@ import (
 	"github.com/elves/elvish/pkg/eval/store"
 	"github.com/elves/elvish/pkg/eval/str"
 	daemonp "github.com/elves/elvish/pkg/program/daemon"
-	"github.com/elves/elvish/pkg/util"
 )
-
-var logger = util.GetLogger("[runtime] ")
 
 const (
 	daemonWaitLoops   = 100

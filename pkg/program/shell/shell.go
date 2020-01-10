@@ -9,7 +9,6 @@ import (
 
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/runtime"
 	"github.com/elves/elvish/pkg/sys"
 	"github.com/elves/elvish/pkg/util"
 )
@@ -35,8 +34,8 @@ func (sh *Shell) Main(fds [3]*os.File, args []string) int {
 	restoreTTY := term.SetupGlobal()
 	defer restoreTTY()
 
-	ev, dataDir := runtime.InitRuntime(sh.BinPath, sh.SockPath, sh.DbPath)
-	defer runtime.CleanupRuntime(ev)
+	ev, dataDir := InitRuntime(sh.BinPath, sh.SockPath, sh.DbPath)
+	defer CleanupRuntime(ev)
 
 	handleSignals(fds[2])
 

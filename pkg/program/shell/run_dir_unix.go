@@ -1,6 +1,6 @@
 // +build !windows,!plan9
 
-package runtime
+package shell
 
 import (
 	"errors"
