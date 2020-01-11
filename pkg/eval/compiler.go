@@ -38,7 +38,7 @@ func (cp *compiler) compiling(n parse.Node) {
 
 func (cp *compiler) errorpf(begin, end int, format string, args ...interface{}) {
 	util.Throw(NewCompilationError(fmt.Sprintf(format, args...),
-		*diag.NewContext(cp.srcMeta.describePath(), cp.srcMeta.code, begin, end)))
+		*diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, begin, end)))
 }
 
 func (cp *compiler) errorf(format string, args ...interface{}) {

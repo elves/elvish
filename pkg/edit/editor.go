@@ -75,8 +75,8 @@ func evalDefaultBinding(ev *eval.Evaler, ns eval.Ns) {
 	if err != nil {
 		panic(err)
 	}
-	src := eval.NewScriptSource(
-		"[default bindings]", "[default bindings]", defaultBindingsElv)
+	src := eval.NewInternalElvishSource(
+		true, "[default bindings]", defaultBindingsElv)
 	op, err := ev.CompileWithGlobal(n, src, ns)
 	if err != nil {
 		panic(err)

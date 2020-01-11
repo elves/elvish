@@ -163,11 +163,11 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 
 	for i, text := range texts {
 		name := fmt.Sprintf("test%d.elv", i)
-		src := NewScriptSource(name, name, text)
+		src := NewInternalElvishSource(true, name, text)
 
-		n, err := parse.AsChunk(src.name, src.code)
+		n, err := parse.AsChunk(src.Name, src.Code)
 		if err != nil {
-			t.Fatalf("Parse(%q) error: %s", src.code, err)
+			t.Fatalf("Parse(%q) error: %s", src.Code, err)
 		}
 		op, err := ev.Compile(n, src)
 		if err != nil {

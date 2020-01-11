@@ -95,7 +95,7 @@ func source(fm *Frame, fname string) error {
 		scriptGlobal.set(name)
 	}
 	op, err := compile(fm.Builtin.static(),
-		scriptGlobal, n, NewScriptSource(fname, path, code))
+		scriptGlobal, n, NewScriptSource(path, code))
 	if err != nil {
 		return err
 	}

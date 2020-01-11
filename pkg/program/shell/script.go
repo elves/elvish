@@ -40,7 +40,7 @@ func script(ev *eval.Evaler, args []string, cmd, compileOnly bool) error {
 		return err
 	}
 
-	src := eval.NewScriptSource(name, path, code)
+	src := eval.NewScriptSource(path, code)
 	op, err := ev.Compile(n, src)
 	if err != nil {
 		return err

@@ -255,14 +255,24 @@ func (op useOp) invoke(fm *Frame) error {
 
 func loadModule(fm *Frame, spec string) (Ns, error) {
 	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") {
-		path := filepath.Clean(filepath.Dir(fm.srcMeta.path) + "/" + spec + ".elv")
+		var dir string
+		if fm.srcMeta.Type == FileSource {
+			dir = filepath.Dir(fm.srcMeta.Name)
+		} else {
+			var err error
+			dir, err = os.Getwd()
+			if err != nil {
+				return nil, err
+			}
+		}
+		path := filepath.Clean(dir + "/" + spec + ".elv")
 		return loadModuleFile(fm, spec, path)
 	}
 	if ns, ok := fm.Evaler.modules[spec]; ok {
 		return ns, nil
 	}
 	if code, ok := fm.bundled[spec]; ok {
-		return evalModule(fm, spec, NewModuleSource(spec, "", code))
+		return evalModule(fm, spec, NewInternalElvishSource(false, spec, code))
 	}
 	if fm.libDir == "" {
 		return nil, noSuchModule{spec}
@@ -281,11 +291,11 @@ func loadModuleFile(fm *Frame, spec, path string) (Ns, error) {
 		}
 		return nil, err
 	}
-	return evalModule(fm, path, NewModuleSource(spec, path, code))
+	return evalModule(fm, path, NewModuleSource(path, code))
 }
 
 func evalModule(fm *Frame, key string, src *Source) (Ns, error) {
-	n, err := parse.AsChunk(src.name, src.code)
+	n, err := parse.AsChunk(src.Name, src.Code)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +307,7 @@ func evalModule(fm *Frame, key string, src *Source) (Ns, error) {
 		fm.Evaler, src,
 		modGlobal, make(Ns),
 		fm.ports,
-		0, len(src.code), fm.addTraceback(), false,
+		0, len(src.Code), fm.addTraceback(), false,
 	}
 
 	op, err := compile(newFm.Builtin.static(), modGlobal.static(), n, src)

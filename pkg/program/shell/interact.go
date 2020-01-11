@@ -91,7 +91,7 @@ func sourceRC(stderr *os.File, ev *eval.Evaler, dataDir string) error {
 		}
 		return err
 	}
-	err = ev.EvalSourceInTTY(eval.NewScriptSource("rc.elv", absPath, code))
+	err = ev.EvalSourceInTTY(eval.NewScriptSource(absPath, code))
 	if err != nil {
 		return err
 	}

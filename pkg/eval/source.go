@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/util"
 	"github.com/xiaq/persistent/hash"
@@ -12,52 +11,49 @@ import (
 
 // Source describes a piece of source code.
 type Source struct {
-	typ  sourceType
-	name string
-	path string
-	code string
+	Type SourceType
+	Name string
+	Root bool
+	Code string
 }
 
 // NewInteractiveSource returns a Source for a piece of code entered
 // interactively.
 func NewInteractiveSource(code string) *Source {
-	return &Source{interactiveSource, "", "", code}
+	return &Source{InteractiveSource, "[tty]", true, code}
 }
 
 // NewScriptSource returns a Source for a piece of code used as a script.
-func NewScriptSource(name, path, code string) *Source {
-	return &Source{scriptSource, name, path, code}
+func NewScriptSource(path, code string) *Source {
+	return &Source{FileSource, path, true, code}
 }
 
 // NewModuleSource returns a Source for a piece of code used as a module.
-func NewModuleSource(name, path, code string) *Source {
-	return &Source{moduleSource, name, path, code}
+func NewModuleSource(path, code string) *Source {
+	return &Source{FileSource, path, false, code}
 }
 
 // NewInternalGoSource returns a Source for use as a placeholder when calling Elvish
 // functions from Go code. It has no associated code.
 func NewInternalGoSource(name string) *Source {
-	return &Source{internalGoSource, name, name, ""}
+	return &Source{InternalGoSource, name, true, ""}
 }
 
-func (src *Source) describePath() string {
-	if src.typ == interactiveSource {
-		return "[tty]"
-	}
-	return src.path
+func NewInternalElvishSource(root bool, name, code string) *Source {
+	return &Source{InternalElvishSource, name, root, code}
 }
-
-var (
-	_ vals.Indexer = (*Source)(nil)
-)
 
 func (src *Source) Kind() string {
 	return "map"
 }
 
 func (src *Source) Hash() uint32 {
-	return hash.DJB(uint32(src.typ),
-		hash.String(src.name), hash.String(src.path), hash.String(src.code))
+	var root uint32
+	if src.Root {
+		root = 1
+	}
+	return hash.DJB(uint32(src.Type),
+		hash.String(src.Name), root, hash.String(src.Code))
 }
 
 func (src *Source) Equal(other interface{}) bool {
@@ -68,56 +64,54 @@ func (src *Source) Equal(other interface{}) bool {
 }
 
 func (src *Source) Repr(int) string {
-	return fmt.Sprintf("<src type:%s name:%s path:%s code:...>",
-		src.typ, parse.Quote(src.name), parse.Quote(src.path))
+	return fmt.Sprintf(
+		"<src type:%s name:%s root:$%v code:...>",
+		src.Type, parse.Quote(src.Name), src.Root)
 }
 
 func (src *Source) Index(k interface{}) (interface{}, bool) {
-	ret := ""
 	switch k {
 	case "type":
-		ret = src.typ.String()
+		return src.Type.String(), true
 	case "name":
-		ret = src.name
-	case "path":
-		ret = src.path
+		return src.Name, true
+	case "root":
+		return src.Root, true
 	case "code":
-		ret = src.code
+		return src.Code, true
 	default:
 		return nil, false
 	}
-	return ret, true
 }
 
 func (src *Source) IterateKeys(f func(interface{}) bool) {
-	util.Feed(f, "type", "name", "path", "code")
+	util.Feed(f, "type", "name", "root", "code")
 }
 
-// sourceType records the type of a piece of source code.
-type sourceType int
+// SourceType records the type of a piece of source code.
+type SourceType int
 
 const (
+	InvalidSource SourceType = iota
 	// A special value used for the Frame when calling Elvish functions from Go.
 	// This is the only sourceType without associated code.
-	internalGoSource sourceType = iota
+	InternalGoSource
+	// Code from an internal buffer.
+	InternalElvishSource
 	// Code entered interactively.
-	interactiveSource
-	// Code from the main script.
-	scriptSource
-	// Code from
-	moduleSource
+	InteractiveSource
+	// Code from a file.
+	FileSource
 )
 
-func (t sourceType) String() string {
+func (t SourceType) String() string {
 	switch t {
-	case internalGoSource:
+	case InternalGoSource:
 		return "internal"
-	case interactiveSource:
+	case InteractiveSource:
 		return "interactive"
-	case scriptSource:
-		return "script"
-	case moduleSource:
-		return "module"
+	case FileSource:
+		return "file"
 	default:
 		return "bad type " + strconv.Itoa(int(t))
 	}

@@ -36,7 +36,7 @@ func NewTopFrame(ev *Evaler, src *Source, ports []*Port) *Frame {
 		ev, src,
 		ev.Global, make(Ns),
 		ports,
-		0, len(src.code), nil, false,
+		0, len(src.Code), nil, false,
 	}
 }
 
@@ -225,7 +225,7 @@ func (fm *Frame) makeException(e error) *Exception {
 func (fm *Frame) addTraceback() *stackTrace {
 	return &stackTrace{
 		entry: diag.NewContext(
-			fm.srcMeta.describePath(), fm.srcMeta.code, fm.begin, fm.end),
+			fm.srcMeta.Name, fm.srcMeta.Code, fm.begin, fm.end),
 		next: fm.traceback,
 	}
 }
