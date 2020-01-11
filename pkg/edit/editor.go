@@ -7,6 +7,7 @@ package edit
 
 import (
 	"os"
+	"strings"
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/histutil"
@@ -33,7 +34,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 
 	if fuser != nil {
 		appSpec.AfterReadline = []func(string){func(code string) {
-			if code != "" {
+			if code != "" && !strings.HasPrefix(code, " ") {
 				fuser.AddCmd(code)
 			}
 			// TODO(xiaq): Handle the error.
