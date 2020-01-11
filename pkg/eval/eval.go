@@ -53,6 +53,8 @@ type Evaler struct {
 	// State of the module system.
 	libDir  string
 	bundled map[string]string
+	// Internal modules are indexed by use specs. External modules are indexed by
+	// absolute paths.
 	modules map[string]Ns
 
 	// Dependencies.

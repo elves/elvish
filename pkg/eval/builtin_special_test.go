@@ -126,10 +126,12 @@ func TestUse(t *testing.T) {
 		// module is cached after first use
 		That(`use has-init; use has-init`).Puts("has-init"),
 		// overriding module
-		That(`use d; put $d:name; use a/b/c/d; put $d:name`).Puts(
-			"d", "a/b/c/d"),
+		That(`use d; put $d:name; use a/b/c/d; put $d:name`).
+			Puts("d", "a/b/c/d"),
 		// relative uses
 		That(`use a/b/c/x; put $x:d $x:lorem`).Puts("a/b/c/d", "lorem"),
+		// relative uses from top-level
+		That(`use ./d; put $d:name`).Puts("d"),
 
 		// Renaming module
 		That(`use a/b/c/d mod; put $mod:name`).Puts("a/b/c/d"),

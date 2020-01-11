@@ -17,8 +17,6 @@ package eval
 // closures functioning as code blocks.
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,20 +28,15 @@ import (
 
 type compileBuiltin func(*compiler, *parse.Form) effectOpBody
 
-var (
-	// ErrRelativeUseNotFromMod is thrown by "use" when relative use is used
-	// not from a module
-	ErrRelativeUseNotFromMod = errors.New("Relative use not from module")
-	// ErrRelativeUseGoesOutsideLib is thrown when a relative use goes out of
-	// the library directory.
-	ErrRelativeUseGoesOutsideLib = errors.New("Module outside library directory")
-)
-
 var builtinSpecials map[string]compileBuiltin
 
 // IsBuiltinSpecial is the set of all names of builtin special forms. It is
 // intended for external consumption, e.g. the syntax highlighter.
 var IsBuiltinSpecial = map[string]bool{}
+
+type noSuchModule struct{ spec string }
+
+func (err noSuchModule) Error() string { return "no such module: " + err.spec }
 
 func init() {
 	// Needed to avoid initialization loop
@@ -221,22 +214,22 @@ func (op fnWrap) invoke(fm *Frame) error {
 
 // UseForm = 'use' StringPrimary
 func compileUse(cp *compiler, fn *parse.Form) effectOpBody {
-	var name, path string
+	var name, spec string
 
 	switch len(fn.Args) {
 	case 0:
 		end := fn.Head.Range().To
 		cp.errorpf(end, end, "lack module name")
 	case 1:
-		path = mustString(cp, fn.Args[0],
-			"module path should be a literal string")
+		spec = mustString(cp, fn.Args[0],
+			"module spec should be a literal string")
 		// Use the last path component as the name; for instance, if path =
 		// "a/b/c/d", name is "d". If path doesn't have slashes, name = path.
-		name = path[strings.LastIndexByte(path, '/')+1:]
+		name = spec[strings.LastIndexByte(spec, '/')+1:]
 	case 2:
 		// TODO(xiaq): Allow using variable as module path
-		path = mustString(cp, fn.Args[0],
-			"module path should be a literal string")
+		spec = mustString(cp, fn.Args[0],
+			"module spec should be a literal string")
 		name = mustString(cp, fn.Args[1],
 			"module name should be a literal string")
 	default: // > 2
@@ -246,52 +239,53 @@ func compileUse(cp *compiler, fn *parse.Form) effectOpBody {
 
 	cp.thisScope().set(name + NsSuffix)
 
-	return useOp{name, path}
+	return useOp{name, spec}
 }
 
-type useOp struct{ modname, modpath string }
+type useOp struct{ name, spec string }
 
 func (op useOp) invoke(fm *Frame) error {
-	return use(fm, op.modname, op.modpath)
-}
-
-func use(fm *Frame, modname, modpath string) error {
-	resolvedPath := ""
-	if strings.HasPrefix(modpath, "./") || strings.HasPrefix(modpath, "../") {
-		if fm.srcMeta.typ != moduleSource {
-			return ErrRelativeUseNotFromMod
-		}
-		// Resolve relative modpath.
-		resolvedPath = filepath.Clean(filepath.Dir(fm.srcMeta.name) + "/" + modpath)
-	} else {
-		resolvedPath = filepath.Clean(modpath)
-	}
-	if strings.HasPrefix(resolvedPath, "../") {
-		return ErrRelativeUseGoesOutsideLib
-	}
-
-	// Put the just loaded module into local scope.
-	ns, err := loadModule(fm, resolvedPath)
+	ns, err := loadModule(fm, op.spec)
 	if err != nil {
 		return err
 	}
-	fm.local.AddNs(modname, ns)
+	fm.local.AddNs(op.name, ns)
 	return nil
 }
 
-func loadModule(fm *Frame, name string) (Ns, error) {
-	if ns, ok := fm.Evaler.modules[name]; ok {
-		// Module already loaded.
+func loadModule(fm *Frame, spec string) (Ns, error) {
+	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") {
+		path := filepath.Clean(filepath.Dir(fm.srcMeta.path) + "/" + spec + ".elv")
+		return loadModuleFile(fm, spec, path)
+	}
+	if ns, ok := fm.Evaler.modules[spec]; ok {
 		return ns, nil
 	}
+	if code, ok := fm.bundled[spec]; ok {
+		return evalModule(fm, spec, NewModuleSource(spec, "", code))
+	}
+	if fm.libDir == "" {
+		return nil, noSuchModule{spec}
+	}
+	return loadModuleFile(fm, spec, fm.libDir+"/"+spec+".elv")
+}
 
-	// Load the source.
-	src, err := getModuleSource(fm.Evaler, name)
+func loadModuleFile(fm *Frame, spec, path string) (Ns, error) {
+	if ns, ok := fm.modules[path]; ok {
+		return ns, nil
+	}
+	code, err := readFileUTF8(path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, noSuchModule{spec}
+		}
 		return nil, err
 	}
+	return evalModule(fm, path, NewModuleSource(spec, path, code))
+}
 
-	n, err := parse.AsChunk(name, src.code)
+func evalModule(fm *Frame, key string, src *Source) (Ns, error) {
+	n, err := parse.AsChunk(src.name, src.code)
 	if err != nil {
 		return nil, err
 	}
@@ -313,38 +307,14 @@ func loadModule(fm *Frame, name string) (Ns, error) {
 
 	// Load the namespace before executing. This prevent circular "use"es from
 	// resulting in an infinite recursion.
-	fm.Evaler.modules[name] = modGlobal
+	fm.Evaler.modules[key] = modGlobal
 	err = newFm.Eval(op)
 	if err != nil {
 		// Unload the namespace.
-		delete(fm.modules, name)
+		delete(fm.modules, key)
 		return nil, err
 	}
 	return modGlobal, nil
-}
-
-func getModuleSource(ev *Evaler, name string) (*Source, error) {
-	// First try loading from file.
-	path := filepath.Join(ev.libDir, name+".elv")
-	if ev.libDir != "" {
-		_, err := os.Stat(path)
-		if err == nil {
-			code, err := readFileUTF8(path)
-			if err != nil {
-				return nil, err
-			}
-			return NewModuleSource(name, path, code), nil
-		} else if !os.IsNotExist(err) {
-			return nil, err
-		}
-	}
-
-	// Try loading bundled module.
-	if code, ok := ev.bundled[name]; ok {
-		return NewModuleSource(name, "", code), nil
-	}
-
-	return nil, fmt.Errorf("cannot load %s: %s does not exist", name, path)
 }
 
 // compileAnd compiles the "and" special form.
