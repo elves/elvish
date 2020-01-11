@@ -71,10 +71,10 @@ func TestCompileEffect(t *testing.T) {
 			Prints("233\n"),
 
 		// Redirections from special form.
-		That(`f = (mktemp elvXXXXXX);
-	for x [lorem ipsum] { echo $x } > $f
-	cat $f
-	rm $f`).Prints("lorem\nipsum\n"),
+		That(`f = (mktemp elvXXXXXX)`,
+			`for x [lorem ipsum] { echo $x } > $f`,
+			`cat $f`,
+			`rm $f`).Prints("lorem\nipsum\n"),
 
 		// Redirections from File object.
 		That(`fname=(mktemp elvXXXXXX); echo haha > $fname;

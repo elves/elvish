@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/util"
 )
 
 // Unwrappers are helper types for "unwrapping" values, the process for
@@ -130,13 +131,18 @@ func (u ValueUnwrapper) FdOrClose() (int, error) {
 	return fd, nil
 }
 
-func (u ValueUnwrapper) Callable() (Callable, error) {
+func (u ValueUnwrapper) CommandHead() (Callable, error) {
 	if u.err != nil {
 		return nil, u.err
 	}
-	c, ok := u.values[0].(Callable)
-	if !ok {
-		u.error("callable", "%s", vals.Kind(u.values[0]))
+	switch v := u.values[0].(type) {
+	case Callable:
+		return v, nil
+	case string:
+		if util.DontSearch(v) {
+			return ExternalCmd{v}, nil
+		}
 	}
-	return c, u.err
+	u.error("callable or relative path", "%s", vals.Kind(u.values[0]))
+	return nil, u.err
 }

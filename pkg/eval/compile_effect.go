@@ -307,7 +307,7 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 	var args []interface{}
 	if op.headOp.body != nil {
 		// head
-		headFn, errRet = fm.ExecAndUnwrap("head of command", op.headOp).One().Callable()
+		headFn, errRet = fm.ExecAndUnwrap("head of command", op.headOp).One().CommandHead()
 		if errRet != nil {
 			return errRet
 		}
