@@ -25,6 +25,9 @@ func TestCompileEffectUnix(t *testing.T) {
 		That("e:./foo").Prints("foo\n"),
 		// Names of external commands may be built dynamically.
 		That("x = ipsum", "lorem/$x").Prints("lorem ipsum\n"),
+		// Using new FD as destination in external commands.
+		// Regression test against b.elv.sh/788.
+		That("./foo 5</dev/null").Prints("foo\n"),
 	)
 }
 
