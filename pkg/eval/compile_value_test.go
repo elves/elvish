@@ -43,11 +43,15 @@ func TestCompileValue(t *testing.T) {
 		// Variable Use
 		// ------------
 
+		That("x = foo", "put $x").Puts("foo"),
+		// Must exist before use
+		That("put $x").DoesNotCompile(),
+		That("put $x[0]").DoesNotCompile(),
 		// Compounding
-		That("x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n").
+		That("x = SHELL", "put 'WOW, SUCH '$x', MUCH COOL'\n").
 			Puts("WOW, SUCH SHELL, MUCH COOL"),
 		// Splicing
-		That("x=[elvish rules]; put $@x").Puts("elvish", "rules"),
+		That("x = [elvish rules]", "put $@x").Puts("elvish", "rules"),
 
 		// Variable namespace
 		// ------------------
