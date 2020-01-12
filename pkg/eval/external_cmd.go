@@ -62,7 +62,9 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 
 	files := make([]*os.File, len(fm.ports))
 	for i, port := range fm.ports {
-		files[i] = port.File
+		if port != nil {
+			files[i] = port.File
+		}
 	}
 
 	args := make([]string, len(argVals)+1)
