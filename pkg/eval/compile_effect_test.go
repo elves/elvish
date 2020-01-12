@@ -43,8 +43,13 @@ func TestCompileEffect(t *testing.T) {
 		// Assignments
 		// -----------
 
+		// Spacey assignment.
+		That("a @b = 2 3 foo; put $a $b[1]").Puts("2", "foo"),
 		// List element assignment
 		That("li=[foo bar]; li[0]=233; put $@li").Puts("233", "bar"),
+		// Variable in list assignment must already be defined. Regression test
+		// for b.elv.sh/889.
+		That("foobarlorem[0] = a").DoesNotCompile(),
 		// Map element assignment
 		That("di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]").
 			Puts("lorem", "ipsum"),
@@ -65,9 +70,6 @@ func TestCompileEffect(t *testing.T) {
 		That("m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]").Puts("v2", "v"),
 		// Temporary assignment before special form.
 		That("li=[foo bar] for x $li { put $x }").Puts("foo", "bar"),
-
-		// Spacey assignment.
-		That("a @b = 2 3 foo; put $a $b[1]").Puts("2", "foo"),
 		// Spacey assignment with temporary assignment
 		That("x = 1; x=2 y = (+ 1 $x); put $x $y").Puts("1", 3.0),
 
