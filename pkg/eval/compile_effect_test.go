@@ -1,8 +1,15 @@
 package eval
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/elves/elvish/pkg/util"
+)
 
 func TestCompileEffect(t *testing.T) {
+	_, cleanup := util.InTestDir()
+	defer cleanup()
+
 	Test(t,
 		// Chunks
 		// ------
@@ -67,21 +74,26 @@ func TestCompileEffect(t *testing.T) {
 		// Redirections
 		// ------------
 
-		That("f=(mktemp elvXXXXXX); echo 233 > $f; cat < $f; rm $f").
-			Prints("233\n"),
-
+		That("echo 233 > out1", " slurp < out1").
+			Puts("233\n"),
 		// Redirections from special form.
-		That(`f = (mktemp elvXXXXXX)`,
-			`for x [lorem ipsum] { echo $x } > $f`,
-			`cat $f`,
-			`rm $f`).Prints("lorem\nipsum\n"),
-
+		That(`for x [lorem ipsum] { echo $x } > out2`, `slurp < out2`).
+			Puts("lorem\nipsum\n"),
+		// Using numeric FDs as source and destination.
+		That(`{ echo foobar >&2 } 2> out3`, `slurp < out3`).
+			Puts("foobar\n"),
+		// Using named FDs as source and destination.
+		That(`{ echo foobar >&stderr } stderr> out4`, `slurp < out4`).
+			Puts("foobar\n"),
+		// Using a new FD as source throws an exception.
+		That(`echo foo >&4`).ThrowsAny(),
+		// Using a new FD as destination is OK, and makes it available.
+		That(`{ echo foo >&4 } 4>out5`, `slurp < out5`).Puts("foo\n"),
 		// Redirections from File object.
-		That(`fname=(mktemp elvXXXXXX); echo haha > $fname;
-			f=(fopen $fname); cat <$f; fclose $f; rm $fname`).Prints("haha\n"),
-
+		That(`echo haha > out3`, `f = (fopen out3)`, `slurp <$f`, ` fclose $f`).
+			Puts("haha\n"),
 		// Redirections from Pipe object.
-		That(`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`).
-			Prints("haha\n"),
+		That(`p = (pipe); echo haha > $p; pwclose $p; slurp < $p; prclose $p`).
+			Puts("haha\n"),
 	)
 }
