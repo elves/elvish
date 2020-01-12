@@ -22,6 +22,7 @@ type TTY interface {
 	// This method should be called before any other method is called.
 	Setup() (restore func(), err error)
 
+	// ReadEvent reads a terminal event.
 	ReadEvent() (term.Event, error)
 	// SetRawInput requests the next n ReadEvent calls to read raw events. It
 	// is applicable to environments where events are represented as a special
