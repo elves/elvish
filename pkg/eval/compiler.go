@@ -8,7 +8,6 @@ import (
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 )
 
 // compiler maintains the set of states needed when compiling a single source
@@ -28,7 +27,18 @@ type compiler struct {
 
 func compile(b, g staticNs, n *parse.Chunk, src *Source) (op Op, err error) {
 	cp := &compiler{b, []staticNs{g}, make(staticNs), 0, 0, src}
-	defer util.Catch(&err)
+	defer func() {
+		r := recover()
+		if r == nil {
+			return
+		} else if e, ok := GetCompilationError(r); ok {
+			// Save the compilation error and stop the panic.
+			err = e
+		} else {
+			// Resume the panic; it is not supposed to be handled here.
+			panic(r)
+		}
+	}()
 	return Op{cp.chunkOp(n), src}, nil
 }
 
@@ -37,7 +47,8 @@ func (cp *compiler) compiling(n parse.Node) {
 }
 
 func (cp *compiler) errorpf(begin, end int, format string, args ...interface{}) {
-	util.Throw(NewCompilationError(fmt.Sprintf(format, args...),
+	// The panic is caught by the recover in compile above.
+	panic(NewCompilationError(fmt.Sprintf(format, args...),
 		*diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, begin, end)))
 }
 
