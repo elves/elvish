@@ -43,7 +43,11 @@ func (bt BindingMap) Repr(indent int) string {
 
 // Index converts the index to ui.Key and uses the Index of the inner Map.
 func (bt BindingMap) Index(index interface{}) (interface{}, error) {
-	return vals.Index(bt.Map, ui.ToKey(index))
+	key, err := ui.ToKey(index)
+	if err != nil {
+		return nil, err
+	}
+	return vals.Index(bt.Map, key)
 }
 
 func (bt BindingMap) HasKey(k interface{}) bool {
@@ -72,7 +76,10 @@ func (bt BindingMap) GetOrDefault(k ui.Key) eval.Callable {
 // Assoc converts the index to ui.Key, ensures that the value is CallableValue,
 // uses the Assoc of the inner Map and converts the result to a BindingTable.
 func (bt BindingMap) Assoc(k, v interface{}) (interface{}, error) {
-	key := ui.ToKey(k)
+	key, err := ui.ToKey(k)
+	if err != nil {
+		return nil, err
+	}
 	f, ok := v.(eval.Callable)
 	if !ok {
 		return nil, errValueShouldBeFn
@@ -84,7 +91,12 @@ func (bt BindingMap) Assoc(k, v interface{}) (interface{}, error) {
 // Dissoc converts the key to ui.Key and calls the Dissoc method of the inner
 // map.
 func (bt BindingMap) Dissoc(k interface{}) interface{} {
-	return BindingMap{bt.Map.Dissoc(ui.ToKey(k))}
+	key, err := ui.ToKey(k)
+	if err != nil {
+		// Key is invalid; dissoc is no-op.
+		return bt
+	}
+	return BindingMap{bt.Map.Dissoc(key)}
 }
 
 func MakeBindingMap(raw hashmap.Map) (BindingMap, error) {
@@ -95,7 +107,11 @@ func MakeBindingMap(raw hashmap.Map) (BindingMap, error) {
 		if !ok {
 			return EmptyBindingMap, errValueShouldBeFn
 		}
-		converted = converted.Assoc(ui.ToKey(k), f)
+		key, err := ui.ToKey(k)
+		if err != nil {
+			return BindingMap{}, err
+		}
+		converted = converted.Assoc(key, f)
 	}
 
 	return BindingMap{converted}, nil

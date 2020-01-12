@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -221,19 +220,14 @@ func parseKey(s string) (Key, error) {
 
 // ToKey converts an Elvish Value to a Key. If the passed Value is not Key or
 // String, it throws an error.
-func ToKey(k interface{}) Key {
+func ToKey(k interface{}) (Key, error) {
 	switch k := k.(type) {
 	case Key:
-		return k
+		return k, nil
 	case string:
-		key, err := parseKey(string(k))
-		if err != nil {
-			util.Throw(err)
-		}
-		return key
+		return parseKey(k)
 	default:
-		util.Throw(ErrKeyMustBeString)
-		panic("unreachable")
+		return Key{}, ErrKeyMustBeString
 	}
 }
 
