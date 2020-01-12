@@ -478,6 +478,10 @@ type redirOp struct {
 	flag    int
 }
 
+type invalidFD struct{ fd int }
+
+func (err invalidFD) Error() string { return fmt.Sprintf("invalid fd: %d", err.fd) }
+
 func (op *redirOp) invoke(fm *Frame) error {
 	var dst int
 	if op.dstOp.body == nil {
@@ -509,10 +513,13 @@ func (op *redirOp) invoke(fm *Frame) error {
 		if err != nil {
 			return err
 		}
-		if src == -1 {
+		switch {
+		case src == -1:
 			// close
 			fm.ports[dst] = &Port{}
-		} else {
+		case src >= len(fm.ports) || fm.ports[src] == nil:
+			return invalidFD{src}
+		default:
 			fm.ports[dst] = fm.ports[src].Fork()
 		}
 	} else {

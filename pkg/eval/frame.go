@@ -121,7 +121,9 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 func (fm *Frame) fork(name string) *Frame {
 	newPorts := make([]*Port, len(fm.ports))
 	for i, p := range fm.ports {
-		newPorts[i] = p.Fork()
+		if p != nil {
+			newPorts[i] = p.Fork()
+		}
 	}
 	return &Frame{
 		fm.Evaler, fm.srcMeta,
