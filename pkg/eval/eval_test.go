@@ -3,6 +3,7 @@ package eval
 import (
 	"reflect"
 	"strconv"
+	"sync"
 	"syscall"
 	"testing"
 
@@ -44,6 +45,23 @@ func TestMultipleEval(t *testing.T) {
 	if !reflect.DeepEqual(r.valueOut, wantOuts) {
 		t.Errorf("eval %s outputs %v, want %v", texts, r.valueOut, wantOuts)
 	}
+}
+
+func TestConcurrentEval(t *testing.T) {
+	// Run this test with "go test -race".
+	ev := NewEvaler()
+	src := NewInternalElvishSource(true, "[test]", "")
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		ev.EvalSourceInTTY(src)
+		wg.Done()
+	}()
+	go func() {
+		ev.EvalSourceInTTY(src)
+		wg.Done()
+	}()
+	wg.Wait()
 }
 
 func BenchmarkOutputCaptureOverhead(b *testing.B) {
