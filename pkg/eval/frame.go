@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/util"
 )
 
 // Frame contains information of the current running function, aknin to a call
@@ -147,7 +146,6 @@ func (fm *Frame) Eval(op Op) error {
 // eval evaluates an effectOp. It does so in a protected environment so that
 // exceptions thrown are wrapped in an Error.
 func (fm *Frame) eval(op effectOp) (err error) {
-	defer catch(&err, fm)
 	e := op.exec(fm)
 	if e != nil {
 		if exc, ok := e.(*Exception); ok {
@@ -161,7 +159,6 @@ func (fm *Frame) eval(op effectOp) (err error) {
 // Call calls a function with the given arguments and options. It does so in a
 // protected environment so that exceptions thrown are wrapped in an Error.
 func (fm *Frame) Call(f Callable, args []interface{}, opts map[string]interface{}) (err error) {
-	defer catch(&err, fm)
 	e := f.Call(fm, args, opts)
 	if e != nil {
 		if exc, ok := e.(*Exception); ok {
@@ -198,25 +195,6 @@ func (fm *Frame) CallWithOutputCallback(fn Callable, args []interface{}, opts ma
 // callbacks.
 func (fm *Frame) ExecWithOutputCallback(op Op, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
 	return pcaptureOutputInner(fm, op.Inner, valuesCb, bytesCb)
-}
-
-func catch(perr *error, fm *Frame) {
-	// NOTE: We have to duplicate instead of calling util.Catch here, since
-	// recover can only catch a panic when called directly from a deferred
-	// function.
-	r := recover()
-	if r == nil {
-		return
-	}
-	if exc, ok := r.(util.Thrown); ok {
-		err := exc.Wrapped
-		if _, ok := err.(*Exception); !ok {
-			err = fm.makeException(err)
-		}
-		*perr = err
-	} else if r != nil {
-		panic(r)
-	}
 }
 
 // makeException turns an error into an Exception by adding traceback.
