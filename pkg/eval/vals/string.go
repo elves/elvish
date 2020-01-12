@@ -28,17 +28,19 @@ func ToString(v interface{}) string {
 }
 
 func formatFloat64(f float64) string {
-	// Go's 'g' format is almost what we want, except that its threshold for
-	// "large exponent" is too low - 6 for positive exponents and -5 for
-	// negative exponents. This means that relative small numbers like 1234567
-	// are printed with scientific notations, something we don't really want.
-	// See also b.elv.sh/811.
+	// Go's 'g' format is not quite ideal for printing floating point numbers;
+	// it uses scientific notation too aggressively, and relatively small
+	// numbers like 1234567 are printed with scientific notations, something we
+	// don't really want.
 	//
-	// So we emulate the 'g' format by first using 'f', parse the result, and
-	// use 'e' if the exponent >= 14 or <= -5.
+	// So we use a different algorithm for determining when to use scientific
+	// notation. The algorithm is reverse-engineered from Racket's; it may not
+	// be a perfect clone but hopefully good enough.
+	//
+	// See also b.elv.sh/811 for more context.
 	s := strconv.FormatFloat(f, 'f', -1, 64)
-	i := strings.IndexByte(s, '.')
-	if (i == -1 && len(s) > 14) || i >= 14 || strings.HasPrefix(s, "0.0000") {
+	if (strings.IndexByte(s, '.') == -1 && len(s) > 14 && s[len(s)-1] == '0') ||
+		strings.HasPrefix(s, "0.0000") {
 		return strconv.FormatFloat(f, 'e', -1, 64)
 	}
 	return s
