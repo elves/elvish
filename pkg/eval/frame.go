@@ -147,26 +147,14 @@ func (fm *Frame) Eval(op Op) error {
 // exceptions thrown are wrapped in an Error.
 func (fm *Frame) eval(op effectOp) (err error) {
 	e := op.exec(fm)
-	if e != nil {
-		if exc, ok := e.(*Exception); ok {
-			return exc
-		}
-		return fm.makeException(e)
-	}
-	return nil
+	return fm.makeException(e)
 }
 
 // Call calls a function with the given arguments and options. It does so in a
 // protected environment so that exceptions thrown are wrapped in an Error.
 func (fm *Frame) Call(f Callable, args []interface{}, opts map[string]interface{}) (err error) {
 	e := f.Call(fm, args, opts)
-	if e != nil {
-		if exc, ok := e.(*Exception); ok {
-			return exc
-		}
-		return fm.makeException(e)
-	}
-	return nil
+	return fm.makeException(e)
 }
 
 // CaptureOutput calls a function with the given arguments and options,
@@ -197,9 +185,17 @@ func (fm *Frame) ExecWithOutputCallback(op Op, valuesCb func(<-chan interface{})
 	return pcaptureOutputInner(fm, op.Inner, valuesCb, bytesCb)
 }
 
-// makeException turns an error into an Exception by adding traceback.
-func (fm *Frame) makeException(e error) *Exception {
-	return &Exception{e, fm.addTraceback()}
+// makeException turns an error into an Exception by adding traceback. If e is
+// nil or already an *Exception, it is returned as is.
+func (fm *Frame) makeException(e error) error {
+	switch e := e.(type) {
+	case nil:
+		return nil
+	case *Exception:
+		return e
+	default:
+		return &Exception{e, fm.addTraceback()}
+	}
 }
 
 func (fm *Frame) addTraceback() *stackTrace {
