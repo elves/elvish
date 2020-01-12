@@ -25,6 +25,10 @@ type fakeTTY struct {
 	setup func() (func(), error)
 	// Channel that StartRead returns. Can be used to inject additional events.
 	eventCh chan term.Event
+	// Whether eventCh has been closed.
+	eventChClosed bool
+	// Mutex for synchronizing writing and closing eventCh.
+	eventChMutex sync.Mutex
 	// Channel for publishing updates of the main buffer and notes buffer.
 	bufCh, notesBufCh chan *term.Buffer
 	// Records history of the main buffer and notes buffer.
@@ -79,13 +83,18 @@ func (t *fakeTTY) ReadEvent() (term.Event, error) {
 	return <-t.eventCh, nil
 }
 
-// Nop.
+// Records the argument.
 func (t *fakeTTY) SetRawInput(n int) {
 	t.raw = n
 }
 
-// Closes t.eventCh.
-func (t *fakeTTY) StopInput() { close(t.eventCh) }
+// Closes eventCh.
+func (t *fakeTTY) StopInput() {
+	t.eventChMutex.Lock()
+	defer t.eventChMutex.Unlock()
+	close(t.eventCh)
+	t.eventChClosed = true
+}
 
 // Returns the last recorded buffer.
 func (t *fakeTTY) Buffer() *term.Buffer { return t.bufs[len(t.bufs)-1] }
@@ -142,6 +151,14 @@ func (t TTYCtrl) SetSize(h, w int) {
 // Inject injects events to the fake terminal.
 func (t TTYCtrl) Inject(events ...term.Event) {
 	for _, event := range events {
+		t.inject(event)
+	}
+}
+
+func (t TTYCtrl) inject(event term.Event) {
+	t.eventChMutex.Lock()
+	defer t.eventChMutex.Unlock()
+	if !t.eventChClosed {
 		t.eventCh <- event
 	}
 }
