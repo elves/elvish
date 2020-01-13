@@ -4,6 +4,15 @@ package getopt
 
 import "strconv"
 
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[DoubleDashTerminatesOptions-1]
+	_ = x[FirstArgTerminatesOptions-2]
+	_ = x[LongOnly-4]
+}
+
 const (
 	_Config_name_0 = "DoubleDashTerminatesOptionsFirstArgTerminatesOptions"
 	_Config_name_1 = "LongOnly"
@@ -24,6 +33,14 @@ func (i Config) String() string {
 		return "Config(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
 }
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[NoArgument-0]
+	_ = x[RequiredArgument-1]
+	_ = x[OptionalArgument-2]
+}
 
 const _HasArg_name = "NoArgumentRequiredArgumentOptionalArgument"
 
@@ -34,6 +51,18 @@ func (i HasArg) String() string {
 		return "HasArg(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
 	return _HasArg_name[_HasArg_index[i]:_HasArg_index[i+1]]
+}
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[NewOptionOrArgument-0]
+	_ = x[NewOption-1]
+	_ = x[NewLongOption-2]
+	_ = x[LongOption-3]
+	_ = x[ChainShortOption-4]
+	_ = x[OptionArgument-5]
+	_ = x[Argument-6]
 }
 
 const _ContextType_name = "NewOptionOrArgumentNewOptionNewLongOptionLongOptionChainShortOptionOptionArgumentArgument"

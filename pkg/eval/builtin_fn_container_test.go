@@ -40,6 +40,9 @@ func TestBuiltinFnContainer(t *testing.T) {
 		That(`count [(range 100)]`).Puts("100"),
 		That(`count 1 2 3`).ThrowsAny(),
 
+		That(`explode (append [1 2] 3)`).Puts("1", "2", "3"),
+		That(`explode (concat [1 2] [3 4])`).Puts("1", "2", "3", "4"),
+
 		That(`keys [&]`).DoesNothing(),
 		That(`keys [&a=foo]`).Puts("a"),
 		// Windows does not have an external sort command. Disabled until we have a

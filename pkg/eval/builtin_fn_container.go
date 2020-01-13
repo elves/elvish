@@ -28,9 +28,11 @@ func init() {
 		"has-key":   hasKey,
 		"has-value": hasValue,
 
-		"take":  take,
-		"drop":  drop,
-		"count": count,
+		"take":   take,
+		"drop":   drop,
+		"count":  count,
+		"append": appendElvish,
+		"concat": concat,
 
 		"keys": keys,
 	})
@@ -192,6 +194,18 @@ func count(fm *Frame, args ...interface{}) (int, error) {
 		return 0, errors.New("want 0 or 1 argument")
 	}
 	return n, nil
+}
+
+func appendElvish(list vals.List, value interface{}) vals.List {
+	return list.Cons(value)
+}
+
+func concat(list vals.List, list2 vals.List) vals.List {
+	newList := list
+	for it := list2.Iterator(); it.HasElem(); it.Next() {
+		newList = newList.Cons(it.Elem())
+	}
+	return newList
 }
 
 func keys(fm *Frame, v interface{}) error {
