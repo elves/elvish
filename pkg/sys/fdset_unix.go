@@ -1,4 +1,4 @@
-// +build !freebsd,!windows,!plan9
+// +build !windows,!plan9
 
 package sys
 
