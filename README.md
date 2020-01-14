@@ -29,7 +29,7 @@ To build Elvish, you need
 -   Linux, {Free,Net,Open}BSD, macOS, or Windows (Windows support is
     experimental).
 
--   Go >= 1.12.
+-   Go >= 1.13.
 
 If you have not done so, first set up your environment by following
 [How To Write Go Code](http://golang.org/doc/code.html).

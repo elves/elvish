@@ -3,20 +3,13 @@ os: linux
 sudo: false
 go:
   - 1.13.x
-  - 1.12.x
 env:
   global:
     - CGO_ENABLED=0
     - ELVISH_TEST_UI_TIMEOUT=5s
-  jobs:
-    - GO111MODULE=on
-    - GO111MODULE=off
 jobs:
   include:
     - os: osx
-      go: 1.13.x
-    - os: osx
-      go: 1.12.x
     # TODO(xiaq): Enable coverage reports for pull requests
     - stage: deploy
       name: Generate and upload coverage to codecov and coveralls
