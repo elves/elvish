@@ -69,8 +69,4 @@ Some tips on installation:
 
 ## Contributing to Elvish
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more notes for contributors. You can
-also join one of the developer groups (also connected together by matterbridge):
-[![Gitter for Developers](https://img.shields.io/badge/gitter-elves/elvish--dev-000000.svg?logo=gitter-white)](https://gitter.im/elves/elvish-dev)
-[![Telegram Group for Developers](https://img.shields.io/badge/telegram-@elvish__dev-000000.svg)](https://telegram.me/elvish_dev)
-[![#elvish-dev on freenode](https://img.shields.io/badge/freenode-%23elvish--dev-000000.svg)](https://webchat.freenode.net/?channels=elvish-dev)
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more notes for contributors.
