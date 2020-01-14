@@ -130,7 +130,9 @@ func emitRegionsInForm(n *parse.Form, f func(parse.Node, regionKind, string)) {
 	if n.Head == nil {
 		return
 	}
-	f(n.Head, semanticRegion, commandRegion)
+	if isBarewordCompound(n.Head) {
+		f(n.Head, semanticRegion, commandRegion)
+	}
 	// Special forms.
 	// TODO: This only highlights bareword special commands, however currently
 	// quoted special commands are also possible (e.g `"if" $true { }` is
@@ -143,6 +145,10 @@ func emitRegionsInForm(n *parse.Form, f func(parse.Node, regionKind, string)) {
 	case "try":
 		emitRegionsInTry(n, f)
 	}
+}
+
+func isBarewordCompound(n *parse.Compound) bool {
+	return len(n.Indexings) == 1 && len(n.Indexings[0].Indicies) == 0 && n.Indexings[0].Head.Type == parse.Bareword
 }
 
 func emitRegionsInIf(n *parse.Form, f func(parse.Node, regionKind, string)) {

@@ -22,7 +22,11 @@ var styles = ui.RuneStylesheet{
 }
 
 func TestHighlighter_HighlightRegions(t *testing.T) {
-	hl := NewHighlighter(Config{})
+	// Force commands to be delivered synchronously.
+	MaxBlockForLate = 100 * time.Millisecond
+	hl := NewHighlighter(Config{
+		HasCommand: func(name string) bool { return name == "ls" },
+	})
 
 	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
 		Args("ls").Rets(
@@ -41,6 +45,14 @@ func TestHighlighter_HighlightRegions(t *testing.T) {
 				"ls $x 'y'", styles,
 				"vv $$ '''"),
 			noErrors),
+		// Non-bareword commands do not go through command highlighting.
+		Args("'ls'").Rets(ui.T("'ls'", ui.FgYellow)),
+		Args("a$x").Rets(
+			ui.MarkLines(
+				"a$x", styles,
+				" $$"),
+			noErrors,
+		),
 	})
 }
 
