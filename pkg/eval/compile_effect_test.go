@@ -73,6 +73,10 @@ func TestCompileEffect(t *testing.T) {
 		// Spacey assignment with temporary assignment
 		That("x = 1; x=2 y = (+ 1 $x); put $x $y").Puts("1", 3.0),
 
+		// Concurrently creating a new variable and accessing existing variable.
+		// Run with "go test -race".
+		That("x = 1", "put $x | y = (all)").DoesNothing(),
+
 		// Redirections
 		// ------------
 
