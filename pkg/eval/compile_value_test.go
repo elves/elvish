@@ -10,6 +10,9 @@ import (
 )
 
 func TestCompileValue(t *testing.T) {
+	home, cleanup := InTempHome()
+	defer cleanup()
+
 	Test(t,
 		// Compounding
 		// -----------
@@ -100,9 +103,10 @@ func TestCompileValue(t *testing.T) {
 
 		// Tilde
 		// -----
-		That("E:HOME=/foo put ~").Puts("/foo"),
-		That("E:HOME=/foo put ~/src").Puts("/foo/src"),
-		That("E:HOME=/foo put ~/src/").Puts("/foo/src/"),
+		That("put ~").Puts(home),
+		That("put ~/src").Puts(home+"/src"),
+		That("put ~/src/").Puts(home+"/src/"),
+		// TODO(xiaq): Add regression test for #793.
 
 		// Closure
 		// -------

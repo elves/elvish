@@ -231,6 +231,17 @@ var goodCases = []struct {
 			},
 		}},
 	)},
+	// Tilde and wildcard
+	{"a ~xiaq/*.go", a(
+		ast{"Compound", fs{
+			"Indexings": []ast{
+				{"Indexing/Primary", fs{"Type": Tilde, "Value": "~"}},
+				{"Indexing/Primary", fs{"Type": Bareword, "Value": "xiaq/"}},
+				{"Indexing/Primary", fs{"Type": Wildcard, "Value": "*"}},
+				{"Indexing/Primary", fs{"Type": Bareword, "Value": ".go"}},
+			},
+		}},
+	)},
 
 	// Line continuation: "\\\n" is considered whitespace
 	{"a b\\\nc", ast{

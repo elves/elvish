@@ -148,29 +148,29 @@ func doTilde(v interface{}) (interface{}, error) {
 		}
 		switch seg := v.Segments[0].(type) {
 		case glob.Literal:
-			s := seg.Data
-			// Find / in the first segment to determine the username.
-			i := strings.Index(s, "/")
-			if i == -1 {
-				return nil, ErrCannotDetermineUsername
+			if len(v.Segments) == 1 {
+				return nil, ErrBadGlobPattern
 			}
-			uname := s[:i]
-			dir, err := util.GetHome(uname)
-			if err != nil {
-				return nil, err
+			_, isSlash := v.Segments[1].(glob.Slash)
+			if isSlash {
+				// ~username or ~username/xxx. Replace the first segment with
+				// the home directory of the specified user.
+				dir, err := util.GetHome(seg.Data)
+				if err != nil {
+					return nil, err
+				}
+				v.Segments[0] = glob.Literal{Data: dir}
+				return v, nil
 			}
-			// Replace ~uname in first segment with the found path.
-			v.Segments[0] = glob.Literal{dir + s[i:]}
 		case glob.Slash:
 			dir, err := util.GetHome("")
 			if err != nil {
 				return nil, err
 			}
 			v.DirOverride = dir
-		default:
-			return nil, ErrCannotDetermineUsername
+			return v, nil
 		}
-		return v, nil
+		return nil, ErrCannotDetermineUsername
 	default:
 		return nil, fmt.Errorf("tilde doesn't work on value of type %s", vals.Kind(v))
 	}
