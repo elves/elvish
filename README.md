@@ -24,34 +24,50 @@ User groups (all connected thanks to
 
 ## Building Elvish
 
-To build Elvish, you need
+To build Elvish from source, you need
 
--   Linux, {Free,Net,Open}BSD, macOS, or Windows (Windows support is
-    experimental).
+-   A supported OS: Linux, {Free,Net,Open}BSD, macOS, or Windows.
+
+    **NOTE**: Windows support is experimental. Elvish builds on Windows >= 7,
+    but the terminal IO only works correctly on Windows 10.
 
 -   Go >= 1.13.
 
-If you have not done so, first set up your environment by following
-[How To Write Go Code](http://golang.org/doc/code.html).
-
-There are two ways to build Elvish. You can build it directly with `go get`:
+To build Elvish from source, follow these steps:
 
 ```sh
-go get github.com/elves/elvish
-```
-
-However, binaries built in this way lacks some build-time information; for
-instance, `elvish -version` will show `unknown`. To add such information, use
-`make`:
-
-```sh
-cd `go env GOPATH`/src/github.com/elves/elvish
+# 1. Start from any directory you want to store Elvish's source code
+# 2. Clone the Git repository
+git clone https://github.com/elves/elvish
+# 3. Change into the repository
+cd elvish
+# 4. Build and install Elvish
 make get
 ```
 
-In either cases, the binary is placed in `$GOPATH/bin`. Consider adding it to
-your `$PATH` if you want to run the Elvish binary you just built by just typing
-`elvish`.
+This will install Elvish to `~/go/bin`.
+
+Alternatively, you can also just use `go get` to install Elvish:
+
+```sh
+go get -u github.com/elves/elvish
+```
+
+This will clone the Git repository to `~/go/src/github.com/elves/elvish`,
+updating it if already exists, and install Elvish to `~/go/bin`. However, Elvish
+built this way will lack version information, although it is otherwise fully
+functional.
+
+Some tips on installation:
+
+-   Remember to add `$HOME/go/bin` to your `PATH` so that you can run `elvish`
+    directly.
+
+-   If you want to install Elvish to a different place, follow
+    [these steps](https://github.com/golang/go/wiki/SettingGOPATH) to set
+    `GOPATH`, and Elvish will be installed to `$GOPATH/bin` instead.
+
+## Contributing to Elvish
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for more notes for contributors. You can
 also join one of the developer groups (also connected together by matterbridge):
