@@ -1,4 +1,4 @@
-// +build darwin dragonfly freebsd netbsd openbsd
+// +build !windows,!plan9
 
 package sys
 
@@ -14,5 +14,6 @@ func Select(nfd int, r *FdSet, w *FdSet, e *FdSet, timeout time.Duration) error 
 		timeval := unix.NsecToTimeval(int64(timeout))
 		ptimeval = &timeval
 	}
-	return unix.Select(nfd, r.s(), w.s(), e.s(), ptimeval)
+	_, err := unix.Select(nfd, r.s(), w.s(), e.s(), ptimeval)
+	return err
 }
