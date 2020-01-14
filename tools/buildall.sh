@@ -1,7 +1,6 @@
 #!/bin/sh -e
 
 # Should be invoked from repo root.
-# Requires Go >= 1.13 (for the -trimpath flag).
 
 : ${VERSION:=unknown}
 : ${BIN_DIR:=./_bin}
