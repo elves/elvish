@@ -17,9 +17,8 @@ func TestBuiltinFnContainer(t *testing.T) {
 		That(`has-key (dissoc [&k=v] k) k`).Puts(false),
 
 		That(`put foo bar | all`).Puts("foo", "bar"),
-		That(`echo foobar | all`).Prints("foobar\n"),
-		That(`{ put foo bar; echo foobar } | all`).Puts(
-			"foo", "bar").Prints("foobar\n"),
+		That(`echo foobar | all`).Puts("foobar"),
+		That(`all [foo bar]`).Puts("foo", "bar"),
 
 		That(`range 100 | take 2`).Puts(0.0, 1.0),
 		That(`range 100 | drop 98`).Puts(98.0, 99.0),

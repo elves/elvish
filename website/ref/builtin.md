@@ -269,14 +269,16 @@ given multiple arguments. Examples:
 
 ## all
 
-```elvish
+```elvish $input-list?
 all
 ```
 
-Pass inputs, both bytes and values, to the output.
+Passes inputs to the output as is. Byte inputs into values, one per line.
 
-This is an identity function in pipelines: `a | all | b` is equivalent to
-`a | b`. It is mainly useful for turning inputs into arguments, like:
+This is an identity function for commands with value outputs: `a | all` is
+equivalent to `a` if it only outputs values.
+
+This function is useful for turning inputs into arguments, like:
 
 ```elvish-transcript
 ~> put 'lorem,ipsum' | splits , (all)
@@ -293,6 +295,14 @@ bar
 (Press ^D)
 ~> put $x
 ▶ [foo bar]
+```
+
+When given a list, it outputs all elements of the list:
+
+```elvish-transcript
+~> all [foo bar]
+▶ foo
+▶ bar
 ```
 
 ## assoc

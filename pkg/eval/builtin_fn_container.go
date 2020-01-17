@@ -3,7 +3,6 @@ package eval
 import (
 	"errors"
 	"fmt"
-	"io"
 
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
@@ -104,20 +103,9 @@ func dissoc(a, k interface{}) (interface{}, error) {
 	return a2, nil
 }
 
-func all(fm *Frame) error {
-	valuesDone := make(chan struct{})
-	go func() {
-		for input := range fm.ports[0].Chan {
-			fm.ports[1].Chan <- input
-		}
-		close(valuesDone)
-	}()
-	_, err := io.Copy(fm.ports[1].File, fm.ports[0].File)
-	<-valuesDone
-	if err != nil {
-		return fmt.Errorf("cannot copy byte input: %s", err)
-	}
-	return nil
+func all(fm *Frame, inputs Inputs) {
+	out := fm.ports[1].Chan
+	inputs(func(v interface{}) { out <- v })
 }
 
 func take(fm *Frame, n int, inputs Inputs) {
