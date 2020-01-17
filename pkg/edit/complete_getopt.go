@@ -115,9 +115,9 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 		c := complexItem{Stem: "-" + string(opt.Short)}
 		if d, ok := opts.desc[opt]; ok {
 			if e, ok := opts.argDesc[opt]; ok {
-				c.DisplaySuffix = " " + e + " (" + d + ")"
+				c.Display = c.Stem + " " + e + " (" + d + ")"
 			} else {
-				c.DisplaySuffix = " (" + d + ")"
+				c.Display = c.Stem + " (" + d + ")"
 			}
 		}
 		out <- c
@@ -126,9 +126,9 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 		c := complexItem{Stem: "--" + opt.Long}
 		if d, ok := opts.desc[opt]; ok {
 			if e, ok := opts.argDesc[opt]; ok {
-				c.DisplaySuffix = " " + e + " (" + d + ")"
+				c.Display = c.Stem + " " + e + " (" + d + ")"
 			} else {
-				c.DisplaySuffix = " (" + d + ")"
+				c.Display = c.Stem + " (" + d + ")"
 			}
 		}
 		out <- c

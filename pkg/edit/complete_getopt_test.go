@@ -31,13 +31,13 @@ func TestCompleteGetopt(t *testing.T) {
 	testGlobals(t, f.Evaler, map[string]interface{}{
 		"arg1": vals.MakeList("first1", "first2"),
 		"opts": vals.MakeList(
-			complexItem{Stem: "-a", DisplaySuffix: " (Show all)"},
-			complexItem{Stem: "--all", DisplaySuffix: " (Show all)"},
-			complexItem{Stem: "-n", DisplaySuffix: " (Set name)"},
-			complexItem{Stem: "--name", DisplaySuffix: " (Set name)"}),
+			complexItem{Stem: "-a", Display: "-a (Show all)"},
+			complexItem{Stem: "--all", Display: "--all (Show all)"},
+			complexItem{Stem: "-n", Display: "-n (Set name)"},
+			complexItem{Stem: "--name", Display: "--name (Set name)"}),
 		"long-opts": vals.MakeList(
-			complexItem{Stem: "--all", DisplaySuffix: " (Show all)"},
-			complexItem{Stem: "--name", DisplaySuffix: " (Set name)"}),
+			complexItem{Stem: "--all", Display: "--all (Show all)"},
+			complexItem{Stem: "--name", Display: "--name (Set name)"}),
 		"short-opt-arg":  vals.MakeList("name1", "name2"),
 		"long-opt-arg":   vals.MakeList("name1", "name2"),
 		"arg1-after-opt": vals.MakeList("first1", "first2"),

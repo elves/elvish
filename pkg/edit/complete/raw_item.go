@@ -30,19 +30,23 @@ func (nq noQuoteItem) Cook(parse.PrimaryType) completion.Item {
 
 // ComplexItem is an implementation of RawItem that offers customization options.
 type ComplexItem struct {
-	Stem          string   // Used in the code and the menu.
-	CodeSuffix    string   // Appended to the code.
-	DisplaySuffix string   // Appended to the display.
-	DisplayStyle  ui.Style // Use for displaying.
+	Stem         string   // Used in the code and the menu.
+	CodeSuffix   string   // Appended to the code.
+	Display      string   // How the item is displayed. If empty, defaults to Stem.
+	DisplayStyle ui.Style // Use for displaying.
 }
 
 func (c ComplexItem) String() string { return c.Stem }
 
 func (c ComplexItem) Cook(q parse.PrimaryType) completion.Item {
 	quoted, _ := parse.QuoteAs(c.Stem, q)
+	display := c.Display
+	if display == "" {
+		display = c.Stem
+	}
 	return completion.Item{
 		ToInsert:  quoted + c.CodeSuffix,
-		ToShow:    c.Stem + c.DisplaySuffix,
+		ToShow:    display,
 		ShowStyle: c.DisplayStyle,
 	}
 }

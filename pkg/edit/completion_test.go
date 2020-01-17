@@ -64,9 +64,9 @@ func TestComplexCandidate(t *testing.T) {
 	defer f.Cleanup()
 
 	evals(f.Evaler,
-		`cand  = (edit:complex-candidate a/b/c &code-suffix=' ' &display-suffix='x')`,
+		`cand  = (edit:complex-candidate a/b/c &code-suffix=' ' &display=A/B/C)`,
 		// Identical to $cand.
-		`cand2 = (edit:complex-candidate a/b/c &code-suffix=' ' &display-suffix='x')`,
+		`cand2 = (edit:complex-candidate a/b/c &code-suffix=' ' &display=A/B/C)`,
 		// Different from $cand.
 		`cand3 = (edit:complex-candidate a/b/c)`,
 		`kind  = (kind-of $cand)`,
@@ -75,19 +75,19 @@ func TestComplexCandidate(t *testing.T) {
 		`eq2   = (eq $cand $cand2)`,
 		`eq2h  = [&$cand=$true][$cand2]`,
 		`eq3   = (eq $cand $cand3)`,
-		`stem code-suffix display-suffix = $cand[stem code-suffix display-suffix]`,
+		`stem code-suffix display = $cand[stem code-suffix display]`,
 	)
 	testGlobals(t, f.Evaler, map[string]interface{}{
 		"kind": "map",
-		"keys": vals.MakeList("stem", "code-suffix", "display-suffix"),
-		"repr": "(edit:complex-candidate a/b/c &code-suffix=' ' &display-suffix=x)",
+		"keys": vals.MakeList("stem", "code-suffix", "display"),
+		"repr": "(edit:complex-candidate a/b/c &code-suffix=' ' &display=A/B/C)",
 		"eq2":  true,
 		"eq2h": true,
 		"eq3":  false,
 
-		"stem":           "a/b/c",
-		"code-suffix":    " ",
-		"display-suffix": "x",
+		"stem":        "a/b/c",
+		"code-suffix": " ",
+		"display":     "A/B/C",
 	})
 }
 

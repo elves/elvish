@@ -74,15 +74,21 @@ import (
 type complexCandidateOpts struct {
 	CodeSuffix    string
 	DisplaySuffix string
+	Display       string
 }
 
 func (*complexCandidateOpts) SetDefaultOptions() {}
 
 func complexCandidate(opts complexCandidateOpts, stem string) complexItem {
+	display := opts.Display
+	if display == "" {
+		// TODO(#898): Deprecate DisplaySuffix and remove this branch.
+		display = stem + opts.DisplaySuffix
+	}
 	return complexItem{
-		Stem:          stem,
-		CodeSuffix:    opts.CodeSuffix,
-		DisplaySuffix: opts.DisplaySuffix,
+		Stem:       stem,
+		CodeSuffix: opts.CodeSuffix,
+		Display:    display,
 	}
 }
 
@@ -241,14 +247,14 @@ func (c complexItem) Index(k interface{}) (interface{}, bool) {
 		return c.Stem, true
 	case "code-suffix":
 		return c.CodeSuffix, true
-	case "display-suffix":
-		return c.DisplaySuffix, true
+	case "display":
+		return c.Display, true
 	}
 	return nil, false
 }
 
 func (c complexItem) IterateKeys(f func(interface{}) bool) {
-	util.Feed(f, "stem", "code-suffix", "display-suffix")
+	util.Feed(f, "stem", "code-suffix", "display")
 }
 
 func (c complexItem) Kind() string { return "map" }
@@ -256,21 +262,21 @@ func (c complexItem) Kind() string { return "map" }
 func (c complexItem) Equal(a interface{}) bool {
 	rhs, ok := a.(complexItem)
 	return ok && c.Stem == rhs.Stem &&
-		c.CodeSuffix == rhs.CodeSuffix && c.DisplaySuffix == rhs.DisplaySuffix
+		c.CodeSuffix == rhs.CodeSuffix && c.Display == rhs.Display
 }
 
 func (c complexItem) Hash() uint32 {
 	h := hash.DJBInit
 	h = hash.DJBCombine(h, hash.String(c.Stem))
 	h = hash.DJBCombine(h, hash.String(c.CodeSuffix))
-	h = hash.DJBCombine(h, hash.String(c.DisplaySuffix))
+	h = hash.DJBCombine(h, hash.String(c.Display))
 	return h
 }
 
 func (c complexItem) Repr(indent int) string {
 	// TODO(xiaq): Pretty-print when indent >= 0
-	return fmt.Sprintf("(edit:complex-candidate %s &code-suffix=%s &display-suffix=%s)",
-		parse.Quote(c.Stem), parse.Quote(c.CodeSuffix), parse.Quote(c.DisplaySuffix))
+	return fmt.Sprintf("(edit:complex-candidate %s &code-suffix=%s &display=%s)",
+		parse.Quote(c.Stem), parse.Quote(c.CodeSuffix), parse.Quote(c.Display))
 }
 
 type wrappedArgGenerator func(*eval.Frame, ...string) error
