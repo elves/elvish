@@ -19,6 +19,12 @@ func TestBuiltinFnContainer(t *testing.T) {
 		That(`put foo bar | all`).Puts("foo", "bar"),
 		That(`echo foobar | all`).Puts("foobar"),
 		That(`all [foo bar]`).Puts("foo", "bar"),
+		That(`put foo | one`).Puts("foo"),
+		That(`put | one`).ThrowsAny(),
+		That(`put foo bar | one`).ThrowsAny(),
+		That(`one [foo]`).Puts("foo"),
+		That(`one []`).ThrowsAny(),
+		That(`one [foo bar]`).ThrowsAny(),
 
 		That(`range 100 | take 2`).Puts(0.0, 1.0),
 		That(`range 100 | drop 98`).Puts(98.0, 99.0),

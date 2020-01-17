@@ -23,6 +23,7 @@ func init() {
 		"dissoc": dissoc,
 
 		"all": all,
+		"one": one,
 
 		"has-key":   hasKey,
 		"has-value": hasValue,
@@ -106,6 +107,22 @@ func dissoc(a, k interface{}) (interface{}, error) {
 func all(fm *Frame, inputs Inputs) {
 	out := fm.ports[1].Chan
 	inputs(func(v interface{}) { out <- v })
+}
+
+func one(fm *Frame, inputs Inputs) error {
+	var val interface{}
+	n := 0
+	inputs(func(v interface{}) {
+		if n == 0 {
+			val = v
+		}
+		n++
+	})
+	if n == 1 {
+		fm.OutputChan() <- val
+		return nil
+	}
+	return fmt.Errorf("expect a single value, got %d", n)
 }
 
 func take(fm *Frame, n int, inputs Inputs) {

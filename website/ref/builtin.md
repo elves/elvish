@@ -305,6 +305,8 @@ When given a list, it outputs all elements of the list:
 ▶ bar
 ```
 
+@cf one
+
 ## assoc
 
 ```elvish
@@ -1066,6 +1068,20 @@ this does not imply that `$value`s are all distinct. Examples:
 ```
 
 @cf eq
+
+## one
+
+```elvish
+one $input-list?
+```
+
+Passes inputs to outputs, if there is only a single one. Otherwise raises an
+exception.
+
+This function can be used in a similar way to [`all`](#all), but is a better
+choice when you expect that there is exactly one output:
+
+@cf all
 
 ## only-bytes
 
