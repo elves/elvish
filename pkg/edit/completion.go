@@ -68,8 +68,22 @@ import (
 //elvdoc:fn complex-candidate
 //
 // ```elvish
-// edit:complex-candidate $stem &code-suffix='' &display-suffix=''
+// edit:complex-candidate $stem &display='' &display-suffix='' &code-suffix=''
 // ```
+//
+// Builds a complex candidate. This is mainly useful in [argument
+// completers](#argument-completer).
+//
+// The `&display` and `&display-suffix` options control how the item is
+// displayed. If `$display` is non-empty, its content is shown. If `$display` is
+// empty, the content will be `$stem` concatenated with `$display-suffix`.
+//
+// The `&code-suffix` option controls how the candidate is inserted into the
+// code when it is accepted. By default, a quoted version of `$stem` is
+// inserted. If `$code-suffix` is non-empty, it is added to that text, without
+// any further quoting.
+//
+// The `&display` option first appeared between 0.13 and 0.14.
 
 type complexCandidateOpts struct {
 	CodeSuffix    string
