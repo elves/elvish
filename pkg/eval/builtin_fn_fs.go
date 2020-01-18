@@ -15,6 +15,69 @@ import (
 // ErrStoreNotConnected is thrown by dir-history when the store is not connected.
 var ErrStoreNotConnected = errors.New("store not connected")
 
+//elvdoc:fn cd
+//
+// ```elvish
+// cd $dirname
+// ```
+//
+// Change directory.
+//
+// Note that Elvish's `cd` does not support `cd -`.
+
+//elvdoc:fn dir-history
+//
+// ```elvish
+// dir-history
+// ```
+//
+// Return a list containing the directory history. Each element is a map with two
+// keys: `path` and `score`. The list is sorted by descending score.
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> dir-history | take 1
+// ▶ [&path=/Users/foo/.elvish &score=96.79928]
+// ```
+
+//elvdoc:fn path-\*
+//
+// ```elvish
+// path-abs $path
+// path-base $path
+// path-clean $path
+// path-dir $path
+// path-ext $path
+// ```
+//
+// See [godoc of path/filepath](https://godoc.org/path/filepath). Go errors are
+// turned into exceptions.
+
+// TODO(xiaq): Document eval-symlinks.
+
+//elvdoc:fn tilde-abbr
+//
+// ```elvish
+// tilde-abbr $path
+// ```
+//
+// If `$path` represents a path under the home directory, replace the home
+// directory with `~`. Examples:
+//
+// ```elvish-transcript
+// ~> echo $E:HOME
+// /Users/foo
+// ~> tilde-abbr /Users/foo
+// ▶ '~'
+// ~> tilde-abbr /Users/foobar
+// ▶ /Users/foobar
+// ~> tilde-abbr /Users/foo/a/b
+// ▶ '~/a/b'
+// ```
+
+// TODO(xiaq): Document -is-dir.
+
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		// Directory

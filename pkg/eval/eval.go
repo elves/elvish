@@ -69,6 +69,60 @@ type evalerScopes struct {
 	Builtin Ns
 }
 
+//elvdoc:var after-chdir
+//
+// A list of functions to run after changing directory. These functions are always
+// called with directory to change it, which might be a relative path. The
+// following example also shows `$before-chdir`:
+//
+// ```elvish-transcript
+// ~> before-chdir = [[dir]{ echo "Going to change to "$dir", pwd is "$pwd }]
+// ~> after-chdir = [[dir]{ echo "Changed to "$dir", pwd is "$pwd }]
+// ~> cd /usr
+// Going to change to /usr, pwd is /Users/xiaq
+// Changed to /usr, pwd is /usr
+// /usr> cd local
+// Going to change to local, pwd is /usr
+// Changed to local, pwd is /usr/local
+// /usr/local>
+// ```
+//
+// @cf before-chdir
+
+//elvdoc:var before-chdir
+//
+// A list of functions to run before changing directory. These functions are always
+// called with the new working directory.
+//
+// @cf after-chdir
+
+//elvdoc:var num-bg-jobs
+//
+// Number of background jobs.
+
+//elvdoc:var notify-bg-job-success
+//
+// Whether to notify success of background jobs, defaulting to `$true`.
+//
+// Failures of background jobs are always notified.
+
+//elvdoc:var value-out-indicator
+//
+// A string put before value outputs (such as those of of `put`). Defaults to
+// `'▶ '`. Example:
+//
+// ```elvish-transcript
+// ~> put lorem ipsum
+// ▶ lorem
+// ▶ ipsum
+// ~> value-out-indicator = 'val> '
+// ~> put lorem ipsum
+// val> lorem
+// val> ipsum
+// ```
+//
+// Note that you almost always want some trailing whitespace for readability.
+
 // NewEvaler creates a new Evaler.
 func NewEvaler() *Evaler {
 	builtin := builtinNs.Clone()

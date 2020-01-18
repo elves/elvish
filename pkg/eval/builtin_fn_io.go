@@ -12,6 +12,310 @@ import (
 
 // Input and output.
 
+//elvdoc:fn put
+//
+// ```elvish
+// put $value...
+// ```
+//
+// Takes arbitrary arguments and write them to the structured stdout.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> put a
+// ▶ a
+// ~> put lorem ipsum [a b] { ls }
+// ▶ lorem
+// ▶ ipsum
+// ▶ [a b]
+// ▶ <closure 0xc4202607e0>
+// ```
+//
+// Etymology: Various languages, in particular
+// [C](https://manpages.debian.org/stretch/manpages-dev/puts.3.en.html) and
+// [Ruby](https://ruby-doc.org/core-2.2.2/IO.html#method-i-puts) as `puts`.
+
+// TODO(xiaq): Document read-upto.
+
+//elvdoc:fn print
+//
+// ```elvish
+// print &sep=' ' $value...
+// ```
+//
+// Like `echo`, just without the newline.
+//
+// @cf echo
+//
+// Etymology: Various languages, in particular
+// [Perl](https://perldoc.perl.org/functions/print.html) and
+// [zsh](http://zsh.sourceforge.net/Doc/Release/Shell-Builtin-Commands.html), whose
+// `print`s do not print a trailing newline.
+
+//elvdoc:fn echo
+//
+// ```elvish
+// echo &sep=' ' $value...
+// ```
+//
+// Print all arguments, joined by the `sep` option, and followed by a newline.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> echo Hello   elvish
+// Hello elvish
+// ~> echo "Hello   elvish"
+// Hello   elvish
+// ~> echo &sep=, lorem ipsum
+// lorem,ipsum
+// ```
+//
+// Notes: The `echo` builtin does not treat `-e` or `-n` specially. For instance,
+// `echo -n` just prints `-n`. Use double-quoted strings to print special
+// characters, and `print` to suppress the trailing newline.
+//
+// @cf print
+//
+// Etymology: Bourne sh.
+
+//elvdoc:fn pprint
+//
+// ```elvish
+// pprint $value...
+// ```
+//
+// Pretty-print representations of Elvish values. Examples:
+//
+// ```elvish-transcript
+// ~> pprint [foo bar]
+// [
+// foo
+// bar
+// ]
+// ~> pprint [&k1=v1 &k2=v2]
+// [
+// &k2=
+// v2
+// &k1=
+// v1
+// ]
+// ```
+//
+// The output format is subject to change.
+//
+// @cf repr
+
+//elvdoc:fn repr
+//
+// ```elvish
+// repr $value...
+// ```
+//
+// Writes representation of `$value`s, separated by space and followed by a
+// newline. Example:
+//
+// ```elvish-transcript
+// ~> repr [foo 'lorem ipsum'] "aha\n"
+// [foo 'lorem ipsum'] "aha\n"
+// ```
+//
+// @cf pprint
+//
+// Etymology: [Python](https://docs.python.org/3/library/functions.html#repr).
+
+//elvdoc:fn only-bytes
+//
+// ```elvish
+// only-bytes
+// ```
+//
+// Passes byte input to output, and discards value inputs.
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> { put value; echo bytes } | only-bytes
+// bytes
+// ```
+
+//elvdoc:fn only-values
+//
+// ```elvish
+// only-values
+// ```
+//
+// Passes value input to output, and discards byte inputs.
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> { put value; echo bytes } | only-values
+// ▶ value
+// ```
+
+//elvdoc:fn slurp
+//
+// ```elvish
+// slurp
+// ```
+//
+// Reads bytes input into a single string, and put this string on structured
+// stdout.
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> echo "a\nb" | slurp
+// ▶ "a\nb\n"
+// ```
+//
+// Etymology: Perl, as
+// [`File::Slurp`](http://search.cpan.org/~uri/File-Slurp-9999.19/lib/File/Slurp.pm).
+
+// TODO(xiaq): Document from-lines.
+
+//elvdoc:fn from-json
+//
+// ```elvish
+// from-json
+// ```
+//
+// Takes bytes stdin, parses it as JSON and puts the result on structured stdout.
+// The input can contain multiple JSONs, which can, but do not have to, be
+// separated with whitespaces.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> echo '"a"' | from-json
+// ▶ a
+// ~> echo '["lorem", "ipsum"]' | from-json
+// ▶ [lorem ipsum]
+// ~> echo '{"lorem": "ipsum"}' | from-json
+// ▶ [&lorem=ipsum]
+// ~> # multiple JSONs running together
+// echo '"a""b"["x"]' | from-json
+// ▶ a
+// ▶ b
+// ▶ [x]
+// ~> # multiple JSONs separated by newlines
+// echo '"a"
+// {"k": "v"}' | from-json
+// ▶ a
+// ▶ [&k=v]
+// ```
+//
+// @cf to-json
+
+// TODO(xiaq): Document to-lines.
+
+//elvdoc:fn to-json
+//
+// ```elvish
+// to-json
+// ```
+//
+// Takes structured stdin, convert it to JSON and puts the result on bytes stdout.
+//
+// ```elvish-transcript
+// ~> put a | to-json
+// "a"
+// ~> put [lorem ipsum] | to-json
+// ["lorem","ipsum"]
+// ~> put [&lorem=ipsum] | to-json
+// {"lorem":"ipsum"}
+// ```
+//
+// @cf from-json
+
+//elvdoc:fn fopen
+//
+// ```elvish
+// fopen $filename
+// ```
+//
+// Open a file. Currently, `fopen` only supports opening a file for reading. File
+// must be closed with `fclose` explicitly. Example:
+//
+// ```elvish-transcript
+// ~> cat a.txt
+// This is
+// a file.
+// ~> f = (fopen a.txt)
+// ~> cat < $f
+// This is
+// a file.
+// ~> fclose $f
+// ```
+//
+// @cf fclose
+
+//elvdoc:fn fclose
+//
+// ```elvish
+// fclose $file
+// ```
+//
+// Close a file opened with `fopen`.
+//
+// @cf fopen
+
+//elvdoc:fn pipe
+//
+// ```elvish
+// pipe
+// ```
+//
+// Create a new Unix pipe that can be used in redirections.
+//
+// A pipe contains both the read FD and the write FD. When redirecting command
+// input to a pipe with `<`, the read FD is used. When redirecting command output
+// to a pipe with `>`, the write FD is used. It is not supported to redirect both
+// input and output with `<>` to a pipe.
+//
+// Pipes have an OS-dependent buffer, so writing to a pipe without an active reader
+// does not necessarily block. Pipes **must** be explicitly closed with `prclose`
+// and `pwclose`.
+//
+// Putting values into pipes will cause those values to be discarded.
+//
+// Examples (assuming the pipe has a large enough buffer):
+//
+// ```elvish-transcript
+// ~> p = (pipe)
+// ~> echo 'lorem ipsum' > $p
+// ~> head -n1 < $p
+// lorem ipsum
+// ~> put 'lorem ipsum' > $p
+// ~> head -n1 < $p
+// # blocks
+// # $p should be closed with prclose and pwclose afterwards
+// ```
+//
+// @cf prclose pwclose
+
+//elvdoc:fn prclose
+//
+// ```elvish
+// prclose $pipe
+// ```
+//
+// Close the read end of a pipe.
+//
+// @cf pwclose pipe
+
+//elvdoc:fn pwclose
+//
+// ```elvish
+// pwclose $pipe
+// ```
+//
+// Close the write end of a pipe.
+//
+// @cf prclose pipe
+
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		// Value output

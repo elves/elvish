@@ -18,6 +18,233 @@ import (
 // ErrInputOfEawkMustBeString is thrown when eawk gets a non-string input.
 var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 
+//elvdoc:fn &lt;s &lt;=s ==s !=s &gt;s &gt;=s
+//
+// ```elvish
+// <s  $string... # less
+// <=s $string... # less or equal
+// ==s $string... # equal
+// !=s $string... # not equal
+// >s  $string... # greater
+// >=s $string... # greater or equal
+// ```
+//
+// String comparisons. They behave similarly to their number counterparts when
+// given multiple arguments. Examples:
+//
+// ```elvish-transcript
+// ~> >s lorem ipsum
+// ▶ $true
+// ~> ==s 1 1.0
+// ▶ $false
+// ~> >s 8 12
+// ▶ $true
+// ```
+
+//elvdoc:fn to-string
+//
+// ```elvish
+// to-string $value...
+// ```
+//
+// Convert arguments to string values.
+//
+// ```elvish-transcript
+// ~> to-string foo [a] [&k=v]
+// ▶ foo
+// ▶ '[a]'
+// ▶ '[&k=v]'
+// ```
+
+//elvdoc:fn ord
+//
+// ```elvish
+// ord $string
+// ```
+//
+// Output value of each codepoint in `$string`, in hexadecimal. Examples:
+//
+// ```elvish-transcript
+// ~> ord a
+// ▶ 0x61
+// ~> ord 你好
+// ▶ 0x4f60
+// ▶ 0x597d
+// ```
+//
+// The output format is subject to change.
+//
+// Etymology: [Python](https://docs.python.org/3/library/functions.html#ord).
+//
+// @cf chr
+
+//elvdoc:fn chr
+//
+// ```elvish
+// chr $number...
+// ```
+//
+// Outputs a string consisting of the given Unicode codepoints. Example:
+//
+// ```elvish-transcript
+// ~> chr 0x61
+// ▶ a
+// ~> chr 0x4f60 0x597d
+// ▶ 你好
+// ```
+//
+// Etymology: [Python](https://docs.python.org/3/library/functions.html#chr).
+//
+// @cf ord
+
+// TODO(xiaq): Document "base".
+
+//elvdoc:fn wcswidth
+//
+// ```elvish
+// wcswidth $string
+// ```
+//
+// Output the width of `$string` when displayed on the terminal. Examples:
+//
+// ```elvish-transcript
+// ~> wcswidth a
+// ▶ 1
+// ~> wcswidth lorem
+// ▶ 5
+// ~> wcswidth 你好，世界
+// ▶ 10
+// ```
+
+// TODO(xiaq): Document -override-wcswidth.
+
+//elvdoc:fn has-prefix
+//
+// ```elvish
+// has-prefix $string $prefix
+// ```
+//
+// Determine whether `$prefix` is a prefix of `$string`. Examples:
+//
+// ```elvish-transcript
+// ~> has-prefix lorem,ipsum lor
+// ▶ $true
+// ~> has-prefix lorem,ipsum foo
+// ▶ $false
+// ```
+
+//elvdoc:fn has-suffix
+//
+// ```elvish
+// has-suffix $string $suffix
+// ```
+//
+// Determine whether `$suffix` is a suffix of `$string`. Examples:
+//
+// ```elvish-transcript
+// ~> has-suffix a.html .txt
+// ▶ $false
+// ~> has-suffix a.html .html
+// ▶ $true
+// ```
+
+//elvdoc:fn joins
+//
+// ```elvish
+// joins $sep $input-list?
+// ```
+//
+// Join inputs with `$sep`. Examples:
+//
+// ```elvish-transcript
+// ~> put lorem ipsum | joins ,
+// ▶ lorem,ipsum
+// ~> joins , [lorem ipsum]
+// ▶ lorem,ipsum
+// ```
+//
+// The suffix "s" means "string" and also serves to avoid colliding with the
+// well-known [join](<https://en.wikipedia.org/wiki/join_(Unix)>) utility.
+//
+// Etymology: Various languages as `join`, in particular
+// [Python](https://docs.python.org/3.6/library/stdtypes.html#str.join).
+//
+// @cf splits
+
+//elvdoc:fn splits
+//
+// ```elvish
+// splits $sep $string
+// ```
+//
+// Split `$string` by `$sep`. If `$sep` is an empty string, split it into
+// codepoints.
+//
+// ```elvish-transcript
+// ~> splits , lorem,ipsum
+// ▶ lorem
+// ▶ ipsum
+// ~> splits '' 你好
+// ▶ 你
+// ▶ 好
+// ```
+//
+// **Note**: `splits` does not support splitting by regular expressions, `$sep` is
+// always interpreted as a plain string. Use [re:split](re.html#split) if you need
+// to split by regex.
+//
+// Etymology: Various languages as `split`, in particular
+// [Python](https://docs.python.org/3.6/library/stdtypes.html#str.split).
+//
+// @cf joins
+
+//elvdoc:fn replaces
+//
+// ```elvish
+// replaces &max=-1 $old $repl $source
+// ```
+//
+// Replace all occurrences of `$old` with `$repl` in `$source`. If `$max` is
+// non-negative, it determines the max number of substitutions.
+//
+// **Note**: `replaces` does not support searching by regular expressions, `$old`
+// is always interpreted as a plain string. Use [re:replace](re.html#replace) if
+// you need to search by regex.
+
+//elvdoc:fn eawk
+//
+// ```elvish
+// eawk $f $input-list?
+// ```
+//
+// For each input, call `$f` with the input followed by all its fields.
+//
+// It should behave the same as the following functions:
+//
+// ```elvish
+// fn eawk [f @rest]{
+// each [line]{
+// @fields = (re:split '[ \t]+'
+// (re:replace '^[ \t]+|[ \t]+$' '' $line))
+// $f $line $@fields
+// } $@rest
+// }
+// ```
+//
+// This command allows you to write code very similar to `awk` scripts using
+// anonymous functions. Example:
+//
+// ```elvish-transcript
+// ~> echo ' lorem ipsum
+// 1 2' | awk '{ print $1 }'
+// lorem
+// 1
+// ~> echo ' lorem ipsum
+// 1 2' | eawk [line a b]{ put $a }
+// ▶ lorem
+// ▶ 1
+// ```
+
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		"<s":  func(a, b string) bool { return a < b },
