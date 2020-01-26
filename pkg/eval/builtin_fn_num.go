@@ -11,17 +11,18 @@ import (
 
 // TODO(xiaq): Document float64.
 
-//elvdoc:fn + - * /
+//elvdoc:fn + - * / ^
 //
 // ```elvish
 // + $summand...
 // - $minuend $subtrahend...
 // * $factor...
 // / $dividend $divisor...
+// ^ $number
 // ```
 //
-// Basic arithmetic operations of adding, subtraction, multiplication and division
-// respectively.
+// Basic arithmetic operations of adding, subtraction, multiplication, division
+// and exponentiation respectively.
 //
 // All of them can take multiple arguments:
 //
@@ -34,12 +35,18 @@ import (
 // ▶ 70
 // ~> / 2 5 7 # 2 / 5 / 7
 // ▶ 0.05714285714285715
+// ~> ^ 2 3
+// ▶ 8
+// ~> ^ 2 0.5
+// ▶ 1.4142135623730951
+// ~> ^ 2 2 3
+// ▶ 256
 // ```
 //
 // When given one element, they all output their sole argument (given that it is a
 // valid number). When given no argument,
 //
-// -   `+` outputs 0, and `*` outputs 1. You can think that they both have a
+// -   `+` outputs 0, and `*` and `^` outputs 1. You can think that they have a
 // "hidden" argument of 0 or 1, which does not alter their behaviors (in
 // mathematical terms, 0 and 1 are
 // [identity elements](https://en.wikipedia.org/wiki/Identity_element) of
@@ -49,6 +56,9 @@ import (
 //
 // -   `/` becomes a synonym for `cd /`, due to the implicit cd feature. (The
 // implicit cd feature will probably change to avoid this oddity).
+//
+// -    `^` is right associative, so that `^ 2 2 3` is equivalent to
+// `^ 2 (^ 2 3)`, not to `^ (^2 2) 3`.
 
 //elvdoc:fn %
 //
@@ -62,21 +72,6 @@ import (
 // ```elvish-transcript
 // ~> % 23 7
 // ▶ 2
-// ```
-
-//elvdoc:fn ^
-//
-// ```elvish
-// ^ $base $exponent
-// ```
-//
-// Output the result of raising `$base` to the power of `$exponent`. Examples:
-//
-// ```elvish-transcript
-// ~> ^ 2 10
-// ▶ 1024
-// ~> ^ 2 0.5
-// ▶ 1.4142135623730951
 // ```
 
 //elvdoc:fn &lt; &lt;= == != &gt; &gt;=
@@ -169,7 +164,7 @@ func init() {
 		"-": minus,
 		"*": times,
 		"/": slash,
-		"^": math.Pow,
+		"^": power,
 		"%": mod,
 
 		// Random
@@ -261,6 +256,17 @@ func times(nums ...float64) float64 {
 		prod *= f
 	}
 	return prod
+}
+
+func power(nums ...float64) float64 {
+	if len(nums) == 0 {
+		return 1.0
+	}
+	pow := nums[len(nums)-1]
+	for i := len(nums)-2; i >= 0; i-- {
+		pow = math.Pow(nums[i], pow)
+	}
+	return pow
 }
 
 func slash(fm *Frame, args ...float64) error {
