@@ -109,9 +109,8 @@ func TestComplete(t *testing.T) {
 		},
 	}
 
-	pathSep := parse.Quote(string(os.PathSeparator))
 	allFileNameItems := []completion.Item{
-		fc("a.exe", " "), fc("d", pathSep), fc("non-exe", " "),
+		fc("a.exe", " "), fc("d" + string(os.PathSeparator), ""), fc("non-exe", " "),
 	}
 
 	allCommandItems := []completion.Item{
@@ -244,7 +243,7 @@ func TestComplete(t *testing.T) {
 			panic(err)
 		}
 		allLocalCommandItems := []completion.Item{
-			fc("./a.exe", " "), fc("./d", "/"), fc("./d2", "/"),
+			fc("./a.exe", " "), fc("./d/", ""), fc("./d2/", ""),
 		}
 		tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
 			// Filename completion treats symlink to directories as directories.
@@ -252,7 +251,7 @@ func TestComplete(t *testing.T) {
 			Args(cb("p > d"), cfg).Rets(
 				&Result{
 					Name: "redir", Replace: r(4, 5),
-					Items: []completion.Item{fc("d", "/"), fc("d2", "/")}},
+					Items: []completion.Item{fc("d/", ""), fc("d2/", "")}},
 				nil,
 			),
 
@@ -280,10 +279,8 @@ func cb(s string) CodeBuffer { return CodeBuffer{s, len(s)} }
 func c(s string) completion.Item { return completion.Item{ToShow: s, ToInsert: s} }
 
 func fc(s, suffix string) completion.Item {
-	return completion.Item{ToShow: s, ToInsert: s + suffix,
+	return completion.Item{ToShow: s, ToInsert: parse.Quote(s) + suffix,
 		ShowStyle: ui.StyleFromSGR(lscolors.GetColorist().GetStyle(s))}
 }
 
 func r(i, j int) diag.Ranging { return diag.Ranging{From: i, To: j} }
-
-func withPathSeparator(d string) string { return d + parse.Quote(string(os.PathSeparator)) }
