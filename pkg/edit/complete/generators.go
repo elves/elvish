@@ -10,12 +10,11 @@ import (
 	"github.com/elves/elvish/pkg/cli/lscolors"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/ui"
 	"github.com/elves/elvish/pkg/util"
 )
 
-var quotedPathSeparator = parse.Quote(string(filepath.Separator))
+var pathSeparator = string(filepath.Separator)
 
 // GenerateFileNames returns filename candidates that are suitable for completing
 // the last argument. It can be used in Config.ArgGenerator.
@@ -123,19 +122,24 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 		// Full filename for source and getStyle.
 		full := dir + name
 
+		// Will be set to an empty space for non-directories
 		suffix := " "
+
 		if info.IsDir() {
-			suffix = quotedPathSeparator
+			full += pathSeparator
+			suffix = ""
 		} else if info.Mode()&os.ModeSymlink != 0 {
 			stat, err := os.Stat(full)
 			if err == nil && stat.IsDir() {
 				// Symlink to directory.
-				suffix = quotedPathSeparator
+				full += pathSeparator
+				suffix = ""
 			}
 		}
 
 		items = append(items, ComplexItem{
-			Stem: full, CodeSuffix: suffix,
+			Stem:         full,
+			CodeSuffix:   suffix,
 			DisplayStyle: ui.StyleFromSGR(lsColor.GetStyle(full)),
 		})
 	}
