@@ -43,7 +43,7 @@ func Repr(v interface{}, indent int) string {
 	case string:
 		return parse.Quote(v)
 	case float64:
-		return fmt.Sprintf("(float64 %g)", v)
+		return "(float64 " + formatFloat64(v) + ")"
 	case File:
 		return fmt.Sprintf("<file{%s %d}>", parse.Quote(v.Name()), v.Fd())
 	case List:

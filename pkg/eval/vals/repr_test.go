@@ -23,6 +23,7 @@ func TestRepr(t *testing.T) {
 		Args(true).Rets("$true"),
 		Args("foo").Rets("foo"),
 		Args(1.0).Rets("(float64 1)"),
+		Args(1e10).Rets("(float64 10000000000)"),
 		Args(os.Stdin).Rets(
 			fmt.Sprintf("<file{%s %d}>", os.Stdin.Name(), os.Stdin.Fd())),
 		Args(EmptyList).Rets("[]"),
