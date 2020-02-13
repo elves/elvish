@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"runtime"
 	"syscall"
 
 	"github.com/elves/elvish/pkg/eval/vals"
@@ -96,6 +97,12 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 	return NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid)
 }
 
+var osHasNoExecutableBit bool
+
+func init() {
+	osHasNoExecutableBit = runtime.GOOS == "windows"
+}
+
 // EachExternal calls f for each name that can resolve to an external
 // command.
 // TODO(xiaq): Windows support
@@ -104,7 +111,7 @@ func EachExternal(f func(string)) {
 		// XXX Ignore error
 		infos, _ := ioutil.ReadDir(dir)
 		for _, info := range infos {
-			if !info.IsDir() && (info.Mode()&0111 != 0) {
+			if !info.IsDir() && (info.Mode()&0111 != 0 || osHasNoExecutableBit) {
 				f(info.Name())
 			}
 		}
