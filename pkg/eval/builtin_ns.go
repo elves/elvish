@@ -3,6 +3,7 @@ package eval
 import (
 	"strconv"
 	"syscall"
+        "runtime"
 
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/xiaq/persistent/vector"
@@ -87,6 +88,7 @@ var builtinNs = Ns{
 	"nil":   vars.NewReadOnly(nil),
 	"true":  vars.NewReadOnly(true),
 	"false": vars.NewReadOnly(false),
+        "os":    vars.NewReadOnly(runtime.GOOS),
 	"paths": &EnvList{envName: "PATH"},
 	"pwd":   PwdVariable{},
 	"args":  vars.NewReadOnly(vector.Empty),
