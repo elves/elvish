@@ -184,7 +184,7 @@ var bufferBuiltinsData = map[string]func(*cli.CodeBuffer){
 	"move-dot-right":            makeMove(moveDotRight),
 	"move-dot-left-word":        makeMove(moveDotLeftWord),
 	"move-dot-right-word":       makeMove(moveDotRightWord),
-	"move-dot-left-small-word":  makeMove(moveDotLeftWord),
+	"move-dot-left-small-word":  makeMove(moveDotLeftSmallWord),
 	"move-dot-right-small-word": makeMove(moveDotRightSmallWord),
 	"move-dot-left-alnum-word":  makeMove(moveDotLeftAlnumWord),
 	"move-dot-right-alnum-word": makeMove(moveDotRightAlnumWord),
