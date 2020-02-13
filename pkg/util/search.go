@@ -3,6 +3,7 @@ package util
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -20,5 +21,16 @@ func IsExecutable(path string) bool {
 		return false
 	}
 	fm := fi.Mode()
-	return !fm.IsDir() && (fm&0111 != 0)
+	return !fm.IsDir() && IsExecutableFile(fi)
+}
+
+var osHasNoExecutableBit bool
+
+func init() {
+	osHasNoExecutableBit = runtime.GOOS == "windows"
+}
+
+// IsExecutableFile returns true if the item denoted by info is executable on the runtime platform
+func IsExecutableFile(info os.FileInfo) bool {
+	return (info.Mode()&0111 != 0 || osHasNoExecutableBit)
 }
