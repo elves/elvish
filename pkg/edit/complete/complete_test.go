@@ -109,7 +109,7 @@ func TestComplete(t *testing.T) {
 		},
 	}
 
-	pathSep := parse.Quote(string(os.PathSeparator))
+	pathSep := parse.Quote("/")
 	allFileNameItems := []completion.Item{
 		fc("a.exe", " "), fc("d", pathSep), fc("non-exe", " "),
 	}
@@ -286,4 +286,4 @@ func fc(s, suffix string) completion.Item {
 
 func r(i, j int) diag.Ranging { return diag.Ranging{From: i, To: j} }
 
-func withPathSeparator(d string) string { return d + parse.Quote(string(os.PathSeparator)) }
+func withPathSeparator(d string) string { return d + parse.Quote("/") }
