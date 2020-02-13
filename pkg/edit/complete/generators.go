@@ -15,7 +15,7 @@ import (
 	"github.com/elves/elvish/pkg/util"
 )
 
-var quotedPathSeparator = parse.Quote(string(filepath.Separator))
+var quotedPathSeparator = parse.Quote("/")
 
 // GenerateFileNames returns filename candidates that are suitable for completing
 // the last argument. It can be used in Config.ArgGenerator.
