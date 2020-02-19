@@ -1174,9 +1174,9 @@ outputting `x`, `y` and `z`, before calling `or`.
 
 ## Deleting variable or element: `del`
 
-The `del` special command can be used to either delete variables or elements of
-lists and maps. Operands should be specified without a leading dollar sign, like
-the left-hand side of assignments.
+The `del` special command can be used to delete variables or map elements.
+Operands should be specified without a leading dollar sign, like the left-hand
+side of assignments.
 
 Example of deleting variable:
 
@@ -1190,7 +1190,7 @@ Compilation error: variable $x not found
 [tty], line 1: echo $x
 ```
 
-Example of deleting element:
+Example of deleting map element:
 
 ```elvish-transcript
 ~> m = [&k=v &k2=v2]
