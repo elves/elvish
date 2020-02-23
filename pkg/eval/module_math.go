@@ -55,7 +55,6 @@ var MathNs = NewNs().AddGoFns("math", map[string]interface{}{
 	"gamma":           math.Gamma,
 	"dim":             math.Dim,
 	"mod":             math.Mod,
-	"modf":            math.Modf,
 	"sincos":          math.Sincos,
 	"erfcinv":         math.Erfcinv,
 	"erfinv":          math.Erfinv,
