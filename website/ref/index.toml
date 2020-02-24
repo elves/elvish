@@ -11,6 +11,10 @@ name = "edit"
 title = "The Editor Module (edit:)"
 
 [[articles]]
+name = "math"
+title = "The Math Module (math:)"
+
+[[articles]]
 name = "platform"
 title = "Access to the platform's identifying data (platform:)"
 

@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"reflect"
 	"strings"
@@ -29,6 +30,13 @@ import (
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/util"
 )
+
+// These two symbols are used for tests that need to compare floating point
+// values that can't be guaranteed to be bit for bit identical. Typically due
+// to tiny rounding errors that tend to occur in floating point operations.
+const float64EqualityThreshold = 1e-15
+
+type Approximately struct{ F float64 }
 
 // TestCase is a test case for Test.
 type TestCase struct {
@@ -223,6 +231,34 @@ func matchOut(want, got []interface{}) bool {
 		return false
 	}
 	for i := range got {
+		// Equality of some data types needs to be special-cased in unit
+		// tests. For example, by definition `NaN == NaN` is always false
+		// since NaN is never equal to any other value; not even NaN. But for
+		// unit tests we want to ensure that if the test is expected to
+		// produce NaN it does so and the test passes.
+		switch v := got[i].(type) {
+		case float64:
+			switch x := want[i].(type) {
+			case float64:
+				if math.IsNaN(v) && math.IsNaN(x) {
+					return true
+				}
+				return v == x
+			case Approximately:
+				// Apply a reasonable epsilon if the user asked for an
+				// approximate equality test.
+				w := x.F
+				if math.IsNaN(v) && math.IsNaN(w) {
+					return true
+				}
+				if math.IsInf(v, 0) && math.IsInf(w, 0) &&
+					math.Signbit(v) == math.Signbit(w) {
+					return true
+				}
+				return math.Abs(v-w) <= float64EqualityThreshold
+			}
+		}
+
 		if !vals.Equal(got[i], want[i]) {
 			return false
 		}
