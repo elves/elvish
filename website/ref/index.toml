@@ -11,6 +11,10 @@ name = "edit"
 title = "The Editor Module (edit:)"
 
 [[articles]]
+name = "math"
+title = "The Math Module (math:)"
+
+[[articles]]
 name = "re"
 title = "The Regular Expression Module (re:)"
 

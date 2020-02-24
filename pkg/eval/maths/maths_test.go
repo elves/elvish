@@ -1,17 +1,15 @@
-package eval
+package maths
 
-import "testing"
+import (
+	"testing"
 
-func TestMathModule(t *testing.T) {
-	TestWithSetup(t,
-		func(ev *Evaler) {
-			ev.InstallModule("math", MathNs)
-			err := ev.EvalSourceInTTY(NewInteractiveSource(`use math`))
-			if err != nil {
-				panic(err)
-			}
-		},
+	"github.com/elves/elvish/pkg/eval"
+)
 
+func TestMath(t *testing.T) {
+	setup := func(ev *eval.Evaler) { ev.Builtin.AddNs("math", Ns) }
+	That := eval.That
+	eval.TestWithSetup(t, setup,
 		That(`math:abs 2.1`).Puts(2.1),
 		That(`math:abs -2.1`).Puts(2.1),
 
