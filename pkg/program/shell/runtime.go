@@ -11,6 +11,7 @@ import (
 	"github.com/elves/elvish/pkg/daemon"
 	"github.com/elves/elvish/pkg/eval"
 	daemonmod "github.com/elves/elvish/pkg/eval/daemon"
+	mathmod "github.com/elves/elvish/pkg/eval/math"
 	"github.com/elves/elvish/pkg/eval/platform"
 	"github.com/elves/elvish/pkg/eval/re"
 	"github.com/elves/elvish/pkg/eval/store"
@@ -73,7 +74,7 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 	ev := eval.NewEvaler()
 	ev.SetLibDir(filepath.Join(dataDir, "lib"))
 
-	ev.InstallModule("math", eval.MathNs)
+	ev.InstallModule("math", mathmod.Ns)
 	ev.InstallModule("platform", platform.Ns)
 	ev.InstallModule("re", re.Ns)
 	ev.InstallModule("str", str.Ns)
