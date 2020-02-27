@@ -5,6 +5,8 @@ import (
 	"reflect"
 )
 
+const float64EqualityThreshold = 1e-9
+
 // Equaler wraps the Equal method.
 type Equaler interface {
 	// Equal compares the receiver to another value. Two equal values must have
@@ -29,7 +31,11 @@ func Equal(x, y interface{}) bool {
 			// that if the test is expected to produce NaN it does so.
 			return true
 		}
-		return x == y
+		if math.Signbit(x) == math.Signbit(y.(float64)) &&
+			math.IsInf(x, 0) && math.IsInf(y.(float64), 0) {
+			return true
+		}
+		return math.Abs(x-y.(float64)) <= float64EqualityThreshold
 	case string:
 		return x == y
 	case File:

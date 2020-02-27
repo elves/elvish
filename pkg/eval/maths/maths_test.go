@@ -1,6 +1,7 @@
 package maths
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
@@ -41,5 +42,17 @@ func TestMath(t *testing.T) {
 		That(`math:log2 1`).Puts(0.0),
 		That(`math:log2 0`).Puts(math.Inf(-1)),
 		That(`math:log2 -1`).Puts(math.NaN()),
+
+		That(`math:cos 0`).Puts(1.0),
+		That(`math:cos 1`).Puts(0.5403023058681397174),
+		That(fmt.Sprintf(`math:cos %g`, math.Pi)).Puts(-1.0),
+
+		That(`math:sin 0`).Puts(0.0),
+		That(`math:sin 1`).Puts(0.84147098480789650665),
+		That(fmt.Sprintf(`math:sin %g`, math.Pi)).Puts(0.0),
+
+		That(`math:tan 0`).Puts(0.0),
+		That(`math:tan 1`).Puts(1.5574077246549023),
+		That(fmt.Sprintf(`math:tan %g`, math.Pi)).Puts(0.0),
 	)
 }

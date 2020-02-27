@@ -38,6 +38,21 @@ import (
 // > (float64 -2)
 // ```
 
+//elvdoc:fn cos
+//
+// ```elvish
+// math:cos $float64
+// ```
+//
+// Compute the cosine of a number in radians (not degress). Example:
+//
+// ```elvish-transcript
+// ~> math:cos 0
+// > (float64 1)
+// ~> math:cos 3.14159265
+// > (float64 -1)
+// ```
+
 //elvdoc:fn floor
 //
 // ```elvish
@@ -98,15 +113,48 @@ import (
 // > (float64 NaN)
 // ```
 
+//elvdoc:fn sin
+//
+// ```elvish
+// math:sin $float64
+// ```
+//
+// Compute the sine of a number in radians (not degress). Example:
+//
+// ```elvish-transcript
+// ~> math:sin 0
+// > (float64 0)
+// ~> math:sin 3.14159265
+// > (float64 3.5897930298416118e-09)
+// ```
+
+//elvdoc:fn tan
+//
+// ```elvish
+// math:tan $float64
+// ```
+//
+// Compute the tangent of a number in radians (not degress). Example:
+//
+// ```elvish-transcript
+// ~> math:tan 0
+// > (float64 0)
+// ~> math:tan 3.14159265
+// > (float64 -0.0000000035897930298416118)
+// ```
+
 // Ns is the namespace for the math: module.
 var Ns = eval.NewNs().AddGoFns("math:", fns)
 
 var fns = map[string]interface{}{
 	"abs":   math.Abs,
 	"ceil":  math.Ceil,
+	"cos":  math.Cos,
 	"floor": math.Floor,
 	"log": math.Log,
 	"log10": math.Log10,
 	"log2": math.Log2,
 	"round": math.Round,
+	"sin":  math.Sin,
+	"tan":  math.Tan,
 }
