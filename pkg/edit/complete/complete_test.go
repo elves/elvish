@@ -110,7 +110,7 @@ func TestComplete(t *testing.T) {
 	}
 
 	allFileNameItems := []completion.Item{
-		fc("a.exe", " "), fc("d" + string(os.PathSeparator), ""), fc("non-exe", " "),
+		fc("a.exe", " "), fc("d"+string(os.PathSeparator), ""), fc("non-exe", " "),
 	}
 
 	allCommandItems := []completion.Item{

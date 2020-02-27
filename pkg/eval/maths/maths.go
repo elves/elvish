@@ -149,12 +149,12 @@ var Ns = eval.NewNs().AddGoFns("math:", fns)
 var fns = map[string]interface{}{
 	"abs":   math.Abs,
 	"ceil":  math.Ceil,
-	"cos":  math.Cos,
+	"cos":   math.Cos,
 	"floor": math.Floor,
-	"log": math.Log,
+	"log":   math.Log,
 	"log10": math.Log10,
-	"log2": math.Log2,
+	"log2":  math.Log2,
 	"round": math.Round,
-	"sin":  math.Sin,
-	"tan":  math.Tan,
+	"sin":   math.Sin,
+	"tan":   math.Tan,
 }
