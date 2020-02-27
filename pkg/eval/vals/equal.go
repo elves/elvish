@@ -1,6 +1,7 @@
 package vals
 
 import (
+	"math"
 	"reflect"
 )
 
@@ -22,6 +23,12 @@ func Equal(x, y interface{}) bool {
 	case bool:
 		return x == y
 	case float64:
+		if math.IsNaN(x) && math.IsNaN(y.(float64)) {
+			// `NaN == NaN` is always false since NaN is never equal to any
+			// other value; not even NaN. But for unit tests we want to ensure
+			// that if the test is expected to produce NaN it does so.
+			return true
+		}
 		return x == y
 	case string:
 		return x == y
