@@ -15,6 +15,7 @@ import (
 	"github.com/elves/elvish/pkg/eval/re"
 	"github.com/elves/elvish/pkg/eval/store"
 	"github.com/elves/elvish/pkg/eval/str"
+	"github.com/elves/elvish/pkg/eval/platform"
 	daemonp "github.com/elves/elvish/pkg/program/daemon"
 )
 
@@ -74,6 +75,7 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 	ev.InstallModule("math", eval.MathNs)
 	ev.InstallModule("re", re.Ns)
 	ev.InstallModule("str", str.Ns)
+	ev.InstallModule("platform", platform.Ns)
 	if sockpath != "" && dbpath != "" {
 		spawner := &daemonp.Daemon{
 			BinPath:       binpath,
