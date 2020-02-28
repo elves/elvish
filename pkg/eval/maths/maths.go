@@ -134,7 +134,7 @@ import (
 // math:round-to-even $float64
 // ```
 //
-// Round returns the nearest integer, rounding ties to even.
+// Round-to-even returns the nearest integer, rounding ties to even.
 //
 // ```elvish-transcript
 // ~> math:round-to-even -1.1
@@ -173,19 +173,35 @@ import (
 // > (float64 -0.0000000035897930298416118)
 // ```
 
+//elvdoc:fn trunc
+//
+// ```elvish
+// math:trunc $float64
+// ```
+//
+// Trunc returns the integer value of the float64.
+//
+// ```elvish-transcript
+// ~> math:trunc -1.1
+// > (float64 -1)
+// ~> math:trunc 2.5
+// > (float64 2)
+// ```
+
 // Ns is the namespace for the math: module.
 var Ns = eval.NewNs().AddGoFns("math:", fns)
 
 var fns = map[string]interface{}{
-	"abs":   math.Abs,
-	"ceil":  math.Ceil,
-	"cos":   math.Cos,
-	"floor": math.Floor,
-	"log":   math.Log,
-	"log10": math.Log10,
-	"log2":  math.Log2,
-	"round": math.Round,
+	"abs":           math.Abs,
+	"ceil":          math.Ceil,
+	"cos":           math.Cos,
+	"floor":         math.Floor,
+	"log":           math.Log,
+	"log10":         math.Log10,
+	"log2":          math.Log2,
+	"round":         math.Round,
 	"round-to-even": math.RoundToEven,
-	"sin":   math.Sin,
-	"tan":   math.Tan,
+	"sin":           math.Sin,
+	"tan":           math.Tan,
+	"trunc":         math.Trunc,
 }
