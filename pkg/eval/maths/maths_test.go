@@ -70,5 +70,9 @@ func TestMath(t *testing.T) {
 		That(`math:tan 0`).Puts(0.0),
 		That(`math:tan 1`).Puts(1.5574077246549023),
 		That(fmt.Sprintf(`math:tan %g`, math.Pi)).Puts(0.0),
+
+		That(`math:sqrt 0`).Puts(0.0),
+		That(`math:sqrt 4`).Puts(2.0),
+		That(`math:sqrt -4`).Puts(math.NaN()),
 	)
 }

@@ -158,6 +158,23 @@ import (
 // > (float64 3.5897930298416118e-09)
 // ```
 
+//elvdoc:fn sqrt
+//
+// ```elvish
+// math:sqrt $float64
+// ```
+//
+// Compute the square-root of a number. Example:
+//
+// ```elvish-transcript
+// ~> math:sqrt 0
+// > (float64 0)
+// ~> math:sqrt 4
+// > (float64 2)
+// ~> math:sqrt -4
+// > (float64 NaN)
+// ```
+
 //elvdoc:fn tan
 //
 // ```elvish
@@ -202,6 +219,7 @@ var fns = map[string]interface{}{
 	"round":         math.Round,
 	"round-to-even": math.RoundToEven,
 	"sin":           math.Sin,
+	"sqrt":          math.Sqrt,
 	"tan":           math.Tan,
 	"trunc":         math.Trunc,
 }
