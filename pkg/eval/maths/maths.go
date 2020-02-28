@@ -6,7 +6,24 @@ import (
 	"math"
 
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/eval/vars"
 )
+
+//elvdoc:var e
+//
+// ```elvish
+// $math:e
+// ```
+//
+// The value of E: 2.718281... This variable is read-only.
+
+//elvdoc:var pi
+//
+// ```elvish
+// $math:pi
+// ```
+//
+// The value of Pi: 3.141592... This variable is read-only.
 
 //elvdoc:fn abs
 //
@@ -222,4 +239,9 @@ var fns = map[string]interface{}{
 	"sqrt":          math.Sqrt,
 	"tan":           math.Tan,
 	"trunc":         math.Trunc,
+}
+
+func init() {
+	Ns.Add("e", vars.NewReadOnly(math.E))
+	Ns.Add("pi", vars.NewReadOnly(math.Pi))
 }

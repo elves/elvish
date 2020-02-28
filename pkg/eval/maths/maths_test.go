@@ -12,6 +12,9 @@ func TestMath(t *testing.T) {
 	setup := func(ev *eval.Evaler) { ev.Builtin.AddNs("math", Ns) }
 	That := eval.That
 	eval.TestWithSetup(t, setup,
+		That(`put $math:pi`).Puts(math.Pi),
+		That(`put $math:e`).Puts(math.E),
+
 		That(`math:abs 2.1`).Puts(2.1),
 		That(`math:abs -2.1`).Puts(2.1),
 
