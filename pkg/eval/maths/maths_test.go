@@ -25,6 +25,15 @@ func TestMath(t *testing.T) {
 		That(`math:round -2.1`).Puts(-2.0),
 		That(`math:round 2.5`).Puts(3.0),
 		That(`math:round -2.5`).Puts(-3.0),
+		That(`math:round (float64 Inf)`).Puts(math.Inf(1)),
+		That(`math:round (float64 NaN)`).Puts(math.NaN()),
+
+		That(`math:round-to-even 2.1`).Puts(2.0),
+		That(`math:round-to-even -2.1`).Puts(-2.0),
+		That(`math:round-to-even 2.5`).Puts(2.0),
+		That(`math:round-to-even -2.5`).Puts(-2.0),
+		That(`math:round-to-even (float64 Inf)`).Puts(math.Inf(1)),
+		That(`math:round-to-even (float64 NaN)`).Puts(math.NaN()),
 
 		That(`math:log 2.71828182845904523536028747135266249775724709369995`).Puts(1.0),
 		That(`math:log 1`).Puts(0.0),

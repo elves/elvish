@@ -113,6 +113,36 @@ import (
 // > (float64 NaN)
 // ```
 
+//elvdoc:fn round
+//
+// ```elvish
+// math:round $float64
+// ```
+//
+// Round returns the nearest integer, rounding half away from zero.
+//
+// ```elvish-transcript
+// ~> math:round -1.1
+// > (float64 -1)
+// ~> math:round 2.5
+// > (float64 3)
+// ```
+
+//elvdoc:fn round-to-even
+//
+// ```elvish
+// math:round-to-even $float64
+// ```
+//
+// Round returns the nearest integer, rounding ties to even.
+//
+// ```elvish-transcript
+// ~> math:round-to-even -1.1
+// > (float64 -1)
+// ~> math:round-to-even 2.5
+// > (float64 2)
+// ```
+
 //elvdoc:fn sin
 //
 // ```elvish
@@ -155,6 +185,7 @@ var fns = map[string]interface{}{
 	"log10": math.Log10,
 	"log2":  math.Log2,
 	"round": math.Round,
+	"round-to-even": math.RoundToEven,
 	"sin":   math.Sin,
 	"tan":   math.Tan,
 }
