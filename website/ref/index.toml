@@ -15,6 +15,10 @@ name = "re"
 title = "The Regular Expression Module (re:)"
 
 [[articles]]
+name = "str"
+title = "The String Module (str:)"
+
+[[articles]]
 name = "epm"
 title = "The Elvish Package Manager (epm:)"
 
