@@ -228,6 +228,96 @@ import (
 // > ABC!123
 // ```
 
+//elvdoc:fn trim
+//
+// ```elvish
+// str:trim $str $cutset
+// ```
+//
+// Trim returns a slice of the `$str` with all leading and trailing Unicode
+// code points contained in `$cutset` removed.
+//
+// ```elvish-transcript
+// ~> str:trim "¡¡¡Hello, Elven!!!" "!¡"
+// > 'Hello, Elven'
+// ```
+
+//elvdoc:fn trim-left
+//
+// ```elvish
+// str:trim-left $str $cutset
+// ```
+//
+// Trim-left returns a slice of the `$str` with all leading Unicode code
+// points contained in `$cutset` removed. To remove a prefix string use
+// `str:trim-prefix` instead.
+//
+// ```elvish-transcript
+// ~> str:trim-left "¡¡¡Hello, Elven!!!" "!¡"
+// > 'Hello, Elven!!!'
+// ```
+
+//elvdoc:fn trim-prefix
+//
+// ```elvish
+// str:trim-prefix $str $prefix
+// ```
+//
+// Trim-prefix returns `$str` without the provided leading `$prefix` string.
+// If `$str` doesn't begin with `$prefix`, `$str` is returned unchanged.
+//
+// ```elvish-transcript
+// ~> str:trim-prefix "¡¡¡Hello, Elven!!!" "¡¡¡Hello, "
+// > Elven!!!
+// ~> str:trim-prefix "¡¡¡Hello, Elven!!!" "¡¡¡Hola, "
+// > '¡¡¡Hello, Elven!!!'
+// ```
+
+//elvdoc:fn trim-right
+//
+// ```elvish
+// str:trim-right $str $cutset
+// ```
+//
+// Trim-right returns a slice of the `$str` with all leading Unicode code
+// points contained in `$cutset` removed. To remove a prefix string use
+// `str:trim-suffix` instead.
+//
+// ```elvish-transcript
+// ~> str:trim-right "¡¡¡Hello, Elven!!!" "!¡"
+// > '¡¡¡Hello, Elven'
+// ```
+
+//elvdoc:fn trim-space
+//
+// ```elvish
+// str:trim-space $str
+// ```
+//
+// Trim-space returns a copy of `$str`, with all leading and trailing white
+// space removed, as defined by Unicode.
+//
+// ```elvish-transcript
+// ~> str:trim-space " \t\n Hello, Elven \n\t\r\n"
+// > 'Hello, Elven'
+// ```
+
+//elvdoc:fn trim-suffix
+//
+// ```elvish
+// str:trim-suffix $str $suffix
+// ```
+//
+// Trim-suffix returns `$str` without the provided trailing `$suffix` string.
+// If `$str` doesn't end with `$suffix`, `$str` is returned unchanged.
+//
+// ```elvish-transcript
+// ~> str:trim-suffix "¡¡¡Hello, Elven!!!" ", Elven!!!"
+// > ¡¡¡Hello
+// ~> str:trim-suffix "¡¡¡Hello, Elven!!!" ", Klingons!!!"
+// > '¡¡¡Hello, Elven!!!'
+// ```
+
 var Ns = eval.NewNs().AddGoFns("str:", fns)
 
 var fns = map[string]interface{}{
