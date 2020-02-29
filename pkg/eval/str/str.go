@@ -170,6 +170,64 @@ import (
 // > -1
 // ```
 
+//elvdoc:fn title
+//
+// ```elvish
+// str:title $str
+// ```
+//
+// Title returns a copy of `$str` with all Unicode letters that begin words
+// mapped to their Unicode title case.
+//
+// ```elvish-transcript
+// ~> str:title "her royal highness"
+// > Her Royal Highness
+// ```
+
+//elvdoc:fn to-lower
+//
+// ```elvish
+// str:to-lower $str
+// ```
+//
+// To-lower converts `$str` with all Unicode letters mapped to their
+// lower-case equivalent.
+//
+// ```elvish-transcript
+// ~> str:to-lower 'ABC!123'
+// > abc!123
+// ```
+
+//elvdoc:fn to-title
+//
+// ```elvish
+// str:to-title $str
+// ```
+//
+// To-title returns a copy of `$str` with all Unicode letters mapped to
+// their Unicode title case.
+//
+// ```elvish-transcript
+// ~> str:to-title "her royal highness"
+// > HER ROYAL HIGHNESS
+// ~> str:to-title "хлеб"
+// > ХЛЕБ
+// ```
+
+//elvdoc:fn to-upper
+//
+// ```elvish
+// str:to-upper
+// ```
+//
+// To-upper converts `$str` with all Unicode letters mapped to their
+// upper-case equivalent.
+//
+// ```elvish-transcript
+// ~> str:to-upper 'abc!123'
+// > ABC!123
+// ```
+
 var Ns = eval.NewNs().AddGoFns("str:", fns)
 
 var fns = map[string]interface{}{
