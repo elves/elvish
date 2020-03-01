@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/eval/vals"
 )
 
 //elvdoc:fn compare
@@ -153,6 +154,40 @@ import (
 // ~> str:index-any l33t aeiouy
 // > -1
 // ```
+
+//elvdoc:fn join
+//
+// ```elvish
+// str:join $join_str $arg...
+// ```
+//
+// Join concatenates its arguments separated by `$join_str`; which is
+// typically a single char but can be an arbitrary string. If there are no
+// arguments it reads from stdin. Lists are flattened one level. So `str:join
+// - a b` produces the same output as `str:join - [a b]`. Other data types
+// (such as float64) have the same representation you would get by passing the
+// same arg to the `echo` builtin.
+//
+// ```elvish-transcript
+// ~> str:join :
+// > ''
+// ~> str:join : x
+// > x
+// ~> str:join : x (float64 111.222333444555666777888999) y [a '' b] '' c [] d
+// > x:111.22233344455567:y:a::b::c:d
+// ~> put x (float64 111.222333444555666777888999) y [a '' b] '' c [] d | str:join :
+// > x:111.22233344455567:y:a::b::c:d
+// ~> echo "a\nb" | str:join -
+// > a-b
+// ```
+//
+// **Important**: Empty strings insert a join separator but empty lists do not
+// since lists are flattened. Thus `str:join - a '' b` is not equivalent to
+// `str:join - a [] b`.
+//
+// **Note**: You have to provide a join separator. If you don't it is a
+// compilation error. However, you don't have to specify any arguments to be
+// joined in which case it reads from stdin.
 
 //elvdoc:fn last-index
 //
@@ -318,6 +353,56 @@ import (
 // > '¡¡¡Hello, Elven!!!'
 // ```
 
+// Wrap Go's strings.Join() so it can be used in an elvish program. We require
+// the join string argument to be provided but not the strings to be joined.
+// If none are provided this returns the empty string.
+func strJoin(fm *eval.Frame, join_str string, args ...interface{}) string {
+	var result string
+	need_sep := false
+	f := func(a interface{}) {
+		// We could just use vals.ToString() for all arguments. However, we
+		// want to flatten lists so that `str:join - a b` and `str:join - [a b]`
+		// produce the same output: `a-b`.
+		switch v := a.(type) {
+		case string:
+			// We special-case `string` since that is by far the most common
+			// case, we've already determined the type, and this avoids the
+			// overhead of vals.ToString().
+			if need_sep {
+				result += join_str
+			}
+			result += v
+			need_sep = true
+		case vals.List:
+			// Note that empty lists are not the same as empty strings. The
+			// latter will insert a join separator while the former will not.
+			for it := v.Iterator(); it.HasElem(); it.Next() {
+				if need_sep {
+					result += join_str
+				}
+				result += vals.ToString(it.Elem())
+				need_sep = true
+			}
+		default:
+			if need_sep {
+				result += join_str
+			}
+			result += vals.ToString(a)
+			need_sep = true
+		}
+	}
+
+	if len(args) > 0 {
+		for _, a := range args {
+			f(a)
+		}
+	} else {
+		fm.IterateInputs(f)
+	}
+
+	return result
+}
+
 var Ns = eval.NewNs().AddGoFns("str:", fns)
 
 var fns = map[string]interface{}{
@@ -331,7 +416,8 @@ var fns = map[string]interface{}{
 	"has-suffix": strings.HasSuffix,
 	"index":      strings.Index,
 	"index-any":  strings.IndexAny,
-	// TODO: IndexFunc, Join
+	// TODO: IndexFunc
+	"join":       strJoin,
 	"last-index": strings.LastIndex,
 	// TODO: LastIndexFunc, Map, Repeat, Replace, Split, SplitAfter
 	"title":    strings.Title,

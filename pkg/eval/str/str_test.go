@@ -45,6 +45,17 @@ func TestStr(t *testing.T) {
 		That(`str:index-any "chicken" "aeiouy"`).Puts("2"),
 		That(`str:index-any l33t aeiouy`).Puts("-1"),
 
+		That(`str:join`).ThrowsAny(),
+		That(`str:join :`).Puts(""),
+		That(`str:join : []`).Puts(""),
+		That(`str:join : a`).Puts("a"),
+		That(`str:join : [a]`).Puts("a"),
+		That(`str:join : x (float64 111.222333444555666777888999) y ['a' '' 'b'] '' c [] d`).Puts(
+			"x:111.22233344455567:y:a::b::c:d"),
+		That(`put x y | str:join :`).Puts("x:y"),
+		That(`{ echo m; echo n } | str:join :`).Puts("m:n"),
+		That(`put x y | str:join : [a b]`).Puts("a:b"),
+
 		That(`str:last-index abc`).ThrowsAny(),
 		That(`str:last-index "elven speak elvish" "elv"`).Puts("12"),
 		That(`str:last-index "elven speak elvish" "romulan"`).Puts("-1"),
