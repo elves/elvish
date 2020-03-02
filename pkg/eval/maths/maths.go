@@ -85,6 +85,46 @@ import (
 // > (float64 -3)
 // ```
 
+//elvdoc:fn is-inf
+//
+// ```elvish
+// math:is-inf $float64 $sign
+// ```
+//
+// is-inf tests whether the number is positive (if `$sign > 0`),
+// negative (if `$sign < 0`), or either (if `$sign == 0`) infinity.
+//
+// ```elvish-transcript
+// ~> math:is-inf 123
+//
+// ~> math:is-inf 123 0
+// > $false
+// ~> math:is-inf (float64 inf) 1
+// > $true
+// ~> math:is-inf (float64 inf) -1
+// > $false
+// ~> math:is-inf (float64 -inf) -1
+// > $true
+// ```
+
+//elvdoc:fn is-nan
+//
+// ```elvish
+// math:is-nan $float64 $sign
+// ```
+//
+// is-nan tests whether the number is positive (if `$sign > 0`),
+// negative (if `$sign < 0`), or either (if `$sign == 0`) infinity.
+//
+// ```elvish-transcript
+// ~> math:is-nan 123
+// > $false
+// ~> math:is-nan (float64 inf)
+// > $false
+// ~> math:is-nan (float64 nan)
+// > $true
+// ```
+
 //elvdoc:fn log
 //
 // ```elvish
@@ -230,6 +270,8 @@ var fns = map[string]interface{}{
 	"ceil":          math.Ceil,
 	"cos":           math.Cos,
 	"floor":         math.Floor,
+	"is-inf":        math.IsInf,
+	"is-nan":        math.IsNaN,
 	"log":           math.Log,
 	"log10":         math.Log10,
 	"log2":          math.Log2,

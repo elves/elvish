@@ -24,6 +24,19 @@ func TestMath(t *testing.T) {
 		That(`math:floor 2.1`).Puts(2.0),
 		That(`math:floor -2.1`).Puts(-3.0),
 
+		That(`math:is-inf 1.3`).ThrowsAny(),
+		That(`math:is-inf 1.3 0`).Puts(false),
+		That(`math:is-inf (float64 inf) 0`).Puts(true),
+		That(`math:is-inf (float64 inf) 1`).Puts(true),
+		That(`math:is-inf (float64 -inf) -1`).Puts(true),
+		That(`math:is-inf (float64 -inf) 1`).Puts(false),
+		That(`math:is-inf (float64 -inf) 0`).Puts(true),
+		That(`math:is-inf (float64 nan) 0`).Puts(false),
+
+		That(`math:is-nan 1.3`).Puts(false),
+		That(`math:is-nan (float64 inf)`).Puts(false),
+		That(`math:is-nan (float64 nan)`).Puts(true),
+
 		That(`math:round 2.1`).Puts(2.0),
 		That(`math:round -2.1`).Puts(-2.0),
 		That(`math:round 2.5`).Puts(3.0),
