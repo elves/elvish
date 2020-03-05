@@ -96,20 +96,34 @@ but when the current directory is empty, `count` will wait for inputs. Hence it
 is required to put the input in a list: `count [*]` unambiguously supplies input
 in the argument, even if there is no file.
 
-## Numerical Commands
+## Commands That Operate On Numbers
 
-Commands that operate on numbers are quite flexible about the format of the
-numbers. Integers can be specified as decimals (e.g. `233`) or hexadecimals
-(e.g. `0xE9`) and floating-point numbers can be specified using the scientific
-notation (e.g. `2.33e2`). These are different strings, but equal when considered
-as commands.
+Commands that operate on numbers are quite flexible about the
+format of those numbers. See the discussion of the [number data
+type](./language.html#number).
 
-Elvish has no special syntax or data type for numbers. Instead, they are just
-strings. For this reason, builtin commands for strings and numbers are
-completely separate. For instance, the numerical equality command is `==`, while
-the string equality command is `==s`. Another example is the `+` builtin, which
-only operates on numbers and does not function as a string concatenation
-commands.
+Because numbers are normally specified as strings, rather than as
+an explicit `float64` data type, some builtin commands have variants
+intended to operate on strings or numbers exclusively. For instance, the
+numerical equality command is `==`, while the string equality command is
+`==s`. Another example is the `+` builtin, which only operates on numbers
+and does not function as a string concatenation command. Consider these
+examples:
+
+```elvish-transcript
+~/projects/3rd-party/elvish> + x 1
+Exception: wrong type of 1'th argument: cannot parse as number: x
+[tty], line 1: + x 1
+~> + inf 1
+▶ (float64 +Inf)
+~> + -inf 1
+▶ (float64 -Inf)
+~> + -infinity 1
+▶ (float64 -Inf)
+~> + -infinityx 1
+Exception: wrong type of 1'th argument: cannot parse as number: -infinityx
+[tty], line 1: + -infinityx 1
+```
 
 ## Predicates
 

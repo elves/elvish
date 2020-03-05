@@ -46,12 +46,14 @@ statements **executes** to produce side effects; an expression **evaluates** to
 some values. (The traditional terms for the two levels are "commands" and
 "words", but those terms are quite ambiguous.)
 
-# String
+# Data types
+
+## String
 
 The most common data structure in shells is the string. String literals can be
 quoted or unquoted (barewords).
 
-## Quoted
+### Quoted
 
 There are two types of quoted strings in Elvish, single-quoted strings and
 double-quoted strings.
@@ -72,7 +74,7 @@ effect, simply concatenate strings: instead of `"my name is $name"`, write
 `"my name is "$name`. Under the hood this is a
 [compound expression](#compound-expression-and-braced-lists).
 
-## Barewords
+### Barewords
 
 If a string only consists of bareword characters, it can be written without any
 quote; this is called a **bareword**. Examples are `a.txt`, `long-bareword`, and
@@ -102,27 +104,55 @@ metacharacters; use quoted strings instead. For instance, to echo a star, write
 in line continuations; their use elsewhere is reserved will cause a syntax
 error.
 
-## Notes
+### Notes
 
 The three syntaxes above all evaluate to strings, and they are interchangeable.
 For instance, `xyz`, `'xyz'` and `"xyz"` are different syntaxes for the same
-string, and they are always equivalent.
+string, and they are always equivalent with the exception of
+**escape sequences** as documented above.
 
-Elvish does have a dedicated `float64` number type, but it does not have a
-literal syntax; instead it needs to be constructed using a function call, as in
-`put (float64 42)`; the argument `42` is a string. For convenience, all Elvish
-functions that expect number arguments also accept strings that can be parsed as
-a number, so explicit number constructors are not needed often.
+## Number
 
+A `$number` argument can be a string in the following formats (they all
+express the same value):
 
-# List and Map
+* decimal notation (e.g., `10`),
+* hexadecimal notation (e.g., `0xA`),
+* octal notation (e.g., `0o12`),
+* binary notation (e.g., `0b1010`),
+* floating point notation (e.g., `10.0`), and
+* scientific notation (e.g., `1.0e1`).
 
-Lists and maps are the basic container types in Elvish.
+An explicit `float64` data type is created using this syntax: `(float64
+$number)`. For convenience, all Elvish functions that expect a numeric
+argument will accept a string that can be parsed as a number. They
+will automatically convert the string to a `float64`. Which means
+explicit `float64` constructors are almost never needed. This implicit
+conversion includes special values like infinity (`Inf`) and not-a-number
+(`NaN`). Note that the letter case of these special values doesn't matter
+so `inf`, `Inf`, and `INF` are equivalent.
+
+A `float64` data type can be converted to a string using `(to-string
+$number)`. The resulting string is guaranteed to result in the same
+value when converted back to a `float64`. Most of the time you won't
+need to perform this explicit conversion. Elvish will implicitly make
+the conversion when running external commands and many of the builtins
+(where the distinction is not important).
+
+See also the discussion of [Commands That Operate On
+Numbers](./builtin.html#commands-that-operate-on-numbers).
+
+## Exception
+
+Elvish has an exception data type, but it does not have a literal
+syntax for that type. See the discussion of [exception and flow
+commands](./language.html#exception-and-flow-commands) for more
+information about this data type.
 
 ## List
 
 Lists are surround by square brackets `[ ]`, with elements separated by
-whitespaces. Examples:
+whitespace. They are one of the basic container types in Elvish. Examples:
 
 ```elvish-transcript
 ~> put [lorem ipsum]
@@ -149,7 +179,8 @@ don't use them to separate elements:
 
 Maps are also surrounded by square brackets; a key/value pair is written
 `&key=value` (reminiscent to HTTP query parameters), and pairs are separated by
-whitespaces. Whitespaces are allowed after `=`, but not before `=`. Examples:
+whitespaces. Whitespaces are allowed after `=`, but not before `=`. They are
+one of the basic container types in Elvish. Examples:
 
 ```elvish-transcript
 ~> put [&foo=bar &lorem=ipsum]
@@ -1562,6 +1593,12 @@ fn f {
   }
 }
 ```
+
+**WARNING:** The exception data type currently supports a single attribute,
+`cause`, that can be used to extract an object describing the cause
+of the exception; e.g. `$e[cause]`.  This is not a string. This is an
+experimental feature. You should probably use `(to-string $e)` at this
+time in any production code.
 
 # Namespaces and Modules
 
