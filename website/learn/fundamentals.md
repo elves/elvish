@@ -128,7 +128,7 @@ can just ask Elvish to recall it by pressing <span class="key">Up</span>:
 This will give you the last command you have run. However, it may have been a
 while when you have last run the `randint` command, and this will not give you
 what you need. You can either continue pressing <span class="key">Up</span>
-until you find the command, or you you can give Elvish a hint by typing some
+until you find the command, or you can give Elvish a hint by typing some
 characters from the command line you want, e.g. `ra`, before pressing <span
 class="key">Up</span>:
 

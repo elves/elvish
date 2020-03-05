@@ -321,10 +321,10 @@ syntax tree, then **compile**s the syntax tree code to an internal
 representation, and finally **evaluate**s the just-generated internal
 representation.
 
-If any error happens during the first two phases, Elvish rejects the chunk
-without executing any of it. For instance, in Elvish unclosed parenthesis is a
-syntax error (error in the first parsing phase). The following code, when
-executed as a chunk, does nothing other than printing the parse error:
+If any error happens during the first two phases, Elvish rejects the
+chunk without executing any of it. For instance, in Elvish unclosed
+parenthesis is an error during the parsing phase. The following code,
+when executed as a chunk, does nothing other than printing the parse error:
 
 ```elvish-bad
 echo before
