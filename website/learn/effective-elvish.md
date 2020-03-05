@@ -191,7 +191,7 @@ output contains multiple lines, each line becomes one value:
 ▶ [lorem ipsum]
 ```
 
-Most Elvish builtin functions also work with with both byte and value inputs.
+Most Elvish builtin functions also work with both byte and value inputs.
 Similarly to output capture, they split their byte intput by newlines. For
 example:
 
