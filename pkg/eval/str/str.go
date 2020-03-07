@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/eval/vals"
 )
 
 //elvdoc:fn compare
@@ -313,6 +314,69 @@ import (
 // ▶ '¡¡¡Hello, Elven!!!'
 // ```
 
+//elvdoc:fn split
+//
+// ```elvish
+// str:split $separator $arg...
+// ```
+//
+// Split separates each argument, when coerced to a string if it isn't already
+// a string, by `$separator`. The separator is typically a single char but can
+// be an arbitrary string. If the separator is the empty string then each
+// argument is split on code points in the string; i.e., "characters".
+//
+// If there are no arguments it reads from stdin. Lists are flattened one
+// level. So `str:split - a-b` produces the same output as `str:split -
+// [a-b]`. Other data types (such as float64) have the same representation you
+// would get by passing the same arg to the `echo` builtin. That is, they are
+// coerced to a string representation before being split (same as
+// [`str:join`]("#join")).
+//
+// ```elvish-transcript
+// ~> str:split : x
+// > x
+// ~> str:split : a:b c:d
+// > a
+// > b
+// > c
+// > d
+// ~> put (float64 1.2) y [a.b] | str:split .
+// > 1
+// > 2
+// > y
+// > a
+// > b
+// ~> echo "a:b\nc" | str:split :
+// > a
+// > b
+// > c
+// ~> str:split '' (float64 1.2)
+// > 1
+// > .
+// > 2
+// ```
+//
+// See also: [`str:join`]("#join").
+
+// Wrap Go's strings.SplitN() so it can be used in an elvish program.
+type splitOpts struct{ Max int }
+
+func (o *splitOpts) SetDefaultOptions() { o.Max = -1 }
+
+func split(fm *eval.Frame, opts splitOpts, sep string, arg interface{}) {
+	out := fm.OutputChan()
+	switch v := arg.(type) {
+	case string: // handle the common case
+		for _, s := range strings.SplitN(v, sep, opts.Max) {
+			out <- s
+		}
+	default: // handle other value types such as float64
+		for _, s := range strings.SplitN(vals.ToString(arg), sep, opts.Max) {
+			out <- s
+		}
+	}
+}
+
 var Ns = eval.Ns{}.AddGoFns("str:", fns)
 
 var fns = map[string]interface{}{
@@ -328,7 +392,8 @@ var fns = map[string]interface{}{
 	"index-any":  strings.IndexAny,
 	// TODO: IndexFunc, Join
 	"last-index": strings.LastIndex,
-	// TODO: LastIndexFunc, Map, Repeat, Replace, Split, SplitAfter
+	// TODO: LastIndexFunc, Map, Repeat, Replace, SplitAfter
+	"split":    split,
 	"title":    strings.Title,
 	"to-lower": strings.ToLower,
 	"to-title": strings.ToTitle,

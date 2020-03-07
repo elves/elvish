@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/eval/errs"
 )
 
 var That = eval.That
@@ -57,6 +58,16 @@ func TestStr(t *testing.T) {
 		That(`str:to-lower abc`).Puts("abc"),
 		That(`str:to-lower ABC`).Puts("abc"),
 		That(`str:to-lower ABC def`).ThrowsAny(),
+
+		That(`str:split '' ab`).Puts("a", "b"),
+		That(`str:split ',' ab`).Puts("ab"),
+		That(`str:split : x`).Puts("x"),
+		That(`str:split : a:b:c`).Puts("a", "b", "c"),
+		That(`str:split . (float64 1.2)`).Puts("1", "2"),
+		That(`str:split '' (float64 1.2)`).Puts("1", ".", "2"),
+		That(`str:split :`).Throws(
+			errs.ArityMismatch{What: "arguments here", ValidLow: 2, ValidHigh: 2, Actual: 1},
+			"str:split :"),
 
 		That(`str:to-title "her royal highness"`).Puts("HER ROYAL HIGHNESS"),
 		That(`str:to-title "хлеб"`).Puts("ХЛЕБ"),
