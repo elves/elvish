@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/eval/errs"
 )
 
 var That = eval.That
@@ -45,6 +46,20 @@ func TestStr(t *testing.T) {
 		That(`str:index-any abc`).ThrowsAny(),
 		That(`str:index-any "chicken" "aeiouy"`).Puts("2"),
 		That(`str:index-any l33t aeiouy`).Puts("-1"),
+
+		That(`str:join : []`).Puts(""),
+		That(`nop | str:join :`).Puts(""),
+		That(`str:join : [/usr /bin /tmp]`).Puts("/usr:/bin:/tmp"),
+		That(`str:join : ['' a '']`).Puts(":a:"),
+		That(`str:join '' [a b c]`).Puts("abc"),
+		That(`echo "a\nb" | str:join @@`).Puts("a@@b"),
+		That(`{ put (float64 3.1415); put $true } | str:join /`).Puts("3.1415/$true"),
+		That(`str:join`).Throws(
+			errs.ArityMismatch{What: "arguments here", ValidLow: 1, ValidHigh: 2, Actual: 0},
+			"str:join"),
+		That(`str:join : a b`).Throws(
+			errs.ArityMismatch{What: "arguments here", ValidLow: 1, ValidHigh: 2, Actual: 3},
+			"str:join : a b"),
 
 		That(`str:last-index abc`).ThrowsAny(),
 		That(`str:last-index "elven speak elvish" "elv"`).Puts("12"),

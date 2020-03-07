@@ -3,9 +3,11 @@
 package str
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/eval/vals"
 )
 
 //elvdoc:fn compare
@@ -151,6 +153,32 @@ import (
 // ~> str:index-any l33t aeiouy
 // ▶ -1
 // ```
+
+//elvdoc:fn join
+//
+// ```elvish
+// str:join $sep $input-list?
+// ```
+//
+// Join its inputs with `$sep`. Each input is coerced to a string if it isn't
+// already a string. The separator is typically a single char but can be an
+// arbitrary string.
+//
+// ```elvish-transcript
+// ~> str:join : [lorem ipsum]
+// > lorum:ipsum
+// ~> put lorem ipsum | str:join :
+// > lorum:ipsum
+// ~> str:join : x
+// > x
+// ~> put (float64 1.2) y [a b] | str:join :
+// > '1.2:y:[a b]'
+// ~> x = [b c]
+// ~> str:join : [(float64 2.0) y $x]
+// > '2:y:[b c]'
+// ```
+//
+// @cf split
 
 //elvdoc:fn last-index
 //
@@ -313,6 +341,30 @@ import (
 // ▶ '¡¡¡Hello, Elven!!!'
 // ```
 
+// Wrap Go's strings.Join() so it can be used in an elvish program. We require
+// the sep argument to be provided but not the strings to be joined. If none
+// are provided this outputs the empty string.
+func join(sep string, inputs eval.Inputs) string {
+	var buf bytes.Buffer
+	need_sep := false
+	f := func(v interface{}) {
+		if need_sep {
+			buf.WriteString(sep)
+		} else {
+			need_sep = true
+		}
+		switch s := v.(type) {
+		case string: // handle the common case
+			buf.WriteString(s)
+		default: // handle non-string values
+			buf.WriteString(vals.ToString(v))
+		}
+	}
+
+	inputs(f)
+	return buf.String()
+}
+
 var Ns = eval.Ns{}.AddGoFns("str:", fns)
 
 var fns = map[string]interface{}{
@@ -326,7 +378,8 @@ var fns = map[string]interface{}{
 	"has-suffix": strings.HasSuffix,
 	"index":      strings.Index,
 	"index-any":  strings.IndexAny,
-	// TODO: IndexFunc, Join
+	// TODO: IndexFunc
+	"join":       join,
 	"last-index": strings.LastIndex,
 	// TODO: LastIndexFunc, Map, Repeat, Replace, Split, SplitAfter
 	"title":    strings.Title,
