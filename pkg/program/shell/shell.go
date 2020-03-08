@@ -61,9 +61,10 @@ func rescue() {
 	r := recover()
 	if r != nil {
 		println()
-		println(r)
 		print(sys.DumpStack())
-		println("\nexecing recovery shell /bin/sh")
+		println()
+		println(r)
+		println("\nExecing recovery shell /bin/sh")
 		syscall.Exec("/bin/sh", []string{"/bin/sh"}, os.Environ())
 	}
 }
