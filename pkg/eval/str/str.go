@@ -14,16 +14,16 @@ import (
 // str:compare $a $b
 // ```
 //
-// Compare returns an integer comparing two strings lexicographically. The
-// result will be 0 if a==b, -1 if a < b, and +1 if a > b.
+// Compare two strings and output an integer that will be 0 if a == b,
+// -1 if a < b, and +1 if a > b.
 //
 // ```elvish-transcript
 // ~> str:compare a a
-// > 0
+// ▶ 0
 // ~> str:compare a b
-// > -1
+// ▶ -1
 // ~> str:compare b a
-// > 1
+// ▶ 1
 // ```
 
 //elvdoc:fn contains
@@ -32,13 +32,13 @@ import (
 // str:contains $str $substr
 // ```
 //
-// Contains returns `$true` if `$substr` is within `$str` else `$false`.
+// If `$substr` is within `$str` output `$true` else `$false`.
 //
 // ```elvish-transcript
 // ~> str:contains abcd x
-// > $false
+// ▶ $false
 // ~> str:contains abcd bc
-// > $true
+// ▶ $true
 // ```
 
 //elvdoc:fn contains-any
@@ -47,14 +47,14 @@ import (
 // str:contains-any $str $chars
 // ```
 //
-// Contains-any returns `$true` if any Unicode code points in `$chars` is
-// within `$str` else `$false`.
+// If any Unicode code points in `$chars` is within `$str` output `$true` else
+// `$false`.
 //
 // ```elvish-transcript
 // ~> str:contains-any abcd x
-// > $false
+// ▶ $false
 // ~> str:contains-any abcd xby
-// > $true
+// ▶ $true
 // ```
 
 //elvdoc:fn count
@@ -63,15 +63,15 @@ import (
 // str:count $str $substr
 // ```
 //
-// Count counts the number of non-overlapping instances of substr in s.
-// If substr is an empty string, Count returns 1 + the number of Unicode code
-// points in s.
+// Output the number of non-overlapping instances of `$substr` in `$s`.
+// If `$substr` is an empty string, output 1 + the number of Unicode code
+// points in `$s`.
 //
 // ```elvish-transcript
 // ~> str:count abcdefabcdef bc
-// > 2
+// ▶ 2
 // ~> str:count abcdef ''
-// > 7
+// ▶ 7
 // ```
 
 //elvdoc:fn equal-fold
@@ -80,14 +80,14 @@ import (
 // str:equal-fold $str1 $str2
 // ```
 //
-// Equal-fold reports whether `$str1` and `$str2`, interpreted as UTF-8
-// strings, are equal under Unicode case-folding.
+// If `$str1` and `$str2`, interpreted as UTF-8 strings, are equal under
+// Unicode case-folding output `$true` else `$false`.
 //
 // ```elvish-transcript
 // ~> str:equal-fold ABC abc
-// > $true
+// ▶ $true
 // ~> str:equal-fold abc ab
-// > $false
+// ▶ $false
 // ```
 
 //elvdoc:fn has-prefix
@@ -96,13 +96,13 @@ import (
 // str:has-prefix $str $prefix
 // ```
 //
-// Has-prefix tests whether the string `$str` begins with `$prefix`
+// If `$str` begins with `$prefix` output `$true` else `$false`.
 //
 // ```elvish-transcript
 // ~> str:has-prefix abc ab
-// > $true
+// ▶ $true
 // ~> str:has-prefix abc bc
-// > $false
+// ▶ $false
 // ```
 
 //elvdoc:fn has-suffix
@@ -111,13 +111,13 @@ import (
 // str:has-suffix $str $suffix
 // ```
 //
-// Has-suffix tests whether the string `$str` begins with `$suffix`
+// If `$str` ends with `$suffix` output `$true` else `$false`.
 //
 // ```elvish-transcript
 // ~> str:has-suffix abc ab
-// > $false
+// ▶ $false
 // ~> str:has-suffix abc bc
-// > $true
+// ▶ $true
 // ```
 
 //elvdoc:fn index
@@ -126,15 +126,15 @@ import (
 // str:index $str $substr
 // ```
 //
-// Index returns the index of the first instance of `$substr` in `$str`, or -1
+// Output the index of the first instance of `$substr` in `$str`, or -1
 // if `$substr` is not present in `$str`.
 
 //
 // ```elvish-transcript
 // ~> str:index abcd cd
-// > 2
+// ▶ 2
 // ~> str:index abcd xyz
-// > -1
+// ▶ -1
 // ```
 
 //elvdoc:fn index-any
@@ -143,15 +143,15 @@ import (
 // str:index-any $str $chars
 // ```
 //
-// Index-any returns the index of the first instance of any Unicode code point
+// Output the index of the first instance of any Unicode code point
 // from `$chars` in `$str`, or -1 if no Unicode code point from `$chars` is
 // present in `$str`.
 //
 // ```elvish-transcript
 // ~> str:index-any "chicken" "aeiouy"
-// > 2
+// ▶ 2
 // ~> str:index-any l33t aeiouy
-// > -1
+// ▶ -1
 // ```
 
 //elvdoc:fn last-index
@@ -160,14 +160,14 @@ import (
 // str:last-index $str $substr
 // ```
 //
-// Last-index returns the index of the last instance of `$substr` in `$str`,
+// Output the index of the last instance of `$substr` in `$str`,
 // or -1 if `$substr` is not present in `$str`.
 //
 // ```elvish-transcript
 // ~> str:last-index "elven speak elvish" elv
-// > 12
+// ▶ 12
 // ~> str:last-index "elven speak elvish" romulan
-// > -1
+// ▶ -1
 // ```
 
 //elvdoc:fn title
@@ -176,12 +176,12 @@ import (
 // str:title $str
 // ```
 //
-// Title returns a copy of `$str` with all Unicode letters that begin words
-// mapped to their Unicode title case.
+// Output `$str` with all Unicode letters that begin words mapped to their
+// Unicode title case.
 //
 // ```elvish-transcript
 // ~> str:title "her royal highness"
-// > Her Royal Highness
+// ▶ Her Royal Highness
 // ```
 
 //elvdoc:fn to-lower
@@ -190,12 +190,12 @@ import (
 // str:to-lower $str
 // ```
 //
-// To-lower converts `$str` with all Unicode letters mapped to their
-// lower-case equivalent.
+// Output `$str` with all Unicode letters mapped to their lower-case
+// equivalent.
 //
 // ```elvish-transcript
 // ~> str:to-lower 'ABC!123'
-// > abc!123
+// ▶ abc!123
 // ```
 
 //elvdoc:fn to-title
@@ -204,14 +204,13 @@ import (
 // str:to-title $str
 // ```
 //
-// To-title returns a copy of `$str` with all Unicode letters mapped to
-// their Unicode title case.
+// Output `$str` with all Unicode letters mapped to their Unicode title case.
 //
 // ```elvish-transcript
 // ~> str:to-title "her royal highness"
-// > HER ROYAL HIGHNESS
+// ▶ HER ROYAL HIGHNESS
 // ~> str:to-title "хлеб"
-// > ХЛЕБ
+// ▶ ХЛЕБ
 // ```
 
 //elvdoc:fn to-upper
@@ -220,12 +219,12 @@ import (
 // str:to-upper
 // ```
 //
-// To-upper converts `$str` with all Unicode letters mapped to their
-// upper-case equivalent.
+// Output `$str` with all Unicode letters mapped to their upper-case
+// equivalent.
 //
 // ```elvish-transcript
 // ~> str:to-upper 'abc!123'
-// > ABC!123
+// ▶ ABC!123
 // ```
 
 //elvdoc:fn trim
@@ -234,12 +233,12 @@ import (
 // str:trim $str $cutset
 // ```
 //
-// Trim returns a slice of the `$str` with all leading and trailing Unicode
-// code points contained in `$cutset` removed.
+// Output `$str` with all leading and trailing Unicode code points contained
+// in `$cutset` removed.
 //
 // ```elvish-transcript
 // ~> str:trim "¡¡¡Hello, Elven!!!" "!¡"
-// > 'Hello, Elven'
+// ▶ 'Hello, Elven'
 // ```
 
 //elvdoc:fn trim-left
@@ -248,13 +247,12 @@ import (
 // str:trim-left $str $cutset
 // ```
 //
-// Trim-left returns a slice of the `$str` with all leading Unicode code
-// points contained in `$cutset` removed. To remove a prefix string use
-// `str:trim-prefix` instead.
+// Output `$str` with all leading Unicode code points contained in `$cutset`
+// removed. To remove a prefix string use [`str:trim-prefix`](#strtrim-prefix).
 //
 // ```elvish-transcript
 // ~> str:trim-left "¡¡¡Hello, Elven!!!" "!¡"
-// > 'Hello, Elven!!!'
+// ▶ 'Hello, Elven!!!'
 // ```
 
 //elvdoc:fn trim-prefix
@@ -263,14 +261,14 @@ import (
 // str:trim-prefix $str $prefix
 // ```
 //
-// Trim-prefix returns `$str` without the provided leading `$prefix` string.
-// If `$str` doesn't begin with `$prefix`, `$str` is returned unchanged.
+// Output `$str` minus the leading `$prefix` string. If `$str` doesn't begin
+// with `$prefix`, `$str` is output unchanged.
 //
 // ```elvish-transcript
 // ~> str:trim-prefix "¡¡¡Hello, Elven!!!" "¡¡¡Hello, "
-// > Elven!!!
+// ▶ Elven!!!
 // ~> str:trim-prefix "¡¡¡Hello, Elven!!!" "¡¡¡Hola, "
-// > '¡¡¡Hello, Elven!!!'
+// ▶ '¡¡¡Hello, Elven!!!'
 // ```
 
 //elvdoc:fn trim-right
@@ -279,13 +277,12 @@ import (
 // str:trim-right $str $cutset
 // ```
 //
-// Trim-right returns a slice of the `$str` with all leading Unicode code
-// points contained in `$cutset` removed. To remove a prefix string use
-// `str:trim-suffix` instead.
+// Output `$str` with all leading Unicode code points contained in `$cutset`
+// removed. To remove a suffix string use [`str:trim-suffix`](#strtrim-suffix).
 //
 // ```elvish-transcript
 // ~> str:trim-right "¡¡¡Hello, Elven!!!" "!¡"
-// > '¡¡¡Hello, Elven'
+// ▶ '¡¡¡Hello, Elven'
 // ```
 
 //elvdoc:fn trim-space
@@ -294,12 +291,12 @@ import (
 // str:trim-space $str
 // ```
 //
-// Trim-space returns a copy of `$str`, with all leading and trailing white
-// space removed, as defined by Unicode.
+// Output `$str` with all leading and trailing white space removed as defined
+// by Unicode.
 //
 // ```elvish-transcript
 // ~> str:trim-space " \t\n Hello, Elven \n\t\r\n"
-// > 'Hello, Elven'
+// ▶ 'Hello, Elven'
 // ```
 
 //elvdoc:fn trim-suffix
@@ -308,14 +305,14 @@ import (
 // str:trim-suffix $str $suffix
 // ```
 //
-// Trim-suffix returns `$str` without the provided trailing `$suffix` string.
-// If `$str` doesn't end with `$suffix`, `$str` is returned unchanged.
+// Output `$str` minus the trailing `$suffix` string. If `$str` doesn't end
+// with `$suffix`, `$str` is output unchanged.
 //
 // ```elvish-transcript
 // ~> str:trim-suffix "¡¡¡Hello, Elven!!!" ", Elven!!!"
-// > ¡¡¡Hello
+// ▶ ¡¡¡Hello
 // ~> str:trim-suffix "¡¡¡Hello, Elven!!!" ", Klingons!!!"
-// > '¡¡¡Hello, Elven!!!'
+// ▶ '¡¡¡Hello, Elven!!!'
 // ```
 
 var Ns = eval.NewNs().AddGoFns("str:", fns)

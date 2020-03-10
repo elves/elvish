@@ -6,9 +6,10 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 )
 
+var That = eval.That
+
 func TestStr(t *testing.T) {
 	setup := func(ev *eval.Evaler) { ev.Builtin.AddNs("str", Ns) }
-	That := eval.That
 	eval.TestWithSetup(t, setup,
 		That(`str:compare abc`).ThrowsAny(),
 		That(`str:compare abc abc`).Puts("0"),
