@@ -120,6 +120,9 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 
 //elvdoc:fn has-prefix
 //
+// *NOTE:* Deprecated as of 0.14 and will be removed after release of 0.15.
+// Please use [`str:has-prefix`](./str.html#strhas-prefix) instead.
+//
 // ```elvish
 // has-prefix $string $prefix
 // ```
@@ -134,6 +137,9 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // ```
 
 //elvdoc:fn has-suffix
+//
+// *NOTE:* Deprecated as of 0.14 and will be removed after release of 0.15.
+// Please use [`str:has-prefix`](./str.html#strhas-prefix) instead.
 //
 // ```elvish
 // has-suffix $string $suffix
