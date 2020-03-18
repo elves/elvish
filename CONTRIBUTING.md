@@ -2,7 +2,7 @@
 
 ## Human communication
 
-The project lead is xiaq@, who is reachable in the user group most of the time.
+The project lead is @xiaq, who is reachable in the user group most of the time.
 If you intend to make user-visible changes to Elvish's behavior, it good idea to
 talk to him first; this will make it easier to review your changes.
 
