@@ -1,33 +1,69 @@
-# Notes for Contributors
+# Guidelines for Contributors
 
-## Code Checklist
+## Human communication
 
-1.  Always run unit tests before committing. `make` will take care of this.
+The project lead is xiaq@, who is reachable in the user group most of the time.
+If you intend to make user-visible changes to Elvish's behavior, it good idea to
+talk to him first; this will make it easier to review your changes.
 
-2.  Some files are generated from other files. They should be committed into the repository for this package to be go-gettable. Run `go generate ./...` to regenerate them in case you modified the source.
+## Unit tests
 
-    Dependencies of the generation rules:
+Write comprehensive unit tests for your code, and make sure that existing tests
+are passing. Running `make` in the repo root will run all unit tests.
 
-    *   The `stringer` tool: Install with `go get -u golang.org/x/tools/cmd/stringer`;
+Most of the Elvish codebase has good testing utilities today, and some also have
+established testing patterns. Before writing unit tests, read a few existing
+tests in the package you are changing, and follow the existing patterns. Some
+packages unfortunately have two (and hopefully no more than that) competing
+patterns. When in doubt, ask the project lead.
 
-    *   An installed `elvish` in your PATH;
+Still, some part of the codebase is poorly tested, and may even be outright
+untestable. In that case, also discuss to the project lead.
 
-    *   Python 2.7 at `/usr/bin/python2.7` (Python scripts should be rewritten in either Go or Elvish).
+Most of the Elvish codebase has decent unit test coverage. When contributing to
+Elvish,
 
-3.  Always format the code with `goimports` before committing. Run `go get golang.org/x/tools/cmd/goimports` to install `goimports`, and `goimports -w .` to format all golang sources.
+## Generating code
 
-    To automate this you can set up a `goimports` filter for Git by putting this in `~/.gitconfig`:
+Elvish uses generated code in a few places. As is the usual case with Go
+projects, they are committed into the repo, and if you change the input of a
+generated file you should re-generate it.
 
-        [filter "goimports"]
-            clean = goimports
-            smudge = cat
+Use the standard command, `go generate ./...` to regenerate all files.
 
-    Git will then always run `goimports` for you before committing, since `.gitattributes` in this repository refers to this filter. More about Git attributes and filters [here](https://www.kernel.org/pub/software/scm/git/docs/gitattributes.html).
+Dependencies of the generation rules:
 
-## Human Communication
+-   The `stringer` tool: Install with
+    `go get -u golang.org/x/tools/cmd/stringer`;
 
-If you are making significant changes or any user-visible changes (e.g. changes to the language, the UI or the elv script API), please discuss on the developer channel before starting to work.
+-   An installed `elvish` in your PATH;
+
+-   Python 2.7 at `/usr/bin/python2.7`.
+
+    NOTE: Python scripts should be rewritten in either Go or Elvish, but we
+    still have some.
+
+## Formatting source files
+
+Format Go code with
+[goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports):
+
+```sh
+go get golang.org/x/tools/cmd/goimports # Install
+goimports -w . # Format Go files
+```
+
+Format Markdown files with [prettier](https://prettier.io/):
+
+```sh
+npm install --global prettier # Install
+prettier --tab-width 4 --prose-wrap always --write *.md # Format Markdown files
+```
+
+Refer to the documentation of your editor to run these commands automatically
+when saving Go or Markdown sources.
 
 ## Licensing
 
-By contributing, you agree to license your code under the same license as existing source code of elvish. See the LICENSE file.
+By contributing, you agree to license your code under the same license as
+existing source code of elvish. See the LICENSE file.
