@@ -169,6 +169,9 @@ func compileFn(cp *compiler, fn *parse.Form) effectOpBody {
 	args := cp.walkArgs(fn)
 	nameNode := args.next()
 	varName := mustString(cp, nameNode, "must be a literal string") + FnSuffix
+	if !parse.IsValidVariableName(varName) {
+		cp.errorpf(nameNode.Range().From, nameNode.Range().To, "must be a valid variable name")
+	}
 	bodyNode := args.nextMustLambda()
 	args.mustEnd()
 
@@ -215,6 +218,7 @@ func (op fnWrap) invoke(fm *Frame) error {
 // UseForm = 'use' StringPrimary
 func compileUse(cp *compiler, fn *parse.Form) effectOpBody {
 	var name, spec string
+	var nameArg parse.Node
 
 	switch len(fn.Args) {
 	case 0:
@@ -226,15 +230,23 @@ func compileUse(cp *compiler, fn *parse.Form) effectOpBody {
 		// Use the last path component as the name; for instance, if path =
 		// "a/b/c/d", name is "d". If path doesn't have slashes, name = path.
 		name = spec[strings.LastIndexByte(spec, '/')+1:]
+		nameArg = fn.Args[0]
 	case 2:
 		// TODO(xiaq): Allow using variable as module path
 		spec = mustString(cp, fn.Args[0],
 			"module spec should be a literal string")
 		name = mustString(cp, fn.Args[1],
 			"module name should be a literal string")
+		nameArg = fn.Args[1]
 	default: // > 2
 		cp.errorpf(fn.Args[2].Range().From, fn.Args[len(fn.Args)-1].Range().To,
 			"superfluous argument(s)")
+	}
+
+	// Validate that the namespace string is a legal variable name so that
+	// assignments to variables in the namespace work.
+	if !parse.IsValidVariableName(name) {
+		cp.errorpf(nameArg.Range().From, nameArg.Range().To, "must be a valid variable name")
 	}
 
 	cp.thisScope().set(name + NsSuffix)
