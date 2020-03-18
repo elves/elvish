@@ -1,4 +1,4 @@
-# Guidelines for Contributors
+# Contributor's Manual
 
 ## Human communication
 
@@ -22,6 +22,59 @@ untestable. In that case, also discuss to the project lead.
 
 Most of the Elvish codebase has decent unit test coverage. When contributing to
 Elvish,
+
+## Documenting builtin functions and variables
+
+Documentation for builtin functions and variables are written in the Go sources
+as comments.
+
+Document function using the following format:
+
+````go
+//elvdoc:fn name-of-fn
+//
+// ```elvish
+// name-of-fn $arg &opt=default
+// ```
+//
+// Does something.
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> name-of-fn something
+// ▶ some-value-output
+// ```
+````
+
+Note the following:
+
+-   There is no space before `elvdoc` of the first line.
+
+-   The signature of the function follows the convention
+    [here](website/ref/builtin.md#usage-notation).
+
+-   The first sentence of the description should start with a verb in 3rd person
+    singular (i.e. ending with a "s"), as if there is an implicit subject "this
+    function".
+
+-   Examples are best illustrated by a transcript of actual REPL input and
+    output. Always use the default prompt `~>` and default value output
+    indicator `▶`. If you have customized those, it's left as an exercise to
+    define a key binding in `rc.elv` for switching between the default and your
+    customized values.
+
+Document variables using the following format:
+
+```go
+//elvdoc:var name-of-var
+//
+// Something.
+```
+
+Variables do not have signatures, and can be described using a noun phrase.
+Examples are not always needed; if they are, they can be given in the same
+format as examples for functions above.
 
 ## Generating code
 
