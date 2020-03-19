@@ -1618,8 +1618,8 @@ also comes with the following modules:
 
 You can define your own modules with Elvishscript by putting them in
 files under `~/.elvish/lib` and giving them a `.elv` extension. The file
-name must be a valid [variable name](#variable). So `a.elv` is valid but
-`a.b.elv` is not valid as a module name.
+name must be a valid [variable name](#variable). For example, `a.elv`
+is valid but `a.b.elv` is not valid as a module name.
 
 For instance, to define a module named `a`, store it in
 `~/.elvish/lib/a.elv`:
@@ -1670,9 +1670,9 @@ use `use x/y/z xyz`:
 f from x/y/z
 ```
 
-This is especially useful when you need to import several modules that
-are in different directories but have the same file name. The alias name
-must be a valid [variable name](#variable). So `c_prime` is valid but
+This is especially useful when you need to import several modules that are
+in different directories but have the same file name. The alias name must
+be a valid [variable name](#variable). For example, `c_prime` is valid but
 `c.prime` is not valid as a module name alias.
 
 ## Scoping of Imports
