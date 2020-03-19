@@ -1399,7 +1399,11 @@ Syntax:
 fn <name> <lambda>
 ```
 
-Define a function with a given name. The function behaves in the same way to the
+Define a function with a given name. The function name must be a valid
+[variable name](#variable). For example, `a` is valid but `a.b` is not
+valid as a function name.
+
+The function behaves in the same way to the
 lambda used to define it, except that it "captures" `return`. In other words,
 `return` will fall through lambdas not defined with `fn`, and continues until it
 exits a function defined with `fn`:
@@ -1594,9 +1598,9 @@ The following namespaces have special meanings to the language:
 
 ## Pre-Defined Modules
 
-Namespaces that are not special (i,e. one of the above) are also called
-**modules**. Aside from these special namespaces, Elvish also comes with the
-following modules:
+Namespaces that are not special (i.e., one of the above) are also called
+**modules**. Aside from the special namespaces in the previous section, Elvish
+also comes with the following modules:
 
 -   `edit:` for accessing the Elvish editor. This module is available in
     interactive mode and does not need importing.
@@ -1612,9 +1616,13 @@ following modules:
 
 ## User-Defined Modules
 
-You can define your own modules with Elvishscript by putting them under
-`~/.elvish/lib` and giving them a `.elv` extension. For instance, to define a
-module named `a`, store it in `~/.elvish/lib/a.elv`:
+You can define your own modules with Elvishscript by putting them in
+files under `~/.elvish/lib` and giving them a `.elv` extension. The file
+name must be a valid [variable name](#variable). For example, `a.elv`
+is valid but `a.b.elv` is not valid as a module name.
+
+For instance, to define a module named `a`, store it in
+`~/.elvish/lib/a.elv`:
 
 ```elvish-transcript
 ~> cat ~/.elvish/lib/a.elv
@@ -1662,8 +1670,10 @@ use `use x/y/z xyz`:
 f from x/y/z
 ```
 
-This is especially useful when you need to import several modules that are in
-different directories but have the same file name.
+This is especially useful when you need to import several modules that are
+in different directories but have the same file name. The alias name must
+be a valid [variable name](#variable). For example, `c_prime` is valid but
+`c.prime` is not valid as a module name alias.
 
 ## Scoping of Imports
 
