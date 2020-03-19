@@ -1400,8 +1400,8 @@ fn <name> <lambda>
 ```
 
 Define a function with a given name. The function name must be a valid
-[variable name](#variable). So `a` is valid but `a.b` is not valid as a
-function name.
+[variable name](#variable). For example, `a` is valid but `a.b` is not
+valid as a function name.
 
 The function behaves in the same way to the
 lambda used to define it, except that it "captures" `return`. In other words,
