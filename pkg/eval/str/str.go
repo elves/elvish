@@ -14,7 +14,7 @@ import (
 // str:compare $a $b
 // ```
 //
-// Compare two strings and output an integer that will be 0 if a == b,
+// Compares two strings and output an integer that will be 0 if a == b,
 // -1 if a < b, and +1 if a > b.
 //
 // ```elvish-transcript
@@ -32,7 +32,7 @@ import (
 // str:contains $str $substr
 // ```
 //
-// If `$substr` is within `$str` output `$true` else `$false`.
+// Outputs whether `$str` contains `$substr` as a substring.
 //
 // ```elvish-transcript
 // ~> str:contains abcd x
@@ -47,8 +47,7 @@ import (
 // str:contains-any $str $chars
 // ```
 //
-// If any Unicode code points in `$chars` is within `$str` output `$true` else
-// `$false`.
+// Outputs whether `$str` contains any Unicode code points in `$chars`.
 //
 // ```elvish-transcript
 // ~> str:contains-any abcd x
@@ -63,7 +62,7 @@ import (
 // str:count $str $substr
 // ```
 //
-// Output the number of non-overlapping instances of `$substr` in `$s`.
+// Outputs the number of non-overlapping instances of `$substr` in `$s`.
 // If `$substr` is an empty string, output 1 + the number of Unicode code
 // points in `$s`.
 //
@@ -80,8 +79,8 @@ import (
 // str:equal-fold $str1 $str2
 // ```
 //
-// If `$str1` and `$str2`, interpreted as UTF-8 strings, are equal under
-// Unicode case-folding output `$true` else `$false`.
+// Outputs if `$str1` and `$str2`, interpreted as UTF-8 strings, are equal
+// under Unicode case-folding.
 //
 // ```elvish-transcript
 // ~> str:equal-fold ABC abc
@@ -96,7 +95,7 @@ import (
 // str:has-prefix $str $prefix
 // ```
 //
-// If `$str` begins with `$prefix` output `$true` else `$false`.
+// Outputs if `$str` begins with `$prefix`.
 //
 // ```elvish-transcript
 // ~> str:has-prefix abc ab
@@ -111,7 +110,7 @@ import (
 // str:has-suffix $str $suffix
 // ```
 //
-// If `$str` ends with `$suffix` output `$true` else `$false`.
+// Outputs if `$str` ends with `$suffix`.
 //
 // ```elvish-transcript
 // ~> str:has-suffix abc ab
@@ -126,9 +125,8 @@ import (
 // str:index $str $substr
 // ```
 //
-// Output the index of the first instance of `$substr` in `$str`, or -1
+// Outputs the index of the first instance of `$substr` in `$str`, or -1
 // if `$substr` is not present in `$str`.
-
 //
 // ```elvish-transcript
 // ~> str:index abcd cd
@@ -143,7 +141,7 @@ import (
 // str:index-any $str $chars
 // ```
 //
-// Output the index of the first instance of any Unicode code point
+// Outputs the index of the first instance of any Unicode code point
 // from `$chars` in `$str`, or -1 if no Unicode code point from `$chars` is
 // present in `$str`.
 //
@@ -160,7 +158,7 @@ import (
 // str:last-index $str $substr
 // ```
 //
-// Output the index of the last instance of `$substr` in `$str`,
+// Outputs the index of the last instance of `$substr` in `$str`,
 // or -1 if `$substr` is not present in `$str`.
 //
 // ```elvish-transcript
@@ -176,7 +174,7 @@ import (
 // str:title $str
 // ```
 //
-// Output `$str` with all Unicode letters that begin words mapped to their
+// Outputs `$str` with all Unicode letters that begin words mapped to their
 // Unicode title case.
 //
 // ```elvish-transcript
@@ -190,7 +188,7 @@ import (
 // str:to-lower $str
 // ```
 //
-// Output `$str` with all Unicode letters mapped to their lower-case
+// Outputs `$str` with all Unicode letters mapped to their lower-case
 // equivalent.
 //
 // ```elvish-transcript
@@ -204,7 +202,7 @@ import (
 // str:to-title $str
 // ```
 //
-// Output `$str` with all Unicode letters mapped to their Unicode title case.
+// Outputs `$str` with all Unicode letters mapped to their Unicode title case.
 //
 // ```elvish-transcript
 // ~> str:to-title "her royal highness"
@@ -219,7 +217,7 @@ import (
 // str:to-upper
 // ```
 //
-// Output `$str` with all Unicode letters mapped to their upper-case
+// Outputs `$str` with all Unicode letters mapped to their upper-case
 // equivalent.
 //
 // ```elvish-transcript
@@ -233,7 +231,7 @@ import (
 // str:trim $str $cutset
 // ```
 //
-// Output `$str` with all leading and trailing Unicode code points contained
+// Outputs `$str` with all leading and trailing Unicode code points contained
 // in `$cutset` removed.
 //
 // ```elvish-transcript
@@ -247,7 +245,7 @@ import (
 // str:trim-left $str $cutset
 // ```
 //
-// Output `$str` with all leading Unicode code points contained in `$cutset`
+// Outputs `$str` with all leading Unicode code points contained in `$cutset`
 // removed. To remove a prefix string use [`str:trim-prefix`](#strtrim-prefix).
 //
 // ```elvish-transcript
@@ -261,7 +259,7 @@ import (
 // str:trim-prefix $str $prefix
 // ```
 //
-// Output `$str` minus the leading `$prefix` string. If `$str` doesn't begin
+// Outputs `$str` minus the leading `$prefix` string. If `$str` doesn't begin
 // with `$prefix`, `$str` is output unchanged.
 //
 // ```elvish-transcript
@@ -277,7 +275,7 @@ import (
 // str:trim-right $str $cutset
 // ```
 //
-// Output `$str` with all leading Unicode code points contained in `$cutset`
+// Outputs `$str` with all leading Unicode code points contained in `$cutset`
 // removed. To remove a suffix string use [`str:trim-suffix`](#strtrim-suffix).
 //
 // ```elvish-transcript
@@ -291,7 +289,7 @@ import (
 // str:trim-space $str
 // ```
 //
-// Output `$str` with all leading and trailing white space removed as defined
+// Outputs `$str` with all leading and trailing white space removed as defined
 // by Unicode.
 //
 // ```elvish-transcript
@@ -305,7 +303,7 @@ import (
 // str:trim-suffix $str $suffix
 // ```
 //
-// Output `$str` minus the trailing `$suffix` string. If `$str` doesn't end
+// Outputs `$str` minus the trailing `$suffix` string. If `$str` doesn't end
 // with `$suffix`, `$str` is output unchanged.
 //
 // ```elvish-transcript
