@@ -25,5 +25,5 @@ import (
 
 var Ns = eval.Ns{
 	"arch": vars.NewReadOnly(runtime.GOARCH),
-	"os": vars.NewReadOnly(runtime.GOOS),
+	"os":   vars.NewReadOnly(runtime.GOOS),
 }
