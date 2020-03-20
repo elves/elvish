@@ -146,6 +146,8 @@ to [matterbridge](https://github.com/42wim/matterbridge)!
 
 -   Telegram: [@elvish](https://telegram.me/elvish)
 
+-   Matrix: [#elvish:matrix.org](https://matrix.to/#/#elvish:matrix.org)
+
 # <i class="icon-link-ext"></i> More Resources
 
 -   [Awesome Elvish](https://github.com/elves/awesome-elvish): Official list of
