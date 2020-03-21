@@ -1,4 +1,9 @@
 [[articles]]
+name = "0.13.1-release-notes"
+title = "Elvish 0.13.1 Release Notes"
+timestamp = "2020-03-21"
+
+[[articles]]
 name = "0.13-release-notes"
 title = "Elvish 0.13 Release Notes"
 timestamp = "2020-01-01"
