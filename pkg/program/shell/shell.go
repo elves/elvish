@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/elves/elvish/pkg/cli/term"
@@ -50,7 +51,11 @@ func (sh *Shell) Main(fds [3]*os.File, args []string) int {
 			return 2
 		}
 	} else {
-		interact(fds, ev, dataDir, sh.NoRc)
+		rcPath := ""
+		if !sh.NoRc {
+			rcPath = filepath.Join(dataDir, "rc.elv")
+		}
+		interact(fds, ev, rcPath)
 	}
 
 	return 0

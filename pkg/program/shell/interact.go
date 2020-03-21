@@ -18,7 +18,7 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func interact(fds [3]*os.File, ev *eval.Evaler, dataDir string, norc bool) {
+func interact(fds [3]*os.File, ev *eval.Evaler, rcPath string) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(fds[0]) {
@@ -30,8 +30,8 @@ func interact(fds [3]*os.File, ev *eval.Evaler, dataDir string, norc bool) {
 	}
 
 	// Source rc.elv.
-	if !norc && dataDir != "" {
-		err := sourceRC(fds[2], ev, dataDir)
+	if rcPath != "" {
+		err := sourceRC(fds[2], ev, rcPath)
 		if err != nil {
 			diag.PPrintError(err)
 		}
@@ -76,8 +76,8 @@ func interact(fds [3]*os.File, ev *eval.Evaler, dataDir string, norc bool) {
 	}
 }
 
-func sourceRC(stderr *os.File, ev *eval.Evaler, dataDir string) error {
-	absPath, err := filepath.Abs(filepath.Join(dataDir, "rc.elv"))
+func sourceRC(stderr *os.File, ev *eval.Evaler, rcPath string) error {
+	absPath, err := filepath.Abs(rcPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
