@@ -23,6 +23,10 @@ name = "str"
 title = "The String Module (str:)"
 
 [[articles]]
+name = "unix"
+title = "The UNIX Module (unix:)"
+
+[[articles]]
 name = "epm"
 title = "The Elvish Package Manager (epm:)"
 
