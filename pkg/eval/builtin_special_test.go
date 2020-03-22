@@ -83,10 +83,6 @@ func TestBuiltinSpecial(t *testing.T) {
 		// fn.
 		That("fn f [x]{ put x=$x'.' }; f lorem; f ipsum").
 			Puts("x=lorem.", "x=ipsum."),
-		// fn with good and bad function names. The first validates that
-		// non-ASCII chars are handled correctly.
-		That("fn blåbær [x]{ put $x }; blåbær argle").Puts("argle"),
-		That("fn f.bad [x]{ put $x }").DoesNotCompile(),
 		// return.
 		That("fn f []{ put a; return; put b }; f").Puts("a"),
 	)
@@ -149,10 +145,5 @@ func TestUse(t *testing.T) {
 		// Wrong uses of "use".
 		That("use").DoesNotCompile(),
 		That("use a b c").DoesNotCompile(),
-		That("use a.c").DoesNotCompile(),
-		That("use lib.dir/os dir/os").DoesNotCompile(),
-		// Note that the period in the path is okay so this should compile but
-		// fail because the module doesn't exist.
-		That("use lib.dir/os os").ThrowsAny(),
 	)
 }

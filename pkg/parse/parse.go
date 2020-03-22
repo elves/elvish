@@ -718,15 +718,6 @@ func allowedInVariableName(r rune) bool {
 		r == '-' || r == '_' || r == ':' || r == '~'
 }
 
-// IsValidVariableName checks whether the string is valid when used as a
-// variable name.
-func IsValidVariableName(s string) bool {
-	for _, r := range(s) {
-		if !allowedInVariableName(r) { return false }
-	}
-	return true
-}
-
 func (pn *Primary) starWildcard(ps *parser) {
 	pn.Type = Wildcard
 	for ps.peek() == '*' {
