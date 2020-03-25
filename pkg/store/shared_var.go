@@ -3,7 +3,7 @@ package store
 import (
 	"errors"
 
-	"github.com/boltdb/bolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 // ErrNoSharedVar is returned by Store.SharedVar when there is no such variable.

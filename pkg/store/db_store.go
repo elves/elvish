@@ -7,7 +7,7 @@ import (
 
 	"github.com/elves/elvish/pkg/util"
 
-	"github.com/boltdb/bolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 var logger = util.GetLogger("[store] ")
