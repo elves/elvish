@@ -85,7 +85,9 @@ func (w *colView) MutateState(f func(*ColViewState)) {
 func (w *colView) CopyState() ColViewState {
 	w.StateMutex.RLock()
 	defer w.StateMutex.RUnlock()
-	return w.State
+	copied := w.State
+	copied.Columns = append([]Widget(nil), w.State.Columns...)
+	return copied
 }
 
 const colViewColGap = 1
