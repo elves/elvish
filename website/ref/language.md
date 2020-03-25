@@ -1452,6 +1452,23 @@ The entire resolution procedure can be emulated with the
 [resolve](builtin.html#resolve) command. Searching of external commands can be
 emulated with the [search-external](builtin.html#search-builtin) command.
 
+**TIP**: Step 2 of the command resolution rules means that if you define a variable
+with a name ending with `~`, you can use it as a command:
+
+```elvish-transcript
+~> f~ = { put f }
+~> f
+▶ f
+```
+
+The same also applies to function parameters:
+
+```elvish-transcript
+~> fn g [f~]{ f }
+~> g { put f }
+▶ f
+```
+
 # Pipeline
 
 A **pipeline** is formed by joining one or more commands together with the pipe
