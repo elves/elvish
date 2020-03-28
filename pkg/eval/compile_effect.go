@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/elves/elvish/pkg/diag"
@@ -39,8 +40,16 @@ func (op chunkOp) invoke(fm *Frame) error {
 }
 
 func (cp *compiler) pipelineOp(n *parse.Pipeline) effectOp {
+	saveNewLocals := cp.newLocals
+	cp.newLocals = nil
+
+	formOps := cp.formOps(n.Forms)
+
+	newLocals := cp.newLocals
+	cp.newLocals = saveNewLocals
+
 	return makeEffectOp(n,
-		&pipelineOp{n.Background, n.SourceText(), cp.formOps(n.Forms)})
+		&pipelineOp{n.Background, n.SourceText(), formOps, newLocals})
 }
 
 func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []effectOp {
@@ -52,9 +61,10 @@ func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []effectOp {
 }
 
 type pipelineOp struct {
-	bg     bool
-	source string
-	subops []effectOp
+	bg        bool
+	source    string
+	subops    []effectOp
+	newLocals []string
 }
 
 const pipelineChanBufferSize = 32
@@ -62,6 +72,20 @@ const pipelineChanBufferSize = 32
 func (op *pipelineOp) invoke(fm *Frame) error {
 	if fm.IsInterrupted() {
 		return ErrInterrupted
+	}
+
+	for _, name := range op.newLocals {
+		var variable vars.Var
+		if strings.HasSuffix(name, FnSuffix) {
+			val := Callable(nil)
+			variable = vars.FromPtr(&val)
+		} else if strings.HasSuffix(name, NsSuffix) {
+			val := Ns(nil)
+			variable = vars.FromPtr(&val)
+		} else {
+			variable = vars.FromInit(nil)
+		}
+		fm.local[name] = variable
 	}
 
 	if op.bg {

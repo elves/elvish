@@ -17,12 +17,14 @@ type compiler struct {
 	scopes []staticNs
 	// Variables captured from outer scopes.
 	capture staticNs
+	// New variables created within a pipeline.
+	newLocals []string
 	// Information about the source.
 	srcMeta *Source
 }
 
 func compile(b, g staticNs, n *parse.Chunk, src *Source) (op Op, err error) {
-	cp := &compiler{b, []staticNs{g}, make(staticNs), src}
+	cp := &compiler{b, []staticNs{g}, make(staticNs), nil, src}
 	defer func() {
 		r := recover()
 		if r == nil {
@@ -90,6 +92,7 @@ func (cp *compiler) registerVariableAccess(qname string, set bool) bool {
 	createLocal := func(name string) bool {
 		if set && name != "" && !strings.ContainsRune(name[:len(name)-1], ':') {
 			cp.thisScope().set(name)
+			cp.newLocals = append(cp.newLocals, name)
 			return true
 		}
 		return false

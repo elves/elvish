@@ -3,7 +3,6 @@ package eval
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vars"
@@ -127,21 +126,10 @@ type varOp struct {
 func (op varOp) invoke(fm *Frame) ([]vars.Var, error) {
 	variable := fm.ResolveVar(op.qname)
 	if variable == nil {
-		ns, name := SplitQNameNs(op.qname)
+		ns, _ := SplitQNameNs(op.qname)
 		if ns == "" || ns == ":" || ns == "local:" {
-			// New variable.
-			// XXX We depend on the fact that this variable will
-			// immeidately be set.
-			if strings.HasSuffix(name, FnSuffix) {
-				val := Callable(nil)
-				variable = vars.FromPtr(&val)
-			} else if strings.HasSuffix(name, NsSuffix) {
-				val := Ns(nil)
-				variable = vars.FromPtr(&val)
-			} else {
-				variable = vars.FromInit(nil)
-			}
-			fm.local[name] = variable
+			// This should have been created as part of pipelineOp; a compiler bug.
+			return nil, errors.New("compiler bug: new local variable not created in pipeline")
 		} else {
 			return nil, fmt.Errorf("new variables can only be created in local scope")
 		}
