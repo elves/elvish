@@ -14,8 +14,8 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func (cp *compiler) chunk(n *parse.Chunk) effectOpBody {
-	return chunkOp{cp.pipelineOps(n.Pipelines)}
+func (cp *compiler) chunkOp(n *parse.Chunk) effectOp {
+	return makeEffectOp(n, chunkOp{cp.pipelineOps(n.Pipelines)})
 }
 
 type chunkOp struct {
@@ -38,8 +38,17 @@ func (op chunkOp) invoke(fm *Frame) error {
 	return nil
 }
 
-func (cp *compiler) pipeline(n *parse.Pipeline) effectOpBody {
-	return &pipelineOp{n.Background, n.SourceText(), cp.formOps(n.Forms)}
+func (cp *compiler) pipelineOp(n *parse.Pipeline) effectOp {
+	return makeEffectOp(n,
+		&pipelineOp{n.Background, n.SourceText(), cp.formOps(n.Forms)})
+}
+
+func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []effectOp {
+	ops := make([]effectOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.pipelineOp(n)
+	}
+	return ops
 }
 
 type pipelineOp struct {
@@ -140,14 +149,14 @@ func (op *pipelineOp) invoke(fm *Frame) error {
 	return ComposeExceptionsFromPipeline(errors)
 }
 
-func (cp *compiler) form(n *parse.Form) effectOpBody {
+func (cp *compiler) formOp(n *parse.Form) effectOp {
 	var saveVarsOps []lvaluesOp
 	var assignmentOps []effectOp
 	if len(n.Assignments) > 0 {
 		assignmentOps = cp.assignmentOps(n.Assignments)
 		if n.Head == nil && n.Vars == nil {
 			// Permanent assignment.
-			return seqOp{assignmentOps}
+			return makeEffectOp(n, seqOp{assignmentOps})
 		}
 		for _, a := range n.Assignments {
 			v, r := cp.lvaluesOp(a.Left)
@@ -223,7 +232,15 @@ func (cp *compiler) form(n *parse.Form) effectOpBody {
 	redirOps := cp.redirOps(n.Redirs)
 	// TODO: n.ErrorRedir
 
-	return &formOp{saveVarsOps, assignmentOps, redirOps, specialOpFunc, headOp, argOps, optsOp, spaceyAssignOp, n.Range().From, n.Range().To}
+	return makeEffectOp(n, &formOp{saveVarsOps, assignmentOps, redirOps, specialOpFunc, headOp, argOps, optsOp, spaceyAssignOp, n.Range().From, n.Range().To})
+}
+
+func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
+	ops := make([]effectOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.formOp(n)
+	}
+	return ops
 }
 
 type formOp struct {
@@ -357,10 +374,18 @@ func allTrue(vs []interface{}) bool {
 	return true
 }
 
-func (cp *compiler) assignment(n *parse.Assignment) effectOpBody {
+func (cp *compiler) assignmentOp(n *parse.Assignment) effectOp {
 	valuesOp := cp.compoundOp(n.Right)
 	variablesOp, restOp := cp.lvaluesOp(n.Left)
-	return &assignmentOp{variablesOp, restOp, valuesOp}
+	return makeEffectOp(n, &assignmentOp{variablesOp, restOp, valuesOp})
+}
+
+func (cp *compiler) assignmentOps(ns []*parse.Assignment) []effectOp {
+	ops := make([]effectOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.assignmentOp(n)
+	}
+	return ops
 }
 
 // ErrMoreThanOneRest is returned when the LHS of an assignment contains more
@@ -442,7 +467,7 @@ func (cp *compiler) literal(n *parse.Primary, msg string) string {
 const defaultFileRedirPerm = 0644
 
 // redir compiles a Redir into a op.
-func (cp *compiler) redir(n *parse.Redir) effectOpBody {
+func (cp *compiler) redirOp(n *parse.Redir) effectOp {
 	var dstOp valuesOp
 	if n.Left != nil {
 		dstOp = cp.compoundOp(n.Left)
@@ -452,7 +477,16 @@ func (cp *compiler) redir(n *parse.Redir) effectOpBody {
 		// TODO: Record and get redirection sign position
 		cp.errorpf(n, "bad redirection sign")
 	}
-	return &redirOp{dstOp, cp.compoundOp(n.Right), n.RightIsFd, n.Mode, flag}
+	return makeEffectOp(n,
+		&redirOp{dstOp, cp.compoundOp(n.Right), n.RightIsFd, n.Mode, flag})
+}
+
+func (cp *compiler) redirOps(ns []*parse.Redir) []effectOp {
+	ops := make([]effectOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.redirOp(n)
+	}
+	return ops
 }
 
 func makeFlag(m parse.RedirMode) int {

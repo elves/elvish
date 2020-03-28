@@ -1,7 +1,5 @@
 package eval
 
-//go:generate ./boilerplate.py
-
 import (
 	"fmt"
 	"strings"

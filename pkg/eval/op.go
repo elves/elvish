@@ -18,6 +18,10 @@ type effectOp struct {
 	diag.Ranging
 }
 
+func makeEffectOp(r diag.Ranger, body effectOpBody) effectOp {
+	return effectOp{body, r.Range()}
+}
+
 // The body of an effectOp.
 type effectOpBody interface {
 	invoke(*Frame) error
@@ -33,6 +37,10 @@ func (op effectOp) exec(fm *Frame) error {
 type valuesOp struct {
 	body valuesOpBody
 	diag.Ranging
+}
+
+func makeValuesOp(r diag.Ranger, body valuesOpBody) valuesOp {
+	return valuesOp{body, r.Range()}
 }
 
 // The body of ValuesOp.

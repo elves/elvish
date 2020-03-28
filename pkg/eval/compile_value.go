@@ -18,9 +18,9 @@ import (
 
 var outputCaptureBufferSize = 16
 
-func (cp *compiler) compound(n *parse.Compound) valuesOpBody {
+func (cp *compiler) compoundOp(n *parse.Compound) valuesOp {
 	if len(n.Indexings) == 0 {
-		return literalStr("")
+		return makeValuesOp(n, literalStr(""))
 	}
 
 	tilde := false
@@ -29,19 +29,27 @@ func (cp *compiler) compound(n *parse.Compound) valuesOpBody {
 	if n.Indexings[0].Head.Type == parse.Tilde {
 		// A lone ~.
 		if len(n.Indexings) == 1 {
-			return funcValuesOp(func(fm *Frame) ([]interface{}, error) {
+			return makeValuesOp(n, funcValuesOp(func(fm *Frame) ([]interface{}, error) {
 				home, err := util.GetHome("")
 				if err != nil {
 					return nil, err
 				}
 				return []interface{}{home}, nil
-			})
+			}))
 		}
 		tilde = true
 		indexings = indexings[1:]
 	}
 
-	return compoundOp{tilde, cp.indexingOps(indexings)}
+	return makeValuesOp(n, compoundOp{tilde, cp.indexingOps(indexings)})
+}
+
+func (cp *compiler) compoundOps(ns []*parse.Compound) []valuesOp {
+	ops := make([]valuesOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.compoundOp(n)
+	}
+	return ops
 }
 
 type compoundOp struct {
@@ -177,16 +185,32 @@ func doTilde(v interface{}) (interface{}, error) {
 	}
 }
 
-func (cp *compiler) array(n *parse.Array) valuesOpBody {
-	return seqValuesOp{cp.compoundOps(n.Compounds)}
+func (cp *compiler) arrayOp(n *parse.Array) valuesOp {
+	return makeValuesOp(n, seqValuesOp{cp.compoundOps(n.Compounds)})
 }
 
-func (cp *compiler) indexing(n *parse.Indexing) valuesOpBody {
-	if len(n.Indicies) == 0 {
-		return cp.primary(n.Head)
+func (cp *compiler) arrayOps(ns []*parse.Array) []valuesOp {
+	ops := make([]valuesOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.arrayOp(n)
 	}
+	return ops
+}
 
-	return &indexingOp{cp.primaryOp(n.Head), cp.arrayOps(n.Indicies)}
+func (cp *compiler) indexingOp(n *parse.Indexing) valuesOp {
+	if len(n.Indicies) == 0 {
+		return cp.primaryOp(n.Head)
+	}
+	return makeValuesOp(n,
+		&indexingOp{cp.primaryOp(n.Head), cp.arrayOps(n.Indicies)})
+}
+
+func (cp *compiler) indexingOps(ns []*parse.Indexing) []valuesOp {
+	ops := make([]valuesOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.indexingOp(n)
+	}
+	return ops
 }
 
 type indexingOp struct {
@@ -219,16 +243,17 @@ func (op *indexingOp) invoke(fm *Frame) ([]interface{}, error) {
 	return vs, nil
 }
 
-func (cp *compiler) primary(n *parse.Primary) valuesOpBody {
+func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
+	var body valuesOpBody
 	switch n.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
-		return literalStr(n.Value)
+		body = literalStr(n.Value)
 	case parse.Variable:
 		sigil, qname := SplitVariableRef(n.Value)
 		if !cp.registerVariableGet(qname) {
 			cp.errorpf(n, "variable $%s not found", qname)
 		}
-		return &variableOp{sigil != "", qname}
+		body = &variableOp{sigil != "", qname}
 	case parse.Wildcard:
 		seg, err := wildcardToSegment(n.SourceText())
 		if err != nil {
@@ -236,26 +261,35 @@ func (cp *compiler) primary(n *parse.Primary) valuesOpBody {
 		}
 		vs := []interface{}{
 			GlobPattern{glob.Pattern{[]glob.Segment{seg}, ""}, 0, nil}}
-		return literalValues(vs...)
+		body = literalValues(vs...)
 	case parse.Tilde:
 		cp.errorpf(n, "compiler bug: Tilde not handled in .compound")
-		return literalStr("~")
+		body = literalStr("~")
 	case parse.ExceptionCapture:
-		return exceptionCaptureOp{cp.chunkOp(n.Chunk)}
+		body = exceptionCaptureOp{cp.chunkOp(n.Chunk)}
 	case parse.OutputCapture:
-		return outputCaptureOp{cp.chunkOp(n.Chunk)}
+		body = outputCaptureOp{cp.chunkOp(n.Chunk)}
 	case parse.List:
-		return cp.list(n)
+		body = cp.list(n)
 	case parse.Lambda:
-		return cp.lambda(n)
+		body = cp.lambda(n)
 	case parse.Map:
-		return cp.map_(n)
+		body = cp.map_(n)
 	case parse.Braced:
-		return cp.braced(n)
+		body = cp.braced(n)
 	default:
 		cp.errorpf(n, "bad PrimaryType; parser bug")
-		return literalStr(n.SourceText())
+		body = literalStr(n.SourceText())
 	}
+	return makeValuesOp(n, body)
+}
+
+func (cp *compiler) primaryOps(ns []*parse.Primary) []valuesOp {
+	ops := make([]valuesOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.primaryOp(n)
+	}
+	return ops
 }
 
 type variableOp struct {
