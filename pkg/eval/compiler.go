@@ -19,14 +19,12 @@ type compiler struct {
 	scopes []staticNs
 	// Variables captured from outer scopes.
 	capture staticNs
-	// Position of what is being compiled.
-	begin, end int
 	// Information about the source.
 	srcMeta *Source
 }
 
 func compile(b, g staticNs, n *parse.Chunk, src *Source) (op Op, err error) {
-	cp := &compiler{b, []staticNs{g}, make(staticNs), 0, 0, src}
+	cp := &compiler{b, []staticNs{g}, make(staticNs), src}
 	defer func() {
 		r := recover()
 		if r == nil {
@@ -42,18 +40,10 @@ func compile(b, g staticNs, n *parse.Chunk, src *Source) (op Op, err error) {
 	return Op{cp.chunkOp(n), src}, nil
 }
 
-func (cp *compiler) compiling(n parse.Node) {
-	cp.begin, cp.end = n.Range().From, n.Range().To
-}
-
 func (cp *compiler) errorpf(r diag.Ranger, format string, args ...interface{}) {
 	// The panic is caught by the recover in compile above.
 	panic(NewCompilationError(fmt.Sprintf(format, args...),
 		*diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r.Range().From, r.Range().To)))
-}
-
-func (cp *compiler) errorf(format string, args ...interface{}) {
-	cp.errorpf(diag.Ranging{From: cp.begin, To: cp.end}, format, args...)
 }
 
 func (cp *compiler) thisScope() staticNs {

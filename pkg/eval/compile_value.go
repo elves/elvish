@@ -226,19 +226,19 @@ func (cp *compiler) primary(n *parse.Primary) valuesOpBody {
 	case parse.Variable:
 		sigil, qname := SplitVariableRef(n.Value)
 		if !cp.registerVariableGet(qname) {
-			cp.errorf("variable $%s not found", qname)
+			cp.errorpf(n, "variable $%s not found", qname)
 		}
 		return &variableOp{sigil != "", qname}
 	case parse.Wildcard:
 		seg, err := wildcardToSegment(n.SourceText())
 		if err != nil {
-			cp.errorf("%s", err)
+			cp.errorpf(n, "%s", err)
 		}
 		vs := []interface{}{
 			GlobPattern{glob.Pattern{[]glob.Segment{seg}, ""}, 0, nil}}
 		return literalValues(vs...)
 	case parse.Tilde:
-		cp.errorf("compiler bug: Tilde not handled in .compound")
+		cp.errorpf(n, "compiler bug: Tilde not handled in .compound")
 		return literalStr("~")
 	case parse.ExceptionCapture:
 		return exceptionCaptureOp{cp.chunkOp(n.Chunk)}
@@ -253,7 +253,7 @@ func (cp *compiler) primary(n *parse.Primary) valuesOpBody {
 	case parse.Braced:
 		return cp.braced(n)
 	default:
-		cp.errorf("bad PrimaryType; parser bug")
+		cp.errorpf(n, "bad PrimaryType; parser bug")
 		return literalStr(n.SourceText())
 	}
 }

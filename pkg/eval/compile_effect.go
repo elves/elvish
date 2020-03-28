@@ -434,9 +434,8 @@ func (cp *compiler) literal(n *parse.Primary, msg string) string {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return n.Value
 	default:
-		cp.compiling(n)
-		cp.errorf(msg)
-		return "" // not reached
+		cp.errorpf(n, msg)
+		return ""
 	}
 }
 
@@ -451,7 +450,7 @@ func (cp *compiler) redir(n *parse.Redir) effectOpBody {
 	flag := makeFlag(n.Mode)
 	if flag == -1 {
 		// TODO: Record and get redirection sign position
-		cp.errorf("bad redirection sign")
+		cp.errorpf(n, "bad redirection sign")
 	}
 	return &redirOp{dstOp, cp.compoundOp(n.Right), n.RightIsFd, n.Mode, flag}
 }

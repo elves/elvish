@@ -63,24 +63,23 @@ const delArgMsg = "arguments to del must be variable or variable elements"
 func compileDel(cp *compiler, fn *parse.Form) effectOpBody {
 	var ops []effectOp
 	for _, cn := range fn.Args {
-		cp.compiling(cn)
 		if len(cn.Indexings) != 1 {
-			cp.errorf(delArgMsg)
+			cp.errorpf(cn, delArgMsg)
 			continue
 		}
 		head, indicies := cn.Indexings[0].Head, cn.Indexings[0].Indicies
 		if head.Type != parse.Bareword {
 			if head.Type == parse.Variable {
-				cp.errorf("arguments to del must drop $")
+				cp.errorpf(cn, "arguments to del must drop $")
 			} else {
-				cp.errorf(delArgMsg)
+				cp.errorpf(cn, delArgMsg)
 			}
 			continue
 		}
 
 		sigil, qname := SplitVariableRef(head.Value)
 		if sigil != "" {
-			cp.errorf("arguments to del may not have a sigils, got %q", sigil)
+			cp.errorpf(cn, "arguments to del may not have a sigils, got %q", sigil)
 			continue
 		}
 		var f effectOpBody
@@ -89,7 +88,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOpBody {
 			switch ns {
 			case "", ":", "local:":
 				if !cp.thisScope().has(name) {
-					cp.errorf("no variable $%s in local scope", name)
+					cp.errorpf(cn, "no variable $%s in local scope", name)
 					continue
 				}
 				cp.thisScope().del(name)
@@ -97,12 +96,12 @@ func compileDel(cp *compiler, fn *parse.Form) effectOpBody {
 			case "E:":
 				f = delEnvVarOp{name}
 			default:
-				cp.errorf("only variables in local: or E: can be deleted")
+				cp.errorpf(cn, "only variables in local: or E: can be deleted")
 				continue
 			}
 		} else {
 			if !cp.registerVariableGet(qname) {
-				cp.errorf("no variable $%s", head.Value)
+				cp.errorpf(cn, "no variable $%s", head.Value)
 				continue
 			}
 			f = newDelElementOp(qname, head.Range().From, head.Range().To, cp.arrayOps(indicies))

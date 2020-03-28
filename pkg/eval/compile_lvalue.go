@@ -21,7 +21,7 @@ func (cp *compiler) lvaluesOp(n *parse.Indexing) (lvaluesOp, lvaluesOp) {
 	if n.Head.Type == parse.Braced {
 		// Braced list of variable specs, possibly with indicies.
 		if len(n.Indicies) > 0 {
-			cp.errorf("may not have indicies")
+			cp.errorpf(n, "may not have indicies")
 		}
 		return cp.lvaluesMulti(n.Head.Braced)
 	}
@@ -89,7 +89,7 @@ func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, lvaluesOpBo
 
 func (cp *compiler) lvalueElement(qname string, n *parse.Indexing) lvaluesOpBody {
 	if !cp.registerVariableGet(qname) {
-		cp.errorf("variable $%s not found", qname)
+		cp.errorpf(n, "variable $%s not found", qname)
 	}
 
 	begin, end := n.Range().From, n.Range().To
