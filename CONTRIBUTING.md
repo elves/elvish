@@ -20,9 +20,6 @@ patterns. When in doubt, ask the project lead.
 Still, some part of the codebase is poorly tested, and may even be outright
 untestable. In that case, also discuss to the project lead.
 
-Most of the Elvish codebase has decent unit test coverage. When contributing to
-Elvish,
-
 ## Documenting builtin functions and variables
 
 Documentation for builtin functions and variables are written in the Go sources
