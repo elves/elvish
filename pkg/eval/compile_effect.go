@@ -232,7 +232,7 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 	redirOps := cp.redirOps(n.Redirs)
 	// TODO: n.ErrorRedir
 
-	return makeEffectOp(n, &formOp{saveVarsOps, assignmentOps, redirOps, specialOpFunc, headOp, argOps, optsOp, spaceyAssignOp, n.Range().From, n.Range().To})
+	return makeEffectOp(n, &formOp{saveVarsOps, assignmentOps, redirOps, specialOpFunc, headOp, argOps, optsOp, spaceyAssignOp})
 }
 
 func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
@@ -252,10 +252,12 @@ type formOp struct {
 	argOps         []valuesOp
 	optsOp         valuesOpBody
 	spaceyAssignOp effectOp
-	begin, end     int
 }
 
 func (op *formOp) invoke(fm *Frame) (errRet error) {
+	// Save the range for the entire form.
+	formRange := fm.srcRange
+
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
 
@@ -357,8 +359,7 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 		}
 	}
 
-	fm.begin, fm.end = op.begin, op.end
-
+	fm.srcRange = formRange
 	if headFn != nil {
 		return headFn.Call(fm, args, convertedOpts)
 	}

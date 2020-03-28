@@ -305,9 +305,10 @@ func evalModule(fm *Frame, key string, src *Source) (Ns, error) {
 
 	newFm := &Frame{
 		fm.Evaler, src,
+		diag.Ranging{From: 0, To: len(src.Code)},
 		modGlobal, make(Ns),
 		fm.ports,
-		0, len(src.Code), fm.addTraceback(), false,
+		fm.addTraceback(), false,
 	}
 
 	op, err := compile(newFm.Builtin.static(), modGlobal.static(), n, src)

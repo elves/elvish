@@ -16,13 +16,13 @@ import (
 // shortly after creation; new Frame's are "forked" when needed.
 type Frame struct {
 	*Evaler
-	srcMeta *Source
+	srcMeta  *Source
+	srcRange diag.Ranging
 
 	local, up Ns
 	ports     []*Port
 
-	begin, end int
-	traceback  *stackTrace
+	traceback *stackTrace
 
 	background bool
 }
@@ -33,9 +33,10 @@ type Frame struct {
 func NewTopFrame(ev *Evaler, src *Source, ports []*Port) *Frame {
 	return &Frame{
 		ev, src,
+		diag.Ranging{From: 0, To: len(src.Code)},
 		ev.Global, make(Ns),
 		ports,
-		0, len(src.Code), nil, false,
+		nil, false,
 	}
 }
 
@@ -125,10 +126,10 @@ func (fm *Frame) fork(name string) *Frame {
 		}
 	}
 	return &Frame{
-		fm.Evaler, fm.srcMeta,
+		fm.Evaler, fm.srcMeta, fm.srcRange,
 		fm.local, fm.up,
 		newPorts,
-		fm.begin, fm.end, fm.traceback, fm.background,
+		fm.traceback, fm.background,
 	}
 }
 
@@ -201,7 +202,7 @@ func (fm *Frame) makeException(e error) error {
 func (fm *Frame) addTraceback() *stackTrace {
 	return &stackTrace{
 		entry: diag.NewContext(
-			fm.srcMeta.Name, fm.srcMeta.Code, fm.begin, fm.end),
+			fm.srcMeta.Name, fm.srcMeta.Code, fm.srcRange.From, fm.srcRange.To),
 		next: fm.traceback,
 	}
 }
@@ -209,6 +210,6 @@ func (fm *Frame) addTraceback() *stackTrace {
 // Amends the being and end of the current frame and returns the result of
 // fmt.Errorf.
 func (fm *Frame) errorpf(begin, end int, format string, args ...interface{}) error {
-	fm.begin, fm.end = begin, end
+	fm.srcRange = diag.Ranging{From: begin, To: end}
 	return fmt.Errorf(format, args...)
 }
