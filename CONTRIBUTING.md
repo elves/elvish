@@ -88,11 +88,6 @@ Dependencies of the generation rules:
 
 -   An installed `elvish` in your PATH;
 
--   Python 2.7 at `/usr/bin/python2.7`.
-
-    NOTE: Python scripts should be rewritten in either Go or Elvish, but we
-    still have some.
-
 ## Formatting source files
 
 Format Go code with
