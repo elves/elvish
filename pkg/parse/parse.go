@@ -214,7 +214,7 @@ func (fn *Form) parse(ps *parser) {
 					if len(cn.Indexings) == 1 && checkVariableInAssignment(cn.Indexings[0].Head, ps) {
 						fn.Vars = append(fn.Vars, cn)
 					} else {
-						ps.errorp(cn.From, cn.To, errBadLHS)
+						ps.errorp(cn, errBadLHS)
 					}
 				}
 				if fn.Head != nil {
@@ -275,7 +275,7 @@ func (an *Assignment) parse(ps *parser) {
 	ps.parse(&Indexing{ExprCtx: LHSExpr}).addAs(&an.Left, an)
 	head := an.Left.Head
 	if !checkVariableInAssignment(head, ps) {
-		ps.errorp(head.Range().From, head.Range().To, errShouldBeVariableName)
+		ps.errorp(head, errShouldBeVariableName)
 	}
 
 	if !parseSep(an, ps, '=') {

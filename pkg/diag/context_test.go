@@ -77,5 +77,5 @@ func parseContext(s, starter, ender string, endAfter bool) *Context {
 	if endAfter {
 		end += len(ender)
 	}
-	return NewContext("[test]", s, strings.Index(s, starter), end)
+	return NewContext("[test]", s, Ranging{From: strings.Index(s, starter), To: end})
 }

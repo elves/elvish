@@ -103,8 +103,8 @@ func (ps *parser) backup() {
 	ps.pos -= s
 }
 
-func (ps *parser) errorp(begin, end int, e error) {
-	ps.errors.add(e.Error(), diag.NewContext(ps.srcName, ps.src, begin, end))
+func (ps *parser) errorp(r diag.Ranger, e error) {
+	ps.errors.add(e.Error(), diag.NewContext(ps.srcName, ps.src, r))
 }
 
 func (ps *parser) error(e error) {
@@ -112,7 +112,7 @@ func (ps *parser) error(e error) {
 	if end < len(ps.src) {
 		end++
 	}
-	ps.errorp(ps.pos, end, e)
+	ps.errorp(diag.Ranging{From: ps.pos, To: end}, e)
 }
 
 func newError(text string, shouldbe ...string) error {

@@ -41,7 +41,7 @@ func compile(b, g staticNs, n *parse.Chunk, src *Source) (op Op, err error) {
 func (cp *compiler) errorpf(r diag.Ranger, format string, args ...interface{}) {
 	// The panic is caught by the recover in compile above.
 	panic(NewCompilationError(fmt.Sprintf(format, args...),
-		*diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r.Range().From, r.Range().To)))
+		*diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r)))
 }
 
 func (cp *compiler) thisScope() staticNs {

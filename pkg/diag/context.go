@@ -20,8 +20,8 @@ type Context struct {
 }
 
 // NewContext creates a new Context.
-func NewContext(name, source string, from, to int) *Context {
-	return &Context{name, source, Ranging{from, to}, nil}
+func NewContext(name, source string, r Ranger) *Context {
+	return &Context{name, source, r.Range(), nil}
 }
 
 // Information about the source range that are needed for pretty-printing.

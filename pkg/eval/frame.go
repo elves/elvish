@@ -201,9 +201,8 @@ func (fm *Frame) makeException(e error) error {
 
 func (fm *Frame) addTraceback() *stackTrace {
 	return &stackTrace{
-		entry: diag.NewContext(
-			fm.srcMeta.Name, fm.srcMeta.Code, fm.srcRange.From, fm.srcRange.To),
-		next: fm.traceback,
+		entry: diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, fm.srcRange),
+		next:  fm.traceback,
 	}
 }
 
