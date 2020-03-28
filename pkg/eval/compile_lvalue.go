@@ -42,7 +42,7 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (lvaluesOp, lvaluesOp)
 	fixedEnd := 0
 	for i, cn := range nodes {
 		if len(cn.Indexings) != 1 {
-			cp.errorpf(cn.Range().From, cn.Range().To, "must be an lvalue")
+			cp.errorpf(cn, "must be an lvalue")
 		}
 		var rest bool
 		rest, opFuncs[i] = cp.lvalueBase(cn.Indexings[0], "must be an lvalue ")
@@ -52,7 +52,7 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (lvaluesOp, lvaluesOp)
 				restNode = cn.Indexings[0]
 				restOpFunc = opFuncs[i]
 			} else {
-				cp.errorpf(cn.Range().From, cn.Range().To, "only the last lvalue may have @")
+				cp.errorpf(cn, "only the last lvalue may have @")
 			}
 		} else {
 			fixedEnd = cn.Range().To

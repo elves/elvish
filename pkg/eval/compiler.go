@@ -46,14 +46,14 @@ func (cp *compiler) compiling(n parse.Node) {
 	cp.begin, cp.end = n.Range().From, n.Range().To
 }
 
-func (cp *compiler) errorpf(begin, end int, format string, args ...interface{}) {
+func (cp *compiler) errorpf(r diag.Ranger, format string, args ...interface{}) {
 	// The panic is caught by the recover in compile above.
 	panic(NewCompilationError(fmt.Sprintf(format, args...),
-		*diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, begin, end)))
+		*diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r.Range().From, r.Range().To)))
 }
 
 func (cp *compiler) errorf(format string, args ...interface{}) {
-	cp.errorpf(cp.begin, cp.end, format, args...)
+	cp.errorpf(diag.Ranging{From: cp.begin, To: cp.end}, format, args...)
 }
 
 func (cp *compiler) thisScope() staticNs {

@@ -25,7 +25,7 @@ func oneString(cn *parse.Compound) (string, bool) {
 func mustPrimary(cp *compiler, cn *parse.Compound, msg string) *parse.Primary {
 	p := onePrimary(cn)
 	if p == nil {
-		cp.errorpf(cn.Range().From, cn.Range().To, msg)
+		cp.errorpf(cn, msg)
 	}
 	return p
 }
@@ -35,7 +35,7 @@ func mustPrimary(cp *compiler, cn *parse.Compound, msg string) *parse.Primary {
 func mustString(cp *compiler, cn *parse.Compound, msg string) string {
 	s, ok := oneString(cn)
 	if !ok {
-		cp.errorpf(cn.Range().From, cn.Range().To, msg)
+		cp.errorpf(cn, msg)
 	}
 	return s
 }

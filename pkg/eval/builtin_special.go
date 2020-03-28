@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
@@ -219,7 +220,7 @@ func compileUse(cp *compiler, fn *parse.Form) effectOpBody {
 	switch len(fn.Args) {
 	case 0:
 		end := fn.Head.Range().To
-		cp.errorpf(end, end, "lack module name")
+		cp.errorpf(diag.PointRanging(end), "lack module name")
 	case 1:
 		spec = mustString(cp, fn.Args[0],
 			"module spec should be a literal string")
@@ -233,7 +234,7 @@ func compileUse(cp *compiler, fn *parse.Form) effectOpBody {
 		name = mustString(cp, fn.Args[1],
 			"module name should be a literal string")
 	default: // > 2
-		cp.errorpf(fn.Args[2].Range().From, fn.Args[len(fn.Args)-1].Range().To,
+		cp.errorpf(diag.MixedRanging(fn.Args[2], fn.Args[len(fn.Args)-1]),
 			"superfluous argument(s)")
 	}
 
@@ -487,7 +488,7 @@ func compileFor(cp *compiler, fn *parse.Form) effectOpBody {
 
 	varOp, restOp := cp.lvaluesOp(varNode.Indexings[0])
 	if restOp.body != nil {
-		cp.errorpf(restOp.From, restOp.To, "rest not allowed")
+		cp.errorpf(restOp, "rest not allowed")
 	}
 
 	iterOp := cp.compoundOp(iterNode)
@@ -588,7 +589,7 @@ func compileTry(cp *compiler, fn *parse.Form) effectOpBody {
 		var restOp lvaluesOp
 		exceptVarOp, restOp = cp.lvaluesOp(exceptVarNode)
 		if restOp.body != nil {
-			cp.errorpf(restOp.From, restOp.To, "may not use @rest in except variable")
+			cp.errorpf(restOp, "may not use @rest in except variable")
 		}
 	}
 	if exceptNode != nil {

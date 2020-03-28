@@ -1,9 +1,12 @@
 package eval
 
-import "github.com/elves/elvish/pkg/parse"
+import (
+	"github.com/elves/elvish/pkg/diag"
+	"github.com/elves/elvish/pkg/parse"
+)
 
 type errorpfer interface {
-	errorpf(begin, end int, fmt string, args ...interface{})
+	errorpf(r diag.Ranger, fmt string, args ...interface{})
 }
 
 // argsWalker is used by builtin special forms to implement argument parsing.
@@ -23,7 +26,7 @@ func (aw *argsWalker) more() bool {
 
 func (aw *argsWalker) peek() *parse.Compound {
 	if !aw.more() {
-		aw.cp.errorpf(aw.form.Range().To, aw.form.Range().To, "need more arguments")
+		aw.cp.errorpf(aw.form, "need more arguments")
 	}
 	return aw.form.Args[aw.idx]
 }
@@ -49,14 +52,14 @@ func (aw *argsWalker) nextIs(text string) bool {
 func (aw *argsWalker) nextMustLambda() *parse.Primary {
 	n := aw.next()
 	if len(n.Indexings) != 1 {
-		aw.cp.errorpf(n.Range().From, n.Range().To, "must be lambda")
+		aw.cp.errorpf(n, "must be lambda")
 	}
 	if len(n.Indexings[0].Indicies) != 0 {
-		aw.cp.errorpf(n.Range().From, n.Range().To, "must be lambda")
+		aw.cp.errorpf(n, "must be lambda")
 	}
 	pn := n.Indexings[0].Head
 	if pn.Type != parse.Lambda {
-		aw.cp.errorpf(n.Range().From, n.Range().To, "must be lambda")
+		aw.cp.errorpf(n, "must be lambda")
 	}
 	return pn
 }
@@ -70,6 +73,6 @@ func (aw *argsWalker) nextMustLambdaIfAfter(leader string) *parse.Primary {
 
 func (aw *argsWalker) mustEnd() {
 	if aw.more() {
-		aw.cp.errorpf(aw.form.Args[aw.idx].Range().From, aw.form.Range().To, "too many arguments")
+		aw.cp.errorpf(diag.Ranging{From: aw.form.Args[aw.idx].Range().From, To: aw.form.Range().To}, "too many arguments")
 	}
 }

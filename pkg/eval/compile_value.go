@@ -397,14 +397,14 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 			explode := sigil != ""
 			ns, name := SplitQNameNs(qname)
 			if ns != "" {
-				cp.errorpf(arg.Range().From, arg.Range().To, "argument name must be unqualified")
+				cp.errorpf(arg, "argument name must be unqualified")
 			}
 			if name == "" {
-				cp.errorpf(arg.Range().From, arg.Range().To, "argument name must not be empty")
+				cp.errorpf(arg, "argument name must not be empty")
 			}
 			if explode {
 				if i != len(n.Elements)-1 {
-					cp.errorpf(arg.Range().From, arg.Range().To, "only the last argument may have @")
+					cp.errorpf(arg, "only the last argument may have @")
 				}
 				restArgName = name
 				argNames = argNames[:i]
@@ -420,14 +420,14 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 			qname := mustString(cp, opt.Key, "option name must be literal string")
 			ns, name := SplitQNameNs(qname)
 			if ns != "" {
-				cp.errorpf(opt.Key.Range().From, opt.Key.Range().To, "option name must be unqualified")
+				cp.errorpf(opt.Key, "option name must be unqualified")
 			}
 			if name == "" {
-				cp.errorpf(opt.Key.Range().From, opt.Key.Range().To, "option name must not be empty")
+				cp.errorpf(opt.Key, "option name must not be empty")
 			}
 			optNames[i] = name
 			if opt.Value == nil {
-				cp.errorpf(opt.Range().To, opt.Range().To, "option must have default value")
+				cp.errorpf(opt.Key, "option must have default value")
 			} else {
 				optDefaultOps[i] = cp.compoundOp(opt.Value)
 			}
