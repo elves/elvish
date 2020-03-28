@@ -307,7 +307,7 @@ func evalModule(fm *Frame, key string, src *Source) (Ns, error) {
 		fm.Evaler, src,
 		diag.Ranging{From: 0, To: len(src.Code)},
 		modGlobal, make(Ns),
-		fm.ports,
+		fm.intCh, fm.ports,
 		fm.addTraceback(), false,
 	}
 

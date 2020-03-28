@@ -47,9 +47,6 @@ type Evaler struct {
 	beforeChdir []func(string)
 	afterChdir  []func(string)
 
-	// Used to receive SIGINT.
-	intCh chan struct{}
-
 	// State of the module system.
 	libDir  string
 	bundled map[string]string
@@ -142,7 +139,6 @@ func NewEvaler() *Evaler {
 		},
 		bundled: bundled.Get(),
 		Editor:  nil,
-		intCh:   nil,
 	}
 
 	beforeChdirElvish, afterChdirElvish := vector.Empty, vector.Empty
@@ -282,10 +278,8 @@ func (ev *Evaler) EvalInTTY(op Op) error {
 	defer stdPorts.close()
 
 	intCh, cleanupInt := listenInterrupts()
-	ev.intCh = intCh
 	defer func() {
 		cleanupInt()
-		ev.intCh = nil
 		// Put myself in foreground, in case some command has put me in background.
 		err := putSelfInFg()
 		if err != nil {
@@ -293,7 +287,9 @@ func (ev *Evaler) EvalInTTY(op Op) error {
 		}
 	}()
 
-	return ev.Eval(op, stdPorts.ports[:])
+	ec := NewTopFrame(ev, op.Src, stdPorts.ports[:])
+	ec.intCh = intCh
+	return ec.eval(op.Inner)
 }
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it

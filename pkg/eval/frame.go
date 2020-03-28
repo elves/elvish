@@ -16,11 +16,14 @@ import (
 // shortly after creation; new Frame's are "forked" when needed.
 type Frame struct {
 	*Evaler
+
 	srcMeta  *Source
 	srcRange diag.Ranging
 
 	local, up Ns
-	ports     []*Port
+
+	intCh chan struct{}
+	ports []*Port
 
 	traceback *stackTrace
 
@@ -35,7 +38,7 @@ func NewTopFrame(ev *Evaler, src *Source, ports []*Port) *Frame {
 		ev, src,
 		diag.Ranging{From: 0, To: len(src.Code)},
 		ev.Global, make(Ns),
-		ports,
+		nil, ports,
 		nil, false,
 	}
 }
@@ -128,7 +131,7 @@ func (fm *Frame) fork(name string) *Frame {
 	return &Frame{
 		fm.Evaler, fm.srcMeta, fm.srcRange,
 		fm.local, fm.up,
-		newPorts,
+		fm.intCh, newPorts,
 		fm.traceback, fm.background,
 	}
 }
