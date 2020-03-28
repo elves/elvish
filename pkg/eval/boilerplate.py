@@ -8,7 +8,7 @@ def put_compile_s(out, name, intype, extraargs, outtype):
     print >>out, '''
 func (cp *compiler) {name}Op(n {intype}{extraargs}) {outtype} {{
 	cp.compiling(n)
-	return {outtype}{{cp.{name}(n{extranames}), n.Range().From, n.Range().To}}
+	return {outtype}{{cp.{name}(n{extranames}), n.Range()}}
 }}
 
 func (cp *compiler) {name}Ops(ns []{intype}{extraargs}) []{outtype} {{

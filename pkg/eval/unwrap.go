@@ -43,7 +43,7 @@ type ValuesUnwrapper struct{ *unwrapper }
 // values.
 func (ctx *Frame) ExecAndUnwrap(desc string, op valuesOp) ValuesUnwrapper {
 	values, err := op.exec(ctx)
-	return ValuesUnwrapper{&unwrapper{ctx, desc, op.begin, op.end, values, err}}
+	return ValuesUnwrapper{&unwrapper{ctx, desc, op.From, op.To, values, err}}
 }
 
 // One unwraps the value to be exactly one value.

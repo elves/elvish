@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
 )
@@ -25,7 +26,7 @@ func (cp *compiler) lvaluesOp(n *parse.Indexing) (lvaluesOp, lvaluesOp) {
 		return cp.lvaluesMulti(n.Head.Braced)
 	}
 	rest, opFunc := cp.lvalueBase(n, "must be an lvalue or a braced list of those")
-	op := lvaluesOp{opFunc, n.Range().From, n.Range().To}
+	op := lvaluesOp{opFunc, n.Range()}
 	if rest {
 		return lvaluesOp{}, op
 	}
@@ -61,14 +62,14 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (lvaluesOp, lvaluesOp)
 	var restOp lvaluesOp
 	// If there is a rest part, make LValuesOp for it and remove it from opFuncs.
 	if restOpFunc != nil {
-		restOp = lvaluesOp{restOpFunc, restNode.Range().From, restNode.Range().To}
+		restOp = lvaluesOp{restOpFunc, restNode.Range()}
 		opFuncs = opFuncs[:len(opFuncs)-1]
 	}
 
 	var op lvaluesOp
 	// If there is still anything left in opFuncs, make LValuesOp for the fixed part.
 	if len(opFuncs) > 0 {
-		op = lvaluesOp{seqLValuesOpBody{opFuncs}, nodes[0].Range().From, fixedEnd}
+		op = lvaluesOp{seqLValuesOpBody{opFuncs}, diag.Ranging{From: nodes[0].Range().From, To: fixedEnd}}
 	}
 
 	return op, restOp

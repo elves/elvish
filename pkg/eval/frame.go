@@ -165,7 +165,7 @@ func (fm *Frame) CaptureOutput(fn Callable, args []interface{}, opts map[string]
 	opFunc := func(f *Frame) error {
 		return fn.Call(f, args, opts)
 	}
-	return pcaptureOutput(fm, effectOp{funcOp(opFunc), -1, -1})
+	return pcaptureOutput(fm, effectOp{funcOp(opFunc), diag.Ranging{From: -1, To: -1}})
 }
 
 // CallWithOutputCallback calls a function with the given arguments and options,
@@ -176,7 +176,7 @@ func (fm *Frame) CallWithOutputCallback(fn Callable, args []interface{}, opts ma
 	opFunc := func(f *Frame) error {
 		return fn.Call(f, args, opts)
 	}
-	return pcaptureOutputInner(fm, effectOp{funcOp(opFunc), -1, -1}, valuesCb, bytesCb)
+	return pcaptureOutputInner(fm, effectOp{funcOp(opFunc), diag.Ranging{From: -1, To: -1}}, valuesCb, bytesCb)
 }
 
 // ExecWithOutputCallback executes an Op, feeding the outputs to the given

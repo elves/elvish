@@ -7,6 +7,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 )
 
@@ -65,7 +66,7 @@ func TestConcurrentEval(t *testing.T) {
 }
 
 func BenchmarkOutputCaptureOverhead(b *testing.B) {
-	op := effectOp{funcOp(func(*Frame) error { return nil }), 0, 0}
+	op := effectOp{funcOp(func(*Frame) error { return nil }), diag.Ranging{}}
 	benchmarkOutputCapture(op, b.N)
 }
 
@@ -73,7 +74,7 @@ func BenchmarkOutputCaptureValues(b *testing.B) {
 	op := effectOp{funcOp(func(fm *Frame) error {
 		fm.ports[1].Chan <- "test"
 		return nil
-	}), 0, 0}
+	}), diag.Ranging{}}
 	benchmarkOutputCapture(op, b.N)
 }
 
@@ -82,7 +83,7 @@ func BenchmarkOutputCaptureBytes(b *testing.B) {
 	op := effectOp{funcOp(func(fm *Frame) error {
 		fm.ports[1].File.Write(bytesToWrite)
 		return nil
-	}), 0, 0}
+	}), diag.Ranging{}}
 	benchmarkOutputCapture(op, b.N)
 }
 
@@ -92,7 +93,7 @@ func BenchmarkOutputCaptureMixed(b *testing.B) {
 		fm.ports[1].Chan <- false
 		fm.ports[1].File.Write(bytesToWrite)
 		return nil
-	}), 0, 0}
+	}), diag.Ranging{}}
 	benchmarkOutputCapture(op, b.N)
 }
 

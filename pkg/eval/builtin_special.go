@@ -106,7 +106,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOpBody {
 			}
 			f = newDelElementOp(qname, head.Range().From, head.Range().To, cp.arrayOps(indicies))
 		}
-		ops = append(ops, effectOp{f, cn.Range().From, cn.Range().To})
+		ops = append(ops, effectOp{f, cn.Range()})
 	}
 	return seqOp{ops}
 }
@@ -128,7 +128,7 @@ func newDelElementOp(qname string, begin, headEnd int, indexOps []valuesOp) effe
 	ends := make([]int, len(indexOps)+1)
 	ends[0] = headEnd
 	for i, op := range indexOps {
-		ends[i+1] = op.end
+		ends[i+1] = op.To
 	}
 	return &delElemOp{qname, indexOps, begin, ends}
 }
@@ -148,7 +148,7 @@ func (op *delElemOp) invoke(fm *Frame) error {
 			return err
 		}
 		if len(indexValues) != 1 {
-			return fm.errorpf(indexOp.begin, indexOp.end, "index must evaluate to a single value in argument to del")
+			return fm.errorpf(indexOp.From, indexOp.To, "index must evaluate to a single value in argument to del")
 		}
 		indicies = append(indicies, indexValues[0])
 	}
@@ -198,7 +198,7 @@ func (op fnOp) invoke(fm *Frame) error {
 }
 
 func wrapFn(op effectOp) effectOp {
-	return effectOp{fnWrap{op}, op.begin, op.end}
+	return effectOp{fnWrap{op}, op.Ranging}
 }
 
 type fnWrap struct{ wrapped effectOp }
@@ -487,7 +487,7 @@ func compileFor(cp *compiler, fn *parse.Form) effectOpBody {
 
 	varOp, restOp := cp.lvaluesOp(varNode.Indexings[0])
 	if restOp.body != nil {
-		cp.errorpf(restOp.begin, restOp.end, "rest not allowed")
+		cp.errorpf(restOp.From, restOp.To, "rest not allowed")
 	}
 
 	iterOp := cp.compoundOp(iterNode)
@@ -513,7 +513,7 @@ func (op *forOp) invoke(fm *Frame) error {
 		return err
 	}
 	if len(variables) != 1 {
-		return fm.errorpf(op.varOp.begin, op.varOp.end, "only one variable allowed")
+		return fm.errorpf(op.varOp.From, op.varOp.To, "only one variable allowed")
 	}
 	variable := variables[0]
 	iterable, err := fm.ExecAndUnwrap("value being iterated", op.iterOp).One().Any()
@@ -588,7 +588,7 @@ func compileTry(cp *compiler, fn *parse.Form) effectOpBody {
 		var restOp lvaluesOp
 		exceptVarOp, restOp = cp.lvaluesOp(exceptVarNode)
 		if restOp.body != nil {
-			cp.errorpf(restOp.begin, restOp.end, "may not use @rest in except variable")
+			cp.errorpf(restOp.From, restOp.To, "may not use @rest in except variable")
 		}
 	}
 	if exceptNode != nil {
@@ -675,7 +675,7 @@ func (op lvaluesOp) execMustOne(fm *Frame) (vars.Var, error) {
 		return nil, err
 	}
 	if len(variables) != 1 {
-		return nil, fm.errorpf(op.begin, op.end, "should be one variable")
+		return nil, fm.errorpf(op.From, op.To, "should be one variable")
 	}
 	return variables[0], nil
 }

@@ -67,7 +67,7 @@ func (c *Closure) Index(k interface{}) (interface{}, bool) {
 	case "opt-defaults":
 		return vals.MakeList(c.OptDefaults...), true
 	case "body":
-		return c.SrcMeta.Code[c.Op.begin:c.Op.end], true
+		return c.SrcMeta.Code[c.Op.From:c.Op.To], true
 	case "def":
 		return c.SrcMeta.Code[c.DefBegint:c.DefEnd], true
 	case "src":

@@ -4,7 +4,7 @@ import "github.com/elves/elvish/pkg/parse"
 
 func (cp *compiler) chunkOp(n *parse.Chunk) effectOp {
 	cp.compiling(n)
-	return effectOp{cp.chunk(n), n.Range().From, n.Range().To}
+	return effectOp{cp.chunk(n), n.Range()}
 }
 
 func (cp *compiler) chunkOps(ns []*parse.Chunk) []effectOp {
@@ -17,7 +17,7 @@ func (cp *compiler) chunkOps(ns []*parse.Chunk) []effectOp {
 
 func (cp *compiler) pipelineOp(n *parse.Pipeline) effectOp {
 	cp.compiling(n)
-	return effectOp{cp.pipeline(n), n.Range().From, n.Range().To}
+	return effectOp{cp.pipeline(n), n.Range()}
 }
 
 func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []effectOp {
@@ -30,7 +30,7 @@ func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []effectOp {
 
 func (cp *compiler) formOp(n *parse.Form) effectOp {
 	cp.compiling(n)
-	return effectOp{cp.form(n), n.Range().From, n.Range().To}
+	return effectOp{cp.form(n), n.Range()}
 }
 
 func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
@@ -43,7 +43,7 @@ func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
 
 func (cp *compiler) assignmentOp(n *parse.Assignment) effectOp {
 	cp.compiling(n)
-	return effectOp{cp.assignment(n), n.Range().From, n.Range().To}
+	return effectOp{cp.assignment(n), n.Range()}
 }
 
 func (cp *compiler) assignmentOps(ns []*parse.Assignment) []effectOp {
@@ -56,7 +56,7 @@ func (cp *compiler) assignmentOps(ns []*parse.Assignment) []effectOp {
 
 func (cp *compiler) redirOp(n *parse.Redir) effectOp {
 	cp.compiling(n)
-	return effectOp{cp.redir(n), n.Range().From, n.Range().To}
+	return effectOp{cp.redir(n), n.Range()}
 }
 
 func (cp *compiler) redirOps(ns []*parse.Redir) []effectOp {
@@ -69,7 +69,7 @@ func (cp *compiler) redirOps(ns []*parse.Redir) []effectOp {
 
 func (cp *compiler) compoundOp(n *parse.Compound) valuesOp {
 	cp.compiling(n)
-	return valuesOp{cp.compound(n), n.Range().From, n.Range().To}
+	return valuesOp{cp.compound(n), n.Range()}
 }
 
 func (cp *compiler) compoundOps(ns []*parse.Compound) []valuesOp {
@@ -82,7 +82,7 @@ func (cp *compiler) compoundOps(ns []*parse.Compound) []valuesOp {
 
 func (cp *compiler) arrayOp(n *parse.Array) valuesOp {
 	cp.compiling(n)
-	return valuesOp{cp.array(n), n.Range().From, n.Range().To}
+	return valuesOp{cp.array(n), n.Range()}
 }
 
 func (cp *compiler) arrayOps(ns []*parse.Array) []valuesOp {
@@ -95,7 +95,7 @@ func (cp *compiler) arrayOps(ns []*parse.Array) []valuesOp {
 
 func (cp *compiler) indexingOp(n *parse.Indexing) valuesOp {
 	cp.compiling(n)
-	return valuesOp{cp.indexing(n), n.Range().From, n.Range().To}
+	return valuesOp{cp.indexing(n), n.Range()}
 }
 
 func (cp *compiler) indexingOps(ns []*parse.Indexing) []valuesOp {
@@ -108,7 +108,7 @@ func (cp *compiler) indexingOps(ns []*parse.Indexing) []valuesOp {
 
 func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 	cp.compiling(n)
-	return valuesOp{cp.primary(n), n.Range().From, n.Range().To}
+	return valuesOp{cp.primary(n), n.Range()}
 }
 
 func (cp *compiler) primaryOps(ns []*parse.Primary) []valuesOp {
@@ -121,7 +121,7 @@ func (cp *compiler) primaryOps(ns []*parse.Primary) []valuesOp {
 
 func (cp *compiler) listOp(n *parse.Primary) valuesOp {
 	cp.compiling(n)
-	return valuesOp{cp.list(n), n.Range().From, n.Range().To}
+	return valuesOp{cp.list(n), n.Range()}
 }
 
 func (cp *compiler) listOps(ns []*parse.Primary) []valuesOp {
@@ -134,7 +134,7 @@ func (cp *compiler) listOps(ns []*parse.Primary) []valuesOp {
 
 func (cp *compiler) lambdaOp(n *parse.Primary) valuesOp {
 	cp.compiling(n)
-	return valuesOp{cp.lambda(n), n.Range().From, n.Range().To}
+	return valuesOp{cp.lambda(n), n.Range()}
 }
 
 func (cp *compiler) lambdaOps(ns []*parse.Primary) []valuesOp {
@@ -147,7 +147,7 @@ func (cp *compiler) lambdaOps(ns []*parse.Primary) []valuesOp {
 
 func (cp *compiler) map_Op(n *parse.Primary) valuesOp {
 	cp.compiling(n)
-	return valuesOp{cp.map_(n), n.Range().From, n.Range().To}
+	return valuesOp{cp.map_(n), n.Range()}
 }
 
 func (cp *compiler) map_Ops(ns []*parse.Primary) []valuesOp {
@@ -160,7 +160,7 @@ func (cp *compiler) map_Ops(ns []*parse.Primary) []valuesOp {
 
 func (cp *compiler) bracedOp(n *parse.Primary) valuesOp {
 	cp.compiling(n)
-	return valuesOp{cp.braced(n), n.Range().From, n.Range().To}
+	return valuesOp{cp.braced(n), n.Range()}
 }
 
 func (cp *compiler) bracedOps(ns []*parse.Primary) []valuesOp {

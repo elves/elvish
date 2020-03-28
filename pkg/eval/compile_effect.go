@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
@@ -183,7 +184,7 @@ func (cp *compiler) form(n *parse.Form) effectOpBody {
 					// Fall back to $e:head~.
 					headOpFunc = literalValues(ExternalCmd{headStr})
 				}
-				headOp = valuesOp{headOpFunc, n.Head.Range().From, n.Head.Range().To}
+				headOp = valuesOp{headOpFunc, n.Head.Range()}
 			}
 		} else {
 			// Head exists and is not a literal string. Evaluate as a normal
@@ -206,14 +207,14 @@ func (cp *compiler) form(n *parse.Form) effectOpBody {
 					values = append(values, moreValues...)
 				}
 				return values, nil
-			}), -1, -1}
+			}), diag.Ranging{From: -1, To: -1}}
 		if len(argOps) > 0 {
-			argsOp.begin = argOps[0].begin
-			argsOp.end = argOps[len(argOps)-1].end
+			argsOp.From = argOps[0].From
+			argsOp.To = argOps[len(argOps)-1].To
 		}
 		spaceyAssignOp = effectOp{
 			&assignmentOp{varsOp, restOp, argsOp},
-			n.Range().From, argsOp.end,
+			diag.Ranging{From: n.Range().From, To: argsOp.To},
 		}
 	}
 

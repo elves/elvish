@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/glob"
 	"github.com/elves/elvish/pkg/parse"
@@ -499,7 +500,7 @@ func (cp *compiler) mapPairs(pairs []*parse.MapPair) valuesOpBody {
 		keysOps[i] = cp.compoundOp(pair.Key)
 		if pair.Value == nil {
 			p := pair.Range().To
-			valuesOps[i] = valuesOp{literalValues(true), p, p}
+			valuesOps[i] = valuesOp{literalValues(true), diag.Ranging{From: p, To: p}}
 		} else {
 			valuesOps[i] = cp.compoundOp(pairs[i].Value)
 		}
