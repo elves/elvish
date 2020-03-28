@@ -8,15 +8,15 @@ import (
 	"path/filepath"
 	"time"
 
-	bolt "go.etcd.io/bbolt"
 	"github.com/elves/elvish/pkg/daemon"
 	"github.com/elves/elvish/pkg/eval"
 	daemonmod "github.com/elves/elvish/pkg/eval/daemon"
+	"github.com/elves/elvish/pkg/eval/platform"
 	"github.com/elves/elvish/pkg/eval/re"
 	"github.com/elves/elvish/pkg/eval/store"
 	"github.com/elves/elvish/pkg/eval/str"
-	"github.com/elves/elvish/pkg/eval/platform"
 	daemonp "github.com/elves/elvish/pkg/program/daemon"
+	bolt "go.etcd.io/bbolt"
 )
 
 const (
