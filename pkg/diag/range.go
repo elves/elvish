@@ -15,3 +15,14 @@ type Ranging struct {
 
 // Range returns the Ranging itself.
 func (r Ranging) Range() Ranging { return r }
+
+// PointRanging returns a zero-width Ranging at the given point.
+func PointRanging(p int) Ranging {
+	return Ranging{p, p}
+}
+
+// MixedRanging returns a Ranging from the start position of a to the end
+// position of b.
+func MixedRanging(a, b Ranger) Ranging {
+	return Ranging{a.Range().From, b.Range().To}
+}
