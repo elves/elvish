@@ -4,6 +4,11 @@ PKG_COVERS := $(shell go list ./... | sed 's|^$(PKG_BASE)|.|' | grep -v '^\.$$' 
 COVER_MODE := set
 VERSION := $(shell git describe --tags --always --dirty=-dirty)
 
+# -race requires cgo
+ifneq ($(OS),Windows_NT)
+    TEST_FLAGS := -race
+endif
+
 GOVERALLS := github.com/mattn/goveralls
 
 default: test get
@@ -20,7 +25,7 @@ generate:
 	go generate ./...
 
 test:
-	go test -race $(PKGS)
+	CGO_ENABLED=1 go test $(TEST_FLAGS) $(PKGS)
 
 cover/%.cover: %
 	mkdir -p $(dir $@)
