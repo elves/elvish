@@ -20,7 +20,7 @@ generate:
 	go generate ./...
 
 test:
-	go test $(PKGS)
+	go test -race $(PKGS)
 
 cover/%.cover: %
 	mkdir -p $(dir $@)
