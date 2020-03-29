@@ -28,12 +28,22 @@ func (vt ValueTester) Kind(wantKind string) ValueTester {
 	return vt
 }
 
+// Bool tests the Boool of the value.
+func (vt ValueTester) Bool(wantBool bool) ValueTester {
+	vt.t.Helper()
+	b := Bool(vt.v)
+	if b != wantBool {
+		vt.t.Errorf("Bool(v) = %v, want %v", b, wantBool)
+	}
+	return vt
+}
+
 // Hash tests the Hash of the value.
 func (vt ValueTester) Hash(wantHash uint32) ValueTester {
 	vt.t.Helper()
-	kind := Hash(vt.v)
-	if kind != wantHash {
-		vt.t.Errorf("Hash(v) = %v, want %v", kind, wantHash)
+	hash := Hash(vt.v)
+	if hash != wantHash {
+		vt.t.Errorf("Hash(v) = %v, want %v", hash, wantHash)
 	}
 	return vt
 }

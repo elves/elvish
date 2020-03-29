@@ -24,6 +24,7 @@ func (testStructMap2) IsStructMap(StructMapMarker) {}
 func TestStructMap(t *testing.T) {
 	TestValue(t, testStructMap{}).
 		Kind("structmap").
+		Bool(true).
 		Hash(hash.DJB(Hash(""), Hash(0.0))).
 		Repr(`[&name='' &score-number=(float64 0)]`).
 		Len(2).
@@ -41,6 +42,7 @@ func TestStructMap(t *testing.T) {
 
 	TestValue(t, testStructMap{"a", 1.0}).
 		Kind("structmap").
+		Bool(true).
 		Hash(hash.DJB(Hash("a"), Hash(1.0))).
 		Repr(`[&name=a &score-number=(float64 1)]`).
 		Len(2).

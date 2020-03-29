@@ -18,6 +18,7 @@ func TestPipe(t *testing.T) {
 
 	TestValue(t, NewPipe(r, w)).
 		Kind("pipe").
+		Bool(true).
 		Hash(hash.DJB(hash.UIntPtr(r.Fd()), hash.UIntPtr(w.Fd()))).
 		Repr(fmt.Sprintf("<pipe{%v %v}>", r.Fd(), w.Fd())).
 		Equal(NewPipe(r, w)).
