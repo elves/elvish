@@ -6,6 +6,7 @@ VERSION := $(shell git describe --tags --always --dirty=-dirty)
 
 # -race requires cgo
 ifneq ($(OS),Windows_NT)
+    TEST_ENV := CGO_ENABLED=1
     TEST_FLAGS := -race
 endif
 
@@ -25,7 +26,7 @@ generate:
 	go generate ./...
 
 test:
-	CGO_ENABLED=1 go test $(TEST_FLAGS) $(PKGS)
+	$(TEST_ENV) go test $(TEST_FLAGS) $(PKGS)
 
 cover/%.cover: %
 	mkdir -p $(dir $@)
