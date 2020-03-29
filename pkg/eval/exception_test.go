@@ -52,7 +52,5 @@ func TestErrors(t *testing.T) {
 		tt.Args(Return).Rets("return"),
 		tt.Args(Break).Rets("break"),
 		tt.Args(Continue).Rets("continue"),
-
-		tt.Args(ExternalCmdExit{0, "ls", 100}).Rets("ls exited with 0"),
 	})
 }
