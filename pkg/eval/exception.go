@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"unsafe"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/util"
@@ -20,6 +21,14 @@ import (
 type Exception struct {
 	Cause     error
 	Traceback *stackTrace
+}
+
+// A stack trace as a linked list of diag.Context. The head is the innermost
+// stack. Since pipelines can call multiple functions in parallel, all the
+// stackTrace nodes form a DAG.
+type stackTrace struct {
+	head *diag.Context
+	next *stackTrace
 }
 
 // Cause returns the Cause field if err is an *Exception. Otherwise it returns
@@ -53,12 +62,12 @@ func (exc *Exception) PPrint(indent string) string {
 	fmt.Fprintf(buf, "Exception: %s\n", causeDescription)
 
 	if exc.Traceback.next == nil {
-		buf.WriteString(exc.Traceback.entry.PPrintCompact(indent))
+		buf.WriteString(exc.Traceback.head.PPrintCompact(indent))
 	} else {
 		buf.WriteString(indent + "Traceback:")
 		for tb := exc.Traceback; tb != nil; tb = tb.next {
 			buf.WriteString("\n" + indent + "  ")
-			buf.WriteString(tb.entry.PPrint(indent + "    "))
+			buf.WriteString(tb.head.PPrint(indent + "    "))
 		}
 	}
 
