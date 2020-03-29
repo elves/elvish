@@ -33,6 +33,8 @@ type fakeTTY struct {
 	bufCh, notesBufCh chan *term.Buffer
 	// Records history of the main buffer and notes buffer.
 	bufs, notesBufs []*term.Buffer
+	// Mutexes for guarding bufs and notesBufs.
+	bufMutex sync.RWMutex
 	// Channel that NotifySignals returns. Can be used to inject signals.
 	sigCh chan os.Signal
 	// Argument that SetRawInput got.
@@ -97,14 +99,24 @@ func (t *fakeTTY) StopInput() {
 }
 
 // Returns the last recorded buffer.
-func (t *fakeTTY) Buffer() *term.Buffer { return t.bufs[len(t.bufs)-1] }
+func (t *fakeTTY) Buffer() *term.Buffer {
+	t.bufMutex.RLock()
+	defer t.bufMutex.RUnlock()
+	return t.bufs[len(t.bufs)-1]
+}
 
 // Records a nil buffer.
-func (t *fakeTTY) ResetBuffer() { t.recordBuf(nil) }
+func (t *fakeTTY) ResetBuffer() {
+	t.bufMutex.Lock()
+	defer t.bufMutex.Unlock()
+	t.recordBuf(nil)
+}
 
 // UpdateBuffer records a new pair of buffers, i.e. sending them to their
 // respective channels and appending them to their respective slices.
 func (t *fakeTTY) UpdateBuffer(bufNotes, buf *term.Buffer, _ bool) error {
+	t.bufMutex.Lock()
+	defer t.bufMutex.Unlock()
 	t.recordNotesBuf(bufNotes)
 	t.recordBuf(buf)
 	return nil
@@ -187,6 +199,8 @@ func (t TTYCtrl) TestBuffer(tt *testing.T, b *term.Buffer) {
 	tt.Helper()
 	ok := testBuffer(tt, b, t.bufCh)
 	if !ok {
+		t.bufMutex.RLock()
+		defer t.bufMutex.RUnlock()
 		lastBuf := t.LastBuffer()
 		tt.Logf("Last buffer: %s", lastBuf.TTYString())
 		if lastBuf == nil {
@@ -207,6 +221,8 @@ func (t TTYCtrl) TestNotesBuffer(tt *testing.T, b *term.Buffer) {
 	tt.Helper()
 	ok := testBuffer(tt, b, t.notesBufCh)
 	if !ok {
+		t.bufMutex.RLock()
+		defer t.bufMutex.RUnlock()
 		bufs := t.NotesBufferHistory()
 		tt.Logf("There has been %d notes buffers. None-nil ones are:", len(bufs))
 		for i, buf := range bufs {
@@ -218,10 +234,16 @@ func (t TTYCtrl) TestNotesBuffer(tt *testing.T, b *term.Buffer) {
 }
 
 // BufferHistory returns a slice of all buffers that have appeared.
-func (t TTYCtrl) BufferHistory() []*term.Buffer { return t.bufs }
+func (t TTYCtrl) BufferHistory() []*term.Buffer {
+	t.bufMutex.RLock()
+	defer t.bufMutex.RUnlock()
+	return t.bufs
+}
 
 // LastBuffer returns the last buffer that has appeared.
 func (t TTYCtrl) LastBuffer() *term.Buffer {
+	t.bufMutex.RLock()
+	defer t.bufMutex.RUnlock()
 	if len(t.bufs) == 0 {
 		return nil
 	}
@@ -229,9 +251,15 @@ func (t TTYCtrl) LastBuffer() *term.Buffer {
 }
 
 // NotesBufferHistory returns a slice of all notes buffers that have appeared.
-func (t TTYCtrl) NotesBufferHistory() []*term.Buffer { return t.notesBufs }
+func (t TTYCtrl) NotesBufferHistory() []*term.Buffer {
+	t.bufMutex.RLock()
+	defer t.bufMutex.RUnlock()
+	return t.notesBufs
+}
 
 func (t TTYCtrl) LastNotesBuffer() *term.Buffer {
+	t.bufMutex.RLock()
+	defer t.bufMutex.RUnlock()
 	if len(t.notesBufs) == 0 {
 		return nil
 	}
