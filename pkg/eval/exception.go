@@ -235,9 +235,7 @@ func (f Flow) PPrint(string) string {
 	return "\033[33;1m" + f.Error() + "\033[m"
 }
 
-// ExternalCmdExit contains the exit status of external commands. If the
-// command was stopped rather than terminated, the Pid field contains the pid
-// of the process.
+// ExternalCmdExit contains the exit status of external commands.
 type ExternalCmdExit struct {
 	syscall.WaitStatus
 	CmdName string
@@ -249,9 +247,6 @@ type ExternalCmdExit struct {
 func NewExternalCmdExit(name string, ws syscall.WaitStatus, pid int) error {
 	if ws.Exited() && ws.ExitStatus() == 0 {
 		return nil
-	}
-	if !ws.Stopped() {
-		pid = 0
 	}
 	return ExternalCmdExit{ws, name, pid}
 }
