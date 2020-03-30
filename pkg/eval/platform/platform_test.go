@@ -14,5 +14,8 @@ func TestPlatform(t *testing.T) {
 	eval.TestWithSetup(t, setup,
 		That(`put $platform:arch`).Puts(runtime.GOARCH),
 		That(`put $platform:os`).Puts(runtime.GOOS),
+		That(`put $platform:is-windows`).Puts(runtime.GOOS == "windows"),
+		That(`put $platform:is-unix`).Puts(
+			runtime.GOOS != "windows" && runtime.GOOS != "plan9" && runtime.GOOS != "js"),
 	)
 }
