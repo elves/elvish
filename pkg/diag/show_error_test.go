@@ -18,27 +18,27 @@ func teardown() {
 	stderr = os.Stderr
 }
 
-type pprinterError struct{}
+type showerError struct{}
 
-func (pprinterError) Error() string { return "error" }
+func (showerError) Error() string { return "error" }
 
-func (pprinterError) PPrint(_ string) string { return "pprint" }
+func (showerError) Show(_ string) string { return "show" }
 
-var pprintErrorTests = []struct {
+var showErrorTests = []struct {
 	name    string
 	err     error
 	wantBuf string
 }{
-	{"A PPrinter error", pprinterError{}, "pprint\n"},
+	{"A Shower error", showerError{}, "show\n"},
 	{"A errors.New error", errors.New("ERROR"), "\033[31;1mERROR\033[m\n"},
 }
 
-func TestPPrintError(t *testing.T) {
-	for _, test := range pprintErrorTests {
+func TestShowError(t *testing.T) {
+	for _, test := range showErrorTests {
 		t.Run(test.name, func(t *testing.T) {
 			setup()
 			defer teardown()
-			PPrintError(test.err)
+			ShowError(test.err)
 			if stderrBuf.String() != test.wantBuf {
 				t.Errorf("Wrote %q, want %q", stderrBuf.String(), test.wantBuf)
 			}

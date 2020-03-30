@@ -24,12 +24,12 @@ func TestError(t *testing.T) {
 
 	culpritLineBegin = "<"
 	culpritLineEnd = ">"
-	wantPPrint := lines(
+	wantShow := lines(
 		"some error: \033[31;1mbad list\033[m",
 		"[test], line 1: echo <[x]>",
 	)
-	if gotPPrint := err.PPrint(""); gotPPrint != wantPPrint {
-		t.Errorf("PPrint() -> %q, want %q", gotPPrint, wantPPrint)
+	if gotShow := err.Show(""); gotShow != wantShow {
+		t.Errorf("Show() -> %q, want %q", gotShow, wantShow)
 	}
 }
 

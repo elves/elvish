@@ -33,7 +33,7 @@ func interact(fds [3]*os.File, ev *eval.Evaler, rcPath string) {
 	if rcPath != "" {
 		err := sourceRC(fds[2], ev, rcPath)
 		if err != nil {
-			diag.PPrintError(err)
+			diag.ShowError(err)
 		}
 	}
 
@@ -71,7 +71,7 @@ func interact(fds [3]*os.File, ev *eval.Evaler, rcPath string) {
 		err = ev.EvalSourceInTTY(eval.NewInteractiveSource(line))
 		term.Sanitize(fds[0], fds[2])
 		if err != nil {
-			diag.PPrintError(err)
+			diag.ShowError(err)
 		}
 	}
 }

@@ -16,7 +16,7 @@ type Context struct {
 	Source string
 	Ranging
 
-	savedPPrintInfo *rangePPrintInfo
+	savedShowInfo *rangeShowInfo
 }
 
 // NewContext creates a new Context.
@@ -24,8 +24,8 @@ func NewContext(name, source string, r Ranger) *Context {
 	return &Context{name, source, r.Range(), nil}
 }
 
-// Information about the source range that are needed for pretty-printing.
-type rangePPrintInfo struct {
+// Information about the source range that are needed for showing.
+type rangeShowInfo struct {
 	// Head is the piece of text immediately before Culprit, extending to, but
 	// not including the closest line boundary. If Culprit already starts after
 	// a line boundary, Head is an empty string.
@@ -49,9 +49,9 @@ var (
 	culpritPlaceHolder = "^"
 )
 
-func (c *Context) pprintInfo() *rangePPrintInfo {
-	if c.savedPPrintInfo != nil {
-		return c.savedPPrintInfo
+func (c *Context) showInfo() *rangeShowInfo {
+	if c.savedShowInfo != nil {
+		return c.savedShowInfo
 	}
 
 	before := c.Source[:c.From]
@@ -71,12 +71,12 @@ func (c *Context) pprintInfo() *rangePPrintInfo {
 
 	endLine := beginLine + strings.Count(culprit, "\n")
 
-	c.savedPPrintInfo = &rangePPrintInfo{head, culprit, tail, beginLine, endLine}
-	return c.savedPPrintInfo
+	c.savedShowInfo = &rangeShowInfo{head, culprit, tail, beginLine, endLine}
+	return c.savedShowInfo
 }
 
-// PPrint pretty-prints a SourceContext.
-func (c *Context) PPrint(sourceIndent string) string {
+// Show shows a SourceContext.
+func (c *Context) Show(sourceIndent string) string {
 	if err := c.checkPosition(); err != nil {
 		return err.Error()
 	}
@@ -84,9 +84,9 @@ func (c *Context) PPrint(sourceIndent string) string {
 		"\n" + sourceIndent + c.relevantSource(sourceIndent))
 }
 
-// PPrintCompact pretty-prints a SourceContext, with no line break between the
+// ShowCompact shows a SourceContext, with no line break between the
 // source position range description and relevant source excerpt.
-func (c *Context) PPrintCompact(sourceIndent string) string {
+func (c *Context) ShowCompact(sourceIndent string) string {
 	if err := c.checkPosition(); err != nil {
 		return err.Error()
 	}
@@ -106,7 +106,7 @@ func (c *Context) checkPosition() error {
 }
 
 func (c *Context) lineRange() string {
-	info := c.pprintInfo()
+	info := c.showInfo()
 
 	if info.BeginLine == info.EndLine {
 		return fmt.Sprintf("line %d:", info.BeginLine)
@@ -115,7 +115,7 @@ func (c *Context) lineRange() string {
 }
 
 func (c *Context) relevantSource(sourceIndent string) string {
-	info := c.pprintInfo()
+	info := c.showInfo()
 
 	var buf bytes.Buffer
 	buf.WriteString(info.Head)

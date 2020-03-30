@@ -9,11 +9,11 @@ import (
 // Can be changed for testing.
 var stderr io.Writer = os.Stderr
 
-// PPrintError pretty-prints an error. It uses the PPrint method if the error
-// implements PPrinter, and uses Complain to print the error message otherwise.
-func PPrintError(err error) {
-	if pprinter, ok := err.(PPrinter); ok {
-		fmt.Fprintln(stderr, pprinter.PPrint(""))
+// ShowError shows an error. It uses the Show method if the error
+// implements Shower, and uses Complain to print the error message otherwise.
+func ShowError(err error) {
+	if shower, ok := err.(Shower); ok {
+		fmt.Fprintln(stderr, shower.Show(""))
 	} else {
 		Complain(err.Error())
 	}

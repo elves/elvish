@@ -2,7 +2,7 @@ package diag
 
 import "fmt"
 
-// Error represents an error with context that can be pretty-printed.
+// Error represents an error with context that can be showed.
 type Error struct {
 	Type    string
 	Message string
@@ -20,8 +20,8 @@ func (e *Error) Range() Ranging {
 	return e.Context.Range()
 }
 
-// PPrint pretty-prints the error.
-func (e *Error) PPrint(indent string) string {
+// Show shows the error.
+func (e *Error) Show(indent string) string {
 	header := fmt.Sprintf("%s: \033[31;1m%s\033[m\n", e.Type, e.Message)
-	return header + e.Context.PPrintCompact(indent+"  ")
+	return header + e.Context.ShowCompact(indent+"  ")
 }

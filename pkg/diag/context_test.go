@@ -10,31 +10,31 @@ var sourceRangeTests = []struct {
 	Context *Context
 	Indent  string
 
-	WantPPrint        string
-	WantPPrintCompact string
+	WantShow        string
+	WantShowCompact string
 }{
 	{
 		Name:    "single-line culprit",
 		Context: parseContext("echo (bad)", "(", ")", true),
 		Indent:  "_",
 
-		WantPPrint: lines(
+		WantShow: lines(
 			"[test], line 1:",
 			"_echo <(bad)>",
 		),
-		WantPPrintCompact: "[test], line 1: echo <(bad)>",
+		WantShowCompact: "[test], line 1: echo <(bad)>",
 	},
 	{
 		Name:    "multi-line culprit",
 		Context: parseContext("echo (bad\nbad)", "(", ")", true),
 		Indent:  "_",
 
-		WantPPrint: lines(
+		WantShow: lines(
 			"[test], line 1-2:",
 			"_echo <(bad>",
 			"_<bad)>",
 		),
-		WantPPrintCompact: lines(
+		WantShowCompact: lines(
 			"[test], line 1-2: echo <(bad>",
 			"_                  <bad)>",
 		),
@@ -44,11 +44,11 @@ var sourceRangeTests = []struct {
 		Context: parseContext("echo x", "x", "x", false),
 		Indent:  "",
 
-		WantPPrint: lines(
+		WantShow: lines(
 			"[test], line 1:",
 			"echo <^>x",
 		),
-		WantPPrintCompact: "[test], line 1: echo <^>x",
+		WantShowCompact: "[test], line 1: echo <^>x",
 	},
 }
 
@@ -57,14 +57,14 @@ func TestContext(t *testing.T) {
 	culpritLineEnd = ">"
 	for _, test := range sourceRangeTests {
 		t.Run(test.Name, func(t *testing.T) {
-			gotPPrint := test.Context.PPrint(test.Indent)
-			if gotPPrint != test.WantPPrint {
-				t.Errorf("PPrint() -> %q, want %q", gotPPrint, test.WantPPrint)
+			gotShow := test.Context.Show(test.Indent)
+			if gotShow != test.WantShow {
+				t.Errorf("Show() -> %q, want %q", gotShow, test.WantShow)
 			}
-			gotPPrintCompact := test.Context.PPrintCompact(test.Indent)
-			if gotPPrintCompact != test.WantPPrintCompact {
-				t.Errorf("PPrintCompact() -> %q, want %q",
-					gotPPrintCompact, test.WantPPrintCompact)
+			gotShowCompact := test.Context.ShowCompact(test.Indent)
+			if gotShowCompact != test.WantShowCompact {
+				t.Errorf("ShowCompact() -> %q, want %q",
+					gotShowCompact, test.WantShowCompact)
 			}
 		})
 	}

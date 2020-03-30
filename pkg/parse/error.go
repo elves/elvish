@@ -40,13 +40,13 @@ func (me *MultiError) Error() string {
 	}
 }
 
-// PPrint pretty-prints the error.
+// Show shows the error.
 func (me *MultiError) PPrint(indent string) string {
 	switch len(me.Entries) {
 	case 0:
 		return "no parse error"
 	case 1:
-		return me.Entries[0].PPrint(indent)
+		return me.Entries[0].Show(indent)
 	default:
 		sb := new(strings.Builder)
 		fmt.Fprint(sb, "Multiple parse errors:")
@@ -54,7 +54,7 @@ func (me *MultiError) PPrint(indent string) string {
 			sb.WriteString("\n" + indent + "  ")
 			fmt.Fprintf(sb, "\033[31;1m%s\033[m\n", e.Message)
 			sb.WriteString(indent + "    ")
-			sb.WriteString(e.Context.PPrint(indent + "      "))
+			sb.WriteString(e.Context.Show(indent + "      "))
 		}
 		return sb.String()
 	}
