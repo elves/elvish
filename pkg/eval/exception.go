@@ -54,7 +54,7 @@ func (exc *Exception) PPrint(indent string) string {
 	buf := new(bytes.Buffer)
 
 	var causeDescription string
-	if pprinter, ok := exc.Cause.(util.PPrinter); ok {
+	if pprinter, ok := exc.Cause.(diag.PPrinter); ok {
 		causeDescription = pprinter.PPrint(indent)
 	} else {
 		causeDescription = "\033[31;1m" + exc.Cause.Error() + "\033[m"

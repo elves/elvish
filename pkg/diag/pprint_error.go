@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	"github.com/elves/elvish/pkg/util"
 )
 
 // Can be changed for testing.
@@ -14,7 +12,7 @@ var stderr io.Writer = os.Stderr
 // PPrintError pretty-prints an error. It uses the PPrint method if the error
 // implements PPrinter, and uses Complain to print the error message otherwise.
 func PPrintError(err error) {
-	if pprinter, ok := err.(util.PPrinter); ok {
+	if pprinter, ok := err.(PPrinter); ok {
 		fmt.Fprintln(stderr, pprinter.PPrint(""))
 	} else {
 		Complain(err.Error())

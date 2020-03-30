@@ -1,4 +1,4 @@
-package util
+package diag
 
 // PPrinter wraps the PPrint function.
 type PPrinter interface {
