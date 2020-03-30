@@ -225,7 +225,7 @@ func (f Flow) Repr(int) string {
 
 func (f Flow) Error() string {
 	if f >= Flow(len(flowNames)) {
-		return fmt.Sprintf("!(BAD FLOW: %v)", f)
+		return fmt.Sprintf("!(BAD FLOW: %d)", f)
 	}
 	return flowNames[f]
 }

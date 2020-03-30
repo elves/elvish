@@ -47,10 +47,17 @@ func makeException(cause error, entries ...*diag.Context) *Exception {
 	return &Exception{cause, s}
 }
 
-func TestErrors(t *testing.T) {
+func TestErrorMethods(t *testing.T) {
 	tt.Test(t, tt.Fn("Error", error.Error), tt.Table{
+		tt.Args(makeException(errors.New("err"))).Rets("err"),
+
+		tt.Args(ComposeExceptionsFromPipeline([]*Exception{
+			makeException(errors.New("err1")),
+			makeException(errors.New("err2"))})).Rets("(err1 | err2)"),
+
 		tt.Args(Return).Rets("return"),
 		tt.Args(Break).Rets("break"),
 		tt.Args(Continue).Rets("continue"),
+		tt.Args(Flow(1000)).Rets("!(BAD FLOW: 1000)"),
 	})
 }
