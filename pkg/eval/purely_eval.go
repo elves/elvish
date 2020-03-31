@@ -15,15 +15,18 @@ func PurelyEvalCompound(cn *parse.Compound) (string, error) {
 }
 
 func (ev *Evaler) PurelyEvalCompound(cn *parse.Compound) (string, error) {
-	return ev.PurelyEvalPartialCompound(cn, nil)
+	return ev.PurelyEvalPartialCompound(cn, -1)
 }
 
-func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Indexing) (string, error) {
+func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (string, error) {
 	tilde := false
 	head := ""
 	for _, in := range cn.Indexings {
 		if len(in.Indicies) > 0 {
 			return "", ErrImpure
+		}
+		if upto >= 0 && in.To > upto {
+			break
 		}
 		switch in.Head.Type {
 		case parse.Tilde:
@@ -42,10 +45,6 @@ func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Inde
 			}
 		default:
 			return "", ErrImpure
-		}
-
-		if in == upto {
-			break
 		}
 	}
 	if tilde {

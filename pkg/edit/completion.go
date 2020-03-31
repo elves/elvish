@@ -517,6 +517,6 @@ func (pe pureEvaler) PurelyEvalCompound(cn *parse.Compound) (string, error) {
 	return pe.ev.PurelyEvalCompound(cn)
 }
 
-func (pe pureEvaler) PurelyEvalPartialCompound(cn *parse.Compound, in *parse.Indexing) (string, error) {
-	return pe.ev.PurelyEvalPartialCompound(cn, in)
+func (pe pureEvaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (string, error) {
+	return pe.ev.PurelyEvalPartialCompound(cn, upto)
 }

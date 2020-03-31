@@ -33,7 +33,7 @@ func primaryInSimpleCompound(pn *parse.Primary, ev PureEvaler) (*parse.Compound,
 	if !ok {
 		return nil, ""
 	}
-	head, err := ev.PurelyEvalPartialCompound(compound, indexing)
+	head, err := ev.PurelyEvalPartialCompound(compound, indexing.To)
 	if err != nil {
 		return nil, ""
 	}
@@ -43,7 +43,7 @@ func primaryInSimpleCompound(pn *parse.Primary, ev PureEvaler) (*parse.Compound,
 func purelyEvalForm(form *parse.Form, seed string, upto int, ev PureEvaler) []string {
 	// Find out head of the form and preceding arguments.
 	// If form.Head is not a simple compound, head will be "", just what we want.
-	head, _ := ev.PurelyEvalPartialCompound(form.Head, nil)
+	head, _ := ev.PurelyEvalPartialCompound(form.Head, -1)
 	words := []string{head}
 	for _, compound := range form.Args {
 		if compound.Range().From >= upto {
