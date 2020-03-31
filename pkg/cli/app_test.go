@@ -159,7 +159,7 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	// Ensure that the terminal shows the input with the intial width.
+	// Ensure that the terminal shows the input with the initial width.
 	feedInput(f.TTY, "1234567890")
 	f.TTY.TestBuffer(t, bb().Write("1234567890").SetDotHere().Buffer())
 

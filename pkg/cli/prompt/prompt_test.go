@@ -35,7 +35,7 @@ func TestPrompt_StalePrompt(t *testing.T) {
 	})
 
 	prompt.Trigger(true)
-	// The compute function is blocked, so a stale version of the intial
+	// The compute function is blocked, so a stale version of the initial
 	// "unknown" prompt will be shown.
 	testUpdate(t, prompt, ui.T("???> ", ui.Inverse))
 

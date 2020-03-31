@@ -49,7 +49,7 @@ func TestGetHorizontalWindow(t *testing.T) {
 		// All items cannot fit, selected = 0; show a window from 0. Height
 		// reduced to make room for scrollbar.
 		Args(ListBoxState{Items: TestItems{Prefix: "x", NItems: 11}, Selected: 0, First: 0}, 0, 6, 5).Rets(0, 4),
-		// All items cannot fit. Columsn are 0-3, 4-7, 8-10 (height reduced from
+		// All items cannot fit. Columns are 0-3, 4-7, 8-10 (height reduced from
 		// 5 to 4 for scrollbar). Selecting last item, and showing last two
 		// columns; height reduced to make room for scrollbar.
 		Args(ListBoxState{Items: TestItems{Prefix: "x", NItems: 11}, Selected: 10, First: 0}, 0, 7, 5).Rets(4, 4),
