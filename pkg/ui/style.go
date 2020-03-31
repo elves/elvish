@@ -43,9 +43,9 @@ func (s Style) SGR() string {
 	return strings.Join(sgr, ";")
 }
 
-// ImportFromOptions assigns all recognized values from a map to the current
+// MergeFromOptions merges all recognized values from a map to the current
 // Style.
-func (s *Style) ImportFromOptions(options map[string]interface{}) error {
+func (s *Style) MergeFromOptions(options map[string]interface{}) error {
 	assignColor := func(val interface{}, colorField *Color) string {
 		if val == "default" {
 			*colorField = nil

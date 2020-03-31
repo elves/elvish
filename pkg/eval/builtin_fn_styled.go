@@ -114,7 +114,7 @@ func styledSegment(options RawOptions, input interface{}) (*ui.Segment, error) {
 		return nil, errStyledSegmentArgType
 	}
 
-	if err := style.ImportFromOptions(options); err != nil {
+	if err := style.MergeFromOptions(options); err != nil {
 		return nil, err
 	}
 
