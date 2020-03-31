@@ -37,8 +37,9 @@ func ApplyStyling(s Style, ts ...Styling) Style {
 // Stylings joins several transformers into one.
 func Stylings(ts ...Styling) Styling { return jointStyling(ts) }
 
+// Common stylings.
 var (
-	FgDefault = setForeground{nil}
+	FgDefault Styling = setForeground{nil}
 
 	FgBlack   = setForeground{Black}
 	FgRed     = setForeground{Red}
