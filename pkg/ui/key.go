@@ -99,7 +99,7 @@ var keyNames = map[rune]string{
 }
 
 func (k Key) Kind() string {
-	return "edit:Key"
+	return "edit:key"
 }
 
 func (k Key) Equal(other interface{}) bool {
@@ -107,10 +107,7 @@ func (k Key) Equal(other interface{}) bool {
 }
 
 func (k Key) Hash() uint32 {
-	h := hash.DJBInit
-	h = hash.DJBCombine(h, uint32(k.Rune))
-	h = hash.DJBCombine(h, uint32(k.Mod))
-	return h
+	return hash.DJB(uint32(k.Rune), uint32(k.Mod))
 }
 
 func (k Key) Repr(int) string {

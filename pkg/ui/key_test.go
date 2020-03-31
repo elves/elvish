@@ -1,6 +1,43 @@
 package ui
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/xiaq/persistent/hash"
+)
+
+var kTests = []struct {
+	k1 Key
+	k2 Key
+}{
+	{K('a'), Key{'a', 0}},
+	{K('a', Alt), Key{'a', Alt}},
+	{K('a', Alt, Ctrl), Key{'a', Alt | Ctrl}},
+}
+
+func TestK(t *testing.T) {
+	for _, test := range kTests {
+		if test.k1 != test.k2 {
+			t.Errorf("%v != %v", test.k1, test.k2)
+		}
+	}
+}
+
+func TestKeyAsElvishValue(t *testing.T) {
+	vals.TestValue(t, K('a')).
+		Kind("edit:key").
+		Hash(hash.DJB('a', 0)).
+		Repr("(edit:key a)").
+		Equal(K('a')).
+		NotEqual(K('A'), K('a', Alt))
+
+	vals.TestValue(t, K('a', Alt)).Repr("(edit:key Alt-a)")
+	vals.TestValue(t, K('a', Ctrl, Alt, Shift)).Repr("(edit:key Ctrl-Alt-Shift-a)")
+
+	vals.TestValue(t, K('\t')).Repr("(edit:key Tab)")
+	vals.TestValue(t, K(F1)).Repr("(edit:key F1)")
+}
 
 var parseKeyTests = []struct {
 	s       string
@@ -24,6 +61,10 @@ var parseKeyTests = []struct {
 	// Multiple modifiers can appear in any order.
 	{"Alt-Ctrl-Delete", Key{Delete, Alt | Ctrl}},
 	{"Ctrl-Alt-Delete", Key{Delete, Alt | Ctrl}},
+
+	// Ctrl-I and Ctrl-J are normalized to Tab and Enter.
+	{"Ctrl-I", K(Tab)},
+	{"Ctrl-J", K(Enter)},
 }
 
 func TestParseKey(t *testing.T) {
