@@ -101,6 +101,12 @@ var (
 	ToggleInverse    Styling = boolToggle(accessInverse)
 )
 
+// Fg returns a Styling that sets the foreground color.
+func Fg(c Color) Styling { return setForeground{c} }
+
+// Bg returns a Styling that sets the background color.
+func Bg(c Color) Styling { return setBackground{c} }
+
 type setForeground struct{ c Color }
 type setBackground struct{ c Color }
 type boolOn func(*Style) *bool
