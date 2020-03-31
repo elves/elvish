@@ -31,7 +31,7 @@ maybe-genblog:
 
 # Installs latest genblog.
 genblog:
-	go get -u github.com/xiaq/genblog
+	cd ~ && go get -u github.com/xiaq/genblog
 
 # Synchronizes the generated website into $(PUBLISH_DIR). The PUBLISH_DIR
 # environment variable can be overriden to a remote place to publish this online.
