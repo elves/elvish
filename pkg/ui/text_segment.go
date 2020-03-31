@@ -135,3 +135,20 @@ func (s *Segment) SplitByRune(r rune) []*Segment {
 	}
 	return splitSegs
 }
+
+// String returns a string representation of the styled segment. This now always
+// assumes VT-style terminal output.
+// TODO: Make string conversion sensible to environment, e.g. use HTML when
+// output is web.
+func (s *Segment) String() string {
+	return s.VTString()
+}
+
+// VTString renders the styled segment using VT-style escape sequences.
+func (s *Segment) VTString() string {
+	sgr := s.SGR()
+	if sgr == "" {
+		return s.Text
+	}
+	return fmt.Sprintf("\033[%sm%s\033[m", sgr, s.Text)
+}

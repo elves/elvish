@@ -188,3 +188,21 @@ func (t Text) TrimWcwidth(wmax int) Text {
 	}
 	return newt
 }
+
+// String returns a string representation of the styled text. This now always
+// assumes VT-style terminal output.
+//
+// TODO: Make string conversion sensible to environment, e.g. use HTML when
+// output is web.
+func (t Text) String() string {
+	return t.VTString()
+}
+
+// VTString renders the styled text using VT-style escape sequences.
+func (t Text) VTString() string {
+	var buf bytes.Buffer
+	for _, seg := range t {
+		buf.WriteString(seg.VTString())
+	}
+	return buf.String()
+}
