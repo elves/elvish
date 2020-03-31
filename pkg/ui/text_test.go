@@ -122,3 +122,17 @@ func TestTrimWcwidth(t *testing.T) {
 			Text{red("你好"), blue("精")}),
 	})
 }
+
+type textVTStringTest struct {
+	text         Text
+	wantVTString string
+}
+
+func testTextVTString(t *testing.T, tests []textVTStringTest) {
+	for _, test := range tests {
+		vtString := test.text.VTString()
+		if vtString != test.wantVTString {
+			t.Errorf("got %q, want %q", vtString, test.wantVTString)
+		}
+	}
+}
