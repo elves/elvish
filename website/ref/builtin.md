@@ -98,17 +98,15 @@ in the argument, even if there is no file.
 
 ## Commands That Operate On Numbers
 
-Commands that operate on numbers are quite flexible about the
-format of those numbers. See the discussion of the [number data
-type](./language.html#number).
+Commands that operate on numbers are quite flexible about the format of those
+numbers. See the discussion of the [number data type](./language.html#number).
 
-Because numbers are normally specified as strings, rather than as
-an explicit `float64` data type, some builtin commands have variants
-intended to operate on strings or numbers exclusively. For instance, the
-numerical equality command is `==`, while the string equality command is
-`==s`. Another example is the `+` builtin, which only operates on numbers
-and does not function as a string concatenation command. Consider these
-examples:
+Because numbers are normally specified as strings, rather than as an explicit
+`float64` data type, some builtin commands have variants intended to operate on
+strings or numbers exclusively. For instance, the numerical equality command is
+`==`, while the string equality command is `==s`. Another example is the `+`
+builtin, which only operates on numbers and does not function as a string
+concatenation command. Consider these examples:
 
 ```elvish-transcript
 ~/projects/3rd-party/elvish> + x 1

@@ -108,8 +108,8 @@ error.
 
 The three syntaxes above all evaluate to strings, and they are interchangeable.
 For instance, `xyz`, `'xyz'` and `"xyz"` are different syntaxes for the same
-string, and they are always equivalent with the exception of
-**escape sequences** as documented above.
+string, and they are always equivalent with the exception of **escape
+sequences** as documented above.
 
 ## Number
 
@@ -118,40 +118,39 @@ with the `float64` builtin. The builtin takes a single argument, which should be
 either another `float64` value, or a string in the following formats (examples
 below all express the same value):
 
-* Decimal notation, e.g. `10`.
-  
-* Hexadecimal notation, e.g. `0xA`.
-  
-* Octal notation, e.g. `0o12`.
-  
-* Binary notation, e.g. `0b1010`.
-  
-* Floating point notation, e.g. `10.0`.
-  
-* Scientific notation, e.g. `1.0e1`.
+-   Decimal notation, e.g. `10`.
+
+-   Hexadecimal notation, e.g. `0xA`.
+
+-   Octal notation, e.g. `0o12`.
+
+-   Binary notation, e.g. `0b1010`.
+
+-   Floating point notation, e.g. `10.0`.
+
+-   Scientific notation, e.g. `1.0e1`.
 
 The following special floating point values are also supported: `+Inf`, `-Inf`
 and `NaN`.
 
 The `float64` builtin is case-insensitive.
 
-A `float64` data type can be converted to a string using `(to-string
-$number)`. The resulting string is guaranteed to result in the same
-value when converted back to a `float64`. Most of the time you won't
-need to perform this explicit conversion. Elvish will implicitly make
-the conversion when running external commands and many of the builtins
-(where the distinction is not important).
+A `float64` data type can be converted to a string using `(to-string $number)`.
+The resulting string is guaranteed to result in the same value when converted
+back to a `float64`. Most of the time you won't need to perform this explicit
+conversion. Elvish will implicitly make the conversion when running external
+commands and many of the builtins (where the distinction is not important).
 
-You usually do not need to use `float64` values explicitly;
-see the discussion of [Commands That Operate On
-Numbers](./builtin.html#commands-that-operate-on-numbers).
+You usually do not need to use `float64` values explicitly; see the discussion
+of
+[Commands That Operate On Numbers](./builtin.html#commands-that-operate-on-numbers).
 
 ## Exception
 
-Elvish has an exception data type, but it does not have a literal
-syntax for that type. See the discussion of [exception and flow
-commands](./language.html#exception-and-flow-commands) for more
-information about this data type.
+Elvish has an exception data type, but it does not have a literal syntax for
+that type. See the discussion of
+[exception and flow commands](./language.html#exception-and-flow-commands) for
+more information about this data type.
 
 ## List
 
@@ -183,8 +182,8 @@ don't use them to separate elements:
 
 Maps are also surrounded by square brackets; a key/value pair is written
 `&key=value` (reminiscent to HTTP query parameters), and pairs are separated by
-whitespaces. Whitespaces are allowed after `=`, but not before `=`. They are
-one of the basic container types in Elvish. Examples:
+whitespaces. Whitespaces are allowed after `=`, but not before `=`. They are one
+of the basic container types in Elvish. Examples:
 
 ```elvish-transcript
 ~> put [&foo=bar &lorem=ipsum]
@@ -1487,8 +1486,8 @@ The entire resolution procedure can be emulated with the
 [resolve](builtin.html#resolve) command. Searching of external commands can be
 emulated with the [search-external](builtin.html#search-builtin) command.
 
-**TIP**: Step 2 of the command resolution rules means that if you define a variable
-with a name ending with `~`, you can use it as a command:
+**TIP**: Step 2 of the command resolution rules means that if you define a
+variable with a name ending with `~`, you can use it as a command:
 
 ```elvish-transcript
 ~> f~ = { put f }
@@ -1599,10 +1598,10 @@ fn f {
 ```
 
 **WARNING:** The exception data type currently supports a single attribute,
-`cause`, that can be used to extract an object describing the cause
-of the exception; e.g. `$e[cause]`.  This is not a string. This is an
-experimental feature. You should probably use `(to-string $e)` at this
-time in any production code.
+`cause`, that can be used to extract an object describing the cause of the
+exception; e.g. `$e[cause]`. This is not a string. This is an experimental
+feature. You should probably use `(to-string $e)` at this time in any production
+code.
 
 # Namespaces and Modules
 
@@ -1692,8 +1691,8 @@ f from mod a
 ```
 
 Modules in nested directories can also be imported. For example, if you have
-defined a module in `~/.elvish/lib/x/y/z.elv`, you can import it by using `use
-x/y/z`, and the resulting namespace will be `z:`:
+defined a module in `~/.elvish/lib/x/y/z.elv`, you can import it by using
+`use x/y/z`, and the resulting namespace will be `z:`:
 
 ```elvish-transcript
 ~> cat .elvish/lib/x/y/z.elv

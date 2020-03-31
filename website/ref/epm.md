@@ -93,9 +93,9 @@ recommended:
 -   `maintainers`: an array containing the package maintainers, in
     `Name <email>` format.
 -   `homepage`: URL of the homepage for the package, if it has one.
--   `dependencies`: an array listing dependencies of the current
-    package. Any packages listed will be installed automatically by
-    `epm:install` if they are not yet installed.
+-   `dependencies`: an array listing dependencies of the current package. Any
+    packages listed will be installed automatically by `epm:install` if they are
+    not yet installed.
 
 ## query
 
