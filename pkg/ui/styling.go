@@ -41,64 +41,64 @@ func Stylings(ts ...Styling) Styling { return jointStyling(ts) }
 var (
 	FgDefault Styling = setForeground{nil}
 
-	FgBlack   = setForeground{Black}
-	FgRed     = setForeground{Red}
-	FgGreen   = setForeground{Green}
-	FgYellow  = setForeground{Yellow}
-	FgBlue    = setForeground{Blue}
-	FgMagenta = setForeground{Magenta}
-	FgCyan    = setForeground{Cyan}
-	FgWhite   = setForeground{White}
+	FgBlack   Styling = setForeground{Black}
+	FgRed     Styling = setForeground{Red}
+	FgGreen   Styling = setForeground{Green}
+	FgYellow  Styling = setForeground{Yellow}
+	FgBlue    Styling = setForeground{Blue}
+	FgMagenta Styling = setForeground{Magenta}
+	FgCyan    Styling = setForeground{Cyan}
+	FgWhite   Styling = setForeground{White}
 
-	FgBrightBlack   = setForeground{BrightBlack}
-	FgBrightRed     = setForeground{BrightRed}
-	FgBrightGreen   = setForeground{BrightGreen}
-	FgBrightYellow  = setForeground{BrightYellow}
-	FgBrightBlue    = setForeground{BrightBlue}
-	FgBrightMagenta = setForeground{BrightMagenta}
-	FgBrightCyan    = setForeground{BrightCyan}
-	FgBrightWhite   = setForeground{BrightWhite}
+	FgBrightBlack   Styling = setForeground{BrightBlack}
+	FgBrightRed     Styling = setForeground{BrightRed}
+	FgBrightGreen   Styling = setForeground{BrightGreen}
+	FgBrightYellow  Styling = setForeground{BrightYellow}
+	FgBrightBlue    Styling = setForeground{BrightBlue}
+	FgBrightMagenta Styling = setForeground{BrightMagenta}
+	FgBrightCyan    Styling = setForeground{BrightCyan}
+	FgBrightWhite   Styling = setForeground{BrightWhite}
 
-	BgDefault = setBackground{nil}
+	BgDefault Styling = setBackground{nil}
 
-	BgBlack   = setBackground{Black}
-	BgRed     = setBackground{Red}
-	BgGreen   = setBackground{Green}
-	BgYellow  = setBackground{Yellow}
-	BgBlue    = setBackground{Blue}
-	BgMagenta = setBackground{Magenta}
-	BgCyan    = setBackground{Cyan}
-	BgWhite   = setBackground{White}
+	BgBlack   Styling = setBackground{Black}
+	BgRed     Styling = setBackground{Red}
+	BgGreen   Styling = setBackground{Green}
+	BgYellow  Styling = setBackground{Yellow}
+	BgBlue    Styling = setBackground{Blue}
+	BgMagenta Styling = setBackground{Magenta}
+	BgCyan    Styling = setBackground{Cyan}
+	BgWhite   Styling = setBackground{White}
 
-	BgBrightBlack   = setBackground{BrightBlack}
-	BgBrightRed     = setBackground{BrightRed}
-	BgBrightGreen   = setBackground{BrightGreen}
-	BgBrightYellow  = setBackground{BrightYellow}
-	BgBrightBlue    = setBackground{BrightBlue}
-	BgBrightMagenta = setBackground{BrightMagenta}
-	BgBrightCyan    = setBackground{BrightCyan}
-	BgBrightWhite   = setBackground{BrightWhite}
+	BgBrightBlack   Styling = setBackground{BrightBlack}
+	BgBrightRed     Styling = setBackground{BrightRed}
+	BgBrightGreen   Styling = setBackground{BrightGreen}
+	BgBrightYellow  Styling = setBackground{BrightYellow}
+	BgBrightBlue    Styling = setBackground{BrightBlue}
+	BgBrightMagenta Styling = setBackground{BrightMagenta}
+	BgBrightCyan    Styling = setBackground{BrightCyan}
+	BgBrightWhite   Styling = setBackground{BrightWhite}
 
-	Bold       = boolOn(accessBold)
-	Dim        = boolOn(accessDim)
-	Italic     = boolOn(accessItalic)
-	Underlined = boolOn(accessUnderlined)
-	Blink      = boolOn(accessBlink)
-	Inverse    = boolOn(accessInverse)
+	Bold       Styling = boolOn(accessBold)
+	Dim        Styling = boolOn(accessDim)
+	Italic     Styling = boolOn(accessItalic)
+	Underlined Styling = boolOn(accessUnderlined)
+	Blink      Styling = boolOn(accessBlink)
+	Inverse    Styling = boolOn(accessInverse)
 
-	NoBold       = boolOff(accessBold)
-	NoDim        = boolOff(accessDim)
-	NoItalic     = boolOff(accessItalic)
-	NoUnderlined = boolOff(accessUnderlined)
-	NoBlink      = boolOff(accessBlink)
-	NoInverse    = boolOff(accessInverse)
+	NoBold       Styling = boolOff(accessBold)
+	NoDim        Styling = boolOff(accessDim)
+	NoItalic     Styling = boolOff(accessItalic)
+	NoUnderlined Styling = boolOff(accessUnderlined)
+	NoBlink      Styling = boolOff(accessBlink)
+	NoInverse    Styling = boolOff(accessInverse)
 
-	ToggleBold       = boolToggle(accessBold)
-	ToggleDim        = boolToggle(accessDim)
-	ToggleItalic     = boolToggle(accessItalic)
-	ToggleUnderlined = boolToggle(accessUnderlined)
-	ToggleBlink      = boolToggle(accessBlink)
-	ToggleInverse    = boolToggle(accessInverse)
+	ToggleBold       Styling = boolToggle(accessBold)
+	ToggleDim        Styling = boolToggle(accessDim)
+	ToggleItalic     Styling = boolToggle(accessItalic)
+	ToggleUnderlined Styling = boolToggle(accessUnderlined)
+	ToggleBlink      Styling = boolToggle(accessBlink)
+	ToggleInverse    Styling = boolToggle(accessInverse)
 )
 
 type setForeground struct{ c Color }
