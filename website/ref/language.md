@@ -113,24 +113,27 @@ string, and they are always equivalent with the exception of
 
 ## Number
 
-A `$number` argument can be a string in the following formats (they all
-express the same value):
+Elvish has a double-precision floating point number type that can be constructed
+with the `float64` builtin. The builtin takes a single argument, which should be
+either another `float64` value, or a string in the following formats (examples
+below all express the same value):
 
-* decimal notation (e.g., `10`),
-* hexadecimal notation (e.g., `0xA`),
-* octal notation (e.g., `0o12`),
-* binary notation (e.g., `0b1010`),
-* floating point notation (e.g., `10.0`), and
-* scientific notation (e.g., `1.0e1`).
+* Decimal notation, e.g. `10`.
+  
+* Hexadecimal notation, e.g. `0xA`.
+  
+* Octal notation, e.g. `0o12`.
+  
+* Binary notation, e.g. `0b1010`.
+  
+* Floating point notation, e.g. `10.0`.
+  
+* Scientific notation, e.g. `1.0e1`.
 
-An explicit `float64` data type is created using this syntax: `(float64
-$number)`. For convenience, all Elvish functions that expect a numeric
-argument will accept a string that can be parsed as a number. They
-will automatically convert the string to a `float64`. Which means
-explicit `float64` constructors are almost never needed. This implicit
-conversion includes special values like infinity (`Inf`) and not-a-number
-(`NaN`). Note that the letter case of these special values doesn't matter
-so `inf`, `Inf`, and `INF` are equivalent.
+The following special floating point values are also supported: `+Inf`, `-Inf`
+and `NaN`.
+
+The `float64` builtin is case-insensitive.
 
 A `float64` data type can be converted to a string using `(to-string
 $number)`. The resulting string is guaranteed to result in the same
@@ -139,7 +142,8 @@ need to perform this explicit conversion. Elvish will implicitly make
 the conversion when running external commands and many of the builtins
 (where the distinction is not important).
 
-See also the discussion of [Commands That Operate On
+You usually do not need to use `float64` values explicitly;
+see the discussion of [Commands That Operate On
 Numbers](./builtin.html#commands-that-operate-on-numbers).
 
 ## Exception
