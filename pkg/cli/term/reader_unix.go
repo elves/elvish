@@ -60,9 +60,6 @@ func readEvent(rd byteReaderWithTimeout) (event Event, err error) {
 		func() rune {
 			r, e := readRune(rd, keySeqTimeout)
 			if e != nil {
-				if e == errTimeout {
-					e = nil
-				}
 				return runeEndOfSeq
 			}
 			currentSeq += string(r)
