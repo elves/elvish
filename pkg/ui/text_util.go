@@ -92,7 +92,7 @@ func toRuns(s string) []run {
 
 func bytesForFirstNRunes(s string, n int) int {
 	k := 0
-	for i, _ := range s {
+	for i := range s {
 		if k == n {
 			return i
 		}

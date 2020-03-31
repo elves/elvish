@@ -76,9 +76,9 @@ func TestComplete(t *testing.T) {
 			externals: []string{"ls", "make"},
 			specials:  []string{"if", "for"},
 			variables: map[string][]string{
-				"":     []string{"foo", "bar", "fn~", "ns:"},
-				"ns1:": []string{"lorem"},
-				"ns2:": []string{"ipsum"},
+				"":     {"foo", "bar", "fn~", "ns:"},
+				"ns1:": {"lorem"},
+				"ns2:": {"ipsum"},
 			},
 			namespaces: []string{"ns1:", "ns2:"},
 		},

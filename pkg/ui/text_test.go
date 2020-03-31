@@ -46,14 +46,14 @@ var partitionTests = tt.Table{
 		{red("lorem"), blue("f")}, {blue("oobar")}}),
 	Args(text2, 11).Rets([]Text{text2, nil}),
 
-	Args(text1, 1, 2).Rets([]Text{Text{red("l")}, Text{red("o")}, Text{red("rem")}}),
+	Args(text1, 1, 2).Rets([]Text{{red("l")}, {red("o")}, {red("rem")}}),
 	Args(text1, 1, 2, 3, 4).Rets([]Text{
-		Text{red("l")}, Text{red("o")}, Text{red("r")}, Text{red("e")}, Text{red("m")}}),
+		{red("l")}, {red("o")}, {red("r")}, {red("e")}, {red("m")}}),
 	Args(text2, 2, 4, 6).Rets([]Text{
-		Text{red("lo")}, Text{red("re")},
-		Text{red("m"), blue("f")}, Text{blue("oobar")}}),
+		{red("lo")}, {red("re")},
+		{red("m"), blue("f")}, {blue("oobar")}}),
 	Args(text2, 6, 8).Rets([]Text{
-		Text{red("lorem"), blue("f")}, Text{blue("oo")}, Text{blue("bar")}}),
+		{red("lorem"), blue("f")}, {blue("oo")}, {blue("bar")}}),
 }
 
 func TestPartition(t *testing.T) {
@@ -82,31 +82,31 @@ func TestCountLines(t *testing.T) {
 func TestSplitByRune(t *testing.T) {
 	tt.Test(t, tt.Fn("Text.SplitByRune", Text.SplitByRune), tt.Table{
 		Args(Text{}, '\n').Rets([]Text(nil)),
-		Args(Text{red("lorem")}, '\n').Rets([]Text{Text{red("lorem")}}),
+		Args(Text{red("lorem")}, '\n').Rets([]Text{{red("lorem")}}),
 		Args(Text{red("lorem"), blue("ipsum"), red("dolar")}, '\n').Rets(
 			[]Text{
-				Text{red("lorem"), blue("ipsum"), red("dolar")},
+				{red("lorem"), blue("ipsum"), red("dolar")},
 			}),
 		Args(Text{red("lo\nrem")}, '\n').Rets([]Text{
-			Text{red("lo")}, Text{red("rem")},
+			{red("lo")}, {red("rem")},
 		}),
 		Args(Text{red("lo\nrem"), blue("ipsum")}, '\n').Rets(
 			[]Text{
-				Text{red("lo")},
-				Text{red("rem"), blue("ipsum")},
+				{red("lo")},
+				{red("rem"), blue("ipsum")},
 			}),
 		Args(Text{red("lo\nrem"), blue("ip\nsum")}, '\n').Rets(
 			[]Text{
-				Text{red("lo")},
-				Text{red("rem"), blue("ip")},
-				Text{blue("sum")},
+				{red("lo")},
+				{red("rem"), blue("ip")},
+				{blue("sum")},
 			}),
 		Args(Text{red("lo\nrem"), blue("ip\ns\num"), red("dolar")}, '\n').Rets(
 			[]Text{
-				Text{red("lo")},
-				Text{red("rem"), blue("ip")},
-				Text{blue("s")},
-				Text{blue("um"), red("dolar")},
+				{red("lo")},
+				{red("rem"), blue("ip")},
+				{blue("s")},
+				{blue("um"), red("dolar")},
 			}),
 	})
 }
