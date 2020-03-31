@@ -19,6 +19,20 @@ func TestCompileValue(t *testing.T) {
 		That("put {fi,elvi}sh{1.0,1.1}").Puts(
 			"fish1.0", "fish1.1", "elvish1.0", "elvish1.1"),
 
+		// As a special case, an empty compound expression evaluates to an empty
+		// string.
+		That("put {}").Puts(""),
+		That("put [&k=][k]").Puts(""),
+
+		// TODO: Test the case where util.GetHome returns an error.
+
+		// Error in any of the components throws an exception.
+		That("put a{[][1]}").ThrowsMessage("index out of range"),
+		// Error in concatenating the values throws an exception.
+		That("put []a").ThrowsMessage("cannot concatenate list and string"),
+		// Error when applying tilde throws an exception.
+		That("put ~[]").ThrowsMessage("tilde doesn't work on value of type list"),
+
 		// List, Map and Indexing
 		// ----------------------
 

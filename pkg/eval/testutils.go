@@ -48,6 +48,11 @@ type result struct {
 // error, as long as not nil, is a match.
 var errAny = errors.New("any error")
 
+// A special error type that matches any error with the given message.
+type errorWithMessage struct{ msg string }
+
+func (e errorWithMessage) Error() string { return "any error with message " + e.msg }
+
 // The following functions and methods are used to build Test structs. They are
 // supposed to read like English, so a test that "put x" should put "x" reads:
 //
@@ -95,6 +100,12 @@ func (t TestCase) Prints(s string) TestCase {
 func (t TestCase) Throws(err error) TestCase {
 	t.want.exception = err
 	return t
+}
+
+// ThrowsMessage returns an altered TestCase that requires the source code to
+// throw an exception with the specified message when evaluted.
+func (t TestCase) ThrowsMessage(msg string) TestCase {
+	return t.Throws(errorWithMessage{msg})
 }
 
 // ThrowsAny returns an altered TestCase that requires the source code to throw
@@ -223,7 +234,13 @@ func matchErr(want, got error) bool {
 	if got == nil {
 		return want == nil
 	}
-	return want == errAny || reflect.DeepEqual(Cause(got), want)
+	if want == errAny {
+		return true
+	}
+	if e, ok := want.(errorWithMessage); ok {
+		return e.msg == got.Error()
+	}
+	return reflect.DeepEqual(Cause(got), want)
 }
 
 // MustMkdirAll calls os.MkdirAll and panics if an error is returned. It is
