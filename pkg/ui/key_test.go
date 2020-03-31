@@ -37,34 +37,45 @@ func TestKeyAsElvishValue(t *testing.T) {
 
 	vals.TestValue(t, K('\t')).Repr("(edit:key Tab)")
 	vals.TestValue(t, K(F1)).Repr("(edit:key F1)")
+	vals.TestValue(t, K(-1)).Repr("(edit:key '(bad function key -1)')")
+	vals.TestValue(t, K(-2000)).Repr("(edit:key '(bad function key -2000)')")
 }
 
 var parseKeyTests = []struct {
 	s       string
 	wantKey Key
+	wantErr string
 }{
+	{s: "x", wantKey: K('x')},
+	{s: "Tab", wantKey: K(Tab)},
+	{s: "F1", wantKey: K(F1)},
+
 	// Alt- keys are case-sensitive.
-	{"a-x", Key{'x', Alt}},
-	{"a-X", Key{'X', Alt}},
+	{s: "a-x", wantKey: Key{'x', Alt}},
+	{s: "a-X", wantKey: Key{'X', Alt}},
 
 	// Ctrl- keys are case-insensitive.
-	{"C-x", Key{'X', Ctrl}},
-	{"C-X", Key{'X', Ctrl}},
+	{s: "C-x", wantKey: Key{'X', Ctrl}},
+	{s: "C-X", wantKey: Key{'X', Ctrl}},
 
 	// + is the same as -.
-	{"C+X", Key{'X', Ctrl}},
+	{s: "C+X", wantKey: Key{'X', Ctrl}},
 
 	// Full names and alternative names can also be used.
-	{"M-x", Key{'x', Alt}},
-	{"Meta-x", Key{'x', Alt}},
+	{s: "M-x", wantKey: Key{'x', Alt}},
+	{s: "Meta-x", wantKey: Key{'x', Alt}},
 
 	// Multiple modifiers can appear in any order.
-	{"Alt-Ctrl-Delete", Key{Delete, Alt | Ctrl}},
-	{"Ctrl-Alt-Delete", Key{Delete, Alt | Ctrl}},
+	{s: "Alt-Ctrl-Delete", wantKey: Key{Delete, Alt | Ctrl}},
+	{s: "Ctrl-Alt-Delete", wantKey: Key{Delete, Alt | Ctrl}},
 
 	// Ctrl-I and Ctrl-J are normalized to Tab and Enter.
-	{"Ctrl-I", K(Tab)},
-	{"Ctrl-J", K(Enter)},
+	{s: "Ctrl-I", wantKey: K(Tab)},
+	{s: "Ctrl-J", wantKey: K(Enter)},
+
+	// Errors.
+	{s: "F123", wantErr: "bad key: F123"},
+	{s: "Super-X", wantErr: "bad modifier: super"},
 }
 
 func TestParseKey(t *testing.T) {
@@ -73,8 +84,15 @@ func TestParseKey(t *testing.T) {
 		if key != test.wantKey {
 			t.Errorf("ParseKey(%q) => %v, want %v", test.s, key, test.wantKey)
 		}
-		if err != nil {
-			t.Errorf("ParseKey(%q) => error %v, want nil", test.s, err)
+		if test.wantErr == "" {
+			if err != nil {
+				t.Errorf("ParseKey(%q) => error %v, want nil", test.s, err)
+			}
+		} else {
+			if err == nil || err.Error() != test.wantErr {
+				t.Errorf("ParseKey(%q) => error %v, want error with message %q",
+					test.s, err, test.wantErr)
+			}
 		}
 	}
 }

@@ -133,7 +133,7 @@ func (k Key) String() string {
 		}
 	} else {
 		i := int(k.Rune + functionKeyOffset)
-		if i >= len(functionKeyNames) {
+		if i < 0 || i >= len(functionKeyNames) {
 			fmt.Fprintf(&b, "(bad function key %d)", k.Rune)
 		} else {
 			b.WriteString(functionKeyNames[i])
@@ -168,7 +168,7 @@ func parseKey(s string) (Key, error) {
 		modname := strings.ToLower(s[:i])
 		mod, ok := modifierByName[modname]
 		if !ok {
-			return Key{}, fmt.Errorf("bad modifier: %q", modname)
+			return Key{}, fmt.Errorf("bad modifier: %s", parse.Quote(modname))
 		}
 		k.Mod |= mod
 		s = s[i+1:]
@@ -212,7 +212,7 @@ func parseKey(s string) (Key, error) {
 		}
 	}
 
-	return Key{}, fmt.Errorf("bad key: %q", s)
+	return Key{}, fmt.Errorf("bad key: %s", parse.Quote(s))
 }
 
 // ToKey converts an Elvish Value to a Key. If the passed Value is not Key or
