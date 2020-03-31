@@ -80,7 +80,7 @@ var parseKeyTests = []struct {
 
 func TestParseKey(t *testing.T) {
 	for _, test := range parseKeyTests {
-		key, err := parseKey(test.s)
+		key, err := ParseKey(test.s)
 		if key != test.wantKey {
 			t.Errorf("ParseKey(%q) => %v, want %v", test.s, key, test.wantKey)
 		}

@@ -2,15 +2,12 @@ package ui
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/xiaq/persistent/hash"
 )
-
-var ErrKeyMustBeString = errors.New("key must be key or string value")
 
 // Key represents a single keyboard input, typically assembled from a escape
 // sequence.
@@ -152,12 +149,12 @@ var modifierByName = map[string]Mod{
 	"c": Ctrl, "ctrl": Ctrl,
 }
 
-// parseKey parses a key. The syntax is:
+// ParseKey parses a key. The syntax is:
 //
 // Key = { Mod ('+' | '-') } BareKey
 //
 // BareKey = FunctionKeyName | SingleRune
-func parseKey(s string) (Key, error) {
+func ParseKey(s string) (Key, error) {
 	var k Key
 	// parse modifiers
 	for {
@@ -213,19 +210,6 @@ func parseKey(s string) (Key, error) {
 	}
 
 	return Key{}, fmt.Errorf("bad key: %s", parse.Quote(s))
-}
-
-// ToKey converts an Elvish Value to a Key. If the passed Value is not Key or
-// String, it throws an error.
-func ToKey(k interface{}) (Key, error) {
-	switch k := k.(type) {
-	case Key:
-		return k, nil
-	case string:
-		return parseKey(k)
-	default:
-		return Key{}, ErrKeyMustBeString
-	}
 }
 
 // Keys implements sort.Interface.

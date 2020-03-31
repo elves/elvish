@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"errors"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -95,6 +96,19 @@ func insertRaw(app cli.App, tty cli.TTY) {
 //
 // Parses a string into a key.
 
+var errMustBeKeyOrString = errors.New("must be key or string")
+
+func toKey(v interface{}) (ui.Key, error) {
+	switch v := v.(type) {
+	case ui.Key:
+		return v, nil
+	case string:
+		return ui.ParseKey(v)
+	default:
+		return ui.Key{}, errMustBeKeyOrString
+	}
+}
+
 //elvdoc:fn redraw &full=$false
 //
 // Triggers a redraw.
@@ -170,7 +184,7 @@ func initMiscBuiltins(app cli.App, ns eval.Ns) {
 		"binding-table":  MakeBindingMap,
 		"close-listing":  func() { closeListing(app) },
 		"end-of-history": func() { endOfHistory(app) },
-		"key":            ui.ToKey,
+		"key":            toKey,
 		"redraw":         func(opts redrawOpts) { redraw(app, opts) },
 		"return-line":    app.CommitCode,
 		"return-eof":     app.CommitEOF,
