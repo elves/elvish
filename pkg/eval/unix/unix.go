@@ -9,6 +9,8 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 )
 
+const ExposeUnixNs = true
+
 var Ns = eval.Ns{
 	"umask": UmaskVariable{},
 }

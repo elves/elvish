@@ -9,4 +9,6 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 )
 
+const ExposeUnixNs = false
+
 var Ns = eval.Ns{}

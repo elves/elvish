@@ -78,7 +78,9 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 	ev.InstallModule("platform", platform.Ns)
 	ev.InstallModule("re", re.Ns)
 	ev.InstallModule("str", str.Ns)
-	ev.InstallModule("unix", unix.Ns)
+	if unix.ExposeUnixNs {
+		ev.InstallModule("unix", unix.Ns)
+	}
 
 	if sockpath != "" && dbpath != "" {
 		spawner := &daemonp.Daemon{
