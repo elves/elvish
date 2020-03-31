@@ -109,7 +109,7 @@ builtin, which only operates on numbers and does not function as a string
 concatenation command. Consider these examples:
 
 ```elvish-transcript
-~/projects/3rd-party/elvish> + x 1
+~> + x 1
 Exception: wrong type of 1'th argument: cannot parse as number: x
 [tty], line 1: + x 1
 ~> + inf 1
