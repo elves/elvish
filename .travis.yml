@@ -4,6 +4,7 @@ os:
   - osx
 sudo: false
 go:
+  - 1.14.x
   - 1.13.x
 env:
   global:
