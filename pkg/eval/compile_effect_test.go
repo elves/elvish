@@ -40,6 +40,17 @@ func TestCompileEffect(t *testing.T) {
 			"prclose $p").Puts("foo"),
 		// TODO: Add a useful hybrid pipeline sample
 
+		// Commands
+		// --------
+
+		That("put foo").Puts("foo"),
+		// Command errors when the head is not a single value.
+		That("{put put} foo").ThrowsMessage("head of command must be a single value; got 2 values"),
+		// Command errors when when argument errors.
+		That("put [][1]").ThrowsMessage("index out of range"),
+		// Command errors when any optional evaluation errors.
+		That("put &x=[][1]").ThrowsMessage("index out of range"),
+
 		// Assignments
 		// -----------
 
@@ -77,14 +88,25 @@ func TestCompileEffect(t *testing.T) {
 		// Run with "go test -race".
 		That("x = 1", "put $x | y = (all)").DoesNothing(),
 
+		// Assignment errors when the RHS errors.
+		That("x = [][1]").ThrowsMessage("index out of range"),
+		// Arity mismatch.
+		That("x = 1 2").Throws(ErrArityMismatch),
+		That("x y = 1").Throws(ErrArityMismatch),
+		That("x y @z = 1").Throws(ErrArityMismatch),
+
 		// Redirections
 		// ------------
 
-		That("echo 233 > out1", " slurp < out1").
-			Puts("233\n"),
+		// Output and input redirection.
+		That("echo 233 > out1", " slurp < out1").Puts("233\n"),
+		// Append.
+		That("echo 1 > out; echo 2 >> out; slurp < out").Puts("1\n2\n"),
+
 		// Redirections from special form.
 		That(`for x [lorem ipsum] { echo $x } > out2`, `slurp < out2`).
 			Puts("lorem\nipsum\n"),
+
 		// Using numeric FDs as source and destination.
 		That(`{ echo foobar >&2 } 2> out3`, `slurp < out3`).
 			Puts("foobar\n"),
@@ -95,11 +117,15 @@ func TestCompileEffect(t *testing.T) {
 		That(`echo foo >&4`).ThrowsAny(),
 		// Using a new FD as destination is OK, and makes it available.
 		That(`{ echo foo >&4 } 4>out5`, `slurp < out5`).Puts("foo\n"),
+
 		// Redirections from File object.
 		That(`echo haha > out3`, `f = (fopen out3)`, `slurp <$f`, ` fclose $f`).
 			Puts("haha\n"),
 		// Redirections from Pipe object.
 		That(`p = (pipe); echo haha > $p; pwclose $p; slurp < $p; prclose $p`).
 			Puts("haha\n"),
+
+		// Using anything else in redirection throws an exception.
+		That("echo > []").ThrowsMessage("redirection source must be string, file or pipe; got list"),
 	)
 }

@@ -11,6 +11,8 @@ import (
 
 func TestCompileValue(t *testing.T) {
 	home, cleanup := InTempHome()
+	MustCreateEmpty("file1")
+	MustCreateEmpty("file2")
 	defer cleanup()
 
 	Test(t,
@@ -40,6 +42,19 @@ func TestCompileValue(t *testing.T) {
 			Puts("[a b c] [&key=value]"),
 		That("put [a b c][2]").Puts("c"),
 		That("put [&key=value][key]").Puts("value"),
+
+		// Map keys and values may evaluate to multiple values as long as their
+		// numbers match.
+		That("put [&{a b}={foo bar}]").Puts(vals.MakeMap("a", "foo", "b", "bar")),
+
+		// List expression errors if an element expression errors.
+		That("put [ [][0] ]").ThrowsMessage("index out of range"),
+		// Map expression errors if a key or value expression errors.
+		That("put [ &[][0]=a ]").ThrowsMessage("index out of range"),
+		That("put [ &a=[][0] ]").ThrowsMessage("index out of range"),
+		// Map expression errors if number of keys and values in a single pair
+		// does not match.
+		That("put [&{a b}={foo bar lorem}]").ThrowsMessage("2 keys but 3 values"),
 
 		// String Literals
 		// ---------------
@@ -119,7 +134,10 @@ func TestCompileValue(t *testing.T) {
 		// -----
 		That("put ~").Puts(home),
 		That("put ~/src").Puts(home+"/src"),
+		// Make sure that tilde processing retains trailing slashes.
 		That("put ~/src/").Puts(home+"/src/"),
+		// Tilde and wildcard.
+		That("put ~/*").Puts(home+"/file1", home+"/file2"),
 		// TODO(xiaq): Add regression test for #793.
 
 		// Closure
@@ -149,6 +167,21 @@ func TestCompileValue(t *testing.T) {
 		That("[a &k=v]{ put $a $k } foo &k=bar").Puts("foo", "bar"),
 		// Option default value.
 		That("[a &k=v]{ put $a $k } foo").Puts("foo", "v"),
+
+		// Argument name must be unqualified.
+		That("[a:b]{ }").DoesNotCompile(),
+		// Argument name must not be empty.
+		That("['']{ }").DoesNotCompile(),
+		That("[@]{ }").DoesNotCompile(),
+		// Only the last argument may be prefixed with @.
+		That("[@a b]{ }").DoesNotCompile(),
+		// Option name must be unqualified.
+		That("[&a:b=1]{ }").DoesNotCompile(),
+		// Option name must not be empty.
+		That("[&''=b]{ }").DoesNotCompile(),
+
+		// Option default value must be one value.
+		That("[&a=(put foo bar)]{ }").ThrowsMessage("option default value must be a single value; got 2 values"),
 	)
 }
 

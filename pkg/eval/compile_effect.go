@@ -616,7 +616,8 @@ func (op *redirOp) invoke(fm *Frame) error {
 				CloseFile: false,
 			}
 		default:
-			srcUnwrap.error("string or file", "%s", vals.Kind(src))
+			srcUnwrap.error("string, file or pipe", "%s", vals.Kind(src))
+			return srcUnwrap.err
 		}
 	}
 	return nil
