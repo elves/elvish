@@ -7,7 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
@@ -224,34 +223,24 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 			// expression.
 			headOp = cp.compoundOp(n.Head)
 		}
+		argOps = cp.compoundOps(n.Args)
 	} else {
 		// Assignment form.
 		varsOp, restOp := cp.lvaluesMulti(n.Vars)
-		// This cannot be replaced with newSeqValuesOp as it depends on the fact
-		// that argOps will be changed later.
-		argsOp := valuesOp{
-			funcValuesOp(func(fm *Frame) ([]interface{}, error) {
-				var values []interface{}
-				for _, op := range argOps {
-					moreValues, err := op.exec(fm)
-					if err != nil {
-						return nil, err
-					}
-					values = append(values, moreValues...)
-				}
-				return values, nil
-			}), diag.Ranging{From: -1, To: -1}}
+		argOps = cp.compoundOps(n.Args)
+		valuesOp := valuesOp{body: seqValuesOp{argOps}}
 		if len(argOps) > 0 {
-			argsOp.From = argOps[0].From
-			argsOp.To = argOps[len(argOps)-1].To
+			valuesOp.From = argOps[0].From
+			valuesOp.To = argOps[len(argOps)-1].To
+		} else {
+			valuesOp.From = n.Range().To
+			valuesOp.To = n.Range().To
 		}
 		spaceyAssignOp = effectOp{
-			&assignmentOp{varsOp, restOp, argsOp},
-			diag.Ranging{From: n.Range().From, To: argsOp.To},
+			&assignmentOp{varsOp, restOp, valuesOp}, n.Range(),
 		}
 	}
 
-	argOps = cp.compoundOps(n.Args)
 	optsOp := cp.mapPairs(n.Opts)
 	redirOps := cp.redirOps(n.Redirs)
 	// TODO: n.ErrorRedir

@@ -3,6 +3,7 @@ package eval
 import (
 	"testing"
 
+	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -55,7 +56,11 @@ func TestCompileEffect(t *testing.T) {
 		// -----------
 
 		// Spacey assignment.
-		That("a @b = 2 3 foo; put $a $b[1]").Puts("2", "foo"),
+		That("a = foo; put $a").Puts("foo"),
+		That("a b = foo bar; put $a $b").Puts("foo", "bar"),
+		That("a @b = 2 3 foo; put $a $b").Puts("2", vals.MakeList("3", "foo")),
+		That("@a = ; put $a").Puts(vals.EmptyList),
+
 		// List element assignment
 		That("li=[foo bar]; li[0]=233; put $@li").Puts("233", "bar"),
 		// Variable in list assignment must already be defined. Regression test
