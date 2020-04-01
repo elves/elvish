@@ -16,7 +16,7 @@ type Segment struct {
 }
 
 // Kind returns "styled-segment".
-func (*Segment) Kind() string { return "styled-segment" }
+func (*Segment) Kind() string { return "ui:text-segment" }
 
 // Repr returns the representation of this Segment. The string can be used to
 // construct an identical Segment. Unset or default attributes are skipped. If
@@ -25,12 +25,18 @@ func (s *Segment) Repr(indent int) string {
 	buf := new(bytes.Buffer)
 	addIfNotEqual := func(key string, val, cmp interface{}) {
 		if val != cmp {
-			fmt.Fprintf(buf, "&%s=%s ", key, vals.Repr(val, 0))
+			var valString string
+			if c, ok := val.(Color); ok {
+				valString = c.String()
+			} else {
+				valString = vals.Repr(val, 0)
+			}
+			fmt.Fprintf(buf, "&%s=%s ", key, valString)
 		}
 	}
 
-	addIfNotEqual("fg-color", s.Foreground, "")
-	addIfNotEqual("bg-color", s.Background, "")
+	addIfNotEqual("fg-color", s.Foreground, nil)
+	addIfNotEqual("bg-color", s.Background, nil)
 	addIfNotEqual("bold", s.Bold, false)
 	addIfNotEqual("dim", s.Dim, false)
 	addIfNotEqual("italic", s.Italic, false)
@@ -42,7 +48,7 @@ func (s *Segment) Repr(indent int) string {
 		return s.Text
 	}
 
-	return fmt.Sprintf("(styled-segment %s %s)", s.Text, strings.TrimSpace(buf.String()))
+	return fmt.Sprintf("(ui:text-segment %s %s)", s.Text, strings.TrimSpace(buf.String()))
 }
 
 // IterateKeys feeds the function with all valid attributes of styled-segment.

@@ -94,7 +94,7 @@ func (s *Style) MergeFromOptions(options map[string]interface{}) error {
 		}
 
 		if need != "" {
-			return fmt.Errorf("value to option '%s' must be a %s", k, need)
+			return fmt.Errorf("value for option '%s' must be a %s", k, need)
 		}
 	}
 

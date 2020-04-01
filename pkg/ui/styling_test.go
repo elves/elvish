@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/elves/elvish/pkg/tt"
@@ -61,4 +62,33 @@ func TestStyleText(t *testing.T) {
 			Rets(Text{&Segment{Style{Inverse: true}, "foo"}}),
 		// TODO: Test nil styling.
 	})
+}
+
+var parseStylingTests = []struct {
+	s           string
+	wantStyling Styling
+}{
+	{"default", FgDefault},
+	{"red", FgRed},
+	{"fg-default", FgDefault},
+	{"fg-red", FgRed},
+
+	{"bg-default", BgDefault},
+	{"bg-red", BgRed},
+
+	{"bold", Bold},
+	{"no-bold", NoBold},
+	{"toggle-bold", ToggleBold},
+
+	{"red bold", Stylings(FgRed, Bold)},
+}
+
+func TestParseStyling(t *testing.T) {
+	for _, test := range parseStylingTests {
+		styling := ParseStyling(test.s)
+		if !reflect.DeepEqual(styling, test.wantStyling) {
+			t.Errorf("ParseStyling(%q) -> %v, want %v",
+				test.s, styling, test.wantStyling)
+		}
+	}
 }

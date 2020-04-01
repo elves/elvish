@@ -19,7 +19,7 @@ func T(s string, ts ...Styling) Text {
 }
 
 // Kind returns "styled-text".
-func (Text) Kind() string { return "styled-text" }
+func (Text) Kind() string { return "ui:text" }
 
 // Repr returns the representation of the current Text. It is just a wrapper
 // around the containing Segments.
@@ -28,7 +28,7 @@ func (t Text) Repr(indent int) string {
 	for _, s := range t {
 		buf.WriteString(s.Repr(indent + 1))
 	}
-	return fmt.Sprintf("(styled %s)", buf.String())
+	return fmt.Sprintf("(ui:text %s)", buf.String())
 }
 
 // IterateKeys feeds the function with all valid indicies of the styled-text.

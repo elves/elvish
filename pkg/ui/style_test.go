@@ -22,6 +22,75 @@ func TestStyleSGR(t *testing.T) {
 	})
 }
 
+type mergeFromOptionsTest struct {
+	style     Style
+	options   map[string]interface{}
+	wantStyle Style
+	wantErr   string
+}
+
+var mergeFromOptionsTests = []mergeFromOptionsTest{
+	// Parsing of each possible key.
+	kv("fg-color", "red", Style{Foreground: Red}),
+	kv("bg-color", "red", Style{Background: Red}),
+	kv("bold", true, Style{Bold: true}),
+	kv("dim", true, Style{Dim: true}),
+	kv("italic", true, Style{Italic: true}),
+	kv("underlined", true, Style{Underlined: true}),
+	kv("blink", true, Style{Blink: true}),
+	kv("inverse", true, Style{Inverse: true}),
+	// Merging with existing options.
+	{
+		style: Style{Bold: true, Dim: true},
+		options: map[string]interface{}{
+			"bold": false, "fg-color": "red",
+		},
+		wantStyle: Style{Dim: true, Foreground: Red},
+	},
+	// Bad key.
+	{
+		options: map[string]interface{}{"bad": true},
+		wantErr: "unrecognized option 'bad'",
+	},
+	// Bad type for color field.
+	{
+		options: map[string]interface{}{"fg-color": true},
+		wantErr: "value for option 'fg-color' must be a valid color string",
+	},
+	// Bad type for bool field.
+	{
+		options: map[string]interface{}{"bold": ""},
+		wantErr: "value for option 'bold' must be a bool value",
+	},
+}
+
+// A helper for constructing a test case whose input is a single key-value pair.
+func kv(k string, v interface{}, s Style) mergeFromOptionsTest {
+	return mergeFromOptionsTest{
+		options: map[string]interface{}{k: v}, wantStyle: s,
+	}
+}
+
+func TestMergeFromOptions(t *testing.T) {
+	for _, test := range mergeFromOptionsTests {
+		style := test.style
+		err := style.MergeFromOptions(test.options)
+		if style != test.wantStyle {
+			t.Errorf("(%v).MergeFromOptions(%v) -> %v, want %v",
+				test.style, test.options, style, test.wantStyle)
+		}
+		if err == nil {
+			if test.wantErr != "" {
+				t.Errorf("got error nil, want %v", test.wantErr)
+			}
+		} else {
+			if err.Error() != test.wantErr {
+				t.Errorf("got error %v, want error with message %s", err, test.wantErr)
+			}
+		}
+	}
+}
+
 func TestStyleFromSGR(t *testing.T) {
 	tt.Test(t, tt.Fn("StyleFromSGR", StyleFromSGR), tt.Table{
 		tt.Args("1").Rets(Style{Bold: true}),

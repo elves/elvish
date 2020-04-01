@@ -3,10 +3,9 @@ package ui
 import (
 	"testing"
 
+	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/tt"
 )
-
-// TODO: Test other methods of Text.
 
 var Args = tt.Args
 
@@ -18,6 +17,19 @@ func TestT(t *testing.T) {
 		Args("test red", FgRed, Bold).Rets(Text{&Segment{
 			Text: "test red", Style: Style{Foreground: Red, Bold: true}}}),
 	})
+}
+
+func TestTextAsElvishValue(t *testing.T) {
+	vals.TestValue(t, T("text")).
+		Kind("ui:text").
+		Repr("(ui:text text)").
+		AllKeys("0").
+		Index("0", &Segment{Text: "text"})
+
+	vals.TestValue(t, T("text", FgRed)).
+		Repr("(ui:text (ui:text-segment text &fg-color=red))")
+	vals.TestValue(t, T("text", Bold)).
+		Repr("(ui:text (ui:text-segment text &bold=$true))")
 }
 
 var (
