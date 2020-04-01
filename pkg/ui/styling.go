@@ -79,26 +79,26 @@ var (
 	BgBrightCyan    Styling = setBackground{BrightCyan}
 	BgBrightWhite   Styling = setBackground{BrightWhite}
 
-	Bold       Styling = boolOn(accessBold)
-	Dim        Styling = boolOn(accessDim)
-	Italic     Styling = boolOn(accessItalic)
-	Underlined Styling = boolOn(accessUnderlined)
-	Blink      Styling = boolOn(accessBlink)
-	Inverse    Styling = boolOn(accessInverse)
+	Bold       Styling = boolOn{boldField{}}
+	Dim        Styling = boolOn{dimField{}}
+	Italic     Styling = boolOn{italicField{}}
+	Underlined Styling = boolOn{underlinedField{}}
+	Blink      Styling = boolOn{blinkField{}}
+	Inverse    Styling = boolOn{inverseField{}}
 
-	NoBold       Styling = boolOff(accessBold)
-	NoDim        Styling = boolOff(accessDim)
-	NoItalic     Styling = boolOff(accessItalic)
-	NoUnderlined Styling = boolOff(accessUnderlined)
-	NoBlink      Styling = boolOff(accessBlink)
-	NoInverse    Styling = boolOff(accessInverse)
+	NoBold       Styling = boolOff{boldField{}}
+	NoDim        Styling = boolOff{dimField{}}
+	NoItalic     Styling = boolOff{italicField{}}
+	NoUnderlined Styling = boolOff{underlinedField{}}
+	NoBlink      Styling = boolOff{blinkField{}}
+	NoInverse    Styling = boolOff{inverseField{}}
 
-	ToggleBold       Styling = boolToggle(accessBold)
-	ToggleDim        Styling = boolToggle(accessDim)
-	ToggleItalic     Styling = boolToggle(accessItalic)
-	ToggleUnderlined Styling = boolToggle(accessUnderlined)
-	ToggleBlink      Styling = boolToggle(accessBlink)
-	ToggleInverse    Styling = boolToggle(accessInverse)
+	ToggleBold       Styling = boolToggle{boldField{}}
+	ToggleDim        Styling = boolToggle{dimField{}}
+	ToggleItalic     Styling = boolToggle{italicField{}}
+	ToggleUnderlined Styling = boolToggle{underlinedField{}}
+	ToggleBlink      Styling = boolToggle{blinkField{}}
+	ToggleInverse    Styling = boolToggle{inverseField{}}
 )
 
 // Fg returns a Styling that sets the foreground color.
@@ -109,22 +109,31 @@ func Bg(c Color) Styling { return setBackground{c} }
 
 type setForeground struct{ c Color }
 type setBackground struct{ c Color }
-type boolOn func(*Style) *bool
-type boolOff func(*Style) *bool
-type boolToggle func(*Style) *bool
+type boolOn struct{ f boolField }
+type boolOff struct{ f boolField }
+type boolToggle struct{ f boolField }
 
 func (t setForeground) transform(s *Style) { s.Foreground = t.c }
 func (t setBackground) transform(s *Style) { s.Background = t.c }
-func (t boolOn) transform(s *Style)        { *t(s) = true }
-func (t boolOff) transform(s *Style)       { *t(s) = false }
-func (t boolToggle) transform(s *Style)    { p := t(s); *p = !*p }
+func (t boolOn) transform(s *Style)        { *t.f.get(s) = true }
+func (t boolOff) transform(s *Style)       { *t.f.get(s) = false }
+func (t boolToggle) transform(s *Style)    { p := t.f.get(s); *p = !*p }
 
-func accessBold(s *Style) *bool       { return &s.Bold }
-func accessDim(s *Style) *bool        { return &s.Dim }
-func accessItalic(s *Style) *bool     { return &s.Italic }
-func accessUnderlined(s *Style) *bool { return &s.Underlined }
-func accessBlink(s *Style) *bool      { return &s.Blink }
-func accessInverse(s *Style) *bool    { return &s.Inverse }
+type boolField interface{ get(*Style) *bool }
+
+type boldField struct{}
+type dimField struct{}
+type italicField struct{}
+type underlinedField struct{}
+type blinkField struct{}
+type inverseField struct{}
+
+func (boldField) get(s *Style) *bool       { return &s.Bold }
+func (dimField) get(s *Style) *bool        { return &s.Dim }
+func (italicField) get(s *Style) *bool     { return &s.Italic }
+func (underlinedField) get(s *Style) *bool { return &s.Underlined }
+func (blinkField) get(s *Style) *bool      { return &s.Blink }
+func (inverseField) get(s *Style) *bool    { return &s.Inverse }
 
 type jointStyling []Styling
 
@@ -157,13 +166,13 @@ func ParseStyling(s string) Styling {
 	return joint
 }
 
-var boolFieldAccessor = map[string]func(*Style) *bool{
-	"bold":       accessBold,
-	"dim":        accessDim,
-	"italic":     accessItalic,
-	"underlined": accessUnderlined,
-	"blink":      accessBlink,
-	"inverse":    accessInverse,
+var boolFields = map[string]boolField{
+	"bold":       boldField{},
+	"dim":        dimField{},
+	"italic":     italicField{},
+	"underlined": underlinedField{},
+	"blink":      blinkField{},
+	"inverse":    inverseField{},
 }
 
 func parseOneStyling(name string) Styling {
@@ -181,16 +190,16 @@ func parseOneStyling(name string) Styling {
 			return setBackground{color}
 		}
 	case strings.HasPrefix(name, "no-"):
-		if f, ok := boolFieldAccessor[name[len("no-"):]]; ok {
-			return boolOff(f)
+		if f, ok := boolFields[name[len("no-"):]]; ok {
+			return boolOff{f}
 		}
 	case strings.HasPrefix(name, "toggle-"):
-		if f, ok := boolFieldAccessor[name[len("toggle-"):]]; ok {
-			return boolToggle(f)
+		if f, ok := boolFields[name[len("toggle-"):]]; ok {
+			return boolToggle{f}
 		}
 	default:
-		if f, ok := boolFieldAccessor[name]; ok {
-			return boolOn(f)
+		if f, ok := boolFields[name]; ok {
+			return boolOn{f}
 		}
 		if color := parseColor(name); color != nil {
 			return setForeground{color}
