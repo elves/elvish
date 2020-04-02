@@ -1,8 +1,10 @@
 env:
   GOPROXY: https://proxy.golang.org
-  CGO_ENABLED: 0
   ELVISH_TEST_UI_TIMEOUT: 5s
 test_task:
+  modules_cache:
+    fingerprint_script: cat go.sum
+    folder: $GOPATH/pkg/mod
   matrix:
     - container:
         image: golang:latest
@@ -10,9 +12,8 @@ test_task:
         image: golang:latest
     - osx_instance:
         image: catalina-base
+      setup_script: brew install go
     - freebsd_instance:
         image_family: freebsd-12-1
-  modules_cache:
-    fingerprint_script: cat go.sum
-    folder: $GOPATH/pkg/mod
-  test_script: make test
+      setup_script: pkg install -y go
+  test_script: go test ./...
