@@ -14,6 +14,8 @@ type MultiError struct {
 	Entries []*diag.Error
 }
 
+var _ diag.Shower = &MultiError{}
+
 func (me *MultiError) add(msg string, ctx *diag.Context) {
 	err := &diag.Error{Type: parseErrorType, Message: msg, Context: *ctx}
 	me.Entries = append(me.Entries, err)
@@ -41,7 +43,7 @@ func (me *MultiError) Error() string {
 }
 
 // Show shows the error.
-func (me *MultiError) PPrint(indent string) string {
+func (me *MultiError) Show(indent string) string {
 	switch len(me.Entries) {
 	case 0:
 		return "no parse error"
