@@ -12,9 +12,10 @@ import (
 func TestBuiltinSpecial(t *testing.T) {
 	Test(t,
 		// del - deleting variable
-		That("x = 1; del $x; echo $x").DoesNotCompile(),
-		That("x = 1; del $:x; echo $x").DoesNotCompile(),
-		That("x = 1; del $local:x; echo $x").DoesNotCompile(),
+		That("x = 1; del x").DoesNothing(),
+		That("x = 1; del x; echo $x").DoesNotCompile(),
+		That("x = 1; del :x; echo $x").DoesNotCompile(),
+		That("x = 1; del local:x; echo $x").DoesNotCompile(),
 		// del - deleting element
 		That("x = [&k=v &k2=v2]; del x[k2]; keys $x").Puts("k"),
 		That("x = [[&k=v &k2=v2]]; del x[0][k2]; keys $x[0]").Puts("k"),
