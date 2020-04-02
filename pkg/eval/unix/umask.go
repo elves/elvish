@@ -39,6 +39,7 @@ import (
 // creation permission mask. Setting it changes the current file creation
 // permission mask for the process (not an individual thread).
 type UmaskVariable struct{}
+
 var _ vars.Var = UmaskVariable{}
 
 // Guard against concurrent fetch and assignment of $unix:umask. This assumes
