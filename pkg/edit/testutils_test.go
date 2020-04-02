@@ -55,6 +55,9 @@ func setup(fns ...func(*fixture)) *fixture {
 	ev.InstallModule("edit", ed.Ns())
 	evals(ev,
 		`use edit`,
+		// This is the same as the default prompt for non-root users. This makes
+		// sure that the tests will work when run as root.
+		"edit:prompt = { tilde-abbr $pwd; put '> ' }",
 		// This will simplify most tests against the terminal.
 		"edit:rprompt = { }")
 	f := &fixture{Editor: ed, TTYCtrl: ttyCtrl, Evaler: ev, Store: st, Home: home}
