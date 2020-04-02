@@ -39,8 +39,11 @@ import (
 // creation permission mask. Setting it changes the current file creation
 // permission mask for the process (not an individual thread).
 type UmaskVariable struct{}
-
 var _ vars.Var = UmaskVariable{}
+
+// Guard against concurrent fetch and assignment of $unix:umask. This assumes
+// no other part of the elvish code base will call unix.Umask() as it only
+// protects against races involving the aforementioned Elvish var.
 var umaskMutex sync.Mutex
 
 // Get returns the current file creation umask as a string.
@@ -59,9 +62,6 @@ func (UmaskVariable) Get() interface{} {
 // (the usual case) or a float64.
 func (UmaskVariable) Set(v interface{}) error {
 	var umask int
-
-	umaskMutex.Lock()
-	defer umaskMutex.Unlock()
 
 	switch v := v.(type) {
 	case string:
@@ -87,6 +87,8 @@ func (UmaskVariable) Set(v interface{}) error {
 		return errors.New("umask value outside the range [0..0o777]")
 	}
 
+	umaskMutex.Lock()
+	defer umaskMutex.Unlock()
 	unix.Umask(umask)
 	return nil
 }

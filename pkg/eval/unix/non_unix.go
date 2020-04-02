@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 )
 
+// Indicate that this module should not be exposed as a usable elvish namespace.
 const ExposeUnixNs = false
 
 var Ns = eval.Ns{}
