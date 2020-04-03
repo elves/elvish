@@ -4,12 +4,10 @@ environment:
   GOPATH: c:\gopath
   ELVISH_TEST_TIME_SCALE: 10
 install:
-  - echo %PATH%
-  - echo %GOPATH%
   - set PATH=%GOPATH%\bin;c:\go\bin;C:\msys64\usr\bin;%PATH%
   - go version
-  - go env
 build_script:
-  - make test
+  - go test ./...
 deploy_script:
-  - make upload-coverage-codecov
+  - go test -coverprofile=coverage -covermode=set ./...
+  - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage
