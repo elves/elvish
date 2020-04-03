@@ -1,7 +1,10 @@
 # Elvish: Friendly Interactive Shell and Expressive Programming Language
 
-[![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?logo=travis&label=linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
-[![Build status on AppVeyor](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=appveyor&label=windows)](https://ci.appveyor.com/project/xiaq/elvish)
+[![Test Status on Linux](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=Linux&task=Test%20on%20Linux)](https://cirrus-ci.com/github/elves/elvish)
+[![Test Status on macOS](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=macOS&task=Test%20on%20macOS)](https://cirrus-ci.com/github/elves/elvish)
+[![Test Status on FreeBSD](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=FreeBSD&task=Test%20on%20FreeBSD)](https://cirrus-ci.com/github/elves/elvish)
+[![Test status on Windows](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=AppVeyor&label=Windows)](https://ci.appveyor.com/project/xiaq/elvish)
+
 [![Code Coverage on codecov.io](https://img.shields.io/codecov/c/github/elves/elvish.svg?label=codecov)](https://codecov.io/gh/elves/elvish)
 [![Code Coverage on coveralls.io](https://img.shields.io/coveralls/github/elves/elvish.svg?label=coveralls)](https://coveralls.io/github/elves/elvish)
 [![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/github.com/elves/elvish)
