@@ -7,7 +7,6 @@ test_task:
     # defined. Fortunately none of them have a custom $GOPATH; they are all
     # equal to $HOME/go.
     folder: $HOME/go/pkg/mod
-  go_env_debug_script: go version; go env
   matrix:
     - name: Test on Linux
       container:
@@ -20,11 +19,12 @@ test_task:
     - name: Test on macOS
       osx_instance:
         image: catalina-base
-      env_debug_script: pwd; env
       setup_script: brew install go
+      env_debug_script: pwd; env
     - name: Test on FreeBSD
       freebsd_instance:
         image_family: freebsd-12-1
-      env_debug_script: pwd; env
       setup_script: pkg install -y go
+      env_debug_script: pwd; env
+  go_env_debug_script: go version; go env
   test_script: go test ./...
