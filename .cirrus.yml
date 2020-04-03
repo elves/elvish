@@ -3,10 +3,7 @@ env:
 test_task:
   modules_cache:
     fingerprint_script: cat go.sum
-    # Cannot use $GOPATH here since some of the environments do not have it
-    # defined. Fortunately none of them have a custom $GOPATH; they are all
-    # equal to $HOME/go.
-    folder: $HOME/go/pkg/mod
+    folder: $GOPATH/pkg/mod
   matrix:
     - name: Test on Linux
       container:
@@ -18,9 +15,13 @@ test_task:
       osx_instance:
         image: catalina-base
       setup_script: brew install go
+      env:
+        GOPATH: $HOME/go
     - name: Test on FreeBSD
       freebsd_instance:
         image_family: freebsd-12-1
       setup_script: pkg install -y go
+      env:
+        GOPATH: $HOME/go
   go_version_script: go version
   test_script: go test ./...
