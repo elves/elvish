@@ -20,35 +20,31 @@ func TestGetwd(t *testing.T) {
 	}
 
 	var tests = []struct {
+		name   string
 		home   string
 		chdir  string
 		wantWd string
 	}{
-		// When the working directory is outside HOME, it is not abbreviated.
-		{"/does/not/exist", tmpdir, tmpdir},
+		{"wd outside HOME not abbreviated", "/does/not/exist", tmpdir, tmpdir},
 
-		// When the working directory is HOME, it is abbreviated to ~.
-		{tmpdir, tmpdir, "~"},
-		// When the working directory is within HOME, the HOME part is
-		// abbreviated to ~.
-		{tmpdir, tmpdir + "/a", filepath.Join("~", "a")},
+		{"wd at HOME abbreviated", tmpdir, tmpdir, "~"},
+		{"wd inside HOME abbreviated", tmpdir, tmpdir + "/a", filepath.Join("~", "a")},
 
-		// When HOME is "", working directory is not abbreviated.
-		{"", tmpdir, tmpdir},
-		// When HOME is "/", working directory is not abbreviated, even though
-		// technically it is within HOME.
-		{"/", tmpdir, tmpdir},
+		{"wd not abbreviated when HOME is empty", "", tmpdir, tmpdir},
+		{"wd not abbreviated when HOME is slash", "/", tmpdir, tmpdir},
 	}
 
 	oldHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", oldHome)
 
 	for _, test := range tests {
-		os.Setenv("HOME", test.home)
-		mustOK(os.Chdir(test.chdir))
-		if gotWd := Getwd(); gotWd != test.wantWd {
-			t.Errorf("Getwd() -> %v, want %v", gotWd, test.wantWd)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			os.Setenv("HOME", test.home)
+			mustOK(os.Chdir(test.chdir))
+			if gotWd := Getwd(); gotWd != test.wantWd {
+				t.Errorf("Getwd() -> %v, want %v", gotWd, test.wantWd)
+			}
+		})
 	}
 
 	// Remove the working directory, and test that Getwd returns "?".
