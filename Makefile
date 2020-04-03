@@ -28,6 +28,10 @@ generate:
 test:
 	$(TEST_ENV) go test $(TEST_FLAGS) $(PKGS)
 
+style:
+	find . -name '*.go' | xargs goimports -w
+	find . -name '*.md' | xargs prettier --tab-width 4 --prose-wrap always --write
+
 cover/%.cover: %
 	mkdir -p $(dir $@)
 	go test -coverprofile=$@ -covermode=$(COVER_MODE) ./$<

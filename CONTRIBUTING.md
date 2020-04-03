@@ -90,7 +90,7 @@ Dependencies of the generation rules:
 
 ## Formatting source files
 
-Format Go code with
+Format Go source files with
 [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports):
 
 ```sh
@@ -105,8 +105,11 @@ npm install --global prettier # Install
 prettier --tab-width 4 --prose-wrap always --write *.md # Format Markdown files
 ```
 
-Refer to the documentation of your editor to run these commands automatically
-when saving Go or Markdown sources.
+Once you have installed the tools, `make style` from the repo root will format
+all the Go source files and Markdown files.
+
+Alternatively, configure your editor to run these commands automatically when
+saving Go or Markdown sources.
 
 ## Licensing
 

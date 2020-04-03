@@ -13,7 +13,8 @@ Elvish is a friendly interactive shell and an expressive programming language.
 It runs on Linux, BSDs, macOS and Windows. Despite its pre-1.0 status, it is
 already suitable for most daily interactive use.
 
-**Visit the official website https://elv.sh for prebuilt binaries, blog posts, documentation and other resources.**
+**Visit the official website https://elv.sh for prebuilt binaries, blog posts,
+documentation and other resources.**
 
 User groups (all connected with
 [matterbridge](https://github.com/42wim/matterbridge/)):
@@ -24,7 +25,8 @@ User groups (all connected with
 
 ## Building Elvish
 
-Most users can just use [prebuilt binaries](https://elv.sh/get/) and do not need to build from source.
+Most users can just use [prebuilt binaries](https://elv.sh/get/) and do not need
+to build from source.
 
 To build Elvish from source, you need
 
