@@ -10,17 +10,12 @@ ifneq ($(OS),Windows_NT)
     TEST_FLAGS := -race
 endif
 
-GOVERALLS := github.com/mattn/goveralls
-
 default: test get
 
 get:
 	go get -trimpath -ldflags \
 		"-X github.com/elves/elvish/pkg/buildinfo.Version=$(VERSION) \
 		 -X github.com/elves/elvish/pkg/buildinfo.Reproducible=true" .
-
-buildall:
-	./tools/buildall.sh
 
 generate:
 	go generate ./...
@@ -40,16 +35,4 @@ cover/all: $(PKG_COVERS)
 	echo mode: $(COVER_MODE) > $@
 	for f in $(PKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 
-upload-coverage-codecov: cover/all
-	curl -s https://codecov.io/bash -o codecov.bash && \
-		bash codecov.bash -f $< || \
-		true
-
-upload-coverage-coveralls: cover/all
-	go get $(GOVERALLS)
-	goveralls -coverprofile $<
-
-binaries-travis:
-	./tools/binaries-travis.sh
-
-.PHONY: default get buildall generate test style upload-coverage-codecov upload-coverage-coveralls binaries-travis
+.PHONY: default get generate test style

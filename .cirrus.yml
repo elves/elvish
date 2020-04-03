@@ -1,7 +1,7 @@
-env:
-  ELVISH_TEST_TIME_SCALE: 10
-  CODECOV_TOKEN: ENCRYPTED[832ae776d0809c879cb08b78d8ac3cc89cbff90688beafc329661fb42d06d3bc5feef31da156d78fb442e3491468ef6d]
 test_task:
+  env:
+    ELVISH_TEST_TIME_SCALE: 10
+    CODECOV_TOKEN: ENCRYPTED[832ae776d0809c879cb08b78d8ac3cc89cbff90688beafc329661fb42d06d3bc5feef31da156d78fb442e3491468ef6d]
   go_modules_cache:
     fingerprint_script: cat go.sum
     folder: $GOPATH/pkg/mod
@@ -29,3 +29,15 @@ test_task:
   upload_coverage_script:
     - go test -coverprofile=coverage -covermode=set ./...
     - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage -t $CODECOV_TOKEN
+
+deploy_task:
+  name: Build binaries and deploy to bintray
+  env:
+    BINTRAY_TOKEN: ENCRYPTED[dad59874551bbb71e478101191cc13943d9aff033082bdf76e24812aaf49238780907a031e25e0271fa5fd9b71b8c808]
+  go_modules_cache:
+    fingerprint_script: cat go.sum
+    folder: $GOPATH/pkg/mod
+  container:
+    image: golang:latest
+  go_version_script: go version
+  deploy_script: ./tools/cirrus-deploy.sh
