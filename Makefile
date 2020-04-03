@@ -52,4 +52,4 @@ upload-coverage-coveralls: cover/all
 binaries-travis:
 	./tools/binaries-travis.sh
 
-.PHONY: default get buildall generate test testmain upload-coverage-codecov upload-coverage-coveralls binaries-travis
+.PHONY: default get buildall generate test style upload-coverage-codecov upload-coverage-coveralls binaries-travis
