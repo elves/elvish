@@ -11,7 +11,7 @@ import (
 )
 
 // Ns is the namespace for the re: module.
-var Ns = eval.NewNs().AddGoFns("re:", fns)
+var Ns = eval.Ns{}.AddGoFns("re:", fns)
 
 var fns = map[string]interface{}{
 	"quote":   regexp.QuoteMeta,

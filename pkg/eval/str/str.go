@@ -313,7 +313,7 @@ import (
 // ▶ '¡¡¡Hello, Elven!!!'
 // ```
 
-var Ns = eval.NewNs().AddGoFns("str:", fns)
+var Ns = eval.Ns{}.AddGoFns("str:", fns)
 
 var fns = map[string]interface{}{
 	"compare":      strings.Compare,
