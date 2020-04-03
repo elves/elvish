@@ -4,9 +4,7 @@
 [![Test Status on macOS](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=macOS&task=Test%20on%20macOS)](https://cirrus-ci.com/github/elves/elvish)
 [![Test Status on FreeBSD](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=FreeBSD&task=Test%20on%20FreeBSD)](https://cirrus-ci.com/github/elves/elvish)
 [![Test status on Windows](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=AppVeyor&label=Windows)](https://ci.appveyor.com/project/xiaq/elvish)
-
-[![Code Coverage on codecov.io](https://img.shields.io/codecov/c/github/elves/elvish.svg?label=codecov)](https://codecov.io/gh/elves/elvish)
-[![Code Coverage on coveralls.io](https://img.shields.io/coveralls/github/elves/elvish.svg?label=coveralls)](https://coveralls.io/github/elves/elvish)
+[![Test Coverage](https://img.shields.io/codecov/c/github/elves/elvish.svg?logo=Codecov&label=Coverage)](https://codecov.io/gh/elves/elvish)
 [![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/github.com/elves/elvish)
 [![GoDoc](https://img.shields.io/badge/godoc-api-blue.svg)](https://godoc.elv.sh)
 [![License](https://img.shields.io/badge/BSD-2--clause-blue.svg)](https://github.com/elves/elvish/blob/master/LICENSE)
