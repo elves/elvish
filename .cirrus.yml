@@ -38,6 +38,6 @@ deploy_task:
     fingerprint_script: cat go.sum
     folder: $GOPATH/pkg/mod
   container:
-    image: golang:latest
+    image: theelves/up
   go_version_script: go version
   deploy_script: ./tools/cirrus-deploy.sh
