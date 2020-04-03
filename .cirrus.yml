@@ -3,25 +3,28 @@ env:
 test_task:
   modules_cache:
     fingerprint_script: cat go.sum
-    folder: $GOPATH/pkg/mod
+    # Cannot use $GOPATH here since some of the environments do not have it
+    # defined. Fortunately none of them have a custom $GOPATH; they are all
+    # equal to $HOME/go.
+    folder: $HOME/go/pkg/mod
+  go_env_debug_script: go version; go env
   matrix:
     - name: Test on Linux
       container:
         image: golang:latest
-      env_script: pwd; env
+      env_debug_script: pwd; env
     - name: Test on Windows
       windows_container:
         image: golang:latest
-      env_script: cd; set
+      env_debug_script: cd; set
     - name: Test on macOS
       osx_instance:
         image: catalina-base
-      env_script: pwd; env
+      env_debug_script: pwd; env
       setup_script: brew install go
     - name: Test on FreeBSD
       freebsd_instance:
         image_family: freebsd-12-1
-      env_script: pwd; env
+      env_debug_script: pwd; env
       setup_script: pkg install -y go
-  go_env_script: go env
   test_script: go test ./...
