@@ -8,6 +8,8 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 )
 
+var That = eval.That
+
 // Note that this unit test assumes a UNIX environment with a POSIX compatible
 // /bin/sh program.
 func TestUmask(t *testing.T) {
