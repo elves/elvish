@@ -16,4 +16,5 @@ test_task:
     - freebsd_instance:
         image_family: freebsd-12-1
       setup_script: pkg install -y go
+  env_script: go env
   test_script: go test ./...
