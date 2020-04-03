@@ -1,5 +1,6 @@
 env:
   ELVISH_TEST_TIME_SCALE: 10
+  CODECOV_TOKEN: ENCRYPTED[832ae776d0809c879cb08b78d8ac3cc89cbff90688beafc329661fb42d06d3bc5feef31da156d78fb442e3491468ef6d]
 test_task:
   go_modules_cache:
     fingerprint_script: cat go.sum
@@ -27,4 +28,4 @@ test_task:
   test_script: go test ./...
   upload_coverage_script:
     - go test -coverprofile=coverage -covermode=set ./...
-    - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage
+    - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage -t $CODECOV_TOKEN

@@ -12,17 +12,6 @@ env:
     - ELVISH_TEST_TIME_SCALE=10
 jobs:
   include:
-    # TODO(xiaq): Enable coverage reports for pull requests
-    - stage: deploy
-      name: Generate and upload coverage to codecov and coveralls
-      script: make upload-coverage-codecov upload-coverage-coveralls
-      if: type = push
-      os: linux
-    - stage: deploy
-      name: Generate and upload coverage to codecov
-      script: make upload-coverage-codecov
-      if: type = push
-      os: osx
     - stage: deploy
       name: Build and upload binaries to bintray
       script: make binaries-travis
