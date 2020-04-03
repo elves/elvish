@@ -16,7 +16,7 @@ test_task:
     - name: Test on Windows
       windows_container:
         image: golang:latest
-      env_debug_script: cd; set
+      env_debug_script: set
     - name: Test on macOS
       osx_instance:
         image: catalina-base
