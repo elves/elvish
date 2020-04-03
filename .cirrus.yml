@@ -11,20 +11,16 @@ test_task:
     - name: Test on Linux
       container:
         image: golang:latest
-      env_debug_script: pwd; env
     - name: Test on Windows
       windows_container:
         image: golang:latest
-      env_debug_script: set
     - name: Test on macOS
       osx_instance:
         image: catalina-base
       setup_script: brew install go
-      env_debug_script: pwd; env
     - name: Test on FreeBSD
       freebsd_instance:
         image_family: freebsd-12-1
       setup_script: pkg install -y go
-      env_debug_script: pwd; env
-  go_env_debug_script: go version; go env
+  go_version_script: go version
   test_script: go test ./...
