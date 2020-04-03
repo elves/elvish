@@ -84,8 +84,7 @@ func Start(app cli.App, cfg Config) {
 		}
 	}
 
-	home, _ := util.GetHome("")
-	l := list{dirs, home}
+	l := list{dirs}
 
 	w := cli.NewComboBox(cli.ComboBoxSpec{
 		CodeArea: cli.CodeAreaSpec{
@@ -148,7 +147,6 @@ func (ws WorkspaceIterator) Parse(path string) (kind, root string) {
 
 type list struct {
 	dirs []store.Dir
-	home string
 }
 
 func (l list) filter(p string) list {
@@ -158,11 +156,11 @@ func (l list) filter(p string) list {
 	re := makeRegexpForPattern(p)
 	var filteredDirs []store.Dir
 	for _, dir := range l.dirs {
-		if re.MatchString(showPath(dir.Path, l.home)) {
+		if re.MatchString(util.TildeAbbr(dir.Path)) {
 			filteredDirs = append(filteredDirs, dir)
 		}
 	}
-	return list{filteredDirs, l.home}
+	return list{filteredDirs}
 }
 
 var (
@@ -190,7 +188,7 @@ func makeRegexpForPattern(p string) *regexp.Regexp {
 
 func (l list) Show(i int) ui.Text {
 	return ui.T(fmt.Sprintf("%s %s",
-		showScore(l.dirs[i].Score), showPath(l.dirs[i].Path, l.home)))
+		showScore(l.dirs[i].Score), util.TildeAbbr(l.dirs[i].Path)))
 }
 
 func (l list) Len() int { return len(l.dirs) }
@@ -200,13 +198,4 @@ func showScore(f float64) string {
 		return "  *"
 	}
 	return fmt.Sprintf("%3.0f", f)
-}
-
-func showPath(path, home string) string {
-	if path == home {
-		return "~"
-	} else if strings.HasPrefix(path, home+string(os.PathSeparator)) {
-		return "~" + path[len(home):]
-	}
-	return path
 }
