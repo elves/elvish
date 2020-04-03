@@ -1,5 +1,4 @@
 env:
-  GOPROXY: https://proxy.golang.org
   ELVISH_TEST_UI_TIMEOUT: 5s
 test_task:
   modules_cache:
@@ -10,11 +9,13 @@ test_task:
         image: golang:latest
     - windows_container:
         image: golang:latest
+        env_script: cd; set
     - osx_instance:
         image: catalina-base
       setup_script: brew install go
     - freebsd_instance:
         image_family: freebsd-12-1
       setup_script: pkg install -y go
-  env_script: go env
+  env_script: pwd; env
+  go_env_script: go env
   test_script: go test ./...
