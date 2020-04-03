@@ -30,7 +30,6 @@ func TestGetwd(t *testing.T) {
 		{"wd at HOME abbreviated", tmpdir, tmpdir, "~"},
 		{"wd inside HOME abbreviated", tmpdir, tmpdir + "/a", filepath.Join("~", "a")},
 
-		{"wd not abbreviated when HOME is empty", "", tmpdir, tmpdir},
 		{"wd not abbreviated when HOME is slash", "/", tmpdir, tmpdir},
 	}
 
