@@ -5,17 +5,21 @@ test_task:
     fingerprint_script: cat go.sum
     folder: $GOPATH/pkg/mod
   matrix:
-    - container:
+    - name: Test on Linux
+      container:
         image: golang:latest
       env_script: pwd; env
-    - windows_container:
+    - name: Test on Windows
+      windows_container:
         image: golang:latest
       env_script: cd; set
-    - osx_instance:
+    - name: Test on macOS
+      osx_instance:
         image: catalina-base
       env_script: pwd; env
       setup_script: brew install go
-    - freebsd_instance:
+    - name: Test on FreeBSD
+      freebsd_instance:
         image_family: freebsd-12-1
       env_script: pwd; env
       setup_script: pkg install -y go
