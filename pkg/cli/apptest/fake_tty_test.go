@@ -4,7 +4,6 @@ import (
 	"os"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/term"
@@ -128,22 +127,5 @@ func TestGetTTYCtrl(t *testing.T) {
 	realTTY := cli.StdTTY
 	if _, ok := GetTTYCtrl(realTTY); ok {
 		t.Errorf("-> _, true, want _, false")
-	}
-}
-
-func TestGetUITestTimeout(t *testing.T) {
-	original := os.Getenv(uiTimeoutEnvName)
-	defer os.Setenv(uiTimeoutEnvName, original)
-
-	os.Unsetenv(uiTimeoutEnvName)
-	timeout := getUITestTimeout()
-	if timeout != uiTimeoutDefault {
-		t.Errorf("Not default when env not set")
-	}
-
-	os.Setenv(uiTimeoutEnvName, "10s")
-	timeout = getUITestTimeout()
-	if timeout != 10*time.Second {
-		t.Errorf("Not set from environment variable")
 	}
 }

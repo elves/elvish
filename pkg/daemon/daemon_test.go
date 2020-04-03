@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -26,7 +27,7 @@ func TestDaemon(t *testing.T) {
 		} else if i == 99 {
 			t.Fatal("Failed to connect after 1s")
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(testutil.ScaledMs(10))
 	}
 
 	_, err := client.AddCmd("test cmd")

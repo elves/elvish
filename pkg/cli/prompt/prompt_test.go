@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/ui"
 	"github.com/elves/elvish/pkg/util"
 )
@@ -30,7 +31,7 @@ func TestPrompt_StalePrompt(t *testing.T) {
 	prompt := New(Config{
 		Compute: compute,
 		StaleThreshold: func() time.Duration {
-			return 10 * time.Millisecond
+			return testutil.ScaledMs(10)
 		},
 	})
 
@@ -177,7 +178,7 @@ func testNoUpdate(t *testing.T, p *Prompt) {
 	select {
 	case update := <-p.LateUpdates():
 		t.Errorf("unexpected update %v", update)
-	case <-time.After(10 * time.Millisecond):
+	case <-time.After(testutil.ScaledMs(10)):
 		// OK
 	}
 }

@@ -9,7 +9,7 @@ go:
 env:
   global:
     - CGO_ENABLED=0
-    - ELVISH_TEST_UI_TIMEOUT=5s
+    - ELVISH_TEST_TIME_SCALE=10
 jobs:
   include:
     # TODO(xiaq): Enable coverage reports for pull requests

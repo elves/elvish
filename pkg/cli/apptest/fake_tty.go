@@ -9,6 +9,7 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/term"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 const (
@@ -270,7 +271,7 @@ func (t TTYCtrl) LastNotesBuffer() *term.Buffer {
 func testBuffer(t *testing.T, want *term.Buffer, ch <-chan *term.Buffer) bool {
 	t.Helper()
 
-	timeout := time.After(getUITestTimeout())
+	timeout := time.After(testutil.ScaledMs(100))
 	for {
 		select {
 		case buf := <-ch:
@@ -283,15 +284,4 @@ func testBuffer(t *testing.T, want *term.Buffer, ch <-chan *term.Buffer) bool {
 			return false
 		}
 	}
-}
-
-const uiTimeoutEnvName = "ELVISH_TEST_UI_TIMEOUT"
-
-var uiTimeoutDefault = 100 * time.Millisecond
-
-func getUITestTimeout() time.Duration {
-	if d, err := time.ParseDuration(os.Getenv(uiTimeoutEnvName)); err == nil {
-		return d
-	}
-	return uiTimeoutDefault
 }

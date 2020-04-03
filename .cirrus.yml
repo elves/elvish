@@ -1,5 +1,5 @@
 env:
-  ELVISH_TEST_UI_TIMEOUT: 5s
+  ELVISH_TEST_TIME_SCALE: 10
 test_task:
   go_modules_cache:
     fingerprint_script: cat go.sum

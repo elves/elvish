@@ -7,7 +7,8 @@ import (
 	"io"
 	"os"
 	"testing"
-	"time"
+
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 func TestFileReader_ReadByteWithTimeout(t *testing.T) {
@@ -46,7 +47,7 @@ func TestFileReader_ReadByteWithTimeout_Timeout(t *testing.T) {
 	r, _, cleanup := setupFileReader()
 	defer cleanup()
 
-	_, err := r.ReadByteWithTimeout(time.Millisecond)
+	_, err := r.ReadByteWithTimeout(testutil.ScaledMs(1))
 	if err != errTimeout {
 		t.Errorf("got err %v, want %v", err, errTimeout)
 	}
