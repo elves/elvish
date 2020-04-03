@@ -1,16 +1,16 @@
 env:
   ELVISH_TEST_UI_TIMEOUT: 5s
 test_task:
-  modules_cache:
+  go_modules_cache:
     fingerprint_script: cat go.sum
     folder: $GOPATH/pkg/mod
   matrix:
     - name: Test on Linux
       container:
         image: golang:latest
-    - name: Test on Windows
-      windows_container:
-        image: golang:latest
+    - name: Test on Linux (Old Supported Go Version)
+      container:
+        image: golang:1.13
     - name: Test on macOS
       osx_instance:
         image: catalina-base
@@ -25,3 +25,6 @@ test_task:
         GOPATH: $HOME/go
   go_version_script: go version
   test_script: go test ./...
+  upload_coverage_script:
+    - go test -coverprofile=coverage -covermode=set ./...
+    - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage
