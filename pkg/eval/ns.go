@@ -12,11 +12,6 @@ type Ns map[string]vars.Var
 
 var _ interface{} = Ns(nil)
 
-// NewNs creates an empty namespace.
-func NewNs() Ns {
-	return make(Ns)
-}
-
 func (Ns) Kind() string {
 	return "ns"
 }

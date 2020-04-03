@@ -6,7 +6,7 @@ import (
 )
 
 func Ns(s store.Store) eval.Ns {
-	return eval.NewNs().AddGoFns("store:", map[string]interface{}{
+	return eval.Ns{}.AddGoFns("store:", map[string]interface{}{
 		"del-dir": s.DelDir,
 		"del-cmd": s.DelCmd,
 	})
