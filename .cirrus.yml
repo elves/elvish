@@ -20,7 +20,7 @@ test_task:
     - name: Test on FreeBSD
       freebsd_instance:
         image_family: freebsd-12-1
-      setup_script: pkg install -y go
+      setup_script: pkg install -y go bash
       env:
         GOPATH: $HOME/go
   go_version_script: go version
