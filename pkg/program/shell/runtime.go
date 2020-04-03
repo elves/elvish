@@ -15,6 +15,7 @@ import (
 	"github.com/elves/elvish/pkg/eval/re"
 	"github.com/elves/elvish/pkg/eval/store"
 	"github.com/elves/elvish/pkg/eval/str"
+	"github.com/elves/elvish/pkg/eval/unix"
 	daemonp "github.com/elves/elvish/pkg/program/daemon"
 	bolt "go.etcd.io/bbolt"
 )
@@ -72,10 +73,15 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 
 	ev := eval.NewEvaler()
 	ev.SetLibDir(filepath.Join(dataDir, "lib"))
+
 	ev.InstallModule("math", eval.MathNs)
+	ev.InstallModule("platform", platform.Ns)
 	ev.InstallModule("re", re.Ns)
 	ev.InstallModule("str", str.Ns)
-	ev.InstallModule("platform", platform.Ns)
+	if unix.ExposeUnixNs {
+		ev.InstallModule("unix", unix.Ns)
+	}
+
 	if sockpath != "" && dbpath != "" {
 		spawner := &daemonp.Daemon{
 			BinPath:       binpath,
