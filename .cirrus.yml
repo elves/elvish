@@ -33,7 +33,7 @@ test_task:
 deploy_task:
   name: Build binaries and deploy to bintray
   env:
-    BINTRAY_TOKEN: ENCRYPTED[dad59874551bbb71e478101191cc13943d9aff033082bdf76e24812aaf49238780907a031e25e0271fa5fd9b71b8c808]
+    BINTRAY_TOKEN: ENCRYPTED[1a1820d17a2014de6b1798d379f86aa24bbd8acd5149656a98bfdf33746c78c85fefc8e6e522fedacdf8c4bf92bb25a0]
   go_modules_cache:
     fingerprint_script: cat go.sum
     folder: $GOPATH/pkg/mod
