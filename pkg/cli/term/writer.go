@@ -3,11 +3,12 @@ package term
 import (
 	"bytes"
 	"fmt"
-	"os"
+	"io"
 )
 
 var logWriterDetail = false
 
+// Writer represents the output to a terminal.
 type Writer interface {
 	// CurrentBuffer returns the current buffer.
 	CurrentBuffer() *Buffer
@@ -19,11 +20,12 @@ type Writer interface {
 
 // writer renders the editor UI.
 type writer struct {
-	file   *os.File
+	file   io.Writer
 	curBuf *Buffer
 }
 
-func NewWriter(f *os.File) Writer {
+// NewWriter returns a Writer that writes VT100 sequences to the given io.Writer.
+func NewWriter(f io.Writer) Writer {
 	return &writer{f, &Buffer{}}
 }
 
@@ -55,6 +57,11 @@ func deltaPos(from, to Pos) []byte {
 	}
 	return buf.Bytes()
 }
+
+const (
+	hideCursor = "\033[?25l"
+	showCursor = "\033[?25h"
+)
 
 // CommitBuffer updates the terminal display to reflect current buffer.
 func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
@@ -162,7 +169,7 @@ func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 	bytesBuf.Write(deltaPos(cursor, buf.Dot))
 
 	// Show cursor.
-	bytesBuf.WriteString("\033[?25h")
+	bytesBuf.WriteString(showCursor)
 
 	if logWriterDetail {
 		logger.Printf("going to write %q", bytesBuf.String())
