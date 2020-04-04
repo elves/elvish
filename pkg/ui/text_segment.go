@@ -21,7 +21,7 @@ func (*Segment) Kind() string { return "ui:text-segment" }
 // Repr returns the representation of this Segment. The string can be used to
 // construct an identical Segment. Unset or default attributes are skipped. If
 // the Segment represents an unstyled string only this string is returned.
-func (s *Segment) Repr(indent int) string {
+func (s *Segment) Repr(int) string {
 	buf := new(bytes.Buffer)
 	addIfNotEqual := func(key string, val, cmp interface{}) {
 		if val != cmp {
@@ -83,10 +83,6 @@ func (s *Segment) Index(k interface{}) (v interface{}, ok bool) {
 		v = s.Blink
 	case "inverse":
 		v = s.Inverse
-	}
-
-	if v == "" {
-		v = "default"
 	}
 
 	return v, v != nil
