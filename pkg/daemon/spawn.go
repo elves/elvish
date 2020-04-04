@@ -1,5 +1,3 @@
-// Package daemon provides the entry point of the daemon sub-program and helpers
-// to spawn a daemon process.
 package daemon
 
 import (
@@ -9,10 +7,8 @@ import (
 	"path/filepath"
 )
 
-// Daemon keeps configurations for the daemon sub-program. It can be used both
-// from the main function for running the daemon and from another process
-// (typically the first Elvish shell session) for spawning a daemon.
-type Daemon struct {
+// SpawnConfig keeps configurations for spawning the daemon.
+type SpawnConfig struct {
 	// BinPath is the path to the Elvish binary itself, used when forking. This
 	// field is used only when spawning the daemon. If empty, it is
 	// automatically determined with os.Executable.
@@ -33,8 +29,8 @@ type Daemon struct {
 // makes sure that the daemon is detached from the current terminal (so that it
 // is not affected by I/O or signals in the current terminal), and keeps running
 // after the current process quits.
-func (d *Daemon) Spawn() error {
-	binPath := d.BinPath
+func Spawn(cfg *SpawnConfig) error {
+	binPath := cfg.BinPath
 	// Determine binPath.
 	if binPath == "" {
 		bin, err := os.Executable()
@@ -60,9 +56,9 @@ func (d *Daemon) Spawn() error {
 		return absPath
 	}
 	binPath = abs("BinPath", binPath)
-	dbPath := abs("DbPath", d.DbPath)
-	sockPath := abs("SockPath", d.SockPath)
-	logPathPrefix := abs("LogPathPrefix", d.LogPathPrefix)
+	dbPath := abs("DbPath", cfg.DbPath)
+	sockPath := abs("SockPath", cfg.SockPath)
+	logPathPrefix := abs("LogPathPrefix", cfg.LogPathPrefix)
 	if pathError != nil {
 		return pathError
 	}

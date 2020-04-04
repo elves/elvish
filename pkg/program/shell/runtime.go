@@ -16,7 +16,6 @@ import (
 	"github.com/elves/elvish/pkg/eval/store"
 	"github.com/elves/elvish/pkg/eval/str"
 	"github.com/elves/elvish/pkg/eval/unix"
-	daemonp "github.com/elves/elvish/pkg/program/daemon"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -83,7 +82,7 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 	}
 
 	if sockpath != "" && dbpath != "" {
-		spawner := &daemonp.Daemon{
+		spawnCfg := &daemon.SpawnConfig{
 			BinPath:       binpath,
 			DbPath:        dbpath,
 			SockPath:      sockpath,
@@ -91,7 +90,7 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 		}
 		// TODO(xiaq): Connect to daemon and install daemon module
 		// asynchronously.
-		client, err := connectToDaemon(sockpath, spawner)
+		client, err := connectToDaemon(sockpath, spawnCfg)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Cannot connect to daemon:", err)
 			fmt.Fprintln(os.Stderr, daemonWontWorkMsg)
@@ -100,12 +99,12 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 		// anyway. Daemon may eventually come online and become functional.
 		ev.InstallDaemonClient(client)
 		ev.InstallModule("store", store.Ns(client))
-		ev.InstallModule("daemon", daemonmod.Ns(client, spawner))
+		ev.InstallModule("daemon", daemonmod.Ns(client, spawnCfg))
 	}
 	return ev, dataDir
 }
 
-func connectToDaemon(sockpath string, spawner *daemonp.Daemon) (daemon.Client, error) {
+func connectToDaemon(sockpath string, spawnCfg *daemon.SpawnConfig) (daemon.Client, error) {
 	cl := daemon.NewClient(sockpath)
 	status, err := detectDaemon(sockpath, cl)
 	shouldSpawn := false
@@ -142,7 +141,7 @@ func connectToDaemon(sockpath string, spawner *daemonp.Daemon) (daemon.Client, e
 		return cl, nil
 	}
 
-	err = spawner.Spawn()
+	err = daemon.Spawn(spawnCfg)
 	if err != nil {
 		return cl, fmt.Errorf("failed to spawn daemon: %v", err)
 	}
