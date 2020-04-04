@@ -5,10 +5,6 @@ import (
 	"syscall"
 )
 
-func setUmask() {
-	// NOP on windows.
-}
-
 // A subset of possible process creation flags, value taken from
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ms684863(v=vs.85).aspx
 const (

@@ -15,7 +15,6 @@ import (
 	"runtime/pprof"
 	"strconv"
 
-	"github.com/elves/elvish/pkg/program/daemon"
 	"github.com/elves/elvish/pkg/program/shell"
 	"github.com/elves/elvish/pkg/program/web"
 	"github.com/elves/elvish/pkg/util"
@@ -128,12 +127,10 @@ func FindProgram(flag *flagSet) Program {
 		if len(flag.Args()) > 0 {
 			return badUsageProgram{"arguments are not allowed with -daemon", flag}
 		}
-		return daemonProgram{&daemon.Daemon{
-			BinPath:       flag.Bin,
-			DbPath:        flag.DB,
-			SockPath:      flag.Sock,
-			LogPathPrefix: flag.LogPrefix,
-		}}
+		return daemonProgram{
+			DbPath:   flag.DB,
+			SockPath: flag.Sock,
+		}
 	case flag.Web:
 		if len(flag.Args()) > 0 {
 			return badUsageProgram{"arguments are not allowed with -web", flag}

@@ -52,14 +52,11 @@ var findProgramTests = []struct {
 		return p.(*web.Web).SockPath == "/sock"
 	}},
 
-	{[]string{"-daemon", "-bin", "/elvish"}, func(p Program) bool {
-		return p.(daemonProgram).inner.BinPath == "/elvish"
-	}},
 	{[]string{"-daemon", "-db", "/db"}, func(p Program) bool {
-		return p.(daemonProgram).inner.DbPath == "/db"
+		return p.(daemonProgram).DbPath == "/db"
 	}},
 	{[]string{"-daemon", "-sock", "/sock"}, func(p Program) bool {
-		return p.(daemonProgram).inner.SockPath == "/sock"
+		return p.(daemonProgram).SockPath == "/sock"
 	}},
 }
 

@@ -14,7 +14,8 @@ import (
 // (typically the first Elvish shell session) for spawning a daemon.
 type Daemon struct {
 	// BinPath is the path to the Elvish binary itself, used when forking. This
-	// field is optional only when spawning the daemon.
+	// field is used only when spawning the daemon. If empty, it is
+	// automatically determined with os.Executable.
 	BinPath string
 	// DbPath is the path to the database.
 	DbPath string
@@ -24,15 +25,6 @@ type Daemon struct {
 	// LogPathPrefix is used to derive the name of the log file by adding the
 	// pid.
 	LogPathPrefix string
-}
-
-// Main is the entry point of the daemon sub-program. It simply sets the umask
-// (if relevant) and runs serve. It always return a nil error, since any errors
-// encountered is logged in the serve function.
-func (d *Daemon) Main(serve func(string, string)) error {
-	setUmask()
-	serve(d.SockPath, d.DbPath)
-	return nil
 }
 
 // Spawn spawns a daemon process in the background by invoking BinPath, passing
