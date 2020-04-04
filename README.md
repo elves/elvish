@@ -7,7 +7,6 @@
 [![Test Coverage](https://img.shields.io/codecov/c/github/elves/elvish.svg?logo=Codecov&label=coverage)](https://codecov.io/gh/elves/elvish)
 [![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/github.com/elves/elvish)
 [![GoDoc](https://img.shields.io/badge/godoc-api-blue.svg)](https://godoc.elv.sh)
-[![License](https://img.shields.io/badge/BSD-2--clause-blue.svg)](https://github.com/elves/elvish/blob/master/LICENSE)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
 Elvish is a friendly interactive shell and an expressive programming language.
