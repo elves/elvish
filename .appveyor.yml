@@ -3,8 +3,7 @@ clone_folder: c:\gopath\src\github.com\elves\elvish
 environment:
   GOPATH: c:\gopath
   ELVISH_TEST_TIME_SCALE: 10
-build_script:
-  -
+build: off
 before_test:
   - go version
 test_script:
