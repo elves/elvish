@@ -32,6 +32,7 @@ test_task:
 
 deploy_task:
   name: Build binaries and deploy to bintray
+  only_if: $CIRRUS_PR == ""
   env:
     BINTRAY_TOKEN: ENCRYPTED[1a1820d17a2014de6b1798d379f86aa24bbd8acd5149656a98bfdf33746c78c85fefc8e6e522fedacdf8c4bf92bb25a0]
   go_modules_cache:
