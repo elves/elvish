@@ -4,7 +4,7 @@ environment:
   GOPATH: c:\gopath
   ELVISH_TEST_TIME_SCALE: 10
 build_script:
-  - echo no build phase
+  -
 before_test:
   - go version
 test_script:
