@@ -6,6 +6,7 @@ environment:
 install:
   - set PATH=%GOPATH%\bin;c:\go\bin;C:\msys64\usr\bin;%PATH%
   - go version
+build_script:
 test_script:
   - go test -coverprofile=coverage -covermode=set ./...
   - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage
