@@ -1,7 +1,7 @@
 test_task:
   env:
     ELVISH_TEST_TIME_SCALE: 10
-    CODECOV_TOKEN: ENCRYPTED[832ae776d0809c879cb08b78d8ac3cc89cbff90688beafc329661fb42d06d3bc5feef31da156d78fb442e3491468ef6d]
+    CODECOV_TOKEN: e10d2e99-591b-4d2a-a8cf-8ca3e8d6df61
   go_modules_cache:
     fingerprint_script: cat go.sum
     folder: $GOPATH/pkg/mod
