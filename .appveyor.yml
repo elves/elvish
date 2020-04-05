@@ -3,11 +3,10 @@ clone_folder: c:\gopath\src\github.com\elves\elvish
 environment:
   GOPATH: c:\gopath
   ELVISH_TEST_TIME_SCALE: 10
-install:
-  - set PATH=%GOPATH%\bin;c:\go\bin;C:\msys64\usr\bin;%PATH%
-  - go version
 build_script:
   - echo no build phase
+before_test:
+  - go version
 test_script:
   - go test -coverprofile=coverage -covermode=set ./...
   - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage
