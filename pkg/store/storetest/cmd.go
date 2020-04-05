@@ -67,7 +67,7 @@ func TestCmd(t *testing.T, tStore store.Store) {
 		}
 		cmd, err := f(tt.seq, tt.prefix)
 		wantedCmd := store.Cmd{Text: tt.wantedCmd, Seq: tt.wantedSeq}
-		if cmd != wantedCmd || err != tt.wantedErr {
+		if cmd != wantedCmd || !matchErr(err, tt.wantedErr) {
 			t.Errorf("%s(%v, %v) => (%v, %v), want (%v, %v)",
 				funcname, tt.seq, tt.prefix, cmd, err, wantedCmd, tt.wantedErr)
 		}
@@ -76,7 +76,7 @@ func TestCmd(t *testing.T, tStore store.Store) {
 	if err := tStore.DelCmd(1); err != nil {
 		t.Error("Failed to remove cmd")
 	}
-	if seq, err := tStore.Cmd(1); err != store.ErrNoMatchingCmd {
+	if seq, err := tStore.Cmd(1); !matchErr(err, store.ErrNoMatchingCmd) {
 		t.Errorf("Cmd(1) => (%v, %v), want (%v, %v)",
 			seq, err, "", store.ErrNoMatchingCmd)
 	}
