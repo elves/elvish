@@ -28,6 +28,9 @@ var (
 )
 
 func TestCmd(t *testing.T) {
+	tStore, cleanup := MustGetTempStore()
+	defer cleanup()
+
 	startSeq, err := tStore.NextCmdSeq()
 	if startSeq != 1 || err != nil {
 		t.Errorf("tStore.NextCmdSeq() => (%v, %v), want (1, nil)",

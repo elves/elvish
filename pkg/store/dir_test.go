@@ -17,6 +17,9 @@ var (
 )
 
 func TestDir(t *testing.T) {
+	tStore, cleanup := MustGetTempStore()
+	defer cleanup()
+
 	for _, path := range dirsToAdd {
 		err := tStore.AddDir(path, 1)
 		if err != nil {

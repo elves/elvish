@@ -3,6 +3,9 @@ package store
 import "testing"
 
 func TestSharedVar(t *testing.T) {
+	tStore, cleanup := MustGetTempStore()
+	defer cleanup()
+
 	varname := "foo"
 	value1 := "lorem ipsum"
 	value2 := "o mores, o tempora"
