@@ -12,8 +12,6 @@ import (
 const retriesOnShutdown = 3
 
 var (
-	// ErrClientNotInitialized is returned when the Client is not initialized.
-	ErrClientNotInitialized = errors.New("client not initialized")
 	// ErrDaemonUnreachable is returned when the daemon cannot be reached after
 	// several retries.
 	ErrDaemonUnreachable = errors.New("daemon offline")
@@ -47,16 +45,13 @@ func NewClient(sockPath string) Client {
 // SockPath returns the socket path that the Client talks to. If the client is
 // nil, it returns an empty string.
 func (c *client) SockPath() string {
-	if c == nil {
-		return ""
-	}
 	return c.sockPath
 }
 
 // ResetConn resets the current connection. A new connection will be established
 // the next time a request is made. If the client is nil, it does nothing.
 func (c *client) ResetConn() error {
-	if c == nil || c.rpcClient == nil {
+	if c.rpcClient == nil {
 		return nil
 	}
 	rc := c.rpcClient
@@ -67,17 +62,11 @@ func (c *client) ResetConn() error {
 // Close waits for all outstanding requests to finish and close the connection.
 // If the client is nil, it does nothing and returns nil.
 func (c *client) Close() error {
-	if c == nil {
-		return nil
-	}
 	c.waits.Wait()
 	return c.ResetConn()
 }
 
 func (c *client) call(f string, req, res interface{}) error {
-	if c == nil {
-		return ErrClientNotInitialized
-	}
 	c.waits.Add(1)
 	defer c.waits.Done()
 
