@@ -1,5 +1,5 @@
-// Package `platform` exposes variables and functions that deal with the
-// specific platform being run on; such as the OS name and CPU architecture.
+// Package platform exposes variables and functions that deal with the
+// specific platform being run on, such as the OS name and CPU architecture.
 package platform
 
 import (
