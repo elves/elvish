@@ -7,10 +7,11 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+// Parameters for directory history scores.
 const (
-	scoreDecay     = 0.986 // roughly 0.5^(1/50)
-	scoreIncrement = 10
-	scorePrecision = 6
+	DirScoreDecay     = 0.986 // roughly 0.5^(1/50)
+	DirScoreIncrement = 10
+	DirScorePrecision = 6
 )
 
 func init() {
@@ -21,8 +22,9 @@ func init() {
 }
 
 func marshalScore(score float64) []byte {
-	return []byte(strconv.FormatFloat(score, 'E', scorePrecision, 64))
+	return []byte(strconv.FormatFloat(score, 'E', DirScorePrecision, 64))
 }
+
 func unmarshalScore(data []byte) float64 {
 	f, _ := strconv.ParseFloat(string(data), 64)
 	return f
@@ -35,7 +37,7 @@ func (s *dbStore) AddDir(d string, incFactor float64) error {
 
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			score := unmarshalScore(v) * scoreDecay
+			score := unmarshalScore(v) * DirScoreDecay
 			b.Put(k, marshalScore(score))
 		}
 
@@ -44,7 +46,7 @@ func (s *dbStore) AddDir(d string, incFactor float64) error {
 		if v := b.Get(k); v != nil {
 			score = unmarshalScore(v)
 		}
-		score += scoreIncrement * incFactor
+		score += DirScoreIncrement * incFactor
 		return b.Put(k, marshalScore(score))
 	})
 }
