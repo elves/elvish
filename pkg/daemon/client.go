@@ -200,7 +200,7 @@ func (c *client) SetSharedVar(name, value string) error {
 }
 
 func (c *client) DelSharedVar(name string) error {
-	req := &api.DelSharedVarRequest{}
+	req := &api.DelSharedVarRequest{name}
 	res := &api.DelSharedVarResponse{}
 	return c.call("DelSharedVar", req, res)
 }

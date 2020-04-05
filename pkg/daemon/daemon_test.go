@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/elves/elvish/pkg/store/storetest"
 	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/util"
 )
@@ -37,7 +38,6 @@ func TestDaemon(t *testing.T) {
 	}
 
 	// Server state requests.
-
 	gotVersion, err := client.Version()
 	if gotVersion != Version || err != nil {
 		t.Errorf(".Version() -> (%v, %v), want (%v, nil)", gotVersion, err, Version)
@@ -50,9 +50,7 @@ func TestDaemon(t *testing.T) {
 	}
 
 	// Store requests.
-
-	_, err = client.AddCmd("test cmd")
-	if err != nil {
-		t.Errorf("client.AddCmd -> error %v", err)
-	}
+	storetest.TestCmd(t, client)
+	storetest.TestDir(t, client)
+	storetest.TestSharedVar(t, client)
 }
