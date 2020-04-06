@@ -1,4 +1,6 @@
-package util
+// Package wcwidth provides utilities for determining the column width of
+// characters when displayed on the terminal.
+package wcwidth
 
 import (
 	"sort"
@@ -65,8 +67,8 @@ func isCombining(r rune) bool {
 	return i < n && r >= combining[i][0]
 }
 
-// Wcwidth returns the width of a rune when displayed on the terminal.
-func Wcwidth(r rune) int {
+// OfRune returns the column width of a rune.
+func OfRune(r rune) int {
 	if w, ok := wcwidthOverride[r]; ok {
 		return w
 	}
@@ -95,34 +97,33 @@ func Wcwidth(r rune) int {
 	return 1
 }
 
-// OverrideWcwidth overrides the wcwidth of a rune to be a specific non-negative
-// value. OverrideWcwidth panics if w < 0.
-func OverrideWcwidth(r rune, w int) {
+// Override overrides the column width of a rune to be a specific non-negative
+// value. It panics if w < 0.
+func Override(r rune, w int) {
 	if w < 0 {
 		panic("negative width")
 	}
 	wcwidthOverride[r] = w
 }
 
-// UnoverrideWcwidth removes the override of a rune.
-func UnoverrideWcwidth(r rune) {
+// Unoverride removes the column width override of a rune.
+func Unoverride(r rune) {
 	delete(wcwidthOverride, r)
 }
 
-// Wcswidth returns the width of a string when displayed on the terminal,
-// assuming no soft line breaks.
-func Wcswidth(s string) (w int) {
+// Of returns the column width of a string, assuming no soft line breaks.
+func Of(s string) (w int) {
 	for _, r := range s {
-		w += Wcwidth(r)
+		w += OfRune(r)
 	}
 	return
 }
 
-// TrimWcwidth trims the string s so that it has a width of at most wmax.
-func TrimWcwidth(s string, wmax int) string {
+// Trim trims the string s so that it has a column width of at most wmax.
+func Trim(s string, wmax int) string {
 	w := 0
 	for i, r := range s {
-		w += Wcwidth(r)
+		w += OfRune(r)
 		if w > wmax {
 			return s[:i]
 		}
@@ -130,12 +131,11 @@ func TrimWcwidth(s string, wmax int) string {
 	return s
 }
 
-// ForceWcwidth forces the string s to the given display width by trimming and
-// padding.
-func ForceWcwidth(s string, width int) string {
+// Force forces the string s to the given column width by trimming and padding.
+func Force(s string, width int) string {
 	w := 0
 	for i, r := range s {
-		w0 := Wcwidth(r)
+		w0 := OfRune(r)
 		w += w0
 		if w > width {
 			w -= w0
@@ -146,12 +146,12 @@ func ForceWcwidth(s string, width int) string {
 	return s + strings.Repeat(" ", width-w)
 }
 
-// TrimEachLineWcwidth trims each line of s so that it is no wider than the
-// specified width.
-func TrimEachLineWcwidth(s string, width int) string {
+// TrimEachLine trims each line of s so that it is no wider than the specified
+// width.
+func TrimEachLine(s string, width int) string {
 	lines := strings.Split(s, "\n")
 	for i := range lines {
-		lines[i] = TrimWcwidth(lines[i], width)
+		lines[i] = Trim(lines[i], width)
 	}
 	return strings.Join(lines, "\n")
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/elves/elvish/pkg/parse/parseutil"
 	"github.com/elves/elvish/pkg/ui"
 	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/wcwidth"
 )
 
 //elvdoc:fn binding-table
@@ -333,8 +334,8 @@ func moveDotUp(buffer string, dot int) int {
 	}
 	prevEOL := sol - 1
 	prevSOL := util.FindLastSOL(buffer[:prevEOL])
-	width := util.Wcswidth(buffer[sol:dot])
-	return prevSOL + len(util.TrimWcwidth(buffer[prevSOL:prevEOL], width))
+	width := wcwidth.Of(buffer[sol:dot])
+	return prevSOL + len(wcwidth.Trim(buffer[prevSOL:prevEOL], width))
 }
 
 //elvdoc:fn move-dot-down
@@ -351,8 +352,8 @@ func moveDotDown(buffer string, dot int) int {
 	nextSOL := eol + 1
 	nextEOL := util.FindFirstEOL(buffer[nextSOL:]) + nextSOL
 	sol := util.FindLastSOL(buffer[:dot])
-	width := util.Wcswidth(buffer[sol:dot])
-	return nextSOL + len(util.TrimWcwidth(buffer[nextSOL:nextEOL], width))
+	width := wcwidth.Of(buffer[sol:dot])
+	return nextSOL + len(wcwidth.Trim(buffer[nextSOL:nextEOL], width))
 }
 
 // TODO(xiaq): Document the concepts of words, small words and alnum words.

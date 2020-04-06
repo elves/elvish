@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/wcwidth"
 )
 
 // Context is a range of text in a source code. It is typically used for
@@ -92,7 +92,7 @@ func (c *Context) ShowCompact(sourceIndent string) string {
 	}
 	desc := c.Name + ", " + c.lineRange() + " "
 	// Extra indent so that following lines line up with the first line.
-	descIndent := strings.Repeat(" ", util.Wcswidth(desc))
+	descIndent := strings.Repeat(" ", wcwidth.Of(desc))
 	return desc + c.relevantSource(sourceIndent+descIndent)
 }
 

@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/wcwidth"
 )
 
 // Text contains of a list of styled Segments.
@@ -177,10 +177,10 @@ func (t Text) SplitByRune(r rune) []Text {
 func (t Text) TrimWcwidth(wmax int) Text {
 	var newt Text
 	for _, seg := range t {
-		w := util.Wcswidth(seg.Text)
+		w := wcwidth.Of(seg.Text)
 		if w >= wmax {
 			newt = append(newt,
-				&Segment{seg.Style, util.TrimWcwidth(seg.Text, wmax)})
+				&Segment{seg.Style, wcwidth.Trim(seg.Text, wmax)})
 			break
 		}
 		wmax -= w

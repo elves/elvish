@@ -5,7 +5,7 @@ import (
 
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/wcwidth"
 )
 
 // TextView is a Widget for displaying text, with support for vertical
@@ -68,7 +68,7 @@ func (w *textView) Render(width, height int) *term.Buffer {
 		if i > first {
 			bb.Newline()
 		}
-		bb.Write(util.TrimWcwidth(lines[i], textWidth))
+		bb.Write(wcwidth.Trim(lines[i], textWidth))
 	}
 	buf := bb.Buffer()
 

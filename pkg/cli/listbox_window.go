@@ -1,6 +1,6 @@
 package cli
 
-import "github.com/elves/elvish/pkg/util"
+import "github.com/elves/elvish/pkg/wcwidth"
 
 // The number of lines the listing mode keeps between the current selected item
 // and the top and bottom edges of the window, unless the available height is
@@ -133,7 +133,7 @@ func maxWidth(items Items, padding, low, high int) int {
 	for i := low; i < high && i < n; i++ {
 		w := 0
 		for _, seg := range items.Show(i) {
-			w += util.Wcswidth(seg.Text)
+			w += wcwidth.Of(seg.Text)
 		}
 		if width < w {
 			width = w

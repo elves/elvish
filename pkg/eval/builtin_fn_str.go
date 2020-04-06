@@ -10,7 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/wcwidth"
 )
 
 // String operations.
@@ -260,8 +260,8 @@ func init() {
 		"chr":  chr,
 		"base": base,
 
-		"wcswidth":          util.Wcswidth,
-		"-override-wcwidth": util.OverrideWcwidth,
+		"wcswidth":          wcwidth.Of,
+		"-override-wcwidth": wcwidth.Override,
 
 		"has-prefix": strings.HasPrefix,
 		"has-suffix": strings.HasSuffix,

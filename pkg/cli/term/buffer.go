@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/wcwidth"
 )
 
 // Cell is an indivisible unit on the screen. It is not necessarily 1 column
@@ -23,7 +23,7 @@ type Pos struct {
 func CellsWidth(cs []Cell) int {
 	w := 0
 	for _, c := range cs {
-		w += util.Wcswidth(c.Text)
+		w += wcwidth.Of(c.Text)
 	}
 	return w
 }
@@ -171,7 +171,7 @@ func (b *Buffer) TTYString() string {
 				lastStyle = cell.Style
 			}
 			sb.WriteString(cell.Text)
-			usedWidth += util.Wcswidth(cell.Text)
+			usedWidth += wcwidth.Of(cell.Text)
 		}
 		if lastStyle != "" {
 			sb.WriteString("\033[m")

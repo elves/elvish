@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/wcwidth"
 )
 
 // BufferBuilder supports building of Buffer.
@@ -68,7 +68,7 @@ func (bb *BufferBuilder) appendLine() {
 func (bb *BufferBuilder) appendCell(c Cell) {
 	n := len(bb.Lines)
 	bb.Lines[n-1] = append(bb.Lines[n-1], c)
-	bb.Col += util.Wcswidth(c.Text)
+	bb.Col += wcwidth.Of(c.Text)
 }
 
 // Newline starts a newline.
@@ -104,7 +104,7 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 		c = Cell{"^" + string(r^0x40), style}
 	}
 
-	if bb.Col+util.Wcswidth(c.Text) > bb.Width {
+	if bb.Col+wcwidth.Of(c.Text) > bb.Width {
 		bb.Newline()
 		bb.appendCell(c)
 	} else {

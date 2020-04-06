@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/wcwidth"
 )
 
 // View model, calculated from State and used for rendering.
@@ -112,7 +112,7 @@ func truncateToHeight(b *term.Buffer, maxHeight int) {
 func styledWcswidth(t ui.Text) int {
 	w := 0
 	for _, seg := range t {
-		w += util.Wcswidth(seg.Text)
+		w += wcwidth.Of(seg.Text)
 	}
 	return w
 }

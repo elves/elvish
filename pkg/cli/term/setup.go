@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/elves/elvish/pkg/sys"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/wcwidth"
 )
 
 // Setup sets up the terminal so that it is suitable for the Reader and
@@ -53,7 +53,7 @@ func setupVT(out *os.File) error {
 		   LackEOL character. Otherwise, we are now in the next line and this is
 		   a no-op. The LackEOL character remains.
 	*/
-	s += fmt.Sprintf("\033[?7h%s%*s\r \r", lackEOL, width-util.Wcwidth(lackEOLRune), "")
+	s += fmt.Sprintf("\033[?7h%s%*s\r \r", lackEOL, width-wcwidth.OfRune(lackEOLRune), "")
 
 	/*
 		Turn off autowrap.
