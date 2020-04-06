@@ -179,6 +179,8 @@ Function 1 from b.
 ## f2
 
 Function 2 from a.
+
+    Some indented code.
 `)
 }
 
@@ -208,6 +210,8 @@ Function 1 from b.
 ## f2
 
 Function 2 from a.
+
+    Some indented code.
 `)
 }
 
@@ -230,6 +234,8 @@ Some more text.`)
 
 Function 2 from a.
 
+    Some indented code.
+
 Some more text.
 `)
 }
@@ -250,6 +256,8 @@ func setup() func() {
 //elvdoc:fn f2
 //
 // Function 2 from a.
+//
+//     Some indented code.
 `)
 	writeFile("b.go", `package x
 //elvdoc:fn f1

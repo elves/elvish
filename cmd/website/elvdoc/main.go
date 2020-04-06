@@ -147,7 +147,7 @@ func extract(r io.Reader, ns string, w io.Writer) {
 				return builder.String(), err
 			}
 			// The line already has a trailing newline.
-			builder.WriteString(strings.TrimLeft(line[len("//"):], " "))
+			builder.WriteString(strings.TrimPrefix(line[len("//"):], " "))
 		}
 	}
 
