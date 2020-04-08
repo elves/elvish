@@ -148,14 +148,14 @@ func (op *delElemOp) invoke(fm *Frame) error {
 			return err
 		}
 		if len(indexValues) != 1 {
-			return fm.errorpf(indexOp.From, indexOp.To, "index must evaluate to a single value in argument to del")
+			return fm.errorpf(indexOp, "index must evaluate to a single value in argument to del")
 		}
 		indicies = append(indicies, indexValues[0])
 	}
 	err := vars.DelElement(fm.ResolveVar(op.qname), indicies)
 	if err != nil {
 		if level := vars.ElementErrorLevel(err); level >= 0 {
-			return fm.errorpf(op.begin, op.ends[level], "%s", err.Error())
+			return fm.errorp(diag.Ranging{From: op.begin, To: op.ends[level]}, err)
 		}
 		return err
 	}
@@ -239,13 +239,16 @@ func compileUse(cp *compiler, fn *parse.Form) effectOpBody {
 
 	cp.thisScope().set(name + NsSuffix)
 
-	return useOp{name, spec}
+	return useOp{fn.Range(), name, spec}
 }
 
-type useOp struct{ name, spec string }
+type useOp struct {
+	diag.Ranging
+	name, spec string
+}
 
 func (op useOp) invoke(fm *Frame) error {
-	ns, err := loadModule(fm, op.spec)
+	ns, err := loadModule(fm, op, op.spec)
 	if err != nil {
 		return err
 	}
@@ -253,7 +256,7 @@ func (op useOp) invoke(fm *Frame) error {
 	return nil
 }
 
-func loadModule(fm *Frame, spec string) (Ns, error) {
+func loadModule(fm *Frame, r diag.Ranger, spec string) (Ns, error) {
 	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") {
 		var dir string
 		if fm.srcMeta.Type == FileSource {
@@ -266,21 +269,21 @@ func loadModule(fm *Frame, spec string) (Ns, error) {
 			}
 		}
 		path := filepath.Clean(dir + "/" + spec + ".elv")
-		return loadModuleFile(fm, spec, path)
+		return loadModuleFile(fm, r, spec, path)
 	}
 	if ns, ok := fm.Evaler.modules[spec]; ok {
 		return ns, nil
 	}
 	if code, ok := fm.bundled[spec]; ok {
-		return evalModule(fm, spec, NewInternalElvishSource(false, spec, code))
+		return evalModule(fm, r, spec, NewInternalElvishSource(false, spec, code))
 	}
 	if fm.libDir == "" {
 		return nil, noSuchModule{spec}
 	}
-	return loadModuleFile(fm, spec, fm.libDir+"/"+spec+".elv")
+	return loadModuleFile(fm, r, spec, fm.libDir+"/"+spec+".elv")
 }
 
-func loadModuleFile(fm *Frame, spec, path string) (Ns, error) {
+func loadModuleFile(fm *Frame, r diag.Ranger, spec, path string) (Ns, error) {
 	if ns, ok := fm.modules[path]; ok {
 		return ns, nil
 	}
@@ -291,10 +294,10 @@ func loadModuleFile(fm *Frame, spec, path string) (Ns, error) {
 		}
 		return nil, err
 	}
-	return evalModule(fm, path, NewModuleSource(path, code))
+	return evalModule(fm, r, path, NewModuleSource(path, code))
 }
 
-func evalModule(fm *Frame, key string, src *Source) (Ns, error) {
+func evalModule(fm *Frame, r diag.Ranger, key string, src *Source) (Ns, error) {
 	n, err := parse.AsChunk(src.Name, src.Code)
 	if err != nil {
 		return nil, err
@@ -305,10 +308,9 @@ func evalModule(fm *Frame, key string, src *Source) (Ns, error) {
 
 	newFm := &Frame{
 		fm.Evaler, src,
-		diag.Ranging{From: 0, To: len(src.Code)},
 		modGlobal, make(Ns),
 		fm.intCh, fm.ports,
-		fm.addTraceback(), false,
+		fm.addTraceback(r), false,
 	}
 
 	op, err := compile(newFm.Builtin.static(), modGlobal.static(), n, src)
@@ -514,7 +516,7 @@ func (op *forOp) invoke(fm *Frame) error {
 		return err
 	}
 	if len(variables) != 1 {
-		return fm.errorpf(op.varOp.From, op.varOp.To, "only one variable allowed")
+		return fm.errorpf(op.varOp, "only one variable allowed")
 	}
 	variable := variables[0]
 	iterable, err := fm.ExecAndUnwrap("value being iterated", op.iterOp).One().Any()
@@ -676,7 +678,7 @@ func (op lvaluesOp) execMustOne(fm *Frame) (vars.Var, error) {
 		return nil, err
 	}
 	if len(variables) != 1 {
-		return nil, fm.errorpf(op.From, op.To, "should be one variable")
+		return nil, fm.errorpf(op, "should be one variable")
 	}
 	return variables[0], nil
 }

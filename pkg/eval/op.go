@@ -29,8 +29,7 @@ type effectOpBody interface {
 
 // Executes an effectOp for side effects.
 func (op effectOp) exec(fm *Frame) error {
-	fm.srcRange = op.Ranging
-	return op.body.invoke(fm)
+	return fm.errorp(op, op.body.invoke(fm))
 }
 
 // An operation on an Frame that produce Value's.
@@ -50,8 +49,8 @@ type valuesOpBody interface {
 
 // Executes a ValuesOp and produces values.
 func (op valuesOp) exec(fm *Frame) ([]interface{}, error) {
-	fm.srcRange = op.Ranging
-	return op.body.invoke(fm)
+	values, err := op.body.invoke(fm)
+	return values, fm.errorp(op, err)
 }
 
 // An operation on a Frame that produce Variable's.
@@ -71,6 +70,6 @@ func (op lvaluesOp) exec(fm *Frame) ([]vars.Var, error) {
 	if op.body == nil {
 		return []vars.Var{}, nil
 	}
-	fm.srcRange = op.Ranging
-	return op.body.invoke(fm)
+	lvalues, err := op.body.invoke(fm)
+	return lvalues, fm.errorp(op, err)
 }

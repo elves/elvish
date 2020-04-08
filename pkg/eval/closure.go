@@ -139,8 +139,6 @@ func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 		}
 	}
 
-	fm.traceback = fm.addTraceback()
-
 	fm.srcMeta = c.SrcMeta
 	return c.Op.exec(fm)
 }

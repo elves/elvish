@@ -17,8 +17,7 @@ import (
 type Frame struct {
 	*Evaler
 
-	srcMeta  *Source
-	srcRange diag.Ranging
+	srcMeta *Source
 
 	local, up Ns
 
@@ -36,7 +35,6 @@ type Frame struct {
 func NewTopFrame(ev *Evaler, src *Source, ports []*Port) *Frame {
 	return &Frame{
 		ev, src,
-		diag.Ranging{From: 0, To: len(src.Code)},
 		ev.Global, make(Ns),
 		nil, ports,
 		nil, false,
@@ -129,7 +127,7 @@ func (fm *Frame) fork(name string) *Frame {
 		}
 	}
 	return &Frame{
-		fm.Evaler, fm.srcMeta, fm.srcRange,
+		fm.Evaler, fm.srcMeta,
 		fm.local, fm.up,
 		fm.intCh, newPorts,
 		fm.traceback, fm.background,
@@ -149,16 +147,14 @@ func (fm *Frame) Eval(op Op) error {
 
 // eval evaluates an effectOp. It does so in a protected environment so that
 // exceptions thrown are wrapped in an Error.
-func (fm *Frame) eval(op effectOp) (err error) {
-	e := op.exec(fm)
-	return fm.makeException(e)
+func (fm *Frame) eval(op effectOp) error {
+	return op.exec(fm)
 }
 
 // Call calls a function with the given arguments and options. It does so in a
 // protected environment so that exceptions thrown are wrapped in an Error.
-func (fm *Frame) Call(f Callable, args []interface{}, opts map[string]interface{}) (err error) {
-	e := f.Call(fm, args, opts)
-	return fm.makeException(e)
+func (fm *Frame) Call(f Callable, args []interface{}, opts map[string]interface{}) error {
+	return f.Call(fm, args, opts)
 }
 
 // CaptureOutput calls a function with the given arguments and options,
@@ -189,29 +185,29 @@ func (fm *Frame) ExecWithOutputCallback(op Op, valuesCb func(<-chan interface{})
 	return pcaptureOutputInner(fm, op.Inner, valuesCb, bytesCb)
 }
 
-// makeException turns an error into an Exception by adding traceback. If e is
-// nil or already an *Exception, it is returned as is.
-func (fm *Frame) makeException(e error) error {
+func (fm *Frame) addTraceback(r diag.Ranger) *stackTrace {
+	return &stackTrace{
+		head: diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r.Range()),
+		next: fm.traceback,
+	}
+}
+
+// Returns an Exception with specified range and cause.
+func (fm *Frame) errorp(r diag.Ranger, e error) error {
 	switch e := e.(type) {
 	case nil:
 		return nil
 	case *Exception:
 		return e
 	default:
-		return &Exception{e, fm.addTraceback()}
+		return &Exception{e, &stackTrace{
+			head: diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r.Range()),
+			next: fm.traceback,
+		}}
 	}
 }
 
-func (fm *Frame) addTraceback() *stackTrace {
-	return &stackTrace{
-		head: diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, fm.srcRange),
-		next: fm.traceback,
-	}
-}
-
-// Amends the being and end of the current frame and returns the result of
-// fmt.Errorf.
-func (fm *Frame) errorpf(begin, end int, format string, args ...interface{}) error {
-	fm.srcRange = diag.Ranging{From: begin, To: end}
-	return fmt.Errorf(format, args...)
+// Returns an Exception with specified range and error text.
+func (fm *Frame) errorpf(r diag.Ranger, format string, args ...interface{}) error {
+	return fm.errorp(r, fmt.Errorf(format, args...))
 }

@@ -91,7 +91,6 @@ func (cp *compiler) lvalueElement(qname string, n *parse.Indexing) lvaluesOpBody
 		cp.errorpf(n, "variable $%s not found", qname)
 	}
 
-	begin, end := n.Range().From, n.Range().To
 	ends := make([]int, len(n.Indicies)+1)
 	ends[0] = n.Head.Range().To
 	for i, idx := range n.Indicies {
@@ -100,7 +99,7 @@ func (cp *compiler) lvalueElement(qname string, n *parse.Indexing) lvaluesOpBody
 
 	indexOps := cp.arrayOps(n.Indicies)
 
-	return &elemOp{qname, indexOps, begin, end, ends}
+	return &elemOp{n.Range(), qname, indexOps, ends}
 }
 
 type seqLValuesOpBody struct {
@@ -138,10 +137,9 @@ func (op varOp) invoke(fm *Frame) ([]vars.Var, error) {
 }
 
 type elemOp struct {
+	diag.Ranging
 	qname    string
 	indexOps []valuesOp
-	begin    int
-	end      int
 	ends     []int
 }
 
@@ -167,9 +165,9 @@ func (op *elemOp) invoke(fm *Frame) ([]vars.Var, error) {
 	if err != nil {
 		level := vars.ElementErrorLevel(err)
 		if level < 0 {
-			return nil, fm.errorpf(op.begin, op.end, "%s", err)
+			return nil, fm.errorp(op, err)
 		}
-		return nil, fm.errorpf(op.begin, op.ends[level], "%s", err)
+		return nil, fm.errorp(diag.Ranging{From: op.From, To: op.ends[level]}, err)
 	}
 	return []vars.Var{elemVar}, nil
 }

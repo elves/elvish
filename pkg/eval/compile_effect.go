@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
@@ -245,7 +246,7 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 	redirOps := cp.redirOps(n.Redirs)
 	// TODO: n.ErrorRedir
 
-	return makeEffectOp(n, &formOp{saveVarsOps, assignmentOps, redirOps, specialOpFunc, headOp, argOps, optsOp, spaceyAssignOp})
+	return makeEffectOp(n, &formOp{n.Range(), saveVarsOps, assignmentOps, redirOps, specialOpFunc, headOp, argOps, optsOp, spaceyAssignOp})
 }
 
 func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
@@ -257,6 +258,7 @@ func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
 }
 
 type formOp struct {
+	diag.Ranging
 	saveVarsOps    []lvaluesOp
 	assignmentOps  []effectOp
 	redirOps       []effectOp
@@ -268,10 +270,7 @@ type formOp struct {
 }
 
 func (op *formOp) invoke(fm *Frame) (errRet error) {
-	// Save the range for the entire form.
-	formRange := fm.srcRange
-
-	// ec here is always a subevaler created in compiler.pipeline, so it can
+	// fm here is always a sub-frame created in compiler.pipeline, so it can
 	// be safely modified.
 
 	// Temporary assignment.
@@ -372,8 +371,10 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 		}
 	}
 
-	fm.srcRange = formRange
 	if headFn != nil {
+		if _, isClosure := headFn.(*Closure); isClosure {
+			fm.traceback = fm.addTraceback(op)
+		}
 		return headFn.Call(fm, args, convertedOpts)
 	}
 	return op.spaceyAssignOp.exec(fm)

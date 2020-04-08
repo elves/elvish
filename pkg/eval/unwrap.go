@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/util"
 )
@@ -13,14 +14,13 @@ import (
 // properties are not satisfied.
 
 type unwrapper struct {
+	// Range in the source code to point to when error occurs.
+	diag.Ranging
 	// ctx is the evaluation context.
 	ctx *Frame
 	// description describes what is being unwrapped. It is used in error
 	// messages.
 	description string
-	// begin and end contains positions in the source code to point to when
-	// error occurs.
-	begin, end int
 	// values contain the Value's to unwrap.
 	values []interface{}
 	// Any errors during the unwrapping.
@@ -33,7 +33,7 @@ func (u *unwrapper) error(want, gotfmt string, gotargs ...interface{}) {
 	}
 	got := fmt.Sprintf(gotfmt, gotargs...)
 	u.err = u.ctx.errorpf(
-		u.begin, u.end, "%s must be %s; got %s", u.description, want, got)
+		u, "%s must be %s; got %s", u.description, want, got)
 }
 
 // ValuesUnwrapper unwraps []Value.
@@ -43,7 +43,7 @@ type ValuesUnwrapper struct{ *unwrapper }
 // values.
 func (ctx *Frame) ExecAndUnwrap(desc string, op valuesOp) ValuesUnwrapper {
 	values, err := op.exec(ctx)
-	return ValuesUnwrapper{&unwrapper{ctx, desc, op.From, op.To, values, err}}
+	return ValuesUnwrapper{&unwrapper{op.Range(), ctx, desc, values, err}}
 }
 
 // One unwraps the value to be exactly one value.
@@ -113,7 +113,7 @@ func (u ValueUnwrapper) Fd() (int, error) {
 	default:
 		i, err := u.NonNegativeInt()
 		if err != nil {
-			return 0, u.ctx.errorpf(u.begin, u.end, "fd must be standard stream name or integer; got %s", s)
+			return 0, u.ctx.errorpf(u, "fd must be standard stream name or integer; got %s", s)
 		}
 		return i, nil
 	}
@@ -126,7 +126,7 @@ func (u ValueUnwrapper) FdOrClose() (int, error) {
 	}
 	fd, err := u.Fd()
 	if err != nil {
-		return 0, u.ctx.errorpf(u.begin, u.end, "redirection source must be standard stream name or integer; got %s", s)
+		return 0, u.ctx.errorpf(u, "redirection source must be standard stream name or integer; got %s", s)
 	}
 	return fd, nil
 }
