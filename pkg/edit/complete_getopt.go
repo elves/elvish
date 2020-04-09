@@ -134,7 +134,7 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 		out <- c
 	}
 	call := func(fn eval.Callable, args ...interface{}) {
-		fm.Call(fn, args, eval.NoOpts)
+		fn.Call(fm, args, eval.NoOpts)
 	}
 
 	switch ctx.Type {

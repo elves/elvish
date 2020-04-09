@@ -146,7 +146,7 @@ func runParallel(fm *Frame, functions ...Callable) error {
 	exceptions := make([]*Exception, len(functions))
 	for i, function := range functions {
 		go func(fm2 *Frame, function Callable, exception **Exception) {
-			err := fm2.Call(function, NoArgs, NoOpts)
+			err := function.Call(fm2, NoArgs, NoOpts)
 			if err != nil {
 				*exception = err.(*Exception)
 			}
@@ -167,7 +167,7 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 			return
 		}
 		newFm := fm.fork("closure of each")
-		ex := newFm.Call(f, []interface{}{v}, NoOpts)
+		ex := f.Call(newFm, []interface{}{v}, NoOpts)
 		newFm.Close()
 
 		if ex != nil {
@@ -198,7 +198,7 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 		go func() {
 			newFm := fm.fork("closure of peach")
 			newFm.ports[0] = DevNullClosedChan
-			ex := newFm.Call(f, []interface{}{v}, NoOpts)
+			ex := f.Call(newFm, []interface{}{v}, NoOpts)
 			newFm.Close()
 
 			if ex != nil {

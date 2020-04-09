@@ -142,19 +142,7 @@ func (fm *Frame) Eval(op Op) error {
 	defer func() {
 		fm.srcMeta = oldSrc
 	}()
-	return fm.eval(op.Inner)
-}
-
-// eval evaluates an effectOp. It does so in a protected environment so that
-// exceptions thrown are wrapped in an Error.
-func (fm *Frame) eval(op effectOp) error {
-	return op.exec(fm)
-}
-
-// Call calls a function with the given arguments and options. It does so in a
-// protected environment so that exceptions thrown are wrapped in an Error.
-func (fm *Frame) Call(f Callable, args []interface{}, opts map[string]interface{}) error {
-	return f.Call(fm, args, opts)
+	return op.Inner.exec(fm)
 }
 
 // CaptureOutput calls a function with the given arguments and options,

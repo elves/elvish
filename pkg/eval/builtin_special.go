@@ -204,7 +204,7 @@ func wrapFn(op effectOp) effectOp {
 type fnWrap struct{ wrapped effectOp }
 
 func (op fnWrap) invoke(fm *Frame) error {
-	err := fm.eval(op.wrapped)
+	err := op.wrapped.exec(fm)
 	if err != nil && Cause(err) != Return {
 		// rethrow
 		return err
@@ -461,7 +461,7 @@ func (op *whileOp) invoke(fm *Frame) error {
 			break
 		}
 		iterated = true
-		err = fm.fork("while").Call(body, NoArgs, NoOpts)
+		err = body.Call(fm.fork("while"), NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(*Exception)
 			if exc.Cause == Continue {
@@ -536,7 +536,7 @@ func (op *forOp) invoke(fm *Frame) error {
 			errElement = err
 			return false
 		}
-		err = fm.fork("for").Call(body, NoArgs, NoOpts)
+		err = body.Call(fm.fork("for"), NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(*Exception)
 			if exc.Cause == Continue {
@@ -625,7 +625,7 @@ func (op *tryOp) invoke(fm *Frame) error {
 	elseFn := op.elseOp.execlambdaOp(fm)
 	finally := op.finallyOp.execlambdaOp(fm)
 
-	err = fm.fork("try body").Call(body, NoArgs, NoOpts)
+	err = body.Call(fm.fork("try body"), NoArgs, NoOpts)
 	if err != nil {
 		if except != nil {
 			if exceptVar != nil {
@@ -634,11 +634,11 @@ func (op *tryOp) invoke(fm *Frame) error {
 					return err
 				}
 			}
-			err = fm.fork("try except").Call(except, NoArgs, NoOpts)
+			err = except.Call(fm.fork("try except"), NoArgs, NoOpts)
 		}
 	} else {
 		if elseFn != nil {
-			err = fm.fork("try else").Call(elseFn, NoArgs, NoOpts)
+			err = elseFn.Call(fm.fork("try else"), NoArgs, NoOpts)
 		}
 	}
 	if finally != nil {

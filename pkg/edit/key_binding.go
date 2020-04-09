@@ -67,7 +67,7 @@ func callWithNotifyPorts(nt notifier, ev *eval.Evaler, f eval.Callable, args ...
 	ports := []*eval.Port{eval.DevNullClosedChan, notifyPort, notifyPort}
 	frame := eval.NewTopFrame(ev, bindingSource, ports)
 
-	err := frame.Call(f, args, eval.NoOpts)
+	err := f.Call(frame, args, eval.NoOpts)
 	if err != nil {
 		// TODO(xiaq): Make the stack trace available.
 		nt.Notify("[binding error] " + err.Error())

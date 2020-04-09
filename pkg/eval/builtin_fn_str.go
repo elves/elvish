@@ -383,7 +383,7 @@ func eawk(fm *Frame, f Callable, inputs Inputs) error {
 
 		newFm := fm.fork("fn of eawk")
 		// TODO: Close port 0 of newFm.
-		ex := newFm.Call(f, args, NoOpts)
+		ex := f.Call(newFm, args, NoOpts)
 		newFm.Close()
 
 		if ex != nil {

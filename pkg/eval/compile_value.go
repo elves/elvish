@@ -332,7 +332,7 @@ func (op listOp) invoke(fm *Frame) ([]interface{}, error) {
 type exceptionCaptureOp struct{ subop effectOp }
 
 func (op exceptionCaptureOp) invoke(fm *Frame) ([]interface{}, error) {
-	err := fm.eval(op.subop)
+	err := op.subop.exec(fm)
 	if err == nil {
 		return []interface{}{OK}, nil
 	}
@@ -405,7 +405,7 @@ func pcaptureOutputInner(fm *Frame, op effectOp, valuesCb func(<-chan interface{
 		close(bytesCollected)
 	}()
 
-	err = newFm.eval(op)
+	err = op.exec(newFm)
 
 	newFm.Close()
 	<-bytesCollected

@@ -174,7 +174,7 @@ func adaptChdirHook(name string, ev *Evaler, pfns *vector.Vector) func(string) {
 			}
 			fm := NewTopFrame(ev,
 				NewInternalGoSource("["+name+" hook]"), stdPorts.ports[:])
-			err := fm.Call(fn, []interface{}{path}, NoOpts)
+			err := fn.Call(fm, []interface{}{path}, NoOpts)
 			if err != nil {
 				// TODO: Stack trace
 				fmt.Fprintln(os.Stderr, err)
@@ -247,8 +247,8 @@ func (fm *Frame) growPorts(n int) {
 
 // Eval evaluates an Op using the specified ports.
 func (ev *Evaler) Eval(op Op, ports []*Port) error {
-	ec := NewTopFrame(ev, op.Src, ports)
-	return ec.eval(op.Inner)
+	fm := NewTopFrame(ev, op.Src, ports)
+	return op.Inner.exec(fm)
 }
 
 // EvalSourceInTTY evaluates Elvish source code in the current terminal.
@@ -287,9 +287,9 @@ func (ev *Evaler) EvalInTTY(op Op) error {
 		}
 	}()
 
-	ec := NewTopFrame(ev, op.Src, stdPorts.ports[:])
-	ec.intCh = intCh
-	return ec.eval(op.Inner)
+	fm := NewTopFrame(ev, op.Src, stdPorts.ports[:])
+	fm.intCh = intCh
+	return op.Inner.exec(fm)
 }
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it
