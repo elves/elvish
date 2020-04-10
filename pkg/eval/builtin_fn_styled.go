@@ -59,16 +59,16 @@ var errStyledSegmentArgType = errors.New("argument to styled-segment must be a s
 // -   A color name for setting the text color, which may be one of the
 // following:
 //
-// -   One of the 8 basic ANSI colors: `black`, `red`, `green`, `yellow`,
+//     -   One of the 8 basic ANSI colors: `black`, `red`, `green`, `yellow`,
 // `blue`, `magenta`, `cyan` and `white`
 //
-// -   The bright variant of the 8 basic ANSI colors, with a `bright-`
+//     -   The bright variant of the 8 basic ANSI colors, with a `bright-`
 // prefix
 //
-// -   Any color from the xterm 256-color palette, as `colorX` (such as
+//     -   Any color from the xterm 256-color palette, as `colorX` (such as
 // `color12`)
 //
-// -   A 24-bit RGB color, as `#RRGGBB`, such as `#778899`.
+//     -   A 24-bit RGB color, as `#RRGGBB`, such as `#778899`.
 //
 // -   A color name prefixed by `bg-` to set the background color
 //
