@@ -96,9 +96,9 @@ func TestCompileEffect(t *testing.T) {
 		// Assignment errors when the RHS errors.
 		That("x = [][1]").ThrowsMessage("index out of range"),
 		// Arity mismatch.
-		That("x = 1 2").Throws(ErrArityMismatch),
-		That("x y = 1").Throws(ErrArityMismatch),
-		That("x y @z = 1").Throws(ErrArityMismatch),
+		That("x = 1 2").ThrowsCause(ErrArityMismatch),
+		That("x y = 1").ThrowsCause(ErrArityMismatch),
+		That("x y @z = 1").ThrowsCause(ErrArityMismatch),
 
 		// Redirections
 		// ------------

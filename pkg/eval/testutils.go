@@ -17,7 +17,6 @@ package eval
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -52,14 +51,32 @@ type result struct {
 	exception        error
 }
 
-// A special value for want.{compilationError,exception} to indicate that any
-// error, as long as not nil, is a match.
-var errAny = errors.New("any error")
+type errorMatcher interface{ matchError(error) bool }
 
-// A special error type that matches any error with the given message.
-type errorWithMessage struct{ msg string }
+// An errorMatcher for any error.
+type anyError struct{}
 
-func (e errorWithMessage) Error() string { return "any error with message " + e.msg }
+func (anyError) Error() string { return "any error" }
+
+func (anyError) matchError(e error) bool { return e != nil }
+
+// An errorMatcher for any exception with the given cause.
+type excWithCause struct{ cause error }
+
+func (e excWithCause) Error() string { return "exception with cause " + e.cause.Error() }
+
+func (e excWithCause) matchError(e2 error) bool {
+	return e2 != nil && reflect.DeepEqual(e.cause, Cause(e2))
+}
+
+// An errorMatcher for any error with the given message.
+type errWithMessage struct{ msg string }
+
+func (e errWithMessage) Error() string { return "error with message " + e.msg }
+
+func (e errWithMessage) matchError(e2 error) bool {
+	return e2 != nil && e.msg == e2.Error()
+}
 
 // The following functions and methods are used to build Test structs. They are
 // supposed to read like English, so a test that "put x" should put "x" reads:
@@ -110,36 +127,45 @@ func (t TestCase) Throws(err error) TestCase {
 	return t
 }
 
+// ThrowsCause returns an altered TestCase that requires the source code to
+// throw an exception with the given cause when evaluated.
+func (t TestCase) ThrowsCause(err error) TestCase {
+	return t.Throws(excWithCause{err})
+}
+
 // ThrowsMessage returns an altered TestCase that requires the source code to
-// throw an exception with the specified message when evaluted.
+// throw an error with the specified message when evaluted.
 func (t TestCase) ThrowsMessage(msg string) TestCase {
-	return t.Throws(errorWithMessage{msg})
+	return t.Throws(errWithMessage{msg})
 }
 
 // ThrowsAny returns an altered TestCase that requires the source code to throw
 // any exception when evaluated.
 func (t TestCase) ThrowsAny() TestCase {
-	return t.Throws(errAny)
+	return t.Throws(anyError{})
 }
 
 // DoesNotCompile returns an altered TestCase that requires the source code to
 // fail compilation.
 func (t TestCase) DoesNotCompile() TestCase {
-	t.want.compilationError = errAny
+	t.want.compilationError = anyError{}
 	return t
 }
 
 // Test runs test cases. For each test case, a new Evaler is created with
 // NewEvaler.
 func Test(t *testing.T, tests ...TestCase) {
+	t.Helper()
 	TestWithSetup(t, func(*Evaler) {}, tests...)
 }
 
 // TestWithSetup runs test cases. For each test case, a new Evaler is created
 // with NewEvaler and passed to the setup function.
 func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
+	t.Helper()
 	for _, tt := range tests {
 		t.Run(tt.code, func(t *testing.T) {
+			t.Helper()
 			ev := NewEvaler()
 			defer ev.Close()
 			setup(ev)
@@ -267,16 +293,13 @@ func matchOut(want, got []interface{}) bool {
 }
 
 func matchErr(want, got error) bool {
-	if got == nil {
-		return want == nil
+	if want == nil {
+		return got == nil
 	}
-	if want == errAny {
-		return true
+	if matcher, ok := want.(errorMatcher); ok {
+		return matcher.matchError(got)
 	}
-	if e, ok := want.(errorWithMessage); ok {
-		return e.msg == got.Error()
-	}
-	return reflect.DeepEqual(Cause(got), want)
+	return reflect.DeepEqual(want, got)
 }
 
 // Calls os.MkdirAll and panics if an error is returned.

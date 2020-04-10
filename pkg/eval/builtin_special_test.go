@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"errors"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -50,15 +49,15 @@ func TestBuiltinSpecial(t *testing.T) {
 		That("try { nop } except { put bad } else { put good }").Puts("good"),
 		That("try { e:false } except - { put bad } else { put good }").
 			Puts("bad"),
-		That("try { fail tr }").Throws(errors.New("tr")),
+		That("try { fail tr }").ThrowsMessage("tr"),
 		That("try { fail tr } finally { put final }").
-			Puts("final").Throws(errors.New("tr")),
+			Puts("final").ThrowsMessage("tr"),
 		That("try { fail tr } except { fail ex } finally { put final }").
-			Puts("final").Throws(errors.New("ex")),
+			Puts("final").ThrowsMessage("ex"),
 		That("try { fail tr } except { put ex } finally { fail final }").
-			Puts("ex").Throws(errors.New("final")),
+			Puts("ex").ThrowsMessage("final"),
 		That("try { fail tr } except { fail ex } finally { fail final }").
-			Throws(errors.New("final")),
+			ThrowsMessage("final"),
 		// try - wrong use
 		That("try { nop } except @a { }").DoesNotCompile(),
 

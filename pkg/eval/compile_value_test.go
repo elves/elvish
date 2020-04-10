@@ -249,7 +249,7 @@ func TestWildcard(t *testing.T) {
 
 	Test(t,
 		That("put *").PutsStrings(fileListing),
-		That("put a/b/nonexistent*").Throws(ErrWildcardNoMatch),
+		That("put a/b/nonexistent*").ThrowsCause(ErrWildcardNoMatch),
 		That("put a/b/nonexistent*[nomatch-ok]").DoesNothing(),
 
 		// Character set and range

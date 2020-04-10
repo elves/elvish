@@ -18,6 +18,6 @@ func TestBuiltinFnFlow(t *testing.T) {
 		// TODO: test peach
 
 		That(`fail haha`).ThrowsAny(),
-		That(`return`).Throws(Return),
+		That(`return`).ThrowsCause(Return),
 	)
 }
