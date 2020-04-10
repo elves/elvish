@@ -51,7 +51,7 @@ func TestErrorMethods(t *testing.T) {
 	tt.Test(t, tt.Fn("Error", error.Error), tt.Table{
 		tt.Args(makeException(errors.New("err"))).Rets("err"),
 
-		tt.Args(ComposeExceptionsFromPipeline([]*Exception{
+		tt.Args(makePipelineError([]*Exception{
 			makeException(errors.New("err1")),
 			makeException(errors.New("err2"))})).Rets("(err1 | err2)"),
 

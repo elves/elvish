@@ -175,12 +175,15 @@ func (pe PipelineError) Error() string {
 	return b.String()
 }
 
-// ComposeExceptionsFromPipeline takes a slice of Exception pointers and
-// composes a suitable error. If all elements of the slice are either nil or OK,
-// a nil is returned. If there is exactly non-nil non-OK Exception, it is
-// returned. Otherwise, a PipelineError built from the slice is returned, with
-// nil items turned into OK's for easier access from elvishscript.
-func ComposeExceptionsFromPipeline(excs []*Exception) error {
+// Builds a suitable error from pipeline results:
+//
+// * if all elements are either nil or OK, return nil.
+//
+// * If there is exactly non-nil non-OK Exception, return it.
+//
+// * Otherwise return a PipelineError built from the slice, with nil items
+//   turned into OK's for easier access from elvishscript.
+func makePipelineError(excs []*Exception) error {
 	newexcs := make([]*Exception, len(excs))
 	notOK, lastNotOK := 0, 0
 	for i, e := range excs {

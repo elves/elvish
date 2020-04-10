@@ -85,5 +85,5 @@ func fg(pids ...int) error {
 		}
 	}
 
-	return ComposeExceptionsFromPipeline(errors)
+	return makePipelineError(errors)
 }

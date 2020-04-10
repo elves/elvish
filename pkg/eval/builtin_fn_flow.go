@@ -155,7 +155,7 @@ func runParallel(fm *Frame, functions ...Callable) error {
 	}
 
 	waitg.Wait()
-	return ComposeExceptionsFromPipeline(exceptions)
+	return makePipelineError(exceptions)
 }
 
 // each takes a single closure and applies it to all input values.

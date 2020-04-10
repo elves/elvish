@@ -155,7 +155,7 @@ func (op *pipelineOp) invoke(fm *Frame) error {
 			wg.Wait()
 			fm.Evaler.state.addNumBgJobs(-1)
 			msg := "job " + op.source + " finished"
-			err := ComposeExceptionsFromPipeline(errors)
+			err := makePipelineError(errors)
 			if err != nil {
 				msg += ", errors = " + err.Error()
 			}
@@ -170,7 +170,7 @@ func (op *pipelineOp) invoke(fm *Frame) error {
 		return nil
 	}
 	wg.Wait()
-	return ComposeExceptionsFromPipeline(errors)
+	return makePipelineError(errors)
 }
 
 func (cp *compiler) formOp(n *parse.Form) effectOp {
