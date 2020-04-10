@@ -11,8 +11,8 @@ func TestBuiltinFnFS(t *testing.T) {
 	tmpHome, cleanup := InTempHome()
 	defer cleanup()
 
-	MustMkdirAll("dir", 0700)
-	MustCreateEmpty("file")
+	mustMkdirAll("dir", 0700)
+	mustCreateEmpty("file")
 
 	Test(t,
 		That(`path-base a/b/c.png`).Puts("c.png"),

@@ -21,7 +21,7 @@ func TestResolve(t *testing.T) {
 	libdir, cleanup := util.InTestDir()
 	defer cleanup()
 
-	MustWriteFile("mod.elv", []byte("fn func { }"), 0600)
+	mustWriteFile("mod.elv", []byte("fn func { }"), 0600)
 
 	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
 		That("resolve for").Puts("special"),

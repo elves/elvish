@@ -8,12 +8,6 @@ import (
 	"github.com/elves/elvish/pkg/util"
 )
 
-type testAddDirer func(string, float64) error
-
-func (t testAddDirer) AddDir(dir string, weight float64) error {
-	return t(dir, weight)
-}
-
 func TestChdir(t *testing.T) {
 	dst, cleanup := util.TestDir()
 	defer cleanup()

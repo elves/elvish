@@ -11,8 +11,8 @@ import (
 
 func TestCompileValue(t *testing.T) {
 	home, cleanup := InTempHome()
-	MustCreateEmpty("file1")
-	MustCreateEmpty("file2")
+	mustCreateEmpty("file1")
+	mustCreateEmpty("file2")
 	defer cleanup()
 
 	Test(t,
@@ -241,10 +241,10 @@ func TestWildcard(t *testing.T) {
 	defer cleanup()
 
 	for _, filename := range filesToCreate {
-		MustCreateEmpty(filename)
+		mustCreateEmpty(filename)
 	}
 	for _, dirname := range dirsToCreate {
-		MustMkdirAll(dirname, 0700)
+		mustMkdirAll(dirname, 0700)
 	}
 
 	Test(t,

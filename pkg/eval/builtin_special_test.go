@@ -95,11 +95,11 @@ func TestUse(t *testing.T) {
 	libdir, cleanup := util.InTestDir()
 	defer cleanup()
 
-	MustMkdirAll(filepath.Join("a", "b", "c"), 0700)
+	mustMkdirAll(filepath.Join("a", "b", "c"), 0700)
 
 	writeMod := func(name, content string) {
 		fname := filepath.Join(strings.Split(name, "/")...) + ".elv"
-		MustWriteFile(fname, []byte(content), 0600)
+		mustWriteFile(fname, []byte(content), 0600)
 	}
 	writeMod("has-init", "put has-init")
 	writeMod("put-x", "put $x")

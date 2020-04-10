@@ -243,18 +243,16 @@ func matchErr(want, got error) bool {
 	return reflect.DeepEqual(Cause(got), want)
 }
 
-// MustMkdirAll calls os.MkdirAll and panics if an error is returned. It is
-// mainly useful in tests.
-func MustMkdirAll(name string, perm os.FileMode) {
+// Calls os.MkdirAll and panics if an error is returned.
+func mustMkdirAll(name string, perm os.FileMode) {
 	err := os.MkdirAll(name, perm)
 	if err != nil {
 		panic(err)
 	}
 }
 
-// MustCreateEmpty creates an empty file, and panics if an error occurs. It is
-// mainly useful in tests.
-func MustCreateEmpty(name string) {
+// Creates an empty file, and panics if an error occurs.
+func mustCreateEmpty(name string) {
 	file, err := os.Create(name)
 	if err != nil {
 		panic(err)
@@ -262,9 +260,8 @@ func MustCreateEmpty(name string) {
 	file.Close()
 }
 
-// MustWriteFile calls ioutil.WriteFile and panics if an error occurs. It is
-// mainly useful in tests.
-func MustWriteFile(filename string, data []byte, perm os.FileMode) {
+// Calls ioutil.WriteFile and panics if an error occurs.
+func mustWriteFile(filename string, data []byte, perm os.FileMode) {
 	err := ioutil.WriteFile(filename, data, perm)
 	if err != nil {
 		panic(err)

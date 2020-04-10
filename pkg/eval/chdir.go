@@ -4,12 +4,6 @@ import (
 	"os"
 )
 
-// AddDirer wraps the AddDir function.
-type AddDirer interface {
-	// AddDir adds a directory with the given weight to some storage.
-	AddDir(dir string, weight float64) error
-}
-
 // Chdir changes the current directory. On success it also updates the PWD
 // environment variable and records the new directory in the directory history.
 // It runs the functions in beforeChdir immediately before changing the
