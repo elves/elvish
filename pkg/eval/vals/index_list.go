@@ -8,7 +8,7 @@ import (
 
 var (
 	errIndexMustBeInteger = errors.New("index must must be integer")
-	errIndexOutOfRange    = errors.New("index out of range")
+	ErrIndexOutOfRange    = errors.New("index out of range")
 )
 
 func indexList(l List, rawIndex interface{}) (interface{}, error) {
@@ -44,7 +44,7 @@ func ConvertListIndex(rawIndex interface{}, n int) (*ListIndex, error) {
 			index += n
 		}
 		if !(0 <= index && index < n) {
-			return nil, errIndexOutOfRange
+			return nil, ErrIndexOutOfRange
 		}
 		return &ListIndex{false, index, 0}, nil
 	case string:
@@ -60,11 +60,11 @@ func ConvertListIndex(rawIndex interface{}, n int) (*ListIndex, error) {
 		}
 		if slice {
 			if !(0 <= i && i <= j && j <= n) {
-				return nil, errIndexOutOfRange
+				return nil, ErrIndexOutOfRange
 			}
 		} else {
 			if !(0 <= i && i < n) {
-				return nil, errIndexOutOfRange
+				return nil, ErrIndexOutOfRange
 			}
 		}
 		return &ListIndex{slice, i, j}, nil
@@ -106,12 +106,12 @@ func parseListIndex(s string, n int) (slice bool, i int, j int, err error) {
 }
 
 // atoi is a wrapper around strconv.Atoi, converting strconv.ErrRange to
-// errIndexOutOfRange.
+// ErrIndexOutOfRange.
 func atoi(a string) (int, error) {
 	i, err := strconv.Atoi(a)
 	if err != nil {
 		if err.(*strconv.NumError).Err == strconv.ErrRange {
-			return 0, errIndexOutOfRange
+			return 0, ErrIndexOutOfRange
 		}
 		return 0, errIndexMustBeInteger
 	}

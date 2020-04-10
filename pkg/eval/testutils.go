@@ -60,6 +60,35 @@ func (anyError) Error() string { return "any error" }
 
 func (anyError) matchError(e error) bool { return e != nil }
 
+// An errorMatcher for any exception with the given cause and stack traces.
+type exc struct {
+	cause  error
+	stacks []string
+}
+
+func (e exc) Error() string {
+	return fmt.Sprintf("exception with cause %v and stacks %v", e.cause, e.stacks)
+}
+
+func (e exc) matchError(e2 error) bool {
+	if e2, ok := e2.(*Exception); ok {
+		if reflect.DeepEqual(e.cause, e2.Cause) {
+			return reflect.DeepEqual(e.stacks, getStackTexts(e2.Traceback))
+		}
+	}
+	return false
+}
+
+func getStackTexts(tb *stackTrace) []string {
+	texts := []string{}
+	for tb != nil {
+		ctx := tb.head
+		texts = append(texts, ctx.Source[ctx.From:ctx.To])
+		tb = tb.next
+	}
+	return texts
+}
+
 // An errorMatcher for any exception with the given cause.
 type excWithCause struct{ cause error }
 
@@ -120,29 +149,34 @@ func (t TestCase) Prints(s string) TestCase {
 	return t
 }
 
-// Throws returns an altered TestCase that requires the source code to throw the
-// specified exception when evaluted.
-func (t TestCase) Throws(err error) TestCase {
-	t.want.exception = err
-	return t
+// Throws returns an altered TestCase that requires the source code to throw an
+// exception that has the given cause, and has stacktraces that match the given
+// source fragments (innermost first).
+func (t TestCase) Throws(cause error, stacks ...string) TestCase {
+	return t.throws(exc{cause, stacks})
 }
 
 // ThrowsCause returns an altered TestCase that requires the source code to
 // throw an exception with the given cause when evaluated.
 func (t TestCase) ThrowsCause(err error) TestCase {
-	return t.Throws(excWithCause{err})
+	return t.throws(excWithCause{err})
 }
 
 // ThrowsMessage returns an altered TestCase that requires the source code to
 // throw an error with the specified message when evaluted.
 func (t TestCase) ThrowsMessage(msg string) TestCase {
-	return t.Throws(errWithMessage{msg})
+	return t.throws(errWithMessage{msg})
 }
 
 // ThrowsAny returns an altered TestCase that requires the source code to throw
 // any exception when evaluated.
 func (t TestCase) ThrowsAny() TestCase {
-	return t.Throws(anyError{})
+	return t.throws(anyError{})
+}
+
+func (t TestCase) throws(err error) TestCase {
+	t.want.exception = err
+	return t
 }
 
 // DoesNotCompile returns an altered TestCase that requires the source code to

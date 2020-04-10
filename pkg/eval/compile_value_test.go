@@ -29,7 +29,7 @@ func TestCompileValue(t *testing.T) {
 		// TODO: Test the case where util.GetHome returns an error.
 
 		// Error in any of the components throws an exception.
-		That("put a{[][1]}").ThrowsMessage("index out of range"),
+		That("put a{[][1]}").Throws(vals.ErrIndexOutOfRange, "[][1]"),
 		// Error in concatenating the values throws an exception.
 		That("put []a").ThrowsMessage("cannot concatenate list and string"),
 		// Error when applying tilde throws an exception.

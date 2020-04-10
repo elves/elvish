@@ -32,22 +32,22 @@ func TestIndex(t *testing.T) {
 		// Simple indicies: 0 <= i < n.
 		Args(li4, "0").Rets("foo", nil),
 		Args(li4, "3").Rets("ipsum", nil),
-		Args(li0, "0").Rets(Any, errIndexOutOfRange),
-		Args(li4, "4").Rets(Any, errIndexOutOfRange),
-		Args(li4, "5").Rets(Any, errIndexOutOfRange),
+		Args(li0, "0").Rets(Any, ErrIndexOutOfRange),
+		Args(li4, "4").Rets(Any, ErrIndexOutOfRange),
+		Args(li4, "5").Rets(Any, ErrIndexOutOfRange),
 		// Negative indices: -n <= i < 0.
 		Args(li4, "-1").Rets("ipsum", nil),
 		Args(li4, "-4").Rets("foo", nil),
-		Args(li4, "-5").Rets(Any, errIndexOutOfRange), // Out of range.
+		Args(li4, "-5").Rets(Any, ErrIndexOutOfRange), // Out of range.
 		// Decimal indicies are not allowed even if the value is an integer.
 		Args(li4, "0.0").Rets(Any, errIndexMustBeInteger),
 
 		// Float64 indicies are allowed as long as they are integers.
 		Args(li4, 0.0).Rets("foo", nil),
 		Args(li4, 3.0).Rets("ipsum", nil),
-		Args(li4, 5.0).Rets(nil, errIndexOutOfRange),
+		Args(li4, 5.0).Rets(nil, ErrIndexOutOfRange),
 		Args(li4, -1.0).Rets("ipsum", nil),
-		Args(li4, -5.0).Rets(nil, errIndexOutOfRange),
+		Args(li4, -5.0).Rets(nil, ErrIndexOutOfRange),
 		Args(li4, 0.5).Rets(Any, errIndexMustBeInteger),
 
 		// Slice indicies: 0 <= i <= j <= n.
@@ -66,9 +66,9 @@ func TestIndex(t *testing.T) {
 		Args(li4, ":").Rets(Eq(li4), nil),
 
 		// Index out of range.
-		Args(li4, "-5:1").Rets(nil, errIndexOutOfRange),
-		Args(li4, "0:5").Rets(nil, errIndexOutOfRange),
-		Args(li4, "3:2").Rets(nil, errIndexOutOfRange),
+		Args(li4, "-5:1").Rets(nil, ErrIndexOutOfRange),
+		Args(li4, "0:5").Rets(nil, ErrIndexOutOfRange),
+		Args(li4, "3:2").Rets(nil, ErrIndexOutOfRange),
 
 		// Malformed list indices.
 		Args(li4, "a").Rets(Any, errIndexMustBeInteger),
