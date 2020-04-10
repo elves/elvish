@@ -145,32 +145,14 @@ func (fm *Frame) Eval(op Op) error {
 	return op.Inner.exec(fm)
 }
 
-// CaptureOutput calls a function with the given arguments and options,
-// capturing and returning the output. It does so in a protected environment so
-// that exceptions thrown are wrapped in an Error.
-func (fm *Frame) CaptureOutput(fn Callable, args []interface{}, opts map[string]interface{}) (vs []interface{}, err error) {
-	// XXX There is no source.
-	opFunc := func(f *Frame) error {
-		return fn.Call(f, args, opts)
-	}
-	return pcaptureOutput(fm, effectOp{funcOp(opFunc), diag.Ranging{From: -1, To: -1}})
+// CaptureOutput captures the output of a given callback that operates on a Frame.
+func (fm *Frame) CaptureOutput(f func(*Frame) error) ([]interface{}, error) {
+	return captureOutput(fm, f)
 }
 
-// CallWithOutputCallback calls a function with the given arguments and options,
-// feeding the outputs to the given callbacks. It does so in a protected
-// environment so that exceptions thrown are wrapped in an Error.
-func (fm *Frame) CallWithOutputCallback(fn Callable, args []interface{}, opts map[string]interface{}, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
-	// XXX There is no source.
-	opFunc := func(f *Frame) error {
-		return fn.Call(f, args, opts)
-	}
-	return pcaptureOutputInner(fm, effectOp{funcOp(opFunc), diag.Ranging{From: -1, To: -1}}, valuesCb, bytesCb)
-}
-
-// ExecWithOutputCallback executes an Op, feeding the outputs to the given
-// callbacks.
-func (fm *Frame) ExecWithOutputCallback(op Op, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
-	return pcaptureOutputInner(fm, op.Inner, valuesCb, bytesCb)
+// PipeOutput calls a callback with output piped to the given output handlers.
+func (fm *Frame) PipeOutput(f func(*Frame) error, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
+	return pipeOutput(fm, f, valuesCb, bytesCb)
 }
 
 func (fm *Frame) addTraceback(r diag.Ranger) *stackTrace {

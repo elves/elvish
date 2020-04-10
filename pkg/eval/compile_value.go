@@ -342,75 +342,68 @@ func (op exceptionCaptureOp) invoke(fm *Frame) ([]interface{}, error) {
 type outputCaptureOp struct{ subop effectOp }
 
 func (op outputCaptureOp) invoke(fm *Frame) ([]interface{}, error) {
-	return pcaptureOutput(fm, op.subop)
+	return captureOutput(fm, op.subop.exec)
 }
 
-func pcaptureOutput(fm *Frame, op effectOp) ([]interface{}, error) {
+func captureOutput(fm *Frame, f func(*Frame) error) ([]interface{}, error) {
 	vs := []interface{}{}
 	var m sync.Mutex
-	valueCb := func(ch <-chan interface{}) {
-		for v := range ch {
-			m.Lock()
-			vs = append(vs, v)
-			m.Unlock()
-		}
-	}
-	bytesCb := func(r *os.File) {
-		buffered := bufio.NewReader(r)
-		for {
-			line, err := buffered.ReadString('\n')
-			if line != "" {
-				v := strings.TrimSuffix(line, "\n")
+	err := pipeOutput(fm, f,
+		func(ch <-chan interface{}) {
+			for v := range ch {
 				m.Lock()
 				vs = append(vs, v)
 				m.Unlock()
 			}
-			if err != nil {
-				if err != io.EOF {
-					logger.Println("error on reading:", err)
+		},
+		func(r *os.File) {
+			buffered := bufio.NewReader(r)
+			for {
+				line, err := buffered.ReadString('\n')
+				if line != "" {
+					v := strings.TrimSuffix(line, "\n")
+					m.Lock()
+					vs = append(vs, v)
+					m.Unlock()
 				}
-				break
+				if err != nil {
+					if err != io.EOF {
+						logger.Println("error on reading:", err)
+					}
+					break
+				}
 			}
-		}
-	}
-
-	err := pcaptureOutputInner(fm, op, valueCb, bytesCb)
+		})
 	return vs, err
 }
 
-func pcaptureOutputInner(fm *Frame, op effectOp, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
-
+func pipeOutput(fm *Frame, f func(*Frame) error, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
 	newFm := fm.fork("[output capture]")
 
 	ch := make(chan interface{}, outputCaptureBufferSize)
-	pipeRead, pipeWrite, err := os.Pipe()
+	r, w, err := os.Pipe()
 	if err != nil {
-		return fmt.Errorf("failed to create pipe: %v", err)
+		return err
 	}
 	newFm.ports[1] = &Port{
 		Chan: ch, CloseChan: true,
-		File: pipeWrite, CloseFile: true,
+		File: w, CloseFile: true,
 	}
-
-	bytesCollected := make(chan struct{})
-	chCollected := make(chan struct{})
-
+	var wg sync.WaitGroup
+	wg.Add(2)
 	go func() {
+		defer wg.Done()
 		valuesCb(ch)
-		close(chCollected)
 	}()
 	go func() {
-		bytesCb(pipeRead)
-		pipeRead.Close()
-		close(bytesCollected)
+		defer wg.Done()
+		defer r.Close()
+		bytesCb(r)
 	}()
 
-	err = op.exec(newFm)
-
+	err = f(newFm)
 	newFm.Close()
-	<-bytesCollected
-	<-chCollected
-
+	wg.Wait()
 	return err
 }
 

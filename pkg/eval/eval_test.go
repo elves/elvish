@@ -7,7 +7,6 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 )
 
@@ -66,42 +65,38 @@ func TestConcurrentEval(t *testing.T) {
 }
 
 func BenchmarkOutputCaptureOverhead(b *testing.B) {
-	op := effectOp{funcOp(func(*Frame) error { return nil }), diag.Ranging{}}
-	benchmarkOutputCapture(op, b.N)
+	benchmarkOutputCapture(b.N, func(fm *Frame) {})
 }
 
 func BenchmarkOutputCaptureValues(b *testing.B) {
-	op := effectOp{funcOp(func(fm *Frame) error {
+	benchmarkOutputCapture(b.N, func(fm *Frame) {
 		fm.ports[1].Chan <- "test"
-		return nil
-	}), diag.Ranging{}}
-	benchmarkOutputCapture(op, b.N)
+	})
 }
 
 func BenchmarkOutputCaptureBytes(b *testing.B) {
 	bytesToWrite := []byte("test")
-	op := effectOp{funcOp(func(fm *Frame) error {
+	benchmarkOutputCapture(b.N, func(fm *Frame) {
 		fm.ports[1].File.Write(bytesToWrite)
-		return nil
-	}), diag.Ranging{}}
-	benchmarkOutputCapture(op, b.N)
+	})
 }
 
 func BenchmarkOutputCaptureMixed(b *testing.B) {
 	bytesToWrite := []byte("test")
-	op := effectOp{funcOp(func(fm *Frame) error {
+	benchmarkOutputCapture(b.N, func(fm *Frame) {
 		fm.ports[1].Chan <- false
 		fm.ports[1].File.Write(bytesToWrite)
-		return nil
-	}), diag.Ranging{}}
-	benchmarkOutputCapture(op, b.N)
+	})
 }
 
-func benchmarkOutputCapture(op effectOp, n int) {
+func benchmarkOutputCapture(n int, f func(*Frame)) {
 	ev := NewEvaler()
 	defer ev.Close()
-	ec := NewTopFrame(ev, NewInternalGoSource("[benchmark]"), []*Port{{}, {}, {}})
+	fm := NewTopFrame(ev, NewInternalGoSource("[benchmark]"), []*Port{{}, {}, {}})
 	for i := 0; i < n; i++ {
-		pcaptureOutput(ec, op)
+		captureOutput(fm, func(fm *Frame) error {
+			f(fm)
+			return nil
+		})
 	}
 }

@@ -153,7 +153,9 @@ func Styled(fm *Frame, input interface{}, stylings ...interface{}) (ui.Text, err
 			text = ui.StyleText(text, parsedStyling)
 		case Callable:
 			for i, seg := range text {
-				vs, err := fm.CaptureOutput(styling, []interface{}{seg}, NoOpts)
+				vs, err := fm.CaptureOutput(func(fm *Frame) error {
+					return styling.Call(fm, []interface{}{seg}, NoOpts)
+				})
 				if err != nil {
 					return nil, err
 				}

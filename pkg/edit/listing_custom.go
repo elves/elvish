@@ -63,8 +63,8 @@ func listingStartCustom(app cli.App, fm *eval.Frame, opts customListingOpts, ite
 					}
 				}
 			}
-			err := fm.CallWithOutputCallback(
-				fn, []interface{}{q}, eval.NoOpts, valuesCb, bytesCb)
+			f := func(fm *eval.Frame) error { return fn.Call(fm, []interface{}{q}, eval.NoOpts) }
+			err := fm.PipeOutput(f, valuesCb, bytesCb)
 			// TODO(xiaq): Report the error.
 			_ = err
 			return items

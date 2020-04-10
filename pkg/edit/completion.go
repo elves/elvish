@@ -402,7 +402,9 @@ func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer
 			{File: os.Stderr},
 		}
 		fm := eval.NewTopFrame(ev, eval.NewInternalGoSource("[editor matcher]"), ports)
-		outputs, err := fm.CaptureOutput(matcher, []interface{}{seed}, eval.NoOpts)
+		outputs, err := fm.CaptureOutput(func(fm *eval.Frame) error {
+			return matcher.Call(fm, []interface{}{seed}, eval.NoOpts)
+		})
 		if err != nil {
 			nt.Notify(fmt.Sprintf("[matcher error] %s", err))
 			// Continue with whatever values have been output
@@ -472,7 +474,10 @@ func adaptArgGeneratorMap(ev *eval.Evaler, m vals.Map) complete.ArgGenerator {
 			}
 		}
 		fm := eval.NewTopFrame(ev, eval.NewInternalGoSource("[editor arg generator]"), ports)
-		err := fm.CallWithOutputCallback(gen, argValues, eval.NoOpts, valueCb, bytesCb)
+		f := func(fm *eval.Frame) error {
+			return gen.Call(fm, argValues, eval.NoOpts)
+		}
+		err := fm.PipeOutput(f, valueCb, bytesCb)
 		return output, err
 	}
 }

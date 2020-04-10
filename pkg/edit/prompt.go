@@ -170,7 +170,8 @@ func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...i
 	}
 	// XXX There is no source to pass to NewTopEvalCtx.
 	fm := eval.NewTopFrame(ev, eval.NewInternalGoSource("[prompt]"), ports)
-	err := fm.CallWithOutputCallback(fn, args, eval.NoOpts, valuesCb, bytesCb)
+	f := func(fm *eval.Frame) error { return fn.Call(fm, args, eval.NoOpts) }
+	err := fm.PipeOutput(f, valuesCb, bytesCb)
 
 	if err != nil {
 		nt.Notify(fmt.Sprintf("prompt function error: %v", err))

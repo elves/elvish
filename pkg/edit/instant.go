@@ -79,7 +79,8 @@ func instantStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
 				addLine(strings.TrimSuffix(line, "\n"))
 			}
 		}
-		err = fm.ExecWithOutputCallback(op, valuesCb, bytesCb)
+		err = fm.PipeOutput(
+			func(fm *eval.Frame) error { return fm.Eval(op) }, valuesCb, bytesCb)
 		return output, err
 	}
 	instant.Start(app, instant.Config{Binding: binding, Execute: execute})

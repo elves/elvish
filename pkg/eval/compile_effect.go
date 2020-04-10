@@ -624,9 +624,3 @@ func (op seqOp) invoke(fm *Frame) error {
 	}
 	return nil
 }
-
-type funcOp func(*Frame) error
-
-func (op funcOp) invoke(fm *Frame) error {
-	return op(fm)
-}

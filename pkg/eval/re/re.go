@@ -102,7 +102,9 @@ func replace(fm *eval.Frame, opts replaceOpts, argPattern string, argRepl interf
 			if errReplace != nil {
 				return ""
 			}
-			values, err := fm.CaptureOutput(repl, []interface{}{s}, eval.NoOpts)
+			values, err := fm.CaptureOutput(func(fm *eval.Frame) error {
+				return repl.Call(fm, []interface{}{s}, eval.NoOpts)
+			})
 			if err != nil {
 				errReplace = err
 				return ""
