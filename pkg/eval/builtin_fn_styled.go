@@ -48,35 +48,35 @@ var errStyledSegmentArgType = errors.New("argument to styled-segment must be a s
 //
 // -   The name of a builtin style transformer, which may be one of the following:
 //
-// -   On of the attribute names `bold`, `dim`, `italic`, `underlined`, `blink`
-// or `inverse` for setting the corresponding attribute
+//     -   One of the attribute names `bold`, `dim`, `italic`, `underlined`,
+//     `blink` or `inverse` for setting the corresponding attribute.
 //
-// -   An attribute name prefixed by `no-` for unsetting the attribute
+//     -   An attribute name prefixed by `no-` for unsetting the attribute.
 //
-// -   An attribute name prefixed by `toggle-` for toggling the attribute
-// between set and unset
+//     -   An attribute name prefixed by `toggle-` for toggling the attribute
+//     between set and unset.
 //
 // -   A color name for setting the text color, which may be one of the
 // following:
 //
 //     -   One of the 8 basic ANSI colors: `black`, `red`, `green`, `yellow`,
-// `blue`, `magenta`, `cyan` and `white`
+//    `blue`, `magenta`, `cyan` and `white`.
 //
 //     -   The bright variant of the 8 basic ANSI colors, with a `bright-`
-// prefix
+//    prefix.
 //
 //     -   Any color from the xterm 256-color palette, as `colorX` (such as
-// `color12`)
+//    `color12`).
 //
 //     -   A 24-bit RGB color, as `#RRGGBB`, such as `#778899`.
 //
-// -   A color name prefixed by `bg-` to set the background color
+// -   A color name prefixed by `bg-` to set the background color.
 //
 // -   A lambda that receives a styled segment as the only argument and returns a
-// single styled segment
+// single styled segment.
 //
 // -   A function with the same properties as the lambda (provided via the
-// `$transformer~` syntax)
+// `$transformer~` syntax).
 //
 // When a styled text is converted to a string the corresponding
 // [ANSI SGR code](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_.28Select_Graphic_Rendition.29_parameters)
