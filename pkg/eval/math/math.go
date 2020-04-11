@@ -121,7 +121,7 @@ import (
 //elvdoc:fn is-nan
 //
 // ```elvish
-// math:is-nan $number $sign
+// math:is-nan $number
 // ```
 //
 // Tests whether the number is a NaN (not-a-number).
@@ -248,7 +248,7 @@ import (
 // math:tan $number
 // ```
 //
-// Computes the tangent `$number` in units of radians (not degrees). Examples:
+// Computes the tangent of `$number` in units of radians (not degrees). Examples:
 //
 // ```elvish-transcript
 // ~> math:tan 0
