@@ -72,7 +72,7 @@ func (e exc) Error() string {
 
 func (e exc) matchError(e2 error) bool {
 	if e2, ok := e2.(*Exception); ok {
-		if reflect.DeepEqual(e.cause, e2.Cause) {
+		if matchErr(e.cause, e2.Cause) {
 			return reflect.DeepEqual(e.stacks, getStackTexts(e2.Traceback))
 		}
 	}
@@ -96,6 +96,15 @@ func (e excWithCause) Error() string { return "exception with cause " + e.cause.
 
 func (e excWithCause) matchError(e2 error) bool {
 	return e2 != nil && reflect.DeepEqual(e.cause, Cause(e2))
+}
+
+// An errorMatcher for any error with the given type.
+type errWithType struct{ v error }
+
+func (e errWithType) Error() string { return fmt.Sprintf("error with type %T", e.v) }
+
+func (e errWithType) matchError(e2 error) bool {
+	return reflect.TypeOf(e.v) == reflect.TypeOf(e2)
 }
 
 // An errorMatcher for any error with the given message.

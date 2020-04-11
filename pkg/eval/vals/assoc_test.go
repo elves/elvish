@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/elves/elvish/pkg/eval/errs"
 	. "github.com/elves/elvish/pkg/tt"
 )
 
@@ -27,7 +28,8 @@ func TestAssoc(t *testing.T) {
 		Args(MakeList("0", "1", "2", "3"), 0.0, "foo").Rets(
 			Eq(MakeList("foo", "1", "2", "3")), nil),
 		Args(MakeList("0"), MakeList("0"), "1").Rets(nil, errIndexMustBeInteger),
-		Args(MakeList("0"), "1", "x").Rets(nil, ErrIndexOutOfRange),
+		Args(MakeList("0"), "1", "x").Rets(nil, errs.OutOfRange{
+			What: "index here", ValidLow: 0, ValidHigh: 0, Actual: "1"}),
 		// TODO: Support list assoc with slice
 		Args(MakeList("0", "1", "2", "3"), "1:3", MakeList("foo")).Rets(
 			nil, errAssocWithSlice),

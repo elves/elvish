@@ -3,6 +3,7 @@ package eval
 import (
 	"testing"
 
+	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/util"
 )
@@ -48,9 +49,9 @@ func TestCompileEffect(t *testing.T) {
 		// Command errors when the head is not a single value.
 		That("{put put} foo").ThrowsMessage("head of command must be a single value; got 2 values"),
 		// Command errors when when argument errors.
-		That("put [][1]").ThrowsMessage("index out of range"),
+		That("put [][1]").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
 		// Command errors when any optional evaluation errors.
-		That("put &x=[][1]").ThrowsMessage("index out of range"),
+		That("put &x=[][1]").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
 
 		// Assignments
 		// -----------
@@ -94,7 +95,7 @@ func TestCompileEffect(t *testing.T) {
 		That("x = 1", "put $x | y = (all)").DoesNothing(),
 
 		// Assignment errors when the RHS errors.
-		That("x = [][1]").ThrowsMessage("index out of range"),
+		That("x = [][1]").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
 		// Arity mismatch.
 		That("x = 1 2").ThrowsCause(ErrArityMismatch),
 		That("x y = 1").ThrowsCause(ErrArityMismatch),
