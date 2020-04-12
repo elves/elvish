@@ -90,9 +90,10 @@ func (f *Fixture) TestTTYNotes(t *testing.T, args ...interface{}) {
 	f.TTY.TestNotesBuffer(t, f.MakeBuffer(args...))
 }
 
-// StartReadCode starts the given function asynchronously. It returns two
-// channels; when the function returns, the return values will be delivered on
-// those two channels and the two channels will be closed.
+// StartReadCode starts the readCode function asynchronously, and returns two
+// channels that deliver its return values. The two channels are closed after
+// return values are delivered, so that subsequent reads will return zero values
+// and not block.
 func StartReadCode(readCode func() (string, error)) (<-chan string, <-chan error) {
 	codeCh := make(chan string, 1)
 	errCh := make(chan error, 1)
