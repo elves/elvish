@@ -1,20 +1,16 @@
 package eval
 
 import (
-	"errors"
 	"fmt"
 	"unsafe"
 
+	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/util"
 	"github.com/xiaq/persistent/hash"
 )
-
-// ErrArityMismatch is thrown by a closure when the number of arguments the user
-// supplies does not match with what is required.
-var ErrArityMismatch = errors.New("arity mismatch")
 
 // Closure is a closure defined in Elvish script. Each closure has its unique
 // identity.
@@ -93,12 +89,16 @@ func (c *Closure) IterateKeys(f func(interface{}) bool) {
 // Call calls a closure.
 func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{}) error {
 	if c.RestArg != "" {
-		if len(c.ArgNames) > len(args) {
-			return fmt.Errorf("need %d or more arguments, got %d", len(c.ArgNames), len(args))
+		if len(args) < len(c.ArgNames) {
+			return errs.ArityMismatch{
+				What:     "arguments here",
+				ValidLow: len(c.ArgNames), ValidHigh: -1, Actual: len(args)}
 		}
 	} else {
-		if len(c.ArgNames) != len(args) {
-			return fmt.Errorf("need %d arguments, got %d", len(c.ArgNames), len(args))
+		if len(args) != len(c.ArgNames) {
+			return errs.ArityMismatch{
+				What:     "arguments here",
+				ValidLow: len(c.ArgNames), ValidHigh: len(c.ArgNames), Actual: len(args)}
 		}
 	}
 

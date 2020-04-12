@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"unsafe"
 
+	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/xiaq/persistent/hash"
 )
@@ -155,16 +156,20 @@ var errNoOptions = errors.New("function does not accept any options")
 func (b *GoFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) error {
 	if b.variadicArg != nil {
 		if len(args) < len(b.normalArgs) {
-			return fmt.Errorf("want %d or more arguments, got %d",
-				len(b.normalArgs), len(args))
+			return errs.ArityMismatch{
+				What:     "arguments here",
+				ValidLow: len(b.normalArgs), ValidHigh: -1, Actual: len(args)}
 		}
 	} else if b.inputs {
 		if len(args) != len(b.normalArgs) && len(args) != len(b.normalArgs)+1 {
-			return fmt.Errorf("want %d or %d arguments, got %d",
-				len(b.normalArgs), len(b.normalArgs)+1, len(args))
+			return errs.ArityMismatch{
+				What:     "arguments here",
+				ValidLow: len(b.normalArgs), ValidHigh: len(b.normalArgs) + 1, Actual: len(args)}
 		}
 	} else if len(args) != len(b.normalArgs) {
-		return fmt.Errorf("want %d arguments, got %d", len(b.normalArgs), len(args))
+		return errs.ArityMismatch{
+			What:     "arguments here",
+			ValidLow: len(b.normalArgs), ValidHigh: len(b.normalArgs), Actual: len(args)}
 	}
 	if !b.rawOptions && b.options == nil && len(opts) > 0 {
 		return ErrNoOptAccepted

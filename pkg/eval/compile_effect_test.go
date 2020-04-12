@@ -97,9 +97,21 @@ func TestCompileEffect(t *testing.T) {
 		// Assignment errors when the RHS errors.
 		That("x = [][1]").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
 		// Arity mismatch.
-		That("x = 1 2").ThrowsCause(ErrArityMismatch),
-		That("x y = 1").ThrowsCause(ErrArityMismatch),
-		That("x y @z = 1").ThrowsCause(ErrArityMismatch),
+		That("x = 1 2").Throws(
+			errs.ArityMismatch{
+				What:     "assignment right-hand-side",
+				ValidLow: 1, ValidHigh: 1, Actual: 2},
+			"x = 1 2"),
+		That("x y = 1").Throws(
+			errs.ArityMismatch{
+				What:     "assignment right-hand-side",
+				ValidLow: 2, ValidHigh: 2, Actual: 1},
+			"x y = 1"),
+		That("x y @z = 1").Throws(
+			errs.ArityMismatch{
+				What:     "assignment right-hand-side",
+				ValidLow: 2, ValidHigh: -1, Actual: 1},
+			"x y @z = 1"),
 
 		// Redirections
 		// ------------

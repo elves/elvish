@@ -1,15 +1,33 @@
 package eval
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/elves/elvish/pkg/eval/errs"
+)
 
 func TestClosure(t *testing.T) {
 	Test(t,
 		That("kind-of { }").Puts("fn"),
 		That("eq { } { }").Puts(false),
 		That("x = { }; put [&$x= foo][$x]").Puts("foo"),
-		That("[x]{ } a b").ThrowsAny(),
-		That("[x y]{ } a").ThrowsAny(),
-		That("[x y @rest]{ } a").ThrowsAny(),
+
+		That("f = [x]{ }", "$f a b").Throws(
+			errs.ArityMismatch{
+				What:     "arguments here",
+				ValidLow: 1, ValidHigh: 1, Actual: 2},
+			"$f a b"),
+		That("f = [x y]{ }", "$f a").Throws(
+			errs.ArityMismatch{
+				What:     "arguments here",
+				ValidLow: 2, ValidHigh: 2, Actual: 1},
+			"$f a"),
+		That("f = [x y @rest]{ }", "$f a").Throws(
+			errs.ArityMismatch{
+				What:     "arguments here",
+				ValidLow: 2, ValidHigh: -1, Actual: 1},
+			"$f a"),
+
 		That("[]{ } &k=v").ThrowsAny(),
 
 		That("explode [a b]{ }[arg-names]").Puts("a", "b"),

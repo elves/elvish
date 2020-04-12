@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/elves/elvish/pkg/diag"
+	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
@@ -372,9 +373,6 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 	}
 
 	if headFn != nil {
-		if _, isClosure := headFn.(*Closure); isClosure {
-			fm.traceback = fm.addTraceback(op)
-		}
 		return headFn.Call(fm, args, convertedOpts)
 	}
 	return op.spaceyAssignOp.exec(fm)
@@ -432,12 +430,16 @@ func (op *assignmentOp) invoke(fm *Frame) (errRet error) {
 		return ErrMoreThanOneRest
 	}
 	if len(rest) == 1 {
-		if len(variables) > len(values) {
-			return ErrArityMismatch
+		if len(values) < len(variables) {
+			return errs.ArityMismatch{
+				What:     "assignment right-hand-side",
+				ValidLow: len(variables), ValidHigh: -1, Actual: len(values)}
 		}
 	} else {
 		if len(variables) != len(values) {
-			return ErrArityMismatch
+			return errs.ArityMismatch{
+				What:     "assignment right-hand-side",
+				ValidLow: len(variables), ValidHigh: len(variables), Actual: len(values)}
 		}
 	}
 

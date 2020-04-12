@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
 )
 
@@ -25,9 +26,9 @@ func TestGoFnCall(t *testing.T) {
 			t.Errorf("Failed to call f: %v", err)
 		}
 	}
-	callBad := func(fm *Frame, args []interface{}, opts map[string]interface{}) {
+	callBad := func(fm *Frame, args []interface{}, opts map[string]interface{}, wantErr error) {
 		err := f.Call(fm, args, opts)
-		if err == nil {
+		if !matchErr(wantErr, err) {
 			t.Errorf("Calling f didn't return error")
 		}
 	}
@@ -175,39 +176,42 @@ func TestGoFnCall(t *testing.T) {
 	f = NewGoFn("f", func() {
 		t.Errorf("Function called when there are too many arguments")
 	})
-	callBad(theFrame, []interface{}{"x"}, theOptions)
+	callBad(theFrame, []interface{}{"x"}, theOptions, errs.ArityMismatch{
+		What: "arguments here", ValidLow: 0, ValidHigh: 0, Actual: 1})
 
 	// Too few arguments.
 	f = NewGoFn("f", func(x string) {
 		t.Errorf("Function called when there are too few arguments")
 	})
-	callBad(theFrame, nil, theOptions)
+	callBad(theFrame, nil, theOptions, errs.ArityMismatch{
+		What: "arguments here", ValidLow: 1, ValidHigh: 1, Actual: 0})
 	f = NewGoFn("f", func(x string, y ...string) {
 		t.Errorf("Function called when there are too few arguments")
 	})
-	callBad(theFrame, nil, theOptions)
+	callBad(theFrame, nil, theOptions, errs.ArityMismatch{
+		What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0})
 
 	// Options when the function does not accept options.
 	f = NewGoFn("f", func() {
 		t.Errorf("Function called when there are extra options")
 	})
-	callBad(theFrame, nil, RawOptions{"foo": "bar"})
+	callBad(theFrame, nil, RawOptions{"foo": "bar"}, errNoOptions)
 
 	// Wrong argument type.
 	f = NewGoFn("f", func(x string) {
 		t.Errorf("Function called when arguments have wrong type")
 	})
-	callBad(theFrame, []interface{}{1}, theOptions)
+	callBad(theFrame, []interface{}{1}, theOptions, anyError{})
 
 	// Wrong argument type: cannot convert to int.
 	f = NewGoFn("f", func(x int) {
 		t.Errorf("Function called when arguments have wrong type")
 	})
-	callBad(theFrame, []interface{}{"x"}, theOptions)
+	callBad(theFrame, []interface{}{"x"}, theOptions, anyError{})
 
 	// Wrong argument type: cannot convert to float64.
 	f = NewGoFn("f", func(x float64) {
 		t.Errorf("Function called when arguments have wrong type")
 	})
-	callBad(theFrame, []interface{}{"x"}, theOptions)
+	callBad(theFrame, []interface{}{"x"}, theOptions, anyError{})
 }
