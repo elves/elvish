@@ -3,10 +3,23 @@ package eval
 import (
 	"errors"
 	"testing"
+	"unsafe"
 
 	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/xiaq/persistent/hash"
 )
+
+func TestGoFnAsValue(t *testing.T) {
+	fn1 := NewGoFn("fn1", func() {})
+	fn2 := NewGoFn("fn2", func() {})
+	vals.TestValue(t, fn1).
+		Kind("fn").
+		Hash(hash.Pointer(unsafe.Pointer(fn1))).
+		Equal(fn1).
+		NotEqual(fn2).
+		Repr("<builtin fn1>")
+}
 
 type testOptions struct {
 	Foo string
