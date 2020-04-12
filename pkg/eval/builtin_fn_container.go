@@ -142,8 +142,8 @@ import (
 
 //elvdoc:fn all
 //
-// ```elvish $input-list?
-// all
+// ```elvish
+// all $input-list?
 // ```
 //
 // Passes inputs to the output as is. Byte inputs into values, one per line.
