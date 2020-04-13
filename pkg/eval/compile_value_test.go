@@ -181,8 +181,13 @@ func TestCompileValue(t *testing.T) {
 		// Option name must not be empty.
 		That("[&''=b]{ }").DoesNotCompile(),
 
+		// Exception when evaluating option default value.
+		That("[&a=[][0]]{ }").Throws(errWithType{errs.OutOfRange{}}, "[][0]"),
 		// Option default value must be one value.
-		That("[&a=(put foo bar)]{ }").ThrowsMessage("option default value must be a single value; got 2 values"),
+		That("[&a=(put foo bar)]{ }").Throws(
+			errs.ArityMismatch{
+				What: "option default value", ValidLow: 1, ValidHigh: 1, Actual: 2},
+			"(put foo bar)"),
 	)
 }
 

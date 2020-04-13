@@ -47,7 +47,17 @@ func TestCompileEffect(t *testing.T) {
 
 		That("put foo").Puts("foo"),
 		// Command errors when the head is not a single value.
-		That("{put put} foo").ThrowsMessage("head of command must be a single value; got 2 values"),
+		That("{put put} foo").Throws(
+			errs.ArityMismatch{
+				What: "command", ValidLow: 1, ValidHigh: 1, Actual: 2},
+			"{put put}"),
+		// Command errors when the head is not callable or relative path.
+		That("[] foo").Throws(
+			errs.BadValue{
+				What:   "command",
+				Valid:  "callable or string containing relative path",
+				Actual: "list"},
+			"[]"),
 		// Command errors when when argument errors.
 		That("put [][1]").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
 		// Command errors when any optional evaluation errors.
@@ -144,6 +154,10 @@ func TestCompileEffect(t *testing.T) {
 			Puts("haha\n"),
 
 		// Using anything else in redirection throws an exception.
-		That("echo > []").ThrowsMessage("redirection source must be string, file or pipe; got list"),
+		That("echo > []").Throws(
+			errs.BadValue{
+				What:  "redirection source",
+				Valid: "string, file or pipe", Actual: "list"},
+			"[]"),
 	)
 }

@@ -24,6 +24,19 @@ func (e OutOfRange) Error() string {
 		e.What, e.ValidLow, e.ValidHigh, e.Actual)
 }
 
+// BadValue encodes an error where the value does not meet a requirement. For
+// out-of-range erros, use OutOfRange.
+type BadValue struct {
+	What   string
+	Valid  string
+	Actual string
+}
+
+func (e BadValue) Error() string {
+	return fmt.Sprintf(
+		"bad value: %v must be %v, but is %v", e.What, e.Valid, e.Actual)
+}
+
 // ArityMismatch encodes an error where the expected number of values is out of
 // the valid range.
 type ArityMismatch struct {

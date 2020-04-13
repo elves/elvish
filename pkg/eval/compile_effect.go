@@ -339,10 +339,11 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 	var headFn Callable
 	var args []interface{}
 	if op.headOp.body != nil {
+		var err error
 		// head
-		headFn, errRet = fm.ExecAndUnwrap("head of command", op.headOp).One().CommandHead()
-		if errRet != nil {
-			return errRet
+		headFn, err = evalForCommand(fm, op.headOp, "command")
+		if err != nil {
+			return err
 		}
 
 		// args
@@ -376,6 +377,25 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 		return headFn.Call(fm, args, convertedOpts)
 	}
 	return op.spaceyAssignOp.exec(fm)
+}
+
+func evalForCommand(fm *Frame, op valuesOp, what string) (Callable, error) {
+	value, err := evalForValue(fm, op, what)
+	if err != nil {
+		return nil, err
+	}
+	switch value := value.(type) {
+	case Callable:
+		return value, nil
+	case string:
+		if util.DontSearch(value) {
+			return ExternalCmd{value}, nil
+		}
+	}
+	return nil, fm.errorp(op, errs.BadValue{
+		What:   what,
+		Valid:  "callable or string containing relative path",
+		Actual: vals.Kind(value)})
 }
 
 func allTrue(vs []interface{}) bool {
@@ -548,19 +568,17 @@ func (op *redirOp) invoke(fm *Frame) error {
 	} else {
 		var err error
 		// dst must be a valid fd
-		dst, err = fm.ExecAndUnwrap("Fd", op.dstOp).One().Fd()
+		dst, err = evalForFd(fm, op.dstOp, false, "redirection destination")
 		if err != nil {
 			return err
 		}
 	}
 
 	fm.growPorts(dst + 1)
-	// Logger.Printf("closing old port %d of %s", dst, ec.context)
 	fm.ports[dst].Close()
 
-	srcUnwrap := fm.ExecAndUnwrap("redirection source", op.srcOp).One()
 	if op.srcIsFd {
-		src, err := srcUnwrap.FdOrClose()
+		src, err := evalForFd(fm, op.srcOp, true, "redirection source")
 		if err != nil {
 			return err
 		}
@@ -573,46 +591,74 @@ func (op *redirOp) invoke(fm *Frame) error {
 		default:
 			fm.ports[dst] = fm.ports[src].Fork()
 		}
-	} else {
-		src, err := srcUnwrap.Any()
+		return nil
+	}
+	src, err := evalForValue(fm, op.srcOp, "redirection source")
+	if err != nil {
+		return err
+	}
+	switch src := src.(type) {
+	case string:
+		f, err := os.OpenFile(src, op.flag, defaultFileRedirPerm)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to open file %s: %s", vals.Repr(src, vals.NoPretty), err)
 		}
-		switch src := src.(type) {
-		case string:
-			f, err := os.OpenFile(src, op.flag, defaultFileRedirPerm)
-			if err != nil {
-				return fmt.Errorf("failed to open file %s: %s", vals.Repr(src, vals.NoPretty), err)
-			}
-			fm.ports[dst] = &Port{
-				File: f, Chan: BlackholeChan,
-				CloseFile: true,
-			}
-		case vals.File:
-			fm.ports[dst] = &Port{
-				File: src, Chan: BlackholeChan,
-				CloseFile: false,
-			}
-		case vals.Pipe:
-			var f *os.File
-			switch op.mode {
-			case parse.Read:
-				f = src.ReadEnd
-			case parse.Write:
-				f = src.WriteEnd
-			default:
-				return errors.New("can only use < or > with pipes")
-			}
-			fm.ports[dst] = &Port{
-				File: f, Chan: BlackholeChan,
-				CloseFile: false,
-			}
+		fm.ports[dst] = &Port{
+			File: f, Chan: BlackholeChan,
+			CloseFile: true,
+		}
+	case vals.File:
+		fm.ports[dst] = &Port{
+			File: src, Chan: BlackholeChan,
+			CloseFile: false,
+		}
+	case vals.Pipe:
+		var f *os.File
+		switch op.mode {
+		case parse.Read:
+			f = src.ReadEnd
+		case parse.Write:
+			f = src.WriteEnd
 		default:
-			srcUnwrap.error("string, file or pipe", "%s", vals.Kind(src))
-			return srcUnwrap.err
+			return errors.New("can only use < or > with pipes")
 		}
+		fm.ports[dst] = &Port{
+			File: f, Chan: BlackholeChan,
+			CloseFile: false,
+		}
+	default:
+		return fm.errorp(op.srcOp, errs.BadValue{
+			What:  "redirection source",
+			Valid: "string, file or pipe", Actual: vals.Kind(src)})
 	}
 	return nil
+}
+
+func evalForFd(fm *Frame, op valuesOp, closeOK bool, what string) (int, error) {
+	value, err := evalForValue(fm, op, what)
+	if err != nil {
+		return -1, err
+	}
+	switch value {
+	case "stdin":
+		return 0, nil
+	case "stdout":
+		return 1, nil
+	case "stderr":
+		return 2, nil
+	}
+	var fd int
+	if vals.ScanToGo(value, &fd) == nil {
+		return fd, nil
+	} else if value == "-" && closeOK {
+		return -1, nil
+	}
+	valid := "fd name or number"
+	if closeOK {
+		valid = "fd name or number or '-'"
+	}
+	return -1, fm.errorp(op, errs.BadValue{
+		What: what, Valid: valid, Actual: vals.Repr(value, vals.NoPretty)})
 }
 
 type seqOp struct{ subops []effectOp }

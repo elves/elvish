@@ -511,15 +511,11 @@ type forOp struct {
 }
 
 func (op *forOp) invoke(fm *Frame) error {
-	variables, err := op.varOp.exec(fm)
+	variable, err := evalForVar(fm, op.varOp, "iterator")
 	if err != nil {
 		return err
 	}
-	if len(variables) != 1 {
-		return fm.errorpf(op.varOp, "only one variable allowed")
-	}
-	variable := variables[0]
-	iterable, err := fm.ExecAndUnwrap("value being iterated", op.iterOp).One().Any()
+	iterable, err := evalForValue(fm, op.iterOp, "value being iterated")
 	if err != nil {
 		return err
 	}

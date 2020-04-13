@@ -505,7 +505,7 @@ func (op *lambdaOp) invoke(fm *Frame) ([]interface{}, error) {
 	}
 	optDefaults := make([]interface{}, len(op.optDefaultOps))
 	for i, op := range op.optDefaultOps {
-		defaultValue, err := fm.ExecAndUnwrap("option default value", op).One().Any()
+		defaultValue, err := evalForValue(fm, op, "option default value")
 		if err != nil {
 			return nil, err
 		}

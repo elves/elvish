@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -79,6 +80,20 @@ func TestBuiltinSpecial(t *testing.T) {
 		That("for x [a] { put $x } else { put $x }").Puts("a"),
 		// continue
 		That("for x [a b] { put $x; continue; put $x; }").Puts("a", "b"),
+		// More than one iterator.
+		That("for {x,y} [] { }").Throws(
+			errs.ArityMismatch{
+				What:     "iterator",
+				ValidLow: 1, ValidHigh: 1, Actual: 2},
+			"x,y"),
+		// Exception when evaluating iterable.
+		That("for x [][0] { }").Throws(errWithType{errs.OutOfRange{}}, "[][0]"),
+		// More than one iterable.
+		That("for x (put a b) { }").Throws(
+			errs.ArityMismatch{
+				What:     "value being iterated",
+				ValidLow: 1, ValidHigh: 1, Actual: 2},
+			"(put a b)"),
 
 		// fn.
 		That("fn f [x]{ put x=$x'.' }; f lorem; f ipsum").

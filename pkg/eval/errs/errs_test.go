@@ -17,6 +17,10 @@ var errorMessageTests = []struct {
 		"out of range: list index here has no valid value, but is 0",
 	},
 	{
+		BadValue{What: "command", Valid: "callable", Actual: "number"},
+		"bad value: command must be callable, but is number",
+	},
+	{
 		ArityMismatch{What: "arguments here", ValidLow: 2, ValidHigh: 2, Actual: 3},
 		"arity mismatch: arguments here must be 2 values, but is 3 values",
 	},
