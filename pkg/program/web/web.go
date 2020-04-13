@@ -35,8 +35,10 @@ type ExecuteResponse struct {
 }
 
 func (web *Web) Main(fds [3]*os.File, _ []string) int {
-	ev, _ := shell.InitRuntime(web.BinPath, web.SockPath, web.DbPath)
-	defer shell.CleanupRuntime(ev)
+	p := shell.MakePathsWithDefaults(fds[2],
+		&shell.Paths{Bin: web.BinPath, Sock: web.SockPath, Db: web.DbPath})
+	ev := shell.InitRuntime(fds[2], p)
+	defer shell.CleanupRuntime(fds[2], ev)
 
 	h := httpHandler{ev}
 

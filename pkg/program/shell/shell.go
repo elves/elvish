@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
 	"github.com/elves/elvish/pkg/cli/term"
@@ -35,8 +34,11 @@ func (sh *Shell) Main(fds [3]*os.File, args []string) int {
 	restoreTTY := term.SetupGlobal()
 	defer restoreTTY()
 
-	ev, dataDir := InitRuntime(sh.BinPath, sh.SockPath, sh.DbPath)
-	defer CleanupRuntime(ev)
+	p := MakePathsWithDefaults(fds[2],
+		&Paths{Bin: sh.BinPath, Sock: sh.SockPath, Db: sh.DbPath})
+
+	ev := InitRuntime(fds[2], p)
+	defer CleanupRuntime(fds[2], ev)
 
 	handleSignals(fds[2])
 
@@ -51,9 +53,9 @@ func (sh *Shell) Main(fds [3]*os.File, args []string) int {
 			return 2
 		}
 	} else {
-		rcPath := ""
-		if !sh.NoRc {
-			rcPath = filepath.Join(dataDir, "rc.elv")
+		rcPath := p.Rc
+		if sh.NoRc {
+			rcPath = ""
 		}
 		interact(fds, ev, rcPath)
 	}
