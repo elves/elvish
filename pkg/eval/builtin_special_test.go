@@ -103,8 +103,6 @@ func TestBuiltinSpecial(t *testing.T) {
 	)
 }
 
-var useTests = []TestCase{}
-
 func TestUse(t *testing.T) {
 	libdir, cleanup := util.InTestDir()
 	defer cleanup()

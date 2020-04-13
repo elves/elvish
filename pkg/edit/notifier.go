@@ -18,9 +18,3 @@ type notifier interface {
 type appNotifier struct{ p *cli.App }
 
 func (n appNotifier) Notify(note string) { (*n.p).Notify(note) }
-
-// A notifier implementation that records all Notify calls it has seen. Useful
-// in tests.
-type fakeNotifier struct{ notes []string }
-
-func (n *fakeNotifier) Notify(note string) { n.notes = append(n.notes, note) }

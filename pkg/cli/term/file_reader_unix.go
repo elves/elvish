@@ -38,8 +38,6 @@ type bReader struct {
 	mutex sync.Mutex
 }
 
-const maxNoProgress = 10
-
 func (r *bReader) ReadByteWithTimeout(timeout time.Duration) (byte, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()

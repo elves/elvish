@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	maxL      int = 10
-	maxR          = 10
-	indentInc     = 2
+	maxL      = 10
+	maxR      = 10
+	indentInc = 2
 )
 
 // PPrintAST pretty-prints the AST part of a Node to a Writer.

@@ -180,8 +180,6 @@ func (a *app) triggerPrompts(force bool) {
 	a.RPrompt.Trigger(force)
 }
 
-var transformerForPending = "underline"
-
 func (a *app) redraw(flag redrawFlag) {
 	// Get the dimensions available.
 	height, width := a.TTY.Size()

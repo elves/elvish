@@ -22,14 +22,6 @@ func oneString(cn *parse.Compound) (string, bool) {
 	return "", false
 }
 
-func mustPrimary(cp *compiler, cn *parse.Compound, msg string) *parse.Primary {
-	p := onePrimary(cn)
-	if p == nil {
-		cp.errorpf(cn, msg)
-	}
-	return p
-}
-
 // mustString musts that a Compound contains exactly one Primary of type
 // Variable.
 func mustString(cp *compiler, cn *parse.Compound, msg string) string {

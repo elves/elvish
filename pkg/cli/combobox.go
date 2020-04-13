@@ -27,8 +27,6 @@ type comboBox struct {
 	listBox  ListBox
 	OnFilter func(ComboBox, string)
 
-	// Whether filtering has ever been done.
-	hasFiltered bool
 	// Last filter value.
 	lastFilter string
 }

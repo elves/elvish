@@ -69,18 +69,6 @@ func TestInTestDir_CleanupChangesBackToOldWd(t *testing.T) {
 	}
 }
 
-var testDir = Dir{
-	"a": "a content",
-	"b": "b content",
-	"c": "",
-	"d": Dir{
-		"d1": "d1 content",
-		"dd": Dir{
-			"dd1": "dd1 content",
-		},
-	},
-}
-
 func TestInTestDirWithSetup_CreatesFiles(t *testing.T) {
 	cleanup := InTestDirWithSetup(Dir{
 		"a": "a content",

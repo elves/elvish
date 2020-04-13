@@ -24,8 +24,6 @@ import (
 // is chosen because it resembles "elvi".
 const defaultWebPort = 3171
 
-var logger = util.GetLogger("[main] ")
-
 type flagSet struct {
 	flag.FlagSet
 

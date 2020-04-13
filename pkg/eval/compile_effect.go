@@ -369,7 +369,7 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 		if ks, ok := k.(string); ok {
 			convertedOpts[ks] = v
 		} else {
-			return fmt.Errorf("Option key must be string, got %s", vals.Kind(k))
+			return fmt.Errorf("option key must be string, got %s", vals.Kind(k))
 		}
 	}
 

@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -124,10 +123,4 @@ func preExit(fm *Frame) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
-}
-
-var errNotSupportedOnWindows = errors.New("not supported on Windows")
-
-func notSupportedOnWindows() error {
-	return errNotSupportedOnWindows
 }

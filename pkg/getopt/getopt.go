@@ -244,7 +244,7 @@ func (g *Getopt) Parse(elems []string) ([]*ParsedOption, []string, *Context) {
 	} else if elem == "--" {
 		ctx.Type = NewLongOption
 	} else if hasPrefix("--") {
-		if strings.IndexRune(elem, '=') == -1 {
+		if !strings.ContainsRune(elem, '=') {
 			ctx.Type, ctx.Text = LongOption, elem[2:]
 		} else {
 			newopt, _ := g.parseLong(elem[2:])
@@ -252,7 +252,7 @@ func (g *Getopt) Parse(elems []string) ([]*ParsedOption, []string, *Context) {
 		}
 	} else if hasPrefix("-") {
 		if g.Config.HasAll(LongOnly) {
-			if strings.IndexRune(elem, '=') == -1 {
+			if !strings.ContainsRune(elem, '=') {
 				ctx.Type, ctx.Text = LongOption, elem[1:]
 			} else {
 				newopt, _ := g.parseLong(elem[1:])

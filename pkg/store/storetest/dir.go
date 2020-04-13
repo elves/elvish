@@ -44,7 +44,7 @@ func TestDir(t *testing.T, tStore store.Store) {
 			dirs, err, wantedDirs)
 	}
 
-	tStore.DelDir("/usr")
+	tStore.DelDir(dirToDel)
 	dirs, err = tStore.Dirs(black)
 	if err != nil || !reflect.DeepEqual(dirs, wantedDirsAfterDel) {
 		t.Errorf(`After DelDir("/usr"), tStore.ListDirs() => (%v, %v), want (%v, <nil>)`,

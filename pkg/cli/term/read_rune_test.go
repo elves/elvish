@@ -20,7 +20,7 @@ func TestReadRune(t *testing.T) {
 			defer cleanup()
 
 			w.Write([]byte(content))
-			for _, wantRune := range []rune(content) {
+			for _, wantRune := range content {
 				r, err := readRune(rd, 0)
 				if r != wantRune {
 					t.Errorf("got rune %q, want %q", r, wantRune)

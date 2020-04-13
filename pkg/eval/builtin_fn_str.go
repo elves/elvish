@@ -333,7 +333,7 @@ func chr(nums ...int) (string, error) {
 	var b bytes.Buffer
 	for _, num := range nums {
 		if !utf8.ValidRune(rune(num)) {
-			return "", fmt.Errorf("Invalid codepoint: %d", num)
+			return "", fmt.Errorf("invalid codepoint: %d", num)
 		}
 		b.WriteRune(rune(num))
 	}
