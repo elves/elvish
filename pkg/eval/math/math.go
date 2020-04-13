@@ -76,6 +76,19 @@ import (
 // ▶ (float64 -1)
 // ```
 
+//elvdoc:fn cosh
+//
+// ```elvish
+// math:cosh $number
+// ```
+//
+// Computes the hyperbolic cosine of `$number`. Example:
+//
+// ```elvish-transcript
+// ~> math:cosh 0
+// ▶ (float64 1)
+// ```
+
 //elvdoc:fn floor
 //
 // ```elvish
@@ -225,6 +238,19 @@ import (
 // ▶ (float64 3.5897930298416118e-09)
 // ```
 
+//elvdoc:fn sinh
+//
+// ```elvish
+// math:sinh $number
+// ```
+//
+// Computes the hyperbolic sine of `$number`. Example:
+//
+// ```elvish-transcript
+// ~> math:sinh 0
+// ▶ (float64 0)
+// ```
+
 //elvdoc:fn sqrt
 //
 // ```elvish
@@ -257,6 +283,19 @@ import (
 // ▶ (float64 -0.0000000035897930298416118)
 // ```
 
+//elvdoc:fn tanh
+//
+// ```elvish
+// math:tanh $number
+// ```
+//
+// Computes the hyperbolic tangent of `$number`. Example:
+//
+// ```elvish-transcript
+// ~> math:tanh 0
+// ▶ (float64 0)
+// ```
+
 //elvdoc:fn trunc
 //
 // ```elvish
@@ -282,6 +321,7 @@ var fns = map[string]interface{}{
 	"abs":           math.Abs,
 	"ceil":          math.Ceil,
 	"cos":           math.Cos,
+	"cosh":          math.Cosh,
 	"floor":         math.Floor,
 	"is-inf":        isInf,
 	"is-nan":        math.IsNaN,
@@ -291,8 +331,10 @@ var fns = map[string]interface{}{
 	"round":         math.Round,
 	"round-to-even": math.RoundToEven,
 	"sin":           math.Sin,
+	"sinh":          math.Sinh,
 	"sqrt":          math.Sqrt,
 	"tan":           math.Tan,
+	"tanh":          math.Tanh,
 	"trunc":         math.Trunc,
 }
 

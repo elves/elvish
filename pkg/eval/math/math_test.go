@@ -87,13 +87,25 @@ func TestMath(t *testing.T) {
 		That(`math:cos 1`).Puts(math.Cos(1.0)),
 		That(`math:cos $math:pi`).Puts(-1.0),
 
+		That(`math:cosh 0`).Puts(1.0),
+		That(`math:cosh inf`).Puts(math.Inf(1)),
+		That(`math:cosh nan`).Puts(math.NaN()),
+
 		That(`math:sin 0`).Puts(0.0),
 		That(`math:sin 1`).Puts(math.Sin(1.0)),
 		That(`math:sin $math:pi`).Puts(math.Sin(math.Pi)),
 
+		That(`math:sinh 0`).Puts(0.0),
+		That(`math:sinh inf`).Puts(math.Inf(1)),
+		That(`math:sinh nan`).Puts(math.NaN()),
+
 		That(`math:tan 0`).Puts(0.0),
 		That(`math:tan 1`).Puts(math.Tan(1.0)),
 		That(`math:tan $math:pi`).Puts(math.Tan(math.Pi)),
+
+		That(`math:tanh 0`).Puts(0.0),
+		That(`math:tanh inf`).Puts(1.0),
+		That(`math:tanh nan`).Puts(math.NaN()),
 
 		// This block of tests isn't strictly speaking necessary. But it helps
 		// ensure that we're not just confirming Go statements such as
