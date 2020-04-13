@@ -5,6 +5,7 @@ import (
 
 	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -60,6 +61,10 @@ func TestCompileEffect(t *testing.T) {
 			"[]"),
 		// Command errors when when argument errors.
 		That("put [][1]").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
+		// Command errors when an option key is not string.
+		That("put &[]=[]").Throws(
+			errs.BadValue{What: "option key", Valid: "string", Actual: "list"},
+			"put &[]=[]"),
 		// Command errors when any optional evaluation errors.
 		That("put &x=[][1]").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
 
@@ -106,6 +111,9 @@ func TestCompileEffect(t *testing.T) {
 
 		// Assignment errors when the RHS errors.
 		That("x = [][1]").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
+		// Assignment errors itself.
+		That("true = 1").Throws(vars.ErrSetReadOnlyVar, "true = 1"),
+		That("@true = 1").Throws(vars.ErrSetReadOnlyVar, "@true = 1"),
 		// Arity mismatch.
 		That("x = 1 2").Throws(
 			errs.ArityMismatch{
@@ -153,7 +161,19 @@ func TestCompileEffect(t *testing.T) {
 		That(`p = (pipe); echo haha > $p; pwclose $p; slurp < $p; prclose $p`).
 			Puts("haha\n"),
 
-		// Using anything else in redirection throws an exception.
+		// Invalid redirection destination.
+		That("echo []> test").Throws(
+			errs.BadValue{
+				What:  "redirection destination",
+				Valid: "fd name or number", Actual: "[]"},
+			"[]"),
+		// Invalid fd redirection source.
+		That("echo >&test").Throws(
+			errs.BadValue{
+				What:  "redirection source",
+				Valid: "fd name or number or '-'", Actual: "test"},
+			"test"),
+		// Invalid redirection source.
 		That("echo > []").Throws(
 			errs.BadValue{
 				What:  "redirection source",

@@ -369,7 +369,9 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 		if ks, ok := k.(string); ok {
 			convertedOpts[ks] = v
 		} else {
-			return fmt.Errorf("option key must be string, got %s", vals.Kind(k))
+			// TODO(xiaq): Point to the particular key.
+			return errs.BadValue{
+				What: "option key", Valid: "string", Actual: vals.Kind(k)}
 		}
 	}
 
@@ -477,18 +479,6 @@ func (op *assignmentOp) invoke(fm *Frame) (errRet error) {
 		}
 	}
 	return nil
-}
-
-func fixNilVariables(vs []vars.Var, perr *error) {
-	for _, v := range vs {
-		if vars.IsBlackhole(v) {
-			continue
-		}
-		if v.Get() == nil {
-			err := v.Set("")
-			*perr = util.Errors(*perr, err)
-		}
-	}
 }
 
 func (cp *compiler) literal(n *parse.Primary, msg string) string {

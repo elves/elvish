@@ -4,7 +4,8 @@ import (
 	"errors"
 )
 
-var errSetReadOnlyVar = errors.New("read-only variable; cannot be set")
+// ErrSetReadOnlyVar is returned by the Set method of a read-only variable.
+var ErrSetReadOnlyVar = errors.New("read-only variable; cannot be set")
 
 type readOnly struct {
 	value interface{}
@@ -17,7 +18,7 @@ func NewReadOnly(v interface{}) Var {
 }
 
 func (rv readOnly) Set(val interface{}) error {
-	return errSetReadOnlyVar
+	return ErrSetReadOnlyVar
 }
 
 func (rv readOnly) Get() interface{} {

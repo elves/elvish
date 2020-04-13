@@ -26,7 +26,7 @@ func FromGet(get func() interface{}) Var {
 }
 
 func (cv roCallback) Set(interface{}) error {
-	return errSetReadOnlyVar
+	return ErrSetReadOnlyVar
 }
 
 func (cv roCallback) Get() interface{} {

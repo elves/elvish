@@ -7,7 +7,7 @@ func TestNewReadOnly(t *testing.T) {
 	if v.Get() != "haha" {
 		t.Errorf("Get doesn't return initial value")
 	}
-	if v.Set("lala") != errSetReadOnlyVar {
+	if v.Set("lala") != ErrSetReadOnlyVar {
 		t.Errorf("Set doesn't error")
 	}
 }
