@@ -21,7 +21,14 @@ var (
 // If XDG_RUNTIME_DIR is not set it falls back to elvish-$uid under the default
 // temp dir.
 func getSecureRunDir() (string, error) {
-	runDir := getRunDirPath()
+	runDirs := getRunDirPaths()
+	for _, runDir := range runDirs {
+		if runDirExistsWithExclusiveAccess(runDir) {
+			return runDir, nil
+		}
+	}
+
+	runDir := runDirs[0]
 	err := os.MkdirAll(runDir, 0700)
 	if err != nil {
 		return "", fmt.Errorf("mkdir: %v", err)
@@ -35,16 +42,30 @@ func getSecureRunDir() (string, error) {
 	return runDir, checkExclusiveAccess(info, os.Getuid())
 }
 
-// getRunDirPath returns a path that's used by Elvish to store runtime files.
-// This path will be either XDG_RUNTIME_DIR/elvish when the XDG_RUNTIME_DIR
-// environment variable is set, or TMPDIR/elvish-$uid otherwise.
-func getRunDirPath() string {
+// getRunDirPaths returns an array of paths that's used by Elvish to determine
+// where to store the runtime files. The paths are sorted in descending order
+// of preference and will always contain at least one path that points to
+// TMPDIR/elvish-$uid as the last item in the array.
+// When XDG_RUNTIME_DIR is set, the XDG_RUNTIME_DIR/elvish path will be the
+// first entry in the arrray.
+func getRunDirPaths() []string {
+	tmpDirPath := filepath.Join(os.TempDir(), fmt.Sprintf("elvish-%d", os.Getuid()))
 	if os.Getenv("XDG_RUNTIME_DIR") != "" {
-		return filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), "elvish")
+		xdgDirPath := filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), "elvish")
+		return []string{xdgDirPath, tmpDirPath}
 	}
 
-	uid := os.Getuid()
-	return filepath.Join(os.TempDir(), fmt.Sprintf("elvish-%d", uid))
+	return []string{tmpDirPath}
+}
+
+func runDirExistsWithExclusiveAccess(runDir string) bool {
+	info, err := os.Stat(runDir)
+	if err != nil {
+		return false
+	}
+
+	err = checkExclusiveAccess(info, os.Getuid())
+	return err == nil
 }
 
 func checkExclusiveAccess(info os.FileInfo, uid int) error {
