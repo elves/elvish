@@ -6,164 +6,79 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
-	"syscall"
 	"testing"
 
 	"github.com/elves/elvish/pkg/util"
 )
 
-func TestGetSecureRunDir(t *testing.T) {
-	xdgRuntimeDir, xdgCleanup := util.TestDir()
-	defer xdgCleanup()
+var elvishDashUid = fmt.Sprintf("elvish-%d", os.Getuid())
 
-	tmpDir, tmpCleanup := util.TestDir()
-	defer tmpCleanup()
-
-	uid := os.Getuid()
-
-	tests := []struct {
-		name          string
-		xdgRuntimeDir string
-		tmpdir        string
-		want          string
-	}{
-		{
-			name:          "prefer XDG_RUNTIME_DIR over TMPDIR",
-			xdgRuntimeDir: xdgRuntimeDir,
-			tmpdir:        tmpDir,
-			want:          filepath.Join(xdgRuntimeDir, "elvish"),
-		},
-		{
-			name:          "use XDG_RUNTIME_DIR when TMPDIR is not set",
-			xdgRuntimeDir: xdgRuntimeDir,
-			tmpdir:        "",
-			want:          filepath.Join(xdgRuntimeDir, "elvish"),
-		},
-		{
-			name:          "fallback to TMPDIR when XDG_RUNTIME_DIR is not set",
-			xdgRuntimeDir: "",
-			tmpdir:        tmpDir,
-			want:          filepath.Join(tmpDir, fmt.Sprintf("elvish-%d", uid)),
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			t.Helper()
-
-			envOverrides := map[string]string{
-				"XDG_RUNTIME_DIR": test.xdgRuntimeDir,
-				"TMPDIR":          test.tmpdir,
-			}
-
-			restore := withTempEnvs(envOverrides)
-			defer restore()
-
-			runDir, err := getSecureRunDir()
-			if err != nil {
-				t.Errorf("Could not get secure run dir: %v", err)
-			}
-
-			wantRunDir := test.want
-			if runDir != wantRunDir {
-				t.Errorf("Got run dir %v, want %v", runDir, wantRunDir)
-			}
-
-			info, err := os.Stat(runDir)
-			if err != nil {
-				t.Errorf("Could not stat run dir: %v", err)
-			}
-
-			stat := info.Sys().(*syscall.Stat_t)
-			if int(stat.Uid) != uid {
-				t.Errorf("Invalid run dir owner")
-			}
-			if stat.Mode&077 != 0 {
-				t.Errorf("Invalid run dir permissions")
-			}
-		})
-	}
+func TestGetSecureRunDir_PrefersXDGWhenNeitherExists(t *testing.T) {
+	xdg, _, cleanup := setupForSecureRunDir()
+	defer cleanup()
+	testSecureRunDir(t, filepath.Join(xdg, "elvish"), false)
 }
 
-func TestGetSecureRunDir_PreferExistingTmpDir(t *testing.T) {
+func TestGetSecureRunDir_PrefersXDGWhenBothExist(t *testing.T) {
+	xdg, tmp, cleanup := setupForSecureRunDir()
+	defer cleanup()
+
+	os.MkdirAll(filepath.Join(xdg, "elvish"), 0700)
+	os.MkdirAll(filepath.Join(tmp, elvishDashUid), 0700)
+
+	testSecureRunDir(t, filepath.Join(xdg, "elvish"), false)
+}
+
+func TestGetSecureRunDir_PrefersTmpWhenOnlyItExists(t *testing.T) {
+	_, tmp, cleanup := setupForSecureRunDir()
+	defer cleanup()
+
+	os.MkdirAll(filepath.Join(tmp, elvishDashUid), 0700)
+
+	testSecureRunDir(t, filepath.Join(tmp, elvishDashUid), false)
+}
+
+func TestGetSecureRunDir_PrefersTmpWhenXdgEnvIsEmpty(t *testing.T) {
+	_, tmp, cleanup := setupForSecureRunDir()
+	defer cleanup()
+	os.Setenv("XDG_RUNTIME_DIR", "")
+	testSecureRunDir(t, filepath.Join(tmp, elvishDashUid), false)
+}
+
+func TestGetSecureRunDir_ReturnsErrorWhenUnableToMkdir(t *testing.T) {
+	xdg, _, cleanup := setupForSecureRunDir()
+	defer cleanup()
+	os.Chmod(xdg, 0500) // Remove the user write bit
+	testSecureRunDir(t, "", true)
+}
+
+func setupForSecureRunDir() (xdgRuntimeDir, tmpDir string, cleanup func()) {
 	xdgRuntimeDir, xdgCleanup := util.TestDir()
-	defer xdgCleanup()
-
 	tmpDir, tmpCleanup := util.TestDir()
-	defer tmpCleanup()
-
-	uid := os.Getuid()
-
-	tmpDirPath := filepath.Join(tmpDir, fmt.Sprintf("elvish-%d", uid))
-	err := os.MkdirAll(tmpDirPath, 0700)
-	if err != nil {
-		t.Errorf("Could not create test run dir: %v", err)
-	}
-
-	envOverrides := map[string]string{
+	envCleanup := withTempEnvs(map[string]string{
 		"XDG_RUNTIME_DIR": xdgRuntimeDir,
 		"TMPDIR":          tmpDir,
+	})
+	return xdgRuntimeDir, tmpDir, func() {
+		envCleanup()
+		tmpCleanup()
+		xdgCleanup()
 	}
+}
 
-	restore := withTempEnvs(envOverrides)
-	defer restore()
-
+func testSecureRunDir(t *testing.T, wantRunDir string, wantErr bool) {
 	runDir, err := getSecureRunDir()
-	if err != nil {
-		t.Errorf("Could not get secure run dir: %v", err)
+	if runDir != wantRunDir {
+		t.Errorf("got rundir %q, want %q", runDir, wantRunDir)
 	}
-
-	if runDir != tmpDirPath {
-		t.Errorf("Got run dir %v, want %v", runDir, tmpDirPath)
-	}
-}
-
-func TestGetRunDirPaths(t *testing.T) {
-	uid := os.Getuid()
-
-	tests := []struct {
-		name          string
-		xdgRuntimeDir string
-		tmpdir        string
-		want          []string
-	}{
-		{
-			name:          "use XDG_RUNTIME_DIR when set",
-			xdgRuntimeDir: "/foo/runtime",
-			tmpdir:        "/foo/tmp",
-			want:          []string{"/foo/runtime/elvish", fmt.Sprintf("/foo/tmp/elvish-%d", uid)},
-		},
-		{
-			name:          "do not use XDG_RUNTIME_DIR when not set",
-			xdgRuntimeDir: "",
-			tmpdir:        "/foo/tmp",
-			want:          []string{fmt.Sprintf("/foo/tmp/elvish-%d", uid)},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			t.Helper()
-
-			envOverrides := map[string]string{
-				"XDG_RUNTIME_DIR": test.xdgRuntimeDir,
-				"TMPDIR":          test.tmpdir,
-			}
-
-			restore := withTempEnvs(envOverrides)
-			defer restore()
-
-			runDirPaths := getRunDirPaths()
-			wantDirPaths := test.want
-			if !reflect.DeepEqual(runDirPaths, wantDirPaths) {
-				t.Errorf("Got run dir paths %v, want %v", runDirPaths, wantDirPaths)
-			}
-		})
+	if wantErr && err == nil {
+		t.Errorf("got nil err, want non-nil")
+	} else if !wantErr && err != nil {
+		t.Errorf("got err %v, want nil err", err)
 	}
 }
 
-// TODO: Move to the util package and add tests
+// TODO(xiaq): Move to the testutil package and add tests.
 func withTempEnvs(envOverrides map[string]string) func() {
 	valuesToRestore := map[string]string{}
 
