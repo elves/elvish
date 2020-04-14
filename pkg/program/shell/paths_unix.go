@@ -51,5 +51,5 @@ func checkExclusiveAccess(runDir string) bool {
 		return false
 	}
 	stat := info.Sys().(*syscall.Stat_t)
-	return int(stat.Uid) == os.Getuid() && stat.Mode&077 == 0
+	return info.IsDir() && int(stat.Uid) == os.Getuid() && stat.Mode&077 == 0
 }
