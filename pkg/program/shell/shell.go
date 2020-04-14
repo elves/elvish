@@ -48,7 +48,7 @@ func (sh *Shell) Main(fds [3]*os.File, args []string) int {
 			if sh.CompileOnly && sh.JSON {
 				fmt.Fprintf(fds[1], "%s\n", errorToJSON(err))
 			} else {
-				diag.ShowError(err)
+				diag.ShowError(os.Stderr, err)
 			}
 			return 2
 		}

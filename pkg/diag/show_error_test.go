@@ -2,21 +2,9 @@ package diag
 
 import (
 	"errors"
-	"os"
 	"strings"
 	"testing"
 )
-
-var stderrBuf *strings.Builder
-
-func setup() {
-	stderrBuf = &strings.Builder{}
-	stderr = stderrBuf
-}
-
-func teardown() {
-	stderr = os.Stderr
-}
 
 type showerError struct{}
 
@@ -36,11 +24,10 @@ var showErrorTests = []struct {
 func TestShowError(t *testing.T) {
 	for _, test := range showErrorTests {
 		t.Run(test.name, func(t *testing.T) {
-			setup()
-			defer teardown()
-			ShowError(test.err)
-			if stderrBuf.String() != test.wantBuf {
-				t.Errorf("Wrote %q, want %q", stderrBuf.String(), test.wantBuf)
+			sb := &strings.Builder{}
+			ShowError(sb, test.err)
+			if sb.String() != test.wantBuf {
+				t.Errorf("Wrote %q, want %q", sb.String(), test.wantBuf)
 			}
 		})
 	}

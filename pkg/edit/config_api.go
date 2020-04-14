@@ -57,7 +57,7 @@ func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}
 		if !ok {
 			// TODO(xiaq): This is not testable as it depends on stderr.
 			// Make it testable.
-			diag.Complainf("%s not function", name)
+			diag.Complainf(os.Stderr, "%s not function", name)
 			continue
 		}
 		// TODO(xiaq): This should use stdPorts, but stdPorts is currently

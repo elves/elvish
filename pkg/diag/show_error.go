@@ -3,29 +3,24 @@ package diag
 import (
 	"fmt"
 	"io"
-	"os"
 )
-
-// Can be changed for testing.
-var stderr io.Writer = os.Stderr
 
 // ShowError shows an error. It uses the Show method if the error
 // implements Shower, and uses Complain to print the error message otherwise.
-func ShowError(err error) {
+func ShowError(w io.Writer, err error) {
 	if shower, ok := err.(Shower); ok {
-		fmt.Fprintln(stderr, shower.Show(""))
+		fmt.Fprintln(w, shower.Show(""))
 	} else {
-		Complain(err.Error())
+		Complain(w, err.Error())
 	}
 }
 
-// Complain prints a message to stderr in bold and red, adding a trailing
-// newline.
-func Complain(msg string) {
-	fmt.Fprintf(stderr, "\033[31;1m%s\033[m\n", msg)
+// Complain prints a message to w in bold and red, adding a trailing newline.
+func Complain(w io.Writer, msg string) {
+	fmt.Fprintf(w, "\033[31;1m%s\033[m\n", msg)
 }
 
 // Complainf is like Complain, but accepts a format string and arguments.
-func Complainf(format string, args ...interface{}) {
-	Complain(fmt.Sprintf(format, args...))
+func Complainf(w io.Writer, format string, args ...interface{}) {
+	Complain(w, fmt.Sprintf(format, args...))
 }
