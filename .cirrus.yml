@@ -12,6 +12,9 @@ test_task:
     - name: Test on Linux (Old Supported Go Version)
       container:
         image: golang:1.13
+      env:
+        # This should have the same coverage as the previous task, so skip it.
+        SKIP_UPLOAD_COVERAGE: 1
     - name: Test on macOS
       osx_instance:
         image: catalina-base
@@ -24,9 +27,15 @@ test_task:
       setup_script: pkg install -y go bash
       env:
         GOPATH: $HOME/go
+        # For some reason the FreeBSD runner often has problem reaching codecov.
+        # Skip it to prevent the coverage from fluctuating, and make the FreeBSD
+        # task faster. There are very few files that are built on FreeBSD but not
+        # Linux, so losing this part of the data makes very little difference.
+        SKIP_UPLOAD_COVERAGE: 1
   go_version_script: go version
   test_script: go test -race ./...
   upload_coverage_script:
+    - test -z $SKIP_UPLOAD_COVERAGE || exit
     - go test -coverprofile=coverage -covermode=set ./...
     - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage -t $CODECOV_TOKEN
 
