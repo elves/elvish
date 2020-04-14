@@ -51,14 +51,19 @@ func TestConcurrentEval(t *testing.T) {
 	// Run this test with "go test -race".
 	ev := NewEvaler()
 	src := NewInternalElvishSource(true, "[test]", "")
+	op, err := ev.ParseAndCompile(src)
+	if err != nil {
+		panic(err)
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
-		ev.EvalSourceInTTY(src)
+		ev.EvalInTTY(op)
 		wg.Done()
 	}()
 	go func() {
-		ev.EvalSourceInTTY(src)
+		ev.EvalInTTY(op)
 		wg.Done()
 	}()
 	wg.Wait()

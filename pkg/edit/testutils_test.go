@@ -105,7 +105,12 @@ func feedInput(ttyCtrl apptest.TTYCtrl, s string) {
 
 func evals(ev *eval.Evaler, codes ...string) {
 	for _, code := range codes {
-		err := ev.EvalSourceInTTY(eval.NewInternalElvishSource(true, "[test]", code))
+		src := eval.NewInternalElvishSource(true, "[test]", code)
+		op, err := ev.ParseAndCompile(src)
+		if err != nil {
+			panic(fmt.Errorf("parse and compile %q: %s", code, err))
+		}
+		err = ev.EvalInTTY(op)
 		if err != nil {
 			panic(fmt.Errorf("eval %q: %s", code, err))
 		}

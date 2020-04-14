@@ -79,8 +79,12 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 		// No error; reset cooldown.
 		cooldown = time.Second
 
-		err = ev.EvalSourceInTTY(eval.NewInteractiveSource("[tty]", line))
-		term.Sanitize(fds[0], fds[2])
+		src := eval.NewInteractiveSource("[tty]", line)
+		op, err := ev.ParseAndCompile(src)
+		if err == nil {
+			err = ev.EvalInTTY(op)
+			term.Sanitize(fds[0], fds[2])
+		}
 		if err != nil {
 			diag.ShowError(fds[2], err)
 		}
@@ -102,7 +106,12 @@ func sourceRC(stderr *os.File, ev *eval.Evaler, rcPath string) error {
 		}
 		return err
 	}
-	err = ev.EvalSourceInTTY(eval.NewScriptSource(absPath, code))
+	src := eval.NewScriptSource(absPath, code)
+	op, err := ev.ParseAndCompile(src)
+	if err != nil {
+		return err
+	}
+	err = ev.EvalInTTY(op)
 	if err != nil {
 		return err
 	}

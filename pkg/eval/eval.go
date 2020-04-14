@@ -251,15 +251,6 @@ func (ev *Evaler) Eval(op Op, ports []*Port) error {
 	return op.Inner.exec(fm)
 }
 
-// EvalSourceInTTY evaluates Elvish source code in the current terminal.
-func (ev *Evaler) EvalSourceInTTY(src *Source) error {
-	op, err := ev.ParseAndCompile(src)
-	if err != nil {
-		return err
-	}
-	return ev.EvalInTTY(op)
-}
-
 // EvalInTTY evaluates an Op in the current terminal. It uses the stdin, stdout
 // and stderr to build the ports, relays SIGINT from the terminal to ev.intCh,
 // and puts Elvish in the foreground after evaluation finishes.
