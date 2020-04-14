@@ -109,5 +109,18 @@ func TestMath(t *testing.T) {
 		That(`math:sqrt 0`).Puts(0.0),
 		That(`math:sqrt 4`).Puts(2.0),
 		That(`math:sqrt -4`).Puts(math.NaN()),
+
+		// Test the inverse trigonometric block of functions.
+		That(`math:acos 0`).Puts(math.Acos(0)),
+		That(`math:acos 1`).Puts(math.Acos(1)),
+		That(`math:acos 1.00001`).Puts(math.NaN()),
+
+		That(`math:asin 0`).Puts(math.Asin(0)),
+		That(`math:asin 1`).Puts(math.Asin(1)),
+		That(`math:asin 1.00001`).Puts(math.NaN()),
+
+		That(`math:atan 0`).Puts(math.Atan(0)),
+		That(`math:atan 1`).Puts(math.Atan(1)),
+		That(`math:atan inf`).Puts(math.Pi / 2),
 	)
 }
