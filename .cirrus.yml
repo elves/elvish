@@ -35,7 +35,7 @@ test_task:
   go_version_script: go version
   test_script: go test -race ./...
   upload_coverage_script:
-    - test -z $SKIP_UPLOAD_COVERAGE || exit
+    - test -z $SKIP_UPLOAD_COVERAGE || exit 0
     - go test -coverprofile=coverage -covermode=set ./...
     - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage -t $CODECOV_TOKEN
 
