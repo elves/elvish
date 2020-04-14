@@ -107,7 +107,9 @@ const (
 func (t SourceType) String() string {
 	switch t {
 	case InternalGoSource:
-		return "internal"
+		return "internal-go"
+	case InternalElvishSource:
+		return "internal-elvish"
 	case InteractiveSource:
 		return "interactive"
 	case FileSource:
