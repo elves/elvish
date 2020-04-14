@@ -60,6 +60,53 @@ import (
 // ▶ (float64 -2)
 // ```
 
+//elvdoc:fn acos
+//
+// ```elvish
+// math:acos $number
+// ```
+//
+// Outputs the arccosine of `$number`, in radians (not degrees). Examples:
+//
+// ```elvish-transcript
+// ~> math:acos 1
+// ▶ (float64 1)
+// ~> math:acos 1.00001
+// ▶ (float64 NaN)
+// ```
+
+//elvdoc:fn asin
+//
+// ```elvish
+// math:asin $number
+// ```
+//
+// Outputs the arcsine of `$number`, in radians (not degrees). Examples:
+//
+// ```elvish-transcript
+// ~> math:asin 0
+// ▶ (float64 0)
+// ~> math:asin 1
+// ▶ (float64 1.5707963267948966)
+// ~> math:asin 1.00001
+// ▶ (float64 NaN)
+// ```
+
+//elvdoc:fn atan
+//
+// ```elvish
+// math:atan $number
+// ```
+//
+// Outputs the arctangent of `$number`, in radians (not degrees). Examples:
+//
+// ```elvish-transcript
+// ~> math:atan 0
+// ▶ (float64 0)
+// ~> math:atan $math:inf
+// ▶ (float64 1.5707963267948966)
+// ```
+
 //elvdoc:fn cos
 //
 // ```elvish
@@ -319,6 +366,9 @@ var Ns = eval.Ns{
 
 var fns = map[string]interface{}{
 	"abs":           math.Abs,
+	"acos":          math.Acos,
+	"asin":          math.Asin,
+	"atan":          math.Atan,
 	"ceil":          math.Ceil,
 	"cos":           math.Cos,
 	"cosh":          math.Cosh,
