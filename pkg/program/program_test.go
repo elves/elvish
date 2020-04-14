@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/buildinfo"
-	"github.com/elves/elvish/pkg/program/shell"
 	"github.com/elves/elvish/pkg/program/web"
 )
 
@@ -21,10 +20,10 @@ var findProgramTests = []struct {
 }{
 	{[]string{}, isShell},
 	{[]string{"-c", "echo"}, func(p Program) bool {
-		return p.(*shell.Shell).Cmd
+		return p.(*shellProgram).Cmd
 	}},
 	{[]string{"-compileonly"}, func(p Program) bool {
-		return p.(*shell.Shell).CompileOnly
+		return p.(*shellProgram).CompileOnly
 	}},
 	{[]string{"-web"}, isWeb},
 	{[]string{"-web", "-port", "233"}, func(p Program) bool {
@@ -33,13 +32,13 @@ var findProgramTests = []struct {
 	{[]string{"-daemon"}, isDaemon},
 
 	{[]string{"-bin", "/elvish"}, func(p Program) bool {
-		return p.(*shell.Shell).BinPath == "/elvish"
+		return p.(*shellProgram).BinPath == "/elvish"
 	}},
 	{[]string{"-db", "/db"}, func(p Program) bool {
-		return p.(*shell.Shell).DbPath == "/db"
+		return p.(*shellProgram).DbPath == "/db"
 	}},
 	{[]string{"-sock", "/sock"}, func(p Program) bool {
-		return p.(*shell.Shell).SockPath == "/sock"
+		return p.(*shellProgram).SockPath == "/sock"
 	}},
 
 	{[]string{"-web", "-bin", "/elvish"}, func(p Program) bool {
@@ -62,7 +61,7 @@ var findProgramTests = []struct {
 
 func isDaemon(p Program) bool { _, ok := p.(daemonProgram); return ok }
 func isWeb(p Program) bool    { _, ok := p.(*web.Web); return ok }
-func isShell(p Program) bool  { _, ok := p.(*shell.Shell); return ok }
+func isShell(p Program) bool  { _, ok := p.(*shellProgram); return ok }
 
 func TestFindProgram(t *testing.T) {
 	for i, test := range findProgramTests {

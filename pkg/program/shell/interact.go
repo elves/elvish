@@ -18,7 +18,18 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func interact(fds [3]*os.File, ev *eval.Evaler, rcPath string) {
+// InteractConfig keeps configuration for the interactive mode.
+type InteractConfig struct {
+	SpawnDaemon bool
+	Paths       Paths
+}
+
+// Interact runs an interactive shell session.
+func Interact(fds [3]*os.File, cfg *InteractConfig) {
+	defer rescue()
+	ev, cleanup := setupShell(fds, &cfg.Paths, cfg.SpawnDaemon)
+	defer cleanup()
+
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(fds[0]) {
@@ -30,10 +41,10 @@ func interact(fds [3]*os.File, ev *eval.Evaler, rcPath string) {
 	}
 
 	// Source rc.elv.
-	if rcPath != "" {
-		err := sourceRC(fds[2], ev, rcPath)
+	if cfg.Paths.Rc != "" {
+		err := sourceRC(fds[2], ev, cfg.Paths.Rc)
 		if err != nil {
-			diag.ShowError(os.Stderr, err)
+			diag.ShowError(fds[2], err)
 		}
 	}
 
@@ -71,7 +82,7 @@ func interact(fds [3]*os.File, ev *eval.Evaler, rcPath string) {
 		err = ev.EvalSourceInTTY(eval.NewInteractiveSource(line))
 		term.Sanitize(fds[0], fds[2])
 		if err != nil {
-			diag.ShowError(os.Stderr, err)
+			diag.ShowError(fds[2], err)
 		}
 	}
 }

@@ -2,65 +2,36 @@
 package shell
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/diag"
+	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/sys"
 	"github.com/elves/elvish/pkg/util"
 )
 
 var logger = util.GetLogger("[shell] ")
 
-// Shell keeps flags to the shell.
-type Shell struct {
-	BinPath     string
-	SockPath    string
-	DbPath      string
-	Cmd         bool
-	CompileOnly bool
-	NoRc        bool
-	JSON        bool
-}
-
-// Main runs Elvish using the default terminal interface. It blocks until Elvish
-// quits, and returns the exit code.
-func (sh *Shell) Main(fds [3]*os.File, args []string) int {
-	defer rescue()
-
+func setupShell(fds [3]*os.File, p *Paths, spawn bool) (*eval.Evaler, func()) {
 	restoreTTY := term.SetupGlobal()
-	defer restoreTTY()
+	ev := InitRuntime(fds[2], p, spawn)
 
-	p := MakePathsWithDefaults(fds[2],
-		&Paths{Bin: sh.BinPath, Sock: sh.SockPath, Db: sh.DbPath})
-
-	ev := InitRuntime(fds[2], p)
-	defer CleanupRuntime(fds[2], ev)
-
-	handleSignals(fds[2])
-
-	if len(args) > 0 {
-		err := script(ev, args, sh.Cmd, sh.CompileOnly)
-		if err != nil {
-			if sh.CompileOnly && sh.JSON {
-				fmt.Fprintf(fds[1], "%s\n", errorToJSON(err))
-			} else {
-				diag.ShowError(os.Stderr, err)
-			}
-			return 2
+	sigs := make(chan os.Signal)
+	signal.Notify(sigs)
+	go func() {
+		for sig := range sigs {
+			logger.Println("signal", sig)
+			handleSignal(sig, fds[2])
 		}
-	} else {
-		rcPath := p.Rc
-		if sh.NoRc {
-			rcPath = ""
-		}
-		interact(fds, ev, rcPath)
+	}()
+
+	return ev, func() {
+		signal.Stop(sigs)
+		CleanupRuntime(fds[2], ev)
+		restoreTTY()
 	}
-
-	return 0
 }
 
 // Global panic handler.
@@ -74,15 +45,4 @@ func rescue() {
 		println("\nExecing recovery shell /bin/sh")
 		syscall.Exec("/bin/sh", []string{"/bin/sh"}, os.Environ())
 	}
-}
-
-func handleSignals(stderr *os.File) {
-	sigs := make(chan os.Signal)
-	signal.Notify(sigs)
-	go func() {
-		for sig := range sigs {
-			logger.Println("signal", sig)
-			handleSignal(sig, stderr)
-		}
-	}()
 }

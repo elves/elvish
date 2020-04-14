@@ -46,7 +46,7 @@ var errInvalidDB = errors.New("daemon reported that database is invalid. If you 
 
 // InitRuntime initializes the runtime. The caller should call CleanupRuntime
 // when the Evaler is no longer needed.
-func InitRuntime(stderr io.Writer, p *Paths) *eval.Evaler {
+func InitRuntime(stderr io.Writer, p *Paths, spawn bool) *eval.Evaler {
 	ev := eval.NewEvaler()
 	ev.SetLibDir(p.LibDir)
 	ev.InstallModule("math", mathmod.Ns)
@@ -57,7 +57,7 @@ func InitRuntime(stderr io.Writer, p *Paths) *eval.Evaler {
 		ev.InstallModule("unix", unix.Ns)
 	}
 
-	if p.Sock != "" && p.Db != "" {
+	if spawn && p.Sock != "" && p.Db != "" {
 		spawnCfg := &daemon.SpawnConfig{
 			BinPath:       p.Bin,
 			DbPath:        p.Db,

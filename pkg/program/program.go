@@ -15,7 +15,6 @@ import (
 	"runtime/pprof"
 	"strconv"
 
-	"github.com/elves/elvish/pkg/program/shell"
 	"github.com/elves/elvish/pkg/program/web"
 	"github.com/elves/elvish/pkg/util"
 )
@@ -140,7 +139,7 @@ func FindProgram(flag *flagSet) Program {
 			BinPath: flag.Bin, SockPath: flag.Sock, DbPath: flag.DB,
 			Port: flag.Port}
 	default:
-		return &shell.Shell{
+		return &shellProgram{
 			BinPath: flag.Bin, SockPath: flag.Sock, DbPath: flag.DB,
 			Cmd: flag.CodeInArg, CompileOnly: flag.CompileOnly,
 			NoRc: flag.NoRc, JSON: flag.JSON}
