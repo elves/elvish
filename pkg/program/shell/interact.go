@@ -79,7 +79,7 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 		// No error; reset cooldown.
 		cooldown = time.Second
 
-		err = ev.EvalSourceInTTY(eval.NewInteractiveSource(line))
+		err = ev.EvalSourceInTTY(eval.NewInteractiveSource("[tty]", line))
 		term.Sanitize(fds[0], fds[2])
 		if err != nil {
 			diag.ShowError(fds[2], err)

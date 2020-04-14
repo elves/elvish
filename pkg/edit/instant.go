@@ -11,7 +11,6 @@ import (
 	"github.com/elves/elvish/pkg/cli/addons/instant"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/parse"
 )
 
 //elvdoc:var -instant:binding
@@ -40,12 +39,8 @@ func initInstant(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 
 func instantStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
 	execute := func(code string) ([]string, error) {
-		src := eval.NewInteractiveSource(code)
-		n, err := parse.AsChunk("[instant]", code)
-		if err != nil {
-			return nil, err
-		}
-		op, err := ev.Compile(n, src)
+		src := eval.NewInteractiveSource("[instant]", code)
+		op, err := ev.ParseAndCompile(src)
 		if err != nil {
 			return nil, err
 		}

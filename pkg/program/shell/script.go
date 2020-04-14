@@ -10,7 +10,6 @@ import (
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/parse"
 )
 
 // ScriptConfig keeps configuration for the script mode.
@@ -32,28 +31,26 @@ func Script(fds [3]*os.File, args []string, cfg *ScriptConfig) int {
 	arg0 := args[0]
 	ev.SetArgs(args[1:])
 
-	var name, path, code string
+	var name, code string
 	if cfg.Cmd {
 		name = "code from -c"
-		path = ""
 		code = arg0
 	} else {
 		var err error
-		name = arg0
-		path, err = filepath.Abs(name)
+		name, err = filepath.Abs(arg0)
 		if err != nil {
 			fmt.Fprintf(fds[2],
-				"cannot get full path of script %q: %v\n", name, err)
+				"cannot get full path of script %q: %v\n", arg0, err)
 			return 2
 		}
-		code, err = readFileUTF8(path)
+		code, err = readFileUTF8(name)
 		if err != nil {
 			fmt.Fprintf(fds[2], "cannot read script %q: %v\n", name, err)
 			return 2
 		}
 	}
 
-	op, err := parseCompile(ev, name, path, code)
+	op, err := ev.ParseAndCompile(eval.NewScriptSource(name, code))
 	if err != nil {
 		if cfg.CompileOnly && cfg.JSON {
 			fmt.Fprintf(fds[1], "%s\n", errorToJSON(err))
@@ -72,15 +69,6 @@ func Script(fds [3]*os.File, args []string, cfg *ScriptConfig) int {
 		return 2
 	}
 	return 0
-}
-
-func parseCompile(ev *eval.Evaler, name, path, code string) (eval.Op, error) {
-	n, err := parse.AsChunk(name, code)
-	if err != nil {
-		return eval.Op{}, err
-	}
-	src := eval.NewScriptSource(path, code)
-	return ev.Compile(n, src)
 }
 
 var errSourceNotUTF8 = errors.New("source is not UTF-8")

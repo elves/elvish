@@ -19,7 +19,7 @@ type Source struct {
 
 // NewInteractiveSource returns a Source for a piece of code entered
 // interactively.
-func NewInteractiveSource(code string) *Source {
+func NewInteractiveSource(name, code string) *Source {
 	return &Source{InteractiveSource, "[tty]", true, code}
 }
 

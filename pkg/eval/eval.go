@@ -253,11 +253,7 @@ func (ev *Evaler) Eval(op Op, ports []*Port) error {
 
 // EvalSourceInTTY evaluates Elvish source code in the current terminal.
 func (ev *Evaler) EvalSourceInTTY(src *Source) error {
-	n, err := parse.AsChunk(src.Name, src.Code)
-	if err != nil {
-		return err
-	}
-	op, err := ev.Compile(n, src)
+	op, err := ev.ParseAndCompile(src)
 	if err != nil {
 		return err
 	}
@@ -290,6 +286,15 @@ func (ev *Evaler) EvalInTTY(op Op) error {
 	fm := NewTopFrame(ev, op.Src, stdPorts.ports[:])
 	fm.intCh = intCh
 	return op.Inner.exec(fm)
+}
+
+// ParseAndCompile parses and compiles a Source.
+func (ev *Evaler) ParseAndCompile(src *Source) (Op, error) {
+	n, err := parse.AsChunk(src.Name, src.Code)
+	if err != nil {
+		return Op{}, err
+	}
+	return ev.Compile(n, src)
 }
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it

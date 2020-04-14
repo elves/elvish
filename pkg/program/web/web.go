@@ -12,7 +12,6 @@ import (
 	"os"
 
 	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/program/shell"
 )
 
@@ -96,12 +95,7 @@ const (
 func evalAndCollect(ev *eval.Evaler, code string) (
 	outBytes []byte, outValues []interface{}, errBytes []byte, err error) {
 
-	node, err := parse.AsChunk("[web]", code)
-	if err != nil {
-		return
-	}
-	src := eval.NewInteractiveSource(code)
-	op, err := ev.Compile(node, src)
+	op, err := ev.ParseAndCompile(eval.NewInteractiveSource("[web]", code))
 	if err != nil {
 		return
 	}
