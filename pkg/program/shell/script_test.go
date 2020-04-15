@@ -1,31 +1,18 @@
 package shell
 
 import (
-	"io/ioutil"
-	"os"
 	"testing"
-
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/util"
 )
 
-func TestScript(t *testing.T) {
-	_, cleanup := util.InTestDir()
-	defer cleanup()
-	err := ioutil.WriteFile("a.elv", []byte("echo hello > out"), 0600)
-	if err != nil {
-		panic(err)
-	}
+func TestScript_ScriptFile(t *testing.T) {
+	f := setup()
+	defer f.cleanup()
 
-	Script(
-		[3]*os.File{eval.DevNull, eval.DevNull, eval.DevNull},
-		[]string{"a.elv"}, &ScriptConfig{})
+	writeFile("a.elv", "echo hello")
 
-	out, err := ioutil.ReadFile("out")
-	if err != nil {
-		panic(err)
-	}
-	if string(out) != "hello\n" {
+	Script(f.fds(), []string{"a.elv"}, &ScriptConfig{})
+
+	if out := f.getOut(); out != "hello\n" {
 		t.Errorf("got out %q", out)
 	}
 }
