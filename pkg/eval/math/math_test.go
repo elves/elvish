@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/eval/errs"
 )
 
 var That = eval.That
@@ -112,11 +113,11 @@ func TestMath(t *testing.T) {
 		//    math.Tan(math.Pi) == math.Tan(math.Pi)
 		// are true. The ops that should return a zero value do not actually
 		// do so. Which illustrates why an approximate match is needed.
-		That(`math:cos 1`).Puts(eval.Approximately{0.5403023058681397174}),
-		That(`math:sin 1`).Puts(eval.Approximately{0.8414709848078965066}),
-		That(`math:sin $math:pi`).Puts(eval.Approximately{0.0}),
-		That(`math:tan 1`).Puts(eval.Approximately{1.5574077246549023}),
-		That(`math:tan $math:pi`).Puts(eval.Approximately{0.0}),
+		That(`math:cos 1`).Puts(eval.Approximately{F: 0.5403023058681397174}),
+		That(`math:sin 1`).Puts(eval.Approximately{F: 0.8414709848078965066}),
+		That(`math:sin $math:pi`).Puts(eval.Approximately{F: 0.0}),
+		That(`math:tan 1`).Puts(eval.Approximately{F: 1.5574077246549023}),
+		That(`math:tan $math:pi`).Puts(eval.Approximately{F: 0.0}),
 
 		That(`math:sqrt 0`).Puts(0.0),
 		That(`math:sqrt 4`).Puts(2.0),
@@ -156,5 +157,19 @@ func TestMath(t *testing.T) {
 		That(`math:pow10 0`).Puts(1.0),
 		That(`math:pow10 3`).Puts(1000.0),
 		That(`math:pow10 -3`).Puts(0.001),
+
+		That(`math:max`).Throws(
+			errs.ArityMismatch{What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0},
+			"math:max"),
+		That(`math:max 42`).Puts(float64(42)),
+		That(`math:max 11 -3 1 7`).Puts(float64(11)),
+		That(`math:max 3 NaN 5`).Puts(math.NaN()),
+
+		That(`math:min`).Throws(
+			errs.ArityMismatch{What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0},
+			"math:min"),
+		That(`math:min 42`).Puts(float64(42)),
+		That(`math:min 11 -3 1 7`).Puts(float64(-3)),
+		That(`math:min 3 NaN 5`).Puts(math.NaN()),
 	)
 }
