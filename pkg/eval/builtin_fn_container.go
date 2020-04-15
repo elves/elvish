@@ -526,31 +526,11 @@ func hasKey(container, key interface{}) bool {
 	return vals.HasKey(container, key)
 }
 
-func count(fm *Frame, args ...interface{}) (int, error) {
+func count(fm *Frame, inputs Inputs) (int, error) {
 	var n int
-	switch len(args) {
-	case 0:
-		// Count inputs.
-		fm.IterateInputs(func(interface{}) {
-			n++
-		})
-	case 1:
-		// Get length of argument.
-		v := args[0]
-		if len := vals.Len(v); len >= 0 {
-			n = len
-		} else {
-			err := vals.Iterate(v, func(interface{}) bool {
-				n++
-				return true
-			})
-			if err != nil {
-				return 0, fmt.Errorf("cannot get length of a %s", vals.Kind(v))
-			}
-		}
-	default:
-		return 0, errors.New("want 0 or 1 argument")
-	}
+	inputs(func(_ interface{}) {
+		n++
+	})
 	return n, nil
 }
 

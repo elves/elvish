@@ -43,7 +43,9 @@ func TestBuiltinFnContainer(t *testing.T) {
 
 		That(`range 100 | count`).Puts("100"),
 		That(`count [(range 100)]`).Puts("100"),
+		That(`count 123`).Puts("3"),
 		That(`count 1 2 3`).ThrowsAny(),
+		That(`count $true`).ThrowsAny(),
 
 		That(`keys [&]`).DoesNothing(),
 		That(`keys [&a=foo]`).Puts("a"),
