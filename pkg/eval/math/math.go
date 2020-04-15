@@ -75,6 +75,21 @@ import (
 // ▶ (float64 NaN)
 // ```
 
+//elvdoc:fn acosh
+//
+// ```elvish
+// math:acosh $number
+// ```
+//
+// Outputs the inverse hyperbolic cosine of `$number`. Examples:
+//
+// ```elvish-transcript
+// ~> math:acosh 1
+// ▶ (float64 0)
+// ~> math:acosh 0
+// ▶ (float64 NaN)
+// ```
+
 //elvdoc:fn asin
 //
 // ```elvish
@@ -92,6 +107,21 @@ import (
 // ▶ (float64 NaN)
 // ```
 
+//elvdoc:fn asinh
+//
+// ```elvish
+// math:asinh $number
+// ```
+//
+// Outputs the inverse hyperbolic sine of `$number`. Examples:
+//
+// ```elvish-transcript
+// ~> math:asinh 0
+// ▶ (float64 0)
+// ~> math:asinh inf
+// ▶ (float64 +Inf)
+// ```
+
 //elvdoc:fn atan
 //
 // ```elvish
@@ -105,6 +135,21 @@ import (
 // ▶ (float64 0)
 // ~> math:atan $math:inf
 // ▶ (float64 1.5707963267948966)
+// ```
+
+//elvdoc:fn atanh
+//
+// ```elvish
+// math:atanh $number
+// ```
+//
+// Outputs the inverse hyperbolic tangent of `$number`. Examples:
+//
+// ```elvish-transcript
+// ~> math:atanh 0
+// ▶ (float64 0)
+// ~> math:atanh 1
+// ▶ (float64 +Inf)
 // ```
 
 //elvdoc:fn cos
@@ -367,8 +412,11 @@ var Ns = eval.Ns{
 var fns = map[string]interface{}{
 	"abs":           math.Abs,
 	"acos":          math.Acos,
+	"acosh":         math.Acosh,
 	"asin":          math.Asin,
+	"asinh":         math.Asinh,
 	"atan":          math.Atan,
+	"atanh":         math.Atanh,
 	"ceil":          math.Ceil,
 	"cos":           math.Cos,
 	"cosh":          math.Cosh,
