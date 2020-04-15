@@ -133,6 +133,18 @@ func TestMath(t *testing.T) {
 
 		That(`math:atan 0`).Puts(math.Atan(0)),
 		That(`math:atan 1`).Puts(math.Atan(1)),
-		That(`math:atan inf`).Puts(math.Pi / 2),
+		That(`math:atan inf`).Puts(math.Pi/2),
+
+		// Test the inverse hyperbolic trigonometric block of functions.
+		That(`math:acosh 0`).Puts(math.Acosh(0)),
+		That(`math:acosh 1`).Puts(math.Acosh(1)),
+		That(`math:acosh nan`).Puts(math.NaN()),
+
+		That(`math:asinh 0`).Puts(math.Asinh(0)),
+		That(`math:asinh 1`).Puts(math.Asinh(1)),
+		That(`math:asinh inf`).Puts(math.Inf(1)),
+
+		That(`math:atanh 0`).Puts(math.Atanh(0)),
+		That(`math:atanh 1`).Puts(math.Inf(1)),
 	)
 }
