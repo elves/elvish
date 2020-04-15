@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/xiaq/persistent/hashmap"
@@ -526,9 +527,12 @@ func hasKey(container, key interface{}) bool {
 	return vals.HasKey(container, key)
 }
 
+// The count implmentation uses a custom varargs based implementation rather
+// than the more common `Inputs` API (see pkg/eval/go_fn.go) because this
+// allows the implmentation to be O(1) for the common cases rather than O(n).
 func count(fm *Frame, args ...interface{}) (int, error) {
 	var n int
-	switch len(args) {
+	switch nargs := len(args); nargs {
 	case 0:
 		// Count inputs.
 		fm.IterateInputs(func(interface{}) {
@@ -549,7 +553,10 @@ func count(fm *Frame, args ...interface{}) (int, error) {
 			}
 		}
 	default:
-		return 0, errors.New("want 0 or 1 argument")
+		// The error matches what would be returned if the `Inputs` API was
+		// used. See GoFn.Call().
+		return 0, errs.ArityMismatch{
+			What: "arguments here", ValidLow: 0, ValidHigh: 1, Actual: nargs}
 	}
 	return n, nil
 }

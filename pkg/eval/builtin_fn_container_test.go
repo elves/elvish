@@ -1,6 +1,10 @@
 package eval
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/elves/elvish/pkg/eval/errs"
+)
 
 func TestBuiltinFnContainer(t *testing.T) {
 	Test(t,
@@ -43,7 +47,12 @@ func TestBuiltinFnContainer(t *testing.T) {
 
 		That(`range 100 | count`).Puts("100"),
 		That(`count [(range 100)]`).Puts("100"),
-		That(`count 1 2 3`).ThrowsAny(),
+		That(`count 123`).Puts("3"),
+		That(`count 1 2 3`).Throws(
+			errs.ArityMismatch{
+				What: "arguments here", ValidLow: 0, ValidHigh: 1, Actual: 3},
+			"count 1 2 3"),
+		That(`count $true`).ThrowsMessage("cannot get length of a bool"),
 
 		That(`keys [&]`).DoesNothing(),
 		That(`keys [&a=foo]`).Puts("a"),
