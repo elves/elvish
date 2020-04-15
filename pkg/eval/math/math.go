@@ -285,6 +285,50 @@ import (
 // ▶ (float64 NaN)
 // ```
 
+//elvdoc:fn max
+//
+// ```elvish
+// math:max $number...
+// ```
+//
+// Outputs the maximum number in the arguments. If there are no arguments
+// an exception is thrown. If any number is NaN then NaN is output.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> math:max
+// ▶ ?(WTF)
+// ~> math:max 3
+// ▶ (float 3)
+// ~> math:max 3 5 2
+// ▶ (float 5)
+// ~> range 100 | math:max (all)
+// ▶ (float 99)
+// ```
+
+//elvdoc:fn min
+//
+// ```elvish
+// math:min $number...
+// ```
+//
+// Outputs the minimum number in the arguments. If there are no arguments
+// an exception is thrown. If any number is NaN then NaN is output.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> math:min
+// ▶ ?(WTF)
+// ~> math:min 3
+// ▶ (float 3)
+// ~> math:min 3 5 2
+// ▶ (float 2)
+// ~> range 100 | math:min (all)
+// ▶ (float 0)
+// ```
+
 //elvdoc:fn pow
 //
 // ```elvish
@@ -462,6 +506,8 @@ var fns = map[string]interface{}{
 	"log":           math.Log,
 	"log10":         math.Log10,
 	"log2":          math.Log2,
+	"max":           max,
+	"min":           min,
 	"pow":           math.Pow,
 	"pow10":         math.Pow10,
 	"round":         math.Round,
@@ -480,4 +526,18 @@ func (opts *isInfOpts) SetDefaultOptions() { opts.Sign = 0 }
 
 func isInf(opts isInfOpts, arg float64) bool {
 	return math.IsInf(arg, opts.Sign)
+}
+
+func max(fm *eval.Frame, num float64, nums ...float64) float64 {
+	for i := 0; i < len(nums); i++ {
+		num = math.Max(num, nums[i])
+	}
+	return num
+}
+
+func min(fm *eval.Frame, num float64, nums ...float64) float64 {
+	for i := 0; i < len(nums); i++ {
+		num = math.Min(num, nums[i])
+	}
+	return num
 }
