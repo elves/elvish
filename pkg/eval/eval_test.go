@@ -59,11 +59,11 @@ func TestConcurrentEval(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
-		ev.EvalInTTY(op)
+		ev.Eval(op, EvalCfg{})
 		wg.Done()
 	}()
 	go func() {
-		ev.EvalInTTY(op)
+		ev.Eval(op, EvalCfg{})
 		wg.Done()
 	}()
 	wg.Wait()

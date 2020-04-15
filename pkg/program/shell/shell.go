@@ -34,6 +34,13 @@ func setupShell(fds [3]*os.File, p *Paths, spawn bool) (*eval.Evaler, func()) {
 	}
 }
 
+func evalInTTY(ev *eval.Evaler, op eval.Op, fds [3]*os.File) error {
+	ports, cleanup := eval.PortsFromFiles(fds, ev)
+	defer cleanup()
+	return ev.Eval(op, eval.EvalCfg{
+		Ports: ports[:], Interrupt: eval.ListenInterrupts, PutInFg: true})
+}
+
 // Global panic handler.
 func rescue() {
 	r := recover()

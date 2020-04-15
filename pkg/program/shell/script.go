@@ -63,7 +63,7 @@ func Script(fds [3]*os.File, args []string, cfg *ScriptConfig) int {
 		return 0
 	}
 
-	err = ev.EvalInTTY(op)
+	err = evalInTTY(ev, op, fds)
 	if err != nil {
 		diag.ShowError(fds[2], err)
 		return 2

@@ -42,7 +42,7 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 
 	// Source rc.elv.
 	if cfg.Paths.Rc != "" {
-		err := sourceRC(fds[2], ev, cfg.Paths.Rc)
+		err := sourceRC(fds, ev, cfg.Paths.Rc)
 		if err != nil {
 			diag.ShowError(fds[2], err)
 		}
@@ -82,7 +82,7 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 		src := eval.NewInteractiveSource("[tty]", line)
 		op, err := ev.ParseAndCompile(src)
 		if err == nil {
-			err = ev.EvalInTTY(op)
+			err = evalInTTY(ev, op, fds)
 			term.Sanitize(fds[0], fds[2])
 		}
 		if err != nil {
@@ -91,7 +91,7 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 	}
 }
 
-func sourceRC(stderr *os.File, ev *eval.Evaler, rcPath string) error {
+func sourceRC(fds [3]*os.File, ev *eval.Evaler, rcPath string) error {
 	absPath, err := filepath.Abs(rcPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -111,11 +111,11 @@ func sourceRC(stderr *os.File, ev *eval.Evaler, rcPath string) error {
 	if err != nil {
 		return err
 	}
-	err = ev.EvalInTTY(op)
+	err = evalInTTY(ev, op, fds)
 	if err != nil {
 		return err
 	}
-	extractExports(ev.Global, stderr)
+	extractExports(ev.Global, fds[2])
 	return nil
 }
 

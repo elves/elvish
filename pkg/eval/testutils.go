@@ -280,7 +280,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 		}
 
 		// NOTE: Only the exception of the last code that compiles is saved.
-		r.exception = ev.Eval(op, ports)
+		r.exception = ev.Eval(op, EvalCfg{Ports: ports})
 		close(outCh)
 		<-outDone
 	}

@@ -110,7 +110,7 @@ func evals(ev *eval.Evaler, codes ...string) {
 		if err != nil {
 			panic(fmt.Errorf("parse and compile %q: %s", code, err))
 		}
-		err = ev.EvalInTTY(op)
+		err = ev.Eval(op, eval.EvalCfg{})
 		if err != nil {
 			panic(fmt.Errorf("eval %q: %s", code, err))
 		}

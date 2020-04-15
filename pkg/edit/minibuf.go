@@ -44,7 +44,7 @@ func minibufSubmit(app cli.App, ev *eval.Evaler) {
 	notifyPort, cleanup := makeNotifyPort(app.Notify)
 	defer cleanup()
 	ports := []*eval.Port{eval.DevNullClosedChan, notifyPort, notifyPort}
-	err = ev.Eval(op, ports)
+	err = ev.Eval(op, eval.EvalCfg{Ports: ports})
 	if err != nil {
 		app.Notify(err.Error())
 	}

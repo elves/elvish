@@ -15,12 +15,12 @@ func TestEvalerPorts(t *testing.T) {
 	defer stderrReader.Close()
 
 	prefix := "> "
-	ep := newStdPorts(DevNull, stdout, stderr, prefix)
-	ep.ports[1].Chan <- "x"
-	ep.ports[1].Chan <- "y"
-	ep.ports[2].Chan <- "bad"
-	ep.ports[2].Chan <- "err"
-	ep.close()
+	ports, cleanup := portsFromFiles([3]*os.File{DevNull, stdout, stderr}, prefix)
+	ports[1].Chan <- "x"
+	ports[1].Chan <- "y"
+	ports[2].Chan <- "bad"
+	ports[2].Chan <- "err"
+	cleanup()
 	stdout.Close()
 	stderr.Close()
 

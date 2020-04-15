@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -32,28 +33,40 @@ func (p *Port) Close() {
 
 var (
 	// ClosedChan is a closed channel, suitable for use as placeholder channel input.
-	ClosedChan = make(chan interface{})
+	ClosedChan = getClosedChan()
 	// BlackholeChan is channel writes onto which disappear, suitable for use as
 	// placeholder channel output.
-	BlackholeChan = make(chan interface{})
+	BlackholeChan = getBlackholeChan()
 	// DevNull is /dev/null.
-	DevNull *os.File
+	DevNull = getDevNull()
 	// DevNullClosedChan is a port made up from DevNull and ClosedChan,
 	// suitable as placeholder input port.
-	DevNullClosedChan *Port
+	DevNullClosedChan = &Port{File: DevNull, Chan: ClosedChan}
+	// DevNullClosedChan is a port made up from DevNull and BlackholeChan,
+	// suitable as placeholder output port.
+	DevNullBlackholeChan = &Port{File: DevNull, Chan: BlackholeChan}
 )
 
-func init() {
-	close(ClosedChan)
+func getClosedChan() chan interface{} {
+	ch := make(chan interface{})
+	close(ch)
+	return ch
+}
+
+func getBlackholeChan() chan interface{} {
+	ch := make(chan interface{})
 	go func() {
-		for range BlackholeChan {
+		for range ch {
 		}
 	}()
+	return ch
+}
 
-	var err error
-	DevNull, err = os.Open(os.DevNull)
+func getDevNull() *os.File {
+	f, err := os.Open(os.DevNull)
 	if err != nil {
-		os.Stderr.WriteString("cannot open " + os.DevNull + ", shell might not function normally\n")
+		fmt.Fprintf(os.Stderr,
+			"cannot open %s, shell might not function normally\n", os.DevNull)
 	}
-	DevNullClosedChan = &Port{File: DevNull, Chan: ClosedChan}
+	return f
 }
