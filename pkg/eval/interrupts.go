@@ -28,7 +28,7 @@ func (fm *Frame) IsInterrupted() bool {
 // Starts to listen to terminal interrupts. Returns a channel that is closed
 // when a SIGINT or SIGQUIT has been received, and a cleanup function that
 // should be called to stop listening and clean up the resource.
-func listenInterrupts() (chan struct{}, func()) {
+func listenInterrupts() (<-chan struct{}, func()) {
 	sigCh := make(chan os.Signal)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGQUIT)
 	// Channel to return, closed after receiving the first SIGINT or SIGQUIT.

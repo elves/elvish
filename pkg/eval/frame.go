@@ -21,7 +21,7 @@ type Frame struct {
 
 	local, up Ns
 
-	intCh chan struct{}
+	intCh <-chan struct{}
 	ports []*Port
 
 	traceback *stackTrace
