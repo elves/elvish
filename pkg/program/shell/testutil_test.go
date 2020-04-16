@@ -3,6 +3,8 @@ package shell
 import (
 	"io/ioutil"
 	"os"
+	"strings"
+	"testing"
 
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/util"
@@ -21,6 +23,34 @@ func setup() *fixture {
 
 func (f *fixture) fds() [3]*os.File {
 	return [3]*os.File{eval.DevNull, f.stdout.w, f.stderr.w}
+}
+
+func (f *fixture) testOut(t *testing.T, wantOut string) {
+	t.Helper()
+	if out := f.getOut(); out != wantOut {
+		t.Errorf("got out %q, want %q", out, wantOut)
+	}
+}
+
+func (f *fixture) testOutSnippet(t *testing.T, wantOutSnippet string) {
+	t.Helper()
+	if err := f.getOut(); !strings.Contains(err, wantOutSnippet) {
+		t.Errorf("got err %q, want string containing %q", err, wantOutSnippet)
+	}
+}
+
+func (f *fixture) testErr(t *testing.T, wantErr string) {
+	t.Helper()
+	if err := f.getErr(); err != wantErr {
+		t.Errorf("got err %q, want %q", err, wantErr)
+	}
+}
+
+func (f *fixture) testErrSnippet(t *testing.T, wantErrSnippet string) {
+	t.Helper()
+	if err := f.getErr(); !strings.Contains(err, wantErrSnippet) {
+		t.Errorf("got err %q, want string containing %q", err, wantErrSnippet)
+	}
 }
 
 func (f *fixture) getOut() string { return f.stdout.get() }
