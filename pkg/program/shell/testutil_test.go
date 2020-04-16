@@ -30,6 +30,14 @@ func (f *fixture) fds() [3]*os.File {
 	return [3]*os.File{f.pipes[0].r, f.pipes[1].w, f.pipes[2].w}
 }
 
+func (f *fixture) feedIn(s string) {
+	_, err := f.pipes[0].w.WriteString(s)
+	if err != nil {
+		panic(err)
+	}
+	f.pipes[0].w.Close()
+}
+
 func (f *fixture) testOut(t *testing.T, fd int, wantOut string) {
 	t.Helper()
 	if out := f.pipes[fd].get(); out != wantOut {
