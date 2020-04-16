@@ -94,9 +94,6 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 func sourceRC(fds [3]*os.File, ev *eval.Evaler, rcPath string) error {
 	absPath, err := filepath.Abs(rcPath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
 		return fmt.Errorf("cannot get full path of rc.elv: %v", err)
 	}
 	code, err := readFileUTF8(absPath)

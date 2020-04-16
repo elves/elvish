@@ -38,6 +38,17 @@ func TestInteract_RcFile(t *testing.T) {
 	f.testOut(t, 1, "hello from rc.elv\n")
 }
 
+func TestInteract_RcFile_DoesNotCompile(t *testing.T) {
+	f := setup()
+	defer f.cleanup()
+	f.feedIn("")
+
+	writeFile("rc.elv", "echo $a")
+
+	Interact(f.fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
+	f.testOutSnippet(t, 2, "variable $a not found")
+}
+
 func TestInteract_RcFile_Exception(t *testing.T) {
 	f := setup()
 	defer f.cleanup()
