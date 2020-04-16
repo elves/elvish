@@ -6,97 +6,82 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/util"
 )
 
 type fixture struct {
-	stdout     *pipedOut
-	stderr     *pipedOut
+	pipes      [3]*pipe
 	dirCleanup func()
 }
 
 func setup() *fixture {
 	_, dirCleanup := util.InTestDir()
-	return &fixture{makePipedOut(), makePipedOut(), dirCleanup}
+	return &fixture{[3]*pipe{makePipe(), makePipe(), makePipe()}, dirCleanup}
+}
+
+func (f *fixture) cleanup() {
+	f.pipes[0].close()
+	f.pipes[1].close()
+	f.pipes[2].close()
+	f.dirCleanup()
 }
 
 func (f *fixture) fds() [3]*os.File {
-	return [3]*os.File{eval.DevNull, f.stdout.w, f.stderr.w}
+	return [3]*os.File{f.pipes[0].r, f.pipes[1].w, f.pipes[2].w}
 }
 
-func (f *fixture) testOut(t *testing.T, wantOut string) {
+func (f *fixture) testOut(t *testing.T, fd int, wantOut string) {
 	t.Helper()
-	if out := f.getOut(); out != wantOut {
+	if out := f.pipes[fd].get(); out != wantOut {
 		t.Errorf("got out %q, want %q", out, wantOut)
 	}
 }
 
-func (f *fixture) testOutSnippet(t *testing.T, wantOutSnippet string) {
+func (f *fixture) testOutSnippet(t *testing.T, fd int, wantOutSnippet string) {
 	t.Helper()
-	if err := f.getOut(); !strings.Contains(err, wantOutSnippet) {
-		t.Errorf("got err %q, want string containing %q", err, wantOutSnippet)
+	if err := f.pipes[fd].get(); !strings.Contains(err, wantOutSnippet) {
+		t.Errorf("got out %q, want string containing %q", err, wantOutSnippet)
 	}
 }
 
-func (f *fixture) testErr(t *testing.T, wantErr string) {
-	t.Helper()
-	if err := f.getErr(); err != wantErr {
-		t.Errorf("got err %q, want %q", err, wantErr)
-	}
+type pipe struct {
+	r, w             *os.File
+	rClosed, wClosed bool
+	saved            string
 }
 
-func (f *fixture) testErrSnippet(t *testing.T, wantErrSnippet string) {
-	t.Helper()
-	if err := f.getErr(); !strings.Contains(err, wantErrSnippet) {
-		t.Errorf("got err %q, want string containing %q", err, wantErrSnippet)
-	}
-}
-
-func (f *fixture) getOut() string { return f.stdout.get() }
-
-func (f *fixture) getErr() string { return f.stderr.get() }
-
-func (f *fixture) cleanup() {
-	f.stdout.close()
-	f.stderr.close()
-	f.dirCleanup()
-}
-
-type pipedOut struct {
-	r, w   *os.File
-	closed bool
-	saved  string
-}
-
-func makePipedOut() *pipedOut {
+func makePipe() *pipe {
 	r, w, err := os.Pipe()
 	if err != nil {
 		panic(err)
 	}
-	return &pipedOut{r: r, w: w}
+	return &pipe{r: r, w: w}
 }
 
-func (p *pipedOut) get() string {
-	if p.closed {
+func (p *pipe) get() string {
+	if p.rClosed {
 		return p.saved
 	}
 	p.w.Close()
+	p.wClosed = true
 	b, err := ioutil.ReadAll(p.r)
 	if err != nil {
 		panic(err)
 	}
 	p.r.Close()
-	p.closed = true
+	p.rClosed = true
 	p.saved = string(b)
 	return p.saved
 }
 
-func (p *pipedOut) close() {
-	if !p.closed {
+func (p *pipe) close() {
+	if !p.wClosed {
 		p.w.Close()
+		p.wClosed = true
+	}
+	if !p.rClosed {
 		p.r.Close()
-		p.closed = true
+		p.rClosed = true
 	}
 }
 

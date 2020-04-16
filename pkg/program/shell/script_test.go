@@ -11,7 +11,7 @@ func TestScript_File(t *testing.T) {
 
 	Script(f.fds(), []string{"a.elv"}, &ScriptConfig{})
 
-	f.testOut(t, "hello\n")
+	f.testOut(t, 1, "hello\n")
 }
 
 func TestScript_BadFile(t *testing.T) {
@@ -23,7 +23,7 @@ func TestScript_BadFile(t *testing.T) {
 	if ret != 2 {
 		t.Errorf("got ret %v, want 2", ret)
 	}
-	f.testErrSnippet(t, "cannot read script")
+	f.testOutSnippet(t, 2, "cannot read script")
 }
 
 func TestScript_Cmd(t *testing.T) {
@@ -32,9 +32,7 @@ func TestScript_Cmd(t *testing.T) {
 
 	Script(f.fds(), []string{"echo hello"}, &ScriptConfig{Cmd: true})
 
-	if out := f.getOut(); out != "hello\n" {
-		t.Errorf("got out %q", out)
-	}
+	f.testOut(t, 1, "hello\n")
 }
 
 func TestScript_DoesNotCompile(t *testing.T) {
@@ -46,7 +44,7 @@ func TestScript_DoesNotCompile(t *testing.T) {
 	if ret != 2 {
 		t.Errorf("got ret %v, want 2", ret)
 	}
-	f.testErrSnippet(t, "compilation error")
+	f.testOutSnippet(t, 2, "compilation error")
 }
 
 func TestScript_DoesNotCompile_JSON(t *testing.T) {
@@ -59,7 +57,7 @@ func TestScript_DoesNotCompile_JSON(t *testing.T) {
 	if ret != 2 {
 		t.Errorf("got ret %v, want 2", ret)
 	}
-	f.testOutSnippet(t, "variable $a not found")
+	f.testOutSnippet(t, 1, "variable $a not found")
 }
 
 func TestScript_Exception(t *testing.T) {
@@ -70,7 +68,7 @@ func TestScript_Exception(t *testing.T) {
 	if ret != 2 {
 		t.Errorf("got ret %v, want 2", ret)
 	}
-	f.testErrSnippet(t, "fail failure")
+	f.testOutSnippet(t, 2, "fail failure")
 }
 
 func TestScript_Exception_CompileOnly(t *testing.T) {
