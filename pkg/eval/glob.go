@@ -3,7 +3,6 @@ package eval
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"unicode"
 
@@ -55,23 +54,6 @@ var runeMatchers = map[string]func(rune) bool{
 	"symbol":  unicode.IsSymbol,
 	"title":   unicode.IsTitle,
 	"upper":   unicode.IsUpper,
-}
-
-func (GlobPattern) Kind() string {
-	return "glob-pattern"
-}
-
-func (gp GlobPattern) Equal(a interface{}) bool {
-	return reflect.DeepEqual(gp, a)
-}
-
-func (gp GlobPattern) Hash() uint32 {
-	// GlobPattern is not a first-class value.
-	return 0
-}
-
-func (gp GlobPattern) Repr(int) string {
-	return fmt.Sprintf("<GlobPattern%v>", gp)
 }
 
 func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
