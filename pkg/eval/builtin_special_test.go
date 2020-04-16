@@ -107,7 +107,7 @@ func TestUse(t *testing.T) {
 	libdir, cleanup := util.InTestDir()
 	defer cleanup()
 
-	mustMkdirAll(filepath.Join("a", "b", "c"), 0700)
+	mustMkdirAll(filepath.Join("a", "b", "c"))
 
 	writeMod := func(name, content string) {
 		fname := filepath.Join(strings.Split(name, "/")...) + ".elv"

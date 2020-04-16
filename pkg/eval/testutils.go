@@ -346,20 +346,24 @@ func matchErr(want, got error) bool {
 }
 
 // Calls os.MkdirAll and panics if an error is returned.
-func mustMkdirAll(name string, perm os.FileMode) {
-	err := os.MkdirAll(name, perm)
-	if err != nil {
-		panic(err)
+func mustMkdirAll(names ...string) {
+	for _, name := range names {
+		err := os.MkdirAll(name, 0700)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
 // Creates an empty file, and panics if an error occurs.
-func mustCreateEmpty(name string) {
-	file, err := os.Create(name)
-	if err != nil {
-		panic(err)
+func mustCreateEmpty(names ...string) {
+	for _, name := range names {
+		file, err := os.Create(name)
+		if err != nil {
+			panic(err)
+		}
+		file.Close()
 	}
-	file.Close()
 }
 
 // Calls ioutil.WriteFile and panics if an error occurs.

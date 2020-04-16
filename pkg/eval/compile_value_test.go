@@ -1,13 +1,10 @@
 package eval
 
 import (
-	"sort"
-	"strings"
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/util"
 )
 
 func TestCompileValue(t *testing.T) {
@@ -188,83 +185,5 @@ func TestCompileValue(t *testing.T) {
 			errs.ArityMismatch{
 				What: "option default value", ValidLow: 1, ValidHigh: 1, Actual: 2},
 			"(put foo bar)"),
-	)
-}
-
-var (
-	filesToCreate = []string{
-		"a1", "a2", "a3", "a10",
-		"b1", "b2", "b3",
-		"c1", "c2",
-		"foo", "bar", "lorem", "ipsum",
-	}
-	dirsToCreate = []string{"dir", "dir2"}
-	fileListing  = getFileListing()
-)
-
-func getFileListing() []string {
-	var x []string
-	x = append(x, filesToCreate...)
-	x = append(x, dirsToCreate...)
-	sort.Strings(x)
-	return x
-}
-
-func getFilesWithPrefix(prefixes ...string) []string {
-	var x []string
-	for _, name := range fileListing {
-		for _, prefix := range prefixes {
-			if strings.HasPrefix(name, prefix) {
-				x = append(x, name)
-				break
-			}
-		}
-	}
-	sort.Strings(x)
-	return x
-}
-
-func getFilesBut(excludes ...string) []string {
-	var x []string
-	for _, name := range fileListing {
-		excluded := false
-		for _, exclude := range excludes {
-			if name == exclude {
-				excluded = true
-				break
-			}
-		}
-		if !excluded {
-			x = append(x, name)
-		}
-	}
-	sort.Strings(x)
-	return x
-}
-
-func TestWildcard(t *testing.T) {
-	_, cleanup := util.InTestDir()
-	defer cleanup()
-
-	for _, filename := range filesToCreate {
-		mustCreateEmpty(filename)
-	}
-	for _, dirname := range dirsToCreate {
-		mustMkdirAll(dirname, 0700)
-	}
-
-	Test(t,
-		That("put *").PutsStrings(fileListing),
-		That("put a/b/nonexistent*").ThrowsCause(ErrWildcardNoMatch),
-		That("put a/b/nonexistent*[nomatch-ok]").DoesNothing(),
-
-		// Character set and range
-		That("put ?[set:ab]*").PutsStrings(getFilesWithPrefix("a", "b")),
-		That("put ?[range:a-c]*").PutsStrings(getFilesWithPrefix("a", "b", "c")),
-		That("put ?[range:a~c]*").PutsStrings(getFilesWithPrefix("a", "b")),
-		That("put *[range:a-z]").Puts("bar", "dir", "foo", "ipsum", "lorem"),
-
-		// Exclusion
-		That("put *[but:foo][but:lorem]").PutsStrings(getFilesBut("foo", "lorem")),
 	)
 }

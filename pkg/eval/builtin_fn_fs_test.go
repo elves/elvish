@@ -11,7 +11,7 @@ func TestBuiltinFnFS(t *testing.T) {
 	tmpHome, cleanup := InTempHome()
 	defer cleanup()
 
-	mustMkdirAll("dir", 0700)
+	mustMkdirAll("dir")
 	mustCreateEmpty("file")
 
 	Test(t,
