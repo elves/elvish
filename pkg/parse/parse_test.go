@@ -264,30 +264,46 @@ func TestParse(t *testing.T) {
 	}
 }
 
-var badCases = []struct {
-	src string
-	pos int // expected Begin position of first error
+var parseErrorTests = []struct {
+	src      string
+	errPart  string
+	errAtEnd bool
+	errMsg   string
 }{
 	// Empty form.
-	{"a|", 2},
+	{src: "a|", errAtEnd: true, errMsg: "should be form"},
 	// Unopened parens.
-	{")", 0}, {"]", 0}, {"}", 0},
+	{src: ")", errPart: ")", errMsg: "unexpected rune ')'"},
+	{src: "]", errPart: "]", errMsg: "unexpected rune ']'"},
+	{src: "}", errPart: "}", errMsg: "unexpected rune '}'"},
 	// Unclosed parens.
-	{"a (", 3}, {"a [", 3}, {"a {", 3},
+	{src: "a (", errAtEnd: true, errMsg: "should be ')'"},
+	{src: "a [", errAtEnd: true, errMsg: "should be ']'"},
+	{src: "a {", errAtEnd: true, errMsg: "should be ',' or '}'"},
 	// Bogus ampersand.
-	{"a & &", 4}, {"a [&", 4},
+	{src: "a & &", errPart: "&", errMsg: "unexpected rune '&'"},
+	{src: "a [&", errAtEnd: true, errMsg: "should be ']'"},
 }
 
 func TestParseError(t *testing.T) {
-	for _, tc := range badCases {
-		_, err := AsChunk("[test]", tc.src)
-		if err == nil {
-			t.Errorf("Parse(%q) returns no error", tc.src)
-			continue
-		}
-		posErr0 := err.(*MultiError).Entries[0]
-		if posErr0.Context.From != tc.pos {
-			t.Errorf("Parse(%q) first error begins at %d, want %d. Errors are:%s\n", tc.src, posErr0.Context.From, tc.pos, err)
-		}
+	for _, test := range parseErrorTests {
+		t.Run(test.src, func(t *testing.T) {
+			_, err := AsChunk("[test]", test.src)
+			if err == nil {
+				t.Fatalf("no error")
+			}
+			parseError := err.(*MultiError).Entries[0]
+			r := parseError.Context
+
+			if errPart := test.src[r.From:r.To]; errPart != test.errPart {
+				t.Errorf("err part is %q, want %q", errPart, test.errPart)
+			}
+			if errAtEnd := r.From == len(test.src); errAtEnd != test.errAtEnd {
+				t.Errorf("err at end is %v, want %v", errAtEnd, test.errAtEnd)
+			}
+			if errMsg := parseError.Message; errMsg != test.errMsg {
+				t.Errorf("err message is %q, want %q", errMsg, test.errMsg)
+			}
+		})
 	}
 }
