@@ -12,6 +12,9 @@ import (
 	"github.com/elves/elvish/pkg/util"
 )
 
+// TODO(xiaq): Rewrite these tests to test the exported MakePaths instead of the
+// unexported getSecureRunDir.
+
 var elvishDashUid = fmt.Sprintf("elvish-%d", os.Getuid())
 
 func TestGetSecureRunDir_PrefersXDGWhenNeitherExists(t *testing.T) {
