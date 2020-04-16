@@ -27,7 +27,7 @@ type InteractConfig struct {
 // Interact runs an interactive shell session.
 func Interact(fds [3]*os.File, cfg *InteractConfig) {
 	defer rescue()
-	ev, cleanup := setupShell(fds, &cfg.Paths, cfg.SpawnDaemon)
+	ev, cleanup := setupShell(fds, cfg.Paths, cfg.SpawnDaemon)
 	defer cleanup()
 
 	// Build Editor.

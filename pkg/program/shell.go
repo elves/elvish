@@ -25,9 +25,9 @@ func (sh *shellProgram) Main(fds [3]*os.File, args []string) int {
 	if len(args) > 0 {
 		return shell.Script(
 			fds, args, &shell.ScriptConfig{
-				SpawnDaemon: true, Paths: *p,
+				SpawnDaemon: true, Paths: p,
 				Cmd: sh.Cmd, CompileOnly: sh.CompileOnly, JSON: sh.JSON})
 	}
-	shell.Interact(fds, &shell.InteractConfig{SpawnDaemon: true, Paths: *p})
+	shell.Interact(fds, &shell.InteractConfig{SpawnDaemon: true, Paths: p})
 	return 0
 }

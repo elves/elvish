@@ -14,7 +14,7 @@ import (
 
 var logger = util.GetLogger("[shell] ")
 
-func setupShell(fds [3]*os.File, p *Paths, spawn bool) (*eval.Evaler, func()) {
+func setupShell(fds [3]*os.File, p Paths, spawn bool) (*eval.Evaler, func()) {
 	restoreTTY := term.SetupGlobal()
 	ev := InitRuntime(fds[2], p, spawn)
 
