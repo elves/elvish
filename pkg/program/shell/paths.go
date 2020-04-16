@@ -23,9 +23,9 @@ type Paths struct {
 	Bin string
 }
 
-// MakePathsWithDefaults tries to populate empty fileds with default values.
-func MakePathsWithDefaults(stderr io.Writer, p0 *Paths) *Paths {
-	p := *p0
+// MakePaths makes a populated Paths, using the given overrides.
+func MakePaths(stderr io.Writer, overrides Paths) Paths {
+	p := overrides
 	setDir(&p.RunDir, "secure run directory", getSecureRunDir, stderr)
 	if p.RunDir != "" {
 		setChild(&p.Sock, p.RunDir, "sock")
@@ -47,7 +47,7 @@ func MakePathsWithDefaults(stderr io.Writer, p0 *Paths) *Paths {
 			fmt.Fprintln(stderr, "warning: cannot get executable path:", err)
 		}
 	}
-	return &p
+	return p
 }
 
 func setDir(p *string, what string, f func() (string, error), stderr io.Writer) {

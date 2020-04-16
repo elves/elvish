@@ -34,8 +34,8 @@ type ExecuteResponse struct {
 }
 
 func (web *Web) Main(fds [3]*os.File, _ []string) int {
-	p := shell.MakePathsWithDefaults(fds[2],
-		&shell.Paths{Bin: web.BinPath, Sock: web.SockPath, Db: web.DbPath})
+	p := shell.MakePaths(fds[2],
+		shell.Paths{Bin: web.BinPath, Sock: web.SockPath, Db: web.DbPath})
 	ev := shell.InitRuntime(fds[2], p, true)
 	defer shell.CleanupRuntime(fds[2], ev)
 

@@ -17,8 +17,8 @@ type shellProgram struct {
 }
 
 func (sh *shellProgram) Main(fds [3]*os.File, args []string) int {
-	p := shell.MakePathsWithDefaults(fds[2],
-		&shell.Paths{Bin: sh.BinPath, Sock: sh.SockPath, Db: sh.DbPath})
+	p := shell.MakePaths(fds[2],
+		shell.Paths{Bin: sh.BinPath, Sock: sh.SockPath, Db: sh.DbPath})
 	if sh.NoRc {
 		p.Rc = ""
 	}
