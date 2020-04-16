@@ -47,9 +47,9 @@ var goodCases = []struct {
 		"Assignments": []string{"k=v", "k[a][b]=v"},
 		"Head":        "a"}}},
 	// Spacey assignment.
-	{"k=v a b = c d", ast{"Chunk/Pipeline/Form", fs{
+	{"k=v a b @rest = c d", ast{"Chunk/Pipeline/Form", fs{
 		"Assignments": []string{"k=v"},
-		"Vars":        []string{"a", "b"},
+		"Vars":        []string{"a", "b", "@rest"},
 		"Args":        []string{"c", "d"}}}},
 	// Redirections
 	{"a >b", ast{"Chunk/Pipeline/Form", fs{
@@ -280,9 +280,41 @@ var parseErrorTests = []struct {
 	{src: "a (", errAtEnd: true, errMsg: "should be ')'"},
 	{src: "a [", errAtEnd: true, errMsg: "should be ']'"},
 	{src: "a {", errAtEnd: true, errMsg: "should be ',' or '}'"},
-	// Bogus ampersand.
+	// Bogus ampersand in form.
 	{src: "a & &", errPart: "&", errMsg: "unexpected rune '&'"},
-	{src: "a [&", errAtEnd: true, errMsg: "should be ']'"},
+	// Bad assignment LHS.
+	{src: "a'b' = x", errPart: "a'b'", errMsg: "bad assignment LHS"},
+	{src: "$a = x", errPart: "$a", errMsg: "bad assignment LHS"},
+	{src: "'' = x", errPart: "''", errMsg: "bad assignment LHS"},
+	{src: "'<' = x", errPart: "'<'", errMsg: "bad assignment LHS"},
+	// Chained assignment.
+	{src: "a = b = c", errPart: "=", errMsg: "chained assignment not yet supported"},
+	// No redirection source.
+	{src: "a >", errAtEnd: true, errMsg: "should be a composite term representing filename"},
+	{src: "a >&", errAtEnd: true, errMsg: "should be a composite term representing fd"},
+	// Unmatched paren in indexing.
+	{src: "a $a[0}", errPart: "}", errMsg: "should be ']'"},
+	// Unterminated string.
+	{src: "'a", errAtEnd: true, errMsg: "string not terminated"},
+	{src: `"a`, errAtEnd: true, errMsg: "string not terminated"},
+	// Bad escape sequence.
+	{src: `a "\^0"`, errPart: "0", errMsg: "invalid control sequence, should be a rune between @ (0x40) and _(0x5F)"},
+	{src: `a "\xQQ"`, errPart: "Q", errMsg: "invalid escape sequence, should be hex digit"},
+	{src: `a "\1ab"`, errPart: "a", errMsg: "invalid escape sequence, should be octal digit"},
+	{src: `a "\i"`, errPart: "i", errMsg: "invalid escape sequence"},
+	// Unterminated variable name.
+	{src: "$", errAtEnd: true, errMsg: "should be variable name"},
+	// Unmatched (.
+	{src: "a (", errAtEnd: true, errMsg: "should be ')'"},
+	// List-map hybrid.
+	// TODO(xiaq): Add correct position information.
+	{src: "a [a &k=v]", errAtEnd: true, errMsg: "cannot contain both list elements and map pairs"},
+	// Unmatched {.
+	{src: "{ a", errAtEnd: true, errMsg: "should be '}'"},
+	// Unfinished line continuation.
+	{src: `a \`, errAtEnd: true, errMsg: "should be newline"},
+	// Backslash is otherwise not allowed.
+	{src: `a \a`, errPart: `\`, errMsg: `unexpected rune '\\'`},
 }
 
 func TestParseError(t *testing.T) {

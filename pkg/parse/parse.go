@@ -60,7 +60,7 @@ var (
 	errShouldBeCompound           = newError("", "compound")
 	errShouldBeEqual              = newError("", "'='")
 	errBothElementsAndPairs       = newError("cannot contain both list elements and map pairs")
-	errShouldBeEscapeSequence     = newError("", "escape sequence")
+	errShouldBeNewline            = newError("", "newline")
 )
 
 // Chunk = { PipelineSep | Space } { Pipeline { PipelineSep | Space } }
@@ -208,7 +208,8 @@ func (fn *Form) parse(ps *parser) {
 				if fn.Head != nil {
 					addLHS(fn.Head)
 				} else {
-					ps.error(errChainedAssignment)
+					// TODO(xiaq): Should use the entire assignment form as the range.
+					ps.errorp(cn, errChainedAssignment)
 				}
 				fn.Head = nil
 				for _, cn := range fn.Args {
@@ -274,7 +275,7 @@ func (an *Assignment) parse(ps *parser) {
 
 func checkVariableInAssignment(p *Primary, ps *parser) bool {
 	if p.Type == Braced {
-		// XXX don't check further inside braced expression
+		// TODO(xiaq): check further inside braced expression
 		return true
 	}
 	if p.Type != Bareword && p.Type != SingleQuoted && p.Type != DoubleQuoted {
@@ -283,9 +284,12 @@ func checkVariableInAssignment(p *Primary, ps *parser) bool {
 	if p.Value == "" {
 		return false
 	}
-	for _, r := range p.Value {
-		// XXX special case '&' and '@'.
-		if !allowedInVariableName(r) && r != '&' && r != '@' {
+	name := p.Value
+	if name[0] == '@' {
+		name = name[1:]
+	}
+	for _, r := range name {
+		if !allowedInVariableName(r) {
 			return false
 		}
 	}
@@ -774,6 +778,7 @@ items:
 	} else {
 		if loneAmpersand || len(pn.MapPairs) > 0 {
 			if len(pn.Elements) > 0 {
+				// TODO(xiaq): Add correct position information.
 				ps.error(errBothElementsAndPairs)
 			}
 			pn.Type = Map
@@ -941,7 +946,7 @@ spaces:
 			case '\n':
 				ps.next()
 			case eof:
-				ps.error(errShouldBeEscapeSequence)
+				ps.error(errShouldBeNewline)
 			default:
 				ps.backup()
 				break spaces
