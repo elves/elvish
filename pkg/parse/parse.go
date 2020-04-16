@@ -40,7 +40,6 @@ func As(srcname, src string, n Node) error {
 var (
 	errShouldBeForm         = newError("", "form")
 	errBadLHS               = errors.New("bad assignment LHS")
-	errDuplicateExitusRedir = newError("duplicate exitus redir")
 	errBadRedirSign         = newError("bad redir sign", "'<'", "'>'", "'>>'", "'<>'")
 	errShouldBeFD           = newError("", "a composite term representing fd")
 	errShouldBeFilename     = newError("", "a composite term representing filename")
@@ -146,17 +145,16 @@ func startsPipeline(r rune) bool {
 }
 
 // Form = { Space } { { Assignment } { Space } }
-//        { Compound } { Space } { ( Compound | MapPair | Redir | ExitusRedir ) { Space } }
+//        { Compound } { Space } { ( Compound | MapPair | Redir ) { Space } }
 type Form struct {
 	node
 	Assignments []*Assignment
 	Head        *Compound
 	// Left-hand-sides for the spacey assignment. Right-hand-sides are in Args.
-	Vars        []*Compound
-	Args        []*Compound
-	Opts        []*MapPair
-	Redirs      []*Redir
-	ExitusRedir *ExitusRedir
+	Vars   []*Compound
+	Args   []*Compound
+	Opts   []*MapPair
+	Redirs []*Redir
 }
 
 func (fn *Form) parse(ps *parser) {
@@ -190,16 +188,6 @@ func (fn *Form) parse(ps *parser) {
 			}
 			ps.parse(&MapPair{}).addTo(&fn.Opts, fn)
 		case startsCompound(r, NormalExpr):
-			if ps.hasPrefix("?>") {
-				if fn.ExitusRedir != nil {
-					ps.error(errDuplicateExitusRedir)
-					// Parse the duplicate redir anyway.
-					addChild(fn, ps.parse(&ExitusRedir{}).n)
-				} else {
-					ps.parse(&ExitusRedir{}).addAs(&fn.ExitusRedir, fn)
-				}
-				continue
-			}
 			cn := &Compound{}
 			ps.parse(cn)
 			if isRedirSign(ps.peek()) {
@@ -302,20 +290,6 @@ func checkVariableInAssignment(p *Primary, ps *parser) bool {
 		}
 	}
 	return true
-}
-
-// ExitusRedir = '?' '>' { Space } Compound
-type ExitusRedir struct {
-	node
-	Dest *Compound
-}
-
-func (ern *ExitusRedir) parse(ps *parser) {
-	ps.next()
-	ps.next()
-	addSep(ern, ps)
-	parseSpaces(ern, ps)
-	ps.parse(&Compound{}).addAs(&ern.Dest, ern)
 }
 
 // Redir = { Compound } { '<'|'>'|'<>'|'>>' } { Space } ( '&'? Compound )

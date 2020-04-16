@@ -69,11 +69,6 @@ var goodCases = []struct {
 			{"Redir", fs{"Left": "6", "Mode": ReadWrite, "Right": "d"}},
 		},
 	}}},
-	// Exitus redirection
-	{"a ?>$e", ast{"Chunk/Pipeline/Form", fs{
-		"Head":        "a",
-		"ExitusRedir": ast{"ExitusRedir", fs{"Dest": "$e"}},
-	}}},
 	// Options (structure of MapPair tested below with map)
 	{"a &a=1 x &b=2", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",
