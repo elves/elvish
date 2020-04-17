@@ -4,10 +4,22 @@ import "testing"
 
 func TestBuiltinFnStr(t *testing.T) {
 	Test(t,
-		That(`==s haha haha`).Puts(true),
-		That(`==s 10 10.0`).Puts(false),
 		That(`<s a b`).Puts(true),
 		That(`<s 2 10`).Puts(false),
+		That(`<=s a a`).Puts(true),
+		That(`<=s a b`).Puts(true),
+		That(`<=s b a`).Puts(false),
+		That(`==s haha haha`).Puts(true),
+		That(`==s 10 10.0`).Puts(false),
+		That(`!=s haha haha`).Puts(false),
+		That(`!=s 10 10.1`).Puts(true),
+		That(`>s a b`).Puts(false),
+		That(`>s 2 10`).Puts(true),
+		That(`>=s a a`).Puts(true),
+		That(`>=s a b`).Puts(false),
+		That(`>=s b a`).Puts(true),
+
+		That(`to-string str (float64 1) $true`).Puts("str", "1", "$true"),
 
 		That(`joins : [/usr /bin /tmp]`).Puts("/usr:/bin:/tmp"),
 		That(`joins : ['' a '']`).Puts(":a:"),
