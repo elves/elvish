@@ -404,7 +404,7 @@ func categorizeWord(r rune) int {
 // Deletes the the last small word to the left of the dot.
 
 func moveDotLeftSmallWord(buffer string, dot int) int {
-	return moveDotLeftGeneralWord(categorizeSmallWord, buffer, dot)
+	return moveDotLeftGeneralWord(cli.CategorizeSmallWord, buffer, dot)
 }
 
 //elvdoc:fn move-dot-right-small-word
@@ -416,18 +416,7 @@ func moveDotLeftSmallWord(buffer string, dot int) int {
 // Deletes the the first small word to the right of the dot.
 
 func moveDotRightSmallWord(buffer string, dot int) int {
-	return moveDotRightGeneralWord(categorizeSmallWord, buffer, dot)
-}
-
-func categorizeSmallWord(r rune) int {
-	switch {
-	case unicode.IsSpace(r):
-		return 0
-	case isAlnum(r):
-		return 1
-	default:
-		return 2
-	}
+	return moveDotRightGeneralWord(cli.CategorizeSmallWord, buffer, dot)
 }
 
 //elvdoc:fn move-dot-left-alnum-word
@@ -456,7 +445,7 @@ func moveDotRightAlnumWord(buffer string, dot int) int {
 
 func categorizeAlnum(r rune) int {
 	switch {
-	case isAlnum(r):
+	case cli.IsAlnum(r):
 		return 1
 	default:
 		return 0
@@ -573,8 +562,4 @@ func moveDotRightGeneralWord(categorize categorizer, buffer string, dot int) int
 	skipCat(0)
 
 	return len(buffer) - len(right)
-}
-
-func isAlnum(r rune) bool {
-	return unicode.IsLetter(r) || unicode.IsNumber(r)
 }

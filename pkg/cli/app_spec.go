@@ -20,6 +20,8 @@ type AppSpec struct {
 	Abbreviations  func(f func(abbr, full string))
 	QuotePaste     func() bool
 
+	SmallWordAbbreviations func(f func(abbr, full string))
+
 	CodeAreaState CodeAreaState
 	State         State
 }

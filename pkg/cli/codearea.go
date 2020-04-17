@@ -38,7 +38,8 @@ type CodeAreaSpec struct {
 	// A function that calls the callback with string pairs for abbreviations
 	// and their expansions. If this function is not given, the Widget does not
 	// expand any abbreviations.
-	Abbreviations func(f func(abbr, full string))
+	Abbreviations          func(f func(abbr, full string))
+	SmallWordAbbreviations func(f func(abbr, full string))
 	// A function that returns whether pasted texts (from bracketed pastes)
 	// should be quoted. If this function is not given, the Widget defaults to
 	// not quoting pasted texts.
@@ -125,6 +126,9 @@ func NewCodeArea(spec CodeAreaSpec) CodeArea {
 	if spec.Abbreviations == nil {
 		spec.Abbreviations = func(func(a, f string)) {}
 	}
+	if spec.SmallWordAbbreviations == nil {
+		spec.SmallWordAbbreviations = func(func(a, f string)) {}
+	}
 	if spec.QuotePaste == nil {
 		spec.QuotePaste = func() bool { return false }
 	}
@@ -196,6 +200,71 @@ func (w *codeArea) handlePasteSetting(start bool) bool {
 	return true
 }
 
+// Try to expand a simple abbreviation that ignores word boundaries.
+func (w *codeArea) expandSimpleAbbr() {
+	var abbr, full string
+	// Find the longest matching abbreviation.
+	w.Abbreviations(func(a, f string) {
+		if strings.HasSuffix(w.inserts, a) && len(a) > len(abbr) {
+			abbr, full = a, f
+		}
+	})
+	if len(abbr) > 0 {
+		c := &w.State.Buffer
+		*c = CodeBuffer{
+			Content: c.Content[:c.Dot-len(abbr)] + full + c.Content[c.Dot:],
+			Dot:     c.Dot - len(abbr) + len(full),
+		}
+		w.resetInserts()
+	}
+}
+
+// Try to expand a small word abbreviation.
+func (w *codeArea) expandSmallWordAbbr(triggerRune rune, triggerLen int) {
+	// We only do small word expansions at the end of the line and only if
+	// there are characters in the insert buffer other than the trigger rune.
+	c := &w.State.Buffer
+	if len(w.inserts) <= triggerLen || c.Dot < len(c.Content) {
+		return
+	}
+
+	inserts := w.inserts[:len(w.inserts)-triggerLen] // ignore abbr trigger rune
+	var abbr, full string
+	// Find the longest matching abbreviation.
+	w.SmallWordAbbreviations(func(a, f string) {
+		if len(a) >= len(w.inserts) || len(a) < len(abbr) {
+			return // check the next abbreviation
+		}
+
+		// Verify the abbreviation is in the insert buffer.
+		if !strings.HasSuffix(inserts, a) {
+			return
+		}
+		// Verify the trigger rune creates a word boundary.
+		r2, _ := utf8.DecodeLastRuneInString(a)
+		if CategorizeSmallWord(triggerRune) == CategorizeSmallWord(r2) {
+			return
+		}
+		// Verify the rune preceding the abbreviation, if any, creates a word boundary.
+		if len(c.Content) > len(a)+triggerLen {
+			r1, _ := utf8.DecodeLastRuneInString(c.Content[:len(c.Content)-len(a)-triggerLen])
+			r2, _ = utf8.DecodeRuneInString(a)
+			if CategorizeSmallWord(r1) == CategorizeSmallWord(r2) {
+				return
+			}
+		}
+
+		abbr, full = a, f
+	})
+	if len(abbr) > 0 {
+		*c = CodeBuffer{
+			Content: c.Content[:c.Dot-len(abbr)-triggerLen] + full + string(triggerRune),
+			Dot:     c.Dot - len(abbr) + len(full),
+		}
+		w.resetInserts()
+	}
+}
+
 func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 	isFuncKey := key.Mod != 0 || key.Rune < 0
 	if w.pasting {
@@ -207,9 +276,11 @@ func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 		}
 		return true
 	}
+
 	if w.OverlayHandler.Handle(term.KeyEvent(key)) {
 		return true
 	}
+
 	// We only implement essential keybindings here. Other keybindings can be
 	// added via handler overlays.
 	switch key {
@@ -245,21 +316,25 @@ func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 		w.State.Buffer.InsertAtDot(s)
 		w.inserts += s
 		w.lastCodeBuffer = w.State.Buffer
-		var abbr, full string
-		// Try to expand an abbreviation, preferring the longest one
-		w.Abbreviations(func(a, f string) {
-			if strings.HasSuffix(w.inserts, a) && len(a) > len(abbr) {
-				abbr, full = a, f
-			}
-		})
-		if len(abbr) > 0 {
-			c := &w.State.Buffer
-			*c = CodeBuffer{
-				Content: c.Content[:c.Dot-len(abbr)] + full + c.Content[c.Dot:],
-				Dot:     c.Dot - len(abbr) + len(full),
-			}
-			w.resetInserts()
-		}
+		w.expandSimpleAbbr()
+		w.expandSmallWordAbbr(key.Rune, len(s))
 		return true
+	}
+}
+
+// Determine if the rune is an alphanumeric character.
+func IsAlnum(r rune) bool {
+	return unicode.IsLetter(r) || unicode.IsNumber(r)
+}
+
+// Determine if the rune is whitespace, alphanum, or something else.
+func CategorizeSmallWord(r rune) int {
+	switch {
+	case unicode.IsSpace(r):
+		return 0
+	case IsAlnum(r):
+		return 1
+	default:
+		return 2
 	}
 }
