@@ -376,7 +376,12 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 	}
 
 	if headFn != nil {
-		return headFn.Call(fm, args, convertedOpts)
+		fm.traceback = fm.addTraceback(op)
+		err := headFn.Call(fm, args, convertedOpts)
+		if _, ok := err.(*Exception); ok {
+			return err
+		}
+		return &Exception{err, fm.traceback}
 	}
 	return op.spaceyAssignOp.exec(fm)
 }

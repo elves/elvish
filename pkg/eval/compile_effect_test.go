@@ -181,3 +181,19 @@ func TestCompileEffect(t *testing.T) {
 			"[]"),
 	)
 }
+
+func TestStacktrace(t *testing.T) {
+	oops := errWithMessage{"oops"}
+	Test(t,
+		// Stack traces.
+		That("fail oops").Throws(oops, "fail oops"),
+		That("fn f { fail oops }", "f").Throws(oops, "fail oops ", "f"),
+		That("fn f { fail oops }", "fn g { f }", "g").Throws(
+			oops, "fail oops ", "f ", "g"),
+		// Error thrown before execution.
+		That("fn f { }", "f a").Throws(errWithType{errs.ArityMismatch{}}, "f a"),
+		// Error from builtin.
+		That("count 1 2 3").Throws(
+			errWithType{errs.ArityMismatch{}}, "count 1 2 3"),
+	)
+}

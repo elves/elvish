@@ -226,7 +226,12 @@ func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
 					r.compilationError, tt.want.compilationError)
 			}
 			if !matchErr(tt.want.exception, r.exception) {
-				t.Errorf("got exception %v, want %v", r.exception, tt.want.exception)
+				t.Errorf("unexpected exception")
+				t.Logf("got: %v", r.exception)
+				if exc, ok := r.exception.(*Exception); ok {
+					t.Logf("stack trace: %#v", getStackTexts(exc.Traceback))
+				}
+				t.Errorf("want: %v", tt.want.exception)
 			}
 		})
 	}
