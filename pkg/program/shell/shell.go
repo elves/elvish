@@ -4,6 +4,7 @@ package shell
 import (
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"github.com/elves/elvish/pkg/cli/term"
@@ -17,6 +18,7 @@ var logger = util.GetLogger("[shell] ")
 func setupShell(fds [3]*os.File, p Paths, spawn bool) (*eval.Evaler, func()) {
 	restoreTTY := term.SetupGlobal()
 	ev := InitRuntime(fds[2], p, spawn)
+	restoreSHLVL := incSHLVL()
 
 	sigs := make(chan os.Signal)
 	signal.Notify(sigs)
@@ -29,6 +31,7 @@ func setupShell(fds [3]*os.File, p Paths, spawn bool) (*eval.Evaler, func()) {
 
 	return ev, func() {
 		signal.Stop(sigs)
+		restoreSHLVL()
 		CleanupRuntime(fds[2], ev)
 		restoreTTY()
 	}
@@ -39,6 +42,28 @@ func evalInTTY(ev *eval.Evaler, op eval.Op, fds [3]*os.File) error {
 	defer cleanup()
 	return ev.Eval(op, eval.EvalCfg{
 		Ports: ports[:], Interrupt: eval.ListenInterrupts, PutInFg: true})
+}
+
+const envSHLVL = "SHLVL"
+
+func incSHLVL() func() {
+	restoreSHLVL := saveEnv(envSHLVL)
+
+	i, err := strconv.Atoi(os.Getenv(envSHLVL))
+	if err != nil {
+		i = 0
+	}
+	os.Setenv(envSHLVL, strconv.Itoa(i+1))
+
+	return restoreSHLVL
+}
+
+func saveEnv(name string) func() {
+	v, ok := os.LookupEnv(name)
+	if ok {
+		return func() { os.Setenv(name, v) }
+	}
+	return func() { os.Unsetenv(name) }
 }
 
 // Global panic handler.
