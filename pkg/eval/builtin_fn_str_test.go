@@ -29,10 +29,19 @@ func TestBuiltinFnStr(t *testing.T) {
 		That(`replaces &max=2 : / :usr:bin:tmp`).Puts("/usr/bin:tmp"),
 
 		That(`ord a`).Puts("0x61"),
+		That(`ord &bytes a`).Puts("0x61"),
 		That(`ord 你好`).Puts("0x4f60", "0x597d"),
+		That(`ord &bytes 你a好`).Puts("0xe4", "0xbd", "0xa0", "0x61", "0xe5", "0xa5", "0xbd"),
+
 		That(`chr 0x61`).Puts("a"),
+		That(`chr &bytes 0x61`).Puts("a"),
 		That(`chr 0x4f60 0x597d`).Puts("你好"),
-		That(`chr -1`).ThrowsAny(),
+		That(`chr &bytes 0x4f60 0x597d`).ThrowsMessage("invalid byte value: 20320"),
+		That(`chr -1`).ThrowsMessage("invalid codepoint: -1"),
+
+		That(`chr 0x4f60 0x61 0x597d | ord (all)`).Puts("0x4f60", "0x61", "0x597d"),
+		That(`ord &bytes 你a好 | chr &bytes (all)`).Puts("你a好"),
+		That(`ord 你a好 | chr (all)`).Puts("你a好"),
 
 		That(`base 16 42 233`).Puts("2a", "e9"),
 		That(`base 1 1`).ThrowsAny(),   // no base-1

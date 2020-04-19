@@ -59,17 +59,29 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 //elvdoc:fn ord
 //
 // ```elvish
-// ord $string
+// ord &bytes $string
 // ```
 //
-// Output value of each codepoint in `$string`, in hexadecimal. Examples:
+// If the `&bytes` option is not used it outputs the value of each Unicode
+// codepoint in `$string`, in hexadecimal. If the `&bytes` option is used it
+// outputs the individual bytes in `$string`, in hexadecimal; i.e., the UTF-8
+// encoding. Examples:
 //
 // ```elvish-transcript
 // ~> ord a
 // ▶ 0x61
-// ~> ord 你好
+// ~> ord 你a好
 // ▶ 0x4f60
+// ▶ 0x61
 // ▶ 0x597d
+// ~> ord &bytes 你a好
+// ▶ 0xe4
+// ▶ 0xbd
+// ▶ 0xa0
+// ▶ 0x61
+// ▶ 0xe5
+// ▶ 0xa5
+// ▶ 0xbd
 // ```
 //
 // The output format is subject to change.
@@ -81,16 +93,20 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 //elvdoc:fn chr
 //
 // ```elvish
-// chr $number...
+// chr &bytes $number...
 // ```
 //
-// Outputs a string consisting of the given Unicode codepoints. Example:
+// Outputs a string consisting of the Unicode codepoints. If the `&bytes`
+// option is used the string is composed of individual bytes; e.g. the UTF-8
+// encoding. Examples:
 //
 // ```elvish-transcript
 // ~> chr 0x61
 // ▶ a
-// ~> chr 0x4f60 0x597d
-// ▶ 你好
+// ~> chr 0x4f60 0x61 0x597d
+// ▶ 你a好
+// ~> chr &bytes 0xe4 0xbd 0xa0 0x61 0xe5 0xa5 0xbd
+// ▶ 你a好
 // ```
 //
 // Etymology: [Python](https://docs.python.org/3/library/functions.html#chr).
@@ -322,20 +338,43 @@ func replaces(opts maxOpt, old, repl, s string) string {
 	return strings.Replace(s, old, repl, opts.Max)
 }
 
-func ord(fm *Frame, s string) {
+type ordOpt struct{ Bytes bool }
+
+func (o *ordOpt) SetDefaultOptions() { o.Bytes = false }
+
+func ord(fm *Frame, opts ordOpt, s string) {
 	out := fm.ports[1].Chan
-	for _, r := range s {
-		out <- "0x" + strconv.FormatInt(int64(r), 16)
+	if opts.Bytes { // hex encode bytes; e.g. UTF-8
+		for i := 0; i < len(s); i++ {
+			out <- "0x" + strconv.FormatInt(int64(s[i]), 16)
+		}
+	} else { // hex encode code points; e.g. UTF-32
+		for _, r := range s {
+			out <- "0x" + strconv.FormatInt(int64(r), 16)
+		}
 	}
 }
 
-func chr(nums ...int) (string, error) {
+type chrOpt struct{ Bytes bool }
+
+func (o *chrOpt) SetDefaultOptions() { o.Bytes = false }
+
+func chr(opts chrOpt, nums ...int) (string, error) {
 	var b bytes.Buffer
-	for _, num := range nums {
-		if !utf8.ValidRune(rune(num)) {
-			return "", fmt.Errorf("invalid codepoint: %d", num)
+	if opts.Bytes { // assume byte encoding; e.g. UTF-8
+		for _, num := range nums {
+			if num < 0 || num > 0xFF {
+				return "", fmt.Errorf("invalid byte value: %d", num)
+			}
+			b.WriteByte(byte(num))
 		}
-		b.WriteRune(rune(num))
+	} else { // assume code point encoding; e.g. UTF-32
+		for _, num := range nums {
+			if !utf8.ValidRune(rune(num)) {
+				return "", fmt.Errorf("invalid codepoint: %d", num)
+			}
+			b.WriteRune(rune(num))
+		}
 	}
 	return b.String(), nil
 }
