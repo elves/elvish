@@ -36,7 +36,30 @@ import (
 // [C](https://manpages.debian.org/stretch/manpages-dev/puts.3.en.html) and
 // [Ruby](https://ruby-doc.org/core-2.2.2/IO.html#method-i-puts) as `puts`.
 
-// TODO(xiaq): Document read-upto.
+//elvdoc:fn read-upto
+//
+// ```elvish
+// read-upto $delim
+// ```
+//
+// Reads byte input until `$delim` or end-of-file is encountered, and outputs
+// the part of the input read as a string value. The output contains the
+// trailing `$delim`, unless `read-upto` terminated at end-of-file.
+//
+// The `$delim` argument must be a single rune in the ASCII range.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> echo "a,b,c" | read-upto ","
+// ▶ 'a,'
+// ~> echo "foo\nbar" | read-upto "\n"
+// ▶ "foo\n"
+// ~> echo "a.elv\x00b.elv" | read-upto "\x00"
+// ▶ "a.elv\x00"
+// ~> print "foobar" | read-upto "\n"
+// ▶ foobar
+// ```
 
 //elvdoc:fn print
 //
