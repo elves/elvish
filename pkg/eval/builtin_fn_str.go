@@ -97,7 +97,29 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 //
 // @cf ord
 
-// TODO(xiaq): Document "base".
+//elvdoc:fn base
+//
+// ```elvish
+// base $base $number...
+// ```
+//
+// Outputs a string for each `$number` written in `$base`. The `$base` must be
+// between 2 and 36, inclusive. Examples:
+//
+// ```elvish-transcript
+// ~> base 2 1 3 4 16 255
+// ▶ 1
+// ▶ 11
+// ▶ 100
+// ▶ 10000
+// ▶ 11111111
+// ~> base 16 1 3 4 16 255
+// ▶ 1
+// ▶ 3
+// ▶ 4
+// ▶ 10
+// ▶ ff
+// ```
 
 //elvdoc:fn wcswidth
 //
