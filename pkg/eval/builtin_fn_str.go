@@ -169,7 +169,7 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // Etymology: Various languages as `join`, in particular
 // [Python](https://docs.python.org/3.6/library/stdtypes.html#str.join).
 //
-// @cf splits
+// @cf str:join splits
 
 //elvdoc:fn splits
 //

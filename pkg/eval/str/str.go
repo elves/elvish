@@ -178,7 +178,7 @@ import (
 // > '2:y:[b c]'
 // ```
 //
-// @cf split
+// @cf builtin:joins str:split
 
 //elvdoc:fn last-index
 //
