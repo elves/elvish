@@ -169,6 +169,42 @@ import (
 // ▶ -1
 // ```
 
+//elvdoc:fn split
+//
+// ```elvish
+// str:split $sep $arg
+// ```
+//
+// Split separates `$arg`, when coerced to a string if it isn't already
+// a string, by `$sep`. The separator is typically a single char but can
+// be an arbitrary string. If the separator is the empty string then `$arg`
+// is split on code points in the string; i.e., into individual characters.
+//
+// ```elvish-transcript
+// ~> str:split : x
+// > x
+// ~> str:split : a:b:c
+// > a
+// > b
+// > c
+// ~> splits '' 你好
+// ▶ 你
+// ▶ 好
+// ~> str:split '' (float64 1.2)
+// > 1
+// > .
+// > 2
+// ~> str:split '.' (float64 3.14)
+// > 3
+// > 14
+// ```
+//
+// **Note**: `splits` does not support splitting by regular expressions, `$sep` is
+// always interpreted as a plain string. Use [re:split](re.html#split) if you need
+// to split by regex.
+//
+// @cf builtin:splits str:join
+
 //elvdoc:fn title
 //
 // ```elvish
@@ -313,50 +349,6 @@ import (
 // ~> str:trim-suffix "¡¡¡Hello, Elven!!!" ", Klingons!!!"
 // ▶ '¡¡¡Hello, Elven!!!'
 // ```
-
-//elvdoc:fn split
-//
-// ```elvish
-// str:split $separator $arg...
-// ```
-//
-// Split separates each argument, when coerced to a string if it isn't already
-// a string, by `$separator`. The separator is typically a single char but can
-// be an arbitrary string. If the separator is the empty string then each
-// argument is split on code points in the string; i.e., "characters".
-//
-// If there are no arguments it reads from stdin. Lists are flattened one
-// level. So `str:split - a-b` produces the same output as `str:split -
-// [a-b]`. Other data types (such as float64) have the same representation you
-// would get by passing the same arg to the `echo` builtin. That is, they are
-// coerced to a string representation before being split (same as
-// [`str:join`]("#join")).
-//
-// ```elvish-transcript
-// ~> str:split : x
-// > x
-// ~> str:split : a:b c:d
-// > a
-// > b
-// > c
-// > d
-// ~> put (float64 1.2) y [a.b] | str:split .
-// > 1
-// > 2
-// > y
-// > a
-// > b
-// ~> echo "a:b\nc" | str:split :
-// > a
-// > b
-// > c
-// ~> str:split '' (float64 1.2)
-// > 1
-// > .
-// > 2
-// ```
-//
-// See also: [`str:join`]("#join").
 
 // Wrap Go's strings.SplitN() so it can be used in an elvish program.
 type splitOpts struct{ Max int }

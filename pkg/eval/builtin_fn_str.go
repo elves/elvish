@@ -196,7 +196,7 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // Etymology: Various languages as `split`, in particular
 // [Python](https://docs.python.org/3.6/library/stdtypes.html#str.split).
 //
-// @cf joins
+// @cf joins str:split
 
 //elvdoc:fn replaces
 //
