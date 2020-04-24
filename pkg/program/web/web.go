@@ -33,7 +33,7 @@ type ExecuteResponse struct {
 	Err       string
 }
 
-func (web *Web) Main(fds [3]*os.File, _ []string) int {
+func (web *Web) Main(fds [3]*os.File, _ []string) error {
 	p := shell.MakePaths(fds[2],
 		shell.Paths{Bin: web.BinPath, Sock: web.SockPath, Db: web.DbPath})
 	ev := shell.InitRuntime(fds[2], p, true)
@@ -48,7 +48,7 @@ func (web *Web) Main(fds [3]*os.File, _ []string) int {
 	err := http.ListenAndServe(addr, nil)
 
 	log.Println(err)
-	return 0
+	return nil
 }
 
 func (h httpHandler) handleMainPage(w http.ResponseWriter, r *http.Request) {

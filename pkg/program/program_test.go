@@ -2,6 +2,7 @@ package program
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,75 +12,16 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/buildinfo"
-	"github.com/elves/elvish/pkg/program/web"
 )
 
-var findProgramTests = []struct {
-	args    []string
-	checker func(Program) bool
-}{
-	{[]string{}, isShell},
-	{[]string{"-c", "echo"}, func(p Program) bool {
-		return p.(*shellProgram).Cmd
-	}},
-	{[]string{"-compileonly"}, func(p Program) bool {
-		return p.(*shellProgram).CompileOnly
-	}},
-	{[]string{"-web"}, isWeb},
-	{[]string{"-web", "-port", "233"}, func(p Program) bool {
-		return p.(*web.Web).Port == 233
-	}},
-	{[]string{"-daemon"}, isDaemon},
-
-	{[]string{"-bin", "/elvish"}, func(p Program) bool {
-		return p.(*shellProgram).BinPath == "/elvish"
-	}},
-	{[]string{"-db", "/db"}, func(p Program) bool {
-		return p.(*shellProgram).DbPath == "/db"
-	}},
-	{[]string{"-sock", "/sock"}, func(p Program) bool {
-		return p.(*shellProgram).SockPath == "/sock"
-	}},
-
-	{[]string{"-web", "-bin", "/elvish"}, func(p Program) bool {
-		return p.(*web.Web).BinPath == "/elvish"
-	}},
-	{[]string{"-web", "-db", "/db"}, func(p Program) bool {
-		return p.(*web.Web).DbPath == "/db"
-	}},
-	{[]string{"-web", "-sock", "/sock"}, func(p Program) bool {
-		return p.(*web.Web).SockPath == "/sock"
-	}},
-
-	{[]string{"-daemon", "-db", "/db"}, func(p Program) bool {
-		return p.(daemonProgram).DbPath == "/db"
-	}},
-	{[]string{"-daemon", "-sock", "/sock"}, func(p Program) bool {
-		return p.(daemonProgram).SockPath == "/sock"
-	}},
-}
-
-func isDaemon(p Program) bool { _, ok := p.(daemonProgram); return ok }
-func isWeb(p Program) bool    { _, ok := p.(*web.Web); return ok }
-func isShell(p Program) bool  { _, ok := p.(*shellProgram); return ok }
-
-func TestFindProgram(t *testing.T) {
-	for i, test := range findProgramTests {
-		f := parse(test.args)
-		p := FindProgram(f)
-		if !test.checker(p) {
-			t.Errorf("test #%d (args = %q) failed", i, test.args)
-		}
-	}
-}
-
-func parse(args []string) *flagSet {
-	f := newFlagSet(os.Stderr)
-	err := f.Parse(args)
+func parse(args []string) (*flag.FlagSet, *Flags) {
+	f := Flags{}
+	fs := newFlagSet(os.Stderr, &f)
+	err := fs.Parse(args)
 	if err != nil {
 		panic(fmt.Sprintln("bad flags in test", args))
 	}
-	return f
+	return fs, &f
 }
 
 type programTest struct {
