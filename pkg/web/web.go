@@ -13,7 +13,7 @@ import (
 
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/prog"
-	"github.com/elves/elvish/pkg/prog/shell"
+	"github.com/elves/elvish/pkg/shell"
 )
 
 // Program is the web subprogram.

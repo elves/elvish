@@ -10,8 +10,8 @@ import (
 	"github.com/elves/elvish/pkg/buildinfo"
 	"github.com/elves/elvish/pkg/daemon"
 	"github.com/elves/elvish/pkg/prog"
-	"github.com/elves/elvish/pkg/prog/shell"
-	"github.com/elves/elvish/pkg/prog/web"
+	"github.com/elves/elvish/pkg/shell"
+	"github.com/elves/elvish/pkg/web"
 )
 
 func main() {
