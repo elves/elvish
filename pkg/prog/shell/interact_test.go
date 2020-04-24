@@ -7,7 +7,7 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
-	. "github.com/elves/elvish/pkg/program/progtest"
+	. "github.com/elves/elvish/pkg/prog/progtest"
 )
 
 func TestInteract_SingleCommand(t *testing.T) {

@@ -1,6 +1,6 @@
 // Package program provides the entry point to Elvish. Its subpackages
 // correspond to subprograms of Elvish.
-package program
+package prog
 
 // This package sets up the basic environment and calls the appropriate
 // "subprogram", one of the daemon, the terminal interface, or the web

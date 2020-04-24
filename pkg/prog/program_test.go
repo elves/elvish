@@ -1,4 +1,4 @@
-package program
+package prog
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/buildinfo"
-	. "github.com/elves/elvish/pkg/program/progtest"
+	. "github.com/elves/elvish/pkg/prog/progtest"
 )
 
 func TestVersion(t *testing.T) {

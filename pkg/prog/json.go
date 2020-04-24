@@ -1,4 +1,4 @@
-package program
+package prog
 
 import (
 	"bytes"

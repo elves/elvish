@@ -7,9 +7,9 @@ package main
 import (
 	"os"
 
-	"github.com/elves/elvish/pkg/program"
+	"github.com/elves/elvish/pkg/prog"
 )
 
 func main() {
-	os.Exit(program.Main([3]*os.File{os.Stdin, os.Stdout, os.Stderr}, os.Args))
+	os.Exit(prog.Main([3]*os.File{os.Stdin, os.Stdout, os.Stderr}, os.Args))
 }

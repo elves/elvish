@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/pkg/daemon"
 	"github.com/elves/elvish/pkg/testutil"
 
-	. "github.com/elves/elvish/pkg/program/progtest"
+	. "github.com/elves/elvish/pkg/prog/progtest"
 )
 
 func TestShell_ConnectsToDaemon(t *testing.T) {

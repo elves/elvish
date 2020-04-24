@@ -1,9 +1,9 @@
-package program
+package prog
 
 import (
 	"os"
 
-	"github.com/elves/elvish/pkg/program/shell"
+	"github.com/elves/elvish/pkg/prog/shell"
 )
 
 type shellProgram struct{}

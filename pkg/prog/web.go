@@ -1,9 +1,9 @@
-package program
+package prog
 
 import (
 	"os"
 
-	"github.com/elves/elvish/pkg/program/web"
+	"github.com/elves/elvish/pkg/prog/web"
 )
 
 type webProgram struct{}

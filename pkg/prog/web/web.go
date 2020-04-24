@@ -12,7 +12,7 @@ import (
 	"os"
 
 	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/program/shell"
+	"github.com/elves/elvish/pkg/prog/shell"
 )
 
 type Web struct {
