@@ -111,11 +111,6 @@ func Run(fds [3]*os.File, args []string, programs ...Program) int {
 		return 0
 	}
 
-	for _, program := range programs {
-		if program.ShouldRun(f) {
-		}
-	}
-
 	p := findProgram(f, programs)
 	if p == nil {
 		fmt.Fprintln(fds[2], "program bug: no suitable subprogram")
