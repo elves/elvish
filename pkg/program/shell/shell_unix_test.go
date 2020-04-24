@@ -11,11 +11,13 @@ import (
 
 	"github.com/elves/elvish/pkg/daemon"
 	"github.com/elves/elvish/pkg/testutil"
+
+	. "github.com/elves/elvish/pkg/program/progtest"
 )
 
 func TestShell_ConnectsToDaemon(t *testing.T) {
-	f := setup()
-	defer f.cleanup()
+	f := Setup()
+	defer f.Cleanup()
 
 	// Run the daemon in the same process for simplicity.
 	var wg sync.WaitGroup
@@ -47,11 +49,11 @@ func TestShell_ConnectsToDaemon(t *testing.T) {
 
 	// This test uses Script, but it also applies to Interact since the daemon
 	// connection logic is common to both modes.
-	Script(f.fds(),
+	Script(f.Fds(),
 		[]string{"use daemon; print $daemon:pid"},
 		&ScriptConfig{
 			Cmd: true, SpawnDaemon: true,
 			Paths: Paths{Sock: "sock", Db: "db", DaemonLogPrefix: "log-"}})
-	f.testOut(t, 1, strconv.Itoa(os.Getpid()))
-	f.testOut(t, 2, "")
+	f.TestOut(t, 1, strconv.Itoa(os.Getpid()))
+	f.TestOut(t, 2, "")
 }

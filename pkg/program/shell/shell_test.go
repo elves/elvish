@@ -3,6 +3,8 @@ package shell
 import (
 	"os"
 	"testing"
+
+	. "github.com/elves/elvish/pkg/program/progtest"
 )
 
 func TestShell_SHLVL_NormalCase(t *testing.T) {
@@ -49,13 +51,13 @@ func TestShell_NegativeSHLVL_Increments(t *testing.T) {
 
 func testSHLVL(t *testing.T, wantSHLVL string) {
 	t.Helper()
-	f := setup()
-	defer f.cleanup()
+	f := Setup()
+	defer f.Cleanup()
 
 	oldValue, oldOK := os.LookupEnv("SHLVL")
 
-	Script(f.fds(), []string{"print $E:SHLVL"}, &ScriptConfig{Cmd: true})
-	f.testOut(t, 1, wantSHLVL)
+	Script(f.Fds(), []string{"print $E:SHLVL"}, &ScriptConfig{Cmd: true})
+	f.TestOut(t, 1, wantSHLVL)
 
 	// Test that state of SHLVL is restored.
 	newValue, newOK := os.LookupEnv("SHLVL")

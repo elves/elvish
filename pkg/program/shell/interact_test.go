@@ -7,66 +7,67 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
+	. "github.com/elves/elvish/pkg/program/progtest"
 )
 
 func TestInteract_SingleCommand(t *testing.T) {
-	f := setup()
-	defer f.cleanup()
-	f.feedIn("echo hello\n")
+	f := Setup()
+	defer f.Cleanup()
+	f.FeedIn("echo hello\n")
 
-	Interact(f.fds(), &InteractConfig{})
-	f.testOut(t, 1, "hello\n")
+	Interact(f.Fds(), &InteractConfig{})
+	f.TestOut(t, 1, "hello\n")
 }
 
 func TestInteract_Exception(t *testing.T) {
-	f := setup()
-	defer f.cleanup()
-	f.feedIn("fail mock\n")
+	f := Setup()
+	defer f.Cleanup()
+	f.FeedIn("fail mock\n")
 
-	Interact(f.fds(), &InteractConfig{})
-	f.testOutSnippet(t, 2, "fail mock")
+	Interact(f.Fds(), &InteractConfig{})
+	f.TestOutSnippet(t, 2, "fail mock")
 }
 
 func TestInteract_RcFile(t *testing.T) {
-	f := setup()
-	defer f.cleanup()
-	f.feedIn("")
+	f := Setup()
+	defer f.Cleanup()
+	f.FeedIn("")
 
-	writeFile("rc.elv", "echo hello from rc.elv")
+	MustWriteFile("rc.elv", "echo hello from rc.elv")
 
-	Interact(f.fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
-	f.testOut(t, 1, "hello from rc.elv\n")
+	Interact(f.Fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
+	f.TestOut(t, 1, "hello from rc.elv\n")
 }
 
 func TestInteract_RcFile_DoesNotCompile(t *testing.T) {
-	f := setup()
-	defer f.cleanup()
-	f.feedIn("")
+	f := Setup()
+	defer f.Cleanup()
+	f.FeedIn("")
 
-	writeFile("rc.elv", "echo $a")
+	MustWriteFile("rc.elv", "echo $a")
 
-	Interact(f.fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
-	f.testOutSnippet(t, 2, "variable $a not found")
+	Interact(f.Fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
+	f.TestOutSnippet(t, 2, "variable $a not found")
 }
 
 func TestInteract_RcFile_Exception(t *testing.T) {
-	f := setup()
-	defer f.cleanup()
-	f.feedIn("")
+	f := Setup()
+	defer f.Cleanup()
+	f.FeedIn("")
 
-	writeFile("rc.elv", "fail mock")
+	MustWriteFile("rc.elv", "fail mock")
 
-	Interact(f.fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
-	f.testOutSnippet(t, 2, "fail mock")
+	Interact(f.Fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
+	f.TestOutSnippet(t, 2, "fail mock")
 }
 
 func TestInteract_RcFile_NonexistentIsOK(t *testing.T) {
-	f := setup()
-	defer f.cleanup()
-	f.feedIn("")
+	f := Setup()
+	defer f.Cleanup()
+	f.FeedIn("")
 
-	Interact(f.fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
-	f.testOut(t, 1, "")
+	Interact(f.Fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
+	f.TestOut(t, 1, "")
 }
 
 func TestExtractExports(t *testing.T) {

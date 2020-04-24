@@ -1,4 +1,8 @@
-package shell
+// Package progtest provides utilities for testing subprograms.
+//
+// This package intentionally has no test file; it is excluded from test
+// coverage.
+package progtest
 
 import (
 	"io/ioutil"
@@ -9,28 +13,34 @@ import (
 	"github.com/elves/elvish/pkg/util"
 )
 
-type fixture struct {
+// Fixture is a test fixture suitable for testing programs.
+type Fixture struct {
 	pipes      [3]*pipe
 	dirCleanup func()
 }
 
-func setup() *fixture {
+// Setup sets up a test fixture. The caller is responsible for calling the
+// Cleanup method of the returned Fixture.
+func Setup() *Fixture {
 	_, dirCleanup := util.InTestDir()
-	return &fixture{[3]*pipe{makePipe(), makePipe(), makePipe()}, dirCleanup}
+	return &Fixture{[3]*pipe{makePipe(), makePipe(), makePipe()}, dirCleanup}
 }
 
-func (f *fixture) cleanup() {
+// Cleanup cleans up the test fixture.
+func (f *Fixture) Cleanup() {
 	f.pipes[0].close()
 	f.pipes[1].close()
 	f.pipes[2].close()
 	f.dirCleanup()
 }
 
-func (f *fixture) fds() [3]*os.File {
+// Fds returns the file descriptors in the fixture.
+func (f *Fixture) Fds() [3]*os.File {
 	return [3]*os.File{f.pipes[0].r, f.pipes[1].w, f.pipes[2].w}
 }
 
-func (f *fixture) feedIn(s string) {
+// FeedIn feeds input to the standard input.
+func (f *Fixture) FeedIn(s string) {
 	_, err := f.pipes[0].w.WriteString(s)
 	if err != nil {
 		panic(err)
@@ -38,14 +48,16 @@ func (f *fixture) feedIn(s string) {
 	f.pipes[0].w.Close()
 }
 
-func (f *fixture) testOut(t *testing.T, fd int, wantOut string) {
+// TestOut tests that the output on the given FD matches the given text.
+func (f *Fixture) TestOut(t *testing.T, fd int, wantOut string) {
 	t.Helper()
 	if out := f.pipes[fd].get(); out != wantOut {
 		t.Errorf("got out %q, want %q", out, wantOut)
 	}
 }
 
-func (f *fixture) testOutSnippet(t *testing.T, fd int, wantOutSnippet string) {
+// TestOutSnippet tests that the output on the given FD contains the given text.
+func (f *Fixture) TestOutSnippet(t *testing.T, fd int, wantOutSnippet string) {
 	t.Helper()
 	if err := f.pipes[fd].get(); !strings.Contains(err, wantOutSnippet) {
 		t.Errorf("got out %q, want string containing %q", err, wantOutSnippet)
@@ -93,7 +105,9 @@ func (p *pipe) close() {
 	}
 }
 
-func writeFile(name, content string) {
+// MustWriteFile writes a file with the given name and content. It panics if the
+// write fails.
+func MustWriteFile(name, content string) {
 	err := ioutil.WriteFile(name, []byte(content), 0600)
 	if err != nil {
 		panic(err)
