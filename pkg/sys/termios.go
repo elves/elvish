@@ -51,6 +51,11 @@ func (term *Termios) SetICanon(v bool) {
 	setFlag(&term.Lflag, unix.ICANON, v)
 }
 
+// SetIExten sets the iexten flag.
+func (term *Termios) SetIExten(v bool) {
+	setFlag(&term.Lflag, unix.IEXTEN, v)
+}
+
 // SetEcho sets the echo flag.
 func (term *Termios) SetEcho(v bool) {
 	setFlag(&term.Lflag, unix.ECHO, v)
