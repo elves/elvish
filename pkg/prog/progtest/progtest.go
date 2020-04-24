@@ -113,3 +113,17 @@ func MustWriteFile(name, content string) {
 		panic(err)
 	}
 }
+
+// Elvish returns an argument slice starting with "elvish".
+func Elvish(args ...string) []string {
+	return append([]string{"elvish"}, args...)
+}
+
+// TestError tests the error result of a program.
+func TestError(t *testing.T, f *Fixture, exit int, wantErrSnippet string) {
+	t.Helper()
+	if exit != 2 {
+		t.Errorf("got exit %v, want 2", exit)
+	}
+	f.TestOutSnippet(t, 2, wantErrSnippet)
+}

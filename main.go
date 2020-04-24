@@ -7,13 +7,15 @@ package main
 import (
 	"os"
 
+	"github.com/elves/elvish/pkg/buildinfo"
+	"github.com/elves/elvish/pkg/daemon"
 	"github.com/elves/elvish/pkg/prog"
+	"github.com/elves/elvish/pkg/prog/shell"
+	"github.com/elves/elvish/pkg/prog/web"
 )
 
 func main() {
 	os.Exit(prog.Run(
-		[3]*os.File{os.Stdin, os.Stdout, os.Stderr},
-		os.Args,
-		prog.VersionProgram{}, prog.BuildInfoProgram{}, prog.DaemonProgram{},
-		prog.WebProgram{}, prog.ShellProgram{}))
+		[3]*os.File{os.Stdin, os.Stdout, os.Stderr}, os.Args,
+		buildinfo.Program, daemon.Program, web.Program, shell.Program))
 }

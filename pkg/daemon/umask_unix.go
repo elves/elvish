@@ -1,6 +1,6 @@
 // +build !windows,!plan9,!js
 
-package prog
+package daemon
 
 import "golang.org/x/sys/unix"
 

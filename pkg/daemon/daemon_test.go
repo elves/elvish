@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/elves/elvish/pkg/prog"
+	. "github.com/elves/elvish/pkg/prog/progtest"
 	"github.com/elves/elvish/pkg/store/storetest"
 	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/util"
@@ -53,4 +55,13 @@ func TestDaemon(t *testing.T) {
 	storetest.TestCmd(t, client)
 	storetest.TestDir(t, client)
 	storetest.TestSharedVar(t, client)
+}
+
+func TestProgram_SpuriousArgument(t *testing.T) {
+	f := Setup()
+	defer f.Cleanup()
+
+	exit := prog.Run(f.Fds(), Elvish("-daemon", "x"), Program)
+
+	TestError(t, f, exit, "arguments are not allowed with -daemon")
 }

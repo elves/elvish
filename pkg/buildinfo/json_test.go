@@ -1,4 +1,4 @@
-package prog
+package buildinfo
 
 import "testing"
 

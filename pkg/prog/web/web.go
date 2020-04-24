@@ -12,8 +12,27 @@ import (
 	"os"
 
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/prog/shell"
 )
+
+// Program is the web subprogram.
+var Program prog.Program = program{}
+
+type program struct{}
+
+func (program) ShouldRun(f *prog.Flags) bool { return f.Web }
+
+func (program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
+	if len(args) > 0 {
+		return prog.BadUsage("arguments are not allowed with -web")
+	}
+	if f.CodeInArg {
+		return prog.BadUsage("-c cannot be used together with -web")
+	}
+	p := Web{BinPath: f.Bin, SockPath: f.Sock, DbPath: f.DB, Port: f.Port}
+	return p.Main(fds, nil)
+}
 
 type Web struct {
 	BinPath  string

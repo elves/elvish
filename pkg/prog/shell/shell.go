@@ -9,11 +9,36 @@ import (
 
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/sys"
 	"github.com/elves/elvish/pkg/util"
 )
 
 var logger = util.GetLogger("[shell] ")
+
+// Program is the shell subprogram.
+var Program prog.Program = program{}
+
+type program struct{}
+
+func (program) ShouldRun(*prog.Flags) bool { return true }
+
+func (program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
+	p := MakePaths(fds[2],
+		Paths{Bin: f.Bin, Sock: f.Sock, Db: f.DB})
+	if f.NoRc {
+		p.Rc = ""
+	}
+	if len(args) > 0 {
+		exit := Script(
+			fds, args, &ScriptConfig{
+				SpawnDaemon: true, Paths: p,
+				Cmd: f.CodeInArg, CompileOnly: f.CompileOnly, JSON: f.JSON})
+		return prog.Exit(exit)
+	}
+	Interact(fds, &InteractConfig{SpawnDaemon: true, Paths: p})
+	return nil
+}
 
 func setupShell(fds [3]*os.File, p Paths, spawn bool) (*eval.Evaler, func()) {
 	restoreTTY := term.SetupGlobal()
