@@ -6,11 +6,11 @@ import (
 	"github.com/elves/elvish/pkg/prog/shell"
 )
 
-type shellProgram struct{}
+type ShellProgram struct{}
 
-func (sh shellProgram) ShouldRun(*Flags) bool { return true }
+func (ShellProgram) ShouldRun(*Flags) bool { return true }
 
-func (sh shellProgram) Run(fds [3]*os.File, f *Flags, args []string) error {
+func (ShellProgram) Run(fds [3]*os.File, f *Flags, args []string) error {
 	p := shell.MakePaths(fds[2],
 		shell.Paths{Bin: f.Bin, Sock: f.Sock, Db: f.DB})
 	if f.NoRc {

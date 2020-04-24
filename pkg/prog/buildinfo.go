@@ -8,11 +8,11 @@ import (
 	"github.com/elves/elvish/pkg/buildinfo"
 )
 
-type buildInfoProgram struct{}
+type BuildInfoProgram struct{}
 
-func (p buildInfoProgram) ShouldRun(f *Flags) bool { return f.BuildInfo }
+func (BuildInfoProgram) ShouldRun(f *Flags) bool { return f.BuildInfo }
 
-func (p buildInfoProgram) Run(fds [3]*os.File, f *Flags, _ []string) error {
+func (BuildInfoProgram) Run(fds [3]*os.File, f *Flags, _ []string) error {
 	if f.JSON {
 		fmt.Fprintf(fds[1],
 			`{"version":%s,"goversion":%s,"reproducible":%v}`+"\n",
@@ -26,11 +26,11 @@ func (p buildInfoProgram) Run(fds [3]*os.File, f *Flags, _ []string) error {
 	return nil
 }
 
-type versionProgram struct{}
+type VersionProgram struct{}
 
-func (versionProgram) ShouldRun(f *Flags) bool { return f.Version }
+func (VersionProgram) ShouldRun(f *Flags) bool { return f.Version }
 
-func (versionProgram) Run(fds [3]*os.File, _ *Flags, _ []string) error {
+func (VersionProgram) Run(fds [3]*os.File, _ *Flags, _ []string) error {
 	fmt.Fprintln(fds[1], buildinfo.Version)
 	return nil
 }

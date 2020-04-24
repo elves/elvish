@@ -11,5 +11,9 @@ import (
 )
 
 func main() {
-	os.Exit(prog.Main([3]*os.File{os.Stdin, os.Stdout, os.Stderr}, os.Args))
+	os.Exit(prog.Run(
+		[3]*os.File{os.Stdin, os.Stdout, os.Stderr},
+		os.Args,
+		prog.VersionProgram{}, prog.BuildInfoProgram{}, prog.DaemonProgram{},
+		prog.WebProgram{}, prog.ShellProgram{}))
 }

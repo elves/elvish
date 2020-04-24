@@ -6,11 +6,11 @@ import (
 	"github.com/elves/elvish/pkg/prog/web"
 )
 
-type webProgram struct{}
+type WebProgram struct{}
 
-func (w webProgram) ShouldRun(f *Flags) bool { return f.Web }
+func (WebProgram) ShouldRun(f *Flags) bool { return f.Web }
 
-func (w webProgram) Run(fds [3]*os.File, f *Flags, args []string) error {
+func (WebProgram) Run(fds [3]*os.File, f *Flags, args []string) error {
 	if len(args) > 0 {
 		return BadUsage("arguments are not allowed with -web")
 	}

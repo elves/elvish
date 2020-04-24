@@ -14,7 +14,7 @@ func TestVersion(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 
-	Main(f.Fds(), elvish("-version"))
+	Run(f.Fds(), elvish("-version"), VersionProgram{})
 
 	f.TestOut(t, 1, buildinfo.Version+"\n")
 }
@@ -23,7 +23,7 @@ func TestBuildInfo(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 
-	Main(f.Fds(), elvish("-buildinfo"))
+	Run(f.Fds(), elvish("-buildinfo"), BuildInfoProgram{})
 
 	f.TestOut(t, 1,
 		fmt.Sprintf(
@@ -37,7 +37,7 @@ func TestBuildInfo_JSON(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 
-	Main(f.Fds(), elvish("-buildinfo", "-json"))
+	Run(f.Fds(), elvish("-buildinfo", "-json"), BuildInfoProgram{})
 
 	f.TestOut(t, 1,
 		mustToJSON(struct {
@@ -55,7 +55,7 @@ func TestHelp(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 
-	Main(f.Fds(), elvish("-help"))
+	Run(f.Fds(), elvish("-help"))
 
 	f.TestOutSnippet(t, 1, "Usage: elvish [flags] [script]")
 }
@@ -64,7 +64,7 @@ func TestBadFlag(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 
-	exit := Main(f.Fds(), elvish("-bad-flag"))
+	exit := Run(f.Fds(), elvish("-bad-flag"))
 
 	testError(t, f, exit, "flag provided but not defined: -bad-flag")
 }
@@ -73,7 +73,7 @@ func TestWeb_SpuriousArgument(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 
-	exit := Main(f.Fds(), elvish("-web", "x"))
+	exit := Run(f.Fds(), elvish("-web", "x"), WebProgram{})
 
 	testError(t, f, exit, "arguments are not allowed with -web")
 }
@@ -82,7 +82,7 @@ func TestWeb_SpuriousC(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 
-	exit := Main(f.Fds(), elvish("-web", "-c"))
+	exit := Run(f.Fds(), elvish("-web", "-c"), WebProgram{})
 
 	testError(t, f, exit, "-c cannot be used together with -web")
 }
@@ -91,7 +91,7 @@ func TestDaemon_SpuriousArgument(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 
-	exit := Main(f.Fds(), elvish("-daemon", "x"))
+	exit := Run(f.Fds(), elvish("-daemon", "x"), DaemonProgram{})
 
 	testError(t, f, exit, "arguments are not allowed with -daemon")
 }

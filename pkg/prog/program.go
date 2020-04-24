@@ -75,13 +75,9 @@ func usage(out io.Writer, f *flag.FlagSet) {
 	f.PrintDefaults()
 }
 
-func Main(fds [3]*os.File, args []string) int {
-	return run(fds, args,
-		versionProgram{}, buildInfoProgram{},
-		daemonProgram{}, webProgram{}, shellProgram{})
-}
-
-func run(fds [3]*os.File, args []string, programs ...Program) int {
+// Run parses command-line flags and runs the first applicable subprogram. It
+// returns the exit status of the program.
+func Run(fds [3]*os.File, args []string, programs ...Program) int {
 	f := &Flags{}
 	fs := newFlagSet(fds[2], f)
 	err := fs.Parse(args[1:])
