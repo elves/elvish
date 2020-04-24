@@ -49,6 +49,26 @@ func expandTtyshot(line string) string {
 	return buf.String()
 }
 
+// Given a `@cf` reference convert it to a HTML link.
+func makeLink(cf string) string {
+	i := strings.IndexRune(cf, ':')
+	if i == -1 {
+		// This handles the @cf uses in the `builtin:` namespace to other
+		// sections in the same namespace.
+		return fmt.Sprintf("[`%s`](#%s)", cf, cf)
+	}
+
+	module := cf[:i]
+	symbol := cf[i+1:]
+	if module == "builtin" {
+		// The `builtin:` namespace is treated differently than other
+		// namespaces with regard to how hash tag references are named.
+		return fmt.Sprintf("[`%s`](%s.html/#%s)", cf, module, symbol)
+	} else {
+		return fmt.Sprintf("[`%s`](%s.html/#%s%s)", cf, module, module, symbol)
+	}
+}
+
 func expandCf(line string) string {
 	i := strings.Index(line, cf)
 	if i < 0 {
@@ -58,15 +78,14 @@ func expandCf(line string) string {
 	var buf bytes.Buffer
 	buf.WriteString("See also")
 	for i, target := range targets {
-		var sep string
 		if i == 0 {
-			sep = " "
+			buf.WriteString(" ")
 		} else if i == len(targets)-1 {
-			sep = " and "
+			buf.WriteString(" and ")
 		} else {
-			sep = ", "
+			buf.WriteString(", ")
 		}
-		fmt.Fprintf(&buf, "%s[`%s`](#%s)", sep, target, target)
+		buf.WriteString(makeLink(target))
 	}
 	buf.WriteString(".")
 	return buf.String()
