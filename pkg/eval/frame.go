@@ -18,7 +18,7 @@ import (
 type Frame struct {
 	*Evaler
 
-	srcMeta *parse.Source
+	srcMeta parse.Source
 
 	local, up Ns
 
@@ -33,7 +33,7 @@ type Frame struct {
 // NewTopFrame creates a top-level Frame.
 //
 // TODO(xiaq): This should be a method on the Evaler.
-func NewTopFrame(ev *Evaler, src *parse.Source, ports []*Port) *Frame {
+func NewTopFrame(ev *Evaler, src parse.Source, ports []*Port) *Frame {
 	return &Frame{
 		ev, src,
 		ev.Global, make(Ns),

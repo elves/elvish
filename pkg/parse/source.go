@@ -17,15 +17,15 @@ type Source struct {
 }
 
 // SourceForTest returns a Source used for testing.
-func SourceForTest(code string) *Source {
-	return &Source{Name: "[test]", Code: code}
+func SourceForTest(code string) Source {
+	return Source{Name: "[test]", Code: code}
 }
 
-func (src *Source) Kind() string {
+func (src Source) Kind() string {
 	return "map"
 }
 
-func (src *Source) Hash() uint32 {
+func (src Source) Hash() uint32 {
 	return hash.DJB(
 		hash.String(src.Name), hash.String(src.Code), hashBool(src.IsFile))
 }
@@ -37,19 +37,19 @@ func hashBool(b bool) uint32 {
 	return 0
 }
 
-func (src *Source) Equal(other interface{}) bool {
-	if src2, ok := other.(*Source); ok {
-		return *src == *src2
+func (src Source) Equal(other interface{}) bool {
+	if src2, ok := other.(Source); ok {
+		return src == src2
 	}
 	return false
 }
 
-func (src *Source) Repr(int) string {
+func (src Source) Repr(int) string {
 	return fmt.Sprintf(
 		"<src name:%s code:... is-file:$%v>", Quote(src.Name), src.IsFile)
 }
 
-func (src *Source) Index(k interface{}) (interface{}, bool) {
+func (src Source) Index(k interface{}) (interface{}, bool) {
 	switch k {
 	case "name":
 		return src.Name, true
@@ -62,6 +62,6 @@ func (src *Source) Index(k interface{}) (interface{}, bool) {
 	}
 }
 
-func (src *Source) IterateKeys(f func(interface{}) bool) {
+func (src Source) IterateKeys(f func(interface{}) bool) {
 	util.Feed(f, "name", "code", "is-file")
 }

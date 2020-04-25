@@ -20,10 +20,10 @@ type compiler struct {
 	// New variables created within a pipeline.
 	newLocals []string
 	// Information about the source.
-	srcMeta *parse.Source
+	srcMeta parse.Source
 }
 
-func compile(b, g staticNs, n *parse.Chunk, src *parse.Source) (op Op, err error) {
+func compile(b, g staticNs, n *parse.Chunk, src parse.Source) (op Op, err error) {
 	cp := &compiler{b, []staticNs{g}, make(staticNs), nil, src}
 	defer func() {
 		r := recover()

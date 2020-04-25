@@ -10,7 +10,7 @@ import (
 // of source.
 type Op struct {
 	Inner effectOp
-	Src   *parse.Source
+	Src   parse.Source
 }
 
 // An operation on a Frame that produces a side effect.

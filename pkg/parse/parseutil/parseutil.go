@@ -25,7 +25,7 @@ descend:
 
 // Wordify turns a piece of source code into words.
 func Wordify(src string) []string {
-	tree, _ := parse.Parse(&parse.Source{Name: "[wordify]", Code: src})
+	tree, _ := parse.Parse(parse.Source{Name: "[wordify]", Code: src})
 	return wordifyInner(tree.Root, nil)
 }
 

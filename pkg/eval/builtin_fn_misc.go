@@ -267,7 +267,7 @@ func source(fm *Frame, fname string) error {
 	if err != nil {
 		return err
 	}
-	src := &parse.Source{Name: fname, Code: code, IsFile: true}
+	src := parse.Source{Name: fname, Code: code, IsFile: true}
 	tree, err := parse.Parse(src)
 	if err != nil {
 		return err

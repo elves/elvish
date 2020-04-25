@@ -85,7 +85,7 @@ func init() {
 	})
 }
 
-func src(fm *Frame) *parse.Source {
+func src(fm *Frame) parse.Source {
 	return fm.srcMeta
 }
 

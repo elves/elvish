@@ -40,7 +40,7 @@ func initInstant(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 
 func instantStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
 	execute := func(code string) ([]string, error) {
-		src := &parse.Source{Name: "[instant]", Code: code}
+		src := parse.Source{Name: "[instant]", Code: code}
 		op, err := ev.ParseAndCompile(src)
 		if err != nil {
 			return nil, err

@@ -51,7 +51,7 @@ func TestMultipleEval(t *testing.T) {
 func TestConcurrentEval(t *testing.T) {
 	// Run this test with "go test -race".
 	ev := NewEvaler()
-	src := &parse.Source{Name: "[test]"}
+	src := parse.Source{Name: "[test]"}
 	op, err := ev.ParseAndCompile(src)
 	if err != nil {
 		panic(err)
@@ -98,7 +98,7 @@ func BenchmarkOutputCaptureMixed(b *testing.B) {
 func benchmarkOutputCapture(n int, f func(*Frame)) {
 	ev := NewEvaler()
 	defer ev.Close()
-	fm := NewTopFrame(ev, &parse.Source{Name: "[benchmark]"}, []*Port{{}, {}, {}})
+	fm := NewTopFrame(ev, parse.Source{Name: "[benchmark]"}, []*Port{{}, {}, {}})
 	for i := 0; i < n; i++ {
 		captureOutput(fm, func(fm *Frame) error {
 			f(fm)

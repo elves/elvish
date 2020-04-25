@@ -58,7 +58,7 @@ func indexLayeredBindings(k ui.Key, bindings ...BindingMap) eval.Callable {
 	return nil
 }
 
-var bindingSource = &parse.Source{Name: "[editor binding]"}
+var bindingSource = parse.Source{Name: "[editor binding]"}
 
 func callWithNotifyPorts(nt notifier, ev *eval.Evaler, f eval.Callable, args ...interface{}) {
 	// TODO(xiaq): Use CallWithOutputCallback when it supports redirecting the

@@ -147,7 +147,7 @@ func smartEnter(app cli.App) {
 }
 
 func isSyntaxComplete(code string) bool {
-	_, err := parse.Parse(&parse.Source{Code: code})
+	_, err := parse.Parse(parse.Source{Code: code})
 	if err != nil {
 		for _, e := range err.(*parse.MultiError).Entries {
 			if e.Context.From == len(code) {

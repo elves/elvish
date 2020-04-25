@@ -51,7 +51,7 @@ func Script(fds [3]*os.File, args []string, cfg *ScriptConfig) int {
 	}
 
 	op, err := ev.ParseAndCompile(
-		&parse.Source{Name: name, Code: code, IsFile: true})
+		parse.Source{Name: name, Code: code, IsFile: true})
 	if err != nil {
 		if cfg.CompileOnly && cfg.JSON {
 			fmt.Fprintf(fds[1], "%s\n", errorToJSON(err))

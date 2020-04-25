@@ -31,7 +31,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	var errors []error
 	var errorRegions []region
 
-	tree, errParse := parse.Parse(&parse.Source{Name: "[interactive]", Code: code})
+	tree, errParse := parse.Parse(parse.Source{Name: "[interactive]", Code: code})
 	if errParse != nil {
 		for _, err := range errParse.(*parse.MultiError).Entries {
 			if err.Context.From != len(code) {

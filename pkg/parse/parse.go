@@ -22,12 +22,12 @@ import (
 // Tree represents a parsed tree.
 type Tree struct {
 	Root   *Chunk
-	Source *Source
+	Source Source
 }
 
 // Parse parses the given source. The returned error always has type MultiError
 // if it is not nil.
-func Parse(src *Source) (Tree, error) {
+func Parse(src Source) (Tree, error) {
 	tree := Tree{&Chunk{}, src}
 	err := As(src.Name, src.Code, tree.Root)
 	return tree, err
