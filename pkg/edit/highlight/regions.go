@@ -7,6 +7,8 @@ import (
 	"github.com/elves/elvish/pkg/parse"
 )
 
+var sourceText = parse.SourceText
+
 // Represents a region to be highlighted.
 type region struct {
 	begin int
@@ -106,7 +108,7 @@ func emitRegions(n parse.Node, f func(parse.Node, regionKind, string)) {
 	case *parse.Sep:
 		emitRegionsInSep(n, f)
 	}
-	for _, child := range n.Children() {
+	for _, child := range parse.Children(n) {
 		emitRegions(child, f)
 	}
 }
@@ -137,7 +139,7 @@ func emitRegionsInForm(n *parse.Form, f func(parse.Node, regionKind, string)) {
 	// TODO: This only highlights bareword special commands, however currently
 	// quoted special commands are also possible (e.g `"if" $true { }` is
 	// accepted).
-	switch n.Head.SourceText() {
+	switch sourceText(n.Head) {
 	case "if":
 		emitRegionsInIf(n, f)
 	case "for":
@@ -155,7 +157,7 @@ func emitRegionsInIf(n *parse.Form, f func(parse.Node, regionKind, string)) {
 	// Highlight all "elif" and "else".
 	for i := 2; i < len(n.Args); i += 2 {
 		arg := n.Args[i]
-		if arg.SourceText() == "elif" || arg.SourceText() == "else" {
+		if s := sourceText(arg); s == "elif" || s == "else" {
 			f(arg, semanticRegion, keywordRegion)
 		}
 	}
@@ -167,7 +169,7 @@ func emitRegionsInFor(n *parse.Form, f func(parse.Node, regionKind, string)) {
 		f(n.Args[0].Indexings[0].Head, semanticRegion, variableRegion)
 	}
 	// Highlight "else".
-	if 3 < len(n.Args) && n.Args[3].SourceText() == "else" {
+	if 3 < len(n.Args) && sourceText(n.Args[3]) == "else" {
 		f(n.Args[3], semanticRegion, keywordRegion)
 	}
 }
@@ -177,7 +179,7 @@ func emitRegionsInTry(n *parse.Form, f func(parse.Node, regionKind, string)) {
 	// "finally".
 	i := 1
 	matchKW := func(text string) bool {
-		if i < len(n.Args) && n.Args[i].SourceText() == text {
+		if i < len(n.Args) && sourceText(n.Args[i]) == text {
 			f(n.Args[i], semanticRegion, keywordRegion)
 			return true
 		}
@@ -213,7 +215,7 @@ func emitRegionsInPrimary(n *parse.Primary, f func(parse.Node, regionKind, strin
 }
 
 func emitRegionsInSep(n *parse.Sep, f func(parse.Node, regionKind, string)) {
-	text := n.SourceText()
+	text := sourceText(n)
 	switch {
 	case strings.TrimSpace(text) == "":
 		// Don't do anything; whitespaces do not get highlighted.

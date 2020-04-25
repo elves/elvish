@@ -19,7 +19,7 @@ func initHighlighter(appSpec *cli.AppSpec, ev *eval.Evaler) {
 }
 
 func check(ev *eval.Evaler, n *parse.Chunk) error {
-	src := &parse.Source{Name: "[tty]", Code: n.SourceText()}
+	src := &parse.Source{Name: "[tty]", Code: parse.SourceText(n)}
 	_, err := ev.Compile(n, src)
 	return err
 }

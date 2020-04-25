@@ -40,7 +40,7 @@ func (aw *argsWalker) next() *parse.Compound {
 // nextIs returns whether the next argument's source matches the given text. It
 // also consumes the argument if it is.
 func (aw *argsWalker) nextIs(text string) bool {
-	if aw.more() && aw.form.Args[aw.idx].SourceText() == text {
+	if aw.more() && parse.SourceText(aw.form.Args[aw.idx]) == text {
 		aw.idx++
 		return true
 	}

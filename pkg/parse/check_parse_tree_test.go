@@ -4,14 +4,14 @@ import "fmt"
 
 // checkParseTree checks whether the parse tree part of a Node is well-formed.
 func checkParseTree(n Node) error {
-	children := n.Children()
+	children := Children(n)
 	if len(children) == 0 {
 		return nil
 	}
 
 	// Parent pointers of all children should point to me.
 	for i, ch := range children {
-		if ch.Parent() != n {
+		if Parent(ch) != n {
 			return fmt.Errorf("parent of child %d (%s) is wrong: %s", i, summary(ch), summary(n))
 		}
 	}
@@ -33,7 +33,7 @@ func checkParseTree(n Node) error {
 	}
 
 	// Check children recursively.
-	for _, ch := range n.Children() {
+	for _, ch := range Children(n) {
 		err := checkParseTree(ch)
 		if err != nil {
 			return err

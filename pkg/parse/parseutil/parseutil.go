@@ -11,8 +11,8 @@ import (
 // position is out of bound.
 func FindLeafNode(n parse.Node, p int) parse.Node {
 descend:
-	for len(n.Children()) > 0 {
-		for _, ch := range n.Children() {
+	for len(parse.Children(n)) > 0 {
+		for _, ch := range parse.Children(n) {
 			if ch.Range().From <= p && p <= ch.Range().To {
 				n = ch
 				continue descend
@@ -30,14 +30,14 @@ func Wordify(src string) []string {
 }
 
 func wordifyInner(n parse.Node, words []string) []string {
-	if len(n.Children()) == 0 || isCompound(n) {
-		text := n.SourceText()
+	if len(parse.Children(n)) == 0 || isCompound(n) {
+		text := parse.SourceText(n)
 		if strings.TrimFunc(text, parse.IsWhitespace) != "" {
 			return append(words, text)
 		}
 		return words
 	}
-	for _, ch := range n.Children() {
+	for _, ch := range parse.Children(n) {
 		words = wordifyInner(ch, words)
 	}
 	return words

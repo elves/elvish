@@ -8,6 +8,8 @@ import (
 	"github.com/elves/elvish/pkg/parse"
 )
 
+var parent = parse.Parent
+
 var completers = []completer{
 	completeCommand,
 	completeIndex,
@@ -28,7 +30,7 @@ type context struct {
 func completeArg(n parse.Node, cfg Config) (*context, []RawItem, error) {
 	ev := cfg.PureEvaler
 	if sep, ok := n.(*parse.Sep); ok {
-		if form, ok := sep.Parent().(*parse.Form); ok && form.Head != nil {
+		if form, ok := parent(sep).(*parse.Form); ok && form.Head != nil {
 			// Case 1: starting a new argument.
 			ctx := &context{"argument", "", parse.Bareword, range0(n.Range().To)}
 			args := purelyEvalForm(form, "", n.Range().To, ev)
@@ -38,7 +40,7 @@ func completeArg(n parse.Node, cfg Config) (*context, []RawItem, error) {
 	}
 	if primary, ok := n.(*parse.Primary); ok {
 		if compound, seed := primaryInSimpleCompound(primary, ev); compound != nil {
-			if form, ok := compound.Parent().(*parse.Form); ok {
+			if form, ok := parent(compound).(*parse.Form); ok {
 				if form.Head != nil && form.Head != compound {
 					// Case 2: in an incomplete argument.
 					ctx := &context{"argument", seed, primary.Type, compound.Range()}
@@ -67,7 +69,7 @@ func completeCommand(n parse.Node, cfg Config) (*context, []RawItem, error) {
 		return generateForEmpty(n.Range().To)
 	}
 	if is(n, aSep) {
-		parent := n.Parent()
+		parent := parent(n)
 		switch {
 		case is(parent, aChunk), is(parent, aPipeline):
 			// Case 2: Just after a newline, semicolon, or a pipe.
@@ -83,7 +85,7 @@ func completeCommand(n parse.Node, cfg Config) (*context, []RawItem, error) {
 
 	if primary, ok := n.(*parse.Primary); ok {
 		if compound, seed := primaryInSimpleCompound(primary, ev); compound != nil {
-			if form, ok := compound.Parent().(*parse.Form); ok {
+			if form, ok := parent(compound).(*parse.Form); ok {
 				if form.Head == compound {
 					// Case 4: At an already started command.
 					ctx := &context{
@@ -107,20 +109,20 @@ func completeIndex(n parse.Node, cfg Config) (*context, []RawItem, error) {
 	}
 
 	if is(n, aSep) {
-		if is(n.Parent(), aIndexing) {
+		if is(parent(n), aIndexing) {
 			// We are just after an opening bracket.
-			indexing := n.Parent().(*parse.Indexing)
+			indexing := parent(n).(*parse.Indexing)
 			if len(indexing.Indicies) == 1 {
 				if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 					return generateForEmpty(indexee, n.Range().To)
 				}
 			}
 		}
-		if is(n.Parent(), aArray) {
-			array := n.Parent()
-			if is(array.Parent(), aIndexing) {
+		if is(parent(n), aArray) {
+			array := parent(n)
+			if is(parent(array), aIndexing) {
 				// We are after an existing index and spaces.
-				indexing := array.Parent().(*parse.Indexing)
+				indexing := parent(array).(*parse.Indexing)
 				if len(indexing.Indicies) == 1 {
 					if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 						return generateForEmpty(indexee, n.Range().To)
@@ -134,11 +136,11 @@ func completeIndex(n parse.Node, cfg Config) (*context, []RawItem, error) {
 		primary := n.(*parse.Primary)
 		compound, seed := primaryInSimpleCompound(primary, ev)
 		if compound != nil {
-			if is(compound.Parent(), aArray) {
-				array := compound.Parent()
-				if is(array.Parent(), aIndexing) {
+			if is(parent(compound), aArray) {
+				array := parent(compound)
+				if is(parent(array), aIndexing) {
 					// We are just after an incomplete index.
-					indexing := array.Parent().(*parse.Indexing)
+					indexing := parent(array).(*parse.Indexing)
 					if len(indexing.Indicies) == 1 {
 						if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 							ctx := &context{
@@ -156,7 +158,7 @@ func completeIndex(n parse.Node, cfg Config) (*context, []RawItem, error) {
 func completeRedir(n parse.Node, cfg Config) (*context, []RawItem, error) {
 	ev := cfg.PureEvaler
 	if is(n, aSep) {
-		if is(n.Parent(), aRedir) {
+		if is(parent(n), aRedir) {
 			// Empty redirection target.
 			ctx := &context{"redir", "", parse.Bareword, range0(n.Range().To)}
 			items, err := generateFileNames("", false)
@@ -165,7 +167,7 @@ func completeRedir(n parse.Node, cfg Config) (*context, []RawItem, error) {
 	}
 	if primary, ok := n.(*parse.Primary); ok {
 		if compound, seed := primaryInSimpleCompound(primary, ev); compound != nil {
-			if is(compound.Parent(), &parse.Redir{}) {
+			if is(parent(compound), &parse.Redir{}) {
 				// Non-empty redirection target.
 				ctx := &context{
 					"redir", seed, primary.Type, compound.Range()}

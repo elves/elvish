@@ -564,7 +564,7 @@ func compileTry(cp *compiler, fn *parse.Form) effectOpBody {
 	logger.Println("compiling try")
 	args := cp.walkArgs(fn)
 	bodyNode := args.nextMustLambda()
-	logger.Printf("body is %q", bodyNode.SourceText())
+	logger.Printf("body is %q", parse.SourceText(bodyNode))
 	var exceptVarNode *parse.Indexing
 	var exceptNode *parse.Primary
 	if args.nextIs("except") {

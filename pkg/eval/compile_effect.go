@@ -50,7 +50,7 @@ func (cp *compiler) pipelineOp(n *parse.Pipeline) effectOp {
 	cp.newLocals = saveNewLocals
 
 	return makeEffectOp(n,
-		&pipelineOp{n.Background, n.SourceText(), formOps, newLocals})
+		&pipelineOp{n.Background, parse.SourceText(n), formOps, newLocals})
 }
 
 func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []effectOp {

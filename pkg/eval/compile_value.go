@@ -255,7 +255,7 @@ func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 		}
 		body = &variableOp{sigil != "", qname}
 	case parse.Wildcard:
-		seg, err := wildcardToSegment(n.SourceText())
+		seg, err := wildcardToSegment(parse.SourceText(n))
 		if err != nil {
 			cp.errorpf(n, "%s", err)
 		}
@@ -279,7 +279,7 @@ func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 		body = cp.braced(n)
 	default:
 		cp.errorpf(n, "bad PrimaryType; parser bug")
-		body = literalStr(n.SourceText())
+		body = literalStr(parse.SourceText(n))
 	}
 	return makeValuesOp(n, body)
 }

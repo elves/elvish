@@ -4,18 +4,9 @@ import "github.com/elves/elvish/pkg/diag"
 
 // Node represents a parse tree as well as an AST.
 type Node interface {
-	parse(*parser)
-
 	diag.Ranger
-	SourceText() string
-	Parent() Node
-	Children() []Node
-
-	setFrom(int)
-	setTo(int)
-	setSourceText(string)
-	setParent(Node)
-	addChild(Node)
+	parse(*parser)
+	n() *node
 }
 
 type node struct {
@@ -25,34 +16,19 @@ type node struct {
 	children   []Node
 }
 
-func (n *node) setFrom(begin int) { n.From = begin }
-
-func (n *node) setTo(end int) { n.To = end }
-
-func (n *node) setSourceText(source string) { n.sourceText = source }
-
-func (n *node) setParent(p Node) { n.parent = p }
+func (n *node) n() *node { return n }
 
 func (n *node) addChild(ch Node) { n.children = append(n.children, ch) }
 
-// Parent returns the parent node. If the node is the root of the syntax tree,
-// the parent is nil.
-func (n *node) Parent() Node {
-	return n.parent
-}
+// Range returns the range within the full source text that parses to the node.
+func (n *node) Range() diag.Ranging { return n.Ranging }
 
-// Range returns the range within the original (full) source text that parses
-// to the node.
-func (n *node) Range() diag.Ranging {
-	return diag.Ranging{n.From, n.To}
-}
+// Parent returns the parent of a node. It returns nil if the node is the root
+// of the parse tree.
+func Parent(n Node) Node { return n.n().parent }
 
 // SourceText returns the part of the source text that parses to the node.
-func (n *node) SourceText() string {
-	return n.sourceText
-}
+func SourceText(n Node) string { return n.n().sourceText }
 
 // Children returns all children of the node in the parse tree.
-func (n *node) Children() []Node {
-	return n.children
-}
+func Children(n Node) []Node { return n.n().children }

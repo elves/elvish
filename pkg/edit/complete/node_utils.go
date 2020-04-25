@@ -25,11 +25,11 @@ var (
 )
 
 func primaryInSimpleCompound(pn *parse.Primary, ev PureEvaler) (*parse.Compound, string) {
-	indexing, ok := pn.Parent().(*parse.Indexing)
+	indexing, ok := parent(pn).(*parse.Indexing)
 	if !ok {
 		return nil, ""
 	}
-	compound, ok := indexing.Parent().(*parse.Compound)
+	compound, ok := parent(indexing).(*parse.Compound)
 	if !ok {
 		return nil, ""
 	}

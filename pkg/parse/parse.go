@@ -905,7 +905,7 @@ func (*Sep) parse(*parser) {
 
 func addSep(n Node, ps *parser) {
 	var begin int
-	ch := n.Children()
+	ch := Children(n)
 	if len(ch) > 0 {
 		begin = ch[len(ch)-1].Range().To
 	} else {
@@ -971,6 +971,6 @@ func IsWhitespace(r rune) bool {
 }
 
 func addChild(p Node, ch Node) {
-	p.addChild(ch)
-	ch.setParent(p)
+	p.n().addChild(ch)
+	ch.n().parent = p
 }

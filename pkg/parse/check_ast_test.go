@@ -59,7 +59,7 @@ func checkAST(n Node, want ast) error {
 		if i == len(wantnames)-1 {
 			break
 		}
-		fields := n.Children()
+		fields := Children(n)
 		if len(fields) != 1 {
 			return fmt.Errorf("want exactly 1 child, got %d (%s)", len(fields), summary(n))
 		}
@@ -134,7 +134,7 @@ func checkField(got interface{}, want interface{}, ctx string) error {
 func checkNodeInField(got Node, want interface{}) error {
 	switch want := want.(type) {
 	case string:
-		text := got.SourceText()
+		text := SourceText(got)
 		if want != text {
 			return fmt.Errorf("want %q, got %q (%s)", want, text, summary(got))
 		}
