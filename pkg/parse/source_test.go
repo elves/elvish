@@ -18,8 +18,11 @@ func TestSourceAsValue(t *testing.T) {
 		AllKeys("name", "code", "is-file").
 		Index("name", "[tty]").
 		Index("code", "echo").
-		Index("is-file", false)
+		Index("is-file", false).
+		Index("path", "")
 
-	vals.TestValue(t, &Source{IsFile: true}).
-		Index("is-file", true)
+	vals.TestValue(t, &Source{Name: "/etc/rc.elv", Code: "echo", IsFile: true}).
+		Hash(hash.DJB(hash.String("/etc/rc.elv"), hash.String("echo"), 1)).
+		Index("is-file", true).
+		Index("path", "/etc/rc.elv")
 }

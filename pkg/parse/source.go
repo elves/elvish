@@ -55,6 +55,12 @@ func (src Source) Index(k interface{}) (interface{}, bool) {
 		return src.Name, true
 	case "code":
 		return src.Code, true
+	case "path":
+		// For backward compatibility; remove after 0.14 release.
+		if src.IsFile {
+			return src.Name, true
+		}
+		return "", true
 	case "is-file":
 		return src.IsFile, true
 	default:
