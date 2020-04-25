@@ -36,14 +36,6 @@ func TestEvalerPorts(t *testing.T) {
 	}
 }
 
-func mustPipe() (*os.File, *os.File) {
-	r, w, err := os.Pipe()
-	if err != nil {
-		panic(err)
-	}
-	return r, w
-}
-
 func mustReadAllString(r io.Reader) string {
 	b, err := ioutil.ReadAll(r)
 	if err != nil {

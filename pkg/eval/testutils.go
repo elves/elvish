@@ -18,11 +18,13 @@ package eval
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math"
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval/vals"
@@ -44,8 +46,9 @@ type TestCase struct {
 }
 
 type result struct {
-	valueOut []interface{}
-	bytesOut []byte
+	valueOut  []interface{}
+	bytesOut  []byte
+	stderrOut []byte
 
 	compilationError error
 	exception        error
@@ -158,6 +161,13 @@ func (t TestCase) Prints(s string) TestCase {
 	return t
 }
 
+// PrintsStderr returns an altered TestCase that requires the source code to
+// produce the specified output to stderr when evaluated.
+func (t TestCase) PrintsStderr(s string) TestCase {
+	t.want.stderrOut = []byte(s)
+	return t
+}
+
 // Throws returns an altered TestCase that requires the source code to throw an
 // exception that has the given cause, and has stacktraces that match the given
 // source fragments (innermost first).
@@ -221,6 +231,9 @@ func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
 			if !bytes.Equal(tt.want.bytesOut, r.bytesOut) {
 				t.Errorf("got bytes out %q, want %q", r.bytesOut, tt.want.bytesOut)
 			}
+			if !bytes.Equal(tt.want.stderrOut, r.stderrOut) {
+				t.Errorf("got stderr out %q, want %q", r.stderrOut, tt.want.stderrOut)
+			}
 			if !matchErr(tt.want.compilationError, r.compilationError) {
 				t.Errorf("got compilation error %v, want %v",
 					r.compilationError, tt.want.compilationError)
@@ -239,20 +252,31 @@ func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
 
 func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 	var r result
-	// Collect byte output.
-	pr, pw, _ := os.Pipe()
-	bytesDone := make(chan struct{})
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+	rOut, stdout := mustPipe()
 	go func() {
-		for {
-			var buf [64]byte
-			nr, err := pr.Read(buf[:])
-			r.bytesOut = append(r.bytesOut, buf[:nr]...)
-			if err != nil {
-				break
-			}
-		}
-		close(bytesDone)
+		r.bytesOut = mustReadAllAndClose(rOut)
+		wg.Done()
 	}()
+	rErr, stderr := mustPipe()
+	go func() {
+		r.stderrOut = mustReadAllAndClose(rErr)
+		wg.Done()
+	}()
+	outCh := make(chan interface{}, 1024)
+	go func() {
+		for v := range outCh {
+			r.valueOut = append(r.valueOut, v)
+		}
+		wg.Done()
+	}()
+	ports := []*Port{
+		DevNullClosedChan,
+		{File: stdout, Chan: outCh},
+		{File: stderr, Chan: BlackholeChan},
+	}
 
 	for i, text := range texts {
 		src := parse.Source{Name: fmt.Sprintf("test%d.elv", i), Code: text}
@@ -267,31 +291,14 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 			r.compilationError = err
 			continue
 		}
-
-		outCh := make(chan interface{}, 1024)
-		outDone := make(chan struct{})
-		go func() {
-			for v := range outCh {
-				r.valueOut = append(r.valueOut, v)
-			}
-			close(outDone)
-		}()
-
-		ports := []*Port{
-			{File: os.Stdin, Chan: ClosedChan},
-			{File: pw, Chan: outCh},
-			{File: os.Stderr, Chan: BlackholeChan},
-		}
-
 		// NOTE: Only the exception of the last code that compiles is saved.
 		r.exception = ev.Eval(op, EvalCfg{Ports: ports})
-		close(outCh)
-		<-outDone
 	}
 
-	pw.Close()
-	<-bytesDone
-	pr.Close()
+	stdout.Close()
+	stderr.Close()
+	close(outCh)
+	wg.Wait()
 
 	return r
 }
@@ -347,6 +354,23 @@ func matchErr(want, got error) bool {
 		return matcher.matchError(got)
 	}
 	return reflect.DeepEqual(want, got)
+}
+
+func mustPipe() (*os.File, *os.File) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		panic(err)
+	}
+	return r, w
+}
+
+func mustReadAllAndClose(r io.ReadCloser) []byte {
+	bs, err := ioutil.ReadAll(r)
+	if err != nil {
+		panic(err)
+	}
+	r.Close()
+	return bs
 }
 
 // Calls os.MkdirAll and panics if an error is returned.
