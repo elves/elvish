@@ -10,7 +10,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"runtime/pprof"
 	"strconv"
@@ -90,10 +89,12 @@ func Run(fds [3]*os.File, args []string, programs ...Program) int {
 	if f.CPUProfile != "" {
 		f, err := os.Create(f.CPUProfile)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Fprintln(fds[2], "Warning: cannot create CPU profile:", err)
+			fmt.Fprintln(fds[2], "Continuing without CPU profiling.")
+		} else {
+			pprof.StartCPUProfile(f)
+			defer pprof.StopCPUProfile()
 		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
 	}
 
 	if f.Log != "" {

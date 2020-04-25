@@ -16,6 +16,28 @@ func TestBadFlag(t *testing.T) {
 	TestError(t, f, exit, "flag provided but not defined: -bad-flag")
 }
 
+func TestCPUProfile(t *testing.T) {
+	f := Setup()
+	defer f.Cleanup()
+
+	Run(f.Fds(), Elvish("-cpuprofile", "cpuprof"), testProgram{shouldRun: true})
+	// There isn't much to test beyond a sanity check that the profile file now
+	// exists.
+	_, err := os.Stat("cpuprof")
+	if err != nil {
+		t.Errorf("CPU profile file does not exist: %v", err)
+	}
+}
+
+func TestCPUProfile_BadPath(t *testing.T) {
+	f := Setup()
+	defer f.Cleanup()
+
+	Run(f.Fds(), Elvish("-cpuprofile", "/a/bad/path"), testProgram{shouldRun: true})
+	f.TestOutSnippet(t, 2, "Warning: cannot create CPU profile:")
+	f.TestOutSnippet(t, 2, "Continuing without CPU profiling.")
+}
+
 func TestHelp(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
