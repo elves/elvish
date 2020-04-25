@@ -1,12 +1,13 @@
-package eval
+package parse
 
 import (
 	"fmt"
 
-	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/util"
 	"github.com/xiaq/persistent/hash"
 )
+
+// TODO(xiaq): Move this into the diag package after implementing phantom types.
 
 // Source describes a piece of source code.
 type Source struct {
@@ -40,7 +41,7 @@ func (src *Source) Equal(other interface{}) bool {
 
 func (src *Source) Repr(int) string {
 	return fmt.Sprintf(
-		"<src name:%s code:... is-file:$%v>", parse.Quote(src.Name), src.IsFile)
+		"<src name:%s code:... is-file:$%v>", Quote(src.Name), src.IsFile)
 }
 
 func (src *Source) Index(k interface{}) (interface{}, bool) {

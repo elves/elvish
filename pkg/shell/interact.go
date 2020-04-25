@@ -14,6 +14,7 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
+	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/sys"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -79,7 +80,7 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 		// No error; reset cooldown.
 		cooldown = time.Second
 
-		src := &eval.Source{Name: fmt.Sprintf("[tty %v]", cmdNum), Code: line}
+		src := &parse.Source{Name: fmt.Sprintf("[tty %v]", cmdNum), Code: line}
 		op, err := ev.ParseAndCompile(src)
 		if err == nil {
 			err = evalInTTY(ev, op, fds)
@@ -103,7 +104,7 @@ func sourceRC(fds [3]*os.File, ev *eval.Evaler, rcPath string) error {
 		}
 		return err
 	}
-	src := &eval.Source{Name: absPath, Code: code, IsFile: true}
+	src := &parse.Source{Name: absPath, Code: code, IsFile: true}
 	op, err := ev.ParseAndCompile(src)
 	if err != nil {
 		return err

@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
+	"github.com/elves/elvish/pkg/parse"
 )
 
 func initConfigAPI(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
@@ -64,7 +65,7 @@ func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}
 		// unexported from eval.
 		ports := []*eval.Port{
 			{File: os.Stdin}, {File: os.Stdout}, {File: os.Stderr}}
-		fm := eval.NewTopFrame(ev, &eval.Source{Name: name}, ports)
+		fm := eval.NewTopFrame(ev, &parse.Source{Name: name}, ports)
 		fn.Call(fm, args, eval.NoOpts)
 	}
 }

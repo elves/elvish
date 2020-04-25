@@ -9,7 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/parse"
 )
 
 // ScriptConfig keeps configuration for the script mode.
@@ -51,7 +51,7 @@ func Script(fds [3]*os.File, args []string, cfg *ScriptConfig) int {
 	}
 
 	op, err := ev.ParseAndCompile(
-		&eval.Source{Name: name, Code: code, IsFile: true})
+		&parse.Source{Name: name, Code: code, IsFile: true})
 	if err != nil {
 		if cfg.CompileOnly && cfg.JSON {
 			fmt.Fprintf(fds[1], "%s\n", errorToJSON(err))

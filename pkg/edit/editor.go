@@ -76,7 +76,7 @@ func evalDefaultBinding(ev *eval.Evaler, ns eval.Ns) {
 	if err != nil {
 		panic(err)
 	}
-	src := &eval.Source{Name: "[default bindings]", Code: defaultBindingsElv}
+	src := &parse.Source{Name: "[default bindings]", Code: defaultBindingsElv}
 	op, err := ev.CompileWithGlobal(n, src, ns)
 	if err != nil {
 		panic(err)

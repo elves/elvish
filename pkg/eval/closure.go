@@ -22,7 +22,7 @@ type Closure struct {
 	OptDefaults []interface{}
 	Op          effectOp
 	Captured    Ns
-	SrcMeta     *Source
+	SrcMeta     *parse.Source
 	DefBegint   int
 	DefEnd      int
 }

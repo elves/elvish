@@ -3,6 +3,7 @@ package eval
 import (
 	"runtime"
 
+	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -84,7 +85,7 @@ func init() {
 	})
 }
 
-func src(fm *Frame) *Source {
+func src(fm *Frame) *parse.Source {
 	return fm.srcMeta
 }
 

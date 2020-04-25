@@ -276,7 +276,7 @@ func loadModule(fm *Frame, r diag.Ranger, spec string) (Ns, error) {
 	}
 	if code, ok := fm.bundled[spec]; ok {
 		return evalModule(fm, r, spec,
-			&Source{Name: "[bundled " + spec + "]", Code: code})
+			&parse.Source{Name: "[bundled " + spec + "]", Code: code})
 	}
 	if fm.libDir == "" {
 		return nil, noSuchModule{spec}
@@ -295,10 +295,10 @@ func loadModuleFile(fm *Frame, r diag.Ranger, spec, path string) (Ns, error) {
 		}
 		return nil, err
 	}
-	return evalModule(fm, r, path, &Source{Name: path, Code: code, IsFile: true})
+	return evalModule(fm, r, path, &parse.Source{Name: path, Code: code, IsFile: true})
 }
 
-func evalModule(fm *Frame, r diag.Ranger, key string, src *Source) (Ns, error) {
+func evalModule(fm *Frame, r diag.Ranger, key string, src *parse.Source) (Ns, error) {
 	n, err := parse.AsChunk(src.Name, src.Code)
 	if err != nil {
 		return nil, err

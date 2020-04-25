@@ -185,7 +185,7 @@ func adaptChdirHook(name string, ev *Evaler, pfns *vector.Vector) func(string) {
 				fmt.Fprintln(os.Stderr, name, "hook must be callable")
 				continue
 			}
-			fm := NewTopFrame(ev, &Source{Name: "[hook " + name + "]"}, ports[:])
+			fm := NewTopFrame(ev, &parse.Source{Name: "[hook " + name + "]"}, ports[:])
 			err := fn.Call(fm, []interface{}{path}, NoOpts)
 			if err != nil {
 				// TODO: Stack trace
@@ -281,7 +281,7 @@ func (ev *Evaler) Eval(op Op, cfg EvalCfg) error {
 }
 
 // ParseAndCompile parses and compiles a Source.
-func (ev *Evaler) ParseAndCompile(src *Source) (Op, error) {
+func (ev *Evaler) ParseAndCompile(src *parse.Source) (Op, error) {
 	n, err := parse.AsChunk(src.Name, src.Code)
 	if err != nil {
 		return Op{}, err
@@ -291,7 +291,7 @@ func (ev *Evaler) ParseAndCompile(src *Source) (Op, error) {
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it
 // can be passed to GetCompilationError to retrieve more details.
-func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (Op, error) {
+func (ev *Evaler) Compile(n *parse.Chunk, src *parse.Source) (Op, error) {
 	return ev.CompileWithGlobal(n, src, ev.Global)
 }
 
@@ -302,6 +302,6 @@ func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (Op, error) {
 // TODO(xiaq): To use the Op created, the caller must create a Frame and mutate
 // its local scope manually. Consider restructuring the API to make that
 // unnecessary.
-func (ev *Evaler) CompileWithGlobal(n *parse.Chunk, src *Source, g Ns) (Op, error) {
+func (ev *Evaler) CompileWithGlobal(n *parse.Chunk, src *parse.Source, g Ns) (Op, error) {
 	return compile(ev.Builtin.static(), g.static(), n, src)
 }

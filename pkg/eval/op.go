@@ -3,13 +3,14 @@ package eval
 import (
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vars"
+	"github.com/elves/elvish/pkg/parse"
 )
 
 // Op represents an operation on a Frame. It is the result of compiling a piece
 // of source.
 type Op struct {
 	Inner effectOp
-	Src   *Source
+	Src   *parse.Source
 }
 
 // An operation on a Frame that produces a side effect.

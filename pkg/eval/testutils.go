@@ -255,7 +255,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 	}()
 
 	for i, text := range texts {
-		src := &Source{Name: fmt.Sprintf("test%d.elv", i), Code: text}
+		src := &parse.Source{Name: fmt.Sprintf("test%d.elv", i), Code: text}
 
 		n, err := parse.AsChunk(src.Name, src.Code)
 		if err != nil {

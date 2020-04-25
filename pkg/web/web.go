@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/shell"
 )
@@ -114,7 +115,7 @@ const (
 func evalAndCollect(ev *eval.Evaler, code string) (
 	outBytes []byte, outValues []interface{}, errBytes []byte, err error) {
 
-	op, err := ev.ParseAndCompile(&eval.Source{Name: "[web]", Code: code})
+	op, err := ev.ParseAndCompile(&parse.Source{Name: "[web]", Code: code})
 	if err != nil {
 		return
 	}

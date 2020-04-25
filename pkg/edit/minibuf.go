@@ -3,6 +3,7 @@ package edit
 import (
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/parse"
 )
 
 func initMinibuf(app cli.App, ev *eval.Evaler, ns eval.Ns) {
@@ -35,7 +36,7 @@ func minibufSubmit(app cli.App, ev *eval.Evaler) {
 	}
 	cli.SetAddon(app, nil)
 	code := codeArea.CopyState().Buffer.Content
-	src := &eval.Source{Name: "[minibuf]", Code: code}
+	src := &parse.Source{Name: "[minibuf]", Code: code}
 	op, err := ev.ParseAndCompile(src)
 	if err != nil {
 		app.Notify(err.Error())

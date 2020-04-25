@@ -493,7 +493,7 @@ type lambdaOp struct {
 	optDefaultOps []valuesOp
 	capture       staticNs
 	subop         effectOp
-	srcMeta       *Source
+	srcMeta       *parse.Source
 	defBegin      int
 	defEnd        int
 }

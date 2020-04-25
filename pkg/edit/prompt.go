@@ -13,6 +13,7 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
+	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/ui"
 	"github.com/elves/elvish/pkg/util"
 )
@@ -169,7 +170,7 @@ func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...i
 		{File: os.Stderr},
 	}
 	// XXX There is no source to pass to NewTopEvalCtx.
-	fm := eval.NewTopFrame(ev, &eval.Source{Name: "[prompt]"}, ports)
+	fm := eval.NewTopFrame(ev, &parse.Source{Name: "[prompt]"}, ports)
 	f := func(fm *eval.Frame) error { return fn.Call(fm, args, eval.NoOpts) }
 	err := fm.PipeOutput(f, valuesCb, bytesCb)
 

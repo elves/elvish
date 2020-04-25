@@ -1,9 +1,10 @@
-package eval
+package parse_test
 
 import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval/vals"
+	. "github.com/elves/elvish/pkg/parse"
 	"github.com/xiaq/persistent/hash"
 )
 
