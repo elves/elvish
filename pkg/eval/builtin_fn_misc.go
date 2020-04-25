@@ -267,7 +267,8 @@ func source(fm *Frame, fname string) error {
 	if err != nil {
 		return err
 	}
-	n, err := parse.AsChunk(fname, code)
+	src := &parse.Source{Name: fname, Code: code, IsFile: true}
+	tree, err := parse.Parse(src)
 	if err != nil {
 		return err
 	}
@@ -275,8 +276,7 @@ func source(fm *Frame, fname string) error {
 	for name := range fm.up.static() {
 		scriptGlobal.set(name)
 	}
-	op, err := compile(fm.Builtin.static(),
-		scriptGlobal, n, &parse.Source{Name: path, Code: code, IsFile: true})
+	op, err := compile(fm.Builtin.static(), scriptGlobal, tree.Root, src)
 	if err != nil {
 		return err
 	}

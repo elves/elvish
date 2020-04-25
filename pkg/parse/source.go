@@ -16,6 +16,11 @@ type Source struct {
 	IsFile bool
 }
 
+// SourceForTest returns a Source used for testing.
+func SourceForTest(code string) *Source {
+	return &Source{Name: "[test]", Code: code}
+}
+
 func (src *Source) Kind() string {
 	return "map"
 }

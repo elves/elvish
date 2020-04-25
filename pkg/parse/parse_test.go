@@ -245,21 +245,25 @@ var goodCases = []struct {
 
 func TestParse(t *testing.T) {
 	for _, tc := range goodCases {
-		bn, err := AsChunk("[test]", tc.src)
+		src := SourceForTest(tc.src)
+		tree, err := Parse(src)
 		if err != nil {
 			t.Errorf("Parse(%q) returns error: %v", tc.src, err)
 		}
-		err = checkParseTree(bn)
+		if tree.Source != src {
+			t.Errorf("Parse(%q) returns source %v, want %v", tc.src, tree.Source, src)
+		}
+		err = checkParseTree(tree.Root)
 		if err != nil {
 			t.Errorf("Parse(%q) returns bad parse tree: %v", tc.src, err)
 			fmt.Fprintf(os.Stderr, "Parse tree of %q:\n", tc.src)
-			pprintParseTree(bn, os.Stderr)
+			pprintParseTree(tree.Root, os.Stderr)
 		}
-		err = checkAST(bn, tc.ast)
+		err = checkAST(tree.Root, tc.ast)
 		if err != nil {
 			t.Errorf("Parse(%q) returns bad AST: %v", tc.src, err)
 			fmt.Fprintf(os.Stderr, "AST of %q:\n", tc.src)
-			pprintAST(bn, os.Stderr)
+			pprintAST(tree.Root, os.Stderr)
 		}
 	}
 }
@@ -320,7 +324,7 @@ var parseErrorTests = []struct {
 func TestParseError(t *testing.T) {
 	for _, test := range parseErrorTests {
 		t.Run(test.src, func(t *testing.T) {
-			_, err := AsChunk("[test]", test.src)
+			_, err := Parse(SourceForTest(test.src))
 			if err == nil {
 				t.Fatalf("no error")
 			}

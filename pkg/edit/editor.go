@@ -72,12 +72,12 @@ func evalDefaultBinding(ev *eval.Evaler, ns eval.Ns) {
 	// TODO(xiaq): The evaler API should accodomate the use case of evaluating a
 	// piece of code in an alternative global namespace.
 
-	n, err := parse.AsChunk("[default bindings]", defaultBindingsElv)
+	src := &parse.Source{Name: "[default bindings]", Code: defaultBindingsElv}
+	tree, err := parse.Parse(src)
 	if err != nil {
 		panic(err)
 	}
-	src := &parse.Source{Name: "[default bindings]", Code: defaultBindingsElv}
-	op, err := ev.CompileWithGlobal(n, src, ns)
+	op, err := ev.CompileWithGlobal(tree.Root, src, ns)
 	if err != nil {
 		panic(err)
 	}

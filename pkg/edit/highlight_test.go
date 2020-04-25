@@ -131,11 +131,11 @@ func TestMakeHasCommand(t *testing.T) {
 }
 
 func mustParse(src string) *parse.Chunk {
-	n, err := parse.AsChunk("[test]", src)
+	tree, err := parse.Parse(parse.SourceForTest(src))
 	if err != nil {
 		panic(err)
 	}
-	return n
+	return tree.Root
 }
 
 func mustMkdirAll(path string) {

@@ -299,7 +299,7 @@ func loadModuleFile(fm *Frame, r diag.Ranger, spec, path string) (Ns, error) {
 }
 
 func evalModule(fm *Frame, r diag.Ranger, key string, src *parse.Source) (Ns, error) {
-	n, err := parse.AsChunk(src.Name, src.Code)
+	tree, err := parse.Parse(src)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +314,7 @@ func evalModule(fm *Frame, r diag.Ranger, key string, src *parse.Source) (Ns, er
 		fm.addTraceback(r), false,
 	}
 
-	op, err := compile(newFm.Builtin.static(), modGlobal.static(), n, src)
+	op, err := compile(newFm.Builtin.static(), modGlobal.static(), tree.Root, src)
 	if err != nil {
 		return nil, err
 	}

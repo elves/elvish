@@ -25,8 +25,8 @@ descend:
 
 // Wordify turns a piece of source code into words.
 func Wordify(src string) []string {
-	n, _ := parse.AsChunk("[wordify]", src)
-	return wordifyInner(n, nil)
+	tree, _ := parse.Parse(&parse.Source{Name: "[wordify]", Code: src})
+	return wordifyInner(tree.Root, nil)
 }
 
 func wordifyInner(n parse.Node, words []string) []string {

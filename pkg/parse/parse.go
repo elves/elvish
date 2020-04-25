@@ -19,12 +19,18 @@ import (
 	"github.com/elves/elvish/pkg/diag"
 )
 
-// AsChunk parses the given source as a Chunk. If the error is not nil, it
-// always has type MultiError.
-func AsChunk(srcname, src string) (*Chunk, error) {
-	n := &Chunk{}
-	err := As(srcname, src, n)
-	return n, err
+// Tree represents a parsed tree.
+type Tree struct {
+	Root   *Chunk
+	Source *Source
+}
+
+// Parse parses the given source. The returned error always has type MultiError
+// if it is not nil.
+func Parse(src *Source) (Tree, error) {
+	tree := Tree{&Chunk{}, src}
+	err := As(src.Name, src.Code, tree.Root)
+	return tree, err
 }
 
 // As parses the given source as a node, depending on the dynamic type of n. If

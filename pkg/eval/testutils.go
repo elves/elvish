@@ -257,11 +257,11 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 	for i, text := range texts {
 		src := &parse.Source{Name: fmt.Sprintf("test%d.elv", i), Code: text}
 
-		n, err := parse.AsChunk(src.Name, src.Code)
+		tree, err := parse.Parse(src)
 		if err != nil {
 			t.Fatalf("Parse(%q) error: %s", src.Code, err)
 		}
-		op, err := ev.Compile(n, src)
+		op, err := ev.Compile(tree.Root, src)
 		if err != nil {
 			// NOTE: Only the compilation error of the last code is saved.
 			r.compilationError = err

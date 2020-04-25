@@ -282,11 +282,11 @@ func (ev *Evaler) Eval(op Op, cfg EvalCfg) error {
 
 // ParseAndCompile parses and compiles a Source.
 func (ev *Evaler) ParseAndCompile(src *parse.Source) (Op, error) {
-	n, err := parse.AsChunk(src.Name, src.Code)
+	tree, err := parse.Parse(src)
 	if err != nil {
 		return Op{}, err
 	}
-	return ev.Compile(n, src)
+	return ev.Compile(tree.Root, src)
 }
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it

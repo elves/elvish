@@ -31,7 +31,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	var errors []error
 	var errorRegions []region
 
-	n, errParse := parse.AsChunk("[interactive]", code)
+	tree, errParse := parse.Parse(&parse.Source{Name: "[interactive]", Code: code})
 	if errParse != nil {
 		for _, err := range errParse.(*parse.MultiError).Entries {
 			if err.Context.From != len(code) {
@@ -45,7 +45,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	}
 
 	if cfg.Check != nil {
-		err := cfg.Check(n)
+		err := cfg.Check(tree.Root)
 		if r, ok := err.(diag.Ranger); ok && r.Range().From != len(code) {
 			errors = append(errors, err)
 			errorRegions = append(errorRegions,
@@ -55,7 +55,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	}
 
 	var text ui.Text
-	regions := getRegionsInner(n)
+	regions := getRegionsInner(tree.Root)
 	regions = append(regions, errorRegions...)
 	regions = fixRegions(regions)
 	lastEnd := 0
