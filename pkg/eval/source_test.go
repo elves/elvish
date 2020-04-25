@@ -8,23 +8,17 @@ import (
 )
 
 func TestSourceAsValue(t *testing.T) {
-	vals.TestValue(t, NewInteractiveSource("[tty]", "echo")).
+	vals.TestValue(t, &Source{Name: "[tty]", Code: "echo"}).
 		Kind("map").
 		Hash(hash.DJB(hash.String("[tty]"), hash.String("echo"), 0)).
-		Equal(NewInteractiveSource("[tty]", "echo")).
-		NotEqual(NewInteractiveSource("[tty]", "put")).
+		Equal(&Source{Name: "[tty]", Code: "echo"}).
+		NotEqual(&Source{Name: "[tty]", Code: "put"}).
 		Repr("<src name:'[tty]' code:... is-file:$false>").
 		AllKeys("name", "code", "is-file").
 		Index("name", "[tty]").
 		Index("code", "echo").
 		Index("is-file", false)
 
-	vals.TestValue(t, NewInternalGoSource("[test]")).
-		Index("is-file", false)
-
-	vals.TestValue(t, NewInternalElvishSource(true, "[test]", "echo")).
-		Index("is-file", false)
-
-	vals.TestValue(t, NewScriptSource("/fake/path", "echo")).
+	vals.TestValue(t, &Source{IsFile: true}).
 		Index("is-file", true)
 }

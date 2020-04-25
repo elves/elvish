@@ -10,36 +10,9 @@ import (
 
 // Source describes a piece of source code.
 type Source struct {
-	Name string
-	Code string
-
+	Name   string
+	Code   string
 	IsFile bool
-}
-
-// NewInteractiveSource returns a Source for a piece of code entered
-// interactively.
-func NewInteractiveSource(name, code string) *Source {
-	return &Source{Name: "[tty]", Code: code}
-}
-
-// NewScriptSource returns a Source for a piece of code used as a script.
-func NewScriptSource(path, code string) *Source {
-	return &Source{Name: path, Code: code, IsFile: true}
-}
-
-// NewModuleSource returns a Source for a piece of code used as a module.
-func NewModuleSource(path, code string) *Source {
-	return &Source{Name: path, Code: code, IsFile: true}
-}
-
-// NewInternalGoSource returns a Source for use as a placeholder when calling Elvish
-// functions from Go code. It has no associated code.
-func NewInternalGoSource(name string) *Source {
-	return &Source{Name: name}
-}
-
-func NewInternalElvishSource(root bool, name, code string) *Source {
-	return &Source{Name: name, Code: code}
 }
 
 func (src *Source) Kind() string {

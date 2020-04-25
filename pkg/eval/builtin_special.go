@@ -275,7 +275,8 @@ func loadModule(fm *Frame, r diag.Ranger, spec string) (Ns, error) {
 		return ns, nil
 	}
 	if code, ok := fm.bundled[spec]; ok {
-		return evalModule(fm, r, spec, NewInternalElvishSource(false, spec, code))
+		return evalModule(fm, r, spec,
+			&Source{Name: "[bundled " + spec + "]", Code: code})
 	}
 	if fm.libDir == "" {
 		return nil, noSuchModule{spec}
@@ -294,7 +295,7 @@ func loadModuleFile(fm *Frame, r diag.Ranger, spec, path string) (Ns, error) {
 		}
 		return nil, err
 	}
-	return evalModule(fm, r, path, NewModuleSource(path, code))
+	return evalModule(fm, r, path, &Source{Name: path, Code: code, IsFile: true})
 }
 
 func evalModule(fm *Frame, r diag.Ranger, key string, src *Source) (Ns, error) {

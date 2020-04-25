@@ -57,7 +57,7 @@ func indexLayeredBindings(k ui.Key, bindings ...BindingMap) eval.Callable {
 	return nil
 }
 
-var bindingSource = eval.NewInternalGoSource("[editor binding]")
+var bindingSource = &eval.Source{Name: "[editor binding]"}
 
 func callWithNotifyPorts(nt notifier, ev *eval.Evaler, f eval.Callable, args ...interface{}) {
 	// TODO(xiaq): Use CallWithOutputCallback when it supports redirecting the

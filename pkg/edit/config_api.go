@@ -64,7 +64,7 @@ func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}
 		// unexported from eval.
 		ports := []*eval.Port{
 			{File: os.Stdin}, {File: os.Stdout}, {File: os.Stderr}}
-		fm := eval.NewTopFrame(ev, eval.NewInternalGoSource(name), ports)
+		fm := eval.NewTopFrame(ev, &eval.Source{Name: name}, ports)
 		fn.Call(fm, args, eval.NoOpts)
 	}
 }

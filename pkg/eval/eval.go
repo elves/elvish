@@ -185,8 +185,7 @@ func adaptChdirHook(name string, ev *Evaler, pfns *vector.Vector) func(string) {
 				fmt.Fprintln(os.Stderr, name, "hook must be callable")
 				continue
 			}
-			fm := NewTopFrame(ev,
-				NewInternalGoSource("["+name+" hook]"), ports[:])
+			fm := NewTopFrame(ev, &Source{Name: "[hook " + name + "]"}, ports[:])
 			err := fn.Call(fm, []interface{}{path}, NoOpts)
 			if err != nil {
 				// TODO: Stack trace
