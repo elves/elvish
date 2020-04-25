@@ -276,7 +276,7 @@ func source(fm *Frame, fname string) error {
 	for name := range fm.up.static() {
 		scriptGlobal.set(name)
 	}
-	op, err := compile(fm.Builtin.static(), scriptGlobal, tree.Root, src)
+	op, err := compile(fm.Builtin.static(), scriptGlobal, tree)
 	if err != nil {
 		return err
 	}

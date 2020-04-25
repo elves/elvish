@@ -13,14 +13,13 @@ import (
 
 func initHighlighter(appSpec *cli.AppSpec, ev *eval.Evaler) {
 	appSpec.Highlighter = highlight.NewHighlighter(highlight.Config{
-		Check:      func(n *parse.Chunk) error { return check(ev, n) },
+		Check:      func(tree parse.Tree) error { return check(ev, tree) },
 		HasCommand: func(cmd string) bool { return hasCommand(ev, cmd) },
 	})
 }
 
-func check(ev *eval.Evaler, n *parse.Chunk) error {
-	src := parse.Source{Name: "[tty]", Code: parse.SourceText(n)}
-	_, err := ev.Compile(n, src)
+func check(ev *eval.Evaler, tree parse.Tree) error {
+	_, err := ev.Compile(tree)
 	return err
 }
 

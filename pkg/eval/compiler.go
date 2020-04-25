@@ -23,8 +23,8 @@ type compiler struct {
 	srcMeta parse.Source
 }
 
-func compile(b, g staticNs, n *parse.Chunk, src parse.Source) (op Op, err error) {
-	cp := &compiler{b, []staticNs{g}, make(staticNs), nil, src}
+func compile(b, g staticNs, tree parse.Tree) (op Op, err error) {
+	cp := &compiler{b, []staticNs{g}, make(staticNs), nil, tree.Source}
 	defer func() {
 		r := recover()
 		if r == nil {
@@ -37,7 +37,7 @@ func compile(b, g staticNs, n *parse.Chunk, src parse.Source) (op Op, err error)
 			panic(r)
 		}
 	}()
-	return Op{cp.chunkOp(n), src}, nil
+	return Op{cp.chunkOp(tree.Root), tree.Source}, nil
 }
 
 func (cp *compiler) errorpf(r diag.Ranger, format string, args ...interface{}) {

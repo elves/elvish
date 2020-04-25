@@ -286,13 +286,13 @@ func (ev *Evaler) ParseAndCompile(src parse.Source) (Op, error) {
 	if err != nil {
 		return Op{}, err
 	}
-	return ev.Compile(tree.Root, src)
+	return ev.Compile(tree)
 }
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it
 // can be passed to GetCompilationError to retrieve more details.
-func (ev *Evaler) Compile(n *parse.Chunk, src parse.Source) (Op, error) {
-	return ev.CompileWithGlobal(n, src, ev.Global)
+func (ev *Evaler) Compile(tree parse.Tree) (Op, error) {
+	return ev.CompileWithGlobal(tree, ev.Global)
 }
 
 // CompileWithGlobal compiles Elvish code in an alternative global scope. If the
@@ -302,6 +302,6 @@ func (ev *Evaler) Compile(n *parse.Chunk, src parse.Source) (Op, error) {
 // TODO(xiaq): To use the Op created, the caller must create a Frame and mutate
 // its local scope manually. Consider restructuring the API to make that
 // unnecessary.
-func (ev *Evaler) CompileWithGlobal(n *parse.Chunk, src parse.Source, g Ns) (Op, error) {
-	return compile(ev.Builtin.static(), g.static(), n, src)
+func (ev *Evaler) CompileWithGlobal(tree parse.Tree, g Ns) (Op, error) {
+	return compile(ev.Builtin.static(), g.static(), tree)
 }

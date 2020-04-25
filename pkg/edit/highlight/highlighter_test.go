@@ -76,7 +76,7 @@ func TestHighlighter_CheckErrors(t *testing.T) {
 	var checkError error
 	// Make a highlighter whose Check callback returns checkError.
 	hl := NewHighlighter(Config{
-		Check: func(*parse.Chunk) error { return checkError }})
+		Check: func(parse.Tree) error { return checkError }})
 	getWithCheckError := func(code string, err error) (ui.Text, []error) {
 		checkError = err
 		return hl.Get(code)

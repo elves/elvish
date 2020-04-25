@@ -314,7 +314,7 @@ func evalModule(fm *Frame, r diag.Ranger, key string, src parse.Source) (Ns, err
 		fm.addTraceback(r), false,
 	}
 
-	op, err := compile(newFm.Builtin.static(), modGlobal.static(), tree.Root, src)
+	op, err := compile(newFm.Builtin.static(), modGlobal.static(), tree)
 	if err != nil {
 		return nil, err
 	}

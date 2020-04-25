@@ -11,7 +11,7 @@ import (
 
 // Config keeps configuration for highlighting code.
 type Config struct {
-	Check      func(n *parse.Chunk) error
+	Check      func(n parse.Tree) error
 	HasCommand func(name string) bool
 }
 
@@ -31,7 +31,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	var errors []error
 	var errorRegions []region
 
-	tree, errParse := parse.Parse(parse.Source{Name: "[interactive]", Code: code})
+	tree, errParse := parse.Parse(parse.Source{Name: "[tty]", Code: code})
 	if errParse != nil {
 		for _, err := range errParse.(*parse.MultiError).Entries {
 			if err.Context.From != len(code) {
@@ -45,7 +45,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	}
 
 	if cfg.Check != nil {
-		err := cfg.Check(tree.Root)
+		err := cfg.Check(tree)
 		if r, ok := err.(diag.Ranger); ok && r.Range().From != len(code) {
 			errors = append(errors, err)
 			errorRegions = append(errorRegions,
