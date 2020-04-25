@@ -253,13 +253,13 @@ func TestParse(t *testing.T) {
 		if err != nil {
 			t.Errorf("Parse(%q) returns bad parse tree: %v", tc.src, err)
 			fmt.Fprintf(os.Stderr, "Parse tree of %q:\n", tc.src)
-			PPrintParseTree(bn, os.Stderr)
+			pprintParseTree(bn, os.Stderr)
 		}
 		err = checkAST(bn, tc.ast)
 		if err != nil {
 			t.Errorf("Parse(%q) returns bad AST: %v", tc.src, err)
 			fmt.Fprintf(os.Stderr, "AST of %q:\n", tc.src)
-			PPrintAST(bn, os.Stderr)
+			pprintAST(bn, os.Stderr)
 		}
 	}
 }

@@ -13,9 +13,9 @@ const (
 	indentInc = 2
 )
 
-// PPrintAST pretty-prints the AST part of a Node to a Writer.
-func PPrintAST(n Node, w io.Writer) {
-	pprintAST(n, w, 0, "")
+// Pretty-prints the AST part of a Node to a Writer.
+func pprintAST(n Node, w io.Writer) {
+	pprintASTRec(n, w, 0, "")
 }
 
 type field struct {
@@ -26,7 +26,7 @@ type field struct {
 
 var zeroValue reflect.Value
 
-func pprintAST(n Node, wr io.Writer, indent int, leading string) {
+func pprintASTRec(n Node, wr io.Writer, indent int, leading string) {
 	nodeType := reflect.TypeOf((*Node)(nil)).Elem()
 
 	var childFields, childrenFields, propertyFields []field
@@ -65,7 +65,7 @@ func pprintAST(n Node, wr io.Writer, indent int, leading string) {
 	// has only one child and nothing more : coalesce
 	if len(n.Children()) == 1 &&
 		n.Children()[0].SourceText() == n.SourceText() {
-		pprintAST(n.Children()[0], wr, indent, leading+nt.Name()+"/")
+		pprintASTRec(n.Children()[0], wr, indent, leading+nt.Name()+"/")
 		return
 	}
 	// print heading
@@ -90,7 +90,7 @@ func pprintAST(n Node, wr io.Writer, indent int, leading string) {
 	// print lone children recursively
 	for _, chf := range childFields {
 		// TODO the name is omitted
-		pprintAST(chf.value.(Node), wr, indent+indentInc, "")
+		pprintASTRec(chf.value.(Node), wr, indent+indentInc, "")
 	}
 	// print children list recursively
 	for _, chf := range childrenFields {
@@ -101,17 +101,17 @@ func pprintAST(n Node, wr io.Writer, indent int, leading string) {
 		// fmt.Fprintf(wr, "%*s.%s:\n", indent, "", chf.name)
 		for i := 0; i < children.Len(); i++ {
 			n := children.Index(i).Interface().(Node)
-			pprintAST(n, wr, indent+indentInc, "")
+			pprintASTRec(n, wr, indent+indentInc, "")
 		}
 	}
 }
 
-// PPrintParseTree pretty-prints the parse tree part of a Node to a Writer.
-func PPrintParseTree(n Node, w io.Writer) {
-	pprintParseTree(n, w, 0)
+// Pretty-prints the parse tree part of a Node to a Writer.
+func pprintParseTree(n Node, w io.Writer) {
+	pprintParseTreeRec(n, w, 0)
 }
 
-func pprintParseTree(n Node, wr io.Writer, indent int) {
+func pprintParseTreeRec(n Node, wr io.Writer, indent int) {
 	leading := ""
 	for len(n.Children()) == 1 {
 		leading += reflect.TypeOf(n).Elem().Name() + "/"
@@ -119,7 +119,7 @@ func pprintParseTree(n Node, wr io.Writer, indent int) {
 	}
 	fmt.Fprintf(wr, "%*s%s%s\n", indent, "", leading, summary(n))
 	for _, ch := range n.Children() {
-		pprintParseTree(ch, wr, indent+indentInc)
+		pprintParseTreeRec(ch, wr, indent+indentInc)
 	}
 }
 

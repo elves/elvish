@@ -28,7 +28,7 @@ var pprintASTTests = tt.Table{
 func TestPPrintAST(t *testing.T) {
 	tt.Test(t, tt.Fn("PPrintAST (to string)", func(n Node) string {
 		var b strings.Builder
-		PPrintAST(n, &b)
+		pprintAST(n, &b)
 		return b.String()
 	}), pprintASTTests)
 }
@@ -58,7 +58,7 @@ var pprintParseTreeTests = tt.Table{
 func TestPPrintParseTree(t *testing.T) {
 	tt.Test(t, tt.Fn("PPrintParseTree (to string)", func(n Node) string {
 		var b strings.Builder
-		PPrintParseTree(n, &b)
+		pprintParseTree(n, &b)
 		return b.String()
 	}), pprintParseTreeTests)
 }
