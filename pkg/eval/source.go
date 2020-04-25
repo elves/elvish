@@ -2,7 +2,6 @@ package eval
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/util"
@@ -11,36 +10,36 @@ import (
 
 // Source describes a piece of source code.
 type Source struct {
-	Type SourceType
 	Name string
-	Root bool
 	Code string
+
+	IsFile bool
 }
 
 // NewInteractiveSource returns a Source for a piece of code entered
 // interactively.
 func NewInteractiveSource(name, code string) *Source {
-	return &Source{InteractiveSource, "[tty]", true, code}
+	return &Source{Name: "[tty]", Code: code}
 }
 
 // NewScriptSource returns a Source for a piece of code used as a script.
 func NewScriptSource(path, code string) *Source {
-	return &Source{FileSource, path, true, code}
+	return &Source{Name: path, Code: code, IsFile: true}
 }
 
 // NewModuleSource returns a Source for a piece of code used as a module.
 func NewModuleSource(path, code string) *Source {
-	return &Source{FileSource, path, false, code}
+	return &Source{Name: path, Code: code, IsFile: true}
 }
 
 // NewInternalGoSource returns a Source for use as a placeholder when calling Elvish
 // functions from Go code. It has no associated code.
 func NewInternalGoSource(name string) *Source {
-	return &Source{InternalGoSource, name, true, ""}
+	return &Source{Name: name}
 }
 
 func NewInternalElvishSource(root bool, name, code string) *Source {
-	return &Source{InternalElvishSource, name, root, code}
+	return &Source{Name: name, Code: code}
 }
 
 func (src *Source) Kind() string {
@@ -48,12 +47,15 @@ func (src *Source) Kind() string {
 }
 
 func (src *Source) Hash() uint32 {
-	var root uint32
-	if src.Root {
-		root = 1
+	return hash.DJB(
+		hash.String(src.Name), hash.String(src.Code), hashBool(src.IsFile))
+}
+
+func hashBool(b bool) uint32 {
+	if b {
+		return 1
 	}
-	return hash.DJB(uint32(src.Type),
-		hash.String(src.Name), root, hash.String(src.Code))
+	return 0
 }
 
 func (src *Source) Equal(other interface{}) bool {
@@ -65,56 +67,22 @@ func (src *Source) Equal(other interface{}) bool {
 
 func (src *Source) Repr(int) string {
 	return fmt.Sprintf(
-		"<src type:%s name:%s root:$%v code:...>",
-		src.Type, parse.Quote(src.Name), src.Root)
+		"<src name:%s code:... is-file:$%v>", parse.Quote(src.Name), src.IsFile)
 }
 
 func (src *Source) Index(k interface{}) (interface{}, bool) {
 	switch k {
-	case "type":
-		return src.Type.String(), true
 	case "name":
 		return src.Name, true
-	case "root":
-		return src.Root, true
 	case "code":
 		return src.Code, true
+	case "is-file":
+		return src.IsFile, true
 	default:
 		return nil, false
 	}
 }
 
 func (src *Source) IterateKeys(f func(interface{}) bool) {
-	util.Feed(f, "type", "name", "root", "code")
-}
-
-// SourceType records the type of a piece of source code.
-type SourceType int
-
-const (
-	InvalidSource SourceType = iota
-	// A special value used for the Frame when calling Elvish functions from Go.
-	// This is the only sourceType without associated code.
-	InternalGoSource
-	// Code from an internal buffer.
-	InternalElvishSource
-	// Code entered interactively.
-	InteractiveSource
-	// Code from a file.
-	FileSource
-)
-
-func (t SourceType) String() string {
-	switch t {
-	case InternalGoSource:
-		return "internal-go"
-	case InternalElvishSource:
-		return "internal-elvish"
-	case InteractiveSource:
-		return "interactive"
-	case FileSource:
-		return "file"
-	default:
-		return "bad type " + strconv.Itoa(int(t))
-	}
+	util.Feed(f, "name", "code", "is-file")
 }

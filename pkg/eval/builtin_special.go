@@ -259,7 +259,7 @@ func (op useOp) invoke(fm *Frame) error {
 func loadModule(fm *Frame, r diag.Ranger, spec string) (Ns, error) {
 	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") {
 		var dir string
-		if fm.srcMeta.Type == FileSource {
+		if fm.srcMeta.IsFile {
 			dir = filepath.Dir(fm.srcMeta.Name)
 		} else {
 			var err error
