@@ -45,18 +45,17 @@ func setupShell(fds [3]*os.File, p Paths, spawn bool) (*eval.Evaler, func()) {
 	restoreTTY := term.SetupGlobal()
 	ev := InitRuntime(fds[2], p, spawn)
 	restoreSHLVL := incSHLVL()
+	sigCh := sys.NotifySignals()
 
-	sigs := make(chan os.Signal)
-	signal.Notify(sigs)
 	go func() {
-		for sig := range sigs {
+		for sig := range sigCh {
 			logger.Println("signal", sig)
 			handleSignal(sig, fds[2])
 		}
 	}()
 
 	return ev, func() {
-		signal.Stop(sigs)
+		signal.Stop(sigCh)
 		restoreSHLVL()
 		CleanupRuntime(fds[2], ev)
 		restoreTTY()
