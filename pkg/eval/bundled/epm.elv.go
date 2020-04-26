@@ -1,6 +1,7 @@
 package bundled
 
 const epmElv = `use re
+use str
 
 # Verbosity configuration
 debug-mode = $false
@@ -61,11 +62,11 @@ fn is-installed [pkg]{
 }
 
 fn -package-domain [pkg]{
-  splits &max=2 / $pkg | take 1
+  str:split &max=2 / $pkg | take 1
 }
 
 fn -package-without-domain [pkg]{
-  splits &max=2 / $pkg | drop 1 | joins ''
+  str:split &max=2 / $pkg | drop 1 | joins ''
 }
 
 # Merge two maps
@@ -278,7 +279,7 @@ fn query [pkg]{
 # List installed packages
 fn installed {
   put $-lib-dir/*[nomatch-ok] | each [dir]{
-    dom = (replaces $-lib-dir/ '' $dir)
+    dom = (str:replace $-lib-dir/ '' $dir)
     cfg = (-domain-config $dom)
     # Only list domains for which we know the config, so that the user
     # can have his own non-package directories under ~/.elvish/lib

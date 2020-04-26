@@ -3,9 +3,12 @@
 package str
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/eval/errs"
+	"github.com/elves/elvish/pkg/eval/vals"
 )
 
 //elvdoc:fn compare
@@ -152,6 +155,53 @@ import (
 // ▶ -1
 // ```
 
+//elvdoc:fn join
+//
+// ```elvish
+// str:join $sep $input-list?
+// ```
+//
+// Joins inputs with `$sep`. Examples:
+//
+// ```elvish-transcript
+// ~> put lorem ipsum | joins ,
+// ▶ lorem,ipsum
+// ~> joins , [lorem ipsum]
+// ▶ lorem,ipsum
+// ~> joins '' [lorem ipsum]
+// ▶ loremipsum
+// ~> joins '...' [lorem ipsum]
+// ▶ lorem...ipsum
+// ```
+//
+// Etymology: Various languages,
+// [Python](https://docs.python.org/3.6/library/stdtypes.html#str.join).
+//
+// @cf str:split
+
+func join(sep string, inputs eval.Inputs) (string, error) {
+	var buf bytes.Buffer
+	var errJoin error
+	first := true
+	inputs(func(v interface{}) {
+		if errJoin != nil {
+			return
+		}
+		if s, ok := v.(string); ok {
+			if first {
+				first = false
+			} else {
+				buf.WriteString(sep)
+			}
+			buf.WriteString(s)
+		} else {
+			errJoin = errs.BadValue{
+				What: "input to str:join", Valid: "string", Actual: vals.Kind(v)}
+		}
+	})
+	return buf.String(), errJoin
+}
+
 //elvdoc:fn last-index
 //
 // ```elvish
@@ -167,6 +217,62 @@ import (
 // ~> str:last-index "elven speak elvish" romulan
 // ▶ -1
 // ```
+
+//elvdoc:fn replace
+//
+// ```elvish
+// str:replace &max=-1 $old $repl $source
+// ```
+//
+// Replaces all occurrences of `$old` with `$repl` in `$source`. If `$max` is
+// non-negative, it determines the max number of substitutions.
+//
+// **Note**: This command does not support searching by regular expressions, `$old`
+// is always interpreted as a plain string. Use [re:replace](re.html#replace) if
+// you need to search by regex.
+
+type maxOpt struct{ Max int }
+
+func (o *maxOpt) SetDefaultOptions() { o.Max = -1 }
+
+func replace(opts maxOpt, old, repl, s string) string {
+	return strings.Replace(s, old, repl, opts.Max)
+}
+
+//elvdoc:fn split
+//
+// ```elvish
+// str:split $sep $string
+// ```
+//
+// Splits `$string` by `$sep`. If `$sep` is an empty string, split it into
+// codepoints.
+//
+// ```elvish-transcript
+// ~> splits , lorem,ipsum
+// ▶ lorem
+// ▶ ipsum
+// ~> splits '' 你好
+// ▶ 你
+// ▶ 好
+// ```
+//
+// **Note**: This command does not support splitting by regular expressions,
+// `$sep` is always interpreted as a plain string. Use [re:split](re.html#split)
+// if you need to split by regex.
+//
+// Etymology: Various languages, in particular
+// [Python](https://docs.python.org/3.6/library/stdtypes.html#str.split).
+//
+// @cf str:join
+
+func split(fm *eval.Frame, opts maxOpt, sep, s string) {
+	out := fm.OutputChan()
+	parts := strings.SplitN(s, sep, opts.Max)
+	for _, p := range parts {
+		out <- p
+	}
+}
 
 //elvdoc:fn title
 //
@@ -326,9 +432,13 @@ var fns = map[string]interface{}{
 	"has-suffix": strings.HasSuffix,
 	"index":      strings.Index,
 	"index-any":  strings.IndexAny,
-	// TODO: IndexFunc, Join
+	// TODO: IndexFunc
+	"join":       join,
 	"last-index": strings.LastIndex,
-	// TODO: LastIndexFunc, Map, Repeat, Replace, Split, SplitAfter
+	// TODO: LastIndexFunc, Map, Repeat
+	"replace": replace,
+	"split":   split,
+	// TODO: SplitAfter
 	"title":    strings.Title,
 	"to-lower": strings.ToLower,
 	"to-title": strings.ToTitle,

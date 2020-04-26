@@ -154,6 +154,8 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // joins $sep $input-list?
 // ```
 //
+// This function is deprecated; use [str:join](str.html#strjoin) instead.
+//
 // Join inputs with `$sep`. Examples:
 //
 // ```elvish-transcript
@@ -176,6 +178,8 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // ```elvish
 // splits $sep $string
 // ```
+//
+// This function is deprecated; use [str:split](str.html#strsplit) instead.
 //
 // Split `$string` by `$sep`. If `$sep` is an empty string, split it into
 // codepoints.
@@ -203,6 +207,8 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // ```elvish
 // replaces &max=-1 $old $repl $source
 // ```
+//
+// This function is deprecated; use [str:replace](str.html#strreplace) instead.
 //
 // Replace all occurrences of `$old` with `$repl` in `$source`. If `$max` is
 // non-negative, it determines the max number of substitutions.

@@ -142,6 +142,12 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 	switch name {
 	case "explode~":
 		msg = `the "explode" command is deprecated; use "all" instead`
+	case "join~":
+		msg = `the "joins" command is deprecated; use "str:join" instead`
+	case "splits~":
+		msg = `the "splits" command is deprecated; use "str:split" instead`
+	case "replaces~":
+		msg = `the "replaces" command is deprecated; use "str:replace" instead`
 	default:
 		return
 	}
