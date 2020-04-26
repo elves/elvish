@@ -162,31 +162,45 @@ import (
 
 // TODO(xiaq): Document esleep.
 
+//elvdoc:fn time
+//
+// ```elvish
+// time &on-end=$nil $callable
+// ```
+//
+// Runs the callable, and call `$on-end` with the duration it took, as a
+// number in seconds. If `$on-end` is `$nil` (the default), prints the
+// duration in human-readable form.
+//
+// If `$callable` throws an exception, the exception is propagated after the
+// on-end or default printing is done.
+//
+// If `$on-end` throws an exception, it is propagated, unless `$callable` has
+// already thrown an exception.
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> time { sleep 1 }
+// 1.006060647s
+// ~> time { sleep 0.01 }
+// 1.288977ms
+// ~> t = ''
+// ~> time &on-end=[x]{ t = $x } { sleep 1 }
+// ~> put $t
+// ▶ (float64 1.000925004)
+// ~> time &on-end=[x]{ t = $x } { sleep 0.01 }
+// ~> put $t
+// ▶ (float64 0.011030208)
+// ```
+
 //elvdoc:fn -time
 //
 // ```elvish
-// -time $callable
+// -time &cb=$nil $callable
 // ```
 //
-// Run the callable, and write the time used to run it. Example:
-//
-// ```elvish-transcript
-// ~> -time { sleep 1 }
-// 1.006060647s
-// ```
-//
-// When the callable also produces outputs, they are a bit tricky to separate from
-// the output of `-time`. The easiest workaround is to redirect the output into a
-// temporary file:
-//
-// ```elvish-transcript
-// ~> f = (mktemp)
-// ~> -time { { echo output; sleep 1 } > $f }
-// 1.005589823s
-// ~> cat $f
-// output
-// ~> rm $f
-// ```
+// Deprecated alias of [`time`](#time).
 
 //elvdoc:fn -ifaddrs
 //
@@ -210,7 +224,8 @@ func init() {
 
 		// Time
 		"esleep": sleep,
-		"-time":  _time,
+		"time":   timeCmd,
+		"-time":  timeCmd,
 
 		"-ifaddrs": _ifaddrs,
 	})
@@ -304,13 +319,25 @@ func sleep(fm *Frame, t float64) error {
 	}
 }
 
-func _time(fm *Frame, f Callable) error {
+type timeOpt struct{ OnEnd Callable }
+
+func (o *timeOpt) SetDefaultOptions() {}
+
+func timeCmd(fm *Frame, opts timeOpt, f Callable) error {
 	t0 := time.Now()
 	err := f.Call(fm, NoArgs, NoOpts)
 	t1 := time.Now()
 
 	dt := t1.Sub(t0)
-	fmt.Fprintln(fm.ports[1].File, dt)
+	if opts.OnEnd != nil {
+		newFm := fm.fork("on-end callback of time")
+		errCb := opts.OnEnd.Call(newFm, []interface{}{dt.Seconds()}, NoOpts)
+		if err == nil {
+			err = errCb
+		}
+	} else {
+		fmt.Fprintln(fm.ports[1].File, dt)
+	}
 
 	return err
 }

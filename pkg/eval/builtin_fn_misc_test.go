@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/elves/elvish/pkg/util"
@@ -14,6 +15,20 @@ func TestBuiltinFnMisc(t *testing.T) {
 		      -source $f; rm $f`).Puts("x"),
 		That(`f = (mktemp elvXXXXXX); echo 'put $x' > $f
 		      fn p [x]{ -source $f }; p x; rm $f`).Puts("x"),
+
+		// Test the "time" builtin.
+		//
+		// Since runtime duration is non-deterministic, we only have some sanity
+		// checks here.
+		That("time { echo foo } | a _ = (all)", "put $a").Puts("foo"),
+		That("duration = ''",
+			"time &on-end=[x]{ duration = $x } { echo foo } | out = (all)",
+			"put $out", "kind-of $duration").Puts("foo", "number"),
+		That("time { fail body } | nop (all)").ThrowsCause(errors.New("body")),
+		That("time &on-end=[_]{ fail on-end } { }").
+			ThrowsCause(errors.New("on-end")),
+		That("time &on-end=[_]{ fail on-end } { fail body }").
+			ThrowsCause(errors.New("body")),
 	)
 }
 

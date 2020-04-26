@@ -159,6 +159,8 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 		msg = `the "splits" command is deprecated; use "str:split" instead`
 	case "replaces~":
 		msg = `the "replaces" command is deprecated; use "str:replace" instead`
+	case "-time~":
+		msg = `the "-time" command is deprecated; use "time" instead`
 	default:
 		return
 	}
