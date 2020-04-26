@@ -87,7 +87,7 @@ func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, lvaluesOpBo
 }
 
 func (cp *compiler) lvalueElement(qname string, n *parse.Indexing) lvaluesOpBody {
-	if !cp.registerVariableGet(qname) {
+	if !cp.registerVariableGet(qname, nil) {
 		cp.errorpf(n, "variable $%s not found", qname)
 	}
 

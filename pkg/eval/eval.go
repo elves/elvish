@@ -4,6 +4,7 @@ package eval
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -284,18 +285,18 @@ func (ev *Evaler) Eval(op Op, cfg EvalCfg) error {
 }
 
 // ParseAndCompile parses and compiles a Source.
-func (ev *Evaler) ParseAndCompile(src parse.Source) (Op, error) {
+func (ev *Evaler) ParseAndCompile(src parse.Source, w io.Writer) (Op, error) {
 	tree, err := parse.Parse(src)
 	if err != nil {
 		return Op{}, err
 	}
-	return ev.Compile(tree)
+	return ev.Compile(tree, w)
 }
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it
 // can be passed to GetCompilationError to retrieve more details.
-func (ev *Evaler) Compile(tree parse.Tree) (Op, error) {
-	return ev.CompileWithGlobal(tree, ev.Global)
+func (ev *Evaler) Compile(tree parse.Tree, w io.Writer) (Op, error) {
+	return ev.CompileWithGlobal(tree, ev.Global, w)
 }
 
 // CompileWithGlobal compiles Elvish code in an alternative global scope. If the
@@ -305,6 +306,6 @@ func (ev *Evaler) Compile(tree parse.Tree) (Op, error) {
 // TODO(xiaq): To use the Op created, the caller must create a Frame and mutate
 // its local scope manually. Consider restructuring the API to make that
 // unnecessary.
-func (ev *Evaler) CompileWithGlobal(tree parse.Tree, g Ns) (Op, error) {
-	return compile(ev.Builtin.static(), g.static(), tree)
+func (ev *Evaler) CompileWithGlobal(tree parse.Tree, g Ns, w io.Writer) (Op, error) {
+	return compile(ev.Builtin.static(), g.static(), tree, w)
 }

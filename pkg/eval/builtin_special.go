@@ -100,7 +100,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOpBody {
 				continue
 			}
 		} else {
-			if !cp.registerVariableGet(qname) {
+			if !cp.registerVariableGet(qname, nil) {
 				cp.errorpf(cn, "no variable $%s", head.Value)
 				continue
 			}
@@ -314,7 +314,7 @@ func evalModule(fm *Frame, r diag.Ranger, key string, src parse.Source) (Ns, err
 		fm.addTraceback(r), false,
 	}
 
-	op, err := compile(newFm.Builtin.static(), modGlobal.static(), tree)
+	op, err := compile(newFm.Builtin.static(), modGlobal.static(), tree, fm.ports[2].File)
 	if err != nil {
 		return nil, err
 	}

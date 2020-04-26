@@ -211,7 +211,7 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 			} else {
 				var headOpFunc valuesOpBody
 				sigil, qname := SplitVariableRef(headStr)
-				if sigil == "" && cp.registerVariableGet(qname+FnSuffix) {
+				if sigil == "" && cp.registerVariableGet(qname+FnSuffix, n.Head) {
 					// $head~ resolves.
 					headOpFunc = variableOp{false, qname + FnSuffix}
 				} else {

@@ -115,7 +115,7 @@ const (
 func evalAndCollect(ev *eval.Evaler, code string) (
 	outBytes []byte, outValues []interface{}, errBytes []byte, err error) {
 
-	op, err := ev.ParseAndCompile(parse.Source{Name: "[web]", Code: code})
+	op, err := ev.ParseAndCompile(parse.Source{Name: "[web]", Code: code}, nil)
 	if err != nil {
 		return
 	}

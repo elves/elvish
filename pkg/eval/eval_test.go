@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"bytes"
 	"reflect"
 	"strconv"
 	"sync"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
+	"github.com/elves/elvish/pkg/util"
 )
 
 func TestBuiltinPid(t *testing.T) {
@@ -26,6 +28,36 @@ func TestNumBgJobs(t *testing.T) {
 		// with { put $num-bg-jobs }& because the output channel may have
 		// already been closed when the closure is run.
 	)
+}
+
+func TestEvalTimeDeprecate(t *testing.T) {
+	_, cleanup := util.InTestDir()
+	defer cleanup()
+
+	TestWithSetup(t, func(ev *Evaler) {
+		ev.Global.AddGoFn("", "dep", func(fm *Frame) {
+			fm.Deprecate("deprecated")
+		})
+	},
+		That("dep").PrintsStderrWith("deprecated"),
+		// Deprecation message is only shown once.
+		That("dep 2> tmp.txt; dep").DoesNothing(),
+	)
+}
+
+func TestCompileTimeDeprecation(t *testing.T) {
+	ev := NewEvaler()
+	r, w := mustPipe()
+	_, err := ev.ParseAndCompile(parse.Source{Code: "explode [1 2]"}, w)
+	if err != nil {
+		t.Errorf("got err %v, want nil", err)
+	}
+	w.Close()
+	warnings := mustReadAllAndClose(r)
+	wantWarning := []byte(`the "explode" command is deprecated`)
+	if !bytes.Contains(warnings, wantWarning) {
+		t.Errorf("got warnings %q, want warnings to contain %q", warnings, wantWarning)
+	}
 }
 
 func TestMiscEval(t *testing.T) {
@@ -52,7 +84,7 @@ func TestConcurrentEval(t *testing.T) {
 	// Run this test with "go test -race".
 	ev := NewEvaler()
 	src := parse.Source{Name: "[test]"}
-	op, err := ev.ParseAndCompile(src)
+	op, err := ev.ParseAndCompile(src, nil)
 	if err != nil {
 		panic(err)
 	}

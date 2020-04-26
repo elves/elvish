@@ -77,7 +77,7 @@ func evalDefaultBinding(ev *eval.Evaler, ns eval.Ns) {
 	if err != nil {
 		panic(err)
 	}
-	op, err := ev.CompileWithGlobal(tree, ns)
+	op, err := ev.CompileWithGlobal(tree, ns, nil)
 	if err != nil {
 		panic(err)
 	}

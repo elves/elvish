@@ -285,7 +285,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 		if err != nil {
 			t.Fatalf("Parse(%q) error: %s", src.Code, err)
 		}
-		op, err := ev.Compile(tree)
+		op, err := ev.Compile(tree, nil)
 		if err != nil {
 			// NOTE: Only the compilation error of the last code is saved.
 			r.compilationError = err

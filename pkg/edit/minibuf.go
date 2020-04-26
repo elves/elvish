@@ -37,7 +37,7 @@ func minibufSubmit(app cli.App, ev *eval.Evaler) {
 	cli.SetAddon(app, nil)
 	code := codeArea.CopyState().Buffer.Content
 	src := parse.Source{Name: "[minibuf]", Code: code}
-	op, err := ev.ParseAndCompile(src)
+	op, err := ev.ParseAndCompile(src, nil)
 	if err != nil {
 		app.Notify(err.Error())
 		return

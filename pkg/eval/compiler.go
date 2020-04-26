@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/elves/elvish/pkg/diag"
@@ -19,12 +20,19 @@ type compiler struct {
 	capture staticNs
 	// New variables created within a pipeline.
 	newLocals []string
+	// Destination of warning messages. This is currently only used for
+	// deprecation messages.
+	warn io.Writer
+	// Deprecation registry.
+	deprecations deprecationRegistry
 	// Information about the source.
 	srcMeta parse.Source
 }
 
-func compile(b, g staticNs, tree parse.Tree) (op Op, err error) {
-	cp := &compiler{b, []staticNs{g}, make(staticNs), nil, tree.Source}
+func compile(b, g staticNs, tree parse.Tree, w io.Writer) (op Op, err error) {
+	cp := &compiler{
+		b, []staticNs{g}, make(staticNs), nil,
+		w, newDeprecationRegistry(), tree.Source}
 	defer func() {
 		r := recover()
 		if r == nil {
@@ -62,14 +70,14 @@ func (cp *compiler) popScope() {
 }
 
 func (cp *compiler) registerVariableSet(qname string) bool {
-	return cp.registerVariableAccess(qname, true)
+	return cp.registerVariableAccess(qname, true, nil)
 }
 
-func (cp *compiler) registerVariableGet(qname string) bool {
-	return cp.registerVariableAccess(qname, false)
+func (cp *compiler) registerVariableGet(qname string, r diag.Ranger) bool {
+	return cp.registerVariableAccess(qname, false, r)
 }
 
-func (cp *compiler) registerVariableAccess(qname string, set bool) bool {
+func (cp *compiler) registerVariableAccess(qname string, set bool, r diag.Ranger) bool {
 	readLocal := func(name string) bool { return cp.thisScope().has(name) }
 
 	readUpvalue := func(name string) bool {
@@ -83,7 +91,10 @@ func (cp *compiler) registerVariableAccess(qname string, set bool) bool {
 		return false
 	}
 
-	readBuiltin := func(name string) bool { return cp.builtin.has(name) }
+	readBuiltin := func(name string) bool {
+		cp.checkDeprecatedBuiltin(name, r)
+		return cp.builtin.has(name)
+	}
 
 	readNonPseudo := func(name string) bool {
 		return readLocal(name) || readUpvalue(name) || readBuiltin(name)
@@ -120,5 +131,26 @@ func (cp *compiler) registerVariableAccess(qname string, set bool) bool {
 		return readNonPseudo(name1) || createLocal(name)
 	default:
 		return readNonPseudo(ns)
+	}
+}
+
+func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
+	if cp.warn == nil || r == nil {
+		return
+	}
+	msg := ""
+	switch name {
+	case "explode~":
+		msg = `the "explode" command is deprecated; use "all" instead`
+	default:
+		return
+	}
+	dep := deprecation{cp.srcMeta.Name, r.Range(), msg}
+	if cp.deprecations.register(dep) {
+		err := diag.Error{
+			Type: "deprecation", Message: msg,
+			Context: diag.Context{
+				Name: cp.srcMeta.Name, Source: cp.srcMeta.Code, Ranging: r.Range()}}
+		fmt.Fprintln(cp.warn, err.Show(""))
 	}
 }

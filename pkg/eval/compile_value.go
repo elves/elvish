@@ -250,7 +250,7 @@ func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 		body = literalStr(n.Value)
 	case parse.Variable:
 		sigil, qname := SplitVariableRef(n.Value)
-		if !cp.registerVariableGet(qname) {
+		if !cp.registerVariableGet(qname, n) {
 			cp.errorpf(n, "variable $%s not found", qname)
 		}
 		body = &variableOp{sigil != "", qname}
@@ -480,7 +480,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 	cp.popScope()
 
 	for name := range capture {
-		cp.registerVariableGet(name)
+		cp.registerVariableGet(name, nil)
 	}
 
 	return &lambdaOp{argNames, restArgName, optNames, optDefaultOps, capture, subop, cp.srcMeta, n.Range().From, n.Range().To}
