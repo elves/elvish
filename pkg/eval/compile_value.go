@@ -471,8 +471,10 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 	for _, optName := range optNames {
 		thisScope.set(optName)
 	}
-
-	subop := cp.chunkOp(n.Chunk)
+	savedLocals := cp.pushNewLocals()
+	chunkOp := cp.chunkOp(n.Chunk)
+	scopeOp := wrapScopeOp(chunkOp, cp.newLocals)
+	cp.newLocals = savedLocals
 
 	// XXX The fiddlings with cp.capture is error-prone.
 	capture := cp.capture
@@ -483,7 +485,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 		cp.registerVariableGet(name, nil)
 	}
 
-	return &lambdaOp{argNames, restArgName, optNames, optDefaultOps, capture, subop, cp.srcMeta, n.Range().From, n.Range().To}
+	return &lambdaOp{argNames, restArgName, optNames, optDefaultOps, capture, scopeOp, cp.srcMeta, n.Range().From, n.Range().To}
 }
 
 type lambdaOp struct {

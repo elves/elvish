@@ -18,7 +18,7 @@ type compiler struct {
 	scopes []staticNs
 	// Variables captured from outer scopes.
 	capture staticNs
-	// New variables created within a pipeline.
+	// New variables created in a lexical scope.
 	newLocals []string
 	// Destination of warning messages. This is currently only used for
 	// deprecation messages.
@@ -45,7 +45,18 @@ func compile(b, g staticNs, tree parse.Tree, w io.Writer) (op Op, err error) {
 			panic(r)
 		}
 	}()
-	return Op{cp.chunkOp(tree.Root), tree.Source}, nil
+	savedLocals := cp.pushNewLocals()
+	chunkOp := cp.chunkOp(tree.Root)
+	scopeOp := wrapScopeOp(chunkOp, cp.newLocals)
+	cp.newLocals = savedLocals
+
+	return Op{scopeOp, tree.Source}, nil
+}
+
+func (cp *compiler) pushNewLocals() []string {
+	saved := cp.newLocals
+	cp.newLocals = nil
+	return saved
 }
 
 func (cp *compiler) errorpf(r diag.Ranger, format string, args ...interface{}) {

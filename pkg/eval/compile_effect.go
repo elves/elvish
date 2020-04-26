@@ -16,6 +16,35 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
+// An effectOpBody that creates all variables in a scope before executing the
+// body.
+type scopeOp struct {
+	inner  effectOpBody
+	locals []string
+}
+
+func wrapScopeOp(op effectOp, locals []string) effectOp {
+	return effectOp{scopeOp{op.body, locals}, op.Ranging}
+}
+
+func (op scopeOp) invoke(fm *Frame) error {
+	for _, name := range op.locals {
+		var variable vars.Var
+		if strings.HasSuffix(name, FnSuffix) {
+			val := Callable(nil)
+			variable = vars.FromPtr(&val)
+		} else if strings.HasSuffix(name, NsSuffix) {
+			val := Ns(nil)
+			variable = vars.FromPtr(&val)
+		} else {
+			variable = vars.FromInit(nil)
+		}
+		fm.local[name] = variable
+	}
+
+	return op.inner.invoke(fm)
+}
+
 func (cp *compiler) chunkOp(n *parse.Chunk) effectOp {
 	return makeEffectOp(n, chunkOp{cp.pipelineOps(n.Pipelines)})
 }
@@ -41,16 +70,10 @@ func (op chunkOp) invoke(fm *Frame) error {
 }
 
 func (cp *compiler) pipelineOp(n *parse.Pipeline) effectOp {
-	saveNewLocals := cp.newLocals
-	cp.newLocals = nil
-
 	formOps := cp.formOps(n.Forms)
 
-	newLocals := cp.newLocals
-	cp.newLocals = saveNewLocals
-
 	return makeEffectOp(n,
-		&pipelineOp{n.Background, parse.SourceText(n), formOps, newLocals})
+		&pipelineOp{n.Background, parse.SourceText(n), formOps})
 }
 
 func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []effectOp {
@@ -62,10 +85,9 @@ func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []effectOp {
 }
 
 type pipelineOp struct {
-	bg        bool
-	source    string
-	subops    []effectOp
-	newLocals []string
+	bg     bool
+	source string
+	subops []effectOp
 }
 
 const pipelineChanBufferSize = 32
@@ -73,20 +95,6 @@ const pipelineChanBufferSize = 32
 func (op *pipelineOp) invoke(fm *Frame) error {
 	if fm.IsInterrupted() {
 		return ErrInterrupted
-	}
-
-	for _, name := range op.newLocals {
-		var variable vars.Var
-		if strings.HasSuffix(name, FnSuffix) {
-			val := Callable(nil)
-			variable = vars.FromPtr(&val)
-		} else if strings.HasSuffix(name, NsSuffix) {
-			val := Ns(nil)
-			variable = vars.FromPtr(&val)
-		} else {
-			variable = vars.FromInit(nil)
-		}
-		fm.local[name] = variable
 	}
 
 	if op.bg {

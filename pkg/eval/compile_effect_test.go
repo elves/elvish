@@ -108,6 +108,7 @@ func TestCompileEffect(t *testing.T) {
 		// Concurrently creating a new variable and accessing existing variable.
 		// Run with "go test -race".
 		That("x = 1", "put $x | y = (all)").DoesNothing(),
+		That("nop (x = 1) | nop").DoesNothing(),
 
 		// Assignment errors when the RHS errors.
 		That("x = [][1]").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
