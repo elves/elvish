@@ -22,6 +22,8 @@ func Kind(v interface{}) string {
 		return "bool"
 	case string:
 		return "string"
+	case float64:
+		return "number"
 	case File:
 		return "file"
 	case List:
