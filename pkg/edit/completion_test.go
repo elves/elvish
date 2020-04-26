@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/cli/term"
+	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/util"
 )
@@ -59,36 +60,35 @@ func TestCompleteFilename(t *testing.T) {
 			complexItem{Stem: "./d/b", CodeSuffix: " "}))
 }
 
+var That = eval.That
+
 func TestComplexCandidate(t *testing.T) {
+	eval.TestWithSetup(t, func(ev *eval.Evaler) {
+		ev.Global.AddGoFn("", "cc", complexCandidate)
+	},
+		That("kind-of (cc stem)").Puts("map"),
+		That("keys (cc stem)").Puts("stem", "code-suffix", "display"),
+		That("repr (cc a/b &code-suffix=' ' &display=A/B)").Prints(
+			"(edit:complex-candidate a/b &code-suffix=' ' &display=A/B)\n"),
+		That("eq (cc stem) (cc stem)").Puts(true),
+		That("eq (cc stem &code-suffix=' ') (cc stem)").Puts(false),
+		That("eq (cc stem &display=STEM) (cc stem)").Puts(false),
+		That("put [&(cc stem)=value][(cc stem)]").Puts("value"),
+		That("put (cc a/b &code-suffix=' ' &display=A/B)[stem code-suffix display]").
+			Puts("a/b", " ", "A/B"),
+		That("put (cc a/b &display-suffix=/)[display]").Puts("a/b/").
+			PrintsStderrWith("deprecation:"),
+	)
+}
+
+func TestComplexCandidate_InEditModule(t *testing.T) {
+	// A sanity check that the complex-candidate command is part of the edit
+	// module.
 	f := setup()
 	defer f.Cleanup()
 
-	evals(f.Evaler,
-		`cand  = (edit:complex-candidate a/b/c &code-suffix=' ' &display=A/B/C)`,
-		// Identical to $cand.
-		`cand2 = (edit:complex-candidate a/b/c &code-suffix=' ' &display=A/B/C)`,
-		// Different from $cand.
-		`cand3 = (edit:complex-candidate a/b/c)`,
-		`kind  = (kind-of $cand)`,
-		`@keys = (keys $cand)`,
-		`repr  = (repr $cand)`,
-		`eq2   = (eq $cand $cand2)`,
-		`eq2h  = [&$cand=$true][$cand2]`,
-		`eq3   = (eq $cand $cand3)`,
-		`stem code-suffix display = $cand[stem code-suffix display]`,
-	)
-	testGlobals(t, f.Evaler, map[string]interface{}{
-		"kind": "map",
-		"keys": vals.MakeList("stem", "code-suffix", "display"),
-		"repr": "(edit:complex-candidate a/b/c &code-suffix=' ' &display=A/B/C)",
-		"eq2":  true,
-		"eq2h": true,
-		"eq3":  false,
-
-		"stem":        "a/b/c",
-		"code-suffix": " ",
-		"display":     "A/B/C",
-	})
+	evals(f.Evaler, `stem = (edit:complex-candidate stem)[stem]`)
+	testGlobal(t, f.Evaler, "stem", "stem")
 }
 
 func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
@@ -101,7 +101,7 @@ func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
 		`edit:completion:arg-completer[foo] = [@args]{
 		   foo-args = $args
 		   put 1val
-		   edit:complex-candidate 2val &display-suffix=_
+		   edit:complex-candidate 2val &display=2VAL
 		 }`)
 
 	feedInput(f.TTYCtrl, "foo foo1 foo2 \t")
@@ -110,8 +110,8 @@ func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
 		"   vvv           ____",
 		" COMPLETING argument  ", Styles,
 		"********************* ", term.DotHere, "\n",
-		"1val  2val_", Styles,
-		"++++       ",
+		"1val  2VAL", Styles,
+		"++++      ",
 	)
 	testGlobal(t, f.Evaler,
 		"foo-args", vals.MakeList("foo", "foo1", "foo2", ""))

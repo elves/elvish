@@ -46,9 +46,9 @@ type TestCase struct {
 }
 
 type result struct {
-	valueOut  []interface{}
-	bytesOut  []byte
-	stderrOut []byte
+	valueOut   []interface{}
+	bytesOut   []byte
+	stderrPart []byte
 
 	compilationError error
 	exception        error
@@ -161,10 +161,10 @@ func (t TestCase) Prints(s string) TestCase {
 	return t
 }
 
-// PrintsStderr returns an altered TestCase that requires the source code to
-// produce the specified output to stderr when evaluated.
-func (t TestCase) PrintsStderr(s string) TestCase {
-	t.want.stderrOut = []byte(s)
+// PrintsStderr returns an altered TestCase that requires the stderr output to
+// contain the given text.
+func (t TestCase) PrintsStderrWith(s string) TestCase {
+	t.want.stderrPart = []byte(s)
 	return t
 }
 
@@ -231,8 +231,8 @@ func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
 			if !bytes.Equal(tt.want.bytesOut, r.bytesOut) {
 				t.Errorf("got bytes out %q, want %q", r.bytesOut, tt.want.bytesOut)
 			}
-			if !bytes.Equal(tt.want.stderrOut, r.stderrOut) {
-				t.Errorf("got stderr out %q, want %q", r.stderrOut, tt.want.stderrOut)
+			if !bytes.Contains(r.stderrPart, tt.want.stderrPart) {
+				t.Errorf("got stderr out %q, want %q", r.stderrPart, tt.want.stderrPart)
 			}
 			if !matchErr(tt.want.compilationError, r.compilationError) {
 				t.Errorf("got compilation error %v, want %v",
@@ -262,7 +262,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 	}()
 	rErr, stderr := mustPipe()
 	go func() {
-		r.stderrOut = mustReadAllAndClose(rErr)
+		r.stderrPart = mustReadAllAndClose(rErr)
 		wg.Done()
 	}()
 	outCh := make(chan interface{}, 1024)

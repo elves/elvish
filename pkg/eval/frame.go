@@ -182,3 +182,14 @@ func (fm *Frame) errorp(r diag.Ranger, e error) error {
 func (fm *Frame) errorpf(r diag.Ranger, format string, args ...interface{}) error {
 	return fm.errorp(r, fmt.Errorf(format, args...))
 }
+
+// Deprecate shows a deprecation message. The message is not shown if the same
+// deprecation message has been shown for the same location before.
+func (fm *Frame) Deprecate(msg string) {
+	dep := deprecation{fm.traceback.head.Name, fm.traceback.head.Ranging, msg}
+	if fm.deprecations.register(dep) {
+		err := diag.Error{
+			Type: "deprecation", Message: dep.message, Context: *fm.traceback.head}
+		fm.ports[2].File.WriteString(err.Show("") + "\n")
+	}
+}

@@ -84,6 +84,10 @@ import (
 // any further quoting.
 //
 // The `&display` option first appeared between 0.13 and 0.14.
+//
+// The `&display-suffix` option is deprecated in 0.14 and will be removed in
+// 0.15. After its removal, the displayed text of the candidate will default to
+// `$stem` if `$display` is empty.
 
 type complexCandidateOpts struct {
 	CodeSuffix    string
@@ -93,10 +97,12 @@ type complexCandidateOpts struct {
 
 func (*complexCandidateOpts) SetDefaultOptions() {}
 
-func complexCandidate(opts complexCandidateOpts, stem string) complexItem {
+func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) complexItem {
+	if opts.DisplaySuffix != "" {
+		fm.Deprecate("the &display-suffix option is deprecated, use &display instead")
+	}
 	display := opts.Display
 	if display == "" {
-		// TODO(#898): Deprecate DisplaySuffix and remove this branch.
 		display = stem + opts.DisplaySuffix
 	}
 	return complexItem{

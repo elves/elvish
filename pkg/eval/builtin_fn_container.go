@@ -437,7 +437,6 @@ func repeat(fm *Frame, n int, v interface{}) {
 	}
 }
 
-// explode puts each element of the argument.
 func explode(fm *Frame, v interface{}) error {
 	out := fm.ports[1].Chan
 	return vals.Iterate(v, func(e interface{}) bool {

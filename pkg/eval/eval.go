@@ -54,6 +54,8 @@ type Evaler struct {
 	// absolute paths.
 	modules map[string]Ns
 
+	deprecations deprecationRegistry
+
 	// Dependencies.
 	//
 	// TODO: Remove these dependency by providing more general extension points.
@@ -151,7 +153,8 @@ func NewEvaler() *Evaler {
 			"builtin": builtin,
 		},
 		bundled: bundled.Get(),
-		Editor:  nil,
+
+		deprecations: newDeprecationRegistry(),
 	}
 
 	beforeChdirElvish, afterChdirElvish := vector.Empty, vector.Empty
