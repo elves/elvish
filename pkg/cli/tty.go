@@ -134,8 +134,7 @@ func (t *aTTY) UpdateBuffer(bufNotes, bufMain *term.Buffer, full bool) error {
 }
 
 func (t *aTTY) NotifySignals() <-chan os.Signal {
-	t.sigCh = make(chan os.Signal, sigsChanBufferSize)
-	signal.Notify(t.sigCh)
+	t.sigCh = sys.NotifySignals()
 	return t.sigCh
 }
 
