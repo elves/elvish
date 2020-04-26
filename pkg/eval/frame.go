@@ -10,6 +10,7 @@ import (
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/parse"
+	"github.com/elves/elvish/pkg/prog"
 )
 
 // Frame contains information of the current running function, aknin to a call
@@ -187,7 +188,7 @@ func (fm *Frame) errorpf(r diag.Ranger, format string, args ...interface{}) erro
 // deprecation message has been shown for the same location before.
 func (fm *Frame) Deprecate(msg string) {
 	dep := deprecation{fm.traceback.head.Name, fm.traceback.head.Ranging, msg}
-	if fm.deprecations.register(dep) {
+	if prog.ShowDeprecations && fm.deprecations.register(dep) {
 		err := diag.Error{
 			Type: "deprecation", Message: dep.message, Context: *fm.traceback.head}
 		fm.ports[2].File.WriteString(err.Show("") + "\n")

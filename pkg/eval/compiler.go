@@ -7,6 +7,7 @@ import (
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/parse"
+	"github.com/elves/elvish/pkg/prog"
 )
 
 // compiler maintains the set of states needed when compiling a single source
@@ -165,7 +166,7 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 		return
 	}
 	dep := deprecation{cp.srcMeta.Name, r.Range(), msg}
-	if cp.deprecations.register(dep) {
+	if prog.ShowDeprecations && cp.deprecations.register(dep) {
 		err := diag.Error{
 			Type: "deprecation", Message: msg,
 			Context: diag.Context{

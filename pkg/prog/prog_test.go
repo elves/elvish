@@ -47,6 +47,18 @@ func TestHelp(t *testing.T) {
 	f.TestOutSnippet(t, 1, "Usage: elvish [flags] [script]")
 }
 
+func TestShowDeprecations(t *testing.T) {
+	restore := SetShowDeprecations(false)
+	defer restore()
+	f := Setup()
+	defer f.Cleanup()
+
+	Run(f.Fds(), Elvish("-show-deprecations"), testProgram{shouldRun: true})
+	if !ShowDeprecations {
+		t.Errorf("ShowDeprecations = false, want true")
+	}
+}
+
 func TestNoProgram(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()

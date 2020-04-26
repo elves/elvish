@@ -21,6 +21,17 @@ import (
 // resembles "elvi".
 const defaultWebPort = 3171
 
+// Global flag of whether to show deprecations.
+var ShowDeprecations = false
+
+// SetShowDeprecations sets ShowDeprecations to the given value, and returns a
+// function to restore the old value.
+func SetShowDeprecations(b bool) func() {
+	save := ShowDeprecations
+	ShowDeprecations = b
+	return func() { ShowDeprecations = save }
+}
+
 // Flags keeps command-line flags.
 type Flags struct {
 	Log, LogPrefix, CPUProfile string
@@ -64,6 +75,8 @@ func newFlagSet(stderr io.Writer, f *Flags) *flag.FlagSet {
 	fs.StringVar(&f.Bin, "bin", "", "path to the elvish binary")
 	fs.StringVar(&f.DB, "db", "", "path to the database")
 	fs.StringVar(&f.Sock, "sock", "", "path to the daemon socket")
+
+	fs.BoolVar(&ShowDeprecations, "show-deprecations", ShowDeprecations, "whether to show deprecations")
 
 	return fs
 }

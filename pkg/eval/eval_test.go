@@ -10,6 +10,7 @@ import (
 
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
+	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -31,6 +32,8 @@ func TestNumBgJobs(t *testing.T) {
 }
 
 func TestEvalTimeDeprecate(t *testing.T) {
+	restore := prog.SetShowDeprecations(true)
+	defer restore()
 	_, cleanup := util.InTestDir()
 	defer cleanup()
 
@@ -46,6 +49,9 @@ func TestEvalTimeDeprecate(t *testing.T) {
 }
 
 func TestCompileTimeDeprecation(t *testing.T) {
+	restore := prog.SetShowDeprecations(true)
+	defer restore()
+
 	ev := NewEvaler()
 	r, w := mustPipe()
 	_, err := ev.ParseAndCompile(parse.Source{Code: "explode [1 2]"}, w)

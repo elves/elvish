@@ -6,6 +6,7 @@ import (
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -63,6 +64,9 @@ func TestCompleteFilename(t *testing.T) {
 var That = eval.That
 
 func TestComplexCandidate(t *testing.T) {
+	restore := prog.SetShowDeprecations(true)
+	defer restore()
+
 	eval.TestWithSetup(t, func(ev *eval.Evaler) {
 		ev.Global.AddGoFn("", "cc", complexCandidate)
 	},
