@@ -133,12 +133,6 @@ func (t *aTTY) UpdateBuffer(bufNotes, bufMain *term.Buffer, full bool) error {
 	return t.w.CommitBuffer(bufNotes, bufMain, full)
 }
 
-func (t *aTTY) NotifySignals() <-chan os.Signal {
-	t.sigCh = make(chan os.Signal, sigsChanBufferSize)
-	signal.Notify(t.sigCh)
-	return t.sigCh
-}
-
 func (t *aTTY) StopSignals() {
 	signal.Stop(t.sigCh)
 	close(t.sigCh)

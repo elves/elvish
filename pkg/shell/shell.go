@@ -46,8 +46,18 @@ func setupShell(fds [3]*os.File, p Paths, spawn bool) (*eval.Evaler, func()) {
 	ev := InitRuntime(fds[2], p, spawn)
 	restoreSHLVL := incSHLVL()
 
+	// This implicitly catches every signal regardless of whether it is
+	// currently ignored.
 	sigs := make(chan os.Signal)
 	signal.Notify(sigs)
+	// TODO: Remove this if, and when, job control is implemented. This
+	// handles the case of launching an external interactive command (e.g.,
+	// vim) from an Elvish script.
+	//
+	// See https://github.com/elves/elvish/issues/988. See also
+	// NotifySignals() in pkg/cli/tty_unix.go.
+	signal.Ignore(syscall.SIGTTIN, syscall.SIGTTOU, syscall.SIGTSTP)
+
 	go func() {
 		for sig := range sigs {
 			logger.Println("signal", sig)
