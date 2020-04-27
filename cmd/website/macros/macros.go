@@ -49,33 +49,13 @@ func expandTtyshot(line string) string {
 	return buf.String()
 }
 
-// Given a `@cf` reference convert it to a HTML link.
-func makeLink(cf string) string {
-	i := strings.IndexRune(cf, ':')
-	if i == -1 {
-		// This handles the @cf uses in the `builtin:` namespace to other
-		// sections in the same namespace.
-		return fmt.Sprintf("[`%s`](#%s)", cf, cf)
-	}
-
-	module := cf[:i]
-	symbol := cf[i+1:]
-	if module == "builtin" {
-		// The `builtin:` namespace is treated differently than other
-		// namespaces with regard to how hash tag references are named.
-		return fmt.Sprintf("[`%s`](%s.html/#%s)", cf, module, symbol)
-	} else {
-		return fmt.Sprintf("[`%s`](%s.html/#%s%s)", cf, module, module, symbol)
-	}
-}
-
 func expandCf(line string) string {
 	i := strings.Index(line, cf)
 	if i < 0 {
 		return line
 	}
 	targets := strings.Split(line[i+len(cf):], " ")
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("See also")
 	for i, target := range targets {
 		if i == 0 {
@@ -85,10 +65,30 @@ func expandCf(line string) string {
 		} else {
 			buf.WriteString(", ")
 		}
-		buf.WriteString(makeLink(target))
+		fmt.Fprintf(&buf, "[`%s`](%s)", target, cfHref(target))
 	}
 	buf.WriteString(".")
 	return buf.String()
+}
+
+// Returns the href for a `@cf` reference.
+func cfHref(target string) string {
+	i := strings.IndexRune(target, ':')
+	if i == -1 {
+		// A link within the builtin page. Use unqualified name (e.g. #put).
+		return "#" + target
+	}
+
+	module, symbol := target[:i], target[i+1:]
+	if module == "builtin" {
+		// A link from outside the builtin page to the builtin page. Use
+		// unqualified name (e.g. #put).
+		return "builtin.html#" + symbol
+	}
+	// A link to a non-builtin page. The section names are always qualified
+	// names (e.g str:join), but pandoc strips the colons from the anchor (e.g.
+	// #strjoin).
+	return module + ".html#" + strings.ReplaceAll(target, ":", "")
 }
 
 func expandDl(line string) string {
