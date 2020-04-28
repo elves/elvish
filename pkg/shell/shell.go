@@ -32,8 +32,8 @@ func (program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 	if len(args) > 0 {
 		exit := Script(
 			fds, args, &ScriptConfig{
-				SpawnDaemon: true, Paths: p,
-				Cmd: f.CodeInArg, CompileOnly: f.CompileOnly, JSON: f.JSON})
+				Paths: p,
+				Cmd:   f.CodeInArg, CompileOnly: f.CompileOnly, JSON: f.JSON})
 		return prog.Exit(exit)
 	}
 	Interact(fds, &InteractConfig{SpawnDaemon: true, Paths: p})
