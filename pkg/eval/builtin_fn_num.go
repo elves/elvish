@@ -78,6 +78,9 @@ import (
 // ~> ^ 2 0.5
 // ▶ 1.4142135623730951
 // ```
+//
+// This function is deprecated; use [math:pow](math.html#mathpow) or
+// [math:pow10](math.html#mathpow10) instead.
 
 //elvdoc:fn &lt; &lt;= == != &gt; &gt;=
 //

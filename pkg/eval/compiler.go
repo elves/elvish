@@ -162,6 +162,8 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 		msg = `the "replaces" command is deprecated; use "str:replace" instead`
 	case "-time~":
 		msg = `the "-time" command is deprecated; use "time" instead`
+	case "^~":
+		msg = `the "^" command is deprecated; use "math:pow" or "math:pow10" instead`
 	default:
 		return
 	}
