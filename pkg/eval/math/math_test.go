@@ -146,5 +146,15 @@ func TestMath(t *testing.T) {
 
 		That(`math:atanh 0`).Puts(math.Atanh(0)),
 		That(`math:atanh 1`).Puts(math.Inf(1)),
+
+		That(`math:pow nan 2`).Puts(math.NaN()),
+		That(`math:pow inf 2`).Puts(math.Inf(1)),
+		That(`math:pow 1 3`).Puts(1.0),
+		That(`math:pow 2 3`).Puts(8.0),
+		That(`math:pow -2 2`).Puts(4.0),
+
+		That(`math:pow10 0`).Puts(1.0),
+		That(`math:pow10 3`).Puts(1000.0),
+		That(`math:pow10 -3`).Puts(0.001),
 	)
 }

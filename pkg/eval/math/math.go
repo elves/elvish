@@ -285,6 +285,42 @@ import (
 // ▶ (float64 NaN)
 // ```
 
+//elvdoc:fn pow
+//
+// ```elvish
+// math:pow $base $exponent
+// ```
+//
+// Output the result of raising `$base` to the power of `$exponent`. Examples:
+//
+// ```elvish-transcript
+// ~> math:pow 3 2
+// ▶ (float64 9)
+// ~> math:pow -2 2
+// ▶ (float64 4)
+// ```
+//
+// @cf math:pow10
+
+//elvdoc:fn pow10
+//
+// ```elvish
+// math:pow10 $exponent
+// ```
+//
+// Output the result of raising ten to the power of `$exponent` which must be
+// an integer. Note that `$exponent > 308` results in +Inf and `$exponent <
+// -323` results in zero. Examples:
+//
+// ```elvish-transcript
+// ~> math:pow10 2
+// ▶ (float64 100)
+// ~> math:pow10 -3
+// ▶ (float64 0.001)
+// ```
+//
+// @cf math:pow
+
 //elvdoc:fn round
 //
 // ```elvish
@@ -426,6 +462,8 @@ var fns = map[string]interface{}{
 	"log":           math.Log,
 	"log10":         math.Log10,
 	"log2":          math.Log2,
+	"pow":           math.Pow,
+	"pow10":         math.Pow10,
 	"round":         math.Round,
 	"round-to-even": math.RoundToEven,
 	"sin":           math.Sin,
