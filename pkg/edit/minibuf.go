@@ -13,23 +13,24 @@ func initMinibuf(ed *Editor, ev *eval.Evaler) {
 		eval.Ns{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:minibuf>:", map[string]interface{}{
-			"start": func() { minibufStart(ed.app, ev, binding) },
+			"start": func() { minibufStart(ed, ev, binding) },
 		}))
 }
 
-func minibufStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
+func minibufStart(ed *Editor, ev *eval.Evaler, binding cli.Handler) {
 	w := cli.NewCodeArea(cli.CodeAreaSpec{
 		Prompt:         cli.ModePrompt(" MINIBUF ", true),
 		OverlayHandler: binding,
-		OnSubmit:       func() { minibufSubmit(app, ev) },
+		OnSubmit:       func() { minibufSubmit(ed, ev) },
 		// TODO: Add Highlighter. Right now the async highlighter is not
 		// directly usable.
 	})
-	cli.SetAddon(app, w)
-	app.Redraw()
+	cli.SetAddon(ed.app, w)
+	ed.app.Redraw()
 }
 
-func minibufSubmit(app cli.App, ev *eval.Evaler) {
+func minibufSubmit(ed *Editor, ev *eval.Evaler) {
+	app := ed.app
 	codeArea, ok := cli.Addon(app).(cli.CodeArea)
 	if !ok {
 		return
@@ -42,7 +43,7 @@ func minibufSubmit(app cli.App, ev *eval.Evaler) {
 		app.Notify(err.Error())
 		return
 	}
-	notifyPort, cleanup := makeNotifyPort(app.Notify)
+	notifyPort, cleanup := makeNotifyPort(ed)
 	defer cleanup()
 	ports := []*eval.Port{eval.DevNullClosedChan, notifyPort, notifyPort}
 	err = ev.Eval(op, eval.EvalCfg{Ports: ports})

@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -140,8 +139,7 @@ func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...i
 		defer resultMutex.Unlock()
 		newResult, err := result.Concat(v)
 		if err != nil {
-			nt.notify(fmt.Sprintf(
-				"invalid output type from prompt: %s", vals.Kind(v)))
+			nt.notifyf("invalid output type from prompt: %s", vals.Kind(v))
 		} else {
 			result = newResult.(ui.Text)
 		}
@@ -157,7 +155,7 @@ func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...i
 	bytesCb := func(r *os.File) {
 		allBytes, err := ioutil.ReadAll(r)
 		if err != nil {
-			nt.notify(fmt.Sprintf("error reading prompt byte output: %v", err))
+			nt.notifyf("error reading prompt byte output: %v", err)
 		}
 		if len(allBytes) > 0 {
 			add(string(allBytes))
@@ -175,7 +173,7 @@ func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...i
 	err := fm.PipeOutput(f, valuesCb, bytesCb)
 
 	if err != nil {
-		nt.notify(fmt.Sprintf("prompt function error: %v", err))
+		nt.notifyError("prompt function", err)
 		return nil
 	}
 

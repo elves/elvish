@@ -63,19 +63,18 @@ var bindingSource = parse.Source{Name: "[editor binding]"}
 func callWithNotifyPorts(nt notifier, ev *eval.Evaler, f eval.Callable, args ...interface{}) {
 	// TODO(xiaq): Use CallWithOutputCallback when it supports redirecting the
 	// stderr port.
-	notifyPort, cleanup := makeNotifyPort(nt.notify)
+	notifyPort, cleanup := makeNotifyPort(nt)
 	defer cleanup()
 	ports := []*eval.Port{eval.DevNullClosedChan, notifyPort, notifyPort}
 	frame := eval.NewTopFrame(ev, bindingSource, ports)
 
 	err := f.Call(frame, args, eval.NoOpts)
 	if err != nil {
-		// TODO(xiaq): Make the stack trace available.
-		nt.notify("[binding error] " + err.Error())
+		nt.notifyError("binding", err)
 	}
 }
 
-func makeNotifyPort(notify func(string)) (*eval.Port, func()) {
+func makeNotifyPort(nt notifier) (*eval.Port, func()) {
 	ch := make(chan interface{})
 	r, w, err := os.Pipe()
 	if err != nil {
@@ -86,7 +85,7 @@ func makeNotifyPort(notify func(string)) (*eval.Port, func()) {
 	go func() {
 		// Relay value outputs
 		for v := range ch {
-			notify("[value out] " + vals.Repr(v, vals.NoPretty))
+			nt.notifyf("[value out] %s", vals.Repr(v, vals.NoPretty))
 		}
 		wg.Done()
 	}()
@@ -97,14 +96,14 @@ func makeNotifyPort(notify func(string)) (*eval.Port, func()) {
 			line, err := reader.ReadString('\n')
 			if err != nil {
 				if line != "" {
-					notify("[bytes out] " + line)
+					nt.notifyf("[bytes out] %s", line)
 				}
 				if err != io.EOF {
-					notify("[bytes error] " + err.Error())
+					nt.notifyf("[bytes error] %s", err)
 				}
 				break
 			}
-			notify("[bytes out] " + line[:len(line)-1])
+			nt.notifyf("[bytes out] %s", line[:len(line)-1])
 		}
 		wg.Done()
 	}()

@@ -383,8 +383,8 @@ func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer
 	return func(ctxName, seed string, rawItems []complete.RawItem) []complete.RawItem {
 		matcher, ok := lookupFn(m, ctxName)
 		if !ok {
-			nt.notify(fmt.Sprintf(
-				"matcher for %s not a function, falling back to prefix matching", ctxName))
+			nt.notifyf(
+				"matcher for %s not a function, falling back to prefix matching", ctxName)
 		}
 		if matcher == nil {
 			return complete.FilterPrefix(ctxName, seed, rawItems)
@@ -413,13 +413,13 @@ func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer
 			return matcher.Call(fm, []interface{}{seed}, eval.NoOpts)
 		})
 		if err != nil {
-			nt.notify(fmt.Sprintf("[matcher error] %s", err))
+			nt.notifyError("matcher", err)
 			// Continue with whatever values have been output
 		}
 		if len(outputs) != len(rawItems) {
-			nt.notify(fmt.Sprintf(
+			nt.notifyf(
 				"matcher has output %v values, not equal to %v inputs",
-				len(outputs), len(rawItems)))
+				len(outputs), len(rawItems))
 		}
 		filtered := []complete.RawItem{}
 		for i := 0; i < len(rawItems) && i < len(outputs); i++ {

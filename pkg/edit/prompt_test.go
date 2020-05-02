@@ -37,7 +37,11 @@ func TestPrompt_NotifiesException(t *testing.T) {
 	f := setup(rc(`edit:prompt = { fail ERROR }`))
 	defer f.Cleanup()
 
-	f.TestTTYNotes(t, "prompt function error: ERROR")
+	f.TestTTYNotes(t,
+		"[prompt function error] ERROR\n",
+		`see stack trace with "exc:show $edit:exceptions[0]"`)
+	evals(f.Evaler, `excs = (count $edit:exceptions)`)
+	testGlobal(t, f.Evaler, "excs", "1")
 }
 
 func TestRPrompt(t *testing.T) {

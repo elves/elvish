@@ -6,12 +6,16 @@
 package edit
 
 import (
+	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/store"
 )
@@ -20,13 +24,17 @@ import (
 type Editor struct {
 	app cli.App
 	ns  eval.Ns
+
+	excMutex sync.RWMutex
+	excList  vals.List
 }
 
-// An interface that wraps notify and notifyError. It is only implemented by
-// *Editor. Functions may take arguments of this type to make it clear that they
-// do not depend on other parts of *Editor.
+// An interface that wraps notifyf and notifyError. It is only implemented by
+// the *Editor type; functions may take a notifier instead of *Editor argument
+// to make it clear that they do not depend on other parts of *Editor.
 type notifier interface {
-	notify(string)
+	notifyf(format string, args ...interface{})
+	notifyError(ctx string, e error)
 }
 
 // NewEditor creates a new editor from input and output terminal files.
@@ -49,13 +57,14 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 
 	// Declare the Editor with a nil App first; some initialization functions
 	// require a notifier as an argument, but does not use it immediately.
-	ed := &Editor{nil, eval.Ns{}}
+	ed := &Editor{ns: eval.Ns{}, excList: vals.EmptyList}
 	initHighlighter(&appSpec, ev)
 	initConfigAPI(&appSpec, ev, ed.ns)
 	initInsertAPI(&appSpec, ed, ev, ed.ns)
 	initPrompts(&appSpec, ed, ev, ed.ns)
 	ed.app = cli.NewApp(appSpec)
 
+	initExceptionsAPI(ed)
 	initCommandAPI(ed, ev)
 	initListings(ed, ev, st, fuser)
 	initNavigation(ed, ev)
@@ -72,6 +81,10 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 	evalDefaultBinding(ev, ed.ns)
 
 	return ed
+}
+
+func initExceptionsAPI(ed *Editor) {
+	ed.ns.Add("exceptions", vars.FromPtrWithMutex(&ed.excList, &ed.excMutex))
 }
 
 func evalDefaultBinding(ev *eval.Evaler, ns eval.Ns) {
@@ -109,3 +122,18 @@ func (ed *Editor) Ns() eval.Ns {
 }
 
 func (ed *Editor) notify(s string) { ed.app.Notify(s) }
+
+func (ed *Editor) notifyf(format string, args ...interface{}) {
+	ed.app.Notify(fmt.Sprintf(format, args...))
+}
+
+func (ed *Editor) notifyError(ctx string, e error) {
+	ed.notifyf("[%v error] %v", ctx, e)
+	if exc, ok := e.(*eval.Exception); ok {
+		ed.excMutex.Lock()
+		defer ed.excMutex.Unlock()
+		ed.excList = ed.excList.Cons(exc)
+		ed.notifyf(`see stack trace with "exc:show $edit:exceptions[%d]"`,
+			ed.excList.Len()-1)
+	}
+}
