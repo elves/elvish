@@ -2,6 +2,7 @@
 package shell
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -98,7 +99,7 @@ func rescue() {
 		println()
 		print(sys.DumpStack())
 		println()
-		println(r)
+		fmt.Println(r)
 		println("\nExecing recovery shell /bin/sh")
 		syscall.Exec("/bin/sh", []string{"/bin/sh"}, os.Environ())
 	}
