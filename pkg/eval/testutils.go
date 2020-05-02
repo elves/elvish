@@ -278,8 +278,8 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 		{File: stderr, Chan: BlackholeChan},
 	}
 
-	for i, text := range texts {
-		src := parse.Source{Name: fmt.Sprintf("test%d.elv", i), Code: text}
+	for _, text := range texts {
+		src := parse.Source{Name: "[test]", Code: text}
 
 		tree, err := parse.Parse(src)
 		if err != nil {
