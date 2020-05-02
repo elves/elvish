@@ -12,10 +12,11 @@ import (
 // Import command history entries that happened after the current session
 // started.
 
-func initHistWalk(app cli.App, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fuser) {
+func initHistWalk(ed *Editor, ev *eval.Evaler, fuser *histutil.Fuser) {
 	bindingVar := newBindingVar(EmptyBindingMap)
-	binding := newMapBinding(app, ev, bindingVar)
-	ns.AddNs("history",
+	binding := newMapBinding(ed, ev, bindingVar)
+	app := ed.app
+	ed.ns.AddNs("history",
 		eval.Ns{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:history>", map[string]interface{}{

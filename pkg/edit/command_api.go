@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/addons/stub"
 	"github.com/elves/elvish/pkg/eval"
 )
@@ -10,15 +9,15 @@ import (
 //
 // Starts the command mode.
 
-func initCommandAPI(app cli.App, ev *eval.Evaler, ns eval.Ns) {
+func initCommandAPI(ed *Editor, ev *eval.Evaler) {
 	bindingVar := newBindingVar(EmptyBindingMap)
-	binding := newMapBinding(app, ev, bindingVar)
-	ns.AddNs("command",
+	binding := newMapBinding(ed, ev, bindingVar)
+	ed.ns.AddNs("command",
 		eval.Ns{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:command>:", map[string]interface{}{
 			"start": func() {
-				stub.Start(app, stub.Config{
+				stub.Start(ed.app, stub.Config{
 					Binding: binding,
 					Name:    " COMMAND ",
 					Focus:   false,

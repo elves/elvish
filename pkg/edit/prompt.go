@@ -140,7 +140,7 @@ func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...i
 		defer resultMutex.Unlock()
 		newResult, err := result.Concat(v)
 		if err != nil {
-			nt.Notify(fmt.Sprintf(
+			nt.notify(fmt.Sprintf(
 				"invalid output type from prompt: %s", vals.Kind(v)))
 		} else {
 			result = newResult.(ui.Text)
@@ -157,7 +157,7 @@ func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...i
 	bytesCb := func(r *os.File) {
 		allBytes, err := ioutil.ReadAll(r)
 		if err != nil {
-			nt.Notify(fmt.Sprintf("error reading prompt byte output: %v", err))
+			nt.notify(fmt.Sprintf("error reading prompt byte output: %v", err))
 		}
 		if len(allBytes) > 0 {
 			add(string(allBytes))
@@ -175,7 +175,7 @@ func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...i
 	err := fm.PipeOutput(f, valuesCb, bytesCb)
 
 	if err != nil {
-		nt.Notify(fmt.Sprintf("prompt function error: %v", err))
+		nt.notify(fmt.Sprintf("prompt function error: %v", err))
 		return nil
 	}
 

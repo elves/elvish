@@ -213,16 +213,16 @@ func completionStart(app cli.App, binding cli.Handler, cfg complete.Config, smar
 //
 // Closes the completion mode UI.
 
-func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
+func initCompletion(ed *Editor, ev *eval.Evaler) {
 	bindingVar := newBindingVar(EmptyBindingMap)
-	binding := newMapBinding(app, ev, bindingVar)
+	binding := newMapBinding(ed, ev, bindingVar)
 	matcherMapVar := newMapVar(vals.EmptyMap)
 	argGeneratorMapVar := newMapVar(vals.EmptyMap)
 	cfg := func() complete.Config {
 		return complete.Config{
 			PureEvaler: pureEvaler{ev},
 			Filterer: adaptMatcherMap(
-				app, ev, matcherMapVar.Get().(vals.Map)),
+				ed, ev, matcherMapVar.Get().(vals.Map)),
 			ArgGenerator: adaptArgGeneratorMap(
 				ev, argGeneratorMapVar.Get().(vals.Map)),
 		}
@@ -230,7 +230,7 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	generateForSudo := func(args []string) ([]complete.RawItem, error) {
 		return complete.GenerateForSudo(cfg(), args)
 	}
-	ns.AddGoFns("<edit>", map[string]interface{}{
+	ed.ns.AddGoFns("<edit>", map[string]interface{}{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
 		"complete-getopt":   completeGetopt,
 		"complete-sudo":     wrapArgGenerator(generateForSudo),
@@ -239,7 +239,8 @@ func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 		"match-subseq":      wrapMatcher(util.HasSubseq),
 		"match-substr":      wrapMatcher(strings.Contains),
 	})
-	ns.AddNs("completion",
+	app := ed.app
+	ed.ns.AddNs("completion",
 		eval.Ns{
 			"arg-completer": argGeneratorMapVar,
 			"binding":       bindingVar,
@@ -382,7 +383,7 @@ func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer
 	return func(ctxName, seed string, rawItems []complete.RawItem) []complete.RawItem {
 		matcher, ok := lookupFn(m, ctxName)
 		if !ok {
-			nt.Notify(fmt.Sprintf(
+			nt.notify(fmt.Sprintf(
 				"matcher for %s not a function, falling back to prefix matching", ctxName))
 		}
 		if matcher == nil {
@@ -412,11 +413,11 @@ func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer
 			return matcher.Call(fm, []interface{}{seed}, eval.NoOpts)
 		})
 		if err != nil {
-			nt.Notify(fmt.Sprintf("[matcher error] %s", err))
+			nt.notify(fmt.Sprintf("[matcher error] %s", err))
 			// Continue with whatever values have been output
 		}
 		if len(outputs) != len(rawItems) {
-			nt.Notify(fmt.Sprintf(
+			nt.notify(fmt.Sprintf(
 				"matcher has output %v values, not equal to %v inputs",
 				len(outputs), len(rawItems)))
 		}

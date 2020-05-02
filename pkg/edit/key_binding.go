@@ -63,7 +63,7 @@ var bindingSource = parse.Source{Name: "[editor binding]"}
 func callWithNotifyPorts(nt notifier, ev *eval.Evaler, f eval.Callable, args ...interface{}) {
 	// TODO(xiaq): Use CallWithOutputCallback when it supports redirecting the
 	// stderr port.
-	notifyPort, cleanup := makeNotifyPort(nt.Notify)
+	notifyPort, cleanup := makeNotifyPort(nt.notify)
 	defer cleanup()
 	ports := []*eval.Port{eval.DevNullClosedChan, notifyPort, notifyPort}
 	frame := eval.NewTopFrame(ev, bindingSource, ports)
@@ -71,7 +71,7 @@ func callWithNotifyPorts(nt notifier, ev *eval.Evaler, f eval.Callable, args ...
 	err := f.Call(frame, args, eval.NoOpts)
 	if err != nil {
 		// TODO(xiaq): Make the stack trace available.
-		nt.Notify("[binding error] " + err.Error())
+		nt.notify("[binding error] " + err.Error())
 	}
 }
 

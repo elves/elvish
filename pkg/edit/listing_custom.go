@@ -28,10 +28,10 @@ func (*customListingOpts) SetDefaultOptions() {}
 //
 // Starts a custom listing addon.
 
-func listingStartCustom(app cli.App, fm *eval.Frame, opts customListingOpts, items interface{}) {
+func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, items interface{}) {
 	var binding cli.Handler
 	if opts.Binding.Map != nil {
-		binding = newMapBinding(app, fm.Evaler, vars.FromPtr(&opts.Binding))
+		binding = newMapBinding(ed, fm.Evaler, vars.FromPtr(&opts.Binding))
 	}
 	var getItems func(string) []listing.Item
 	if fn, isFn := items.(eval.Callable); isFn {
@@ -85,7 +85,7 @@ func listingStartCustom(app cli.App, fm *eval.Frame, opts customListingOpts, ite
 		}
 	}
 
-	listing.Start(app, listing.Config{
+	listing.Start(ed.app, listing.Config{
 		Binding: binding,
 		Caption: opts.Caption,
 		GetItems: func(q string) ([]listing.Item, int) {
@@ -98,7 +98,7 @@ func listingStartCustom(app cli.App, fm *eval.Frame, opts customListingOpts, ite
 		},
 		Accept: func(s string) bool {
 			if opts.Accept != nil {
-				callWithNotifyPorts(app, fm.Evaler, opts.Accept, s)
+				callWithNotifyPorts(ed, fm.Evaler, opts.Accept, s)
 			}
 			return false
 		},

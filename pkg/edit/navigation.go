@@ -84,21 +84,22 @@ func convertNavWidthRatio(v interface{}) [3]int {
 	return ret
 }
 
-func initNavigation(app cli.App, ev *eval.Evaler, ns eval.Ns) {
+func initNavigation(ed *Editor, ev *eval.Evaler) {
 	bindingVar := newBindingVar(EmptyBindingMap)
-	binding := newMapBinding(app, ev, bindingVar)
+	binding := newMapBinding(ed, ev, bindingVar)
 	widthRatioVar := newListVar(vals.MakeList(1.0, 3.0, 4.0))
 
 	selectedFileVar := vars.FromGet(func() interface{} {
-		name := navigation.SelectedName(app)
+		name := navigation.SelectedName(ed.app)
 		if name == "" {
 			return nil
 		}
 		return name
 	})
 
-	ns.Add("selected-file", selectedFileVar)
-	ns.AddNs("navigation",
+	app := ed.app
+	ed.ns.Add("selected-file", selectedFileVar)
+	ed.ns.AddNs("navigation",
 		eval.Ns{
 			"binding":     bindingVar,
 			"width-ratio": widthRatioVar,

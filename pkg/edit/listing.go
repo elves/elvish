@@ -15,9 +15,10 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st store.Store, fuser *histutil.Fuser) {
+func initListings(ed *Editor, ev *eval.Evaler, st store.Store, fuser *histutil.Fuser) {
 	bindingVar := newBindingVar(EmptyBindingMap)
-	ns.AddNs("listing",
+	app := ed.app
+	ed.ns.AddNs("listing",
 		eval.Ns{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:listing>:", map[string]interface{}{
@@ -31,7 +32,7 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st store.Store, fuse
 			"page-up":      func() { listingPageUp(app) },
 			"page-down":    func() { listingPageDown(app) },
 			"start-custom": func(fm *eval.Frame, opts customListingOpts, items interface{}) {
-				listingStartCustom(app, fm, opts, items)
+				listingStartCustom(ed, fm, opts, items)
 			},
 			/*
 				"toggle-filtering": cli.ListingToggleFiltering,
@@ -43,22 +44,22 @@ func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st store.Store, fuse
 		histStore = fuserWrapper{fuser}
 	}
 
-	initHistlist(app, ev, ns, histStore, bindingVar)
-	initLastcmd(app, ev, ns, histStore, bindingVar)
-	initLocation(app, ev, ns, st, bindingVar)
+	initHistlist(ed, ev, histStore, bindingVar)
+	initLastcmd(ed, ev, histStore, bindingVar)
+	initLocation(ed, ev, st, bindingVar)
 }
 
-func initHistlist(app cli.App, ev *eval.Evaler, ns eval.Ns, histStore histutil.Store, commonBindingVar vars.PtrVar) {
+func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar) {
 	bindingVar := newBindingVar(EmptyBindingMap)
-	binding := newMapBinding(app, ev, bindingVar, commonBindingVar)
+	binding := newMapBinding(ed, ev, bindingVar, commonBindingVar)
 	dedup := newBoolVar(true)
 	caseSensitive := newBoolVar(true)
-	ns.AddNs("histlist",
+	ed.ns.AddNs("histlist",
 		eval.Ns{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:histlist>", map[string]interface{}{
 			"start": func() {
-				histlist.Start(app, histlist.Config{
+				histlist.Start(ed.app, histlist.Config{
 					Binding: binding, Store: histStore,
 					CaseSensitive: func() bool {
 						return caseSensitive.Get().(bool)
@@ -70,48 +71,48 @@ func initHistlist(app cli.App, ev *eval.Evaler, ns eval.Ns, histStore histutil.S
 			},
 			"toggle-case-sensitivity": func() {
 				caseSensitive.Set(!caseSensitive.Get().(bool))
-				listingRefilter(app)
-				app.Redraw()
+				listingRefilter(ed.app)
+				ed.app.Redraw()
 			},
 			"toggle-dedup": func() {
 				dedup.Set(!dedup.Get().(bool))
-				listingRefilter(app)
-				app.Redraw()
+				listingRefilter(ed.app)
+				ed.app.Redraw()
 			},
 		}))
 }
 
-func initLastcmd(app cli.App, ev *eval.Evaler, ns eval.Ns, histStore histutil.Store, commonBindingVar vars.PtrVar) {
+func initLastcmd(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar) {
 	bindingVar := newBindingVar(EmptyBindingMap)
-	binding := newMapBinding(app, ev, bindingVar, commonBindingVar)
-	ns.AddNs("lastcmd",
+	binding := newMapBinding(ed, ev, bindingVar, commonBindingVar)
+	ed.ns.AddNs("lastcmd",
 		eval.Ns{
 			"binding": bindingVar,
 		}.AddGoFn("<edit:lastcmd>", "start", func() {
 			// TODO: Specify wordifier
-			lastcmd.Start(app, lastcmd.Config{
+			lastcmd.Start(ed.app, lastcmd.Config{
 				Binding: binding, Store: histStore})
 		}))
 }
 
-func initLocation(app cli.App, ev *eval.Evaler, ns eval.Ns, st store.Store, commonBindingVar vars.PtrVar) {
+func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar vars.PtrVar) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	pinnedVar := newListVar(vals.EmptyList)
 	hiddenVar := newListVar(vals.EmptyList)
 	workspacesVar := newMapVar(vals.EmptyMap)
 
-	binding := newMapBinding(app, ev, bindingVar, commonBindingVar)
+	binding := newMapBinding(ed, ev, bindingVar, commonBindingVar)
 	workspaceIterator := location.WorkspaceIterator(
 		adaptToIterateStringPair(workspacesVar))
 
-	ns.AddNs("location",
+	ed.ns.AddNs("location",
 		eval.Ns{
 			"binding":    bindingVar,
 			"hidden":     hiddenVar,
 			"pinned":     pinnedVar,
 			"workspaces": workspacesVar,
 		}.AddGoFn("<edit:location>", "start", func() {
-			location.Start(app, location.Config{
+			location.Start(ed.app, location.Config{
 				Binding: binding, Store: dirStore{ev, st},
 				IteratePinned:     adaptToIterateString(pinnedVar),
 				IterateHidden:     adaptToIterateString(hiddenVar),

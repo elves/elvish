@@ -22,9 +22,15 @@ type Editor struct {
 	ns  eval.Ns
 }
 
+// An interface that wraps notify and notifyError. It is only implemented by
+// *Editor. Functions may take arguments of this type to make it clear that they
+// do not depend on other parts of *Editor.
+type notifier interface {
+	notify(string)
+}
+
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
-	ns := eval.Ns{}
 	appSpec := cli.AppSpec{TTY: tty}
 
 	fuser, err := histutil.NewFuser(st)
@@ -41,31 +47,31 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 		}}
 	}
 
-	// Make a variable for the app first. This is to work around the
-	// bootstrapping of initPrompts, which expects a notifier.
-	var app cli.App
+	// Declare the Editor with a nil App first; some initialization functions
+	// require a notifier as an argument, but does not use it immediately.
+	ed := &Editor{nil, eval.Ns{}}
 	initHighlighter(&appSpec, ev)
-	initConfigAPI(&appSpec, ev, ns)
-	initInsertAPI(&appSpec, appNotifier{&app}, ev, ns)
-	initPrompts(&appSpec, appNotifier{&app}, ev, ns)
-	app = cli.NewApp(appSpec)
+	initConfigAPI(&appSpec, ev, ed.ns)
+	initInsertAPI(&appSpec, ed, ev, ed.ns)
+	initPrompts(&appSpec, ed, ev, ed.ns)
+	ed.app = cli.NewApp(appSpec)
 
-	initCommandAPI(app, ev, ns)
-	initListings(app, ev, ns, st, fuser)
-	initNavigation(app, ev, ns)
-	initCompletion(app, ev, ns)
-	initHistWalk(app, ev, ns, fuser)
-	initInstant(app, ev, ns)
-	initMinibuf(app, ev, ns)
+	initCommandAPI(ed, ev)
+	initListings(ed, ev, st, fuser)
+	initNavigation(ed, ev)
+	initCompletion(ed, ev)
+	initHistWalk(ed, ev, fuser)
+	initInstant(ed, ev)
+	initMinibuf(ed, ev)
 
-	initBufferBuiltins(app, ns)
-	initTTYBuiltins(app, tty, ns)
-	initMiscBuiltins(app, ns)
-	initStateAPI(app, ns)
-	initStoreAPI(app, ns, fuser)
-	evalDefaultBinding(ev, ns)
+	initBufferBuiltins(ed.app, ed.ns)
+	initTTYBuiltins(ed.app, tty, ed.ns)
+	initMiscBuiltins(ed.app, ed.ns)
+	initStateAPI(ed.app, ed.ns)
+	initStoreAPI(ed.app, ed.ns, fuser)
+	evalDefaultBinding(ev, ed.ns)
 
-	return &Editor{app, ns}
+	return ed
 }
 
 func evalDefaultBinding(ev *eval.Evaler, ns eval.Ns) {
@@ -101,3 +107,5 @@ func (ed *Editor) ReadCode() (string, error) {
 func (ed *Editor) Ns() eval.Ns {
 	return ed.ns
 }
+
+func (ed *Editor) notify(s string) { ed.app.Notify(s) }

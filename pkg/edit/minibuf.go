@@ -6,14 +6,14 @@ import (
 	"github.com/elves/elvish/pkg/parse"
 )
 
-func initMinibuf(app cli.App, ev *eval.Evaler, ns eval.Ns) {
+func initMinibuf(ed *Editor, ev *eval.Evaler) {
 	bindingVar := newBindingVar(EmptyBindingMap)
-	binding := newMapBinding(app, ev, bindingVar)
-	ns.AddNs("minibuf",
+	binding := newMapBinding(ed, ev, bindingVar)
+	ed.ns.AddNs("minibuf",
 		eval.Ns{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:minibuf>:", map[string]interface{}{
-			"start": func() { minibufStart(app, ev, binding) },
+			"start": func() { minibufStart(ed.app, ev, binding) },
 		}))
 }
 
