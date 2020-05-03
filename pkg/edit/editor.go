@@ -133,12 +133,14 @@ func (ed *Editor) notifyf(format string, args ...interface{}) {
 }
 
 func (ed *Editor) notifyError(ctx string, e error) {
-	ed.notifyf("[%v error] %v", ctx, e)
 	if exc, ok := e.(*eval.Exception); ok {
 		ed.excMutex.Lock()
 		defer ed.excMutex.Unlock()
 		ed.excList = ed.excList.Cons(exc)
-		ed.notifyf(`see stack trace with "use exc; exc:show $edit:exceptions[%d]"`,
-			ed.excList.Len()-1)
+		ed.notifyf("[%v error] %v\n"+
+			`see stack trace with "use exc; exc:show $edit:exceptions[%d]"`,
+			ctx, e, ed.excList.Len()-1)
+	} else {
+		ed.notifyf("[%v error] %v", ctx, e)
 	}
 }
