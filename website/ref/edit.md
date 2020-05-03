@@ -87,7 +87,8 @@ edit:prompt-stale-transform = [x]{ styled $x inverse }
 edit:prompt-stale-transform = [x]{ styled $x bright-black }
 ```
 
-As an example, try running following code:
+To see the transformer in action, try the following example (assuming default
+`$edit:prompt-stale-transform`):
 
 ```elvish
 n = 0
