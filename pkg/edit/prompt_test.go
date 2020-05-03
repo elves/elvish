@@ -1,11 +1,13 @@
 package edit
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/elves/elvish/pkg/cli/apptest"
 	"github.com/elves/elvish/pkg/cli/term"
+	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/ui"
 )
 
@@ -70,7 +72,7 @@ func TestPromptStaleThreshold(t *testing.T) {
 	f := setup(rc(
 		`pipe = (pipe)`,
 		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
-		`edit:prompt-stale-threshold = 0.05`))
+		`edit:prompt-stale-threshold = `+scaledMsAsSec(50)))
 	defer f.Cleanup()
 
 	f.TestTTY(t,
@@ -86,7 +88,7 @@ func TestPromptStaleTransform(t *testing.T) {
 	f := setup(rc(
 		`pipe = (pipe)`,
 		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
-		`edit:prompt-stale-threshold = 0.05`,
+		`edit:prompt-stale-threshold = `+scaledMsAsSec(50),
 		`edit:prompt-stale-transform = [a]{ put S; put $a; put S }`))
 	defer f.Cleanup()
 
@@ -147,4 +149,8 @@ func TestDefaultRPrompt(t *testing.T) {
 		"~> ", term.DotHere, strings.Repeat(" ", 39),
 		"elf@host", Styles,
 		"++++++++")
+}
+
+func scaledMsAsSec(ms int) string {
+	return fmt.Sprint(testutil.ScaledMs(ms).Seconds())
 }
