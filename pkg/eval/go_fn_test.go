@@ -28,6 +28,9 @@ type testOptions struct {
 
 func (o *testOptions) SetDefaultOptions() { o.Bar = "default" }
 
+// TODO: Break down this test into multiple small ones, and test errors more
+// strictly.
+
 func TestGoFnCall(t *testing.T) {
 	theFrame := new(Frame)
 	theOptions := map[string]interface{}{}
@@ -227,4 +230,12 @@ func TestGoFnCall(t *testing.T) {
 		t.Errorf("Function called when arguments have wrong type")
 	})
 	callBad(theFrame, []interface{}{"x"}, theOptions, anyError{})
+
+	// Invalid option; regression test for #958.
+	f = NewGoFn("f", func(opts testOptions) {})
+	callBad(theFrame, nil, RawOptions{"bad": ""}, anyError{})
+
+	// Invalid option type; regression test for #958.
+	f = NewGoFn("f", func(opts testOptions) {})
+	callBad(theFrame, nil, RawOptions{"foo": vals.EmptyList}, anyError{})
 }

@@ -186,7 +186,10 @@ func (b *GoFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) e
 		ptrValue := reflect.New(b.options)
 		ptr := ptrValue.Interface()
 		ptr.(optionsPtr).SetDefaultOptions()
-		scanOptions(opts, ptr)
+		err := scanOptions(opts, ptr)
+		if err != nil {
+			return err
+		}
 		in = append(in, ptrValue.Elem())
 	}
 	for i, arg := range args {
