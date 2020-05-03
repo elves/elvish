@@ -241,6 +241,28 @@ var goodCases = []struct {
 	// Line continuation: "\\\n" is considered whitespace
 	{"a b\\\nc", ast{
 		"Chunk/Pipeline/Form", fs{"Head": "a", "Args": []string{"b", "c"}}}},
+
+	// Carriage returns are normally treated the same as newlines:
+	// Separating pipelines in a chunk
+	{"a\rb", ast{"Chunk", fs{"Pipelines": []string{"a", "b"}}}},
+	{"a\r\nb", ast{"Chunk", fs{"Pipelines": []string{"a", "b"}}}},
+	// Whitespace padding in lambdas
+	{"a { \rfoo\r\nbar }", a(
+		ast{"Compound/Indexing/Primary",
+			fs{"Type": Lambda, "Chunk": " \rfoo\r\nbar "}},
+	)},
+	// Separating elements in lists
+	{"a [a\rb]", a(
+		ast{"Compound/Indexing/Primary", fs{
+			"Type":     List,
+			"Elements": []string{"a", "b"}}})},
+
+	// However, in line continuations, \r\n is treated as a single newline
+	{"a b\\\r\nc", ast{
+		"Chunk/Pipeline/Form", fs{"Head": "a", "Args": []string{"b", "c"}}}},
+	// But a lone \r also works
+	{"a b\\\rc", ast{
+		"Chunk/Pipeline/Form", fs{"Head": "a", "Args": []string{"b", "c"}}}},
 }
 
 func TestParse(t *testing.T) {

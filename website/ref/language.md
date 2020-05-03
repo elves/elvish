@@ -33,9 +33,11 @@ is any of:
 -   A comment: starting with `#` and ending before the next newline or end of
     file;
 
--   Line continuation: a backslash followed by a newline.
+-   Line continuation: a backslash followed by a newline (`"\n"`), or a carriage
+    return and newline (`"\r\n"`).
 
-A **whitespace** is either an **inline whitespace** or a newline (`"\n"`).
+A **whitespace** is either an **inline whitespace**, a carriage return (`"\r"`),
+or a newline (`"\n"`).
 
 Like most shells, Elvish has a syntax structure that can be divided into two
 levels: a **statement** level and an **expression** level. For instance, on the

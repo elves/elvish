@@ -86,7 +86,7 @@ func (bn *Chunk) parse(ps *parser) {
 }
 
 func isPipelineSep(r rune) bool {
-	return r == '\n' || r == ';'
+	return r == '\r' || r == '\n' || r == ';'
 }
 
 // parseSeps parses pipeline separators along with whitespaces. It returns the
@@ -808,7 +808,7 @@ func (pn *Primary) lambda(ps *parser) {
 func (pn *Primary) lbrace(ps *parser) {
 	parseSep(pn, ps, '{')
 
-	if r := ps.peek(); r == ';' || r == '\n' || IsInlineWhitespace(r) {
+	if r := ps.peek(); r == ';' || r == '\r' || r == '\n' || IsInlineWhitespace(r) {
 		pn.lambda(ps)
 		return
 	}
@@ -949,6 +949,11 @@ spaces:
 		case r == '\\': // line continuation
 			ps.next()
 			switch ps.peek() {
+			case '\r':
+				ps.next()
+				if ps.peek() == '\n' {
+					ps.next()
+				}
 			case '\n':
 				ps.next()
 			case eof:
@@ -973,7 +978,7 @@ func IsInlineWhitespace(r rune) bool {
 // IsWhitespace reports whether r is a whitespace. Currently this includes
 // inline whitespace characters and newline (Unicode 0xa).
 func IsWhitespace(r rune) bool {
-	return IsInlineWhitespace(r) || r == '\n'
+	return IsInlineWhitespace(r) || r == '\r' || r == '\n'
 }
 
 func addChild(p Node, ch Node) {
