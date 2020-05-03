@@ -40,7 +40,7 @@ func TestPrompt_NotifiesException(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TestTTYNotes(t,
-		"[prompt function error] ERROR\n",
+		"[prompt error] ERROR\n",
 		`see stack trace with "use exc; exc:show $edit:exceptions[0]"`)
 	evals(f.Evaler, `excs = (count $edit:exceptions)`)
 	testGlobal(t, f.Evaler, "excs", "1")
@@ -95,6 +95,21 @@ func TestPromptStaleTransform(t *testing.T) {
 	f.TestTTY(t, "S???> S", term.DotHere)
 	evals(f.Evaler, `pwclose $pipe`)
 	evals(f.Evaler, `prclose $pipe`)
+}
+
+func TestPromptStaleTransform_Exception(t *testing.T) {
+	f := setup(rc(
+		`pipe = (pipe)`,
+		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
+		`edit:prompt-stale-threshold = `+scaledMsAsSec(50),
+		`edit:prompt-stale-transform = [_]{ fail ERROR }`))
+	defer f.Cleanup()
+
+	f.TestTTYNotes(t,
+		"[prompt stale transform error] ERROR\n",
+		`see stack trace with "use exc; exc:show $edit:exceptions[0]"`)
+	evals(f.Evaler, `excs = (count $edit:exceptions)`)
+	testGlobal(t, f.Evaler, "excs", "1")
 }
 
 func TestRPromptPersistent_True(t *testing.T) {

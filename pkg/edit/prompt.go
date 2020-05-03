@@ -76,7 +76,7 @@ func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *
 
 	*p = prompt.New(prompt.Config{
 		Compute: func() ui.Text {
-			return callForStyledText(nt, ev, computeVar.Get().(eval.Callable))
+			return callForStyledText(nt, ev, name, computeVar.Get().(eval.Callable))
 		},
 		Eagerness: func() int { return eagernessVar.GetRaw().(int) },
 		StaleThreshold: func() time.Duration {
@@ -84,7 +84,7 @@ func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *
 			return time.Duration(seconds * float64(time.Second))
 		},
 		StaleTransform: func(original ui.Text) ui.Text {
-			return callForStyledText(nt, ev, staleTransformVar.Get().(eval.Callable), original)
+			return callForStyledText(nt, ev, name+" stale transform", staleTransformVar.Get().(eval.Callable), original)
 		},
 	})
 }
@@ -126,10 +126,9 @@ func defaultStaleTransform(original ui.Text) ui.Text {
 	return ui.StyleText(original, ui.Inverse)
 }
 
-// callPrompt calls a function with the given arguments and closed input, and
-// concatenates its outputs to a styled text. Used to call prompts and stale
-// transformers.
-func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...interface{}) ui.Text {
+// Calls a function with the given arguments and closed input, and concatenates
+// its outputs to a styled text. Used to call prompts and stale transformers.
+func callForStyledText(nt notifier, ev *eval.Evaler, ctx string, fn eval.Callable, args ...interface{}) ui.Text {
 	var (
 		result      ui.Text
 		resultMutex sync.Mutex
@@ -167,13 +166,12 @@ func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, args ...i
 		{}, // Will be replaced when capturing output
 		{File: os.Stderr},
 	}
-	// XXX There is no source to pass to NewTopEvalCtx.
-	fm := eval.NewTopFrame(ev, parse.Source{Name: "[prompt]"}, ports)
+	fm := eval.NewTopFrame(ev, parse.Source{Name: "[" + ctx + "]"}, ports)
 	f := func(fm *eval.Frame) error { return fn.Call(fm, args, eval.NoOpts) }
 	err := fm.PipeOutput(f, valuesCb, bytesCb)
 
 	if err != nil {
-		nt.notifyError("prompt function", err)
+		nt.notifyError(ctx, err)
 		return nil
 	}
 
