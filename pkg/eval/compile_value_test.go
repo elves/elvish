@@ -66,6 +66,8 @@ func TestCompileValue(t *testing.T) {
 		// Output capture
 		That("put (put lorem ipsum)").Puts("lorem", "ipsum"),
 		That("put (print \"lorem\nipsum\")").Puts("lorem", "ipsum"),
+		// \r\n is also supported as a line separator
+		That(`print "lorem\r\nipsum\r\n" | all`).Puts("lorem", "ipsum"),
 
 		// Exception capture
 		That("bool ?(nop); bool ?(e:false)").Puts(true, false),

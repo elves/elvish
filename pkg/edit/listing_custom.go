@@ -55,7 +55,7 @@ func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, item
 				for {
 					line, err := buffered.ReadString('\n')
 					if line != "" {
-						s := strings.TrimSuffix(line, "\n")
+						s := strings.TrimRight(line, "\r\n")
 						collect(listing.Item{ToAccept: s, ToShow: ui.T(s)})
 					}
 					if err != nil {

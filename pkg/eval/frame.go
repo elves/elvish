@@ -108,7 +108,7 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 	for {
 		line, err := filein.ReadString('\n')
 		if line != "" {
-			ch <- strings.TrimSuffix(line, "\n")
+			ch <- strings.TrimRight(line, "\r\n")
 		}
 		if err != nil {
 			if err != io.EOF {

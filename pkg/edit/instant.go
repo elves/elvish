@@ -72,7 +72,7 @@ func instantStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
 					}
 					break
 				}
-				addLine(strings.TrimSuffix(line, "\n"))
+				addLine(strings.TrimRight(line, "\r\n"))
 			}
 		}
 		err = fm.PipeOutput(

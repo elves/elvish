@@ -361,7 +361,7 @@ func captureOutput(fm *Frame, f func(*Frame) error) ([]interface{}, error) {
 			for {
 				line, err := buffered.ReadString('\n')
 				if line != "" {
-					v := strings.TrimSuffix(line, "\n")
+					v := strings.TrimRight(line, "\r\n")
 					m.Lock()
 					vs = append(vs, v)
 					m.Unlock()

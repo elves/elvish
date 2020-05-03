@@ -753,6 +753,15 @@ them by newlines, and consider each line to be one string value:
 ▶ b
 ```
 
+Trailing carriage returns are also stripped from each line, which effectively
+makes `\r\n` also valid line separators:
+
+```elvish-transcript
+~> put (echo "a\r\nb")
+▶ a
+▶ b
+```
+
 **Note 1**. Only the last newline is ever removed, so empty lines are preserved;
 `(echo "a\n")` evaluates to two values, `"a"` and `""`.
 
