@@ -20,6 +20,17 @@ patterns. When in doubt, ask the project lead.
 Still, some part of the codebase is poorly tested, and may even be outright
 untestable. In that case, also discuss to the project lead.
 
+### ELVISH_TEST_TIME_SCALE
+
+Some unit tests depend on time thresholds. The default values of these time
+thresholds are suitable for a reasonably powerful laptop, but on
+resource-constraint environments (virtual machines, embedded systems) they might
+not be enough.
+
+Set the `ELVISH_TEST_TIME_SCALE` environment variable to a number greater than 1
+to scale up the time thresholds used in tests. The CI environments use
+`ELVISH_TEST_TIME_SCALE = 10`.
+
 ## Documenting builtin functions and variables
 
 Documentation for builtin functions and variables are written in the Go sources
