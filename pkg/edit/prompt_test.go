@@ -39,7 +39,7 @@ func TestPrompt_NotifiesException(t *testing.T) {
 
 	f.TestTTYNotes(t,
 		"[prompt function error] ERROR\n",
-		`see stack trace with "exc:show $edit:exceptions[0]"`)
+		`see stack trace with "use exc; exc:show $edit:exceptions[0]"`)
 	evals(f.Evaler, `excs = (count $edit:exceptions)`)
 	testGlobal(t, f.Evaler, "excs", "1")
 }
