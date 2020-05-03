@@ -16,7 +16,7 @@ var any = anyMatcher{}
 var noErrors []error
 
 var styles = ui.RuneStylesheet{
-	'?':  ui.BgRed,
+	'?':  ui.Stylings(ui.FgBrightWhite, ui.BgRed),
 	'$':  ui.FgMagenta,
 	'\'': ui.FgYellow,
 	'v':  ui.FgGreen,

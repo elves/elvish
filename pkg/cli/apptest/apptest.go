@@ -17,7 +17,7 @@ var Styles = ui.RuneStylesheet{
 	'/': ui.FgBlue,
 	'#': ui.Stylings(ui.Inverse, ui.FgBlue),
 	'!': ui.FgRed,
-	'?': ui.BgRed,
+	'?': ui.Stylings(ui.FgBrightWhite, ui.BgRed),
 	'-': ui.FgMagenta,
 	'X': ui.Stylings(ui.Inverse, ui.FgMagenta),
 	'v': ui.FgGreen,
