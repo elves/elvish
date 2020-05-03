@@ -75,11 +75,17 @@ The threshold is customizable with `$edit:prompt-stale-threshold`; it specifies
 the threshold in seconds.
 
 The transformer is customizable with `$edit:prompt-stale-transform`. It is a
-function; the function is called with no arguments, and `styled` values as
-inputs, and the output is interpreted in the same way as prompt functions. Since
-`styled` values can be used as outputs in prompt functions, a function that
-simply passes all the input values through as outputs is a valid stale
-transformer.
+function; the function is called with one argument, a `styled` text, and the
+output is interpreted in the same way as prompt functions. Some examples are:
+
+```elvish
+# The following effectively disables marking of stale prompt.
+edit:prompt-stale-transform = [x]{ put $x }
+# Show stale prompts in inverse; equivalent to the default.
+edit:prompt-stale-transform = [x]{ styled $x inverse }
+# Gray out stale prompts.
+edit:prompt-stale-transform = [x]{ styled $x bright-black }
+```
 
 As an example, try running following code:
 
