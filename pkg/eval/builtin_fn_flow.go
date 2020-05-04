@@ -4,6 +4,8 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/elves/elvish/pkg/eval/errs"
+	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -51,19 +53,26 @@ import (
 //elvdoc:fn fail
 //
 // ```elvish
-// fail $message
+// fail $v
 // ```
 //
-// Throw an exception.
+// Throws an exception if `$v` is a string. Rethrows an exception if `$v` is a
+// caught exception.
 //
 // ```elvish-transcript
 // ~> fail bad
 // Exception: bad
-// Traceback:
-// [interactive], line 1:
-// fail bad
+// [tty 9], line 1: fail bad
 // ~> put ?(fail bad)
 // ▶ ?(fail bad)
+// ~> fn f { fail bad }
+// ~> fail ?(f)
+// Exception: bad
+// Traceback:
+//   [tty 7], line 1:
+//     fn f { fail bad }
+//   [tty 8], line 1:
+//     fail ?(f)
 // ```
 //
 // **Note**: Exceptions are now only allowed to carry string messages. You cannot
@@ -219,8 +228,20 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 	return err
 }
 
-func fail(msg string) error {
-	return errors.New(msg)
+func fail(v interface{}) error {
+	switch v := v.(type) {
+	case error:
+		// MAYBE TODO: if v is an exception, attach a "rethrown" stack trace,
+		// like Java
+		return v
+	case string:
+		return errors.New(v)
+	default:
+		return errs.BadValue{
+			What:  "argument to fail",
+			Valid: "string or exception", Actual: vals.Kind(v),
+		}
+	}
 }
 
 func multiErrorFn(excs ...*Exception) error {
