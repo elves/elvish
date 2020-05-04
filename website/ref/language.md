@@ -30,8 +30,8 @@ is any of:
 
 -   A space (ASCII 0x20) or tab (ASCII 0x9, `"\t"`);
 
--   A comment: starting with `#` and ending before the next newline or end of
-    file;
+-   A comment: starting with `#` and ending before the next carriage return,
+    newline or end of file;
 
 -   Line continuation: a backslash followed by a newline (`"\n"`), or a carriage
     return and newline (`"\r\n"`).
