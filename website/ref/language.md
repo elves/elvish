@@ -33,8 +33,10 @@ is any of:
 -   A comment: starting with `#` and ending before the next carriage return,
     newline or end of file;
 
--   Line continuation: a backslash followed by a newline (`"\n"`), or a carriage
-    return and newline (`"\r\n"`).
+-   Line continuation: a backslash or `^` followed by a newline (`"\n"`), or a
+    carriage return and newline (`"\r\n"`).
+
+    **NOTE**: Use of backslashes is deprecated and will be removed soon.
 
 A **whitespace** is either an **inline whitespace**, a carriage return (`"\r"`),
 or a newline (`"\n"`).

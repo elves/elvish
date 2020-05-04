@@ -235,7 +235,10 @@ var goodCases = []struct {
 		}},
 	)},
 
-	// Line continuation: "\\\n" is considered whitespace
+	// Line continuation: "^\n" is considered whitespace
+	{"a b^\nc", ast{
+		"Chunk/Pipeline/Form", fs{"Head": "a", "Args": []string{"b", "c"}}}},
+	// Same test using deprecated "\\\n".
 	{"a b\\\nc", ast{
 		"Chunk/Pipeline/Form", fs{"Head": "a", "Args": []string{"b", "c"}}}},
 

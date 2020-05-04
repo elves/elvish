@@ -948,7 +948,7 @@ spaces:
 				}
 				ps.next()
 			}
-		case r == '\\':
+		case r == '\\' || r == '^':
 			// Line continuation is like inline whitespace.
 			ps.next()
 			switch ps.peek() {
