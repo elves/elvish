@@ -30,9 +30,6 @@ var goodCases = []struct {
 	// Newlines are allowed after pipes.
 	{"a| \n \n b", ast{
 		"Chunk/Pipeline", fs{"Forms": []string{"a", "b"}}}},
-	// Comments.
-	{"a#haha\nb#lala", ast{
-		"Chunk", fs{"Pipelines": []string{"a", "b"}}}},
 
 	// Form
 	// Smoke test.
@@ -263,6 +260,20 @@ var goodCases = []struct {
 	// But a lone \r also works
 	{"a b\\\rc", ast{
 		"Chunk/Pipeline/Form", fs{"Head": "a", "Args": []string{"b", "c"}}}},
+
+	// Comments in chunks.
+	{"a#haha\nb#lala", ast{
+		"Chunk", fs{"Pipelines": []ast{
+			{"Pipeline/Form", fs{"Head": "a"}},
+			{"Pipeline/Form", fs{"Head": "b"}},
+		}}}},
+	// Comments in lists.
+	{"a [a#haha\nb]", a(
+		ast{"Compound/Indexing/Primary", fs{
+			"Type":     List,
+			"Elements": []string{"a", "b"},
+		}},
+	)},
 }
 
 func TestParse(t *testing.T) {

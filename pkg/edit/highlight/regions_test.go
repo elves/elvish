@@ -49,7 +49,7 @@ func TestGetRegions(t *testing.T) {
 		}),
 		Args("ls # comment").Rets([]region{
 			lsCommand,
-			{3, 12, lexicalRegion, commentRegion}, // # comment
+			{2, 12, lexicalRegion, commentRegion}, // # comment
 		}),
 
 		// LHS of assignments.

@@ -216,10 +216,11 @@ func emitRegionsInPrimary(n *parse.Primary, f func(parse.Node, regionKind, strin
 
 func emitRegionsInSep(n *parse.Sep, f func(parse.Node, regionKind, string)) {
 	text := sourceText(n)
+	trimmed := strings.TrimLeftFunc(text, parse.IsWhitespace)
 	switch {
-	case strings.TrimSpace(text) == "":
+	case trimmed == "":
 		// Don't do anything; whitespaces do not get highlighted.
-	case strings.HasPrefix(text, "#"):
+	case strings.HasPrefix(trimmed, "#"):
 		f(n, lexicalRegion, commentRegion)
 	default:
 		f(n, lexicalRegion, text)

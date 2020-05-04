@@ -99,20 +99,9 @@ func (bn *Chunk) parseSeps(ps *parser) int {
 			// parse as a Sep
 			parseSep(bn, ps, r)
 			nseps++
-		} else if IsInlineWhitespace(r) {
+		} else if IsInlineWhitespace(r) || r == '#' {
 			// parse a run of spaces as a Sep
 			parseSpaces(bn, ps)
-		} else if r == '#' {
-			// parse a comment as a Sep
-			for {
-				r := ps.peek()
-				if r == eof || r == '\n' {
-					break
-				}
-				ps.next()
-			}
-			addSep(bn, ps)
-			nseps++
 		} else {
 			break
 		}
@@ -932,21 +921,35 @@ func parseSep(n Node, ps *parser, sep rune) bool {
 }
 
 func parseSpaces(n Node, ps *parser) {
-	parseSpacesInner(n, ps, IsInlineWhitespace)
+	parseSpacesInner(n, ps, false)
 }
 
 func parseSpacesAndNewlines(n Node, ps *parser) {
-	parseSpacesInner(n, ps, IsWhitespace)
+	parseSpacesInner(n, ps, true)
 }
 
-func parseSpacesInner(n Node, ps *parser, isSpace func(rune) bool) {
+func parseSpacesInner(n Node, ps *parser, newlines bool) {
 spaces:
 	for {
 		r := ps.peek()
 		switch {
-		case isSpace(r):
+		case IsInlineWhitespace(r):
 			ps.next()
-		case r == '\\': // line continuation
+		case newlines && IsWhitespace(r):
+			ps.next()
+		case r == '#':
+			// Comment is like inline whitespace as long as we don't include the
+			// trailing newline.
+			ps.next()
+			for {
+				r := ps.peek()
+				if r == eof || r == '\r' || r == '\n' {
+					break
+				}
+				ps.next()
+			}
+		case r == '\\':
+			// Line continuation is like inline whitespace.
 			ps.next()
 			switch ps.peek() {
 			case '\r':
