@@ -4,10 +4,29 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval/errs"
+	"github.com/elves/elvish/pkg/eval/vals"
 )
 
 func TestBuiltinFnContainer(t *testing.T) {
 	Test(t,
+		That("make-map []").Puts(vals.EmptyMap),
+		That("make-map [[k v]]").Puts(vals.MakeMap("k", "v")),
+		That("make-map [[k v] [k v2]]").Puts(vals.MakeMap("k", "v2")),
+		That("make-map [[k1 v1] [k2 v2]]").
+			Puts(vals.MakeMap("k1", "v1", "k2", "v2")),
+		That("make-map [kv]").Puts(vals.MakeMap("k", "v")),
+		That("make-map [{ }]").
+			Throws(
+				errs.BadValue{
+					What: "input to make-map", Valid: "iterable", Actual: "fn"},
+				"make-map [{ }]"),
+		That("make-map [[k]]").
+			Throws(
+				errs.BadValue{
+					What: "input to make-map", Valid: "iterable with 2 elements",
+					Actual: "list with 1 elements"},
+				"make-map [[k]]"),
+
 		That(`range 3`).Puts(0.0, 1.0, 2.0),
 		That(`range 1 3`).Puts(1.0, 2.0),
 		That(`range 0 10 &step=3`).Puts(0.0, 3.0, 6.0, 9.0),

@@ -371,6 +371,8 @@ func init() {
 	addBuiltinFns(map[string]interface{}{
 		"ns": nsFn,
 
+		"make-map": makeMap,
+
 		"range":   rangeFn,
 		"repeat":  repeat,
 		"explode": explode,
@@ -405,6 +407,63 @@ func nsFn(m hashmap.Map) (Ns, error) {
 		ns[kstring] = vars.FromInit(v)
 	}
 	return ns, nil
+}
+
+//elvdoc:fn make-map
+//
+// ```elvish
+// make-map $input?
+// ```
+//
+// Outputs a map from an input consisting of containers with two elements. The
+// first element of each container is used as the key, and the second element is
+// used as the value.
+//
+// If the same key appears multiple times, the last value is used.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> make-map [[k v]]
+// ▶ [&k=v]
+// ~> make-map [[k v1] [k v2]]
+// ▶ [&k=v2]
+// ~> put [k1 v1] [k2 v2] | make-map
+// ▶ [&k1=v1 &k2=v2]
+// ~> put aA bB | make-map
+// ▶ [&a=A &b=B]
+// ```
+
+func makeMap(input Inputs) (vals.Map, error) {
+	m := vals.EmptyMap
+	var errMakeMap error
+	input(func(v interface{}) {
+		if errMakeMap != nil {
+			return
+		}
+		if !vals.CanIterate(v) {
+			errMakeMap = errs.BadValue{
+				What: "input to make-map", Valid: "iterable", Actual: vals.Kind(v)}
+			return
+		}
+		if l := vals.Len(v); l != 2 {
+			errMakeMap = errs.BadValue{
+				What: "input to make-map", Valid: "iterable with 2 elements",
+				Actual: fmt.Sprintf("%v with %v elements", vals.Kind(v), l)}
+			return
+		}
+		elems, err := vals.Collect(v)
+		if err != nil {
+			errMakeMap = err
+			return
+		}
+		if len(elems) != 2 {
+			errMakeMap = fmt.Errorf("internal bug: collected %v values", len(elems))
+			return
+		}
+		m = m.Assoc(elems[0], elems[1])
+	})
+	return m, errMakeMap
 }
 
 type rangeOpts struct{ Step float64 }
