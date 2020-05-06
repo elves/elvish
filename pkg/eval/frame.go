@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/elves/elvish/pkg/diag"
@@ -108,7 +107,7 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 	for {
 		line, err := filein.ReadString('\n')
 		if line != "" {
-			ch <- strings.TrimRight(line, "\r\n")
+			ch <- ChopLineEnding(line)
 		}
 		if err != nil {
 			if err != io.EOF {

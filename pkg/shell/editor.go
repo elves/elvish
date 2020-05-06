@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
+
+	"github.com/elves/elvish/pkg/eval"
 )
 
 type editor interface {
@@ -28,7 +29,5 @@ func (ed *minEditor) ReadCode() (string, error) {
 	}
 	fmt.Fprintf(ed.out, "%s> ", wd)
 	line, err := ed.in.ReadString('\n')
-	// Chop off the trailing \r on Windows.
-	line = strings.TrimRight(line, "\r\n")
-	return line, err
+	return eval.ChopLineEnding(line), err
 }

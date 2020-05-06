@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"io"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/elves/elvish/pkg/cli"
@@ -72,7 +71,7 @@ func instantStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
 					}
 					break
 				}
-				addLine(strings.TrimRight(line, "\r\n"))
+				addLine(eval.ChopLineEnding(line))
 			}
 		}
 		err = fm.PipeOutput(
