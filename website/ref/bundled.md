@@ -1,6 +1,6 @@
 <!-- toc -->
 
-The Elvish binary is bundled with some Elvishscript modules.
+The Elvish binary is also bundled with some modules implemented in Elvish.
 
 # readline-binding
 

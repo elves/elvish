@@ -1682,9 +1682,9 @@ following modules:
 
 ## User-Defined Modules
 
-You can define your own modules with Elvishscript by putting them under
-`~/.elvish/lib` and giving them a `.elv` extension. For instance, to define a
-module named `a`, store it in `~/.elvish/lib/a.elv`:
+You can define your own modules in Elvish by putting them under `~/.elvish/lib`
+and giving them a `.elv` extension. For instance, to define a module named `a`,
+store it in `~/.elvish/lib/a.elv`:
 
 ```elvish-transcript
 ~> cat ~/.elvish/lib/a.elv
