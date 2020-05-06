@@ -17,6 +17,11 @@ func TestBuiltinFnIO(t *testing.T) {
 		// read-upto reads up to EOF
 		That("print abcd | read-upto z").Puts("abcd"),
 
+		That(`print eof-ending | read-line`).Puts("eof-ending"),
+		That(`print "lf-ending\n" | read-line`).Puts("lf-ending"),
+		That(`print "crlf-ending\r\n" | read-line`).Puts("crlf-ending"),
+		That(`print "extra-cr\r\r\n" | read-line`).Puts("extra-cr\r"),
+
 		That(`print [foo bar]`).Prints("[foo bar]"),
 		That(`print foo bar &sep=,`).Prints("foo,bar"),
 		That(`echo [foo bar]`).Prints("[foo bar]\n"),

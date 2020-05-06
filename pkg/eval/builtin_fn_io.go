@@ -346,6 +346,7 @@ func init() {
 
 		// Bytes input
 		"read-upto": readUpto,
+		"read-line": readLine,
 
 		// Bytes output
 		"print":  print,
@@ -408,6 +409,35 @@ func readUpto(fm *Frame, last string) (string, error) {
 		}
 	}
 	return string(buf), nil
+}
+
+//elvdoc:fn read-line
+//
+// ```elvish
+// read-line
+// ```
+//
+// Reads a single line from byte input, and writes the line to the value output,
+// stripping the line ending. A line can end with `"\r\n"`, `"\n"`, or end of
+// file. Examples:
+//
+// ```elvish-transcript
+// ~> print line | read-line
+// ▶ line
+// ~> print "line\n" | read-line
+// ▶ line
+// ~> print "line\r\n" | read-line
+// ▶ line
+// ~> print "line-with-extra-cr\r\r\n" | read-line
+// ▶ "line-with-extra-cr\r"
+// ```
+
+func readLine(fm *Frame) (string, error) {
+	s, err := readUpto(fm, "\n")
+	if err != nil {
+		return "", err
+	}
+	return ChopLineEnding(s), nil
 }
 
 type printOpts struct{ Sep string }

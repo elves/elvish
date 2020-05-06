@@ -119,6 +119,16 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 	}
 }
 
+// ChopLineEnding removes any line ending ("\r\n" or "\n") from the end of s.
+func ChopLineEnding(s string) string {
+	if len(s) >= 2 && s[len(s)-2:] == "\r\n" {
+		return s[:len(s)-2]
+	} else if len(s) >= 1 && s[len(s)-1] == '\n' {
+		return s[:len(s)-1]
+	}
+	return s
+}
+
 // fork returns a modified copy of ec. The ports are forked, and the name is
 // changed to the given value. Other fields are copied shallowly.
 func (fm *Frame) fork(name string) *Frame {
