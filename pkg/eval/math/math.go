@@ -297,8 +297,8 @@ import (
 // Examples:
 //
 // ```elvish-transcript
-// ~> math:max
-// ▶ ?(WTF)
+// ~> put ?(math:max)
+// ▶ ?(fail 'arity mismatch: arguments here must be 1 or more values, but is 0 values')
 // ~> math:max 3
 // ▶ (float 3)
 // ~> math:max 3 5 2
@@ -319,8 +319,8 @@ import (
 // Examples:
 //
 // ```elvish-transcript
-// ~> math:min
-// ▶ ?(WTF)
+// ~> put ?(math:min)
+// ▶ ?(fail 'arity mismatch: arguments here must be 1 or more values, but is 0 values')
 // ~> math:min 3
 // ▶ (float 3)
 // ~> math:min 3 5 2
@@ -528,14 +528,14 @@ func isInf(opts isInfOpts, arg float64) bool {
 	return math.IsInf(arg, opts.Sign)
 }
 
-func max(fm *eval.Frame, num float64, nums ...float64) float64 {
+func max(num float64, nums ...float64) float64 {
 	for i := 0; i < len(nums); i++ {
 		num = math.Max(num, nums[i])
 	}
 	return num
 }
 
-func min(fm *eval.Frame, num float64, nums ...float64) float64 {
+func min(num float64, nums ...float64) float64 {
 	for i := 0; i < len(nums); i++ {
 		num = math.Min(num, nums[i])
 	}
