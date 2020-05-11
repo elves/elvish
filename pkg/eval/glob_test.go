@@ -88,3 +88,19 @@ func TestGlob_But(t *testing.T) {
 		That("put *[but:foobar][but:ipsum]").Puts("bar", "foo", "lorem"),
 	)
 }
+
+func TestGlob_Type(t *testing.T) {
+	_, cleanup := util.InTestDir()
+	defer cleanup()
+
+	mustMkdirAll("d1", "d2", ".d", "b/c")
+	mustCreateEmpty("bar", "foo", "ipsum", "lorem", "d1/f1", "d2/fm")
+
+	Test(t,
+		That("put **[type:dir]").Puts("b/c", "b", "d1", "d2"),
+		That("put **[type:regular]").Puts("d1/f1", "d2/fm", "bar", "foo", "ipsum", "lorem"),
+		That("put **[type:regular]m").Puts("d2/fm", "ipsum", "lorem"),
+		That("put **[type:dir]f*[type:regular]").ThrowsCause(ErrMultipleTypeModifiers),
+		That("put **[type:unknown]").ThrowsCause(ErrUnknownTypeModifier),
+	)
+}

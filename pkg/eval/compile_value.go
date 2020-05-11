@@ -260,7 +260,8 @@ func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 			cp.errorpf(n, "%s", err)
 		}
 		vs := []interface{}{
-			GlobPattern{glob.Pattern{[]glob.Segment{seg}, ""}, 0, nil}}
+			GlobPattern{Pattern: glob.Pattern{[]glob.Segment{seg}, ""}, Flags: 0,
+				Buts: nil, TypeCb: nil}}
 		body = literalValues(vs...)
 	case parse.Tilde:
 		cp.errorpf(n, "compiler bug: Tilde not handled in .compound")
