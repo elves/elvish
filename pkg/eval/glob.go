@@ -3,6 +3,7 @@ package eval
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"unicode"
 
@@ -15,11 +16,17 @@ import (
 // wildcards.
 type GlobPattern struct {
 	glob.Pattern
-	Flags GlobFlag
-	Buts  []string
+	Flags  GlobFlag
+	Buts   []string
+	TypeCb func(os.FileMode) bool
 }
 
 type GlobFlag uint
+
+var typeCbMap = map[string]func(os.FileMode) bool{
+	"dir":     os.FileMode.IsDir,
+	"regular": os.FileMode.IsRegular,
+}
 
 const (
 	NoMatchOK GlobFlag = 1 << iota
@@ -35,9 +42,11 @@ var (
 )
 
 var (
-	ErrMustFollowWildcard   = errors.New("must follow wildcard")
-	ErrModifierMustBeString = errors.New("modifier must be string")
-	ErrWildcardNoMatch      = errors.New("wildcard has no match")
+	ErrMustFollowWildcard    = errors.New("must follow wildcard")
+	ErrModifierMustBeString  = errors.New("modifier must be string")
+	ErrWildcardNoMatch       = errors.New("wildcard has no match")
+	ErrMultipleTypeModifiers = errors.New("only one type modifier allowed")
+	ErrUnknownTypeModifier   = errors.New("unknown type modifier")
 )
 
 var runeMatchers = map[string]func(rune) bool{
@@ -74,6 +83,19 @@ func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
 		}
 		gp.Segments[len(gp.Segments)-1] = glob.Wild{
 			lastSeg.Type, true, lastSeg.Matchers,
+		}
+	case strings.HasPrefix(modifier, "type:"):
+		if gp.TypeCb != nil {
+			return nil, ErrMultipleTypeModifiers
+		}
+		switch {
+		default:
+			typeName := modifier[len("type:"):]
+			cb, ok := typeCbMap[typeName]
+			if !ok {
+				return nil, ErrUnknownTypeModifier
+			}
+			gp.TypeCb = cb
 		}
 	default:
 		var matcher func(rune) bool
@@ -123,6 +145,13 @@ func (gp GlobPattern) Concat(v interface{}) (interface{}, error) {
 		gp.append(rhs.Segments[0])
 		gp.Flags |= rhs.Flags
 		gp.Buts = append(gp.Buts, rhs.Buts...)
+		// This handles illegal cases such as `**[type:regular]x*[type:directory]`.
+		if gp.TypeCb != nil && rhs.TypeCb != nil {
+			return nil, ErrMultipleTypeModifiers
+		}
+		if rhs.TypeCb != nil {
+			gp.TypeCb = rhs.TypeCb
+		}
 		return gp, nil
 	}
 
@@ -135,7 +164,8 @@ func (gp GlobPattern) RConcat(v interface{}) (interface{}, error) {
 		segs := stringToSegments(lhs)
 		// We know gp contains exactly one segment.
 		segs = append(segs, gp.Segments[0])
-		return GlobPattern{glob.Pattern{Segments: segs}, gp.Flags, gp.Buts}, nil
+		return GlobPattern{Pattern: glob.Pattern{Segments: segs}, Flags: gp.Flags,
+			Buts: gp.Buts, TypeCb: gp.TypeCb}, nil
 	}
 
 	return nil, vals.ErrConcatNotImplemented
@@ -208,15 +238,20 @@ func doGlob(gp GlobPattern, abort <-chan struct{}) ([]interface{}, error) {
 	}
 
 	vs := make([]interface{}, 0)
-	if !gp.Glob(func(name string) bool {
+	if !gp.Glob(func(pathInfo glob.PathInfo) bool {
 		select {
 		case <-abort:
 			logger.Println("glob aborted")
 			return false
 		default:
 		}
-		if _, b := but[name]; !b {
-			vs = append(vs, name)
+
+		if _, ignore := but[pathInfo.Path]; ignore {
+			return true
+		}
+
+		if gp.TypeCb == nil || (gp.TypeCb)(pathInfo.Info.Mode()) {
+			vs = append(vs, pathInfo.Path)
 		}
 		return true
 	}) {

@@ -10,13 +10,24 @@ import (
 
 // TODO: Use native path separators instead of always using /.
 
+// PathInfo is used in glob expansion callbacks to efficiently determine if a
+// given pathname satisfies a particular constraint.
+type PathInfo struct {
+	// `Path` is needed to generate paths consistent with the original glob
+	// pattern. That is, the `Info.Name()` value might be just the final
+	// component of `Path`. Glob modifiers need the complete path in addition
+	// to information about the target of the path.
+	Path string
+	Info os.FileInfo
+}
+
 // Glob returns a list of file names satisfying the given pattern.
-func Glob(p string, cb func(string) bool) bool {
+func Glob(p string, cb func(PathInfo) bool) bool {
 	return Parse(p).Glob(cb)
 }
 
 // Glob returns a list of file names satisfying the Pattern.
-func (p Pattern) Glob(cb func(string) bool) bool {
+func (p Pattern) Glob(cb func(PathInfo) bool) bool {
 	segs := p.Segments
 	dir := ""
 
@@ -49,7 +60,7 @@ func isDrive(s string) bool {
 // glob finds all filenames matching the given Segments in the given dir, and
 // calls the callback on all of them. If the callback returns false, globbing is
 // interrupted, and glob returns false. Otherwise it returns true.
-func glob(segs []Segment, dir string, cb func(string) bool) bool {
+func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 	// Consume non-wildcard path elements simply by following the path. This may
 	// seem like an optimization, but is actually required for "." and ".." to
 	// be used as path elements, as they do not appear in the result of ReadDir.
@@ -63,11 +74,14 @@ func glob(segs []Segment, dir string, cb func(string) bool) bool {
 	}
 
 	if len(segs) == 0 {
-		return cb(dir)
+		if info, err := os.Stat(dir); err == nil {
+			return cb(PathInfo{dir, info})
+		}
+		return true
 	} else if len(segs) == 1 && IsLiteral(segs[0]) {
 		path := dir + segs[0].(Literal).Data
-		if _, err := os.Stat(path); err == nil {
-			return cb(path)
+		if info, err := os.Stat(path); err == nil {
+			return cb(PathInfo{path, info})
 		}
 		return true
 	}
@@ -142,7 +156,12 @@ func glob(segs []Segment, dir string, cb func(string) bool) bool {
 	for _, info := range infos {
 		name := info.Name()
 		if matchElement(segs, name) {
-			if !cb(dir + name) {
+			dirname := dir + name
+			info, err := os.Stat(dirname)
+			if err != nil {
+				return true
+			}
+			if !cb(PathInfo{dirname, info}) {
 				return false
 			}
 		}

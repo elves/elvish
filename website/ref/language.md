@@ -907,8 +907,10 @@ The following behaviors are default, although they can be altered by modifiers:
 
 Wildcards can be **modified** using the same syntax as indexing. For instance,
 in `*[match-hidden]` the `*` wildcard is modified with the `match-hidden`
-modifier. Multiple matchers can be chained like `*[set:abc][range:0-9]`. There
-are two kinds of modifiers:
+modifier. Multiple matchers can be chained like `*[set:abc][range:0-9]`. In
+which case they are OR'ed together.
+
+There are two kinds of modifiers:
 
 **Global modifiers** apply to the whole pattern and can be placed after any
 wildcard:
@@ -920,11 +922,17 @@ wildcard:
 -   `but:xxx` (where `xxx` is any filename) excludes the filename from the final
     result.
 
-Although global modifiers affect the entire wildcard pattern, you can add it
-after any wildcard, and the effect is the same. For example,
-`put */*[nomatch-ok].cpp` and `put *[nomatch-ok]/*.cpp` do the same thing.
+-   `type:xxx` (where `xxx` is a recognized file type from the list below). Only
+    one type modifier is allowed. For example, to find the directories at any
+    level below the current working directory: `**[type:dir]`.
 
-On the other hand, you must add it after a wildcard, instead of after the entire
+    -   `dir` will match if the path is a directory.
+
+    -   `regular` will match if the path is a regular file.
+
+after any wildcard, and the effect is the same. For example,
+`put */*[nomatch-ok].cpp` and `put *[nomatch-ok]/*.cpp` do the same thing. On
+the other hand, you must add it after a wildcard, instead of after the entire
 pattern: `put */*.cpp[nomatch-ok]` unfortunately does not do the correct thing.
 (This will probably be fixed.)
 
@@ -949,19 +957,23 @@ pattern: `put */*.cpp[nomatch-ok]` unfortunately does not do the correct thing.
         `upper`. See the Is\* functions [here](https://godoc.org/unicode) for
         their definitions.
 
-    Note the following caveats:
+Note the following caveats:
 
-    -   Multiple matchers, they are OR'ed. For instance, ?[set:aeoiu][digit]
-        matches `aeoiu` and digits.
+-   Local matchers chained together in separate modifiers are OR'ed. For
+    instance, `?[set:aeoiu][digit]` matches all files with the chars `aeoiu` or
+    containing a digit.
 
-    -   Dots at the beginning of filenames always require an explicit
-        `match-hidden`, even if the matcher includes `.`. For example,
-        `?[set:.a]x.conf` does **not** match `.x.conf`; you have to
-        `?[set:.a match-hidden]x.conf`.
+-   Local matchers combined in the same modifier, such as `?[set:aeoiu digit]`,
+    behave in a hard to explain manner. Do not use this form as **the behavior
+    is likely to change in the future.**
 
-    -   Likewise, you always need to use `**` to match slashes, even if the
-        matcher includes `/`. For example `*[set:abc/]` is the same as
-        `*[set:abc]`.
+-   Dots at the beginning of filenames always require an explicit
+    `match-hidden`, even if the matcher includes `.`. For example,
+    `?[set:.a]x.conf` does **not** match `.x.conf`; you have to
+    `?[set:.a match-hidden]x.conf`.
+
+-   Likewise, you always need to use `**` to match slashes, even if the matcher
+    includes `/`. For example `*[set:abc/]` is the same as `*[set:abc]`.
 
 # Compound Expression and Braced Lists
 

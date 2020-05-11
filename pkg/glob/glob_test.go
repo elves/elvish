@@ -96,8 +96,8 @@ func testGlob(t *testing.T, abs bool) {
 		sort.Strings(wantResults)
 
 		results := []string{}
-		Glob(pattern, func(name string) bool {
-			results = append(results, name)
+		Glob(pattern, func(pathInfo PathInfo) bool {
+			results = append(results, pathInfo.Path)
 			return true
 		})
 		sort.Strings(results)
