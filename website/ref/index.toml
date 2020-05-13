@@ -1,55 +1,47 @@
 [[articles]]
 name = "language"
-title = "The Language"
+title = "The Language Specification"
 
 [[articles]]
 name = "builtin"
-title = "The Builtin Module"
+title = "Builtin Functions and Variables"
 
 [[articles]]
 name = "edit"
-title = "The Editor Module (edit:)"
-
-[[articles]]
-name = "exc"
-title = "The Exception Module (exc:)"
-
-[[articles]]
-name = "math"
-title = "The Math Module (math:)"
-
-[[articles]]
-name = "platform"
-title = "The Platform Information Module (platform:)"
-
-[[articles]]
-name = "re"
-title = "The Regular Expression Module (re:)"
-
-[[articles]]
-name = "str"
-title = "The String Module (str:)"
-
-[[articles]]
-name = "unix"
-title = "The UNIX Module (unix:)"
+title = "API for the Interactive Editor (edit:)"
 
 [[articles]]
 name = "epm"
 title = "The Elvish Package Manager (epm:)"
 
 [[articles]]
+name = "exc"
+title = "Exception Utilities (exc:)"
+
+[[articles]]
+name = "math"
+title = "Math Utilities (math:)"
+
+[[articles]]
+name = "platform"
+title = "Information About the Platform (platform:)"
+
+[[articles]]
+name = "re"
+title = "Regular Expression Utilities (re:)"
+
+[[articles]]
+name = "readline-binding"
+title = "Readline-like Key Bindings (readline-binding:)"
+
+[[articles]]
 name = "store"
-title = "The Elvish Store (store:)"
+title = "API for the Elvish Persistent Data Store (store:)"
 
 [[articles]]
-name = "bundled"
-title = "Bundled Modules"
+name = "str"
+title = "String Manipulation (str:)"
 
 [[articles]]
-name = "name"
-title = "The Name"
-
-[[articles]]
-name = "philosophy"
-title = "The Philosophy"
+name = "unix"
+title = "Support for UNIX-like systems (unix:)"

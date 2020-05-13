@@ -4,8 +4,21 @@
 
 The builtin module contains facilities that are potentially useful to all users.
 It occupies the `builtin:` namespace. You rarely have to explicitly specify the
-namespace though, since it is one of the namespaces consulted when resolving
-unqualified names.
+namespace since it is one of the namespaces consulted when resolving unqualified
+names. The exception to this rule is if you define a function with the same name
+as a builtin. In which case to use the builtin rather than the function you need
+to say so explicitly. For example,
+
+```elvish
+fn cd [@args]{
+    echo running my cd function
+    builtin:cd $@args
+}
+```
+
+Unlike most modules you do not need to execute `use builtin` to use these
+variables and commands in this module. The only reason to import it is for
+introspection; for example, `keys $builtin:`.
 
 ## Usage Notation
 
