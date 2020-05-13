@@ -1675,21 +1675,20 @@ The following namespaces have special meanings to the language:
 
 ## Pre-Defined Modules
 
-Namespaces that are not special (i,e. one of the above) are also called
+Namespaces that are not special (i.e. one of the above) are also called
 **modules**. Aside from these special namespaces, Elvish also comes with the
-following modules:
+following modules that can be imported by `use`:
 
--   `edit:` for accessing the Elvish editor. This module is available in
-    interactive mode and does not need importing.
+-   The following modules are always available: [daemon](daemon.html),
+    [epm](epm.html), [exc](exc.html), [math](math.html),
+    [platform](platform.html), [str](str.html), [re](re.html),
+    [readline-binding](readline-binding.html), [store](store.html).
 
-    See [reference](edit.html).
+-   The [unix](unix.html) module is available on UNIX-like platforms (see
+    [`$platform:is-unix`](platform.html#platformis-unix)).
 
--   `re:` for regular expression facilities. This module is always available.
-    See [reference](re.html).
-
--   `daemon:` for manipulating the daemon. This module is always available.
-
-    This is not yet documented.
+The [edit](edit.html) module is available in interactive module. As a special
+case, it does not need importing, but this may change in the future.
 
 ## User-Defined Modules
 
