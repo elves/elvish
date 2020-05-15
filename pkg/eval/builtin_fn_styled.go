@@ -68,9 +68,17 @@ var errStyledSegmentArgType = errors.New("argument to styled-segment must be a s
 //     -   Any color from the xterm 256-color palette, as `colorX` (such as
 //    `color12`).
 //
-//     -   A 24-bit RGB color, as `#RRGGBB`, such as `#778899`.
+//     -   A 24-bit RGB color written as `#RRGGBB` such as `'#778899'`.
+//
+//		   **NOTE:** You need to quote such values since an unquoted `#` char
+//		   introduces a comment. So use `'bg-#778899'` not `bg-#778899`. If
+//		   you omit the quotes the text after the `#` char is ignored which
+//		   will likely result in an error or unexpected behavior.
 //
 // -   A color name prefixed by `bg-` to set the background color.
+//
+// -   A color name prefixed by `fg-` to set the foreground color. This has
+// the same effect as specifying the color name without the `fg-` prefix.
 //
 // -   A lambda that receives a styled segment as the only argument and returns a
 // single styled segment.
