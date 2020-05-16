@@ -39,6 +39,9 @@ type notifier interface {
 
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
+	// Declare the Editor with a nil App first; some initialization functions
+	// require a notifier as an argument, but does not use it immediately.
+	ed := &Editor{ns: eval.Ns{}, excList: vals.EmptyList}
 	appSpec := cli.AppSpec{TTY: tty}
 
 	fuser, err := histutil.NewFuser(st)
@@ -47,17 +50,21 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 	}
 
 	if fuser != nil {
+		ignoreLeadingSpace := eval.NewGoFn("<ignore-cmd-with-leading-space>",
+			func(s string) bool { return !strings.HasPrefix(s, " ") })
+		filters := newListVar(vals.MakeList(ignoreLeadingSpace))
+		ed.ns["add-cmd-filters"] = filters
+
 		appSpec.AfterReadline = []func(string){func(code string) {
-			if code != "" && !strings.HasPrefix(code, " ") {
+			if code != "" &&
+				callFilters(ev, "$<edit>:add-cmd-filters",
+					filters.Get().(vals.List), code) {
 				fuser.AddCmd(code)
 			}
 			// TODO(xiaq): Handle the error.
 		}}
 	}
 
-	// Declare the Editor with a nil App first; some initialization functions
-	// require a notifier as an argument, but does not use it immediately.
-	ed := &Editor{ns: eval.Ns{}, excList: vals.EmptyList}
 	initHighlighter(&appSpec, ev)
 	initConfigAPI(&appSpec, ev, ed.ns)
 	initInsertAPI(&appSpec, ed, ev, ed.ns)
