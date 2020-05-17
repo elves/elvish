@@ -3,20 +3,16 @@ package edit
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/elves/elvish/pkg/cli"
+	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
 )
-
-func initConfigAPI(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
-	initMaxHeight(appSpec, ns)
-	initBeforeReadline(appSpec, ev, ns)
-	initAfterReadline(appSpec, ev, ns)
-}
 
 //elvdoc:var max-height
 //
@@ -33,6 +29,13 @@ func initMaxHeight(appSpec *cli.AppSpec, ns eval.Ns) {
 	ns.Add("max-height", maxHeight)
 }
 
+func initReadlineHooks(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
+	initBeforeReadline(appSpec, ev, ns)
+	initAfterReadline(appSpec, ev, ns)
+}
+
+// TODO: Document $edit:before-readline.
+
 func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	hook := newListVar(vals.EmptyList)
 	ns["before-readline"] = hook
@@ -40,6 +43,8 @@ func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 		callHooks(ev, "$<edit>:before-readline", hook.Get().(vals.List))
 	})
 }
+
+// TODO: Document $edit:after-readline.
 
 func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	hook := newListVar(vals.EmptyList)
@@ -58,6 +63,22 @@ func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 // command is not saved to history, and the rest of the filters are
 // not run. The default value of this list contains a filter which
 // ignores command starts with space.
+
+func initAddCmdFilters(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fuser) {
+	ignoreLeadingSpace := eval.NewGoFn("<ignore-cmd-with-leading-space>",
+		func(s string) bool { return !strings.HasPrefix(s, " ") })
+	filters := newListVar(vals.MakeList(ignoreLeadingSpace))
+	ns["add-cmd-filters"] = filters
+
+	appSpec.AfterReadline = append(appSpec.AfterReadline, func(code string) {
+		if code != "" &&
+			callFilters(ev, "$<edit>:add-cmd-filters",
+				filters.Get().(vals.List), code) {
+			fuser.AddCmd(code)
+		}
+		// TODO(xiaq): Handle the error.
+	})
+}
 
 func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}) {
 	i := -1

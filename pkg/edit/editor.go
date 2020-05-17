@@ -8,7 +8,6 @@ package edit
 import (
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/elves/elvish/pkg/cli"
@@ -49,24 +48,12 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 		// TODO(xiaq): Report the error.
 	}
 
-	if fuser != nil {
-		ignoreLeadingSpace := eval.NewGoFn("<ignore-cmd-with-leading-space>",
-			func(s string) bool { return !strings.HasPrefix(s, " ") })
-		filters := newListVar(vals.MakeList(ignoreLeadingSpace))
-		ed.ns["add-cmd-filters"] = filters
-
-		appSpec.AfterReadline = []func(string){func(code string) {
-			if code != "" &&
-				callFilters(ev, "$<edit>:add-cmd-filters",
-					filters.Get().(vals.List), code) {
-				fuser.AddCmd(code)
-			}
-			// TODO(xiaq): Handle the error.
-		}}
-	}
-
 	initHighlighter(&appSpec, ev)
-	initConfigAPI(&appSpec, ev, ed.ns)
+	initMaxHeight(&appSpec, ed.ns)
+	initReadlineHooks(&appSpec, ev, ed.ns)
+	if fuser != nil {
+		initAddCmdFilters(&appSpec, ev, ed.ns, fuser)
+	}
 	initInsertAPI(&appSpec, ed, ev, ed.ns)
 	initPrompts(&appSpec, ed, ev, ed.ns)
 	ed.app = cli.NewApp(appSpec)
