@@ -539,6 +539,25 @@ func slurp(fm *Frame) (string, error) {
 	return string(b), err
 }
 
+//elvdoc:fn from-lines
+//
+// ```elvish
+// from-lines
+// ```
+//
+// Splits byte input into lines, and writes them to the value output. Value
+// input is ignored.
+//
+// ```elvish-transcript
+// ~> { echo a; echo b } | from-lines
+// ▶ a
+// ▶ b
+// ~> { echo a; put b } | from-lines
+// ▶ a
+// ```
+//
+// @cf to-lines
+
 func fromLines(fm *Frame) {
 	linesToChan(fm.ports[0].File, fm.ports[1].Chan)
 }
@@ -565,6 +584,29 @@ func fromJSON(fm *Frame) error {
 		out <- converted
 	}
 }
+
+//elvdoc:fn to-lines
+//
+// ```elvish
+// to-lines $input?
+// ```
+//
+// Writes each value input to a separate line in the byte output. Byte input is
+// ignored.
+//
+// ```elvish-transcript
+// ~> put a b | to-lines
+// a
+// b
+// ~> to-lines [a b]
+// a
+// b
+// ~> { put a; echo b } | to-lines
+// b
+// a
+// ```
+//
+// @cf from-lines
 
 func toLines(fm *Frame, inputs Inputs) {
 	out := fm.ports[1].File
