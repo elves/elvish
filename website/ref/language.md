@@ -1237,6 +1237,17 @@ Compilation error: variable $x not found
 [tty], line 1: echo $x
 ```
 
+Deleting a variable does not affect closures that have already captured it; it
+only removes the name. Example:
+
+```elvish-transcript
+~> x = value
+~> fn f { put $x }
+~> del x
+~> f
+▶ value
+```
+
 Example of deleting map element:
 
 ```elvish-transcript
