@@ -34,7 +34,10 @@ func initReadlineHooks(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	initAfterReadline(appSpec, ev, ns)
 }
 
-// TODO: Document $edit:before-readline.
+//elvdoc:var before-readline
+//
+// A list of functions to call before each readline cycle. Each function is
+// called without any arguments.
 
 func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	hook := newListVar(vals.EmptyList)
@@ -44,7 +47,10 @@ func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	})
 }
 
-// TODO: Document $edit:after-readline.
+//elvdoc:var after-readline
+//
+// A list of functions to call after each readline cycle. Each function is
+// called with a single string argument containing the code that has been read.
 
 func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	hook := newListVar(vals.EmptyList)
