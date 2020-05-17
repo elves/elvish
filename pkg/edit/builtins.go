@@ -110,7 +110,11 @@ func toKey(v interface{}) (ui.Key, error) {
 	}
 }
 
-//elvdoc:fn redraw &full=$false
+//elvdoc:fn redraw
+//
+// ```elvish
+// edit:redraw &full=$false
+// ```
 //
 // Triggers a redraw.
 //
