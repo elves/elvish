@@ -22,7 +22,7 @@ import (
 //
 // When assigning a new value a string is implicitly treated as an octal
 // number. If that fails the usual rules for interpreting
-// [numbers](./language.html#number) are used. The following arer equivalent:
+// [numbers](./language.html#number) are used. The following are equivalent:
 // `unix:umask = 027` and `unix:umask = 0o27`. You can also assign to it a
 // `float64` data type that has no fractional component.
 // The assigned value must be within the range [0 ... 0o777], otherwise the
