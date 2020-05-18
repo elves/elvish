@@ -127,7 +127,7 @@ func (cp *compiler) registerVariableAccess(qname string, set bool, r diag.Ranger
 		name1, _ = SplitQNameNsFirst(name)
 	}
 
-	// This switch mirrors the structure of that from (*Frame).ResoleVar.
+	// This switch mirrors the structure of that from (*Frame).ResolveVar.
 	switch ns {
 	case "E:":
 		return true
