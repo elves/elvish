@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/user"
+	"strings"
 	"sync"
 	"time"
 
@@ -126,6 +127,71 @@ func defaultStaleTransform(original ui.Text) ui.Text {
 	return ui.StyleText(original, ui.Inverse)
 }
 
+type rawToken struct {
+	data      []byte
+	isSGRCode bool
+}
+
+func parseBytesIntoTokens(b []byte) (ret []rawToken) {
+	currentSGRCode := []byte{}
+	currentPlaintext := []byte{}
+	isSGRSequence := false
+	skipCounter := 0
+	for idx, byt := range b {
+		if skipCounter > 0 {
+			skipCounter--
+			continue
+		}
+		if isSGRSequence {
+			if byt == 'm' {
+				currentSGRCode = append(currentSGRCode, 'm')
+				ret = append(ret, rawToken{
+					data:      currentSGRCode,
+					isSGRCode: true,
+				})
+				currentPlaintext = []byte{}
+				isSGRSequence = false
+				continue
+			}
+			currentSGRCode = append(currentSGRCode, byt)
+			continue
+		}
+		if len(b) > idx+1 {
+			byt2 := b[idx+1]
+			if byt == '\033' && byt2 == '[' {
+				skipCounter = 1
+				isSGRSequence = true
+				ret = append(ret, rawToken{
+					data:      currentPlaintext,
+					isSGRCode: false,
+				})
+				currentSGRCode = []byte{}
+				currentSGRCode = append(currentSGRCode, '\033', '[')
+				continue
+			}
+		}
+		currentPlaintext = append(currentPlaintext, byt)
+	}
+	return
+}
+
+func parseTokensIntoText(rt []rawToken) ui.Text {
+	segments := []ui.Segment{}
+	currentStyle := ui.Style{}
+	for _, token := range rt {
+		if !token.isSGRCode {
+			segments = append(segments, ui.Segment{Style: currentStyle, Text: string(token.data)})
+		} else {
+			currentStyle = ui.StyleFromSGR(strings.TrimPrefix(strings.TrimSuffix(string(token.data), "m"), "\033["))
+		}
+	}
+	ret := ui.Text{}
+	for idx := range segments {
+		ret = append(ret, &segments[idx])
+	}
+	return ret
+}
+
 // Calls a function with the given arguments and closed input, and concatenates
 // its outputs to a styled text. Used to call prompts and stale transformers.
 func callForStyledText(nt notifier, ev *eval.Evaler, ctx string, fn eval.Callable, args ...interface{}) ui.Text {
@@ -153,11 +219,12 @@ func callForStyledText(nt notifier, ev *eval.Evaler, ctx string, fn eval.Callabl
 	// Byte output is added to the prompt as a single unstyled text.
 	bytesCb := func(r *os.File) {
 		allBytes, err := ioutil.ReadAll(r)
+		parsed := parseTokensIntoText(parseBytesIntoTokens(allBytes))
 		if err != nil {
 			nt.notifyf("error reading prompt byte output: %v", err)
 		}
-		if len(allBytes) > 0 {
-			add(string(allBytes))
+		if len(parsed) > 0 {
+			add(parsed)
 		}
 	}
 
