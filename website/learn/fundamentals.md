@@ -303,10 +303,10 @@ echo Bye, $name!
 We can run it like this:
 
 ```elvish-transcript
-~> elvish greet-and-byte.elv Jane
+~> elvish greet-and-bye.elv Jane
 Hello, Jane!
 Bye, Jane!
-~> elvish greet-and-byte.elv John
+~> elvish greet-and-bye.elv John
 Hello, John!
 Bye, John!
 ```
