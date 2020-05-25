@@ -634,15 +634,13 @@ func keys(fm *Frame, v interface{}) error {
 //elvdoc:fn order
 //
 // ```elvish
-// order &reverse=$false &stable=$false $less-than=$nil~ $inputs?
+// order &reverse=$false $less-than=$nil $inputs?
 // ```
 //
-// Outputs the input values sorted in ascending order.
+// Outputs the input values sorted in ascending order. The sort is guaranteed to
+// be [stable](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability).
 //
 // The `&reverse` option, if true, reverses the order of output.
-//
-// The `&stable` option, if true, makes the sort
-// [stable](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability).
 //
 // The `&less-than` option, if given, establishes the ordering of the elements.
 // Its value should be a function that takes two arguments and outputs a single
@@ -685,7 +683,7 @@ func keys(fm *Frame, v interface{}) error {
 // ▶ c
 // ▶ b
 // ▶ a
-// ~> order &less-than=[a b]{ eq $a x } &stable [l x o r x e x m]
+// ~> order &less-than=[a b]{ eq $a x } [l x o r x e x m]
 // ▶ x
 // ▶ x
 // ▶ x
@@ -712,7 +710,6 @@ func keys(fm *Frame, v interface{}) error {
 
 type orderOptions struct {
 	Reverse  bool
-	Stable   bool
 	LessThan Callable
 }
 
@@ -779,11 +776,7 @@ func order(fm *Frame, opts orderOptions, inputs Inputs) error {
 		}
 	}
 
-	if opts.Stable {
-		sort.SliceStable(values, lessFn)
-	} else {
-		sort.Slice(values, lessFn)
-	}
+	sort.SliceStable(values, lessFn)
 
 	if errSort != nil {
 		return errSort

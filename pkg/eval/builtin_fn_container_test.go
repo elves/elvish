@@ -136,9 +136,9 @@ func TestBuiltinFnContainer(t *testing.T) {
 		// &less-than and &reverse
 		That("put 1 10 2 5 | order &reverse &less-than=[a b]{ < $a $b }").
 			Puts("10", "5", "2", "1"),
-		// &stable - test by pretending that all values but one are equal, and
-		// check that the order among them has not changed
-		That("put l x o x r x e x m | order &stable &less-than=[a b]{ eq $a x }").
+		// Sort should be stable - test by pretending that all values but one  d
+		// are equal, an check that the order among them has not change        d
+		That("put l x o x r x e x m | order &less-than=[a b]{ eq $a x }").
 			Puts("x", "x", "x", "x", "l", "o", "r", "e", "m"),
 	)
 }
