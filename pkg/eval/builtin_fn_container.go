@@ -3,6 +3,8 @@ package eval
 import (
 	"errors"
 	"fmt"
+	"math"
+	"sort"
 
 	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
@@ -391,6 +393,8 @@ func init() {
 		"count": count,
 
 		"keys": keys,
+
+		"order": order,
 	})
 }
 
@@ -625,4 +629,235 @@ func keys(fm *Frame, v interface{}) error {
 		out <- k
 		return true
 	})
+}
+
+//elvdoc:fn order
+//
+// ```elvish
+// order &reverse=$false &stable=$false $less-than=$nil~ $inputs?
+// ```
+//
+// Outputs the input values sorted in ascending order.
+//
+// The `&reverse` option, if true, reverses the order of output.
+//
+// The `&stable` option, if true, makes the sort
+// [stable](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability).
+//
+// The `&less-than` option, if given, establishes the ordering of the elements.
+// Its value should be a function that takes two arguments and outputs a single
+// boolean indicating whether the first argument is less than the second
+// argument. If the function throws an exception, `order` rethrows the exception
+// without outputting any value.
+//
+// If `&less-than` has value `$nil` (the default if not set), the following
+// comparison algorithm is used:
+//
+// - Numbers are compared numerically. For the sake of sorting, `NaN` is treated
+//   as smaller than all other numbers.
+//
+// - Strings are compared lexicographically by bytes, which is equivalent to
+//   comparing by codepoints under UTF-8.
+//
+// - Lists are compared lexicographically by elements, if the elements at the
+//   same positions are comparable.
+//
+// If the ordering between two elements are not defined by the conditions above,
+// no value is outputted and an exception is thrown.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> put foo bar ipsum | order
+// ▶ bar
+// ▶ foo
+// ▶ ipsum
+// ~> order [(float64 10) (float64 1) (float64 5)]
+// ▶ (float64 1)
+// ▶ (float64 5)
+// ▶ (float64 10)
+// ~> order [[a b] [a] [b b] [a c]]
+// ▶ [a]
+// ▶ [a b]
+// ▶ [a c]
+// ▶ [b b]
+// ~> order &reverse [a c b]
+// ▶ c
+// ▶ b
+// ▶ a
+// ~> order &less-than=[a b]{ eq $a x } &stable [l x o r x e x m]
+// ▶ x
+// ▶ x
+// ▶ x
+// ▶ l
+// ▶ o
+// ▶ r
+// ▶ e
+// ▶ m
+// ```
+//
+// Beware that strings that look like numbers are treated as strings, not
+// numbers. To sort strings as numbers, use an explicit `&less-than` option:
+//
+// ```elvish-transcript
+// ~> order [5 1 10]
+// ▶ 1
+// ▶ 10
+// ▶ 5
+// ~> order &less-than=[a b]{ < $a $b } [5 1 10]
+// ▶ 1
+// ▶ 5
+// ▶ 10
+// ```
+
+type orderOptions struct {
+	Reverse  bool
+	Stable   bool
+	LessThan Callable
+}
+
+func (opt *orderOptions) SetDefaultOptions() {}
+
+var errUncomparable = errs.BadValue{
+	What:  `inputs to "order"`,
+	Valid: "comparable values", Actual: "uncomparable values"}
+
+func order(fm *Frame, opts orderOptions, inputs Inputs) error {
+	var values []interface{}
+	inputs(func(v interface{}) { values = append(values, v) })
+
+	var errSort error
+	var lessFn func(i, j int) bool
+	if opts.LessThan != nil {
+		lessFn = func(i, j int) bool {
+			if errSort != nil {
+				return true
+			}
+			var args []interface{}
+			if opts.Reverse {
+				args = []interface{}{values[j], values[i]}
+			} else {
+				args = []interface{}{values[i], values[j]}
+			}
+			outputs, err := fm.CaptureOutput(func(fm *Frame) error {
+				return opts.LessThan.Call(fm, args, NoOpts)
+			})
+			if err != nil {
+				errSort = err
+				return true
+			}
+			if len(outputs) != 1 {
+				errSort = errs.BadValue{
+					What:   "output of the &less-than callback",
+					Valid:  "a single boolean",
+					Actual: fmt.Sprintf("%d values", len(outputs))}
+				return true
+			}
+			if b, ok := outputs[0].(bool); ok {
+				return b
+			}
+			errSort = errs.BadValue{
+				What:  "output of the &less-than callback",
+				Valid: "boolean", Actual: vals.Kind(outputs[0])}
+			return true
+		}
+	} else {
+		// Use default comparison implemented by compare.
+		lessFn = func(i, j int) bool {
+			if errSort != nil {
+				return true
+			}
+			o := compare(values[i], values[j])
+			if o == uncomparable {
+				errSort = errUncomparable
+				return true
+			}
+			if opts.Reverse {
+				return o == more
+			}
+			return o == less
+		}
+	}
+
+	if opts.Stable {
+		sort.SliceStable(values, lessFn)
+	} else {
+		sort.Slice(values, lessFn)
+	}
+
+	if errSort != nil {
+		return errSort
+	}
+	for _, v := range values {
+		fm.OutputChan() <- v
+	}
+	return nil
+}
+
+type ordering uint8
+
+const (
+	less ordering = iota
+	equal
+	more
+	uncomparable
+)
+
+func compare(a, b interface{}) ordering {
+	switch a := a.(type) {
+	case float64:
+		if b, ok := b.(float64); ok {
+			switch {
+			case math.IsNaN(a):
+				if math.IsNaN(b) {
+					return equal
+				}
+				return less
+			case math.IsNaN(b):
+				return more
+			case a == b:
+				return equal
+			case a < b:
+				return less
+			default:
+				// a > b
+				return more
+			}
+		}
+	case string:
+		if b, ok := b.(string); ok {
+			switch {
+			case a == b:
+				return equal
+			case a < b:
+				return less
+			default:
+				// a > b
+				return more
+			}
+		}
+	case vals.List:
+		if b, ok := b.(vals.List); ok {
+			aIt := a.Iterator()
+			bIt := b.Iterator()
+			for aIt.HasElem() && bIt.HasElem() {
+				o := compare(aIt.Elem(), bIt.Elem())
+				if o != equal {
+					return o
+				}
+				aIt.Next()
+				bIt.Next()
+			}
+			switch {
+			case a.Len() == b.Len():
+				return equal
+			case a.Len() < b.Len():
+				return less
+			default:
+				// a.Len() > b.Len()
+				return more
+			}
+		}
+	}
+	return uncomparable
 }

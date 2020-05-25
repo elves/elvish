@@ -1,6 +1,8 @@
 package eval
 
 import (
+	"errors"
+	"math"
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval/errs"
@@ -77,6 +79,66 @@ func TestBuiltinFnContainer(t *testing.T) {
 		That(`keys [&a=foo]`).Puts("a"),
 		// Windows does not have an external sort command. Disabled until we have a
 		// builtin sort command.
-		// That(`keys [&a=foo &b=bar] | each echo | sort | each $put~`).Puts("a", "b"),
+		That(`keys [&a=foo &b=bar] | order`).Puts("a", "b"),
+
+		// Ordering strings
+		That("put foo bar ipsum | order").Puts("bar", "foo", "ipsum"),
+		That("put foo bar bar | order").Puts("bar", "bar", "foo"),
+		That("put 10 1 5 2 | order").Puts("1", "10", "2", "5"),
+		// Ordering numbers
+		That("put 10 1 5 2 | each $float64~ | order").Puts(1.0, 2.0, 5.0, 10.0),
+		That("put 10 1 1 | each $float64~ | order").Puts(1.0, 1.0, 10.0),
+		That("put 10 NaN 1 | each $float64~ | order").Puts(math.NaN(), 1.0, 10.0),
+		That("put NaN NaN 1 | each $float64~ | order").
+			Puts(math.NaN(), math.NaN(), 1.0),
+		// Ordering lists
+		That("put [b] [a] | order").Puts(vals.MakeList("a"), vals.MakeList("b")),
+		That("put [a] [b] [a] | order").
+			Puts(vals.MakeList("a"), vals.MakeList("a"), vals.MakeList("b")),
+		That("put [(float64 10)] [(float64 2)] | order").
+			Puts(vals.MakeList(2.0), vals.MakeList(10.0)),
+		That("put [a b] [b b] [a c] | order").
+			Puts(
+				vals.MakeList("a", "b"),
+				vals.MakeList("a", "c"), vals.MakeList("b", "b")),
+		That("put [a] [] [a (float64 2)] [a (float64 1)] | order").
+			Puts(vals.EmptyList, vals.MakeList("a"),
+				vals.MakeList("a", 1.0), vals.MakeList("a", 2.0)),
+		// Attempting to order uncomparable values
+		That("put a (float64 1) b (float64 2) | order").
+			Throws(errUncomparable, "order"),
+		That("put [a] [(float64 1)] | order").
+			Throws(errUncomparable, "order"),
+		// &reverse
+		That("put foo bar ipsum | order &reverse").Puts("ipsum", "foo", "bar"),
+		// &less-than
+		That("put 1 10 2 5 | order &less-than=[a b]{ < $a $b }").
+			Puts("1", "2", "5", "10"),
+		// &less-than writing more than one value
+		That("put 1 10 2 5 | order &less-than=[a b]{ put $true $false }").
+			Throws(
+				errs.BadValue{
+					What:  "output of the &less-than callback",
+					Valid: "a single boolean", Actual: "2 values"},
+				"order &less-than=[a b]{ put $true $false }"),
+		// &less-than writing non-boolean value
+		That("put 1 10 2 5 | order &less-than=[a b]{ put x }").
+			Throws(
+				errs.BadValue{
+					What:  "output of the &less-than callback",
+					Valid: "boolean", Actual: "string"},
+				"order &less-than=[a b]{ put x }"),
+		// &less-than throwing an exception
+		That("put 1 10 2 5 | order &less-than=[a b]{ fail bad }").
+			Throws(
+				errors.New("bad"),
+				"fail bad ", "order &less-than=[a b]{ fail bad }"),
+		// &less-than and &reverse
+		That("put 1 10 2 5 | order &reverse &less-than=[a b]{ < $a $b }").
+			Puts("10", "5", "2", "1"),
+		// &stable - test by pretending that all values but one are equal, and
+		// check that the order among them has not changed
+		That("put l x o x r x e x m | order &stable &less-than=[a b]{ eq $a x }").
+			Puts("x", "x", "x", "x", "l", "o", "r", "e", "m"),
 	)
 }
