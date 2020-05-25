@@ -226,7 +226,8 @@ func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
 			r := evalAndCollect(t, ev, []string{tt.code})
 
 			if !matchOut(tt.want.valueOut, r.valueOut) {
-				t.Errorf("got value out %v, want %v", r.valueOut, tt.want.valueOut)
+				t.Errorf("got value out %v, want %v",
+					reprs(r.valueOut), reprs(tt.want.valueOut))
 			}
 			if !bytes.Equal(tt.want.bytesOut, r.bytesOut) {
 				t.Errorf("got bytes out %q, want %q", r.bytesOut, tt.want.bytesOut)
@@ -344,6 +345,14 @@ func matchOut(want, got []interface{}) bool {
 		}
 	}
 	return true
+}
+
+func reprs(values []interface{}) []string {
+	s := make([]string, len(values))
+	for i, v := range values {
+		s[i] = vals.Repr(v, vals.NoPretty)
+	}
+	return s
 }
 
 func matchErr(want, got error) bool {
