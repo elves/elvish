@@ -8,40 +8,40 @@ title = "Builtin Functions and Variables"
 
 [[articles]]
 name = "edit"
-title = "API for the Interactive Editor (edit:)"
+title = "edit: API for the Interactive Editor"
 
 [[articles]]
 name = "epm"
-title = "The Elvish Package Manager (epm:)"
+title = "epm: The Elvish Package Manager"
 
 [[articles]]
 name = "exc"
-title = "Exception Utilities (exc:)"
+title = "exc: Exception Utilities"
 
 [[articles]]
 name = "math"
-title = "Math Utilities (math:)"
+title = "math: Math Utilities"
 
 [[articles]]
 name = "platform"
-title = "Information About the Platform (platform:)"
+title = "platform: Information About the Platform"
 
 [[articles]]
 name = "re"
-title = "Regular Expression Utilities (re:)"
+title = "re: Regular Expression Utilities"
 
 [[articles]]
 name = "readline-binding"
-title = "Readline-like Key Bindings (readline-binding:)"
+title = "readline-binding: Readline-like Key Bindings"
 
 [[articles]]
 name = "store"
-title = "API for the Elvish Persistent Data Store (store:)"
+title = "store: API for the Elvish Persistent Data Store"
 
 [[articles]]
 name = "str"
-title = "String Manipulation (str:)"
+title = "str: String Manipulation"
 
 [[articles]]
 name = "unix"
-title = "Support for UNIX-like systems (unix:)"
+title = "unix: Support for UNIX-like systems"
