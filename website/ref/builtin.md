@@ -3,22 +3,26 @@
 # Introduction
 
 The builtin module contains facilities that are potentially useful to all users.
-It occupies the `builtin:` namespace. You rarely have to explicitly specify the
-namespace since it is one of the namespaces consulted when resolving unqualified
-names. The exception to this rule is if you define a function with the same name
-as a builtin. In which case to use the builtin rather than the function you need
-to say so explicitly. For example,
 
-```elvish
-fn cd [@args]{
-    echo running my cd function
-    builtin:cd $@args
-}
-```
+## Using builtin: explicitly
 
-Unlike most modules you do not need to execute `use builtin` to use these
-variables and commands in this module. The only reason to import it is for
-introspection; for example, `keys $builtin:`.
+The builtin module is consulted implicitly when resolving unqualified names, so
+you usually don't need to specify `builtin:` explicitly. However, there are some
+cases where it is useful to do that:
+
+-   When a builtin function is shadowed by a local function, you can still use
+    the builtin function by specifying `builtin:`. This is especially useful
+    when wrapping a builtin function:
+
+    ```elvish
+    use builtin
+    fn cd [@args]{
+        echo running my cd function
+        builtin:cd $@args
+    }
+    ```
+
+-   Introspecting the builtin module, for example `keys $builtin:`.
 
 ## Usage Notation
 
