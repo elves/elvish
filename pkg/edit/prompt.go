@@ -175,21 +175,17 @@ func parseBytesIntoTokens(b []byte) (ret []rawToken) {
 	return
 }
 
-func parseTokensIntoText(rt []rawToken) ui.Text {
+func parseTokensIntoText(rt []rawToken) []ui.Segment {
 	segments := []ui.Segment{}
 	currentStyle := ui.Style{}
 	for _, token := range rt {
 		if !token.isSGRCode {
 			segments = append(segments, ui.Segment{Style: currentStyle, Text: string(token.data)})
 		} else {
-			currentStyle = ui.StyleFromSGR(strings.TrimPrefix(strings.TrimSuffix(string(token.data), "m"), "\033["))
+			ui.StylingFromSGR(strings.TrimPrefix(strings.TrimSuffix(string(token.data), "m"), "\033[")).Transform(&currentStyle)
 		}
 	}
-	ret := ui.Text{}
-	for idx := range segments {
-		ret = append(ret, &segments[idx])
-	}
-	return ret
+	return segments
 }
 
 // Calls a function with the given arguments and closed input, and concatenates
@@ -223,8 +219,8 @@ func callForStyledText(nt notifier, ev *eval.Evaler, ctx string, fn eval.Callabl
 		if err != nil {
 			nt.notifyf("error reading prompt byte output: %v", err)
 		}
-		if len(parsed) > 0 {
-			add(parsed)
+		for _, seg := range parsed {
+			add(seg)
 		}
 	}
 

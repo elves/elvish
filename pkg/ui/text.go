@@ -57,6 +57,8 @@ func (t Text) Concat(v interface{}) (interface{}, error) {
 	switch rhs := v.(type) {
 	case string:
 		return t.ConcatSegments(&Segment{Text: rhs}), nil
+	case Segment:
+		return t.ConcatSegments(&rhs), nil
 	case *Segment:
 		return t.ConcatSegments(rhs), nil
 	case Text:

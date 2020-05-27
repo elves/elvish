@@ -92,7 +92,7 @@ func TestMergeFromOptions(t *testing.T) {
 }
 
 func TestStyleFromSGR(t *testing.T) {
-	tt.Test(t, tt.Fn("StyleFromSGR", StyleFromSGR), tt.Table{
+	tt.Test(t, tt.Fn("StyleFromSGR", StylingFromSGR), tt.Table{
 		tt.Args("1").Rets(Style{Bold: true}),
 		// Invalid codes are ignored
 		tt.Args("1;invalid;10000").Rets(Style{Bold: true}),

@@ -6,7 +6,9 @@ import (
 
 // Styling specifies how to change a Style. It can also be applied to a Segment
 // or Text.
-type Styling interface{ transform(*Style) }
+type Styling interface {
+	Transform(*Style)
+}
 
 // StyleText returns a new Text with the given Styling's applied. It does not
 // modify the given Text.
@@ -28,7 +30,7 @@ func StyleSegment(seg *Segment, ts ...Styling) *Segment {
 func ApplyStyling(s Style, ts ...Styling) Style {
 	for _, t := range ts {
 		if t != nil {
-			t.transform(&s)
+			t.Transform(&s)
 		}
 	}
 	return s
@@ -107,17 +109,19 @@ func Fg(c Color) Styling { return setForeground{c} }
 // Bg returns a Styling that sets the background color.
 func Bg(c Color) Styling { return setBackground{c} }
 
+type resetStyling struct{}
 type setForeground struct{ c Color }
 type setBackground struct{ c Color }
 type boolOn struct{ f boolField }
 type boolOff struct{ f boolField }
 type boolToggle struct{ f boolField }
 
-func (t setForeground) transform(s *Style) { s.Foreground = t.c }
-func (t setBackground) transform(s *Style) { s.Background = t.c }
-func (t boolOn) transform(s *Style)        { *t.f.get(s) = true }
-func (t boolOff) transform(s *Style)       { *t.f.get(s) = false }
-func (t boolToggle) transform(s *Style)    { p := t.f.get(s); *p = !*p }
+func (t resetStyling) Transform(s *Style)  { *s = Style{} }
+func (t setForeground) Transform(s *Style) { s.Foreground = t.c }
+func (t setBackground) Transform(s *Style) { s.Background = t.c }
+func (t boolOn) Transform(s *Style)        { *t.f.get(s) = true }
+func (t boolOff) Transform(s *Style)       { *t.f.get(s) = false }
+func (t boolToggle) Transform(s *Style)    { p := t.f.get(s); *p = !*p }
 
 type boolField interface{ get(*Style) *bool }
 
@@ -137,9 +141,9 @@ func (inverseField) get(s *Style) *bool    { return &s.Inverse }
 
 type jointStyling []Styling
 
-func (t jointStyling) transform(s *Style) {
+func (t jointStyling) Transform(s *Style) {
 	for _, t := range t {
-		t.transform(s)
+		t.Transform(s)
 	}
 }
 

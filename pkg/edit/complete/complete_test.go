@@ -279,7 +279,7 @@ func c(s string) completion.Item { return completion.Item{ToShow: s, ToInsert: s
 
 func fc(s, suffix string) completion.Item {
 	return completion.Item{ToShow: s, ToInsert: parse.Quote(s) + suffix,
-		ShowStyle: ui.StyleFromSGR(lscolors.GetColorist().GetStyle(s))}
+		ShowStyle: ui.StylingFromSGR(lscolors.GetColorist().GetStyle(s))}
 }
 
 func r(i, j int) diag.Ranging { return diag.Ranging{From: i, To: j} }

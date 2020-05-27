@@ -109,9 +109,21 @@ var sgrStyling = map[int]Styling{
 	7: Inverse,
 }
 
+// StyleFromStyling builds a Style from a Styling
+func StyleFromStyling(s Styling) Style {
+	var ret Style
+	s.Transform(&ret)
+	return ret
+}
+
 // StyleFromSGR builds a Style from an SGR sequence.
 func StyleFromSGR(s string) Style {
-	style := Style{}
+	return StyleFromStyling(StylingFromSGR(s))
+}
+
+// StylingFromSGR builds a Styling from an SGR sequence.
+func StylingFromSGR(s string) Styling {
+	style := jointStyling{}
 	codes := getSGRCodes(s)
 	for len(codes) > 0 {
 		code := codes[0]
@@ -119,28 +131,28 @@ func StyleFromSGR(s string) Style {
 
 		switch {
 		case sgrStyling[code] != nil:
-			sgrStyling[code].transform(&style)
+			style = append(style, sgrStyling[code])
+		case code == 0:
+			style = append(style, resetStyling{})
 		case 30 <= code && code <= 37:
-			style.Foreground = ansiColor(code - 30)
+			style = append(style, setForeground{ansiColor(code - 30)})
 		case 40 <= code && code <= 47:
-			style.Background = ansiColor(code - 40)
+			style = append(style, setBackground{ansiColor(code - 40)})
 		case 90 <= code && code <= 97:
-			style.Foreground = ansiBrightColor(code - 90)
+			style = append(style, setForeground{ansiBrightColor(code - 90)})
 		case 100 <= code && code <= 107:
-			style.Background = ansiBrightColor(code - 100)
+			style = append(style, setBackground{ansiBrightColor(code - 100)})
 		case code == 38 && len(codes) >= 3 && codes[1] == 5:
-			style.Foreground = xterm256Color(codes[2])
+			style = append(style, setForeground{xterm256Color(codes[2])})
 			consume = 3
 		case code == 48 && len(codes) >= 3 && codes[1] == 5:
-			style.Background = xterm256Color(codes[2])
+			style = append(style, setBackground{xterm256Color(codes[2])})
 			consume = 3
 		case code == 38 && len(codes) >= 5 && codes[1] == 2:
-			style.Foreground = trueColor{
-				uint8(codes[2]), uint8(codes[3]), uint8(codes[4])}
+			style = append(style, setForeground{trueColor{uint8(codes[2]), uint8(codes[3]), uint8(codes[4])}})
 			consume = 5
 		case code == 48 && len(codes) >= 5 && codes[1] == 2:
-			style.Background = trueColor{
-				uint8(codes[2]), uint8(codes[3]), uint8(codes[4])}
+			style = append(style, setBackground{trueColor{uint8(codes[2]), uint8(codes[3]), uint8(codes[4])}})
 			consume = 5
 		default:
 			// Do nothing; skip this code
