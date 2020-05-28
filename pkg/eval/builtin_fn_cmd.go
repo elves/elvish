@@ -119,8 +119,10 @@ func exit(fm *Frame, codes ...int) error {
 }
 
 func preExit(fm *Frame) {
-	err := fm.DaemonClient.Close()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	if fm.DaemonClient != nil {
+		err := fm.DaemonClient.Close()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
 	}
 }
