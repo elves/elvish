@@ -3,22 +3,25 @@
 ## Human communication
 
 The project lead is @xiaq, who is reachable in the user group most of the time.
-If you intend to make user-visible changes to Elvish's behavior, it good idea to
-talk to him first; this will make it easier to review your changes.
 
-## Unit tests
+If you intend to make user-visible changes to Elvish's behavior, it is good idea
+to talk to him first; this will make it easier to review your changes.
+
+On the other hand, if you find it easier to express your thoughts directly in
+code, it is also completely fine to directly send a pull request, as long as you
+don't mind the risk of the PR being rejected due to lack of prior discussion.
+
+## Testing changes
 
 Write comprehensive unit tests for your code, and make sure that existing tests
-are passing. Running `make` in the repo root will run all unit tests.
+are passing. Tests are run on CI automatically for PRs; you can also run `make test` in the repo root
+yourself.
 
-Most of the Elvish codebase has good testing utilities today, and some also have
-established testing patterns. Before writing unit tests, read a few existing
-tests in the package you are changing, and follow the existing patterns. Some
-packages unfortunately have two (and hopefully no more than that) competing
-patterns. When in doubt, ask the project lead.
-
-Still, some part of the codebase is poorly tested, and may even be outright
-untestable. In that case, also discuss to the project lead.
+Respect established patterns of how unit tests are written. Some packages
+unfortunately have competing patterns, which usually reflects a still-evolving
+idea of how to best test the code. Worse, parts of the codebase are poorly
+tested, or even untestable. In either case, discuss with the project lead on the
+best way forward.
 
 ### ELVISH_TEST_TIME_SCALE
 
@@ -31,12 +34,27 @@ Set the `ELVISH_TEST_TIME_SCALE` environment variable to a number greater than 1
 to scale up the time thresholds used in tests. The CI environments use
 `ELVISH_TEST_TIME_SCALE = 10`.
 
-## Documenting builtin functions and variables
+## Documenting changes
 
-Documentation for builtin functions and variables are written in the Go sources
-as comments.
+Always document user-visible changes.
 
-Document function using the following format:
+### Release notes
+
+Add a brief list item to the release note of the next release, in the
+appropriate section.
+
+The release
+notes live in `website/blog`; the symlink
+`NEXT-RELEASE.md` at the repo root always points to those of the
+next release.
+
+### Reference docs
+
+Reference docs are interspersed in Go sources as comments blocks whose first
+line starts with `//elvdoc` (and are hence called _elvdocs_). They can use
+[Github Flavored Markdown](https://github.github.com/gfm/).
+
+Elvdocs for functions look like the following:
 
 ````go
 //elvdoc:fn name-of-fn
@@ -53,26 +71,34 @@ Document function using the following format:
 // ~> name-of-fn something
 // ▶ some-value-output
 // ```
+
+func nameOfFn() { ... }
 ````
 
-Note the following:
+Generally, elvdocs for functions have the following structure:
 
--   There is no space before `elvdoc` of the first line.
+-   A line starting with `//elvdoc:fn`, followed by the name of the function.
+    Note that there should be no space after `//`, unlike all the other lines.
 
--   The signature of the function follows the convention
-    [here](website/ref/builtin.md#usage-notation).
+-   An `elvish` code block describing the signature of the function, following
+    the convention [here](website/ref/builtin.md#usage-notation).
 
--   The first sentence of the description should start with a verb in 3rd person
-    singular (i.e. ending with a "s"), as if there is an implicit subject "this
+-   Description of the function, which can be one or more paragraphs. The first
+    sentence of the description should start with a verb in 3rd person singular
+    (i.e. ending with a "s"), as if there is an implicit subject "this
     function".
 
--   Examples are best illustrated by a transcript of actual REPL input and
-    output. Always use the default prompt `~>` and default value output
-    indicator `▶`. If you have customized those, it's left as an exercise to
-    define a key binding in `rc.elv` for switching between the default and your
-    customized values.
+-   One or more `elvish-transcript` code blocks showing example usages, which
+    are transcripts of actual REPL input and output. Transcripts must use the
+    default prompt `~>` and default value output indicator `▶`. You can use
+    `elvish -norc` if you have customized either in your `rc.elv`.
 
-Document variables using the following format:
+Place the comment block before the implementation of the function. If the
+function has no implementation (e.g. it is a simple wrapper of a function from
+the Go standard library), place it before the top-level declaration of the
+namespace.
+
+Similarly, reference docs for variables start with `//elvdoc:var`:
 
 ```go
 //elvdoc:var name-of-var
@@ -80,9 +106,9 @@ Document variables using the following format:
 // Something.
 ```
 
-Variables do not have signatures, and can be described using a noun phrase.
+Variables do not have signatures, and are described using a noun phrase.
 Examples are not always needed; if they are, they can be given in the same
-format as examples for functions above.
+format as examples for functions.
 
 ## Generating code
 
