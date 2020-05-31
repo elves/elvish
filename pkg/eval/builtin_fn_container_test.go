@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"errors"
 	"math"
 	"testing"
 
@@ -131,7 +130,7 @@ func TestBuiltinFnContainer(t *testing.T) {
 		// &less-than throwing an exception
 		That("put 1 10 2 5 | order &less-than=[a b]{ fail bad }").
 			Throws(
-				errors.New("bad"),
+				FailError{"bad"},
 				"fail bad ", "order &less-than=[a b]{ fail bad }"),
 		// &less-than and &reverse
 		That("put 1 10 2 5 | order &reverse &less-than=[a b]{ < $a $b }").

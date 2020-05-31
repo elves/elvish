@@ -1,10 +1,9 @@
 package eval
 
 import (
-	"errors"
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval/errs"
+	"github.com/elves/elvish/pkg/eval/vals"
 )
 
 func TestBuiltinFnFlow(t *testing.T) {
@@ -23,13 +22,11 @@ func TestBuiltinFnFlow(t *testing.T) {
 		// TODO(xiaq): Test that "each" does not close the stdin.
 		// TODO: test peach
 
-		That("fail haha").Throws(errors.New("haha"), "fail haha"),
+		That("fail haha").Throws(FailError{"haha"}, "fail haha"),
 		That("fn f { fail haha }", "fail ?(f)").Throws(
-			errors.New("haha"), "fail haha ", "f"),
+			FailError{"haha"}, "fail haha ", "f"),
 		That("fail []").Throws(
-			errs.BadValue{What: "argument to fail",
-				Valid: "string or exception", Actual: "list"},
-			"fail []"),
+			FailError{vals.EmptyList}, "fail []"),
 
 		That(`return`).ThrowsCause(Return),
 	)

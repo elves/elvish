@@ -1,10 +1,8 @@
 package eval
 
 import (
-	"errors"
 	"sync"
 
-	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/util"
 )
@@ -49,36 +47,6 @@ import (
 // use `peach` instead.
 //
 // @cf peach
-
-//elvdoc:fn fail
-//
-// ```elvish
-// fail $v
-// ```
-//
-// Throws an exception if `$v` is a string. Rethrows an exception if `$v` is a
-// caught exception.
-//
-// ```elvish-transcript
-// ~> fail bad
-// Exception: bad
-// [tty 9], line 1: fail bad
-// ~> put ?(fail bad)
-// ▶ ?(fail bad)
-// ~> fn f { fail bad }
-// ~> fail ?(f)
-// Exception: bad
-// Traceback:
-//   [tty 7], line 1:
-//     fn f { fail bad }
-//   [tty 8], line 1:
-//     fail ?(f)
-// ```
-//
-// **Note**: Exceptions are now only allowed to carry string messages. You cannot
-// do `fail [&cause=xxx]` (this will, ironically, throw a different exception
-// complaining that you cannot throw a map). This is subject to change. Builtins
-// will likely also throw structured exceptions in future.
 
 // TODO(xiaq): Document "multi-error".
 
@@ -228,20 +196,44 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 	return err
 }
 
+// FailError is an error returned by the "fail" command.
+type FailError struct{ Cause interface{} }
+
+// Error returns the string representation of the cause.
+func (e FailError) Error() string { return vals.ToString(e.Cause) }
+
+//elvdoc:fn fail
+//
+// ```elvish
+// fail $v
+// ```
+//
+// Throws an exception; `$v` may be any type. If `$v` is already an exception,
+// `fail` rethrows it.
+//
+// ```elvish-transcript
+// ~> fail bad
+// Exception: bad
+// [tty 9], line 1: fail bad
+// ~> put ?(fail bad)
+// ▶ ?(fail bad)
+// ~> fn f { fail bad }
+// ~> fail ?(f)
+// Exception: bad
+// Traceback:
+//   [tty 7], line 1:
+//     fn f { fail bad }
+//   [tty 8], line 1:
+//     fail ?(f)
+// ```
+
 func fail(v interface{}) error {
-	switch v := v.(type) {
-	case error:
+	if e, ok := v.(error); ok {
 		// MAYBE TODO: if v is an exception, attach a "rethrown" stack trace,
 		// like Java
-		return v
-	case string:
-		return errors.New(v)
-	default:
-		return errs.BadValue{
-			What:  "argument to fail",
-			Valid: "string or exception", Actual: vals.Kind(v),
-		}
+		return e
 	}
+	return FailError{v}
 }
 
 func multiErrorFn(excs ...*Exception) error {

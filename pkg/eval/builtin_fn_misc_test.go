@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/elves/elvish/pkg/util"
@@ -24,11 +23,11 @@ func TestBuiltinFnMisc(t *testing.T) {
 		That("duration = ''",
 			"time &on-end=[x]{ duration = $x } { echo foo } | out = (all)",
 			"put $out", "kind-of $duration").Puts("foo", "number"),
-		That("time { fail body } | nop (all)").ThrowsCause(errors.New("body")),
+		That("time { fail body } | nop (all)").ThrowsCause(FailError{"body"}),
 		That("time &on-end=[_]{ fail on-end } { }").
-			ThrowsCause(errors.New("on-end")),
+			ThrowsCause(FailError{"on-end"}),
 		That("time &on-end=[_]{ fail on-end } { fail body }").
-			ThrowsCause(errors.New("body")),
+			ThrowsCause(FailError{"body"}),
 	)
 }
 
