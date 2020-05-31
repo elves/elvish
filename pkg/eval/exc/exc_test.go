@@ -22,5 +22,8 @@ func TestExc(t *testing.T) {
 
 		// TODO: Test positive case of exc:is-killed
 		That("exc:is-killed ?(fail bad)").Puts(false),
+
+		That("exc:is-fail-error ?(fail bad)").Puts(true),
+		That("exc:is-fail-error ?("+failingExternalCmd+")").Puts(false),
 	)
 }

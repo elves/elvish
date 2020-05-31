@@ -12,6 +12,8 @@ var Ns = eval.Ns{}.
 		"is-external-cmd-error": isExternalCmdError,
 		"is-nonzero-exit":       isNonzeroExit,
 		"is-killed":             isKilled,
+
+		"is-fail-error": isFailError,
 	})
 
 //elvdoc:fn show
@@ -120,4 +122,24 @@ func isNonzeroExit(e *eval.Exception) bool {
 func isKilled(e *eval.Exception) bool {
 	err, ok := e.Cause.(eval.ExternalCmdExit)
 	return ok && err.Signaled()
+}
+
+//elvdoc:fn is-fail-error
+//
+// ```elvish
+// exc:is-fail-error $e
+// ```
+//
+// Outputs whether an exception was thrown by the `fail` command.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ```
+//
+// @cf builtin:fail
+
+func isFailError(e *eval.Exception) bool {
+	_, ok := e.Cause.(eval.FailError)
+	return ok
 }
