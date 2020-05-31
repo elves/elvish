@@ -14,8 +14,8 @@ func TestExc(t *testing.T) {
 		// Have a simple sanity test that exc:show writes something.
 		That(`exc:show ?(fail foo) | > (count (slurp)) 0`).Puts(true),
 
-		That("exc:is-external-cmd-error ?("+failingExternalCmd+")").Puts(true),
-		That("exc:is-external-cmd-error ?(fail bad)").Puts(false),
+		That("exc:is-external-cmd-exc ?("+failingExternalCmd+")").Puts(true),
+		That("exc:is-external-cmd-exc ?(fail bad)").Puts(false),
 
 		That("exc:is-nonzero-exit ?("+failingExternalCmd+")").Puts(true),
 		That("exc:is-nonzero-exit ?(fail bad)").Puts(false),
@@ -23,7 +23,7 @@ func TestExc(t *testing.T) {
 		// TODO: Test positive case of exc:is-killed
 		That("exc:is-killed ?(fail bad)").Puts(false),
 
-		That("exc:is-fail-error ?(fail bad)").Puts(true),
-		That("exc:is-fail-error ?("+failingExternalCmd+")").Puts(false),
+		That("exc:is-fail-exc ?(fail bad)").Puts(true),
+		That("exc:is-fail-exc ?("+failingExternalCmd+")").Puts(false),
 	)
 }

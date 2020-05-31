@@ -9,11 +9,11 @@ var Ns = eval.Ns{}.
 	AddGoFns("exc:", map[string]interface{}{
 		"show": show,
 
-		"is-external-cmd-error": isExternalCmdError,
-		"is-nonzero-exit":       isNonzeroExit,
-		"is-killed":             isKilled,
+		"is-external-cmd-exc": isExternalCmdExc,
+		"is-nonzero-exit":     isNonzeroExit,
+		"is-killed":           isKilled,
 
-		"is-fail-error": isFailError,
+		"is-fail-exc": isFailExc,
 	})
 
 //elvdoc:fn show
@@ -39,10 +39,10 @@ func show(fm *eval.Frame, e *eval.Exception) {
 	fm.OutputFile().WriteString("\n")
 }
 
-//elvdoc:fn is-external-cmd-error
+//elvdoc:fn is-external-cmd-exc
 //
 // ```elvish
-// exc:is-external-cmd-error $e
+// exc:is-external-cmd-exc $e
 // ```
 //
 // Outputs whether an exception was caused by any error with an external
@@ -52,11 +52,11 @@ func show(fm *eval.Frame, e *eval.Exception) {
 // Examples:
 //
 // ```elvish-transcript
-// ~> exc:is-external-cmd-error ?(fail bad)
+// ~> exc:is-external-cmd-exc ?(fail bad)
 // ▶ $false
-// ~> exc:is-external-cmd-error ?(false)
+// ~> exc:is-external-cmd-exc ?(false)
 // ▶ $true
-// ~> exc:is-external-cmd-error ?(elvish -c 'echo $pid; exec cat')
+// ~> exc:is-external-cmd-exc ?(elvish -c 'echo $pid; exec cat')
 // # outputs pid
 // # run "kill <pid> in another terminal"
 // ▶ $true
@@ -64,7 +64,7 @@ func show(fm *eval.Frame, e *eval.Exception) {
 //
 // @cf is-nonzero-exit is-killed
 
-func isExternalCmdError(e *eval.Exception) bool {
+func isExternalCmdExc(e *eval.Exception) bool {
 	_, ok := e.Cause.(eval.ExternalCmdExit)
 	return ok
 }
@@ -91,7 +91,7 @@ func isExternalCmdError(e *eval.Exception) bool {
 // ▶ $true
 // ```
 //
-// @cf is-external-cmd-error is-killed
+// @cf is-external-cmd-exc is-killed
 
 func isNonzeroExit(e *eval.Exception) bool {
 	err, ok := e.Cause.(eval.ExternalCmdExit)
@@ -117,17 +117,17 @@ func isNonzeroExit(e *eval.Exception) bool {
 // ▶ $true
 // ```
 //
-// @cf is-external-cmd-error is-nonzero-exit
+// @cf is-external-cmd-exc is-nonzero-exit
 
 func isKilled(e *eval.Exception) bool {
 	err, ok := e.Cause.(eval.ExternalCmdExit)
 	return ok && err.Signaled()
 }
 
-//elvdoc:fn is-fail-error
+//elvdoc:fn is-fail-exc
 //
 // ```elvish
-// exc:is-fail-error $e
+// exc:is-fail-exc $e
 // ```
 //
 // Outputs whether an exception was thrown by the `fail` command.
@@ -139,7 +139,7 @@ func isKilled(e *eval.Exception) bool {
 //
 // @cf builtin:fail
 
-func isFailError(e *eval.Exception) bool {
+func isFailExc(e *eval.Exception) bool {
 	_, ok := e.Cause.(eval.FailError)
 	return ok
 }
