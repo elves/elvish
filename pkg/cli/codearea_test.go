@@ -273,6 +273,26 @@ var codeAreaHandleTests = []HandleTest{
 		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "/dev/null", Dot: 9}},
 	},
 	{
+		Name: "abbreviation expansion 2",
+		Given: NewCodeArea(CodeAreaSpec{
+			Abbreviations: func(f func(abbr, full string)) {
+				f("||", " | less")
+			},
+		}),
+		Events:       []term.Event{term.K('x'), term.K('|'), term.K('|')},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "x | less", Dot: 8}},
+	},
+	{
+		Name: "abbreviation expansion after other content",
+		Given: NewCodeArea(CodeAreaSpec{
+			Abbreviations: func(f func(abbr, full string)) {
+				f("||", " | less")
+			},
+		}),
+		Events:       []term.Event{term.K('{'), term.K('e'), term.K('c'), term.K('h'), term.K('o'), term.K(' '), term.K('x'), term.K('}'), term.K('|'), term.K('|')},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "{echo x} | less", Dot: 15}},
+	},
+	{
 		Name: "abbreviation expansion preferring longest",
 		Given: NewCodeArea(CodeAreaSpec{
 			Abbreviations: func(f func(abbr, full string)) {
@@ -292,26 +312,6 @@ var codeAreaHandleTests = []HandleTest{
 		}),
 		Events:       []term.Event{term.K('d'), term.K(ui.F1), term.K('n')},
 		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "dn", Dot: 2}},
-	},
-	{
-		Name: "abbreviation expansion",
-		Given: NewCodeArea(CodeAreaSpec{
-			Abbreviations: func(f func(abbr, full string)) {
-				f("||", " | less")
-			},
-		}),
-		Events:       []term.Event{term.K('x'), term.K('|'), term.K('|')},
-		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "x | less", Dot: 8}},
-	},
-	{
-		Name: "abbreviation expansion",
-		Given: NewCodeArea(CodeAreaSpec{
-			Abbreviations: func(f func(abbr, full string)) {
-				f("||", " | less")
-			},
-		}),
-		Events:       []term.Event{term.K('{'), term.K('e'), term.K('c'), term.K('h'), term.K('o'), term.K(' '), term.K('x'), term.K('}'), term.K('|'), term.K('|')},
-		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "{echo x} | less", Dot: 15}},
 	},
 	{
 		Name: "small word abbreviation expansion space trigger",

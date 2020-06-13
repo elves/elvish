@@ -200,7 +200,8 @@ func (w *codeArea) handlePasteSetting(start bool) bool {
 	return true
 }
 
-// Try to expand a simple abbreviation that ignores word boundaries.
+// Tries to expand a simple abbreviation. This function assumes that the state
+// mutex is already being held.
 func (w *codeArea) expandSimpleAbbr() {
 	var abbr, full string
 	// Find the longest matching abbreviation.
@@ -219,46 +220,54 @@ func (w *codeArea) expandSimpleAbbr() {
 	}
 }
 
-// Try to expand a small word abbreviation.
-func (w *codeArea) expandSmallWordAbbr(triggerRune rune, triggerLen int) {
-	// We only do small word expansions at the end of the line and only if
-	// there are characters in the insert buffer other than the trigger rune.
+// Tries to expand a word abbreviation. This function assumes that the state
+// mutex is already being held.
+func (w *codeArea) expandWordAbbr(trigger rune, categorizer func(rune) int) {
 	c := &w.State.Buffer
-	if len(w.inserts) <= triggerLen || c.Dot < len(c.Content) {
+	if c.Dot < len(c.Content) {
+		// Word abbreviations are only expanded at the end of the buffer.
 		return
 	}
+	triggerLen := len(string(trigger))
+	if triggerLen >= len(w.inserts) {
+		// Only the trigger has been inserted, or a simple abbreviation was just
+		// expanded. In either case, there is nothing to expand.
+		return
+	}
+	// The trigger is only used to determine word boundary; when considering
+	// what to expand, we only consider the part that was inserted before it.
+	inserts := w.inserts[:len(w.inserts)-triggerLen]
 
-	inserts := w.inserts[:len(w.inserts)-triggerLen] // ignore abbr trigger rune
 	var abbr, full string
 	// Find the longest matching abbreviation.
 	w.SmallWordAbbreviations(func(a, f string) {
-		if len(a) >= len(w.inserts) || len(a) < len(abbr) {
-			return // check the next abbreviation
+		if len(a) <= len(abbr) {
+			// This abbreviation can't be the longest.
+			return
 		}
-
-		// Verify the abbreviation is in the insert buffer.
 		if !strings.HasSuffix(inserts, a) {
+			// This abbreviation was not inserted.
 			return
 		}
 		// Verify the trigger rune creates a word boundary.
-		r2, _ := utf8.DecodeLastRuneInString(a)
-		if CategorizeSmallWord(triggerRune) == CategorizeSmallWord(r2) {
+		r, _ := utf8.DecodeLastRuneInString(a)
+		if categorizer(trigger) == categorizer(r) {
 			return
 		}
-		// Verify the rune preceding the abbreviation, if any, creates a word boundary.
+		// Verify the rune preceding the abbreviation, if any, creates a word
+		// boundary.
 		if len(c.Content) > len(a)+triggerLen {
 			r1, _ := utf8.DecodeLastRuneInString(c.Content[:len(c.Content)-len(a)-triggerLen])
-			r2, _ = utf8.DecodeRuneInString(a)
-			if CategorizeSmallWord(r1) == CategorizeSmallWord(r2) {
+			r2, _ := utf8.DecodeRuneInString(a)
+			if categorizer(r1) == categorizer(r2) {
 				return
 			}
 		}
-
 		abbr, full = a, f
 	})
 	if len(abbr) > 0 {
 		*c = CodeBuffer{
-			Content: c.Content[:c.Dot-len(abbr)-triggerLen] + full + string(triggerRune),
+			Content: c.Content[:c.Dot-len(abbr)-triggerLen] + full + string(trigger),
 			Dot:     c.Dot - len(abbr) + len(full),
 		}
 		w.resetInserts()
@@ -317,7 +326,7 @@ func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 		w.inserts += s
 		w.lastCodeBuffer = w.State.Buffer
 		w.expandSimpleAbbr()
-		w.expandSmallWordAbbr(key.Rune, len(s))
+		w.expandWordAbbr(key.Rune, CategorizeSmallWord)
 		return true
 	}
 }
