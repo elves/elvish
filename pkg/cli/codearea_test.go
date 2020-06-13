@@ -294,6 +294,67 @@ var codeAreaHandleTests = []HandleTest{
 		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "dn", Dot: 2}},
 	},
 	{
+		Name: "abbreviation expansion",
+		Given: NewCodeArea(CodeAreaSpec{
+			Abbreviations: func(f func(abbr, full string)) {
+				f("||", " | less")
+			},
+		}),
+		Events:       []term.Event{term.K('x'), term.K('|'), term.K('|')},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "x | less", Dot: 8}},
+	},
+	{
+		Name: "abbreviation expansion",
+		Given: NewCodeArea(CodeAreaSpec{
+			Abbreviations: func(f func(abbr, full string)) {
+				f("||", " | less")
+			},
+		}),
+		Events:       []term.Event{term.K('{'), term.K('e'), term.K('c'), term.K('h'), term.K('o'), term.K(' '), term.K('x'), term.K('}'), term.K('|'), term.K('|')},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "{echo x} | less", Dot: 15}},
+	},
+	{
+		Name: "small word abbreviation expansion space trigger",
+		Given: NewCodeArea(CodeAreaSpec{
+			SmallWordAbbreviations: func(f func(abbr, full string)) {
+				f("eh", "echo hello")
+			},
+		}),
+		Events:       []term.Event{term.K('e'), term.K('h'), term.K(' ')},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "echo hello ", Dot: 11}},
+	},
+	{
+		Name: "small word abbreviation expansion non-space trigger",
+		Given: NewCodeArea(CodeAreaSpec{
+			SmallWordAbbreviations: func(f func(abbr, full string)) {
+				f("h", "hello")
+			},
+		}),
+		Events:       []term.Event{term.K('x'), term.K('['), term.K('h'), term.K(']')},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "x[hello]", Dot: 8}},
+	},
+	{
+		Name: "small word abbreviation expansion preceding char invalid",
+		Given: NewCodeArea(CodeAreaSpec{
+			SmallWordAbbreviations: func(f func(abbr, full string)) {
+				f("h", "hello")
+			},
+		}),
+		Events:       []term.Event{term.K('g'), term.K('h'), term.K(' ')},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "gh ", Dot: 3}},
+	},
+	{
+		Name: "small word abbreviation expansion after backspace preceding char invalid",
+		Given: NewCodeArea(CodeAreaSpec{
+			SmallWordAbbreviations: func(f func(abbr, full string)) {
+				f("h", "hello")
+			},
+		}),
+		Events: []term.Event{term.K('g'), term.K(' '), term.K(ui.Backspace),
+			term.K('h'), term.K(' ')},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "gh ", Dot: 3}},
+	},
+	{
 		Name: "overlay handler",
 		Given: codeAreaWithOverlay(CodeAreaSpec{}, func(w *codeArea) Handler {
 			return MapHandler{

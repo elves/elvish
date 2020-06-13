@@ -123,6 +123,8 @@ func NewApp(spec AppSpec) App {
 		QuotePaste:     spec.QuotePaste,
 		OnSubmit:       a.CommitCode,
 		State:          spec.CodeAreaState,
+
+		SmallWordAbbreviations: spec.SmallWordAbbreviations,
 	})
 
 	return &a
