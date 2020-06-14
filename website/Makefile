@@ -1,8 +1,8 @@
-TOOLS_DIR := ./_tools
+TOOLS_DIR := ./tools
 DST_DIR = ./_dst
 PUBLISH_DIR := ./_publish
 
-MDS := home.md $(wildcard [^_]*/*.md)
+MDS := home.md $(filter-out %/README.md,$(wildcard [^_]*/*.md))
 HTMLS := $(MDS:.md=.html)
 
 TOOLS := highlight macros elvdoc genblog
@@ -12,17 +12,14 @@ default: gen
 %.html: %.md $(TOOL_BINARIES) $(TOOLS_DIR)/md-to-html
 	$(TOOLS_DIR)/md-to-html $< $@
 
-%.bin: %.go
-	go build -o $@ ./$<
-
 # Generates the website into the dst directory.
 gen: tools $(HTMLS)
-	./_tools/genblog.bin . $(DST_DIR)
-	ln -sf `pwd`/_favicons/* $(DST_DIR)/
+	./$(TOOLS_DIR)/genblog.bin . $(DST_DIR)
+	ln -sf `pwd`/favicons/* $(DST_DIR)/
 
 tools:
 	for tool in $(TOOLS); do \
-		go build -o _tools/$$tool.bin ../cmd/website/$$tool; \
+		go build -o $(TOOLS_DIR)/$$tool.bin ./cmd/$$tool; \
 	done
 
 genblog:

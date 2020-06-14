@@ -1,4 +1,5 @@
 /home.html
 /*/*.html
+!/ttyshot/*.html
+/tools/*.bin
 /_dst
-/_tools/*.bin
