@@ -25,6 +25,9 @@ tools:
 		go build -o _tools/$$tool.bin ../cmd/website/$$tool; \
 	done
 
+genblog:
+	: # a nop, kept for backward compatibility with elves/up
+	
 # Synchronizes the generated website into $(PUBLISH_DIR). The PUBLISH_DIR
 # environment variable can be overriden to a remote place to publish this online.
 publish: gen
@@ -34,5 +37,5 @@ clean:
 	rm -f $(HTMLS) _tools/*.bin
 	rm -rf $(DST_DIR)
 
-.PHONY: default gen tools publish clean
+.PHONY: default gen tools genblog publish clean
 .SECONDARY: $(TOOL_BINARIES)
