@@ -3,7 +3,6 @@ package main
 //go:generate ./gen-include
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,48 +10,26 @@ import (
 	"time"
 )
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func main() {
-	// Parse flags.
-	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "Usage: genblog [options] <src dir> <dst dir>")
-		flag.PrintDefaults()
-	}
-	flag.Parse()
-	args := flag.Args()
+	args := os.Args[1:]
 	if len(args) != 2 {
-		flag.Usage()
-		os.Exit(1)
+		log.Fatal("Usage: genblog <src dir> <dst dir>")
 	}
 	srcDir, dstDir := args[0], args[1]
 
 	// Read blog configuration.
 	conf := &blogConf{}
 	decodeFile(path.Join(srcDir, "index.toml"), conf)
-	genFeed, genSitemap := true, true
 	if conf.RootURL == "" {
-		fmt.Fprintln(os.Stderr, "No rootURL specified, generation of feed and sitemap disabled.")
-		genFeed, genSitemap = false, false
+		log.Fatal("RootURL must be specified; needed by feed and sitemap")
 	}
 	if conf.Template == "" {
-		log.Fatalln("Template must be specified")
+		log.Fatal("Template must be specified")
 	}
 	if conf.BaseCSS == nil {
-		log.Fatalln("BaseCSS must be specified")
+		log.Fatal("BaseCSS must be specified")
 	}
+
 	template := readAll(path.Join(srcDir, conf.Template))
 	baseCSS := catAllInDir(srcDir, conf.BaseCSS)
 
@@ -151,21 +128,18 @@ func main() {
 	ad := &articleDot{base, a}
 	executeToFile(homepageTmpl, ad, path.Join(dstDir, "index.html"))
 
-	// Generate feed
-	if genFeed {
-		feedArticles := recents.articles
-		fd := feedDot{base, feedArticles, rfc3339Time(lastModified)}
-		executeToFile(feedTmpl, fd, path.Join(dstDir, "feed.atom"))
-	}
+	// Generate feed.
+	feedArticles := recents.articles
+	fd := feedDot{base, feedArticles, rfc3339Time(lastModified)}
+	executeToFile(feedTmpl, fd, path.Join(dstDir, "feed.atom"))
 
-	if genSitemap {
-		file, err := openForWrite(path.Join(dstDir, "sitemap.txt"))
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer file.Close()
-		for _, p := range allPaths {
-			fmt.Fprintf(file, "%s/%s\n", conf.RootURL, p)
-		}
+	// Generate site map.
+	file, err := openForWrite(path.Join(dstDir, "sitemap.txt"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	for _, p := range allPaths {
+		fmt.Fprintf(file, "%s/%s\n", conf.RootURL, p)
 	}
 }
