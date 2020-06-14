@@ -15,7 +15,7 @@ default: gen
 # Generates the website into the dst directory.
 gen: tools $(HTMLS)
 	./$(TOOLS_DIR)/genblog.bin . $(DST_DIR)
-	ln -sf `pwd`/favicons/* $(DST_DIR)/
+	ln -sf `pwd`/fonts.css `pwd`/favicons/* $(DST_DIR)/
 
 tools:
 	for tool in $(TOOLS); do \
