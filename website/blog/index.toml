@@ -1,3 +1,5 @@
+prelude = "prelude"
+
 [[articles]]
 name = "0.13.1-release-notes"
 title = "Elvish 0.13.1 Release Notes"
