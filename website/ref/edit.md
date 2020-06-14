@@ -27,7 +27,7 @@ The primary modes supported now are `insert`, `completion`, `navigation`,
 `history`, `histlist`, `location`, and `lastcmd`. The last 4 are "listing
 modes", and their particularity is documented below.
 
-# Prompts
+## Prompts
 
 Elvish has two prompts: the (normal) left-hand prompt and the right-side prompt
 (rprompt). Most of this section only documents the left-hand prompt, but API for
@@ -58,7 +58,7 @@ $
 # Cursor will be on the next line as `echo` outputs a trailing newline
 ```
 
-## Stale Prompt
+### Stale Prompt
 
 Elvish never waits for the prompt function to finish. Instead, the prompt
 function is always executed on a separate thread, and Elvish updates the screen
@@ -111,7 +111,7 @@ Elvish does not queue another update. The reason why exactly two updates happen
 in this case, and how this algorithm ensures freshness of the prompt is left as
 an exercise to the reader.
 
-## Prompt Eagerness
+### Prompt Eagerness
 
 The occassions when the prompt should get updated can be controlled with
 `$edit:-prompt-eagerness`:
@@ -126,7 +126,7 @@ The occassions when the prompt should get updated can be controlled with
 
 The default value is 5.
 
-## RPrompt Persistency
+### RPrompt Persistency
 
 By default, the rprompt is only shown while the editor is active: as soon as you
 press Enter, it is erased. If you want to keep it, simply set
@@ -136,7 +136,7 @@ press Enter, it is erased. If you want to keep it, simply set
 edit:rprompt-persistent = $true
 ```
 
-# Keybindings
+## Keybindings
 
 Each mode has its own keybinding, accessible as the `binding` variable in its
 module. For instance, the binding table for insert mode is
@@ -171,11 +171,11 @@ edit:insert:binding[Ctrl-L] = { clear > /dev/tty }
 
 Bound functions have their inputs redirected to /dev/null.
 
-## Format of Keys
+### Format of Keys
 
 TBD
 
-## Listing Modes
+### Listing Modes
 
 The modes `histlist`, `loc` and `lastcmd` are all **listing modes**: They all
 show a list, and you can filter items and accept items.
@@ -190,7 +190,7 @@ Moreover, there are a lot of builtin functions in the `edit:listing` module like
 `edit:listing:down` (for moving down selection). They always apply to whichever
 listing mode is active.
 
-## Caveat: Bindings to Start Modes
+### Caveat: Bindings to Start Modes
 
 Note that keybindings to **start** modes live in the binding table of the insert
 mode, not the target mode. For instance, if you want to be able to use
@@ -216,9 +216,9 @@ edit:insert:binding[Ctrl-P] =  { edit:history:start }
 edit:history:binding[Ctrl-P] = { edit:history:up }
 ```
 
-# Completion API
+## Completion API
 
-## Argument Completer
+### Argument Completer
 
 There are two types of completions in Elvish: completion for internal data and
 completion for command arguments. The former includes completion for variable
@@ -325,7 +325,7 @@ edit:arg-completer[git] = [@args]{
 }
 ```
 
-## Matcher
+### Matcher
 
 As stated above, after the completer outputs candidates, Elvish matches them
 with them with what the user has typed. For clarity, the part of the user input
@@ -361,7 +361,7 @@ edit:completion:matcher[argument] = [seed]{ edit:match-prefix $seed &ignore-case
 The default value of `$edit:completion:matcher` is `[&''=$edit:match-prefix~]`,
 hence that candidates for all completion types are matched by prefix.
 
-# Hooks
+## Hooks
 
 Hooks are functions that are executed at certain points in time. In Elvish, this
 functionality is provided by lists of functions.
@@ -386,7 +386,7 @@ Then every time you accept a chunk of code (and thus leaving the editor),
 Elvish session, or after a chunk of code is executed, `going to read` is
 printed.
 
-# Word types
+## Word types
 
 The editor supports operating on entire "words". As intuitive as the concept of
 "word" is, there is actually no single definition for the concept. The editor
