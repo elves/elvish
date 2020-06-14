@@ -11,11 +11,6 @@ import (
 	"time"
 )
 
-var (
-	printDefaultTemplate = flag.Bool("print-default-template", false, "Print default template")
-	printDefaultCSS      = flag.Bool("print-default-css", false, "Print default CSS")
-)
-
 func max(a, b int) int {
 	if a > b {
 		return a
@@ -38,14 +33,6 @@ func main() {
 	}
 	flag.Parse()
 	args := flag.Args()
-	switch {
-	case *printDefaultTemplate:
-		fmt.Print(defaultTemplate)
-		return
-	case *printDefaultCSS:
-		fmt.Print(defaultCSS)
-		return
-	}
 	if len(args) != 2 {
 		flag.Usage()
 		os.Exit(1)
@@ -60,14 +47,14 @@ func main() {
 		fmt.Fprintln(os.Stderr, "No rootURL specified, generation of feed and sitemap disabled.")
 		genFeed, genSitemap = false, false
 	}
-	template := defaultTemplate
-	if conf.Template != "" {
-		template = readAll(path.Join(srcDir, conf.Template))
+	if conf.Template == "" {
+		log.Fatalln("Template must be specified")
 	}
-	baseCSS := defaultCSS
-	if conf.BaseCSS != nil {
-		baseCSS = catAllInDir(srcDir, conf.BaseCSS)
+	if conf.BaseCSS == nil {
+		log.Fatalln("BaseCSS must be specified")
 	}
+	template := readAll(path.Join(srcDir, conf.Template))
+	baseCSS := catAllInDir(srcDir, conf.BaseCSS)
 
 	// Initialize templates. They are all initialized from the same source code,
 	// plus a snippet to fix the "content" reference.
