@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -92,65 +92,40 @@ func (ra *recentArticles) insert(a article) {
 	ra.articles[i] = a
 }
 
-func articlesToDots(b *baseDot, as []article) []articleDot {
-	ads := make([]articleDot, len(as))
-	for i, a := range as {
-		ads[i] = articleDot(articleDot{b, a})
-	}
-	return ads
-}
-
 // decodeFile decodes the named file in TOML into a pointer.
-func decodeFile(fname string, v interface{}) {
+func decodeTOML(fname string, v interface{}) {
 	_, err := toml.DecodeFile(fname, v)
 	if err != nil {
 		log.Fatalln(err)
 	}
 }
 
-// readCatetoryConf reads a category configuration file.
-func readCategoryConf(cat, fname string) *categoryConf {
-	conf := &categoryConf{}
-	decodeFile(fname, conf)
-	return conf
+func readFile(fname string) string {
+	content, err := ioutil.ReadFile(fname)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(content)
 }
 
-// readAllAndStat retrieves all content of the named file and its stat.
-func readAllAndStat(fname string) (string, os.FileInfo) {
-	file, err := os.Open(fname)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer file.Close()
-	content, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	fi, err := file.Stat()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return string(content), fi
-}
-
-func readAll(fname string) string {
-	all, _ := readAllAndStat(fname)
-	return all
-}
-
-func catAllInDir(dirname string, fnames []string) string {
+func catInDir(dirname string, fnames []string) string {
 	var sb strings.Builder
 	for _, fname := range fnames {
-		sb.WriteString(readAll(path.Join(dirname, fname)))
+		sb.WriteString(readFile(filepath.Join(dirname, fname)))
 	}
 	return sb.String()
 }
 
 func getArticle(a article, am articleMeta, dir string) article {
-	content, fi := readAllAndStat(path.Join(dir, am.Name+".html"))
-	modTime := fi.ModTime()
-	css := catAllInDir(dir, am.ExtraCSS)
-	js := catAllInDir(dir, am.ExtraJS)
+	fname := filepath.Join(dir, am.Name+".html")
+	content := readFile(fname)
+	fileInfo, err := os.Stat(fname)
+	if err != nil {
+		log.Fatal(err)
+	}
+	modTime := fileInfo.ModTime()
+	css := catInDir(dir, am.ExtraCSS)
+	js := catInDir(dir, am.ExtraJS)
 	return article{
 		am, a.IsHomepage, a.Category, content, css, js, rfc3339Time(modTime)}
 }

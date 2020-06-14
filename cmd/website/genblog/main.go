@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
+	"sort"
 	"time"
 )
 
@@ -16,10 +17,18 @@ func main() {
 		log.Fatal("Usage: genblog <src dir> <dst dir>")
 	}
 	srcDir, dstDir := args[0], args[1]
+	srcFile := func(elem ...string) string {
+		elem = append([]string{srcDir}, elem...)
+		return filepath.Join(elem...)
+	}
+	dstFile := func(elem ...string) string {
+		elem = append([]string{dstDir}, elem...)
+		return filepath.Join(elem...)
+	}
 
 	// Read blog configuration.
 	conf := &blogConf{}
-	decodeFile(path.Join(srcDir, "index.toml"), conf)
+	decodeTOML(srcFile("index.toml"), conf)
 	if conf.RootURL == "" {
 		log.Fatal("RootURL must be specified; needed by feed and sitemap")
 	}
@@ -30,8 +39,8 @@ func main() {
 		log.Fatal("BaseCSS must be specified")
 	}
 
-	template := readAll(path.Join(srcDir, conf.Template))
-	baseCSS := catAllInDir(srcDir, conf.BaseCSS)
+	template := readFile(srcFile(conf.Template))
+	baseCSS := catInDir(srcDir, conf.BaseCSS)
 
 	// Initialize templates. They are all initialized from the same source code,
 	// plus a snippet to fix the "content" reference.
@@ -63,7 +72,7 @@ func main() {
 		// Add category index to the sitemap, without "/index.html"
 		allPaths = append(allPaths, name)
 		// Create directory
-		catDir := path.Join(dstDir, name)
+		catDir := dstFile(name)
 		err := os.MkdirAll(catDir, 0755)
 		if err != nil {
 			log.Fatal(err)
@@ -71,7 +80,7 @@ func main() {
 
 		// Generate index
 		cd := &categoryDot{base, name, prelude, articles, css, js}
-		executeToFile(categoryTmpl, cd, path.Join(catDir, "index.html"))
+		executeToFile(categoryTmpl, cd, filepath.Join(catDir, "index.html"))
 	}
 
 	for _, cat := range conf.Categories {
@@ -84,24 +93,24 @@ func main() {
 			continue
 		}
 
-		catConf := readCategoryConf(cat.Name, path.Join(srcDir, cat.Name, "index.toml"))
+		catConf := &categoryConf{}
+		decodeTOML(srcFile(cat.Name, "index.toml"), catConf)
 
 		prelude := ""
 		if catConf.Prelude != "" {
-			prelude = readAll(
-				path.Join(srcDir, cat.Name, catConf.Prelude+".html"))
+			prelude = readFile(srcFile(cat.Name, catConf.Prelude+".html"))
 		}
-		css := catAllInDir(path.Join(srcDir, cat.Name), catConf.ExtraCSS)
-		js := catAllInDir(path.Join(srcDir, cat.Name), catConf.ExtraJS)
+		css := catInDir(srcFile(cat.Name), catConf.ExtraCSS)
+		js := catInDir(srcFile(cat.Name), catConf.ExtraJS)
 		renderCategoryIndex(cat.Name, prelude, css, js, catConf.Articles)
 
 		// Generate articles
 		for _, am := range catConf.Articles {
 			// Add article URL to sitemap.
-			p := path.Join(cat.Name, am.Name+".html")
+			p := filepath.Join(cat.Name, am.Name+".html")
 			allPaths = append(allPaths, p)
 
-			a := getArticle(article{Category: cat.Name}, am, path.Join(srcDir, cat.Name))
+			a := getArticle(article{Category: cat.Name}, am, srcFile(cat.Name))
 			modTime := time.Time(a.LastModified)
 			if modTime.After(lastModified) {
 				lastModified = modTime
@@ -109,7 +118,7 @@ func main() {
 
 			// Generate article page.
 			ad := &articleDot{base, a}
-			executeToFile(articleTmpl, ad, path.Join(dstDir, p))
+			executeToFile(articleTmpl, ad, dstFile(p))
 
 			allArticleMetas = append(allArticleMetas, a.articleMeta)
 			recents.insert(a)
@@ -118,7 +127,9 @@ func main() {
 
 	// Generate "all category"
 	if hasAllCategory {
-		sortArticleMetas(allArticleMetas)
+		sort.Slice(allArticleMetas, func(i, j int) bool {
+			return allArticleMetas[i].Timestamp > allArticleMetas[j].Timestamp
+		})
 		renderCategoryIndex("all", "", "", "", allArticleMetas)
 	}
 
@@ -126,18 +137,15 @@ func main() {
 	// article pages.
 	a := getArticle(article{IsHomepage: true, Category: "homepage"}, conf.Index, srcDir)
 	ad := &articleDot{base, a}
-	executeToFile(homepageTmpl, ad, path.Join(dstDir, "index.html"))
+	executeToFile(homepageTmpl, ad, dstFile("index.html"))
 
 	// Generate feed.
 	feedArticles := recents.articles
 	fd := feedDot{base, feedArticles, rfc3339Time(lastModified)}
-	executeToFile(feedTmpl, fd, path.Join(dstDir, "feed.atom"))
+	executeToFile(feedTmpl, fd, dstFile("feed.atom"))
 
 	// Generate site map.
-	file, err := openForWrite(path.Join(dstDir, "sitemap.txt"))
-	if err != nil {
-		log.Fatal(err)
-	}
+	file := openForWrite(dstFile("sitemap.txt"))
 	defer file.Close()
 	for _, p := range allPaths {
 		fmt.Fprintf(file, "%s/%s\n", conf.RootURL, p)

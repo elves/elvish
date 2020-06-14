@@ -78,17 +78,18 @@ func newTemplate(name, root string, sources ...string) *template.Template {
 	return t
 }
 
-func openForWrite(fname string) (*os.File, error) {
-	return os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-}
-
-func executeToFile(t *template.Template, data interface{}, fname string) {
-	file, err := openForWrite(fname)
+func openForWrite(fname string) *os.File {
+	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
+	return file
+}
+
+func executeToFile(t *template.Template, data interface{}, fname string) {
+	file := openForWrite(fname)
 	defer file.Close()
-	err = t.Execute(file, data)
+	err := t.Execute(file, data)
 	if err != nil {
 		log.Fatalf("rendering %q: %s", fname, err)
 	}
