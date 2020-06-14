@@ -403,9 +403,10 @@ supports the following three definitions of words:
 -   An **alphanumerical word** is a sequence of alphanumerical characters. This
     definition corresponds to the concept of "word" in bash.
 
-Whitespace characters are those with the Unicode [Whitespace](https://en.wikip
-edia.org/wiki/Whitespace_character#Unicode) property. Alphanumerical characters
-are those in the Unicode Letter or Number category.
+Whitespace characters are those with the Unicode
+[Whitespace](https://en.wikipedia.org/wiki/Whitespace_character#Unicode)
+property. Alphanumerical characters are those in the Unicode Letter or Number
+category.
 
 A **word boundary** is an imaginary zero-length boundary around a word.
 
