@@ -10,48 +10,95 @@ import (
 
 //elvdoc:var abbr
 //
-// This is a map of abbreviations to expansions. The expansion occurs as soon
-// as the final character of the abbreviation is typed. These are known as
-// "instant abbreviations". If more than a single abbreviation would match the
-// longest one is used.
+// A map from (simple) abbreviations to their expansions.
+//
+// An abbreviation is replaced by its expansion when it is typed in full
+// and consecutively, without being interrupted by the use of other editing
+// functionalities, such as cursor movements.
+//
+// If more than one abbreviations would match, the longest one is used.
 //
 // Examples:
 //
 // ```elvish
-// edit:abbr['||'] = ' | less'
-// edit:abbr['>dn'] = ' 2>/dev/null '
+// edit:abbr['||'] = '| less'
+// edit:abbr['>dn'] = '2>/dev/null'
 // ```
+//
+// With the definitions above, typing `||` anywhere expands to `| less`, and
+// typing `>dn` anywhere expands to `2>/dev/null`. However, typing a `|`, moving
+// the cursor left, and typing another `|` does **not** expand to `| less`,
+// since the abbreviation `||` was not typed consecutively.
 //
 // @cf edit:small-word-abbr
 
 //elvdoc:var small-word-abbr
 //
-// This is a map of small word abbreviations to expansions. A "small word" is
-// a contiguous sequence of whitespace, alpha-numeric, or other characters.
-// Small word abbreviations are expanded only when a small word boundary is
-// detected at the start and end of the abbreviation. The beginning of the
-// command line is considered to be a non-small word character regardless of
-// the category of the first character in the abbreviation. The small word
-// abbreviation can independently begin and end with a char in any of the
-// three aforementioned categories.
+// A map from small-word abbreviations and their expansions.
 //
-// Small word abbreviations only expand when the most recently typed character
-// is at the end of the command line. This means that if you move the cursor
-// to earlier in the line and type what would otherwise match a small word
-// abbreviation no expansion will occur.
+// A small-word abbreviation is replaced by its expansion after it is typed in
+// full and consecutively, and followed by another character (the *trigger*
+// character). Furthermore, the expansion requires the following conditions to
+// be satisfied:
 //
-// [Instant abbreviations](#editabbr) have higher priority. Which means small
-// word abbreviations are only considered for expansion if no instant
-// abbreviation is expanded after typing a character.
+// -   The end of the abbreviation must be adjacent to a small-word boundary,
+//     i.e. the last character of the abbreviation and the trigger character
+//     must be from two different small-word categories.
 //
-// Examples:
+// -   The start of the abbreviation must also be adjacent to a small-word
+//     boundary, unless it appears at the beginning of the code buffer.
+//
+// -   The cursor must be at the end of the buffer.
+//
+// If more than one abbreviations would match, the longest one is used.
+//
+// As an example, with the following configuration:
 //
 // ```elvish
 // edit:small-word-abbr['gcm'] = 'git checkout master'
-// edit:small-word-abbr['gcp'] = 'git cherry-pick -x'
-// edit:small-word-abbr['ll'] = 'ls -ltr'
+// ```
+//
+// In the following scenarios, the `gcm` abbreviation is expanded:
+//
+// -   With an empty buffer, typing `gcm` and a space or semicolon;
+//
+// -   When the buffer ends with a space, typing `gcm` and a space or semicolon.
+//
+// The space or semicolon after `gcm` is preserved in both cases.
+//
+// In the following scenarios, the `gcm` abbreviation is **not** expanded:
+//
+// -   With an empty buffer, typing `Xgcm` and a space or semicolon (start of
+//     abbreviation is not adjacent to a small-word boundary);
+//
+// -   When the buffer ends with `X`, typing `gcm` and a space or semicolon (end
+//     of abbreviation is not adjacent to a small-word boundary);
+//
+// -   When the buffer is non-empty, move the cursor to the beginning, and typing
+//     `gcm` and a space (cursor not at the end of the buffer).
+//
+// This example shows the case where the abbreviation consists of a single small
+// word of alphanumerical characters, but that doesn't have to be the case. For
+// example, with the following configuration:
+//
+// ```elvish
 // edit:small-word-abbr['>dn'] = ' 2>/dev/null'
 // ```
+//
+// The abbreviation `>dn` starts with a punctuation character, and ends with an
+// alphanumerical character. This means that it is expanded when it borders
+// a whitespace or alphanumerical character to the left, and a whitespace or
+// punctuation to the right; for example, typing `ls>dn;` will expand it.
+//
+// Some extra examples of small-word abbreviations:
+//
+// ```elvish
+// edit:small-word-abbr['gcp'] = 'git cherry-pick -x'
+// edit:small-word-abbr['ll'] = 'ls -ltr'
+// ```
+//
+// If both a [simple abbreviation](#editabbr) and a small-word abbreviation can
+// be expanded, the simple abbreviation has priority.
 //
 // @cf edit:abbr
 

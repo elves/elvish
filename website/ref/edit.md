@@ -386,4 +386,38 @@ Then every time you accept a chunk of code (and thus leaving the editor),
 Elvish session, or after a chunk of code is executed, `going to read` is
 printed.
 
+# Word types
+
+The editor supports operating on entire "words". As intuitive as the concept of
+"word" is, there is actually no single definition for the concept. The editor
+supports the following three definitions of words:
+
+-   A **big word**, or simply **word**, is a sequence of non-whitespace
+    characters. This definition corresponds to the concept of "WORD" in vi.
+
+-   A **small word** is a sequence of alphanumerical characters ("alnum small
+    word"), or a sequence of non-alphanumerical, non-whitespace characters
+    ("punctuation small word"). This definition corresponds to the concept of
+    "word" in vi and zsh.
+
+-   An **alphanumerical word** is a sequence of alphanumerical characters. This
+    definition corresponds to the concept of "word" in bash.
+
+Whitespace characters are those with the Unicode [Whitespace](https://en.wikip
+edia.org/wiki/Whitespace_character#Unicode) property. Alphanumerical characters
+are those in the Unicode Letter or Number category.
+
+A **word boundary** is an imaginary zero-length boundary around a word.
+
+To see the difference between these definitions, consider the following string:
+`abc++ /* xyz`:
+
+-   It contains three (big) words: `abc++`, `/*` and `xyz`.
+
+-   It contains four small words, `abc`, `++`, `/*` and `xyz`. Among them, `abc`
+    and `xyz` are alnum small words, while `++` and `/*` are punctuation small
+    words.
+
+-   It contains two alnum words, `abc` and `xyz`.
+
 @elvdoc -ns edit: -dir ../pkg/edit
