@@ -3,7 +3,6 @@
 package platform
 
 import (
-	"errors"
 	"os"
 	"runtime"
 	"strings"
@@ -40,17 +39,22 @@ import (
 
 //elvdoc:fn hostname &strip-domain=false
 //
-// The host name of the system. If option `&strip-domain` is used any domain
-// components are stripped from the host name. Domain components include the
-// first dot (period) and anything that follows. For example,
-// `machname.subdomain.tld` => `machname`.
+// Outputs the hostname of the system. If the option `&strip-domain` is `$true`,
+// strips the part after the first dot.
 //
-// If an error occurs while fetching the host name an exception is thrown.
-// This is implemented using Go's
-// [`os.Hostname`](https://golang.org/pkg/os/#Hostname) function.
+// This function throws an exception if it cannot determine the hostname. It is
+// implemented using Go's [`os.Hostname`](https://golang.org/pkg/os/#Hostname).
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> platform:hostname
+// ▶ lothlorien.elv.sh
+// ~> platform:hostname &strip-domain=$true
+// ▶ lothlorien
+// ```
 
 var osHostname = os.Hostname // to allow mocking in unit tests
-var errCannotDetermineHostname = errors.New("cannot determine the hostname")
 
 type hostnameOpt struct{ StripDomain bool }
 
@@ -59,7 +63,7 @@ func (o *hostnameOpt) SetDefaultOptions() {}
 func hostname(opts hostnameOpt) (string, error) {
 	hostname, err := osHostname()
 	if err != nil {
-		return "", errCannotDetermineHostname
+		return "", err
 	}
 	if !opts.StripDomain {
 		return hostname, nil
