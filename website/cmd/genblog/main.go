@@ -102,7 +102,11 @@ func main() {
 		}
 		css := catInDir(srcFile(cat.Name), catConf.ExtraCSS)
 		js := catInDir(srcFile(cat.Name), catConf.ExtraJS)
-		renderCategoryIndex(cat.Name, prelude, css, js, catConf.Articles)
+		var articles []articleMeta
+		if catConf.AutoIndex {
+			articles = catConf.Articles
+		}
+		renderCategoryIndex(cat.Name, prelude, css, js, articles)
 
 		// Generate articles
 		for _, am := range catConf.Articles {

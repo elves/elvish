@@ -35,10 +35,11 @@ type categoryMeta struct {
 // categoryConf represents the configuration of a category. Note that the
 // metadata is found in the global blog configuration and not duplicated here.
 type categoryConf struct {
-	Prelude  string
-	ExtraCSS []string
-	ExtraJS  []string
-	Articles []articleMeta
+	Prelude   string
+	AutoIndex bool
+	ExtraCSS  []string
+	ExtraJS   []string
+	Articles  []articleMeta
 }
 
 // articleMeta represents the metadata of an article, found in a category

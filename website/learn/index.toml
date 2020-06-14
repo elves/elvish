@@ -1,3 +1,5 @@
+autoIndex = true
+
 [[articles]]
 name = "fundamentals"
 title = "Fundamentals"

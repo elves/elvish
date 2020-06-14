@@ -1,3 +1,5 @@
+autoIndex = true
+
 [[articles]]
 name = "language"
 title = "The Language Specification"

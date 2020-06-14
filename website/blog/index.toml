@@ -1,4 +1,5 @@
 prelude = "prelude"
+autoIndex = true
 
 [[articles]]
 name = "0.13.1-release-notes"
