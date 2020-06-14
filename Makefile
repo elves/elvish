@@ -17,6 +17,10 @@ get:
 		"-X github.com/elves/elvish/pkg/buildinfo.Version=$(VERSION) \
 		 -X github.com/elves/elvish/pkg/buildinfo.Reproducible=true" .
 
+# Used by elves/up
+buildall:
+	./tools/buildall.sh
+
 generate:
 	go generate ./...
 
