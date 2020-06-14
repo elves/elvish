@@ -1,6 +1,7 @@
 module github.com/elves/elvish
 
 require (
+	github.com/BurntSushi/toml v0.3.1
 	github.com/kr/pty v1.1.4
 	github.com/mattn/go-isatty v0.0.12
 	github.com/xiaq/persistent v0.0.0-20190312105637-a1d9ac4077fc

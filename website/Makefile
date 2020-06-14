@@ -5,7 +5,7 @@ PUBLISH_DIR := ./_publish
 MDS := home.md $(wildcard [^_]*/*.md)
 HTMLS := $(MDS:.md=.html)
 
-TOOLS := highlight macros elvdoc
+TOOLS := highlight macros elvdoc genblog
 
 default: gen
 
@@ -16,22 +16,14 @@ default: gen
 	go build -o $@ ./$<
 
 # Generates the website into the dst directory.
-gen: tools $(HTMLS) maybe-genblog
-	genblog . $(DST_DIR)
+gen: tools $(HTMLS)
+	./_tools/genblog.bin . $(DST_DIR)
 	ln -sf `pwd`/_favicons/* $(DST_DIR)/
 
 tools:
 	for tool in $(TOOLS); do \
 		go build -o _tools/$$tool.bin ../cmd/website/$$tool; \
 	done
-
-# Installs genblog only if not found.
-maybe-genblog:
-	which genblog || $(MAKE) genblog
-
-# Installs latest genblog.
-genblog:
-	cd ~ && go get -u github.com/xiaq/genblog
 
 # Synchronizes the generated website into $(PUBLISH_DIR). The PUBLISH_DIR
 # environment variable can be overriden to a remote place to publish this online.
@@ -42,5 +34,5 @@ clean:
 	rm -f $(HTMLS) _tools/*.bin
 	rm -rf $(DST_DIR)
 
-.PHONY: default gen tools maybe-genblog genblog publish clean
+.PHONY: default gen tools publish clean
 .SECONDARY: $(TOOL_BINARIES)

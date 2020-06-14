@@ -1,0 +1,17 @@
+#!/bin/sh
+
+i() {
+    printf '`'
+    cat ./include/$1 | sed 's/`/``/g'
+    printf '`'
+}
+
+cat > ./include.go <<EOF
+package main
+
+const defaultCSS = `i reset.css` + `i blog.css`
+
+const defaultTemplate = `i base.html`
+
+const feedTemplText = `i feed.atom`
+EOF
