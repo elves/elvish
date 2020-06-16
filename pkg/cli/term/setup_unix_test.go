@@ -5,7 +5,7 @@ package term
 import (
 	"testing"
 
-	"github.com/kr/pty"
+	"github.com/creack/pty"
 )
 
 func TestSetupTerminal(t *testing.T) {

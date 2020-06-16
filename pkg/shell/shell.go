@@ -30,11 +30,12 @@ func (program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 	if f.NoRc {
 		p.Rc = ""
 	}
-	if len(args) > 0 {
-		exit := Script(
-			fds, args, &ScriptConfig{
-				Paths: p,
-				Cmd:   f.CodeInArg, CompileOnly: f.CompileOnly, JSON: f.JSON})
+	if len(args) > 0 || !sys.IsATTY(fds[0]) {
+		if !f.CodeInArg && len(args) == 0 && !sys.IsATTY(fds[0]) {
+			args = []string{"-"} // read the script from stdin
+		}
+		exit := Script(fds, args, &ScriptConfig{
+			Paths: p, Cmd: f.CodeInArg, CompileOnly: f.CompileOnly, JSON: f.JSON})
 		return prog.Exit(exit)
 	}
 	Interact(fds, &InteractConfig{SpawnDaemon: true, Paths: p})

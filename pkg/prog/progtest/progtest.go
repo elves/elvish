@@ -19,8 +19,11 @@ type Fixture struct {
 	dirCleanup func()
 }
 
-// Setup sets up a test fixture. The caller is responsible for calling the
-// Cleanup method of the returned Fixture.
+// Setup sets up a test fixture for testing non-interactive behavior of
+// elvish. See also, SetupInteractive().
+//
+// The caller is responsible for calling the Cleanup method of the returned
+// Fixture.
 func Setup() *Fixture {
 	_, dirCleanup := util.InTestDir()
 	return &Fixture{[3]*pipe{makePipe(), makePipe(), makePipe()}, dirCleanup}

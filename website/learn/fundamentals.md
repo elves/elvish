@@ -245,6 +245,109 @@ linux is at index 0
 Note that in this example, the two pairs of `[]` have different meanings: the
 first pair denotes lists, while the second pair denotes an indexing operation.
 
+# Output capture and multiple values
+
+Environment variables are not the only way to learn about a computer system; we
+can also gain more information by invoking commands. The `uname` command tells
+you which operation system the computer is running; for instance, if you are
+running Linux, it prints `Linux` (unsurprisingly):
+
+```elvish-transcript
+~> uname
+Linux
+```
+
+(If you are running macOS, `uname` will print `Darwin`, the
+[open-source core](<https://en.wikipedia.org/wiki/Darwin_(operating_system)>) of
+macOS.)
+
+Let's try to integrate this information into our "hello" message. The Elvish
+command-line allows us to run multiple commands in a batch, as long as they are
+separated by semicolons. We can build the message by running multiple commands,
+using `uname` for the OS part:
+
+```elvish-transcript
+~> echo Hello, $E:USER, ; uname ; echo user!
+Hello, xiaq,
+Linux
+user!
+```
+
+This has the undesirable effect that "Linux" appears on its own line. Instead of
+running this command directly, we can first **capture** its output in a
+variable:
+
+```elvish-transcript
+~> os = (uname)
+~> echo Hello, $E:USER, $os user!
+Hello, elf, Linux user!
+```
+
+You can also use the output capture construct directly as an argument to `echo`,
+without storing the result in a variable first:
+
+```elvish-transcript
+~> echo Hello, $E:USER, (uname) user!
+Hello, elf, Linux user!
+```
+
+## More arithmetics
+
+You can use output captures to construct do complex arithmetic involving more
+than one operation:
+
+```elvish-transcript
+~> # compute the answer to life, universe and everything
+   * (+ 3 4) (- 100 94)
+▶ 42
+```
+
+# Running elvish
+
+The `elvish` program has a large number of options; most of which you'll never
+need to use because they are for debugging or other esoteric situations. Run
+`elvish -help` to see all the available options.
+
+If you run `elvish` with no options, and stdin is a tty, an interactive session
+is started. See the sections on [command history](#history-and-scripting) and
+the [command editor](../ref/edit.html).
+
+If you run `elvish -c 'code'` stdin is treated as data (regardless of whether or
+not stdin is a tty). For example:
+
+```elvish-transcript
+~> { echo 'yes'; echo 'no' } | elvish -c 'from-lines'
+▶ yes
+▶ no
+```
+
+If stdin is not attached to a tty it may be treated as an Elvish script or data.
+If you provide no options then stdin will be treated as an Elvish script to run.
+For example:
+
+```elvish-transcript
+~> echo '+ 1 2' | elvish
+▶ 3
+```
+
+If you provide a path to a file that contains an Elvish script then stdin is
+treated as data:
+
+```elvish-transcript
+-> echo 'from-lines' > example.elv
+~> echo '+ 1 2' | elvish example.elv
+▶ '+ 1 2'
+```
+
+If you wish to read a script from stdin and pass arguments to it (see the
+discussion of [script arguments below](#script-arguments)) you need to use `-`
+as the script name to force reading the script from stdin:
+
+```elvish-transcript
+~> echo 'put $args' | elvish - arg1 arg2
+▶ [arg1 arg2]
+```
+
 ## Script arguments
 
 Recall the `dice.elv` script above:
@@ -309,63 +412,6 @@ Bye, Jane!
 ~> elvish greet-and-bye.elv John
 Hello, John!
 Bye, John!
-```
-
-# Output capture and multiple values
-
-Environment variables are not the only way to learn about a computer system; we
-can also gain more information by invoking commands. The `uname` command tells
-you which operation system the computer is running; for instance, if you are
-running Linux, it prints `Linux` (unsurprisingly):
-
-```elvish-transcript
-~> uname
-Linux
-```
-
-(If you are running macOS, `uname` will print `Darwin`, the
-[open-source core](<https://en.wikipedia.org/wiki/Darwin_(operating_system)>) of
-macOS.)
-
-Let's try to integrate this information into our "hello" message. The Elvish
-command-line allows us to run multiple commands in a batch, as long as they are
-separated by semicolons. We can build the message by running multiple commands,
-using `uname` for the OS part:
-
-```elvish-transcript
-~> echo Hello, $E:USER, ; uname ; echo user!
-Hello, xiaq,
-Linux
-user!
-```
-
-This has the undesirable effect that "Linux" appears on its own line. Instead of
-running this command directly, we can first **capture** its output in a
-variable:
-
-```elvish-transcript
-~> os = (uname)
-~> echo Hello, $E:USER, $os user!
-Hello, elf, Linux user!
-```
-
-You can also use the output capture construct directly as an argument to `echo`,
-without storing the result in a variable first:
-
-```elvish-transcript
-~> echo Hello, $E:USER, (uname) user!
-Hello, elf, Linux user!
-```
-
-## More arithmetics
-
-You can use output captures to construct do complex arithmetic involving more
-than one operation:
-
-```elvish-transcript
-~> # compute the answer to life, universe and everything
-   * (+ 3 4) (- 100 94)
-▶ 42
 ```
 
 <!--

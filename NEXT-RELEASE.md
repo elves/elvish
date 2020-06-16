@@ -112,6 +112,10 @@ Other improvements:
 
 # Notable bugfixes
 
+-   Running elvish with stdin not attached to a tty no longer attempts to start
+    an interactive shell ([#661](https://b.elv.sh/661)). Depending on the CLI
+    arguments it may treat stdin as a script or data.
+
 -   Invalid option names or values passed to builtin functions now correctly
     trigger an exception, instead of being silently ignored.
 

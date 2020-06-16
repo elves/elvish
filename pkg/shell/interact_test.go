@@ -1,3 +1,5 @@
+// +build !windows
+
 package shell
 
 import (
@@ -11,7 +13,7 @@ import (
 )
 
 func TestInteract_SingleCommand(t *testing.T) {
-	f := Setup()
+	f := SetupInteractive()
 	defer f.Cleanup()
 	f.FeedIn("echo hello\n")
 

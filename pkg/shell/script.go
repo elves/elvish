@@ -37,13 +37,17 @@ func Script(fds [3]*os.File, args []string, cfg *ScriptConfig) int {
 		code = arg0
 	} else {
 		var err error
-		name, err = filepath.Abs(arg0)
-		if err != nil {
-			fmt.Fprintf(fds[2],
-				"cannot get full path of script %q: %v\n", arg0, err)
-			return 2
+		if arg0 == "-" { // we were asked to read the script from stdin
+			code, err = readStdinUTF8(fds[0])
+		} else {
+			name, err = filepath.Abs(arg0)
+			if err != nil {
+				fmt.Fprintf(fds[2],
+					"cannot get full path of script %q: %v\n", arg0, err)
+				return 2
+			}
+			code, err = readFileUTF8(name)
 		}
-		code, err = readFileUTF8(name)
 		if err != nil {
 			fmt.Fprintf(fds[2], "cannot read script %q: %v\n", name, err)
 			return 2
@@ -76,6 +80,17 @@ var errSourceNotUTF8 = errors.New("source is not UTF-8")
 
 func readFileUTF8(fname string) (string, error) {
 	bytes, err := ioutil.ReadFile(fname)
+	if err != nil {
+		return "", err
+	}
+	if !utf8.Valid(bytes) {
+		return "", errSourceNotUTF8
+	}
+	return string(bytes), nil
+}
+
+func readStdinUTF8(fd *os.File) (string, error) {
+	bytes, err := ioutil.ReadAll(fd)
 	if err != nil {
 		return "", err
 	}

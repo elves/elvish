@@ -27,19 +27,18 @@ type InteractConfig struct {
 
 // Interact runs an interactive shell session.
 func Interact(fds [3]*os.File, cfg *InteractConfig) {
+	if !sys.IsATTY(fds[0]) {
+		panic("stdin should have been connected to a tty")
+	}
 	defer rescue()
 	ev, cleanup := setupShell(fds, cfg.Paths, cfg.SpawnDaemon)
 	defer cleanup()
 
 	// Build Editor.
 	var ed editor
-	if sys.IsATTY(fds[0]) {
-		newed := edit.NewEditor(cli.StdTTY, ev, ev.DaemonClient)
-		ev.Builtin.AddNs("edit", newed.Ns())
-		ed = newed
-	} else {
-		ed = newMinEditor(fds[0], fds[2])
-	}
+	newed := edit.NewEditor(cli.StdTTY, ev, ev.DaemonClient)
+	ev.Builtin.AddNs("edit", newed.Ns())
+	ed = newed
 
 	// Source rc.elv.
 	if cfg.Paths.Rc != "" {
