@@ -135,6 +135,10 @@ func isKilled(e *eval.Exception) bool {
 // Examples:
 //
 // ```elvish-transcript
+// ~> exc:is-fail-exc ?(fail bad)
+// ▶ $true
+// ~> exc:is-fail-exc ?(false)
+// ▶ $false
 // ```
 //
 // @cf builtin:fail
