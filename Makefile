@@ -31,6 +31,15 @@ style:
 	find . -name '*.go' | xargs goimports -w
 	find . -name '*.md' | xargs prettier --tab-width 4 --prose-wrap always --write
 
+checkstyle:
+	echo 'Go files that need formatting:'
+	! find . -name '*.go' | xargs goimports -l \
+		| sed 's/^/  /' | grep . && echo '  None!'
+
+	echo 'Markdown files that need formatting:'
+	! find . -name '*.md' | xargs prettier --tab-width 4 --prose-wrap always -l \
+		| sed 's/^/  /' | grep . && echo '  None!'
+
 cover/%.cover: %
 	mkdir -p $(dir $@)
 	go test -coverprofile=$@ -covermode=$(COVER_MODE) ./$<
@@ -39,4 +48,5 @@ cover/all: $(PKG_COVERS)
 	echo mode: $(COVER_MODE) > $@
 	for f in $(PKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 
-.PHONY: default get generate test style
+.SILENT: checkstyle
+.PHONY: default get generate test style checkstyle
