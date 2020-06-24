@@ -31,11 +31,14 @@ style:
 	find . -name '*.go' | xargs goimports -w
 	find . -name '*.md' | xargs prettier --tab-width 4 --prose-wrap always --write
 
-checkstyle:
+checkstyle: checkstyle-go checkstyle-md
+
+checkstyle-go:
 	echo 'Go files that need formatting:'
 	! find . -name '*.go' | xargs goimports -l \
 		| sed 's/^/  /' | grep . && echo '  None!'
 
+checkstyle-md:
 	echo 'Markdown files that need formatting:'
 	! find . -name '*.md' | xargs prettier --tab-width 4 --prose-wrap always -l \
 		| sed 's/^/  /' | grep . && echo '  None!'
@@ -48,5 +51,5 @@ cover/all: $(PKG_COVERS)
 	echo mode: $(COVER_MODE) > $@
 	for f in $(PKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 
-.SILENT: checkstyle
-.PHONY: default get generate test style checkstyle
+.SILENT: checkstyle-go checkstyle-md
+.PHONY: default get generate test style checkstyle checkstyle-go checkstyle-md
