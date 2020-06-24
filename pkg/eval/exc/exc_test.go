@@ -25,5 +25,8 @@ func TestExc(t *testing.T) {
 
 		That("exc:is-fail-exc ?(fail bad)").Puts(true),
 		That("exc:is-fail-exc ?("+failingExternalCmd+")").Puts(false),
+
+		That("exc:is-pipeline-exc ?(fail bad)").Puts(false),
+		That("exc:is-pipeline-exc ?(fail 1 | fail 2)").Puts(true),
 	)
 }
