@@ -14,6 +14,8 @@ var Ns = eval.Ns{}.
 		"is-killed":           isKilled,
 
 		"is-fail-exc": isFailExc,
+
+		"is-pipeline-exc": isPipelineExc,
 	})
 
 //elvdoc:fn show
@@ -145,5 +147,24 @@ func isKilled(e *eval.Exception) bool {
 
 func isFailExc(e *eval.Exception) bool {
 	_, ok := e.Cause.(eval.FailError)
+	return ok
+}
+
+//elvdoc:fn is-pipeline-exc
+//
+// ```elvish
+// exc:is-pipeline-exc $e
+// ```
+//
+// Outputs whether an exception was a result of multiple commands in a pipeline
+// throwing out exceptions.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ```
+
+func isPipelineExc(e *eval.Exception) bool {
+	_, ok := e.Cause.(eval.PipelineError)
 	return ok
 }
