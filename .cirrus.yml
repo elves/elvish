@@ -39,6 +39,24 @@ test_task:
     - go test -coverprofile=coverage -covermode=set ./...
     - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage -t $CODECOV_TOKEN
 
+checkstyle_go_task:
+  name: Check the style of .go files
+  container:
+    image: golang:latest
+  env:
+    PATH: $HOME/go/bin:$PATH
+  setup_script: go get golang.org/x/tools/cmd/goimports
+  check_script: make checkstyle-go
+
+checkstyle_md_task:
+  name: Check the style of .md files
+  container:
+    image: node:latest
+  env:
+    PATH: $HOME/.npm-packages/bin:$PATH
+  setup_script: npm install --global prettier
+  check_script: make checkstyle-md
+
 deploy_task:
   name: Build binaries and deploy to bintray
   only_if: $CIRRUS_PR == ""
