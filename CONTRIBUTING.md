@@ -14,8 +14,8 @@ don't mind the risk of the PR being rejected due to lack of prior discussion.
 ## Testing changes
 
 Write comprehensive unit tests for your code, and make sure that existing tests
-are passing. Tests are run on CI automatically for PRs; you can also run `make test` in the repo root
-yourself.
+are passing. Tests are run on CI automatically for PRs; you can also run
+`make test` in the repo root yourself.
 
 Respect established patterns of how unit tests are written. Some packages
 unfortunately have competing patterns, which usually reflects a still-evolving
@@ -43,10 +43,8 @@ Always document user-visible changes.
 Add a brief list item to the release note of the next release, in the
 appropriate section.
 
-The release
-notes live in `website/blog`; the symlink
-`NEXT-RELEASE.md` at the repo root always points to those of the
-next release.
+The release notes live in `website/blog`; the symlink `NEXT-RELEASE.md` at the
+repo root always points to those of the next release.
 
 ### Reference docs
 
@@ -127,26 +125,20 @@ Dependencies of the generation rules:
 
 ## Formatting source files
 
-Format Go source files with
-[goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports):
+Install [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports) to
+format Go files, and [prettier](https://prettier.io/) to format Markdown files.
 
 ```sh
-go get golang.org/x/tools/cmd/goimports # Install
-goimports -w . # Format Go files
+go get golang.org/x/tools/cmd/goimports
+npm install --global prettier
 ```
 
-Format Markdown files with [prettier](https://prettier.io/):
+Once you have installed the tools, use `make style` to format Go and Markdown
+files. If you prefer, you can also configure your editor to run these commands
+automatically when saving Go or Markdown sources.
 
-```sh
-npm install --global prettier # Install
-prettier --tab-width 4 --prose-wrap always --write *.md # Format Markdown files
-```
-
-Once you have installed the tools, `make style` from the repo root will format
-all the Go source files and Markdown files.
-
-Alternatively, configure your editor to run these commands automatically when
-saving Go or Markdown sources.
+Use `make checkstyle` to check if all Go and Markdown files are properly
+formatted.
 
 ## Licensing
 
