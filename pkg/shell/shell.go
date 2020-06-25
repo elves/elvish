@@ -2,16 +2,13 @@
 package shell
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
-	"syscall"
 
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/prog"
-	"github.com/elves/elvish/pkg/sys"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -90,17 +87,4 @@ func saveEnv(name string) func() {
 		return func() { os.Setenv(name, v) }
 	}
 	return func() { os.Unsetenv(name) }
-}
-
-// Global panic handler.
-func rescue() {
-	r := recover()
-	if r != nil {
-		println()
-		print(sys.DumpStack())
-		println()
-		fmt.Println(r)
-		println("\nExecing recovery shell /bin/sh")
-		syscall.Exec("/bin/sh", []string{"/bin/sh"}, os.Environ())
-	}
 }

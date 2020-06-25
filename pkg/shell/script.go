@@ -24,7 +24,6 @@ type ScriptConfig struct {
 
 // Script executes a shell script.
 func Script(fds [3]*os.File, args []string, cfg *ScriptConfig) int {
-	defer rescue()
 	ev, cleanup := setupShell(fds, cfg.Paths, cfg.SpawnDaemon)
 	defer cleanup()
 

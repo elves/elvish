@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/elves/elvish/pkg/cli"
@@ -19,15 +20,34 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
+// InteractiveRescueShell determines whether a panic results in a rescue shell
+// being launched. It should be set to false by interactive mode unit tests.
+var interactiveRescueShell bool = true
+
 // InteractConfig keeps configuration for the interactive mode.
 type InteractConfig struct {
 	SpawnDaemon bool
 	Paths       Paths
 }
 
+// Interactive mode panic handler.
+func handlePanic() {
+	r := recover()
+	if r != nil {
+		println()
+		print(sys.DumpStack())
+		println()
+		fmt.Println(r)
+		println("\nExecing recovery shell /bin/sh")
+		syscall.Exec("/bin/sh", []string{"/bin/sh"}, os.Environ())
+	}
+}
+
 // Interact runs an interactive shell session.
 func Interact(fds [3]*os.File, cfg *InteractConfig) {
-	defer rescue()
+	if interactiveRescueShell {
+		defer handlePanic()
+	}
 	ev, cleanup := setupShell(fds, cfg.Paths, cfg.SpawnDaemon)
 	defer cleanup()
 
