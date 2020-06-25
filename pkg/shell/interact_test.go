@@ -2,6 +2,7 @@ package shell
 
 import (
 	"bytes"
+	"os"
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval"
@@ -9,6 +10,11 @@ import (
 	"github.com/elves/elvish/pkg/eval/vars"
 	. "github.com/elves/elvish/pkg/prog/progtest"
 )
+
+func TestMain(m *testing.M) {
+	interactiveRescueShell = false
+	os.Exit(m.Run())
+}
 
 func TestInteract_SingleCommand(t *testing.T) {
 	f := Setup()
