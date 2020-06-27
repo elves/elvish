@@ -12,6 +12,9 @@ be released on 2020-07-01, 6 months after 0.13.0.
 -   Output captures now split trailing carriage returns from each line,
     effectively making `\r\n` also valid line separators.
 
+-   Map-like values written by the `dir-history` and `re:find` functions can no
+    longer be assoc'ed.
+
 # Deprecated features
 
 Elvish now has a deprecation mechanism to give advance notice for breaking

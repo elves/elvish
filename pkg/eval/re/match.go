@@ -5,18 +5,18 @@ import (
 )
 
 type matchStruct struct {
-	Text   string    `json:"text"`
-	Start  int       `json:"start"`
-	End    int       `json:"end"`
-	Groups vals.List `json:"groups"`
+	Text   string
+	Start  int
+	End    int
+	Groups vals.List
 }
 
-func (matchStruct) IsStructMap(vals.StructMapMarker) {}
+func (matchStruct) IsStructMap() {}
 
 type submatchStruct struct {
-	Text  string `json:"text"`
-	Start int    `json:"start"`
-	End   int    `json:"end"`
+	Text  string
+	Start int
+	End   int
 }
 
-func (submatchStruct) IsStructMap(vals.StructMapMarker) {}
+func (submatchStruct) IsStructMap() {}

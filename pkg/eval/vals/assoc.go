@@ -2,7 +2,6 @@ package vals
 
 import (
 	"errors"
-	"reflect"
 )
 
 // Assocer wraps the Assoc method.
@@ -31,8 +30,6 @@ func Assoc(a, k, v interface{}) (interface{}, error) {
 		return assocList(a, k, v)
 	case Map:
 		return a.Assoc(k, v), nil
-	case StructMap:
-		return assocStructMap(a, k, v)
 	case Assocer:
 		return a.Assoc(k, v)
 	}
@@ -60,32 +57,4 @@ func assocList(l List, k, v interface{}) (interface{}, error) {
 		return nil, errAssocWithSlice
 	}
 	return l.Assoc(index.Lower, v), nil
-}
-
-func assocStructMap(s StructMap, k, v interface{}) (interface{}, error) {
-	kstring, ok := k.(string)
-	if !ok {
-		return nil, errStructMapKey
-	}
-	t := reflect.TypeOf(s)
-	info := getStructMapInfo(t)
-	index := -1
-	for i, fieldName := range info.fieldNames {
-		if fieldName == kstring {
-			index = i
-			break
-		}
-	}
-	if index == -1 {
-		return nil, errStructMapKey
-	}
-	// TODO: Check whether v can be assigned to the field first, to avoid
-	// unncessary copying.
-	copy := reflect.New(t).Elem()
-	copy.Set(reflect.ValueOf(s))
-	err := ScanToGo(v, copy.Field(index).Addr().Interface())
-	if err != nil {
-		return nil, err
-	}
-	return copy.Interface(), nil
 }

@@ -23,7 +23,7 @@ func Len(v interface{}) int {
 	case string:
 		return len(v)
 	case StructMap:
-		return reflect.ValueOf(v).NumField()
+		return getStructMapInfo(reflect.TypeOf(v)).filledFields
 	case Lener:
 		return v.Len()
 	}

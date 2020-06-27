@@ -24,7 +24,7 @@ func HasKey(container, key interface{}) bool {
 		return hashmap.HasKey(container, key)
 	case StructMap:
 		kstring, ok := key.(string)
-		if !ok {
+		if !ok || kstring == "" {
 			return false
 		}
 		for _, fieldName := range getStructMapInfo(reflect.TypeOf(container)).fieldNames {

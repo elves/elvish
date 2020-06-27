@@ -6,20 +6,31 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
-// A test structmap type used in other tests.
 type testStructMap struct {
-	Name        string  `json:"name"`
-	ScoreNumber float64 `json:"score-number"`
+	Name        string
+	ScoreNumber float64
 }
 
-func (testStructMap) IsStructMap(StructMapMarker) {}
+func (testStructMap) IsStructMap() {}
 
+// Structurally identical to testStructMap.
 type testStructMap2 struct {
-	Name        string  `json:"name"`
-	ScoreNumber float64 `json:"score-number"`
+	Name        string
+	ScoreNumber float64
 }
 
-func (testStructMap2) IsStructMap(StructMapMarker) {}
+func (testStructMap2) IsStructMap() {}
+
+type testStructMap3 struct {
+	Name  string
+	score float64
+}
+
+func (testStructMap3) IsStructMap() {}
+
+func (m testStructMap3) Score() float64 {
+	return m.score + 10
+}
 
 func TestStructMap(t *testing.T) {
 	TestValue(t, testStructMap{}).
@@ -52,10 +63,19 @@ func TestStructMap(t *testing.T) {
 			testStructMap{}, testStructMap{"a", 2.0}, testStructMap{"b", 1.0}).
 		// Keys are tested above, thus omitted here.
 		Index("name", "a").
-		Index("score-number", 1.0).
-		Assoc("name", "b", testStructMap{"b", 1.0}).
-		Assoc("score-number", 2.0, testStructMap{"a", 2.0}).
-		AssocError("score-number", "not-num", cannotParseAs{"number", "not-num"}).
-		AssocError("new-key", "", errStructMapKey).
-		AssocError(1.0 /* non-string key */, "", errStructMapKey)
+		Index("score-number", 1.0)
+
+	TestValue(t, testStructMap3{"a", 1.0}).
+		Kind("structmap").
+		Bool(true).
+		Hash(hash.DJB(Hash("a"), Hash(11.0))).
+		Repr(`[&name=a &score=(float64 11)]`).
+		Len(2).
+		Equal(testStructMap3{"a", 1.0}).
+		NotEqual(
+			"a", MakeMap("name", "", "score-number", 1.0),
+			testStructMap{}, testStructMap{"a", 11.0}).
+		// Keys are tested above, thus omitted here.
+		Index("name", "a").
+		Index("score", 11.0)
 }

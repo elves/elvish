@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/store"
 	"github.com/elves/elvish/pkg/util"
 )
@@ -117,11 +116,11 @@ func cd(fm *Frame, args ...string) error {
 }
 
 type dirHistoryEntry struct {
-	Path  string  `json:"path"`
-	Score float64 `json:"score"`
+	Path  string
+	Score float64
 }
 
-func (dirHistoryEntry) IsStructMap(vals.StructMapMarker) {}
+func (dirHistoryEntry) IsStructMap() {}
 
 func dirs(fm *Frame) error {
 	if fm.DaemonClient == nil {

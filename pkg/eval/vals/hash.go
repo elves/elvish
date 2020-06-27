@@ -46,10 +46,11 @@ func Hash(v interface{}) uint32 {
 		return h
 	case StructMap:
 		h := hash.DJBInit
-		vv := reflect.ValueOf(v)
-		n := reflect.TypeOf(v).NumField()
-		for i := 0; i < n; i++ {
-			h = hash.DJBCombine(h, Hash(vv.Field(i).Interface()))
+		it := iterateStructMap(reflect.TypeOf(v))
+		vValue := reflect.ValueOf(v)
+		for it.Next() {
+			_, field := it.Get(vValue)
+			h = hash.DJBCombine(h, Hash(field))
 		}
 		return h
 	case Hasher:

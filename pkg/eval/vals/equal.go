@@ -83,14 +83,18 @@ func equalMap(x, y Map) bool {
 }
 
 func equalStructMap(x, y StructMap) bool {
-	if reflect.TypeOf(x) != reflect.TypeOf(y) {
+	t := reflect.TypeOf(x)
+	if t != reflect.TypeOf(y) {
 		return false
 	}
-	xv := reflect.ValueOf(x)
-	yv := reflect.ValueOf(y)
-	n := xv.NumField()
-	for i := 0; i < n; i++ {
-		if !Equal(xv.Field(i).Interface(), yv.Field(i).Interface()) {
+
+	xValue := reflect.ValueOf(x)
+	yValue := reflect.ValueOf(y)
+	it := iterateStructMap(t)
+	for it.Next() {
+		_, xField := it.Get(xValue)
+		_, yField := it.Get(yValue)
+		if !Equal(xField, yField) {
 			return false
 		}
 	}

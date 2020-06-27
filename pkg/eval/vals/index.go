@@ -46,7 +46,7 @@ func Index(a, k interface{}) (interface{}, error) {
 		return indexList(a, k)
 	case StructMap:
 		fieldName, ok := k.(string)
-		if !ok {
+		if !ok || fieldName == "" {
 			return nil, NoSuchKey(k)
 		}
 		return indexStructMap(a, fieldName)
@@ -63,12 +63,14 @@ func Index(a, k interface{}) (interface{}, error) {
 	}
 }
 
-func indexStructMap(a StructMap, k string) (interface{}, error) {
-	info := getStructMapInfo(reflect.TypeOf(a))
-	for i, fieldName := range info.fieldNames {
+func indexStructMap(a StructMap, fieldName string) (interface{}, error) {
+	aValue := reflect.ValueOf(a)
+	it := iterateStructMap(reflect.TypeOf(a))
+	for it.Next() {
+		k, v := it.Get(aValue)
 		if k == fieldName {
-			return FromGo(reflect.ValueOf(a).Field(i).Interface()), nil
+			return FromGo(v), nil
 		}
 	}
-	return nil, NoSuchKey(k)
+	return nil, NoSuchKey(fieldName)
 }

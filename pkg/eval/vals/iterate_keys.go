@@ -33,6 +33,9 @@ func IterateKeys(v interface{}, f func(interface{}) bool) error {
 		}
 	case StructMap:
 		for _, k := range getStructMapInfo(reflect.TypeOf(v)).fieldNames {
+			if k == "" {
+				continue
+			}
 			if !f(k) {
 				break
 			}

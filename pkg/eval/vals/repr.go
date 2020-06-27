@@ -60,13 +60,13 @@ func Repr(v interface{}, indent int) string {
 		}
 		return builder.String()
 	case StructMap:
-		info := getStructMapInfo(reflect.TypeOf(v))
-		vv := reflect.ValueOf(v)
-		n := vv.NumField()
+		vValue := reflect.ValueOf(v)
+		vType := vValue.Type()
 		builder := NewMapReprBuilder(indent)
-		for i := 0; i < n; i++ {
-			builder.WritePair(Repr(info.fieldNames[i], indent+1),
-				indent+2, Repr(vv.Field(i).Interface(), indent+2))
+		it := iterateStructMap(vType)
+		for it.Next() {
+			k, v := it.Get(vValue)
+			builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
 		}
 		return builder.String()
 	case Reprer:
