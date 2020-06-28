@@ -8,7 +8,6 @@ import (
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -23,8 +22,8 @@ type Closure struct {
 	Op          effectOp
 	Captured    Ns
 	SrcMeta     parse.Source
-	DefBegint   int
-	DefEnd      int
+	DefFrom     int
+	DefTo       int
 }
 
 var _ Callable = &Closure{}
@@ -49,41 +48,12 @@ func (c *Closure) Repr(int) string {
 	return fmt.Sprintf("<closure %p>", c)
 }
 
-// Index supports the introspection of the closure. Supported keys are
-// "arg-names", "rest-arg", "opt-names", "opt-defaults", "body", "def" and
-// "src".
-func (c *Closure) Index(k interface{}) (interface{}, bool) {
-	switch k {
-	case "arg-names":
-		return listOfStrings(c.ArgNames), true
-	case "rest-arg":
-		return c.RestArg, true
-	case "opt-names":
-		return listOfStrings(c.OptNames), true
-	case "opt-defaults":
-		return vals.MakeList(c.OptDefaults...), true
-	case "body":
-		return c.SrcMeta.Code[c.Op.From:c.Op.To], true
-	case "def":
-		return c.SrcMeta.Code[c.DefBegint:c.DefEnd], true
-	case "src":
-		return c.SrcMeta, true
-	}
-	return nil, false
-}
-
 func listOfStrings(ss []string) vals.List {
 	list := vals.EmptyList
 	for _, s := range ss {
 		list = list.Cons(s)
 	}
 	return list
-}
-
-// IterateKeys calls f with all the valid keys that can be used for Index.
-func (c *Closure) IterateKeys(f func(interface{}) bool) {
-	util.Feed(f, "arg-names", "rest-arg",
-		"opt-names", "opt-defaults", "body", "def", "src")
 }
 
 // Call calls a closure.
@@ -141,4 +111,27 @@ func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 
 	fm.srcMeta = c.SrcMeta
 	return c.Op.exec(fm)
+}
+
+func (c *Closure) Fields() vals.StructMap { return closureFields{c} }
+
+type closureFields struct{ c *Closure }
+
+func (closureFields) IsStructMap() {}
+
+func (cf closureFields) ArgNames() vals.List { return listOfStrings(cf.c.ArgNames) }
+func (cf closureFields) RestArg() string     { return cf.c.RestArg }
+func (cf closureFields) OptNames() vals.List { return listOfStrings(cf.c.OptNames) }
+func (cf closureFields) Src() parse.Source   { return cf.c.SrcMeta }
+
+func (cf closureFields) OptDefaults() vals.List {
+	return vals.MakeList(cf.c.OptDefaults...)
+}
+
+func (cf closureFields) Body() string {
+	return cf.c.SrcMeta.Code[cf.c.Op.From:cf.c.Op.To]
+}
+
+func (cf closureFields) Def() string {
+	return cf.c.SrcMeta.Code[cf.c.DefFrom:cf.c.DefTo]
 }
