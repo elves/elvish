@@ -79,3 +79,20 @@ func TestStructMap(t *testing.T) {
 		Index("name", "a").
 		Index("score", 11.0)
 }
+
+type pseudoStructMap struct{}
+
+func (pseudoStructMap) Fields() StructMap {
+	return testStructMap{"pseudo", 100}
+}
+
+func TestPseudoStructMap(t *testing.T) {
+	TestValue(t, pseudoStructMap{}).
+		HasKey("name", "score-number").
+		HasNoKey("bad", 1.0).
+		IndexError("bad", NoSuchKey("bad")).
+		IndexError(1.0, NoSuchKey(1.0)).
+		AllKeys("name", "score-number").
+		Index("name", "pseudo").
+		Index("score-number", 100.0)
+}

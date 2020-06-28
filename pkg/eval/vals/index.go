@@ -53,17 +53,19 @@ func Index(a, k interface{}) (interface{}, error) {
 	case List:
 		return indexList(a, k)
 	case StructMap:
-		fieldName, ok := k.(string)
-		if !ok || fieldName == "" {
-			return nil, NoSuchKey(k)
-		}
-		return indexStructMap(a, fieldName)
+		return indexStructMap(a, k)
+	case PseudoStructMap:
+		return indexStructMap(a.Fields(), k)
 	default:
 		return nil, errNotIndexable
 	}
 }
 
-func indexStructMap(a StructMap, fieldName string) (interface{}, error) {
+func indexStructMap(a StructMap, k interface{}) (interface{}, error) {
+	fieldName, ok := k.(string)
+	if !ok || fieldName == "" {
+		return nil, NoSuchKey(k)
+	}
 	aValue := reflect.ValueOf(a)
 	it := iterateStructMap(reflect.TypeOf(a))
 	for it.Next() {

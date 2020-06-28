@@ -34,16 +34,22 @@ func IterateKeys(v interface{}, f func(interface{}) bool) error {
 			}
 		}
 	case StructMap:
-		for _, k := range getStructMapInfo(reflect.TypeOf(v)).fieldNames {
-			if k == "" {
-				continue
-			}
-			if !f(k) {
-				break
-			}
-		}
+		iterateKeysStructMap(v, f)
+	case PseudoStructMap:
+		iterateKeysStructMap(v.Fields(), f)
 	default:
 		return cannotIterateKeysOf{Kind(v)}
 	}
 	return nil
+}
+
+func iterateKeysStructMap(v StructMap, f func(interface{}) bool) {
+	for _, k := range getStructMapInfo(reflect.TypeOf(v)).fieldNames {
+		if k == "" {
+			continue
+		}
+		if !f(k) {
+			break
+		}
+	}
 }

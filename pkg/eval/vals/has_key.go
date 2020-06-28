@@ -25,16 +25,9 @@ func HasKey(container, key interface{}) bool {
 	case Map:
 		return hashmap.HasKey(container, key)
 	case StructMap:
-		kstring, ok := key.(string)
-		if !ok || kstring == "" {
-			return false
-		}
-		for _, fieldName := range getStructMapInfo(reflect.TypeOf(container)).fieldNames {
-			if fieldName == kstring {
-				return true
-			}
-		}
-		return false
+		return hasKeyStructMap(container, key)
+	case PseudoStructMap:
+		return hasKeyStructMap(container.Fields(), key)
 	default:
 		var found bool
 		err := IterateKeys(container, func(k interface{}) bool {
@@ -53,4 +46,17 @@ func HasKey(container, key interface{}) bool {
 		}
 		return false
 	}
+}
+
+func hasKeyStructMap(m StructMap, k interface{}) bool {
+	kstring, ok := k.(string)
+	if !ok || kstring == "" {
+		return false
+	}
+	for _, fieldName := range getStructMapInfo(reflect.TypeOf(m)).fieldNames {
+		if fieldName == kstring {
+			return true
+		}
+	}
+	return false
 }

@@ -12,13 +12,17 @@ import (
 // named field and getter method (a method taking no argument and returning one
 // value) becomes a field of the map, with the name mapped to dash-case.
 //
+// The following operations are derived for structmaps: Kind, Repr, Hash, Len,
+// Index, HasKey and IterateKeys.
+//
 // Example:
 //
 //   type someStruct struct {
-//       StructMapMarker
 //       FooBar int
 //       lorem  string
 //   }
+//
+//   func (someStruct) IsStructMap() { }
 //
 //   func (s SomeStruct) Ipsum() string { return s.lorem }
 //
@@ -27,6 +31,10 @@ import (
 // An instance of someStruct behaves like a read-only map with 3 fields:
 // foo-bar, lorem and ipsum.
 type StructMap interface{ IsStructMap() }
+
+// PseudoStructMap may be implemented by a type to derive the Index, HasKey and
+// IterateKeys operations from the struct map returned by the Fields method.
+type PseudoStructMap interface{ Fields() StructMap }
 
 // Keeps cached information about a structMap.
 type structMapInfo struct {
