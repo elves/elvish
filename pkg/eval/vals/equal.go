@@ -25,6 +25,8 @@ func Equal(x, y interface{}) bool {
 		return x == y
 	case string:
 		return x == y
+	case Equaler:
+		return x.Equal(y)
 	case File:
 		if yy, ok := y.(File); ok {
 			return x.Fd() == yy.Fd()
@@ -45,8 +47,6 @@ func Equal(x, y interface{}) bool {
 			return equalStructMap(x, yy)
 		}
 		return false
-	case Equaler:
-		return x.Equal(y)
 	default:
 		return reflect.DeepEqual(x, y)
 	}

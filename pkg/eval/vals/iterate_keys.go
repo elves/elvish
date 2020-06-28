@@ -24,6 +24,8 @@ func (err cannotIterateKeysOf) Error() string {
 // other types, it doesn't do anything and returns an error.
 func IterateKeys(v interface{}, f func(interface{}) bool) error {
 	switch v := v.(type) {
+	case KeysIterator:
+		v.IterateKeys(f)
 	case Map:
 		for it := v.Iterator(); it.HasElem(); it.Next() {
 			k, _ := it.Elem()
@@ -40,8 +42,6 @@ func IterateKeys(v interface{}, f func(interface{}) bool) error {
 				break
 			}
 		}
-	case KeysIterator:
-		v.IterateKeys(f)
 	default:
 		return cannotIterateKeysOf{Kind(v)}
 	}

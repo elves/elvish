@@ -42,14 +42,6 @@ func Index(a, k interface{}) (interface{}, error) {
 	switch a := a.(type) {
 	case string:
 		return indexString(a, k)
-	case List:
-		return indexList(a, k)
-	case StructMap:
-		fieldName, ok := k.(string)
-		if !ok || fieldName == "" {
-			return nil, NoSuchKey(k)
-		}
-		return indexStructMap(a, fieldName)
 	case ErrIndexer:
 		return a.Index(k)
 	case Indexer:
@@ -58,6 +50,14 @@ func Index(a, k interface{}) (interface{}, error) {
 			return nil, NoSuchKey(k)
 		}
 		return v, nil
+	case List:
+		return indexList(a, k)
+	case StructMap:
+		fieldName, ok := k.(string)
+		if !ok || fieldName == "" {
+			return nil, NoSuchKey(k)
+		}
+		return indexStructMap(a, fieldName)
 	default:
 		return nil, errNotIndexable
 	}

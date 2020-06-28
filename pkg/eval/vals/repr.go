@@ -44,6 +44,8 @@ func Repr(v interface{}, indent int) string {
 		return parse.Quote(v)
 	case float64:
 		return "(float64 " + formatFloat64(v) + ")"
+	case Reprer:
+		return v.Repr(indent)
 	case File:
 		return fmt.Sprintf("<file{%s %d}>", parse.Quote(v.Name()), v.Fd())
 	case List:
@@ -69,8 +71,6 @@ func Repr(v interface{}, indent int) string {
 			builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
 		}
 		return builder.String()
-	case Reprer:
-		return v.Repr(indent)
 	default:
 		return fmt.Sprintf("<unknown %v>", v)
 	}

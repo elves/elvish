@@ -22,10 +22,10 @@ func Len(v interface{}) int {
 	switch v := v.(type) {
 	case string:
 		return len(v)
-	case StructMap:
-		return getStructMapInfo(reflect.TypeOf(v)).filledFields
 	case Lener:
 		return v.Len()
+	case StructMap:
+		return getStructMapInfo(reflect.TypeOf(v)).filledFields
 	}
 	return -1
 }

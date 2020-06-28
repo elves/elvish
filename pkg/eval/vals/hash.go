@@ -28,6 +28,8 @@ func Hash(v interface{}) uint32 {
 		return hash.UInt64(math.Float64bits(v))
 	case string:
 		return hash.String(v)
+	case Hasher:
+		return v.Hash()
 	case File:
 		return hash.UIntPtr(v.Fd())
 	case List:
@@ -53,8 +55,6 @@ func Hash(v interface{}) uint32 {
 			h = hash.DJBCombine(h, Hash(field))
 		}
 		return h
-	case Hasher:
-		return v.Hash()
 	}
 	return 0
 }

@@ -24,6 +24,8 @@ func Kind(v interface{}) string {
 		return "string"
 	case float64:
 		return "number"
+	case Kinder:
+		return v.Kind()
 	case File:
 		return "file"
 	case List:
@@ -32,8 +34,6 @@ func Kind(v interface{}) string {
 		return "map"
 	case StructMap:
 		return "structmap"
-	case Kinder:
-		return v.Kind()
 	default:
 		return fmt.Sprintf("!!%T", v)
 	}

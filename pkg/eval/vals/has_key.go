@@ -20,6 +20,8 @@ type HasKeyer interface {
 // it returns false.
 func HasKey(container, key interface{}) bool {
 	switch container := container.(type) {
+	case HasKeyer:
+		return container.HasKey(key)
 	case Map:
 		return hashmap.HasKey(container, key)
 	case StructMap:
@@ -33,8 +35,6 @@ func HasKey(container, key interface{}) bool {
 			}
 		}
 		return false
-	case HasKeyer:
-		return container.HasKey(key)
 	default:
 		var found bool
 		err := IterateKeys(container, func(k interface{}) bool {
