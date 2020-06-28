@@ -10,13 +10,12 @@ import (
 
 // TODO: Use native path separators instead of always using /.
 
-// PathInfo is used in glob expansion callbacks to efficiently determine if a
-// given pathname satisfies a particular constraint.
+// PathInfo keeps a path resulting from glob expansion and its FileInfo. The
+// FileInfo is useful for efficiently determining if a given pathname satisfies
+// a particular constraint without doing an extra stat.
 type PathInfo struct {
-	// `Path` is needed to generate paths consistent with the original glob
-	// pattern. That is, the `Info.Name()` value might be just the final
-	// component of `Path`. Glob modifiers need the complete path in addition
-	// to information about the target of the path.
+	// The generated path, consistent with the original glob pattern. It cannot
+	// be replaced by Info.Name(), which is just the final path component.
 	Path string
 	Info os.FileInfo
 }

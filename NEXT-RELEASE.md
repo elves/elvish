@@ -45,6 +45,9 @@ The following deprecated features, unfortunately, do not trigger any warnings:
 
 New features in the language:
 
+-   Two new wildcard modifiers, `type:dir` and `type:regular` are added for
+    matching only directories and regular files.
+
 -   The printing of floating-point numbers has been tweaked to feel much more
     natural ([#811](https://b.elv.sh/811)).
 

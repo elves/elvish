@@ -88,15 +88,12 @@ func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
 		if gp.TypeCb != nil {
 			return nil, ErrMultipleTypeModifiers
 		}
-		switch {
-		default:
-			typeName := modifier[len("type:"):]
-			cb, ok := typeCbMap[typeName]
-			if !ok {
-				return nil, ErrUnknownTypeModifier
-			}
-			gp.TypeCb = cb
+		typeName := modifier[len("type:"):]
+		cb, ok := typeCbMap[typeName]
+		if !ok {
+			return nil, ErrUnknownTypeModifier
 		}
+		gp.TypeCb = cb
 	default:
 		var matcher func(rune) bool
 		if m, ok := runeMatchers[modifier]; ok {
@@ -250,7 +247,7 @@ func doGlob(gp GlobPattern, abort <-chan struct{}) ([]interface{}, error) {
 			return true
 		}
 
-		if gp.TypeCb == nil || (gp.TypeCb)(pathInfo.Info.Mode()) {
+		if gp.TypeCb == nil || gp.TypeCb(pathInfo.Info.Mode()) {
 			vs = append(vs, pathInfo.Path)
 		}
 		return true
