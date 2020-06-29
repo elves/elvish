@@ -9,13 +9,13 @@ var Ns = eval.Ns{}.
 	AddGoFns("exc:", map[string]interface{}{
 		"show": show,
 
-		"is-external-cmd-exc": isExternalCmdExc,
+		"is-external-cmd-err": isExternalCmdErr,
 		"is-nonzero-exit":     isNonzeroExit,
 		"is-killed":           isKilled,
 
-		"is-fail-exc": isFailExc,
+		"is-fail-err": isFailErr,
 
-		"is-pipeline-exc": isPipelineExc,
+		"is-pipeline-err": isPipelineErr,
 	})
 
 //elvdoc:fn show
@@ -41,24 +41,24 @@ func show(fm *eval.Frame, e *eval.Exception) {
 	fm.OutputFile().WriteString("\n")
 }
 
-//elvdoc:fn is-external-cmd-exc
+//elvdoc:fn is-external-cmd-err
 //
 // ```elvish
-// exc:is-external-cmd-exc $e
+// exc:is-external-cmd-err $r
 // ```
 //
-// Outputs whether an exception was caused by any error with an external
-// command. If this command outputs `$true`, exact one of `exc:is-nonzero-exit
-// $e` and `exc:is-killed $e` will output `$true`.
+// Outputs whether an exception reason is an error with an external command.
+// If this command outputs `$true`, exact one of `exc:is-nonzero-exit $r` and
+// `exc:is-killed $r` will output `$true`.
 //
 // Examples:
 //
 // ```elvish-transcript
-// ~> exc:is-external-cmd-exc ?(fail bad)
+// ~> exc:is-external-cmd-exc ?(fail bad)[reason]
 // ▶ $false
-// ~> exc:is-external-cmd-exc ?(false)
+// ~> exc:is-external-cmd-exc ?(false)[reason]
 // ▶ $true
-// ~> exc:is-external-cmd-exc ?(elvish -c 'echo $pid; exec cat')
+// ~> exc:is-external-cmd-exc ?(elvish -c 'echo $pid; exec cat')[reason]
 // # outputs pid
 // # run "kill <pid> in another terminal"
 // ▶ $true
@@ -66,8 +66,8 @@ func show(fm *eval.Frame, e *eval.Exception) {
 //
 // @cf is-nonzero-exit is-killed
 
-func isExternalCmdExc(e *eval.Exception) bool {
-	_, ok := e.Reason.(eval.ExternalCmdExit)
+func isExternalCmdErr(e error) bool {
+	_, ok := e.(eval.ExternalCmdExit)
 	return ok
 }
 
@@ -77,26 +77,26 @@ func isExternalCmdExc(e *eval.Exception) bool {
 // exc:is-nonzero-exit $e
 // ```
 //
-// Outputs whether an exception was caused by an external command exiting with a
+// Outputs whether an exception reason is an external command exiting with a
 // nonzero code.
 //
 // **NOTE**: An external command is only considered to have exited if it
 // terminated on its own. If an exception was caused by an external command
-// being killed by a signal, this predicate will output `$false`.
+// being killed by a signal, this predicate will output `$false` on its reason.
 //
 // Examples:
 //
 // ```elvish-transcript
-// ~> exc:is-nonzero-exit ?(fail bad)
+// ~> exc:is-nonzero-exit ?(fail bad)[reason]
 // ▶ $false
-// ~> exc:is-nonzero-exit ?(false)
+// ~> exc:is-nonzero-exit ?(false)[reason]
 // ▶ $true
 // ```
 //
 // @cf is-external-cmd-exc is-killed
 
-func isNonzeroExit(e *eval.Exception) bool {
-	err, ok := e.Reason.(eval.ExternalCmdExit)
+func isNonzeroExit(e error) bool {
+	err, ok := e.(eval.ExternalCmdExit)
 	return ok && err.Exited()
 }
 
@@ -106,14 +106,14 @@ func isNonzeroExit(e *eval.Exception) bool {
 // exc:is-killed $e
 // ```
 //
-// Outputs whether an exception was caused by an external command being killed.
+// Outputs whether an exception reason is an external command being killed.
 //
 // Examples:
 //
 // ```elvish-transcript
-// ~> exc:is-killed ?(fail bad)
+// ~> exc:is-killed ?(fail bad)[reason]
 // ▶ $false
-// ~> exc:is-killed ?(elvish -c 'echo $pid; exec cat')
+// ~> exc:is-killed ?(elvish -c 'echo $pid; exec cat')[reason]
 // # outputs pid
 // # run "kill <pid> in another terminal"
 // ▶ $true
@@ -121,50 +121,54 @@ func isNonzeroExit(e *eval.Exception) bool {
 //
 // @cf is-external-cmd-exc is-nonzero-exit
 
-func isKilled(e *eval.Exception) bool {
-	err, ok := e.Reason.(eval.ExternalCmdExit)
+func isKilled(e error) bool {
+	err, ok := e.(eval.ExternalCmdExit)
 	return ok && err.Signaled()
 }
 
-//elvdoc:fn is-fail-exc
+//elvdoc:fn is-fail-err
 //
 // ```elvish
-// exc:is-fail-exc $e
+// exc:is-fail-err $e
 // ```
 //
-// Outputs whether an exception was thrown by the `fail` command.
+// Outputs whether an exception reason originates from the `fail` command.
 //
 // Examples:
 //
 // ```elvish-transcript
-// ~> exc:is-fail-exc ?(fail bad)
+// ~> exc:is-fail-exc ?(fail bad)[reason]
 // ▶ $true
-// ~> exc:is-fail-exc ?(false)
+// ~> exc:is-fail-exc ?(false)[reason]
 // ▶ $false
 // ```
 //
 // @cf builtin:fail
 
-func isFailExc(e *eval.Exception) bool {
-	_, ok := e.Reason.(eval.FailError)
+func isFailErr(e error) bool {
+	_, ok := e.(eval.FailError)
 	return ok
 }
 
-//elvdoc:fn is-pipeline-exc
+//elvdoc:fn is-pipeline-err
 //
 // ```elvish
-// exc:is-pipeline-exc $e
+// exc:is-pipeline-err $r
 // ```
 //
-// Outputs whether an exception was a result of multiple commands in a pipeline
-// throwing out exceptions.
+// Outputs whether an exception reason is a result of multiple commands in a
+// pipeline throwing out exceptions.
 //
 // Examples:
 //
 // ```elvish-transcript
+// ~> exc:is-pipeline-err ?(fail bad)[reason]
+// ▶ $false
+// ~> exc:is-pipeline-err ?(fail 1 | fail 2)[reason]
+// ▶ $true
 // ```
 
-func isPipelineExc(e *eval.Exception) bool {
-	_, ok := e.Reason.(eval.PipelineError)
+func isPipelineErr(e error) bool {
+	_, ok := e.(eval.PipelineError)
 	return ok
 }
