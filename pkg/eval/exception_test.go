@@ -28,8 +28,8 @@ func TestException(t *testing.T) {
 		Hash(hash.Pointer(unsafe.Pointer(exc))).
 		Equal(exc).
 		NotEqual(makeException(errors.New("error"))).
-		AllKeys("cause").
-		Index("cause", err).
+		AllKeys("reason").
+		Index("reason", err).
 		IndexError("stack", vals.NoSuchKey("stack")).
 		Repr("?(fail error)")
 

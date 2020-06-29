@@ -75,8 +75,8 @@ func (e exc) Error() string {
 
 func (e exc) matchError(e2 error) bool {
 	if e2, ok := e2.(*Exception); ok {
-		if matchErr(e.cause, e2.Cause) {
-			return reflect.DeepEqual(e.stacks, getStackTexts(e2.Traceback))
+		if matchErr(e.cause, e2.Reason) {
+			return reflect.DeepEqual(e.stacks, getStackTexts(e2.StackTrace))
 		}
 	}
 	return false
@@ -243,7 +243,7 @@ func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
 				t.Errorf("unexpected exception")
 				t.Logf("got: %v", r.exception)
 				if exc, ok := r.exception.(*Exception); ok {
-					t.Logf("stack trace: %#v", getStackTexts(exc.Traceback))
+					t.Logf("stack trace: %#v", getStackTexts(exc.StackTrace))
 				}
 				t.Errorf("want: %v", tt.want.exception)
 			}

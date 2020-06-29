@@ -465,9 +465,9 @@ func (op *whileOp) invoke(fm *Frame) error {
 		err = body.Call(fm.fork("while"), NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(*Exception)
-			if exc.Cause == Continue {
+			if exc.Reason == Continue {
 				// do nothing
-			} else if exc.Cause == Break {
+			} else if exc.Reason == Break {
 				break
 			} else {
 				return err
@@ -536,9 +536,9 @@ func (op *forOp) invoke(fm *Frame) error {
 		err = body.Call(fm.fork("for"), NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(*Exception)
-			if exc.Cause == Continue {
+			if exc.Reason == Continue {
 				// do nothing
-			} else if exc.Cause == Break {
+			} else if exc.Reason == Break {
 				return false
 			} else {
 				errElement = err

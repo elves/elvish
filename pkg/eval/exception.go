@@ -11,7 +11,6 @@ import (
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -19,8 +18,8 @@ import (
 // elvishscript, and the type of error returned by public facing evaluation
 // methods like (*Evaler)PEval.
 type Exception struct {
-	Cause     error
-	Traceback *stackTrace
+	Reason     error
+	StackTrace *stackTrace
 }
 
 // A stack trace as a linked list of diag.Context. The head is the innermost
@@ -35,7 +34,7 @@ type stackTrace struct {
 // err itself.
 func Cause(err error) error {
 	if exc, ok := err.(*Exception); ok {
-		return exc.Cause
+		return exc.Reason
 	}
 	return err
 }
@@ -46,7 +45,7 @@ var OK = &Exception{}
 
 // Error returns the message of the cause of the exception.
 func (exc *Exception) Error() string {
-	return exc.Cause.Error()
+	return exc.Reason.Error()
 }
 
 // Show shows the exception.
@@ -54,24 +53,24 @@ func (exc *Exception) Show(indent string) string {
 	buf := new(bytes.Buffer)
 
 	var causeDescription string
-	if shower, ok := exc.Cause.(diag.Shower); ok {
+	if shower, ok := exc.Reason.(diag.Shower); ok {
 		causeDescription = shower.Show(indent)
 	} else {
-		causeDescription = "\033[31;1m" + exc.Cause.Error() + "\033[m"
+		causeDescription = "\033[31;1m" + exc.Reason.Error() + "\033[m"
 	}
 	fmt.Fprintf(buf, "Exception: %s\n", causeDescription)
 
-	if exc.Traceback.next == nil {
-		buf.WriteString(exc.Traceback.head.ShowCompact(indent))
+	if exc.StackTrace.next == nil {
+		buf.WriteString(exc.StackTrace.head.ShowCompact(indent))
 	} else {
 		buf.WriteString(indent + "Traceback:")
-		for tb := exc.Traceback; tb != nil; tb = tb.next {
+		for tb := exc.StackTrace; tb != nil; tb = tb.next {
 			buf.WriteString("\n" + indent + "  ")
 			buf.WriteString(tb.head.Show(indent + "    "))
 		}
 	}
 
-	if pipeExcs, ok := exc.Cause.(PipelineError); ok {
+	if pipeExcs, ok := exc.Reason.(PipelineError); ok {
 		buf.WriteString("\n" + indent + "Caused by:")
 		for _, e := range pipeExcs.Errors {
 			if e == OK {
@@ -92,13 +91,13 @@ func (exc *Exception) Kind() string {
 // Repr returns a representation of the exception. It is lossy in that it does
 // not preserve the stacktrace.
 func (exc *Exception) Repr(indent int) string {
-	if exc.Cause == nil {
+	if exc.Reason == nil {
 		return "$ok"
 	}
-	if r, ok := exc.Cause.(vals.Reprer); ok {
+	if r, ok := exc.Reason.(vals.Reprer); ok {
 		return r.Repr(indent)
 	}
-	return "?(fail " + parse.Quote(exc.Cause.Error()) + ")"
+	return "?(fail " + parse.Quote(exc.Reason.Error()) + ")"
 }
 
 // Equal compares by address.
@@ -113,25 +112,15 @@ func (exc *Exception) Hash() uint32 {
 
 // Bool returns whether this exception has a nil cause; that is, it is $ok.
 func (exc *Exception) Bool() bool {
-	return exc.Cause == nil
+	return exc.Reason == nil
 }
 
-// Index supports introspection of the exception. Currently the only supported
-// key is "cause".
-func (exc *Exception) Index(k interface{}) (interface{}, bool) {
-	// TODO: Access to Traceback
-	switch k {
-	case "cause":
-		return exc.Cause, true
-	default:
-		return nil, false
-	}
-}
+func (exc *Exception) Fields() vals.StructMap { return excFields{exc} }
 
-// IterateKeys calls f with all the valid keys that can be used in Index.
-func (exc *Exception) IterateKeys(f func(interface{}) bool) {
-	util.Feed(f, "cause")
-}
+type excFields struct{ e *Exception }
+
+func (excFields) IsStructMap()    {}
+func (f excFields) Reason() error { return f.e.Reason }
 
 // PipelineError represents the errors of pipelines, in which multiple commands
 // may error.
@@ -165,7 +154,7 @@ func (pe PipelineError) Error() string {
 		if i > 0 {
 			b.WriteString(" | ")
 		}
-		if e == nil || e.Cause == nil {
+		if e == nil || e.Reason == nil {
 			b.WriteString("<nil>")
 		} else {
 			b.WriteString(e.Error())
@@ -191,7 +180,7 @@ func makePipelineError(excs []*Exception) error {
 			newexcs[i] = OK
 		} else {
 			newexcs[i] = e
-			if e.Cause != nil {
+			if e.Reason != nil {
 				notOK++
 				lastNotOK = i
 			}

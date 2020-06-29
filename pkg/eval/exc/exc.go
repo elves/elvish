@@ -67,7 +67,7 @@ func show(fm *eval.Frame, e *eval.Exception) {
 // @cf is-nonzero-exit is-killed
 
 func isExternalCmdExc(e *eval.Exception) bool {
-	_, ok := e.Cause.(eval.ExternalCmdExit)
+	_, ok := e.Reason.(eval.ExternalCmdExit)
 	return ok
 }
 
@@ -96,7 +96,7 @@ func isExternalCmdExc(e *eval.Exception) bool {
 // @cf is-external-cmd-exc is-killed
 
 func isNonzeroExit(e *eval.Exception) bool {
-	err, ok := e.Cause.(eval.ExternalCmdExit)
+	err, ok := e.Reason.(eval.ExternalCmdExit)
 	return ok && err.Exited()
 }
 
@@ -122,7 +122,7 @@ func isNonzeroExit(e *eval.Exception) bool {
 // @cf is-external-cmd-exc is-nonzero-exit
 
 func isKilled(e *eval.Exception) bool {
-	err, ok := e.Cause.(eval.ExternalCmdExit)
+	err, ok := e.Reason.(eval.ExternalCmdExit)
 	return ok && err.Signaled()
 }
 
@@ -146,7 +146,7 @@ func isKilled(e *eval.Exception) bool {
 // @cf builtin:fail
 
 func isFailExc(e *eval.Exception) bool {
-	_, ok := e.Cause.(eval.FailError)
+	_, ok := e.Reason.(eval.FailError)
 	return ok
 }
 
@@ -165,6 +165,6 @@ func isFailExc(e *eval.Exception) bool {
 // ```
 
 func isPipelineExc(e *eval.Exception) bool {
-	_, ok := e.Cause.(eval.PipelineError)
+	_, ok := e.Reason.(eval.PipelineError)
 	return ok
 }
