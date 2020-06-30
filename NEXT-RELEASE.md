@@ -3,14 +3,15 @@ be released on 2020-07-01, 6 months after 0.13.0.
 
 # Breaking changes
 
--   The `type` field of the value returned by `src` have been removed.
+-   The `type` field of the value written by `src` have been removed.
 
 -   The `all` command no longer preserves byte inputs as is; instead it turns
     them into values, one each line. It also accepts an optional list argument,
     consistent with other value-taking commands.
 
--   Output captures now split trailing carriage returns from each line,
-    effectively making `\r\n` also valid line separators.
+-   Output captures now strip trailing carriage returns from each line,
+    effectively making `\r\n` accepted as a line separator
+    ([#970](https://b.elv.sh/970)).
 
 -   Map-like values written by the `dir-history` and `re:find` functions can no
     longer be assoc'ed.
@@ -45,25 +46,34 @@ The following deprecated features, unfortunately, do not trigger any warnings:
 
 New features in the language:
 
--   Two new wildcard modifiers, `type:dir` and `type:regular` are added for
-    matching only directories and regular files.
+-   Exceptions can now be introspected by accessing their fields
+    ([#208](https://b.elv.sh/208)).
+
+-   Two new wildcard modifiers, `type:dir` and `type:regular` are added, which
+    restricts the wildcard pattern to only match directories or regular files,
+    respectively.
 
 -   The printing of floating-point numbers has been tweaked to feel much more
     natural ([#811](https://b.elv.sh/811)).
 
--   Scripts may now use relative `use` to import files outside `~/.elvish/lib`.
+-   Scripts may now use relative `use` to import modules outside
+    `~/.elvish/lib`.
 
 -   Dynamic strings may now be used as command as long as they contain slashes
     ([#764](https://b.elv.sh/764)).
 
--   Elvish now supports CRLF line endings in source files.
+-   Elvish now supports CRLF line endings in source files
+    ([#918](https://b.elv.sh/918)).
 
--   Comments are now allowed in list and map literals, and other places where
-    newlines serve as separators.
+-   Comments are now allowed anywhere newlines serve as separators, notably
+    inside list and map literals ([#924](https://b.elv.sh/924)).
+
+-   The `^` character can now be used for line continuation.
 
 New features in the standard library:
 
--   A new `order` command for sorting values has been introduced.
+-   A new `order` command for sorting values has been introduced
+    [#651](https://b.elv.sh/651).
 
 -   A new `platform:` module has been introduced.
 
@@ -72,18 +82,21 @@ New features in the standard library:
 -   A new `math:` module has been introduced.
 
 -   The `fail` command now takes an argument of any type. In particular, if the
-    argument is an exception, it rethrows the exception.
+    argument is an exception, it rethrows the exception
+    ([#941](https://b.elv.sh/941)).
 
--   A new `show` command has been added, which is currently useful for showing
-    an exception to the terminal.
+-   A new `show` command has been added, which is currently useful for printing
+    the stack trace of an exception to the terminal.
 
--   A new `make-map` command creates a map from a sequence of pairs.
+-   A new `make-map` command creates a map from a sequence of pairs
+    ([#943](https://b.elv.sh/943)).
 
 -   A new `read-line` command can be used to read a single line from the byte
-    input.
+    input ([#975](https://b.elv.sh/975)).
 
 -   The `-time` command has been promoted to `time`, and it now accepts an
-    `&on-end` callback to specify how to save the duration of the execution.
+    `&on-end` callback to specify how to save the duration of the execution
+    ([#295](https://b.elv.sh/295)).
 
 -   A new `one` command has been added.
 
@@ -93,7 +106,8 @@ New features in the standard library:
 New features in the interactive editor:
 
 -   When a callback of the interactive editor throws an exception, the exception
-    is now saved in a `$edit:exceptions` variable for closer examination.
+    is now saved in a `$edit:exceptions` variable for closer examination
+    ([#945](https://b.elv.sh/945)).
 
 -   A new alternative abbreviation mechanism, "small word abbreviation", is now
     available and configurable via `$edit:small-word-abbr`.
@@ -114,12 +128,14 @@ Other improvements:
 
 -   Elvish now uses `$XDG_RUNTIME_DIR` to keep runtime files if possible.
 
--   Elvish now increments the `$SHLVL` environment variable.
+-   Elvish now increments the `$SHLVL` environment variable
+    ([#834](https://b.elv.sh/834)).
 
 # Notable bugfixes
 
 -   Invalid option names or values passed to builtin functions now correctly
-    trigger an exception, instead of being silently ignored.
+    trigger an exception, instead of being silently ignored
+    ([#958](https://b.elv.sh/958)).
 
 -   Elvish no longer crashes when redirecting to a high FD
     ([#788](https://b.elv.sh/788)).
