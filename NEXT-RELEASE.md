@@ -29,6 +29,8 @@ The following deprecated features trigger a warning at compilation time:
 -   The `joins`, `replaces` and `splits` commands are now deprecated. Use
     `str:join`, `str:replace` and `str:split` instead.
 
+-   The `^` command is now deprecated. Use `math:pow` instead.
+
 -   The `-time` command has been promoted to `time`. The `-time` command is now
     a deprecated alias for `time`.
 
