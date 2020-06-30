@@ -197,10 +197,20 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 }
 
 // FailError is an error returned by the "fail" command.
-type FailError struct{ Cause interface{} }
+type FailError struct{ Content interface{} }
 
 // Error returns the string representation of the cause.
-func (e FailError) Error() string { return vals.ToString(e.Cause) }
+func (e FailError) Error() string { return vals.ToString(e.Content) }
+
+// Fields returns a structmap for accessing fields from Elvish.
+func (e FailError) Fields() vals.StructMap { return failFields{e} }
+
+type failFields struct{ e FailError }
+
+func (failFields) IsStructMap() {}
+
+func (f failFields) Type() string         { return "fail" }
+func (f failFields) Content() interface{} { return f.e.Content }
 
 //elvdoc:fn fail
 //

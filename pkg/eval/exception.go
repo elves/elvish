@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
-	"strings"
 	"syscall"
 	"unsafe"
 
@@ -94,10 +93,7 @@ func (exc *Exception) Repr(indent int) string {
 	if exc.Reason == nil {
 		return "$ok"
 	}
-	if r, ok := exc.Reason.(vals.Reprer); ok {
-		return r.Repr(indent)
-	}
-	return "?(fail " + parse.Quote(exc.Reason.Error()) + ")"
+	return "[&reason=" + vals.Repr(exc.Reason, indent+1) + "]"
 }
 
 // Equal compares by address.
@@ -126,24 +122,6 @@ func (f excFields) Reason() error { return f.e.Reason }
 // may error.
 type PipelineError struct {
 	Errors []*Exception
-}
-
-// Repr returns a representation of the pipeline error, using the multi-error builtin.
-func (pe PipelineError) Repr(indent int) string {
-	// TODO Make a more generalized ListReprBuilder and use it here.
-	b := new(bytes.Buffer)
-	b.WriteString("?(multi-error")
-	elemIndent := indent + len("?(multi-error ")
-	for _, e := range pe.Errors {
-		if indent > 0 {
-			b.WriteString("\n" + strings.Repeat(" ", elemIndent))
-		} else {
-			b.WriteString(" ")
-		}
-		b.WriteString(e.Repr(elemIndent))
-	}
-	b.WriteString(")")
-	return b.String()
 }
 
 // Error returns a plain text representation of the pipeline error.
@@ -196,6 +174,22 @@ func makePipelineError(excs []*Exception) error {
 	}
 }
 
+func (pe PipelineError) Fields() vals.StructMap { return peFields{pe} }
+
+type peFields struct{ pe PipelineError }
+
+func (peFields) IsStructMap() {}
+
+func (f peFields) Type() string { return "pipeline" }
+
+func (f peFields) Exceptions() vals.List {
+	li := vals.EmptyList
+	for _, exc := range f.pe.Errors {
+		li = li.Cons(exc)
+	}
+	return li
+}
+
 // Flow is a special type of error used for control flows.
 type Flow uint
 
@@ -210,11 +204,6 @@ var flowNames = [...]string{
 	"return", "break", "continue",
 }
 
-// Repr returns a representation of the flow "error".
-func (f Flow) Repr(int) string {
-	return "?(" + f.Error() + ")"
-}
-
 func (f Flow) Error() string {
 	if f >= Flow(len(flowNames)) {
 		return fmt.Sprintf("!(BAD FLOW: %d)", f)
@@ -226,6 +215,15 @@ func (f Flow) Error() string {
 func (f Flow) Show(string) string {
 	return "\033[33;1m" + f.Error() + "\033[m"
 }
+
+func (f Flow) Fields() vals.StructMap { return flowFields{f} }
+
+type flowFields struct{ f Flow }
+
+func (flowFields) IsStructMap() {}
+
+func (f flowFields) Type() string { return "flow" }
+func (f flowFields) Name() string { return f.f.Error() }
 
 // ExternalCmdExit contains the exit status of external commands.
 type ExternalCmdExit struct {
@@ -266,3 +264,47 @@ func (exit ExternalCmdExit) Error() string {
 		return fmt.Sprint(quotedName, " has unknown WaitStatus ", ws)
 	}
 }
+
+func (exit ExternalCmdExit) Fields() vals.StructMap {
+	ws := exit.WaitStatus
+	f := exitFieldsCommon{exit}
+	switch {
+	case ws.Exited():
+		return exitFieldsExited{f}
+	case ws.Signaled():
+		return exitFieldsSignaled{f}
+	case ws.Stopped():
+		return exitFieldsStopped{f}
+	default:
+		return exitFieldsUnknown{f}
+	}
+}
+
+type exitFieldsCommon struct{ e ExternalCmdExit }
+
+func (exitFieldsCommon) IsStructMap()      {}
+func (f exitFieldsCommon) CmdName() string { return f.e.CmdName }
+func (f exitFieldsCommon) Pid() string     { return strconv.Itoa(f.e.Pid) }
+
+type exitFieldsExited struct{ exitFieldsCommon }
+
+func (exitFieldsExited) Type() string         { return "external-cmd/exited" }
+func (f exitFieldsExited) ExitStatus() string { return strconv.Itoa(f.e.ExitStatus()) }
+
+type exitFieldsSignaled struct{ exitFieldsCommon }
+
+func (f exitFieldsSignaled) Type() string         { return "external-cmd/signaled" }
+func (f exitFieldsSignaled) SignalName() string   { return f.e.Signal().String() }
+func (f exitFieldsSignaled) SignalNumber() string { return strconv.Itoa(int(f.e.Signal())) }
+func (f exitFieldsSignaled) CoreDumped() bool     { return f.e.CoreDump() }
+
+type exitFieldsStopped struct{ exitFieldsCommon }
+
+func (f exitFieldsStopped) Type() string         { return "external-cmd/stopped" }
+func (f exitFieldsStopped) SignalName() string   { return f.e.StopSignal().String() }
+func (f exitFieldsStopped) SignalNumber() string { return strconv.Itoa(int(f.e.StopSignal())) }
+func (f exitFieldsStopped) TrapCause() int       { return f.e.TrapCause() }
+
+type exitFieldsUnknown struct{ exitFieldsCommon }
+
+func (exitFieldsUnknown) Type() string { return "external-cmd/unknown" }

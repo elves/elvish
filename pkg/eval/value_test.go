@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"errors"
 	"reflect"
 	"testing"
 
@@ -19,12 +18,6 @@ var reprTests = []struct {
 	{"a\x00b", `"a\x00b"`},
 	{true, "$true"},
 	{false, "$false"},
-	{&Exception{nil, nil}, "$ok"},
-	{&Exception{errors.New("foo bar"), nil}, "?(fail 'foo bar')"},
-	{&Exception{
-		PipelineError{[]*Exception{{nil, nil}, {errors.New("lorem"), nil}}}, nil},
-		"?(multi-error $ok ?(fail lorem))"},
-	{&Exception{Return, nil}, "?(return)"},
 	{vals.EmptyList, "[]"},
 	{vals.MakeList("bash", false), "[bash $false]"},
 	{vals.EmptyMap, "[&]"},

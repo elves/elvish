@@ -32,8 +32,9 @@ import (
 // foo-bar, lorem and ipsum.
 type StructMap interface{ IsStructMap() }
 
-// PseudoStructMap may be implemented by a type to derive the Index, HasKey and
-// IterateKeys operations from the struct map returned by the Fields method.
+// PseudoStructMap may be implemented by a type to derive the Repr, Index,
+// HasKey and IterateKeys operations from the struct map returned by the Fields
+// method.
 type PseudoStructMap interface{ Fields() StructMap }
 
 // Keeps cached information about a structMap.

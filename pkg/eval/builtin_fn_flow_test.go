@@ -27,6 +27,8 @@ func TestBuiltinFnFlow(t *testing.T) {
 			FailError{"haha"}, "fail haha ", "f"),
 		That("fail []").Throws(
 			FailError{vals.EmptyList}, "fail []"),
+		That("put ?(fail 1)[reason][type]").Puts("fail"),
+		That("put ?(fail 1)[reason][content]").Puts("1"),
 
 		That(`return`).ThrowsCause(Return),
 	)

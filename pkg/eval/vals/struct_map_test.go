@@ -88,6 +88,7 @@ func (pseudoStructMap) Fields() StructMap {
 
 func TestPseudoStructMap(t *testing.T) {
 	TestValue(t, pseudoStructMap{}).
+		Repr("[&name=pseudo &score-number=(float64 100)]").
 		HasKey("name", "score-number").
 		HasNoKey("bad", 1.0).
 		IndexError("bad", NoSuchKey("bad")).

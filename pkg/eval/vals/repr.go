@@ -62,16 +62,22 @@ func Repr(v interface{}, indent int) string {
 		}
 		return builder.String()
 	case StructMap:
-		vValue := reflect.ValueOf(v)
-		vType := vValue.Type()
-		builder := NewMapReprBuilder(indent)
-		it := iterateStructMap(vType)
-		for it.Next() {
-			k, v := it.Get(vValue)
-			builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
-		}
-		return builder.String()
+		return reprStructMap(v, indent)
+	case PseudoStructMap:
+		return reprStructMap(v.Fields(), indent)
 	default:
 		return fmt.Sprintf("<unknown %v>", v)
 	}
+}
+
+func reprStructMap(v StructMap, indent int) string {
+	vValue := reflect.ValueOf(v)
+	vType := vValue.Type()
+	builder := NewMapReprBuilder(indent)
+	it := iterateStructMap(vType)
+	for it.Next() {
+		k, v := it.Get(vValue)
+		builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
+	}
+	return builder.String()
 }

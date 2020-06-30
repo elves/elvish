@@ -1634,11 +1634,71 @@ fn f {
 }
 ```
 
-**WARNING:** The exception data type currently supports a single attribute,
-`cause`, that can be used to extract an object describing the cause of the
-exception; e.g. `$e[cause]`. This is not a string. This is an experimental
-feature. You should probably use `(to-string $e)` at this time in any production
-code.
+## Introspecting exceptions
+
+Exceptions has a `reason` field that can be used to access the reason of the
+exception, which has a `type` field identifying how the exception was raised,
+and further fields depending on the type:
+
+-   If the `type` field is `fail`, the exception was raised by the
+    [fail](builtins.html#fail) command.
+
+    In this case, the `content` field contains the argument to `fail`.
+
+-   If the `type` field is `flow`, the exception was raised by one of the flow
+    commands.
+
+    In this case, the `name` field contains the name of the flow command.
+
+-   If the `type` field is `pipeline`, the exception was a result of multiple
+    commands in the same pipeline raising exceptions.
+
+    In this case, the `exceptions` field contains the exceptions from the
+    individual commands.
+
+-   If the `type` field starts with `external-cmd/`, the exception was caused by
+    one of several conditions of an external command. In this case, the
+    following fields are available:
+
+    -   The `cmd-name` field contains the name of the command.
+
+    -   The `pid` field contains the PID of the command.
+
+-   If the `type` field is `external-cmd/exited`, the external command exited
+    with a non-zero status code. In this case, the `exit-status` field contains
+    the exit status.
+
+-   If the `type` field is `external-cmd/signaled`, the external command was
+    killed by a signal. In this case, the following extra fields are available:
+
+    -   The `signal-name` field contains the name of the signal.
+
+    -   The `signal-number` field contains the numerical value of the signal, as
+        a string.
+
+    -   The `core-dumped` field is a boolean reflecting whether a core dump was
+        generated.
+
+-   If the `type` field is `external-cmd/stopped`, the external command was
+    stopped. In this case, the following extra fields are available:
+
+    -   The `signal-name` field contains the name of the signal.
+
+    -   The `signal-number` field contains the numerical value of the signal, as
+        a string.
+
+    -   The `trap-cause` field contains the number indicating the trap cause.
+
+Examples:
+
+```elvish-transcript
+~> put ?(fail foo)[reason]
+▶ [&content=foo &type=fail]
+~> put ?(return)[reason]
+▶ [&name=return &type=flow]
+~> put ?(false)[reason]
+▶ [&cmd-name=false &exit-status=1 &pid=953421 &type=external-cmd/exited]
+```
 
 # Namespaces and Modules
 

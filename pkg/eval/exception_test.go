@@ -2,6 +2,7 @@ package eval
 
 import (
 	"errors"
+	"runtime"
 	"testing"
 	"unsafe"
 
@@ -20,7 +21,7 @@ func TestCause(t *testing.T) {
 }
 
 func TestException(t *testing.T) {
-	err := errors.New("error")
+	err := FailError{"error"}
 	exc := makeException(err)
 	vals.TestValue(t, exc).
 		Kind("exception").
@@ -31,7 +32,7 @@ func TestException(t *testing.T) {
 		AllKeys("reason").
 		Index("reason", err).
 		IndexError("stack", vals.NoSuchKey("stack")).
-		Repr("?(fail error)")
+		Repr("[&reason=[&content=error &type=fail]]")
 
 	vals.TestValue(t, OK).
 		Kind("exception").
@@ -45,6 +46,33 @@ func makeException(cause error, entries ...*diag.Context) *Exception {
 		s = &stackTrace{head: entries[i], next: s}
 	}
 	return &Exception{cause, s}
+}
+
+func TestFlow_Fields(t *testing.T) {
+	Test(t,
+		That("put ?(return)[reason][type name]").Puts("flow", "return"),
+	)
+}
+
+func TestExternalCmdExit_Fields(t *testing.T) {
+	badCmd := "false"
+	if runtime.GOOS == "windows" {
+		badCmd = "cmd /c exit 1"
+	}
+	Test(t,
+		That("put ?("+badCmd+")[reason][type exit-status]").
+			Puts("external-cmd/exited", "1"),
+		// TODO: Test killed and stopped commands
+	)
+}
+
+func TestPipelineError_Fields(t *testing.T) {
+	Test(t,
+		That("put ?(fail 1 | fail 2)[reason][type]").Puts("pipeline"),
+		That("count ?(fail 1 | fail 2)[reason][exceptions]").Puts("2"),
+		That("put ?(fail 1 | fail 2)[reason][exceptions][0][reason][type]").
+			Puts("fail"),
+	)
 }
 
 func TestErrorMethods(t *testing.T) {
