@@ -11,7 +11,6 @@ import (
 	"github.com/elves/elvish/pkg/daemon"
 	"github.com/elves/elvish/pkg/eval"
 	daemonmod "github.com/elves/elvish/pkg/eval/daemon"
-	"github.com/elves/elvish/pkg/eval/exc"
 	mathmod "github.com/elves/elvish/pkg/eval/math"
 	"github.com/elves/elvish/pkg/eval/platform"
 	"github.com/elves/elvish/pkg/eval/re"
@@ -50,7 +49,6 @@ var errInvalidDB = errors.New("daemon reported that database is invalid. If you 
 func InitRuntime(stderr io.Writer, p Paths, spawn bool) *eval.Evaler {
 	ev := eval.NewEvaler()
 	ev.SetLibDir(p.LibDir)
-	ev.InstallModule("exc", exc.Ns)
 	ev.InstallModule("math", mathmod.Ns)
 	ev.InstallModule("platform", platform.Ns)
 	ev.InstallModule("re", re.Ns)

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 )
 
@@ -353,6 +354,7 @@ func init() {
 		"echo":   echo,
 		"pprint": pprint,
 		"repr":   repr,
+		"show":   show,
 
 		// Only bytes or values
 		//
@@ -476,6 +478,32 @@ func repr(fm *Frame, args ...interface{}) {
 		out.WriteString(vals.Repr(arg, vals.NoPretty))
 	}
 	out.WriteString("\n")
+}
+
+//elvdoc:fn show
+//
+// ```elvish
+// show $e
+// ```
+//
+// Shows the value to the output, which is assumed to be a VT-100-compatible
+// terminal.
+//
+// Currently, the only type of value that can be showed is exceptions, but this
+// will likely expand in future.
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> e = ?(fail lorem-ipsum)
+// ~> show $e
+// Exception: lorem-ipsum
+// [tty 3], line 1: e = ?(fail lorem-ipsum)
+// ```
+
+func show(fm *Frame, v diag.Shower) {
+	fm.OutputFile().WriteString(v.Show(""))
+	fm.OutputFile().WriteString("\n")
 }
 
 const bytesReadBufferSize = 512

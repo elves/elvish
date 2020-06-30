@@ -28,6 +28,9 @@ func TestBuiltinFnIO(t *testing.T) {
 		That(`pprint [foo bar]`).Prints("[\n foo\n bar\n]\n"),
 		That(`repr foo bar ['foo bar']`).Prints("foo bar ['foo bar']\n"),
 
+		// A sanity test that show writes something.
+		That(`show ?(fail foo) | !=s (slurp) ''`).Puts(true),
+
 		// Baseline for only-{bytes,values}
 		That(`{ print bytes; put values }`).Prints("bytes").Puts("values"),
 		That(`{ print bytes; put values } | only-bytes`).Prints("bytes").Puts(),

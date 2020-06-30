@@ -17,10 +17,6 @@ name = "epm"
 title = "epm: The Elvish Package Manager"
 
 [[articles]]
-name = "exc"
-title = "exc: Exception Utilities"
-
-[[articles]]
 name = "math"
 title = "math: Math Utilities"
 

@@ -71,11 +71,11 @@ New features in the standard library:
 
 -   A new `math:` module has been introduced.
 
--   A new `exc:` module has been introduced, including support for printing
-    exception stacktraces and determining the cause of the exception.
-
 -   The `fail` command now takes an argument of any type. In particular, if the
     argument is an exception, it rethrows the exception.
+
+-   A new `show` command has been added, which is currently useful for showing
+    an exception to the terminal.
 
 -   A new `make-map` command creates a map from a sequence of pairs.
 
