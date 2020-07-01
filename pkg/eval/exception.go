@@ -54,6 +54,8 @@ func (exc *Exception) Show(indent string) string {
 	var causeDescription string
 	if shower, ok := exc.Reason.(diag.Shower); ok {
 		causeDescription = shower.Show(indent)
+	} else if exc.Reason == nil {
+		causeDescription = "ok"
 	} else {
 		causeDescription = "\033[31;1m" + exc.Reason.Error() + "\033[m"
 	}
