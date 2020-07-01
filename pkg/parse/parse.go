@@ -14,9 +14,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"unicode"
 
 	"github.com/elves/elvish/pkg/diag"
+	"github.com/elves/elvish/pkg/prog"
 )
 
 // Tree represents a parsed tree.
@@ -28,15 +30,22 @@ type Tree struct {
 // Parse parses the given source. The returned error always has type MultiError
 // if it is not nil.
 func Parse(src Source) (Tree, error) {
+	return ParseWithDeprecation(src, nil)
+}
+
+// ParseWithDeprecation is like Parse, but also writes out deprecation warnings
+// to the given io.Writer.
+func ParseWithDeprecation(src Source, w io.Writer) (Tree, error) {
 	tree := Tree{&Chunk{}, src}
-	err := As(src.Name, src.Code, tree.Root)
+	err := ParseAs(src, tree.Root, w)
 	return tree, err
 }
 
-// As parses the given source as a node, depending on the dynamic type of n. If
+// ParseAs parses the given source as a node, depending on the dynamic type of
+// n, writing deprecation warnings to the given io.Writer if it is not nil. If
 // the error is not nil, it always has type MultiError.
-func As(srcname, src string, n Node) error {
-	ps := newParser(srcname, src)
+func ParseAs(src Source, n Node, w io.Writer) error {
+	ps := &parser{srcName: src.Name, src: src.Code, warn: w}
 	ps.parse(n)
 	ps.done()
 	return ps.assembleError()
@@ -949,6 +958,7 @@ spaces:
 				ps.next()
 			}
 		case r == '\\' || r == '^':
+			p := ps.pos
 			// Line continuation is like inline whitespace.
 			ps.next()
 			switch ps.peek() {
@@ -957,8 +967,14 @@ spaces:
 				if ps.peek() == '\n' {
 					ps.next()
 				}
+				if r == '\\' {
+					backslashLineCont(ps, p)
+				}
 			case '\n':
 				ps.next()
+				if r == '\\' {
+					backslashLineCont(ps, p)
+				}
 			case eof:
 				ps.error(errShouldBeNewline)
 			default:
@@ -970,6 +986,20 @@ spaces:
 		}
 	}
 	addSep(n, ps)
+}
+
+func backslashLineCont(ps *parser, p int) {
+	if !prog.ShowDeprecations || ps.warn == nil {
+		return
+	}
+	err := diag.Error{
+		Type:    "deprecation",
+		Message: "using \\ for line continuation is deprecated; use ^ instead",
+		Context: diag.Context{
+			Name: ps.srcName, Source: ps.src,
+			Ranging: diag.Ranging{From: p, To: p + 1}},
+	}
+	fmt.Fprintln(ps.warn, err.Show(""))
 }
 
 // IsInlineWhitespace reports whether r is an inline whitespace character.

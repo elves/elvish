@@ -22,7 +22,8 @@ Elvish now has a deprecation mechanism to give advance notice for breaking
 changes. Deprecated features trigger warnings, and will be removed in the next
 release.
 
-The following deprecated features trigger a warning at compilation time:
+The following deprecated features trigger a warning whenever the code is parsed
+or compiled, even if it is not executed:
 
 -   The `explode` command is now deprecated. Use `all` instead.
 
@@ -34,7 +35,9 @@ The following deprecated features trigger a warning at compilation time:
 -   The `-time` command has been promoted to `time`. The `-time` command is now
     a deprecated alias for `time`.
 
-The following deprecated features trigger a warning at evaluation time:
+-   Using `\\` for line continuation is now deprecated. Use `^` instead.
+
+The following deprecated features trigger a warning when the code is evaluated:
 
 -   The `&display-suffix` option of the `edit:complex-candidate` is now
     deprecated. Use the `&display` option instead.

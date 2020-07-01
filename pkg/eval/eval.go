@@ -286,7 +286,7 @@ func (ev *Evaler) Eval(op Op, cfg EvalCfg) error {
 
 // ParseAndCompile parses and compiles a Source.
 func (ev *Evaler) ParseAndCompile(src parse.Source, w io.Writer) (Op, error) {
-	tree, err := parse.Parse(src)
+	tree, err := parse.ParseWithDeprecation(src, w)
 	if err != nil {
 		return Op{}, err
 	}

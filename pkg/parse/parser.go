@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"reflect"
 	"strings"
 	"unicode/utf8"
@@ -20,11 +21,7 @@ type parser struct {
 	pos     int
 	overEOF int
 	errors  MultiError
-}
-
-// newParser creates a new parser from a piece of source text and its name.
-func newParser(srcname, src string) *parser {
-	return &parser{srcname, src, 0, 0, MultiError{}}
+	warn    io.Writer
 }
 
 func (ps *parser) parse(n Node) parsed {

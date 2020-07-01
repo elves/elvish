@@ -1,9 +1,14 @@
 package parse
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/elves/elvish/pkg/prog"
 )
 
 func a(c ...interface{}) ast {
@@ -301,6 +306,27 @@ func TestParse(t *testing.T) {
 			fmt.Fprintf(os.Stderr, "AST of %q:\n", tc.src)
 			pprintAST(tree.Root, os.Stderr)
 		}
+	}
+}
+
+func TestParseDeprecations(t *testing.T) {
+	restore := prog.SetShowDeprecations(true)
+	defer restore()
+
+	r, w := io.Pipe()
+	msgChan := make(chan []byte)
+	go func() {
+		msg, _ := ioutil.ReadAll(r)
+		msgChan <- msg
+		r.Close()
+	}()
+	ParseWithDeprecation(Source{Name: "[test]", Code: "a\\\nb"}, w)
+	w.Close()
+
+	msg := <-msgChan
+	wantMsg := []byte("using \\ for line continuation is deprecated")
+	if !bytes.Contains(msg, wantMsg) {
+		t.Errorf("got message %q, want message to contain %q", msg, wantMsg)
 	}
 }
 
