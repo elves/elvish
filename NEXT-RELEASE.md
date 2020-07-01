@@ -35,7 +35,7 @@ or compiled, even if it is not executed:
 -   The `-time` command has been promoted to `time`. The `-time` command is now
     a deprecated alias for `time`.
 
--   Using `\\` for line continuation is now deprecated. Use `^` instead.
+-   Using `\` for line continuation is now deprecated. Use `^` instead.
 
 The following deprecated features trigger a warning when the code is evaluated:
 
