@@ -59,15 +59,18 @@ func (exc *Exception) Show(indent string) string {
 	} else {
 		causeDescription = "\033[31;1m" + exc.Reason.Error() + "\033[m"
 	}
-	fmt.Fprintf(buf, "Exception: %s\n", causeDescription)
+	fmt.Fprintf(buf, "Exception: %s", causeDescription)
 
-	if exc.StackTrace.next == nil {
-		buf.WriteString(exc.StackTrace.head.ShowCompact(indent))
-	} else {
-		buf.WriteString(indent + "Traceback:")
-		for tb := exc.StackTrace; tb != nil; tb = tb.next {
-			buf.WriteString("\n" + indent + "  ")
-			buf.WriteString(tb.head.Show(indent + "    "))
+	if exc.StackTrace != nil {
+		buf.WriteString("\n")
+		if exc.StackTrace.next == nil {
+			buf.WriteString(exc.StackTrace.head.ShowCompact(indent))
+		} else {
+			buf.WriteString(indent + "Traceback:")
+			for tb := exc.StackTrace; tb != nil; tb = tb.next {
+				buf.WriteString("\n" + indent + "  ")
+				buf.WriteString(tb.head.Show(indent + "    "))
+			}
 		}
 	}
 
