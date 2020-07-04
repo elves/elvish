@@ -1753,9 +1753,9 @@ Namespaces that are not special (i.e. one of the above) are also called
 following modules that can be imported by `use`:
 
 -   The following modules are always available: [daemon](daemon.html),
-    [epm](epm.html), [exc](exc.html), [math](math.html),
-    [platform](platform.html), [str](str.html), [re](re.html),
-    [readline-binding](readline-binding.html), [store](store.html).
+    [epm](epm.html), [math](math.html), [platform](platform.html),
+    [str](str.html), [re](re.html), [readline-binding](readline-binding.html),
+    [store](store.html).
 
 -   The [unix](unix.html) module is available on UNIX-like platforms (see
     [`$platform:is-unix`](platform.html#platformis-unix)).
