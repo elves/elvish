@@ -22,7 +22,7 @@ import (
 const defaultWebPort = 3171
 
 // Global flag of whether to show deprecations.
-var ShowDeprecations = false
+var ShowDeprecations = true
 
 // SetShowDeprecations sets ShowDeprecations to the given value, and returns a
 // function to restore the old value.
