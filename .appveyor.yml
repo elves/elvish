@@ -11,4 +11,4 @@ before_test:
   - go version
 test_script:
   - go test -coverprofile=coverage -covermode=set ./...
-  - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage
+  - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage || ver > nul
