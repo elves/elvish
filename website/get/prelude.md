@@ -34,22 +34,22 @@ maintain backward compatibility from version to version.
   </tr>
   <tr>
     <td>
-      0.14.0 rc1 (<a href="/blog/0.14.0-release-notes.html">Release Note</a>)
+      0.14.0 (<a href="/blog/0.14.0-release-notes.html">Release Note</a>)
     </td>
     <td>
-      @dl Linux linux-amd64/elvish-v0.14.0-rc1.tar.gz
-      @dl macOS darwin-amd64/elvish-v0.14.0-rc1.tar.gz
-      @dl FreeBSD freebsd-amd64/elvish-0.14.0-rc1.tar.gz
-      @dl NetBSD netbsd-amd64/elvish-0.14.0-rc1.tar.gz
-      @dl OpenBSD openbsd-amd64/elvish-0.14.0-rc1.tar.gz
+      @dl Linux linux-amd64/elvish-v0.14.0.tar.gz
+      @dl macOS darwin-amd64/elvish-v0.14.0.tar.gz
+      @dl FreeBSD freebsd-amd64/elvish-0.14.0.tar.gz
+      @dl NetBSD netbsd-amd64/elvish-0.14.0.tar.gz
+      @dl OpenBSD openbsd-amd64/elvish-0.14.0.tar.gz
       @dl Windows windows-amd64/elvish-v0.14.0.zip
     </td>
     <td>
-      @dl Linux linux-386/elvish-v0.14.0-rc1.tar.gz
+      @dl Linux linux-386/elvish-v0.14.0.tar.gz
       @dl Windows windows-386/elvish-v0.14.0.zip
     </td>
     <td>
-      @dl Linux linux-arm64/elvish-v0.14.0-rc1.tar.gz
+      @dl Linux linux-arm64/elvish-v0.14.0.tar.gz
     </td>
   </tr>
 </table>
