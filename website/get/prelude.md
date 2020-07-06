@@ -91,24 +91,6 @@ dnf install elvish
 Elvish is packaged by [Debian](https://packages.debian.org/elvish) since buster
 and by [Ubuntu](http://packages.ubuntu.com/elvish) since 17.10.
 
-However, packages in official repositories are likely outdated. You can install
-the latest release from
-[PPA](https://launchpad.net/~zhsj/+archive/ubuntu/elvish):
-
-```elvish
-# Add Elvish PPA repo
-sudo wget -O /etc/apt/trusted.gpg.d/elvish \
-  'https://sks-keyservers.net/pks/lookup?search=0xE9EA75D542E35A20&options=mr&op=get'
-sudo gpg --dearmor /etc/apt/trusted.gpg.d/elvish
-sudo rm /etc/apt/trusted.gpg.d/elvish
-echo 'deb http://ppa.launchpad.net/zhsj/elvish/ubuntu xenial main' | \
-  sudo tee /etc/apt/sources.list.d/elvish.list
-sudo apt-get update
-
-# Install Elvish
-sudo apt-get install elvish
-```
-
 ## macOS (Homebrew)
 
 Elvish is packaged in Homebrew:
