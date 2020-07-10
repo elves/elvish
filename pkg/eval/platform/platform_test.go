@@ -35,7 +35,10 @@ func TestPlatform(t *testing.T) {
 		That(`put $platform:os`).Puts(runtime.GOOS),
 		That(`put $platform:is-windows`).Puts(runtime.GOOS == "windows"),
 		That(`put $platform:is-unix`).Puts(
-			runtime.GOOS != "windows" && runtime.GOOS != "plan9" && runtime.GOOS != "js"),
+			// Convert to bool type explicitly, to workaround gccgo bug.
+			// https://github.com/golang/go/issues/40152
+			// TODO(zhsj): remove workaround after gcc 11 is the default in CI.
+			bool(runtime.GOOS != "windows" && runtime.GOOS != "plan9" && runtime.GOOS != "js")),
 		// The first time we invoke the mock it acts as if we can't determine
 		// the hostname. Make sure that is turned into the expected exception.
 		That(`platform:hostname`).ThrowsCause(
