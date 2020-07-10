@@ -2,6 +2,7 @@ test_task:
   env:
     ELVISH_TEST_TIME_SCALE: 10
     CODECOV_TOKEN: e10d2e99-591b-4d2a-a8cf-8ca3e8d6df61
+    TEST_FLAG: -race
   go_modules_cache:
     fingerprint_script: cat go.sum
     folder: $GOPATH/pkg/mod
@@ -15,6 +16,17 @@ test_task:
       env:
         # This should have the same coverage as the previous task, so skip it.
         SKIP_UPLOAD_COVERAGE: 1
+    - name: Test on Linux (Gccgo)
+      container:
+        image: debian:unstable-slim
+      setup_script:
+        - apt-get -y update
+        - apt-get -y install ca-certificates gccgo-go
+      env:
+        # This should have the same coverage as the previous task, so skip it.
+        SKIP_UPLOAD_COVERAGE: 1
+        # Gccgo doesn't support race test
+        TEST_FLAG: ""
     - name: Test on macOS
       osx_instance:
         image: catalina-base
@@ -33,7 +45,7 @@ test_task:
         # Linux, so losing this part of the data makes very little difference.
         SKIP_UPLOAD_COVERAGE: 1
   go_version_script: go version
-  test_script: go test -race ./...
+  test_script: go test $TEST_FLAG ./...
   upload_coverage_script:
     - test -z $SKIP_UPLOAD_COVERAGE || exit 0
     - go test -coverprofile=coverage -covermode=set ./...
