@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/prog"
+	"github.com/elves/elvish/pkg/sys"
 	"github.com/elves/elvish/pkg/util"
 )
 
