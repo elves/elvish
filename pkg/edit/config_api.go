@@ -12,6 +12,7 @@ import (
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
+	"github.com/elves/elvish/pkg/store"
 )
 
 //elvdoc:var max-height
@@ -70,7 +71,7 @@ func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 // not run. The default value of this list contains a filter which
 // ignores command starts with space.
 
-func initAddCmdFilters(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fuser) {
+func initAddCmdFilters(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns, s histutil.Store) {
 	ignoreLeadingSpace := eval.NewGoFn("<ignore-cmd-with-leading-space>",
 		func(s string) bool { return !strings.HasPrefix(s, " ") })
 	filters := newListVar(vals.MakeList(ignoreLeadingSpace))
@@ -80,7 +81,7 @@ func initAddCmdFilters(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns, fuser 
 		if code != "" &&
 			callFilters(ev, "$<edit>:add-cmd-filters",
 				filters.Get().(vals.List), code) {
-			fuser.AddCmd(code)
+			s.AddCmd(store.Cmd{Text: code, Seq: -1})
 		}
 		// TODO(xiaq): Handle the error.
 	})

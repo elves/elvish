@@ -33,7 +33,14 @@ func TestStart_StoreError(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	Start(f.App, Config{Store: faultyStore{}})
+	db := histutil.NewFaultyInMemoryDB()
+	store, err := histutil.NewDBStore(db)
+	if err != nil {
+		panic(err)
+	}
+	db.SetOneOffError(mockError)
+
+	Start(f.App, Config{Store: store})
 	f.TestTTYNotes(t, "db error: mock error")
 }
 
@@ -41,8 +48,7 @@ func TestStart_OK(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	st := histutil.NewMemoryStore()
-	st.AddCmd(store.Cmd{Text: "foo,bar,baz", Seq: 0})
+	st := histutil.NewMemStore("foo,bar,baz")
 	Start(f.App, Config{
 		Store: st,
 		Wordifier: func(cmd string) []string {

@@ -39,10 +39,9 @@ func TestStart_OK(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	st := histutil.NewMemoryStore()
-	st.AddCmd(store.Cmd{Text: "foo", Seq: 0})
-	st.AddCmd(store.Cmd{Text: "bar", Seq: 1})
-	st.AddCmd(store.Cmd{Text: "baz", Seq: 2})
+	st := histutil.NewMemStore(
+		// 0    1      2
+		"foo", "bar", "baz")
 	Start(f.App, Config{Store: st})
 
 	// Test UI.
@@ -78,10 +77,9 @@ func TestStart_Dedup(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	st := histutil.NewMemoryStore()
-	st.AddCmd(store.Cmd{Text: "ls", Seq: 0})
-	st.AddCmd(store.Cmd{Text: "echo", Seq: 1})
-	st.AddCmd(store.Cmd{Text: "ls", Seq: 2})
+	st := histutil.NewMemStore(
+		// 0    1      2
+		"ls", "echo", "ls")
 
 	// No dedup
 	Start(f.App, Config{Store: st, Dedup: func() bool { return false }})
@@ -106,9 +104,9 @@ func TestStart_CaseSensitive(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	st := histutil.NewMemoryStore()
-	st.AddCmd(store.Cmd{Text: "ls", Seq: 0})
-	st.AddCmd(store.Cmd{Text: "LS", Seq: 1})
+	st := histutil.NewMemStore(
+		// 0  1
+		"ls", "LS")
 
 	// Case sensitive
 	Start(f.App, Config{Store: st, CaseSensitive: func() bool { return true }})

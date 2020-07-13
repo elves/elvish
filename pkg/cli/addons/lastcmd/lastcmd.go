@@ -9,7 +9,6 @@ import (
 
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/cli/histutil"
-	"github.com/elves/elvish/pkg/store"
 	"github.com/elves/elvish/pkg/ui"
 )
 
@@ -25,7 +24,7 @@ type Config struct {
 
 // Store wraps the LastCmd method. It is a subset of histutil.Store.
 type Store interface {
-	LastCmd() (store.Cmd, error)
+	Cursor(prefix string) histutil.Cursor
 }
 
 var _ = Store(histutil.Store(nil))
@@ -36,7 +35,9 @@ func Start(app cli.App, cfg Config) {
 		app.Notify("no history store")
 		return
 	}
-	cmd, err := cfg.Store.LastCmd()
+	c := cfg.Store.Cursor("")
+	c.Prev()
+	cmd, err := c.Get()
 	if err != nil {
 		app.Notify("db error: " + err.Error())
 		return

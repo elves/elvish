@@ -12,7 +12,7 @@ import (
 // Import command history entries that happened after the current session
 // started.
 
-func initHistWalk(ed *Editor, ev *eval.Evaler, fuser *histutil.Fuser) {
+func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar)
 	app := ed.app
@@ -20,7 +20,7 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, fuser *histutil.Fuser) {
 		eval.Ns{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:history>", map[string]interface{}{
-			"start": func() { histWalkStart(app, fuser, binding) },
+			"start": func() { histWalkStart(app, hs, binding) },
 			"up":    func() { notifyIfError(app, histwalk.Prev(app)) },
 			"down":  func() { notifyIfError(app, histwalk.Next(app)) },
 			"down-or-quit": func() {
@@ -34,14 +34,14 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, fuser *histutil.Fuser) {
 			"accept": func() { histwalk.Accept(app) },
 			"close":  func() { histwalk.Close(app) },
 
-			"fast-forward": fuser.FastForward,
+			"fast-forward": hs.FastForward,
 		}))
 }
 
-func histWalkStart(app cli.App, fuser *histutil.Fuser, binding cli.Handler) {
+func histWalkStart(app cli.App, hs *histStore, binding cli.Handler) {
 	buf := app.CodeArea().CopyState().Buffer
-	walker := fuser.Walker(buf.Content[:buf.Dot])
-	histwalk.Start(app, histwalk.Config{Binding: binding, Walker: walker})
+	histwalk.Start(app, histwalk.Config{
+		Binding: binding, Store: hs, Prefix: buf.Content[:buf.Dot]})
 }
 
 func notifyIfError(app cli.App, err error) {

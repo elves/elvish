@@ -20,12 +20,12 @@ func TestHistWalk(t *testing.T) {
 	f.TTY.TestBuffer(t, buf0)
 
 	getCfg := func() Config {
-		db := &histutil.TestDB{
-			//                 0       1        2         3        4         5
-			AllCmds: []string{"echo", "ls -l", "echo a", "ls -a", "echo a", "ls -a"},
-		}
+		store := histutil.NewMemStore(
+			// 0       1        2         3        4         5
+			"echo", "ls -l", "echo a", "ls -a", "echo a", "ls -a")
 		return Config{
-			Walker: histutil.NewWalker(db, -1, nil, "ls"),
+			Store:  store,
+			Prefix: "ls",
 			Binding: cli.MapHandler{
 				term.K(ui.Up):        func() { Prev(f.App) },
 				term.K(ui.Down):      func() { Next(f.App) },
@@ -72,7 +72,7 @@ func TestHistWalk_NoWalker(t *testing.T) {
 	defer f.Stop()
 
 	Start(f.App, Config{})
-	f.TestTTYNotes(t, "no history walker")
+	f.TestTTYNotes(t, "no history store")
 }
 
 func TestHistWalk_NoMatch(t *testing.T) {
@@ -84,8 +84,8 @@ func TestHistWalk_NoMatch(t *testing.T) {
 	buf0 := f.MakeBuffer("ls", term.DotHere)
 	f.TTY.TestBuffer(t, buf0)
 
-	db := &histutil.TestDB{AllCmds: []string{"echo 1", "echo 2"}}
-	cfg := Config{Walker: histutil.NewWalker(db, -1, nil, "ls")}
+	store := histutil.NewMemStore("echo 1", "echo 2")
+	cfg := Config{Store: store, Prefix: "ls"}
 	Start(f.App, cfg)
 	// Test that an error message has been written to the notes buffer.
 	f.TestTTYNotes(t, "end of history")
@@ -97,12 +97,8 @@ func TestHistWalk_FallbackHandler(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	db := &histutil.TestDB{
-		AllCmds: []string{"ls"},
-	}
-	Start(f.App, Config{
-		Walker: histutil.NewWalker(db, -1, nil, ""),
-	})
+	store := histutil.NewMemStore("ls")
+	Start(f.App, Config{Store: store, Prefix: ""})
 	f.TestTTY(t,
 		"ls", Styles,
 		"__", term.DotHere, "\n",

@@ -15,7 +15,7 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func initListings(ed *Editor, ev *eval.Evaler, st store.Store, fuser *histutil.Fuser) {
+func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histutil.Store) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	app := ed.app
 	ed.ns.AddNs("listing",
@@ -38,11 +38,6 @@ func initListings(ed *Editor, ev *eval.Evaler, st store.Store, fuser *histutil.F
 				"toggle-filtering": cli.ListingToggleFiltering,
 			*/
 		}))
-
-	var histStore histutil.Store
-	if fuser != nil {
-		histStore = fuserWrapper{fuser}
-	}
 
 	initHistlist(ed, ev, histStore, bindingVar)
 	initLastcmd(ed, ev, histStore, bindingVar)
@@ -254,17 +249,6 @@ func adaptToIterateStringPair(variable vars.Var) func(func(string, string) bool)
 			}
 		}
 	}
-}
-
-// Wraps the histutil.Fuser interface to implement histutil.Store. This is a
-// bandaid as we cannot change the implementation of Fuser without breaking its
-// other users. Eventually Fuser should implement Store directly.
-type fuserWrapper struct {
-	*histutil.Fuser
-}
-
-func (f fuserWrapper) AddCmd(cmd store.Cmd) (int, error) {
-	return f.Fuser.AddCmd(cmd.Text)
 }
 
 // Wraps an Evaler to implement the cli.DirStore interface.

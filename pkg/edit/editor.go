@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/histutil"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
@@ -43,7 +42,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 	ed := &Editor{ns: eval.Ns{}, excList: vals.EmptyList}
 	appSpec := cli.AppSpec{TTY: tty}
 
-	fuser, err := histutil.NewFuser(st)
+	hs, err := newHistStore(st)
 	if err != nil {
 		// TODO(xiaq): Report the error.
 	}
@@ -51,19 +50,17 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 	initHighlighter(&appSpec, ev)
 	initMaxHeight(&appSpec, ed.ns)
 	initReadlineHooks(&appSpec, ev, ed.ns)
-	if fuser != nil {
-		initAddCmdFilters(&appSpec, ev, ed.ns, fuser)
-	}
+	initAddCmdFilters(&appSpec, ev, ed.ns, hs)
 	initInsertAPI(&appSpec, ed, ev, ed.ns)
 	initPrompts(&appSpec, ed, ev, ed.ns)
 	ed.app = cli.NewApp(appSpec)
 
 	initExceptionsAPI(ed)
 	initCommandAPI(ed, ev)
-	initListings(ed, ev, st, fuser)
+	initListings(ed, ev, st, hs)
 	initNavigation(ed, ev)
 	initCompletion(ed, ev)
-	initHistWalk(ed, ev, fuser)
+	initHistWalk(ed, ev, hs)
 	initInstant(ed, ev)
 	initMinibuf(ed, ev)
 
@@ -71,7 +68,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 	initTTYBuiltins(ed.app, tty, ed.ns)
 	initMiscBuiltins(ed.app, ed.ns)
 	initStateAPI(ed.app, ed.ns)
-	initStoreAPI(ed.app, ed.ns, fuser)
+	initStoreAPI(ed.app, ed.ns, hs)
 	evalDefaultBinding(ev, ed.ns)
 
 	return ed

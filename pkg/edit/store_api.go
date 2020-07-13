@@ -26,7 +26,7 @@ var errStoreOffline = errors.New("store offline")
 // edit:command-history | put [(all)][-1][cmd]
 // ```
 
-func commandHistory(fuser *histutil.Fuser, ch chan<- interface{}) error {
+func commandHistory(fuser histutil.Store, ch chan<- interface{}) error {
 	if fuser == nil {
 		return errStoreOffline
 	}
@@ -44,11 +44,10 @@ func commandHistory(fuser *histutil.Fuser, ch chan<- interface{}) error {
 //
 // Inserts the last word of the last command.
 
-func insertLastWord(app cli.App, fuser *histutil.Fuser) error {
-	if fuser == nil {
-		return errStoreOffline
-	}
-	cmd, err := fuser.LastCmd()
+func insertLastWord(app cli.App, histStore histutil.Store) error {
+	c := histStore.Cursor("")
+	c.Prev()
+	cmd, err := c.Get()
 	if err != nil {
 		return err
 	}
@@ -61,7 +60,7 @@ func insertLastWord(app cli.App, fuser *histutil.Fuser) error {
 	return nil
 }
 
-func initStoreAPI(app cli.App, ns eval.Ns, fuser *histutil.Fuser) {
+func initStoreAPI(app cli.App, ns eval.Ns, fuser histutil.Store) {
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"command-history": func(fm *eval.Frame) error {
 			return commandHistory(fuser, fm.OutputChan())
