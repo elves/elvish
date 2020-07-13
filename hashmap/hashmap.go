@@ -25,12 +25,13 @@ type Hash func(k interface{}) uint32
 // New takes an equality function and a hash function, and returns an empty
 // Map.
 func New(e Equal, h Hash) Map {
-	return &hashMap{0, emptyBitmapNode, e, h}
+	return &hashMap{0, emptyBitmapNode, nil, e, h}
 }
 
 type hashMap struct {
 	count int
 	root  node
+	nilV  *interface{}
 	equal Equal
 	hash  Hash
 }
@@ -40,25 +41,45 @@ func (m *hashMap) Len() int {
 }
 
 func (m *hashMap) Index(k interface{}) (interface{}, bool) {
+	if k == nil {
+		if m.nilV == nil {
+			return nil, false
+		}
+		return *m.nilV, true
+	}
 	return m.root.find(0, m.hash(k), k, m.equal)
 }
 
 func (m *hashMap) Assoc(k, v interface{}) Map {
+	if k == nil {
+		newCount := m.count
+		if m.nilV == nil {
+			newCount++
+		}
+		return &hashMap{newCount, m.root, &v, m.equal, m.hash}
+	}
 	newRoot, added := m.root.assoc(0, m.hash(k), k, v, m.hash, m.equal)
 	newCount := m.count
 	if added {
 		newCount++
 	}
-	return &hashMap{newCount, newRoot, m.equal, m.hash}
+	return &hashMap{newCount, newRoot, m.nilV, m.equal, m.hash}
 }
 
 func (m *hashMap) Dissoc(k interface{}) Map {
+	if k == nil {
+		newCount := m.count
+		if m.nilV != nil {
+			newCount--
+		}
+		return &hashMap{newCount, m.root, nil, m.equal, m.hash}
+	}
 	newRoot, deleted := m.root.without(0, m.hash(k), k, m.equal)
 	newCount := m.count
 	if deleted {
 		newCount--
 	}
-	return &hashMap{newCount, newRoot, m.equal, m.hash}
+	return &hashMap{newCount, newRoot, m.nilV, m.equal, m.hash}
 }
 
 func (m *hashMap) Iterator() Iterator {

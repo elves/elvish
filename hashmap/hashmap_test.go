@@ -271,6 +271,40 @@ func testIterator(t *testing.T, m Map, ref map[testKey]string) {
 	}
 }
 
+func TestNilKey(t *testing.T) {
+	m := empty
+
+	testLen := func(l int) {
+		if m.Len() != l {
+			t.Errorf(".Len -> %d, want %d", m.Len(), l)
+		}
+	}
+	testIndex := func(wantVal interface{}, wantOk bool) {
+		val, ok := m.Index(nil)
+		if val != wantVal {
+			t.Errorf(".Index -> %v, want %v", val, wantVal)
+		}
+		if ok != wantOk {
+			t.Errorf(".Index -> ok %v, want %v", ok, wantOk)
+		}
+	}
+
+	testLen(0)
+	testIndex(nil, false)
+
+	m = m.Assoc(nil, "nil value")
+	testLen(1)
+	testIndex("nil value", true)
+
+	m = m.Assoc(nil, "nil value 2")
+	testLen(1)
+	testIndex("nil value 2", true)
+
+	m = m.Dissoc(nil)
+	testLen(0)
+	testIndex(nil, false)
+}
+
 func BenchmarkSequentialConsNative1(b *testing.B) { nativeSequentialAdd(b.N, N1) }
 func BenchmarkSequentialConsNative2(b *testing.B) { nativeSequentialAdd(b.N, N2) }
 func BenchmarkSequentialConsNative3(b *testing.B) { nativeSequentialAdd(b.N, N3) }
