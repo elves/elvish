@@ -83,7 +83,35 @@ func (m *hashMap) Dissoc(k interface{}) Map {
 }
 
 func (m *hashMap) Iterator() Iterator {
+	if m.nilV != nil {
+		return &nilVIterator{true, *m.nilV, m.root.iterator()}
+	}
 	return m.root.iterator()
+}
+
+type nilVIterator struct {
+	atNil bool
+	nilV  interface{}
+	tail  Iterator
+}
+
+func (it *nilVIterator) Elem() (interface{}, interface{}) {
+	if it.atNil {
+		return nil, it.nilV
+	}
+	return it.tail.Elem()
+}
+
+func (it *nilVIterator) HasElem() bool {
+	return it.atNil || it.tail.HasElem()
+}
+
+func (it *nilVIterator) Next() {
+	if it.atNil {
+		it.atNil = false
+	} else {
+		it.tail.Next()
+	}
 }
 
 func (m *hashMap) MarshalJSON() ([]byte, error) {

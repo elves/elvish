@@ -2,6 +2,7 @@ package hashmap
 
 import (
 	"math/rand"
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -303,6 +304,19 @@ func TestNilKey(t *testing.T) {
 	m = m.Dissoc(nil)
 	testLen(0)
 	testIndex(nil, false)
+}
+
+func TestIterateMapWithNilKey(t *testing.T) {
+	m := empty.Assoc("k", "v").Assoc(nil, "nil value")
+	var collected []interface{}
+	for it := m.Iterator(); it.HasElem(); it.Next() {
+		k, v := it.Elem()
+		collected = append(collected, k, v)
+	}
+	wantCollected := []interface{}{nil, "nil value", "k", "v"}
+	if !reflect.DeepEqual(collected, wantCollected) {
+		t.Errorf("collected %v, want %v", collected, wantCollected)
+	}
 }
 
 func BenchmarkSequentialConsNative1(b *testing.B) { nativeSequentialAdd(b.N, N1) }
