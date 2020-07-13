@@ -6,8 +6,8 @@ github.com/mattn/go-isatty v0.0.11 h1:FxPOTFNqGkuDUGi3H/qkUbQO4ZiBa2brKq5r0l8TGe
 github.com/mattn/go-isatty v0.0.11/go.mod h1:PhnuNfih5lzO57/f3n+odYbM4JtupLOxQOAqxQCu2WE=
 github.com/mattn/go-isatty v0.0.12 h1:wuysRhFDzyxgEmMf5xjvJ2M9dZoWAXNNr5LSBS7uHXY=
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
-github.com/xiaq/persistent v0.0.0-20190312105637-a1d9ac4077fc h1:r6bnN6KKLy+njHSxM+3phuzshod0HhzwIOMV6JQgT18=
-github.com/xiaq/persistent v0.0.0-20190312105637-a1d9ac4077fc/go.mod h1:ezTJjR1ZWIJvN9QAd79tCd/TO4X3x7FDbLMEGHOI1LA=
+github.com/xiaq/persistent v0.0.0-20200713233553-14b5bdc771d3 h1:A89V6pky+I7R7he7WBNFC7A8fNTmf8CllT6fDc7pVRU=
+github.com/xiaq/persistent v0.0.0-20200713233553-14b5bdc771d3/go.mod h1:ezTJjR1ZWIJvN9QAd79tCd/TO4X3x7FDbLMEGHOI1LA=
 go.etcd.io/bbolt v1.3.4 h1:hi1bXHMVrlQh6WwxAy+qZCV/SYIlqo+Ushwdpa4tAKg=
 go.etcd.io/bbolt v1.3.4/go.mod h1:G5EMThwa9y8QZGBClrRx5EY+Yw9kAhnjy3bSjsnlVTQ=
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
