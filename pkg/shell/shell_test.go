@@ -58,6 +58,7 @@ func testSHLVL(t *testing.T, wantSHLVL string) {
 
 	Script(f.Fds(), []string{"print $E:SHLVL"}, &ScriptConfig{Cmd: true})
 	f.TestOut(t, 1, wantSHLVL)
+	f.TestOut(t, 2, "")
 
 	// Test that state of SHLVL is restored.
 	newValue, newOK := os.LookupEnv("SHLVL")

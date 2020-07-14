@@ -17,6 +17,7 @@ func TestVersion(t *testing.T) {
 	prog.Run(f.Fds(), Elvish("-version"), Program)
 
 	f.TestOut(t, 1, Version+"\n")
+	f.TestOut(t, 2, "")
 }
 
 func TestBuildInfo(t *testing.T) {
@@ -31,6 +32,7 @@ func TestBuildInfo(t *testing.T) {
 			Version,
 			runtime.Version(),
 			Reproducible))
+	f.TestOut(t, 2, "")
 }
 
 func TestBuildInfo_JSON(t *testing.T) {
@@ -49,6 +51,7 @@ func TestBuildInfo_JSON(t *testing.T) {
 			runtime.Version(),
 			Reproducible == "true",
 		})+"\n")
+	f.TestOut(t, 2, "")
 }
 
 func mustToJSON(v interface{}) string {
