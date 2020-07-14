@@ -32,6 +32,7 @@ func TestInteract_Exception(t *testing.T) {
 
 	Interact(f.Fds(), &InteractConfig{})
 	f.TestOutSnippet(t, 2, "fail mock")
+	f.TestOut(t, 1, "")
 }
 
 func TestInteract_RcFile(t *testing.T) {
@@ -54,6 +55,7 @@ func TestInteract_RcFile_DoesNotCompile(t *testing.T) {
 
 	Interact(f.Fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
 	f.TestOutSnippet(t, 2, "variable $a not found")
+	f.TestOut(t, 1, "")
 }
 
 func TestInteract_RcFile_Exception(t *testing.T) {
@@ -65,6 +67,7 @@ func TestInteract_RcFile_Exception(t *testing.T) {
 
 	Interact(f.Fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
 	f.TestOutSnippet(t, 2, "fail mock")
+	f.TestOut(t, 1, "")
 }
 
 func TestInteract_RcFile_NonexistentIsOK(t *testing.T) {

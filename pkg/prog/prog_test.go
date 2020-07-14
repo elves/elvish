@@ -34,6 +34,7 @@ func TestCPUProfile_BadPath(t *testing.T) {
 	defer f.Cleanup()
 
 	Run(f.Fds(), Elvish("-cpuprofile", "/a/bad/path"), testProgram{shouldRun: true})
+	f.TestOut(t, 1, "")
 	f.TestOutSnippet(t, 2, "Warning: cannot create CPU profile:")
 	f.TestOutSnippet(t, 2, "Continuing without CPU profiling.")
 }
@@ -45,6 +46,7 @@ func TestHelp(t *testing.T) {
 	Run(f.Fds(), Elvish("-help"))
 
 	f.TestOutSnippet(t, 1, "Usage: elvish [flags] [script]")
+	f.TestOut(t, 2, "")
 }
 
 func TestShowDeprecations(t *testing.T) {
@@ -76,6 +78,7 @@ func TestGoodProgram(t *testing.T) {
 		testProgram{shouldRun: true, writeOut: "program 2"})
 
 	f.TestOut(t, 1, "program 2")
+	f.TestOut(t, 2, "")
 }
 
 func TestPreferEarlierProgram(t *testing.T) {
@@ -87,6 +90,7 @@ func TestPreferEarlierProgram(t *testing.T) {
 		testProgram{shouldRun: true, writeOut: "program 2"})
 
 	f.TestOut(t, 1, "program 1")
+	f.TestOut(t, 2, "")
 }
 
 func TestBadUsageError(t *testing.T) {
@@ -98,6 +102,7 @@ func TestBadUsageError(t *testing.T) {
 
 	TestError(t, f, exit, "lorem ipsum")
 	f.TestOutSnippet(t, 2, "Usage:")
+	f.TestOut(t, 1, "")
 }
 
 func TestExitError(t *testing.T) {
@@ -111,6 +116,7 @@ func TestExitError(t *testing.T) {
 		t.Errorf("exit = %v, want 3", exit)
 	}
 	f.TestOut(t, 2, "")
+	f.TestOut(t, 1, "")
 }
 
 func TestExitError_0(t *testing.T) {
