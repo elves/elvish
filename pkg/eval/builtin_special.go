@@ -299,7 +299,7 @@ func loadModuleFile(fm *Frame, r diag.Ranger, spec, path string) (Ns, error) {
 }
 
 func evalModule(fm *Frame, r diag.Ranger, key string, src parse.Source) (Ns, error) {
-	tree, err := parse.Parse(src)
+	tree, err := parse.ParseWithDeprecation(src, fm.ports[2].File)
 	if err != nil {
 		return nil, err
 	}
