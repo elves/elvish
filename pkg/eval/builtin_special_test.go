@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval/errs"
+	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -158,5 +159,19 @@ func TestUse(t *testing.T) {
 		// Wrong uses of "use".
 		That("use").DoesNotCompile(),
 		That("use a b c").DoesNotCompile(),
+	)
+}
+
+// Regression test for #1072
+func TestUse_WarnsAboutDeprecatedSyntax(t *testing.T) {
+	restore := prog.SetShowDeprecations(true)
+	defer restore()
+	libdir, cleanup := util.InTestDir()
+	defer cleanup()
+	mustWriteFile("dep.elv", []byte("a = \\\n1"), 0600)
+
+	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
+		// Importing module triggers check for deprecated syntax features
+		That("use dep").PrintsStderrWith("is deprecated"),
 	)
 }

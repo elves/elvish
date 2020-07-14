@@ -283,7 +283,7 @@ func source(fm *Frame, fname string) error {
 		return err
 	}
 	src := parse.Source{Name: fname, Code: code, IsFile: true}
-	tree, err := parse.Parse(src)
+	tree, err := parse.ParseWithDeprecation(src, fm.ports[2].File)
 	if err != nil {
 		return err
 	}
