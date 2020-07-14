@@ -35,7 +35,7 @@ func (s *histStore) AllCmds() ([]store.Cmd, error) {
 func (s *histStore) Cursor(prefix string) histutil.Cursor {
 	s.m.Lock()
 	defer s.m.Unlock()
-	return s.hs.Cursor(prefix)
+	return cursor{&s.m, histutil.NewDedupCursor(s.hs.Cursor(prefix))}
 }
 
 func (s *histStore) FastForward() error {
@@ -44,4 +44,27 @@ func (s *histStore) FastForward() error {
 	hs, err := histutil.NewHybridStore(s.db)
 	s.hs = hs
 	return err
+}
+
+type cursor struct {
+	m *sync.Mutex
+	c histutil.Cursor
+}
+
+func (c cursor) Prev() {
+	c.m.Lock()
+	defer c.m.Unlock()
+	c.c.Prev()
+}
+
+func (c cursor) Next() {
+	c.m.Lock()
+	defer c.m.Unlock()
+	c.c.Next()
+}
+
+func (c cursor) Get() (store.Cmd, error) {
+	c.m.Lock()
+	defer c.m.Unlock()
+	return c.c.Get()
 }

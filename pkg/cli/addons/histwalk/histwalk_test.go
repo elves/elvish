@@ -21,8 +21,8 @@ func TestHistWalk(t *testing.T) {
 
 	getCfg := func() Config {
 		store := histutil.NewMemStore(
-			// 0       1        2         3        4         5
-			"echo", "ls -l", "echo a", "ls -a", "echo a", "ls -a")
+			// 0       1        2         3       4         5
+			"echo", "ls -l", "echo a", "echo", "echo a", "ls -a")
 		return Config{
 			Store:  store,
 			Prefix: "ls",
@@ -45,7 +45,6 @@ func TestHistWalk(t *testing.T) {
 	f.TTY.TestBuffer(t, buf5)
 
 	f.TTY.Inject(term.K(ui.Up))
-	// Skips item #3 as it is a duplicate.
 	buf1 := f.MakeBuffer(
 		"ls -l", Styles,
 		"  ___", term.DotHere, "\n",

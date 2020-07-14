@@ -66,7 +66,7 @@ func Start(app cli.App, cfg Config) {
 	if cfg.Binding == nil {
 		cfg.Binding = cli.DummyHandler{}
 	}
-	cursor := histutil.NewDedupCursor(cfg.Store.Cursor(cfg.Prefix))
+	cursor := cfg.Store.Cursor(cfg.Prefix)
 	cursor.Prev()
 	_, err := cursor.Get()
 	if err != nil {
