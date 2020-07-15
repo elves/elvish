@@ -48,6 +48,7 @@ type app struct {
 	MaxHeight         func() int
 	RPromptPersistent func() bool
 	BeforeReadline    []func()
+	AfterPrompt       []func() string
 	AfterReadline     []func(string)
 	Highlighter       Highlighter
 	Prompt            Prompt
@@ -87,6 +88,7 @@ func NewApp(spec AppSpec) App {
 		MaxHeight:         spec.MaxHeight,
 		RPromptPersistent: spec.RPromptPersistent,
 		BeforeReadline:    spec.BeforeReadline,
+		AfterPrompt:       spec.AfterPrompt,
 		AfterReadline:     spec.AfterReadline,
 		Highlighter:       spec.Highlighter,
 		Prompt:            spec.Prompt,

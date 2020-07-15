@@ -32,6 +32,7 @@ func initMaxHeight(appSpec *cli.AppSpec, ns eval.Ns) {
 
 func initReadlineHooks(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	initBeforeReadline(appSpec, ev, ns)
+	initAfterPrompt(appSpec, ev, ns)
 	initAfterReadline(appSpec, ev, ns)
 }
 
@@ -45,6 +46,14 @@ func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	ns["before-readline"] = hook
 	appSpec.BeforeReadline = append(appSpec.BeforeReadline, func() {
 		callHooks(ev, "$<edit>:before-readline", hook.Get().(vals.List))
+	})
+}
+
+func initAfterPrompt(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
+	hook := newListVar(vals.EmptyList)
+	ns["after-prompt"] = hook
+	appSpec.AfterPrompt = append(appSpec.AfterPrompt, func() string {
+		return callHooksWithStringResult(ev, "$<edit>:after-prompt", hook.Get().(vals.List))
 	})
 }
 
@@ -106,6 +115,44 @@ func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}
 		fm := eval.NewTopFrame(ev, parse.Source{Name: name}, ports)
 		fn.Call(fm, args, eval.NoOpts)
 	}
+}
+
+// TODO(zzamboni): This is an extremely rough first version, this
+// function is based on callFilters but adapted to return a
+// concatenated string with the output of all the hook functions.
+func callHooksWithStringResult(ev *eval.Evaler, name string, hooks vals.List, args ...interface{}) string {
+	i := -1
+	result := ""
+	for it := hooks.Iterator(); it.HasElem(); it.Next() {
+		i++
+		name := fmt.Sprintf("%s[%d]", name, i)
+		fn, ok := it.Elem().(eval.Callable)
+		if !ok {
+			// TODO(xiaq): This is not testable as it depends on stderr.
+			// Make it testable.
+			diag.Complainf(os.Stderr, "%s not function", name)
+			continue
+		}
+		// TODO(xiaq): This should use stdPorts, but stdPorts is currently
+		// unexported from eval.
+		ports := []*eval.Port{
+			eval.DevNullClosedChan, {File: os.Stdout}, {File: os.Stderr}}
+		fm := eval.NewTopFrame(ev, parse.Source{Name: name}, ports)
+		out, err := fm.CaptureOutput(func(fm *eval.Frame) error { return fn.Call(fm, args, eval.NoOpts) })
+		if err != nil {
+			diag.Complainf(os.Stderr, "%s return error", name)
+			continue
+		}
+		for _,r := range out {
+			p, ok := r.(string)
+			if !ok {
+				diag.Complainf(os.Stderr, "hook %s should return a string", name)
+				continue
+			}
+			result = result + p
+		}
+	}
+	return result
 }
 
 func callFilters(ev *eval.Evaler, name string, filters vals.List, args ...interface{}) bool {

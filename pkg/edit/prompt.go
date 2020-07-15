@@ -55,15 +55,15 @@ import (
 
 func initPrompts(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns) {
 	promptVal, rpromptVal := getDefaultPromptVals()
-	initPrompt(&appSpec.Prompt, "prompt", promptVal, nt, ev, ns)
-	initPrompt(&appSpec.RPrompt, "rprompt", rpromptVal, nt, ev, ns)
+	initPrompt(&appSpec.Prompt, "prompt", promptVal, nt, ev, ns, appSpec.AfterPrompt)
+	initPrompt(&appSpec.RPrompt, "rprompt", rpromptVal, nt, ev, ns, nil)
 
 	rpromptPersistentVar := newBoolVar(false)
 	appSpec.RPromptPersistent = func() bool { return rpromptPersistentVar.Get().(bool) }
 	ns["rprompt-persistent"] = rpromptPersistentVar
 }
 
-func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *eval.Evaler, ns eval.Ns) {
+func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *eval.Evaler, ns eval.Ns, afterPrompt []func() string) {
 	computeVar := vars.FromPtr(&val)
 	ns[name] = computeVar
 	eagernessVar := newIntVar(5)
@@ -76,7 +76,20 @@ func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *
 
 	*p = prompt.New(prompt.Config{
 		Compute: func() ui.Text {
-			return callForStyledText(nt, ev, name, computeVar.Get().(eval.Callable))
+			result := callForStyledText(nt, ev, name, computeVar.Get().(eval.Callable))
+			afterPromptResult := ""
+			if afterPrompt != nil {
+				for _, f := range afterPrompt {
+					afterPromptResult = afterPromptResult + f()
+				}
+			}
+			newResult, err := result.Concat(afterPromptResult)
+			if err != nil {
+				nt.notifyf("invalid output type from after-prompt: %s", vals.Kind(afterPromptResult))
+			} else {
+				result = newResult.(ui.Text)
+			}
+			return result
 		},
 		Eagerness: func() int { return eagernessVar.GetRaw().(int) },
 		StaleThreshold: func() time.Duration {
