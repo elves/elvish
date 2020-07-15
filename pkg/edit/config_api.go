@@ -143,7 +143,7 @@ func callHooksWithStringResult(ev *eval.Evaler, name string, hooks vals.List, ar
 			diag.Complainf(os.Stderr, "%s return error", name)
 			continue
 		}
-		for _,r := range out {
+		for _, r := range out {
 			p, ok := r.(string)
 			if !ok {
 				diag.Complainf(os.Stderr, "hook %s should return a string", name)
