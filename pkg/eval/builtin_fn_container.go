@@ -82,6 +82,8 @@ import (
 // explode $iterable
 // ```
 //
+// This function is deprecated; use [all](#all) instead.
+//
 // Put all elements of `$iterable` on the structured stdout. Like `flatten` in
 // functional languages. Equivalent to `[li]{ put $@li }`.
 //
