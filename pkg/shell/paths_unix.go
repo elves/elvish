@@ -9,7 +9,7 @@ import (
 	"syscall"
 )
 
-// Returns a "run directory" for storing ephemeral files, which is guranteed
+// Returns a "run directory" for storing ephemeral files, which is guaranteed
 // to be only accessible to the current user.
 //
 // The path of the run directory is either $XDG_RUNTIME_DIR/elvish or
