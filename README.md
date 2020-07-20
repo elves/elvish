@@ -1,5 +1,7 @@
 # Elvish: Friendly Interactive Shell and Expressive Programming Language
 
+# dummy comment
+
 [![Test Status on Linux](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=linux&task=Test%20on%20Linux)](https://cirrus-ci.com/github/elves/elvish/master)
 [![Test Status on macOS](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=macos&task=Test%20on%20macOS)](https://cirrus-ci.com/github/elves/elvish/master)
 [![Test Status on FreeBSD](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=freebsd&task=Test%20on%20FreeBSD)](https://cirrus-ci.com/github/elves/elvish/master)
