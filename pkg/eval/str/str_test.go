@@ -35,6 +35,10 @@ func TestStr(t *testing.T) {
 		That(`str:from-codepoints 0x4f60 0x597d`).Puts("你好"),
 		That(`str:from-codepoints -1`).ThrowsAny(),
 
+		That(`str:from-utf8-bytes 0x61`).Puts("a"),
+		That(`str:from-utf8-bytes 0xe4 0xbd 0xa0 0xe5 0xa5 0xbd`).Puts("你好"),
+		That(`str:from-utf8-bytes -1`).ThrowsAny(),
+
 		That(`str:has-prefix abc`).ThrowsAny(),
 		That(`str:has-prefix abcd ab`).Puts(true),
 		That(`str:has-prefix abcd cd`).Puts(false),
@@ -68,6 +72,9 @@ func TestStr(t *testing.T) {
 
 		That(`str:to-codepoints a`).Puts("0x61"),
 		That(`str:to-codepoints 你好`).Puts("0x4f60", "0x597d"),
+
+		That(`str:to-utf8-bytes a`).Puts("0x61"),
+		That(`str:to-utf8-bytes 你好`).Puts("0xe4", "0xbd", "0xa0", "0xe5", "0xa5", "0xbd"),
 
 		That(`str:title abc`).Puts("Abc"),
 		That(`str:title "abc def"`).Puts("Abc Def"),

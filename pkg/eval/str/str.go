@@ -123,6 +123,34 @@ func fromCodepoints(nums ...int) (string, error) {
 	return b.String(), nil
 }
 
+//elvdoc:fn from-utf8-bytes
+//
+// ```elvish
+// str:from-from-utf8-bytes $number...
+// ```
+//
+// Outputs a string consisting of the given Unicode bytes. Example:
+//
+// ```elvish-transcript
+// ~> str:from-utf8-bytes 0x61
+// ▶ a
+// ~> str:from-utf8-bytes 0xe4 0xbd 0xa0 0xe5 0xa5 0xbd
+// ▶ 你好
+// ```
+//
+// @cf str:to-utf8-bytes
+
+func fromUtf8Bytes(nums ...int) (string, error) {
+	var b bytes.Buffer
+	for _, num := range nums {
+		b.WriteByte(byte(num))
+	}
+	if !utf8.Valid(b.Bytes()) {
+		return "", fmt.Errorf("invalid utf8 bytes: %d", b)
+	}
+	return b.String(), nil
+}
+
 //elvdoc:fn has-prefix
 //
 // ```elvish
@@ -360,6 +388,37 @@ func toCodepoints(fm *eval.Frame, s string) {
 // ▶ abc!123
 // ```
 
+//elvdoc:fn to-utf8-bytes
+//
+// ```elvish
+// str:to-utf8-bytes $string
+// ```
+//
+// Output value of each byte in `$string`, in hexadecimal. Examples:
+//
+// ```elvish-transcript
+// ~> str:to-utf8-bytes a
+// ▶ 0x61
+// ~> str:to-utf8-bytes 你好
+// ▶ 0xe4
+// ▶ 0xbd
+// ▶ 0xa0
+// ▶ 0xe5
+// ▶ 0xa5
+// ▶ 0xbd
+// ```
+//
+// The output format is subject to change.
+//
+// @cf from-utf8-bytes
+
+func toUtf8Bytes(fm *eval.Frame, s string) {
+	out := fm.OutputChan()
+	for _, r := range []byte(s) {
+		out <- "0x" + strconv.FormatInt(int64(r), 16)
+	}
+}
+
 //elvdoc:fn to-title
 //
 // ```elvish
@@ -487,6 +546,7 @@ var fns = map[string]interface{}{
 	"equal-fold":   strings.EqualFold,
 	// TODO: Fields, FieldsFunc
 	"from-codepoints": fromCodepoints,
+	"from-utf8-bytes": fromUtf8Bytes,
 	"has-prefix":      strings.HasPrefix,
 	"has-suffix":      strings.HasSuffix,
 	"index":           strings.Index,
@@ -503,6 +563,7 @@ var fns = map[string]interface{}{
 	"to-lower":      strings.ToLower,
 	"to-title":      strings.ToTitle,
 	"to-upper":      strings.ToUpper,
+	"to-utf8-bytes": toUtf8Bytes,
 	// TODO: ToLowerSpecial, ToTitleSpecial, ToUpperSpecial
 	"trim":       strings.Trim,
 	"trim-left":  strings.TrimLeft,
