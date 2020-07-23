@@ -9,7 +9,18 @@ import (
 
 // Numerical operations.
 
-// TODO(xiaq): Document float64.
+//elvdoc:fn float64
+//
+// ```elvish
+// float64 123
+// float64 NaN
+// float64 Inf
+// ```
+//
+// Explicitly convert a string to a `float64` data type.
+//
+// It is very rare that this command is needed. See the discussion of the
+// [number](language.html#number) data type.
 
 //elvdoc:fn + - * /
 //
