@@ -198,8 +198,6 @@ import (
 // Etymology: Perl, as
 // [`File::Slurp`](http://search.cpan.org/~uri/File-Slurp-9999.19/lib/File/Slurp.pm).
 
-// TODO(xiaq): Document from-lines.
-
 //elvdoc:fn from-json
 //
 // ```elvish
@@ -232,8 +230,6 @@ import (
 // ```
 //
 // @cf to-json
-
-// TODO(xiaq): Document to-lines.
 
 //elvdoc:fn to-json
 //
