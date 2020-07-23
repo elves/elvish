@@ -4,7 +4,10 @@ package str
 
 import (
 	"bytes"
+	"fmt"
+	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/errs"
@@ -91,6 +94,34 @@ import (
 // ~> str:equal-fold abc ab
 // ▶ $false
 // ```
+
+//elvdoc:fn from-codepoints
+//
+// ```elvish
+// str:from-codepoints $number...
+// ```
+//
+// Outputs a string consisting of the given Unicode codepoints. Example:
+//
+// ```elvish-transcript
+// ~> str:from-codepoints 0x61
+// ▶ a
+// ~> str:from-codepoints 0x4f60 0x597d
+// ▶ 你好
+// ```
+//
+// @cf str:to-codepoints
+
+func fromCodepoints(nums ...int) (string, error) {
+	var b bytes.Buffer
+	for _, num := range nums {
+		if !utf8.ValidRune(rune(num)) {
+			return "", fmt.Errorf("invalid codepoint: %d", num)
+		}
+		b.WriteRune(rune(num))
+	}
+	return b.String(), nil
+}
 
 //elvdoc:fn has-prefix
 //
@@ -288,6 +319,33 @@ func split(fm *eval.Frame, opts maxOpt, sep, s string) {
 // ▶ Her Royal Highness
 // ```
 
+//elvdoc:fn to-codepoints
+//
+// ```elvish
+// str:to-codepoints $string
+// ```
+//
+// Output value of each codepoint in `$string`, in hexadecimal. Examples:
+//
+// ```elvish-transcript
+// ~> str:to-codepoints a
+// ▶ 0x61
+// ~> str:to-codepoints 你好
+// ▶ 0x4f60
+// ▶ 0x597d
+// ```
+//
+// The output format is subject to change.
+//
+// @cf from-codepoints
+
+func toCodepoints(fm *eval.Frame, s string) {
+	out := fm.OutputChan()
+	for _, r := range s {
+		out <- "0x" + strconv.FormatInt(int64(r), 16)
+	}
+}
+
 //elvdoc:fn to-lower
 //
 // ```elvish
@@ -428,10 +486,11 @@ var fns = map[string]interface{}{
 	"count":        strings.Count,
 	"equal-fold":   strings.EqualFold,
 	// TODO: Fields, FieldsFunc
-	"has-prefix": strings.HasPrefix,
-	"has-suffix": strings.HasSuffix,
-	"index":      strings.Index,
-	"index-any":  strings.IndexAny,
+	"from-codepoints": fromCodepoints,
+	"has-prefix":      strings.HasPrefix,
+	"has-suffix":      strings.HasSuffix,
+	"index":           strings.Index,
+	"index-any":       strings.IndexAny,
 	// TODO: IndexFunc
 	"join":       join,
 	"last-index": strings.LastIndex,
@@ -439,10 +498,11 @@ var fns = map[string]interface{}{
 	"replace": replace,
 	"split":   split,
 	// TODO: SplitAfter
-	"title":    strings.Title,
-	"to-lower": strings.ToLower,
-	"to-title": strings.ToTitle,
-	"to-upper": strings.ToUpper,
+	"title":         strings.Title,
+	"to-codepoints": toCodepoints,
+	"to-lower":      strings.ToLower,
+	"to-title":      strings.ToTitle,
+	"to-upper":      strings.ToUpper,
 	// TODO: ToLowerSpecial, ToTitleSpecial, ToUpperSpecial
 	"trim":       strings.Trim,
 	"trim-left":  strings.TrimLeft,

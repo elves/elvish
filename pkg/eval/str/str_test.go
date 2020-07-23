@@ -31,6 +31,10 @@ func TestStr(t *testing.T) {
 		That(`str:equal-fold abc ABC`).Puts(true),
 		That(`str:equal-fold abc A`).Puts(false),
 
+		That(`str:from-codepoints 0x61`).Puts("a"),
+		That(`str:from-codepoints 0x4f60 0x597d`).Puts("你好"),
+		That(`str:from-codepoints -1`).ThrowsAny(),
+
 		That(`str:has-prefix abc`).ThrowsAny(),
 		That(`str:has-prefix abcd ab`).Puts(true),
 		That(`str:has-prefix abcd cd`).Puts(false),
@@ -61,6 +65,9 @@ func TestStr(t *testing.T) {
 
 		That(`str:split : /usr:/bin:/tmp`).Puts("/usr", "/bin", "/tmp"),
 		That(`str:split : /usr:/bin:/tmp &max=2`).Puts("/usr", "/bin:/tmp"),
+
+		That(`str:to-codepoints a`).Puts("0x61"),
+		That(`str:to-codepoints 你好`).Puts("0x4f60", "0x597d"),
 
 		That(`str:title abc`).Puts("Abc"),
 		That(`str:title "abc def"`).Puts("Abc Def"),
