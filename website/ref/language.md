@@ -55,30 +55,71 @@ some values. (The traditional terms for the two levels are "commands" and
 ## String
 
 The most common data structure in shells is the string. String literals can be
-quoted or unquoted (barewords).
+quoted or unquoted (barewords). There are two types of quoted strings in Elvish:
+single-quoted strings and double-quoted strings.
 
-### Quoted
+### Single-Quoted String
 
-There are two types of quoted strings in Elvish, single-quoted strings and
-double-quoted strings.
-
-In single-quoted strings, all characters represent themselves, except single
+In single-quoted strings all characters represent themselves, except single
 quotes, which need to be doubled. For instance, `'*\'` evaluates to `*\`, and
 `'it''s'` evaluates to `it's`.
 
-In double-quoted strings, the backslash `\` introduces a **escape sequence**.
-For instance, `"\n"` evaluates to a newline; `"\\"` evaluates to a backslash;
-invalid escape sequences like `"\*"` result in a syntax error.
+### Double-Quoted String
 
-**TODO**: Document the full list of supported escape sequences.
+In double-quoted strings the backslash, `\`, introduces an **escape sequence**.
+For instance, `\n` evaluates to a newline and `\\` evaluates to a backslash.
+Invalid escape sequences like `\*` result in a syntax error when the program is
+compiled.
 
-Unlike most other shells, double-quoted strings do not support interpolation.
-For instance, `"$USER"` simply evaluates to the string `$USER`. To get a similar
-effect, simply concatenate strings: instead of `"my name is $name"`, write
-`"my name is "$name`. Under the hood this is a
+Unlike most other shells, double-quoted strings in Elvish do not support
+interpolation. For instance, `"$name"` simply evaluates to the string `$name`.
+To get a similar effect, simply concatenate strings: instead of
+`"my name is $name"`, write `"my name is "$name`. Under the hood this is a
 [compound expression](#compound-expression-and-braced-lists).
 
-### Barewords
+The following escape sequences are recognized in double-quoted strings:
+
+-   `\cX`, where _X_ is a character with codepoint between 0x40 and 0x5F,
+    represents the codepoint that is 0x40 lower than _X_. For example, `\cI` is
+    the tab character: 0x49 (`I`) - 0x40 = 0x09 (tab). There is one special
+    case: A question-mark is converted to del; i.e., `\c?` or `\^?` is
+    equivalent to `\x7F`.
+
+-   `\^X` is the same as `\cX`.
+
+-   `\[0..7][0..7][0..7]` is a byte written as an octal value. There must be
+    three octal digits following the backslash. For example, `\000` is the nul
+    character, and `\101` is the same as `A`, but `\0` is an invalid escape
+    sequence (too few digits).
+
+-   `\x..` is a Unicode code point represented by two hexadecimal digits.
+
+-   `\u....` is a Unicode code point represented by four hexadecimal digits.
+
+-   `\U......` is a Unicode code point represented by eight hexadecimal digits.
+
+-   The following single character escape sequences:
+
+    -   `\a` is the "bel" character, equivalent to `\007` or `\x07`.
+
+    -   `\b` is the "backspace" character, equivalent to `\010` or `\x08`.
+
+    -   `\f` is the "formfeed" (aka "np") character, equivalent to `\014` or
+        `\x0c`.
+
+    -   `\n` is the "nl" character, equivalent to `\012` or `\x0a`.
+
+    -   `\r` is the "cr" character, equivalent to `\015` or `\x0d`.
+
+    -   `\t` is the "tab" character, equivalent to `\011` or `\x09`.
+
+    -   `\v` is the "vt" character, equivalent to `\013` or `\x0b`.
+
+    -   `\\` is the "backslash" character, equivalent to `\134` or `\x5c`.
+
+    -   `\"` is the "double-quote" character, equivalent to `\042` or `\x22`.
+
+### Bareword String
 
 If a string only consists of bareword characters, it can be written without any
 quote; this is called a **bareword**. Examples are `a.txt`, `long-bareword`, and

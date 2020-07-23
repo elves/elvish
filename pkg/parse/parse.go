@@ -53,20 +53,19 @@ func ParseAs(src Source, n Node, w io.Writer) error {
 
 // Errors.
 var (
-	errShouldBeForm         = newError("", "form")
-	errBadLHS               = errors.New("bad assignment LHS")
-	errBadRedirSign         = newError("bad redir sign", "'<'", "'>'", "'>>'", "'<>'")
-	errShouldBeFD           = newError("", "a composite term representing fd")
-	errShouldBeFilename     = newError("", "a composite term representing filename")
-	errShouldBeArray        = newError("", "spaced")
-	errStringUnterminated   = newError("string not terminated")
-	errChainedAssignment    = newError("chained assignment not yet supported")
-	errInvalidEscape        = newError("invalid escape sequence")
-	errInvalidEscapeOct     = newError("invalid escape sequence", "octal digit")
-	errInvalidEscapeHex     = newError("invalid escape sequence", "hex digit")
-	errInvalidEscapeControl = newError("invalid control sequence", "a rune between @ (0x40) and _(0x5F)")
-	errShouldBePrimary      = newError("",
-		"single-quoted string", "double-quoted string", "bareword")
+	errShouldBeForm               = newError("", "form")
+	errBadLHS                     = errors.New("bad assignment LHS")
+	errBadRedirSign               = newError("bad redir sign", "'<'", "'>'", "'>>'", "'<>'")
+	errShouldBeFD                 = newError("", "a composite term representing fd")
+	errShouldBeFilename           = newError("", "a composite term representing filename")
+	errShouldBeArray              = newError("", "spaced")
+	errStringUnterminated         = newError("string not terminated")
+	errChainedAssignment          = newError("chained assignment not yet supported")
+	errInvalidEscape              = newError("invalid escape sequence")
+	errInvalidEscapeOct           = newError("invalid escape sequence", "octal digit")
+	errInvalidEscapeHex           = newError("invalid escape sequence", "hex digit")
+	errInvalidEscapeControl       = newError("invalid control sequence", "a codepoint between 0x3F and 0x5F")
+	errShouldBePrimary            = newError("", "single-quoted string", "double-quoted string", "bareword")
 	errShouldBeVariableName       = newError("", "variable name")
 	errShouldBeRBracket           = newError("", "']'")
 	errShouldBeRBrace             = newError("", "'}'")
@@ -585,16 +584,19 @@ func (pn *Primary) doubleQuoted(ps *parser) {
 			return
 		case '\\':
 			switch r := ps.next(); r {
-			case 'c', '^':
-				// Control sequence
+			case 'c', '^': // control sequence
 				r := ps.next()
-				if r < 0x40 || r >= 0x60 {
+				if r < 0x3F || r > 0x5F {
 					ps.backup()
 					ps.error(errInvalidEscapeControl)
 					ps.next()
 				}
-				buf.WriteByte(byte(r - 0x40))
-			case 'x', 'u', 'U':
+				if byte(r) == '?' { // special-case: \c? => del
+					buf.WriteByte(byte(0x7F))
+				} else {
+					buf.WriteByte(byte(r - 0x40))
+				}
+			case 'x', 'u', 'U': // two, four, or eight hex digits
 				var n int
 				switch r {
 				case 'x':
@@ -615,8 +617,7 @@ func (pn *Primary) doubleQuoted(ps *parser) {
 					rr = rr*16 + d
 				}
 				buf.WriteRune(rr)
-			case '0', '1', '2', '3', '4', '5', '6', '7':
-				// 2 more octal digits
+			case '0', '1', '2', '3', '4', '5', '6', '7': // three octal digits
 				rr := r - '0'
 				for i := 0; i < 2; i++ {
 					r := ps.next()

@@ -94,7 +94,19 @@ var goodCases = []struct {
 		"Type": SingleQuoted, "Value": "'x'y'",
 	}})},
 	// Double quote
-	{`a "b\^[\x1b\u548c\U0002CE23\123\n\t\\"`,
+	{`a "[\c?\c@\cI\^I\^[]"`, // control char sequences
+		a(ast{"Compound/Indexing/Primary", fs{
+			"Type":  DoubleQuoted,
+			"Value": "[\x7f\x00\t\t\x1b]",
+		}})},
+
+	{`a "[\n\t\a\v\\\"]"`, // single char sequences
+		a(ast{"Compound/Indexing/Primary", fs{
+			"Type":  DoubleQuoted,
+			"Value": "[\n\t\a\v\\\"]",
+		}})},
+
+	{`a "b\^[\x1b\u548c\U0002CE23\123\n\t\\"`, // numeric sequences
 		a(ast{"Compound/Indexing/Primary", fs{
 			"Type":  DoubleQuoted,
 			"Value": "b\x1b\x1b\u548c\U0002CE23\123\n\t\\",
@@ -364,7 +376,8 @@ var parseErrorTests = []struct {
 	{src: "'a", errAtEnd: true, errMsg: "string not terminated"},
 	{src: `"a`, errAtEnd: true, errMsg: "string not terminated"},
 	// Bad escape sequence.
-	{src: `a "\^0"`, errPart: "0", errMsg: "invalid control sequence, should be a rune between @ (0x40) and _(0x5F)"},
+	{src: `a "\^` + "\t", errPart: "\t",
+		errMsg: "invalid control sequence, should be a codepoint between 0x3F and 0x5F"},
 	{src: `a "\xQQ"`, errPart: "Q", errMsg: "invalid escape sequence, should be hex digit"},
 	{src: `a "\1ab"`, errPart: "a", errMsg: "invalid escape sequence, should be octal digit"},
 	{src: `a "\i"`, errPart: "i", errMsg: "invalid escape sequence"},
