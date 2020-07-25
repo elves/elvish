@@ -19,7 +19,8 @@ import (
 //
 // Explicitly convert a string to a `float64` data type.
 //
-// It is very rare that this command is needed. See the discussion of the
+// This command is seldom needed since commands that operate on numbers will
+// convert a string to a number. See the discussion of the
 // [number](language.html#number) data type.
 
 //elvdoc:fn + - * /
