@@ -13,7 +13,9 @@ generate:
 	go generate ./...
 
 test:
-	go test -race ./...
+	echo "`go env GOOS`/`go env GOARCH`" | egrep -q '^(linux|freebsd|darwin|windows)/amd64$$' \
+		&& go test -race ./... \
+		|| go test ./...
 
 style:
 	find . -name '*.go' | xargs goimports -w
