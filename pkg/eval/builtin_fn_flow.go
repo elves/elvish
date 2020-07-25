@@ -50,7 +50,85 @@ import (
 
 // TODO(xiaq): Document "multi-error".
 
-// TODO(xiaq): Document "return", "break" and "continue".
+//elvdoc:fn break
+//
+// Raises the special "break" exception. When raised inside a loop it is
+// captured and causes the loop to terminate.
+//
+// Because `break` raises an exception it can be caught by a
+// [`try`](language.html#exception-control-try) block. If not caught, either
+// implicitly by a loop or explicitly, it causes a failure like any other
+// uncaught exception.
+//
+// See the discussion about [flow commands and exceptions](language.html#exception-and-flow-commands)
+//
+// **Note**: You can create a `break` function and it will shadow the builtin
+// command. If you do so you should explicitly invoke the builtin. For example:
+//
+// ```elvish-transcript
+// > fn break []{ put 'break'; builtin:break; put 'should not appear' }
+// > for x [a b c] { put $x; break; put 'unexpected' }
+// ▶ a
+// ▶ break
+// ```
+
+//elvdoc:fn continue
+//
+// Raises the special "continue" exception. When raised inside a loop it is
+// captured and causes the loop to begin its next iteration.
+//
+// Because `continue` raises an exception it can be caught by a
+// [`try`](language.html#exception-control-try) block. If not caught, either
+// implicitly by a loop or explicitly, it causes a failure like any other
+// uncaught exception.
+//
+// See the discussion about [flow commands and exceptions](language.html#exception-and-flow-commands)
+//
+// **Note**: You can create a `continue` function and it will shadow the builtin
+// command. If you do so you should explicitly invoke the builtin. For example:
+//
+// ```elvish-transcript
+// > fn break []{ put 'continue'; builtin:continue; put 'should not appear' }
+// > for x [a b c] { put $x; continue; put 'unexpected' }
+// ▶ a
+// ▶ continue
+// ▶ b
+// ▶ continue
+// ▶ c
+// ▶ continue
+// ```
+
+//elvdoc:fn return
+//
+// Raises the special "return" exception. When raised inside a named function
+// (defined by the [`fn` keyword](../language.html#function-definition-fn)) it
+// is captured by the function and causes the function to terminate. It is not
+// captured by an anonymous function (aka [lambda](../language.html#lambda)).
+//
+// Because `return` raises an exception it can be caught by a
+// [`try`](language.html#exception-control-try) block. If not caught, either
+// implicitly by a named function or explicitly, it causes a failure like any
+// other uncaught exception.
+//
+// See the discussion about [flow commands and exceptions](language.html#exception-and-flow-commands)
+//
+// **Note**: While defining a `return~ = { builtin:return }` lambda should
+// work it currently results results in infinite recursion. **Do not do
+// this!**
+//
+// **Note**: You can create a `return` function and it will shadow the builtin
+// command. **Do not do this!**. You cannot propagate the exception to the
+// calling function. In this example you might, incorrectly, expect "no" to
+// not appear in the output:
+//
+// ```elvish-transcript
+// > fn return []{ put 'return'; builtin:return; put 'should not appear' }
+// > fn test-return []{ put 'yes'; return; put 'no' }
+// > test-return
+// ▶ yes
+// ▶ return
+// ▶ no
+// ```
 
 //elvdoc:fn each
 //
