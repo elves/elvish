@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/elves/elvish/pkg/eval"
@@ -115,8 +116,17 @@ import (
 func fromCodepoints(nums ...int) (string, error) {
 	var b bytes.Buffer
 	for _, num := range nums {
+		if num < 0 || num > unicode.MaxRune {
+			return "", errs.OutOfRange{
+				What:     "codepoint",
+				ValidLow: 0, ValidHigh: unicode.MaxRune,
+				Actual: strconv.Itoa(num)}
+		}
 		if !utf8.ValidRune(rune(num)) {
-			return "", fmt.Errorf("invalid codepoint: %d", num)
+			return "", errs.BadValue{
+				What:   "argument to str:from-codepoints",
+				Valid:  "valid Unicode codepoint",
+				Actual: "0x" + strconv.FormatInt(int64(num), 16)}
 		}
 		b.WriteRune(rune(num))
 	}
@@ -143,10 +153,19 @@ func fromCodepoints(nums ...int) (string, error) {
 func fromUtf8Bytes(nums ...int) (string, error) {
 	var b bytes.Buffer
 	for _, num := range nums {
+		if num < 0 || num > 255 {
+			return "", errs.OutOfRange{
+				What:     "byte",
+				ValidLow: 0, ValidHigh: 255,
+				Actual: strconv.Itoa(num)}
+		}
 		b.WriteByte(byte(num))
 	}
 	if !utf8.Valid(b.Bytes()) {
-		return "", fmt.Errorf("invalid utf8 bytes: %d", b)
+		return "", errs.BadValue{
+			What:   "arguments to str:from-utf8-bytes",
+			Valid:  "valid UTF-8 sequence",
+			Actual: fmt.Sprint(b.Bytes())}
 	}
 	return b.String(), nil
 }
