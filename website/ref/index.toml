@@ -21,6 +21,10 @@ name = "math"
 title = "math: Math Utilities"
 
 [[articles]]
+name = "path"
+title = "path: Path Utilities"
+
+[[articles]]
 name = "platform"
 title = "platform: Information About the Platform"
 

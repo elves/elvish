@@ -158,10 +158,22 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 		msg = `the "ord" command is deprecated; use "str:to-codepoints" instead`
 	case "chr~":
 		msg = `the "chr" command is deprecated; use "str:from-codepoints" instead`
+	case "eval-symlinks~":
+		msg = `the "eval-symlinks" command is deprecated; use "path:eval-symlinks" instead`
 	case "has-prefix~":
 		msg = `the "has-prefix" command is deprecated; use "str:has-prefix" instead`
 	case "has-suffix~":
 		msg = `the "has-suffix" command is deprecated; use "str:has-suffix" instead`
+	case "path-abs~":
+		msg = `the "path-abs" command is deprecated; use "path:abs" instead`
+	case "path-base~":
+		msg = `the "path-base" command is deprecated; use "path:base" instead`
+	case "path-clean~":
+		msg = `the "path-clean" command is deprecated; use "path:clean" instead`
+	case "path-dir~":
+		msg = `the "path-dir" command is deprecated; use "path:dir" instead`
+	case "path-ext~":
+		msg = `the "path-ext" command is deprecated; use "path:ext" instead`
 	default:
 		return
 	}

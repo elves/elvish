@@ -26,6 +26,19 @@ or compiled, even if it is not executed:
 
 -   The `-source` command is now deprecated. Use `eval` instead.
 
+-   The `eval-symlinks` command is now deprecated. Use `path:eval-symlinks`
+    instead.
+
+-   The `path-abs` command is now deprecated. Use `path:abs` instead.
+
+-   The `path-base` command is now deprecated. Use `path:base` instead.
+
+-   The `path-clean` command is now deprecated. Use `path:clean` instead.
+
+-   The `path-dir` command is now deprecated. Use `path:dir` instead.
+
+-   The `path-ext` command is now deprecated. Use `path:ext` instead.
+
 The following deprecated features trigger a warning when the code is evaluated:
 
 -   Using `:` in slice indicies is deprecated. Use `..` instead.
@@ -44,6 +57,8 @@ New features in the standard library:
 
 -   A new `eval` command supports evaluating a dynamic piece of code in a
     restricted namespace.
+
+-   A new `path:` module has been introduced.
 
 # Notable bugfixes
 

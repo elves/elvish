@@ -26,6 +26,8 @@ var ErrStoreNotConnected = errors.New("store not connected")
 //
 // See [godoc of path/filepath](https://godoc.org/path/filepath). Go errors are
 // turned into exceptions.
+//
+// These functions are deprecated; use [path:](path.html)
 
 // TODO(xiaq): Document eval-symlinks.
 

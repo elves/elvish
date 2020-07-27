@@ -1829,9 +1829,9 @@ Elvish's standard library provides the following pre-defined modules that can be
 imported by `use`:
 
 -   The following modules are always available: [daemon](daemon.html),
-    [epm](epm.html), [math](math.html), [platform](platform.html),
-    [str](str.html), [re](re.html), [readline-binding](readline-binding.html),
-    [store](store.html).
+    [epm](epm.html), [math](math.html), [path](path.html),
+    [platform](platform.html), [str](str.html), [re](re.html),
+    [readline-binding](readline-binding.html), [store](store.html).
 
 -   The [unix](unix.html) module is available on UNIX-like platforms (see
     [`$platform:is-unix`](platform.html#platformis-unix)).
