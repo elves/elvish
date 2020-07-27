@@ -13,7 +13,7 @@ generate:
 	go generate ./...
 
 test:
-	echo "`go env GOOS`/`go env GOARCH`" | egrep -q '^(linux|freebsd|darwin|windows)/amd64$$' \
+	echo `go env GOOS GOARCH` | egrep -qx '(linux|freebsd|darwin|windows) amd64' \
 		&& go test -race ./... \
 		|| go test ./...
 
