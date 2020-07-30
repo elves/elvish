@@ -139,6 +139,10 @@ and `NaN`.
 
 The `float64` builtin is case-insensitive.
 
+Numbers can contain underscores between digits to improve readability. For
+example, `1000000` and `1_000_000` are equivalent. As is `1.234_56e3` and
+`1.23456e3`. You can not use an underscore as a prefix or suffix in a number.
+
 A `float64` data type can be converted to a string using `(to-string $number)`.
 The resulting string is guaranteed to result in the same value when converted
 back to a `float64`. Most of the time you won't need to perform this explicit
