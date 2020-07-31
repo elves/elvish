@@ -13,9 +13,11 @@ generate:
 	go generate ./...
 
 test:
-	echo `go env GOOS GOARCH` | egrep -qx '(linux|freebsd|darwin|windows) amd64' \
-		&& go test -race ./... \
-		|| go test ./...
+	if echo `go env GOOS GOARCH` | egrep -qx '(linux|freebsd|darwin|windows) amd64'; then \
+		go test -race ./... ; \
+	else \
+		go test ./... ; \
+	fi
 
 style:
 	find . -name '*.go' | xargs goimports -w
