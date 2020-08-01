@@ -62,9 +62,8 @@ func (w *widget) Handle(event term.Event) bool {
 				updateState(w, "")
 			}
 			return true
-		} else {
-			return false
 		}
+		return false
 	} else {
 		return w.app.CodeArea().Handle(event)
 	}
@@ -141,9 +140,8 @@ func Start(app cli.App, cfg Config) {
 			Prompt: func() ui.Text {
 				if w.CopyState().ShowHidden {
 					return cli.ModeLine(" NAVIGATING (show hidden) ", true)
-				} else {
-					return cli.ModeLine(" NAVIGATING ", true)
 				}
+				return cli.ModeLine(" NAVIGATING ", true)
 			},
 		}),
 		colView: cli.NewColView(cli.ColViewSpec{

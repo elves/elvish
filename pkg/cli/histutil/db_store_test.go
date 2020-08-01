@@ -48,4 +48,4 @@ func TestDBStore_Cursor(t *testing.T) {
 	expect(store.Cmd{Text: "+ 3", Seq: 2}, mockError)
 }
 
-// Remaing methods tested with HybridStore
+// Remaining methods tested with HybridStore.

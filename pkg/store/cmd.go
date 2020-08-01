@@ -55,11 +55,11 @@ func (s *dbStore) Cmd(seq int) (string, error) {
 	var cmd string
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketCmd))
-		if v := b.Get(marshalSeq(uint64(seq))); v == nil {
+		v := b.Get(marshalSeq(uint64(seq)))
+		if v == nil {
 			return ErrNoMatchingCmd
-		} else {
-			cmd = string(v)
 		}
+		cmd = string(v)
 		return nil
 	})
 	return cmd, err
