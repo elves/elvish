@@ -127,11 +127,10 @@ func (op varOp) invoke(fm *Frame) ([]vars.Var, error) {
 	if variable == nil {
 		ns, _ := SplitQNameNs(op.qname)
 		if ns == "" || ns == ":" || ns == "local:" {
-			// This should have been created as part of pipelineOp; a compiler bug.
+			// This should have been created as part of pipelineOp.
 			return nil, errors.New("compiler bug: new local variable not created in pipeline")
-		} else {
-			return nil, fmt.Errorf("new variables can only be created in local scope")
 		}
+		return nil, fmt.Errorf("new variables can only be created in local scope")
 	}
 	return []vars.Var{variable}, nil
 }

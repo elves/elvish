@@ -21,12 +21,12 @@ func (s *dbStore) SharedVar(n string) (string, error) {
 	var value string
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketSharedVar))
-		if v := b.Get([]byte(n)); v == nil {
+		v := b.Get([]byte(n))
+		if v == nil {
 			return ErrNoSharedVar
-		} else {
-			value = string(v)
-			return nil
 		}
+		value = string(v)
+		return nil
 	})
 	return value, err
 }

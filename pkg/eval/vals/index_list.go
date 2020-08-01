@@ -90,11 +90,10 @@ func ConvertListIndex(rawIndex interface{}, n int) (*ListIndex, error) {
 					return nil, errs.OutOfRange{
 						What:     "negative slice upper index here",
 						ValidLow: i - n, ValidHigh: -1, Actual: strconv.Itoa(j0)}
-				} else {
-					return nil, errs.OutOfRange{
-						What:     "slice upper index here",
-						ValidLow: i, ValidHigh: n, Actual: strconv.Itoa(j0)}
 				}
+				return nil, errs.OutOfRange{
+					What:     "slice upper index here",
+					ValidLow: i, ValidHigh: n, Actual: strconv.Itoa(j0)}
 			}
 		}
 		return &ListIndex{slice, i, j}, nil
