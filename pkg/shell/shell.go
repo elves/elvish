@@ -67,16 +67,14 @@ func evalInTTY(ev *eval.Evaler, op eval.Op, fds [3]*os.File) error {
 		Ports: ports[:], Interrupt: eval.ListenInterrupts, PutInFg: true})
 }
 
-const envSHLVL = "SHLVL"
-
 func incSHLVL() func() {
-	restoreSHLVL := saveEnv(envSHLVL)
+	restoreSHLVL := saveEnv(util.EnvSHLVL)
 
-	i, err := strconv.Atoi(os.Getenv(envSHLVL))
+	i, err := strconv.Atoi(os.Getenv(util.EnvSHLVL))
 	if err != nil {
 		i = 0
 	}
-	os.Setenv(envSHLVL, strconv.Itoa(i+1))
+	os.Setenv(util.EnvSHLVL, strconv.Itoa(i+1))
 
 	return restoreSHLVL
 }
