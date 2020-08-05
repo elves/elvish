@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/eval/errs"
 )
 
 var That = eval.That
@@ -18,7 +19,7 @@ func TestUmask(t *testing.T) {
 		// We have to start with a known umask value.
 		That(`unix:umask = 022`).Puts(),
 		That(`put $unix:umask`).Puts(`0o022`),
-		// Now verify that mutating the value and outputing it works.
+		// Verify that mutating the value and outputing the new value works.
 		That(`unix:umask = 23`).Puts(),
 		That(`put $unix:umask`).Puts(`0o023`),
 		That(`unix:umask = 0o75`).Puts(),
@@ -37,5 +38,23 @@ func TestUmask(t *testing.T) {
 		// We should be back to our expected umask given the preceding tests
 		// applied a temporary change to that process attribute.
 		That(`put $unix:umask`).Puts(`0o075`),
+		// An explicit float64 value should be handled correctly.
+		That(`unix:umask=(float64 0o17) put $unix:umask`).Puts(`0o017`),
+		That(`unix:umask=(float64 123.4)`).ThrowsCause(errs.BadValue{
+			What: "umask", Valid: validUmaskMsg, Actual: "123.4"}),
+		// An invalid string should raise the expected exception.
+		That(`unix:umask=022z`).ThrowsCause(errs.BadValue{
+			What: "umask", Valid: validUmaskMsg, Actual: "022z"}),
+		// An invalid data type should raise the expected exception.
+		That(`unix:umask=[1]`).ThrowsCause(errs.BadValue{
+			What: "umask", Valid: validUmaskMsg, Actual: "[1]"}),
+		// Values outside the legal range should raise the expected exception.
+		//
+		// TODO: Switch to `%O` when Go 1.15 is the minimum acceptable version.
+		// Until then the formatting of negative numbers will be weird.
+		That(`unix:umask=0o1000`).ThrowsCause(errs.OutOfRange{
+			What: "umask", ValidLow: 0, ValidHigh: 0o777, ValidFmt: "0o%o", Actual: "0o1000"}),
+		That(`unix:umask=-1`).ThrowsCause(errs.OutOfRange{
+			What: "umask", ValidLow: 0, ValidHigh: 0o777, ValidFmt: "0o%o", Actual: "0o-1"}),
 	)
 }

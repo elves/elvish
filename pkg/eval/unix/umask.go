@@ -3,7 +3,6 @@
 package unix
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -11,7 +10,13 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"github.com/elves/elvish/pkg/eval/errs"
+	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
+)
+
+const (
+	validUmaskMsg = "integer in the range [0..0o777]"
 )
 
 //elvdoc:var umask
@@ -70,22 +75,29 @@ func (UmaskVariable) Set(v interface{}) error {
 		if err != nil {
 			i, err = strconv.ParseInt(v, 0, 0)
 			if err != nil {
-				return errors.New("umask value not a valid number")
+				return errs.BadValue{
+					What: "umask", Valid: validUmaskMsg, Actual: vals.ToString(v)}
 			}
 		}
 		umask = int(i)
 	case float64:
 		intPart, fracPart := math.Modf(v)
 		if fracPart != 0 {
-			return errors.New("umask value must be an integer")
+			return errs.BadValue{
+				What: "umask", Valid: validUmaskMsg, Actual: vals.ToString(v)}
 		}
 		umask = int(intPart)
 	default:
-		return errors.New("umask value must be a string or float64")
+		return errs.BadValue{
+			What: "umask", Valid: validUmaskMsg, Actual: vals.ToString(v)}
 	}
 
 	if umask < 0 || umask > 0o777 {
-		return errors.New("umask value outside the range [0..0o777]")
+		// TODO: Switch to `%O` when Go 1.15 is the minimum acceptable version.
+		// Until then the formatting of negative numbers will be weird.
+		return errs.OutOfRange{
+			What: "umask", ValidLow: 0, ValidHigh: 0o777, ValidFmt: "0o%o",
+			Actual: fmt.Sprintf("0o%o", umask)}
 	}
 
 	umaskMutex.Lock()
