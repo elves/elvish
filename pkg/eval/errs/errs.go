@@ -12,6 +12,7 @@ type OutOfRange struct {
 	ValidLow  int
 	ValidHigh int
 	Actual    string
+	ValidFmt  string
 }
 
 func (e OutOfRange) Error() string {
@@ -19,8 +20,12 @@ func (e OutOfRange) Error() string {
 		return fmt.Sprintf(
 			"out of range: %v has no valid value, but is %v", e.What, e.Actual)
 	}
+	validFmt := e.ValidFmt
+	if validFmt == "" {
+		validFmt = "%d"
+	}
 	return fmt.Sprintf(
-		"out of range: %v must be from %v to %v, but is %v",
+		"out of range: %s must be from "+validFmt+" to "+validFmt+", but is %s",
 		e.What, e.ValidLow, e.ValidHigh, e.Actual)
 }
 
