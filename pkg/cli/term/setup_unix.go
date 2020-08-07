@@ -18,7 +18,7 @@ func setup(in, out *os.File) (func() error, error) {
 	// same terminal are equivalent.
 
 	fd := int(in.Fd())
-	term, err := sys.NewTermiosFromFd(fd)
+	term, err := sys.TermiosForFd(fd)
 	if err != nil {
 		return nil, fmt.Errorf("can't get terminal attribute: %s", err)
 	}
