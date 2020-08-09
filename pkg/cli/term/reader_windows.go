@@ -13,7 +13,8 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// XXX Put here to make edit package build on Windows.
+// TODO(xiaq): Put here to make edit package build on Windows. Refactor so
+// that isn't needed?
 const DefaultSeqTimeout = 10 * time.Millisecond
 
 type reader struct {

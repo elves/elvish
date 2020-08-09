@@ -84,7 +84,7 @@ func readEvent(rd byteReaderWithTimeout) (event Event, err error) {
 			r2 = readRune()
 		}
 		if r2 == runeEndOfSeq {
-			// XXX Error is swallowed
+			// TODO(xiaq): Error is swallowed.
 			// Nothing follows. Taken as a lone Escape.
 			event = KeyEvent{'[', ui.Ctrl}
 			break

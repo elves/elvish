@@ -62,7 +62,7 @@ rune:
 	return Pattern{segments, ""}
 }
 
-// XXX Contains duplicate code with parse/parser.go.
+// TODO(xiaq): Contains duplicate code with parse/parser.go.
 
 type parser struct {
 	src     string

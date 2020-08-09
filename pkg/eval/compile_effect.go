@@ -296,7 +296,7 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 			saveVars = append(saveVars, moreSaveVars...)
 		}
 		for i, v := range saveVars {
-			// XXX(xiaq): If the variable to save is a elemVariable, save
+			// TODO(xiaq): If the variable to save is a elemVariable, save
 			// the outermost variable instead.
 			if u := vars.HeadOfElement(v); u != nil {
 				v = u
@@ -319,9 +319,9 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 			for i, v := range saveVars {
 				val := saveVals[i]
 				if val == nil {
-					// XXX Old value is nonexistent. We should delete the
-					// variable. However, since the compiler now doesn't delete
-					// it, we don't delete it in the evaler either.
+					// TODO(xiaq): Old value is nonexistent. We should delete
+					// the variable. However, since the compiler now doesn't
+					// delete it, we don't delete it in the evaler either.
 					val = ""
 				}
 				err := v.Set(val)
@@ -365,7 +365,7 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 	}
 
 	// opts
-	// XXX This conversion should be avoided.
+	// TODO(xiaq): This conversion should be avoided.
 	optValues, err := op.optsOp.invoke(fm)
 	if err != nil {
 		return err

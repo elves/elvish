@@ -122,7 +122,7 @@ func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 			switchStyle("")
 			bytesBuf.WriteString("\033[K\n")
 		}
-		// XXX Hacky.
+		// TODO(xiaq): This is hacky; try to improve it.
 		if len(w.curBuf.Lines) > 0 {
 			w.curBuf.Lines = w.curBuf.Lines[1:]
 		}

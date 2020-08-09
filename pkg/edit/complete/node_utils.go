@@ -50,7 +50,7 @@ func purelyEvalForm(form *parse.Form, seed string, upto int, ev PureEvaler) []st
 			break
 		}
 		if arg, err := ev.PurelyEvalCompound(compound); err == nil {
-			// XXX Arguments that are not simple compounds are simply ignored.
+			// TODO(xiaq): Arguments that are not simple compounds are simply ignored.
 			words = append(words, arg)
 		}
 	}

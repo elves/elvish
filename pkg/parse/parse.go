@@ -813,7 +813,7 @@ func (pn *Primary) lbrace(ps *parser) {
 
 	pn.Type = Braced
 
-	// XXX: The compound can be empty, which allows us to parse {,foo}.
+	// TODO(xiaq): The compound can be empty, which allows us to parse {,foo}.
 	// Allowing compounds to be empty can be fragile in other cases.
 	ps.parse(&Compound{ExprCtx: BracedElemExpr}).addTo(&pn.Braced, pn)
 

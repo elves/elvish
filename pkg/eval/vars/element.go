@@ -23,13 +23,13 @@ func (ev *elem) Set(v0 interface{}) error {
 		}
 	}
 	err = ev.variable.Set(v)
-	// XXX(xiaq): Remember the set value for use in Get.
+	// TODO(xiaq): Remember the set value for use in Get.
 	ev.setValue = v0
 	return err
 }
 
 func (ev *elem) Get() interface{} {
-	// XXX(xiaq): This is only called from fixNilVariables. We don't want to
+	// TODO(xiaq): This is only called from fixNilVariables. We don't want to
 	// waste time accessing the variable, so we simply return the value that was
 	// set.
 	return ev.setValue
