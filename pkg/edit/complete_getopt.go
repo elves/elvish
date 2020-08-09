@@ -175,7 +175,7 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 	case getopt.ChainShortOption:
 		for _, opt := range opts.opts {
 			if opt.Short != 0 {
-				// XXX loses chained options
+				// TODO(xiaq): Loses chained options.
 				putShortOpt(opt)
 			}
 		}

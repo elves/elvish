@@ -95,7 +95,7 @@ func _gc() {
 
 func _stack(fm *Frame) {
 	out := fm.ports[1].File
-	// XXX dup with main.go
+	// TODO(xiaq): Dup with main.go.
 	buf := make([]byte, 1024)
 	for runtime.Stack(buf, true) == cap(buf) {
 		buf = make([]byte, cap(buf)*2)

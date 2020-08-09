@@ -59,7 +59,7 @@ func TestDetermineFeature(t *testing.T) {
 	test("a", false, featureRegular)
 
 	// Setuid and Setgid.
-	// XXX(xiaq): Fails.
+	// TODO(xiaq): Fails.
 	/*
 		create("su", os.ModeSetuid)
 		test("su", true, featureSetuid)

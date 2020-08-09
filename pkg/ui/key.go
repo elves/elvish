@@ -173,8 +173,8 @@ func ParseKey(s string) (Key, error) {
 
 	if len(s) == 1 {
 		k.Rune = rune(s[0])
-		// XXX The following assumptions about keys with Ctrl are not checked
-		// with all terminals.
+		// TODO(xiaq): The following assumptions about keys with Ctrl are not
+		// checked with all terminals.
 		if k.Mod&Ctrl != 0 {
 			// Keys with Ctrl as one of the modifiers and a single ASCII letter
 			// as the base rune do not distinguish between cases. So we

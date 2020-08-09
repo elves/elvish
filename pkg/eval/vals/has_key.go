@@ -40,7 +40,8 @@ func HasKey(container, key interface{}) bool {
 			return found
 		}
 		if len := Len(container); len >= 0 {
-			// XXX(xiaq): Not all types that implement Lener have numerical indices
+			// TODO(xiaq): Not all types that implement Lener have numerical
+			// indices
 			_, err := ConvertListIndex(key, len)
 			return err == nil
 		}

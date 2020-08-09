@@ -30,8 +30,8 @@ func (p Pattern) Glob(cb func(PathInfo) bool) bool {
 	segs := p.Segments
 	dir := ""
 
-	// XXX: This is a hack solely for supporting globs that start with ~ in the
-	// eval package.
+	// TODO(xiaq): This is a hack solely for supporting globs that start with
+	// ~ (tilde) in the eval package.
 	if p.DirOverride != "" {
 		dir = p.DirOverride
 	}
@@ -87,7 +87,7 @@ func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 
 	infos, err := readDir(dir)
 	if err != nil {
-		// XXX Silently drop the error
+		// TODO(xiaq): Silently drop the error.
 		return true
 	}
 

@@ -481,7 +481,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 	scopeOp := wrapScopeOp(chunkOp, cp.newLocals)
 	cp.newLocals = savedLocals
 
-	// XXX The fiddlings with cp.capture is error-prone.
+	// TODO(xiaq): The fiddlings with cp.capture is error-prone.
 	capture := cp.capture
 	cp.capture = make(staticNs)
 	cp.popScope()

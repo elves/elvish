@@ -101,7 +101,7 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 // TODO(xiaq): Windows support
 func EachExternal(f func(string)) {
 	for _, dir := range searchPaths() {
-		// XXX Ignore error
+		// TODO(xiaq): Ignore error.
 		infos, _ := ioutil.ReadDir(dir)
 		for _, info := range infos {
 			if !info.IsDir() && (info.Mode()&0111 != 0) {

@@ -237,7 +237,7 @@ func kindOf(fm *Frame, args ...interface{}) {
 }
 
 func constantly(args ...interface{}) Callable {
-	// XXX Repr of this fn is not right
+	// TODO(xiaq): Repr of this function is not right.
 	return NewGoFn(
 		"created by constantly",
 		func(fm *Frame) {
