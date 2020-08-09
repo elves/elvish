@@ -9,6 +9,9 @@ import (
 	"github.com/elves/elvish/pkg/env"
 )
 
+// CurrentUser allows for unit test error injection.
+var CurrentUser func() (*user.User, error) = user.Current
+
 // GetHome finds the home directory of a specified user. When given an empty
 // string, it finds the home directory of the current user.
 func GetHome(uname string) (string, error) {
@@ -25,7 +28,7 @@ func GetHome(uname string) (string, error) {
 	var u *user.User
 	var err error
 	if uname == "" {
-		u, err = user.Current()
+		u, err = CurrentUser()
 	} else {
 		u, err = user.Lookup(uname)
 	}
