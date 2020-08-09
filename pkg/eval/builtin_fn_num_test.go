@@ -3,6 +3,8 @@ package eval
 import (
 	"math"
 	"testing"
+
+	"github.com/elves/elvish/pkg/eval/errs"
 )
 
 func TestBuiltinFnNum(t *testing.T) {
@@ -33,5 +35,12 @@ func TestBuiltinFnNum(t *testing.T) {
 		That("^ 16 2").Puts(256.0),
 		That("% 23 7").Puts("2"),
 		That("% 1 0").ThrowsAny(),
+
+		That("randint 1 2").Puts("1"),
+		That("i = (randint 10 100); >= $i 10; < $i 100").Puts(true, true),
+		That("randint 2 1").Throws(ErrArgs, "randint 2 1"),
+		That("randint").Throws(errWithType{errs.ArityMismatch{}}, "randint"),
+		That("randint 1").Throws(errWithType{errs.ArityMismatch{}}, "randint 1"),
+		That("randint 1 2 3").Throws(errWithType{errs.ArityMismatch{}}, "randint 1 2 3"),
 	)
 }
