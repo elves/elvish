@@ -167,7 +167,7 @@ import (
 // ```
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		// Constructor
 		"float64": toFloat64,
 

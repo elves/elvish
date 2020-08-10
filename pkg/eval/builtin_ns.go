@@ -92,6 +92,6 @@ var builtinNs = Ns{
 	"args":  vars.NewReadOnly(vector.Empty),
 }
 
-func addBuiltinFns(fns map[string]interface{}) {
+func AddBuiltinFns(fns map[string]interface{}) {
 	builtinNs.AddGoFns("", fns)
 }

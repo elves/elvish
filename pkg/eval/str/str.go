@@ -452,3 +452,16 @@ var fns = map[string]interface{}{
 	"trim-prefix": strings.TrimPrefix,
 	"trim-suffix": strings.TrimSuffix,
 }
+
+// TODO: Remove this when the deprecated builtins are eliminated sometime
+// after the 0.15 release. Don't forget to remove the corresponding
+// documentation in pkg/eval/builtin_fn_str.go.
+func init() {
+	eval.AddBuiltinFns(map[string]interface{}{
+		"has-prefix": strings.HasPrefix,
+		"has-suffix": strings.HasSuffix,
+		"joins":      join,
+		"splits":     split,
+		"replaces":   replace,
+	})
+}

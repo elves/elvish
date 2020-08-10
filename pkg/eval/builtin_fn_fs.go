@@ -78,7 +78,7 @@ var ErrStoreNotConnected = errors.New("store not connected")
 // TODO(xiaq): Document -is-dir.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		// Directory
 		"cd":          cd,
 		"dir-history": dirs,

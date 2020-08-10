@@ -76,7 +76,7 @@ import (
 // Exit the Elvish process with `$status` (defaulting to 0).
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		// Command resolution
 		"external":        external,
 		"has-external":    hasExternal,

@@ -372,7 +372,7 @@ import (
 // Note that there is no guaranteed order for the keys of a map.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		"ns": nsFn,
 
 		"make-map": makeMap,

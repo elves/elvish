@@ -213,7 +213,7 @@ import (
 // This should be part of a networking module instead of the builtin module.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		"nop":        nop,
 		"kind-of":    kindOf,
 		"constantly": constantly,

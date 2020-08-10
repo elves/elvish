@@ -77,7 +77,7 @@ import (
 // This is only useful for debug purposes.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		"src":    src,
 		"-gc":    _gc,
 		"-stack": _stack,

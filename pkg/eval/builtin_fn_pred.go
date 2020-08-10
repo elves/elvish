@@ -127,7 +127,7 @@ import "github.com/elves/elvish/pkg/eval/vals"
 // @cf eq
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		"bool":   vals.Bool,
 		"not":    not,
 		"is":     is,
