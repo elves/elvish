@@ -69,7 +69,7 @@ checkstyle_md_task:
     image: node:latest
   env:
     PATH: $HOME/.npm-packages/bin:$PATH
-  setup_script: npm install --global prettier
+  setup_script: npm install --global prettier@2.0.5
   check_script: make checkstyle-md
 
 deploy_task:
