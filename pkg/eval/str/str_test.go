@@ -39,11 +39,11 @@ func TestStr(t *testing.T) {
 		That(`str:from-codepoints -0x1`).ThrowsCause(errs.OutOfRange{
 			What:     "codepoint",
 			ValidLow: 0, ValidHigh: unicode.MaxRune,
-			Actual: strconv.Itoa(-1)}),
+			Actual: "-0x1"}),
 		That(fmt.Sprintf(`str:from-codepoints 0x%x`, unicode.MaxRune+1)).ThrowsCause(errs.OutOfRange{
 			What:     "codepoint",
 			ValidLow: 0, ValidHigh: unicode.MaxRune,
-			Actual: strconv.Itoa(unicode.MaxRune + 1)}),
+			Actual: hex(unicode.MaxRune + 1)}),
 		That(`str:from-codepoints 0xd800`).ThrowsCause(errs.BadValue{
 			What:   "argument to str:from-codepoints",
 			Valid:  "valid Unicode codepoint",

@@ -120,23 +120,32 @@ func fromCodepoints(nums ...int) (string, error) {
 			return "", errs.OutOfRange{
 				What:     "codepoint",
 				ValidLow: 0, ValidHigh: unicode.MaxRune,
-				Actual: strconv.Itoa(num)}
+				Actual: hex(num),
+			}
 		}
 		if !utf8.ValidRune(rune(num)) {
 			return "", errs.BadValue{
 				What:   "argument to str:from-codepoints",
 				Valid:  "valid Unicode codepoint",
-				Actual: "0x" + strconv.FormatInt(int64(num), 16)}
+				Actual: hex(num),
+			}
 		}
 		b.WriteRune(rune(num))
 	}
 	return b.String(), nil
 }
 
+func hex(i int) string {
+	if i < 0 {
+		return "-0x" + strconv.FormatInt(-int64(i), 16)
+	}
+	return "0x" + strconv.FormatInt(int64(i), 16)
+}
+
 //elvdoc:fn from-utf8-bytes
 //
 // ```elvish
-// str:from-from-utf8-bytes $number...
+// str:from-utf8-bytes $number...
 // ```
 //
 // Outputs a string consisting of the given Unicode bytes. Example:
@@ -372,7 +381,7 @@ func split(fm *eval.Frame, opts maxOpt, sep, s string) {
 // str:to-codepoints $string
 // ```
 //
-// Output value of each codepoint in `$string`, in hexadecimal. Examples:
+// Outputs value of each codepoint in `$string`, in hexadecimal. Examples:
 //
 // ```elvish-transcript
 // ~> str:to-codepoints a
@@ -413,7 +422,7 @@ func toCodepoints(fm *eval.Frame, s string) {
 // str:to-utf8-bytes $string
 // ```
 //
-// Output value of each byte in `$string`, in hexadecimal. Examples:
+// Outputs value of each byte in `$string`, in hexadecimal. Examples:
 //
 // ```elvish-transcript
 // ~> str:to-utf8-bytes a
