@@ -69,8 +69,8 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 
 	args := make([]string, len(argVals)+1)
 	for i, a := range argVals {
-		// NOTE Maybe we should enfore string arguments instead of coercing all
-		// args into string
+		// TODO: Maybe we should enforce string arguments instead of coercing
+		// all args to strings.
 		args[i+1] = vals.ToString(a)
 	}
 
@@ -83,22 +83,25 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 
 	sys := makeSysProcAttr(fm.background)
 	proc, err := os.StartProcess(path, args, &os.ProcAttr{Files: files, Sys: sys})
-
 	if err != nil {
 		return err
 	}
 
 	state, err := proc.Wait()
-
 	if err != nil {
+		// This should be a can't happen situation. Nonetheless, treat it as a
+		// soft error rather than panicing since the Go documentation is not
+		// explicit that this can only happen if we make a mistake. Such as
+		// calling `Wait` twice on a particular process object.
 		return err
 	}
 	return NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid)
 }
 
-// EachExternal calls f for each name that can resolve to an external
-// command.
-// TODO(xiaq): Windows support
+// EachExternal calls f for each name that can resolve to an external command.
+//
+// TODO(xiaq): Windows support. See https://golang.org/pkg/os/#Chmod for why
+// this doesn't work on Windows as currently written.
 func EachExternal(f func(string)) {
 	for _, dir := range searchPaths() {
 		// TODO(xiaq): Ignore error.

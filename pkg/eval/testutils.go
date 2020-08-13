@@ -120,6 +120,24 @@ func (e errWithMessage) matchError(e2 error) bool {
 	return e2 != nil && e.msg == e2.Error()
 }
 
+// An errorMatcher for an ExternalCmdExit error that ignores the `Pid` member.
+// We only match the command name and exit status because at run time we
+// cannot know the correct value for `Pid`.
+type errCmdExit struct{ v ExternalCmdExit }
+
+func (e errCmdExit) Error() string {
+	return e.v.Error()
+}
+
+func (e errCmdExit) matchError(gotErr error) bool {
+	if gotErr == nil {
+		return false
+	}
+
+	ge := gotErr.(*Exception).Reason.(ExternalCmdExit)
+	return e.v.CmdName == ge.CmdName && e.v.WaitStatus == ge.WaitStatus
+}
+
 // The following functions and methods are used to build Test structs. They are
 // supposed to read like English, so a test that "put x" should put "x" reads:
 //
@@ -180,6 +198,13 @@ func (t TestCase) ThrowsCause(err error) TestCase {
 // Whenever possible, use ThrowsCause instead of this method.
 func (t TestCase) ThrowsMessage(msg string) TestCase {
 	return t.throws(errWithMessage{msg})
+}
+
+// ThrowsCmdExit returns an altered TestCase that requires the source code to
+// throw an an ExternalCmdExit error that matches the given error, ignoring
+// the PID.
+func (t TestCase) ThrowsCmdExit(err ExternalCmdExit) TestCase {
+	return t.throws(errCmdExit{err})
 }
 
 // ThrowsAny returns an altered TestCase that requires the source code to throw
