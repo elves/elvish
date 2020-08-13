@@ -2,6 +2,7 @@ package eval
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -29,7 +30,7 @@ type ExternalCmd struct {
 }
 
 func (ExternalCmd) Kind() string {
-	return "fn"
+	return "external"
 }
 
 func (e ExternalCmd) Equal(a interface{}) bool {
@@ -69,8 +70,8 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 
 	args := make([]string, len(argVals)+1)
 	for i, a := range argVals {
-		// NOTE Maybe we should enfore string arguments instead of coercing all
-		// args into string
+		// NOTE: Maybe we should enforce string arguments instead of coercing
+		// all args to strings.
 		args[i+1] = vals.ToString(a)
 	}
 
@@ -83,21 +84,20 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 
 	sys := makeSysProcAttr(fm.background)
 	proc, err := os.StartProcess(path, args, &os.ProcAttr{Files: files, Sys: sys})
-
 	if err != nil {
 		return err
 	}
 
 	state, err := proc.Wait()
-
 	if err != nil {
-		return err
+		// This is a "can't happen" situation unless we do something invalid
+		// such as call proc.Wait() twice.
+		panic(fmt.Sprintf("proc.Wait returned unexpected error: %v", err))
 	}
 	return NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid)
 }
 
-// EachExternal calls f for each name that can resolve to an external
-// command.
+// EachExternal calls f for each name that can resolve to an external command.
 // TODO(xiaq): Windows support
 func EachExternal(f func(string)) {
 	for _, dir := range searchPaths() {

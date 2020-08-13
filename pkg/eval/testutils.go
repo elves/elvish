@@ -119,6 +119,31 @@ func (e errWithMessage) matchError(e2 error) bool {
 	return e2 != nil && e.msg == e2.Error()
 }
 
+// An errorMatcher for an ExternalCmdExit error that ignores the Pid member.
+// That is, we only match the command name and raw exit status.
+type errCmdExit struct{ v error }
+
+func (e errCmdExit) Error() string { return fmt.Sprintf("%#v", e.v) }
+
+func (want_err errCmdExit) matchError(got_err error) bool {
+	if got_err == nil {
+		return false
+	}
+	we, ok := want_err.v.(ExternalCmdExit)
+	if !ok { // this should never happen
+		panic("unexpected want_err type passed to errCmdExit.matchError")
+	}
+
+	ge, ok0 := got_err.(*Exception).Reason.(ExternalCmdExit)
+	if !ok0 {
+		fmt.Println("WTF e0 !ok")
+		return false
+	}
+
+	// Ignore ExternalCmdExit.Pid. We have no idea what it should be.
+	return we.CmdName == ge.CmdName && we.WaitStatus == ge.WaitStatus
+}
+
 // The following functions and methods are used to build Test structs. They are
 // supposed to read like English, so a test that "put x" should put "x" reads:
 //
@@ -185,6 +210,15 @@ func (t TestCase) ThrowsCause(err error) TestCase {
 // throw an error with the specified message when evaluted.
 func (t TestCase) ThrowsMessage(msg string) TestCase {
 	return t.throws(errWithMessage{msg})
+}
+
+// ThrowsCmdExit returns an altered TestCase that requires the source code to
+// throw an ExternalCmdExit error that ignores the pid.
+func (t TestCase) ThrowsCmdExit(err error) TestCase {
+	if _, ok := err.(ExternalCmdExit); !ok {
+		panic("You can only pass a eval.ExternalCmdExit to ThrowsCmdExit")
+	}
+	return t.throws(errCmdExit{err})
 }
 
 // ThrowsAny returns an altered TestCase that requires the source code to throw
