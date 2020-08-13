@@ -99,5 +99,6 @@ func TestResolve(t *testing.T) {
 		That("fn f { }; resolve f").Puts("$f~"),
 		That("use mod; resolve mod:func").Puts("$mod:func~"),
 		That("resolve cat").Puts("(external cat)"),
+		That(`resolve external`).Puts("$external~"),
 	)
 }

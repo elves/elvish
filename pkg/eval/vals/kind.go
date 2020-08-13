@@ -14,6 +14,11 @@ type Kinder interface {
 // the File, List, Map types, StructMap types, and types satisfying the Kinder
 // interface. For other types, it returns the Go type name of the argument
 // preceded by "!!".
+//
+// TODO: Decide what `kind-of` should report for an external command object
+// and document the rationale for the choice in the doc string for `func
+// (ExternalCmd) Kind()` as well as user facing documentation. It's not
+// obvious why this returns "fn" rather than "external" for that case.
 func Kind(v interface{}) string {
 	switch v := v.(type) {
 	case nil:
