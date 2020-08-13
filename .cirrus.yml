@@ -12,7 +12,7 @@ test_task:
         image: golang:latest
     - name: Test on Linux (Old Supported Go Version)
       container:
-        image: golang:1.13
+        image: golang:1.14
       env:
         # This should have the same coverage as the previous task, so skip it.
         SKIP_UPLOAD_COVERAGE: 1
