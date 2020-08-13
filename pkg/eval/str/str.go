@@ -4,7 +4,11 @@ package str
 
 import (
 	"bytes"
+	"fmt"
+	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/errs"
@@ -91,6 +95,80 @@ import (
 // ~> str:equal-fold abc ab
 // ▶ $false
 // ```
+
+//elvdoc:fn from-codepoints
+//
+// ```elvish
+// str:from-codepoints $number...
+// ```
+//
+// Outputs a string consisting of the given Unicode codepoints. Example:
+//
+// ```elvish-transcript
+// ~> str:from-codepoints 0x61
+// ▶ a
+// ~> str:from-codepoints 0x4f60 0x597d
+// ▶ 你好
+// ```
+//
+// @cf str:to-codepoints
+
+func fromCodepoints(nums ...int) (string, error) {
+	var b bytes.Buffer
+	for _, num := range nums {
+		if num < 0 || num > unicode.MaxRune {
+			return "", errs.OutOfRange{
+				What:     "codepoint",
+				ValidLow: 0, ValidHigh: unicode.MaxRune,
+				Actual: strconv.Itoa(num)}
+		}
+		if !utf8.ValidRune(rune(num)) {
+			return "", errs.BadValue{
+				What:   "argument to str:from-codepoints",
+				Valid:  "valid Unicode codepoint",
+				Actual: "0x" + strconv.FormatInt(int64(num), 16)}
+		}
+		b.WriteRune(rune(num))
+	}
+	return b.String(), nil
+}
+
+//elvdoc:fn from-utf8-bytes
+//
+// ```elvish
+// str:from-from-utf8-bytes $number...
+// ```
+//
+// Outputs a string consisting of the given Unicode bytes. Example:
+//
+// ```elvish-transcript
+// ~> str:from-utf8-bytes 0x61
+// ▶ a
+// ~> str:from-utf8-bytes 0xe4 0xbd 0xa0 0xe5 0xa5 0xbd
+// ▶ 你好
+// ```
+//
+// @cf str:to-utf8-bytes
+
+func fromUtf8Bytes(nums ...int) (string, error) {
+	var b bytes.Buffer
+	for _, num := range nums {
+		if num < 0 || num > 255 {
+			return "", errs.OutOfRange{
+				What:     "byte",
+				ValidLow: 0, ValidHigh: 255,
+				Actual: strconv.Itoa(num)}
+		}
+		b.WriteByte(byte(num))
+	}
+	if !utf8.Valid(b.Bytes()) {
+		return "", errs.BadValue{
+			What:   "arguments to str:from-utf8-bytes",
+			Valid:  "valid UTF-8 sequence",
+			Actual: fmt.Sprint(b.Bytes())}
+	}
+	return b.String(), nil
+}
 
 //elvdoc:fn has-prefix
 //
@@ -288,6 +366,33 @@ func split(fm *eval.Frame, opts maxOpt, sep, s string) {
 // ▶ Her Royal Highness
 // ```
 
+//elvdoc:fn to-codepoints
+//
+// ```elvish
+// str:to-codepoints $string
+// ```
+//
+// Output value of each codepoint in `$string`, in hexadecimal. Examples:
+//
+// ```elvish-transcript
+// ~> str:to-codepoints a
+// ▶ 0x61
+// ~> str:to-codepoints 你好
+// ▶ 0x4f60
+// ▶ 0x597d
+// ```
+//
+// The output format is subject to change.
+//
+// @cf from-codepoints
+
+func toCodepoints(fm *eval.Frame, s string) {
+	out := fm.OutputChan()
+	for _, r := range s {
+		out <- "0x" + strconv.FormatInt(int64(r), 16)
+	}
+}
+
 //elvdoc:fn to-lower
 //
 // ```elvish
@@ -301,6 +406,37 @@ func split(fm *eval.Frame, opts maxOpt, sep, s string) {
 // ~> str:to-lower 'ABC!123'
 // ▶ abc!123
 // ```
+
+//elvdoc:fn to-utf8-bytes
+//
+// ```elvish
+// str:to-utf8-bytes $string
+// ```
+//
+// Output value of each byte in `$string`, in hexadecimal. Examples:
+//
+// ```elvish-transcript
+// ~> str:to-utf8-bytes a
+// ▶ 0x61
+// ~> str:to-utf8-bytes 你好
+// ▶ 0xe4
+// ▶ 0xbd
+// ▶ 0xa0
+// ▶ 0xe5
+// ▶ 0xa5
+// ▶ 0xbd
+// ```
+//
+// The output format is subject to change.
+//
+// @cf from-utf8-bytes
+
+func toUtf8Bytes(fm *eval.Frame, s string) {
+	out := fm.OutputChan()
+	for _, r := range []byte(s) {
+		out <- "0x" + strconv.FormatInt(int64(r), 16)
+	}
+}
 
 //elvdoc:fn to-title
 //
@@ -428,10 +564,12 @@ var fns = map[string]interface{}{
 	"count":        strings.Count,
 	"equal-fold":   strings.EqualFold,
 	// TODO: Fields, FieldsFunc
-	"has-prefix": strings.HasPrefix,
-	"has-suffix": strings.HasSuffix,
-	"index":      strings.Index,
-	"index-any":  strings.IndexAny,
+	"from-codepoints": fromCodepoints,
+	"from-utf8-bytes": fromUtf8Bytes,
+	"has-prefix":      strings.HasPrefix,
+	"has-suffix":      strings.HasSuffix,
+	"index":           strings.Index,
+	"index-any":       strings.IndexAny,
 	// TODO: IndexFunc
 	"join":       join,
 	"last-index": strings.LastIndex,
@@ -439,10 +577,12 @@ var fns = map[string]interface{}{
 	"replace": replace,
 	"split":   split,
 	// TODO: SplitAfter
-	"title":    strings.Title,
-	"to-lower": strings.ToLower,
-	"to-title": strings.ToTitle,
-	"to-upper": strings.ToUpper,
+	"title":         strings.Title,
+	"to-codepoints": toCodepoints,
+	"to-lower":      strings.ToLower,
+	"to-title":      strings.ToTitle,
+	"to-upper":      strings.ToUpper,
+	"to-utf8-bytes": toUtf8Bytes,
 	// TODO: ToLowerSpecial, ToTitleSpecial, ToUpperSpecial
 	"trim":       strings.Trim,
 	"trim-left":  strings.TrimLeft,

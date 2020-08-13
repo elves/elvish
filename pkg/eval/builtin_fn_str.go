@@ -62,6 +62,8 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // ord $string
 // ```
 //
+// This function is deprecated; use [str:to-codepoints](str.html#strto-codepoints) instead.
+//
 // Output value of each codepoint in `$string`, in hexadecimal. Examples:
 //
 // ```elvish-transcript
@@ -83,6 +85,8 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // ```elvish
 // chr $number...
 // ```
+//
+// This function is deprecated; use [str:from-codepoints](str.html#strfrom-codepoints) instead.
 //
 // Outputs a string consisting of the given Unicode codepoints. Example:
 //
