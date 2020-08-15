@@ -50,7 +50,7 @@ func GetColorist() Colorist {
 }
 
 func getLsColors() string {
-	lsColorString := os.Getenv("LS_COLORS")
+	lsColorString := os.Getenv(util.EnvLS_COLORS)
 	if len(lsColorString) == 0 {
 		return defaultLsColorString
 	}
