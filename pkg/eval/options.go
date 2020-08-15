@@ -24,14 +24,13 @@ func scanOptions(rawOpts RawOptions, ptr interface{}) error {
 		return fmt.Errorf(
 			"internal bug: need struct ptr to scan options, got %T", ptr)
 	}
-	struc := ptrValue.Elem()
 
-	// fieldIdxForOpt maps option name to the index of field in struc.
+	// fieldIdxForOpt maps option name to the index of field in `struc`.
 	fieldIdxForOpt := make(map[string]int)
+	struc := ptrValue.Elem()
 	for i := 0; i < struc.Type().NumField(); i++ {
-		// ignore unexported fields
 		if !struc.Field(i).CanSet() {
-			continue
+			continue // ignore unexported fields
 		}
 
 		f := struc.Type().Field(i)
