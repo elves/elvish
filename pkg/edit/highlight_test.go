@@ -80,10 +80,9 @@ func TestMakeHasCommand(t *testing.T) {
 	oldPath := os.Getenv(util.EnvPATH)
 	defer os.Setenv(util.EnvPATH, oldPath)
 	if runtime.GOOS == "windows" {
-		oldPathExt := os.Getenv("PATHEXT")
-		defer os.Setenv("PATHEXT", oldPathExt)
-		// Forces default value
-		os.Setenv("PATHEXT", "")
+		oldPathExt := os.Getenv(util.EnvPATHEXT)
+		defer os.Setenv(util.EnvPATHEXT, oldPathExt)
+		os.Unsetenv(util.EnvPATHEXT) // force default value
 	}
 
 	// Set up a directory in PATH.
