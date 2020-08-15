@@ -13,7 +13,7 @@ func GetHome(uname string) (string, error) {
 	if uname == "" {
 		// Use $HOME as override if we are looking for the home of the current
 		// variable.
-		home := os.Getenv("HOME")
+		home := os.Getenv(EnvHOME)
 		if home != "" {
 			return strings.TrimRight(home, pathSep), nil
 		}

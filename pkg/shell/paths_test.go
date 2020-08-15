@@ -43,7 +43,7 @@ func TestMakePaths_RespectsSetSubPaths(t *testing.T) {
 func TestMakePaths_SetsAndCreatesDataDir(t *testing.T) {
 	home, cleanupDir := util.TestDir()
 	defer cleanupDir()
-	cleanupEnv := util.WithTempEnv("HOME", home)
+	cleanupEnv := util.WithTempEnv(util.EnvHOME, home)
 	defer cleanupEnv()
 
 	paths := MakePaths(os.Stderr, Paths{
