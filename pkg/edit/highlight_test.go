@@ -77,8 +77,8 @@ func TestMakeHasCommand(t *testing.T) {
 	// Set up environment.
 	testDir, cleanup := util.InTestDir()
 	defer cleanup()
-	oldPath := os.Getenv("PATH")
-	defer os.Setenv("PATH", oldPath)
+	oldPath := os.Getenv(util.EnvPATH)
+	defer os.Setenv(util.EnvPATH, oldPath)
 	if runtime.GOOS == "windows" {
 		oldPathExt := os.Getenv("PATHEXT")
 		defer os.Setenv("PATHEXT", oldPathExt)
@@ -87,7 +87,7 @@ func TestMakeHasCommand(t *testing.T) {
 	}
 
 	// Set up a directory in PATH.
-	os.Setenv("PATH", filepath.Join(testDir, "bin"))
+	os.Setenv(util.EnvPATH, filepath.Join(testDir, "bin"))
 	mustMkdirAll("bin")
 	mustMkExecutable("bin/external")
 	mustMkExecutable("bin/@external")
