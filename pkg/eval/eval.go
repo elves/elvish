@@ -248,7 +248,7 @@ func (ev *Evaler) SetLibDir(libDir string) {
 }
 
 func searchPaths() []string {
-	return strings.Split(os.Getenv("PATH"), ":")
+	return strings.Split(os.Getenv(util.EnvPATH), ":")
 }
 
 // growPorts makes the size of ec.ports at least n, adding nil's if necessary.

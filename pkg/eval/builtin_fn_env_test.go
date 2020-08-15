@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/util"
 )
 
 func TestBuiltinFnEnv(t *testing.T) {
-	oldpath := os.Getenv("PATH")
+	oldpath := os.Getenv(util.EnvPATH)
 	listSep := string(os.PathListSeparator)
 	Test(t,
 		That(`get-env var`).ThrowsCause(errNonExistentEnvVar),
@@ -29,5 +30,5 @@ func TestBuiltinFnEnv(t *testing.T) {
 		That(`paths = [/test-path2 $@paths]`),
 		That(`get-env PATH`).Puts("/test-path2"+listSep+"/test-path"),
 	)
-	os.Setenv("PATH", oldpath)
+	os.Setenv(util.EnvPATH, oldpath)
 }
