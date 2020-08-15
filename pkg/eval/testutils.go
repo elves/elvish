@@ -422,12 +422,12 @@ func mustWriteFile(filename string, data []byte, perm os.FileMode) {
 //
 // TODO(xiaq): Move this into the util package.
 func InTempHome() (string, func()) {
-	oldHome := os.Getenv("HOME")
+	oldHome := os.Getenv(util.EnvHOME)
 	tmpHome, cleanup := util.InTestDir()
-	os.Setenv("HOME", tmpHome)
+	os.Setenv(util.EnvHOME, tmpHome)
 
 	return tmpHome, func() {
-		os.Setenv("HOME", oldHome)
+		os.Setenv(util.EnvHOME, oldHome)
 		cleanup()
 	}
 }
