@@ -26,7 +26,7 @@ func TestChdir(t *testing.T) {
 	if err != nil {
 		t.Errorf("Chdir => error %v", err)
 	}
-	if envPwd := os.Getenv("PWD"); envPwd != dst {
+	if envPwd := os.Getenv(util.EnvPWD); envPwd != dst {
 		t.Errorf("$PWD is %q after Chdir, want %q", envPwd, dst)
 	}
 

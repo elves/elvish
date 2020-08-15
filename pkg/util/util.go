@@ -4,5 +4,6 @@ package util
 // Environment variables with special significance to Elvish.
 const (
 	EnvHOME  = "HOME"
+	EnvPWD   = "PWD"
 	EnvSHLVL = "SHLVL"
 )

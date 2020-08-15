@@ -2,6 +2,8 @@ package eval
 
 import (
 	"os"
+
+	"github.com/elves/elvish/pkg/util"
 )
 
 // Chdir changes the current directory. On success it also updates the PWD
@@ -28,7 +30,7 @@ func (ev *Evaler) Chdir(path string) error {
 		logger.Println("getwd after cd:", err)
 		return nil
 	}
-	os.Setenv("PWD", pwd)
+	os.Setenv(util.EnvPWD, pwd)
 
 	return nil
 }
