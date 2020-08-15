@@ -39,7 +39,7 @@ func TestEvalTimeDeprecate(t *testing.T) {
 
 	TestWithSetup(t, func(ev *Evaler) {
 		ev.Global.AddGoFn("", "dep", func(fm *Frame) {
-			fm.Deprecate("deprecated")
+			fm.Deprecate("deprecated", nil)
 		})
 	},
 		That("dep").PrintsStderrWith("deprecated"),

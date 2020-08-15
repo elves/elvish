@@ -99,7 +99,7 @@ func (*complexCandidateOpts) SetDefaultOptions() {}
 
 func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) complexItem {
 	if opts.DisplaySuffix != "" {
-		fm.Deprecate("the &display-suffix option is deprecated, use &display instead")
+		fm.Deprecate("the &display-suffix option is deprecated, use &display instead", nil)
 	}
 	display := opts.Display
 	if display == "" {

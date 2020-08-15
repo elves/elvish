@@ -235,6 +235,10 @@ func (op *indexingOp) invoke(fm *Frame) ([]interface{}, error) {
 				if err != nil {
 					return nil, err
 				}
+				deprecation := vals.CheckDeprecatedIndex(v, index)
+				if deprecation != "" {
+					fm.Deprecate(deprecation, diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, indexOp))
+				}
 				newvs = append(newvs, result)
 			}
 		}

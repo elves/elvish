@@ -66,7 +66,7 @@ func ConvertListIndex(rawIndex interface{}, n int) (*ListIndex, error) {
 		}
 		return &ListIndex{false, index, 0}, nil
 	case string:
-		slice, i, j, err := parseListIndex(rawIndex, n)
+		slice, i, j, err := parseIndexString(rawIndex, n)
 		if err != nil {
 			return nil, err
 		}
@@ -102,11 +102,11 @@ func ConvertListIndex(rawIndex interface{}, n int) (*ListIndex, error) {
 	}
 }
 
-// ListIndex = Number |
-//             Number ':' Number
-func parseListIndex(s string, n int) (slice bool, i int, j int, err error) {
-	colon := strings.IndexRune(s, ':')
-	if colon == -1 {
+// Index = Number |
+//         Number ( ':' | '..' | '..=' ) Number
+func parseIndexString(s string, n int) (slice bool, i int, j int, err error) {
+	low, sep, high := splitIndexString(s)
+	if sep == "" {
 		// A single number
 		i, err := atoi(s, n)
 		if err != nil {
@@ -114,24 +114,40 @@ func parseListIndex(s string, n int) (slice bool, i int, j int, err error) {
 		}
 		return false, i, 0, nil
 	}
-	if s[:colon] == "" {
+	if low == "" {
 		i = 0
 	} else {
-		i, err = atoi(s[:colon], n)
+		i, err = atoi(low, n)
 		if err != nil {
 			return false, 0, 0, err
 		}
 	}
-	if s[colon+1:] == "" {
+	if high == "" {
 		j = n
 	} else {
-		j, err = atoi(s[colon+1:], n)
+		j, err = atoi(high, n)
 		if err != nil {
 			return false, 0, 0, err
+		}
+		if sep == "..=" {
+			j++
 		}
 	}
 	// Two numbers
 	return true, i, j, nil
+}
+
+func splitIndexString(s string) (low, sep, high string) {
+	if i := strings.IndexRune(s, ':'); i >= 0 {
+		return s[:i], ":", s[i+1:]
+	}
+	if i := strings.Index(s, "..="); i >= 0 {
+		return s[:i], "..=", s[i+3:]
+	}
+	if i := strings.Index(s, ".."); i >= 0 {
+		return s[:i], "..", s[i+2:]
+	}
+	return s, "", ""
 }
 
 // atoi is a wrapper around strconv.Atoi, converting strconv.ErrRange to

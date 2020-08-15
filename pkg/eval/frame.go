@@ -195,11 +195,14 @@ func (fm *Frame) errorpf(r diag.Ranger, format string, args ...interface{}) erro
 
 // Deprecate shows a deprecation message. The message is not shown if the same
 // deprecation message has been shown for the same location before.
-func (fm *Frame) Deprecate(msg string) {
-	dep := deprecation{fm.traceback.head.Name, fm.traceback.head.Ranging, msg}
+func (fm *Frame) Deprecate(msg string, ctx *diag.Context) {
+	if ctx == nil {
+		ctx = fm.traceback.head
+	}
+	dep := deprecation{ctx.Name, ctx.Ranging, msg}
 	if prog.ShowDeprecations && fm.deprecations.register(dep) {
 		err := diag.Error{
-			Type: "deprecation", Message: dep.message, Context: *fm.traceback.head}
+			Type: "deprecation", Message: dep.message, Context: *ctx}
 		fm.ports[2].File.WriteString(err.Show("") + "\n")
 	}
 }

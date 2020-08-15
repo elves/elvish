@@ -662,25 +662,27 @@ Lists can be indexed with any of the following:
 -   A negative integer, an offset counting from the back of the list. For
     instance, `$li[-1]` is the last element `$li`.
 
--   A slice `$a:$b`, where both `$a` and `$b` are integers. The result is
+-   A slice `$a..$b`, where both `$a` and `$b` are integers. The result is
     sublist of `$li[$a]` up to, but not including, `$li[$b]`. For instance,
-    `$li[4:7]` equals `[$li[4] $li[5] $li[6]]`, while `$li[1:-1]` contains all
+    `$li[4..7]` equals `[$li[4] $li[5] $li[6]]`, while `$li[1..-1]` contains all
     elements from `$li` except the first and last one.
 
     Both integers may be omitted; `$a` defaults to 0 while `$b` defaults to the
-    length of the list. For instance, `$li[:2]` is equivalent to `$li[0:2]`,
-    `$li[2:]` is equivalent to `$li[2:(count $li)]`, and `$li[:]` makes a copy
-    of `$li`. The last form is rarely useful, as lists are immutable.
+    length of the list. For instance, `$li[..2]` is equivalent to `$li[0..2]`,
+    `$li[2..]` is equivalent to `$li[2..(count $li)]`, and `$li[..]` makes a
+    copy of `$li`. The last form is rarely useful, as lists are immutable.
 
     Note that the slice needs to be a **single** string, so there cannot be any
-    spaces within the slice. For instance, `$li[2:10]` cannot be written as
-    `$li[2: 10]`; the latter contains two indicies and is equivalent to
-    `$li[2:] $li[10]` (see [Multiple Indicies](#multiple-indicies)).
+    spaces within the slice. For instance, `$li[2..10]` cannot be written as
+    `$li[2.. 10]`; the latter contains two indicies and is equivalent to
+    `$li[2..] $li[10]` (see [Multiple Indicies](#multiple-indicies)).
+
+-   A slice `$a..=$b`, which is similar to `$a..$b`, but includes `$li[$b]`.
 
 -   Not yet implemented: The string `@`. The result is all the values in the
     list. Note that this is not the same as `:`: if `$li` has 10 elements,
     `$li[@]` evaluates to 10 values (all the elements in the list), while
-    `$li[:]` evaluates to just one value (a copy of the list).
+    `$li[..]` evaluates to just one value (a copy of the list).
 
     When used on a variable like `$li`, it is equivalent to the explosion
     construct `$li[@]`. It is useful, however, when used on other constructs,
@@ -694,7 +696,7 @@ Examples:
 ▶ lorem
 ~> put $li[-1]
 ▶ bar
-~> put $li[0:2]
+~> put $li[0..2]
 ▶ [lorem ipsum]
 ```
 
@@ -738,8 +740,8 @@ Julia.)
 
 ## Map indexing
 
-Maps are simply indexed by their keys. There is no slice indexing, and `:` does
-not have a special meaning. Examples:
+Maps are simply indexed by their keys. There is no slice indexing, and `..` or
+`..=` does not have a special meaning. Examples:
 
 ```elvish-transcript
 ~> map = [&a=lorem &b=ipsum &a:b=haha]
