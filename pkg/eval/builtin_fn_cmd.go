@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
-
-	"github.com/elves/elvish/pkg/util"
 )
 
 // Command and process control.
@@ -122,19 +119,7 @@ func exit(fm *Frame, codes ...int) error {
 	panic("os.Exit returned")
 }
 
-// decSHLVL decrements $E:SHLVL. It's primary purpose is to ensure that
-// $E:SHLVL var is correct when running an `exec` command since that replaces
-// the current shell level with a new command.
-func decSHLVL() {
-	i, err := strconv.Atoi(os.Getenv(util.EnvSHLVL))
-	if err != nil {
-		return
-	}
-	os.Setenv(util.EnvSHLVL, strconv.Itoa(i-1))
-}
-
 func preExit(fm *Frame) {
-	decSHLVL()
 	if fm.DaemonClient != nil {
 		err := fm.DaemonClient.Close()
 		if err != nil {
