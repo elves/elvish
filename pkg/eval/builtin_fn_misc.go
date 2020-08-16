@@ -29,6 +29,7 @@ func init() {
 		"resolve": resolve,
 
 		"eval":    eval,
+		"use-mod": useMod,
 		"-source": source,
 
 		// Time
@@ -230,6 +231,29 @@ func nextEvalCount() int {
 	defer evalCountMutex.Unlock()
 	evalCount++
 	return evalCount
+}
+
+//elvdoc:fn use-mod
+//
+// ```elvish
+// use-mod $use-spec
+// ```
+//
+// Imports a module, and outputs the namespace for the module.
+//
+// Most code should use the [use](language.html#importing-modules-with-use)
+// special command instead.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> echo 'x = value' > a.elv
+// ~> put (use-mod ./a)[x]
+// ▶ value
+// ```
+
+func useMod(fm *Frame, spec string) (Ns, error) {
+	return use(fm, spec, fm.traceback)
 }
 
 //elvdoc:fn -source
