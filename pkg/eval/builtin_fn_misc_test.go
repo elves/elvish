@@ -10,6 +10,18 @@ func TestBuiltinFnMisc(t *testing.T) {
 	Test(t,
 		That(`f = (constantly foo); $f; $f`).Puts("foo", "foo"),
 
+		That("eval 'put x'").Puts("x"),
+		// Using initial binding in &ns.
+		That("n = (ns [&x=foo]); eval 'put $x' &ns=$n").Puts("foo"),
+		// Altering variables in &ns.
+		That("n = (ns [&x=foo]); eval 'x = bar' &ns=$n; put $n[x]").Puts("bar"),
+		// Parse error.
+		That("eval '['").ThrowsAny(),
+		// Compilation error.
+		That("eval 'put $x'").ThrowsAny(),
+		// Exception.
+		That("eval 'fail x'").ThrowsCause(FailError{"x"}),
+
 		That(`f = (mktemp elvXXXXXX); echo 'put x' > $f
 		      -source $f; rm $f`).Puts("x"),
 		That(`f = (mktemp elvXXXXXX); echo 'put $x' > $f

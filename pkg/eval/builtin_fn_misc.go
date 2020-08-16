@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net"
 	"path/filepath"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -27,6 +28,7 @@ func init() {
 
 		"resolve": resolve,
 
+		"eval":    eval,
 		"-source": source,
 
 		// Time
@@ -166,6 +168,79 @@ func resolve(fm *Frame, head string) string {
 		return "$" + qname + FnSuffix
 	}
 	return "(external " + parse.Quote(head) + ")"
+}
+
+//elvdoc:fn eval
+//
+// ```elvish
+// eval $code &ns=$nil
+// ```
+//
+// Evaluates `$code`, which should be a string. The evaluation happens in the
+// namespace specified by the `&ns` option. If it is `$nil` (the default), a
+// fresh empty namespace is created.
+//
+// If `$code` fails to parse or compile, the parse error or compilation error is
+// raised as an exception.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> eval 'put x'
+// ▶ x
+// ~> ns = (ns [&x=initial])
+// ~> eval 'put $x; x = altered; put $x' &ns=$ns
+// ▶ initial
+// ▶ altered
+// ~> put $ns[x]
+// ▶ altered
+// ```
+//
+// NOTE: Unlike the `eval` found in many other dynamic languages, `eval` cannot
+// affect the current namespace:
+//
+// ```elvish-transcript
+// ~> eval 'x = value'
+// ~> put $x
+// compilation error: variable $x not found
+// [tty 4], line 1: put $x
+// ```
+
+type evalOpts struct{ Ns Ns }
+
+func (*evalOpts) SetDefaultOptions() {}
+
+func eval(fm *Frame, opts evalOpts, code string) error {
+	src := parse.Source{Name: fmt.Sprintf("[eval %d]", nextEvalCount()), Code: code}
+	tree, err := parse.ParseWithDeprecation(src, fm.ports[2].File)
+	if err != nil {
+		return err
+	}
+	ns := opts.Ns
+	if ns == nil {
+		ns = make(Ns)
+	}
+	newFm := &Frame{
+		fm.Evaler, src, ns, make(Ns),
+		fm.intCh, fm.ports, fm.traceback, fm.background}
+	op, err := compile(newFm.Builtin.static(), ns.static(), tree, fm.ports[2].File)
+	if err != nil {
+		return err
+	}
+	return newFm.Eval(op)
+}
+
+// Used to generate unique names for each source passed to eval.
+var (
+	evalCount      int
+	evalCountMutex sync.Mutex
+)
+
+func nextEvalCount() int {
+	evalCountMutex.Lock()
+	defer evalCountMutex.Unlock()
+	evalCount++
+	return evalCount
 }
 
 //elvdoc:fn -source
