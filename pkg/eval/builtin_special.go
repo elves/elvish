@@ -248,7 +248,7 @@ type useOp struct {
 }
 
 func (op useOp) invoke(fm *Frame) error {
-	ns, err := loadModule(fm, op, op.spec)
+	ns, err := use(fm, op.spec, fm.addTraceback(op))
 	if err != nil {
 		return err
 	}
@@ -256,7 +256,7 @@ func (op useOp) invoke(fm *Frame) error {
 	return nil
 }
 
-func loadModule(fm *Frame, r diag.Ranger, spec string) (Ns, error) {
+func use(fm *Frame, spec string, st *stackTrace) (Ns, error) {
 	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") {
 		var dir string
 		if fm.srcMeta.IsFile {
@@ -269,22 +269,22 @@ func loadModule(fm *Frame, r diag.Ranger, spec string) (Ns, error) {
 			}
 		}
 		path := filepath.Clean(dir + "/" + spec + ".elv")
-		return loadModuleFile(fm, r, spec, path)
+		return useFromFile(fm, spec, path, st)
 	}
 	if ns, ok := fm.Evaler.modules[spec]; ok {
 		return ns, nil
 	}
 	if code, ok := fm.bundled[spec]; ok {
-		return evalModule(fm, r, spec,
-			parse.Source{Name: "[bundled " + spec + "]", Code: code})
+		return evalModule(fm, spec,
+			parse.Source{Name: "[bundled " + spec + "]", Code: code}, st)
 	}
 	if fm.libDir == "" {
 		return nil, noSuchModule{spec}
 	}
-	return loadModuleFile(fm, r, spec, fm.libDir+"/"+spec+".elv")
+	return useFromFile(fm, spec, fm.libDir+"/"+spec+".elv", st)
 }
 
-func loadModuleFile(fm *Frame, r diag.Ranger, spec, path string) (Ns, error) {
+func useFromFile(fm *Frame, spec, path string, st *stackTrace) (Ns, error) {
 	if ns, ok := fm.modules[path]; ok {
 		return ns, nil
 	}
@@ -295,40 +295,38 @@ func loadModuleFile(fm *Frame, r diag.Ranger, spec, path string) (Ns, error) {
 		}
 		return nil, err
 	}
-	return evalModule(fm, r, path, parse.Source{Name: path, Code: code, IsFile: true})
+	return evalModule(fm, path, parse.Source{Name: path, Code: code, IsFile: true}, st)
 }
 
-func evalModule(fm *Frame, r diag.Ranger, key string, src parse.Source) (Ns, error) {
-	tree, err := parse.ParseWithDeprecation(src, fm.ports[2].File)
-	if err != nil {
-		return nil, err
-	}
-
+func evalModule(fm *Frame, key string, src parse.Source, st *stackTrace) (Ns, error) {
 	// Make an empty scope to evaluate the module in.
-	modGlobal := Ns{}
-
-	newFm := &Frame{
-		fm.Evaler, src,
-		modGlobal, make(Ns),
-		fm.intCh, fm.ports,
-		fm.addTraceback(r), false,
-	}
-
-	op, err := compile(newFm.Builtin.static(), modGlobal.static(), tree, fm.ports[2].File)
-	if err != nil {
-		return nil, err
-	}
-
-	// Load the namespace before executing. This prevent circular "use"es from
+	ns := Ns{}
+	// Load the namespace before executing. This prevent circular use'es from
 	// resulting in an infinite recursion.
-	fm.Evaler.modules[key] = modGlobal
-	err = newFm.Eval(op)
+	fm.Evaler.modules[key] = ns
+	err := evalInner(fm, src, ns, st)
 	if err != nil {
 		// Unload the namespace.
 		delete(fm.modules, key)
 		return nil, err
 	}
-	return modGlobal, nil
+	return ns, nil
+}
+
+// Evaluates a source. Shared by evalModule and the eval builtin.
+func evalInner(fm *Frame, src parse.Source, ns Ns, st *stackTrace) error {
+	tree, err := parse.ParseWithDeprecation(src, fm.ports[2].File)
+	if err != nil {
+		return err
+	}
+	newFm := &Frame{
+		fm.Evaler, src, ns, make(Ns),
+		fm.intCh, fm.ports, fm.traceback, fm.background}
+	op, err := compile(newFm.Builtin.static(), ns.static(), tree, fm.ports[2].File)
+	if err != nil {
+		return err
+	}
+	return newFm.Eval(op)
 }
 
 // compileAnd compiles the "and" special form.

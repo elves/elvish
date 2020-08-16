@@ -212,22 +212,11 @@ func (*evalOpts) SetDefaultOptions() {}
 
 func eval(fm *Frame, opts evalOpts, code string) error {
 	src := parse.Source{Name: fmt.Sprintf("[eval %d]", nextEvalCount()), Code: code}
-	tree, err := parse.ParseWithDeprecation(src, fm.ports[2].File)
-	if err != nil {
-		return err
-	}
 	ns := opts.Ns
 	if ns == nil {
 		ns = make(Ns)
 	}
-	newFm := &Frame{
-		fm.Evaler, src, ns, make(Ns),
-		fm.intCh, fm.ports, fm.traceback, fm.background}
-	op, err := compile(newFm.Builtin.static(), ns.static(), tree, fm.ports[2].File)
-	if err != nil {
-		return err
-	}
-	return newFm.Eval(op)
+	return evalInner(fm, src, ns, fm.traceback)
 }
 
 // Used to generate unique names for each source passed to eval.
