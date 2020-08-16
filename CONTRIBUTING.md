@@ -108,6 +108,21 @@ Variables do not have signatures, and are described using a noun phrase.
 Examples are not always needed; if they are, they can be given in the same
 format as examples for functions.
 
+### Comment for unexported Go types and functions
+
+In the doc comment for exported types and functions, it's customary to use the
+symbol itself as the first word of the comment. For unexported types and
+functions, this becomes a bit awkward as their names don't start with a capital
+letter, so don't repeat the symbol. Examples:
+
+```go
+// Foo does foo.
+func Foo() { }
+
+// Does foo.
+func foo() { }
+```
+
 ## Generating code
 
 Elvish uses generated code in a few places. As is the usual case with Go
