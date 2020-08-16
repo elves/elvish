@@ -27,6 +27,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/util"
@@ -422,12 +423,12 @@ func mustWriteFile(filename string, data []byte, perm os.FileMode) {
 //
 // TODO(xiaq): Move this into the util package.
 func InTempHome() (string, func()) {
-	oldHome := os.Getenv(util.EnvHOME)
+	oldHome := os.Getenv(env.HOME)
 	tmpHome, cleanup := util.InTestDir()
-	os.Setenv(util.EnvHOME, tmpHome)
+	os.Setenv(env.HOME, tmpHome)
 
 	return tmpHome, func() {
-		os.Setenv(util.EnvHOME, oldHome)
+		os.Setenv(env.HOME, oldHome)
 		cleanup()
 	}
 }

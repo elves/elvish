@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/env"
 )
 
 // Returns a "run directory" for storing ephemeral files, which is guaranteed
@@ -40,8 +40,8 @@ func getSecureRunDir() (string, error) {
 // preference.
 func getRunDirCandidates() []string {
 	tmpDirPath := filepath.Join(os.TempDir(), fmt.Sprintf("elvish-%d", os.Getuid()))
-	if os.Getenv(util.EnvXDG_RUNTIME_DIR) != "" {
-		xdgDirPath := filepath.Join(os.Getenv(util.EnvXDG_RUNTIME_DIR), "elvish")
+	if os.Getenv(env.XDG_RUNTIME_DIR) != "" {
+		xdgDirPath := filepath.Join(os.Getenv(env.XDG_RUNTIME_DIR), "elvish")
 		return []string{xdgDirPath, tmpDirPath}
 	}
 	return []string{tmpDirPath}

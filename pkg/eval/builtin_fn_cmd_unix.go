@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"syscall"
 
+	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/sys"
-	"github.com/elves/elvish/pkg/util"
 )
 
 // ErrNotInSameProcessGroup is thrown when the process IDs passed to fg are not
@@ -44,11 +44,11 @@ func execFn(fm *Frame, args ...interface{}) error {
 // Decrements $E:SHLVL. Called from execFn to ensure that $E:SHLVL remains the
 // same in the new command.
 func decSHLVL() {
-	i, err := strconv.Atoi(os.Getenv(util.EnvSHLVL))
+	i, err := strconv.Atoi(os.Getenv(env.SHLVL))
 	if err != nil {
 		return
 	}
-	os.Setenv(util.EnvSHLVL, strconv.Itoa(i-1))
+	os.Setenv(env.SHLVL, strconv.Itoa(i-1))
 }
 
 func fg(pids ...int) error {

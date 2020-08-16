@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/util"
 )
 
@@ -50,7 +51,7 @@ func GetColorist() Colorist {
 }
 
 func getLsColors() string {
-	lsColorString := os.Getenv(util.EnvLS_COLORS)
+	lsColorString := os.Getenv(env.LS_COLORS)
 	if len(lsColorString) == 0 {
 		return defaultLsColorString
 	}

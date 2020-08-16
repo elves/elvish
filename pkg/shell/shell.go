@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/pkg/cli/term"
+	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/sys"
@@ -68,13 +69,13 @@ func evalInTTY(ev *eval.Evaler, op eval.Op, fds [3]*os.File) error {
 }
 
 func incSHLVL() func() {
-	restoreSHLVL := saveEnv(util.EnvSHLVL)
+	restoreSHLVL := saveEnv(env.SHLVL)
 
-	i, err := strconv.Atoi(os.Getenv(util.EnvSHLVL))
+	i, err := strconv.Atoi(os.Getenv(env.SHLVL))
 	if err != nil {
 		i = 0
 	}
-	os.Setenv(util.EnvSHLVL, strconv.Itoa(i+1))
+	os.Setenv(env.SHLVL, strconv.Itoa(i+1))
 
 	return restoreSHLVL
 }

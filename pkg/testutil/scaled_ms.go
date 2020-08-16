@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/env"
 )
 
 // ScaledMs returns ms milliseconds, scaled by the ELVISH_TEST_TIME_SCALE
@@ -17,7 +17,7 @@ func ScaledMs(ms int) time.Duration {
 }
 
 func getTestTimeScale() float64 {
-	env := os.Getenv(util.EnvELVISH_TEST_TIME_SCALE)
+	env := os.Getenv(env.ELVISH_TEST_TIME_SCALE)
 	if env == "" {
 		return 1
 	}

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/cli/term"
+	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
@@ -77,16 +78,16 @@ func TestMakeHasCommand(t *testing.T) {
 	// Set up environment.
 	testDir, cleanup := util.InTestDir()
 	defer cleanup()
-	oldPath := os.Getenv(util.EnvPATH)
-	defer os.Setenv(util.EnvPATH, oldPath)
+	oldPath := os.Getenv(env.PATH)
+	defer os.Setenv(env.PATH, oldPath)
 	if runtime.GOOS == "windows" {
-		oldPathExt := os.Getenv(util.EnvPATHEXT)
-		defer os.Setenv(util.EnvPATHEXT, oldPathExt)
-		os.Unsetenv(util.EnvPATHEXT) // force default value
+		oldPathExt := os.Getenv(env.PATHEXT)
+		defer os.Setenv(env.PATHEXT, oldPathExt)
+		os.Unsetenv(env.PATHEXT) // force default value
 	}
 
 	// Set up a directory in PATH.
-	os.Setenv(util.EnvPATH, filepath.Join(testDir, "bin"))
+	os.Setenv(env.PATH, filepath.Join(testDir, "bin"))
 	mustMkdirAll("bin")
 	mustMkExecutable("bin/external")
 	mustMkExecutable("bin/@external")

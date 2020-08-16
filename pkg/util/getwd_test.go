@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	"github.com/elves/elvish/pkg/env"
 )
 
 func TestGetwd(t *testing.T) {
@@ -33,12 +35,12 @@ func TestGetwd(t *testing.T) {
 		{"wd not abbreviated when HOME is slash", "/", tmpdir, tmpdir},
 	}
 
-	oldHome := os.Getenv(EnvHOME)
-	defer os.Setenv(EnvHOME, oldHome)
+	oldHome := os.Getenv(env.HOME)
+	defer os.Setenv(env.HOME, oldHome)
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			os.Setenv(EnvHOME, test.home)
+			os.Setenv(env.HOME, test.home)
 			mustOK(os.Chdir(test.chdir))
 			if gotWd := Getwd(); gotWd != test.wantWd {
 				t.Errorf("Getwd() -> %v, want %v", gotWd, test.wantWd)

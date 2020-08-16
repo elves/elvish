@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/user"
 	"strings"
+
+	"github.com/elves/elvish/pkg/env"
 )
 
 // GetHome finds the home directory of a specified user. When given an empty
@@ -13,7 +15,7 @@ func GetHome(uname string) (string, error) {
 	if uname == "" {
 		// Use $HOME as override if we are looking for the home of the current
 		// variable.
-		home := os.Getenv(EnvHOME)
+		home := os.Getenv(env.HOME)
 		if home != "" {
 			return strings.TrimRight(home, pathSep), nil
 		}

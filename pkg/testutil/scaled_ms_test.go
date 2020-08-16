@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/env"
 )
 
 var scaledMsTests = []struct {
@@ -27,12 +27,12 @@ var scaledMsTests = []struct {
 }
 
 func TestScaledMs(t *testing.T) {
-	envSave := os.Getenv(util.EnvELVISH_TEST_TIME_SCALE)
-	defer os.Setenv(util.EnvELVISH_TEST_TIME_SCALE, envSave)
+	envSave := os.Getenv(env.ELVISH_TEST_TIME_SCALE)
+	defer os.Setenv(env.ELVISH_TEST_TIME_SCALE, envSave)
 
 	for _, test := range scaledMsTests {
 		t.Run(test.name, func(t *testing.T) {
-			os.Setenv(util.EnvELVISH_TEST_TIME_SCALE, test.env)
+			os.Setenv(env.ELVISH_TEST_TIME_SCALE, test.env)
 			got := ScaledMs(test.ms)
 			if got != test.want {
 				t.Errorf("got %v, want %v", got, test.want)
