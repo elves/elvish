@@ -164,9 +164,9 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 		msg = `the "-time" command is deprecated; use "time" instead`
 	case "^~":
 		msg = `the "^" command is deprecated; use "math:pow" or "math:pow10" instead`
-	case "ord":
+	case "ord~":
 		msg = `the "ord" command is deprecated; use "str:to-codepoints" instead`
-	case "chr":
+	case "chr~":
 		msg = `the "chr" command is deprecated; use "str:from-codepoints" instead`
 	default:
 		return
