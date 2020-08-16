@@ -27,13 +27,3 @@ func (src Source) Repr(int) string {
 	return fmt.Sprintf(
 		"[&name=%s &code=<...> &is-file=$%v]", Quote(src.Name), src.IsFile)
 }
-
-// Path returns src.Name if src.IsFile is true, and an empty string otherwise.
-// It is kept for backward compatibility and will be removed after the 0.14
-// release.
-func (src Source) Path() string {
-	if src.IsFile {
-		return src.Name
-	}
-	return ""
-}
