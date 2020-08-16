@@ -1,6 +1,6 @@
 test_task:
   env:
-    ELVISH_TEST_TIME_SCALE: 10
+    ELVISH_TEST_TIME_SCALE: 20
     CODECOV_TOKEN: e10d2e99-591b-4d2a-a8cf-8ca3e8d6df61
     TEST_FLAG: -race
   go_modules_cache:
