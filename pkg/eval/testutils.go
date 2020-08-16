@@ -177,18 +177,24 @@ func (t TestCase) Throws(cause error, stacks ...string) TestCase {
 
 // ThrowsCause returns an altered TestCase that requires the source code to
 // throw an exception with the given cause when evaluated.
+//
+// If the stack trace is important, use Throws instead of this method.
 func (t TestCase) ThrowsCause(err error) TestCase {
 	return t.throws(excWithCause{err})
 }
 
 // ThrowsMessage returns an altered TestCase that requires the source code to
 // throw an error with the specified message when evaluted.
+//
+// Whenever possible, use ThrowsCause instead of this method.
 func (t TestCase) ThrowsMessage(msg string) TestCase {
 	return t.throws(errWithMessage{msg})
 }
 
 // ThrowsAny returns an altered TestCase that requires the source code to throw
 // any exception when evaluated.
+//
+// Whenever possible, use a more specific Throws* method instead of this method.
 func (t TestCase) ThrowsAny() TestCase {
 	return t.throws(anyError{})
 }
