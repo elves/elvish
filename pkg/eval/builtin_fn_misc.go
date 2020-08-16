@@ -251,6 +251,8 @@ func nextEvalCount() int {
 //
 // Read the named file, and evaluate it in the current scope.
 //
+// This function is deprecated. Use [eval](#eval) instead.
+//
 // Examples:
 //
 // ```elvish-transcript

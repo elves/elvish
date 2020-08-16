@@ -152,6 +152,8 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 	}
 	msg := ""
 	switch name {
+	case "-source~":
+		msg = `the "source" command is deprecated; use "eval" instead`
 	case "ord~":
 		msg = `the "ord" command is deprecated; use "str:to-codepoints" instead`
 	case "chr~":

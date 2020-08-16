@@ -14,6 +14,8 @@ or compiled, even if it is not executed:
 
 -   The `has-suffix` command is now deprecated. Use `str:has-suffix` instead.
 
+-   The `-source` command is now deprecated. Use `eval` instead.
+
 The following deprecated features trigger a warning when the code is evaluated:
 
 -   Using `:` in slice indicies is deprecated. Use `..` instead.
