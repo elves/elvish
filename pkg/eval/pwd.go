@@ -14,11 +14,13 @@ type PwdVariable struct {
 
 var _ vars.Var = PwdVariable{}
 
-// Get returns the current working directory. It returns /unknown/pwd when it
-// cannot be determined.
+// Getwd allows for unit test error injection.
+var getwd func() (string, error) = os.Getwd
+
+// Get returns the current working directory. It returns "/unknown/pwd" when
+// it cannot be determined.
 func (PwdVariable) Get() interface{} {
-	pwd, err := os.Getwd()
-	// TODO: Deprecate the $pwd variable.
+	pwd, err := getwd()
 	if err != nil {
 		return "/unknown/pwd"
 	}
