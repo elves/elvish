@@ -66,7 +66,7 @@ fn -package-domain [pkg]{
 }
 
 fn -package-without-domain [pkg]{
-  str:split &max=2 / $pkg | drop 1 | joins ''
+  str:split &max=2 / $pkg | drop 1 | str:join ''
 }
 
 # Merge two maps
@@ -269,7 +269,7 @@ fn query [pkg]{
     if (not (has-value $special-keys $key)) {
       val = $data[$key]
       if (eq (kind-of $val) list) {
-        val = (joins ", " $val)
+        val = (str:join ", " $val)
       }
       echo (styled (-first-upper $key)":" blue) $val
     }
@@ -286,7 +286,7 @@ fn installed {
     # without conflicts.
     if $cfg {
       lvl = $cfg[levels]
-      pat = '^\Q'$-lib-dir'/\E('(repeat (+ $lvl 1) '[^/]+' | joins '/')')/$'
+      pat = '^\Q'$-lib-dir'/\E('(repeat (+ $lvl 1) '[^/]+' | str:join '/')')/$'
       put (each [d]{ re:find $pat $d } [ $-lib-dir/$dom/**[nomatch-ok]/ ] )[groups][1][text]
     }
   }
@@ -313,7 +313,7 @@ fn install [&silent-if-installed=$false @pkgs]{
       metadata = (metadata $pkg)
       if (has-key $metadata dependencies) {
         deps = $metadata[dependencies]
-        -info "Installing dependencies: "(joins " " $deps)
+        -info "Installing dependencies: "(str:join " " $deps)
         # If the installation of dependencies fails, uninstall the
         # target package (leave any already-installed dependencies in
         # place)

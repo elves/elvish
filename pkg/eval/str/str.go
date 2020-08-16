@@ -251,13 +251,13 @@ func fromUtf8Bytes(nums ...int) (string, error) {
 // Joins inputs with `$sep`. Examples:
 //
 // ```elvish-transcript
-// ~> put lorem ipsum | joins ,
+// ~> put lorem ipsum | str:join ,
 // ▶ lorem,ipsum
-// ~> joins , [lorem ipsum]
+// ~> str:join , [lorem ipsum]
 // ▶ lorem,ipsum
-// ~> joins '' [lorem ipsum]
+// ~> str:join '' [lorem ipsum]
 // ▶ loremipsum
-// ~> joins '...' [lorem ipsum]
+// ~> str:join '...' [lorem ipsum]
 // ▶ lorem...ipsum
 // ```
 //
@@ -336,10 +336,10 @@ func replace(opts maxOpt, old, repl, s string) string {
 // codepoints.
 //
 // ```elvish-transcript
-// ~> splits , lorem,ipsum
+// ~> str:split , lorem,ipsum
 // ▶ lorem
 // ▶ ipsum
-// ~> splits '' 你好
+// ~> str:split '' 你好
 // ▶ 你
 // ▶ 好
 // ```
