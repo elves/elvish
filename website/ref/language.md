@@ -1749,8 +1749,8 @@ Examples:
 
 # Namespaces and Modules
 
-Namespace in Elvish helps prevent name collisions and is important for building
-modules.
+Like other modern programming languages, but unlike traditional shells, Elvish
+has a **namespace** mechanism for preventing name collisions.
 
 ## Syntax
 
@@ -1793,11 +1793,39 @@ The following namespaces have special meanings to the language:
     You don't need to use this explicitly unless you have defined names that
     shadows builtin counterparts.
 
-## Pre-Defined Modules
+## Modules
 
-Namespaces that are not special (i.e. one of the above) are also called
-**modules**. Aside from these special namespaces, Elvish also comes with the
-following modules that can be imported by `use`:
+Apart from the special namespaces, the most common usage of namespaces is to
+reference modules, reusable pieces of code that are either shipped with Elvish
+itself or defined by the user.
+
+### Importing modules with `use`
+
+Modules are imported using the `use` special command, which accepts a **module
+spec** and an optional alias:
+
+```elvish
+use $spec $alias?
+```
+
+Both the module spec and the alias must appear as a single string literal.
+
+The module spec specifies which module to import, and the alias, if given,
+specifies the namespace to import the module under. By default, the namespace is
+derived from the module spec, by taking the part after the last slash.
+
+Examples:
+
+```elvish
+use str # imports the "str" module as "str:"
+use a/b/c # imports the "a/b/c" module as "c:"
+use a/b/c foo # imports the "a/b/c" module as "foo:"
+```
+
+### Pre-Defined Modules
+
+Elvish's standard library provides the following pre-defined modules that can be
+imported by `use`:
 
 -   The following modules are always available: [daemon](daemon.html),
     [epm](epm.html), [math](math.html), [platform](platform.html),
@@ -1810,7 +1838,7 @@ following modules that can be imported by `use`:
 The [edit](edit.html) module is available in interactive module. As a special
 case, it does not need importing, but this may change in the future.
 
-## User-Defined Modules
+### User-Defined Modules
 
 You can define your own modules in Elvish by putting them under `~/.elvish/lib`
 and giving them a `.elv` extension. For instance, to define a module named `a`,
@@ -1824,7 +1852,7 @@ fn f {
 }
 ```
 
-To import the module, use `use`:
+This module can now be imported by `use a`:
 
 ```elvish-transcript
 ~> use a
@@ -1833,9 +1861,8 @@ mod a loading
 f from mod a
 ```
 
-Modules in nested directories can also be imported. For example, if you have
-defined a module in `~/.elvish/lib/x/y/z.elv`, you can import it by using
-`use x/y/z`, and the resulting namespace will be `z:`:
+Similarly, a module defined in `~/.elvish/lib/x/y/z.elv` can be imported by
+`use x/y/z`:
 
 ```elvish-transcript
 ~> cat .elvish/lib/x/y/z.elv
@@ -1847,25 +1874,17 @@ fn f {
 f from x/y/z
 ```
 
-In general, if you import a module from a nested directory, the resulting
-namespace will be the same as the file name (without the `.elv` extension).
+In general, a module defined in namespace will be the same as the file name
+(without the `.elv` extension).
 
-## Aliasing
+### Relative imports
 
-You can import a module as a namespace of your choice by specifying a second
-argument to `use`. For example, to import `x/y/z` as a `xyz` namespace, you can
-use `use x/y/z xyz`:
+The module spec may being with `./` or `../`, which introduce **relative
+imports**. When `use` is invoked from a file, this will import the file relative
+to the location of the file. When `use` is invoked at the interactive prompt,
+this will import the file relative to the current working directory.
 
-```elvish-transcript
-~> use x/y/z xyz
-~> xyz:f
-f from x/y/z
-```
-
-This is especially useful when you need to import several modules that are in
-different directories but have the same file name.
-
-## Scoping of Imports
+### Scoping of Imports
 
 Namespace imports are lexically scoped. For instance, if you `use` a module
 within an inner scope, it is not available outside that scope:
@@ -1892,7 +1911,7 @@ fn ls [@a]{
 That definition is not visible in module files: `ls` will still refer to the
 external command `ls`, unless you shadow it in the very same module.
 
-## Re-Importing
+### Re-Importing
 
 Modules are cached after one import. Subsequent imports do not re-execute the
 module; they only serve the bring it into the current scope. Moreover, the cache
@@ -1914,5 +1933,5 @@ As does the following:
 
 ```elvish
 use a/b
-use a/b
+use a/b alias
 ```
