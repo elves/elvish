@@ -10,6 +10,10 @@ or compiled, even if it is not executed:
 
 -   The `ord` command is now deprecated. Use `str:to-codepoints` instead.
 
+-   The `has-prefix` command is now deprecated. Use `str:has-prefix` instead.
+
+-   The `has-suffix` command is now deprecated. Use `str:has-suffix` instead.
+
 The following deprecated features trigger a warning when the code is evaluated:
 
 -   Using `:` in slice indicies is deprecated. Use `..` instead.

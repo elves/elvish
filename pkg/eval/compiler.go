@@ -156,6 +156,10 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 		msg = `the "ord" command is deprecated; use "str:to-codepoints" instead`
 	case "chr~":
 		msg = `the "chr" command is deprecated; use "str:from-codepoints" instead`
+	case "has-prefix~":
+		msg = `the "has-prefix" command is deprecated; use "str:has-prefix" instead`
+	case "has-suffix~":
+		msg = `the "has-suffix" command is deprecated; use "str:has-suffix" instead`
 	default:
 		return
 	}
