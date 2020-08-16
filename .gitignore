@@ -22,7 +22,6 @@ _testmain.go
 *.exe
 
 # Project specific
-cover
-elvish-coverage.dat
+/cover
 /_bin/
 /elvish

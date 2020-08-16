@@ -23,9 +23,8 @@ test:
 # Generate a basic test coverage report. This will open the report in your
 # browser. See also https://codecov.io/gh/elves/elvish/.
 cover:
-	rm -f elvish-coverage.dat
-	go test -covermode=set -coverprofile=./elvish-coverage.dat ./...
-	go tool cover -html=./elvish-coverage.dat
+	go test -covermode=set -coverprofile=$@ ./...
+	go tool cover -html=$@
 
 # Ensure the style of Go and Markdown source files is consistent.
 style:
