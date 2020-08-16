@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"math"
 	"math/rand"
 
 	"github.com/elves/elvish/pkg/eval/vals"
@@ -75,24 +74,6 @@ import (
 // ~> % 23 7
 // ▶ 2
 // ```
-
-//elvdoc:fn ^
-//
-// ```elvish
-// ^ $base $exponent
-// ```
-//
-// Output the result of raising `$base` to the power of `$exponent`. Examples:
-//
-// ```elvish-transcript
-// ~> ^ 2 10
-// ▶ 1024
-// ~> ^ 2 0.5
-// ▶ 1.4142135623730951
-// ```
-//
-// This function is deprecated; use [math:pow](math.html#mathpow) or
-// [math:pow10](math.html#mathpow10) instead.
 
 //elvdoc:fn &lt; &lt;= == != &gt; &gt;=
 //
@@ -184,7 +165,6 @@ func init() {
 		"-": minus,
 		"*": times,
 		"/": slash,
-		"^": math.Pow,
 		"%": mod,
 
 		// Random

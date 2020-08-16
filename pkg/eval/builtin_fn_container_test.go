@@ -33,7 +33,6 @@ func TestBuiltinFnContainer(t *testing.T) {
 		That(`range 0 10 &step=3`).Puts(0.0, 3.0, 6.0, 9.0),
 
 		That(`repeat 4 foo`).Puts("foo", "foo", "foo", "foo"),
-		That(`explode [foo bar]`).Puts("foo", "bar"),
 
 		That(`put (assoc [0] 0 zero)[0]`).Puts("zero"),
 		That(`put (assoc [&] k v)[k]`).Puts("v"),

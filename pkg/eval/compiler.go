@@ -152,18 +152,6 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 	}
 	msg := ""
 	switch name {
-	case "explode~":
-		msg = `the "explode" command is deprecated; use "all" instead`
-	case "join~":
-		msg = `the "joins" command is deprecated; use "str:join" instead`
-	case "splits~":
-		msg = `the "splits" command is deprecated; use "str:split" instead`
-	case "replaces~":
-		msg = `the "replaces" command is deprecated; use "str:replace" instead`
-	case "-time~":
-		msg = `the "-time" command is deprecated; use "time" instead`
-	case "^~":
-		msg = `the "^" command is deprecated; use "math:pow" or "math:pow10" instead`
 	case "ord~":
 		msg = `the "ord" command is deprecated; use "str:to-codepoints" instead`
 	case "chr~":

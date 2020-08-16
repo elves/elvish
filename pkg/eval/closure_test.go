@@ -30,10 +30,10 @@ func TestClosure(t *testing.T) {
 
 		That("[]{ } &k=v").ThrowsAny(),
 
-		That("explode [a b]{ }[arg-names]").Puts("a", "b"),
+		That("all [a b]{ }[arg-names]").Puts("a", "b"),
 		That("put [@r]{ }[rest-arg]").Puts("r"),
-		That("explode [&opt=def]{ }[opt-names]").Puts("opt"),
-		That("explode [&opt=def]{ }[opt-defaults]").Puts("def"),
+		That("all [&opt=def]{ }[opt-names]").Puts("opt"),
+		That("all [&opt=def]{ }[opt-defaults]").Puts("def"),
 		That("put { body }[body]").Puts(" body "),
 		That("put [x @y]{ body }[def]").Puts("[x @y]{ body }"),
 		That("put { body }[src][code]").

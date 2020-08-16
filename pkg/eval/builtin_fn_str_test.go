@@ -21,13 +21,6 @@ func TestBuiltinFnStr(t *testing.T) {
 
 		That(`to-string str (float64 1) $true`).Puts("str", "1", "$true"),
 
-		That(`joins : [/usr /bin /tmp]`).Puts("/usr:/bin:/tmp"),
-		That(`joins : ['' a '']`).Puts(":a:"),
-		That(`splits : /usr:/bin:/tmp`).Puts("/usr", "/bin", "/tmp"),
-		That(`splits : /usr:/bin:/tmp &max=2`).Puts("/usr", "/bin:/tmp"),
-		That(`replaces : / ":usr:bin:tmp"`).Puts("/usr/bin/tmp"),
-		That(`replaces &max=2 : / :usr:bin:tmp`).Puts("/usr/bin:tmp"),
-
 		That(`ord a`).Puts("0x61"),
 		That(`ord 你好`).Puts("0x4f60", "0x597d"),
 		That(`chr 0x61`).Puts("a"),

@@ -76,30 +76,6 @@ import (
 //
 // Etymology: [Clojure](https://clojuredocs.org/clojure.core/repeat).
 
-//elvdoc:fn explode
-//
-// ```elvish
-// explode $iterable
-// ```
-//
-// This function is deprecated; use [all](#all) instead.
-//
-// Put all elements of `$iterable` on the structured stdout. Like `flatten` in
-// functional languages. Equivalent to `[li]{ put $@li }`.
-//
-// Example:
-//
-// ```elvish-transcript
-// ~> explode [a b [x]]
-// ▶ a
-// ▶ b
-// ▶ [x]
-// ```
-//
-// Etymology: [PHP](http://php.net/manual/en/function.explode.php). PHP's `explode`
-// is actually equivalent to Elvish's `splits`, but the author liked the name too
-// much to not use it.
-
 //elvdoc:fn assoc
 //
 // ```elvish
@@ -377,9 +353,8 @@ func init() {
 
 		"make-map": makeMap,
 
-		"range":   rangeFn,
-		"repeat":  repeat,
-		"explode": explode,
+		"range":  rangeFn,
+		"repeat": repeat,
 
 		"assoc":  assoc,
 		"dissoc": dissoc,
@@ -500,14 +475,6 @@ func repeat(fm *Frame, n int, v interface{}) {
 	for i := 0; i < n; i++ {
 		out <- v
 	}
-}
-
-func explode(fm *Frame, v interface{}) error {
-	out := fm.ports[1].Chan
-	return vals.Iterate(v, func(e interface{}) bool {
-		out <- e
-		return true
-	})
 }
 
 func assoc(a, k, v interface{}) (interface{}, error) {

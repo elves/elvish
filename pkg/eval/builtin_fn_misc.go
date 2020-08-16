@@ -194,14 +194,6 @@ import (
 // ▶ (float64 0.011030208)
 // ```
 
-//elvdoc:fn -time
-//
-// ```elvish
-// -time &cb=$nil $callable
-// ```
-//
-// Deprecated alias of [`time`](#time).
-
 //elvdoc:fn -ifaddrs
 //
 // ```elvish
@@ -225,7 +217,6 @@ func init() {
 		// Time
 		"esleep": sleep,
 		"time":   timeCmd,
-		"-time":  timeCmd,
 
 		"-ifaddrs": _ifaddrs,
 	})

@@ -174,75 +174,6 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // ▶ $true
 // ```
 
-//elvdoc:fn joins
-//
-// ```elvish
-// joins $sep $input-list?
-// ```
-//
-// This function is deprecated; use [str:join](str.html#strjoin) instead.
-//
-// Join inputs with `$sep`. Examples:
-//
-// ```elvish-transcript
-// ~> put lorem ipsum | joins ,
-// ▶ lorem,ipsum
-// ~> joins , [lorem ipsum]
-// ▶ lorem,ipsum
-// ```
-//
-// The suffix "s" means "string" and also serves to avoid colliding with the
-// well-known [join](<https://en.wikipedia.org/wiki/join_(Unix)>) utility.
-//
-// Etymology: Various languages as `join`, in particular
-// [Python](https://docs.python.org/3.6/library/stdtypes.html#str.join).
-//
-// @cf splits
-
-//elvdoc:fn splits
-//
-// ```elvish
-// splits $sep $string
-// ```
-//
-// This function is deprecated; use [str:split](str.html#strsplit) instead.
-//
-// Split `$string` by `$sep`. If `$sep` is an empty string, split it into
-// codepoints.
-//
-// ```elvish-transcript
-// ~> splits , lorem,ipsum
-// ▶ lorem
-// ▶ ipsum
-// ~> splits '' 你好
-// ▶ 你
-// ▶ 好
-// ```
-//
-// **Note**: `splits` does not support splitting by regular expressions, `$sep` is
-// always interpreted as a plain string. Use [re:split](re.html#split) if you need
-// to split by regex.
-//
-// Etymology: Various languages as `split`, in particular
-// [Python](https://docs.python.org/3.6/library/stdtypes.html#str.split).
-//
-// @cf joins
-
-//elvdoc:fn replaces
-//
-// ```elvish
-// replaces &max=-1 $old $repl $source
-// ```
-//
-// This function is deprecated; use [str:replace](str.html#strreplace) instead.
-//
-// Replace all occurrences of `$old` with `$repl` in `$source`. If `$max` is
-// non-negative, it determines the max number of substitutions.
-//
-// **Note**: `replaces` does not support searching by regular expressions, `$old`
-// is always interpreted as a plain string. Use [re:replace](re.html#replace) if
-// you need to search by regex.
-
 //elvdoc:fn eawk
 //
 // ```elvish
@@ -298,10 +229,6 @@ func init() {
 		"has-prefix": strings.HasPrefix,
 		"has-suffix": strings.HasSuffix,
 
-		"joins":    joins,
-		"splits":   splits,
-		"replaces": replaces,
-
 		"eawk": eawk,
 	})
 }
@@ -312,46 +239,6 @@ func toString(fm *Frame, args ...interface{}) {
 	for _, a := range args {
 		out <- vals.ToString(a)
 	}
-}
-
-// joins joins all input strings with a delimiter.
-func joins(sep string, inputs Inputs) (string, error) {
-	var buf bytes.Buffer
-	var errJoin error
-	first := true
-	inputs(func(v interface{}) {
-		if errJoin != nil {
-			return
-		}
-		if s, ok := v.(string); ok {
-			if first {
-				first = false
-			} else {
-				buf.WriteString(sep)
-			}
-			buf.WriteString(s)
-		} else {
-			errJoin = fmt.Errorf("join wants string input, got %s", vals.Kind(v))
-		}
-	})
-	return buf.String(), errJoin
-}
-
-type maxOpt struct{ Max int }
-
-func (o *maxOpt) SetDefaultOptions() { o.Max = -1 }
-
-// splits splits an argument strings by a delimiter and writes all pieces.
-func splits(fm *Frame, opts maxOpt, sep, s string) {
-	out := fm.ports[1].Chan
-	parts := strings.SplitN(s, sep, opts.Max)
-	for _, p := range parts {
-		out <- p
-	}
-}
-
-func replaces(opts maxOpt, old, repl, s string) string {
-	return strings.Replace(s, old, repl, opts.Max)
 }
 
 func ord(fm *Frame, s string) {

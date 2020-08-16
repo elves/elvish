@@ -54,13 +54,13 @@ func TestCompileTimeDeprecation(t *testing.T) {
 
 	ev := NewEvaler()
 	r, w := mustPipe()
-	_, err := ev.ParseAndCompile(parse.Source{Code: "explode [1 2]"}, w)
+	_, err := ev.ParseAndCompile(parse.Source{Code: "ord a"}, w)
 	if err != nil {
 		t.Errorf("got err %v, want nil", err)
 	}
 	w.Close()
 	warnings := mustReadAllAndClose(r)
-	wantWarning := []byte(`the "explode" command is deprecated`)
+	wantWarning := []byte(`the "ord" command is deprecated`)
 	if !bytes.Contains(warnings, wantWarning) {
 		t.Errorf("got warnings %q, want warnings to contain %q", warnings, wantWarning)
 	}
