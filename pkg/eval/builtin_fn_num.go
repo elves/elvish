@@ -8,6 +8,45 @@ import (
 
 // Numerical operations.
 
+//elvdoc:fn rand
+//
+// ```elvish
+// rand
+// ```
+//
+// Output a pseudo-random number in the interval [0, 1). Example:
+//
+// ```elvish-transcript
+// ~> rand
+// ▶ 0.17843564133528436
+// ```
+
+func init() {
+	addBuiltinFns(map[string]interface{}{
+		// Constructor
+		"float64": toFloat64,
+
+		// Comparison
+		"<":  lt,
+		"<=": le,
+		"==": eqNum,
+		"!=": ne,
+		">":  gt,
+		">=": ge,
+
+		// Arithmetics
+		"+": plus,
+		"-": minus,
+		"*": times,
+		"/": slash,
+		"%": mod,
+
+		// Random
+		"rand":    rand.Float64,
+		"randint": randint,
+	})
+}
+
 //elvdoc:fn float64
 //
 // ```elvish
@@ -22,58 +61,9 @@ import (
 // convert a string to a number. See the discussion of the
 // [number](language.html#number) data type.
 
-//elvdoc:fn + - * /
-//
-// ```elvish
-// + $summand...
-// - $minuend $subtrahend...
-// * $factor...
-// / $dividend $divisor...
-// ```
-//
-// Basic arithmetic operations of adding, subtraction, multiplication and division
-// respectively.
-//
-// All of them can take multiple arguments:
-//
-// ```elvish-transcript
-// ~> + 2 5 7 # 2 + 5 + 7
-// ▶ 14
-// ~> - 2 5 7 # 2 - 5 - 7
-// ▶ -10
-// ~> * 2 5 7 # 2 * 5 * 7
-// ▶ 70
-// ~> / 2 5 7 # 2 / 5 / 7
-// ▶ 0.05714285714285715
-// ```
-//
-// When given one element, they all output their sole argument (given that it is a
-// valid number). When given no argument,
-//
-// -   `+` outputs 0, and `*` outputs 1. You can think that they both have a
-// "hidden" argument of 0 or 1, which does not alter their behaviors (in
-// mathematical terms, 0 and 1 are
-// [identity elements](https://en.wikipedia.org/wiki/Identity_element) of
-// addition and multiplication, respectively).
-//
-// -   `-` throws an exception.
-//
-// -   `/` becomes a synonym for `cd /`, due to the implicit cd feature. (The
-// implicit cd feature will probably change to avoid this oddity).
-
-//elvdoc:fn %
-//
-// ```elvish
-// % $dividend $divisor
-// ```
-//
-// Output the remainder after dividing `$dividend` by `$divisor`. Both must be
-// integers. Example:
-//
-// ```elvish-transcript
-// ~> % 23 7
-// ▶ 2
-// ```
+func toFloat64(f float64) float64 {
+	return f
+}
 
 //elvdoc:fn &lt; &lt;= == != &gt; &gt;=
 //
@@ -119,63 +109,6 @@ import (
 // ~> != 5 6 5
 // ▶ $true
 // ```
-
-//elvdoc:fn rand
-//
-// ```elvish
-// rand
-// ```
-//
-// Output a pseudo-random number in the interval [0, 1). Example:
-//
-// ```elvish-transcript
-// ~> rand
-// ▶ 0.17843564133528436
-// ```
-
-//elvdoc:fn randint
-//
-// ```elvish
-// randint $low $high
-// ```
-//
-// Output a pseudo-random integer in the interval [$low, $high). Example:
-//
-// ```elvish-transcript
-// ~> # Emulate dice
-// randint 1 7
-// ▶ 6
-// ```
-
-func init() {
-	addBuiltinFns(map[string]interface{}{
-		// Constructor
-		"float64": toFloat64,
-
-		// Comparison
-		"<":  lt,
-		"<=": le,
-		"==": eqNum,
-		"!=": ne,
-		">":  gt,
-		">=": ge,
-
-		// Arithmetics
-		"+": plus,
-		"-": minus,
-		"*": times,
-		"/": slash,
-		"%": mod,
-
-		// Random
-		"rand":    rand.Float64,
-		"randint": randint,
-	})
-}
-
-func toFloat64(f float64) float64 {
-	return f
-}
 
 func lt(nums ...float64) bool {
 	for i := 0; i < len(nums)-1; i++ {
@@ -231,6 +164,45 @@ func ge(nums ...float64) bool {
 	return true
 }
 
+//elvdoc:fn + - * /
+//
+// ```elvish
+// + $summand...
+// - $minuend $subtrahend...
+// * $factor...
+// / $dividend $divisor...
+// ```
+//
+// Basic arithmetic operations of adding, subtraction, multiplication and division
+// respectively.
+//
+// All of them can take multiple arguments:
+//
+// ```elvish-transcript
+// ~> + 2 5 7 # 2 + 5 + 7
+// ▶ 14
+// ~> - 2 5 7 # 2 - 5 - 7
+// ▶ -10
+// ~> * 2 5 7 # 2 * 5 * 7
+// ▶ 70
+// ~> / 2 5 7 # 2 / 5 / 7
+// ▶ 0.05714285714285715
+// ```
+//
+// When given one element, they all output their sole argument (given that it is a
+// valid number). When given no argument,
+//
+// -   `+` outputs 0, and `*` outputs 1. You can think that they both have a
+// "hidden" argument of 0 or 1, which does not alter their behaviors (in
+// mathematical terms, 0 and 1 are
+// [identity elements](https://en.wikipedia.org/wiki/Identity_element) of
+// addition and multiplication, respectively).
+//
+// -   `-` throws an exception.
+//
+// -   `/` becomes a synonym for `cd /`, due to the implicit cd feature. (The
+// implicit cd feature will probably change to avoid this oddity).
+
 func plus(nums ...float64) float64 {
 	sum := 0.0
 	for _, f := range nums {
@@ -276,12 +248,40 @@ func divide(fm *Frame, prod float64, nums ...float64) {
 	out <- vals.FromGo(prod)
 }
 
+//elvdoc:fn %
+//
+// ```elvish
+// % $dividend $divisor
+// ```
+//
+// Output the remainder after dividing `$dividend` by `$divisor`. Both must be
+// integers. Example:
+//
+// ```elvish-transcript
+// ~> % 23 7
+// ▶ 2
+// ```
+
 func mod(a, b int) (int, error) {
 	if b == 0 {
 		return 0, ErrArgs
 	}
 	return a % b, nil
 }
+
+//elvdoc:fn randint
+//
+// ```elvish
+// randint $low $high
+// ```
+//
+// Output a pseudo-random integer in the interval [$low, $high). Example:
+//
+// ```elvish-transcript
+// ~> # Emulate dice
+// randint 1 7
+// ▶ 6
+// ```
 
 func randint(low, high int) (int, error) {
 	if low >= high {

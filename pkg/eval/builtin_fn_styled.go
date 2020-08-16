@@ -11,6 +11,13 @@ import (
 
 var errStyledSegmentArgType = errors.New("argument to styled-segment must be a string or a styled segment")
 
+func init() {
+	addBuiltinFns(map[string]interface{}{
+		"styled-segment": styledSegment,
+		"styled":         Styled,
+	})
+}
+
 //elvdoc:fn styled-segment
 //
 // ```elvish
@@ -35,6 +42,33 @@ var errStyledSegmentArgType = errors.New("argument to styled-segment must be a s
 // put $s[fg-color]
 // put $s[bold]
 // ```
+
+// Turns a string or ui.Segment into a new ui.Segment with the attributes
+// from the supplied options applied to it. If the input is already a Segment its
+// attributes are copied and modified.
+func styledSegment(options RawOptions, input interface{}) (*ui.Segment, error) {
+	var text string
+	var style ui.Style
+
+	switch input := input.(type) {
+	case string:
+		text = input
+	case *ui.Segment:
+		text = input.Text
+		style = input.Style
+	default:
+		return nil, errStyledSegmentArgType
+	}
+
+	if err := style.MergeFromOptions(options); err != nil {
+		return nil, err
+	}
+
+	return &ui.Segment{
+		Text:  text,
+		Style: style,
+	}, nil
+}
 
 //elvdoc:fn styled
 //
@@ -97,40 +131,6 @@ var errStyledSegmentArgType = errors.New("argument to styled-segment must be a s
 // s = (styled abc red)(styled def green)
 // put $s[0] $s[1]
 // ```
-
-func init() {
-	addBuiltinFns(map[string]interface{}{
-		"styled-segment": styledSegment,
-		"styled":         Styled,
-	})
-}
-
-// Turns a string or ui.Segment into a new ui.Segment with the attributes
-// from the supplied options applied to it. If the input is already a Segment its
-// attributes are copied and modified.
-func styledSegment(options RawOptions, input interface{}) (*ui.Segment, error) {
-	var text string
-	var style ui.Style
-
-	switch input := input.(type) {
-	case string:
-		text = input
-	case *ui.Segment:
-		text = input.Text
-		style = input.Style
-	default:
-		return nil, errStyledSegmentArgType
-	}
-
-	if err := style.MergeFromOptions(options); err != nil {
-		return nil, err
-	}
-
-	return &ui.Segment{
-		Text:  text,
-		Style: style,
-	}, nil
-}
 
 // Styled turns a string, a ui.Segment or a ui.Text into a ui.Text by applying
 // the given stylings.

@@ -7,6 +7,15 @@ import (
 	"github.com/elves/elvish/pkg/util"
 )
 
+func init() {
+	addBuiltinFns(map[string]interface{}{
+		"src":    src,
+		"-gc":    _gc,
+		"-stack": _stack,
+		"-log":   _log,
+	})
+}
+
 //elvdoc:fn src
 //
 // ```elvish
@@ -46,6 +55,10 @@ import (
 // ▶ /home/elf/.elvish/lib/src-util.elv
 // ```
 
+func src(fm *Frame) parse.Source {
+	return fm.srcMeta
+}
+
 //elvdoc:fn -gc
 //
 // ```elvish
@@ -55,6 +68,10 @@ import (
 // Force the Go garbage collector to run.
 //
 // This is only useful for debug purposes.
+
+func _gc() {
+	runtime.GC()
+}
 
 //elvdoc:fn -stack
 //
@@ -66,33 +83,6 @@ import (
 //
 // This is only useful for debug purposes.
 
-//elvdoc:fn -log
-//
-// ```elvish
-// -log $filename
-// ```
-//
-// Direct internal debug logs to the named file.
-//
-// This is only useful for debug purposes.
-
-func init() {
-	addBuiltinFns(map[string]interface{}{
-		"src":    src,
-		"-gc":    _gc,
-		"-stack": _stack,
-		"-log":   _log,
-	})
-}
-
-func src(fm *Frame) parse.Source {
-	return fm.srcMeta
-}
-
-func _gc() {
-	runtime.GC()
-}
-
 func _stack(fm *Frame) {
 	out := fm.ports[1].File
 	// TODO(xiaq): Dup with main.go.
@@ -102,6 +92,16 @@ func _stack(fm *Frame) {
 	}
 	out.Write(buf)
 }
+
+//elvdoc:fn -log
+//
+// ```elvish
+// -log $filename
+// ```
+//
+// Direct internal debug logs to the named file.
+//
+// This is only useful for debug purposes.
 
 func _log(fname string) error {
 	return util.SetOutputFile(fname)

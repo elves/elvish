@@ -8,6 +8,22 @@ import (
 
 // Command and process control.
 
+// TODO(xiaq): Document "fg".
+
+func init() {
+	addBuiltinFns(map[string]interface{}{
+		// Command resolution
+		"external":        external,
+		"has-external":    hasExternal,
+		"search-external": searchExternal,
+
+		// Process control
+		"fg":   fg,
+		"exec": execFn,
+		"exit": exit,
+	})
+}
+
 //elvdoc:fn external
 //
 // ```elvish
@@ -22,6 +38,10 @@ import (
 // ```
 //
 // @cf has-external search-external
+
+func external(cmd string) ExternalCmd {
+	return ExternalCmd{cmd}
+}
 
 //elvdoc:fn has-external
 //
@@ -41,6 +61,11 @@ import (
 //
 // @cf external search-external
 
+func hasExternal(cmd string) bool {
+	_, err := exec.LookPath(cmd)
+	return err == nil
+}
+
 //elvdoc:fn search-external
 //
 // ```elvish
@@ -57,16 +82,9 @@ import (
 //
 // @cf external has-external
 
-// TODO(xiaq): Document "fg".
-
-//elvdoc:fn exec
-//
-// ```elvish
-// exec $command?
-// ```
-//
-// Replace the Elvish process with an external `$command`, defaulting to
-// `elvish`. This decrements `$E:SHLVL` before starting the new process.
+func searchExternal(cmd string) (string, error) {
+	return exec.LookPath(cmd)
+}
 
 //elvdoc:fn exit
 //
@@ -75,33 +93,6 @@ import (
 // ```
 //
 // Exit the Elvish process with `$status` (defaulting to 0).
-
-func init() {
-	addBuiltinFns(map[string]interface{}{
-		// Command resolution
-		"external":        external,
-		"has-external":    hasExternal,
-		"search-external": searchExternal,
-
-		// Process control
-		"fg":   fg,
-		"exec": execFn,
-		"exit": exit,
-	})
-}
-
-func external(cmd string) ExternalCmd {
-	return ExternalCmd{cmd}
-}
-
-func hasExternal(cmd string) bool {
-	_, err := exec.LookPath(cmd)
-	return err == nil
-}
-
-func searchExternal(cmd string) (string, error) {
-	return exec.LookPath(cmd)
-}
 
 func exit(fm *Frame, codes ...int) error {
 	code := 0

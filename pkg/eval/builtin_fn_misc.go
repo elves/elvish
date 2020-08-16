@@ -17,6 +17,29 @@ import (
 
 // Builtins that have not been put into their own groups go here.
 
+// TODO(xiaq): Document esleep.
+
+func init() {
+	addBuiltinFns(map[string]interface{}{
+		"nop":        nop,
+		"kind-of":    kindOf,
+		"constantly": constantly,
+
+		"resolve": resolve,
+
+		"-source": source,
+
+		// Time
+		"esleep": sleep,
+		"time":   timeCmd,
+
+		"-ifaddrs": _ifaddrs,
+	})
+
+	// For rand and randint.
+	rand.Seed(time.Now().UTC().UnixNano())
+}
+
 //elvdoc:fn nop
 //
 // ```elvish
@@ -36,6 +59,10 @@ import (
 // Etymology: Various languages, in particular NOP in
 // [assembly languages](https://en.wikipedia.org/wiki/NOP).
 
+func nop(opts RawOptions, args ...interface{}) {
+	// Do nothing
+}
+
 //elvdoc:fn kind-of
 //
 // ```elvish
@@ -52,6 +79,13 @@ import (
 // ```
 //
 // The terminology and definition of "kind" is subject to change.
+
+func kindOf(fm *Frame, args ...interface{}) {
+	out := fm.ports[1].Chan
+	for _, a := range args {
+		out <- vals.Kind(a)
+	}
+}
 
 //elvdoc:fn constantly
 //
@@ -85,6 +119,19 @@ import (
 //
 // Etymology: [Clojure](https://clojuredocs.org/clojure.core/constantly).
 
+func constantly(args ...interface{}) Callable {
+	// TODO(xiaq): Repr of this function is not right.
+	return NewGoFn(
+		"created by constantly",
+		func(fm *Frame) {
+			out := fm.ports[1].Chan
+			for _, v := range args {
+				out <- v
+			}
+		},
+	)
+}
+
 //elvdoc:fn resolve
 //
 // ```elvish
@@ -105,6 +152,21 @@ import (
 // ~> resolve cat
 // ▶ <external cat>
 // ```
+
+func resolve(fm *Frame, head string) string {
+	// Emulate static resolution of a command head. This needs to be kept in
+	// sync with (*compiler).form.
+
+	_, special := builtinSpecials[head]
+	if special {
+		return "special"
+	}
+	sigil, qname := SplitVariableRef(head)
+	if sigil == "" && fm.ResolveVar(qname+FnSuffix) != nil {
+		return "$" + qname + FnSuffix
+	}
+	return "(external " + parse.Quote(head) + ")"
+}
 
 //elvdoc:fn -source
 //
@@ -160,110 +222,6 @@ import (
 // bar
 // ```
 
-// TODO(xiaq): Document esleep.
-
-//elvdoc:fn time
-//
-// ```elvish
-// time &on-end=$nil $callable
-// ```
-//
-// Runs the callable, and call `$on-end` with the duration it took, as a
-// number in seconds. If `$on-end` is `$nil` (the default), prints the
-// duration in human-readable form.
-//
-// If `$callable` throws an exception, the exception is propagated after the
-// on-end or default printing is done.
-//
-// If `$on-end` throws an exception, it is propagated, unless `$callable` has
-// already thrown an exception.
-//
-// Example:
-//
-// ```elvish-transcript
-// ~> time { sleep 1 }
-// 1.006060647s
-// ~> time { sleep 0.01 }
-// 1.288977ms
-// ~> t = ''
-// ~> time &on-end=[x]{ t = $x } { sleep 1 }
-// ~> put $t
-// ▶ (float64 1.000925004)
-// ~> time &on-end=[x]{ t = $x } { sleep 0.01 }
-// ~> put $t
-// ▶ (float64 0.011030208)
-// ```
-
-//elvdoc:fn -ifaddrs
-//
-// ```elvish
-// -ifaddrs
-// ```
-//
-// Output all IP addresses of the current host.
-//
-// This should be part of a networking module instead of the builtin module.
-
-func init() {
-	addBuiltinFns(map[string]interface{}{
-		"nop":        nop,
-		"kind-of":    kindOf,
-		"constantly": constantly,
-
-		"resolve": resolve,
-
-		"-source": source,
-
-		// Time
-		"esleep": sleep,
-		"time":   timeCmd,
-
-		"-ifaddrs": _ifaddrs,
-	})
-
-	// For rand and randint.
-	rand.Seed(time.Now().UTC().UnixNano())
-}
-
-func nop(opts RawOptions, args ...interface{}) {
-	// Do nothing
-}
-
-func kindOf(fm *Frame, args ...interface{}) {
-	out := fm.ports[1].Chan
-	for _, a := range args {
-		out <- vals.Kind(a)
-	}
-}
-
-func constantly(args ...interface{}) Callable {
-	// TODO(xiaq): Repr of this function is not right.
-	return NewGoFn(
-		"created by constantly",
-		func(fm *Frame) {
-			out := fm.ports[1].Chan
-			for _, v := range args {
-				out <- v
-			}
-		},
-	)
-}
-
-func resolve(fm *Frame, head string) string {
-	// Emulate static resolution of a command head. This needs to be kept in
-	// sync with (*compiler).form.
-
-	_, special := builtinSpecials[head]
-	if special {
-		return "special"
-	}
-	sigil, qname := SplitVariableRef(head)
-	if sigil == "" && fm.ResolveVar(qname+FnSuffix) != nil {
-		return "$" + qname + FnSuffix
-	}
-	return "(external " + parse.Quote(head) + ")"
-}
-
 func source(fm *Frame, fname string) error {
 	path, err := filepath.Abs(fname)
 	if err != nil {
@@ -310,6 +268,38 @@ func sleep(fm *Frame, t float64) error {
 	}
 }
 
+//elvdoc:fn time
+//
+// ```elvish
+// time &on-end=$nil $callable
+// ```
+//
+// Runs the callable, and call `$on-end` with the duration it took, as a
+// number in seconds. If `$on-end` is `$nil` (the default), prints the
+// duration in human-readable form.
+//
+// If `$callable` throws an exception, the exception is propagated after the
+// on-end or default printing is done.
+//
+// If `$on-end` throws an exception, it is propagated, unless `$callable` has
+// already thrown an exception.
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> time { sleep 1 }
+// 1.006060647s
+// ~> time { sleep 0.01 }
+// 1.288977ms
+// ~> t = ''
+// ~> time &on-end=[x]{ t = $x } { sleep 1 }
+// ~> put $t
+// ▶ (float64 1.000925004)
+// ~> time &on-end=[x]{ t = $x } { sleep 0.01 }
+// ~> put $t
+// ▶ (float64 0.011030208)
+// ```
+
 type timeOpt struct{ OnEnd Callable }
 
 func (o *timeOpt) SetDefaultOptions() {}
@@ -332,6 +322,16 @@ func timeCmd(fm *Frame, opts timeOpt, f Callable) error {
 
 	return err
 }
+
+//elvdoc:fn -ifaddrs
+//
+// ```elvish
+// -ifaddrs
+// ```
+//
+// Output all IP addresses of the current host.
+//
+// This should be part of a networking module instead of the builtin module.
 
 func _ifaddrs(fm *Frame) error {
 	addrs, err := net.InterfaceAddrs()

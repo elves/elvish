@@ -18,6 +18,17 @@ import (
 // in the same process group.
 var ErrNotInSameProcessGroup = errors.New("not in the same process group")
 
+//elvdoc:fn exec
+//
+// ```elvish
+// exec $command?
+// ```
+//
+// Replace the Elvish process with an external `$command`, defaulting to
+// `elvish`. This decrements `$E:SHLVL` before starting the new process.
+//
+// This command always raises an exception on Windows.
+
 func execFn(fm *Frame, args ...interface{}) error {
 	var argstrings []string
 	if len(args) == 0 {

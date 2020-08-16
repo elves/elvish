@@ -33,6 +33,16 @@ import "github.com/elves/elvish/pkg/eval/vals"
 //
 // @cf not
 
+func init() {
+	addBuiltinFns(map[string]interface{}{
+		"bool":   vals.Bool,
+		"not":    not,
+		"is":     is,
+		"eq":     eq,
+		"not-eq": notEq,
+	})
+}
+
 //elvdoc:fn not
 //
 // ```elvish
@@ -55,6 +65,10 @@ import "github.com/elves/elvish/pkg/eval/vals"
 // **NOTE**: `and` and `or` are implemented as special commands.
 //
 // @cf bool
+
+func not(v interface{}) bool {
+	return !vals.Bool(v)
+}
 
 //elvdoc:fn is
 //
@@ -82,6 +96,15 @@ import "github.com/elves/elvish/pkg/eval/vals"
 //
 // Etymology: [Python](https://docs.python.org/3/reference/expressions.html#is).
 
+func is(args ...interface{}) bool {
+	for i := 0; i+1 < len(args); i++ {
+		if args[i] != args[i+1] {
+			return false
+		}
+	}
+	return true
+}
+
 //elvdoc:fn eq
 //
 // ```elvish
@@ -106,6 +129,15 @@ import "github.com/elves/elvish/pkg/eval/vals"
 //
 // Etymology: [Perl](https://perldoc.perl.org/perlop.html#Equality-Operators).
 
+func eq(args ...interface{}) bool {
+	for i := 0; i+1 < len(args); i++ {
+		if !vals.Equal(args[i], args[i+1]) {
+			return false
+		}
+	}
+	return true
+}
+
 //elvdoc:fn not-eq
 //
 // ```elvish
@@ -125,38 +157,6 @@ import "github.com/elves/elvish/pkg/eval/vals"
 // ```
 //
 // @cf eq
-
-func init() {
-	addBuiltinFns(map[string]interface{}{
-		"bool":   vals.Bool,
-		"not":    not,
-		"is":     is,
-		"eq":     eq,
-		"not-eq": notEq,
-	})
-}
-
-func not(v interface{}) bool {
-	return !vals.Bool(v)
-}
-
-func is(args ...interface{}) bool {
-	for i := 0; i+1 < len(args); i++ {
-		if args[i] != args[i+1] {
-			return false
-		}
-	}
-	return true
-}
-
-func eq(args ...interface{}) bool {
-	for i := 0; i+1 < len(args); i++ {
-		if !vals.Equal(args[i], args[i+1]) {
-			return false
-		}
-	}
-	return true
-}
 
 func notEq(args ...interface{}) bool {
 	for i := 0; i+1 < len(args); i++ {

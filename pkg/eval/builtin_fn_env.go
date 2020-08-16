@@ -7,42 +7,6 @@ import (
 
 var errNonExistentEnvVar = errors.New("non-existent environment variable")
 
-//elvdoc:fn has-env
-//
-// ```elvish
-// has-env $name
-// ```
-//
-// Test whether an environment variable exists. Examples:
-//
-// ```elvish-transcript
-// ~> has-env PATH
-// ▶ $true
-// ~> has-env NO_SUCH_ENV
-// ▶ $false
-// ```
-//
-// @cf get-env set-env unset-env
-
-//elvdoc:fn get-env
-//
-// ```elvish
-// get-env $name
-// ```
-//
-// Gets the value of an environment variable. Throws an exception if the
-// environment variable does not exist. Examples:
-//
-// ```elvish-transcript
-// ~> get-env LANG
-// ▶ zh_CN.UTF-8
-// ~> get-env NO_SUCH_ENV
-// Exception: non-existent environment variable
-// [tty], line 1: get-env NO_SUCH_ENV
-// ```
-//
-// @cf has-env set-env unset-env
-
 //elvdoc:fn set-env
 //
 // ```elvish
@@ -87,10 +51,46 @@ func init() {
 	})
 }
 
+//elvdoc:fn has-env
+//
+// ```elvish
+// has-env $name
+// ```
+//
+// Test whether an environment variable exists. Examples:
+//
+// ```elvish-transcript
+// ~> has-env PATH
+// ▶ $true
+// ~> has-env NO_SUCH_ENV
+// ▶ $false
+// ```
+//
+// @cf get-env set-env unset-env
+
 func hasEnv(key string) bool {
 	_, ok := os.LookupEnv(key)
 	return ok
 }
+
+//elvdoc:fn get-env
+//
+// ```elvish
+// get-env $name
+// ```
+//
+// Gets the value of an environment variable. Throws an exception if the
+// environment variable does not exist. Examples:
+//
+// ```elvish-transcript
+// ~> get-env LANG
+// ▶ zh_CN.UTF-8
+// ~> get-env NO_SUCH_ENV
+// Exception: non-existent environment variable
+// [tty], line 1: get-env NO_SUCH_ENV
+// ```
+//
+// @cf has-env set-env unset-env
 
 func getEnv(key string) (string, error) {
 	value, ok := os.LookupEnv(key)

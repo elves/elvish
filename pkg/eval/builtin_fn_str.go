@@ -41,90 +41,6 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // ▶ $true
 // ```
 
-//elvdoc:fn to-string
-//
-// ```elvish
-// to-string $value...
-// ```
-//
-// Convert arguments to string values.
-//
-// ```elvish-transcript
-// ~> to-string foo [a] [&k=v]
-// ▶ foo
-// ▶ '[a]'
-// ▶ '[&k=v]'
-// ```
-
-//elvdoc:fn ord
-//
-// ```elvish
-// ord $string
-// ```
-//
-// This function is deprecated; use [str:to-codepoints](str.html#strto-codepoints) instead.
-//
-// Output value of each codepoint in `$string`, in hexadecimal. Examples:
-//
-// ```elvish-transcript
-// ~> ord a
-// ▶ 0x61
-// ~> ord 你好
-// ▶ 0x4f60
-// ▶ 0x597d
-// ```
-//
-// The output format is subject to change.
-//
-// Etymology: [Python](https://docs.python.org/3/library/functions.html#ord).
-//
-// @cf chr
-
-//elvdoc:fn chr
-//
-// ```elvish
-// chr $number...
-// ```
-//
-// This function is deprecated; use [str:from-codepoints](str.html#strfrom-codepoints) instead.
-//
-// Outputs a string consisting of the given Unicode codepoints. Example:
-//
-// ```elvish-transcript
-// ~> chr 0x61
-// ▶ a
-// ~> chr 0x4f60 0x597d
-// ▶ 你好
-// ```
-//
-// Etymology: [Python](https://docs.python.org/3/library/functions.html#chr).
-//
-// @cf ord
-
-//elvdoc:fn base
-//
-// ```elvish
-// base $base $number...
-// ```
-//
-// Outputs a string for each `$number` written in `$base`. The `$base` must be
-// between 2 and 36, inclusive. Examples:
-//
-// ```elvish-transcript
-// ~> base 2 1 3 4 16 255
-// ▶ 1
-// ▶ 11
-// ▶ 100
-// ▶ 10000
-// ▶ 11111111
-// ~> base 16 1 3 4 16 255
-// ▶ 1
-// ▶ 3
-// ▶ 4
-// ▶ 10
-// ▶ ff
-// ```
-
 //elvdoc:fn wcswidth
 //
 // ```elvish
@@ -180,40 +96,6 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // This function is deprecated; use [str:has-suffix](str.html#strhas-suffix)
 // instead.
 
-//elvdoc:fn eawk
-//
-// ```elvish
-// eawk $f $input-list?
-// ```
-//
-// For each input, call `$f` with the input followed by all its fields.
-//
-// It should behave the same as the following functions:
-//
-// ```elvish
-// fn eawk [f @rest]{
-// each [line]{
-// @fields = (re:split '[ \t]+'
-// (re:replace '^[ \t]+|[ \t]+$' '' $line))
-// $f $line $@fields
-// } $@rest
-// }
-// ```
-//
-// This command allows you to write code very similar to `awk` scripts using
-// anonymous functions. Example:
-//
-// ```elvish-transcript
-// ~> echo ' lorem ipsum
-// 1 2' | awk '{ print $1 }'
-// lorem
-// 1
-// ~> echo ' lorem ipsum
-// 1 2' | eawk [line a b]{ put $a }
-// ▶ lorem
-// ▶ 1
-// ```
-
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		"<s":  func(a, b string) bool { return a < b },
@@ -239,7 +121,21 @@ func init() {
 	})
 }
 
-// toString converts all arguments to strings.
+//elvdoc:fn to-string
+//
+// ```elvish
+// to-string $value...
+// ```
+//
+// Convert arguments to string values.
+//
+// ```elvish-transcript
+// ~> to-string foo [a] [&k=v]
+// ▶ foo
+// ▶ '[a]'
+// ▶ '[&k=v]'
+// ```
+
 func toString(fm *Frame, args ...interface{}) {
 	out := fm.OutputChan()
 	for _, a := range args {
@@ -247,12 +143,57 @@ func toString(fm *Frame, args ...interface{}) {
 	}
 }
 
+//elvdoc:fn ord
+//
+// ```elvish
+// ord $string
+// ```
+//
+// This function is deprecated; use [str:to-codepoints](str.html#strto-codepoints) instead.
+//
+// Output value of each codepoint in `$string`, in hexadecimal. Examples:
+//
+// ```elvish-transcript
+// ~> ord a
+// ▶ 0x61
+// ~> ord 你好
+// ▶ 0x4f60
+// ▶ 0x597d
+// ```
+//
+// The output format is subject to change.
+//
+// Etymology: [Python](https://docs.python.org/3/library/functions.html#ord).
+//
+// @cf chr
+
 func ord(fm *Frame, s string) {
 	out := fm.ports[1].Chan
 	for _, r := range s {
 		out <- "0x" + strconv.FormatInt(int64(r), 16)
 	}
 }
+
+//elvdoc:fn chr
+//
+// ```elvish
+// chr $number...
+// ```
+//
+// This function is deprecated; use [str:from-codepoints](str.html#strfrom-codepoints) instead.
+//
+// Outputs a string consisting of the given Unicode codepoints. Example:
+//
+// ```elvish-transcript
+// ~> chr 0x61
+// ▶ a
+// ~> chr 0x4f60 0x597d
+// ▶ 你好
+// ```
+//
+// Etymology: [Python](https://docs.python.org/3/library/functions.html#chr).
+//
+// @cf ord
 
 func chr(nums ...int) (string, error) {
 	var b bytes.Buffer
@@ -264,6 +205,30 @@ func chr(nums ...int) (string, error) {
 	}
 	return b.String(), nil
 }
+
+//elvdoc:fn base
+//
+// ```elvish
+// base $base $number...
+// ```
+//
+// Outputs a string for each `$number` written in `$base`. The `$base` must be
+// between 2 and 36, inclusive. Examples:
+//
+// ```elvish-transcript
+// ~> base 2 1 3 4 16 255
+// ▶ 1
+// ▶ 11
+// ▶ 100
+// ▶ 10000
+// ▶ 11111111
+// ~> base 16 1 3 4 16 255
+// ▶ 1
+// ▶ 3
+// ▶ 4
+// ▶ 10
+// ▶ ff
+// ```
 
 // ErrBadBase is thrown by the "base" builtin if the base is smaller than 2 or
 // greater than 36.
@@ -283,11 +248,41 @@ func base(fm *Frame, b int, nums ...int) error {
 
 var eawkWordSep = regexp.MustCompile("[ \t]+")
 
-// eawk takes a function. For each line in the input stream, it calls the
-// function with the line and the words in the line. The words are found by
-// stripping the line and splitting the line by whitespaces. The function may
-// call break and continue. Overall this provides a similar functionality to
-// awk, hence the name.
+//elvdoc:fn eawk
+//
+// ```elvish
+// eawk $f $input-list?
+// ```
+//
+// For each input, call `$f` with the input followed by all its fields. The
+// function may call `break` and `continue`.
+//
+// It should behave the same as the following functions:
+//
+// ```elvish
+// fn eawk [f @rest]{
+//   each [line]{
+//     @fields = (re:split '[ \t]+'
+//     (re:replace '^[ \t]+|[ \t]+$' '' $line))
+//     $f $line $@fields
+//   } $@rest
+// }
+// ```
+//
+// This command allows you to write code very similar to `awk` scripts using
+// anonymous functions. Example:
+//
+// ```elvish-transcript
+// ~> echo ' lorem ipsum
+// 1 2' | awk '{ print $1 }'
+// lorem
+// 1
+// ~> echo ' lorem ipsum
+// 1 2' | eawk [line a b]{ put $a }
+// ▶ lorem
+// ▶ 1
+// ```
+
 func eawk(fm *Frame, f Callable, inputs Inputs) error {
 	broken := false
 	var err error
