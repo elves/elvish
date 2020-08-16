@@ -59,22 +59,24 @@ import (
 //elvdoc:var pwd
 //
 // The present working directory. Setting this variable has the same effect as
-// `cd`. This variable is most useful in temporary assignment.
+// `cd`. This variable is most useful in a temporary assignment.
 //
 // Example:
 //
 // ```elvish
 // ## Updates all git repositories
 // for x [*/] {
-// pwd=$x {
-// if ?(test -d .git) {
-// git pull
-// }
-// }
+//   pwd=$x {
+//     if ?(test -d .git) {
+//       git pull
+//     }
+//   }
 // }
 // ```
 //
 // Etymology: the `pwd` command.
+//
+// @cf cd
 
 //elvdoc:var true
 //

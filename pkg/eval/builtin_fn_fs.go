@@ -57,9 +57,13 @@ func init() {
 // cd $dirname
 // ```
 //
-// Change directory.
+// Change directory. This affects the entire process; i.e., all threads
+// whether running indirectly (e.g., prompt functions) or started explicitly
+// by commands such as [`peach`](#peach).
 //
 // Note that Elvish's `cd` does not support `cd -`.
+//
+// @cf pwd
 
 func cd(fm *Frame, args ...string) error {
 	var dir string
