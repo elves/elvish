@@ -75,9 +75,9 @@ import (
 // ▶ first1
 // ▶ first2
 // ~> complete '-'
-// ▶ (edit:complex-candidate -a &display-suffix=' (Show all)')
-// ▶ (edit:complex-candidate --all &display-suffix=' (Show all)')
-// ▶ (edit:complex-candidate -n &display-suffix=' (Set name)')
+// ▶ (edit:complex-candidate -a &display='-a (Show all)')
+// ▶ (edit:complex-candidate --all &display='--all (Show all)')
+// ▶ (edit:complex-candidate -n &display='-n (Set name)')
 // ~> complete -n ''
 // ▶ name1
 // ▶ name2

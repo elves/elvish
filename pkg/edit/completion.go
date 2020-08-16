@@ -51,59 +51,48 @@ import (
 //
 // ```elvish-transcript
 // ~> edit:complete-filename ''
-// ▶ (edit:complex-candidate Applications &code-suffix=/ &display-suffix='' &style='01;34')
-// ▶ (edit:complex-candidate Books &code-suffix=/ &display-suffix='' &style='01;34')
-// ▶ (edit:complex-candidate Desktop &code-suffix=/ &display-suffix='' &style='01;34')
-// ▶ (edit:complex-candidate Docsafe &code-suffix=/ &display-suffix='' &style='01;34')
-// ▶ (edit:complex-candidate Documents &code-suffix=/ &display-suffix='' &style='01;34')
+// ▶ (edit:complex-candidate Applications &code-suffix=/ &style='01;34')
+// ▶ (edit:complex-candidate Books &code-suffix=/ &style='01;34')
+// ▶ (edit:complex-candidate Desktop &code-suffix=/ &style='01;34')
+// ▶ (edit:complex-candidate Docsafe &code-suffix=/ &style='01;34')
+// ▶ (edit:complex-candidate Documents &code-suffix=/ &style='01;34')
 // ...
 // ~> edit:complete-filename .elvish/
-// ▶ (edit:complex-candidate .elvish/aliases &code-suffix=/ &display-suffix='' &style='01;34')
-// ▶ (edit:complex-candidate .elvish/db &code-suffix=' ' &display-suffix='' &style='')
-// ▶ (edit:complex-candidate .elvish/epm-installed &code-suffix=' ' &display-suffix='' &style='')
-// ▶ (edit:complex-candidate .elvish/lib &code-suffix=/ &display-suffix='' &style='01;34')
-// ▶ (edit:complex-candidate .elvish/rc.elv &code-suffix=' ' &display-suffix='' &style='')
+// ▶ (edit:complex-candidate .elvish/aliases &code-suffix=/ &style='01;34')
+// ▶ (edit:complex-candidate .elvish/db &code-suffix=' ' &style='')
+// ▶ (edit:complex-candidate .elvish/epm-installed &code-suffix=' ' &style='')
+// ▶ (edit:complex-candidate .elvish/lib &code-suffix=/ &style='01;34')
+// ▶ (edit:complex-candidate .elvish/rc.elv &code-suffix=' ' &style='')
 // ```
 
 //elvdoc:fn complex-candidate
 //
 // ```elvish
-// edit:complex-candidate $stem &display='' &display-suffix='' &code-suffix=''
+// edit:complex-candidate $stem &display='' &code-suffix=''
 // ```
 //
 // Builds a complex candidate. This is mainly useful in [argument
 // completers](#argument-completer).
 //
-// The `&display` and `&display-suffix` options control how the item is
-// displayed. If `$display` is non-empty, its content is shown. If `$display` is
-// empty, the content will be `$stem` concatenated with `$display-suffix`.
+// If `$display` is non-empty, its content is used in the UI; otherwise `$stem`
+// is used.
 //
 // The `&code-suffix` option controls how the candidate is inserted into the
 // code when it is accepted. By default, a quoted version of `$stem` is
 // inserted. If `$code-suffix` is non-empty, it is added to that text, without
 // any further quoting.
-//
-// The `&display` option first appeared between 0.13 and 0.14.
-//
-// The `&display-suffix` option is deprecated in 0.14 and will be removed in
-// 0.15. After its removal, the displayed text of the candidate will default to
-// `$stem` if `$display` is empty.
 
 type complexCandidateOpts struct {
-	CodeSuffix    string
-	DisplaySuffix string
-	Display       string
+	CodeSuffix string
+	Display    string
 }
 
 func (*complexCandidateOpts) SetDefaultOptions() {}
 
 func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) complexItem {
-	if opts.DisplaySuffix != "" {
-		fm.Deprecate("the &display-suffix option is deprecated, use &display instead", nil)
-	}
 	display := opts.Display
 	if display == "" {
-		display = stem + opts.DisplaySuffix
+		display = stem
 	}
 	return complexItem{
 		Stem:       stem,

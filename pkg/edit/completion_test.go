@@ -80,8 +80,6 @@ func TestComplexCandidate(t *testing.T) {
 		That("put [&(cc stem)=value][(cc stem)]").Puts("value"),
 		That("put (cc a/b &code-suffix=' ' &display=A/B)[stem code-suffix display]").
 			Puts("a/b", " ", "A/B"),
-		That("put (cc a/b &display-suffix=/)[display]").Puts("a/b/").
-			PrintsStderrWith("deprecation:"),
 	)
 }
 
