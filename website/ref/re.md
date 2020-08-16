@@ -2,9 +2,8 @@
 
 # Introduction
 
-The `re:` module wraps Go's `regexp` package. See the
-[doc](http://godoc.org/regexp) for the Go package for syntax of regular
-expressions and replacement patterns.
+The `re:` module wraps Go's `regexp` package. See the Go's doc for supported
+[regular expression syntax](https://godoc.org/regexp/syntax).
 
 # Functions
 
