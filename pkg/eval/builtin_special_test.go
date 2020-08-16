@@ -163,15 +163,15 @@ func TestUse(t *testing.T) {
 }
 
 // Regression test for #1072
-func TestUse_WarnsAboutDeprecatedSyntax(t *testing.T) {
+func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	restore := prog.SetShowDeprecations(true)
 	defer restore()
 	libdir, cleanup := util.InTestDir()
 	defer cleanup()
-	mustWriteFile("dep.elv", []byte("a = \\\n1"), 0600)
+	mustWriteFile("dep.elv", []byte("x = (ord 1)"), 0600)
 
 	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
-		// Importing module triggers check for deprecated syntax features
+		// Importing module triggers check for deprecated features
 		That("use dep").PrintsStderrWith("is deprecated"),
 	)
 }

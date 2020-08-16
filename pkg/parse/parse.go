@@ -18,7 +18,6 @@ import (
 	"unicode"
 
 	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/prog"
 )
 
 // Tree represents a parsed tree.
@@ -958,8 +957,7 @@ spaces:
 				}
 				ps.next()
 			}
-		case r == '\\' || r == '^':
-			p := ps.pos
+		case r == '^':
 			// Line continuation is like inline whitespace.
 			ps.next()
 			switch ps.peek() {
@@ -968,14 +966,8 @@ spaces:
 				if ps.peek() == '\n' {
 					ps.next()
 				}
-				if r == '\\' {
-					backslashLineCont(ps, p)
-				}
 			case '\n':
 				ps.next()
-				if r == '\\' {
-					backslashLineCont(ps, p)
-				}
 			case eof:
 				ps.error(errShouldBeNewline)
 			default:
@@ -987,20 +979,6 @@ spaces:
 		}
 	}
 	addSep(n, ps)
-}
-
-func backslashLineCont(ps *parser, p int) {
-	if !prog.ShowDeprecations || ps.warn == nil {
-		return
-	}
-	err := diag.Error{
-		Type:    "deprecation",
-		Message: "using \\ for line continuation is deprecated; use ^ instead",
-		Context: diag.Context{
-			Name: ps.srcName, Source: ps.src,
-			Ranging: diag.Ranging{From: p, To: p + 1}},
-	}
-	fmt.Fprintln(ps.warn, err.Show(""))
 }
 
 // IsInlineWhitespace reports whether r is an inline whitespace character.

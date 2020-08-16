@@ -1,14 +1,9 @@
 package parse
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
 	"testing"
-
-	"github.com/elves/elvish/pkg/prog"
 )
 
 func a(c ...interface{}) ast {
@@ -255,9 +250,6 @@ var goodCases = []struct {
 	// Line continuation: "^\n" is considered whitespace
 	{"a b^\nc", ast{
 		"Chunk/Pipeline/Form", fs{"Head": "a", "Args": []string{"b", "c"}}}},
-	// Same test using deprecated "\\\n".
-	{"a b\\\nc", ast{
-		"Chunk/Pipeline/Form", fs{"Head": "a", "Args": []string{"b", "c"}}}},
 
 	// Carriage returns are normally treated the same as newlines:
 	// Separating pipelines in a chunk
@@ -275,10 +267,10 @@ var goodCases = []struct {
 			"Elements": []string{"a", "b"}}})},
 
 	// However, in line continuations, \r\n is treated as a single newline
-	{"a b\\\r\nc", ast{
+	{"a b^\r\nc", ast{
 		"Chunk/Pipeline/Form", fs{"Head": "a", "Args": []string{"b", "c"}}}},
 	// But a lone \r also works
-	{"a b\\\rc", ast{
+	{"a b^\rc", ast{
 		"Chunk/Pipeline/Form", fs{"Head": "a", "Args": []string{"b", "c"}}}},
 
 	// Comments in chunks.
@@ -318,27 +310,6 @@ func TestParse(t *testing.T) {
 			fmt.Fprintf(os.Stderr, "AST of %q:\n", tc.src)
 			pprintAST(tree.Root, os.Stderr)
 		}
-	}
-}
-
-func TestParseDeprecations(t *testing.T) {
-	restore := prog.SetShowDeprecations(true)
-	defer restore()
-
-	r, w := io.Pipe()
-	msgChan := make(chan []byte)
-	go func() {
-		msg, _ := ioutil.ReadAll(r)
-		msgChan <- msg
-		r.Close()
-	}()
-	ParseWithDeprecation(Source{Name: "[test]", Code: "a\\\nb"}, w)
-	w.Close()
-
-	msg := <-msgChan
-	wantMsg := []byte("using \\ for line continuation is deprecated")
-	if !bytes.Contains(msg, wantMsg) {
-		t.Errorf("got message %q, want message to contain %q", msg, wantMsg)
 	}
 }
 
@@ -391,7 +362,7 @@ var parseErrorTests = []struct {
 	// Unmatched {.
 	{src: "{ a", errAtEnd: true, errMsg: "should be '}'"},
 	// Unfinished line continuation.
-	{src: `a \`, errAtEnd: true, errMsg: "should be newline"},
+	{src: `a ^`, errAtEnd: true, errMsg: "should be newline"},
 	// Backslash is otherwise not allowed.
 	{src: `a \a`, errPart: `\`, errMsg: `unexpected rune '\\'`},
 }
