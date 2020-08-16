@@ -10,6 +10,12 @@ import (
 
 func TestBuiltinFnContainer(t *testing.T) {
 	Test(t,
+		That("put (ns [&name=value])[name]").Puts("value"),
+		That("n: = (ns [&name=value]); put $n:name").Puts("value"),
+		That("ns [&[]=[]]").ThrowsCause(errs.BadValue{
+			What:  `key of argument of "ns"`,
+			Valid: "string", Actual: "list"}),
+
 		That("make-map []").Puts(vals.EmptyMap),
 		That("make-map [[k v]]").Puts(vals.MakeMap("k", "v")),
 		That("make-map [[k v] [k v2]]").Puts(vals.MakeMap("k", "v2")),

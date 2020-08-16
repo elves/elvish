@@ -14,8 +14,6 @@ import (
 
 // Sequence, list and maps.
 
-// TODO(xiaq): Document "ns".
-
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		"ns": nsFn,
@@ -44,7 +42,23 @@ func init() {
 	})
 }
 
-var errKeyMustBeString = errors.New("key must be string")
+//elvdoc:fn ns
+//
+// ```elvish
+// ns $map
+// ```
+//
+// Constructs a namespace from `$map`, using the keys as variable names and the
+// values as their values. Examples:
+//
+// ```elvish-transcript
+// ~> n = (ns [&name=value])
+// ~> put $n[name]
+// ▶ value
+// ~> n: = (ns [&name=value])
+// ~> put $n:name
+// ▶ value
+// ```
 
 func nsFn(m hashmap.Map) (Ns, error) {
 	ns := make(Ns)
@@ -52,7 +66,9 @@ func nsFn(m hashmap.Map) (Ns, error) {
 		k, v := it.Elem()
 		kstring, ok := k.(string)
 		if !ok {
-			return nil, errKeyMustBeString
+			return nil, errs.BadValue{
+				What:  `key of argument of "ns"`,
+				Valid: "string", Actual: vals.Kind(k)}
 		}
 		ns[kstring] = vars.FromInit(v)
 	}
