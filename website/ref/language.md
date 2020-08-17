@@ -731,14 +731,14 @@ Julia.)
 
 ## Map indexing
 
-Maps are simply indexed by their keys. There is no slice indexing, and `..` or
-`..=` does not have a special meaning. Examples:
+Maps are simply indexed by their keys. There is no slice indexing, and `..` and
+`..=` do not have a special meaning. Examples:
 
 ```elvish-transcript
-~> map = [&a=lorem &b=ipsum &a:b=haha]
+~> map = [&a=lorem &b=ipsum &a..b=haha]
 ~> echo $map[a]
 lorem
-~> echo $map[a:b]
+~> echo $map[a..b]
 haha
 ```
 
@@ -757,7 +757,7 @@ Examples:
 ▶ lorem
 ▶ foo
 ▶ [lorem ipsum]
-~> put [&a=lorem &b=ipsum &a:b=haha][a a:b]
+~> put [&a=lorem &b=ipsum &a..b=haha][a a..b]
 ▶ lorem
 ▶ haha
 ```
