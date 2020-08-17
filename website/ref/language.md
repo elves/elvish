@@ -339,7 +339,7 @@ get all its element values. This is called **exploding** the variable:
 ```
 
 (This notation is restricted to exploding variables. To explode arbitrary
-values, use the builtin [explode](builtin.html#explode) command.)
+values, use the builtin [all](builtin.html#all) command.)
 
 When assigning variables, if you prefix the name of the last variable with `@`,
 it gets assigned a list containing all remaining values. That variable is called
