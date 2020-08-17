@@ -679,15 +679,6 @@ Lists can be indexed with any of the following:
 
 -   A slice `$a..=$b`, which is similar to `$a..$b`, but includes `$li[$b]`.
 
--   Not yet implemented: The string `@`. The result is all the values in the
-    list. Note that this is not the same as `:`: if `$li` has 10 elements,
-    `$li[@]` evaluates to 10 values (all the elements in the list), while
-    `$li[..]` evaluates to just one value (a copy of the list).
-
-    When used on a variable like `$li`, it is equivalent to the explosion
-    construct `$li[@]`. It is useful, however, when used on other constructs,
-    like output capture or other
-
 Examples:
 
 ```elvish-transcript
@@ -758,11 +749,11 @@ is equivalent to `$li[x] $li[y] $li[z]`. This applies to all indexable values.
 Examples:
 
 ```elvish-transcript
-~> put elv[0 2 0:2]
+~> put elv[0 2 0..2]
 ▶ e
 ▶ v
 ▶ el
-~> put [lorem ipsum foo bar][0 2 0:2]
+~> put [lorem ipsum foo bar][0 2 0..2]
 ▶ lorem
 ▶ foo
 ▶ [lorem ipsum]
