@@ -849,7 +849,7 @@ func (pn *Primary) bareword(ps *parser) {
 // The following are allowed in barewords:
 //
 // * Anything allowed in variable names
-// * The symbols "./@%+!"
+// * The symbols "./\@%+!"
 // * The symbol "=", if ctx != lhsExpr && ctx != strictExpr
 // * The symbol ",", if ctx != bracedExpr && ctx != strictExpr
 // * The symbols "<>*^", if ctx = commandExpr
@@ -858,7 +858,7 @@ func (pn *Primary) bareword(ps *parser) {
 // Windows.
 func allowedInBareword(r rune, ctx ExprCtx) bool {
 	return allowedInVariableName(r) || r == '.' || r == '/' ||
-		r == '@' || r == '%' || r == '+' || r == '!' ||
+		r == '\\' || r == '@' || r == '%' || r == '+' || r == '!' ||
 		(ctx != LHSExpr && ctx != strictExpr && r == '=') ||
 		(ctx != BracedElemExpr && ctx != strictExpr && r == ',') ||
 		(ctx == CmdExpr && (r == '<' || r == '>' || r == '*' || r == '^'))

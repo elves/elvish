@@ -83,7 +83,17 @@ var goodCases = []struct {
 	}})},
 
 	// Primary
-	//
+
+	// Bareword.
+	{"a foo", a(ast{"Compound/Indexing/Primary", fs{
+		"Type": Bareword, "Value": "foo",
+	}})},
+
+	// Bareword, with all allowed symbols.
+	{"a ./\\@%+!=,", a(ast{"Compound/Indexing/Primary", fs{
+		"Type": Bareword, "Value": "./\\@%+!=,",
+	}})},
+
 	// Single quote
 	{"a '''x''y'''", a(ast{"Compound/Indexing/Primary", fs{
 		"Type": SingleQuoted, "Value": "'x'y'",
@@ -363,8 +373,6 @@ var parseErrorTests = []struct {
 	{src: "{ a", errAtEnd: true, errMsg: "should be '}'"},
 	// Unfinished line continuation.
 	{src: `a ^`, errAtEnd: true, errMsg: "should be newline"},
-	// Backslash is otherwise not allowed.
-	{src: `a \a`, errPart: `\`, errMsg: `unexpected rune '\\'`},
 }
 
 func TestParseError(t *testing.T) {
