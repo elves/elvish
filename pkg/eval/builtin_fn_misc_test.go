@@ -1,7 +1,9 @@
 package eval
 
 import (
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/elves/elvish/pkg/util"
 )
@@ -50,6 +52,38 @@ func TestUseMod(t *testing.T) {
 
 	Test(t,
 		That("put (use-mod ./mod)[x]").Puts("value"),
+	)
+}
+
+func timeAfterMock(fm *Frame, d time.Duration) <-chan time.Time {
+	fm.ports[1].Chan <- d // report to the test framework the duration we received
+	return time.After(0)
+}
+
+func TestSleep(t *testing.T) {
+	timeAfter = timeAfterMock
+	Test(t,
+		That(`sleep 0`).Puts(0*time.Second),
+		That(`sleep 1`).Puts(1*time.Second),
+		That(`sleep 1.3s`).Puts(1300*time.Millisecond),
+		That(`sleep 0.1`).Puts(100*time.Millisecond),
+		That(`sleep 0.1ms`).Puts(100*time.Microsecond),
+		That(`sleep 3h5m7s`).Puts((3*3600+5*60+7)*time.Second),
+
+		That(`sleep 1x`).Throws(errors.New("invalid sleep duration"), "sleep 1x"),
+		That(`sleep -7`).Throws(errors.New("sleep duration must be >= zero"), "sleep -7"),
+		That(`sleep -3h`).Throws(errors.New("sleep duration must be >= zero"), "sleep -3h"),
+
+		// Verify the correct behavior if a number rather than a string is
+		// passed to the command.
+		That(`sleep (float64 0)`).Puts(0*time.Second),
+		That(`sleep (float64 1.7)`).Puts(1700*time.Millisecond),
+		That(`sleep (float64 -7)`).Throws(
+			errors.New("sleep duration must be >= zero"),
+			"sleep (float64 -7)"),
+
+		// An invalid argument type should raise an exception.
+		That(`sleep [1]`).Throws(errors.New("invalid sleep duration"), "sleep [1]"),
 	)
 }
 

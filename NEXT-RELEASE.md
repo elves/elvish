@@ -26,6 +26,8 @@ or compiled, even if it is not executed:
 
 -   The `-source` command is now deprecated. Use `eval` instead.
 
+-   The undocumented `esleep` command is now deprecated. Use `sleep` instead.
+
 The following deprecated features trigger a warning when the code is evaluated:
 
 -   Using `:` in slice indicies is deprecated. Use `..` instead.
@@ -44,6 +46,8 @@ New features in the standard library:
 
 -   A new `eval` command supports evaluating a dynamic piece of code in a
     restricted namespace.
+
+-   A new `sleep` command.
 
 New features in the interactive editor:
 

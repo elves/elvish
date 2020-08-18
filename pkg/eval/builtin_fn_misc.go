@@ -3,11 +3,13 @@ package eval
 // Misc builtin functions.
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"net"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 	"unicode/utf8"
@@ -17,8 +19,6 @@ import (
 )
 
 // Builtins that have not been put into their own groups go here.
-
-// TODO(xiaq): Document esleep.
 
 func init() {
 	addBuiltinFns(map[string]interface{}{
@@ -34,6 +34,7 @@ func init() {
 
 		// Time
 		"esleep": sleep,
+		"sleep":  sleep,
 		"time":   timeCmd,
 
 		"-ifaddrs": _ifaddrs,
@@ -348,12 +349,85 @@ func readFileUTF8(fname string) (string, error) {
 	return string(bytes), nil
 }
 
-func sleep(fm *Frame, t float64) error {
-	d := time.Duration(float64(time.Second) * t)
+// This allows for unit tests to efficiently test the behavior of the `sleep`
+// command; both by eliminating an actual sleep and verifying the duration was
+// properly parsed.
+var timeAfter func(fm *Frame, d time.Duration) <-chan time.Time = func(
+	fm *Frame, d time.Duration) <-chan time.Time {
+	return time.After(d)
+}
+
+//elvdoc:fn sleep
+//
+// ```elvish
+// sleep $duration
+// ```
+//
+// Pause for the specified duration. The pause granularity depends on the
+// platform and might be as long as 100 milliseconds. The actual pause might
+// be longer than requested for reasons outside the control of Elvish; e.g.,
+// the systems being so busy it can't schedule the elvish process to run.
+//
+// A duration can be a simple [number](../language.html#number) (with optional
+// fractional value) without an explicit unit suffix or a [float64](#float64).
+// In this case the implied time unit is seconds.
+//
+// A duration can also be a string written as a sequence of decimal numbers,
+// each with optional fraction, plus a unit suffix. For example, "300ms",
+// "1.5h" or "1h45m7s". Valid time units are "ns", "us" (or "µs"), "ms", "s",
+// "m", "h".
+//
+// See the [Go documentation](https://golang.org/pkg/time/#ParseDuration) for
+// more information about how durations are parsed. Negative durations raise a
+// "sleep duration must be >= zero" exception since it doesn't make sense to
+// sleep for a negative interval. This is different than the typical BSD or
+// GNU `sleep` command that silently exits with a success status, and no
+// pause, when given a negative duration.
+//
+// This only affects the current Elvish context. It does not affect any other
+// contexts that might be executing in parallel as a consequence of a command
+// such as [`peach`](#peach).
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> sleep 0.1    # sleeps 0.1 seconds
+// ~> sleep 100ms  # sleeps 0.1 seconds
+// ~> sleep 1.5m   # sleeps 1.5 minutes
+// ~> sleep 1m30s  # sleeps 1.5 minutes
+// ~> sleep -1
+// Exception: sleep duration must be >= zero
+// [tty 8], line 1: sleep -1
+// ```
+
+func sleep(fm *Frame, duration interface{}) error {
+	var d time.Duration
+
+	switch duration := duration.(type) {
+	case float64:
+		d = time.Duration(float64(time.Second) * duration)
+	case string:
+		f, err := strconv.ParseFloat(duration, 64)
+		if err == nil { // it's a simple number assumed to have units == seconds
+			d = time.Duration(float64(time.Second) * f)
+		} else {
+			d, err = time.ParseDuration(duration)
+			if err != nil {
+				return errors.New("invalid sleep duration")
+			}
+		}
+	default:
+		return errors.New("invalid sleep duration")
+	}
+
+	if d < 0 {
+		return fmt.Errorf("sleep duration must be >= zero")
+	}
+
 	select {
 	case <-fm.Interrupts():
 		return ErrInterrupted
-	case <-time.After(d):
+	case <-timeAfter(fm, d):
 		return nil
 	}
 }
