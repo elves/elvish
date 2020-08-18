@@ -89,11 +89,13 @@ func ConvertListIndex(rawIndex interface{}, n int) (*ListIndex, error) {
 				if j0 < 0 {
 					return nil, errs.OutOfRange{
 						What:     "negative slice upper index here",
-						ValidLow: i - n, ValidHigh: -1, Actual: strconv.Itoa(j0)}
+						ValidLow: strconv.Itoa(i - n), ValidHigh: "-1",
+						Actual: strconv.Itoa(j0)}
 				}
 				return nil, errs.OutOfRange{
 					What:     "slice upper index here",
-					ValidLow: i, ValidHigh: n, Actual: strconv.Itoa(j0)}
+					ValidLow: strconv.Itoa(i), ValidHigh: strconv.Itoa(n),
+					Actual: strconv.Itoa(j0)}
 			}
 		}
 		return &ListIndex{slice, i, j}, nil
@@ -169,11 +171,11 @@ func atoi(a string, n int) (int, error) {
 func posIndexOutOfRange(index string, n int) errs.OutOfRange {
 	return errs.OutOfRange{
 		What:     "index here",
-		ValidLow: 0, ValidHigh: n - 1, Actual: index}
+		ValidLow: "0", ValidHigh: strconv.Itoa(n - 1), Actual: index}
 }
 
 func negIndexOutOfRange(index string, n int) errs.OutOfRange {
 	return errs.OutOfRange{
 		What:     "negative index here",
-		ValidLow: -n, ValidHigh: -1, Actual: index}
+		ValidLow: strconv.Itoa(-n), ValidHigh: "-1", Actual: index}
 }

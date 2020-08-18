@@ -119,7 +119,7 @@ func fromCodepoints(nums ...int) (string, error) {
 		if num < 0 || num > unicode.MaxRune {
 			return "", errs.OutOfRange{
 				What:     "codepoint",
-				ValidLow: 0, ValidHigh: unicode.MaxRune,
+				ValidLow: "0", ValidHigh: strconv.Itoa(unicode.MaxRune),
 				Actual: hex(num),
 			}
 		}
@@ -165,7 +165,7 @@ func fromUtf8Bytes(nums ...int) (string, error) {
 		if num < 0 || num > 255 {
 			return "", errs.OutOfRange{
 				What:     "byte",
-				ValidLow: 0, ValidHigh: 255,
+				ValidLow: "0", ValidHigh: "255",
 				Actual: strconv.Itoa(num)}
 		}
 		b.WriteByte(byte(num))

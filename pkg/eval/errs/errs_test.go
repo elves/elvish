@@ -9,11 +9,11 @@ var errorMessageTests = []struct {
 	wantMsg string
 }{
 	{
-		OutOfRange{What: "list index here", ValidLow: 0, ValidHigh: 2, Actual: "3"},
+		OutOfRange{What: "list index here", ValidLow: "0", ValidHigh: "2", Actual: "3"},
 		"out of range: list index here must be from 0 to 2, but is 3",
 	},
 	{
-		OutOfRange{What: "list index here", ValidLow: 1, ValidHigh: 0, Actual: "0"},
+		OutOfRange{What: "list index here", ValidLow: "1", ValidHigh: "0", Actual: "0"},
 		"out of range: list index here has no valid value, but is 0",
 	},
 	{

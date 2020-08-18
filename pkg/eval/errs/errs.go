@@ -9,10 +9,9 @@ import (
 // OutOfRange encodes an error where a value is out of its valid range.
 type OutOfRange struct {
 	What      string
-	ValidLow  int
-	ValidHigh int
+	ValidLow  string
+	ValidHigh string
 	Actual    string
-	ValidFmt  string
 }
 
 func (e OutOfRange) Error() string {
@@ -20,12 +19,8 @@ func (e OutOfRange) Error() string {
 		return fmt.Sprintf(
 			"out of range: %v has no valid value, but is %v", e.What, e.Actual)
 	}
-	validFmt := e.ValidFmt
-	if validFmt == "" {
-		validFmt = "%d"
-	}
 	return fmt.Sprintf(
-		"out of range: %s must be from "+validFmt+" to "+validFmt+", but is %s",
+		"out of range: %s must be from %s to %s, but is %s",
 		e.What, e.ValidLow, e.ValidHigh, e.Actual)
 }
 

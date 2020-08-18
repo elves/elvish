@@ -53,8 +53,8 @@ func TestUmask(t *testing.T) {
 		// TODO: Switch to `%O` when Go 1.15 is the minimum acceptable version.
 		// Until then the formatting of negative numbers will be weird.
 		That(`unix:umask=0o1000`).ThrowsCause(errs.OutOfRange{
-			What: "umask", ValidLow: 0, ValidHigh: 0o777, ValidFmt: "0o%o", Actual: "0o1000"}),
+			What: "umask", ValidLow: "0", ValidHigh: "0o777", Actual: "0o1000"}),
 		That(`unix:umask=-1`).ThrowsCause(errs.OutOfRange{
-			What: "umask", ValidLow: 0, ValidHigh: 0o777, ValidFmt: "0o%o", Actual: "0o-1"}),
+			What: "umask", ValidLow: "0", ValidHigh: "0o777", Actual: "0o-1"}),
 	)
 }
