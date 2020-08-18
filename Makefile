@@ -12,9 +12,11 @@ buildall:
 generate:
 	go generate ./...
 
-# Run unit tests -- with race detection if the platform supports it.
+# Run unit tests -- with race detection if the platform supports it. Go's
+# Windows port supports race detection, but requires GCC, so we don't enable it
+# there.
 test:
-	if echo `go env GOOS GOARCH` | egrep -qx '(linux|freebsd|darwin|windows) amd64'; then \
+	if echo `go env GOOS GOARCH` | egrep -qx '(linux|freebsd|darwin) amd64'; then \
 		go test -race ./... ; \
 	else \
 		go test ./... ; \
