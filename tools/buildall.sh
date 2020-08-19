@@ -69,5 +69,5 @@ buildone() {
 }
 
 build amd64 linux darwin freebsd openbsd netbsd windows
-build 386   linux windows
+build 386   linux darwin windows
 build arm64 linux
