@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"strconv"
 	"unsafe"
 
 	"github.com/elves/elvish/pkg/eval/errs"
@@ -15,8 +16,8 @@ import (
 // identity.
 type Closure struct {
 	ArgNames []string
-	// The name for the rest argument. If empty, the function has fixed arity.
-	RestArg     string
+	// The index of the rest argument. -1 if there is no rest argument.
+	RestArg     int
 	OptNames    []string
 	OptDefaults []interface{}
 	Op          effectOp
@@ -58,11 +59,11 @@ func listOfStrings(ss []string) vals.List {
 
 // Call calls a closure.
 func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{}) error {
-	if c.RestArg != "" {
-		if len(args) < len(c.ArgNames) {
+	if c.RestArg != -1 {
+		if len(args) < len(c.ArgNames)-1 {
 			return errs.ArityMismatch{
 				What:     "arguments here",
-				ValidLow: len(c.ArgNames), ValidHigh: -1, Actual: len(args)}
+				ValidLow: len(c.ArgNames) - 1, ValidHigh: -1, Actual: len(args)}
 		}
 	} else {
 		if len(args) != len(c.ArgNames) {
@@ -83,14 +84,22 @@ func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 		fm.up[name] = variable
 	}
 
-	// Populate local scope with arguments, possibly a rest argument, and
-	// options.
+	// Populate local scope with arguments and options.
 	fm.local = make(Ns)
-	for i, name := range c.ArgNames {
-		fm.local[name] = vars.FromInit(args[i])
-	}
-	if c.RestArg != "" {
-		fm.local[c.RestArg] = vars.FromInit(vals.MakeList(args[len(c.ArgNames):]...))
+	if c.RestArg == -1 {
+		for i, name := range c.ArgNames {
+			fm.local[name] = vars.FromInit(args[i])
+		}
+	} else {
+		for i := 0; i < c.RestArg; i++ {
+			fm.local[c.ArgNames[i]] = vars.FromInit(args[i])
+		}
+		restOff := len(args) - len(c.ArgNames)
+		fm.local[c.ArgNames[c.RestArg]] = vars.FromInit(
+			vals.MakeList(args[c.RestArg : c.RestArg+restOff+1]...))
+		for i := c.RestArg + 1; i < len(c.ArgNames); i++ {
+			fm.local[c.ArgNames[i]] = vars.FromInit(args[i+restOff])
+		}
 	}
 	optUsed := make(map[string]struct{})
 	for i, name := range c.OptNames {
@@ -120,7 +129,7 @@ type closureFields struct{ c *Closure }
 func (closureFields) IsStructMap() {}
 
 func (cf closureFields) ArgNames() vals.List { return listOfStrings(cf.c.ArgNames) }
-func (cf closureFields) RestArg() string     { return cf.c.RestArg }
+func (cf closureFields) RestArg() string     { return strconv.Itoa(cf.c.RestArg) }
 func (cf closureFields) OptNames() vals.List { return listOfStrings(cf.c.OptNames) }
 func (cf closureFields) Src() parse.Source   { return cf.c.SrcMeta }
 

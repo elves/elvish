@@ -75,6 +75,9 @@ func TestCompileEffect(t *testing.T) {
 		That("a = foo; put $a").Puts("foo"),
 		That("a b = foo bar; put $a $b").Puts("foo", "bar"),
 		That("a @b = 2 3 foo; put $a $b").Puts("2", vals.MakeList("3", "foo")),
+		That("a @b c = 1 2 3 4; put $a $b $c").
+			Puts("1", vals.MakeList("2", "3"), "4"),
+		That("a @b c = 1 2; put $a $b $c").Puts("1", vals.EmptyList, "2"),
 		That("@a = ; put $a").Puts(vals.EmptyList),
 
 		// List element assignment

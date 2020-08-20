@@ -341,9 +341,9 @@ get all its element values. This is called **exploding** the variable:
 (This notation is restricted to exploding variables. To explode arbitrary
 values, use the builtin [all](builtin.html#all) command.)
 
-When assigning variables, if you prefix the name of the last variable with `@`,
-it gets assigned a list containing all remaining values. That variable is called
-a **rest variable**. Example:
+When assigning variables, you may prefix the name of one variable with `@`, it
+gets assigned a list containing all remaining values. That variable is called a
+**rest variable**. Example:
 
 ```elvish-transcript
 ~> a b @rest = 1 2 3 4 5 6 7
@@ -351,6 +351,11 @@ a **rest variable**. Example:
 ▶ 1
 ▶ 2
 ▶ [3 4 5 6 7]
+~> a @rest b = 1 2 3 4 5 6 7
+~> put $a $rest $b
+▶ 1
+▶ [2 3 4 5 6]
+▶ 7
 ```
 
 Schematically this is a reverse operation to variable explosion, which is why
@@ -557,8 +562,8 @@ signature as a list, followed by a lambda without signature:
 ▶ <closure 0xc42004a480>
 ```
 
-Like in the left hand of assignments, if you prefix the last argument with `@`,
-it becomes a **rest argument**, and its value is a list containing all the
+Like in the left hand of assignments, if you prefix one of the arguments with
+`@`, it becomes a **rest argument**, and its value is a list containing all the
 remaining arguments:
 
 ```elvish-transcript
@@ -569,6 +574,11 @@ remaining arguments:
 ~> $f lorem ipsum dolar sit
 ▶ lorem
 ▶ [ipsum dolar sit]
+~> f = [a @rest b]{ put $a $rest $b }
+~> $f lorem ipsum dolar sit
+▶ lorem
+▶ [ipsum dolar]
+▶ sit
 ```
 
 You can also declare options in the signature. The syntax is `&name=default`

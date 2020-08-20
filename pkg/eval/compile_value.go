@@ -416,7 +416,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 	// Parse signature.
 	var (
 		argNames      []string
-		restArgName   string
+		restArg       int = -1
 		optNames      []string
 		optDefaultOps []valuesOp
 	)
@@ -426,7 +426,6 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 		for i, arg := range n.Elements {
 			ref := mustString(cp, arg, "argument name must be literal string")
 			sigil, qname := SplitVariableRef(ref)
-			explode := sigil != ""
 			ns, name := SplitQNameNs(qname)
 			if ns != "" {
 				cp.errorpf(arg, "argument name must be unqualified")
@@ -434,15 +433,13 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 			if name == "" {
 				cp.errorpf(arg, "argument name must not be empty")
 			}
-			if explode {
-				if i != len(n.Elements)-1 {
-					cp.errorpf(arg, "only the last argument may have @")
+			if sigil == "@" {
+				if restArg != -1 {
+					cp.errorpf(arg, "only one argument may have @")
 				}
-				restArgName = name
-				argNames = argNames[:i]
-			} else {
-				argNames[i] = name
+				restArg = i
 			}
+			argNames[i] = name
 		}
 	}
 	if len(n.MapPairs) > 0 {
@@ -470,9 +467,6 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 	for _, argName := range argNames {
 		thisScope.set(argName)
 	}
-	if restArgName != "" {
-		thisScope.set(restArgName)
-	}
 	for _, optName := range optNames {
 		thisScope.set(optName)
 	}
@@ -490,12 +484,12 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 		cp.registerVariableGet(name, nil)
 	}
 
-	return &lambdaOp{argNames, restArgName, optNames, optDefaultOps, capture, scopeOp, cp.srcMeta, n.Range().From, n.Range().To}
+	return &lambdaOp{argNames, restArg, optNames, optDefaultOps, capture, scopeOp, cp.srcMeta, n.Range().From, n.Range().To}
 }
 
 type lambdaOp struct {
 	argNames      []string
-	restArgName   string
+	restArg       int
 	optNames      []string
 	optDefaultOps []valuesOp
 	capture       staticNs
@@ -518,7 +512,7 @@ func (op *lambdaOp) invoke(fm *Frame) ([]interface{}, error) {
 		}
 		optDefaults[i] = defaultValue
 	}
-	return []interface{}{&Closure{op.argNames, op.restArgName, op.optNames, optDefaults, op.subop, evCapture, op.srcMeta, op.defBegin, op.defEnd}}, nil
+	return []interface{}{&Closure{op.argNames, op.restArg, op.optNames, optDefaults, op.subop, evCapture, op.srcMeta, op.defBegin, op.defEnd}}, nil
 }
 
 func (cp *compiler) map_(n *parse.Primary) valuesOpBody {

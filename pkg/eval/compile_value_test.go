@@ -163,6 +163,8 @@ func TestCompileValue(t *testing.T) {
 
 		// Rest argument.
 		That("[x @xs]{ put $x $xs } a b c").Puts("a", vals.MakeList("b", "c")),
+		That("[a @b c]{ put $a $b $c } a b c d").
+			Puts("a", vals.MakeList("b", "c"), "d"),
 		// Options.
 		That("[a &k=v]{ put $a $k } foo &k=bar").Puts("foo", "bar"),
 		// Option default value.
@@ -173,8 +175,6 @@ func TestCompileValue(t *testing.T) {
 		// Argument name must not be empty.
 		That("['']{ }").DoesNotCompile(),
 		That("[@]{ }").DoesNotCompile(),
-		// Only the last argument may be prefixed with @.
-		That("[@a b]{ }").DoesNotCompile(),
 		// Option name must be unqualified.
 		That("[&a:b=1]{ }").DoesNotCompile(),
 		// Option name must not be empty.

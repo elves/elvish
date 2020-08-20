@@ -5,151 +5,160 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/pkg/diag"
+	"github.com/elves/elvish/pkg/eval/errs"
+	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
 )
 
-// lvaluesOp compiles lvalues, returning the fixed part and, optionally a rest
-// part.
-//
-// In the AST an lvalue is either an Indexing node where the head is a string
-// literal, or a braced list of such Indexing nodes. The last Indexing node may
-// be prefixed by @, in which case they become the rest part. For instance, in
-// {a[x],b,@c[z]}, "a[x],b" is the fixed part and "c[z]" is the rest part.
-func (cp *compiler) lvaluesOp(n *parse.Indexing) (lvaluesOp, lvaluesOp) {
-	if n.Head.Type == parse.Braced {
-		// Braced list of variable specs, possibly with indicies.
-		if len(n.Indicies) > 0 {
-			cp.errorpf(n, "may not have indicies")
-		}
-		return cp.lvaluesMulti(n.Head.Braced)
-	}
-	rest, opFunc := cp.lvalueBase(n, "must be an lvalue or a braced list of those")
-	op := lvaluesOp{opFunc, n.Range()}
-	if rest {
-		return lvaluesOp{}, op
-	}
-	return op, lvaluesOp{}
+// Parsed group of lvalues.
+type lvaluesGroup struct {
+	lvalues []lvalue
+	// Index of the rest variable within lvalues. If there is no rest variable,
+	// the index is -1.
+	rest int
 }
 
-func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (lvaluesOp, lvaluesOp) {
-	opFuncs := make([]lvaluesOpBody, len(nodes))
-	var restNode *parse.Indexing
-	var restOpFunc lvaluesOpBody
-
-	// Compile each spec inside the brace.
-	fixedEnd := 0
-	for i, cn := range nodes {
-		if len(cn.Indexings) != 1 {
-			cp.errorpf(cn, "must be an lvalue")
-		}
-		var rest bool
-		rest, opFuncs[i] = cp.lvalueBase(cn.Indexings[0], "must be an lvalue ")
-		// Only the last one may a rest part.
-		if rest {
-			if i == len(nodes)-1 {
-				restNode = cn.Indexings[0]
-				restOpFunc = opFuncs[i]
-			} else {
-				cp.errorpf(cn, "only the last lvalue may have @")
-			}
-		} else {
-			fixedEnd = cn.Range().To
-		}
-	}
-
-	var restOp lvaluesOp
-	// If there is a rest part, make LValuesOp for it and remove it from opFuncs.
-	if restOpFunc != nil {
-		restOp = lvaluesOp{restOpFunc, restNode.Range()}
-		opFuncs = opFuncs[:len(opFuncs)-1]
-	}
-
-	var op lvaluesOp
-	// If there is still anything left in opFuncs, make LValuesOp for the fixed part.
-	if len(opFuncs) > 0 {
-		op = lvaluesOp{seqLValuesOpBody{opFuncs}, diag.Ranging{From: nodes[0].Range().From, To: fixedEnd}}
-	}
-
-	return op, restOp
-}
-
-func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, lvaluesOpBody) {
-	ref := cp.literal(n.Head, msg)
-	sigil, qname := SplitVariableRef(ref)
-	// TODO: Deal with other sigils too
-	explode := sigil != ""
-	if len(n.Indicies) == 0 {
-		cp.registerVariableSet(qname)
-		return explode, varOp{qname}
-	}
-	return explode, cp.lvalueElement(qname, n)
-}
-
-func (cp *compiler) lvalueElement(qname string, n *parse.Indexing) lvaluesOpBody {
-	if !cp.registerVariableGet(qname, nil) {
-		cp.errorpf(n, "variable $%s not found", qname)
-	}
-
-	ends := make([]int, len(n.Indicies)+1)
-	ends[0] = n.Head.Range().To
-	for i, idx := range n.Indicies {
-		ends[i+1] = idx.Range().To
-	}
-
-	indexOps := cp.arrayOps(n.Indicies)
-
-	return &elemOp{n.Range(), qname, indexOps, ends}
-}
-
-type seqLValuesOpBody struct {
-	ops []lvaluesOpBody
-}
-
-func (op seqLValuesOpBody) invoke(fm *Frame) ([]vars.Var, error) {
-	var variables []vars.Var
-	for _, op := range op.ops {
-		moreVariables, err := op.invoke(fm)
-		if err != nil {
-			return nil, err
-		}
-		variables = append(variables, moreVariables...)
-	}
-	return variables, nil
-}
-
-type varOp struct {
-	qname string
-}
-
-func (op varOp) invoke(fm *Frame) ([]vars.Var, error) {
-	variable := fm.ResolveVar(op.qname)
-	if variable == nil {
-		ns, _ := SplitQNameNs(op.qname)
-		if ns == "" || ns == ":" || ns == "local:" {
-			// This should have been created as part of pipelineOp.
-			return nil, errors.New("compiler bug: new local variable not created in pipeline")
-		}
-		return nil, fmt.Errorf("new variables can only be created in local scope")
-	}
-	return []vars.Var{variable}, nil
-}
-
-type elemOp struct {
+// Parsed lvalue.
+type lvalue struct {
 	diag.Ranging
 	qname    string
 	indexOps []valuesOp
 	ends     []int
 }
 
-func (op *elemOp) invoke(fm *Frame) ([]vars.Var, error) {
-	variable := fm.ResolveVar(op.qname)
-	if variable == nil {
-		return nil, fmt.Errorf("variable $%s does not exist, compiler bug", op.qname)
+func (cp *compiler) parseCompoundLValues(ns []*parse.Compound) lvaluesGroup {
+	g := lvaluesGroup{nil, -1}
+	for _, n := range ns {
+		if len(n.Indexings) != 1 {
+			cp.errorpf(n, "lvalue may not be composite expressions")
+		}
+		more := cp.parseIndexingLValue(n.Indexings[0])
+		if more.rest == -1 {
+			g.lvalues = append(g.lvalues, more.lvalues...)
+		} else if g.rest != -1 {
+			cp.errorpf(n, "at most one rest variable is allowed")
+		} else {
+			g.rest = len(g.lvalues) + more.rest
+			g.lvalues = append(g.lvalues, more.lvalues...)
+		}
+	}
+	return g
+}
+
+func (cp *compiler) parseIndexingLValue(n *parse.Indexing) lvaluesGroup {
+	if n.Head.Type == parse.Braced {
+		// Braced list of lvalues may not have indicies.
+		if len(n.Indicies) > 0 {
+			cp.errorpf(n, "braced list may not have indicies when used as lvalue")
+		}
+		return cp.parseCompoundLValues(n.Head.Braced)
+	}
+	// A basic lvalue.
+	ref := cp.literal(n.Head, "lvalue only supports literal variable names")
+	sigil, qname := SplitVariableRef(ref)
+	ends := make([]int, len(n.Indicies)+1)
+	ends[0] = n.Head.Range().To
+	for i, idx := range n.Indicies {
+		ends[i+1] = idx.Range().To
+	}
+	lv := lvalue{n.Range(), qname, cp.arrayOps(n.Indicies), ends}
+	restIndex := -1
+	if sigil == "@" {
+		restIndex = 0
+	}
+	// TODO: Deal with other sigils when they exist.
+	return lvaluesGroup{[]lvalue{lv}, restIndex}
+}
+
+func (cp *compiler) registerLValues(lhs lvaluesGroup) {
+	for _, lv := range lhs.lvalues {
+		if len(lv.indexOps) == 0 {
+			cp.registerVariableSet(lv.qname)
+		} else {
+			ok := cp.registerVariableGet(lv.qname, lv)
+			if !ok {
+				cp.errorpf(lv, "variable $%s not found", lv.qname)
+			}
+		}
+	}
+}
+
+type assignOp struct {
+	lhs lvaluesGroup
+	rhs valuesOp
+}
+
+func (op *assignOp) invoke(fm *Frame) error {
+	variables := make([]vars.Var, len(op.lhs.lvalues))
+	for i, lvalue := range op.lhs.lvalues {
+		variable, err := getVar(fm, lvalue)
+		if err != nil {
+			return err
+		}
+		variables[i] = variable
 	}
 
-	indicies := make([]interface{}, len(op.indexOps))
-	for i, op := range op.indexOps {
+	values, err := op.rhs.exec(fm)
+	if err != nil {
+		return err
+	}
+
+	if op.lhs.rest == -1 {
+		if len(variables) != len(values) {
+			return errs.ArityMismatch{
+				What:     "assignment right-hand-side",
+				ValidLow: len(variables), ValidHigh: len(variables), Actual: len(values)}
+		}
+		for i, variable := range variables {
+			err := variable.Set(values[i])
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		if len(values) < len(variables)-1 {
+			return errs.ArityMismatch{
+				What:     "assignment right-hand-side",
+				ValidLow: len(variables) - 1, ValidHigh: -1, Actual: len(values)}
+		}
+		rest := op.lhs.rest
+		for i := 0; i < rest; i++ {
+			err := variables[i].Set(values[i])
+			if err != nil {
+				return err
+			}
+		}
+		restOff := len(values) - len(variables)
+		err := variables[rest].Set(vals.MakeList(values[rest : rest+restOff+1]...))
+		if err != nil {
+			return err
+		}
+		for i := rest + 1; i < len(variables); i++ {
+			err := variables[i].Set(values[i+restOff])
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func getVar(fm *Frame, lv lvalue) (vars.Var, error) {
+	variable := fm.ResolveVar(lv.qname)
+	if variable == nil {
+		ns, _ := SplitQNameNs(lv.qname)
+		if ns == "" || ns == ":" || ns == "local:" {
+			// This should have been created as part of pipelineOp.
+			return nil, errors.New("compiler bug: new local variable not created in pipeline")
+		}
+		return nil, fmt.Errorf("new variables can only be created in local scope")
+	}
+	if len(lv.indexOps) == 0 {
+		return variable, nil
+	}
+	indicies := make([]interface{}, len(lv.indexOps))
+	for i, op := range lv.indexOps {
 		values, err := op.exec(fm)
 		if err != nil {
 			return nil, err
@@ -164,9 +173,9 @@ func (op *elemOp) invoke(fm *Frame) ([]vars.Var, error) {
 	if err != nil {
 		level := vars.ElementErrorLevel(err)
 		if level < 0 {
-			return nil, fm.errorp(op, err)
+			return nil, fm.errorp(lv, err)
 		}
-		return nil, fm.errorp(diag.Ranging{From: op.From, To: op.ends[level]}, err)
+		return nil, fm.errorp(diag.Ranging{From: lv.From, To: lv.ends[level]}, err)
 	}
-	return []vars.Var{elemVar}, nil
+	return elemVar, nil
 }

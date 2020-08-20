@@ -487,10 +487,7 @@ func compileFor(cp *compiler, fn *parse.Form) effectOpBody {
 	elseNode := args.nextMustLambdaIfAfter("else")
 	args.mustEnd()
 
-	varOp, restOp := cp.lvaluesOp(varNode.Indexings[0])
-	if restOp.body != nil {
-		cp.errorpf(restOp, "rest not allowed")
-	}
+	lvalue := cp.compileOneLValue(varNode)
 
 	iterOp := cp.compoundOp(iterNode)
 	bodyOp := cp.primaryOp(bodyNode)
@@ -499,18 +496,18 @@ func compileFor(cp *compiler, fn *parse.Form) effectOpBody {
 		elseOp = cp.primaryOp(elseNode)
 	}
 
-	return &forOp{varOp, iterOp, bodyOp, elseOp}
+	return &forOp{lvalue, iterOp, bodyOp, elseOp}
 }
 
 type forOp struct {
-	varOp  lvaluesOp
+	lvalue lvalue
 	iterOp valuesOp
 	bodyOp valuesOp
 	elseOp valuesOp
 }
 
 func (op *forOp) invoke(fm *Frame) error {
-	variable, err := evalForVar(fm, op.varOp, "iterator")
+	variable, err := getVar(fm, op.lvalue)
 	if err != nil {
 		return err
 	}
@@ -563,14 +560,14 @@ func compileTry(cp *compiler, fn *parse.Form) effectOpBody {
 	args := cp.walkArgs(fn)
 	bodyNode := args.nextMustLambda()
 	logger.Printf("body is %q", parse.SourceText(bodyNode))
-	var exceptVarNode *parse.Indexing
+	var exceptVarNode *parse.Compound
 	var exceptNode *parse.Primary
 	if args.nextIs("except") {
 		logger.Println("except-ing")
 		n := args.peek()
 		// Is this a variable?
 		if len(n.Indexings) == 1 && n.Indexings[0].Head.Type == parse.Bareword {
-			exceptVarNode = n.Indexings[0]
+			exceptVarNode = n
 			args.next()
 		}
 		exceptNode = args.nextMustLambda()
@@ -579,15 +576,11 @@ func compileTry(cp *compiler, fn *parse.Form) effectOpBody {
 	finallyNode := args.nextMustLambdaIfAfter("finally")
 	args.mustEnd()
 
-	var exceptVarOp lvaluesOp
+	var exceptVar lvalue
 	var bodyOp, exceptOp, elseOp, finallyOp valuesOp
 	bodyOp = cp.primaryOp(bodyNode)
 	if exceptVarNode != nil {
-		var restOp lvaluesOp
-		exceptVarOp, restOp = cp.lvaluesOp(exceptVarNode)
-		if restOp.body != nil {
-			cp.errorpf(restOp, "may not use @rest in except variable")
-		}
+		exceptVar = cp.compileOneLValue(exceptVarNode)
 	}
 	if exceptNode != nil {
 		exceptOp = cp.primaryOp(exceptNode)
@@ -599,28 +592,32 @@ func compileTry(cp *compiler, fn *parse.Form) effectOpBody {
 		finallyOp = cp.primaryOp(finallyNode)
 	}
 
-	return &tryOp{bodyOp, exceptVarOp, exceptOp, elseOp, finallyOp}
+	return &tryOp{bodyOp, exceptVar, exceptOp, elseOp, finallyOp}
 }
 
 type tryOp struct {
-	bodyOp      valuesOp
-	exceptVarOp lvaluesOp
-	exceptOp    valuesOp
-	elseOp      valuesOp
-	finallyOp   valuesOp
+	bodyOp    valuesOp
+	exceptVar lvalue
+	exceptOp  valuesOp
+	elseOp    valuesOp
+	finallyOp valuesOp
 }
 
 func (op *tryOp) invoke(fm *Frame) error {
 	body := op.bodyOp.execlambdaOp(fm)
-	exceptVar, err := op.exceptVarOp.execMustOne(fm)
-	if err != nil {
-		return err
+	var exceptVar vars.Var
+	if op.exceptVar.qname != "" {
+		var err error
+		exceptVar, err = getVar(fm, op.exceptVar)
+		if err != nil {
+			return err
+		}
 	}
 	except := op.exceptOp.execlambdaOp(fm)
 	elseFn := op.elseOp.execlambdaOp(fm)
 	finally := op.finallyOp.execlambdaOp(fm)
 
-	err = body.Call(fm.fork("try body"), NoArgs, NoOpts)
+	err := body.Call(fm.fork("try body"), NoArgs, NoOpts)
 	if err != nil {
 		if except != nil {
 			if exceptVar != nil {
@@ -645,6 +642,21 @@ func (op *tryOp) invoke(fm *Frame) error {
 		}
 	}
 	return err
+}
+
+func (cp *compiler) compileOneLValue(n *parse.Compound) lvalue {
+	if len(n.Indexings) != 1 {
+		cp.errorpf(n, "must be valid lvalue")
+	}
+	lvalues := cp.parseIndexingLValue(n.Indexings[0])
+	cp.registerLValues(lvalues)
+	if lvalues.rest != -1 {
+		cp.errorpf(lvalues.lvalues[lvalues.rest], "rest variable not allowed")
+	}
+	if len(lvalues.lvalues) != 1 {
+		cp.errorpf(n, "must be exactly one lvalue")
+	}
+	return lvalues.lvalues[0]
 }
 
 // execLambdaOp executes a ValuesOp that is known to yield a lambda and returns

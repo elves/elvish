@@ -31,7 +31,7 @@ func TestClosure(t *testing.T) {
 		That("[]{ } &k=v").ThrowsAny(),
 
 		That("all [a b]{ }[arg-names]").Puts("a", "b"),
-		That("put [@r]{ }[rest-arg]").Puts("r"),
+		That("put [@r]{ }[rest-arg]").Puts("0"),
 		That("all [&opt=def]{ }[opt-names]").Puts("opt"),
 		That("all [&opt=def]{ }[opt-defaults]").Puts("def"),
 		That("put { body }[body]").Puts(" body "),

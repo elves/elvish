@@ -183,7 +183,7 @@ func (op *pipelineOp) invoke(fm *Frame) error {
 }
 
 func (cp *compiler) formOp(n *parse.Form) effectOp {
-	var saveVarsOps []lvaluesOp
+	var tempLValues []lvalue
 	var assignmentOps []effectOp
 	if len(n.Assignments) > 0 {
 		assignmentOps = cp.assignmentOps(n.Assignments)
@@ -192,8 +192,9 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 			return makeEffectOp(n, seqOp{assignmentOps})
 		}
 		for _, a := range n.Assignments {
-			v, r := cp.lvaluesOp(a.Left)
-			saveVarsOps = append(saveVarsOps, v, r)
+			lvalues := cp.parseIndexingLValue(a.Left)
+			cp.registerLValues(lvalues)
+			tempLValues = append(tempLValues, lvalues.lvalues...)
 		}
 		logger.Println("temporary assignment of", len(n.Assignments), "pairs")
 	}
@@ -236,26 +237,25 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 		argOps = cp.compoundOps(n.Args)
 	} else {
 		// Assignment form.
-		varsOp, restOp := cp.lvaluesMulti(n.Vars)
+		lhs := cp.parseCompoundLValues(n.Vars)
+		cp.registerLValues(lhs)
 		argOps = cp.compoundOps(n.Args)
-		valuesOp := valuesOp{body: seqValuesOp{argOps}}
+		rhs := valuesOp{body: seqValuesOp{argOps}}
 		if len(argOps) > 0 {
-			valuesOp.From = argOps[0].From
-			valuesOp.To = argOps[len(argOps)-1].To
+			rhs.From = argOps[0].From
+			rhs.To = argOps[len(argOps)-1].To
 		} else {
-			valuesOp.From = n.Range().To
-			valuesOp.To = n.Range().To
+			rhs.From = n.Range().To
+			rhs.To = n.Range().To
 		}
-		spaceyAssignOp = effectOp{
-			&assignmentOp{varsOp, restOp, valuesOp}, n.Range(),
-		}
+		spaceyAssignOp = makeEffectOp(n, &assignOp{lhs, rhs})
 	}
 
 	optsOp := cp.mapPairs(n.Opts)
 	redirOps := cp.redirOps(n.Redirs)
 	// TODO: n.ErrorRedir
 
-	return makeEffectOp(n, &formOp{n.Range(), saveVarsOps, assignmentOps, redirOps, specialOpFunc, headOp, argOps, optsOp, spaceyAssignOp})
+	return makeEffectOp(n, &formOp{n.Range(), tempLValues, assignmentOps, redirOps, specialOpFunc, headOp, argOps, optsOp, spaceyAssignOp})
 }
 
 func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
@@ -268,7 +268,7 @@ func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
 
 type formOp struct {
 	diag.Ranging
-	saveVarsOps    []lvaluesOp
+	tempLValues    []lvalue
 	assignmentOps  []effectOp
 	redirOps       []effectOp
 	specialOpBody  effectOpBody
@@ -283,17 +283,17 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 	// be safely modified.
 
 	// Temporary assignment.
-	if len(op.saveVarsOps) > 0 {
+	if len(op.tempLValues) > 0 {
 		// There is a temporary assignment.
 		// Save variables.
 		var saveVars []vars.Var
 		var saveVals []interface{}
-		for _, op := range op.saveVarsOps {
-			moreSaveVars, err := op.exec(fm)
+		for _, lv := range op.tempLValues {
+			variable, err := getVar(fm, lv)
 			if err != nil {
 				return err
 			}
-			saveVars = append(saveVars, moreSaveVars...)
+			saveVars = append(saveVars, variable)
 		}
 		for i, v := range saveVars {
 			// TODO(xiaq): If the variable to save is a elemVariable, save
@@ -423,9 +423,10 @@ func allTrue(vs []interface{}) bool {
 }
 
 func (cp *compiler) assignmentOp(n *parse.Assignment) effectOp {
-	valuesOp := cp.compoundOp(n.Right)
-	variablesOp, restOp := cp.lvaluesOp(n.Left)
-	return makeEffectOp(n, &assignmentOp{variablesOp, restOp, valuesOp})
+	lhs := cp.parseIndexingLValue(n.Left)
+	cp.registerLValues(lhs)
+	rhs := cp.compoundOp(n.Right)
+	return makeEffectOp(n, &assignOp{lhs, rhs})
 }
 
 func (cp *compiler) assignmentOps(ns []*parse.Assignment) []effectOp {
@@ -434,64 +435,6 @@ func (cp *compiler) assignmentOps(ns []*parse.Assignment) []effectOp {
 		ops[i] = cp.assignmentOp(n)
 	}
 	return ops
-}
-
-// ErrMoreThanOneRest is returned when the LHS of an assignment contains more
-// than one rest variables.
-var ErrMoreThanOneRest = errors.New("more than one @ lvalue")
-
-type assignmentOp struct {
-	variablesOp lvaluesOp
-	restOp      lvaluesOp
-	valuesOp    valuesOp
-}
-
-func (op *assignmentOp) invoke(fm *Frame) (errRet error) {
-	variables, err := op.variablesOp.exec(fm)
-	if err != nil {
-		return err
-	}
-	rest, err := op.restOp.exec(fm)
-	if err != nil {
-		return err
-	}
-
-	values, err := op.valuesOp.exec(fm)
-	if err != nil {
-		return err
-	}
-
-	if len(rest) > 1 {
-		return ErrMoreThanOneRest
-	}
-	if len(rest) == 1 {
-		if len(values) < len(variables) {
-			return errs.ArityMismatch{
-				What:     "assignment right-hand-side",
-				ValidLow: len(variables), ValidHigh: -1, Actual: len(values)}
-		}
-	} else {
-		if len(variables) != len(values) {
-			return errs.ArityMismatch{
-				What:     "assignment right-hand-side",
-				ValidLow: len(variables), ValidHigh: len(variables), Actual: len(values)}
-		}
-	}
-
-	for i, variable := range variables {
-		err := variable.Set(values[i])
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(rest) == 1 {
-		err := rest[0].Set(vals.MakeList(values[len(variables):]...))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (cp *compiler) literal(n *parse.Primary, msg string) string {

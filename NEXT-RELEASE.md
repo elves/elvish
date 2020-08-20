@@ -27,6 +27,9 @@ New features in the language:
 -   Slice indicies can now use `..` for left-closed, right-open ranges, and
     `..=` for closed ranges.
 
+-   Rest variables and rest arguments are no longer restricted to the last
+    variable.
+
 New features in the standard library:
 
 -   A new `eval` command supports evaluating a dynamic piece of code in a

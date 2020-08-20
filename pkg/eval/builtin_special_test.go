@@ -82,11 +82,7 @@ func TestBuiltinSpecial(t *testing.T) {
 		// continue
 		That("for x [a b] { put $x; continue; put $x; }").Puts("a", "b"),
 		// More than one iterator.
-		That("for {x,y} [] { }").Throws(
-			errs.ArityMismatch{
-				What:     "iterator",
-				ValidLow: 1, ValidHigh: 1, Actual: 2},
-			"x,y"),
+		That("for {x,y} [] { }").DoesNotCompile(),
 		// Invalid for loop lvalue. You can't use a var in a namespace other
 		// than the special "local:" namespace as the lvalue in a for loop.
 		That("for no-such-namespace:x [a b] { }").ThrowsMessage("new variables can only be created in local scope"),
