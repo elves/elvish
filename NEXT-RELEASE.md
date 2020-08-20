@@ -44,3 +44,7 @@ New features in the standard library:
 
 -   A new `eval` command supports evaluating a dynamic piece of code in a
     restricted namespace.
+
+# Notable bugfixes
+
+-   Using large lists that contain `$nil` no longer crashes Elvish.
