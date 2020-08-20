@@ -1,6 +1,16 @@
 This is the draft release notes for 0.15.0, scheduled to be released on
 2021-01-01.
 
+# Breaking changes
+
+-   Introspection for rest arguments has changed:
+
+    -   The rest argument is now contained in the `arg-names` field of a
+        closure.
+
+    -   The `rest-arg` field now contains the index of the rest argument,
+        instead of the name.
+
 # Deprecated features
 
 The following deprecated features trigger a warning whenever the code is parsed
