@@ -141,7 +141,6 @@ func (v *vector) Assoc(i int, val interface{}) Vector {
 	}
 	if i >= v.treeSize() {
 		newTail := append([]interface{}(nil), v.tail...)
-		copy(newTail, v.tail)
 		newTail[i&chunkMask] = val
 		return &vector{v.count, v.height, v.root, newTail}
 	}
