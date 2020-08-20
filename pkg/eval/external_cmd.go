@@ -96,15 +96,22 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 	return NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid)
 }
 
+// TODO: Windows support. See the Go os.exec.LookPath implementation for
+// ideas.
+func fileIsExecutable(info os.FileInfo) bool {
+	return !info.IsDir() && (info.Mode()&0111 != 0)
+}
+
 // EachExternal calls f for each name that can resolve to an external
-// command.
-// TODO(xiaq): Windows support
+// command. See also searchExternal.
+//
+// TODO(xiaq): Windows support (see fileIsExecutable).
 func EachExternal(f func(string)) {
 	for _, dir := range searchPaths() {
 		// TODO(xiaq): Ignore error.
 		infos, _ := ioutil.ReadDir(dir)
 		for _, info := range infos {
-			if !info.IsDir() && (info.Mode()&0111 != 0) {
+			if fileIsExecutable(info) {
 				f(info.Name())
 			}
 		}

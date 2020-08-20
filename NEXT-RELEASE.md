@@ -45,6 +45,9 @@ New features in the standard library:
 -   A new `eval` command supports evaluating a dynamic piece of code in a
     restricted namespace.
 
+-   The `search-external` builtin has a new `&all` option to mimic `type -a` in
+    other shells.
+
 # Notable bugfixes
 
 -   Using large lists that contain `$nil` no longer crashes Elvish.
