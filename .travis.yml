@@ -1,16 +1,10 @@
 language: go
 go:
-    - 1.6
-    - 1.7
-    - 1.8
-    - 1.9
+    - 1.14
+    - 1.15
 sudo: false
 os:
     - linux
     - osx
-matrix:
-    exclude:
-        - os: osx
-          go: 1.6
 script:
     make travis
