@@ -3,6 +3,7 @@ package vector
 import (
 	"errors"
 	"math/rand"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -21,16 +22,47 @@ func init() {
 }
 
 func TestVector(t *testing.T) {
-	const (
-		subst = "233"
-		n     = N4
-	)
+	run := func(n int) {
+		t.Run(strconv.Itoa(n), func(t *testing.T) {
+			v := testCons(t, n)
+			testIndex(t, v, 0, n)
+			testAssoc(t, v, "233")
+			testIterator(t, v.Iterator(), 0, n)
+			testPop(t, v)
+		})
+	}
 
-	v := testCons(t, n)
-	testIndex(t, v, 0, n)
-	testAssoc(t, v, subst)
-	testIterator(t, v.Iterator(), 0, n)
-	testPop(t, v)
+	for i := 0; i <= N3; i++ {
+		run(i)
+	}
+	run(N4)
+}
+
+// Regression test against #4.
+func TestIterator_VectorWithNil(t *testing.T) {
+	run := func(n int) {
+		t.Run(strconv.Itoa(n), func(t *testing.T) {
+			v := Empty
+			for i := 0; i < n; i++ {
+				v = v.Cons(nil)
+			}
+
+			iterated := 0
+			for it := v.Iterator(); it.HasElem(); it.Next() {
+				iterated++
+				if it.Elem() != nil {
+					t.Errorf("element not nil")
+				}
+			}
+			if iterated != n {
+				t.Errorf("did not iterate %d items", n)
+			}
+		})
+	}
+	for i := 0; i <= N3; i++ {
+		run(i)
+	}
+	run(N4)
 }
 
 // testCons creates a vector containing 0...n-1 with Cons, and ensures that the

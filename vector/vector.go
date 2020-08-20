@@ -381,7 +381,7 @@ func (it *iterator) Next() {
 	var i int
 	for i = len(it.path) - 1; i >= 0; i-- {
 		e := it.path[i]
-		if e.index+1 < len(e.node) && e.node[e.index+1] != nil {
+		if e.index+1 < len(e.node) {
 			break
 		}
 	}
