@@ -16,11 +16,17 @@ import (
 	"github.com/elves/elvish/pkg/util"
 )
 
+// An operation that produces values.
+type valuesOp interface {
+	diag.Ranger
+	exec(*Frame) ([]interface{}, error)
+}
+
 var outputCaptureBufferSize = 16
 
 func (cp *compiler) compoundOp(n *parse.Compound) valuesOp {
 	if len(n.Indexings) == 0 {
-		return makeValuesOp(n, literalStr(""))
+		return literalValues(n, "")
 	}
 
 	tilde := false
@@ -29,19 +35,23 @@ func (cp *compiler) compoundOp(n *parse.Compound) valuesOp {
 	if n.Indexings[0].Head.Type == parse.Tilde {
 		// A lone ~.
 		if len(n.Indexings) == 1 {
-			return makeValuesOp(n, funcValuesOp(func(fm *Frame) ([]interface{}, error) {
-				home, err := util.GetHome("")
-				if err != nil {
-					return nil, err
-				}
-				return []interface{}{home}, nil
-			}))
+			return loneTildeOp{n.Range()}
 		}
 		tilde = true
 		indexings = indexings[1:]
 	}
 
-	return makeValuesOp(n, compoundOp{tilde, cp.indexingOps(indexings)})
+	return compoundOp{n.Range(), tilde, cp.indexingOps(indexings)}
+}
+
+type loneTildeOp struct{ diag.Ranging }
+
+func (loneTildeOp) exec(fm *Frame) ([]interface{}, error) {
+	home, err := util.GetHome("")
+	if err != nil {
+		return nil, err
+	}
+	return []interface{}{home}, nil
 }
 
 func (cp *compiler) compoundOps(ns []*parse.Compound) []valuesOp {
@@ -53,11 +63,12 @@ func (cp *compiler) compoundOps(ns []*parse.Compound) []valuesOp {
 }
 
 type compoundOp struct {
+	diag.Ranging
 	tilde  bool
 	subops []valuesOp
 }
 
-func (op compoundOp) invoke(fm *Frame) ([]interface{}, error) {
+func (op compoundOp) exec(fm *Frame) ([]interface{}, error) {
 	// Accumulator.
 	vs, err := op.subops[0].exec(fm)
 	if err != nil {
@@ -71,7 +82,7 @@ func (op compoundOp) invoke(fm *Frame) ([]interface{}, error) {
 		}
 		vs, err = outerProduct(vs, us, vals.Concat)
 		if err != nil {
-			return nil, err
+			return nil, fm.errorp(op, err)
 		}
 	}
 	if op.tilde {
@@ -79,7 +90,7 @@ func (op compoundOp) invoke(fm *Frame) ([]interface{}, error) {
 		for i, v := range vs {
 			tilded, err := doTilde(v)
 			if err != nil {
-				return nil, err
+				return nil, fm.errorp(op, err)
 			}
 			newvs[i] = tilded
 		}
@@ -98,7 +109,7 @@ func (op compoundOp) invoke(fm *Frame) ([]interface{}, error) {
 			if gp, ok := v.(GlobPattern); ok {
 				results, err := doGlob(gp, fm.Interrupts())
 				if err != nil {
-					return nil, err
+					return nil, fm.errorp(op, err)
 				}
 				newvs = append(newvs, results...)
 			} else {
@@ -186,7 +197,7 @@ func doTilde(v interface{}) (interface{}, error) {
 }
 
 func (cp *compiler) arrayOp(n *parse.Array) valuesOp {
-	return makeValuesOp(n, seqValuesOp{cp.compoundOps(n.Compounds)})
+	return seqValuesOp{n.Range(), cp.compoundOps(n.Compounds)}
 }
 
 func (cp *compiler) arrayOps(ns []*parse.Array) []valuesOp {
@@ -201,8 +212,7 @@ func (cp *compiler) indexingOp(n *parse.Indexing) valuesOp {
 	if len(n.Indicies) == 0 {
 		return cp.primaryOp(n.Head)
 	}
-	return makeValuesOp(n,
-		&indexingOp{cp.primaryOp(n.Head), cp.arrayOps(n.Indicies)})
+	return &indexingOp{n.Range(), cp.primaryOp(n.Head), cp.arrayOps(n.Indicies)}
 }
 
 func (cp *compiler) indexingOps(ns []*parse.Indexing) []valuesOp {
@@ -214,11 +224,12 @@ func (cp *compiler) indexingOps(ns []*parse.Indexing) []valuesOp {
 }
 
 type indexingOp struct {
+	diag.Ranging
 	headOp   valuesOp
 	indexOps []valuesOp
 }
 
-func (op *indexingOp) invoke(fm *Frame) ([]interface{}, error) {
+func (op *indexingOp) exec(fm *Frame) ([]interface{}, error) {
 	vs, err := op.headOp.exec(fm)
 	if err != nil {
 		return nil, err
@@ -233,7 +244,7 @@ func (op *indexingOp) invoke(fm *Frame) ([]interface{}, error) {
 			for _, index := range indicies {
 				result, err := vals.Index(v, index)
 				if err != nil {
-					return nil, err
+					return nil, fm.errorp(op, err)
 				}
 				deprecation := vals.CheckDeprecatedIndex(v, index)
 				if deprecation != "" {
@@ -248,16 +259,15 @@ func (op *indexingOp) invoke(fm *Frame) ([]interface{}, error) {
 }
 
 func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
-	var body valuesOpBody
 	switch n.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
-		body = literalStr(n.Value)
+		return literalValues(n, n.Value)
 	case parse.Variable:
 		sigil, qname := SplitVariableRef(n.Value)
 		if !cp.registerVariableGet(qname, n) {
 			cp.errorpf(n, "variable $%s not found", qname)
 		}
-		body = &variableOp{sigil != "", qname}
+		return &variableOp{n.Range(), sigil != "", qname}
 	case parse.Wildcard:
 		seg, err := wildcardToSegment(parse.SourceText(n))
 		if err != nil {
@@ -266,27 +276,26 @@ func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 		vs := []interface{}{
 			GlobPattern{Pattern: glob.Pattern{[]glob.Segment{seg}, ""}, Flags: 0,
 				Buts: nil, TypeCb: nil}}
-		body = literalValues(vs...)
+		return literalValues(n, vs...)
 	case parse.Tilde:
 		cp.errorpf(n, "compiler bug: Tilde not handled in .compound")
-		body = literalStr("~")
+		return literalValues(n, "~")
 	case parse.ExceptionCapture:
-		body = exceptionCaptureOp{cp.chunkOp(n.Chunk)}
+		return exceptionCaptureOp{n.Range(), cp.chunkOp(n.Chunk)}
 	case parse.OutputCapture:
-		body = outputCaptureOp{cp.chunkOp(n.Chunk)}
+		return outputCaptureOp{n.Range(), cp.chunkOp(n.Chunk)}
 	case parse.List:
-		body = cp.list(n)
+		return listOp{n.Range(), cp.compoundOps(n.Elements)}
 	case parse.Lambda:
-		body = cp.lambda(n)
+		return cp.lambda(n)
 	case parse.Map:
-		body = cp.map_(n)
+		return mapOp{n.Range(), cp.mapPairs(n.MapPairs)}
 	case parse.Braced:
-		body = cp.braced(n)
+		return seqValuesOp{n.Range(), cp.compoundOps(n.Braced)}
 	default:
 		cp.errorpf(n, "bad PrimaryType; parser bug")
-		body = literalStr(parse.SourceText(n))
+		return literalValues(n, parse.SourceText(n))
 	}
-	return makeValuesOp(n, body)
 }
 
 func (cp *compiler) primaryOps(ns []*parse.Primary) []valuesOp {
@@ -298,29 +307,30 @@ func (cp *compiler) primaryOps(ns []*parse.Primary) []valuesOp {
 }
 
 type variableOp struct {
+	diag.Ranging
 	explode bool
 	qname   string
 }
 
-func (op variableOp) invoke(fm *Frame) ([]interface{}, error) {
+func (op variableOp) exec(fm *Frame) ([]interface{}, error) {
 	variable := fm.ResolveVar(op.qname)
 	if variable == nil {
-		return nil, fmt.Errorf("variable $%s not found", op.qname)
+		return nil, fm.errorpf(op, "variable $%s not found", op.qname)
 	}
 	value := variable.Get()
 	if op.explode {
-		return vals.Collect(value)
+		vs, err := vals.Collect(value)
+		return vs, fm.errorp(op, err)
 	}
 	return []interface{}{value}, nil
 }
 
-func (cp *compiler) list(n *parse.Primary) valuesOpBody {
-	return listOp{cp.compoundOps(n.Elements)}
+type listOp struct {
+	diag.Ranging
+	subops []valuesOp
 }
 
-type listOp struct{ subops []valuesOp }
-
-func (op listOp) invoke(fm *Frame) ([]interface{}, error) {
+func (op listOp) exec(fm *Frame) ([]interface{}, error) {
 	list := vals.EmptyList
 	for _, subop := range op.subops {
 		moreValues, err := subop.exec(fm)
@@ -334,9 +344,12 @@ func (op listOp) invoke(fm *Frame) ([]interface{}, error) {
 	return []interface{}{list}, nil
 }
 
-type exceptionCaptureOp struct{ subop effectOp }
+type exceptionCaptureOp struct {
+	diag.Ranging
+	subop effectOp
+}
 
-func (op exceptionCaptureOp) invoke(fm *Frame) ([]interface{}, error) {
+func (op exceptionCaptureOp) exec(fm *Frame) ([]interface{}, error) {
 	err := op.subop.exec(fm)
 	if err == nil {
 		return []interface{}{OK}, nil
@@ -344,9 +357,12 @@ func (op exceptionCaptureOp) invoke(fm *Frame) ([]interface{}, error) {
 	return []interface{}{err.(*Exception)}, nil
 }
 
-type outputCaptureOp struct{ subop effectOp }
+type outputCaptureOp struct {
+	diag.Ranging
+	subop effectOp
+}
 
-func (op outputCaptureOp) invoke(fm *Frame) ([]interface{}, error) {
+func (op outputCaptureOp) exec(fm *Frame) ([]interface{}, error) {
 	return captureOutput(fm, op.subop.exec)
 }
 
@@ -412,7 +428,7 @@ func pipeOutput(fm *Frame, f func(*Frame) error, valuesCb func(<-chan interface{
 	return err
 }
 
-func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
+func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 	// Parse signature.
 	var (
 		argNames      []string
@@ -484,10 +500,11 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 		cp.registerVariableGet(name, nil)
 	}
 
-	return &lambdaOp{argNames, restArg, optNames, optDefaultOps, capture, scopeOp, cp.srcMeta, n.Range().From, n.Range().To}
+	return &lambdaOp{n.Range(), argNames, restArg, optNames, optDefaultOps, capture, scopeOp, cp.srcMeta}
 }
 
 type lambdaOp struct {
+	diag.Ranging
 	argNames      []string
 	restArg       int
 	optNames      []string
@@ -495,11 +512,9 @@ type lambdaOp struct {
 	capture       staticNs
 	subop         effectOp
 	srcMeta       parse.Source
-	defBegin      int
-	defEnd        int
 }
 
-func (op *lambdaOp) invoke(fm *Frame) ([]interface{}, error) {
+func (op *lambdaOp) exec(fm *Frame) ([]interface{}, error) {
 	evCapture := make(Ns)
 	for name := range op.capture {
 		evCapture[name] = fm.ResolveVar(":" + name)
@@ -512,14 +527,27 @@ func (op *lambdaOp) invoke(fm *Frame) ([]interface{}, error) {
 		}
 		optDefaults[i] = defaultValue
 	}
-	return []interface{}{&Closure{op.argNames, op.restArg, op.optNames, optDefaults, op.subop, evCapture, op.srcMeta, op.defBegin, op.defEnd}}, nil
+	return []interface{}{&Closure{op.argNames, op.restArg, op.optNames, optDefaults, op.subop, evCapture, op.srcMeta, op.Range()}}, nil
 }
 
-func (cp *compiler) map_(n *parse.Primary) valuesOpBody {
-	return cp.mapPairs(n.MapPairs)
+type mapOp struct {
+	diag.Ranging
+	pairsOp *mapPairsOp
 }
 
-func (cp *compiler) mapPairs(pairs []*parse.MapPair) valuesOpBody {
+func (op mapOp) exec(fm *Frame) ([]interface{}, error) {
+	m := vals.EmptyMap
+	err := op.pairsOp.exec(fm, func(k, v interface{}) error {
+		m = m.Assoc(k, v)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return []interface{}{m}, nil
+}
+
+func (cp *compiler) mapPairs(pairs []*parse.MapPair) *mapPairsOp {
 	npairs := len(pairs)
 	keysOps := make([]valuesOp, npairs)
 	valuesOps := make([]valuesOp, npairs)
@@ -528,7 +556,7 @@ func (cp *compiler) mapPairs(pairs []*parse.MapPair) valuesOpBody {
 		keysOps[i] = cp.compoundOp(pair.Key)
 		if pair.Value == nil {
 			p := pair.Range().To
-			valuesOps[i] = valuesOp{literalValues(true), diag.Ranging{From: p, To: p}}
+			valuesOps[i] = literalValues(diag.PointRanging(p), true)
 		} else {
 			valuesOps[i] = cp.compoundOp(pairs[i].Value)
 		}
@@ -544,52 +572,49 @@ type mapPairsOp struct {
 	ends      []int
 }
 
-func (op *mapPairsOp) invoke(fm *Frame) ([]interface{}, error) {
-	m := vals.EmptyMap
+func (op *mapPairsOp) exec(fm *Frame, f func(k, v interface{}) error) error {
 	for i := range op.keysOps {
 		keys, err := op.keysOps[i].exec(fm)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		values, err := op.valuesOps[i].exec(fm)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if len(keys) != len(values) {
-			return nil, fm.errorpf(diag.Ranging{From: op.begins[i], To: op.ends[i]},
+			return fm.errorpf(diag.Ranging{From: op.begins[i], To: op.ends[i]},
 				"%d keys but %d values", len(keys), len(values))
 		}
 		for j, key := range keys {
-			m = m.Assoc(key, values[j])
+			err := f(key, values[j])
+			if err != nil {
+				return err
+			}
 		}
 	}
-	return []interface{}{m}, nil
+	return nil
 }
 
-func (cp *compiler) braced(n *parse.Primary) valuesOpBody {
-	ops := cp.compoundOps(n.Braced)
-	// TODO: n.IsRange
-	// isRange := n.IsRange
-	return seqValuesOp{ops}
+type literalValuesOp struct {
+	diag.Ranging
+	values []interface{}
 }
 
-type literalValuesOp struct{ values []interface{} }
-
-func (op literalValuesOp) invoke(*Frame) ([]interface{}, error) {
+func (op literalValuesOp) exec(*Frame) ([]interface{}, error) {
 	return op.values, nil
 }
 
-func literalValues(v ...interface{}) valuesOpBody {
-	return literalValuesOp{v}
+func literalValues(r diag.Ranger, vs ...interface{}) valuesOp {
+	return literalValuesOp{r.Range(), vs}
 }
 
-func literalStr(text string) valuesOpBody {
-	return literalValues(text)
+type seqValuesOp struct {
+	diag.Ranging
+	subops []valuesOp
 }
 
-type seqValuesOp struct{ subops []valuesOp }
-
-func (op seqValuesOp) invoke(fm *Frame) ([]interface{}, error) {
+func (op seqValuesOp) exec(fm *Frame) ([]interface{}, error) {
 	var values []interface{}
 	for _, subop := range op.subops {
 		moreValues, err := subop.exec(fm)

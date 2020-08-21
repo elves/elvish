@@ -85,16 +85,17 @@ func (cp *compiler) registerLValues(lhs lvaluesGroup) {
 }
 
 type assignOp struct {
+	diag.Ranging
 	lhs lvaluesGroup
 	rhs valuesOp
 }
 
-func (op *assignOp) invoke(fm *Frame) error {
+func (op *assignOp) exec(fm *Frame) error {
 	variables := make([]vars.Var, len(op.lhs.lvalues))
 	for i, lvalue := range op.lhs.lvalues {
 		variable, err := getVar(fm, lvalue)
 		if err != nil {
-			return err
+			return fm.errorp(op, err)
 		}
 		variables[i] = variable
 	}
@@ -106,38 +107,38 @@ func (op *assignOp) invoke(fm *Frame) error {
 
 	if op.lhs.rest == -1 {
 		if len(variables) != len(values) {
-			return errs.ArityMismatch{
+			return fm.errorp(op, errs.ArityMismatch{
 				What:     "assignment right-hand-side",
-				ValidLow: len(variables), ValidHigh: len(variables), Actual: len(values)}
+				ValidLow: len(variables), ValidHigh: len(variables), Actual: len(values)})
 		}
 		for i, variable := range variables {
 			err := variable.Set(values[i])
 			if err != nil {
-				return err
+				return fm.errorp(op, err)
 			}
 		}
 	} else {
 		if len(values) < len(variables)-1 {
-			return errs.ArityMismatch{
+			return fm.errorp(op, errs.ArityMismatch{
 				What:     "assignment right-hand-side",
-				ValidLow: len(variables) - 1, ValidHigh: -1, Actual: len(values)}
+				ValidLow: len(variables) - 1, ValidHigh: -1, Actual: len(values)})
 		}
 		rest := op.lhs.rest
 		for i := 0; i < rest; i++ {
 			err := variables[i].Set(values[i])
 			if err != nil {
-				return err
+				return fm.errorp(op, err)
 			}
 		}
 		restOff := len(values) - len(variables)
 		err := variables[rest].Set(vals.MakeList(values[rest : rest+restOff+1]...))
 		if err != nil {
-			return err
+			return fm.errorp(op, err)
 		}
 		for i := rest + 1; i < len(variables); i++ {
 			err := variables[i].Set(values[i+restOff])
 			if err != nil {
-				return err
+				return fm.errorp(op, err)
 			}
 		}
 	}

@@ -30,6 +30,13 @@ type compiler struct {
 	srcMeta parse.Source
 }
 
+// Op represents an operation on a Frame. It is the result of compiling a piece
+// of source.
+type Op struct {
+	Inner effectOp
+	Src   parse.Source
+}
+
 func compile(b, g staticNs, tree parse.Tree, w io.Writer) (op Op, err error) {
 	cp := &compiler{
 		b, []staticNs{g}, make(staticNs), nil,

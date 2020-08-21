@@ -27,7 +27,7 @@ import (
 	"github.com/elves/elvish/pkg/parse"
 )
 
-type compileBuiltin func(*compiler, *parse.Form) effectOpBody
+type compileBuiltin func(*compiler, *parse.Form) effectOp
 
 var builtinSpecials map[string]compileBuiltin
 
@@ -60,7 +60,7 @@ func init() {
 const delArgMsg = "arguments to del must be variable or variable elements"
 
 // DelForm = 'del' { VariablePrimary }
-func compileDel(cp *compiler, fn *parse.Form) effectOpBody {
+func compileDel(cp *compiler, fn *parse.Form) effectOp {
 	var ops []effectOp
 	for _, cn := range fn.Args {
 		if len(cn.Indexings) != 1 {
@@ -82,7 +82,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOpBody {
 			cp.errorpf(cn, "arguments to del may not have a sigils, got %q", sigil)
 			continue
 		}
-		var f effectOpBody
+		var f effectOp
 		if len(indicies) == 0 {
 			ns, name := SplitQNameNsFirst(qname)
 			switch ns {
@@ -106,29 +106,29 @@ func compileDel(cp *compiler, fn *parse.Form) effectOpBody {
 			}
 			f = newDelElementOp(qname, head.Range().From, head.Range().To, cp.arrayOps(indicies))
 		}
-		ops = append(ops, effectOp{f, cn.Range()})
+		ops = append(ops, f)
 	}
 	return seqOp{ops}
 }
 
 type delLocalVarOp struct{ name string }
 
-func (op delLocalVarOp) invoke(fm *Frame) error {
+func (op delLocalVarOp) exec(fm *Frame) error {
 	delete(fm.local, op.name)
 	return nil
 }
 
 type delEnvVarOp struct{ name string }
 
-func (op delEnvVarOp) invoke(*Frame) error {
+func (op delEnvVarOp) exec(*Frame) error {
 	return os.Unsetenv(op.name)
 }
 
-func newDelElementOp(qname string, begin, headEnd int, indexOps []valuesOp) effectOpBody {
+func newDelElementOp(qname string, begin, headEnd int, indexOps []valuesOp) effectOp {
 	ends := make([]int, len(indexOps)+1)
 	ends[0] = headEnd
 	for i, op := range indexOps {
-		ends[i+1] = op.To
+		ends[i+1] = op.Range().To
 	}
 	return &delElemOp{qname, indexOps, begin, ends}
 }
@@ -140,7 +140,11 @@ type delElemOp struct {
 	ends     []int
 }
 
-func (op *delElemOp) invoke(fm *Frame) error {
+func (op *delElemOp) Range() diag.Ranging {
+	return diag.Ranging{From: op.begin, To: op.ends[0]}
+}
+
+func (op *delElemOp) exec(fm *Frame) error {
 	var indicies []interface{}
 	for _, indexOp := range op.indexOps {
 		indexValues, err := indexOp.exec(fm)
@@ -157,7 +161,7 @@ func (op *delElemOp) invoke(fm *Frame) error {
 		if level := vars.ElementErrorLevel(err); level >= 0 {
 			return fm.errorp(diag.Ranging{From: op.begin, To: op.ends[level]}, err)
 		}
-		return err
+		return fm.errorp(op, err)
 	}
 	return nil
 }
@@ -165,7 +169,7 @@ func (op *delElemOp) invoke(fm *Frame) error {
 // FnForm = 'fn' StringPrimary LambdaPrimary
 //
 // fn f []{foobar} is a shorthand for set '&'f = []{foobar}.
-func compileFn(cp *compiler, fn *parse.Form) effectOpBody {
+func compileFn(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	nameNode := args.next()
 	varName := mustString(cp, nameNode, "must be a literal string") + FnSuffix
@@ -180,31 +184,27 @@ func compileFn(cp *compiler, fn *parse.Form) effectOpBody {
 
 type fnOp struct {
 	varName  string
-	lambdaOp valuesOpBody
+	lambdaOp valuesOp
 }
 
-func (op fnOp) invoke(fm *Frame) error {
+func (op fnOp) exec(fm *Frame) error {
 	// Initialize the function variable with the builtin nop function. This step
 	// allows the definition of recursive functions; the actual function will
 	// never be called.
 	fm.local[op.varName] = vars.FromInit(NewGoFn("<shouldn't be called>", nop))
-	values, err := op.lambdaOp.invoke(fm)
+	values, err := op.lambdaOp.exec(fm)
 	if err != nil {
 		return err
 	}
 	closure := values[0].(*Closure)
-	closure.Op = wrapFn(closure.Op)
+	closure.Op = fnWrap{closure.Op}
 	return fm.local[op.varName].Set(closure)
 }
 
-func wrapFn(op effectOp) effectOp {
-	return effectOp{fnWrap{op}, op.Ranging}
-}
+type fnWrap struct{ effectOp }
 
-type fnWrap struct{ wrapped effectOp }
-
-func (op fnWrap) invoke(fm *Frame) error {
-	err := op.wrapped.exec(fm)
+func (op fnWrap) exec(fm *Frame) error {
+	err := op.effectOp.exec(fm)
 	if err != nil && Cause(err) != Return {
 		// rethrow
 		return err
@@ -213,7 +213,7 @@ func (op fnWrap) invoke(fm *Frame) error {
 }
 
 // UseForm = 'use' StringPrimary
-func compileUse(cp *compiler, fn *parse.Form) effectOpBody {
+func compileUse(cp *compiler, fn *parse.Form) effectOp {
 	var name, spec string
 
 	switch len(fn.Args) {
@@ -247,10 +247,10 @@ type useOp struct {
 	name, spec string
 }
 
-func (op useOp) invoke(fm *Frame) error {
+func (op useOp) exec(fm *Frame) error {
 	ns, err := use(fm, op.spec, fm.addTraceback(op))
 	if err != nil {
-		return err
+		return fm.errorp(op, err)
 	}
 	fm.local.AddNs(op.name, ns)
 	return nil
@@ -335,7 +335,7 @@ func evalInner(fm *Frame, src parse.Source, ns Ns, st *stackTrace) error {
 // and outputs it; the remaining arguments are not evaluated. If there are no
 // false-ish values, the last value is output. If there are no arguments, it
 // outputs $true, as if there is a hidden $true before actual arguments.
-func compileAnd(cp *compiler, fn *parse.Form) effectOpBody {
+func compileAnd(cp *compiler, fn *parse.Form) effectOp {
 	return &andOrOp{cp.compoundOps(fn.Args), true, false}
 }
 
@@ -345,7 +345,7 @@ func compileAnd(cp *compiler, fn *parse.Form) effectOpBody {
 // outputs it; the remaining arguments are not evaluated. If there are no
 // true-ish values, the last value is output. If there are no arguments, it
 // outputs $false, as if there is a hidden $false before actual arguments.
-func compileOr(cp *compiler, fn *parse.Form) effectOpBody {
+func compileOr(cp *compiler, fn *parse.Form) effectOp {
 	return &andOrOp{cp.compoundOps(fn.Args), false, true}
 }
 
@@ -355,7 +355,7 @@ type andOrOp struct {
 	stopAt bool
 }
 
-func (op *andOrOp) invoke(fm *Frame) error {
+func (op *andOrOp) exec(fm *Frame) error {
 	var lastValue interface{} = vals.Bool(op.init)
 	for _, argOp := range op.argOps {
 		values, err := argOp.exec(fm)
@@ -374,7 +374,7 @@ func (op *andOrOp) invoke(fm *Frame) error {
 	return nil
 }
 
-func compileIf(cp *compiler, fn *parse.Form) effectOpBody {
+func compileIf(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	var condNodes []*parse.Compound
 	var bodyNodes []*parse.Primary
@@ -395,37 +395,38 @@ func compileIf(cp *compiler, fn *parse.Form) effectOpBody {
 		elseOp = cp.primaryOp(elseNode)
 	}
 
-	return &ifOp{condOps, bodyOps, elseOp}
+	return &ifOp{fn.Range(), condOps, bodyOps, elseOp}
 }
 
 type ifOp struct {
+	diag.Ranging
 	condOps []valuesOp
 	bodyOps []valuesOp
 	elseOp  valuesOp
 }
 
-func (op *ifOp) invoke(fm *Frame) error {
+func (op *ifOp) exec(fm *Frame) error {
 	bodies := make([]Callable, len(op.bodyOps))
 	for i, bodyOp := range op.bodyOps {
-		bodies[i] = bodyOp.execlambdaOp(fm)
+		bodies[i] = execLambdaOp(fm, bodyOp)
 	}
-	elseFn := op.elseOp.execlambdaOp(fm)
+	elseFn := execLambdaOp(fm, op.elseOp)
 	for i, condOp := range op.condOps {
 		condValues, err := condOp.exec(fm.fork("if cond"))
 		if err != nil {
 			return err
 		}
 		if allTrue(condValues) {
-			return bodies[i].Call(fm.fork("if body"), NoArgs, NoOpts)
+			return fm.errorp(op, bodies[i].Call(fm.fork("if body"), NoArgs, NoOpts))
 		}
 	}
-	if op.elseOp.body != nil {
-		return elseFn.Call(fm.fork("if else"), NoArgs, NoOpts)
+	if op.elseOp != nil {
+		return fm.errorp(op, elseFn.Call(fm.fork("if else"), NoArgs, NoOpts))
 	}
 	return nil
 }
 
-func compileWhile(cp *compiler, fn *parse.Form) effectOpBody {
+func compileWhile(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	condNode := args.next()
 	bodyNode := args.nextMustLambda()
@@ -439,16 +440,17 @@ func compileWhile(cp *compiler, fn *parse.Form) effectOpBody {
 		elseOp = cp.primaryOp(elseNode)
 	}
 
-	return &whileOp{condOp, bodyOp, elseOp}
+	return &whileOp{fn.Range(), condOp, bodyOp, elseOp}
 }
 
 type whileOp struct {
+	diag.Ranging
 	condOp, bodyOp, elseOp valuesOp
 }
 
-func (op *whileOp) invoke(fm *Frame) error {
-	body := op.bodyOp.execlambdaOp(fm)
-	elseBody := op.elseOp.execlambdaOp(fm)
+func (op *whileOp) exec(fm *Frame) error {
+	body := execLambdaOp(fm, op.bodyOp)
+	elseBody := execLambdaOp(fm, op.elseOp)
 
 	iterated := false
 	for {
@@ -468,18 +470,18 @@ func (op *whileOp) invoke(fm *Frame) error {
 			} else if exc.Reason == Break {
 				break
 			} else {
-				return err
+				return fm.errorp(op, err)
 			}
 		}
 	}
 
-	if op.elseOp.body != nil && !iterated {
-		return elseBody.Call(fm.fork("while else"), NoArgs, NoOpts)
+	if op.elseOp != nil && !iterated {
+		return fm.errorp(op, elseBody.Call(fm.fork("while else"), NoArgs, NoOpts))
 	}
 	return nil
 }
 
-func compileFor(cp *compiler, fn *parse.Form) effectOpBody {
+func compileFor(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	varNode := args.next()
 	iterNode := args.next()
@@ -496,28 +498,29 @@ func compileFor(cp *compiler, fn *parse.Form) effectOpBody {
 		elseOp = cp.primaryOp(elseNode)
 	}
 
-	return &forOp{lvalue, iterOp, bodyOp, elseOp}
+	return &forOp{fn.Range(), lvalue, iterOp, bodyOp, elseOp}
 }
 
 type forOp struct {
+	diag.Ranging
 	lvalue lvalue
 	iterOp valuesOp
 	bodyOp valuesOp
 	elseOp valuesOp
 }
 
-func (op *forOp) invoke(fm *Frame) error {
+func (op *forOp) exec(fm *Frame) error {
 	variable, err := getVar(fm, op.lvalue)
 	if err != nil {
-		return err
+		return fm.errorp(op, err)
 	}
 	iterable, err := evalForValue(fm, op.iterOp, "value being iterated")
 	if err != nil {
-		return err
+		return fm.errorp(op, err)
 	}
 
-	body := op.bodyOp.execlambdaOp(fm)
-	elseBody := op.elseOp.execlambdaOp(fm)
+	body := execLambdaOp(fm, op.bodyOp)
+	elseBody := execLambdaOp(fm, op.elseOp)
 
 	iterated := false
 	var errElement error
@@ -543,19 +546,19 @@ func (op *forOp) invoke(fm *Frame) error {
 		return true
 	})
 	if errIterate != nil {
-		return errIterate
+		return fm.errorp(op, errIterate)
 	}
 	if errElement != nil {
-		return errElement
+		return fm.errorp(op, errElement)
 	}
 
 	if !iterated && elseBody != nil {
-		return elseBody.Call(fm.fork("for else"), NoArgs, NoOpts)
+		return fm.errorp(op, elseBody.Call(fm.fork("for else"), NoArgs, NoOpts))
 	}
 	return nil
 }
 
-func compileTry(cp *compiler, fn *parse.Form) effectOpBody {
+func compileTry(cp *compiler, fn *parse.Form) effectOp {
 	logger.Println("compiling try")
 	args := cp.walkArgs(fn)
 	bodyNode := args.nextMustLambda()
@@ -592,10 +595,11 @@ func compileTry(cp *compiler, fn *parse.Form) effectOpBody {
 		finallyOp = cp.primaryOp(finallyNode)
 	}
 
-	return &tryOp{bodyOp, exceptVar, exceptOp, elseOp, finallyOp}
+	return &tryOp{fn.Range(), bodyOp, exceptVar, exceptOp, elseOp, finallyOp}
 }
 
 type tryOp struct {
+	diag.Ranging
 	bodyOp    valuesOp
 	exceptVar lvalue
 	exceptOp  valuesOp
@@ -603,19 +607,19 @@ type tryOp struct {
 	finallyOp valuesOp
 }
 
-func (op *tryOp) invoke(fm *Frame) error {
-	body := op.bodyOp.execlambdaOp(fm)
+func (op *tryOp) exec(fm *Frame) error {
+	body := execLambdaOp(fm, op.bodyOp)
 	var exceptVar vars.Var
 	if op.exceptVar.qname != "" {
 		var err error
 		exceptVar, err = getVar(fm, op.exceptVar)
 		if err != nil {
-			return err
+			return fm.errorp(op, err)
 		}
 	}
-	except := op.exceptOp.execlambdaOp(fm)
-	elseFn := op.elseOp.execlambdaOp(fm)
-	finally := op.finallyOp.execlambdaOp(fm)
+	except := execLambdaOp(fm, op.exceptOp)
+	elseFn := execLambdaOp(fm, op.elseOp)
+	finally := execLambdaOp(fm, op.finallyOp)
 
 	err := body.Call(fm.fork("try body"), NoArgs, NoOpts)
 	if err != nil {
@@ -623,7 +627,7 @@ func (op *tryOp) invoke(fm *Frame) error {
 			if exceptVar != nil {
 				err := exceptVar.Set(err.(*Exception))
 				if err != nil {
-					return err
+					return fm.errorp(op, err)
 				}
 			}
 			err = except.Call(fm.fork("try except"), NoArgs, NoOpts)
@@ -638,10 +642,10 @@ func (op *tryOp) invoke(fm *Frame) error {
 		if errFinally != nil {
 			// TODO: If err is not nil, this discards err. Use something similar
 			// to pipeline exception to expose both.
-			return errFinally
+			return fm.errorp(op, errFinally)
 		}
 	}
-	return err
+	return fm.errorp(op, err)
 }
 
 func (cp *compiler) compileOneLValue(n *parse.Compound) lvalue {
@@ -659,33 +663,15 @@ func (cp *compiler) compileOneLValue(n *parse.Compound) lvalue {
 	return lvalues.lvalues[0]
 }
 
-// execLambdaOp executes a ValuesOp that is known to yield a lambda and returns
-// the lambda. If the ValuesOp is empty, it returns a nil.
-func (op valuesOp) execlambdaOp(fm *Frame) Callable {
-	if op.body == nil {
+// Executes a valuesOp that is known to yield a lambda and returns the lambda.
+// Returns nil if op is nil.
+func execLambdaOp(fm *Frame, op valuesOp) Callable {
+	if op == nil {
 		return nil
 	}
-
 	values, err := op.exec(fm)
 	if err != nil {
 		panic("must not be erroneous")
 	}
 	return values[0].(Callable)
-}
-
-// execMustOne executes the LValuesOp and returns an error if it does not
-// evaluate to exactly one Variable. If the given LValuesOp is empty, it returns
-// nil.
-func (op lvaluesOp) execMustOne(fm *Frame) (vars.Var, error) {
-	if op.body == nil {
-		return nil, nil
-	}
-	variables, err := op.exec(fm)
-	if err != nil {
-		return nil, err
-	}
-	if len(variables) != 1 {
-		return nil, fm.errorpf(op, "should be one variable")
-	}
-	return variables[0], nil
 }

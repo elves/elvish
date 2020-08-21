@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"unsafe"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
@@ -23,8 +24,7 @@ type Closure struct {
 	Op          effectOp
 	Captured    Ns
 	SrcMeta     parse.Source
-	DefFrom     int
-	DefTo       int
+	DefRange    diag.Ranging
 }
 
 var _ Callable = &Closure{}
@@ -138,9 +138,10 @@ func (cf closureFields) OptDefaults() vals.List {
 }
 
 func (cf closureFields) Body() string {
-	return cf.c.SrcMeta.Code[cf.c.Op.From:cf.c.Op.To]
+	r := cf.c.Op.(diag.Ranger).Range()
+	return cf.c.SrcMeta.Code[r.From:r.To]
 }
 
 func (cf closureFields) Def() string {
-	return cf.c.SrcMeta.Code[cf.c.DefFrom:cf.c.DefTo]
+	return cf.c.SrcMeta.Code[cf.c.DefRange.From:cf.c.DefRange.To]
 }

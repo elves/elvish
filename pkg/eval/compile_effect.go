@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -13,21 +12,24 @@ import (
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/util"
-	"github.com/xiaq/persistent/hashmap"
 )
 
-// An effectOpBody that creates all variables in a scope before executing the
-// body.
+// An operation with some side effects.
+type effectOp interface{ exec(*Frame) error }
+
+// An effectOp that creates all variables in a scope before executing the body.
 type scopeOp struct {
-	inner  effectOpBody
+	inner  effectOp
 	locals []string
 }
 
 func wrapScopeOp(op effectOp, locals []string) effectOp {
-	return effectOp{scopeOp{op.body, locals}, op.Ranging}
+	return scopeOp{op, locals}
 }
 
-func (op scopeOp) invoke(fm *Frame) error {
+func (op scopeOp) Range() diag.Ranging { return op.inner.(diag.Ranger).Range() }
+
+func (op scopeOp) exec(fm *Frame) error {
 	for _, name := range op.locals {
 		var variable vars.Var
 		if strings.HasSuffix(name, FnSuffix) {
@@ -42,18 +44,19 @@ func (op scopeOp) invoke(fm *Frame) error {
 		fm.local[name] = variable
 	}
 
-	return op.inner.invoke(fm)
+	return op.inner.exec(fm)
 }
 
 func (cp *compiler) chunkOp(n *parse.Chunk) effectOp {
-	return makeEffectOp(n, chunkOp{cp.pipelineOps(n.Pipelines)})
+	return chunkOp{n.Range(), cp.pipelineOps(n.Pipelines)}
 }
 
 type chunkOp struct {
+	diag.Ranging
 	subops []effectOp
 }
 
-func (op chunkOp) invoke(fm *Frame) error {
+func (op chunkOp) exec(fm *Frame) error {
 	for _, subop := range op.subops {
 		err := subop.exec(fm)
 		if err != nil {
@@ -64,7 +67,7 @@ func (op chunkOp) invoke(fm *Frame) error {
 	// We also check for interrupts before each pipeline, so there is no
 	// need to check it before the chunk or after each pipeline.
 	if fm.IsInterrupted() {
-		return ErrInterrupted
+		return fm.errorp(op, ErrInterrupted)
 	}
 	return nil
 }
@@ -72,8 +75,7 @@ func (op chunkOp) invoke(fm *Frame) error {
 func (cp *compiler) pipelineOp(n *parse.Pipeline) effectOp {
 	formOps := cp.formOps(n.Forms)
 
-	return makeEffectOp(n,
-		&pipelineOp{n.Background, parse.SourceText(n), formOps})
+	return &pipelineOp{n.Range(), n.Background, parse.SourceText(n), formOps}
 }
 
 func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []effectOp {
@@ -85,6 +87,7 @@ func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []effectOp {
 }
 
 type pipelineOp struct {
+	diag.Ranging
 	bg     bool
 	source string
 	subops []effectOp
@@ -92,9 +95,9 @@ type pipelineOp struct {
 
 const pipelineChanBufferSize = 32
 
-func (op *pipelineOp) invoke(fm *Frame) error {
+func (op *pipelineOp) exec(fm *Frame) error {
 	if fm.IsInterrupted() {
-		return ErrInterrupted
+		return fm.errorp(op, ErrInterrupted)
 	}
 
 	if op.bg {
@@ -118,7 +121,7 @@ func (op *pipelineOp) invoke(fm *Frame) error {
 	var nextIn *Port
 
 	// For each form, create a dedicated evalCtx and run asynchronously
-	for i, op := range op.subops {
+	for i, formOp := range op.subops {
 		hasChanInput := i > 0
 		newFm := fm.fork("[form op]")
 		if i > 0 {
@@ -130,7 +133,7 @@ func (op *pipelineOp) invoke(fm *Frame) error {
 			// os.Pipe sets O_CLOEXEC, which is what we want.
 			reader, writer, e := os.Pipe()
 			if e != nil {
-				return fmt.Errorf("failed to create pipe: %s", e)
+				return fm.errorpf(op, "failed to create pipe: %s", e)
 			}
 			ch := make(chan interface{}, pipelineChanBufferSize)
 			newFm.ports[1] = &Port{
@@ -138,7 +141,7 @@ func (op *pipelineOp) invoke(fm *Frame) error {
 			nextIn = &Port{
 				File: reader, Chan: ch, CloseFile: true, CloseChan: false}
 		}
-		thisOp := op
+		thisOp := formOp
 		thisError := &errors[i]
 		go func() {
 			err := thisOp.exec(newFm)
@@ -179,7 +182,7 @@ func (op *pipelineOp) invoke(fm *Frame) error {
 		return nil
 	}
 	wg.Wait()
-	return makePipelineError(errors)
+	return fm.errorp(op, makePipelineError(errors))
 }
 
 func (cp *compiler) formOp(n *parse.Form) effectOp {
@@ -189,7 +192,7 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 		assignmentOps = cp.assignmentOps(n.Assignments)
 		if n.Head == nil && n.Vars == nil {
 			// Permanent assignment.
-			return makeEffectOp(n, seqOp{assignmentOps})
+			return seqOp{assignmentOps}
 		}
 		for _, a := range n.Assignments {
 			lvalues := cp.parseIndexingLValue(a.Left)
@@ -202,7 +205,7 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 	// Depending on the type of the form, exactly one of the three below will be
 	// set.
 	var (
-		specialOpFunc  effectOpBody
+		specialOp      effectOp
 		headOp         valuesOp
 		spaceyAssignOp effectOp
 	)
@@ -216,18 +219,16 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 			compileForm, ok := builtinSpecials[headStr]
 			if ok {
 				// Special form.
-				specialOpFunc = compileForm(cp, n)
+				specialOp = compileForm(cp, n)
 			} else {
-				var headOpFunc valuesOpBody
 				sigil, qname := SplitVariableRef(headStr)
 				if sigil == "" && cp.registerVariableGet(qname+FnSuffix, n.Head) {
 					// $head~ resolves.
-					headOpFunc = variableOp{false, qname + FnSuffix}
+					headOp = variableOp{n.Head.Range(), false, qname + FnSuffix}
 				} else {
 					// Fall back to $e:head~.
-					headOpFunc = literalValues(ExternalCmd{headStr})
+					headOp = literalValues(n.Head, ExternalCmd{headStr})
 				}
-				headOp = valuesOp{headOpFunc, n.Head.Range()}
 			}
 		} else {
 			// Head exists and is not a literal string. Evaluate as a normal
@@ -240,22 +241,21 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 		lhs := cp.parseCompoundLValues(n.Vars)
 		cp.registerLValues(lhs)
 		argOps = cp.compoundOps(n.Args)
-		rhs := valuesOp{body: seqValuesOp{argOps}}
+		var rhsRanging diag.Ranging
 		if len(argOps) > 0 {
-			rhs.From = argOps[0].From
-			rhs.To = argOps[len(argOps)-1].To
+			rhsRanging = diag.MixedRanging(argOps[0], argOps[len(argOps)-1])
 		} else {
-			rhs.From = n.Range().To
-			rhs.To = n.Range().To
+			rhsRanging = diag.PointRanging(n.Range().To)
 		}
-		spaceyAssignOp = makeEffectOp(n, &assignOp{lhs, rhs})
+		rhs := seqValuesOp{rhsRanging, argOps}
+		spaceyAssignOp = &assignOp{n.Range(), lhs, rhs}
 	}
 
 	optsOp := cp.mapPairs(n.Opts)
 	redirOps := cp.redirOps(n.Redirs)
 	// TODO: n.ErrorRedir
 
-	return makeEffectOp(n, &formOp{n.Range(), tempLValues, assignmentOps, redirOps, specialOpFunc, headOp, argOps, optsOp, spaceyAssignOp})
+	return &formOp{n.Range(), tempLValues, assignmentOps, redirOps, specialOp, headOp, argOps, optsOp, spaceyAssignOp}
 }
 
 func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
@@ -271,14 +271,14 @@ type formOp struct {
 	tempLValues    []lvalue
 	assignmentOps  []effectOp
 	redirOps       []effectOp
-	specialOpBody  effectOpBody
+	specialOp      effectOp
 	headOp         valuesOp
 	argOps         []valuesOp
-	optsOp         valuesOpBody
+	optsOp         *mapPairsOp
 	spaceyAssignOp effectOp
 }
 
-func (op *formOp) invoke(fm *Frame) (errRet error) {
+func (op *formOp) exec(fm *Frame) (errRet error) {
 	// fm here is always a sub-frame created in compiler.pipeline, so it can
 	// be safely modified.
 
@@ -291,7 +291,7 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 		for _, lv := range op.tempLValues {
 			variable, err := getVar(fm, lv)
 			if err != nil {
-				return err
+				return fm.errorp(op, err)
 			}
 			saveVars = append(saveVars, variable)
 		}
@@ -341,17 +341,17 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 		}
 	}
 
-	if op.specialOpBody != nil {
-		return op.specialOpBody.invoke(fm)
+	if op.specialOp != nil {
+		return op.specialOp.exec(fm)
 	}
 	var headFn Callable
 	var args []interface{}
-	if op.headOp.body != nil {
+	if op.headOp != nil {
 		var err error
 		// head
 		headFn, err = evalForCommand(fm, op.headOp, "command")
 		if err != nil {
-			return err
+			return fm.errorp(op.headOp, err)
 		}
 
 		// args
@@ -366,21 +366,19 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 
 	// opts
 	// TODO(xiaq): This conversion should be avoided.
-	optValues, err := op.optsOp.invoke(fm)
-	if err != nil {
-		return err
-	}
-	opts := optValues[0].(hashmap.Map)
+
 	convertedOpts := make(map[string]interface{})
-	for it := opts.Iterator(); it.HasElem(); it.Next() {
-		k, v := it.Elem()
+	err := op.optsOp.exec(fm, func(k, v interface{}) error {
 		if ks, ok := k.(string); ok {
 			convertedOpts[ks] = v
-		} else {
-			// TODO(xiaq): Point to the particular key.
-			return errs.BadValue{
-				What: "option key", Valid: "string", Actual: vals.Kind(k)}
+			return nil
 		}
+		// TODO(xiaq): Point to the particular key.
+		return fm.errorp(op, errs.BadValue{
+			What: "option key", Valid: "string", Actual: vals.Kind(k)})
+	})
+	if err != nil {
+		return fm.errorp(op, err)
 	}
 
 	if headFn != nil {
@@ -426,7 +424,7 @@ func (cp *compiler) assignmentOp(n *parse.Assignment) effectOp {
 	lhs := cp.parseIndexingLValue(n.Left)
 	cp.registerLValues(lhs)
 	rhs := cp.compoundOp(n.Right)
-	return makeEffectOp(n, &assignOp{lhs, rhs})
+	return &assignOp{n.Range(), lhs, rhs}
 }
 
 func (cp *compiler) assignmentOps(ns []*parse.Assignment) []effectOp {
@@ -460,8 +458,7 @@ func (cp *compiler) redirOp(n *parse.Redir) effectOp {
 		// TODO: Record and get redirection sign position
 		cp.errorpf(n, "bad redirection sign")
 	}
-	return makeEffectOp(n,
-		&redirOp{dstOp, cp.compoundOp(n.Right), n.RightIsFd, n.Mode, flag})
+	return &redirOp{n.Range(), dstOp, cp.compoundOp(n.Right), n.RightIsFd, n.Mode, flag}
 }
 
 func (cp *compiler) redirOps(ns []*parse.Redir) []effectOp {
@@ -488,6 +485,7 @@ func makeFlag(m parse.RedirMode) int {
 }
 
 type redirOp struct {
+	diag.Ranging
 	dstOp   valuesOp
 	srcOp   valuesOp
 	srcIsFd bool
@@ -499,9 +497,9 @@ type invalidFD struct{ fd int }
 
 func (err invalidFD) Error() string { return fmt.Sprintf("invalid fd: %d", err.fd) }
 
-func (op *redirOp) invoke(fm *Frame) error {
+func (op *redirOp) exec(fm *Frame) error {
 	var dst int
-	if op.dstOp.body == nil {
+	if op.dstOp == nil {
 		// use default dst fd
 		switch op.mode {
 		case parse.Read:
@@ -509,14 +507,14 @@ func (op *redirOp) invoke(fm *Frame) error {
 		case parse.Write, parse.ReadWrite, parse.Append:
 			dst = 1
 		default:
-			return fmt.Errorf("bad RedirMode; parser bug")
+			return fm.errorpf(op, "bad RedirMode; parser bug")
 		}
 	} else {
 		var err error
 		// dst must be a valid fd
 		dst, err = evalForFd(fm, op.dstOp, false, "redirection destination")
 		if err != nil {
-			return err
+			return fm.errorp(op, err)
 		}
 	}
 
@@ -526,14 +524,14 @@ func (op *redirOp) invoke(fm *Frame) error {
 	if op.srcIsFd {
 		src, err := evalForFd(fm, op.srcOp, true, "redirection source")
 		if err != nil {
-			return err
+			return fm.errorp(op, err)
 		}
 		switch {
 		case src == -1:
 			// close
 			fm.ports[dst] = &Port{}
 		case src >= len(fm.ports) || fm.ports[src] == nil:
-			return invalidFD{src}
+			return fm.errorp(op, invalidFD{src})
 		default:
 			fm.ports[dst] = fm.ports[src].Fork()
 		}
@@ -541,13 +539,13 @@ func (op *redirOp) invoke(fm *Frame) error {
 	}
 	src, err := evalForValue(fm, op.srcOp, "redirection source")
 	if err != nil {
-		return err
+		return fm.errorp(op, err)
 	}
 	switch src := src.(type) {
 	case string:
 		f, err := os.OpenFile(src, op.flag, defaultFileRedirPerm)
 		if err != nil {
-			return fmt.Errorf("failed to open file %s: %s", vals.Repr(src, vals.NoPretty), err)
+			return fm.errorpf(op, "failed to open file %s: %s", vals.Repr(src, vals.NoPretty), err)
 		}
 		fm.ports[dst] = &Port{
 			File: f, Chan: BlackholeChan,
@@ -566,7 +564,7 @@ func (op *redirOp) invoke(fm *Frame) error {
 		case parse.Write:
 			f = src.WriteEnd
 		default:
-			return errors.New("can only use < or > with pipes")
+			return fm.errorpf(op, "can only use < or > with pipes")
 		}
 		fm.ports[dst] = &Port{
 			File: f, Chan: BlackholeChan,
@@ -609,7 +607,7 @@ func evalForFd(fm *Frame, op valuesOp, closeOK bool, what string) (int, error) {
 
 type seqOp struct{ subops []effectOp }
 
-func (op seqOp) invoke(fm *Frame) error {
+func (op seqOp) exec(fm *Frame) error {
 	for _, subop := range op.subops {
 		err := subop.exec(fm)
 		if err != nil {
