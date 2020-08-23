@@ -63,16 +63,6 @@ func (bt BindingMap) GetKey(k ui.Key) eval.Callable {
 	return v.(eval.Callable)
 }
 
-func (bt BindingMap) GetOrDefault(k ui.Key) eval.Callable {
-	switch {
-	case bt.HasKey(k):
-		return bt.GetKey(k)
-	case bt.HasKey(ui.Default):
-		return bt.GetKey(ui.Default)
-	}
-	return nil
-}
-
 // Assoc converts the index to ui.Key, ensures that the value is CallableValue,
 // uses the Assoc of the inner Map and converts the result to a BindingTable.
 func (bt BindingMap) Assoc(k, v interface{}) (interface{}, error) {

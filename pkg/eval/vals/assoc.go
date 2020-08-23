@@ -15,7 +15,6 @@ var (
 	errAssocUnsupported        = errors.New("assoc is not supported")
 	errReplacementMustBeString = errors.New("replacement must be string")
 	errAssocWithSlice          = errors.New("assoc with slice not yet supported")
-	errStructMapKey            = errors.New("struct-maps must be assoced with existing key")
 )
 
 // Assoc takes a container, a key and value, and returns a modified version of

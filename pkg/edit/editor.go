@@ -117,8 +117,6 @@ func (ed *Editor) Ns() eval.Ns {
 	return ed.ns
 }
 
-func (ed *Editor) notify(s string) { ed.app.Notify(s) }
-
 func (ed *Editor) notifyf(format string, args ...interface{}) {
 	ed.app.Notify(fmt.Sprintf(format, args...))
 }

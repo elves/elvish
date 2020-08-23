@@ -13,13 +13,7 @@ import (
 	"github.com/elves/elvish/pkg/ui"
 )
 
-type faultyStore struct{}
-
 var mockError = errors.New("mock error")
-
-func (s faultyStore) LastCmd() (store.Cmd, error) {
-	return store.Cmd{}, mockError
-}
 
 func TestStart_NoStore(t *testing.T) {
 	f := Setup()

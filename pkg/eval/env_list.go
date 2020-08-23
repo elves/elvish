@@ -19,7 +19,6 @@ var (
 
 // Errors
 var (
-	ErrCanOnlyAssignList          = errors.New("can only assign compatible values")
 	ErrPathMustBeString           = errors.New("path must be string")
 	ErrPathCannotContainColonZero = errors.New(`path cannot contain colon or \0`)
 )

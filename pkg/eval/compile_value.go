@@ -625,7 +625,3 @@ func (op seqValuesOp) exec(fm *Frame) ([]interface{}, error) {
 	}
 	return values, nil
 }
-
-type funcValuesOp func(*Frame) ([]interface{}, error)
-
-func (op funcValuesOp) invoke(fm *Frame) ([]interface{}, error) { return op(fm) }

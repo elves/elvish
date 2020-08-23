@@ -45,12 +45,6 @@ func (bb *BufferBuilder) SetEagerWrap(v bool) *BufferBuilder {
 	return bb
 }
 
-func (bb *BufferBuilder) SetLines(lines ...[]Cell) *BufferBuilder {
-	bb.Lines = lines
-	bb.Col = CellsWidth(lines[len(lines)-1])
-	return bb
-}
-
 func (bb *BufferBuilder) setDot(dot Pos) *BufferBuilder {
 	bb.Dot = dot
 	return bb

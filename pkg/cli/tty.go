@@ -67,8 +67,6 @@ type aTTY struct {
 	raw      int
 }
 
-const sigsChanBufferSize = 256
-
 // NewTTY returns a new TTY from input and output terminal files.
 func NewTTY(in, out *os.File) TTY {
 	return &aTTY{in: in, out: out, w: term.NewWriter(out)}

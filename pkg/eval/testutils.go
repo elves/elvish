@@ -145,16 +145,6 @@ func (t TestCase) Puts(vs ...interface{}) TestCase {
 	return t
 }
 
-// PutsStrings returns an altered TestCase that requires the source code to produce
-// the specified strings in the value channel when evaluated.
-func (t TestCase) PutsStrings(ss []string) TestCase {
-	t.want.valueOut = make([]interface{}, len(ss))
-	for i, s := range ss {
-		t.want.valueOut[i] = s
-	}
-	return t
-}
-
 // Prints returns an altered TestCase that requires the source code to produce
 // the specified output in the byte pipe when evaluated.
 func (t TestCase) Prints(s string) TestCase {
