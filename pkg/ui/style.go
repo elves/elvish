@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 )
 
@@ -99,66 +98,4 @@ func (s *Style) MergeFromOptions(options map[string]interface{}) error {
 	}
 
 	return nil
-}
-
-var sgrStyling = map[int]Styling{
-	1: Bold,
-	2: Dim,
-	4: Underlined,
-	5: Blink,
-	7: Inverse,
-}
-
-// StyleFromSGR builds a Style from an SGR sequence.
-func StyleFromSGR(s string) Style {
-	style := Style{}
-	codes := getSGRCodes(s)
-	for len(codes) > 0 {
-		code := codes[0]
-		consume := 1
-
-		switch {
-		case sgrStyling[code] != nil:
-			sgrStyling[code].transform(&style)
-		case 30 <= code && code <= 37:
-			style.Foreground = ansiColor(code - 30)
-		case 40 <= code && code <= 47:
-			style.Background = ansiColor(code - 40)
-		case 90 <= code && code <= 97:
-			style.Foreground = ansiBrightColor(code - 90)
-		case 100 <= code && code <= 107:
-			style.Background = ansiBrightColor(code - 100)
-		case code == 38 && len(codes) >= 3 && codes[1] == 5:
-			style.Foreground = xterm256Color(codes[2])
-			consume = 3
-		case code == 48 && len(codes) >= 3 && codes[1] == 5:
-			style.Background = xterm256Color(codes[2])
-			consume = 3
-		case code == 38 && len(codes) >= 5 && codes[1] == 2:
-			style.Foreground = trueColor{
-				uint8(codes[2]), uint8(codes[3]), uint8(codes[4])}
-			consume = 5
-		case code == 48 && len(codes) >= 5 && codes[1] == 2:
-			style.Background = trueColor{
-				uint8(codes[2]), uint8(codes[3]), uint8(codes[4])}
-			consume = 5
-		default:
-			// Do nothing; skip this code
-		}
-
-		codes = codes[consume:]
-	}
-	return style
-}
-
-func getSGRCodes(s string) []int {
-	var codes []int
-	for _, part := range strings.Split(s, ";") {
-		code, err := strconv.Atoi(part)
-		if err != nil {
-			continue
-		}
-		codes = append(codes, code)
-	}
-	return codes
 }
