@@ -6,6 +6,24 @@ import (
 	"github.com/elves/elvish/pkg/tt"
 )
 
+func TestParseSGREscapedText(t *testing.T) {
+	tt.Test(t, tt.Fn("ParseSGREscapedText", ParseSGREscapedText), tt.Table{
+		tt.Args("").Rets(Text(nil)),
+		tt.Args("text").Rets(T("text")),
+		tt.Args("\033[1mbold").Rets(T("bold", Bold)),
+		tt.Args("\033[1mbold\033[31mbold red").Rets(
+			Concat(T("bold", Bold), T("bold red", Bold, FgRed))),
+		tt.Args("\033[1mbold\033[;31mred").Rets(
+			Concat(T("bold", Bold), T("red", FgRed))),
+		// Other escape sequences are ignored.
+		tt.Args("\033[Atext").Rets(T("text")),
+		// Non-graphic runes are removed.
+		tt.Args("t\x01ext").Rets(T("text")),
+		// Lone escape runes are removed.
+		tt.Args("t\033ext").Rets(T("text")),
+	})
+}
+
 func TestStyleFromSGR(t *testing.T) {
 	tt.Test(t, tt.Fn("StyleFromSGR", StyleFromSGR), tt.Table{
 		tt.Args("1").Rets(Style{Bold: true}),
