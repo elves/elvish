@@ -22,7 +22,7 @@ func makeWidget() cli.Widget {
 	w := cli.NewComboBox(cli.ComboBoxSpec{
 		CodeArea: cli.CodeAreaSpec{
 			Prompt: func() ui.Text {
-				return ui.T(" NUMBER ", ui.Bold, ui.BgMagenta).ConcatText(ui.T(" "))
+				return ui.Concat(ui.T(" NUMBER ", ui.Bold, ui.BgMagenta), ui.T(" "))
 			},
 		},
 		ListBox: cli.ListBoxSpec{

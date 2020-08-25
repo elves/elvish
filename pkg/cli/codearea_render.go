@@ -25,7 +25,7 @@ func getView(w *codeArea) *view {
 		// Apply stylingForPending to [pFrom, pTo)
 		parts := styledCode.Partition(pFrom, pTo)
 		pending := ui.StyleText(parts[1], stylingForPending)
-		styledCode = parts[0].ConcatText(pending).ConcatText(parts[2])
+		styledCode = ui.Concat(parts[0], pending, parts[2])
 	}
 
 	var rprompt ui.Text

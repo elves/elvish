@@ -6,7 +6,7 @@ import "github.com/elves/elvish/pkg/ui"
 func ModeLine(content string, space bool) ui.Text {
 	t := ui.T(content, ui.Bold, ui.FgWhite, ui.BgMagenta)
 	if space {
-		t = t.ConcatText(ui.T(" "))
+		t = ui.Concat(t, ui.T(" "))
 	}
 	return t
 }

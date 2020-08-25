@@ -17,18 +17,20 @@ func TestMarkLines(t *testing.T) {
 			"foo  bar foobar", stylesheet,
 			"---  xxx ------",
 		).Rets(
-			T("foo", Inverse).
-				ConcatText(T("  ")).
-				ConcatText(T("bar", FgBlue, BgGreen)).
-				ConcatText(T(" ")).
-				ConcatText(T("foobar", Inverse)),
+			Concat(
+				T("foo", Inverse),
+				T("  "),
+				T("bar", FgBlue, BgGreen),
+				T(" "),
+				T("foobar", Inverse)),
 		),
 		tt.Args(
 			"foo  bar foobar", stylesheet,
 			"---",
 		).Rets(
-			T("foo", Inverse).
-				ConcatText(T("  bar foobar")),
+			Concat(
+				T("foo", Inverse),
+				T("  bar foobar")),
 		),
 		tt.Args(
 			"plain1",
@@ -37,15 +39,16 @@ func TestMarkLines(t *testing.T) {
 			"---  xxx ------",
 			"plain3",
 		).Rets(
-			T("plain1").
-				ConcatText(T("plain2")).
-				ConcatText(T("foo", Inverse)).
-				ConcatText(T("  ")).
-				ConcatText(T("bar", FgBlue, BgGreen)).
-				ConcatText(T(" ")).
-				ConcatText(T("foobar", Inverse)).
-				ConcatText(T("\n")).
-				ConcatText(T("plain3")),
+			Concat(
+				T("plain1"),
+				T("plain2"),
+				T("foo", Inverse),
+				T("  "),
+				T("bar", FgBlue, BgGreen),
+				T(" "),
+				T("foobar", Inverse),
+				T("\n"),
+				T("plain3")),
 		),
 	})
 }

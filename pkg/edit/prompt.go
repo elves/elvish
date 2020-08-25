@@ -111,7 +111,7 @@ func getDefaultPrompt(isRoot bool) eval.Callable {
 		p = ui.T("# ", ui.FgRed)
 	}
 	return eval.NewGoFn("default prompt", func() ui.Text {
-		return ui.T(util.Getwd()).ConcatText(p)
+		return ui.Concat(ui.T(util.Getwd()), p)
 	})
 }
 

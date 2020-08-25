@@ -231,13 +231,13 @@ func (c croppedLines) Render(width, height int) *term.Buffer {
 		if extendStyle {
 			left[0].Style = line[0].Style
 		}
-		acc := left.ConcatText(line.TrimWcwidth(width - 2*c.padding))
+		acc := ui.Concat(left, line.TrimWcwidth(width-2*c.padding))
 		if extendStyle || selected {
 			right := rightSpacing.Clone()
 			if extendStyle {
 				right[0].Style = line[len(line)-1].Style
 			}
-			acc = acc.ConcatText(right).TrimWcwidth(width)
+			acc = ui.Concat(acc, right).TrimWcwidth(width)
 		}
 		if selected {
 			acc = ui.StyleText(acc, stylingForSelected)

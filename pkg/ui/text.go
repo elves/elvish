@@ -18,6 +18,15 @@ func T(s string, ts ...Styling) Text {
 	return StyleText(Text{&Segment{Text: s}}, ts...)
 }
 
+// Concat concatenates multiple Text's into one.
+func Concat(texts ...Text) Text {
+	var ret Text
+	for _, text := range texts {
+		ret = append(ret, text...)
+	}
+	return ret
+}
+
 // Kind returns "styled-text".
 func (Text) Kind() string { return "ui:text" }
 
@@ -53,34 +62,24 @@ func (t Text) Index(k interface{}) (interface{}, error) {
 }
 
 // Concat implements Text+string, Text+Segment and Text+Text.
-func (t Text) Concat(v interface{}) (interface{}, error) {
-	switch rhs := v.(type) {
+func (t Text) Concat(rhs interface{}) (interface{}, error) {
+	switch rhs := rhs.(type) {
 	case string:
-		return t.ConcatSegments(&Segment{Text: rhs}), nil
+		return Concat(t, T(rhs)), nil
 	case *Segment:
-		return t.ConcatSegments(rhs), nil
+		return Concat(t, Text{rhs}), nil
 	case Text:
-		return t.ConcatSegments(rhs...), nil
+		return Concat(t, rhs), nil
 	}
 
 	return nil, vals.ErrConcatNotImplemented
 }
 
-// ConcatSegments returns a new Text with the new Text added to the end.
-func (t Text) ConcatText(t2 Text) Text {
-	return t.ConcatSegments(t2...)
-}
-
-// ConcatSegments returns a new Text with the new Segment's added to the end.
-func (t Text) ConcatSegments(segs ...*Segment) Text {
-	return Text(append(append(Text(nil), t...), segs...))
-}
-
 // RConcat implements string+Text.
-func (t Text) RConcat(v interface{}) (interface{}, error) {
-	switch lhs := v.(type) {
+func (t Text) RConcat(lhs interface{}) (interface{}, error) {
+	switch lhs := lhs.(type) {
 	case string:
-		return Text(append([]*Segment{{Text: lhs}}, t...)), nil
+		return Concat(T(lhs), t), nil
 	}
 
 	return nil, vals.ErrConcatNotImplemented

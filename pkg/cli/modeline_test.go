@@ -21,7 +21,8 @@ func testModeLine(t *testing.T, fn *tt.FnToTest) {
 		tt.Args("TEST", false).Rets(
 			ui.T("TEST", ui.Bold, ui.FgWhite, ui.BgMagenta)),
 		tt.Args("TEST", true).Rets(
-			ui.T("TEST", ui.Bold, ui.FgWhite, ui.BgMagenta).
-				ConcatText(ui.T(" "))),
+			ui.Concat(
+				ui.T("TEST", ui.Bold, ui.FgWhite, ui.BgMagenta),
+				ui.T(" "))),
 	})
 }
