@@ -38,5 +38,8 @@ func TestClosure(t *testing.T) {
 		That("put [x @y]{ body }[def]").Puts("[x @y]{ body }"),
 		That("put { body }[src][code]").
 			Puts("put { body }[src][code]"),
+
+		// Regression test for https://b.elv.sh/1126
+		That("fn f { body }; put $f~[body]").Puts(" body "),
 	)
 }

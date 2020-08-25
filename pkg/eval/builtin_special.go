@@ -203,6 +203,8 @@ func (op fnOp) exec(fm *Frame) error {
 
 type fnWrap struct{ effectOp }
 
+func (op fnWrap) Range() diag.Ranging { return op.effectOp.(diag.Ranger).Range() }
+
 func (op fnWrap) exec(fm *Frame) error {
 	err := op.effectOp.exec(fm)
 	if err != nil && Cause(err) != Return {
