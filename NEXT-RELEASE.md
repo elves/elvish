@@ -45,6 +45,10 @@ New features in the standard library:
 -   A new `eval` command supports evaluating a dynamic piece of code in a
     restricted namespace.
 
+New features in the interactive editor:
+
+-   SGR escape sequences written from the prompt callback are now supported.
+
 # Notable bugfixes
 
 -   Using large lists that contain `$nil` no longer crashes Elvish.

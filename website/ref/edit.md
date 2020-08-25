@@ -35,11 +35,21 @@ rprompt is the same other than the variable name: just replace `prompt` with
 `rprompt`.
 
 To customize the prompt, assign a function to `edit:prompt`. The function may
-write value outputs or byte outputs. Value outputs may be either strings or
-`styled` values; they are joiend with no spaces in between. Byte outputs are
-output as-is, including any newlines, but control characters will be escaped:
-you should use `styled` to output styled text. If you mix value and byte
-outputs, the order in which they appear is non-deterministic.
+write value outputs or byte outputs:
+
+-   Value outputs may be either strings or `styled` values; they are joiend with
+    no spaces in between.
+
+-   Byte outputs are output as-is, including any newlines. Any
+    [SGR escape sequences](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters)
+    included in the byte outputs will be parsed, but any other escape sequences
+    or control character will be removed.
+
+If you mix value and byte outputs, the order in which they appear is
+non-deterministic.
+
+Prefer using `styled` to output styled text; the support for SGR escape
+sequences is mostly for compatibility with external cross-shell prompts.
 
 The default prompt and rprompt are equivalent to:
 
