@@ -11,14 +11,12 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const flushInputDuringSetup = false
-
 func setup(in, out *os.File) (func() error, error) {
 	// On Unix, use input file for changing termios. All fds pointing to the
 	// same terminal are equivalent.
 
 	fd := int(in.Fd())
-	term, err := sys.NewTermiosFromFd(fd)
+	term, err := sys.TermiosForFd(fd)
 	if err != nil {
 		return nil, fmt.Errorf("can't get terminal attribute: %s", err)
 	}
@@ -40,14 +38,6 @@ func setup(in, out *os.File) (func() error, error) {
 		return nil, fmt.Errorf("can't set up terminal attribute: %s", err)
 	}
 
-	var errFlushInput error
-	if flushInputDuringSetup {
-		err = sys.FlushInput(fd)
-		if err != nil {
-			errFlushInput = fmt.Errorf("can't flush input: %s", err)
-		}
-	}
-
 	var errSetupVT error
 	err = setupVT(out)
 	if err != nil {
@@ -58,7 +48,7 @@ func setup(in, out *os.File) (func() error, error) {
 		return util.Errors(savedTermios.ApplyToFd(fd), restoreVT(out))
 	}
 
-	return restore, util.Errors(errFlushInput, errSetupVT)
+	return restore, errSetupVT
 }
 
 func setupGlobal() func() {

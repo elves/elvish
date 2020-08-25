@@ -22,5 +22,5 @@ func TestSetupTerminal(t *testing.T) {
 	}
 	// TODO(xiaq): Test whether the interesting flags in the termios were indeed
 	// set.
-	// termios, err := sys.NewTermiosFromFd(int(tty.Fd()))
+	// termios, err := sys.TermiosForFd(int(tty.Fd()))
 }
