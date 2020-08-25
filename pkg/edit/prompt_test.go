@@ -21,10 +21,19 @@ func TestPrompt_ValueOutput(t *testing.T) {
 }
 
 func TestPrompt_ByteOutput(t *testing.T) {
-	f := setup(rc(`edit:prompt = { put 'bytes> ' }`))
+	f := setup(rc(`edit:prompt = { print 'bytes> ' }`))
 	defer f.Cleanup()
 
 	f.TestTTY(t, "bytes> ", term.DotHere)
+}
+
+func TestPrompt_ParsesSGRInByteOutput(t *testing.T) {
+	f := setup(rc(`edit:prompt = { print "\033[31mred\033[m> " }`))
+	defer f.Cleanup()
+
+	f.TestTTY(t,
+		"red> ", Styles,
+		"!!!  ", term.DotHere)
 }
 
 func TestPrompt_NotifiesInvalidValueOutput(t *testing.T) {

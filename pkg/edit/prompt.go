@@ -157,7 +157,7 @@ func callForStyledText(nt notifier, ev *eval.Evaler, ctx string, fn eval.Callabl
 			nt.notifyf("error reading prompt byte output: %v", err)
 		}
 		if len(allBytes) > 0 {
-			add(string(allBytes))
+			add(ui.ParseSGREscapedText(string(allBytes)))
 		}
 	}
 
