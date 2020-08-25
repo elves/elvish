@@ -15,19 +15,16 @@ import (
 // Termios represents terminal attributes.
 type Termios unix.Termios
 
-// NewTermiosFromFd extracts the terminal attribute of the given file
-// descriptor.
-func NewTermiosFromFd(fd int) (*Termios, error) {
-	var term Termios
-	if err := Ioctl(fd, getAttrIOCTL, uintptr(unsafe.Pointer(&term))); err != nil {
-		return nil, err
-	}
-	return &term, nil
+// TermiosForFd returns a pointer to a Termios structure if the file
+// descriptor is open on a terminal device.
+func TermiosForFd(fd int) (*Termios, error) {
+	term, err := unix.IoctlGetTermios(fd, getAttrIOCTL)
+	return (*Termios)(term), err
 }
 
 // ApplyToFd applies term to the given file descriptor.
 func (term *Termios) ApplyToFd(fd int) error {
-	return Ioctl(fd, setAttrNowIOCTL, uintptr(unsafe.Pointer(term)))
+	return unix.IoctlSetTermios(fd, setAttrNowIOCTL, (*unix.Termios)(unsafe.Pointer(term)))
 }
 
 // Copy returns a copy of term.
@@ -64,9 +61,4 @@ func (term *Termios) SetEcho(v bool) {
 // SetICRNL sets the CRNL iflag bit
 func (term *Termios) SetICRNL(v bool) {
 	setFlag(&term.Iflag, unix.ICRNL, v)
-}
-
-// FlushInput discards data written to a file descriptor but not read.
-func FlushInput(fd int) error {
-	return Ioctl(fd, flushIOCTL, uintptr(unix.TCIFLUSH))
 }
