@@ -2,21 +2,12 @@
 
 # Introduction
 
-This document describes the Elvish programming language. It tries to be both a
-specification and an advanced tutorial; if it turns out to be impossible to do
-these two things at the same time, this document will evolve to a formal
-specification, and more readable tutorials will be created.
+This document describes the Elvish programming language. It is both a
+specification and an advanced tutorial.
 
 Examples for one construct might use constructs that have not yet been
 introduced, so some familiarity with the language is assumed. If you are new to
 Elvish, start with the [learning materials](../learn/).
-
-**Note to the reader**. Like Elvish itself, this document is a work in progress.
-Some materials are missing, and some are documented sparingly. If you have found
-something that should be improved -- even if there is already a "TODO" for it --
-please feel free to ask on any of the chat channels advertised on the
-[homepage](..). Some developer will explain to you, and then update the
-document. Question-driven documentation :)
 
 # Syntax Convention
 
@@ -24,19 +15,15 @@ Elvish source code must be UTF-8-encoded. In this document, **character** is a
 synonym of [Unicode codepoint](https://en.wikipedia.org/wiki/Code_point) or its
 UTF-8 encoding.
 
-Also like most shells, Elvish uses whitespaces -- instead of commas, periods or
-semicolons -- to separate constructs. In this document, an **inline whitespace**
-is any of:
+In this document, an **inline whitespace** is any of the following:
 
 -   A space (ASCII 0x20) or tab (ASCII 0x9, `"\t"`);
 
--   A comment: starting with `#` and ending before the next carriage return,
-    newline or end of file;
+-   A comment: starting with `#` and ending before (but not including) the next
+    carriage return, newline or end of file;
 
--   Line continuation: a backslash or `^` followed by a newline (`"\n"`), or a
-    carriage return and newline (`"\r\n"`).
-
-    **NOTE**: Use of backslashes is deprecated and will be removed soon.
+-   Line continuation: a `^` followed by a newline (`"\n"`), or a carriage
+    return and newline (`"\r\n"`).
 
 A **whitespace** is either an **inline whitespace**, a carriage return (`"\r"`),
 or a newline (`"\n"`).
@@ -54,30 +41,24 @@ some values. (The traditional terms for the two levels are "commands" and
 
 ## String
 
-The most common data structure in shells is the string. String literals can be
-quoted or unquoted (barewords). There are two types of quoted strings in Elvish:
-single-quoted strings and double-quoted strings.
+The most common data structure in shells is the string. There are three types of
+string literals: single-quoted, double-quoted, and bareword.
 
 ### Single-Quoted String
 
-In single-quoted strings all characters represent themselves, except single
-quotes, which need to be doubled. For instance, `'*\'` evaluates to `*\`, and
-`'it''s'` evaluates to `it's`.
+A single-quoted string literal is enclosed in single quotes (`'`). All enclosed
+characters represent themselves, except the single quote, which can be written
+by two consecutive single quote characters.
+
+**Examples**: `'*\'` evaluates to `*\`, and `'it''s'` evaluates to `it's`.
 
 ### Double-Quoted String
 
-In double-quoted strings the backslash, `\`, introduces an **escape sequence**.
-For instance, `\n` evaluates to a newline and `\\` evaluates to a backslash.
-Invalid escape sequences like `\*` result in a syntax error when the program is
-compiled.
+A double-quoted string literal is enclosed in double quotes (`"`). All enclosed
+characters represent themselves, except double quotes, which are not allowed,
+and backslashes (`\`), which introduces **escape sequences**.
 
-Unlike most other shells, double-quoted strings in Elvish do not support
-interpolation. For instance, `"$name"` simply evaluates to the string `$name`.
-To get a similar effect, simply concatenate strings: instead of
-`"my name is $name"`, write `"my name is "$name`. Under the hood this is a
-[compound expression](#compound-expression-and-braced-lists).
-
-The following escape sequences are recognized in double-quoted strings:
+The following escape sequences are supported:
 
 -   `\cX`, where _X_ is a character with codepoint between 0x40 and 0x5F,
     represents the codepoint that is 0x40 lower than _X_. For example, `\cI` is
@@ -100,40 +81,50 @@ The following escape sequences are recognized in double-quoted strings:
 
 -   The following single character escape sequences:
 
-    -   `\a` is the "bel" character, equivalent to `\007` or `\x07`.
+    -   `\a` is the "bell" character, equivalent to `\007` or `\x07`.
 
     -   `\b` is the "backspace" character, equivalent to `\010` or `\x08`.
 
-    -   `\f` is the "formfeed" (aka "np") character, equivalent to `\014` or
-        `\x0c`.
+    -   `\f` is the "form feed" character, equivalent to `\014` or `\x0c`.
 
-    -   `\n` is the "nl" character, equivalent to `\012` or `\x0a`.
+    -   `\n` is the "new line" character, equivalent to `\012` or `\x0a`.
 
-    -   `\r` is the "cr" character, equivalent to `\015` or `\x0d`.
+    -   `\r` is the "carriage return" character, equivalent to `\015` or `\x0d`.
 
     -   `\t` is the "tab" character, equivalent to `\011` or `\x09`.
 
-    -   `\v` is the "vt" character, equivalent to `\013` or `\x0b`.
+    -   `\v` is the "vertical tab" character, equivalent to `\013` or `\x0b`.
 
     -   `\\` is the "backslash" character, equivalent to `\134` or `\x5c`.
 
     -   `\"` is the "double-quote" character, equivalent to `\042` or `\x22`.
 
-### Bareword String
+An unsupported escape sequence results in a parse error.
 
-If a string only consists of bareword characters, it can be written without any
-quote; this is called a **bareword**. Examples are `a.txt`, `long-bareword`, and
-`/usr/local/bin`. The set of bareword characters include:
+**Note**: Unlike most other shells, double-quoted strings in Elvish do not
+support interpolation. For instance, `"$name"` simply evaluates to a string
+containing `$name`. To get a similar effect, simply concatenate strings: instead
+of `"my name is $name"`, write `"my name is "$name`. Under the hood this is a
+[compound expression](#compound-expression-and-braced-lists).
+
+### Bareword
+
+A string can be written without quoting -- a **bareword**, if it only includes
+the characters from the following set:
 
 -   ASCII letters (a-z and A-Z) and numbers (0-9);
 
--   The symbols `-_:%+,./@!`;
+-   The symbols `!%+,-./:@\_`;
 
 -   Non-ASCII codepoints that are printable, as defined by
     [unicode.IsPrint](https://godoc.org/unicode#IsPrint) in Go's standard
     library.
 
-The following are bareword characters depending on their position:
+**Examples**: `a.txt`, `long-bareword`, `elf@elv.sh`, `/usr/local/bin`,
+`你好世界`.
+
+Moreover, the following characters are allowed to appear without quoting under
+certain conditions:
 
 -   The tilde `~`, unless it appears at the beginning of a compound expression,
     in which case it is subject to [tilde expansion](#tilde-expansion);
@@ -143,18 +134,16 @@ The following are bareword characters depending on their position:
     [assignments](#assignment) or
     [temporary assignments](#temporary-assignment).
 
-Unlike traditional shells, an unquoted backslash `\` does not escape
-metacharacters; use quoted strings instead. For instance, to echo a star, write
-`echo "*"` or `echo '*'`, not `echo \*`. Unquote backslashes are now only used
-in line continuations; their use elsewhere is reserved will cause a syntax
-error.
-
 ### Notes
 
-The three syntaxes above all evaluate to strings, and they are interchangeable.
-For instance, `xyz`, `'xyz'` and `"xyz"` are different syntaxes for the same
-string, and they are always equivalent with the exception of **escape
-sequences** as documented above.
+Unless otherwise noted, different syntaxes of string literals are equivalent in
+the code. For instance, `xyz`, `'xyz'` and `"xyz"` are different syntaxes for
+the same string with content `xyz`.
+
+Unlike traditional shells, an unquoted backslash `\` does not escape
+metacharacters; use quoted strings instead. For instance, to echo a star, write
+`echo "*"` or `echo '*'`, not `echo \*`. The last command just writes out `\*`,
+since backslash is a [bareword character](#bareword).
 
 ## Number
 
@@ -198,12 +187,12 @@ of
 
 Elvish has an exception data type, but it does not have a literal syntax for
 that type. See the discussion of
-[exception and flow commands](./language.html#exception-and-flow-commands) for
-more information about this data type.
+[exception and flow commands](#exception-and-flow-commands) for more information
+about this data type.
 
 ## List
 
-Lists are surround by square brackets `[ ]`, with elements separated by
+Lists are surrounded by square brackets `[ ]`, with elements separated by
 whitespace. They are one of the basic container types in Elvish. Examples:
 
 ```elvish-transcript
@@ -245,9 +234,9 @@ of the basic container types in Elvish. Examples:
 
 An empty map is written as `[&]`.
 
-If you only specify a key without `=` or a value that follows it, the value will
-be `$true`. However, if you keep `=` but don't specify any value after it, the
-value will be an empty string. Example:
+Specify a key without `=` or a value following it is equivalent to specifying
+`$true` as the value. Specifying a key with `=` but no value following it is
+equivalent to specifying the empty string as the value. Example:
 
 ```elvish-transcript
 ~> echo [&a &b=]
