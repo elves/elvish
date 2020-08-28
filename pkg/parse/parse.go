@@ -405,7 +405,8 @@ func (cn *Compound) parse(ps *parser) {
 func (cn *Compound) tilde(ps *parser) {
 	if ps.peek() == '~' {
 		ps.next()
-		base := node{diag.Ranging{ps.pos - 1, ps.pos}, "~", nil, nil}
+		base := node{Ranging: diag.Ranging{From: ps.pos - 1, To: ps.pos},
+			sourceText: "~", parent: nil, children: nil}
 		pn := &Primary{node: base, Type: Tilde, Value: "~"}
 		in := &Indexing{node: base}
 		parsed{pn}.addAs(&in.Head, in)
@@ -900,7 +901,7 @@ type Sep struct {
 
 // NewSep makes a new Sep.
 func NewSep(src string, begin, end int) *Sep {
-	return &Sep{node{diag.Ranging{begin, end}, src[begin:end], nil, nil}}
+	return &Sep{node: node{diag.Ranging{From: begin, To: end}, src[begin:end], nil, nil}}
 }
 
 func (*Sep) parse(*parser) {

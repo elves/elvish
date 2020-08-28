@@ -82,7 +82,7 @@ func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
 			return nil, err
 		}
 		gp.Segments[len(gp.Segments)-1] = glob.Wild{
-			lastSeg.Type, true, lastSeg.Matchers,
+			Type: lastSeg.Type, MatchHidden: true, Matchers: lastSeg.Matchers,
 		}
 	case strings.HasPrefix(modifier, "type:"):
 		if gp.TypeCb != nil {
@@ -184,8 +184,8 @@ func (gp *GlobPattern) addMatcher(matcher func(rune) bool) error {
 		return err
 	}
 	gp.Segments[len(gp.Segments)-1] = glob.Wild{
-		lastSeg.Type, lastSeg.MatchHidden,
-		append(lastSeg.Matchers, matcher),
+		Type: lastSeg.Type, MatchHidden: lastSeg.MatchHidden,
+		Matchers: append(lastSeg.Matchers, matcher),
 	}
 	return nil
 }
@@ -197,11 +197,11 @@ func (gp *GlobPattern) append(segs ...glob.Segment) {
 func wildcardToSegment(s string) (glob.Segment, error) {
 	switch s {
 	case "*":
-		return glob.Wild{glob.Star, false, nil}, nil
+		return glob.Wild{Type: glob.Star, MatchHidden: false, Matchers: nil}, nil
 	case "**":
-		return glob.Wild{glob.StarStar, false, nil}, nil
+		return glob.Wild{Type: glob.StarStar, MatchHidden: false, Matchers: nil}, nil
 	case "?":
-		return glob.Wild{glob.Question, false, nil}, nil
+		return glob.Wild{Type: glob.Question, MatchHidden: false, Matchers: nil}, nil
 	default:
 		return nil, fmt.Errorf("bad wildcard: %q", s)
 	}
@@ -214,7 +214,7 @@ func stringToSegments(s string) []glob.Segment {
 		for ; j < len(s) && s[j] != '/'; j++ {
 		}
 		if j > i {
-			segs = append(segs, glob.Literal{s[i:j]})
+			segs = append(segs, glob.Literal{Data: s[i:j]})
 		}
 		if j < len(s) {
 			for ; j < len(s) && s[j] == '/'; j++ {
