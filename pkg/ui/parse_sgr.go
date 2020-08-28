@@ -3,7 +3,6 @@ package ui
 import (
 	"strconv"
 	"strings"
-	"unicode"
 )
 
 type sgrTokenizer struct {
@@ -52,13 +51,7 @@ func (st *sgrTokenizer) Next() bool {
 	}
 	st.text = st.text[len(content):]
 	st.styling = nil
-	var sb strings.Builder
-	for _, r := range content {
-		if unicode.IsGraphic(r) {
-			sb.WriteRune(r)
-		}
-	}
-	st.content = sb.String()
+	st.content = content
 	return true
 }
 
@@ -67,7 +60,7 @@ func (st *sgrTokenizer) Token() (Styling, string) {
 }
 
 // ParseSGREscapedText parses SGR-escaped text into a Text. It also removes
-// other unprintable sequences in the text.
+// non-SGR CSI sequences sequences in the text.
 func ParseSGREscapedText(s string) Text {
 	var text Text
 	var style Style

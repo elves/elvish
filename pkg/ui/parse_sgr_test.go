@@ -15,12 +15,11 @@ func TestParseSGREscapedText(t *testing.T) {
 			Concat(T("bold", Bold), T("bold red", Bold, FgRed))),
 		tt.Args("\033[1mbold\033[;31mred").Rets(
 			Concat(T("bold", Bold), T("red", FgRed))),
-		// Other escape sequences are ignored.
+		// Non-SGR CSI sequences are removed.
 		tt.Args("\033[Atext").Rets(T("text")),
-		// Non-graphic runes are removed.
-		tt.Args("t\x01ext").Rets(T("text")),
-		// Lone escape runes are removed.
-		tt.Args("t\033ext").Rets(T("text")),
+		// Control characters not part of CSI escape sequences are left
+		// untouched.
+		tt.Args("t\x01ext").Rets(T("t\x01ext")),
 	})
 }
 
