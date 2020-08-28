@@ -39,11 +39,11 @@ var stringToSegmentsTests = []struct {
 	want []glob.Segment
 }{
 	{"", []glob.Segment{}},
-	{"a", []glob.Segment{glob.Literal{"a"}}},
-	{"/a", []glob.Segment{glob.Slash{}, glob.Literal{"a"}}},
-	{"a/", []glob.Segment{glob.Literal{"a"}, glob.Slash{}}},
-	{"/a/", []glob.Segment{glob.Slash{}, glob.Literal{"a"}, glob.Slash{}}},
-	{"a//b", []glob.Segment{glob.Literal{"a"}, glob.Slash{}, glob.Literal{"b"}}},
+	{"a", []glob.Segment{glob.Literal{Data: "a"}}},
+	{"/a", []glob.Segment{glob.Slash{}, glob.Literal{Data: "a"}}},
+	{"a/", []glob.Segment{glob.Literal{Data: "a"}, glob.Slash{}}},
+	{"/a/", []glob.Segment{glob.Slash{}, glob.Literal{Data: "a"}, glob.Slash{}}},
+	{"a//b", []glob.Segment{glob.Literal{Data: "a"}, glob.Slash{}, glob.Literal{Data: "b"}}},
 }
 
 func TestStringToSegments(t *testing.T) {

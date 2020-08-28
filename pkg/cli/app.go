@@ -284,9 +284,9 @@ func (a *app) ReadCode() (string, error) {
 			} else if err == term.ErrStopped {
 				return
 			} else if term.IsReadErrorRecoverable(err) {
-				a.loop.Input(term.NonfatalErrorEvent{err})
+				a.loop.Input(term.NonfatalErrorEvent{Err: err})
 			} else {
-				a.loop.Input(term.FatalErrorEvent{err})
+				a.loop.Input(term.FatalErrorEvent{Err: err})
 				return
 			}
 		}

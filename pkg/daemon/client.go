@@ -117,90 +117,90 @@ func (c *client) NextCmdSeq() (int, error) {
 }
 
 func (c *client) AddCmd(text string) (int, error) {
-	req := &api.AddCmdRequest{text}
+	req := &api.AddCmdRequest{Text: text}
 	res := &api.AddCmdResponse{}
 	err := c.call("AddCmd", req, res)
 	return res.Seq, err
 }
 
 func (c *client) DelCmd(seq int) error {
-	req := &api.DelCmdRequest{seq}
+	req := &api.DelCmdRequest{Seq: seq}
 	res := &api.DelCmdResponse{}
 	err := c.call("DelCmd", req, res)
 	return err
 }
 
 func (c *client) Cmd(seq int) (string, error) {
-	req := &api.CmdRequest{seq}
+	req := &api.CmdRequest{Seq: seq}
 	res := &api.CmdResponse{}
 	err := c.call("Cmd", req, res)
 	return res.Text, err
 }
 
 func (c *client) Cmds(from, upto int) ([]string, error) {
-	req := &api.CmdsRequest{from, upto}
+	req := &api.CmdsRequest{From: from, Upto: upto}
 	res := &api.CmdsResponse{}
 	err := c.call("Cmds", req, res)
 	return res.Cmds, err
 }
 
 func (c *client) CmdsWithSeq(from, upto int) ([]store.Cmd, error) {
-	req := &api.CmdsWithSeqRequest{from, upto}
+	req := &api.CmdsWithSeqRequest{From: from, Upto: upto}
 	res := &api.CmdsWithSeqResponse{}
 	err := c.call("CmdsWithSeq", req, res)
 	return res.Cmds, err
 }
 
 func (c *client) NextCmd(from int, prefix string) (store.Cmd, error) {
-	req := &api.NextCmdRequest{from, prefix}
+	req := &api.NextCmdRequest{From: from, Prefix: prefix}
 	res := &api.NextCmdResponse{}
 	err := c.call("NextCmd", req, res)
 	return store.Cmd{Text: res.Text, Seq: res.Seq}, err
 }
 
 func (c *client) PrevCmd(upto int, prefix string) (store.Cmd, error) {
-	req := &api.PrevCmdRequest{upto, prefix}
+	req := &api.PrevCmdRequest{Upto: upto, Prefix: prefix}
 	res := &api.PrevCmdResponse{}
 	err := c.call("PrevCmd", req, res)
 	return store.Cmd{Text: res.Text, Seq: res.Seq}, err
 }
 
 func (c *client) AddDir(dir string, incFactor float64) error {
-	req := &api.AddDirRequest{dir, incFactor}
+	req := &api.AddDirRequest{Dir: dir, IncFactor: incFactor}
 	res := &api.AddDirResponse{}
 	err := c.call("AddDir", req, res)
 	return err
 }
 
 func (c *client) DelDir(dir string) error {
-	req := &api.DelDirRequest{dir}
+	req := &api.DelDirRequest{Dir: dir}
 	res := &api.DelDirResponse{}
 	err := c.call("DelDir", req, res)
 	return err
 }
 
 func (c *client) Dirs(blacklist map[string]struct{}) ([]store.Dir, error) {
-	req := &api.DirsRequest{blacklist}
+	req := &api.DirsRequest{Blacklist: blacklist}
 	res := &api.DirsResponse{}
 	err := c.call("Dirs", req, res)
 	return res.Dirs, err
 }
 
 func (c *client) SharedVar(name string) (string, error) {
-	req := &api.SharedVarRequest{name}
+	req := &api.SharedVarRequest{Name: name}
 	res := &api.SharedVarResponse{}
 	err := c.call("SharedVar", req, res)
 	return res.Value, err
 }
 
 func (c *client) SetSharedVar(name, value string) error {
-	req := &api.SetSharedVarRequest{name, value}
+	req := &api.SetSharedVarRequest{Name: name, Value: value}
 	res := &api.SetSharedVarResponse{}
 	return c.call("SetSharedVar", req, res)
 }
 
 func (c *client) DelSharedVar(name string) error {
-	req := &api.DelSharedVarRequest{name}
+	req := &api.DelSharedVarRequest{Name: name}
 	res := &api.DelSharedVarResponse{}
 	return c.call("DelSharedVar", req, res)
 }

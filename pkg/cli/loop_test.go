@@ -127,7 +127,9 @@ func quitOn(lp *loop, retTrigger event, ret string, err error) handleCb {
 	}
 }
 
-func ExampleLoop() {
+// This will be run by `go test` and compare the output to that in the comment
+// at the end of the function. See https://golang.org/pkg/testing/#pkg-examples.
+func Example_loop() {
 	buffer := ""
 	firstDrawerCall := true
 	drawer := func(flag redrawFlag) {
