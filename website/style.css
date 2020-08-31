@@ -445,4 +445,18 @@ pre.ttyshot, pre.ttyshot code {
     background-color: #eee;
 }
 
+table {
+    border-collapse: collpase;
+    width: 100%;
+    margin-bottom: 16px;
+}
+td, th {
+    border: 1px solid #aaa;
+    text-align: left;
+    padding: 0.4em;
+}
+
+.dark td, .dark th {
+    border-color: #444;
+}
 /* vi: se ts=4 sts=4 sw=4: */
