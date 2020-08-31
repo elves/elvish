@@ -52,11 +52,11 @@ func TestCompileEffect(t *testing.T) {
 			errs.ArityMismatch{
 				What: "command", ValidLow: 1, ValidHigh: 1, Actual: 2},
 			"{put put}"),
-		// Command errors when the head is not callable or relative path.
+		// Command errors when the head is not callable or string containing slash.
 		That("[] foo").Throws(
 			errs.BadValue{
 				What:   "command",
-				Valid:  "callable or string containing relative path",
+				Valid:  "callable or string containing slash",
 				Actual: "list"},
 			"[]"),
 		// Command errors when when argument errors.

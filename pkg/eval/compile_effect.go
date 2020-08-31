@@ -407,7 +407,7 @@ func evalForCommand(fm *Frame, op valuesOp, what string) (Callable, error) {
 	}
 	return nil, fm.errorp(op, errs.BadValue{
 		What:   what,
-		Valid:  "callable or string containing relative path",
+		Valid:  "callable or string containing slash",
 		Actual: vals.Kind(value)})
 }
 
