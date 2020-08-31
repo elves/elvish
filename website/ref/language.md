@@ -45,7 +45,7 @@ A **whitespace** is any of the following:
 
 ## Metacharacters
 
-The following character sequences serve to introduce or delimit syntax
+The following **metacharacters** serve to introduce or delimit syntax
 constructs:
 
 | Metacharacter | Use                                                         |
@@ -60,7 +60,7 @@ constructs:
 | `[` and `]`   | Enclosing list literals, map literals or function signature |
 | `{` and `}`   | Enclosing lambda literals or brace expressions              |
 
-The following characters are metacharacters under certain conditions:
+The following characters are parsed as metacharacters under certain conditions:
 
 -   `~` is a metacharacter if it appears at the beginning of a compound
     expression, in which case it is subject to
@@ -72,17 +72,22 @@ The following characters are metacharacters under certain conditions:
 
 ## Single-quoted string
 
-A single-quoted string is enclosed in single quotes (`'`). All enclosed
-characters represent themselves, except the single quote, which can be written
-by two consecutive single quote characters.
+A single-quoted string consists of zero or more characters enclosed in single
+quotes (`'`). All enclosed characters represent themselves, except the single
+quote.
+
+Two consecutive single quotes are handled as a special case: they represent one
+single quote, instead of terminating a single-quoted string and starting
+another.
 
 **Examples**: `'*\'` evaluates to `*\`, and `'it''s'` evaluates to `it's`.
 
 ## Double-quoted string
 
-A double-quoted string is enclosed in double quotes (`"`). All enclosed
-characters represent themselves, except double quotes, which are not allowed,
-and backslashes (`\`), which introduces **escape sequences**.
+A double-quoted string consists of zero or more characters enclosed in double
+quotes (`"`). All enclosed characters represent themselves, except backslashes
+(`\`), which introduces **escape sequences**. Double quotes are not allowed
+inside double-quoted strings, except after backslashes.
 
 The following escape sequences are supported:
 
@@ -162,13 +167,12 @@ writes out `\*`.
 ## String
 
 A string is a (possibly empty) sequence of bytes.
+
 [Single-quoted string literals](#single-quoted-string),
 [double-quoted string literals](#double-quoted-string)and [barewords](#bareword)
-all evaluate to string values.
-
-Unless otherwise noted, different syntaxes of string literals are equivalent in
-the code. For instance, `xyz`, `'xyz'` and `"xyz"` are different syntaxes for
-the same string with content `xyz`.
+all evaluate to string values. Unless otherwise noted, different syntaxes of
+string literals are equivalent in the code. For instance, `xyz`, `'xyz'` and
+`"xyz"` are different syntaxes for the same string with content `xyz`.
 
 Strings that contain UTF-8 encoded text can be [indexed](#indexing) with a
 **byte index** where a codepoint starts, which results in the codepoint that
@@ -189,7 +193,7 @@ string that parses to a number. Examples:
 
 -   In the string `世界`, each codepoint is encoded with three bytes. The first
     codepoint occupies byte 0 through 2, and the second occupies byte 3 through
-    5\. Hence valid indicies are 0 and 3:
+    5\. Hence valid indices are 0 and 3:
 
     ```elvish-transcript
     ~> put 世界[0]
@@ -200,7 +204,7 @@ string that parses to a number. Examples:
 
 Such strings may also be indexed with a slice (see documentation of
 [list](#list) for slice syntax). The range determined by the slice is also
-interpreted as byte indicies, and the range must begin and end at codepoint
+interpreted as byte indices, and the range must begin and end at codepoint
 boundaries.
 
 The behavior of indexing a string that does not contain valid UTF-8-encoded
@@ -304,7 +308,7 @@ one of two forms:
 
     Note that the slice needs to be a **single** string, so there cannot be any
     spaces within the slice. For instance, `$li[2..10]` cannot be written as
-    `$li[2.. 10]`; the latter contains two indicies and is equivalent to
+    `$li[2.. 10]`; the latter contains two indices and is equivalent to
     `$li[2..] $li[10]` (see [Indexing](#indexing)).
 
 -   A slice `$a..=$b`, which is similar to `$a..$b`, but includes `$li[$b]`.
@@ -860,7 +864,7 @@ must be quoted right now.
 
 ## Indexing
 
-An **indexing expression** is formed by appending one or more indicies inside a
+An **indexing expression** is formed by appending one or more indices inside a
 pair of brackets (`[]`) after another expression (the indexee). Examples:
 
 ```elvish-transcript
@@ -929,7 +933,7 @@ of all the constituent expressions. Examples:
 ▶ '$v is value'
 ```
 
-When one or more of the consituent expressions evaluate to multiple values, the
+When one or more of the constituent expressions evaluate to multiple values, the
 result is all possible combinations:
 
 ```elvish-transcript
@@ -1279,7 +1283,7 @@ hand to all the lvalues at the left hand. An **lvalue** is one of the following:
     variable when [using](#variable-use) it, which is why they share the `@`
     sign.
 
--   A variable name followed by one or more indicies in brackets (`[]`), for
+-   A variable name followed by one or more indices in brackets (`[]`), for
     assigning to an element. The variable must already exist.
 
 The number of values and lvalues must be compatible. To be more exact:
