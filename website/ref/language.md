@@ -364,6 +364,20 @@ lorem
 haha
 ```
 
+## Pseudo-map
+
+The concept of **pseudo-map** is not a concrete data type, but refer to certain
+data types that behave like maps in some aspects.
+
+A pseudo-map typically has a fixed set of keys, called **fields**. The values of
+a field can be accessed by [indexing](#indexing). However, unlike maps, it is
+usually not possible to add new keys, remove existing keys, or even assigning a
+new value to an existing key.
+
+The pseudo-map mechanism is often used for introspection. For example,
+[exceptions](#exception) and [user-defined functions](#function) are both
+structmaps.
+
 ## Exception
 
 An exception carries information about errors during the execution of code.
@@ -372,12 +386,78 @@ There is no literal syntax for exceptions. See the discussion of
 [exception and flow commands](#exception-and-flow-commands) for more information
 about this data type.
 
+An exception is a [pseudo-map](#pseudo-map) with a `reason` field, which is in
+turn a pseudo-map. The reason pseudo-map has has a `type` field identifying how
+the exception was raised, and further fields depending on the type:
+
+-   If the `type` field is `fail`, the exception was raised by the
+    [fail](builtins.html#fail) command.
+
+    In this case, the `content` field contains the argument to `fail`.
+
+-   If the `type` field is `flow`, the exception was raised by one of the flow
+    commands.
+
+    In this case, the `name` field contains the name of the flow command.
+
+-   If the `type` field is `pipeline`, the exception was a result of multiple
+    commands in the same pipeline raising exceptions.
+
+    In this case, the `exceptions` field contains the exceptions from the
+    individual commands.
+
+-   If the `type` field starts with `external-cmd/`, the exception was caused by
+    one of several conditions of an external command. In this case, the
+    following fields are available:
+
+    -   The `cmd-name` field contains the name of the command.
+
+    -   The `pid` field contains the PID of the command.
+
+-   If the `type` field is `external-cmd/exited`, the external command exited
+    with a non-zero status code. In this case, the `exit-status` field contains
+    the exit status.
+
+-   If the `type` field is `external-cmd/signaled`, the external command was
+    killed by a signal. In this case, the following extra fields are available:
+
+    -   The `signal-name` field contains the name of the signal.
+
+    -   The `signal-number` field contains the numerical value of the signal, as
+        a string.
+
+    -   The `core-dumped` field is a boolean reflecting whether a core dump was
+        generated.
+
+-   If the `type` field is `external-cmd/stopped`, the external command was
+    stopped. In this case, the following extra fields are available:
+
+    -   The `signal-name` field contains the name of the signal.
+
+    -   The `signal-number` field contains the numerical value of the signal, as
+        a string.
+
+    -   The `trap-cause` field contains the number indicating the trap cause.
+
+Examples:
+
+```elvish-transcript
+~> put ?(fail foo)[reason]
+▶ [&content=foo &type=fail]
+~> put ?(return)[reason]
+▶ [&name=return &type=flow]
+~> put ?(false)[reason]
+▶ [&cmd-name=false &exit-status=1 &pid=953421 &type=external-cmd/exited]
+```
+
 ## Function
 
 A function encapsulates a piece of code that can be executed in an
-[ordinary command](#ordinary-command). The behavior of a function can be
-affected by its arguments and options. A function could be builtin or
-user-defined.
+[ordinary command](#ordinary-command), and takes its arguments and options.
+Functions are first-class values; they can be kept in variables, used as
+arguments, output on the value channel and embedded in other data structures.
+Elvish comes with a set of **builtin functions**, and Elvish code can also
+create **user-defined functions**.
 
 **Note**: Unlike most programming languages, functions in Elvish do not have
 return values. Instead, they can output values, which can be
@@ -475,9 +555,29 @@ Exception: unknown option k2
 [tty], line 1: [&k=v]{ echo $k } &k2=v2
 ```
 
-Functions are first-class values in Elvish. They can be kept in variables, used
-as arguments, output on the value channel, embedded in other data structures,
-and used in [ordinary commands](#ordinary-command).
+A user-defined function is a [pseudo-map](#pseudo-map). If `$f` is a
+user-defined function, it has the following fields:
+
+-   `$f[arg-names]` is a list containing the names of the arguments.
+
+-   `$f[rest-arg]` is the index of the rest argument. If there is no rest
+    argument, it is `-1`.
+
+-   `$f[opt-names]` is a list containing the names of the options.
+
+-   `$f[opt-defaults]` is a list containing the default values of the options,
+    in the same order as `$f[opt-names]`.
+
+-   `$f[def]` is a string containing the definition of the function, including
+    the signature and the body.
+
+-   `$f[body]` is a string containing the body of the function, without the
+    enclosing brackets.
+
+-   `$f[src]` is a map-like data structure containing information about the
+    source code that the function is defined in. It contains the same value that
+    would the [src](builtin.html#src) function would output if called from the
+    function.
 
 # Variable
 
@@ -1851,72 +1951,6 @@ fn f {
     return
   }
 }
-```
-
-## Introspecting exceptions
-
-Exceptions has a `reason` field that can be used to access the reason of the
-exception, which has a `type` field identifying how the exception was raised,
-and further fields depending on the type:
-
--   If the `type` field is `fail`, the exception was raised by the
-    [fail](builtins.html#fail) command.
-
-    In this case, the `content` field contains the argument to `fail`.
-
--   If the `type` field is `flow`, the exception was raised by one of the flow
-    commands.
-
-    In this case, the `name` field contains the name of the flow command.
-
--   If the `type` field is `pipeline`, the exception was a result of multiple
-    commands in the same pipeline raising exceptions.
-
-    In this case, the `exceptions` field contains the exceptions from the
-    individual commands.
-
--   If the `type` field starts with `external-cmd/`, the exception was caused by
-    one of several conditions of an external command. In this case, the
-    following fields are available:
-
-    -   The `cmd-name` field contains the name of the command.
-
-    -   The `pid` field contains the PID of the command.
-
--   If the `type` field is `external-cmd/exited`, the external command exited
-    with a non-zero status code. In this case, the `exit-status` field contains
-    the exit status.
-
--   If the `type` field is `external-cmd/signaled`, the external command was
-    killed by a signal. In this case, the following extra fields are available:
-
-    -   The `signal-name` field contains the name of the signal.
-
-    -   The `signal-number` field contains the numerical value of the signal, as
-        a string.
-
-    -   The `core-dumped` field is a boolean reflecting whether a core dump was
-        generated.
-
--   If the `type` field is `external-cmd/stopped`, the external command was
-    stopped. In this case, the following extra fields are available:
-
-    -   The `signal-name` field contains the name of the signal.
-
-    -   The `signal-number` field contains the numerical value of the signal, as
-        a string.
-
-    -   The `trap-cause` field contains the number indicating the trap cause.
-
-Examples:
-
-```elvish-transcript
-~> put ?(fail foo)[reason]
-▶ [&content=foo &type=fail]
-~> put ?(return)[reason]
-▶ [&name=return &type=flow]
-~> put ?(false)[reason]
-▶ [&cmd-name=false &exit-status=1 &pid=953421 &type=external-cmd/exited]
 ```
 
 # Namespaces and Modules
