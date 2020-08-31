@@ -363,30 +363,28 @@ var timeAfter func(fm *Frame, d time.Duration) <-chan time.Time = func(
 // sleep $duration
 // ```
 //
-// Pause for the specified duration. The pause granularity depends on the
-// platform and might be as long as 100 milliseconds. The actual pause might
-// be longer than requested for reasons outside the control of Elvish; e.g.,
-// the systems being so busy it can't schedule the elvish process to run.
+// Pauses for at least the specified duration. The actual pause duration depends
+// on the system.
+//
+// This only affects the current Elvish context. It does not affect any other
+// contexts that might be executing in parallel as a consequence of a command
+// such as [`peach`](#peach).
 //
 // A duration can be a simple [number](../language.html#number) (with optional
-// fractional value) without an explicit unit suffix or a [float64](#float64).
-// In this case the implied time unit is seconds.
+// fractional value) without an explicit unit suffix, with an implicit unit of
+// seconds.
 //
 // A duration can also be a string written as a sequence of decimal numbers,
 // each with optional fraction, plus a unit suffix. For example, "300ms",
 // "1.5h" or "1h45m7s". Valid time units are "ns", "us" (or "µs"), "ms", "s",
 // "m", "h".
 //
-// See the [Go documentation](https://golang.org/pkg/time/#ParseDuration) for
-// more information about how durations are parsed. Negative durations raise a
-// "sleep duration must be >= zero" exception since it doesn't make sense to
-// sleep for a negative interval. This is different than the typical BSD or
-// GNU `sleep` command that silently exits with a success status, and no
-// pause, when given a negative duration.
+// Passing a negative duration causes an exception; this is different from the
+// typical BSD or GNU `sleep` command that silently exits with a success status
+// without pausing when given a negative duration.
 //
-// This only affects the current Elvish context. It does not affect any other
-// contexts that might be executing in parallel as a consequence of a command
-// such as [`peach`](#peach).
+// See the [Go documentation](https://golang.org/pkg/time/#ParseDuration) for
+// more information about how durations are parsed.
 //
 // Examples:
 //
