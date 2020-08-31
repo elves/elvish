@@ -39,21 +39,28 @@ started quickly:
 
     @ttyshot history-mode
 
--   Press <span class="key">Tab</span> to start completion. Use arrow keys
-    <span class="key">▲&#xfe0e;</span> <span class="key">▼&#xfe0e;</span>
-    <span class="key">◀&#xfe0e;</span> <span class="key">▶&#xfe0e;</span> or
-    <span class="key">Tab</span> and <span class="key">Shift-Tab</span> to
-    select the candidate. Press <span class="key">Enter</span>, or just continue
-    typing to accept. To cancel, press <span
-    class="key">Escape.</span> It even comes with a scrollbar! :) In fact, all
-    interactive modes show a scrollbar when there is more output to see.
+-   Press <span class="key">Tab</span> to start completion.
+
+    -   To navigate the candidate list, use arrow keys
+        <span class="key">▲&#xfe0e;</span> <span class="key">▼&#xfe0e;</span>
+        <span class="key">◀&#xfe0e;</span> <span class="key">▶&#xfe0e;</span> or
+        <span class="key">Tab</span> and <span class="key">Shift-Tab</span>.
+
+    -   To filter candidates, continue typing.
+
+    -   To accept the selected candidate, press <span class="key">Enter</span>.
+
+    -   To cancel, press <span class="key">Escape.</span>
+
+    The candidate list also comes with a scrollbar. In fact, all interactive
+    modes show a scrollbar when there is more output to see.
 
     @ttyshot completion-mode
 
 -   You can make completion case-insensitive with the following code:
 
     ```elvish
-    edit:-matcher[''] = [p]{ edit:match-prefix &ignore-case $p }
+    edit:completion:matcher[''] = [p]{ edit:match-prefix &ignore-case $p }
     ```
 
     You can also make the completion use "smart case" by changing `&ignore-case`
