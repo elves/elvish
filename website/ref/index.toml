@@ -2,7 +2,7 @@ autoIndex = true
 
 [[articles]]
 name = "language"
-title = "The Language Specification"
+title = "Language Specification"
 
 [[articles]]
 name = "builtin"
