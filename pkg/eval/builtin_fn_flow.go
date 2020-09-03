@@ -3,8 +3,8 @@ package eval
 import (
 	"sync"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/util"
 )
 
 // Flow control.
@@ -182,7 +182,7 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 					broken = true
 				default:
 					broken = true
-					err = util.Errors(err, ex)
+					err = diag.Errors(err, ex)
 				}
 			}
 			w.Done()

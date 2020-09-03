@@ -6,9 +6,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
-	"github.com/elves/elvish/pkg/util"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -79,7 +79,7 @@ func (envli *EnvList) Set(v interface{}) error {
 	})
 
 	if errElement != nil || errIterate != nil {
-		return util.Errors(errElement, errIterate)
+		return diag.Errors(errElement, errIterate)
 	}
 
 	envli.Lock()

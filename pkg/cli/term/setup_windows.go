@@ -3,7 +3,7 @@ package term
 import (
 	"os"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/diag"
 	"golang.org/x/sys/windows"
 )
 
@@ -35,11 +35,11 @@ func setup(in, out *os.File) (func() error, error) {
 	errVT := setupVT(out)
 
 	return func() error {
-		return util.Errors(
+		return diag.Errors(
 			restoreVT(out),
 			windows.SetConsoleMode(hOut, oldOutMode),
 			windows.SetConsoleMode(hIn, oldInMode))
-	}, util.Errors(errSetIn, errSetOut, errVT)
+	}, diag.Errors(errSetIn, errSetOut, errVT)
 }
 
 func setupGlobal() func() {

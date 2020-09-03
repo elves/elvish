@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/sys"
-	"github.com/elves/elvish/pkg/util"
 	"golang.org/x/sys/unix"
 )
 
@@ -45,7 +45,7 @@ func setup(in, out *os.File) (func() error, error) {
 	}
 
 	restore := func() error {
-		return util.Errors(savedTermios.ApplyToFd(fd), restoreVT(out))
+		return diag.Errors(savedTermios.ApplyToFd(fd), restoreVT(out))
 	}
 
 	return restore, errSetupVT
