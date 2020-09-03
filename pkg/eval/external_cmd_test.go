@@ -3,13 +3,17 @@ package eval
 import (
 	"os"
 	"testing"
+
+	"github.com/elves/elvish/pkg/util"
 )
 
 func TestBuiltinFnExternal(t *testing.T) {
 	tmpHome, cleanup := InTempHome()
 	defer cleanup()
 
-	os.Setenv("PATH", tmpHome+":"+os.Getenv("PATH"))
+	restorePath := util.WithTempEnv("PATH", tmpHome+":"+os.Getenv("PATH"))
+	defer restorePath()
+
 	Test(t,
 		That(`e = (external true); kind-of $e`).Puts("fn"),
 		That(`e = (external true); put (repr $e)`).Puts("<external true>"),

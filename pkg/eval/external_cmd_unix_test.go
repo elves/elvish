@@ -3,10 +3,11 @@
 package eval
 
 import (
-	"os"
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/elves/elvish/pkg/util"
 )
 
 // TODO: When EachExternal is modified to work on Windows either fold this
@@ -16,6 +17,9 @@ func TestEachExternal(t *testing.T) {
 	tmpHome, cleanup := InTempHome()
 	defer cleanup()
 
+	restorePath := util.WithTempEnv("PATH", "/foo:"+tmpHome+":/bar")
+	defer restorePath()
+
 	mustMkdirAll("dir")
 	mustCreateEmpty("cmdx")
 	mustWriteFile("cmd1", []byte("#!/bin/sh"), 0755)
@@ -23,7 +27,6 @@ func TestEachExternal(t *testing.T) {
 	mustWriteFile("cmd3", []byte(""), 0755)
 	mustCreateEmpty("file")
 
-	os.Setenv("PATH", "/argle:"+tmpHome+":/bargle")
 	wantCmds := []string{"cmd1", "cmd2", "cmd3"}
 	gotCmds := []string{}
 	EachExternal(func(filename string) {
