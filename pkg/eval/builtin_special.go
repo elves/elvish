@@ -258,7 +258,7 @@ func (op useOp) exec(fm *Frame) error {
 	return nil
 }
 
-func use(fm *Frame, spec string, st *stackTrace) (Ns, error) {
+func use(fm *Frame, spec string, st *StackTrace) (Ns, error) {
 	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") {
 		var dir string
 		if fm.srcMeta.IsFile {
@@ -286,7 +286,7 @@ func use(fm *Frame, spec string, st *stackTrace) (Ns, error) {
 	return useFromFile(fm, spec, fm.libDir+"/"+spec+".elv", st)
 }
 
-func useFromFile(fm *Frame, spec, path string, st *stackTrace) (Ns, error) {
+func useFromFile(fm *Frame, spec, path string, st *StackTrace) (Ns, error) {
 	if ns, ok := fm.modules[path]; ok {
 		return ns, nil
 	}
@@ -300,7 +300,7 @@ func useFromFile(fm *Frame, spec, path string, st *stackTrace) (Ns, error) {
 	return evalModule(fm, path, parse.Source{Name: path, Code: code, IsFile: true}, st)
 }
 
-func evalModule(fm *Frame, key string, src parse.Source, st *stackTrace) (Ns, error) {
+func evalModule(fm *Frame, key string, src parse.Source, st *StackTrace) (Ns, error) {
 	// Make an empty scope to evaluate the module in.
 	ns := Ns{}
 	// Load the namespace before executing. This prevent circular use'es from
@@ -316,7 +316,7 @@ func evalModule(fm *Frame, key string, src parse.Source, st *stackTrace) (Ns, er
 }
 
 // Evaluates a source. Shared by evalModule and the eval builtin.
-func evalInner(fm *Frame, src parse.Source, ns Ns, st *stackTrace) error {
+func evalInner(fm *Frame, src parse.Source, ns Ns, st *StackTrace) error {
 	tree, err := parse.ParseWithDeprecation(src, fm.ports[2].File)
 	if err != nil {
 		return err

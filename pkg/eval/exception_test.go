@@ -41,9 +41,9 @@ func TestException(t *testing.T) {
 }
 
 func makeException(cause error, entries ...*diag.Context) *Exception {
-	var s *stackTrace
+	var s *StackTrace
 	for i := len(entries) - 1; i >= 0; i-- {
-		s = &stackTrace{head: entries[i], next: s}
+		s = &StackTrace{Head: entries[i], Next: s}
 	}
 	return &Exception{cause, s}
 }

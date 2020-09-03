@@ -83,12 +83,12 @@ func (e exc) matchError(e2 error) bool {
 	return false
 }
 
-func getStackTexts(tb *stackTrace) []string {
+func getStackTexts(tb *StackTrace) []string {
 	texts := []string{}
 	for tb != nil {
-		ctx := tb.head
+		ctx := tb.Head
 		texts = append(texts, ctx.Source[ctx.From:ctx.To])
-		tb = tb.next
+		tb = tb.Next
 	}
 	return texts
 }

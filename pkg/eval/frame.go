@@ -25,7 +25,7 @@ type Frame struct {
 	intCh <-chan struct{}
 	ports []*Port
 
-	traceback *stackTrace
+	traceback *StackTrace
 
 	background bool
 }
@@ -166,10 +166,10 @@ func (fm *Frame) PipeOutput(f func(*Frame) error, valuesCb func(<-chan interface
 	return pipeOutput(fm, f, valuesCb, bytesCb)
 }
 
-func (fm *Frame) addTraceback(r diag.Ranger) *stackTrace {
-	return &stackTrace{
-		head: diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r.Range()),
-		next: fm.traceback,
+func (fm *Frame) addTraceback(r diag.Ranger) *StackTrace {
+	return &StackTrace{
+		Head: diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r.Range()),
+		Next: fm.traceback,
 	}
 }
 
@@ -181,9 +181,9 @@ func (fm *Frame) errorp(r diag.Ranger, e error) error {
 	case *Exception:
 		return e
 	default:
-		return &Exception{e, &stackTrace{
-			head: diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r.Range()),
-			next: fm.traceback,
+		return &Exception{e, &StackTrace{
+			Head: diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r.Range()),
+			Next: fm.traceback,
 		}}
 	}
 }
@@ -197,7 +197,7 @@ func (fm *Frame) errorpf(r diag.Ranger, format string, args ...interface{}) erro
 // deprecation message has been shown for the same location before.
 func (fm *Frame) Deprecate(msg string, ctx *diag.Context) {
 	if ctx == nil {
-		ctx = fm.traceback.head
+		ctx = fm.traceback.Head
 	}
 	dep := deprecation{ctx.Name, ctx.Ranging, msg}
 	if prog.ShowDeprecations && fm.deprecations.register(dep) {

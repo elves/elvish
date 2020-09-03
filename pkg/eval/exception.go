@@ -18,15 +18,17 @@ import (
 // methods like (*Evaler)PEval.
 type Exception struct {
 	Reason     error
-	StackTrace *stackTrace
+	StackTrace *StackTrace
 }
 
-// A stack trace as a linked list of diag.Context. The head is the innermost
-// stack. Since pipelines can call multiple functions in parallel, all the
-// stackTrace nodes form a DAG.
-type stackTrace struct {
-	head *diag.Context
-	next *stackTrace
+// StackTrace represents a stack trace as a linked list of diag.Context. The
+// head is the innermost stack.
+//
+// Since pipelines can call multiple functions in parallel, all the StackTrace
+// nodes form a DAG.
+type StackTrace struct {
+	Head *diag.Context
+	Next *StackTrace
 }
 
 // Cause returns the Cause field if err is an *Exception. Otherwise it returns
@@ -63,13 +65,13 @@ func (exc *Exception) Show(indent string) string {
 
 	if exc.StackTrace != nil {
 		buf.WriteString("\n")
-		if exc.StackTrace.next == nil {
-			buf.WriteString(exc.StackTrace.head.ShowCompact(indent))
+		if exc.StackTrace.Next == nil {
+			buf.WriteString(exc.StackTrace.Head.ShowCompact(indent))
 		} else {
 			buf.WriteString(indent + "Traceback:")
-			for tb := exc.StackTrace; tb != nil; tb = tb.next {
+			for tb := exc.StackTrace; tb != nil; tb = tb.Next {
 				buf.WriteString("\n" + indent + "  ")
-				buf.WriteString(tb.head.Show(indent + "    "))
+				buf.WriteString(tb.Head.Show(indent + "    "))
 			}
 		}
 	}
