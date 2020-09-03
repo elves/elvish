@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/elves/elvish/pkg/env"
 )
 
 // TestDir creates a temporary directory for testing. It returns the path of the
@@ -44,6 +46,19 @@ func InTestDir() (string, func()) {
 	mustChdir(dir)
 	return dir, func() {
 		mustChdir(oldWd)
+		cleanup()
+	}
+}
+
+// InTempHome is like InTestDir, but it also sets HOME to the temporary
+// directory and restores the original HOME in cleanup.
+func InTempHome() (string, func()) {
+	oldHome := os.Getenv(env.HOME)
+	tmpHome, cleanup := InTestDir()
+	os.Setenv(env.HOME, tmpHome)
+
+	return tmpHome, func() {
+		os.Setenv(env.HOME, oldHome)
 		cleanup()
 	}
 }

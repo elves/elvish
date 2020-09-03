@@ -11,8 +11,8 @@ import (
 	"github.com/elves/elvish/pkg/cli"
 	. "github.com/elves/elvish/pkg/cli/clitest"
 	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/store"
+	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/ui"
 )
 
@@ -173,7 +173,7 @@ func TestStart_Workspace(t *testing.T) {
 }
 
 func TestStart_OK(t *testing.T) {
-	home, cleanupHome := evaltest.InTempHome()
+	home, cleanupHome := testutil.InTempHome()
 	defer cleanupHome()
 	f := Setup()
 	defer f.Stop()

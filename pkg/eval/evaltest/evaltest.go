@@ -27,11 +27,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/testutil"
 )
 
 // These two symbols are used for tests that need to compare floating point
@@ -440,20 +438,5 @@ func MustWriteFile(filename string, data []byte, perm os.FileMode) {
 	err := ioutil.WriteFile(filename, data, perm)
 	if err != nil {
 		panic(err)
-	}
-}
-
-// InTempHome is like testutil.InTestDir, but it also sets HOME to the temporary
-// directory and restores the original HOME in cleanup.
-//
-// TODO(xiaq): Move this into the util package.
-func InTempHome() (string, func()) {
-	oldHome := os.Getenv(env.HOME)
-	tmpHome, cleanup := testutil.InTestDir()
-	os.Setenv(env.HOME, tmpHome)
-
-	return tmpHome, func() {
-		os.Setenv(env.HOME, oldHome)
-		cleanup()
 	}
 }

@@ -8,12 +8,13 @@ import (
 	"testing"
 
 	. "github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/testutil"
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
 )
 
 func TestBuiltinPwd(t *testing.T) {
-	tmpHome, cleanup := InTempHome()
+	tmpHome, cleanup := testutil.InTempHome()
 	defer cleanup()
 
 	MustMkdirAll("dir1")

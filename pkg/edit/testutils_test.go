@@ -7,11 +7,11 @@ import (
 	"github.com/elves/elvish/pkg/cli/clitest"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/store"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 var Styles = clitest.Styles
@@ -50,7 +50,7 @@ func storeOp(storeFn func(store.Store)) func(*fixture) {
 
 func setup(fns ...func(*fixture)) *fixture {
 	st, cleanupStore := store.MustGetTempStore()
-	home, cleanupFs := evaltest.InTempHome()
+	home, cleanupFs := testutil.InTempHome()
 	tty, ttyCtrl := clitest.NewFakeTTY()
 	ev := eval.NewEvaler()
 	ed := NewEditor(tty, ev, st)

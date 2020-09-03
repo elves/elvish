@@ -11,7 +11,7 @@ import (
 )
 
 func TestBuiltinFnExternal(t *testing.T) {
-	tmpHome, cleanup := InTempHome()
+	tmpHome, cleanup := testutil.InTempHome()
 	defer cleanup()
 
 	restorePath := testutil.WithTempEnv("PATH", tmpHome+":"+os.Getenv("PATH"))

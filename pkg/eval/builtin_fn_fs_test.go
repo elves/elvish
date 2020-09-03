@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	. "github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/testutil"
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/fsutil"
@@ -20,7 +21,7 @@ func currentUser() (*user.User, error) {
 }
 
 func TestBuiltinFnFS(t *testing.T) {
-	tmpHome, cleanup := InTempHome()
+	tmpHome, cleanup := testutil.InTempHome()
 	defer cleanup()
 
 	MustMkdirAll("dir")
@@ -37,7 +38,7 @@ func TestBuiltinFnFS(t *testing.T) {
 }
 
 func TestBuiltinCd(t *testing.T) {
-	tmpHome, cleanup := InTempHome()
+	tmpHome, cleanup := testutil.InTempHome()
 	defer cleanup()
 
 	MustMkdirAll("d1")

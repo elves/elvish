@@ -5,15 +5,15 @@ import (
 	"testing"
 
 	. "github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/testutil"
 
-	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
 )
 
 func TestPurelyEvalCompound(t *testing.T) {
-	home, cleanup := InTempHome()
+	home, cleanup := testutil.InTempHome()
 	defer cleanup()
 
 	var tests = []struct {

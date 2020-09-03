@@ -5,13 +5,14 @@ import (
 
 	. "github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/errs"
+	"github.com/elves/elvish/pkg/testutil"
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/eval/vals"
 )
 
 func TestCompileValue(t *testing.T) {
-	home, cleanup := InTempHome()
+	home, cleanup := testutil.InTempHome()
 	MustCreateEmpty("file1")
 	MustCreateEmpty("file2")
 	defer cleanup()

@@ -18,7 +18,7 @@ import (
 // test into external_cmd_test.go or create an external_cmd_windows_test.go
 // that performs an equivalent test on Windows.
 func TestEachExternal(t *testing.T) {
-	tmpHome, cleanup := InTempHome()
+	tmpHome, cleanup := testutil.InTempHome()
 	defer cleanup()
 
 	restorePath := testutil.WithTempEnv("PATH", "/foo:"+tmpHome+":/bar")
