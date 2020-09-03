@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli/apptest"
+	"github.com/elves/elvish/pkg/cli/clitest"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
@@ -13,11 +13,11 @@ import (
 	"github.com/elves/elvish/pkg/store"
 )
 
-var Styles = apptest.Styles
+var Styles = clitest.Styles
 
 type fixture struct {
 	Editor  *Editor
-	TTYCtrl apptest.TTYCtrl
+	TTYCtrl clitest.TTYCtrl
 	Evaler  *eval.Evaler
 	Store   store.Store
 	Home    string
@@ -50,7 +50,7 @@ func storeOp(storeFn func(store.Store)) func(*fixture) {
 func setup(fns ...func(*fixture)) *fixture {
 	st, cleanupStore := store.MustGetTempStore()
 	home, cleanupFs := eval.InTempHome()
-	tty, ttyCtrl := apptest.NewFakeTTY()
+	tty, ttyCtrl := clitest.NewFakeTTY()
 	ev := eval.NewEvaler()
 	ed := NewEditor(tty, ev, st)
 	ev.InstallModule("edit", ed.Ns())
@@ -66,7 +66,7 @@ func setup(fns ...func(*fixture)) *fixture {
 		fn(f)
 	}
 	_, f.width = tty.Size()
-	f.codeCh, f.errCh = apptest.StartReadCode(f.Editor.ReadCode)
+	f.codeCh, f.errCh = clitest.StartReadCode(f.Editor.ReadCode)
 	f.cleanup = func() {
 		f.Editor.app.CommitEOF()
 		f.Wait()
@@ -98,7 +98,7 @@ func (f *fixture) TestTTYNotes(t *testing.T, args ...interface{}) {
 	f.TTYCtrl.TestNotesBuffer(t, f.MakeBuffer(args...))
 }
 
-func feedInput(ttyCtrl apptest.TTYCtrl, s string) {
+func feedInput(ttyCtrl clitest.TTYCtrl, s string) {
 	for _, r := range s {
 		ttyCtrl.Inject(term.K(r))
 	}

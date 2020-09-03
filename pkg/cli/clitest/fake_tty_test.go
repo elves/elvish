@@ -1,4 +1,4 @@
-package apptest
+package clitest
 
 import (
 	"os"

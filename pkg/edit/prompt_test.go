@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli/apptest"
+	"github.com/elves/elvish/pkg/cli/clitest"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/ui"
@@ -60,7 +60,7 @@ func TestRPrompt(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TestTTY(t, "~> ", term.DotHere,
-		strings.Repeat(" ", apptest.FakeTTYWidth-6)+"RRR")
+		strings.Repeat(" ", clitest.FakeTTYWidth-6)+"RRR")
 }
 
 func TestPromptEagerness(t *testing.T) {
@@ -123,7 +123,7 @@ func TestPromptStaleTransform_Exception(t *testing.T) {
 
 func TestRPromptPersistent_True(t *testing.T) {
 	testRPromptPersistent(t, `edit:rprompt-persistent = $true`,
-		"~> "+strings.Repeat(" ", apptest.FakeTTYWidth-6)+"RRR",
+		"~> "+strings.Repeat(" ", clitest.FakeTTYWidth-6)+"RRR",
 		"\n", term.DotHere,
 	)
 }
@@ -142,7 +142,7 @@ func testRPromptPersistent(t *testing.T, code string, finalBuf ...interface{}) {
 	// Make sure that the UI has stablized before hitting Enter.
 	f.TestTTY(t,
 		"~> ", term.DotHere,
-		strings.Repeat(" ", apptest.FakeTTYWidth-6), "RRR",
+		strings.Repeat(" ", clitest.FakeTTYWidth-6), "RRR",
 	)
 
 	f.TTYCtrl.Inject(term.K('\n'))

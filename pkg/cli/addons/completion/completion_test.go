@@ -3,7 +3,7 @@ package completion
 import (
 	"testing"
 
-	. "github.com/elves/elvish/pkg/cli/apptest"
+	. "github.com/elves/elvish/pkg/cli/clitest"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/ui"

@@ -1,5 +1,5 @@
-// Package apptest provides utilities for testing cli.App.
-package apptest
+// Package clitest provides utilities for testing cli.App.
+package clitest
 
 import (
 	"testing"

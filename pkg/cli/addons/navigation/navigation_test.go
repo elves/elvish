@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/cli"
-	. "github.com/elves/elvish/pkg/cli/apptest"
+	. "github.com/elves/elvish/pkg/cli/clitest"
 	"github.com/elves/elvish/pkg/cli/lscolors"
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
