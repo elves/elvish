@@ -10,4 +10,4 @@ and `use unix` will fail. Use the
 [`$platform:is-unix`](platform.html#platformis-unix) variable to determine if
 this namespace is usable.
 
-@elvdoc -ns unix: -dir ../pkg/eval/unix
+@elvdoc -ns unix: -dir ../pkg/eval/mods/unix

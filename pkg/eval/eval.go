@@ -11,7 +11,7 @@ import (
 
 	"github.com/elves/elvish/pkg/daemon"
 	"github.com/elves/elvish/pkg/env"
-	"github.com/elves/elvish/pkg/eval/bundled"
+	"github.com/elves/elvish/pkg/eval/mods/bundled"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"

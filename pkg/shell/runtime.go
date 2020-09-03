@@ -10,13 +10,13 @@ import (
 
 	"github.com/elves/elvish/pkg/daemon"
 	"github.com/elves/elvish/pkg/eval"
-	daemonmod "github.com/elves/elvish/pkg/eval/daemon"
-	mathmod "github.com/elves/elvish/pkg/eval/math"
-	"github.com/elves/elvish/pkg/eval/platform"
-	"github.com/elves/elvish/pkg/eval/re"
-	"github.com/elves/elvish/pkg/eval/store"
-	"github.com/elves/elvish/pkg/eval/str"
-	"github.com/elves/elvish/pkg/eval/unix"
+	daemonmod "github.com/elves/elvish/pkg/eval/mods/daemon"
+	mathmod "github.com/elves/elvish/pkg/eval/mods/math"
+	"github.com/elves/elvish/pkg/eval/mods/platform"
+	"github.com/elves/elvish/pkg/eval/mods/re"
+	"github.com/elves/elvish/pkg/eval/mods/store"
+	"github.com/elves/elvish/pkg/eval/mods/str"
+	"github.com/elves/elvish/pkg/eval/mods/unix"
 	bolt "go.etcd.io/bbolt"
 )
 
