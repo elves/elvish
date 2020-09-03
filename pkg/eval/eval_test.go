@@ -11,7 +11,7 @@ import (
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/prog"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 func TestBuiltinPid(t *testing.T) {
@@ -34,7 +34,7 @@ func TestNumBgJobs(t *testing.T) {
 func TestEvalTimeDeprecate(t *testing.T) {
 	restore := prog.SetShowDeprecations(true)
 	defer restore()
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	TestWithSetup(t, func(ev *Evaler) {

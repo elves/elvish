@@ -12,7 +12,7 @@ import (
 	"sync"
 
 	"github.com/elves/elvish/pkg/env"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 // Colorist styles filenames based on the features of the file.
@@ -131,5 +131,5 @@ func (lc *colorist) GetStyle(fname string) string {
 // function is mainly useful in tests.
 func WithTestLsColors() func() {
 	// ow (world-writable directory) needed for Windows.
-	return util.WithTempEnv("LS_COLORS", "di=34:ow=34:*.png=31")
+	return testutil.WithTempEnv("LS_COLORS", "di=34:ow=34:*.png=31")
 }

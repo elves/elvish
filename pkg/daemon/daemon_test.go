@@ -9,12 +9,11 @@ import (
 	. "github.com/elves/elvish/pkg/prog/progtest"
 	"github.com/elves/elvish/pkg/store/storetest"
 	"github.com/elves/elvish/pkg/testutil"
-	"github.com/elves/elvish/pkg/util"
 )
 
 func TestDaemon(t *testing.T) {
 	// Set up filesystem.
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	// Set up server.

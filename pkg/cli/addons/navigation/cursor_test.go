@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
 )
 
 var (
@@ -15,7 +15,7 @@ var (
 )
 
 type testCursor struct {
-	root util.Dir
+	root testutil.Dir
 	pwd  []string
 
 	currentErr, parentErr, ascendErr, descendErr error
@@ -62,10 +62,10 @@ func (c *testCursor) Descend(name string) error {
 	return errCannotCd
 }
 
-func getFile(root util.Dir, path []string) (File, error) {
+func getFile(root testutil.Dir, path []string) (File, error) {
 	var f interface{} = root
 	for _, p := range path {
-		d, ok := f.(util.Dir)
+		d, ok := f.(testutil.Dir)
 		if !ok {
 			return nil, errNoSuchFile
 		}
@@ -78,7 +78,7 @@ func getFile(root util.Dir, path []string) (File, error) {
 	return testFile{name, f}, nil
 }
 
-func getDirFile(root util.Dir, path []string) (File, error) {
+func getDirFile(root testutil.Dir, path []string) (File, error) {
 	f, err := getFile(root, path)
 	if err != nil {
 		return nil, err
@@ -109,12 +109,12 @@ func (f testFile) ShowName() ui.Text {
 }
 
 func (f testFile) IsDirDeep() bool {
-	_, ok := f.data.(util.Dir)
+	_, ok := f.data.(testutil.Dir)
 	return ok
 }
 
 func (f testFile) Read() ([]File, []byte, error) {
-	if dir, ok := f.data.(util.Dir); ok {
+	if dir, ok := f.data.(testutil.Dir); ok {
 		files := make([]File, 0, len(dir))
 		for name, data := range dir {
 			files = append(files, testFile{name, data})

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 func TestBuiltinFnMisc(t *testing.T) {
@@ -46,7 +46,7 @@ func TestBuiltinFnMisc(t *testing.T) {
 }
 
 func TestUseMod(t *testing.T) {
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 	mustWriteFile("mod.elv", []byte("x = value"), 0600)
 
@@ -88,7 +88,7 @@ func TestSleep(t *testing.T) {
 }
 
 func TestResolve(t *testing.T) {
-	libdir, cleanup := util.InTestDir()
+	libdir, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	mustWriteFile("mod.elv", []byte("fn func { }"), 0600)

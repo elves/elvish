@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/cli/lscolors"
+	"github.com/elves/elvish/pkg/testutil"
 
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
 )
 
 func TestNavigation(t *testing.T) {
@@ -75,7 +75,7 @@ func setupNav() (*fixture, func()) {
 	f := setup()
 	restoreLsColors := lscolors.WithTestLsColors()
 
-	util.ApplyDir(util.Dir{"d": util.Dir{"a": ""}})
+	testutil.ApplyDir(testutil.Dir{"d": testutil.Dir{"a": ""}})
 	err := os.Chdir("d")
 	if err != nil {
 		panic(err)

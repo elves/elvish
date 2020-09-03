@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 var extractTests = []struct {
@@ -251,7 +251,7 @@ func compare(t *testing.T, got, want string) {
 // containing .go files. Returns a teardown function. Useful for testing the run
 // function.
 func setup() func() {
-	_, teardown := util.InTestDir()
+	_, teardown := testutil.InTestDir()
 	writeFile("a.go", `package x
 //elvdoc:fn f2
 //

@@ -11,9 +11,9 @@ import (
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/parse"
+	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/tt"
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
 )
 
 var Args = tt.Args
@@ -53,11 +53,11 @@ func (ev testEvaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
 }
 
 func setupFs() func() {
-	return util.InTestDirWithSetup(util.Dir{
-		"a.exe":   util.File{Perm: 0755, Content: ""},
+	return testutil.InTestDirWithSetup(testutil.Dir{
+		"a.exe":   testutil.File{Perm: 0755, Content: ""},
 		"non-exe": "",
-		"d": util.Dir{
-			"a.exe": util.File{Perm: 0755, Content: ""},
+		"d": testutil.Dir{
+			"a.exe": testutil.File{Perm: 0755, Content: ""},
 		},
 	})
 }

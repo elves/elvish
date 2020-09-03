@@ -6,11 +6,11 @@ import (
 
 	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 func TestChdir(t *testing.T) {
-	dst, cleanup := util.TestDir()
+	dst, cleanup := testutil.TestDir()
 	defer cleanup()
 
 	ev := NewEvaler()
@@ -42,7 +42,7 @@ func TestChdir(t *testing.T) {
 }
 
 func TestChdirElvishHooks(t *testing.T) {
-	dst, cleanup := util.TestDir()
+	dst, cleanup := testutil.TestDir()
 	defer cleanup()
 
 	back := saveWd()
@@ -60,7 +60,7 @@ func TestChdirElvishHooks(t *testing.T) {
 }
 
 func TestChdirError(t *testing.T) {
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	ev := NewEvaler()

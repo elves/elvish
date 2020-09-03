@@ -3,11 +3,11 @@ package eval
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 func TestGlob_Simple(t *testing.T) {
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	mustMkdirAll("z", "z2")
@@ -22,7 +22,7 @@ func TestGlob_Simple(t *testing.T) {
 }
 
 func TestGlob_Recursive(t *testing.T) {
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	mustMkdirAll("1/2/3")
@@ -36,7 +36,7 @@ func TestGlob_Recursive(t *testing.T) {
 }
 
 func TestGlob_NoMatch(t *testing.T) {
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	Test(t,
@@ -46,7 +46,7 @@ func TestGlob_NoMatch(t *testing.T) {
 }
 
 func TestGlob_MatchHidden(t *testing.T) {
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	mustMkdirAll("d", ".d")
@@ -63,7 +63,7 @@ func TestGlob_MatchHidden(t *testing.T) {
 }
 
 func TestGlob_SetAndRange(t *testing.T) {
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	mustCreateEmpty("a1", "a2", "b1", "c1", "ipsum", "lorem")
@@ -78,7 +78,7 @@ func TestGlob_SetAndRange(t *testing.T) {
 }
 
 func TestGlob_But(t *testing.T) {
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	mustCreateEmpty("bar", "foo", "ipsum", "lorem")
@@ -90,7 +90,7 @@ func TestGlob_But(t *testing.T) {
 }
 
 func TestGlob_Type(t *testing.T) {
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	mustMkdirAll("d1", "d2", ".d", "b/c")

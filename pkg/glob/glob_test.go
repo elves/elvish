@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 var (
@@ -63,7 +63,7 @@ func TestGlob_Absolute(t *testing.T) {
 }
 
 func testGlob(t *testing.T, abs bool) {
-	dir, cleanup := util.InTestDir()
+	dir, cleanup := testutil.InTestDir()
 	dir = strings.ReplaceAll(dir, string(os.PathSeparator), "/")
 	defer cleanup()
 

@@ -11,8 +11,8 @@ import (
 
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/store"
+	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
 )
 
 func TestLocationAddon(t *testing.T) {
@@ -46,11 +46,11 @@ func TestLocationAddon_Workspace(t *testing.T) {
 		s.AddDir("other-ws/bin", 1)
 	}))
 	defer f.Cleanup()
-	util.ApplyDir(
-		util.Dir{
-			"ws1": util.Dir{
-				"bin": util.Dir{},
-				"tmp": util.Dir{}}})
+	testutil.ApplyDir(
+		testutil.Dir{
+			"ws1": testutil.Dir{
+				"bin": testutil.Dir{},
+				"tmp": testutil.Dir{}}})
 	err := os.Chdir("ws1/tmp")
 	if err != nil {
 		t.Skip("chdir:", err)
@@ -76,11 +76,11 @@ func TestLocationAddon_Workspace(t *testing.T) {
 func TestLocation_AddDir(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
-	util.ApplyDir(
-		util.Dir{
-			"bin": util.Dir{},
-			"ws1": util.Dir{
-				"bin": util.Dir{}}})
+	testutil.ApplyDir(
+		testutil.Dir{
+			"bin": testutil.Dir{},
+			"ws1": testutil.Dir{
+				"bin": testutil.Dir{}}})
 	evals(f.Evaler, `edit:location:workspaces = [&ws=$E:HOME/ws.]`)
 
 	chdir := func(path string) {

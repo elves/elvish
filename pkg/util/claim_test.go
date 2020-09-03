@@ -3,6 +3,8 @@ package util
 import (
 	"os"
 	"testing"
+
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 var claimFileTests = []struct {
@@ -14,7 +16,7 @@ var claimFileTests = []struct {
 }
 
 func TestClaimFile(t *testing.T) {
-	_, cleanup := InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	touch("a0.log")

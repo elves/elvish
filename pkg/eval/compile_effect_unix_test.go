@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 func TestCompileEffectUnix(t *testing.T) {
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	mustWriteScript("foo", "#!/bin/sh", "echo foo")

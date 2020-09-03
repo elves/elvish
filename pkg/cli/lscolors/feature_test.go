@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 func TestDetermineFeature(t *testing.T) {
@@ -22,7 +22,7 @@ func TestDetermineFeature(t *testing.T) {
 		}
 	}
 
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	create("a", 0600)

@@ -7,7 +7,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 // TODO: When EachExternal is modified to work on Windows either fold this
@@ -17,7 +17,7 @@ func TestEachExternal(t *testing.T) {
 	tmpHome, cleanup := InTempHome()
 	defer cleanup()
 
-	restorePath := util.WithTempEnv("PATH", "/foo:"+tmpHome+":/bar")
+	restorePath := testutil.WithTempEnv("PATH", "/foo:"+tmpHome+":/bar")
 	defer restorePath()
 
 	mustMkdirAll("dir")

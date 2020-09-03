@@ -7,7 +7,7 @@ import (
 
 	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/prog"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 func TestBuiltinSpecial(t *testing.T) {
@@ -104,7 +104,7 @@ func TestBuiltinSpecial(t *testing.T) {
 }
 
 func TestUse(t *testing.T) {
-	libdir, cleanup := util.InTestDir()
+	libdir, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	mustMkdirAll(filepath.Join("a", "b", "c"))
@@ -165,7 +165,7 @@ func TestUse(t *testing.T) {
 func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	restore := prog.SetShowDeprecations(true)
 	defer restore()
-	libdir, cleanup := util.InTestDir()
+	libdir, cleanup := testutil.InTestDir()
 	defer cleanup()
 	mustWriteFile("dep.elv", []byte("x = (ord 1)"), 0600)
 

@@ -4,14 +4,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 func TestBuiltinFnExternal(t *testing.T) {
 	tmpHome, cleanup := InTempHome()
 	defer cleanup()
 
-	restorePath := util.WithTempEnv("PATH", tmpHome+":"+os.Getenv("PATH"))
+	restorePath := testutil.WithTempEnv("PATH", tmpHome+":"+os.Getenv("PATH"))
 	defer restorePath()
 
 	Test(t,

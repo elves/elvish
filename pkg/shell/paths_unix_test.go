@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/env"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 // TODO(xiaq): Rewrite these tests to test the exported MakePaths instead of the
@@ -58,8 +58,8 @@ func TestGetSecureRunDir_ReturnsErrorWhenUnableToMkdir(t *testing.T) {
 }
 
 func setupForSecureRunDir() (xdgRuntimeDir, tmpDir string, cleanup func()) {
-	xdgRuntimeDir, xdgCleanup := util.TestDir()
-	tmpDir, tmpCleanup := util.TestDir()
+	xdgRuntimeDir, xdgCleanup := testutil.TestDir()
+	tmpDir, tmpCleanup := testutil.TestDir()
 	envCleanup := withTempEnvs(map[string]string{
 		env.XDG_RUNTIME_DIR: xdgRuntimeDir,
 		"TMPDIR":            tmpDir,

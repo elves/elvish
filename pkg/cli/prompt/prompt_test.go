@@ -8,7 +8,6 @@ import (
 
 	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
 )
 
 func TestPrompt_DefaultCompute(t *testing.T) {
@@ -88,7 +87,7 @@ func TestPrompt_Eagerness0(t *testing.T) {
 	testNoUpdate(t, prompt)
 
 	// No update even if pwd has changed.
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 	prompt.Trigger(false)
 	testNoUpdate(t, prompt)
@@ -113,7 +112,7 @@ func TestPrompt_Eagerness5(t *testing.T) {
 	testNoUpdate(t, prompt)
 
 	// Update because the pwd has changed.
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 	prompt.Trigger(false)
 	testUpdate(t, prompt, ui.T("2> "))

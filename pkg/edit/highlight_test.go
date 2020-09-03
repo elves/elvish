@@ -12,8 +12,8 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
+	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/tt"
-	"github.com/elves/elvish/pkg/util"
 )
 
 // High-level sanity test.
@@ -76,7 +76,7 @@ func TestMakeHasCommand(t *testing.T) {
 	ev.Global.AddNs("a", aNs)
 
 	// Set up environment.
-	testDir, cleanup := util.InTestDir()
+	testDir, cleanup := testutil.InTestDir()
 	defer cleanup()
 	oldPath := os.Getenv(env.PATH)
 	defer os.Setenv(env.PATH, oldPath)

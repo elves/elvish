@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 // Fixture is a test fixture suitable for testing programs.
@@ -30,7 +30,7 @@ func captureOutput(p *pipe) {
 // Setup sets up a test fixture. The caller is responsible for calling the
 // Cleanup method of the returned Fixture.
 func Setup() *Fixture {
-	_, dirCleanup := util.InTestDir()
+	_, dirCleanup := testutil.InTestDir()
 	pipes := [3]*pipe{makePipe(false), makePipe(true), makePipe(true)}
 	return &Fixture{pipes, dirCleanup}
 }

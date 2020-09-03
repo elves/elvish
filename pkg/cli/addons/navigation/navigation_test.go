@@ -9,20 +9,20 @@ import (
 	. "github.com/elves/elvish/pkg/cli/clitest"
 	"github.com/elves/elvish/pkg/cli/lscolors"
 	"github.com/elves/elvish/pkg/cli/term"
+	"github.com/elves/elvish/pkg/testutil"
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
 )
 
-var testDir = util.Dir{
+var testDir = testutil.Dir{
 	"a": "",
-	"d": util.Dir{
+	"d": testutil.Dir{
 		"d1": "content\td1\nline 2",
-		"d2": util.Dir{
+		"d2": testutil.Dir{
 			"d21":     "content d21",
 			"d22":     "content d22",
 			"d23.png": "",
 		},
-		"d3":  util.Dir{},
+		"d3":  testutil.Dir{},
 		".dh": "hidden",
 	},
 	"f": "",
@@ -149,7 +149,7 @@ func TestNavigation_FakeFS(t *testing.T) {
 }
 
 func TestNavigation_RealFS(t *testing.T) {
-	cleanupFs := util.InTestDirWithSetup(testDir)
+	cleanupFs := testutil.InTestDirWithSetup(testDir)
 	err := os.Chdir("d")
 	if err != nil {
 		panic(err)

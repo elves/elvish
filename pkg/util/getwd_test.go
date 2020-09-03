@@ -8,10 +8,11 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/env"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 func TestGetwd(t *testing.T) {
-	tmpdir, cleanup := InTestDir()
+	tmpdir, cleanup := testutil.InTestDir()
 	defer cleanup()
 	mustOK(os.Mkdir("a", 0700))
 

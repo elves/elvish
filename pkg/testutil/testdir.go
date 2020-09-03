@@ -1,4 +1,4 @@
-package util
+package testutil
 
 import (
 	"fmt"
@@ -95,7 +95,10 @@ func applyDir(dir Dir, prefix string) {
 }
 
 func mustChdir(dir string) {
-	err := os.Chdir(dir)
+	mustOK(os.Chdir(dir))
+}
+
+func mustOK(err error) {
 	if err != nil {
 		panic(err)
 	}

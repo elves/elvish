@@ -4,11 +4,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 func TestLsColors(t *testing.T) {
-	_, cleanup := util.InTestDir()
+	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 	restoreLsColors := WithTestLsColors()
 	defer restoreLsColors()

@@ -30,7 +30,7 @@ import (
 	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 // These two symbols are used for tests that need to compare floating point
@@ -433,13 +433,13 @@ func mustWriteFile(filename string, data []byte, perm os.FileMode) {
 	}
 }
 
-// InTempHome is like util.InTestDir, but it also sets HOME to the temporary
+// InTempHome is like testutil.InTestDir, but it also sets HOME to the temporary
 // directory and restores the original HOME in cleanup.
 //
 // TODO(xiaq): Move this into the util package.
 func InTempHome() (string, func()) {
 	oldHome := os.Getenv(env.HOME)
-	tmpHome, cleanup := util.InTestDir()
+	tmpHome, cleanup := testutil.InTestDir()
 	os.Setenv(env.HOME, tmpHome)
 
 	return tmpHome, func() {

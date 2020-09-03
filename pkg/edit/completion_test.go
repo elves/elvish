@@ -7,13 +7,13 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/prog"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 func TestCompletionAddon(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
-	util.ApplyDir(util.Dir{"a": "", "b": ""})
+	testutil.ApplyDir(testutil.Dir{"a": "", "b": ""})
 
 	feedInput(f.TTYCtrl, "echo \t")
 	f.TestTTY(t,
@@ -29,7 +29,7 @@ func TestCompletionAddon(t *testing.T) {
 func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
-	util.ApplyDir(util.Dir{"foo1": "", "foo2": "", "foo": "", "fox": ""})
+	testutil.ApplyDir(testutil.Dir{"foo1": "", "foo2": "", "foo": "", "fox": ""})
 
 	feedInput(f.TTYCtrl, "echo \t")
 	f.TestTTY(t,
@@ -51,7 +51,7 @@ func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
 func TestCompleteFilename(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
-	util.ApplyDir(util.Dir{"d": util.Dir{"a": "", "b": ""}})
+	testutil.ApplyDir(testutil.Dir{"d": testutil.Dir{"a": "", "b": ""}})
 
 	evals(f.Evaler, `@cands = (edit:complete-filename ls ./d/a)`)
 	testGlobal(t, f.Evaler,
@@ -158,7 +158,7 @@ func TestCompleteSudo(t *testing.T) {
 func TestCompletionMatcher(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
-	util.ApplyDir(util.Dir{"foo": "", "oof": ""})
+	testutil.ApplyDir(testutil.Dir{"foo": "", "oof": ""})
 
 	evals(f.Evaler, `edit:completion:matcher[''] = $edit:match-substr~`)
 	feedInput(f.TTYCtrl, "echo f\t")

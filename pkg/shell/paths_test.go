@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/env"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/testutil"
 )
 
 var j = filepath.Join
@@ -42,9 +42,9 @@ func TestMakePaths_RespectsSetSubPaths(t *testing.T) {
 }
 
 func TestMakePaths_SetsAndCreatesDataDir(t *testing.T) {
-	home, cleanupDir := util.TestDir()
+	home, cleanupDir := testutil.TestDir()
 	defer cleanupDir()
-	cleanupEnv := util.WithTempEnv(env.HOME, home)
+	cleanupEnv := testutil.WithTempEnv(env.HOME, home)
 	defer cleanupEnv()
 
 	paths := MakePaths(os.Stderr, Paths{
