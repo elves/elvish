@@ -12,8 +12,8 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/parse/parseutil"
+	"github.com/elves/elvish/pkg/strutil"
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
 	"github.com/elves/elvish/pkg/wcwidth"
 )
 
@@ -310,7 +310,7 @@ func moveDotRight(buffer string, dot int) int {
 // Deletes the text between the dot and the start of the current line.
 
 func moveDotSOL(buffer string, dot int) int {
-	return util.FindLastSOL(buffer[:dot])
+	return strutil.FindLastSOL(buffer[:dot])
 }
 
 //elvdoc:fn move-dot-eol
@@ -322,7 +322,7 @@ func moveDotSOL(buffer string, dot int) int {
 // Deletes the text between the dot and the end of the current line.
 
 func moveDotEOL(buffer string, dot int) int {
-	return util.FindFirstEOL(buffer[dot:]) + dot
+	return strutil.FindFirstEOL(buffer[dot:]) + dot
 }
 
 //elvdoc:fn move-dot-up
@@ -331,13 +331,13 @@ func moveDotEOL(buffer string, dot int) int {
 // Does nothing if dot is already on the first line of the buffer.
 
 func moveDotUp(buffer string, dot int) int {
-	sol := util.FindLastSOL(buffer[:dot])
+	sol := strutil.FindLastSOL(buffer[:dot])
 	if sol == 0 {
 		// Already in the first line.
 		return dot
 	}
 	prevEOL := sol - 1
-	prevSOL := util.FindLastSOL(buffer[:prevEOL])
+	prevSOL := strutil.FindLastSOL(buffer[:prevEOL])
 	width := wcwidth.Of(buffer[sol:dot])
 	return prevSOL + len(wcwidth.Trim(buffer[prevSOL:prevEOL], width))
 }
@@ -348,14 +348,14 @@ func moveDotUp(buffer string, dot int) int {
 // position. Does nothing if dot is already on the last line of the buffer.
 
 func moveDotDown(buffer string, dot int) int {
-	eol := util.FindFirstEOL(buffer[dot:]) + dot
+	eol := strutil.FindFirstEOL(buffer[dot:]) + dot
 	if eol == len(buffer) {
 		// Already in the last line.
 		return dot
 	}
 	nextSOL := eol + 1
-	nextEOL := util.FindFirstEOL(buffer[nextSOL:]) + nextSOL
-	sol := util.FindLastSOL(buffer[:dot])
+	nextEOL := strutil.FindFirstEOL(buffer[nextSOL:]) + nextSOL
+	sol := strutil.FindLastSOL(buffer[:dot])
 	width := wcwidth.Of(buffer[sol:dot])
 	return nextSOL + len(wcwidth.Trim(buffer[nextSOL:nextEOL], width))
 }

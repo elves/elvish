@@ -14,6 +14,7 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
+	"github.com/elves/elvish/pkg/strutil"
 	"github.com/elves/elvish/pkg/util"
 	"github.com/xiaq/persistent/hash"
 )
@@ -225,7 +226,7 @@ func initCompletion(ed *Editor, ev *eval.Evaler) {
 		"complete-sudo":     wrapArgGenerator(generateForSudo),
 		"complex-candidate": complexCandidate,
 		"match-prefix":      wrapMatcher(strings.HasPrefix),
-		"match-subseq":      wrapMatcher(util.HasSubseq),
+		"match-subseq":      wrapMatcher(strutil.HasSubseq),
 		"match-substr":      wrapMatcher(strings.Contains),
 	})
 	app := ed.app
