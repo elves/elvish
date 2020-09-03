@@ -1,0 +1,12 @@
+coverage:
+  status:
+    project:
+      default:
+        threshold: 0.1%
+    patch: off
+comment: false
+ignore:
+  # Exclude test helpers from coverage calculation.
+  - "pkg/cli/clitest"
+  - "pkg/prog/progtest"
+  - "pkg/store/storetest"
