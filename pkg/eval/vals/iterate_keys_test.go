@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	. "github.com/elves/elvish/pkg/tt"
-	"github.com/elves/elvish/pkg/util"
 )
 
 func vs(xs ...interface{}) []interface{} { return xs }
@@ -12,7 +11,7 @@ func vs(xs ...interface{}) []interface{} { return xs }
 type keysIterator struct{ keys []interface{} }
 
 func (k keysIterator) IterateKeys(f func(interface{}) bool) {
-	util.Feed(f, k.keys...)
+	Feed(f, k.keys...)
 }
 
 type nonKeysIterator struct{}

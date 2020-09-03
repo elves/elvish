@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/util"
 )
 
 // Segment is a string that has some style applied to it.
@@ -53,7 +52,7 @@ func (s *Segment) Repr(int) string {
 
 // IterateKeys feeds the function with all valid attributes of styled-segment.
 func (*Segment) IterateKeys(fn func(v interface{}) bool) {
-	util.Feed(fn, "text", "fg-color", "bg-color", "bold", "dim", "italic", "underlined", "blink", "inverse")
+	vals.Feed(fn, "text", "fg-color", "bg-color", "bold", "dim", "italic", "underlined", "blink", "inverse")
 }
 
 // Index provides access to the attributes of a styled-segment.

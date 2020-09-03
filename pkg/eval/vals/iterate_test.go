@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	. "github.com/elves/elvish/pkg/tt"
-	"github.com/elves/elvish/pkg/util"
 )
 
 // An implementation of Iterator.
 type iterator struct{ elements []interface{} }
 
 func (i iterator) Iterate(f func(interface{}) bool) {
-	util.Feed(f, i.elements...)
+	Feed(f, i.elements...)
 }
 
 // A non-implementation of Iterator.

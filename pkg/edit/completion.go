@@ -15,7 +15,6 @@ import (
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/strutil"
-	"github.com/elves/elvish/pkg/util"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -265,7 +264,7 @@ func (c complexItem) Index(k interface{}) (interface{}, bool) {
 }
 
 func (c complexItem) IterateKeys(f func(interface{}) bool) {
-	util.Feed(f, "stem", "code-suffix", "display")
+	vals.Feed(f, "stem", "code-suffix", "display")
 }
 
 func (c complexItem) Kind() string { return "map" }
