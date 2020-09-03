@@ -6,7 +6,7 @@ import (
 
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/strutil"
 )
 
 // RawOptions is the type of an argument a Go-native function can take to
@@ -36,7 +36,7 @@ func scanOptions(rawOpts RawOptions, ptr interface{}) error {
 		f := struc.Type().Field(i)
 		optName := f.Tag.Get("name")
 		if optName == "" {
-			optName = util.CamelToDashed(f.Name)
+			optName = strutil.CamelToDashed(f.Name)
 		}
 		fieldIdxForOpt[optName] = i
 	}

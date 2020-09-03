@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/strutil"
 )
 
 // StructMap may be implemented by a struct to mark the struct as a "struct
@@ -70,7 +70,7 @@ func makeStructMapInfo(t reflect.Type) structMapInfo {
 	for i := 0; i < n; i++ {
 		field := t.Field(i)
 		if field.PkgPath == "" && !field.Anonymous {
-			fieldNames[i] = util.CamelToDashed(field.Name)
+			fieldNames[i] = strutil.CamelToDashed(field.Name)
 			filledFields++
 		}
 	}
@@ -78,7 +78,7 @@ func makeStructMapInfo(t reflect.Type) structMapInfo {
 	for i := 0; i < m; i++ {
 		method := t.Method(i)
 		if method.PkgPath == "" && method.Type.NumIn() == 1 && method.Type.NumOut() == 1 {
-			fieldNames[i+n] = util.CamelToDashed(method.Name)
+			fieldNames[i+n] = strutil.CamelToDashed(method.Name)
 			filledFields++
 		}
 	}
