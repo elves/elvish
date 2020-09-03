@@ -2,14 +2,14 @@ package vals
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 )
 
 // NoPretty can be passed to Repr to suppress pretty-printing.
-const NoPretty = util.MinInt
+const NoPretty = math.MinInt32
 
 // Reprer wraps the Repr method.
 type Reprer interface {
