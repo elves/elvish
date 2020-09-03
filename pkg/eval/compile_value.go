@@ -11,9 +11,9 @@ import (
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/glob"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 )
 
 // An operation that produces values.
@@ -47,7 +47,7 @@ func (cp *compiler) compoundOp(n *parse.Compound) valuesOp {
 type loneTildeOp struct{ diag.Ranging }
 
 func (loneTildeOp) exec(fm *Frame) ([]interface{}, error) {
-	home, err := util.GetHome("")
+	home, err := fsutil.GetHome("")
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func doTilde(v interface{}) (interface{}, error) {
 			uname = s[:i]
 			rest = s[i+1:]
 		}
-		dir, err := util.GetHome(uname)
+		dir, err := fsutil.GetHome(uname)
 		if err != nil {
 			return nil, err
 		}
@@ -175,7 +175,7 @@ func doTilde(v interface{}) (interface{}, error) {
 			if isSlash {
 				// ~username or ~username/xxx. Replace the first segment with
 				// the home directory of the specified user.
-				dir, err := util.GetHome(seg.Data)
+				dir, err := fsutil.GetHome(seg.Data)
 				if err != nil {
 					return nil, err
 				}
@@ -183,7 +183,7 @@ func doTilde(v interface{}) (interface{}, error) {
 				return v, nil
 			}
 		case glob.Slash:
-			dir, err := util.GetHome("")
+			dir, err := fsutil.GetHome("")
 			if err != nil {
 				return nil, err
 			}

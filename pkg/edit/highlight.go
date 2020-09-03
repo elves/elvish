@@ -7,8 +7,8 @@ import (
 	"github.com/elves/elvish/pkg/cli"
 	"github.com/elves/elvish/pkg/edit/highlight"
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 )
 
 func initHighlighter(appSpec *cli.AppSpec, ev *eval.Evaler) {
@@ -27,7 +27,7 @@ func hasCommand(ev *eval.Evaler, cmd string) bool {
 	if eval.IsBuiltinSpecial[cmd] {
 		return true
 	}
-	if util.DontSearch(cmd) {
+	if fsutil.DontSearch(cmd) {
 		return isDirOrExecutable(cmd) || hasExternalCommand(cmd)
 	}
 

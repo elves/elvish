@@ -8,11 +8,11 @@ package daemon
 import (
 	"os"
 
+	"github.com/elves/elvish/pkg/logutil"
 	"github.com/elves/elvish/pkg/prog"
-	"github.com/elves/elvish/pkg/util"
 )
 
-var logger = util.GetLogger("[daemon] ")
+var logger = logutil.GetLogger("[daemon] ")
 
 // Version is the API version. It should be bumped any time the API changes.
 const Version = -93

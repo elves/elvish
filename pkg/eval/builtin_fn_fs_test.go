@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 )
 
-// For error injection into the util.GetHome function.
+// For error injection into the fsutil.GetHome function.
 func currentUser() (*user.User, error) {
 	return nil, fmt.Errorf("user unknown")
 }
@@ -42,8 +42,8 @@ func TestBuiltinCd(t *testing.T) {
 
 	// We install this mock for all tests, not just the one that needs it,
 	// because it should not be invoked by any of the other tests.
-	util.CurrentUser = currentUser
-	defer func() { util.CurrentUser = user.Current }()
+	fsutil.CurrentUser = currentUser
+	defer func() { fsutil.CurrentUser = user.Current }()
 
 	Test(t,
 		That(`cd dir1 dir2`).Throws(ErrArgs, "cd dir1 dir2"),

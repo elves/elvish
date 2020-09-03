@@ -1,4 +1,4 @@
-package util
+package fsutil
 
 import (
 	"os"
@@ -64,5 +64,11 @@ func TestGetwd(t *testing.T) {
 		if gotwd := Getwd(); gotwd != "?" {
 			t.Errorf("Getwd() -> %v, want ?", gotwd)
 		}
+	}
+}
+
+func mustOK(err error) {
+	if err != nil {
+		panic(err)
 	}
 }

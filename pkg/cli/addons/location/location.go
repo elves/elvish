@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/cli"
+	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/store"
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
 )
 
 // Config is the configuration to start the location history feature.
@@ -156,7 +156,7 @@ func (l list) filter(p string) list {
 	re := makeRegexpForPattern(p)
 	var filteredDirs []store.Dir
 	for _, dir := range l.dirs {
-		if re.MatchString(util.TildeAbbr(dir.Path)) {
+		if re.MatchString(fsutil.TildeAbbr(dir.Path)) {
 			filteredDirs = append(filteredDirs, dir)
 		}
 	}
@@ -188,7 +188,7 @@ func makeRegexpForPattern(p string) *regexp.Regexp {
 
 func (l list) Show(i int) ui.Text {
 	return ui.T(fmt.Sprintf("%s %s",
-		showScore(l.dirs[i].Score), util.TildeAbbr(l.dirs[i].Path)))
+		showScore(l.dirs[i].Score), fsutil.TildeAbbr(l.dirs[i].Path)))
 }
 
 func (l list) Len() int { return len(l.dirs) }

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/fsutil"
 )
 
 // Paths keeps all paths required for the Elvish runtime.
@@ -71,7 +71,7 @@ func setChild(p *string, d, name string) {
 // the path to the data directory (never with a trailing slash) and possible
 // error.
 func ensureDataDir() (string, error) {
-	home, err := util.GetHome("")
+	home, err := fsutil.GetHome("")
 	if err != nil {
 		return "", err
 	}

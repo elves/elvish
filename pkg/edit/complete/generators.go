@@ -10,8 +10,8 @@ import (
 	"github.com/elves/elvish/pkg/cli/lscolors"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
 )
 
 var pathSeparator = string(filepath.Separator)
@@ -38,7 +38,7 @@ func GenerateForSudo(cfg Config, args []string) ([]RawItem, error) {
 // Internal generators, used from completers.
 
 func generateExternalCommands(seed string, ev PureEvaler) ([]RawItem, error) {
-	if util.DontSearch(seed) {
+	if fsutil.DontSearch(seed) {
 		// Completing a local external command name.
 		return generateFileNames(seed, true)
 	}
@@ -48,7 +48,7 @@ func generateExternalCommands(seed string, ev PureEvaler) ([]RawItem, error) {
 }
 
 func generateCommands(seed string, ev PureEvaler) ([]RawItem, error) {
-	if util.DontSearch(seed) {
+	if fsutil.DontSearch(seed) {
 		// Completing a local external command name.
 		return generateFileNames(seed, true)
 	}

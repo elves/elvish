@@ -14,7 +14,7 @@ import (
 	"runtime/pprof"
 	"strconv"
 
-	"github.com/elves/elvish/pkg/util"
+	"github.com/elves/elvish/pkg/logutil"
 )
 
 // Default port on which the web interface runs. The number is chosen because it
@@ -111,9 +111,9 @@ func Run(fds [3]*os.File, args []string, programs ...Program) int {
 	}
 
 	if f.Log != "" {
-		err = util.SetOutputFile(f.Log)
+		err = logutil.SetOutputFile(f.Log)
 	} else if f.LogPrefix != "" {
-		err = util.SetOutputFile(f.LogPrefix + strconv.Itoa(os.Getpid()))
+		err = logutil.SetOutputFile(f.LogPrefix + strconv.Itoa(os.Getpid()))
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

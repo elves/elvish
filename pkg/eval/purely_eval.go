@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 )
 
 var ErrImpure = errors.New("expression is impure")
@@ -53,7 +53,7 @@ func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (strin
 			i = len(head)
 		}
 		uname := head[:i]
-		home, err := util.GetHome(uname)
+		home, err := fsutil.GetHome(uname)
 		if err != nil {
 			return "", err
 		}

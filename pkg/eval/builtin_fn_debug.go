@@ -3,8 +3,8 @@ package eval
 import (
 	"runtime"
 
+	"github.com/elves/elvish/pkg/logutil"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 )
 
 func init() {
@@ -49,10 +49,10 @@ func init() {
 // calling `src`. Consider the following example:
 //
 // ```elvish-transcript
-// ~> echo 'fn show { put (src)[name] }' > ~/.elvish/lib/src-util.elv
+// ~> echo 'fn show { put (src)[name] }' > ~/.elvish/lib/src-fsutil.elv
 // ~> use src-util
 // ~> src-util:show
-// ▶ /home/elf/.elvish/lib/src-util.elv
+// ▶ /home/elf/.elvish/lib/src-fsutil.elv
 // ```
 
 func src(fm *Frame) parse.Source {
@@ -104,5 +104,5 @@ func _stack(fm *Frame) {
 // This is only useful for debug purposes.
 
 func _log(fname string) error {
-	return util.SetOutputFile(fname)
+	return logutil.SetOutputFile(fname)
 }

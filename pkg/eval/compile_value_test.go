@@ -24,7 +24,7 @@ func TestCompileValue(t *testing.T) {
 		That("put {}").Puts(""),
 		That("put [&k=][k]").Puts(""),
 
-		// TODO: Test the case where util.GetHome returns an error.
+		// TODO: Test the case where fsutil.GetHome returns an error.
 
 		// Error in any of the components throws an exception.
 		That("put a{[][1]}").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),

@@ -14,12 +14,12 @@ import (
 	"github.com/elves/elvish/pkg/eval/mods/bundled"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
+	"github.com/elves/elvish/pkg/logutil"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 	"github.com/xiaq/persistent/vector"
 )
 
-var logger = util.GetLogger("[eval] ")
+var logger = logutil.GetLogger("[eval] ")
 
 const (
 	// FnSuffix is the suffix for the variable names of functions. Defining a

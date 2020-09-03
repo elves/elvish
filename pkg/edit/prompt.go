@@ -12,9 +12,9 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
+	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/util"
 )
 
 //elvdoc:var prompt
@@ -111,7 +111,7 @@ func getDefaultPrompt(isRoot bool) eval.Callable {
 		p = ui.T("# ", ui.FgRed)
 	}
 	return eval.NewGoFn("default prompt", func() ui.Text {
-		return ui.Concat(ui.T(util.Getwd()), p)
+		return ui.Concat(ui.T(fsutil.Getwd()), p)
 	})
 }
 

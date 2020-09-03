@@ -10,8 +10,8 @@ import (
 	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
+	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 )
 
 // An operation with some side effects.
@@ -401,7 +401,7 @@ func evalForCommand(fm *Frame, op valuesOp, what string) (Callable, error) {
 	case Callable:
 		return value, nil
 	case string:
-		if util.DontSearch(value) {
+		if fsutil.DontSearch(value) {
 			return ExternalCmd{value}, nil
 		}
 	}

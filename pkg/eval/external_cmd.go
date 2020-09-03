@@ -8,8 +8,8 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/util"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -49,7 +49,7 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 	if len(opts) > 0 {
 		return ErrExternalCmdOpts
 	}
-	if util.DontSearch(e.Name) {
+	if fsutil.DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)
 		if err == nil && stat.IsDir() {
 			// implicit cd

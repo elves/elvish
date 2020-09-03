@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/store"
-	"github.com/elves/elvish/pkg/util"
 )
 
 // Filesystem commands.
@@ -70,7 +70,7 @@ func cd(fm *Frame, args ...string) error {
 	switch len(args) {
 	case 0:
 		var err error
-		dir, err = util.GetHome("")
+		dir, err = fsutil.GetHome("")
 		if err != nil {
 			return err
 		}
@@ -142,7 +142,7 @@ func dirs(fm *Frame) error {
 // ```
 
 func tildeAbbr(path string) string {
-	return util.TildeAbbr(path)
+	return fsutil.TildeAbbr(path)
 }
 
 func isDir(path string) bool {

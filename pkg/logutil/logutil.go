@@ -1,4 +1,5 @@
-package util
+// Package logutil provides logging utilities.
+package logutil
 
 import (
 	"io"

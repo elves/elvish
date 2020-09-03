@@ -9,12 +9,12 @@ import (
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/logutil"
 	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/sys"
-	"github.com/elves/elvish/pkg/util"
 )
 
-var logger = util.GetLogger("[shell] ")
+var logger = logutil.GetLogger("[shell] ")
 
 // Program is the shell subprogram.
 var Program prog.Program = program{}

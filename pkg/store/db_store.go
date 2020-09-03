@@ -5,12 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/elves/elvish/pkg/util"
-
+	"github.com/elves/elvish/pkg/logutil"
 	bolt "go.etcd.io/bbolt"
 )
 
-var logger = util.GetLogger("[store] ")
+var logger = logutil.GetLogger("[store] ")
 var initDB = map[string](func(*bolt.Tx) error){}
 
 // DBStore is the permanent storage backend for elvish. It is not thread-safe.
