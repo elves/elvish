@@ -1,12 +1,13 @@
 // +build !windows,!plan9
 
-package eval
+package eval_test
 
 import (
 	"path/filepath"
 	"strings"
 	"testing"
 
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/testutil"
 )
 
@@ -32,6 +33,6 @@ func TestCompileEffectUnix(t *testing.T) {
 }
 
 func mustWriteScript(name string, lines ...string) {
-	mustMkdirAll(filepath.Dir(name))
-	mustWriteFile(name, []byte(strings.Join(lines, "\n")), 0700)
+	MustMkdirAll(filepath.Dir(name))
+	MustWriteFile(name, []byte(strings.Join(lines, "\n")), 0700)
 }

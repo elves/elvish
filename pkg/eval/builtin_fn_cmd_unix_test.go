@@ -1,9 +1,11 @@
 // +build !windows,!plan9,!js
 
-package eval
+package eval_test
 
 import (
 	"testing"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 )
 
 // Tests of the `builtin:has-external` command.

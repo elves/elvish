@@ -149,15 +149,13 @@ func (pe PipelineError) Error() string {
 	return b.String()
 }
 
-// Builds a suitable error from pipeline results:
+// MakePipelineError builds a suitable error from pipeline results:
 //
-// * if all elements are either nil or OK, return nil.
-//
-// * If there is exactly non-nil non-OK Exception, return it.
-//
-// * Otherwise return a PipelineError built from the slice, with nil items
-//   turned into OK's for easier access from elvishscript.
-func makePipelineError(excs []*Exception) error {
+// If all elements are either nil or OK, it returns nil. If there is exactly
+// non-nil non-OK Exception, it returns it. Otherwise, it return a PipelineError
+// built from the slice, with nil items turned into OK's for easier access from
+// Elvish code.
+func MakePipelineError(excs []*Exception) error {
 	newexcs := make([]*Exception, len(excs))
 	notOK, lastNotOK := 0, 0
 	for i, e := range excs {

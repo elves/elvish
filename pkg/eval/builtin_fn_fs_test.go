@@ -1,4 +1,4 @@
-package eval
+package eval_test
 
 import (
 	"errors"
@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	. "github.com/elves/elvish/pkg/eval"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/parse"
 )
@@ -20,8 +23,8 @@ func TestBuiltinFnFS(t *testing.T) {
 	tmpHome, cleanup := InTempHome()
 	defer cleanup()
 
-	mustMkdirAll("dir")
-	mustCreateEmpty("file")
+	MustMkdirAll("dir")
+	MustCreateEmpty("file")
 
 	Test(t,
 		That(`path-base a/b/c.png`).Puts("c.png"),
@@ -37,7 +40,7 @@ func TestBuiltinCd(t *testing.T) {
 	tmpHome, cleanup := InTempHome()
 	defer cleanup()
 
-	mustMkdirAll("d1")
+	MustMkdirAll("d1")
 	d1Path := filepath.Join(tmpHome, "d1")
 
 	// We install this mock for all tests, not just the one that needs it,

@@ -2,10 +2,12 @@ package eval
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 	"unsafe"
 
 	"github.com/elves/elvish/pkg/eval/errs"
+
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/xiaq/persistent/hash"
 )
@@ -37,12 +39,14 @@ func TestGoFnCall(t *testing.T) {
 
 	var f Callable
 	callGood := func(fm *Frame, args []interface{}, opts map[string]interface{}) {
+		t.Helper()
 		err := f.Call(fm, args, opts)
 		if err != nil {
 			t.Errorf("Failed to call f: %v", err)
 		}
 	}
 	callBad := func(fm *Frame, args []interface{}, opts map[string]interface{}, wantErr error) {
+		t.Helper()
 		err := f.Call(fm, args, opts)
 		if !matchErr(wantErr, err) {
 			t.Errorf("Calling f didn't return error")
@@ -238,4 +242,15 @@ func TestGoFnCall(t *testing.T) {
 	// Invalid option type; regression test for #958.
 	f = NewGoFn("f", func(opts testOptions) {})
 	callBad(theFrame, nil, RawOptions{"foo": vals.EmptyList}, anyError{})
+}
+
+type anyError struct{}
+
+func (anyError) Error() string { return "any error" }
+
+func matchErr(want, got error) bool {
+	if (want == anyError{}) {
+		return got != nil
+	}
+	return reflect.DeepEqual(want, got)
 }

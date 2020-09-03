@@ -1,9 +1,12 @@
-package eval
+package eval_test
 
 import (
 	"os"
 	"testing"
 
+	. "github.com/elves/elvish/pkg/eval"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/testutil"
 )
 

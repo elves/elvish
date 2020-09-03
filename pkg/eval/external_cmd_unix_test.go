@@ -1,12 +1,16 @@
 // +build !windows,!plan9,!js
 
-package eval
+package eval_test
 
 import (
 	"reflect"
 	"sort"
+	"syscall"
 	"testing"
 
+	. "github.com/elves/elvish/pkg/eval"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/testutil"
 )
 
@@ -20,12 +24,12 @@ func TestEachExternal(t *testing.T) {
 	restorePath := testutil.WithTempEnv("PATH", "/foo:"+tmpHome+":/bar")
 	defer restorePath()
 
-	mustMkdirAll("dir")
-	mustCreateEmpty("cmdx")
-	mustWriteFile("cmd1", []byte("#!/bin/sh"), 0755)
-	mustWriteFile("cmd2", []byte("#!/bin/sh"), 0755)
-	mustWriteFile("cmd3", []byte(""), 0755)
-	mustCreateEmpty("file")
+	MustMkdirAll("dir")
+	MustCreateEmpty("cmdx")
+	MustWriteFile("cmd1", []byte("#!/bin/sh"), 0755)
+	MustWriteFile("cmd2", []byte("#!/bin/sh"), 0755)
+	MustWriteFile("cmd3", []byte(""), 0755)
+	MustCreateEmpty("file")
 
 	wantCmds := []string{"cmd1", "cmd2", "cmd3"}
 	gotCmds := []string{}
@@ -37,4 +41,11 @@ func TestEachExternal(t *testing.T) {
 	if !reflect.DeepEqual(wantCmds, gotCmds) {
 		t.Errorf("EachExternal want %q got %q", wantCmds, gotCmds)
 	}
+}
+
+func exitWaitStatus(exit uint32) syscall.WaitStatus {
+	// The exit<<8 is gross but I can't find any exported symbols that would
+	// allow us to construct WaitStatus. So assume legacy UNIX encoding
+	// for a process that exits normally; i.e., not due to a signal.
+	return syscall.WaitStatus(exit << 8)
 }

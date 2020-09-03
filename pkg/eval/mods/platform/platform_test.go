@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval"
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 )
 
 const (
@@ -23,14 +24,12 @@ func hostnameMock() (string, error) {
 	return testHostname, nil
 }
 
-var That = eval.That
-
 func TestPlatform(t *testing.T) {
 	savedOsHostname := osHostname
 	osHostname = hostnameMock
 	defer func() { osHostname = savedOsHostname }()
 	setup := func(ev *eval.Evaler) { ev.Builtin.AddNs("platform", Ns) }
-	eval.TestWithSetup(t, setup,
+	TestWithSetup(t, setup,
 		That(`put $platform:arch`).Puts(runtime.GOARCH),
 		That(`put $platform:os`).Puts(runtime.GOOS),
 		That(`put $platform:is-windows`).Puts(runtime.GOOS == "windows"),

@@ -1,9 +1,11 @@
-package eval
+package eval_test
 
 import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval/errs"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/testutil"
@@ -60,13 +62,13 @@ func TestCompileEffect(t *testing.T) {
 				Actual: "list"},
 			"[]"),
 		// Command errors when when argument errors.
-		That("put [][1]").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
+		That("put [][1]").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
 		// Command errors when an option key is not string.
 		That("put &[]=[]").Throws(
 			errs.BadValue{What: "option key", Valid: "string", Actual: "list"},
 			"put &[]=[]"),
 		// Command errors when any optional evaluation errors.
-		That("put &x=[][1]").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
+		That("put &x=[][1]").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
 
 		// Assignments
 		// -----------
@@ -114,7 +116,7 @@ func TestCompileEffect(t *testing.T) {
 		That("nop (x = 1) | nop").DoesNothing(),
 
 		// Assignment errors when the RHS errors.
-		That("x = [][1]").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
+		That("x = [][1]").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
 		// Assignment errors itself.
 		That("true = 1").Throws(vars.ErrSetReadOnlyVar, "true = 1"),
 		That("@true = 1").Throws(vars.ErrSetReadOnlyVar, "@true = 1"),
@@ -187,7 +189,7 @@ func TestCompileEffect(t *testing.T) {
 }
 
 func TestStacktrace(t *testing.T) {
-	oops := errWithMessage{"oops"}
+	oops := ErrorWithMessage("oops")
 	Test(t,
 		// Stack traces.
 		That("fail oops").Throws(oops, "fail oops"),
@@ -195,9 +197,9 @@ func TestStacktrace(t *testing.T) {
 		That("fn f { fail oops }", "fn g { f }", "g").Throws(
 			oops, "fail oops ", "f ", "g"),
 		// Error thrown before execution.
-		That("fn f { }", "f a").Throws(errWithType{errs.ArityMismatch{}}, "f a"),
+		That("fn f { }", "f a").Throws(ErrorWithType(errs.ArityMismatch{}), "f a"),
 		// Error from builtin.
 		That("count 1 2 3").Throws(
-			errWithType{errs.ArityMismatch{}}, "count 1 2 3"),
+			ErrorWithType(errs.ArityMismatch{}), "count 1 2 3"),
 	)
 }

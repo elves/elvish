@@ -1,19 +1,23 @@
 // +build wtf
 
-package eval
+package eval_test
 
 import (
 	"errors"
 	"path/filepath"
 	"testing"
+
+	. "github.com/elves/elvish/pkg/eval"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 )
 
 func TestBuiltinPwd(t *testing.T) {
 	tmpHome, cleanup := InTempHome()
 	defer cleanup()
 
-	mustMkdirAll("dir1")
-	mustMkdirAll("dir2")
+	MustMkdirAll("dir1")
+	MustMkdirAll("dir2")
 	dir1 := filepath.Join(tmpHome, "dir1")
 	dir2 := filepath.Join(tmpHome, "dir2")
 

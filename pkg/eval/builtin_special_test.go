@@ -1,11 +1,14 @@
-package eval
+package eval_test
 
 import (
 	"path/filepath"
 	"strings"
 	"testing"
 
+	. "github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/errs"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/testutil"
 )
@@ -87,7 +90,7 @@ func TestBuiltinSpecial(t *testing.T) {
 		// than the special "local:" namespace as the lvalue in a for loop.
 		That("for no-such-namespace:x [a b] { }").ThrowsMessage("new variables can only be created in local scope"),
 		// Exception when evaluating iterable.
-		That("for x [][0] { }").Throws(errWithType{errs.OutOfRange{}}, "[][0]"),
+		That("for x [][0] { }").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// More than one iterable.
 		That("for x (put a b) { }").Throws(
 			errs.ArityMismatch{
@@ -107,11 +110,11 @@ func TestUse(t *testing.T) {
 	libdir, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	mustMkdirAll(filepath.Join("a", "b", "c"))
+	MustMkdirAll(filepath.Join("a", "b", "c"))
 
 	writeMod := func(name, content string) {
 		fname := filepath.Join(strings.Split(name, "/")...) + ".elv"
-		mustWriteFile(fname, []byte(content), 0600)
+		MustWriteFile(fname, []byte(content), 0600)
 	}
 	writeMod("has-init", "put has-init")
 	writeMod("put-x", "put $x")
@@ -167,7 +170,7 @@ func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	defer restore()
 	libdir, cleanup := testutil.InTestDir()
 	defer cleanup()
-	mustWriteFile("dep.elv", []byte("x = (ord 1)"), 0600)
+	MustWriteFile("dep.elv", []byte("x = (ord 1)"), 0600)
 
 	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
 		// Importing module triggers check for deprecated features

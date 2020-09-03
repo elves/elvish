@@ -108,5 +108,5 @@ func fg(pids ...int) error {
 		}
 	}
 
-	return makePipelineError(errors)
+	return MakePipelineError(errors)
 }

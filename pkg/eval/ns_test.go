@@ -1,6 +1,10 @@
-package eval
+package eval_test
 
-import "testing"
+import (
+	"testing"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
+)
 
 func TestNs(t *testing.T) {
 	Test(t,

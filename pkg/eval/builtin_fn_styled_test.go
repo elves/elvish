@@ -1,7 +1,9 @@
-package eval
+package eval_test
 
 import (
 	"testing"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 )
 
 func TestStyledString(t *testing.T) {

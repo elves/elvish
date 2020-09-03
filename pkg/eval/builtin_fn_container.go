@@ -700,7 +700,9 @@ type orderOptions struct {
 
 func (opt *orderOptions) SetDefaultOptions() {}
 
-var errUncomparable = errs.BadValue{
+// ErrUncomparable is raised by the order command when inputs contain
+// uncomparable values.
+var ErrUncomparable = errs.BadValue{
 	What:  `inputs to "order"`,
 	Valid: "comparable values", Actual: "uncomparable values"}
 
@@ -751,7 +753,7 @@ func order(fm *Frame, opts orderOptions, inputs Inputs) error {
 			}
 			o := compare(values[i], values[j])
 			if o == uncomparable {
-				errSort = errUncomparable
+				errSort = ErrUncomparable
 				return true
 			}
 			if opts.Reverse {

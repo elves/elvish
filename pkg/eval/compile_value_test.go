@@ -1,16 +1,19 @@
-package eval
+package eval_test
 
 import (
 	"testing"
 
+	. "github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/errs"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/eval/vals"
 )
 
 func TestCompileValue(t *testing.T) {
 	home, cleanup := InTempHome()
-	mustCreateEmpty("file1")
-	mustCreateEmpty("file2")
+	MustCreateEmpty("file1")
+	MustCreateEmpty("file2")
 	defer cleanup()
 
 	Test(t,
@@ -27,7 +30,7 @@ func TestCompileValue(t *testing.T) {
 		// TODO: Test the case where fsutil.GetHome returns an error.
 
 		// Error in any of the components throws an exception.
-		That("put a{[][1]}").Throws(errWithType{errs.OutOfRange{}}, "[][1]"),
+		That("put a{[][1]}").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
 		// Error in concatenating the values throws an exception.
 		That("put []a").ThrowsMessage("cannot concatenate list and string"),
 		// Error when applying tilde throws an exception.
@@ -46,10 +49,10 @@ func TestCompileValue(t *testing.T) {
 		That("put [&{a b}={foo bar}]").Puts(vals.MakeMap("a", "foo", "b", "bar")),
 
 		// List expression errors if an element expression errors.
-		That("put [ [][0] ]").Throws(errWithType{errs.OutOfRange{}}, "[][0]"),
+		That("put [ [][0] ]").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// Map expression errors if a key or value expression errors.
-		That("put [ &[][0]=a ]").Throws(errWithType{errs.OutOfRange{}}, "[][0]"),
-		That("put [ &a=[][0] ]").Throws(errWithType{errs.OutOfRange{}}, "[][0]"),
+		That("put [ &[][0]=a ]").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
+		That("put [ &a=[][0] ]").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// Map expression errors if number of keys and values in a single pair
 		// does not match.
 		That("put [&{a b}={foo bar lorem}]").ThrowsMessage("2 keys but 3 values"),
@@ -181,7 +184,7 @@ func TestCompileValue(t *testing.T) {
 		That("[&''=b]{ }").DoesNotCompile(),
 
 		// Exception when evaluating option default value.
-		That("[&a=[][0]]{ }").Throws(errWithType{errs.OutOfRange{}}, "[][0]"),
+		That("[&a=[][0]]{ }").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// Option default value must be one value.
 		That("[&a=(put foo bar)]{ }").Throws(
 			errs.ArityMismatch{

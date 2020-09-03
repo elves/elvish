@@ -1,6 +1,6 @@
 // +build windows
 
-package eval
+package eval_test
 
 import (
 	"syscall"

@@ -8,13 +8,12 @@ import (
 
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/errs"
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 )
-
-var That = eval.That
 
 func TestStr(t *testing.T) {
 	setup := func(ev *eval.Evaler) { ev.Builtin.AddNs("str", Ns) }
-	eval.TestWithSetup(t, setup,
+	TestWithSetup(t, setup,
 		That(`str:compare abc`).ThrowsAny(),
 		That(`str:compare abc abc`).Puts("0"),
 		That(`str:compare abc def`).Puts("-1"),

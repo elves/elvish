@@ -1,8 +1,11 @@
-package eval
+package eval_test
 
 import (
 	"testing"
 
+	. "github.com/elves/elvish/pkg/eval"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/testutil"
 )
 
@@ -10,8 +13,8 @@ func TestGlob_Simple(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	mustMkdirAll("z", "z2")
-	mustCreateEmpty("bar", "foo", "ipsum", "lorem")
+	MustMkdirAll("z", "z2")
+	MustCreateEmpty("bar", "foo", "ipsum", "lorem")
 
 	Test(t,
 		That("put *").Puts("bar", "foo", "ipsum", "lorem", "z", "z2"),
@@ -25,8 +28,8 @@ func TestGlob_Recursive(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	mustMkdirAll("1/2/3")
-	mustCreateEmpty("a.go", "1/a.go", "1/2/3/a.go")
+	MustMkdirAll("1/2/3")
+	MustCreateEmpty("a.go", "1/a.go", "1/2/3/a.go")
 
 	Test(t,
 		That("put **").Puts("1/2/3/a.go", "1/2/3", "1/2", "1/a.go", "1", "a.go"),
@@ -49,8 +52,8 @@ func TestGlob_MatchHidden(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	mustMkdirAll("d", ".d")
-	mustCreateEmpty("a", ".a", "d/a", "d/.a", ".d/a", ".d/.a")
+	MustMkdirAll("d", ".d")
+	MustCreateEmpty("a", ".a", "d/a", "d/.a", ".d/a", ".d/.a")
 
 	Test(t,
 		That("put *").Puts("a", "d"),
@@ -66,7 +69,7 @@ func TestGlob_SetAndRange(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	mustCreateEmpty("a1", "a2", "b1", "c1", "ipsum", "lorem")
+	MustCreateEmpty("a1", "a2", "b1", "c1", "ipsum", "lorem")
 
 	Test(t,
 		That("put ?[set:ab]*").Puts("a1", "a2", "b1"),
@@ -81,7 +84,7 @@ func TestGlob_But(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	mustCreateEmpty("bar", "foo", "ipsum", "lorem")
+	MustCreateEmpty("bar", "foo", "ipsum", "lorem")
 
 	Test(t,
 		// Nonexistent files can also be excluded
@@ -93,8 +96,8 @@ func TestGlob_Type(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	mustMkdirAll("d1", "d2", ".d", "b/c")
-	mustCreateEmpty("bar", "foo", "ipsum", "lorem", "d1/f1", "d2/fm")
+	MustMkdirAll("d1", "d2", ".d", "b/c")
+	MustCreateEmpty("bar", "foo", "ipsum", "lorem", "d1/f1", "d2/fm")
 
 	Test(t,
 		That("put **[type:dir]").Puts("b/c", "b", "d1", "d2"),

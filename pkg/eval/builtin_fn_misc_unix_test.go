@@ -1,11 +1,15 @@
 // +build !windows,!plan9,!js
 
-package eval
+package eval_test
 
 import (
 	"os"
 	"testing"
 	"time"
+
+	. "github.com/elves/elvish/pkg/eval"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 )
 
 func interruptedTimeAfterMock(fm *Frame, d time.Duration) <-chan time.Time {
@@ -19,7 +23,7 @@ func interruptedTimeAfterMock(fm *Frame, d time.Duration) <-chan time.Time {
 }
 
 func TestInterruptedSleep(t *testing.T) {
-	timeAfter = interruptedTimeAfterMock
+	TimeAfter = interruptedTimeAfterMock
 	Test(t,
 		// Special-case that should result in the sleep being interrupted. See
 		// timeAfterMock above.

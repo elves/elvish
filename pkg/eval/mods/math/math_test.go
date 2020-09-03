@@ -6,13 +6,12 @@ import (
 
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/errs"
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 )
-
-var That = eval.That
 
 func TestMath(t *testing.T) {
 	setup := func(ev *eval.Evaler) { ev.Builtin.AddNs("math", Ns) }
-	eval.TestWithSetup(t, setup,
+	TestWithSetup(t, setup,
 		That(`put $math:pi`).Puts(math.Pi),
 		That(`put $math:e`).Puts(math.E),
 
@@ -113,11 +112,11 @@ func TestMath(t *testing.T) {
 		//    math.Tan(math.Pi) == math.Tan(math.Pi)
 		// are true. The ops that should return a zero value do not actually
 		// do so. Which illustrates why an approximate match is needed.
-		That(`math:cos 1`).Puts(eval.Approximately{F: 0.5403023058681397174}),
-		That(`math:sin 1`).Puts(eval.Approximately{F: 0.8414709848078965066}),
-		That(`math:sin $math:pi`).Puts(eval.Approximately{F: 0.0}),
-		That(`math:tan 1`).Puts(eval.Approximately{F: 1.5574077246549023}),
-		That(`math:tan $math:pi`).Puts(eval.Approximately{F: 0.0}),
+		That(`math:cos 1`).Puts(Approximately{F: 0.5403023058681397174}),
+		That(`math:sin 1`).Puts(Approximately{F: 0.8414709848078965066}),
+		That(`math:sin $math:pi`).Puts(Approximately{F: 0.0}),
+		That(`math:tan 1`).Puts(Approximately{F: 1.5574077246549023}),
+		That(`math:tan $math:pi`).Puts(Approximately{F: 0.0}),
 
 		That(`math:sqrt 0`).Puts(0.0),
 		That(`math:sqrt 4`).Puts(2.0),

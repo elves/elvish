@@ -1,12 +1,14 @@
 // +build !windows,!plan9,!js
 
-package eval
+package eval_test
 
 import (
 	"fmt"
 	"runtime"
 	"syscall"
 	"testing"
+
+	. "github.com/elves/elvish/pkg/eval"
 
 	"github.com/elves/elvish/pkg/tt"
 )

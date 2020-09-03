@@ -1,10 +1,13 @@
-package eval
+package eval_test
 
 import (
 	"errors"
 	"testing"
 	"time"
 
+	. "github.com/elves/elvish/pkg/eval"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/testutil"
 )
 
@@ -48,7 +51,7 @@ func TestBuiltinFnMisc(t *testing.T) {
 func TestUseMod(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
-	mustWriteFile("mod.elv", []byte("x = value"), 0600)
+	MustWriteFile("mod.elv", []byte("x = value"), 0600)
 
 	Test(t,
 		That("put (use-mod ./mod)[x]").Puts("value"),
@@ -56,12 +59,12 @@ func TestUseMod(t *testing.T) {
 }
 
 func timeAfterMock(fm *Frame, d time.Duration) <-chan time.Time {
-	fm.ports[1].Chan <- d // report to the test framework the duration we received
+	fm.OutputChan() <- d // report to the test framework the duration we received
 	return time.After(0)
 }
 
 func TestSleep(t *testing.T) {
-	timeAfter = timeAfterMock
+	TimeAfter = timeAfterMock
 	Test(t,
 		That(`sleep 0`).Puts(0*time.Second),
 		That(`sleep 1`).Puts(1*time.Second),
@@ -91,7 +94,7 @@ func TestResolve(t *testing.T) {
 	libdir, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	mustWriteFile("mod.elv", []byte("fn func { }"), 0600)
+	MustWriteFile("mod.elv", []byte("fn func { }"), 0600)
 
 	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
 		That("resolve for").Puts("special"),

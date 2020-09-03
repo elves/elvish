@@ -167,7 +167,7 @@ func (op *pipelineOp) exec(fm *Frame) error {
 			wg.Wait()
 			fm.Evaler.state.addNumBgJobs(-1)
 			msg := "job " + op.source + " finished"
-			err := makePipelineError(errors)
+			err := MakePipelineError(errors)
 			if err != nil {
 				msg += ", errors = " + err.Error()
 			}
@@ -182,7 +182,7 @@ func (op *pipelineOp) exec(fm *Frame) error {
 		return nil
 	}
 	wg.Wait()
-	return fm.errorp(op, makePipelineError(errors))
+	return fm.errorp(op, MakePipelineError(errors))
 }
 
 func (cp *compiler) formOp(n *parse.Form) effectOp {

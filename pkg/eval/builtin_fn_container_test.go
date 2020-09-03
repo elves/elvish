@@ -1,10 +1,13 @@
-package eval
+package eval_test
 
 import (
 	"math"
 	"testing"
 
+	. "github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/errs"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/eval/vals"
 )
 
@@ -110,9 +113,9 @@ func TestBuiltinFnContainer(t *testing.T) {
 				vals.MakeList("a", 1.0), vals.MakeList("a", 2.0)),
 		// Attempting to order uncomparable values
 		That("put a (float64 1) b (float64 2) | order").
-			Throws(errUncomparable, "order"),
+			Throws(ErrUncomparable, "order"),
 		That("put [a] [(float64 1)] | order").
-			Throws(errUncomparable, "order"),
+			Throws(ErrUncomparable, "order"),
 		// &reverse
 		That("put foo bar ipsum | order &reverse").Puts("ipsum", "foo", "bar"),
 		// &less-than

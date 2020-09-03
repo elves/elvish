@@ -4,13 +4,13 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval"
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/eval/vals"
 )
 
 func TestRe(t *testing.T) {
 	setup := func(ev *eval.Evaler) { ev.Builtin.AddNs("re", Ns) }
-	That := eval.That
-	eval.TestWithSetup(t, setup,
+	TestWithSetup(t, setup,
 		That("re:match . xyz").Puts(true),
 		That("re:match . ''").Puts(false),
 		That("re:match '[a-z]' A").Puts(false),

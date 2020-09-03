@@ -80,7 +80,7 @@ func runParallel(fm *Frame, functions ...Callable) error {
 	}
 
 	waitg.Wait()
-	return makePipelineError(exceptions)
+	return MakePipelineError(exceptions)
 }
 
 //elvdoc:fn each

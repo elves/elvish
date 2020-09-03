@@ -1,9 +1,11 @@
-package eval
+package eval_test
 
 import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval/errs"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 )
 
 func TestClosure(t *testing.T) {

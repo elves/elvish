@@ -1,26 +1,18 @@
-package eval
+package eval_test
 
 import (
 	"bytes"
 	"reflect"
-	"strconv"
 	"sync"
-	"syscall"
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval/vals"
+	. "github.com/elves/elvish/pkg/eval"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/testutil"
 )
-
-func TestBuiltinPid(t *testing.T) {
-	pid := strconv.Itoa(syscall.Getpid())
-	builtinPid := vals.ToString(builtinNs["pid"].Get())
-	if builtinPid != pid {
-		t.Errorf(`ev.builtin["pid"] = %v, want %v`, builtinPid, pid)
-	}
-}
 
 func TestNumBgJobs(t *testing.T) {
 	Test(t,
@@ -53,13 +45,13 @@ func TestCompileTimeDeprecation(t *testing.T) {
 	defer restore()
 
 	ev := NewEvaler()
-	r, w := mustPipe()
+	r, w := MustPipe()
 	_, err := ev.ParseAndCompile(parse.Source{Code: "ord a"}, w)
 	if err != nil {
 		t.Errorf("got err %v, want nil", err)
 	}
 	w.Close()
-	warnings := mustReadAllAndClose(r)
+	warnings := MustReadAllAndClose(r)
 	wantWarning := []byte(`the "ord" command is deprecated`)
 	if !bytes.Contains(warnings, wantWarning) {
 		t.Errorf("got warnings %q, want warnings to contain %q", warnings, wantWarning)
@@ -76,13 +68,13 @@ func TestMiscEval(t *testing.T) {
 
 func TestMultipleEval(t *testing.T) {
 	texts := []string{"x=hello", "put $x"}
-	r := evalAndCollect(t, NewEvaler(), texts)
+	r := EvalAndCollect(t, NewEvaler(), texts)
 	wantOuts := []interface{}{"hello"}
-	if r.exception != nil {
-		t.Errorf("eval %s => %v, want nil", texts, r.exception)
+	if r.Exception != nil {
+		t.Errorf("eval %s => %v, want nil", texts, r.Exception)
 	}
-	if !reflect.DeepEqual(r.valueOut, wantOuts) {
-		t.Errorf("eval %s outputs %v, want %v", texts, r.valueOut, wantOuts)
+	if !reflect.DeepEqual(r.ValueOut, wantOuts) {
+		t.Errorf("eval %s outputs %v, want %v", texts, r.ValueOut, wantOuts)
 	}
 }
 

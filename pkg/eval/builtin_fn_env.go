@@ -5,7 +5,9 @@ import (
 	"os"
 )
 
-var errNonExistentEnvVar = errors.New("non-existent environment variable")
+// ErrNonExistentEnvVar is raised by the get-env command when the environment
+// variable does not exist.
+var ErrNonExistentEnvVar = errors.New("non-existent environment variable")
 
 //elvdoc:fn set-env
 //
@@ -95,7 +97,7 @@ func hasEnv(key string) bool {
 func getEnv(key string) (string, error) {
 	value, ok := os.LookupEnv(key)
 	if !ok {
-		return "", errNonExistentEnvVar
+		return "", ErrNonExistentEnvVar
 	}
 	return value, nil
 }

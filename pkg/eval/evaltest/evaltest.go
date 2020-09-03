@@ -13,7 +13,7 @@
 //
 // If some setup is needed, use the TestWithSetup function instead.
 
-package eval
+package evaltest
 
 import (
 	"bytes"
@@ -28,6 +28,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/pkg/env"
+	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/testutil"
@@ -43,16 +44,16 @@ type Approximately struct{ F float64 }
 // TestCase is a test case for Test.
 type TestCase struct {
 	code string
-	want result
+	want Result
 }
 
-type result struct {
-	valueOut   []interface{}
-	bytesOut   []byte
-	stderrPart []byte
+type Result struct {
+	ValueOut  []interface{}
+	BytesOut  []byte
+	StderrOut []byte
 
-	compilationError error
-	exception        error
+	CompilationError error
+	Exception        error
 }
 
 type errorMatcher interface{ matchError(error) bool }
@@ -75,7 +76,7 @@ func (e exc) Error() string {
 }
 
 func (e exc) matchError(e2 error) bool {
-	if e2, ok := e2.(*Exception); ok {
+	if e2, ok := e2.(*eval.Exception); ok {
 		if matchErr(e.cause, e2.Reason) {
 			return reflect.DeepEqual(e.stacks, getStackTexts(e2.StackTrace))
 		}
@@ -83,7 +84,7 @@ func (e exc) matchError(e2 error) bool {
 	return false
 }
 
-func getStackTexts(tb *StackTrace) []string {
+func getStackTexts(tb *eval.StackTrace) []string {
 	texts := []string{}
 	for tb != nil {
 		ctx := tb.Head
@@ -99,8 +100,12 @@ type excWithCause struct{ cause error }
 func (e excWithCause) Error() string { return "exception with cause " + e.cause.Error() }
 
 func (e excWithCause) matchError(e2 error) bool {
-	return e2 != nil && reflect.DeepEqual(e.cause, Cause(e2))
+	return e2 != nil && reflect.DeepEqual(e.cause, eval.Cause(e2))
 }
+
+// ErrorWithType returns an error that can be passed to the Throws method of
+// TestCase to verify that the thrown error has the same type as the given error.
+func ErrorWithType(v error) error { return errWithType{v} }
 
 // An errorMatcher for any error with the given type.
 type errWithType struct{ v error }
@@ -110,6 +115,10 @@ func (e errWithType) Error() string { return fmt.Sprintf("error with type %T", e
 func (e errWithType) matchError(e2 error) bool {
 	return reflect.TypeOf(e.v) == reflect.TypeOf(e2)
 }
+
+// ErrorWithType returns an error that can be passed to the Throws method of
+// TestCase to verify that the thrown error has the given message.
+func ErrorWithMessage(msg string) error { return errWithMessage{msg} }
 
 // An errorMatcher for any error with the given message.
 type errWithMessage struct{ msg string }
@@ -123,7 +132,7 @@ func (e errWithMessage) matchError(e2 error) bool {
 // An errorMatcher for an ExternalCmdExit error that ignores the `Pid` member.
 // We only match the command name and exit status because at run time we
 // cannot know the correct value for `Pid`.
-type errCmdExit struct{ v ExternalCmdExit }
+type errCmdExit struct{ v eval.ExternalCmdExit }
 
 func (e errCmdExit) Error() string {
 	return e.v.Error()
@@ -134,7 +143,7 @@ func (e errCmdExit) matchError(gotErr error) bool {
 		return false
 	}
 
-	ge := gotErr.(*Exception).Reason.(ExternalCmdExit)
+	ge := gotErr.(*eval.Exception).Reason.(eval.ExternalCmdExit)
 	return e.v.CmdName == ge.CmdName && e.v.WaitStatus == ge.WaitStatus
 }
 
@@ -159,21 +168,21 @@ func (t TestCase) DoesNothing() TestCase {
 // Puts returns an altered TestCase that requires the source code to produce the
 // specified values in the value channel when evaluated.
 func (t TestCase) Puts(vs ...interface{}) TestCase {
-	t.want.valueOut = vs
+	t.want.ValueOut = vs
 	return t
 }
 
 // Prints returns an altered TestCase that requires the source code to produce
 // the specified output in the byte pipe when evaluated.
 func (t TestCase) Prints(s string) TestCase {
-	t.want.bytesOut = []byte(s)
+	t.want.BytesOut = []byte(s)
 	return t
 }
 
 // PrintsStderr returns an altered TestCase that requires the stderr output to
 // contain the given text.
 func (t TestCase) PrintsStderrWith(s string) TestCase {
-	t.want.stderrPart = []byte(s)
+	t.want.StderrOut = []byte(s)
 	return t
 }
 
@@ -203,7 +212,7 @@ func (t TestCase) ThrowsMessage(msg string) TestCase {
 // ThrowsCmdExit returns an altered TestCase that requires the source code to
 // throw an an ExternalCmdExit error that matches the given error, ignoring
 // the PID.
-func (t TestCase) ThrowsCmdExit(err ExternalCmdExit) TestCase {
+func (t TestCase) ThrowsCmdExit(err eval.ExternalCmdExit) TestCase {
 	return t.throws(errCmdExit{err})
 }
 
@@ -216,14 +225,14 @@ func (t TestCase) ThrowsAny() TestCase {
 }
 
 func (t TestCase) throws(err error) TestCase {
-	t.want.exception = err
+	t.want.Exception = err
 	return t
 }
 
 // DoesNotCompile returns an altered TestCase that requires the source code to
 // fail compilation.
 func (t TestCase) DoesNotCompile() TestCase {
-	t.want.compilationError = anyError{}
+	t.want.CompilationError = anyError{}
 	return t
 }
 
@@ -231,74 +240,74 @@ func (t TestCase) DoesNotCompile() TestCase {
 // NewEvaler.
 func Test(t *testing.T, tests ...TestCase) {
 	t.Helper()
-	TestWithSetup(t, func(*Evaler) {}, tests...)
+	TestWithSetup(t, func(*eval.Evaler) {}, tests...)
 }
 
 // TestWithSetup runs test cases. For each test case, a new Evaler is created
 // with NewEvaler and passed to the setup function.
-func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
+func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...TestCase) {
 	t.Helper()
 	for _, tt := range tests {
 		t.Run(tt.code, func(t *testing.T) {
 			t.Helper()
-			ev := NewEvaler()
+			ev := eval.NewEvaler()
 			defer ev.Close()
 			setup(ev)
 
-			r := evalAndCollect(t, ev, []string{tt.code})
+			r := EvalAndCollect(t, ev, []string{tt.code})
 
-			if !matchOut(tt.want.valueOut, r.valueOut) {
+			if !matchOut(tt.want.ValueOut, r.ValueOut) {
 				t.Errorf("got value out %v, want %v",
-					reprs(r.valueOut), reprs(tt.want.valueOut))
+					reprs(r.ValueOut), reprs(tt.want.ValueOut))
 			}
-			if !bytes.Equal(tt.want.bytesOut, r.bytesOut) {
-				t.Errorf("got bytes out %q, want %q", r.bytesOut, tt.want.bytesOut)
+			if !bytes.Equal(tt.want.BytesOut, r.BytesOut) {
+				t.Errorf("got bytes out %q, want %q", r.BytesOut, tt.want.BytesOut)
 			}
-			if !bytes.Contains(r.stderrPart, tt.want.stderrPart) {
-				t.Errorf("got stderr out %q, want %q", r.stderrPart, tt.want.stderrPart)
+			if !bytes.Contains(r.StderrOut, tt.want.StderrOut) {
+				t.Errorf("got stderr out %q, want %q", r.StderrOut, tt.want.StderrOut)
 			}
-			if !matchErr(tt.want.compilationError, r.compilationError) {
+			if !matchErr(tt.want.CompilationError, r.CompilationError) {
 				t.Errorf("got compilation error %v, want %v",
-					r.compilationError, tt.want.compilationError)
+					r.CompilationError, tt.want.CompilationError)
 			}
-			if !matchErr(tt.want.exception, r.exception) {
+			if !matchErr(tt.want.Exception, r.Exception) {
 				t.Errorf("unexpected exception")
-				t.Logf("got: %v", r.exception)
-				if exc, ok := r.exception.(*Exception); ok {
+				t.Logf("got: %v", r.Exception)
+				if exc, ok := r.Exception.(*eval.Exception); ok {
 					t.Logf("stack trace: %#v", getStackTexts(exc.StackTrace))
 				}
-				t.Errorf("want: %v", tt.want.exception)
+				t.Errorf("want: %v", tt.want.Exception)
 			}
 		})
 	}
 }
 
-func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
-	var r result
+func EvalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) Result {
+	var r Result
 
 	var wg sync.WaitGroup
 	wg.Add(3)
-	rOut, stdout := mustPipe()
+	rOut, stdout := MustPipe()
 	go func() {
-		r.bytesOut = mustReadAllAndClose(rOut)
+		r.BytesOut = MustReadAllAndClose(rOut)
 		wg.Done()
 	}()
-	rErr, stderr := mustPipe()
+	rErr, stderr := MustPipe()
 	go func() {
-		r.stderrPart = mustReadAllAndClose(rErr)
+		r.StderrOut = MustReadAllAndClose(rErr)
 		wg.Done()
 	}()
 	outCh := make(chan interface{}, 1024)
 	go func() {
 		for v := range outCh {
-			r.valueOut = append(r.valueOut, v)
+			r.ValueOut = append(r.ValueOut, v)
 		}
 		wg.Done()
 	}()
-	ports := []*Port{
-		DevNullClosedChan,
+	ports := []*eval.Port{
+		eval.DevNullClosedChan,
 		{File: stdout, Chan: outCh},
-		{File: stderr, Chan: BlackholeChan},
+		{File: stderr, Chan: eval.BlackholeChan},
 	}
 
 	for _, text := range texts {
@@ -311,11 +320,12 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string) result {
 		op, err := ev.Compile(tree, nil)
 		if err != nil {
 			// NOTE: Only the compilation error of the last code is saved.
-			r.compilationError = err
+			r.CompilationError = err
 			continue
 		}
 		// NOTE: Only the exception of the last code that compiles is saved.
-		r.exception = ev.Eval(op, EvalCfg{Ports: ports, Interrupt: ListenInterrupts})
+		r.Exception = ev.Eval(op, eval.EvalCfg{
+			Ports: ports, Interrupt: eval.ListenInterrupts})
 	}
 
 	stdout.Close()
@@ -387,7 +397,7 @@ func matchErr(want, got error) bool {
 	return reflect.DeepEqual(want, got)
 }
 
-func mustPipe() (*os.File, *os.File) {
+func MustPipe() (*os.File, *os.File) {
 	r, w, err := os.Pipe()
 	if err != nil {
 		panic(err)
@@ -395,7 +405,7 @@ func mustPipe() (*os.File, *os.File) {
 	return r, w
 }
 
-func mustReadAllAndClose(r io.ReadCloser) []byte {
+func MustReadAllAndClose(r io.ReadCloser) []byte {
 	bs, err := ioutil.ReadAll(r)
 	if err != nil {
 		panic(err)
@@ -405,7 +415,7 @@ func mustReadAllAndClose(r io.ReadCloser) []byte {
 }
 
 // Calls os.MkdirAll and panics if an error is returned.
-func mustMkdirAll(names ...string) {
+func MustMkdirAll(names ...string) {
 	for _, name := range names {
 		err := os.MkdirAll(name, 0700)
 		if err != nil {
@@ -415,7 +425,7 @@ func mustMkdirAll(names ...string) {
 }
 
 // Creates an empty file, and panics if an error occurs.
-func mustCreateEmpty(names ...string) {
+func MustCreateEmpty(names ...string) {
 	for _, name := range names {
 		file, err := os.Create(name)
 		if err != nil {
@@ -426,7 +436,7 @@ func mustCreateEmpty(names ...string) {
 }
 
 // Calls ioutil.WriteFile and panics if an error occurs.
-func mustWriteFile(filename string, data []byte, perm os.FileMode) {
+func MustWriteFile(filename string, data []byte, perm os.FileMode) {
 	err := ioutil.WriteFile(filename, data, perm)
 	if err != nil {
 		panic(err)

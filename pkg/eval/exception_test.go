@@ -1,4 +1,4 @@
-package eval
+package eval_test
 
 import (
 	"errors"
@@ -7,6 +7,9 @@ import (
 	"unsafe"
 
 	"github.com/elves/elvish/pkg/diag"
+	. "github.com/elves/elvish/pkg/eval"
+
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/tt"
 	"github.com/xiaq/persistent/hash"
@@ -79,7 +82,7 @@ func TestErrorMethods(t *testing.T) {
 	tt.Test(t, tt.Fn("Error", error.Error), tt.Table{
 		tt.Args(makeException(errors.New("err"))).Rets("err"),
 
-		tt.Args(makePipelineError([]*Exception{
+		tt.Args(MakePipelineError([]*Exception{
 			makeException(errors.New("err1")),
 			makeException(errors.New("err2"))})).Rets("(err1 | err2)"),
 

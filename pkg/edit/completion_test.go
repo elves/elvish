@@ -5,6 +5,7 @@ import (
 
 	"github.com/elves/elvish/pkg/cli/term"
 	"github.com/elves/elvish/pkg/eval"
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/testutil"
@@ -61,13 +62,11 @@ func TestCompleteFilename(t *testing.T) {
 			complexItem{Stem: "./d/b", CodeSuffix: " "}))
 }
 
-var That = eval.That
-
 func TestComplexCandidate(t *testing.T) {
 	restore := prog.SetShowDeprecations(true)
 	defer restore()
 
-	eval.TestWithSetup(t, func(ev *eval.Evaler) {
+	TestWithSetup(t, func(ev *eval.Evaler) {
 		ev.Global.AddGoFn("", "cc", complexCandidate)
 	},
 		That("kind-of (cc stem)").Puts("map"),

@@ -43,3 +43,11 @@ func mustReadAllString(r io.Reader) string {
 	}
 	return string(b)
 }
+
+func mustPipe() (*os.File, *os.File) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		panic(err)
+	}
+	return r, w
+}

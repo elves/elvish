@@ -349,11 +349,13 @@ func readFileUTF8(fname string) (string, error) {
 	return string(bytes), nil
 }
 
-// This allows for unit tests to efficiently test the behavior of the `sleep`
-// command; both by eliminating an actual sleep and verifying the duration was
-// properly parsed.
-var timeAfter func(fm *Frame, d time.Duration) <-chan time.Time = func(
-	fm *Frame, d time.Duration) <-chan time.Time {
+// TimeAfter is used by the sleep command to obtain a channel that is delivered
+// a value after the specified time.
+//
+// It is a variable to allow for unit tests to efficiently test the behavior of
+// the `sleep` command, both by eliminating an actual sleep and verifying the
+// duration was properly parsed.
+var TimeAfter = func(fm *Frame, d time.Duration) <-chan time.Time {
 	return time.After(d)
 }
 
@@ -425,7 +427,7 @@ func sleep(fm *Frame, duration interface{}) error {
 	select {
 	case <-fm.Interrupts():
 		return ErrInterrupted
-	case <-timeAfter(fm, d):
+	case <-TimeAfter(fm, d):
 		return nil
 	}
 }
