@@ -196,9 +196,9 @@ func (op fnOp) exec(fm *Frame) error {
 	if err != nil {
 		return err
 	}
-	closure := values[0].(*Closure)
-	closure.Op = fnWrap{closure.Op}
-	return fm.local[op.varName].Set(closure)
+	c := values[0].(*closure)
+	c.Op = fnWrap{c.Op}
+	return fm.local[op.varName].Set(c)
 }
 
 type fnWrap struct{ effectOp }

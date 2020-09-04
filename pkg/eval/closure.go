@@ -13,9 +13,8 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
-// Closure is a closure defined in Elvish script. Each closure has its unique
-// identity.
-type Closure struct {
+// A user-defined function in Elvish code. Each closure has its unique identity.
+type closure struct {
 	ArgNames []string
 	// The index of the rest argument. -1 if there is no rest argument.
 	RestArg     int
@@ -27,25 +26,25 @@ type Closure struct {
 	DefRange    diag.Ranging
 }
 
-var _ Callable = &Closure{}
+var _ Callable = &closure{}
 
 // Kind returns "fn".
-func (*Closure) Kind() string {
+func (*closure) Kind() string {
 	return "fn"
 }
 
 // Equal compares by address.
-func (c *Closure) Equal(rhs interface{}) bool {
+func (c *closure) Equal(rhs interface{}) bool {
 	return c == rhs
 }
 
 // Hash returns the hash of the address of the closure.
-func (c *Closure) Hash() uint32 {
+func (c *closure) Hash() uint32 {
 	return hash.Pointer(unsafe.Pointer(c))
 }
 
 // Repr returns an opaque representation "<closure 0x23333333>".
-func (c *Closure) Repr(int) string {
+func (c *closure) Repr(int) string {
 	return fmt.Sprintf("<closure %p>", c)
 }
 
@@ -58,7 +57,7 @@ func listOfStrings(ss []string) vals.List {
 }
 
 // Call calls a closure.
-func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{}) error {
+func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{}) error {
 	if c.RestArg != -1 {
 		if len(args) < len(c.ArgNames)-1 {
 			return errs.ArityMismatch{
@@ -122,9 +121,9 @@ func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 	return c.Op.exec(fm)
 }
 
-func (c *Closure) Fields() vals.StructMap { return closureFields{c} }
+func (c *closure) Fields() vals.StructMap { return closureFields{c} }
 
-type closureFields struct{ c *Closure }
+type closureFields struct{ c *closure }
 
 func (closureFields) IsStructMap() {}
 
