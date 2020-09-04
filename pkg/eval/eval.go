@@ -172,7 +172,7 @@ func NewEvaler() *Evaler {
 	builtin["num-bg-jobs"] = vars.FromGet(func() interface{} {
 		return strconv.Itoa(ev.state.getNumBgJobs())
 	})
-	builtin["pwd"] = PwdVariable{ev}
+	builtin["pwd"] = NewPwdVar(ev)
 
 	return ev
 }

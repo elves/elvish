@@ -90,7 +90,6 @@ var builtinNs = Ns{
 	"true":  vars.NewReadOnly(true),
 	"false": vars.NewReadOnly(false),
 	"paths": NewEnvListVar("PATH"),
-	"pwd":   PwdVariable{},
 	"args":  vars.NewReadOnly(vector.Empty),
 }
 
