@@ -22,7 +22,45 @@ var (
 	ErrNoOptAccepted = errors.New("function does not accept any options")
 )
 
-// GoFn uses reflection to wrap arbitrary Go functions into Elvish functions.
+type goFn struct {
+	name string
+	impl interface{}
+
+	// Type information of impl.
+
+	// If true, pass the frame as a *Frame argument.
+	frame bool
+	// If true, pass options as a RawOptions argument.
+	rawOptions bool
+	// If not nil, type of the parameter that gets options via RawOptions.Scan.
+	options reflect.Type
+	// If not nil, pass the inputs as an Input-typed last argument.
+	inputs bool
+	// Type of "normal" (non-frame, non-options, non-variadic) arguments.
+	normalArgs []reflect.Type
+	// If not nil, type of variadic arguments.
+	variadicArg reflect.Type
+}
+
+// An interface to be implemented by pointers to structs that should hold
+// scanned options.
+type optionsPtr interface {
+	SetDefaultOptions()
+}
+
+// Inputs is the type that the last parameter of a Go-native function can take.
+// When that is the case, it is a callback to get inputs. See the doc of GoFn
+// for details.
+type Inputs func(func(interface{}))
+
+var (
+	frameType      = reflect.TypeOf((*Frame)(nil))
+	rawOptionsType = reflect.TypeOf(RawOptions(nil))
+	optionsPtrType = reflect.TypeOf((*optionsPtr)(nil)).Elem()
+	inputsType     = reflect.TypeOf(Inputs(nil))
+)
+
+// NewGoFn wraps a Go function into an Elvish function using reflection.
 //
 // Parameters are passed following these rules:
 //
@@ -49,50 +87,9 @@ var (
 // converted using goToElv. If the last return value has type error and is not
 // nil, it is turned into an exception and no ouputting happens. If the last
 // return value is a nil error, it is ignored.
-type GoFn struct {
-	name string
-	impl interface{}
-
-	// Type information of impl.
-
-	// If true, pass the frame as a *Frame argument.
-	frame bool
-	// If true, pass options as a RawOptions argument.
-	rawOptions bool
-	// If not nil, type of the parameter that gets options via RawOptions.Scan.
-	options reflect.Type
-	// If not nil, pass the inputs as an Input-typed last argument.
-	inputs bool
-	// Type of "normal" (non-frame, non-options, non-variadic) arguments.
-	normalArgs []reflect.Type
-	// If not nil, type of variadic arguments.
-	variadicArg reflect.Type
-}
-
-var _ Callable = &GoFn{}
-
-// An interface to be implemented by pointers to structs that should hold
-// scanned options.
-type optionsPtr interface {
-	SetDefaultOptions()
-}
-
-// Inputs is the type that the last parameter of a Go-native function can take.
-// When that is the case, it is a callback to get inputs. See the doc of GoFn
-// for details.
-type Inputs func(func(interface{}))
-
-var (
-	frameType      = reflect.TypeOf((*Frame)(nil))
-	rawOptionsType = reflect.TypeOf(RawOptions(nil))
-	optionsPtrType = reflect.TypeOf((*optionsPtr)(nil)).Elem()
-	inputsType     = reflect.TypeOf(Inputs(nil))
-)
-
-// NewGoFn creates a new GoFn instance.
-func NewGoFn(name string, impl interface{}) *GoFn {
+func NewGoFn(name string, impl interface{}) Callable {
 	implType := reflect.TypeOf(impl)
-	b := &GoFn{name: name, impl: impl}
+	b := &goFn{name: name, impl: impl}
 
 	i := 0
 	if i < implType.NumIn() && implType.In(i) == frameType {
@@ -127,22 +124,22 @@ func NewGoFn(name string, impl interface{}) *GoFn {
 }
 
 // Kind returns "fn".
-func (*GoFn) Kind() string {
+func (*goFn) Kind() string {
 	return "fn"
 }
 
 // Equal compares identity.
-func (b *GoFn) Equal(rhs interface{}) bool {
+func (b *goFn) Equal(rhs interface{}) bool {
 	return b == rhs
 }
 
 // Hash hashes the address.
-func (b *GoFn) Hash() uint32 {
+func (b *goFn) Hash() uint32 {
 	return hash.Pointer(unsafe.Pointer(b))
 }
 
 // Repr returns an opaque representation "<builtin $name>".
-func (b *GoFn) Repr(int) string {
+func (b *goFn) Repr(int) string {
 	return "<builtin " + b.name + ">"
 }
 
@@ -153,7 +150,7 @@ var errorType = reflect.TypeOf((*error)(nil)).Elem()
 var errNoOptions = errors.New("function does not accept any options")
 
 // Call calls the implementation using reflection.
-func (b *GoFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) error {
+func (b *goFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) error {
 	if b.variadicArg != nil {
 		if len(args) < len(b.normalArgs) {
 			return errs.ArityMismatch{

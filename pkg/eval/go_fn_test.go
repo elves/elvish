@@ -17,7 +17,7 @@ func TestGoFnAsValue(t *testing.T) {
 	fn2 := NewGoFn("fn2", func() {})
 	vals.TestValue(t, fn1).
 		Kind("fn").
-		Hash(hash.Pointer(unsafe.Pointer(fn1))).
+		Hash(hash.Pointer(unsafe.Pointer(fn1.(*goFn)))).
 		Equal(fn1).
 		NotEqual(fn2).
 		Repr("<builtin fn1>")
