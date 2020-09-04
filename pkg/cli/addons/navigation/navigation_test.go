@@ -149,12 +149,14 @@ func TestNavigation_FakeFS(t *testing.T) {
 }
 
 func TestNavigation_RealFS(t *testing.T) {
-	cleanupFs := testutil.InTestDirWithSetup(testDir)
+	_, cleanupFs := testutil.InTestDir()
+	defer cleanupFs()
+	testutil.ApplyDir(testDir)
+
 	err := os.Chdir("d")
 	if err != nil {
 		panic(err)
 	}
-	defer cleanupFs()
 	testNavigation(t, nil)
 }
 

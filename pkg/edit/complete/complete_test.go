@@ -53,13 +53,15 @@ func (ev testEvaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
 }
 
 func setupFs() func() {
-	return testutil.InTestDirWithSetup(testutil.Dir{
+	_, cleanupFs := testutil.InTestDir()
+	testutil.ApplyDir(testutil.Dir{
 		"a.exe":   testutil.File{Perm: 0755, Content: ""},
 		"non-exe": "",
 		"d": testutil.Dir{
 			"a.exe": testutil.File{Perm: 0755, Content: ""},
 		},
 	})
+	return cleanupFs
 }
 
 func TestComplete(t *testing.T) {

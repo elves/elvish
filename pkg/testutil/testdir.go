@@ -74,20 +74,7 @@ type File struct {
 	Content string
 }
 
-// InTestDirWithSetup sets up a temporary directory using the given cli. If
-// wd is not empty, it also changes into the given subdirectory. It returns a
-// cleanup function to remove the temporary directory and restore the working
-// directory.
-//
-// It panics if there are any errors.
-func InTestDirWithSetup(dir Dir) func() {
-	_, cleanup := InTestDir()
-	ApplyDir(dir)
-	return cleanup
-}
-
-// ApplyDir creates the given files specified by ta directory layout to the
-// current directory.
+// ApplyDir creates the given filesystem layout in the current directory.
 func ApplyDir(dir Dir) {
 	applyDir(dir, "")
 }

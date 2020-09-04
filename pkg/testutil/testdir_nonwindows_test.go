@@ -7,13 +7,15 @@ import (
 	"testing"
 )
 
-func TestInTestDirWithSetup_CreatesFileWithPerm(t *testing.T) {
-	cleanup := InTestDirWithSetup(Dir{
+func TestApplyDir_CreatesFileWithPerm(t *testing.T) {
+	_, cleanup := InTestDir()
+	defer cleanup()
+
+	ApplyDir(Dir{
 		// For some unknown reason, termux on Android does not set the
 		// group and other permission bits correctly, so we use 700 here.
 		"a": File{0700, "a content"},
 	})
-	defer cleanup()
 
 	testFileContent(t, "a", "a content")
 	testFilePerm(t, "a", 0700)

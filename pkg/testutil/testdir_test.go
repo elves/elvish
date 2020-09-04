@@ -69,19 +69,24 @@ func TestInTestDir_CleanupChangesBackToOldWd(t *testing.T) {
 	}
 }
 
-func TestInTestDirWithSetup_CreatesFiles(t *testing.T) {
-	cleanup := InTestDirWithSetup(Dir{
+func TestApplyDir_CreatesFiles(t *testing.T) {
+	_, cleanup := InTestDir()
+	defer cleanup()
+
+	ApplyDir(Dir{
 		"a": "a content",
 		"b": "b content",
 	})
-	defer cleanup()
 
 	testFileContent(t, "a", "a content")
 	testFileContent(t, "b", "b content")
 }
 
-func TestInTestDirWithSetup_CreatesDirectories(t *testing.T) {
-	cleanup := InTestDirWithSetup(Dir{
+func TestApplyDir_CreatesDirectories(t *testing.T) {
+	_, cleanup := InTestDir()
+	defer cleanup()
+
+	ApplyDir(Dir{
 		"d": Dir{
 			"d1": "d1 content",
 			"d2": "d2 content",
@@ -90,7 +95,6 @@ func TestInTestDirWithSetup_CreatesDirectories(t *testing.T) {
 			},
 		},
 	})
-	defer cleanup()
 
 	testFileContent(t, "d/d1", "d1 content")
 	testFileContent(t, "d/d2", "d2 content")
