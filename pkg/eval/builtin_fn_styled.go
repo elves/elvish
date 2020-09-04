@@ -14,7 +14,7 @@ var errStyledSegmentArgType = errors.New("argument to styled-segment must be a s
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		"styled-segment": styledSegment,
-		"styled":         Styled,
+		"styled":         styled,
 	})
 }
 
@@ -132,9 +132,7 @@ func styledSegment(options RawOptions, input interface{}) (*ui.Segment, error) {
 // put $s[0] $s[1]
 // ```
 
-// Styled turns a string, a ui.Segment or a ui.Text into a ui.Text by applying
-// the given stylings.
-func Styled(fm *Frame, input interface{}, stylings ...interface{}) (ui.Text, error) {
+func styled(fm *Frame, input interface{}, stylings ...interface{}) (ui.Text, error) {
 	var text ui.Text
 
 	switch input := input.(type) {
