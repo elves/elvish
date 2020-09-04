@@ -504,6 +504,38 @@ func fromJSON(fm *Frame) error {
 	}
 }
 
+// Converts a interface{} that results from json.Unmarshal to an Elvish value.
+func fromJSONInterface(v interface{}) (interface{}, error) {
+	switch v := v.(type) {
+	case nil, bool, string:
+		return v, nil
+	case float64:
+		return v, nil
+	case []interface{}:
+		vec := vals.EmptyList
+		for _, elem := range v {
+			converted, err := fromJSONInterface(elem)
+			if err != nil {
+				return nil, err
+			}
+			vec = vec.Cons(converted)
+		}
+		return vec, nil
+	case map[string]interface{}:
+		m := vals.EmptyMap
+		for key, val := range v {
+			convertedVal, err := fromJSONInterface(val)
+			if err != nil {
+				return nil, err
+			}
+			m = m.Assoc(key, convertedVal)
+		}
+		return m, nil
+	default:
+		return nil, fmt.Errorf("unexpected json type: %T", v)
+	}
+}
+
 //elvdoc:fn to-lines
 //
 // ```elvish
