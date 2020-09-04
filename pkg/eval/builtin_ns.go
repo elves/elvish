@@ -12,8 +12,7 @@ import (
 //
 // A blackhole variable.
 //
-// Values assigned to it will be discarded. Trying to use its value (like `put $_`)
-// causes an exception.
+// Values assigned to it will be discarded. Referencing it always results in $nil.
 
 //elvdoc:var args
 //
@@ -44,8 +43,6 @@ import (
 //elvdoc:var nil
 //
 // A special value useful for representing the lack of values.
-//
-// **WARNING**: Due to a bug, `$nil` cannot be used as a map key now.
 
 //elvdoc:var paths
 //

@@ -12,7 +12,7 @@ func (blackhole) Get() interface{} {
 
 // NewBlackhole returns a blackhole variable. Assignments to a blackhole
 // variable will be discarded, and getting a blackhole variable always returns
-// an empty string.
+// nil.
 func NewBlackhole() Var {
 	return blackhole{}
 }
