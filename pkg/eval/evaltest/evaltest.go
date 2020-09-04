@@ -17,10 +17,8 @@ package evaltest
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"io/ioutil"
-	"math"
 	"os"
 	"reflect"
 	"strings"
@@ -31,13 +29,6 @@ import (
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
 )
-
-// These two symbols are used for tests that need to compare floating point
-// values that can't be guaranteed to be bit for bit identical. Typically due
-// to tiny rounding errors that tend to occur in floating point operations.
-const float64EqualityThreshold = 1e-15
-
-type Approximately struct{ F float64 }
 
 // TestCase is a test case for Test.
 type TestCase struct {
@@ -52,98 +43,6 @@ type Result struct {
 
 	CompilationError error
 	Exception        error
-}
-
-type errorMatcher interface{ matchError(error) bool }
-
-// AnyError is an error that can be passed to TestCase.Throws to match any
-// non-nil error.
-var AnyError = anyError{}
-
-// An errorMatcher for any error.
-type anyError struct{}
-
-func (anyError) Error() string { return "any error" }
-
-func (anyError) matchError(e error) bool { return e != nil }
-
-// An errorMatcher for exceptions.
-type exc struct {
-	reason error
-	stacks []string
-}
-
-func (e exc) Error() string {
-	if len(e.stacks) == 0 {
-		return fmt.Sprintf("exception with reason %v", e.reason)
-	}
-	return fmt.Sprintf("exception with reason %v and stacks %v", e.reason, e.stacks)
-}
-
-func (e exc) matchError(e2 error) bool {
-	if e2, ok := e2.(*eval.Exception); ok {
-		return matchErr(e.reason, e2.Reason) &&
-			(len(e.stacks) == 0 ||
-				reflect.DeepEqual(e.stacks, getStackTexts(e2.StackTrace)))
-	}
-	return false
-}
-
-func getStackTexts(tb *eval.StackTrace) []string {
-	texts := []string{}
-	for tb != nil {
-		ctx := tb.Head
-		texts = append(texts, ctx.Source[ctx.From:ctx.To])
-		tb = tb.Next
-	}
-	return texts
-}
-
-// ErrorWithType returns an error that can be passed to the TestCase.Throws
-// to match any error with the same type as the argument.
-func ErrorWithType(v error) error { return errWithType{v} }
-
-// An errorMatcher for any error with the given type.
-type errWithType struct{ v error }
-
-func (e errWithType) Error() string { return fmt.Sprintf("error with type %T", e.v) }
-
-func (e errWithType) matchError(e2 error) bool {
-	return reflect.TypeOf(e.v) == reflect.TypeOf(e2)
-}
-
-// ErrorWithMessage returns an error that can be passed to TestCase.Throws to
-// match any error with the given message.
-func ErrorWithMessage(msg string) error { return errWithMessage{msg} }
-
-// An errorMatcher for any error with the given message.
-type errWithMessage struct{ msg string }
-
-func (e errWithMessage) Error() string { return "error with message " + e.msg }
-
-func (e errWithMessage) matchError(e2 error) bool {
-	return e2 != nil && e.msg == e2.Error()
-}
-
-// CmdExit returns an error that can be passed to TestCase.Throws to match an
-// eval.ExternalCmdExit ignoring the Pid field.
-func CmdExit(v eval.ExternalCmdExit) error { return errCmdExit{v} }
-
-// An errorMatcher for an ExternalCmdExit error that ignores the `Pid` member.
-// We only match the command name and exit status because at run time we
-// cannot know the correct value for `Pid`.
-type errCmdExit struct{ v eval.ExternalCmdExit }
-
-func (e errCmdExit) Error() string {
-	return e.v.Error()
-}
-
-func (e errCmdExit) matchError(gotErr error) bool {
-	if gotErr == nil {
-		return false
-	}
-	ge := gotErr.(eval.ExternalCmdExit)
-	return e.v.CmdName == ge.CmdName && e.v.WaitStatus == ge.WaitStatus
 }
 
 // The following functions and methods are used to build Test structs. They are
@@ -313,36 +212,26 @@ func matchOut(want, got []interface{}) bool {
 		return false
 	}
 	for i := range got {
-		// Equality of some data types needs to be special-cased in unit
-		// tests. For example, by definition `NaN == NaN` is always false
-		// since NaN is never equal to any other value; not even NaN. But for
-		// unit tests we want to ensure that if the test is expected to
-		// produce NaN it does so and the test passes.
-		switch v := got[i].(type) {
+		switch g := got[i].(type) {
 		case float64:
-			switch x := want[i].(type) {
+			// Special-case float64 to correctly handle NaN and support
+			// approximate comparison.
+			switch w := want[i].(type) {
 			case float64:
-				if math.IsNaN(v) && math.IsNaN(x) {
-					return true
+				if !matchFloat64(g, w, 0) {
+					return false
 				}
-				return v == x
 			case Approximately:
-				// Apply a reasonable epsilon if the user asked for an
-				// approximate equality test.
-				w := x.F
-				if math.IsNaN(v) && math.IsNaN(w) {
-					return true
+				if !matchFloat64(g, w.F, ApproximatelyThreshold) {
+					return false
 				}
-				if math.IsInf(v, 0) && math.IsInf(w, 0) &&
-					math.Signbit(v) == math.Signbit(w) {
-					return true
-				}
-				return math.Abs(v-w) <= float64EqualityThreshold
+			default:
+				return false
 			}
-		}
-
-		if !vals.Equal(got[i], want[i]) {
-			return false
+		default:
+			if !vals.Equal(got[i], want[i]) {
+				return false
+			}
 		}
 	}
 	return true
