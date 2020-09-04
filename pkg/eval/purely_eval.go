@@ -10,10 +10,6 @@ import (
 
 var ErrImpure = errors.New("expression is impure")
 
-func PurelyEvalCompound(cn *parse.Compound) (string, error) {
-	return (*Evaler)(nil).PurelyEvalCompound(cn)
-}
-
 func (ev *Evaler) PurelyEvalCompound(cn *parse.Compound) (string, error) {
 	return ev.PurelyEvalPartialCompound(cn, -1)
 }
