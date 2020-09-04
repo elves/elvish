@@ -576,7 +576,7 @@ user-defined function, it has the following fields:
 
 -   `$f[src]` is a map-like data structure containing information about the
     source code that the function is defined in. It contains the same value that
-    would the [src](builtin.html#src) function would output if called from the
+    the [src](builtin.html#src) function would output if called from the
     function.
 
 # Variable
