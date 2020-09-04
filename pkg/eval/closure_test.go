@@ -30,7 +30,7 @@ func TestClosure(t *testing.T) {
 				ValidLow: 2, ValidHigh: -1, Actual: 1},
 			"$f a"),
 
-		That("[]{ } &k=v").ThrowsAny(),
+		That("[]{ } &k=v").Throws(AnyError),
 
 		That("all [a b]{ }[arg-names]").Puts("a", "b"),
 		That("put [@r]{ }[rest-arg]").Puts("0"),

@@ -40,8 +40,9 @@ func TestPlatform(t *testing.T) {
 			bool(runtime.GOOS != "windows" && runtime.GOOS != "plan9" && runtime.GOOS != "js")),
 		// The first time we invoke the mock it acts as if we can't determine
 		// the hostname. Make sure that is turned into the expected exception.
-		That(`platform:hostname`).ThrowsCause(
+		That(`platform:hostname`).Throws(
 			errors.New("hostname cannot be determined")),
+
 		That(`platform:hostname`).Puts(testHostname),
 		That(`platform:hostname &strip-domain`).Puts(testMachname),
 	)

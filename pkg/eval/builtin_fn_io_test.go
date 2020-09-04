@@ -45,7 +45,7 @@ func TestBuiltinFnIO(t *testing.T) {
 				"foo"),
 		That(`echo '[null, "foo"]' | from-json`).Puts(
 			vals.MakeList(nil, "foo")),
-		That(`echo 'invalid' | from-json`).ThrowsAny(),
+		That(`echo 'invalid' | from-json`).Throws(AnyError),
 
 		That(`put "l\norem" ipsum | to-lines`).Prints("l\norem\nipsum\n"),
 		That(`put [&k=v &a=[1 2]] foo | to-json`).

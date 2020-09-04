@@ -21,7 +21,7 @@ func TestBuiltinFnFlow(t *testing.T) {
 		That(`range 10 | each [x]{ if (== $x 4) { break }; put $x }`).
 			Puts(0.0, 1.0, 2.0, 3.0),
 		That(`range 10 | each [x]{ if (== $x 4) { fail haha }; put $x }`).
-			Puts(0.0, 1.0, 2.0, 3.0).ThrowsAny(),
+			Puts(0.0, 1.0, 2.0, 3.0).Throws(AnyError),
 		// TODO(xiaq): Test that "each" does not close the stdin.
 		// TODO: test peach
 
@@ -33,6 +33,6 @@ func TestBuiltinFnFlow(t *testing.T) {
 		That("put ?(fail 1)[reason][type]").Puts("fail"),
 		That("put ?(fail 1)[reason][content]").Puts("1"),
 
-		That(`return`).ThrowsCause(Return),
+		That(`return`).Throws(Return),
 	)
 }

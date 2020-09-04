@@ -43,7 +43,7 @@ func TestGlob_NoMatch(t *testing.T) {
 	defer cleanup()
 
 	Test(t,
-		That("put a/b/nonexistent*").ThrowsCause(ErrWildcardNoMatch),
+		That("put a/b/nonexistent*").Throws(ErrWildcardNoMatch),
 		That("put a/b/nonexistent*[nomatch-ok]").DoesNothing(),
 	)
 }
@@ -103,7 +103,7 @@ func TestGlob_Type(t *testing.T) {
 		That("put **[type:dir]").Puts("b/c", "b", "d1", "d2"),
 		That("put **[type:regular]").Puts("d1/f1", "d2/fm", "bar", "foo", "ipsum", "lorem"),
 		That("put **[type:regular]m").Puts("d2/fm", "ipsum", "lorem"),
-		That("put **[type:dir]f*[type:regular]").ThrowsCause(ErrMultipleTypeModifiers),
-		That("put **[type:unknown]").ThrowsCause(ErrUnknownTypeModifier),
+		That("put **[type:dir]f*[type:regular]").Throws(ErrMultipleTypeModifiers),
+		That("put **[type:unknown]").Throws(ErrUnknownTypeModifier),
 	)
 }

@@ -15,7 +15,7 @@ func TestBuiltinFnContainer(t *testing.T) {
 	Test(t,
 		That("put (ns [&name=value])[name]").Puts("value"),
 		That("n: = (ns [&name=value]); put $n:name").Puts("value"),
-		That("ns [&[]=[]]").ThrowsCause(errs.BadValue{
+		That("ns [&[]=[]]").Throws(errs.BadValue{
 			What:  `key of argument of "ns"`,
 			Valid: "string", Actual: "list"}),
 
@@ -52,11 +52,11 @@ func TestBuiltinFnContainer(t *testing.T) {
 		That(`echo foobar | all`).Puts("foobar"),
 		That(`all [foo bar]`).Puts("foo", "bar"),
 		That(`put foo | one`).Puts("foo"),
-		That(`put | one`).ThrowsAny(),
-		That(`put foo bar | one`).ThrowsAny(),
+		That(`put | one`).Throws(AnyError),
+		That(`put foo bar | one`).Throws(AnyError),
 		That(`one [foo]`).Puts("foo"),
-		That(`one []`).ThrowsAny(),
-		That(`one [foo bar]`).ThrowsAny(),
+		That(`one []`).Throws(AnyError),
+		That(`one [foo bar]`).Throws(AnyError),
 
 		That(`range 100 | take 2`).Puts(0.0, 1.0),
 		That(`range 100 | drop 98`).Puts(98.0, 99.0),
@@ -80,7 +80,7 @@ func TestBuiltinFnContainer(t *testing.T) {
 			errs.ArityMismatch{
 				What: "arguments here", ValidLow: 0, ValidHigh: 1, Actual: 3},
 			"count 1 2 3"),
-		That(`count $true`).ThrowsMessage("cannot get length of a bool"),
+		That(`count $true`).Throws(ErrorWithMessage("cannot get length of a bool")),
 
 		That(`keys [&]`).DoesNothing(),
 		That(`keys [&a=foo]`).Puts("a"),

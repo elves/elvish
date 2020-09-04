@@ -21,11 +21,11 @@ func TestBuiltinFnMisc(t *testing.T) {
 		// Altering variables in &ns.
 		That("n = (ns [&x=foo]); eval 'x = bar' &ns=$n; put $n[x]").Puts("bar"),
 		// Parse error.
-		That("eval '['").ThrowsAny(),
+		That("eval '['").Throws(AnyError),
 		// Compilation error.
-		That("eval 'put $x'").ThrowsAny(),
+		That("eval 'put $x'").Throws(AnyError),
 		// Exception.
-		That("eval 'fail x'").ThrowsCause(FailError{"x"}),
+		That("eval 'fail x'").Throws(FailError{"x"}),
 
 		That(`f = (mktemp elvXXXXXX); echo 'put x' > $f
 		      -source $f; rm $f`).Puts("x"),
@@ -40,11 +40,12 @@ func TestBuiltinFnMisc(t *testing.T) {
 		That("duration = ''",
 			"time &on-end=[x]{ duration = $x } { echo foo } | out = (all)",
 			"put $out", "kind-of $duration").Puts("foo", "number"),
-		That("time { fail body } | nop (all)").ThrowsCause(FailError{"body"}),
-		That("time &on-end=[_]{ fail on-end } { }").
-			ThrowsCause(FailError{"on-end"}),
-		That("time &on-end=[_]{ fail on-end } { fail body }").
-			ThrowsCause(FailError{"body"}),
+		That("time { fail body } | nop (all)").Throws(FailError{"body"}),
+		That("time &on-end=[_]{ fail on-end } { }").Throws(
+			FailError{"on-end"}),
+
+		That("time &on-end=[_]{ fail on-end } { fail body }").Throws(
+			FailError{"body"}),
 	)
 }
 

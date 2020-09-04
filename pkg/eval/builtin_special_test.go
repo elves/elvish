@@ -54,15 +54,22 @@ func TestBuiltinSpecial(t *testing.T) {
 		That("try { nop } except { put bad } else { put good }").Puts("good"),
 		That("try { e:false } except - { put bad } else { put good }").
 			Puts("bad"),
-		That("try { fail tr }").ThrowsMessage("tr"),
+		That("try { fail tr }").Throws(ErrorWithMessage("tr")),
 		That("try { fail tr } finally { put final }").
-			Puts("final").ThrowsMessage("tr"),
+			Puts("final").Throws(ErrorWithMessage(
+			"tr")),
+
 		That("try { fail tr } except { fail ex } finally { put final }").
-			Puts("final").ThrowsMessage("ex"),
+			Puts("final").Throws(ErrorWithMessage(
+			"ex")),
+
 		That("try { fail tr } except { put ex } finally { fail final }").
-			Puts("ex").ThrowsMessage("final"),
-		That("try { fail tr } except { fail ex } finally { fail final }").
-			ThrowsMessage("final"),
+			Puts("ex").Throws(ErrorWithMessage(
+			"final")),
+
+		That("try { fail tr } except { fail ex } finally { fail final }").Throws(ErrorWithMessage(
+			"final")),
+
 		// try - wrong use
 		That("try { nop } except @a { }").DoesNotCompile(),
 
@@ -70,7 +77,7 @@ func TestBuiltinSpecial(t *testing.T) {
 		That("x=0; while (< $x 4) { put $x; x=(+ $x 1) }").
 			Puts("0", 1.0, 2.0, 3.0),
 		That("x = 0; while (< $x 4) { put $x; break }").Puts("0"),
-		That("x = 0; while (< $x 4) { fail haha }").ThrowsAny(),
+		That("x = 0; while (< $x 4) { fail haha }").Throws(AnyError),
 		That("x = 0; while (< $x 4) { put $x; x=(+ $x 1) } else { put bad }").
 			Puts("0", 1.0, 2.0, 3.0),
 		That("while $false { put bad } else { put good }").Puts("good"),
@@ -88,7 +95,7 @@ func TestBuiltinSpecial(t *testing.T) {
 		That("for {x,y} [] { }").DoesNotCompile(),
 		// Invalid for loop lvalue. You can't use a var in a namespace other
 		// than the special "local:" namespace as the lvalue in a for loop.
-		That("for no-such-namespace:x [a b] { }").ThrowsMessage("new variables can only be created in local scope"),
+		That("for no-such-namespace:x [a b] { }").Throws(ErrorWithMessage("new variables can only be created in local scope")),
 		// Exception when evaluating iterable.
 		That("for x [][0] { }").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// More than one iterable.
@@ -154,7 +161,7 @@ func TestUse(t *testing.T) {
 
 		// Variables defined in the default global scope is invisible from
 		// modules
-		That("x = foo; use put-x").ThrowsAny(),
+		That("x = foo; use put-x").Throws(AnyError),
 
 		// TODO: Test module namespace
 

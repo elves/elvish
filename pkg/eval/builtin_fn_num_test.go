@@ -36,7 +36,7 @@ func TestBuiltinFnNum(t *testing.T) {
 		That("/ 233333 353").Puts(661.0),
 		That("/ 1 0").Puts(math.Inf(1)),
 		That("% 23 7").Puts("2"),
-		That("% 1 0").ThrowsAny(),
+		That("% 1 0").Throws(AnyError),
 
 		That("randint 1 2").Puts("1"),
 		That("i = (randint 10 100); >= $i 10; < $i 100").Puts(true, true),

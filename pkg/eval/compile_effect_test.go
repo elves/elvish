@@ -24,7 +24,7 @@ func TestCompileEffect(t *testing.T) {
 		// Outputs of pipelines in a chunk are concatenated
 		That("put x; put y; put z").Puts("x", "y", "z"),
 		// A failed pipeline cause the whole chunk to fail
-		That("put a; e:false; put b").Puts("a").ThrowsAny(),
+		That("put a; e:false; put b").Puts("a").Throws(AnyError),
 
 		// Pipelines
 		// ---------
@@ -156,7 +156,7 @@ func TestCompileEffect(t *testing.T) {
 		That(`{ echo foobar >&stderr } stderr> out4`, `slurp < out4`).
 			Puts("foobar\n"),
 		// Using a new FD as source throws an exception.
-		That(`echo foo >&4`).ThrowsAny(),
+		That(`echo foo >&4`).Throws(AnyError),
 		// Using a new FD as destination is OK, and makes it available.
 		That(`{ echo foo >&4 } 4>out5`, `slurp < out5`).Puts("foo\n"),
 

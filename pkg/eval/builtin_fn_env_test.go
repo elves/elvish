@@ -15,7 +15,7 @@ func TestBuiltinFnEnv(t *testing.T) {
 	oldpath := os.Getenv(env.PATH)
 	listSep := string(os.PathListSeparator)
 	Test(t,
-		That(`get-env var`).ThrowsCause(eval.ErrNonExistentEnvVar),
+		That(`get-env var`).Throws(eval.ErrNonExistentEnvVar),
 		That(`set-env var test1`),
 		That(`get-env var`).Puts("test1"),
 		That(`put $E:var`).Puts("test1"),

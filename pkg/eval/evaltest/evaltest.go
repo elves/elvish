@@ -56,6 +56,10 @@ type Result struct {
 
 type errorMatcher interface{ matchError(error) bool }
 
+// AnyError is an error that can be passed to TestCase.Throws to match any
+// non-nil error.
+var AnyError = anyError{}
+
 // An errorMatcher for any error.
 type anyError struct{}
 
@@ -63,21 +67,24 @@ func (anyError) Error() string { return "any error" }
 
 func (anyError) matchError(e error) bool { return e != nil }
 
-// An errorMatcher for any exception with the given cause and stack traces.
+// An errorMatcher for exceptions.
 type exc struct {
-	cause  error
+	reason error
 	stacks []string
 }
 
 func (e exc) Error() string {
-	return fmt.Sprintf("exception with cause %v and stacks %v", e.cause, e.stacks)
+	if len(e.stacks) == 0 {
+		return fmt.Sprintf("exception with reason %v", e.reason)
+	}
+	return fmt.Sprintf("exception with reason %v and stacks %v", e.reason, e.stacks)
 }
 
 func (e exc) matchError(e2 error) bool {
 	if e2, ok := e2.(*eval.Exception); ok {
-		if matchErr(e.cause, e2.Reason) {
-			return reflect.DeepEqual(e.stacks, getStackTexts(e2.StackTrace))
-		}
+		return matchErr(e.reason, e2.Reason) &&
+			(len(e.stacks) == 0 ||
+				reflect.DeepEqual(e.stacks, getStackTexts(e2.StackTrace)))
 	}
 	return false
 }
@@ -92,17 +99,8 @@ func getStackTexts(tb *eval.StackTrace) []string {
 	return texts
 }
 
-// An errorMatcher for any exception with the given cause.
-type excWithCause struct{ cause error }
-
-func (e excWithCause) Error() string { return "exception with cause " + e.cause.Error() }
-
-func (e excWithCause) matchError(e2 error) bool {
-	return e2 != nil && reflect.DeepEqual(e.cause, eval.Cause(e2))
-}
-
-// ErrorWithType returns an error that can be passed to the Throws method of
-// TestCase to verify that the thrown error has the same type as the given error.
+// ErrorWithType returns an error that can be passed to the TestCase.Throws
+// to match any error with the same type as the argument.
 func ErrorWithType(v error) error { return errWithType{v} }
 
 // An errorMatcher for any error with the given type.
@@ -114,8 +112,8 @@ func (e errWithType) matchError(e2 error) bool {
 	return reflect.TypeOf(e.v) == reflect.TypeOf(e2)
 }
 
-// ErrorWithType returns an error that can be passed to the Throws method of
-// TestCase to verify that the thrown error has the given message.
+// ErrorWithMessage returns an error that can be passed to TestCase.Throws to
+// match any error with the given message.
 func ErrorWithMessage(msg string) error { return errWithMessage{msg} }
 
 // An errorMatcher for any error with the given message.
@@ -126,6 +124,10 @@ func (e errWithMessage) Error() string { return "error with message " + e.msg }
 func (e errWithMessage) matchError(e2 error) bool {
 	return e2 != nil && e.msg == e2.Error()
 }
+
+// CmdExit returns an error that can be passed to TestCase.Throws to match an
+// eval.ExternalCmdExit ignoring the Pid field.
+func CmdExit(v eval.ExternalCmdExit) error { return errCmdExit{v} }
 
 // An errorMatcher for an ExternalCmdExit error that ignores the `Pid` member.
 // We only match the command name and exit status because at run time we
@@ -140,8 +142,7 @@ func (e errCmdExit) matchError(gotErr error) bool {
 	if gotErr == nil {
 		return false
 	}
-
-	ge := gotErr.(*eval.Exception).Reason.(eval.ExternalCmdExit)
+	ge := gotErr.(eval.ExternalCmdExit)
 	return e.v.CmdName == ge.CmdName && e.v.WaitStatus == ge.WaitStatus
 }
 
@@ -185,45 +186,15 @@ func (t TestCase) PrintsStderrWith(s string) TestCase {
 }
 
 // Throws returns an altered TestCase that requires the source code to throw an
-// exception that has the given cause, and has stacktraces that match the given
-// source fragments (innermost first).
-func (t TestCase) Throws(cause error, stacks ...string) TestCase {
-	return t.throws(exc{cause, stacks})
-}
-
-// ThrowsCause returns an altered TestCase that requires the source code to
-// throw an exception with the given cause when evaluated.
+// exception with the given reason. The reason supports special matcher values
+// constructed by functions like ErrorWithMessage.
 //
-// If the stack trace is important, use Throws instead of this method.
-func (t TestCase) ThrowsCause(err error) TestCase {
-	return t.throws(excWithCause{err})
-}
-
-// ThrowsMessage returns an altered TestCase that requires the source code to
-// throw an error with the specified message when evaluted.
-//
-// Whenever possible, use ThrowsCause instead of this method.
-func (t TestCase) ThrowsMessage(msg string) TestCase {
-	return t.throws(errWithMessage{msg})
-}
-
-// ThrowsCmdExit returns an altered TestCase that requires the source code to
-// throw an an ExternalCmdExit error that matches the given error, ignoring
-// the PID.
-func (t TestCase) ThrowsCmdExit(err eval.ExternalCmdExit) TestCase {
-	return t.throws(errCmdExit{err})
-}
-
-// ThrowsAny returns an altered TestCase that requires the source code to throw
-// any exception when evaluated.
-//
-// Whenever possible, use a more specific Throws* method instead of this method.
-func (t TestCase) ThrowsAny() TestCase {
-	return t.throws(anyError{})
-}
-
-func (t TestCase) throws(err error) TestCase {
-	t.want.Exception = err
+// If at least one stacktrace string is given, the exception must also have a
+// stacktrace matching the given source fragments, frame by frame (innermost
+// frame first). If no stacktrace string is given, the stack trace of the
+// exception is not checked.
+func (t TestCase) Throws(reason error, stacks ...string) TestCase {
+	t.want.Exception = exc{reason, stacks}
 	return t
 }
 

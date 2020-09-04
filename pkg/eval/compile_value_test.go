@@ -33,9 +33,9 @@ func TestCompileValue(t *testing.T) {
 		// Error in any of the components throws an exception.
 		That("put a{[][1]}").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
 		// Error in concatenating the values throws an exception.
-		That("put []a").ThrowsMessage("cannot concatenate list and string"),
+		That("put []a").Throws(ErrorWithMessage("cannot concatenate list and string")),
 		// Error when applying tilde throws an exception.
-		That("put ~[]").ThrowsMessage("tilde doesn't work on value of type list"),
+		That("put ~[]").Throws(ErrorWithMessage("tilde doesn't work on value of type list")),
 
 		// List, Map and Indexing
 		// ----------------------
@@ -56,7 +56,7 @@ func TestCompileValue(t *testing.T) {
 		That("put [ &a=[][0] ]").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// Map expression errors if number of keys and values in a single pair
 		// does not match.
-		That("put [&{a b}={foo bar lorem}]").ThrowsMessage("2 keys but 3 values"),
+		That("put [&{a b}={foo bar lorem}]").Throws(ErrorWithMessage("2 keys but 3 values")),
 
 		// String Literals
 		// ---------------
