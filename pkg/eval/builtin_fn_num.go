@@ -241,7 +241,7 @@ func slash(fm *Frame, args ...float64) error {
 }
 
 func divide(fm *Frame, prod float64, nums ...float64) {
-	out := fm.ports[1].Chan
+	out := fm.OutputChan()
 	for _, f := range nums {
 		prod /= f
 	}

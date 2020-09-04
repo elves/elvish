@@ -155,7 +155,7 @@ func (op *pipelineOp) exec(fm *Frame) error {
 				// mitigates the effect of erroneous pipelines like
 				// "range 100 | cat"; without draining the pipeline will
 				// lock up.
-				for range newFm.ports[0].Chan {
+				for range newFm.InputChan() {
 				}
 			}
 		}()

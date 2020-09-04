@@ -77,6 +77,11 @@ func (fm *Frame) OutputFile() *os.File {
 	return fm.ports[1].File
 }
 
+// OutputFile returns a file onto which error messages can be written.
+func (fm *Frame) ErrorFile() *os.File {
+	return fm.ports[2].File
+}
+
 // IterateInputs calls the passed function for each input element.
 func (fm *Frame) IterateInputs(f func(interface{})) {
 	var w sync.WaitGroup
@@ -84,7 +89,7 @@ func (fm *Frame) IterateInputs(f func(interface{})) {
 
 	w.Add(2)
 	go func() {
-		linesToChan(fm.ports[0].File, inputs)
+		linesToChan(fm.InputFile(), inputs)
 		w.Done()
 	}()
 	go func() {

@@ -85,7 +85,7 @@ func nop(opts RawOptions, args ...interface{}) {
 // The terminology and definition of "kind" is subject to change.
 
 func kindOf(fm *Frame, args ...interface{}) {
-	out := fm.ports[1].Chan
+	out := fm.OutputChan()
 	for _, a := range args {
 		out <- vals.Kind(a)
 	}
@@ -128,7 +128,7 @@ func constantly(args ...interface{}) Callable {
 	return NewGoFn(
 		"created by constantly",
 		func(fm *Frame) {
-			out := fm.ports[1].Chan
+			out := fm.OutputChan()
 			for _, v := range args {
 				out <- v
 			}
@@ -323,7 +323,7 @@ func source(fm *Frame, fname string) error {
 		return err
 	}
 	src := parse.Source{Name: fname, Code: code, IsFile: true}
-	tree, err := parse.ParseWithDeprecation(src, fm.ports[2].File)
+	tree, err := parse.ParseWithDeprecation(src, fm.ErrorFile())
 	if err != nil {
 		return err
 	}
@@ -331,7 +331,7 @@ func source(fm *Frame, fname string) error {
 	for name := range fm.up.static() {
 		scriptGlobal.set(name)
 	}
-	op, err := compile(fm.Builtin.static(), scriptGlobal, tree, fm.ports[2].File)
+	op, err := compile(fm.Builtin.static(), scriptGlobal, tree, fm.ErrorFile())
 	if err != nil {
 		return err
 	}
@@ -481,7 +481,7 @@ func timeCmd(fm *Frame, opts timeOpt, f Callable) error {
 			err = errCb
 		}
 	} else {
-		fmt.Fprintln(fm.ports[1].File, dt)
+		fmt.Fprintln(fm.OutputFile(), dt)
 	}
 
 	return err
@@ -502,7 +502,7 @@ func _ifaddrs(fm *Frame) error {
 	if err != nil {
 		return err
 	}
-	out := fm.ports[1].Chan
+	out := fm.OutputChan()
 	for _, addr := range addrs {
 		out <- addr.String()
 	}

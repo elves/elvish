@@ -168,7 +168,7 @@ func toString(fm *Frame, args ...interface{}) {
 // @cf chr
 
 func ord(fm *Frame, s string) {
-	out := fm.ports[1].Chan
+	out := fm.OutputChan()
 	for _, r := range s {
 		out <- "0x" + strconv.FormatInt(int64(r), 16)
 	}
@@ -239,7 +239,7 @@ func base(fm *Frame, b int, nums ...int) error {
 		return ErrBadBase
 	}
 
-	out := fm.ports[1].Chan
+	out := fm.OutputChan()
 	for _, num := range nums {
 		out <- strconv.FormatInt(int64(num), b)
 	}

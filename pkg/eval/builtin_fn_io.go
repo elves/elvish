@@ -82,7 +82,7 @@ func init() {
 // [Ruby](https://ruby-doc.org/core-2.2.2/IO.html#method-i-puts) as `puts`.
 
 func put(fm *Frame, args ...interface{}) {
-	out := fm.ports[1].Chan
+	out := fm.OutputChan()
 	for _, a := range args {
 		out <- a
 	}
@@ -185,7 +185,7 @@ type printOpts struct{ Sep string }
 func (o *printOpts) SetDefaultOptions() { o.Sep = " " }
 
 func print(fm *Frame, opts printOpts, args ...interface{}) {
-	out := fm.ports[1].File
+	out := fm.OutputFile()
 	for i, arg := range args {
 		if i > 0 {
 			out.WriteString(opts.Sep)
@@ -223,7 +223,7 @@ func print(fm *Frame, opts printOpts, args ...interface{}) {
 
 func echo(fm *Frame, opts printOpts, args ...interface{}) {
 	print(fm, opts, args...)
-	fm.ports[1].File.WriteString("\n")
+	fm.OutputFile().WriteString("\n")
 }
 
 //elvdoc:fn pprint
@@ -254,7 +254,7 @@ func echo(fm *Frame, opts printOpts, args ...interface{}) {
 // @cf repr
 
 func pprint(fm *Frame, args ...interface{}) {
-	out := fm.ports[1].File
+	out := fm.OutputFile()
 	for _, arg := range args {
 		out.WriteString(vals.Repr(arg, 0))
 		out.WriteString("\n")
@@ -280,7 +280,7 @@ func pprint(fm *Frame, args ...interface{}) {
 // Etymology: [Python](https://docs.python.org/3/library/functions.html#repr).
 
 func repr(fm *Frame, args ...interface{}) {
-	out := fm.ports[1].File
+	out := fm.OutputFile()
 	for i, arg := range args {
 		if i > 0 {
 			out.WriteString(" ")
@@ -422,7 +422,7 @@ func onlyValues(fm *Frame) error {
 // [`File::Slurp`](http://search.cpan.org/~uri/File-Slurp-9999.19/lib/File/Slurp.pm).
 
 func slurp(fm *Frame) (string, error) {
-	b, err := ioutil.ReadAll(fm.ports[0].File)
+	b, err := ioutil.ReadAll(fm.InputFile())
 	return string(b), err
 }
 
@@ -446,7 +446,7 @@ func slurp(fm *Frame) (string, error) {
 // @cf to-lines
 
 func fromLines(fm *Frame) {
-	linesToChan(fm.ports[0].File, fm.ports[1].Chan)
+	linesToChan(fm.InputFile(), fm.OutputChan())
 }
 
 //elvdoc:fn from-json
@@ -483,8 +483,8 @@ func fromLines(fm *Frame) {
 // @cf to-json
 
 func fromJSON(fm *Frame) error {
-	in := fm.ports[0].File
-	out := fm.ports[1].Chan
+	in := fm.InputFile()
+	out := fm.OutputChan()
 
 	dec := json.NewDecoder(in)
 	for {
@@ -528,7 +528,7 @@ func fromJSON(fm *Frame) error {
 // @cf from-lines
 
 func toLines(fm *Frame, inputs Inputs) {
-	out := fm.ports[1].File
+	out := fm.OutputFile()
 
 	inputs(func(v interface{}) {
 		fmt.Fprintln(out, vals.ToString(v))
