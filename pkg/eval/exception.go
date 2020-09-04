@@ -149,7 +149,8 @@ func (pe PipelineError) Error() string {
 	return b.String()
 }
 
-// MakePipelineError builds a suitable error from pipeline results:
+// MakePipelineError builds an error from the execution results of multiple
+// commands in a pipeline.
 //
 // If all elements are either nil or OK, it returns nil. If there is exactly
 // non-nil non-OK Exception, it returns it. Otherwise, it return a PipelineError
