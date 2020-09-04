@@ -10,7 +10,6 @@ import (
 
 	. "github.com/elves/elvish/pkg/eval"
 
-	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/testutil"
 )
 
@@ -18,18 +17,20 @@ import (
 // test into external_cmd_test.go or create an external_cmd_windows_test.go
 // that performs an equivalent test on Windows.
 func TestEachExternal(t *testing.T) {
-	tmpHome, cleanup := testutil.InTempHome()
+	binPath, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	restorePath := testutil.WithTempEnv("PATH", "/foo:"+tmpHome+":/bar")
+	restorePath := testutil.WithTempEnv("PATH", "/foo:"+binPath+":/bar")
 	defer restorePath()
 
-	MustMkdirAll("dir")
-	MustCreateEmpty("cmdx")
-	MustWriteFile("cmd1", []byte("#!/bin/sh"), 0755)
-	MustWriteFile("cmd2", []byte("#!/bin/sh"), 0755)
-	MustWriteFile("cmd3", []byte(""), 0755)
-	MustCreateEmpty("file")
+	testutil.ApplyDir(testutil.Dir{
+		"dir":  testutil.Dir{},
+		"file": "",
+		"cmdx": "#!/bin/sh",
+		"cmd1": testutil.File{Perm: 0755, Content: "#!/bin/sh"},
+		"cmd2": testutil.File{Perm: 0755, Content: "#!/bin/sh"},
+		"cmd3": testutil.File{Perm: 0755, Content: ""},
+	})
 
 	wantCmds := []string{"cmd1", "cmd2", "cmd3"}
 	gotCmds := []string{}
