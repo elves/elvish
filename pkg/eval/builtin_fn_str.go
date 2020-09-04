@@ -307,7 +307,7 @@ func eawk(fm *Frame, f Callable, inputs Inputs) error {
 		newFm.Close()
 
 		if ex != nil {
-			switch Cause(ex) {
+			switch Reason(ex) {
 			case nil, Continue:
 				// nop
 			case Break:

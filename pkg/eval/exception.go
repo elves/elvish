@@ -31,9 +31,9 @@ type StackTrace struct {
 	Next *StackTrace
 }
 
-// Cause returns the Cause field if err is an *Exception. Otherwise it returns
+// Reason returns the Reason field if err is an *Exception. Otherwise it returns
 // err itself.
-func Cause(err error) error {
+func Reason(err error) error {
 	if exc, ok := err.(*Exception); ok {
 		return exc.Reason
 	}

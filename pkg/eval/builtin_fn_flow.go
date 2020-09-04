@@ -119,7 +119,7 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 		newFm.Close()
 
 		if ex != nil {
-			switch Cause(ex) {
+			switch Reason(ex) {
 			case nil, Continue:
 				// nop
 			case Break:
@@ -175,7 +175,7 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 			newFm.Close()
 
 			if ex != nil {
-				switch Cause(ex) {
+				switch Reason(ex) {
 				case nil, Continue:
 					// nop
 				case Break:

@@ -15,9 +15,9 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
-func TestCause(t *testing.T) {
+func TestReason(t *testing.T) {
 	err := errors.New("ordinary error")
-	tt.Test(t, tt.Fn("Cause", Cause), tt.Table{
+	tt.Test(t, tt.Fn("Reason", Reason), tt.Table{
 		tt.Args(err).Rets(err),
 		tt.Args(makeException(err)).Rets(err),
 	})
