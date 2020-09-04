@@ -17,8 +17,8 @@ func TestBuiltinPwd(t *testing.T) {
 	tmpHome, cleanup := testutil.InTempHome()
 	defer cleanup()
 
-	MustMkdirAll("dir1")
-	MustMkdirAll("dir2")
+	testutil.MustMkdirAll("dir1")
+	testutil.MustMkdirAll("dir2")
 	dir1 := filepath.Join(tmpHome, "dir1")
 	dir2 := filepath.Join(tmpHome, "dir2")
 

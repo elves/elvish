@@ -45,13 +45,13 @@ func TestCompileTimeDeprecation(t *testing.T) {
 	defer restore()
 
 	ev := NewEvaler()
-	r, w := MustPipe()
+	r, w := testutil.MustPipe()
 	_, err := ev.ParseAndCompile(parse.Source{Code: "ord a"}, w)
 	if err != nil {
 		t.Errorf("got err %v, want nil", err)
 	}
 	w.Close()
-	warnings := MustReadAllAndClose(r)
+	warnings := testutil.MustReadAllAndClose(r)
 	wantWarning := []byte(`the "ord" command is deprecated`)
 	if !bytes.Contains(warnings, wantWarning) {
 		t.Errorf("got warnings %q, want warnings to contain %q", warnings, wantWarning)

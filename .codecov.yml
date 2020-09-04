@@ -11,3 +11,4 @@ ignore:
   - "pkg/eval/evaltest"
   - "pkg/prog/progtest"
   - "pkg/store/storetest"
+  - "pkg/testutil/must.go"

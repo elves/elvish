@@ -13,8 +13,8 @@ import (
 
 func TestCompileValue(t *testing.T) {
 	home, cleanup := testutil.InTempHome()
-	MustCreateEmpty("file1")
-	MustCreateEmpty("file2")
+	testutil.MustCreateEmpty("file1")
+	testutil.MustCreateEmpty("file2")
 	defer cleanup()
 
 	Test(t,

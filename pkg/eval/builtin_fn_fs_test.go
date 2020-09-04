@@ -24,8 +24,8 @@ func TestBuiltinFnFS(t *testing.T) {
 	tmpHome, cleanup := testutil.InTempHome()
 	defer cleanup()
 
-	MustMkdirAll("dir")
-	MustCreateEmpty("file")
+	testutil.MustMkdirAll("dir")
+	testutil.MustCreateEmpty("file")
 
 	Test(t,
 		That(`path-base a/b/c.png`).Puts("c.png"),
@@ -41,7 +41,7 @@ func TestBuiltinCd(t *testing.T) {
 	tmpHome, cleanup := testutil.InTempHome()
 	defer cleanup()
 
-	MustMkdirAll("d1")
+	testutil.MustMkdirAll("d1")
 	d1Path := filepath.Join(tmpHome, "d1")
 
 	// We install this mock for all tests, not just the one that needs it,

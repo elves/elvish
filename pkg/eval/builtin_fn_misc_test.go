@@ -52,7 +52,7 @@ func TestBuiltinFnMisc(t *testing.T) {
 func TestUseMod(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
-	MustWriteFile("mod.elv", []byte("x = value"), 0600)
+	testutil.MustWriteFile("mod.elv", []byte("x = value"), 0600)
 
 	Test(t,
 		That("put (use-mod ./mod)[x]").Puts("value"),
@@ -95,7 +95,7 @@ func TestResolve(t *testing.T) {
 	libdir, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	MustWriteFile("mod.elv", []byte("fn func { }"), 0600)
+	testutil.MustWriteFile("mod.elv", []byte("fn func { }"), 0600)
 
 	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
 		That("resolve for").Puts("special"),

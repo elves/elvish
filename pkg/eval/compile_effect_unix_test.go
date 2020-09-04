@@ -33,6 +33,6 @@ func TestCompileEffectUnix(t *testing.T) {
 }
 
 func mustWriteScript(name string, lines ...string) {
-	MustMkdirAll(filepath.Dir(name))
-	MustWriteFile(name, []byte(strings.Join(lines, "\n")), 0700)
+	testutil.MustMkdirAll(filepath.Dir(name))
+	testutil.MustWriteFile(name, []byte(strings.Join(lines, "\n")), 0700)
 }

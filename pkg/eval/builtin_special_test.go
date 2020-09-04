@@ -117,11 +117,11 @@ func TestUse(t *testing.T) {
 	libdir, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	MustMkdirAll(filepath.Join("a", "b", "c"))
+	testutil.MustMkdirAll(filepath.Join("a", "b", "c"))
 
 	writeMod := func(name, content string) {
 		fname := filepath.Join(strings.Split(name, "/")...) + ".elv"
-		MustWriteFile(fname, []byte(content), 0600)
+		testutil.MustWriteFile(fname, []byte(content), 0600)
 	}
 	writeMod("has-init", "put has-init")
 	writeMod("put-x", "put $x")
@@ -177,7 +177,7 @@ func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	defer restore()
 	libdir, cleanup := testutil.InTestDir()
 	defer cleanup()
-	MustWriteFile("dep.elv", []byte("x = (ord 1)"), 0600)
+	testutil.MustWriteFile("dep.elv", []byte("x = (ord 1)"), 0600)
 
 	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
 		// Importing module triggers check for deprecated features

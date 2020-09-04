@@ -13,8 +13,8 @@ func TestGlob_Simple(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	MustMkdirAll("z", "z2")
-	MustCreateEmpty("bar", "foo", "ipsum", "lorem")
+	testutil.MustMkdirAll("z", "z2")
+	testutil.MustCreateEmpty("bar", "foo", "ipsum", "lorem")
 
 	Test(t,
 		That("put *").Puts("bar", "foo", "ipsum", "lorem", "z", "z2"),
@@ -28,8 +28,8 @@ func TestGlob_Recursive(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	MustMkdirAll("1/2/3")
-	MustCreateEmpty("a.go", "1/a.go", "1/2/3/a.go")
+	testutil.MustMkdirAll("1/2/3")
+	testutil.MustCreateEmpty("a.go", "1/a.go", "1/2/3/a.go")
 
 	Test(t,
 		That("put **").Puts("1/2/3/a.go", "1/2/3", "1/2", "1/a.go", "1", "a.go"),
@@ -52,8 +52,8 @@ func TestGlob_MatchHidden(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	MustMkdirAll("d", ".d")
-	MustCreateEmpty("a", ".a", "d/a", "d/.a", ".d/a", ".d/.a")
+	testutil.MustMkdirAll("d", ".d")
+	testutil.MustCreateEmpty("a", ".a", "d/a", "d/.a", ".d/a", ".d/.a")
 
 	Test(t,
 		That("put *").Puts("a", "d"),
@@ -69,7 +69,7 @@ func TestGlob_SetAndRange(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	MustCreateEmpty("a1", "a2", "b1", "c1", "ipsum", "lorem")
+	testutil.MustCreateEmpty("a1", "a2", "b1", "c1", "ipsum", "lorem")
 
 	Test(t,
 		That("put ?[set:ab]*").Puts("a1", "a2", "b1"),
@@ -84,7 +84,7 @@ func TestGlob_But(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	MustCreateEmpty("bar", "foo", "ipsum", "lorem")
+	testutil.MustCreateEmpty("bar", "foo", "ipsum", "lorem")
 
 	Test(t,
 		// Nonexistent files can also be excluded
@@ -96,8 +96,8 @@ func TestGlob_Type(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	MustMkdirAll("d1", "d2", ".d", "b/c")
-	MustCreateEmpty("bar", "foo", "ipsum", "lorem", "d1/f1", "d2/fm")
+	testutil.MustMkdirAll("d1", "d2", ".d", "b/c")
+	testutil.MustCreateEmpty("bar", "foo", "ipsum", "lorem", "d1/f1", "d2/fm")
 
 	Test(t,
 		That("put **[type:dir]").Puts("b/c", "b", "d1", "d2"),
