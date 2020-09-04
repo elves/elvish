@@ -13,6 +13,7 @@ import (
 	"github.com/elves/elvish/pkg/edit/complete"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/strutil"
 	"github.com/xiaq/persistent/hash"
@@ -496,7 +497,7 @@ func lookupFn(m vals.Map, ctxName string) (eval.Callable, bool) {
 
 type pureEvaler struct{ ev *eval.Evaler }
 
-func (pureEvaler) EachExternal(f func(string)) { eval.EachExternal(f) }
+func (pureEvaler) EachExternal(f func(string)) { fsutil.EachExternal(f) }
 
 func (pureEvaler) EachSpecial(f func(string)) {
 	for name := range eval.IsBuiltinSpecial {

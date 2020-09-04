@@ -2,7 +2,6 @@ package eval
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"syscall"
@@ -96,20 +95,4 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 		return err
 	}
 	return NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid)
-}
-
-// EachExternal calls f for each name that can resolve to an external command.
-//
-// TODO(xiaq): Windows support. See https://golang.org/pkg/os/#Chmod for why
-// this doesn't work on Windows as currently written.
-func EachExternal(f func(string)) {
-	for _, dir := range searchPaths() {
-		// TODO(xiaq): Ignore error.
-		infos, _ := ioutil.ReadDir(dir)
-		for _, info := range infos {
-			if !info.IsDir() && (info.Mode()&0111 != 0) {
-				f(info.Name())
-			}
-		}
-	}
 }

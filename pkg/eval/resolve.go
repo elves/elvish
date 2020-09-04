@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/eval/vars"
+	"github.com/elves/elvish/pkg/fsutil"
 )
 
 // Resolution and iteration of variables and namespaces.
@@ -25,7 +26,7 @@ func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 			f(name)
 		}
 	case "e:":
-		EachExternal(func(cmd string) {
+		fsutil.EachExternal(func(cmd string) {
 			f(cmd + FnSuffix)
 		})
 	case "E:":

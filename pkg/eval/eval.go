@@ -7,10 +7,8 @@ import (
 	"io"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/elves/elvish/pkg/daemon"
-	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/eval/mods/bundled"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
@@ -246,10 +244,6 @@ func (ev *Evaler) SetArgs(args []string) {
 // found.
 func (ev *Evaler) SetLibDir(libDir string) {
 	ev.libDir = libDir
-}
-
-func searchPaths() []string {
-	return strings.Split(os.Getenv(env.PATH), ":")
 }
 
 // growPorts makes the size of ec.ports at least n, adding nil's if necessary.
