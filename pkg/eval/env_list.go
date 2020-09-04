@@ -23,24 +23,25 @@ var (
 	ErrPathCannotContainColonZero = errors.New(`path cannot contain colon or \0`)
 )
 
-// EnvList is a variable whose value is constructed from an environment variable
-// by splitting at pathListSeparator. Changes to it are also propagated to the
-// corresponding environment variable. Its elements cannot contain
-// pathListSeparator or \0; attempting to put any in its elements will result in
+// NewEnvListVar returns a variable whose value is a list synchronized with an
+// environment variable with the elements joined by os.PathListSeparator.
+//
+// Elements in the value of the variable must be strings, and cannot contain
+// os.PathListSeparator or \0; attempting to put any in its elements will result in
 // an error.
-type EnvList struct {
+func NewEnvListVar(name string) vars.Var {
+	return &envListVar{envName: name}
+}
+
+type envListVar struct {
 	sync.RWMutex
 	envName    string
 	cacheFor   string
 	cacheValue interface{}
 }
 
-var (
-	_ vars.Var = (*EnvList)(nil)
-)
-
 // Get returns a Value for an EnvPathList.
-func (envli *EnvList) Get() interface{} {
+func (envli *envListVar) Get() interface{} {
 	envli.Lock()
 	defer envli.Unlock()
 
@@ -58,7 +59,7 @@ func (envli *EnvList) Get() interface{} {
 }
 
 // Set sets an EnvPathList. The underlying environment variable is set.
-func (envli *EnvList) Set(v interface{}) error {
+func (envli *envListVar) Set(v interface{}) error {
 	var (
 		paths      []string
 		errElement error
