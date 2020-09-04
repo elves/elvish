@@ -14,6 +14,7 @@ import (
 	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/glob"
 	"github.com/elves/elvish/pkg/parse"
+	"github.com/elves/elvish/pkg/strutil"
 )
 
 // An operation that produces values.
@@ -382,7 +383,7 @@ func captureOutput(fm *Frame, f func(*Frame) error) ([]interface{}, error) {
 			for {
 				line, err := buffered.ReadString('\n')
 				if line != "" {
-					v := ChopLineEnding(line)
+					v := strutil.ChopLineEnding(line)
 					m.Lock()
 					vs = append(vs, v)
 					m.Unlock()

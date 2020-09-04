@@ -11,6 +11,7 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
+	"github.com/elves/elvish/pkg/strutil"
 	"github.com/elves/elvish/pkg/ui"
 )
 
@@ -55,7 +56,7 @@ func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, item
 				for {
 					line, err := buffered.ReadString('\n')
 					if line != "" {
-						s := eval.ChopLineEnding(line)
+						s := strutil.ChopLineEnding(line)
 						collect(listing.Item{ToAccept: s, ToShow: ui.T(s)})
 					}
 					if err != nil {

@@ -11,6 +11,7 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
+	"github.com/elves/elvish/pkg/strutil"
 )
 
 //elvdoc:var -instant:binding
@@ -71,7 +72,7 @@ func instantStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
 					}
 					break
 				}
-				addLine(eval.ChopLineEnding(line))
+				addLine(strutil.ChopLineEnding(line))
 			}
 		}
 		err = fm.PipeOutput(

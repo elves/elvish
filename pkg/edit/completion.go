@@ -462,7 +462,7 @@ func adaptArgGeneratorMap(ev *eval.Evaler, m vals.Map) complete.ArgGenerator {
 			for {
 				line, err := buffered.ReadString('\n')
 				if line != "" {
-					collect(complete.PlainItem(eval.ChopLineEnding(line)))
+					collect(complete.PlainItem(strutil.ChopLineEnding(line)))
 				}
 				if err != nil {
 					break

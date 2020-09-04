@@ -10,6 +10,7 @@ import (
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/prog"
+	"github.com/elves/elvish/pkg/strutil"
 )
 
 // Frame contains information of the current running function, aknin to a call
@@ -107,7 +108,7 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 	for {
 		line, err := filein.ReadString('\n')
 		if line != "" {
-			ch <- ChopLineEnding(line)
+			ch <- strutil.ChopLineEnding(line)
 		}
 		if err != nil {
 			if err != io.EOF {
@@ -116,16 +117,6 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 			break
 		}
 	}
-}
-
-// ChopLineEnding removes any line ending ("\r\n" or "\n") from the end of s.
-func ChopLineEnding(s string) string {
-	if len(s) >= 2 && s[len(s)-2:] == "\r\n" {
-		return s[:len(s)-2]
-	} else if len(s) >= 1 && s[len(s)-1] == '\n' {
-		return s[:len(s)-1]
-	}
-	return s
 }
 
 // fork returns a modified copy of ec. The ports are forked, and the name is

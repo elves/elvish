@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/elves/elvish/pkg/eval"
+	"github.com/elves/elvish/pkg/strutil"
 )
 
 type editor interface {
@@ -29,5 +29,5 @@ func (ed *minEditor) ReadCode() (string, error) {
 	}
 	fmt.Fprintf(ed.out, "%s> ", wd)
 	line, err := ed.in.ReadString('\n')
-	return eval.ChopLineEnding(line), err
+	return strutil.ChopLineEnding(line), err
 }

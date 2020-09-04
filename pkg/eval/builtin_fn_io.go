@@ -9,6 +9,7 @@ import (
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/strutil"
 )
 
 // Input and output.
@@ -161,7 +162,7 @@ func readLine(fm *Frame) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return ChopLineEnding(s), nil
+	return strutil.ChopLineEnding(s), nil
 }
 
 //elvdoc:fn print
