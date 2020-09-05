@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 
@@ -86,6 +87,7 @@ func (op compoundOp) exec(fm *Frame) ([]interface{}, error) {
 			return nil, fm.errorp(op, err)
 		}
 	}
+
 	if op.tilde {
 		newvs := make([]interface{}, len(vs))
 		for i, v := range vs {
@@ -97,6 +99,7 @@ func (op compoundOp) exec(fm *Frame) ([]interface{}, error) {
 		}
 		vs = newvs
 	}
+
 	hasGlob := false
 	for _, v := range vs {
 		if _, ok := v.(GlobPattern); ok {
@@ -104,22 +107,52 @@ func (op compoundOp) exec(fm *Frame) ([]interface{}, error) {
 			break
 		}
 	}
-	if hasGlob {
-		newvs := make([]interface{}, 0, len(vs))
-		for _, v := range vs {
-			if gp, ok := v.(GlobPattern); ok {
-				results, err := doGlob(gp, fm.Interrupts())
-				if err != nil {
-					return nil, fm.errorp(op, err)
-				}
-				newvs = append(newvs, results...)
-			} else {
-				newvs = append(newvs, v)
-			}
-		}
-		vs = newvs
+	if !hasGlob {
+		return vs, nil
 	}
-	return vs, nil
+	return op.expandGlob(vs, fm)
+}
+
+func (op compoundOp) expandGlob(vs []interface{}, fm *Frame) ([]interface{}, error) {
+	// Expand the glob, sort the result, and eliminate duplicates.
+	//
+	// We sort and eliminate duplicates from glob expansion here rather than
+	// in `doGlob` or the 'readDir` function it invokes because globs like
+	// `*[set:aeoiu digit]` result in a matching file appearing more than once
+	// in the expansion. It's also more efficient to defer the sorting to this
+	// stage even if duplicate elimination isn't needed.
+	newvs := make([]interface{}, 0, len(vs))
+	for _, v := range vs {
+		if gp, ok := v.(GlobPattern); ok {
+			results, err := doGlob(gp, fm.Interrupts())
+			if err != nil {
+				return nil, fm.errorp(op, err)
+			}
+			newvs = append(newvs, results...)
+		} else {
+			newvs = append(newvs, v)
+		}
+	}
+	return sortAndRemoveDuplicates(newvs), nil
+}
+
+func sortAndRemoveDuplicates(vs []interface{}) []interface{} {
+	if len(vs) < 2 { // no need to sort and eliminate duplicates.
+		return vs
+	}
+
+	sort.Slice(vs, func(i, j int) bool {
+		return vs[i].(string) < vs[j].(string)
+	})
+
+	max := 0
+	for i, v := range vs {
+		if i > max && v.(string) != vs[max].(string) {
+			max += 1
+			vs[max] = vs[i]
+		}
+	}
+	return vs[:max+1]
 }
 
 func outerProduct(vs []interface{}, us []interface{}, f func(interface{}, interface{}) (interface{}, error)) ([]interface{}, error) {

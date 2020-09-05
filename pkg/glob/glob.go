@@ -2,7 +2,6 @@
 package glob
 
 import (
-	"io/ioutil"
 	"os"
 	"runtime"
 	"unicode/utf8"
@@ -15,7 +14,7 @@ import (
 // a particular constraint without doing an extra stat.
 type PathInfo struct {
 	// The generated path, consistent with the original glob pattern. It cannot
-	// be replaced by Info.Name(), which is just the final path component.
+	// be replaced by Info.Name() since that is just the final path component.
 	Path string
 	Info os.FileInfo
 }
@@ -168,13 +167,18 @@ func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 	return true
 }
 
-// readDir is just like ioutil.ReadDir except that it treats an argument of ""
+// readDir is just like os.ReadDir except that it treats an argument of ""
 // as ".".
 func readDir(dir string) ([]os.FileInfo, error) {
 	if dir == "" {
 		dir = "."
 	}
-	return ioutil.ReadDir(dir)
+	f, err := os.Open(dir)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { f.Close() }()
+	return f.Readdir(0)
 }
 
 // matchElement matches a path element against segments, which may not contain
