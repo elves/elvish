@@ -42,6 +42,9 @@ New features in the language:
 -   Rest variables and rest arguments are no longer restricted to the last
     variable.
 
+-   Glob expansions are now sorted. See
+    https://github.com/elves/elvish/issues/1019
+
 New features in the standard library:
 
 -   A new `eval` command supports evaluating a dynamic piece of code in a

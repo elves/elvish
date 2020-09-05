@@ -15,7 +15,7 @@ import (
 // a particular constraint without doing an extra stat.
 type PathInfo struct {
 	// The generated path, consistent with the original glob pattern. It cannot
-	// be replaced by Info.Name(), which is just the final path component.
+	// be replaced by Info.Name() since that is just the final path component.
 	Path string
 	Info os.FileInfo
 }

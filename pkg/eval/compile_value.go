@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 
@@ -104,20 +105,46 @@ func (op compoundOp) exec(fm *Frame) ([]interface{}, error) {
 			break
 		}
 	}
-	if hasGlob {
-		newvs := make([]interface{}, 0, len(vs))
-		for _, v := range vs {
-			if gp, ok := v.(GlobPattern); ok {
-				results, err := doGlob(gp, fm.Interrupts())
-				if err != nil {
-					return nil, fm.errorp(op, err)
-				}
-				newvs = append(newvs, results...)
-			} else {
-				newvs = append(newvs, v)
+	if !hasGlob {
+		return vs, nil
+	}
+
+	newvs := make([]interface{}, 0, len(vs))
+	for _, v := range vs {
+		if gp, ok := v.(GlobPattern); ok {
+			results, err := doGlob(gp, fm.Interrupts())
+			if err != nil {
+				return nil, fm.errorp(op, err)
 			}
+			newvs = append(newvs, results...)
+		} else {
+			newvs = append(newvs, v)
 		}
-		vs = newvs
+	}
+
+	// Note: We have to do the sorting and duplicate elimination of glob
+	// expansion here, rather than in `doGlob()`, due to how globs such as
+	// `?[set:aeoiu digit]` are handled which will result in a given file
+	// appearing more than once in the expansion.
+
+	// Sort the result of the glob expansion using case-sensitive ordering.
+	var duplicateSeen bool
+	sort.Slice(newvs, func(i, j int) bool {
+		if newvs[i].(string) == newvs[j].(string) {
+			duplicateSeen = true
+		}
+		return newvs[i].(string) < newvs[j].(string)
+	})
+	if !duplicateSeen { // the usual case
+		return newvs, nil
+	}
+	vs = make([]interface{}, 0)
+	var prior interface{} = ""
+	for _, v := range newvs {
+		if v.(string) != prior.(string) {
+			prior = v
+			vs = append(vs, v)
+		}
 	}
 	return vs, nil
 }
