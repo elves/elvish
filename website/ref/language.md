@@ -1089,7 +1089,8 @@ If you need them to be, use a [braced list](#braced-list):
 ## Wildcard expansion
 
 **Wildcard patterns** are expressions that contain **wildcards**. Wildcard
-patterns evaluate to all filenames they match.
+patterns evaluate to all filenames they match. In other shells these patterns
+may be known as "globs".
 
 In examples in this section, we will assume that the current directory has the
 following structure:
@@ -1121,10 +1122,12 @@ Elvish supports the following wildcards:
 
 The following behaviors are default, although they can be altered by modifiers:
 
+-   Matching filenames are sorted (case-sensitive, so "B" comes before "a"). See
+    the [order](builtin.html#order) command if you need a different order.
+
 -   When the entire wildcard pattern has no match, an error is thrown.
 
--   None of the wildcards matches `.` at the beginning of filenames. For
-    example:
+-   None of the wildcards match `.` at the beginning of filenames. For example:
 
     -   `?x.conf` does not match `.x.conf`;
 
@@ -1175,10 +1178,10 @@ pattern: `put */*.cpp[nomatch-ok]` unfortunately does not do the correct thing.
 
 -   Character matchers restrict the characters to match:
 
-    -   Character sets, like `set:aeoiu`;
+    -   Character sets, like `set:aeoiu`.
 
-    -   Character ranges like `range:a-z` (including `z`) or `range:a~z`
-        (excluding `z`);
+    -   Character ranges, like `range:a-z` (including `z`) or `range:a~z`
+        (excluding `z`).
 
     -   Character classes: `control`, `digit`, `graphic`, `letter`, `lower`,
         `mark`, `number`, `print`, `punct`, `space`, `symbol`, `title`, and
@@ -2080,7 +2083,7 @@ fn f {
 f from x/y/z
 ```
 
-In general, a module defined in namespace will be the same as the file name
+In general, a module defined in namespace will be the same as the filename
 (without the `.elv` extension).
 
 ### Relative imports
