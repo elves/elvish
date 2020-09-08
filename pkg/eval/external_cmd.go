@@ -94,5 +94,15 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 		// calling `Wait` twice on a particular process object.
 		return err
 	}
-	return NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid)
+
+	// Treat termination due to SIGPIPE as equivalent to explicitly
+	// terminating with a zero status; i.e., a successful execution.
+	waitStatus := state.Sys().(syscall.WaitStatus)
+	if waitStatus.Signaled() && waitStatus.Signal() == syscall.SIGPIPE {
+		// This relies on the UNIX convention for how a successful exit status
+		// is encoded.
+		waitStatus = ExitWaitStatus(0)
+	}
+
+	return NewExternalCmdExit(e.Name, waitStatus, proc.Pid)
 }

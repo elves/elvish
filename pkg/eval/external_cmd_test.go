@@ -25,7 +25,7 @@ func TestBuiltinFnExternal(t *testing.T) {
 		That(`e = (external true); $e`).DoesNothing(),
 		That(`e = (external true); $e &option`).Throws(ErrExternalCmdOpts, "$e &option"),
 		That(`e = (external false); $e`).Throws(CmdExit(
-			ExternalCmdExit{CmdName: "false", WaitStatus: exitWaitStatus(1)})),
+			ExternalCmdExit{CmdName: "false", WaitStatus: ExitWaitStatus(1)})),
 
 		// TODO: Modify the ExternalCmd.Call method to wrap the Go error in a
 		// predictable Elvish error so we don't have to resort to using

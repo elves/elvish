@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	. "github.com/elves/elvish/pkg/eval"
+	. "github.com/elves/elvish/pkg/eval/evaltest"
 
 	"github.com/elves/elvish/pkg/tt"
 )
@@ -35,4 +36,11 @@ func TestExternalCmdExit_Error(t *testing.T) {
 			tt.Args(ExternalCmdExit{0xff, "ls", 1}).Rets("ls has unknown WaitStatus 255"),
 		})
 	}
+
+	Test(t,
+		// Prior to the resolution of https://github.com/elves/elvish/issues/952
+		// this would result in a SIGPIPE exception. Verify that we now get a
+		// successful exit without an exception.
+		That("e:cat /dev/zero | e:true").DoesNothing(),
+	)
 }
