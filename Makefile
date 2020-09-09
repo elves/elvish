@@ -33,17 +33,15 @@ style:
 	find . -name '*.go' | xargs goimports -w
 	find . -name '*.md' | xargs prettier --tab-width 4 --prose-wrap always --write
 
+# Check if the style of the Go and Markdown files is correct without modifying
+# those files.
 checkstyle: checkstyle-go checkstyle-md
 
 checkstyle-go:
-	echo 'Go files that need formatting:'
-	! find . -name '*.go' | xargs goimports -l \
-		| sed 's/^/  /' | grep . && echo '  None!'
+	./tools/checkstyle-go.sh
 
 checkstyle-md:
-	echo 'Markdown files that need formatting:'
-	! find . -name '*.md' | xargs prettier --tab-width 4 --prose-wrap always -l \
-		| sed 's/^/  /' | grep . && echo '  None!'
+	./tools/checkstyle-md.sh
 
 .SILENT: checkstyle-go checkstyle-md
 .PHONY: default get generate test style checkstyle checkstyle-go checkstyle-md cover
