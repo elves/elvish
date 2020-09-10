@@ -1576,6 +1576,14 @@ Redirections may appear anywhere in the command, except at the beginning,
 although this may be restricted in future. It's usually good style to write
 redirections at the end of command forms.
 
+**Important:** Elvish only supports reading and writing bytes from/to the target
+of a redirection. Elvish does not support reading values from or writing values
+to a file or [pipe](builtin.html#pipe) via redirection. Assume a file named
+_data_ contains a single line with a single word such as "hello". This will
+output zero even though there is one word in the file:
+`only-values < data | count`. Whereas `only-bytes < data | count` will report
+one.
+
 # Special Commands
 
 **Special commands** obey the same syntax rules as normal commands, but have

@@ -497,21 +497,31 @@ type invalidFD struct{ fd int }
 
 func (err invalidFD) Error() string { return fmt.Sprintf("invalid fd: %d", err.fd) }
 
+func (op *redirOp) fileChan() chan interface{} {
+	if op.mode == parse.Read {
+		// ClosedChan is used when redirecting from a named file because we
+		// don't support reading "values" (as opposed to bytes) from a file.
+		return ClosedChan
+	}
+	// TODO: Replace BlackholeChan for output with a value sink that will
+	// throw an exception if it sees any values since we don't support writing
+	// values to a file without first converting them to bytes.
+	return BlackholeChan
+}
+
 func (op *redirOp) exec(fm *Frame) error {
 	var dst int
-	if op.dstOp == nil {
-		// use default dst fd
+	if op.dstOp == nil { // the common case: use default destination file-descriptor
 		switch op.mode {
 		case parse.Read:
-			dst = 0
+			dst = 0 // stdin
 		case parse.Write, parse.ReadWrite, parse.Append:
-			dst = 1
+			dst = 1 // stdout
 		default:
 			return fm.errorpf(op, "bad RedirMode; parser bug")
 		}
-	} else {
+	} else { // use the destination file-descriptor requested by the user
 		var err error
-		// dst must be a valid fd
 		dst, err = evalForFd(fm, op.dstOp, false, "redirection destination")
 		if err != nil {
 			return fm.errorp(op, err)
@@ -547,15 +557,9 @@ func (op *redirOp) exec(fm *Frame) error {
 		if err != nil {
 			return fm.errorpf(op, "failed to open file %s: %s", vals.Repr(src, vals.NoPretty), err)
 		}
-		fm.ports[dst] = &Port{
-			File: f, Chan: BlackholeChan,
-			CloseFile: true,
-		}
+		fm.ports[dst] = &Port{File: f, CloseFile: true, Chan: op.fileChan()}
 	case vals.File:
-		fm.ports[dst] = &Port{
-			File: src, Chan: BlackholeChan,
-			CloseFile: false,
-		}
+		fm.ports[dst] = &Port{File: src, CloseFile: false, Chan: op.fileChan()}
 	case vals.Pipe:
 		var f *os.File
 		switch op.mode {
@@ -566,10 +570,7 @@ func (op *redirOp) exec(fm *Frame) error {
 		default:
 			return fm.errorpf(op, "can only use < or > with pipes")
 		}
-		fm.ports[dst] = &Port{
-			File: f, Chan: BlackholeChan,
-			CloseFile: false,
-		}
+		fm.ports[dst] = &Port{File: f, CloseFile: false, Chan: op.fileChan()}
 	default:
 		return fm.errorp(op.srcOp, errs.BadValue{
 			What:  "redirection source",
