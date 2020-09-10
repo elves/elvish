@@ -167,6 +167,12 @@ func TestCompileEffect(t *testing.T) {
 		That(`p = (pipe); echo haha > $p; pwclose $p; slurp < $p; prclose $p`).
 			Puts("haha\n"),
 
+		// We can't read values from a file and shouldn't hang when iterating
+		// over input from a file.
+		// Regression test for https://github.com/elves/elvish/issues/1010
+		That("echo abc > bytes", "each $echo~ < bytes").Prints("abc\n"),
+		That("echo def > bytes", "only-values < bytes | count").Puts("0"),
+
 		// Invalid redirection destination.
 		That("echo []> test").Throws(
 			errs.BadValue{
