@@ -199,19 +199,14 @@ false # will print a stack trace and stop execution
 echo "after false"
 ```
 
-(If you are running a version of Elvish older than 0.9, you might need to use
-`e:false`, as Elvish used to have a builtin version of `false` that does
-something different.)
-
 An alternative way to describe this is that Elvish **does** have exit statuses,
-but non-zero exit statuses terminates execution by default.
+but non-zero exit statuses terminates execution by default. You can handle
+non-zero exit statuses by wrapping the command in a
+[`try`](../language.html#exception-control-try) block.
 
-If you come from POSIX shell, this is aknin to `set -e` or having a `&&` between
-each pair of pipelines. In a sense, `&&` is written as `;` (or more commonly, a
-newline) in Elvish.
-
-Defaulting on stopping execution when bad things happen makes Elvish safer and
-code behavior more predictable.
+Elvish behavior is similar to POSIX shells that use `set -e` or
+`set -o errexit`. Defaulting to stopping execution when bad things happen makes
+Elvish safer and code behavior more predictable.
 
 ## Predicates and `if`
 

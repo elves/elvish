@@ -13,7 +13,7 @@ import (
 	"github.com/elves/elvish/pkg/strutil"
 )
 
-// Frame contains information of the current running function, aknin to a call
+// Frame contains information of the current running function, akin to a call
 // frame in native CPU execution. A Frame is only modified during and very
 // shortly after creation; new Frame's are "forked" when needed.
 type Frame struct {
