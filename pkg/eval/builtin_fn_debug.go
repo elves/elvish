@@ -84,7 +84,7 @@ func _gc() {
 // This is only useful for debug purposes.
 
 func _stack(fm *Frame) {
-	out := fm.ports[1].File
+	out := fm.OutputFile()
 	// TODO(xiaq): Dup with main.go.
 	buf := make([]byte, 1024)
 	for runtime.Stack(buf, true) == cap(buf) {

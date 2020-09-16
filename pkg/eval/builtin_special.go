@@ -317,14 +317,14 @@ func evalModule(fm *Frame, key string, src parse.Source, st *StackTrace) (Ns, er
 
 // Evaluates a source. Shared by evalModule and the eval builtin.
 func evalInner(fm *Frame, src parse.Source, ns Ns, st *StackTrace) error {
-	tree, err := parse.ParseWithDeprecation(src, fm.ports[2].File)
+	tree, err := parse.ParseWithDeprecation(src, fm.ErrorFile())
 	if err != nil {
 		return err
 	}
 	newFm := &Frame{
 		fm.Evaler, src, ns, make(Ns),
 		fm.intCh, fm.ports, fm.traceback, fm.background}
-	op, err := compile(newFm.Builtin.static(), ns.static(), tree, fm.ports[2].File)
+	op, err := compile(newFm.Builtin.static(), ns.static(), tree, fm.ErrorFile())
 	if err != nil {
 		return err
 	}

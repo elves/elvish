@@ -114,7 +114,7 @@ func dirs(fm *Frame) error {
 	if err != nil {
 		return err
 	}
-	out := fm.ports[1].Chan
+	out := fm.OutputChan()
 	for _, dir := range dirs {
 		out <- dirHistoryEntry{dir.Path, dir.Score}
 	}

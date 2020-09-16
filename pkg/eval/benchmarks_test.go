@@ -44,22 +44,22 @@ func BenchmarkOutputCapture_Overhead(b *testing.B) {
 
 func BenchmarkOutputCapture_Values(b *testing.B) {
 	benchmarkOutputCapture(b.N, func(fm *Frame) {
-		fm.ports[1].Chan <- "test"
+		fm.OutputChan() <- "test"
 	})
 }
 
 func BenchmarkOutputCapture_Bytes(b *testing.B) {
 	bytesToWrite := []byte("test")
 	benchmarkOutputCapture(b.N, func(fm *Frame) {
-		fm.ports[1].File.Write(bytesToWrite)
+		fm.OutputFile().Write(bytesToWrite)
 	})
 }
 
 func BenchmarkOutputCapture_Mixed(b *testing.B) {
 	bytesToWrite := []byte("test")
 	benchmarkOutputCapture(b.N, func(fm *Frame) {
-		fm.ports[1].Chan <- false
-		fm.ports[1].File.Write(bytesToWrite)
+		fm.OutputChan() <- false
+		fm.OutputFile().Write(bytesToWrite)
 	})
 }
 

@@ -189,7 +189,7 @@ func rangeFn(fm *Frame, opts rangeOpts, args ...float64) error {
 		return ErrArgs
 	}
 
-	out := fm.ports[1].Chan
+	out := fm.OutputChan()
 	for f := lower; f < upper; f += opts.Step {
 		out <- vals.FromGo(f)
 	}
@@ -322,7 +322,7 @@ func dissoc(a, k interface{}) (interface{}, error) {
 // @cf one
 
 func all(fm *Frame, inputs Inputs) {
-	out := fm.ports[1].Chan
+	out := fm.OutputChan()
 	inputs(func(v interface{}) { out <- v })
 }
 
@@ -350,7 +350,8 @@ func one(fm *Frame, inputs Inputs) error {
 		n++
 	})
 	if n == 1 {
-		fm.OutputChan() <- val
+		out := fm.OutputChan()
+		out <- val
 		return nil
 	}
 	return fmt.Errorf("expect a single value, got %d", n)
@@ -380,7 +381,7 @@ func one(fm *Frame, inputs Inputs) error {
 // Etymology: Haskell.
 
 func take(fm *Frame, n int, inputs Inputs) {
-	out := fm.ports[1].Chan
+	out := fm.OutputChan()
 	i := 0
 	inputs(func(v interface{}) {
 		if i < n {
@@ -417,7 +418,7 @@ func take(fm *Frame, n int, inputs Inputs) {
 // @cf take
 
 func drop(fm *Frame, n int, inputs Inputs) {
-	out := fm.ports[1].Chan
+	out := fm.OutputChan()
 	i := 0
 	inputs(func(v interface{}) {
 		if i >= n {
@@ -609,7 +610,7 @@ func count(fm *Frame, args ...interface{}) (int, error) {
 // Note that there is no guaranteed order for the keys of a map.
 
 func keys(fm *Frame, v interface{}) error {
-	out := fm.ports[1].Chan
+	out := fm.OutputChan()
 	return vals.IterateKeys(v, func(k interface{}) bool {
 		out <- k
 		return true
@@ -768,8 +769,9 @@ func order(fm *Frame, opts orderOptions, inputs Inputs) error {
 	if errSort != nil {
 		return errSort
 	}
+	out := fm.OutputChan()
 	for _, v := range values {
-		fm.OutputChan() <- v
+		out <- v
 	}
 	return nil
 }

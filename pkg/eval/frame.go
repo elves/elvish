@@ -77,6 +77,11 @@ func (fm *Frame) OutputFile() *os.File {
 	return fm.ports[1].File
 }
 
+// ErrorFile returns a file onto which error output can be written.
+func (fm *Frame) ErrorFile() *os.File {
+	return fm.ports[2].File
+}
+
 // IterateInputs calls the passed function for each input element.
 func (fm *Frame) IterateInputs(f func(interface{})) {
 	var w sync.WaitGroup
@@ -84,11 +89,11 @@ func (fm *Frame) IterateInputs(f func(interface{})) {
 
 	w.Add(2)
 	go func() {
-		linesToChan(fm.ports[0].File, inputs)
+		linesToChan(fm.InputFile(), inputs)
 		w.Done()
 	}()
 	go func() {
-		for v := range fm.ports[0].Chan {
+		for v := range fm.InputChan() {
 			inputs <- v
 		}
 		w.Done()
@@ -194,6 +199,6 @@ func (fm *Frame) Deprecate(msg string, ctx *diag.Context) {
 	if prog.ShowDeprecations && fm.deprecations.register(dep) {
 		err := diag.Error{
 			Type: "deprecation", Message: dep.message, Context: *ctx}
-		fm.ports[2].File.WriteString(err.Show("") + "\n")
+		fm.ErrorFile().WriteString(err.Show("") + "\n")
 	}
 }
