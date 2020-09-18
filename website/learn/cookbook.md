@@ -106,10 +106,9 @@ started quickly:
 
 -   Elvish doesn't support history expansion like `!!`. Instead, it has a "last
     command mode" offering the same functionality, triggered by <span
-    class="key">Alt-1</span> by default (resembling how you type `!` using
-    <span class="key">Shift-1</span>). In this mode, you can pick individual
+    class="key">Alt-,</span> by default. In this mode, you can pick individual
     arguments from the last command using numbers, or the entire command by
-    typing <span class="key">Alt-1</span> again.
+    typing <span class="key">Alt-,</span> again.
 
     This is showing me trying to fix a forgotten `sudo`:
 

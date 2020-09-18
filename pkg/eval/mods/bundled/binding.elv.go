@@ -19,7 +19,7 @@ fn install {
         &Alt-Down=      $edit:move-dot-down~
         &Alt-Enter=     $edit:insert-key~
         &Alt-.=         $edit:insert-last-word~
-        &Alt-1=         $edit:lastcmd:start~
+        &Alt-,=         $edit:lastcmd:start~
         &Alt-b=         $edit:move-dot-left-word~
         &Alt-f=         $edit:move-dot-right-word~
         &Alt-Backspace= $edit:kill-word-left~
