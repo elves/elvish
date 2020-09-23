@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/BurntSushi/toml"
+	toml "github.com/pelletier/go-toml"
 )
 
 // This file contains functions and types for parsing and manipulating the
@@ -95,7 +95,14 @@ func (ra *recentArticles) insert(a article) {
 
 // decodeFile decodes the named file in TOML into a pointer.
 func decodeTOML(fname string, v interface{}) {
-	_, err := toml.DecodeFile(fname, v)
+	file, err := os.Open(fname)
+	defer file.Close()
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	err = toml.NewDecoder(file).Decode(v)
 	if err != nil {
 		log.Fatalln(err)
 	}
