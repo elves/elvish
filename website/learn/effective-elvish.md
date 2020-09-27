@@ -121,14 +121,15 @@ newline, and the second value is a list. When we capture the output, we get
 those exact values back. Passing structured data is difficult with byte-based
 output, but trivial with value output.
 
-Besides `put`, many other builtin commands also write to structured output, like
-`splits`:
+Besides `put`, many other builtin commands and modules that ship with Elvish
+also write to structured output, like `str:split`:
 
 ```elvish-transcript
-~> splits , foo,bar
+~> use str
+~> str:split , foo,bar
 ▶ foo
 ▶ bar
-~> words = [(splits , foo,bar)]
+~> words = [(str:split , foo,bar)]
 ~> put $words
 ▶ [foo bar]
 ```
@@ -139,7 +140,7 @@ Elvish, it is easy to think of `put` as **the** command to "return" values and
 write code like this:
 
 ```elvish-transcript
-~> fn split-by-comma [s]{ put (splits , $s) }
+~> fn split-by-comma [s]{ use str; put (str:split , $s) }
 ~> split-by-comma foo,bar
 ▶ foo
 ▶ bar
@@ -148,7 +149,7 @@ write code like this:
 The `split-by-comma` function works, but it can be written more concisely as:
 
 ```elvish-transcript
-~> fn split-by-comma [s]{ splits , $s }
+~> fn split-by-comma [s]{ use str; str:split , $s }
 ~> split-by-comma foo,bar
 ▶ foo
 ▶ bar
@@ -257,15 +258,16 @@ It is also useful, for example, when working with NUL-separated output:
 ~> touch "a\nb.go"
 ~> mkdir d
 ~> touch d/f.go
-~> find . -name '*.go' -print0 | splits "\000" (slurp)
+~> use str
+~> find . -name '*.go' -print0 | str:split "\000" (slurp)
 ▶ "./a\nb.go"
 ▶ ./d/f.go
 ▶ ''
 ```
 
 In the above command, `slurp` turns the input into one string, which is then
-used as an argument to `splits`. The `splits` command then splits the whole
-input by NUL bytes.
+used as an argument to `str:split`. The `str:split` command then splits the
+whole input by NUL bytes.
 
 Note that in Elvish, strings can contain NUL bytes; in fact, they can contain
 any byte; this makes Elvish suitable for working with binary data. (Also, note
@@ -287,23 +289,25 @@ rejoin them with semicolons, you can write:
 
 ```elvish-transcript
 ~> csv = a,b,foo,bar
-~> joins ';' [(each [x]{ put $x,$x } [(splits , $csv)])]
+~> use str
+~> str:join ';' [(each [x]{ put $x,$x } [(str:split , $csv)])]
 ▶ 'a,a;b,b;foo,foo;bar,bar'
 ```
 
-This code works, but it is a bit unreadable. In particular, since `splits`
+This code works, but it is a bit unreadable. In particular, since `str:split`
 outputs multiple values but `each` wants a list argument, you have to wrap the
-output of `splits` in a list with `[(splits ...)]`. Then you have to do this
-again in order to pass the output of `each` to `joins`. You might wonder why
-commands like `splits` and `each` do not simply output a list to make this
-easier.
+output of `str:split` in a list with `[(str:split ...)]`. Then you have to do
+this again in order to pass the output of `each` to `str:join`. You might wonder
+why commands like `str:split` and `each` do not simply output a list to make
+this easier.
 
 The answer to that particular question is in the next subsection, but for the
 program at hand, there is a much better way to write it:
 
 ```elvish-transcript
 ~> csv = a,b,foo,bar
-~> splits , $csv | each [x]{ put $x,$x } | joins ';'
+~> use str
+~> str:split , $csv | each [x]{ put $x,$x } | str:join ';'
 ▶ 'a,a;b,b;foo,foo;bar,bar'
 ```
 
@@ -314,7 +318,7 @@ reduplicated, and then finally everything is joined by semicolons. It matches
 exactly how you would describe the algorithm in spoken English -- or for that
 matter, any spoken language!
 
-Both versions work, because commands like `each` and `joins` that work with
+Both versions work, because commands like `each` and `str:join` that work with
 multiple inputs can take their inputs in two ways: they can take the inputs as
 one list argument, like in the first version; or from the pipeline, like the
 second version. Whenever possible, you should prefer the input-from-pipeline
@@ -344,21 +348,23 @@ if we want to first join some values with space and then split at commas, this
 won't work:
 
 ```elvish-transcript
-~> joins ' ' [a,b c,d] | splits ,
-Exception: want 2 arguments, got 1
-[tty], line 1: joins ' ' [a,b c,d] | splits ,
+~> use str
+~> str:join ' ' [a,b c,d] | str:split ,
+Exception: arity mismatch: arguments here must be 2 values, but is 1 value
+[tty], line 1: str:join ' ' [a,b c,d] | str:split ,
 ```
 
-This is because the `splits` command only ever works with one input (one string
-to split), and was not implemented to support taking input from pipeline; hence
-it always takes 2 arguments and we got an exception.
+This is because the `str:split` command only ever works with one input (one
+string to split), and was not implemented to support taking input from pipeline;
+hence it always takes 2 arguments and we got an exception.
 
 It is easy to remedy this situation however. The `all` command passes its input
 to its output, and by capturing its output, we can turn the input into an
 argument:
 
 ```elvish-transcript
-~> joins ' ' [a,b c,d] | splits , (all)
+~> use str
+~> str:join ' ' [a,b c,d] | str:split , (all)
 ▶ a
 ▶ 'b c'
 ▶ d
@@ -366,8 +372,8 @@ argument:
 
 ## Streaming Multiple Outputs
 
-In the previous subsection, we remarked that commands like `splits` and `each`
-write multiple output values instead of one list. Why?
+In the previous subsection, we remarked that commands like `str:split` and
+`each` write multiple output values instead of one list. Why?
 
 This has to do with another advantage of passing data through the pipeline: in a
 pipeline, all commands are executed in parallel. A command in a pipeline does
@@ -397,10 +403,10 @@ anything. Now, although the commands themselves are run in parallel, they all
 need to be waiting for their previous commands to finish before they can start
 doing real work.
 
-This is why commands like `each` and `splits` produce multiple values instead of
-one list. When writing your functions, try to make them produce multiple values
-as well: they will cooperate better with builtin commands, and they can benefit
-from the efficiency of parallel computations.
+This is why commands like `each` and `str:split` produce multiple values instead
+of one list. When writing your functions, try to make them produce multiple
+values as well: they will cooperate better with builtin commands, and they can
+benefit from the efficiency of parallel computations.
 
 # Working with Multiple Values
 
@@ -411,13 +417,14 @@ To start with, output captures evaluate to all the captured values, instead of a
 list:
 
 ```elvish-transcript
-~> splits , a,b,c
+~> use str
+~> str:split , a,b,c
 ▶ a
 ▶ b
 ▶ c
-~> li = (splits , a,b,c)
-Exception: arity mismatch
-[tty], line 1: li = (splits , a,b,c)
+~> li = (str:split , a,b,c)
+Exception: arity mismatch: assignment right-hand-side must be 1 value, but is 3 values
+[tty], line 1: li = (str:split , a,b,c)
 ```
 
 The assignment fails with "arity mismatch" because the right hand side evaluates
@@ -426,10 +433,11 @@ want to capture the results into a list, you have to explicitly do so, either by
 constructing a list or using rest variables:
 
 ```elvish-transcript
-~> li = [(splits , a,b,c)]
+~> use str
+~> li = [(str:split , a,b,c)]
 ~> put $li
 ▶ [a b c]
-~> @li = (splits , a,b,c) # equivalent and slightly shorter
+~> @li = (str:split , a,b,c) # equivalent and slightly shorter
 ```
 
 ## Assigning Multiple Variables
