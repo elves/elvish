@@ -295,7 +295,8 @@ func dissoc(a, k interface{}) (interface{}, error) {
 // This function is useful for turning inputs into arguments, like:
 //
 // ```elvish-transcript
-// ~> put 'lorem,ipsum' | splits , (all)
+// ~> use str
+// ~> put 'lorem,ipsum' | str:split , (all)
 // ▶ lorem
 // ▶ ipsum
 // ```
@@ -370,7 +371,8 @@ func one(fm *Frame, inputs Inputs) error {
 // ▶ a
 // ▶ b
 // ▶ c
-// ~> splits ' ' 'how are you?' | take 1
+// ~> use str
+// ~> str:split ' ' 'how are you?' | take 1
 // ▶ how
 // ~> range 2 | take 10
 // ▶ 0
@@ -406,7 +408,8 @@ func take(fm *Frame, n int, inputs Inputs) {
 // ▶ c
 // ▶ d
 // ▶ e
-// ~> splits ' ' 'how are you?' | drop 1
+// ~> use str
+// ~> str:split ' ' 'how are you?' | drop 1
 // ▶ are
 // ▶ 'you?'
 // ~> range 2 | drop 10
