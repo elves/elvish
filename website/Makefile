@@ -26,7 +26,7 @@ genblog:
 	: # a nop, kept for backward compatibility with elves/up
 	
 # Synchronizes the generated website into $(PUBLISH_DIR). The PUBLISH_DIR
-# environment variable can be overriden to a remote place to publish this online.
+# environment variable can be overridden to a remote place to publish this online.
 publish: gen
 	rsync -aLv --delete ./_dst/ $(PUBLISH_DIR)/
 

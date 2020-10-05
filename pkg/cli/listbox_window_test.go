@@ -63,7 +63,7 @@ func TestGetHorizontalWindow(t *testing.T) {
 			6, 6).Rets(5, 5),
 
 		// The following cases only differ in State.First and shows that the
-		// algorithm respects it. In alls cases, the columns are 0-4, 5-9,
+		// algorithm respects it. In all cases, the columns are 0-4, 5-9,
 		// 10-14, 15-19, item 10 is selected, and the terminal can fit 2 columns.
 
 		// First = 0. Try to reach as far as possible to that, ending up showing

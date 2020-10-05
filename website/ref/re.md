@@ -29,11 +29,11 @@ re:find &posix=$false &longest=$false &max=-1 $pattern $source
 Find all matches of `$pattern` in `$source`.
 
 Each match is represented by a map-like value `$m`; `$m[text]`, `$m[start]` and
-`$m[end]` are the text, start and end positions (as byte indicies into
-`$source`) of the match; `$m[groups]` is a list of submatches for capture groups
-in the pattern. A submatch has a similar structure to a match, except that it
-does not have a `group` key. The entire pattern is an implicit capture group,
-and it always appears first.
+`$m[end]` are the text, start and end positions (as byte indices into `$source`)
+of the match; `$m[groups]` is a list of submatches for capture groups in the
+pattern. A submatch has a similar structure to a match, except that it does not
+have a `group` key. The entire pattern is an implicit capture group, and it
+always appears first.
 
 Examples:
 

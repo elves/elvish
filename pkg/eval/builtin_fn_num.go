@@ -34,7 +34,7 @@ func init() {
 		">":  gt,
 		">=": ge,
 
-		// Arithmetics
+		// Arithmetic
 		"+": plus,
 		"-": minus,
 		"*": times,

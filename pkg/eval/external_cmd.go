@@ -89,7 +89,7 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 	state, err := proc.Wait()
 	if err != nil {
 		// This should be a can't happen situation. Nonetheless, treat it as a
-		// soft error rather than panicing since the Go documentation is not
+		// soft error rather than panicking since the Go documentation is not
 		// explicit that this can only happen if we make a mistake. Such as
 		// calling `Wait` twice on a particular process object.
 		return err

@@ -67,7 +67,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 			cp.errorpf(cn, delArgMsg)
 			continue
 		}
-		head, indicies := cn.Indexings[0].Head, cn.Indexings[0].Indicies
+		head, indices := cn.Indexings[0].Head, cn.Indexings[0].Indicies
 		if head.Type != parse.Bareword {
 			if head.Type == parse.Variable {
 				cp.errorpf(cn, "arguments to del must drop $")
@@ -83,7 +83,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 			continue
 		}
 		var f effectOp
-		if len(indicies) == 0 {
+		if len(indices) == 0 {
 			ns, name := SplitQNameNsFirst(qname)
 			switch ns {
 			case "", ":", "local:":
@@ -104,7 +104,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 				cp.errorpf(cn, "no variable $%s", head.Value)
 				continue
 			}
-			f = newDelElementOp(qname, head.Range().From, head.Range().To, cp.arrayOps(indicies))
+			f = newDelElementOp(qname, head.Range().From, head.Range().To, cp.arrayOps(indices))
 		}
 		ops = append(ops, f)
 	}
@@ -145,7 +145,7 @@ func (op *delElemOp) Range() diag.Ranging {
 }
 
 func (op *delElemOp) exec(fm *Frame) error {
-	var indicies []interface{}
+	var indices []interface{}
 	for _, indexOp := range op.indexOps {
 		indexValues, err := indexOp.exec(fm)
 		if err != nil {
@@ -154,9 +154,9 @@ func (op *delElemOp) exec(fm *Frame) error {
 		if len(indexValues) != 1 {
 			return fm.errorpf(indexOp, "index must evaluate to a single value in argument to del")
 		}
-		indicies = append(indicies, indexValues[0])
+		indices = append(indices, indexValues[0])
 	}
-	err := vars.DelElement(fm.ResolveVar(op.qname), indicies)
+	err := vars.DelElement(fm.ResolveVar(op.qname), indices)
 	if err != nil {
 		if level := vars.ElementErrorLevel(err); level >= 0 {
 			return fm.errorp(diag.Ranging{From: op.begin, To: op.ends[level]}, err)

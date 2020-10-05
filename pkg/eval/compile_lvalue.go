@@ -48,9 +48,9 @@ func (cp *compiler) parseCompoundLValues(ns []*parse.Compound) lvaluesGroup {
 
 func (cp *compiler) parseIndexingLValue(n *parse.Indexing) lvaluesGroup {
 	if n.Head.Type == parse.Braced {
-		// Braced list of lvalues may not have indicies.
+		// Braced list of lvalues may not have indices.
 		if len(n.Indicies) > 0 {
-			cp.errorpf(n, "braced list may not have indicies when used as lvalue")
+			cp.errorpf(n, "braced list may not have indices when used as lvalue")
 		}
 		return cp.parseCompoundLValues(n.Head.Braced)
 	}
@@ -158,7 +158,7 @@ func getVar(fm *Frame, lv lvalue) (vars.Var, error) {
 	if len(lv.indexOps) == 0 {
 		return variable, nil
 	}
-	indicies := make([]interface{}, len(lv.indexOps))
+	indices := make([]interface{}, len(lv.indexOps))
 	for i, op := range lv.indexOps {
 		values, err := op.exec(fm)
 		if err != nil {
@@ -168,9 +168,9 @@ func getVar(fm *Frame, lv lvalue) (vars.Var, error) {
 		if len(values) != 1 {
 			return nil, errors.New("multi indexing not implemented")
 		}
-		indicies[i] = values[0]
+		indices[i] = values[0]
 	}
-	elemVar, err := vars.MakeElement(variable, indicies)
+	elemVar, err := vars.MakeElement(variable, indices)
 	if err != nil {
 		level := vars.ElementErrorLevel(err)
 		if level < 0 {

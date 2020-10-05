@@ -53,7 +53,7 @@ func TestTrim(t *testing.T) {
 
 func TestForce(t *testing.T) {
 	tt.Test(t, tt.Fn("Force", Force), tt.Table{
-		// Triming
+		// Trimming
 		Args("abc", 2).Rets("ab"),
 		Args("你好", 2).Rets("你"),
 		// Padding

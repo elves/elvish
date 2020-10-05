@@ -205,7 +205,7 @@ func TestComplete(t *testing.T) {
 				Items: []completion.Item{c("e:ls"), c("e:make")}},
 			nil),
 
-		// TODO(xiaq): Add tests for completing indicies.
+		// TODO(xiaq): Add tests for completing indices.
 
 		// Complete filenames for redirection.
 		Args(cb("p >"), cfg).Rets(

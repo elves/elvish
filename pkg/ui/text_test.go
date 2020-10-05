@@ -69,7 +69,7 @@ var partitionTests = tt.Table{
 }
 
 func TestPartition(t *testing.T) {
-	tt.Test(t, tt.Fn("Text.Parition", Text.Partition), partitionTests)
+	tt.Test(t, tt.Fn("Text.Partition", Text.Partition), partitionTests)
 }
 
 func TestCountRune(t *testing.T) {

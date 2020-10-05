@@ -4,7 +4,7 @@
 // information when given a partial input. It is mainly useful for writing
 // completion engines and wrapper programs.
 //
-// If you are looking for an option parser for your go programm, consider using
+// If you are looking for an option parser for your go program, consider using
 // the flag package in the standard library instead.
 package getopt
 

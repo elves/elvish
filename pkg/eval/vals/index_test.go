@@ -15,7 +15,7 @@ var (
 
 func TestIndex(t *testing.T) {
 	Test(t, Fn("Index", Index), Table{
-		// String indicies
+		// String indices
 		Args("abc", "0").Rets("a", nil),
 		Args("abc", 0.0).Rets("a", nil),
 		Args("你好", "0").Rets("你", nil),
@@ -42,7 +42,7 @@ func TestIndex(t *testing.T) {
 		// List indices
 		// ============
 
-		// Simple indicies: 0 <= i < n.
+		// Simple indices: 0 <= i < n.
 		Args(li4, "0").Rets("foo", nil),
 		Args(li4, "3").Rets("ipsum", nil),
 		Args(li0, "0").Rets(Any, errs.OutOfRange{
@@ -56,10 +56,10 @@ func TestIndex(t *testing.T) {
 		Args(li4, "-4").Rets("foo", nil),
 		Args(li4, "-5").Rets(Any, errs.OutOfRange{
 			What: "negative index here", ValidLow: "-4", ValidHigh: "-1", Actual: "-5"}),
-		// Decimal indicies are not allowed even if the value is an integer.
+		// Decimal indices are not allowed even if the value is an integer.
 		Args(li4, "0.0").Rets(Any, errIndexMustBeInteger),
 
-		// Float64 indicies are allowed as long as they are integers.
+		// Float64 indices are allowed as long as they are integers.
 		Args(li4, 0.0).Rets("foo", nil),
 		Args(li4, 3.0).Rets("ipsum", nil),
 		Args(li4, 5.0).Rets(nil, errs.OutOfRange{
@@ -116,7 +116,7 @@ func TestIndex(t *testing.T) {
 		// TODO(xiaq): Make the error more accurate.
 		Args(li4, "1:3:2").Rets(Any, errIndexMustBeInteger),
 
-		// Map indicies
+		// Map indices
 		// ============
 
 		Args(m, "foo").Rets("bar", nil),

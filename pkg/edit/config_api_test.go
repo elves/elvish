@@ -12,7 +12,7 @@ func TestBeforeReadline(t *testing.T) {
 		`edit:before-readline = [ { called = (+ $called 1) } ]`))
 	defer f.Cleanup()
 
-	// Wait for UI to stablize so that we can be sure that before-readline hooks
+	// Wait for UI to stabilize so that we can be sure that before-readline hooks
 	// have been called.
 	f.TestTTY(t, "~> ", term.DotHere)
 
@@ -28,7 +28,7 @@ func TestAfterReadline(t *testing.T) {
 		`edit:after-readline = [
 	             [code]{ called = (+ $called 1); called-with = $code } ]`)
 
-	// Wait for UI to stablize so that we can be sure that after-readline hooks
+	// Wait for UI to stabilize so that we can be sure that after-readline hooks
 	// are *not* called.
 	f.TestTTY(t, "~> ", term.DotHere)
 	testGlobal(t, f.Evaler, "called", "0")
