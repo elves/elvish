@@ -85,7 +85,7 @@ var (
 //
 // Return values go to the channel part of the stdout port, after being
 // converted using goToElv. If the last return value has type error and is not
-// nil, it is turned into an exception and no ouputting happens. If the last
+// nil, it is turned into an exception and no outputting happens. If the last
 // return value is a nil error, it is ignored.
 func NewGoFn(name string, impl interface{}) Callable {
 	implType := reflect.TypeOf(impl)

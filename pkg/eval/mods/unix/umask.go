@@ -56,7 +56,7 @@ var umaskMutex sync.Mutex
 func (UmaskVariable) Get() interface{} {
 	// Note: The seemingly redundant syscall is because the unix.Umask() API
 	// doesn't allow querying the current value without changing it. So ensure
-	// we reinstate the curent value.
+	// we reinstate the current value.
 	umaskMutex.Lock()
 	defer umaskMutex.Unlock()
 	umask := unix.Umask(0)

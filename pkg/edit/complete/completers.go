@@ -105,7 +105,7 @@ func completeIndex(n parse.Node, cfg Config) (*context, []RawItem, error) {
 	ev := cfg.PureEvaler
 	generateForEmpty := func(v interface{}, pos int) (*context, []RawItem, error) {
 		ctx := &context{"index", "", parse.Bareword, range0(pos)}
-		return ctx, generateIndicies(v), nil
+		return ctx, generateIndices(v), nil
 	}
 
 	if is(n, aSep) {
@@ -145,7 +145,7 @@ func completeIndex(n parse.Node, cfg Config) (*context, []RawItem, error) {
 						if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 							ctx := &context{
 								"index", seed, primary.Type, compound.Range()}
-							return ctx, generateIndicies(indexee), nil
+							return ctx, generateIndices(indexee), nil
 						}
 					}
 				}

@@ -236,13 +236,13 @@ func (op *indexingOp) exec(fm *Frame) ([]interface{}, error) {
 		return nil, err
 	}
 	for _, indexOp := range op.indexOps {
-		indicies, err := indexOp.exec(fm)
+		indices, err := indexOp.exec(fm)
 		if err != nil {
 			return nil, err
 		}
-		newvs := make([]interface{}, 0, len(vs)*len(indicies))
+		newvs := make([]interface{}, 0, len(vs)*len(indices))
 		for _, v := range vs {
-			for _, index := range indicies {
+			for _, index := range indices {
 				result, err := vals.Index(v, index)
 				if err != nil {
 					return nil, fm.errorp(op, err)

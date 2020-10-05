@@ -9,7 +9,7 @@ import (
 var elementTests = []struct {
 	name         string
 	oldContainer interface{}
-	indicies     []interface{}
+	indices      []interface{}
 	elemValue    interface{}
 	newContainer interface{}
 }{
@@ -34,7 +34,7 @@ func TestElement(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			m := test.oldContainer
 
-			elemVar, err := MakeElement(FromPtr(&m), test.indicies)
+			elemVar, err := MakeElement(FromPtr(&m), test.indices)
 			if err != nil {
 				t.Errorf("MakeElement -> error %v, want nil", err)
 			}
@@ -55,7 +55,7 @@ func TestElement(t *testing.T) {
 var delElementTests = []struct {
 	name         string
 	oldContainer interface{}
-	indicies     []interface{}
+	indices      []interface{}
 	newContainer interface{}
 }{
 	{
@@ -78,7 +78,7 @@ func TestDelElement(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			m := test.oldContainer
 
-			DelElement(FromPtr(&m), test.indicies)
+			DelElement(FromPtr(&m), test.indices)
 			if !vals.Equal(m, test.newContainer) {
 				t.Errorf("After deleting, map is %v, want %v",
 					vals.Repr(m, vals.NoPretty),

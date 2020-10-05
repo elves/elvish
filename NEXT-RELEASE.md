@@ -30,14 +30,14 @@ or compiled, even if it is not executed:
 
 The following deprecated features trigger a warning when the code is evaluated:
 
--   Using `:` in slice indicies is deprecated. Use `..` instead.
+-   Using `:` in slice indices is deprecated. Use `..` instead.
 
 # Notable new features
 
 New features in the language:
 
--   Slice indicies can now use `..` for left-closed, right-open ranges, and
-    `..=` for closed ranges.
+-   Slice indices can now use `..` for left-closed, right-open ranges, and `..=`
+    for closed ranges.
 
 -   Rest variables and rest arguments are no longer restricted to the last
     variable.

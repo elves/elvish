@@ -555,9 +555,9 @@ func hasKey(container, key interface{}) bool {
 // ▶ 100
 // ```
 
-// The count implmentation uses a custom varargs based implementation rather
+// The count implementation uses a custom varargs based implementation rather
 // than the more common `Inputs` API (see pkg/eval/go_fn.go) because this
-// allows the implmentation to be O(1) for the common cases rather than O(n).
+// allows the implementation to be O(1) for the common cases rather than O(n).
 func count(fm *Frame, args ...interface{}) (int, error) {
 	var n int
 	switch nargs := len(args); nargs {

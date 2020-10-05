@@ -192,7 +192,7 @@ output contains multiple lines, each line becomes one value:
 ```
 
 Most Elvish builtin functions also work with both byte and value inputs.
-Similarly to output capture, they split their byte intput by newlines. For
+Similarly to output capture, they split their byte input by newlines. For
 example:
 
 ```elvish-transcript

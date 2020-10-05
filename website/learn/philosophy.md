@@ -21,7 +21,7 @@ The development of Elvish is driven by a set of ideas, a **design philosophy**.
 
     -   Barewords are simply strings.
 
-    -   Prefix notation dominates, like Lisp. For example, arithmetics is done
+    -   Prefix notation dominates, like Lisp. For example, arithmetic is done
         like `+ 10 (/ 105 5)`.
 
     -   Pipeline is the main tool for function composition. To make pipelines

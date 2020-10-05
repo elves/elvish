@@ -23,7 +23,7 @@ var (
 	errTimeout             = errors.New("WaitForMultipleObjects timeout")
 )
 
-// WaitForMultipleObjects blocks until any of the objects is triggerd or
+// WaitForMultipleObjects blocks until any of the objects is triggered or
 // timeout.
 //
 // DWORD WINAPI WaitForMultipleObjects(

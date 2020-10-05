@@ -314,7 +314,7 @@ func TestMoveDotUpDown(t *testing.T) {
 // different movement behaviors apart.
 //
 // The string is annotated with carets (^) to indicate the beginning of words,
-// and periods (.) to indicate trailing runes of words. Indicies are also
+// and periods (.) to indicate trailing runes of words. Indices are also
 // annotated.
 //
 //   cd ~/downloads; rm -rf 2018aug07-pics/*;

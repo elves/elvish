@@ -38,7 +38,7 @@ func TestBool(t *testing.T) {
 
 		That(`not-eq a b`).Puts(true),
 		That(`not-eq a a`).Puts(false),
-		// not-eq is true as long as each adjancent pair is not equal.
+		// not-eq is true as long as each adjacent pair is not equal.
 		That(`not-eq 1 2 1`).Puts(true),
 	)
 }

@@ -147,7 +147,7 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 	return items, nil
 }
 
-func generateIndicies(v interface{}) []RawItem {
+func generateIndices(v interface{}) []RawItem {
 	var items []RawItem
 	vals.IterateKeys(v, func(k interface{}) bool {
 		if kstring, ok := k.(string); ok {

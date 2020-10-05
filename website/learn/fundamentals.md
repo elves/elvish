@@ -357,7 +357,7 @@ without storing the result in a variable first:
 Hello, elf, Linux user!
 ```
 
-## More arithmetics
+## More arithmetic
 
 You can use output captures to construct do complex arithmetic involving more
 than one operation:

@@ -123,7 +123,7 @@ an exercise to the reader.
 
 ### Prompt Eagerness
 
-The occassions when the prompt should get updated can be controlled with
+The occasions when the prompt should get updated can be controlled with
 `$edit:-prompt-eagerness`:
 
 -   The prompt is always updated when the editor becomes active -- when Elvish
@@ -194,7 +194,7 @@ Because they are very similar, you may want to change their bindings at the same
 time. This is made possible by the `$edit:listing:binding` binding table
 (`listing` is not a "real" mode but an "abstract" mode). These modes still have
 their own binding tables like `$edit:histlist:binding`, and bindings there have
-highter precedence over those in the shared `$edit:listing:binding` table.
+higher precedence over those in the shared `$edit:listing:binding` table.
 
 Moreover, there are a lot of builtin functions in the `edit:listing` module like
 `edit:listing:down` (for moving down selection). They always apply to whichever
@@ -232,7 +232,7 @@ edit:history:binding[Ctrl-P] = { edit:history:up }
 
 There are two types of completions in Elvish: completion for internal data and
 completion for command arguments. The former includes completion for variable
-names (e.g. `echo $`<span class="key">Tab</span>) and indicies (e.g.
+names (e.g. `echo $`<span class="key">Tab</span>) and indices (e.g.
 `echo $edit:insert:binding[`<span class="key">Tab</span>). These are the
 completions that Elvish can provide itself because they only depend on the
 internal state of Elvish.
@@ -286,7 +286,7 @@ After receiving your candidates, Elvish will match your candidates against what
 the user has typed. Hence, normally you don't need to (and shouldn't) do any
 matching yourself.
 
-That means that in many cases you can (and should) simpy ignore the last
+That means that in many cases you can (and should) simply ignore the last
 argument to your completer. However, they can be useful for deciding what
 **kind** of things to complete. For instance, if you are to write a completer
 for `ls`, you want to see whether the last argument starts with `-` or not: if

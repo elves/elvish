@@ -40,7 +40,7 @@ func (t Text) Repr(indent int) string {
 	return fmt.Sprintf("(ui:text %s)", buf.String())
 }
 
-// IterateKeys feeds the function with all valid indicies of the styled-text.
+// IterateKeys feeds the function with all valid indices of the styled-text.
 func (t Text) IterateKeys(fn func(interface{}) bool) {
 	for i := 0; i < len(t); i++ {
 		if !fn(strconv.Itoa(i)) {
@@ -85,14 +85,14 @@ func (t Text) RConcat(lhs interface{}) (interface{}, error) {
 	return nil, vals.ErrConcatNotImplemented
 }
 
-// Partition partitions the Text at n indicies into n+1 Text values.
-func (t Text) Partition(indicies ...int) []Text {
-	out := make([]Text, len(indicies)+1)
+// Partition partitions the Text at n indices into n+1 Text values.
+func (t Text) Partition(indices ...int) []Text {
+	out := make([]Text, len(indices)+1)
 	segs := t.Clone()
-	for i, idx := range indicies {
+	for i, idx := range indices {
 		toConsume := idx
 		if i > 0 {
-			toConsume -= indicies[i-1]
+			toConsume -= indices[i-1]
 		}
 		for len(segs) > 0 && toConsume > 0 {
 			if len(segs[0].Text) <= toConsume {
@@ -108,7 +108,7 @@ func (t Text) Partition(indicies ...int) []Text {
 	}
 	if len(segs) > 0 {
 		// Don't use segs directly to avoid memory leak
-		out[len(indicies)] = append(Text(nil), segs...)
+		out[len(indices)] = append(Text(nil), segs...)
 	}
 	return out
 }

@@ -57,7 +57,7 @@ func find(fm *eval.Frame, opts findOpts, argPattern, source string) error {
 		for i := 0; i < len(match); i += 2 {
 			start, end := match[i], match[i+1]
 			text := ""
-			// FindAllSubmatchIndex may return negative indicies to indicate
+			// FindAllSubmatchIndex may return negative indices to indicate
 			// that the pattern didn't appear in the text.
 			if start >= 0 && end >= 0 {
 				text = source[start:end]

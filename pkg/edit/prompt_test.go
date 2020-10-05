@@ -139,7 +139,7 @@ func testRPromptPersistent(t *testing.T, code string, finalBuf ...interface{}) {
 	f := setup(rc(`edit:rprompt = { put RRR }`, code))
 	defer f.Cleanup()
 
-	// Make sure that the UI has stablized before hitting Enter.
+	// Make sure that the UI has stabilized before hitting Enter.
 	f.TestTTY(t,
 		"~> ", term.DotHere,
 		strings.Repeat(" ", clitest.FakeTTYWidth-6), "RRR",

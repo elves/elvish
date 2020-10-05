@@ -18,7 +18,7 @@ func TestUmask(t *testing.T) {
 		// We have to start with a known umask value.
 		That(`unix:umask = 022`).Puts(),
 		That(`put $unix:umask`).Puts(`0o022`),
-		// Verify that mutating the value and outputing the new value works.
+		// Verify that mutating the value and outputting the new value works.
 		That(`unix:umask = 23`).Puts(),
 		That(`put $unix:umask`).Puts(`0o023`),
 		That(`unix:umask = 0o75`).Puts(),
