@@ -81,9 +81,6 @@ func saveWd() func() {
 		panic(err)
 	}
 	return func() {
-		err := os.Chdir(wd)
-		if err != nil {
-			panic(err)
-		}
+		testutil.MustChdir(wd)
 	}
 }

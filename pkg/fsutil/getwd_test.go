@@ -14,7 +14,7 @@ import (
 func TestGetwd(t *testing.T) {
 	tmpdir, cleanup := testutil.InTestDir()
 	defer cleanup()
-	mustOK(os.Mkdir("a", 0700))
+	testutil.Must(os.Mkdir("a", 0700))
 
 	// On some systems /tmp is a symlink.
 	tmpdir, err := filepath.EvalSymlinks(tmpdir)
@@ -42,7 +42,7 @@ func TestGetwd(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			os.Setenv(env.HOME, test.home)
-			mustOK(os.Chdir(test.chdir))
+			testutil.MustChdir(test.chdir)
 			if gotWd := Getwd(); gotWd != test.wantWd {
 				t.Errorf("Getwd() -> %v, want %v", gotWd, test.wantWd)
 			}
@@ -59,16 +59,10 @@ func TestGetwd(t *testing.T) {
 	// have the same behavior as Linux. So far only macOS has been checked.
 	if runtime.GOOS == "linux" {
 		wd := path.Join(tmpdir, "a")
-		mustOK(os.Chdir(wd))
-		mustOK(os.Remove(wd))
+		testutil.MustChdir(wd)
+		testutil.Must(os.Remove(wd))
 		if gotwd := Getwd(); gotwd != "?" {
 			t.Errorf("Getwd() -> %v, want ?", gotwd)
 		}
-	}
-}
-
-func mustOK(err error) {
-	if err != nil {
-		panic(err)
 	}
 }

@@ -51,3 +51,24 @@ func MustWriteFile(filename string, data []byte, perm os.FileMode) {
 		panic(err)
 	}
 }
+
+// MustChdir calls os.Chdir and panics if it fails.
+func MustChdir(dir string) {
+	err := os.Chdir(dir)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Must panics if the error value is not nil. It is typically used like this:
+//
+//   testutil.Must(a_function())
+//
+// Where `a_function` returns a single error value. This is useful with
+// functions like os.Mkdir to succinctly ensure the test fails to proceed if a
+// "can't happen" failure does, in fact, happen.
+func Must(err error) {
+	if err != nil {
+		panic(err)
+	}
+}

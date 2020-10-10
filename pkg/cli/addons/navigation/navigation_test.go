@@ -2,7 +2,6 @@ package navigation
 
 import (
 	"errors"
-	"os"
 	"testing"
 
 	"github.com/elves/elvish/pkg/cli"
@@ -153,10 +152,7 @@ func TestNavigation_RealFS(t *testing.T) {
 	defer cleanupFs()
 	testutil.ApplyDir(testDir)
 
-	err := os.Chdir("d")
-	if err != nil {
-		panic(err)
-	}
+	testutil.MustChdir("d")
 	testNavigation(t, nil)
 }
 
