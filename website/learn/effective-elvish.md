@@ -121,8 +121,8 @@ newline, and the second value is a list. When we capture the output, we get
 those exact values back. Passing structured data is difficult with byte-based
 output, but trivial with value output.
 
-Besides `put`, many other builtin commands and modules that ship with Elvish
-also write to structured output, like `str:split`:
+Besides `put`, many other builtin commands and commands in builtin modules also
+write to structured output, like `str:split`:
 
 ```elvish-transcript
 ~> use str
