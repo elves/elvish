@@ -27,7 +27,22 @@ import (
 // Inserts the selected filename.
 
 func navInsertSelected(app cli.App) {
-	insertAtDot(app, " "+parse.Quote(navigation.SelectedName(app)))
+	fname := navigation.SelectedName(app)
+	if fname == "" {
+		// User pressed [enter] in an empty directory with nothing selected;
+		// therefore, do not insert an empty string in the buffer.
+		return
+	}
+
+	// Insert a space only if not at the start of the CodeArea buffer and the
+	// previous char is not a space. Then insert the selected filename.
+	app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
+		cursor := s.Buffer.Dot
+		if cursor != 0 && s.Buffer.Content[cursor-1] != ' ' {
+			s.Buffer.InsertAtDot(" ")
+		}
+		s.Buffer.InsertAtDot(parse.Quote(fname))
+	})
 }
 
 //elvdoc:fn navigation:insert-selected-and-quit

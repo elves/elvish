@@ -1,7 +1,7 @@
 package edit
 
 import (
-	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/elves/elvish/pkg/cli/lscolors"
@@ -15,17 +15,18 @@ func TestNavigation(t *testing.T) {
 	f, cleanup := setupNav()
 	defer cleanup()
 
-	// Test navigation addon UI.
 	feedInput(f.TTYCtrl, "put")
 	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))
 	f.TestTTY(t,
-		"~"+string(os.PathSeparator)+"d> ",
+		filepath.Join("~", "d"), "> ",
 		"put", Styles,
 		"vvv", term.DotHere, "\n",
 		" NAVIGATING  \n", Styles,
 		"************ ",
-		" d      a                 ", Styles,
+		" d      a                 \n", Styles,
 		"###### ++++++++++++++++++ ",
+		"        e                ", Styles,
+		"       //////////////////",
 	)
 
 	// Test $edit:selected-file.
@@ -38,19 +39,21 @@ func TestNavigation(t *testing.T) {
 	// Test Alt-Enter: inserts filename without quitting.
 	f.TTYCtrl.Inject(term.K(ui.Enter, ui.Alt))
 	f.TestTTY(t,
-		"~"+string(os.PathSeparator)+"d> ",
+		filepath.Join("~", "d"), "> ",
 		"put a", Styles,
 		"vvv ", term.DotHere, "\n",
 		" NAVIGATING  \n", Styles,
 		"************ ",
-		" d      a                 ", Styles,
+		" d      a                 \n", Styles,
 		"###### ++++++++++++++++++ ",
+		"        e                ", Styles,
+		"       //////////////////",
 	)
 
 	// Test Enter: inserts filename and quits.
 	f.TTYCtrl.Inject(term.K(ui.Enter))
 	f.TestTTY(t,
-		"~"+string(os.PathSeparator)+"d> ",
+		filepath.Join("~", "d"), "> ",
 		"put a a", Styles,
 		"vvv    ", term.DotHere,
 	)
@@ -63,11 +66,86 @@ func TestNavigation_WidthRatio(t *testing.T) {
 	evals(f.Evaler, `@edit:navigation:width-ratio = 1 1 1`)
 	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))
 	f.TestTTY(t,
-		"~"+string(os.PathSeparator)+"d> ", term.DotHere, "\n",
+		filepath.Join("~", "d"), "> ", term.DotHere, "\n",
 		" NAVIGATING  \n", Styles,
 		"************ ",
-		" d                a               ", Styles,
+		" d                a               \n", Styles,
 		"################ ++++++++++++++++ ",
+		"                  e              ", Styles,
+		"                 ////////////////",
+	)
+}
+
+// Test corner case: Inserting a selection when the CLI cursor is not at the
+// start of the edit buffer, but the preceding char is a space, does not
+// insert another space.
+func TestNavigationCornerCaseRedundantSpace(t *testing.T) {
+	f, cleanup := setupNav()
+	defer cleanup()
+
+	f.TTYCtrl.Inject(term.K('x'))              // user presses 'x'
+	f.TTYCtrl.Inject(term.K(' '))              // user presses Space
+	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))     // begin navigation mode
+	f.TTYCtrl.Inject(term.K(ui.Down))          // select "e"
+	f.TTYCtrl.Inject(term.K(ui.Enter, ui.Alt)) // insert the "e" file name
+	f.TTYCtrl.Inject(term.K('z'))              // user presses 'z'
+	f.TestTTY(t,
+		filepath.Join("~", "d"), "> ",
+		"x ez", Styles,
+		"!", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" d      a                 \n", Styles,
+		"######                    ",
+		"        e                ", Styles,
+		"       ##################",
+	)
+}
+
+// Test corner case: Inserting a selection when the CLI cursor is at the start
+// of the edit buffer omits the space char prefix.
+func TestNavigationCornerCaseStartOfBuffer(t *testing.T) {
+	f, cleanup := setupNav()
+	defer cleanup()
+
+	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))     // begin navigation mode
+	f.TTYCtrl.Inject(term.K(ui.Enter, ui.Alt)) // insert the "a" file name
+	f.TestTTY(t,
+		filepath.Join("~", "d"), "> ",
+		"a", Styles,
+		"!", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" d      a                 \n", Styles,
+		"###### ++++++++++++++++++ ",
+		"        e                ", Styles,
+		"       //////////////////",
+	)
+}
+
+// Test corner case: Inserting the "selection" in an empty directory inserts
+// nothing rather than the literal `''`  that used to be inserted.
+func TestNavigationCornerCaseEmptyDir(t *testing.T) {
+	f, cleanup := setupNav()
+	defer cleanup()
+
+	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))     // begin navigation mode
+	f.TTYCtrl.Inject(term.K('z'))              // user presses 'z'
+	f.TTYCtrl.Inject(term.K(ui.Down))          // select empty directory "e"
+	f.TTYCtrl.Inject(term.K(ui.Right))         // move into "e" directory
+	f.TTYCtrl.Inject(term.K(ui.Enter, ui.Alt)) // insert nothing since the dir is empty
+	f.TTYCtrl.Inject(term.K('a'))              // user presses 'a'
+	f.TTYCtrl.Inject(term.K(' '))              // user presses Space
+	f.TestTTY(t,
+		filepath.Join("~", "d", "e"), "> ",
+		"za ", Styles,
+		"!! ", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" a                        \n", Styles,
+		"                          ",
+		" e    ", Styles,
+		"######",
 	)
 }
 
@@ -75,11 +153,10 @@ func setupNav() (*fixture, func()) {
 	f := setup()
 	restoreLsColors := lscolors.WithTestLsColors()
 
-	testutil.ApplyDir(testutil.Dir{"d": testutil.Dir{"a": ""}})
-	err := os.Chdir("d")
-	if err != nil {
-		panic(err)
-	}
+	// Path "d/a" is an empty file and "d/e" is an empty directory.
+	testutil.MustMkdirAll(filepath.Join("d", "e"))
+	testutil.MustCreateEmpty(filepath.Join("d", "a"))
+	testutil.MustChdir("d")
 
 	return f, func() {
 		restoreLsColors()
