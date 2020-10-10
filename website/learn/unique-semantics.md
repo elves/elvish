@@ -204,9 +204,10 @@ but non-zero exit statuses terminates execution by default. You can handle
 non-zero exit statuses by wrapping the command in a
 [`try`](../language.html#exception-control-try) block.
 
-Elvish behavior is similar to POSIX shells that use `set -e` or
-`set -o errexit`. Defaulting to stopping execution when bad things happen makes
-Elvish safer and code behavior more predictable.
+Compare with POSIX shells, the behavior of Elvish is similar to `set -e` or
+`set -o errexit`, or having implicit `&&` operators joining all the commands.
+Defaulting to stopping execution when bad things happen makes Elvish safer and
+code behavior more predictable.
 
 ## Predicates and `if`
 
