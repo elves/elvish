@@ -221,7 +221,7 @@ func TestUse_SetsVariableCorrectlyIfModuleCallsAddGlobal(t *testing.T) {
 	ev := NewEvaler()
 	ev.SetLibDir(libdir)
 	addVar := func() {
-		ev.AddGlobal(NsBuilder{"b": vars.NewReadOnly("foo")}.Ns())
+		ev.AddGlobal(NsBuilder{"b": vars.NewReadOnly("b", "foo")}.Ns())
 	}
 	ev.AddBuiltin(NsBuilder{}.AddGoFn("", "add-var", addVar).Ns())
 

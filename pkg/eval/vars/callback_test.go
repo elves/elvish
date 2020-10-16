@@ -33,7 +33,7 @@ func TestFromGet(t *testing.T) {
 		getCalled = true
 		return "cb"
 	}
-	v := FromGet(get)
+	v := FromGet("v", get)
 	if v.Get() != "cb" {
 		t.Errorf("roCbVariable doesn't return value from callback")
 	}

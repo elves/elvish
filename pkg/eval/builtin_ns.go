@@ -80,11 +80,11 @@ import (
 
 var builtinNs = NsBuilder{
 	"_":     vars.NewBlackhole(),
-	"pid":   vars.NewReadOnly(strconv.Itoa(syscall.Getpid())),
-	"ok":    vars.NewReadOnly(OK),
-	"nil":   vars.NewReadOnly(nil),
-	"true":  vars.NewReadOnly(true),
-	"false": vars.NewReadOnly(false),
+	"pid":   vars.NewReadOnly("builtin:pid", strconv.Itoa(syscall.Getpid())),
+	"ok":    vars.NewReadOnly("builtin:ok", OK),
+	"nil":   vars.NewReadOnly("builtin:nil", nil),
+	"true":  vars.NewReadOnly("builtin:true", true),
+	"false": vars.NewReadOnly("builtin:false", false),
 	"paths": vars.NewEnvListVar("PATH"),
 }
 

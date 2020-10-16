@@ -108,7 +108,7 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	binding := newMapBinding(ed, ev, bindingVar)
 	widthRatioVar := newListVar(vals.MakeList(1.0, 3.0, 4.0))
 
-	selectedFileVar := vars.FromGet(func() interface{} {
+	selectedFileVar := vars.FromGet("edit:selected-file", func() interface{} {
 		name := navigation.SelectedName(ed.app)
 		if name == "" {
 			return nil

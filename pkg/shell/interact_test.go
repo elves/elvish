@@ -86,7 +86,7 @@ func TestExtractExports(t *testing.T) {
 	defer restore()
 
 	ns := eval.NsBuilder{
-		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc("a", "lorem")),
+		exportsVarName: vars.NewReadOnly(exportsVarName, vals.EmptyMap.Assoc("a", "lorem")),
 	}.Ns()
 	ns2 := extractExports(ns, &bytes.Buffer{})
 	if a, _ := ns2.Index("a"); a != "lorem" {
@@ -99,7 +99,7 @@ func TestExtractExports_IgnoreNonMapExports(t *testing.T) {
 	defer restore()
 
 	ns := eval.NsBuilder{
-		exportsVarName: vars.NewReadOnly("x"),
+		exportsVarName: vars.NewReadOnly(exportsVarName, "x"),
 	}.Ns()
 	var errBuf bytes.Buffer
 	extractExports(ns, &errBuf)
@@ -113,7 +113,7 @@ func TestExtractExports_IgnoreNonStringKeys(t *testing.T) {
 	defer restore()
 
 	ns := eval.NsBuilder{
-		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc(vals.EmptyList, "lorem")),
+		exportsVarName: vars.NewReadOnly(exportsVarName, vals.EmptyMap.Assoc(vals.EmptyList, "lorem")),
 	}.Ns()
 	var errBuf bytes.Buffer
 	extractExports(ns, &errBuf)
@@ -127,8 +127,8 @@ func TestExtractExports_DoesNotOverwrite(t *testing.T) {
 	defer restore()
 
 	ns := eval.NsBuilder{
-		"a":            vars.NewReadOnly("lorem"),
-		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc("a", "ipsum")),
+		"a":            vars.NewReadOnly("a", "lorem"),
+		exportsVarName: vars.NewReadOnly(exportsVarName, vals.EmptyMap.Assoc("a", "ipsum")),
 	}.Ns()
 	var errBuf bytes.Buffer
 	ns2 := extractExports(ns, &errBuf)
@@ -145,7 +145,7 @@ func TestExtractExports_ShowsDeprecationWarning(t *testing.T) {
 	defer restore()
 
 	ns := eval.NsBuilder{
-		exportsVarName: vars.NewReadOnly(vals.EmptyMap),
+		exportsVarName: vars.NewReadOnly(exportsVarName, vals.EmptyMap),
 	}.Ns()
 	var errBuf bytes.Buffer
 	extractExports(ns, &errBuf)

@@ -176,10 +176,10 @@ func NewEvaler() *Evaler {
 			&ev.valuePrefix, &ev.mu)).
 		Add("notify-bg-job-success", vars.FromPtrWithMutex(
 			&ev.notifyBgJobSuccess, &ev.mu)).
-		Add("num-bg-jobs", vars.FromGet(func() interface{} {
+			Add("num-bg-jobs", vars.FromGet("builtin:num-bg-jobs", func() interface{} {
 			return strconv.Itoa(ev.getNumBgJobs())
 		})).
-		Add("args", vars.FromGet(func() interface{} {
+		Add("args", vars.FromGet("builtin:args", func() interface{} {
 			return ev.getArgs()
 		})).
 		Ns()

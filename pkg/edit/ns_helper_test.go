@@ -9,7 +9,7 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 )
 
-var testVar = vars.NewReadOnly("")
+var testVar = vars.NewReadOnly("testVar", "")
 
 var eachVariableInTopTests = []struct {
 	builtin   *eval.Ns
@@ -31,14 +31,14 @@ var eachVariableInTopTests = []struct {
 	},
 	{
 		builtin: eval.NsBuilder{
-			"mod:": vars.NewReadOnly(eval.NsBuilder{"a": testVar, "b": testVar}.Ns()),
+			"mod:": vars.NewReadOnly("mod:", eval.NsBuilder{"a": testVar, "b": testVar}.Ns()),
 		}.Ns(),
 		ns:        "mod:",
 		wantNames: []string{"a", "b"},
 	},
 	{
 		global: eval.NsBuilder{
-			"mod:": vars.NewReadOnly(eval.NsBuilder{"a": testVar, "b": testVar}.Ns()),
+			"mod:": vars.NewReadOnly("mod:", eval.NsBuilder{"a": testVar, "b": testVar}.Ns()),
 		}.Ns(),
 		ns:        "mod:",
 		wantNames: []string{"a", "b"},

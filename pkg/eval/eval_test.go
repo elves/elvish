@@ -69,7 +69,7 @@ func TestMultipleEval(t *testing.T) {
 
 func TestEval_AlternativeGlobal(t *testing.T) {
 	ev := NewEvaler()
-	g := NsBuilder{"a": vars.NewReadOnly("")}.Ns()
+	g := NsBuilder{"a": vars.NewReadOnly("a", "")}.Ns()
 	err := ev.Eval(parse.Source{Code: "nop $a"}, EvalCfg{Global: g})
 	if err != nil {
 		t.Errorf("got error %v, want nil", err)

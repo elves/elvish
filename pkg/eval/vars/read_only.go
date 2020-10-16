@@ -1,24 +1,31 @@
 package vars
 
 import (
-	"errors"
+	"fmt"
 )
 
 // ErrSetReadOnlyVar is returned by the Set method of a read-only variable.
-var ErrSetReadOnlyVar = errors.New("read-only variable; cannot be set")
+type ErrSetReadOnlyVar struct {
+	VarName string
+}
+
+func (e *ErrSetReadOnlyVar) Error() string {
+	return fmt.Sprintf("read-only variable %s cannot be set", e.VarName)
+}
 
 type readOnly struct {
+	name  string
 	value interface{}
 }
 
 // NewReadOnly creates a variable that is read-only and always returns an error
-// on Set.
-func NewReadOnly(v interface{}) Var {
-	return readOnly{v}
+// when modified.
+func NewReadOnly(name string, value interface{}) Var {
+	return readOnly{name, value}
 }
 
 func (rv readOnly) Set(val interface{}) error {
-	return ErrSetReadOnlyVar
+	return &ErrSetReadOnlyVar{rv.name}
 }
 
 func (rv readOnly) Get() interface{} {
