@@ -84,7 +84,7 @@ func (fm *Frame) ResolveVar(qname string) vars.Var {
 		return vars.FromEnv(name)
 	case "e:":
 		if strings.HasSuffix(name, FnSuffix) {
-			return vars.NewReadOnly(ExternalCmd{name[:len(name)-len(FnSuffix)]})
+			return vars.NewReadOnly(qname, ExternalCmd{name[:len(name)-len(FnSuffix)]})
 		}
 		return nil
 	case "local:":

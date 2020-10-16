@@ -169,7 +169,7 @@ func NewEvaler() *Evaler {
 		&ev.state.valuePrefix, &ev.state.mutex)
 	builtin["notify-bg-job-success"] = vars.FromPtrWithMutex(
 		&ev.state.notifyBgJobSuccess, &ev.state.mutex)
-	builtin["num-bg-jobs"] = vars.FromGet(func() interface{} {
+	builtin["num-bg-jobs"] = vars.FromGet("num-bg-jobs", func() interface{} {
 		return strconv.Itoa(ev.state.getNumBgJobs())
 	})
 	builtin["pwd"] = NewPwdVar(ev)
@@ -237,7 +237,7 @@ func (ev *Evaler) SetArgs(args []string) {
 	for _, arg := range args {
 		v = v.Cons(arg)
 	}
-	ev.Builtin["args"] = vars.NewReadOnly(v)
+	ev.Builtin["args"] = vars.NewReadOnly("args", v)
 }
 
 // SetLibDir sets the library directory, in which external modules are to be

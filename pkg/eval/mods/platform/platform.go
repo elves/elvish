@@ -73,10 +73,10 @@ func hostname(opts hostnameOpt) (string, error) {
 }
 
 var Ns = eval.Ns{
-	"arch":       vars.NewReadOnly(runtime.GOARCH),
-	"os":         vars.NewReadOnly(runtime.GOOS),
-	"is-unix":    vars.NewReadOnly(isUnix),
-	"is-windows": vars.NewReadOnly(isWindows),
+	"arch":       vars.NewReadOnly("arch", runtime.GOARCH),
+	"os":         vars.NewReadOnly("os", runtime.GOOS),
+	"is-unix":    vars.NewReadOnly("is-unix", isUnix),
+	"is-windows": vars.NewReadOnly("is-windows", isWindows),
 }.AddGoFns("platform:", map[string]interface{}{
 	"hostname": hostname,
 })

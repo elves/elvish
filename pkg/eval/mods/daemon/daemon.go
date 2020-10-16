@@ -38,8 +38,8 @@ func Ns(d daemon.Client, spawnCfg *daemon.SpawnConfig) eval.Ns {
 	}
 
 	return eval.Ns{
-		"pid":  vars.FromGet(getPidVar),
-		"sock": vars.NewReadOnly(string(d.SockPath())),
+		"pid":  vars.FromGet("pid", getPidVar),
+		"sock": vars.NewReadOnly("sock", string(d.SockPath())),
 	}.AddGoFns("daemon:", map[string]interface{}{
 		"pid":   getPid,
 		"spawn": spawn,

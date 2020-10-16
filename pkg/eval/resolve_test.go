@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/pkg/eval/vars"
 )
 
-var testVar = vars.NewReadOnly("")
+var testVar = vars.NewReadOnly("testVar", "")
 
 var eachVariableInTopTests = []struct {
 	builtin   Ns
@@ -29,12 +29,12 @@ var eachVariableInTopTests = []struct {
 		wantNames: []string{"bar", "foo", "ipsum", "lorem"},
 	},
 	{
-		builtin:   Ns{"mod:": vars.NewReadOnly(Ns{"a": testVar, "b": testVar})},
+		builtin:   Ns{"mod:": vars.NewReadOnly("mod:", Ns{"a": testVar, "b": testVar})},
 		ns:        "mod:",
 		wantNames: []string{"a", "b"},
 	},
 	{
-		global:    Ns{"mod:": vars.NewReadOnly(Ns{"a": testVar, "b": testVar})},
+		global:    Ns{"mod:": vars.NewReadOnly("mod:", Ns{"a": testVar, "b": testVar})},
 		ns:        "mod:",
 		wantNames: []string{"a", "b"},
 	},
