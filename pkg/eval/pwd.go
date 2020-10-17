@@ -19,13 +19,17 @@ type pwdVar struct {
 var _ vars.Var = pwdVar{}
 
 // Getwd allows for unit test error injection.
-var getwd func() (string, error) = os.Getwd
+var Getwd func() (string, error) = os.Getwd
 
 // Get returns the current working directory. It returns "/unknown/pwd" when
 // it cannot be determined.
 func (pwdVar) Get() interface{} {
-	pwd, err := getwd()
+	pwd, err := Getwd()
 	if err != nil {
+		// This should really use the path separator appropriate for the
+		// platform but in practice this hardcoded string works fine. Both
+		// because MS Windows supports forward slashes and this will very
+		// rarely occur.
 		return "/unknown/pwd"
 	}
 	return pwd
