@@ -1,10 +1,9 @@
-// +build wtf
-
 package eval_test
 
 import (
 	"errors"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	. "github.com/elves/elvish/pkg/eval"
@@ -24,18 +23,32 @@ func TestBuiltinPwd(t *testing.T) {
 
 	Test(t,
 		That(`pwd=dir1 put $pwd; put $pwd`).Puts(dir1, tmpHome),
-		That(`cd ~/dir2; pwd=~ put $pwd; put $pwd`).Puts(tmpHome, dir2),
-		That(`cd ~/dir2; pwd=~/dir1 put $pwd; put $pwd`).Puts(dir1, dir2),
-		That(`cd ~/dir1; pwd=../dir2 put $pwd; put $pwd`).Puts(dir2, dir1),
 		That(`pwd=(float64 1) put $pwd`).Throws(ErrPathMustBeString, "pwd=(float64 1)"),
 	)
+
+	// We could separate these two test variants into separate unit test
+	// modules but that's overkill for this situation and makes the
+	// equivalence between the two environments harder to see.
+	if runtime.GOOS == "windows" {
+		Test(t,
+			That(`cd $E:HOME\dir2; pwd=$E:HOME put $pwd; put $pwd`).Puts(tmpHome, dir2),
+			That(`cd $E:HOME\dir2; pwd=..\dir1 put $pwd; put $pwd`).Puts(dir1, dir2),
+			That(`cd $E:HOME\dir1; pwd=..\dir2 put $pwd; put $pwd`).Puts(dir2, dir1),
+		)
+	} else {
+		Test(t,
+			That(`cd ~/dir2; pwd=~ put $pwd; put $pwd`).Puts(tmpHome, dir2),
+			That(`cd ~/dir2; pwd=~/dir1 put $pwd; put $pwd`).Puts(dir1, dir2),
+			That(`cd ~/dir1; pwd=../dir2 put $pwd; put $pwd`).Puts(dir2, dir1),
+		)
+	}
 }
 
 // Verify the behavior when the CWD cannot be determined.
 func TestBuiltinPwd_GetwdError(t *testing.T) {
-	origGetwd := getwd
-	getwd = mockGetwdWithError
-	defer func() { getwd = origGetwd }()
+	origGetwd := Getwd
+	Getwd = mockGetwdWithError
+	defer func() { Getwd = origGetwd }()
 
 	Test(t,
 		That(`put $pwd`).Puts("/unknown/pwd"),
