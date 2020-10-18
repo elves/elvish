@@ -142,8 +142,8 @@ func constantly(args ...interface{}) Callable {
 // resolve $command
 // ```
 //
-// Resolve `$command`. Command resolution is described in the
-// [language reference](language.html). (TODO: actually describe it there.)
+// Output what `$command` resolves to in symbolic form. Command resolution is
+// described in the [language reference](language.html#ordinary-command).
 //
 // Example:
 //
