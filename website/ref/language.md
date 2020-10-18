@@ -1264,20 +1264,21 @@ its type:
 An **ordinary command** form consists of a command head, and any number of
 arguments and options.
 
-The first expression in an ordinary command is the **command head**. If the head
-is a single string literal, it is subject to **static resolution**:
+The first expression in an ordinary command is the command **head**. If the head
+is a single string literal it is subject to **static resolution**:
 
 -   If a variable with name `head~` (where `head` is the value of the head)
-    exists, the head will evaluate as if it is `$head~`;
+    exists, the head will evaluate as if it is `$head~`; i.e., a function
+    invocation.
 
--   Otherwise, the head will be evaluate to an external command with the name
+-   Otherwise, the head will evaluate to an external command with the name
     `head`.
 
 If the head is not a single string literal, it is evaluated as a normal
 expression. The expression must evaluate to one value, and the value must be one
 of the following:
 
--   A callable value: a function or external command;
+-   A callable value: a function or external command.
 
 -   A string containing at least one slash, in which case it is treated like an
     external command with the string value as its path.
