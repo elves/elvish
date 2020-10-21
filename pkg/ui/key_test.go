@@ -51,8 +51,8 @@ var parseKeyTests = []struct {
 	{s: "F1", wantKey: K(F1)},
 
 	// Alt- keys are case-sensitive.
-	{s: "a-x", wantKey: Key{'x', Alt}},
-	{s: "a-X", wantKey: Key{'X', Alt}},
+	{s: "A-x", wantKey: Key{'x', Alt}},
+	{s: "A-X", wantKey: Key{'X', Alt}},
 
 	// Ctrl- keys are case-insensitive.
 	{s: "C-x", wantKey: Key{'X', Ctrl}},
@@ -66,8 +66,8 @@ var parseKeyTests = []struct {
 	{s: "Meta-x", wantKey: Key{'x', Alt}},
 
 	// Multiple modifiers can appear in any order.
-	{s: "Alt-Ctrl-Delete", wantKey: Key{Delete, Alt | Ctrl}},
-	{s: "Ctrl-Alt-Delete", wantKey: Key{Delete, Alt | Ctrl}},
+	{s: "Alt-Ctrl+Delete", wantKey: Key{Delete, Alt | Ctrl}},
+	{s: "Ctrl+Alt-Delete", wantKey: Key{Delete, Alt | Ctrl}},
 
 	// Ctrl-I and Ctrl-J are normalized to Tab and Enter.
 	{s: "Ctrl-I", wantKey: K(Tab)},
@@ -75,7 +75,8 @@ var parseKeyTests = []struct {
 
 	// Errors.
 	{s: "F123", wantErr: "bad key: F123"},
-	{s: "Super-X", wantErr: "bad modifier: super"},
+	{s: "Super-X", wantErr: "bad modifier: Super"},
+	{s: "a-x", wantErr: "bad modifier: a"},
 }
 
 func TestParseKey(t *testing.T) {

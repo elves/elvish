@@ -25,7 +25,7 @@ func K(r rune, mods ...Mod) Key {
 	return Key{r, mod}
 }
 
-// Default is used in the key binding table to indicate default binding.
+// Default is used in the key binding table to indicate a default binding.
 var Default = Key{DefaultBindingRune, 0}
 
 // Mod represents a modifier key.
@@ -44,10 +44,11 @@ const (
 
 const functionKeyOffset = 1000
 
-// Special negative runes to represent function keys, used in the Rune field of
-// the Key struct.
+// Special negative runes to represent function keys, used in the Rune field
+// of the Key struct. This also has a few function names that are aliases for
+// simple runes. See keyNames below for mapping these values to strings.
 const (
-	// DefaultBindingRune is a special value to represent default binding.
+	// DefaultBindingRune is a special value to represent a default binding.
 	DefaultBindingRune rune = iota - functionKeyOffset
 
 	F1
@@ -75,24 +76,40 @@ const (
 	PageUp
 	PageDown
 
-	// Some function key names are just aliases for their ASCII representation
-
+	// Function key names that are aliases for their ASCII representation.
 	Tab       = '\t'
 	Enter     = '\n'
 	Backspace = 0x7f
 )
 
-// functionKey stores the names of function keys, in the same order they appeared above.
-var functionKeyNames = [...]string{
-	"Default",
-	"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
-	"Up", "Down", "Right", "Left",
-	"Home", "Insert", "Delete", "End", "PageUp", "PageDown",
-}
-
-// keyNames stores the name of function keys with a positive rune.
+// keyNames maps runes, whether simple or function, to symbolic key names.
 var keyNames = map[rune]string{
-	Tab: "Tab", Enter: "Enter", Backspace: "Backspace",
+	DefaultBindingRune: "Default",
+	F1:                 "F1",
+	F2:                 "F2",
+	F3:                 "F3",
+	F4:                 "F4",
+	F5:                 "F5",
+	F6:                 "F6",
+	F7:                 "F7",
+	F8:                 "F8",
+	F9:                 "F9",
+	F10:                "F10",
+	F11:                "F11",
+	F12:                "F12",
+	Up:                 "Up",
+	Down:               "Down",
+	Right:              "Right",
+	Left:               "Left",
+	Home:               "Home",
+	Insert:             "Insert",
+	Delete:             "Delete",
+	End:                "End",
+	PageUp:             "PageUp",
+	PageDown:           "PageDown",
+	Tab:                "Tab",
+	Enter:              "Enter",
+	Backspace:          "Backspace",
 }
 
 func (k Key) Kind() string {
@@ -113,6 +130,7 @@ func (k Key) Repr(int) string {
 
 func (k Key) String() string {
 	var b bytes.Buffer
+
 	if k.Mod&Ctrl != 0 {
 		b.WriteString("Ctrl-")
 	}
@@ -122,20 +140,17 @@ func (k Key) String() string {
 	if k.Mod&Shift != 0 {
 		b.WriteString("Shift-")
 	}
-	if k.Rune > 0 {
-		if name, ok := keyNames[k.Rune]; ok {
-			b.WriteString(name)
-		} else {
-			b.WriteRune(k.Rune)
-		}
+
+	if name, ok := keyNames[k.Rune]; ok {
+		b.WriteString(name)
 	} else {
-		i := int(k.Rune + functionKeyOffset)
-		if i < 0 || i >= len(functionKeyNames) {
-			fmt.Fprintf(&b, "(bad function key %d)", k.Rune)
+		if k.Rune >= 0 {
+			b.WriteRune(k.Rune)
 		} else {
-			b.WriteString(functionKeyNames[i])
+			fmt.Fprintf(&b, "(bad function key %d)", k.Rune)
 		}
 	}
+
 	return b.String()
 }
 
@@ -143,32 +158,33 @@ func (k Key) String() string {
 // the modifier string is first turned to lower case, so that all of C, c,
 // CTRL, Ctrl and ctrl can represent the Ctrl modifier.
 var modifierByName = map[string]Mod{
-	"s": Shift, "shift": Shift,
-	"a": Alt, "alt": Alt,
-	"m": Alt, "meta": Alt,
-	"c": Ctrl, "ctrl": Ctrl,
+	"S": Shift, "Shift": Shift,
+	"A": Alt, "Alt": Alt,
+	"M": Alt, "Meta": Alt,
+	"C": Ctrl, "Ctrl": Ctrl,
 }
 
-// ParseKey parses a key. The syntax is:
+// ParseKey parses a symbolic key. The syntax is:
 //
-// Key = { Mod ('+' | '-') } BareKey
+//   Key = { Mod ('+' | '-') } BareKey
 //
-// BareKey = FunctionKeyName | SingleRune
+//   BareKey = FunctionKeyName | SingleRune
 func ParseKey(s string) (Key, error) {
 	var k Key
-	// parse modifiers
+
+	// Parse modifiers.
 	for {
 		i := strings.IndexAny(s, "+-")
 		if i == -1 {
 			break
 		}
-		modname := strings.ToLower(s[:i])
-		mod, ok := modifierByName[modname]
-		if !ok {
+		modname := s[:i]
+		if mod, ok := modifierByName[modname]; ok {
+			k.Mod |= mod
+			s = s[i+1:]
+		} else {
 			return Key{}, fmt.Errorf("bad modifier: %s", parse.Quote(modname))
 		}
-		k.Mod |= mod
-		s = s[i+1:]
 	}
 
 	if len(s) == 1 {
@@ -182,29 +198,25 @@ func ParseKey(s string) (Key, error) {
 			if 'a' <= k.Rune && k.Rune <= 'z' {
 				k.Rune += 'A' - 'a'
 			}
-			// Tab is equivalent to Ctrl-I and Ctrl-J is equivalent to Enter.
-			// Normalize Ctrl-I to Tab and Ctrl-J to Enter.
+			// Normalize Ctrl-I to Tab, Ctrl-J to Enter, and Ctrl-? to Backspace.
 			if k.Rune == 'I' {
 				k.Mod &= ^Ctrl
 				k.Rune = Tab
 			} else if k.Rune == 'J' {
 				k.Mod &= ^Ctrl
 				k.Rune = Enter
+			} else if k.Rune == '?' {
+				k.Mod &= ^Ctrl
+				k.Rune = Backspace
 			}
 		}
 		return k, nil
 	}
 
+	// Is this is a symbolic key name, such as `Enter`, we recognize?
 	for r, name := range keyNames {
 		if s == name {
 			k.Rune = r
-			return k, nil
-		}
-	}
-
-	for i, name := range functionKeyNames {
-		if s == name {
-			k.Rune = rune(i - functionKeyOffset)
 			return k, nil
 		}
 	}
