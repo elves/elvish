@@ -183,7 +183,38 @@ Bound functions have their inputs redirected to /dev/null.
 
 ### Format of Keys
 
-TBD
+Key modifiers and names are case sensitive. This includes single character key
+names such as `x` and `Y` as well as function key names such as `Enter`.
+
+Key names have zero or more modifiers from the following symbols:
+
+```
+    A  Alt
+    C  Ctrl
+    M  Meta
+    S  Shift
+```
+
+Modifiers, if present, end with either a `-` or `+`; e.g., `S-F1`, `Ctrl-X` or
+`Alt+Enter`. You can stack modifiers; e.g., `C+A-X`.
+
+The key name may be a simple character such as `x` or a function key from these
+symbols:
+
+```
+    F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11  F12
+    Up  Down  Right  Left
+    Home  Insert  Delete  End  PageUp  PageDown
+    Tab  Enter  Backspace
+```
+
+**Note:** `Tab` is an alias for `"\t"` (aka `Ctrl-I`), `Enter` for `"\n"` (aka
+`Ctrl-J`), and `Backspace` for `"\x7F"` (aka `Ctrl-?`).
+
+**Note:** The `Shift` modifier is only applicable to function keys such as `F1`.
+You cannot write `Shift-m` as a synonym for `M`.
+
+**TODO:** Document the behavior of the `Shift` modifier.
 
 ### Listing Modes
 
