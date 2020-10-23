@@ -127,7 +127,7 @@ func (ed *Editor) notifyError(ctx string, e error) {
 		defer ed.excMutex.Unlock()
 		ed.excList = ed.excList.Cons(exc)
 		ed.notifyf("[%v error] %v\n"+
-			`see stack trace with "use exc; exc:show $edit:exceptions[%d]"`,
+			`see stack trace with "show $edit:exceptions[%d]"`,
 			ctx, e, ed.excList.Len()-1)
 	} else {
 		ed.notifyf("[%v error] %v", ctx, e)

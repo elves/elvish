@@ -50,7 +50,7 @@ func TestPrompt_NotifiesException(t *testing.T) {
 
 	f.TestTTYNotes(t,
 		"[prompt error] ERROR\n",
-		`see stack trace with "use exc; exc:show $edit:exceptions[0]"`)
+		`see stack trace with "show $edit:exceptions[0]"`)
 	evals(f.Evaler, `excs = (count $edit:exceptions)`)
 	testGlobal(t, f.Evaler, "excs", "1")
 }
@@ -116,7 +116,7 @@ func TestPromptStaleTransform_Exception(t *testing.T) {
 
 	f.TestTTYNotes(t,
 		"[prompt stale transform error] ERROR\n",
-		`see stack trace with "use exc; exc:show $edit:exceptions[0]"`)
+		`see stack trace with "show $edit:exceptions[0]"`)
 	evals(f.Evaler, `excs = (count $edit:exceptions)`)
 	testGlobal(t, f.Evaler, "excs", "1")
 }
