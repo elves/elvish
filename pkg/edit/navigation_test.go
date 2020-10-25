@@ -149,13 +149,18 @@ func TestNavigationCornerCaseEmptyDir(t *testing.T) {
 	)
 }
 
+var testDir = testutil.Dir{
+	"d": testutil.Dir{
+		"a": "",
+		"e": testutil.Dir{},
+	},
+}
+
 func setupNav() (*fixture, func()) {
 	f := setup()
 	restoreLsColors := lscolors.WithTestLsColors()
 
-	// Path "d/a" is an empty file and "d/e" is an empty directory.
-	testutil.MustMkdirAll(filepath.Join("d", "e"))
-	testutil.MustCreateEmpty(filepath.Join("d", "a"))
+	testutil.ApplyDir(testDir)
 	testutil.MustChdir("d")
 
 	return f, func() {
