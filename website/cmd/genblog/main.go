@@ -1,7 +1,5 @@
 package main
 
-//go:generate ./gen-include
-
 import (
 	"fmt"
 	"log"
