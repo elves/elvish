@@ -297,7 +297,7 @@ func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 		w.resetInserts()
 		w.Submit()
 		return true
-	case ui.K(ui.Backspace):
+	case ui.K(ui.Backspace), ui.K(ui.DeleteCtrl, ui.Ctrl):
 		w.resetInserts()
 		w.MutateState(func(s *CodeAreaState) {
 			c := &s.Buffer

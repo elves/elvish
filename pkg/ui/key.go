@@ -77,9 +77,10 @@ const (
 
 	// Some function key names are just aliases for their ASCII representation
 
-	Tab       = '\t'
-	Enter     = '\n'
-	Backspace = 0x7f
+	Tab        = '\t'
+	Enter      = '\n'
+	Backspace  = 0x7f
+	DeleteCtrl = 0x48
 )
 
 // functionKey stores the names of function keys, in the same order they appeared above.
