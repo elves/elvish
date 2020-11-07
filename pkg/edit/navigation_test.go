@@ -79,67 +79,68 @@ func TestNavigation_WidthRatio(t *testing.T) {
 // Test corner case: Inserting a selection when the CLI cursor is not at the
 // start of the edit buffer, but the preceding char is a space, does not
 // insert another space.
-func TestNavigationCornerCaseRedundantSpace(t *testing.T) {
+func TestNavigation_EnterDoesNotAddSpaceAfterSpace(t *testing.T) {
 	f, cleanup := setupNav()
 	defer cleanup()
 
-	f.TTYCtrl.Inject(term.K('x'))              // user presses 'x'
-	f.TTYCtrl.Inject(term.K(' '))              // user presses Space
-	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))     // begin navigation mode
-	f.TTYCtrl.Inject(term.K(ui.Down))          // select "e"
-	f.TTYCtrl.Inject(term.K(ui.Enter, ui.Alt)) // insert the "e" file name
-	f.TTYCtrl.Inject(term.K('z'))              // user presses 'z'
+	feedInput(f.TTYCtrl, "put ")
+	f.TTYCtrl.Inject(term.K('N', ui.Ctrl)) // begin navigation mode
+	f.TTYCtrl.Inject(term.K(ui.Down))      // select "e"
+	f.TTYCtrl.Inject(term.K(ui.Enter))     // insert the "e" file name
 	f.TestTTY(t,
 		filepath.Join("~", "d"), "> ",
-		"x ez", Styles,
-		"!", term.DotHere, "\n",
-		" NAVIGATING  \n", Styles,
-		"************ ",
-		" d      a                 \n", Styles,
-		"######                    ",
-		"        e                ", Styles,
-		"       ##################",
+		"put e", Styles,
+		"vvv", term.DotHere,
 	)
 }
 
 // Test corner case: Inserting a selection when the CLI cursor is at the start
 // of the edit buffer omits the space char prefix.
-func TestNavigationCornerCaseStartOfBuffer(t *testing.T) {
+func TestNavigation_EnterDoesNotAddSpaceAtStartOfBuffer(t *testing.T) {
 	f, cleanup := setupNav()
 	defer cleanup()
 
-	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))     // begin navigation mode
-	f.TTYCtrl.Inject(term.K(ui.Enter, ui.Alt)) // insert the "a" file name
+	f.TTYCtrl.Inject(term.K('N', ui.Ctrl)) // begin navigation mode
+	f.TTYCtrl.Inject(term.K(ui.Enter))     // insert the "a" file name
 	f.TestTTY(t,
 		filepath.Join("~", "d"), "> ",
 		"a", Styles,
-		"!", term.DotHere, "\n",
-		" NAVIGATING  \n", Styles,
-		"************ ",
-		" d      a                 \n", Styles,
-		"###### ++++++++++++++++++ ",
-		"        e                ", Styles,
-		"       //////////////////",
+		"!", term.DotHere,
+	)
+}
+
+// Test corner case: Inserting a selection when the CLI cursor is at the start
+// of a line buffer omits the space char prefix.
+func TestNavigation_EnterDoesNotAddSpaceAtStartOfLine(t *testing.T) {
+	f, cleanup := setupNav()
+	defer cleanup()
+	feedInput(f.TTYCtrl, "put [\n")
+	f.TTYCtrl.Inject(term.K('N', ui.Ctrl)) // begin navigation mode
+	f.TTYCtrl.Inject(term.K(ui.Enter))     // insert the "a" file name
+	f.TestTTY(t,
+		filepath.Join("~", "d"), "> ",
+		"put [", Styles,
+		"vvv b", "\n",
+		"     a", term.DotHere,
 	)
 }
 
 // Test corner case: Inserting the "selection" in an empty directory inserts
-// nothing rather than the literal `''`  that used to be inserted.
-func TestNavigationCornerCaseEmptyDir(t *testing.T) {
+// nothing. Regression test for https://b.elv.sh/1169.
+func TestNavigation_EnterDoesNothingInEmptyDir(t *testing.T) {
 	f, cleanup := setupNav()
 	defer cleanup()
 
+	feedInput(f.TTYCtrl, "pu")
 	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))     // begin navigation mode
-	f.TTYCtrl.Inject(term.K('z'))              // user presses 'z'
 	f.TTYCtrl.Inject(term.K(ui.Down))          // select empty directory "e"
 	f.TTYCtrl.Inject(term.K(ui.Right))         // move into "e" directory
 	f.TTYCtrl.Inject(term.K(ui.Enter, ui.Alt)) // insert nothing since the dir is empty
-	f.TTYCtrl.Inject(term.K('a'))              // user presses 'a'
-	f.TTYCtrl.Inject(term.K(' '))              // user presses Space
+	f.TTYCtrl.Inject(term.K('t'))              // user presses 'a'
 	f.TestTTY(t,
 		filepath.Join("~", "d", "e"), "> ",
-		"za ", Styles,
-		"!! ", term.DotHere, "\n",
+		"put", Styles,
+		"vvv", term.DotHere, "\n",
 		" NAVIGATING  \n", Styles,
 		"************ ",
 		" a                        \n", Styles,
