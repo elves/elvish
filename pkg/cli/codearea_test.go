@@ -262,6 +262,15 @@ var codeAreaHandleTests = []HandleTest{
 			term.K('你'), term.K('好'), term.K(ui.Backspace)},
 		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "你", Dot: 3}},
 	},
+	// Regression test for https://b.elv.sh/1178
+	{
+		Name:  "Ctrl-H being equivalent to backspace",
+		Given: NewCodeArea(CodeAreaSpec{}),
+		Events: []term.Event{
+			term.K('c'), term.K('o'), term.K('d'), term.K('e'),
+			term.K('H', ui.Ctrl)},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "cod", Dot: 3}},
+	},
 	{
 		Name: "abbreviation expansion",
 		Given: NewCodeArea(CodeAreaSpec{
