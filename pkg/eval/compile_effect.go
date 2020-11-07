@@ -497,30 +497,35 @@ type invalidFD struct{ fd int }
 
 func (err invalidFD) Error() string { return fmt.Sprintf("invalid fd: %d", err.fd) }
 
-func (op *redirOp) fileChan() chan interface{} {
-	if op.mode == parse.Read {
-		// ClosedChan is used when redirecting from a named file because we
-		// don't support reading "values" (as opposed to bytes) from a file.
+// Returns a suitable dummy value for the channel part of the port when
+// redirecting from or to a file, so that the read and write attempts fail
+// silently (instead of blocking or panicking).
+//
+// TODO: Instead of letting read and write attempts fail silently, consider
+// raising an exception instead.
+func chanForFileRedir(mode parse.RedirMode) chan interface{} {
+	if mode == parse.Read {
+		// ClosedChan produces no values when reading.
 		return ClosedChan
 	}
-	// TODO: Replace BlackholeChan for output with a value sink that will
-	// throw an exception if it sees any values since we don't support writing
-	// values to a file without first converting them to bytes.
+	// BlackholeChan discards all values written to it.
 	return BlackholeChan
 }
 
 func (op *redirOp) exec(fm *Frame) error {
 	var dst int
-	if op.dstOp == nil { // the common case: use default destination file-descriptor
+	if op.dstOp == nil {
+		// No explicit FD destination specified; use default destinations
 		switch op.mode {
 		case parse.Read:
-			dst = 0 // stdin
+			dst = 0
 		case parse.Write, parse.ReadWrite, parse.Append:
-			dst = 1 // stdout
+			dst = 1
 		default:
 			return fm.errorpf(op, "bad RedirMode; parser bug")
 		}
-	} else { // use the destination file-descriptor requested by the user
+	} else {
+		// An explicit FD destination specified, evaluate it.
 		var err error
 		dst, err = evalForFd(fm, op.dstOp, false, "redirection destination")
 		if err != nil {
@@ -557,9 +562,9 @@ func (op *redirOp) exec(fm *Frame) error {
 		if err != nil {
 			return fm.errorpf(op, "failed to open file %s: %s", vals.Repr(src, vals.NoPretty), err)
 		}
-		fm.ports[dst] = &Port{File: f, CloseFile: true, Chan: op.fileChan()}
+		fm.ports[dst] = &Port{File: f, CloseFile: true, Chan: chanForFileRedir(op.mode)}
 	case vals.File:
-		fm.ports[dst] = &Port{File: src, CloseFile: false, Chan: op.fileChan()}
+		fm.ports[dst] = &Port{File: src, CloseFile: false, Chan: chanForFileRedir(op.mode)}
 	case vals.Pipe:
 		var f *os.File
 		switch op.mode {
@@ -570,7 +575,7 @@ func (op *redirOp) exec(fm *Frame) error {
 		default:
 			return fm.errorpf(op, "can only use < or > with pipes")
 		}
-		fm.ports[dst] = &Port{File: f, CloseFile: false, Chan: op.fileChan()}
+		fm.ports[dst] = &Port{File: f, CloseFile: false, Chan: chanForFileRedir(op.mode)}
 	default:
 		return fm.errorp(op.srcOp, errs.BadValue{
 			What:  "redirection source",
