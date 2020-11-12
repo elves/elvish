@@ -65,13 +65,17 @@ var parseKeyTests = []struct {
 	{s: "M-x", wantKey: Key{'x', Alt}},
 	{s: "Meta-x", wantKey: Key{'x', Alt}},
 
-	// Multiple modifiers can appear in any order.
+	// Multiple modifiers can appear in any order and with alternative
+	// separator chars.
 	{s: "Alt-Ctrl+Delete", wantKey: Key{Delete, Alt | Ctrl}},
 	{s: "Ctrl+Alt-Delete", wantKey: Key{Delete, Alt | Ctrl}},
 
-	// Ctrl-I and Ctrl-J are normalized to Tab and Enter.
-	{s: "Ctrl-I", wantKey: K(Tab)},
-	{s: "Ctrl-J", wantKey: K(Enter)},
+	// Confirm alternative symbolic keys are turned into the canonical form.
+	{s: "\t", wantKey: K(Tab)},           // literal tab is normalized to Tab
+	{s: "\n", wantKey: K(Enter)},         // literal newline is normalized to Enter
+	{s: "Ctrl-I", wantKey: K(Tab)},       // Ctrl-I is normalized to Tab
+	{s: "Ctrl-J", wantKey: K(Enter)},     // Ctrl-J is normalized to Enter
+	{s: "Ctrl-?", wantKey: K(Backspace)}, // Ctrl-? is normalized to Backspace
 
 	// Errors.
 	{s: "F123", wantErr: "bad key: F123"},
