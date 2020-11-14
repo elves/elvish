@@ -331,12 +331,13 @@ func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 	}
 }
 
-// Determine if the rune is an alphanumeric character.
+// IsAlnum determines if the rune is an alphanumeric character.
 func IsAlnum(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsNumber(r)
 }
 
-// Determine if the rune is whitespace, alphanum, or something else.
+// CategorizeSmallWord determines if the rune is whitespace, alphanum, or
+// something else.
 func CategorizeSmallWord(r rune) int {
 	switch {
 	case unicode.IsSpace(r):

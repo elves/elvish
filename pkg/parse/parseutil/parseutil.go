@@ -7,7 +7,7 @@ import (
 	"github.com/elves/elvish/pkg/parse"
 )
 
-// LeafNodeAtDot finds the leaf node at a specific position. It returns nil if
+// FindLeafNode finds the leaf node at a specific position. It returns nil if
 // position is out of bound.
 func FindLeafNode(n parse.Node, p int) parse.Node {
 descend:

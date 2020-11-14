@@ -1,5 +1,5 @@
-// Package program provides the entry point to Elvish. Its subpackages
-// correspond to subprograms of Elvish.
+// Package prog provides the entry point to Elvish. Its subpackages correspond
+// to subprograms of Elvish.
 package prog
 
 // This package sets up the basic environment and calls the appropriate
@@ -21,7 +21,7 @@ import (
 // resembles "elvi".
 const defaultWebPort = 3171
 
-// Global flag of whether to show deprecations.
+// ShowDeprecations is a global flag that controls whether to show deprecations.
 var ShowDeprecations = false
 
 // SetShowDeprecations sets ShowDeprecations to the given value, and returns a

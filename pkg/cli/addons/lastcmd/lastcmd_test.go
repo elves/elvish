@@ -13,7 +13,7 @@ import (
 	"github.com/elves/elvish/pkg/ui"
 )
 
-var mockError = errors.New("mock error")
+var errMock = errors.New("mock error")
 
 func TestStart_NoStore(t *testing.T) {
 	f := Setup()
@@ -32,7 +32,7 @@ func TestStart_StoreError(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	db.SetOneOffError(mockError)
+	db.SetOneOffError(errMock)
 
 	Start(f.App, Config{Store: store})
 	f.TestTTYNotes(t, "db error: mock error")

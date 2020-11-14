@@ -16,7 +16,7 @@ import (
 // TODO(xiaq): Rewrite these tests to test the exported MakePaths instead of the
 // unexported getSecureRunDir.
 
-var elvishDashUid = fmt.Sprintf("elvish-%d", os.Getuid())
+var elvishDashUID = fmt.Sprintf("elvish-%d", os.Getuid())
 
 func TestGetSecureRunDir_PrefersXDGWhenNeitherExists(t *testing.T) {
 	xdg, _, cleanup := setupForSecureRunDir()
@@ -29,7 +29,7 @@ func TestGetSecureRunDir_PrefersXDGWhenBothExist(t *testing.T) {
 	defer cleanup()
 
 	os.MkdirAll(filepath.Join(xdg, "elvish"), 0700)
-	os.MkdirAll(filepath.Join(tmp, elvishDashUid), 0700)
+	os.MkdirAll(filepath.Join(tmp, elvishDashUID), 0700)
 
 	testSecureRunDir(t, filepath.Join(xdg, "elvish"), false)
 }
@@ -38,16 +38,16 @@ func TestGetSecureRunDir_PrefersTmpWhenOnlyItExists(t *testing.T) {
 	_, tmp, cleanup := setupForSecureRunDir()
 	defer cleanup()
 
-	os.MkdirAll(filepath.Join(tmp, elvishDashUid), 0700)
+	os.MkdirAll(filepath.Join(tmp, elvishDashUID), 0700)
 
-	testSecureRunDir(t, filepath.Join(tmp, elvishDashUid), false)
+	testSecureRunDir(t, filepath.Join(tmp, elvishDashUID), false)
 }
 
 func TestGetSecureRunDir_PrefersTmpWhenXdgEnvIsEmpty(t *testing.T) {
 	_, tmp, cleanup := setupForSecureRunDir()
 	defer cleanup()
 	os.Setenv(env.XDG_RUNTIME_DIR, "")
-	testSecureRunDir(t, filepath.Join(tmp, elvishDashUid), false)
+	testSecureRunDir(t, filepath.Join(tmp, elvishDashUID), false)
 }
 
 func TestGetSecureRunDir_ReturnsErrorWhenUnableToMkdir(t *testing.T) {

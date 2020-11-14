@@ -32,20 +32,20 @@ func TestDBStore_Cursor(t *testing.T) {
 		}
 	}
 
-	db.SetOneOffError(mockError)
+	db.SetOneOffError(errMock)
 	c.Prev()
-	expect(store.Cmd{Seq: 3}, mockError)
+	expect(store.Cmd{Seq: 3}, errMock)
 
 	c.Prev()
 	expect(store.Cmd{Text: "+ 3", Seq: 2}, nil)
 
-	db.SetOneOffError(mockError)
+	db.SetOneOffError(errMock)
 	c.Prev()
-	expect(store.Cmd{Text: "+ 3", Seq: 2}, mockError)
+	expect(store.Cmd{Text: "+ 3", Seq: 2}, errMock)
 
-	db.SetOneOffError(mockError)
+	db.SetOneOffError(errMock)
 	c.Next()
-	expect(store.Cmd{Text: "+ 3", Seq: 2}, mockError)
+	expect(store.Cmd{Text: "+ 3", Seq: 2}, errMock)
 }
 
 // Remaining methods tested with HybridStore.

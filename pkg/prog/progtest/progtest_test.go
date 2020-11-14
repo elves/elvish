@@ -14,7 +14,7 @@ func TestOutputCaptureDoesNotDeadlock(t *testing.T) {
 	// filling the pipe before the test completes. Pipes typically buffer 8 to
 	// 128 KiB.
 	bytes := [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
-	for i := 0; i < 128*1024/len(bytes); i += 1 {
+	for i := 0; i < 128*1024/len(bytes); i++ {
 		f.pipes[1].w.Write(bytes[:])
 	}
 	f.pipes[1].w.WriteString("hello\n")
