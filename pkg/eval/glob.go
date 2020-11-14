@@ -29,7 +29,9 @@ var typeCbMap = map[string]func(os.FileMode) bool{
 }
 
 const (
-	NoMatchOK GlobFlag = 1 << iota
+	// noMatchOK indicates that the "nomatch-ok" glob index modifer was
+	// present.
+	noMatchOK GlobFlag = 1 << iota
 )
 
 func (f GlobFlag) Has(g GlobFlag) bool {
@@ -73,7 +75,7 @@ func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
 	modifier := modifierv
 	switch {
 	case modifier == "nomatch-ok":
-		gp.Flags |= NoMatchOK
+		gp.Flags |= noMatchOK
 	case strings.HasPrefix(modifier, "but:"):
 		gp.Buts = append(gp.Buts, modifier[len("but:"):])
 	case modifier == "match-hidden":
@@ -254,7 +256,7 @@ func doGlob(gp GlobPattern, abort <-chan struct{}) ([]interface{}, error) {
 	}) {
 		return nil, ErrInterrupted
 	}
-	if len(vs) == 0 && !gp.Flags.Has(NoMatchOK) {
+	if len(vs) == 0 && !gp.Flags.Has(noMatchOK) {
 		return nil, ErrWildcardNoMatch
 	}
 	return vs, nil

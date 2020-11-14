@@ -42,7 +42,7 @@ var (
 	// DevNullClosedChan is a port made up from DevNull and ClosedChan,
 	// suitable as placeholder input port.
 	DevNullClosedChan = &Port{File: DevNull, Chan: ClosedChan}
-	// DevNullClosedChan is a port made up from DevNull and BlackholeChan,
+	// DevNullBlackholeChan is a port made up from DevNull and BlackholeChan,
 	// suitable as placeholder output port.
 	DevNullBlackholeChan = &Port{File: DevNull, Chan: BlackholeChan}
 )

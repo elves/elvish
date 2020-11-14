@@ -28,15 +28,16 @@ func SplitQNameNs(qname string) (ns, name string) {
 	return qname[:colon+1], qname[colon+1:]
 }
 
-// SplitQNameNs splits an incomplete qualified variable name into the namespace
-// part and the name part.
+// SplitQNameNsIncomplete splits an incomplete qualified variable name into
+// the namespace part and the name part.
 func SplitQNameNsIncomplete(qname string) (ns, name string) {
 	colon := strings.LastIndexByte(qname, ':')
 	// If colon is -1, colon+1 will be 0, rendering an empty ns.
 	return qname[:colon+1], qname[colon+1:]
 }
 
-// SplitQNameNs splits a qualified variable name into the first part and the rest.
+// SplitQNameNsFirst splits a qualified variable name into the first part and
+// the rest.
 func SplitQNameNsFirst(qname string) (ns, rest string) {
 	colon := strings.IndexByte(qname, ':')
 	if colon == len(qname)-1 {
@@ -47,8 +48,8 @@ func SplitQNameNsFirst(qname string) (ns, rest string) {
 	return qname[:colon+1], qname[colon+1:]
 }
 
-// SplitIncompleteQNameNsFirst splits an incomplete qualified variable name into
-// the first part and the rest.
+// SplitIncompleteQNameFirstNs splits an incomplete qualified variable name
+// into the first part and the rest.
 func SplitIncompleteQNameFirstNs(qname string) (ns, rest string) {
 	colon := strings.IndexByte(qname, ':')
 	// If colon is -1, colon+1 will be 0, rendering an empty ns.

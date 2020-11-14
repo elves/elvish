@@ -2,8 +2,8 @@ package histutil
 
 import "github.com/elves/elvish/pkg/store"
 
-// Returns a Store backed by a database, with the view of all commands frozen at
-// creation.
+// NewDBStore returns a Store backed by a database with the view of all
+// commands frozen at creation.
 func NewDBStore(db DB) (Store, error) {
 	upper, err := db.NextCmdSeq()
 	if err != nil {

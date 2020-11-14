@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/pkg/store"
 )
 
-var mockError = errors.New("mock error")
+var errMock = errors.New("mock error")
 
 func TestNewHybridStore_ReturnsMemStoreIfDBIsNil(t *testing.T) {
 	store, err := NewHybridStore(nil)
@@ -22,13 +22,13 @@ func TestNewHybridStore_ReturnsMemStoreIfDBIsNil(t *testing.T) {
 
 func TestNewHybridStore_ReturnsMemStoreOnDBError(t *testing.T) {
 	db := NewFaultyInMemoryDB()
-	db.SetOneOffError(mockError)
+	db.SetOneOffError(errMock)
 	store, err := NewHybridStore(db)
 	if _, ok := store.(*memStore); !ok {
 		t.Errorf("NewHybridStore -> %v, want memStore", store)
 	}
-	if err != mockError {
-		t.Errorf("NewHybridStore -> error %v, want %v", err, mockError)
+	if err != errMock {
+		t.Errorf("NewHybridStore -> error %v, want %v", err, errMock)
 	}
 }
 
@@ -59,11 +59,11 @@ func TestFusuer_AddCmd_AddsBothToDBAndSession(t *testing.T) {
 func TestHybridStore_AddCmd_AddsToSessionEvenIfDBErrors(t *testing.T) {
 	db := NewFaultyInMemoryDB()
 	f := mustNewHybridStore(db)
-	db.SetOneOffError(mockError)
+	db.SetOneOffError(errMock)
 
 	_, err := f.AddCmd(store.Cmd{Text: "haha"})
-	if err != mockError {
-		t.Errorf("AddCmd -> error %v, want %v", err, mockError)
+	if err != errMock {
+		t.Errorf("AddCmd -> error %v, want %v", err, errMock)
 	}
 
 	allCmds, err := f.AllCmds()
@@ -107,11 +107,11 @@ func TestHybridStore_AllCmds_ReturnsSessionIfDBErrors(t *testing.T) {
 	db := NewFaultyInMemoryDB("shared 1")
 	f := mustNewHybridStore(db)
 	f.AddCmd(store.Cmd{Text: "session 1"})
-	db.SetOneOffError(mockError)
+	db.SetOneOffError(errMock)
 
 	allCmds, err := f.AllCmds()
-	if err != mockError {
-		t.Errorf("AllCmds -> error %v, want %v", err, mockError)
+	if err != errMock {
+		t.Errorf("AllCmds -> error %v, want %v", err, errMock)
 	}
 	wantAllCmds := []store.Cmd{{Text: "session 1", Seq: 1}}
 	if !reflect.DeepEqual(allCmds, wantAllCmds) {

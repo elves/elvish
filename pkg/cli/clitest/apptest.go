@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/pkg/ui"
 )
 
-// Common stylesheet.
+// Styles defines a common stylesheet for unit tests.
 var Styles = ui.RuneStylesheet{
 	'_': ui.Underlined,
 	'b': ui.Bold,

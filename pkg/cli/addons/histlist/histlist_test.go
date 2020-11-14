@@ -23,9 +23,9 @@ func TestStart_NoStore(t *testing.T) {
 
 type faultyStore struct{}
 
-var mockError = errors.New("mock error")
+var errMock = errors.New("mock error")
 
-func (s faultyStore) AllCmds() ([]store.Cmd, error) { return nil, mockError }
+func (s faultyStore) AllCmds() ([]store.Cmd, error) { return nil, errMock }
 
 func TestStart_StoreError(t *testing.T) {
 	f := Setup()

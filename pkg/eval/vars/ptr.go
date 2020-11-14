@@ -44,7 +44,7 @@ func (v PtrVar) GetRaw() interface{} {
 	return reflect.Indirect(reflect.ValueOf(v.ptr)).Interface()
 }
 
-// Get sets the value pointed by the pointer, after conversion using ScanToGo.
+// Set sets the value pointed by the pointer, after conversion using ScanToGo.
 func (v PtrVar) Set(val interface{}) error {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()

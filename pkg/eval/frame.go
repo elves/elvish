@@ -77,7 +77,7 @@ func (fm *Frame) OutputFile() *os.File {
 	return fm.ports[1].File
 }
 
-// OutputFile returns a file onto which error messages can be written.
+// ErrorFile returns a file onto which error messages can be written.
 func (fm *Frame) ErrorFile() *os.File {
 	return fm.ports[2].File
 }

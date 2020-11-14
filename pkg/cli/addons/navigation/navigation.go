@@ -64,9 +64,8 @@ func (w *widget) Handle(event term.Event) bool {
 			return true
 		}
 		return false
-	} else {
-		return w.app.CodeArea().Handle(event)
 	}
+	return w.app.CodeArea().Handle(event)
 }
 
 func (w *widget) Render(width, height int) *term.Buffer {
@@ -368,8 +367,8 @@ func MutateFiltering(app cli.App, f func(bool) bool) {
 	})
 }
 
-// MutateFiltering changes whether the navigation addon should show file whose
-// names start with ".".
+// MutateShowHidden changes whether the navigation addon should show file
+// whose names start with ".".
 func MutateShowHidden(app cli.App, f func(bool) bool) {
 	actOnWidget(app, func(w *widget) {
 		w.MutateState(func(s *state) { s.ShowHidden = f(s.ShowHidden) })

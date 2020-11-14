@@ -23,7 +23,7 @@ func MustReadAllAndClose(r io.ReadCloser) []byte {
 	return bs
 }
 
-// Calls os.MkdirAll and panics if an error is returned.
+// MustMkdirAll calls os.MkdirAll and panics if an error is returned.
 func MustMkdirAll(names ...string) {
 	for _, name := range names {
 		err := os.MkdirAll(name, 0700)
@@ -33,7 +33,7 @@ func MustMkdirAll(names ...string) {
 	}
 }
 
-// Creates an empty file, and panics if an error occurs.
+// MustCreateEmpty creates an empty file, and panics if an error occurs.
 func MustCreateEmpty(names ...string) {
 	for _, name := range names {
 		file, err := os.Create(name)
@@ -44,7 +44,7 @@ func MustCreateEmpty(names ...string) {
 	}
 }
 
-// Calls ioutil.WriteFile and panics if an error occurs.
+// MustWriteFile calls ioutil.WriteFile and panics if an error occurs.
 func MustWriteFile(filename string, data []byte, perm os.FileMode) {
 	err := ioutil.WriteFile(filename, data, perm)
 	if err != nil {

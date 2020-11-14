@@ -75,8 +75,8 @@ func (t TestCase) Prints(s string) TestCase {
 	return t
 }
 
-// PrintsStderr returns an altered TestCase that requires the stderr output to
-// contain the given text.
+// PrintsStderrWith returns an altered TestCase that requires the stderr
+// output to contain the given text.
 func (t TestCase) PrintsStderrWith(s string) TestCase {
 	t.want.StderrOut = []byte(s)
 	return t
