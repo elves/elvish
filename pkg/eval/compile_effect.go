@@ -175,7 +175,7 @@ func (op *pipelineOp) exec(fm *Frame) error {
 				if fm.Editor != nil {
 					fm.Editor.Notify("%s", msg)
 				} else {
-					fm.ports[2].File.WriteString(msg + "\n")
+					fm.ErrorFile().WriteString(msg + "\n")
 				}
 			}
 		}()

@@ -199,6 +199,6 @@ func (fm *Frame) Deprecate(msg string, ctx *diag.Context) {
 	if prog.ShowDeprecations && fm.deprecations.register(dep) {
 		err := diag.Error{
 			Type: "deprecation", Message: dep.message, Context: *ctx}
-		fm.ports[2].File.WriteString(err.Show("") + "\n")
+		fm.ErrorFile().WriteString(err.Show("") + "\n")
 	}
 }
