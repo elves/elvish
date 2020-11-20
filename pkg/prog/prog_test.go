@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	. "src.elv.sh/pkg/prog/progtest"
+	"src.elv.sh/pkg/trace"
 )
 
 func TestBadFlag(t *testing.T) {
@@ -47,6 +48,17 @@ func TestHelp(t *testing.T) {
 
 	f.TestOutSnippet(t, 1, "Usage: elvish [flags] [script]")
 	f.TestOut(t, 2, "")
+}
+
+func TestTraceFlag(t *testing.T) {
+	f := Setup()
+	defer f.Cleanup()
+	defer trace.InitState()
+
+	Run(f.Fds(), Elvish("-trace=nframes=3,arglebargle,all"), testProgram{shouldRun: true})
+
+	f.TestOut(t, 1, "")
+	f.TestOut(t, 2, "unknown trace option: arglebargle\n")
 }
 
 func TestShowDeprecations(t *testing.T) {

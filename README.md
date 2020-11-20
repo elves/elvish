@@ -71,6 +71,107 @@ Some tips on installation:
     [these steps](https://github.com/golang/go/wiki/SettingGOPATH) to set
     `GOPATH`, and Elvish will be installed to `$GOPATH/bin` instead.
 
+## Running (and Debugging) Elvish
+
+Usage: `elvish` \[_options_\] \[_script_\]
+
+TODO: Document the behavior of interactive, versus, non-interactive shells once
+https://github.com/elves/elvish/issues/661 is fixed. Specifically, doing
+something like `elvish < x.elv` attempts to instantiate an interactive shell
+which causes numerous problems since stdin is not a TTY.
+
+See the `-trace` CLI option for how to gain insight into what elvish is doing.
+Use `-trace=cmd` if you are looking for the equivalent of `set -o xtrace` or
+`set -x` in shells like bash and ksh.
+
+You can send a `SIGUSR1` signal (on UNIX like systems) to a running `elvish`
+binary to cause it to write backtraces of each goroutine to stderr. For example,
+`kill -USR1 $pid`.
+
+### Command Line Options
+
+-   `-bin`: Path to the `elvish` binary. Do not use.
+
+-   `-buildinfo`: Output information about how `elvish` was built then quit. See
+    also `-json` and `-version`.
+
+-   `-c` _string_: Treat the _string_ argument as Elvish code to execute.
+    Additional arguments are bundled into the `$argv` variable.
+
+-   `-compileonly`: Compile the Elvish program without risking any side-effects
+    from executing the program. This is useful to identify problems with an
+    Elvish program that can be detected at compile time. See also `-json`.
+
+-   `-daemon`: Run the daemon instead of a shell. Do not use.
+
+-   `-db` _/path/to/db_: Path to the interactive database. Do not use.
+
+-   `-deprecation-level` _n_: Show warnings for all features deprecated as of
+    version 0._n_; e.g., 0.15. The default value depends on the specific
+    `elvish` version you are running.
+
+-   `-json`: Output the information from the `-buildinfo` and `-compileonly`
+    options in JSON format.
+
+-   `-norc`: Don't read the _\$HOME/.elvish/rc.elv_ script. This is only
+    meaningful for interactive shells.
+
+-   `-port` _n_: The TCP/IP port number of the web backend (default:: 3171). Do
+    not use.
+
+-   `-sock` _/path/to/daemon_socket_: Path to the UNIX domain socket used by, or
+    to communicate with, the daemon. Do not use.
+
+-   `-trace` _options_: Enable tracing `elvish` behavior. Options can be
+    separated by commas and/or spaces; e.g., "all,utc" and "all utc" are both
+    acceptable. Each trace message belongs to a specific class. By default each
+    trace message includes a timestamp that is the fractional seconds since the
+    previous message of the same class was output. You can switch to absolute
+    timestamps in the local or UTC timezone by including the `local` or `utc`
+    option respectively.
+
+    -   `all`: Enable all message classes. See below for the specific clases
+        that can be enabled individually.
+
+    -   `file=`_/a/path_: Write the trace output to _/a/path_. The path can be a
+        TTY device; i.e., another terminal window. The default is stderr.
+
+    -   `local`: Output trace messages prefaced by an absolute timestamp in the
+        local timezone rather than a timestamp relative to the prior message
+        with the same class.
+
+    -   `nframes=`_n_: The number of Go backtrace frames to include in trace
+        messages that don't specify an explicit number of frames.
+
+    -   `utc`: Output trace messages prefaced by an absolute timestamp in the
+        UTC timezone rather than a timestamp relative to the prior message with
+        the same class.
+
+    -   Message classes that can be enabled individually:
+
+        -   `adhoc`: Enable ad-hoc messages.
+
+        -   `cmd`: Enable messages about the execution of Elvish statements.
+            This is analogous to the `set -x` (or `set -o xtrace`) feature found
+            in POSIX shells like bash and ksh.
+
+        -   `daemon`: Enable messages related to interacting with the daemon.
+
+        -   `eval`: Enable messages related to compiling Elvish programs.
+
+        -   `shell`: Enable messages related to the behavior of the shell. At
+            the moment this only includes information about signals.
+
+        -   `store`: Enable messages related to interacting with the interactive
+            data store.
+
+        -   `terminal`: Enable messages related to interacting with the
+            terminal.
+
+-   `-version`: Output the `elvish` version then quit. See also `-buildinfo`.
+
+-   `-web`: Run the web server rather than a shell. Do not use.
+
 ## Contributing to Elvish
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for more notes for contributors.

@@ -14,6 +14,7 @@ import (
 	"runtime/pprof"
 
 	"src.elv.sh/pkg/logutil"
+	"src.elv.sh/pkg/trace"
 )
 
 // Default port on which the web interface runs. The number is chosen because it
@@ -35,7 +36,7 @@ func SetDeprecationLevel(level int) func() {
 
 // Flags keeps command-line flags.
 type Flags struct {
-	Log, CPUProfile string
+	Log, CPUProfile, Trace string
 
 	Help, Version, BuildInfo, JSON bool
 
@@ -56,6 +57,7 @@ func newFlagSet(stderr io.Writer, f *Flags) *flag.FlagSet {
 	fs.Usage = func() { usage(stderr, fs) }
 
 	fs.StringVar(&f.Log, "log", "", "a file to write debug log to except for the daemon")
+	fs.StringVar(&f.Trace, "trace", "", "execution trace options")
 	fs.StringVar(&f.CPUProfile, "cpuprofile", "", "write cpu profile to file")
 
 	fs.BoolVar(&f.Help, "help", false, "show usage help and quit")
@@ -110,15 +112,13 @@ func Run(fds [3]*os.File, args []string, programs ...Program) int {
 		}
 	}
 
-	if f.Daemon {
-		// We expect our stdout file handle is open on a unique log file for the daemon to write its
-		// log messages. See daemon.Spawn() in pkg/daemon.
-		logutil.SetOutput(fds[1])
+	if f.Trace != "" {
+		err = trace.ParseTraceOptions(f.Trace)
 	} else if f.Log != "" {
 		err = logutil.SetOutputFile(f.Log)
-		if err != nil {
-			fmt.Fprintln(fds[2], err)
-		}
+	}
+	if err != nil {
+		fmt.Fprintln(fds[2], err)
 	}
 
 	if f.Help {
