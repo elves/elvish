@@ -58,6 +58,13 @@ var parseKeyTests = []struct {
 	{s: "C-x", wantKey: Key{'X', Ctrl}},
 	{s: "C-X", wantKey: Key{'X', Ctrl}},
 
+	// Literal control chars are equivalent to the preferred Ctrl-? formulation.
+	{s: "\033", wantKey: Key{'[', Ctrl}},
+	{s: "\t", wantKey: K(Tab)},
+	{s: "Alt-\t", wantKey: Key{Tab, Alt}},
+	{s: "\n", wantKey: K(Enter)},
+	{s: "\x7F", wantKey: K(Backspace)},
+
 	// + is the same as -.
 	{s: "C+X", wantKey: Key{'X', Ctrl}},
 
@@ -81,6 +88,7 @@ var parseKeyTests = []struct {
 	{s: "F123", wantErr: "bad key: F123"},
 	{s: "Super-X", wantErr: "bad modifier: Super"},
 	{s: "a-x", wantErr: "bad modifier: a"},
+	{s: "Ctrl-\t", wantErr: `Ctrl modifier with literal control char: '\t'`},
 }
 
 func TestParseKey(t *testing.T) {
