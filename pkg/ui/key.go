@@ -189,6 +189,15 @@ func ParseKey(s string) (Key, error) {
 
 	if len(s) == 1 {
 		k.Rune = rune(s[0])
+		if k.Rune < ' ' {
+			if k.Mod&Ctrl != 0 {
+				return Key{}, fmt.Errorf("Ctrl modifier with literal control char: %q", k.Rune)
+			}
+			// Convert literal control char to the equivalent canonical form;
+			// e.g., "\e" to Ctrl-'[' and "\t" to Ctrl-I.
+			k.Mod |= Ctrl
+			k.Rune += '@'
+		}
 		// TODO(xiaq): The following assumptions about keys with Ctrl are not
 		// checked with all terminals.
 		if k.Mod&Ctrl != 0 {
