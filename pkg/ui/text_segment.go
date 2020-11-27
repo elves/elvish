@@ -95,6 +95,11 @@ func (s *Segment) Concat(v interface{}) (interface{}, error) {
 			s,
 			&Segment{Text: rhs},
 		}, nil
+	case float64:
+		return Text{
+			s,
+			&Segment{Text: vals.ToString(rhs)},
+		}, nil
 	case *Segment:
 		return Text{s, rhs}, nil
 	case Text:
@@ -110,6 +115,11 @@ func (s *Segment) RConcat(v interface{}) (interface{}, error) {
 	case string:
 		return Text{
 			&Segment{Text: lhs},
+			s,
+		}, nil
+	case float64:
+		return Text{
+			&Segment{Text: vals.ToString(lhs)},
 			s,
 		}, nil
 	}
