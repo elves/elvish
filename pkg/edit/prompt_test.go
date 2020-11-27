@@ -12,11 +12,11 @@ import (
 )
 
 func TestPrompt_ValueOutput(t *testing.T) {
-	f := setup(rc(`edit:prompt = { put 'val'; styled '> ' red }`))
+	f := setup(rc(`edit:prompt = { put '#'; float64 13; styled '> ' red }`))
 	defer f.Cleanup()
 
 	f.TestTTY(t,
-		"val> ", Styles,
+		"#13> ", Styles,
 		"   !!", term.DotHere)
 }
 

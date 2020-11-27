@@ -102,7 +102,7 @@ To see the transformer in action, try the following example (assuming default
 
 ```elvish
 n = 0
-edit:prompt = { sleep 2; to-string $n; n = (+ $n 1); put ': ' }
+edit:prompt = { sleep 2; put $n; n = (+ $n 1); put ': ' }
 edit:-prompt-eagerness = 10 # update prompt on each keystroke
 edit:prompt-stale-threshold = 0.5
 ```
