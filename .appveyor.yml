@@ -4,11 +4,13 @@ environment:
   GOPATH: c:\gopath
   ELVISH_TEST_TIME_SCALE: 10
 install:
-  # Needed since the codecov uploader depends on a UNIX "find" command.
+  # The coverage script and codecov uploader depend on a POSIX shell and
+  # commands such as `find` so ensure the relevant Windows MSYS2 directory is
+  # in the external command search path.
   - set PATH=C:\msys64\usr\bin;%PATH%
 build: off
 before_test:
   - go version
 test_script:
-  - go test -coverprofile=coverage -covermode=set ./...
+  - bash -e tools/test-coverage.sh
   - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage || ver > nul
