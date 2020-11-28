@@ -51,8 +51,8 @@ test_task:
   test_script: go test $TEST_FLAG ./...
   upload_coverage_script:
     - test -z $SKIP_UPLOAD_COVERAGE || exit 0
-    - go test -coverprofile=coverage -covermode=set ./...
-    - curl -s https://codecov.io/bash -o codecov && bash codecov -f coverage -t $CODECOV_TOKEN || true
+    - go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
+    - curl -s https://codecov.io/bash -o codecov && bash codecov -f cover -t $CODECOV_TOKEN || true
 
 checkstyle_go_task:
   name: Check the style of .go files
