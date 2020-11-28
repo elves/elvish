@@ -25,8 +25,9 @@ test:
 # Generate a basic test coverage report. This will open the report in your
 # browser. See also https://codecov.io/gh/elves/elvish/.
 cover:
-	go test -covermode=set -coverprofile=$@ ./...
-	go tool cover -html=$@
+	go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
+	go tool cover -html=cover
+	go tool cover -func=cover | tail -1 | awk '{ print "Overall coverage:", $$NF }'
 
 # Ensure the style of Go and Markdown source files is consistent.
 style:
