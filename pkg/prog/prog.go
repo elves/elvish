@@ -12,7 +12,6 @@ import (
 	"io"
 	"os"
 	"runtime/pprof"
-	"strconv"
 
 	"github.com/elves/elvish/pkg/logutil"
 )
@@ -34,7 +33,7 @@ func SetShowDeprecations(b bool) func() {
 
 // Flags keeps command-line flags.
 type Flags struct {
-	Log, LogPrefix, CPUProfile string
+	Log, CPUProfile string
 
 	Help, Version, BuildInfo, JSON bool
 
@@ -54,8 +53,7 @@ func newFlagSet(stderr io.Writer, f *Flags) *flag.FlagSet {
 	fs.SetOutput(stderr)
 	fs.Usage = func() { usage(stderr, fs) }
 
-	fs.StringVar(&f.Log, "log", "", "a file to write debug log to")
-	fs.StringVar(&f.LogPrefix, "logprefix", "", "the prefix for the daemon log file")
+	fs.StringVar(&f.Log, "log", "", "a file to write debug log to except for the daemon")
 	fs.StringVar(&f.CPUProfile, "cpuprofile", "", "write cpu profile to file")
 
 	fs.BoolVar(&f.Help, "help", false, "show usage help and quit")
@@ -110,13 +108,15 @@ func Run(fds [3]*os.File, args []string, programs ...Program) int {
 		}
 	}
 
-	if f.Log != "" {
+	if f.Daemon {
+		// We expect our stdout file handle is open on a unique log file for the daemon to write its
+		// log messages. See daemon.Spawn() in pkg/daemon.
+		logutil.SetOutput(fds[1])
+	} else if f.Log != "" {
 		err = logutil.SetOutputFile(f.Log)
-	} else if f.LogPrefix != "" {
-		err = logutil.SetOutputFile(f.LogPrefix + strconv.Itoa(os.Getpid()))
-	}
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		if err != nil {
+			fmt.Fprintln(fds[2], err)
+		}
 	}
 
 	if f.Help {

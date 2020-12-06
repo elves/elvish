@@ -59,10 +59,10 @@ func InitRuntime(stderr io.Writer, p Paths, spawn bool) *eval.Evaler {
 
 	if spawn && p.Sock != "" && p.Db != "" {
 		spawnCfg := &daemon.SpawnConfig{
-			BinPath:       p.Bin,
-			DbPath:        p.Db,
-			SockPath:      p.Sock,
-			LogPathPrefix: p.DaemonLogPrefix,
+			RunDir:   p.RunDir,
+			BinPath:  p.Bin,
+			DbPath:   p.Db,
+			SockPath: p.Sock,
 		}
 		// TODO(xiaq): Connect to daemon and install daemon module
 		// asynchronously.

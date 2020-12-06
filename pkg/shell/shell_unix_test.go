@@ -53,7 +53,7 @@ func TestShell_ConnectsToDaemon(t *testing.T) {
 		[]string{"use daemon; print $daemon:pid"},
 		&ScriptConfig{
 			Cmd: true, SpawnDaemon: true,
-			Paths: Paths{Sock: "sock", Db: "db", DaemonLogPrefix: "log-"}})
+			Paths: Paths{Sock: "sock", Db: "db", RunDir: "."}})
 	f.TestOut(t, 1, strconv.Itoa(os.Getpid()))
 	f.TestOut(t, 2, "")
 }
