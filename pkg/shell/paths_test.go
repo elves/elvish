@@ -14,9 +14,8 @@ var j = filepath.Join
 func TestMakePaths_PopulatesUnsetSubPaths(t *testing.T) {
 	paths := MakePaths(os.Stderr, Paths{RunDir: "run", DataDir: "data", Bin: "bin"})
 	wantPaths := Paths{
-		RunDir:          "run",
-		Sock:            j("run", "sock"),
-		DaemonLogPrefix: j("run", "daemon.log-"),
+		RunDir: "run",
+		Sock:   j("run", "sock"),
 
 		DataDir: "data",
 		Db:      j("data", "db"),

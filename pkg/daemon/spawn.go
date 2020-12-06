@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/elves/elvish/pkg/fsutil"
 )
 
 // SpawnConfig keeps configurations for spawning the daemon.
@@ -18,17 +20,17 @@ type SpawnConfig struct {
 	// SockPath is the path to the socket on which the daemon will serve
 	// requests.
 	SockPath string
-	// LogPathPrefix is used to derive the name of the log file by adding the
-	// pid.
-	LogPathPrefix string
+	// RunDir is the directory in which to place the daemon log file.
+	RunDir string
 }
 
-// Spawn spawns a daemon process in the background by invoking BinPath, passing
-// DbPath, SockPath and LogPathPrefix as command-line arguments after resolving
-// them to absolute paths. A suitable ProcAttr is chosen depending on the OS and
-// makes sure that the daemon is detached from the current terminal (so that it
-// is not affected by I/O or signals in the current terminal), and keeps running
-// after the current process quits.
+// Spawn spawns a daemon process in the background by invoking BinPath. Passing BinPath, DbPath and
+// SockPath as command-line arguments after resolving them to absolute paths. The daemon log file is
+// created in the secure run-time dir.
+//
+// A suitable ProcAttr is chosen depending on the OS and makes sure that the daemon is detached from
+// the current terminal (so that it is not affected by I/O or signals in the current terminal), and
+// keeps running after the current process quits.
 func Spawn(cfg *SpawnConfig) error {
 	binPath := cfg.BinPath
 	// Determine binPath.
@@ -58,7 +60,7 @@ func Spawn(cfg *SpawnConfig) error {
 	binPath = abs("BinPath", binPath)
 	dbPath := abs("DbPath", cfg.DbPath)
 	sockPath := abs("SockPath", cfg.SockPath)
-	logPathPrefix := abs("LogPathPrefix", cfg.LogPathPrefix)
+	runDir := abs("RunDir", cfg.RunDir)
 	if pathError != nil {
 		return pathError
 	}
@@ -69,11 +71,17 @@ func Spawn(cfg *SpawnConfig) error {
 		"-bin", binPath,
 		"-db", dbPath,
 		"-sock", sockPath,
-		"-logprefix", logPathPrefix,
 	}
 
-	// TODO Redirect daemon stdout and stderr
+	daemonStdout, err := fsutil.ClaimFile(runDir, "daemon-*.log")
+	if err != nil {
+		return err
+	}
+	defer daemonStdout.Close()
 
-	_, err := os.StartProcess(binPath, args, procAttrForSpawn())
+	procattrs := procAttrForSpawn(daemonStdout)
+	_, err = os.StartProcess(binPath, args, procattrs)
+	procattrs.Files[0].Close() // drop our reference to the /dev/null handle passed to the daemon
+
 	return err
 }

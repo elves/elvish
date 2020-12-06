@@ -11,9 +11,8 @@ import (
 
 // Paths keeps all paths required for the Elvish runtime.
 type Paths struct {
-	RunDir          string
-	Sock            string
-	DaemonLogPrefix string
+	RunDir string
+	Sock   string
 
 	DataDir string
 	Db      string
@@ -29,7 +28,6 @@ func MakePaths(stderr io.Writer, overrides Paths) Paths {
 	setDir(&p.RunDir, "secure run directory", getSecureRunDir, stderr)
 	if p.RunDir != "" {
 		setChild(&p.Sock, p.RunDir, "sock")
-		setChild(&p.DaemonLogPrefix, p.RunDir, "daemon.log-")
 	}
 
 	setDir(&p.DataDir, "data directory", ensureDataDir, stderr)
