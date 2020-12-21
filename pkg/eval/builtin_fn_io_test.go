@@ -55,3 +55,25 @@ func TestBuiltinFnIO(t *testing.T) {
 		That(`put [$nil foo] | to-json`).Prints("[null,\"foo\"]\n"),
 	)
 }
+
+func TestBuiltinFnPrintf(t *testing.T) {
+	Test(t,
+		That(`printf abcd`).Prints("abcd"),
+		That(`printf '%s\n%s\n' abc xyz`).Prints("abc\\nxyz\\n"),
+		That(`printf "%s\n%s\n" abc xyz`).Prints("abc\nxyz\n"),
+		That(`printf '%.1f' 3.1415`).Prints("3.1"),
+		That(`printf '%.1f' (float64 3.1415)`).Prints("3.1"),
+		That(`printf '%5.3s' 3.1415`).Prints("  3.1"),
+		That(`printf '%5.3s' (float64 3.1415)`).Prints("  3.1"),
+		That(`printf '%3d' (float64 5)`).Prints("  5"),
+		That(`printf '%3d' 5`).Prints("  5"),
+		That(`printf '%08b' (float64 5)`).Prints("00000101"),
+		That(`printf '%08b' 5`).Prints("00000101"),
+		That(`printf '%t' $true`).Prints("true"),
+
+		// Verify that corner cases produce the expected error output.
+		That(`printf '%f' 1.3x`).Prints("%!f(cannot parse as number: 1.3x)"),
+		That(`printf '%d' 3.5`).Prints("%!d(cannot parse as integer: 3.5)"),
+		That(`printf '%d' (float64 5.1)`).Prints("%!d(must be an integer)"),
+	)
+}
