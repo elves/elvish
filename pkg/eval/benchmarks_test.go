@@ -7,33 +7,42 @@ import (
 )
 
 func BenchmarkEval_Empty(b *testing.B) {
-	benchmarkEval(b.N, "")
+	benchmarkEval(b, "")
 }
 
 func BenchmarkEval_NopCommand(b *testing.B) {
-	benchmarkEval(b.N, "nop")
+	benchmarkEval(b, "nop")
 }
 
 func BenchmarkEval_PutCommand(b *testing.B) {
-	benchmarkEval(b.N, "put x")
+	benchmarkEval(b, "put x")
 }
 
 func BenchmarkEval_ForLoop100WithEmptyBody(b *testing.B) {
-	benchmarkEval(b.N, "for x [(range 100)] { }")
+	benchmarkEval(b, "for x [(range 100)] { }")
 }
 
 func BenchmarkEval_EachLoop100WithEmptyBody(b *testing.B) {
-	benchmarkEval(b.N, "range 100 | each [x]{ }")
+	benchmarkEval(b, "range 100 | each [x]{ }")
 }
 
-func benchmarkEval(n int, code string) {
+func BenchmarkEval_LocalVariableAccess(b *testing.B) {
+	benchmarkEval(b, "x = val; nop $x")
+}
+
+func BenchmarkEval_UpVariableAccess(b *testing.B) {
+	benchmarkEval(b, "x = val; { nop $x }")
+}
+
+func benchmarkEval(b *testing.B, code string) {
 	ev := NewEvaler()
 	src := parse.Source{Name: "[benchmark]", Code: code}
 	op, err := ev.ParseAndCompile(src, nil)
 	if err != nil {
 		panic(err)
 	}
-	for i := 0; i < n; i++ {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
 		ev.Eval(op, EvalCfg{})
 	}
 }
