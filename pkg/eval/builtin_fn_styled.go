@@ -104,10 +104,10 @@ func styledSegment(options RawOptions, input interface{}) (*ui.Segment, error) {
 //
 //     -   A 24-bit RGB color written as `#RRGGBB` such as `'#778899'`.
 //
-//		   **NOTE:** You need to quote such values since an unquoted `#` char
+//		   **Note**: You need to quote such values since an unquoted `#` char
 //		   introduces a comment. So use `'bg-#778899'` not `bg-#778899`. If
 //		   you omit the quotes the text after the `#` char is ignored which
-//		   will likely result in an error or unexpected behavior.
+//		   will result in an error or unexpected behavior.
 //
 // -   A color name prefixed by `bg-` to set the background color.
 //
