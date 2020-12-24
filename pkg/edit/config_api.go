@@ -24,15 +24,15 @@ import (
 // it can often occupy the entire terminal, and push up your scrollback buffer.
 // Change this variable to a finite number to restrict the height of the editor.
 
-func initMaxHeight(appSpec *cli.AppSpec, ns eval.Ns) {
+func initMaxHeight(appSpec *cli.AppSpec, nb eval.NsBuilder) {
 	maxHeight := newIntVar(-1)
 	appSpec.MaxHeight = func() int { return maxHeight.GetRaw().(int) }
-	ns.Add("max-height", maxHeight)
+	nb.Add("max-height", maxHeight)
 }
 
-func initReadlineHooks(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
-	initBeforeReadline(appSpec, ev, ns)
-	initAfterReadline(appSpec, ev, ns)
+func initReadlineHooks(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder) {
+	initBeforeReadline(appSpec, ev, nb)
+	initAfterReadline(appSpec, ev, nb)
 }
 
 //elvdoc:var before-readline
@@ -40,9 +40,9 @@ func initReadlineHooks(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 // A list of functions to call before each readline cycle. Each function is
 // called without any arguments.
 
-func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
+func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder) {
 	hook := newListVar(vals.EmptyList)
-	ns["before-readline"] = hook
+	nb["before-readline"] = hook
 	appSpec.BeforeReadline = append(appSpec.BeforeReadline, func() {
 		callHooks(ev, "$<edit>:before-readline", hook.Get().(vals.List))
 	})
@@ -53,9 +53,9 @@ func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 // A list of functions to call after each readline cycle. Each function is
 // called with a single string argument containing the code that has been read.
 
-func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
+func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder) {
 	hook := newListVar(vals.EmptyList)
-	ns["after-readline"] = hook
+	nb["after-readline"] = hook
 	appSpec.AfterReadline = append(appSpec.AfterReadline, func(code string) {
 		callHooks(ev, "$<edit>:after-readline", hook.Get().(vals.List), code)
 	})
@@ -71,11 +71,11 @@ func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 // not run. The default value of this list contains a filter which
 // ignores command starts with space.
 
-func initAddCmdFilters(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns, s histutil.Store) {
+func initAddCmdFilters(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder, s histutil.Store) {
 	ignoreLeadingSpace := eval.NewGoFn("<ignore-cmd-with-leading-space>",
 		func(s string) bool { return !strings.HasPrefix(s, " ") })
 	filters := newListVar(vals.MakeList(ignoreLeadingSpace))
-	ns["add-cmd-filters"] = filters
+	nb["add-cmd-filters"] = filters
 
 	appSpec.AfterReadline = append(appSpec.AfterReadline, func(code string) {
 		if code != "" &&

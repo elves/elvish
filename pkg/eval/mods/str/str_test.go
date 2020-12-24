@@ -12,7 +12,9 @@ import (
 )
 
 func TestStr(t *testing.T) {
-	setup := func(ev *eval.Evaler) { ev.Builtin.AddNs("str", Ns) }
+	setup := func(ev *eval.Evaler) {
+		ev.Global = eval.NsBuilder{}.AddNs("str", Ns).Ns()
+	}
 	TestWithSetup(t, setup,
 		That(`str:compare abc`).Throws(AnyError),
 		That(`str:compare abc abc`).Puts("0"),

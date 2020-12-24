@@ -15,11 +15,11 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histutil.Store) {
+func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histutil.Store, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	app := ed.app
-	ed.ns.AddNs("listing",
-		eval.Ns{
+	nb.AddNs("listing",
+		eval.NsBuilder{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:listing>:", map[string]interface{}{
 			"accept":       func() { listingAccept(app) },
@@ -37,20 +37,20 @@ func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histuti
 			/*
 				"toggle-filtering": cli.ListingToggleFiltering,
 			*/
-		}))
+		}).Ns())
 
-	initHistlist(ed, ev, histStore, bindingVar)
-	initLastcmd(ed, ev, histStore, bindingVar)
-	initLocation(ed, ev, st, bindingVar)
+	initHistlist(ed, ev, histStore, bindingVar, nb)
+	initLastcmd(ed, ev, histStore, bindingVar, nb)
+	initLocation(ed, ev, st, bindingVar, nb)
 }
 
-func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar) {
+func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar, commonBindingVar)
 	dedup := newBoolVar(true)
 	caseSensitive := newBoolVar(true)
-	ed.ns.AddNs("histlist",
-		eval.Ns{
+	nb.AddNs("histlist",
+		eval.NsBuilder{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:histlist>", map[string]interface{}{
 			"start": func() {
@@ -74,23 +74,23 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 				listingRefilter(ed.app)
 				ed.app.Redraw()
 			},
-		}))
+		}).Ns())
 }
 
-func initLastcmd(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar) {
+func initLastcmd(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar, commonBindingVar)
-	ed.ns.AddNs("lastcmd",
-		eval.Ns{
+	nb.AddNs("lastcmd",
+		eval.NsBuilder{
 			"binding": bindingVar,
 		}.AddGoFn("<edit:lastcmd>", "start", func() {
 			// TODO: Specify wordifier
 			lastcmd.Start(ed.app, lastcmd.Config{
 				Binding: binding, Store: histStore})
-		}))
+		}).Ns())
 }
 
-func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar vars.PtrVar) {
+func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	pinnedVar := newListVar(vals.EmptyList)
 	hiddenVar := newListVar(vals.EmptyList)
@@ -100,8 +100,8 @@ func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar 
 	workspaceIterator := location.WorkspaceIterator(
 		adaptToIterateStringPair(workspacesVar))
 
-	ed.ns.AddNs("location",
-		eval.Ns{
+	nb.AddNs("location",
+		eval.NsBuilder{
 			"binding":    bindingVar,
 			"hidden":     hiddenVar,
 			"pinned":     pinnedVar,
@@ -113,7 +113,7 @@ func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar 
 				IterateHidden:     adaptToIterateString(hiddenVar),
 				IterateWorkspaces: workspaceIterator,
 			})
-		}))
+		}).Ns())
 	ev.AddAfterChdir(func(string) {
 		wd, err := os.Getwd()
 		if err != nil {

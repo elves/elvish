@@ -2,7 +2,6 @@ package eval
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/errs"
@@ -22,7 +21,7 @@ type lvaluesGroup struct {
 // Parsed lvalue.
 type lvalue struct {
 	diag.Ranging
-	qname    string
+	ref      *varRef
 	indexOps []valuesOp
 	ends     []int
 }
@@ -55,33 +54,41 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing) lvaluesGroup {
 		return cp.parseCompoundLValues(n.Head.Braced)
 	}
 	// A basic lvalue.
-	ref := cp.literal(n.Head, "lvalue only supports literal variable names")
-	sigil, qname := SplitVariableRef(ref)
+	varUse := cp.literal(n.Head, "lvalue only supports literal variable names")
+	sigil, qname := SplitVariableRef(varUse)
+	var ref *varRef
+	if len(n.Indicies) == 0 {
+		ref = resolveVarRef(cp, qname, nil)
+		if ref == nil {
+			segs := SplitQNameSegs(qname)
+			if len(segs) == 1 {
+				// Unqualified name - implicit local
+				ref = &varRef{localScope, cp.thisScope().addInner(segs[0]), nil}
+			} else if len(segs) == 2 && (segs[0] == "local:" || segs[0] == ":") {
+				// Qualified local name
+				ref = &varRef{localScope, cp.thisScope().addInner(segs[1]), nil}
+			} else {
+				cp.errorpf(n, "cannot create variable $%s; new variables can only be created in the local scope", qname)
+			}
+		}
+	} else {
+		ref = resolveVarRef(cp, qname, n)
+		if ref == nil {
+			cp.errorpf(n, "cannot find variable $%s", qname)
+		}
+	}
 	ends := make([]int, len(n.Indicies)+1)
 	ends[0] = n.Head.Range().To
 	for i, idx := range n.Indicies {
 		ends[i+1] = idx.Range().To
 	}
-	lv := lvalue{n.Range(), qname, cp.arrayOps(n.Indicies), ends}
+	lv := lvalue{n.Range(), ref, cp.arrayOps(n.Indicies), ends}
 	restIndex := -1
 	if sigil == "@" {
 		restIndex = 0
 	}
 	// TODO: Deal with other sigils when they exist.
 	return lvaluesGroup{[]lvalue{lv}, restIndex}
-}
-
-func (cp *compiler) registerLValues(lhs lvaluesGroup) {
-	for _, lv := range lhs.lvalues {
-		if len(lv.indexOps) == 0 {
-			cp.registerVariableSet(lv.qname)
-		} else {
-			ok := cp.registerVariableGet(lv.qname, lv)
-			if !ok {
-				cp.errorpf(lv, "variable $%s not found", lv.qname)
-			}
-		}
-	}
 }
 
 type assignOp struct {
@@ -93,7 +100,7 @@ type assignOp struct {
 func (op *assignOp) exec(fm *Frame) error {
 	variables := make([]vars.Var, len(op.lhs.lvalues))
 	for i, lvalue := range op.lhs.lvalues {
-		variable, err := getVar(fm, lvalue)
+		variable, err := derefLValue(fm, lvalue)
 		if err != nil {
 			return fm.errorp(op, err)
 		}
@@ -145,16 +152,8 @@ func (op *assignOp) exec(fm *Frame) error {
 	return nil
 }
 
-func getVar(fm *Frame, lv lvalue) (vars.Var, error) {
-	variable := fm.ResolveVar(lv.qname)
-	if variable == nil {
-		ns, _ := SplitQNameNs(lv.qname)
-		if ns == "" || ns == ":" || ns == "local:" {
-			// This should have been created as part of pipelineOp.
-			return nil, errors.New("compiler bug: new local variable not created in pipeline")
-		}
-		return nil, fmt.Errorf("new variables can only be created in local scope")
-	}
+func derefLValue(fm *Frame, lv lvalue) (vars.Var, error) {
+	variable := deref(fm, lv.ref)
 	if len(lv.indexOps) == 0 {
 		return variable, nil
 	}

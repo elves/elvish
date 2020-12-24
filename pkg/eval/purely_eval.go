@@ -71,10 +71,10 @@ func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
 		if sigil != "" {
 			return nil
 		}
-		ec := NewTopFrame(ev, parse.Source{Name: "[purely-eval]"}, nil)
-		variable := ec.ResolveVar(qname)
-		if variable != nil {
-			return variable.Get()
+		fm := NewTopFrame(ev, parse.Source{Name: "[purely-eval]"}, nil)
+		ref := resolveVarRef(fm, qname, nil)
+		if ref != nil {
+			return deref(fm, ref).Get()
 		}
 	}
 	return nil

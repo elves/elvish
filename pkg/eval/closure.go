@@ -21,7 +21,7 @@ type closure struct {
 	OptNames    []string
 	OptDefaults []interface{}
 	Op          effectOp
-	Captured    Ns
+	Captured    *Ns
 	SrcMeta     parse.Source
 	DefRange    diag.Ranging
 }
@@ -77,27 +77,27 @@ func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 	// and ports can be problematic.
 
 	// Make upvalue namespace and capture variables.
-	// TODO(xiaq): Is it safe to simply assign ec.up = c.Captured?
-	fm.up = make(Ns)
-	for name, variable := range c.Captured {
-		fm.up[name] = variable
-	}
+	fm.up = c.Captured
 
 	// Populate local scope with arguments and options.
-	fm.local = make(Ns)
+	localSize := len(c.ArgNames) + len(c.OptNames)
+	fm.local = &Ns{make([]vars.Var, localSize), make([]string, localSize)}
+	for i, name := range c.ArgNames {
+		fm.local.names[i] = name
+	}
 	if c.RestArg == -1 {
-		for i, name := range c.ArgNames {
-			fm.local[name] = vars.FromInit(args[i])
+		for i, _ := range c.ArgNames {
+			fm.local.slots[i] = vars.FromInit(args[i])
 		}
 	} else {
 		for i := 0; i < c.RestArg; i++ {
-			fm.local[c.ArgNames[i]] = vars.FromInit(args[i])
+			fm.local.slots[i] = vars.FromInit(args[i])
 		}
 		restOff := len(args) - len(c.ArgNames)
-		fm.local[c.ArgNames[c.RestArg]] = vars.FromInit(
+		fm.local.slots[c.RestArg] = vars.FromInit(
 			vals.MakeList(args[c.RestArg : c.RestArg+restOff+1]...))
 		for i := c.RestArg + 1; i < len(c.ArgNames); i++ {
-			fm.local[c.ArgNames[i]] = vars.FromInit(args[i+restOff])
+			fm.local.slots[i] = vars.FromInit(args[i+restOff])
 		}
 	}
 	optUsed := make(map[string]struct{})
@@ -108,7 +108,8 @@ func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 		} else {
 			v = c.OptDefaults[i]
 		}
-		fm.local[name] = vars.FromInit(v)
+		fm.local.names[len(c.ArgNames)+i] = name
+		fm.local.slots[len(c.ArgNames)+i] = vars.FromInit(v)
 	}
 	for name := range opts {
 		_, used := optUsed[name]

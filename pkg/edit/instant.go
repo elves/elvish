@@ -27,15 +27,15 @@ import (
 // commands. For example, if you type `sudo rm -rf /tmp/*` in the instant mode,
 // Elvish will attempt to evaluate `sudo rm -rf /` when you typed that far.
 
-func initInstant(ed *Editor, ev *eval.Evaler) {
+func initInstant(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar)
-	ed.ns.AddNs("-instant",
-		eval.Ns{
+	nb.AddNs("-instant",
+		eval.NsBuilder{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:-instant>:", map[string]interface{}{
 			"start": func() { instantStart(ed.app, ev, binding) },
-		}))
+		}).Ns())
 }
 
 func instantStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {

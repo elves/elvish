@@ -17,6 +17,23 @@ func SplitVariableRef(ref string) (sigil string, qname string) {
 	}
 }
 
+func SplitQName(qname string) (first, rest string) {
+	colon := strings.IndexByte(qname, ':')
+	if colon == -1 {
+		return qname, ""
+	}
+	return qname[:colon+1], qname[colon+1:]
+}
+
+// SplitQNameSegs splits a qualified name into namespace segments.
+func SplitQNameSegs(qname string) []string {
+	segs := strings.SplitAfter(qname, ":")
+	if len(segs) > 0 && segs[len(segs)-1] == "" {
+		segs = segs[:len(segs)-1]
+	}
+	return segs
+}
+
 // SplitQNameNs splits a qualified variable name into the namespace part and the
 // name part.
 func SplitQNameNs(qname string) (ns, name string) {

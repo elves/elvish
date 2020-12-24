@@ -28,7 +28,9 @@ func TestPlatform(t *testing.T) {
 	savedOsHostname := osHostname
 	osHostname = hostnameMock
 	defer func() { osHostname = savedOsHostname }()
-	setup := func(ev *eval.Evaler) { ev.Builtin.AddNs("platform", Ns) }
+	setup := func(ev *eval.Evaler) {
+		ev.Global = eval.NsBuilder{}.AddNs("platform", Ns).Ns()
+	}
 	TestWithSetup(t, setup,
 		That(`put $platform:arch`).Puts(runtime.GOARCH),
 		That(`put $platform:os`).Puts(runtime.GOOS),

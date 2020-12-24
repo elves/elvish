@@ -30,9 +30,9 @@ func TestEvalTimeDeprecate(t *testing.T) {
 	defer cleanup()
 
 	TestWithSetup(t, func(ev *Evaler) {
-		ev.Global.AddGoFn("", "dep", func(fm *Frame) {
+		ev.Global = NsBuilder{}.AddGoFn("", "dep", func(fm *Frame) {
 			fm.Deprecate("deprecated", nil)
-		})
+		}).Ns()
 	},
 		That("dep").PrintsStderrWith("deprecated"),
 		// Deprecation message is only shown once.

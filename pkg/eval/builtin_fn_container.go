@@ -60,8 +60,8 @@ func init() {
 // ▶ value
 // ```
 
-func nsFn(m hashmap.Map) (Ns, error) {
-	ns := make(Ns)
+func nsFn(m hashmap.Map) (*Ns, error) {
+	nb := make(NsBuilder)
 	for it := m.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		kstring, ok := k.(string)
@@ -70,9 +70,9 @@ func nsFn(m hashmap.Map) (Ns, error) {
 				What:  `key of argument of "ns"`,
 				Valid: "string", Actual: vals.Kind(k)}
 		}
-		ns[kstring] = vars.FromInit(v)
+		nb[kstring] = vars.FromInit(v)
 	}
-	return ns, nil
+	return nb.Ns(), nil
 }
 
 //elvdoc:fn make-map

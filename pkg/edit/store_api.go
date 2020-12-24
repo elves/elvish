@@ -60,8 +60,8 @@ func insertLastWord(app cli.App, histStore histutil.Store) error {
 	return nil
 }
 
-func initStoreAPI(app cli.App, ns eval.Ns, fuser histutil.Store) {
-	ns.AddGoFns("<edit>", map[string]interface{}{
+func initStoreAPI(app cli.App, nb eval.NsBuilder, fuser histutil.Store) {
+	nb.AddGoFns("<edit>", map[string]interface{}{
 		"command-history": func(fm *eval.Frame) error {
 			return commandHistory(fuser, fm.OutputChan())
 		},

@@ -11,6 +11,7 @@ import (
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/glob"
 	"github.com/elves/elvish/pkg/parse"
@@ -265,10 +266,11 @@ func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 		return literalValues(n, n.Value)
 	case parse.Variable:
 		sigil, qname := SplitVariableRef(n.Value)
-		if !cp.registerVariableGet(qname, n) {
+		ref := resolveVarRef(cp, qname, n)
+		if ref == nil {
 			cp.errorpf(n, "variable $%s not found", qname)
 		}
-		return &variableOp{n.Range(), sigil != "", qname}
+		return &variableOp{n.Range(), sigil != "", qname, ref}
 	case parse.Wildcard:
 		seg, err := wildcardToSegment(parse.SourceText(n))
 		if err != nil {
@@ -311,10 +313,11 @@ type variableOp struct {
 	diag.Ranging
 	explode bool
 	qname   string
+	ref     *varRef
 }
 
 func (op variableOp) exec(fm *Frame) ([]interface{}, error) {
-	variable := fm.ResolveVar(op.qname)
+	variable := deref(fm, op.ref)
 	if variable == nil {
 		return nil, fm.errorpf(op, "variable $%s not found", op.qname)
 	}
@@ -480,28 +483,19 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 		}
 	}
 
-	thisScope := cp.pushScope()
+	thisScope, thisUp := cp.pushScope()
 	for _, argName := range argNames {
-		thisScope.set(argName)
+		thisScope.add(argName)
 	}
 	for _, optName := range optNames {
-		thisScope.set(optName)
+		thisScope.add(optName)
 	}
-	savedLocals := cp.pushNewLocals()
+	scopeSizeInit := len(thisScope.names)
 	chunkOp := cp.chunkOp(n.Chunk)
-	scopeOp := wrapScopeOp(chunkOp, cp.newLocals)
-	cp.newLocals = savedLocals
-
-	// TODO(xiaq): The fiddlings with cp.capture is error-prone.
-	capture := cp.capture
-	cp.capture = make(staticNs)
+	scopeOp := wrapScopeOp(chunkOp, thisScope.names[scopeSizeInit:])
 	cp.popScope()
 
-	for name := range capture {
-		cp.registerVariableGet(name, nil)
-	}
-
-	return &lambdaOp{n.Range(), argNames, restArg, optNames, optDefaultOps, capture, scopeOp, cp.srcMeta}
+	return &lambdaOp{n.Range(), argNames, restArg, optNames, optDefaultOps, thisUp, scopeOp, cp.srcMeta}
 }
 
 type lambdaOp struct {
@@ -510,15 +504,20 @@ type lambdaOp struct {
 	restArg       int
 	optNames      []string
 	optDefaultOps []valuesOp
-	capture       staticNs
+	capture       *staticUpNs
 	subop         effectOp
 	srcMeta       parse.Source
 }
 
 func (op *lambdaOp) exec(fm *Frame) ([]interface{}, error) {
-	evCapture := make(Ns)
-	for name := range op.capture {
-		evCapture[name] = fm.ResolveVar(":" + name)
+	capture := &Ns{
+		names: op.capture.names, slots: make([]vars.Var, len(op.capture.names))}
+	for i := range op.capture.names {
+		if op.capture.local[i] {
+			capture.slots[i] = fm.local.slots[op.capture.index[i]]
+		} else {
+			capture.slots[i] = fm.up.slots[op.capture.index[i]]
+		}
 	}
 	optDefaults := make([]interface{}, len(op.optDefaultOps))
 	for i, op := range op.optDefaultOps {
@@ -528,7 +527,7 @@ func (op *lambdaOp) exec(fm *Frame) ([]interface{}, error) {
 		}
 		optDefaults[i] = defaultValue
 	}
-	return []interface{}{&closure{op.argNames, op.restArg, op.optNames, optDefaults, op.subop, evCapture, op.srcMeta, op.Range()}}, nil
+	return []interface{}{&closure{op.argNames, op.restArg, op.optNames, optDefaults, op.subop, capture, op.srcMeta, op.Range()}}, nil
 }
 
 type mapOp struct {

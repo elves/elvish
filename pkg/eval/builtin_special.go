@@ -87,12 +87,13 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 			ns, name := SplitQNameNsFirst(qname)
 			switch ns {
 			case "", ":", "local:":
-				if !cp.thisScope().has(name) {
+				index := cp.thisScope().lookup(name)
+				if index == -1 {
 					cp.errorpf(cn, "no variable $%s in local scope", name)
 					continue
 				}
 				cp.thisScope().del(name)
-				f = delLocalVarOp{name}
+				f = delLocalVarOp{index}
 			case "E:":
 				f = delEnvVarOp{name}
 			default:
@@ -100,21 +101,22 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 				continue
 			}
 		} else {
-			if !cp.registerVariableGet(qname, nil) {
+			ref := resolveVarRef(cp, qname, nil)
+			if ref == nil {
 				cp.errorpf(cn, "no variable $%s", head.Value)
 				continue
 			}
-			f = newDelElementOp(qname, head.Range().From, head.Range().To, cp.arrayOps(indices))
+			f = newDelElementOp(ref, head.Range().From, head.Range().To, cp.arrayOps(indices))
 		}
 		ops = append(ops, f)
 	}
 	return seqOp{ops}
 }
 
-type delLocalVarOp struct{ name string }
+type delLocalVarOp struct{ index int }
 
 func (op delLocalVarOp) exec(fm *Frame) error {
-	delete(fm.local, op.name)
+	fm.local.slots[op.index] = nil
 	return nil
 }
 
@@ -124,17 +126,17 @@ func (op delEnvVarOp) exec(*Frame) error {
 	return os.Unsetenv(op.name)
 }
 
-func newDelElementOp(qname string, begin, headEnd int, indexOps []valuesOp) effectOp {
+func newDelElementOp(ref *varRef, begin, headEnd int, indexOps []valuesOp) effectOp {
 	ends := make([]int, len(indexOps)+1)
 	ends[0] = headEnd
 	for i, op := range indexOps {
 		ends[i+1] = op.Range().To
 	}
-	return &delElemOp{qname, indexOps, begin, ends}
+	return &delElemOp{ref, indexOps, begin, ends}
 }
 
 type delElemOp struct {
-	qname    string
+	ref      *varRef
 	indexOps []valuesOp
 	begin    int
 	ends     []int
@@ -156,7 +158,7 @@ func (op *delElemOp) exec(fm *Frame) error {
 		}
 		indices = append(indices, indexValues[0])
 	}
-	err := vars.DelElement(fm.ResolveVar(op.qname), indices)
+	err := vars.DelElement(deref(fm, op.ref), indices)
 	if err != nil {
 		if level := vars.ElementErrorLevel(err); level >= 0 {
 			return fm.errorp(diag.Ranging{From: op.begin, To: op.ends[level]}, err)
@@ -172,18 +174,17 @@ func (op *delElemOp) exec(fm *Frame) error {
 func compileFn(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	nameNode := args.next()
-	varName := mustString(cp, nameNode, "must be a literal string") + FnSuffix
+	name := mustString(cp, nameNode, "must be a literal string")
 	bodyNode := args.nextMustLambda()
 	args.mustEnd()
 
-	cp.registerVariableSet(":" + varName)
 	op := cp.lambda(bodyNode)
 
-	return fnOp{varName, op}
+	return fnOp{cp.thisScope().add(name + FnSuffix), op}
 }
 
 type fnOp struct {
-	varName  string
+	varIndex int
 	lambdaOp valuesOp
 }
 
@@ -191,14 +192,14 @@ func (op fnOp) exec(fm *Frame) error {
 	// Initialize the function variable with the builtin nop function. This step
 	// allows the definition of recursive functions; the actual function will
 	// never be called.
-	fm.local[op.varName] = vars.FromInit(NewGoFn("<shouldn't be called>", nop))
+	fm.local.slots[op.varIndex] = vars.FromInit(NewGoFn("<shouldn't be called>", nop))
 	values, err := op.lambdaOp.exec(fm)
 	if err != nil {
 		return err
 	}
 	c := values[0].(*closure)
 	c.Op = fnWrap{c.Op}
-	return fm.local[op.varName].Set(c)
+	return fm.local.slots[op.varIndex].Set(c)
 }
 
 type fnWrap struct{ effectOp }
@@ -239,14 +240,13 @@ func compileUse(cp *compiler, fn *parse.Form) effectOp {
 			"superfluous argument(s)")
 	}
 
-	cp.thisScope().set(name + NsSuffix)
-
-	return useOp{fn.Range(), name, spec}
+	return useOp{fn.Range(), cp.thisScope().add(name + NsSuffix), spec}
 }
 
 type useOp struct {
 	diag.Ranging
-	name, spec string
+	varIndex int
+	spec     string
 }
 
 func (op useOp) exec(fm *Frame) error {
@@ -254,11 +254,11 @@ func (op useOp) exec(fm *Frame) error {
 	if err != nil {
 		return fm.errorp(op, err)
 	}
-	fm.local.AddNs(op.name, ns)
+	fm.local.slots[op.varIndex] = vars.FromInit(ns)
 	return nil
 }
 
-func use(fm *Frame, spec string, st *StackTrace) (Ns, error) {
+func use(fm *Frame, spec string, st *StackTrace) (*Ns, error) {
 	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") {
 		var dir string
 		if fm.srcMeta.IsFile {
@@ -286,7 +286,7 @@ func use(fm *Frame, spec string, st *StackTrace) (Ns, error) {
 	return useFromFile(fm, spec, fm.libDir+"/"+spec+".elv", st)
 }
 
-func useFromFile(fm *Frame, spec, path string, st *StackTrace) (Ns, error) {
+func useFromFile(fm *Frame, spec, path string, st *StackTrace) (*Ns, error) {
 	if ns, ok := fm.modules[path]; ok {
 		return ns, nil
 	}
@@ -300,9 +300,9 @@ func useFromFile(fm *Frame, spec, path string, st *StackTrace) (Ns, error) {
 	return evalModule(fm, path, parse.Source{Name: path, Code: code, IsFile: true}, st)
 }
 
-func evalModule(fm *Frame, key string, src parse.Source, st *StackTrace) (Ns, error) {
+func evalModule(fm *Frame, key string, src parse.Source, st *StackTrace) (*Ns, error) {
 	// Make an empty scope to evaluate the module in.
-	ns := Ns{}
+	ns := new(Ns)
 	// Load the namespace before executing. This prevent circular use'es from
 	// resulting in an infinite recursion.
 	fm.Evaler.modules[key] = ns
@@ -316,13 +316,13 @@ func evalModule(fm *Frame, key string, src parse.Source, st *StackTrace) (Ns, er
 }
 
 // Evaluates a source. Shared by evalModule and the eval builtin.
-func evalInner(fm *Frame, src parse.Source, ns Ns, st *StackTrace) error {
+func evalInner(fm *Frame, src parse.Source, ns *Ns, st *StackTrace) error {
 	tree, err := parse.ParseWithDeprecation(src, fm.ErrorFile())
 	if err != nil {
 		return err
 	}
 	newFm := &Frame{
-		fm.Evaler, src, ns, make(Ns),
+		fm.Evaler, src, ns, new(Ns),
 		fm.intCh, fm.ports, fm.traceback, fm.background}
 	op, err := compile(newFm.Builtin.static(), ns.static(), tree, fm.ErrorFile())
 	if err != nil {
@@ -512,7 +512,7 @@ type forOp struct {
 }
 
 func (op *forOp) exec(fm *Frame) error {
-	variable, err := getVar(fm, op.lvalue)
+	variable, err := derefLValue(fm, op.lvalue)
 	if err != nil {
 		return fm.errorp(op, err)
 	}
@@ -612,9 +612,9 @@ type tryOp struct {
 func (op *tryOp) exec(fm *Frame) error {
 	body := execLambdaOp(fm, op.bodyOp)
 	var exceptVar vars.Var
-	if op.exceptVar.qname != "" {
+	if op.exceptVar.ref != nil {
 		var err error
-		exceptVar, err = getVar(fm, op.exceptVar)
+		exceptVar, err = derefLValue(fm, op.exceptVar)
 		if err != nil {
 			return fm.errorp(op, err)
 		}
@@ -655,7 +655,6 @@ func (cp *compiler) compileOneLValue(n *parse.Compound) lvalue {
 		cp.errorpf(n, "must be valid lvalue")
 	}
 	lvalues := cp.parseIndexingLValue(n.Indexings[0])
-	cp.registerLValues(lvalues)
 	if lvalues.rest != -1 {
 		cp.errorpf(lvalues.lvalues[lvalues.rest], "rest variable not allowed")
 	}

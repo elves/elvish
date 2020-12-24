@@ -67,7 +67,7 @@ func TestComplexCandidate(t *testing.T) {
 	defer restore()
 
 	TestWithSetup(t, func(ev *eval.Evaler) {
-		ev.Global.AddGoFn("", "cc", complexCandidate)
+		ev.Global = eval.NsBuilder{}.AddGoFn("", "cc", complexCandidate).Ns()
 	},
 		That("kind-of (cc stem)").Puts("map"),
 		That("keys (cc stem)").Puts("stem", "code-suffix", "display"),

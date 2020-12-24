@@ -102,7 +102,7 @@ func convertNavWidthRatio(v interface{}) [3]int {
 	return ret
 }
 
-func initNavigation(ed *Editor, ev *eval.Evaler) {
+func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar)
 	widthRatioVar := newListVar(vals.MakeList(1.0, 3.0, 4.0))
@@ -116,9 +116,9 @@ func initNavigation(ed *Editor, ev *eval.Evaler) {
 	})
 
 	app := ed.app
-	ed.ns.Add("selected-file", selectedFileVar)
-	ed.ns.AddNs("navigation",
-		eval.Ns{
+	nb.Add("selected-file", selectedFileVar)
+	nb.AddNs("navigation",
+		eval.NsBuilder{
 			"binding":     bindingVar,
 			"width-ratio": widthRatioVar,
 		}.AddGoFns("<edit:navigation>", map[string]interface{}{
@@ -145,5 +145,5 @@ func initNavigation(ed *Editor, ev *eval.Evaler) {
 
 			"trigger-filter":       func() { navToggleFilter(app) },
 			"trigger-shown-hidden": func() { navToggleShowHidden(app) },
-		}))
+		}).Ns())
 }

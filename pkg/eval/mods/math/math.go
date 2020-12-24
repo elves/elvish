@@ -484,10 +484,10 @@ import (
 // ```
 
 // Ns is the namespace for the math: module.
-var Ns = eval.Ns{
+var Ns = eval.NsBuilder{
 	"e":  vars.NewReadOnly(math.E),
 	"pi": vars.NewReadOnly(math.Pi),
-}.AddGoFns("math:", fns)
+}.AddGoFns("math:", fns).Ns()
 
 var fns = map[string]interface{}{
 	"abs":           math.Abs,

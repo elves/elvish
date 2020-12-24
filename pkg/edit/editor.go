@@ -21,7 +21,7 @@ import (
 // Editor is the interface line editor for Elvish.
 type Editor struct {
 	app cli.App
-	ns  eval.Ns
+	ns  *eval.Ns
 
 	excMutex sync.RWMutex
 	excList  vals.List
@@ -39,7 +39,8 @@ type notifier interface {
 func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 	// Declare the Editor with a nil App first; some initialization functions
 	// require a notifier as an argument, but does not use it immediately.
-	ed := &Editor{ns: eval.Ns{}, excList: vals.EmptyList}
+	ed := &Editor{excList: vals.EmptyList}
+	nb := eval.NsBuilder{}
 	appSpec := cli.AppSpec{TTY: tty}
 
 	hs, err := newHistStore(st)
@@ -48,27 +49,29 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 	}
 
 	initHighlighter(&appSpec, ev)
-	initMaxHeight(&appSpec, ed.ns)
-	initReadlineHooks(&appSpec, ev, ed.ns)
-	initAddCmdFilters(&appSpec, ev, ed.ns, hs)
-	initInsertAPI(&appSpec, ed, ev, ed.ns)
-	initPrompts(&appSpec, ed, ev, ed.ns)
+	initMaxHeight(&appSpec, nb)
+	initReadlineHooks(&appSpec, ev, nb)
+	initAddCmdFilters(&appSpec, ev, nb, hs)
+	initInsertAPI(&appSpec, ed, ev, nb)
+	initPrompts(&appSpec, ed, ev, nb)
 	ed.app = cli.NewApp(appSpec)
 
-	initExceptionsAPI(ed)
-	initCommandAPI(ed, ev)
-	initListings(ed, ev, st, hs)
-	initNavigation(ed, ev)
-	initCompletion(ed, ev)
-	initHistWalk(ed, ev, hs)
-	initInstant(ed, ev)
-	initMinibuf(ed, ev)
+	initExceptionsAPI(ed, nb)
+	initCommandAPI(ed, ev, nb)
+	initListings(ed, ev, st, hs, nb)
+	initNavigation(ed, ev, nb)
+	initCompletion(ed, ev, nb)
+	initHistWalk(ed, ev, hs, nb)
+	initInstant(ed, ev, nb)
+	initMinibuf(ed, ev, nb)
 
-	initBufferBuiltins(ed.app, ed.ns)
-	initTTYBuiltins(ed.app, tty, ed.ns)
-	initMiscBuiltins(ed.app, ed.ns)
-	initStateAPI(ed.app, ed.ns)
-	initStoreAPI(ed.app, ed.ns, hs)
+	initBufferBuiltins(ed.app, nb)
+	initTTYBuiltins(ed.app, tty, nb)
+	initMiscBuiltins(ed.app, nb)
+	initStateAPI(ed.app, nb)
+	initStoreAPI(ed.app, nb, hs)
+
+	ed.ns = nb.Ns()
 	evalDefaultBinding(ev, ed.ns)
 
 	return ed
@@ -79,11 +82,11 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 // A list of exceptions thrown from callbacks such as prompts. Useful for
 // examining tracebacks and other metadata.
 
-func initExceptionsAPI(ed *Editor) {
-	ed.ns.Add("exceptions", vars.FromPtrWithMutex(&ed.excList, &ed.excMutex))
+func initExceptionsAPI(ed *Editor, nb eval.NsBuilder) {
+	nb.Add("exceptions", vars.FromPtrWithMutex(&ed.excList, &ed.excMutex))
 }
 
-func evalDefaultBinding(ev *eval.Evaler, ns eval.Ns) {
+func evalDefaultBinding(ev *eval.Evaler, ns *eval.Ns) {
 	// TODO(xiaq): The evaler API should accodomate the use case of evaluating a
 	// piece of code in an alternative global namespace.
 
@@ -113,7 +116,7 @@ func (ed *Editor) ReadCode() (string, error) {
 }
 
 // Ns returns a namespace for manipulating the editor from Elvish code.
-func (ed *Editor) Ns() eval.Ns {
+func (ed *Editor) Ns() *eval.Ns {
 	return ed.ns
 }
 

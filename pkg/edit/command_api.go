@@ -9,11 +9,11 @@ import (
 //
 // Starts the command mode.
 
-func initCommandAPI(ed *Editor, ev *eval.Evaler) {
+func initCommandAPI(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar)
-	ed.ns.AddNs("command",
-		eval.Ns{
+	nb.AddNs("command",
+		eval.NsBuilder{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:command>:", map[string]interface{}{
 			"start": func() {
@@ -23,5 +23,5 @@ func initCommandAPI(ed *Editor, ev *eval.Evaler) {
 					Focus:   false,
 				})
 			},
-		}))
+		}).Ns())
 }

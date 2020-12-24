@@ -11,30 +11,34 @@ import (
 var testVar = vars.NewReadOnly("")
 
 var eachVariableInTopTests = []struct {
-	builtin   Ns
-	global    Ns
+	builtin   *Ns
+	global    *Ns
 	ns        string
 	wantNames []string
 }{
 	{
-		builtin:   Ns{"foo": testVar, "bar": testVar},
-		global:    Ns{"lorem": testVar, "ipsum": testVar},
+		builtin:   NsBuilder{"foo": testVar, "bar": testVar}.Ns(),
+		global:    NsBuilder{"lorem": testVar, "ipsum": testVar}.Ns(),
 		ns:        "builtin:",
 		wantNames: []string{"bar", "foo"},
 	},
 	{
-		builtin:   Ns{"foo": testVar, "bar": testVar},
-		global:    Ns{"lorem": testVar, "ipsum": testVar},
+		builtin:   NsBuilder{"foo": testVar, "bar": testVar}.Ns(),
+		global:    NsBuilder{"lorem": testVar, "ipsum": testVar}.Ns(),
 		ns:        "",
 		wantNames: []string{"bar", "foo", "ipsum", "lorem"},
 	},
 	{
-		builtin:   Ns{"mod:": vars.NewReadOnly(Ns{"a": testVar, "b": testVar})},
+		builtin: NsBuilder{
+			"mod:": vars.NewReadOnly(NsBuilder{"a": testVar, "b": testVar}.Ns()),
+		}.Ns(),
 		ns:        "mod:",
 		wantNames: []string{"a", "b"},
 	},
 	{
-		global:    Ns{"mod:": vars.NewReadOnly(Ns{"a": testVar, "b": testVar})},
+		global: NsBuilder{
+			"mod:": vars.NewReadOnly(NsBuilder{"a": testVar, "b": testVar}.Ns()),
+		}.Ns(),
 		ns:        "mod:",
 		wantNames: []string{"a", "b"},
 	},
@@ -61,24 +65,24 @@ func TestEachVariableInTop(t *testing.T) {
 }
 
 var eachNsInTopTests = []struct {
-	builtin   Ns
-	global    Ns
+	builtin   *Ns
+	global    *Ns
 	wantNames []string
 }{
 	{
 		wantNames: []string{"E:", "builtin:", "e:"},
 	},
 	{
-		builtin:   Ns{"foo:": testVar},
+		builtin:   NsBuilder{"foo:": testVar}.Ns(),
 		wantNames: []string{"E:", "builtin:", "e:", "foo:"},
 	},
 	{
-		global:    Ns{"foo:": testVar},
+		global:    NsBuilder{"foo:": testVar}.Ns(),
 		wantNames: []string{"E:", "builtin:", "e:", "foo:"},
 	},
 	{
-		builtin:   Ns{"foo:": testVar},
-		global:    Ns{"bar:": testVar},
+		builtin:   NsBuilder{"foo:": testVar}.Ns(),
+		global:    NsBuilder{"bar:": testVar}.Ns(),
 		wantNames: []string{"E:", "bar:", "builtin:", "e:", "foo:"},
 	},
 }
@@ -100,9 +104,9 @@ func TestEachNsInTop(t *testing.T) {
 
 func fillScopes(scopes *evalerScopes) {
 	if scopes.Builtin == nil {
-		scopes.Builtin = Ns{}
+		scopes.Builtin = new(Ns)
 	}
 	if scopes.Global == nil {
-		scopes.Global = Ns{}
+		scopes.Global = new(Ns)
 	}
 }

@@ -47,8 +47,8 @@ func replaceInput(app cli.App, text string) {
 //
 // This API is subject to change.
 
-func initStateAPI(app cli.App, ns eval.Ns) {
-	ns.AddGoFns("<edit>", map[string]interface{}{
+func initStateAPI(app cli.App, nb eval.NsBuilder) {
+	nb.AddGoFns("<edit>", map[string]interface{}{
 		"insert-at-dot": func(s string) { insertAtDot(app, s) },
 		"replace-input": func(s string) { replaceInput(app, s) },
 	})
@@ -67,7 +67,7 @@ func initStateAPI(app cli.App, ns eval.Ns) {
 	getDot := func() interface{} {
 		return vals.FromGo(app.CodeArea().CopyState().Buffer.Dot)
 	}
-	ns.Add("-dot", vars.FromSetGet(setDot, getDot))
+	nb.Add("-dot", vars.FromSetGet(setDot, getDot))
 
 	setCurrentCommand := func(v interface{}) error {
 		var content string
@@ -81,5 +81,5 @@ func initStateAPI(app cli.App, ns eval.Ns) {
 	getCurrentCommand := func() interface{} {
 		return vals.FromGo(cli.GetCodeBuffer(app).Content)
 	}
-	ns.Add("current-command", vars.FromSetGet(setCurrentCommand, getCurrentCommand))
+	nb.Add("current-command", vars.FromSetGet(setCurrentCommand, getCurrentCommand))
 }

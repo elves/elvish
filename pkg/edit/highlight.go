@@ -61,24 +61,24 @@ func hasQualifiedFn(ev *eval.Evaler, firstNs string, rest string) bool {
 	if rest == "" {
 		return false
 	}
-	modVar := ev.Global[firstNs]
-	if modVar == nil {
-		modVar = ev.Builtin[firstNs]
-		if modVar == nil {
+	modVal, ok := ev.Global.Index(firstNs)
+	if !ok {
+		modVal, ok = ev.Builtin.Index(firstNs)
+		if !ok {
 			return false
 		}
 	}
-	mod, ok := modVar.Get().(eval.Ns)
+	mod, ok := modVal.(*eval.Ns)
 	if !ok {
 		return false
 	}
 	segs := eval.SplitQNameNsSegs(rest)
 	for _, seg := range segs[:len(segs)-1] {
-		modVar = mod[seg]
-		if modVar == nil {
+		modVal, ok = mod.Index(seg)
+		if !ok {
 			return false
 		}
-		mod, ok = modVar.Get().(eval.Ns)
+		mod, ok = modVal.(*eval.Ns)
 		if !ok {
 			return false
 		}
@@ -86,12 +86,12 @@ func hasQualifiedFn(ev *eval.Evaler, firstNs string, rest string) bool {
 	return hasFn(mod, segs[len(segs)-1])
 }
 
-func hasFn(ns eval.Ns, name string) bool {
-	fnVar, ok := ns[name+eval.FnSuffix]
+func hasFn(ns *eval.Ns, name string) bool {
+	fnVar, ok := ns.Index(name + eval.FnSuffix)
 	if !ok {
 		return false
 	}
-	_, ok = fnVar.Get().(eval.Callable)
+	_, ok = fnVar.(eval.Callable)
 	return ok
 }
 

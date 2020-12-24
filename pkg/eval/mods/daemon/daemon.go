@@ -15,7 +15,7 @@ import (
 var errDontKnowHowToSpawnDaemon = errors.New("don't know how to spawn daemon")
 
 // Ns makes the daemon: namespace.
-func Ns(d daemon.Client, spawnCfg *daemon.SpawnConfig) eval.Ns {
+func Ns(d daemon.Client, spawnCfg *daemon.SpawnConfig) *eval.Ns {
 	getPid := func() (string, error) {
 		pid, err := d.Pid()
 		return string(strconv.Itoa(pid)), err
@@ -37,11 +37,11 @@ func Ns(d daemon.Client, spawnCfg *daemon.SpawnConfig) eval.Ns {
 		return pid
 	}
 
-	return eval.Ns{
+	return eval.NsBuilder{
 		"pid":  vars.FromGet(getPidVar),
 		"sock": vars.NewReadOnly(string(d.SockPath())),
 	}.AddGoFns("daemon:", map[string]interface{}{
 		"pid":   getPid,
 		"spawn": spawn,
-	})
+	}).Ns()
 }

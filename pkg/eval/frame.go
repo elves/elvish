@@ -21,7 +21,7 @@ type Frame struct {
 
 	srcMeta parse.Source
 
-	local, up Ns
+	local, up *Ns
 
 	intCh <-chan struct{}
 	ports []*Port
@@ -37,14 +37,14 @@ type Frame struct {
 func NewTopFrame(ev *Evaler, src parse.Source, ports []*Port) *Frame {
 	return &Frame{
 		ev, src,
-		ev.Global, make(Ns),
+		ev.Global, new(Ns),
 		nil, ports,
 		nil, false,
 	}
 }
 
 // SetLocal changes the local scope of the Frame.
-func (fm *Frame) SetLocal(ns Ns) {
+func (fm *Frame) SetLocal(ns *Ns) {
 	fm.local = ns
 }
 

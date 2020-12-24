@@ -53,26 +53,26 @@ import (
 //
 // See [RPrompt Persistency](#rprompt-persistency).
 
-func initPrompts(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns) {
+func initPrompts(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.NsBuilder) {
 	promptVal, rpromptVal := getDefaultPromptVals()
-	initPrompt(&appSpec.Prompt, "prompt", promptVal, nt, ev, ns)
-	initPrompt(&appSpec.RPrompt, "rprompt", rpromptVal, nt, ev, ns)
+	initPrompt(&appSpec.Prompt, "prompt", promptVal, nt, ev, nb)
+	initPrompt(&appSpec.RPrompt, "rprompt", rpromptVal, nt, ev, nb)
 
 	rpromptPersistentVar := newBoolVar(false)
 	appSpec.RPromptPersistent = func() bool { return rpromptPersistentVar.Get().(bool) }
-	ns["rprompt-persistent"] = rpromptPersistentVar
+	nb["rprompt-persistent"] = rpromptPersistentVar
 }
 
-func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *eval.Evaler, ns eval.Ns) {
+func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *eval.Evaler, nb eval.NsBuilder) {
 	computeVar := vars.FromPtr(&val)
-	ns[name] = computeVar
+	nb[name] = computeVar
 	eagernessVar := newIntVar(5)
-	ns["-"+name+"-eagerness"] = eagernessVar
+	nb["-"+name+"-eagerness"] = eagernessVar
 	staleThresholdVar := newFloatVar(0.2)
-	ns[name+"-stale-threshold"] = staleThresholdVar
+	nb[name+"-stale-threshold"] = staleThresholdVar
 	staleTransformVar := newFnVar(
 		eval.NewGoFn("<default stale transform>", defaultStaleTransform))
-	ns[name+"-stale-transform"] = staleTransformVar
+	nb[name+"-stale-transform"] = staleTransformVar
 
 	*p = prompt.New(prompt.Config{
 		Compute: func() ui.Text {

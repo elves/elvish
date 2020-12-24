@@ -564,7 +564,7 @@ func toUtf8Bytes(fm *eval.Frame, s string) {
 // ▶ '¡¡¡Hello, Elven!!!'
 // ```
 
-var Ns = eval.Ns{}.AddGoFns("str:", fns)
+var Ns = eval.NsBuilder{}.AddGoFns("str:", fns).Ns()
 
 var fns = map[string]interface{}{
 	"compare":      strings.Compare,

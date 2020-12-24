@@ -13,7 +13,9 @@ import (
 // Note that this unit test assumes a UNIX environment with a POSIX compatible
 // /bin/sh program.
 func TestUmask(t *testing.T) {
-	setup := func(ev *eval.Evaler) { ev.Builtin.AddNs("unix", Ns) }
+	setup := func(ev *eval.Evaler) {
+		ev.Global = eval.NsBuilder{}.AddNs("unix", Ns).Ns()
+	}
 	TestWithSetup(t, setup,
 		// We have to start with a known umask value.
 		That(`unix:umask = 022`).Puts(),

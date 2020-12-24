@@ -12,12 +12,12 @@ import (
 // Import command history entries that happened after the current session
 // started.
 
-func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore) {
+func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar)
 	app := ed.app
-	ed.ns.AddNs("history",
-		eval.Ns{
+	nb.AddNs("history",
+		eval.NsBuilder{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:history>", map[string]interface{}{
 			"start": func() { histWalkStart(app, hs, binding) },
@@ -35,7 +35,7 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore) {
 			"close":  func() { histwalk.Close(app) },
 
 			"fast-forward": hs.FastForward,
-		}))
+		}).Ns())
 }
 
 func histWalkStart(app cli.App, hs *histStore, binding cli.Handler) {

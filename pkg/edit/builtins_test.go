@@ -96,7 +96,7 @@ func TestKey(t *testing.T) {
 
 	evals(f.Evaler, `k = (edit:key a)`)
 	wantK := ui.K('a')
-	if k := f.Evaler.Global["k"].Get(); k != wantK {
+	if k, _ := f.Evaler.Global.Index("k"); k != wantK {
 		t.Errorf("$k is %v, want %v", k, wantK)
 	}
 }
@@ -175,7 +175,7 @@ func TestWordify(t *testing.T) {
 
 	evals(f.Evaler, `@words = (edit:wordify 'ls str [list]')`)
 	wantWords := vals.MakeList("ls", "str", "[list]")
-	if words := f.Evaler.Global["words"].Get(); !vals.Equal(words, wantWords) {
+	if words, _ := f.Evaler.Global.Index("words"); !vals.Equal(words, wantWords) {
 		t.Errorf("$words is %v, want %v", words, wantWords)
 	}
 }

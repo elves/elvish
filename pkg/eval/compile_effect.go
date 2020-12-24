@@ -30,20 +30,23 @@ func wrapScopeOp(op effectOp, locals []string) effectOp {
 func (op scopeOp) Range() diag.Ranging { return op.inner.(diag.Ranger).Range() }
 
 func (op scopeOp) exec(fm *Frame) error {
+	if len(op.locals) == 0 {
+		return op.inner.exec(fm)
+	}
+	fm.local.names = append(fm.local.names, op.locals...)
 	for _, name := range op.locals {
 		var variable vars.Var
 		if strings.HasSuffix(name, FnSuffix) {
 			val := Callable(nil)
 			variable = vars.FromPtr(&val)
 		} else if strings.HasSuffix(name, NsSuffix) {
-			val := Ns(nil)
+			val := (*Ns)(nil)
 			variable = vars.FromPtr(&val)
 		} else {
 			variable = vars.FromInit(nil)
 		}
-		fm.local[name] = variable
+		fm.local.slots = append(fm.local.slots, variable)
 	}
-
 	return op.inner.exec(fm)
 }
 
@@ -196,7 +199,6 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 		}
 		for _, a := range n.Assignments {
 			lvalues := cp.parseIndexingLValue(a.Left)
-			cp.registerLValues(lvalues)
 			tempLValues = append(tempLValues, lvalues.lvalues...)
 		}
 		logger.Println("temporary assignment of", len(n.Assignments), "pairs")
@@ -222,10 +224,15 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 				specialOp = compileForm(cp, n)
 			} else {
 				sigil, qname := SplitVariableRef(headStr)
-				if sigil == "" && cp.registerVariableGet(qname+FnSuffix, n.Head) {
-					// $head~ resolves.
-					headOp = variableOp{n.Head.Range(), false, qname + FnSuffix}
-				} else {
+				if sigil == "" {
+					varName := qname + FnSuffix
+					ref := resolveVarRef(cp, varName, n.Head)
+					if ref != nil {
+						// $head~ resolves.
+						headOp = variableOp{n.Head.Range(), false, varName, ref}
+					}
+				}
+				if headOp == nil {
 					// Fall back to $e:head~.
 					headOp = literalValues(n.Head, ExternalCmd{headStr})
 				}
@@ -239,7 +246,6 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 	} else {
 		// Assignment form.
 		lhs := cp.parseCompoundLValues(n.Vars)
-		cp.registerLValues(lhs)
 		argOps = cp.compoundOps(n.Args)
 		var rhsRanging diag.Ranging
 		if len(argOps) > 0 {
@@ -289,7 +295,7 @@ func (op *formOp) exec(fm *Frame) (errRet error) {
 		var saveVars []vars.Var
 		var saveVals []interface{}
 		for _, lv := range op.tempLValues {
-			variable, err := getVar(fm, lv)
+			variable, err := derefLValue(fm, lv)
 			if err != nil {
 				return fm.errorp(op, err)
 			}
@@ -422,7 +428,6 @@ func allTrue(vs []interface{}) bool {
 
 func (cp *compiler) assignmentOp(n *parse.Assignment) effectOp {
 	lhs := cp.parseIndexingLValue(n.Left)
-	cp.registerLValues(lhs)
 	rhs := cp.compoundOp(n.Right)
 	return &assignOp{n.Range(), lhs, rhs}
 }

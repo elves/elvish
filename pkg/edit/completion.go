@@ -203,7 +203,7 @@ func completionStart(app cli.App, binding cli.Handler, cfg complete.Config, smar
 //
 // Closes the completion mode UI.
 
-func initCompletion(ed *Editor, ev *eval.Evaler) {
+func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(EmptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar)
 	matcherMapVar := newMapVar(vals.EmptyMap)
@@ -220,7 +220,7 @@ func initCompletion(ed *Editor, ev *eval.Evaler) {
 	generateForSudo := func(args []string) ([]complete.RawItem, error) {
 		return complete.GenerateForSudo(cfg(), args)
 	}
-	ed.ns.AddGoFns("<edit>", map[string]interface{}{
+	nb.AddGoFns("<edit>", map[string]interface{}{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
 		"complete-getopt":   completeGetopt,
 		"complete-sudo":     wrapArgGenerator(generateForSudo),
@@ -230,8 +230,8 @@ func initCompletion(ed *Editor, ev *eval.Evaler) {
 		"match-substr":      wrapMatcher(strings.Contains),
 	})
 	app := ed.app
-	ed.ns.AddNs("completion",
-		eval.Ns{
+	nb.AddNs("completion",
+		eval.NsBuilder{
 			"arg-completer": argGeneratorMapVar,
 			"binding":       bindingVar,
 			"matcher":       matcherMapVar,
@@ -246,7 +246,7 @@ func initCompletion(ed *Editor, ev *eval.Evaler) {
 			"down-cycle":  func() { listingDownCycle(app) },
 			"left":        func() { listingLeft(app) },
 			"right":       func() { listingRight(app) },
-		}))
+		}).Ns())
 }
 
 // A wrapper type implementing Elvish value methods.

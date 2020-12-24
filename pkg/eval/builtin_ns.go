@@ -79,7 +79,7 @@ import (
 //
 // The boolean true value.
 
-var builtinNs = Ns{
+var builtinNs = NsBuilder{
 	"_":     vars.NewBlackhole(),
 	"pid":   vars.NewReadOnly(strconv.Itoa(syscall.Getpid())),
 	"ok":    vars.NewReadOnly(OK),

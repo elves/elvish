@@ -177,15 +177,15 @@ func wordify(fm *eval.Frame, code string) {
 	}
 }
 
-func initTTYBuiltins(app cli.App, tty cli.TTY, ns eval.Ns) {
-	ns.AddGoFns("<edit>", map[string]interface{}{
+func initTTYBuiltins(app cli.App, tty cli.TTY, nb eval.NsBuilder) {
+	nb.AddGoFns("<edit>", map[string]interface{}{
 		"-dump-buf":  func() string { return dumpBuf(tty) },
 		"insert-raw": func() { insertRaw(app, tty) },
 	})
 }
 
-func initMiscBuiltins(app cli.App, ns eval.Ns) {
-	ns.AddGoFns("<edit>", map[string]interface{}{
+func initMiscBuiltins(app cli.App, nb eval.NsBuilder) {
+	nb.AddGoFns("<edit>", map[string]interface{}{
 		"binding-table":  MakeBindingMap,
 		"close-listing":  func() { closeListing(app) },
 		"end-of-history": func() { endOfHistory(app) },
@@ -225,8 +225,8 @@ var bufferBuiltinsData = map[string]func(*cli.CodeBuffer){
 	"kill-line-right":       makeKill(moveDotEOL),
 }
 
-func initBufferBuiltins(app cli.App, ns eval.Ns) {
-	ns.AddGoFns("<edit>", bufferBuiltins(app))
+func initBufferBuiltins(app cli.App, nb eval.NsBuilder) {
+	nb.AddGoFns("<edit>", bufferBuiltins(app))
 }
 
 func bufferBuiltins(app cli.App) map[string]interface{} {

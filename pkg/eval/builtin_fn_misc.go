@@ -166,7 +166,7 @@ func resolve(fm *Frame, head string) string {
 		return "special"
 	}
 	sigil, qname := SplitVariableRef(head)
-	if sigil == "" && fm.ResolveVar(qname+FnSuffix) != nil {
+	if sigil == "" && resolveVarRef(fm, qname+FnSuffix, nil) != nil {
 		return "$" + qname + FnSuffix
 	}
 	return "(external " + parse.Quote(head) + ")"
@@ -208,7 +208,7 @@ func resolve(fm *Frame, head string) string {
 // [tty 4], line 1: put $x
 // ```
 
-type evalOpts struct{ Ns Ns }
+type evalOpts struct{ Ns *Ns }
 
 func (*evalOpts) SetDefaultOptions() {}
 
@@ -216,7 +216,7 @@ func eval(fm *Frame, opts evalOpts, code string) error {
 	src := parse.Source{Name: fmt.Sprintf("[eval %d]", nextEvalCount()), Code: code}
 	ns := opts.Ns
 	if ns == nil {
-		ns = make(Ns)
+		ns = new(Ns)
 	}
 	return evalInner(fm, src, ns, fm.traceback)
 }
@@ -253,7 +253,7 @@ func nextEvalCount() int {
 // ▶ value
 // ```
 
-func useMod(fm *Frame, spec string) (Ns, error) {
+func useMod(fm *Frame, spec string) (*Ns, error) {
 	return use(fm, spec, fm.traceback)
 }
 
@@ -328,7 +328,7 @@ func source(fm *Frame, fname string) error {
 		return err
 	}
 	scriptGlobal := fm.local.static()
-	for name := range fm.up.static() {
+	for _, name := range fm.up.static().names {
 		scriptGlobal.set(name)
 	}
 	op, err := compile(fm.Builtin.static(), scriptGlobal, tree, fm.ErrorFile())

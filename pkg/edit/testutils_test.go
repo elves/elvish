@@ -35,7 +35,7 @@ func rc(codes ...string) func(*fixture) {
 
 func assign(name string, val interface{}) func(*fixture) {
 	return func(f *fixture) {
-		f.Evaler.Global["temp"] = vars.NewReadOnly(val)
+		f.Evaler.Global.Append(eval.NsBuilder{"temp": vars.NewReadOnly(val)}.Ns())
 		evals(f.Evaler, name+` = $temp`)
 	}
 }
@@ -120,7 +120,8 @@ func evals(ev *eval.Evaler, codes ...string) {
 }
 
 func getGlobal(ev *eval.Evaler, name string) interface{} {
-	return ev.Global[name].Get()
+	v, _ := ev.Global.Index(name)
+	return v
 }
 
 func testGlobals(t *testing.T, ev *eval.Evaler, wantVals map[string]interface{}) {

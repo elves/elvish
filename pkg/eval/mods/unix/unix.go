@@ -15,6 +15,6 @@ const ExposeUnixNs = true
 
 // Ns is an Elvish namespace that contains variables and functions that deal
 // with features unique to UNIX-like operating systems. On
-var Ns = eval.Ns{
+var Ns = eval.NsBuilder{
 	"umask": UmaskVariable{},
-}
+}.Ns()

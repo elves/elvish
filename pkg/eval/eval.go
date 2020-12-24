@@ -52,7 +52,7 @@ type Evaler struct {
 	bundled map[string]string
 	// Internal modules are indexed by use specs. External modules are indexed by
 	// absolute paths.
-	modules map[string]Ns
+	modules map[string]*Ns
 
 	deprecations deprecationRegistry
 
@@ -77,8 +77,8 @@ type EvalCfg struct {
 }
 
 type evalerScopes struct {
-	Global  Ns
-	Builtin Ns
+	Global  *Ns
+	Builtin *Ns
 }
 
 //elvdoc:var after-chdir
@@ -137,7 +137,7 @@ type evalerScopes struct {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler() *Evaler {
-	builtin := builtinNs.Clone()
+	builtin := builtinNs.Ns()
 
 	ev := &Evaler{
 		state: state{
@@ -146,10 +146,10 @@ func NewEvaler() *Evaler {
 			numBgJobs:          0,
 		},
 		evalerScopes: evalerScopes{
-			Global:  make(Ns),
+			Global:  new(Ns),
 			Builtin: builtin,
 		},
-		modules: map[string]Ns{
+		modules: map[string]*Ns{
 			"builtin": builtin,
 		},
 		bundled: bundled.Get(),
@@ -162,17 +162,23 @@ func NewEvaler() *Evaler {
 		adaptChdirHook("before-chdir", ev, &beforeChdirElvish))
 	ev.afterChdir = append(ev.afterChdir,
 		adaptChdirHook("after-chdir", ev, &afterChdirElvish))
-	builtin["before-chdir"] = vars.FromPtr(&beforeChdirElvish)
-	builtin["after-chdir"] = vars.FromPtr(&afterChdirElvish)
 
-	builtin["value-out-indicator"] = vars.FromPtrWithMutex(
+	moreBuiltinsBuilder := make(NsBuilder)
+	moreBuiltinsBuilder["before-chdir"] = vars.FromPtr(&beforeChdirElvish)
+	moreBuiltinsBuilder["after-chdir"] = vars.FromPtr(&afterChdirElvish)
+
+	moreBuiltinsBuilder["value-out-indicator"] = vars.FromPtrWithMutex(
 		&ev.state.valuePrefix, &ev.state.mutex)
-	builtin["notify-bg-job-success"] = vars.FromPtrWithMutex(
+	moreBuiltinsBuilder["notify-bg-job-success"] = vars.FromPtrWithMutex(
 		&ev.state.notifyBgJobSuccess, &ev.state.mutex)
-	builtin["num-bg-jobs"] = vars.FromGet(func() interface{} {
+	moreBuiltinsBuilder["num-bg-jobs"] = vars.FromGet(func() interface{} {
 		return strconv.Itoa(ev.state.getNumBgJobs())
 	})
-	builtin["pwd"] = NewPwdVar(ev)
+	moreBuiltinsBuilder["pwd"] = NewPwdVar(ev)
+
+	moreBuiltins := moreBuiltinsBuilder.Ns()
+	builtin.slots = append(builtin.slots, moreBuiltins.slots...)
+	builtin.names = append(builtin.names, moreBuiltins.names...)
 
 	return ev
 }
@@ -221,7 +227,7 @@ func (ev *Evaler) InstallDaemonClient(client daemon.Client) {
 
 // InstallModule installs a module to the Evaler so that it can be used with
 // "use $name" from script.
-func (ev *Evaler) InstallModule(name string, mod Ns) {
+func (ev *Evaler) InstallModule(name string, mod *Ns) {
 	ev.modules[name] = mod
 }
 
@@ -237,7 +243,10 @@ func (ev *Evaler) SetArgs(args []string) {
 	for _, arg := range args {
 		v = v.Cons(arg)
 	}
-	ev.Builtin["args"] = vars.NewReadOnly(v)
+	// TODO: Avoid creating the variable dynamically; instead, always create the
+	// variable, and set its value here.
+	ev.Builtin.slots = append(ev.Builtin.slots, vars.NewReadOnly(v))
+	ev.Builtin.names = append(ev.Builtin.names, "args")
 }
 
 // SetLibDir sets the library directory, in which external modules are to be
@@ -301,6 +310,6 @@ func (ev *Evaler) Compile(tree parse.Tree, w io.Writer) (Op, error) {
 // TODO(xiaq): To use the Op created, the caller must create a Frame and mutate
 // its local scope manually. Consider restructuring the API to make that
 // unnecessary.
-func (ev *Evaler) CompileWithGlobal(tree parse.Tree, g Ns, w io.Writer) (Op, error) {
+func (ev *Evaler) CompileWithGlobal(tree parse.Tree, g *Ns, w io.Writer) (Op, error) {
 	return compile(ev.Builtin.static(), g.static(), tree, w)
 }

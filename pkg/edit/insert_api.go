@@ -102,7 +102,7 @@ import (
 //
 // @cf edit:abbr
 
-func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns) {
+func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.NsBuilder) {
 	abbr := vals.EmptyMap
 	abbrVar := vars.FromPtr(&abbr)
 	appSpec.Abbreviations = makeMapIterator(abbrVar)
@@ -121,13 +121,13 @@ func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.N
 		quotePaste.Set(!quotePaste.Get().(bool))
 	}
 
-	ns.Add("abbr", abbrVar)
-	ns.Add("small-word-abbr", SmallWordAbbrVar)
-	ns.AddGoFn("<edit>", "toggle-quote-paste", toggleQuotePaste)
-	ns.AddNs("insert", eval.Ns{
+	nb.Add("abbr", abbrVar)
+	nb.Add("small-word-abbr", SmallWordAbbrVar)
+	nb.AddGoFn("<edit>", "toggle-quote-paste", toggleQuotePaste)
+	nb.AddNs("insert", eval.NsBuilder{
 		"binding":     binding,
 		"quote-paste": quotePaste,
-	})
+	}.Ns())
 }
 
 func makeMapIterator(mv vars.PtrVar) func(func(a, b string)) {
