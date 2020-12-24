@@ -62,7 +62,9 @@ func init() {
 // ▶ $true
 // ```
 //
-// **NOTE**: `and` and `or` are implemented as special commands.
+// **Note**: `not` is a regular command, and thus can be overriden by a
+// function definition (though you shouldn't do so), while `and` and `or` are
+// implemented as [special commands](language.html#special-commands).
 //
 // @cf bool
 
