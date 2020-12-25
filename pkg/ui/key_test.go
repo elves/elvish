@@ -7,7 +7,7 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
-var identityTests = []struct {
+var kTests = []struct {
 	k1 Key
 	k2 Key
 }{
@@ -17,7 +17,7 @@ var identityTests = []struct {
 }
 
 func TestK(t *testing.T) {
-	for _, test := range identityTests {
+	for _, test := range kTests {
 		if test.k1 != test.k2 {
 			t.Errorf("%v != %v", test.k1, test.k2)
 		}
