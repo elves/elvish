@@ -67,7 +67,7 @@ func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return pn.Value
 	case parse.Variable:
-		sigil, qname := SplitVariableRef(pn.Value)
+		sigil, qname := SplitSigil(pn.Value)
 		if sigil != "" {
 			return nil
 		}

@@ -55,7 +55,7 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing) lvaluesGroup {
 	}
 	// A basic lvalue.
 	varUse := cp.literal(n.Head, "lvalue only supports literal variable names")
-	sigil, qname := SplitVariableRef(varUse)
+	sigil, qname := SplitSigil(varUse)
 	var ref *varRef
 	if len(n.Indicies) == 0 {
 		ref = resolveVarRef(cp, qname, nil)

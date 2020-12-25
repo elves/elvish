@@ -69,8 +69,8 @@ func generateCommands(seed string, ev PureEvaler) ([]RawItem, error) {
 	// Generate all external commands (without the e: prefix).
 	ev.EachExternal(addPlainItem)
 
-	sigil, qname := eval.SplitVariableRef(seed)
-	ns, _ := eval.SplitQNameNsIncomplete(qname)
+	sigil, qname := eval.SplitSigil(seed)
+	ns, _ := eval.SplitIncompleteQNameNs(qname)
 	if sigil == "" {
 		// Generate functions, namespaces, and variable assignments.
 		ev.EachVariableInNs(ns, func(varname string) {

@@ -33,7 +33,7 @@ func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 			}
 		}
 	default:
-		segs := SplitQNameNsSegs(ns)
+		segs := SplitQNameSegs(ns)
 		mod := ev.Global.indexInner(segs[0])
 		if mod == nil {
 			mod = ev.Builtin.indexInner(segs[0])

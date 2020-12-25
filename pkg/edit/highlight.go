@@ -31,24 +31,24 @@ func hasCommand(ev *eval.Evaler, cmd string) bool {
 		return isDirOrExecutable(cmd) || hasExternalCommand(cmd)
 	}
 
-	sigil, qname := eval.SplitVariableRef(cmd)
+	sigil, qname := eval.SplitSigil(cmd)
 	if sigil != "" {
 		// The @ sign is only valid when referring to external commands.
 		return hasExternalCommand(cmd)
 	}
 
-	firstNs, rest := eval.SplitIncompleteQNameFirstNs(qname)
-	switch firstNs {
-	case "e:":
-		return hasExternalCommand(rest)
-	case "":
+	first, rest := eval.SplitQName(qname)
+	switch {
+	case rest == "":
 		// Unqualified name; try builtin and global.
-		if hasFn(ev.Builtin, rest) || hasFn(ev.Global, rest) {
+		if hasFn(ev.Builtin, first) || hasFn(ev.Global, first) {
 			return true
 		}
+	case first == "e:":
+		return hasExternalCommand(rest)
 	default:
 		// Qualified name. Find the top-level module first.
-		if hasQualifiedFn(ev, firstNs, rest) {
+		if hasQualifiedFn(ev, first, rest) {
 			return true
 		}
 	}
@@ -72,7 +72,7 @@ func hasQualifiedFn(ev *eval.Evaler, firstNs string, rest string) bool {
 	if !ok {
 		return false
 	}
-	segs := eval.SplitQNameNsSegs(rest)
+	segs := eval.SplitQNameSegs(rest)
 	for _, seg := range segs[:len(segs)-1] {
 		modVal, ok = mod.Index(seg)
 		if !ok {

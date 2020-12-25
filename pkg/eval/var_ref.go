@@ -115,7 +115,7 @@ func resolveCmdHeadInternally(s scopeSearcher, head string, r diag.Ranger) (comp
 	if ok {
 		return special, nil
 	}
-	sigil, qname := SplitVariableRef(head)
+	sigil, qname := SplitSigil(head)
 	if sigil == "" {
 		varName := qname + FnSuffix
 		ref := resolveVarRef(s, varName, r)

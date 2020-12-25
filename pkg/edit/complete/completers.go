@@ -185,8 +185,8 @@ func completeVariable(n parse.Node, cfg Config) (*context, []RawItem, error) {
 	if !ok || primary.Type != parse.Variable {
 		return nil, nil, errNoCompletion
 	}
-	sigil, qname := eval.SplitVariableRef(primary.Value)
-	ns, nameSeed := eval.SplitQNameNsIncomplete(qname)
+	sigil, qname := eval.SplitSigil(primary.Value)
+	ns, nameSeed := eval.SplitIncompleteQNameNs(qname)
 	// Move past "$", "@" and "<ns>:".
 	begin := primary.Range().From + 1 + len(sigil) + len(ns)
 

@@ -10,8 +10,8 @@ import (
 
 var Args = tt.Args
 
-func TestSplitVariableRef(t *testing.T) {
-	tt.Test(t, tt.Fn("SplitVariableRef", SplitVariableRef), tt.Table{
+func TestSplitSigil(t *testing.T) {
+	tt.Test(t, tt.Fn("SplitSigil", SplitSigil), tt.Table{
 		Args("").Rets("", ""),
 		Args("x").Rets("", "x"),
 		Args("@x").Rets("@", "x"),
@@ -20,46 +20,10 @@ func TestSplitVariableRef(t *testing.T) {
 	})
 }
 
-func TestSplitQNameNs(t *testing.T) {
-	tt.Test(t, tt.Fn("SplitQNameNs", SplitQNameNs), tt.Table{
+func TestSplitQName(t *testing.T) {
+	tt.Test(t, tt.Fn("SplitQName", SplitQName), tt.Table{
 		Args("").Rets("", ""),
-		Args("a").Rets("", "a"),
-		Args("a:").Rets("", "a:"),
-		Args("a:b").Rets("a:", "b"),
-		Args("a:b:").Rets("a:", "b:"),
-		Args("a:b:c").Rets("a:b:", "c"),
-		Args("a:b:c:").Rets("a:b:", "c:"),
-	})
-}
-
-func TestSplitQNameNsIncomplete(t *testing.T) {
-	tt.Test(t, tt.Fn("SplitQNameNsIncomplete", SplitQNameNsIncomplete), tt.Table{
-		Args("").Rets("", ""),
-		Args("a").Rets("", "a"),
-		Args("a:").Rets("a:", ""),
-		Args("a:b").Rets("a:", "b"),
-		Args("a:b:").Rets("a:b:", ""),
-		Args("a:b:c").Rets("a:b:", "c"),
-		Args("a:b:c:").Rets("a:b:c:", ""),
-	})
-}
-
-func TestSplitQNameNsFirst(t *testing.T) {
-	tt.Test(t, tt.Fn("SplitQNameNsFirst", SplitQNameNsFirst), tt.Table{
-		Args("").Rets("", ""),
-		Args("a").Rets("", "a"),
-		Args("a:").Rets("", "a:"),
-		Args("a:b").Rets("a:", "b"),
-		Args("a:b:").Rets("a:", "b:"),
-		Args("a:b:c").Rets("a:", "b:c"),
-		Args("a:b:c:").Rets("a:", "b:c:"),
-	})
-}
-
-func TestSplitIncompleteQNameFirstNs(t *testing.T) {
-	tt.Test(t, tt.Fn("SplitIncompleteQNameFirstNs", SplitIncompleteQNameFirstNs), tt.Table{
-		Args("").Rets("", ""),
-		Args("a").Rets("", "a"),
+		Args("a").Rets("a", ""),
 		Args("a:").Rets("a:", ""),
 		Args("a:b").Rets("a:", "b"),
 		Args("a:b:").Rets("a:", "b:"),
@@ -68,8 +32,8 @@ func TestSplitIncompleteQNameFirstNs(t *testing.T) {
 	})
 }
 
-func TestSplitQNameNsSegs(t *testing.T) {
-	tt.Test(t, tt.Fn("SplitQNameNsSegs", SplitQNameNsSegs), tt.Table{
+func TestSplitQNameSegs(t *testing.T) {
+	tt.Test(t, tt.Fn("SplitQNameSegs", SplitQNameSegs), tt.Table{
 		Args("").Rets([]string{}),
 		Args("a").Rets([]string{"a"}),
 		Args("a:").Rets([]string{"a:"}),
@@ -77,5 +41,17 @@ func TestSplitQNameNsSegs(t *testing.T) {
 		Args("a:b:").Rets([]string{"a:", "b:"}),
 		Args("a:b:c").Rets([]string{"a:", "b:", "c"}),
 		Args("a:b:c:").Rets([]string{"a:", "b:", "c:"}),
+	})
+}
+
+func TestSplitIncompleteQNameNs(t *testing.T) {
+	tt.Test(t, tt.Fn("SplitIncompleteQNameNs", SplitIncompleteQNameNs), tt.Table{
+		Args("").Rets("", ""),
+		Args("a").Rets("", "a"),
+		Args("a:").Rets("a:", ""),
+		Args("a:b").Rets("a:", "b"),
+		Args("a:b:").Rets("a:b:", ""),
+		Args("a:b:c").Rets("a:b:", "c"),
+		Args("a:b:c:").Rets("a:b:c:", ""),
 	})
 }

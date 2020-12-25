@@ -265,7 +265,7 @@ func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return literalValues(n, n.Value)
 	case parse.Variable:
-		sigil, qname := SplitVariableRef(n.Value)
+		sigil, qname := SplitSigil(n.Value)
 		ref := resolveVarRef(cp, qname, n)
 		if ref == nil {
 			cp.errorpf(n, "variable $%s not found", qname)
@@ -445,9 +445,9 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 		argNames = make([]string, len(n.Elements))
 		for i, arg := range n.Elements {
 			ref := mustString(cp, arg, "argument name must be literal string")
-			sigil, qname := SplitVariableRef(ref)
-			ns, name := SplitQNameNs(qname)
-			if ns != "" {
+			sigil, qname := SplitSigil(ref)
+			name, rest := SplitQName(qname)
+			if rest != "" {
 				cp.errorpf(arg, "argument name must be unqualified")
 			}
 			if name == "" {
@@ -467,8 +467,8 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 		optDefaultOps = make([]valuesOp, len(n.MapPairs))
 		for i, opt := range n.MapPairs {
 			qname := mustString(cp, opt.Key, "option name must be literal string")
-			ns, name := SplitQNameNs(qname)
-			if ns != "" {
+			name, rest := SplitQName(qname)
+			if rest != "" {
 				cp.errorpf(opt.Key, "option name must be unqualified")
 			}
 			if name == "" {

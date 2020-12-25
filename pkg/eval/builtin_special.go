@@ -77,35 +77,28 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 			continue
 		}
 
-		sigil, qname := SplitVariableRef(head.Value)
+		sigil, qname := SplitSigil(head.Value)
 		if sigil != "" {
 			cp.errorpf(cn, "arguments to del may not have a sigils, got %q", sigil)
 			continue
 		}
 		var f effectOp
+		ref := resolveVarRef(cp, qname, nil)
+		if ref == nil {
+			cp.errorpf(cn, "no variable $%s", head.Value)
+			continue
+		}
 		if len(indices) == 0 {
-			ns, name := SplitQNameNsFirst(qname)
-			switch ns {
-			case "", ":", "local:":
-				index := cp.thisScope().lookup(name)
-				if index == -1 {
-					cp.errorpf(cn, "no variable $%s in local scope", name)
-					continue
-				}
-				cp.thisScope().del(name)
-				f = delLocalVarOp{index}
-			case "E:":
-				f = delEnvVarOp{name}
-			default:
+			if ref.scope == envScope {
+				f = delEnvVarOp{ref.subNames[0]}
+			} else if ref.scope == localScope && len(ref.subNames) == 0 {
+				f = delLocalVarOp{ref.index}
+				cp.thisScope().deleted[ref.index] = true
+			} else {
 				cp.errorpf(cn, "only variables in local: or E: can be deleted")
 				continue
 			}
 		} else {
-			ref := resolveVarRef(cp, qname, nil)
-			if ref == nil {
-				cp.errorpf(cn, "no variable $%s", head.Value)
-				continue
-			}
 			f = newDelElementOp(ref, head.Range().From, head.Range().To, cp.arrayOps(indices))
 		}
 		ops = append(ops, f)
