@@ -87,7 +87,8 @@ func (s *Segment) Index(k interface{}) (v interface{}, ok bool) {
 	return v, v != nil
 }
 
-// Concat implements Segment+string, Segment+Segment and Segment+Text.
+// Concat implements Segment+string, Segment+float64, Segment+Segment and
+// Segment+Text.
 func (s *Segment) Concat(v interface{}) (interface{}, error) {
 	switch rhs := v.(type) {
 	case string:
@@ -109,7 +110,7 @@ func (s *Segment) Concat(v interface{}) (interface{}, error) {
 	return nil, vals.ErrConcatNotImplemented
 }
 
-// RConcat implements string+Segment.
+// RConcat implements string+Segment and float64+Segment.
 func (s *Segment) RConcat(v interface{}) (interface{}, error) {
 	switch lhs := v.(type) {
 	case string:

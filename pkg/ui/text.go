@@ -61,9 +61,7 @@ func (t Text) Index(k interface{}) (interface{}, error) {
 	}
 }
 
-// Concat implements Text+string, Text+Segment and Text+Text. Where "string"
-// refers to strings and data types, such as float64, where it is reasonable
-// to implicitly convert the type to a string.
+// Concat implements Text+string, Text+float64, Text+Segment and Text+Text.
 func (t Text) Concat(rhs interface{}) (interface{}, error) {
 	switch rhs := rhs.(type) {
 	case string:
@@ -79,9 +77,7 @@ func (t Text) Concat(rhs interface{}) (interface{}, error) {
 	return nil, vals.ErrConcatNotImplemented
 }
 
-// RConcat implements string+Text. Where "string" refers to strings and data
-// types, such as float64, where it is reasonable to implicitly convert the
-// type to a string.
+// RConcat implements string+Text and float64+Text.
 func (t Text) RConcat(lhs interface{}) (interface{}, error) {
 	switch lhs := lhs.(type) {
 	case string:
