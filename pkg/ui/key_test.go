@@ -58,12 +58,9 @@ var parseKeyTests = []struct {
 	{s: "C-x", wantKey: Key{'X', Ctrl}},
 	{s: "C-X", wantKey: Key{'X', Ctrl}},
 
-	// Literal control chars are equivalent to the preferred Ctrl-? formulation.
+	// Literal control chars are equivalent to the preferred Ctrl-<key>
+	// formulation.
 	{s: "\033", wantKey: Key{'[', Ctrl}},
-	{s: "\t", wantKey: K(Tab)},
-	{s: "Alt-\t", wantKey: Key{Tab, Alt}},
-	{s: "\n", wantKey: K(Enter)},
-	{s: "\x7F", wantKey: K(Backspace)},
 
 	// + is the same as -.
 	{s: "C+X", wantKey: Key{'X', Ctrl}},
@@ -78,11 +75,12 @@ var parseKeyTests = []struct {
 	{s: "Ctrl+Alt-Delete", wantKey: Key{Delete, Alt | Ctrl}},
 
 	// Confirm alternative symbolic keys are turned into the canonical form.
-	{s: "\t", wantKey: K(Tab)},           // literal tab is normalized to Tab
-	{s: "\n", wantKey: K(Enter)},         // literal newline is normalized to Enter
-	{s: "Ctrl-I", wantKey: K(Tab)},       // Ctrl-I is normalized to Tab
-	{s: "Ctrl-J", wantKey: K(Enter)},     // Ctrl-J is normalized to Enter
-	{s: "Ctrl-?", wantKey: K(Backspace)}, // Ctrl-? is normalized to Backspace
+	{s: "\t", wantKey: K(Tab)},       // literal tab is normalized to Tab
+	{s: "\n", wantKey: K(Enter)},     // literal newline is normalized to Enter
+	{s: "Ctrl-I", wantKey: K(Tab)},   // Ctrl-I is normalized to Tab
+	{s: "Ctrl-J", wantKey: K(Enter)}, // Ctrl-J is normalized to Enter
+	{s: "Alt-\t", wantKey: Key{Tab, Alt}},
+	{s: "\x7F", wantKey: K(Backspace)},
 
 	// Errors.
 	{s: "F123", wantErr: "bad key: F123"},

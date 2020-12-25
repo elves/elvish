@@ -11,9 +11,9 @@ This is the draft release notes for 0.15.0, scheduled to be released on
     -   The `rest-arg` field now contains the index of the rest argument,
         instead of the name.
 
--   Key modifiers are no longer case insensitive. Thus `Alt` is still recognized
-    but `alt` is not. This makes key modifier parsing consistent with key names.
-    See [#1163](https://b.elv.sh/1163).
+-   Key modifiers are no longer case insensitive. For example, `Alt` is still
+    recognized but `alt` is not. This makes key modifier parsing consistent with
+    key names. See [#1163](https://b.elv.sh/1163).
 
 # Deprecated features
 
