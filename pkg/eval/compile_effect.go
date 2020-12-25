@@ -218,24 +218,14 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 	if n.Head != nil {
 		headStr, ok := oneString(n.Head)
 		if ok {
-			compileForm, ok := builtinSpecials[headStr]
-			if ok {
-				// Special form.
-				specialOp = compileForm(cp, n)
-			} else {
-				sigil, qname := SplitVariableRef(headStr)
-				if sigil == "" {
-					varName := qname + FnSuffix
-					ref := resolveVarRef(cp, varName, n.Head)
-					if ref != nil {
-						// $head~ resolves.
-						headOp = variableOp{n.Head.Range(), false, varName, ref}
-					}
-				}
-				if headOp == nil {
-					// Fall back to $e:head~.
-					headOp = literalValues(n.Head, ExternalCmd{headStr})
-				}
+			special, fnRef := resolveCmdHeadInternally(cp, headStr, n.Head)
+			switch {
+			case special != nil:
+				specialOp = special(cp, n)
+			case fnRef != nil:
+				headOp = variableOp{n.Head.Range(), false, headStr + FnSuffix, fnRef}
+			default:
+				headOp = literalValues(n.Head, ExternalCmd{headStr})
 			}
 		} else {
 			// Head exists and is not a literal string. Evaluate as a normal

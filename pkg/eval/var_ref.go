@@ -108,6 +108,24 @@ func resolveVarRefBuiltin(s scopeSearcher, qname string, r diag.Ranger) *varRef 
 	return nil
 }
 
+// Tries to resolve the command head as an internal command, i.e. a builtin
+// special command or a function.
+func resolveCmdHeadInternally(s scopeSearcher, head string, r diag.Ranger) (compileBuiltin, *varRef) {
+	special, ok := builtinSpecials[head]
+	if ok {
+		return special, nil
+	}
+	sigil, qname := SplitVariableRef(head)
+	if sigil == "" {
+		varName := qname + FnSuffix
+		ref := resolveVarRef(s, varName, r)
+		if ref != nil {
+			return nil, ref
+		}
+	}
+	return nil, nil
+}
+
 // Dereferences a varRef into a Var.
 func deref(fm *Frame, ref *varRef) vars.Var {
 	variable, subNames := derefBase(fm, ref)

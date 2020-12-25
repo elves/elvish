@@ -158,18 +158,15 @@ func constantly(args ...interface{}) Callable {
 // ```
 
 func resolve(fm *Frame, head string) string {
-	// Emulate static resolution of a command head. This needs to be kept in
-	// sync with (*compiler).form.
-
-	_, special := builtinSpecials[head]
-	if special {
+	special, fnRef := resolveCmdHeadInternally(fm, head, nil)
+	switch {
+	case special != nil:
 		return "special"
+	case fnRef != nil:
+		return "$" + head + FnSuffix
+	default:
+		return "(external " + parse.Quote(head) + ")"
 	}
-	sigil, qname := SplitVariableRef(head)
-	if sigil == "" && resolveVarRef(fm, qname+FnSuffix, nil) != nil {
-		return "$" + qname + FnSuffix
-	}
-	return "(external " + parse.Quote(head) + ")"
 }
 
 //elvdoc:fn eval
