@@ -231,11 +231,6 @@ func (ev *Evaler) InstallModule(name string, mod *Ns) {
 	ev.modules[name] = mod
 }
 
-// InstallBundled installs a bundled module to the Evaler.
-func (ev *Evaler) InstallBundled(name, src string) {
-	ev.bundled[name] = src
-}
-
 // SetArgs replaces the $args builtin variable with a vector built from the
 // argument.
 func (ev *Evaler) SetArgs(args []string) {
