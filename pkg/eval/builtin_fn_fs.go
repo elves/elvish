@@ -26,10 +26,9 @@ var ErrStoreNotConnected = errors.New("store not connected")
 //
 // See [godoc of path/filepath](https://godoc.org/path/filepath). Go errors are
 // turned into exceptions.
-
-// TODO(xiaq): Document eval-symlinks.
-
-// TODO(xiaq): Document -is-dir.
+//
+// These functions are deprecated. Use the equivalent functions in the
+// [path:](path.html) module.
 
 func init() {
 	addBuiltinFns(map[string]interface{}{

@@ -37,6 +37,20 @@ or compiled, even if it is not executed:
 
 -   The undocumented `esleep` command is now deprecated. Use `sleep` instead.
 
+-   The `eval-symlinks` command is deprecated. Use `path:real` instead.
+
+-   The `path-abs` command is deprecated. Use `path:abs` instead.
+
+-   The `path-base` command is deprecated. Use `path:base` instead.
+
+-   The `path-clean` command is deprecated. Use `path:clean` instead.
+
+-   The `path-dir` command is deprecated. Use `path:dir` instead.
+
+-   The `path-ext` command is deprecated. Use `path:ext` instead.
+
+-   The `-is-dir` command is deprecated. Use `path:is-dir` instead.
+
 The following deprecated features trigger a warning when the code is evaluated:
 
 -   Using `:` in slice indices is deprecated. Use `..` instead.
@@ -57,6 +71,9 @@ New features in the standard library:
     restricted namespace.
 
 -   A new `sleep` command.
+
+-   A new `path:` module has been introduced for manipulating and testing
+    filesystem paths.
 
 New features in the interactive editor:
 

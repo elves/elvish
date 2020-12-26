@@ -12,6 +12,7 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	daemonmod "github.com/elves/elvish/pkg/eval/mods/daemon"
 	mathmod "github.com/elves/elvish/pkg/eval/mods/math"
+	pathmod "github.com/elves/elvish/pkg/eval/mods/path"
 	"github.com/elves/elvish/pkg/eval/mods/platform"
 	"github.com/elves/elvish/pkg/eval/mods/re"
 	"github.com/elves/elvish/pkg/eval/mods/store"
@@ -50,6 +51,7 @@ func InitRuntime(stderr io.Writer, p Paths, spawn bool) *eval.Evaler {
 	ev := eval.NewEvaler()
 	ev.SetLibDir(p.LibDir)
 	ev.AddModule("math", mathmod.Ns)
+	ev.AddModule("path", pathmod.Ns)
 	ev.AddModule("platform", platform.Ns)
 	ev.AddModule("re", re.Ns)
 	ev.AddModule("str", str.Ns)
