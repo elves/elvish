@@ -140,13 +140,12 @@ Start your Elvish journey in this very website!
 Join any of the following channels -- they are all all bridged together thanks
 to [matterbridge](https://github.com/42wim/matterbridge)!
 
--   IRC: [#elvish](https://webchat.freenode.net/?channels=elvish) on Freenode
-
--   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
-
 -   Telegram: [@elvish](https://telegram.me/elvish)
 
--   Matrix: [#elvish:matrix.org](https://matrix.to/#/#elvish:matrix.org)
+-   IRC: [#elvish](https://webchat.freenode.net/?channels=elvish) on Freenode
+
+-   Gitter/Matrix: [elves/elvish](https://gitter.im/elves/elvish),
+    [#elvish:matrix.org](https://matrix.to/#/#elves_elvish:gitter.im)
 
 # <i class="icon-link-ext"></i> More Resources
 
