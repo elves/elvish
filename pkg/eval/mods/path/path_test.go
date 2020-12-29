@@ -1,7 +1,6 @@
 package path
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -10,11 +9,23 @@ import (
 	"github.com/elves/elvish/pkg/testutil"
 )
 
+var testDir = testutil.Dir{
+	"d1": testutil.Dir{
+		"f": testutil.Symlink{filepath.Join("d2", "f")},
+		"d2": testutil.Dir{
+			"empty": "",
+			"f":     "",
+			"g":     testutil.Symlink{"f"},
+		},
+	},
+	"s1": testutil.Symlink{filepath.Join("d1", "d2")},
+}
+
 func TestPath(t *testing.T) {
 	tmpdir, cleanup := testutil.InTestDir()
 	defer cleanup()
-	testutil.Must(os.MkdirAll("d1/d2", 0700))
-	testutil.Must(os.Symlink("d1", "s1"))
+	testutil.ApplyDir(testDir)
+
 	absPath, err := filepath.Abs("a/b/c.png")
 	if err != nil {
 		panic("unable to convert a/b/c.png to an absolute path")
@@ -36,12 +47,22 @@ func TestPath(t *testing.T) {
 		That(`path:ext a/b/s`).Puts(""),
 		That(`path:is-abs a/b/s`).Puts(false),
 		That(`path:is-abs `+absPath).Puts(true),
-		That(`path:real s1/d2`).Puts(filepath.Join("d1", "d2")),
+		That(`path:real d1/d2`).Puts(filepath.Join("d1", "d2")),
+		That(`path:real d1/d2/f`).Puts(filepath.Join("d1", "d2", "f")),
+		That(`path:real s1`).Puts(filepath.Join("d1", "d2")),
+		That(`path:real d1/f`).Puts(filepath.Join("d1", "d2", "f")),
+		That(`path:real s1/g`).Puts(filepath.Join("d1", "d2", "f")),
+		That(`path:real s1/empty`).Puts(filepath.Join("d1", "d2", "empty")),
 
 		// Elvish `path:` module functions that are not trivial wrappers around a Go stdlib function
 		// should have comprehensive tests below this comment.
 		That(`path:is-dir a/b/s`).Puts(false),
 		That(`path:is-dir `+tmpdir).Puts(true),
 		That(`path:is-dir s1`).Puts(true),
+		That(`path:is-regular a/b/s`).Puts(false),
+		That(`path:is-regular `+tmpdir).Puts(false),
+		That(`path:is-regular d1/f`).Puts(true),
+		That(`path:is-regular d1/d2/f`).Puts(true),
+		That(`path:is-regular s1/f`).Puts(true),
 	)
 }

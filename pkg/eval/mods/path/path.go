@@ -135,13 +135,35 @@ func isDir(path string) bool {
 	return err == nil && fi.Mode().IsDir()
 }
 
+//elvdoc:fn is-regular
+//
+// ```elvish
+// is-regular $path
+// ```
+//
+// Outputs `$true` if the path resolves to a directory.
+//
+// ```elvish-transcript
+// ~> touch not-a-dir
+// ~> path:is-regular not-a-dir
+// ▶ true
+// ~> path:is-dir /tmp
+// ▶ false
+// ```
+
+func isRegular(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && fi.Mode().IsRegular()
+}
+
 var Ns = eval.NsBuilder{}.AddGoFns("path:", map[string]interface{}{
-	"abs":    filepath.Abs,
-	"base":   filepath.Base,
-	"clean":  filepath.Clean,
-	"dir":    filepath.Dir,
-	"ext":    filepath.Ext,
-	"is-abs": filepath.IsAbs,
-	"is-dir": isDir,
-	"real":   filepath.EvalSymlinks,
+	"abs":        filepath.Abs,
+	"base":       filepath.Base,
+	"clean":      filepath.Clean,
+	"dir":        filepath.Dir,
+	"ext":        filepath.Ext,
+	"is-abs":     filepath.IsAbs,
+	"is-dir":     isDir,
+	"is-regular": isRegular,
+	"real":       filepath.EvalSymlinks,
 }).Ns()
