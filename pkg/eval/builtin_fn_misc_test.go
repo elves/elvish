@@ -27,11 +27,6 @@ func TestBuiltinFnMisc(t *testing.T) {
 		// Exception.
 		That("eval 'fail x'").Throws(FailError{"x"}),
 
-		That(`f = (mktemp elvXXXXXX); echo 'put x' > $f
-		      -source $f; rm $f`).Puts("x"),
-		That(`f = (mktemp elvXXXXXX); echo 'put $x' > $f
-		      fn p [x]{ -source $f }; p x; rm $f`).Puts("x"),
-
 		// Test the "time" builtin.
 		//
 		// Since runtime duration is non-deterministic, we only have some sanity
@@ -46,6 +41,16 @@ func TestBuiltinFnMisc(t *testing.T) {
 
 		That("time &on-end=[_]{ fail on-end } { fail body }").Throws(
 			FailError{"body"}),
+	)
+}
+
+func TestSource(t *testing.T) {
+	_, cleanup := testutil.InTestDir()
+	defer cleanup()
+
+	Test(t,
+		That("echo 'put x' > a.elv; -source a.elv").Puts("x"),
+		That("echo 'put $x' > a.elv; fn p [x]{ -source a.elv }; p foo").Puts("foo"),
 	)
 }
 
