@@ -54,7 +54,7 @@ func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op Op, err error) {
 		r := recover()
 		if r == nil {
 			return
-		} else if e, ok := GetCompilationError(r); ok {
+		} else if e := GetCompilationError(r); e != nil {
 			// Save the compilation error and stop the panic.
 			err = e
 		} else {
