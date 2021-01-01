@@ -382,7 +382,7 @@ func TestParseError(t *testing.T) {
 			if err == nil {
 				t.Fatalf("no error")
 			}
-			parseError := err.(*MultiError).Entries[0]
+			parseError := err.(*Error).Entries[0]
 			r := parseError.Context
 
 			if errPart := test.src[r.From:r.To]; errPart != test.errPart {

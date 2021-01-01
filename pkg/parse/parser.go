@@ -20,7 +20,7 @@ type parser struct {
 	src     string
 	pos     int
 	overEOF int
-	errors  MultiError
+	errors  Error
 	warn    io.Writer
 }
 

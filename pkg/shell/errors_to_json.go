@@ -28,7 +28,7 @@ func errorToJSON(err error) []byte {
 		e = []interface{}{
 			errorInJSON{err.Context.Name, err.Context.From, err.Context.To, err.Message},
 		}
-	case *parse.MultiError:
+	case *parse.Error:
 		var errArr []errorInJSON
 		for _, v := range err.Entries {
 			errArr = append(errArr,

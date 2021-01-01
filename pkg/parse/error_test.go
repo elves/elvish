@@ -1,34 +1,44 @@
 package parse
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/elves/elvish/pkg/diag"
+	. "github.com/elves/elvish/pkg/tt"
 )
 
-var multiErrorTests = []struct {
-	multiError *MultiError
-	indent     string
-	wantError  string
-	wantShow   string
+func TestGetError(t *testing.T) {
+	parseError := makeError()
+	Test(t, Fn("GetError", GetError), Table{
+		Args(parseError).Rets(parseError),
+		Args(errors.New("random error")).Rets((*Error)(nil)),
+	})
+}
+
+var errorTests = []struct {
+	err       *Error
+	indent    string
+	wantError string
+	wantShow  string
 }{
-	{makeMultiError(), "", "no parse error", "no parse error"},
+	{makeError(), "", "no parse error", "no parse error"},
 	// TODO: Add more complex test cases.
 }
 
-func TestMultiError(t *testing.T) {
-	for _, test := range multiErrorTests {
-		gotError := test.multiError.Error()
+func TestError(t *testing.T) {
+	for _, test := range errorTests {
+		gotError := test.err.Error()
 		if gotError != test.wantError {
 			t.Errorf("got error %q, want %q", gotError, test.wantError)
 		}
-		gotShow := test.multiError.Show(test.indent)
+		gotShow := test.err.Show(test.indent)
 		if gotShow != test.wantShow {
 			t.Errorf("got show %q, want %q", gotShow, test.wantShow)
 		}
 	}
 }
 
-func makeMultiError(entries ...*diag.Error) *MultiError {
-	return &MultiError{entries}
+func makeError(entries ...*diag.Error) *Error {
+	return &Error{entries}
 }

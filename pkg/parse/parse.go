@@ -26,7 +26,7 @@ type Tree struct {
 	Source Source
 }
 
-// Parse parses the given source. The returned error always has type MultiError
+// Parse parses the given source. The returned error always has type *Error
 // if it is not nil.
 func Parse(src Source) (Tree, error) {
 	return ParseWithDeprecation(src, nil)
@@ -42,7 +42,7 @@ func ParseWithDeprecation(src Source, w io.Writer) (Tree, error) {
 
 // ParseAs parses the given source as a node, depending on the dynamic type of
 // n, writing deprecation warnings to the given io.Writer if it is not nil. If
-// the error is not nil, it always has type MultiError.
+// the error is not nil, it always has type *Error.
 func ParseAs(src Source, n Node, w io.Writer) error {
 	ps := &parser{srcName: src.Name, src: src.Code, warn: w}
 	ps.parse(n)
