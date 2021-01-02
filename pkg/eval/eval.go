@@ -266,7 +266,7 @@ func (fm *Frame) growPorts(n int) {
 // returned error may be a parse error, compilation error or exception.
 func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
 	cfg.Ports = fillPorts(cfg.Ports)
-	op, err := ev.ParseAndCompile(src, cfg.Ports[2].File)
+	op, err := ev.parseAndCompile(src, cfg.Ports[2].File)
 	if err != nil {
 		return err
 	}
@@ -313,8 +313,8 @@ func (ev *Evaler) execOp(op Op, cfg EvalCfg) error {
 	return op.Inner.exec(fm)
 }
 
-// ParseAndCompile parses and compiles a Source.
-func (ev *Evaler) ParseAndCompile(src parse.Source, w io.Writer) (Op, error) {
+// Parses and compiles a Source.
+func (ev *Evaler) parseAndCompile(src parse.Source, w io.Writer) (Op, error) {
 	tree, err := parse.ParseWithDeprecation(src, w)
 	if err != nil {
 		return Op{}, err

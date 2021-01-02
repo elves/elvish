@@ -37,7 +37,7 @@ func BenchmarkEval_UpVariableAccess(b *testing.B) {
 func benchmarkEval(b *testing.B, code string) {
 	ev := NewEvaler()
 	src := parse.Source{Name: "[benchmark]", Code: code}
-	op, err := ev.ParseAndCompile(src, nil)
+	op, err := ev.parseAndCompile(src, nil)
 	if err != nil {
 		panic(err)
 	}
