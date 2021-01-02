@@ -141,6 +141,13 @@ func (fm *Frame) fork(name string) *Frame {
 	}
 }
 
+// A shorthand for forking a frame and setting the output port.
+func (fm *Frame) forkWithOutput(name string, p *Port) *Frame {
+	newFm := fm.fork(name)
+	newFm.ports[1] = p
+	return newFm
+}
+
 // Eval evaluates an Op. It is like eval except that it sets fm.srcMeta
 // temporarily to op.src during the evaluation.
 func (fm *Frame) Eval(op Op) error {
@@ -154,12 +161,23 @@ func (fm *Frame) Eval(op Op) error {
 
 // CaptureOutput captures the output of a given callback that operates on a Frame.
 func (fm *Frame) CaptureOutput(f func(*Frame) error) ([]interface{}, error) {
-	return captureOutput(fm, f)
+	outPort, collect, err := CapturePort()
+	if err != nil {
+		return nil, err
+	}
+	err = f(fm.forkWithOutput("[output capture]", outPort))
+	return collect(), err
 }
 
 // PipeOutput calls a callback with output piped to the given output handlers.
-func (fm *Frame) PipeOutput(f func(*Frame) error, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
-	return pipeOutput(fm, f, valuesCb, bytesCb)
+func (fm *Frame) PipeOutput(f func(*Frame) error, vCb func(<-chan interface{}), bCb func(*os.File)) error {
+	outPort, done, err := PipePort(vCb, bCb)
+	if err != nil {
+		return err
+	}
+	err = f(fm.forkWithOutput("[output pipe]", outPort))
+	done()
+	return err
 }
 
 func (fm *Frame) addTraceback(r diag.Ranger) *StackTrace {

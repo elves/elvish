@@ -1,8 +1,13 @@
 package eval
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
+	"sync"
+
+	"github.com/elves/elvish/pkg/strutil"
 )
 
 // Port conveys data stream. It always consists of a byte band and a channel band.
@@ -32,18 +37,20 @@ func (p *Port) Close() {
 }
 
 var (
-	// ClosedChan is a closed channel, suitable for use as placeholder channel input.
+	// ClosedChan is a closed channel, suitable as a placeholder input channel.
 	ClosedChan = getClosedChan()
-	// BlackholeChan is channel writes onto which disappear, suitable for use as
-	// placeholder channel output.
+	// BlackholeChan is a channel that absorbs all values written to it,
+	// suitable as a placeholder output channel.
 	BlackholeChan = getBlackholeChan()
-	// DevNull is /dev/null.
+	// DevNull is /dev/null, suitable as a placeholder file for either input or
+	// output.
 	DevNull = getDevNull()
-	// DevNullClosedChan is a port made up from DevNull and ClosedChan,
-	// suitable as placeholder input port.
+
+	// DevNullClosedChan is a port made up from DevNull and ClosedChan, suitable
+	// as a placeholder input port.
 	DevNullClosedChan = &Port{File: DevNull, Chan: ClosedChan}
 	// DevNullBlackholeChan is a port made up from DevNull and BlackholeChan,
-	// suitable as placeholder output port.
+	// suitable as a placeholder output port.
 	DevNullBlackholeChan = &Port{File: DevNull, Chan: BlackholeChan}
 )
 
@@ -69,4 +76,76 @@ func getDevNull() *os.File {
 			"cannot open %s, shell might not function normally\n", os.DevNull)
 	}
 	return f
+}
+
+// PipePort returns an output *Port whose value and byte components are both
+// piped. The supplied functions are called on a separate goroutine with the
+// read ends of the value and byte components of the port. It also returns a
+// function to clean up the port and wait for the callbacks to finish.
+func PipePort(vCb func(<-chan interface{}), bCb func(*os.File)) (*Port, func(), error) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		return nil, nil, err
+	}
+	ch := make(chan interface{}, outputCaptureBufferSize)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		vCb(ch)
+	}()
+	go func() {
+		defer wg.Done()
+		defer r.Close()
+		bCb(r)
+	}()
+
+	port := &Port{Chan: ch, CloseChan: true, File: w, CloseFile: true}
+	done := func() {
+		port.Close()
+		wg.Wait()
+	}
+	return port, done, nil
+}
+
+// CapturePort returns an output *Port whose value and byte components are
+// both connected to an internal pipe that saves the output. It also returns a
+// function to call to obtain the captured output.
+func CapturePort() (*Port, func() []interface{}, error) {
+	vs := []interface{}{}
+	var m sync.Mutex
+	port, done, err := PipePort(
+		func(ch <-chan interface{}) {
+			for v := range ch {
+				m.Lock()
+				vs = append(vs, v)
+				m.Unlock()
+			}
+		},
+		func(r *os.File) {
+			buffered := bufio.NewReader(r)
+			for {
+				line, err := buffered.ReadString('\n')
+				if line != "" {
+					v := strutil.ChopLineEnding(line)
+					m.Lock()
+					vs = append(vs, v)
+					m.Unlock()
+				}
+				if err != nil {
+					if err != io.EOF {
+						logger.Println("error on reading:", err)
+					}
+					break
+				}
+			}
+		})
+	if err != nil {
+		return nil, nil, err
+	}
+	return port, func() []interface{} {
+		done()
+		return vs
+	}, nil
 }

@@ -77,7 +77,7 @@ func benchmarkOutputCapture(n int, f func(*Frame)) {
 	defer ev.Close()
 	fm := NewTopFrame(ev, parse.Source{Name: "[benchmark]"}, []*Port{{}, {}, {}})
 	for i := 0; i < n; i++ {
-		captureOutput(fm, func(fm *Frame) error {
+		fm.CaptureOutput(func(fm *Frame) error {
 			f(fm)
 			return nil
 		})

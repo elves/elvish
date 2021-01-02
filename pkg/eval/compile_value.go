@@ -1,13 +1,9 @@
 package eval
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"strings"
-	"sync"
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
@@ -15,7 +11,6 @@ import (
 	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/glob"
 	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/strutil"
 )
 
 // An operation that produces values.
@@ -367,69 +362,7 @@ type outputCaptureOp struct {
 }
 
 func (op outputCaptureOp) exec(fm *Frame) ([]interface{}, error) {
-	return captureOutput(fm, op.subop.exec)
-}
-
-func captureOutput(fm *Frame, f func(*Frame) error) ([]interface{}, error) {
-	vs := []interface{}{}
-	var m sync.Mutex
-	err := pipeOutput(fm, f,
-		func(ch <-chan interface{}) {
-			for v := range ch {
-				m.Lock()
-				vs = append(vs, v)
-				m.Unlock()
-			}
-		},
-		func(r *os.File) {
-			buffered := bufio.NewReader(r)
-			for {
-				line, err := buffered.ReadString('\n')
-				if line != "" {
-					v := strutil.ChopLineEnding(line)
-					m.Lock()
-					vs = append(vs, v)
-					m.Unlock()
-				}
-				if err != nil {
-					if err != io.EOF {
-						logger.Println("error on reading:", err)
-					}
-					break
-				}
-			}
-		})
-	return vs, err
-}
-
-func pipeOutput(fm *Frame, f func(*Frame) error, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
-	newFm := fm.fork("[output capture]")
-
-	ch := make(chan interface{}, outputCaptureBufferSize)
-	r, w, err := os.Pipe()
-	if err != nil {
-		return err
-	}
-	newFm.ports[1] = &Port{
-		Chan: ch, CloseChan: true,
-		File: w, CloseFile: true,
-	}
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		valuesCb(ch)
-	}()
-	go func() {
-		defer wg.Done()
-		defer r.Close()
-		bytesCb(r)
-	}()
-
-	err = f(newFm)
-	newFm.Close()
-	wg.Wait()
-	return err
+	return fm.CaptureOutput(op.subop.exec)
 }
 
 func (cp *compiler) lambda(n *parse.Primary) valuesOp {
