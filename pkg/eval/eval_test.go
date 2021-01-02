@@ -1,8 +1,8 @@
 package eval_test
 
 import (
-	"bytes"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 
@@ -45,16 +45,23 @@ func TestCompileTimeDeprecation(t *testing.T) {
 	defer restore()
 
 	ev := NewEvaler()
-	r, w := testutil.MustPipe()
-	_, err := ev.ParseAndCompile(parse.Source{Code: "ord a"}, w)
+	errPort, collect, err := CaptureStringPort()
+	if err != nil {
+		panic(err)
+	}
+
+	err = ev.Eval(
+		parse.Source{Code: "ord a"},
+		EvalCfg{Ports: []*Port{nil, nil, errPort}, NoExecute: true})
+	warnings := collect()
 	if err != nil {
 		t.Errorf("got err %v, want nil", err)
 	}
-	w.Close()
-	warnings := testutil.MustReadAllAndClose(r)
-	wantWarning := []byte(`the "ord" command is deprecated`)
-	if !bytes.Contains(warnings, wantWarning) {
-		t.Errorf("got warnings %q, want warnings to contain %q", warnings, wantWarning)
+
+	warning := warnings[0]
+	wantWarning := `the "ord" command is deprecated`
+	if !strings.Contains(warning, wantWarning) {
+		t.Errorf("got warning %q, want warning containing %q", warning, wantWarning)
 	}
 }
 
