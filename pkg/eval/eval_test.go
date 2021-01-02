@@ -81,20 +81,16 @@ func TestMultipleEval(t *testing.T) {
 func TestConcurrentEval(t *testing.T) {
 	// Run this test with "go test -race".
 	ev := NewEvaler()
-	src := parse.Source{Name: "[test]"}
-	op, err := ev.ParseAndCompile(src, nil)
-	if err != nil {
-		panic(err)
-	}
+	src := parse.Source{Name: "[test]", Code: ""}
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
-		ev.Eval(op, EvalCfg{})
+		ev.Eval(src, EvalCfg{})
 		wg.Done()
 	}()
 	go func() {
-		ev.Eval(op, EvalCfg{})
+		ev.Eval(src, EvalCfg{})
 		wg.Done()
 	}()
 	wg.Wait()

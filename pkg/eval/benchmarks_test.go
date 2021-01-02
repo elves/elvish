@@ -43,7 +43,7 @@ func benchmarkEval(b *testing.B, code string) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ev.Eval(op, EvalCfg{})
+		ev.execOp(op, EvalCfg{})
 	}
 }
 

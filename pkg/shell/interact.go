@@ -100,12 +100,9 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 		// No error; reset cooldown.
 		cooldown = time.Second
 
-		src := parse.Source{Name: fmt.Sprintf("[tty %v]", cmdNum), Code: line}
-		op, err := ev.ParseAndCompile(src, fds[2])
-		if err == nil {
-			err = evalInTTY(ev, op, fds)
-			term.Sanitize(fds[0], fds[2])
-		}
+		err = evalInTTY(ev, fds, false,
+			parse.Source{Name: fmt.Sprintf("[tty %v]", cmdNum), Code: line})
+		term.Sanitize(fds[0], fds[2])
 		if err != nil {
 			diag.ShowError(fds[2], err)
 		}
@@ -124,12 +121,8 @@ func sourceRC(fds [3]*os.File, ev *eval.Evaler, rcPath string) error {
 		}
 		return err
 	}
-	src := parse.Source{Name: absPath, Code: code, IsFile: true}
-	op, err := ev.ParseAndCompile(src, fds[2])
-	if err != nil {
-		return err
-	}
-	err = evalInTTY(ev, op, fds)
+	err = evalInTTY(ev, fds, false,
+		parse.Source{Name: absPath, Code: code, IsFile: true})
 	if err != nil {
 		return err
 	}

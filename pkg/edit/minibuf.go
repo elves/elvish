@@ -38,15 +38,10 @@ func minibufSubmit(ed *Editor, ev *eval.Evaler) {
 	cli.SetAddon(app, nil)
 	code := codeArea.CopyState().Buffer.Content
 	src := parse.Source{Name: "[minibuf]", Code: code}
-	op, err := ev.ParseAndCompile(src, nil)
-	if err != nil {
-		app.Notify(err.Error())
-		return
-	}
 	notifyPort, cleanup := makeNotifyPort(ed)
 	defer cleanup()
 	ports := []*eval.Port{eval.DevNullClosedChan, notifyPort, notifyPort}
-	err = ev.Eval(op, eval.EvalCfg{Ports: ports})
+	err := ev.Eval(src, eval.EvalCfg{Ports: ports})
 	if err != nil {
 		app.Notify(err.Error())
 	}

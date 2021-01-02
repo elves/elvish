@@ -177,21 +177,18 @@ func EvalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) Result {
 	}
 
 	for _, text := range texts {
-		src := parse.Source{Name: "[test]", Code: text}
+		err := ev.Eval(parse.Source{Name: "[test]", Code: text},
+			eval.EvalCfg{Ports: ports, Interrupt: eval.ListenInterrupts})
 
-		tree, err := parse.Parse(src)
-		if err != nil {
-			t.Fatalf("Parse(%q) error: %s", src.Code, err)
-		}
-		op, err := ev.Compile(tree, nil)
-		if err != nil {
+		if parse.GetError(err) != nil {
+			t.Fatalf("Parse(%q) error: %s", text, err)
+		} else if eval.GetCompilationError(err) != nil {
 			// NOTE: Only the compilation error of the last code is saved.
 			r.CompilationError = err
-			continue
+		} else if err != nil {
+			// NOTE: Only the exception of the last code that compiles is saved.
+			r.Exception = err
 		}
-		// NOTE: Only the exception of the last code that compiles is saved.
-		r.Exception = ev.Eval(op, eval.EvalCfg{
-			Ports: ports, Interrupt: eval.ListenInterrupts})
 	}
 
 	stdout.Close()

@@ -115,11 +115,6 @@ const (
 func evalAndCollect(ev *eval.Evaler, code string) (
 	outBytes []byte, outValues []interface{}, errBytes []byte, err error) {
 
-	op, err := ev.ParseAndCompile(parse.Source{Name: "[web]", Code: code}, nil)
-	if err != nil {
-		return
-	}
-
 	outFile, chanOutBytes := makeBytesWriterAndCollect()
 	outChan, chanOutValues := makeValuesWriterAndCollect()
 	errFile, chanErrBytes := makeBytesWriterAndCollect()
@@ -129,7 +124,8 @@ func evalAndCollect(ev *eval.Evaler, code string) (
 		{File: outFile, Chan: outChan},
 		{File: errFile, Chan: eval.BlackholeChan},
 	}
-	err = ev.Eval(op, eval.EvalCfg{Ports: ports})
+	err = ev.Eval(
+		parse.Source{Name: "[web]", Code: code}, eval.EvalCfg{Ports: ports})
 
 	outFile.Close()
 	close(outChan)

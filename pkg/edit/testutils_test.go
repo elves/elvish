@@ -107,12 +107,7 @@ func feedInput(ttyCtrl clitest.TTYCtrl, s string) {
 
 func evals(ev *eval.Evaler, codes ...string) {
 	for _, code := range codes {
-		src := parse.Source{Name: "[test]", Code: code}
-		op, err := ev.ParseAndCompile(src, nil)
-		if err != nil {
-			panic(fmt.Errorf("parse and compile %q: %s", code, err))
-		}
-		err = ev.Eval(op, eval.EvalCfg{})
+		err := ev.Eval(parse.Source{Name: "[test]", Code: code}, eval.EvalCfg{})
 		if err != nil {
 			panic(fmt.Errorf("eval %q: %s", code, err))
 		}

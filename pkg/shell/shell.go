@@ -10,6 +10,7 @@ import (
 	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/logutil"
+	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/sys"
 )
@@ -61,11 +62,12 @@ func setupShell(fds [3]*os.File, p Paths, spawn bool) (*eval.Evaler, func()) {
 	}
 }
 
-func evalInTTY(ev *eval.Evaler, op eval.Op, fds [3]*os.File) error {
+func evalInTTY(ev *eval.Evaler, fds [3]*os.File, noExecute bool, src parse.Source) error {
 	ports, cleanup := eval.PortsFromFiles(fds, ev)
 	defer cleanup()
-	return ev.Eval(op, eval.EvalCfg{
-		Ports: ports[:], Interrupt: eval.ListenInterrupts, PutInFg: true})
+	return ev.Eval(src, eval.EvalCfg{
+		Ports: ports[:], Interrupt: eval.ListenInterrupts,
+		NoExecute: noExecute, PutInFg: true})
 }
 
 func incSHLVL() func() {
