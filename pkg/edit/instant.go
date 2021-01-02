@@ -40,29 +40,37 @@ func initInstant(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 
 func instantStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
 	execute := func(code string) ([]string, error) {
-		src := parse.Source{Name: "[instant]", Code: code}
-		op, err := ev.ParseAndCompile(src, nil)
+		outPort, collect, err := capturePort()
 		if err != nil {
 			return nil, err
 		}
-		fm := eval.NewTopFrame(ev, src, []*eval.Port{
-			{File: eval.DevNull},
-			{}, // Will be replaced in CaptureOutput
-			{File: eval.DevNull},
-		})
-		var output []string
-		var outputMutex sync.Mutex
-		addLine := func(line string) {
-			outputMutex.Lock()
-			defer outputMutex.Unlock()
-			output = append(output, line)
-		}
-		valuesCb := func(ch <-chan interface{}) {
+		err = ev.Eval(
+			parse.Source{Name: "[instant]", Code: code},
+			eval.EvalCfg{
+				Ports:     []*eval.Port{nil, outPort},
+				Interrupt: eval.ListenInterrupts})
+		return collect(), err
+	}
+	instant.Start(app, instant.Config{Binding: binding, Execute: execute})
+}
+
+// Like eval.CapturePort, but collects output into strings, with value outputs
+// stringified and prepended a marker.
+func capturePort() (*eval.Port, func() []string, error) {
+	var lines []string
+	var mu sync.Mutex
+	addLine := func(line string) {
+		mu.Lock()
+		defer mu.Unlock()
+		lines = append(lines, line)
+	}
+	port, done, err := eval.PipePort(
+		func(ch <-chan interface{}) {
 			for v := range ch {
 				addLine("▶ " + vals.ToString(v))
 			}
-		}
-		bytesCb := func(r *os.File) {
+		},
+		func(r *os.File) {
 			bufr := bufio.NewReader(r)
 			for {
 				line, err := bufr.ReadString('\n')
@@ -74,10 +82,12 @@ func instantStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
 				}
 				addLine(strutil.ChopLineEnding(line))
 			}
-		}
-		err = fm.PipeOutput(
-			func(fm *eval.Frame) error { return fm.Eval(op) }, valuesCb, bytesCb)
-		return output, err
+		})
+	if err != nil {
+		return nil, nil, err
 	}
-	instant.Start(app, instant.Config{Binding: binding, Execute: execute})
+	return port, func() []string {
+		done()
+		return lines
+	}, nil
 }
