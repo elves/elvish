@@ -7,6 +7,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/strutil"
 )
 
@@ -147,5 +148,43 @@ func CapturePort() (*Port, func() []interface{}, error) {
 	return port, func() []interface{} {
 		done()
 		return vs
+	}, nil
+}
+
+// CaptureStringPort is like CapturePort, but processes value outputs by
+// stringifying them and prepending an output marker.
+func CaptureStringPort() (*Port, func() []string, error) {
+	var lines []string
+	var mu sync.Mutex
+	addLine := func(line string) {
+		mu.Lock()
+		defer mu.Unlock()
+		lines = append(lines, line)
+	}
+	port, done, err := PipePort(
+		func(ch <-chan interface{}) {
+			for v := range ch {
+				addLine("▶ " + vals.ToString(v))
+			}
+		},
+		func(r *os.File) {
+			bufr := bufio.NewReader(r)
+			for {
+				line, err := bufr.ReadString('\n')
+				if err != nil {
+					if err != io.EOF {
+						addLine("i/o error: " + err.Error())
+					}
+					break
+				}
+				addLine(strutil.ChopLineEnding(line))
+			}
+		})
+	if err != nil {
+		return nil, nil, err
+	}
+	return port, func() []string {
+		done()
+		return lines
 	}, nil
 }
