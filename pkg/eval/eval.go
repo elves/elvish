@@ -265,9 +265,7 @@ func (fm *Frame) growPorts(n int) {
 // Eval evaluates a piece of source code with the given configuration. The
 // returned error may be a parse error, compilation error or exception.
 func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
-	if cfg.Ports == nil {
-		cfg.Ports = DevNullPorts[:]
-	}
+	cfg.Ports = fillPorts(cfg.Ports)
 	op, err := ev.ParseAndCompile(src, cfg.Ports[2].File)
 	if err != nil {
 		return err
@@ -277,6 +275,22 @@ func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
 	} else {
 		return ev.execOp(op, cfg)
 	}
+}
+
+func fillPorts(ports []*Port) []*Port {
+	if len(ports) < 3 {
+		ports = append(ports, make([]*Port, 3-len(ports))...)
+	}
+	if ports[0] == nil {
+		ports[0] = DevNullClosedChan
+	}
+	if ports[1] == nil {
+		ports[1] = DevNullBlackholeChan
+	}
+	if ports[2] == nil {
+		ports[2] = DevNullBlackholeChan
+	}
+	return ports
 }
 
 // Executes an Op with the specified configuration.
