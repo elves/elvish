@@ -314,22 +314,28 @@ func (ev *Evaler) parseAndCompile(src parse.Source, w io.Writer) (Op, error) {
 	if err != nil {
 		return Op{}, err
 	}
-	return ev.Compile(tree, w)
+	return ev.compile(tree, w)
 }
 
-// Check checks the given source code and returns any parse error and
-// compilation error in it. It always tries to compile the code even if there is
-// a parse error; both return values may be non-nil. If the io.Writer argument
-// is not nil, deprecation messages are written to it.
+// Check checks the given source code for any parse error and compilation error.
+// It always tries to compile the code even if there is a parse error; both
+// return values may be non-nil. If w is not nil, deprecation messages are
+// written to it.
 func (ev *Evaler) Check(src parse.Source, w io.Writer) (*parse.Error, *diag.Error) {
 	tree, parseErr := parse.ParseWithDeprecation(src, w)
-	_, compileErr := ev.Compile(tree, w)
-	return parse.GetError(parseErr), GetCompilationError(compileErr)
+	return parse.GetError(parseErr), ev.CheckTree(tree, w)
 }
 
-// Compile compiles Elvish code in the global scope. If the error is not nil, it
-// can be passed to GetCompilationError to retrieve more details.
-func (ev *Evaler) Compile(tree parse.Tree, w io.Writer) (Op, error) {
+// CheckTree checks the given parsed source tree for compilation errors. If w is
+// not nil, deprecation messages are written to it.
+func (ev *Evaler) CheckTree(tree parse.Tree, w io.Writer) *diag.Error {
+	_, compileErr := ev.compile(tree, w)
+	return GetCompilationError(compileErr)
+}
+
+// Compiles Elvish code in the global scope. If the error is not nil, it can be
+// passed to GetCompilationError to retrieve more details.
+func (ev *Evaler) compile(tree parse.Tree, w io.Writer) (Op, error) {
 	return ev.CompileWithGlobal(tree, ev.Global, w)
 }
 

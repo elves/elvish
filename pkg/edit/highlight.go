@@ -19,7 +19,10 @@ func initHighlighter(appSpec *cli.AppSpec, ev *eval.Evaler) {
 }
 
 func check(ev *eval.Evaler, tree parse.Tree) error {
-	_, err := ev.Compile(tree, nil)
+	err := ev.CheckTree(tree, nil)
+	if err == nil {
+		return nil
+	}
 	return err
 }
 
