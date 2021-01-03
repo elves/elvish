@@ -89,7 +89,6 @@ func CleanupRuntime(stderr io.Writer, ev *eval.Evaler) {
 				"warning: failed to close connection to daemon:", err)
 		}
 	}
-	ev.Close()
 }
 
 func connectToDaemon(stderr io.Writer, spawnCfg *daemon.SpawnConfig) (daemon.Client, error) {

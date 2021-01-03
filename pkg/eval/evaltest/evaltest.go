@@ -117,7 +117,6 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...TestCase) {
 		t.Run(tt.code, func(t *testing.T) {
 			t.Helper()
 			ev := eval.NewEvaler()
-			defer ev.Close()
 			setup(ev)
 
 			r := EvalAndCollect(t, ev, []string{tt.code})

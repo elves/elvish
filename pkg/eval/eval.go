@@ -193,12 +193,6 @@ func adaptChdirHook(name string, ev *Evaler, pfns *vector.Vector) func(string) {
 	}
 }
 
-// Close releases resources allocated when creating this Evaler. Currently this
-// does nothing and always returns a nil error.
-func (ev *Evaler) Close() error {
-	return nil
-}
-
 // AddBeforeChdir adds a function to run before changing directory.
 func (ev *Evaler) AddBeforeChdir(f func(string)) {
 	ev.beforeChdir = append(ev.beforeChdir, f)

@@ -81,7 +81,6 @@ func BenchmarkOutputCapture_Mixed(b *testing.B) {
 
 func benchmarkOutputCapture(n int, f func(*Frame)) {
 	ev := NewEvaler()
-	defer ev.Close()
 	fm := &Frame{Evaler: ev, local: ev.Global, up: new(Ns)}
 	for i := 0; i < n; i++ {
 		fm.CaptureOutput(func(fm *Frame) error {
