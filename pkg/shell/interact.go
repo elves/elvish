@@ -100,7 +100,7 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 		// No error; reset cooldown.
 		cooldown = time.Second
 
-		err = evalInTTY(ev, fds, false,
+		err = evalInTTY(ev, fds,
 			parse.Source{Name: fmt.Sprintf("[tty %v]", cmdNum), Code: line})
 		term.Sanitize(fds[0], fds[2])
 		if err != nil {
@@ -121,8 +121,7 @@ func sourceRC(fds [3]*os.File, ev *eval.Evaler, rcPath string) error {
 		}
 		return err
 	}
-	err = evalInTTY(ev, fds, false,
-		parse.Source{Name: absPath, Code: code, IsFile: true})
+	err = evalInTTY(ev, fds, parse.Source{Name: absPath, Code: code, IsFile: true})
 	if err != nil {
 		return err
 	}

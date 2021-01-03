@@ -49,16 +49,29 @@ func Script(fds [3]*os.File, args []string, cfg *ScriptConfig) int {
 		}
 	}
 
-	err := evalInTTY(ev, fds, cfg.CompileOnly,
-		parse.Source{Name: name, Code: code, IsFile: true})
-
-	if err != nil {
-		if cfg.CompileOnly && cfg.JSON {
-			fmt.Fprintf(fds[1], "%s\n", errorToJSON(err))
-		} else {
-			diag.ShowError(fds[2], err)
+	src := parse.Source{Name: name, Code: code, IsFile: true}
+	if cfg.CompileOnly {
+		parseErr, compileErr := ev.Check(src, fds[2])
+		var err error
+		if parseErr != nil {
+			err = parseErr
+		} else if compileErr != nil {
+			err = compileErr
 		}
-		return 2
+		if err != nil {
+			if cfg.JSON {
+				fmt.Fprintf(fds[1], "%s\n", errorToJSON(err))
+			} else {
+				diag.ShowError(fds[2], err)
+			}
+			return 2
+		}
+	} else {
+		err := evalInTTY(ev, fds, src)
+		if err != nil {
+			diag.ShowError(fds[2], err)
+			return 2
+		}
 	}
 
 	return 0

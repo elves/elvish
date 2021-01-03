@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/pkg/daemon"
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/mods/bundled"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
@@ -68,8 +69,6 @@ type EvalCfg struct {
 	// Ports to use in evaluation. If nil, equivalent to specifying
 	// DevNullPorts[:]. If not nil, must contain at least 3 elements.
 	Ports []*Port
-	// If true, the code will be parsed and compiled but not executed.
-	NoExecute bool
 	// Callback to get a channel of interrupt signals and a function to call
 	// when the channel is no longer needed.
 	Interrupt func() (<-chan struct{}, func())
@@ -270,11 +269,7 @@ func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
 	if err != nil {
 		return err
 	}
-	if cfg.NoExecute {
-		return nil
-	} else {
-		return ev.execOp(op, cfg)
-	}
+	return ev.execOp(op, cfg)
 }
 
 func fillPorts(ports []*Port) []*Port {
@@ -313,13 +308,23 @@ func (ev *Evaler) execOp(op Op, cfg EvalCfg) error {
 	return op.Inner.exec(fm)
 }
 
-// Parses and compiles a Source.
+// Parses and compiles a Source. Aborts if parse fails.
 func (ev *Evaler) parseAndCompile(src parse.Source, w io.Writer) (Op, error) {
 	tree, err := parse.ParseWithDeprecation(src, w)
 	if err != nil {
 		return Op{}, err
 	}
 	return ev.Compile(tree, w)
+}
+
+// Check checks the given source code and returns any parse error and
+// compilation error in it. It always tries to compile the code even if there is
+// a parse error; both return values may be non-nil. If the io.Writer argument
+// is not nil, deprecation messages are written to it.
+func (ev *Evaler) Check(src parse.Source, w io.Writer) (*parse.Error, *diag.Error) {
+	tree, parseErr := parse.ParseWithDeprecation(src, w)
+	_, compileErr := ev.Compile(tree, w)
+	return parse.GetError(parseErr), GetCompilationError(compileErr)
 }
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it

@@ -1,6 +1,7 @@
 package eval_test
 
 import (
+	"bytes"
 	"reflect"
 	"strings"
 	"sync"
@@ -45,20 +46,17 @@ func TestCompileTimeDeprecation(t *testing.T) {
 	defer restore()
 
 	ev := NewEvaler()
-	errPort, collect, err := CaptureStringPort()
-	if err != nil {
-		panic(err)
+	errOutput := new(bytes.Buffer)
+
+	parseErr, compileErr := ev.Check(parse.Source{Code: "ord a"}, errOutput)
+	if parseErr != nil {
+		t.Errorf("got parse err %v", parseErr)
+	}
+	if compileErr != nil {
+		t.Errorf("got compile err %v", compileErr)
 	}
 
-	err = ev.Eval(
-		parse.Source{Code: "ord a"},
-		EvalCfg{Ports: []*Port{nil, nil, errPort}, NoExecute: true})
-	warnings := collect()
-	if err != nil {
-		t.Errorf("got err %v, want nil", err)
-	}
-
-	warning := warnings[0]
+	warning := errOutput.String()
 	wantWarning := `the "ord" command is deprecated`
 	if !strings.Contains(warning, wantWarning) {
 		t.Errorf("got warning %q, want warning containing %q", warning, wantWarning)
@@ -101,4 +99,36 @@ func TestConcurrentEval(t *testing.T) {
 		wg.Done()
 	}()
 	wg.Wait()
+}
+
+var checkTests = []struct {
+	name           string
+	code           string
+	wantParseErr   bool
+	wantCompileErr bool
+}{
+	{name: "no error", code: "put $nil"},
+	{name: "parse error only", code: "put [",
+		wantParseErr: true},
+	{name: "compile error only", code: "put $x",
+		wantCompileErr: true},
+	{name: "both parse and compile error", code: "put [$x",
+		wantParseErr: true, wantCompileErr: true},
+}
+
+func TestCheck(t *testing.T) {
+	ev := NewEvaler()
+	for _, test := range checkTests {
+		t.Run(test.name, func(t *testing.T) {
+			parseErr, compileErr := ev.Check(parse.Source{Code: test.code}, nil)
+			if (parseErr != nil) != test.wantParseErr {
+				t.Errorf("got parse error %v, when wantParseErr = %v",
+					parseErr, test.wantParseErr)
+			}
+			if (compileErr != nil) != test.wantCompileErr {
+				t.Errorf("got compile error %v, when wantCompileErr = %v",
+					compileErr, test.wantCompileErr)
+			}
+		})
+	}
 }
