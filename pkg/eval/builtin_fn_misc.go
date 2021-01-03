@@ -8,13 +8,13 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net"
-	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
 	"unicode/utf8"
 
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
 )
 
@@ -260,9 +260,8 @@ func useMod(fm *Frame, spec string) (*Ns, error) {
 // -source $filename
 // ```
 //
-// Read the named file, and evaluate it in the current scope.
-//
-// This function is deprecated. Use [eval](#eval) instead.
+// Read the named file, and evaluate it in a temporary namespace built from the
+// current local and up scope.
 //
 // Examples:
 //
@@ -276,46 +275,32 @@ func useMod(fm *Frame, spec string) (*Ns, error) {
 // bar
 // ```
 //
-// Note that while in the example, you can reference `$foo` after sourcing `x.elv`,
-// putting the `-source` command and reference to `$foo` in the **same code chunk**
-// (e.g. by using <span class="key">Alt-Enter</span> to insert a literal Enter, or
-// using `;`) is invalid:
+// Since the file is evaluated in a temporary namespace, any modifications to
+// the namespace itself - creation of variables and deletion of variables - do
+// not affect the code calling `-source`. For example:
 //
 // ```elvish-transcript
-// ~> # A new Elvish session
-// ~> cat x.elv
-// echo 'executing x.elv'
-// foo = bar
-// ~> -source x.elv; echo $foo
-// Compilation error: variable $foo not found
-// [interactive], line 1:
-// -source x.elv; echo $foo
+// ~> echo 'foo = lorem' > a.elv
+// ~> -source a.elv
+// ~> put $foo
+// compilation error: 4-8 in [tty]: variable $foo not found
+// compilation error: variable $foo not found
+// [tty 3], line 1: put $foo
 // ```
 //
-// This is because the reading of the file is done in the evaluation phase, while
-// the check for variables happens at the compilation phase (before evaluation). So
-// the compiler has no evidence showing that `$foo` is actually valid, and will
-// complain. (See [here](../learn/unique-semantics.html#execution-phases) for a
-// more detailed description of execution phases.)
+// However, the file may mutate variables that already exist, and such mutations
+// are persisted:
 //
-// To work around this, you can add a forward declaration for `$foo`:
-//
-// ```elvish-transcript
-// ~> # Another new session
-// ~> cat x.elv
-// echo 'executing x.elv'
-// foo = bar
-// ~> foo = ''; -source x.elv; echo $foo
-// executing x.elv
-// bar
+// ```elvish
+// ~> foo = lorem
+// ~> echo 'foo = ipsum' > a.elv
+// ~> -source a.elv
+// ~> put $foo
+// ▶ ipsum
 // ```
 
 func source(fm *Frame, fname string) error {
-	path, err := filepath.Abs(fname)
-	if err != nil {
-		return err
-	}
-	code, err := readFileUTF8(path)
+	code, err := readFileUTF8(fname)
 	if err != nil {
 		return err
 	}
@@ -324,15 +309,15 @@ func source(fm *Frame, fname string) error {
 	if err != nil {
 		return err
 	}
-	scriptGlobal := fm.local.static()
-	for _, name := range fm.up.static().names {
-		scriptGlobal.set(name)
-	}
-	op, err := compile(fm.Builtin.static(), scriptGlobal, tree, fm.ErrorFile())
+	// Amalgamate the up and local scope into a new scope to use as the global
+	// scope to evaluate the code in.
+	g := amalgamateNs(fm.local, fm.up)
+	op, err := compile(fm.Builtin.static(), g.static(), tree, fm.ErrorFile())
 	if err != nil {
 		return err
 	}
 	newFm := fm.fork("[-source]")
+	newFm.local = g
 	newFm.srcMeta = src
 	return op.Exec(newFm)
 }
@@ -346,6 +331,18 @@ func readFileUTF8(fname string) (string, error) {
 		return "", fmt.Errorf("%s: source is not valid UTF-8", fname)
 	}
 	return string(bytes), nil
+}
+
+func amalgamateNs(local, up *Ns) *Ns {
+	slots := append([]vars.Var(nil), local.slots...)
+	names := append([]string(nil), local.names...)
+	for i := range up.slots {
+		if local.lookup(up.names[i]) == -1 {
+			slots = append(slots, up.slots[i])
+			names = append(names, up.names[i])
+		}
+	}
+	return &Ns{slots, names}
 }
 
 // TimeAfter is used by the sleep command to obtain a channel that is delivered

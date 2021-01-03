@@ -11,6 +11,9 @@ This is the draft release notes for 0.15.0, scheduled to be released on
     -   The `rest-arg` field now contains the index of the rest argument,
         instead of the name.
 
+-   The `-source` command now runs in a temporary namespace and can no longer
+    affect the local scope of its caller.
+
 -   Key modifiers are no longer case insensitive. For example, `Alt` is still
     recognized but `alt` is not. This makes key modifier parsing consistent with
     key names. See [#1163](https://b.elv.sh/1163).
