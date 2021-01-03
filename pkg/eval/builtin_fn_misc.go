@@ -261,18 +261,17 @@ func useMod(fm *Frame, spec string) (*Ns, error) {
 // ```
 //
 // Read the named file, and evaluate it in a temporary namespace built from the
-// current local and up scope.
+// caller's scope.
 //
 // Examples:
 //
 // ```elvish-transcript
-// ~> cat x.elv
-// echo 'executing x.elv'
-// foo = bar
-// ~> -source x.elv
-// executing x.elv
-// ~> echo $foo
-// bar
+// ~> echo 'echo hello' > hello.elv
+// ~> -source hello.elv
+// hello
+// ~> x = foo
+// ~> echo 'echo $x' > echo-x.elv
+// ~> -source echo-x.elv
 // ```
 //
 // Since the file is evaluated in a temporary namespace, any modifications to
