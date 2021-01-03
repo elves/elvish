@@ -108,6 +108,10 @@ func TestBuiltinSpecial(t *testing.T) {
 		// fn.
 		That("fn f [x]{ put x=$x'.' }; f lorem; f ipsum").
 			Puts("x=lorem.", "x=ipsum."),
+		// Recursive functions with fn. Regression test for #1206.
+		That("fn f [n]{ if (== $n 0) { put 1 } else { * $n (f (- $n 1)) } }; f 3").
+			Puts(6.0),
+
 		// return.
 		That("fn f []{ put a; return; put b }; f").Puts("a"),
 	)

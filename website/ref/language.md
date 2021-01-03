@@ -1587,7 +1587,7 @@ written to a file or a pipe will be discarded. Examples:
 -   Assuming the file `data` contains a single line `hello`,
     `only-values < data` will not do anything.
 
-# Special Commands
+# Special commands
 
 **Special commands** obey the same syntax rules as normal commands, but have
 evaluation rules that are custom to each command. Consider the following
@@ -1867,6 +1867,15 @@ c
 
 **TODO**: Find a better way to describe this. Hopefully the example is
 illustrative enough, though.
+
+The lambda may refer to the function being defined. This makes it easy to define
+recursive functions:
+
+```elvish-transcript
+~> fn f [n]{ if (== $n 0) { put 1 } else { * $n (f (- $n 1)) } }
+~> f 3
+▶ (float64 6)
+```
 
 Under the hood, `fn` defines a variable with the given name plus `~` (see
 [variable suffix](#variable-suffix)).

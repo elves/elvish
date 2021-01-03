@@ -171,9 +171,10 @@ func compileFn(cp *compiler, fn *parse.Form) effectOp {
 	bodyNode := args.nextMustLambda()
 	args.mustEnd()
 
+	index := cp.thisScope().add(name + FnSuffix)
 	op := cp.lambda(bodyNode)
 
-	return fnOp{cp.thisScope().add(name + FnSuffix), op}
+	return fnOp{index, op}
 }
 
 type fnOp struct {
