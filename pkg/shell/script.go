@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -52,18 +53,17 @@ func Script(fds [3]*os.File, args []string, cfg *ScriptConfig) int {
 	src := parse.Source{Name: name, Code: code, IsFile: true}
 	if cfg.CompileOnly {
 		parseErr, compileErr := ev.Check(src, fds[2])
-		var err error
-		if parseErr != nil {
-			err = parseErr
-		} else if compileErr != nil {
-			err = compileErr
-		}
-		if err != nil {
-			if cfg.JSON {
-				fmt.Fprintf(fds[1], "%s\n", errorToJSON(err))
-			} else {
-				diag.ShowError(fds[2], err)
+		if cfg.JSON {
+			fmt.Fprintf(fds[1], "%s\n", errorsToJSON(parseErr, compileErr))
+		} else {
+			if parseErr != nil {
+				diag.ShowError(fds[2], parseErr)
 			}
+			if compileErr != nil {
+				diag.ShowError(fds[2], compileErr)
+			}
+		}
+		if parseErr != nil || compileErr != nil {
 			return 2
 		}
 	} else {
@@ -88,4 +88,34 @@ func readFileUTF8(fname string) (string, error) {
 		return "", errSourceNotUTF8
 	}
 	return string(bytes), nil
+}
+
+// An auxiliary struct for converting errors with diagnostics information to JSON.
+type errorInJSON struct {
+	FileName string `json:"fileName"`
+	Start    int    `json:"start"`
+	End      int    `json:"end"`
+	Message  string `json:"message"`
+}
+
+// Converts parse and compilation errors into JSON.
+func errorsToJSON(parseErr *parse.Error, compileErr *diag.Error) []byte {
+	var converted []errorInJSON
+	if parseErr != nil {
+		for _, e := range parseErr.Entries {
+			converted = append(converted,
+				errorInJSON{e.Context.Name, e.Context.From, e.Context.To, e.Message})
+		}
+	}
+	if compileErr != nil {
+		converted = append(converted,
+			errorInJSON{compileErr.Context.Name,
+				compileErr.Context.From, compileErr.Context.To, compileErr.Message})
+	}
+
+	jsonError, errMarshal := json.Marshal(converted)
+	if errMarshal != nil {
+		return []byte(`[{"message":"Unable to convert the errors to JSON"}]`)
+	}
+	return jsonError
 }

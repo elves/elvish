@@ -57,6 +57,12 @@ New features in the interactive editor:
 
 -   SGR escape sequences written from the prompt callback are now supported.
 
+New features in the main program:
+
+-   When using `-compileonly` to check Elvish sources that contain parse errors,
+    Elvish will still try to compile the source code and print out compilation
+    errors.
+
 # Notable bugfixes
 
 -   Using large lists that contain `$nil` no longer crashes Elvish.

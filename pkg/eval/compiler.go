@@ -68,12 +68,24 @@ func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op Op, err error) {
 	return Op{scopeOp, tree.Source}, nil
 }
 
+const compilationErrorType = "compilation error"
+
 func (cp *compiler) errorpf(r diag.Ranger, format string, args ...interface{}) {
 	// The panic is caught by the recover in compile above.
-	panic(NewCompilationError(fmt.Sprintf(format, args...),
-		*diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r)))
+	panic(&diag.Error{
+		Type:    compilationErrorType,
+		Message: fmt.Sprintf(format, args...),
+		Context: *diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r)})
 }
 
+// GetCompilationError returns a *diag.Error if the given value is a compilation
+// error. Otherwise it returns nil.
+func GetCompilationError(e interface{}) *diag.Error {
+	if e, ok := e.(*diag.Error); ok && e.Type == compilationErrorType {
+		return e
+	}
+	return nil
+}
 func (cp *compiler) thisScope() *staticNs {
 	return cp.scopes[len(cp.scopes)-1]
 }

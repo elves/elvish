@@ -40,52 +40,69 @@ func TestScript_Cmd(t *testing.T) {
 	f.TestOut(t, 2, "")
 }
 
-func TestScript_DoesNotCompile(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
-
-	ret := Script(f.Fds(), []string{"echo $a"}, &ScriptConfig{Cmd: true})
-
-	if ret != 2 {
-		t.Errorf("got ret %v, want 2", ret)
-	}
-	f.TestOutSnippet(t, 2, "compilation error")
-	f.TestOut(t, 1, "")
+var scriptErrorTests = []struct {
+	name        string
+	code        string
+	compileOnly bool
+	json        bool
+	wantExit    int
+	wantOut     string
+	wantErr     string
+}{
+	{name: "parse error",
+		code:     "echo [",
+		wantExit: 2,
+		wantErr:  "parse error"},
+	{name: "parse error with -compileonly and -json",
+		code: "echo [", compileOnly: true, json: true,
+		wantExit: 2,
+		wantOut:  `[{"fileName":"code from -c","start":6,"end":6,"message":"should be ']'"}]` + "\n"},
+	{name: "multiple parse errors with -compileonly and -json",
+		code: "echo [{", compileOnly: true, json: true,
+		wantExit: 2,
+		wantOut:  `[{"fileName":"code from -c","start":7,"end":7,"message":"should be ',' or '}'"},{"fileName":"code from -c","start":7,"end":7,"message":"should be ']'"}]` + "\n"},
+	{name: "compile error",
+		code:     "echo $a",
+		wantExit: 2,
+		wantErr:  "compilation error"},
+	{name: "compile error with -compileonly and -json",
+		code: "echo $a", compileOnly: true, json: true,
+		wantExit: 2,
+		wantOut:  `[{"fileName":"code from -c","start":5,"end":7,"message":"variable $a not found"}]` + "\n"},
+	{name: "parse error and compile error with -compileonly and -json",
+		code: "echo [$a", compileOnly: true, json: true,
+		wantExit: 2,
+		wantOut:  `[{"fileName":"code from -c","start":8,"end":8,"message":"should be ']'"},{"fileName":"code from -c","start":6,"end":8,"message":"variable $a not found"}]` + "\n"},
+	{name: "exception",
+		code:     "fail failure",
+		wantExit: 2,
+		wantOut:  "",
+		wantErr:  "fail failure"},
+	{name: "exception with -compileonly",
+		code: "fail failure", compileOnly: true,
+		wantExit: 0},
 }
 
-func TestScript_DoesNotCompile_JSON(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
-
-	ret := Script(f.Fds(), []string{"echo $a"},
-		&ScriptConfig{Cmd: true, CompileOnly: true, JSON: true})
-
-	if ret != 2 {
-		t.Errorf("got ret %v, want 2", ret)
-	}
-	f.TestOutSnippet(t, 1, "variable $a not found")
-	f.TestOut(t, 2, "")
-}
-
-func TestScript_Exception(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
-
-	ret := Script(f.Fds(), []string{"fail failure"}, &ScriptConfig{Cmd: true})
-	if ret != 2 {
-		t.Errorf("got ret %v, want 2", ret)
-	}
-	f.TestOutSnippet(t, 2, "fail failure")
-	f.TestOut(t, 1, "")
-}
-
-func TestScript_Exception_CompileOnly(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
-
-	ret := Script(f.Fds(), []string{"fail failure"}, &ScriptConfig{
-		Cmd: true, CompileOnly: true})
-	if ret != 0 {
-		t.Errorf("got ret %v, want 0", ret)
+func TestScript_Error(t *testing.T) {
+	for _, test := range scriptErrorTests {
+		t.Run(test.name, func(t *testing.T) {
+			f := Setup()
+			defer f.Cleanup()
+			exit := Script(f.Fds(), []string{test.code}, &ScriptConfig{
+				Cmd: true, CompileOnly: test.compileOnly, JSON: test.json})
+			if exit != test.wantExit {
+				t.Errorf("got exit code %v, want 2", test.wantExit)
+			}
+			f.TestOut(t, 1, test.wantOut)
+			// When testing stderr output, we either only test that there is no
+			// output at all, or that the output contains a string; we never
+			// test it in full, as it is intended for human consumption and may
+			// change.
+			if test.wantErr == "" {
+				f.TestOut(t, 2, "")
+			} else {
+				f.TestOutSnippet(t, 2, test.wantErr)
+			}
+		})
 	}
 }
