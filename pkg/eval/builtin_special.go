@@ -171,6 +171,8 @@ func compileFn(cp *compiler, fn *parse.Form) effectOp {
 	bodyNode := args.nextMustLambda()
 	args.mustEnd()
 
+	// Define the variable before compiling the body, so that the body may refer
+	// to the function itself.
 	index := cp.thisScope().add(name + FnSuffix)
 	op := cp.lambda(bodyNode)
 
@@ -322,7 +324,7 @@ func evalInner(fm *Frame, src parse.Source, ns *Ns, st *StackTrace) error {
 	if err != nil {
 		return err
 	}
-	return newFm.Eval(op)
+	return op.Exec(newFm)
 }
 
 // compileAnd compiles the "and" special form.

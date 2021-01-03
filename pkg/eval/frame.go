@@ -131,17 +131,6 @@ func (fm *Frame) forkWithOutput(name string, p *Port) *Frame {
 	return newFm
 }
 
-// Eval evaluates an Op. It is like eval except that it sets fm.srcMeta
-// temporarily to op.src during the evaluation.
-func (fm *Frame) Eval(op Op) error {
-	oldSrc := fm.srcMeta
-	fm.srcMeta = op.Src
-	defer func() {
-		fm.srcMeta = oldSrc
-	}()
-	return op.Exec(fm)
-}
-
 // CaptureOutput captures the output of a given callback that operates on a Frame.
 func (fm *Frame) CaptureOutput(f func(*Frame) error) ([]interface{}, error) {
 	outPort, collect, err := CapturePort()
