@@ -291,7 +291,7 @@ func useMod(fm *Frame, spec string) (*Ns, error) {
 // However, the file may mutate variables that already exist, and such mutations
 // are persisted:
 //
-// ```elvish
+// ```elvish-transcript
 // ~> foo = lorem
 // ~> echo 'foo = ipsum' > a.elv
 // ~> -source a.elv
