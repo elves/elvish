@@ -393,15 +393,21 @@ func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer
 				}
 			}
 		}()
-		ports := []*eval.Port{
-			{Chan: input, File: eval.DevNull},
-			{}, // Will be replaced in CaptureOutput
-			{File: os.Stderr},
+
+		// TODO: Supply the Chan component of port 2.
+		port1, collect, err := eval.CapturePort()
+		if err != nil {
+			nt.notifyf("cannot create pipe to run completion matcher: %v", err)
+			return nil
 		}
-		fm := eval.NewTopFrame(ev, parse.Source{Name: "[editor matcher]"}, ports)
-		outputs, err := fm.CaptureOutput(func(fm *eval.Frame) error {
-			return matcher.Call(fm, []interface{}{seed}, eval.NoOpts)
-		})
+
+		err = ev.Call(matcher,
+			eval.CallCfg{Args: []interface{}{seed}, From: "[editor matcher]"},
+			eval.EvalCfg{Ports: []*eval.Port{
+				// TODO: Supply the Chan component of port 2.
+				{Chan: input, File: eval.DevNull}, port1, {File: os.Stderr}}})
+		outputs := collect()
+
 		if err != nil {
 			nt.notifyError("matcher", err)
 			// Continue with whatever values have been output
@@ -434,11 +440,6 @@ func adaptArgGeneratorMap(ev *eval.Evaler, m vals.Map) complete.ArgGenerator {
 		for i, arg := range args {
 			argValues[i] = arg
 		}
-		ports := []*eval.Port{
-			eval.DevNullClosedChan,
-			{}, // Will be replaced in CaptureOutput
-			{File: os.Stderr},
-		}
 		var output []complete.RawItem
 		var outputMutex sync.Mutex
 		collect := func(item complete.RawItem) {
@@ -470,11 +471,17 @@ func adaptArgGeneratorMap(ev *eval.Evaler, m vals.Map) complete.ArgGenerator {
 				}
 			}
 		}
-		fm := eval.NewTopFrame(ev, parse.Source{Name: "[editor arg generator]"}, ports)
-		f := func(fm *eval.Frame) error {
-			return gen.Call(fm, argValues, eval.NoOpts)
+		port1, done, err := eval.PipePort(valueCb, bytesCb)
+		if err != nil {
+			panic(err)
 		}
-		err := fm.PipeOutput(f, valueCb, bytesCb)
+		err = ev.Call(gen,
+			eval.CallCfg{Args: argValues, From: "[editor arg generator]"},
+			eval.EvalCfg{Ports: []*eval.Port{
+				// TODO: Supply the Chan component of port 2.
+				nil, port1, {File: os.Stderr}}})
+		done()
+
 		return output, err
 	}
 }

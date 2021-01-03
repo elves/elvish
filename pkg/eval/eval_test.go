@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/elves/elvish/pkg/eval"
 	. "github.com/elves/elvish/pkg/eval"
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
@@ -99,6 +100,35 @@ func TestConcurrentEval(t *testing.T) {
 		wg.Done()
 	}()
 	wg.Wait()
+}
+
+type fooOpts struct{ Opt string }
+
+func (*fooOpts) SetDefaultOptions() {}
+
+func TestCall(t *testing.T) {
+	ev := NewEvaler()
+	var gotOpt, gotArg string
+	fn := NewGoFn("foo", func(fm *Frame, opts fooOpts, arg string) {
+		gotOpt = opts.Opt
+		gotArg = arg
+	})
+
+	passedArg := "arg value"
+	passedOpt := "opt value"
+	ev.Call(fn,
+		eval.CallCfg{
+			Args: []interface{}{passedArg},
+			Opts: map[string]interface{}{"opt": passedOpt},
+			From: "[TestCall]"},
+		eval.EvalCfg{})
+
+	if gotArg != passedArg {
+		t.Errorf("got arg %q, want %q", gotArg, passedArg)
+	}
+	if gotOpt != passedOpt {
+		t.Errorf("got opt %q, want %q", gotOpt, passedOpt)
+	}
 }
 
 var checkTests = []struct {

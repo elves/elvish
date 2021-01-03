@@ -13,7 +13,6 @@ import (
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/fsutil"
-	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/ui"
 )
 
@@ -161,19 +160,21 @@ func callForStyledText(nt notifier, ev *eval.Evaler, ctx string, fn eval.Callabl
 		}
 	}
 
-	ports := []*eval.Port{
-		eval.DevNullClosedChan,
-		{}, // Will be replaced when capturing output
-		{File: os.Stderr},
+	port1, done1, err := eval.PipePort(valuesCb, bytesCb)
+	if err != nil {
+		nt.notifyf("cannot create pipe for prompt: %v", err)
+		return nil
 	}
-	fm := eval.NewTopFrame(ev, parse.Source{Name: "[" + ctx + "]"}, ports)
-	f := func(fm *eval.Frame) error { return fn.Call(fm, args, eval.NoOpts) }
-	err := fm.PipeOutput(f, valuesCb, bytesCb)
+	port2, done2 := makeNotifyPort(nt)
+
+	err = ev.Call(fn,
+		eval.CallCfg{Args: args, From: "[" + ctx + "]"},
+		eval.EvalCfg{Ports: []*eval.Port{nil, port1, port2}})
+	done1()
+	done2()
 
 	if err != nil {
 		nt.notifyError(ctx, err)
-		return nil
 	}
-
 	return result
 }

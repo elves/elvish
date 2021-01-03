@@ -61,14 +61,12 @@ func indexLayeredBindings(k ui.Key, bindings ...BindingMap) eval.Callable {
 var bindingSource = parse.Source{Name: "[editor binding]"}
 
 func callWithNotifyPorts(nt notifier, ev *eval.Evaler, f eval.Callable, args ...interface{}) {
-	// TODO(xiaq): Use CallWithOutputCallback when it supports redirecting the
-	// stderr port.
 	notifyPort, cleanup := makeNotifyPort(nt)
 	defer cleanup()
-	ports := []*eval.Port{eval.DevNullClosedChan, notifyPort, notifyPort}
-	frame := eval.NewTopFrame(ev, bindingSource, ports)
 
-	err := f.Call(frame, args, eval.NoOpts)
+	err := ev.Call(f,
+		eval.CallCfg{Args: args, From: "[editor binding]"},
+		eval.EvalCfg{Ports: []*eval.Port{nil, notifyPort, notifyPort}})
 	if err != nil {
 		nt.notifyError("binding", err)
 	}

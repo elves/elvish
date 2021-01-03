@@ -11,7 +11,6 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
-	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/store"
 )
 
@@ -88,6 +87,15 @@ func initAddCmdFilters(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder,
 }
 
 func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}) {
+	if hook.Len() == 0 {
+		return
+	}
+
+	ports, cleanup := eval.PortsFromFiles(
+		[3]*os.File{os.Stdin, os.Stdout, os.Stderr}, ev)
+	evalCfg := eval.EvalCfg{Ports: ports[:]}
+	defer cleanup()
+
 	i := -1
 	for it := hook.Iterator(); it.HasElem(); it.Next() {
 		i++
@@ -99,16 +107,19 @@ func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}
 			diag.Complainf(os.Stderr, "%s not function", name)
 			continue
 		}
-		// TODO(xiaq): This should use stdPorts, but stdPorts is currently
-		// unexported from eval.
-		ports := []*eval.Port{
-			{File: os.Stdin}, {File: os.Stdout}, {File: os.Stderr}}
-		fm := eval.NewTopFrame(ev, parse.Source{Name: name}, ports)
-		fn.Call(fm, args, eval.NoOpts)
+
+		err := ev.Call(fn, eval.CallCfg{Args: args, From: name}, evalCfg)
+		if err != nil {
+			diag.ShowError(os.Stderr, err)
+		}
 	}
 }
 
 func callFilters(ev *eval.Evaler, name string, filters vals.List, args ...interface{}) bool {
+	if filters.Len() == 0 {
+		return true
+	}
+
 	i := -1
 	for it := filters.Iterator(); it.HasElem(); it.Next() {
 		i++
@@ -120,12 +131,17 @@ func callFilters(ev *eval.Evaler, name string, filters vals.List, args ...interf
 			diag.Complainf(os.Stderr, "%s not function", name)
 			continue
 		}
-		// TODO(xiaq): This should use stdPorts, but stdPorts is currently
-		// unexported from eval.
-		ports := []*eval.Port{
-			eval.DevNullClosedChan, {File: os.Stdout}, {File: os.Stderr}}
-		fm := eval.NewTopFrame(ev, parse.Source{Name: name}, ports)
-		out, err := fm.CaptureOutput(func(fm *eval.Frame) error { return fn.Call(fm, args, eval.NoOpts) })
+
+		port1, collect, err := eval.CapturePort()
+		if err != nil {
+			diag.Complainf(os.Stderr, "cannot create pipe to run filter")
+			return true
+		}
+		err = ev.Call(fn, eval.CallCfg{Args: args, From: name},
+			// TODO: Supply the Chan component of port 2.
+			eval.EvalCfg{Ports: []*eval.Port{nil, port1, {File: os.Stderr}}})
+		out := collect()
+
 		if err != nil {
 			diag.Complainf(os.Stderr, "%s return error", name)
 			continue
