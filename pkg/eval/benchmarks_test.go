@@ -37,13 +37,20 @@ func BenchmarkEval_UpVariableAccess(b *testing.B) {
 func benchmarkEval(b *testing.B, code string) {
 	ev := NewEvaler()
 	src := parse.Source{Name: "[benchmark]", Code: code}
-	op, err := ev.parseAndCompile(src, nil)
+
+	tree, err := parse.Parse(src)
 	if err != nil {
 		panic(err)
 	}
+	op, err := ev.compile(tree, ev.Global, nil)
+	if err != nil {
+		panic(err)
+	}
+
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
-		ev.execOp(op, EvalCfg{})
+		ev.execOp(op, EvalCfg{Global: ev.Global})
 	}
 }
 

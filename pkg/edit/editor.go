@@ -7,7 +7,6 @@ package edit
 
 import (
 	"fmt"
-	"os"
 	"sync"
 
 	"github.com/elves/elvish/pkg/cli"
@@ -87,24 +86,8 @@ func initExceptionsAPI(ed *Editor, nb eval.NsBuilder) {
 }
 
 func evalDefaultBinding(ev *eval.Evaler, ns *eval.Ns) {
-	// TODO(xiaq): The evaler API should accodomate the use case of evaluating a
-	// piece of code in an alternative global namespace.
-
 	src := parse.Source{Name: "[default bindings]", Code: defaultBindingsElv}
-	tree, err := parse.Parse(src)
-	if err != nil {
-		panic(err)
-	}
-	op, err := ev.CompileWithGlobal(tree, ns, nil)
-	if err != nil {
-		panic(err)
-	}
-	// TODO(xiaq): Use stdPorts when it is possible to do so.
-	fm := eval.NewTopFrame(ev, src, []*eval.Port{
-		{File: os.Stdin}, {File: os.Stdout}, {File: os.Stderr},
-	})
-	fm.SetLocal(ns)
-	err = fm.Eval(op)
+	err := ev.Eval(src, eval.EvalCfg{Global: ns})
 	if err != nil {
 		panic(err)
 	}
