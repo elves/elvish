@@ -40,7 +40,7 @@ func TestHighlighter(t *testing.T) {
 
 func TestCheck(t *testing.T) {
 	ev := eval.NewEvaler()
-	ev.Global = eval.NsBuilder{"good": vars.FromInit(0)}.Ns()
+	ev.SetGlobal(eval.NsBuilder{"good": vars.FromInit(0)}.Ns())
 
 	tt.Test(t, tt.Fn("check", check), tt.Table{
 		tt.Args(ev, mustParse("")).Rets(noError),
@@ -69,14 +69,14 @@ func TestMakeHasCommand(t *testing.T) {
 
 	// Set up global functions and modules in the evaler.
 	goodFn := eval.NewGoFn("good", func() {})
-	ev.Global = eval.NsBuilder{}.
+	ev.SetGlobal(eval.NsBuilder{}.
 		AddFn("good", goodFn).
 		AddNs("a",
 			eval.NsBuilder{}.
 				AddFn("good", goodFn).
 				AddNs("b", eval.NsBuilder{}.AddFn("good", goodFn).Ns()).
 				Ns()).
-		Ns()
+		Ns())
 
 	// Set up environment.
 	testDir, cleanup := testutil.InTestDir()

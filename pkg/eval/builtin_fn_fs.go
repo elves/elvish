@@ -80,7 +80,7 @@ func cd(fm *Frame, args ...string) error {
 		return ErrArgs
 	}
 
-	return fm.Chdir(dir)
+	return fm.Evaler.Chdir(dir)
 }
 
 //elvdoc:fn dir-history
@@ -107,10 +107,11 @@ type dirHistoryEntry struct {
 func (dirHistoryEntry) IsStructMap() {}
 
 func dirs(fm *Frame) error {
-	if fm.DaemonClient == nil {
+	daemon := fm.Evaler.DaemonClient()
+	if daemon == nil {
 		return ErrStoreNotConnected
 	}
-	dirs, err := fm.DaemonClient.Dirs(store.NoBlacklist)
+	dirs, err := daemon.Dirs(store.NoBlacklist)
 	if err != nil {
 		return err
 	}

@@ -16,13 +16,15 @@ const (
 var DevNullPorts = [3]*Port{
 	DevNullClosedChan, DevNullBlackholeChan, DevNullBlackholeChan}
 
-// PortsFromFiles builds 3 ports from 3 files. It also returns a function that
-// should be called when the ports are no longer needed.
-func PortsFromFiles(files [3]*os.File, ev *Evaler) ([3]*Port, func()) {
-	return portsFromFiles(files, ev.state.getValuePrefix())
+// PortsFromStdFiles is a shorthand for calling PortsFromFiles with os.Stdin,
+// os.Stdout and os.Stderr.
+func PortsFromStdFiles(prefix string) ([]*Port, func()) {
+	return PortsFromFiles([3]*os.File{os.Stdin, os.Stdout, os.Stderr}, prefix)
 }
 
-func portsFromFiles(files [3]*os.File, prefix string) ([3]*Port, func()) {
+// PortsFromFiles builds 3 ports from 3 files. It also returns a function that
+// should be called when the ports are no longer needed.
+func PortsFromFiles(files [3]*os.File, prefix string) ([]*Port, func()) {
 	stdoutChan := make(chan interface{}, stdoutChanSize)
 	stderrChan := make(chan interface{}, stderrChanSize)
 
@@ -36,7 +38,7 @@ func portsFromFiles(files [3]*os.File, prefix string) ([3]*Port, func()) {
 		{File: files[2], Chan: stderrChan, CloseChan: true},
 	}
 
-	return ports, func() {
+	return ports[:], func() {
 		close(stdoutChan)
 		close(stderrChan)
 		relayerWait.Wait()

@@ -35,7 +35,7 @@ func rc(codes ...string) func(*fixture) {
 
 func assign(name string, val interface{}) func(*fixture) {
 	return func(f *fixture) {
-		f.Evaler.Global.Append(eval.NsBuilder{"temp": vars.NewReadOnly(val)}.Ns())
+		f.Evaler.Global().Append(eval.NsBuilder{"temp": vars.NewReadOnly(val)}.Ns())
 		evals(f.Evaler, name+` = $temp`)
 	}
 }
@@ -54,7 +54,7 @@ func setup(fns ...func(*fixture)) *fixture {
 	tty, ttyCtrl := clitest.NewFakeTTY()
 	ev := eval.NewEvaler()
 	ed := NewEditor(tty, ev, st)
-	ev.InstallModule("edit", ed.Ns())
+	ev.AddModule("edit", ed.Ns())
 	evals(ev,
 		`use edit`,
 		// This is the same as the default prompt for non-root users. This makes
@@ -115,7 +115,7 @@ func evals(ev *eval.Evaler, codes ...string) {
 }
 
 func getGlobal(ev *eval.Evaler, name string) interface{} {
-	v, _ := ev.Global.Index(name)
+	v, _ := ev.Global().Index(name)
 	return v
 }
 

@@ -311,7 +311,7 @@ func source(fm *Frame, fname string) error {
 	// Amalgamate the up and local scope into a new scope to use as the global
 	// scope to evaluate the code in.
 	g := amalgamateNs(fm.local, fm.up)
-	op, err := compile(fm.Builtin.static(), g.static(), tree, fm.ErrorFile())
+	op, err := compile(fm.Evaler.Builtin().static(), g.static(), tree, fm.ErrorFile())
 	if err != nil {
 		return err
 	}

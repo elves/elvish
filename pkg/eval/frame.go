@@ -17,7 +17,7 @@ import (
 // frame in native CPU execution. A Frame is only modified during and very
 // shortly after creation; new Frame's are "forked" when needed.
 type Frame struct {
-	*Evaler
+	Evaler *Evaler
 
 	srcMeta parse.Source
 

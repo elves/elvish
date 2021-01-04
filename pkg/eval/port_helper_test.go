@@ -15,7 +15,7 @@ func TestEvalerPorts(t *testing.T) {
 	defer stderrReader.Close()
 
 	prefix := "> "
-	ports, cleanup := portsFromFiles([3]*os.File{DevNull, stdout, stderr}, prefix)
+	ports, cleanup := PortsFromFiles([3]*os.File{DevNull, stdout, stderr}, prefix)
 	ports[1].Chan <- "x"
 	ports[1].Chan <- "y"
 	ports[2].Chan <- "bad"

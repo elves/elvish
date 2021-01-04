@@ -49,12 +49,12 @@ var errInvalidDB = errors.New("daemon reported that database is invalid. If you 
 func InitRuntime(stderr io.Writer, p Paths, spawn bool) *eval.Evaler {
 	ev := eval.NewEvaler()
 	ev.SetLibDir(p.LibDir)
-	ev.InstallModule("math", mathmod.Ns)
-	ev.InstallModule("platform", platform.Ns)
-	ev.InstallModule("re", re.Ns)
-	ev.InstallModule("str", str.Ns)
+	ev.AddModule("math", mathmod.Ns)
+	ev.AddModule("platform", platform.Ns)
+	ev.AddModule("re", re.Ns)
+	ev.AddModule("str", str.Ns)
 	if unix.ExposeUnixNs {
-		ev.InstallModule("unix", unix.Ns)
+		ev.AddModule("unix", unix.Ns)
 	}
 
 	if spawn && p.Sock != "" && p.Db != "" {
@@ -73,17 +73,18 @@ func InitRuntime(stderr io.Writer, p Paths, spawn bool) *eval.Evaler {
 		}
 		// Even if error is not nil, we install daemon-related functionalities
 		// anyway. Daemon may eventually come online and become functional.
-		ev.InstallDaemonClient(client)
-		ev.InstallModule("store", store.Ns(client))
-		ev.InstallModule("daemon", daemonmod.Ns(client, spawnCfg))
+		ev.SetDaemonClient(client)
+		ev.AddModule("store", store.Ns(client))
+		ev.AddModule("daemon", daemonmod.Ns(client, spawnCfg))
 	}
 	return ev
 }
 
 // CleanupRuntime cleans up the runtime.
 func CleanupRuntime(stderr io.Writer, ev *eval.Evaler) {
-	if ev.DaemonClient != nil {
-		err := ev.DaemonClient.Close()
+	daemon := ev.DaemonClient()
+	if daemon != nil {
+		err := daemon.Close()
 		if err != nil {
 			fmt.Fprintln(stderr,
 				"warning: failed to close connection to daemon:", err)

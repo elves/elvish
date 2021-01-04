@@ -54,8 +54,8 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(fds[0]) {
-		newed := edit.NewEditor(cli.StdTTY, ev, ev.DaemonClient)
-		ev.Builtin.Append(eval.NsBuilder{}.AddNs("edit", newed.Ns()).Ns())
+		newed := edit.NewEditor(cli.StdTTY, ev, ev.DaemonClient())
+		ev.Builtin().Append(eval.NsBuilder{}.AddNs("edit", newed.Ns()).Ns())
 		ed = newed
 	} else {
 		ed = newMinEditor(fds[0], fds[2])
@@ -125,7 +125,7 @@ func sourceRC(fds [3]*os.File, ev *eval.Evaler, rcPath string) error {
 	if err != nil {
 		return err
 	}
-	extractExports(ev.Global, fds[2])
+	extractExports(ev.Global(), fds[2])
 	return nil
 }
 

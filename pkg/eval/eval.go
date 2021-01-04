@@ -11,7 +11,6 @@ import (
 
 	"github.com/elves/elvish/pkg/daemon"
 	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/eval/mods/bundled"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/logutil"
@@ -48,35 +47,40 @@ type Evaler struct {
 	// code is localized and do not need to hold this mutex.
 	//
 	// TODO: Actually guard all mutations by this mutex.
-	mu sync.Mutex
+	mu sync.RWMutex
 
-	evalerScopes
+	global, builtin *Ns
 
-	state state
-
-	// Chdir hooks.
-	beforeChdir []func(string)
-	afterChdir  []func(string)
+	deprecations deprecationRegistry
 
 	// State of the module system.
-	libDir  string
-	bundled map[string]string
+	//
+	// Library directory.
+	libDir string
 	// Internal modules are indexed by use specs. External modules are indexed by
 	// absolute paths.
 	modules map[string]*Ns
 
-	deprecations deprecationRegistry
+	// Various states and configs exposed to Elvish code.
+	//
+	// The prefix to prepend to value outputs when writing them to terminal,
+	// exposed as $value-out-prefix.
+	valuePrefix string
+	// Whether to notify the success of background jobs, exposed as
+	// $notify-bg-job-sucess.
+	notifyBgJobSuccess bool
+	// The current number of background jobs, exposed as $num-bg-jobs.
+	numBgJobs int
+	// Command-line arguments, exposed as $args.
+	args vals.List
+	// Chdir hooks, exposed indirectly as $before-chdir and $after-chdir.
+	beforeChdir, afterChdir []func(string)
 
 	// Dependencies.
 	//
 	// TODO: Remove these dependency by providing more general extension points.
-	DaemonClient daemon.Client
-	Editor       Editor
-}
-
-type evalerScopes struct {
-	Global  *Ns
-	Builtin *Ns
+	daemonClient daemon.Client
+	editor       Editor
 }
 
 //elvdoc:var after-chdir
@@ -136,45 +140,42 @@ type evalerScopes struct {
 // NewEvaler creates a new Evaler.
 func NewEvaler() *Evaler {
 	builtin := builtinNs.Ns()
+	beforeChdirElvish, afterChdirElvish := vector.Empty, vector.Empty
 
 	ev := &Evaler{
-		state: state{
-			valuePrefix:        defaultValuePrefix,
-			notifyBgJobSuccess: defaultNotifyBgJobSuccess,
-			numBgJobs:          0,
-		},
-		evalerScopes: evalerScopes{
-			Global:  new(Ns),
-			Builtin: builtin,
-		},
-		modules: map[string]*Ns{
-			"builtin": builtin,
-		},
-		bundled: bundled.Get(),
+		global:  new(Ns),
+		builtin: builtin,
 
 		deprecations: newDeprecationRegistry(),
+
+		modules: map[string]*Ns{"builtin": builtin},
+
+		valuePrefix:        defaultValuePrefix,
+		notifyBgJobSuccess: defaultNotifyBgJobSuccess,
+		numBgJobs:          0,
+		args:               vals.EmptyList,
 	}
 
-	beforeChdirElvish, afterChdirElvish := vector.Empty, vector.Empty
-	ev.beforeChdir = append(ev.beforeChdir,
-		adaptChdirHook("before-chdir", ev, &beforeChdirElvish))
-	ev.afterChdir = append(ev.afterChdir,
-		adaptChdirHook("after-chdir", ev, &afterChdirElvish))
+	ev.beforeChdir = []func(string){
+		adaptChdirHook("before-chdir", ev, &beforeChdirElvish)}
+	ev.afterChdir = []func(string){
+		adaptChdirHook("after-chdir", ev, &afterChdirElvish)}
 
-	moreBuiltinsBuilder := make(NsBuilder)
-	moreBuiltinsBuilder["before-chdir"] = vars.FromPtr(&beforeChdirElvish)
-	moreBuiltinsBuilder["after-chdir"] = vars.FromPtr(&afterChdirElvish)
-
-	moreBuiltinsBuilder["value-out-indicator"] = vars.FromPtrWithMutex(
-		&ev.state.valuePrefix, &ev.state.mutex)
-	moreBuiltinsBuilder["notify-bg-job-success"] = vars.FromPtrWithMutex(
-		&ev.state.notifyBgJobSuccess, &ev.state.mutex)
-	moreBuiltinsBuilder["num-bg-jobs"] = vars.FromGet(func() interface{} {
-		return strconv.Itoa(ev.state.getNumBgJobs())
-	})
-	moreBuiltinsBuilder["pwd"] = NewPwdVar(ev)
-
-	moreBuiltins := moreBuiltinsBuilder.Ns()
+	moreBuiltins := NsBuilder{}.
+		Add("pwd", NewPwdVar(ev)).
+		Add("before-chdir", vars.FromPtr(&beforeChdirElvish)).
+		Add("after-chdir", vars.FromPtr(&afterChdirElvish)).
+		Add("value-out-indicator", vars.FromPtrWithMutex(
+			&ev.valuePrefix, &ev.mu)).
+		Add("notify-bg-job-success", vars.FromPtrWithMutex(
+			&ev.notifyBgJobSuccess, &ev.mu)).
+		Add("num-bg-jobs", vars.FromGet(func() interface{} {
+			return strconv.Itoa(ev.getNumBgJobs())
+		})).
+		Add("args", vars.FromGet(func() interface{} {
+			return ev.getArgs()
+		})).
+		Ns()
 	builtin.slots = append(builtin.slots, moreBuiltins.slots...)
 	builtin.names = append(builtin.names, moreBuiltins.names...)
 
@@ -183,8 +184,7 @@ func NewEvaler() *Evaler {
 
 func adaptChdirHook(name string, ev *Evaler, pfns *vector.Vector) func(string) {
 	return func(path string) {
-		ports, cleanup := portsFromFiles(
-			[3]*os.File{os.Stdin, os.Stdout, os.Stderr}, ev.state.getValuePrefix())
+		ports, cleanup := PortsFromStdFiles(ev.ValuePrefix())
 		defer cleanup()
 		callCfg := CallCfg{Args: []interface{}{path}, From: "[hook " + name + "]"}
 		evalCfg := EvalCfg{Ports: ports[:]}
@@ -203,43 +203,27 @@ func adaptChdirHook(name string, ev *Evaler, pfns *vector.Vector) func(string) {
 	}
 }
 
-// AddBeforeChdir adds a function to run before changing directory.
-func (ev *Evaler) AddBeforeChdir(f func(string)) {
-	ev.beforeChdir = append(ev.beforeChdir, f)
+// Access methods.
+
+// Global returns the global Ns.
+func (ev *Evaler) Global() *Ns {
+	ev.mu.RLock()
+	defer ev.mu.RUnlock()
+	return ev.global
 }
 
-// AddAfterChdir adds a function to run after changing directory.
-func (ev *Evaler) AddAfterChdir(f func(string)) {
-	ev.afterChdir = append(ev.afterChdir, f)
+// SetGlobal sets the global Ns.
+func (ev *Evaler) SetGlobal(g *Ns) {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.global = g
 }
 
-// InstallDaemonClient installs a daemon client to the Evaler.
-func (ev *Evaler) InstallDaemonClient(client daemon.Client) {
-	ev.DaemonClient = client
-}
-
-// InstallModule installs a module to the Evaler so that it can be used with
-// "use $name" from script.
-func (ev *Evaler) InstallModule(name string, mod *Ns) {
-	ev.modules[name] = mod
-}
-
-// SetArgs replaces the $args builtin variable with a vector built from the
-// argument.
-func (ev *Evaler) SetArgs(args []string) {
-	v := vector.Empty
-	for _, arg := range args {
-		v = v.Cons(arg)
-	}
-	// TODO: Make this concurrency-safe
-	builtin := ev.Builtin
-	builtin.slots[builtin.lookup("args")] = vars.NewReadOnly(v)
-}
-
-// SetLibDir sets the library directory, in which external modules are to be
-// found.
-func (ev *Evaler) SetLibDir(libDir string) {
-	ev.libDir = libDir
+// Builtin returns the builtin Ns.
+func (ev *Evaler) Builtin() *Ns {
+	ev.mu.RLock()
+	defer ev.mu.RUnlock()
+	return ev.builtin
 }
 
 func (ev *Evaler) registerDeprecation(d deprecation) bool {
@@ -248,14 +232,114 @@ func (ev *Evaler) registerDeprecation(d deprecation) bool {
 	return ev.deprecations.register(d)
 }
 
-// growPorts makes the size of ec.ports at least n, adding nil's if necessary.
-func (fm *Frame) growPorts(n int) {
-	if len(fm.ports) >= n {
-		return
+// Returns libdir.
+func (ev *Evaler) getLibDir() string {
+	ev.mu.RLock()
+	defer ev.mu.RUnlock()
+	return ev.libDir
+}
+
+// SetLibDir sets the library directory for finding external modules.
+func (ev *Evaler) SetLibDir(libDir string) {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.libDir = libDir
+}
+
+// AddModule add an internal module so that it can be used with "use $name" from
+// script.
+func (ev *Evaler) AddModule(name string, mod *Ns) {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.modules[name] = mod
+}
+
+// ValuePrefix returns the prefix to prepend to value outputs when writing them
+// to terminal.
+func (ev *Evaler) ValuePrefix() string {
+	ev.mu.RLock()
+	defer ev.mu.RUnlock()
+	return ev.valuePrefix
+}
+
+func (ev *Evaler) getNotifyBgJobSuccess() bool {
+	ev.mu.RLock()
+	defer ev.mu.RUnlock()
+	return ev.notifyBgJobSuccess
+}
+
+func (ev *Evaler) getNumBgJobs() int {
+	ev.mu.RLock()
+	defer ev.mu.RUnlock()
+	return ev.numBgJobs
+}
+
+func (ev *Evaler) addNumBgJobs(delta int) {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.numBgJobs += delta
+}
+
+func (ev *Evaler) getArgs() vals.List {
+	ev.mu.RLock()
+	defer ev.mu.RUnlock()
+	return ev.args
+}
+
+// SetArgs sets the value of the $args variable to a list of strings, built from
+// the given slice.
+func (ev *Evaler) SetArgs(args []string) {
+	v := vector.Empty
+	for _, arg := range args {
+		v = v.Cons(arg)
 	}
-	ports := fm.ports
-	fm.ports = make([]*Port, n)
-	copy(fm.ports, ports)
+
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.args = v
+}
+
+// Returns copies of beforeChdir and afterChdir.
+func (ev *Evaler) chdirHooks() ([]func(string), []func(string)) {
+	ev.mu.RLock()
+	defer ev.mu.RUnlock()
+	return append(([]func(string))(nil), ev.beforeChdir...),
+		append(([]func(string))(nil), ev.afterChdir...)
+}
+
+// AddBeforeChdir adds a function to run before changing directory.
+func (ev *Evaler) AddBeforeChdir(f func(string)) {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.beforeChdir = append(ev.beforeChdir, f)
+}
+
+// AddAfterChdir adds a function to run after changing directory.
+func (ev *Evaler) AddAfterChdir(f func(string)) {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.afterChdir = append(ev.afterChdir, f)
+}
+
+// SetDaemonClient sets the daemon client associated with the Evaler.
+func (ev *Evaler) SetDaemonClient(client daemon.Client) {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.daemonClient = client
+}
+
+// DaemonClient returns the daemon client associated with the Evaler.
+func (ev *Evaler) DaemonClient() daemon.Client {
+	ev.mu.RLock()
+	defer ev.mu.RUnlock()
+	return ev.daemonClient
+}
+
+// DaemonClient returns the editor associated with the Evaler.
+func (ev *Evaler) Editor() Editor {
+	ev.mu.RLock()
+	defer ev.mu.RUnlock()
+	return ev.editor
 }
 
 // EvalCfg keeps configuration for the (*Evaler).Eval method.
@@ -290,7 +374,7 @@ func (cfg *EvalCfg) fillDefaults(ev *Evaler) {
 	}
 
 	if cfg.Global == nil {
-		cfg.Global = ev.Global
+		cfg.Global = ev.Global()
 	}
 }
 
@@ -375,11 +459,11 @@ func (ev *Evaler) Check(src parse.Source, w io.Writer) (*parse.Error, *diag.Erro
 // CheckTree checks the given parsed source tree for compilation errors. If w is
 // not nil, deprecation messages are written to it.
 func (ev *Evaler) CheckTree(tree parse.Tree, w io.Writer) *diag.Error {
-	_, compileErr := ev.compile(tree, ev.Global, w)
+	_, compileErr := ev.compile(tree, ev.Global(), w)
 	return GetCompilationError(compileErr)
 }
 
 // Compiles a parsed tree.
 func (ev *Evaler) compile(tree parse.Tree, g *Ns, w io.Writer) (effectOp, error) {
-	return compile(ev.Builtin.static(), g.static(), tree, w)
+	return compile(ev.Builtin().static(), g.static(), tree, w)
 }

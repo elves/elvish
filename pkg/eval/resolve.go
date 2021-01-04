@@ -9,17 +9,17 @@ import (
 
 // EachVariableInTop calls the passed function for each variable name in
 // namespace ns that can be found from the top context.
-func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
+func EachVariableInTop(builtin, global *Ns, ns string, f func(s string)) {
 	switch ns {
 	case "builtin:":
-		for _, name := range ev.Builtin.names {
+		for _, name := range builtin.names {
 			f(name)
 		}
 	case "", ":":
-		for _, name := range ev.Global.names {
+		for _, name := range global.names {
 			f(name)
 		}
-		for _, name := range ev.Builtin.names {
+		for _, name := range builtin.names {
 			f(name)
 		}
 	case "e:":
@@ -34,9 +34,9 @@ func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 		}
 	default:
 		segs := SplitQNameSegs(ns)
-		mod := ev.Global.indexInner(segs[0])
+		mod := global.indexInner(segs[0])
 		if mod == nil {
-			mod = ev.Builtin.indexInner(segs[0])
+			mod = builtin.indexInner(segs[0])
 		}
 		for _, seg := range segs[1:] {
 			if mod == nil {
@@ -54,17 +54,17 @@ func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 
 // EachNsInTop calls the passed function for each namespace that can be used
 // from the top context.
-func (ev *evalerScopes) EachNsInTop(f func(s string)) {
+func EachNsInTop(builtin, global *Ns, f func(s string)) {
 	f("builtin:")
 	f("e:")
 	f("E:")
 
-	for _, name := range ev.Global.names {
+	for _, name := range global.names {
 		if strings.HasSuffix(name, NsSuffix) {
 			f(name)
 		}
 	}
-	for _, name := range ev.Builtin.names {
+	for _, name := range builtin.names {
 		if strings.HasSuffix(name, NsSuffix) {
 			f(name)
 		}

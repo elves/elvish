@@ -149,7 +149,7 @@ func derefBase(fm *Frame, ref *varRef) (vars.Var, []string) {
 	case captureScope:
 		return fm.up.slots[ref.index], ref.subNames
 	case builtinScope:
-		return fm.Builtin.slots[ref.index], ref.subNames
+		return fm.Evaler.Builtin().slots[ref.index], ref.subNames
 	case envScope:
 		return vars.FromEnv(ref.subNames[0]), nil
 	case externalScope:
@@ -227,5 +227,5 @@ func (fm *Frame) searchCapture(k string) int {
 }
 
 func (fm *Frame) searchBuiltin(k string, r diag.Ranger) int {
-	return fm.Builtin.lookup(k)
+	return fm.Evaler.Builtin().lookup(k)
 }

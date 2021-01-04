@@ -11,7 +11,7 @@ import (
 
 func TestMath(t *testing.T) {
 	setup := func(ev *eval.Evaler) {
-		ev.Global = eval.NsBuilder{}.AddNs("math", Ns).Ns()
+		ev.SetGlobal(eval.NsBuilder{}.AddNs("math", Ns).Ns())
 	}
 	TestWithSetup(t, setup,
 		That(`put $math:pi`).Puts(math.Pi),

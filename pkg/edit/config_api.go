@@ -91,8 +91,7 @@ func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}
 		return
 	}
 
-	ports, cleanup := eval.PortsFromFiles(
-		[3]*os.File{os.Stdin, os.Stdout, os.Stderr}, ev)
+	ports, cleanup := eval.PortsFromStdFiles(ev.ValuePrefix())
 	evalCfg := eval.EvalCfg{Ports: ports[:]}
 	defer cleanup()
 

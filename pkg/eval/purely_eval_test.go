@@ -38,10 +38,10 @@ func TestPurelyEvalCompound(t *testing.T) {
 	}
 
 	ev := NewEvaler()
-	ev.Global = NsBuilder{
+	ev.SetGlobal(NsBuilder{
 		"x": vars.NewReadOnly("bar"),
 		"y": vars.NewReadOnly(vals.MakeList()),
-	}.Ns()
+	}.Ns())
 
 	for _, test := range tests {
 		t.Run(test.code, func(t *testing.T) {

@@ -5,7 +5,6 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/pkg/eval/vars"
-	"github.com/xiaq/persistent/vector"
 )
 
 //elvdoc:var _
@@ -87,7 +86,6 @@ var builtinNs = NsBuilder{
 	"true":  vars.NewReadOnly(true),
 	"false": vars.NewReadOnly(false),
 	"paths": NewEnvListVar("PATH"),
-	"args":  vars.NewReadOnly(vector.Empty),
 }
 
 func addBuiltinFns(fns map[string]interface{}) {

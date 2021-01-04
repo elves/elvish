@@ -32,7 +32,7 @@ func TestNavigation(t *testing.T) {
 	// Test $edit:selected-file.
 	evals(f.Evaler, `file = $edit:selected-file`)
 	wantFile := "a"
-	if file, _ := f.Evaler.Global.Index("file"); file != wantFile {
+	if file, _ := f.Evaler.Global().Index("file"); file != wantFile {
 		t.Errorf("Got $edit:selected-file %q, want %q", file, wantFile)
 	}
 

@@ -44,7 +44,7 @@ func hasCommand(ev *eval.Evaler, cmd string) bool {
 	switch {
 	case rest == "":
 		// Unqualified name; try builtin and global.
-		if hasFn(ev.Builtin, first) || hasFn(ev.Global, first) {
+		if hasFn(ev.Builtin(), first) || hasFn(ev.Global(), first) {
 			return true
 		}
 	case first == "e:":
@@ -64,9 +64,9 @@ func hasQualifiedFn(ev *eval.Evaler, firstNs string, rest string) bool {
 	if rest == "" {
 		return false
 	}
-	modVal, ok := ev.Global.Index(firstNs)
+	modVal, ok := ev.Global().Index(firstNs)
 	if !ok {
-		modVal, ok = ev.Builtin.Index(firstNs)
+		modVal, ok = ev.Builtin().Index(firstNs)
 		if !ok {
 			return false
 		}

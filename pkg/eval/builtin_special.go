@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/diag"
+	"github.com/elves/elvish/pkg/eval/mods/bundled"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
@@ -254,6 +255,8 @@ func (op useOp) exec(fm *Frame) error {
 	return nil
 }
 
+var bundledModules = bundled.Get()
+
 func use(fm *Frame, spec string, st *StackTrace) (*Ns, error) {
 	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") {
 		var dir string
@@ -272,18 +275,20 @@ func use(fm *Frame, spec string, st *StackTrace) (*Ns, error) {
 	if ns, ok := fm.Evaler.modules[spec]; ok {
 		return ns, nil
 	}
-	if code, ok := fm.bundled[spec]; ok {
+	if code, ok := bundledModules[spec]; ok {
 		return evalModule(fm, spec,
 			parse.Source{Name: "[bundled " + spec + "]", Code: code}, st)
 	}
-	if fm.libDir == "" {
+	libDir := fm.Evaler.getLibDir()
+	if libDir == "" {
 		return nil, noSuchModule{spec}
 	}
-	return useFromFile(fm, spec, fm.libDir+"/"+spec+".elv", st)
+	return useFromFile(fm, spec, libDir+"/"+spec+".elv", st)
 }
 
+// TODO: Make access to fm.Evaler.modules concurrency-safe.
 func useFromFile(fm *Frame, spec, path string, st *StackTrace) (*Ns, error) {
-	if ns, ok := fm.modules[path]; ok {
+	if ns, ok := fm.Evaler.modules[path]; ok {
 		return ns, nil
 	}
 	code, err := readFileUTF8(path)
@@ -296,6 +301,7 @@ func useFromFile(fm *Frame, spec, path string, st *StackTrace) (*Ns, error) {
 	return evalModule(fm, path, parse.Source{Name: path, Code: code, IsFile: true}, st)
 }
 
+// TODO: Make access to fm.Evaler.modules concurrency-safe.
 func evalModule(fm *Frame, key string, src parse.Source, st *StackTrace) (*Ns, error) {
 	// Make an empty scope to evaluate the module in.
 	ns := new(Ns)
@@ -305,7 +311,7 @@ func evalModule(fm *Frame, key string, src parse.Source, st *StackTrace) (*Ns, e
 	err := evalInner(fm, src, ns, st)
 	if err != nil {
 		// Unload the namespace.
-		delete(fm.modules, key)
+		delete(fm.Evaler.modules, key)
 		return nil, err
 	}
 	return ns, nil
@@ -320,7 +326,7 @@ func evalInner(fm *Frame, src parse.Source, ns *Ns, st *StackTrace) error {
 	newFm := &Frame{
 		fm.Evaler, src, ns, new(Ns),
 		fm.intCh, fm.ports, fm.traceback, fm.background}
-	op, err := compile(newFm.Builtin.static(), ns.static(), tree, fm.ErrorFile())
+	op, err := compile(newFm.Evaler.Builtin().static(), ns.static(), tree, fm.ErrorFile())
 	if err != nil {
 		return err
 	}

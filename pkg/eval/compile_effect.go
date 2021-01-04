@@ -96,9 +96,9 @@ func (op *pipelineOp) exec(fm *Frame) error {
 		fm = fm.fork("background job" + op.source)
 		fm.intCh = nil
 		fm.background = true
-		fm.Evaler.state.addNumBgJobs(1)
+		fm.Evaler.addNumBgJobs(1)
 
-		if fm.Editor != nil {
+		if fm.Evaler.Editor() != nil {
 			// TODO: Redirect output in interactive mode so that the line
 			// editor does not get messed up.
 		}
@@ -157,15 +157,16 @@ func (op *pipelineOp) exec(fm *Frame) error {
 		// Background job, wait for form termination asynchronously.
 		go func() {
 			wg.Wait()
-			fm.Evaler.state.addNumBgJobs(-1)
+			fm.Evaler.addNumBgJobs(-1)
 			msg := "job " + op.source + " finished"
 			err := MakePipelineError(errors)
 			if err != nil {
 				msg += ", errors = " + err.Error()
 			}
-			if fm.Evaler.state.getNotifyBgJobSuccess() || err != nil {
-				if fm.Editor != nil {
-					fm.Editor.Notify("%s", msg)
+			if fm.Evaler.getNotifyBgJobSuccess() || err != nil {
+				editor := fm.Evaler.Editor()
+				if editor != nil {
+					editor.Notify("%s", msg)
 				} else {
 					fm.ErrorFile().WriteString(msg + "\n")
 				}
@@ -517,7 +518,7 @@ func (op *redirOp) exec(fm *Frame) error {
 		}
 	}
 
-	fm.growPorts(dst + 1)
+	growPorts(&fm.ports, dst+1)
 	fm.ports[dst].Close()
 
 	if op.srcIsFd {
@@ -566,6 +567,16 @@ func (op *redirOp) exec(fm *Frame) error {
 			Valid: "string, file or pipe", Actual: vals.Kind(src)})
 	}
 	return nil
+}
+
+// Makes the size of *ports at least n, adding nil's if necessary.
+func growPorts(ports *[]*Port, n int) {
+	if len(*ports) >= n {
+		return
+	}
+	oldPorts := *ports
+	*ports = make([]*Port, n)
+	copy(*ports, oldPorts)
 }
 
 func evalForFd(fm *Frame, op valuesOp, closeOK bool, what string) (int, error) {

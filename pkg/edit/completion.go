@@ -512,10 +512,12 @@ func (pureEvaler) EachSpecial(f func(string)) {
 	}
 }
 
-func (pe pureEvaler) EachNs(f func(string)) { pe.ev.EachNsInTop(f) }
+func (pe pureEvaler) EachNs(f func(string)) {
+	eval.EachNsInTop(pe.ev.Builtin(), pe.ev.Global(), f)
+}
 
 func (pe pureEvaler) EachVariableInNs(ns string, f func(string)) {
-	pe.ev.EachVariableInTop(ns, f)
+	eval.EachVariableInTop(pe.ev.Builtin(), pe.ev.Global(), ns, f)
 }
 
 func (pe pureEvaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {

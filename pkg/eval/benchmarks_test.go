@@ -42,7 +42,7 @@ func benchmarkEval(b *testing.B, code string) {
 	if err != nil {
 		panic(err)
 	}
-	op, err := ev.compile(tree, ev.Global, nil)
+	op, err := ev.compile(tree, ev.Global(), nil)
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +50,7 @@ func benchmarkEval(b *testing.B, code string) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		fm, cleanup := ev.prepareFrame(src, EvalCfg{Global: ev.Global})
+		fm, cleanup := ev.prepareFrame(src, EvalCfg{Global: ev.Global()})
 		op.exec(fm)
 		cleanup()
 	}
@@ -83,7 +83,7 @@ func BenchmarkOutputCapture_Mixed(b *testing.B) {
 
 func benchmarkOutputCapture(n int, f func(*Frame)) {
 	ev := NewEvaler()
-	fm := &Frame{Evaler: ev, local: ev.Global, up: new(Ns)}
+	fm := &Frame{Evaler: ev, local: ev.Global(), up: new(Ns)}
 	for i := 0; i < n; i++ {
 		fm.CaptureOutput(func(fm *Frame) error {
 			f(fm)

@@ -50,11 +50,11 @@ var eachVariableInTopTests = []struct {
 
 func TestEachVariableInTop(t *testing.T) {
 	for _, test := range eachVariableInTopTests {
-		scopes := evalerScopes{Builtin: test.builtin, Global: test.global}
-		fillScopes(&scopes)
+		builtin := getNs(test.builtin)
+		global := getNs(test.global)
 
 		var names []string
-		scopes.EachVariableInTop(test.ns,
+		EachVariableInTop(builtin, global, test.ns,
 			func(s string) { names = append(names, s) })
 		sort.Strings(names)
 
@@ -89,11 +89,11 @@ var eachNsInTopTests = []struct {
 
 func TestEachNsInTop(t *testing.T) {
 	for _, test := range eachNsInTopTests {
-		scopes := evalerScopes{Builtin: test.builtin, Global: test.global}
-		fillScopes(&scopes)
+		builtin := getNs(test.builtin)
+		global := getNs(test.global)
 
 		var names []string
-		scopes.EachNsInTop(func(s string) { names = append(names, s) })
+		EachNsInTop(builtin, global, func(s string) { names = append(names, s) })
 		sort.Strings(names)
 
 		if !reflect.DeepEqual(names, test.wantNames) {
@@ -102,11 +102,9 @@ func TestEachNsInTop(t *testing.T) {
 	}
 }
 
-func fillScopes(scopes *evalerScopes) {
-	if scopes.Builtin == nil {
-		scopes.Builtin = new(Ns)
+func getNs(ns *Ns) *Ns {
+	if ns == nil {
+		return new(Ns)
 	}
-	if scopes.Global == nil {
-		scopes.Global = new(Ns)
-	}
+	return ns
 }

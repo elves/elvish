@@ -12,7 +12,9 @@ import (
 // directory, and the functions in afterChdir immediately after (if chdir was
 // successful). It returns nil as long as the directory changing part succeeds.
 func (ev *Evaler) Chdir(path string) error {
-	for _, hook := range ev.beforeChdir {
+	beforeChdir, afterChdir := ev.chdirHooks()
+
+	for _, hook := range beforeChdir {
 		hook(path)
 	}
 
@@ -21,7 +23,7 @@ func (ev *Evaler) Chdir(path string) error {
 		return err
 	}
 
-	for _, hook := range ev.afterChdir {
+	for _, hook := range afterChdir {
 		hook(path)
 	}
 

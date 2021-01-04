@@ -55,7 +55,7 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 			if len(argVals) > 0 {
 				return ErrImplicitCdNoArg
 			}
-			return fm.Chdir(e.Name)
+			return fm.Evaler.Chdir(e.Name)
 		}
 	}
 

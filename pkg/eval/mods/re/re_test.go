@@ -10,7 +10,7 @@ import (
 
 func TestRe(t *testing.T) {
 	setup := func(ev *eval.Evaler) {
-		ev.Global = eval.NsBuilder{}.AddNs("re", Ns).Ns()
+		ev.SetGlobal(eval.NsBuilder{}.AddNs("re", Ns).Ns())
 	}
 	TestWithSetup(t, setup,
 		That("re:match . xyz").Puts(true),

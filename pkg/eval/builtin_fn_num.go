@@ -233,7 +233,7 @@ func times(nums ...float64) float64 {
 func slash(fm *Frame, args ...float64) error {
 	if len(args) == 0 {
 		// cd /
-		return fm.Chdir("/")
+		return fm.Evaler.Chdir("/")
 	}
 	// Division
 	divide(fm, args[0], args[1:]...)

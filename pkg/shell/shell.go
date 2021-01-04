@@ -63,10 +63,10 @@ func setupShell(fds [3]*os.File, p Paths, spawn bool) (*eval.Evaler, func()) {
 }
 
 func evalInTTY(ev *eval.Evaler, fds [3]*os.File, src parse.Source) error {
-	ports, cleanup := eval.PortsFromFiles(fds, ev)
+	ports, cleanup := eval.PortsFromFiles(fds, ev.ValuePrefix())
 	defer cleanup()
 	return ev.Eval(src, eval.EvalCfg{
-		Ports: ports[:], Interrupt: eval.ListenInterrupts, PutInFg: true})
+		Ports: ports, Interrupt: eval.ListenInterrupts, PutInFg: true})
 }
 
 func incSHLVL() func() {
