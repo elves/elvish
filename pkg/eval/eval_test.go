@@ -64,14 +64,6 @@ func TestCompileTimeDeprecation(t *testing.T) {
 	}
 }
 
-func TestMiscEval(t *testing.T) {
-	Test(t,
-		// Pseudo-namespace E:
-		That("E:FOO=lorem; put $E:FOO").Puts("lorem"),
-		That("del E:FOO; put $E:FOO").Puts(""),
-	)
-}
-
 func TestMultipleEval(t *testing.T) {
 	texts := []string{"x=hello", "put $x"}
 	r := EvalAndCollect(t, NewEvaler(), texts)
