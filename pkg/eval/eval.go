@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"sync"
 
 	"github.com/elves/elvish/pkg/daemon"
 	"github.com/elves/elvish/pkg/diag"
@@ -37,9 +38,18 @@ const (
 	initIndent                = vals.NoPretty
 )
 
-// Evaler is used to evaluate elvish sources. It maintains runtime context
-// shared among all evalCtx instances.
+// Evaler provides methods for evaluating code, and maintains state that is
+// persisted between evaluation of different pieces of code. An Evaler is safe
+// to use concurrently.
 type Evaler struct {
+	// All mutations to Evaler should be guarded by this mutex.
+	//
+	// Note that this is *not* a GIL; most state mutations when executing Elvish
+	// code is localized and do not need to hold this mutex.
+	//
+	// TODO: Actually guard all mutations by this mutex.
+	mu sync.Mutex
+
 	evalerScopes
 
 	state state
@@ -231,6 +241,12 @@ func (ev *Evaler) SetArgs(args []string) {
 // found.
 func (ev *Evaler) SetLibDir(libDir string) {
 	ev.libDir = libDir
+}
+
+func (ev *Evaler) registerDeprecation(d deprecation) bool {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	return ev.deprecations.register(d)
 }
 
 // growPorts makes the size of ec.ports at least n, adding nil's if necessary.

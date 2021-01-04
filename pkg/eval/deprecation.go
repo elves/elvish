@@ -1,13 +1,10 @@
 package eval
 
 import (
-	"sync"
-
 	"github.com/elves/elvish/pkg/diag"
 )
 
 type deprecationRegistry struct {
-	mutex      sync.Mutex
 	registered map[deprecation]struct{}
 }
 
@@ -24,8 +21,6 @@ type deprecation struct {
 // Registers a deprecation, and returns whether it was registered for the first
 // time.
 func (r *deprecationRegistry) register(dep deprecation) bool {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
 	if _, ok := r.registered[dep]; ok {
 		return false
 	}

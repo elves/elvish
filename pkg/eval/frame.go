@@ -186,7 +186,7 @@ func (fm *Frame) Deprecate(msg string, ctx *diag.Context) {
 		ctx = fm.traceback.Head
 	}
 	dep := deprecation{ctx.Name, ctx.Ranging, msg}
-	if prog.ShowDeprecations && fm.deprecations.register(dep) {
+	if prog.ShowDeprecations && fm.Evaler.registerDeprecation(dep) {
 		err := diag.Error{
 			Type: "deprecation", Message: dep.message, Context: *ctx}
 		fm.ErrorFile().WriteString(err.Show("") + "\n")
