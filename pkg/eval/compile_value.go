@@ -416,19 +416,19 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 		}
 	}
 
-	thisScope, thisUp := cp.pushScope()
+	local, capture := cp.pushScope()
 	for _, argName := range argNames {
-		thisScope.add(argName)
+		local.add(argName)
 	}
 	for _, optName := range optNames {
-		thisScope.add(optName)
+		local.add(optName)
 	}
-	scopeSizeInit := len(thisScope.names)
+	scopeSizeInit := len(local.names)
 	chunkOp := cp.chunkOp(n.Chunk)
-	scopeOp := wrapScopeOp(chunkOp, thisScope.names[scopeSizeInit:])
+	newLocal := local.names[scopeSizeInit:]
 	cp.popScope()
 
-	return &lambdaOp{n.Range(), argNames, restArg, optNames, optDefaultOps, thisUp, scopeOp, cp.srcMeta}
+	return &lambdaOp{n.Range(), argNames, restArg, optNames, optDefaultOps, newLocal, capture, chunkOp, cp.srcMeta}
 }
 
 type lambdaOp struct {
@@ -437,6 +437,7 @@ type lambdaOp struct {
 	restArg       int
 	optNames      []string
 	optDefaultOps []valuesOp
+	newLocal      []string
 	capture       *staticUpNs
 	subop         effectOp
 	srcMeta       parse.Source
@@ -460,7 +461,7 @@ func (op *lambdaOp) exec(fm *Frame) ([]interface{}, error) {
 		}
 		optDefaults[i] = defaultValue
 	}
-	return []interface{}{&closure{op.argNames, op.restArg, op.optNames, optDefaults, op.subop, capture, op.srcMeta, op.Range()}}, nil
+	return []interface{}{&closure{op.argNames, op.restArg, op.optNames, optDefaults, op.subop, op.newLocal, capture, op.srcMeta, op.Range()}}, nil
 }
 
 type mapOp struct {

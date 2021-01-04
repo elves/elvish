@@ -3,7 +3,6 @@ package eval
 import (
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/elves/elvish/pkg/diag"
@@ -35,17 +34,7 @@ func (op scopeOp) exec(fm *Frame) error {
 	}
 	fm.local.names = append(fm.local.names, op.locals...)
 	for _, name := range op.locals {
-		var variable vars.Var
-		if strings.HasSuffix(name, FnSuffix) {
-			val := Callable(nil)
-			variable = vars.FromPtr(&val)
-		} else if strings.HasSuffix(name, NsSuffix) {
-			val := (*Ns)(nil)
-			variable = vars.FromPtr(&val)
-		} else {
-			variable = vars.FromInit(nil)
-		}
-		fm.local.slots = append(fm.local.slots, variable)
+		fm.local.slots = append(fm.local.slots, makeVarFromName(name))
 	}
 	return op.inner.exec(fm)
 }
