@@ -145,7 +145,7 @@ to [matterbridge](https://github.com/42wim/matterbridge)!
 -   IRC: [#elvish](https://webchat.freenode.net/?channels=elvish) on Freenode
 
 -   Gitter/Matrix: [elves/elvish](https://gitter.im/elves/elvish),
-    [#elvish:matrix.org](https://matrix.to/#/#elves_elvish:gitter.im)
+    [#elves_elvish:gitter.im](https://matrix.to/#/#elves_elvish:gitter.im)
 
 # <i class="icon-link-ext"></i> More Resources
 
