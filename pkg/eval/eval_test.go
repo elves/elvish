@@ -11,6 +11,7 @@ import (
 	. "github.com/elves/elvish/pkg/eval"
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
+	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/testutil"
@@ -23,6 +24,14 @@ func TestNumBgJobs(t *testing.T) {
 		// with { put $num-bg-jobs }& because the output channel may have
 		// already been closed when the closure is run.
 	)
+}
+
+func TestArgs(t *testing.T) {
+	Test(t,
+		That("put $args").Puts(vals.EmptyList))
+	TestWithSetup(t,
+		func(ev *Evaler) { ev.SetArgs([]string{"foo", "bar"}) },
+		That("put $args").Puts(vals.MakeList("foo", "bar")))
 }
 
 func TestEvalTimeDeprecate(t *testing.T) {

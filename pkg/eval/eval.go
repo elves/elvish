@@ -231,10 +231,9 @@ func (ev *Evaler) SetArgs(args []string) {
 	for _, arg := range args {
 		v = v.Cons(arg)
 	}
-	// TODO: Avoid creating the variable dynamically; instead, always create the
-	// variable, and set its value here.
-	ev.Builtin.slots = append(ev.Builtin.slots, vars.NewReadOnly(v))
-	ev.Builtin.names = append(ev.Builtin.names, "args")
+	// TODO: Make this concurrency-safe
+	builtin := ev.Builtin
+	builtin.slots[builtin.lookup("args")] = vars.NewReadOnly(v)
 }
 
 // SetLibDir sets the library directory, in which external modules are to be
