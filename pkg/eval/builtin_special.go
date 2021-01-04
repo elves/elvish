@@ -324,7 +324,7 @@ func evalInner(fm *Frame, src parse.Source, ns *Ns, st *StackTrace) error {
 	if err != nil {
 		return err
 	}
-	return op.Exec(newFm)
+	return op.exec(newFm)
 }
 
 // compileAnd compiles the "and" special form.

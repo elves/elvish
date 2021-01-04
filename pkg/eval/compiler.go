@@ -37,14 +37,7 @@ type capture struct {
 	index int
 }
 
-// Op represents an operation on a Frame. It is the result of compiling a piece
-// of source.
-type Op struct {
-	Exec func(*Frame) error
-	Src  parse.Source
-}
-
-func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op Op, err error) {
+func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op effectOp, err error) {
 	g = g.clone()
 	gLenInit := len(g.names)
 	cp := &compiler{
@@ -65,7 +58,7 @@ func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op Op, err error) {
 	chunkOp := cp.chunkOp(tree.Root)
 	scopeOp := wrapScopeOp(chunkOp, g.names[gLenInit:])
 
-	return Op{scopeOp.exec, tree.Source}, nil
+	return scopeOp, nil
 }
 
 const compilationErrorType = "compilation error"

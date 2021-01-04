@@ -50,7 +50,9 @@ func benchmarkEval(b *testing.B, code string) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		ev.execOp(op, EvalCfg{Global: ev.Global})
+		fm, cleanup := ev.prepareFrame(src, EvalCfg{Global: ev.Global})
+		op.exec(fm)
+		cleanup()
 	}
 }
 

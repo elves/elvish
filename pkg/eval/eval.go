@@ -293,7 +293,9 @@ func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
 	if err != nil {
 		return err
 	}
-	return ev.execOp(op, cfg)
+	fm, cleanup := ev.prepareFrame(src, cfg)
+	defer cleanup()
+	return op.exec(fm)
 }
 
 // CallCfg keeps configuration for the (*Evaler).Call method.
@@ -319,28 +321,31 @@ func (cfg *CallCfg) fillDefaults() {
 func (ev *Evaler) Call(f Callable, callCfg CallCfg, evalCfg EvalCfg) error {
 	callCfg.fillDefaults()
 	evalCfg.fillDefaults(ev)
-	exec := func(fm *Frame) error { return f.Call(fm, callCfg.Args, callCfg.Opts) }
-	return ev.execOp(Op{exec, parse.Source{Name: callCfg.From}}, evalCfg)
+	fm, cleanup := ev.prepareFrame(parse.Source{Name: callCfg.From}, evalCfg)
+	defer cleanup()
+	return f.Call(fm, callCfg.Args, callCfg.Opts)
 }
 
-func (ev *Evaler) execOp(op Op, cfg EvalCfg) error {
+func (ev *Evaler) prepareFrame(src parse.Source, cfg EvalCfg) (*Frame, func()) {
 	var intCh <-chan struct{}
+	var intChCleanup func()
 	if cfg.Interrupt != nil {
-		ch, cleanup := cfg.Interrupt()
-		defer cleanup()
-		intCh = ch
+		intCh, intChCleanup = cfg.Interrupt()
 	}
-	if cfg.PutInFg {
-		defer func() {
+
+	fm := &Frame{ev, src, cfg.Global, new(Ns), intCh, cfg.Ports, nil, false}
+	return fm, func() {
+		if intChCleanup != nil {
+			intChCleanup()
+		}
+		if cfg.PutInFg {
 			err := putSelfInFg()
 			if err != nil {
 				fmt.Fprintln(cfg.Ports[2].File,
 					"failed to put myself in foreground:", err)
 			}
-		}()
+		}
 	}
-	fm := &Frame{ev, op.Src, cfg.Global, new(Ns), intCh, cfg.Ports, nil, false}
-	return op.Exec(fm)
 }
 
 // Check checks the given source code for any parse error and compilation error.
@@ -360,6 +365,6 @@ func (ev *Evaler) CheckTree(tree parse.Tree, w io.Writer) *diag.Error {
 }
 
 // Compiles a parsed tree.
-func (ev *Evaler) compile(tree parse.Tree, g *Ns, w io.Writer) (Op, error) {
+func (ev *Evaler) compile(tree parse.Tree, g *Ns, w io.Writer) (effectOp, error) {
 	return compile(ev.Builtin.static(), g.static(), tree, w)
 }

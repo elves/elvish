@@ -318,7 +318,7 @@ func source(fm *Frame, fname string) error {
 	newFm := fm.fork("[-source]")
 	newFm.local = g
 	newFm.srcMeta = src
-	return op.Exec(newFm)
+	return op.exec(newFm)
 }
 
 func readFileUTF8(fname string) (string, error) {
