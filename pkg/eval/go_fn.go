@@ -67,26 +67,31 @@ var (
 // 1. If the first parameter of function has type *Frame, it gets the current
 // call frame.
 //
-// 2. If (possibly after a *Frame parameter) the first parameter has type
-// RawOptions, it gets a map of options. If the function has not declared an
-// RawOptions parameter but is passed options, an error is thrown.
+// 2. After the potential *Frame argument, the first parameter has type
+// RawOptions, it gets a map of option names to their values.
 //
-// Alternatively, a (non-pointer) struct argument whose type implements the
-// Options interface can also be declared, in which case options will be scanned
-// into it using RawOptions.Scan. If the pointer type of the struct implements a
-// SetDefault method, it will be called before scanning.
+// Alternatively, this parameter may be a (non-pointer) struct whose pointer
+// type implements a SetDefaultOptions method that takes no arguments and has no
+// return value. In this case, a new instance of the struct is constructed, the
+// SetDefaultOptions method is called, and any option passed to the Elvish
+// function is used to populate the fields of the struct. Field names are mapped
+// to option names using strutil.CamelToDashed, unless they have a field tag
+// "name", in which case the tag is preferred.
+//
+// If the function does not declare that it accepts options via either method
+// described above, it accepts no options.
 //
 // 3. If the last parameter is non-variadic and has type Inputs, it represents
 // an optional parameter that contains the input to this function. If the
 // argument is not supplied, the input channel of the Frame will be used to
 // supply the inputs.
 //
-// 4. Other parameters are converted using elvToGo.
+// 4. Other parameters are converted using vals.ScanToGo.
 //
 // Return values go to the channel part of the stdout port, after being
-// converted using goToElv. If the last return value has type error and is not
-// nil, it is turned into an exception and no outputting happens. If the last
-// return value is a nil error, it is ignored.
+// converted using vals.FromGo. If the last return value has type error and is
+// not nil, it is turned into an exception and no outputting happens. If the
+// last return value is a nil error, it is ignored.
 func NewGoFn(name string, impl interface{}) Callable {
 	implType := reflect.TypeOf(impl)
 	b := &goFn{name: name, impl: impl}

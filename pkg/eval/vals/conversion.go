@@ -12,17 +12,20 @@ import (
 //
 // Elvish uses native Go types most of the time - string, bool, hashmap.Map,
 // vector.Vector, etc., and there is no need for any conversions. There are some
-// exceptions, for instance the numerical types int and float64: in native Go
-// code they are distinct types, but Elvish uses string for all numbers.
-// Similarly, Elvish uses string to represent runes. In all cases, there is a
-// many-to-one relationship between Go types and Elvish types.
+// exceptions, for instance int and rune, since Elvish currently lacks integer
+// types.
 //
-// Conversion from Go value to Elvish value can happen without knowing the
-// destination type: int, float64 and rune values are converted to strings, and
-// values of other types remain unchanged. The opposite is not true: the native
-// Go value corresponding to the Elvish value "1" can be string("1"), int(1),
-// float64(1.0) or rune('1'). Conversion in this direction depends on the
-// destination type.
+// There is a many-to-one relationship between Go types and Elvish types. A
+// Go value can always be converted to an Elvish value unambiguously, but to
+// convert an Elvish value into a Go value one must know the destination type
+// first. For example, all of the Go values int(1), rune('1') and string("1")
+// convert to Elvish "1"; conversely, Elvish "1" may be converted to any of the
+// aforementioned three possible values, depending on the destination type.
+//
+// In future, Elvish may gain distinct types for integers and characters, making
+// the examples above unnecessary; however, the conversion logic may not
+// entirely go away, as there might always be some mismatch between Elvish's
+// type system and Go's.
 
 type wrongType struct {
 	wantKind string

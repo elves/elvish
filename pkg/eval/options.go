@@ -10,7 +10,7 @@ import (
 )
 
 // RawOptions is the type of an argument a Go-native function can take to
-// declare that it wants to parse options itself. See the doc of GoFn for
+// declare that it wants to parse options itself. See the doc of NewGoFn for
 // details.
 type RawOptions map[string]interface{}
 
