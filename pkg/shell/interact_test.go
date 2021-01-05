@@ -83,8 +83,8 @@ func TestExtractExports(t *testing.T) {
 	ns := eval.NsBuilder{
 		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc("a", "lorem")),
 	}.Ns()
-	extractExports(ns, &bytes.Buffer{})
-	if a, _ := ns.Index("a"); a != "lorem" {
+	ns2 := extractExports(ns, &bytes.Buffer{})
+	if a, _ := ns2.Index("a"); a != "lorem" {
 		t.Errorf("$a not extracted from exports")
 	}
 }
@@ -117,8 +117,8 @@ func TestExtractExports_DoesNotOverwrite(t *testing.T) {
 		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc("a", "ipsum")),
 	}.Ns()
 	var errBuf bytes.Buffer
-	extractExports(ns, &errBuf)
-	if a, _ := ns.Index("a"); a != "lorem" {
+	ns2 := extractExports(ns, &errBuf)
+	if ns2.HasName("a") {
 		t.Errorf("Existing variable overwritten")
 	}
 	if errBuf.Len() == 0 {

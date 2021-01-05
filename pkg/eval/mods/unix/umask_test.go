@@ -14,7 +14,7 @@ import (
 // /bin/sh program.
 func TestUmask(t *testing.T) {
 	setup := func(ev *eval.Evaler) {
-		ev.SetGlobal(eval.NsBuilder{}.AddNs("unix", Ns).Ns())
+		ev.AddGlobal(eval.NsBuilder{}.AddNs("unix", Ns).Ns())
 	}
 	TestWithSetup(t, setup,
 		// We have to start with a known umask value.

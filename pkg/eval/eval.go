@@ -212,11 +212,11 @@ func (ev *Evaler) Global() *Ns {
 	return ev.global
 }
 
-// SetGlobal sets the global Ns.
-func (ev *Evaler) SetGlobal(g *Ns) {
+// AddGlobal merges the given *Ns into the global namespace.
+func (ev *Evaler) AddGlobal(ns *Ns) {
 	ev.mu.Lock()
 	defer ev.mu.Unlock()
-	ev.global = g
+	ev.global = CombineNs(ev.global, ns)
 }
 
 // Builtin returns the builtin Ns.
@@ -224,6 +224,13 @@ func (ev *Evaler) Builtin() *Ns {
 	ev.mu.RLock()
 	defer ev.mu.RUnlock()
 	return ev.builtin
+}
+
+// AddBuiltin merges the given *Ns into the builtin namespace.
+func (ev *Evaler) AddBuiltin(ns *Ns) {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.builtin = CombineNs(ev.builtin, ns)
 }
 
 func (ev *Evaler) registerDeprecation(d deprecation) bool {

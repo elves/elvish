@@ -9,7 +9,9 @@ import (
 )
 
 // Ns is the runtime representation of a namespace. The zero value of Ns is an
-// empty namespace.
+// empty namespace. To create a non-empty Ns, use either NsBuilder or CombineNs.
+//
+// An Ns is immutable after creation.
 type Ns struct {
 	// All variables in the namespace. Static variable accesses are compiled
 	// into indexed accesses into this slice.
@@ -20,8 +22,27 @@ type Ns struct {
 	names []string
 }
 
+// CombineNs returns an *Ns that contains all the bindings from both ns1 and
+// ns2. Names in ns2 takes precedence over those in ns1.
+func CombineNs(ns1 *Ns, ns2 *Ns) *Ns {
+	ns := &Ns{
+		append([]vars.Var(nil), ns2.slots...),
+		append([]string(nil), ns2.names...)}
+	hasName := map[string]bool{}
+	for _, name := range ns.names {
+		hasName[name] = true
+	}
+	for i, name := range ns1.names {
+		if !hasName[name] {
+			ns.slots = append(ns.slots, ns1.slots[i])
+			ns.names = append(ns.names, name)
+		}
+	}
+	return ns
+}
+
 // Kind returns "ns".
-func (*Ns) Kind() string {
+func (ns *Ns) Kind() string {
 	return "ns"
 }
 
@@ -93,12 +114,6 @@ func (ns *Ns) HasName(k string) bool {
 		}
 	}
 	return false
-}
-
-// Append adds all bindings from ns2 to ns.
-func (ns *Ns) Append(ns2 *Ns) {
-	ns.slots = append(ns.slots, ns2.slots...)
-	ns.names = append(ns.names, ns2.names...)
 }
 
 func (ns *Ns) static() *staticNs {

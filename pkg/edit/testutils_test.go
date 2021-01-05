@@ -35,7 +35,8 @@ func rc(codes ...string) func(*fixture) {
 
 func assign(name string, val interface{}) func(*fixture) {
 	return func(f *fixture) {
-		f.Evaler.Global().Append(eval.NsBuilder{"temp": vars.NewReadOnly(val)}.Ns())
+		f.Evaler.AddGlobal(eval.CombineNs(f.Evaler.Global(),
+			eval.NsBuilder{"temp": vars.NewReadOnly(val)}.Ns()))
 		evals(f.Evaler, name+` = $temp`)
 	}
 }

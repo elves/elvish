@@ -55,7 +55,7 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 	var ed editor
 	if sys.IsATTY(fds[0]) {
 		newed := edit.NewEditor(cli.StdTTY, ev, ev.DaemonClient())
-		ev.Builtin().Append(eval.NsBuilder{}.AddNs("edit", newed.Ns()).Ns())
+		ev.AddBuiltin(eval.NsBuilder{}.AddNs("edit", newed.Ns()).Ns())
 		ed = newed
 	} else {
 		ed = newMinEditor(fds[0], fds[2])
@@ -125,23 +125,26 @@ func sourceRC(fds [3]*os.File, ev *eval.Evaler, rcPath string) error {
 	if err != nil {
 		return err
 	}
-	extractExports(ev.Global(), fds[2])
+	extraGlobal := extractExports(ev.Global(), fds[2])
+	if extraGlobal != nil {
+		ev.AddGlobal(extraGlobal)
+	}
 	return nil
 }
 
 const exportsVarName = "-exports-"
 
 // If the namespace contains a variable named exportsVarName, extract its values
-// into the namespace itself.
-func extractExports(ns *eval.Ns, stderr io.Writer) {
+// into a namespace.
+func extractExports(ns *eval.Ns, stderr io.Writer) *eval.Ns {
 	value, ok := ns.Index(exportsVarName)
 	if !ok {
-		return
+		return nil
 	}
 	exports, ok := value.(hashmap.Map)
 	if !ok {
 		fmt.Fprintf(stderr, "$%s is not map, ignored\n", exportsVarName)
-		return
+		return nil
 	}
 	nb := eval.NsBuilder{}
 	for it := exports.Iterator(); it.HasElem(); it.Next() {
@@ -159,5 +162,5 @@ func extractExports(ns *eval.Ns, stderr io.Writer) {
 		}
 		nb.Add(name, vars.FromInit(v))
 	}
-	ns.Append(nb.Ns())
+	return nb.Ns()
 }
