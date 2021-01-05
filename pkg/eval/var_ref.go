@@ -134,7 +134,7 @@ func deref(fm *Frame, ref *varRef) vars.Var {
 		if !ok {
 			return nil
 		}
-		variable = ns.indexInner(subName)
+		variable = ns.IndexName(subName)
 		if variable == nil {
 			return nil
 		}

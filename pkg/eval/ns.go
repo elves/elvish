@@ -65,10 +65,11 @@ func (ns *Ns) Repr(int) string {
 }
 
 // Index looks up a variable with the given name, and returns its value if it
-// exists. This is only used for introspection.
+// exists. This is only used for introspection from Elvish code; for
+// introspection from Go code, use IndexName.
 func (ns *Ns) Index(k interface{}) (interface{}, bool) {
 	if ks, ok := k.(string); ok {
-		variable := ns.indexInner(ks)
+		variable := ns.IndexName(ks)
 		if variable == nil {
 			return nil, false
 		}
@@ -77,7 +78,10 @@ func (ns *Ns) Index(k interface{}) (interface{}, bool) {
 	return nil, false
 }
 
-func (ns *Ns) indexInner(k string) vars.Var {
+// Index looks up a variable with the given name, and returns its value if it
+// exists, or nil if it does not. This is the type-safe version of Index and is
+// useful for introspection from Go code.
+func (ns *Ns) IndexName(k string) vars.Var {
 	i := ns.lookup(k)
 	if i != -1 {
 		return ns.slots[i]
@@ -102,6 +106,17 @@ func (ns *Ns) IterateKeys(f func(interface{}) bool) {
 		}
 		if !f(name) {
 			break
+		}
+	}
+}
+
+// IterateNames produces the names of all variables in the Ns. It is the
+// type-safe version of IterateKeys and is useful for introspection from Go
+// code. It doesn't support breaking early.
+func (ns *Ns) IterateNames(f func(string)) {
+	for i, name := range ns.names {
+		if ns.slots[i] != nil {
+			f(name)
 		}
 	}
 }
