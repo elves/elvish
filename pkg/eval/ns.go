@@ -194,13 +194,6 @@ func (ns *staticNs) clone() *staticNs {
 		append([]string{}, ns.names...), append([]bool{}, ns.deleted...)}
 }
 
-func (ns *staticNs) set(k string) int {
-	if index := ns.lookup(k); index != -1 {
-		return index
-	}
-	return ns.addInner(k)
-}
-
 func (ns *staticNs) del(k string) {
 	if i := ns.lookup(k); i != -1 {
 		ns.deleted[i] = true
@@ -218,10 +211,6 @@ func (ns *staticNs) addInner(k string) int {
 	ns.names = append(ns.names, k)
 	ns.deleted = append(ns.deleted, false)
 	return len(ns.names) - 1
-}
-
-func (ns *staticNs) has(name string) bool {
-	return ns.lookup(name) != -1
 }
 
 func (ns *staticNs) lookup(k string) int {

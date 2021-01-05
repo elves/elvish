@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval"
 	. "github.com/elves/elvish/pkg/eval"
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
@@ -125,11 +124,11 @@ func TestCall(t *testing.T) {
 	passedArg := "arg value"
 	passedOpt := "opt value"
 	ev.Call(fn,
-		eval.CallCfg{
+		CallCfg{
 			Args: []interface{}{passedArg},
 			Opts: map[string]interface{}{"opt": passedOpt},
 			From: "[TestCall]"},
-		eval.EvalCfg{})
+		EvalCfg{})
 
 	if gotArg != passedArg {
 		t.Errorf("got arg %q, want %q", gotArg, passedArg)

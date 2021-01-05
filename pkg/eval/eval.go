@@ -303,11 +303,7 @@ func (ev *Evaler) getArgs() vals.List {
 // SetArgs sets the value of the $args variable to a list of strings, built from
 // the given slice.
 func (ev *Evaler) SetArgs(args []string) {
-	v := vector.Empty
-	for _, arg := range args {
-		v = v.Cons(arg)
-	}
-
+	v := listOfStrings(args)
 	ev.mu.Lock()
 	defer ev.mu.Unlock()
 	ev.args = v

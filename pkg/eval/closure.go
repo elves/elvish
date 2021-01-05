@@ -51,14 +51,6 @@ func (c *closure) Repr(int) string {
 	return fmt.Sprintf("<closure %p>", c)
 }
 
-func listOfStrings(ss []string) vals.List {
-	list := vals.EmptyList
-	for _, s := range ss {
-		list = list.Cons(s)
-	}
-	return list
-}
-
 // Call calls a closure.
 func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{}) error {
 	// Check number of arguments.
@@ -197,4 +189,12 @@ func (cf closureFields) Body() string {
 
 func (cf closureFields) Def() string {
 	return cf.c.SrcMeta.Code[cf.c.DefRange.From:cf.c.DefRange.To]
+}
+
+func listOfStrings(ss []string) vals.List {
+	list := vals.EmptyList
+	for _, s := range ss {
+		list = list.Cons(s)
+	}
+	return list
 }
