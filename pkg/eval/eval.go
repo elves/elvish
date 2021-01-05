@@ -11,6 +11,7 @@ import (
 
 	"github.com/elves/elvish/pkg/daemon"
 	"github.com/elves/elvish/pkg/diag"
+	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/logutil"
@@ -81,6 +82,12 @@ type Evaler struct {
 	// TODO: Remove these dependency by providing more general extension points.
 	daemonClient daemon.Client
 	editor       Editor
+}
+
+// Editor is the interface that the line editor has to satisfy. It is needed so
+// that this package does not depend on the edit package.
+type Editor interface {
+	Notify(string, ...interface{})
 }
 
 //elvdoc:var after-chdir
@@ -347,6 +354,37 @@ func (ev *Evaler) Editor() Editor {
 	ev.mu.RLock()
 	defer ev.mu.RUnlock()
 	return ev.editor
+}
+
+// Chdir changes the current directory. On success it also updates the PWD
+// environment variable and records the new directory in the directory history.
+// It runs the functions in beforeChdir immediately before changing the
+// directory, and the functions in afterChdir immediately after (if chdir was
+// successful). It returns nil as long as the directory changing part succeeds.
+func (ev *Evaler) Chdir(path string) error {
+	beforeChdir, afterChdir := ev.chdirHooks()
+
+	for _, hook := range beforeChdir {
+		hook(path)
+	}
+
+	err := os.Chdir(path)
+	if err != nil {
+		return err
+	}
+
+	for _, hook := range afterChdir {
+		hook(path)
+	}
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		logger.Println("getwd after cd:", err)
+		return nil
+	}
+	os.Setenv(env.PWD, pwd)
+
+	return nil
 }
 
 // EvalCfg keeps configuration for the (*Evaler).Eval method.

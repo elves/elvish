@@ -85,7 +85,7 @@ var builtinNs = NsBuilder{
 	"nil":   vars.NewReadOnly(nil),
 	"true":  vars.NewReadOnly(true),
 	"false": vars.NewReadOnly(false),
-	"paths": NewEnvListVar("PATH"),
+	"paths": vars.NewEnvListVar("PATH"),
 }
 
 func addBuiltinFns(fns map[string]interface{}) {

@@ -10,6 +10,7 @@ import (
 	"github.com/elves/elvish/pkg/testutil"
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
+	"github.com/elves/elvish/pkg/eval/vars"
 )
 
 func TestBuiltinPwd(t *testing.T) {
@@ -23,7 +24,7 @@ func TestBuiltinPwd(t *testing.T) {
 
 	Test(t,
 		That(`pwd=dir1 put $pwd; put $pwd`).Puts(dir1, tmpHome),
-		That(`pwd=(float64 1) put $pwd`).Throws(ErrPathMustBeString, "pwd=(float64 1)"),
+		That(`pwd=(float64 1) put $pwd`).Throws(vars.ErrPathMustBeString, "pwd=(float64 1)"),
 	)
 
 	// We could separate these two test variants into separate unit test

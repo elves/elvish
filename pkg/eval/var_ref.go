@@ -153,7 +153,7 @@ func derefBase(fm *Frame, ref *varRef) (vars.Var, []string) {
 	case envScope:
 		return vars.FromEnv(ref.subNames[0]), nil
 	case externalScope:
-		return vars.NewReadOnly(ExternalCmd{ref.subNames[0]}), nil
+		return vars.NewReadOnly(NewExternalCmd(ref.subNames[0])), nil
 	default:
 		return nil, nil
 	}

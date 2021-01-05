@@ -12,16 +12,15 @@ import (
 	"github.com/elves/elvish/pkg/parse"
 )
 
-// GlobPattern is en ephemeral Value generated when evaluating tilde and
-// wildcards.
-type GlobPattern struct {
+// An ephemeral value generated when evaluating tilde and wildcards.
+type globPattern struct {
 	glob.Pattern
-	Flags  GlobFlag
+	Flags  globFlag
 	Buts   []string
 	TypeCb func(os.FileMode) bool
 }
 
-type GlobFlag uint
+type globFlag uint
 
 var typeCbMap = map[string]func(os.FileMode) bool{
 	"dir":     os.FileMode.IsDir,
@@ -31,17 +30,14 @@ var typeCbMap = map[string]func(os.FileMode) bool{
 const (
 	// noMatchOK indicates that the "nomatch-ok" glob index modifer was
 	// present.
-	noMatchOK GlobFlag = 1 << iota
+	noMatchOK globFlag = 1 << iota
 )
 
-func (f GlobFlag) Has(g GlobFlag) bool {
+func (f globFlag) Has(g globFlag) bool {
 	return (f & g) == g
 }
 
-var (
-	_ interface{}     = GlobPattern{}
-	_ vals.ErrIndexer = GlobPattern{}
-)
+var _ vals.ErrIndexer = globPattern{}
 
 var (
 	ErrMustFollowWildcard    = errors.New("must follow wildcard")
@@ -67,7 +63,7 @@ var runeMatchers = map[string]func(rune) bool{
 	"upper":   unicode.IsUpper,
 }
 
-func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
+func (gp globPattern) Index(k interface{}) (interface{}, error) {
 	modifierv, ok := k.(string)
 	if !ok {
 		return nil, ErrModifierMustBeString
@@ -134,12 +130,12 @@ func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
 	return gp, nil
 }
 
-func (gp GlobPattern) Concat(v interface{}) (interface{}, error) {
+func (gp globPattern) Concat(v interface{}) (interface{}, error) {
 	switch rhs := v.(type) {
 	case string:
 		gp.append(stringToSegments(rhs)...)
 		return gp, nil
-	case GlobPattern:
+	case globPattern:
 		// We know rhs contains exactly one segment.
 		gp.append(rhs.Segments[0])
 		gp.Flags |= rhs.Flags
@@ -157,22 +153,22 @@ func (gp GlobPattern) Concat(v interface{}) (interface{}, error) {
 	return nil, vals.ErrConcatNotImplemented
 }
 
-func (gp GlobPattern) RConcat(v interface{}) (interface{}, error) {
+func (gp globPattern) RConcat(v interface{}) (interface{}, error) {
 	switch lhs := v.(type) {
 	case string:
 		segs := stringToSegments(lhs)
 		// We know gp contains exactly one segment.
 		segs = append(segs, gp.Segments[0])
-		return GlobPattern{Pattern: glob.Pattern{Segments: segs}, Flags: gp.Flags,
+		return globPattern{Pattern: glob.Pattern{Segments: segs}, Flags: gp.Flags,
 			Buts: gp.Buts, TypeCb: gp.TypeCb}, nil
 	}
 
 	return nil, vals.ErrConcatNotImplemented
 }
 
-func (gp *GlobPattern) lastWildSeg() (glob.Wild, error) {
+func (gp *globPattern) lastWildSeg() (glob.Wild, error) {
 	if len(gp.Segments) == 0 {
-		return glob.Wild{}, ErrBadGlobPattern
+		return glob.Wild{}, ErrBadglobPattern
 	}
 	if !glob.IsWild(gp.Segments[len(gp.Segments)-1]) {
 		return glob.Wild{}, ErrMustFollowWildcard
@@ -180,7 +176,7 @@ func (gp *GlobPattern) lastWildSeg() (glob.Wild, error) {
 	return gp.Segments[len(gp.Segments)-1].(glob.Wild), nil
 }
 
-func (gp *GlobPattern) addMatcher(matcher func(rune) bool) error {
+func (gp *globPattern) addMatcher(matcher func(rune) bool) error {
 	lastSeg, err := gp.lastWildSeg()
 	if err != nil {
 		return err
@@ -192,7 +188,7 @@ func (gp *GlobPattern) addMatcher(matcher func(rune) bool) error {
 	return nil
 }
 
-func (gp *GlobPattern) append(segs ...glob.Segment) {
+func (gp *globPattern) append(segs ...glob.Segment) {
 	gp.Segments = append(gp.Segments, segs...)
 }
 
@@ -230,7 +226,7 @@ func stringToSegments(s string) []glob.Segment {
 	return segs
 }
 
-func doGlob(gp GlobPattern, abort <-chan struct{}) ([]interface{}, error) {
+func doGlob(gp globPattern, abort <-chan struct{}) ([]interface{}, error) {
 	but := make(map[string]struct{})
 	for _, s := range gp.Buts {
 		but[s] = struct{}{}

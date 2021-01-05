@@ -3,8 +3,10 @@ package eval_test
 import (
 	"bytes"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval"
@@ -16,6 +18,11 @@ import (
 	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/testutil"
 )
+
+func TestPid(t *testing.T) {
+	pid := strconv.Itoa(syscall.Getpid())
+	Test(t, That("put $pid").Puts(pid))
+}
 
 func TestNumBgJobs(t *testing.T) {
 	Test(t,

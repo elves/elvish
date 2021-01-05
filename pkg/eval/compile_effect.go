@@ -215,7 +215,7 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 			case fnRef != nil:
 				headOp = variableOp{n.Head.Range(), false, headStr + FnSuffix, fnRef}
 			default:
-				headOp = literalValues(n.Head, ExternalCmd{headStr})
+				headOp = literalValues(n.Head, NewExternalCmd(headStr))
 			}
 		} else {
 			// Head exists and is not a literal string. Evaluate as a normal
@@ -388,7 +388,7 @@ func evalForCommand(fm *Frame, op valuesOp, what string) (Callable, error) {
 		return value, nil
 	case string:
 		if fsutil.DontSearch(value) {
-			return ExternalCmd{value}, nil
+			return NewExternalCmd(value), nil
 		}
 	}
 	return nil, fm.errorp(op, errs.BadValue{

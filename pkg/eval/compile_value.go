@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/pkg/diag"
+	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/fsutil"
@@ -95,7 +96,7 @@ func (op compoundOp) exec(fm *Frame) ([]interface{}, error) {
 	}
 	hasGlob := false
 	for _, v := range vs {
-		if _, ok := v.(GlobPattern); ok {
+		if _, ok := v.(globPattern); ok {
 			hasGlob = true
 			break
 		}
@@ -103,7 +104,7 @@ func (op compoundOp) exec(fm *Frame) ([]interface{}, error) {
 	if hasGlob {
 		newvs := make([]interface{}, 0, len(vs))
 		for _, v := range vs {
-			if gp, ok := v.(GlobPattern); ok {
+			if gp, ok := v.(globPattern); ok {
 				results, err := doGlob(gp, fm.Interrupts())
 				if err != nil {
 					return nil, fm.errorp(op, err)
@@ -135,7 +136,7 @@ func outerProduct(vs []interface{}, us []interface{}, f func(interface{}, interf
 
 // Errors thrown when globbing.
 var (
-	ErrBadGlobPattern          = errors.New("bad GlobPattern; elvish bug")
+	ErrBadglobPattern          = errors.New("bad globPattern; elvish bug")
 	ErrCannotDetermineUsername = errors.New("cannot determine user name from glob pattern")
 )
 
@@ -159,14 +160,14 @@ func doTilde(v interface{}) (interface{}, error) {
 		//
 		// TODO(xiaq): Make this correct on Windows.
 		return dir + "/" + rest, nil
-	case GlobPattern:
+	case globPattern:
 		if len(v.Segments) == 0 {
-			return nil, ErrBadGlobPattern
+			return nil, ErrBadglobPattern
 		}
 		switch seg := v.Segments[0].(type) {
 		case glob.Literal:
 			if len(v.Segments) == 1 {
-				return nil, ErrBadGlobPattern
+				return nil, ErrBadglobPattern
 			}
 			_, isSlash := v.Segments[1].(glob.Slash)
 			if isSlash {
@@ -272,7 +273,7 @@ func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 			cp.errorpf(n, "%s", err)
 		}
 		vs := []interface{}{
-			GlobPattern{Pattern: glob.Pattern{Segments: []glob.Segment{seg}, DirOverride: ""},
+			globPattern{Pattern: glob.Pattern{Segments: []glob.Segment{seg}, DirOverride: ""},
 				Flags: 0, Buts: nil, TypeCb: nil}}
 		return literalValues(n, vs...)
 	case parse.Tilde:
@@ -558,4 +559,16 @@ func (op seqValuesOp) exec(fm *Frame) ([]interface{}, error) {
 		values = append(values, moreValues...)
 	}
 	return values, nil
+}
+
+func evalForValue(fm *Frame, op valuesOp, what string) (interface{}, error) {
+	values, err := op.exec(fm)
+	if err != nil {
+		return nil, err
+	}
+	if len(values) != 1 {
+		return nil, fm.errorp(op, errs.ArityMismatch{
+			What: what, ValidLow: 1, ValidHigh: 1, Actual: len(values)})
+	}
+	return values[0], nil
 }

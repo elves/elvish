@@ -39,7 +39,7 @@ func (pwdVar) Get() interface{} {
 func (pwd pwdVar) Set(v interface{}) error {
 	path, ok := v.(string)
 	if !ok {
-		return ErrPathMustBeString
+		return vars.ErrPathMustBeString
 	}
 	return pwd.ev.Chdir(path)
 }

@@ -1,4 +1,4 @@
-package eval
+package vars
 
 import (
 	"errors"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -29,7 +28,7 @@ var (
 // Elements in the value of the variable must be strings, and cannot contain
 // os.PathListSeparator or \0; attempting to put any in its elements will result in
 // an error.
-func NewEnvListVar(name string) vars.Var {
+func NewEnvListVar(name string) Var {
 	return &envListVar{envName: name}
 }
 

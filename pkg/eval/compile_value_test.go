@@ -118,7 +118,7 @@ func TestCompileValue(t *testing.T) {
 		// Only names ending in ~ are resolved, and resolution always succeeds
 		// regardless of whether the command actually exists. Colons inside the
 		// name are supported.
-		That("put $e:a:b~").Puts(ExternalCmd{Name: "a:b"}),
+		That("put $e:a:b~").Puts(NewExternalCmd("a:b")),
 
 		// A "normal" namespace access indexes the namespace as a variable.
 		That("ns: = (ns [&a= val]); put $ns:a").Puts("val"),

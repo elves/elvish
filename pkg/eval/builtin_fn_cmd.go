@@ -39,8 +39,8 @@ func init() {
 //
 // @cf has-external search-external
 
-func external(cmd string) ExternalCmd {
-	return ExternalCmd{cmd}
+func external(cmd string) Callable {
+	return NewExternalCmd(cmd)
 }
 
 //elvdoc:fn has-external

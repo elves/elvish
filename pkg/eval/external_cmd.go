@@ -22,29 +22,37 @@ var (
 	ErrImplicitCdNoArg = errors.New("implicit cd accepts no arguments")
 )
 
-// ExternalCmd is an external command.
-type ExternalCmd struct {
+// externalCmd is an external command.
+type externalCmd struct {
 	Name string
 }
 
-func (ExternalCmd) Kind() string {
+// NewExternalCmd returns a callable that executes the named external command.
+//
+// An external command converts all arguments to strings, and does not accept
+// any option.
+func NewExternalCmd(name string) Callable {
+	return externalCmd{name}
+}
+
+func (e externalCmd) Kind() string {
 	return "fn"
 }
 
-func (e ExternalCmd) Equal(a interface{}) bool {
+func (e externalCmd) Equal(a interface{}) bool {
 	return e == a
 }
 
-func (e ExternalCmd) Hash() uint32 {
+func (e externalCmd) Hash() uint32 {
 	return hash.String(e.Name)
 }
 
-func (e ExternalCmd) Repr(int) string {
+func (e externalCmd) Repr(int) string {
 	return "<external " + parse.Quote(e.Name) + ">"
 }
 
 // Call calls an external command.
-func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]interface{}) error {
+func (e externalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]interface{}) error {
 	if len(opts) > 0 {
 		return ErrExternalCmdOpts
 	}

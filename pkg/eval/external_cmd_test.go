@@ -21,7 +21,7 @@ func TestBuiltinFnExternal(t *testing.T) {
 		That(`e = (external true); kind-of $e`).Puts("fn"),
 		That(`e = (external true); put (repr $e)`).Puts("<external true>"),
 		That(`e = (external false); m = [&$e=true]; put (repr $m)`).Puts("[&<external false>=true]"),
-		// This group tests the `ExternalCmd.Call` method.
+		// Test calling of external commands.
 		That(`e = (external true); $e`).DoesNothing(),
 		That(`e = (external true); $e &option`).Throws(ErrExternalCmdOpts, "$e &option"),
 		That(`e = (external false); $e`).Throws(CmdExit(
