@@ -9,13 +9,11 @@ import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/logutil"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/sys"
+	"src.elv.sh/pkg/trace"
 )
-
-var logger = logutil.GetLogger("[shell] ")
 
 // Program is the shell subprogram.
 var Program prog.Program = program{}
@@ -49,8 +47,10 @@ func setupShell(fds [3]*os.File, p Paths, spawn bool) (*eval.Evaler, func()) {
 
 	go func() {
 		for sig := range sigCh {
-			logger.Println("signal", sig)
-			handleSignal(sig, fds[2])
+			if !ignoreSignal(sig) {
+				trace.Printf(trace.Shell, 0, "%s: %s", signalName(sig), sig)
+				handleSignal(sig, fds[2])
+			}
 		}
 	}()
 

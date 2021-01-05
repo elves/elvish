@@ -19,6 +19,7 @@ import (
 	"src.elv.sh/pkg/eval/mods/str"
 	"src.elv.sh/pkg/eval/mods/unix"
 	"src.elv.sh/pkg/rpc"
+	"src.elv.sh/pkg/trace"
 )
 
 const (
@@ -136,7 +137,7 @@ func connectToDaemon(stderr io.Writer, spawnCfg *daemon.SpawnConfig) (daemon.Cli
 	if err != nil {
 		return cl, fmt.Errorf("failed to spawn daemon: %v", err)
 	}
-	logger.Println("Spawned daemon")
+	trace.Printf(trace.Daemon, 0, "spawned daemon")
 
 	// Wait for daemon to come online
 	for i := 0; i <= daemonWaitLoops; i++ {
