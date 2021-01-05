@@ -40,7 +40,7 @@ func minibufSubmit(ed *Editor, ev *eval.Evaler) {
 	src := parse.Source{Name: "[minibuf]", Code: code}
 	notifyPort, cleanup := makeNotifyPort(ed)
 	defer cleanup()
-	ports := []*eval.Port{eval.DevNullClosedChan, notifyPort, notifyPort}
+	ports := []*eval.Port{eval.DummyInputPort, notifyPort, notifyPort}
 	err := ev.Eval(src, eval.EvalCfg{Ports: ports})
 	if err != nil {
 		app.Notify(err.Error())

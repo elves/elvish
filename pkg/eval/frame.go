@@ -35,7 +35,7 @@ type Frame struct {
 // error. It may be called only once.
 func (fm *Frame) Close() error {
 	for _, port := range fm.ports {
-		port.Close()
+		port.close()
 	}
 	return nil
 }
@@ -113,7 +113,7 @@ func (fm *Frame) fork(name string) *Frame {
 	newPorts := make([]*Port, len(fm.ports))
 	for i, p := range fm.ports {
 		if p != nil {
-			newPorts[i] = p.Fork()
+			newPorts[i] = p.fork()
 		}
 	}
 	return &Frame{

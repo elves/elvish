@@ -33,7 +33,7 @@ func initInstant(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 
 func instantStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
 	execute := func(code string) ([]string, error) {
-		outPort, collect, err := eval.CaptureStringPort()
+		outPort, collect, err := eval.StringCapturePort()
 		if err != nil {
 			return nil, err
 		}

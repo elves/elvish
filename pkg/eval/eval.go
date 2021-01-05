@@ -391,8 +391,8 @@ func (ev *Evaler) Chdir(path string) error {
 type EvalCfg struct {
 	// Ports to use in evaluation. The first 3 elements, if not specified
 	// (either being nil or Ports containing fewer than 3 elements),
-	// will be filled with DevNullClosedChan, DevNullBlackholeChan and
-	// DevNullBlackholeChan respectively.
+	// will be filled with DummyInputPort, DummyOutputPort and
+	// DummyOutputPort respectively.
 	Ports []*Port
 	// Callback to get a channel of interrupt signals and a function to call
 	// when the channel is no longer needed.
@@ -409,13 +409,13 @@ func (cfg *EvalCfg) fillDefaults(ev *Evaler) {
 		cfg.Ports = append(cfg.Ports, make([]*Port, 3-len(cfg.Ports))...)
 	}
 	if cfg.Ports[0] == nil {
-		cfg.Ports[0] = DevNullClosedChan
+		cfg.Ports[0] = DummyInputPort
 	}
 	if cfg.Ports[1] == nil {
-		cfg.Ports[1] = DevNullBlackholeChan
+		cfg.Ports[1] = DummyOutputPort
 	}
 	if cfg.Ports[2] == nil {
-		cfg.Ports[2] = DevNullBlackholeChan
+		cfg.Ports[2] = DummyOutputPort
 	}
 
 	if cfg.Global == nil {

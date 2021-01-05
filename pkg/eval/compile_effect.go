@@ -129,9 +129,9 @@ func (op *pipelineOp) exec(fm *Frame) error {
 			}
 			ch := make(chan interface{}, pipelineChanBufferSize)
 			newFm.ports[1] = &Port{
-				File: writer, Chan: ch, CloseFile: true, CloseChan: true}
+				File: writer, Chan: ch, closeFile: true, closeChan: true}
 			nextIn = &Port{
-				File: reader, Chan: ch, CloseFile: true, CloseChan: false}
+				File: reader, Chan: ch, closeFile: true, closeChan: false}
 		}
 		thisOp := formOp
 		thisError := &errors[i]
@@ -519,7 +519,7 @@ func (op *redirOp) exec(fm *Frame) error {
 	}
 
 	growPorts(&fm.ports, dst+1)
-	fm.ports[dst].Close()
+	fm.ports[dst].close()
 
 	if op.srcIsFd {
 		src, err := evalForFd(fm, op.srcOp, true, "redirection source")
@@ -533,7 +533,7 @@ func (op *redirOp) exec(fm *Frame) error {
 		case src >= len(fm.ports) || fm.ports[src] == nil:
 			return fm.errorp(op, invalidFD{src})
 		default:
-			fm.ports[dst] = fm.ports[src].Fork()
+			fm.ports[dst] = fm.ports[src].fork()
 		}
 		return nil
 	}
@@ -547,9 +547,9 @@ func (op *redirOp) exec(fm *Frame) error {
 		if err != nil {
 			return fm.errorpf(op, "failed to open file %s: %s", vals.Repr(src, vals.NoPretty), err)
 		}
-		fm.ports[dst] = &Port{File: f, CloseFile: true, Chan: chanForFileRedir(op.mode)}
+		fm.ports[dst] = &Port{File: f, closeFile: true, Chan: chanForFileRedir(op.mode)}
 	case vals.File:
-		fm.ports[dst] = &Port{File: src, CloseFile: false, Chan: chanForFileRedir(op.mode)}
+		fm.ports[dst] = &Port{File: src, closeFile: false, Chan: chanForFileRedir(op.mode)}
 	case vals.Pipe:
 		var f *os.File
 		switch op.mode {
@@ -560,7 +560,7 @@ func (op *redirOp) exec(fm *Frame) error {
 		default:
 			return fm.errorpf(op, "can only use < or > with pipes")
 		}
-		fm.ports[dst] = &Port{File: f, CloseFile: false, Chan: chanForFileRedir(op.mode)}
+		fm.ports[dst] = &Port{File: f, closeFile: false, Chan: chanForFileRedir(op.mode)}
 	default:
 		return fm.errorp(op.srcOp, errs.BadValue{
 			What:  "redirection source",

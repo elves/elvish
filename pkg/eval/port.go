@@ -15,24 +15,24 @@ import (
 type Port struct {
 	File      *os.File
 	Chan      chan interface{}
-	CloseFile bool
-	CloseChan bool
+	closeFile bool
+	closeChan bool
 }
 
-// Fork returns a copy of a Port with the Close* flags unset.
-func (p *Port) Fork() *Port {
+// Returns a copy of the Port with the Close* flags unset.
+func (p *Port) fork() *Port {
 	return &Port{p.File, p.Chan, false, false}
 }
 
-// Close closes a Port.
-func (p *Port) Close() {
+// Closes a Port.
+func (p *Port) close() {
 	if p == nil {
 		return
 	}
-	if p.CloseFile {
+	if p.closeFile {
 		p.File.Close()
 	}
-	if p.CloseChan {
+	if p.closeChan {
 		close(p.Chan)
 	}
 }
@@ -47,12 +47,12 @@ var (
 	// output.
 	DevNull = getDevNull()
 
-	// DevNullClosedChan is a port made up from DevNull and ClosedChan, suitable
-	// as a placeholder input port.
-	DevNullClosedChan = &Port{File: DevNull, Chan: ClosedChan}
-	// DevNullBlackholeChan is a port made up from DevNull and BlackholeChan,
+	// DummyInputPort is a port made up from DevNull and ClosedChan, suitable as
+	// a placeholder input port.
+	DummyInputPort = &Port{File: DevNull, Chan: ClosedChan}
+	// DummyOutputPort is a port made up from DevNull and BlackholeChan,
 	// suitable as a placeholder output port.
-	DevNullBlackholeChan = &Port{File: DevNull, Chan: BlackholeChan}
+	DummyOutputPort = &Port{File: DevNull, Chan: BlackholeChan}
 )
 
 func getClosedChan() chan interface{} {
@@ -102,9 +102,9 @@ func PipePort(vCb func(<-chan interface{}), bCb func(*os.File)) (*Port, func(), 
 		bCb(r)
 	}()
 
-	port := &Port{Chan: ch, CloseChan: true, File: w, CloseFile: true}
+	port := &Port{Chan: ch, closeChan: true, File: w, closeFile: true}
 	done := func() {
-		port.Close()
+		port.close()
 		wg.Wait()
 	}
 	return port, done, nil
@@ -151,9 +151,9 @@ func CapturePort() (*Port, func() []interface{}, error) {
 	}, nil
 }
 
-// CaptureStringPort is like CapturePort, but processes value outputs by
+// StringCapturePort is like CapturePort, but processes value outputs by
 // stringifying them and prepending an output marker.
-func CaptureStringPort() (*Port, func() []string, error) {
+func StringCapturePort() (*Port, func() []string, error) {
 	var lines []string
 	var mu sync.Mutex
 	addLine := func(line string) {
@@ -187,4 +187,46 @@ func CaptureStringPort() (*Port, func() []string, error) {
 		done()
 		return lines
 	}, nil
+}
+
+// Buffer size for the channel to use in FilePort. The value has been chosen
+// arbitrarily.
+const filePortChanSize = 32
+
+// FilePort returns an output *Port where the byte component is the file itself,
+// and the value component is converted to an internal channel that writes
+// each value to the file, prepending with a prefix. It also returns a cleanup
+// function, which should be called when the *Port is no longer needed.
+func FilePort(f *os.File, valuePrefix string) (*Port, func()) {
+	ch := make(chan interface{}, filePortChanSize)
+	relayDone := make(chan struct{})
+	go func() {
+		for v := range ch {
+			f.WriteString(valuePrefix)
+			f.WriteString(vals.Repr(v, vals.NoPretty))
+			f.WriteString("\n")
+		}
+		close(relayDone)
+	}()
+	return &Port{File: f, Chan: ch}, func() {
+		close(ch)
+		<-relayDone
+	}
+}
+
+// PortsFromStdFiles is a shorthand for calling PortsFromFiles with os.Stdin,
+// os.Stdout and os.Stderr.
+func PortsFromStdFiles(prefix string) ([]*Port, func()) {
+	return PortsFromFiles([3]*os.File{os.Stdin, os.Stdout, os.Stderr}, prefix)
+}
+
+// PortsFromFiles builds 3 ports from 3 files. It also returns a function that
+// should be called when the ports are no longer needed.
+func PortsFromFiles(files [3]*os.File, prefix string) ([]*Port, func()) {
+	port1, cleanup1 := FilePort(files[1], prefix)
+	port2, cleanup2 := FilePort(files[2], prefix)
+	return []*Port{{File: files[0], Chan: ClosedChan}, port1, port2}, func() {
+		cleanup1()
+		cleanup2()
+	}
 }

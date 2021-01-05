@@ -120,7 +120,7 @@ func evalAndCollect(ev *eval.Evaler, code string) (
 	errFile, chanErrBytes := makeBytesWriterAndCollect()
 
 	ports := []*eval.Port{
-		eval.DevNullClosedChan,
+		eval.DummyInputPort,
 		{File: outFile, Chan: outChan},
 		{File: errFile, Chan: eval.BlackholeChan},
 	}

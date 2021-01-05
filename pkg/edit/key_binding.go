@@ -103,11 +103,13 @@ func makeNotifyPort(nt notifier) (*eval.Port, func()) {
 			}
 			nt.notifyf("[bytes out] %s", line[:len(line)-1])
 		}
+		r.Close()
 		wg.Done()
 	}()
-	port := &eval.Port{Chan: ch, File: w, CloseChan: true, CloseFile: true}
+	port := &eval.Port{Chan: ch, File: w}
 	cleanup := func() {
-		port.Close()
+		close(ch)
+		w.Close()
 		wg.Wait()
 	}
 	return port, cleanup

@@ -170,7 +170,7 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 		w.Add(1)
 		go func() {
 			newFm := fm.fork("closure of peach")
-			newFm.ports[0] = DevNullClosedChan
+			newFm.ports[0] = DummyInputPort
 			ex := f.Call(newFm, []interface{}{v}, NoOpts)
 			newFm.Close()
 

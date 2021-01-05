@@ -170,7 +170,7 @@ func EvalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) Result {
 		wg.Done()
 	}()
 	ports := []*eval.Port{
-		eval.DevNullClosedChan,
+		eval.DummyInputPort,
 		{File: stdout, Chan: outCh},
 		{File: stderr, Chan: eval.BlackholeChan},
 	}
