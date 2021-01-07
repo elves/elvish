@@ -139,7 +139,12 @@ func (op *pipelineOp) exec(fm *Frame) error {
 			err := thisOp.exec(newFm)
 			newFm.Close()
 			if err != nil {
-				*thisError = err.(*Exception)
+				switch err := err.(type) {
+				case *Exception:
+					*thisError = err
+				default:
+					*thisError = &Exception{Reason: err, StackTrace: nil}
+				}
 			}
 			wg.Done()
 			if hasChanInput {
