@@ -26,6 +26,7 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/trace"
 )
 
 type compileBuiltin func(*compiler, *parse.Form) effectOp
@@ -627,14 +628,14 @@ func (op *forOp) exec(fm *Frame) Exception {
 }
 
 func compileTry(cp *compiler, fn *parse.Form) effectOp {
-	logger.Println("compiling try")
+	trace.Printf(trace.Eval, 0, "compiling try...")
 	args := cp.walkArgs(fn)
 	bodyNode := args.nextMustLambda()
-	logger.Printf("body is %q", parse.SourceText(bodyNode))
+	trace.Printf(trace.Eval, 0, "try body is:\n%s", parse.SourceText(bodyNode))
 	var exceptVarNode *parse.Compound
 	var exceptNode *parse.Primary
 	if args.nextIs("except") {
-		logger.Println("except-ing")
+		trace.Printf(trace.Eval, 0, "compiling except...")
 		n := args.peek()
 		// Is this a variable?
 		if len(n.Indexings) == 1 && n.Indexings[0].Head.Type == parse.Bareword {
@@ -642,6 +643,7 @@ func compileTry(cp *compiler, fn *parse.Form) effectOp {
 			args.next()
 		}
 		exceptNode = args.nextMustLambda()
+		trace.Printf(trace.Eval, 0, "except body is:\n%s", parse.SourceText(exceptNode))
 	}
 	elseNode := args.nextMustLambdaIfAfter("else")
 	finallyNode := args.nextMustLambdaIfAfter("finally")

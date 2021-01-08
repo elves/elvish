@@ -11,6 +11,7 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/trace"
 )
 
 // An operation with some side effects.
@@ -170,7 +171,7 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 			lvalues := cp.parseIndexingLValue(a.Left)
 			tempLValues = append(tempLValues, lvalues.lvalues...)
 		}
-		logger.Println("temporary assignment of", len(n.Assignments), "pairs")
+		trace.Printf(trace.Eval, 0, "temporary assignment of %d pairs", len(n.Assignments))
 	}
 
 	redirOps := cp.redirOps(n.Redirs)
@@ -290,7 +291,7 @@ func (op *formOp) exec(fm *Frame) (errRet Exception) {
 			}
 			val := v.Get()
 			saveVals = append(saveVals, val)
-			logger.Printf("saved %s = %s", v, val)
+			trace.Printf(trace.Eval, 0, "saved %s = %s", v, val)
 		}
 		// Do assignment.
 		for _, subop := range op.tempAssignOps {
@@ -314,7 +315,7 @@ func (op *formOp) exec(fm *Frame) (errRet Exception) {
 				if err != nil {
 					errRet = fm.errorp(op, err)
 				}
-				logger.Printf("restored %s = %s", v, val)
+				trace.Printf(trace.Eval, 0, "restored %s = %s", v, val)
 			}
 		}()
 	}

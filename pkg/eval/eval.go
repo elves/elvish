@@ -15,11 +15,9 @@ import (
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
-	"src.elv.sh/pkg/logutil"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/trace"
 )
-
-var logger = logutil.GetLogger("[eval] ")
 
 const (
 	// FnSuffix is the suffix for the variable names of functions. Defining a
@@ -376,7 +374,7 @@ func (ev *Evaler) Chdir(path string) error {
 
 	pwd, err := os.Getwd()
 	if err != nil {
-		logger.Println("getwd after cd:", err)
+		trace.Printf(trace.Eval, 0, "getwd after cd: %v", err)
 		return nil
 	}
 	os.Setenv(env.PWD, pwd)

@@ -9,6 +9,7 @@ import (
 
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/strutil"
+	"src.elv.sh/pkg/trace"
 )
 
 // Port conveys data stream. It always consists of a byte band and a channel band.
@@ -136,7 +137,7 @@ func CapturePort() (*Port, func() []interface{}, error) {
 				}
 				if err != nil {
 					if err != io.EOF {
-						logger.Println("error on reading:", err)
+						trace.Printf(trace.Eval, 0, "error on reading: %v", err)
 					}
 					break
 				}

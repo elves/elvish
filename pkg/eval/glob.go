@@ -10,6 +10,7 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/glob"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/trace"
 )
 
 // An ephemeral value generated when evaluating tilde and wildcards.
@@ -236,7 +237,7 @@ func doGlob(gp globPattern, abort <-chan struct{}) ([]interface{}, error) {
 	if !gp.Glob(func(pathInfo glob.PathInfo) bool {
 		select {
 		case <-abort:
-			logger.Println("glob aborted")
+			trace.Printf(trace.Eval, 0, "glob aborted")
 			return false
 		default:
 		}

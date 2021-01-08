@@ -11,6 +11,7 @@ import (
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/strutil"
+	"src.elv.sh/pkg/trace"
 )
 
 // Frame contains information of the current running function, akin to a call
@@ -144,7 +145,7 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 		}
 		if err != nil {
 			if err != io.EOF {
-				logger.Println("error on reading:", err)
+				trace.Printf(trace.Eval, 0, "error on reading: %v", err)
 			}
 			break
 		}
