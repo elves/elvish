@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+
+	"src.elv.sh/pkg/trace"
 )
 
 func listen(path string) (net.Listener, error) {
@@ -17,18 +19,21 @@ func listen(path string) (net.Listener, error) {
 		file.Close()
 		err2 := os.Remove(path)
 		if err2 != nil {
-			logger.Println("Failed to remove sock file after failure to listen", err2)
+			trace.Printf(trace.Daemon, 0,
+				"failed to remove sock file after failure to listen: %v", err2)
 		}
 		return nil, err
 	}
 	_, err = fmt.Fprint(file, listener.Addr())
 	if err != nil {
-		logger.Println("Failed to write to sock file after listening", err)
+		trace.Printf(trace.Daemon, 0,
+			"failed to write to sock file after listening: %v", err)
 		listener.Close()
 		file.Close()
 		err2 := os.Remove(path)
 		if err2 != nil {
-			logger.Println("Failed to remove sock file after failure to listen", err2)
+			trace.Printf(trace.Daemon, 0,
+				"failed to remove sock file after failure to listen: %v", err2)
 		}
 		return nil, err
 	}

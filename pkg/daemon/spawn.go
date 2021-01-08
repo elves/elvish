@@ -70,6 +70,7 @@ func Spawn(cfg *SpawnConfig) error {
 	args := []string{
 		binPath,
 		"-daemon",
+		"-trace=all,local",
 		"-bin", binPath,
 		"-db", dbPath,
 		"-sock", sockPath,

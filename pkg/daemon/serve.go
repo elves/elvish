@@ -9,25 +9,24 @@ import (
 	"src.elv.sh/pkg/daemon/internal/api"
 	"src.elv.sh/pkg/rpc"
 	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/trace"
 )
 
 // Serve runs the daemon service, listening on the socket specified by sockpath
 // and serving data from dbpath. It quits upon receiving SIGTERM, SIGINT or when
 // all active clients have disconnected.
 func Serve(sockpath, dbpath string) {
-	logger.Println("pid is", syscall.Getpid())
-	logger.Println("going to listen", sockpath)
+	trace.Printf(trace.Daemon, 0, "pid is %d", syscall.Getpid())
+	trace.Printf(trace.Daemon, 0, "listening on %v", sockpath)
 	listener, err := listen(sockpath)
 	if err != nil {
-		logger.Printf("failed to listen on %s: %v", sockpath, err)
-		logger.Println("aborting")
+		trace.Printf(trace.Daemon, 0, "failed to listen on %s: %v\naborting", sockpath, err)
 		os.Exit(2)
 	}
 
 	st, err := store.NewStore(dbpath)
 	if err != nil {
-		logger.Printf("failed to create storage: %v", err)
-		logger.Printf("serving anyway")
+		trace.Printf(trace.Daemon, 0, "failed to create storage: %v\nserving anyway", err)
 	}
 
 	quitSignals := make(chan os.Signal)
@@ -36,29 +35,28 @@ func Serve(sockpath, dbpath string) {
 	go func() {
 		select {
 		case sig := <-quitSignals:
-			logger.Printf("received signal %s", sig)
+			trace.Printf(trace.Daemon, 0, "received signal %s", sig)
 		case <-quitChan:
-			logger.Printf("No active client, daemon exit")
+			trace.Printf(trace.Daemon, 0, "no active clients")
 		}
 		err := os.Remove(sockpath)
 		if err != nil {
-			logger.Printf("failed to remove socket %s: %v", sockpath, err)
+			trace.Printf(trace.Daemon, 0, "failed to remove socket %s: %v", sockpath, err)
 		}
 		err = st.Close()
 		if err != nil {
-			logger.Printf("failed to close storage: %v", err)
+			trace.Printf(trace.Daemon, 0, "failed to close storage: %v", err)
 		}
 		err = listener.Close()
 		if err != nil {
-			logger.Printf("failed to close listener: %v", err)
+			trace.Printf(trace.Daemon, 0, "failed to close listener: %v", err)
 		}
-		logger.Println("listener closed, waiting to exit")
+		trace.Printf(trace.Daemon, 0, "listener closed, waiting to exit")
 	}()
 
 	svc := &service{st, err}
 	rpc.RegisterName(api.ServiceName, svc)
-
-	logger.Println("starting to serve RPC calls")
+	trace.Printf(trace.Daemon, 0, "starting to serve RPC calls")
 
 	firstClient := true
 	activeClient := sync.WaitGroup{}
@@ -72,7 +70,7 @@ func Serve(sockpath, dbpath string) {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			logger.Printf("Failed to accept: %#v", err)
+			trace.Printf(trace.Daemon, 0, "failed to accept connection: %v", err)
 			break
 		}
 
@@ -87,5 +85,5 @@ func Serve(sockpath, dbpath string) {
 		}()
 	}
 
-	logger.Println("exiting")
+	trace.Printf(trace.Daemon, 0, "exiting")
 }

@@ -8,11 +8,8 @@ package daemon
 import (
 	"os"
 
-	"src.elv.sh/pkg/logutil"
 	"src.elv.sh/pkg/prog"
 )
-
-var logger = logutil.GetLogger("[daemon] ")
 
 // Version is the API version. It should be bumped any time the API changes.
 const Version = -93
