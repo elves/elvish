@@ -3,7 +3,6 @@ package eval
 import (
 	"runtime"
 
-	"src.elv.sh/pkg/logutil"
 	"src.elv.sh/pkg/parse"
 )
 
@@ -12,7 +11,6 @@ func init() {
 		"src":    src,
 		"-gc":    _gc,
 		"-stack": _stack,
-		"-log":   _log,
 	})
 }
 
@@ -91,18 +89,4 @@ func _stack(fm *Frame) {
 		buf = make([]byte, cap(buf)*2)
 	}
 	out.Write(buf)
-}
-
-//elvdoc:fn -log
-//
-// ```elvish
-// -log $filename
-// ```
-//
-// Direct internal debug logs to the named file.
-//
-// This is only useful for debug purposes.
-
-func _log(fname string) error {
-	return logutil.SetOutputFile(fname)
 }

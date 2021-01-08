@@ -13,7 +13,6 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"src.elv.sh/pkg/logutil"
 	"src.elv.sh/pkg/trace"
 )
 
@@ -36,7 +35,7 @@ func SetDeprecationLevel(level int) func() {
 
 // Flags keeps command-line flags.
 type Flags struct {
-	Log, CPUProfile, Trace string
+	CPUProfile, Trace string
 
 	Help, Version, BuildInfo, JSON bool
 
@@ -56,7 +55,6 @@ func newFlagSet(stderr io.Writer, f *Flags) *flag.FlagSet {
 	fs.SetOutput(stderr)
 	fs.Usage = func() { usage(stderr, fs) }
 
-	fs.StringVar(&f.Log, "log", "", "a file to write debug log to except for the daemon")
 	fs.StringVar(&f.Trace, "trace", "", "execution trace options")
 	fs.StringVar(&f.CPUProfile, "cpuprofile", "", "write cpu profile to file")
 
@@ -114,8 +112,6 @@ func Run(fds [3]*os.File, args []string, programs ...Program) int {
 
 	if f.Trace != "" {
 		err = trace.ParseTraceOptions(f.Trace)
-	} else if f.Log != "" {
-		err = logutil.SetOutputFile(f.Log)
 	}
 	if err != nil {
 		fmt.Fprintln(fds[2], err)
