@@ -6,10 +6,9 @@ import (
 	"time"
 
 	bolt "go.etcd.io/bbolt"
-	"src.elv.sh/pkg/logutil"
+	"src.elv.sh/pkg/trace"
 )
 
-var logger = logutil.GetLogger("[store] ")
 var initDB = map[string](func(*bolt.Tx) error){}
 
 // DBStore is the permanent storage backend for elvish. It is not thread-safe.
@@ -50,8 +49,8 @@ func NewStore(dbname string) (DBStore, error) {
 
 // NewStoreFromDB creates a new Store from a bolt DB.
 func NewStoreFromDB(db *bolt.DB) (DBStore, error) {
-	logger.Println("initializing store")
-	defer logger.Println("initialized store")
+	trace.Printf(trace.Store, 0, "initializing store")
+	defer trace.Printf(trace.Store, 0, "initialized store")
 	st := &dbStore{
 		db:    db,
 		waits: sync.WaitGroup{},
@@ -78,6 +77,8 @@ func (s *dbStore) Waits() *sync.WaitGroup {
 // Close waits for all outstanding operations to finish, and closes the
 // database.
 func (s *dbStore) Close() error {
+	trace.Printf(trace.Store, 0, "closing store")
+	defer trace.Printf(trace.Store, 0, "closed store")
 	if s == nil || s.db == nil {
 		return nil
 	}
