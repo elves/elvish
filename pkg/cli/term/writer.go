@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-)
 
-var logWriterDetail = false
+	"src.elv.sh/pkg/trace"
+)
 
 // Writer represents the output to a terminal.
 type Writer interface {
@@ -112,9 +112,8 @@ func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 	}
 
 	if bufNoti != nil {
-		if logWriterDetail {
-			logger.Printf("going to write %d lines of notifications", len(bufNoti.Lines))
-		}
+		trace.Printf(trace.Terminal, 0, "going to write %d lines of notifications",
+			len(bufNoti.Lines))
 
 		// Write notifications
 		for _, line := range bufNoti.Lines {
@@ -128,9 +127,8 @@ func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 		}
 	}
 
-	if logWriterDetail {
-		logger.Printf("going to write %d lines, oldBuf had %d", len(buf.Lines), len(w.curBuf.Lines))
-	}
+	trace.Printf(trace.Terminal, 0, "going to write %d lines, oldBuf had %d",
+		len(buf.Lines), len(w.curBuf.Lines))
 
 	for i, line := range buf.Lines {
 		if i > 0 {
@@ -171,10 +169,7 @@ func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 	// Show cursor.
 	bytesBuf.WriteString(showCursor)
 
-	if logWriterDetail {
-		logger.Printf("going to write %q", bytesBuf.String())
-	}
-
+	trace.Printf(trace.Terminal, 0, "going to write %q", bytesBuf.String())
 	_, err := w.file.Write(bytesBuf.Bytes())
 	if err != nil {
 		return err
