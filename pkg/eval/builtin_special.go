@@ -468,10 +468,10 @@ func (op *whileOp) exec(fm *Frame) error {
 		iterated = true
 		err = body.Call(fm.fork("while"), NoArgs, NoOpts)
 		if err != nil {
-			exc := err.(*Exception)
-			if exc.Reason == Continue {
+			exc := err.(*exception)
+			if exc.reason == Continue {
 				// do nothing
-			} else if exc.Reason == Break {
+			} else if exc.reason == Break {
 				break
 			} else {
 				return fm.errorp(op, err)
@@ -537,10 +537,10 @@ func (op *forOp) exec(fm *Frame) error {
 		}
 		err = body.Call(fm.fork("for"), NoArgs, NoOpts)
 		if err != nil {
-			exc := err.(*Exception)
-			if exc.Reason == Continue {
+			exc := err.(*exception)
+			if exc.reason == Continue {
 				// do nothing
-			} else if exc.Reason == Break {
+			} else if exc.reason == Break {
 				return false
 			} else {
 				errElement = err
@@ -629,7 +629,7 @@ func (op *tryOp) exec(fm *Frame) error {
 	if err != nil {
 		if except != nil {
 			if exceptVar != nil {
-				err := exceptVar.Set(err.(*Exception))
+				err := exceptVar.Set(err.(*exception))
 				if err != nil {
 					return fm.errorp(op, err)
 				}

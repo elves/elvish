@@ -354,7 +354,7 @@ func (op exceptionCaptureOp) exec(fm *Frame) ([]interface{}, error) {
 	if err == nil {
 		return []interface{}{OK}, nil
 	}
-	return []interface{}{err.(*Exception)}, nil
+	return []interface{}{err.(*exception)}, nil
 }
 
 type outputCaptureOp struct {

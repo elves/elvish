@@ -54,10 +54,10 @@ func (e exc) Error() string {
 }
 
 func (e exc) matchError(e2 error) bool {
-	if e2, ok := e2.(*eval.Exception); ok {
-		return matchErr(e.reason, e2.Reason) &&
+	if e2, ok := e2.(eval.Exception); ok {
+		return matchErr(e.reason, e2.Reason()) &&
 			(len(e.stacks) == 0 ||
-				reflect.DeepEqual(e.stacks, getStackTexts(e2.StackTrace)))
+				reflect.DeepEqual(e.stacks, getStackTexts(e2.StackTrace())))
 	}
 	return false
 }

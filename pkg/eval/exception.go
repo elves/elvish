@@ -13,12 +13,28 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
-// Exception represents an elvish exception. It is both a Value accessible to
-// elvishscript, and the type of error returned by public facing evaluation
-// methods like (*Evaler)PEval.
-type Exception struct {
-	Reason     error
-	StackTrace *StackTrace
+// Exception represents exceptions. It is both a Value accessible to Elvish
+// code, and can be returned by methods like like (*Evaler).Eval.
+type Exception interface {
+	error
+	diag.Shower
+	Reason() error
+	StackTrace() *StackTrace
+	// This is not strictly necessary, but it makes sure that there is only one
+	// implementation of Exception, so that the compiler may de-virtualize this
+	// interface.
+	isException()
+}
+
+// NewException creates a new Exception.
+func NewException(reason error, stackTrace *StackTrace) Exception {
+	return &exception{reason, stackTrace}
+}
+
+// Implementation of the Exception interface.
+type exception struct {
+	reason     error
+	stackTrace *StackTrace
 }
 
 // StackTrace represents a stack trace as a linked list of diag.Context. The
@@ -31,52 +47,66 @@ type StackTrace struct {
 	Next *StackTrace
 }
 
-// Reason returns the Reason field if err is an *Exception. Otherwise it returns
+// MakeStackTrace creates a new StackTrace from the given Context entries, using
+// the first entry as the head.
+func MakeStackTrace(entries ...*diag.Context) *StackTrace {
+	var s *StackTrace
+	for i := len(entries) - 1; i >= 0; i-- {
+		s = &StackTrace{Head: entries[i], Next: s}
+	}
+	return s
+}
+
+// Reason returns the Reason field if err is an Exception. Otherwise it returns
 // err itself.
 func Reason(err error) error {
-	if exc, ok := err.(*Exception); ok {
-		return exc.Reason
+	if exc, ok := err.(*exception); ok {
+		return exc.reason
 	}
 	return err
 }
 
-// OK is a pointer to the zero value of Exception, representing the absence of
-// exception.
-var OK = &Exception{}
+// OK is a pointer to a special value of Exception that represents the absence
+// of exception.
+var OK = &exception{}
+
+func (exc *exception) isException() {}
+
+func (exc *exception) Reason() error { return exc.reason }
+
+func (exc *exception) StackTrace() *StackTrace { return exc.stackTrace }
 
 // Error returns the message of the cause of the exception.
-func (exc *Exception) Error() string {
-	return exc.Reason.Error()
-}
+func (exc *exception) Error() string { return exc.reason.Error() }
 
 // Show shows the exception.
-func (exc *Exception) Show(indent string) string {
+func (exc *exception) Show(indent string) string {
 	buf := new(bytes.Buffer)
 
 	var causeDescription string
-	if shower, ok := exc.Reason.(diag.Shower); ok {
+	if shower, ok := exc.reason.(diag.Shower); ok {
 		causeDescription = shower.Show(indent)
-	} else if exc.Reason == nil {
+	} else if exc.reason == nil {
 		causeDescription = "ok"
 	} else {
-		causeDescription = "\033[31;1m" + exc.Reason.Error() + "\033[m"
+		causeDescription = "\033[31;1m" + exc.reason.Error() + "\033[m"
 	}
 	fmt.Fprintf(buf, "Exception: %s", causeDescription)
 
-	if exc.StackTrace != nil {
+	if exc.stackTrace != nil {
 		buf.WriteString("\n")
-		if exc.StackTrace.Next == nil {
-			buf.WriteString(exc.StackTrace.Head.ShowCompact(indent))
+		if exc.stackTrace.Next == nil {
+			buf.WriteString(exc.stackTrace.Head.ShowCompact(indent))
 		} else {
 			buf.WriteString(indent + "Traceback:")
-			for tb := exc.StackTrace; tb != nil; tb = tb.Next {
+			for tb := exc.stackTrace; tb != nil; tb = tb.Next {
 				buf.WriteString("\n" + indent + "  ")
 				buf.WriteString(tb.Head.Show(indent + "    "))
 			}
 		}
 	}
 
-	if pipeExcs, ok := exc.Reason.(PipelineError); ok {
+	if pipeExcs, ok := exc.reason.(PipelineError); ok {
 		buf.WriteString("\n" + indent + "Caused by:")
 		for _, e := range pipeExcs.Errors {
 			if e == OK {
@@ -90,45 +120,45 @@ func (exc *Exception) Show(indent string) string {
 }
 
 // Kind returns "exception".
-func (exc *Exception) Kind() string {
+func (exc *exception) Kind() string {
 	return "exception"
 }
 
 // Repr returns a representation of the exception. It is lossy in that it does
 // not preserve the stacktrace.
-func (exc *Exception) Repr(indent int) string {
-	if exc.Reason == nil {
+func (exc *exception) Repr(indent int) string {
+	if exc.reason == nil {
 		return "$ok"
 	}
-	return "[&reason=" + vals.Repr(exc.Reason, indent+1) + "]"
+	return "[&reason=" + vals.Repr(exc.reason, indent+1) + "]"
 }
 
 // Equal compares by address.
-func (exc *Exception) Equal(rhs interface{}) bool {
+func (exc *exception) Equal(rhs interface{}) bool {
 	return exc == rhs
 }
 
 // Hash returns the hash of the address.
-func (exc *Exception) Hash() uint32 {
+func (exc *exception) Hash() uint32 {
 	return hash.Pointer(unsafe.Pointer(exc))
 }
 
 // Bool returns whether this exception has a nil cause; that is, it is $ok.
-func (exc *Exception) Bool() bool {
-	return exc.Reason == nil
+func (exc *exception) Bool() bool {
+	return exc.reason == nil
 }
 
-func (exc *Exception) Fields() vals.StructMap { return excFields{exc} }
+func (exc *exception) Fields() vals.StructMap { return excFields{exc} }
 
-type excFields struct{ e *Exception }
+type excFields struct{ e *exception }
 
 func (excFields) IsStructMap()    {}
-func (f excFields) Reason() error { return f.e.Reason }
+func (f excFields) Reason() error { return f.e.reason }
 
 // PipelineError represents the errors of pipelines, in which multiple commands
 // may error.
 type PipelineError struct {
-	Errors []*Exception
+	Errors []Exception
 }
 
 // Error returns a plain text representation of the pipeline error.
@@ -139,7 +169,7 @@ func (pe PipelineError) Error() string {
 		if i > 0 {
 			b.WriteString(" | ")
 		}
-		if e == nil || e.Reason == nil {
+		if e == nil || e.Reason() == nil {
 			b.WriteString("<nil>")
 		} else {
 			b.WriteString(e.Error())
@@ -156,15 +186,15 @@ func (pe PipelineError) Error() string {
 // non-nil non-OK Exception, it returns it. Otherwise, it return a PipelineError
 // built from the slice, with nil items turned into OK's for easier access from
 // Elvish code.
-func MakePipelineError(excs []*Exception) error {
-	newexcs := make([]*Exception, len(excs))
+func MakePipelineError(excs []Exception) error {
+	newexcs := make([]Exception, len(excs))
 	notOK, lastNotOK := 0, 0
 	for i, e := range excs {
 		if e == nil {
 			newexcs[i] = OK
 		} else {
 			newexcs[i] = e
-			if e.Reason != nil {
+			if e.Reason() != nil {
 				notOK++
 				lastNotOK = i
 			}

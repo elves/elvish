@@ -2,6 +2,7 @@ package eval_test
 
 import (
 	"errors"
+	"reflect"
 	"runtime"
 	"testing"
 	"unsafe"
@@ -29,7 +30,7 @@ func TestException(t *testing.T) {
 	vals.TestValue(t, exc).
 		Kind("exception").
 		Bool(false).
-		Hash(hash.Pointer(unsafe.Pointer(exc))).
+		Hash(hash.Pointer(unsafe.Pointer(reflect.ValueOf(exc).Pointer()))).
 		Equal(exc).
 		NotEqual(makeException(errors.New("error"))).
 		AllKeys("reason").
@@ -43,12 +44,8 @@ func TestException(t *testing.T) {
 		Repr("$ok")
 }
 
-func makeException(cause error, entries ...*diag.Context) *Exception {
-	var s *StackTrace
-	for i := len(entries) - 1; i >= 0; i-- {
-		s = &StackTrace{Head: entries[i], Next: s}
-	}
-	return &Exception{cause, s}
+func makeException(cause error, entries ...*diag.Context) Exception {
+	return NewException(cause, MakeStackTrace(entries...))
 }
 
 func TestFlow_Fields(t *testing.T) {
@@ -82,7 +79,7 @@ func TestErrorMethods(t *testing.T) {
 	tt.Test(t, tt.Fn("Error", error.Error), tt.Table{
 		tt.Args(makeException(errors.New("err"))).Rets("err"),
 
-		tt.Args(MakePipelineError([]*Exception{
+		tt.Args(MakePipelineError([]Exception{
 			makeException(errors.New("err1")),
 			makeException(errors.New("err2"))})).Rets("(err1 | err2)"),
 

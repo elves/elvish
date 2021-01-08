@@ -85,12 +85,12 @@ func fg(pids ...int) error {
 		return err
 	}
 
-	errors := make([]*Exception, len(pids))
+	errors := make([]Exception, len(pids))
 
 	for i, pid := range pids {
 		err := syscall.Kill(pid, syscall.SIGCONT)
 		if err != nil {
-			errors[i] = &Exception{err, nil}
+			errors[i] = &exception{err, nil}
 		}
 	}
 
@@ -101,10 +101,10 @@ func fg(pids ...int) error {
 		var ws syscall.WaitStatus
 		_, err = syscall.Wait4(pid, &ws, syscall.WUNTRACED, nil)
 		if err != nil {
-			errors[i] = &Exception{err, nil}
+			errors[i] = &exception{err, nil}
 		} else {
 			// TODO find command name
-			errors[i] = &Exception{NewExternalCmdExit(
+			errors[i] = &exception{NewExternalCmdExit(
 				"[pid "+strconv.Itoa(pid)+"]", ws, pid), nil}
 		}
 	}

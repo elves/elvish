@@ -108,7 +108,7 @@ func (op *pipelineOp) exec(fm *Frame) error {
 
 	var wg sync.WaitGroup
 	wg.Add(nforms)
-	errors := make([]*Exception, nforms)
+	errors := make([]Exception, nforms)
 
 	var nextIn *Port
 
@@ -140,10 +140,10 @@ func (op *pipelineOp) exec(fm *Frame) error {
 			newFm.Close()
 			if err != nil {
 				switch err := err.(type) {
-				case *Exception:
+				case *exception:
 					*thisError = err
 				default:
-					*thisError = &Exception{Reason: err, StackTrace: nil}
+					*thisError = &exception{reason: err, stackTrace: nil}
 				}
 			}
 			wg.Done()
@@ -375,10 +375,10 @@ func (op *formOp) exec(fm *Frame) (errRet error) {
 	if headFn != nil {
 		fm.traceback = fm.addTraceback(op)
 		err := headFn.Call(fm, args, convertedOpts)
-		if _, ok := err.(*Exception); ok {
+		if _, ok := err.(*exception); ok {
 			return err
 		}
-		return &Exception{err, fm.traceback}
+		return &exception{err, fm.traceback}
 	}
 	return op.spaceyAssignOp.exec(fm)
 }

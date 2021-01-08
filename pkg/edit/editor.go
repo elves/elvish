@@ -108,7 +108,7 @@ func (ed *Editor) notifyf(format string, args ...interface{}) {
 }
 
 func (ed *Editor) notifyError(ctx string, e error) {
-	if exc, ok := e.(*eval.Exception); ok {
+	if exc, ok := e.(eval.Exception); ok {
 		ed.excMutex.Lock()
 		defer ed.excMutex.Unlock()
 		ed.excList = ed.excList.Cons(exc)

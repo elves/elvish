@@ -164,10 +164,10 @@ func (fm *Frame) errorp(r diag.Ranger, e error) error {
 	switch e := e.(type) {
 	case nil:
 		return nil
-	case *Exception:
+	case *exception:
 		return e
 	default:
-		return &Exception{e, &StackTrace{
+		return &exception{e, &StackTrace{
 			Head: diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r.Range()),
 			Next: fm.traceback,
 		}}

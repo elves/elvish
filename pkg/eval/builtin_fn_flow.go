@@ -68,12 +68,12 @@ func init() {
 func runParallel(fm *Frame, functions ...Callable) error {
 	var waitg sync.WaitGroup
 	waitg.Add(len(functions))
-	exceptions := make([]*Exception, len(functions))
+	exceptions := make([]Exception, len(functions))
 	for i, function := range functions {
-		go func(fm2 *Frame, function Callable, exception **Exception) {
+		go func(fm2 *Frame, function Callable, pexc *Exception) {
 			err := function.Call(fm2, NoArgs, NoOpts)
 			if err != nil {
-				*exception = err.(*Exception)
+				*pexc = err.(Exception)
 			}
 			waitg.Done()
 		}(fm.fork("[run-parallel function]"), function, &exceptions[i])
@@ -242,7 +242,7 @@ func fail(v interface{}) error {
 	return FailError{v}
 }
 
-func multiErrorFn(excs ...*Exception) error {
+func multiErrorFn(excs ...Exception) error {
 	return PipelineError{excs}
 }
 
