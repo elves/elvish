@@ -144,22 +144,22 @@ func (nb NsBuilder) Add(name string, v vars.Var) NsBuilder {
 	return nb
 }
 
-// AddFn adds a function.
+// AddFn adds a function. The resulting variable will be read-only.
 func (nb NsBuilder) AddFn(name string, v Callable) NsBuilder {
-	return nb.Add(name+FnSuffix, vars.FromPtr(&v))
+	return nb.Add(name+FnSuffix, vars.NewReadOnly(v))
 }
 
-// AddNs adds a sub-namespace.
+// AddNs adds a sub-namespace. The resulting variable will be read-only.
 func (nb NsBuilder) AddNs(name string, v *Ns) NsBuilder {
-	return nb.Add(name+NsSuffix, vars.FromPtr(&v))
+	return nb.Add(name+NsSuffix, vars.NewReadOnly(v))
 }
 
-// AddGoFn adds a Go function.
+// AddGoFn adds a Go function. The resulting variable will be read-only.
 func (nb NsBuilder) AddGoFn(nsName, name string, impl interface{}) NsBuilder {
 	return nb.AddFn(name, NewGoFn(nsName+name, impl))
 }
 
-// AddGoFns adds Go functions.
+// AddGoFns adds Go functions. The resulting variables will be read-only.
 func (nb NsBuilder) AddGoFns(nsName string, fns map[string]interface{}) NsBuilder {
 	for name, impl := range fns {
 		nb.AddGoFn(nsName, name, impl)

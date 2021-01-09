@@ -258,24 +258,30 @@ func multiErrorFn(excs ...Exception) error {
 // implicitly by a named function or explicitly, it causes a failure like any
 // other uncaught exception.
 //
-// See the discussion about [flow commands and exceptions](language.html#exception-and-flow-commands)
+// See the discussion about [flow commands and
+// exceptions](language.html#exception-and-flow-commands)
 //
-// **Note**: While defining a `return~ = { builtin:return }` lambda should
-// work it currently results results in infinite recursion. **Do not do
-// this!**
-//
-// **Note**: You can create a `return` function and it will shadow the builtin
-// command. **Do not do this!**. You cannot propagate the exception to the
-// calling function. In this example you might, incorrectly, expect "no" to
-// not appear in the output:
+// **Note**: If you want to shadow the builtin `return` function with a local
+// wrapper, do not define it with `fn` as `fn` swallows the special exception
+// raised by return. Consider this example:
 //
 // ```elvish-transcript
-// > fn return []{ put 'return'; builtin:return; put 'should not appear' }
-// > fn test-return []{ put 'yes'; return; put 'no' }
-// > test-return
-// ▶ yes
+// ~> fn return { put return; builtin:return }
+// ~> fn test-return { put before; return; put after }
+// ~> test-return
+// ▶ before
 // ▶ return
-// ▶ no
+// ▶ after
+// ```
+//
+// Instead, shadow the function by directly assigning to `local:return~`:
+//
+// ```elvish-transcript
+// ~> local:return~ = { put return; builtin:return }
+// ~> fn test-return { put before; return; put after }
+// ~> test-return
+// ▶ before
+// ▶ return
 // ```
 
 func returnFn() error {

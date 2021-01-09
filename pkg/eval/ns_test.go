@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
+	"github.com/elves/elvish/pkg/eval/vars"
 )
 
 func TestNs(t *testing.T) {
@@ -20,5 +21,11 @@ func TestNs(t *testing.T) {
 		That(`keys (ns [&a=b])`).Puts("a"),
 		That(`has-key (ns [&a=b &x=y]) a`).Puts(true),
 		That(`has-key (ns [&a=b &x=y]) b`).Puts(false),
+	)
+}
+
+func TestBuiltinFunctionsReadOnly(t *testing.T) {
+	Test(t,
+		That("return~ = { }").Throws(vars.ErrSetReadOnlyVar, "return~ = { }"),
 	)
 }

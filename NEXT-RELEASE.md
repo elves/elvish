@@ -3,6 +3,8 @@ This is the draft release notes for 0.15.0, scheduled to be released on
 
 # Breaking changes
 
+-   Builtin functions and subnamespaces of `edit:` are now read-only.
+
 -   Introspection for rest arguments has changed:
 
     -   The rest argument is now contained in the `arg-names` field of a
