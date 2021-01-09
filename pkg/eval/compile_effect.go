@@ -184,11 +184,13 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 
 	if n.Head != nil {
 		headStr, ok := oneString(n.Head)
+		argOpsNeeded := true
 		if ok {
 			special, fnRef := resolveCmdHeadInternally(cp, headStr, n.Head)
 			switch {
 			case special != nil:
 				specialOp = special(cp, n)
+				argOpsNeeded = false
 			case fnRef != nil:
 				headOp = variableOp{n.Head.Range(), false, headStr + FnSuffix, fnRef}
 			default:
@@ -199,7 +201,9 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 			// expression.
 			headOp = cp.compoundOp(n.Head)
 		}
-		argOps = cp.compoundOps(n.Args)
+		if argOpsNeeded {
+			argOps = cp.compoundOps(n.Args)
+		}
 	} else {
 		// Assignment form.
 		lhs := cp.parseCompoundLValues(n.Vars)

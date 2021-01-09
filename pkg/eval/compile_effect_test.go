@@ -70,6 +70,10 @@ func TestCompileEffect(t *testing.T) {
 		// Command errors when any optional evaluation errors.
 		That("put &x=[][1]").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
 
+		// Regression test for #1204; ensures that the arguments of special
+		// forms are not accidentally compiled twice.
+		That("nop (and (use builtin)); nop $builtin:echo~").DoesNothing(),
+
 		// Assignments
 		// -----------
 
