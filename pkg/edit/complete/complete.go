@@ -59,8 +59,8 @@ type PureEvaler interface {
 	EachNs(func(string))
 	EachVariableInNs(string, func(string))
 	PurelyEvalPrimary(pn *parse.Primary) interface{}
-	PurelyEvalCompound(*parse.Compound) (string, error)
-	PurelyEvalPartialCompound(*parse.Compound, int) (string, error)
+	PurelyEvalCompound(*parse.Compound) (string, bool)
+	PurelyEvalPartialCompound(*parse.Compound, int) (string, bool)
 }
 
 // CodeBuffer is the same the type in github.com/elves/elvish/pkg/el/codearea,

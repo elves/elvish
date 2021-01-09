@@ -1,25 +1,22 @@
 package eval
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/elves/elvish/pkg/fsutil"
 	"github.com/elves/elvish/pkg/parse"
 )
 
-var ErrImpure = errors.New("expression is impure")
-
-func (ev *Evaler) PurelyEvalCompound(cn *parse.Compound) (string, error) {
+func (ev *Evaler) PurelyEvalCompound(cn *parse.Compound) (string, bool) {
 	return ev.PurelyEvalPartialCompound(cn, -1)
 }
 
-func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (string, error) {
+func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (string, bool) {
 	tilde := false
 	head := ""
 	for _, in := range cn.Indexings {
 		if len(in.Indicies) > 0 {
-			return "", ErrImpure
+			return "", false
 		}
 		if upto >= 0 && in.To > upto {
 			break
@@ -31,16 +28,16 @@ func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (strin
 			head += in.Head.Value
 		case parse.Variable:
 			if ev == nil {
-				return "", ErrImpure
+				return "", false
 			}
 			v := ev.PurelyEvalPrimary(in.Head)
 			if s, ok := v.(string); ok {
 				head += s
 			} else {
-				return "", ErrImpure
+				return "", false
 			}
 		default:
-			return "", ErrImpure
+			return "", false
 		}
 	}
 	if tilde {
@@ -51,11 +48,11 @@ func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (strin
 		uname := head[:i]
 		home, err := fsutil.GetHome(uname)
 		if err != nil {
-			return "", err
+			return "", false
 		}
 		head = home + head[i:]
 	}
-	return head, nil
+	return head, true
 }
 
 // PurelyEvalPrimary evaluates a primary node without causing any side effects.

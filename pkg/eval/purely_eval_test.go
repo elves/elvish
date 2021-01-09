@@ -1,7 +1,6 @@
 package eval_test
 
 import (
-	"reflect"
 	"testing"
 
 	. "github.com/elves/elvish/pkg/eval"
@@ -20,7 +19,7 @@ func TestPurelyEvalCompound(t *testing.T) {
 		code      string
 		upto      int
 		wantValue string
-		wantErr   error
+		wantBad   bool
 	}{
 		{code: "foobar", wantValue: "foobar"},
 		{code: "'foobar'", wantValue: "foobar"},
@@ -32,13 +31,13 @@ func TestPurelyEvalCompound(t *testing.T) {
 		{code: "~/foo", wantValue: home + "/foo"},
 		{code: "$ns:x", wantValue: "foo"},
 
-		{code: "$bad", wantErr: ErrImpure},
-		{code: "$ns:bad", wantErr: ErrImpure},
+		{code: "$bad", wantBad: true},
+		{code: "$ns:bad", wantBad: true},
 
-		{code: "[abc]", wantErr: ErrImpure},
-		{code: "$y", wantErr: ErrImpure},
-		{code: "a[0]", wantErr: ErrImpure},
-		{code: "$@x", wantErr: ErrImpure},
+		{code: "[abc]", wantBad: true},
+		{code: "$y", wantBad: true},
+		{code: "a[0]", wantBad: true},
+		{code: "$@x", wantBad: true},
 	}
 
 	ev := NewEvaler()
@@ -63,13 +62,13 @@ func TestPurelyEvalCompound(t *testing.T) {
 			if upto == 0 {
 				upto = -1
 			}
-			value, err := ev.PurelyEvalPartialCompound(n, upto)
+			value, ok := ev.PurelyEvalPartialCompound(n, upto)
 
 			if value != test.wantValue {
 				t.Errorf("got value %q, want %q", value, test.wantValue)
 			}
-			if !reflect.DeepEqual(err, test.wantErr) {
-				t.Errorf("got error %v, want %q", err, test.wantErr)
+			if ok != !test.wantBad {
+				t.Errorf("got ok %v, want %v", ok, !test.wantBad)
 			}
 		})
 	}

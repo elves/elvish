@@ -524,10 +524,10 @@ func (pe pureEvaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
 	return pe.ev.PurelyEvalPrimary(pn)
 }
 
-func (pe pureEvaler) PurelyEvalCompound(cn *parse.Compound) (string, error) {
+func (pe pureEvaler) PurelyEvalCompound(cn *parse.Compound) (string, bool) {
 	return pe.ev.PurelyEvalCompound(cn)
 }
 
-func (pe pureEvaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (string, error) {
+func (pe pureEvaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (string, bool) {
 	return pe.ev.PurelyEvalPartialCompound(cn, upto)
 }

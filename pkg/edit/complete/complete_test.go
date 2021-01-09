@@ -40,11 +40,11 @@ func (ev testEvaler) EachVariableInNs(ns string, f func(string)) {
 	feed(f, ev.variables[ns])
 }
 
-func (ev testEvaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (string, error) {
+func (ev testEvaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (string, bool) {
 	return (*eval.Evaler)(nil).PurelyEvalPartialCompound(cn, upto)
 }
 
-func (ev testEvaler) PurelyEvalCompound(cn *parse.Compound) (string, error) {
+func (ev testEvaler) PurelyEvalCompound(cn *parse.Compound) (string, bool) {
 	return (*eval.Evaler)(nil).PurelyEvalCompound(cn)
 }
 

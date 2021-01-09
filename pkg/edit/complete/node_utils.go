@@ -33,8 +33,8 @@ func primaryInSimpleCompound(pn *parse.Primary, ev PureEvaler) (*parse.Compound,
 	if !ok {
 		return nil, ""
 	}
-	head, err := ev.PurelyEvalPartialCompound(compound, indexing.To)
-	if err != nil {
+	head, ok := ev.PurelyEvalPartialCompound(compound, indexing.To)
+	if !ok {
 		return nil, ""
 	}
 	return compound, head
@@ -49,7 +49,7 @@ func purelyEvalForm(form *parse.Form, seed string, upto int, ev PureEvaler) []st
 		if compound.Range().From >= upto {
 			break
 		}
-		if arg, err := ev.PurelyEvalCompound(compound); err == nil {
+		if arg, ok := ev.PurelyEvalCompound(compound); ok {
 			// TODO(xiaq): Arguments that are not simple compounds are simply ignored.
 			words = append(words, arg)
 		}
