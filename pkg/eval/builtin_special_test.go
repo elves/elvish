@@ -152,6 +152,9 @@ func TestUse(t *testing.T) {
 		That(`use a/b/c/d; put $d:name`).Puts("a/b/c/d"),
 		// module is cached after first use
 		That(`use has-init; use has-init`).Puts("has-init"),
+		// repeated uses result in the same namespace being imported
+		That("use lorem; use lorem lorem2; put $lorem:name $lorem2:name").
+			Puts("lorem", "lorem"),
 		// overriding module
 		That(`use d; put $d:name; use a/b/c/d; put $d:name`).
 			Puts("d", "a/b/c/d"),

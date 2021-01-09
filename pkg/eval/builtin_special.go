@@ -307,12 +307,11 @@ func useFromFile(fm *Frame, spec, path string, r diag.Ranger) (*Ns, error) {
 
 // TODO: Make access to fm.Evaler.modules concurrency-safe.
 func evalModule(fm *Frame, key string, src parse.Source, r diag.Ranger) (*Ns, error) {
-	// Make an empty scope to evaluate the module in.
-	ns := new(Ns)
-	// Load the namespace before executing. This prevent circular use'es from
-	// resulting in an infinite recursion.
+	// Make an empty namespace before executing. This prevent circular use'es
+	// from resulting in an infinite recursion.
+	fm.Evaler.modules[key] = new(Ns)
+	ns, err := fm.Eval(src, r, new(Ns))
 	fm.Evaler.modules[key] = ns
-	ns, err := fm.Eval(src, r, ns)
 	if err != nil {
 		// Unload the namespace.
 		delete(fm.Evaler.modules, key)
