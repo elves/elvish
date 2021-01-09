@@ -31,6 +31,34 @@ type Frame struct {
 	background bool
 }
 
+// Eval evaluates a piece of code in a copy. If r is not nil, it is added to the
+// traceback of the evaluation context. If ns is not nil, it is used in place
+// of the current local namespace as the namespace to evaluate the code in. It
+// returns the altered local namespace and any parse error, compilation error or
+// exception.
+func (fm *Frame) Eval(src parse.Source, r diag.Ranger, ns *Ns) (*Ns, error) {
+	tree, err := parse.ParseWithDeprecation(src, fm.ErrorFile())
+	if err != nil {
+		return nil, err
+	}
+	local := fm.local
+	if ns != nil {
+		local = ns
+	}
+	traceback := fm.traceback
+	if r != nil {
+		traceback = fm.addTraceback(r)
+	}
+	newFm := &Frame{
+		fm.Evaler, src, local, new(Ns), fm.intCh, fm.ports, traceback, fm.background}
+	op, err := compile(newFm.Evaler.Builtin().static(), local.static(), tree, fm.ErrorFile())
+	if err != nil {
+		return nil, err
+	}
+	exc := op.exec(newFm)
+	return newFm.local, exc
+}
+
 // Close releases resources allocated for this frame. It always returns a nil
 // error. It may be called only once.
 func (fm *Frame) Close() error {

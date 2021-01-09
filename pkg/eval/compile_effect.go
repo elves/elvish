@@ -16,29 +16,6 @@ import (
 // An operation with some side effects.
 type effectOp interface{ exec(*Frame) Exception }
 
-// An effectOp that creates all variables in a scope before executing the body.
-type scopeOp struct {
-	inner  effectOp
-	locals []string
-}
-
-func wrapScopeOp(op effectOp, locals []string) effectOp {
-	return scopeOp{op, locals}
-}
-
-func (op scopeOp) Range() diag.Ranging { return op.inner.(diag.Ranger).Range() }
-
-func (op scopeOp) exec(fm *Frame) Exception {
-	if len(op.locals) == 0 {
-		return op.inner.exec(fm)
-	}
-	fm.local.names = append(fm.local.names, op.locals...)
-	for _, name := range op.locals {
-		fm.local.slots = append(fm.local.slots, makeVarFromName(name))
-	}
-	return op.inner.exec(fm)
-}
-
 func (cp *compiler) chunkOp(n *parse.Chunk) effectOp {
 	return chunkOp{n.Range(), cp.pipelineOps(n.Pipelines)}
 }

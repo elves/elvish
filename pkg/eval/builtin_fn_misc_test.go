@@ -8,6 +8,7 @@ import (
 	. "github.com/elves/elvish/pkg/eval"
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
+	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/testutil"
 )
 
@@ -15,11 +16,27 @@ func TestBuiltinFnMisc(t *testing.T) {
 	Test(t,
 		That(`f = (constantly foo); $f; $f`).Puts("foo", "foo"),
 
+		// eval
+		// ====
 		That("eval 'put x'").Puts("x"),
-		// Using initial binding in &ns.
+		// Using variable from the local scope.
+		That("x = foo; eval 'put $x'").Puts("foo"),
+		// Setting a variable in the local scope.
+		That("x = foo; eval 'x = bar'; put $x").Puts("bar"),
+		// Using variable from the upvalue scope.
+		That("x = foo; { nop $x; eval 'put $x' }").Puts("foo"),
+		// Specifying a namespace.
 		That("n = (ns [&x=foo]); eval 'put $x' &ns=$n").Puts("foo"),
-		// Altering variables in &ns.
+		// Altering variables in the specified namespace.
 		That("n = (ns [&x=foo]); eval 'x = bar' &ns=$n; put $n[x]").Puts("bar"),
+		// Newly created variables do not appear in the local namespace.
+		That("eval 'x = foo'; put $x").DoesNotCompile(),
+		// Newly created variables do not alter the specified namespace, either.
+		That("n = (ns [&]); eval &ns=$n 'x = foo'; put $n[x]").
+			Throws(vals.NoSuchKey("x"), "$n[x]"),
+		// However, newly created variable can be accessed in the final
+		// namespace using &on-end.
+		That("eval &on-end=[n]{ put $n[x] } 'x = foo'").Puts("foo"),
 		// Parse error.
 		That("eval '['").Throws(AnyError),
 		// Compilation error.

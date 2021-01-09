@@ -172,40 +172,63 @@ func resolve(fm *Frame, head string) string {
 //elvdoc:fn eval
 //
 // ```elvish
-// eval $code &ns=$nil
+// eval $code &ns=$nil &on-end=$nil
 // ```
 //
-// Evaluates `$code`, which should be a string. The evaluation happens in the
-// namespace specified by the `&ns` option. If it is `$nil` (the default), a
-// fresh empty namespace is created.
+// Evaluates `$code`, which should be a string. The evaluation happens in a
+// new, restricted namespace, whose initial set of variables can be specified by
+// the `&ns` option. After evaluation completes, the new namespace is passed to
+// the callback specified by `&on-end` if it is not nil.
+//
+// The namespace specified by `&ns` is never modified; it will not be affected
+// by the creation or deletion of variables by `$code`. However, the values of
+// the variables may be mutated by `$code`.
+//
+// If the `&ns` option is `$nil` (the default), a temporary namespace built by
+// amalgamating the local and upvalue scopes of the caller is used.
 //
 // If `$code` fails to parse or compile, the parse error or compilation error is
 // raised as an exception.
 //
-// Examples:
+// Basic examples that do not modify the namespace or any variable:
 //
 // ```elvish-transcript
 // ~> eval 'put x'
 // ▶ x
-// ~> ns = (ns [&x=initial])
-// ~> eval 'put $x; x = altered; put $x' &ns=$ns
-// ▶ initial
-// ▶ altered
-// ~> put $ns[x]
-// ▶ altered
+// ~> x = foo
+// ~> eval 'put $x'
+// ▶ foo
+// ~> ns = (ns [&x=bar])
+// ~> eval &ns=$ns 'put $x'
+// ▶ bar
 // ```
 //
-// NOTE: Unlike the `eval` found in many other dynamic languages, `eval` cannot
-// affect the current namespace:
+// Examples that modify existing variables:
 //
 // ```elvish-transcript
-// ~> eval 'x = value'
-// ~> put $x
-// compilation error: variable $x not found
-// [tty 4], line 1: put $x
+// ~> y = foo
+// ~> eval 'y = bar'
+// ~> put $y
+// ▶ bar
+// ```
+//
+// Examples that creates new variables and uses the callback to access it:
+//
+// ```elvish-transcript
+// ~> eval 'z = lorem'
+// ~> put $z
+// compilation error: variable $z not found
+// [ttz 2], line 1: put $z
+// ~> saved-ns = $nil
+// ~> eval &on-end=[ns]{ saved-ns = $ns } 'z = lorem'
+// ~> put $saved-ns[z]
+// ▶ lorem
 // ```
 
-type evalOpts struct{ Ns *Ns }
+type evalOpts struct {
+	Ns    *Ns
+	OnEnd Callable
+}
 
 func (*evalOpts) SetDefaultOptions() {}
 
@@ -213,9 +236,19 @@ func eval(fm *Frame, opts evalOpts, code string) error {
 	src := parse.Source{Name: fmt.Sprintf("[eval %d]", nextEvalCount()), Code: code}
 	ns := opts.Ns
 	if ns == nil {
-		ns = new(Ns)
+		ns = amalgamateNs(fm.local, fm.up)
 	}
-	return evalInner(fm, src, ns, fm.traceback)
+	// The stacktrace already contains the line that calls "eval", so we pass
+	// nil as the second argument.
+	newNs, exc := fm.Eval(src, nil, ns)
+	if opts.OnEnd != nil {
+		newFm := fm.fork("on-end callback of eval")
+		errCb := opts.OnEnd.Call(newFm, []interface{}{newNs}, NoOpts)
+		if exc == nil {
+			return errCb
+		}
+	}
+	return exc
 }
 
 // Used to generate unique names for each source passed to eval.
@@ -251,7 +284,7 @@ func nextEvalCount() int {
 // ```
 
 func useMod(fm *Frame, spec string) (*Ns, error) {
-	return use(fm, spec, fm.traceback)
+	return use(fm, spec, nil)
 }
 
 //elvdoc:fn -source
@@ -260,42 +293,7 @@ func useMod(fm *Frame, spec string) (*Ns, error) {
 // -source $filename
 // ```
 //
-// Read the named file, and evaluate it in a temporary namespace built from the
-// caller's scope.
-//
-// Examples:
-//
-// ```elvish-transcript
-// ~> echo 'echo hello' > hello.elv
-// ~> -source hello.elv
-// hello
-// ~> x = foo
-// ~> echo 'echo $x' > echo-x.elv
-// ~> -source echo-x.elv
-// ```
-//
-// Since the file is evaluated in a temporary namespace, any modifications to
-// the namespace itself - creation of variables and deletion of variables - do
-// not affect the code calling `-source`. For example:
-//
-// ```elvish-transcript
-// ~> echo 'foo = lorem' > a.elv
-// ~> -source a.elv
-// ~> put $foo
-// compilation error: 4-8 in [tty]: variable $foo not found
-// compilation error: variable $foo not found
-// [tty 3], line 1: put $foo
-// ```
-//
-// However, the file may mutate variables that already exist, and such mutations
-// are persisted:
-//
-// ```elvish-transcript
-// ~> foo = lorem
-// ~> echo 'foo = ipsum' > a.elv
-// ~> -source a.elv
-// ~> put $foo
-// ▶ ipsum
+// Equivalent to `eval (slurp <$filename)`. Deprecated.
 // ```
 
 func source(fm *Frame, fname string) error {
@@ -304,21 +302,11 @@ func source(fm *Frame, fname string) error {
 		return err
 	}
 	src := parse.Source{Name: fname, Code: code, IsFile: true}
-	tree, err := parse.ParseWithDeprecation(src, fm.ErrorFile())
-	if err != nil {
-		return err
-	}
 	// Amalgamate the up and local scope into a new scope to use as the global
 	// scope to evaluate the code in.
-	g := amalgamateNs(fm.local, fm.up)
-	op, err := compile(fm.Evaler.Builtin().static(), g.static(), tree, fm.ErrorFile())
-	if err != nil {
-		return err
-	}
-	newFm := fm.fork("[-source]")
-	newFm.local = g
-	newFm.srcMeta = src
-	return op.exec(newFm)
+	ns := amalgamateNs(fm.local, fm.up)
+	_, exc := fm.Eval(src, nil, ns)
+	return exc
 }
 
 func readFileUTF8(fname string) (string, error) {

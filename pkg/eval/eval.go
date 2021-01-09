@@ -435,7 +435,11 @@ func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
 	}
 	fm, cleanup := ev.prepareFrame(src, cfg)
 	defer cleanup()
-	return op.exec(fm)
+	exc := op.exec(fm)
+	ev.mu.Lock()
+	ev.global = fm.local
+	defer ev.mu.Unlock()
+	return exc
 }
 
 // CallCfg keeps configuration for the (*Evaler).Call method.
@@ -505,6 +509,6 @@ func (ev *Evaler) CheckTree(tree parse.Tree, w io.Writer) *diag.Error {
 }
 
 // Compiles a parsed tree.
-func (ev *Evaler) compile(tree parse.Tree, g *Ns, w io.Writer) (effectOp, error) {
+func (ev *Evaler) compile(tree parse.Tree, g *Ns, w io.Writer) (nsOp, error) {
 	return compile(ev.Builtin().static(), g.static(), tree, w)
 }

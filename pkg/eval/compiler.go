@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/elves/elvish/pkg/diag"
+	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
 )
 
@@ -37,7 +38,7 @@ type capture struct {
 	index int
 }
 
-func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op effectOp, err error) {
+func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op nsOp, err error) {
 	g = g.clone()
 	gLenInit := len(g.names)
 	cp := &compiler{
@@ -56,9 +57,31 @@ func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op effectOp, err err
 		}
 	}()
 	chunkOp := cp.chunkOp(tree.Root)
-	scopeOp := wrapScopeOp(chunkOp, g.names[gLenInit:])
+	return nsOp{chunkOp, g.names[gLenInit:]}, nil
+}
 
-	return scopeOp, nil
+type nsOp struct {
+	inner     effectOp
+	moreNames []string
+}
+
+// Prepares a new local namespace before executing the inner effectOp. Replaces
+// fm.local.
+func (op nsOp) exec(fm *Frame) Exception {
+	if len(op.moreNames) > 0 {
+		n := len(fm.local.slots)
+		more := len(op.moreNames)
+		newLocal := &Ns{make([]vars.Var, n+more), make([]string, n+more)}
+		copy(newLocal.slots, fm.local.slots)
+		copy(newLocal.names, fm.local.names)
+		for i, name := range op.moreNames {
+			newLocal.slots[i+n] = makeVarFromName(name)
+			newLocal.names[i+n] = name
+		}
+		fm.local = newLocal
+	}
+
+	return op.inner.exec(fm)
 }
 
 const compilationErrorType = "compilation error"

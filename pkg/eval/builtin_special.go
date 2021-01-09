@@ -251,7 +251,7 @@ type useOp struct {
 }
 
 func (op useOp) exec(fm *Frame) Exception {
-	ns, err := use(fm, op.spec, fm.addTraceback(op))
+	ns, err := use(fm, op.spec, op)
 	if err != nil {
 		return fm.errorp(op, err)
 	}
@@ -261,7 +261,7 @@ func (op useOp) exec(fm *Frame) Exception {
 
 var bundledModules = bundled.Get()
 
-func use(fm *Frame, spec string, st *StackTrace) (*Ns, error) {
+func use(fm *Frame, spec string, r diag.Ranger) (*Ns, error) {
 	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") {
 		var dir string
 		if fm.srcMeta.IsFile {
@@ -274,24 +274,24 @@ func use(fm *Frame, spec string, st *StackTrace) (*Ns, error) {
 			}
 		}
 		path := filepath.Clean(dir + "/" + spec + ".elv")
-		return useFromFile(fm, spec, path, st)
+		return useFromFile(fm, spec, path, r)
 	}
 	if ns, ok := fm.Evaler.modules[spec]; ok {
 		return ns, nil
 	}
 	if code, ok := bundledModules[spec]; ok {
 		return evalModule(fm, spec,
-			parse.Source{Name: "[bundled " + spec + "]", Code: code}, st)
+			parse.Source{Name: "[bundled " + spec + "]", Code: code}, r)
 	}
 	libDir := fm.Evaler.getLibDir()
 	if libDir == "" {
 		return nil, noSuchModule{spec}
 	}
-	return useFromFile(fm, spec, libDir+"/"+spec+".elv", st)
+	return useFromFile(fm, spec, libDir+"/"+spec+".elv", r)
 }
 
 // TODO: Make access to fm.Evaler.modules concurrency-safe.
-func useFromFile(fm *Frame, spec, path string, st *StackTrace) (*Ns, error) {
+func useFromFile(fm *Frame, spec, path string, r diag.Ranger) (*Ns, error) {
 	if ns, ok := fm.Evaler.modules[path]; ok {
 		return ns, nil
 	}
@@ -302,39 +302,23 @@ func useFromFile(fm *Frame, spec, path string, st *StackTrace) (*Ns, error) {
 		}
 		return nil, err
 	}
-	return evalModule(fm, path, parse.Source{Name: path, Code: code, IsFile: true}, st)
+	return evalModule(fm, path, parse.Source{Name: path, Code: code, IsFile: true}, r)
 }
 
 // TODO: Make access to fm.Evaler.modules concurrency-safe.
-func evalModule(fm *Frame, key string, src parse.Source, st *StackTrace) (*Ns, error) {
+func evalModule(fm *Frame, key string, src parse.Source, r diag.Ranger) (*Ns, error) {
 	// Make an empty scope to evaluate the module in.
 	ns := new(Ns)
 	// Load the namespace before executing. This prevent circular use'es from
 	// resulting in an infinite recursion.
 	fm.Evaler.modules[key] = ns
-	err := evalInner(fm, src, ns, st)
+	ns, err := fm.Eval(src, r, ns)
 	if err != nil {
 		// Unload the namespace.
 		delete(fm.Evaler.modules, key)
 		return nil, err
 	}
 	return ns, nil
-}
-
-// Evaluates a source. Shared by evalModule and the eval builtin.
-func evalInner(fm *Frame, src parse.Source, ns *Ns, st *StackTrace) error {
-	tree, err := parse.ParseWithDeprecation(src, fm.ErrorFile())
-	if err != nil {
-		return err
-	}
-	newFm := &Frame{
-		fm.Evaler, src, ns, new(Ns),
-		fm.intCh, fm.ports, fm.traceback, fm.background}
-	op, err := compile(newFm.Evaler.Builtin().static(), ns.static(), tree, fm.ErrorFile())
-	if err != nil {
-		return err
-	}
-	return op.exec(newFm)
 }
 
 // compileAnd compiles the "and" special form.
