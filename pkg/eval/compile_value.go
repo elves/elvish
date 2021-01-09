@@ -17,7 +17,7 @@ import (
 // An operation that produces values.
 type valuesOp interface {
 	diag.Ranger
-	exec(*Frame) ([]interface{}, error)
+	exec(*Frame) ([]interface{}, Exception)
 }
 
 var outputCaptureBufferSize = 16
@@ -44,10 +44,10 @@ func (cp *compiler) compoundOp(n *parse.Compound) valuesOp {
 
 type loneTildeOp struct{ diag.Ranging }
 
-func (loneTildeOp) exec(fm *Frame) ([]interface{}, error) {
+func (op loneTildeOp) exec(fm *Frame) ([]interface{}, Exception) {
 	home, err := fsutil.GetHome("")
 	if err != nil {
-		return nil, err
+		return nil, fm.errorp(op, err)
 	}
 	return []interface{}{home}, nil
 }
@@ -66,18 +66,19 @@ type compoundOp struct {
 	subops []valuesOp
 }
 
-func (op compoundOp) exec(fm *Frame) ([]interface{}, error) {
+func (op compoundOp) exec(fm *Frame) ([]interface{}, Exception) {
 	// Accumulator.
-	vs, err := op.subops[0].exec(fm)
-	if err != nil {
-		return nil, err
+	vs, exc := op.subops[0].exec(fm)
+	if exc != nil {
+		return nil, exc
 	}
 
 	for _, subop := range op.subops[1:] {
-		us, err := subop.exec(fm)
-		if err != nil {
-			return nil, err
+		us, exc := subop.exec(fm)
+		if exc != nil {
+			return nil, exc
 		}
+		var err error
 		vs, err = outerProduct(vs, us, vals.Concat)
 		if err != nil {
 			return nil, fm.errorp(op, err)
@@ -227,15 +228,15 @@ type indexingOp struct {
 	indexOps []valuesOp
 }
 
-func (op *indexingOp) exec(fm *Frame) ([]interface{}, error) {
-	vs, err := op.headOp.exec(fm)
-	if err != nil {
-		return nil, err
+func (op *indexingOp) exec(fm *Frame) ([]interface{}, Exception) {
+	vs, exc := op.headOp.exec(fm)
+	if exc != nil {
+		return nil, exc
 	}
 	for _, indexOp := range op.indexOps {
-		indices, err := indexOp.exec(fm)
-		if err != nil {
-			return nil, err
+		indices, exc := indexOp.exec(fm)
+		if exc != nil {
+			return nil, exc
 		}
 		newvs := make([]interface{}, 0, len(vs)*len(indices))
 		for _, v := range vs {
@@ -312,7 +313,7 @@ type variableOp struct {
 	ref     *varRef
 }
 
-func (op variableOp) exec(fm *Frame) ([]interface{}, error) {
+func (op variableOp) exec(fm *Frame) ([]interface{}, Exception) {
 	variable := deref(fm, op.ref)
 	if variable == nil {
 		return nil, fm.errorpf(op, "variable $%s not found", op.qname)
@@ -330,12 +331,12 @@ type listOp struct {
 	subops []valuesOp
 }
 
-func (op listOp) exec(fm *Frame) ([]interface{}, error) {
+func (op listOp) exec(fm *Frame) ([]interface{}, Exception) {
 	list := vals.EmptyList
 	for _, subop := range op.subops {
-		moreValues, err := subop.exec(fm)
-		if err != nil {
-			return nil, err
+		moreValues, exc := subop.exec(fm)
+		if exc != nil {
+			return nil, exc
 		}
 		for _, moreValue := range moreValues {
 			list = list.Cons(moreValue)
@@ -349,12 +350,12 @@ type exceptionCaptureOp struct {
 	subop effectOp
 }
 
-func (op exceptionCaptureOp) exec(fm *Frame) ([]interface{}, error) {
-	err := op.subop.exec(fm)
-	if err == nil {
+func (op exceptionCaptureOp) exec(fm *Frame) ([]interface{}, Exception) {
+	exc := op.subop.exec(fm)
+	if exc == nil {
 		return []interface{}{OK}, nil
 	}
-	return []interface{}{err.(*exception)}, nil
+	return []interface{}{exc}, nil
 }
 
 type outputCaptureOp struct {
@@ -362,8 +363,13 @@ type outputCaptureOp struct {
 	subop effectOp
 }
 
-func (op outputCaptureOp) exec(fm *Frame) ([]interface{}, error) {
-	return fm.CaptureOutput(op.subop.exec)
+func (op outputCaptureOp) exec(fm *Frame) ([]interface{}, Exception) {
+	outPort, collect, err := CapturePort()
+	if err != nil {
+		return nil, fm.errorp(op, err)
+	}
+	exc := op.subop.exec(fm.forkWithOutput("[output capture]", outPort))
+	return collect(), exc
 }
 
 func (cp *compiler) lambda(n *parse.Primary) valuesOp {
@@ -444,7 +450,7 @@ type lambdaOp struct {
 	srcMeta       parse.Source
 }
 
-func (op *lambdaOp) exec(fm *Frame) ([]interface{}, error) {
+func (op *lambdaOp) exec(fm *Frame) ([]interface{}, Exception) {
 	capture := &Ns{
 		names: op.capture.names, slots: make([]vars.Var, len(op.capture.names))}
 	for i := range op.capture.names {
@@ -470,14 +476,14 @@ type mapOp struct {
 	pairsOp *mapPairsOp
 }
 
-func (op mapOp) exec(fm *Frame) ([]interface{}, error) {
+func (op mapOp) exec(fm *Frame) ([]interface{}, Exception) {
 	m := vals.EmptyMap
-	err := op.pairsOp.exec(fm, func(k, v interface{}) error {
+	exc := op.pairsOp.exec(fm, func(k, v interface{}) Exception {
 		m = m.Assoc(k, v)
 		return nil
 	})
-	if err != nil {
-		return nil, err
+	if exc != nil {
+		return nil, exc
 	}
 	return []interface{}{m}, nil
 }
@@ -507,15 +513,15 @@ type mapPairsOp struct {
 	ends      []int
 }
 
-func (op *mapPairsOp) exec(fm *Frame, f func(k, v interface{}) error) error {
+func (op *mapPairsOp) exec(fm *Frame, f func(k, v interface{}) Exception) Exception {
 	for i := range op.keysOps {
-		keys, err := op.keysOps[i].exec(fm)
-		if err != nil {
-			return err
+		keys, exc := op.keysOps[i].exec(fm)
+		if exc != nil {
+			return exc
 		}
-		values, err := op.valuesOps[i].exec(fm)
-		if err != nil {
-			return err
+		values, exc := op.valuesOps[i].exec(fm)
+		if exc != nil {
+			return exc
 		}
 		if len(keys) != len(values) {
 			return fm.errorpf(diag.Ranging{From: op.begins[i], To: op.ends[i]},
@@ -536,7 +542,7 @@ type literalValuesOp struct {
 	values []interface{}
 }
 
-func (op literalValuesOp) exec(*Frame) ([]interface{}, error) {
+func (op literalValuesOp) exec(*Frame) ([]interface{}, Exception) {
 	return op.values, nil
 }
 
@@ -549,22 +555,22 @@ type seqValuesOp struct {
 	subops []valuesOp
 }
 
-func (op seqValuesOp) exec(fm *Frame) ([]interface{}, error) {
+func (op seqValuesOp) exec(fm *Frame) ([]interface{}, Exception) {
 	var values []interface{}
 	for _, subop := range op.subops {
-		moreValues, err := subop.exec(fm)
-		if err != nil {
-			return nil, err
+		moreValues, exc := subop.exec(fm)
+		if exc != nil {
+			return nil, exc
 		}
 		values = append(values, moreValues...)
 	}
 	return values, nil
 }
 
-func evalForValue(fm *Frame, op valuesOp, what string) (interface{}, error) {
-	values, err := op.exec(fm)
-	if err != nil {
-		return nil, err
+func evalForValue(fm *Frame, op valuesOp, what string) (interface{}, Exception) {
+	values, exc := op.exec(fm)
+	if exc != nil {
+		return nil, exc
 	}
 	if len(values) != 1 {
 		return nil, fm.errorp(op, errs.ArityMismatch{

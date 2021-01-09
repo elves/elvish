@@ -91,7 +91,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 		}
 		if len(indices) == 0 {
 			if ref.scope == envScope {
-				f = delEnvVarOp{ref.subNames[0]}
+				f = delEnvVarOp{fn.Range(), ref.subNames[0]}
 			} else if ref.scope == localScope && len(ref.subNames) == 0 {
 				f = delLocalVarOp{ref.index}
 				cp.thisScope().deleted[ref.index] = true
@@ -109,15 +109,18 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 
 type delLocalVarOp struct{ index int }
 
-func (op delLocalVarOp) exec(fm *Frame) error {
+func (op delLocalVarOp) exec(fm *Frame) Exception {
 	fm.local.slots[op.index] = nil
 	return nil
 }
 
-type delEnvVarOp struct{ name string }
+type delEnvVarOp struct {
+	diag.Ranging
+	name string
+}
 
-func (op delEnvVarOp) exec(*Frame) error {
-	return os.Unsetenv(op.name)
+func (op delEnvVarOp) exec(fm *Frame) Exception {
+	return fm.errorp(op, os.Unsetenv(op.name))
 }
 
 func newDelElementOp(ref *varRef, begin, headEnd int, indexOps []valuesOp) effectOp {
@@ -140,12 +143,12 @@ func (op *delElemOp) Range() diag.Ranging {
 	return diag.Ranging{From: op.begin, To: op.ends[0]}
 }
 
-func (op *delElemOp) exec(fm *Frame) error {
+func (op *delElemOp) exec(fm *Frame) Exception {
 	var indices []interface{}
 	for _, indexOp := range op.indexOps {
-		indexValues, err := indexOp.exec(fm)
-		if err != nil {
-			return err
+		indexValues, exc := indexOp.exec(fm)
+		if exc != nil {
+			return exc
 		}
 		if len(indexValues) != 1 {
 			return fm.errorpf(indexOp, "index must evaluate to a single value in argument to del")
@@ -177,37 +180,38 @@ func compileFn(cp *compiler, fn *parse.Form) effectOp {
 	index := cp.thisScope().add(name + FnSuffix)
 	op := cp.lambda(bodyNode)
 
-	return fnOp{index, op}
+	return fnOp{nameNode.Range(), index, op}
 }
 
 type fnOp struct {
-	varIndex int
-	lambdaOp valuesOp
+	keywordRange diag.Ranging
+	varIndex     int
+	lambdaOp     valuesOp
 }
 
-func (op fnOp) exec(fm *Frame) error {
+func (op fnOp) exec(fm *Frame) Exception {
 	// Initialize the function variable with the builtin nop function. This step
 	// allows the definition of recursive functions; the actual function will
 	// never be called.
 	fm.local.slots[op.varIndex] = vars.FromInit(NewGoFn("<shouldn't be called>", nop))
-	values, err := op.lambdaOp.exec(fm)
-	if err != nil {
-		return err
+	values, exc := op.lambdaOp.exec(fm)
+	if exc != nil {
+		return exc
 	}
 	c := values[0].(*closure)
 	c.Op = fnWrap{c.Op}
-	return fm.local.slots[op.varIndex].Set(c)
+	return fm.errorp(op.keywordRange, fm.local.slots[op.varIndex].Set(c))
 }
 
 type fnWrap struct{ effectOp }
 
 func (op fnWrap) Range() diag.Ranging { return op.effectOp.(diag.Ranger).Range() }
 
-func (op fnWrap) exec(fm *Frame) error {
-	err := op.effectOp.exec(fm)
-	if err != nil && Reason(err) != Return {
+func (op fnWrap) exec(fm *Frame) Exception {
+	exc := op.effectOp.exec(fm)
+	if exc != nil && exc.Reason() != Return {
 		// rethrow
-		return err
+		return exc
 	}
 	return nil
 }
@@ -246,7 +250,7 @@ type useOp struct {
 	spec     string
 }
 
-func (op useOp) exec(fm *Frame) error {
+func (op useOp) exec(fm *Frame) Exception {
 	ns, err := use(fm, op.spec, fm.addTraceback(op))
 	if err != nil {
 		return fm.errorp(op, err)
@@ -359,12 +363,12 @@ type andOrOp struct {
 	stopAt bool
 }
 
-func (op *andOrOp) exec(fm *Frame) error {
+func (op *andOrOp) exec(fm *Frame) Exception {
 	var lastValue interface{} = vals.Bool(op.init)
 	for _, argOp := range op.argOps {
-		values, err := argOp.exec(fm)
-		if err != nil {
-			return err
+		values, exc := argOp.exec(fm)
+		if exc != nil {
+			return exc
 		}
 		for _, value := range values {
 			if vals.Bool(value) == op.stopAt {
@@ -409,16 +413,16 @@ type ifOp struct {
 	elseOp  valuesOp
 }
 
-func (op *ifOp) exec(fm *Frame) error {
+func (op *ifOp) exec(fm *Frame) Exception {
 	bodies := make([]Callable, len(op.bodyOps))
 	for i, bodyOp := range op.bodyOps {
 		bodies[i] = execLambdaOp(fm, bodyOp)
 	}
 	elseFn := execLambdaOp(fm, op.elseOp)
 	for i, condOp := range op.condOps {
-		condValues, err := condOp.exec(fm.fork("if cond"))
-		if err != nil {
-			return err
+		condValues, exc := condOp.exec(fm.fork("if cond"))
+		if exc != nil {
+			return exc
 		}
 		if allTrue(condValues) {
 			return fm.errorp(op, bodies[i].Call(fm.fork("if body"), NoArgs, NoOpts))
@@ -452,29 +456,29 @@ type whileOp struct {
 	condOp, bodyOp, elseOp valuesOp
 }
 
-func (op *whileOp) exec(fm *Frame) error {
+func (op *whileOp) exec(fm *Frame) Exception {
 	body := execLambdaOp(fm, op.bodyOp)
 	elseBody := execLambdaOp(fm, op.elseOp)
 
 	iterated := false
 	for {
-		condValues, err := op.condOp.exec(fm.fork("while cond"))
-		if err != nil {
-			return err
+		condValues, exc := op.condOp.exec(fm.fork("while cond"))
+		if exc != nil {
+			return exc
 		}
 		if !allTrue(condValues) {
 			break
 		}
 		iterated = true
-		err = body.Call(fm.fork("while"), NoArgs, NoOpts)
+		err := body.Call(fm.fork("while"), NoArgs, NoOpts)
 		if err != nil {
-			exc := err.(*exception)
-			if exc.reason == Continue {
-				// do nothing
-			} else if exc.reason == Break {
+			exc := err.(Exception)
+			if exc.Reason() == Continue {
+				// Do nothing
+			} else if exc.Reason() == Break {
 				break
 			} else {
-				return fm.errorp(op, err)
+				return exc
 			}
 		}
 	}
@@ -513,7 +517,7 @@ type forOp struct {
 	elseOp valuesOp
 }
 
-func (op *forOp) exec(fm *Frame) error {
+func (op *forOp) exec(fm *Frame) Exception {
 	variable, err := derefLValue(fm, op.lvalue)
 	if err != nil {
 		return fm.errorp(op, err)
@@ -537,10 +541,10 @@ func (op *forOp) exec(fm *Frame) error {
 		}
 		err = body.Call(fm.fork("for"), NoArgs, NoOpts)
 		if err != nil {
-			exc := err.(*exception)
-			if exc.reason == Continue {
+			exc := err.(Exception)
+			if exc.Reason() == Continue {
 				// do nothing
-			} else if exc.reason == Break {
+			} else if exc.Reason() == Break {
 				return false
 			} else {
 				errElement = err
@@ -611,7 +615,7 @@ type tryOp struct {
 	finallyOp valuesOp
 }
 
-func (op *tryOp) exec(fm *Frame) error {
+func (op *tryOp) exec(fm *Frame) Exception {
 	body := execLambdaOp(fm, op.bodyOp)
 	var exceptVar vars.Var
 	if op.exceptVar.ref != nil {
@@ -629,7 +633,7 @@ func (op *tryOp) exec(fm *Frame) error {
 	if err != nil {
 		if except != nil {
 			if exceptVar != nil {
-				err := exceptVar.Set(err.(*exception))
+				err := exceptVar.Set(err.(Exception))
 				if err != nil {
 					return fm.errorp(op, err)
 				}
@@ -672,8 +676,8 @@ func execLambdaOp(fm *Frame, op valuesOp) Callable {
 	if op == nil {
 		return nil
 	}
-	values, err := op.exec(fm)
-	if err != nil {
+	values, exc := op.exec(fm)
+	if exc != nil {
 		panic("must not be erroneous")
 	}
 	return values[0].(Callable)

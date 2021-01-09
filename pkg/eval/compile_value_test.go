@@ -43,7 +43,10 @@ func TestCompileValue(t *testing.T) {
 		That("echo [a b c] [&key=value] | each $put~").
 			Puts("[a b c] [&key=value]"),
 		That("put [a b c][2]").Puts("c"),
+		That("put [][0]").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		That("put [&key=value][key]").Puts("value"),
+		That("put [&key=value][bad]").Throws(
+			vals.NoSuchKey("bad"), "[&key=value][bad]"),
 
 		// Map keys and values may evaluate to multiple values as long as their
 		// numbers match.

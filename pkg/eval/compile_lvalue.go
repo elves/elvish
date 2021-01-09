@@ -97,7 +97,7 @@ type assignOp struct {
 	rhs valuesOp
 }
 
-func (op *assignOp) exec(fm *Frame) error {
+func (op *assignOp) exec(fm *Frame) Exception {
 	variables := make([]vars.Var, len(op.lhs.lvalues))
 	for i, lvalue := range op.lhs.lvalues {
 		variable, err := derefLValue(fm, lvalue)
@@ -107,9 +107,9 @@ func (op *assignOp) exec(fm *Frame) error {
 		variables[i] = variable
 	}
 
-	values, err := op.rhs.exec(fm)
-	if err != nil {
-		return err
+	values, exc := op.rhs.exec(fm)
+	if exc != nil {
+		return exc
 	}
 
 	if op.lhs.rest == -1 {
@@ -159,9 +159,9 @@ func derefLValue(fm *Frame, lv lvalue) (vars.Var, error) {
 	}
 	indices := make([]interface{}, len(lv.indexOps))
 	for i, op := range lv.indexOps {
-		values, err := op.exec(fm)
-		if err != nil {
-			return nil, err
+		values, exc := op.exec(fm)
+		if exc != nil {
+			return nil, exc
 		}
 		// TODO: Implement multi-indexing.
 		if len(values) != 1 {

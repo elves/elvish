@@ -160,11 +160,11 @@ func (fm *Frame) addTraceback(r diag.Ranger) *StackTrace {
 }
 
 // Returns an Exception with specified range and cause.
-func (fm *Frame) errorp(r diag.Ranger, e error) error {
+func (fm *Frame) errorp(r diag.Ranger, e error) Exception {
 	switch e := e.(type) {
 	case nil:
 		return nil
-	case *exception:
+	case Exception:
 		return e
 	default:
 		return &exception{e, &StackTrace{
@@ -175,7 +175,7 @@ func (fm *Frame) errorp(r diag.Ranger, e error) error {
 }
 
 // Returns an Exception with specified range and error text.
-func (fm *Frame) errorpf(r diag.Ranger, format string, args ...interface{}) error {
+func (fm *Frame) errorpf(r diag.Ranger, format string, args ...interface{}) Exception {
 	return fm.errorp(r, fmt.Errorf(format, args...))
 }
 

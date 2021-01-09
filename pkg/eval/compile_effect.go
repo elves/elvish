@@ -14,7 +14,7 @@ import (
 )
 
 // An operation with some side effects.
-type effectOp interface{ exec(*Frame) error }
+type effectOp interface{ exec(*Frame) Exception }
 
 // An effectOp that creates all variables in a scope before executing the body.
 type scopeOp struct {
@@ -28,7 +28,7 @@ func wrapScopeOp(op effectOp, locals []string) effectOp {
 
 func (op scopeOp) Range() diag.Ranging { return op.inner.(diag.Ranger).Range() }
 
-func (op scopeOp) exec(fm *Frame) error {
+func (op scopeOp) exec(fm *Frame) Exception {
 	if len(op.locals) == 0 {
 		return op.inner.exec(fm)
 	}
@@ -48,11 +48,11 @@ type chunkOp struct {
 	subops []effectOp
 }
 
-func (op chunkOp) exec(fm *Frame) error {
+func (op chunkOp) exec(fm *Frame) Exception {
 	for _, subop := range op.subops {
-		err := subop.exec(fm)
-		if err != nil {
-			return err
+		exc := subop.exec(fm)
+		if exc != nil {
+			return exc
 		}
 	}
 	// Check for interrupts after the chunk.
@@ -87,7 +87,7 @@ type pipelineOp struct {
 
 const pipelineChanBufferSize = 32
 
-func (op *pipelineOp) exec(fm *Frame) error {
+func (op *pipelineOp) exec(fm *Frame) Exception {
 	if fm.IsInterrupted() {
 		return fm.errorp(op, ErrInterrupted)
 	}
@@ -108,7 +108,7 @@ func (op *pipelineOp) exec(fm *Frame) error {
 
 	var wg sync.WaitGroup
 	wg.Add(nforms)
-	errors := make([]Exception, nforms)
+	excs := make([]Exception, nforms)
 
 	var nextIn *Port
 
@@ -134,17 +134,12 @@ func (op *pipelineOp) exec(fm *Frame) error {
 				File: reader, Chan: ch, closeFile: true, closeChan: false}
 		}
 		thisOp := formOp
-		thisError := &errors[i]
+		thisExc := &excs[i]
 		go func() {
-			err := thisOp.exec(newFm)
+			exc := thisOp.exec(newFm)
 			newFm.Close()
-			if err != nil {
-				switch err := err.(type) {
-				case *exception:
-					*thisError = err
-				default:
-					*thisError = &exception{reason: err, stackTrace: nil}
-				}
+			if exc != nil {
+				*thisExc = exc
 			}
 			wg.Done()
 			if hasChanInput {
@@ -164,7 +159,7 @@ func (op *pipelineOp) exec(fm *Frame) error {
 			wg.Wait()
 			fm.Evaler.addNumBgJobs(-1)
 			msg := "job " + op.source + " finished"
-			err := MakePipelineError(errors)
+			err := MakePipelineError(excs)
 			if err != nil {
 				msg += ", errors = " + err.Error()
 			}
@@ -180,7 +175,7 @@ func (op *pipelineOp) exec(fm *Frame) error {
 		return nil
 	}
 	wg.Wait()
-	return fm.errorp(op, MakePipelineError(errors))
+	return fm.errorp(op, MakePipelineError(excs))
 }
 
 func (cp *compiler) formOp(n *parse.Form) effectOp {
@@ -269,7 +264,7 @@ type formOp struct {
 	spaceyAssignOp effectOp
 }
 
-func (op *formOp) exec(fm *Frame) (errRet error) {
+func (op *formOp) exec(fm *Frame) (errRet Exception) {
 	// fm here is always a sub-frame created in compiler.pipeline, so it can
 	// be safely modified.
 
@@ -299,9 +294,9 @@ func (op *formOp) exec(fm *Frame) (errRet error) {
 		}
 		// Do assignment.
 		for _, subop := range op.assignmentOps {
-			err := subop.exec(fm)
-			if err != nil {
-				return err
+			exc := subop.exec(fm)
+			if exc != nil {
+				return exc
 			}
 		}
 		// Defer variable restoration. Will be executed even if an error
@@ -317,7 +312,7 @@ func (op *formOp) exec(fm *Frame) (errRet error) {
 				}
 				err := v.Set(val)
 				if err != nil {
-					errRet = err
+					errRet = fm.errorp(op, err)
 				}
 				logger.Printf("restored %s = %s", v, val)
 			}
@@ -326,9 +321,9 @@ func (op *formOp) exec(fm *Frame) (errRet error) {
 
 	// redirs
 	for _, redirOp := range op.redirOps {
-		err := redirOp.exec(fm)
-		if err != nil {
-			return err
+		exc := redirOp.exec(fm)
+		if exc != nil {
+			return exc
 		}
 	}
 
@@ -347,9 +342,9 @@ func (op *formOp) exec(fm *Frame) (errRet error) {
 
 		// args
 		for _, argOp := range op.argOps {
-			moreArgs, err := argOp.exec(fm)
-			if err != nil {
-				return err
+			moreArgs, exc := argOp.exec(fm)
+			if exc != nil {
+				return exc
 			}
 			args = append(args, moreArgs...)
 		}
@@ -359,7 +354,7 @@ func (op *formOp) exec(fm *Frame) (errRet error) {
 	// TODO(xiaq): This conversion should be avoided.
 
 	convertedOpts := make(map[string]interface{})
-	err := op.optsOp.exec(fm, func(k, v interface{}) error {
+	exc := op.optsOp.exec(fm, func(k, v interface{}) Exception {
 		if ks, ok := k.(string); ok {
 			convertedOpts[ks] = v
 			return nil
@@ -368,15 +363,15 @@ func (op *formOp) exec(fm *Frame) (errRet error) {
 		return fm.errorp(op, errs.BadValue{
 			What: "option key", Valid: "string", Actual: vals.Kind(k)})
 	})
-	if err != nil {
-		return fm.errorp(op, err)
+	if exc != nil {
+		return exc
 	}
 
 	if headFn != nil {
 		fm.traceback = fm.addTraceback(op)
 		err := headFn.Call(fm, args, convertedOpts)
-		if _, ok := err.(*exception); ok {
-			return err
+		if exc, ok := err.(Exception); ok {
+			return exc
 		}
 		return &exception{err, fm.traceback}
 	}
@@ -502,7 +497,7 @@ func chanForFileRedir(mode parse.RedirMode) chan interface{} {
 	return BlackholeChan
 }
 
-func (op *redirOp) exec(fm *Frame) error {
+func (op *redirOp) exec(fm *Frame) Exception {
 	var dst int
 	if op.dstOp == nil {
 		// No explicit FD destination specified; use default destinations
@@ -613,11 +608,11 @@ func evalForFd(fm *Frame, op valuesOp, closeOK bool, what string) (int, error) {
 
 type seqOp struct{ subops []effectOp }
 
-func (op seqOp) exec(fm *Frame) error {
+func (op seqOp) exec(fm *Frame) Exception {
 	for _, subop := range op.subops {
-		err := subop.exec(fm)
-		if err != nil {
-			return err
+		exc := subop.exec(fm)
+		if exc != nil {
+			return exc
 		}
 	}
 	return nil
