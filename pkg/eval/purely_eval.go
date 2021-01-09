@@ -74,7 +74,11 @@ func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
 		fm := &Frame{Evaler: ev, local: ev.Global(), up: new(Ns)}
 		ref := resolveVarRef(fm, qname, nil)
 		if ref != nil {
-			return deref(fm, ref).Get()
+			variable := deref(fm, ref)
+			if variable == nil {
+				return nil
+			}
+			return variable.Get()
 		}
 	}
 	return nil

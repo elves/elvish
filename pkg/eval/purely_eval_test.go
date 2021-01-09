@@ -30,6 +30,10 @@ func TestPurelyEvalCompound(t *testing.T) {
 		{code: "foo$x", upto: 3, wantValue: "foo"},
 		{code: "~", wantValue: home},
 		{code: "~/foo", wantValue: home + "/foo"},
+		{code: "$ns:x", wantValue: "foo"},
+
+		{code: "$bad", wantErr: ErrImpure},
+		{code: "$ns:bad", wantErr: ErrImpure},
 
 		{code: "[abc]", wantErr: ErrImpure},
 		{code: "$y", wantErr: ErrImpure},
@@ -38,10 +42,13 @@ func TestPurelyEvalCompound(t *testing.T) {
 	}
 
 	ev := NewEvaler()
-	ev.AddGlobal(NsBuilder{
+	g := NsBuilder{
 		"x": vars.NewReadOnly("bar"),
 		"y": vars.NewReadOnly(vals.MakeList()),
-	}.Ns())
+	}.
+		AddNs("ns", NsBuilder{"x": vars.NewReadOnly("foo")}.Ns()).
+		Ns()
+	ev.AddGlobal(g)
 
 	for _, test := range tests {
 		t.Run(test.code, func(t *testing.T) {
