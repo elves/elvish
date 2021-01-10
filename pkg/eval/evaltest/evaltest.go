@@ -17,9 +17,9 @@ package evaltest
 
 import (
 	"bytes"
+	"os"
 	"reflect"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval"
@@ -150,30 +150,9 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...TestCase) {
 func EvalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) Result {
 	var r Result
 
-	var wg sync.WaitGroup
-	wg.Add(3)
-	rOut, stdout := testutil.MustPipe()
-	go func() {
-		r.BytesOut = testutil.MustReadAllAndClose(rOut)
-		wg.Done()
-	}()
-	rErr, stderr := testutil.MustPipe()
-	go func() {
-		r.StderrOut = testutil.MustReadAllAndClose(rErr)
-		wg.Done()
-	}()
-	outCh := make(chan interface{}, 1024)
-	go func() {
-		for v := range outCh {
-			r.ValueOut = append(r.ValueOut, v)
-		}
-		wg.Done()
-	}()
-	ports := []*eval.Port{
-		eval.DummyInputPort,
-		{File: stdout, Chan: outCh},
-		{File: stderr, Chan: eval.BlackholeChan},
-	}
+	port1, collect1 := capturePort()
+	port2, collect2 := capturePort()
+	ports := []*eval.Port{eval.DummyInputPort, port1, port2}
 
 	for _, text := range texts {
 		err := ev.Eval(parse.Source{Name: "[test]", Code: text},
@@ -182,20 +161,42 @@ func EvalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) Result {
 		if parse.GetError(err) != nil {
 			t.Fatalf("Parse(%q) error: %s", text, err)
 		} else if eval.GetCompilationError(err) != nil {
-			// NOTE: Only the compilation error of the last code is saved.
+			// NOTE: If multiple code pieces have compilation errors, only the
+			// last one compilation error is saved.
 			r.CompilationError = err
 		} else if err != nil {
-			// NOTE: Only the exception of the last code that compiles is saved.
+			// NOTE: If multiple code pieces throw exceptions, only the last one
+			// is saved.
 			r.Exception = err
 		}
 	}
 
-	stdout.Close()
-	stderr.Close()
-	close(outCh)
-	wg.Wait()
-
+	r.ValueOut, r.BytesOut = collect1()
+	_, r.StderrOut = collect2()
 	return r
+}
+
+// Like eval.CapturePort, but captures values and bytes separately. Also panics
+// if it cannot create a pipe.
+func capturePort() (*eval.Port, func() ([]interface{}, []byte)) {
+	var values []interface{}
+	var bytes []byte
+	port, done, err := eval.PipePort(
+		func(ch <-chan interface{}) {
+			for v := range ch {
+				values = append(values, v)
+			}
+		},
+		func(r *os.File) {
+			bytes = testutil.MustReadAllAndClose(r)
+		})
+	if err != nil {
+		panic(err)
+	}
+	return port, func() ([]interface{}, []byte) {
+		done()
+		return values, bytes
+	}
 }
 
 func matchOut(want, got []interface{}) bool {
