@@ -2,7 +2,6 @@ package eval_test
 
 import (
 	"bytes"
-	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -80,15 +79,9 @@ func TestCompileTimeDeprecation(t *testing.T) {
 }
 
 func TestMultipleEval(t *testing.T) {
-	texts := []string{"x=hello", "put $x"}
-	r := EvalAndCollect(t, NewEvaler(), texts)
-	wantOuts := []interface{}{"hello"}
-	if r.Exception != nil {
-		t.Errorf("eval %s => %v, want nil", texts, r.Exception)
-	}
-	if !reflect.DeepEqual(r.ValueOut, wantOuts) {
-		t.Errorf("eval %s outputs %v, want %v", texts, r.ValueOut, wantOuts)
-	}
+	Test(t,
+		That("x = hello").Then("put $x").Puts("hello"),
+	)
 }
 
 func TestConcurrentEval(t *testing.T) {

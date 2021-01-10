@@ -30,8 +30,8 @@ import (
 
 // TestCase is a test case for Test.
 type TestCase struct {
-	code string
-	want Result
+	codes []string
+	want  Result
 }
 
 type Result struct {
@@ -49,9 +49,17 @@ type Result struct {
 // That("put x").Puts("x")
 
 // That returns a new Test with the specified source code. Multiple arguments
-// are joined with newlines.
+// are joined with newlines. To specify multiple pieces of code that are
+// executed separately, use the Then method to append code pieces.
 func That(lines ...string) TestCase {
-	return TestCase{code: strings.Join(lines, "\n")}
+	return TestCase{codes: []string{strings.Join(lines, "\n")}}
+}
+
+// Then returns a new Test that executes the given code in addition. Multiple
+// arguments are joined with newlines.
+func (t TestCase) Then(lines ...string) TestCase {
+	t.codes = append(t.codes, strings.Join(lines, "\n"))
+	return t
 }
 
 // DoesNothing returns t unchanged. It is used to mark that a piece of code
@@ -114,12 +122,12 @@ func Test(t *testing.T, tests ...TestCase) {
 func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...TestCase) {
 	t.Helper()
 	for _, tt := range tests {
-		t.Run(tt.code, func(t *testing.T) {
+		t.Run(strings.Join(tt.codes, "\n"), func(t *testing.T) {
 			t.Helper()
 			ev := eval.NewEvaler()
 			setup(ev)
 
-			r := EvalAndCollect(t, ev, []string{tt.code})
+			r := evalAndCollect(t, ev, tt.codes)
 
 			if !matchOut(tt.want.ValueOut, r.ValueOut) {
 				t.Errorf("got value out %v, want %v",
@@ -147,7 +155,7 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...TestCase) {
 	}
 }
 
-func EvalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) Result {
+func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) Result {
 	var r Result
 
 	port1, collect1 := capturePort()
