@@ -20,6 +20,10 @@ type Ns struct {
 	// only contain a small number of names in each namespace, in which case a
 	// linear search in a slice is usually faster than map access.
 	names []string
+	// Whether the variable has been deleted. Deleted variables can still be
+	// kept in the Ns since there might be a reference to them in a closure.
+	// Shadowed variables are also considered deleted.
+	deleted []bool
 }
 
 // CombineNs returns an *Ns that contains all the bindings from both ns1 and
@@ -27,15 +31,19 @@ type Ns struct {
 func CombineNs(ns1 *Ns, ns2 *Ns) *Ns {
 	ns := &Ns{
 		append([]vars.Var(nil), ns2.slots...),
-		append([]string(nil), ns2.names...)}
+		append([]string(nil), ns2.names...),
+		append([]bool(nil), ns2.deleted...)}
 	hasName := map[string]bool{}
-	for _, name := range ns.names {
-		hasName[name] = true
+	for i, name := range ns.names {
+		if !ns.deleted[i] {
+			hasName[name] = true
+		}
 	}
 	for i, name := range ns1.names {
-		if !hasName[name] {
+		if !ns1.deleted[i] && !hasName[name] {
 			ns.slots = append(ns.slots, ns1.slots[i])
 			ns.names = append(ns.names, name)
+			ns.deleted = append(ns.deleted, false)
 		}
 	}
 	return ns
@@ -91,7 +99,7 @@ func (ns *Ns) IndexName(k string) vars.Var {
 
 func (ns *Ns) lookup(k string) int {
 	for i, name := range ns.names {
-		if name == k {
+		if name == k && !ns.deleted[i] {
 			return i
 		}
 	}
@@ -101,7 +109,7 @@ func (ns *Ns) lookup(k string) int {
 // IterateKeys produces the names of all the variables in this Ns.
 func (ns *Ns) IterateKeys(f func(interface{}) bool) {
 	for i, name := range ns.names {
-		if ns.slots[i] == nil {
+		if ns.slots[i] == nil || ns.deleted[i] {
 			continue
 		}
 		if !f(name) {
@@ -115,7 +123,7 @@ func (ns *Ns) IterateKeys(f func(interface{}) bool) {
 // code. It doesn't support breaking early.
 func (ns *Ns) IterateNames(f func(string)) {
 	for i, name := range ns.names {
-		if ns.slots[i] != nil {
+		if ns.slots[i] != nil && !ns.deleted[i] {
 			f(name)
 		}
 	}
@@ -124,7 +132,7 @@ func (ns *Ns) IterateNames(f func(string)) {
 // HasName reports whether the Ns has a variable with the given name.
 func (ns *Ns) HasName(k string) bool {
 	for i, name := range ns.names {
-		if name == k {
+		if name == k && !ns.deleted[i] {
 			return ns.slots[i] != nil
 		}
 	}
@@ -132,7 +140,7 @@ func (ns *Ns) HasName(k string) bool {
 }
 
 func (ns *Ns) static() *staticNs {
-	return &staticNs{ns.names, make([]bool, len(ns.names))}
+	return &staticNs{ns.names, ns.deleted}
 }
 
 // NsBuilder is a helper type used for building an Ns.
@@ -169,7 +177,8 @@ func (nb NsBuilder) AddGoFns(nsName string, fns map[string]interface{}) NsBuilde
 
 // Build builds an Ns.
 func (nb NsBuilder) Ns() *Ns {
-	ns := &Ns{make([]vars.Var, len(nb)), make([]string, len(nb))}
+	n := len(nb)
+	ns := &Ns{make([]vars.Var, n), make([]string, n), make([]bool, n)}
 	i := 0
 	for name, variable := range nb {
 		ns.slots[i] = variable

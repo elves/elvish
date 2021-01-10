@@ -14,7 +14,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
 )
 
@@ -236,7 +235,7 @@ func eval(fm *Frame, opts evalOpts, code string) error {
 	src := parse.Source{Name: fmt.Sprintf("[eval %d]", nextEvalCount()), Code: code}
 	ns := opts.Ns
 	if ns == nil {
-		ns = amalgamateNs(fm.local, fm.up)
+		ns = CombineNs(fm.up, fm.local)
 	}
 	// The stacktrace already contains the line that calls "eval", so we pass
 	// nil as the second argument.
@@ -304,7 +303,7 @@ func source(fm *Frame, fname string) error {
 	src := parse.Source{Name: fname, Code: code, IsFile: true}
 	// Amalgamate the up and local scope into a new scope to use as the global
 	// scope to evaluate the code in.
-	ns := amalgamateNs(fm.local, fm.up)
+	ns := CombineNs(fm.up, fm.local)
 	_, exc := fm.Eval(src, nil, ns)
 	return exc
 }
@@ -318,18 +317,6 @@ func readFileUTF8(fname string) (string, error) {
 		return "", fmt.Errorf("%s: source is not valid UTF-8", fname)
 	}
 	return string(bytes), nil
-}
-
-func amalgamateNs(local, up *Ns) *Ns {
-	slots := append([]vars.Var(nil), local.slots...)
-	names := append([]string(nil), local.names...)
-	for i := range up.slots {
-		if local.lookup(up.names[i]) == -1 {
-			slots = append(slots, up.slots[i])
-			names = append(names, up.names[i])
-		}
-	}
-	return &Ns{slots, names}
 }
 
 // TimeAfter is used by the sleep command to obtain a channel that is delivered

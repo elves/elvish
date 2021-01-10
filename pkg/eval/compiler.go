@@ -40,7 +40,6 @@ type capture struct {
 
 func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op nsOp, err error) {
 	g = g.clone()
-	gLenInit := len(g.names)
 	cp := &compiler{
 		b, []*staticNs{g}, []*staticUpNs{new(staticUpNs)},
 		w, newDeprecationRegistry(), tree.Source}
@@ -57,28 +56,29 @@ func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op nsOp, err error) 
 		}
 	}()
 	chunkOp := cp.chunkOp(tree.Root)
-	return nsOp{chunkOp, g.names[gLenInit:]}, nil
+	return nsOp{chunkOp, g}, nil
 }
 
 type nsOp struct {
-	inner     effectOp
-	moreNames []string
+	inner    effectOp
+	template *staticNs
 }
 
 // Prepares a new local namespace before executing the inner effectOp. Replaces
 // fm.local.
 func (op nsOp) exec(fm *Frame) Exception {
-	if len(op.moreNames) > 0 {
-		n := len(fm.local.slots)
-		more := len(op.moreNames)
-		newLocal := &Ns{make([]vars.Var, n+more), make([]string, n+more)}
+	if len(op.template.names) > len(fm.local.names) {
+		n := len(op.template.names)
+		newLocal := &Ns{make([]vars.Var, n), op.template.names, op.template.deleted}
 		copy(newLocal.slots, fm.local.slots)
-		copy(newLocal.names, fm.local.names)
-		for i, name := range op.moreNames {
-			newLocal.slots[i+n] = makeVarFromName(name)
-			newLocal.names[i+n] = name
+		for i := len(fm.local.names); i < n; i++ {
+			newLocal.slots[i] = makeVarFromName(newLocal.names[i])
 		}
 		fm.local = newLocal
+	} else {
+		// If no new has been created, there might still be some existing
+		// variables deleted.
+		fm.local = &Ns{fm.local.slots, fm.local.names, op.template.deleted}
 	}
 
 	return op.inner.exec(fm)

@@ -185,6 +185,7 @@ func NewEvaler() *Evaler {
 		Ns()
 	builtin.slots = append(builtin.slots, moreBuiltins.slots...)
 	builtin.names = append(builtin.names, moreBuiltins.names...)
+	builtin.deleted = append(builtin.deleted, make([]bool, len(moreBuiltins.names))...)
 
 	return ev
 }

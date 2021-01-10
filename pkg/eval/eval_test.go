@@ -81,6 +81,12 @@ func TestCompileTimeDeprecation(t *testing.T) {
 func TestMultipleEval(t *testing.T) {
 	Test(t,
 		That("x = hello").Then("put $x").Puts("hello"),
+
+		// Shadowing with fn. Regression test for #1213.
+		That("fn f { put old }").Then("fn f { put new }").Then("f").
+			Puts("new"),
+		// Variable deletion. Regression test for #1213.
+		That("x = foo").Then("del x").Then("put $x").DoesNotCompile(),
 	)
 }
 

@@ -99,7 +99,7 @@ func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 
 	// Populate local scope with arguments, options, and newly created locals.
 	localSize := len(c.ArgNames) + len(c.OptNames) + len(c.NewLocal)
-	local := &Ns{make([]vars.Var, localSize), make([]string, localSize)}
+	local := &Ns{make([]vars.Var, localSize), make([]string, localSize), make([]bool, localSize)}
 
 	for i, name := range c.ArgNames {
 		local.names[i] = name
