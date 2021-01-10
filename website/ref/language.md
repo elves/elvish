@@ -2104,6 +2104,31 @@ f from x/y/z
 In general, a module defined in namespace will be the same as the file name
 (without the `.elv` extension).
 
+### Circular dependencies
+
+Circular dependencies are legal but restricted. If a module `a` imports module
+`b`, which then also imports module `a`, module `b` won't be able to observe any
+bindings in module `a` when it it evaluated. Instead, it will observe an empty
+namespace.
+
+On the other hand, functions in module `b` will have access to bindings in
+module `a` after it is fully evaluated.
+
+Examples:
+
+```elvish
+# a.elv
+foo = lorem
+use b
+# b.elv
+use a
+fn f { put $a:foo }
+put $a:foo # results in an exception
+# in REPL
+use a; use b
+b:f # puts "lorem"
+```
+
 ### Relative imports
 
 The module spec may being with `./` or `../`, which introduce **relative
