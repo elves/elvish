@@ -6,6 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
@@ -25,11 +27,11 @@ func init() {
 
 		// Bytes output
 		"print":  print,
-		"printf": printf,
 		"echo":   echo,
 		"pprint": pprint,
 		"repr":   repr,
 		"show":   show,
+		"printf": printf,
 
 		// Only bytes or values
 		//
@@ -198,24 +200,43 @@ func print(fm *Frame, opts printOpts, args ...interface{}) {
 //elvdoc:fn printf
 //
 // ```elvish
-// printf $fmt $value...
+// printf $template $value...
 // ```
 //
-// Like [`print`](#print) but uses a formatting template to control how the
-// values appear in the output. An implicit newline is not added. You must
-// include a newline in the format (e.g., `printf "%s\n" yes`) or a string
-// value if a newline is desired in the output. This command writes its output
-// to the byte stream.
+// Prints values to the byte stream according to a template.
+//
+// Like [`print`](#print), this command does not add an implicit newline; use
+// an explicit `"\n"` in the formatting template instead.
 //
 // See Go's [`fmt`](https://golang.org/pkg/fmt/#hdr-Printing) package for
 // details about the formatting verbs and the various flags that modify the
-// default behavior; e.g., left versus right justification. We explicitly
-// handle only strings and float64 data types. Printing other types is likely
-// to result in unexpected output (but not an exception). You can use the
-// numeric formatting verbs (e.g., `%d`, `%f`) with either a float64 or a
-// string that can be converted to a number. If you use a float64 value to
-// the `%s` verb it will first be converted to a string using the rules for
-// [numbers](language.html#number]).
+// default behavior, such as padding and justification.
+//
+// Unlike Go, each formatting verb has a single associated internal type, and
+// accepts any argument that can reasonably be converted to that type:
+//
+// - The verbs `%s`, `%q` and `%v` convert the corresponding argument to a
+//   string in different ways:
+//
+//     - `%s` uses [to-string](#to-string) to convert a value to string.
+//
+//     - `%q` uses [repr](#repr) to convert a value to string.
+//
+//     - `%v` is equivalent to `%s`, and `%#v` is equivalent to `%q`.
+//
+// - The verb `%t` first convert the corresponding argument to a boolean using
+//   [bool](#bool), and then uses its Go counterpart to format the boolean.
+//
+// - The verbs `%b`, `%c`, `%d`, `%o`, `%O`, `%x`, `%X` and `%U` first convert
+//   the corresponding argument to an integer using an internal algorithm, and
+//   use their Go counterparts to format the integer.
+//
+// - The verbs `%e`, `%E`, `%f`, `%F`, `%g` and `%G` first convert the
+//   corresponding argument to a floating-point number using
+//   [float64](#float64), and then use their Go counterparts to format the
+//   number.
+//
+// Verbs not documented above are not supported.
 //
 // Examples:
 //
@@ -228,145 +249,98 @@ func print(fm *Frame, opts printOpts, args ...interface{}) {
 // 231
 // ~> printf "%08b\n" 231
 // 11100111
+// ~> printf "list is: %q\n" [foo bar 'foo bar']
+// list is: [foo bar 'foo bar']
 // ```
 //
-// **Note**: A couple of Go's [formatting
-// verbs](https://golang.org/pkg/fmt/#hdr-Printing), such as `%b` and `%x`,
-// behave differently based on the associated value type. In Elvish the
-// type is always an integer; specifically, a Go `int`; regardless of whether
-// the Elvish value is a string or float64. That is, the number is coerced to
-// an int if possible else an exception is raised.
+// **Note**: Compared to the [POSIX `printf`
+// command](https://pubs.opengroup.org/onlinepubs/007908799/xcu/printf.html)
+// found in other shells, there are 3 key differences:
 //
-// **Note**: Do not use the `%p` or `%q` formatting verbs at this time. The `%p`
-// verb will never have any meaning. The `%q` formatting verb will eventually
-// behave as if you had printed the result of `repr` on the value. Similarly,
-// only scalars such as strings and numbers are currently supported. Passing
-// an Elvish list, map, exception, or other complex type will produce
-// unexpected output. This will be improved in the future.
+// - The behavior of the formatting verbs are based on Go's
+//   [`fmt`](https://golang.org/pkg/fmt/) package instead of the POSIX
+//   specification.
 //
-// **Note**: This is loosely based on the [POSIX `printf`
-// command](https://pubs.opengroup.org/onlinepubs/007908799/xcu/printf.html).
-// There are three notable differences. The first is that the formatting verbs
-// and behavior use Go's [`fmt`](https://golang.org/pkg/fmt/) package and not
-// the POSIX specification. The two have many similarities but are not
-// identical. The second is that the number of values must match the number of
-// formatting verbs. Excess values do not result in the format being evaluated
-// additional times until all values are consumed as happens with the POSIX
-// command of the same name. You must explicitly split the value list and
-// invoke this builtin for each block of values. The third is that the Elvish
-// `printf` does not recognize backslash sequences such as `\n`. You must use
-// [double-quoted Elvish strings](language.html#double-quoted-string) if you
-// want such backslash sequences to be recognized -- just as you would with a
-// string passed to any other Elvish builtin.
+// - The number of arguments after the formatting template must match the number
+//   of formatting verbs. The POSIX command will repeat the template string to
+//   consume excess values; this command does not have that behavior.
+//
+// - This command does not interprete escape sequences such as `\n`; just use
+//   [double-quoted strings](language.html#double-quoted-string).
 //
 // @cf print echo pprint repr
 
-type formatterString struct {
-	str string
-}
-type formatterFloat64 struct {
-	num float64
-}
-
 func printf(fm *Frame, template string, args ...interface{}) {
-	out := fm.OutputFile()
-	aliasedArgs := make([]interface{}, len(args))
-	// TODO: Implement support for `%q` but using Elvish's rules for quoting
-	// strings such as produced by `repr '\a"b'"\033'"` rather than Go's
-	// default `%q` behavior.
-	//
-	// TODO: Possibly special case other Elvish types such as lists, maps and
-	// exceptions.
-	for i, a := range args {
-		switch a := a.(type) {
-		case string:
-			aliasedArgs[i] = formatterString{a}
-		case float64:
-			aliasedArgs[i] = formatterFloat64{a}
-		default:
-			// This will pretty much only work if the `%v` fmt verb is used or
-			// the argument type matches the formatting verg (e.g., passing
-			// `$true` to the `%t` verb).
-			aliasedArgs[i] = a
-		}
+	wrappedArgs := make([]interface{}, len(args))
+	for i, arg := range args {
+		wrappedArgs[i] = formatter{arg}
 	}
-	s := fmt.Sprintf(template, aliasedArgs...)
-	out.WriteString(s)
+
+	fmt.Fprintf(fm.OutputFile(), template, wrappedArgs...)
 }
 
-// Convert a formatting verb state to a string that is logically equivalent to
-// the original formatting verb.
-func buildFmtVerb(state fmt.State, v rune) string {
-	var flags = []rune{'%'}
-	for _, f := range "+-# 0" {
-		if state.Flag(int(f)) {
-			flags = append(flags, f)
-		}
-	}
-	s := string(flags)
-	if w, ok := state.Width(); ok {
-		s = fmt.Sprintf("%s%d", s, w)
-	}
-	if p, ok := state.Precision(); ok {
-		s = fmt.Sprintf("%s.%d", s, p)
-	}
-	return s + string(v)
+type formatter struct {
+	wrapped interface{}
 }
 
-func stringAsFloat(state fmt.State, r rune, s string) {
-	var n float64
-	if err := vals.ScanToGo(s, &n); err != nil {
-		fmt.Fprintf(state, "%%!f(%s)", err.Error())
-		return
-	}
-	verb := buildFmtVerb(state, r)
-	fmt.Fprintf(state, verb, n)
-}
-
-func stringAsInt(state fmt.State, r rune, s string) {
-	var n int
-	if err := vals.ScanToGo(s, &n); err != nil {
-		fmt.Fprintf(state, "%%!%c(%s)", r, err.Error())
-		return
-	}
-	verb := buildFmtVerb(state, r)
-	fmt.Fprintf(state, verb, n)
-}
-
-// Format an Elvish float64 according to the provided fmt verb.
-func (v formatterFloat64) Format(state fmt.State, r rune) {
+func (f formatter) Format(state fmt.State, r rune) {
+	wrapped := f.wrapped
 	switch r {
-	case 's', 'v':
-		verb := buildFmtVerb(state, r)
-		fmt.Fprintf(state, verb, vals.ToString(v.num))
-	case 'e', 'E', 'f', 'F', 'g', 'G':
-		verb := buildFmtVerb(state, r)
-		fmt.Fprintf(state, verb, v.num)
-	case 'b', 'd', 'o', 'O', 'x', 'X', 'U':
-		i := int(v.num)
-		if float64(i) != v.num {
-			fmt.Fprintf(state, "%%!d(must be an integer)")
+	case 's':
+		writeFmt(state, 's', vals.ToString(wrapped))
+	case 'q':
+		// TODO: Support using the precision flag to specify indentation.
+		writeFmt(state, 's', vals.Repr(wrapped, vals.NoPretty))
+	case 'v':
+		var s string
+		if state.Flag('#') {
+			s = vals.Repr(wrapped, vals.NoPretty)
+		} else {
+			s = vals.ToString(wrapped)
+		}
+		writeFmt(state, 's', s)
+	case 't':
+		writeFmt(state, 't', vals.Bool(wrapped))
+	case 'b', 'c', 'd', 'o', 'O', 'x', 'X', 'U':
+		var i int
+		if err := vals.ScanToGo(wrapped, &i); err != nil {
+			fmt.Fprintf(state, "%%!%c(%s)", r, err.Error())
 			return
 		}
-		verb := buildFmtVerb(state, r)
-		fmt.Fprintf(state, verb, i)
+		writeFmt(state, r, i)
+	case 'e', 'E', 'f', 'F', 'g', 'G':
+		var f float64
+		if err := vals.ScanToGo(wrapped, &f); err != nil {
+			fmt.Fprintf(state, "%%!%c(%s)", r, err.Error())
+			return
+		}
+		writeFmt(state, r, f)
 	default:
 		fmt.Fprintf(state, "%%!%c(unsupported formatting verb)", r)
 	}
 }
 
-func (v formatterString) Format(state fmt.State, r rune) {
-	switch r {
-	case 's', 'v':
-		verb := buildFmtVerb(state, r)
-		fmt.Fprintf(state, verb, v.str)
-	case 'e', 'E', 'f', 'F', 'g', 'G':
-		stringAsFloat(state, r, v.str)
-	case 'b', 'd', 'o', 'O', 'x', 'X', 'U':
-		stringAsInt(state, r, v.str)
-	default:
-		fmt.Fprintf(state, "%%!%c(unsupported formatting verb)", r)
+// Writes to State using the flag it stores, but with a potentially different
+// verb and value.
+func writeFmt(state fmt.State, v rune, val interface{}) {
+	// Reconstruct the verb string.
+	var sb strings.Builder
+	sb.WriteRune('%')
+	for _, f := range "+-# 0" {
+		if state.Flag(int(f)) {
+			sb.WriteRune(f)
+		}
 	}
+	if w, ok := state.Width(); ok {
+		sb.WriteString(strconv.Itoa(w))
+	}
+	if p, ok := state.Precision(); ok {
+		sb.WriteRune('.')
+		sb.WriteString(strconv.Itoa(p))
+	}
+	sb.WriteRune(v)
+
+	fmt.Fprintf(state, sb.String(), val)
 }
 
 //elvdoc:fn echo
