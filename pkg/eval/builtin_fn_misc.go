@@ -293,7 +293,6 @@ func useMod(fm *Frame, spec string) (*Ns, error) {
 // ```
 //
 // Equivalent to `eval (slurp <$filename)`. Deprecated.
-// ```
 
 func source(fm *Frame, fname string) error {
 	code, err := readFileUTF8(fname)
