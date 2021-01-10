@@ -13,7 +13,7 @@ import (
 	"github.com/elves/elvish/pkg/testutil"
 )
 
-func TestBuiltinSpecial(t *testing.T) {
+func TestDel(t *testing.T) {
 	Test(t,
 		// del - deleting variable
 		That("x = 1; del x").DoesNothing(),
@@ -31,48 +31,69 @@ func TestBuiltinSpecial(t *testing.T) {
 		That("x = 1; del $x").DoesNotCompile(),
 		That("del [a]").DoesNotCompile(),
 		That("x = []; del @x").DoesNotCompile(),
+	)
+}
 
-		// and
+func TestAnd(t *testing.T) {
+	Test(t,
 		That("and $true $false").Puts(false),
-		// and - short circuit
+		That("and a b").Puts("b"),
+		That("and $false b").Puts(false),
+		That("and $true b").Puts("b"),
+		// short circuit
 		That("x = a; and $false (x = b); put $x").Puts(false, "a"),
+	)
+}
 
-		// or
+func TestOr(t *testing.T) {
+	Test(t,
 		That("or $true $false").Puts(true),
 		That("or a b").Puts("a"),
-		// or - short circuit
+		That("or $false b").Puts("b"),
+		That("or $true b").Puts(true),
+		// short circuit
 		That("x = a; or $true (x = b); put $x").Puts(true, "a"),
+	)
+}
 
-		// if
+func TestIf(t *testing.T) {
+	Test(t,
 		That("if true { put then }").Puts("then"),
 		That("if $false { put then } else { put else }").Puts("else"),
 		That("if $false { put 1 } elif $false { put 2 } else { put 3 }").
 			Puts("3"),
 		That("if $false { put 2 } elif true { put 2 } else { put 3 }").Puts("2"),
+	)
+}
 
-		// try
+func TestTry(t *testing.T) {
+	Test(t,
 		That("try { nop } except { put bad } else { put good }").Puts("good"),
 		That("try { e:false } except - { put bad } else { put good }").
 			Puts("bad"),
 		That("try { fail tr }").Throws(ErrorWithMessage("tr")),
 		That("try { fail tr } finally { put final }").
-			Puts("final").Throws(ErrorWithMessage(
-			"tr")),
+			Puts("final").
+			Throws(ErrorWithMessage("tr")),
 
 		That("try { fail tr } except { fail ex } finally { put final }").
-			Puts("final").Throws(ErrorWithMessage(
-			"ex")),
+			Puts("final").
+			Throws(ErrorWithMessage("ex")),
 
 		That("try { fail tr } except { put ex } finally { fail final }").
-			Puts("ex").Throws(ErrorWithMessage(
-			"final")),
+			Puts("ex").
+			Throws(ErrorWithMessage("final")),
 
-		That("try { fail tr } except { fail ex } finally { fail final }").Throws(ErrorWithMessage(
-			"final")),
+		That("try { fail tr } except { fail ex } finally { fail final }").
+			Throws(ErrorWithMessage("final")),
 
-		// try - wrong use
+		// wrong syntax
 		That("try { nop } except @a { }").DoesNotCompile(),
+	)
+}
 
+func TestWhile(t *testing.T) {
+	Test(t,
 		// while
 		That("x=0; while (< $x 4) { put $x; x=(+ $x 1) }").
 			Puts("0", 1.0, 2.0, 3.0),
@@ -81,7 +102,11 @@ func TestBuiltinSpecial(t *testing.T) {
 		That("x = 0; while (< $x 4) { put $x; x=(+ $x 1) } else { put bad }").
 			Puts("0", 1.0, 2.0, 3.0),
 		That("while $false { put bad } else { put good }").Puts("good"),
+	)
+}
 
+func TestFor(t *testing.T) {
+	Test(t,
 		// for
 		That("for x [tempora mores] { put 'O '$x }").
 			Puts("O tempora", "O mores"),
@@ -104,15 +129,17 @@ func TestBuiltinSpecial(t *testing.T) {
 				What:     "value being iterated",
 				ValidLow: 1, ValidHigh: 1, Actual: 2},
 			"(put a b)"),
+	)
+}
 
-		// fn.
+func TestFn(t *testing.T) {
+	Test(t,
 		That("fn f [x]{ put x=$x'.' }; f lorem; f ipsum").
 			Puts("x=lorem.", "x=ipsum."),
 		// Recursive functions with fn. Regression test for #1206.
 		That("fn f [n]{ if (== $n 0) { put 1 } else { * $n (f (- $n 1)) } }; f 3").
 			Puts(6.0),
-
-		// return.
+		// Exception thrown by return is swallowed by a fn-defined function.
 		That("fn f []{ put a; return; put b }; f").Puts("a"),
 	)
 }

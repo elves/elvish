@@ -10,7 +10,7 @@ import (
 	. "github.com/elves/elvish/pkg/eval/evaltest"
 )
 
-func TestClosure(t *testing.T) {
+func TestClosureAsValue(t *testing.T) {
 	Test(t,
 		// Basic operations as a value.
 		That("kind-of { }").Puts("fn"),

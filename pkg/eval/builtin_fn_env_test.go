@@ -4,34 +4,71 @@ import (
 	"os"
 	"testing"
 
-	"github.com/elves/elvish/pkg/env"
 	"github.com/elves/elvish/pkg/eval"
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/eval/vals"
 )
 
-func TestBuiltinFnEnv(t *testing.T) {
-	oldpath := os.Getenv(env.PATH)
-	listSep := string(os.PathListSeparator)
+func TestGetEnv(t *testing.T) {
+	restore := saveEnv("var")
+	defer restore()
+
+	os.Unsetenv("var")
+	Test(t, That(`get-env var`).Throws(eval.ErrNonExistentEnvVar))
+
+	os.Setenv("var", "test1")
 	Test(t,
-		That(`get-env var`).Throws(eval.ErrNonExistentEnvVar),
-		That(`set-env var test1`),
 		That(`get-env var`).Puts("test1"),
 		That(`put $E:var`).Puts("test1"),
+	)
 
-		That(`set-env var test2`),
+	os.Setenv("var", "test2")
+	Test(t,
 		That(`get-env var`).Puts("test2"),
 		That(`put $E:var`).Puts("test2"),
+	)
+}
 
-		That(`has-env var`).Puts(true),
-		That(`unset-env var`),
-		That(`has-env var`).Puts(false),
+func TestHasEnv(t *testing.T) {
+	restore := saveEnv("var")
+	defer restore()
 
+	os.Setenv("var", "test1")
+	Test(t, That(`has-env var`).Puts(true))
+
+	os.Unsetenv("var")
+	Test(t, That(`has-env var`).Puts(false))
+}
+
+func TestSetEnv(t *testing.T) {
+	restore := saveEnv("var")
+	defer restore()
+
+	Test(t, That("set-env var test1").DoesNothing())
+	if envVal := os.Getenv("var"); envVal != "test1" {
+		t.Errorf("got $E:var = %q, want 'test1'", envVal)
+	}
+}
+
+func TestSetEnv_PATH(t *testing.T) {
+	restore := saveEnv("PATH")
+	defer restore()
+
+	listSep := string(os.PathListSeparator)
+	Test(t,
 		That(`set-env PATH /test-path`),
 		That(`put $paths`).Puts(vals.MakeList("/test-path")),
 		That(`paths = [/test-path2 $@paths]`),
 		That(`get-env PATH`).Puts("/test-path2"+listSep+"/test-path"),
 	)
-	os.Setenv(env.PATH, oldpath)
+}
+
+func saveEnv(name string) func() {
+	oldValue, ok := os.LookupEnv(name)
+	return func() {
+		if ok {
+			os.Setenv(name, oldValue)
+		}
+	}
 }

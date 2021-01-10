@@ -11,14 +11,18 @@ import (
 	"github.com/elves/elvish/pkg/eval/vals"
 )
 
-func TestBuiltinFnContainer(t *testing.T) {
+func TestNsCmd(t *testing.T) {
 	Test(t,
 		That("put (ns [&name=value])[name]").Puts("value"),
 		That("n: = (ns [&name=value]); put $n:name").Puts("value"),
 		That("ns [&[]=[]]").Throws(errs.BadValue{
 			What:  `key of argument of "ns"`,
 			Valid: "string", Actual: "list"}),
+	)
+}
 
+func TestMakeMap(t *testing.T) {
+	Test(t,
 		That("make-map []").Puts(vals.EmptyMap),
 		That("make-map [[k v]]").Puts(vals.MakeMap("k", "v")),
 		That("make-map [[k v] [k v2]]").Puts(vals.MakeMap("k", "v2")),
@@ -36,43 +40,91 @@ func TestBuiltinFnContainer(t *testing.T) {
 					What: "input to make-map", Valid: "iterable with 2 elements",
 					Actual: "list with 1 elements"},
 				"make-map [[k]]"),
+	)
+}
 
+func TestRange(t *testing.T) {
+	Test(t,
 		That(`range 3`).Puts(0.0, 1.0, 2.0),
 		That(`range 1 3`).Puts(1.0, 2.0),
 		That(`range 0 10 &step=3`).Puts(0.0, 3.0, 6.0, 9.0),
+	)
+}
 
+func TestRepeat(t *testing.T) {
+	Test(t,
 		That(`repeat 4 foo`).Puts("foo", "foo", "foo", "foo"),
+	)
+}
 
+func TestAssoc(t *testing.T) {
+	Test(t,
 		That(`put (assoc [0] 0 zero)[0]`).Puts("zero"),
 		That(`put (assoc [&] k v)[k]`).Puts("v"),
 		That(`put (assoc [&k=v] k v2)[k]`).Puts("v2"),
-		That(`has-key (dissoc [&k=v] k) k`).Puts(false),
+	)
+}
 
+func TestDissoc(t *testing.T) {
+	Test(t,
+		That(`has-key (dissoc [&k=v] k) k`).Puts(false),
+	)
+}
+
+func TestAll(t *testing.T) {
+	Test(t,
 		That(`put foo bar | all`).Puts("foo", "bar"),
 		That(`echo foobar | all`).Puts("foobar"),
 		That(`all [foo bar]`).Puts("foo", "bar"),
+	)
+}
+
+func TestOne(t *testing.T) {
+	Test(t,
 		That(`put foo | one`).Puts("foo"),
 		That(`put | one`).Throws(AnyError),
 		That(`put foo bar | one`).Throws(AnyError),
 		That(`one [foo]`).Puts("foo"),
 		That(`one []`).Throws(AnyError),
 		That(`one [foo bar]`).Throws(AnyError),
+	)
+}
 
+func TestTake(t *testing.T) {
+	Test(t,
 		That(`range 100 | take 2`).Puts(0.0, 1.0),
-		That(`range 100 | drop 98`).Puts(98.0, 99.0),
+	)
+}
 
+func TestDrop(t *testing.T) {
+	Test(t,
+		That(`range 100 | drop 98`).Puts(98.0, 99.0),
+	)
+}
+
+func TestHasKey(t *testing.T) {
+	Test(t,
 		That(`has-key [foo bar] 0`).Puts(true),
 		That(`has-key [foo bar] 0:1`).Puts(true),
 		That(`has-key [foo bar] 0:20`).Puts(false),
 		That(`has-key [&lorem=ipsum &foo=bar] lorem`).Puts(true),
 		That(`has-key [&lorem=ipsum &foo=bar] loremwsq`).Puts(false),
+	)
+}
+
+func TestHasValue(t *testing.T) {
+	Test(t,
 		That(`has-value [&lorem=ipsum &foo=bar] lorem`).Puts(false),
 		That(`has-value [&lorem=ipsum &foo=bar] bar`).Puts(true),
 		That(`has-value [foo bar] bar`).Puts(true),
 		That(`has-value [foo bar] badehose`).Puts(false),
 		That(`has-value "foo" o`).Puts(true),
 		That(`has-value "foo" d`).Puts(false),
+	)
+}
 
+func TestCount(t *testing.T) {
+	Test(t,
 		That(`range 100 | count`).Puts("100"),
 		That(`count [(range 100)]`).Puts("100"),
 		That(`count 123`).Puts("3"),
@@ -81,13 +133,21 @@ func TestBuiltinFnContainer(t *testing.T) {
 				What: "arguments here", ValidLow: 0, ValidHigh: 1, Actual: 3},
 			"count 1 2 3"),
 		That(`count $true`).Throws(ErrorWithMessage("cannot get length of a bool")),
+	)
+}
 
+func TestKeys(t *testing.T) {
+	Test(t,
 		That(`keys [&]`).DoesNothing(),
 		That(`keys [&a=foo]`).Puts("a"),
 		// Windows does not have an external sort command. Disabled until we have a
 		// builtin sort command.
 		That(`keys [&a=foo &b=bar] | order`).Puts("a", "b"),
+	)
+}
 
+func TestOrder(t *testing.T) {
+	Test(t,
 		// Ordering strings
 		That("put foo bar ipsum | order").Puts("bar", "foo", "ipsum"),
 		That("put foo bar bar | order").Puts("bar", "bar", "foo"),
@@ -143,8 +203,8 @@ func TestBuiltinFnContainer(t *testing.T) {
 		// &less-than and &reverse
 		That("put 1 10 2 5 | order &reverse &less-than=[a b]{ < $a $b }").
 			Puts("10", "5", "2", "1"),
-		// Sort should be stable - test by pretending that all values but one  d
-		// are equal, an check that the order among them has not change        d
+		// Sort should be stable - test by pretending that all values but one
+		// are equal, an check that the order among them has not changed.
 		That("put l x o x r x e x m | order &less-than=[a b]{ eq $a x }").
 			Puts("x", "x", "x", "x", "l", "o", "r", "e", "m"),
 	)

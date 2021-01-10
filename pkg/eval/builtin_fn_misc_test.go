@@ -12,12 +12,14 @@ import (
 	"github.com/elves/elvish/pkg/testutil"
 )
 
-func TestBuiltinFnMisc(t *testing.T) {
+func TestConstantly(t *testing.T) {
 	Test(t,
 		That(`f = (constantly foo); $f; $f`).Puts("foo", "foo"),
+	)
+}
 
-		// eval
-		// ====
+func TestEval(t *testing.T) {
+	Test(t,
 		That("eval 'put x'").Puts("x"),
 		// Using variable from the local scope.
 		That("x = foo; eval 'put $x'").Puts("foo"),
@@ -43,9 +45,11 @@ func TestBuiltinFnMisc(t *testing.T) {
 		That("eval 'put $x'").Throws(AnyError),
 		// Exception.
 		That("eval 'fail x'").Throws(FailError{"x"}),
+	)
+}
 
-		// Test the "time" builtin.
-		//
+func TestTime(t *testing.T) {
+	Test(t,
 		// Since runtime duration is non-deterministic, we only have some sanity
 		// checks here.
 		That("time { echo foo } | a _ = (all)", "put $a").Puts("foo"),

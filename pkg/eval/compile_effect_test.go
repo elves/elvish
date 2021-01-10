@@ -5,34 +5,30 @@ import (
 
 	"github.com/elves/elvish/pkg/eval/errs"
 
+	. "github.com/elves/elvish/pkg/eval"
 	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/testutil"
 )
 
-func TestCompileEffect(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
-
+func TestChunk(t *testing.T) {
 	Test(t,
-		// Chunks
-		// ------
-
 		// Empty chunk
 		That("").DoesNothing(),
 		// Outputs of pipelines in a chunk are concatenated
 		That("put x; put y; put z").Puts("x", "y", "z"),
 		// A failed pipeline cause the whole chunk to fail
 		That("put a; e:false; put b").Puts("a").Throws(AnyError),
+	)
+}
 
-		// Pipelines
-		// ---------
-
+func TestPipeline(t *testing.T) {
+	Test(t,
 		// Pure byte pipeline
 		That(`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`).
 			Prints("A1bert\nBer1in\n"),
-		// Pure channel pipeline
+		// Pure value pipeline
 		That(`put 233 42 19 | each [x]{+ $x 10}`).Puts(243.0, 52.0, 29.0),
 		// Pipeline draining.
 		That(`range 100 | put x`).Puts("x"),
@@ -44,10 +40,11 @@ func TestCompileEffect(t *testing.T) {
 			"slurp < $p",
 			"prclose $p").Puts("foo"),
 		// TODO: Add a useful hybrid pipeline sample
+	)
+}
 
-		// Commands
-		// --------
-
+func TestCommand(t *testing.T) {
+	Test(t,
 		That("put foo").Puts("foo"),
 		// Command errors when the head is not a single value.
 		That("{put put} foo").Throws(
@@ -69,14 +66,25 @@ func TestCompileEffect(t *testing.T) {
 			"put &[]=[]"),
 		// Command errors when any optional evaluation errors.
 		That("put &x=[][1]").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
+	)
+}
 
+func TestCommand_Special(t *testing.T) {
+	Test(t,
 		// Regression test for #1204; ensures that the arguments of special
 		// forms are not accidentally compiled twice.
 		That("nop (and (use builtin)); nop $builtin:echo~").DoesNothing(),
 
-		// Assignments
-		// -----------
+		// Behavior of individual special commands are tested in
+		// builtin_special_test.go.
+	)
+}
 
+func TestCommand_Assignment(t *testing.T) {
+	// NOTE: TestClosure has more tests for the interaction between assignment
+	// and variable scoping.
+
+	Test(t,
 		// Spacey assignment.
 		That("a = foo; put $a").Puts("foo"),
 		That("a b = foo bar; put $a $b").Puts("foo", "bar"),
@@ -141,9 +149,17 @@ func TestCompileEffect(t *testing.T) {
 				ValidLow: 2, ValidHigh: -1, Actual: 1},
 			"x y @z = 1"),
 
-		// Redirections
-		// ------------
+		// Trying to add a new name in a namespace throws an exception.
+		// Regression test for #1214.
+		That("ns: = (ns [&]); ns:a = b").Throws(NoSuchVariable("ns:a"), "ns:a = b"),
+	)
+}
 
+func TestCommand_Redir(t *testing.T) {
+	_, cleanup := testutil.InTestDir()
+	defer cleanup()
+
+	Test(t,
 		// Output and input redirection.
 		That("echo 233 > out1", " slurp < out1").Puts("233\n"),
 		// Append.
@@ -198,7 +214,7 @@ func TestCompileEffect(t *testing.T) {
 	)
 }
 
-func TestStacktrace(t *testing.T) {
+func TestCommand_Stacktrace(t *testing.T) {
 	oops := ErrorWithMessage("oops")
 	Test(t,
 		// Stack traces.

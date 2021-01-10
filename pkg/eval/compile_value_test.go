@@ -11,15 +11,8 @@ import (
 	"github.com/elves/elvish/pkg/eval/vals"
 )
 
-func TestCompileValue(t *testing.T) {
-	home, cleanup := testutil.InTempHome()
-	testutil.MustCreateEmpty("file1")
-	testutil.MustCreateEmpty("file2")
-	defer cleanup()
-
+func TestCompound(t *testing.T) {
 	Test(t,
-		// Compounding
-		// -----------
 		That("put {fi,elvi}sh{1.0,1.1}").Puts(
 			"fish1.0", "fish1.1", "elvish1.0", "elvish1.1"),
 
@@ -36,52 +29,90 @@ func TestCompileValue(t *testing.T) {
 		That("put []a").Throws(ErrorWithMessage("cannot concatenate list and string")),
 		// Error when applying tilde throws an exception.
 		That("put ~[]").Throws(ErrorWithMessage("tilde doesn't work on value of type list")),
+	)
+}
 
-		// List, Map and Indexing
-		// ----------------------
-
-		That("echo [a b c] [&key=value] | each $put~").
-			Puts("[a b c] [&key=value]"),
+func TestIndexing(t *testing.T) {
+	Test(t,
 		That("put [a b c][2]").Puts("c"),
 		That("put [][0]").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		That("put [&key=value][key]").Puts("value"),
 		That("put [&key=value][bad]").Throws(
 			vals.NoSuchKey("bad"), "[&key=value][bad]"),
+	)
+}
 
+func TestListLiteral(t *testing.T) {
+	Test(t,
+		That("put [a b c]").Puts(vals.MakeList("a", "b", "c")),
+		That("put []").Puts(vals.EmptyList),
+		// List expression errors if an element expression errors.
+		That("put [ [][0] ]").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
+	)
+}
+
+func TestMapLiteral(t *testing.T) {
+	Test(t,
+		That("put [&key=value]").Puts(vals.MakeMap("key", "value")),
+		That("put [&]").Puts(vals.EmptyMap),
 		// Map keys and values may evaluate to multiple values as long as their
 		// numbers match.
 		That("put [&{a b}={foo bar}]").Puts(vals.MakeMap("a", "foo", "b", "bar")),
-
-		// List expression errors if an element expression errors.
-		That("put [ [][0] ]").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// Map expression errors if a key or value expression errors.
 		That("put [ &[][0]=a ]").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		That("put [ &a=[][0] ]").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// Map expression errors if number of keys and values in a single pair
 		// does not match.
 		That("put [&{a b}={foo bar lorem}]").Throws(ErrorWithMessage("2 keys but 3 values")),
+	)
+}
 
-		// String Literals
-		// ---------------
+func TestStringLiteral(t *testing.T) {
+	Test(t,
 		That(`put 'such \"''literal'`).Puts(`such \"'literal`),
 		That(`put "much \n\033[31;1m$cool\033[m"`).
 			Puts("much \n\033[31;1m$cool\033[m"),
+	)
+}
 
-		// Captures
-		// ---------
+func TestTilde(t *testing.T) {
+	home, cleanup := testutil.InTempHome()
+	testutil.MustCreateEmpty("file1")
+	testutil.MustCreateEmpty("file2")
+	defer cleanup()
 
+	Test(t,
+		// Tilde
+		// -----
+		That("put ~").Puts(home),
+		That("put ~/src").Puts(home+"/src"),
+		// Make sure that tilde processing retains trailing slashes.
+		That("put ~/src/").Puts(home+"/src/"),
+		// Tilde and wildcard.
+		That("put ~/*").Puts(home+"/file1", home+"/file2"),
+		// TODO(xiaq): Add regression test for #793.
+	)
+}
+
+func TestOutputCapture(t *testing.T) {
+	Test(t,
 		// Output capture
 		That("put (put lorem ipsum)").Puts("lorem", "ipsum"),
 		That("put (print \"lorem\nipsum\")").Puts("lorem", "ipsum"),
 		// \r\n is also supported as a line separator
 		That(`print "lorem\r\nipsum\r\n" | all`).Puts("lorem", "ipsum"),
+	)
+}
 
+func TestExceptionCapture(t *testing.T) {
+	Test(t,
 		// Exception capture
 		That("bool ?(nop); bool ?(e:false)").Puts(true, false),
+	)
+}
 
-		// Variable Use
-		// ------------
-
+func TestVariableUse(t *testing.T) {
+	Test(t,
 		That("x = foo", "put $x").Puts("foo"),
 		// Must exist before use
 		That("put $x").DoesNotCompile(),
@@ -136,26 +167,21 @@ func TestCompileValue(t *testing.T) {
 		// Multi-level namespace access can be combined with the up:
 		// pseudo-namespaces.
 		That("ns: = (ns [&a:= (ns [&b= val])]); { put $up:ns:a:b }").Puts("val"),
+	)
+}
 
-		// Tilde
-		// -----
-		That("put ~").Puts(home),
-		That("put ~/src").Puts(home+"/src"),
-		// Make sure that tilde processing retains trailing slashes.
-		That("put ~/src/").Puts(home+"/src/"),
-		// Tilde and wildcard.
-		That("put ~/*").Puts(home+"/file1", home+"/file2"),
-		// TODO(xiaq): Add regression test for #793.
-
-		// Closure
-		// -------
-
+func TestClosure(t *testing.T) {
+	Test(t,
 		That("[]{ }").DoesNothing(),
 		That("[x]{put $x} foo").Puts("foo"),
 
-		// Variable capture
+		// Assigning to captured variable
 		That("x=lorem; []{x=ipsum}; put $x").Puts("ipsum"),
 		That("x=lorem; []{ put $x; x=ipsum }; put $x").Puts("lorem", "ipsum"),
+
+		// Assigning to element of captured variable
+		That("x = a; { x = b }; put $x").Puts("b"),
+		That("x = [a]; { x[0] = b }; put $x[0]").Puts("b"),
 
 		// Shadowing
 		That("x=ipsum; []{ local:x=lorem; put $x }; put $x").Puts("lorem", "ipsum"),
