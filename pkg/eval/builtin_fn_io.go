@@ -265,7 +265,7 @@ func print(fm *Frame, opts printOpts, args ...interface{}) {
 //   of formatting verbs. The POSIX command will repeat the template string to
 //   consume excess values; this command does not have that behavior.
 //
-// - This command does not interprete escape sequences such as `\n`; just use
+// - This command does not interpret escape sequences such as `\n`; just use
 //   [double-quoted strings](language.html#double-quoted-string).
 //
 // @cf print echo pprint repr

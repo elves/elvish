@@ -137,7 +137,7 @@ func TestPrintf(t *testing.T) {
 		That(`printf '%.1f' 3.1415`).Prints("3.1"),
 		That(`printf '%.1f' (float64 3.1415)`).Prints("3.1"),
 
-		// Does not interprete escape sequences
+		// Does not interpret escape sequences
 		That(`printf '%s\n%s\n' abc xyz`).Prints("abc\\nxyz\\n"),
 
 		// Error cases
