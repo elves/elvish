@@ -236,6 +236,8 @@ func print(fm *Frame, opts printOpts, args ...interface{}) {
 //   [float64](#float64), and then use their Go counterparts to format the
 //   number.
 //
+// The special verb `%%` prints a literal `%` and consumes no argument.
+//
 // Verbs not documented above are not supported.
 //
 // Examples:
