@@ -372,6 +372,7 @@ func (op *formOp) exec(fm *Frame) (errRet Exception) {
 		return exc
 	}
 
+	fmPrintln(fm, trace.Cmd, op, "CMD ARGS", args)
 	fm.traceback = fm.addTraceback(op)
 	err = headFn.Call(fm, args, convertedOpts)
 	if exc, ok := err.(Exception); ok {
@@ -620,6 +621,11 @@ func (op seqOp) exec(fm *Frame) Exception {
 	return nil
 }
 
-type nopOp struct{}
+type nopOp struct{ diag.Ranging }
 
-func (nopOp) exec(fm *Frame) Exception { return nil }
+// Note: At the present time this is only run when a `var` statement with no assigned values is
+// processed.
+func (op nopOp) exec(fm *Frame) Exception {
+	fmPrintln(fm, trace.Cmd, op, "")
+	return nil
+}

@@ -81,7 +81,7 @@ func (c *Context) Show(sourceIndent string) string {
 		return err.Error()
 	}
 	return (c.Name + ", " + c.lineRange() +
-		"\n" + sourceIndent + c.relevantSource(sourceIndent))
+		":\n" + sourceIndent + c.relevantSource(sourceIndent))
 }
 
 // ShowCompact shows a SourceContext, with no line break between the
@@ -90,10 +90,20 @@ func (c *Context) ShowCompact(sourceIndent string) string {
 	if err := c.checkPosition(); err != nil {
 		return err.Error()
 	}
-	desc := c.Name + ", " + c.lineRange() + " "
+	desc := c.Name + ", " + c.lineRange() + ": "
 	// Extra indent so that following lines line up with the first line.
 	descIndent := strings.Repeat(" ", wcwidth.Of(desc))
 	return desc + c.relevantSource(sourceIndent+descIndent)
+}
+
+// Description returns two strings: the first identifies where the source code originated, the
+// second is the styled source code.
+func (c *Context) Description() (string, string) {
+	if err := c.checkPosition(); err != nil {
+		return err.Error(), ""
+	}
+	location := c.Name + ", " + c.lineRange()
+	return location, c.relevantSource("")
 }
 
 func (c *Context) checkPosition() error {
@@ -109,9 +119,9 @@ func (c *Context) lineRange() string {
 	info := c.showInfo()
 
 	if info.BeginLine == info.EndLine {
-		return fmt.Sprintf("line %d:", info.BeginLine)
+		return fmt.Sprintf("line %d", info.BeginLine)
 	}
-	return fmt.Sprintf("line %d-%d:", info.BeginLine, info.EndLine)
+	return fmt.Sprintf("line %d-%d", info.BeginLine, info.EndLine)
 }
 
 func (c *Context) relevantSource(sourceIndent string) string {

@@ -44,6 +44,15 @@ func Repr(v interface{}, indent int) string {
 		return parse.Quote(v)
 	case float64:
 		return "(float64 " + formatFloat64(v) + ")"
+	case []interface{}:
+		// This case is to support functions like eval.doFmPrintf which might want to print a Go
+		// slice of interface{} types. It obviously mirrors the `case List` below that is used for
+		// Elvish lists.
+		b := NewSliceReprBuilder(indent)
+		for _, val := range v {
+			b.WriteElem(Repr(val, indent+1))
+		}
+		return b.String()
 	case Reprer:
 		return v.Repr(indent)
 	case File:

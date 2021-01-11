@@ -8,6 +8,7 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/trace"
 )
 
 // Parsed group of lvalues.
@@ -111,6 +112,7 @@ func (op *assignOp) exec(fm *Frame) Exception {
 	}
 
 	values, exc := op.rhs.exec(fm)
+	fmPrintln(fm, trace.Cmd, op, "RHS VALS", values)
 	if exc != nil {
 		return exc
 	}
@@ -152,6 +154,7 @@ func (op *assignOp) exec(fm *Frame) Exception {
 			}
 		}
 	}
+
 	return nil
 }
 

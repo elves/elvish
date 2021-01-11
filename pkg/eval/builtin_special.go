@@ -17,6 +17,7 @@ package eval
 // closures functioning as code blocks.
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -106,7 +107,7 @@ func compileVar(cp *compiler, fn *parse.Form) effectOp {
 			lvalue{cn.Range(), &varRef{localScope, slotIndex, nil}, nil, nil})
 	}
 	// If there is no assignment, there is no work to be done at eval-time.
-	return nopOp{}
+	return nopOp{fn.Range()}
 }
 
 // IsUnqualified returns whether name is an unqualified variable name.
@@ -168,7 +169,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 			if ref.scope == envScope {
 				f = delEnvVarOp{fn.Range(), ref.subNames[0]}
 			} else if ref.scope == localScope && len(ref.subNames) == 0 {
-				f = delLocalVarOp{ref.index}
+				f = delLocalVarOp{fn.Range(), ref.index}
 				cp.thisScope().deleted[ref.index] = true
 			} else {
 				cp.errorpf(cn, "only variables in local: or E: can be deleted")
@@ -182,9 +183,13 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 	return seqOp{ops}
 }
 
-type delLocalVarOp struct{ index int }
+type delLocalVarOp struct {
+	diag.Ranging
+	index int
+}
 
 func (op delLocalVarOp) exec(fm *Frame) Exception {
+	fmPrintln(fm, trace.Cmd, op, "")
 	fm.local.slots[op.index] = nil
 	return nil
 }
@@ -195,6 +200,7 @@ type delEnvVarOp struct {
 }
 
 func (op delEnvVarOp) exec(fm *Frame) Exception {
+	fmPrintln(fm, trace.Cmd, op, "")
 	return fm.errorp(op, os.Unsetenv(op.name))
 }
 
@@ -219,6 +225,7 @@ func (op *delElemOp) Range() diag.Ranging {
 }
 
 func (op *delElemOp) exec(fm *Frame) Exception {
+	fmPrintln(fm, trace.Cmd, op, "")
 	var indices []interface{}
 	for _, indexOp := range op.indexOps {
 		indexValues, exc := indexOp.exec(fm)
@@ -326,6 +333,7 @@ type useOp struct {
 }
 
 func (op useOp) exec(fm *Frame) Exception {
+	fmPrintln(fm, trace.Cmd, op, "")
 	ns, err := use(fm, op.spec, op)
 	if err != nil {
 		return fm.errorp(op, err)
@@ -405,7 +413,7 @@ func evalModule(fm *Frame, key string, src parse.Source, r diag.Ranger) (*Ns, er
 // false-ish values, the last value is output. If there are no arguments, it
 // outputs $true, as if there is a hidden $true before actual arguments.
 func compileAnd(cp *compiler, fn *parse.Form) effectOp {
-	return &andOrOp{cp.compoundOps(fn.Args), true, false}
+	return &andOrOp{fn.Range(), cp.compoundOps(fn.Args), true, false}
 }
 
 // compileOr compiles the "or" special form.
@@ -415,10 +423,11 @@ func compileAnd(cp *compiler, fn *parse.Form) effectOp {
 // true-ish values, the last value is output. If there are no arguments, it
 // outputs $false, as if there is a hidden $false before actual arguments.
 func compileOr(cp *compiler, fn *parse.Form) effectOp {
-	return &andOrOp{cp.compoundOps(fn.Args), false, true}
+	return &andOrOp{fn.Range(), cp.compoundOps(fn.Args), false, true}
 }
 
 type andOrOp struct {
+	diag.Ranging
 	argOps []valuesOp
 	init   bool
 	stopAt bool
@@ -433,11 +442,21 @@ func (op *andOrOp) exec(fm *Frame) Exception {
 		}
 		for _, value := range values {
 			if vals.Bool(value) == op.stopAt {
+				if op.init {
+					fmPrintln(fm, trace.Cmd, op, "AS IF: and $false ...")
+				} else {
+					fmPrintln(fm, trace.Cmd, op, "AS IF: or $true ...")
+				}
 				fm.OutputChan() <- value
 				return nil
 			}
 			lastValue = value
 		}
+	}
+	if op.init {
+		fmPrintln(fm, trace.Cmd, op, "AS IF: and $true...")
+	} else {
+		fmPrintln(fm, trace.Cmd, op, "AS IF: or $false...")
 	}
 	fm.OutputChan() <- lastValue
 	return nil
@@ -474,6 +493,18 @@ type ifOp struct {
 	elseOp  valuesOp
 }
 
+func ifCondOpPrintln(fm *Frame, r diag.Ranger, blockNum int, truthVal bool) {
+	if !trace.IsEnabled(trace.Cmd) {
+		return
+	}
+	truthStr := vals.ToString(truthVal)
+	if blockNum == 0 {
+		fmPrintln(fm, trace.Cmd, r, fmt.Sprintf("AS IF: if %s {...", truthStr))
+	} else {
+		fmPrintln(fm, trace.Cmd, r, fmt.Sprintf("AS IF: ...} elif %s {...", truthStr))
+	}
+}
+
 func (op *ifOp) exec(fm *Frame) Exception {
 	bodies := make([]Callable, len(op.bodyOps))
 	for i, bodyOp := range op.bodyOps {
@@ -486,10 +517,13 @@ func (op *ifOp) exec(fm *Frame) Exception {
 			return exc
 		}
 		if allTrue(condValues) {
+			ifCondOpPrintln(fm, condOp, i, true)
 			return fm.errorp(op, bodies[i].Call(fm.fork("if body"), NoArgs, NoOpts))
 		}
+		ifCondOpPrintln(fm, condOp, i, false)
 	}
 	if op.elseOp != nil {
+		fmPrintln(fm, trace.Cmd, op.elseOp, "AS IF: if $false {...} else {...")
 		return fm.errorp(op, elseFn.Call(fm.fork("if else"), NoArgs, NoOpts))
 	}
 	return nil
@@ -528,8 +562,10 @@ func (op *whileOp) exec(fm *Frame) Exception {
 			return exc
 		}
 		if !allTrue(condValues) {
+			fmPrintln(fm, trace.Cmd, op.condOp, "AS IF: while $false {...")
 			break
 		}
+		fmPrintln(fm, trace.Cmd, op.condOp, "AS IF: while $true {...")
 		iterated = true
 		err := body.Call(fm.fork("while"), NoArgs, NoOpts)
 		if err != nil {
@@ -545,6 +581,7 @@ func (op *whileOp) exec(fm *Frame) Exception {
 	}
 
 	if op.elseOp != nil && !iterated {
+		fmPrintln(fm, trace.Cmd, op.elseOp, "")
 		return fm.errorp(op, elseBody.Call(fm.fork("while else"), NoArgs, NoOpts))
 	}
 	return nil
@@ -600,6 +637,7 @@ func (op *forOp) exec(fm *Frame) Exception {
 			errElement = err
 			return false
 		}
+		fmPrintln(fm, trace.Cmd, op, "FOR WITH VAL", v)
 		err = body.Call(fm.fork("for"), NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(Exception)
@@ -691,6 +729,7 @@ func (op *tryOp) exec(fm *Frame) Exception {
 	elseFn := execLambdaOp(fm, op.elseOp)
 	finally := execLambdaOp(fm, op.finallyOp)
 
+	fmPrintln(fm, trace.Cmd, op, "TRY...")
 	err := body.Call(fm.fork("try body"), NoArgs, NoOpts)
 	if err != nil {
 		if except != nil {
@@ -700,14 +739,17 @@ func (op *tryOp) exec(fm *Frame) Exception {
 					return fm.errorp(op, err)
 				}
 			}
+			fmPrintln(fm, trace.Cmd, op.exceptOp, "TRY EXCEPT...")
 			err = except.Call(fm.fork("try except"), NoArgs, NoOpts)
 		}
 	} else {
 		if elseFn != nil {
+			fmPrintln(fm, trace.Cmd, op.elseOp, "TRY ELSE...")
 			err = elseFn.Call(fm.fork("try else"), NoArgs, NoOpts)
 		}
 	}
 	if finally != nil {
+		fmPrintln(fm, trace.Cmd, op.finallyOp, "TRY FINALLY...")
 		errFinally := finally.Call(fm.fork("try finally"), NoArgs, NoOpts)
 		if errFinally != nil {
 			// TODO: If err is not nil, this discards err. Use something similar

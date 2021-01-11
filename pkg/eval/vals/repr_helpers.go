@@ -6,6 +6,40 @@ import (
 )
 
 // ListReprBuilder helps to build Repr of list-like Values.
+type SliceReprBuilder struct {
+	indent int
+	buf    bytes.Buffer
+}
+
+// NewSliceReprBuilder makes a new SliceReprBuilder.
+func NewSliceReprBuilder(indent int) *SliceReprBuilder {
+	return &SliceReprBuilder{indent: indent}
+}
+
+// WriteElem writes a new element.
+func (b *SliceReprBuilder) WriteElem(v string) {
+	if b.indent >= 0 {
+		// Pretty-printing: Add a newline and indent+1 spaces.
+		b.buf.WriteString("\n" + strings.Repeat(" ", b.indent+1))
+	} else if b.buf.Len() > 0 {
+		b.buf.WriteByte(' ')
+	}
+	b.buf.WriteString(v)
+}
+
+// String returns the representation that has been built. After it is called,
+// the ListReprBuilder may no longer be used.
+func (b *SliceReprBuilder) String() string {
+	if b.buf.Len() == 0 {
+		return ""
+	}
+	if b.indent >= 0 {
+		b.buf.WriteString("\n" + strings.Repeat(" ", b.indent))
+	}
+	return b.buf.String()
+}
+
+// ListReprBuilder helps to build Repr of list-like Values.
 type ListReprBuilder struct {
 	indent int
 	buf    bytes.Buffer
