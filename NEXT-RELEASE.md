@@ -37,7 +37,7 @@ or compiled, even if it is not executed:
 
 -   The undocumented `esleep` command is now deprecated. Use `sleep` instead.
 
--   The `eval-symlinks` command is deprecated. Use `path:real` instead.
+-   The `eval-symlinks` command is deprecated. Use `path:eval-symlinks` instead.
 
 -   The `path-abs` command is deprecated. Use `path:abs` instead.
 

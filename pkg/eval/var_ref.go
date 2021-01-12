@@ -206,7 +206,7 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 	case "esleep~":
 		msg = `the "esleep" command is deprecated; use "sleep" instead`
 	case "eval-symlinks~":
-		msg = `the "eval-symlinks" command is deprecated; use "path:realpath" instead`
+		msg = `the "eval-symlinks" command is deprecated; use "path:eval-symlinks" instead`
 	case "path-abs~":
 		msg = `the "path-abs" command is deprecated; use "path:abs" instead`
 	case "path-base~":

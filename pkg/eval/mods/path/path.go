@@ -8,6 +8,21 @@ import (
 	"github.com/elves/elvish/pkg/eval"
 )
 
+// Ns is the namespace for the re: module.
+var Ns = eval.NsBuilder{}.AddGoFns("path:", fns).Ns()
+
+var fns = map[string]interface{}{
+	"abs":           filepath.Abs,
+	"base":          filepath.Base,
+	"clean":         filepath.Clean,
+	"dir":           filepath.Dir,
+	"ext":           filepath.Ext,
+	"eval-symlinks": filepath.EvalSymlinks,
+	"is-abs":        filepath.IsAbs,
+	"is-dir":        isDir,
+	"is-regular":    isRegular,
+}
+
 //elvdoc:fn abs
 //
 // ```elvish
@@ -99,12 +114,12 @@ import (
 // ▶ true
 // ```
 
-//elvdoc:fn real
+//elvdoc:fn eval-symlinks
 //
 // ```elvish-transcript
 // ~> mkdir bin
 // ~> ln -s bin sbin
-// ~> path:real ./sbin/a_command
+// ~> path:eval-symlinks ./sbin/a_command
 // ▶ bin/a_command
 // ```
 //
@@ -155,15 +170,3 @@ func isRegular(path string) bool {
 	fi, err := os.Stat(path)
 	return err == nil && fi.Mode().IsRegular()
 }
-
-var Ns = eval.NsBuilder{}.AddGoFns("path:", map[string]interface{}{
-	"abs":        filepath.Abs,
-	"base":       filepath.Base,
-	"clean":      filepath.Clean,
-	"dir":        filepath.Dir,
-	"ext":        filepath.Ext,
-	"is-abs":     filepath.IsAbs,
-	"is-dir":     isDir,
-	"is-regular": isRegular,
-	"real":       filepath.EvalSymlinks,
-}).Ns()
