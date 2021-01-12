@@ -196,14 +196,14 @@ func completeVariable(n parse.Node, cfg Config) (*context, []RawItem, error) {
 
 	var items []RawItem
 	ev.EachVariableInNs(ns, func(varname string) {
-		items = append(items, noQuoteItem(varname))
+		items = append(items, noQuoteItem(parse.QuoteVariableName(varname)))
 	})
 
 	ev.EachNs(func(thisNs string) {
 		// This is to match namespaces that are "nested" under the current
 		// namespace.
 		if hasProperPrefix(thisNs, ns) {
-			items = append(items, noQuoteItem(thisNs[len(ns):]))
+			items = append(items, noQuoteItem(parse.QuoteVariableName(thisNs[len(ns):])))
 		}
 	})
 

@@ -13,6 +13,32 @@ func Quote(s string) string {
 	return s
 }
 
+// QuoteVariableName is like Quote, but quotes s if it contains any character
+// that may not appear unquoted in variable names.
+func QuoteVariableName(s string) string {
+	if s == "" {
+		return "''"
+	}
+
+	// Keep track of whether it is a valid bareword.
+	bare := true
+	for _, r := range s {
+		if !unicode.IsPrint(r) {
+			// Contains unprintable character; force double quote.
+			return quoteDouble(s)
+		}
+		if !allowedInVariableName(r) {
+			bare = false
+			break
+		}
+	}
+
+	if bare {
+		return s
+	}
+	return quoteSingle(s)
+}
+
 // QuoteAs returns a representation of s in elvish syntax, preferring the syntax
 // specified by q, which must be one of Bareword, SingleQuoted, or DoubleQuoted.
 // It returns the quoted string and the actual quoting.

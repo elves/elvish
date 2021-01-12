@@ -3,34 +3,41 @@ package parse
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/tt"
+	. "github.com/elves/elvish/pkg/tt"
 )
 
-var quoteTests = tt.Table{
-	// Empty string is single-quoted.
-	tt.Args("").Rets(`''`),
+func TestQuote(t *testing.T) {
+	Test(t, Fn("Quote", Quote).ArgsFmt("(%q)").RetsFmt("%q"), Table{
+		// Empty string is single-quoted.
+		Args("").Rets(`''`),
 
-	// Bareword when possible.
-	tt.Args("x-y:z@h/d").Rets("x-y:z@h/d"),
+		// Bareword when possible.
+		Args("x-y:z@h/d").Rets("x-y:z@h/d"),
 
-	// Single quote when there are special characters but no unprintable
-	// characters.
-	tt.Args("x$y[]ef'").Rets("'x$y[]ef'''"),
+		// Single quote when there are special characters but no unprintable
+		// characters.
+		Args("x$y[]ef'").Rets("'x$y[]ef'''"),
 
-	// Tilde needs quoting only leading the expression.
-	tt.Args("~x").Rets("'~x'"),
-	tt.Args("x~").Rets("x~"),
+		// Tilde needs quoting only leading the expression.
+		Args("~x").Rets("'~x'"),
+		Args("x~").Rets("x~"),
 
-	// Double quote when there is unprintable char.
-	tt.Args("a\nb").Rets(`"a\nb"`),
-	tt.Args("\x1b\"\\").Rets(`"\e\"\\"`),
+		// Double quote when there is unprintable char.
+		Args("a\nb").Rets(`"a\nb"`),
+		Args("\x1b\"\\").Rets(`"\e\"\\"`),
 
-	// Commas and equal signs are always quoted, so that the quoted string is
-	// safe for use everywhere.
-	tt.Args("a,b").Rets(`'a,b'`),
-	tt.Args("a=b").Rets(`'a=b'`),
+		// Commas and equal signs are always quoted, so that the quoted string is
+		// safe for use everywhere.
+		Args("a,b").Rets(`'a,b'`),
+		Args("a=b").Rets(`'a=b'`),
+	})
 }
 
-func TestQuote(t *testing.T) {
-	tt.Test(t, tt.Fn("Quote", Quote).ArgsFmt("(%q)").RetsFmt("%q"), quoteTests)
+func TestQuoteVariableName(t *testing.T) {
+	Test(t, Fn("QuoteVariableName", QuoteVariableName).ArgsFmt("(%q)").RetsFmt("%q"), Table{
+		Args("").Rets("''"),
+		Args("foo").Rets("foo"),
+		Args("a/b").Rets("'a/b'"),
+		Args("\x1b").Rets(`"\e"`),
+	})
 }
