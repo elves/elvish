@@ -75,13 +75,14 @@ import (
 // Builds a complex candidate. This is mainly useful in [argument
 // completers](#argument-completer).
 //
-// If `$display` is non-empty, its content is used in the UI; otherwise `$stem`
+// The `&display` option controls how the candidate is shown in the UI. It can
+// be a string or a [styled](builtin.html#styled) text. If it is empty, `$stem`
 // is used.
 //
-// The `&code-suffix` option controls how the candidate is inserted into the
-// code when it is accepted. By default, a quoted version of `$stem` is
-// inserted. If `$code-suffix` is non-empty, it is added to that text, without
-// any further quoting.
+// The `&code-suffix` option affects how the candidate is inserted into the code
+// when it is accepted. By default, a quoted version of `$stem` is inserted. If
+// `$code-suffix` is non-empty, it is added to that text, and the suffix is not
+// quoted.
 
 type complexCandidateOpts struct {
 	CodeSuffix string
