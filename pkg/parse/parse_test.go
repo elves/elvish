@@ -48,6 +48,9 @@ var goodCases = []struct {
 		"Assignments": []string{"k=v"},
 		"Vars":        []string{"a", "b", "@rest"},
 		"Args":        []string{"c", "d"}}}},
+	{"'a/b' = foo", ast{"Chunk/Pipeline/Form", fs{
+		"Vars": []string{"'a/b'"},
+		"Args": []string{"foo"}}}},
 	// Redirections
 	{"a >b", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",
@@ -124,9 +127,10 @@ var goodCases = []struct {
 		ast{"Compound", fs{"Indexings": []string{"?", "?"}}},
 	)},
 	// Variable
-	{"a $x $&f", a(
+	{`a $x $'!@#' $"\n"`, a(
 		ast{"Compound/Indexing/Primary", fs{"Type": Variable, "Value": "x"}},
-		ast{"Compound/Indexing/Primary", fs{"Type": Variable, "Value": "&f"}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Variable, "Value": "!@#"}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Variable, "Value": "\n"}},
 	)},
 	// List
 	{"a [] [ ] [1] [ 2] [3 ] [\n 4 \n5\n 6 7 \n]", a(
@@ -344,8 +348,7 @@ var parseErrorTests = []struct {
 	// Bad assignment LHS.
 	{src: "a'b' = x", errPart: "a'b'", errMsg: "bad assignment LHS"},
 	{src: "$a = x", errPart: "$a", errMsg: "bad assignment LHS"},
-	{src: "'' = x", errPart: "''", errMsg: "bad assignment LHS"},
-	{src: "'<' = x", errPart: "'<'", errMsg: "bad assignment LHS"},
+	{src: "a/b = x", errPart: "a/b", errMsg: "bad assignment LHS"},
 	// Chained assignment.
 	{src: "a = b = c", errPart: "=", errMsg: "chained assignment not yet supported"},
 	// No redirection source.

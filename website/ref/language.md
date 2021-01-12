@@ -582,16 +582,8 @@ user-defined function, it has the following fields:
 # Variable
 
 A variable is a named storage location for holding a value. The following
-characters can be used in variable names (a subset of bareword characters):
-
--   ASCII letters (a-z and A-Z) and numbers (0-9);
-
--   The symbols `-_:~`. The colon `:` is special; it is normally used for
-    separating namespaces or denoting namespace variables;
-
--   Non-ASCII codepoints that are printable, as defined by
-    [unicode.IsPrint](https://godoc.org/unicode#IsPrint) in Go's standard
-    library.
+characters can be used in variable names (a subset of bareword characters)
+without quoting:
 
 A variable exist after its first [assignment](#ordinary-assignment), and its
 value may be mutated by further assignments. It can be [used](#variable-use) as
@@ -789,6 +781,34 @@ variable. Examples:
 ▶ bar
 ~> put $x
 ▶ 3
+```
+
+If the variable name only contains the following characters (a subset of
+bareword characters), the name can appear unquoted after `$` and the variable
+use expression extends to the longest sequence of such characters:
+
+-   ASCII letters (a-z and A-Z) and numbers (0-9);
+
+-   The symbols `-_:~`. The colon `:` is special; it is normally used for
+    separating namespaces or denoting namespace variables;
+
+-   Non-ASCII codepoints that are printable, as defined by
+    [unicode.IsPrint](https://godoc.org/unicode#IsPrint) in Go's standard
+    library.
+
+Alternatively, `$` may be followed immediately by a
+[single-quoted string](https://elv.sh/ref/language.html#single-quoted-string) or
+a [double-quoted string](https://elv.sh/ref/language.html#double-quoted-string),
+in which cases the value of the string specifies the name of the variable.
+Examples:
+
+```elvish-transcript
+~> "\n" = foo
+~> put $"\n"
+▶ foo
+~> '!!!' = bar
+~> put $'!!!'
+▶ bar
 ```
 
 Unlike other shells and other dynamic languages, local namespaces in Elvish are
@@ -1418,6 +1438,19 @@ Example:
 ~> b[0] = foo
 ~> put $b
 ▶ [foo y]
+```
+
+If the variable name contains any character that may not appear unquoted in
+[variable use expressions](#variable-use), it must be quoted even if it is
+otherwise a valid bareword:
+
+```elvish-transcript
+~> a/b = foo
+parse error: bad assignment LHS
+[tty 5], line 1: a/b = foo
+~> 'a/b' = foo
+~> put $'a/b'
+▶ foo
 ```
 
 Lists and maps in Elvish are immutable. As a result, when assigning to the

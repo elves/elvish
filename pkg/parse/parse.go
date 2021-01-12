@@ -201,7 +201,7 @@ func (fn *Form) parse(ps *parser) {
 				addChild(fn, NewSep(ps.src, cn.From, cn.To))
 				// Turn the head and preceding arguments into LHSs.
 				addLHS := func(cn *Compound) {
-					if len(cn.Indexings) == 1 && checkVariableInAssignment(cn.Indexings[0].Head, ps) {
+					if len(cn.Indexings) == 1 && checkVariableInAssignment(cn.Indexings[0].Head) {
 						fn.Vars = append(fn.Vars, cn)
 					} else {
 						ps.errorp(cn, errBadLHS)
@@ -265,7 +265,7 @@ type Assignment struct {
 func (an *Assignment) parse(ps *parser) {
 	ps.parse(&Indexing{ExprCtx: LHSExpr}).addAs(&an.Left, an)
 	head := an.Left.Head
-	if !checkVariableInAssignment(head, ps) {
+	if !checkVariableInAssignment(head) {
 		ps.errorp(head, errShouldBeVariableName)
 	}
 
@@ -275,27 +275,33 @@ func (an *Assignment) parse(ps *parser) {
 	ps.parse(&Compound{}).addAs(&an.Right, an)
 }
 
-func checkVariableInAssignment(p *Primary, ps *parser) bool {
-	if p.Type == Braced {
+func checkVariableInAssignment(p *Primary) bool {
+	switch p.Type {
+	case Braced:
 		// TODO(xiaq): check further inside braced expression
 		return true
-	}
-	if p.Type != Bareword && p.Type != SingleQuoted && p.Type != DoubleQuoted {
-		return false
-	}
-	if p.Value == "" {
-		return false
-	}
-	name := p.Value
-	if name[0] == '@' {
-		name = name[1:]
-	}
-	for _, r := range name {
-		if !allowedInVariableName(r) {
+	case SingleQuoted, DoubleQuoted:
+		// Quoted variable names may contain anything
+		return true
+	case Bareword:
+		// Bareword variable names may only contain runes that are valid in raw
+		// variable names
+		if p.Value == "" {
 			return false
 		}
+		name := p.Value
+		if name[0] == '@' {
+			name = name[1:]
+		}
+		for _, r := range name {
+			if !allowedInVariableName(r) {
+				return false
+			}
+		}
+		return true
+	default:
+		return false
 	}
-	return true
 }
 
 // Redir = { Compound } { '<'|'>'|'<>'|'>>' } { Space } ( '&'? Compound )
@@ -548,6 +554,12 @@ func (pn *Primary) parse(ps *parser) {
 func (pn *Primary) singleQuoted(ps *parser) {
 	pn.Type = SingleQuoted
 	ps.next()
+	pn.singleQuotedInner(ps)
+}
+
+// Parses a single-quoted string after the opening quote. Sets pn.Value but not
+// pn.Type.
+func (pn *Primary) singleQuotedInner(ps *parser) {
 	var buf bytes.Buffer
 	defer func() { pn.Value = buf.String() }()
 	for {
@@ -573,6 +585,12 @@ func (pn *Primary) singleQuoted(ps *parser) {
 func (pn *Primary) doubleQuoted(ps *parser) {
 	pn.Type = DoubleQuoted
 	ps.next()
+	pn.doubleQuotedInner(ps)
+}
+
+// Parses a double-quoted string after the opening quote. Sets pn.Value but not
+// pn.Type.
+func (pn *Primary) doubleQuotedInner(ps *parser) {
 	var buf bytes.Buffer
 	defer func() { pn.Value = buf.String() }()
 	for {
@@ -676,16 +694,25 @@ func hexToDigit(r rune) (rune, bool) {
 
 func (pn *Primary) variable(ps *parser) {
 	pn.Type = Variable
-	defer func() { pn.Value = ps.src[pn.From+1 : ps.pos] }()
 	ps.next()
-	// The character of the variable name can be anything.
-	if ps.next() == eof {
+	switch r := ps.next(); r {
+	case eof:
 		ps.backup()
 		ps.error(errShouldBeVariableName)
 		ps.next()
-	}
-	for allowedInVariableName(ps.peek()) {
-		ps.next()
+	case '\'':
+		pn.singleQuotedInner(ps)
+	case '"':
+		pn.doubleQuotedInner(ps)
+	default:
+		defer func() { pn.Value = ps.src[pn.From+1 : ps.pos] }()
+		if !allowedInVariableName(r) && r != '@' {
+			ps.backup()
+			ps.error(errShouldBeVariableName)
+		}
+		for allowedInVariableName(ps.peek()) {
+			ps.next()
+		}
 	}
 }
 

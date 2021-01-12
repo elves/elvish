@@ -51,6 +51,9 @@ New features in the language:
 -   Rest variables and rest arguments are no longer restricted to the last
     variable.
 
+-   Variables containing any character can now be assigned and used by quoting
+    their name, for example `'name!' = foo; put $'name!'`.
+
 New features in the standard library:
 
 -   A new `eval` command supports evaluating a dynamic piece of code in a
