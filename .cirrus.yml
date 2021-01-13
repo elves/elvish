@@ -60,9 +60,10 @@ test_task:
   test_script: go test $TEST_FLAG ./...
   upload_coverage_script:
     - test -z $SKIP_UPLOAD_COVERAGE || exit 0
-    - go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
-    - ./cc-test-reporter after-build -t gocov cover
-    - curl -s https://codecov.io/bash -o codecov && bash codecov -f cover -t $CODECOV_TOKEN || true
+    # cc-test-reporter requires the coverage file to be called "c.out"
+    - go test -coverprofile=c.out -coverpkg=./pkg/... ./pkg/...
+    - ./cc-test-reporter after-build -t gocov
+    - curl -s https://codecov.io/bash -o codecov && bash codecov -f c.out -t $CODECOV_TOKEN || true
 
 checkstyle_go_task:
   name: Check the style of .go files
