@@ -2,7 +2,6 @@ test_task:
   env:
     ELVISH_TEST_TIME_SCALE: 20
     CODECOV_TOKEN: e10d2e99-591b-4d2a-a8cf-8ca3e8d6df61
-    CC_TEST_REPORTER_ID: ENCRYPTED[387947360cd5d3d828de64dea04a144a5110e3aca81d2f19622a1ead22df413d85ed872090dc96b19beecdb4565d757f]
     TEST_FLAG: -race
   go_modules_cache:
     fingerprint_script: cat go.sum
@@ -11,10 +10,6 @@ test_task:
     - name: Test on Linux
       container:
         image: golang:latest
-      prepare_codeclimate_coverage_script:
-        - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-        - chmod +x ./cc-test-reporter
-        - ./cc-test-reporter before-build
     - name: Test on Linux (Old Supported Go Version)
       container:
         image: golang:1.14
@@ -39,10 +34,6 @@ test_task:
       osx_instance:
         image: catalina-base
       setup_script: brew install go
-      prepare_codeclimate_coverage_script:
-        - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-darwin-amd64 > ./cc-test-reporter
-        - chmod +x ./cc-test-reporter
-        - ./cc-test-reporter before-build
       env:
         GOPATH: $HOME/go
     - name: Test on FreeBSD
@@ -60,10 +51,8 @@ test_task:
   test_script: go test $TEST_FLAG ./...
   upload_coverage_script:
     - test -z $SKIP_UPLOAD_COVERAGE || exit 0
-    # cc-test-reporter requires the coverage file to be called "c.out"
-    - go test -coverprofile=c.out -coverpkg=./pkg/... ./pkg/...
-    - ./cc-test-reporter after-build -t gocov
-    - curl -s https://codecov.io/bash -o codecov && bash codecov -f c.out -t $CODECOV_TOKEN || true
+    - go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
+    - curl -s https://codecov.io/bash -o codecov && bash codecov -f cover -t $CODECOV_TOKEN || true
 
 checkstyle_go_task:
   name: Check the style of .go files
