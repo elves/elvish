@@ -6,11 +6,11 @@ package eval
 // the compilation phase (whereas ordinary commands can only affect the
 // evaluation phase).
 //
-// For instance, the "and" special form evaluates its arguments from left to
+// For example, the "and" special form evaluates its arguments from left to
 // right, and stops as soon as one booleanly false value is obtained: the
 // command "and $false (fail haha)" does not produce an exception.
 //
-// As another instance, the "del" special form removes a variable, affecting the
+// As another example, the "del" special form removes a variable, affecting the
 // compiler.
 //
 // Flow control structures are also implemented as special forms in elvish, with
@@ -69,20 +69,13 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 			continue
 		}
 		head, indices := cn.Indexings[0].Head, cn.Indexings[0].Indicies
-		if head.Type != parse.Bareword {
-			if head.Type == parse.Variable {
-				cp.errorpf(cn, "arguments to del must drop $")
-			} else {
-				cp.errorpf(cn, delArgMsg)
-			}
-			continue
+		if head.Type == parse.Variable {
+			cp.errorpf(cn, "arguments to del must drop $")
+		} else if !parse.ValidLHSVariable(head, false) {
+			cp.errorpf(cn, delArgMsg)
 		}
 
-		sigil, qname := SplitSigil(head.Value)
-		if sigil != "" {
-			cp.errorpf(cn, "arguments to del may not have a sigils, got %q", sigil)
-			continue
-		}
+		qname := head.Value
 		var f effectOp
 		ref := resolveVarRef(cp, qname, nil)
 		if ref == nil {

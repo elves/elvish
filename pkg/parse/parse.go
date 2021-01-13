@@ -201,7 +201,7 @@ func (fn *Form) parse(ps *parser) {
 				addChild(fn, NewSep(ps.src, cn.From, cn.To))
 				// Turn the head and preceding arguments into LHSs.
 				addLHS := func(cn *Compound) {
-					if len(cn.Indexings) == 1 && checkVariableInAssignment(cn.Indexings[0].Head) {
+					if len(cn.Indexings) == 1 && ValidLHSVariable(cn.Indexings[0].Head, true) {
 						fn.Vars = append(fn.Vars, cn)
 					} else {
 						ps.errorp(cn, errBadLHS)
@@ -265,7 +265,7 @@ type Assignment struct {
 func (an *Assignment) parse(ps *parser) {
 	ps.parse(&Indexing{ExprCtx: LHSExpr}).addAs(&an.Left, an)
 	head := an.Left.Head
-	if !checkVariableInAssignment(head) {
+	if !ValidLHSVariable(head, true) {
 		ps.errorp(head, errShouldBeVariableName)
 	}
 
@@ -275,7 +275,7 @@ func (an *Assignment) parse(ps *parser) {
 	ps.parse(&Compound{}).addAs(&an.Right, an)
 }
 
-func checkVariableInAssignment(p *Primary) bool {
+func ValidLHSVariable(p *Primary, allowSigil bool) bool {
 	switch p.Type {
 	case Braced:
 		// TODO(xiaq): check further inside braced expression
@@ -290,7 +290,7 @@ func checkVariableInAssignment(p *Primary) bool {
 			return false
 		}
 		name := p.Value
-		if name[0] == '@' {
+		if allowSigil && name[0] == '@' {
 			name = name[1:]
 		}
 		for _, r := range name {

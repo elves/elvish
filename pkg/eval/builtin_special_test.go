@@ -15,22 +15,35 @@ import (
 
 func TestDel(t *testing.T) {
 	Test(t,
-		// del - deleting variable
+		// Deleting variable
 		That("x = 1; del x").DoesNothing(),
 		That("x = 1; del x; echo $x").DoesNotCompile(),
 		That("x = 1; del :x; echo $x").DoesNotCompile(),
 		That("x = 1; del local:x; echo $x").DoesNotCompile(),
-		// del - deleting element
+		// Deleting variable whose name contains special characters
+		That("'a/b' = foo; del 'a/b'").DoesNothing(),
+		// Deleting element
 		That("x = [&k=v &k2=v2]; del x[k2]; keys $x").Puts("k"),
 		That("x = [[&k=v &k2=v2]]; del x[0][k2]; keys $x[0]").Puts("k"),
-		// del - wrong use of del
+
+		// Error cases
+
+		// Deleting nonexistent variable
 		That("del x").DoesNotCompile(),
+		// Deleting element of nonexistent variable
 		That("del x[0]").DoesNotCompile(),
-		That("ab = 1; del a'b'").DoesNotCompile(),
+		// Deleting variable in non-local namespace
 		That("del a:b").DoesNotCompile(),
+		// Variable name given with $
 		That("x = 1; del $x").DoesNotCompile(),
+		// Variable name not given as a single primary expression
+		That("ab = 1; del a'b'").DoesNotCompile(),
+		// Variable name not a string
 		That("del [a]").DoesNotCompile(),
+		// Variable name has sigil
 		That("x = []; del @x").DoesNotCompile(),
+		// Variable name not quoted when it should be
+		That("'a/b' = foo; del a/b").DoesNotCompile(),
 	)
 }
 

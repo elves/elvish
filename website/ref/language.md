@@ -1658,6 +1658,14 @@ Compilation error: variable $x not found
 [tty], line 1: echo $x
 ```
 
+If the variable name contains any character that cannot appear unquoted after
+`$`, it must be quoted, even if it is otherwise a valid bareword:
+
+```elvish-transcript
+~> 'a/b' = foo
+~> del 'a/b'
+```
+
 Deleting a variable does not affect closures that have already captured it; it
 only removes the name. Example:
 
