@@ -61,7 +61,7 @@ test_task:
   upload_coverage_script:
     - test -z $SKIP_UPLOAD_COVERAGE || exit 0
     - go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
-    - ./cc-test-reporter after-build cover
+    - ./cc-test-reporter after-build -t gocov cover
     - curl -s https://codecov.io/bash -o codecov && bash codecov -f cover -t $CODECOV_TOKEN || true
 
 checkstyle_go_task:
