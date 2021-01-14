@@ -228,6 +228,9 @@ segs:
 				if !startingStar.Match(r) {
 					break
 				}
+				if j > len(name) {
+					break
+				}
 				ok, rest := matchFixedLength(chunk, name[j:])
 				if ok && (rest == "" || len(segs) > 0) {
 					name = rest
