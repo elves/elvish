@@ -54,16 +54,34 @@ func TestGetRegions(t *testing.T) {
 
 		// LHS of assignments.
 
-		Args("x = foo").Rets([]region{
-			{0, 1, semanticRegion, variableRegion}, // x
-			{2, 3, lexicalRegion, barewordRegion},
-			{4, 7, lexicalRegion, barewordRegion},
+		Args("x y = foo bar").Rets([]region{
+			{0, 1, semanticRegion, variableRegion},  // x
+			{2, 3, semanticRegion, variableRegion},  // y
+			{4, 5, lexicalRegion, barewordRegion},   // =
+			{6, 9, lexicalRegion, barewordRegion},   // foo
+			{10, 13, lexicalRegion, barewordRegion}, // bar
 		}),
 		Args("x=foo ls").Rets([]region{
 			{0, 1, semanticRegion, variableRegion}, // x
 			{1, 2, lexicalRegion, "="},
 			{2, 5, lexicalRegion, barewordRegion}, // foo
 			{6, 8, semanticRegion, commandRegion}, // ls
+		}),
+
+		// The "var" special command
+		Args("var x = foo").Rets([]region{
+			{0, 3, semanticRegion, commandRegion},  // var
+			{4, 5, semanticRegion, variableRegion}, // x
+			{6, 7, semanticRegion, keywordRegion},  // =
+			{8, 11, lexicalRegion, barewordRegion}, // foo
+		}),
+
+		// The "set" special command
+		Args("set x = foo").Rets([]region{
+			{0, 3, semanticRegion, commandRegion},  // var
+			{4, 5, semanticRegion, variableRegion}, // x
+			{6, 7, semanticRegion, keywordRegion},  // =
+			{8, 11, lexicalRegion, barewordRegion}, // foo
 		}),
 
 		// The "if" special command.

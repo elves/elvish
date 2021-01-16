@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/parse"
 )
 
@@ -120,34 +121,49 @@ func emitRegionsInForm(n *parse.Form, f func(parse.Node, regionKind, string)) {
 			f(an.Left.Head, semanticRegion, variableRegion)
 		}
 	}
-	for i, arg := range n.Args {
-		if parse.SourceText(arg) == "=" {
-			// Highlight left hands of legacy assignment form.
-			emitVariableRegion(n.Head, f)
-			for j := 0; j < i; j++ {
-				emitVariableRegion(n.Args[j], f)
-			}
-			return
-		}
-	}
-
 	if n.Head == nil {
 		return
-	}
-	if isBarewordCompound(n.Head) {
-		f(n.Head, semanticRegion, commandRegion)
 	}
 	// Special forms.
 	// TODO: This only highlights bareword special commands, however currently
 	// quoted special commands are also possible (e.g `"if" $true { }` is
 	// accepted).
-	switch sourceText(n.Head) {
+	head := sourceText(n.Head)
+	switch head {
+	case "var", "set":
+		emitRegionsInVarSet(n, f)
 	case "if":
 		emitRegionsInIf(n, f)
 	case "for":
 		emitRegionsInFor(n, f)
 	case "try":
 		emitRegionsInTry(n, f)
+	}
+	if !eval.IsBuiltinSpecial[head] {
+		for i, arg := range n.Args {
+			if parse.SourceText(arg) == "=" {
+				// Highlight left hands of legacy assignment form.
+				emitVariableRegion(n.Head, f)
+				for j := 0; j < i; j++ {
+					emitVariableRegion(n.Args[j], f)
+				}
+				return
+			}
+		}
+	}
+	if isBarewordCompound(n.Head) {
+		f(n.Head, semanticRegion, commandRegion)
+	}
+}
+
+func emitRegionsInVarSet(n *parse.Form, f func(parse.Node, regionKind, string)) {
+	// Highlight all LHS, and = as a keyword.
+	for _, arg := range n.Args {
+		if parse.SourceText(arg) == "=" {
+			f(arg, semanticRegion, keywordRegion)
+			break
+		}
+		emitVariableRegion(arg, f)
 	}
 }
 
