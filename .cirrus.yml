@@ -1,7 +1,7 @@
 test_task:
   env:
     ELVISH_TEST_TIME_SCALE: 20
-    CODECOV_TOKEN: e10d2e99-591b-4d2a-a8cf-8ca3e8d6df61
+    CODECOV_TOKEN: ENCRYPTED[fcfbb034d9341821345216d5da5de529e582b85a2dde43da484e9827166ce1770d8e1da4ed2f32ddb7f4eb4fba593158]
     TEST_FLAG: -race
   go_modules_cache:
     fingerprint_script: cat go.sum
