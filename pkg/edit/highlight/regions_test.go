@@ -56,7 +56,7 @@ func TestGetRegions(t *testing.T) {
 
 		Args("x = foo").Rets([]region{
 			{0, 1, semanticRegion, variableRegion}, // x
-			{2, 3, lexicalRegion, "="},
+			{2, 3, lexicalRegion, barewordRegion},
 			{4, 7, lexicalRegion, barewordRegion},
 		}),
 		Args("x=foo ls").Rets([]region{

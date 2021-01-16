@@ -160,7 +160,7 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 	var assignmentOps []effectOp
 	if len(n.Assignments) > 0 {
 		assignmentOps = cp.assignmentOps(n.Assignments)
-		if n.Head == nil && n.Vars == nil {
+		if n.Head == nil {
 			// Permanent assignment.
 			return seqOp{assignmentOps}
 		}
@@ -171,58 +171,66 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 		logger.Println("temporary assignment of", len(n.Assignments), "pairs")
 	}
 
-	// Depending on the type of the form, exactly one of the three below will be
-	// set.
-	var (
-		specialOp      effectOp
-		headOp         valuesOp
-		spaceyAssignOp effectOp
-	)
+	redirOps := cp.redirOps(n.Redirs)
+	body := cp.formBody(n)
 
-	// Forward declaration; needed when compiling assignment forms.
-	var argOps []valuesOp
+	return &formOp{n.Range(), tempLValues, assignmentOps, redirOps, body}
+}
 
-	if n.Head != nil {
-		headStr, ok := oneString(n.Head)
-		argOpsNeeded := true
-		if ok {
-			special, fnRef := resolveCmdHeadInternally(cp, headStr, n.Head)
-			switch {
-			case special != nil:
-				specialOp = special(cp, n)
-				argOpsNeeded = false
-			case fnRef != nil:
-				headOp = variableOp{n.Head.Range(), false, headStr + FnSuffix, fnRef}
-			default:
-				headOp = literalValues(n.Head, NewExternalCmd(headStr))
-			}
-		} else {
-			// Head exists and is not a literal string. Evaluate as a normal
-			// expression.
-			headOp = cp.compoundOp(n.Head)
-		}
-		if argOpsNeeded {
-			argOps = cp.compoundOps(n.Args)
-		}
-	} else {
-		// Assignment form.
-		lhs := cp.parseCompoundLValues(n.Vars)
-		argOps = cp.compoundOps(n.Args)
-		var rhsRanging diag.Ranging
-		if len(argOps) > 0 {
-			rhsRanging = diag.MixedRanging(argOps[0], argOps[len(argOps)-1])
-		} else {
-			rhsRanging = diag.PointRanging(n.Range().To)
-		}
-		rhs := seqValuesOp{rhsRanging, argOps}
-		spaceyAssignOp = &assignOp{n.Range(), lhs, rhs}
+func (cp *compiler) formBody(n *parse.Form) formBody {
+	if n.Head == nil {
+		// Compiling an incomplete form node, return an empty body.
+		return formBody{}
 	}
 
-	optsOp := cp.mapPairs(n.Opts)
-	redirOps := cp.redirOps(n.Redirs)
-	// TODO: n.ErrorRedir
+	// Determine if this form is a special command.
+	if head, ok := oneString(n.Head); ok {
+		special, _ := resolveCmdHeadInternally(cp, head, n.Head)
+		if special != nil {
+			specialOp := special(cp, n)
+			return formBody{specialOp: specialOp}
+		}
+	}
 
-	return &formOp{n.Range(), tempLValues, assignmentOps, redirOps, specialOp, headOp, argOps, optsOp, spaceyAssignOp}
+	// Determine if the form is a legacy assignment form, by looking for an
+	// argument whose source is a literal "=".
+	for i, arg := range n.Args {
+		if parse.SourceText(arg) == "=" {
+			lhsNodes := make([]*parse.Compound, i+1)
+			lhsNodes[0] = n.Head
+			copy(lhsNodes[1:], n.Args[:i])
+			lhs := cp.parseCompoundLValues(lhsNodes)
+
+			rhsOps := cp.compoundOps(n.Args[i+1:])
+			var rhsRange diag.Ranging
+			if len(rhsOps) > 0 {
+				rhsRange = diag.MixedRanging(rhsOps[0], rhsOps[len(rhsOps)-1])
+			} else {
+				rhsRange = diag.PointRanging(n.Range().To)
+			}
+			rhs := seqValuesOp{rhsRange, rhsOps}
+
+			return formBody{assignOp: &assignOp{n.Range(), lhs, rhs}}
+		}
+	}
+
+	var headOp valuesOp
+	if head, ok := oneString(n.Head); ok {
+		// Head is a literal string: resolve to function or external (special
+		// commands are already handled above).
+		if _, fnRef := resolveCmdHeadInternally(cp, head, n.Head); fnRef != nil {
+			headOp = variableOp{n.Head.Range(), false, head + FnSuffix, fnRef}
+		} else {
+			headOp = literalValues(n.Head, NewExternalCmd(head))
+		}
+	} else {
+		// Head is not a literal string: evaluate as a normal expression.
+		headOp = cp.compoundOp(n.Head)
+	}
+
+	argOps := cp.compoundOps(n.Args)
+	optsOp := cp.mapPairs(n.Opts)
+	return formBody{ordinaryCmd: ordinaryCmd{headOp, argOps, optsOp}}
 }
 
 func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
@@ -235,14 +243,23 @@ func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
 
 type formOp struct {
 	diag.Ranging
-	tempLValues    []lvalue
-	assignmentOps  []effectOp
-	redirOps       []effectOp
-	specialOp      effectOp
-	headOp         valuesOp
-	argOps         []valuesOp
-	optsOp         *mapPairsOp
-	spaceyAssignOp effectOp
+	tempLValues   []lvalue
+	tempAssignOps []effectOp
+	redirOps      []effectOp
+	body          formBody
+}
+
+type formBody struct {
+	// Exactly one field will be populated.
+	specialOp   effectOp
+	assignOp    effectOp
+	ordinaryCmd ordinaryCmd
+}
+
+type ordinaryCmd struct {
+	headOp valuesOp
+	argOps []valuesOp
+	optsOp *mapPairsOp
 }
 
 func (op *formOp) exec(fm *Frame) (errRet Exception) {
@@ -274,7 +291,7 @@ func (op *formOp) exec(fm *Frame) (errRet Exception) {
 			logger.Printf("saved %s = %s", v, val)
 		}
 		// Do assignment.
-		for _, subop := range op.assignmentOps {
+		for _, subop := range op.tempAssignOps {
 			exc := subop.exec(fm)
 			if exc != nil {
 				return exc
@@ -300,7 +317,7 @@ func (op *formOp) exec(fm *Frame) (errRet Exception) {
 		}()
 	}
 
-	// redirs
+	// Redirections.
 	for _, redirOp := range op.redirOps {
 		exc := redirOp.exec(fm)
 		if exc != nil {
@@ -308,34 +325,38 @@ func (op *formOp) exec(fm *Frame) (errRet Exception) {
 		}
 	}
 
-	if op.specialOp != nil {
-		return op.specialOp.exec(fm)
+	if op.body.specialOp != nil {
+		return op.body.specialOp.exec(fm)
 	}
-	var headFn Callable
+	if op.body.assignOp != nil {
+		return op.body.assignOp.exec(fm)
+	}
+
+	// Ordinary command: evaluate head, arguments and options.
+	cmd := op.body.ordinaryCmd
+
+	// Special case: evaluating an incomplete form node. Return directly.
+	if cmd.headOp == nil {
+		return nil
+	}
+
+	headFn, err := evalForCommand(fm, cmd.headOp, "command")
+	if err != nil {
+		return fm.errorp(cmd.headOp, err)
+	}
+
 	var args []interface{}
-	if op.headOp != nil {
-		var err error
-		// head
-		headFn, err = evalForCommand(fm, op.headOp, "command")
-		if err != nil {
-			return fm.errorp(op.headOp, err)
+	for _, argOp := range cmd.argOps {
+		moreArgs, exc := argOp.exec(fm)
+		if exc != nil {
+			return exc
 		}
-
-		// args
-		for _, argOp := range op.argOps {
-			moreArgs, exc := argOp.exec(fm)
-			if exc != nil {
-				return exc
-			}
-			args = append(args, moreArgs...)
-		}
+		args = append(args, moreArgs...)
 	}
 
-	// opts
 	// TODO(xiaq): This conversion should be avoided.
-
 	convertedOpts := make(map[string]interface{})
-	exc := op.optsOp.exec(fm, func(k, v interface{}) Exception {
+	exc := cmd.optsOp.exec(fm, func(k, v interface{}) Exception {
 		if ks, ok := k.(string); ok {
 			convertedOpts[ks] = v
 			return nil
@@ -348,15 +369,12 @@ func (op *formOp) exec(fm *Frame) (errRet Exception) {
 		return exc
 	}
 
-	if headFn != nil {
-		fm.traceback = fm.addTraceback(op)
-		err := headFn.Call(fm, args, convertedOpts)
-		if exc, ok := err.(Exception); ok {
-			return exc
-		}
-		return &exception{err, fm.traceback}
+	fm.traceback = fm.addTraceback(op)
+	err = headFn.Call(fm, args, convertedOpts)
+	if exc, ok := err.(Exception); ok {
+		return exc
 	}
-	return op.spaceyAssignOp.exec(fm)
+	return &exception{err, fm.traceback}
 }
 
 func evalForCommand(fm *Frame, op valuesOp, what string) (Callable, error) {

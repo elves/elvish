@@ -152,11 +152,9 @@ type Form struct {
 	node
 	Assignments []*Assignment
 	Head        *Compound
-	// Left-hand-sides for the spacey assignment. Right-hand-sides are in Args.
-	Vars   []*Compound
-	Args   []*Compound
-	Opts   []*MapPair
-	Redirs []*Redir
+	Args        []*Compound
+	Opts        []*MapPair
+	Redirs      []*Redir
 }
 
 func (fn *Form) parse(ps *parser) {
@@ -195,29 +193,6 @@ func (fn *Form) parse(ps *parser) {
 			if isRedirSign(ps.peek()) {
 				// Redir
 				ps.parse(&Redir{Left: cn}).addTo(&fn.Redirs, fn)
-			} else if cn.sourceText == "=" {
-				// Spacey assignment.
-				// Turn the equal sign into a Sep.
-				addChild(fn, NewSep(ps.src, cn.From, cn.To))
-				// Turn the head and preceding arguments into LHSs.
-				addLHS := func(cn *Compound) {
-					if len(cn.Indexings) == 1 && ValidLHSVariable(cn.Indexings[0].Head, true) {
-						fn.Vars = append(fn.Vars, cn)
-					} else {
-						ps.errorp(cn, errBadLHS)
-					}
-				}
-				if fn.Head != nil {
-					addLHS(fn.Head)
-				} else {
-					// TODO(xiaq): Should use the entire assignment form as the range.
-					ps.errorp(cn, errChainedAssignment)
-				}
-				fn.Head = nil
-				for _, cn := range fn.Args {
-					addLHS(cn)
-				}
-				fn.Args = nil
 			} else {
 				parsed{cn}.addTo(&fn.Args, fn)
 			}

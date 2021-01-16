@@ -120,15 +120,17 @@ func emitRegionsInForm(n *parse.Form, f func(parse.Node, regionKind, string)) {
 			f(an.Left.Head, semanticRegion, variableRegion)
 		}
 	}
-	// Left hands of ordinary assignments.
-	for _, cn := range n.Vars {
-		// NOTE: In a well-formed assignment, cn.Indexings will have at most 1
-		// element. For instance, "x[0]y[1] = value" is not well-formed and will
-		// result in a parse error.
-		if len(cn.Indexings) > 0 && cn.Indexings[0].Head != nil {
-			f(cn.Indexings[0].Head, semanticRegion, variableRegion)
+	for i, arg := range n.Args {
+		if parse.SourceText(arg) == "=" {
+			// Highlight left hands of legacy assignment form.
+			emitVariableRegion(n.Head, f)
+			for j := 0; j < i; j++ {
+				emitVariableRegion(n.Args[j], f)
+			}
+			return
 		}
 	}
+
 	if n.Head == nil {
 		return
 	}
@@ -146,6 +148,14 @@ func emitRegionsInForm(n *parse.Form, f func(parse.Node, regionKind, string)) {
 		emitRegionsInFor(n, f)
 	case "try":
 		emitRegionsInTry(n, f)
+	}
+}
+
+func emitVariableRegion(n *parse.Compound, f func(parse.Node, regionKind, string)) {
+	// Only handle valid LHS here. Invalid LHS will result in a compile error
+	// and highlighted as an error accordingly.
+	if n != nil && len(n.Indexings) == 1 && n.Indexings[0].Head != nil {
+		f(n.Indexings[0].Head, semanticRegion, variableRegion)
 	}
 }
 

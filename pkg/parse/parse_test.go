@@ -43,14 +43,6 @@ var goodCases = []struct {
 	{"k=v k[a][b]=v a", ast{"Chunk/Pipeline/Form", fs{
 		"Assignments": []string{"k=v", "k[a][b]=v"},
 		"Head":        "a"}}},
-	// Spacey assignment.
-	{"k=v a b @rest = c d", ast{"Chunk/Pipeline/Form", fs{
-		"Assignments": []string{"k=v"},
-		"Vars":        []string{"a", "b", "@rest"},
-		"Args":        []string{"c", "d"}}}},
-	{"'a/b' = foo", ast{"Chunk/Pipeline/Form", fs{
-		"Vars": []string{"'a/b'"},
-		"Args": []string{"foo"}}}},
 	// Redirections
 	{"a >b", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",
@@ -345,12 +337,6 @@ var parseErrorTests = []struct {
 	{src: "a {", errAtEnd: true, errMsg: "should be ',' or '}'"},
 	// Bogus ampersand in form.
 	{src: "a & &", errPart: "&", errMsg: "unexpected rune '&'"},
-	// Bad assignment LHS.
-	{src: "a'b' = x", errPart: "a'b'", errMsg: "bad assignment LHS"},
-	{src: "$a = x", errPart: "$a", errMsg: "bad assignment LHS"},
-	{src: "a/b = x", errPart: "a/b", errMsg: "bad assignment LHS"},
-	// Chained assignment.
-	{src: "a = b = c", errPart: "=", errMsg: "chained assignment not yet supported"},
 	// No redirection source.
 	{src: "a >", errAtEnd: true, errMsg: "should be a composite term representing filename"},
 	{src: "a >&", errAtEnd: true, errMsg: "should be a composite term representing fd"},
