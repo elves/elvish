@@ -7,11 +7,62 @@ import (
 
 	. "github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/errs"
+	"github.com/elves/elvish/pkg/eval/vals"
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/testutil"
 )
+
+func TestVar(t *testing.T) {
+	Test(t,
+		// Declaring one variable
+		That("var x", "put $x").Puts(nil),
+		// Declaring one variable whose name needs to be quoted
+		That("var 'a/b'", "put $'a/b'").Puts(nil),
+		// Declaring multiple variables
+		That("var x y", "put $x $y").Puts(nil, nil),
+		// Declaring one variable with initial value
+		That("var x = foo", "put $x").Puts("foo"),
+		// Declaring multiple variables with initial values
+		That("var x y = foo bar", "put $x $y").Puts("foo", "bar"),
+		// Declaring multiple variables with initial values, including a rest
+		// variable in the assignment LHS
+		That("var x @y z = a b c d", "put $x $y $z").
+			Puts("a", vals.MakeList("b", "c"), "d"),
+		// An empty RHS is technically legal although rarely useful.
+		That("var @x =", "put $x").Puts(vals.EmptyList),
+		// Shadowing.
+		That("var x = old; fn f { put $x }", "var x = new; put $x; f").
+			Puts("new", "old"),
+
+		// Variable name that must be quoted after $ must be quoted
+		That("var a/b").DoesNotCompile(),
+		// Multiple @ not allowed
+		That("var x @y @z = a b c d").DoesNotCompile(),
+		// Namespace not allowed
+		That("var local:a").DoesNotCompile(),
+		// Index not allowed
+		That("var a[0]").DoesNotCompile(),
+		// Composite expression not allowed
+		That("var a'b'").DoesNotCompile(),
+	)
+}
+
+func TestSet(t *testing.T) {
+	Test(t,
+		// Setting one variable
+		That("var x; set x = foo", "put $x").Puts("foo"),
+		// An empty RHS is technically legal although rarely useful.
+		That("var x; set @x =", "put $x").Puts(vals.EmptyList),
+		// Not duplicating tests with TestCommand_Assignment.
+		//
+		// TODO: After legacy assignment form is removed, transfer tests here.
+
+		// = is required.
+		That("var x; set x").DoesNotCompile(),
+	)
+}
 
 func TestDel(t *testing.T) {
 	Test(t,

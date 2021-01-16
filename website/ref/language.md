@@ -67,7 +67,7 @@ The following characters are parsed as metacharacters under certain conditions:
     [tilde expansion](#tilde-expansion);
 
 -   `=` is a metacharacter when used for terminating [map keys](#map) or option
-    keys, or denoting [ordinary assignments](#ordinary-assignment) or
+    keys, or denoting [legacy assignment form](#legacy-assignment-form) or
     [temporary assignments](#temporary-assignment).
 
 ## Single-quoted string
@@ -585,7 +585,8 @@ A variable is a named storage location for holding a value. The following
 characters can be used in variable names (a subset of bareword characters)
 without quoting:
 
-A variable exist after its first [assignment](#ordinary-assignment), and its
+A variable exist after it is declared (either explicitly using [`var`](#var) or
+implicitly using the [legacy assignment form](#legacy-assignment-form)), and its
 value may be mutated by further assignments. It can be [used](#variable-use) as
 an expression or part of an expression.
 
@@ -1264,8 +1265,8 @@ To force a particular order of evaluation, group expressions using a
 
 A **command form** is either an [ordinary command](#ordinary-command), a
 [special command](#special-command) or an
-[ordinary assignment](#ordinary-assignment). All of three different types can
-have [redirections](#redirection).
+[legacy assignment form](#legacy-assignment-form). All of three different types
+can have [redirections](#redirection).
 
 When Elvish parses a command form, it applies the following process to decide
 its type:
@@ -1381,91 +1382,18 @@ A **special command** form has the same syntax with an ordinary command, but how
 it is executed depends on the command head. See
 [special commands](#special-commands).
 
-## Ordinary assignment
+## Legacy assignment form
 
-An **orindary assignment** form consists of one or more **lvalues**, followed by
-an equal sign (`=`) and zero or more expressions. The equal sign must appear
-unquoted, and surrounded by inline whitespaces on **both sides**.
+If any argument in a command form is an unquoted equal sign (`=`), the command
+form is treated as an assignment form: the arguments to the left of `=`,
+including the head, are treated as lvalues, and the arguments to the right of
+`=` are treated as values to assign to those lvalues.
 
-When executed, an ordinary assignment form assigns all the values at the right
-hand to all the lvalues at the left hand. An **lvalue** is one of the following:
+If any lvalue refers to a variable that doesn't yet exist, it is created first.
 
--   A variable name (without `$`), for assigning to the variable. The variable
-    is created is if it doesn't exist yet.
-
--   A variable name prefixed with `@`, for packing a variable number of values
-    into a list and assigning to the variable. The variable is created if it
-    doesn't exist yet.
-
-    This variant is called a **rest variable**. In an ordinary assignment form,
-    there could be at most one rest variable.
-
-    **Note**: Schematically this is the reverse operation of exploding a
-    variable when [using](#variable-use) it, which is why they share the `@`
-    sign.
-
--   A variable name followed by one or more indices in brackets (`[]`), for
-    assigning to an element. The variable must already exist.
-
-The number of values and lvalues must be compatible. To be more exact:
-
--   If there is no rest variable, the number of values and lvalues must match
-    exactly.
-
--   If there is a rest variable, the number of values should be at least the
-    number of lvalues minus one.
-
-Example:
-
-```elvish-transcript
-~> foo = bar
-~> put $foo
-▶ bar
-~> x y = lorem ipsum
-~> put $x $y
-▶ lorem
-▶ ipsum
-~> a @b c = x y
-~> put $a $b $c
-▶ x
-▶ []
-▶ y
-~> a @b c = w x y z
-~> put $a $b $c
-▶ w
-▶ [x y]
-▶ z
-~> b[0] = foo
-~> put $b
-▶ [foo y]
-```
-
-If the variable name contains any character that may not appear unquoted in
-[variable use expressions](#variable-use), it must be quoted even if it is
-otherwise a valid bareword:
-
-```elvish-transcript
-~> a/b = foo
-parse error: bad assignment LHS
-[tty 5], line 1: a/b = foo
-~> 'a/b' = foo
-~> put $'a/b'
-▶ foo
-```
-
-Lists and maps in Elvish are immutable. As a result, when assigning to the
-element of a variable that contains a list or map, Elvish does not mutate the
-underlying list or map. Instead, Elvish creates a new list or map with the
-mutation applied, and assigns it to the variable. Example:
-
-```elvish-transcript
-~> li = [foo bar]
-~> li2 = $li
-~> li[0] = lorem
-~> put $li $li2
-▶ [lorem bar]
-▶ [foo bar]
-```
+This is a legacy syntax that will be deprecated in future. Use the [`var`](#var)
+special command to declare variables, and the [`set`](#set) special command set
+the values of variables.
 
 ## Temporary assignment
 
@@ -1640,7 +1568,141 @@ If `or` were a normal command, the code above is still syntactically correct.
 However, Elvish would then evaluate all its arguments, with the side effect of
 outputting `x`, `y` and `z`, before calling `or`.
 
-## Deleting variable or element: `del`
+## Declaring variables: `var` {#var}
+
+The `var` special command declares local variables. It takes any number of
+unqualified variable names (without the leading `$`). The variables will start
+out having value `$nil`. Examples:
+
+```elvish-transcript
+~> var a
+~> put $a
+▶ $nil
+~> var foo bar
+~> put $foo $bar
+▶ $nil
+▶ $nil
+```
+
+To set alternative initial values, add an unquoted `=` and the initial values.
+Examples:
+
+```elvish-transcript
+~> var a b = foo bar
+~> put $a $b
+▶ foo
+▶ bar
+```
+
+Similar to [`set`](#set), at most one of variables may be prefixed with `@` to
+function as a rest variable.
+
+When declaring a variable that already exists, the existing variable is
+shadowed. The shadowed variable may still be accessed indirectly if it is
+referenced by a function. Example:
+
+```elvish-transcript
+~> var x = old
+~> fn f { put $x }
+~> var x = new
+~> put $x
+▶ new
+~> f
+▶ old
+```
+
+## Setting the value of variables or elements: `set` {#set}
+
+The `set` special command sets the value of variables or elements.
+
+It takes any number of **lvalues** (which refer to either variables or
+elements), followed by an equal sign (`=`) and any number of expressions. The
+equal sign must appear unquoted, as a single argument.
+
+An **lvalue** is one of the following:
+
+-   A variable name (without `$`).
+
+-   A variable name prefixed with `@`, for packing a variable number of values
+    into a list and assigning to the variable.
+
+    This variant is called a **rest variable**. There could be at most one rest
+    variable.
+
+    **Note**: Schematically this is the reverse operation of exploding a
+    variable when [using](#variable-use) it, which is why they share the `@`
+    sign.
+
+-   A variable name followed by one or more indices in brackets (`[]`), for
+    assigning to an element.
+
+The number of values the expressions evaluate to and lvalues must be compatible.
+To be more exact:
+
+-   If there is no rest variable, the number of values and lvalues must match
+    exactly.
+
+-   If there is a rest variable, the number of values should be at least the
+    number of lvalues minus one.
+
+All the variables to set must already exist; use the [`var`](#var) special
+command to declare new variables.
+
+Examples:
+
+```elvish-transcript
+~> var x y z
+~> set x = foo
+~> put $x
+▶ foo
+~> x y = lorem ipsum
+~> put $x $y
+▶ lorem
+▶ ipsum
+~> set x @y z = a b
+~> put $x $y $z
+▶ a
+▶ []
+▶ b
+~> set x @y z = a b c d
+~> put $x $y $z
+▶ a
+▶ [b c]
+▶ d
+~> set y[0] = foo
+~> put $y
+▶ [foo c]
+```
+
+If the variable name contains any character that may not appear unquoted in
+[variable use expressions](#variable-use), it must be quoted even if it is
+otherwise a valid bareword:
+
+```elvish-transcript
+~> var 'a/b'
+~> set a/b = foo
+compilation error: lvalue must be valid literal variable names
+[tty 23], line 1: a/b = foo
+~> set 'a/b' = foo
+~> put $'a/b'
+▶ foo
+```
+
+Lists and maps in Elvish are immutable. As a result, when assigning to the
+element of a variable that contains a list or map, Elvish does not mutate the
+underlying list or map. Instead, Elvish creates a new list or map with the
+mutation applied, and assigns it to the variable. Example:
+
+```elvish-transcript
+~> var li = [foo bar]
+~> var li2 = $li
+~> set li[0] = lorem
+~> put $li $li2
+▶ [lorem bar]
+▶ [foo bar]
+```
+
+## Deleting variables or elements: `del` {#del}
 
 The `del` special command can be used to delete variables or map elements.
 Operands should be specified without a leading dollar sign, like the left-hand
@@ -1690,7 +1752,7 @@ Example of deleting map element:
 ▶ [[&k=v]]
 ```
 
-## Logics: `and` and `or`
+## Logics: `and` and `or` {#and-or}
 
 The `and` special command evaluates its arguments from left to right; as soon as
 a booleanly false value is obtained, it outputs the value and stops. When given
@@ -1699,7 +1761,7 @@ no arguments, it outputs `$true`.
 The `or` special command is the same except that it stops when a booleanly true
 value is obtained. When given no arguments, it outpus `$false`.
 
-## Condition: `if`
+## Condition: `if` {#if}
 
 **TODO**: Document the syntax notation, and add more examples.
 
@@ -1758,7 +1820,7 @@ if ?(test -d .git) {
 However, for Elvish's builtin predicates that output values instead of throw
 exceptions, the output capture construct `()` should be used.
 
-## Conditional Loop: `while`
+## Conditional loop: `while` {#while}
 
 Syntax:
 
@@ -1775,7 +1837,7 @@ Execute the body as long as the condition evaluates to a booleanly true value.
 The else body, if present, is executed if the body has never been executed (i.e.
 the condition evaluates to a booleanly false value in the very beginning).
 
-## Iterative Loop: `for`
+## Iterative loop: `for` {#for}
 
 Syntax:
 
@@ -1793,7 +1855,7 @@ an element of the container and execute the body.
 The else body, if present, is executed if the body has never been executed (i.e.
 the iteration value has no elements).
 
-## Exception Control: `try`
+## Exception control: `try` {#try}
 
 (If you just want to capture the exception, you can use the more concise
 exception capture construct `?()` instead.)
@@ -1878,7 +1940,7 @@ Traceback:
     try { fail bad } except e { fail worse } finally { fail worst }
 ```
 
-## Function Definition: `fn`
+## Function definition: `fn` {#fn}
 
 Syntax:
 
@@ -1926,7 +1988,7 @@ Under the hood, `fn` defines a variable with the given name plus `~` (see
 A **pipeline** is formed by joining one or more commands together with the pipe
 sign (`|`).
 
-## IO Semantics
+## IO semantics
 
 For each pair of adjacent commands `a | b`, the output of `a` is connected to
 the input of `b`. Both the byte pipe and the value channel are connected, even
@@ -1941,7 +2003,7 @@ the following writes `foo` to `a.txt` instead of the output:
 foo
 ```
 
-## Execution Flow
+## Execution flow
 
 All of the commands in a pipeline are executed in parallel, and the execution of
 the pipeline finishes when all of its commands finish execution.
@@ -1956,7 +2018,7 @@ have thrown an exception:
 -   If more than one commands have thrown exceptions, a "composite exception",
     containing information all exceptions involved, is thrown.
 
-## Background Pipeline
+## Background pipeline
 
 Adding an ampersand `&` to the end of a pipeline will cause it to be executed in
 the background. In this case, the rest of the code chunk will continue to
@@ -2036,7 +2098,7 @@ Namespaces may be nested; for example, calling `edit:location:start` first finds
 the `edit:` namespace, and then the `location:` namespace inside it, and then
 call the `start` function within the nested namespace.
 
-## Special Namespaces
+## Special namespaces
 
 The following namespaces have special meanings to the language:
 
@@ -2090,7 +2152,7 @@ use a/b/c # imports the "a/b/c" module as "c:"
 use a/b/c foo # imports the "a/b/c" module as "foo:"
 ```
 
-### Pre-Defined Modules
+### Pre-defined modules
 
 Elvish's standard library provides the following pre-defined modules that can be
 imported by `use`:
@@ -2106,7 +2168,7 @@ imported by `use`:
 The [edit](edit.html) module is available in interactive module. As a special
 case, it does not need importing, but this may change in the future.
 
-### User-Defined Modules
+### User-defined modules
 
 You can define your own modules in Elvish by putting them under `~/.elvish/lib`
 and giving them a `.elv` extension. For instance, to define a module named `a`,
@@ -2177,7 +2239,7 @@ imports**. When `use` is invoked from a file, this will import the file relative
 to the location of the file. When `use` is invoked at the interactive prompt,
 this will import the file relative to the current working directory.
 
-### Scoping of Imports
+### Scoping of imports
 
 Namespace imports are lexically scoped. For instance, if you `use` a module
 within an inner scope, it is not available outside that scope:
@@ -2204,7 +2266,7 @@ fn ls [@a]{
 That definition is not visible in module files: `ls` will still refer to the
 external command `ls`, unless you shadow it in the very same module.
 
-### Re-Importing
+### Re-importing
 
 Modules are cached after one import. Subsequent imports do not re-execute the
 module; they only serve the bring it into the current scope. Moreover, the cache

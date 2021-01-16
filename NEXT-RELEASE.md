@@ -45,6 +45,12 @@ The following deprecated features trigger a warning when the code is evaluated:
 
 New features in the language:
 
+-   A new `var` special command can be used to explicitly declare variables, and
+    optionally assign them initial values.
+
+-   A new `set` special command can be used to set the values of variables or
+    elements.
+
 -   Slice indices can now use `..` for left-closed, right-open ranges, and `..=`
     for closed ranges.
 

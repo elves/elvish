@@ -54,7 +54,10 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing) lvaluesGroup {
 		return cp.parseCompoundLValues(n.Head.Braced)
 	}
 	// A basic lvalue.
-	varUse := cp.literal(n.Head, "lvalue only supports literal variable names")
+	if !parse.ValidLHSVariable(n.Head, true) {
+		cp.errorpf(n.Head, "lvalue must be valid literal variable names")
+	}
+	varUse := n.Head.Value
 	sigil, qname := SplitSigil(varUse)
 	var ref *varRef
 	if len(n.Indicies) == 0 {

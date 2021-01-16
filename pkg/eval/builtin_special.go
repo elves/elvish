@@ -43,11 +43,16 @@ func (err noSuchModule) Error() string { return "no such module: " + err.spec }
 func init() {
 	// Needed to avoid initialization loop
 	builtinSpecials = map[string]compileBuiltin{
-		"del":   compileDel,
-		"fn":    compileFn,
-		"use":   compileUse,
-		"and":   compileAnd,
-		"or":    compileOr,
+		"var": compileVar,
+		"set": compileSet,
+		"del": compileDel,
+		"fn":  compileFn,
+
+		"use": compileUse,
+
+		"and": compileAnd,
+		"or":  compileOr,
+
 		"if":    compileIf,
 		"while": compileWhile,
 		"for":   compileFor,
@@ -58,9 +63,79 @@ func init() {
 	}
 }
 
+// VarForm = 'var' { VariablePrimary } [ '=' { Compound } ]
+func compileVar(cp *compiler, fn *parse.Form) effectOp {
+	lhs := lvaluesGroup{rest: -1}
+	for i, cn := range fn.Args {
+		if parse.SourceText(cn) == "=" {
+			var rhs valuesOp
+			if i == len(fn.Args)-1 {
+				rhs = nopValuesOp{diag.PointRanging(fn.Range().To)}
+			} else {
+				rhs = seqValuesOp{
+					diag.MixedRanging(fn.Args[i+1], fn.Args[len(fn.Args)-1]),
+					cp.compoundOps(fn.Args[i+1:])}
+			}
+			return &assignOp{fn.Range(), lhs, rhs}
+		}
+		if len(cn.Indexings) != 1 {
+			cp.errorpf(cn, "variable name must be a single string literal")
+		}
+		if len(cn.Indexings[0].Indicies) > 0 {
+			cp.errorpf(cn, "variable name must not have indicies")
+		}
+		pn := cn.Indexings[0].Head
+		if !parse.ValidLHSVariable(pn, true) {
+			cp.errorpf(cn, "invalid variable name")
+		}
+
+		name := pn.Value
+		if strings.Contains(name, NsSuffix) {
+			cp.errorpf(cn, "variable declared in var must be unqualified")
+		}
+		sigil, name := SplitSigil(name)
+		if sigil == "@" {
+			if lhs.rest != -1 {
+				cp.errorpf(cn, "multiple variable names with @ not allowed")
+			}
+			lhs.rest = i
+		}
+		slotIndex := cp.thisScope().add(name)
+		lhs.lvalues = append(lhs.lvalues,
+			lvalue{cn.Range(), &varRef{localScope, slotIndex, nil}, nil, nil})
+	}
+	// If there is no assignment, there is no work to be done at eval-time.
+	return nopOp{}
+}
+
+// SetForm = 'set' { LHS } '=' { Compound }
+func compileSet(cp *compiler, fn *parse.Form) effectOp {
+	eq := -1
+	for i, cn := range fn.Args {
+		if parse.SourceText(cn) == "=" {
+			eq = i
+			break
+		}
+	}
+	if eq == -1 {
+		cp.errorpf(diag.PointRanging(fn.Range().To), "need = and right-hand-side")
+	}
+	lhs := cp.parseCompoundLValues(fn.Args[:eq])
+	var rhs valuesOp
+	if eq == len(fn.Args)-1 {
+		rhs = nopValuesOp{diag.PointRanging(fn.Range().To)}
+	} else {
+		rhs = seqValuesOp{
+			diag.MixedRanging(fn.Args[eq+1], fn.Args[len(fn.Args)-1]),
+			cp.compoundOps(fn.Args[eq+1:])}
+	}
+	return &assignOp{fn.Range(), lhs, rhs}
+
+}
+
 const delArgMsg = "arguments to del must be variable or variable elements"
 
-// DelForm = 'del' { VariablePrimary }
+// DelForm = 'del' { LHS }
 func compileDel(cp *compiler, fn *parse.Form) effectOp {
 	var ops []effectOp
 	for _, cn := range fn.Args {

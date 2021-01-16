@@ -569,6 +569,10 @@ func (op seqValuesOp) exec(fm *Frame) ([]interface{}, Exception) {
 	return values, nil
 }
 
+type nopValuesOp struct{ diag.Ranging }
+
+func (nopValuesOp) exec(fm *Frame) ([]interface{}, Exception) { return nil, nil }
+
 func evalForValue(fm *Frame, op valuesOp, what string) (interface{}, Exception) {
 	values, exc := op.exec(fm)
 	if exc != nil {

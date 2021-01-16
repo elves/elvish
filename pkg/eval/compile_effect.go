@@ -616,3 +616,7 @@ func (op seqOp) exec(fm *Frame) Exception {
 	}
 	return nil
 }
+
+type nopOp struct{}
+
+func (nopOp) exec(fm *Frame) Exception { return nil }
