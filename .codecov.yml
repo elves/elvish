@@ -5,3 +5,12 @@ coverage:
         threshold: 0.1%
     patch: off
 comment: false
+ignore:
+  # Exclude test helpers from coverage calculation.
+  - "pkg/cli/clitest"
+  - "pkg/eval/evaltest"
+  - "pkg/prog/progtest"
+  - "pkg/store/storetest"
+  - "pkg/testutil/must.go"
+  # The web UI is not being worked on now, also exclude it.
+  - "pkg/web"
