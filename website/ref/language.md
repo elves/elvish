@@ -2155,18 +2155,20 @@ use a/b/c foo # imports the "a/b/c" module as "foo:"
 ### Pre-defined modules
 
 Elvish's standard library provides the following pre-defined modules that can be
-imported by `use`:
+imported by the `use` command:
 
--   The following modules are always available: [daemon](daemon.html),
-    [epm](epm.html), [math](math.html), [platform](platform.html),
-    [str](str.html), [re](re.html), [readline-binding](readline-binding.html),
-    [store](store.html).
-
--   The [unix](unix.html) module is available on UNIX-like platforms (see
-    [`$platform:is-unix`](platform.html#platformis-unix)).
-
-The [edit](edit.html) module is available in interactive module. As a special
-case, it does not need importing, but this may change in the future.
+-   [edit](edit.html) is only available in interactive mode. As a special case
+    it does not need importing via `use`, but this may change in the future.
+-   [epm](epm.html)
+-   [math](math.html)
+-   [path](path.html)
+-   [platform](platform.html)
+-   [re](re.html)
+-   [readline-binding](readline-binding.html)
+-   [store](store.html)
+-   [str](str.html)
+-   [unix](unix.html) is only available on UNIX-like platforms (see
+    [`$platform:is-unix`](platform.html#platformis-unix))
 
 ### User-defined modules
 

@@ -205,6 +205,20 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 		msg = `the "has-suffix" command is deprecated; use "str:has-suffix" instead`
 	case "esleep~":
 		msg = `the "esleep" command is deprecated; use "sleep" instead`
+	case "eval-symlinks~":
+		msg = `the "eval-symlinks" command is deprecated; use "path:eval-symlinks" instead`
+	case "path-abs~":
+		msg = `the "path-abs" command is deprecated; use "path:abs" instead`
+	case "path-base~":
+		msg = `the "path-base" command is deprecated; use "path:base" instead`
+	case "path-clean~":
+		msg = `the "path-clean" command is deprecated; use "path:clean" instead`
+	case "path-dir~":
+		msg = `the "path-dir" command is deprecated; use "path:dir" instead`
+	case "path-ext~":
+		msg = `the "path-ext" command is deprecated; use "path:ext" instead`
+	case "-is-dir~":
+		msg = `the "-is-dir" command is deprecated; use "path:is-dir" instead`
 	default:
 		return
 	}
