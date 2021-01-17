@@ -2,6 +2,7 @@ package fsutil
 
 import (
 	"fmt"
+	"path/filepath"
 	"sort"
 	"testing"
 
@@ -15,7 +16,7 @@ var claimFileTests = []struct {
 }{
 	{".", "a*.log", "a9.log"},
 	{".", "*.txt", "1.txt"},
-	{"d", "*.txt", "d/1.txt"},
+	{"d", "*.txt", filepath.Join("d", "1.txt")},
 }
 
 func TestClaimFile(t *testing.T) {
