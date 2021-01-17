@@ -86,6 +86,9 @@ New features in the standard library:
 
 New features in the interactive editor:
 
+-   The new commands `edit:add-var` and `edit:add-vars` provide an API for
+    manipulating the REPL's namespace from anywhere.
+
 -   SGR escape sequences written from the prompt callback are now supported.
 
 New features in the main program:

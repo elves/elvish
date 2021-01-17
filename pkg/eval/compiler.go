@@ -77,7 +77,7 @@ func (op nsOp) prepareNs(fm *Frame) {
 		newLocal := &Ns{make([]vars.Var, n), op.template.names, op.template.deleted}
 		copy(newLocal.slots, fm.local.slots)
 		for i := len(fm.local.names); i < n; i++ {
-			newLocal.slots[i] = makeVarFromName(newLocal.names[i])
+			newLocal.slots[i] = MakeVarFromName(newLocal.names[i])
 		}
 		fm.local = newLocal
 	} else {

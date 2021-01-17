@@ -133,7 +133,7 @@ func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 	offset += len(c.OptNames)
 	for i, name := range c.NewLocal {
 		local.names[offset+i] = name
-		local.slots[offset+i] = makeVarFromName(name)
+		local.slots[offset+i] = MakeVarFromName(name)
 	}
 
 	fm.local = local
@@ -141,7 +141,9 @@ func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 	return c.Op.exec(fm)
 }
 
-func makeVarFromName(name string) vars.Var {
+// MakeVarFromName creates a Var with a suitable type constraint inferred from
+// the name.
+func MakeVarFromName(name string) vars.Var {
 	switch {
 	case strings.HasSuffix(name, FnSuffix):
 		val := Callable(nil)
