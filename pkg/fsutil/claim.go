@@ -55,7 +55,7 @@ func ClaimFile(dir, pattern string) (*os.File, error) {
 
 	for i := max + 1; ; i++ {
 		name := filepath.Join(dir, prefix+strconv.Itoa(i)+suffix)
-		f, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE, 0666)
+		f, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 		if err == nil {
 			return f, nil
 		}

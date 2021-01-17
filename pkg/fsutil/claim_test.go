@@ -1,44 +1,72 @@
 package fsutil
 
 import (
-	"os"
+	"fmt"
+	"sort"
 	"testing"
 
-	"github.com/elves/elvish/pkg/testutil"
+	. "github.com/elves/elvish/pkg/testutil"
 )
 
 var claimFileTests = []struct {
+	dir          string
 	pattern      string
 	wantFileName string
 }{
-	{"a*.log", "a9.log"},
-	{"*.txt", "1.txt"},
+	{".", "a*.log", "a9.log"},
+	{".", "*.txt", "1.txt"},
+	{"d", "*.txt", "d/1.txt"},
 }
 
 func TestClaimFile(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
+	_, cleanup := InTestDir()
 	defer cleanup()
 
-	touch("a0.log")
-	touch("a1.log")
-	touch("a8.log")
+	ApplyDir(Dir{
+		"a0.log": "",
+		"a1.log": "",
+		"a8.log": "",
+		"d":      Dir{}})
 
 	for _, test := range claimFileTests {
-		f, err := ClaimFile(".", test.pattern)
-		if err != nil {
-			t.Errorf("ClaimFile errors: %v", err)
-		}
-		defer f.Close()
-		if f.Name() != test.wantFileName {
-			t.Errorf("ClaimFile claims %s, want %s", f.Name(), test.wantFileName)
+		name := claimFileAndGetName(test.dir, test.pattern)
+		if name != test.wantFileName {
+			t.Errorf("ClaimFile claims %s, want %s", name, test.wantFileName)
 		}
 	}
 }
 
-func touch(fname string) {
-	f, err := os.Create(fname)
-	if err != nil {
-		panic(err)
+func TestClaimFile_Concurrent(t *testing.T) {
+	_, cleanup := InTestDir()
+	defer cleanup()
+
+	n := 9
+	ch := make(chan string, n)
+	for i := 0; i < n; i++ {
+		go func() {
+			ch <- claimFileAndGetName(".", "a*.log")
+		}()
 	}
-	f.Close()
+
+	names := make([]string, n)
+	for i := 0; i < n; i++ {
+		names[i] = <-ch
+	}
+	sort.Strings(names)
+
+	for i, name := range names {
+		wantName := fmt.Sprintf("a%d.log", i+1)
+		if name != wantName {
+			t.Errorf("got names[%d] = %q, want %q", i, name, wantName)
+		}
+	}
+}
+
+func claimFileAndGetName(dir, pattern string) string {
+	f, err := ClaimFile(dir, pattern)
+	if err != nil {
+		panic(fmt.Sprintf("ClaimFile errors: %v", err))
+	}
+	defer f.Close()
+	return f.Name()
 }
