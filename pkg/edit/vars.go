@@ -49,7 +49,7 @@ func addVar(fm *eval.Frame, name string, val interface{}) error {
 	return nil
 }
 
-//elvdoc:fn add-var
+//elvdoc:fn add-vars
 //
 // ```elvish
 // edit:add-vars $map
