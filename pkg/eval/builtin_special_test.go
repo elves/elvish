@@ -20,6 +20,8 @@ func TestVar(t *testing.T) {
 		That("var x", "put $x").Puts(nil),
 		// Declaring one variable whose name needs to be quoted
 		That("var 'a/b'", "put $'a/b'").Puts(nil),
+		// Declaring one variable whose name ends in ":".
+		That("var a:").DoesNothing(),
 		// Declaring multiple variables
 		That("var x y", "put $x $y").Puts(nil, nil),
 		// Declaring one variable with initial value

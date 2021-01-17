@@ -90,7 +90,7 @@ func compileVar(cp *compiler, fn *parse.Form) effectOp {
 		}
 
 		name := pn.Value
-		if strings.Contains(name, NsSuffix) {
+		if !IsUnqualified(name) {
 			cp.errorpf(cn, "variable declared in var must be unqualified")
 		}
 		sigil, name := SplitSigil(name)
@@ -106,6 +106,12 @@ func compileVar(cp *compiler, fn *parse.Form) effectOp {
 	}
 	// If there is no assignment, there is no work to be done at eval-time.
 	return nopOp{}
+}
+
+// IsUnqualified returns whether name is an unqualified variable name.
+func IsUnqualified(name string) bool {
+	i := strings.IndexByte(name, ':')
+	return i == -1 || i == len(name)-1
 }
 
 // SetForm = 'set' { LHS } '=' { Compound }
