@@ -176,16 +176,19 @@ func listingUpCycle(app cli.App) { listingSelect(app, cli.PrevWrap) }
 func listingDownCycle(app cli.App) { listingSelect(app, cli.NextWrap) }
 
 //elvdoc:fn listing:page-up
+//
 // Moves the cursor up one page.
 
 func listingPageUp(app cli.App) { listingSelect(app, cli.PrevPage) }
 
 //elvdoc:fn listing:page-down
+//
 // Moves the cursor down one page.
 
 func listingPageDown(app cli.App) { listingSelect(app, cli.NextPage) }
 
 //elvdoc:fn listing:left
+//
 // Moves the cursor left in listing mode.
 
 func listingLeft(app cli.App) { listingSelect(app, cli.Left) }
