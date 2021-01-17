@@ -135,7 +135,10 @@ var fns = map[string]interface{}{
 // is-dir $path
 // ```
 //
-// Outputs `$true` if the path resolves to a directory.
+// Outputs `$true` if the path resolves to a directory. If the final element of the path is a
+// symlink, even if it points to a directory, it still outputs `$false` since a symlink is not a
+// directory. Use [`eval-symlinks`](#patheval-symlinks) on the path first if you don't care if the
+// final element is a symlink.
 //
 // ```elvish-transcript
 // ~> touch not-a-dir
@@ -156,7 +159,10 @@ func isDir(path string) bool {
 // is-regular $path
 // ```
 //
-// Outputs `$true` if the path resolves to a directory.
+// Outputs `$true` if the path resolves to a regular file. If the final element of the path is a
+// symlink, even if it points to a regular file, it still outputs `$false` since a symlink is not a
+// regular file. Use [`eval-symlinks`](#patheval-symlinks) on the path first if you don't care if
+// the final element is a symlink.
 //
 // ```elvish-transcript
 // ~> touch not-a-dir
