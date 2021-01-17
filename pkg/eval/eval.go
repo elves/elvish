@@ -401,7 +401,7 @@ type EvalCfg struct {
 	Global *Ns
 }
 
-func (cfg *EvalCfg) fillDefaults(ev *Evaler) {
+func (cfg *EvalCfg) fillDefaults() {
 	if len(cfg.Ports) < 3 {
 		cfg.Ports = append(cfg.Ports, make([]*Port, 3-len(cfg.Ports))...)
 	}
@@ -414,32 +414,50 @@ func (cfg *EvalCfg) fillDefaults(ev *Evaler) {
 	if cfg.Ports[2] == nil {
 		cfg.Ports[2] = DummyOutputPort
 	}
-
-	if cfg.Global == nil {
-		cfg.Global = ev.Global()
-	}
 }
 
 // Eval evaluates a piece of source code with the given configuration. The
 // returned error may be a parse error, compilation error or exception.
 func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
-	cfg.fillDefaults(ev)
+	cfg.fillDefaults()
 	errFile := cfg.Ports[2].File
 
 	tree, err := parse.ParseWithDeprecation(src, errFile)
 	if err != nil {
 		return err
 	}
-	op, err := ev.compile(tree, cfg.Global, errFile)
+
+	ev.mu.Lock()
+	b := ev.builtin
+	defaultGlobal := cfg.Global == nil
+	if defaultGlobal {
+		// If cfg.Global is nil, use the Evaler's default global, and also
+		// mutate the default global.
+		cfg.Global = ev.global
+		// Continue to hold the mutex; it will be released when ev.global gets
+		// mutated.
+	} else {
+		ev.mu.Unlock()
+	}
+
+	op, err := compile(b.static(), cfg.Global.static(), tree, errFile)
 	if err != nil {
+		if defaultGlobal {
+			ev.mu.Unlock()
+		}
 		return err
 	}
+
 	fm, cleanup := ev.prepareFrame(src, cfg)
 	defer cleanup()
+
+	op.prepareNs(fm)
+	if defaultGlobal {
+		ev.global = fm.local
+		ev.mu.Unlock()
+	}
+
 	exc := op.exec(fm)
-	ev.mu.Lock()
-	ev.global = fm.local
-	defer ev.mu.Unlock()
 	return exc
 }
 
@@ -465,7 +483,10 @@ func (cfg *CallCfg) fillDefaults() {
 // Call calls a given function.
 func (ev *Evaler) Call(f Callable, callCfg CallCfg, evalCfg EvalCfg) error {
 	callCfg.fillDefaults()
-	evalCfg.fillDefaults(ev)
+	evalCfg.fillDefaults()
+	if evalCfg.Global == nil {
+		evalCfg.Global = ev.Global()
+	}
 	fm, cleanup := ev.prepareFrame(parse.Source{Name: callCfg.From}, evalCfg)
 	defer cleanup()
 	return f.Call(fm, callCfg.Args, callCfg.Opts)

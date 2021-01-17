@@ -12,6 +12,7 @@ import (
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
 	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/testutil"
@@ -90,22 +91,40 @@ func TestMultipleEval(t *testing.T) {
 	)
 }
 
-func TestConcurrentEval(t *testing.T) {
-	// Run this test with "go test -race".
+func TestEval_AlternativeGlobal(t *testing.T) {
 	ev := NewEvaler()
-	src := parse.Source{Name: "[test]", Code: ""}
+	g := NsBuilder{"a": vars.NewReadOnly("")}.Ns()
+	err := ev.Eval(parse.Source{Code: "nop $a"}, EvalCfg{Global: g})
+	if err != nil {
+		t.Errorf("got error %v, want nil", err)
+	}
+	// Regression test for #1223
+	if ev.Global().HasName("a") {
+		t.Errorf("$a from alternative global leaked into Evaler global")
+	}
+}
+
+func TestEval_Concurrent(t *testing.T) {
+	ev := NewEvaler()
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
-		ev.Eval(src, EvalCfg{})
+		ev.Eval(parse.Source{Code: "var a"}, EvalCfg{})
 		wg.Done()
 	}()
 	go func() {
-		ev.Eval(src, EvalCfg{})
+		ev.Eval(parse.Source{Code: "var b"}, EvalCfg{})
 		wg.Done()
 	}()
 	wg.Wait()
+	g := ev.Global()
+	if !g.HasName("a") {
+		t.Errorf("variable $a not created")
+	}
+	if !g.HasName("b") {
+		t.Errorf("variable $b not created")
+	}
 }
 
 type fooOpts struct{ Opt string }
