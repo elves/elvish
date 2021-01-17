@@ -24,13 +24,15 @@ type SpawnConfig struct {
 	RunDir string
 }
 
-// Spawn spawns a daemon process in the background by invoking BinPath. Passing BinPath, DbPath and
-// SockPath as command-line arguments after resolving them to absolute paths. The daemon log file is
-// created in the secure run-time dir.
+// Spawn spawns a daemon process in the background by invoking BinPath, passing
+// BinPath, DbPath and SockPath as command-line arguments after resolving them
+// to absolute paths. The daemon log file is created in RunDir, and the stdout
+// and stderr of the daemon is redirected to the log file.
 //
-// A suitable ProcAttr is chosen depending on the OS and makes sure that the daemon is detached from
-// the current terminal (so that it is not affected by I/O or signals in the current terminal), and
-// keeps running after the current process quits.
+// A suitable ProcAttr is chosen depending on the OS and makes sure that the
+// daemon is detached from the current terminal, so that it is not affected by
+// I/O or signals in the current terminal and keeps running after the current
+// process quits.
 func Spawn(cfg *SpawnConfig) error {
 	binPath := cfg.BinPath
 	// Determine binPath.
@@ -73,15 +75,24 @@ func Spawn(cfg *SpawnConfig) error {
 		"-sock", sockPath,
 	}
 
-	daemonStdout, err := fsutil.ClaimFile(runDir, "daemon-*.log")
+	out, err := fsutil.ClaimFile(runDir, "daemon-*.log")
 	if err != nil {
 		return err
 	}
-	defer daemonStdout.Close()
+	defer out.Close()
 
-	procattrs := procAttrForSpawn(daemonStdout)
+	// The daemon does not read any input; open DevNull and use it for stdin. We
+	// could also just close the stdin, but on Unix that would make the first
+	// file opened by the daemon take FD 0.
+	in, err := os.OpenFile(os.DevNull, os.O_RDONLY, 0)
+	if err != nil {
+		in = os.Stdin
+	} else {
+		defer in.Close()
+	}
+
+	procattrs := procAttrForSpawn([]*os.File{in, out, out})
 	_, err = os.StartProcess(binPath, args, procattrs)
-	procattrs.Files[0].Close() // drop our reference to the /dev/null handle passed to the daemon
 
 	return err
 }
