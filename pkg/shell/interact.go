@@ -16,6 +16,7 @@ import (
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/elves/elvish/pkg/parse"
+	"github.com/elves/elvish/pkg/prog"
 	"github.com/elves/elvish/pkg/sys"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -140,6 +141,10 @@ func extractExports(ns *eval.Ns, stderr io.Writer) *eval.Ns {
 	value, ok := ns.Index(exportsVarName)
 	if !ok {
 		return nil
+	}
+	if prog.DeprecationLevel >= 15 {
+		fmt.Fprintln(stderr,
+			"the $-exports- mechanism is deprecated; use edit:add-vars instead.")
 	}
 	exports, ok := value.(hashmap.Map)
 	if !ok {

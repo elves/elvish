@@ -3,11 +3,13 @@ package shell
 import (
 	"bytes"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/eval/vars"
+	"github.com/elves/elvish/pkg/prog"
 	. "github.com/elves/elvish/pkg/prog/progtest"
 )
 
@@ -80,6 +82,9 @@ func TestInteract_RcFile_NonexistentIsOK(t *testing.T) {
 }
 
 func TestExtractExports(t *testing.T) {
+	restore := prog.SetDeprecationLevel(0)
+	defer restore()
+
 	ns := eval.NsBuilder{
 		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc("a", "lorem")),
 	}.Ns()
@@ -90,6 +95,9 @@ func TestExtractExports(t *testing.T) {
 }
 
 func TestExtractExports_IgnoreNonMapExports(t *testing.T) {
+	restore := prog.SetDeprecationLevel(0)
+	defer restore()
+
 	ns := eval.NsBuilder{
 		exportsVarName: vars.NewReadOnly("x"),
 	}.Ns()
@@ -101,6 +109,9 @@ func TestExtractExports_IgnoreNonMapExports(t *testing.T) {
 }
 
 func TestExtractExports_IgnoreNonStringKeys(t *testing.T) {
+	restore := prog.SetDeprecationLevel(0)
+	defer restore()
+
 	ns := eval.NsBuilder{
 		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc(vals.EmptyList, "lorem")),
 	}.Ns()
@@ -112,6 +123,9 @@ func TestExtractExports_IgnoreNonStringKeys(t *testing.T) {
 }
 
 func TestExtractExports_DoesNotOverwrite(t *testing.T) {
+	restore := prog.SetDeprecationLevel(0)
+	defer restore()
+
 	ns := eval.NsBuilder{
 		"a":            vars.NewReadOnly("lorem"),
 		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc("a", "ipsum")),
@@ -123,5 +137,19 @@ func TestExtractExports_DoesNotOverwrite(t *testing.T) {
 	}
 	if errBuf.Len() == 0 {
 		t.Errorf("No error written with name conflict")
+	}
+}
+
+func TestExtractExports_ShowsDeprecationWarning(t *testing.T) {
+	restore := prog.SetDeprecationLevel(15)
+	defer restore()
+
+	ns := eval.NsBuilder{
+		exportsVarName: vars.NewReadOnly(vals.EmptyMap),
+	}.Ns()
+	var errBuf bytes.Buffer
+	extractExports(ns, &errBuf)
+	if errOut := errBuf.String(); !strings.Contains(errOut, "deprecated") {
+		t.Errorf("no deprecation warning")
 	}
 }

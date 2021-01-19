@@ -61,6 +61,9 @@ The following deprecated features trigger a warning when the code is evaluated:
 
 -   Using `:` in slice indices is deprecated. Use `..` instead.
 
+-   The mechanism of assigning to `$-exports-` in `rc.elv` to export variables
+    to the REPL namespace is deprecated. Use `edit:add-vars` instead.
+
 # Notable new features
 
 New features in the language:
