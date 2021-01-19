@@ -273,7 +273,7 @@ func TestUse(t *testing.T) {
 
 // Regression test for #1072
 func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
-	restore := prog.SetShowDeprecations(true)
+	restore := prog.SetDeprecationLevel(15)
 	defer restore()
 	libdir, cleanup := testutil.InTestDir()
 	defer cleanup()

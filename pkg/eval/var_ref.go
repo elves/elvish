@@ -192,6 +192,7 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 		return
 	}
 	msg := ""
+	minLevel := 15
 	switch name {
 	case "-source~":
 		msg = `the "source" command is deprecated; use "eval" instead`
@@ -223,7 +224,7 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 		return
 	}
 	dep := deprecation{cp.srcMeta.Name, r.Range(), msg}
-	if prog.ShowDeprecations && cp.deprecations.register(dep) {
+	if prog.DeprecationLevel >= minLevel && cp.deprecations.register(dep) {
 		err := diag.Error{
 			Type: "deprecation", Message: msg,
 			Context: diag.Context{

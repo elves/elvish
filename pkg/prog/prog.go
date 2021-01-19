@@ -20,15 +20,17 @@ import (
 // resembles "elvi".
 const defaultWebPort = 3171
 
-// ShowDeprecations is a global flag that controls whether to show deprecations.
-var ShowDeprecations = false
+// DeprecationLevel is a global flag that controls which deprecations to show.
+// If its value is X, Elvish shows deprecations that should be shown for version
+// 0.X.
+var DeprecationLevel = 14
 
-// SetShowDeprecations sets ShowDeprecations to the given value, and returns a
+// SetDeprecationLevel sets ShowDeprecations to the given value, and returns a
 // function to restore the old value.
-func SetShowDeprecations(b bool) func() {
-	save := ShowDeprecations
-	ShowDeprecations = b
-	return func() { ShowDeprecations = save }
+func SetDeprecationLevel(level int) func() {
+	save := DeprecationLevel
+	DeprecationLevel = level
+	return func() { DeprecationLevel = save }
 }
 
 // Flags keeps command-line flags.
@@ -74,7 +76,7 @@ func newFlagSet(stderr io.Writer, f *Flags) *flag.FlagSet {
 	fs.StringVar(&f.DB, "db", "", "path to the database")
 	fs.StringVar(&f.Sock, "sock", "", "path to the daemon socket")
 
-	fs.BoolVar(&ShowDeprecations, "show-deprecations", ShowDeprecations, "whether to show deprecations")
+	fs.IntVar(&DeprecationLevel, "deprecation-level", DeprecationLevel, "show warnings for all features deprecated as of version 0.X")
 
 	return fs
 }

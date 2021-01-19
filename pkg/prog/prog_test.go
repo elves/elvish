@@ -50,14 +50,14 @@ func TestHelp(t *testing.T) {
 }
 
 func TestShowDeprecations(t *testing.T) {
-	restore := SetShowDeprecations(false)
+	restore := SetDeprecationLevel(0)
 	defer restore()
 	f := Setup()
 	defer f.Cleanup()
 
-	Run(f.Fds(), Elvish("-show-deprecations"), testProgram{shouldRun: true})
-	if !ShowDeprecations {
-		t.Errorf("ShowDeprecations = false, want true")
+	Run(f.Fds(), Elvish("-deprecation-level", "42"), testProgram{shouldRun: true})
+	if DeprecationLevel != 42 {
+		t.Errorf("ShowDeprecations = %d, want 42", DeprecationLevel)
 	}
 }
 

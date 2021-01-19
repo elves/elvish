@@ -41,14 +41,14 @@ func TestArgs(t *testing.T) {
 }
 
 func TestEvalTimeDeprecate(t *testing.T) {
-	restore := prog.SetShowDeprecations(true)
+	restore := prog.SetDeprecationLevel(42)
 	defer restore()
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
 	TestWithSetup(t, func(ev *Evaler) {
 		ev.AddGlobal(NsBuilder{}.AddGoFn("", "dep", func(fm *Frame) {
-			fm.Deprecate("deprecated", nil)
+			fm.Deprecate("deprecated", nil, 42)
 		}).Ns())
 	},
 		That("dep").PrintsStderrWith("deprecated"),
@@ -58,7 +58,7 @@ func TestEvalTimeDeprecate(t *testing.T) {
 }
 
 func TestCompileTimeDeprecation(t *testing.T) {
-	restore := prog.SetShowDeprecations(true)
+	restore := prog.SetDeprecationLevel(15)
 	defer restore()
 
 	ev := NewEvaler()
