@@ -161,7 +161,9 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 	if len(n.Assignments) > 0 {
 		assignmentOps = cp.assignmentOps(n.Assignments)
 		if n.Head == nil {
-			// Permanent assignment.
+			// Using the syntax of temporary assignment for non-temporary
+			// assignment. Still supported as of 0.15 but deprecated.
+			cp.deprecate(n, `using the syntax of temporary assignment for non-temporary assignment is deprecated; use "var" or "set" instead`, 15)
 			return seqOp{assignmentOps}
 		}
 		for _, a := range n.Assignments {

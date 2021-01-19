@@ -25,6 +25,12 @@ This is the draft release notes for 0.15.0, scheduled to be released on
 The following deprecated features trigger a warning whenever the code is parsed
 or compiled, even if it is not executed:
 
+-   Using the syntax of temporary assignment (`var=value`) for non-temporary
+    assignment is now deprecated. The syntax is still valid for temporary
+    assignment. For example, using `foo=bar` as a standalone command is
+    deprecated, but using it as part of command, like `foo=bar ls`, is not
+    deprecated.
+
 -   The `chr` command is now deprecated. Use `str:from-codepoints` instead.
 
 -   The `ord` command is now deprecated. Use `str:to-codepoints` instead.

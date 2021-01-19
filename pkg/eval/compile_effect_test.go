@@ -69,6 +69,11 @@ func TestCommand(t *testing.T) {
 	)
 }
 
+func TestCommand_DeprecateUsingTemporaryAssignmentForNonTemporaryAssignment(t *testing.T) {
+	testCompileTimeDeprecation(t, "foo=bar", `using the syntax of temporary assignment for non-temporary assignment is deprecated; use "var" or "set" instead`, 15)
+
+}
+
 func TestCommand_Special(t *testing.T) {
 	Test(t,
 		// Regression test for #1204; ensures that the arguments of special
