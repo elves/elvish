@@ -1,9 +1,7 @@
 package eval_test
 
 import (
-	"bytes"
 	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 	"testing"
@@ -55,28 +53,6 @@ func TestEvalTimeDeprecate(t *testing.T) {
 		// Deprecation message is only shown once.
 		That("dep 2> tmp.txt; dep").DoesNothing(),
 	)
-}
-
-func TestCompileTimeDeprecation(t *testing.T) {
-	restore := prog.SetDeprecationLevel(15)
-	defer restore()
-
-	ev := NewEvaler()
-	errOutput := new(bytes.Buffer)
-
-	parseErr, compileErr := ev.Check(parse.Source{Code: "ord a"}, errOutput)
-	if parseErr != nil {
-		t.Errorf("got parse err %v", parseErr)
-	}
-	if compileErr != nil {
-		t.Errorf("got compile err %v", compileErr)
-	}
-
-	warning := errOutput.String()
-	wantWarning := `the "ord" command is deprecated`
-	if !strings.Contains(warning, wantWarning) {
-		t.Errorf("got warning %q, want warning containing %q", warning, wantWarning)
-	}
 }
 
 func TestMultipleEval(t *testing.T) {

@@ -1,12 +1,10 @@
 package eval
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vars"
-	"github.com/elves/elvish/pkg/prog"
 )
 
 // This file implements variable resolution. Elvish has fully static lexical
@@ -185,52 +183,6 @@ func (cp *compiler) searchBuiltin(k string, r diag.Ranger) int {
 		cp.checkDeprecatedBuiltin(k, r)
 	}
 	return index
-}
-
-func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
-	if cp.warn == nil || r == nil {
-		return
-	}
-	msg := ""
-	minLevel := 15
-	switch name {
-	case "-source~":
-		msg = `the "source" command is deprecated; use "eval" instead`
-	case "ord~":
-		msg = `the "ord" command is deprecated; use "str:to-codepoints" instead`
-	case "chr~":
-		msg = `the "chr" command is deprecated; use "str:from-codepoints" instead`
-	case "has-prefix~":
-		msg = `the "has-prefix" command is deprecated; use "str:has-prefix" instead`
-	case "has-suffix~":
-		msg = `the "has-suffix" command is deprecated; use "str:has-suffix" instead`
-	case "esleep~":
-		msg = `the "esleep" command is deprecated; use "sleep" instead`
-	case "eval-symlinks~":
-		msg = `the "eval-symlinks" command is deprecated; use "path:eval-symlinks" instead`
-	case "path-abs~":
-		msg = `the "path-abs" command is deprecated; use "path:abs" instead`
-	case "path-base~":
-		msg = `the "path-base" command is deprecated; use "path:base" instead`
-	case "path-clean~":
-		msg = `the "path-clean" command is deprecated; use "path:clean" instead`
-	case "path-dir~":
-		msg = `the "path-dir" command is deprecated; use "path:dir" instead`
-	case "path-ext~":
-		msg = `the "path-ext" command is deprecated; use "path:ext" instead`
-	case "-is-dir~":
-		msg = `the "-is-dir" command is deprecated; use "path:is-dir" instead`
-	default:
-		return
-	}
-	dep := deprecation{cp.srcMeta.Name, r.Range(), msg}
-	if prog.DeprecationLevel >= minLevel && cp.deprecations.register(dep) {
-		err := diag.Error{
-			Type: "deprecation", Message: msg,
-			Context: diag.Context{
-				Name: cp.srcMeta.Name, Source: cp.srcMeta.Code, Ranging: r.Range()}}
-		fmt.Fprintln(cp.warn, err.Show(""))
-	}
 }
 
 func (fm *Frame) searchLocal(k string) int {
