@@ -23,7 +23,7 @@ const defaultWebPort = 3171
 // DeprecationLevel is a global flag that controls which deprecations to show.
 // If its value is X, Elvish shows deprecations that should be shown for version
 // 0.X.
-var DeprecationLevel = 14
+var DeprecationLevel = 15
 
 // SetDeprecationLevel sets ShowDeprecations to the given value, and returns a
 // function to restore the old value.
