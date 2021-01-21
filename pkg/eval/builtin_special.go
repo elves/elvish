@@ -267,7 +267,7 @@ func (op fnOp) exec(fm *Frame) Exception {
 	// Initialize the function variable with the builtin nop function. This step
 	// allows the definition of recursive functions; the actual function will
 	// never be called.
-	fm.local.slots[op.varIndex] = vars.FromInit(NewGoFn("<shouldn't be called>", nop))
+	fm.local.slots[op.varIndex].Set(NewGoFn("<shouldn't be called>", nop))
 	values, exc := op.lambdaOp.exec(fm)
 	if exc != nil {
 		return exc
@@ -329,7 +329,7 @@ func (op useOp) exec(fm *Frame) Exception {
 	if err != nil {
 		return fm.errorp(op, err)
 	}
-	fm.local.slots[op.varIndex] = vars.FromInit(ns)
+	fm.local.slots[op.varIndex].Set(ns)
 	return nil
 }
 

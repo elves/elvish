@@ -8,10 +8,12 @@ import (
 	. "github.com/elves/elvish/pkg/eval"
 	"github.com/elves/elvish/pkg/eval/errs"
 	"github.com/elves/elvish/pkg/eval/vals"
+	"github.com/elves/elvish/pkg/eval/vars"
+	"github.com/elves/elvish/pkg/parse"
 
 	. "github.com/elves/elvish/pkg/eval/evaltest"
 	"github.com/elves/elvish/pkg/prog"
-	"github.com/elves/elvish/pkg/testutil"
+	. "github.com/elves/elvish/pkg/testutil"
 )
 
 func TestVar(t *testing.T) {
@@ -210,15 +212,42 @@ func TestFn(t *testing.T) {
 	)
 }
 
-func TestUse(t *testing.T) {
-	libdir, cleanup := testutil.InTestDir()
+// Regression test for #1225
+func TestUse_SetsVariableCorrectlyIfModuleCallsAddGlobal(t *testing.T) {
+	libdir, cleanup := InTestDir()
 	defer cleanup()
 
-	testutil.MustMkdirAll(filepath.Join("a", "b", "c"))
+	ApplyDir(Dir{"a.elv": "add-var"})
+	ev := NewEvaler()
+	ev.SetLibDir(libdir)
+	addVar := func() {
+		ev.AddGlobal(NsBuilder{"b": vars.NewReadOnly("foo")}.Ns())
+	}
+	ev.AddBuiltin(NsBuilder{}.AddGoFn("", "add-var", addVar).Ns())
+
+	err := ev.Eval(parse.Source{Code: "use a"}, EvalCfg{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	g := ev.Global()
+	if g.IndexName("a:").Get().(*Ns) == nil {
+		t.Errorf("$a: is nil")
+	}
+	if g.IndexName("b").Get().(string) != "foo" {
+		t.Errorf(`$b is not "foo"`)
+	}
+}
+
+func TestUse(t *testing.T) {
+	libdir, cleanup := InTestDir()
+	defer cleanup()
+
+	MustMkdirAll(filepath.Join("a", "b", "c"))
 
 	writeMod := func(name, content string) {
 		fname := filepath.Join(strings.Split(name, "/")...) + ".elv"
-		testutil.MustWriteFile(fname, []byte(content), 0600)
+		MustWriteFile(fname, []byte(content), 0600)
 	}
 	writeMod("has-init", "put has-init")
 	writeMod("put-x", "put $x")
@@ -275,9 +304,9 @@ func TestUse(t *testing.T) {
 func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	restore := prog.SetDeprecationLevel(15)
 	defer restore()
-	libdir, cleanup := testutil.InTestDir()
+	libdir, cleanup := InTestDir()
 	defer cleanup()
-	testutil.MustWriteFile("dep.elv", []byte("x = (ord 1)"), 0600)
+	MustWriteFile("dep.elv", []byte("x = (ord 1)"), 0600)
 
 	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
 		// Importing module triggers check for deprecated features
