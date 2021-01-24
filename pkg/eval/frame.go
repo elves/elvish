@@ -31,15 +31,19 @@ type Frame struct {
 	background bool
 }
 
-// Eval evaluates a piece of code in a copy. If r is not nil, it is added to the
-// traceback of the evaluation context. If ns is not nil, it is used in place
-// of the current local namespace as the namespace to evaluate the code in. It
-// returns the altered local namespace and any parse error, compilation error or
-// exception.
-func (fm *Frame) Eval(src parse.Source, r diag.Ranger, ns *Ns) (*Ns, error) {
+// PrepareEval prepares a piece of code for evaluation in a copy of the current
+// Frame. If r is not nil, it is added to the traceback of the evaluation
+// context. If ns is not nil, it is used in place of the current local namespace
+// as the namespace to evaluate the code in.
+//
+// If there is any parse error or compilation error, it returns a nil *Ns, nil
+// function and the error. If there is no parse error or compilation error, it
+// returns the altered local namespace, function that can be called to actuate
+// the evaluation, and a nil error.
+func (fm *Frame) PrepareEval(src parse.Source, r diag.Ranger, ns *Ns) (*Ns, func() Exception, error) {
 	tree, err := parse.ParseWithDeprecation(src, fm.ErrorFile())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	local := fm.local
 	if ns != nil {
@@ -53,10 +57,22 @@ func (fm *Frame) Eval(src parse.Source, r diag.Ranger, ns *Ns) (*Ns, error) {
 		fm.Evaler, src, local, new(Ns), fm.intCh, fm.ports, traceback, fm.background}
 	op, err := compile(newFm.Evaler.Builtin().static(), local.static(), tree, fm.ErrorFile())
 	if err != nil {
+		return nil, nil, err
+	}
+	newLocal, exec := op.prepare(newFm)
+	return newLocal, exec, nil
+}
+
+// Eval evaluates a piece of code in a copy of the current Frame. It returns the
+// altered local namespace, and any parse error, compilation error or exception.
+//
+// See PrepareEval for a description of the arguments.
+func (fm *Frame) Eval(src parse.Source, r diag.Ranger, ns *Ns) (*Ns, error) {
+	newLocal, exec, err := fm.PrepareEval(src, r, ns)
+	if err != nil {
 		return nil, err
 	}
-	exc := op.exec(newFm)
-	return newFm.local, exc
+	return newLocal, exec()
 }
 
 // Close releases resources allocated for this frame. It always returns a nil

@@ -51,7 +51,8 @@ func benchmarkEval(b *testing.B, code string) {
 
 	for i := 0; i < b.N; i++ {
 		fm, cleanup := ev.prepareFrame(src, EvalCfg{Global: ev.Global()})
-		op.exec(fm)
+		_, exec := op.prepare(fm)
+		_ = exec()
 		cleanup()
 	}
 }
