@@ -105,31 +105,40 @@ func TestMakeHasCommand(t *testing.T) {
 	tt.Test(t, tt.Fn("hasCommand", hasCommand), tt.Table{
 		// Builtin special form
 		tt.Args(ev, "if").Rets(true),
+
 		// Builtin function
 		tt.Args(ev, "put").Rets(true),
+		// Explicit builtin:
+		tt.Args(ev, "builtin:put").Rets(true),
+		tt.Args(ev, "builtin:bad-builtin").Rets(false),
+
 		// User-defined function
 		tt.Args(ev, "good").Rets(true),
+
 		// Function in modules
 		tt.Args(ev, "a:good").Rets(true),
 		tt.Args(ev, "a:b:good").Rets(true),
+		tt.Args(ev, "a:bad").Rets(false),
+		tt.Args(ev, "a:b:bad").Rets(false),
 
 		// Non-searching directory and external
 		tt.Args(ev, "./a").Rets(true),
 		tt.Args(ev, "a/b").Rets(true),
 		tt.Args(ev, "a/b/c/executable").Rets(true),
+		tt.Args(ev, "./bad").Rets(false),
+		tt.Args(ev, "a/bad").Rets(false),
 
 		// External in PATH
 		tt.Args(ev, "external").Rets(true),
 		tt.Args(ev, "@external").Rets(true),
 		tt.Args(ev, "ex:tern:al").Rets(colonInFilenameOk),
+		// With explicit e:
+		tt.Args(ev, "e:external").Rets(true),
+		tt.Args(ev, "e:bad-external").Rets(false),
 
 		// Non-existent
 		tt.Args(ev, "bad").Rets(false),
 		tt.Args(ev, "a:").Rets(false),
-		tt.Args(ev, "a:bad").Rets(false),
-		tt.Args(ev, "a:b:bad").Rets(false),
-		tt.Args(ev, "./bad").Rets(false),
-		tt.Args(ev, "a/bad").Rets(false),
 	})
 }
 
