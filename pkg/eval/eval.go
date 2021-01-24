@@ -451,14 +451,13 @@ func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
 	fm, cleanup := ev.prepareFrame(src, cfg)
 	defer cleanup()
 
-	op.prepareNs(fm)
+	newLocal, exec := op.prepare(fm)
 	if defaultGlobal {
-		ev.global = fm.local
+		ev.global = newLocal
 		ev.mu.Unlock()
 	}
 
-	exc := op.exec(fm)
-	return exc
+	return exec()
 }
 
 // CallCfg keeps configuration for the (*Evaler).Call method.

@@ -65,14 +65,9 @@ type nsOp struct {
 	template *staticNs
 }
 
-// Prepares a new local namespace before executing the inner effectOp. Replaces
-// fm.local.
-func (op nsOp) exec(fm *Frame) Exception {
-	op.prepareNs(fm)
-	return op.inner.exec(fm)
-}
-
-func (op nsOp) prepareNs(fm *Frame) {
+// Prepares the local namespace, and returns the namespace and a function for
+// executing the inner effectOp. Mutates fm.local.
+func (op nsOp) prepare(fm *Frame) (*Ns, func() Exception) {
 	if len(op.template.names) > len(fm.local.names) {
 		n := len(op.template.names)
 		newLocal := &Ns{make([]vars.Var, n), op.template.names, op.template.deleted}
@@ -86,7 +81,7 @@ func (op nsOp) prepareNs(fm *Frame) {
 		// variables deleted.
 		fm.local = &Ns{fm.local.slots, fm.local.names, op.template.deleted}
 	}
-
+	return fm.local, func() Exception { return op.inner.exec(fm) }
 }
 
 const compilationErrorType = "compilation error"

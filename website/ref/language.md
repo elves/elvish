@@ -2211,28 +2211,50 @@ In general, a module defined in namespace will be the same as the file name
 
 ### Circular dependencies
 
-Circular dependencies are legal but restricted. If a module `a` imports module
-`b`, which then also imports module `a`, module `b` won't be able to observe any
-bindings in module `a` when it it evaluated. Instead, it will observe an empty
-namespace.
+Circular dependencies are allowed but has an important restriction. If a module
+`a` contains `use b` and module `b` contains `use a`, the top-level statements
+in module `b` will only be able to access variables that are defined before the
+`use b` in module `a`; other variables will be `$nil`.
 
 On the other hand, functions in module `b` will have access to bindings in
 module `a` after it is fully evaluated.
 
 Examples:
 
-```elvish
-# a.elv
-foo = lorem
-use b
-# b.elv
-use a
-fn f { put $a:foo }
-put $a:foo # results in an exception
-# in REPL
-use a; use b
-b:f # puts "lorem"
+```elvish-transcript
+~> cat a.elv
+var before = before
+use ./b
+var after = after
+~> cat b.elv
+use ./a
+put $a:before $a:after
+fn f { put $a:before $a:after }
+~> use ./a
+▶ before
+▶ $nil
+~> use ./b
+~> b:f
+▶ before
+▶ after
 ```
+
+Note that this behavior can be different depending on whether the REPL imports
+`a` or `b` first. In the previous example, if the REPL imports `b` first, it
+will have access to all the variables in `a`:
+
+```elvish-transcript
+~> use ./b
+▶ before
+▶ after
+```
+
+**Note**: Elvish caches imported modules. If you are trying this locally, run a
+fresh Elvish instance with `exec` first.
+
+When you do need to have circular dependencies, it is best to avoid using
+variables from the modules in top-level statements, and only use them in
+functions.
 
 ### Relative imports
 

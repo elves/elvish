@@ -239,6 +239,25 @@ func TestUse_SetsVariableCorrectlyIfModuleCallsAddGlobal(t *testing.T) {
 	}
 }
 
+func TestUse_SupportsCircularDependency(t *testing.T) {
+	libdir, cleanup := InTestDir()
+	defer cleanup()
+
+	ApplyDir(Dir{
+		"a.elv": "var pre = apre; use b; put $b:pre $b:post; var post = apost",
+		"b.elv": "var pre = bpre; use a; put $a:pre $a:post; var post = bpost",
+	})
+
+	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
+		That(`use a`).Puts(
+			// When b.elv is imported from a.elv, $a:pre is set but $a:post is
+			// not
+			"apre", nil,
+			// After a.elv imports b.elv, both $b:pre and $b:post are set
+			"bpre", "bpost"),
+	)
+}
+
 func TestUse(t *testing.T) {
 	libdir, cleanup := InTestDir()
 	defer cleanup()
