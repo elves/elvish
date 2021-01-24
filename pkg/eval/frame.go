@@ -225,17 +225,16 @@ func (fm *Frame) errorpf(r diag.Ranger, format string, args ...interface{}) Exce
 
 // Deprecate shows a deprecation message. The message is not shown if the same
 // deprecation message has been shown for the same location before.
-func (fm *Frame) Deprecate(msg string, r diag.Ranger, minLevel int) {
-	var ctx *diag.Context
-	if r == nil {
-		ctx = fm.traceback.Head
-	} else {
-		ctx = diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r)
+func (fm *Frame) Deprecate(msg string, ctx *diag.Context, minLevel int) {
+	if prog.DeprecationLevel < minLevel {
+		return
 	}
-	dep := deprecation{ctx.Name, ctx.Ranging, msg}
-	if prog.DeprecationLevel >= minLevel && fm.Evaler.registerDeprecation(dep) {
-		err := diag.Error{
-			Type: "deprecation", Message: dep.message, Context: *ctx}
+	if ctx == nil {
+		fmt.Fprintf(fm.ErrorFile(), "deprecation: \033[31;1m%s\033[m\n", msg)
+		return
+	}
+	if fm.Evaler.registerDeprecation(deprecation{ctx.Name, ctx.Ranging, msg}) {
+		err := diag.Error{Type: "deprecation", Message: msg, Context: *ctx}
 		fm.ErrorFile().WriteString(err.Show("") + "\n")
 	}
 }

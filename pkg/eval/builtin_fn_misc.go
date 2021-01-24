@@ -13,6 +13,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/pkg/diag"
 	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/elves/elvish/pkg/parse"
 )
@@ -30,6 +31,8 @@ func init() {
 		"eval":    eval,
 		"use-mod": useMod,
 		"-source": source,
+
+		"deprecate": deprecate,
 
 		// Time
 		"esleep": sleep,
@@ -316,6 +319,49 @@ func readFileUTF8(fname string) (string, error) {
 		return "", fmt.Errorf("%s: source is not valid UTF-8", fname)
 	}
 	return string(bytes), nil
+}
+
+//elvdoc:fn deprecate
+//
+// ```elvish
+// deprecate $msg
+// ```
+//
+// Shows the given deprecation message to stderr. If called from a function
+// or module, also shows the call site of the function or import site of the
+// module. Does nothing if the combination of the call site and the message has
+// been shown before.
+//
+// ```elvish-transcript
+// ~> deprecate msg
+// deprecation: msg
+// ~> fn f { deprecate msg }
+// ~> f
+// deprecation: msg
+// [tty 19], line 1: f
+// ~> exec
+// ~> deprecate msg
+// deprecation: msg
+// ~> fn f { deprecate msg }
+// ~> f
+// deprecation: msg
+// [tty 3], line 1: f
+// ~> f # a different call site; shows deprecate message
+// deprecation: msg
+// [tty 4], line 1: f
+// ~> fn g { f }
+// ~> g
+// deprecation: msg
+// [tty 5], line 1: fn g { f }
+// ~> g # same call site, no more deprecation message
+// ```
+
+func deprecate(fm *Frame, msg string) {
+	var ctx *diag.Context
+	if fm.traceback.Next != nil {
+		ctx = fm.traceback.Next.Head
+	}
+	fm.Deprecate(msg, ctx, 0)
 }
 
 // TimeAfter is used by the sleep command to obtain a channel that is delivered
