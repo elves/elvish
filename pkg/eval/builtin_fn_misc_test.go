@@ -2,6 +2,7 @@ package eval_test
 
 import (
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -45,6 +46,18 @@ func TestEval(t *testing.T) {
 		That("eval 'put $x'").Throws(AnyError),
 		// Exception.
 		That("eval 'fail x'").Throws(FailError{"x"}),
+	)
+}
+
+func TestDeprecate(t *testing.T) {
+	Test(t,
+		That("deprecate msg").PrintsStderrWith("msg"),
+		// Different call sites trigger multiple deprecation messages
+		That("fn f { deprecate msg }", "f 2>"+os.DevNull, "f").
+			PrintsStderrWith("msg"),
+		// The same call site only triggers the message once
+		That("fn f { deprecate msg}", "fn g { f }", "g 2>"+os.DevNull, "g 2>&1").
+			DoesNothing(),
 	)
 }
 
