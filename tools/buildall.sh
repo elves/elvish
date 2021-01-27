@@ -1,45 +1,75 @@
 #!/bin/sh -e
 
-# Should be invoked from repo root.
+# Builds Elvish binaries for all supported platforms.
+#
+# Arguments are passed via the following environment variables:
+#
+# - SRC_DIR: Root of the checked out source tree. Defauls to ".".
+#
+# - BIN_DIR: Root of the directory to put binaries in. Defauls to "./_bin".
+#
+# - VERSION: Version name to use in the filenames and the version info of the
+#            built binaries. Defaults to "unknown".
+#
+# Alternatively, they can be passed as command-line arguments (buildall.sh
+# src_dir dst_dir version), but the environment variables take precedence.
+#
+# For each supported combination of $GOOS and $GOARCH, this script saves the
+# built binary to $BIN_DIR/$GOOS-$GOARCH/elvish-$VERSION.
+#
+# It also creates and an archive for each binary file, and puts it in the same
+# directory. For GOOS=windows, the archive is a .zip file. For all other GOOS,
+# the archive is a .tar.gz file.
+#
+# If the sha256sum command is available, this script also creates a sha256sum
+# file for each binary and archive file, and puts it in the same directory.
+#
+# This script is not whitespace-correct; avoid whitespaces in directory names.
 
-: ${VERSION:=unknown}
-: ${BIN_DIR:=./_bin}
-: ${MANIFEST:=/dev/null}
+: ${SRC_DIR:=${1:-.}}
+: ${BIN_DIR:=${2:-./_bin}}
+: ${VERSION:=${3:-unknown}}
 
 export GOOS GOARCH
 export CGO_ENABLED=0
 
-# build $os $arch...
-build() {
-    local GOARCH=$1
+main() {
+    buildarch amd64 linux darwin freebsd openbsd netbsd windows
+    buildarch 386   linux windows
+    buildarch arm64 linux
+}
+
+# Builds one GOARCH, multiple GOOS.
+#
+# buildarch $arch $os...
+buildarch() {
+    local GOARCH=$1 GOOS
     shift
     for GOOS in $@; do
-        DST_DIR=$BIN_DIR/$GOOS-$GOARCH
-        mkdir -p $DST_DIR
         buildone
     done
 }
 
-# buildone
-# Uses: $GOOS $GOARCH $BIN_DIR $MANIFEST
+# Builds one GOARCH and one GOOS.
+#
+# Uses: $GOARCH $GOOS $BIN_DIR
 buildone() {
     local DST_DIR=$BIN_DIR/$GOOS-$GOARCH
-    local STEM=elvish-$VERSION
-
     mkdir -p $DST_DIR
 
+    local STEM=elvish-$VERSION
     if test $GOOS = windows; then
-        BIN=$STEM.exe
-        ARCHIVE=$STEM.zip
+        local BIN=$STEM.exe
+        local ARCHIVE=$STEM.zip
     else
-        BIN=$STEM
-        ARCHIVE=$STEM.tar.gz
+        local BIN=$STEM
+        local ARCHIVE=$STEM.tar.gz
     fi
 
     echo -n "Building for $GOOS-$GOARCH... "
     go build -o $DST_DIR/$BIN -trimpath -ldflags \
         "-X src.elv.sh/pkg/buildinfo.Version=$VERSION \
-         -X src.elv.sh/pkg/buildinfo.Reproducible=true" ./cmd/elvish || {
+         -X src.elv.sh/pkg/buildinfo.Reproducible=true" $SRC_DIR/cmd/elvish || {
         echo "Failed"
         return
     }
@@ -51,23 +81,14 @@ buildone() {
     else
         tar cfz $ARCHIVE $BIN
     fi
-    )
 
     echo "Done"
-    echo $GOOS-$GOARCH/$BIN >> $MANIFEST
-    echo $GOOS-$GOARCH/$ARCHIVE >> $MANIFEST
 
     if which sha256sum > /dev/null; then
-        (
-        cd $DST_DIR
         sha256sum $BIN > $BIN.sha256sum
         sha256sum $ARCHIVE > $ARCHIVE.sha256sum
-        )
-        echo $GOOS-$GOARCH/$BIN.sha256sum >> $MANIFEST
-        echo $GOOS-$GOARCH/$ARCHIVE.sha256sum >> $MANIFEST
     fi
+    )
 }
 
-build amd64 linux darwin freebsd openbsd netbsd windows
-build 386   linux windows
-build arm64 linux
+main
