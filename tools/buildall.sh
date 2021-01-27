@@ -8,8 +8,9 @@
 #
 # - BIN_DIR: Root of the directory to put binaries in. Defauls to "./_bin".
 #
-# - VERSION: Version name to use in the filenames and the version info of the
-#            built binaries. Defaults to "unknown".
+# - VERSION: Version info to use in the built binaries. Defaults to "unknown".
+#
+# - STEM_SUFFIX: Suffix to add to the filename stem. Defaults to $VERSION.
 #
 # Alternatively, they can be passed as command-line arguments (buildall.sh
 # src_dir dst_dir version), but the environment variables take precedence.
@@ -29,6 +30,7 @@
 : ${SRC_DIR:=${1:-.}}
 : ${BIN_DIR:=${2:-./_bin}}
 : ${VERSION:=${3:-unknown}}
+: ${STEM_SUFFIX:=${4:-$VERSION}}
 
 export GOOS GOARCH
 export CGO_ENABLED=0
@@ -57,7 +59,7 @@ buildone() {
     local DST_DIR=$BIN_DIR/$GOOS-$GOARCH
     mkdir -p $DST_DIR
 
-    local STEM=elvish-$VERSION
+    local STEM=elvish-$STEM_SUFFIX
     if test $GOOS = windows; then
         local BIN=$STEM.exe
         local ARCHIVE=$STEM.zip
