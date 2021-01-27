@@ -2,8 +2,8 @@
 package listing
 
 import (
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/ui"
 )
 
 // Config is the configuration to start the custom listing addon.

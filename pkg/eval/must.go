@@ -1,7 +1,7 @@
 package eval
 
 import (
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/parse"
 )
 
 func onePrimary(cn *parse.Compound) *parse.Primary {

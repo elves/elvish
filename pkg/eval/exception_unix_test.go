@@ -8,9 +8,9 @@ import (
 	"syscall"
 	"testing"
 
-	. "github.com/elves/elvish/pkg/eval"
+	. "src.elv.sh/pkg/eval"
 
-	"github.com/elves/elvish/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 func TestExternalCmdExit_Error(t *testing.T) {

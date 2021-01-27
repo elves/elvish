@@ -6,11 +6,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/getopt"
-	"github.com/elves/elvish/pkg/parse"
 	"github.com/xiaq/persistent/hashmap"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/getopt"
+	"src.elv.sh/pkg/parse"
 )
 
 //elvdoc:fn complete-getopt

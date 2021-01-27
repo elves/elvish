@@ -3,8 +3,8 @@ package cli
 import (
 	"fmt"
 
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/ui"
 )
 
 // Selected is a special value in the argument to WriteListing, signalling that

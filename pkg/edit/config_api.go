@@ -5,13 +5,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/histutil"
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/eval/vars"
-	"github.com/elves/elvish/pkg/store"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/histutil"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/store"
 )
 
 //elvdoc:var max-height

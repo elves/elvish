@@ -5,9 +5,9 @@ package unix
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/errs"
-	. "github.com/elves/elvish/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
+	. "src.elv.sh/pkg/eval/evaltest"
 )
 
 // Note that this unit test assumes a UNIX environment with a POSIX compatible

@@ -3,8 +3,8 @@ package edit
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/tt"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/tt"
 )
 
 func TestBufToHTML(t *testing.T) {

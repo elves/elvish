@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/elves/elvish/pkg/prog/progtest"
+	. "src.elv.sh/pkg/prog/progtest"
 )
 
 func TestBadFlag(t *testing.T) {

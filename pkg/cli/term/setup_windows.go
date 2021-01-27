@@ -3,8 +3,8 @@ package term
 import (
 	"os"
 
-	"github.com/elves/elvish/pkg/diag"
 	"golang.org/x/sys/windows"
+	"src.elv.sh/pkg/diag"
 )
 
 const (

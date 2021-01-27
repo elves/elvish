@@ -3,9 +3,9 @@ package complete
 import (
 	"strings"
 
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/parse"
 )
 
 var parent = parse.Parent

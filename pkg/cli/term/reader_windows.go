@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/elves/elvish/pkg/sys"
-	"github.com/elves/elvish/pkg/ui"
 	"golang.org/x/sys/windows"
+	"src.elv.sh/pkg/sys"
+	"src.elv.sh/pkg/ui"
 )
 
 // TODO(xiaq): Put here to make edit package build on Windows. Refactor so

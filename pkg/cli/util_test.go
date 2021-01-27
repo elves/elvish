@@ -3,7 +3,7 @@ package cli_test
 import (
 	"testing"
 
-	. "github.com/elves/elvish/pkg/cli"
+	. "src.elv.sh/pkg/cli"
 )
 
 func TestCodeBufferUtils(t *testing.T) {

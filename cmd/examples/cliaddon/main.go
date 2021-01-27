@@ -4,9 +4,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/addons/navigation"
-	"github.com/elves/elvish/pkg/cli/term"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/addons/navigation"
+	"src.elv.sh/pkg/cli/term"
 )
 
 func main() {

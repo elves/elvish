@@ -7,9 +7,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/ui"
 )
 
 // CodeArea is a Widget for displaying and editing code.

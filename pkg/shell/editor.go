@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/elves/elvish/pkg/strutil"
+	"src.elv.sh/pkg/strutil"
 )
 
 type editor interface {

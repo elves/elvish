@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/tt"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/ui"
 )
 
 var bb = term.NewBufferBuilder

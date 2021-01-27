@@ -8,8 +8,8 @@ package daemon
 import (
 	"os"
 
-	"github.com/elves/elvish/pkg/logutil"
-	"github.com/elves/elvish/pkg/prog"
+	"src.elv.sh/pkg/logutil"
+	"src.elv.sh/pkg/prog"
 )
 
 var logger = logutil.GetLogger("[daemon] ")

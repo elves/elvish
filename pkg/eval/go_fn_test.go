@@ -6,10 +6,10 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/elves/elvish/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/errs"
 
-	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/xiaq/persistent/hash"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 func TestGoFnAsValue(t *testing.T) {

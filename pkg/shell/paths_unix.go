@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/elves/elvish/pkg/env"
+	"src.elv.sh/pkg/env"
 )
 
 // Returns a "run directory" for storing ephemeral files, which is guaranteed

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/histutil"
-	"github.com/elves/elvish/pkg/store"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/histutil"
+	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/ui"
 )
 
 // Config contains configurations to start history listing.

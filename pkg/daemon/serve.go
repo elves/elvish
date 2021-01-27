@@ -7,8 +7,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/elves/elvish/pkg/daemon/internal/api"
-	"github.com/elves/elvish/pkg/store"
+	"src.elv.sh/pkg/daemon/internal/api"
+	"src.elv.sh/pkg/store"
 )
 
 // Serve runs the daemon service, listening on the socket specified by sockpath

@@ -3,8 +3,8 @@ package eval
 import (
 	"runtime"
 
-	"github.com/elves/elvish/pkg/logutil"
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/logutil"
+	"src.elv.sh/pkg/parse"
 )
 
 func init() {

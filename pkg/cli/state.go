@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/ui"
 )
 
 // ListBoxState keeps the mutable state ListBox.

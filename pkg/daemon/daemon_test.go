@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/pkg/prog"
-	. "github.com/elves/elvish/pkg/prog/progtest"
-	"github.com/elves/elvish/pkg/store/storetest"
-	"github.com/elves/elvish/pkg/testutil"
+	"src.elv.sh/pkg/prog"
+	. "src.elv.sh/pkg/prog/progtest"
+	"src.elv.sh/pkg/store/storetest"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestDaemon(t *testing.T) {

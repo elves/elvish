@@ -9,14 +9,14 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/elves/elvish/pkg/daemon"
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/env"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/eval/vars"
-	"github.com/elves/elvish/pkg/logutil"
-	"github.com/elves/elvish/pkg/parse"
 	"github.com/xiaq/persistent/vector"
+	"src.elv.sh/pkg/daemon"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/logutil"
+	"src.elv.sh/pkg/parse"
 )
 
 var logger = logutil.GetLogger("[eval] ")

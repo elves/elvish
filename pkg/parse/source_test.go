@@ -3,8 +3,8 @@ package parse_test
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval/vals"
-	. "github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/eval/vals"
+	. "src.elv.sh/pkg/parse"
 )
 
 func TestSourceAsStructMap(t *testing.T) {

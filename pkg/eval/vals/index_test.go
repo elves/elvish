@@ -3,8 +3,8 @@ package vals
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval/errs"
-	. "github.com/elves/elvish/pkg/tt"
+	"src.elv.sh/pkg/eval/errs"
+	. "src.elv.sh/pkg/tt"
 )
 
 var (

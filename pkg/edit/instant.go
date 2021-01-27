@@ -1,10 +1,10 @@
 package edit
 
 import (
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/addons/instant"
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/addons/instant"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/parse"
 )
 
 //elvdoc:var -instant:binding

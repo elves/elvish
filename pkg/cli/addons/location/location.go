@@ -10,10 +10,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/fsutil"
-	"github.com/elves/elvish/pkg/store"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/fsutil"
+	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/ui"
 )
 
 // Config is the configuration to start the location history feature.

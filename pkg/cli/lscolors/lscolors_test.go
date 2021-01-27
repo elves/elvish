@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/elves/elvish/pkg/testutil"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestLsColors(t *testing.T) {

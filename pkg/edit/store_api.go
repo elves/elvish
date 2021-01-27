@@ -4,11 +4,11 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/histutil"
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/parse/parseutil"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/histutil"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/parse/parseutil"
 )
 
 var errStoreOffline = errors.New("store offline")

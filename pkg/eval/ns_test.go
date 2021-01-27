@@ -3,8 +3,8 @@ package eval_test
 import (
 	"testing"
 
-	. "github.com/elves/elvish/pkg/eval/evaltest"
-	"github.com/elves/elvish/pkg/eval/vars"
+	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval/vars"
 )
 
 func TestNs(t *testing.T) {

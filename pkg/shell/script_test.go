@@ -3,7 +3,7 @@ package shell
 import (
 	"testing"
 
-	. "github.com/elves/elvish/pkg/prog/progtest"
+	. "src.elv.sh/pkg/prog/progtest"
 )
 
 func TestScript_File(t *testing.T) {

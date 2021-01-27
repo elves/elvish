@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	. "github.com/elves/elvish/pkg/tt"
+	. "src.elv.sh/pkg/tt"
 )
 
 func TestToString(t *testing.T) {

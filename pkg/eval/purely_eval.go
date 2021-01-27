@@ -3,8 +3,8 @@ package eval
 import (
 	"strings"
 
-	"github.com/elves/elvish/pkg/fsutil"
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/fsutil"
+	"src.elv.sh/pkg/parse"
 )
 
 func (ev *Evaler) PurelyEvalCompound(cn *parse.Compound) (string, bool) {

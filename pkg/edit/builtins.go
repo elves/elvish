@@ -6,15 +6,15 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/addons/stub"
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/parse/parseutil"
-	"github.com/elves/elvish/pkg/strutil"
-	"github.com/elves/elvish/pkg/ui"
-	"github.com/elves/elvish/pkg/wcwidth"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/addons/stub"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/parse/parseutil"
+	"src.elv.sh/pkg/strutil"
+	"src.elv.sh/pkg/ui"
+	"src.elv.sh/pkg/wcwidth"
 )
 
 //elvdoc:fn binding-table

@@ -5,15 +5,15 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/errs"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/eval/vars"
-	"github.com/elves/elvish/pkg/parse"
+	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/parse"
 
-	. "github.com/elves/elvish/pkg/eval/evaltest"
-	"github.com/elves/elvish/pkg/prog"
-	. "github.com/elves/elvish/pkg/testutil"
+	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/prog"
+	. "src.elv.sh/pkg/testutil"
 )
 
 func TestVar(t *testing.T) {

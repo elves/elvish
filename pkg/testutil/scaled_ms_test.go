@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/pkg/env"
+	"src.elv.sh/pkg/env"
 )
 
 var scaledMsTests = []struct {

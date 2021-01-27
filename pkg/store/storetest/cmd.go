@@ -3,7 +3,7 @@ package storetest
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/store"
+	"src.elv.sh/pkg/store"
 )
 
 var (

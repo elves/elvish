@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/elves/elvish/pkg/prog"
-	. "github.com/elves/elvish/pkg/prog/progtest"
+	"src.elv.sh/pkg/prog"
+	. "src.elv.sh/pkg/prog/progtest"
 )
 
 func TestVersion(t *testing.T) {

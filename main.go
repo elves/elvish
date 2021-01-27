@@ -7,10 +7,10 @@ package main
 import (
 	"os"
 
-	"github.com/elves/elvish/pkg/buildinfo"
-	"github.com/elves/elvish/pkg/daemon"
-	"github.com/elves/elvish/pkg/prog"
-	"github.com/elves/elvish/pkg/shell"
+	"src.elv.sh/pkg/buildinfo"
+	"src.elv.sh/pkg/daemon"
+	"src.elv.sh/pkg/prog"
+	"src.elv.sh/pkg/shell"
 )
 
 func main() {

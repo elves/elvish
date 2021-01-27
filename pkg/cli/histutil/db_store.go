@@ -1,6 +1,6 @@
 package histutil
 
-import "github.com/elves/elvish/pkg/store"
+import "src.elv.sh/pkg/store"
 
 // NewDBStore returns a Store backed by a database with the view of all
 // commands frozen at creation.

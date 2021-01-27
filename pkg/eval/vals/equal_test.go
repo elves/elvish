@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/elves/elvish/pkg/tt"
+	. "src.elv.sh/pkg/tt"
 )
 
 type customEqualer struct{ ret bool }

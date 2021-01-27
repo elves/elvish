@@ -6,9 +6,9 @@ import (
 	"testing"
 	"unicode"
 
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/errs"
-	. "github.com/elves/elvish/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
+	. "src.elv.sh/pkg/eval/evaltest"
 )
 
 func TestStr(t *testing.T) {

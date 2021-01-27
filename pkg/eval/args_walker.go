@@ -1,8 +1,8 @@
 package eval
 
 import (
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/parse"
 )
 
 type errorpfer interface {

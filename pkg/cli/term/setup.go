@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/elves/elvish/pkg/sys"
-	"github.com/elves/elvish/pkg/wcwidth"
+	"src.elv.sh/pkg/sys"
+	"src.elv.sh/pkg/wcwidth"
 )
 
 // Setup sets up the terminal so that it is suitable for the Reader and
@@ -97,7 +97,7 @@ func restoreVT(out *os.File) error {
 	// visible. This is because the terminal driver might not be smart enough to
 	// recognize some escape sequences as invisible and wrongly assume that we
 	// are not in the first column, which can mess up with tabs. See
-	// https://github.com/elves/elvish/pkg/issues/629 for an example.
+	// https://src.elv.sh/pkg/issues/629 for an example.
 	s += "\r"
 	_, err := out.WriteString(s)
 	return err

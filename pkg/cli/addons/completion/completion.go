@@ -5,9 +5,9 @@ package completion
 import (
 	"strings"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/ui"
 )
 
 // Item represents a completion item, also known as a candidate.

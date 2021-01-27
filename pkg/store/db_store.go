@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/elves/elvish/pkg/logutil"
 	bolt "go.etcd.io/bbolt"
+	"src.elv.sh/pkg/logutil"
 )
 
 var logger = logutil.GetLogger("[store] ")

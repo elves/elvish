@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/elves/elvish/pkg/sys"
 	"golang.org/x/sys/windows"
+	"src.elv.sh/pkg/sys"
 )
 
 func main() {

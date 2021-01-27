@@ -8,17 +8,17 @@ import (
 	"os"
 	"time"
 
-	"github.com/elves/elvish/pkg/daemon"
-	"github.com/elves/elvish/pkg/eval"
-	daemonmod "github.com/elves/elvish/pkg/eval/mods/daemon"
-	mathmod "github.com/elves/elvish/pkg/eval/mods/math"
-	pathmod "github.com/elves/elvish/pkg/eval/mods/path"
-	"github.com/elves/elvish/pkg/eval/mods/platform"
-	"github.com/elves/elvish/pkg/eval/mods/re"
-	"github.com/elves/elvish/pkg/eval/mods/store"
-	"github.com/elves/elvish/pkg/eval/mods/str"
-	"github.com/elves/elvish/pkg/eval/mods/unix"
 	bolt "go.etcd.io/bbolt"
+	"src.elv.sh/pkg/daemon"
+	"src.elv.sh/pkg/eval"
+	daemonmod "src.elv.sh/pkg/eval/mods/daemon"
+	mathmod "src.elv.sh/pkg/eval/mods/math"
+	pathmod "src.elv.sh/pkg/eval/mods/path"
+	"src.elv.sh/pkg/eval/mods/platform"
+	"src.elv.sh/pkg/eval/mods/re"
+	"src.elv.sh/pkg/eval/mods/store"
+	"src.elv.sh/pkg/eval/mods/str"
+	"src.elv.sh/pkg/eval/mods/unix"
 )
 
 const (

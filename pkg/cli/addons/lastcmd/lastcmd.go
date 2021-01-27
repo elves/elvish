@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/histutil"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/histutil"
+	"src.elv.sh/pkg/ui"
 )
 
 // Config is the configuration for starting lastcmd.

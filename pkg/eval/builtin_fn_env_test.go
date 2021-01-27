@@ -4,10 +4,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval"
+	"src.elv.sh/pkg/eval"
 
-	. "github.com/elves/elvish/pkg/eval/evaltest"
-	"github.com/elves/elvish/pkg/eval/vals"
+	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 func TestGetEnv(t *testing.T) {

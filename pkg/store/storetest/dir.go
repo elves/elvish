@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/pkg/store"
+	"src.elv.sh/pkg/store"
 )
 
 var (

@@ -13,9 +13,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/parse"
 )
 
 // Builtins that have not been put into their own groups go here.

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/strutil"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/strutil"
 )
 
 // RawOptions is the type of an argument a Go-native function can take to

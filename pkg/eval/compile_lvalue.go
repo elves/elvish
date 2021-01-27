@@ -3,11 +3,11 @@ package eval
 import (
 	"errors"
 
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/eval/errs"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/eval/vars"
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/parse"
 )
 
 // Parsed group of lvalues.

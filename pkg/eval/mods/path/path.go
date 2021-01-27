@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/elves/elvish/pkg/eval"
+	"src.elv.sh/pkg/eval"
 )
 
 // Ns is the namespace for the re: module.

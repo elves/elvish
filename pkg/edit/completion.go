@@ -8,15 +8,15 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/addons/completion"
-	"github.com/elves/elvish/pkg/edit/complete"
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/fsutil"
-	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/strutil"
 	"github.com/xiaq/persistent/hash"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/addons/completion"
+	"src.elv.sh/pkg/edit/complete"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/fsutil"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/strutil"
 )
 
 //elvdoc:var completion:arg-completer

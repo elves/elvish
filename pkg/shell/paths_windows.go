@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/elves/elvish/pkg/env"
+	"src.elv.sh/pkg/env"
 )
 
 // getSecureRunDir stats elvish-$USERNAME under the default temp dir, creating

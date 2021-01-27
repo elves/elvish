@@ -6,13 +6,13 @@ import (
 	"os/signal"
 	"strconv"
 
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/env"
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/logutil"
-	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/prog"
-	"github.com/elves/elvish/pkg/sys"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/logutil"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/prog"
+	"src.elv.sh/pkg/sys"
 )
 
 var logger = logutil.GetLogger("[shell] ")

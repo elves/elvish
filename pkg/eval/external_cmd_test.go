@@ -4,10 +4,10 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/elves/elvish/pkg/eval"
+	. "src.elv.sh/pkg/eval"
 
-	. "github.com/elves/elvish/pkg/eval/evaltest"
-	"github.com/elves/elvish/pkg/testutil"
+	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestBuiltinFnExternal(t *testing.T) {

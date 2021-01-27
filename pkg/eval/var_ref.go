@@ -3,8 +3,8 @@ package eval
 import (
 	"strings"
 
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/eval/vars"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval/vars"
 )
 
 // This file implements variable resolution. Elvish has fully static lexical

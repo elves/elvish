@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/elves/elvish/pkg/env"
+	"src.elv.sh/pkg/env"
 )
 
 // ScaledMs returns ms milliseconds, scaled by the ELVISH_TEST_TIME_SCALE

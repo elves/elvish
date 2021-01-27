@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/pkg/cli/lscolors"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli/lscolors"
+	"src.elv.sh/pkg/ui"
 )
 
 // Cursor represents a cursor for navigating in a potentially virtual filesystem.

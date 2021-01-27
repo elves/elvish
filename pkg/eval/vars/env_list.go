@@ -6,9 +6,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/xiaq/persistent/vector"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 var (

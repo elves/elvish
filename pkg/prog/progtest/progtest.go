@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elves/elvish/pkg/testutil"
+	"src.elv.sh/pkg/testutil"
 )
 
 // Fixture is a test fixture suitable for testing programs.

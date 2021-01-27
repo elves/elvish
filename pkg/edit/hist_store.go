@@ -3,8 +3,8 @@ package edit
 import (
 	"sync"
 
-	"github.com/elves/elvish/pkg/cli/histutil"
-	"github.com/elves/elvish/pkg/store"
+	"src.elv.sh/pkg/cli/histutil"
+	"src.elv.sh/pkg/store"
 )
 
 // A wrapper of histutil.Store that is concurrency-safe and supports an

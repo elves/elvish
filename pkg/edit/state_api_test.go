@@ -3,7 +3,7 @@ package edit
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli"
+	"src.elv.sh/pkg/cli"
 )
 
 func TestInsertAtDot(t *testing.T) {

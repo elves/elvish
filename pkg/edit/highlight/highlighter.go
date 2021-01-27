@@ -3,7 +3,7 @@ package highlight
 import (
 	"sync"
 
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/ui"
 )
 
 const latesBufferSize = 128

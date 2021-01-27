@@ -5,7 +5,7 @@ package eval_test
 import (
 	"testing"
 
-	. "github.com/elves/elvish/pkg/eval/evaltest"
+	. "src.elv.sh/pkg/eval/evaltest"
 )
 
 // Tests of the `builtin:has-external` command.

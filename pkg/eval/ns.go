@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/xiaq/persistent/hash"
+	"src.elv.sh/pkg/eval/vars"
 )
 
 // Ns is the runtime representation of a namespace. The zero value of Ns is an

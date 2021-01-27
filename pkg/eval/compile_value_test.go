@@ -3,12 +3,12 @@ package eval_test
 import (
 	"testing"
 
-	. "github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/errs"
-	"github.com/elves/elvish/pkg/testutil"
+	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/testutil"
 
-	. "github.com/elves/elvish/pkg/eval/evaltest"
-	"github.com/elves/elvish/pkg/eval/vals"
+	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 func TestCompound(t *testing.T) {

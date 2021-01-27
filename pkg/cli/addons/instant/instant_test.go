@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/elves/elvish/pkg/cli/clitest"
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/ui"
+	. "src.elv.sh/pkg/cli/clitest"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/ui"
 )
 
 func setupStarted(t *testing.T) *Fixture {

@@ -4,11 +4,11 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/edit/highlight"
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/fsutil"
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/edit/highlight"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/fsutil"
+	"src.elv.sh/pkg/parse"
 )
 
 func initHighlighter(appSpec *cli.AppSpec, ev *eval.Evaler) {

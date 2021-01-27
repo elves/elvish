@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/elves/elvish/pkg/env"
-	"github.com/elves/elvish/pkg/testutil"
+	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/testutil"
 )
 
 // TODO(xiaq): Rewrite these tests to test the exported MakePaths instead of the

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/pkg/wcwidth"
+	"src.elv.sh/pkg/wcwidth"
 )
 
 // Cell is an indivisible unit on the screen. It is not necessarily 1 column

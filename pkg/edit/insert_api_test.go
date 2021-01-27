@@ -3,7 +3,7 @@ package edit
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli/term"
+	"src.elv.sh/pkg/cli/term"
 )
 
 func TestInsert_Abbr(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/ui"
 )
 
 var bufferBuilderWritesTests = []struct {

@@ -4,8 +4,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/parse"
 )
 
 var sourceText = parse.SourceText

@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/elves/elvish/pkg/tt"
+	. "src.elv.sh/pkg/tt"
 )
 
 type reprer struct{}

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/vals"
 	"github.com/xiaq/persistent/vector"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 // Ns is the namespace for the re: module.

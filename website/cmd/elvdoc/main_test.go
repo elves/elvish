@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elves/elvish/pkg/testutil"
+	"src.elv.sh/pkg/testutil"
 )
 
 var extractTests = []struct {

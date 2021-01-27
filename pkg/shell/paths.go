@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/elves/elvish/pkg/fsutil"
+	"src.elv.sh/pkg/fsutil"
 )
 
 // Paths keeps all paths required for the Elvish runtime.

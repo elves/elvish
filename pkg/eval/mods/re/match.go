@@ -1,7 +1,7 @@
 package re
 
 import (
-	"github.com/elves/elvish/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 type matchStruct struct {

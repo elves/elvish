@@ -5,7 +5,7 @@ import (
 	"math"
 	"reflect"
 
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/parse"
 )
 
 // NoPretty can be passed to Repr to suppress pretty-printing.

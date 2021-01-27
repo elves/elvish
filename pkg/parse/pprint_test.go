@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elves/elvish/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 var n = mustParse("ls $x[0]$y[1];echo")

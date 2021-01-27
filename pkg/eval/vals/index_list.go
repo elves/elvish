@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elves/elvish/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/errs"
 )
 
 var (

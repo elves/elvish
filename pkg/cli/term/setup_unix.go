@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/sys"
 	"golang.org/x/sys/unix"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/sys"
 )
 
 func setup(in, out *os.File) (func() error, error) {

@@ -3,10 +3,10 @@ package completion
 import (
 	"testing"
 
-	. "github.com/elves/elvish/pkg/cli/clitest"
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/ui"
+	. "src.elv.sh/pkg/cli/clitest"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/ui"
 )
 
 func setupStarted(t *testing.T) *Fixture {

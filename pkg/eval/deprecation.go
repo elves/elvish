@@ -1,7 +1,7 @@
 package eval
 
 import (
-	"github.com/elves/elvish/pkg/diag"
+	"src.elv.sh/pkg/diag"
 )
 
 type deprecationRegistry struct {

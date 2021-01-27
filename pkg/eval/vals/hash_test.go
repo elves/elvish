@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/elves/elvish/pkg/tt"
 	"github.com/xiaq/persistent/hash"
+	. "src.elv.sh/pkg/tt"
 )
 
 type hasher struct{}

@@ -3,9 +3,9 @@ package edit
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/errs"
-	. "github.com/elves/elvish/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
+	. "src.elv.sh/pkg/eval/evaltest"
 )
 
 func TestAddVar(t *testing.T) {

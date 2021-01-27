@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/histutil"
-	"github.com/elves/elvish/pkg/cli/term"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/histutil"
+	"src.elv.sh/pkg/cli/term"
 )
 
 var ErrHistWalkInactive = errors.New("the histwalk addon is not active")

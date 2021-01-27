@@ -13,7 +13,7 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/elves/elvish/pkg/logutil"
+	"src.elv.sh/pkg/logutil"
 )
 
 // Default port on which the web interface runs. The number is chosen because it

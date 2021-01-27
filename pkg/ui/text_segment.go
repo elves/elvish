@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 // Segment is a string that has some style applied to it.

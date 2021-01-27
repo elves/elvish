@@ -3,7 +3,7 @@ package complete
 import (
 	"reflect"
 
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/parse"
 )
 
 // Reports whether a and b have the same dynamic type. Useful as a more succinct

@@ -4,12 +4,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli"
-	. "github.com/elves/elvish/pkg/cli/clitest"
-	"github.com/elves/elvish/pkg/cli/lscolors"
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/testutil"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli"
+	. "src.elv.sh/pkg/cli/clitest"
+	"src.elv.sh/pkg/cli/lscolors"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/ui"
 )
 
 var testDir = testutil.Dir{

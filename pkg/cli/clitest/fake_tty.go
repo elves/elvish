@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/testutil"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/testutil"
 )
 
 const (

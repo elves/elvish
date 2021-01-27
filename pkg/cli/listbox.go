@@ -4,8 +4,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/ui"
 )
 
 // ListBox is a list for displaying and selecting from a list of items.

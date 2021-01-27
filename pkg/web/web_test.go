@@ -3,8 +3,8 @@ package web
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/prog"
-	. "github.com/elves/elvish/pkg/prog/progtest"
+	"src.elv.sh/pkg/prog"
+	. "src.elv.sh/pkg/prog/progtest"
 )
 
 func TestWeb_SpuriousArgument(t *testing.T) {

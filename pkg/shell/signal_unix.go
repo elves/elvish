@@ -7,7 +7,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/elves/elvish/pkg/sys"
+	"src.elv.sh/pkg/sys"
 )
 
 func handleSignal(sig os.Signal, stderr *os.File) {

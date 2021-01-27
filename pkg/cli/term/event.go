@@ -1,6 +1,6 @@
 package term
 
-import "github.com/elves/elvish/pkg/ui"
+import "src.elv.sh/pkg/ui"
 
 // Event represents an event that can be read from the terminal.
 type Event interface {

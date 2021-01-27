@@ -3,8 +3,8 @@ package cli
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/tt"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/ui"
 )
 
 func TestModeLine(t *testing.T) {

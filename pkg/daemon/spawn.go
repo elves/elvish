@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/elves/elvish/pkg/fsutil"
+	"src.elv.sh/pkg/fsutil"
 )
 
 // SpawnConfig keeps configurations for spawning the daemon.

@@ -6,7 +6,7 @@
 package unix
 
 import (
-	"github.com/elves/elvish/pkg/eval"
+	"src.elv.sh/pkg/eval"
 )
 
 // ExposeUnixNs indicate whether this module should be exposed as a usable

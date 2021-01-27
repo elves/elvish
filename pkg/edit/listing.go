@@ -3,16 +3,16 @@ package edit
 import (
 	"os"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/addons/histlist"
-	"github.com/elves/elvish/pkg/cli/addons/lastcmd"
-	"github.com/elves/elvish/pkg/cli/addons/location"
-	"github.com/elves/elvish/pkg/cli/histutil"
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/eval/vars"
-	"github.com/elves/elvish/pkg/store"
 	"github.com/xiaq/persistent/hashmap"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/addons/histlist"
+	"src.elv.sh/pkg/cli/addons/lastcmd"
+	"src.elv.sh/pkg/cli/addons/location"
+	"src.elv.sh/pkg/cli/histutil"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/store"
 )
 
 func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histutil.Store, nb eval.NsBuilder) {

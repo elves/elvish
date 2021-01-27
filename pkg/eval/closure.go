@@ -7,12 +7,12 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/eval/errs"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/eval/vars"
-	"github.com/elves/elvish/pkg/parse"
 	"github.com/xiaq/persistent/hash"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/parse"
 )
 
 // A user-defined function in Elvish code. Each closure has its unique identity.

@@ -3,7 +3,7 @@ package ui
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 func TestTextSegmentAsElvishValue(t *testing.T) {

@@ -1,6 +1,6 @@
 package eval
 
-import "github.com/elves/elvish/pkg/eval/vals"
+import "src.elv.sh/pkg/eval/vals"
 
 // Basic predicate commands.
 

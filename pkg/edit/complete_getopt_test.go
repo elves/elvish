@@ -3,7 +3,7 @@ package edit
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 func TestCompleteGetopt(t *testing.T) {

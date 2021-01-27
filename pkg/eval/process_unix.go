@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/elves/elvish/pkg/sys"
+	"src.elv.sh/pkg/sys"
 )
 
 // Process control functions in Unix.

@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/elves/elvish/pkg/cli/term"
+	"src.elv.sh/pkg/cli/term"
 )
 
 // Empty is an empty widget.

@@ -5,7 +5,7 @@ import (
 	"math"
 	"reflect"
 
-	"github.com/elves/elvish/pkg/eval"
+	"src.elv.sh/pkg/eval"
 )
 
 // ApproximatelyThreshold defines the threshold for matching float64 values when

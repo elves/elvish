@@ -3,7 +3,7 @@ package histutil
 import (
 	"errors"
 
-	"github.com/elves/elvish/pkg/store"
+	"src.elv.sh/pkg/store"
 )
 
 // Store is an abstract interface for history store.

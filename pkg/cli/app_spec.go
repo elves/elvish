@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/ui"
 )
 
 // AppSpec specifies the configuration and initial state for an App.

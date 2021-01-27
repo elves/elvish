@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/elves/elvish/pkg/cli/term"
+	"src.elv.sh/pkg/cli/term"
 )
 
 // ComboBox is a Widget that combines a ListBox and a CodeArea.

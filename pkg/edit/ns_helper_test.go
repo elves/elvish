@@ -5,8 +5,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/vars"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vars"
 )
 
 var testVar = vars.NewReadOnly("")

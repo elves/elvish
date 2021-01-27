@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/testutil"
-	"github.com/elves/elvish/pkg/tt"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/ui"
 )
 
 var any = anyMatcher{}

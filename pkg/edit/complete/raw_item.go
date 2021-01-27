@@ -1,9 +1,9 @@
 package complete
 
 import (
-	"github.com/elves/elvish/pkg/cli/addons/completion"
-	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli/addons/completion"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/ui"
 )
 
 // PlainItem is a simple implementation of RawItem.

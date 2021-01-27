@@ -7,7 +7,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/elves/elvish/pkg/testutil"
+	"src.elv.sh/pkg/testutil"
 )
 
 // TODO: When EachExternal is modified to work on Windows either fold this

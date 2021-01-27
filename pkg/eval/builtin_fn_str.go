@@ -9,8 +9,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/wcwidth"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/wcwidth"
 )
 
 // String operations.

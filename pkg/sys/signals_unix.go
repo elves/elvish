@@ -19,7 +19,7 @@ func NotifySignals() chan os.Signal {
 	// handles the case of running an external command from an interactive
 	// prompt.
 	//
-	// See https://github.com/elves/elvish/issues/988.
+	// See https://src.elv.sh/issues/988.
 	signal.Ignore(syscall.SIGTTIN, syscall.SIGTTOU, syscall.SIGTSTP)
 	return sigCh
 }

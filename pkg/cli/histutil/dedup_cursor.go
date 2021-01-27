@@ -1,6 +1,6 @@
 package histutil
 
-import "github.com/elves/elvish/pkg/store"
+import "src.elv.sh/pkg/store"
 
 // NewDedupCursor returns a cursor that skips over all duplicate entries.
 func NewDedupCursor(c Cursor) Cursor {

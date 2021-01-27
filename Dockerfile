@@ -2,8 +2,8 @@ FROM golang:alpine as builder
 RUN apk update && \
     apk add --virtual build-deps make git
 # Build Elvish
-COPY . /go/src/github.com/elves/elvish
-RUN make -C /go/src/github.com/elves/elvish get
+COPY . /go/src/src.elv.sh
+RUN make -C /go/src/src.elv.sh get
 
 FROM alpine
 COPY --from=builder /go/bin/elvish /bin/elvish

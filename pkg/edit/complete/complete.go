@@ -5,10 +5,10 @@ import (
 	"errors"
 	"sort"
 
-	"github.com/elves/elvish/pkg/cli/addons/completion"
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/parse/parseutil"
+	"src.elv.sh/pkg/cli/addons/completion"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/parse/parseutil"
 )
 
 // An error returned by Complete if the config has not supplied a PureEvaler.
@@ -63,7 +63,7 @@ type PureEvaler interface {
 	PurelyEvalPartialCompound(*parse.Compound, int) (string, bool)
 }
 
-// CodeBuffer is the same the type in github.com/elves/elvish/pkg/el/codearea,
+// CodeBuffer is the same the type in src.elv.sh/pkg/el/codearea,
 // replicated here to avoid an unnecessary dependency.
 type CodeBuffer struct {
 	Content string

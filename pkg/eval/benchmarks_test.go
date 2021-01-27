@@ -3,7 +3,7 @@ package eval
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/parse"
 )
 
 func BenchmarkEval_Empty(b *testing.B) {

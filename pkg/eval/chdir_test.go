@@ -4,12 +4,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/elves/elvish/pkg/env"
-	. "github.com/elves/elvish/pkg/eval"
+	"src.elv.sh/pkg/env"
+	. "src.elv.sh/pkg/eval"
 
-	. "github.com/elves/elvish/pkg/eval/evaltest"
-	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/testutil"
+	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestChdir(t *testing.T) {

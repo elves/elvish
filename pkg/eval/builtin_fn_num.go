@@ -3,7 +3,7 @@ package eval
 import (
 	"math/rand"
 
-	"github.com/elves/elvish/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 // Numerical operations.

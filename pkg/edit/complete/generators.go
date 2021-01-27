@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/elves/elvish/pkg/cli/lscolors"
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/fsutil"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli/lscolors"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/fsutil"
+	"src.elv.sh/pkg/ui"
 )
 
 var pathSeparator = string(filepath.Separator)

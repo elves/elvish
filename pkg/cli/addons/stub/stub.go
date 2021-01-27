@@ -3,8 +3,8 @@
 package stub
 
 import (
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/term"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/term"
 )
 
 // Config keeps the configuration for the stub addon.

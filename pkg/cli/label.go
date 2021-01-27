@@ -1,8 +1,8 @@
 package cli
 
 import (
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/ui"
 )
 
 // Label is a Renderer that writes out a text.

@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/parse"
 )
 
 // ScriptConfig keeps configuration for the script mode.

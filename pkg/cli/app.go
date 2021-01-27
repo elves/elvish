@@ -7,8 +7,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/sys"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/sys"
 )
 
 // App represents a CLI app.

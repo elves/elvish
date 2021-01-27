@@ -5,7 +5,7 @@
 [![Test Status on FreeBSD](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=freebsd&task=Test%20on%20FreeBSD)](https://cirrus-ci.com/github/elves/elvish/master)
 [![Test status on Windows](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=AppVeyor&label=windows)](https://ci.appveyor.com/project/xiaq/elvish)
 [![Test Coverage](https://img.shields.io/codecov/c/github/elves/elvish.svg?logo=Codecov&label=coverage)](https://codecov.io/gh/elves/elvish)
-[![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/github.com/elves/elvish)
+[![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/src.elv.sh)
 [![GoDoc](https://img.shields.io/badge/godoc-api-blue.svg)](https://godoc.elv.sh)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
@@ -53,13 +53,12 @@ This will install Elvish to `~/go/bin`.
 Alternatively, you can also just use `go get` to install Elvish:
 
 ```sh
-go get -u github.com/elves/elvish
+go get -u src.elv.sh
 ```
 
-This will clone the Git repository to `~/go/src/github.com/elves/elvish`,
-updating it if already exists, and install Elvish to `~/go/bin`. However, Elvish
-built this way will lack version information, although it is otherwise fully
-functional.
+This will clone the Git repository to `~/go/src/src.elv.sh`, updating it if
+already exists, and install Elvish to `~/go/bin`. However, Elvish built this way
+will lack version information, although it is otherwise fully functional.
 
 Some tips on installation:
 

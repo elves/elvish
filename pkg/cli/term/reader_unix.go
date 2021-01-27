@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/ui"
 )
 
 // reader reads terminal escape sequences and decodes them into events.

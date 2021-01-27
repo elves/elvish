@@ -1,8 +1,8 @@
 package edit
 
 import (
-	"github.com/elves/elvish/pkg/cli/addons/stub"
-	"github.com/elves/elvish/pkg/eval"
+	"src.elv.sh/pkg/cli/addons/stub"
+	"src.elv.sh/pkg/eval"
 )
 
 //elv:fn command:start

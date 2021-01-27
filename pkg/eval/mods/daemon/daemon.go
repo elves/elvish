@@ -5,9 +5,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/elves/elvish/pkg/daemon"
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/vars"
+	"src.elv.sh/pkg/daemon"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vars"
 )
 
 // errDontKnowHowToSpawnDaemon is thrown by daemon:spawn when the Evaler's

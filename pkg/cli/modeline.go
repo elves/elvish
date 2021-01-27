@@ -1,6 +1,6 @@
 package cli
 
-import "github.com/elves/elvish/pkg/ui"
+import "src.elv.sh/pkg/ui"
 
 // ModeLine returns a text styled as a modeline.
 func ModeLine(content string, space bool) ui.Text {

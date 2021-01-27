@@ -3,7 +3,7 @@ package vals
 import (
 	"testing"
 
-	. "github.com/elves/elvish/pkg/tt"
+	. "src.elv.sh/pkg/tt"
 )
 
 // An implementation of Iterator.

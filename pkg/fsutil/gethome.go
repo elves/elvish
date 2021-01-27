@@ -6,7 +6,7 @@ import (
 	"os/user"
 	"strings"
 
-	"github.com/elves/elvish/pkg/env"
+	"src.elv.sh/pkg/env"
 )
 
 // CurrentUser allows for unit test error injection.

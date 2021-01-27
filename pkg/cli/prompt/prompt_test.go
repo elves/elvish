@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/pkg/testutil"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/ui"
 )
 
 func TestPrompt_DefaultCompute(t *testing.T) {

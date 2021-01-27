@@ -3,9 +3,9 @@ package edit
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/store"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/store"
 )
 
 func TestCommandHistory(t *testing.T) {

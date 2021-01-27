@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/pkg/daemon"
-	"github.com/elves/elvish/pkg/testutil"
+	"src.elv.sh/pkg/daemon"
+	"src.elv.sh/pkg/testutil"
 
-	. "github.com/elves/elvish/pkg/prog/progtest"
+	. "src.elv.sh/pkg/prog/progtest"
 )
 
 func TestShell_ConnectsToDaemon(t *testing.T) {

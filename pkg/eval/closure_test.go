@@ -3,11 +3,11 @@ package eval_test
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/errs"
-	"github.com/elves/elvish/pkg/tt"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/tt"
 
-	. "github.com/elves/elvish/pkg/eval/evaltest"
+	. "src.elv.sh/pkg/eval/evaltest"
 )
 
 func TestClosureAsValue(t *testing.T) {

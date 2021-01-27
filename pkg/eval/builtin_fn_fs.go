@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/elves/elvish/pkg/fsutil"
-	"github.com/elves/elvish/pkg/store"
+	"src.elv.sh/pkg/fsutil"
+	"src.elv.sh/pkg/store"
 )
 
 // Filesystem commands.

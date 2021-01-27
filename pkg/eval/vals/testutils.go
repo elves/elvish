@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 // ValueTester is a helper for testing properties of a value.

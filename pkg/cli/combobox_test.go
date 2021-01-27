@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/ui"
 )
 
 var comboBoxRenderTests = []RenderTest{

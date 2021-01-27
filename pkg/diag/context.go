@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/pkg/wcwidth"
+	"src.elv.sh/pkg/wcwidth"
 )
 
 // Context is a range of text in a source code. It is typically used for

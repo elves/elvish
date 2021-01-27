@@ -4,7 +4,7 @@ package parseutil
 import (
 	"strings"
 
-	"github.com/elves/elvish/pkg/parse"
+	"src.elv.sh/pkg/parse"
 )
 
 // FindLeafNode finds the leaf node at a specific position. It returns nil if

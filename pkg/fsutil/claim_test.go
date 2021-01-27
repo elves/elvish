@@ -6,7 +6,7 @@ import (
 	"sort"
 	"testing"
 
-	. "github.com/elves/elvish/pkg/testutil"
+	. "src.elv.sh/pkg/testutil"
 )
 
 var claimFileTests = []struct {

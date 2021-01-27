@@ -1,4 +1,4 @@
-module github.com/elves/elvish
+module src.elv.sh
 
 require (
 	github.com/BurntSushi/toml v0.3.1

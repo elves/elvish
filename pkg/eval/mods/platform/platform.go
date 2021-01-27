@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/vars"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vars"
 )
 
 //elvdoc:var arch

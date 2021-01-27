@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/pkg/parse"
 	"github.com/xiaq/persistent/hash"
+	"src.elv.sh/pkg/parse"
 )
 
 // Key represents a single keyboard input, typically assembled from a escape

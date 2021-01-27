@@ -1,10 +1,10 @@
 package edit
 
 import (
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/addons/histwalk"
-	"github.com/elves/elvish/pkg/cli/histutil"
-	"github.com/elves/elvish/pkg/eval"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/addons/histwalk"
+	"src.elv.sh/pkg/cli/histutil"
+	"src.elv.sh/pkg/eval"
 )
 
 //elvdoc:fn history:fast-forward

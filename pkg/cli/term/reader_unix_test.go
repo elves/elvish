@@ -5,7 +5,7 @@ package term
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/ui"
 )
 
 var readEventTests = []struct {

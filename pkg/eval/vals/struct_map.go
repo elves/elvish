@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/elves/elvish/pkg/strutil"
+	"src.elv.sh/pkg/strutil"
 )
 
 // StructMap may be implemented by a struct to mark the struct as a "struct

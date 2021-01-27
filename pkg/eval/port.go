@@ -7,8 +7,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/strutil"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/strutil"
 )
 
 // Port conveys data stream. It always consists of a byte band and a channel band.

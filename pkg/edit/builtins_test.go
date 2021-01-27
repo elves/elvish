@@ -4,11 +4,11 @@ import (
 	"io"
 	"testing"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/tt"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/ui"
 )
 
 func TestBindingTable(t *testing.T) {

@@ -11,10 +11,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/prog"
-	"github.com/elves/elvish/pkg/shell"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/prog"
+	"src.elv.sh/pkg/shell"
 )
 
 // Program is the web subprogram.

@@ -38,8 +38,8 @@ buildone() {
 
     echo -n "Building for $GOOS-$GOARCH... "
     go build -o $DST_DIR/$BIN -trimpath -ldflags \
-        "-X github.com/elves/elvish/pkg/buildinfo.Version=$VERSION \
-         -X github.com/elves/elvish/pkg/buildinfo.Reproducible=true" || {
+        "-X src.elv.sh/pkg/buildinfo.Version=$VERSION \
+         -X src.elv.sh/pkg/buildinfo.Reproducible=true" || {
         echo "Failed"
         return
     }

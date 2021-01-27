@@ -3,8 +3,8 @@ package cli
 import (
 	"sync"
 
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/ui"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/ui"
 )
 
 // ColView is a Widget that arranges several widgets in a column.

@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/elves/elvish/pkg/sys"
+	"src.elv.sh/pkg/sys"
 )
 
 // A helper for reading from a file.

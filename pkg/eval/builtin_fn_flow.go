@@ -3,8 +3,8 @@ package eval
 import (
 	"sync"
 
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/eval/vals"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 // Flow control.

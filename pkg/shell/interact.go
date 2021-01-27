@@ -8,17 +8,17 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/elves/elvish/pkg/cli"
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/edit"
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/eval/vars"
-	"github.com/elves/elvish/pkg/parse"
-	"github.com/elves/elvish/pkg/prog"
-	"github.com/elves/elvish/pkg/sys"
 	"github.com/xiaq/persistent/hashmap"
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/edit"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/prog"
+	"src.elv.sh/pkg/sys"
 )
 
 // InteractiveRescueShell determines whether a panic results in a rescue shell

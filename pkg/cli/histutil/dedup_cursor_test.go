@@ -3,7 +3,7 @@ package histutil
 import (
 	"testing"
 
-	"github.com/elves/elvish/pkg/store"
+	"src.elv.sh/pkg/store"
 )
 
 func TestDedupCursor(t *testing.T) {

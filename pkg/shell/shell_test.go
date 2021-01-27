@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/elves/elvish/pkg/env"
-	. "github.com/elves/elvish/pkg/prog/progtest"
+	"src.elv.sh/pkg/env"
+	. "src.elv.sh/pkg/prog/progtest"
 )
 
 func TestShell_SHLVL_NormalCase(t *testing.T) {

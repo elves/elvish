@@ -1,8 +1,8 @@
 package store
 
 import (
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/store"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/store"
 )
 
 func Ns(s store.Store) *eval.Ns {

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/elves/elvish/pkg/tt"
+	. "src.elv.sh/pkg/tt"
 )
 
 // An implementation for Concatter that accepts strings, returns a special

@@ -6,10 +6,10 @@ import (
 	"math"
 	"sort"
 
-	"github.com/elves/elvish/pkg/eval/errs"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/eval/vars"
 	"github.com/xiaq/persistent/hashmap"
+	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vars"
 )
 
 // Sequence, list and maps.

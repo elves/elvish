@@ -4,10 +4,10 @@ import (
 	"math"
 	"testing"
 
-	. "github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/eval/errs"
+	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
 
-	. "github.com/elves/elvish/pkg/eval/evaltest"
+	. "src.elv.sh/pkg/eval/evaltest"
 )
 
 func TestFloat64(t *testing.T) {

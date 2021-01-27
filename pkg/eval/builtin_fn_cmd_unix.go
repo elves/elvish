@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/elves/elvish/pkg/env"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/sys"
+	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/sys"
 )
 
 // ErrNotInSameProcessGroup is thrown when the process IDs passed to fg are not

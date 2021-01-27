@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/elves/elvish/pkg/cli"
-	. "github.com/elves/elvish/pkg/cli/clitest"
-	"github.com/elves/elvish/pkg/cli/term"
-	"github.com/elves/elvish/pkg/sys"
-	"github.com/elves/elvish/pkg/ui"
+	. "src.elv.sh/pkg/cli"
+	. "src.elv.sh/pkg/cli/clitest"
+	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/sys"
+	"src.elv.sh/pkg/ui"
 )
 
 // Lifecycle aspects.

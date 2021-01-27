@@ -4,9 +4,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/elves/elvish/pkg/eval"
-	. "github.com/elves/elvish/pkg/eval/evaltest"
-	"github.com/elves/elvish/pkg/testutil"
+	"src.elv.sh/pkg/eval"
+	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/testutil"
 )
 
 var testDir = testutil.Dir{

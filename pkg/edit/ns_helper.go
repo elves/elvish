@@ -4,8 +4,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/elves/elvish/pkg/eval"
-	"github.com/elves/elvish/pkg/fsutil"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/fsutil"
 )
 
 // Calls the passed function for each variable name in namespace ns that can be

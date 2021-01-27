@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elves/elvish/pkg/diag"
-	"github.com/elves/elvish/pkg/eval/vals"
-	"github.com/elves/elvish/pkg/strutil"
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/strutil"
 )
 
 // Input and output.
