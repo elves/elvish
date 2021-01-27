@@ -7,6 +7,13 @@
     <link rel="alternate" type="application/atom+xml"
           href="{{ rootURL }}/feed.atom">
   {{ end }}
+  {{ if is "homepage" }}
+    <link rel="canonical" href="{{ .RootURL }}">
+  {{ else if is "category" }}
+    <link rel="canonical" href="{{ .RootURL }}/{{ .Category }}/">
+  {{ else }}
+    <link rel="canonical" href="{{ .RootURL }}/{{ .Category }}/{{ .Name }}">
+  {{ end }}
 
   <title>
     {{ if is "homepage" }}
