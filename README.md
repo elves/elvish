@@ -53,7 +53,7 @@ This will install Elvish to `~/go/bin`.
 Alternatively, you can also just use `go get` to install Elvish:
 
 ```sh
-go get -u src.elv.sh
+go get -u src.elv.sh/cmd/elvish
 ```
 
 This will clone the Git repository to `~/go/src/src.elv.sh`, updating it if
