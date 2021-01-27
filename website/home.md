@@ -117,7 +117,7 @@ language. It runs on Linux, BSDs, macOS and Windows.
 
 -   [Source code](https://github.com/elves/elvish) on GitHub
 
--   [Try Elvish](https://try.elv.sh) directly from the browser (coming soon!)
+-   [Try Elvish](https://try.elv.sh) directly from the browser (Beta)
 
 # <i class="icon-sitemap"></i> Use this Site
 
