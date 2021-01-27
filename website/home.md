@@ -152,7 +152,7 @@ to [matterbridge](https://github.com/42wim/matterbridge)!
 -   [Awesome Elvish](https://github.com/elves/awesome-elvish): Official list of
     unofficial Elvish modules
 
--   [@RealElvishShell](https://twitter.com/realelvishshell) on Twitter
+-   [@ElvishShell](https://twitter.com/elvishshell) on Twitter
 
 </div>
 
