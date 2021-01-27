@@ -446,7 +446,7 @@ pre.ttyshot, pre.ttyshot code {
 }
 
 table {
-    border-collapse: collpase;
+    border-collapse: collapse;
     width: 100%;
     margin-bottom: 16px;
 }
