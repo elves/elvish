@@ -105,7 +105,7 @@ func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 		local.names[i] = name
 	}
 	if c.RestArg == -1 {
-		for i, _ := range c.ArgNames {
+		for i := range c.ArgNames {
 			local.slots[i] = vars.FromInit(args[i])
 		}
 	} else {
