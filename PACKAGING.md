@@ -74,7 +74,7 @@ version of the Go compiler.
 
 To make reproducible builds, you must do the following:
 
--   Pass `-trimpath` to the Go compiler.
+-   Pass `-buildmode=pie -trimpath` to the Go compiler.
 
 -   Disable cgo by setting the `CGO_ENABLED` environment variable to 0.
 
@@ -87,8 +87,10 @@ To make reproducible builds, you must do the following:
     requirements when packaging reproducible builds.
 
     In addition, if your distribution uses a patched version of the Go compiler
-    that changes its output, you must treat this as a patch on Elvish itself,
-    and supply a version suffix accordingly.
+    that changes its output, or if the build command uses any additional flags
+    (either via the command line or via any environment variables), you must
+    treat this as a patch on Elvish itself, and supply a version suffix
+    accordingly.
 
 If you follow these requirements when building Elvish, you can mark the build as
 a reproducible one by overriding `src.elv.sh/pkg/buildinfo.Reproducible` to
@@ -97,7 +99,7 @@ a reproducible one by overriding `src.elv.sh/pkg/buildinfo.Reproducible` to
 Example when building a release version without any patches:
 
 ```sh
-go build -trimpath \
+go build -buildmode=pie -trimpath \
   -ldflags "-X src.elv.sh/pkg/buildinfo.Reproducible=true" \
   ./cmd/elvish
 ```
@@ -105,7 +107,7 @@ go build -trimpath \
 Example when building a development version with a patch:
 
 ```sh
-go build -trimpath \
+go build -buildmode=pie -trimpath \
   -ldflags "-X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev.$(git describe --always --dirty=-dirty --exclude '*')-deb0 \
             -X src.elv.sh/pkg/buildinfo.Reproducible=true" \
   ./cmd/elvish

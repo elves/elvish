@@ -84,7 +84,8 @@ buildone() {
     fi
 
     echo -n "Building for $GOOS-$GOARCH... "
-    go build -o $BIN_DIR/$BIN -trimpath -ldflags "$LD_FLAGS" $SRC_DIR/cmd/elvish || {
+    go build -buildmode=pie -trimpath -ldflags "$LD_FLAGS"\
+      -o $BIN_DIR/$BIN $SRC_DIR/cmd/elvish || {
         echo "Failed"
         return
     }
