@@ -79,7 +79,7 @@ To make reproducible builds, you must do the following:
 -   Disable cgo by setting the `CGO_ENABLED` environment variable to 0.
 
 -   Follow the requirements above for putting [accurate version
-    information](#accurate version information) into the binary, so that the
+    information](#accurate-version-information) into the binary, so that the
     user is able to uniquely identify the build by running `elvish -version`.
 
     The recommendation for how to set `VersionSuffix` when
