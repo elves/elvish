@@ -27,7 +27,8 @@ echo "Deleting old version of $bintray_version"
 curl -X DELETE -u$BINTRAY_TOKEN \
     https://api.bintray.com/packages/elves/elvish/elvish/versions/$bintray_version
 
-find _bin -type f -printf '%P\n' | while read f; do
+find _bin -type f | while read f; do
+    f=${f#_bin/}
     echo "Deploying $f"
     curl -T _bin/$f -u$BINTRAY_TOKEN \
         https://api.bintray.com/content/elves/elvish/elvish/$bintray_version/$f'?publish=1&override=1'
