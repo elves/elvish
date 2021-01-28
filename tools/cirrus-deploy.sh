@@ -5,8 +5,12 @@
 # Environment variables used by this script:
 # $CIRRUS_BRANCH $CIRRUS_TAG $BINTRAY_TOKEN
 
+# Used by buildall.sh
+export ELVISH_REPRODUCIBLE
+
 if [ "$CIRRUS_TAG" -a "$CIRRUS_BRANCH" != master ]; then
     file_suffix=$CIRRUS_TAG
+    ELVISH_REPRODUCIBLE=release
 else
 	if [ "$CIRRUS_BRANCH" = master ]; then
         file_suffix=HEAD
@@ -14,12 +18,10 @@ else
         file_suffix=$CIRRUS_BRANCH
 	fi
     version_suffix=-dev$(git describe --always --dirty=-dirty --exclude '*')
-	GO_LD_FLAGS="-X src.elv.sh/pkg/buildinfo.VersionSuffix=$version_suffix"
+    ELVISH_REPRODUCIBLE=dev
 fi
 
 rm -rf _bin
-# Used by buildall.sh
-export GO_LD_FLAGS="$GO_LD_FLAGS -X src.elv.sh/pkg/buildinfo.Reproducible=true"
 ./tools/buildall.sh . _bin $file_suffix
 
 bintray_version=$file_suffix
