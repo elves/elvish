@@ -1,22 +1,10 @@
 #!/bin/sh -e
 
-# Builds Elvish binaries for all supported platforms.
+# buildall.sh $SRC_DIR $DST_DIR $SUFFIX.
 #
-# Arguments are passed via the following environment variables:
-#
-# - SRC_DIR: Root of the checked out source tree. Defauls to ".".
-#
-# - BIN_DIR: Root of the directory to put binaries in. Defauls to "./_bin".
-#
-# - VERSION: Version info to use in the built binaries. Defaults to "unknown".
-#
-# - STEM_SUFFIX: Suffix to add to the filename stem. Defaults to $VERSION.
-#
-# Alternatively, they can be passed as command-line arguments (buildall.sh
-# src_dir dst_dir version), but the environment variables take precedence.
-#
-# For each supported combination of $GOOS and $GOARCH, this script saves the
-# built binary to $BIN_DIR/$GOOS-$GOARCH/elvish-$VERSION.
+# Builds Elvish binaries for all supported platforms, using the code in $SRC_DIR
+# and building $DST_DIR/$GOOS-$GOARCH/elvish-$SUFFIX for each supported
+# combination of $GOOS and $GOARCH.
 #
 # It also creates and an archive for each binary file, and puts it in the same
 # directory. For GOOS=windows, the archive is a .zip file. For all other GOOS,
@@ -25,12 +13,37 @@
 # If the sha256sum command is available, this script also creates a sha256sum
 # file for each binary and archive file, and puts it in the same directory.
 #
+# The ELVISH_REPRODUCIBLE environment variable, if set, instructs the script to
+# mark the binary as a reproducible build. It must take one of the two following
+# values:
+#
+# - release: SRC_DIR must contain the source code for a tagged release.
+#
+# - dev: SRC_DIR must be a Git repository checked out from the latest master
+#        branch.
+#
 # This script is not whitespace-correct; avoid whitespaces in directory names.
 
-: ${SRC_DIR:=${1:-.}}
-: ${BIN_DIR:=${2:-./_bin}}
-: ${VERSION:=${3:-unknown}}
-: ${STEM_SUFFIX:=${4:-$VERSION}}
+if test $# != 3; then
+    echo 'buildall.sh $SRC_DIR $DST_DIR $SUFFIX'
+    exit 1
+fi
+
+SRC_DIR=$1
+DST_DIR=$2
+SUFFIX=$3
+
+LD_FLAGS=
+if test -n "$ELVISH_REPRODUCIBLE"; then
+    LD_FLAGS="-X src.elv.sh/pkg/buildinfo.Reproducible=true"
+    if test "$ELVISH_REPRODUCIBLE" = dev; then
+        LD_FLAGS="$LD_FLAGS -X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev.$(git -C $SRC_DIR describe --always --dirty=-dirty --exclude '*')"
+    elif test "$ELVISH_REPRODUCIBLE" = release; then
+        : # nothing to do
+    else
+        echo "$ELVISH_REPRODUCIBLE must be 'dev' or 'release' when set"
+    fi
+fi
 
 export GOOS GOARCH
 export CGO_ENABLED=0
@@ -41,9 +54,9 @@ main() {
     buildarch arm64 linux
 }
 
-# Builds one GOARCH, multiple GOOS.
-#
 # buildarch $arch $os...
+#
+# Builds one GOARCH, multiple GOOS.
 buildarch() {
     local GOARCH=$1 GOOS
     shift
@@ -52,14 +65,16 @@ buildarch() {
     done
 }
 
+# buildone
+#
 # Builds one GOARCH and one GOOS.
 #
-# Uses: $GOARCH $GOOS $BIN_DIR
+# Uses: $GOARCH $GOOS $DST_DIR
 buildone() {
-    local DST_DIR=$BIN_DIR/$GOOS-$GOARCH
-    mkdir -p $DST_DIR
+    local BIN_DIR=$DST_DIR/$GOOS-$GOARCH
+    mkdir -p $BIN_DIR
 
-    local STEM=elvish-$STEM_SUFFIX
+    local STEM=elvish-$SUFFIX
     if test $GOOS = windows; then
         local BIN=$STEM.exe
         local ARCHIVE=$STEM.zip
@@ -69,15 +84,13 @@ buildone() {
     fi
 
     echo -n "Building for $GOOS-$GOARCH... "
-    go build -o $DST_DIR/$BIN -trimpath -ldflags \
-        "-X src.elv.sh/pkg/buildinfo.Version=$VERSION \
-         -X src.elv.sh/pkg/buildinfo.Reproducible=true" $SRC_DIR/cmd/elvish || {
+    go build -o $BIN_DIR/$BIN -trimpath -ldflags "$LD_FLAGS" $SRC_DIR/cmd/elvish || {
         echo "Failed"
         return
     }
 
     (
-    cd $DST_DIR
+    cd $BIN_DIR
     if test $GOOS = windows; then
         zip -q $ARCHIVE $BIN
     else

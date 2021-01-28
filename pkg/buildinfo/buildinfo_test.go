@@ -16,7 +16,7 @@ func TestVersion(t *testing.T) {
 
 	prog.Run(f.Fds(), Elvish("-version"), Program)
 
-	f.TestOut(t, 1, Version+"\n")
+	f.TestOut(t, 1, Version+VersionSuffix+"\n")
 	f.TestOut(t, 2, "")
 }
 
@@ -29,7 +29,7 @@ func TestBuildInfo(t *testing.T) {
 	f.TestOut(t, 1,
 		fmt.Sprintf(
 			"Version: %v\nGo version: %v\nReproducible build: %v\n",
-			Version,
+			Version+VersionSuffix,
 			runtime.Version(),
 			Reproducible))
 	f.TestOut(t, 2, "")
@@ -47,7 +47,7 @@ func TestBuildInfo_JSON(t *testing.T) {
 			GoVersion    string `json:"goversion"`
 			Reproducible bool   `json:"reproducible"`
 		}{
-			Version,
+			Version + VersionSuffix,
 			runtime.Version(),
 			Reproducible == "true",
 		})+"\n")

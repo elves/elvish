@@ -2,12 +2,8 @@ default: test get
 
 get:
 	go get -trimpath -ldflags \
-		"-X src.elv.sh/pkg/buildinfo.Version=$$(git describe --tags --always --dirty=-dirty) \
+		"-X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev.$$(git describe --always --dirty=-dirty --exclude '*') \
 		 -X src.elv.sh/pkg/buildinfo.Reproducible=true" ./cmd/elvish
-
-# Used by elves/up
-buildall:
-	./tools/buildall.sh
 
 generate:
 	go generate ./...
