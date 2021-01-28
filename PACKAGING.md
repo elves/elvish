@@ -50,13 +50,13 @@ If you are packaging development builds, the default value of `VersionSuffix`,
 which is `-dev.unknown`, is likely not good enough, as it does not identify the
 commit Elvish is built from.
 
-You should override `VersionSuffix` with `-dev-$commit_hash`, and the commit
+You should override `VersionSuffix` with `-dev.$commit_hash`, and the commit
 hash should be obtained with
 `git describe --always --dirty=-dirty --exclude '*'`. Example:
 
 ```sh
 go build -ldflags \
-  "-X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev-$(git describe --always --dirty=-dirty --exclude '*')" \
+  "-X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev.$(git describe --always --dirty=-dirty --exclude '*')" \
   ./cmd/elvish
 ```
 
