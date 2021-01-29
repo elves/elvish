@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-# buildall.sh $SRC_DIR $DST_DIR $SUFFIX.
+# buildall.sh $SRC_DIR $DST_DIR $SUFFIX
 #
 # Builds Elvish binaries for all supported platforms, using the code in $SRC_DIR
 # and building $DST_DIR/$GOOS-$GOARCH/elvish-$SUFFIX for each supported
@@ -25,7 +25,13 @@
 # This script is not whitespace-correct; avoid whitespaces in directory names.
 
 if test $# != 3; then
-    echo 'buildall.sh $SRC_DIR $DST_DIR $SUFFIX'
+    # Output the comment block above, stripping any leading "#" or "# "
+    sed < $0 -n '
+      /^# /,/^$/{
+        /^$/q
+        s/^# \?//
+        p
+      }'
     exit 1
 fi
 
