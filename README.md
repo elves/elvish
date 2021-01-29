@@ -1,4 +1,4 @@
-# Elvish: Friendly Interactive Shell and Expressive Programming Language
+# Elvish: Expressive Programming Language + Versatile Interactive Shell
 
 [![Test Status on Linux](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=linux&task=Test%20on%20Linux)](https://cirrus-ci.com/github/elves/elvish/master)
 [![Test Status on macOS](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=macos&task=Test%20on%20macOS)](https://cirrus-ci.com/github/elves/elvish/master)
@@ -9,9 +9,11 @@
 [![GoDoc](https://img.shields.io/badge/godoc-api-blue.svg)](https://godoc.elv.sh)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/ElvishShell)
 
-Elvish is a friendly interactive shell and an expressive programming language.
-It runs on Linux, BSDs, macOS and Windows. Despite its pre-1.0 status, it is
-already suitable for most daily interactive use.
+Elvish is an expressive programming language and a versatile interactive shell,
+combined into one seamless package. It runs on Linux, BSDs, macOS and Windows.
+
+Despite its pre-1.0 status, it is already suitable for most daily interactive
+use.
 
 **Visit the official website https://elv.sh for prebuilt binaries, blog posts,
 documentation and other resources.**
