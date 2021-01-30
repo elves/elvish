@@ -1,13 +1,13 @@
 package daemon
 
 import (
-	"net/rpc"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
 	"src.elv.sh/pkg/daemon/internal/api"
+	"src.elv.sh/pkg/rpc"
 	"src.elv.sh/pkg/store"
 )
 

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/rpc"
 	"os"
 	"time"
 
@@ -19,6 +18,7 @@ import (
 	"src.elv.sh/pkg/eval/mods/store"
 	"src.elv.sh/pkg/eval/mods/str"
 	"src.elv.sh/pkg/eval/mods/unix"
+	"src.elv.sh/pkg/rpc"
 )
 
 const (

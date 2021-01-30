@@ -2,10 +2,10 @@ package daemon
 
 import (
 	"errors"
-	"net/rpc"
 	"sync"
 
 	"src.elv.sh/pkg/daemon/internal/api"
+	"src.elv.sh/pkg/rpc"
 	"src.elv.sh/pkg/store"
 )
 
