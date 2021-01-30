@@ -12,7 +12,7 @@ generate:
 # Windows port supports race detection, but requires GCC, so we don't enable it
 # there.
 test:
-	if echo `go env GOOS GOARCH` | egrep -qx '(linux|freebsd|darwin) amd64'; then \
+	if echo `go env GOOS GOARCH CGO_ENABLED` | egrep -qx '(linux|freebsd|darwin) amd64 1'; then \
 		go test -race ./... ; \
 	else \
 		go test ./... ; \
