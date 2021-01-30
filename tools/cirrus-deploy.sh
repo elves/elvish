@@ -17,7 +17,6 @@ else
     else
         file_suffix=$CIRRUS_BRANCH
 	fi
-    version_suffix=-dev$(git describe --always --dirty=-dirty --exclude '*')
     ELVISH_REPRODUCIBLE=dev
 fi
 

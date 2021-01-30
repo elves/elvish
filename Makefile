@@ -2,7 +2,7 @@ default: test get
 
 get:
 	go get -buildmode=pie -trimpath -ldflags \
-		"-X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev.$$(git describe --always --dirty=-dirty --exclude '*') \
+		"-X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev.$$(git rev-parse HEAD)$$(git diff --quiet || { echo -n '+'; uname -n; }) \
 		 -X src.elv.sh/pkg/buildinfo.Reproducible=true" ./cmd/elvish
 
 generate:
