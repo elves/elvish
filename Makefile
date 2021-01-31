@@ -5,7 +5,7 @@ get:
 	if go env GOOS GOARCH | egrep -qx '(windows .*|linux (amd64|arm64))'; then \
 		export GOFLAGS=-buildmode=pie; \
 	fi; \
-	go get -buildmode=pie -trimpath -ldflags \
+	go get -trimpath -ldflags \
 		"-X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev.$$(git rev-parse HEAD)$$(git diff --quiet || printf +%s `uname -n`) \
 		 -X src.elv.sh/pkg/buildinfo.Reproducible=true" ./cmd/elvish
 
