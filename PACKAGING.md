@@ -74,7 +74,9 @@ version of the Go compiler.
 
 To make reproducible builds, you must do the following:
 
--   Pass `-buildmode=pie -trimpath` to the Go compiler.
+-   Pass `-trimpath` to the Go compiler.
+
+-   For Linux and Windows, also pass `-buildmode=pie` to the Go compiler.
 
 -   Disable cgo by setting the `CGO_ENABLED` environment variable to 0.
 
@@ -97,7 +99,8 @@ If you follow these requirements when building Elvish, you can mark the build as
 a reproducible one by overriding `src.elv.sh/pkg/buildinfo.Reproducible` to
 `"true"`.
 
-Example when building a release version without any patches:
+Example when building a release version without any patches for Linux or
+Windows:
 
 ```sh
 go build -buildmode=pie -trimpath \
@@ -105,7 +108,7 @@ go build -buildmode=pie -trimpath \
   ./cmd/elvish
 ```
 
-Example when building a development version with a patch:
+Example when building a development version with a patch for Linux or Windows:
 
 ```sh
 go build -buildmode=pie -trimpath \

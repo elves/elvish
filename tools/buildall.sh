@@ -51,7 +51,7 @@ if test -n "$ELVISH_REPRODUCIBLE"; then
     fi
 fi
 
-export GOOS GOARCH
+export GOOS GOARCH GOFLAGS
 export CGO_ENABLED=0
 
 main() {
@@ -89,8 +89,12 @@ buildone() {
         local ARCHIVE=$STEM.tar.gz
     fi
 
+    if test $GOOS = windows -o $GOOS = linux; then
+        local GOFLAGS=-buildmode=pie
+    fi
+
     echo -n "Building for $GOOS-$GOARCH... "
-    go build -buildmode=pie -trimpath -ldflags "$LD_FLAGS"\
+    go build -trimpath -ldflags "$LD_FLAGS"\
       -o $BIN_DIR/$BIN $SRC_DIR/cmd/elvish || {
         echo "Failed"
         return
