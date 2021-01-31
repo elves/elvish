@@ -1,7 +1,7 @@
 # Packager's Manual
 
 **Note**: The guidance here applies to the current development version and
-release versions starting from v0.15.0. The details for earlier versions are
+release versions starting from 0.16.0. The details for earlier versions are
 different.
 
 Elvish is a normal Go application, and doesn't require any special attention.
