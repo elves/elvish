@@ -89,7 +89,7 @@ buildone() {
         local ARCHIVE=$STEM.tar.gz
     fi
 
-    if test $GOOS = windows -o $GOOS = linux; then
+	if go env GOOS GOARCH | egrep -qx '(windows .*|linux (amd64|arm64))'; then
         local GOFLAGS=-buildmode=pie
     fi
 

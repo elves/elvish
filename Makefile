@@ -2,7 +2,7 @@ default: test get
 
 get:
 	export CGO_ENABLED=0; \
-	if go env GOOS | egrep -qx '(linux|windows)'; then \
+	if go env GOOS GOARCH | egrep -qx '(windows .*|linux (amd64|arm64))'; then \
 		export GOFLAGS=-buildmode=pie; \
 	fi; \
 	go get -buildmode=pie -trimpath -ldflags \
