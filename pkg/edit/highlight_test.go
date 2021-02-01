@@ -143,7 +143,7 @@ func TestMakeHasCommand(t *testing.T) {
 }
 
 func mustParse(src string) parse.Tree {
-	tree, err := parse.Parse(parse.SourceForTest(src))
+	tree, err := parse.Parse(parse.SourceForTest(src), parse.Config{})
 	if err != nil {
 		panic(err)
 	}

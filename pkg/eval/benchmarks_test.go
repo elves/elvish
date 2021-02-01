@@ -38,7 +38,7 @@ func benchmarkEval(b *testing.B, code string) {
 	ev := NewEvaler()
 	src := parse.Source{Name: "[benchmark]", Code: code}
 
-	tree, err := parse.Parse(src)
+	tree, err := parse.Parse(src, parse.Config{})
 	if err != nil {
 		panic(err)
 	}

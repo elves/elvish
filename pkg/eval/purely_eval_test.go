@@ -53,7 +53,7 @@ func TestPurelyEvalCompound(t *testing.T) {
 		t.Run(test.code, func(t *testing.T) {
 			n := &parse.Compound{}
 			err := parse.ParseAs(
-				parse.Source{Name: "[test]", Code: test.code}, n, nil)
+				parse.Source{Name: "[test]", Code: test.code}, n, parse.Config{})
 			if err != nil {
 				panic(err)
 			}

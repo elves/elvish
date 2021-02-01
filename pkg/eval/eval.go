@@ -422,7 +422,7 @@ func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
 	cfg.fillDefaults()
 	errFile := cfg.Ports[2].File
 
-	tree, err := parse.ParseWithDeprecation(src, errFile)
+	tree, err := parse.Parse(src, parse.Config{WarningWriter: errFile})
 	if err != nil {
 		return err
 	}
@@ -518,7 +518,7 @@ func (ev *Evaler) prepareFrame(src parse.Source, cfg EvalCfg) (*Frame, func()) {
 // return values may be non-nil. If w is not nil, deprecation messages are
 // written to it.
 func (ev *Evaler) Check(src parse.Source, w io.Writer) (*parse.Error, *diag.Error) {
-	tree, parseErr := parse.ParseWithDeprecation(src, w)
+	tree, parseErr := parse.Parse(src, parse.Config{WarningWriter: w})
 	return parse.GetError(parseErr), ev.CheckTree(tree, w)
 }
 

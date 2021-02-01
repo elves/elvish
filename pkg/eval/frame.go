@@ -41,7 +41,7 @@ type Frame struct {
 // returns the altered local namespace, function that can be called to actuate
 // the evaluation, and a nil error.
 func (fm *Frame) PrepareEval(src parse.Source, r diag.Ranger, ns *Ns) (*Ns, func() Exception, error) {
-	tree, err := parse.ParseWithDeprecation(src, fm.ErrorFile())
+	tree, err := parse.Parse(src, parse.Config{WarningWriter: fm.ErrorFile()})
 	if err != nil {
 		return nil, nil, err
 	}

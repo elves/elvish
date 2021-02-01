@@ -26,25 +26,24 @@ type Tree struct {
 	Source Source
 }
 
-// Parse parses the given source. The returned error always has type *Error
-// if it is not nil.
-func Parse(src Source) (Tree, error) {
-	return ParseWithDeprecation(src, nil)
+// Config keeps configuration options when parsing.
+type Config struct {
+	// Destination of warnings. If nil, warnings are suppressed.
+	WarningWriter io.Writer
 }
 
-// ParseWithDeprecation is like Parse, but also writes out deprecation warnings
-// to the given io.Writer.
-func ParseWithDeprecation(src Source, w io.Writer) (Tree, error) {
+// Parse parses the given source. The returned error always has type *Error
+// if it is not nil.
+func Parse(src Source, cfg Config) (Tree, error) {
 	tree := Tree{&Chunk{}, src}
-	err := ParseAs(src, tree.Root, w)
+	err := ParseAs(src, tree.Root, cfg)
 	return tree, err
 }
 
 // ParseAs parses the given source as a node, depending on the dynamic type of
-// n, writing deprecation warnings to the given io.Writer if it is not nil. If
-// the error is not nil, it always has type *Error.
-func ParseAs(src Source, n Node, w io.Writer) error {
-	ps := &parser{srcName: src.Name, src: src.Code, warn: w}
+// n. If the error is not nil, it always has type *Error.
+func ParseAs(src Source, n Node, cfg Config) error {
+	ps := &parser{srcName: src.Name, src: src.Code, warn: cfg.WarningWriter}
 	ps.parse(n)
 	ps.done()
 	return ps.assembleError()

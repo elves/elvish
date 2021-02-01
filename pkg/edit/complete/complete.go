@@ -84,7 +84,7 @@ func Complete(code CodeBuffer, cfg Config) (*Result, error) {
 	}
 
 	// Ignore the error; the function always returns a valid *ChunkNode.
-	tree, _ := parse.Parse(parse.Source{Name: "[interactive]", Code: code.Content})
+	tree, _ := parse.Parse(parse.Source{Name: "[interactive]", Code: code.Content}, parse.Config{})
 	leaf := parseutil.FindLeafNode(tree.Root, code.Dot)
 	for _, completer := range completers {
 		ctx, rawItems, err := completer(leaf, cfg)

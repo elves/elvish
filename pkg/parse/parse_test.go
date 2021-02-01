@@ -297,7 +297,7 @@ var goodCases = []struct {
 func TestParse(t *testing.T) {
 	for _, tc := range goodCases {
 		src := SourceForTest(tc.src)
-		tree, err := Parse(src)
+		tree, err := Parse(src, Config{})
 		if err != nil {
 			t.Errorf("Parse(%q) returns error: %v", tc.src, err)
 		}
@@ -367,7 +367,7 @@ var parseErrorTests = []struct {
 func TestParseError(t *testing.T) {
 	for _, test := range parseErrorTests {
 		t.Run(test.src, func(t *testing.T) {
-			_, err := Parse(SourceForTest(test.src))
+			_, err := Parse(SourceForTest(test.src), Config{})
 			if err == nil {
 				t.Fatalf("no error")
 			}

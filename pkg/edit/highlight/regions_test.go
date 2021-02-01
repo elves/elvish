@@ -172,6 +172,6 @@ func TestGetRegions(t *testing.T) {
 
 func getRegionsFromString(code string) []region {
 	// Ignore error.
-	tree, _ := parse.Parse(parse.SourceForTest(code))
+	tree, _ := parse.Parse(parse.SourceForTest(code), parse.Config{})
 	return getRegions(tree.Root)
 }
