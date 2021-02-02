@@ -343,6 +343,30 @@ const (
 	Append
 )
 
+// Query represents an Elvish query. It uses the same syntax as arguments and
+// options to a command.
+type Query struct {
+	node
+	Args []*Compound
+	Opts []*MapPair
+}
+
+func (qn *Query) parse(ps *parser) {
+	parseSpaces(qn, ps)
+	for {
+		r := ps.peek()
+		switch {
+		case r == '&':
+			ps.parse(&MapPair{}).addTo(&qn.Opts, qn)
+		case startsCompound(r, NormalExpr):
+			ps.parse(&Compound{}).addTo(&qn.Args, qn)
+		default:
+			return
+		}
+		parseSpaces(qn, ps)
+	}
+}
+
 // Compound = { Indexing }
 type Compound struct {
 	node

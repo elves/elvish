@@ -146,6 +146,40 @@ var testCases = []struct {
 		wantErrMsg:   "should be a composite term representing fd",
 	},
 
+	// Query
+	{
+		name: "empty query",
+		code: "",
+		node: &Query{},
+		want: ast{"Query", fs{}},
+	},
+	{
+		name: "query with arguments",
+		code: "foo bar",
+		node: &Query{},
+		want: ast{"Query", fs{"Args": []string{"foo", "bar"}}},
+	},
+	{
+		name: "query with options",
+		code: "&foo=bar &lorem=ipsum",
+		node: &Query{},
+		want: ast{"Query", fs{"Opts": []string{"&foo=bar", "&lorem=ipsum"}}},
+	},
+	{
+		name: "query mixing arguments and options",
+		code: "foo &a=b bar &x=y",
+		node: &Query{},
+		want: ast{"Query", fs{
+			"Args": []string{"foo", "bar"},
+			"Opts": []string{"&a=b", "&x=y"}}},
+	},
+	{
+		name: "query with leading and trailing whitespaces",
+		code: "  foo  ",
+		node: &Query{},
+		want: ast{"Query", fs{"Args": []string{"foo"}}},
+	},
+
 	// Compound
 	{
 		name: "compound expression",
