@@ -27,9 +27,6 @@ test_task:
         SKIP_UPLOAD_COVERAGE: 1
         # Gccgo doesn't support race test
         TEST_FLAG: ""
-      # Gccgo is buggy. Allow failures until it could reliably build and test
-      # Elvish.
-      allow_failures: true
     - name: Test on macOS
       osx_instance:
         image: catalina-base
