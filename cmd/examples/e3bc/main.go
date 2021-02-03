@@ -1,4 +1,5 @@
-// A test program for the cli package.
+// Command e3bc ("Elvish-editor-enhanced bc") is a wrapper for the bc command
+// that uses Elvish's cli library for an enhanced CLI experience.
 package main
 
 import (
@@ -6,11 +7,15 @@ import (
 	"io"
 	"unicode"
 
+	"src.elv.sh/cmd/examples/e3bc/bc"
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/ui"
 )
 
+// A highlighter for bc code. Currently this just makes all digits green.
+//
+// TODO: Highlight more syntax of bc.
 type highlighter struct{}
 
 func (highlighter) Get(code string) (ui.Text, []error) {
@@ -30,12 +35,15 @@ func (highlighter) LateUpdates() <-chan struct{} { return nil }
 func main() {
 	var app cli.App
 	app = cli.NewApp(cli.AppSpec{
-		Prompt:      cli.NewConstPrompt(ui.T("> ")),
+		Prompt:      cli.NewConstPrompt(ui.T("bc> ")),
 		Highlighter: highlighter{},
 		OverlayHandler: cli.MapHandler{
 			term.K('D', ui.Ctrl): func() { app.CommitEOF() },
 		},
 	})
+
+	bc := bc.Start()
+	defer bc.Quit()
 
 	for {
 		code, err := app.ReadCode()
@@ -45,6 +53,6 @@ func main() {
 			}
 			break
 		}
-		fmt.Println("got:", code)
+		bc.Exec(code)
 	}
 }
