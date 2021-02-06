@@ -93,7 +93,7 @@ buildone() {
         local GOFLAGS=-buildmode=pie
     fi
 
-    echo -n "Building for $GOOS-$GOARCH... "
+    printf '%s' "Building for $GOOS-$GOARCH... "
     go build -trimpath -ldflags "$LD_FLAGS"\
       -o $BIN_DIR/$BIN $SRC_DIR/cmd/elvish || {
         echo "Failed"
