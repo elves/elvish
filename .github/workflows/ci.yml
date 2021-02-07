@@ -17,6 +17,7 @@ jobs:
           # Test old supported Go version
           - os: ubuntu-latest
             go-version: 1.14.x
+    name: Run tests
     env:
       ELVISH_TEST_TIME_SCALE: 20
     runs-on: ${{ matrix.os }}
@@ -36,6 +37,8 @@ jobs:
           ~/Library/Caches/go-build
           %LocalAppData%\go-build
         key: ${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
-        restore-keys: ${{ matrix.os }}/
+        restore-keys: |
+          ${{ matrix.os }}/${{ matrix.go-version }}/
+          ${{ matrix.os }}/
     - name: Test
       run: go test -race ./...
