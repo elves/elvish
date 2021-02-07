@@ -11,16 +11,16 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu, macos, windows]
         go-version: [1.15.x]
         include:
           # Test old supported Go version
-          - os: ubuntu-latest
+          - os: ubuntu
             go-version: 1.14.x
-    name: Run tests
+    name: Test
     env:
       ELVISH_TEST_TIME_SCALE: 20
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
