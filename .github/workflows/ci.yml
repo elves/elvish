@@ -24,12 +24,6 @@ jobs:
       ELVISH_TEST_TIME_SCALE: 20
     runs-on: ${{ matrix.os }}-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go-version }}
     - name: Set up cache
       uses: actions/cache@v2
       with:
@@ -38,10 +32,16 @@ jobs:
           ~/.cache/go-build
           ~/Library/Caches/go-build
           %LocalAppData%\go-build
-        key: ${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
+        key: build/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
         restore-keys: |
           ${{ matrix.os }}/${{ matrix.go-version }}/
           ${{ matrix.os }}/
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
     - name: Test with race detection
       run: go test -race ./...
     - name: Generate coverage
@@ -59,10 +59,15 @@ jobs:
     steps:
     - name: Set up environment
       run: echo "PATH=$HOME/go/bin:$PATH" >> $GITHUB_ENV
+    - name: Set up cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: checkstyle-go
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: Set up coreutils
-      run: sudo apt install coreutils
     - name: Set up Go
       uses: actions/setup-go@v2
     - name: Set up goimports
@@ -78,6 +83,11 @@ jobs:
       run: |
         echo "NPM_PREFIX=$HOME/npm" >> $GITHUB_ENV
         echo "PATH=$HOME/npm/bin:$PATH" >> $GITHUB_ENV
+    - name: Set up cache
+      uses: actions/cache@v2
+      with:
+        path: ~/npm
+        key: checkstyle-md
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Set up Node
