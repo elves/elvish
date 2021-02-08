@@ -53,6 +53,35 @@ jobs:
       with:
         files: ./cover
 
+	build:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: build/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
+        restore-keys: |
+          ${{ matrix.os }}/${{ matrix.go-version }}/
+          ${{ matrix.os }}/
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.15.x
+    - name: Build binaries
+      # TODO: Use PR number for suffix when running for PR
+      run: ELVISH_REPRODUCIBLE=dev ./tools/buildall.sh . bin HEAD
+    - name: Upload binaries
+      uses: actions/upload-artifact@v2
+      with:
+        name: bin
+        path: bin
+
   checkstyle-go:
     name: Check style of **.go
     runs-on: ubuntu-latest
