@@ -14,7 +14,7 @@ jobs:
       matrix:
         os: [ubuntu, macos, windows]
         go-version: [1.15.x]
-        upload-coverage: ['upload']
+        upload-coverage: ['codecov']
         include:
           # Test old supported Go version
           - os: ubuntu
@@ -48,7 +48,7 @@ jobs:
       if: matrix.upload-coverage != 'skip'
       run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
     - name: Upload coverage to codecov
-      if: matrix.upload-coverage != 'skip'
+      if: matrix.upload-coverage == 'codecov'
       uses: codecov/codecov-action@v1
       with:
         files: ./cover
