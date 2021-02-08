@@ -53,7 +53,7 @@ jobs:
       with:
         files: ./cover
 
-	build:
+  build:
     name: Build binaries
     runs-on: ubuntu-latest
     steps:
