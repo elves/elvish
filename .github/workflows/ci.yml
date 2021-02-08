@@ -13,11 +13,12 @@ jobs:
       matrix:
         os: [ubuntu, macos, windows]
         go-version: [1.15.x]
-        upload-coverage: [true]
+        upload-coverage: ['upload']
         include:
           # Test old supported Go version
           - os: ubuntu
             go-version: 1.14.x
+            upload-coverage: 'skip'
     name: Test
     env:
       ELVISH_TEST_TIME_SCALE: 20
@@ -44,10 +45,10 @@ jobs:
     - name: Test with race detection
       run: go test -race ./...
     - name: Generate coverage
-      if: ${{ matrix.upload-coverage }}
+      if: matrix.upload-coverage != 'skip'
       run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
     - name: Upload coverage to codecov
-      if: ${{ matrix.upload-coverage }}
+      if: matrix.upload-coverage != 'skip'
       uses: codecov/codecov-action@v1
       with:
         files: ./cover
