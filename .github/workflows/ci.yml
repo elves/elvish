@@ -80,7 +80,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: bin
-        path: bin
+        path: bin/**/*
 
   checkstyle-go:
     name: Check style of **.go
