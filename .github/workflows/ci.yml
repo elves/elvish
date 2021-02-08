@@ -82,6 +82,23 @@ jobs:
         name: bin
         path: bin/**/*
 
+  release:
+    name: Update HEAD pseudo-release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Create release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: HEAD
+        body: |
+          Download HEAD binaries here.
+        prerelease: true
+
   checkstyle-go:
     name: Check style of **.go
     runs-on: ubuntu-latest
