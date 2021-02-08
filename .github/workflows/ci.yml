@@ -57,6 +57,8 @@ jobs:
     name: Check style of **.go
     runs-on: ubuntu-latest
     steps:
+    - name: Set up environment
+      run: echo "PATH=$HOME/go/bin:$PATH" >> $GITHUB_ENV
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Set up coreutils
@@ -66,17 +68,16 @@ jobs:
     - name: Set up goimports
       run: go get golang.org/x/tools/cmd/goimports
     - name: Check style
-      env:
-        PATH: $HOME/go/bin:$PATH
       run: ./tools/checkstyle-go.sh
 
   checkstyle-md:
     name: Check style of **.md
     runs-on: ubuntu-latest
-    env:
-      NPM_PREFIX: $HOME/npm
-      PATH: $NPM_PREFIX/bin:$PATH
     steps:
+    - name: Set up environment
+      run: |
+        echo "NPM_PREFIX=$HOME/npm" >> $GITHUB_ENV
+        echo "PATH=$HOME/npm/bin:$PATH" >> $GITHUB_ENV
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Set up coreutils
