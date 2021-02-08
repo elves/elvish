@@ -1,21 +1,10 @@
 test_task:
   env:
     ELVISH_TEST_TIME_SCALE: 20
-    CODECOV_TOKEN: ENCRYPTED[fcfbb034d9341821345216d5da5de529e582b85a2dde43da484e9827166ce1770d8e1da4ed2f32ddb7f4eb4fba593158]
-    TEST_FLAG: -race
   go_modules_cache:
     fingerprint_script: cat go.sum
     folder: $GOPATH/pkg/mod
   matrix:
-    - name: Test on Linux
-      container:
-        image: golang:latest
-    - name: Test on Linux (Old Supported Go Version)
-      container:
-        image: golang:1.14
-      env:
-        # This should have the same coverage as the previous task, so skip it.
-        SKIP_UPLOAD_COVERAGE: 1
     - name: Test on Linux (Gccgo)
       container:
         image: debian:unstable-slim
@@ -23,33 +12,17 @@ test_task:
         - apt-get -y update
         - apt-get -y install ca-certificates gccgo-go
       env:
-        # This should have the same coverage as the previous task, so skip it.
-        SKIP_UPLOAD_COVERAGE: 1
         # Gccgo doesn't support race test
         TEST_FLAG: ""
-    - name: Test on macOS
-      osx_instance:
-        image: catalina-base
-      setup_script: brew install go
-      env:
-        GOPATH: $HOME/go
     - name: Test on FreeBSD
       freebsd_instance:
         image_family: freebsd-12-1
-      setup_script: pkg install -y go bash
+      setup_script: pkg install -y go
       env:
         GOPATH: $HOME/go
-        # For some reason the FreeBSD runner often has problem reaching codecov.
-        # Skip it to prevent the coverage from fluctuating, and make the FreeBSD
-        # task faster. There are very few files that are built on FreeBSD but not
-        # Linux, so losing this part of the data makes very little difference.
-        SKIP_UPLOAD_COVERAGE: 1
+        TEST_FLAG: -race
   go_version_script: go version
   test_script: go test $TEST_FLAG ./...
-  upload_coverage_script:
-    - test -z $SKIP_UPLOAD_COVERAGE || exit 0
-    - go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
-    - curl -s https://codecov.io/bash -o codecov && bash codecov -f cover -t $CODECOV_TOKEN || true
 
 checkstyle_go_task:
   name: Check the style of .go files
