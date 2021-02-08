@@ -13,7 +13,7 @@ jobs:
       matrix:
         os: [ubuntu, macos, windows]
         go-version: [1.15.x]
-        upload-coverage: true
+        upload-coverage: [true]
         include:
           # Test old supported Go version
           - os: ubuntu
