@@ -80,8 +80,6 @@ jobs:
         echo "PATH=$HOME/npm/bin:$PATH" >> $GITHUB_ENV
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: Set up coreutils
-      run: sudo apt install coreutils
     - name: Set up Node
       uses: actions/setup-node@v2
     - name: Set up Node prefix
