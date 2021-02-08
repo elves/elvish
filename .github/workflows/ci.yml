@@ -59,6 +59,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+    - name: Set up coreutils
+      run: sudo apt install coreutils
     - name: Set up Go
       uses: actions/setup-go@v2
     - name: Set up goimports
@@ -77,6 +79,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+    - name: Set up coreutils
+      run: sudo apt install coreutils
     - name: Set up Node
       uses: actions/setup-node@v2
     - name: Set up Node prefix
