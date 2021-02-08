@@ -40,5 +40,11 @@ jobs:
         restore-keys: |
           ${{ matrix.os }}/${{ matrix.go-version }}/
           ${{ matrix.os }}/
-    - name: Test
+    - name: Test with race detection
       run: go test -race ./...
+    - name: Generate coverage
+      run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
+    - name: Upload coverage to codecov
+      uses: codecov/codecov-action@v1
+      with:
+        files: ./cover
