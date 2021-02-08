@@ -54,7 +54,7 @@ jobs:
         files: ./cover
 
   checkstyle-go:
-    name: Check style of *.go
+    name: Check style of **.go
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -66,19 +66,22 @@ jobs:
     - name: Check style
       env:
         PATH: $HOME/go/bin:$PATH
-      run: make checkstyle-go
+      run: ./tools/checkstyle-go.sh
 
   checkstyle-md:
-    name: Check style of *.md
+    name: Check style of **.md
     runs-on: ubuntu-latest
+    env:
+      NPM_PREFIX: $HOME/npm
+      PATH: $NPM_PREFIX/bin:$PATH
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Set up Node
       uses: actions/setup-node@v2
+    - name: Set up Node prefix
+      run: npm config set prefix $NPM_PREFIX
     - name: Set up prettier
       run: npm install --global prettier@2.0.5
     - name: Check style
-      env:
-        PATH: $HOME/.npm-packages/bin:$PATH
-      run: make checkstyle-md
+      run: ./tools/checkstyle-md.sh
