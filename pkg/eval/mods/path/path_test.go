@@ -24,6 +24,7 @@ var testDir = testutil.Dir{
 func TestPath(t *testing.T) {
 	tmpdir, cleanup := testutil.InTestDir()
 	defer cleanup()
+	t.Log("test dir", tmpdir)
 	testutil.ApplyDir(testDir)
 
 	absPath, err := filepath.Abs("a/b/c.png")
