@@ -59,10 +59,10 @@ func TestPath(t *testing.T) {
 		// should have comprehensive tests below this comment.
 		That(`path:is-dir a/b/s`).Puts(false),
 		That(`path:is-dir `+tmpdir).Puts(true),
-		That(`path:is-dir s1`).Puts(true),
+		That(`path:is-dir s1`).Puts(false),
 		That(`path:is-regular a/b/s`).Puts(false),
 		That(`path:is-regular `+tmpdir).Puts(false),
-		That(`path:is-regular d1/f`).Puts(true),
+		That(`path:is-regular d1/f`).Puts(false),
 		That(`path:is-regular d1/d2/f`).Puts(true),
 		That(`path:is-regular s1/f`).Puts(true),
 	)
