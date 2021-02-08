@@ -52,3 +52,31 @@ jobs:
       uses: codecov/codecov-action@v1
       with:
         files: ./cover
+
+  checkstyle-go:
+    name: Check style of *.go
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+    - name: Set up goimports
+      run: go get golang.org/x/tools/cmd/goimports
+    - name: Check style
+      env:
+        PATH: $HOME/go/bin:$PATH
+      run: make checkstyle-go
+
+  checkstyle-md:
+    name: Check style of *.md
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Node
+      uses: actions/setup-node@v2
+    - name: Set up prettier
+      run: npm install --global prettier@2.0.5
+    - name: Check style
+      env:
+        PATH: $HOME/.npm-packages/bin:$PATH
+      run: make checkstyle-md
