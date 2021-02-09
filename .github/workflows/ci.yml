@@ -9,17 +9,15 @@ on:
 jobs:
 
   test:
-    name: Test
+    name: Run tests
     strategy:
       matrix:
         os: [ubuntu, macos, windows]
         go-version: [1.15.x]
-        upload-coverage: ['codecov']
         include:
           # Test old supported Go version
           - os: ubuntu
             go-version: 1.14.x
-            upload-coverage: 'skip'
     env:
       ELVISH_TEST_TIME_SCALE: 20
     runs-on: ${{ matrix.os }}-latest
@@ -44,11 +42,39 @@ jobs:
         go-version: ${{ matrix.go-version }}
     - name: Test with race detection
       run: go test -race ./...
+
+  coverage:
+    name: Upload coverage
+    needs: test
+    strategy:
+      matrix:
+        os: [ubuntu, macos, windows]
+        go-version: [1.15.x]
+    env:
+      ELVISH_TEST_TIME_SCALE: 20
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+          ~/Library/Caches/go-build
+          %LocalAppData%\go-build
+        key: build/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
+        restore-keys: |
+          build/${{ matrix.os }}/${{ matrix.go-version }}/
+          build/${{ matrix.os }}/
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
     - name: Generate coverage
-      if: matrix.upload-coverage != 'skip'
       run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
     - name: Upload coverage to codecov
-      if: matrix.upload-coverage == 'codecov'
       uses: codecov/codecov-action@v1
       with:
         files: ./cover
