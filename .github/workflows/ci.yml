@@ -22,7 +22,7 @@ jobs:
             coverage: skip-coverage
     env:
       ELVISH_TEST_TIME_SCALE: 20
-    runs-on: ${{ runner.os }}-latest
+    runs-on: ${{ matrix.os }}-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
