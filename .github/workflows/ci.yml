@@ -29,11 +29,11 @@ jobs:
           ~/go/pkg/mod
           ~/.cache/go-build
           ~/Library/Caches/go-build
-          %LocalAppData%\go-build
-        key: build/${{ runner.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
+          ~/AppData/Local/go-build
+        key: build/v2/${{ runner.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
         restore-keys: |
-          build/${{ runner.os }}/${{ matrix.go-version }}/
-          build/${{ runner.os }}/
+          build/v2/${{ runner.os }}/${{ matrix.go-version }}/
+          build/v2/${{ runner.os }}/
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
@@ -84,10 +84,10 @@ jobs:
         path: |
           ~/go/pkg/mod
           ~/.cache/go-build
-        key: build/${{ runner.os }}/1.15.x/${{ hashFiles('go.sum') }}
+        key: build/v2/${{ runner.os }}/1.15.x/${{ hashFiles('go.sum') }}
         restore-keys: |
-          build/${{ runner.os }}/1.15.x/
-          build/${{ runner.os }}/
+          build/v2/${{ runner.os }}/1.15.x/
+          build/v2/${{ runner.os }}/
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
