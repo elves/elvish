@@ -47,7 +47,7 @@ jobs:
       if: matrix.go-version == '1.15.x'
       uses: actions/upload-artifact@v2
       with:
-        name: cover-${{ runner.os }}
+        name: cover-${{ matrix.os }}
         path: cover
 
   upload-coverage:
@@ -65,7 +65,7 @@ jobs:
     - name: Download test coverage
       uses: actions/download-artifact@v2
       with:
-        name: cover-${{ runner.os }}
+        name: cover-${{ matrix.os }}
     - name: Upload coverage to codecov
       uses: codecov/codecov-action@v1
       with:
