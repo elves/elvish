@@ -30,10 +30,10 @@ jobs:
           ~/.cache/go-build
           ~/Library/Caches/go-build
           ~/AppData/Local/go-build
-        key: build/v2/${{ runner.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
+        key: test/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
         restore-keys: |
-          build/v2/${{ runner.os }}/${{ matrix.go-version }}/
-          build/v2/${{ runner.os }}/
+          test/${{ matrix.os }}/${{ matrix.go-version }}/
+          test/${{ matrix.os }}/
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
@@ -72,7 +72,7 @@ jobs:
         files: ./cover
         env_vars: OS
 
-  build:
+  buildall:
     name: Build binaries
     runs-on: ubuntu-latest
     steps:
@@ -84,10 +84,10 @@ jobs:
         path: |
           ~/go/pkg/mod
           ~/.cache/go-build
-        key: build/v2/${{ runner.os }}/1.15.x/${{ hashFiles('go.sum') }}
+        key: buildall/${{ matrix.os }}/1.15.x/${{ hashFiles('go.sum') }}
         restore-keys: |
-          build/v2/${{ runner.os }}/1.15.x/
-          build/v2/${{ runner.os }}/
+          buildall/${{ matrix.os }}/1.15.x/
+          buildall/${{ matrix.os }}/
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
