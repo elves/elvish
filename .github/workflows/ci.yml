@@ -14,13 +14,15 @@ jobs:
       matrix:
         os: [ubuntu, macos, windows]
         go-version: [1.15.x]
+        coverage: [save-coverage]
         include:
           # Test old supported Go version
           - os: ubuntu
             go-version: 1.14.x
+            coverage: skip-coverage
     env:
       ELVISH_TEST_TIME_SCALE: 20
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ runner.os }}-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -32,52 +34,45 @@ jobs:
           ~/.cache/go-build
           ~/Library/Caches/go-build
           %LocalAppData%\go-build
-        key: build/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
+        key: build/${{ runner.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
         restore-keys: |
-          build/${{ matrix.os }}/${{ matrix.go-version }}/
-          build/${{ matrix.os }}/
+          build/${{ runner.os }}/${{ matrix.go-version }}/
+          build/${{ runner.os }}/
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go-version }}
     - name: Test with race detection
       run: go test -race ./...
+    - name: Generate test coverage
+      if: matrix.coverage == 'save-coverage'
+      run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
+    - name: Save test coverage
+      if: matrix.coverage == 'save-coverage'
+      uses: actions/upload-artifact@v2
+      with:
+        name: cover-{{ runner.os }}
+        path: cover
 
   coverage:
     name: Upload coverage
-    needs: test
     strategy:
       matrix:
         os: [ubuntu, macos, windows]
-        go-version: [1.15.x]
+    needs: test
+    runs-on: ubuntu-latest
     env:
-      ELVISH_TEST_TIME_SCALE: 20
-    runs-on: ${{ matrix.os }}-latest
+      OS: ${{ matrix.os }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Set up cache
-      uses: actions/cache@v2
+    - name: Download test coverage
+      uses: actions/download-artifact@v2
       with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-          ~/Library/Caches/go-build
-          %LocalAppData%\go-build
-        key: build/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
-        restore-keys: |
-          build/${{ matrix.os }}/${{ matrix.go-version }}/
-          build/${{ matrix.os }}/
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go-version }}
-    - name: Generate coverage
-      run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
+        name: cover-{{ runner.os }}
     - name: Upload coverage to codecov
       uses: codecov/codecov-action@v1
       with:
         files: ./cover
+        env_vars: OS
 
   build:
     name: Build binaries
@@ -92,10 +87,10 @@ jobs:
         path: |
           ~/go/pkg/mod
           ~/.cache/go-build
-        key: build/ubuntu/1.15.x/${{ hashFiles('go.sum') }}
+        key: build/${{ runner.os }}/1.15.x/${{ hashFiles('go.sum') }}
         restore-keys: |
-          build/ubuntu/1.15.x/
-          build/ubuntu/
+          build/${{ runner.os }}/1.15.x/
+          build/${{ runner.os }}/
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
