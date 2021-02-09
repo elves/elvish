@@ -14,12 +14,10 @@ jobs:
       matrix:
         os: [ubuntu, macos, windows]
         go-version: [1.15.x]
-        coverage: [save-coverage]
         include:
           # Test old supported Go version
           - os: ubuntu
             go-version: 1.14.x
-            coverage: skip-coverage
     env:
       ELVISH_TEST_TIME_SCALE: 20
     runs-on: ${{ matrix.os }}-latest
@@ -45,17 +43,17 @@ jobs:
     - name: Test with race detection
       run: go test -race ./...
     - name: Generate test coverage
-      if: matrix.coverage == 'save-coverage'
+      if: matrix.go-version = 1.15.x
       run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
     - name: Save test coverage
-      if: matrix.coverage == 'save-coverage'
+      if: matrix.go-version = 1.15.x
       uses: actions/upload-artifact@v2
       with:
-        name: cover-{{ runner.os }}
+        name: cover-${{ runner.os }}
         path: cover
 
-  coverage:
-    name: Upload coverage
+  upload-coverage:
+    name: Upload test coverage
     strategy:
       matrix:
         os: [ubuntu, macos, windows]
@@ -67,7 +65,7 @@ jobs:
     - name: Download test coverage
       uses: actions/download-artifact@v2
       with:
-        name: cover-{{ runner.os }}
+        name: cover-${{ runner.os }}
     - name: Upload coverage to codecov
       uses: codecov/codecov-action@v1
       with:
