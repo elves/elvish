@@ -30,10 +30,8 @@ jobs:
           ~/.cache/go-build
           ~/Library/Caches/go-build
           ~/AppData/Local/go-build
-        key: test/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}
-        restore-keys: |
-          test/${{ matrix.os }}/${{ matrix.go-version }}/
-          test/${{ matrix.os }}/
+        key: test/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}/{{ github.sha }}
+        restore-keys: test/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}/
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
@@ -84,10 +82,8 @@ jobs:
         path: |
           ~/go/pkg/mod
           ~/.cache/go-build
-        key: buildall/${{ matrix.os }}/1.15.x/${{ hashFiles('go.sum') }}
-        restore-keys: |
-          buildall/${{ matrix.os }}/1.15.x/
-          buildall/${{ matrix.os }}/
+        key: buildall/${{ matrix.os }}/1.15.x/${{ hashFiles('go.sum') }}/{{ github.sha }}
+        restore-keys: buildall/${{ matrix.os }}/1.15.x/${{ hashFiles('go.sum') }}
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
