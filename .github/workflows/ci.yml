@@ -111,8 +111,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: Set up environment
-      run: echo "PATH=$HOME/go/bin:$PATH" >> $GITHUB_ENV
     - name: Set up cache
       uses: actions/cache@v2
       with:
