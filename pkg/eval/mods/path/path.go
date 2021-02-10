@@ -149,7 +149,7 @@ var fns = map[string]interface{}{
 // ```
 
 func isDir(path string) bool {
-	fi, err := os.Stat(path)
+	fi, err := os.Lstat(path)
 	return err == nil && fi.Mode().IsDir()
 }
 
@@ -173,6 +173,6 @@ func isDir(path string) bool {
 // ```
 
 func isRegular(path string) bool {
-	fi, err := os.Stat(path)
+	fi, err := os.Lstat(path)
 	return err == nil && fi.Mode().IsRegular()
 }
