@@ -5,14 +5,14 @@ test_task:
     fingerprint_script: cat go.sum
     folder: $GOPATH/pkg/mod
   matrix:
-    - name: Test on Linux (Gccgo)
+    - name: Test on gccgo
       container:
         image: debian:unstable-slim
       setup_script:
         - apt-get -y update
         - apt-get -y install ca-certificates gccgo-go
       env:
-        # Gccgo doesn't support race test
+        # gccgo doesn't support race test
         TEST_FLAG: ""
     - name: Test on FreeBSD
       freebsd_instance:
@@ -23,24 +23,6 @@ test_task:
         TEST_FLAG: -race
   go_version_script: go version
   test_script: go test $TEST_FLAG ./...
-
-checkstyle_go_task:
-  name: Check the style of .go files
-  container:
-    image: golang:latest
-  env:
-    PATH: $HOME/go/bin:$PATH
-  setup_script: go get golang.org/x/tools/cmd/goimports
-  check_script: make checkstyle-go
-
-checkstyle_md_task:
-  name: Check the style of .md files
-  container:
-    image: node:latest
-  env:
-    PATH: $HOME/.npm-packages/bin:$PATH
-  setup_script: npm install --global prettier@2.0.5
-  check_script: make checkstyle-md
 
 deploy_task:
   name: Build binaries and deploy to bintray
