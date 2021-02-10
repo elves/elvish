@@ -55,30 +55,25 @@ jobs:
 
   upload-coverage:
     name: Upload test coverage
+    strategy:
+      matrix:
+        os: [ubuntu, macos, windows]
     needs: test
     runs-on: ubuntu-latest
+    env:
+      OS: ${{ matrix.os }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: Download test coverage from ubuntu
+    - name: Download test coverage
       uses: actions/download-artifact@v2
       with:
-        name: cover-ubuntu
-        path: ubuntu
-    - name: Download test coverage from macos
-      uses: actions/download-artifact@v2
-      with:
-        name: cover-macos
-        path: macos
-    - name: Download test coverage from windows
-      uses: actions/download-artifact@v2
-      with:
-        name: cover-windows
-        path: windows
-    - name: Upload coverages to codecov
+        name: cover-${{ matrix.os }}
+    - name: Upload coverage to codecov
       uses: codecov/codecov-action@v1
       with:
-        files: ./ubuntu/cover,./macos/cover,./windows/cover
+        files: ./cover
+        env_vars: OS
 
   buildall:
     name: Build binaries
