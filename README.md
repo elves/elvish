@@ -1,6 +1,6 @@
 # Elvish: Expressive Programming Language + Versatile Interactive Shell
 
-![CI status](https://github.com/elves/elvish/workflows/CI/badge.svg)
+[![CI status](https://github.com/elves/elvish/workflows/CI/badge.svg)](https://github.com/elves/elvish/actions?query=workflow%3ACI)
 [![FreeBSD test status](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=freebsd&task=Test%20on%20FreeBSD)](https://cirrus-ci.com/github/elves/elvish/master)
 [![gccgo test status](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=gccgo&task=Test%20on%20gccgo)](https://cirrus-ci.com/github/elves/elvish/master)
 [![Test Coverage](https://img.shields.io/codecov/c/github/elves/elvish.svg?logo=Codecov&label=coverage)](https://codecov.io/gh/elves/elvish)
