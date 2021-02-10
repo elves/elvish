@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+defaults:
+  run:
+    # PowerShell's behavior for -flag=value is undesirable, so run all commands with bash.
+    shell: bash
+
+jobs:
+
+  test:
+    name: Run tests
+    strategy:
+      matrix:
+        os: [ubuntu, macos, windows]
+        go-version: [1.15.x]
+        include:
+          # Test old supported Go version
+          - os: ubuntu
+            go-version: 1.14.x
+    env:
+      ELVISH_TEST_TIME_SCALE: 20
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+          ~/Library/Caches/go-build
+          ~/AppData/Local/go-build
+        key: test/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}/${{ github.sha }}
+        restore-keys: test/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}/
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+    - name: Test with race detection
+      run: go test -race ./...
+    - name: Generate test coverage
+      if: matrix.go-version == '1.15.x'
+      run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
+    - name: Save test coverage
+      if: matrix.go-version == '1.15.x'
+      uses: actions/upload-artifact@v2
+      with:
+        name: cover-${{ matrix.os }}
+        path: cover
+
+  upload-coverage:
+    name: Upload test coverage
+    strategy:
+      matrix:
+        os: [ubuntu, macos, windows]
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set ostype to matrix.os
+      run: echo ostype=${{ matrix.os }} >> $GITHUB_ENV
+    - name: Set ostype to linux
+      if: matrix.os == 'ubuntu'
+      run: echo ostype=linux >> $GITHUB_ENV
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Download test coverage
+      uses: actions/download-artifact@v2
+      with:
+        name: cover-${{ matrix.os }}
+    - name: Upload coverage to codecov
+      uses: codecov/codecov-action@v1
+      with:
+        files: ./cover
+        flags: ${{ env.ostype }}
+
+  buildall:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: buildall/${{ matrix.os }}/1.15.x/${{ hashFiles('go.sum') }}/${{ github.sha }}
+        restore-keys: buildall/${{ matrix.os }}/1.15.x/${{ hashFiles('go.sum') }}
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.15.x
+    - name: Build binaries
+      # TODO: Use PR number for suffix when running for PR
+      run: ELVISH_REPRODUCIBLE=dev ./tools/buildall.sh . bin HEAD
+    - name: Upload binaries
+      uses: actions/upload-artifact@v2
+      with:
+        name: bin
+        path: bin/**/*
+
+  checkstyle-go:
+    name: Check style of **.go
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+    - name: Set up goimports
+      run: go get golang.org/x/tools/cmd/goimports
+    - name: Check style
+      run: ./tools/checkstyle-go.sh
+
+  checkstyle-md:
+    name: Check style of **.md
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up environment
+      run: |
+        echo "NPM_PREFIX=$HOME/npm" >> $GITHUB_ENV
+        echo "PATH=$HOME/npm/bin:$PATH" >> $GITHUB_ENV
+    - name: Set up Node
+      uses: actions/setup-node@v2
+    - name: Set up Node prefix
+      run: npm config set prefix $NPM_PREFIX
+    - name: Set up prettier
+      run: npm install --global prettier@2.0.5
+    - name: Check style
+      run: ./tools/checkstyle-md.sh
