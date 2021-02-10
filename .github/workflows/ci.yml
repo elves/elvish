@@ -60,8 +60,6 @@ jobs:
         os: [ubuntu, macos, windows]
     needs: test
     runs-on: ubuntu-latest
-    env:
-      OS: ${{ matrix.os }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -73,7 +71,7 @@ jobs:
       uses: codecov/codecov-action@v1
       with:
         files: ./cover
-        env_vars: OS
+        flags: ${{ matrix.os }}
 
   buildall:
     name: Build binaries
