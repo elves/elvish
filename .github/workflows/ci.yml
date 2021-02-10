@@ -64,7 +64,7 @@ jobs:
     - name: Set ostype to matrix.os
       run: echo ostype=${{ matrix.os }} >> $GITHUB_ENV
     - name: Set ostype to linux
-      if: matrix.os == "ubuntu"
+      if: matrix.os == 'ubuntu'
       run: echo ostype=linux >> $GITHUB_ENV
     - name: Checkout code
       uses: actions/checkout@v2
