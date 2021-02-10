@@ -61,6 +61,11 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
+    - name: Set ostype to matrix.os
+      run: echo ostype=${{ matrix.os }} >> $GITHUB_ENV
+    - name: Set ostype to linux
+      if: matrix.os == "ubuntu"
+      run: echo ostype=linux >> $GITHUB_ENV
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Download test coverage
@@ -71,7 +76,7 @@ jobs:
       uses: codecov/codecov-action@v1
       with:
         files: ./cover
-        flags: ${{ matrix.os }}
+        flags: ${{ env.ostype }}
 
   buildall:
     name: Build binaries
