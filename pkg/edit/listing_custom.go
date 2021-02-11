@@ -16,7 +16,7 @@ import (
 )
 
 type customListingOpts struct {
-	Binding    BindingMap
+	Binding    bindingMap
 	Caption    string
 	KeepBottom bool
 	Accept     eval.Callable

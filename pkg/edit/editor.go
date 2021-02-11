@@ -34,7 +34,9 @@ type notifier interface {
 	notifyError(ctx string, e error)
 }
 
-// NewEditor creates a new editor from input and output terminal files.
+// NewEditor creates a new editor. The tty is used for input and output. The
+// Evaler is used for syntax highlighting and completion, and the Store is
+// used for saving and retrieving command and directory history.
 func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 	// Declare the Editor with a nil App first; some initialization functions
 	// require a notifier as an argument, but does not use it immediately.
@@ -100,6 +102,8 @@ func (ed *Editor) ReadCode() (string, error) {
 }
 
 // Ns returns a namespace for manipulating the editor from Elvish code.
+//
+// See https://elv.sh/ref/edit.html for the Elvish API.
 func (ed *Editor) Ns() *eval.Ns {
 	return ed.ns
 }

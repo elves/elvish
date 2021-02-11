@@ -7,7 +7,7 @@ import (
 )
 
 func initMinibuf(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(EmptyBindingMap)
+	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar)
 	nb.AddNs("minibuf",
 		eval.NsBuilder{

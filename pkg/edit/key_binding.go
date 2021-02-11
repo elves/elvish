@@ -30,9 +30,9 @@ func (b mapBinding) Handle(e term.Event) bool {
 	if !ok {
 		return false
 	}
-	maps := make([]BindingMap, len(b.mapVars))
+	maps := make([]bindingMap, len(b.mapVars))
 	for i, v := range b.mapVars {
-		maps[i] = v.GetRaw().(BindingMap)
+		maps[i] = v.GetRaw().(bindingMap)
 	}
 	f := indexLayeredBindings(ui.Key(k), maps...)
 	if f == nil {
@@ -44,7 +44,7 @@ func (b mapBinding) Handle(e term.Event) bool {
 
 // Indexes a series of layered bindings. Returns nil if none of the bindings
 // have the required key or a default.
-func indexLayeredBindings(k ui.Key, bindings ...BindingMap) eval.Callable {
+func indexLayeredBindings(k ui.Key, bindings ...bindingMap) eval.Callable {
 	for _, binding := range bindings {
 		if binding.HasKey(k) {
 			return binding.GetKey(k)

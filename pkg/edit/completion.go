@@ -205,7 +205,7 @@ func completionStart(app cli.App, binding cli.Handler, cfg complete.Config, smar
 // Closes the completion mode UI.
 
 func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(EmptyBindingMap)
+	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar)
 	matcherMapVar := newMapVar(vals.EmptyMap)
 	argGeneratorMapVar := newMapVar(vals.EmptyMap)

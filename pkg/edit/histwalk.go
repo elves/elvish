@@ -13,7 +13,7 @@ import (
 // started.
 
 func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(EmptyBindingMap)
+	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar)
 	app := ed.app
 	nb.AddNs("history",

@@ -103,7 +103,7 @@ func convertNavWidthRatio(v interface{}) [3]int {
 }
 
 func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(EmptyBindingMap)
+	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar)
 	widthRatioVar := newListVar(vals.MakeList(1.0, 3.0, 4.0))
 

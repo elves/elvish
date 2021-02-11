@@ -16,7 +16,7 @@ import (
 )
 
 func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histutil.Store, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(EmptyBindingMap)
+	bindingVar := newBindingVar(emptyBindingMap)
 	app := ed.app
 	nb.AddNs("listing",
 		eval.NsBuilder{
@@ -45,7 +45,7 @@ func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histuti
 }
 
 func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(EmptyBindingMap)
+	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar, commonBindingVar)
 	dedup := newBoolVar(true)
 	caseSensitive := newBoolVar(true)
@@ -78,7 +78,7 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 }
 
 func initLastcmd(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(EmptyBindingMap)
+	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar, commonBindingVar)
 	nb.AddNs("lastcmd",
 		eval.NsBuilder{
@@ -91,7 +91,7 @@ func initLastcmd(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBi
 }
 
 func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(EmptyBindingMap)
+	bindingVar := newBindingVar(emptyBindingMap)
 	pinnedVar := newListVar(vals.EmptyList)
 	hiddenVar := newListVar(vals.EmptyList)
 	workspacesVar := newMapVar(vals.EmptyMap)

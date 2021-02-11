@@ -21,7 +21,7 @@ import (
 // Elvish will attempt to evaluate `sudo rm -rf /` when you typed that far.
 
 func initInstant(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(EmptyBindingMap)
+	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(ed, ev, bindingVar)
 	nb.AddNs("-instant",
 		eval.NsBuilder{
