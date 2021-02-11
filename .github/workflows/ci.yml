@@ -61,7 +61,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-    - name: Set ostype to matrix.os
+    - name: Set ostype to ${{ matrix.os }}
+      if: matrix.os != 'ubuntu'
       run: echo ostype=${{ matrix.os }} >> $GITHUB_ENV
     - name: Set ostype to linux
       if: matrix.os == 'ubuntu'
