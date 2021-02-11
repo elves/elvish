@@ -1,13 +1,13 @@
-name: Email about Cirrus CI failures
+name: Check Cirrus CI
 
 on:
   check_suite:
     type: ['completed']
 
 jobs:
-  continue:
-    name: After Cirrus CI Failure
-    if: github.event.check_suite.app.name == 'Cirrus CI' && github.event.check_suite.conclusion != 'success'
+  notify-failure:
+    name: Notify failure
+    if: github.event.check_suite.app.name == 'Cirrus CI' && github.event.check_suite.conclusion == 'failure'
     runs-on: ubuntu-latest
     steps:
       - uses: octokit/request-action@v2.x
@@ -21,6 +21,7 @@ jobs:
           echo "Cirrus CI ${{ github.event.check_suite.conclusion }} on ${{ github.event.check_suite.head_branch }} branch!"
           echo "SHA ${{ github.event.check_suite.head_sha }}"
           echo $MESSAGE
-          echo "##[error]See $CHECK_RUN_URL for details" && false
+          echo "##[error]See $CHECK_RUN_URL for details"
+          false
         env:
           CHECK_RUN_URL: ${{ fromJson(steps.get_failed_check_run.outputs.data).check_runs[0].html_url }}
