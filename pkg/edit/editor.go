@@ -17,7 +17,7 @@ import (
 	"src.elv.sh/pkg/store"
 )
 
-// Editor is the interface line editor for Elvish.
+// Editor is the interactive line editor for Elvish.
 type Editor struct {
 	app cli.App
 	ns  *eval.Ns
@@ -34,9 +34,9 @@ type notifier interface {
 	notifyError(ctx string, e error)
 }
 
-// NewEditor creates a new editor. The tty is used for input and output. The
-// Evaler is used for syntax highlighting and completion, and the Store is
-// used for saving and retrieving command and directory history.
+// NewEditor creates a new editor. The TTY is used for input and output. The
+// Evaler is used for syntax highlighting, completion, and calling callbacks.
+// The Store is used for saving and retrieving command and directory history.
 func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 	// Declare the Editor with a nil App first; some initialization functions
 	// require a notifier as an argument, but does not use it immediately.
