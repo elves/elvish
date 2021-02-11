@@ -150,10 +150,10 @@ func TestSmartEnter_InsertsNewlineWhenIncomplete(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	cli.SetCodeBuffer(f.Editor.app, tk.CodeBuffer{Content: "put [", Dot: 5})
+	f.SetCodeBuffer(tk.CodeBuffer{Content: "put [", Dot: 5})
 	evals(f.Evaler, `edit:smart-enter`)
 	wantBuf := tk.CodeBuffer{Content: "put [\n", Dot: 6}
-	if buf := cli.CodeBuffer(f.Editor.app); buf != wantBuf {
+	if buf := f.Editor.app.CodeArea().CopyState().Buffer; buf != wantBuf {
 		t.Errorf("got code buffer %v, want %v", buf, wantBuf)
 	}
 }
@@ -162,7 +162,7 @@ func TestSmartEnter_AcceptsCodeWhenWholeBufferIsComplete(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	cli.SetCodeBuffer(f.Editor.app, tk.CodeBuffer{Content: "put []", Dot: 5})
+	f.SetCodeBuffer(tk.CodeBuffer{Content: "put []", Dot: 5})
 	evals(f.Evaler, `edit:smart-enter`)
 	wantCode := "put []"
 	if code, _ := f.Wait(); code != wantCode {

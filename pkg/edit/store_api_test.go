@@ -3,7 +3,6 @@ package edit
 import (
 	"testing"
 
-	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/store"
@@ -33,7 +32,7 @@ func TestInsertLastWord(t *testing.T) {
 
 	evals(f.Evaler, "edit:insert-last-word")
 	wantBuf := tk.CodeBuffer{Content: "bar", Dot: 3}
-	if buf := cli.CodeBuffer(f.Editor.app); buf != wantBuf {
+	if buf := f.Editor.app.CodeArea().CopyState().Buffer; buf != wantBuf {
 		t.Errorf("buf = %v, want %v", buf, wantBuf)
 	}
 }

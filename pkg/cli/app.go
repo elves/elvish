@@ -67,15 +67,13 @@ type State struct {
 	// An addon widget. When non-nil, it is shown under the codearea widget and
 	// terminal events are handled by it.
 	//
-	// The addon widget may implement the Focuser interface, in which case the
-	// Focus method is used to determine whether the cursor should be placed on
-	// the addon widget during each render. If the widget does not implement the
-	// Focuser interface, the cursor is always placed on the addon widget.
+	// The cursor is placed on the addon by default. If the addon widget
+	// implements interface{ Focus() bool }, the Focus method is called to
+	// determine that instead.
 	Addon tk.Widget
 }
 
-// Focuser is an interface that addon widgets may implement.
-type Focuser interface {
+type focuser interface {
 	Focus() bool
 }
 
@@ -241,7 +239,7 @@ func renderApp(codeArea, addon tk.Renderer, width, height int) *term.Buffer {
 	if addon != nil && len(buf.Lines) < height {
 		bufListing := addon.Render(width, height-len(buf.Lines))
 		focus := true
-		if focuser, ok := addon.(Focuser); ok {
+		if focuser, ok := addon.(focuser); ok {
 			focus = focuser.Focus()
 		}
 		buf.Extend(bufListing, focus)

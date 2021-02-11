@@ -141,7 +141,7 @@ func toKey(v interface{}) (ui.Key, error) {
 
 func smartEnter(app cli.App) {
 	// TODO(xiaq): Fix the race condition.
-	buf := cli.CodeBuffer(app)
+	buf := app.CodeArea().CopyState().Buffer
 	if isSyntaxComplete(buf.Content) {
 		app.CommitCode()
 	} else {

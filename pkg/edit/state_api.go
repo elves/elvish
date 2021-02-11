@@ -32,7 +32,9 @@ func insertAtDot(app cli.App, text string) {
 // Equivalent to assigning `$text` to `$edit:current-command`.
 
 func replaceInput(app cli.App, text string) {
-	cli.SetCodeBuffer(app, tk.CodeBuffer{Content: text, Dot: len(text)})
+	app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+		s.Buffer = tk.CodeBuffer{Content: text, Dot: len(text)}
+	})
 }
 
 //elvdoc:var -dot
@@ -80,7 +82,7 @@ func initStateAPI(app cli.App, nb eval.NsBuilder) {
 		return nil
 	}
 	getCurrentCommand := func() interface{} {
-		return vals.FromGo(cli.CodeBuffer(app).Content)
+		return vals.FromGo(app.CodeArea().CopyState().Buffer.Content)
 	}
 	nb.Add("current-command", vars.FromSetGet(setCurrentCommand, getCurrentCommand))
 }

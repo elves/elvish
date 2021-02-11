@@ -6,6 +6,7 @@ import (
 
 	"src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -98,6 +99,12 @@ func (f *fixture) TestTTY(t *testing.T, args ...interface{}) {
 func (f *fixture) TestTTYNotes(t *testing.T, args ...interface{}) {
 	t.Helper()
 	f.TTYCtrl.TestNotesBuffer(t, f.MakeBuffer(args...))
+}
+
+func (f *fixture) SetCodeBuffer(b tk.CodeBuffer) {
+	f.Editor.app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+		s.Buffer = b
+	})
 }
 
 func feedInput(ttyCtrl clitest.TTYCtrl, s string) {

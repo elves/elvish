@@ -27,17 +27,17 @@ func minibufStart(ed *Editor, ev *eval.Evaler, binding tk.Handler) {
 		// TODO: Add Highlighter. Right now the async highlighter is not
 		// directly usable.
 	})
-	cli.SetAddon(ed.app, w)
+	ed.app.MutateState(func(s *cli.State) { s.Addon = w })
 	ed.app.Redraw()
 }
 
 func minibufSubmit(ed *Editor, ev *eval.Evaler) {
 	app := ed.app
-	codeArea, ok := cli.Addon(app).(tk.CodeArea)
+	codeArea, ok := app.CopyState().Addon.(tk.CodeArea)
 	if !ok {
 		return
 	}
-	cli.SetAddon(app, nil)
+	ed.app.MutateState(func(s *cli.State) { s.Addon = nil })
 	code := codeArea.CopyState().Buffer.Content
 	src := parse.Source{Name: "[minibuf]", Code: code}
 	notifyPort, cleanup := makeNotifyPort(ed)

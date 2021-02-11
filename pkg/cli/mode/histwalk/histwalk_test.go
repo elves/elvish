@@ -12,10 +12,11 @@ import (
 )
 
 func TestHistWalk(t *testing.T) {
-	f := Setup()
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
+		spec.CodeAreaState.Buffer = tk.CodeBuffer{Content: "ls", Dot: 2}
+	}))
 	defer f.Stop()
 
-	cli.SetCodeBuffer(f.App, tk.CodeBuffer{Content: "ls", Dot: 2})
 	f.App.Redraw()
 	buf0 := f.MakeBuffer("ls", term.DotHere)
 	f.TTY.TestBuffer(t, buf0)
@@ -76,10 +77,11 @@ func TestHistWalk_NoWalker(t *testing.T) {
 }
 
 func TestHistWalk_NoMatch(t *testing.T) {
-	f := Setup()
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
+		spec.CodeAreaState.Buffer = tk.CodeBuffer{Content: "ls", Dot: 2}
+	}))
 	defer f.Stop()
 
-	cli.SetCodeBuffer(f.App, tk.CodeBuffer{Content: "ls", Dot: 2})
 	f.App.Redraw()
 	buf0 := f.MakeBuffer("ls", term.DotHere)
 	f.TTY.TestBuffer(t, buf0)
