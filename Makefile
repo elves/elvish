@@ -6,7 +6,7 @@ get:
 		export GOFLAGS=-buildmode=pie; \
 	fi; \
 	go get -trimpath -ldflags \
-		"-X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev.$$(git rev-parse HEAD)$$(git diff --quiet || printf +%s `uname -n`) \
+		"-X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev.$$(git rev-parse HEAD)$$(git diff HEAD --quiet || printf +%s `uname -n`) \
 		 -X src.elv.sh/pkg/buildinfo.Reproducible=true" ./cmd/elvish
 
 generate:
