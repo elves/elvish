@@ -102,6 +102,15 @@ brew install elvish
 brew install --HEAD elvish
 ```
 
+## macOS (MacPorts)
+
+Elvish is also available via [MacPorts](https://www.macports.org):
+
+```elvish
+sudo port selfupdate
+sudo port install elvish
+```
+
 ## FreeBSD
 
 Elvish is available in the FreeBSD ports tree and as a prebuilt package. Both
