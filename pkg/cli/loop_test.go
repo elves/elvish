@@ -127,9 +127,11 @@ func quitOn(lp *loop, retTrigger event, ret string, err error) handleCb {
 	}
 }
 
-// This will be run by `go test` and compare the output to that in the comment
-// at the end of the function. See https://golang.org/pkg/testing/#pkg-examples.
-func Example_loop() {
+func TestLoop_FullLifecycle(t *testing.T) {
+	// A test for the entire lifecycle of a loop.
+
+	var initialBuffer, finalBuffer string
+
 	buffer := ""
 	firstDrawerCall := true
 	drawer := func(flag redrawFlag) {
@@ -137,10 +139,10 @@ func Example_loop() {
 		// nondeterministic except for the first and final calls.
 		switch {
 		case firstDrawerCall:
-			fmt.Printf("initial buffer is %q\n", buffer)
+			initialBuffer = buffer
 			firstDrawerCall = false
 		case flag&finalRedraw != 0:
-			fmt.Printf("final buffer is %q\n", buffer)
+			finalBuffer = buffer
 		}
 	}
 
@@ -158,12 +160,18 @@ func Example_loop() {
 		}
 	}()
 	lp.RedrawCb(drawer)
-	buf, err := lp.Run()
-	fmt.Printf("returned buffer is %q\n", buf)
-	fmt.Printf("returned error is %v\n", err)
-	// Output:
-	// initial buffer is ""
-	// final buffer is "echo"
-	// returned buffer is "echo"
-	// returned error is <nil>
+	returnedBuffer, err := lp.Run()
+
+	if initialBuffer != "" {
+		t.Errorf("got initial buffer %q, want %q", initialBuffer, "")
+	}
+	if finalBuffer != "echo" {
+		t.Errorf("got final buffer %q, want %q", finalBuffer, "echo")
+	}
+	if returnedBuffer != "echo" {
+		t.Errorf("got returned buffer %q, want %q", returnedBuffer, "echo")
+	}
+	if err != nil {
+		t.Errorf("got error %v, want nil", err)
+	}
 }
