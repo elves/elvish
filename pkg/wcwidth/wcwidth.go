@@ -5,9 +5,13 @@ package wcwidth
 import (
 	"sort"
 	"strings"
+	"sync"
 )
 
-var wcwidthOverride = map[rune]int{}
+var (
+	overrideMutex sync.RWMutex
+	override      = map[rune]int{}
+)
 
 // Taken from http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c (public domain)
 var combining = [][2]rune{
@@ -69,7 +73,7 @@ func isCombining(r rune) bool {
 
 // OfRune returns the column width of a rune.
 func OfRune(r rune) int {
-	if w, ok := wcwidthOverride[r]; ok {
+	if w, ok := getOverride(r); ok {
 		return w
 	}
 	if r == 0 ||
@@ -97,18 +101,30 @@ func OfRune(r rune) int {
 	return 1
 }
 
+func getOverride(r rune) (int, bool) {
+	overrideMutex.RLock()
+	defer overrideMutex.RUnlock()
+	w, ok := override[r]
+	return w, ok
+}
+
 // Override overrides the column width of a rune to be a specific non-negative
-// value. It panics if w < 0.
+// value. If w < 0, it removes the override.
 func Override(r rune, w int) {
 	if w < 0 {
-		panic("negative width")
+		Unoverride(r)
+		return
 	}
-	wcwidthOverride[r] = w
+	overrideMutex.Lock()
+	defer overrideMutex.Unlock()
+	override[r] = w
 }
 
 // Unoverride removes the column width override of a rune.
 func Unoverride(r rune) {
-	delete(wcwidthOverride, r)
+	overrideMutex.Lock()
+	defer overrideMutex.Unlock()
+	delete(override, r)
 }
 
 // Of returns the column width of a string, assuming no soft line breaks.

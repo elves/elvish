@@ -36,6 +36,19 @@ func TestOverride(t *testing.T) {
 	}
 }
 
+func TestOverride_NegativeWidthRemovesOverride(t *testing.T) {
+	Override('x', 2)
+	Override('x', -1)
+	if OfRune('x') != 1 {
+		t.Errorf("Override with negative width did not remove override")
+	}
+}
+
+func TestConcurrentOverride(t *testing.T) {
+	go Override('x', 2)
+	_ = OfRune('x')
+}
+
 func TestTrim(t *testing.T) {
 	tt.Test(t, tt.Fn("Trim", Trim), tt.Table{
 		Args("abc", 1).Rets("a"),
