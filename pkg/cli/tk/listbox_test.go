@@ -7,7 +7,7 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-var listBoxRenderVerticalTests = []RenderTest{
+var listBoxRenderVerticalTests = []renderTest{
 	{
 		Name:  "placeholder when Items is nil",
 		Given: NewListBox(ListBoxSpec{Placeholder: ui.T("nothing")}),
@@ -124,7 +124,7 @@ var listBoxRenderVerticalTests = []RenderTest{
 }
 
 func TestListBox_Render_Vertical(t *testing.T) {
-	TestRender(t, listBoxRenderVerticalTests)
+	testRender(t, listBoxRenderVerticalTests)
 }
 
 func TestListBox_Render_Vertical_MutatesState(t *testing.T) {
@@ -142,7 +142,7 @@ func TestListBox_Render_Vertical_MutatesState(t *testing.T) {
 	}
 }
 
-var listBoxRenderHorizontalTests = []RenderTest{
+var listBoxRenderHorizontalTests = []renderTest{
 	{
 		Name:  "placeholder when Items is nil",
 		Given: NewListBox(ListBoxSpec{Horizontal: true, Placeholder: ui.T("nothing")}),
@@ -234,7 +234,7 @@ var listBoxRenderHorizontalTests = []RenderTest{
 }
 
 func TestListBox_Render_Horizontal(t *testing.T) {
-	TestRender(t, listBoxRenderHorizontalTests)
+	testRender(t, listBoxRenderHorizontalTests)
 }
 
 func TestListBox_Render_Horizontal_MutatesState(t *testing.T) {
@@ -254,7 +254,7 @@ func TestListBox_Render_Horizontal_MutatesState(t *testing.T) {
 	}
 }
 
-var listBoxHandleTests = []HandleTest{
+var listBoxHandleTests = []handleTest{
 	{
 		Name:  "up moving selection up",
 		Given: NewListBox(ListBoxSpec{State: ListBoxState{Items: TestItems{NItems: 10}, Selected: 1}}),
@@ -334,7 +334,7 @@ func listBoxWithOverlay(spec ListBoxSpec, overlay func(*listBox) Handler) *listB
 }
 
 func TestListBox_Handle(t *testing.T) {
-	TestHandle(t, listBoxHandleTests)
+	testHandle(t, listBoxHandleTests)
 }
 
 func TestListBox_Handle_EnterEmitsAccept(t *testing.T) {

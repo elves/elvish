@@ -8,7 +8,7 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-var comboBoxRenderTests = []RenderTest{
+var comboBoxRenderTests = []renderTest{
 	{
 		Name: "rendering codearea and listbox",
 		Given: NewComboBox(ComboBoxSpec{
@@ -41,7 +41,7 @@ var comboBoxRenderTests = []RenderTest{
 }
 
 func TestComboBox_Render(t *testing.T) {
-	TestRender(t, comboBoxRenderTests)
+	testRender(t, comboBoxRenderTests)
 }
 
 func TestComboBox_Handle(t *testing.T) {

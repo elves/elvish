@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/ui"
 )
 
-// RenderTest is a test case to be used in TestRenderer.
-type RenderTest struct {
+// renderTest is a test case to be used in TestRenderer.
+type renderTest struct {
 	Name   string
 	Given  Renderer
 	Width  int
@@ -16,8 +17,8 @@ type RenderTest struct {
 	Want   interface{ Buffer() *term.Buffer }
 }
 
-// TestRender runs the given Renderer tests.
-func TestRender(t *testing.T, tests []RenderTest) {
+// testRender runs the given Renderer tests.
+func testRender(t *testing.T, tests []renderTest) {
 	t.Helper()
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
@@ -33,8 +34,8 @@ func TestRender(t *testing.T, tests []RenderTest) {
 	}
 }
 
-// HandleTest is a test case to be used in TestHandle.
-type HandleTest struct {
+// handleTest is a test case to be used in testHandle.
+type handleTest struct {
 	Name   string
 	Given  Handler
 	Event  term.Event
@@ -44,8 +45,8 @@ type HandleTest struct {
 	WantUnhandled bool
 }
 
-// TestHandle runs the given Handler tests.
-func TestHandle(t *testing.T, tests []HandleTest) {
+// testHandle runs the given Handler tests.
+func testHandle(t *testing.T, tests []handleTest) {
 	t.Helper()
 
 	for _, test := range tests {
@@ -84,4 +85,62 @@ func getState(v interface{}) interface{} {
 		rv = reflect.Indirect(rv)
 	}
 	return rv.FieldByName("State").Interface()
+}
+
+// Test for the test utilities.
+
+func TestTestRender(t *testing.T) {
+	testRender(t, []renderTest{
+		{
+			Name:  "test",
+			Given: &testWidget{text: ui.T("test")},
+			Width: 10, Height: 10,
+
+			Want: term.NewBufferBuilder(10).Write("test"),
+		},
+	})
+}
+
+type testHandlerWithState struct {
+	State testHandlerState
+}
+
+type testHandlerState struct {
+	last  term.Event
+	total int
+}
+
+func (h *testHandlerWithState) Handle(e term.Event) bool {
+	if e == term.K('x') {
+		return false
+	}
+	h.State.last = e
+	h.State.total++
+	return true
+}
+
+func TestTestHandle(t *testing.T) {
+	testHandle(t, []handleTest{
+		{
+			Name:  "WantNewState",
+			Given: &testHandlerWithState{},
+			Event: term.K('a'),
+
+			WantNewState: testHandlerState{last: term.K('a'), total: 1},
+		},
+		{
+			Name:   "Multiple events",
+			Given:  &testHandlerWithState{},
+			Events: []term.Event{term.K('a'), term.K('b')},
+
+			WantNewState: testHandlerState{last: term.K('b'), total: 2},
+		},
+		{
+			Name:  "WantUnhaneld",
+			Given: &testHandlerWithState{},
+			Event: term.K('x'),
+
+			WantUnhandled: true,
+		},
+	})
 }

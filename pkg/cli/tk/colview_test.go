@@ -8,7 +8,7 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-var colViewRenderTests = []RenderTest{
+var colViewRenderTests = []renderTest{
 	{
 		Name:  "colview no column",
 		Given: NewColView(ColViewSpec{}),
@@ -58,7 +58,7 @@ func makeListbox(prefix string, n, selected int) Widget {
 }
 
 func TestColView_Render(t *testing.T) {
-	TestRender(t, colViewRenderTests)
+	testRender(t, colViewRenderTests)
 }
 
 func TestColView_Handle(t *testing.T) {

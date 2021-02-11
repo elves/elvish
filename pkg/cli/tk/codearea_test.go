@@ -14,7 +14,7 @@ var bb = term.NewBufferBuilder
 
 func p(t ui.Text) func() ui.Text { return func() ui.Text { return t } }
 
-var codeAreaRenderTests = []RenderTest{
+var codeAreaRenderTests = []renderTest{
 	{
 		Name: "prompt only",
 		Given: NewCodeArea(CodeAreaSpec{
@@ -184,10 +184,10 @@ var codeAreaRenderTests = []RenderTest{
 }
 
 func TestCodeArea_Render(t *testing.T) {
-	TestRender(t, codeAreaRenderTests)
+	testRender(t, codeAreaRenderTests)
 }
 
-var codeAreaHandleTests = []HandleTest{
+var codeAreaHandleTests = []handleTest{
 	{
 		Name:         "simple inserts",
 		Given:        NewCodeArea(CodeAreaSpec{}),
@@ -386,7 +386,7 @@ var codeAreaHandleTests = []HandleTest{
 }
 
 func TestCodeArea_Handle(t *testing.T) {
-	TestHandle(t, codeAreaHandleTests)
+	testHandle(t, codeAreaHandleTests)
 }
 
 // A utility for building a CodeArea with an OverlayHandler as a single

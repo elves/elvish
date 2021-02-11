@@ -8,7 +8,7 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-var textViewRenderTests = []RenderTest{
+var textViewRenderTests = []renderTest{
 	{
 		Name: "text fits entirely",
 		Given: NewTextView(TextViewSpec{State: TextViewState{
@@ -63,10 +63,10 @@ var textViewRenderTests = []RenderTest{
 }
 
 func TestTextView_Render(t *testing.T) {
-	TestRender(t, textViewRenderTests)
+	testRender(t, textViewRenderTests)
 }
 
-var textViewHandleTests = []HandleTest{
+var textViewHandleTests = []handleTest{
 	{
 		Name: "up doing nothing when not scrollable",
 		Given: NewTextView(TextViewSpec{
@@ -122,7 +122,7 @@ var textViewHandleTests = []HandleTest{
 }
 
 func TestTextView_Handle(t *testing.T) {
-	TestHandle(t, textViewHandleTests)
+	testHandle(t, textViewHandleTests)
 }
 
 func TestTextView_CopyState(t *testing.T) {
