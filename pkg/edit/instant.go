@@ -2,7 +2,8 @@ package edit
 
 import (
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/addons/instant"
+	"src.elv.sh/pkg/cli/mode/instant"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 )
@@ -31,7 +32,7 @@ func initInstant(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 		}).Ns())
 }
 
-func instantStart(app cli.App, ev *eval.Evaler, binding cli.Handler) {
+func instantStart(app cli.App, ev *eval.Evaler, binding tk.Handler) {
 	execute := func(code string) ([]string, error) {
 		outPort, collect, err := eval.StringCapturePort()
 		if err != nil {

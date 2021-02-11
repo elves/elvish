@@ -1,7 +1,7 @@
 package complete
 
 import (
-	"src.elv.sh/pkg/cli/addons/completion"
+	"src.elv.sh/pkg/cli/mode/completion"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/ui"
 )

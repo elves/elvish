@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/addons/listing"
+	"src.elv.sh/pkg/cli/mode/listing"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -30,7 +30,7 @@ func (*customListingOpts) SetDefaultOptions() {}
 // Starts a custom listing addon.
 
 func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, items interface{}) {
-	var binding cli.Handler
+	var binding tk.Handler
 	if opts.Binding.Map != nil {
 		binding = newMapBinding(ed, fm.Evaler, vars.FromPtr(&opts.Binding))
 	}

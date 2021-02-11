@@ -9,6 +9,7 @@ import (
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -17,20 +18,20 @@ var (
 	horizontal = flag.Bool("horizontal", false, "use horizontal listbox layout")
 )
 
-func makeWidget() cli.Widget {
-	items := cli.TestItems{Prefix: "list item "}
-	w := cli.NewComboBox(cli.ComboBoxSpec{
-		CodeArea: cli.CodeAreaSpec{
+func makeWidget() tk.Widget {
+	items := tk.TestItems{Prefix: "list item "}
+	w := tk.NewComboBox(tk.ComboBoxSpec{
+		CodeArea: tk.CodeAreaSpec{
 			Prompt: func() ui.Text {
 				return ui.Concat(ui.T(" NUMBER ", ui.Bold, ui.BgMagenta), ui.T(" "))
 			},
 		},
-		ListBox: cli.ListBoxSpec{
-			State:       cli.ListBoxState{Items: &items},
+		ListBox: tk.ListBoxSpec{
+			State:       tk.ListBoxState{Items: &items},
 			Placeholder: ui.T("(no items)"),
 			Horizontal:  *horizontal,
 		},
-		OnFilter: func(w cli.ComboBox, filter string) {
+		OnFilter: func(w tk.ComboBox, filter string) {
 			if n, err := strconv.Atoi(filter); err == nil {
 				items.NItems = n
 			}

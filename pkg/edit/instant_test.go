@@ -5,6 +5,7 @@ import (
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/cli/tk"
 )
 
 func TestInstantAddon_ValueOutput(t *testing.T) {
@@ -43,7 +44,7 @@ func TestInstantAddon_ByteOutput(t *testing.T) {
 
 	// We don't want to trigger the evaluation of "e", "ec", and "ech", so we
 	// start with a non-empty code buffer.
-	cli.SetCodeBuffer(f.Editor.app, cli.CodeBuffer{Content: "echo ", Dot: 5})
+	cli.SetCodeBuffer(f.Editor.app, tk.CodeBuffer{Content: "echo ", Dot: 5})
 	evals(f.Evaler, "edit:-instant:start")
 	f.TestTTY(t,
 		"~> echo ", Styles,

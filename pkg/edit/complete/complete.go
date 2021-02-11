@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sort"
 
-	"src.elv.sh/pkg/cli/addons/completion"
+	"src.elv.sh/pkg/cli/mode/completion"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/parse/parseutil"

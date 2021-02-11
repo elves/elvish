@@ -6,6 +6,7 @@ import (
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/histutil"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/parse/parseutil"
@@ -53,7 +54,7 @@ func insertLastWord(app cli.App, histStore histutil.Store) error {
 	}
 	words := parseutil.Wordify(cmd.Text)
 	if len(words) > 0 {
-		app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
+		app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 			s.Buffer.InsertAtDot(words[len(words)-1])
 		})
 	}

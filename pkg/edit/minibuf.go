@@ -2,6 +2,8 @@ package edit
 
 import (
 	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/mode"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 )
@@ -17,9 +19,9 @@ func initMinibuf(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 		}).Ns())
 }
 
-func minibufStart(ed *Editor, ev *eval.Evaler, binding cli.Handler) {
-	w := cli.NewCodeArea(cli.CodeAreaSpec{
-		Prompt:         cli.ModePrompt(" MINIBUF ", true),
+func minibufStart(ed *Editor, ev *eval.Evaler, binding tk.Handler) {
+	w := tk.NewCodeArea(tk.CodeAreaSpec{
+		Prompt:         mode.Prompt(" MINIBUF ", true),
 		OverlayHandler: binding,
 		OnSubmit:       func() { minibufSubmit(ed, ev) },
 		// TODO: Add Highlighter. Right now the async highlighter is not
@@ -31,7 +33,7 @@ func minibufStart(ed *Editor, ev *eval.Evaler, binding cli.Handler) {
 
 func minibufSubmit(ed *Editor, ev *eval.Evaler) {
 	app := ed.app
-	codeArea, ok := cli.Addon(app).(cli.CodeArea)
+	codeArea, ok := cli.Addon(app).(tk.CodeArea)
 	if !ok {
 		return
 	}

@@ -6,8 +6,8 @@ import (
 	"os"
 	"sync"
 
-	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -21,7 +21,7 @@ type mapBinding struct {
 	mapVars []vars.PtrVar
 }
 
-func newMapBinding(nt notifier, ev *eval.Evaler, mapVars ...vars.PtrVar) cli.Handler {
+func newMapBinding(nt notifier, ev *eval.Evaler, mapVars ...vars.PtrVar) tk.Handler {
 	return mapBinding{nt, ev, mapVars}
 }
 

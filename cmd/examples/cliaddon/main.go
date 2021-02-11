@@ -5,14 +5,15 @@ import (
 	"fmt"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/addons/navigation"
+	"src.elv.sh/pkg/cli/mode/navigation"
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/cli/tk"
 )
 
 func main() {
 	app := cli.NewApp(cli.AppSpec{})
 	navigation.Start(app, navigation.Config{
-		Binding: cli.MapHandler{
+		Binding: tk.MapHandler{
 			term.K('x'): func() { app.CommitCode() },
 		},
 	})

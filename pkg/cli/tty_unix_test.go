@@ -11,7 +11,7 @@ import (
 )
 
 func TestTTYSignal(t *testing.T) {
-	tty := StdTTY
+	tty := NewTTY(os.Stdin, os.Stderr)
 	sigch := tty.NotifySignals()
 
 	err := unix.Kill(unix.Getpid(), unix.SIGUSR1)

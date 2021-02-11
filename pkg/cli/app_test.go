@@ -11,6 +11,7 @@ import (
 	. "src.elv.sh/pkg/cli"
 	. "src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/sys"
 	"src.elv.sh/pkg/ui"
 )
@@ -50,7 +51,7 @@ func TestReadCode_ResetsStateBeforeReturning(t *testing.T) {
 
 	f.Stop()
 
-	if code := GetCodeBuffer(f.App); code != (CodeBuffer{}) {
+	if code := CodeBuffer(f.App); code != (tk.CodeBuffer{}) {
 		t.Errorf("Editor state has CodeBuffer %v, want empty", code)
 	}
 }
@@ -107,7 +108,7 @@ func TestReadCode_CallsAfterReadline(t *testing.T) {
 func TestReadCode_FinalRedraw(t *testing.T) {
 	f := Setup(WithSpec(func(spec *AppSpec) {
 		spec.CodeAreaState.Buffer.Content = "code"
-		spec.State.Addon = Label{Content: ui.T("addon")}
+		spec.State.Addon = tk.Label{Content: ui.T("addon")}
 	}))
 
 	// Wait until the stable state.
@@ -334,7 +335,7 @@ func TestReadCode_HidesRPromptInFinalRedrawIfNotPersistent(t *testing.T) {
 
 func TestReadCode_LetsAddonHandleEvents(t *testing.T) {
 	f := Setup(WithSpec(func(spec *AppSpec) {
-		spec.State.Addon = NewCodeArea(CodeAreaSpec{
+		spec.State.Addon = tk.NewCodeArea(tk.CodeAreaSpec{
 			Prompt: func() ui.Text { return ui.T("addon> ") },
 		})
 	}))
@@ -349,7 +350,7 @@ func TestReadCode_LetsAddonHandleEvents(t *testing.T) {
 }
 
 type testAddon struct {
-	Empty
+	tk.Empty
 	focus bool
 }
 
@@ -397,7 +398,7 @@ func TestReadCode_ShowNotes(t *testing.T) {
 	inHandler := make(chan struct{})
 	unblock := make(chan struct{})
 	f := Setup(WithSpec(func(spec *AppSpec) {
-		spec.OverlayHandler = MapHandler{
+		spec.OverlayHandler = tk.MapHandler{
 			term.K('a'): func() {
 				inHandler <- struct{}{}
 				<-unblock

@@ -10,6 +10,7 @@ import (
 	"src.elv.sh/cmd/examples/e3bc/bc"
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -37,7 +38,7 @@ func main() {
 	app = cli.NewApp(cli.AppSpec{
 		Prompt:      cli.NewConstPrompt(ui.T("bc> ")),
 		Highlighter: highlighter{},
-		OverlayHandler: cli.MapHandler{
+		OverlayHandler: tk.MapHandler{
 			term.K('D', ui.Ctrl): func() { app.CommitEOF() },
 		},
 	})

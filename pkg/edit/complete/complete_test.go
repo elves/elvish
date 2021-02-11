@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"testing"
 
-	"src.elv.sh/pkg/cli/addons/completion"
 	"src.elv.sh/pkg/cli/lscolors"
+	"src.elv.sh/pkg/cli/mode/completion"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"

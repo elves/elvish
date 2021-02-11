@@ -55,7 +55,7 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(fds[0]) {
-		newed := edit.NewEditor(cli.StdTTY, ev, ev.DaemonClient())
+		newed := edit.NewEditor(cli.NewTTY(fds[0], fds[2]), ev, ev.DaemonClient())
 		ev.AddBuiltin(eval.NsBuilder{}.AddNs("edit", newed.Ns()).Ns())
 		ed = newed
 	} else {

@@ -2,8 +2,9 @@ package edit
 
 import (
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/addons/histwalk"
 	"src.elv.sh/pkg/cli/histutil"
+	"src.elv.sh/pkg/cli/mode/histwalk"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 )
 
@@ -38,7 +39,7 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder)
 		}).Ns())
 }
 
-func histWalkStart(app cli.App, hs *histStore, binding cli.Handler) {
+func histWalkStart(app cli.App, hs *histStore, binding tk.Handler) {
 	buf := app.CodeArea().CopyState().Buffer
 	histwalk.Start(app, histwalk.Config{
 		Binding: binding, Store: hs, Prefix: buf.Content[:buf.Dot]})

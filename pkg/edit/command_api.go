@@ -1,7 +1,7 @@
 package edit
 
 import (
-	"src.elv.sh/pkg/cli/addons/stub"
+	"src.elv.sh/pkg/cli/mode/stub"
 	"src.elv.sh/pkg/eval"
 )
 

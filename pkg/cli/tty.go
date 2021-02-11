@@ -54,9 +54,6 @@ type TTY interface {
 	UpdateBuffer(bufNotes, bufMain *term.Buffer, full bool) error
 }
 
-// StdTTY is the terminal connected to inputs from stdin and output to stderr.
-var StdTTY = NewTTY(os.Stdin, os.Stderr)
-
 type aTTY struct {
 	in, out *os.File
 	r       term.Reader

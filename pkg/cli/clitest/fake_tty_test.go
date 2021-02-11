@@ -119,12 +119,15 @@ func TestFakeTTY_Buffer(t *testing.T) {
 	}
 }
 
-func TestGetTTYCtrl(t *testing.T) {
+func TestGetTTYCtrl_FakeTTY(t *testing.T) {
 	fakeTTY, ttyCtrl := NewFakeTTY()
 	if got, ok := GetTTYCtrl(fakeTTY); got != ttyCtrl || !ok {
 		t.Errorf("-> %v, %v, want %v, %v", got, ok, ttyCtrl, true)
 	}
-	realTTY := cli.StdTTY
+}
+
+func TestGetTTYCtrl_RealTTY(t *testing.T) {
+	realTTY := cli.NewTTY(os.Stdin, os.Stderr)
 	if _, ok := GetTTYCtrl(realTTY); ok {
 		t.Errorf("-> _, true, want _, false")
 	}

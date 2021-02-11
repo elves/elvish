@@ -4,7 +4,8 @@ import (
 	"strings"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/addons/navigation"
+	"src.elv.sh/pkg/cli/mode/navigation"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -36,7 +37,7 @@ func navInsertSelected(app cli.App) {
 		return
 	}
 
-	app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
+	app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 		dot := s.Buffer.Dot
 		if dot != 0 && !strings.ContainsRune(" \n", rune(s.Buffer.Content[dot-1])) {
 			// The dot is not at the beginning of a buffer, and the previous
@@ -132,10 +133,10 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 			},
 			"left":      func() { navigation.Ascend(app) },
 			"right":     func() { navigation.Descend(app) },
-			"up":        func() { navigation.Select(app, cli.Prev) },
-			"down":      func() { navigation.Select(app, cli.Next) },
-			"page-up":   func() { navigation.Select(app, cli.PrevPage) },
-			"page-down": func() { navigation.Select(app, cli.NextPage) },
+			"up":        func() { navigation.Select(app, tk.Prev) },
+			"down":      func() { navigation.Select(app, tk.Next) },
+			"page-up":   func() { navigation.Select(app, tk.PrevPage) },
+			"page-down": func() { navigation.Select(app, tk.NextPage) },
 
 			"file-preview-up":   func() { navigation.ScrollPreview(app, -1) },
 			"file-preview-down": func() { navigation.ScrollPreview(app, 1) },

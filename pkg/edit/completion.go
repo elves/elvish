@@ -10,7 +10,8 @@ import (
 
 	"github.com/xiaq/persistent/hash"
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/addons/completion"
+	"src.elv.sh/pkg/cli/mode/completion"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/edit/complete"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
@@ -158,7 +159,7 @@ func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) co
 // Starts the completion mode. However, if all the candidates share a non-empty
 // prefix and that prefix starts with the seed, inserts the prefix instead.
 
-func completionStart(app cli.App, binding cli.Handler, cfg complete.Config, smart bool) {
+func completionStart(app cli.App, binding tk.Handler, cfg complete.Config, smart bool) {
 	buf := app.CodeArea().CopyState().Buffer
 	result, err := complete.Complete(
 		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot}, cfg)
@@ -180,10 +181,10 @@ func completionStart(app cli.App, binding cli.Handler, cfg complete.Config, smar
 		}
 		if prefix != "" {
 			insertedPrefix := false
-			app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
+			app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 				rep := s.Buffer.Content[result.Replace.From:result.Replace.To]
 				if len(prefix) > len(rep) && strings.HasPrefix(prefix, rep) {
-					s.Pending = cli.PendingCode{
+					s.Pending = tk.PendingCode{
 						Content: prefix,
 						From:    result.Replace.From, To: result.Replace.To}
 					s.ApplyPending()

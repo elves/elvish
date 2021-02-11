@@ -5,12 +5,13 @@ import (
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/cli/tk"
 )
 
 func TestFixture(t *testing.T) {
 	f := Setup(
 		WithSpec(func(spec *cli.AppSpec) {
-			spec.CodeAreaState.Buffer = cli.CodeBuffer{Content: "test", Dot: 4}
+			spec.CodeAreaState.Buffer = tk.CodeBuffer{Content: "test", Dot: 4}
 		}),
 		WithTTY(func(tty TTYCtrl) {
 			tty.SetSize(20, 30) // h = 20, w = 30
@@ -19,7 +20,7 @@ func TestFixture(t *testing.T) {
 	defer f.Stop()
 
 	// Verify that the functions passed to Setup have taken effect.
-	if cli.GetCodeBuffer(f.App).Content != "test" {
+	if cli.CodeBuffer(f.App).Content != "test" {
 		t.Errorf("WithSpec did not work")
 	}
 

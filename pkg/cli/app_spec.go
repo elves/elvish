@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -16,13 +17,13 @@ type AppSpec struct {
 	Prompt      Prompt
 	RPrompt     Prompt
 
-	OverlayHandler Handler
+	OverlayHandler tk.Handler
 	Abbreviations  func(f func(abbr, full string))
 	QuotePaste     func() bool
 
 	SmallWordAbbreviations func(f func(abbr, full string))
 
-	CodeAreaState CodeAreaState
+	CodeAreaState tk.CodeAreaState
 	State         State
 }
 

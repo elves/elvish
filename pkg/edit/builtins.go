@@ -7,8 +7,9 @@ import (
 	"unicode/utf8"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/addons/stub"
+	"src.elv.sh/pkg/cli/mode/stub"
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/parse/parseutil"
@@ -72,10 +73,10 @@ func redraw(app cli.App, opts redrawOpts) {
 func insertRaw(app cli.App, tty cli.TTY) {
 	tty.SetRawInput(1)
 	stub.Start(app, stub.Config{
-		Binding: cli.FuncHandler(func(event term.Event) bool {
+		Binding: tk.FuncHandler(func(event term.Event) bool {
 			switch event := event.(type) {
 			case term.KeyEvent:
-				app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
+				app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 					s.Buffer.InsertAtDot(string(event.Rune))
 				})
 				closeListing(app)
@@ -140,11 +141,11 @@ func toKey(v interface{}) (ui.Key, error) {
 
 func smartEnter(app cli.App) {
 	// TODO(xiaq): Fix the race condition.
-	buf := cli.GetCodeBuffer(app)
+	buf := cli.CodeBuffer(app)
 	if isSyntaxComplete(buf.Content) {
 		app.CommitCode()
 	} else {
-		app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
+		app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 			s.Buffer.InsertAtDot("\n")
 		})
 	}
@@ -198,7 +199,7 @@ func initMiscBuiltins(app cli.App, nb eval.NsBuilder) {
 	})
 }
 
-var bufferBuiltinsData = map[string]func(*cli.CodeBuffer){
+var bufferBuiltinsData = map[string]func(*tk.CodeBuffer){
 	"move-dot-left":             makeMove(moveDotLeft),
 	"move-dot-right":            makeMove(moveDotRight),
 	"move-dot-left-word":        makeMove(moveDotLeftWord),
@@ -235,7 +236,7 @@ func bufferBuiltins(app cli.App) map[string]interface{} {
 		// Make a lexically scoped copy of fn.
 		fn2 := fn
 		m[name] = func() {
-			app.CodeArea().MutateState(func(s *cli.CodeAreaState) {
+			app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 				fn2(&s.Buffer)
 			})
 		}
@@ -248,14 +249,14 @@ func bufferBuiltins(app cli.App) map[string]interface{} {
 // the editor state.
 type pureMover func(buffer string, dot int) int
 
-func makeMove(m pureMover) func(*cli.CodeBuffer) {
-	return func(buf *cli.CodeBuffer) {
+func makeMove(m pureMover) func(*tk.CodeBuffer) {
+	return func(buf *tk.CodeBuffer) {
 		buf.Dot = m(buf.Content, buf.Dot)
 	}
 }
 
-func makeKill(m pureMover) func(*cli.CodeBuffer) {
-	return func(buf *cli.CodeBuffer) {
+func makeKill(m pureMover) func(*tk.CodeBuffer) {
+	return func(buf *tk.CodeBuffer) {
 		newDot := m(buf.Content, buf.Dot)
 		if newDot < buf.Dot {
 			// Dot moved to the left: remove text between new dot and old dot,
@@ -404,7 +405,7 @@ func categorizeWord(r rune) int {
 // Deletes the the last small word to the left of the dot.
 
 func moveDotLeftSmallWord(buffer string, dot int) int {
-	return moveDotLeftGeneralWord(cli.CategorizeSmallWord, buffer, dot)
+	return moveDotLeftGeneralWord(tk.CategorizeSmallWord, buffer, dot)
 }
 
 //elvdoc:fn move-dot-right-small-word
@@ -416,7 +417,7 @@ func moveDotLeftSmallWord(buffer string, dot int) int {
 // Deletes the the first small word to the right of the dot.
 
 func moveDotRightSmallWord(buffer string, dot int) int {
-	return moveDotRightGeneralWord(cli.CategorizeSmallWord, buffer, dot)
+	return moveDotRightGeneralWord(tk.CategorizeSmallWord, buffer, dot)
 }
 
 //elvdoc:fn move-dot-left-alnum-word
@@ -445,7 +446,7 @@ func moveDotRightAlnumWord(buffer string, dot int) int {
 
 func categorizeAlnum(r rune) int {
 	switch {
-	case cli.IsAlnum(r):
+	case tk.IsAlnum(r):
 		return 1
 	default:
 		return 0

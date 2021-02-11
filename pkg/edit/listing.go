@@ -5,10 +5,11 @@ import (
 
 	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/addons/histlist"
-	"src.elv.sh/pkg/cli/addons/lastcmd"
-	"src.elv.sh/pkg/cli/addons/location"
 	"src.elv.sh/pkg/cli/histutil"
+	"src.elv.sh/pkg/cli/mode/histlist"
+	"src.elv.sh/pkg/cli/mode/lastcmd"
+	"src.elv.sh/pkg/cli/mode/location"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -133,7 +134,7 @@ func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar 
 // Accepts the current selected listing item.
 
 func listingAccept(app cli.App) {
-	w, ok := app.CopyState().Addon.(cli.ComboBox)
+	w, ok := app.CopyState().Addon.(tk.ComboBox)
 	if !ok {
 		return
 	}
@@ -153,54 +154,54 @@ func listingAcceptClose(app cli.App) {
 //
 // Moves the cursor up in listing mode.
 
-func listingUp(app cli.App) { listingSelect(app, cli.Prev) }
+func listingUp(app cli.App) { listingSelect(app, tk.Prev) }
 
 //elvdoc:fn listing:down
 //
 // Moves the cursor down in listing mode.
 
-func listingDown(app cli.App) { listingSelect(app, cli.Next) }
+func listingDown(app cli.App) { listingSelect(app, tk.Next) }
 
 //elvdoc:fn listing:up-cycle
 //
 // Moves the cursor up in listing mode, or to the last item if the first item is
 // currently selected.
 
-func listingUpCycle(app cli.App) { listingSelect(app, cli.PrevWrap) }
+func listingUpCycle(app cli.App) { listingSelect(app, tk.PrevWrap) }
 
 //elvdoc:fn listing:down-cycle
 //
 // Moves the cursor down in listing mode, or to the first item if the last item is
 // currently selected.
 
-func listingDownCycle(app cli.App) { listingSelect(app, cli.NextWrap) }
+func listingDownCycle(app cli.App) { listingSelect(app, tk.NextWrap) }
 
 //elvdoc:fn listing:page-up
 //
 // Moves the cursor up one page.
 
-func listingPageUp(app cli.App) { listingSelect(app, cli.PrevPage) }
+func listingPageUp(app cli.App) { listingSelect(app, tk.PrevPage) }
 
 //elvdoc:fn listing:page-down
 //
 // Moves the cursor down one page.
 
-func listingPageDown(app cli.App) { listingSelect(app, cli.NextPage) }
+func listingPageDown(app cli.App) { listingSelect(app, tk.NextPage) }
 
 //elvdoc:fn listing:left
 //
 // Moves the cursor left in listing mode.
 
-func listingLeft(app cli.App) { listingSelect(app, cli.Left) }
+func listingLeft(app cli.App) { listingSelect(app, tk.Left) }
 
 //elvdoc:fn listing:right
 //
 // Moves the cursor right in listing mode.
 
-func listingRight(app cli.App) { listingSelect(app, cli.Right) }
+func listingRight(app cli.App) { listingSelect(app, tk.Right) }
 
-func listingSelect(app cli.App, f func(cli.ListBoxState) int) {
-	w, ok := app.CopyState().Addon.(cli.ComboBox)
+func listingSelect(app cli.App, f func(tk.ListBoxState) int) {
+	w, ok := app.CopyState().Addon.(tk.ComboBox)
 	if !ok {
 		return
 	}
@@ -208,7 +209,7 @@ func listingSelect(app cli.App, f func(cli.ListBoxState) int) {
 }
 
 func listingRefilter(app cli.App) {
-	w, ok := app.CopyState().Addon.(cli.ComboBox)
+	w, ok := app.CopyState().Addon.(tk.ComboBox)
 	if !ok {
 		return
 	}
