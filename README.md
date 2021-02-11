@@ -26,8 +26,12 @@ User groups (all connected with
 
 ## Building Elvish
 
-Most users can just use [prebuilt binaries](https://elv.sh/get/) and do not need
-to build from source.
+Most users do not need to build Elvish from source. Prebuilt binaries for the
+latest commit are provided for
+[Linux amd64](https://dl.elv.sh/linux-amd64/elvish-HEAD.tar.gz),
+[macOS amd64](https://dl.elv.sh/darwin-amd64/elvish-HEAD.tar.gz),
+[Windows amd64](https://dl.elv.sh/windows-amd64/elvish-HEAD.zip), and
+[many other platforms](https://elv.sh/get).
 
 To build Elvish from source, you need
 
@@ -49,27 +53,21 @@ cd elvish
 make get
 ```
 
-This will install Elvish to `~/go/bin`.
+This will install Elvish to `~/go/bin`; you might want to add it to your `PATH`.
 
-Alternatively, you can also just use `go get` to install Elvish:
+To install it elsewhere, override `GOBIN` in the `make` command:
 
 ```sh
-go get -u src.elv.sh/cmd/elvish
+make get GOBIN=$PWD # Install to the repo root (use $pwd if running in Elvish)
+make get GOBIN=/usr/local/bin # Install to /usr/local/bin
 ```
 
-This will clone the Git repository to `~/go/src/src.elv.sh`, updating it if
-already exists, and install Elvish to `~/go/bin`. However, Elvish built this way
-will lack version information, although it is otherwise fully functional.
+Note that `GOBIN` must be an absolute path.
 
-Some tips on installation:
+## Packaging Elvish
 
--   Remember to add `$HOME/go/bin` to your `PATH` so that you can run `elvish`
-    directly.
-
--   If you want to install Elvish to a different place, follow
-    [these steps](https://github.com/golang/go/wiki/SettingGOPATH) to set
-    `GOPATH`, and Elvish will be installed to `$GOPATH/bin` instead.
+See [PACKAGING.md](PACKAGING.md) for notes for packagers.
 
 ## Contributing to Elvish
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more notes for contributors.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for notes for contributors.
