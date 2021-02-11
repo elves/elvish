@@ -186,7 +186,7 @@ func initTTYBuiltins(app cli.App, tty cli.TTY, nb eval.NsBuilder) {
 
 func initMiscBuiltins(app cli.App, nb eval.NsBuilder) {
 	nb.AddGoFns("<edit>", map[string]interface{}{
-		"binding-table":  MakeBindingMap,
+		"binding-table":  makeBindingMap,
 		"close-listing":  func() { closeListing(app) },
 		"end-of-history": func() { endOfHistory(app) },
 		"key":            toKey,

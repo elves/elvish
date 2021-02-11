@@ -89,7 +89,7 @@ func (bt bindingMap) Dissoc(k interface{}) interface{} {
 	return bindingMap{bt.Map.Dissoc(key)}
 }
 
-func MakeBindingMap(raw hashmap.Map) (bindingMap, error) {
+func makeBindingMap(raw hashmap.Map) (bindingMap, error) {
 	converted := vals.EmptyMap
 	for it := raw.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
