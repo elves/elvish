@@ -49,7 +49,7 @@ func Start(app cli.App, cfg Config) {
 	accept := func(s string) {
 		retain := cfg.Accept(s)
 		if !retain {
-			app.MutateState(func(s *cli.State) { s.Addon = nil })
+			app.SetAddon(nil, false)
 		}
 	}
 	w := tk.NewComboBox(tk.ComboBoxSpec{
@@ -71,7 +71,7 @@ func Start(app cli.App, cfg Config) {
 			}
 		},
 	})
-	app.MutateState(func(s *cli.State) { s.Addon = w })
+	app.SetAddon(w, false)
 	app.Redraw()
 }
 

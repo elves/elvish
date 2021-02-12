@@ -24,6 +24,12 @@ type App interface {
 	CopyState() State
 	// CodeArea returns the codearea widget of the app.
 	CodeArea() tk.CodeArea
+	// SetAddon sets the current addon to the given widget. If there is an
+	// existing addon, it is closed first. If the existing addon implements
+	// interface{ Close(bool) }, the Close method is called with the accept
+	// argument. To close the current addon without setting a new one, call
+	// SetAddon(nil, accept).
+	SetAddon(w tk.Widget, accept bool)
 
 	// CommitEOF causes the main loop to exit with EOF. If this method is called
 	// when an event is being handled, the main loop will exit after the handler
@@ -74,10 +80,6 @@ type State struct {
 	// implements interface{ Focus() bool }, the Focus method is called to
 	// determine that instead.
 	Addon tk.Widget
-}
-
-type focuser interface {
-	Focus() bool
 }
 
 // NewApp creates a new App from the given specification.
@@ -146,6 +148,19 @@ func (a *app) CopyState() State {
 
 func (a *app) CodeArea() tk.CodeArea {
 	return a.codeArea
+}
+
+type closer interface {
+	Close(bool)
+}
+
+func (a *app) SetAddon(w tk.Widget, accept bool) {
+	a.StateMutex.Lock()
+	defer a.StateMutex.Unlock()
+	if c, ok := a.State.Addon.(closer); ok {
+		c.Close(accept)
+	}
+	a.State.Addon = w
 }
 
 func (a *app) resetAllStates() {
@@ -234,6 +249,10 @@ func renderNotes(notes []string, width int) *term.Buffer {
 		bb.Write(note)
 	}
 	return bb.Buffer()
+}
+
+type focuser interface {
+	Focus() bool
 }
 
 // Renders the codearea, and uses the rest of the height for the listing.

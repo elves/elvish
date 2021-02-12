@@ -80,7 +80,7 @@ func Start(app cli.App, cfg Config) {
 						buf.InsertAtDot("\n" + text)
 					}
 				})
-				app.MutateState(func(s *cli.State) { s.Addon = nil })
+				app.SetAddon(nil, false)
 			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
@@ -89,7 +89,7 @@ func Start(app cli.App, cfg Config) {
 		},
 	})
 
-	app.MutateState(func(s *cli.State) { s.Addon = w })
+	app.SetAddon(w, false)
 	app.Redraw()
 }
 

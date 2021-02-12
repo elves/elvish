@@ -54,7 +54,7 @@ func Start(app cli.App, cfg Config) {
 				app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 					s.ApplyPending()
 				})
-				app.MutateState(func(s *cli.State) { s.Addon = nil })
+				app.SetAddon(nil, false)
 			},
 			ExtendStyle: true,
 		},
@@ -62,7 +62,7 @@ func Start(app cli.App, cfg Config) {
 			w.ListBox().Reset(filter(cfg.Items, p), 0)
 		},
 	})
-	app.MutateState(func(s *cli.State) { s.Addon = w })
+	app.SetAddon(w, false)
 	app.Redraw()
 }
 
@@ -70,7 +70,7 @@ func Start(app cli.App, cfg Config) {
 func Close(app cli.App) {
 	app.CodeArea().MutateState(
 		func(s *tk.CodeAreaState) { s.Pending = tk.PendingCode{} })
-	app.MutateState(func(s *cli.State) { s.Addon = nil })
+	app.SetAddon(nil, false)
 	app.Redraw()
 }
 

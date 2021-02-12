@@ -156,7 +156,7 @@ func Start(app cli.App, cfg Config) {
 		}),
 	}
 	updateState(w, "")
-	app.MutateState(func(s *cli.State) { s.Addon = w })
+	app.SetAddon(w, false)
 	app.Redraw()
 }
 

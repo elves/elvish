@@ -84,6 +84,6 @@ func Start(app cli.App, cfg Config) {
 		textView: tk.NewTextView(tk.TextViewSpec{Scrollable: true}),
 	}
 	w.update(true)
-	app.MutateState(func(s *cli.State) { s.Addon = &w })
+	app.SetAddon(&w, false)
 	app.Redraw()
 }

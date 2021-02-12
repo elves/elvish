@@ -44,6 +44,6 @@ func Start(app cli.App, cfg Config) {
 		cfg.Binding = tk.DummyHandler{}
 	}
 	w := widget{cfg}
-	app.MutateState(func(s *cli.State) { s.Addon = &w })
+	app.SetAddon(&w, false)
 	app.Redraw()
 }

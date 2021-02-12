@@ -60,7 +60,7 @@ func Start(app cli.App, cfg Config) {
 		app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 			s.Buffer.InsertAtDot(text)
 		})
-		app.MutateState(func(s *cli.State) { s.Addon = nil })
+		app.SetAddon(nil, false)
 	}
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{Prompt: mode.Prompt(" LASTCMD ", true)},
@@ -79,7 +79,7 @@ func Start(app cli.App, cfg Config) {
 			}
 		},
 	})
-	app.MutateState(func(s *cli.State) { s.Addon = w })
+	app.SetAddon(w, false)
 	app.Redraw()
 }
 

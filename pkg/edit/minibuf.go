@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
@@ -27,7 +26,7 @@ func minibufStart(ed *Editor, ev *eval.Evaler, binding tk.Handler) {
 		// TODO: Add Highlighter. Right now the async highlighter is not
 		// directly usable.
 	})
-	ed.app.MutateState(func(s *cli.State) { s.Addon = w })
+	ed.app.SetAddon(w, false)
 	ed.app.Redraw()
 }
 
@@ -37,7 +36,7 @@ func minibufSubmit(ed *Editor, ev *eval.Evaler) {
 	if !ok {
 		return
 	}
-	ed.app.MutateState(func(s *cli.State) { s.Addon = nil })
+	ed.app.SetAddon(nil, false)
 	code := codeArea.CopyState().Buffer.Content
 	src := parse.Source{Name: "[minibuf]", Code: code}
 	notifyPort, cleanup := makeNotifyPort(ed)

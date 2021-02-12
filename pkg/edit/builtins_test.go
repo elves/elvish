@@ -4,7 +4,6 @@ import (
 	"io"
 	"testing"
 
-	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval/vals"
@@ -28,7 +27,7 @@ func TestCloseListing(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
-	f.Editor.app.MutateState(func(s *cli.State) { s.Addon = tk.Empty{} })
+	f.Editor.app.SetAddon(tk.Empty{}, false)
 	evals(f.Evaler, `edit:close-listing`)
 
 	if listing := f.Editor.app.CopyState().Addon; listing != nil {

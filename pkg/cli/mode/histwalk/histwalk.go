@@ -77,7 +77,7 @@ func Start(app cli.App, cfg Config) {
 	}
 	w := widget{app: app, Config: cfg, cursor: cursor}
 	w.onWalk()
-	app.MutateState(func(s *cli.State) { s.Addon = &w })
+	app.SetAddon(&w, false)
 	app.Redraw()
 }
 

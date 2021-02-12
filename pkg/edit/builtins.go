@@ -43,7 +43,7 @@ func dumpBuf(tty cli.TTY) string {
 // Closes any active listing.
 
 func closeListing(app cli.App) {
-	app.MutateState(func(s *cli.State) { s.Addon = nil })
+	app.SetAddon(nil, false)
 }
 
 //elvdoc:fn end-of-history

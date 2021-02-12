@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"src.elv.sh/pkg/cli"
 	. "src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/histutil"
 	"src.elv.sh/pkg/cli/mode"
@@ -90,7 +89,7 @@ func TestStart_Dedup(t *testing.T) {
 			"   0 ls",
 			"   1 echo",
 			"   2 ls"))
-	f.App.MutateState(func(s *cli.State) { s.Addon = nil })
+	f.App.SetAddon(nil, false)
 
 	// With dedup
 	Start(f.App, Config{Store: st, Dedup: func() bool { return true }})
@@ -116,7 +115,7 @@ func TestStart_CaseSensitive(t *testing.T) {
 		makeListingBuf(
 			" HISTORY (dedup on) ", "l",
 			"   0 ls"))
-	f.App.MutateState(func(s *cli.State) { s.Addon = nil })
+	f.App.SetAddon(nil, false)
 
 	// Case insensitive
 	Start(f.App, Config{Store: st, CaseSensitive: func() bool { return false }})

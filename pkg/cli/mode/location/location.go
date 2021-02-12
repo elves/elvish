@@ -103,14 +103,14 @@ func Start(app cli.App, cfg Config) {
 				if err != nil {
 					app.Notify(err.Error())
 				}
-				app.MutateState(func(s *cli.State) { s.Addon = nil })
+				app.SetAddon(nil, false)
 			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
 			w.ListBox().Reset(l.filter(p), 0)
 		},
 	})
-	app.MutateState(func(s *cli.State) { s.Addon = w })
+	app.SetAddon(w, false)
 	app.Redraw()
 }
 
