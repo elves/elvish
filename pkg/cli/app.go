@@ -14,21 +14,17 @@ import (
 
 // App represents a CLI app.
 type App interface {
+	// ReadCode requests the App to read code from the terminal by running an
+	// event loop. This function is not re-entrant.
+	ReadCode() (string, error)
+
 	// MutateState mutates the state of the app.
 	MutateState(f func(*State))
 	// CopyState returns a copy of the a state.
 	CopyState() State
 	// CodeArea returns the codearea widget of the app.
 	CodeArea() tk.CodeArea
-	// ReadCode requests the App to read code from the terminal by running an
-	// event loop. This function is not re-entrant.
-	ReadCode() (string, error)
-	// Redraw requests a redraw. It never blocks and can be called regardless of
-	// whether the App is active or not.
-	Redraw()
-	// RedrawFull requests a full redraw. It never blocks and can be called
-	// regardless of whether the App is active or not.
-	RedrawFull()
+
 	// CommitEOF causes the main loop to exit with EOF. If this method is called
 	// when an event is being handled, the main loop will exit after the handler
 	// returns.
@@ -37,6 +33,13 @@ type App interface {
 	// this method is called when an event is being handled, the main loop will
 	// exit after the handler returns.
 	CommitCode()
+
+	// Redraw requests a redraw. It never blocks and can be called regardless of
+	// whether the App is active or not.
+	Redraw()
+	// RedrawFull requests a full redraw. It never blocks and can be called
+	// regardless of whether the App is active or not.
+	RedrawFull()
 	// Notify adds a note and requests a redraw.
 	Notify(note string)
 }
