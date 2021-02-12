@@ -10,17 +10,17 @@ import (
 // Starts the command mode.
 
 func initCommandAPI(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(emptyBindingMap)
-	binding := newMapBinding(ed, ev, bindingVar)
+	bindingVar := newBindingVar(emptyBindingsMap)
+	bindings := newMapBindings(ed, ev, bindingVar)
 	nb.AddNs("command",
 		eval.NsBuilder{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:command>:", map[string]interface{}{
 			"start": func() {
 				stub.Start(ed.app, stub.Config{
-					Binding: binding,
-					Name:    " COMMAND ",
-					Focus:   false,
+					Bindings: bindings,
+					Name:     " COMMAND ",
+					Focus:    false,
 				})
 			},
 		}).Ns())

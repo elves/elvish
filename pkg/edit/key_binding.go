@@ -15,24 +15,24 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-type mapBinding struct {
+type mapBindings struct {
 	nt      notifier
 	ev      *eval.Evaler
 	mapVars []vars.PtrVar
 }
 
-func newMapBinding(nt notifier, ev *eval.Evaler, mapVars ...vars.PtrVar) tk.Handler {
-	return mapBinding{nt, ev, mapVars}
+func newMapBindings(nt notifier, ev *eval.Evaler, mapVars ...vars.PtrVar) tk.Bindings {
+	return mapBindings{nt, ev, mapVars}
 }
 
-func (b mapBinding) Handle(e term.Event) bool {
+func (b mapBindings) Handle(w tk.Widget, e term.Event) bool {
 	k, ok := e.(term.KeyEvent)
 	if !ok {
 		return false
 	}
-	maps := make([]bindingMap, len(b.mapVars))
+	maps := make([]bindingsMap, len(b.mapVars))
 	for i, v := range b.mapVars {
-		maps[i] = v.GetRaw().(bindingMap)
+		maps[i] = v.GetRaw().(bindingsMap)
 	}
 	f := indexLayeredBindings(ui.Key(k), maps...)
 	if f == nil {
@@ -44,15 +44,15 @@ func (b mapBinding) Handle(e term.Event) bool {
 
 // Indexes a series of layered bindings. Returns nil if none of the bindings
 // have the required key or a default.
-func indexLayeredBindings(k ui.Key, bindings ...bindingMap) eval.Callable {
-	for _, binding := range bindings {
-		if binding.HasKey(k) {
-			return binding.GetKey(k)
+func indexLayeredBindings(k ui.Key, maps ...bindingsMap) eval.Callable {
+	for _, m := range maps {
+		if m.HasKey(k) {
+			return m.GetKey(k)
 		}
 	}
-	for _, binding := range bindings {
-		if binding.HasKey(ui.Default) {
-			return binding.GetKey(ui.Default)
+	for _, m := range maps {
+		if m.HasKey(ui.Default) {
+			return m.GetKey(ui.Default)
 		}
 	}
 	return nil

@@ -14,14 +14,14 @@ import (
 // started.
 
 func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(emptyBindingMap)
-	binding := newMapBinding(ed, ev, bindingVar)
+	bindingVar := newBindingVar(emptyBindingsMap)
+	bindings := newMapBindings(ed, ev, bindingVar)
 	app := ed.app
 	nb.AddNs("history",
 		eval.NsBuilder{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:history>", map[string]interface{}{
-			"start": func() { histWalkStart(app, hs, binding) },
+			"start": func() { histWalkStart(app, hs, bindings) },
 			"up":    func() { notifyIfError(app, histwalk.Prev(app)) },
 			"down":  func() { notifyIfError(app, histwalk.Next(app)) },
 			"down-or-quit": func() {
@@ -39,10 +39,10 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder)
 		}).Ns())
 }
 
-func histWalkStart(app cli.App, hs *histStore, binding tk.Handler) {
+func histWalkStart(app cli.App, hs *histStore, bindings tk.Bindings) {
 	buf := app.CodeArea().CopyState().Buffer
 	histwalk.Start(app, histwalk.Config{
-		Binding: binding, Store: hs, Prefix: buf.Content[:buf.Dot]})
+		Bindings: bindings, Store: hs, Prefix: buf.Content[:buf.Dot]})
 }
 
 func notifyIfError(app cli.App, err error) {

@@ -15,8 +15,8 @@ import (
 
 // Config contains configurations to start history listing.
 type Config struct {
-	// Binding provides key binding.
-	Binding tk.Handler
+	// Key bindings.
+	Bindings tk.Bindings
 	// Store provides the source of all commands.
 	Store Store
 	// Dedup is called to determine whether deduplication should be done.
@@ -69,7 +69,7 @@ func Start(app cli.App, cfg Config) {
 			return mode.Line(content, true)
 		}},
 		ListBox: tk.ListBoxSpec{
-			OverlayHandler: cfg.Binding,
+			Bindings: cfg.Bindings,
 			OnAccept: func(it tk.Items, i int) {
 				text := it.(items).entries[i].Text
 				app.CodeArea().MutateState(func(s *tk.CodeAreaState) {

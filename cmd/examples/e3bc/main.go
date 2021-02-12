@@ -38,8 +38,8 @@ func main() {
 	app = cli.NewApp(cli.AppSpec{
 		Prompt:      cli.NewConstPrompt(ui.T("bc> ")),
 		Highlighter: highlighter{},
-		OverlayHandler: tk.MapHandler{
-			term.K('D', ui.Ctrl): func() { app.CommitEOF() },
+		Bindings: tk.MapBindings{
+			term.K('D', ui.Ctrl): func(tk.Widget) { app.CommitEOF() },
 		},
 	})
 

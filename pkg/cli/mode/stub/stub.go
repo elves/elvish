@@ -11,8 +11,8 @@ import (
 
 // Config keeps the configuration for the stub addon.
 type Config struct {
-	// Keybinding.
-	Binding tk.Handler
+	// Key bindings.
+	Bindings tk.Bindings
 	// Name to show in the modeline.
 	Name string
 	// Whether the addon widget gets the focus.
@@ -31,7 +31,7 @@ func (w *widget) Render(width, height int) *term.Buffer {
 }
 
 func (w *widget) Handle(event term.Event) bool {
-	return w.Binding.Handle(event)
+	return w.Bindings.Handle(w, event)
 }
 
 func (w *widget) Focus() bool {
@@ -40,8 +40,8 @@ func (w *widget) Focus() bool {
 
 // Start starts the stub addon.
 func Start(app cli.App, cfg Config) {
-	if cfg.Binding == nil {
-		cfg.Binding = tk.DummyHandler{}
+	if cfg.Bindings == nil {
+		cfg.Bindings = tk.DummyBindings{}
 	}
 	w := widget{cfg}
 	app.SetAddon(&w, false)

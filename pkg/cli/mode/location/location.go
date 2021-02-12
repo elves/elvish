@@ -20,8 +20,8 @@ import (
 
 // Config is the configuration to start the location history feature.
 type Config struct {
-	// Binding is the key binding.
-	Binding tk.Handler
+	// Key bindings.
+	Bindings tk.Bindings
 	// Store provides the directory history and the function to change directory.
 	Store Store
 	// IteratePinned specifies pinned directories by calling the given function
@@ -93,7 +93,7 @@ func Start(app cli.App, cfg Config) {
 			Prompt: mode.Prompt(" LOCATION ", true),
 		},
 		ListBox: tk.ListBoxSpec{
-			OverlayHandler: cfg.Binding,
+			Bindings: cfg.Bindings,
 			OnAccept: func(it tk.Items, i int) {
 				path := it.(list).dirs[i].Path
 				if strings.HasPrefix(path, wsKind) {

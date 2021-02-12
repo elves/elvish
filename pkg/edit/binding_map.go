@@ -13,17 +13,17 @@ import (
 
 var errValueShouldBeFn = errors.New("value should be function")
 
-// bindingMap is a special Map that converts its key to ui.Key and ensures
-// that its values satisfy eval.CallableValue.
-type bindingMap struct {
+// A special Map that converts its key to ui.Key and ensures that its values
+// satisfy eval.CallableValue.
+type bindingsMap struct {
 	hashmap.Map
 }
 
-var emptyBindingMap = bindingMap{vals.EmptyMap}
+var emptyBindingsMap = bindingsMap{vals.EmptyMap}
 
 // Repr returns the representation of the binding table as if it were an
 // ordinary map keyed by strings.
-func (bt bindingMap) Repr(indent int) string {
+func (bt bindingsMap) Repr(indent int) string {
 	var keys ui.Keys
 	for it := bt.Map.Iterator(); it.HasElem(); it.Next() {
 		k, _ := it.Elem()
@@ -42,7 +42,7 @@ func (bt bindingMap) Repr(indent int) string {
 }
 
 // Index converts the index to ui.Key and uses the Index of the inner Map.
-func (bt bindingMap) Index(index interface{}) (interface{}, error) {
+func (bt bindingsMap) Index(index interface{}) (interface{}, error) {
 	key, err := toKey(index)
 	if err != nil {
 		return nil, err
@@ -50,12 +50,12 @@ func (bt bindingMap) Index(index interface{}) (interface{}, error) {
 	return vals.Index(bt.Map, key)
 }
 
-func (bt bindingMap) HasKey(k interface{}) bool {
+func (bt bindingsMap) HasKey(k interface{}) bool {
 	_, ok := bt.Map.Index(k)
 	return ok
 }
 
-func (bt bindingMap) GetKey(k ui.Key) eval.Callable {
+func (bt bindingsMap) GetKey(k ui.Key) eval.Callable {
 	v, ok := bt.Map.Index(k)
 	if !ok {
 		panic("get called when key not present")
@@ -65,7 +65,7 @@ func (bt bindingMap) GetKey(k ui.Key) eval.Callable {
 
 // Assoc converts the index to ui.Key, ensures that the value is CallableValue,
 // uses the Assoc of the inner Map and converts the result to a BindingTable.
-func (bt bindingMap) Assoc(k, v interface{}) (interface{}, error) {
+func (bt bindingsMap) Assoc(k, v interface{}) (interface{}, error) {
 	key, err := toKey(k)
 	if err != nil {
 		return nil, err
@@ -75,34 +75,34 @@ func (bt bindingMap) Assoc(k, v interface{}) (interface{}, error) {
 		return nil, errValueShouldBeFn
 	}
 	map2 := bt.Map.Assoc(key, f)
-	return bindingMap{map2}, nil
+	return bindingsMap{map2}, nil
 }
 
 // Dissoc converts the key to ui.Key and calls the Dissoc method of the inner
 // map.
-func (bt bindingMap) Dissoc(k interface{}) interface{} {
+func (bt bindingsMap) Dissoc(k interface{}) interface{} {
 	key, err := toKey(k)
 	if err != nil {
 		// Key is invalid; dissoc is no-op.
 		return bt
 	}
-	return bindingMap{bt.Map.Dissoc(key)}
+	return bindingsMap{bt.Map.Dissoc(key)}
 }
 
-func makeBindingMap(raw hashmap.Map) (bindingMap, error) {
+func makeBindingMap(raw hashmap.Map) (bindingsMap, error) {
 	converted := vals.EmptyMap
 	for it := raw.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		f, ok := v.(eval.Callable)
 		if !ok {
-			return emptyBindingMap, errValueShouldBeFn
+			return emptyBindingsMap, errValueShouldBeFn
 		}
 		key, err := toKey(k)
 		if err != nil {
-			return bindingMap{}, err
+			return bindingsMap{}, err
 		}
 		converted = converted.Assoc(key, f)
 	}
 
-	return bindingMap{converted}, nil
+	return bindingsMap{converted}, nil
 }

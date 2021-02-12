@@ -66,20 +66,20 @@ func TestColView_Handle(t *testing.T) {
 	// itself, column index for column.
 	handledBy := make(chan int, 10)
 	w := NewColView(ColViewSpec{
-		OverlayHandler: MapHandler{
-			term.K('a'): func() { handledBy <- -1 },
+		Bindings: MapBindings{
+			term.K('a'): func(Widget) { handledBy <- -1 },
 		},
 		State: ColViewState{
 			Columns: []Widget{
 				NewListBox(ListBoxSpec{
-					OverlayHandler: MapHandler{
-						term.K('a'): func() { handledBy <- 0 },
-						term.K('b'): func() { handledBy <- 0 },
+					Bindings: MapBindings{
+						term.K('a'): func(Widget) { handledBy <- 0 },
+						term.K('b'): func(Widget) { handledBy <- 0 },
 					}}),
 				NewListBox(ListBoxSpec{
-					OverlayHandler: MapHandler{
-						term.K('a'): func() { handledBy <- 1 },
-						term.K('b'): func() { handledBy <- 1 },
+					Bindings: MapBindings{
+						term.K('a'): func(Widget) { handledBy <- 1 },
+						term.K('b'): func(Widget) { handledBy <- 1 },
 					}}),
 			},
 			FocusColumn: 1,

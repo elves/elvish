@@ -22,17 +22,17 @@ import (
 // Elvish will attempt to evaluate `sudo rm -rf /` when you typed that far.
 
 func initInstant(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(emptyBindingMap)
-	binding := newMapBinding(ed, ev, bindingVar)
+	bindingVar := newBindingVar(emptyBindingsMap)
+	bindings := newMapBindings(ed, ev, bindingVar)
 	nb.AddNs("-instant",
 		eval.NsBuilder{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:-instant>:", map[string]interface{}{
-			"start": func() { instantStart(ed.app, ev, binding) },
+			"start": func() { instantStart(ed.app, ev, bindings) },
 		}).Ns())
 }
 
-func instantStart(app cli.App, ev *eval.Evaler, binding tk.Handler) {
+func instantStart(app cli.App, ev *eval.Evaler, bindings tk.Bindings) {
 	execute := func(code string) ([]string, error) {
 		outPort, collect, err := eval.StringCapturePort()
 		if err != nil {
@@ -45,5 +45,5 @@ func instantStart(app cli.App, ev *eval.Evaler, binding tk.Handler) {
 				Interrupt: eval.ListenInterrupts})
 		return collect(), err
 	}
-	instant.Start(app, instant.Config{Binding: binding, Execute: execute})
+	instant.Start(app, instant.Config{Bindings: bindings, Execute: execute})
 }

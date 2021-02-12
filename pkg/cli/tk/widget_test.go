@@ -32,51 +32,62 @@ func (w *testWidget) Handle(e term.Event) bool {
 	return false
 }
 
-func TestDummyHandler(t *testing.T) {
-	h := DummyHandler{}
+func TestDummyBindings(t *testing.T) {
+	w := Empty{}
+	b := DummyBindings{}
 	for _, event := range []term.Event{term.K('a'), term.PasteSetting(true)} {
-		if h.Handle(event) {
+		if b.Handle(w, event) {
 			t.Errorf("should not handle")
 		}
 	}
 }
 
-func TestMapHandler(t *testing.T) {
-	var aCalled bool
-	h := MapHandler{term.K('a'): func() { aCalled = true }}
-	handled := h.Handle(term.K('a'))
+func TestMapBindings(t *testing.T) {
+	widgetCh := make(chan Widget, 1)
+	w := Empty{}
+	b := MapBindings{term.K('a'): func(w Widget) { widgetCh <- w }}
+	handled := b.Handle(w, term.K('a'))
 	if !handled {
 		t.Errorf("should handle")
 	}
-	if !aCalled {
-		t.Errorf("should call callback")
+	if gotWidget := <-widgetCh; gotWidget != w {
+		t.Errorf("function called with widget %v, want %v", gotWidget, w)
 	}
-	handled = h.Handle(term.K('b'))
+	handled = b.Handle(w, term.K('b'))
 	if handled {
 		t.Errorf("should not handle")
 	}
 }
 
-func TestFuncHandler(t *testing.T) {
+func TestFuncBindings(t *testing.T) {
+	widgetCh := make(chan Widget, 1)
 	eventCh := make(chan term.Event, 1)
-	h := FuncHandler(func(event term.Event) bool {
+
+	h := FuncBindings(func(w Widget, event term.Event) bool {
+		widgetCh <- w
 		eventCh <- event
 		return event == term.K('a')
 	})
 
-	handled := h.Handle(term.K('a'))
+	w := Empty{}
+	event := term.K('a')
+	handled := h.Handle(w, event)
 	if !handled {
 		t.Errorf("should handle")
 	}
-	if <-eventCh != term.K('a') {
-		t.Errorf("should call func")
+	if gotWidget := <-widgetCh; gotWidget != w {
+		t.Errorf("function called with widget %v, want %v", gotWidget, w)
+	}
+	if gotEvent := <-eventCh; gotEvent != event {
+		t.Errorf("function called with event %v, want %v", gotEvent, event)
 	}
 
-	handled = h.Handle(term.K('b'))
+	event = term.K('b')
+	handled = h.Handle(w, event)
 	if handled {
 		t.Errorf("should not handle")
 	}
-	if <-eventCh != term.K('b') {
-		t.Errorf("should call func")
+	if gotEvent := <-eventCh; gotEvent != event {
+		t.Errorf("function called with event %v, want %v", gotEvent, event)
 	}
 }

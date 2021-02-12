@@ -24,10 +24,10 @@ type Item struct {
 
 // Config keeps the configuration for the completion UI.
 type Config struct {
-	Binding tk.Handler
-	Name    string
-	Replace diag.Ranging
-	Items   []Item
+	Bindings tk.Bindings
+	Name     string
+	Replace  diag.Ranging
+	Items    []Item
 }
 
 // Start starts the completion UI.
@@ -41,8 +41,8 @@ func Start(app cli.App, cfg Config) {
 			Prompt: mode.Prompt(" COMPLETING "+cfg.Name+" ", true),
 		},
 		ListBox: tk.ListBoxSpec{
-			Horizontal:     true,
-			OverlayHandler: cfg.Binding,
+			Horizontal: true,
+			Bindings:   cfg.Bindings,
 			OnSelect: func(it tk.Items, i int) {
 				text := it.(items)[i].ToInsert
 				app.CodeArea().MutateState(func(s *tk.CodeAreaState) {

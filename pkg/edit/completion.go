@@ -159,7 +159,7 @@ func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) co
 // Starts the completion mode. However, if all the candidates share a non-empty
 // prefix and that prefix starts with the seed, inserts the prefix instead.
 
-func completionStart(app cli.App, binding tk.Handler, cfg complete.Config, smart bool) {
+func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, smart bool) {
 	buf := app.CodeArea().CopyState().Buffer
 	result, err := complete.Complete(
 		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot}, cfg)
@@ -198,7 +198,7 @@ func completionStart(app cli.App, binding tk.Handler, cfg complete.Config, smart
 	}
 	completion.Start(app, completion.Config{
 		Name: result.Name, Replace: result.Replace, Items: result.Items,
-		Binding: binding})
+		Bindings: bindings})
 }
 
 //elvdoc:fn completion:close
@@ -206,8 +206,8 @@ func completionStart(app cli.App, binding tk.Handler, cfg complete.Config, smart
 // Closes the completion mode UI.
 
 func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(emptyBindingMap)
-	binding := newMapBinding(ed, ev, bindingVar)
+	bindingVar := newBindingVar(emptyBindingsMap)
+	bindings := newMapBindings(ed, ev, bindingVar)
 	matcherMapVar := newMapVar(vals.EmptyMap)
 	argGeneratorMapVar := newMapVar(vals.EmptyMap)
 	cfg := func() complete.Config {
@@ -239,8 +239,8 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 			"matcher":       matcherMapVar,
 		}.AddGoFns("<edit:completion>:", map[string]interface{}{
 			"accept":      func() { listingAccept(app) },
-			"smart-start": func() { completionStart(app, binding, cfg(), true) },
-			"start":       func() { completionStart(app, binding, cfg(), false) },
+			"smart-start": func() { completionStart(app, bindings, cfg(), true) },
+			"start":       func() { completionStart(app, bindings, cfg(), false) },
 			"close":       func() { completion.Close(app) },
 			"up":          func() { listingUp(app) },
 			"down":        func() { listingDown(app) },

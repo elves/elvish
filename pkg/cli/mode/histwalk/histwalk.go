@@ -16,8 +16,8 @@ var ErrHistWalkInactive = errors.New("the histwalk addon is not active")
 
 // Config keeps the configuration for the histwalk addon.
 type Config struct {
-	// Keybinding.
-	Binding tk.Handler
+	// Key bindings.
+	Bindings tk.Bindings
 	// History store to walk.
 	Store histutil.Store
 	// Only walk through items with this prefix.
@@ -39,7 +39,7 @@ func (w *widget) Render(width, height int) *term.Buffer {
 }
 
 func (w *widget) Handle(event term.Event) bool {
-	handled := w.Binding.Handle(event)
+	handled := w.Bindings.Handle(w, event)
 	if handled {
 		return true
 	}
@@ -65,8 +65,8 @@ func Start(app cli.App, cfg Config) {
 		app.Notify("no history store")
 		return
 	}
-	if cfg.Binding == nil {
-		cfg.Binding = tk.DummyHandler{}
+	if cfg.Bindings == nil {
+		cfg.Bindings = tk.DummyBindings{}
 	}
 	cursor := cfg.Store.Cursor(cfg.Prefix)
 	cursor.Prev()

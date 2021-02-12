@@ -10,8 +10,8 @@ import (
 
 // Config is the configuration to start the custom listing addon.
 type Config struct {
-	// Keybinding.
-	Binding tk.Handler
+	// Key bindings.
+	Bindings tk.Bindings
 	// Caption of the listing. If empty, defaults to " LISTING ".
 	Caption string
 	// A function that takes the query string and returns a list of Item's and
@@ -57,7 +57,7 @@ func Start(app cli.App, cfg Config) {
 			Prompt: mode.Prompt(cfg.Caption, true),
 		},
 		ListBox: tk.ListBoxSpec{
-			OverlayHandler: cfg.Binding,
+			Bindings: cfg.Bindings,
 			OnAccept: func(it tk.Items, i int) {
 				accept(it.(items)[i].ToAccept)
 			},

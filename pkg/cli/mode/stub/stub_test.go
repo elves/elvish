@@ -39,7 +39,8 @@ func TestHandling(t *testing.T) {
 
 	bindingCalled := make(chan bool)
 	Start(f.App, Config{
-		Binding: tk.MapHandler{term.K('a'): func() { bindingCalled <- true }},
+		Bindings: tk.MapBindings{
+			term.K('a'): func(tk.Widget) { bindingCalled <- true }},
 	})
 
 	f.TTY.Inject(term.K('a'))

@@ -13,8 +13,8 @@ import (
 func main() {
 	app := cli.NewApp(cli.AppSpec{})
 	navigation.Start(app, navigation.Config{
-		Binding: tk.MapHandler{
-			term.K('x'): func() { app.CommitCode() },
+		Bindings: tk.MapBindings{
+			term.K('x'): func(tk.Widget) { app.CommitCode() },
 		},
 	})
 

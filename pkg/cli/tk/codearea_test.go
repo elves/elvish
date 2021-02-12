@@ -364,20 +364,20 @@ var codeAreaHandleTests = []handleTest{
 		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "gh ", Dot: 3}},
 	},
 	{
-		Name: "overlay handler",
-		Given: codeAreaWithOverlay(CodeAreaSpec{}, func(w *codeArea) Handler {
-			return MapHandler{
-				term.K('a'): func() { w.State.Buffer.InsertAtDot("b") },
-			}
+		Name: "key bindings",
+		Given: NewCodeArea(CodeAreaSpec{Bindings: MapBindings{
+			term.K('a'): func(w Widget) {
+				w.(*codeArea).State.Buffer.InsertAtDot("b")
+			}},
 		}),
 		Events:       []term.Event{term.K('a')},
 		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "b", Dot: 1}},
 	},
 	{
 		// Regression test for #890.
-		Name: "overlay handler does not apply when pasting",
-		Given: codeAreaWithOverlay(CodeAreaSpec{}, func(w *codeArea) Handler {
-			return MapHandler{term.K('\n'): func() {}}
+		Name: "key bindings do not apply when pasting",
+		Given: NewCodeArea(CodeAreaSpec{Bindings: MapBindings{
+			term.K('\n'): func(w Widget) {}},
 		}),
 		Events: []term.Event{
 			term.PasteSetting(true), term.K('\n'), term.PasteSetting(false)},
@@ -387,15 +387,6 @@ var codeAreaHandleTests = []handleTest{
 
 func TestCodeArea_Handle(t *testing.T) {
 	testHandle(t, codeAreaHandleTests)
-}
-
-// A utility for building a CodeArea with an OverlayHandler as a single
-// expression.
-func codeAreaWithOverlay(spec CodeAreaSpec, f func(*codeArea) Handler) CodeArea {
-	w := NewCodeArea(spec)
-	ww := w.(*codeArea)
-	ww.OverlayHandler = f(ww)
-	return w
 }
 
 var codeAreaUnhandledEvents = []term.Event{

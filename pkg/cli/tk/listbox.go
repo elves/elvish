@@ -27,8 +27,8 @@ type ListBox interface {
 
 // ListBoxSpec specifies the configuration and initial state for ListBox.
 type ListBoxSpec struct {
-	// A Handler that takes precedence over the default handling of events.
-	OverlayHandler Handler
+	// Key bindings.
+	Bindings Bindings
 	// A placeholder to show when there are no items.
 	Placeholder ui.Text
 	// A function to call when the selected item has changed.
@@ -59,8 +59,8 @@ type listBox struct {
 
 // NewListBox creates a new ListBox from the given spec.
 func NewListBox(spec ListBoxSpec) ListBox {
-	if spec.OverlayHandler == nil {
-		spec.OverlayHandler = DummyHandler{}
+	if spec.Bindings == nil {
+		spec.Bindings = DummyBindings{}
 	}
 	if spec.OnAccept == nil {
 		spec.OnAccept = func(Items, int) {}
@@ -249,7 +249,7 @@ func (c croppedLines) Render(width, height int) *term.Buffer {
 }
 
 func (w *listBox) Handle(event term.Event) bool {
-	if w.OverlayHandler.Handle(event) {
+	if w.Bindings.Handle(w, event) {
 		return true
 	}
 

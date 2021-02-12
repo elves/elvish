@@ -17,7 +17,7 @@ import (
 )
 
 func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histutil.Store, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(emptyBindingMap)
+	bindingVar := newBindingVar(emptyBindingsMap)
 	app := ed.app
 	nb.AddNs("listing",
 		eval.NsBuilder{
@@ -46,8 +46,8 @@ func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histuti
 }
 
 func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(emptyBindingMap)
-	binding := newMapBinding(ed, ev, bindingVar, commonBindingVar)
+	bindingVar := newBindingVar(emptyBindingsMap)
+	bindings := newMapBindings(ed, ev, bindingVar, commonBindingVar)
 	dedup := newBoolVar(true)
 	caseSensitive := newBoolVar(true)
 	nb.AddNs("histlist",
@@ -56,7 +56,7 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 		}.AddGoFns("<edit:histlist>", map[string]interface{}{
 			"start": func() {
 				histlist.Start(ed.app, histlist.Config{
-					Binding: binding, Store: histStore,
+					Bindings: bindings, Store: histStore,
 					CaseSensitive: func() bool {
 						return caseSensitive.Get().(bool)
 					},
@@ -79,25 +79,25 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 }
 
 func initLastcmd(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(emptyBindingMap)
-	binding := newMapBinding(ed, ev, bindingVar, commonBindingVar)
+	bindingVar := newBindingVar(emptyBindingsMap)
+	bindings := newMapBindings(ed, ev, bindingVar, commonBindingVar)
 	nb.AddNs("lastcmd",
 		eval.NsBuilder{
 			"binding": bindingVar,
 		}.AddGoFn("<edit:lastcmd>", "start", func() {
 			// TODO: Specify wordifier
 			lastcmd.Start(ed.app, lastcmd.Config{
-				Binding: binding, Store: histStore})
+				Bindings: bindings, Store: histStore})
 		}).Ns())
 }
 
 func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(emptyBindingMap)
+	bindingVar := newBindingVar(emptyBindingsMap)
 	pinnedVar := newListVar(vals.EmptyList)
 	hiddenVar := newListVar(vals.EmptyList)
 	workspacesVar := newMapVar(vals.EmptyMap)
 
-	binding := newMapBinding(ed, ev, bindingVar, commonBindingVar)
+	bindings := newMapBindings(ed, ev, bindingVar, commonBindingVar)
 	workspaceIterator := location.WorkspaceIterator(
 		adaptToIterateStringPair(workspacesVar))
 
@@ -109,7 +109,7 @@ func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar 
 			"workspaces": workspacesVar,
 		}.AddGoFn("<edit:location>", "start", func() {
 			location.Start(ed.app, location.Config{
-				Binding: binding, Store: dirStore{ev, st},
+				Bindings: bindings, Store: dirStore{ev, st},
 				IteratePinned:     adaptToIterateString(pinnedVar),
 				IterateHidden:     adaptToIterateString(hiddenVar),
 				IterateWorkspaces: workspaceIterator,

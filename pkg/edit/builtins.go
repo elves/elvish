@@ -73,7 +73,7 @@ func redraw(app cli.App, opts redrawOpts) {
 func insertRaw(app cli.App, tty cli.TTY) {
 	tty.SetRawInput(1)
 	stub.Start(app, stub.Config{
-		Binding: tk.FuncHandler(func(event term.Event) bool {
+		Bindings: tk.FuncBindings(func(w tk.Widget, event term.Event) bool {
 			switch event := event.(type) {
 			case term.KeyEvent:
 				app.CodeArea().MutateState(func(s *tk.CodeAreaState) {

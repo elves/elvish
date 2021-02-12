@@ -28,29 +28,36 @@ type Handler interface {
 	Handle(event term.Event) bool
 }
 
-// DummyHandler is a trivial implementation of Handler.
-type DummyHandler struct{}
+// Bindings is the interface for key bindings.
+type Bindings interface {
+	Handle(Widget, term.Event) bool
+}
+
+// DummyBindings is a trivial Bindings implementation.
+type DummyBindings struct{}
 
 // Handle always returns false.
-func (DummyHandler) Handle(term.Event) bool { return false }
+func (DummyBindings) Handle(w Widget, event term.Event) bool {
+	return false
+}
 
-// MapHandler is a map-backed implementation of Handler.
-type MapHandler map[term.Event]func()
+// MapBindings is a map-backed Bindings implementation.
+type MapBindings map[term.Event]func(Widget)
 
 // Handle handles the event by calling the function corresponding to the event
 // in the map. If there is no corresponding function, it returns false.
-func (m MapHandler) Handle(event term.Event) bool {
+func (m MapBindings) Handle(w Widget, event term.Event) bool {
 	fn, ok := m[event]
 	if ok {
-		fn()
+		fn(w)
 	}
 	return ok
 }
 
-// FuncHandler is a function-based implementation of Handler.
-type FuncHandler func(term.Event) bool
+// FuncBindings is a function-based Bindings implementation.
+type FuncBindings func(Widget, term.Event) bool
 
 // Handle handles the event by calling the function.
-func (f FuncHandler) Handle(event term.Event) bool {
-	return f(event)
+func (f FuncBindings) Handle(w Widget, event term.Event) bool {
+	return f(w, event)
 }

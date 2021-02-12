@@ -16,8 +16,8 @@ import (
 
 // Config contains the configuration needed for the navigation functionality.
 type Config struct {
-	// Key binding.
-	Binding tk.Handler
+	// Key bindings.
+	Bindings tk.Bindings
 	// Underlying filesystem.
 	Cursor Cursor
 	// A function that returns the relative weights of the widths of the 3
@@ -146,7 +146,7 @@ func Start(app cli.App, cfg Config) {
 			},
 		}),
 		colView: tk.NewColView(tk.ColViewSpec{
-			OverlayHandler: cfg.Binding,
+			Bindings: cfg.Bindings,
 			Weights: func(int) []int {
 				a := cfg.WidthRatio()
 				return a[:]

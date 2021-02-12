@@ -25,8 +25,8 @@ type CodeArea interface {
 
 // CodeAreaSpec specifies the configuration and initial state for CodeArea.
 type CodeAreaSpec struct {
-	// A Handler that takes precedence over the default handling of events.
-	OverlayHandler Handler
+	// Key bindings.
+	Bindings Bindings
 	// A function that highlights the given code and returns any errors it has
 	// found when highlighting. If this function is not given, the Widget does
 	// not highlight the code nor show any errors.
@@ -111,8 +111,8 @@ type codeArea struct {
 
 // NewCodeArea creates a new CodeArea from the given spec.
 func NewCodeArea(spec CodeAreaSpec) CodeArea {
-	if spec.OverlayHandler == nil {
-		spec.OverlayHandler = DummyHandler{}
+	if spec.Bindings == nil {
+		spec.Bindings = DummyBindings{}
 	}
 	if spec.Highlighter == nil {
 		spec.Highlighter = func(s string) (ui.Text, []error) { return ui.T(s), nil }
@@ -286,7 +286,7 @@ func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 		return true
 	}
 
-	if w.OverlayHandler.Handle(term.KeyEvent(key)) {
+	if w.Bindings.Handle(w, term.KeyEvent(key)) {
 		return true
 	}
 

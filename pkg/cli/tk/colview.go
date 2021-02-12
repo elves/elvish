@@ -22,8 +22,8 @@ type ColView interface {
 
 // ColViewSpec specifies the configuration and initial state for ColView.
 type ColViewSpec struct {
-	// An overlay handler.
-	OverlayHandler Handler
+	// Key bindings.
+	Bindings Bindings
 	// A function that takes the number of columns and return weights for the
 	// widths of the columns. The returned slice must have a size of n. If this
 	// function is nil, all the columns will have the same weight.
@@ -53,8 +53,8 @@ type colView struct {
 
 // NewColView creates a new ColView from the given spec.
 func NewColView(spec ColViewSpec) ColView {
-	if spec.OverlayHandler == nil {
-		spec.OverlayHandler = DummyHandler{}
+	if spec.Bindings == nil {
+		spec.Bindings = DummyBindings{}
 	}
 	if spec.Weights == nil {
 		spec.Weights = equalWeights
@@ -120,7 +120,7 @@ func (w *colView) Render(width, height int) *term.Buffer {
 // Handle handles the event first by consulting the overlay handler, and then
 // delegating the event to the currently focused column.
 func (w *colView) Handle(event term.Event) bool {
-	if w.OverlayHandler.Handle(event) {
+	if w.Bindings.Handle(w, event) {
 		return true
 	}
 	state := w.CopyState()

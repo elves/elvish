@@ -104,8 +104,8 @@ func convertNavWidthRatio(v interface{}) [3]int {
 }
 
 func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(emptyBindingMap)
-	binding := newMapBinding(ed, ev, bindingVar)
+	bindingVar := newBindingVar(emptyBindingsMap)
+	bindings := newMapBindings(ed, ev, bindingVar)
 	widthRatioVar := newListVar(vals.MakeList(1.0, 3.0, 4.0))
 
 	selectedFileVar := vars.FromGet(func() interface{} {
@@ -125,7 +125,7 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 		}.AddGoFns("<edit:navigation>", map[string]interface{}{
 			"start": func() {
 				navigation.Start(app, navigation.Config{
-					Binding: binding,
+					Bindings: bindings,
 					WidthRatio: func() [3]int {
 						return convertNavWidthRatio(widthRatioVar.Get())
 					},

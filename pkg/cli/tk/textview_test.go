@@ -112,9 +112,9 @@ var textViewHandleTests = []handleTest{
 		WantNewState: TextViewState{Lines: []string{"1", "2", "3", "4"}, First: 3},
 	},
 	{
-		Name: "overlay",
+		Name: "bindings",
 		Given: NewTextView(TextViewSpec{
-			OverlayHandler: MapHandler{term.K('a'): func() {}}}),
+			Bindings: MapBindings{term.K('a'): func(Widget) {}}}),
 		Event: term.K('a'),
 
 		WantNewState: TextViewState{},

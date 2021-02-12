@@ -17,7 +17,7 @@ func TestBindingTable(t *testing.T) {
 
 	evals(f.Evaler, `called = $false`)
 	evals(f.Evaler, `m = (edit:binding-table [&a={ called = $true }])`)
-	_, ok := getGlobal(f.Evaler, "m").(bindingMap)
+	_, ok := getGlobal(f.Evaler, "m").(bindingsMap)
 	if !ok {
 		t.Errorf("edit:binding-table did not create BindingMap variable")
 	}

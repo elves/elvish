@@ -312,25 +312,17 @@ var listBoxHandleTests = []handleTest{
 		WantUnhandled: true,
 	},
 	{
-		Name: "overlay handler",
-		Given: listBoxWithOverlay(
-			ListBoxSpec{State: ListBoxState{Items: TestItems{NItems: 10}, Selected: 5}},
-			func(w *listBox) Handler {
-				return MapHandler{
-					term.K('a'): func() { w.State.Selected = 0 },
-				}
-			}),
+		Name: "bindings",
+		Given: NewListBox(ListBoxSpec{
+			State: ListBoxState{Items: TestItems{NItems: 10}, Selected: 5},
+			Bindings: MapBindings{
+				term.K('a'): func(w Widget) { w.(*listBox).State.Selected = 0 },
+			},
+		}),
 		Event: term.K('a'),
 
 		WantNewState: ListBoxState{Items: TestItems{NItems: 10}, Selected: 0},
 	},
-}
-
-func listBoxWithOverlay(spec ListBoxSpec, overlay func(*listBox) Handler) *listBox {
-	w := NewListBox(spec)
-	ww := w.(*listBox)
-	ww.OverlayHandler = overlay(ww)
-	return ww
 }
 
 func TestListBox_Handle(t *testing.T) {

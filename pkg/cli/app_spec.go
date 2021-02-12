@@ -17,9 +17,9 @@ type AppSpec struct {
 	Prompt      Prompt
 	RPrompt     Prompt
 
-	OverlayHandler tk.Handler
-	Abbreviations  func(f func(abbr, full string))
-	QuotePaste     func() bool
+	Bindings      tk.Bindings
+	Abbreviations func(f func(abbr, full string))
+	QuotePaste    func() bool
 
 	SmallWordAbbreviations func(f func(abbr, full string))
 

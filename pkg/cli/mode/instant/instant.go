@@ -12,8 +12,8 @@ import (
 
 // Config keeps the configuration for the instant addon.
 type Config struct {
-	// Keybinding.
-	Binding tk.Handler
+	// Key bindings.
+	Bindings tk.Bindings
 	// The function to execute code and returns the output.
 	Execute func(code string) ([]string, error)
 }
@@ -45,7 +45,7 @@ func (w *widget) Render(width, height int) *term.Buffer {
 func (w *widget) Focus() bool { return false }
 
 func (w *widget) Handle(event term.Event) bool {
-	handled := w.Binding.Handle(event)
+	handled := w.Bindings.Handle(w, event)
 	if !handled {
 		codeArea := w.app.CodeArea()
 		handled = codeArea.Handle(event)
@@ -75,8 +75,8 @@ func Start(app cli.App, cfg Config) {
 		app.Notify("executor is required")
 		return
 	}
-	if cfg.Binding == nil {
-		cfg.Binding = tk.DummyHandler{}
+	if cfg.Bindings == nil {
+		cfg.Bindings = tk.DummyBindings{}
 	}
 	w := widget{
 		Config:   cfg,

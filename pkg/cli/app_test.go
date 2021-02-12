@@ -398,8 +398,8 @@ func TestReadCode_ShowNotes(t *testing.T) {
 	inHandler := make(chan struct{})
 	unblock := make(chan struct{})
 	f := Setup(WithSpec(func(spec *AppSpec) {
-		spec.OverlayHandler = tk.MapHandler{
-			term.K('a'): func() {
+		spec.Bindings = tk.MapBindings{
+			term.K('a'): func(tk.Widget) {
 				inHandler <- struct{}{}
 				<-unblock
 			},

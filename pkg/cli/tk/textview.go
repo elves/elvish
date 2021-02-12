@@ -26,8 +26,8 @@ type TextView interface {
 
 // TextViewSpec specifies the configuration and initial state for a Widget.
 type TextViewSpec struct {
-	// A Handler that takes precedence over the default handling of events.
-	OverlayHandler Handler
+	// Key bindings.
+	Bindings Bindings
 	// If true, a vertical scrollbar will be shown when there are more lines
 	// that can be displayed, and the widget responds to Up and Down keys.
 	Scrollable bool
@@ -49,8 +49,8 @@ type textView struct {
 
 // NewTextView builds a TextView from the given spec.
 func NewTextView(spec TextViewSpec) TextView {
-	if spec.OverlayHandler == nil {
-		spec.OverlayHandler = DummyHandler{}
+	if spec.Bindings == nil {
+		spec.Bindings = DummyBindings{}
 	}
 	return &textView{TextViewSpec: spec}
 }
@@ -91,7 +91,7 @@ func (w *textView) getStateForRender(height int) (lines []string, first int) {
 }
 
 func (w *textView) Handle(event term.Event) bool {
-	if w.OverlayHandler.Handle(event) {
+	if w.Bindings.Handle(w, event) {
 		return true
 	}
 

@@ -16,8 +16,8 @@ import (
 
 // Config is the configuration for starting lastcmd.
 type Config struct {
-	// Binding provides key binding.
-	Binding tk.Handler
+	// Key bindings.
+	Bindings tk.Bindings
 	// Store provides the source for the last command.
 	Store Store
 	// Wordifier breaks a command into words.
@@ -65,7 +65,7 @@ func Start(app cli.App, cfg Config) {
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{Prompt: mode.Prompt(" LASTCMD ", true)},
 		ListBox: tk.ListBoxSpec{
-			OverlayHandler: cfg.Binding,
+			Bindings: cfg.Bindings,
 			OnAccept: func(it tk.Items, i int) {
 				accept(it.(items).entries[i].content)
 			},

@@ -8,21 +8,21 @@ import (
 )
 
 func initMinibuf(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
-	bindingVar := newBindingVar(emptyBindingMap)
-	binding := newMapBinding(ed, ev, bindingVar)
+	bindingVar := newBindingVar(emptyBindingsMap)
+	bindings := newMapBindings(ed, ev, bindingVar)
 	nb.AddNs("minibuf",
 		eval.NsBuilder{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:minibuf>:", map[string]interface{}{
-			"start": func() { minibufStart(ed, ev, binding) },
+			"start": func() { minibufStart(ed, ev, bindings) },
 		}).Ns())
 }
 
-func minibufStart(ed *Editor, ev *eval.Evaler, binding tk.Handler) {
+func minibufStart(ed *Editor, ev *eval.Evaler, bindings tk.Bindings) {
 	w := tk.NewCodeArea(tk.CodeAreaSpec{
-		Prompt:         mode.Prompt(" MINIBUF ", true),
-		OverlayHandler: binding,
-		OnSubmit:       func() { minibufSubmit(ed, ev) },
+		Prompt:   mode.Prompt(" MINIBUF ", true),
+		Bindings: bindings,
+		OnSubmit: func() { minibufSubmit(ed, ev) },
 		// TODO: Add Highlighter. Right now the async highlighter is not
 		// directly usable.
 	})

@@ -28,11 +28,11 @@ func TestHistWalk(t *testing.T) {
 		return Config{
 			Store:  store,
 			Prefix: "ls",
-			Binding: tk.MapHandler{
-				term.K(ui.Up):        func() { Prev(f.App) },
-				term.K(ui.Down):      func() { Next(f.App) },
-				term.K('[', ui.Ctrl): func() { Close(f.App) },
-				term.K(ui.Enter):     func() { Accept(f.App) },
+			Bindings: tk.MapBindings{
+				term.K(ui.Up):        func(tk.Widget) { Prev(f.App) },
+				term.K(ui.Down):      func(tk.Widget) { Next(f.App) },
+				term.K('[', ui.Ctrl): func(tk.Widget) { Close(f.App) },
+				term.K(ui.Enter):     func(tk.Widget) { Accept(f.App) },
 			},
 		}
 	}
