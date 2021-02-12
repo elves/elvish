@@ -1,7 +1,7 @@
 package edit
 
 import (
-	"src.elv.sh/pkg/cli/mode/stub"
+	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/eval"
 )
 
@@ -17,11 +17,11 @@ func initCommandAPI(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 			"binding": bindingVar,
 		}.AddGoFns("<edit:command>:", map[string]interface{}{
 			"start": func() {
-				stub.Start(ed.app, stub.Config{
+				w := mode.NewStub(mode.StubSpec{
 					Bindings: bindings,
 					Name:     " COMMAND ",
-					Focus:    false,
 				})
+				ed.app.SetAddon(w, false)
 			},
 		}).Ns())
 }

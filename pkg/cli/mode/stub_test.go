@@ -1,19 +1,20 @@
-package stub
+package mode
 
 import (
 	"testing"
 	"time"
 
+	"src.elv.sh/pkg/cli"
 	. "src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 )
 
-func TestRendering(t *testing.T) {
+func TestStub_Rendering(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	Start(f.App, Config{Name: " STUB "})
+	startStub(f.App, StubSpec{Name: " STUB "})
 	f.TestTTY(t,
 		"", term.DotHere, "\n",
 		" STUB ", Styles,
@@ -21,24 +22,12 @@ func TestRendering(t *testing.T) {
 	)
 }
 
-func TestFocus(t *testing.T) {
-	f := Setup()
-	defer f.Stop()
-
-	Start(f.App, Config{Name: " STUB ", Focus: true})
-	f.TestTTY(t,
-		"\n",
-		" STUB ", Styles,
-		"******", term.DotHere,
-	)
-}
-
-func TestHandling(t *testing.T) {
+func TestStub_Handling(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
 	bindingCalled := make(chan bool)
-	Start(f.App, Config{
+	startStub(f.App, StubSpec{
 		Bindings: tk.MapBindings{
 			term.K('a'): func(tk.Widget) { bindingCalled <- true }},
 	})
@@ -50,4 +39,9 @@ func TestHandling(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Errorf("Handler not called after 1s")
 	}
+}
+
+func startStub(app cli.App, spec StubSpec) {
+	w := NewStub(spec)
+	app.SetAddon(w, false)
 }

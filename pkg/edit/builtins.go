@@ -7,7 +7,7 @@ import (
 	"unicode/utf8"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode/stub"
+	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
@@ -72,7 +72,7 @@ func redraw(app cli.App, opts redrawOpts) {
 
 func insertRaw(app cli.App, tty cli.TTY) {
 	tty.SetRawInput(1)
-	stub.Start(app, stub.Config{
+	w := mode.NewStub(mode.StubSpec{
 		Bindings: tk.FuncBindings(func(w tk.Widget, event term.Event) bool {
 			switch event := event.(type) {
 			case term.KeyEvent:
@@ -85,9 +85,9 @@ func insertRaw(app cli.App, tty cli.TTY) {
 				return false
 			}
 		}),
-		Name:  " RAW ",
-		Focus: false,
+		Name: " RAW ",
 	})
+	app.SetAddon(w, false)
 }
 
 //elvdoc:fn key
