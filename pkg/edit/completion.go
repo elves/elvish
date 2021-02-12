@@ -10,7 +10,7 @@ import (
 
 	"github.com/xiaq/persistent/hash"
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode/completion"
+	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/edit/complete"
 	"src.elv.sh/pkg/eval"
@@ -196,9 +196,15 @@ func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, sma
 			}
 		}
 	}
-	completion.Start(app, completion.Config{
+	w, err := mode.NewCompletion(app, mode.CompletionSpec{
 		Name: result.Name, Replace: result.Replace, Items: result.Items,
 		Bindings: bindings})
+	if w != nil {
+		app.SetAddon(w, false)
+	}
+	if err != nil {
+		app.Notify(err.Error())
+	}
 }
 
 //elvdoc:fn completion:close
@@ -241,7 +247,7 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 			"accept":      func() { listingAccept(app) },
 			"smart-start": func() { completionStart(app, bindings, cfg(), true) },
 			"start":       func() { completionStart(app, bindings, cfg(), false) },
-			"close":       func() { completion.Close(app) },
+			"close":       func() { app.SetAddon(nil, false) },
 			"up":          func() { listingUp(app) },
 			"down":        func() { listingDown(app) },
 			"up-cycle":    func() { listingUpCycle(app) },
