@@ -1,7 +1,5 @@
-// Package mode contains utilities for implementing modes.
-//
-// Modes are just pre-packaged ways to use widgets to achieve a specific task.
-// Subpackages of this package contain mode implementations.
+// Package mode implements modes, which are widgets tailored for a specific
+// task.
 package mode
 
 import "src.elv.sh/pkg/ui"

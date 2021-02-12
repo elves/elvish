@@ -1,4 +1,4 @@
-package histwalk
+package mode
 
 import (
 	"testing"
@@ -21,23 +21,23 @@ func TestHistWalk(t *testing.T) {
 	buf0 := f.MakeBuffer("ls", term.DotHere)
 	f.TTY.TestBuffer(t, buf0)
 
-	getCfg := func() Config {
+	getCfg := func() HistwalkSpec {
 		store := histutil.NewMemStore(
 			// 0       1        2         3       4         5
 			"echo", "ls -l", "echo a", "echo", "echo a", "ls -a")
-		return Config{
+		return HistwalkSpec{
 			Store:  store,
 			Prefix: "ls",
 			Bindings: tk.MapBindings{
-				term.K(ui.Up):        func(tk.Widget) { Prev(f.App) },
-				term.K(ui.Down):      func(tk.Widget) { Next(f.App) },
-				term.K('[', ui.Ctrl): func(tk.Widget) { Close(f.App) },
-				term.K(ui.Enter):     func(tk.Widget) { Accept(f.App) },
+				term.K(ui.Up):        func(w tk.Widget) { w.(Histwalk).Prev() },
+				term.K(ui.Down):      func(w tk.Widget) { w.(Histwalk).Next() },
+				term.K('[', ui.Ctrl): func(tk.Widget) { f.App.SetAddon(nil, false) },
+				term.K(ui.Enter):     func(tk.Widget) { f.App.SetAddon(nil, true) },
 			},
 		}
 	}
 
-	Start(f.App, getCfg())
+	startHistwalk(f.App, getCfg())
 	buf5 := f.MakeBuffer(
 		"ls -a", Styles,
 		"  ___", term.DotHere, "\n",
@@ -62,7 +62,7 @@ func TestHistWalk(t *testing.T) {
 	f.TTY.TestBuffer(t, buf0)
 
 	// Start over and accept.
-	Start(f.App, getCfg())
+	startHistwalk(f.App, getCfg())
 	f.TTY.TestBuffer(t, buf5)
 	f.TTY.Inject(term.K(ui.Enter))
 	f.TestTTY(t, "ls -a", term.DotHere)
@@ -72,7 +72,7 @@ func TestHistWalk_NoWalker(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	Start(f.App, Config{})
+	startHistwalk(f.App, HistwalkSpec{})
 	f.TestTTYNotes(t, "no history store")
 }
 
@@ -87,8 +87,8 @@ func TestHistWalk_NoMatch(t *testing.T) {
 	f.TTY.TestBuffer(t, buf0)
 
 	store := histutil.NewMemStore("echo 1", "echo 2")
-	cfg := Config{Store: store, Prefix: "ls"}
-	Start(f.App, cfg)
+	cfg := HistwalkSpec{Store: store, Prefix: "ls"}
+	startHistwalk(f.App, cfg)
 	// Test that an error message has been written to the notes buffer.
 	f.TestTTYNotes(t, "end of history")
 	// Test that buffer has not changed - histwalk addon is not active.
@@ -100,7 +100,7 @@ func TestHistWalk_FallbackHandler(t *testing.T) {
 	defer f.Stop()
 
 	store := histutil.NewMemStore("ls")
-	Start(f.App, Config{Store: store, Prefix: ""})
+	startHistwalk(f.App, HistwalkSpec{Store: store, Prefix: ""})
 	f.TestTTY(t,
 		"ls", Styles,
 		"__", term.DotHere, "\n",
@@ -110,4 +110,14 @@ func TestHistWalk_FallbackHandler(t *testing.T) {
 
 	f.TTY.Inject(term.K(ui.Backspace))
 	f.TestTTY(t, "l", term.DotHere)
+}
+
+func startHistwalk(app cli.App, cfg HistwalkSpec) {
+	w, err := NewHistwalk(app, cfg)
+	if err != nil {
+		app.Notify(err.Error())
+		return
+	}
+	app.SetAddon(w, false)
+	app.Redraw()
 }
