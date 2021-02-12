@@ -90,7 +90,7 @@ func Start(app cli.App, cfg Config) {
 
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{
-			Prompt: mode.Prompt(" LOCATION ", true),
+			Prompt: mode.ModePrompt(" LOCATION ", true),
 		},
 		ListBox: tk.ListBoxSpec{
 			Bindings: cfg.Bindings,

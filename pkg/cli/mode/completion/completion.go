@@ -38,7 +38,7 @@ func Start(app cli.App, cfg Config) {
 	}
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{
-			Prompt: mode.Prompt(" COMPLETING "+cfg.Name+" ", true),
+			Prompt: mode.ModePrompt(" COMPLETING "+cfg.Name+" ", true),
 		},
 		ListBox: tk.ListBoxSpec{
 			Horizontal: true,

@@ -4,8 +4,8 @@ package mode
 
 import "src.elv.sh/pkg/ui"
 
-// Line returns a text styled as a modeline.
-func Line(content string, space bool) ui.Text {
+// ModeLine returns a text styled as a modeline.
+func ModeLine(content string, space bool) ui.Text {
 	t := ui.T(content, ui.Bold, ui.FgWhite, ui.BgMagenta)
 	if space {
 		t = ui.Concat(t, ui.T(" "))
@@ -13,8 +13,9 @@ func Line(content string, space bool) ui.Text {
 	return t
 }
 
-// Prompt returns a callback suitable as the prompt in the codearea of an addon.
-func Prompt(content string, space bool) func() ui.Text {
-	p := Line(content, space)
+// ModePrompt returns a callback suitable as the prompt in the codearea of a
+// mode widget.
+func ModePrompt(content string, space bool) func() ui.Text {
+	p := ModeLine(content, space)
 	return func() ui.Text { return p }
 }

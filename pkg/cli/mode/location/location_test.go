@@ -223,7 +223,7 @@ func TestStart_OK(t *testing.T) {
 func listingBuf(filter string, lines ...string) *term.Buffer {
 	b := term.NewBufferBuilder(50).
 		Newline(). // empty code area
-		WriteStyled(mode.Line(" LOCATION ", true)).
+		WriteStyled(mode.ModeLine(" LOCATION ", true)).
 		Write(filter).SetDotHere()
 	for i, line := range lines {
 		b.Newline()

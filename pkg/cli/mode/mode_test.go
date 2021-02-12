@@ -7,16 +7,16 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-func TestLine(t *testing.T) {
-	testLine(t, tt.Fn("Line", Line))
+func TestModeLine(t *testing.T) {
+	testModeLine(t, tt.Fn("Line", ModeLine))
 }
 
-func TestPrompt(t *testing.T) {
-	testLine(t, tt.Fn("Prompt",
-		func(s string, b bool) ui.Text { return Prompt(s, b)() }))
+func TestModePrompt(t *testing.T) {
+	testModeLine(t, tt.Fn("Prompt",
+		func(s string, b bool) ui.Text { return ModePrompt(s, b)() }))
 }
 
-func testLine(t *testing.T, fn *tt.FnToTest) {
+func testModeLine(t *testing.T, fn *tt.FnToTest) {
 	tt.Test(t, fn, tt.Table{
 		tt.Args("TEST", false).Rets(
 			ui.T("TEST", ui.Bold, ui.FgWhite, ui.BgMagenta)),

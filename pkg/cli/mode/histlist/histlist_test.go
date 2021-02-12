@@ -131,7 +131,7 @@ func bb() *term.BufferBuilder { return term.NewBufferBuilder(50) }
 
 func makeListingBuf(modeline, filter string, lines ...string) *term.Buffer {
 	b := bb().Newline().
-		WriteStyled(mode.Line(modeline, true)).
+		WriteStyled(mode.ModeLine(modeline, true)).
 		Write(filter).SetDotHere()
 	for i, line := range lines {
 		b.Newline()

@@ -25,7 +25,7 @@ type widget struct {
 
 func (w *widget) Render(width, height int) *term.Buffer {
 	buf := term.NewBufferBuilder(width).
-		WriteStyled(mode.Line(w.Name, false)).SetDotHere().Buffer()
+		WriteStyled(mode.ModeLine(w.Name, false)).SetDotHere().Buffer()
 	buf.TrimToLines(0, height)
 	return buf
 }

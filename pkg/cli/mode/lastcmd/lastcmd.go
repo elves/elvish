@@ -63,7 +63,7 @@ func Start(app cli.App, cfg Config) {
 		app.SetAddon(nil, false)
 	}
 	w := tk.NewComboBox(tk.ComboBoxSpec{
-		CodeArea: tk.CodeAreaSpec{Prompt: mode.Prompt(" LASTCMD ", true)},
+		CodeArea: tk.CodeAreaSpec{Prompt: mode.ModePrompt(" LASTCMD ", true)},
 		ListBox: tk.ListBoxSpec{
 			Bindings: cfg.Bindings,
 			OnAccept: func(it tk.Items, i int) {

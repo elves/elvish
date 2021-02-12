@@ -54,7 +54,7 @@ func Start(app cli.App, cfg Config) {
 	}
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{
-			Prompt: mode.Prompt(cfg.Caption, true),
+			Prompt: mode.ModePrompt(cfg.Caption, true),
 		},
 		ListBox: tk.ListBoxSpec{
 			Bindings: cfg.Bindings,

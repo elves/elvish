@@ -20,7 +20,7 @@ func initMinibuf(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 
 func minibufStart(ed *Editor, ev *eval.Evaler, bindings tk.Bindings) {
 	w := tk.NewCodeArea(tk.CodeAreaSpec{
-		Prompt:   mode.Prompt(" MINIBUF ", true),
+		Prompt:   mode.ModePrompt(" MINIBUF ", true),
 		Bindings: bindings,
 		OnSubmit: func() { minibufSubmit(ed, ev) },
 		// TODO: Add Highlighter. Right now the async highlighter is not

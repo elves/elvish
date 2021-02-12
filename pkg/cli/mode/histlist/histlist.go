@@ -66,7 +66,7 @@ func Start(app cli.App, cfg Config) {
 			if !cfg.CaseSensitive() {
 				content += "(case-insensitive) "
 			}
-			return mode.Line(content, true)
+			return mode.ModeLine(content, true)
 		}},
 		ListBox: tk.ListBoxSpec{
 			Bindings: cfg.Bindings,

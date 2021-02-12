@@ -140,9 +140,9 @@ func Start(app cli.App, cfg Config) {
 		codeArea: tk.NewCodeArea(tk.CodeAreaSpec{
 			Prompt: func() ui.Text {
 				if w.CopyState().ShowHidden {
-					return mode.Line(" NAVIGATING (show hidden) ", true)
+					return mode.ModeLine(" NAVIGATING (show hidden) ", true)
 				}
-				return mode.Line(" NAVIGATING ", true)
+				return mode.ModeLine(" NAVIGATING ", true)
 			},
 		}),
 		colView: tk.NewColView(tk.ColViewSpec{
