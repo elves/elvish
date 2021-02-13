@@ -13,7 +13,7 @@ import (
 // Completion is a mode specialized for viewing and inserting completion
 // candidates. It is based on the ComboBox widget.
 type Completion interface {
-	tk.Widget
+	tk.ComboBox
 }
 
 // CompletionSpec specifies the configuration for the completion mode.

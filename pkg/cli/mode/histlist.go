@@ -10,9 +10,10 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-// Histlist is a mode for browsing history and selecting entries to insert.
+// Histlist is a mode for browsing history and selecting entries to insert. It
+// is based on the ComboBox widget.
 type Histlist interface {
-	tk.Widget
+	tk.ComboBox
 }
 
 // HistlistSpec specifies the configuration for the histlist mode.

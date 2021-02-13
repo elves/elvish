@@ -17,9 +17,9 @@ import (
 )
 
 // Location is a mode for viewing location history and changing to a selected
-// directory.
+// directory. It is based on the ComboBox widget.
 type Location interface {
-	tk.Widget
+	tk.ComboBox
 }
 
 // LocationSpec is the configuration to start the location history feature.
