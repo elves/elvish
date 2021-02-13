@@ -1,4 +1,4 @@
-package navigation
+package mode
 
 import (
 	"errors"
@@ -11,21 +11,22 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-// Cursor represents a cursor for navigating in a potentially virtual filesystem.
-type Cursor interface {
+// NavigationCursor represents a cursor for navigating in a potentially virtual
+// filesystem.
+type NavigationCursor interface {
 	// Current returns a File that represents the current directory.
-	Current() (File, error)
+	Current() (NavigationFile, error)
 	// Parent returns a File that represents the parent directory. It may return
 	// nil if the current directory is the root of the filesystem.
-	Parent() (File, error)
+	Parent() (NavigationFile, error)
 	// Ascend navigates to the parent directory.
 	Ascend() error
 	// Descend navigates to the named child directory.
 	Descend(name string) error
 }
 
-// File represents a potentially virtual file.
-type File interface {
+// NavigationFile represents a potentially virtual file.
+type NavigationFile interface {
 	// Name returns the name of the file.
 	Name() string
 	// ShowName returns a styled filename.
@@ -36,15 +37,16 @@ type File interface {
 	// Read returns either a list of File's if the File represents a directory,
 	// a (possibly incomplete) slice of bytes if the File represents a normal
 	// file, or an error if the File cannot be read.
-	Read() ([]File, []byte, error)
+	Read() ([]NavigationFile, []byte, error)
 }
 
-// NewOSCursor returns a Cursor backed by the OS.
-func NewOSCursor() Cursor { return osCursor{lscolors.GetColorist()} }
+// NewOSNavigationCursor returns a NavigationCursor backed by the OS.
+func NewOSNavigationCursor() NavigationCursor {
+    return osCursor{lscolors.GetColorist()} }
 
 type osCursor struct{ colorist lscolors.Colorist }
 
-func (c osCursor) Current() (File, error) {
+func (c osCursor) Current() (NavigationFile, error) {
 	abs, err := filepath.Abs(".")
 	if err != nil {
 		return nil, err
@@ -52,7 +54,7 @@ func (c osCursor) Current() (File, error) {
 	return file{filepath.Base(abs), abs, os.ModeDir, c.colorist}, nil
 }
 
-func (c osCursor) Parent() (File, error) {
+func (c osCursor) Parent() (NavigationFile, error) {
 	if abs, _ := filepath.Abs("."); abs == "/" {
 		return emptyDir{}, nil
 	}
@@ -72,7 +74,7 @@ type emptyDir struct{}
 func (emptyDir) Name() string                  { return "" }
 func (emptyDir) ShowName() ui.Text             { return nil }
 func (emptyDir) IsDirDeep() bool               { return true }
-func (emptyDir) Read() ([]File, []byte, error) { return []File{}, nil, nil }
+func (emptyDir) Read() ([]NavigationFile, []byte, error) { return []NavigationFile{}, nil, nil }
 
 type file struct {
 	name     string
@@ -118,7 +120,7 @@ var specialFileModes = []struct {
 	{os.ModeCharDevice, errCharDevice},
 }
 
-func (f file) Read() ([]File, []byte, error) {
+func (f file) Read() ([]NavigationFile, []byte, error) {
 	ff, err := os.Open(f.path)
 	if err != nil {
 		return nil, nil, err
@@ -135,7 +137,7 @@ func (f file) Read() ([]File, []byte, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		files := make([]File, len(infos))
+		files := make([]NavigationFile, len(infos))
 		for i, info := range infos {
 			files[i] = file{
 				info.Name(),

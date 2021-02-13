@@ -5,18 +5,19 @@ import (
 	"fmt"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode/navigation"
+	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 )
 
 func main() {
 	app := cli.NewApp(cli.AppSpec{})
-	navigation.Start(app, navigation.Config{
+	w := mode.NewNavigation(app, mode.NavigationSpec{
 		Bindings: tk.MapBindings{
 			term.K('x'): func(tk.Widget) { app.CommitCode() },
 		},
 	})
+	app.SetAddon(w, false)
 
 	code, err := app.ReadCode()
 	fmt.Println("code:", code)

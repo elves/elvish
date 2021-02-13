@@ -1,9 +1,10 @@
-package navigation
+package mode
 
 import (
 	"errors"
 	"testing"
 
+	"src.elv.sh/pkg/cli"
 	. "src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/lscolors"
 	"src.elv.sh/pkg/cli/term"
@@ -33,7 +34,7 @@ func TestErrorInAscend(t *testing.T) {
 
 	c := getTestCursor()
 	c.ascendErr = errors.New("cannot ascend")
-	Start(f.App, Config{Cursor: c})
+	startNavigation(f.App, NavigationSpec{Cursor: c})
 
 	f.TTY.Inject(term.K(ui.Left))
 	f.TestTTYNotes(t, "cannot ascend")
@@ -45,7 +46,7 @@ func TestErrorInDescend(t *testing.T) {
 
 	c := getTestCursor()
 	c.descendErr = errors.New("cannot descend")
-	Start(f.App, Config{Cursor: c})
+	startNavigation(f.App, NavigationSpec{Cursor: c})
 
 	f.TTY.Inject(term.K(ui.Down))
 	f.TTY.Inject(term.K(ui.Right))
@@ -59,7 +60,7 @@ func TestErrorInCurrent(t *testing.T) {
 
 	c := getTestCursor()
 	c.currentErr = errors.New("ERR")
-	Start(f.App, Config{Cursor: c})
+	startNavigation(f.App, NavigationSpec{Cursor: c})
 
 	buf := f.MakeBuffer(
 		"", term.DotHere, "\n",
@@ -86,7 +87,7 @@ func TestErrorInParent(t *testing.T) {
 
 	c := getTestCursor()
 	c.parentErr = errors.New("ERR")
-	Start(f.App, Config{Cursor: c})
+	startNavigation(f.App, NavigationSpec{Cursor: c})
 
 	f.TestTTY(t,
 		"", term.DotHere, "\n",
@@ -107,7 +108,7 @@ func TestWidthRatio(t *testing.T) {
 	defer f.Stop()
 
 	c := getTestCursor()
-	Start(f.App, Config{
+	startNavigation(f.App, NavigationSpec{
 		Cursor:     c,
 		WidthRatio: func() [3]int { return [3]int{1, 1, 1} },
 	})
@@ -129,15 +130,10 @@ func TestGetSelectedName(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	wantName := ""
-	if name := SelectedName(f.App); name != wantName {
-		t.Errorf("Got name %q, want %q", name, wantName)
-	}
+	w := startNavigation(f.App, NavigationSpec{Cursor: getTestCursor()})
 
-	Start(f.App, Config{Cursor: getTestCursor()})
-
-	wantName = "d1"
-	if name := SelectedName(f.App); name != wantName {
+	wantName := "d1"
+	if name := w.SelectedName(); name != wantName {
 		t.Errorf("Got name %q, want %q", name, wantName)
 	}
 }
@@ -156,12 +152,12 @@ func TestNavigation_RealFS(t *testing.T) {
 	testNavigation(t, nil)
 }
 
-func testNavigation(t *testing.T, c Cursor) {
+func testNavigation(t *testing.T, c NavigationCursor) {
 	f, cleanup := setup()
 	defer cleanup()
 	defer f.Stop()
 
-	Start(f.App, Config{Cursor: c})
+	w := startNavigation(f.App, NavigationSpec{Cursor: c})
 
 	// Test initial UI and file preview.
 	// NOTE: Buffers are named after the file that is now being selected.
@@ -179,7 +175,8 @@ func testNavigation(t *testing.T, c Cursor) {
 	f.TTY.TestBuffer(t, d1Buf)
 
 	// Test scrolling of preview.
-	ScrollPreview(f.App, 1)
+	w.ScrollPreview(1)
+	f.App.Redraw()
 	d1Buf2 := f.MakeBuffer(
 		"", term.DotHere, "\n",
 		" NAVIGATING  \n", Styles,
@@ -197,7 +194,8 @@ func testNavigation(t *testing.T, c Cursor) {
 
 	// Test handling of selection change and directory preview. Also test
 	// LS_COLORS.
-	Select(f.App, tk.Next)
+	w.Select(tk.Next)
+	f.App.Redraw()
 	d2Buf := f.MakeBuffer(
 		"", term.DotHere, "\n",
 		" NAVIGATING  \n", Styles,
@@ -212,7 +210,8 @@ func testNavigation(t *testing.T, c Cursor) {
 	f.TTY.TestBuffer(t, d2Buf)
 
 	// Test handling of Descend.
-	Descend(f.App)
+	w.Descend()
+	f.App.Redraw()
 	d21Buf := f.MakeBuffer(
 		"", term.DotHere, "\n",
 		" NAVIGATING  \n", Styles,
@@ -228,19 +227,23 @@ func testNavigation(t *testing.T, c Cursor) {
 
 	// Test handling of Ascend, and that the current column selects the
 	// directory we just ascended from, thus reverting to wantBuf1.
-	Ascend(f.App)
+	w.Ascend()
+	f.App.Redraw()
 	f.TTY.TestBuffer(t, d2Buf)
 
 	// Test handling of Descend on a regular file, i.e. do nothing. First move
 	// the cursor to d1, which is a regular file.
-	Select(f.App, tk.Prev)
+	w.Select(tk.Prev)
+	f.App.Redraw()
 	f.TTY.TestBuffer(t, d1Buf)
 	// Now descend, and verify that the buffer has not changed.
-	Descend(f.App)
+	w.Descend()
+	f.App.Redraw()
 	f.TTY.TestBuffer(t, d1Buf)
 
 	// Test showing hidden.
-	MutateShowHidden(f.App, func(bool) bool { return true })
+	w.MutateShowHidden(func(bool) bool { return true })
+	f.App.Redraw()
 	f.TestTTY(t,
 		"", term.DotHere, "\n",
 		" NAVIGATING (show hidden)  \n", Styles,
@@ -253,10 +256,10 @@ func testNavigation(t *testing.T, c Cursor) {
 		"      d3           ", Styles,
 		"     //////////////",
 	)
-	MutateShowHidden(f.App, func(bool) bool { return false })
+	w.MutateShowHidden(func(bool) bool { return false })
 
 	// Test filtering; current column shows d1, d2, d3 before filtering.
-	MutateFiltering(f.App, func(bool) bool { return true })
+	w.MutateFiltering(func(bool) bool { return true })
 	f.TTY.Inject(term.K('3'))
 	f.TestTTY(t,
 		"\n",
@@ -268,13 +271,14 @@ func testNavigation(t *testing.T, c Cursor) {
 		"####",
 		" f  ",
 	)
-	MutateFiltering(f.App, func(bool) bool { return false })
+	w.MutateFiltering(func(bool) bool { return false })
 
 	// Now move into d3, an empty directory. Test that the filter has been
 	// cleared.
-	Select(f.App, tk.Next)
-	Select(f.App, tk.Next)
-	Descend(f.App)
+	w.Select(tk.Next)
+	w.Select(tk.Next)
+	w.Descend()
+	f.App.Redraw()
 	d3NoneBuf := f.MakeBuffer(
 		"", term.DotHere, "\n",
 		" NAVIGATING  \n", Styles,
@@ -287,19 +291,28 @@ func testNavigation(t *testing.T, c Cursor) {
 	)
 	f.TTY.TestBuffer(t, d3NoneBuf)
 	// Test that selecting the previous does nothing in an empty directory.
-	Select(f.App, tk.Prev)
+	w.Select(tk.Prev)
+	f.App.Redraw()
 	f.TTY.TestBuffer(t, d3NoneBuf)
 	// Test that selecting the next does nothing in an empty directory.
-	Select(f.App, tk.Next)
+	w.Select(tk.Next)
+	f.App.Redraw()
 	f.TTY.TestBuffer(t, d3NoneBuf)
 	// Test that Descend does nothing in an empty directory.
-	Descend(f.App)
+	w.Descend()
+	f.App.Redraw()
 	f.TTY.TestBuffer(t, d3NoneBuf)
 }
 
 func setup() (*Fixture, func()) {
 	restore := lscolors.WithTestLsColors()
 	return Setup(WithTTY(func(tty TTYCtrl) { tty.SetSize(6, 40) })), restore
+}
+
+func startNavigation(app cli.App, spec NavigationSpec) Navigation {
+	w := NewNavigation(app, spec)
+	startMode(app, w, nil)
+	return w
 }
 
 func getTestCursor() *testCursor {

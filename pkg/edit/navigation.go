@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode/navigation"
+	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
@@ -30,7 +30,11 @@ import (
 // Inserts the selected filename.
 
 func navInsertSelected(app cli.App) {
-	fname := navigation.SelectedName(app)
+	w, ok := getNavigation(app)
+	if !ok {
+		return
+	}
+	fname := w.SelectedName()
 	if fname == "" {
 		// User pressed Alt-Enter or Enter in an empty directory with nothing
 		// selected; don't do anything.
@@ -62,17 +66,9 @@ func navInsertSelectedAndQuit(app cli.App) {
 //
 // Toggles the filtering status of the navigation addon.
 
-func navToggleFilter(app cli.App) {
-	navigation.MutateFiltering(app, func(b bool) bool { return !b })
-}
-
 //elvdoc:fn navigation:trigger-shown-hidden
 //
 // Toggles whether the navigation addon should be showing hidden files.
-
-func navToggleShowHidden(app cli.App) {
-	navigation.MutateShowHidden(app, func(b bool) bool { return !b })
-}
 
 //elvdoc:var navigation:width-ratio
 //
@@ -109,11 +105,10 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	widthRatioVar := newListVar(vals.MakeList(1.0, 3.0, 4.0))
 
 	selectedFileVar := vars.FromGet(func() interface{} {
-		name := navigation.SelectedName(ed.app)
-		if name == "" {
-			return nil
+		if w, ok := getNavigation(ed.app); ok {
+			return w.SelectedName()
 		}
-		return name
+		return nil
 	})
 
 	app := ed.app
@@ -124,27 +119,51 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 			"width-ratio": widthRatioVar,
 		}.AddGoFns("<edit:navigation>", map[string]interface{}{
 			"start": func() {
-				navigation.Start(app, navigation.Config{
+				w := mode.NewNavigation(app, mode.NavigationSpec{
 					Bindings: bindings,
 					WidthRatio: func() [3]int {
 						return convertNavWidthRatio(widthRatioVar.Get())
 					},
 				})
+				startMode(app, w, nil)
 			},
-			"left":      func() { navigation.Ascend(app) },
-			"right":     func() { navigation.Descend(app) },
-			"up":        func() { navigation.Select(app, tk.Prev) },
-			"down":      func() { navigation.Select(app, tk.Next) },
-			"page-up":   func() { navigation.Select(app, tk.PrevPage) },
-			"page-down": func() { navigation.Select(app, tk.NextPage) },
+			"left":  actOnNavigation(app, mode.Navigation.Ascend),
+			"right": actOnNavigation(app, mode.Navigation.Descend),
+			"up": actOnNavigation(app,
+				func(w mode.Navigation) { w.Select(tk.Prev) }),
+			"down": actOnNavigation(app,
+				func(w mode.Navigation) { w.Select(tk.Next) }),
+			"page-up": actOnNavigation(app,
+				func(w mode.Navigation) { w.Select(tk.PrevPage) }),
+			"page-down": actOnNavigation(app,
+				func(w mode.Navigation) { w.Select(tk.NextPage) }),
 
-			"file-preview-up":   func() { navigation.ScrollPreview(app, -1) },
-			"file-preview-down": func() { navigation.ScrollPreview(app, 1) },
+			"file-preview-up": actOnNavigation(app,
+				func(w mode.Navigation) { w.ScrollPreview(-1) }),
+			"file-preview-down": actOnNavigation(app,
+				func(w mode.Navigation) { w.ScrollPreview(1) }),
 
 			"insert-selected":          func() { navInsertSelected(app) },
 			"insert-selected-and-quit": func() { navInsertSelectedAndQuit(app) },
 
-			"trigger-filter":       func() { navToggleFilter(app) },
-			"trigger-shown-hidden": func() { navToggleShowHidden(app) },
+			"trigger-filter": actOnNavigation(app,
+				func(w mode.Navigation) { w.MutateFiltering(neg) }),
+			"trigger-shown-hidden": actOnNavigation(app,
+				func(w mode.Navigation) { w.MutateShowHidden(neg) }),
 		}).Ns())
+}
+
+func neg(b bool) bool { return !b }
+
+func getNavigation(app cli.App) (mode.Navigation, bool) {
+	w, ok := app.CopyState().Addon.(mode.Navigation)
+	return w, ok
+}
+
+func actOnNavigation(app cli.App, f func(mode.Navigation)) func() {
+	return func() {
+		if w, ok := getNavigation(app); ok {
+			f(w)
+		}
+	}
 }

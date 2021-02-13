@@ -1,4 +1,4 @@
-package navigation
+package mode
 
 import (
 	"errors"
@@ -21,14 +21,14 @@ type testCursor struct {
 	currentErr, parentErr, ascendErr, descendErr error
 }
 
-func (c *testCursor) Current() (File, error) {
+func (c *testCursor) Current() (NavigationFile, error) {
 	if c.currentErr != nil {
 		return nil, c.currentErr
 	}
 	return getDirFile(c.root, c.pwd)
 }
 
-func (c *testCursor) Parent() (File, error) {
+func (c *testCursor) Parent() (NavigationFile, error) {
 	if c.parentErr != nil {
 		return nil, c.parentErr
 	}
@@ -62,7 +62,7 @@ func (c *testCursor) Descend(name string) error {
 	return errCannotCd
 }
 
-func getFile(root testutil.Dir, path []string) (File, error) {
+func getFile(root testutil.Dir, path []string) (NavigationFile, error) {
 	var f interface{} = root
 	for _, p := range path {
 		d, ok := f.(testutil.Dir)
@@ -78,7 +78,7 @@ func getFile(root testutil.Dir, path []string) (File, error) {
 	return testFile{name, f}, nil
 }
 
-func getDirFile(root testutil.Dir, path []string) (File, error) {
+func getDirFile(root testutil.Dir, path []string) (NavigationFile, error) {
 	f, err := getFile(root, path)
 	if err != nil {
 		return nil, err
@@ -113,9 +113,9 @@ func (f testFile) IsDirDeep() bool {
 	return ok
 }
 
-func (f testFile) Read() ([]File, []byte, error) {
+func (f testFile) Read() ([]NavigationFile, []byte, error) {
 	if dir, ok := f.data.(testutil.Dir); ok {
-		files := make([]File, 0, len(dir))
+		files := make([]NavigationFile, 0, len(dir))
 		for name, data := range dir {
 			files = append(files, testFile{name, data})
 		}

@@ -1,5 +1,5 @@
 // Package navigation provides the functionality of navigating the filesystem.
-package navigation
+package mode
 
 import (
 	"sort"
@@ -8,51 +8,71 @@ import (
 	"unicode"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/ui"
 )
 
-// Config contains the configuration needed for the navigation functionality.
-type Config struct {
+type Navigation interface {
+	tk.Widget
+	// SelectedName returns the currently selected name. It returns an empty
+	// string if there is no selected name, which can happen if the current
+	// directory is empty.
+	SelectedName() string
+	// Select changes the selection.
+	Select(f func(tk.ListBoxState) int)
+	// ScrollPreview scrolls the preview.
+	ScrollPreview(delta int)
+	// Ascend ascends to the parent directory.
+	Ascend()
+	// Descend descends into the currently selected child directory.
+	Descend()
+	// MutateFiltering changes the filtering status.
+	MutateFiltering(f func(bool) bool)
+	// MutateShowHidden changes whether hidden files - files whose names start
+	// with ".", should be shown.
+	MutateShowHidden(f func(bool) bool)
+}
+
+// NavigationSpec specifieis the configuration for the navigation mode.
+type NavigationSpec struct {
 	// Key bindings.
 	Bindings tk.Bindings
 	// Underlying filesystem.
-	Cursor Cursor
+	Cursor NavigationCursor
 	// A function that returns the relative weights of the widths of the 3
 	// columns. If unspecified, the ratio is 1:3:4.
 	WidthRatio func() [3]int
 }
 
-type state struct {
+type navigationState struct {
 	Filtering  bool
 	ShowHidden bool
 }
 
-type widget struct {
-	Config
+type navigation struct {
+	NavigationSpec
 	app        cli.App
 	codeArea   tk.CodeArea
 	colView    tk.ColView
 	lastFilter string
 	stateMutex sync.RWMutex
-	state      state
+	state      navigationState
 }
 
-func (w *widget) MutateState(f func(*state)) {
+func (w *navigation) MutateState(f func(*navigationState)) {
 	w.stateMutex.Lock()
 	defer w.stateMutex.Unlock()
 	f(&w.state)
 }
 
-func (w *widget) CopyState() state {
+func (w *navigation) CopyState() navigationState {
 	w.stateMutex.RLock()
 	defer w.stateMutex.RUnlock()
 	return w.state
 }
 
-func (w *widget) Handle(event term.Event) bool {
+func (w *navigation) Handle(event term.Event) bool {
 	if w.colView.Handle(event) {
 		return true
 	}
@@ -70,18 +90,18 @@ func (w *widget) Handle(event term.Event) bool {
 	return w.app.CodeArea().Handle(event)
 }
 
-func (w *widget) Render(width, height int) *term.Buffer {
+func (w *navigation) Render(width, height int) *term.Buffer {
 	buf := w.codeArea.Render(width, height)
 	bufColView := w.colView.Render(width, height-len(buf.Lines))
 	buf.Extend(bufColView, false)
 	return buf
 }
 
-func (w *widget) Focus() bool {
+func (w *navigation) Focus() bool {
 	return w.CopyState().Filtering
 }
 
-func (w *widget) ascend() {
+func (w *navigation) ascend() {
 	// Remember the name of the current directory before ascending.
 	currentName := ""
 	current, err := w.Cursor.Current()
@@ -100,7 +120,7 @@ func (w *widget) ascend() {
 	}
 }
 
-func (w *widget) descend() {
+func (w *navigation) descend() {
 	currentCol, ok := w.colView.CopyState().Columns[1].(tk.ListBox)
 	if !ok {
 		return
@@ -124,31 +144,31 @@ func (w *widget) descend() {
 	}
 }
 
-// Start starts the navigation function.
-func Start(app cli.App, cfg Config) {
-	if cfg.Cursor == nil {
-		cfg.Cursor = NewOSCursor()
+// NewNavigation creates a new navigation mode.
+func NewNavigation(app cli.App, spec NavigationSpec) Navigation {
+	if spec.Cursor == nil {
+		spec.Cursor = NewOSNavigationCursor()
 	}
-	if cfg.WidthRatio == nil {
-		cfg.WidthRatio = func() [3]int { return [3]int{1, 3, 4} }
+	if spec.WidthRatio == nil {
+		spec.WidthRatio = func() [3]int { return [3]int{1, 3, 4} }
 	}
 
-	var w *widget
-	w = &widget{
-		Config: cfg,
-		app:    app,
+	var w *navigation
+	w = &navigation{
+		NavigationSpec: spec,
+		app:            app,
 		codeArea: tk.NewCodeArea(tk.CodeAreaSpec{
 			Prompt: func() ui.Text {
 				if w.CopyState().ShowHidden {
-					return mode.ModeLine(" NAVIGATING (show hidden) ", true)
+					return ModeLine(" NAVIGATING (show hidden) ", true)
 				}
-				return mode.ModeLine(" NAVIGATING ", true)
+				return ModeLine(" NAVIGATING ", true)
 			},
 		}),
 		colView: tk.NewColView(tk.ColViewSpec{
-			Bindings: cfg.Bindings,
+			Bindings: spec.Bindings,
 			Weights: func(int) []int {
-				a := cfg.WidthRatio()
+				a := spec.WidthRatio()
 				return a[:]
 			},
 			OnLeft:  func(tk.ColView) { w.ascend() },
@@ -156,18 +176,10 @@ func Start(app cli.App, cfg Config) {
 		}),
 	}
 	updateState(w, "")
-	app.SetAddon(w, false)
-	app.Redraw()
+	return w
 }
 
-// SelectedName returns the currently selected name in the navigation addon. It
-// returns an empty string if the navigation addon is not active, or if there is
-// no selected name.
-func SelectedName(app cli.App) string {
-	w, ok := app.CopyState().Addon.(*widget)
-	if !ok {
-		return ""
-	}
+func (w *navigation) SelectedName() string {
 	col, ok := w.colView.CopyState().Columns[1].(tk.ListBox)
 	if !ok {
 		return ""
@@ -179,7 +191,7 @@ func SelectedName(app cli.App) string {
 	return ""
 }
 
-func updateState(w *widget, selectName string) {
+func updateState(w *navigation, selectName string) {
 	colView := w.colView
 	cursor := w.Cursor
 	filter := w.lastFilter
@@ -229,7 +241,7 @@ func updateState(w *widget, selectName string) {
 	})
 }
 
-// Selects nothing if the widget is a cli.
+// Selects nothing if the widget is a listbox.
 func tryToSelectNothing(w tk.Widget) {
 	list, ok := w.(tk.ListBox)
 	if !ok {
@@ -260,11 +272,11 @@ func tryToSelectName(w tk.Widget, name string) {
 	})
 }
 
-func makeCol(f File, showHidden bool) tk.Widget {
+func makeCol(f NavigationFile, showHidden bool) tk.Widget {
 	return makeColInner(f, "", showHidden, nil)
 }
 
-func makeColInner(f File, filter string, showHidden bool, onSelect func(tk.Items, int)) tk.Widget {
+func makeColInner(f NavigationFile, filter string, showHidden bool, onSelect func(tk.Items, int)) tk.Widget {
 	files, content, err := f.Read()
 	if err != nil {
 		return makeErrCol(err)
@@ -272,7 +284,7 @@ func makeColInner(f File, filter string, showHidden bool, onSelect func(tk.Items
 
 	if files != nil {
 		if filter != "" || !showHidden {
-			var filtered []File
+			var filtered []NavigationFile
 			for _, file := range files {
 				name := file.Name()
 				hidden := len(name) > 0 && name[0] == '.'
@@ -302,7 +314,7 @@ func makeErrCol(err error) tk.Widget {
 	return tk.Label{Content: ui.T(err.Error(), ui.FgRed)}
 }
 
-type fileItems []File
+type fileItems []NavigationFile
 
 func (it fileItems) Show(i int) ui.Text {
 	return it[i].ShowName()
@@ -323,65 +335,31 @@ func sanitize(content string) string {
 	return sb.String()
 }
 
-// Select changes the selection if the navigation addon is currently active.
-func Select(app cli.App, f func(tk.ListBoxState) int) {
-	actOnWidget(app, func(w *widget) {
-		if listBox, ok := w.colView.CopyState().Columns[1].(tk.ListBox); ok {
-			listBox.Select(f)
-			app.Redraw()
-		}
-	})
-}
-
-// ScrollPreview scrolls the preview if the navigation addon is currently
-// active.
-func ScrollPreview(app cli.App, delta int) {
-	actOnWidget(app, func(w *widget) {
-		if textView, ok := w.colView.CopyState().Columns[2].(tk.TextView); ok {
-			textView.ScrollBy(delta)
-			app.Redraw()
-		}
-	})
-}
-
-// Ascend ascends in the navigation addon if it is active.
-func Ascend(app cli.App) {
-	actOnWidget(app, func(w *widget) {
-		w.colView.Left()
-		app.Redraw()
-	})
-}
-
-// Descend descends in the navigation addon if it is active.
-func Descend(app cli.App) {
-	actOnWidget(app, func(w *widget) {
-		w.colView.Right()
-		app.Redraw()
-	})
-}
-
-// MutateFiltering changes the filtering status of the navigation addon if it is
-// active.
-func MutateFiltering(app cli.App, f func(bool) bool) {
-	actOnWidget(app, func(w *widget) {
-		w.MutateState(func(s *state) { s.Filtering = f(s.Filtering) })
-		app.Redraw()
-	})
-}
-
-// MutateShowHidden changes whether the navigation addon should show file
-// whose names start with ".".
-func MutateShowHidden(app cli.App, f func(bool) bool) {
-	actOnWidget(app, func(w *widget) {
-		w.MutateState(func(s *state) { s.ShowHidden = f(s.ShowHidden) })
-		updateState(w, SelectedName(app))
-		app.Redraw()
-	})
-}
-
-func actOnWidget(app cli.App, f func(*widget)) {
-	w, ok := app.CopyState().Addon.(*widget)
-	if ok {
-		f(w)
+func (w *navigation) Select(f func(tk.ListBoxState) int) {
+	if listBox, ok := w.colView.CopyState().Columns[1].(tk.ListBox); ok {
+		listBox.Select(f)
 	}
+}
+
+func (w *navigation) ScrollPreview(delta int) {
+	if textView, ok := w.colView.CopyState().Columns[2].(tk.TextView); ok {
+		textView.ScrollBy(delta)
+	}
+}
+
+func (w *navigation) Ascend() {
+	w.colView.Left()
+}
+
+func (w *navigation) Descend() {
+	w.colView.Right()
+}
+
+func (w *navigation) MutateFiltering(f func(bool) bool) {
+	w.MutateState(func(s *navigationState) { s.Filtering = f(s.Filtering) })
+}
+
+func (w *navigation) MutateShowHidden(f func(bool) bool) {
+	w.MutateState(func(s *navigationState) { s.ShowHidden = f(s.ShowHidden) })
+	updateState(w, w.SelectedName())
 }
