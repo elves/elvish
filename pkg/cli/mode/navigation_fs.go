@@ -42,7 +42,8 @@ type NavigationFile interface {
 
 // NewOSNavigationCursor returns a NavigationCursor backed by the OS.
 func NewOSNavigationCursor() NavigationCursor {
-    return osCursor{lscolors.GetColorist()} }
+	return osCursor{lscolors.GetColorist()}
+}
 
 type osCursor struct{ colorist lscolors.Colorist }
 
@@ -71,9 +72,9 @@ func (c osCursor) Descend(name string) error { return os.Chdir(name) }
 
 type emptyDir struct{}
 
-func (emptyDir) Name() string                  { return "" }
-func (emptyDir) ShowName() ui.Text             { return nil }
-func (emptyDir) IsDirDeep() bool               { return true }
+func (emptyDir) Name() string                            { return "" }
+func (emptyDir) ShowName() ui.Text                       { return nil }
+func (emptyDir) IsDirDeep() bool                         { return true }
 func (emptyDir) Read() ([]NavigationFile, []byte, error) { return []NavigationFile{}, nil, nil }
 
 type file struct {

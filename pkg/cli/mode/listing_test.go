@@ -118,7 +118,7 @@ func TestNewListing_NoGetItems(t *testing.T) {
 
 	_, err := NewListing(f.App, ListingSpec{})
 	if err != errGetItemsMustBeSpecified {
-    	t.Error("expect errGetItemsMustBeSpecified")
+		t.Error("expect errGetItemsMustBeSpecified")
 	}
 }
 
