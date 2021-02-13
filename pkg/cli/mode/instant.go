@@ -1,34 +1,39 @@
-// Package instant implements an addon that executes code whenever it changes
-// and shows the result.
-package instant
+package mode
 
 import (
+	"errors"
+
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/ui"
 )
 
-// Config keeps the configuration for the instant addon.
-type Config struct {
+// Instant is a mode that executes code whenever it changes and shows the
+// result.
+type Instant interface {
+	tk.Widget
+}
+
+// InstantSpec specifies the configuration for the instant mode.
+type InstantSpec struct {
 	// Key bindings.
 	Bindings tk.Bindings
 	// The function to execute code and returns the output.
 	Execute func(code string) ([]string, error)
 }
 
-type widget struct {
-	Config
+type instant struct {
+	InstantSpec
 	app      cli.App
 	textView tk.TextView
 	lastCode string
 	lastErr  error
 }
 
-func (w *widget) Render(width, height int) *term.Buffer {
+func (w *instant) Render(width, height int) *term.Buffer {
 	bb := term.NewBufferBuilder(width).
-		WriteStyled(mode.ModeLine(" INSTANT ", false)).SetDotHere()
+		WriteStyled(ModeLine(" INSTANT ", false)).SetDotHere()
 	if w.lastErr != nil {
 		bb.Newline().Write(w.lastErr.Error(), ui.FgRed)
 	}
@@ -42,9 +47,9 @@ func (w *widget) Render(width, height int) *term.Buffer {
 	return buf
 }
 
-func (w *widget) Focus() bool { return false }
+func (w *instant) Focus() bool { return false }
 
-func (w *widget) Handle(event term.Event) bool {
+func (w *instant) Handle(event term.Event) bool {
 	handled := w.Bindings.Handle(w, event)
 	if !handled {
 		codeArea := w.app.CodeArea()
@@ -54,7 +59,7 @@ func (w *widget) Handle(event term.Event) bool {
 	return handled
 }
 
-func (w *widget) update(force bool) {
+func (w *instant) update(force bool) {
 	code := w.app.CodeArea().CopyState().Buffer.Content
 	if code == w.lastCode && !force {
 		return
@@ -69,21 +74,21 @@ func (w *widget) update(force bool) {
 	}
 }
 
-// Start starts the addon.
-func Start(app cli.App, cfg Config) {
+var errExecutorIsRequired = errors.New("executor is required")
+
+// NewInstant creates a new instant mode.
+func NewInstant(app cli.App, cfg InstantSpec) (Instant, error) {
 	if cfg.Execute == nil {
-		app.Notify("executor is required")
-		return
+		return nil, errExecutorIsRequired
 	}
 	if cfg.Bindings == nil {
 		cfg.Bindings = tk.DummyBindings{}
 	}
-	w := widget{
-		Config:   cfg,
-		app:      app,
-		textView: tk.NewTextView(tk.TextViewSpec{Scrollable: true}),
+	w := instant{
+		InstantSpec: cfg,
+		app:         app,
+		textView:    tk.NewTextView(tk.TextViewSpec{Scrollable: true}),
 	}
 	w.update(true)
-	app.SetAddon(&w, false)
-	app.Redraw()
+	return &w, nil
 }

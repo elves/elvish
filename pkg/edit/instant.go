@@ -2,7 +2,7 @@ package edit
 
 import (
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode/instant"
+	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
@@ -45,5 +45,13 @@ func instantStart(app cli.App, ev *eval.Evaler, bindings tk.Bindings) {
 				Interrupt: eval.ListenInterrupts})
 		return collect(), err
 	}
-	instant.Start(app, instant.Config{Bindings: bindings, Execute: execute})
+	w, err := mode.NewInstant(app,
+		mode.InstantSpec{Bindings: bindings, Execute: execute})
+	if w != nil {
+		app.SetAddon(w, false)
+		app.Redraw()
+	}
+	if err != nil {
+		app.Notify(err.Error())
+	}
 }

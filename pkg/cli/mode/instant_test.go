@@ -1,4 +1,4 @@
-package instant
+package mode
 
 import (
 	"errors"
@@ -9,9 +9,9 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-func setupStarted(t *testing.T) *Fixture {
+func setupStartedInstant(t *testing.T) *Fixture {
 	f := Setup()
-	Start(f.App, Config{
+	w, err := NewInstant(f.App, InstantSpec{
 		Execute: func(code string) ([]string, error) {
 			var err error
 			if code == "!" {
@@ -20,6 +20,11 @@ func setupStarted(t *testing.T) *Fixture {
 			return []string{"result of", code}, err
 		},
 	})
+	if err != nil {
+		panic(err)
+	}
+	f.App.SetAddon(w, false)
+	f.App.Redraw()
 	f.TestTTY(t,
 		term.DotHere, "\n",
 		" INSTANT \n", Styles,
@@ -30,8 +35,8 @@ func setupStarted(t *testing.T) *Fixture {
 	return f
 }
 
-func TestUpdate(t *testing.T) {
-	f := setupStarted(t)
+func TestInstant_ShowsResult(t *testing.T) {
+	f := setupStartedInstant(t)
 	defer f.Stop()
 
 	f.TTY.Inject(term.K('a'))
@@ -48,8 +53,8 @@ func TestUpdate(t *testing.T) {
 	f.TTY.TestBuffer(t, bufA)
 }
 
-func TestError(t *testing.T) {
-	f := setupStarted(t)
+func TestInstant_ShowsError(t *testing.T) {
+	f := setupStartedInstant(t)
 	defer f.Stop()
 
 	f.TTY.Inject(term.K('!'))
@@ -66,8 +71,10 @@ func TestError(t *testing.T) {
 	)
 }
 
-func TestStart_NoExecutor(t *testing.T) {
+func TestNewInstant_NoExecutor(t *testing.T) {
 	f := Setup()
-	Start(f.App, Config{})
-	f.TestTTYNotes(t, "executor is required")
+	_, err := NewInstant(f.App, InstantSpec{})
+	if err != errExecutorIsRequired {
+		t.Error("expect errExecutorIsRequired")
+	}
 }
