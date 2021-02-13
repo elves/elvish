@@ -62,6 +62,7 @@ func setupStartedCompletion(t *testing.T) *Fixture {
 		},
 	})
 	f.App.SetAddon(w, false)
+	f.App.Redraw()
 	f.TestTTY(t,
 		"foo\n", Styles,
 		"___",
