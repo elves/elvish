@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"src.elv.sh/pkg/cli/mode/listing"
+	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
@@ -34,12 +34,12 @@ func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, item
 	if opts.Bindings.Map != nil {
 		bindings = newMapBindings(ed, fm.Evaler, vars.FromPtr(&opts.Bindings))
 	}
-	var getItems func(string) []listing.Item
+	var getItems func(string) []mode.ListingItem
 	if fn, isFn := items.(eval.Callable); isFn {
-		getItems = func(q string) []listing.Item {
-			var items []listing.Item
+		getItems = func(q string) []mode.ListingItem {
+			var items []mode.ListingItem
 			var itemsMutex sync.Mutex
-			collect := func(item listing.Item) {
+			collect := func(item mode.ListingItem) {
 				itemsMutex.Lock()
 				defer itemsMutex.Unlock()
 				items = append(items, item)
@@ -57,7 +57,7 @@ func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, item
 					line, err := buffered.ReadString('\n')
 					if line != "" {
 						s := strutil.ChopLineEnding(line)
-						collect(listing.Item{ToAccept: s, ToShow: ui.T(s)})
+						collect(mode.ListingItem{ToAccept: s, ToShow: ui.T(s)})
 					}
 					if err != nil {
 						break
@@ -71,8 +71,8 @@ func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, item
 			return items
 		}
 	} else {
-		getItems = func(q string) []listing.Item {
-			convertedItems := []listing.Item{}
+		getItems = func(q string) []mode.ListingItem {
+			convertedItems := []mode.ListingItem{}
 			vals.Iterate(items, func(v interface{}) bool {
 				toFilter, toFilterOk := getToFilter(v)
 				item, itemOk := getListingItem(v)
@@ -86,10 +86,10 @@ func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, item
 		}
 	}
 
-	listing.Start(ed.app, listing.Config{
+	w, err := mode.NewListing(ed.app, mode.ListingSpec{
 		Bindings: bindings,
 		Caption:  opts.Caption,
-		GetItems: func(q string) ([]listing.Item, int) {
+		GetItems: func(q string) ([]mode.ListingItem, int) {
 			items := getItems(q)
 			selected := 0
 			if opts.KeepBottom {
@@ -105,6 +105,7 @@ func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, item
 		},
 		AutoAccept: opts.AutoAccept,
 	})
+	startMode(ed.app, w, err)
 }
 
 func getToFilter(v interface{}) (string, bool) {
@@ -113,7 +114,7 @@ func getToFilter(v interface{}) (string, bool) {
 	return toFilter, toFilterOk
 }
 
-func getListingItem(v interface{}) (item listing.Item, ok bool) {
+func getListingItem(v interface{}) (item mode.ListingItem, ok bool) {
 	toAcceptValue, _ := vals.Index(v, "to-accept")
 	toAccept, toAcceptOk := toAcceptValue.(string)
 	toShowValue, _ := vals.Index(v, "to-show")
@@ -122,5 +123,5 @@ func getListingItem(v interface{}) (item listing.Item, ok bool) {
 		toShow = ui.T(toShowString)
 		toShowOk = true
 	}
-	return listing.Item{ToAccept: toAccept, ToShow: toShow}, toAcceptOk && toShowOk
+	return mode.ListingItem{ToAccept: toAccept, ToShow: toShow}, toAcceptOk && toShowOk
 }

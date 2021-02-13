@@ -1,23 +1,24 @@
-package listing
+package mode
 
 import (
 	"testing"
 
+	"src.elv.sh/pkg/cli"
 	. "src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/ui"
 )
 
-func fooAndGreenBar(string) ([]Item, int) {
-	return []Item{{"foo", ui.T("foo")}, {"bar", ui.T("bar", ui.FgGreen)}}, 0
+func fooAndGreenBar(string) ([]ListingItem, int) {
+	return []ListingItem{{"foo", ui.T("foo")}, {"bar", ui.T("bar", ui.FgGreen)}}, 0
 }
 
-func TestBasicUI(t *testing.T) {
+func TestListing_BasicUI(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	Start(f.App, Config{
+	startListing(f.App, ListingSpec{
 		Caption:  " TEST ",
 		GetItems: fooAndGreenBar,
 	})
@@ -32,11 +33,11 @@ func TestBasicUI(t *testing.T) {
 	)
 }
 
-func TestAccept_ClosingListing(t *testing.T) {
+func TestListing_Accept_ClosingListing(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	Start(f.App, Config{
+	startListing(f.App, ListingSpec{
 		GetItems: fooAndGreenBar,
 		Accept: func(t string) bool {
 			f.App.CodeArea().MutateState(func(s *tk.CodeAreaState) {
@@ -50,11 +51,11 @@ func TestAccept_ClosingListing(t *testing.T) {
 	f.TestTTY(t, "foo", term.DotHere)
 }
 
-func TestAccept_NotClosingListing(t *testing.T) {
+func TestListing_Accept_NotClosingListing(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	Start(f.App, Config{
+	startListing(f.App, ListingSpec{
 		GetItems: fooAndGreenBar,
 		Accept: func(t string) bool {
 			f.App.CodeArea().MutateState(func(s *tk.CodeAreaState) {
@@ -76,28 +77,28 @@ func TestAccept_NotClosingListing(t *testing.T) {
 	)
 }
 
-func TestAccept_DefaultNop(t *testing.T) {
+func TestListing_Accept_DefaultNop(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	Start(f.App, Config{GetItems: fooAndGreenBar})
+	startListing(f.App, ListingSpec{GetItems: fooAndGreenBar})
 	f.TTY.Inject(term.K('\n'))
 	f.TestTTY(t /* nothing */)
 }
 
-func TestAutoAccept(t *testing.T) {
+func TestListing_AutoAccept(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	Start(f.App, Config{
-		GetItems: func(query string) ([]Item, int) {
+	startListing(f.App, ListingSpec{
+		GetItems: func(query string) ([]ListingItem, int) {
 			if query == "" {
 				// Return two items initially.
-				return []Item{
+				return []ListingItem{
 					{"foo", ui.T("foo")}, {"bar", ui.T("bar")},
 				}, 0
 			}
-			return []Item{{"bar", ui.T("bar")}}, 0
+			return []ListingItem{{"bar", ui.T("bar")}}, 0
 		},
 		Accept: func(t string) bool {
 			f.App.CodeArea().MutateState(func(s *tk.CodeAreaState) {
@@ -111,10 +112,17 @@ func TestAutoAccept(t *testing.T) {
 	f.TestTTY(t, "bar", term.DotHere)
 }
 
-func TestAbortWhenGetItemsUnspecified(t *testing.T) {
+func TestNewListing_NoGetItems(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	Start(f.App, Config{})
-	f.TestTTYNotes(t, "internal error: GetItems must be specified")
+	_, err := NewListing(f.App, ListingSpec{})
+	if err != errGetItemsMustBeSpecified {
+    	t.Error("expect errGetItemsMustBeSpecified")
+	}
+}
+
+func startListing(app cli.App, spec ListingSpec) {
+	w, err := NewListing(app, spec)
+	startMode(app, w, err)
 }

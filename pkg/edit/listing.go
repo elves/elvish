@@ -278,6 +278,7 @@ func (d dirStore) Getwd() (string, error) {
 func startMode(app cli.App, w tk.Widget, err error) {
 	if w != nil {
 		app.SetAddon(w, false)
+		app.Redraw()
 	}
 	if err != nil {
 		app.Notify(err.Error())
