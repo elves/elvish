@@ -20,11 +20,7 @@ func setupStartedInstant(t *testing.T) *Fixture {
 			return []string{"result of", code}, err
 		},
 	})
-	if err != nil {
-		panic(err)
-	}
-	f.App.SetAddon(w, false)
-	f.App.Redraw()
+	startMode(f.App, w, err)
 	f.TestTTY(t,
 		term.DotHere, "\n",
 		" INSTANT \n", Styles,

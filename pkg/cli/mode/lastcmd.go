@@ -1,6 +1,4 @@
-// Package lastcmd implements an addon that supports inserting the last command
-// or words from it.
-package lastcmd
+package mode
 
 import (
 	"fmt"
@@ -9,40 +7,43 @@ import (
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/histutil"
-	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/ui"
 )
 
-// Config is the configuration for starting lastcmd.
-type Config struct {
+// Lastcmd is a mode for inspecting the last command, and inserting part of all
+// of it. It is based on the ComboBox widget.
+type Lastcmd interface {
+	tk.ComboBox
+}
+
+// LastcmdSpec specifies the configuration for the lastcmd mode.
+type LastcmdSpec struct {
 	// Key bindings.
 	Bindings tk.Bindings
 	// Store provides the source for the last command.
-	Store Store
+	Store LastcmdStore
 	// Wordifier breaks a command into words.
 	Wordifier func(string) []string
 }
 
-// Store wraps the LastCmd method. It is a subset of histutil.Store.
-type Store interface {
+// LastcmdStore is a subset of histutil.Store used in lastcmd mode.
+type LastcmdStore interface {
 	Cursor(prefix string) histutil.Cursor
 }
 
-var _ = Store(histutil.Store(nil))
+var _ = LastcmdStore(histutil.Store(nil))
 
-// Start starts lastcmd function.
-func Start(app cli.App, cfg Config) {
+// NewLastcmd creates a new lastcmd mode.
+func NewLastcmd(app cli.App, cfg LastcmdSpec) (Lastcmd, error) {
 	if cfg.Store == nil {
-		app.Notify("no history store")
-		return
+		return nil, errNoHistoryStore
 	}
 	c := cfg.Store.Cursor("")
 	c.Prev()
 	cmd, err := c.Get()
 	if err != nil {
-		app.Notify("db error: " + err.Error())
-		return
+		return nil, fmt.Errorf("db error: %v", err)
 	}
 	wordifier := cfg.Wordifier
 	if wordifier == nil {
@@ -50,10 +51,10 @@ func Start(app cli.App, cfg Config) {
 	}
 	cmdText := cmd.Text
 	words := wordifier(cmdText)
-	entries := make([]entry, len(words)+1)
-	entries[0] = entry{content: cmdText}
+	entries := make([]lastcmdEntry, len(words)+1)
+	entries[0] = lastcmdEntry{content: cmdText}
 	for i, word := range words {
-		entries[i+1] = entry{strconv.Itoa(i), strconv.Itoa(i - len(words)), word}
+		entries[i+1] = lastcmdEntry{strconv.Itoa(i), strconv.Itoa(i - len(words)), word}
 	}
 
 	accept := func(text string) {
@@ -63,15 +64,15 @@ func Start(app cli.App, cfg Config) {
 		app.SetAddon(nil, false)
 	}
 	w := tk.NewComboBox(tk.ComboBoxSpec{
-		CodeArea: tk.CodeAreaSpec{Prompt: mode.ModePrompt(" LASTCMD ", true)},
+		CodeArea: tk.CodeAreaSpec{Prompt: ModePrompt(" LASTCMD ", true)},
 		ListBox: tk.ListBoxSpec{
 			Bindings: cfg.Bindings,
 			OnAccept: func(it tk.Items, i int) {
-				accept(it.(items).entries[i].content)
+				accept(it.(lastcmdItems).entries[i].content)
 			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
-			items := filter(entries, p)
+			items := filterLastcmdItems(entries, p)
 			if len(items.entries) == 1 {
 				accept(items.entries[0].content)
 			} else {
@@ -79,26 +80,25 @@ func Start(app cli.App, cfg Config) {
 			}
 		},
 	})
-	app.SetAddon(w, false)
-	app.Redraw()
+	return w, nil
 }
 
-type items struct {
+type lastcmdItems struct {
 	negFilter bool
-	entries   []entry
+	entries   []lastcmdEntry
 }
 
-type entry struct {
+type lastcmdEntry struct {
 	posIndex string
 	negIndex string
 	content  string
 }
 
-func filter(allEntries []entry, p string) items {
+func filterLastcmdItems(allEntries []lastcmdEntry, p string) lastcmdItems {
 	if p == "" {
-		return items{false, allEntries}
+		return lastcmdItems{false, allEntries}
 	}
-	var entries []entry
+	var entries []lastcmdEntry
 	negFilter := strings.HasPrefix(p, "-")
 	for _, entry := range allEntries {
 		if (negFilter && strings.HasPrefix(entry.negIndex, p)) ||
@@ -106,10 +106,10 @@ func filter(allEntries []entry, p string) items {
 			entries = append(entries, entry)
 		}
 	}
-	return items{negFilter, entries}
+	return lastcmdItems{negFilter, entries}
 }
 
-func (it items) Show(i int) ui.Text {
+func (it lastcmdItems) Show(i int) ui.Text {
 	index := ""
 	entry := it.entries[i]
 	if it.negFilter {
@@ -123,4 +123,4 @@ func (it items) Show(i int) ui.Text {
 	return ui.T(fmt.Sprintf("%3s %s", index, entry.content))
 }
 
-func (it items) Len() int { return len(it.entries) }
+func (it lastcmdItems) Len() int { return len(it.entries) }

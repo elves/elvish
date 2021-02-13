@@ -7,7 +7,6 @@ import (
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/histutil"
 	"src.elv.sh/pkg/cli/mode"
-	"src.elv.sh/pkg/cli/mode/lastcmd"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
@@ -87,8 +86,9 @@ func initLastcmd(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBi
 			"binding": bindingVar,
 		}.AddGoFn("<edit:lastcmd>", "start", func() {
 			// TODO: Specify wordifier
-			lastcmd.Start(ed.app, lastcmd.Config{
+			w, err := mode.NewLastcmd(ed.app, mode.LastcmdSpec{
 				Bindings: bindings, Store: histStore})
+			startMode(ed.app, w, err)
 		}).Ns())
 }
 

@@ -1,10 +1,10 @@
-package lastcmd
+package mode
 
 import (
-	"errors"
 	"strings"
 	"testing"
 
+	"src.elv.sh/pkg/cli"
 	. "src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/histutil"
 	"src.elv.sh/pkg/cli/term"
@@ -13,17 +13,17 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-var errMock = errors.New("mock error")
-
-func TestStart_NoStore(t *testing.T) {
+func TestNewLastcmd_NoStore(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	Start(f.App, Config{})
-	f.TestTTYNotes(t, "no history store")
+	_, err := NewLastcmd(f.App, LastcmdSpec{})
+	if err != errNoHistoryStore {
+		t.Error("expect errNoHistoryStore")
+	}
 }
 
-func TestStart_StoreError(t *testing.T) {
+func TestNewLastcmd_StoreError(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
@@ -34,16 +34,18 @@ func TestStart_StoreError(t *testing.T) {
 	}
 	db.SetOneOffError(errMock)
 
-	Start(f.App, Config{Store: store})
-	f.TestTTYNotes(t, "db error: mock error")
+	_, err = NewLastcmd(f.App, LastcmdSpec{Store: store})
+	if err.Error() != "db error: mock error" {
+		t.Error("expect db error")
+	}
 }
 
-func TestStart_OK(t *testing.T) {
+func TestLastcmd(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
 	st := histutil.NewMemStore("foo,bar,baz")
-	Start(f.App, Config{
+	startLastcmd(f.App, LastcmdSpec{
 		Store: st,
 		Wordifier: func(cmd string) []string {
 			return strings.Split(cmd, ",")
@@ -82,7 +84,7 @@ func TestStart_OK(t *testing.T) {
 	f.App.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 		*s = tk.CodeAreaState{}
 	})
-	Start(f.App, Config{
+	startLastcmd(f.App, LastcmdSpec{
 		Store: st,
 		Wordifier: func(cmd string) []string {
 			return strings.Split(cmd, ",")
@@ -96,7 +98,12 @@ func TestStart_OK(t *testing.T) {
 		*s = tk.CodeAreaState{}
 	})
 	st.AddCmd(store.Cmd{Text: "foo bar baz", Seq: 1})
-	Start(f.App, Config{Store: st})
+	startLastcmd(f.App, LastcmdSpec{Store: st})
 	f.TTY.Inject(term.K('0'))
 	f.TestTTY(t, "foo", term.DotHere)
+}
+
+func startLastcmd(app cli.App, spec LastcmdSpec) {
+	w, err := NewLastcmd(app, spec)
+	startMode(app, w, err)
 }

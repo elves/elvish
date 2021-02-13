@@ -1,7 +1,6 @@
 package mode
 
 import (
-	"errors"
 	"testing"
 
 	"src.elv.sh/pkg/cli"
@@ -23,8 +22,6 @@ func TestNewHistlist_NoStore(t *testing.T) {
 }
 
 type faultyStore struct{}
-
-var errMock = errors.New("mock error")
 
 func (s faultyStore) AllCmds() ([]store.Cmd, error) { return nil, errMock }
 
@@ -146,11 +143,5 @@ func TestHistlist_CaseSensitive(t *testing.T) {
 
 func startHistlist(app cli.App, spec HistlistSpec) {
 	w, err := NewHistlist(app, spec)
-	if w != nil {
-		app.SetAddon(w, false)
-		app.Redraw()
-	}
-	if err != nil {
-		app.Notify(err.Error())
-	}
+	startMode(app, w, err)
 }

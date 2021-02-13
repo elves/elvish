@@ -251,11 +251,5 @@ func fixPath(path string) string {
 
 func startLocation(app cli.App, spec LocationSpec) {
 	w, err := NewLocation(app, spec)
-	if w != nil {
-		app.SetAddon(w, false)
-		app.Redraw()
-	}
-	if err != nil {
-		app.Notify(err.Error())
-	}
+	startMode(app, w, err)
 }
