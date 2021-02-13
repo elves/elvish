@@ -1,24 +1,26 @@
-// Package histlist implements the history listing addon.
-package histlist
+package mode
 
 import (
 	"fmt"
 	"strings"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/histutil"
-	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/store"
 	"src.elv.sh/pkg/ui"
 )
 
-// Config contains configurations to start history listing.
-type Config struct {
+// Histlist is a mode for browsing history and selecting entries to insert.
+type Histlist interface {
+	tk.Widget
+}
+
+// HistlistSpec specifies the configuration for the histlist mode.
+type HistlistSpec struct {
 	// Key bindings.
 	Bindings tk.Bindings
-	// Store provides the source of all commands.
-	Store Store
+	// AllCmds is called to retrieve all commands.
+	AllCmds func() ([]store.Cmd, error)
 	// Dedup is called to determine whether deduplication should be done.
 	// Defaults to true if unset.
 	Dedup func() bool
@@ -27,51 +29,43 @@ type Config struct {
 	CaseSensitive func() bool
 }
 
-// Store wraps the AllCmds method. It is a subset of histutil.Store.
-type Store interface {
-	AllCmds() ([]store.Cmd, error)
-}
-
-var _ = Store(histutil.Store(nil))
-
-// Start starts history listing.
-func Start(app cli.App, cfg Config) {
-	if cfg.Store == nil {
-		app.Notify("no history store")
-		return
+// NewHistlist creates a new histlist mode.
+func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
+	if spec.AllCmds == nil {
+		return nil, errNoHistoryStore
 	}
-	if cfg.Dedup == nil {
-		cfg.Dedup = func() bool { return true }
+	if spec.Dedup == nil {
+		spec.Dedup = func() bool { return true }
 	}
-	if cfg.CaseSensitive == nil {
-		cfg.CaseSensitive = func() bool { return true }
+	if spec.CaseSensitive == nil {
+		spec.CaseSensitive = func() bool { return true }
 	}
 
-	cmds, err := cfg.Store.AllCmds()
+	cmds, err := spec.AllCmds()
 	if err != nil {
-		app.Notify("db error: " + err.Error())
+		return nil, fmt.Errorf("db error: %v", err.Error())
 	}
 	last := map[string]int{}
 	for i, cmd := range cmds {
 		last[cmd.Text] = i
 	}
-	cmdItems := items{cmds, last}
+	cmdItems := histlistItems{cmds, last}
 
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{Prompt: func() ui.Text {
 			content := " HISTORY "
-			if cfg.Dedup() {
+			if spec.Dedup() {
 				content += "(dedup on) "
 			}
-			if !cfg.CaseSensitive() {
+			if !spec.CaseSensitive() {
 				content += "(case-insensitive) "
 			}
-			return mode.ModeLine(content, true)
+			return ModeLine(content, true)
 		}},
 		ListBox: tk.ListBoxSpec{
-			Bindings: cfg.Bindings,
+			Bindings: spec.Bindings,
 			OnAccept: func(it tk.Items, i int) {
-				text := it.(items).entries[i].Text
+				text := it.(histlistItems).entries[i].Text
 				app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 					buf := &s.Buffer
 					if buf.Content == "" {
@@ -84,21 +78,19 @@ func Start(app cli.App, cfg Config) {
 			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
-			it := cmdItems.filter(p, cfg.Dedup(), cfg.CaseSensitive())
+			it := cmdItems.filter(p, spec.Dedup(), spec.CaseSensitive())
 			w.ListBox().Reset(it, it.Len()-1)
 		},
 	})
-
-	app.SetAddon(w, false)
-	app.Redraw()
+	return w, nil
 }
 
-type items struct {
+type histlistItems struct {
 	entries []store.Cmd
 	last    map[string]int
 }
 
-func (it items) filter(p string, dedup, caseSensitive bool) items {
+func (it histlistItems) filter(p string, dedup, caseSensitive bool) histlistItems {
 	if p == "" && !dedup {
 		return it
 	}
@@ -118,13 +110,13 @@ func (it items) filter(p string, dedup, caseSensitive bool) items {
 			filtered = append(filtered, entry)
 		}
 	}
-	return items{filtered, nil}
+	return histlistItems{filtered, nil}
 }
 
-func (it items) Show(i int) ui.Text {
+func (it histlistItems) Show(i int) ui.Text {
 	entry := it.entries[i]
 	// TODO: The alignment of the index works up to 10000 entries.
 	return ui.T(fmt.Sprintf("%4d %s", entry.Seq, entry.Text))
 }
 
-func (it items) Len() int { return len(it.entries) }
+func (it histlistItems) Len() int { return len(it.entries) }

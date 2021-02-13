@@ -6,7 +6,7 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/histutil"
-	"src.elv.sh/pkg/cli/mode/histlist"
+	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/mode/lastcmd"
 	"src.elv.sh/pkg/cli/mode/location"
 	"src.elv.sh/pkg/cli/tk"
@@ -55,8 +55,9 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 			"binding": bindingVar,
 		}.AddGoFns("<edit:histlist>", map[string]interface{}{
 			"start": func() {
-				histlist.Start(ed.app, histlist.Config{
-					Bindings: bindings, Store: histStore,
+				w, err := mode.NewHistlist(ed.app, mode.HistlistSpec{
+					Bindings: bindings,
+					AllCmds:  histStore.AllCmds,
 					CaseSensitive: func() bool {
 						return caseSensitive.Get().(bool)
 					},
@@ -64,6 +65,7 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 						return dedup.Get().(bool)
 					},
 				})
+				startMode(ed.app, w, err)
 			},
 			"toggle-case-sensitivity": func() {
 				caseSensitive.Set(!caseSensitive.Get().(bool))
@@ -271,4 +273,13 @@ func (d dirStore) Dirs(blacklist map[string]struct{}) ([]store.Dir, error) {
 
 func (d dirStore) Getwd() (string, error) {
 	return os.Getwd()
+}
+
+func startMode(app cli.App, w tk.Widget, err error) {
+	if w != nil {
+		app.SetAddon(w, false)
+	}
+	if err != nil {
+		app.Notify(err.Error())
+	}
 }
