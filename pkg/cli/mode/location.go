@@ -1,8 +1,7 @@
-// Package location implements an addon that supports viewing location history
-// and changing to a selected directory.
-package location
+package mode
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -11,19 +10,24 @@ import (
 	"strings"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/store"
 	"src.elv.sh/pkg/ui"
 )
 
-// Config is the configuration to start the location history feature.
-type Config struct {
+// Location is a mode for viewing location history and changing to a selected
+// directory.
+type Location interface {
+	tk.Widget
+}
+
+// LocationSpec is the configuration to start the location history feature.
+type LocationSpec struct {
 	// Key bindings.
 	Bindings tk.Bindings
 	// Store provides the directory history and the function to change directory.
-	Store Store
+	Store LocationStore
 	// IteratePinned specifies pinned directories by calling the given function
 	// with all pinned directories.
 	IteratePinned func(func(string))
@@ -31,11 +35,11 @@ type Config struct {
 	// with all hidden directories.
 	IterateHidden func(func(string))
 	// IterateWorksapce specifies workspace configuration.
-	IterateWorkspaces WorkspaceIterator
+	IterateWorkspaces LocationWSIterator
 }
 
-// Store defines the interface for interacting with the directory history.
-type Store interface {
+// LocationStore defines the interface for interacting with the directory history.
+type LocationStore interface {
 	Dirs(blacklist map[string]struct{}) ([]store.Dir, error)
 	Chdir(dir string) error
 	Getwd() (string, error)
@@ -44,11 +48,12 @@ type Store interface {
 // A special score for pinned directories.
 var pinnedScore = math.Inf(1)
 
-// Start starts the directory history feature.
-func Start(app cli.App, cfg Config) {
+var errNoDirectoryHistoryStore = errors.New("no directory history store")
+
+// NewLocation creates a new location mode.
+func NewLocation(app cli.App, cfg LocationSpec) (Location, error) {
 	if cfg.Store == nil {
-		app.Notify("no dir history store")
-		return
+		return nil, errNoDirectoryHistoryStore
 	}
 
 	dirs := []store.Dir{}
@@ -73,10 +78,7 @@ func Start(app cli.App, cfg Config) {
 	}
 	storedDirs, err := cfg.Store.Dirs(blacklist)
 	if err != nil {
-		app.Notify("db error: " + err.Error())
-		if len(dirs) == 0 {
-			return
-		}
+		return nil, fmt.Errorf("db error: %v", err)
 	}
 	for _, dir := range storedDirs {
 		if filepath.IsAbs(dir.Path) {
@@ -86,16 +88,16 @@ func Start(app cli.App, cfg Config) {
 		}
 	}
 
-	l := list{dirs}
+	l := locationList{dirs}
 
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{
-			Prompt: mode.ModePrompt(" LOCATION ", true),
+			Prompt: ModePrompt(" LOCATION ", true),
 		},
 		ListBox: tk.ListBoxSpec{
 			Bindings: cfg.Bindings,
 			OnAccept: func(it tk.Items, i int) {
-				path := it.(list).dirs[i].Path
+				path := it.(locationList).dirs[i].Path
 				if strings.HasPrefix(path, wsKind) {
 					path = wsRoot + path[len(wsKind):]
 				}
@@ -110,8 +112,7 @@ func Start(app cli.App, cfg Config) {
 			w.ListBox().Reset(l.filter(p), 0)
 		},
 	})
-	app.SetAddon(w, false)
-	app.Redraw()
+	return w, nil
 }
 
 func hasPathPrefix(path, prefix string) bool {
@@ -119,15 +120,15 @@ func hasPathPrefix(path, prefix string) bool {
 		strings.HasPrefix(path, prefix+string(filepath.Separator))
 }
 
-// WorkspaceIterator is a function that iterates all workspaces by calling
+// LocationWSIterator is a function that iterates all workspaces by calling
 // the passed function with the name and pattern of each kind of workspace.
 // Iteration should stop when the called function returns false.
-type WorkspaceIterator func(func(kind, pattern string) bool)
+type LocationWSIterator func(func(kind, pattern string) bool)
 
 // Parse returns whether the path matches any kind of workspace. If there is
 // a match, it returns the kind of the workspace and the root. It there is no
 // match, it returns "", "".
-func (ws WorkspaceIterator) Parse(path string) (kind, root string) {
+func (ws LocationWSIterator) Parse(path string) (kind, root string) {
 	var foundKind, foundRoot string
 	ws(func(kind, pattern string) bool {
 		if !strings.HasPrefix(pattern, "^") {
@@ -147,22 +148,22 @@ func (ws WorkspaceIterator) Parse(path string) (kind, root string) {
 	return foundKind, foundRoot
 }
 
-type list struct {
+type locationList struct {
 	dirs []store.Dir
 }
 
-func (l list) filter(p string) list {
+func (l locationList) filter(p string) locationList {
 	if p == "" {
 		return l
 	}
-	re := makeRegexpForPattern(p)
+	re := locationRegexp(p)
 	var filteredDirs []store.Dir
 	for _, dir := range l.dirs {
 		if re.MatchString(fsutil.TildeAbbr(dir.Path)) {
 			filteredDirs = append(filteredDirs, dir)
 		}
 	}
-	return list{filteredDirs}
+	return locationList{filteredDirs}
 }
 
 var (
@@ -170,7 +171,7 @@ var (
 	emptyRe       = regexp.MustCompile("")
 )
 
-func makeRegexpForPattern(p string) *regexp.Regexp {
+func locationRegexp(p string) *regexp.Regexp {
 	var b strings.Builder
 	b.WriteString("(?i).*") // Ignore case, unanchored
 	for i, seg := range strings.Split(p, string(os.PathSeparator)) {
@@ -188,12 +189,12 @@ func makeRegexpForPattern(p string) *regexp.Regexp {
 	return re
 }
 
-func (l list) Show(i int) ui.Text {
+func (l locationList) Show(i int) ui.Text {
 	return ui.T(fmt.Sprintf("%s %s",
 		showScore(l.dirs[i].Score), fsutil.TildeAbbr(l.dirs[i].Path)))
 }
 
-func (l list) Len() int { return len(l.dirs) }
+func (l locationList) Len() int { return len(l.dirs) }
 
 func showScore(f float64) string {
 	if f == pinnedScore {

@@ -8,7 +8,6 @@ import (
 	"src.elv.sh/pkg/cli/histutil"
 	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/mode/lastcmd"
-	"src.elv.sh/pkg/cli/mode/location"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
@@ -100,7 +99,7 @@ func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar 
 	workspacesVar := newMapVar(vals.EmptyMap)
 
 	bindings := newMapBindings(ed, ev, bindingVar, commonBindingVar)
-	workspaceIterator := location.WorkspaceIterator(
+	workspaceIterator := mode.LocationWSIterator(
 		adaptToIterateStringPair(workspacesVar))
 
 	nb.AddNs("location",
@@ -110,12 +109,13 @@ func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar 
 			"pinned":     pinnedVar,
 			"workspaces": workspacesVar,
 		}.AddGoFn("<edit:location>", "start", func() {
-			location.Start(ed.app, location.Config{
+			w, err := mode.NewLocation(ed.app, mode.LocationSpec{
 				Bindings: bindings, Store: dirStore{ev, st},
 				IteratePinned:     adaptToIterateString(pinnedVar),
 				IterateHidden:     adaptToIterateString(hiddenVar),
 				IterateWorkspaces: workspaceIterator,
 			})
+			startMode(ed.app, w, err)
 		}).Ns())
 	ev.AddAfterChdir(func(string) {
 		wd, err := os.Getwd()
