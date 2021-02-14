@@ -19,6 +19,7 @@ var testDir = testutil.Dir{
 		},
 	},
 	"s1": testutil.Symlink{filepath.Join("d1", "d2")},
+	"s2": testutil.Symlink{"invalid"},
 }
 
 func TestPath(t *testing.T) {
@@ -47,12 +48,20 @@ func TestPath(t *testing.T) {
 		That(`path:ext a/b/s`).Puts(""),
 		That(`path:is-abs a/b/s`).Puts(false),
 		That(`path:is-abs `+absPath).Puts(true),
+		// We use more comprehensive tests of `path:eval-symlinks` because we're paranoid and there
+		// is no error case that is special-cased to not be an error.
 		That(`path:eval-symlinks d1/d2`).Puts(filepath.Join("d1", "d2")),
 		That(`path:eval-symlinks d1/d2/f`).Puts(filepath.Join("d1", "d2", "f")),
 		That(`path:eval-symlinks s1`).Puts(filepath.Join("d1", "d2")),
 		That(`path:eval-symlinks d1/f`).Puts(filepath.Join("d1", "d2", "f")),
 		That(`path:eval-symlinks s1/g`).Puts(filepath.Join("d1", "d2", "f")),
 		That(`path:eval-symlinks s1/empty`).Puts(filepath.Join("d1", "d2", "empty")),
+		// Regression test for https://b.elv.sh/1241. An invalid path should silently return the
+		// original path. Because the original path is returned unmodified we don't use
+		// filepath.Join() to construct the expected output.
+		That(`path:eval-symlinks invalid/anything`).Puts("invalid/anything"),
+		That(`path:eval-symlinks d1/does-not-exist`).Puts("d1/does-not-exist"),
+		That(`path:eval-symlinks s1/does-not-matter`).Puts("s1/does-not-matter"),
 
 		// Elvish `path:` module functions that are not trivial wrappers around a Go stdlib function
 		// should have comprehensive tests below this comment.

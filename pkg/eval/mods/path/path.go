@@ -2,8 +2,10 @@
 package path
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"syscall"
 
 	"src.elv.sh/pkg/eval"
 )
@@ -17,7 +19,7 @@ var fns = map[string]interface{}{
 	"clean":         filepath.Clean,
 	"dir":           filepath.Dir,
 	"ext":           filepath.Ext,
-	"eval-symlinks": filepath.EvalSymlinks,
+	"eval-symlinks": evalSymlinks,
 	"is-abs":        filepath.IsAbs,
 	"is-dir":        isDir,
 	"is-regular":    isRegular,
@@ -125,9 +127,31 @@ var fns = map[string]interface{}{
 //
 // Outputs `$path` after resolving any symbolic links. If `$path` is relative the result will be
 // relative to the current directory, unless one of the components is an absolute symbolic link.
-// This function calls `path:clean` on the result before outputing it. This is analogous to the
-// external `realpath` or `readlink` command found on many systems. See the [Go
-// documentation](https://pkg.go.dev/path/filepath#EvalSymlinks) for more details.
+// This function calls `path:clean` on the result before outputing it. If the path is invalid
+// (perhaps because the target of a symlink does not exist) the original path is returned without
+// reporting an error. This is analogous to the external `realpath` or `readlink` command found on
+// many systems. See the [Go documentation](https://pkg.go.dev/path/filepath#EvalSymlinks) for more
+// details.
+
+func evalSymlinks(path string) (string, error) {
+	abspath, err := filepath.EvalSymlinks(path)
+	if err == nil {
+		return abspath, nil
+	}
+
+	// This error handling is fragile and should probably be abstracted into a platform dependent
+	// implementation. The intent is to be compatible with the external `realpath` command by
+	// ignoring that a specific target does not exist by simply returning the original path without
+	// masking other errors.
+	switch err := err.(type) {
+	case *os.PathError:
+		// UNIX uses "lstat" while Windows uses "CreateFile".
+		if (err.Op == "lstat" || err.Op == "CreateFile") && errors.Is(err.Err, syscall.ENOENT) {
+			return path, nil
+		}
+	}
+	return path, err
+}
 
 //elvdoc:fn is-dir
 //
