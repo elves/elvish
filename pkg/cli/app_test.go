@@ -13,6 +13,7 @@ import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/sys"
+	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -377,6 +378,57 @@ func TestReadCode_RespectsAddonFocusMethod(t *testing.T) {
 
 // Misc features.
 
+func TestReadCode_UsesGlobalBindingsWithCodeAreaTarget(t *testing.T) {
+	testGlobalBindings(t, nil)
+}
+
+func TestReadCode_UsesGlobalBindingsWithAddonTarget(t *testing.T) {
+	testGlobalBindings(t, tk.Empty{})
+}
+
+func testGlobalBindings(t *testing.T, addon tk.Widget) {
+	gotWidgetCh := make(chan tk.Widget, 1)
+	f := Setup(WithSpec(func(spec *AppSpec) {
+		spec.GlobalBindings = tk.MapBindings{
+			term.K('X', ui.Ctrl): func(w tk.Widget) {
+				gotWidgetCh <- w
+			},
+		}
+		spec.State.Addon = addon
+	}))
+	defer f.Stop()
+
+	f.TTY.Inject(term.K('X', ui.Ctrl))
+	select {
+	case gotWidget := <-gotWidgetCh:
+		if addon != nil {
+			if gotWidget != addon {
+				t.Error("global binding not called with addon")
+			}
+		} else {
+			if gotWidget != f.App.CodeArea() {
+				t.Error("global binding not called with code area")
+			}
+		}
+	case <-time.After(testutil.ScaledMs(100)):
+		t.Error("global binding not called")
+	}
+}
+
+func TestReadCode_DoesNotUseGlobalBindingsIfHandledByWidget(t *testing.T) {
+	f := Setup(WithSpec(func(spec *AppSpec) {
+		spec.GlobalBindings = tk.MapBindings{
+			term.K('a'): func(w tk.Widget) {},
+		}
+	}))
+	defer f.Stop()
+
+	f.TTY.Inject(term.K('a'))
+
+	// Still handled by code area instead of global binding
+	f.TestTTY(t, "a", term.DotHere)
+}
+
 func TestReadCode_TrimsBufferToMaxHeight(t *testing.T) {
 	f := Setup(func(spec *AppSpec, tty TTYCtrl) {
 		spec.MaxHeight = func() int { return 2 }
@@ -398,7 +450,7 @@ func TestReadCode_ShowNotes(t *testing.T) {
 	inHandler := make(chan struct{})
 	unblock := make(chan struct{})
 	f := Setup(WithSpec(func(spec *AppSpec) {
-		spec.Bindings = tk.MapBindings{
+		spec.CodeAreaBindings = tk.MapBindings{
 			term.K('a'): func(tk.Widget) {
 				inHandler <- struct{}{}
 				<-unblock

@@ -112,7 +112,7 @@ func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.N
 	appSpec.SmallWordAbbreviations = makeMapIterator(SmallWordAbbrVar)
 
 	bindingVar := newBindingVar(emptyBindingsMap)
-	appSpec.Bindings = newMapBindings(nt, ev, bindingVar)
+	appSpec.CodeAreaBindings = newMapBindings(nt, ev, bindingVar)
 
 	quotePaste := newBoolVar(false)
 	appSpec.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }

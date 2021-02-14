@@ -62,6 +62,7 @@ type app struct {
 	Highlighter       Highlighter
 	Prompt            Prompt
 	RPrompt           Prompt
+	GlobalBindings    tk.Bindings
 
 	StateMutex sync.RWMutex
 	State      State
@@ -95,6 +96,7 @@ func NewApp(spec AppSpec) App {
 		Highlighter:       spec.Highlighter,
 		Prompt:            spec.Prompt,
 		RPrompt:           spec.RPrompt,
+		GlobalBindings:    spec.GlobalBindings,
 		State:             spec.State,
 	}
 	if a.TTY == nil {
@@ -115,11 +117,14 @@ func NewApp(spec AppSpec) App {
 	if a.RPrompt == nil {
 		a.RPrompt = NewConstPrompt(nil)
 	}
+	if a.GlobalBindings == nil {
+		a.GlobalBindings = tk.DummyBindings{}
+	}
 	lp.HandleCb(a.handle)
 	lp.RedrawCb(a.redraw)
 
 	a.codeArea = tk.NewCodeArea(tk.CodeAreaSpec{
-		Bindings:      spec.Bindings,
+		Bindings:      spec.CodeAreaBindings,
 		Highlighter:   a.Highlighter.Get,
 		Prompt:        a.Prompt.Get,
 		RPrompt:       a.RPrompt.Get,
@@ -182,10 +187,15 @@ func (a *app) handle(e event) {
 			a.RedrawFull()
 		}
 	case term.Event:
+		var target tk.Widget
 		if listing := a.CopyState().Addon; listing != nil {
-			listing.Handle(e)
+			target = listing
 		} else {
-			a.codeArea.Handle(e)
+			target = a.codeArea
+		}
+		handled := target.Handle(e)
+		if !handled {
+			a.GlobalBindings.Handle(target, e)
 		}
 		if !a.loop.HasReturned() {
 			a.triggerPrompts(false)

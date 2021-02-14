@@ -17,9 +17,10 @@ type AppSpec struct {
 	Prompt      Prompt
 	RPrompt     Prompt
 
-	Bindings      tk.Bindings
-	Abbreviations func(f func(abbr, full string))
-	QuotePaste    func() bool
+	GlobalBindings   tk.Bindings
+	CodeAreaBindings tk.Bindings
+	Abbreviations    func(f func(abbr, full string))
+	QuotePaste       func() bool
 
 	SmallWordAbbreviations func(f func(abbr, full string))
 

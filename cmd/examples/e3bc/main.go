@@ -38,7 +38,7 @@ func main() {
 	app = cli.NewApp(cli.AppSpec{
 		Prompt:      cli.NewConstPrompt(ui.T("bc> ")),
 		Highlighter: highlighter{},
-		Bindings: tk.MapBindings{
+		CodeAreaBindings: tk.MapBindings{
 			term.K('D', ui.Ctrl): func(tk.Widget) { app.CommitEOF() },
 		},
 	})
