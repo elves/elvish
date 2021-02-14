@@ -2,6 +2,7 @@ package edit
 
 import (
 	"os"
+	"strings"
 
 	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/cli"
@@ -46,7 +47,6 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 	bindingVar := newBindingVar(emptyBindingsMap)
 	bindings := newMapBindings(ed, ev, bindingVar, commonBindingVar)
 	dedup := newBoolVar(true)
-	caseSensitive := newBoolVar(true)
 	nb.AddNs("histlist",
 		eval.NsBuilder{
 			"binding": bindingVar,
@@ -55,19 +55,25 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 				w, err := mode.NewHistlist(ed.app, mode.HistlistSpec{
 					Bindings: bindings,
 					AllCmds:  histStore.AllCmds,
-					CaseSensitive: func() bool {
-						return caseSensitive.Get().(bool)
-					},
 					Dedup: func() bool {
 						return dedup.Get().(bool)
 					},
+					MakeFilter: func(f string) func(string) bool {
+						if f == strings.ToLower(f) {
+							// f is entirely lower case, do case-insensitive
+							// filtering.
+							return func(s string) bool {
+								return strings.Contains(strings.ToLower(s), f)
+							}
+						}
+						// f is not entirely lower case, do case-sensitive
+						// filtering.
+						return func(s string) bool {
+							return strings.Contains(s, f)
+						}
+					},
 				})
 				startMode(ed.app, w, err)
-			},
-			"toggle-case-sensitivity": func() {
-				caseSensitive.Set(!caseSensitive.Get().(bool))
-				listingRefilter(ed.app)
-				ed.app.Redraw()
 			},
 			"toggle-dedup": func() {
 				dedup.Set(!dedup.Get().(bool))

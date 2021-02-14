@@ -25,9 +25,9 @@ type HistlistSpec struct {
 	// Dedup is called to determine whether deduplication should be done.
 	// Defaults to true if unset.
 	Dedup func() bool
-	// CaseSensitive is called to determine whether the filter should be
-	// case-sensitive. Defaults to true if unset.
-	CaseSensitive func() bool
+	// MakeFilter is called with the filter content to get a predicate that
+	// filters command texts. If unset, the predicate performs substring match.
+	MakeFilter func(string) func(string) bool
 }
 
 // NewHistlist creates a new histlist mode.
@@ -38,8 +38,10 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 	if spec.Dedup == nil {
 		spec.Dedup = func() bool { return true }
 	}
-	if spec.CaseSensitive == nil {
-		spec.CaseSensitive = func() bool { return true }
+	if spec.MakeFilter == nil {
+		spec.MakeFilter = func(p string) func(string) bool {
+			return func(s string) bool { return strings.Contains(s, p) }
+		}
 	}
 
 	cmds, err := spec.AllCmds()
@@ -57,9 +59,6 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 			content := " HISTORY "
 			if spec.Dedup() {
 				content += "(dedup on) "
-			}
-			if !spec.CaseSensitive() {
-				content += "(case-insensitive) "
 			}
 			return ModeLine(content, true)
 		}},
@@ -79,7 +78,7 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
-			it := cmdItems.filter(p, spec.Dedup(), spec.CaseSensitive())
+			it := cmdItems.filter(spec.MakeFilter(p), spec.Dedup())
 			w.ListBox().Reset(it, it.Len()-1)
 		},
 	})
@@ -91,23 +90,14 @@ type histlistItems struct {
 	last    map[string]int
 }
 
-func (it histlistItems) filter(p string, dedup, caseSensitive bool) histlistItems {
-	if p == "" && !dedup {
-		return it
-	}
-	if !caseSensitive {
-		p = strings.ToLower(p)
-	}
+func (it histlistItems) filter(p func(string) bool, dedup bool) histlistItems {
 	var filtered []store.Cmd
 	for i, entry := range it.entries {
 		text := entry.Text
 		if dedup && it.last[text] != i {
 			continue
 		}
-		if !caseSensitive {
-			text = strings.ToLower(text)
-		}
-		if strings.Contains(text, p) {
+		if p(text) {
 			filtered = append(filtered, entry)
 		}
 	}

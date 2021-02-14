@@ -8,17 +8,6 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-/*
-func TestInitListing_Binding(t *testing.T) {
-	// Test that the binding variable in the returned namespace indeed refers to
-	// the BindingMap returned.
-	_, binding, ns := initListing(&fakeApp{})
-	if ns["binding"].Get() != *binding {
-		t.Errorf("The binding var in the ns is not the same as the BindingMap")
-	}
-}
-*/
-
 // Smoke tests for individual addons.
 
 func TestHistlistAddon(t *testing.T) {
@@ -26,6 +15,7 @@ func TestHistlistAddon(t *testing.T) {
 		s.AddCmd("ls")
 		s.AddCmd("echo")
 		s.AddCmd("ls")
+		s.AddCmd("LS")
 	}))
 	defer f.Cleanup()
 
@@ -35,7 +25,8 @@ func TestHistlistAddon(t *testing.T) {
 		" HISTORY (dedup on)  ", Styles,
 		"******************** ", term.DotHere, "\n",
 		"   2 echo\n",
-		"   3 ls                                           ", Styles,
+		"   3 ls\n",
+		"   4 LS                                           ", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 	)
 
@@ -46,18 +37,31 @@ func TestHistlistAddon(t *testing.T) {
 		"********* ", term.DotHere, "\n",
 		"   1 ls\n",
 		"   2 echo\n",
-		"   3 ls                                           ", Styles,
+		"   3 ls\n",
+		"   4 LS                                           ", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 	)
 
-	evals(f.Evaler, `edit:histlist:toggle-case-sensitivity`)
+	evals(f.Evaler, `edit:histlist:toggle-dedup`)
+
+	// Filtering is case-insensitive when filter is all lower case.
+	f.TTYCtrl.Inject(term.K('l'))
 	f.TestTTY(t,
 		"~> \n",
-		" HISTORY (case-insensitive)  ", Styles,
-		"**************************** ", term.DotHere, "\n",
-		"   1 ls\n",
-		"   2 echo\n",
-		"   3 ls                                           ", Styles,
+		" HISTORY (dedup on)  l", Styles,
+		"********************  ", term.DotHere, "\n",
+		"   3 ls\n",
+		"   4 LS                                           ", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+	)
+
+	// Filtering is case-sensitive when filter is not all lower case.
+	f.TTYCtrl.Inject(term.K(ui.Backspace), term.K('L'))
+	f.TestTTY(t,
+		"~> \n",
+		" HISTORY (dedup on)  L", Styles,
+		"********************  ", term.DotHere, "\n",
+		"   4 LS                                           ", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 	)
 }

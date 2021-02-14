@@ -59,7 +59,6 @@ b=[k f]{ edit:listing:binding[$k] = $f } {
 }
 
 b=[k f]{ edit:histlist:binding[$k] = $f } {
-    $b Alt-g $edit:histlist:toggle-case-sensitivity~
     $b Alt-d $edit:histlist:toggle-dedup~
 }
 `

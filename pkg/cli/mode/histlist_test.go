@@ -1,6 +1,7 @@
 package mode
 
 import (
+	"regexp"
 	"testing"
 
 	"src.elv.sh/pkg/cli"
@@ -109,35 +110,30 @@ func TestHistlist_Dedup(t *testing.T) {
 		"++++++++++++++++++++++++++++++++++++++++++++++++++")
 }
 
-func TestHistlist_CaseSensitive(t *testing.T) {
-	f := Setup(WithTTY(func(tty TTYCtrl) { tty.SetSize(50, 50) }))
+func TestHistlist_CustomFilterAlgorithm(t *testing.T) {
+	f := Setup()
 	defer f.Stop()
 
 	st := histutil.NewMemStore(
-		// 0  1
-		"ls", "LS")
+		// 0   1         2
+		"vi", "elvish", "nvi")
 
-	// Case sensitive
-	startHistlist(f.App,
-		HistlistSpec{AllCmds: st.AllCmds, CaseSensitive: func() bool { return true }})
-	f.TTY.Inject(term.K('l'))
+	startHistlist(f.App, HistlistSpec{
+		AllCmds: st.AllCmds,
+		MakeFilter: func(p string) func(string) bool {
+			re, _ := regexp.Compile(p)
+			return func(s string) bool {
+				return re != nil && re.MatchString(s)
+			}
+		},
+	})
+	f.TTY.Inject(term.K('v'), term.K('i'), term.K('$'))
 	f.TestTTY(t,
 		"\n",
-		" HISTORY (dedup on)  l", Styles,
-		"********************  ", term.DotHere, "\n",
-		"   0 ls                                           ", Styles,
-		"++++++++++++++++++++++++++++++++++++++++++++++++++")
-
-	// Case insensitive
-	startHistlist(f.App,
-		HistlistSpec{AllCmds: st.AllCmds, CaseSensitive: func() bool { return false }})
-	f.TTY.Inject(term.K('l'))
-	f.TestTTY(t,
-		"\n",
-		" HISTORY (dedup on) (case-insensitive)  l", Styles,
-		"***************************************  ", term.DotHere, "\n",
-		"   0 ls\n",
-		"   1 LS                                           ", Styles,
+		" HISTORY (dedup on)  vi$", Styles,
+		"********************    ", term.DotHere, "\n",
+		"   0 vi\n",
+		"   2 nvi                                          ", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++")
 }
 
