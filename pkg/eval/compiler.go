@@ -10,6 +10,27 @@ import (
 	"src.elv.sh/pkg/prog"
 )
 
+type deprecatedWhen struct {
+	minLevel int
+	msg      string
+}
+
+var deprecatedVars = map[string]deprecatedWhen{
+	"builtin:-source~":       {15, `the "builtin:source" command is deprecated; use "eval" instead`},
+	"builtin:ord~":           {15, `the "builtin:ord" command is deprecated; use "str:to-codepoints" instead`},
+	"builtin:chr~":           {15, `the "builtin:chr" command is deprecated; use "str:from-codepoints" instead`},
+	"builtin:has-prefix~":    {15, `the "builtin:has-prefix" command is deprecated; use "str:has-prefix" instead`},
+	"builtin:has-suffix~":    {15, `the "builtin:has-suffix" command is deprecated; use "str:has-suffix" instead`},
+	"builtin:esleep~":        {15, `the "builtin:esleep" command is deprecated; use "sleep" instead`},
+	"builtin:eval-symlinks~": {15, `the "builtin:eval-symlinks" command is deprecated; use "path:eval-symlinks" instead`},
+	"builtin:path-abs~":      {15, `the "builtin:path-abs" command is deprecated; use "path:abs" instead`},
+	"builtin:path-base~":     {15, `the "builtin:path-base" command is deprecated; use "path:base" instead`},
+	"builtin:path-clean~":    {15, `the "builtin:path-clean" command is deprecated; use "path:clean" instEAD`},
+	"builtin:path-dir~":      {15, `the "builtin:path-dir" command is deprecated; use "path:dir" instead`},
+	"builtin:path-ext~":      {15, `the "builtin:path-ext" command is deprecated; use "path:ext" instead`},
+	"builtin:-is-dir~":       {15, `the "builtin:-is-dir" command is deprecated; use "path:is-dir" instead`},
+}
+
 // compiler maintains the set of states needed when compiling a single source
 // file.
 type compiler struct {
@@ -121,40 +142,10 @@ func (cp *compiler) popScope() {
 	cp.captures = cp.captures[:len(cp.captures)-1]
 }
 
-func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
-	msg := ""
-	minLevel := 15
-	switch name {
-	case "-source~":
-		msg = `the "source" command is deprecated; use "eval" instead`
-	case "ord~":
-		msg = `the "ord" command is deprecated; use "str:to-codepoints" instead`
-	case "chr~":
-		msg = `the "chr" command is deprecated; use "str:from-codepoints" instead`
-	case "has-prefix~":
-		msg = `the "has-prefix" command is deprecated; use "str:has-prefix" instead`
-	case "has-suffix~":
-		msg = `the "has-suffix" command is deprecated; use "str:has-suffix" instead`
-	case "esleep~":
-		msg = `the "esleep" command is deprecated; use "sleep" instead`
-	case "eval-symlinks~":
-		msg = `the "eval-symlinks" command is deprecated; use "path:eval-symlinks" instead`
-	case "path-abs~":
-		msg = `the "path-abs" command is deprecated; use "path:abs" instead`
-	case "path-base~":
-		msg = `the "path-base" command is deprecated; use "path:base" instead`
-	case "path-clean~":
-		msg = `the "path-clean" command is deprecated; use "path:clean" instead`
-	case "path-dir~":
-		msg = `the "path-dir" command is deprecated; use "path:dir" instead`
-	case "path-ext~":
-		msg = `the "path-ext" command is deprecated; use "path:ext" instead`
-	case "-is-dir~":
-		msg = `the "-is-dir" command is deprecated; use "path:is-dir" instead`
-	default:
-		return
+func (cp *compiler) checkDeprecatedVar(name string, r diag.Ranger) {
+	if dep, ok := deprecatedVars[name]; ok {
+		cp.deprecate(r, dep.msg, dep.minLevel)
 	}
-	cp.deprecate(r, msg, minLevel)
 }
 
 func (cp *compiler) deprecate(r diag.Ranger, msg string, minLevel int) {

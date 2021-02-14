@@ -42,15 +42,20 @@ const (
 
 // An interface satisfied by both *compiler and *Frame. Used to implement
 // resolveVarRef as a function that works for both types.
+//
+// This interface exists to support the builtin `resolve` command since it shares most of its logic
+// with the compiler methods listed below.
 type scopeSearcher interface {
 	searchLocal(k string) int
 	searchCapture(k string) int
 	searchBuiltin(k string, r diag.Ranger) int
+	checkIfDeprecated(k string, r diag.Ranger)
 }
 
 // Resolves a qname into a varRef.
 func resolveVarRef(s scopeSearcher, qname string, r diag.Ranger) *varRef {
 	qname = strings.TrimPrefix(qname, ":")
+	s.checkIfDeprecated(qname, r)
 	if ref := resolveVarRefLocal(s, qname); ref != nil {
 		return ref
 	}
@@ -180,9 +185,13 @@ func (cp *compiler) searchCapture(k string) int {
 func (cp *compiler) searchBuiltin(k string, r diag.Ranger) int {
 	index := cp.builtin.lookup(k)
 	if index != -1 {
-		cp.checkDeprecatedBuiltin(k, r)
+		cp.checkDeprecatedVar("builtin:"+k, r)
 	}
 	return index
+}
+
+func (cp *compiler) checkIfDeprecated(k string, r diag.Ranger) {
+	cp.checkDeprecatedVar(k, r)
 }
 
 func (fm *Frame) searchLocal(k string) int {
@@ -195,4 +204,8 @@ func (fm *Frame) searchCapture(k string) int {
 
 func (fm *Frame) searchBuiltin(k string, r diag.Ranger) int {
 	return fm.Evaler.Builtin().lookup(k)
+}
+
+// This is a no-op for the `resolve` command case since that does not happen at compile time.
+func (fm *Frame) checkIfDeprecated(k string, r diag.Ranger) {
 }
