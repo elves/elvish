@@ -1,6 +1,8 @@
 package bundled
 
 const readlineBindingElv = `
+edit:global-binding[Ctrl-G] = $edit:close-mode~
+
 b=[k f]{ edit:insert:binding[$k] = $f } {
     $b Ctrl-A $edit:move-dot-sol~
     $b Ctrl-B $edit:move-dot-left~
@@ -47,7 +49,6 @@ b=[k f]{ edit:navigation:binding[$k] = $f } {
 b=[k f]{ edit:history:binding[$k] = $f } {
     $b Ctrl-N $edit:history:down-or-quit~
     $b Ctrl-P $edit:history:up~
-    $b Ctrl-G $edit:close-listing~
 }
 
 b=[k f]{ edit:listing:binding[$k] = $f } {
@@ -55,7 +56,6 @@ b=[k f]{ edit:listing:binding[$k] = $f } {
     $b Ctrl-P $edit:listing:up~
     $b Ctrl-V $edit:listing:page-down~
     $b Alt-v  $edit:listing:page-up~
-    $b Ctrl-G $edit:close-listing~
 }
 
 b=[k f]{ edit:histlist:binding[$k] = $f } {
