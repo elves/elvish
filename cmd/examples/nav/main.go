@@ -1,4 +1,4 @@
-// A test program for the cli package.
+// Command nav runs the navigation mode of the line editor.
 package main
 
 import (
