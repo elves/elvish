@@ -59,7 +59,7 @@ func navInsertSelected(app cli.App) {
 
 func navInsertSelectedAndQuit(app cli.App) {
 	navInsertSelected(app)
-	closeListing(app)
+	closeMode(app)
 }
 
 //elvdoc:fn navigation:trigger-filter

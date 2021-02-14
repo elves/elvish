@@ -86,6 +86,18 @@ func initAddCmdFilters(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder,
 	})
 }
 
+//elvdoc:var global-binding
+//
+// Global keybindings, consulted for keys not handled by mode-specific bindings.
+//
+// See [Keybindings](#keybindings).
+
+func initGlobalBindings(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.NsBuilder) {
+	bindingVar := newBindingVar(emptyBindingsMap)
+	appSpec.GlobalBindings = newMapBindings(nt, ev, bindingVar)
+	nb.Add("global-binding", bindingVar)
+}
+
 func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}) {
 	if hook.Len() == 0 {
 		return

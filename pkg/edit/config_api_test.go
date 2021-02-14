@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/ui"
 )
 
 func TestBeforeReadline(t *testing.T) {
@@ -132,4 +133,18 @@ func TestAddCmdFilters_SkipsRemainingOnFalse(t *testing.T) {
 	f.Wait()
 	testCommands(t, f.Store)
 	testGlobal(t, f.Evaler, "called", false)
+}
+
+func TestGlobalBindings(t *testing.T) {
+	f := setup(rc(
+		`var called = $false`,
+		`edit:global-binding[Ctrl-X] = { set called = $true }`,
+	))
+	defer f.Cleanup()
+
+	f.TTYCtrl.Inject(term.K('X', ui.Ctrl))
+	f.TTYCtrl.Inject(term.K(ui.Enter))
+	f.Wait()
+
+	testGlobal(t, f.Evaler, "called", true)
 }

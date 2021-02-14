@@ -59,7 +59,6 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder)
 			// TODO: Remove these builtins in favor of two universal accept and
 			// close builtins
 			"accept": func() { app.SetAddon(nil, true) },
-			"close":  func() { app.SetAddon(nil, false) },
 
 			"fast-forward": hs.FastForward,
 		}).Ns())

@@ -23,7 +23,6 @@ func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histuti
 		}.AddGoFns("<edit:listing>:", map[string]interface{}{
 			"accept":       func() { listingAccept(app) },
 			"accept-close": func() { listingAcceptClose(app) },
-			"close":        func() { closeListing(app) },
 			"up":           func() { listingUp(app) },
 			"down":         func() { listingDown(app) },
 			"up-cycle":     func() { listingUpCycle(app) },
@@ -149,7 +148,7 @@ func listingAccept(app cli.App) {
 
 func listingAcceptClose(app cli.App) {
 	listingAccept(app)
-	closeListing(app)
+	closeMode(app)
 }
 
 //elvdoc:fn listing:up

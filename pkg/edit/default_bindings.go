@@ -2,6 +2,10 @@ package edit
 
 // Elvish code for default bindings, assuming the editor ns as the global ns.
 const defaultBindingsElv = `
+global-binding = (binding-table [
+  &Ctrl-'['= $close-mode~
+])
+
 insert:binding = (binding-table [
   &Left=  $move-dot-left~
   &Right= $move-dot-right~
@@ -44,7 +48,7 @@ command:binding = (binding-table [
  &D=   $kill-line-right~
  &b=   $move-dot-left-word~
  &h=   $move-dot-left~
- &i=   $listing:close~
+ &i=   $close-mode~
  &j=   $move-dot-down~
  &k=   $move-dot-up~
  &l=   $move-dot-right~
@@ -57,7 +61,6 @@ listing:binding = (binding-table [
   &Down=      $listing:down~
   &Tab=       $listing:down-cycle~
   &Shift-Tab= $listing:up-cycle~
-  &Ctrl-'['=  $close-listing~
 ])
 
 histlist:binding = (binding-table [
@@ -65,7 +68,6 @@ histlist:binding = (binding-table [
 ])
 
 navigation:binding = (binding-table [
-  &Ctrl-'['= $close-listing~
   &Left=     $navigation:left~
   &Right=    $navigation:right~
   &Up=       $navigation:up~
@@ -81,7 +83,6 @@ navigation:binding = (binding-table [
 ])
 
 completion:binding = (binding-table [
-  &Ctrl-'['= $completion:close~
   &Down=     $completion:down~
   &Up=       $completion:up~
   &Tab=      $completion:down-cycle~
@@ -93,7 +94,7 @@ completion:binding = (binding-table [
 history:binding = (binding-table [
   &Up=       $history:up~
   &Down=     $history:down-or-quit~
-  &Ctrl-'['= $history:close~
+  &Ctrl-'['= $close-mode~
 ])
 
 lastcmd:binding = (binding-table [
@@ -101,11 +102,11 @@ lastcmd:binding = (binding-table [
 ])
 
 -instant:binding = (binding-table [
-  &Ctrl-'['= $listing:close~
+  &
 ])
 
 minibuf:binding = (binding-table [
-  &Ctrl-'['= $listing:close~
+  &
 ])
 `
 

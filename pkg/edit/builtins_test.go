@@ -23,12 +23,12 @@ func TestBindingTable(t *testing.T) {
 	}
 }
 
-func TestCloseListing(t *testing.T) {
+func TestCloseMode(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()
 
 	f.Editor.app.SetAddon(tk.Empty{}, false)
-	evals(f.Evaler, `edit:close-listing`)
+	evals(f.Evaler, `edit:close-mode`)
 
 	if listing := f.Editor.app.CopyState().Addon; listing != nil {
 		t.Errorf("got listing %v, want nil", listing)

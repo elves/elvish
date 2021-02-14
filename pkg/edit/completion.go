@@ -247,7 +247,6 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 			"accept":      func() { listingAccept(app) },
 			"smart-start": func() { completionStart(app, bindings, cfg(), true) },
 			"start":       func() { completionStart(app, bindings, cfg(), false) },
-			"close":       func() { app.SetAddon(nil, false) },
 			"up":          func() { listingUp(app) },
 			"down":        func() { listingDown(app) },
 			"up-cycle":    func() { listingUpCycle(app) },

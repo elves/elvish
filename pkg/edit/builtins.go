@@ -38,11 +38,11 @@ func dumpBuf(tty cli.TTY) string {
 	return bufToHTML(tty.Buffer())
 }
 
-//elvdoc:fn close-listing
+//elvdoc:fn close-mode
 //
-// Closes any active listing.
+// Closes the current active mode.
 
-func closeListing(app cli.App) {
+func closeMode(app cli.App) {
 	app.SetAddon(nil, false)
 }
 
@@ -79,7 +79,7 @@ func insertRaw(app cli.App, tty cli.TTY) {
 				app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 					s.Buffer.InsertAtDot(string(event.Rune))
 				})
-				closeListing(app)
+				app.SetAddon(nil, false)
 				return true
 			default:
 				return false
@@ -188,7 +188,7 @@ func initTTYBuiltins(app cli.App, tty cli.TTY, nb eval.NsBuilder) {
 func initMiscBuiltins(app cli.App, nb eval.NsBuilder) {
 	nb.AddGoFns("<edit>", map[string]interface{}{
 		"binding-table":  makeBindingMap,
-		"close-listing":  func() { closeListing(app) },
+		"close-mode":     func() { closeMode(app) },
 		"end-of-history": func() { endOfHistory(app) },
 		"key":            toKey,
 		"redraw":         func(opts redrawOpts) { redraw(app, opts) },

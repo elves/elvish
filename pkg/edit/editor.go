@@ -53,6 +53,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st store.Store) *Editor {
 	initMaxHeight(&appSpec, nb)
 	initReadlineHooks(&appSpec, ev, nb)
 	initAddCmdFilters(&appSpec, ev, nb, hs)
+	initGlobalBindings(&appSpec, ed, ev, nb)
 	initInsertAPI(&appSpec, ed, ev, nb)
 	initPrompts(&appSpec, ed, ev, nb)
 	ed.app = cli.NewApp(appSpec)
