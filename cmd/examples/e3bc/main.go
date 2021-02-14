@@ -9,8 +9,10 @@ import (
 
 	"src.elv.sh/cmd/examples/e3bc/bc"
 	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
+	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -40,6 +42,22 @@ func main() {
 		Highlighter: highlighter{},
 		CodeAreaBindings: tk.MapBindings{
 			term.K('D', ui.Ctrl): func(tk.Widget) { app.CommitEOF() },
+			term.K(ui.Tab): func(w tk.Widget) {
+				codearea := w.(tk.CodeArea)
+				if codearea.CopyState().Buffer.Content != "" {
+					// Only complete with an empty buffer
+					return
+				}
+				w, err := mode.NewCompletion(app, mode.CompletionSpec{
+					Replace: diag.Ranging{From: 0, To: 0}, Items: candidates(),
+				})
+				if err == nil {
+					app.SetAddon(w, false)
+				}
+			},
+		},
+		GlobalBindings: tk.MapBindings{
+			term.K('[', ui.Ctrl): func(tk.Widget) { app.SetAddon(nil, false) },
 		},
 	})
 
