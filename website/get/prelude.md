@@ -1,3 +1,7 @@
+<!-- toc -->
+
+# Prebuilt binaries
+
 Prebuilt, statically linked binaries for some common platforms are provided
 below. If your environment is not listed above, you may still be able to build
 Elvish from [source](https://github.com/elves/elvish). For users in China, the
@@ -10,9 +14,9 @@ maintain backward compatibility from version to version.
 <table>
   <tr>
     <th>Version</th>
-    <th>x86-64</th>
-    <th>x86</th>
-    <th>ARMv8</th>
+    <th>amd64</th>
+    <th>386</th>
+    <th>arm64</th>
   </tr>
   <tr>
     <td>HEAD (<a href="https://github.com/elves/elvish/blob/master/NEXT-RELEASE.md">Draft Release Note</a>)</td>
@@ -54,16 +58,26 @@ maintain backward compatibility from version to version.
   </tr>
 </table>
 
-# OS-Specific Packages
+# OS-specific packages
 
 ## Arch Linux
 
-Elvish PKGBUILDs are available in AUR. Install
-[`elvish`](https://aur.archlinux.org/packages/elvish/) (latest version) or
-[`elvish-git`](https://aur.archlinux.org/packages/elvish-git/) (HEAD) using your
-favorite AUR helper.
+Install
+[`elvish-bin`](https://aur.archlinux.org/packages/elvish-bin/),
+[`elvish`](https://aur.archlinux.org/packages/elvish/) or
+[`elvish-git`](https://aur.archlinux.org/packages/elvish-git/)
+with your favorite AUR helper:
 
-Alternatively, prebuilt packages can be obtained from
+```elvish
+# Install the latest release from prebuilt binary
+yay -S elvish-bin
+# Install the latest release from source
+yay -S elvish
+# Install the HEAD commit
+yay -S elvish-git
+```
+
+Alternatively, install prebuilt packages from the
 [Arch Linux CN repository](https://www.archlinuxcn.org/archlinux-cn-repo-and-mirror/):
 
 ```elvish
@@ -89,11 +103,22 @@ dnf install elvish
 ## Debian / Ubuntu
 
 Elvish is packaged by [Debian](https://packages.debian.org/elvish) since buster
-and by [Ubuntu](http://packages.ubuntu.com/elvish) since 17.10.
+and by [Ubuntu](http://packages.ubuntu.com/elvish) since 17.10:
 
-## macOS (Homebrew)
+```elvish
+apt install elvish
+```
 
-Elvish is packaged in Homebrew:
+However, only testing verions of Debian and Ubuntu tend to have the latest
+Elvish release. If you are running a stable release of Debian or Ubuntu, it is
+recommended to use official [prebuilt binaries](#prebuilt-binaries) instead.
+
+## macOS
+
+Elvish is packaged by both [Homebrew](https://brew.sh) and
+[MacPorts](https://www.macports.org).
+
+To install from Homebrew:
 
 ```elvish
 # Install latest release
@@ -102,9 +127,7 @@ brew install elvish
 brew install --HEAD elvish
 ```
 
-## macOS (MacPorts)
-
-Elvish is also available via [MacPorts](https://www.macports.org):
+To install from MacPorts:
 
 ```elvish
 sudo port selfupdate
@@ -114,15 +137,15 @@ sudo port install elvish
 ## FreeBSD
 
 Elvish is available in the FreeBSD ports tree and as a prebuilt package. Both
-methods will install the latest release:
+methods will install the latest release.
 
-### Install With pkg:
+To install with `pkg`:
 
 ```elvish
 pkg install elvish
 ```
 
-### Build From Ports:
+To build from the ports tree:
 
 ```elvish
 cd /usr/ports/shells/elvish
@@ -156,9 +179,9 @@ for historical interest.
 <table>
   <tr>
     <th>Version</th>
-    <th>x86-64</th>
-    <th>x86</th>
-    <th>ARMv8</th>
+    <th>amd64</th>
+    <th>386</th>
+    <th>arm64</th>
   </tr>
   <tr>
     <td>
