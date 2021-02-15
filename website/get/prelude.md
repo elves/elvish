@@ -58,15 +58,134 @@ maintain backward compatibility from version to version.
   </tr>
 </table>
 
+To install the prebuilt binary on non-Windows systems, follow these steps:
+
+```elvish
+cd ~/Downloads # or whereever Elvish was downloaded to
+tar xvf elvish-HEAD.tar.gz # or elvish-v0.15.0.tar.gz for last release
+chmod +x elvish
+sudo cp elvish /usr/local/bin # or anywhere else on PATH
+```
+
+On Windows, simply unzip the downloaded archive and move it to the desktop. If
+additionally you'd like to invoke `elvish` from `cmd`, move it to somewhere in
+the `PATH` instead and create a desktop shortcut.
+
+# Using Elvish as your default shell
+
+On non-Windows systems, the best way to use Elvish as your default shell is to
+configure your terminal to launch Elvish:
+
+<table>
+  <tr>
+    <th>Terminal</th>
+    <th>Instructions</th>
+  </tr>
+  <tr class="table-section">
+    <td colspan="2" class="notice">
+      Terminals for macOS
+    </td>
+  </tr>
+  <tr>
+    <td>Terminal.app</td>
+    <td>
+      Open <span class="key">Terminal &gt; Preferences</span>.
+      Ensure you are on the <span class="key">Profiles</span> tab, which
+      should be the default tab. In the right-hand panel, select the
+      <span class="key">Shell</span> tab. Tick
+      <span class="key">Run command</span>, put the path to Elvish in the
+      textbox, and untick <span class="key">Run inside shell</span>.
+    </td>
+  </tr>
+  <tr>
+    <td>iTerm2</td>
+    <td>
+      Open <span class="key">iTerm &gt; Preferences</span>. Select the
+      <span class="key">Profiles</span> tab. In the right-hand panel under
+      <span class="key">Command</span>, change the dropdown from
+      <span class="key">Login Shell</span> to
+      <span class="key">Custom Shell</span>, and put the path to Elvish in the
+      textbox.
+    </td>
+  </tr>
+  <tr class="table-section">
+    <td colspan="2" class="notice">
+      Terminal for Linux and BSDs
+    </td>
+  </tr>
+  <tr>
+    <td>GNOME Terminal</td>
+    <td>
+      Open <span class="key">Edit &gt; Preferences</span>. In the right-hand
+      panel, select the <span class="key">Command</span> tab, tick
+      <span class="key">Run a custom command instead of my shell</span>,
+      and set <span class="key">Custom command</span> to the path to Elvish.
+    </td>
+  </tr>
+  <tr>
+    <td>Konsole</td>
+    <td>
+      Open <span class="key">Settings &gt; Edit Current Profile</span>.
+      Set <span class="key">Command</span> to the path to Elvish.
+    </td>
+  </tr>
+  <tr>
+    <td>XFCE Terminal</td>
+    <td>
+      Open <span class="key">Edit &gt; Preferences</span>. Check
+      <span class="key">Run a custom command instead of my shell</span>,
+      and set <span class="key">Custom command</span> to the path to Elvish.
+    </td>
+  </tr>
+  <tr class="table-section">
+    <td colspan="2" class="notice">
+      The following terminals only support a command-line flag for changing
+      the shell
+    </td>
+  </tr>
+  <tr>
+    <td>LXTerminal</td>
+    <td>Pass <code>--command $path_to_elvish</code>.</td>
+  </tr>
+  <tr>
+    <td>rxvt</td>
+    <td>Pass <code>-e $path_to_elvish</code>.</td>
+  </tr>
+  <tr>
+    <td>xterm</td>
+    <td>Pass <code>-e $path_to_elvish</code>.</td>
+  </tr>
+  <tr class="table-section">
+    <td colspan="2" class="notice">
+      Terminal multiplexers
+    </td>
+  </tr>
+  <tr>
+    <td>tmux</td>
+    <td>
+      Add <code>set -g default-command $path_to_elvish</code> to
+      <code>~/.tmux.conf</code>.
+    </td>
+  </tr>
+</table>
+
+It is **not** recommended to change your login shell to Elvish. Some programs
+assume that user's login shell is a traditional POSIX-like shell, and may have
+issues when you change your login shell to Elvish.
+
 # OS-specific packages
+
+Elvish is available from many package managers. Installing Elvish with the
+package manager makes it easy to upgrade Elvish alongside the rest of your
+system. However, these packages are not maintained by Elvish developers and are
+sometimes out of date.
 
 ## Arch Linux
 
-Install
-[`elvish-bin`](https://aur.archlinux.org/packages/elvish-bin/),
+Install [`elvish-bin`](https://aur.archlinux.org/packages/elvish-bin/),
 [`elvish`](https://aur.archlinux.org/packages/elvish/) or
-[`elvish-git`](https://aur.archlinux.org/packages/elvish-git/)
-with your favorite AUR helper:
+[`elvish-git`](https://aur.archlinux.org/packages/elvish-git/) with your
+favorite AUR helper:
 
 ```elvish
 # Install the latest release from prebuilt binary

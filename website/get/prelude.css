@@ -1,10 +1,8 @@
 .notice {
     text-align: center;
-}
-
-tr:nth-child(even) {
     background-color: #ddd;
 }
-.dark tr:nth-child(even) {
+
+.dark .notice {
     background-color: #333;
 }
