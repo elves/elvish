@@ -168,13 +168,13 @@ code, pre {
     font-size: 85%;
 }
 
-/* We only use h1 and h2. */
+/* We only use h1 to h3. */
 
-.article h1, .article h2 {
+.article h1, .article h2, .article h3 {
     line-height: 1.25;
 }
 
-.article h1, .article h2 {
+.article h1, .article h2, .article h3 {
     margin-top: 24px;
     margin-bottom: 20px;
     font-weight: bold;
@@ -188,6 +188,10 @@ code, pre {
 
 .article h2 {
     font-size: 1.2em;
+}
+
+.article h3 {
+    font-style: italic;
 }
 
 .article ul, .article ol {
