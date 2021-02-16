@@ -110,7 +110,7 @@ configure your terminal to launch Elvish:
   </tr>
   <tr class="table-section">
     <td colspan="2" class="notice">
-      Terminal for Linux and BSDs
+      Terminals for Linux and BSDs
     </td>
   </tr>
   <tr>
