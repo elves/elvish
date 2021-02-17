@@ -58,7 +58,7 @@ var bufferBuilderWritesTests = []struct {
 // BufferBuilder and see if the built Buffer matches what is expected.
 func TestBufferBuilderWrites(t *testing.T) {
 	for _, test := range bufferBuilderWritesTests {
-		bb := test.bb
+		bb := cloneBufferBuilder(test.bb)
 		bb.WriteStringSGR(test.text, test.style)
 		buf := bb.Buffer()
 		if !reflect.DeepEqual(buf, test.want) {
@@ -101,4 +101,10 @@ func TestBufferBuilder(t *testing.T) {
 			}
 		})
 	}
+}
+
+func cloneBufferBuilder(bb *BufferBuilder) *BufferBuilder {
+	return &BufferBuilder{
+		bb.Width, bb.Col, bb.Indent,
+		bb.EagerWrap, cloneLines(bb.Lines), bb.Dot}
 }

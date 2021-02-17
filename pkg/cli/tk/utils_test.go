@@ -52,6 +52,11 @@ func testHandle(t *testing.T, tests []handleTest) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			t.Helper()
+
+			handler := test.Given
+			oldState := getState(handler)
+			defer setState(handler, oldState)
+
 			var handled bool
 			switch {
 			case test.Event != nil && test.Events != nil:
@@ -60,10 +65,10 @@ func testHandle(t *testing.T, tests []handleTest) {
 			case test.Event == nil && test.Events == nil:
 				t.Fatal("Malformed test case: both Event and Events nil")
 			case test.Event != nil:
-				handled = test.Given.Handle(test.Event)
+				handled = handler.Handle(test.Event)
 			default: // test.Events != nil
 				for _, event := range test.Events {
-					handled = test.Given.Handle(event)
+					handled = handler.Handle(event)
 				}
 			}
 			if handled != !test.WantUnhandled {
@@ -80,11 +85,19 @@ func testHandle(t *testing.T, tests []handleTest) {
 }
 
 func getState(v interface{}) interface{} {
+	return reflectState(v).Interface()
+}
+
+func setState(v, state interface{}) {
+	reflectState(v).Set(reflect.ValueOf(state))
+}
+
+func reflectState(v interface{}) reflect.Value {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() == reflect.Ptr {
 		rv = reflect.Indirect(rv)
 	}
-	return rv.FieldByName("State").Interface()
+	return rv.FieldByName("State")
 }
 
 // Test for the test utilities.

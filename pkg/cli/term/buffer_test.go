@@ -156,7 +156,7 @@ var bufferTrimToLinesTests = []struct {
 
 func TestBufferTrimToLines(t *testing.T) {
 	for _, test := range bufferTrimToLinesTests {
-		b := test.buf
+		b := cloneBuffer(test.buf)
 		b.TrimToLines(test.low, test.high)
 		if !reflect.DeepEqual(b, test.want) {
 			t.Errorf("buf.trimToLines(%v, %v) makes it %v, want %v",
@@ -203,7 +203,7 @@ var bufferExtendTests = []struct {
 
 func TestBufferExtend(t *testing.T) {
 	for _, test := range bufferExtendTests {
-		buf := test.buf
+		buf := cloneBuffer(test.buf)
 		buf.Extend(test.buf2, test.moveDot)
 		if !reflect.DeepEqual(buf, test.want) {
 			t.Errorf("buf.extend(%v, %v) makes it %v, want %v",
@@ -260,7 +260,7 @@ var bufferExtendRightTests = []struct {
 
 func TestBufferExtendRight(t *testing.T) {
 	for _, test := range bufferExtendRightTests {
-		buf := test.buf
+		buf := cloneBuffer(test.buf)
 		buf.ExtendRight(test.buf2)
 		if !reflect.DeepEqual(buf, test.want) {
 			t.Errorf("buf.extendRight(%v) makes it %v, want %v",
@@ -315,4 +315,19 @@ func TestBufferTTYString(t *testing.T) {
 			t.Errorf("TTYString -> %q, want %q", ttyString, test.want)
 		}
 	}
+}
+
+func cloneBuffer(b *Buffer) *Buffer {
+	return &Buffer{b.Width, cloneLines(b.Lines), b.Dot}
+}
+
+func cloneLines(lines Lines) Lines {
+	newLines := make(Lines, len(lines))
+	for i, line := range lines {
+		if line != nil {
+			newLines[i] = make(Line, len(line))
+			copy(newLines[i], line)
+		}
+	}
+	return newLines
 }

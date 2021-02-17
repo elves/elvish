@@ -16,7 +16,7 @@ type BufferBuilder struct {
 	// will otherwise
 	EagerWrap bool
 	// Lines the content of the buffer.
-	Lines [][]Cell
+	Lines Lines
 	// Dot is what the user perceives as the cursor.
 	Dot Pos
 }
