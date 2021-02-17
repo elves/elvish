@@ -1,15 +1,27 @@
 <!-- toc -->
 
-# Prebuilt binaries
+# Installing an official binary
 
-Prebuilt, statically linked binaries for some common platforms are provided
-below. If your environment is not listed above, you may still be able to build
-Elvish from [source](https://github.com/elves/elvish). For users in China, the
-[mirror](https://mirrors.tuna.tsinghua.edu.cn/elvish) hosted by TUNA may be
-faster.
+The recommended way to install Elvish is by downloading an official binary.
 
-Note that Elvish is **pre-release software**. It can be unstable, and does not
-maintain backward compatibility from version to version.
+First, choose the version to install. At any given time, two versions of Elvish
+are supported:
+
+-   The HEAD version tracks the latest development, and is updated shortly after
+    every commit.
+
+    Use HEAD if you want to use the latest features, and can live with
+    occasional bugs and breaking changes.
+
+-   The release version is updated with new features every 6 months, and gets
+    occasional patch releases that fix severe issues.
+
+    Use the release version if you want a stable foundation. You still need to
+    update when a new release comes out, since only the latest release is
+    supported.
+
+Now find your platform in the table, and download the corresponding binary
+archive:
 
 <table>
   <tr>
@@ -58,13 +70,17 @@ maintain backward compatibility from version to version.
   </tr>
 </table>
 
-To install the prebuilt binary on non-Windows systems, follow these steps:
+(If your platform is not listed, you may still be able to build Elvish from
+[source](https://github.com/elves/elvish). For users in China,
+[TUNA's mirror](https://mirrors.tuna.tsinghua.edu.cn/elvish) may be faster.)
+
+After downloading the binary archive, following these steps to install it:
 
 ```elvish
-cd ~/Downloads # or whereever Elvish was downloaded to
-tar xvf elvish-HEAD.tar.gz # or elvish-v0.15.0.tar.gz for last release
-chmod +x elvish
-sudo cp elvish /usr/local/bin # or anywhere else on PATH
+cd ~/Downloads # or whereever the binary archive was downloaded to
+tar xvf elvish-HEAD.tar.gz # or elvish-v0.15.0.tar.gz for release version
+chmod +x elvish-HEAD # or elvish-v0.15.0 for release version
+sudo cp elvish-HEAD /usr/local/bin/elvish # or anywhere else on PATH
 ```
 
 On Windows, simply unzip the downloaded archive and move it to the desktop. If
@@ -173,7 +189,7 @@ It is **not** recommended to change your login shell to Elvish. Some programs
 assume that user's login shell is a traditional POSIX-like shell, and may have
 issues when you change your login shell to Elvish.
 
-# OS-specific packages
+# Installing from a package manager
 
 Elvish is available from many package managers. Installing Elvish with the
 package manager makes it easy to upgrade Elvish alongside the rest of your
