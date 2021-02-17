@@ -138,15 +138,22 @@ func TestCustomListing_PassingBytesCallback(t *testing.T) {
 	defer f.Cleanup()
 
 	evals(f.Evaler,
-		`f = [q]{ echo 'q '$q }`,
-		`edit:listing:start-custom $f &accept=$edit:insert-at-dot~ &caption=A`)
-	// Query.
+		`f = [q]{ echo '# '$q }`,
+		`edit:listing:start-custom $f &accept=$edit:insert-at-dot~ &caption=A `+
+			`&binding=(edit:binding-table [&Ctrl-X=$edit:listing:accept~])`)
+	// Test that the query function is used to generate candidates. Also test
+	// the caption.
 	f.TTYCtrl.Inject(term.K('x'))
 	f.TestTTY(t,
 		"~> \n",
 		"A x", Styles,
 		"*  ", term.DotHere, "\n",
-		"q x                                               ", Styles,
+		"# x                                               ", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++",
 	)
+	// Test both the binding and the accept callback.
+	f.TTYCtrl.Inject(term.K('X', ui.Ctrl))
+	f.TestTTY(t,
+		"~> # x", Styles,
+		"   ccc", term.DotHere)
 }

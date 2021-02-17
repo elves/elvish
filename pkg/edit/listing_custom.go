@@ -16,7 +16,7 @@ import (
 )
 
 type customListingOpts struct {
-	Bindings   bindingsMap
+	Binding    bindingsMap
 	Caption    string
 	KeepBottom bool
 	Accept     eval.Callable
@@ -31,8 +31,8 @@ func (*customListingOpts) SetDefaultOptions() {}
 
 func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, items interface{}) {
 	var bindings tk.Bindings
-	if opts.Bindings.Map != nil {
-		bindings = newMapBindings(ed, fm.Evaler, vars.FromPtr(&opts.Bindings))
+	if opts.Binding.Map != nil {
+		bindings = newMapBindings(ed, fm.Evaler, vars.FromPtr(&opts.Binding))
 	}
 	var getItems func(string) []mode.ListingItem
 	if fn, isFn := items.(eval.Callable); isFn {
