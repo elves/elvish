@@ -39,7 +39,7 @@ To build Elvish from source, you need
 
     **NOTE**: Windows support is experimental, and only Windows 10 is supported.
 
--   Go >= 1.14.
+-   Go >= 1.15.
 
 To build Elvish from source, follow these steps:
 
