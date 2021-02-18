@@ -17,12 +17,11 @@ use.
 **Visit the official website https://elv.sh for prebuilt binaries, blog posts,
 documentation and other resources.**
 
-User groups (all connected with
-[matterbridge](https://github.com/42wim/matterbridge/)):
+User groups (all connected thanks to [Matrix](https://matrix.org)):
 [![Gitter](https://img.shields.io/badge/gitter-elves/elvish-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish)
 [![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg)](https://telegram.me/elvish)
 [![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-blue.svg)](https://webchat.freenode.net/?channels=elvish)
-[![#elvish:matrix.org](https://img.shields.io/badge/matrix-%23elvish:matrix.org-blue.svg)](https://matrix.to/#/#elvish:matrix.org)
+[![#users:elves.sh](https://img.shields.io/badge/matrix-%23users:elv.sh-blue.svg)](https://matrix.to/#/#users:elves.sh)
 
 ## Building Elvish
 

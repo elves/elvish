@@ -139,14 +139,15 @@ Start your Elvish journey in this very website!
 # <i class="icon-chat"></i> Join the Community
 
 Join any of the following channels -- they are all all bridged together thanks
-to [matterbridge](https://github.com/42wim/matterbridge)!
+to [Matrix](https://matrix.org)!
 
 -   Telegram: [@elvish](https://telegram.me/elvish)
 
 -   IRC: [#elvish](https://webchat.freenode.net/?channels=elvish) on Freenode
 
--   Gitter/Matrix: [elves/elvish](https://gitter.im/elves/elvish),
-    [#elves_elvish:gitter.im](https://matrix.to/#/#elves_elvish:gitter.im)
+-   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
+
+-   Matrix: [#users:elv.sh](https://matrix.to/#/#users:elv.sh)
 
 # <i class="icon-link-ext"></i> More Resources
 
