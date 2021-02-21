@@ -4,7 +4,9 @@ on:
   push:
 
 jobs:
-  lsif-go:
+  lsif:
+    name: Upload LSIF
+    if: github.repository == 'elves/elvish'
     runs-on: ubuntu-latest
     container: sourcegraph/lsif-go:latest
     steps:
