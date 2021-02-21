@@ -75,7 +75,11 @@ func findScrollInterval(n, low, high, height int) (int, int) {
 	f := func(i int) int {
 		return int(float64(i)/float64(n)*float64(height) + 0.5)
 	}
-	scrollLow, scrollHigh := f(low), f(high)
+	scrollLow := f(low)
+	// We use the following instead of f(high), so that the size of the
+	// scrollbar remains the same as long as the window size remains the same.
+	scrollHigh := scrollLow + f(high-low)
+
 	if scrollLow == scrollHigh {
 		if scrollHigh == height {
 			scrollLow--
