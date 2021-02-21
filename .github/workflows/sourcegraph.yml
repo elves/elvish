@@ -1,0 +1,16 @@
+name: SourceGraph Index
+
+on:
+  push:
+
+jobs:
+  lsif-go:
+    runs-on: ubuntu-latest
+    container: sourcegraph/lsif-go:latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Generate LSIF data
+      run: lsif-go
+    - name: Upload LSIF data
+      run: src lsif upload -github-token=${{ secrets.GITHUB_TOKEN }} -ignore-upload-failure
