@@ -124,7 +124,7 @@ func (op *assignOp) exec(fm *Frame) Exception {
 		for i, variable := range variables {
 			err := variable.Set(values[i])
 			if err != nil {
-				return fm.errorp(op, err)
+				return fm.errorp(op.lhs.lvalues[i], err)
 			}
 		}
 	} else {
@@ -137,18 +137,18 @@ func (op *assignOp) exec(fm *Frame) Exception {
 		for i := 0; i < rest; i++ {
 			err := variables[i].Set(values[i])
 			if err != nil {
-				return fm.errorp(op, err)
+				return fm.errorp(op.lhs.lvalues[i], err)
 			}
 		}
 		restOff := len(values) - len(variables)
 		err := variables[rest].Set(vals.MakeList(values[rest : rest+restOff+1]...))
 		if err != nil {
-			return fm.errorp(op, err)
+			return fm.errorp(op.lhs.lvalues[rest], err)
 		}
 		for i := rest + 1; i < len(variables); i++ {
 			err := variables[i].Set(values[i+restOff])
 			if err != nil {
-				return fm.errorp(op, err)
+				return fm.errorp(op.lhs.lvalues[i], err)
 			}
 		}
 	}

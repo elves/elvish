@@ -135,8 +135,8 @@ func TestCommand_Assignment(t *testing.T) {
 		// Assignment errors when the RHS errors.
 		That("x = [][1]").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
 		// Assignment errors itself.
-		That("true = 1").Throws(vars.ErrSetReadOnlyVar, "true = 1"),
-		That("@true = 1").Throws(vars.ErrSetReadOnlyVar, "@true = 1"),
+		That("true = 1").Throws(vars.ErrSetReadOnlyVar, "true"),
+		That("@true = 1").Throws(vars.ErrSetReadOnlyVar, "@true"),
 		// Arity mismatch.
 		That("x = 1 2").Throws(
 			errs.ArityMismatch{

@@ -26,6 +26,6 @@ func TestNs(t *testing.T) {
 
 func TestBuiltinFunctionsReadOnly(t *testing.T) {
 	Test(t,
-		That("return~ = { }").Throws(vars.ErrSetReadOnlyVar, "return~ = { }"),
+		That("return~ = { }").Throws(vars.ErrSetReadOnlyVar, "return~"),
 	)
 }
