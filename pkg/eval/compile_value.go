@@ -145,22 +145,20 @@ func doTilde(v interface{}) (interface{}, error) {
 	switch v := v.(type) {
 	case string:
 		s := v
+		// TODO: Make this correct on Windows.
 		i := strings.Index(s, "/")
 		var uname, rest string
 		if i == -1 {
 			uname = s
 		} else {
 			uname = s[:i]
-			rest = s[i+1:]
+			rest = s[i:]
 		}
 		dir, err := fsutil.GetHome(uname)
 		if err != nil {
 			return nil, err
 		}
-		// We do not use path.Join, as it removes trailing slashes.
-		//
-		// TODO(xiaq): Make this correct on Windows.
-		return dir + "/" + rest, nil
+		return dir + rest, nil
 	case globPattern:
 		if len(v.Segments) == 0 {
 			return nil, ErrBadglobPattern

@@ -90,7 +90,8 @@ func TestTilde(t *testing.T) {
 		That("put ~/src/").Puts(home+"/src/"),
 		// Tilde and wildcard.
 		That("put ~/*").Puts(home+"/file1", home+"/file2"),
-		// TODO(xiaq): Add regression test for #793.
+		// TODO: Add regression test for #793.
+		// TODO: Add regression test for #1246.
 	)
 }
 
