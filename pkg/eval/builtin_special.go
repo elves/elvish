@@ -245,8 +245,8 @@ func (op *delElemOp) exec(fm *Frame) Exception {
 func compileFn(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	nameNode := args.next()
-	name := mustString(cp, nameNode, "must be a literal string")
-	bodyNode := args.nextMustLambda()
+	name := stringLiteralOrError(cp, nameNode, "function name")
+	bodyNode := args.nextMustLambda("function body")
 	args.mustEnd()
 
 	// Define the variable before compiling the body, so that the body may refer
@@ -299,17 +299,14 @@ func compileUse(cp *compiler, fn *parse.Form) effectOp {
 		end := fn.Head.Range().To
 		cp.errorpf(diag.PointRanging(end), "lack module name")
 	case 1:
-		spec = mustString(cp, fn.Args[0],
-			"module spec should be a literal string")
+		spec = stringLiteralOrError(cp, fn.Args[0], "module spec")
 		// Use the last path component as the name; for instance, if path =
 		// "a/b/c/d", name is "d". If path doesn't have slashes, name = path.
 		name = spec[strings.LastIndexByte(spec, '/')+1:]
 	case 2:
 		// TODO(xiaq): Allow using variable as module path
-		spec = mustString(cp, fn.Args[0],
-			"module spec should be a literal string")
-		name = mustString(cp, fn.Args[1],
-			"module name should be a literal string")
+		spec = stringLiteralOrError(cp, fn.Args[0], "module spec")
+		name = stringLiteralOrError(cp, fn.Args[1], "module name")
 	default: // > 2
 		cp.errorpf(diag.MixedRanging(fn.Args[2], fn.Args[len(fn.Args)-1]),
 			"superfluous argument(s)")
@@ -446,12 +443,14 @@ func compileIf(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	var condNodes []*parse.Compound
 	var bodyNodes []*parse.Primary
+	condLeader := "if"
 	for {
 		condNodes = append(condNodes, args.next())
-		bodyNodes = append(bodyNodes, args.nextMustLambda())
+		bodyNodes = append(bodyNodes, args.nextMustLambda(condLeader))
 		if !args.nextIs("elif") {
 			break
 		}
+		condLeader = "elif"
 	}
 	elseNode := args.nextMustLambdaIfAfter("else")
 	args.mustEnd()
@@ -497,7 +496,7 @@ func (op *ifOp) exec(fm *Frame) Exception {
 func compileWhile(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	condNode := args.next()
-	bodyNode := args.nextMustLambda()
+	bodyNode := args.nextMustLambda("while body")
 	elseNode := args.nextMustLambdaIfAfter("else")
 	args.mustEnd()
 
@@ -553,7 +552,7 @@ func compileFor(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	varNode := args.next()
 	iterNode := args.next()
-	bodyNode := args.nextMustLambda()
+	bodyNode := args.nextMustLambda("for body")
 	elseNode := args.nextMustLambdaIfAfter("else")
 	args.mustEnd()
 
@@ -629,7 +628,7 @@ func (op *forOp) exec(fm *Frame) Exception {
 func compileTry(cp *compiler, fn *parse.Form) effectOp {
 	logger.Println("compiling try")
 	args := cp.walkArgs(fn)
-	bodyNode := args.nextMustLambda()
+	bodyNode := args.nextMustLambda("try body")
 	logger.Printf("body is %q", parse.SourceText(bodyNode))
 	var exceptVarNode *parse.Compound
 	var exceptNode *parse.Primary
@@ -641,7 +640,7 @@ func compileTry(cp *compiler, fn *parse.Form) effectOp {
 			exceptVarNode = n
 			args.next()
 		}
-		exceptNode = args.nextMustLambda()
+		exceptNode = args.nextMustLambda("except body")
 	}
 	elseNode := args.nextMustLambdaIfAfter("else")
 	finallyNode := args.nextMustLambdaIfAfter("finally")

@@ -3,7 +3,18 @@ package eval
 import (
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/parse/cmpd"
 )
+
+// Utilities for working with nodes.
+
+func stringLiteralOrError(cp *compiler, n *parse.Compound, what string) string {
+	s, err := cmpd.StringLiteralOrError(n, what)
+	if err != nil {
+		cp.errorpf(n, "%v", err)
+	}
+	return s
+}
 
 type errorpfer interface {
 	errorpf(r diag.Ranger, fmt string, args ...interface{})
@@ -49,24 +60,18 @@ func (aw *argsWalker) nextIs(text string) bool {
 
 // nextMustLambda fetches the next argument, raising an error if it is not a
 // lambda.
-func (aw *argsWalker) nextMustLambda() *parse.Primary {
+func (aw *argsWalker) nextMustLambda(what string) *parse.Primary {
 	n := aw.next()
-	if len(n.Indexings) != 1 {
-		aw.cp.errorpf(n, "must be lambda")
-	}
-	if len(n.Indexings[0].Indicies) != 0 {
-		aw.cp.errorpf(n, "must be lambda")
-	}
-	pn := n.Indexings[0].Head
-	if pn.Type != parse.Lambda {
-		aw.cp.errorpf(n, "must be lambda")
+	pn, ok := cmpd.Lambda(n)
+	if !ok {
+		aw.cp.errorpf(n, "%s must be lambda, found %s", what, cmpd.Shape(n))
 	}
 	return pn
 }
 
 func (aw *argsWalker) nextMustLambdaIfAfter(leader string) *parse.Primary {
 	if aw.nextIs(leader) {
-		return aw.nextMustLambda()
+		return aw.nextMustLambda(leader + " body")
 	}
 	return nil
 }

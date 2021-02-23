@@ -11,6 +11,7 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/parse/cmpd"
 )
 
 // An operation with some side effects.
@@ -186,7 +187,7 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 	}
 
 	// Determine if this form is a special command.
-	if head, ok := oneString(n.Head); ok {
+	if head, ok := cmpd.StringLiteral(n.Head); ok {
 		special, _ := resolveCmdHeadInternally(cp, head, n.Head)
 		if special != nil {
 			specialOp := special(cp, n)
@@ -217,7 +218,7 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 	}
 
 	var headOp valuesOp
-	if head, ok := oneString(n.Head); ok {
+	if head, ok := cmpd.StringLiteral(n.Head); ok {
 		// Head is a literal string: resolve to function or external (special
 		// commands are already handled above).
 		if _, fnRef := resolveCmdHeadInternally(cp, head, n.Head); fnRef != nil {

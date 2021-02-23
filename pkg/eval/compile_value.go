@@ -384,7 +384,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 		// Argument list.
 		argNames = make([]string, len(n.Elements))
 		for i, arg := range n.Elements {
-			ref := mustString(cp, arg, "argument name must be literal string")
+			ref := stringLiteralOrError(cp, arg, "argument name")
 			sigil, qname := SplitSigil(ref)
 			name, rest := SplitQName(qname)
 			if rest != "" {
@@ -406,7 +406,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 		optNames = make([]string, len(n.MapPairs))
 		optDefaultOps = make([]valuesOp, len(n.MapPairs))
 		for i, opt := range n.MapPairs {
-			qname := mustString(cp, opt.Key, "option name must be literal string")
+			qname := stringLiteralOrError(cp, opt.Key, "option name")
 			name, rest := SplitQName(qname)
 			if rest != "" {
 				cp.errorpf(opt.Key, "option name must be unqualified")

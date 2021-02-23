@@ -482,7 +482,7 @@ type Primary struct {
 	// The unquoted string value. Valid for Bareword, SingleQuoted,
 	// DoubleQuoted, Variable, Wildcard and Tilde.
 	Value    string
-	Elements []*Compound // Valid for List and Labda
+	Elements []*Compound // Valid for List and Lambda
 	Chunk    *Chunk      // Valid for OutputCapture, ExitusCapture and Lambda
 	MapPairs []*MapPair  // Valid for Map and Lambda
 	Braced   []*Compound // Valid for Braced
