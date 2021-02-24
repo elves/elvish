@@ -2,13 +2,13 @@ package edit
 
 import (
 	"os"
-	"strings"
 
 	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/histutil"
 	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/tk"
+	"src.elv.sh/pkg/edit/query"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -59,18 +59,11 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 						return dedup.Get().(bool)
 					},
 					MakeFilter: func(f string) func(string) bool {
-						if f == strings.ToLower(f) {
-							// f is entirely lower case, do case-insensitive
-							// filtering.
-							return func(s string) bool {
-								return strings.Contains(strings.ToLower(s), f)
-							}
+						q, err := query.Compile(f)
+						if err != nil {
+							return func(string) bool { return true }
 						}
-						// f is not entirely lower case, do case-sensitive
-						// filtering.
-						return func(s string) bool {
-							return strings.Contains(s, f)
-						}
+						return q.Match
 					},
 				})
 				startMode(ed.app, w, err)
