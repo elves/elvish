@@ -17,7 +17,7 @@ import (
 // Input and output.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		// Value output
 		"put": put,
 

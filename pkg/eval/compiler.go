@@ -10,12 +10,13 @@ import (
 	"src.elv.sh/pkg/prog"
 )
 
-type deprecatedWhen struct {
-	minLevel int
-	msg      string
+// This structure and related var are global solely for the associated unit test.
+type DeprecatedWhen struct {
+	MinLevel int
+	Msg      string
 }
 
-var deprecatedVars = map[string]deprecatedWhen{
+var DeprecatedVars = map[string]DeprecatedWhen{
 	"builtin:-source~":       {15, `the "builtin:source" command is deprecated; use "eval" instead`},
 	"builtin:ord~":           {15, `the "builtin:ord" command is deprecated; use "str:to-codepoints" instead`},
 	"builtin:chr~":           {15, `the "builtin:chr" command is deprecated; use "str:from-codepoints" instead`},
@@ -143,8 +144,8 @@ func (cp *compiler) popScope() {
 }
 
 func (cp *compiler) checkDeprecatedVar(name string, r diag.Ranger) {
-	if dep, ok := deprecatedVars[name]; ok {
-		cp.deprecate(r, dep.msg, dep.minLevel)
+	if dep, ok := DeprecatedVars[name]; ok {
+		cp.deprecate(r, dep.Msg, dep.MinLevel)
 	}
 }
 

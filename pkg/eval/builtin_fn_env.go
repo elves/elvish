@@ -45,7 +45,7 @@ var ErrNonExistentEnvVar = errors.New("non-existent environment variable")
 // @cf has-env get-env set-env
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		"has-env":   hasEnv,
 		"get-env":   getEnv,
 		"set-env":   os.Setenv,

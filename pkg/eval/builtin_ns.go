@@ -88,6 +88,6 @@ var builtinNs = NsBuilder{
 	"paths": vars.NewEnvListVar("PATH"),
 }
 
-func addBuiltinFns(fns map[string]interface{}) {
+func AddBuiltinFns(fns map[string]interface{}) {
 	builtinNs.AddGoFns("", fns)
 }

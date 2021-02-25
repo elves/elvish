@@ -12,7 +12,7 @@ import (
 // TODO(xiaq): Document "multi-error".
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		"run-parallel": runParallel,
 		// Exception and control
 		"fail":        fail,

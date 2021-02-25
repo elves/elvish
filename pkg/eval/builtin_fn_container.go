@@ -15,7 +15,7 @@ import (
 // Sequence, list and maps.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		"ns": nsFn,
 
 		"make-map": makeMap,

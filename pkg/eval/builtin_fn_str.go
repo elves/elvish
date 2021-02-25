@@ -97,7 +97,7 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // instead.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		"<s":  func(a, b string) bool { return a < b },
 		"<=s": func(a, b string) bool { return a <= b },
 		"==s": func(a, b string) bool { return a == b },

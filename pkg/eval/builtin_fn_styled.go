@@ -12,7 +12,7 @@ import (
 var errStyledSegmentArgType = errors.New("argument to styled-segment must be a string or a styled segment")
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		"styled-segment": styledSegment,
 		"styled":         styled,
 	})

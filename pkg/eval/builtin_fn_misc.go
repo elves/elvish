@@ -21,7 +21,7 @@ import (
 // Builtins that have not been put into their own groups go here.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		"nop":        nop,
 		"kind-of":    kindOf,
 		"constantly": constantly,

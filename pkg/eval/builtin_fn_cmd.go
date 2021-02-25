@@ -11,7 +11,7 @@ import (
 // TODO(xiaq): Document "fg".
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		// Command resolution
 		"external":        external,
 		"has-external":    hasExternal,

@@ -34,7 +34,7 @@ import "src.elv.sh/pkg/eval/vals"
 // @cf not
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	AddBuiltinFns(map[string]interface{}{
 		"bool":   vals.Bool,
 		"not":    not,
 		"is":     is,
