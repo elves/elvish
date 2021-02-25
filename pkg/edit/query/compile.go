@@ -7,7 +7,6 @@ package query
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -74,8 +73,11 @@ func compileList(elems []*parse.Compound) (Query, error) {
 	}
 	switch head {
 	case "re":
-		if len(elems) != 2 {
-			return nil, notSupportedError{"re subquery with more than one argument"}
+		if len(elems) == 1 {
+			return nil, notSupportedError{"re subquery with no argument"}
+		}
+		if len(elems) > 2 {
+			return nil, notSupportedError{"re subquery with two or more arguments"}
 		}
 		arg := elems[1]
 		s, ok := cmpd.StringLiteral(arg)
@@ -84,7 +86,7 @@ func compileList(elems []*parse.Compound) (Query, error) {
 		}
 		p, err := regexp.Compile(s)
 		if err != nil {
-			return nil, fmt.Errorf("invalid regular expression %q: %w", s, err)
+			return nil, err
 		}
 		return regexpQuery{p}, nil
 	case "and":
