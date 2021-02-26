@@ -52,6 +52,9 @@ type TTY interface {
 	ResetBuffer()
 	// UpdateBuffer updates the current buffer and draw it to the terminal.
 	UpdateBuffer(bufNotes, bufMain *term.Buffer, full bool) error
+	// ClearScreen clears the terminal screen and places the cursor at the top
+	// left corner.
+	ClearScreen()
 }
 
 type aTTY struct {
@@ -126,6 +129,10 @@ func (t *aTTY) ResetBuffer() {
 
 func (t *aTTY) UpdateBuffer(bufNotes, bufMain *term.Buffer, full bool) error {
 	return t.w.CommitBuffer(bufNotes, bufMain, full)
+}
+
+func (t *aTTY) ClearScreen() {
+	t.w.ClearScreen()
 }
 
 func (t *aTTY) NotifySignals() <-chan os.Signal {

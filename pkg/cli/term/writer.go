@@ -16,6 +16,9 @@ type Writer interface {
 	ResetCurrentBuffer()
 	// CommitBuffer updates the terminal display to reflect current buffer.
 	CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error
+	// ClearScreen clears the terminal screen and places the cursor at the top
+	// left corner.
+	ClearScreen()
 }
 
 // writer renders the editor UI.
@@ -73,8 +76,7 @@ func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 
 	bytesBuf := new(bytes.Buffer)
 
-	// Hide cursor.
-	bytesBuf.WriteString("\033[?25l")
+	bytesBuf.WriteString(hideCursor)
 
 	// Rewind cursor
 	if pLine := w.curBuf.Dot.Line; pLine > 0 {
@@ -182,4 +184,13 @@ func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 
 	w.curBuf = buf
 	return nil
+}
+
+func (w *writer) ClearScreen() {
+	fmt.Fprint(w.file,
+		hideCursor,
+		"\033[H",  // move cursor to the top left corner
+		"\033[2J", // clear entire buffer
+		showCursor,
+	)
 }

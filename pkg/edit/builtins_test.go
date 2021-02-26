@@ -118,6 +118,19 @@ func TestRedraw(t *testing.T) {
 		"   vvvv", term.DotHere)
 }
 
+func TestClear(t *testing.T) {
+	f := setup()
+	defer f.Cleanup()
+
+	evals(f.Evaler, `edit:current-command = echo`, `edit:clear`)
+	f.TestTTY(t,
+		"~> echo", Styles,
+		"   vvvv", term.DotHere)
+	if cleared := f.TTYCtrl.ScreenCleared(); cleared != 1 {
+		t.Errorf("screen cleared %v times, want 1", cleared)
+	}
+}
+
 func TestReturnCode(t *testing.T) {
 	f := setup()
 	defer f.Cleanup()

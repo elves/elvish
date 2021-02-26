@@ -54,6 +54,19 @@ func endOfHistory(app cli.App) {
 	app.Notify("End of history")
 }
 
+//elvdoc:fn redraw
+//
+// ```elvish
+// edit:redraw &full=$false
+// ```
+//
+// Triggers a redraw.
+//
+// The `&full` option controls whether to do a full redraw. By default, all
+// redraws performed by the line editor are incremental redraws, updating only
+// the part of the screen that has changed from the last redraw. A full redraw
+// updates the entire command line.
+
 type redrawOpts struct{ Full bool }
 
 func (redrawOpts) SetDefaultOptions() {}
@@ -64,6 +77,22 @@ func redraw(app cli.App, opts redrawOpts) {
 	} else {
 		app.Redraw()
 	}
+}
+
+//elvdoc:fn clear
+//
+// ```elvish
+// edit:clear
+// ```
+//
+// Clears the screen.
+//
+// This command should be used in place of the external `clear` command to clear
+// the screen.
+
+func clear(app cli.App, tty cli.TTY) {
+	tty.ClearScreen()
+	app.RedrawFull()
 }
 
 //elvdoc:fn insert-raw
@@ -110,19 +139,6 @@ func toKey(v interface{}) (ui.Key, error) {
 		return ui.Key{}, errMustBeKeyOrString
 	}
 }
-
-//elvdoc:fn redraw
-//
-// ```elvish
-// edit:redraw &full=$false
-// ```
-//
-// Triggers a redraw.
-//
-// The `&full` option controls whether to do a full redraw. By default, all
-// redraws performed by the line editor are incremental redraws, updating only
-// the part of the screen that has changed from the last redraw. A full redraw
-// updates the entire command line.
 
 //elvdoc:fn return-line
 //
@@ -182,6 +198,7 @@ func initTTYBuiltins(app cli.App, tty cli.TTY, nb eval.NsBuilder) {
 	nb.AddGoFns("<edit>", map[string]interface{}{
 		"-dump-buf":  func() string { return dumpBuf(tty) },
 		"insert-raw": func() { insertRaw(app, tty) },
+		"clear":      func() { clear(app, tty) },
 	})
 }
 
