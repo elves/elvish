@@ -91,8 +91,10 @@ func redraw(app cli.App, opts redrawOpts) {
 // the screen.
 
 func clear(app cli.App, tty cli.TTY) {
+	tty.HideCursor()
 	tty.ClearScreen()
 	app.RedrawFull()
+	tty.ShowCursor()
 }
 
 //elvdoc:fn insert-raw

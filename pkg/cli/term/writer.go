@@ -19,6 +19,9 @@ type Writer interface {
 	// ClearScreen clears the terminal screen and places the cursor at the top
 	// left corner.
 	ClearScreen()
+	// Control whether the terminal cursor is visible.
+	HideCursor()
+	ShowCursor()
 }
 
 // writer renders the editor UI.
@@ -186,11 +189,17 @@ func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 	return nil
 }
 
+func (w *writer) HideCursor() {
+	fmt.Fprint(w.file, hideCursor)
+}
+
+func (w *writer) ShowCursor() {
+	fmt.Fprint(w.file, showCursor)
+}
+
 func (w *writer) ClearScreen() {
 	fmt.Fprint(w.file,
-		hideCursor,
 		"\033[H",  // move cursor to the top left corner
 		"\033[2J", // clear entire buffer
-		showCursor,
 	)
 }
