@@ -126,6 +126,12 @@ func (t *fakeTTY) UpdateBuffer(bufNotes, buf *term.Buffer, _ bool) error {
 	return nil
 }
 
+func (t *fakeTTY) HideCursor() {
+}
+
+func (t *fakeTTY) ShowCursor() {
+}
+
 func (t *fakeTTY) ClearScreen() {
 	t.cleared++
 }

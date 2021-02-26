@@ -55,6 +55,9 @@ type TTY interface {
 	// ClearScreen clears the terminal screen and places the cursor at the top
 	// left corner.
 	ClearScreen()
+	// Control whether the terminal cursor is visible.
+	HideCursor()
+	ShowCursor()
 }
 
 type aTTY struct {
@@ -129,6 +132,14 @@ func (t *aTTY) ResetBuffer() {
 
 func (t *aTTY) UpdateBuffer(bufNotes, bufMain *term.Buffer, full bool) error {
 	return t.w.CommitBuffer(bufNotes, bufMain, full)
+}
+
+func (t *aTTY) HideCursor() {
+	t.w.HideCursor()
+}
+
+func (t *aTTY) ShowCursor() {
+	t.w.ShowCursor()
 }
 
 func (t *aTTY) ClearScreen() {
