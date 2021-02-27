@@ -10,18 +10,22 @@ import (
 	"regexp"
 	"strings"
 
+	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/parse/cmpd"
 )
 
 // Compile parses and compiles a query.
 func Compile(q string) (Query, error) {
+	qn, errParse := parseQuery(q)
+	query, errCompile := compileQuery(qn)
+	return query, diag.Errors(errParse, errCompile)
+}
+
+func parseQuery(q string) (*parse.Query, error) {
 	qn := &parse.Query{}
-	err := parse.ParseAs(parse.Source{Code: q}, qn, parse.Config{})
-	if err != nil {
-		return nil, err
-	}
-	return compileQuery(qn)
+	err := parse.ParseAs(parse.Source{Name: "query", Code: q}, qn, parse.Config{})
+	return qn, err
 }
 
 func compileQuery(qn *parse.Query) (Query, error) {

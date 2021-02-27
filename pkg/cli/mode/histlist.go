@@ -28,6 +28,8 @@ type HistlistSpec struct {
 	// MakeFilter is called with the filter content to get a predicate that
 	// filters command texts. If unset, the predicate performs substring match.
 	MakeFilter func(string) func(string) bool
+	// Highlighter for the filter.
+	Highlighter func(string) (ui.Text, []error)
 }
 
 // NewHistlist creates a new histlist mode.
@@ -55,13 +57,16 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 	cmdItems := histlistItems{cmds, last}
 
 	w := tk.NewComboBox(tk.ComboBoxSpec{
-		CodeArea: tk.CodeAreaSpec{Prompt: func() ui.Text {
-			content := " HISTORY "
-			if spec.Dedup() {
-				content += "(dedup on) "
-			}
-			return ModeLine(content, true)
-		}},
+		CodeArea: tk.CodeAreaSpec{
+			Prompt: func() ui.Text {
+				content := " HISTORY "
+				if spec.Dedup() {
+					content += "(dedup on) "
+				}
+				return ModeLine(content, true)
+			},
+			Highlighter: spec.Highlighter,
+		},
 		ListBox: tk.ListBoxSpec{
 			Bindings: spec.Bindings,
 			OnAccept: func(it tk.Items, i int) {

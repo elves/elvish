@@ -59,12 +59,13 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 						return dedup.Get().(bool)
 					},
 					MakeFilter: func(f string) func(string) bool {
-						q, err := query.Compile(f)
-						if err != nil {
+						q, _ := query.Compile(f)
+						if q == nil {
 							return func(string) bool { return true }
 						}
 						return q.Match
 					},
+					Highlighter: query.Highlight,
 				})
 				startMode(ed.app, w, err)
 			},

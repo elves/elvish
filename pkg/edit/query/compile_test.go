@@ -58,7 +58,7 @@ func TestCompile(t *testing.T) {
 			Query("[re '[']").
 			DoesNotCompile("error parsing regexp: missing closing ]: `[`"),
 		That("invalid syntax results in parse error").
-			Query("[and").DoesNotParse("parse error: 4-4 in : should be ']'"),
+			Query("[and").DoesNotParse("parse error: 4-4 in query: should be ']'"),
 
 		// Unsupported for now, but may be in future
 		That("options are not supported yet").
