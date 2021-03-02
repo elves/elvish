@@ -17,9 +17,5 @@ name = "effective-elvish"
 title = "Effective Elvish"
 
 [[articles]]
-name = "name"
-title = "The Name"
-
-[[articles]]
-name = "philosophy"
-title = "The Philosophy"
+name = "faq"
+title = "FAQ"
