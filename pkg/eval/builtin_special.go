@@ -636,9 +636,14 @@ func compileTry(cp *compiler, fn *parse.Form) effectOp {
 		logger.Println("except-ing")
 		n := args.peek()
 		// Is this a variable?
-		if len(n.Indexings) == 1 && n.Indexings[0].Head.Type == parse.Bareword {
-			exceptVarNode = n
-			args.next()
+		if len(n.Indexings) == 1 {
+			// This mimics the compiler.literal function. That is, an exception capture var name can
+			// be a bareword or quoted string.
+			t := n.Indexings[0].Head.Type
+			if t == parse.Bareword || t == parse.SingleQuoted || t == parse.DoubleQuoted {
+				exceptVarNode = n
+				args.next()
+			}
 		}
 		exceptNode = args.nextMustLambda("except body")
 	}
