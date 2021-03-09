@@ -476,6 +476,15 @@ Examples:
 ▶ [&cmd-name=false &exit-status=1 &pid=953421 &type=external-cmd/exited]
 ```
 
+## File
+
+There is no literal syntax for the file type. This type is returned by commands
+such as [file:open](file.html#open) and [path:temp-file](path.html#temp-file).
+It can be used as the target of a redirection rather than a filename.
+
+A file object is a [pseudo-map](#pseudo-map) with fields `fd` (an int) and
+`name` (a string). If the file is closed the fd will be -1.
+
 ## Function
 
 A function encapsulates a piece of code that can be executed in an

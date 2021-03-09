@@ -43,6 +43,10 @@ type Result struct {
 	Exception        error
 }
 
+// MatchingRegexp is used in a `Puts()` call when the value being matched should be a string
+// matching a regexp rather than a literal string.
+type MatchingRegexp struct{ Pattern string }
+
 // The following functions and methods are used to build Test structs. They are
 // supposed to read like English, so a test that "put x" should put "x" reads:
 //
@@ -232,8 +236,15 @@ func matchOut(want, got []interface{}) bool {
 				return false
 			}
 		default:
-			if !vals.Equal(got[i], want[i]) {
-				return false
+			switch w := want[i].(type) {
+			case MatchingRegexp:
+				if !vals.MatchesRegexp(got[i], w.Pattern) {
+					return false
+				}
+			default:
+				if !vals.Equal(got[i], want[i]) {
+					return false
+				}
 			}
 		}
 	}

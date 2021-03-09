@@ -2,10 +2,12 @@
 package path
 
 import (
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
 )
 
 // Ns is the namespace for the re: module.
@@ -21,6 +23,8 @@ var fns = map[string]interface{}{
 	"is-abs":        filepath.IsAbs,
 	"is-dir":        isDir,
 	"is-regular":    isRegular,
+	"temp-dir":      tempDir,
+	"temp-file":     tempFile,
 }
 
 //elvdoc:fn abs
@@ -175,4 +179,100 @@ func isDir(path string) bool {
 func isRegular(path string) bool {
 	fi, err := os.Lstat(path)
 	return err == nil && fi.Mode().IsRegular()
+}
+
+//elvdoc:fn temp-dir
+//
+// ```elvish
+// temp-dir &dir=$dir $pattern?
+// ```
+//
+// Create a unique directory and output its name. The &dir option determines where the directory
+// will be created, and its default value is appropriate for your system. The `$pattern` value is
+// optional. If omitted it defaults to `elvish-*`. The last star in the pattern is replaced by a
+// random string. It is your responsibility to remove the (presumably) temporary directory.
+//
+// ```elvish-transcript
+// ~> path:temp-dir
+// ▶ /tmp/elvish-RANDOMSTR
+// ~> path:temp-dir x-
+// ▶ /tmp/x-RANDOMSTR
+// ~> path:temp-dir 'x-*.y'
+// ▶ /tmp/x-RANDOMSTR.y
+// ~> path:temp-dir &dir=.
+// ▶ elvish-RANDOMSTR
+// ~> path:temp-dir &dir=/some/dir
+// ▶ /some/dir/elvish-RANDOMSTR
+// ```
+
+type mktempOpt struct{ Dir string }
+
+func (o *mktempOpt) SetDefaultOptions() {}
+
+func tempDir(opts mktempOpt, args ...string) (string, error) {
+	var pattern string
+	switch len(args) {
+	case 0:
+		pattern = "elvish-*"
+	case 1:
+		pattern = args[0]
+	default:
+		return "", errs.ArityMismatch{
+			What:     "arguments here",
+			ValidLow: 0, ValidHigh: 1, Actual: len(args)}
+	}
+
+	return ioutil.TempDir(opts.Dir, pattern)
+}
+
+//elvdoc:fn temp-file
+//
+// ```elvish
+// temp-file [&dir=$dir] [$pattern]
+// ```
+//
+// Create a unique file and output a [file](language.html#file) object opened for reading and
+// writing. The &dir option determines where the directory will be created, and its default value is
+// appropriate for your system. The `$pattern` value is optional. If omitted it defaults to
+// `elvish-*`. The last star in the pattern is replaced by a random string. It is your
+// responsibility to remove the (presumably) temporary file.
+//
+// You can use [`fclose`](builtin.html#fclose) to close the file. You can use `$f[name]` to extract
+// the name of the file so it can be used as an argument for another command; e.g., `rm`.
+//
+// ```elvish-transcript
+// ~> f = path:temp-file
+// ~> put $f[name]
+// ▶ /tmp/elvish-RANDOMSTR
+// ~> echo hello > $f
+// ~> cat $f[name]
+// hello
+// ~> f = path:temp-file x-
+// ~> put $f[name]
+// ▶ /tmp/x-RANDOMSTR
+// ~> f = path:temp-file 'x-*.y'
+// ~> put $f[name]
+// ▶ /tmp/x-RANDOMSTR.y
+// ~> f = path:temp-file &dir=.
+// ~> put $f[name]
+// ▶ elvish-RANDOMSTR
+// ~> f = path:temp-file &dir=/some/dir
+// ~> put $f[name]
+// ▶ /some/dir/elvish-RANDOMSTR
+// ```
+
+func tempFile(opts mktempOpt, args ...string) (*os.File, error) {
+	var pattern string
+	switch len(args) {
+	case 0:
+		pattern = "elvish-*"
+	case 1:
+		pattern = args[0]
+	default:
+		return nil, errs.ArityMismatch{
+			What:     "arguments here",
+			ValidLow: 0, ValidHigh: 1, Actual: len(args)}
+	}
+
+	return ioutil.TempFile(opts.Dir, pattern)
 }
