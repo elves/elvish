@@ -2,9 +2,11 @@ package path
 
 import (
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/testutil"
 )
@@ -30,6 +32,10 @@ func TestPath(t *testing.T) {
 	if err != nil {
 		panic("unable to convert a/b/c.png to an absolute path")
 	}
+
+	// This is needed for path tests that use a regexp for validating a path since Windows uses a
+	// backslash as the path separator and a backslash is special in a regexp.
+	sep := regexp.QuoteMeta(string(filepath.Separator))
 
 	setup := func(ev *eval.Evaler) {
 		ev.AddGlobal(eval.NsBuilder{}.AddNs("path", Ns).Ns())
@@ -64,5 +70,32 @@ func TestPath(t *testing.T) {
 		That(`path:is-regular d1/f`).Puts(false),
 		That(`path:is-regular d1/d2/f`).Puts(true),
 		That(`path:is-regular s1/f`).Puts(true),
+
+		// Verify the commands for creating temporary filesystem objects work correctly.
+		That(`x = (path:temp-dir)`, `rmdir $x`, `put $x`).Puts(
+			MatchingRegexp{Pattern: `^.*` + sep + `elvish-.*$`}),
+		That(`x = (path:temp-dir 'x-*.y')`, `rmdir $x`, `put $x`).Puts(
+			MatchingRegexp{Pattern: `^.*` + sep + `x-.*\.y$`}),
+		That(`x = (path:temp-dir &dir=. 'x-*.y')`, `rmdir $x`, `put $x`).Puts(
+			MatchingRegexp{Pattern: `^x-.*\.y$`}),
+		That(`x = (path:temp-dir &dir=.)`, `rmdir $x`, `put $x`).Puts(
+			MatchingRegexp{Pattern: `^elvish-.*$`}),
+		That(`path:temp-dir a b`).Throws(
+			errs.ArityMismatch{What: "arguments here", ValidLow: 0, ValidHigh: 1, Actual: 2},
+			"path:temp-dir a b"),
+
+		That(`f = (path:temp-file)`, `fclose $f`, `put $f[fd]`, `rm $f[name]`).
+			Puts(-1),
+		That(`f = (path:temp-file)`, `put $f[name]`, `fclose $f`, `rm $f[name]`).
+			Puts(MatchingRegexp{Pattern: `^.*` + sep + `elvish-.*$`}),
+		That(`f = (path:temp-file 'x-*.y')`, `put $f[name]`, `fclose $f`, `rm $f[name]`).
+			Puts(MatchingRegexp{Pattern: `^.*` + sep + `x-.*\.y$`}),
+		That(`f = (path:temp-file &dir=. 'x-*.y')`, `put $f[name]`, `fclose $f`, `rm $f[name]`).
+			Puts(MatchingRegexp{Pattern: `^x-.*\.y$`}),
+		That(`f = (path:temp-file &dir=.)`, `put $f[name]`, `fclose $f`, `rm $f[name]`).
+			Puts(MatchingRegexp{Pattern: `^elvish-.*$`}),
+		That(`path:temp-file a b`).Throws(
+			errs.ArityMismatch{What: "arguments here", ValidLow: 0, ValidHigh: 1, Actual: 2},
+			"path:temp-file a b"),
 	)
 }
