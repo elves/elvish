@@ -54,7 +54,7 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 				if spec.Dedup() {
 					content += "(dedup on) "
 				}
-				return ModeLine(content, true)
+				return modeLine(content, true)
 			},
 			Highlighter: spec.Filter.Highlighter,
 		},

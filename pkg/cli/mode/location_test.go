@@ -231,7 +231,7 @@ func TestLocation_Workspace(t *testing.T) {
 func locationBuf(filter string, lines ...string) *term.Buffer {
 	b := term.NewBufferBuilder(50).
 		Newline(). // empty code area
-		WriteStyled(ModeLine(" LOCATION ", true)).
+		WriteStyled(modeLine(" LOCATION ", true)).
 		Write(filter).SetDotHere()
 	for i, line := range lines {
 		b.Newline()

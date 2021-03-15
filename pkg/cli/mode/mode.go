@@ -4,8 +4,8 @@ package mode
 
 import "src.elv.sh/pkg/ui"
 
-// ModeLine returns a text styled as a modeline.
-func ModeLine(content string, space bool) ui.Text {
+// Returns text styled as a modeline.
+func modeLine(content string, space bool) ui.Text {
 	t := ui.T(content, ui.Bold, ui.FgWhite, ui.BgMagenta)
 	if space {
 		t = ui.Concat(t, ui.T(" "))
@@ -13,9 +13,11 @@ func ModeLine(content string, space bool) ui.Text {
 	return t
 }
 
-// ModePrompt returns a callback suitable as the prompt in the codearea of a
-// mode widget.
-func ModePrompt(content string, space bool) func() ui.Text {
-	p := ModeLine(content, space)
+func modePrompt(content string, space bool) func() ui.Text {
+	p := modeLine(content, space)
 	return func() ui.Text { return p }
 }
+
+// Prompt returns a callback suitable as the prompt in the codearea of a
+// mode widget. This var is solely for the benefit of pkg/edit/minibuf.
+var Prompt = modePrompt

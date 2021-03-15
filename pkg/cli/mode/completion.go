@@ -48,7 +48,7 @@ func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
 	}
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{
-			Prompt:      ModePrompt(" COMPLETING "+cfg.Name+" ", true),
+			Prompt:      modePrompt(" COMPLETING "+cfg.Name+" ", true),
 			Highlighter: cfg.Filter.Highlighter,
 		},
 		ListBox: tk.ListBoxSpec{

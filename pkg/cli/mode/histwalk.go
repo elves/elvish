@@ -37,7 +37,7 @@ type histwalk struct {
 
 func (w *histwalk) Render(width, height int) *term.Buffer {
 	cmd, _ := w.cursor.Get()
-	content := ModeLine(fmt.Sprintf(" HISTORY #%d ", cmd.Seq), false)
+	content := modeLine(fmt.Sprintf(" HISTORY #%d ", cmd.Seq), false)
 	buf := term.NewBufferBuilder(width).WriteStyled(content).Buffer()
 	buf.TrimToLines(0, height)
 	return buf

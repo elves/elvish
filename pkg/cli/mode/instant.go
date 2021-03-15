@@ -33,7 +33,7 @@ type instant struct {
 
 func (w *instant) Render(width, height int) *term.Buffer {
 	bb := term.NewBufferBuilder(width).
-		WriteStyled(ModeLine(" INSTANT ", false)).SetDotHere()
+		WriteStyled(modeLine(" INSTANT ", false)).SetDotHere()
 	if w.lastErr != nil {
 		bb.Newline().Write(w.lastErr.Error(), ui.FgRed)
 	}

@@ -1,4 +1,3 @@
-// Package navigation provides the functionality of navigating the filesystem.
 package mode
 
 import (
@@ -162,9 +161,9 @@ func NewNavigation(app cli.App, spec NavigationSpec) Navigation {
 		codeArea: tk.NewCodeArea(tk.CodeAreaSpec{
 			Prompt: func() ui.Text {
 				if w.CopyState().ShowHidden {
-					return ModeLine(" NAVIGATING (show hidden) ", true)
+					return modeLine(" NAVIGATING (show hidden) ", true)
 				}
-				return ModeLine(" NAVIGATING ", true)
+				return modeLine(" NAVIGATING ", true)
 			},
 			Highlighter: spec.Filter.Highlighter,
 		}),
