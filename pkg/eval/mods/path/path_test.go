@@ -11,14 +11,14 @@ import (
 
 var testDir = testutil.Dir{
 	"d1": testutil.Dir{
-		"f": testutil.Symlink{filepath.Join("d2", "f")},
+		"f": testutil.Symlink{Target: filepath.Join("d2", "f")},
 		"d2": testutil.Dir{
 			"empty": "",
 			"f":     "",
-			"g":     testutil.Symlink{"f"},
+			"g":     testutil.Symlink{Target: "f"},
 		},
 	},
-	"s1": testutil.Symlink{filepath.Join("d1", "d2")},
+	"s1": testutil.Symlink{Target: filepath.Join("d1", "d2")},
 }
 
 func TestPath(t *testing.T) {

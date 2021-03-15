@@ -11,12 +11,12 @@ import (
 )
 
 func TestModeLine(t *testing.T) {
-	testModeLine(t, tt.Fn("Line", ModeLine))
+	testModeLine(t, tt.Fn("Line", modeLine))
 }
 
 func TestModePrompt(t *testing.T) {
 	testModeLine(t, tt.Fn("Prompt",
-		func(s string, b bool) ui.Text { return ModePrompt(s, b)() }))
+		func(s string, b bool) ui.Text { return modePrompt(s, b)() }))
 }
 
 func testModeLine(t *testing.T, fn *tt.FnToTest) {
