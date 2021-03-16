@@ -58,9 +58,8 @@ func setup(fns ...func(*fixture)) *fixture {
 	tty, ttyCtrl := clitest.NewFakeTTY()
 	ev := eval.NewEvaler()
 	ed := NewEditor(tty, ev, st)
-	ev.AddModule("edit", ed.Ns())
+	ev.AddBuiltin(eval.NsBuilder{}.AddNs("edit", ed.Ns()).Ns())
 	evals(ev,
-		`use edit`,
 		// This is the same as the default prompt for non-root users. This makes
 		// sure that the tests will work when run as root.
 		"edit:prompt = { tilde-abbr $pwd; put '> ' }",

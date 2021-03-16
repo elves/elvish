@@ -1,7 +1,18 @@
 package edit
 
-// Elvish code for default bindings, assuming the editor ns as the global ns.
-const defaultBindingsElv = `
+// Elvish code for default bindings, hooks, and similar initializations. This assumes the `edit`
+// namespace as the global namespace.
+const elvInit = `
+after-command = [
+	# Capture the most recent interactive command duration in $edit:command-duration
+	# as a convenience for prompt functions. Note: The first time this is run is after
+	# shell.sourceRC() finishes so the initial value of command-duration is the time
+	# to execute the user's interactive configuration script.
+	[m]{
+		command-duration = $m[duration]
+	}
+]
+
 global-binding = (binding-table [
   &Ctrl-'['= $close-mode~
 ])

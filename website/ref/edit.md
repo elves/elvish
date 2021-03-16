@@ -431,28 +431,48 @@ hence that candidates for all completion types are matched by prefix.
 
 ## Hooks
 
-Hooks are functions that are executed at certain points in time. In Elvish, this
-functionality is provided by lists of functions.
+Hooks are functions that are executed at certain points in time. In Elvish this
+functionality is provided by variables that are a list of functions. Some hooks
+are populated with one or more functions when Elvish starts. In general you
+should append to a hook variable rather than assign a list of functions to it.
+That is, rather than doing `hook-var = [ []{ put 'I ran' } ]` you should do
+`hook-var = [ $@hook-var []{ put 'I ran' } ]`.
 
-There are current two hooks:
+These are the editor/REPL hooks:
 
--   `$edit:before-readline`, whose elements are called before the editor reads
-    code, with no arguments.
+-   [`$edit:before-readline`](https://elv.sh/ref/edit.html#editbefore-readline):
+    The functions are called before the editor runs. Each function is called
+    with no arguments.
 
--   `$edit:after-readline`, whose elements are called, after the editor reads
-    code, with a sole element -- the line just read.
+-   [`$edit:after-readline`](https://elv.sh/ref/edit.html#editafter-readline):
+    The functions are called after the editor accepts a command for execution.
+    Each function is called with a sole argument: the line just read.
+
+-   [`$edit:after-command`](https://elv.sh/ref/edit.html#editafter-command): The
+    functions are called after the shell executes the command you entered
+    (typically by pressing the `Enter` key). Each function is called with a sole
+    argument: a map that provides information about the executed command. This
+    hook is also called after your interactive RC file is executed and before
+    the first prompt is output.
 
 Example usage:
 
 ```elvish
 edit:before-readline = [{ echo 'going to read' }]
 edit:after-readline = [[line]{ echo 'just read '$line }]
+edit:after-command = [[m]{ echo 'command took '$m[duration]' seconds' }]
 ```
 
-Then every time you accept a chunk of code (and thus leaving the editor),
-`just read` followed by the code is printed; and at the very beginning of an
-Elvish session, or after a chunk of code is executed, `going to read` is
-printed.
+Given the above hooks...
+
+1. Every time you accept a chunk of code (normally by pressing Enter)
+   `just read` is printed.
+
+1. At the very beginning of an Elvish session, or after a chunk of code is
+   handled, `going to read` is printed.
+
+1. After each non empty chunk of code is accepted and executed the string
+   "command took ... seconds` is output.
 
 ## Word types
 
