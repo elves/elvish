@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -60,7 +61,7 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 
 	// Source rc.elv.
 	if cfg.Paths.Rc != "" {
-		err := sourceRC(fds, ev, cfg.Paths.Rc)
+		err := sourceRC(fds, ev, ed, cfg.Paths.Rc)
 		if err != nil {
 			diag.ShowError(fds[2], err)
 		}
@@ -75,7 +76,6 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 		cmdNum++
 
 		line, err := ed.ReadCode()
-
 		if err == io.EOF {
 			break
 		} else if err != nil {
@@ -97,8 +97,15 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 		// No error; reset cooldown.
 		cooldown = time.Second
 
-		err = evalInTTY(ev, fds,
-			parse.Source{Name: fmt.Sprintf("[tty %v]", cmdNum), Code: line})
+		// Execute the command line only if it is not entirely whitespace. This keeps side-effects,
+		// such as executing `$edit:after-command` hooks, from occurring when we didn't actually
+		// evaluate any code entered by the user.
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		src := parse.Source{Name: fmt.Sprintf("[tty %v]", cmdNum), Code: line}
+		duration, err := evalInTTY(ev, fds, src)
+		ed.RunAfterCommandHooks(src, duration, err)
 		term.Sanitize(fds[0], fds[2])
 		if err != nil {
 			diag.ShowError(fds[2], err)
@@ -106,7 +113,7 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 	}
 }
 
-func sourceRC(fds [3]*os.File, ev *eval.Evaler, rcPath string) error {
+func sourceRC(fds [3]*os.File, ev *eval.Evaler, ed eval.Editor, rcPath string) error {
 	absPath, err := filepath.Abs(rcPath)
 	if err != nil {
 		return fmt.Errorf("cannot get full path of rc.elv: %v", err)
@@ -118,5 +125,8 @@ func sourceRC(fds [3]*os.File, ev *eval.Evaler, rcPath string) error {
 		}
 		return err
 	}
-	return evalInTTY(ev, fds, parse.Source{Name: absPath, Code: code, IsFile: true})
+	src := parse.Source{Name: absPath, Code: code, IsFile: true}
+	duration, err := evalInTTY(ev, fds, src)
+	ed.RunAfterCommandHooks(src, duration, err)
+	return err
 }

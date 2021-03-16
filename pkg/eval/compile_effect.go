@@ -75,11 +75,6 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 		fm.intCh = nil
 		fm.background = true
 		fm.Evaler.addNumBgJobs(1)
-
-		if fm.Evaler.Editor() != nil {
-			// TODO: Redirect output in interactive mode so that the line
-			// editor does not get messed up.
-		}
 	}
 
 	nforms := len(op.subops)
@@ -142,12 +137,7 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 				msg += ", errors = " + err.Error()
 			}
 			if fm.Evaler.getNotifyBgJobSuccess() || err != nil {
-				editor := fm.Evaler.Editor()
-				if editor != nil {
-					editor.Notify("%s", msg)
-				} else {
-					fm.ErrorFile().WriteString(msg + "\n")
-				}
+				fm.ErrorFile().WriteString(msg + "\n")
 			}
 		}()
 		return nil

@@ -81,13 +81,12 @@ type Evaler struct {
 	//
 	// TODO: Remove these dependency by providing more general extension points.
 	daemonClient daemon.Client
-	editor       Editor
 }
 
 // Editor is the interface that the line editor has to satisfy. It is needed so
 // that this package does not depend on the edit package.
 type Editor interface {
-	Notify(string, ...interface{})
+	RunAfterCommandHooks(src parse.Source, duration float64, err error)
 }
 
 //elvdoc:var after-chdir
@@ -344,13 +343,6 @@ func (ev *Evaler) DaemonClient() daemon.Client {
 	ev.mu.RLock()
 	defer ev.mu.RUnlock()
 	return ev.daemonClient
-}
-
-// Editor returns the editor associated with the Evaler.
-func (ev *Evaler) Editor() Editor {
-	ev.mu.RLock()
-	defer ev.mu.RUnlock()
-	return ev.editor
 }
 
 // Chdir changes the current directory. On success it also updates the PWD

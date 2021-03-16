@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"time"
 
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/env"
@@ -62,11 +63,14 @@ func setupShell(fds [3]*os.File, p Paths, spawn bool) (*eval.Evaler, func()) {
 	}
 }
 
-func evalInTTY(ev *eval.Evaler, fds [3]*os.File, src parse.Source) error {
+func evalInTTY(ev *eval.Evaler, fds [3]*os.File, src parse.Source) (float64, error) {
+	start := time.Now()
 	ports, cleanup := eval.PortsFromFiles(fds, ev.ValuePrefix())
 	defer cleanup()
-	return ev.Eval(src, eval.EvalCfg{
+	err := ev.Eval(src, eval.EvalCfg{
 		Ports: ports, Interrupt: eval.ListenInterrupts, PutInFg: true})
+	end := time.Now()
+	return end.Sub(start).Seconds(), err
 }
 
 func incSHLVL() func() {
