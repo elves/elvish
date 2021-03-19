@@ -26,6 +26,7 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/parse/cmpd"
 )
 
 type compileBuiltin func(*compiler, *parse.Form) effectOp
@@ -634,16 +635,11 @@ func compileTry(cp *compiler, fn *parse.Form) effectOp {
 	var exceptNode *parse.Primary
 	if args.nextIs("except") {
 		logger.Println("except-ing")
+		// Parse an optional lvalue into exceptVarNode.
 		n := args.peek()
-		// Is this a variable?
-		if len(n.Indexings) == 1 {
-			// This mimics the compiler.literal function. That is, an exception capture var name can
-			// be a bareword or quoted string.
-			t := n.Indexings[0].Head.Type
-			if t == parse.Bareword || t == parse.SingleQuoted || t == parse.DoubleQuoted {
-				exceptVarNode = n
-				args.next()
-			}
+		if _, ok := cmpd.StringLiteral(n); ok {
+			exceptVarNode = n
+			args.next()
 		}
 		exceptNode = args.nextMustLambda("except body")
 	}

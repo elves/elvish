@@ -422,16 +422,6 @@ func (cp *compiler) assignmentOps(ns []*parse.Assignment) []effectOp {
 	return ops
 }
 
-func (cp *compiler) literal(n *parse.Primary, msg string) string {
-	switch n.Type {
-	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
-		return n.Value
-	default:
-		cp.errorpf(n, msg)
-		return ""
-	}
-}
-
 const defaultFileRedirPerm = 0644
 
 // redir compiles a Redir into a op.
