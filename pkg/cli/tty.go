@@ -29,11 +29,10 @@ type TTY interface {
 	// sequences, such as VT100. It is a no-op if events are delivered as whole
 	// units by the terminal, such as Windows consoles.
 	SetRawInput(n int)
+	// CloseReader releases resources allocated for reading terminal events.
+	CloseReader()
 
-	// StopInput causes input delivery to be stopped. When this function
-	// returns, the channel previously returned by StartInput will no longer
-	// deliver input events.
-	StopInput()
+	term.Writer
 
 	// NotifySignals start relaying signals and returns a channel on which
 	// signals are delivered.
@@ -44,27 +43,13 @@ type TTY interface {
 
 	// Size returns the height and width of the terminal.
 	Size() (h, w int)
-
-	// Buffer returns the current buffer. The initial value of the current
-	// buffer is nil.
-	Buffer() *term.Buffer
-	// ResetBuffer resets the current buffer to nil without actuating any redraw.
-	ResetBuffer()
-	// UpdateBuffer updates the current buffer and draw it to the terminal.
-	UpdateBuffer(bufNotes, bufMain *term.Buffer, full bool) error
-	// ClearScreen clears the terminal screen and places the cursor at the top
-	// left corner.
-	ClearScreen()
-	// Control whether the terminal cursor is visible.
-	HideCursor()
-	ShowCursor()
 }
 
 type aTTY struct {
 	in, out *os.File
 	r       term.Reader
-	w       term.Writer
-	sigCh   chan os.Signal
+	term.Writer
+	sigCh chan os.Signal
 
 	rawMutex sync.Mutex
 	raw      int
@@ -72,7 +57,7 @@ type aTTY struct {
 
 // NewTTY returns a new TTY from input and output terminal files.
 func NewTTY(in, out *os.File) TTY {
-	return &aTTY{in: in, out: out, w: term.NewWriter(out)}
+	return &aTTY{in: in, out: out, Writer: term.NewWriter(out)}
 }
 
 func (t *aTTY) Setup() (func(), error) {
@@ -115,35 +100,11 @@ func (t *aTTY) SetRawInput(n int) {
 	t.raw = n
 }
 
-func (t *aTTY) StopInput() {
+func (t *aTTY) CloseReader() {
 	if t.r != nil {
 		t.r.Close()
 	}
 	t.r = nil
-}
-
-func (t *aTTY) Buffer() *term.Buffer {
-	return t.w.CurrentBuffer()
-}
-
-func (t *aTTY) ResetBuffer() {
-	t.w.ResetCurrentBuffer()
-}
-
-func (t *aTTY) UpdateBuffer(bufNotes, bufMain *term.Buffer, full bool) error {
-	return t.w.CommitBuffer(bufNotes, bufMain, full)
-}
-
-func (t *aTTY) HideCursor() {
-	t.w.HideCursor()
-}
-
-func (t *aTTY) ShowCursor() {
-	t.w.ShowCursor()
-}
-
-func (t *aTTY) ClearScreen() {
-	t.w.ClearScreen()
 }
 
 func (t *aTTY) NotifySignals() <-chan os.Signal {

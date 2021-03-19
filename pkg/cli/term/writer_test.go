@@ -16,7 +16,7 @@ func TestWriter(t *testing.T) {
 	}
 
 	w := NewWriter(sb)
-	w.CommitBuffer(
+	w.UpdateBuffer(
 		NewBufferBuilder(10).Write("note 1").Buffer(),
 		NewBufferBuilder(10).Write("line 1").SetDotHere().Buffer(),
 		false)

@@ -304,7 +304,7 @@ func (a *app) ReadCode() (string, error) {
 	a.reqRead = make(chan struct{}, 1)
 	a.reqRead <- struct{}{}
 	defer close(a.reqRead)
-	defer a.TTY.StopInput()
+	defer a.TTY.CloseReader()
 	wg.Add(1)
 	go func() {
 		defer wg.Done()

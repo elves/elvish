@@ -95,7 +95,7 @@ func (t *fakeTTY) SetRawInput(n int) {
 }
 
 // Closes eventCh.
-func (t *fakeTTY) StopInput() {
+func (t *fakeTTY) CloseReader() {
 	t.eventChMutex.Lock()
 	defer t.eventChMutex.Unlock()
 	close(t.eventCh)

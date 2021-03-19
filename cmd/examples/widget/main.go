@@ -51,7 +51,7 @@ func main() {
 		return
 	}
 	defer restore()
-	defer tty.StopInput()
+	defer tty.CloseReader()
 	for {
 		h, w := tty.Size()
 		if h > *maxHeight {

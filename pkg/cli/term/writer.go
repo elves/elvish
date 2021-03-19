@@ -10,18 +10,19 @@ var logWriterDetail = false
 
 // Writer represents the output to a terminal.
 type Writer interface {
-	// CurrentBuffer returns the current buffer.
-	CurrentBuffer() *Buffer
-	// ResetCurrentBuffer resets the current buffer.
-	ResetCurrentBuffer()
-	// CommitBuffer updates the terminal display to reflect current buffer.
-	CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error
+	// Buffer returns the current buffer.
+	Buffer() *Buffer
+	// ResetBuffer resets the current buffer.
+	ResetBuffer()
+	// UpdateBuffer updates the terminal display to reflect current buffer.
+	UpdateBuffer(bufNoti, buf *Buffer, fullRefresh bool) error
 	// ClearScreen clears the terminal screen and places the cursor at the top
 	// left corner.
 	ClearScreen()
-	// Control whether the terminal cursor is visible.
-	HideCursor()
+	// ShowCursor shows the cursor.
 	ShowCursor()
+	// HideCursor hides the cursor.
+	HideCursor()
 }
 
 // writer renders the editor UI.
@@ -35,13 +36,11 @@ func NewWriter(f io.Writer) Writer {
 	return &writer{f, &Buffer{}}
 }
 
-// CurrentBuffer returns the current buffer.
-func (w *writer) CurrentBuffer() *Buffer {
+func (w *writer) Buffer() *Buffer {
 	return w.curBuf
 }
 
-// ResetCurrentBuffer resets the current buffer.
-func (w *writer) ResetCurrentBuffer() {
+func (w *writer) ResetBuffer() {
 	w.curBuf = &Buffer{}
 }
 
@@ -69,8 +68,8 @@ const (
 	showCursor = "\033[?25h"
 )
 
-// CommitBuffer updates the terminal display to reflect current buffer.
-func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
+// UpdateBuffer updates the terminal display to reflect current buffer.
+func (w *writer) UpdateBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 	if buf.Width != w.curBuf.Width && w.curBuf.Lines != nil {
 		// Width change, force full refresh
 		w.curBuf.Lines = nil
