@@ -39,7 +39,6 @@ fn font-face [family weight style file]{
     font-family: "$family";
     font-weight: "$weight";
     font-style: "$style";
-    font-strecth: normal;
     src: url('data:font/woff2;charset=utf-8;base64,"(base64 -w0 _fonts_tmp/$file.subset.woff2 | slurp)"') format('woff2');
 }"
 }
