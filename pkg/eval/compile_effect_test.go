@@ -137,6 +137,12 @@ func TestCommand_Assignment(t *testing.T) {
 		// Assignment errors itself.
 		That("true = 1").Throws(vars.ErrSetReadOnlyVar, "true"),
 		That("@true = 1").Throws(vars.ErrSetReadOnlyVar, "@true"),
+		// A readonly var as a target for the `except` clause should error.
+		That("try { fail reason } except nil { }").Throws(vars.ErrSetReadOnlyVar, "nil"),
+		That("try { fail reason } except x { }").DoesNothing(),
+		// Evaluation of the assignability occurs at run-time so, if no exception is raised, this
+		// otherwise invalid use of `nil` is okay.
+		That("try { } except nil { }").DoesNothing(),
 		// Arity mismatch.
 		That("x = 1 2").Throws(
 			errs.ArityMismatch{

@@ -695,7 +695,7 @@ func (op *tryOp) exec(fm *Frame) Exception {
 			if exceptVar != nil {
 				err := exceptVar.Set(err.(Exception))
 				if err != nil {
-					return fm.errorp(op, err)
+					return fm.errorp(op.exceptVar, err)
 				}
 			}
 			err = except.Call(fm.fork("try except"), NoArgs, NoOpts)
