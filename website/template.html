@@ -21,7 +21,7 @@
     {{ else if is "category" }}
       {{ index .CategoryMap .Category }}
     {{ else }}
-      {{ .Title }}
+      {{ .Title }} - {{ .BlogTitle }}
     {{ end }}
   </title>
 

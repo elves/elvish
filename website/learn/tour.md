@@ -2,8 +2,8 @@
 
 # Introduction
 
-Welcome to the quick tour of Elvish. This is the best place to start your Elvish
-journey if you're already familiar with another shell or programming language.
+Welcome to the quick tour of Elvish. This tour works best if you have used
+another shell or programming language before.
 
 If you are mainly interested in using Elvish interactively, jump directly to
 [interactive features](#interactive-features).
@@ -11,8 +11,8 @@ If you are mainly interested in using Elvish interactively, jump directly to
 # Basic shell language
 
 Many basic language features of Elvish are very familiar to traditional shells.
-One notable exception is control structures, covered
-[below](#control-structures) in the _advanced language features_ section.
+A notable exception is control structures, covered [below](#control-structures)
+in the _advanced language features_ section.
 
 ## Comparison with bash
 
