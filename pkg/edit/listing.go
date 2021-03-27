@@ -43,6 +43,17 @@ func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histuti
 	initLocation(ed, ev, st, bindingVar, nb)
 }
 
+var queryFilterSpec = mode.FilterSpec{
+	Maker: func(f string) func(string) bool {
+		q, _ := query.Compile(f)
+		if q == nil {
+			return func(string) bool { return true }
+		}
+		return q.Match
+	},
+	Highlighter: query.Highlight,
+}
+
 func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(emptyBindingsMap)
 	bindings := newMapBindings(ed, ev, bindingVar, commonBindingVar)
@@ -58,14 +69,7 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 					Dedup: func() bool {
 						return dedup.Get().(bool)
 					},
-					MakeFilter: func(f string) func(string) bool {
-						q, _ := query.Compile(f)
-						if q == nil {
-							return func(string) bool { return true }
-						}
-						return q.Match
-					},
-					Highlighter: query.Highlight,
+					Filter: queryFilterSpec,
 				})
 				startMode(ed.app, w, err)
 			},

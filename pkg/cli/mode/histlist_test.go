@@ -110,7 +110,7 @@ func TestHistlist_Dedup(t *testing.T) {
 		"++++++++++++++++++++++++++++++++++++++++++++++++++")
 }
 
-func TestHistlist_CustomFilterAlgorithm(t *testing.T) {
+func TestHistlist_CustomFilter(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
@@ -120,18 +120,23 @@ func TestHistlist_CustomFilterAlgorithm(t *testing.T) {
 
 	startHistlist(f.App, HistlistSpec{
 		AllCmds: st.AllCmds,
-		MakeFilter: func(p string) func(string) bool {
-			re, _ := regexp.Compile(p)
-			return func(s string) bool {
-				return re != nil && re.MatchString(s)
-			}
+		Filter: FilterSpec{
+			Maker: func(p string) func(string) bool {
+				re, _ := regexp.Compile(p)
+				return func(s string) bool {
+					return re != nil && re.MatchString(s)
+				}
+			},
+			Highlighter: func(p string) (ui.Text, []error) {
+				return ui.T(p, ui.Inverse), nil
+			},
 		},
 	})
 	f.TTY.Inject(term.K('v'), term.K('i'), term.K('$'))
 	f.TestTTY(t,
 		"\n",
 		" HISTORY (dedup on)  vi$", Styles,
-		"********************    ", term.DotHere, "\n",
+		"******************** +++", term.DotHere, "\n",
 		"   0 vi\n",
 		"   2 nvi                                          ", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++")
