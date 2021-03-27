@@ -119,6 +119,16 @@ func TestFakeTTY_Buffer(t *testing.T) {
 	}
 }
 
+func TestFakeTTY_ClearScreen(t *testing.T) {
+	fakeTTY, ttyCtrl := NewFakeTTY()
+	for i := 0; i < 5; i++ {
+		if cleared := ttyCtrl.ScreenCleared(); cleared != i {
+			t.Errorf("ScreenCleared -> %v, want %v", cleared, i)
+		}
+		fakeTTY.ClearScreen()
+	}
+}
+
 func TestGetTTYCtrl_FakeTTY(t *testing.T) {
 	fakeTTY, ttyCtrl := NewFakeTTY()
 	if got, ok := GetTTYCtrl(fakeTTY); got != ttyCtrl || !ok {

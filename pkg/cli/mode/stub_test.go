@@ -44,4 +44,5 @@ func TestStub_Handling(t *testing.T) {
 func startStub(app cli.App, spec StubSpec) {
 	w := NewStub(spec)
 	app.SetAddon(w, false)
+	app.Redraw()
 }

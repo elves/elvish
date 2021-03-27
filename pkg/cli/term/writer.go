@@ -10,12 +10,19 @@ var logWriterDetail = false
 
 // Writer represents the output to a terminal.
 type Writer interface {
-	// CurrentBuffer returns the current buffer.
-	CurrentBuffer() *Buffer
-	// ResetCurrentBuffer resets the current buffer.
-	ResetCurrentBuffer()
-	// CommitBuffer updates the terminal display to reflect current buffer.
-	CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error
+	// Buffer returns the current buffer.
+	Buffer() *Buffer
+	// ResetBuffer resets the current buffer.
+	ResetBuffer()
+	// UpdateBuffer updates the terminal display to reflect current buffer.
+	UpdateBuffer(bufNoti, buf *Buffer, fullRefresh bool) error
+	// ClearScreen clears the terminal screen and places the cursor at the top
+	// left corner.
+	ClearScreen()
+	// ShowCursor shows the cursor.
+	ShowCursor()
+	// HideCursor hides the cursor.
+	HideCursor()
 }
 
 // writer renders the editor UI.
@@ -29,13 +36,11 @@ func NewWriter(f io.Writer) Writer {
 	return &writer{f, &Buffer{}}
 }
 
-// CurrentBuffer returns the current buffer.
-func (w *writer) CurrentBuffer() *Buffer {
+func (w *writer) Buffer() *Buffer {
 	return w.curBuf
 }
 
-// ResetCurrentBuffer resets the current buffer.
-func (w *writer) ResetCurrentBuffer() {
+func (w *writer) ResetBuffer() {
 	w.curBuf = &Buffer{}
 }
 
@@ -63,8 +68,8 @@ const (
 	showCursor = "\033[?25h"
 )
 
-// CommitBuffer updates the terminal display to reflect current buffer.
-func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
+// UpdateBuffer updates the terminal display to reflect current buffer.
+func (w *writer) UpdateBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 	if buf.Width != w.curBuf.Width && w.curBuf.Lines != nil {
 		// Width change, force full refresh
 		w.curBuf.Lines = nil
@@ -73,8 +78,7 @@ func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 
 	bytesBuf := new(bytes.Buffer)
 
-	// Hide cursor.
-	bytesBuf.WriteString("\033[?25l")
+	bytesBuf.WriteString(hideCursor)
 
 	// Rewind cursor
 	if pLine := w.curBuf.Dot.Line; pLine > 0 {
@@ -182,4 +186,19 @@ func (w *writer) CommitBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 
 	w.curBuf = buf
 	return nil
+}
+
+func (w *writer) HideCursor() {
+	fmt.Fprint(w.file, hideCursor)
+}
+
+func (w *writer) ShowCursor() {
+	fmt.Fprint(w.file, showCursor)
+}
+
+func (w *writer) ClearScreen() {
+	fmt.Fprint(w.file,
+		"\033[H",  // move cursor to the top left corner
+		"\033[2J", // clear entire buffer
+	)
 }

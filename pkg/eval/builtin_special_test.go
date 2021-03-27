@@ -157,6 +157,11 @@ func TestTry(t *testing.T) {
 
 		// wrong syntax
 		That("try { nop } except @a { }").DoesNotCompile(),
+
+		// A quoted var name, that would be invalid as a bareword, should be allowed as the referent
+		// in a `try...except...` block.
+		That("try { fail hard } except 'x=' { put 'x= ='(to-string $'x=') }").
+			Puts("x= =[&reason=[&content=hard &type=fail]]"),
 	)
 }
 

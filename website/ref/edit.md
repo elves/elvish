@@ -175,12 +175,16 @@ debugging outputs in bound functions without messing up the terminal.
 
 Internally, this is implemented by connecting their output to a pipe. This does
 the correct thing in most cases, but if you are sure you want to do something to
-the terminal, redirect the output to `/dev/tty`. For instance, the following
-binds <span class="key">Ctrl-L</span> to clearing the terminal:
+the terminal, redirect the output to `/dev/tty`. Since this will break Elvish's
+internal tracking of the terminal state, you should also do a full redraw with
+`edit:redraw &full=$true`. For instance, the following binds
+<span class="key">Ctrl-L</span> to clearing the terminal:
 
 ```elvish
-edit:insert:binding[Ctrl-L] = { clear > /dev/tty }
+edit:insert:binding[Ctrl-L] = { clear > /dev/tty; edit:redraw &full=$true }
 ```
+
+(The same functionality is already available as a builtin, `edit:clear`.)
 
 Bound functions have their inputs redirected to /dev/null.
 

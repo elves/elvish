@@ -378,6 +378,18 @@ The pseudo-map mechanism is often used for introspection. For example,
 [exceptions](#exception) and [user-defined functions](#function) are both
 structmaps.
 
+## Nil
+
+The value `$nil` serves as the initial value of variables that are declared but
+not assigned.
+
+## Boolean
+
+There are two boolean values, `$true` and `$false`.
+
+When converting non-boolean values to the boolean type, only `$nil` converts to
+`$false`. All the other non-boolean values convert to `$true`.
+
 ## Exception
 
 An exception carries information about errors during the execution of code.

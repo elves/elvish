@@ -1,12 +1,13 @@
 autoIndex = true
 
 [[articles]]
-name = "fundamentals"
-title = "Fundamentals"
+name = "tour"
+title = "Quick Tour"
+extraCSS = ["tour.css"]
 
 [[articles]]
-name = "cookbook"
-title = "Cookbook"
+name = "fundamentals"
+title = "Fundamentals"
 
 [[articles]]
 name = "unique-semantics"
@@ -17,9 +18,5 @@ name = "effective-elvish"
 title = "Effective Elvish"
 
 [[articles]]
-name = "name"
-title = "The Name"
-
-[[articles]]
-name = "philosophy"
-title = "The Philosophy"
+name = "faq"
+title = "FAQ"

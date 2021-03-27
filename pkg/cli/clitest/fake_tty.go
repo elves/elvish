@@ -40,6 +40,9 @@ type fakeTTY struct {
 	sigCh chan os.Signal
 	// Argument that SetRawInput got.
 	raw int
+	// Number of times the TTY screen has been cleared, incremented in
+	// ClearScreen.
+	cleared int
 
 	sizeMutex sync.RWMutex
 	// Predefined sizes.
@@ -92,7 +95,7 @@ func (t *fakeTTY) SetRawInput(n int) {
 }
 
 // Closes eventCh.
-func (t *fakeTTY) StopInput() {
+func (t *fakeTTY) CloseReader() {
 	t.eventChMutex.Lock()
 	defer t.eventChMutex.Unlock()
 	close(t.eventCh)
@@ -121,6 +124,16 @@ func (t *fakeTTY) UpdateBuffer(bufNotes, buf *term.Buffer, _ bool) error {
 	t.recordNotesBuf(bufNotes)
 	t.recordBuf(buf)
 	return nil
+}
+
+func (t *fakeTTY) HideCursor() {
+}
+
+func (t *fakeTTY) ShowCursor() {
+}
+
+func (t *fakeTTY) ClearScreen() {
+	t.cleared++
 }
 
 func (t *fakeTTY) NotifySignals() <-chan os.Signal { return t.sigCh }
@@ -192,6 +205,12 @@ func (t TTYCtrl) InjectSignal(sigs ...os.Signal) {
 // the TTY.
 func (t TTYCtrl) RawInput() int {
 	return t.raw
+}
+
+// ScreenCleared returns the number of times ClearScreen has been called on the
+// TTY.
+func (t TTYCtrl) ScreenCleared() int {
+	return t.cleared
 }
 
 // TestBuffer verifies that a buffer will appear within the timeout of 4

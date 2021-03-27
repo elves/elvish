@@ -1,8 +1,8 @@
 # Generates fonts.css by doing the following:
 #
-# 1. Download Source Serif Pro and Fira Mono
+# 1. Download Source Serif and Fira Mono
 #
-# 2. Downsize them by only keeping the Latin glyphs
+# 2. Downsize them by only keeping the Latin glyphs (and a few more)
 #
 # 3. Embed into the CSS file as base64
 #
@@ -14,21 +14,23 @@
 # Subset of glyphs to include, other than ASCII. Discovered with:
 #
 # cat **.html | go run ./cmd/runefreq | sort -nr
-subset=…’“”
+var subset = …’“”
 
 mkdir -p _fonts_tmp
 pwd=_fonts_tmp {
-  @ssp-files-base = SourceSerifPro-{Regular It Semibold SemiboldIt}
+  @ssp-files-base = SourceSerif4-{Regular It Semibold SemiboldIt}
   for base $ssp-files-base {
-    curl -C - -L -o $base.otf -s https://github.com/adobe-fonts/source-serif-pro/raw/release/OTF/$base.otf
+    curl -C - -L -o $base.otf -s https://github.com/adobe-fonts/source-serif/raw/release/OTF/$base.otf
   }
   @fm-files-base = FiraMono-{Regular Bold}
   for base $fm-files-base {
     curl -C - -L -o $base.otf -s https://github.com/mozilla/Fira/raw/master/otf/$base.otf
   }
+
   for base [$@ssp-files-base $@fm-files-base] {
-    fonttools subset $base.otf --unicodes=00-7f --text=$subset
-    fonttools ttLib.woff2 compress -o $base.subset.woff2 $base.subset.otf
+    # For some reason I don't understand, without U+386, the space (U+20) in
+    # Fira Mono will be more narrow than other glyphs, so we keep it.
+    fonttools subset $base.otf --unicodes=00-7f,386 --text=$subset --layout-features-=dnom,frac,locl,numr --name-IDs= --flavor=woff2
   }
 }
 
@@ -37,15 +39,15 @@ fn font-face [family weight style file]{
     font-family: "$family";
     font-weight: "$weight";
     font-style: "$style";
-    font-strecth: normal;
+    font-stretch: normal;
     src: url('data:font/woff2;charset=utf-8;base64,"(base64 -w0 _fonts_tmp/$file.subset.woff2 | slurp)"') format('woff2');
 }"
 }
 
-font-face 'Source Serif Pro' 400 normal SourceSerifPro-Regular
-font-face 'Source Serif Pro' 400 italic SourceSerifPro-It
-font-face 'Source Serif Pro' 600 normal SourceSerifPro-Semibold
-font-face 'Source Serif Pro' 600 italic SourceSerifPro-SemiboldIt
+font-face 'Source Serif' 400 normal SourceSerif4-Regular
+font-face 'Source Serif' 400 italic SourceSerif4-It
+font-face 'Source Serif' 600 normal SourceSerif4-Semibold
+font-face 'Source Serif' 600 italic SourceSerif4-SemiboldIt
 
 font-face 'Fira Mono' 400 normal FiraMono-Regular
 font-face 'Fira Mono' 600 normal FiraMono-Bold
