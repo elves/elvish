@@ -146,7 +146,7 @@ func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 func MakeVarFromName(name string) vars.Var {
 	switch {
 	case strings.HasSuffix(name, FnSuffix):
-		val := Callable(nil)
+		val := NewGoFn("nop~", nop)
 		return vars.FromPtr(&val)
 	case strings.HasSuffix(name, NsSuffix):
 		val := (*Ns)(nil)
