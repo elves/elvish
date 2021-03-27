@@ -58,6 +58,7 @@ func (w *walker) walkPrimary(n *parse.Primary) {
 		w.emit(n, ui.FgYellow)
 	case parse.List:
 		if len(n.Elements) == 0 {
+			w.emit(n, ui.FgRed)
 			return
 		}
 		headNode := n.Elements[0]
