@@ -198,7 +198,8 @@ func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, sma
 	}
 	w, err := mode.NewCompletion(app, mode.CompletionSpec{
 		Name: result.Name, Replace: result.Replace, Items: result.Items,
-		Bindings: bindings})
+		Filter: queryFilterSpec, Bindings: bindings,
+	})
 	if w != nil {
 		app.SetAddon(w, false)
 	}

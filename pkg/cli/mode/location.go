@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -36,6 +35,8 @@ type LocationSpec struct {
 	IterateHidden func(func(string))
 	// IterateWorksapce specifies workspace configuration.
 	IterateWorkspaces LocationWSIterator
+	// Configuration for the filter.
+	Filter FilterSpec
 }
 
 // LocationStore defines the interface for interacting with the directory history.
@@ -54,6 +55,10 @@ var errNoDirectoryHistoryStore = errors.New("no directory history store")
 func NewLocation(app cli.App, cfg LocationSpec) (Location, error) {
 	if cfg.Store == nil {
 		return nil, errNoDirectoryHistoryStore
+	}
+
+	if cfg.Filter.Maker == nil {
+		cfg.Filter.Maker = makeSubstringFilter
 	}
 
 	dirs := []store.Dir{}
@@ -92,7 +97,8 @@ func NewLocation(app cli.App, cfg LocationSpec) (Location, error) {
 
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{
-			Prompt: ModePrompt(" LOCATION ", true),
+			Prompt:      ModePrompt(" LOCATION ", true),
+			Highlighter: cfg.Filter.Highlighter,
 		},
 		ListBox: tk.ListBoxSpec{
 			Bindings: cfg.Bindings,
@@ -109,7 +115,7 @@ func NewLocation(app cli.App, cfg LocationSpec) (Location, error) {
 			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
-			w.ListBox().Reset(l.filter(p), 0)
+			w.ListBox().Reset(l.filter(cfg.Filter.Maker(p)), 0)
 		},
 	})
 	return w, nil
@@ -152,41 +158,14 @@ type locationList struct {
 	dirs []store.Dir
 }
 
-func (l locationList) filter(p string) locationList {
-	if p == "" {
-		return l
-	}
-	re := locationRegexp(p)
+func (l locationList) filter(p func(string) bool) locationList {
 	var filteredDirs []store.Dir
 	for _, dir := range l.dirs {
-		if re.MatchString(fsutil.TildeAbbr(dir.Path)) {
+		if p(fsutil.TildeAbbr(dir.Path)) {
 			filteredDirs = append(filteredDirs, dir)
 		}
 	}
 	return locationList{filteredDirs}
-}
-
-var (
-	quotedPathSep = regexp.QuoteMeta(string(os.PathSeparator))
-	emptyRe       = regexp.MustCompile("")
-)
-
-func locationRegexp(p string) *regexp.Regexp {
-	var b strings.Builder
-	b.WriteString("(?i).*") // Ignore case, unanchored
-	for i, seg := range strings.Split(p, string(os.PathSeparator)) {
-		if i > 0 {
-			b.WriteString(".*" + quotedPathSep + ".*")
-		}
-		b.WriteString(regexp.QuoteMeta(seg))
-	}
-	b.WriteString(".*")
-	re, err := regexp.Compile(b.String())
-	if err != nil {
-		// TODO: Log the error.
-		return emptyRe
-	}
-	return re
 }
 
 func (l locationList) Show(i int) ui.Text {

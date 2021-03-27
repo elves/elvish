@@ -117,6 +117,7 @@ func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar 
 				IteratePinned:     adaptToIterateString(pinnedVar),
 				IterateHidden:     adaptToIterateString(hiddenVar),
 				IterateWorkspaces: workspaceIterator,
+				Filter:            queryFilterSpec,
 			})
 			startMode(ed.app, w, err)
 		}).Ns())

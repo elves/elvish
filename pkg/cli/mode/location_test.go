@@ -3,11 +3,11 @@ package mode
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"src.elv.sh/pkg/cli"
 	. "src.elv.sh/pkg/cli/clitest"
@@ -94,10 +94,10 @@ func TestLocation_FullWorkflow(t *testing.T) {
 	f.TTY.TestBuffer(t, wantBuf)
 
 	// Test filtering.
-	f.TTY.Inject(term.K('f'), term.K(os.PathSeparator), term.K('l'))
+	f.TTY.Inject(term.K('f'), term.K('o'))
 
 	wantBuf = locationBuf(
-		"f"+string(os.PathSeparator)+"l",
+		"fo",
 		" 50 "+fixPath("/tmp/foo/bar/lorem/ipsum"))
 	f.TTY.TestBuffer(t, wantBuf)
 
@@ -109,8 +109,13 @@ func TestLocation_FullWorkflow(t *testing.T) {
 	f.TestTTYNotes(t, "mock chdir error")
 	// Chdir should be called.
 	wantChdir := fixPath("/tmp/foo/bar/lorem/ipsum")
-	if got := <-chdirCh; got != wantChdir {
-		t.Errorf("Chdir called with %s, want %s", got, wantChdir)
+	select {
+	case got := <-chdirCh:
+		if got != wantChdir {
+			t.Errorf("Chdir called with %s, want %s", got, wantChdir)
+		}
+	case <-time.After(testutil.ScaledMs(1000)):
+		t.Errorf("Chdir not called")
 	}
 }
 
