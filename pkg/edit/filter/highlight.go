@@ -1,4 +1,4 @@
-package query
+package filter
 
 import (
 	"strings"
@@ -10,7 +10,7 @@ import (
 )
 
 func Highlight(q string) (ui.Text, []error) {
-	n, _ := parseQuery(q)
+	n, _ := parseFilter(q)
 	w := walker{}
 	w.walk(n)
 	text := ui.StyleRegions(q, w.regions)

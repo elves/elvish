@@ -8,7 +8,7 @@ import (
 	"src.elv.sh/pkg/cli/histutil"
 	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/tk"
-	"src.elv.sh/pkg/edit/query"
+	"src.elv.sh/pkg/edit/filter"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -43,15 +43,15 @@ func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histuti
 	initLocation(ed, ev, st, bindingVar, nb)
 }
 
-var queryFilterSpec = mode.FilterSpec{
+var filterSpec = mode.FilterSpec{
 	Maker: func(f string) func(string) bool {
-		q, _ := query.Compile(f)
+		q, _ := filter.Compile(f)
 		if q == nil {
 			return func(string) bool { return true }
 		}
 		return q.Match
 	},
-	Highlighter: query.Highlight,
+	Highlighter: filter.Highlight,
 }
 
 func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
@@ -69,7 +69,7 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 					Dedup: func() bool {
 						return dedup.Get().(bool)
 					},
-					Filter: queryFilterSpec,
+					Filter: filterSpec,
 				})
 				startMode(ed.app, w, err)
 			},
@@ -117,7 +117,7 @@ func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar 
 				IteratePinned:     adaptToIterateString(pinnedVar),
 				IterateHidden:     adaptToIterateString(hiddenVar),
 				IterateWorkspaces: workspaceIterator,
-				Filter:            queryFilterSpec,
+				Filter:            filterSpec,
 			})
 			startMode(ed.app, w, err)
 		}).Ns())

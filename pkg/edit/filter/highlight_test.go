@@ -1,9 +1,10 @@
-package query
+package filter_test
 
 import (
 	"reflect"
 	"testing"
 
+	"src.elv.sh/pkg/edit/filter"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -51,7 +52,7 @@ var highlightTests = []struct {
 func TestHighlight(t *testing.T) {
 	for _, test := range highlightTests {
 		t.Run(test.name, func(t *testing.T) {
-			got, _ := Highlight(test.q)
+			got, _ := filter.Highlight(test.q)
 			if !reflect.DeepEqual(got, test.want) {
 				t.Errorf("got %s, want %s", got, test.want)
 			}

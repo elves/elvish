@@ -343,15 +343,15 @@ const (
 	Append
 )
 
-// Query represents an Elvish query. It uses the same syntax as arguments and
+// Filter is the Elvish filter DSL. It uses the same syntax as arguments and
 // options to a command.
-type Query struct {
+type Filter struct {
 	node
 	Args []*Compound
 	Opts []*MapPair
 }
 
-func (qn *Query) parse(ps *parser) {
+func (qn *Filter) parse(ps *parser) {
 	parseSpaces(qn, ps)
 	for {
 		r := ps.peek()

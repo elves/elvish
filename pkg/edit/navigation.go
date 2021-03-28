@@ -124,7 +124,7 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 					WidthRatio: func() [3]int {
 						return convertNavWidthRatio(widthRatioVar.Get())
 					},
-					Filter: queryFilterSpec,
+					Filter: filterSpec,
 				})
 				startMode(app, w, nil)
 			},

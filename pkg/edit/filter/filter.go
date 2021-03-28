@@ -1,20 +1,20 @@
-package query
+package filter
 
 import (
 	"regexp"
 	"strings"
 )
 
-// Query represents a compiled query, which can be used to match text.
-type Query interface {
+// Filter represents a compiled filter, which can be used to match text.
+type Filter interface {
 	Match(s string) bool
 }
 
-type andQuery struct {
-	queries []Query
+type andFilter struct {
+	queries []Filter
 }
 
-func (aq andQuery) Match(s string) bool {
+func (aq andFilter) Match(s string) bool {
 	for _, q := range aq.queries {
 		if !q.Match(s) {
 			return false
@@ -23,11 +23,11 @@ func (aq andQuery) Match(s string) bool {
 	return true
 }
 
-type orQuery struct {
-	queries []Query
+type orFilter struct {
+	queries []Filter
 }
 
-func (oq orQuery) Match(s string) bool {
+func (oq orFilter) Match(s string) bool {
 	for _, q := range oq.queries {
 		if q.Match(s) {
 			return true
@@ -36,22 +36,22 @@ func (oq orQuery) Match(s string) bool {
 	return false
 }
 
-type substringQuery struct {
+type substringFilter struct {
 	pattern    string
 	ignoreCase bool
 }
 
-func (sq substringQuery) Match(s string) bool {
+func (sq substringFilter) Match(s string) bool {
 	if sq.ignoreCase {
 		s = strings.ToLower(s)
 	}
 	return strings.Contains(s, sq.pattern)
 }
 
-type regexpQuery struct {
+type regexpFilter struct {
 	pattern *regexp.Regexp
 }
 
-func (rq regexpQuery) Match(s string) bool {
+func (rq regexpFilter) Match(s string) bool {
 	return rq.pattern.MatchString(s)
 }

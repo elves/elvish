@@ -1,86 +1,86 @@
-package query_test
+package filter_test
 
 import (
 	"testing"
 
-	"src.elv.sh/pkg/edit/query"
+	"src.elv.sh/pkg/edit/filter"
 	"src.elv.sh/pkg/parse"
 )
 
 func TestCompile(t *testing.T) {
 	test(t,
-		That("empty query matches anything").
-			Query("").Matches("foo", "bar", " ", ""),
+		That("empty filter matches anything").
+			Filter("").Matches("foo", "bar", " ", ""),
 
 		That("bareword matches any string containing it").
-			Query("foo").Matches("foobar", "afoo").DoesNotMatch("", "faoo"),
-		That("bareword is case-insensitive is query is all lower case").
-			Query("foo").Matches("FOO", "Foo", "FOObar").DoesNotMatch("", "faoo"),
-		That("bareword is case-sensitive is query is not all lower case").
-			Query("Foo").Matches("Foobar").DoesNotMatch("foo", "FOO"),
+			Filter("foo").Matches("foobar", "afoo").DoesNotMatch("", "faoo"),
+		That("bareword is case-insensitive is filter is all lower case").
+			Filter("foo").Matches("FOO", "Foo", "FOObar").DoesNotMatch("", "faoo"),
+		That("bareword is case-sensitive is filter is not all lower case").
+			Filter("Foo").Matches("Foobar").DoesNotMatch("foo", "FOO"),
 
 		That("double quoted string works like bareword").
-			Query(`"foo"`).Matches("FOO", "Foo", "FOObar").DoesNotMatch("", "faoo"),
+			Filter(`"foo"`).Matches("FOO", "Foo", "FOObar").DoesNotMatch("", "faoo"),
 
 		That("single quoted string works like bareword").
-			Query(`'foo'`).Matches("FOO", "Foo", "FOObar").DoesNotMatch("", "faoo"),
+			Filter(`'foo'`).Matches("FOO", "Foo", "FOObar").DoesNotMatch("", "faoo"),
 
-		That("space-separated words work like an AND query").
-			Query("foo bar").
+		That("space-separated words work like an AND filter").
+			Filter("foo bar").
 			Matches("foobar", "bar foo", "foo lorem ipsum bar").
 			DoesNotMatch("foo", "bar", ""),
 
 		That("quoted string can be used when string contains spaces").
-			Query(`"foo bar"`).
+			Filter(`"foo bar"`).
 			Matches("__foo bar xyz").
 			DoesNotMatch("foobar"),
 
-		That("AND query matches if all components match").
-			Query("[and foo bar]").Matches("foobar", "bar foo").DoesNotMatch("foo"),
-		That("OR query matches if any component matches").
-			Query("[or foo bar]").Matches("foo", "bar", "foobar").DoesNotMatch(""),
-		That("RE query uses component as regular expression to match").
-			Query("[re f..]").Matches("foo", "f..").DoesNotMatch("fo", ""),
+		That("AND filter matches if all components match").
+			Filter("[and foo bar]").Matches("foobar", "bar foo").DoesNotMatch("foo"),
+		That("OR filter matches if any component matches").
+			Filter("[or foo bar]").Matches("foo", "bar", "foobar").DoesNotMatch(""),
+		That("RE filter uses component as regular expression to match").
+			Filter("[re f..]").Matches("foo", "f..").DoesNotMatch("fo", ""),
 
 		// Invalid queries
 		That("empty list is invalid").
-			Query("[]").DoesNotCompile("empty subquery"),
+			Filter("[]").DoesNotCompile("empty subfilter"),
 		That("starting list with non-literal is invalid").
-			Query("[[foo] bar]").
-			DoesNotCompile("non-literal subquery head not supported"),
-		That("RE query with no argument is invalid").
-			Query("[re]").
-			DoesNotCompile("re subquery with no argument not supported"),
-		That("RE query with two or more arguments is invalid").
-			Query("[re foo bar]").
-			DoesNotCompile("re subquery with two or more arguments not supported"),
-		That("RE query with invalid regular expression is invalid").
-			Query("[re '[']").
+			Filter("[[foo] bar]").
+			DoesNotCompile("non-literal subfilter head not supported"),
+		That("RE filter with no argument is invalid").
+			Filter("[re]").
+			DoesNotCompile("re subfilter with no argument not supported"),
+		That("RE filter with two or more arguments is invalid").
+			Filter("[re foo bar]").
+			DoesNotCompile("re subfilter with two or more arguments not supported"),
+		That("RE filter with invalid regular expression is invalid").
+			Filter("[re '[']").
 			DoesNotCompile("error parsing regexp: missing closing ]: `[`"),
 		That("invalid syntax results in parse error").
-			Query("[and").DoesNotParse("parse error: 4-4 in query: should be ']'"),
+			Filter("[and").DoesNotParse("parse error: 4-4 in filter: should be ']'"),
 
 		// Unsupported for now, but may be in future
 		That("options are not supported yet").
-			Query("foo &k=v").DoesNotCompile("option not supported"),
+			Filter("foo &k=v").DoesNotCompile("option not supported"),
 		That("compound expressions are not supported yet").
-			Query(`a"foo"`).DoesNotCompile("compound expression not supported"),
+			Filter(`a"foo"`).DoesNotCompile("compound expression not supported"),
 		That("indexing expressions are not supported yet").
-			Query("foo[0]").DoesNotCompile("indexing expression not supported"),
+			Filter("foo[0]").DoesNotCompile("indexing expression not supported"),
 		That("variable references are not supported yet").
-			Query("$a").
+			Filter("$a").
 			DoesNotCompile("primary expression of type Variable not supported"),
-		That("variable references in RE subquery are not supported yet").
-			Query("[re $a]").
-			DoesNotCompile("re subquery with primary expression of type Variable not supported"),
-		That("variable references in AND subquery are not supported yet").
-			Query("[and $a]").
+		That("variable references in RE subfilter are not supported yet").
+			Filter("[re $a]").
+			DoesNotCompile("re subfilter with primary expression of type Variable not supported"),
+		That("variable references in AND subfilter are not supported yet").
+			Filter("[and $a]").
 			DoesNotCompile("primary expression of type Variable not supported"),
-		That("variable references in OR subquery are not supported yet").
-			Query("[or $a]").
+		That("variable references in OR subfilter are not supported yet").
+			Filter("[or $a]").
 			DoesNotCompile("primary expression of type Variable not supported"),
 		That("other subqueries are not supported yet").
-			Query("[other foo bar]").
+			Filter("[other foo bar]").
 			DoesNotCompile("head other not supported"),
 	)
 }
@@ -88,28 +88,28 @@ func TestCompile(t *testing.T) {
 func test(t *testing.T, tests ...testCase) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			q, err := query.Compile(test.query)
+			q, err := filter.Compile(test.filter)
 			if errType := getErrorType(err); errType != test.errorType {
 				t.Errorf("%q should have %s, but has %s",
-					test.query, test.errorType, errType)
+					test.filter, test.errorType, errType)
 			}
 			if err != nil {
 				if err.Error() != test.errorMessage {
 					t.Errorf("%q should have error message %q, but is %q",
-						test.query, test.errorMessage, err)
+						test.filter, test.errorMessage, err)
 				}
 				return
 			}
 			for _, s := range test.matches {
 				ok := q.Match(s)
 				if !ok {
-					t.Errorf("%q should match %q, but doesn't", test.query, s)
+					t.Errorf("%q should match %q, but doesn't", test.filter, s)
 				}
 			}
 			for _, s := range test.doesntMatch {
 				ok := q.Match(s)
 				if ok {
-					t.Errorf("%q shouldn't match %q, but does", test.query, s)
+					t.Errorf("%q shouldn't match %q, but does", test.filter, s)
 				}
 			}
 		})
@@ -118,7 +118,7 @@ func test(t *testing.T, tests ...testCase) {
 
 type testCase struct {
 	name         string
-	query        string
+	filter       string
 	matches      []string
 	doesntMatch  []string
 	errorType    errorType
@@ -129,8 +129,8 @@ func That(name string) testCase {
 	return testCase{name: name}
 }
 
-func (t testCase) Query(q string) testCase {
-	t.query = q
+func (t testCase) Filter(q string) testCase {
+	t.filter = q
 	return t
 }
 
