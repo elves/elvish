@@ -57,10 +57,6 @@ func NewLocation(app cli.App, cfg LocationSpec) (Location, error) {
 		return nil, errNoDirectoryHistoryStore
 	}
 
-	if cfg.Filter.Maker == nil {
-		cfg.Filter.Maker = makeSubstringFilter
-	}
-
 	dirs := []store.Dir{}
 	blacklist := map[string]struct{}{}
 	wsKind, wsRoot := "", ""
@@ -115,7 +111,7 @@ func NewLocation(app cli.App, cfg LocationSpec) (Location, error) {
 			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
-			w.ListBox().Reset(l.filter(cfg.Filter.Maker(p)), 0)
+			w.ListBox().Reset(l.filter(cfg.Filter.makePredicate(p)), 0)
 		},
 	})
 	return w, nil

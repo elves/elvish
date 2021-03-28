@@ -2,7 +2,6 @@ package mode
 
 import (
 	"fmt"
-	"strings"
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/tk"
@@ -29,19 +28,6 @@ type HistlistSpec struct {
 	Filter FilterSpec
 }
 
-// FilterSpec specifies the configuration for the filter in listing modes.
-type FilterSpec struct {
-	// Called with the filter text to get the filter predicate. If nil, the
-	// predicate performs substring match.
-	Maker func(string) func(string) bool
-	// Highlighter for the filter. If nil, the filter will not be higlighted.
-	Highlighter func(string) (ui.Text, []error)
-}
-
-func makeSubstringFilter(p string) func(string) bool {
-	return func(s string) bool { return strings.Contains(s, p) }
-}
-
 // NewHistlist creates a new histlist mode.
 func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 	if spec.AllCmds == nil {
@@ -49,9 +35,6 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 	}
 	if spec.Dedup == nil {
 		spec.Dedup = func() bool { return true }
-	}
-	if spec.Filter.Maker == nil {
-		spec.Filter.Maker = makeSubstringFilter
 	}
 
 	cmds, err := spec.AllCmds()
@@ -91,7 +74,7 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
-			it := cmdItems.filter(spec.Filter.Maker(p), spec.Dedup())
+			it := cmdItems.filter(spec.Filter.makePredicate(p), spec.Dedup())
 			w.ListBox().Reset(it, it.Len()-1)
 		},
 	})

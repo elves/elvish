@@ -46,9 +46,6 @@ func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
 	if len(cfg.Items) == 0 {
 		return nil, errNoCandidates
 	}
-	if cfg.Filter.Maker == nil {
-		cfg.Filter.Maker = makeSubstringFilter
-	}
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{
 			Prompt:      ModePrompt(" COMPLETING "+cfg.Name+" ", true),
@@ -70,7 +67,7 @@ func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
 			ExtendStyle: true,
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
-			w.ListBox().Reset(filterCompletionItems(cfg.Items, cfg.Filter.Maker(p)), 0)
+			w.ListBox().Reset(filterCompletionItems(cfg.Items, cfg.Filter.makePredicate(p)), 0)
 		},
 	})
 	return completion{w, app.CodeArea()}, nil

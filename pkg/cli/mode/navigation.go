@@ -154,9 +154,6 @@ func NewNavigation(app cli.App, spec NavigationSpec) Navigation {
 	if spec.WidthRatio == nil {
 		spec.WidthRatio = func() [3]int { return [3]int{1, 3, 4} }
 	}
-	if spec.Filter.Maker == nil {
-		spec.Filter.Maker = makeSubstringFilter
-	}
 
 	var w *navigation
 	w = &navigation{
@@ -224,7 +221,7 @@ func updateState(w *navigation, selectName string) {
 	if err == nil {
 		currentCol = makeColInner(
 			current,
-			w.Filter.Maker(filter),
+			w.Filter.makePredicate(filter),
 			showHidden,
 			func(it tk.Items, i int) {
 				previewCol := makeCol(it.(fileItems)[i], showHidden)
