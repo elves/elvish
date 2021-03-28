@@ -2,13 +2,13 @@ package edit
 
 import (
 	"os"
-	"strings"
 
 	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/histutil"
 	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/tk"
+	"src.elv.sh/pkg/edit/filter"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -43,6 +43,17 @@ func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histuti
 	initLocation(ed, ev, st, bindingVar, nb)
 }
 
+var filterSpec = mode.FilterSpec{
+	Maker: func(f string) func(string) bool {
+		q, _ := filter.Compile(f)
+		if q == nil {
+			return func(string) bool { return true }
+		}
+		return q.Match
+	},
+	Highlighter: filter.Highlight,
+}
+
 func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(emptyBindingsMap)
 	bindings := newMapBindings(ed, ev, bindingVar, commonBindingVar)
@@ -58,20 +69,7 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 					Dedup: func() bool {
 						return dedup.Get().(bool)
 					},
-					MakeFilter: func(f string) func(string) bool {
-						if f == strings.ToLower(f) {
-							// f is entirely lower case, do case-insensitive
-							// filtering.
-							return func(s string) bool {
-								return strings.Contains(strings.ToLower(s), f)
-							}
-						}
-						// f is not entirely lower case, do case-sensitive
-						// filtering.
-						return func(s string) bool {
-							return strings.Contains(s, f)
-						}
-					},
+					Filter: filterSpec,
 				})
 				startMode(ed.app, w, err)
 			},
@@ -119,6 +117,7 @@ func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar 
 				IteratePinned:     adaptToIterateString(pinnedVar),
 				IterateHidden:     adaptToIterateString(hiddenVar),
 				IterateWorkspaces: workspaceIterator,
+				Filter:            filterSpec,
 			})
 			startMode(ed.app, w, err)
 		}).Ns())

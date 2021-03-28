@@ -2,7 +2,6 @@ package mode
 
 import (
 	"fmt"
-	"strings"
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/tk"
@@ -25,9 +24,8 @@ type HistlistSpec struct {
 	// Dedup is called to determine whether deduplication should be done.
 	// Defaults to true if unset.
 	Dedup func() bool
-	// MakeFilter is called with the filter content to get a predicate that
-	// filters command texts. If unset, the predicate performs substring match.
-	MakeFilter func(string) func(string) bool
+	// Configuration for the filter.
+	Filter FilterSpec
 }
 
 // NewHistlist creates a new histlist mode.
@@ -37,11 +35,6 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 	}
 	if spec.Dedup == nil {
 		spec.Dedup = func() bool { return true }
-	}
-	if spec.MakeFilter == nil {
-		spec.MakeFilter = func(p string) func(string) bool {
-			return func(s string) bool { return strings.Contains(s, p) }
-		}
 	}
 
 	cmds, err := spec.AllCmds()
@@ -55,13 +48,16 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 	cmdItems := histlistItems{cmds, last}
 
 	w := tk.NewComboBox(tk.ComboBoxSpec{
-		CodeArea: tk.CodeAreaSpec{Prompt: func() ui.Text {
-			content := " HISTORY "
-			if spec.Dedup() {
-				content += "(dedup on) "
-			}
-			return ModeLine(content, true)
-		}},
+		CodeArea: tk.CodeAreaSpec{
+			Prompt: func() ui.Text {
+				content := " HISTORY "
+				if spec.Dedup() {
+					content += "(dedup on) "
+				}
+				return ModeLine(content, true)
+			},
+			Highlighter: spec.Filter.Highlighter,
+		},
 		ListBox: tk.ListBoxSpec{
 			Bindings: spec.Bindings,
 			OnAccept: func(it tk.Items, i int) {
@@ -78,7 +74,7 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
-			it := cmdItems.filter(spec.MakeFilter(p), spec.Dedup())
+			it := cmdItems.filter(spec.Filter.makePredicate(p), spec.Dedup())
 			w.ListBox().Reset(it, it.Len()-1)
 		},
 	})
