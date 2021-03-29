@@ -474,6 +474,49 @@ seamlessly with strings that contain newlines or even NUL bytes:
 Unlike most programming languages, Elvish commands don't have return values.
 Instead, they use the value output to "return" their results.
 
+Read the reference for [builtin commands](../ref/builtin.html) to learn which
+commands work with value inputs and outputs. Among them, here are some
+general-purpose primitives:
+
+<table>
+  <tr>
+    <th>Command</th>
+    <th>Functionality</th>
+  </tr>
+  <tr>
+    <td>
+      <a href="../ref/builtin.html#all"><code>all</code></a>
+    </td>
+    <td>
+      Passes value inputs to value outputs
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="../ref/builtin.html#each"><code>each</code></a>
+    </td>
+    <td>
+      Applies a function to all values from value intput
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="../ref/builtin.html#put"><code>put</code></a>
+    </td>
+    <td>
+      Writes arguments as value outputs
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="../ref/builtin.html#slurp"><code>slurp</code></a>
+    </td>
+    <td>
+      Convert byte input to a single string in value output
+    </td>
+  </tr>
+</table>
+
 ## Value pipelines
 
 Pipelines work with value outputs too. When forming pipelines, a command that
@@ -488,7 +531,7 @@ I got bar
 ```
 
 Read the language reference on [pipelines](../ref/language.html#pipeline) to
-learn more.
+learn more about pipelines in general.
 
 ## Value output capture
 
