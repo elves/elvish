@@ -5,11 +5,11 @@ import "testing"
 func TestFromPtr(t *testing.T) {
 	i := 10
 	variable := FromPtr(&i)
-	if g := variable.Get(); g != "10" {
-		t.Errorf(`Getting ptrVariable returns %v, want "10"`, g)
+	if g := variable.Get(); g != int64(10) {
+		t.Errorf(`Get -> %v, want int64(10)`, g)
 	}
-	if g := variable.GetRaw(); g != 10 {
-		t.Errorf("GetRaw -> %v, want 10", g)
+	if g := variable.GetRaw(); g != int(10) {
+		t.Errorf("GetRaw -> %v, want int(10)", g)
 	}
 	err := variable.Set("20")
 	if err != nil {

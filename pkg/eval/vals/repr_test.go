@@ -22,8 +22,8 @@ func TestRepr(t *testing.T) {
 		Args(false).Rets("$false"),
 		Args(true).Rets("$true"),
 		Args("foo").Rets("foo"),
-		Args(1.0).Rets("(float64 1)"),
-		Args(1e10).Rets("(float64 10000000000)"),
+		Args(1.0).Rets("(num 1.0)"),
+		Args(1e10).Rets("(num 10000000000.0)"),
 		Args(os.Stdin).Rets(
 			fmt.Sprintf("<file{%s %d}>", os.Stdin.Name(), os.Stdin.Fd())),
 		Args(EmptyList).Rets("[]"),

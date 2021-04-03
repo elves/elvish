@@ -214,43 +214,43 @@ Unicode text is unspecified.
 
 ## Number
 
-Elvish has a double-precision floating point number type.
+Elvish supports several types of numbers, each with their own textual
+representation:
 
-There is no literal syntax for the number type; it can be constructed with the
-`float64` builtin. The builtin takes a single argument, which should be either
-another `float64` value, or a string in the following formats (examples below
-all express the same value):
+-   **Exact integers** are written in decimal (e.g. `10`), hexadecimal (e.g.
+    `0xA`), octal (e.g. `0o12`) or binary (e.g. `0b1010`).
 
--   Decimal notation, e.g. `10`.
+-   **Exact rationals** are written as two exact integers joined by `/`, e.g.
+    `1/2` or `0x10/100` (16/100).
 
--   Hexadecimal notation, e.g. `0xA`.
+-   **Floating-point numbers** are written with a decimal point (e.g. `10.0`) or
+    using scientific notation (e.g. `1e1` or `1.0e1`). There are also three
+    additional special floating-point values: `+Inf`, `-Inf` and `NaN`.
+    Floating-point numbers are always considered **inexact**.
 
--   Octal notation, e.g. `0o12`.
+The textual representation is case-insensitive.
 
--   Binary notation, e.g. `0b1010`.
+Digits may be separately by underscores, which are ignored; this permits
+separating the digits into groups to improve readability. For example, `1000000`
+and `1_000_000` are equivalent, so are `1.234_56e3` and `1.23456e3`.
 
--   Floating point notation, e.g. `10.0`.
+The textual representation is **not** the syntax for number literals. Instead,
+they are parsed as [barewords](#bareword) and thus string-typed. The `num`
+builtin function can be used to convert the textual representation to a typed
+number.
 
--   Scientific notation, e.g. `1.0e1`.
+A typed number can be converted to a string with `to-string`, like other types
+of values. Such a string is guaranteed to convert back to the original number;
+in other words, `eq $x (num (to-string $x))` always outputs `$true` if `$x` is a
+typed number.
 
-The following special floating point values are also supported: `+Inf`, `-Inf`
-and `NaN`.
+As a matter of convention, expression contexts that accept numbers (e.g. list
+indices) also accept strings that can be converted to numbers. As a result, when
+the word **number** appears unqualified in other sections of this document, it
+can mean either of those.
 
-The `float64` builtin is case-insensitive.
-
-Numbers can contain underscores between digits to improve readability. For
-example, `1000000` and `1_000_000` are equivalent. As is `1.234_56e3` and
-`1.23456e3`. You can not use an underscore as a prefix or suffix in a number.
-
-A `float64` data type can be converted to a string using `(to-string $number)`.
-The resulting string is guaranteed to result in the same value when converted
-back to a `float64`. Most of the time you won't need to perform this explicit
-conversion. Elvish will implicitly make the conversion when running external
-commands and many of the builtins (where the distinction is not important).
-
-You usually do not need to use `float64` values explicitly; see the discussion
-of
-[Commands That Operate On Numbers](./builtin.html#commands-that-operate-on-numbers).
+**Note**: For details on how builtin commands deal with numbers, see the
+discussion of [numeric commands](./builtin.html#numeric-commands).
 
 ## List
 

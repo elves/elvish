@@ -46,7 +46,7 @@ func TestScanToGo(t *testing.T) {
 
 func TestFromGo(t *testing.T) {
 	Test(t, Fn("FromGo", FromGo), Table{
-		Args(12).Rets("12"),
+		Args(12).Rets(int64(12)),
 		Args(1.5).Rets(1.5),
 		Args('x').Rets("x"),
 		Args(nil).Rets(nil),

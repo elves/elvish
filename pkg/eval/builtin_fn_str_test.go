@@ -27,7 +27,7 @@ func TestStringComparisonCommands(t *testing.T) {
 
 func TestToString(t *testing.T) {
 	Test(t,
-		That(`to-string str (float64 1) $true`).Puts("str", "1", "$true"),
+		That(`to-string str (num 1) $true`).Puts("str", "1", "$true"),
 	)
 }
 
@@ -57,9 +57,9 @@ func TestBase(t *testing.T) {
 
 func TestWcswidth(t *testing.T) {
 	Test(t,
-		That(`wcswidth 你好`).Puts("4"),
+		That(`wcswidth 你好`).Puts(int64(4)),
 		That(`-override-wcwidth x 10; wcswidth 1x2x; -override-wcwidth x 1`).
-			Puts("22"),
+			Puts(int64(22)),
 	)
 }
 

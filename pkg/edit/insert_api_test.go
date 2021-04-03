@@ -31,7 +31,7 @@ func TestInsert_Binding(t *testing.T) {
 	if code := <-f.codeCh; code != "" {
 		t.Errorf("code = %q, want %q", code, "")
 	}
-	if called, _ := f.Evaler.Global().Index("called"); called != 1.0 {
+	if called, _ := f.Evaler.Global().Index("called"); called != int64(1) {
 		t.Errorf("called = %v, want 1", called)
 	}
 }

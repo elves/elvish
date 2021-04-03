@@ -1,6 +1,7 @@
 package vals
 
 import (
+	"math"
 	"strconv"
 	"strings"
 )
@@ -16,6 +17,8 @@ type Stringer interface {
 // falls back to Repr(v, NoPretty).
 func ToString(v interface{}) string {
 	switch v := v.(type) {
+	case int64:
+		return strconv.FormatInt(v, 10)
 	case float64:
 		return formatFloat64(v)
 	case string:
@@ -39,9 +42,12 @@ func formatFloat64(f float64) string {
 	//
 	// See also b.elv.sh/811 for more context.
 	s := strconv.FormatFloat(f, 'f', -1, 64)
-	if (strings.IndexByte(s, '.') == -1 && len(s) > 14 && s[len(s)-1] == '0') ||
+	noPoint := !strings.ContainsRune(s, '.')
+	if (noPoint && len(s) > 14 && s[len(s)-1] == '0') ||
 		strings.HasPrefix(s, "0.0000") {
 		return strconv.FormatFloat(f, 'e', -1, 64)
+	} else if noPoint && !math.IsNaN(f) && !math.IsInf(f, 0) {
+		return s + ".0"
 	}
 	return s
 }

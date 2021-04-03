@@ -171,8 +171,8 @@ func TestGoFnCall(t *testing.T) {
 	callGood(outFrame, nil, theOptions)
 	select {
 	case ret := <-ch:
-		if ret != "314" {
-			t.Errorf("Return value is not converted to string")
+		if ret != int64(314) {
+			t.Errorf("Return value is not converted to int64")
 		}
 	default:
 		t.Errorf("Return value is not outputted")

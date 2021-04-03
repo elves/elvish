@@ -55,11 +55,8 @@ func adjustAndCheckIndex(i, n int, includeN bool) (int, error) {
 // the converted structure.
 func ConvertListIndex(rawIndex interface{}, n int) (*ListIndex, error) {
 	switch rawIndex := rawIndex.(type) {
-	case float64:
+	case int64:
 		index := int(rawIndex)
-		if rawIndex != float64(index) {
-			return nil, errIndexMustBeInteger
-		}
 		index, err := adjustAndCheckIndex(index, n, false)
 		if err != nil {
 			return nil, err

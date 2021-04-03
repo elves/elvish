@@ -18,7 +18,7 @@ import (
 // ErrInputOfEawkMustBeString is thrown when eawk gets a non-string input.
 var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 
-//elvdoc:fn &lt;s &lt;=s ==s !=s &gt;s &gt;=s
+//elvdoc:fn &lt;s &lt;=s ==s !=s &gt;s &gt;=s {#str-cmp}
 //
 // ```elvish
 // <s  $string... # less

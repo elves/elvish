@@ -3,6 +3,7 @@ package vals
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"reflect"
 	"strconv"
 	"unicode/utf8"
@@ -73,6 +74,12 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 			*ptr = f
 		}
 		return err
+	case *Num:
+		n, err := elvToNum(src)
+		if err == nil {
+			*ptr = n
+		}
+		return err
 	case *rune:
 		r, err := elvToRune(src)
 		if err == nil {
@@ -101,13 +108,27 @@ type Scanner interface {
 	ScanElvish(interface{}) error
 }
 
-// FromGo converts a Go value to an Elvish value. Conversion happens when the
-// argument is int, float64 or rune (this is consistent with ScanToGo). In other
-// cases, this function just returns the argument.
+// FromGo converts a Go value to an Elvish value. Most types are returned as is,
+// but exact numerical types are normalized to one of int64, *big.Int and
+// *big.Rat, using the small representation that can hold the value, and runes
+// are converted to strings.
 func FromGo(a interface{}) interface{} {
 	switch a := a.(type) {
 	case int:
-		return strconv.Itoa(a)
+		return int64(a)
+	case *big.Int:
+		if a.IsInt64() {
+			return a.Int64()
+		}
+		return a
+	case *big.Rat:
+		if a.IsInt() {
+			if a.Num().IsInt64() {
+				return a.Num().Int64()
+			}
+			return a.Num()
+		}
+		return a
 	case rune:
 		return string(a)
 	default:
@@ -167,4 +188,19 @@ func elvToRune(arg interface{}) (rune, error) {
 		return -1, errMustHaveSingleRune
 	}
 	return r, nil
+}
+
+func elvToNum(arg interface{}) (Num, error) {
+	switch arg := arg.(type) {
+	case int64, *big.Int, *big.Rat, float64:
+		return arg, nil
+	case string:
+		n := ParseNum(arg)
+		if n == nil {
+			return 0, cannotParseAs{"number", Repr(arg, -1)}
+		}
+		return n, nil
+	default:
+		return 0, errMustBeNumber
+	}
 }

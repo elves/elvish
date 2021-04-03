@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/big"
 	"sort"
 
 	"github.com/xiaq/persistent/hashmap"
@@ -173,26 +174,56 @@ func makeMap(input Inputs) (vals.Map, error) {
 // Etymology:
 // [Python](https://docs.python.org/3/library/functions.html#func-range).
 
-type rangeOpts struct{ Step float64 }
+type rangeOpts struct{ Step vals.Num }
 
-func (o *rangeOpts) SetDefaultOptions() { o.Step = 1 }
+func (o *rangeOpts) SetDefaultOptions() { o.Step = int64(1) }
 
-func rangeFn(fm *Frame, opts rangeOpts, args ...float64) error {
-	var lower, upper float64
-
+func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
+	var rawNums []vals.Num
 	switch len(args) {
 	case 1:
-		upper = args[0]
+		rawNums = []vals.Num{int64(0), args[0], opts.Step}
 	case 2:
-		lower, upper = args[0], args[1]
+		rawNums = []vals.Num{args[0], args[1], opts.Step}
 	default:
 		return ErrArgs
 	}
+	nums := vals.UnifyNums(rawNums, vals.Int64)
 
 	out := fm.OutputChan()
-	for f := lower; f < upper; f += opts.Step {
-		out <- vals.FromGo(f)
+	switch nums := nums.(type) {
+	case []int64:
+		lower, upper, step := nums[0], nums[1], nums[2]
+		for cur := lower; cur < upper; cur += step {
+			out <- vals.FromGo(cur)
+		}
+	case []*big.Int:
+		lower, upper, step := nums[0], nums[1], nums[2]
+		cur := &big.Int{}
+		for cur.Set(lower); cur.Cmp(upper) < 0; {
+			out <- vals.FromGo(cur)
+			next := &big.Int{}
+			next.Add(cur, step)
+			cur = next
+		}
+	case []*big.Rat:
+		lower, upper, step := nums[0], nums[1], nums[2]
+		cur := &big.Rat{}
+		for cur.Set(lower); cur.Cmp(upper) < 0; {
+			out <- vals.FromGo(cur)
+			next := &big.Rat{}
+			next.Add(cur, step)
+			cur = next
+		}
+	case []float64:
+		lower, upper, step := nums[0], nums[1], nums[2]
+		for f := lower; f < upper; f += step {
+			out <- vals.FromGo(f)
+		}
+	default:
+		panic("unreachable")
 	}
+
 	return nil
 }
 
