@@ -67,7 +67,7 @@ func (t Text) Concat(rhs interface{}) (interface{}, error) {
 	switch rhs := rhs.(type) {
 	case string:
 		return Concat(t, T(rhs)), nil
-	case int64, *big.Int, *big.Rat, float64:
+	case int, *big.Int, *big.Rat, float64:
 		return Concat(t, T(vals.ToString(rhs))), nil
 	case *Segment:
 		return Concat(t, Text{rhs}), nil
@@ -83,7 +83,7 @@ func (t Text) RConcat(lhs interface{}) (interface{}, error) {
 	switch lhs := lhs.(type) {
 	case string:
 		return Concat(T(lhs), t), nil
-	case int64, *big.Int, *big.Rat, float64:
+	case int, *big.Int, *big.Rat, float64:
 		return Concat(T(vals.ToString(lhs)), t), nil
 	}
 

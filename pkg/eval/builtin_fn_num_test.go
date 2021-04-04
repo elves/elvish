@@ -36,20 +36,20 @@ func TestNumberComparisonCommands(t *testing.T) {
 func TestArithmeticCommands(t *testing.T) {
 	Test(t,
 		// TODO test more edge cases
-		That("+ 233100 233").Puts(int64(233333)),
-		That("- 233333 233100").Puts(int64(233)),
-		That("- 233").Puts(int64(-233)),
-		That("* 353 661").Puts(int64(233333)),
-		That("/ 233333 353").Puts(int64(661)),
+		That("+ 233100 233").Puts(233333),
+		That("- 233333 233100").Puts(233),
+		That("- 233").Puts(-233),
+		That("* 353 661").Puts(233333),
+		That("/ 233333 353").Puts(661),
 		That("/ 1 0").Throws(ErrDivideByZero, "/ 1 0"),
-		That("% 23 7").Puts(int64(2)),
+		That("% 23 7").Puts(2),
 		That("% 1 0").Throws(ErrDivideByZero, "% 1 0"),
 	)
 }
 
 func TestRandint(t *testing.T) {
 	Test(t,
-		That("randint 1 2").Puts(int64(1)),
+		That("randint 1 2").Puts(1),
 		That("i = (randint 10 100); >= $i 10; < $i 100").Puts(true, true),
 		That("randint 2 1").Throws(ErrArgs, "randint 2 1"),
 		That("randint").Throws(ErrorWithType(errs.ArityMismatch{}), "randint"),

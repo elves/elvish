@@ -108,23 +108,21 @@ type Scanner interface {
 	ScanElvish(interface{}) error
 }
 
-// FromGo converts a Go value to an Elvish value. Most types are returned as is,
-// but exact numerical types are normalized to one of int64, *big.Int and
+// FromGo converts a Go value to an Elvish value. Most types are returned as
+// is, but exact numerical types are normalized to one of int, *big.Int and
 // *big.Rat, using the small representation that can hold the value, and runes
 // are converted to strings.
 func FromGo(a interface{}) interface{} {
 	switch a := a.(type) {
-	case int:
-		return int64(a)
 	case *big.Int:
-		if a.IsInt64() {
-			return a.Int64()
+		if i, ok := getFixInt(a); ok {
+			return i
 		}
 		return a
 	case *big.Rat:
 		if a.IsInt() {
-			if a.Num().IsInt64() {
-				return a.Num().Int64()
+			if i, ok := getFixInt(a.Num()); ok {
+				return i
 			}
 			return a.Num()
 		}
@@ -192,7 +190,7 @@ func elvToRune(arg interface{}) (rune, error) {
 
 func elvToNum(arg interface{}) (Num, error) {
 	switch arg := arg.(type) {
-	case int64, *big.Int, *big.Rat, float64:
+	case int, *big.Int, *big.Rat, float64:
 		return arg, nil
 	case string:
 		n := ParseNum(arg)

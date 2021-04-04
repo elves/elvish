@@ -29,7 +29,7 @@ func TestPipeline(t *testing.T) {
 		That(`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`).
 			Prints("A1bert\nBer1in\n"),
 		// Pure value pipeline
-		That(`put 233 42 19 | each [x]{+ $x 10}`).Puts(int64(243), int64(52), int64(29)),
+		That(`put 233 42 19 | each [x]{+ $x 10}`).Puts(243, 52, 29),
 		// Pipeline draining.
 		That(`range 100 | put x`).Puts("x"),
 		// Background pipeline.
@@ -125,7 +125,7 @@ func TestCommand_Assignment(t *testing.T) {
 		// Temporary assignment before special form.
 		That("li=[foo bar] for x $li { put $x }").Puts("foo", "bar"),
 		// Spacey assignment with temporary assignment
-		That("x = 1; x=2 y = (+ 1 $x); put $x $y").Puts("1", int64(3)),
+		That("x = 1; x=2 y = (+ 1 $x); put $x $y").Puts("1", 3),
 
 		// Concurrently creating a new variable and accessing existing variable.
 		// Run with "go test -race".
@@ -202,7 +202,7 @@ func TestCommand_Redir(t *testing.T) {
 		// over input from a file.
 		// Regression test for https://src.elv.sh/issues/1010
 		That("echo abc > bytes", "each $echo~ < bytes").Prints("abc\n"),
-		That("echo def > bytes", "only-values < bytes | count").Puts(int64(0)),
+		That("echo def > bytes", "only-values < bytes | count").Puts(0),
 
 		// Invalid redirection destination.
 		That("echo []> test").Throws(

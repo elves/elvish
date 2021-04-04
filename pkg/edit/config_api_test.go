@@ -17,7 +17,7 @@ func TestBeforeReadline(t *testing.T) {
 	// have been called.
 	f.TestTTY(t, "~> ", term.DotHere)
 
-	testGlobal(t, f.Evaler, "called", int64(1))
+	testGlobal(t, f.Evaler, "called", 1)
 }
 
 func TestAfterReadline(t *testing.T) {
@@ -39,7 +39,7 @@ func TestAfterReadline(t *testing.T) {
 	f.Wait()
 
 	testGlobals(t, f.Evaler, map[string]interface{}{
-		"called":      int64(1),
+		"called":      1,
 		"called-with": "test code",
 	})
 }

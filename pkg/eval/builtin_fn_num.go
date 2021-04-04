@@ -150,7 +150,7 @@ func toFloat64(f float64) float64 {
 func lt(nums ...vals.Num) bool {
 	return chainCompare(nums, func(pair vals.NumSlice) bool {
 		switch pair := pair.(type) {
-		case []int64:
+		case []int:
 			return pair[0] < pair[1]
 		case []*big.Int:
 			return pair[0].Cmp(pair[1]) < 0
@@ -167,7 +167,7 @@ func lt(nums ...vals.Num) bool {
 func le(nums ...vals.Num) bool {
 	return chainCompare(nums, func(pair vals.NumSlice) bool {
 		switch pair := pair.(type) {
-		case []int64:
+		case []int:
 			return pair[0] <= pair[1]
 		case []*big.Int:
 			return pair[0].Cmp(pair[1]) <= 0
@@ -184,7 +184,7 @@ func le(nums ...vals.Num) bool {
 func eqNum(nums ...vals.Num) bool {
 	return chainCompare(nums, func(pair vals.NumSlice) bool {
 		switch pair := pair.(type) {
-		case []int64:
+		case []int:
 			return pair[0] == pair[1]
 		case []*big.Int:
 			return pair[0].Cmp(pair[1]) == 0
@@ -201,7 +201,7 @@ func eqNum(nums ...vals.Num) bool {
 func ne(nums ...vals.Num) bool {
 	return chainCompare(nums, func(pair vals.NumSlice) bool {
 		switch pair := pair.(type) {
-		case []int64:
+		case []int:
 			return pair[0] != pair[1]
 		case []*big.Int:
 			return pair[0].Cmp(pair[1]) != 0
@@ -218,7 +218,7 @@ func ne(nums ...vals.Num) bool {
 func gt(nums ...vals.Num) bool {
 	return chainCompare(nums, func(pair vals.NumSlice) bool {
 		switch pair := pair.(type) {
-		case []int64:
+		case []int:
 			return pair[0] > pair[1]
 		case []*big.Int:
 			return pair[0].Cmp(pair[1]) > 0
@@ -235,7 +235,7 @@ func gt(nums ...vals.Num) bool {
 func ge(nums ...vals.Num) bool {
 	return chainCompare(nums, func(pair vals.NumSlice) bool {
 		switch pair := pair.(type) {
-		case []int64:
+		case []int:
 			return pair[0] >= pair[1]
 		case []*big.Int:
 			return pair[0].Cmp(pair[1]) >= 0
@@ -407,7 +407,7 @@ func mul(rawNums ...vals.Num) vals.Num {
 	hasExact0 := false
 	hasInf := false
 	for _, num := range rawNums {
-		if num == int64(0) {
+		if num == 0 {
 			hasExact0 = true
 		}
 		if f, ok := num.(float64); ok && math.IsInf(f, 0) {
@@ -416,7 +416,7 @@ func mul(rawNums ...vals.Num) vals.Num {
 		}
 	}
 	if hasExact0 && !hasInf {
-		return int64(0)
+		return 0
 	}
 
 	nums := vals.UnifyNums(rawNums, vals.BigInt)
@@ -505,12 +505,12 @@ var ErrDivideByZero = errs.BadValue{
 
 func div(rawNums ...vals.Num) (vals.Num, error) {
 	for _, num := range rawNums[1:] {
-		if num == int64(0) {
+		if num == 0 {
 			return nil, ErrDivideByZero
 		}
 	}
-	if rawNums[0] == int64(0) {
-		return int64(0), nil
+	if rawNums[0] == 0 {
+		return 0, nil
 	}
 	nums := vals.UnifyNums(rawNums, vals.BigRat)
 	switch nums := nums.(type) {

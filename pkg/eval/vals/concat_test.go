@@ -33,8 +33,8 @@ func (rconcatter) RConcat(lhs interface{}) (interface{}, error) {
 func TestConcat(t *testing.T) {
 	Test(t, Fn("Concat", Concat), Table{
 		Args("foo", "bar").Rets("foobar", nil),
-		Args("foo", int64(2)).Rets("foo2", nil),
-		Args(int64(2), "foo").Rets("2foo", nil),
+		Args("foo", 2).Rets("foo2", nil),
+		Args(2, "foo").Rets("2foo", nil),
 
 		// LHS implements Concatter and succeeds
 		Args(concatter{}, "bar").Rets("concatter bar", nil),

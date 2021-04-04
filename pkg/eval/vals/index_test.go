@@ -17,7 +17,7 @@ func TestIndex(t *testing.T) {
 	Test(t, Fn("Index", Index), Table{
 		// String indices
 		Args("abc", "0").Rets("a", nil),
-		Args("abc", int64(0)).Rets("a", nil),
+		Args("abc", 0).Rets("a", nil),
 		Args("你好", "0").Rets("你", nil),
 		Args("你好", "3").Rets("好", nil),
 		Args("你好", "2").Rets(Any, errIndexNotAtRuneBoundary),
@@ -60,12 +60,12 @@ func TestIndex(t *testing.T) {
 		Args(li4, 0.0).Rets(Any, errIndexMustBeInteger),
 
 		// Integer indices are allowed.
-		Args(li4, int64(0)).Rets("foo", nil),
-		Args(li4, int64(3)).Rets("ipsum", nil),
-		Args(li4, int64(5)).Rets(nil, errs.OutOfRange{
+		Args(li4, 0).Rets("foo", nil),
+		Args(li4, 3).Rets("ipsum", nil),
+		Args(li4, 5).Rets(nil, errs.OutOfRange{
 			What: "index here", ValidLow: "0", ValidHigh: "3", Actual: "5"}),
-		Args(li4, int64(-1)).Rets("ipsum", nil),
-		Args(li4, int64(-5)).Rets(nil, errs.OutOfRange{
+		Args(li4, -1).Rets("ipsum", nil),
+		Args(li4, -5).Rets(nil, errs.OutOfRange{
 			What: "negative index here", ValidLow: "-4", ValidHigh: "-1", Actual: "-5"}),
 
 		// Half-open slices.

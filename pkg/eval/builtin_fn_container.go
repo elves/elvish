@@ -176,23 +176,23 @@ func makeMap(input Inputs) (vals.Map, error) {
 
 type rangeOpts struct{ Step vals.Num }
 
-func (o *rangeOpts) SetDefaultOptions() { o.Step = int64(1) }
+func (o *rangeOpts) SetDefaultOptions() { o.Step = 1 }
 
 func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
 	var rawNums []vals.Num
 	switch len(args) {
 	case 1:
-		rawNums = []vals.Num{int64(0), args[0], opts.Step}
+		rawNums = []vals.Num{0, args[0], opts.Step}
 	case 2:
 		rawNums = []vals.Num{args[0], args[1], opts.Step}
 	default:
 		return ErrArgs
 	}
-	nums := vals.UnifyNums(rawNums, vals.Int64)
+	nums := vals.UnifyNums(rawNums, vals.FixInt)
 
 	out := fm.OutputChan()
 	switch nums := nums.(type) {
-	case []int64:
+	case []int:
 		lower, upper, step := nums[0], nums[1], nums[2]
 		for cur := lower; cur < upper; cur += step {
 			out <- vals.FromGo(cur)

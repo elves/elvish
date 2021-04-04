@@ -52,7 +52,7 @@ func TestPrompt_NotifiesException(t *testing.T) {
 		"[prompt error] ERROR\n",
 		`see stack trace with "show $edit:exceptions[0]"`)
 	evals(f.Evaler, `excs = (count $edit:exceptions)`)
-	testGlobal(t, f.Evaler, "excs", int64(1))
+	testGlobal(t, f.Evaler, "excs", 1)
 }
 
 func TestRPrompt(t *testing.T) {
@@ -118,7 +118,7 @@ func TestPromptStaleTransform_Exception(t *testing.T) {
 		"[prompt stale transform error] ERROR\n",
 		`see stack trace with "show $edit:exceptions[0]"`)
 	evals(f.Evaler, `excs = (count $edit:exceptions)`)
-	testGlobal(t, f.Evaler, "excs", int64(1))
+	testGlobal(t, f.Evaler, "excs", 1)
 }
 
 func TestRPromptPersistent_True(t *testing.T) {

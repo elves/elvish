@@ -23,12 +23,12 @@ func ParseNum(s string) Num {
 		return nil
 	}
 	// Try parsing as big.Int
-	var z big.Int
+	z := &big.Int{}
 	if z.UnmarshalText(b) == nil {
-		if z.IsInt64() {
-			return z.Int64()
+		if i, ok := getFixInt(z); ok {
+			return i
 		}
-		return &z
+		return z
 	}
 	// Try parsing as float64
 	if f, err := strconv.ParseFloat(s, 64); err == nil {
@@ -41,7 +41,7 @@ type NumType uint8
 
 // Precedence used for unifying number types.
 const (
-	Int64 NumType = iota
+	FixInt NumType = iota
 	BigInt
 	BigRat
 	Float64
@@ -54,18 +54,18 @@ func UnifyNums(nums []Num, typ NumType) NumSlice {
 		}
 	}
 	switch typ {
-	case Int64:
-		unified := make([]int64, len(nums))
+	case FixInt:
+		unified := make([]int, len(nums))
 		for i, num := range nums {
-			unified[i] = num.(int64)
+			unified[i] = num.(int)
 		}
 		return unified
 	case BigInt:
 		unified := make([]*big.Int, len(nums))
 		for i, num := range nums {
 			switch num := num.(type) {
-			case int64:
-				unified[i] = big.NewInt(num)
+			case int:
+				unified[i] = big.NewInt(int64(num))
 			case *big.Int:
 				unified[i] = num
 			default:
@@ -77,8 +77,8 @@ func UnifyNums(nums []Num, typ NumType) NumSlice {
 		unified := make([]*big.Rat, len(nums))
 		for i, num := range nums {
 			switch num := num.(type) {
-			case int64:
-				unified[i] = big.NewRat(num, 1)
+			case int:
+				unified[i] = big.NewRat(int64(num), 1)
 			case *big.Int:
 				var r big.Rat
 				r.SetInt(num)
@@ -94,10 +94,11 @@ func UnifyNums(nums []Num, typ NumType) NumSlice {
 		unified := make([]float64, len(nums))
 		for i, num := range nums {
 			switch num := num.(type) {
-			case int64:
+			case int:
 				unified[i] = float64(num)
 			case *big.Int:
 				if num.IsInt64() {
+					// Might fit in float64
 					unified[i] = float64(num.Int64())
 				} else {
 					// Definitely won't fit in float64
@@ -119,8 +120,8 @@ func UnifyNums(nums []Num, typ NumType) NumSlice {
 
 func getNumType(n Num) NumType {
 	switch n.(type) {
-	case int64:
-		return Int64
+	case int:
+		return FixInt
 	case *big.Int:
 		return BigInt
 	case *big.Rat:
@@ -134,18 +135,17 @@ func getNumType(n Num) NumType {
 
 func NormalizeNum(n Num) Num {
 	switch n := n.(type) {
-	case int64:
+	case int:
 		return n
 	case *big.Int:
-		if n.IsInt64() {
-			return n.Int64()
+		if i, ok := getFixInt(n); ok {
+			return i
 		}
 		return n
 	case *big.Rat:
 		if n.IsInt() {
-			n := n.Num()
-			if n.IsInt64() {
-				return n.Int64()
+			if i, ok := getFixInt(n.Num()); ok {
+				return i
 			}
 			return n
 		}
@@ -155,4 +155,16 @@ func NormalizeNum(n Num) Num {
 	default:
 		panic("invalid num type" + fmt.Sprintf("%T", n))
 	}
+}
+
+func getFixInt(z *big.Int) (int, bool) {
+	// TODO: Use a more efficient implementation by examining z.Bits
+	if z.IsInt64() {
+		i64 := z.Int64()
+		i := int(i64)
+		if int64(i) == i64 {
+			return i, true
+		}
+	}
+	return -1, false
 }

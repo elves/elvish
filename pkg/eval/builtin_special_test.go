@@ -169,11 +169,11 @@ func TestWhile(t *testing.T) {
 	Test(t,
 		// while
 		That("x=0; while (< $x 4) { put $x; x=(+ $x 1) }").
-			Puts("0", int64(1.0), int64(2.0), int64(3.0)),
+			Puts("0", 1, 2, 3),
 		That("x = 0; while (< $x 4) { put $x; break }").Puts("0"),
 		That("x = 0; while (< $x 4) { fail haha }").Throws(AnyError),
 		That("x = 0; while (< $x 4) { put $x; x=(+ $x 1) } else { put bad }").
-			Puts("0", int64(1.0), int64(2.0), int64(3.0)),
+			Puts("0", 1, 2, 3),
 		That("while $false { put bad } else { put good }").Puts("good"),
 	)
 }
@@ -211,7 +211,7 @@ func TestFn(t *testing.T) {
 			Puts("x=lorem.", "x=ipsum."),
 		// Recursive functions with fn. Regression test for #1206.
 		That("fn f [n]{ if (== $n 0) { num 1 } else { * $n (f (- $n 1)) } }; f 3").
-			Puts(int64(6)),
+			Puts(6),
 		// Exception thrown by return is swallowed by a fn-defined function.
 		That("fn f []{ put a; return; put b }; f").Puts("a"),
 	)

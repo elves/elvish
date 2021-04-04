@@ -45,9 +45,9 @@ func TestMakeMap(t *testing.T) {
 
 func TestRange(t *testing.T) {
 	Test(t,
-		That(`range 3`).Puts(int64(0), int64(1), int64(2)),
-		That(`range 1 3`).Puts(int64(1), int64(2)),
-		That(`range 0 10 &step=3`).Puts(int64(0), int64(3), int64(6), int64(9)),
+		That(`range 3`).Puts(0, 1, 2),
+		That(`range 1 3`).Puts(1, 2),
+		That(`range 0 10 &step=3`).Puts(0, 3, 6, 9),
 	)
 }
 
@@ -92,13 +92,13 @@ func TestOne(t *testing.T) {
 
 func TestTake(t *testing.T) {
 	Test(t,
-		That(`range 100 | take 2`).Puts(int64(0), int64(1)),
+		That(`range 100 | take 2`).Puts(0, 1),
 	)
 }
 
 func TestDrop(t *testing.T) {
 	Test(t,
-		That(`range 100 | drop 98`).Puts(int64(98), int64(99)),
+		That(`range 100 | drop 98`).Puts(98, 99),
 	)
 }
 
@@ -125,9 +125,9 @@ func TestHasValue(t *testing.T) {
 
 func TestCount(t *testing.T) {
 	Test(t,
-		That(`range 100 | count`).Puts(int64(100)),
-		That(`count [(range 100)]`).Puts(int64(100)),
-		That(`count 123`).Puts(int64(3)),
+		That(`range 100 | count`).Puts(100),
+		That(`count [(range 100)]`).Puts(100),
+		That(`count 123`).Puts(3),
 		That(`count 1 2 3`).Throws(
 			errs.ArityMismatch{
 				What: "arguments here", ValidLow: 0, ValidHigh: 1, Actual: 3},

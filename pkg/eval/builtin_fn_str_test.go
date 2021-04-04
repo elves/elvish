@@ -57,9 +57,9 @@ func TestBase(t *testing.T) {
 
 func TestWcswidth(t *testing.T) {
 	Test(t,
-		That(`wcswidth 你好`).Puts(int64(4)),
+		That(`wcswidth 你好`).Puts(4),
 		That(`-override-wcwidth x 10; wcswidth 1x2x; -override-wcwidth x 1`).
-			Puts(int64(22)),
+			Puts(22),
 	)
 }
 

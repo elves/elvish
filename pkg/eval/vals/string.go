@@ -17,8 +17,8 @@ type Stringer interface {
 // falls back to Repr(v, NoPretty).
 func ToString(v interface{}) string {
 	switch v := v.(type) {
-	case int64:
-		return strconv.FormatInt(v, 10)
+	case int:
+		return strconv.Itoa(v)
 	case float64:
 		return formatFloat64(v)
 	case string:

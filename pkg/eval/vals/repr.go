@@ -44,8 +44,8 @@ func Repr(v interface{}, indent int) string {
 		return "$false"
 	case string:
 		return parse.Quote(v)
-	case int64:
-		return "(num " + strconv.FormatInt(v, 10) + ")"
+	case int:
+		return "(num " + strconv.Itoa(v) + ")"
 	case *big.Int:
 		return "(num " + v.String() + ")"
 	case *big.Rat:

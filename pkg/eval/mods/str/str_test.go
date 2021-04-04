@@ -17,9 +17,9 @@ func TestStr(t *testing.T) {
 	}
 	TestWithSetup(t, setup,
 		That(`str:compare abc`).Throws(AnyError),
-		That(`str:compare abc abc`).Puts(int64(0)),
-		That(`str:compare abc def`).Puts(int64(-1)),
-		That(`str:compare def abc`).Puts(int64(1)),
+		That(`str:compare abc abc`).Puts(0),
+		That(`str:compare abc def`).Puts(-1),
+		That(`str:compare def abc`).Puts(1),
 
 		That(`str:contains abc`).Throws(AnyError),
 		That(`str:contains abcd x`).Puts(false),
@@ -76,12 +76,12 @@ func TestStr(t *testing.T) {
 		That(`str:has-suffix abcd cd`).Puts(true),
 
 		That(`str:index abc`).Throws(AnyError),
-		That(`str:index abcd cd`).Puts(int64(2)),
-		That(`str:index abcd de`).Puts(int64(-1)),
+		That(`str:index abcd cd`).Puts(2),
+		That(`str:index abcd de`).Puts(-1),
 
 		That(`str:index-any abc`).Throws(AnyError),
-		That(`str:index-any "chicken" "aeiouy"`).Puts(int64(2)),
-		That(`str:index-any l33t aeiouy`).Puts(int64(-1)),
+		That(`str:index-any "chicken" "aeiouy"`).Puts(2),
+		That(`str:index-any l33t aeiouy`).Puts(-1),
 
 		That(`str:join : [/usr /bin /tmp]`).Puts("/usr:/bin:/tmp"),
 		That(`str:join : ['' a '']`).Puts(":a:"),
@@ -89,8 +89,8 @@ func TestStr(t *testing.T) {
 			errs.BadValue{What: "input to str:join", Valid: "string", Actual: "number"}),
 
 		That(`str:last-index abc`).Throws(AnyError),
-		That(`str:last-index "elven speak elvish" "elv"`).Puts(int64(12)),
-		That(`str:last-index "elven speak elvish" "romulan"`).Puts(int64(-1)),
+		That(`str:last-index "elven speak elvish" "elv"`).Puts(12),
+		That(`str:last-index "elven speak elvish" "romulan"`).Puts(-1),
 
 		That(`str:replace : / ":usr:bin:tmp"`).Puts("/usr/bin/tmp"),
 		That(`str:replace &max=2 : / :usr:bin:tmp`).Puts("/usr/bin:tmp"),
