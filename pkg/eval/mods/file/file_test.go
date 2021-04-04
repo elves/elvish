@@ -13,12 +13,5 @@ func TestFile(t *testing.T) {
 	}
 	evaltest.TestWithSetup(t, setup,
 		evaltest.That(`file:fopen`).Throws(evaltest.AnyError),
-		evaltest.That(`f = (file:fopen file.go)`).Puts(),
-
-		evaltest.That(`file:fclose`).Throws(evaltest.AnyError),
-		evaltest.That(`file:fclose $f`).Puts(),
-
-		evaltest.That(`p = (file:pipe)`).Puts(),
-		evaltest.That(`file:prclose $p`).Puts(),
 	)
 }

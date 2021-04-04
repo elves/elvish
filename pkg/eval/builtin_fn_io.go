@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	//	"os"
+	"os"
 	"strconv"
 	"strings"
 
@@ -53,10 +53,10 @@ func init() {
 
 		// Deprecated written in file.go instead.
 		// File and pipe
-		// "fopen":   fopen,
-		// "fclose":  fclose,
-		// "pipe":    pipe,
-		// "prclose": prclose,
+		"fopen":   fopen,
+		"fclose":  fclose,
+		"pipe":    pipe,
+		"prclose": prclose,
 		"pwclose": pwclose,
 	})
 }
@@ -774,10 +774,10 @@ func toJSON(fm *Frame, inputs Inputs) error {
 // @cf fclose
 
 // Deprecated written in file module instead
-// func fopen(name string) (vals.File, error) {
-// TODO support opening files for writing etc as well.
-//return os.Open(name)
-// }
+func fopen(name string) (vals.File, error) {
+	// TODO support opening files for writing etc as well.
+	return os.Open(name)
+}
 
 //elvdoc:fn fclose
 //
@@ -790,9 +790,9 @@ func toJSON(fm *Frame, inputs Inputs) error {
 // @cf fopen
 
 // Deprecated, written in file module instead.
-// func fclose(f vals.File) error {
-// return f.Close()
-// }
+func fclose(f vals.File) error {
+	return f.Close()
+}
 
 //elvdoc:fn pipe
 //
@@ -829,10 +829,10 @@ func toJSON(fm *Frame, inputs Inputs) error {
 // @cf prclose pwclose
 
 // Deprecated written in file.go
-// func pipe() (vals.Pipe, error) {
-// r, w, err := os.Pipe()
-// return vals.NewPipe(r, w), err
-// }
+func pipe() (vals.Pipe, error) {
+	r, w, err := os.Pipe()
+	return vals.NewPipe(r, w), err
+}
 
 //elvdoc:fn prclose
 //
@@ -845,9 +845,9 @@ func toJSON(fm *Frame, inputs Inputs) error {
 // @cf pwclose pipe
 
 // Deprecated written in file.go
-// func prclose(p vals.Pipe) error {
-// return p.ReadEnd.Close()
-// }
+func prclose(p vals.Pipe) error {
+	return p.ReadEnd.Close()
+}
 
 //elvdoc:fn pwclose
 //

@@ -90,6 +90,10 @@ func prclose(p vals.Pipe) error {
 	return p.ReadEnd.Close()
 }
 
+func isTty(f *os.File) uintptr {
+	return f.Fd()
+}
+
 var Ns = eval.NsBuilder{}.AddGoFns("file:", fns).Ns()
 
 var fns = map[string]interface{}{
@@ -97,4 +101,5 @@ var fns = map[string]interface{}{
 	"fopen":   fopen,
 	"pipe":    pipe,
 	"prclose": prclose,
+	"is-tty":  isTty,
 }
