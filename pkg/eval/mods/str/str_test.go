@@ -56,11 +56,11 @@ func TestStr(t *testing.T) {
 		That(`str:from-utf8-bytes 0xe4 0xbd 0xa0 0xe5 0xa5 0xbd`).Puts("你好"),
 		That(`str:from-utf8-bytes -1`).Throws(errs.OutOfRange{
 			What:     "byte",
-			ValidLow: "0", ValidHigh: "255", Actual: strconv.Itoa(-1)}),
+			ValidLow: "0", ValidHigh: "255", Actual: "-1"}),
 
 		That(`str:from-utf8-bytes 256`).Throws(errs.OutOfRange{
 			What:     "byte",
-			ValidLow: "0", ValidHigh: "255", Actual: strconv.Itoa(256)}),
+			ValidLow: "0", ValidHigh: "255", Actual: "256"}),
 
 		That(`str:from-utf8-bytes 0xff 0x3 0xaa`).Throws(errs.BadValue{
 			What:   "arguments to str:from-utf8-bytes",
