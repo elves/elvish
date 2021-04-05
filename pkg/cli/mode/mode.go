@@ -19,5 +19,5 @@ func modePrompt(content string, space bool) func() ui.Text {
 }
 
 // Prompt returns a callback suitable as the prompt in the codearea of a
-// mode widget. This var is solely for the benefit of pkg/edit/minibuf.
+// mode widget.
 var Prompt = modePrompt
