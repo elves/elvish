@@ -86,8 +86,6 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 			*ptr = r
 		}
 		return err
-	case Scanner:
-		return ptr.ScanElvish(src)
 	default:
 		// Do a generic `*ptr = src` via reflection
 		ptrType := TypeOf(ptr)
@@ -101,11 +99,6 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 		ValueOf(ptr).Elem().Set(ValueOf(src))
 		return nil
 	}
-}
-
-// Scanner is implemented by types that can scan an Elvish value into itself.
-type Scanner interface {
-	ScanElvish(interface{}) error
 }
 
 // FromGo converts a Go value to an Elvish value. Most types are returned as
@@ -155,12 +148,8 @@ func elvToFloat(arg interface{}) (float64, error) {
 
 func elvToInt(arg interface{}) (int, error) {
 	switch arg := arg.(type) {
-	case float64:
-		i := int(arg)
-		if float64(i) != arg {
-			return 0, errMustBeInteger
-		}
-		return i, nil
+	case int:
+		return arg, nil
 	case string:
 		num, err := strconv.ParseInt(arg, 0, 0)
 		if err == nil {
@@ -169,6 +158,21 @@ func elvToInt(arg interface{}) (int, error) {
 		return 0, cannotParseAs{"integer", Repr(arg, -1)}
 	default:
 		return 0, errMustBeInteger
+	}
+}
+
+func elvToNum(arg interface{}) (Num, error) {
+	switch arg := arg.(type) {
+	case int, *big.Int, *big.Rat, float64:
+		return arg, nil
+	case string:
+		n := ParseNum(arg)
+		if n == nil {
+			return 0, cannotParseAs{"number", Repr(arg, -1)}
+		}
+		return n, nil
+	default:
+		return 0, errMustBeNumber
 	}
 }
 
@@ -186,19 +190,4 @@ func elvToRune(arg interface{}) (rune, error) {
 		return -1, errMustHaveSingleRune
 	}
 	return r, nil
-}
-
-func elvToNum(arg interface{}) (Num, error) {
-	switch arg := arg.(type) {
-	case int, *big.Int, *big.Rat, float64:
-		return arg, nil
-	case string:
-		n := ParseNum(arg)
-		if n == nil {
-			return 0, cannotParseAs{"number", Repr(arg, -1)}
-		}
-		return n, nil
-	default:
-		return 0, errMustBeNumber
-	}
 }

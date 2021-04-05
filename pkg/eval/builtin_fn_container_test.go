@@ -2,6 +2,7 @@ package eval_test
 
 import (
 	"math"
+	"math/big"
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
@@ -48,6 +49,22 @@ func TestRange(t *testing.T) {
 		That(`range 3`).Puts(0, 1, 2),
 		That(`range 1 3`).Puts(1, 2),
 		That(`range 0 10 &step=3`).Puts(0, 3, 6, 9),
+
+		That(`range 10_000_000_000_000_000_000 10_000_000_000_000_000_003`).
+			Puts(
+				vals.ParseNum("10_000_000_000_000_000_000"),
+				vals.ParseNum("10_000_000_000_000_000_001"),
+				vals.ParseNum("10_000_000_000_000_000_002")),
+		That(`range 10_000_000_000_000_000_000 10_000_000_000_000_000_003 &step=2`).
+			Puts(
+				vals.ParseNum("10_000_000_000_000_000_000"),
+				vals.ParseNum("10_000_000_000_000_000_002")),
+
+		That(`range 23/10`).Puts(0, 1, 2),
+		That(`range 1/10 23/10`).Puts(
+			big.NewRat(1, 10), big.NewRat(11, 10), big.NewRat(21, 10)),
+		That(`range 1/10 9/10 &step=3/10`).Puts(
+			big.NewRat(1, 10), big.NewRat(4, 10), big.NewRat(7, 10)),
 	)
 }
 

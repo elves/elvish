@@ -148,110 +148,71 @@ func toFloat64(f float64) float64 {
 // ```
 
 func lt(nums ...vals.Num) bool {
-	return chainCompare(nums, func(pair vals.NumSlice) bool {
-		switch pair := pair.(type) {
-		case []int:
-			return pair[0] < pair[1]
-		case []*big.Int:
-			return pair[0].Cmp(pair[1]) < 0
-		case []*big.Rat:
-			return pair[0].Cmp(pair[1]) < 0
-		case []float64:
-			return pair[0] < pair[1]
-		default:
-			panic("unreachable")
-		}
-	})
+	return chainCompare(nums,
+		func(a, b int) bool { return a < b },
+		func(a, b *big.Int) bool { return a.Cmp(b) < 0 },
+		func(a, b *big.Rat) bool { return a.Cmp(b) < 0 },
+		func(a, b float64) bool { return a < b })
+
 }
 
 func le(nums ...vals.Num) bool {
-	return chainCompare(nums, func(pair vals.NumSlice) bool {
-		switch pair := pair.(type) {
-		case []int:
-			return pair[0] <= pair[1]
-		case []*big.Int:
-			return pair[0].Cmp(pair[1]) <= 0
-		case []*big.Rat:
-			return pair[0].Cmp(pair[1]) <= 0
-		case []float64:
-			return pair[0] <= pair[1]
-		default:
-			panic("unreachable")
-		}
-	})
+	return chainCompare(nums,
+		func(a, b int) bool { return a <= b },
+		func(a, b *big.Int) bool { return a.Cmp(b) <= 0 },
+		func(a, b *big.Rat) bool { return a.Cmp(b) <= 0 },
+		func(a, b float64) bool { return a <= b })
 }
 
 func eqNum(nums ...vals.Num) bool {
-	return chainCompare(nums, func(pair vals.NumSlice) bool {
-		switch pair := pair.(type) {
-		case []int:
-			return pair[0] == pair[1]
-		case []*big.Int:
-			return pair[0].Cmp(pair[1]) == 0
-		case []*big.Rat:
-			return pair[0].Cmp(pair[1]) == 0
-		case []float64:
-			return pair[0] == pair[1]
-		default:
-			panic("unreachable")
-		}
-	})
+	return chainCompare(nums,
+		func(a, b int) bool { return a == b },
+		func(a, b *big.Int) bool { return a.Cmp(b) == 0 },
+		func(a, b *big.Rat) bool { return a.Cmp(b) == 0 },
+		func(a, b float64) bool { return a == b })
 }
 
 func ne(nums ...vals.Num) bool {
-	return chainCompare(nums, func(pair vals.NumSlice) bool {
-		switch pair := pair.(type) {
-		case []int:
-			return pair[0] != pair[1]
-		case []*big.Int:
-			return pair[0].Cmp(pair[1]) != 0
-		case []*big.Rat:
-			return pair[0].Cmp(pair[1]) != 0
-		case []float64:
-			return pair[0] != pair[1]
-		default:
-			panic("unreachable")
-		}
-	})
+	return chainCompare(nums,
+		func(a, b int) bool { return a != b },
+		func(a, b *big.Int) bool { return a.Cmp(b) != 0 },
+		func(a, b *big.Rat) bool { return a.Cmp(b) != 0 },
+		func(a, b float64) bool { return a != b })
 }
 
 func gt(nums ...vals.Num) bool {
-	return chainCompare(nums, func(pair vals.NumSlice) bool {
-		switch pair := pair.(type) {
-		case []int:
-			return pair[0] > pair[1]
-		case []*big.Int:
-			return pair[0].Cmp(pair[1]) > 0
-		case []*big.Rat:
-			return pair[0].Cmp(pair[1]) > 0
-		case []float64:
-			return pair[0] > pair[1]
-		default:
-			panic("unreachable")
-		}
-	})
+	return chainCompare(nums,
+		func(a, b int) bool { return a > b },
+		func(a, b *big.Int) bool { return a.Cmp(b) > 0 },
+		func(a, b *big.Rat) bool { return a.Cmp(b) > 0 },
+		func(a, b float64) bool { return a > b })
 }
 
 func ge(nums ...vals.Num) bool {
-	return chainCompare(nums, func(pair vals.NumSlice) bool {
-		switch pair := pair.(type) {
-		case []int:
-			return pair[0] >= pair[1]
-		case []*big.Int:
-			return pair[0].Cmp(pair[1]) >= 0
-		case []*big.Rat:
-			return pair[0].Cmp(pair[1]) >= 0
-		case []float64:
-			return pair[0] >= pair[1]
-		default:
-			panic("unreachable")
-		}
-	})
+	return chainCompare(nums,
+		func(a, b int) bool { return a >= b },
+		func(a, b *big.Int) bool { return a.Cmp(b) >= 0 },
+		func(a, b *big.Rat) bool { return a.Cmp(b) >= 0 },
+		func(a, b float64) bool { return a >= b })
 }
 
-func chainCompare(nums []vals.Num, p func(pair vals.NumSlice) bool) bool {
+func chainCompare(nums []vals.Num,
+	p1 func(a, b int) bool, p2 func(a, b *big.Int) bool,
+	p3 func(a, b *big.Rat) bool, p4 func(a, b float64) bool) bool {
+
 	for i := 0; i < len(nums)-1; i++ {
-		if !p(vals.UnifyNums(nums[i:i+2], 0)) {
+		var r bool
+		switch pair := vals.UnifyNums(nums[i:i+2], 0).(type) {
+		case []int:
+			r = p1(pair[0], pair[1])
+		case []*big.Int:
+			r = p2(pair[0], pair[1])
+		case []*big.Rat:
+			r = p3(pair[0], pair[1])
+		case []float64:
+			r = p4(pair[0], pair[1])
+		}
+		if !r {
 			return false
 		}
 	}
@@ -287,13 +248,13 @@ func add(rawNums ...vals.Num) vals.Num {
 		for _, num := range nums {
 			acc.Add(acc, num)
 		}
-		return vals.NormalizeNum(acc)
+		return vals.NormalizeBigInt(acc)
 	case []*big.Rat:
 		acc := big.NewRat(0, 1)
 		for _, num := range nums {
 			acc.Add(acc, num)
 		}
-		return vals.NormalizeNum(acc)
+		return vals.NormalizeBigRat(acc)
 	case []float64:
 		acc := float64(0)
 		for _, num := range nums {
@@ -426,13 +387,13 @@ func mul(rawNums ...vals.Num) vals.Num {
 		for _, num := range nums {
 			acc.Mul(acc, num)
 		}
-		return vals.NormalizeNum(acc)
+		return vals.NormalizeBigInt(acc)
 	case []*big.Rat:
 		acc := big.NewRat(1, 1)
 		for _, num := range nums {
 			acc.Mul(acc, num)
 		}
-		return vals.NormalizeNum(acc)
+		return vals.NormalizeBigRat(acc)
 	case []float64:
 		acc := float64(1)
 		for _, num := range nums {

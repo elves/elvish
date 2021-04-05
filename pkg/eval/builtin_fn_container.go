@@ -142,6 +142,8 @@ func makeMap(input Inputs) (vals.Map, error) {
 // Output `$low`, `$low` + `$step`, ..., proceeding as long as smaller than
 // `$high`. If not given, `$low` defaults to 0.
 //
+// This command is [exactness-preserving](#exactness-preserving).
+//
 // Examples:
 //
 // ```elvish-transcript
@@ -156,19 +158,24 @@ func makeMap(input Inputs) (vals.Map, error) {
 // ▶ 5
 // ```
 //
-// Beware floating point oddities:
+// When using floating-point numbers, beware that computation errors can result
+// in an unexpected number of outputs:
 //
 // ```elvish-transcript
-// ~> range 0 0.8 &step=.1
-// ▶ 0
-// ▶ 0.1
-// ▶ 0.2
-// ▶ 0.30000000000000004
-// ▶ 0.4
-// ▶ 0.5
-// ▶ 0.6
-// ▶ 0.7
-// ▶ 0.7999999999999999
+// ~> range 0.9 &step=0.3
+// ▶ (num 0.0)
+// ▶ (num 0.3)
+// ▶ (num 0.6)
+// ▶ (num 0.8999999999999999)
+// ```
+//
+// Using exact rationals can avoid this problem:
+//
+// ```elvish-transcript
+// ~> range 9/10 &step=3/10
+// ▶ (num 0)
+// ▶ (num 3/10)
+// ▶ (num 3/5)
 // ```
 //
 // Etymology:

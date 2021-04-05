@@ -12,9 +12,11 @@ func TestToString(t *testing.T) {
 		// string
 		Args("a").Rets("a"),
 
+		Args(1).Rets("1"),
+
 		// float64
-		Args(42.0).Rets("42.0"),
 		Args(0.1).Rets("0.1"),
+		Args(42.0).Rets("42.0"),
 		// Whole numbers with more than 14 digits and trailing 0 are printed in
 		// scientific notation.
 		Args(1e13).Rets("10000000000000.0"),
