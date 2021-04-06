@@ -4,6 +4,7 @@ import (
 	"math"
 	"math/big"
 	"testing"
+	"unsafe"
 
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
@@ -44,27 +45,51 @@ func TestMakeMap(t *testing.T) {
 	)
 }
 
+var maxInt = 1<<((unsafe.Sizeof(0)*8)-1) - 1
+var maxDenseIntInFloat = float64(1 << 53)
+
 func TestRange(t *testing.T) {
 	Test(t,
-		That(`range 3`).Puts(0, 1, 2),
-		That(`range 1 3`).Puts(1, 2),
-		That(`range 0 10 &step=3`).Puts(0, 3, 6, 9),
+		That("range 3").Puts(0, 1, 2),
+		That("range 1 3").Puts(1, 2),
+		That("range 0 10 &step=3").Puts(0, 3, 6, 9),
+		// int overflow
+		That("range &step=2 "+args(vals.ToString(maxInt-3), vals.ToString(maxInt))).
+			Puts(maxInt-3, maxInt-1),
+		// non-positive int step
+		That("range &step=0 10").
+			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "0"}),
 
-		That(`range 10_000_000_000_000_000_000 10_000_000_000_000_000_003`).
+		That("range 10_000_000_000_000_000_000 10_000_000_000_000_000_003").
 			Puts(
 				vals.ParseNum("10_000_000_000_000_000_000"),
 				vals.ParseNum("10_000_000_000_000_000_001"),
 				vals.ParseNum("10_000_000_000_000_000_002")),
-		That(`range 10_000_000_000_000_000_000 10_000_000_000_000_000_003 &step=2`).
+		That("range 10_000_000_000_000_000_000 10_000_000_000_000_000_003 &step=2").
 			Puts(
 				vals.ParseNum("10_000_000_000_000_000_000"),
 				vals.ParseNum("10_000_000_000_000_000_002")),
+		// non-positive bigint step
+		That("range &step=-"+z+" 10").
+			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-" + z}),
 
-		That(`range 23/10`).Puts(0, 1, 2),
-		That(`range 1/10 23/10`).Puts(
+		That("range 23/10").Puts(0, 1, 2),
+		That("range 1/10 23/10").Puts(
 			big.NewRat(1, 10), big.NewRat(11, 10), big.NewRat(21, 10)),
-		That(`range 1/10 9/10 &step=3/10`).Puts(
+		That("range 1/10 9/10 &step=3/10").Puts(
 			big.NewRat(1, 10), big.NewRat(4, 10), big.NewRat(7, 10)),
+		// non-positive bigrat step
+		That("range &step=-1/2 10").
+			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-1/2"}),
+
+		That("range 1.2").Puts(0.0, 1.0),
+		That("range &step=0.5 1 3").Puts(1.0, 1.5, 2.0, 2.5),
+		// float64 overflow
+		That("range "+args(vals.ToString(maxDenseIntInFloat-2), "+inf")).
+			Puts(maxDenseIntInFloat-2, maxDenseIntInFloat-1, maxDenseIntInFloat),
+		// non-positive float64 step
+		That("range &step=-0.5 10").
+			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-0.5"}),
 	)
 }
 

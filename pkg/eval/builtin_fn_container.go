@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/big"
 	"sort"
+	"strconv"
 
 	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/eval/errs"
@@ -140,7 +141,8 @@ func makeMap(input Inputs) (vals.Map, error) {
 // ```
 //
 // Output `$low`, `$low` + `$step`, ..., proceeding as long as smaller than
-// `$high`. If not given, `$low` defaults to 0.
+// `$high` or until overflow. If not given, `$low` defaults to 0. The `$step`
+// must be positive.
 //
 // This command is [exactness-preserving](#exactness-preserving).
 //
@@ -158,8 +160,8 @@ func makeMap(input Inputs) (vals.Map, error) {
 // ▶ 5
 // ```
 //
-// When using floating-point numbers, beware that computation errors can result
-// in an unexpected number of outputs:
+// When using floating-point numbers, beware that numerical errors can result in
+// an incorrect number of outputs:
 //
 // ```elvish-transcript
 // ~> range 0.9 &step=0.3
@@ -169,7 +171,7 @@ func makeMap(input Inputs) (vals.Map, error) {
 // ▶ (num 0.8999999999999999)
 // ```
 //
-// Using exact rationals can avoid this problem:
+// Avoid this problem by using exact rationals:
 //
 // ```elvish-transcript
 // ~> range 9/10 &step=3/10
@@ -195,6 +197,28 @@ func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
 	default:
 		return ErrArgs
 	}
+	switch step := opts.Step.(type) {
+	case int:
+		if step <= 0 {
+			return errs.BadValue{
+				What: "step", Valid: "positive", Actual: strconv.Itoa(step)}
+		}
+	case *big.Int:
+		if step.Sign() <= 0 {
+			return errs.BadValue{
+				What: "step", Valid: "positive", Actual: step.String()}
+		}
+	case *big.Rat:
+		if step.Sign() <= 0 {
+			return errs.BadValue{
+				What: "step", Valid: "positive", Actual: step.String()}
+		}
+	case float64:
+		if step <= 0 {
+			return errs.BadValue{
+				What: "step", Valid: "positive", Actual: vals.ToString(step)}
+		}
+	}
 	nums := vals.UnifyNums(rawNums, vals.FixInt)
 
 	out := fm.OutputChan()
@@ -203,6 +227,10 @@ func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
 		lower, upper, step := nums[0], nums[1], nums[2]
 		for cur := lower; cur < upper; cur += step {
 			out <- vals.FromGo(cur)
+			if cur+step <= cur {
+				// Overflow
+				break
+			}
 		}
 	case []*big.Int:
 		lower, upper, step := nums[0], nums[1], nums[2]
@@ -224,8 +252,12 @@ func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
 		}
 	case []float64:
 		lower, upper, step := nums[0], nums[1], nums[2]
-		for f := lower; f < upper; f += step {
-			out <- vals.FromGo(f)
+		for cur := lower; cur < upper; cur += step {
+			out <- vals.FromGo(cur)
+			if cur+step <= cur {
+				// Overflow
+				break
+			}
 		}
 	default:
 		panic("unreachable")
