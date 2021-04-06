@@ -43,27 +43,27 @@ func TestParseNum(t *testing.T) {
 
 func TestUnifyNums(t *testing.T) {
 	Test(t, Fn("UnifyNums", UnifyNums), Table{
-		Args([]Num{1, 2, 3, 4}, FixInt).
+		Args([]Num{1, 2, 3, 4}, Int).
 			Rets([]int{1, 2, 3, 4}),
 
-		Args([]Num{1, 2, 3, bigInt(z)}, FixInt).
+		Args([]Num{1, 2, 3, bigInt(z)}, Int).
 			Rets([]*big.Int{big.NewInt(1), big.NewInt(2), big.NewInt(3), bigInt(z)}),
 
-		Args([]Num{1, 2, 3, big.NewRat(1, 2)}, FixInt).
+		Args([]Num{1, 2, 3, big.NewRat(1, 2)}, Int).
 			Rets([]*big.Rat{
 				big.NewRat(1, 1), big.NewRat(2, 1),
 				big.NewRat(3, 1), big.NewRat(1, 2)}),
-		Args([]Num{1, 2, bigInt(z), big.NewRat(1, 2)}, FixInt).
+		Args([]Num{1, 2, bigInt(z), big.NewRat(1, 2)}, Int).
 			Rets([]*big.Rat{
 				big.NewRat(1, 1), big.NewRat(2, 1), bigRat(z), big.NewRat(1, 2)}),
 
-		Args([]Num{1, 2, 3, 4.0}, FixInt).
+		Args([]Num{1, 2, 3, 4.0}, Int).
 			Rets([]float64{1, 2, 3, 4}),
-		Args([]Num{1, 2, big.NewRat(1, 2), 4.0}, FixInt).
+		Args([]Num{1, 2, big.NewRat(1, 2), 4.0}, Int).
 			Rets([]float64{1, 2, 0.5, 4}),
-		Args([]Num{1, 2, big.NewInt(3), 4.0}, FixInt).
+		Args([]Num{1, 2, big.NewInt(3), 4.0}, Int).
 			Rets([]float64{1, 2, 3, 4}),
-		Args([]Num{1, 2, bigInt(z), 4.0}, FixInt).
+		Args([]Num{1, 2, bigInt(z), 4.0}, Int).
 			Rets([]float64{1, 2, math.Inf(1), 4}),
 
 		Args([]Num{1, 2, 3, 4}, BigInt).

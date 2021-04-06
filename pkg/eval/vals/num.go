@@ -43,7 +43,7 @@ type NumType uint8
 // Possible values for NumType, sorted in the order of implicit conversion
 // (lower types can be implicitly converted to higher types).
 const (
-	FixInt NumType = iota
+	Int NumType = iota
 	BigInt
 	BigRat
 	Float64
@@ -59,7 +59,7 @@ func UnifyNums(nums []Num, typ NumType) NumSlice {
 		}
 	}
 	switch typ {
-	case FixInt:
+	case Int:
 		unified := make([]int, len(nums))
 		for i, num := range nums {
 			unified[i] = num.(int)
@@ -126,7 +126,7 @@ func UnifyNums(nums []Num, typ NumType) NumSlice {
 func getNumType(n Num) NumType {
 	switch n.(type) {
 	case int:
-		return FixInt
+		return Int
 	case *big.Int:
 		return BigInt
 	case *big.Rat:
@@ -141,7 +141,7 @@ func getNumType(n Num) NumType {
 // NormalizeBigInt converts a big.Int to an int if it is within the range of
 // int. Otherwise it returns n as is.
 func NormalizeBigInt(z *big.Int) Num {
-	if i, ok := getFixInt(z); ok {
+	if i, ok := getInt(z); ok {
 		return i
 	}
 	return z
@@ -152,7 +152,7 @@ func NormalizeBigInt(z *big.Int) Num {
 func NormalizeBigRat(z *big.Rat) Num {
 	if z.IsInt() {
 		n := z.Num()
-		if i, ok := getFixInt(n); ok {
+		if i, ok := getInt(n); ok {
 			return i
 		}
 		return n
@@ -160,7 +160,7 @@ func NormalizeBigRat(z *big.Rat) Num {
 	return z
 }
 
-func getFixInt(z *big.Int) (int, bool) {
+func getInt(z *big.Int) (int, bool) {
 	// TODO: Use a more efficient implementation by examining z.Bits
 	if z.IsInt64() {
 		i64 := z.Int64()

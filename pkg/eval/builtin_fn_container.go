@@ -219,7 +219,7 @@ func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
 				What: "step", Valid: "positive", Actual: vals.ToString(step)}
 		}
 	}
-	nums := vals.UnifyNums(rawNums, vals.FixInt)
+	nums := vals.UnifyNums(rawNums, vals.Int)
 
 	out := fm.OutputChan()
 	switch nums := nums.(type) {

@@ -108,13 +108,13 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 func FromGo(a interface{}) interface{} {
 	switch a := a.(type) {
 	case *big.Int:
-		if i, ok := getFixInt(a); ok {
+		if i, ok := getInt(a); ok {
 			return i
 		}
 		return a
 	case *big.Rat:
 		if a.IsInt() {
-			if i, ok := getFixInt(a.Num()); ok {
+			if i, ok := getInt(a.Num()); ok {
 				return i
 			}
 			return a.Num()

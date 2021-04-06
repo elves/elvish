@@ -14,7 +14,7 @@ import (
 
 const (
 	zeros = "0000000000000000000"
-	// Values that exceed the range of int64, used for testing BigInt.
+	// Values that exceed the range of int64, used for testing bigint.
 	z   = "1" + zeros + "0"
 	z1  = "1" + zeros + "1" // z+1
 	z2  = "1" + zeros + "2" // z+2
@@ -43,92 +43,92 @@ func TestFloat64(t *testing.T) {
 
 func TestNumCmp(t *testing.T) {
 	Test(t,
-		// FixInt
+		// int
 		That("< 1 2 3").Puts(true),
 		That("< 1 3 2").Puts(false),
-		// BigInt
+		// bigint
 		That("< "+args(z1, z2, z3)).Puts(true),
 		That("< "+args(z1, z3, z2)).Puts(false),
-		// BigInt and FixInt
+		// bigint and int
 		That("< "+args("1", z1)).Puts(true),
-		// BigRat
+		// bigrat
 		That("< 1/4 1/3 1/2").Puts(true),
 		That("< 1/4 1/2 1/3").Puts(false),
-		// BigRat, BigInt and FixInt
+		// bigrat, bigint and int
 		That("< "+args("1/2", "1", z1)).Puts(true),
 		That("< "+args("1/2", z1, "1")).Puts(false),
-		// Float
+		// float64
 		That("< 1.0 2.0 3.0").Puts(true),
 		That("< 1.0 3.0 2.0").Puts(false),
-		// Float, BigRat and FixInt
+		// float64, bigrat and int
 		That("< 1.0 3/2 2").Puts(true),
 		That("< 1.0 2 3/2").Puts(false),
 
 		// Mixing of types not tested for commands below; they share the same
 		// code path as <.
 
-		// FixInt
+		// int
 		That("<= 1 1 2").Puts(true),
 		That("<= 1 2 1").Puts(false),
-		// BigInt
+		// bigint
 		That("<= "+args(z1, z1, z2)).Puts(true),
 		That("<= "+args(z1, z2, z1)).Puts(false),
-		// BigRat
+		// bigrat
 		That("<= 1/3 1/3 1/2").Puts(true),
 		That("<= 1/3 1/2 1/1").Puts(true),
-		// Float
+		// float64
 		That("<= 1.0 1.0 2.0").Puts(true),
 		That("<= 1.0 2.0 1.0").Puts(false),
 
-		// FixInt
+		// int
 		That("== 1 1 1").Puts(true),
 		That("== 1 2 1").Puts(false),
-		// BigInt
+		// bigint
 		That("== "+args(z1, z1, z1)).Puts(true),
 		That("== "+args(z1, z2, z1)).Puts(false),
-		// BigRat
+		// bigrat
 		That("== 1/2 1/2 1/2").Puts(true),
 		That("== 1/2 1/3 1/2").Puts(false),
-		// Float
+		// float64
 		That("== 1.0 1.0 1.0").Puts(true),
 		That("== 1.0 2.0 1.0").Puts(false),
 
-		// FixInt
+		// int
 		That("!= 1 2 1").Puts(true),
 		That("!= 1 1 2").Puts(false),
-		// BigInt
+		// bigint
 		That("!= "+args(z1, z2, z1)).Puts(true),
 		That("!= "+args(z1, z1, z2)).Puts(false),
-		// BigRat
+		// bigrat
 		That("!= 1/2 1/3 1/2").Puts(true),
 		That("!= 1/2 1/2 1/3").Puts(false),
-		// Float
+		// float64
 		That("!= 1.0 2.0 1.0").Puts(true),
 		That("!= 1.0 1.0 2.0").Puts(false),
 
-		// FixInt
+		// int
 		That("> 3 2 1").Puts(true),
 		That("> 3 1 2").Puts(false),
-		// BigInt
+		// bigint
 		That("> "+args(z3, z2, z1)).Puts(true),
 		That("> "+args(z3, z1, z2)).Puts(false),
-		// BigRat
+		// bigrat
 		That("> 1/2 1/3 1/4").Puts(true),
 		That("> 1/2 1/4 1/3").Puts(false),
-		// Float
+		// float64
 		That("> 3.0 2.0 1.0").Puts(true),
 		That("> 3.0 1.0 2.0").Puts(false),
 
-		// FixInt
+		// int
 		That(">= 3 3 2").Puts(true),
 		That(">= 3 2 3").Puts(false),
-		// BigInt
+		// bigint
 		That(">= "+args(z3, z3, z2)).Puts(true),
 		That(">= "+args(z3, z2, z3)).Puts(false),
-		// BigRat
+		// bigrat
 		That(">= 1/2 1/2 1/3").Puts(true),
 		That(">= 1/2 1/3 1/2").Puts(false),
-		// Float
+		// float64
 		That(">= 3.0 3.0 2.0").Puts(true),
 		That(">= 3.0 2.0 3.0").Puts(false),
 	)
@@ -138,19 +138,19 @@ func TestArithmeticCommands(t *testing.T) {
 	Test(t,
 		// No argument
 		That("+").Puts(0),
-		// FixInt
+		// int
 		That("+ 233100 233").Puts(233333),
-		// BigInt
+		// bigint
 		That("+ "+args(z, z1)).Puts(bigInt(zz1)),
-		// BigInt and FixInt
+		// bigint and int
 		That("+ 1 2 "+z).Puts(bigInt(z3)),
-		// BigRat
+		// bigrat
 		That("+ 1/2 1/3 1/4").Puts(big.NewRat(13, 12)),
-		// BigRat, BigInt and FixInt
+		// bigrat, bigint and int
 		That("+ 1/2 1/2 1 "+z).Puts(bigInt(z2)),
-		// Float
+		// float64
 		That("+ 0.5 0.25 1.0").Puts(1.75),
-		// Float and other types
+		// float64 and other types
 		That("+ 0.5 1/4 1").Puts(1.75),
 
 		// Mixing of types not tested for commands below; they share the same
@@ -161,20 +161,20 @@ func TestArithmeticCommands(t *testing.T) {
 		That("- "+z).Puts(bigInt("-"+z)),
 		That("- 1/2").Puts(big.NewRat(-1, 2)),
 		That("- 1.0").Puts(-1.0),
-		// FixInt
+		// int
 		That("- 20 10 2").Puts(8),
-		// BigInt
+		// bigint
 		That("- "+args(zz3, z1)).Puts(bigInt(z2)),
-		// Float
+		// float64
 		That("- 2.0 1.0 0.5").Puts(0.5),
 
 		// No argument
 		That("*").Puts(1),
-		// FixInt
+		// int
 		That("* 2 7 4").Puts(56),
-		// BigInt
+		// bigint
 		That("* 2 "+z1).Puts(bigInt(zz2)),
-		// Float
+		// float64
 		That("* 2.0 0.5 1.75").Puts(1.75),
 		// 0 * non-infinity
 		That("* 0 1/2 1.0").Puts(0),
@@ -185,14 +185,14 @@ func TestArithmeticCommands(t *testing.T) {
 		That("/ 2").Puts(big.NewRat(1, 2)),
 		That("/ "+z).Puts(bigRat("1/"+z)),
 		That("/ 2.0").Puts(0.5),
-		// FixInt
+		// int
 		That("/ 233333 353").Puts(661),
 		That("/ 3 4 2").Puts(big.NewRat(3, 8)),
-		// BigInt
+		// bigint
 		That("/ "+args(zz, z)).Puts(2),
 		That("/ "+args(zz, "2")).Puts(bigInt(z)),
 		That("/ "+args(z1, z)).Puts(bigRat(z1+"/"+z)),
-		// Float
+		// float64
 		That("/ 1.0 2.0 4.0").Puts(0.125),
 		// 0 / non-zero
 		That("/ 0 1/2 0.1").Puts(0),
