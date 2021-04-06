@@ -108,18 +108,9 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 func FromGo(a interface{}) interface{} {
 	switch a := a.(type) {
 	case *big.Int:
-		if i, ok := getInt(a); ok {
-			return i
-		}
-		return a
+		return NormalizeBigInt(a)
 	case *big.Rat:
-		if a.IsInt() {
-			if i, ok := getInt(a.Num()); ok {
-				return i
-			}
-			return a.Num()
-		}
-		return a
+		return NormalizeBigRat(a)
 	case rune:
 		return string(a)
 	default:
