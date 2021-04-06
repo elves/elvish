@@ -214,43 +214,57 @@ Unicode text is unspecified.
 
 ## Number
 
-Elvish supports several types of numbers, each with their own textual
-representation:
+Elvish supports several types of numbers. There is no literal syntax, but they
+can be constructed by passing their **string representation** to the
+[`num`](builtin.html#num) builtin command:
 
--   **Exact integers** are written in decimal (e.g. `10`), hexadecimal (e.g.
-    `0xA`), octal (e.g. `0o12`) or binary (e.g. `0b1010`).
+-   **Integers** are written in decimal (e.g. `10`), hexadecimal (e.g. `0xA`),
+    octal (e.g. `0o12`) or binary (e.g. `0b1010`).
 
--   **Exact rationals** are written as two exact integers joined by `/`, e.g.
-    `1/2` or `0x10/100` (16/100).
+-   **Rationals** are written as two exact integers joined by `/`, e.g. `1/2` or
+    `0x10/100` (16/100).
 
 -   **Floating-point numbers** are written with a decimal point (e.g. `10.0`) or
     using scientific notation (e.g. `1e1` or `1.0e1`). There are also three
     additional special floating-point values: `+Inf`, `-Inf` and `NaN`.
-    Floating-point numbers are always considered **inexact**.
-
-The textual representation is case-insensitive.
 
 Digits may be separately by underscores, which are ignored; this permits
 separating the digits into groups to improve readability. For example, `1000000`
 and `1_000_000` are equivalent, so are `1.234_56e3` and `1.23456e3`.
 
-The textual representation is **not** the syntax for number literals. Instead,
-they are parsed as [barewords](#bareword) and thus string-typed. The `num`
-builtin function can be used to convert the textual representation to a typed
-number.
+The string representation is case-insensitive.
 
-A typed number can be converted to a string with `to-string`, like other types
-of values. Such a string is guaranteed to convert back to the original number;
-in other words, `eq $x (num (to-string $x))` always outputs `$true` if `$x` is a
-typed number.
+### Strings and numbers
 
-As a matter of convention, expression contexts that accept numbers (e.g. list
-indices) also accept strings that can be converted to numbers. As a result, when
-the word **number** appears unqualified in other sections of this document, it
-can mean either of those.
+Strings and numbers are distinct types; for example, `2` and `(num 2)` are
+distinct values.
 
-**Note**: For details on how builtin commands deal with numbers, see the
-discussion of [numeric commands](./builtin.html#numeric-commands).
+However, by convention, all language constructs that expect numbers (e.g. list
+indices) also accept strings that can be converted to numbers. This means that
+most of the time, you can just use the string representation of numbers, instead
+of explicitly constructing number values. Builtin
+[numeric commands](./builtin.html#numeric-commands) follow the same convention.
+
+When the word **number** appears unqualified in other sections of this document,
+it means either an explictly number-typed value (**typed number**), or its
+string representation.
+
+When a typed number is converted to a string (e.g. with `to-string`), the result
+is guaranteed to convert back to the original number. In other words,
+`eq $x (num (to-string $x))` always outputs `$true` if `$x` is a typed number.
+
+### Exactness
+
+Integers and rationals are **exact** numbers; their precision is only limited by
+the available memory, and many (but not all) operations on them are guaranteed
+to produce mathematically correct results.
+
+Floating-point numbers follow IEE 754 semantics. Since operations on
+floating-point numbers in general are not guaranteed to be precise, they are
+always considered **inexact**.
+
+See also the discussion on
+[exactness-preserving commands](./builtin.html#exactness-preserving-commands).
 
 ## List
 
