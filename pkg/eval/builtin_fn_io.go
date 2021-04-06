@@ -770,10 +770,10 @@ func toJSON(fm *Frame, inputs Inputs) error {
 // a file.
 // ~> fclose $f
 // ```
+// This function is deprecated; use [file:open](./file.html#open) instead.
 //
 // @cf fclose
 
-// Deprecated written in file module instead
 func fopen(name string) (vals.File, error) {
 	// TODO support opening files for writing etc as well.
 	return os.Open(name)
@@ -787,9 +787,10 @@ func fopen(name string) (vals.File, error) {
 //
 // Close a file opened with `fopen`.
 //
+// This function is deprecated; use [file:close](./file.html#close) instead.
+//
 // @cf fopen
 
-// Deprecated, written in file module instead.
 func fclose(f vals.File) error {
 	return f.Close()
 }
@@ -828,7 +829,6 @@ func fclose(f vals.File) error {
 //
 // @cf prclose pwclose
 
-// Deprecated written in file.go
 func pipe() (vals.Pipe, error) {
 	r, w, err := os.Pipe()
 	return vals.NewPipe(r, w), err
@@ -844,7 +844,6 @@ func pipe() (vals.Pipe, error) {
 //
 // @cf pwclose pipe
 
-// Deprecated written in file.go
 func prclose(p vals.Pipe) error {
 	return p.ReadEnd.Close()
 }
