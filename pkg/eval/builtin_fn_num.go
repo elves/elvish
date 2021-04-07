@@ -27,8 +27,9 @@ import (
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		// Constructor
-		"float64": toFloat64,
-		"num":     num,
+		"float64":   toFloat64,
+		"num":       num,
+		"exact-num": exactNum,
 
 		// Comparison
 		"<":  lt,
@@ -86,6 +87,49 @@ func init() {
 func num(n vals.Num) vals.Num {
 	// Conversion is actually handled in vals/conversion.go.
 	return n
+}
+
+//elvdoc:fn exact-num
+//
+// ```elvish
+// exact-num $string-or-number
+// ```
+//
+// Coerces the argument to an exact number. If the argument is infinity or NaN,
+// an exception is thrown.
+//
+// If the argument is a string, it is converted to a typed number first. If the
+// argument is already an exact number, it is returned as is.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> exact-num (num 0.125)
+// ▶ (num 1/8)
+// ~> exact-num 0.125
+// ▶ (num 1/8)
+// ~> exact-num (num 1)
+// ▶ (num 1)
+// ```
+//
+// Beware that seemingly simple fractions that can't be represented precisely in
+// binary can result in the denominator being a very large power of 2:
+//
+// ```elvish-transcript
+// ~> exact-num 0.1
+// ▶ (num 3602879701896397/36028797018963968)
+// ```
+
+func exactNum(n vals.Num) (vals.Num, error) {
+	if f, ok := n.(float64); ok {
+		r := new(big.Rat).SetFloat64(f)
+		if r == nil {
+			return nil, errs.BadValue{What: "argument here",
+				Valid: "finite float", Actual: vals.ToString(f)}
+		}
+		return r, nil
+	}
+	return n, nil
 }
 
 //elvdoc:fn float64
@@ -507,7 +551,10 @@ func div(rawNums ...vals.Num) (vals.Num, error) {
 // ```
 //
 // Output the remainder after dividing `$x` by `$y`. The result has the same
-// sign as `$x`. Both must be integers. Example:
+// sign as `$x`. Both must be integers that can represented in a machine word
+// (this limit may be lifted in future).
+//
+// Examples:
 //
 // ```elvish-transcript
 // ~> % 10 3

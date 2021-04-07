@@ -133,8 +133,8 @@ Examples:
 ### Exactness-preserving commands {#exactness-preserving}
 
 Some numeric commands are designated **exactness-preserving**. When such
-commands are called with only exact numbers (i.e. exact integers or exact
-rationals), they will always output an exact number. Examples:
+commands are called with only [exact numbers](./language.html#exactness) (i.e.
+integers or rationals), they will always output an exact number. Examples:
 
 ```elvish-transcript
 ~> + 10 1/10
@@ -159,9 +159,8 @@ otherwise documented. Examples:
 ```
 
 There are some cases where the result is exact despite the use of inexact
-arguments or non-exactness-preserving commands. For example, the `math:sin`
-command is usually not exactness-preserving, but it outputs an exact 0 when the
-argument is an exact 0. Such cases are documented in their respective commands.
+arguments or non-exactness-preserving commands. Such cases are always documented
+in their respective commands.
 
 ## Predicates
 

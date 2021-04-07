@@ -30,7 +30,17 @@ func TestNum(t *testing.T) {
 		That("num 1").Puts(1),
 		That("num "+z).Puts(bigInt(z)),
 		That("num 1/2").Puts(big.NewRat(1, 2)),
+		That("num 0.1").Puts(0.1),
 		That("num (num 1)").Puts(1),
+	)
+}
+
+func TestExactNum(t *testing.T) {
+	Test(t,
+		That("exact-num 1").Puts(1),
+		That("exact-num 0.125").Puts(big.NewRat(1, 8)),
+		That("exact-num inf").Throws(errs.BadValue{
+			What: "argument here", Valid: "finite float", Actual: "+Inf"}),
 	)
 }
 
