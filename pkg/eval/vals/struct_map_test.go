@@ -37,7 +37,7 @@ func TestStructMap(t *testing.T) {
 		Kind("structmap").
 		Bool(true).
 		Hash(hash.DJB(Hash(""), Hash(0.0))).
-		Repr(`[&name='' &score-number=(float64 0)]`).
+		Repr(`[&name='' &score-number=(num 0.0)]`).
 		Len(2).
 		Equal(testStructMap{}).
 		NotEqual("a", MakeMap(), testStructMap{"a", 1.0}).
@@ -55,7 +55,7 @@ func TestStructMap(t *testing.T) {
 		Kind("structmap").
 		Bool(true).
 		Hash(hash.DJB(Hash("a"), Hash(1.0))).
-		Repr(`[&name=a &score-number=(float64 1)]`).
+		Repr(`[&name=a &score-number=(num 1.0)]`).
 		Len(2).
 		Equal(testStructMap{"a", 1.0}).
 		NotEqual(
@@ -69,7 +69,7 @@ func TestStructMap(t *testing.T) {
 		Kind("structmap").
 		Bool(true).
 		Hash(hash.DJB(Hash("a"), Hash(11.0))).
-		Repr(`[&name=a &score=(float64 11)]`).
+		Repr(`[&name=a &score=(num 11.0)]`).
 		Len(2).
 		Equal(testStructMap3{"a", 1.0}).
 		NotEqual(
@@ -88,7 +88,7 @@ func (pseudoStructMap) Fields() StructMap {
 
 func TestPseudoStructMap(t *testing.T) {
 	TestValue(t, pseudoStructMap{}).
-		Repr("[&name=pseudo &score-number=(float64 100)]").
+		Repr("[&name=pseudo &score-number=(num 100.0)]").
 		HasKey("name", "score-number").
 		HasNoKey("bad", 1.0).
 		IndexError("bad", NoSuchKey("bad")).

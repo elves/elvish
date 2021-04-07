@@ -129,9 +129,9 @@ func TestPrintf(t *testing.T) {
 		That(`printf '%t' $true`).Prints("true"),
 		That(`printf '%t' $nil`).Prints("false"),
 
-		That(`printf '%3d' (float64 5)`).Prints("  5"),
+		That(`printf '%3d' (num 5)`).Prints("  5"),
 		That(`printf '%3d' 5`).Prints("  5"),
-		That(`printf '%08b' (float64 5)`).Prints("00000101"),
+		That(`printf '%08b' (num 5)`).Prints("00000101"),
 		That(`printf '%08b' 5`).Prints("00000101"),
 
 		That(`printf '%.1f' 3.1415`).Prints("3.1"),

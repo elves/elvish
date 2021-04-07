@@ -3,6 +3,7 @@ package vals
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"reflect"
 	"strconv"
 	"unicode/utf8"
@@ -73,14 +74,18 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 			*ptr = f
 		}
 		return err
+	case *Num:
+		n, err := elvToNum(src)
+		if err == nil {
+			*ptr = n
+		}
+		return err
 	case *rune:
 		r, err := elvToRune(src)
 		if err == nil {
 			*ptr = r
 		}
 		return err
-	case Scanner:
-		return ptr.ScanElvish(src)
 	default:
 		// Do a generic `*ptr = src` via reflection
 		ptrType := TypeOf(ptr)
@@ -96,18 +101,16 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 	}
 }
 
-// Scanner is implemented by types that can scan an Elvish value into itself.
-type Scanner interface {
-	ScanElvish(interface{}) error
-}
-
-// FromGo converts a Go value to an Elvish value. Conversion happens when the
-// argument is int, float64 or rune (this is consistent with ScanToGo). In other
-// cases, this function just returns the argument.
+// FromGo converts a Go value to an Elvish value. Most types are returned as
+// is, but exact numerical types are normalized to one of int, *big.Int and
+// *big.Rat, using the small representation that can hold the value, and runes
+// are converted to strings.
 func FromGo(a interface{}) interface{} {
 	switch a := a.(type) {
-	case int:
-		return strconv.Itoa(a)
+	case *big.Int:
+		return NormalizeBigInt(a)
+	case *big.Rat:
+		return NormalizeBigRat(a)
 	case rune:
 		return string(a)
 	default:
@@ -136,12 +139,8 @@ func elvToFloat(arg interface{}) (float64, error) {
 
 func elvToInt(arg interface{}) (int, error) {
 	switch arg := arg.(type) {
-	case float64:
-		i := int(arg)
-		if float64(i) != arg {
-			return 0, errMustBeInteger
-		}
-		return i, nil
+	case int:
+		return arg, nil
 	case string:
 		num, err := strconv.ParseInt(arg, 0, 0)
 		if err == nil {
@@ -150,6 +149,21 @@ func elvToInt(arg interface{}) (int, error) {
 		return 0, cannotParseAs{"integer", Repr(arg, -1)}
 	default:
 		return 0, errMustBeInteger
+	}
+}
+
+func elvToNum(arg interface{}) (Num, error) {
+	switch arg := arg.(type) {
+	case int, *big.Int, *big.Rat, float64:
+		return arg, nil
+	case string:
+		n := ParseNum(arg)
+		if n == nil {
+			return 0, cannotParseAs{"number", Repr(arg, -1)}
+		}
+		return n, nil
+	default:
+		return 0, errMustBeNumber
 	}
 }
 

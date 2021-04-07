@@ -3,7 +3,9 @@ package vals
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"reflect"
+	"strconv"
 
 	"src.elv.sh/pkg/parse"
 )
@@ -42,8 +44,14 @@ func Repr(v interface{}, indent int) string {
 		return "$false"
 	case string:
 		return parse.Quote(v)
+	case int:
+		return "(num " + strconv.Itoa(v) + ")"
+	case *big.Int:
+		return "(num " + v.String() + ")"
+	case *big.Rat:
+		return "(num " + v.String() + ")"
 	case float64:
-		return "(float64 " + formatFloat64(v) + ")"
+		return "(num " + formatFloat64(v) + ")"
 	case Reprer:
 		return v.Repr(indent)
 	case File:

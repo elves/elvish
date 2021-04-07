@@ -209,7 +209,18 @@ func extract(r io.Reader, ns string, w io.Writer) {
 	}
 }
 
+var sortSymbol = map[string]string{
+	"+": " a",
+	"-": " b",
+	"*": " c",
+	"/": " d",
+}
+
 func symbolForSort(s string) string {
+	// Hack to sort + - * / in that order.
+	if t, ok := sortSymbol[strings.Fields(s)[0]]; ok {
+		return t
+	}
 	// If there is a leading dash, move it to the end.
 	if strings.HasPrefix(s, "-") {
 		return s[1:] + "-"

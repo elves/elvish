@@ -33,7 +33,7 @@ func TestRe(t *testing.T) {
 
 		// Access to fields in the match StructMap
 		That("put (re:find . a)[text start end groups]").
-			Puts("a", "0", "1", vals.MakeList(submatchStruct{"a", 0, 1})),
+			Puts("a", 0, 1, vals.MakeList(submatchStruct{"a", 0, 1})),
 
 		// Invalid pattern in re:find
 		That("re:find '(' x").Throws(AnyError),

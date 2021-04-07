@@ -17,7 +17,7 @@ func TestIndex(t *testing.T) {
 	Test(t, Fn("Index", Index), Table{
 		// String indices
 		Args("abc", "0").Rets("a", nil),
-		Args("abc", 0.0).Rets("a", nil),
+		Args("abc", 0).Rets("a", nil),
 		Args("你好", "0").Rets("你", nil),
 		Args("你好", "3").Rets("好", nil),
 		Args("你好", "2").Rets(Any, errIndexNotAtRuneBoundary),
@@ -56,18 +56,17 @@ func TestIndex(t *testing.T) {
 		Args(li4, "-4").Rets("foo", nil),
 		Args(li4, "-5").Rets(Any, errs.OutOfRange{
 			What: "negative index here", ValidLow: "-4", ValidHigh: "-1", Actual: "-5"}),
-		// Decimal indices are not allowed even if the value is an integer.
-		Args(li4, "0.0").Rets(Any, errIndexMustBeInteger),
+		// Float indices are not allowed even if the value is an integer.
+		Args(li4, 0.0).Rets(Any, errIndexMustBeInteger),
 
-		// Float64 indices are allowed as long as they are integers.
-		Args(li4, 0.0).Rets("foo", nil),
-		Args(li4, 3.0).Rets("ipsum", nil),
-		Args(li4, 5.0).Rets(nil, errs.OutOfRange{
+		// Integer indices are allowed.
+		Args(li4, 0).Rets("foo", nil),
+		Args(li4, 3).Rets("ipsum", nil),
+		Args(li4, 5).Rets(nil, errs.OutOfRange{
 			What: "index here", ValidLow: "0", ValidHigh: "3", Actual: "5"}),
-		Args(li4, -1.0).Rets("ipsum", nil),
-		Args(li4, -5.0).Rets(nil, errs.OutOfRange{
+		Args(li4, -1).Rets("ipsum", nil),
+		Args(li4, -5).Rets(nil, errs.OutOfRange{
 			What: "negative index here", ValidLow: "-4", ValidHigh: "-1", Actual: "-5"}),
-		Args(li4, 0.5).Rets(Any, errIndexMustBeInteger),
 
 		// Half-open slices.
 		Args(li4, "1..3").Rets(Eq(MakeList("bar", "lorem")), nil),

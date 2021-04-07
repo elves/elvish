@@ -214,43 +214,57 @@ Unicode text is unspecified.
 
 ## Number
 
-Elvish has a double-precision floating point number type.
+Elvish supports several types of numbers. There is no literal syntax, but they
+can be constructed by passing their **string representation** to the
+[`num`](builtin.html#num) builtin command:
 
-There is no literal syntax for the number type; it can be constructed with the
-`float64` builtin. The builtin takes a single argument, which should be either
-another `float64` value, or a string in the following formats (examples below
-all express the same value):
+-   **Integers** are written in decimal (e.g. `10`), hexadecimal (e.g. `0xA`),
+    octal (e.g. `0o12`) or binary (e.g. `0b1010`).
 
--   Decimal notation, e.g. `10`.
+-   **Rationals** are written as two exact integers joined by `/`, e.g. `1/2` or
+    `0x10/100` (16/100).
 
--   Hexadecimal notation, e.g. `0xA`.
+-   **Floating-point numbers** are written with a decimal point (e.g. `10.0`) or
+    using scientific notation (e.g. `1e1` or `1.0e1`). There are also three
+    additional special floating-point values: `+Inf`, `-Inf` and `NaN`.
 
--   Octal notation, e.g. `0o12`.
+Digits may be separately by underscores, which are ignored; this permits
+separating the digits into groups to improve readability. For example, `1000000`
+and `1_000_000` are equivalent, so are `1.234_56e3` and `1.23456e3`.
 
--   Binary notation, e.g. `0b1010`.
+The string representation is case-insensitive.
 
--   Floating point notation, e.g. `10.0`.
+### Strings and numbers
 
--   Scientific notation, e.g. `1.0e1`.
+Strings and numbers are distinct types; for example, `2` and `(num 2)` are
+distinct values.
 
-The following special floating point values are also supported: `+Inf`, `-Inf`
-and `NaN`.
+However, by convention, all language constructs that expect numbers (e.g. list
+indices) also accept strings that can be converted to numbers. This means that
+most of the time, you can just use the string representation of numbers, instead
+of explicitly constructing number values. Builtin
+[numeric commands](./builtin.html#numeric-commands) follow the same convention.
 
-The `float64` builtin is case-insensitive.
+When the word **number** appears unqualified in other sections of this document,
+it means either an explictly number-typed value (**typed number**), or its
+string representation.
 
-Numbers can contain underscores between digits to improve readability. For
-example, `1000000` and `1_000_000` are equivalent. As is `1.234_56e3` and
-`1.23456e3`. You can not use an underscore as a prefix or suffix in a number.
+When a typed number is converted to a string (e.g. with `to-string`), the result
+is guaranteed to convert back to the original number. In other words,
+`eq $x (num (to-string $x))` always outputs `$true` if `$x` is a typed number.
 
-A `float64` data type can be converted to a string using `(to-string $number)`.
-The resulting string is guaranteed to result in the same value when converted
-back to a `float64`. Most of the time you won't need to perform this explicit
-conversion. Elvish will implicitly make the conversion when running external
-commands and many of the builtins (where the distinction is not important).
+### Exactness
 
-You usually do not need to use `float64` values explicitly; see the discussion
-of
-[Commands That Operate On Numbers](./builtin.html#commands-that-operate-on-numbers).
+Integers and rationals are **exact** numbers; their precision is only limited by
+the available memory, and many (but not all) operations on them are guaranteed
+to produce mathematically correct results.
+
+Floating-point numbers are IEE 754 double-precision. Since operations on
+floating-point numbers in general are not guaranteed to be precise, they are
+always considered **inexact**.
+
+For more details, see also the discussion on
+[exactness-preserving commands](./builtin.html#exactness-preserving-commands).
 
 ## List
 

@@ -113,32 +113,54 @@ but when the current directory is empty, `count` will wait for inputs. Hence it
 is required to put the input in a list: `count [*]` unambiguously supplies input
 in the argument, even if there is no file.
 
-## Commands That Operate On Numbers
+## Numeric commands
 
-Commands that operate on numbers are quite flexible about the format of those
-numbers. See the discussion of the [number data type](./language.html#number).
+Anywhere a command expects a number argument, that argument can be supplied
+either with a [typed number](language.html#number) or a string that can be
+converted to a number. This includes numeric comparison commands like `==`.
 
-Because numbers are normally specified as strings, rather than as an explicit
-`float64` data type, some builtin commands have variants intended to operate on
-strings or numbers exclusively. For instance, the numerical equality command is
-`==`, while the string equality command is `==s`. Another example is the `+`
-builtin, which only operates on numbers and does not function as a string
-concatenation command. Consider these examples:
+When a command outputs numbers, it always outputs a typed number.
+
+Examples:
 
 ```elvish-transcript
-~> + x 1
-Exception: wrong type of 1'th argument: cannot parse as number: x
-[tty], line 1: + x 1
-~> + inf 1
-▶ (float64 +Inf)
-~> + -inf 1
-▶ (float64 -Inf)
-~> + -infinity 1
-▶ (float64 -Inf)
-~> + -infinityx 1
-Exception: wrong type of 1'th argument: cannot parse as number: -infinityx
-[tty], line 1: + -infinityx 1
+~> + 2 10
+▶ (num 12)
+~> == 2 (num 2)
+▶ $true
 ```
+
+### Exactness-preserving commands {#exactness-preserving}
+
+Some numeric commands are designated **exactness-preserving**. When such
+commands are called with only [exact numbers](./language.html#exactness) (i.e.
+integers or rationals), they will always output an exact number. Examples:
+
+```elvish-transcript
+~> + 10 1/10
+▶ (num 101/10)
+~> * 12 5/17
+▶ (num 60/17)
+```
+
+If the condition above is not satisfied - i.e. when a numeric command is not
+designated exactness-preserving, or when at least one of the arguments is
+inexact (i.e. a floating-point number), the result is an inexact number, unless
+otherwise documented. Examples:
+
+```elvish-transcript
+~> + 10 0.1
+▶ (num 10.1)
+~> + 10 1e1
+▶ (num 20.0)
+~> use math
+~> math:sin 1
+▶ (num 0.8414709848078965)
+```
+
+There are some cases where the result is exact despite the use of inexact
+arguments or non-exactness-preserving commands. Such cases are always documented
+in their respective commands.
 
 ## Predicates
 
