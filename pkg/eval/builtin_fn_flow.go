@@ -266,6 +266,7 @@ func multiErrorFn(excs ...Exception) error {
 // raised by return. Consider this example:
 //
 // ```elvish-transcript
+// ~> use builtin
 // ~> fn return { put return; builtin:return }
 // ~> fn test-return { put before; return; put after }
 // ~> test-return
@@ -274,10 +275,11 @@ func multiErrorFn(excs ...Exception) error {
 // ▶ after
 // ```
 //
-// Instead, shadow the function by directly assigning to `local:return~`:
+// Instead, shadow the function by directly assigning to `return~`:
 //
 // ```elvish-transcript
-// ~> local:return~ = { put return; builtin:return }
+// ~> use builtin
+// ~> var return~ = { put return; builtin:return }
 // ~> fn test-return { put before; return; put after }
 // ~> test-return
 // ▶ before
@@ -304,8 +306,9 @@ func returnFn() error {
 // command. If you do so you should explicitly invoke the builtin. For example:
 //
 // ```elvish-transcript
-// > fn break []{ put 'break'; builtin:break; put 'should not appear' }
-// > for x [a b c] { put $x; break; put 'unexpected' }
+// ~> use builtin
+// ~> fn break []{ put 'break'; builtin:break; put 'should not appear' }
+// ~> for x [a b c] { put $x; break; put 'unexpected' }
 // ▶ a
 // ▶ break
 // ```
@@ -330,8 +333,9 @@ func breakFn() error {
 // command. If you do so you should explicitly invoke the builtin. For example:
 //
 // ```elvish-transcript
-// > fn break []{ put 'continue'; builtin:continue; put 'should not appear' }
-// > for x [a b c] { put $x; continue; put 'unexpected' }
+// ~> use builtin
+// ~> fn continue []{ put 'continue'; builtin:continue; put 'should not appear' }
+// ~> for x [a b c] { put $x; continue; put 'unexpected' }
 // ▶ a
 // ▶ continue
 // ▶ b

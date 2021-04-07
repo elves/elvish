@@ -20,12 +20,6 @@ var eachVariableInTopTests = []struct {
 	{
 		builtin:   eval.NsBuilder{"foo": testVar, "bar": testVar}.Ns(),
 		global:    eval.NsBuilder{"lorem": testVar, "ipsum": testVar}.Ns(),
-		ns:        "builtin:",
-		wantNames: []string{"bar", "foo"},
-	},
-	{
-		builtin:   eval.NsBuilder{"foo": testVar, "bar": testVar}.Ns(),
-		global:    eval.NsBuilder{"lorem": testVar, "ipsum": testVar}.Ns(),
 		ns:        "",
 		wantNames: []string{"bar", "foo", "ipsum", "lorem"},
 	},
@@ -71,20 +65,20 @@ var eachNsInTopTests = []struct {
 	wantNames []string
 }{
 	{
-		wantNames: []string{"E:", "builtin:", "e:"},
+		wantNames: []string{"E:", "e:"},
 	},
 	{
 		builtin:   eval.NsBuilder{"foo:": testVar}.Ns(),
-		wantNames: []string{"E:", "builtin:", "e:", "foo:"},
+		wantNames: []string{"E:", "e:", "foo:"},
 	},
 	{
 		global:    eval.NsBuilder{"foo:": testVar}.Ns(),
-		wantNames: []string{"E:", "builtin:", "e:", "foo:"},
+		wantNames: []string{"E:", "e:", "foo:"},
 	},
 	{
 		builtin:   eval.NsBuilder{"foo:": testVar}.Ns(),
 		global:    eval.NsBuilder{"bar:": testVar}.Ns(),
-		wantNames: []string{"E:", "bar:", "builtin:", "e:", "foo:"},
+		wantNames: []string{"E:", "bar:", "e:", "foo:"},
 	},
 }
 
