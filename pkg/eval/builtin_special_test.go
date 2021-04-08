@@ -326,11 +326,11 @@ func TestUse(t *testing.T) {
 
 // Regression test for #1072
 func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
-	restore := prog.SetDeprecationLevel(15)
+	restore := prog.SetDeprecationLevel(16)
 	defer restore()
 	libdir, cleanup := InTestDir()
 	defer cleanup()
-	MustWriteFile("dep.elv", []byte("x = (ord 1)"), 0600)
+	MustWriteFile("dep.elv", []byte("fn x { fopen x }"), 0600)
 
 	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
 		// Importing module triggers check for deprecated features

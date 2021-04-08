@@ -31,21 +31,6 @@ func TestToString(t *testing.T) {
 	)
 }
 
-func TestOrd(t *testing.T) {
-	Test(t,
-		That(`ord a`).Puts("0x61"),
-		That(`ord 你好`).Puts("0x4f60", "0x597d"),
-	)
-}
-
-func TestChr(t *testing.T) {
-	Test(t,
-		That(`chr 0x61`).Puts("a"),
-		That(`chr 0x4f60 0x597d`).Puts("你好"),
-		That(`chr -1`).Throws(AnyError),
-	)
-}
-
 func TestBase(t *testing.T) {
 	Test(t,
 		That(`base 2 1 3 4 16 255`).Puts("1", "11", "100", "10000", "11111111"),
@@ -60,19 +45,6 @@ func TestWcswidth(t *testing.T) {
 		That(`wcswidth 你好`).Puts(4),
 		That(`-override-wcwidth x 10; wcswidth 1x2x; -override-wcwidth x 1`).
 			Puts(22),
-	)
-}
-
-func TestHasPrefix(t *testing.T) {
-	Test(t,
-		That(`has-prefix golang go`).Puts(true),
-		That(`has-prefix golang x`).Puts(false),
-	)
-}
-
-func TestHasSuffix(t *testing.T) {
-	Test(t,
-		That(`has-suffix golang x`).Puts(false),
 	)
 }
 

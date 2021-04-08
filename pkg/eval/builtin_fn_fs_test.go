@@ -20,7 +20,7 @@ func currentUser() (*user.User, error) {
 	return nil, fmt.Errorf("user unknown")
 }
 
-func TestBuiltinFnFS(t *testing.T) {
+func TestTildeAbbr(t *testing.T) {
 	tmpHome, cleanup := testutil.InTempHome()
 	defer cleanup()
 
@@ -28,16 +28,12 @@ func TestBuiltinFnFS(t *testing.T) {
 	testutil.MustCreateEmpty("file")
 
 	Test(t,
-		That(`path-base a/b/c.png`).Puts("c.png"),
 		That("tilde-abbr "+parse.Quote(filepath.Join(tmpHome, "foobar"))).
 			Puts(filepath.Join("~", "foobar")),
-
-		That(`-is-dir ~/dir`).Puts(true),
-		That(`-is-dir ~/file`).Puts(false),
 	)
 }
 
-func TestBuiltinCd(t *testing.T) {
+func TestCd(t *testing.T) {
 	tmpHome, cleanup := testutil.InTempHome()
 	defer cleanup()
 
@@ -63,7 +59,7 @@ func TestBuiltinCd(t *testing.T) {
 	)
 }
 
-func TestBuiltinDirHistory(t *testing.T) {
+func TestDirHistory(t *testing.T) {
 	// TODO: Add a Store mock so we can test the behavior when a history Store
 	// is available.
 	Test(t,

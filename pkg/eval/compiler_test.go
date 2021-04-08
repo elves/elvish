@@ -11,7 +11,7 @@ import (
 )
 
 func TestDeprecatedBuiltin(t *testing.T) {
-	testCompileTimeDeprecation(t, "ord a", `the "ord" command is deprecated`, 15)
+	testCompileTimeDeprecation(t, "fopen a", `the "fopen" command is deprecated`, 16)
 	// Deprecations of other builtins are implemented in the same way, so we
 	// don't test them repeatedly
 }

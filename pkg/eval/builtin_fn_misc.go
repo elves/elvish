@@ -30,14 +30,12 @@ func init() {
 
 		"eval":    eval,
 		"use-mod": useMod,
-		"-source": source,
 
 		"deprecate": deprecate,
 
 		// Time
-		"esleep": sleep,
-		"sleep":  sleep,
-		"time":   timeCmd,
+		"sleep": sleep,
+		"time":  timeCmd,
 
 		"-ifaddrs": _ifaddrs,
 	})
@@ -287,27 +285,6 @@ func nextEvalCount() int {
 
 func useMod(fm *Frame, spec string) (*Ns, error) {
 	return use(fm, spec, nil)
-}
-
-//elvdoc:fn -source
-//
-// ```elvish
-// -source $filename
-// ```
-//
-// Equivalent to `eval (slurp <$filename)`. Deprecated.
-
-func source(fm *Frame, fname string) error {
-	code, err := readFileUTF8(fname)
-	if err != nil {
-		return err
-	}
-	src := parse.Source{Name: fname, Code: code, IsFile: true}
-	// Amalgamate the up and local scope into a new scope to use as the global
-	// scope to evaluate the code in.
-	ns := CombineNs(fm.up, fm.local)
-	_, exc := fm.Eval(src, nil, ns)
-	return exc
 }
 
 func readFileUTF8(fname string) (string, error) {
