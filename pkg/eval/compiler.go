@@ -153,8 +153,10 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 		msg = `the "-is-dir" command is deprecated; use "path:is-dir" instead`
 	case "fopen":
 		msg = `the "fopen" command is deprecated; use "file:open" instead`
+		minLevel = 16
 	case "fclose":
 		msg = `the "fclose" command is deprecated; use "file:close" instead`
+		minLevel = 16
 	default:
 		return
 	}
