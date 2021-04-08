@@ -11,6 +11,7 @@ import (
 	"src.elv.sh/pkg/daemon"
 	"src.elv.sh/pkg/eval"
 	daemonmod "src.elv.sh/pkg/eval/mods/daemon"
+	"src.elv.sh/pkg/eval/mods/file"
 	mathmod "src.elv.sh/pkg/eval/mods/math"
 	pathmod "src.elv.sh/pkg/eval/mods/path"
 	"src.elv.sh/pkg/eval/mods/platform"
@@ -55,6 +56,7 @@ func InitRuntime(stderr io.Writer, p Paths, spawn bool) *eval.Evaler {
 	ev.AddModule("platform", platform.Ns)
 	ev.AddModule("re", re.Ns)
 	ev.AddModule("str", str.Ns)
+	ev.AddModule("file", file.Ns)
 	if unix.ExposeUnixNs {
 		ev.AddModule("unix", unix.Ns)
 	}

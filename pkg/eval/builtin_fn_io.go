@@ -770,6 +770,8 @@ func toJSON(fm *Frame, inputs Inputs) error {
 // ~> fclose $f
 // ```
 //
+// This function is deprecated; use [file:open](./file.html#open) instead.
+//
 // @cf fclose
 
 func fopen(name string) (vals.File, error) {
@@ -784,6 +786,8 @@ func fopen(name string) (vals.File, error) {
 // ```
 //
 // Close a file opened with `fopen`.
+//
+// This function is deprecated; use [file:close](./file.html#close) instead.
 //
 // @cf fopen
 
