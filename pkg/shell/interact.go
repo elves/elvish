@@ -8,16 +8,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/edit"
 	"src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/sys"
 )
 
@@ -122,50 +118,5 @@ func sourceRC(fds [3]*os.File, ev *eval.Evaler, rcPath string) error {
 		}
 		return err
 	}
-	err = evalInTTY(ev, fds, parse.Source{Name: absPath, Code: code, IsFile: true})
-	if err != nil {
-		return err
-	}
-	extraGlobal := extractExports(ev.Global(), fds[2])
-	if extraGlobal != nil {
-		ev.AddGlobal(extraGlobal)
-	}
-	return nil
-}
-
-const exportsVarName = "-exports-"
-
-// If the namespace contains a variable named exportsVarName, extract its values
-// into a namespace.
-func extractExports(ns *eval.Ns, stderr io.Writer) *eval.Ns {
-	value, ok := ns.Index(exportsVarName)
-	if !ok {
-		return nil
-	}
-	if prog.DeprecationLevel >= 15 {
-		fmt.Fprintln(stderr,
-			"the $-exports- mechanism is deprecated; use edit:add-vars instead.")
-	}
-	exports, ok := value.(hashmap.Map)
-	if !ok {
-		fmt.Fprintf(stderr, "$%s is not map, ignored\n", exportsVarName)
-		return nil
-	}
-	nb := eval.NsBuilder{}
-	for it := exports.Iterator(); it.HasElem(); it.Next() {
-		k, v := it.Elem()
-		name, ok := k.(string)
-		if !ok {
-			fmt.Fprintf(stderr, "$%s[%s] is not string, ignored\n",
-				exportsVarName, vals.Repr(k, vals.NoPretty))
-			continue
-		}
-		if ns.HasName(name) {
-			fmt.Fprintf(stderr, "$%s already exists, ignored $%s[%s]\n",
-				name, exportsVarName, name)
-			continue
-		}
-		nb.Add(name, vars.FromInit(v))
-	}
-	return nb.Ns()
+	return evalInTTY(ev, fds, parse.Source{Name: absPath, Code: code, IsFile: true})
 }

@@ -122,16 +122,3 @@ func TestIndex(t *testing.T) {
 		Args(m, "bad").Rets(Any, NoSuchKey("bad")),
 	})
 }
-
-func TestCheckDeprecatedIndex(t *testing.T) {
-	Test(t, Fn("CheckDeprecatedIndex", CheckDeprecatedIndex), Table{
-		Args("ab", "1:2").Rets("using : for slice is deprecated; use .. instead"),
-		Args("ab", "1").Rets(""),
-		Args("ab", "1..2").Rets(""),
-		Args("ab", 1.0).Rets(""),
-		Args(li4, "1:2").Rets("using : for slice is deprecated; use .. instead"),
-		Args(li4, "1").Rets(""),
-		Args(li4, "1..2").Rets(""),
-		Args(li4, 1.0).Rets(""),
-	})
-}

@@ -61,22 +61,6 @@ func Index(a, k interface{}) (interface{}, error) {
 	}
 }
 
-// CheckDeprecatedIndex checks if the given indexing operation is using any
-// deprecated syntax, and returns a non-empty message if it is.
-func CheckDeprecatedIndex(a, k interface{}) string {
-	switch a.(type) {
-	case string, List:
-		switch k := k.(type) {
-		case string:
-			_, sep, _ := splitIndexString(k)
-			if sep == ":" {
-				return "using : for slice is deprecated; use .. instead"
-			}
-		}
-	}
-	return ""
-}
-
 func indexStructMap(a StructMap, k interface{}) (interface{}, error) {
 	fieldName, ok := k.(string)
 	if !ok || fieldName == "" {
