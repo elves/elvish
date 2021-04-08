@@ -17,6 +17,7 @@ func TestDeprecatedBuiltin(t *testing.T) {
 }
 
 func testCompileTimeDeprecation(t *testing.T, code, wantWarning string, level int) {
+	t.Helper()
 	restore := prog.SetDeprecationLevel(level)
 	defer restore()
 

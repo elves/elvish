@@ -168,11 +168,11 @@ func TestTry(t *testing.T) {
 func TestWhile(t *testing.T) {
 	Test(t,
 		// while
-		That("x=0; while (< $x 4) { put $x; x=(+ $x 1) }").
+		That("var x = 0; while (< $x 4) { put $x; set x = (+ $x 1) }").
 			Puts("0", 1, 2, 3),
-		That("x = 0; while (< $x 4) { put $x; break }").Puts("0"),
-		That("x = 0; while (< $x 4) { fail haha }").Throws(AnyError),
-		That("x = 0; while (< $x 4) { put $x; x=(+ $x 1) } else { put bad }").
+		That("var x = 0; while (< $x 4) { put $x; break }").Puts("0"),
+		That("var x = 0; while (< $x 4) { fail haha }").Throws(AnyError),
+		That("var x = 0; while (< $x 4) { put $x; set x = (+ $x 1) } else { put bad }").
 			Puts("0", 1, 2, 3),
 		That("while $false { put bad } else { put good }").Puts("good"),
 	)
