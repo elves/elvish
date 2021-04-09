@@ -29,6 +29,25 @@ func TestFile(t *testing.T) {
 			errs.ArityMismatch{
 				What:     "arguments here",
 				ValidLow: 1, ValidHigh: 1, Actual: 0}),
+
+		That("file:prclose").Throws(
+			errs.ArityMismatch{
+				What:     "arguments here",
+				ValidLow: 1, ValidHigh: 1, Actual: 0}),
+
+		That("file:pwclose").Throws(
+			errs.ArityMismatch{
+				What:     "arguments here",
+				ValidLow: 1, ValidHigh: 1, Actual: 0}),
+
+		That(`p = (file:pipe)`, `echo haha > $p `, `pwclose $p`,
+			`slurp < $p`, `prclose $p`).Puts("haha\n"),
+
+		That(`p = (file:pipe)`, `echo Zeppelin > $p`, `file:pwclose $p`,
+			`echo Sabbath > $p`, `slurp < $p`, `file:prclose $p`).Puts("Zeppelin\n"),
+
+		That(`p = (file:pipe)`, `echo Legolas > $p`, `file:prclose $p`,
+			`slurp < $p`).Throws(AnyError),
 	)
 
 }
