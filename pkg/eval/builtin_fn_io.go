@@ -827,6 +827,8 @@ func fclose(f vals.File) error {
 // # $p should be closed with prclose and pwclose afterwards
 // ```
 //
+// This function is deprecated; use [file:pipe](./file.html#pipe) instead.
+//
 // @cf prclose pwclose
 
 func pipe() (vals.Pipe, error) {
@@ -842,6 +844,8 @@ func pipe() (vals.Pipe, error) {
 //
 // Close the read end of a pipe.
 //
+// This function is deprecated; use [file:prclose](./file.html#prclose) instead.
+//
 // @cf pwclose pipe
 
 func prclose(p vals.Pipe) error {
@@ -855,6 +859,8 @@ func prclose(p vals.Pipe) error {
 // ```
 //
 // Close the write end of a pipe.
+//
+// This function is deprecated; use [file:pwclose](./file.html#pwclose) instead.
 //
 // @cf prclose pipe
 

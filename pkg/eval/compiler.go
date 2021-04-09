@@ -129,6 +129,12 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 		msg = `the "fopen" command is deprecated; use "file:open" instead`
 	case "fclose~":
 		msg = `the "fclose" command is deprecated; use "file:close" instead`
+	case "pipe~":
+		msg = `the "pipe" command is deprecated; use "file:pipe" instead`
+	case "prclose~":
+		msg = `the "prclose" command is deprecated; use "file:prclose" instead`
+	case "pwclose":
+		msg = `the "pwclose" command is deprecated; use "file:pwclose" instead`
 	default:
 		return
 	}
