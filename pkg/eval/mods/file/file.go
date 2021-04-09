@@ -20,18 +20,19 @@ var fns = map[string]interface{}{
 // file:open $filename
 // ```
 //
-// Opens a file. Currently, `fopen` only supports opening a file for reading.
-// File must be closed with `fclose` explicitly. Example:
+// Opens a file. Currently, `open` only supports opening a file for reading.
+// File must be closed with `close` explicitly. Example:
 //
 // ```elvish-transcript
 // ~> cat a.txt
 // This is
 // a file.
-// ~> f = (fopen a.txt)
+// ~> use file
+// ~> f = (file:open a.txt)
 // ~> cat < $f
 // This is
 // a file.
-// ~> fclose $f
+// ~> close $f
 // ```
 //
 // @cf close
