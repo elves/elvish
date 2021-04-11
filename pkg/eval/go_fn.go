@@ -154,6 +154,18 @@ var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
 var errNoOptions = errors.New("function does not accept any options")
 
+func numberToOrdinal(i int) string {
+    switch i % 100 {
+        case 11, 12, 13: return fmt.Sprintf("%dth", i)
+    }
+    switch i % 10 {
+        case 1: return fmt.Sprintf("%dst", i)
+        case 2: return fmt.Sprintf("%dnd", i)
+        case 3: return fmt.Sprintf("%drd", i)
+    }
+    return fmt.Sprintf("%dth", i)
+}
+
 // Call calls the implementation using reflection.
 func (b *goFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) error {
 	if b.variadicArg != nil {
@@ -208,7 +220,7 @@ func (b *goFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) e
 		ptr := reflect.New(typ)
 		err := vals.ScanToGo(arg, ptr.Interface())
 		if err != nil {
-			return fmt.Errorf("wrong type of %d'th argument: %v", i+1, err)
+			return fmt.Errorf("wrong type of %s argument: %v", numberToOrdinal(i + 1), err)
 		}
 		in = append(in, ptr.Elem())
 	}
