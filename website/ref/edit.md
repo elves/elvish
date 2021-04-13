@@ -23,9 +23,9 @@ Each mode has its own submodule under `edit:`. For instance, builtin functions
 and configuration variables for the completion mode can be found in the
 `edit:completion:` module.
 
-The primary modes supported now are `insert`, `completion`, `navigation`,
-`history`, `histlist`, `location`, and `lastcmd`. The last 4 are "listing
-modes", and their particularity is documented below.
+The primary modes supported now are `insert`, `command`, `completion`,
+`navigation`, `history`, `histlist`, `location`, and `lastcmd`. The last 4 are
+"listing modes", and their particularity is documented below.
 
 ## Prompts
 
