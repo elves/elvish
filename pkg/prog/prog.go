@@ -63,6 +63,9 @@ func newFlagSet(stderr io.Writer, f *Flags) *flag.FlagSet {
 	fs.BoolVar(&f.BuildInfo, "buildinfo", false, "show build info and quit")
 	fs.BoolVar(&f.JSON, "json", false, "show output in JSON. Useful with -buildinfo.")
 
+	// The `-i` option is for compatibility with POSIX shells so that programs, such as the `script`
+	// command, will work when asked to launch an interactive Elvish shell.
+	fs.Bool("i", false, "force interactive mode; currently ignored")
 	fs.BoolVar(&f.CodeInArg, "c", false, "take first argument as code to execute")
 	fs.BoolVar(&f.CompileOnly, "compileonly", false, "Parse/Compile but do not execute")
 	fs.BoolVar(&f.NoRc, "norc", false, "run elvish without invoking rc.elv")
