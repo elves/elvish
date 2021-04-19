@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/testutil"
 )
@@ -19,26 +18,6 @@ func TestFile(t *testing.T) {
 		That(
 			"echo haha > out3", "f = (file:open out3)",
 			"slurp < $f", "file:close $f").Puts("haha\n"),
-
-		That("file:open").Throws(
-			errs.ArityMismatch{
-				What:     "arguments here",
-				ValidLow: 1, ValidHigh: 1, Actual: 0}),
-
-		That("file:close").Throws(
-			errs.ArityMismatch{
-				What:     "arguments here",
-				ValidLow: 1, ValidHigh: 1, Actual: 0}),
-
-		That("file:prclose").Throws(
-			errs.ArityMismatch{
-				What:     "arguments here",
-				ValidLow: 1, ValidHigh: 1, Actual: 0}),
-
-		That("file:pwclose").Throws(
-			errs.ArityMismatch{
-				What:     "arguments here",
-				ValidLow: 1, ValidHigh: 1, Actual: 0}),
 
 		That(`p = (file:pipe)`, `echo haha > $p `, `pwclose $p`,
 			`slurp < $p`, `prclose $p`).Puts("haha\n"),
