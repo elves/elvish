@@ -53,6 +53,8 @@ func storeOp(storeFn func(store.Store)) func(*fixture) {
 func setup(fns ...func(*fixture)) *fixture {
 	st, cleanupStore := store.MustGetTempStore()
 	home, cleanupFs := testutil.InTempHome()
+	restorePATH := testutil.WithTempEnv("PATH", "")
+
 	tty, ttyCtrl := clitest.NewFakeTTY()
 	ev := eval.NewEvaler()
 	ed := NewEditor(tty, ev, st)
@@ -73,6 +75,7 @@ func setup(fns ...func(*fixture)) *fixture {
 	f.cleanup = func() {
 		f.Editor.app.CommitEOF()
 		f.Wait()
+		restorePATH()
 		cleanupFs()
 		cleanupStore()
 	}
