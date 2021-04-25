@@ -160,11 +160,13 @@ var testDir = testutil.Dir{
 func setupNav() (*fixture, func()) {
 	f := setup()
 	restoreLsColors := lscolors.WithTestLsColors()
+	restorePATH := testutil.WithTempEnv("PATH", "")
 
 	testutil.ApplyDir(testDir)
 	testutil.MustChdir("d")
 
 	return f, func() {
+		restorePATH()
 		restoreLsColors()
 		f.Cleanup()
 	}
