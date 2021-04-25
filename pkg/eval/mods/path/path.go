@@ -184,13 +184,19 @@ func isRegular(path string) bool {
 //elvdoc:fn temp-dir
 //
 // ```elvish
-// temp-dir &dir=$dir $pattern?
+// temp-dir &dir='' $pattern?
 // ```
 //
-// Create a unique directory and output its name. The &dir option determines where the directory
-// will be created, and its default value is appropriate for your system. The `$pattern` value is
-// optional. If omitted it defaults to `elvish-*`. The last star in the pattern is replaced by a
-// random string. It is your responsibility to remove the (presumably) temporary directory.
+// Creates a new directory and outputs its name.
+//
+// The &dir option determines where the directory will be created; if it is an
+// empty string (the default), a system-dependent directory suitable for storing
+// temporary files will be used. The `$pattern` argument determins the name of
+// the directory, where the last star will be replaced by a random string; it
+// defaults to `elvish-*`.
+//
+// It is the caller's responsibility to remove the directory if it is intended
+// to be temporary.
 //
 // ```elvish-transcript
 // ~> path:temp-dir
@@ -228,17 +234,21 @@ func tempDir(opts mktempOpt, args ...string) (string, error) {
 //elvdoc:fn temp-file
 //
 // ```elvish
-// temp-file [&dir=$dir] [$pattern]
+// temp-file &dir='' $pattern?
 // ```
 //
-// Create a unique file and output a [file](language.html#file) object opened for reading and
-// writing. The &dir option determines where the directory will be created, and its default value is
-// appropriate for your system. The `$pattern` value is optional. If omitted it defaults to
-// `elvish-*`. The last star in the pattern is replaced by a random string. It is your
-// responsibility to remove the (presumably) temporary file.
+// Creates a new file and outputs a [file](language.html#file) object opened
+// for reading and writing.
 //
-// You can use [`fclose`](builtin.html#fclose) to close the file. You can use `$f[name]` to extract
-// the name of the file so it can be used as an argument for another command; e.g., `rm`.
+// The &dir option determines where the file will be created; if it is an
+// empty string (the default), a system-dependent directory suitable for storing
+// temporary files will be used. The `$pattern` argument determins the name of
+// the file, where the last star will be replaced by a random string; it
+// defaults to `elvish-*`.
+//
+// It is the caller's responsibility to close the file with
+// [`file:close`](file.html#close). The caller should also remove the file if it
+// is intended to be temporary (with `rm $f[name]`).
 //
 // ```elvish-transcript
 // ~> f = path:temp-file

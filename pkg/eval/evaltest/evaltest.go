@@ -43,10 +43,6 @@ type Result struct {
 	Exception        error
 }
 
-// MatchingRegexp is used in a `Puts()` call when the value being matched should be a string
-// matching a regexp rather than a literal string.
-type MatchingRegexp struct{ Pattern string }
-
 // The following functions and methods are used to build Test structs. They are
 // supposed to read like English, so a test that "put x" should put "x" reads:
 //
@@ -212,43 +208,35 @@ func capturePort() (*eval.Port, func() ([]interface{}, []byte)) {
 }
 
 func matchOut(want, got []interface{}) bool {
-	if len(got) == 0 && len(want) == 0 {
-		return true
-	}
 	if len(got) != len(want) {
 		return false
 	}
 	for i := range got {
-		switch g := got[i].(type) {
-		case float64:
-			// Special-case float64 to correctly handle NaN and support
-			// approximate comparison.
-			switch w := want[i].(type) {
-			case float64:
-				if !matchFloat64(g, w, 0) {
-					return false
-				}
-			case Approximately:
-				if !matchFloat64(g, w.F, ApproximatelyThreshold) {
-					return false
-				}
-			default:
-				return false
-			}
-		default:
-			switch w := want[i].(type) {
-			case MatchingRegexp:
-				if !vals.MatchesRegexp(got[i], w.Pattern) {
-					return false
-				}
-			default:
-				if !vals.Equal(got[i], want[i]) {
-					return false
-				}
-			}
+		if !match(got[i], want[i]) {
+			return false
 		}
 	}
 	return true
+}
+
+func match(got, want interface{}) bool {
+	switch got := got.(type) {
+	case float64:
+		// Special-case float64 to correctly handle NaN and support
+		// approximate comparison.
+		switch want := want.(type) {
+		case float64:
+			return matchFloat64(got, want, 0)
+		case Approximately:
+			return matchFloat64(got, want.F, ApproximatelyThreshold)
+		}
+	case string:
+		switch want := want.(type) {
+		case MatchingRegexp:
+			return matchRegexp(want.Pattern, got)
+		}
+	}
+	return vals.Equal(got, want)
 }
 
 func reprs(values []interface{}) []string {

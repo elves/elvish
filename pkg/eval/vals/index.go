@@ -35,36 +35,16 @@ func (err noSuchKeyError) Error() string {
 	return "no such key: " + Repr(err.key, NoPretty)
 }
 
-// TODO: Replace this with a a generalized introspection mechanism based on PseudoStructMap for
-// *os.File objects so that commands like `keys` also work on those objects.
-var errInvalidOsFileIndex = errors.New("invalid index for a File object")
-
-func indexOsFile(f *os.File, k interface{}) (interface{}, error) {
-	switch k := k.(type) {
-	case string:
-		switch {
-		case k == "fd":
-			return int(f.Fd()), nil
-		case k == "name":
-			return f.Name(), nil
-		default:
-			return nil, errInvalidOsFileIndex
-		}
-	default:
-		return nil, errInvalidOsFileIndex
-	}
-}
-
 // Index indexes a value with the given key. It is implemented for the builtin
-// type string, the List type, StructMap types, and types satisfying the
-// ErrIndexer or Indexer interface (the Map type satisfies Indexer). For other
-// types, it returns a nil value and a non-nil error.
+// type string, *os.File, List, StructMap and PseudoStructMap types, and types
+// satisfying the ErrIndexer or Indexer interface (the Map type satisfies
+// Indexer). For other types, it returns a nil value and a non-nil error.
 func Index(a, k interface{}) (interface{}, error) {
 	switch a := a.(type) {
 	case string:
 		return indexString(a, k)
 	case *os.File:
-		return indexOsFile(a, k)
+		return indexFile(a, k)
 	case ErrIndexer:
 		return a.Index(k)
 	case Indexer:
@@ -82,6 +62,16 @@ func Index(a, k interface{}) (interface{}, error) {
 	default:
 		return nil, errNotIndexable
 	}
+}
+
+func indexFile(f *os.File, k interface{}) (interface{}, error) {
+	switch k {
+	case "fd":
+		return int(f.Fd()), nil
+	case "name":
+		return f.Name(), nil
+	}
+	return nil, NoSuchKey(k)
 }
 
 func indexStructMap(a StructMap, k interface{}) (interface{}, error) {

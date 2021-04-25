@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"regexp"
 
 	"src.elv.sh/pkg/eval"
 )
@@ -25,6 +26,19 @@ func matchFloat64(a, b, threshold float64) bool {
 		return true
 	}
 	return math.Abs(a-b) <= threshold
+}
+
+// MatchingRegexp can be passed to TestCase.Puts to match a any string that
+// matches a regexp pattern. If the pattern is not a valid regexp, the test will
+// panic.
+type MatchingRegexp struct{ Pattern string }
+
+func matchRegexp(p, s string) bool {
+	matched, err := regexp.MatchString(p, s)
+	if err != nil {
+		panic(err)
+	}
+	return matched
 }
 
 type errorMatcher interface{ matchError(error) bool }
