@@ -24,6 +24,9 @@ func TestVar(t *testing.T) {
 		That("var 'a/b'", "put $'a/b'").Puts(nil),
 		// Declaring one variable whose name ends in ":".
 		That("var a:").DoesNothing(),
+		// Declaring a variable whose name ends in "~" has default value $builtin:nop rather than
+		// $builtin:nil. See https://github.com/elves/elvish/issues/1248.
+		That("var cmd~; cmd &ignored-opt ignored-arg").DoesNothing(),
 		// Declaring multiple variables
 		That("var x y", "put $x $y").Puts(nil, nil),
 		// Declaring one variable with initial value
