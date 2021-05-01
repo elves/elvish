@@ -9,17 +9,15 @@ import (
 
 //elvdoc:var command:binding
 //
-// Key bindings for command mode. The default bindings are a subset of Vi's command mode.
-//
-// TODO: Document the default bindings. For now note that they are codified in the
-// *pkg/edit/default_bindings.go* source file. Specifically the `command:binding` assignment.
+// Key bindings for command mode. This is currently a very small subset of Vi
+// command mode bindings.
 //
 // @cf edit:command:start
 
 //elvdoc:fn command:start
 //
-// Enter command mode. This is typically used to emulate the Vi editor's command mode by switching
-// to the appropriate key bindings.
+// Enter command mode. This mode is intended to emulate Vi's command mode, but
+// it is very incomplete right now.
 //
 // @cf edit:command:binding
 
