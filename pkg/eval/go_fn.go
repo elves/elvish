@@ -208,7 +208,7 @@ func (b *goFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) e
 		ptr := reflect.New(typ)
 		err := vals.ScanToGo(arg, ptr.Interface())
 		if err != nil {
-			return fmt.Errorf("wrong type of %d'th argument: %v", i+1, err)
+			return fmt.Errorf("wrong type of argument %d: %v", i, err)
 		}
 		in = append(in, ptr.Elem())
 	}
