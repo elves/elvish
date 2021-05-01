@@ -134,7 +134,7 @@ func TestCommand_Assignment(t *testing.T) {
 		That("a true b = 1 2 3").Throws(errs.SetReadOnlyVar{VarName: "true"}, "true"),
 		That("@true = 1").Throws(errs.SetReadOnlyVar{VarName: "@true"}, "@true"),
 		// A readonly var as a target for the `except` clause should error.
-		That("try { fail reason } except nil { }").Throws(vars.ErrSetReadOnlyVar, "nil"),
+		That("try { fail reason } except nil { }").Throws(errs.SetReadOnlyVar{VarName: "nil"}, "nil"),
 		That("try { fail reason } except x { }").DoesNothing(),
 		// Evaluation of the assignability occurs at run-time so, if no exception is raised, this
 		// otherwise invalid use of `nil` is okay.

@@ -1,4 +1,4 @@
-// Package errs declares Elvish error types that are not simple strings (i.e., the Go `error` type).
+// Package errs declares error types used as exception causes.
 package errs
 
 import (
@@ -14,6 +14,7 @@ type OutOfRange struct {
 	Actual    string
 }
 
+// Error implements the error interface.
 func (e OutOfRange) Error() string {
 	if e.ValidHigh < e.ValidLow {
 		return fmt.Sprintf(
@@ -32,6 +33,7 @@ type BadValue struct {
 	Actual string
 }
 
+// Error implements the error interface.
 func (e BadValue) Error() string {
 	return fmt.Sprintf(
 		"bad value: %v must be %v, but is %v", e.What, e.Valid, e.Actual)
@@ -69,9 +71,12 @@ func nValues(n int) string {
 
 // SetReadOnlyVar is returned by the Set method of a read-only variable.
 type SetReadOnlyVar struct {
+	// Name of the read-only variable. This fiels is initially empty, and
+	// populated later when context information is available.
 	VarName string
 }
 
+// Error implements the error interface.
 func (e SetReadOnlyVar) Error() string {
 	return fmt.Sprintf("cannot set read-only variable %q", e.VarName)
 }

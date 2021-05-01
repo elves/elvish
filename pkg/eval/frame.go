@@ -211,12 +211,11 @@ func (fm *Frame) errorp(r diag.Ranger, e error) Exception {
 		return nil
 	case Exception:
 		return e
-	case errs.SetReadOnlyVar:
-		ctx := diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r)
-		e.VarName = ctx.RelevantString()
-		return &exception{e, &StackTrace{Head: ctx, Next: fm.traceback}}
 	default:
 		ctx := diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r)
+		if _, ok := e.(errs.SetReadOnlyVar); ok {
+			e = errs.SetReadOnlyVar{VarName: ctx.RelevantString()}
+		}
 		return &exception{e, &StackTrace{Head: ctx, Next: fm.traceback}}
 	}
 }
