@@ -1,11 +1,8 @@
 package vars
 
 import (
-	"errors"
+	"src.elv.sh/pkg/eval/errs"
 )
-
-// ErrSetReadOnlyVar is returned by the Set method of a read-only variable.
-var ErrSetReadOnlyVar = errors.New("read-only variable; cannot be set")
 
 type readOnly struct {
 	value interface{}
@@ -18,7 +15,7 @@ func NewReadOnly(v interface{}) Var {
 }
 
 func (rv readOnly) Set(val interface{}) error {
-	return ErrSetReadOnlyVar
+	return errs.SetReadOnlyVar{}
 }
 
 func (rv readOnly) Get() interface{} {

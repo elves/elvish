@@ -1,4 +1,4 @@
-// Package errs declares error types used as exception causes.
+// Package errs declares Elvish error types that are not simple strings (i.e., the Go `error` type).
 package errs
 
 import (
@@ -65,4 +65,13 @@ func nValues(n int) string {
 		return "1 value"
 	}
 	return strconv.Itoa(n) + " values"
+}
+
+// SetReadOnlyVar is returned by the Set method of a read-only variable.
+type SetReadOnlyVar struct {
+	VarName string
+}
+
+func (e SetReadOnlyVar) Error() string {
+	return fmt.Sprintf("cannot set read-only variable %q", e.VarName)
 }

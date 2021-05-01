@@ -3,12 +3,10 @@ package eval_test
 import (
 	"testing"
 
-	"src.elv.sh/pkg/eval/errs"
-
 	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -131,9 +129,10 @@ func TestCommand_Assignment(t *testing.T) {
 
 		// Assignment errors when the RHS errors.
 		That("x = [][1]").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
-		// Assignment errors itself.
-		That("true = 1").Throws(vars.ErrSetReadOnlyVar, "true"),
-		That("@true = 1").Throws(vars.ErrSetReadOnlyVar, "@true"),
+		// Assignment to read-only var is an error.
+		That("nil = 1").Throws(errs.SetReadOnlyVar{VarName: "nil"}, "nil"),
+		That("a true b = 1 2 3").Throws(errs.SetReadOnlyVar{VarName: "true"}, "true"),
+		That("@true = 1").Throws(errs.SetReadOnlyVar{VarName: "@true"}, "@true"),
 		// A readonly var as a target for the `except` clause should error.
 		That("try { fail reason } except nil { }").Throws(vars.ErrSetReadOnlyVar, "nil"),
 		That("try { fail reason } except x { }").DoesNothing(),
