@@ -10,11 +10,12 @@ import (
 var Ns = eval.NsBuilder{}.AddGoFns("file:", fns).Ns()
 
 var fns = map[string]interface{}{
-	"close":   close,
-	"open":    open,
-	"pipe":    pipe,
-	"prclose": prclose,
-	"pwclose": pwclose,
+	"close":    close,
+	"open":     open,
+	"pipe":     pipe,
+	"prclose":  prclose,
+	"pwclose":  pwclose,
+	"truncate": truncate,
 }
 
 //elvdoc:fn open
@@ -123,4 +124,13 @@ func prclose(p vals.Pipe) error {
 
 func pwclose(p vals.Pipe) error {
 	return p.WriteEnd.Close()
+}
+
+func truncate(name string, size int) error {
+	s := int64(size)
+	err := os.Truncate(name, s)
+	if err != nil {
+		return err
+	}
+	return nil
 }
