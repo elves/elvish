@@ -645,7 +645,7 @@ when used as the suffix of a variable name:
 -   If a variable name ends with `~`, it can only take callable values, which
     are functions and external commands. Such variables are consulted when
     resolving [ordinary commands](#ordinary-command). The default value is the
-    [`builtin:nop`](builtin.html#nop) command.
+    builtin [`nop`](builtin.html#nop) command.
 
 -   If a variable name ends with `:`, it can only take namespaces as values.
     They are used for accessing namespaced variables.

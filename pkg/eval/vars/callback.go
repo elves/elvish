@@ -1,4 +1,5 @@
 package vars
+
 import (
 	"src.elv.sh/pkg/eval/errs"
 )
