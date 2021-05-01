@@ -1,4 +1,3 @@
-// Package navigation provides the functionality of navigating the filesystem.
 package mode
 
 import (
@@ -43,6 +42,8 @@ type NavigationSpec struct {
 	// A function that returns the relative weights of the widths of the 3
 	// columns. If unspecified, the ratio is 1:3:4.
 	WidthRatio func() [3]int
+	// Configuration for the filter.
+	Filter FilterSpec
 }
 
 type navigationState struct {
@@ -160,10 +161,11 @@ func NewNavigation(app cli.App, spec NavigationSpec) Navigation {
 		codeArea: tk.NewCodeArea(tk.CodeAreaSpec{
 			Prompt: func() ui.Text {
 				if w.CopyState().ShowHidden {
-					return ModeLine(" NAVIGATING (show hidden) ", true)
+					return modeLine(" NAVIGATING (show hidden) ", true)
 				}
-				return ModeLine(" NAVIGATING ", true)
+				return modeLine(" NAVIGATING ", true)
 			},
+			Highlighter: spec.Filter.Highlighter,
 		}),
 		colView: tk.NewColView(tk.ColViewSpec{
 			Bindings: spec.Bindings,
@@ -218,7 +220,7 @@ func updateState(w *navigation, selectName string) {
 	if err == nil {
 		currentCol = makeColInner(
 			current,
-			filter,
+			w.Filter.makePredicate(filter),
 			showHidden,
 			func(it tk.Items, i int) {
 				previewCol := makeCol(it.(fileItems)[i], showHidden)
@@ -273,27 +275,25 @@ func tryToSelectName(w tk.Widget, name string) {
 }
 
 func makeCol(f NavigationFile, showHidden bool) tk.Widget {
-	return makeColInner(f, "", showHidden, nil)
+	return makeColInner(f, func(string) bool { return true }, showHidden, nil)
 }
 
-func makeColInner(f NavigationFile, filter string, showHidden bool, onSelect func(tk.Items, int)) tk.Widget {
+func makeColInner(f NavigationFile, filter func(string) bool, showHidden bool, onSelect func(tk.Items, int)) tk.Widget {
 	files, content, err := f.Read()
 	if err != nil {
 		return makeErrCol(err)
 	}
 
 	if files != nil {
-		if filter != "" || !showHidden {
-			var filtered []NavigationFile
-			for _, file := range files {
-				name := file.Name()
-				hidden := len(name) > 0 && name[0] == '.'
-				if strings.Contains(name, filter) && (showHidden || !hidden) {
-					filtered = append(filtered, file)
-				}
+		var filtered []NavigationFile
+		for _, file := range files {
+			name := file.Name()
+			hidden := len(name) > 0 && name[0] == '.'
+			if filter(name) && (showHidden || !hidden) {
+				filtered = append(filtered, file)
 			}
-			files = filtered
 		}
+		files = filtered
 		sort.Slice(files, func(i, j int) bool {
 			return files[i].Name() < files[j].Name()
 		})

@@ -264,6 +264,26 @@ edit:insert:binding[Ctrl-P] =  { edit:history:start }
 edit:history:binding[Ctrl-P] = { edit:history:up }
 ```
 
+## Filter DSL
+
+The completion, history listing, location and navigation modes all support
+filtering the items to show using a filter DSL. It uses a small subset of
+Elvish's expression syntax, and can be any of the following:
+
+-   A literal string (barewords and single-quoted or double-quoted strings all
+    work) matches items containing the string. If the string is all lower case,
+    the match is done case-insensitively; otherwise the match is case-sensitive.
+
+-   A list `[re $string]` matches items matching the regular expression
+    `$string`. The `$string` must be a literal string.
+
+-   A list `[and $expr...]` matches items matching all of the `$expr`s.
+
+-   A list `[or $expr...]` matches items matching any of the `$expr`s.
+
+If the filter contains multiple expressions, they are ANDed, as if surrounded by
+an implicit `[and ...]`.
+
 ## Completion API
 
 ### Argument Completer

@@ -346,7 +346,7 @@ func (ev *Evaler) DaemonClient() daemon.Client {
 	return ev.daemonClient
 }
 
-// DaemonClient returns the editor associated with the Evaler.
+// Editor returns the editor associated with the Evaler.
 func (ev *Evaler) Editor() Editor {
 	ev.mu.RLock()
 	defer ev.mu.RUnlock()

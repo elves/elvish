@@ -78,24 +78,6 @@ func TestTime(t *testing.T) {
 	)
 }
 
-func TestSource(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
-
-	Test(t,
-		// Smoke test
-		That("echo 'put x' > a.elv; -source a.elv").Puts("x"),
-		// Sourced files have access to the local scope
-		That("echo 'put $x' > a.elv; [x]{ -source a.elv } foo").Puts("foo"),
-		// Mutation to the namespace is not persisted.
-		That("echo 'x = foo ' > a.elv; echo 'put $x' > b.elv",
-			"-source a.elv; -source b.elv").Throws(AnyError, "-source b.elv"),
-		// Regression test for #1202.
-		That("echo 'b = bar' > b.elv; a = foo; { nop $a; -source b.elv }").
-			DoesNothing(),
-	)
-}
-
 func TestUseMod(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()

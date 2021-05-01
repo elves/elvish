@@ -27,7 +27,7 @@ func TestPipeline(t *testing.T) {
 		That(`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`).
 			Prints("A1bert\nBer1in\n"),
 		// Pure value pipeline
-		That(`put 233 42 19 | each [x]{+ $x 10}`).Puts(243.0, 52.0, 29.0),
+		That(`put 233 42 19 | each [x]{+ $x 10}`).Puts(243, 52, 29),
 		// Pipeline draining.
 		That(`range 100 | put x`).Puts("x"),
 		// Background pipeline.
@@ -67,11 +67,6 @@ func TestCommand(t *testing.T) {
 	)
 }
 
-func TestCommand_DeprecateUsingTemporaryAssignmentForNonTemporaryAssignment(t *testing.T) {
-	testCompileTimeDeprecation(t, "foo=bar", `using the syntax of temporary assignment for non-temporary assignment is deprecated; use "var" or "set" instead`, 15)
-
-}
-
 func TestCommand_Special(t *testing.T) {
 	Test(t,
 		// Regression test for #1204; ensures that the arguments of special
@@ -98,23 +93,18 @@ func TestCommand_Assignment(t *testing.T) {
 		That("@a = ; put $a").Puts(vals.EmptyList),
 
 		// List element assignment
-		That("li=[foo bar]; li[0]=233; put $@li").Puts("233", "bar"),
+		That("var li = [foo bar]; set li[0] = 233; put $@li").Puts("233", "bar"),
 		// Variable in list assignment must already be defined. Regression test
 		// for b.elv.sh/889.
-		That("foobarlorem[0] = a").DoesNotCompile(),
+		That("set foobarlorem[0] = a").DoesNotCompile(),
 		// Map element assignment
-		That("di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]").
-			Puts("lorem", "ipsum"),
-		That("d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]").
+		That("var di = [&k=v]; set di[k] = lorem; set di[k2] = ipsum",
+			"put $di[k] $di[k2]").Puts("lorem", "ipsum"),
+		That("var d = [&a=[&b=v]]; put $d[a][b]; set d[a][b] = u; put $d[a][b]").
 			Puts("v", "u"),
-		// Multi-assignments.
-		That("{a,b}=(put a b); put $a $b").Puts("a", "b"),
-		That("@a=(put a b); put $@a").Puts("a", "b"),
-		That("{a,@b}=(put a b c); put $@b").Puts("b", "c"),
-		//That("di=[&]; di[a b]=(put a b); put $di[a] $di[b]").Puts("a", "b"),
 
 		// Temporary assignment.
-		That("a=alice b=bob; {a,@b}=(put amy ben) put $a $@b; put $a $b").
+		That("var a b = alice bob; {a,@b}=(put amy ben) put $a $@b; put $a $b").
 			Puts("amy", "ben", "alice", "bob"),
 		// Temporary assignment of list element.
 		That("l = [a]; l[0]=x put $l[0]; put $l[0]").Puts("x", "a"),
@@ -122,8 +112,15 @@ func TestCommand_Assignment(t *testing.T) {
 		That("m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]").Puts("v2", "v"),
 		// Temporary assignment before special form.
 		That("li=[foo bar] for x $li { put $x }").Puts("foo", "bar"),
+		// Multiple LHSs in temporary assignments.
+		That("{a b}={foo bar} put $a $b").Puts("foo", "bar"),
+		That("@a=(put a b) put $@a").Puts("a", "b"),
+		That("{a,@b}=(put a b c) put $@b").Puts("b", "c"),
 		// Spacey assignment with temporary assignment
-		That("x = 1; x=2 y = (+ 1 $x); put $x $y").Puts("1", 3.0),
+		That("x = 1; x=2 y = (+ 1 $x); put $x $y").Puts("1", 3),
+		// Using syntax of temporary assignment for non-temporary assignment no
+		// longer compiles
+		That("x=y").DoesNotCompile(),
 
 		// Concurrently creating a new variable and accessing existing variable.
 		// Run with "go test -race".
@@ -136,6 +133,12 @@ func TestCommand_Assignment(t *testing.T) {
 		That("nil = 1").Throws(errs.SetReadOnlyVar{VarName: "nil"}, "nil"),
 		That("a true b = 1 2 3").Throws(errs.SetReadOnlyVar{VarName: "true"}, "true"),
 		That("@true = 1").Throws(errs.SetReadOnlyVar{VarName: "@true"}, "@true"),
+		// A readonly var as a target for the `except` clause should error.
+		That("try { fail reason } except nil { }").Throws(vars.ErrSetReadOnlyVar, "nil"),
+		That("try { fail reason } except x { }").DoesNothing(),
+		// Evaluation of the assignability occurs at run-time so, if no exception is raised, this
+		// otherwise invalid use of `nil` is okay.
+		That("try { } except nil { }").DoesNothing(),
 		// Arity mismatch.
 		That("x = 1 2").Throws(
 			errs.ArityMismatch{
@@ -195,7 +198,7 @@ func TestCommand_Redir(t *testing.T) {
 		// over input from a file.
 		// Regression test for https://src.elv.sh/issues/1010
 		That("echo abc > bytes", "each $echo~ < bytes").Prints("abc\n"),
-		That("echo def > bytes", "only-values < bytes | count").Puts("0"),
+		That("echo def > bytes", "only-values < bytes | count").Puts(0),
 
 		// Invalid redirection destination.
 		That("echo []> test").Throws(

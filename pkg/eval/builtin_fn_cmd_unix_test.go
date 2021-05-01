@@ -8,16 +8,14 @@ import (
 	. "src.elv.sh/pkg/eval/evaltest"
 )
 
-// Tests of the `builtin:has-external` command.
-func TestBuiltinHasExternal(t *testing.T) {
+func TestHasExternal(t *testing.T) {
 	Test(t,
 		That("has-external sh").Puts(true),
 		That("has-external random-invalid-command").Puts(false),
 	)
 }
 
-// Tests of the `builtin:search-external` command.
-func TestBuiltinSearchExternal(t *testing.T) {
+func TestSearchExternal(t *testing.T) {
 	Test(t,
 		// Even on UNIX systems we can't assume that commands like `sh` or
 		// `test` are in a specific directory. Those commands might be in /bin
@@ -37,8 +35,7 @@ func TestBuiltinSearchExternal(t *testing.T) {
 	)
 }
 
-// Tests of the `builtin:external` command.
-func TestBuiltinExternal(t *testing.T) {
+func TestExternal(t *testing.T) {
 	Test(t,
 		That(`(external sh) -c 'echo external-sh'`).Prints("external-sh\n"),
 	)

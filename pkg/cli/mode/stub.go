@@ -25,7 +25,7 @@ type stub struct {
 
 func (w stub) Render(width, height int) *term.Buffer {
 	buf := term.NewBufferBuilder(width).
-		WriteStyled(ModeLine(w.Name, false)).SetDotHere().Buffer()
+		WriteStyled(modeLine(w.Name, false)).SetDotHere().Buffer()
 	buf.TrimToLines(0, height)
 	return buf
 }

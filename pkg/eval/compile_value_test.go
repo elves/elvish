@@ -131,8 +131,6 @@ func TestVariableUse(t *testing.T) {
 		That("x = outer; { local:x = inner; put $local:x }").Puts("inner"),
 		// Pseudo-namespace up: accesses upvalues.
 		That("x = outer; { local:x = inner; put $up:x }").Puts("outer"),
-		// Pseudo-namespace builtin: accesses builtins.
-		That("put $builtin:true").Puts(true),
 		// Unqualified name prefers local: to up:.
 		That("x = outer; { local:x = inner; put $x }").Puts("inner"),
 		// Unqualified name resolves to upvalue if no local name exists.
@@ -177,23 +175,26 @@ func TestClosure(t *testing.T) {
 		That("[x]{put $x} foo").Puts("foo"),
 
 		// Assigning to captured variable
-		That("x=lorem; []{x=ipsum}; put $x").Puts("ipsum"),
-		That("x=lorem; []{ put $x; x=ipsum }; put $x").Puts("lorem", "ipsum"),
+		That("var x = lorem; []{set x = ipsum}; put $x").Puts("ipsum"),
+		That("var x = lorem; []{ put $x; set x = ipsum }; put $x").
+			Puts("lorem", "ipsum"),
 
 		// Assigning to element of captured variable
 		That("x = a; { x = b }; put $x").Puts("b"),
 		That("x = [a]; { x[0] = b }; put $x[0]").Puts("b"),
 
 		// Shadowing
-		That("x=ipsum; []{ local:x=lorem; put $x }; put $x").Puts("lorem", "ipsum"),
+		That("var x = ipsum; []{ var x = lorem; put $x }; put $x").
+			Puts("lorem", "ipsum"),
 
 		// Shadowing by argument
-		That("x=ipsum; [x]{ put $x; x=BAD } lorem; put $x").Puts("lorem", "ipsum"),
+		That("var x = ipsum; [x]{ put $x; set x = BAD } lorem; put $x").
+			Puts("lorem", "ipsum"),
 
 		// Closure captures new local variables every time
-		That(`fn f []{ x=0; put []{x=(+ $x 1)} []{put $x} }
-		  {inc1,put1}=(f); $put1; $inc1; $put1
-		  {inc2,put2}=(f); $put2; $inc2; $put2`).Puts("0", 1.0, "0", 1.0),
+		That("fn f []{ var x = (num 0); put { set x = (+ $x 1) } { put $x } }",
+			"var inc1 put1 = (f); $put1; $inc1; $put1",
+			"var inc2 put2 = (f); $put2; $inc2; $put2").Puts(0, 1, 0, 1),
 
 		// Rest argument.
 		That("[x @xs]{ put $x $xs } a b c").Puts("a", vals.MakeList("b", "c")),

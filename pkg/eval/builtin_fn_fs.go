@@ -2,8 +2,6 @@ package eval
 
 import (
 	"errors"
-	"os"
-	"path/filepath"
 
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/store"
@@ -37,16 +35,7 @@ func init() {
 		"dir-history": dirs,
 
 		// Path
-		"path-abs":      filepath.Abs,
-		"path-base":     filepath.Base,
-		"path-clean":    filepath.Clean,
-		"path-dir":      filepath.Dir,
-		"path-ext":      filepath.Ext,
-		"eval-symlinks": filepath.EvalSymlinks,
-		"tilde-abbr":    tildeAbbr,
-
-		// File types
-		"-is-dir": isDir,
+		"tilde-abbr": tildeAbbr,
 	})
 }
 
@@ -143,9 +132,4 @@ func dirs(fm *Frame) error {
 
 func tildeAbbr(path string) string {
 	return fsutil.TildeAbbr(path)
-}
-
-func isDir(path string) bool {
-	fi, err := os.Stat(path)
-	return err == nil && fi.Mode().IsDir()
 }
