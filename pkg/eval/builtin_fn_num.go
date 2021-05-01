@@ -1,8 +1,11 @@
 package eval
 
 import (
+	"math"
+	"math/big"
 	"math/rand"
 
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 )
 
@@ -24,7 +27,9 @@ import (
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		// Constructor
-		"float64": toFloat64,
+		"float64":   toFloat64,
+		"num":       num,
+		"exact-num": exactNum,
 
 		// Comparison
 		"<":  lt,
@@ -35,11 +40,12 @@ func init() {
 		">=": ge,
 
 		// Arithmetic
-		"+": plus,
-		"-": minus,
-		"*": times,
+		"+": add,
+		"-": sub,
+		"*": mul,
+		// Also handles cd /
 		"/": slash,
-		"%": mod,
+		"%": rem,
 
 		// Random
 		"rand":    rand.Float64,
@@ -47,25 +53,100 @@ func init() {
 	})
 }
 
+//elvdoc:fn num
+//
+// ```elvish
+// num $string-or-number
+// ```
+//
+// Constructs a [typed number](./language.html#number).
+//
+// If the argument is a string, this command outputs the typed number the
+// argument represents, or raises an exception if the argument is not a valid
+// representation of a number. If the argument is already a typed number, this
+// command outputs it as is.
+//
+// This command is usually not needed for working with numbers; see the
+// discussion of [numerical commands](#numerical-commands).
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> num 10
+// ▶ (num 10)
+// ~> num 0x10
+// ▶ (num 16)
+// ~> num 1/12
+// ▶ (num 1/12)
+// ~> num 3.14
+// ▶ (num 3.14)
+// ~> num (num 10)
+// ▶ (num 10)
+// ```
+
+func num(n vals.Num) vals.Num {
+	// Conversion is actually handled in vals/conversion.go.
+	return n
+}
+
+//elvdoc:fn exact-num
+//
+// ```elvish
+// exact-num $string-or-number
+// ```
+//
+// Coerces the argument to an exact number. If the argument is infinity or NaN,
+// an exception is thrown.
+//
+// If the argument is a string, it is converted to a typed number first. If the
+// argument is already an exact number, it is returned as is.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> exact-num (num 0.125)
+// ▶ (num 1/8)
+// ~> exact-num 0.125
+// ▶ (num 1/8)
+// ~> exact-num (num 1)
+// ▶ (num 1)
+// ```
+//
+// Beware that seemingly simple fractions that can't be represented precisely in
+// binary can result in the denominator being a very large power of 2:
+//
+// ```elvish-transcript
+// ~> exact-num 0.1
+// ▶ (num 3602879701896397/36028797018963968)
+// ```
+
+func exactNum(n vals.Num) (vals.Num, error) {
+	if f, ok := n.(float64); ok {
+		r := new(big.Rat).SetFloat64(f)
+		if r == nil {
+			return nil, errs.BadValue{What: "argument here",
+				Valid: "finite float", Actual: vals.ToString(f)}
+		}
+		return r, nil
+	}
+	return n, nil
+}
+
 //elvdoc:fn float64
 //
 // ```elvish
-// float64 123
-// float64 NaN
-// float64 Inf
+// float64 $string-or-number
 // ```
 //
-// Explicitly convert a string to a `float64` data type.
+// Constructs a floating-point number.
 //
-// This command is seldom needed since commands that operate on numbers will
-// convert a string to a number. See the discussion of the
-// [number](language.html#number) data type.
+// This command is deprecated; use [`num`](#num) instead.
 
 func toFloat64(f float64) float64 {
 	return f
 }
 
-//elvdoc:fn &lt; &lt;= == != &gt; &gt;=
+//elvdoc:fn &lt; &lt;= == != &gt; &gt;= {#num-cmp}
 //
 // ```elvish
 // <  $number... # less
@@ -110,161 +191,384 @@ func toFloat64(f float64) float64 {
 // ▶ $true
 // ```
 
-func lt(nums ...float64) bool {
+func lt(nums ...vals.Num) bool {
+	return chainCompare(nums,
+		func(a, b int) bool { return a < b },
+		func(a, b *big.Int) bool { return a.Cmp(b) < 0 },
+		func(a, b *big.Rat) bool { return a.Cmp(b) < 0 },
+		func(a, b float64) bool { return a < b })
+
+}
+
+func le(nums ...vals.Num) bool {
+	return chainCompare(nums,
+		func(a, b int) bool { return a <= b },
+		func(a, b *big.Int) bool { return a.Cmp(b) <= 0 },
+		func(a, b *big.Rat) bool { return a.Cmp(b) <= 0 },
+		func(a, b float64) bool { return a <= b })
+}
+
+func eqNum(nums ...vals.Num) bool {
+	return chainCompare(nums,
+		func(a, b int) bool { return a == b },
+		func(a, b *big.Int) bool { return a.Cmp(b) == 0 },
+		func(a, b *big.Rat) bool { return a.Cmp(b) == 0 },
+		func(a, b float64) bool { return a == b })
+}
+
+func ne(nums ...vals.Num) bool {
+	return chainCompare(nums,
+		func(a, b int) bool { return a != b },
+		func(a, b *big.Int) bool { return a.Cmp(b) != 0 },
+		func(a, b *big.Rat) bool { return a.Cmp(b) != 0 },
+		func(a, b float64) bool { return a != b })
+}
+
+func gt(nums ...vals.Num) bool {
+	return chainCompare(nums,
+		func(a, b int) bool { return a > b },
+		func(a, b *big.Int) bool { return a.Cmp(b) > 0 },
+		func(a, b *big.Rat) bool { return a.Cmp(b) > 0 },
+		func(a, b float64) bool { return a > b })
+}
+
+func ge(nums ...vals.Num) bool {
+	return chainCompare(nums,
+		func(a, b int) bool { return a >= b },
+		func(a, b *big.Int) bool { return a.Cmp(b) >= 0 },
+		func(a, b *big.Rat) bool { return a.Cmp(b) >= 0 },
+		func(a, b float64) bool { return a >= b })
+}
+
+func chainCompare(nums []vals.Num,
+	p1 func(a, b int) bool, p2 func(a, b *big.Int) bool,
+	p3 func(a, b *big.Rat) bool, p4 func(a, b float64) bool) bool {
+
 	for i := 0; i < len(nums)-1; i++ {
-		if !(nums[i] < nums[i+1]) {
+		var r bool
+		switch pair := vals.UnifyNums(nums[i:i+2], 0).(type) {
+		case []int:
+			r = p1(pair[0], pair[1])
+		case []*big.Int:
+			r = p2(pair[0], pair[1])
+		case []*big.Rat:
+			r = p3(pair[0], pair[1])
+		case []float64:
+			r = p4(pair[0], pair[1])
+		}
+		if !r {
 			return false
 		}
 	}
 	return true
 }
 
-func le(nums ...float64) bool {
-	for i := 0; i < len(nums)-1; i++ {
-		if !(nums[i] <= nums[i+1]) {
-			return false
-		}
-	}
-	return true
-}
-
-func eqNum(nums ...float64) bool {
-	for i := 0; i < len(nums)-1; i++ {
-		if !(nums[i] == nums[i+1]) {
-			return false
-		}
-	}
-	return true
-}
-
-func ne(nums ...float64) bool {
-	for i := 0; i < len(nums)-1; i++ {
-		if !(nums[i] != nums[i+1]) {
-			return false
-		}
-	}
-	return true
-}
-
-func gt(nums ...float64) bool {
-	for i := 0; i < len(nums)-1; i++ {
-		if !(nums[i] > nums[i+1]) {
-			return false
-		}
-	}
-	return true
-}
-
-func ge(nums ...float64) bool {
-	for i := 0; i < len(nums)-1; i++ {
-		if !(nums[i] >= nums[i+1]) {
-			return false
-		}
-	}
-	return true
-}
-
-//elvdoc:fn + - * /
+//elvdoc:fn + {#add}
 //
 // ```elvish
-// + $summand...
-// - $minuend $subtrahend...
-// * $factor...
-// / $dividend $divisor...
+// + $num...
 // ```
 //
-// Basic arithmetic operations of adding, subtraction, multiplication and division
-// respectively.
+// Outputs the sum of all arguments, or 0 when there are no arguments.
 //
-// All of them can take multiple arguments:
+// This command is [exactness-preserving](#exactness-preserving).
+//
+// Examples:
 //
 // ```elvish-transcript
-// ~> + 2 5 7 # 2 + 5 + 7
-// ▶ 14
-// ~> - 2 5 7 # 2 - 5 - 7
-// ▶ -10
-// ~> * 2 5 7 # 2 * 5 * 7
-// ▶ 70
-// ~> / 2 5 7 # 2 / 5 / 7
-// ▶ 0.05714285714285715
+// ~> + 5 2 7
+// ▶ (num 14)
+// ~> + 1/2 1/3 1/4
+// ▶ (num 13/12)
+// ~> + 1/2 0.5
+// ▶ (num 1.0)
+// ```
+
+func add(rawNums ...vals.Num) vals.Num {
+	nums := vals.UnifyNums(rawNums, vals.BigInt)
+	switch nums := nums.(type) {
+	case []*big.Int:
+		acc := big.NewInt(0)
+		for _, num := range nums {
+			acc.Add(acc, num)
+		}
+		return vals.NormalizeBigInt(acc)
+	case []*big.Rat:
+		acc := big.NewRat(0, 1)
+		for _, num := range nums {
+			acc.Add(acc, num)
+		}
+		return vals.NormalizeBigRat(acc)
+	case []float64:
+		acc := float64(0)
+		for _, num := range nums {
+			acc += num
+		}
+		return acc
+	default:
+		panic("unreachable")
+	}
+}
+
+//elvdoc:fn - {#sub}
+//
+// ```elvish
+// - $x-num $y-num...
 // ```
 //
-// When given one element, they all output their sole argument (given that it is a
-// valid number). When given no argument,
+// Outputs the result of substracting from `$x-num` all the `$y-num`s, working
+// from left to right. When no `$y-num` is given, outputs the negation of
+// `$x-num` instead (in other words, `- $x-num` is equivalent to `- 0 $x-num`).
 //
-// -   `+` outputs 0, and `*` outputs 1. You can think that they both have a
-// "hidden" argument of 0 or 1, which does not alter their behaviors (in
-// mathematical terms, 0 and 1 are
-// [identity elements](https://en.wikipedia.org/wiki/Identity_element) of
-// addition and multiplication, respectively).
+// This command is [exactness-preserving](#exactness-preserving).
 //
-// -   `-` throws an exception.
+// Examples:
 //
-// -   `/` becomes a synonym for `cd /`, due to the implicit cd feature. (The
-// implicit cd feature will probably change to avoid this oddity).
+// ```elvish-transcript
+// ~> - 5
+// ▶ (num -5)
+// ~> - 5 2
+// ▶ (num 3)
+// ~> - 5 2 7
+// ▶ (num -4)
+// ~> - 1/2 1/3
+// ▶ (num 1/6)
+// ~> - 1/2 0.3
+// ▶ (num 0.2)
+// ~> - 10
+// ▶ (num -10)
+// ```
 
-func plus(nums ...float64) float64 {
-	sum := 0.0
-	for _, f := range nums {
-		sum += f
+func sub(rawNums ...vals.Num) (vals.Num, error) {
+	if len(rawNums) == 0 {
+		return nil, errs.ArityMismatch{
+			What:     "arguments here",
+			ValidLow: 1, ValidHigh: -1, Actual: 0,
+		}
 	}
-	return sum
+
+	nums := vals.UnifyNums(rawNums, vals.BigInt)
+	switch nums := nums.(type) {
+	case []*big.Int:
+		acc := &big.Int{}
+		if len(nums) == 1 {
+			acc.Neg(nums[0])
+			return acc, nil
+		}
+		acc.Set(nums[0])
+		for _, num := range nums[1:] {
+			acc.Sub(acc, num)
+		}
+		return acc, nil
+	case []*big.Rat:
+		acc := &big.Rat{}
+		if len(nums) == 1 {
+			acc.Neg(nums[0])
+			return acc, nil
+		}
+		acc.Set(nums[0])
+		for _, num := range nums[1:] {
+			acc.Sub(acc, num)
+		}
+		return acc, nil
+	case []float64:
+		if len(nums) == 1 {
+			return -nums[0], nil
+		}
+		acc := nums[0]
+		for _, num := range nums[1:] {
+			acc -= num
+		}
+		return acc, nil
+	default:
+		panic("unreachable")
+	}
 }
 
-func minus(sum float64, nums ...float64) float64 {
-	if len(nums) == 0 {
-		// Unary -
-		return -sum
+//elvdoc:fn * {#mul}
+//
+// ```elvish
+// * $num...
+// ```
+//
+// Outputs the product of all arguments, or 1 when there are no arguments.
+//
+// This command is [exactness-preserving](#exactness-preserving). Additionally,
+// when any argument is exact 0 and no other argument is a floating-point
+// infinity, the result is exact 0.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> * 2 5 7
+// ▶ (num 70)
+// ~> * 1/2 0.5
+// ▶ (num 0.25)
+// ~> * 0 0.5
+// ▶ (num 0)
+// ```
+
+func mul(rawNums ...vals.Num) vals.Num {
+	hasExact0 := false
+	hasInf := false
+	for _, num := range rawNums {
+		if num == 0 {
+			hasExact0 = true
+		}
+		if f, ok := num.(float64); ok && math.IsInf(f, 0) {
+			hasInf = true
+			break
+		}
 	}
-	for _, f := range nums {
-		sum -= f
+	if hasExact0 && !hasInf {
+		return 0
 	}
-	return sum
+
+	nums := vals.UnifyNums(rawNums, vals.BigInt)
+	switch nums := nums.(type) {
+	case []*big.Int:
+		acc := big.NewInt(1)
+		for _, num := range nums {
+			acc.Mul(acc, num)
+		}
+		return vals.NormalizeBigInt(acc)
+	case []*big.Rat:
+		acc := big.NewRat(1, 1)
+		for _, num := range nums {
+			acc.Mul(acc, num)
+		}
+		return vals.NormalizeBigRat(acc)
+	case []float64:
+		acc := float64(1)
+		for _, num := range nums {
+			acc *= num
+		}
+		return acc
+	default:
+		panic("unreachable")
+	}
 }
 
-func times(nums ...float64) float64 {
-	prod := 1.0
-	for _, f := range nums {
-		prod *= f
-	}
-	return prod
-}
+//elvdoc:fn / {#div}
+//
+// ```elvish
+// / $x-num $y-num...
+// ```
+//
+// Outputs the result of dividing `$x-num` with all the `$y-num`s, working from
+// left to right. When no `$y-num` is given, outputs the reciprocal of `$x-num`
+// instead (in other words, `/ $y-num` is equivalent to `/ 1 $y-num`).
+//
+// Dividing by exact 0 raises an exception. Dividing by inexact 0 results with
+// either infinity or NaN according to floating-point semantics.
+//
+// This command is [exactness-preserving](#exactness-preserving). Additionally,
+// when `$x-num` is exact 0 and no `$y-num` is exact 0, the result is exact 0.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> / 2
+// ▶ (num 1/2)
+// ~> / 2.0
+// ▶ (num 0.5)
+// ~> / 10 5
+// ▶ (num 2)
+// ~> / 2 5
+// ▶ (num 2/5)
+// ~> / 2 5 7
+// ▶ (num 2/35)
+// ~> / 0 1.0
+// ▶ (num 0)
+// ~> / 2 0
+// Exception: bad value: divisor must be number other than exact 0, but is exact 0
+// [tty 6], line 1: / 2 0
+// ~> / 2 0.0
+// ▶ (num +Inf)
+// ```
+//
+// When given no argument, this command is equivalent to `cd /`, due to the
+// implicit cd feature. (The implicit cd feature will probably change to avoid
+// this oddity).
 
-func slash(fm *Frame, args ...float64) error {
+func slash(fm *Frame, args ...vals.Num) error {
 	if len(args) == 0 {
 		// cd /
 		return fm.Evaler.Chdir("/")
 	}
 	// Division
-	divide(fm, args[0], args[1:]...)
-	return nil
-}
-
-func divide(fm *Frame, prod float64, nums ...float64) {
-	out := fm.OutputChan()
-	for _, f := range nums {
-		prod /= f
+	result, err := div(args...)
+	if err == nil {
+		fm.OutputChan() <- vals.FromGo(result)
 	}
-	out <- vals.FromGo(prod)
+	return err
 }
 
-//elvdoc:fn %
+// ErrDivideByZero is thrown when attempting to divide by zero.
+var ErrDivideByZero = errs.BadValue{
+	What: "divisor", Valid: "number other than exact 0", Actual: "exact 0"}
+
+func div(rawNums ...vals.Num) (vals.Num, error) {
+	for _, num := range rawNums[1:] {
+		if num == 0 {
+			return nil, ErrDivideByZero
+		}
+	}
+	if rawNums[0] == 0 {
+		return 0, nil
+	}
+	nums := vals.UnifyNums(rawNums, vals.BigRat)
+	switch nums := nums.(type) {
+	case []*big.Rat:
+		acc := &big.Rat{}
+		acc.Set(nums[0])
+		if len(nums) == 1 {
+			acc.Inv(acc)
+			return acc, nil
+		}
+		for _, num := range nums[1:] {
+			acc.Quo(acc, num)
+		}
+		return acc, nil
+	case []float64:
+		acc := nums[0]
+		if len(nums) == 1 {
+			return 1 / acc, nil
+		}
+		for _, num := range nums[1:] {
+			acc /= num
+		}
+		return acc, nil
+	default:
+		panic("unreachable")
+	}
+}
+
+//elvdoc:fn % {#rem}
 //
 // ```elvish
-// % $dividend $divisor
+// % $x $y
 // ```
 //
-// Output the remainder after dividing `$dividend` by `$divisor`. Both must be
-// integers. Example:
+// Output the remainder after dividing `$x` by `$y`. The result has the same
+// sign as `$x`. Both must be integers that can represented in a machine word
+// (this limit may be lifted in future).
+//
+// Examples:
 //
 // ```elvish-transcript
-// ~> % 23 7
-// ▶ 2
+// ~> % 10 3
+// ▶ 1
+// ~> % -10 3
+// ▶ -1
+// ~> % 10 -3
+// ▶ 1
 // ```
 
-func mod(a, b int) (int, error) {
+func rem(a, b int) (int, error) {
+	// TODO: Support other number types
 	if b == 0 {
-		return 0, ErrArgs
+		return 0, ErrDivideByZero
 	}
 	return a % b, nil
 }

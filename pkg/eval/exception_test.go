@@ -69,7 +69,7 @@ func TestExternalCmdExit_Fields(t *testing.T) {
 func TestPipelineError_Fields(t *testing.T) {
 	Test(t,
 		That("put ?(fail 1 | fail 2)[reason][type]").Puts("pipeline"),
-		That("count ?(fail 1 | fail 2)[reason][exceptions]").Puts("2"),
+		That("count ?(fail 1 | fail 2)[reason][exceptions]").Puts(2),
 		That("put ?(fail 1 | fail 2)[reason][exceptions][0][reason][type]").
 			Puts("fail"),
 	)

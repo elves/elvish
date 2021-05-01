@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/big"
 	"sort"
+	"strconv"
 
 	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/eval/errs"
@@ -139,7 +141,10 @@ func makeMap(input Inputs) (vals.Map, error) {
 // ```
 //
 // Output `$low`, `$low` + `$step`, ..., proceeding as long as smaller than
-// `$high`. If not given, `$low` defaults to 0.
+// `$high` or until overflow. If not given, `$low` defaults to 0. The `$step`
+// must be positive.
+//
+// This command is [exactness-preserving](#exactness-preserving).
 //
 // Examples:
 //
@@ -155,44 +160,109 @@ func makeMap(input Inputs) (vals.Map, error) {
 // ▶ 5
 // ```
 //
-// Beware floating point oddities:
+// When using floating-point numbers, beware that numerical errors can result in
+// an incorrect number of outputs:
 //
 // ```elvish-transcript
-// ~> range 0 0.8 &step=.1
-// ▶ 0
-// ▶ 0.1
-// ▶ 0.2
-// ▶ 0.30000000000000004
-// ▶ 0.4
-// ▶ 0.5
-// ▶ 0.6
-// ▶ 0.7
-// ▶ 0.7999999999999999
+// ~> range 0.9 &step=0.3
+// ▶ (num 0.0)
+// ▶ (num 0.3)
+// ▶ (num 0.6)
+// ▶ (num 0.8999999999999999)
+// ```
+//
+// Avoid this problem by using exact rationals:
+//
+// ```elvish-transcript
+// ~> range 9/10 &step=3/10
+// ▶ (num 0)
+// ▶ (num 3/10)
+// ▶ (num 3/5)
 // ```
 //
 // Etymology:
 // [Python](https://docs.python.org/3/library/functions.html#func-range).
 
-type rangeOpts struct{ Step float64 }
+type rangeOpts struct{ Step vals.Num }
 
 func (o *rangeOpts) SetDefaultOptions() { o.Step = 1 }
 
-func rangeFn(fm *Frame, opts rangeOpts, args ...float64) error {
-	var lower, upper float64
-
+func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
+	var rawNums []vals.Num
 	switch len(args) {
 	case 1:
-		upper = args[0]
+		rawNums = []vals.Num{0, args[0], opts.Step}
 	case 2:
-		lower, upper = args[0], args[1]
+		rawNums = []vals.Num{args[0], args[1], opts.Step}
 	default:
 		return ErrArgs
 	}
+	switch step := opts.Step.(type) {
+	case int:
+		if step <= 0 {
+			return errs.BadValue{
+				What: "step", Valid: "positive", Actual: strconv.Itoa(step)}
+		}
+	case *big.Int:
+		if step.Sign() <= 0 {
+			return errs.BadValue{
+				What: "step", Valid: "positive", Actual: step.String()}
+		}
+	case *big.Rat:
+		if step.Sign() <= 0 {
+			return errs.BadValue{
+				What: "step", Valid: "positive", Actual: step.String()}
+		}
+	case float64:
+		if step <= 0 {
+			return errs.BadValue{
+				What: "step", Valid: "positive", Actual: vals.ToString(step)}
+		}
+	}
+	nums := vals.UnifyNums(rawNums, vals.Int)
 
 	out := fm.OutputChan()
-	for f := lower; f < upper; f += opts.Step {
-		out <- vals.FromGo(f)
+	switch nums := nums.(type) {
+	case []int:
+		lower, upper, step := nums[0], nums[1], nums[2]
+		for cur := lower; cur < upper; cur += step {
+			out <- vals.FromGo(cur)
+			if cur+step <= cur {
+				// Overflow
+				break
+			}
+		}
+	case []*big.Int:
+		lower, upper, step := nums[0], nums[1], nums[2]
+		cur := &big.Int{}
+		for cur.Set(lower); cur.Cmp(upper) < 0; {
+			out <- vals.FromGo(cur)
+			next := &big.Int{}
+			next.Add(cur, step)
+			cur = next
+		}
+	case []*big.Rat:
+		lower, upper, step := nums[0], nums[1], nums[2]
+		cur := &big.Rat{}
+		for cur.Set(lower); cur.Cmp(upper) < 0; {
+			out <- vals.FromGo(cur)
+			next := &big.Rat{}
+			next.Add(cur, step)
+			cur = next
+		}
+	case []float64:
+		lower, upper, step := nums[0], nums[1], nums[2]
+		for cur := lower; cur < upper; cur += step {
+			out <- vals.FromGo(cur)
+			if cur+step <= cur {
+				// Overflow
+				break
+			}
+		}
+	default:
+		panic("unreachable")
 	}
+
 	return nil
 }
 

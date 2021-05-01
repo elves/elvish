@@ -124,7 +124,7 @@ func TestApplyDir_Symlinks(t *testing.T) {
 		{"sf1", filepath.Join("d1", "f")},
 	}
 	for _, fromTo := range symlinkTargets {
-		symlink, expected_target := fromTo[0], fromTo[1]
+		symlink, wantTarget := fromTo[0], fromTo[1]
 		fi, err := os.Lstat(symlink)
 		if err != nil || fi.Mode()&os.ModeSymlink == 0 {
 			t.Errorf("File %v isn't a symlink: err %v\n"+
@@ -132,14 +132,13 @@ func TestApplyDir_Symlinks(t *testing.T) {
 				"fi.Mode        %032b",
 				symlink, err, os.ModeSymlink, fi.Mode())
 		}
-		actual_target, err := filepath.EvalSymlinks(symlink)
-		if err != nil || expected_target != actual_target {
+		gotTarget, err := filepath.EvalSymlinks(symlink)
+		if err != nil || wantTarget != gotTarget {
 			t.Errorf("Symlink %v is incorrect:\n"+
 				"Err: %v\n"+
 				"Exp: %v\n"+
 				"Act: %v",
-				symlink, err, expected_target, actual_target)
-
+				symlink, err, wantTarget, gotTarget)
 		}
 	}
 }

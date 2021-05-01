@@ -44,6 +44,7 @@ func init() {
 // ▶ /home/elf/show-src.elv
 // ▶ "put (src)[name code is-file]\n"
 // ▶ $true
+// ```
 //
 // Note: this builtin always returns information of the source of the function
 // calling `src`. Consider the following example:

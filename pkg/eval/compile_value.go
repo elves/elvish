@@ -243,12 +243,6 @@ func (op *indexingOp) exec(fm *Frame) ([]interface{}, Exception) {
 				if err != nil {
 					return nil, fm.errorp(op, err)
 				}
-				// Check the legacy low:high slice syntax deprecated since 0.15.
-				deprecation := vals.CheckDeprecatedIndex(v, index)
-				if deprecation != "" {
-					ctx := diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, indexOp)
-					fm.Deprecate(deprecation, ctx, 15)
-				}
 				newvs = append(newvs, result)
 			}
 		}

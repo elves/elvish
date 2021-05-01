@@ -2,6 +2,7 @@ package eval
 
 import (
 	"errors"
+	"math/big"
 	"reflect"
 	"testing"
 	"unsafe"
@@ -167,12 +168,12 @@ func TestGoFnCall(t *testing.T) {
 	}
 
 	// Conversion of return values.
-	f = NewGoFn("f", func() int { return 314 })
+	f = NewGoFn("f", func() *big.Int { return big.NewInt(314) })
 	callGood(outFrame, nil, theOptions)
 	select {
 	case ret := <-ch:
-		if ret != "314" {
-			t.Errorf("Return value is not converted to string")
+		if ret != 314 {
+			t.Errorf("Return value is not converted to int")
 		}
 	default:
 		t.Errorf("Return value is not outputted")

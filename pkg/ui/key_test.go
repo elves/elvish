@@ -7,7 +7,7 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 )
 
-var kTests = []struct {
+var KTests = []struct {
 	k1 Key
 	k2 Key
 }{
@@ -17,7 +17,7 @@ var kTests = []struct {
 }
 
 func TestK(t *testing.T) {
-	for _, test := range kTests {
+	for _, test := range KTests {
 		if test.k1 != test.k2 {
 			t.Errorf("%v != %v", test.k1, test.k2)
 		}

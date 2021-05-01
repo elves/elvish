@@ -12,8 +12,6 @@ import (
 // found from the top context.
 func eachVariableInTop(builtin, global *eval.Ns, ns string, f func(s string)) {
 	switch ns {
-	case "builtin:":
-		builtin.IterateNames(f)
 	case "", ":":
 		global.IterateNames(f)
 		builtin.IterateNames(f)
@@ -48,7 +46,6 @@ func eachVariableInTop(builtin, global *eval.Ns, ns string, f func(s string)) {
 // Calls the passed function for each namespace that can be used from the top
 // context.
 func eachNsInTop(builtin, global *eval.Ns, f func(s string)) {
-	f("builtin:")
 	f("e:")
 	f("E:")
 

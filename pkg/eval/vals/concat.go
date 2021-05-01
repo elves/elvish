@@ -3,6 +3,7 @@ package vals
 import (
 	"errors"
 	"fmt"
+	"math/big"
 )
 
 // Concatter wraps the Concat method. See Concat for how it is used.
@@ -60,9 +61,9 @@ func Concat(lhs, rhs interface{}) (interface{}, error) {
 
 func tryConcatBuiltins(lhs, rhs interface{}) (interface{}, bool) {
 	switch lhs := lhs.(type) {
-	case string, float64:
+	case string, int, *big.Int, *big.Rat, float64:
 		switch rhs := rhs.(type) {
-		case string, float64:
+		case string, int, *big.Int, *big.Rat, float64:
 			return ToString(lhs) + ToString(rhs), true
 		}
 	}

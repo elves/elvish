@@ -2,6 +2,7 @@ package vals
 
 import (
 	"errors"
+	"os"
 	"reflect"
 )
 
@@ -35,13 +36,15 @@ func (err noSuchKeyError) Error() string {
 }
 
 // Index indexes a value with the given key. It is implemented for the builtin
-// type string, the List type, StructMap types, and types satisfying the
-// ErrIndexer or Indexer interface (the Map type satisfies Indexer). For other
-// types, it returns a nil value and a non-nil error.
+// type string, *os.File, List, StructMap and PseudoStructMap types, and types
+// satisfying the ErrIndexer or Indexer interface (the Map type satisfies
+// Indexer). For other types, it returns a nil value and a non-nil error.
 func Index(a, k interface{}) (interface{}, error) {
 	switch a := a.(type) {
 	case string:
 		return indexString(a, k)
+	case *os.File:
+		return indexFile(a, k)
 	case ErrIndexer:
 		return a.Index(k)
 	case Indexer:
@@ -61,20 +64,14 @@ func Index(a, k interface{}) (interface{}, error) {
 	}
 }
 
-// CheckDeprecatedIndex checks if the given indexing operation is using any
-// deprecated syntax, and returns a non-empty message if it is.
-func CheckDeprecatedIndex(a, k interface{}) string {
-	switch a.(type) {
-	case string, List:
-		switch k := k.(type) {
-		case string:
-			_, sep, _ := splitIndexString(k)
-			if sep == ":" {
-				return "using : for slice is deprecated; use .. instead"
-			}
-		}
+func indexFile(f *os.File, k interface{}) (interface{}, error) {
+	switch k {
+	case "fd":
+		return int(f.Fd()), nil
+	case "name":
+		return f.Name(), nil
 	}
-	return ""
+	return nil, NoSuchKey(k)
 }
 
 func indexStructMap(a StructMap, k interface{}) (interface{}, error) {

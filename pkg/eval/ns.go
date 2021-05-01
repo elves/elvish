@@ -86,9 +86,8 @@ func (ns *Ns) Index(k interface{}) (interface{}, bool) {
 	return nil, false
 }
 
-// Index looks up a variable with the given name, and returns its value if it
-// exists, or nil if it does not. This is the type-safe version of Index and is
-// useful for introspection from Go code.
+// IndexName looks up a variable with the given name, and returns its value if it exists, or nil if
+// it does not. This is the type-safe version of Index and is useful for introspection from Go code.
 func (ns *Ns) IndexName(k string) vars.Var {
 	i := ns.lookup(k)
 	if i != -1 {
@@ -175,7 +174,7 @@ func (nb NsBuilder) AddGoFns(nsName string, fns map[string]interface{}) NsBuilde
 	return nb
 }
 
-// Build builds an Ns.
+// Ns builds a namespace.
 func (nb NsBuilder) Ns() *Ns {
 	n := len(nb)
 	ns := &Ns{make([]vars.Var, n), make([]string, n), make([]bool, n)}

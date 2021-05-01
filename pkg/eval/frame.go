@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/strutil"
@@ -211,10 +212,11 @@ func (fm *Frame) errorp(r diag.Ranger, e error) Exception {
 	case Exception:
 		return e
 	default:
-		return &exception{e, &StackTrace{
-			Head: diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r.Range()),
-			Next: fm.traceback,
-		}}
+		ctx := diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r)
+		if _, ok := e.(errs.SetReadOnlyVar); ok {
+			e = errs.SetReadOnlyVar{VarName: ctx.RelevantString()}
+		}
+		return &exception{e, &StackTrace{Head: ctx, Next: fm.traceback}}
 	}
 }
 

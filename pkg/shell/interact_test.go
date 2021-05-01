@@ -1,15 +1,9 @@
 package shell
 
 import (
-	"bytes"
 	"os"
-	"strings"
 	"testing"
 
-	"src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/eval/vars"
-	"src.elv.sh/pkg/prog"
 	. "src.elv.sh/pkg/prog/progtest"
 )
 
@@ -79,77 +73,4 @@ func TestInteract_RcFile_NonexistentIsOK(t *testing.T) {
 
 	Interact(f.Fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
 	f.TestOut(t, 1, "")
-}
-
-func TestExtractExports(t *testing.T) {
-	restore := prog.SetDeprecationLevel(0)
-	defer restore()
-
-	ns := eval.NsBuilder{
-		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc("a", "lorem")),
-	}.Ns()
-	ns2 := extractExports(ns, &bytes.Buffer{})
-	if a, _ := ns2.Index("a"); a != "lorem" {
-		t.Errorf("$a not extracted from exports")
-	}
-}
-
-func TestExtractExports_IgnoreNonMapExports(t *testing.T) {
-	restore := prog.SetDeprecationLevel(0)
-	defer restore()
-
-	ns := eval.NsBuilder{
-		exportsVarName: vars.NewReadOnly("x"),
-	}.Ns()
-	var errBuf bytes.Buffer
-	extractExports(ns, &errBuf)
-	if errBuf.Len() == 0 {
-		t.Errorf("No error written with non-map exports")
-	}
-}
-
-func TestExtractExports_IgnoreNonStringKeys(t *testing.T) {
-	restore := prog.SetDeprecationLevel(0)
-	defer restore()
-
-	ns := eval.NsBuilder{
-		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc(vals.EmptyList, "lorem")),
-	}.Ns()
-	var errBuf bytes.Buffer
-	extractExports(ns, &errBuf)
-	if errBuf.Len() == 0 {
-		t.Errorf("No error written with non-string key")
-	}
-}
-
-func TestExtractExports_DoesNotOverwrite(t *testing.T) {
-	restore := prog.SetDeprecationLevel(0)
-	defer restore()
-
-	ns := eval.NsBuilder{
-		"a":            vars.NewReadOnly("lorem"),
-		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc("a", "ipsum")),
-	}.Ns()
-	var errBuf bytes.Buffer
-	ns2 := extractExports(ns, &errBuf)
-	if ns2.HasName("a") {
-		t.Errorf("Existing variable overwritten")
-	}
-	if errBuf.Len() == 0 {
-		t.Errorf("No error written with name conflict")
-	}
-}
-
-func TestExtractExports_ShowsDeprecationWarning(t *testing.T) {
-	restore := prog.SetDeprecationLevel(15)
-	defer restore()
-
-	ns := eval.NsBuilder{
-		exportsVarName: vars.NewReadOnly(vals.EmptyMap),
-	}.Ns()
-	var errBuf bytes.Buffer
-	extractExports(ns, &errBuf)
-	if errOut := errBuf.String(); !strings.Contains(errOut, "deprecated") {
-		t.Errorf("no deprecation warning")
-	}
 }

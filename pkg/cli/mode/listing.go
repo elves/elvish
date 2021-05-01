@@ -61,7 +61,7 @@ func NewListing(app cli.App, spec ListingSpec) (Listing, error) {
 	}
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{
-			Prompt: ModePrompt(spec.Caption, true),
+			Prompt: modePrompt(spec.Caption, true),
 		},
 		ListBox: tk.ListBoxSpec{
 			Bindings: spec.Bindings,

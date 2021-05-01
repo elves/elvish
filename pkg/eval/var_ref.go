@@ -83,15 +83,12 @@ func resolveVarRefCapture(s scopeSearcher, qname string) *varRef {
 func resolveVarRefBuiltin(s scopeSearcher, qname string, r diag.Ranger) *varRef {
 	first, rest := SplitQName(qname)
 	if rest != "" {
-		// Try the 5 special namespace that we pretend are subnamespaces of
-		// builtin:.
+		// Try special namespace first.
 		switch first {
 		case "local:":
 			return resolveVarRefLocal(s, rest)
 		case "up:":
 			return resolveVarRefCapture(s, rest)
-		case "builtin:":
-			return resolveVarRefBuiltin(s, rest, r)
 		case "e:":
 			if strings.HasSuffix(rest, FnSuffix) {
 				return &varRef{scope: externalScope, subNames: []string{rest[:len(rest)-1]}}

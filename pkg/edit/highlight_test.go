@@ -108,9 +108,6 @@ func TestMakeHasCommand(t *testing.T) {
 
 		// Builtin function
 		tt.Args(ev, "put").Rets(true),
-		// Explicit builtin:
-		tt.Args(ev, "builtin:put").Rets(true),
-		tt.Args(ev, "builtin:bad-builtin").Rets(false),
 
 		// User-defined function
 		tt.Args(ev, "good").Rets(true),

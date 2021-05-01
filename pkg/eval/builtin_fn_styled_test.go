@@ -75,10 +75,10 @@ func TestStyledConcat(t *testing.T) {
 		That("print abc(styled abc blink)").Prints("abc\033[5mabc\033[m"),
 		// text+string
 		That("print (styled abc blink)abc").Prints("\033[5mabc\033[mabc"),
-		// float64+text
-		That("print (float64 13)(styled abc blink)").Prints("13\033[5mabc\033[m"),
-		// text+float64
-		That("print (styled abc blink)(float64 13)").Prints("\033[5mabc\033[m13"),
+		// number+text
+		That("print (num 13)(styled abc blink)").Prints("13\033[5mabc\033[m"),
+		// text+number
+		That("print (styled abc blink)(num 13)").Prints("\033[5mabc\033[m13"),
 		// text+segment
 		That("print (styled abc inverse)(styled-segment abc &bg-color=white)").Prints("\033[7mabc\033[m\033[47mabc\033[m"),
 		// text+text
