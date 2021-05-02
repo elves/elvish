@@ -8,8 +8,35 @@ import (
 	"strings"
 )
 
+// Design notes:
+//
+// The choice and relationship of number types in Elvish is closely modelled
+// after R6RS's numerical tower (with the omission of complex types for now). In
+// fact, there is a 1:1 correspondence between number types in Elvish and a
+// typical R6RS implementation (the list below uses Chez Scheme's terminology;
+// see https://www.scheme.com/csug8/numeric.html):
+//
+// int      : fixnum
+// *big.Int : bignum
+// *big.Rat : ratnum
+// float64  : flonum
+//
+// Similar to Chez Scheme, *big.Int is only used for representing integers
+// outside the range of int, and *big.Rat is only used for representing
+// non-integer rationals. Furthermore, *big.Rat values are always in simplest
+// form (this is guaranteed by the math/big library). As a consequence, each
+// number in Elvish only has a single unique representation.
+//
+// Note that the only machine-native integer type included in the system is int.
+// This is done primarily for the uniqueness of representation for each number,
+// but also for simplicity - the vast majority of Go functions that take
+// machine-native integers take int. When there is a genuine need to work with
+// other machine-native integer types, you may have to manually convert from and
+// to *big.Int and check for the relevant range of integers.
+
 // Num is a stand-in type for int, *big.Int, *big.Rat or float64. This type
-// doesn't offer type safety, but is useful as a marker.
+// doesn't offer type safety, but is useful as a marker; for example, it is
+// respected when parsing function arguments.
 type Num interface{}
 
 // NumSlice is a stand-in type for []int, []*big.Int, []*big.Rat or []float64.
