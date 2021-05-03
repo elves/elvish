@@ -349,6 +349,9 @@ func newIterator(v *vector) *iterator {
 
 func newIteratorWithRange(v *vector, begin, end int) *iterator {
 	it := &iterator{v, v.treeSize(), begin, end, nil}
+	if it.index >= it.treeSize {
+		return it
+	}
 	// Find the node for begin, remembering all nodes along the path.
 	n := v.root
 	for shift := v.height * chunkBits; shift > 0; shift -= chunkBits {

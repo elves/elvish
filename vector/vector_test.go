@@ -220,6 +220,17 @@ func TestSubVector(t *testing.T) {
 	}
 }
 
+// Regression test for https://b.elv.sh/1287: crash when tree has a height >= 1
+// and start of subvector is in the tail.
+func TestSubVector_BeginFromTail(t *testing.T) {
+	v := Empty
+	for i := 0; i < 65; i++ {
+		v = v.Cons(i)
+	}
+	sv := v.SubVector(64, 65)
+	testIterator(t, sv.Iterator(), 64, 65)
+}
+
 func checkVector(v Vector, values ...interface{}) bool {
 	if v.Len() != len(values) {
 		return false
