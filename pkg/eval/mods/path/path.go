@@ -136,13 +136,15 @@ var fns = map[string]interface{}{
 //elvdoc:fn is-dir
 //
 // ```elvish
-// is-dir $path
+// is-dir &follow-symlink=$false $path
 // ```
 //
 // Outputs `$true` if the path resolves to a directory. If the final element of the path is a
 // symlink, even if it points to a directory, it still outputs `$false` since a symlink is not a
-// directory. Use [`eval-symlinks`](#patheval-symlinks) on the path first if you don't care if the
-// final element is a symlink.
+// directory. Setting option `&follow-symlink` to true will cause the last element of the path, if
+// it is a symlink, to be resolved before doing the test.
+//
+// @cf eval-symlinks
 //
 // ```elvish-transcript
 // ~> touch not-a-dir
@@ -152,21 +154,33 @@ var fns = map[string]interface{}{
 // ▶ true
 // ```
 
-func isDir(path string) bool {
-	fi, err := os.Lstat(path)
+type isOpts struct{ FollowSymlink bool }
+
+func (opts *isOpts) SetDefaultOptions() {}
+
+func isDir(opts isOpts, path string) bool {
+	var fi os.FileInfo
+	var err error
+	if opts.FollowSymlink {
+		fi, err = os.Stat(path)
+	} else {
+		fi, err = os.Lstat(path)
+	}
 	return err == nil && fi.Mode().IsDir()
 }
 
 //elvdoc:fn is-regular
 //
 // ```elvish
-// is-regular $path
+// is-regular &follow-symlink=$false $path
 // ```
 //
 // Outputs `$true` if the path resolves to a regular file. If the final element of the path is a
 // symlink, even if it points to a regular file, it still outputs `$false` since a symlink is not a
-// regular file. Use [`eval-symlinks`](#patheval-symlinks) on the path first if you don't care if
-// the final element is a symlink.
+// regular file. Setting option `&follow-symlink` to true will cause the last element of the path,
+// if it is a symlink, to be resolved before doing the test.
+//
+// @cf eval-symlinks
 //
 // ```elvish-transcript
 // ~> touch not-a-dir
@@ -176,8 +190,14 @@ func isDir(path string) bool {
 // ▶ false
 // ```
 
-func isRegular(path string) bool {
-	fi, err := os.Lstat(path)
+func isRegular(opts isOpts, path string) bool {
+	var fi os.FileInfo
+	var err error
+	if opts.FollowSymlink {
+		fi, err = os.Stat(path)
+	} else {
+		fi, err = os.Lstat(path)
+	}
 	return err == nil && fi.Mode().IsRegular()
 }
 

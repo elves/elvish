@@ -31,7 +31,7 @@ archive:
     <th>arm64</th>
   </tr>
   <tr>
-    <td>HEAD (<a href="https://github.com/elves/elvish/blob/master/NEXT-RELEASE.md">Draft Release Note</a>)</td>
+    <td>HEAD (<a href="https://github.com/elves/elvish/blob/master/0.16-release-notes.md">Draft Release Note</a>)</td>
     <td>
       @dl Linux linux-amd64/elvish-HEAD.tar.gz
       @dl macOS darwin-amd64/elvish-HEAD.tar.gz

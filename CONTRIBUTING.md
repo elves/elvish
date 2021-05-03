@@ -41,10 +41,8 @@ Always document user-visible changes.
 ### Release notes
 
 Add a brief list item to the release note of the next release, in the
-appropriate section.
-
-The release notes live in `website/blog`; the symlink `NEXT-RELEASE.md` at the
-repo root always points to those of the next release.
+appropriate section. You can find the document at the root of the repo (called
+`$version-release-notes.md`).
 
 ### Reference docs
 

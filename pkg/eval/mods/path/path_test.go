@@ -13,12 +13,15 @@ import (
 
 var testDir = testutil.Dir{
 	"d1": testutil.Dir{
-		"f": testutil.Symlink{Target: filepath.Join("d2", "f")},
 		"d2": testutil.Dir{
 			"empty": "",
 			"f":     "",
 			"g":     testutil.Symlink{Target: "f"},
 		},
+		// These symlink definitions must occur after definition of their targets because on Windows
+		// the behavior of the os.Symlink function depends on the nature of the target; unlike UNIX.
+		"d": testutil.Symlink{"d2"},
+		"f": testutil.Symlink{filepath.Join("d2", "f")},
 	},
 	"s1": testutil.Symlink{Target: filepath.Join("d1", "d2")},
 }
@@ -54,7 +57,8 @@ func TestPath(t *testing.T) {
 		That(`path:is-abs a/b/s`).Puts(false),
 		That(`path:is-abs `+absPath).Puts(true),
 		That(`path:eval-symlinks d1/d2`).Puts(filepath.Join("d1", "d2")),
-		That(`path:eval-symlinks d1/d2/f`).Puts(filepath.Join("d1", "d2", "f")),
+		That(`path:eval-symlinks d1/d`).Puts(filepath.Join("d1", "d2")),
+		That(`path:eval-symlinks d1/d/f`).Puts(filepath.Join("d1", "d2", "f")),
 		That(`path:eval-symlinks s1`).Puts(filepath.Join("d1", "d2")),
 		That(`path:eval-symlinks d1/f`).Puts(filepath.Join("d1", "d2", "f")),
 		That(`path:eval-symlinks s1/g`).Puts(filepath.Join("d1", "d2", "f")),
@@ -65,9 +69,19 @@ func TestPath(t *testing.T) {
 		That(`path:is-dir a/b/s`).Puts(false),
 		That(`path:is-dir `+tmpdir).Puts(true),
 		That(`path:is-dir s1`).Puts(false),
+		That(`path:is-dir d1/d`).Puts(false),
+		That(`path:is-dir d1/d &follow-symlink`).Puts(true),
+		That(`path:is-dir d1/d/does-not-exist`).Puts(false),
+		That(`path:is-dir d1/d/does-not-exist &follow-symlink`).Puts(false),
+		That(`path:is-dir d1/f`).Puts(false),
+		That(`path:is-dir d1/f &follow-symlink`).Puts(false),
+
 		That(`path:is-regular a/b/s`).Puts(false),
 		That(`path:is-regular `+tmpdir).Puts(false),
 		That(`path:is-regular d1/f`).Puts(false),
+		That(`path:is-regular d1/f &follow-symlink`).Puts(true),
+		That(`path:is-regular d1/f/does-not-exist`).Puts(false),
+		That(`path:is-regular d1/f/does-not-exist &follow-symlink`).Puts(false),
 		That(`path:is-regular d1/d2/f`).Puts(true),
 		That(`path:is-regular s1/f`).Puts(true),
 
