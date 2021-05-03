@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/xiaq/persistent/hash"
+	"src.elv.sh/pkg/persistent/hash"
 	. "src.elv.sh/pkg/tt"
 )
 

@@ -1,22 +1,26 @@
 # Persistent data structure in Go
 
-[![GoDoc](https://godoc.org/github.com/xiaq/persistent?status.svg)](https://godoc.org/github.com/xiaq/persistent)
-[![Build Status](https://travis-ci.org/xiaq/persistent.svg?branch=master)](https://travis-ci.org/xiaq/persistent)
-[![Coverage Status](https://coveralls.io/repos/github/xiaq/persistent/badge.svg?branch=master)](https://coveralls.io/github/xiaq/persistent?branch=master)
-
 This is a Go clone of Clojure's persistent data structures.
 
 The API is not stable yet. **DO NOT USE** unless you are willing to cope with
 API changes.
 
-License is [Eclipse Public License 1.0](http://opensource.org/licenses/eclipse-1.0.php) (like Clojure).
-
+License is
+[Eclipse Public License 1.0](http://opensource.org/licenses/eclipse-1.0.php)
+(like Clojure).
 
 ## Implementation notes
 
 The list provided here is a singly-linked list and is very trivial to implement.
 
-The implementation of persistent vector and hash map and based on a series of [excellent](http://blog.higher-order.net/2009/02/01/understanding-clojures-persistentvector-implementation) [blog](http://blog.higher-order.net/2009/09/08/understanding-clojures-persistenthashmap-deftwice) [posts](http://blog.higher-order.net/2010/08/16/assoc-and-clojures-persistenthashmap-part-ii.html) as well as the Clojure source code. Despite the hash map appearing more complicated, the vector is slightly harder to implement due to the "tail array" optimization and some tricky transformation of the tree structure, which is fully replicated here.
+The implementation of persistent vector and hash map and based on a series of
+[excellent](http://blog.higher-order.net/2009/02/01/understanding-clojures-persistentvector-implementation)
+[blog](http://blog.higher-order.net/2009/09/08/understanding-clojures-persistenthashmap-deftwice)
+[posts](http://blog.higher-order.net/2010/08/16/assoc-and-clojures-persistenthashmap-part-ii.html)
+as well as the Clojure source code. Despite the hash map appearing more
+complicated, the vector is slightly harder to implement due to the "tail array"
+optimization and some tricky transformation of the tree structure, which is
+fully replicated here.
 
 ## Benchmarking results
 
@@ -24,11 +28,11 @@ The implementation of persistent vector and hash map and based on a series of [e
 
 Compared to native slices,
 
-*   Adding elements is anywhere from 2x to 8x as slow.
+-   Adding elements is anywhere from 2x to 8x as slow.
 
-*   Sequential read is about 9x as slow.
+-   Sequential read is about 9x as slow.
 
-*   Random read is about 7x as slow.
+-   Random read is about 7x as slow.
 
 Benchmarked on an early 2015 MacBook Pro, with Go 1.9:
 
@@ -54,9 +58,9 @@ BenchmarkEqualPersistent-4                  2000           1020893 ns/op 42.84x
 
 ### Hash map
 
-Compared to native maps, adding elements is about 3-6x slow. Difference is
-more pronunced when keys are sequential integers, but that workload is very
-rare in the real world.
+Compared to native maps, adding elements is about 3-6x slow. Difference is more
+pronunced when keys are sequential integers, but that workload is very rare in
+the real world.
 
 Benchmarked on an early 2015 MacBook Pro, with Go 1.9:
 

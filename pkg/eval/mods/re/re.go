@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/xiaq/persistent/vector"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/persistent/vector"
 )
 
 // Ns is the namespace for the re: module.

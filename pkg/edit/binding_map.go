@@ -4,10 +4,10 @@ import (
 	"errors"
 	"sort"
 
-	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/persistent/hashmap"
 	"src.elv.sh/pkg/ui"
 )
 

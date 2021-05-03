@@ -8,10 +8,10 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/persistent/hashmap"
 )
 
 // Sequence, list and maps.

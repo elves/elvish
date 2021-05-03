@@ -4,7 +4,7 @@ import (
 	"math"
 	"reflect"
 
-	"github.com/xiaq/persistent/hash"
+	"src.elv.sh/pkg/persistent/hash"
 )
 
 // Hasher wraps the Hash method.

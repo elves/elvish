@@ -3,7 +3,7 @@ package vals
 import (
 	"testing"
 
-	"github.com/xiaq/persistent/hash"
+	"src.elv.sh/pkg/persistent/hash"
 )
 
 type testStructMap struct {

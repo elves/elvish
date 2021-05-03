@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/xiaq/persistent/vector"
 	"src.elv.sh/pkg/daemon"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/env"
@@ -17,6 +16,7 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/logutil"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/persistent/vector"
 )
 
 var logger = logutil.GetLogger("[eval] ")

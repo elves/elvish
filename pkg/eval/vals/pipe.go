@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/xiaq/persistent/hash"
+	"src.elv.sh/pkg/persistent/hash"
 )
 
 // Pipe wraps a pair of pointers to os.File that are the two ends of the same

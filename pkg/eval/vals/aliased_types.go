@@ -3,8 +3,8 @@ package vals
 import (
 	"os"
 
-	"github.com/xiaq/persistent/hashmap"
-	"github.com/xiaq/persistent/vector"
+	"src.elv.sh/pkg/persistent/hashmap"
+	"src.elv.sh/pkg/persistent/vector"
 )
 
 // File is an alias for *os.File.

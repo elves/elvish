@@ -6,10 +6,10 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/xiaq/persistent/hash"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/persistent/hash"
 )
 
 var (

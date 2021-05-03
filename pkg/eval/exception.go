@@ -7,10 +7,10 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/xiaq/persistent/hash"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/persistent/hash"
 )
 
 // Exception represents exceptions. It is both a Value accessible to Elvish

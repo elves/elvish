@@ -3,7 +3,7 @@ package vals
 import (
 	"reflect"
 
-	"github.com/xiaq/persistent/hashmap"
+	"src.elv.sh/pkg/persistent/hashmap"
 )
 
 // HasKeyer wraps the HasKey method.

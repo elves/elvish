@@ -6,9 +6,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/xiaq/persistent/vector"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/persistent/vector"
 )
 
 var (

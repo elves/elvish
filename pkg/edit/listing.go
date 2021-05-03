@@ -3,7 +3,6 @@ package edit
 import (
 	"os"
 
-	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/histutil"
 	"src.elv.sh/pkg/cli/mode"
@@ -12,6 +11,7 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/persistent/hashmap"
 	"src.elv.sh/pkg/store"
 )
 

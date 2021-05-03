@@ -10,9 +10,9 @@ import (
 	"src.elv.sh/pkg/diag"
 	. "src.elv.sh/pkg/eval"
 
-	"github.com/xiaq/persistent/hash"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/persistent/hash"
 	"src.elv.sh/pkg/tt"
 )
 

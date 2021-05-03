@@ -9,8 +9,8 @@ import (
 
 	"src.elv.sh/pkg/eval/errs"
 
-	"github.com/xiaq/persistent/hash"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/persistent/hash"
 )
 
 func TestGoFnAsValue(t *testing.T) {

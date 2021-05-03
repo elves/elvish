@@ -6,11 +6,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/getopt"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/persistent/hashmap"
 )
 
 //elvdoc:fn complete-getopt

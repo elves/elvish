@@ -8,7 +8,6 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/xiaq/persistent/hash"
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/tk"
@@ -17,6 +16,7 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/persistent/hash"
 	"src.elv.sh/pkg/strutil"
 )
 

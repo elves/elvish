@@ -1,11 +1,11 @@
 package edit
 
 import (
-	"github.com/xiaq/persistent/hashmap"
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/persistent/hashmap"
 )
 
 //elvdoc:var abbr

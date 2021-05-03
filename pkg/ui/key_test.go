@@ -3,8 +3,8 @@ package ui
 import (
 	"testing"
 
-	"github.com/xiaq/persistent/hash"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/persistent/hash"
 )
 
 var KTests = []struct {

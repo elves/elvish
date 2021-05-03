@@ -3,7 +3,7 @@ package vals
 import (
 	"reflect"
 
-	"github.com/xiaq/persistent/vector"
+	"src.elv.sh/pkg/persistent/vector"
 )
 
 // Lener wraps the Len method.
