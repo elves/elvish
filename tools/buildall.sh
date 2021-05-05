@@ -57,7 +57,7 @@ export CGO_ENABLED=0
 main() {
     buildarch amd64 linux darwin freebsd openbsd netbsd windows
     buildarch 386   linux windows
-    buildarch arm64 linux
+    buildarch arm64 linux darwin
 }
 
 # buildarch $arch $os...

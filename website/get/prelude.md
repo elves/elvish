@@ -46,6 +46,7 @@ archive:
     </td>
     <td>
       @dl Linux linux-arm64/elvish-HEAD.tar.gz
+      @dl macOS darwin-arm64/elvish-HEAD.tar.gz
     </td>
   </tr>
   <tr>
