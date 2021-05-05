@@ -26,10 +26,10 @@
 
 if test $# != 3; then
     # Output the comment block above, stripping any leading "#" or "# "
-    sed < $0 -n '
+    sed < $0 -En '
       /^# /,/^$/{
         /^$/q
-        s/^# \?//
+        s/^# ?//
         p
       }'
     exit 1
