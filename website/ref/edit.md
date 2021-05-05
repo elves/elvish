@@ -432,11 +432,13 @@ hence that candidates for all completion types are matched by prefix.
 ## Hooks
 
 Hooks are functions that are executed at certain points in time. In Elvish this
-functionality is provided by variables that are a list of functions. Some hooks
-are populated with one or more functions when Elvish starts. In general you
-should append to a hook variable rather than assign a list of functions to it.
-That is, rather than doing `hook-var = [ []{ put 'I ran' } ]` you should do
-`hook-var = [ $@hook-var []{ put 'I ran' } ]`.
+functionality is provided by variables that are a list of functions.
+
+**NOTE**: Hook variables may be initialized with a non-empty list, and you may
+have modules that add their own hooks. In general you should append to a hook
+variable rather than assign a list of functions to it. That is, rather than
+doing `set edit:some-hook = [ []{ put 'I ran' } ]` you should do
+`set edit:some-hook = [ $@hook-var []{ put 'I ran' } ]`.
 
 These are the editor/REPL hooks:
 
