@@ -16,11 +16,7 @@ generate:
 # Windows port supports race detection, but requires GCC, so we don't enable it
 # there.
 test:
-	if echo `go env GOOS GOARCH CGO_ENABLED` | egrep -qx '(linux|freebsd|darwin) amd64 1'; then \
-		go test -race ./... ; \
-	else \
-		go test ./... ; \
-	fi
+	go test $(shell ./tools/run-race.sh) ./...
 
 # Generate a basic test coverage report. This will open the report in your
 # browser. See also https://codecov.io/gh/elves/elvish/.
