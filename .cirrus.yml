@@ -23,16 +23,3 @@ test_task:
         TEST_FLAG: -race
   go_version_script: go version
   test_script: go test $TEST_FLAG ./...
-
-deploy_task:
-  name: Build binaries and deploy to bintray
-  only_if: $CIRRUS_PR == ""
-  env:
-    BINTRAY_TOKEN: ENCRYPTED[1a1820d17a2014de6b1798d379f86aa24bbd8acd5149656a98bfdf33746c78c85fefc8e6e522fedacdf8c4bf92bb25a0]
-  go_modules_cache:
-    fingerprint_script: cat go.sum
-    folder: $GOPATH/pkg/mod
-  container:
-    image: theelves/cirrus-builder
-  go_version_script: go version
-  deploy_script: ./tools/cirrus-deploy.sh
