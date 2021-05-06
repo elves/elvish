@@ -1,20 +1,23 @@
 package file
 
 import (
+	"math/big"
 	"os"
 
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 )
 
 var Ns = eval.NsBuilder{}.AddGoFns("file:", fns).Ns()
 
 var fns = map[string]interface{}{
-	"close":   close,
-	"open":    open,
-	"pipe":    pipe,
-	"prclose": prclose,
-	"pwclose": pwclose,
+	"close":    close,
+	"open":     open,
+	"pipe":     pipe,
+	"prclose":  prclose,
+	"pwclose":  pwclose,
+	"truncate": truncate,
 }
 
 //elvdoc:fn open
@@ -123,4 +126,44 @@ func prclose(p vals.Pipe) error {
 
 func pwclose(p vals.Pipe) error {
 	return p.WriteEnd.Close()
+}
+
+//elvdoc:fn truncate
+func truncate(name string, size vals.Num) error {
+
+	switch size.(type) {
+	case int:
+		s := int64(size.(int))
+		err := os.Truncate(name, s)
+		if err != nil {
+			return err
+		} else {
+			return nil
+		}
+
+	case *big.Int:
+		if (size.(*big.Int)).IsInt64() {
+			s := (size.(*big.Int)).Int64()
+			err := os.Truncate(name, s)
+			if err != nil {
+				return err
+			} else {
+				return nil
+			}
+		} else {
+			return errs.OutOfRange{
+				What:      "size argument for os.Truncate",
+				ValidLow:  "0",
+				ValidHigh: "8 bytes",
+				Actual:    "More than 8 bytes",
+			}
+		}
+
+	default:
+		return errs.BadValue{
+			What:   "size argument for os.Truncate",
+			Valid:  "int or *big.Int",
+			Actual: "float64",
+		}
+	}
 }
