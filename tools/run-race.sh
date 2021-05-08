@@ -1,13 +1,16 @@
 #!/bin/sh
-# Prints "-race" if tests should be run with the race detector.
-#
-# This is a subset of all platforms that actually support the race detector,
-# which is documented in
-# https://golang.org/doc/articles/race_detector#Supported_Systems.
-#
-# We don't run with race detectors on Windows because it requires GCC, which is
-# not always available.
-if echo `go env GOOS GOARCH CGO_ENABLED` |
-   egrep -qx '((linux|darwin|freebsd|netbsd) amd64|(linux|darwin) arm64) 1'; then
-  printf %s -race
+# Prints "-race" if running on a platform that supports the race detector.
+# This should be kept in sync of the official list here:
+# https://golang.org/doc/articles/race_detector#Supported_Systems
+if test `go env CGO_ENABLED` = 1; then
+  if echo `go env GOOS GOARCH` |
+     egrep -qx '((linux|darwin|freebsd|netbsd) amd64|(linux|darwin) arm64|linux ppc64le)'; then
+    printf %s -race
+  elif echo `go env GOOS GOARCH` | egrep -qx 'windows amd64'; then
+    # Race detector on windows amd64 requires gcc:
+    # https://github.com/golang/go/issues/27089
+    if which gcc > /dev/null; then
+      printf %s -race
+    fi
+  fi
 fi
