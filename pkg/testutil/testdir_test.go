@@ -101,6 +101,16 @@ func TestApplyDir_CreatesDirectories(t *testing.T) {
 	testFileContent(t, "d/dd/dd1", "dd1 content")
 }
 
+func TestApplyDir_AllowsExistingDirectories(t *testing.T) {
+	_, cleanup := InTestDir()
+	defer cleanup()
+
+	ApplyDir(Dir{"d": Dir{}})
+	ApplyDir(Dir{"d": Dir{"a": "content"}})
+
+	testFileContent(t, "d/a", "content")
+}
+
 func TestApplyDir_Symlinks(t *testing.T) {
 	testdir, cleanup := InTestDir()
 	defer cleanup()

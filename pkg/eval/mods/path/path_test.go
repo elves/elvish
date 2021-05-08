@@ -16,12 +16,17 @@ var testDir = testutil.Dir{
 		"d2": testutil.Dir{
 			"empty": "",
 			"f":     "",
-			"g":     testutil.Symlink{Target: "f"},
 		},
-		// These symlink definitions must occur after definition of their targets because on Windows
-		// the behavior of the os.Symlink function depends on the nature of the target; unlike UNIX.
-		"d": testutil.Symlink{"d2"},
-		"f": testutil.Symlink{filepath.Join("d2", "f")},
+	},
+}
+
+var testDirSymlinks = testutil.Dir{
+	"d1": testutil.Dir{
+		"d2": testutil.Dir{
+			"g": testutil.Symlink{Target: "f"},
+		},
+		"d": testutil.Symlink{Target: "d2"},
+		"f": testutil.Symlink{Target: filepath.Join("d2", "f")},
 	},
 	"s1": testutil.Symlink{Target: filepath.Join("d1", "d2")},
 }
@@ -30,6 +35,8 @@ func TestPath(t *testing.T) {
 	tmpdir, cleanup := testutil.InTestDir()
 	defer cleanup()
 	testutil.ApplyDir(testDir)
+	// Windows requires symlinks targets to exist first
+	testutil.ApplyDir(testDirSymlinks)
 
 	absPath, err := filepath.Abs("a/b/c.png")
 	if err != nil {

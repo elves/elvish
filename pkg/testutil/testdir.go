@@ -91,7 +91,7 @@ func applyDir(dir Dir, prefix string) {
 		case File:
 			Must(ioutil.WriteFile(path, []byte(file.Content), file.Perm))
 		case Dir:
-			Must(os.Mkdir(path, 0755))
+			Must(os.MkdirAll(path, 0755))
 			applyDir(file, path)
 		case Symlink:
 			Must(os.Symlink(file.Target, path))
