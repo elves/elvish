@@ -9,6 +9,43 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 )
 
+// Ns is the namespace for the math: module.
+var Ns = eval.NsBuilder{
+	"e":  vars.NewReadOnly(math.E),
+	"pi": vars.NewReadOnly(math.Pi),
+}.AddGoFns("math:", fns).Ns()
+
+var fns = map[string]interface{}{
+	"abs":           math.Abs,
+	"acos":          math.Acos,
+	"acosh":         math.Acosh,
+	"asin":          math.Asin,
+	"asinh":         math.Asinh,
+	"atan":          math.Atan,
+	"atanh":         math.Atanh,
+	"ceil":          math.Ceil,
+	"cos":           math.Cos,
+	"cosh":          math.Cosh,
+	"floor":         math.Floor,
+	"is-inf":        isInf,
+	"is-nan":        math.IsNaN,
+	"log":           math.Log,
+	"log10":         math.Log10,
+	"log2":          math.Log2,
+	"max":           max,
+	"min":           min,
+	"pow":           math.Pow,
+	"pow10":         math.Pow10,
+	"round":         math.Round,
+	"round-to-even": math.RoundToEven,
+	"sin":           math.Sin,
+	"sinh":          math.Sinh,
+	"sqrt":          math.Sqrt,
+	"tan":           math.Tan,
+	"tanh":          math.Tanh,
+	"trunc":         math.Trunc,
+}
+
 //elvdoc:var e
 //
 // ```elvish
@@ -223,6 +260,14 @@ import (
 // ▶ $true
 // ```
 
+type isInfOpts struct{ Sign int }
+
+func (opts *isInfOpts) SetDefaultOptions() { opts.Sign = 0 }
+
+func isInf(opts isInfOpts, arg float64) bool {
+	return math.IsInf(arg, opts.Sign)
+}
+
 //elvdoc:fn is-nan
 //
 // ```elvish
@@ -307,6 +352,13 @@ import (
 // ▶ (float 99)
 // ```
 
+func max(num float64, nums ...float64) float64 {
+	for i := 0; i < len(nums); i++ {
+		num = math.Max(num, nums[i])
+	}
+	return num
+}
+
 //elvdoc:fn min
 //
 // ```elvish
@@ -328,6 +380,13 @@ import (
 // ~> range 100 | math:min (all)
 // ▶ (float 0)
 // ```
+
+func min(num float64, nums ...float64) float64 {
+	for i := 0; i < len(nums); i++ {
+		num = math.Min(num, nums[i])
+	}
+	return num
+}
 
 //elvdoc:fn pow
 //
@@ -482,62 +541,3 @@ import (
 // ~> math:trunc 2.5
 // ▶ (float64 2)
 // ```
-
-// Ns is the namespace for the math: module.
-var Ns = eval.NsBuilder{
-	"e":  vars.NewReadOnly(math.E),
-	"pi": vars.NewReadOnly(math.Pi),
-}.AddGoFns("math:", fns).Ns()
-
-var fns = map[string]interface{}{
-	"abs":           math.Abs,
-	"acos":          math.Acos,
-	"acosh":         math.Acosh,
-	"asin":          math.Asin,
-	"asinh":         math.Asinh,
-	"atan":          math.Atan,
-	"atanh":         math.Atanh,
-	"ceil":          math.Ceil,
-	"cos":           math.Cos,
-	"cosh":          math.Cosh,
-	"floor":         math.Floor,
-	"is-inf":        isInf,
-	"is-nan":        math.IsNaN,
-	"log":           math.Log,
-	"log10":         math.Log10,
-	"log2":          math.Log2,
-	"max":           max,
-	"min":           min,
-	"pow":           math.Pow,
-	"pow10":         math.Pow10,
-	"round":         math.Round,
-	"round-to-even": math.RoundToEven,
-	"sin":           math.Sin,
-	"sinh":          math.Sinh,
-	"sqrt":          math.Sqrt,
-	"tan":           math.Tan,
-	"tanh":          math.Tanh,
-	"trunc":         math.Trunc,
-}
-
-type isInfOpts struct{ Sign int }
-
-func (opts *isInfOpts) SetDefaultOptions() { opts.Sign = 0 }
-
-func isInf(opts isInfOpts, arg float64) bool {
-	return math.IsInf(arg, opts.Sign)
-}
-
-func max(num float64, nums ...float64) float64 {
-	for i := 0; i < len(nums); i++ {
-		num = math.Max(num, nums[i])
-	}
-	return num
-}
-
-func min(num float64, nums ...float64) float64 {
-	for i := 0; i < len(nums); i++ {
-		num = math.Min(num, nums[i])
-	}
-	return num
-}

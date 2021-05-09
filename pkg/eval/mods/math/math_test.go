@@ -14,18 +14,6 @@ func TestMath(t *testing.T) {
 		ev.AddGlobal(eval.NsBuilder{}.AddNs("math", Ns).Ns())
 	}
 	TestWithSetup(t, setup,
-		That(`put $math:pi`).Puts(math.Pi),
-		That(`put $math:e`).Puts(math.E),
-
-		That(`math:abs 2.1`).Puts(2.1),
-		That(`math:abs -2.1`).Puts(2.1),
-
-		That(`math:ceil 2.1`).Puts(3.0),
-		That(`math:ceil -2.1`).Puts(-2.0),
-
-		That(`math:floor 2.1`).Puts(2.0),
-		That(`math:floor -2.1`).Puts(-3.0),
-
 		That(`math:is-inf 1.3`).Puts(false),
 		That(`math:is-inf &sign=0 inf`).Puts(true),
 		That(`math:is-inf &sign=1 inf`).Puts(true),
@@ -40,6 +28,34 @@ func TestMath(t *testing.T) {
 		That(`math:is-inf (float64 -inf)`).Puts(true),
 		That(`math:is-inf (float64 nan)`).Puts(false),
 		That(`math:is-inf (float64 1.3)`).Puts(false),
+
+		That(`math:max`).Throws(
+			errs.ArityMismatch{What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0},
+			"math:max"),
+		That(`math:max 42`).Puts(float64(42)),
+		That(`math:max 11 -3 1 7`).Puts(float64(11)),
+		That(`math:max 3 NaN 5`).Puts(math.NaN()),
+
+		That(`math:min`).Throws(
+			errs.ArityMismatch{What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0},
+			"math:min"),
+		That(`math:min 42`).Puts(float64(42)),
+		That(`math:min 11 -3 1 7`).Puts(float64(-3)),
+		That(`math:min 3 NaN 5`).Puts(math.NaN()),
+
+		// Tests below this line are tests against simple bindings for Go's math package.
+
+		That(`put $math:pi`).Puts(math.Pi),
+		That(`put $math:e`).Puts(math.E),
+
+		That(`math:abs 2.1`).Puts(2.1),
+		That(`math:abs -2.1`).Puts(2.1),
+
+		That(`math:ceil 2.1`).Puts(3.0),
+		That(`math:ceil -2.1`).Puts(-2.0),
+
+		That(`math:floor 2.1`).Puts(2.0),
+		That(`math:floor -2.1`).Puts(-3.0),
 
 		That(`math:is-nan 1.3`).Puts(false),
 		That(`math:is-nan inf`).Puts(false),
@@ -158,19 +174,5 @@ func TestMath(t *testing.T) {
 		That(`math:pow10 0`).Puts(1.0),
 		That(`math:pow10 3`).Puts(1000.0),
 		That(`math:pow10 -3`).Puts(0.001),
-
-		That(`math:max`).Throws(
-			errs.ArityMismatch{What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0},
-			"math:max"),
-		That(`math:max 42`).Puts(float64(42)),
-		That(`math:max 11 -3 1 7`).Puts(float64(11)),
-		That(`math:max 3 NaN 5`).Puts(math.NaN()),
-
-		That(`math:min`).Throws(
-			errs.ArityMismatch{What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0},
-			"math:min"),
-		That(`math:min 42`).Puts(float64(42)),
-		That(`math:min 11 -3 1 7`).Puts(float64(-3)),
-		That(`math:min 3 NaN 5`).Puts(math.NaN()),
 	)
 }
