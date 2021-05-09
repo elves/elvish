@@ -1,0 +1,27 @@
+image: golang:latest
+
+variables:
+  REPO_NAME: gitlab.com/elves/elvish
+
+before_script:
+  - go version
+#  - mkdir -p $GOPATH/src/$(dirname $REPO_NAME)
+#  - ln -svf $CI_PROJECT_DIR $GOPATH/src/$REPO_NAME
+#  - cd $GOPATH/src/$REPO_NAME
+
+stages:
+  - test
+  - deploy
+
+test:
+  stage: test
+  script:
+    - go test -race ./...
+
+deploy:
+  stage: deploy
+  script:
+    - ./tools/buildall.sh . _bin HEAD
+  artifacts:
+    paths:
+      - _bin
