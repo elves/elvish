@@ -20,7 +20,7 @@ deploy:
   stage: deploy
   script:
     - apk add zip
-    - ./tools/buildall.sh . _bin HEAD
+    - ./tools/buildall.sh . bin HEAD
   artifacts:
     paths:
-      - _bin
+      - bin
