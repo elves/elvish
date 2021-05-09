@@ -4,8 +4,11 @@ package math
 
 import (
 	"math"
+	"math/big"
 
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 )
 
@@ -16,34 +19,34 @@ var Ns = eval.NsBuilder{
 }.AddGoFns("math:", fns).Ns()
 
 var fns = map[string]interface{}{
-	"abs":           math.Abs,
+	"abs":           abs,
 	"acos":          math.Acos,
 	"acosh":         math.Acosh,
 	"asin":          math.Asin,
 	"asinh":         math.Asinh,
 	"atan":          math.Atan,
 	"atanh":         math.Atanh,
-	"ceil":          math.Ceil,
+	"ceil":          math.Ceil, // TODO: Make exactness-preserving
 	"cos":           math.Cos,
 	"cosh":          math.Cosh,
-	"floor":         math.Floor,
+	"floor":         math.Floor, // TODO: Make exactness-preserving
 	"is-inf":        isInf,
-	"is-nan":        math.IsNaN,
+	"is-nan":        isNaN,
 	"log":           math.Log,
 	"log10":         math.Log10,
 	"log2":          math.Log2,
 	"max":           max,
 	"min":           min,
-	"pow":           math.Pow,
-	"pow10":         math.Pow10,
-	"round":         math.Round,
-	"round-to-even": math.RoundToEven,
+	"pow":           math.Pow,         // TODO: Make exactness-preserving for integer exponents
+	"pow10":         math.Pow10,       // TODO: Make exactness-preserving for integer exponents
+	"round":         math.Round,       // TODO: Make exactness-preserving
+	"round-to-even": math.RoundToEven, // TODO: Make exactness-preserving
 	"sin":           math.Sin,
 	"sinh":          math.Sinh,
 	"sqrt":          math.Sqrt,
 	"tan":           math.Tan,
 	"tanh":          math.Tanh,
-	"trunc":         math.Trunc,
+	"trunc":         math.Trunc, // TODO: Make exactness-preserving
 }
 
 //elvdoc:var e
@@ -52,7 +55,7 @@ var fns = map[string]interface{}{
 // $math:e
 // ```
 //
-// The value of
+// Approximate value of
 // [`e`](https://en.wikipedia.org/wiki/E_(mathematical_constant)):
 // 2.718281.... This variable is read-only.
 
@@ -62,7 +65,7 @@ var fns = map[string]interface{}{
 // $math:pi
 // ```
 //
-// The value of [`π`](https://en.wikipedia.org/wiki/Pi): 3.141592.... This
+// Approximate value of [`π`](https://en.wikipedia.org/wiki/Pi): 3.141592.... This
 // variable is read-only.
 
 //elvdoc:fn abs
@@ -71,14 +74,61 @@ var fns = map[string]interface{}{
 // math:abs $number
 // ```
 //
-// Computes the absolute value `$number`. Examples:
+// Computes the absolute value `$number`. This function is exactness-preserving.
+// Examples:
 //
 // ```elvish-transcript
-// ~> math:abs 1.2
-// ▶ (float64 1.2)
-// ~> math:abs -5.3
-// ▶ (float64 5.3)
+// ~> math:abs 2
+// ▶ (num 2)
+// ~> math:abs -2
+// ▶ (num 2)
+// ~> math:abs 10000000000000000000
+// ▶ (num 10000000000000000000)
+// ~> math:abs -10000000000000000000
+// ▶ (num 10000000000000000000)
+// ~> math:abs 1/2
+// ▶ (num 1/2)
+// ~> math:abs -1/2
+// ▶ (num 1/2)
+// ~> math:abs 1.23
+// ▶ (num 1.23)
+// ~> math:abs -1.23
+// ▶ (num 1.23)
 // ```
+
+const (
+	maxInt = int(^uint(0) >> 1)
+	minInt = -maxInt - 1
+)
+
+var absMinInt = new(big.Int).Abs(big.NewInt(int64(minInt)))
+
+func abs(n vals.Num) vals.Num {
+	switch n := n.(type) {
+	case int:
+		if n < 0 {
+			if n == minInt {
+				return absMinInt
+			}
+			return -n
+		}
+		return n
+	case *big.Int:
+		if n.Sign() < 0 {
+			return new(big.Int).Abs(n)
+		}
+		return n
+	case *big.Rat:
+		if n.Sign() < 0 {
+			return new(big.Rat).Abs(n)
+		}
+		return n
+	case float64:
+		return math.Abs(n)
+	default:
+		panic("unreachable")
+	}
+}
 
 //elvdoc:fn ceil
 //
@@ -264,8 +314,11 @@ type isInfOpts struct{ Sign int }
 
 func (opts *isInfOpts) SetDefaultOptions() { opts.Sign = 0 }
 
-func isInf(opts isInfOpts, arg float64) bool {
-	return math.IsInf(arg, opts.Sign)
+func isInf(opts isInfOpts, n vals.Num) bool {
+	if f, ok := n.(float64); ok {
+		return math.IsInf(f, opts.Sign)
+	}
+	return false
 }
 
 //elvdoc:fn is-nan
@@ -284,6 +337,13 @@ func isInf(opts isInfOpts, arg float64) bool {
 // ~> math:is-nan (float64 nan)
 // ▶ $true
 // ```
+
+func isNaN(n vals.Num) bool {
+	if f, ok := n.(float64); ok {
+		return math.IsNaN(f)
+	}
+	return false
+}
 
 //elvdoc:fn log
 //
@@ -336,27 +396,61 @@ func isInf(opts isInfOpts, arg float64) bool {
 // math:max $number...
 // ```
 //
-// Outputs the maximum number in the arguments. If there are no arguments
-// an exception is thrown. If any number is NaN then NaN is output.
+// Outputs the maximum number in the arguments. If there are no arguments,
+// an exception is thrown. If any number is NaN then NaN is output. This
+// function is exactness-preserving.
 //
 // Examples:
 //
 // ```elvish-transcript
-// ~> put ?(math:max)
-// ▶ ?(fail 'arity mismatch: arguments here must be 1 or more values, but is 0 values')
-// ~> math:max 3
-// ▶ (float 3)
 // ~> math:max 3 5 2
-// ▶ (float 5)
-// ~> range 100 | math:max (all)
-// ▶ (float 99)
+// ▶ (num 5)
+// ~> math:max (range 100)
+// ▶ (num 99)
+// ~> math:max 1/2 1/3 2/3
+// ▶ (num 2/3)
 // ```
 
-func max(num float64, nums ...float64) float64 {
-	for i := 0; i < len(nums); i++ {
-		num = math.Max(num, nums[i])
+func max(rawNums ...vals.Num) (vals.Num, error) {
+	if len(rawNums) == 0 {
+		return nil, errs.ArityMismatch{
+			What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0}
 	}
-	return num
+	nums := vals.UnifyNums(rawNums, 0)
+	switch nums := nums.(type) {
+	case []int:
+		n := nums[0]
+		for i := 1; i < len(nums); i++ {
+			if n < nums[i] {
+				n = nums[i]
+			}
+		}
+		return n, nil
+	case []*big.Int:
+		n := nums[0]
+		for i := 1; i < len(nums); i++ {
+			if n.Cmp(nums[i]) < 0 {
+				n = nums[i]
+			}
+		}
+		return n, nil
+	case []*big.Rat:
+		n := nums[0]
+		for i := 1; i < len(nums); i++ {
+			if n.Cmp(nums[i]) < 0 {
+				n = nums[i]
+			}
+		}
+		return n, nil
+	case []float64:
+		n := nums[0]
+		for i := 1; i < len(nums); i++ {
+			n = math.Max(n, nums[i])
+		}
+		return n, nil
+	default:
+		panic("unreachable")
+	}
 }
 
 //elvdoc:fn min
@@ -366,26 +460,61 @@ func max(num float64, nums ...float64) float64 {
 // ```
 //
 // Outputs the minimum number in the arguments. If there are no arguments
-// an exception is thrown. If any number is NaN then NaN is output.
+// an exception is thrown. If any number is NaN then NaN is output. This
+// function is exactness-preserving.
 //
 // Examples:
 //
 // ```elvish-transcript
-// ~> put ?(math:min)
-// ▶ ?(fail 'arity mismatch: arguments here must be 1 or more values, but is 0 values')
-// ~> math:min 3
-// ▶ (float 3)
+// ~> math:min
+// Exception: arity mismatch: arguments here must be 1 or more values, but is 0 values
+// [tty 17], line 1: math:min
 // ~> math:min 3 5 2
-// ▶ (float 2)
-// ~> range 100 | math:min (all)
-// ▶ (float 0)
+// ▶ (num 2)
+// ~> math:min 1/2 1/3 2/3
+// ▶ (num 1/3)
 // ```
 
-func min(num float64, nums ...float64) float64 {
-	for i := 0; i < len(nums); i++ {
-		num = math.Min(num, nums[i])
+func min(rawNums ...vals.Num) (vals.Num, error) {
+	if len(rawNums) == 0 {
+		return nil, errs.ArityMismatch{
+			What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0}
 	}
-	return num
+	nums := vals.UnifyNums(rawNums, 0)
+	switch nums := nums.(type) {
+	case []int:
+		n := nums[0]
+		for i := 1; i < len(nums); i++ {
+			if n > nums[i] {
+				n = nums[i]
+			}
+		}
+		return n, nil
+	case []*big.Int:
+		n := nums[0]
+		for i := 1; i < len(nums); i++ {
+			if n.Cmp(nums[i]) > 0 {
+				n = nums[i]
+			}
+		}
+		return n, nil
+	case []*big.Rat:
+		n := nums[0]
+		for i := 1; i < len(nums); i++ {
+			if n.Cmp(nums[i]) > 0 {
+				n = nums[i]
+			}
+		}
+		return n, nil
+	case []float64:
+		n := nums[0]
+		for i := 1; i < len(nums); i++ {
+			n = math.Min(n, nums[i])
+		}
+		return n, nil
+	default:
+		panic("unreachable")
+	}
 }
 
 //elvdoc:fn pow
