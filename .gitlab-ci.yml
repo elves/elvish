@@ -13,6 +13,7 @@ stages:
 test:
   stage: test
   script:
+    - apk add gcc
     - go test -race ./...
 
 deploy:
