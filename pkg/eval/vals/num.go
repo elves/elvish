@@ -125,24 +125,7 @@ func UnifyNums(nums []Num, typ NumType) NumSlice {
 	case Float64:
 		unified := make([]float64, len(nums))
 		for i, num := range nums {
-			switch num := num.(type) {
-			case int:
-				unified[i] = float64(num)
-			case *big.Int:
-				if num.IsInt64() {
-					// Might fit in float64
-					unified[i] = float64(num.Int64())
-				} else {
-					// Definitely won't fit in float64
-					unified[i] = math.Inf(num.Sign())
-				}
-			case *big.Rat:
-				unified[i], _ = num.Float64()
-			case float64:
-				unified[i] = num
-			default:
-				panic("unreachable")
-			}
+			unified[i] = convertToFloat64(num)
 		}
 		return unified
 	default:
@@ -162,6 +145,28 @@ func getNumType(n Num) NumType {
 		return Float64
 	default:
 		panic("invalid num type " + fmt.Sprintf("%T", n))
+	}
+}
+
+func convertToFloat64(num Num) float64 {
+	switch num := num.(type) {
+	case int:
+		return float64(num)
+	case *big.Int:
+		if num.IsInt64() {
+			// Might fit in float64
+			return float64(num.Int64())
+		} else {
+			// Definitely won't fit in float64
+			return math.Inf(num.Sign())
+		}
+	case *big.Rat:
+		f, _ := num.Float64()
+		return f
+	case float64:
+		return num
+	default:
+		panic("unreachable")
 	}
 }
 

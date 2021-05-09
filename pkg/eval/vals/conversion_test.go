@@ -32,6 +32,9 @@ func TestScanToGo(t *testing.T) {
 		Args("x", 0).Rets(Any, cannotParseAs{"integer", "x"}),
 
 		// float64
+		Args(23, 0.0).Rets(23.0),
+		Args(big.NewRat(1, 2), 0.0).Rets(0.5),
+		Args(1.2, 0.0).Rets(1.2),
 		Args("23", 0.0).Rets(23.0),
 		Args("0x23", 0.0).Rets(float64(0x23)),
 		Args(someType{}, 0.0).Rets(Any, errMustBeNumber),
