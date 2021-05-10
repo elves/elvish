@@ -6,18 +6,12 @@ variables:
 before_script:
   - go version
 
-stages:
-  - test
-  - deploy
-
 test:
-  stage: test
   script:
     - apk add gcc musl-dev
     - go test -race ./...
 
-deploy:
-  stage: deploy
+build:
   script:
     - apk add zip
     - ./tools/buildall.sh . bin HEAD
