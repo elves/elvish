@@ -27,19 +27,24 @@ func UInt64(u uint64) uint32 {
 }
 
 func Pointer(p unsafe.Pointer) uint32 {
-	if unsafe.Sizeof(p) == 4 {
+	switch unsafe.Sizeof(p) {
+	case 4:
 		return UInt32(uint32(uintptr(p)))
-	} else {
+	case 8:
 		return UInt64(uint64(uintptr(p)))
+	default:
+		panic("unhandled pointer size")
 	}
-	// NOTE: We don't care about 128-bit archs yet.
 }
 
-func UIntPtr(u uintptr) uint32 {
-	if unsafe.Sizeof(u) == 4 {
-		return UInt32(uint32(u))
-	} else {
-		return UInt64(uint64(u))
+func UIntPtr(p uintptr) uint32 {
+	switch unsafe.Sizeof(p) {
+	case 4:
+		return UInt32(uint32(p))
+	case 8:
+		return UInt64(uint64(p))
+	default:
+		panic("unhandled pointer size")
 	}
 }
 

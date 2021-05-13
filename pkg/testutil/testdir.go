@@ -53,12 +53,12 @@ func InTestDir() (string, func()) {
 // InTempHome is like InTestDir, but it also sets HOME to the temporary
 // directory and restores the original HOME in cleanup.
 func InTempHome() (string, func()) {
-	oldHome := os.Getenv(env.HOME)
+	oldHome := os.Getenv(env.Home)
 	tmpHome, cleanup := InTestDir()
-	os.Setenv(env.HOME, tmpHome)
+	os.Setenv(env.Home, tmpHome)
 
 	return tmpHome, func() {
-		os.Setenv(env.HOME, oldHome)
+		os.Setenv(env.Home, oldHome)
 		cleanup()
 	}
 }

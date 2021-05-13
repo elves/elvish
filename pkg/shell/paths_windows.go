@@ -11,7 +11,7 @@ import (
 // getSecureRunDir stats elvish-$USERNAME under the default temp dir, creating
 // it if it doesn't yet exist, and return the directory name.
 func getSecureRunDir() (string, error) {
-	username := os.Getenv(env.USERNAME)
+	username := os.Getenv(env.Username)
 
 	runDir := filepath.Join(os.TempDir(), "elvish-"+username)
 	err := os.MkdirAll(runDir, 0700)

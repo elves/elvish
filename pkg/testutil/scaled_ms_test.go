@@ -27,12 +27,12 @@ var scaledMsTests = []struct {
 }
 
 func TestScaledMs(t *testing.T) {
-	envSave := os.Getenv(env.ELVISH_TEST_TIME_SCALE)
-	defer os.Setenv(env.ELVISH_TEST_TIME_SCALE, envSave)
+	envSave := os.Getenv(env.ElvishTestTimeScale)
+	defer os.Setenv(env.ElvishTestTimeScale, envSave)
 
 	for _, test := range scaledMsTests {
 		t.Run(test.name, func(t *testing.T) {
-			os.Setenv(env.ELVISH_TEST_TIME_SCALE, test.env)
+			os.Setenv(env.ElvishTestTimeScale, test.env)
 			got := ScaledMs(test.ms)
 			if got != test.want {
 				t.Errorf("got %v, want %v", got, test.want)

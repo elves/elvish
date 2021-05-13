@@ -46,7 +46,7 @@ func TestGetSecureRunDir_PrefersTmpWhenOnlyItExists(t *testing.T) {
 func TestGetSecureRunDir_PrefersTmpWhenXdgEnvIsEmpty(t *testing.T) {
 	_, tmp, cleanup := setupForSecureRunDir()
 	defer cleanup()
-	os.Setenv(env.XDG_RUNTIME_DIR, "")
+	os.Setenv(env.XdgRuntimeDir, "")
 	testSecureRunDir(t, filepath.Join(tmp, elvishDashUID), false)
 }
 
@@ -61,7 +61,7 @@ func setupForSecureRunDir() (xdgRuntimeDir, tmpDir string, cleanup func()) {
 	xdgRuntimeDir, xdgCleanup := testutil.TestDir()
 	tmpDir, tmpCleanup := testutil.TestDir()
 	envCleanup := withTempEnvs(map[string]string{
-		env.XDG_RUNTIME_DIR: xdgRuntimeDir,
+		env.XdgRuntimeDir: xdgRuntimeDir,
 		"TMPDIR":            tmpDir,
 	})
 	return xdgRuntimeDir, tmpDir, func() {

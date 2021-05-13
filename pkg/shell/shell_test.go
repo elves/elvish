@@ -9,26 +9,26 @@ import (
 )
 
 func TestShell_SHLVL_NormalCase(t *testing.T) {
-	restore := saveEnv(env.SHLVL)
+	restore := saveEnv(env.Shlvl)
 	defer restore()
 
-	os.Setenv(env.SHLVL, "10")
+	os.Setenv(env.Shlvl, "10")
 	testSHLVL(t, "11")
 }
 
 func TestShell_SHLVL_Unset(t *testing.T) {
-	restore := saveEnv(env.SHLVL)
+	restore := saveEnv(env.Shlvl)
 	defer restore()
 
-	os.Unsetenv(env.SHLVL)
+	os.Unsetenv(env.Shlvl)
 	testSHLVL(t, "1")
 }
 
 func TestShell_SHLVL_Invalid(t *testing.T) {
-	restore := saveEnv(env.SHLVL)
+	restore := saveEnv(env.Shlvl)
 	defer restore()
 
-	os.Setenv(env.SHLVL, "invalid")
+	os.Setenv(env.Shlvl, "invalid")
 	testSHLVL(t, "1")
 }
 
@@ -43,10 +43,10 @@ func TestShell_NegativeSHLVL_Increments(t *testing.T) {
 	// 1
 	//
 	// Elvish follows Zsh here.
-	restore := saveEnv(env.SHLVL)
+	restore := saveEnv(env.Shlvl)
 	defer restore()
 
-	os.Setenv(env.SHLVL, "-100")
+	os.Setenv(env.Shlvl, "-100")
 	testSHLVL(t, "-99")
 }
 
@@ -55,14 +55,14 @@ func testSHLVL(t *testing.T, wantSHLVL string) {
 	f := Setup()
 	defer f.Cleanup()
 
-	oldValue, oldOK := os.LookupEnv(env.SHLVL)
+	oldValue, oldOK := os.LookupEnv(env.Shlvl)
 
 	Script(f.Fds(), []string{"print $E:SHLVL"}, &ScriptConfig{Cmd: true})
 	f.TestOut(t, 1, wantSHLVL)
 	f.TestOut(t, 2, "")
 
 	// Test that state of SHLVL is restored.
-	newValue, newOK := os.LookupEnv(env.SHLVL)
+	newValue, newOK := os.LookupEnv(env.Shlvl)
 	if newValue != oldValue {
 		t.Errorf("SHLVL not restored, %q -> %q", oldValue, newValue)
 	}

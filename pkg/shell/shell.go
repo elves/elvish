@@ -74,13 +74,13 @@ func evalInTTY(ev *eval.Evaler, fds [3]*os.File, src parse.Source) (float64, err
 }
 
 func incSHLVL() func() {
-	restoreSHLVL := saveEnv(env.SHLVL)
+	restoreSHLVL := saveEnv(env.Shlvl)
 
-	i, err := strconv.Atoi(os.Getenv(env.SHLVL))
+	i, err := strconv.Atoi(os.Getenv(env.Shlvl))
 	if err != nil {
 		i = 0
 	}
-	os.Setenv(env.SHLVL, strconv.Itoa(i+1))
+	os.Setenv(env.Shlvl, strconv.Itoa(i+1))
 
 	return restoreSHLVL
 }

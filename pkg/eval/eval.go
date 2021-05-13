@@ -371,7 +371,7 @@ func (ev *Evaler) Chdir(path string) error {
 		logger.Println("getwd after cd:", err)
 		return nil
 	}
-	os.Setenv(env.PWD, pwd)
+	os.Setenv(env.Pwd, pwd)
 
 	return nil
 }

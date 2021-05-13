@@ -56,11 +56,11 @@ func execFn(fm *Frame, args ...interface{}) error {
 // Decrements $E:SHLVL. Called from execFn to ensure that $E:SHLVL remains the
 // same in the new command.
 func decSHLVL() {
-	i, err := strconv.Atoi(os.Getenv(env.SHLVL))
+	i, err := strconv.Atoi(os.Getenv(env.Shlvl))
 	if err != nil {
 		return
 	}
-	os.Setenv(env.SHLVL, strconv.Itoa(i-1))
+	os.Setenv(env.Shlvl, strconv.Itoa(i-1))
 }
 
 func fg(pids ...int) error {

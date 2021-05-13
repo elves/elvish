@@ -36,12 +36,12 @@ func TestGetwd(t *testing.T) {
 		{"wd not abbreviated when HOME is slash", "/", tmpdir, tmpdir},
 	}
 
-	oldHome := os.Getenv(env.HOME)
-	defer os.Setenv(env.HOME, oldHome)
+	oldHome := os.Getenv(env.Home)
+	defer os.Setenv(env.Home, oldHome)
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			os.Setenv(env.HOME, test.home)
+			os.Setenv(env.Home, test.home)
 			testutil.MustChdir(test.chdir)
 			if gotWd := Getwd(); gotWd != test.wantWd {
 				t.Errorf("Getwd() -> %v, want %v", gotWd, test.wantWd)

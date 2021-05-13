@@ -40,8 +40,8 @@ func getSecureRunDir() (string, error) {
 // preference.
 func getRunDirCandidates() []string {
 	tmpDirPath := filepath.Join(os.TempDir(), fmt.Sprintf("elvish-%d", os.Getuid()))
-	if os.Getenv(env.XDG_RUNTIME_DIR) != "" {
-		xdgDirPath := filepath.Join(os.Getenv(env.XDG_RUNTIME_DIR), "elvish")
+	if os.Getenv(env.XdgRuntimeDir) != "" {
+		xdgDirPath := filepath.Join(os.Getenv(env.XdgRuntimeDir), "elvish")
 		return []string{xdgDirPath, tmpDirPath}
 	}
 	return []string{tmpDirPath}

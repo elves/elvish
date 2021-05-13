@@ -153,13 +153,10 @@ func convertToFloat64(num Num) float64 {
 	case int:
 		return float64(num)
 	case *big.Int:
-		if num.IsInt64() {
-			// Might fit in float64
+		if num.IsInt64() { // probably fits in a float64
 			return float64(num.Int64())
-		} else {
-			// Definitely won't fit in float64
-			return math.Inf(num.Sign())
 		}
+		return math.Inf(num.Sign()) // definitely won't fit in a float64
 	case *big.Rat:
 		f, _ := num.Float64()
 		return f

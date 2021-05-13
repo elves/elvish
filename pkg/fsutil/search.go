@@ -46,5 +46,5 @@ func EachExternal(f func(string)) {
 }
 
 func searchPaths() []string {
-	return strings.Split(os.Getenv(env.PATH), ":")
+	return strings.Split(os.Getenv(env.Path), ":")
 }

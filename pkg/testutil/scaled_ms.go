@@ -17,7 +17,7 @@ func ScaledMs(ms int) time.Duration {
 }
 
 func getTestTimeScale() float64 {
-	env := os.Getenv(env.ELVISH_TEST_TIME_SCALE)
+	env := os.Getenv(env.ElvishTestTimeScale)
 	if env == "" {
 		return 1
 	}
