@@ -2019,6 +2019,15 @@ recursive functions:
 Under the hood, `fn` defines a variable with the given name plus `~` (see
 [variable suffix](#variable-suffix)).
 
+```elvish-transcript
+~> fn f []{ echo hello from f }
+~> f
+hello from f
+~> ff = $f~
+~> $ff
+hello from f
+```
+
 # Pipeline
 
 A **pipeline** is formed by joining one or more commands together with the pipe
