@@ -21,21 +21,24 @@ var errStoreOffline = errors.New("store offline")
 // edit:command-history &dedup &newest-first
 // ```
 //
-// Outputs the command history as a stream of maps. Each map has a `id` key for the sequence number
-// of the command, and a `cmd` key for the text of the command. If `&dedup` is true only the most
-// recent instance of each command (when comparing just the `cmd` key) is output. If `&newest-first`
-// is true the output is in newest to oldest order (default is oldest to newest).
+// Outputs the command history as a stream of maps unless `&cmd-only` is true. Each map has a `id`
+// key for the sequence number of the command, and a `cmd` key for the text of the command. If
+// `&dedup` is true only the most recent instance of each command (when comparing just the `cmd`
+// key) is output. If `&newest-first` is true the output is in newest to oldest order (default is
+// oldest to newest). If `&cmd-only` is true then only the command text is output (default is a map
+// as described previously).
 //
 // Use indexing to extract individual entries. For example, to extract the text of the most recent
-// command do this:
+// command do one of these:
 //
 // ```elvish
 // edit:command-history | put [(all)][-1][cmd]
+// edit:command-history &cmd-only &newest-first | take 1
 // ```
 //
 // @cf builtin:dir-history
 
-type cmdhistOpt struct{ Dedup, NewestFirst bool }
+type cmdhistOpt struct{ CmdOnly, Dedup, NewestFirst bool }
 
 func (o *cmdhistOpt) SetDefaultOptions() {}
 
@@ -52,8 +55,14 @@ func commandHistory(opts cmdhistOpt, fuser histutil.Store, ch chan<- interface{}
 	} else if opts.NewestFirst {
 		reverse(cmds)
 	}
-	for _, cmd := range cmds {
-		ch <- vals.MakeMap("id", strconv.Itoa(cmd.Seq), "cmd", cmd.Text)
+	if opts.CmdOnly {
+		for _, cmd := range cmds {
+			ch <- cmd.Text
+		}
+	} else {
+		for _, cmd := range cmds {
+			ch <- vals.MakeMap("id", strconv.Itoa(cmd.Seq), "cmd", cmd.Text)
+		}
 	}
 	return nil
 }
