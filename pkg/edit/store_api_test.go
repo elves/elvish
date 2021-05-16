@@ -62,6 +62,15 @@ func TestCommandHistory(t *testing.T) {
 			vals.MakeMap("id", "5", "cmd", "echo 3"),
 			vals.MakeMap("id", "3", "cmd", "echo 2"),
 		))
+
+	evals(f.Evaler, `@cmds = (edit:command-history &dedup &newest-first &cmd-only)`)
+	testGlobal(t, f.Evaler,
+		"cmds",
+		vals.MakeList(
+			"echo 1",
+			"echo 3",
+			"echo 2",
+		))
 }
 
 func TestInsertLastWord(t *testing.T) {
