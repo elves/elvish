@@ -2,6 +2,7 @@ package eval
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -43,13 +44,15 @@ func init() {
 		"only-values": onlyValues,
 
 		// Bytes to value
-		"slurp":      slurp,
-		"from-lines": fromLines,
-		"from-json":  fromJSON,
+		"slurp":           slurp,
+		"from-lines":      fromLines,
+		"from-json":       fromJSON,
+		"from-terminated": fromTerminated,
 
 		// Value to bytes
-		"to-lines": toLines,
-		"to-json":  toJSON,
+		"to-lines":      toLines,
+		"to-json":       toJSON,
+		"to-terminated": toTerminated,
 
 		// File and pipe
 		"fopen":   fopen,
@@ -94,14 +97,14 @@ func put(fm *Frame, args ...interface{}) {
 //elvdoc:fn read-upto
 //
 // ```elvish
-// read-upto $delim
+// read-upto $terminator
 // ```
 //
-// Reads byte input until `$delim` or end-of-file is encountered, and outputs
-// the part of the input read as a string value. The output contains the
-// trailing `$delim`, unless `read-upto` terminated at end-of-file.
+// Reads byte input until `$terminator` or end-of-file is encountered. It outputs the part of the
+// input read as a string value. The output contains the trailing `$terminator`, unless `read-upto`
+// terminated at end-of-file.
 //
-// The `$delim` argument must be a single rune in the ASCII range.
+// The `$terminator` must be a single ASCII character such as `"\x00"` (NUL).
 //
 // Examples:
 //
@@ -116,8 +119,8 @@ func put(fm *Frame, args ...interface{}) {
 // ▶ foobar
 // ```
 
-func readUpto(fm *Frame, last string) (string, error) {
-	if len(last) != 1 {
+func readUpto(fm *Frame, terminator string) (string, error) {
+	if len(terminator) != 1 || terminator[0] > 127 {
 		return "", ErrArgs
 	}
 	in := fm.InputFile()
@@ -132,7 +135,7 @@ func readUpto(fm *Frame, last string) (string, error) {
 			return "", err
 		}
 		buf = append(buf, b[0])
-		if b[0] == last[0] {
+		if b[0] == terminator[0] {
 			break
 		}
 	}
@@ -594,7 +597,7 @@ func slurp(fm *Frame) (string, error) {
 // ▶ a
 // ```
 //
-// @cf to-lines
+// @cf from-terminated read-upto to-lines
 
 func fromLines(fm *Frame) {
 	linesToChan(fm.InputFile(), fm.OutputChan())
@@ -687,6 +690,37 @@ func fromJSONInterface(v interface{}) (interface{}, error) {
 	}
 }
 
+//elvdoc:fn from-terminated
+//
+// ```elvish
+// from-terminated $terminator
+// ```
+//
+// Splits byte input into lines at each `$terminator` character, and writes them to the value
+// output. Value input is ignored.
+//
+// The `$terminator` must be a single ASCII character such as `"\x00"` (NUL).
+//
+// ```elvish-transcript
+// ~> { echo a; echo b } | from-terminated "\x00"
+// ▶ "a\nb\n"
+// ~> print "a\000b" | from-terminated "\x00"
+// ▶ a
+// ▶ b
+// ```
+//
+// @cf from-lines read-upto to-terminated
+
+var ErrInvalidTerminator = errors.New("terminator must be a single ASCII char")
+
+func fromTerminated(fm *Frame, terminator string) error {
+	if len(terminator) != 1 || terminator[0] > 127 {
+		return ErrInvalidTerminator
+	}
+	terminatedToChan(fm.InputFile(), fm.OutputChan(), terminator[0])
+	return nil
+}
+
 //elvdoc:fn to-lines
 //
 // ```elvish
@@ -708,14 +742,46 @@ func fromJSONInterface(v interface{}) (interface{}, error) {
 // a
 // ```
 //
-// @cf from-lines
+// @cf from-lines to-terminated
 
 func toLines(fm *Frame, inputs Inputs) {
 	out := fm.OutputFile()
-
 	inputs(func(v interface{}) {
 		fmt.Fprintln(out, vals.ToString(v))
 	})
+}
+
+//elvdoc:fn to-terminated
+//
+// ```elvish
+// to-terminated $terminator $input?
+// ```
+//
+// Writes each value input to the byte output with the specified terminator character. Byte input is
+// ignored.  This behavior is useful, for example, when feeding output into a program that accepts
+// NUL terminated lines to avoid ambiguities if the values contains newline characters.
+//
+// The `$terminator` must be a single ASCII character such as `"\x00"` (NUL).
+//
+// ```elvish-transcript
+// ~> put a b | to-terminated "\x00" | cat -evt
+// a^@b^@
+// ~> to-terminated "\x00" [a b] | cat -evt
+// a^@b^@
+// ```
+//
+// @cf from-terminated to-lines
+
+func toTerminated(fm *Frame, terminator string, inputs Inputs) error {
+	if len(terminator) != 1 || terminator[0] > 127 {
+		return ErrInvalidTerminator
+	}
+
+	out := fm.OutputFile()
+	inputs(func(v interface{}) {
+		fmt.Fprint(out, vals.ToString(v), terminator)
+	})
+	return nil
 }
 
 //elvdoc:fn to-json

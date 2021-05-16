@@ -152,6 +152,22 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 	}
 }
 
+func terminatedToChan(r io.Reader, ch chan<- interface{}, terminator byte) {
+	filein := bufio.NewReader(r)
+	for {
+		line, err := filein.ReadString(terminator)
+		if line != "" {
+			ch <- strutil.ChopTerminator(line, terminator)
+		}
+		if err != nil {
+			if err != io.EOF {
+				logger.Println("error on reading:", err)
+			}
+			break
+		}
+	}
+}
+
 // fork returns a modified copy of ec. The ports are forked, and the name is
 // changed to the given value. Other fields are copied shallowly.
 func (fm *Frame) fork(name string) *Frame {
