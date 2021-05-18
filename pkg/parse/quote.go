@@ -20,7 +20,7 @@ func QuoteVariableName(s string) string {
 		return "''"
 	}
 
-	// Keep track of whether it is a valid bareword.
+	// Keep track of whether it is a valid (unquoted) variable name.
 	bare := true
 	for _, r := range s {
 		if !unicode.IsPrint(r) {

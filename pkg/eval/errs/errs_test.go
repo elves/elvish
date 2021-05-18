@@ -32,6 +32,14 @@ var errorMessageTests = []struct {
 		ArityMismatch{What: "arguments here", ValidLow: 2, ValidHigh: 3, Actual: 1},
 		"arity mismatch: arguments here must be 2 to 3 values, but is 1 value",
 	},
+	{
+		SetReadOnlyVar{VarName: "x"},
+		"cannot set read-only variable $x",
+	},
+	{
+		ReaderGone{},
+		"reader gone",
+	},
 }
 
 func TestErrorMessages(t *testing.T) {
