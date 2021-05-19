@@ -13,15 +13,16 @@ import (
 
 // Port conveys data stream. It always consists of a byte band and a channel band.
 type Port struct {
-	File      *os.File
-	Chan      chan interface{}
-	closeFile bool
-	closeChan bool
+	File       *os.File
+	Chan       chan interface{}
+	closeFile  bool
+	closeChan  bool
+	readerGone *int32
 }
 
 // Returns a copy of the Port with the Close* flags unset.
 func (p *Port) fork() *Port {
-	return &Port{p.File, p.Chan, false, false}
+	return &Port{p.File, p.Chan, false, false, p.readerGone}
 }
 
 // Closes a Port.

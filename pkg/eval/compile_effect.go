@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"sync/atomic"
 
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval/errs"
@@ -87,12 +88,13 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 
 	// For each form, create a dedicated evalCtx and run asynchronously
 	for i, formOp := range op.subops {
-		hasChanInput := i > 0
 		newFm := fm.fork("[form op]")
-		if i > 0 {
+		inputIsPipe := i > 0
+		outputIsPipe := i < nforms-1
+		if inputIsPipe {
 			newFm.ports[0] = nextIn
 		}
-		if i < nforms-1 {
+		if outputIsPipe {
 			// Each internal port pair consists of a (byte) pipe pair and a
 			// channel.
 			// os.Pipe sets O_CLOEXEC, which is what we want.
@@ -101,21 +103,25 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 				return fm.errorpf(op, "failed to create pipe: %s", e)
 			}
 			ch := make(chan interface{}, pipelineChanBufferSize)
+			readerGone := new(int32)
 			newFm.ports[1] = &Port{
-				File: writer, Chan: ch, closeFile: true, closeChan: true}
+				File: writer, Chan: ch,
+				closeFile: true, closeChan: true, readerGone: readerGone}
 			nextIn = &Port{
-				File: reader, Chan: ch, closeFile: true, closeChan: false}
+				File: reader, Chan: ch,
+				closeFile: true, closeChan: false, readerGone: readerGone}
 		}
 		thisOp := formOp
 		thisExc := &excs[i]
 		go func() {
 			exc := thisOp.exec(newFm)
 			newFm.Close()
-			if exc != nil {
+			if exc != nil && !(outputIsPipe && isReaderGone(exc)) {
 				*thisExc = exc
 			}
-			wg.Done()
-			if hasChanInput {
+			if inputIsPipe {
+				input := newFm.ports[0]
+				atomic.StoreInt32(input.readerGone, 1)
 				// If the command has channel input, drain it. This
 				// mitigates the effect of erroneous pipelines like
 				// "range 100 | cat"; without draining the pipeline will
@@ -123,6 +129,7 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 				for range newFm.InputChan() {
 				}
 			}
+			wg.Done()
 		}()
 	}
 
@@ -144,6 +151,11 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 	}
 	wg.Wait()
 	return fm.errorp(op, MakePipelineError(excs))
+}
+
+func isReaderGone(exc Exception) bool {
+	_, ok := exc.Reason().(errs.ReaderGone)
+	return ok
 }
 
 func (cp *compiler) formOp(n *parse.Form) effectOp {

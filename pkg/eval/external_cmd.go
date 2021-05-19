@@ -4,8 +4,10 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"sync/atomic"
 	"syscall"
 
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
@@ -101,6 +103,13 @@ func (e externalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 		// explicit that this can only happen if we make a mistake. Such as
 		// calling `Wait` twice on a particular process object.
 		return err
+	}
+	ws := state.Sys().(syscall.WaitStatus)
+	if ws.Signaled() && isSIGPIPE(ws.Signal()) {
+		readerGone := fm.ports[1].readerGone
+		if readerGone != nil && atomic.LoadInt32(readerGone) == 1 {
+			return errs.ReaderGone{}
+		}
 	}
 	return NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid)
 }
