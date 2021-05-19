@@ -93,11 +93,9 @@ func (UmaskVariable) Set(v interface{}) error {
 	}
 
 	if umask < 0 || umask > 0o777 {
-		// TODO: Switch to `%O` when Go 1.15 is the minimum acceptable version.
-		// Until then the formatting of negative numbers will be weird.
 		return errs.OutOfRange{
 			What: "umask", ValidLow: "0", ValidHigh: "0o777",
-			Actual: fmt.Sprintf("0o%o", umask)}
+			Actual: fmt.Sprintf("%O", umask)}
 	}
 
 	umaskMutex.Lock()

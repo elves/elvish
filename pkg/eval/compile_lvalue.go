@@ -90,7 +90,7 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing) lvaluesGroup {
 	if sigil == "@" {
 		restIndex = 0
 	}
-	// TODO: Deal with other sigils when they exist.
+	// TODO: Support % (and other sigils?) if https://b.elv.sh/584 is implemented for map explosion.
 	return lvaluesGroup{[]lvalue{lv}, restIndex}
 }
 
