@@ -53,13 +53,9 @@ func TestUmask(t *testing.T) {
 			What: "umask", Valid: validUmaskMsg, Actual: "[1]"}),
 
 		// Values outside the legal range should raise the expected exception.
-		//
-		// TODO: Switch to `%O` when Go 1.15 is the minimum acceptable version.
-		// Until then the formatting of negative numbers will be weird.
 		That(`unix:umask = 0o1000`).Throws(errs.OutOfRange{
 			What: "umask", ValidLow: "0", ValidHigh: "0o777", Actual: "0o1000"}),
-
 		That(`unix:umask = -1`).Throws(errs.OutOfRange{
-			What: "umask", ValidLow: "0", ValidHigh: "0o777", Actual: "0o-1"}),
+			What: "umask", ValidLow: "0", ValidHigh: "0o777", Actual: "-0o1"}),
 	)
 }
