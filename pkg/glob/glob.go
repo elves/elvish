@@ -8,7 +8,9 @@ import (
 	"unicode/utf8"
 )
 
-// TODO: Use native path separators instead of always using /.
+// TODO: Use native path separators (i.e., os.PathSeparator) instead of always using `/` when
+// building a path. When parsing a path note that Windows supports both `/` and `\` so Elvish should
+// as well. TBD is whether os.IsPathSeparator handles Windows correctly.
 
 // PathInfo keeps a path resulting from glob expansion and its FileInfo. The
 // FileInfo is useful for efficiently determining if a given pathname satisfies
@@ -40,7 +42,7 @@ func (p Pattern) Glob(cb func(PathInfo) bool) bool {
 		segs = segs[1:]
 		dir += "/"
 	} else if runtime.GOOS == "windows" && len(segs) > 1 && IsLiteral(segs[0]) && IsSlash(segs[1]) {
-		// TODO: Handle UNC.
+		// TODO: Handle Windows UNC paths.
 		elem := segs[0].(Literal).Data
 		if isDrive(elem) {
 			segs = segs[2:]
@@ -51,9 +53,14 @@ func (p Pattern) Glob(cb func(PathInfo) bool) bool {
 	return glob(segs, dir, cb)
 }
 
+// isLetter returns true if the byte is an ASCII letter.
+func isLetter(chr byte) bool {
+	return ('a' <= chr && chr <= 'z') || ('A' <= chr && chr <= 'Z')
+}
+
+// isDrive returns true if the string looks like a Windows drive letter path prefix.
 func isDrive(s string) bool {
-	return len(s) == 2 && s[1] == ':' &&
-		(('a' <= s[0] && s[1] <= 'z') || ('A' <= s[0] && s[0] <= 'Z'))
+	return len(s) == 2 && s[1] == ':' && isLetter(s[0])
 }
 
 // glob finds all filenames matching the given Segments in the given dir, and
