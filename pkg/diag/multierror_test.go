@@ -5,6 +5,12 @@ import (
 	"testing"
 )
 
+var (
+	err1 = errors.New("error 1")
+	err2 = errors.New("error 2")
+	err3 = errors.New("error 3")
+)
+
 var errorsTests = []struct {
 	e          error
 	wantString string
@@ -13,21 +19,19 @@ var errorsTests = []struct {
 	{MultiError{}, "no error"},
 	{Errors(errors.New("some error")), "some error"},
 	{
-		Errors(errors.New("error 1"), errors.New("error 2")),
+		Errors(err1, err2),
 		"multiple errors: error 1; error 2",
 	},
 	{
-		Errors(errors.New("error 1"), errors.New("error 2"), errors.New("error 3")),
+		Errors(err1, err2, err3),
 		"multiple errors: error 1; error 2; error 3",
 	},
 	{
-		Errors(errors.New("error 1"),
-			Errors(errors.New("error 2"), errors.New("error 3"))),
+		Errors(err1, Errors(err2, err3)),
 		"multiple errors: error 1; error 2; error 3",
 	},
 	{
-		Errors(Errors(errors.New("error 1"), errors.New("error 2")),
-			errors.New("error 3")),
+		Errors(Errors(err1, err2), err3),
 		"multiple errors: error 1; error 2; error 3",
 	},
 }
