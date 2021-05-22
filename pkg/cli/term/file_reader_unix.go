@@ -70,9 +70,9 @@ func (r *bReader) ReadByteWithTimeout(timeout time.Duration) (byte, error) {
 }
 
 func (r *bReader) Stop() error {
-	_, err := r.wStop.Write([]byte{'q'})
 	r.mutex.Lock()
-	r.mutex.Unlock()
+	defer r.mutex.Unlock()
+	_, err := r.wStop.Write([]byte{'q'})
 	return err
 }
 
