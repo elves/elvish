@@ -152,8 +152,6 @@ func (b *goFn) Repr(int) string {
 // *error and use Elem to obtain type of error.
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
-var errNoOptions = errors.New("function does not accept any options")
-
 // Call calls the implementation using reflection.
 func (b *goFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) error {
 	if b.variadicArg != nil {
