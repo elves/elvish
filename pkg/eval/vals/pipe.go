@@ -44,3 +44,14 @@ func (p Pipe) Hash() uint32 {
 func (p Pipe) Repr(int) string {
 	return fmt.Sprintf("<pipe{%v %v}>", p.ReadEnd.Fd(), p.WriteEnd.Fd())
 }
+
+// Index returns the desired pipe endpoint that satisfies a reference such as `$p[r]`.
+func (p Pipe) Index(k interface{}) (interface{}, bool) {
+	switch k {
+	case "r":
+		return p.ReadEnd, true
+	case "w":
+		return p.WriteEnd, true
+	}
+	return nil, false
+}
