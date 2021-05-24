@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net"
-	"strconv"
 	"sync"
 	"time"
 	"unicode/utf8"
@@ -393,23 +392,22 @@ var TimeAfter = func(fm *Frame, d time.Duration) <-chan time.Time {
 // ```
 
 func sleep(fm *Frame, duration interface{}) error {
+	var f float64
 	var d time.Duration
 
-	switch duration := duration.(type) {
-	case float64:
-		d = time.Duration(float64(time.Second) * duration)
-	case string:
-		f, err := strconv.ParseFloat(duration, 64)
-		if err == nil { // it's a simple number assumed to have units == seconds
-			d = time.Duration(float64(time.Second) * f)
-		} else {
+	if err := vals.ScanToGo(duration, &f); err == nil {
+		d = time.Duration(f * float64(time.Second))
+	} else {
+		// See if it is a duration string rather than a simple number.
+		switch duration := duration.(type) {
+		case string:
 			d, err = time.ParseDuration(duration)
 			if err != nil {
 				return errors.New("invalid sleep duration")
 			}
+		default:
+			return errors.New("invalid sleep duration")
 		}
-	default:
-		return errors.New("invalid sleep duration")
 	}
 
 	if d < 0 {
