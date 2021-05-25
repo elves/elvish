@@ -3,6 +3,7 @@ package eval_test
 import (
 	"testing"
 
+	. "src.elv.sh/pkg/eval"
 	. "src.elv.sh/pkg/eval/evaltest"
 )
 
@@ -50,7 +51,35 @@ func TestWcswidth(t *testing.T) {
 
 func TestEawk(t *testing.T) {
 	Test(t,
+		That(`
+			echo "1\n2\n3\n4" | eawk [@a]{
+				if (==s 3 $a[1]) {
+					fail "stop eawk"
+				}
+				put $a[1]
+			}
+		`).Puts("1", "2").Throws(FailError{"stop eawk"}),
+		That(`put (num 42) | eawk [@a]{ fail "this should not run" }`).
+			Throws(ErrInputOfEawkMustBeString),
 		That(`echo "  ax  by cz  \n11\t22 33" | eawk [@a]{ put $a[-1] }`).
 			Puts("cz", "33"),
+		That(`
+			echo " a\nb\tc \nd\ne" | eawk [@a]{
+				if (==s d $a[1]) {
+					break
+				} else {
+					put $a[-1]
+				}
+			}
+		`).Puts("a", "c"),
+		That(`
+			echo " a\nb\tc \nd\ne" | eawk [@a]{
+				if (==s d $a[1]) {
+					continue
+				} else {
+					put $a[-1]
+				}
+			}
+		`).Puts("a", "c", "e"),
 	)
 }
