@@ -189,7 +189,7 @@ func convertEvent(event sys.InputEvent) Event {
 			// If only the shift is held down, we try and see if this is a
 			// non-functional key by looking if the rune generated is a
 			// printable ASCII character.
-			if 0x20 <= r && r < 0x7f {
+			if 0x20 <= r && r != 0x7f {
 				return KeyEvent(ui.Key{Rune: r})
 			}
 		} else if filteredMod&(leftCtrl|rightAlt) == leftCtrl|rightAlt && 0x20 <= r && r != 0x7f && currentLayoutHasAltGr() {
