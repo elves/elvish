@@ -114,7 +114,7 @@ const (
 	shift     uint32 = 0x10
 )
 
-type HKL (uint32)
+type HKL uint32
 
 type keyboardLayout struct {
 	lastCheck time.Time
