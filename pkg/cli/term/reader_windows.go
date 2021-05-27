@@ -135,7 +135,7 @@ func currentLayoutHasAltGr() bool {
 	if currentKeyboardLayout == nil ||
 		time.Since(currentKeyboardLayout.lastCheck) > keyboadLayoutCheckTimeout {
 
-		layout, _, err := syscall.Syscall(procGetKeyboardLayout.Addr(), 0, 0, 0, 0)
+		layout, _, err := syscall.Syscall(procGetKeyboardLayout.Addr(), 1, 0, 0, 0)
 		if err != windows.NO_ERROR {
 			return false
 		}
