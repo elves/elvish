@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"sync"
-	"syscall"
 	"time"
 
 	"golang.org/x/sys/windows"
@@ -114,60 +113,6 @@ const (
 	shift     uint32 = 0x10
 )
 
-type HKL uint32
-
-type keyboardLayout struct {
-	lastCheck time.Time
-	layout    HKL
-	hasAltGr  bool
-}
-
-var (
-	user32                                = syscall.NewLazyDLL("user32.dll")
-	procGetKeyboardLayout                 = user32.NewProc("GetKeyboardLayout")
-	procVkKeyScanExA                      = user32.NewProc("VkKeyScanExA")
-	currentKeyboardLayout *keyboardLayout = nil
-)
-
-const keyboadLayoutCheckTimeout = time.Duration(1e+9) // 1 second
-
-func currentLayoutHasAltGr() bool {
-	if currentKeyboardLayout == nil ||
-		time.Since(currentKeyboardLayout.lastCheck) > keyboadLayoutCheckTimeout {
-
-		layout, _, err := syscall.Syscall(procGetKeyboardLayout.Addr(), 1, 0, 0, 0)
-		if err != windows.NO_ERROR {
-			return false
-		}
-
-		if currentKeyboardLayout != nil && HKL(layout) == currentKeyboardLayout.layout {
-			currentKeyboardLayout.lastCheck = time.Now()
-			return currentKeyboardLayout.hasAltGr
-		}
-
-		// Shamelessly stolen from
-		// https://stackoverflow.com/questions/54588823/detect-if-the-keyboard-layout-has-altgr-on-it-under-windows
-		hasAltGr := false
-		for char := 0x20; char <= 0xff; char += 1 {
-			scancode, _, err := syscall.Syscall(procVkKeyScanExA.Addr(), 2, uintptr(char), layout, 0)
-
-			if err == windows.NO_ERROR && scancode&0x0600 == 0x0600 {
-				// At least one ASCII char requires CTRL and ALT to be pressed
-				hasAltGr = true
-				break
-			}
-		}
-
-		currentKeyboardLayout = &keyboardLayout{
-			lastCheck: time.Now(),
-			layout:    HKL(layout),
-			hasAltGr:  hasAltGr,
-		}
-	}
-
-	return currentKeyboardLayout.hasAltGr
-}
-
 // convertEvent converts the native sys.InputEvent type to a suitable Event
 // type. It returns nil if the event should be ignored.
 func convertEvent(event sys.InputEvent) Event {
@@ -192,7 +137,7 @@ func convertEvent(event sys.InputEvent) Event {
 			if 0x20 <= r && r != 0x7f {
 				return KeyEvent(ui.Key{Rune: r})
 			}
-		} else if filteredMod&(leftCtrl|rightAlt) == leftCtrl|rightAlt && 0x20 <= r && r != 0x7f && currentLayoutHasAltGr() {
+		} else if filteredMod&(leftCtrl|rightAlt) == leftCtrl|rightAlt && 0x20 <= r && r != 0x7f && currentKeyboardLayoutHasAltGr {
 			// Handle AltGr key combinations if they result in a rune
 			// Shift is also ignored, since it is required for some chars
 			return KeyEvent(ui.Key{Rune: r})
