@@ -3,6 +3,7 @@ package file
 import (
 	"math/big"
 	"os"
+	"strconv"
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
@@ -133,49 +134,39 @@ func pwclose(p vals.Pipe) error {
 // ```elvish
 // file:truncate $filename $size
 // ```
-// Truncate changes the size of
-// the named file. If the file is
-// a symbolic link, it changes the
-// size of the link's target.
 //
-// If there is an error it will
-// be of type *PathError.
+// changes the size of the named file. If the file is a symbolic link, it
+// changes the size of the link's target. The size must be an integer between 0
+// and 2^64-1.
 
-func truncate(name string, size vals.Num) error {
-	var offset int64
-	switch size.(type) {
+func truncate(name string, rawSize vals.Num) error {
+	var size int64
+	switch rawSize := rawSize.(type) {
 	case int:
-		offset = int64(size.(int))
-		if offset < 0 {
-			return errs.BadValue{
-				What:   "Numeric input for the function is wrong",
-				Valid:  "positive 64 bit integer",
-				Actual: "Number less than 0",
-			}
-		}
+		size = int64(rawSize)
 	case *big.Int:
-		if (size.(*big.Int)).IsInt64() {
-			offset = (size.(*big.Int)).Int64()
-			if offset < 0 {
-				return errs.BadValue{
-					What:   "Numeric input for the function is wrong",
-					Valid:  "positive 64 bit integer",
-					Actual: "Number less than 0",
-				}
-			}
+		if rawSize.IsInt64() {
+			size = rawSize.Int64()
 		} else {
-			return errs.BadValue{
-				What:   "Numeric input for function is wrong",
-				Valid:  "positive 64 bit integer",
-				Actual: "exceeding the MaxInt64",
-			}
+			return truncateSizeOutOfRange(rawSize.String())
 		}
 	default:
 		return errs.BadValue{
-			What:   "size argument for os.Truncate",
-			Valid:  "int or *big.Int",
-			Actual: "string",
+			What:  "size argument to file:truncate",
+			Valid: "integer", Actual: "non-integer",
 		}
 	}
-	return os.Truncate(name, offset)
+	if size < 0 {
+		return truncateSizeOutOfRange(strconv.FormatInt(size, 10))
+	}
+	return os.Truncate(name, size)
+}
+
+func truncateSizeOutOfRange(size string) error {
+	return errs.OutOfRange{
+		What:      "size argument to file:truncate",
+		ValidLow:  "0",
+		ValidHigh: "2^64-1",
+		Actual:    size,
+	}
 }
