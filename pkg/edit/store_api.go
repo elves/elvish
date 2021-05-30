@@ -2,7 +2,6 @@ package edit
 
 import (
 	"errors"
-	"strconv"
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/histutil"
@@ -18,18 +17,24 @@ var errStoreOffline = errors.New("store offline")
 //elvdoc:fn command-history
 //
 // ```elvish
-// edit:command-history &dedup &newest-first
+// edit:command-history &cmd-only=$false &dedup=$false &newest-first
 // ```
 //
-// Outputs the command history as a stream of maps unless `&cmd-only` is true. Each map has a `id`
-// key for the sequence number of the command, and a `cmd` key for the text of the command. If
-// `&dedup` is true only the most recent instance of each command (when comparing just the `cmd`
-// key) is output. If `&newest-first` is true the output is in newest to oldest order (default is
-// oldest to newest). If `&cmd-only` is true then only the command text is output (default is a map
-// as described previously).
+// Outputs the command history.
 //
-// Use indexing to extract individual entries. For example, to extract the text of the most recent
-// command do one of these:
+// By default, each entry is represented as a map, with an `id` key key for the
+// sequence number of the command, and a `cmd` key for the text of the command.
+// If `&cmd-only` is `$true`, only the text of each command is output.
+//
+// All entries are output by default. If `&dedup` is `$true`, only the most
+// recent instance of each command (when comparing just the `cmd` key) is
+// output.
+//
+// Commands are are output in oldest to newest order by default. If
+// `&newest-first` is `$true` the output is in newest to oldest order instead.
+//
+// As an example, either of the following extracts the text of the most recent
+// command:
 //
 // ```elvish
 // edit:command-history | put [(all)][-1][cmd]
@@ -51,9 +56,9 @@ func commandHistory(opts cmdhistOpt, fuser histutil.Store, ch chan<- interface{}
 		return err
 	}
 	if opts.Dedup {
-		cmds = uniqCmds(cmds, opts.NewestFirst)
+		cmds = dedupCmds(cmds, opts.NewestFirst)
 	} else if opts.NewestFirst {
-		reverse(cmds)
+		reverseCmds(cmds)
 	}
 	if opts.CmdOnly {
 		for _, cmd := range cmds {
@@ -61,15 +66,14 @@ func commandHistory(opts cmdhistOpt, fuser histutil.Store, ch chan<- interface{}
 		}
 	} else {
 		for _, cmd := range cmds {
-			ch <- vals.MakeMap("id", strconv.Itoa(cmd.Seq), "cmd", cmd.Text)
+			ch <- vals.MakeMap("id", cmd.Seq, "cmd", cmd.Text)
 		}
 	}
 	return nil
 }
 
-func uniqCmds(allCmds []store.Cmd, newestFirst bool) []store.Cmd {
-	// The division by four is based on the empirical observation that my personal command history
-	// tends to be only 25% unique commands. This is merely a hint to minimize allocations.
+func dedupCmds(allCmds []store.Cmd, newestFirst bool) []store.Cmd {
+	// Capacity allocation below is based on some personal empirical observation.
 	uniqCmds := make([]store.Cmd, 0, len(allCmds)/4)
 	seenCmds := make(map[string]bool, len(allCmds)/4)
 	for i := len(allCmds) - 1; i != 0; i-- {
@@ -79,14 +83,14 @@ func uniqCmds(allCmds []store.Cmd, newestFirst bool) []store.Cmd {
 		}
 	}
 	if !newestFirst {
-		reverse(uniqCmds)
+		reverseCmds(uniqCmds)
 	}
 	return uniqCmds
 }
 
-// Reverse the order of commands, in place, in the slice. This reorders the command history between
-// oldest or newest command being first in the slice.
-func reverse(cmds []store.Cmd) {
+// Reverse the order of commands, in place, in the slice. This reorders the
+// command history between oldest or newest command being first in the slice.
+func reverseCmds(cmds []store.Cmd) {
 	for i, j := 0, len(cmds)-1; i < j; i, j = i+1, j-1 {
 		cmds[i], cmds[j] = cmds[j], cmds[i]
 	}

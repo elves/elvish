@@ -25,42 +25,42 @@ func TestCommandHistory(t *testing.T) {
 	testGlobal(t, f.Evaler,
 		"cmds",
 		vals.MakeList(
-			vals.MakeMap("id", "1", "cmd", "echo 1"),
-			vals.MakeMap("id", "2", "cmd", "echo 2"),
-			vals.MakeMap("id", "3", "cmd", "echo 2"),
-			vals.MakeMap("id", "4", "cmd", "echo 1"),
-			vals.MakeMap("id", "5", "cmd", "echo 3"),
-			vals.MakeMap("id", "6", "cmd", "echo 1"),
+			cmdMap(1, "echo 1"),
+			cmdMap(2, "echo 2"),
+			cmdMap(3, "echo 2"),
+			cmdMap(4, "echo 1"),
+			cmdMap(5, "echo 3"),
+			cmdMap(6, "echo 1"),
 		))
 
 	evals(f.Evaler, `@cmds = (edit:command-history &newest-first)`)
 	testGlobal(t, f.Evaler,
 		"cmds",
 		vals.MakeList(
-			vals.MakeMap("id", "6", "cmd", "echo 1"),
-			vals.MakeMap("id", "5", "cmd", "echo 3"),
-			vals.MakeMap("id", "4", "cmd", "echo 1"),
-			vals.MakeMap("id", "3", "cmd", "echo 2"),
-			vals.MakeMap("id", "2", "cmd", "echo 2"),
-			vals.MakeMap("id", "1", "cmd", "echo 1"),
+			cmdMap(6, "echo 1"),
+			cmdMap(5, "echo 3"),
+			cmdMap(4, "echo 1"),
+			cmdMap(3, "echo 2"),
+			cmdMap(2, "echo 2"),
+			cmdMap(1, "echo 1"),
 		))
 
 	evals(f.Evaler, `@cmds = (edit:command-history &dedup)`)
 	testGlobal(t, f.Evaler,
 		"cmds",
 		vals.MakeList(
-			vals.MakeMap("id", "3", "cmd", "echo 2"),
-			vals.MakeMap("id", "5", "cmd", "echo 3"),
-			vals.MakeMap("id", "6", "cmd", "echo 1"),
+			cmdMap(3, "echo 2"),
+			cmdMap(5, "echo 3"),
+			cmdMap(6, "echo 1"),
 		))
 
 	evals(f.Evaler, `@cmds = (edit:command-history &dedup &newest-first)`)
 	testGlobal(t, f.Evaler,
 		"cmds",
 		vals.MakeList(
-			vals.MakeMap("id", "6", "cmd", "echo 1"),
-			vals.MakeMap("id", "5", "cmd", "echo 3"),
-			vals.MakeMap("id", "3", "cmd", "echo 2"),
+			cmdMap(6, "echo 1"),
+			cmdMap(5, "echo 3"),
+			cmdMap(3, "echo 2"),
 		))
 
 	evals(f.Evaler, `@cmds = (edit:command-history &dedup &newest-first &cmd-only)`)
@@ -71,6 +71,10 @@ func TestCommandHistory(t *testing.T) {
 			"echo 3",
 			"echo 2",
 		))
+}
+
+func cmdMap(id int, cmd string) vals.Map {
+	return vals.MakeMap("id", id, "cmd", cmd)
 }
 
 func TestInsertLastWord(t *testing.T) {
