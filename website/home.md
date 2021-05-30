@@ -143,7 +143,7 @@ to [Matrix](https://matrix.org)!
 
 -   Telegram: [@elvish](https://telegram.me/elvish)
 
--   IRC: [#elvish](https://webchat.freenode.net/?channels=elvish) on Freenode
+-   IRC: [#elvish](https://web.libera.chat/#elvish) on Libera Chat
 
 -   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
 
