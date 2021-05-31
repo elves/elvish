@@ -78,17 +78,6 @@ func (s *dbStore) IterateCmds(from, upto int, f func(Cmd)) error {
 	})
 }
 
-// Cmds returns the contents of all commands within the specified range.
-//
-// NOTE: Deprecated as of 0.13. Delete after release of 0.14.
-func (s *dbStore) Cmds(from, upto int) ([]string, error) {
-	var cmds []string
-	err := s.IterateCmds(from, upto, func(cmd Cmd) {
-		cmds = append(cmds, cmd.Text)
-	})
-	return cmds, err
-}
-
 // CmdsWithSeq returns all commands within the specified range.
 func (s *dbStore) CmdsWithSeq(from, upto int) ([]Cmd, error) {
 	var cmds []Cmd

@@ -2017,7 +2017,14 @@ recursive functions:
 ```
 
 Under the hood, `fn` defines a variable with the given name plus `~` (see
-[variable suffix](#variable-suffix)).
+[variable suffix](#variable-suffix)). Example:
+
+```elvish-transcript
+~> fn f { echo hello from f }
+~> var v = $f~
+~> $v
+hello from f
+```
 
 # Pipeline
 

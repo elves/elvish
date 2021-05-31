@@ -67,8 +67,8 @@ func init() {
 // @cf peach
 
 func runParallel(fm *Frame, functions ...Callable) error {
-	var waitg sync.WaitGroup
-	waitg.Add(len(functions))
+	var wg sync.WaitGroup
+	wg.Add(len(functions))
 	exceptions := make([]Exception, len(functions))
 	for i, function := range functions {
 		go func(fm2 *Frame, function Callable, pexc *Exception) {
@@ -76,11 +76,11 @@ func runParallel(fm *Frame, functions ...Callable) error {
 			if err != nil {
 				*pexc = err.(Exception)
 			}
-			waitg.Done()
+			wg.Done()
 		}(fm.fork("[run-parallel function]"), function, &exceptions[i])
 	}
 
-	waitg.Wait()
+	wg.Wait()
 	return MakePipelineError(exceptions)
 }
 
@@ -172,7 +172,7 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 // @cf each run-parallel
 
 func peach(fm *Frame, f Callable, inputs Inputs) error {
-	var w sync.WaitGroup
+	var wg sync.WaitGroup
 	var broken atomic.Value
 	broken.Store(false)
 	var err error
@@ -180,7 +180,7 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 		if broken.Load().(bool) || err != nil {
 			return
 		}
-		w.Add(1)
+		wg.Add(1)
 		go func() {
 			newFm := fm.fork("closure of peach")
 			newFm.ports[0] = DummyInputPort
@@ -198,10 +198,10 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 					err = diag.Errors(err, ex)
 				}
 			}
-			w.Done()
+			wg.Done()
 		}()
 	})
-	w.Wait()
+	wg.Wait()
 	return err
 }
 
