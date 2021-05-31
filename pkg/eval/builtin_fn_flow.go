@@ -90,10 +90,18 @@ func runParallel(fm *Frame, functions ...Callable) error {
 // each $f $input-list?
 // ```
 //
-// Call `$f` on all inputs. Examples:
+// Call `$f` on all inputs.
+//
+// An exception raised from [`break`](#break) is caught by `each`, and will
+// cause it to terminate early.
+//
+// An exception raised from [`continue`](#continue) is swallowed and can be used
+// to terminate a single iteration early.
+//
+// Examples:
 //
 // ```elvish-transcript
-// ~> range 5 8 | each [x]{ ^ $x 2 }
+// ~> range 5 8 | each [x]{ * $x $x }
 // ▶ 25
 // ▶ 36
 // ▶ 49
@@ -137,32 +145,35 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 //elvdoc:fn peach
 //
 // ```elvish
-// peach $f~ $input-list?
+// peach $f $input-list?
 // ```
 //
-// Call `$f~` on all inputs, possibly in parallel. The exception from a
-// [`break`](./builtin.html#break) command it will cause `peach` to stop starting new instances of
-// `$f` with any remaining inputs. Because each instance of `$f~` is being run in parallel it is not
-// predictable when the early termination will occur or even that it will happen before all the
-// input has been consumed. The exception from a [`continue`](./builtin.html#continue) command is
-// ignored.
+// Calls `$f` on all inputs, possibly in parallel.
+//
+// Like `each`, an exception raised from [`break`](#break) will cause `peach`
+// to terminate early. However due to the parallel nature of `peach`, the exact
+// time of termination is non-deterministic and not even guranteed.
+//
+// An exception raised from [`continue`](#continue) is swallowed and can be used
+// to terminate a single iteration early.
 //
 // Example (your output will differ):
 //
 // ```elvish-transcript
-// ~> range 1 7 | peach [x]{ + $x 10 }
-// ▶ 12
-// ▶ 11
-// ▶ 13
-// ▶ 16
-// ▶ 15
-// ▶ 14
-// ~> var tot = 0
+// ~> range 1 10 | peach [x]{ + $x 10 }
+// ▶ (num 12)
+// ▶ (num 13)
+// ▶ (num 11)
+// ▶ (num 16)
+// ▶ (num 18)
+// ▶ (num 14)
+// ▶ (num 17)
+// ▶ (num 15)
+// ▶ (num 19)
 // ~> range 1 101 |
 //    peach [x]{ if (== 50 $x) { break } else { put $x } } |
-//    each [x]{ set tot = (+ $tot $x) }
-// ~> put $tot # without the break the total should be (num 5050)
-// ▶ (num 1603)
+//    + (all) # 1+...+49 = 1225; 1+...+100 = 5050
+// ▶ (num 1328)
 // ```
 //
 // This command is intended for homogeneous processing of possibly unbound data. If
@@ -173,11 +184,12 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 
 func peach(fm *Frame, f Callable, inputs Inputs) error {
 	var wg sync.WaitGroup
-	var broken atomic.Value
-	broken.Store(false)
+	var broken int32
+	var errMu sync.Mutex
 	var err error
+
 	inputs(func(v interface{}) {
-		if broken.Load().(bool) || err != nil {
+		if atomic.LoadInt32(&broken) != 0 {
 			return
 		}
 		wg.Add(1)
@@ -192,10 +204,12 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 				case nil, Continue:
 					// nop
 				case Break:
-					broken.Store(true)
+					atomic.StoreInt32(&broken, 1)
 				default:
-					broken.Store(true)
+					errMu.Lock()
 					err = diag.Errors(err, ex)
+					defer errMu.Unlock()
+					atomic.StoreInt32(&broken, 1)
 				}
 			}
 			wg.Done()

@@ -35,17 +35,16 @@ func TestPeach(t *testing.T) {
 	// undefined.
 	Test(t,
 		// Verify the output has the expected values when sorted.
-		That(`range 5 | peach [x]{ + 1 $x } | to-lines | order`).
-			Puts("1", "2", "3", "4", "5"),
+		That(`range 5 | peach [x]{ * 2 $x } | order`).Puts(0, 2, 4, 6, 8),
 		// Verify that successive runs produce the output in different order. This test can
 		// theoretically suffer false positives but the vast majority of the time this will produce
 		// the expected output in the first iteration. The probability it will produce the same
 		// order of output in 100 iterations is effectively zero.
 		That(`
-			var cpu-count = 99
-			var x = [(range $cpu-count | peach [x]{ + 1 $x })]
-			for r [(range 100)] {
-				var y = [(range $cpu-count | peach [x]{ sleep 1us; + 1 $x })]
+			fn f { range 100 | peach $put~ | put [(all)] }
+			var x = (f)
+			for _ [(range 100)] {
+				var y = (f)
 				if (not-eq $x $y) {
 					put $true
 					break
@@ -61,9 +60,8 @@ func TestPeach(t *testing.T) {
 			var tot = 0
 			range 1 101 |
 				peach [x]{ if (== 50 $x) { break } else { put $x } } |
-				each [x]{ set tot = (+ $tot $x) }
-			if (< $tot (/ (* 100 101) 2)) { put okay }
-		`).Puts("okay"),
+				< (+ (all)) (+ (range 1 101))
+		`).Puts(true),
 	)
 }
 
