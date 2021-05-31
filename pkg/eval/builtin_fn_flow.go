@@ -2,6 +2,7 @@ package eval
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval/vals"
@@ -136,10 +137,15 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 //elvdoc:fn peach
 //
 // ```elvish
-// peach $f $input-list?
+// peach $f~ $input-list?
 // ```
 //
-// Call `$f` on all inputs, possibly in parallel.
+// Call `$f~` on all inputs, possibly in parallel. The exception from a
+// [`break`](./builtin.html#break) command it will cause `peach` to stop starting new instances of
+// `$f` with any remaining inputs. Because each instance of `$f~` is being run in parallel it is not
+// predictable when the early termination will occur or even that it will happen before all the
+// input has been consumed. The exception from a [`continue`](./builtin.html#continue) command is
+// ignored.
 //
 // Example (your output will differ):
 //
@@ -151,6 +157,12 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 // ▶ 16
 // ▶ 15
 // ▶ 14
+// ~> var tot = 0
+// ~> range 1 101 |
+//    peach [x]{ if (== 50 $x) { break } else { put $x } } |
+//    each [x]{ set tot = (+ $tot $x) }
+// ~> put $tot # without the break the total should be (num 5050)
+// ▶ (num 1603)
 // ```
 //
 // This command is intended for homogeneous processing of possibly unbound data. If
@@ -161,10 +173,11 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 
 func peach(fm *Frame, f Callable, inputs Inputs) error {
 	var wg sync.WaitGroup
-	broken := false
+	var broken atomic.Value
+	broken.Store(false)
 	var err error
 	inputs(func(v interface{}) {
-		if broken || err != nil {
+		if broken.Load().(bool) || err != nil {
 			return
 		}
 		wg.Add(1)
@@ -179,9 +192,9 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 				case nil, Continue:
 					// nop
 				case Break:
-					broken = true
+					broken.Store(true)
 				default:
-					broken = true
+					broken.Store(true)
 					err = diag.Errors(err, ex)
 				}
 			}
