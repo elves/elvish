@@ -455,8 +455,7 @@ func isNaN(n vals.Num) bool {
 
 func max(rawNums ...vals.Num) (vals.Num, error) {
 	if len(rawNums) == 0 {
-		return nil, errs.ArityMismatch{
-			What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0}
+		return nil, errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: -1, Actual: 0}
 	}
 	nums := vals.UnifyNums(rawNums, 0)
 	switch nums := nums.(type) {
@@ -509,7 +508,7 @@ func max(rawNums ...vals.Num) (vals.Num, error) {
 //
 // ```elvish-transcript
 // ~> math:min
-// Exception: arity mismatch: arguments here must be 1 or more values, but is 0 values
+// Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
 // [tty 17], line 1: math:min
 // ~> math:min 3 5 2
 // ▶ (num 2)
@@ -519,8 +518,7 @@ func max(rawNums ...vals.Num) (vals.Num, error) {
 
 func min(rawNums ...vals.Num) (vals.Num, error) {
 	if len(rawNums) == 0 {
-		return nil, errs.ArityMismatch{
-			What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0}
+		return nil, errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: -1, Actual: 0}
 	}
 	nums := vals.UnifyNums(rawNums, 0)
 	switch nums := nums.(type) {

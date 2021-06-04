@@ -171,8 +171,7 @@ func TestCount(t *testing.T) {
 		That(`count [(range 100)]`).Puts(100),
 		That(`count 123`).Puts(3),
 		That(`count 1 2 3`).Throws(
-			errs.ArityMismatch{
-				What: "arguments here", ValidLow: 0, ValidHigh: 1, Actual: 3},
+			errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: 3},
 			"count 1 2 3"),
 		That(`count $true`).Throws(ErrorWithMessage("cannot get length of a bool")),
 	)

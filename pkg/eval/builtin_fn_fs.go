@@ -5,6 +5,8 @@ import (
 
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/store"
+
+	"src.elv.sh/pkg/eval/errs"
 )
 
 // Filesystem commands.
@@ -65,7 +67,7 @@ func cd(fm *Frame, args ...string) error {
 	case 1:
 		dir = args[0]
 	default:
-		return ErrArgs
+		return errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: len(args)}
 	}
 
 	return fm.Evaler.Chdir(dir)

@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/sys"
 )
@@ -65,7 +66,7 @@ func decSHLVL() {
 
 func fg(pids ...int) error {
 	if len(pids) == 0 {
-		return ErrArgs
+		return errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: -1, Actual: len(pids)}
 	}
 	var thepgid int
 	for i, pid := range pids {

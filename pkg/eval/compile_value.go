@@ -573,8 +573,8 @@ func evalForValue(fm *Frame, op valuesOp, what string) (interface{}, Exception) 
 		return nil, exc
 	}
 	if len(values) != 1 {
-		return nil, fm.errorp(op, errs.ArityMismatch{
-			What: what, ValidLow: 1, ValidHigh: 1, Actual: len(values)})
+		return nil, fm.errorp(op, errs.ArityMismatch{What: what,
+			ValidLow: 1, ValidHigh: 1, Actual: len(values)})
 	}
 	return values[0], nil
 }

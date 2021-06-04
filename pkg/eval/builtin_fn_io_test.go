@@ -22,6 +22,7 @@ func TestReadUpto(t *testing.T) {
 		That("print abcd | { read-upto c; slurp }").Puts("abc", "d"),
 		// read-upto reads up to EOF
 		That("print abcd | read-upto z").Puts("abcd"),
+		That("print abcd | read-upto cd").Throws(eval.ErrInvalidTerminator),
 	)
 }
 

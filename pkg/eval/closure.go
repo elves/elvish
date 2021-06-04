@@ -56,14 +56,12 @@ func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 	// Check number of arguments.
 	if c.RestArg != -1 {
 		if len(args) < len(c.ArgNames)-1 {
-			return errs.ArityMismatch{
-				What:     "arguments here",
+			return errs.ArityMismatch{What: "arguments",
 				ValidLow: len(c.ArgNames) - 1, ValidHigh: -1, Actual: len(args)}
 		}
 	} else {
 		if len(args) != len(c.ArgNames) {
-			return errs.ArityMismatch{
-				What:     "arguments here",
+			return errs.ArityMismatch{What: "arguments",
 				ValidLow: len(c.ArgNames), ValidHigh: len(c.ArgNames), Actual: len(args)}
 		}
 	}

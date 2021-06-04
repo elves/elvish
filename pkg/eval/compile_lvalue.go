@@ -117,8 +117,7 @@ func (op *assignOp) exec(fm *Frame) Exception {
 
 	if op.lhs.rest == -1 {
 		if len(variables) != len(values) {
-			return fm.errorp(op, errs.ArityMismatch{
-				What:     "assignment right-hand-side",
+			return fm.errorp(op, errs.ArityMismatch{What: "assignment right-hand-side",
 				ValidLow: len(variables), ValidHigh: len(variables), Actual: len(values)})
 		}
 		for i, variable := range variables {
@@ -129,8 +128,7 @@ func (op *assignOp) exec(fm *Frame) Exception {
 		}
 	} else {
 		if len(values) < len(variables)-1 {
-			return fm.errorp(op, errs.ArityMismatch{
-				What:     "assignment right-hand-side",
+			return fm.errorp(op, errs.ArityMismatch{What: "assignment right-hand-side",
 				ValidLow: len(variables) - 1, ValidHigh: -1, Actual: len(values)})
 		}
 		rest := op.lhs.rest

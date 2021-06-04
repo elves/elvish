@@ -17,6 +17,8 @@ import (
 
 // Input and output.
 
+var ErrInvalidTerminator = errors.New("terminator must be a single ASCII char")
+
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		// Value output
@@ -121,7 +123,7 @@ func put(fm *Frame, args ...interface{}) {
 
 func readUpto(fm *Frame, terminator string) (string, error) {
 	if len(terminator) != 1 || terminator[0] > 127 {
-		return "", ErrArgs
+		return "", ErrInvalidTerminator
 	}
 	in := fm.InputFile()
 	var buf []byte
@@ -714,8 +716,6 @@ func fromJSONInterface(v interface{}) (interface{}, error) {
 // ```
 //
 // @cf from-lines read-upto to-terminated
-
-var ErrInvalidTerminator = errors.New("terminator must be a single ASCII char")
 
 func fromTerminated(fm *Frame, terminator string) error {
 	if len(terminator) != 1 || terminator[0] > 127 {

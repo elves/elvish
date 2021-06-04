@@ -19,19 +19,14 @@ func TestClosureAsValue(t *testing.T) {
 
 		// Argument arity mismatch.
 		That("f = [x]{ }", "$f a b").Throws(
-			errs.ArityMismatch{
-				What:     "arguments here",
+			errs.ArityMismatch{What: "arguments",
 				ValidLow: 1, ValidHigh: 1, Actual: 2},
 			"$f a b"),
 		That("f = [x y]{ }", "$f a").Throws(
-			errs.ArityMismatch{
-				What:     "arguments here",
-				ValidLow: 2, ValidHigh: 2, Actual: 1},
+			errs.ArityMismatch{What: "arguments", ValidLow: 2, ValidHigh: 2, Actual: 1},
 			"$f a"),
 		That("f = [x y @rest]{ }", "$f a").Throws(
-			errs.ArityMismatch{
-				What:     "arguments here",
-				ValidLow: 2, ValidHigh: -1, Actual: 1},
+			errs.ArityMismatch{What: "arguments", ValidLow: 2, ValidHigh: -1, Actual: 1},
 			"$f a"),
 
 		// Unsupported option.

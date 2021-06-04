@@ -1,6 +1,8 @@
 package eval
 
 import (
+	"errors"
+	"fmt"
 	"math"
 	"math/big"
 	"math/rand"
@@ -342,10 +344,7 @@ func add(rawNums ...vals.Num) vals.Num {
 
 func sub(rawNums ...vals.Num) (vals.Num, error) {
 	if len(rawNums) == 0 {
-		return nil, errs.ArityMismatch{
-			What:     "arguments here",
-			ValidLow: 1, ValidHigh: -1, Actual: 0,
-		}
+		return nil, errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: -1, Actual: 0}
 	}
 
 	nums := vals.UnifyNums(rawNums, vals.BigInt)
@@ -588,9 +587,12 @@ func rem(a, b int) (int, error) {
 // ▶ 6
 // ```
 
+var ErrRandIntArgs = errors.New("$low >= $high")
+
 func randint(low, high int) (int, error) {
 	if low >= high {
-		return 0, ErrArgs
+		return 0, errs.BadValue{What: "low value",
+			Valid: fmt.Sprintf("less than %d", high), Actual: fmt.Sprintf("%d", low)}
 	}
 	return low + rand.Intn(high-low), nil
 }

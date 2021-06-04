@@ -105,7 +105,7 @@ func TestMath(t *testing.T) {
 		That("math:is-nan 1/2").Puts(false),
 
 		That("math:max").Throws(
-			errs.ArityMismatch{What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0},
+			errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: -1, Actual: 0},
 			"math:max"),
 		That("math:max 42").Puts(42),
 		That("math:max -3 3 10 -4").Puts(10),
@@ -116,7 +116,7 @@ func TestMath(t *testing.T) {
 		That("math:max 3 NaN 5").Puts(math.NaN()),
 
 		That("math:min").Throws(
-			errs.ArityMismatch{What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0},
+			errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: -1, Actual: 0},
 			"math:min"),
 		That("math:min 42").Puts(42),
 		That("math:min -3 3 10 -4").Puts(-4),

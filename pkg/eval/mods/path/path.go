@@ -243,8 +243,7 @@ func tempDir(opts mktempOpt, args ...string) (string, error) {
 	case 1:
 		pattern = args[0]
 	default:
-		return "", errs.ArityMismatch{
-			What:     "arguments here",
+		return "", errs.ArityMismatch{What: "arguments",
 			ValidLow: 0, ValidHigh: 1, Actual: len(args)}
 	}
 
@@ -299,8 +298,7 @@ func tempFile(opts mktempOpt, args ...string) (*os.File, error) {
 	case 1:
 		pattern = args[0]
 	default:
-		return nil, errs.ArityMismatch{
-			What:     "arguments here",
+		return nil, errs.ArityMismatch{What: "arguments",
 			ValidLow: 0, ValidHigh: 1, Actual: len(args)}
 	}
 
