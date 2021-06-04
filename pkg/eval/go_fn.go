@@ -12,11 +12,6 @@ import (
 )
 
 var (
-	// ErrArgs is thrown when a Go function gets erroneous arguments.
-	//
-	// TODO(xiaq): Replace this single error type with multiple types that carry
-	// richer error information.
-	ErrArgs = errors.New("args error")
 	// ErrNoOptAccepted is thrown when a Go function that does not accept any
 	// options gets passed options.
 	ErrNoOptAccepted = errors.New("function does not accept any options")
@@ -156,19 +151,16 @@ var errorType = reflect.TypeOf((*error)(nil)).Elem()
 func (b *goFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) error {
 	if b.variadicArg != nil {
 		if len(args) < len(b.normalArgs) {
-			return errs.ArityMismatch{
-				What:     "arguments here",
+			return errs.ArityMismatch{What: "arguments",
 				ValidLow: len(b.normalArgs), ValidHigh: -1, Actual: len(args)}
 		}
 	} else if b.inputs {
 		if len(args) != len(b.normalArgs) && len(args) != len(b.normalArgs)+1 {
-			return errs.ArityMismatch{
-				What:     "arguments here",
+			return errs.ArityMismatch{What: "arguments",
 				ValidLow: len(b.normalArgs), ValidHigh: len(b.normalArgs) + 1, Actual: len(args)}
 		}
 	} else if len(args) != len(b.normalArgs) {
-		return errs.ArityMismatch{
-			What:     "arguments here",
+		return errs.ArityMismatch{What: "arguments",
 			ValidLow: len(b.normalArgs), ValidHigh: len(b.normalArgs), Actual: len(args)}
 	}
 	if !b.rawOptions && b.options == nil && len(opts) > 0 {

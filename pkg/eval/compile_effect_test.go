@@ -46,8 +46,8 @@ func TestCommand(t *testing.T) {
 		That("put foo").Puts("foo"),
 		// Command errors when the head is not a single value.
 		That("{put put} foo").Throws(
-			errs.ArityMismatch{
-				What: "command", ValidLow: 1, ValidHigh: 1, Actual: 2},
+			errs.ArityMismatch{What: "command",
+				ValidLow: 1, ValidHigh: 1, Actual: 2},
 			"{put put}"),
 		// Command errors when the head is not callable or string containing slash.
 		That("[] foo").Throws(
@@ -141,18 +141,15 @@ func TestCommand_Assignment(t *testing.T) {
 		That("try { } except nil { }").DoesNothing(),
 		// Arity mismatch.
 		That("x = 1 2").Throws(
-			errs.ArityMismatch{
-				What:     "assignment right-hand-side",
+			errs.ArityMismatch{What: "assignment right-hand-side",
 				ValidLow: 1, ValidHigh: 1, Actual: 2},
 			"x = 1 2"),
 		That("x y = 1").Throws(
-			errs.ArityMismatch{
-				What:     "assignment right-hand-side",
+			errs.ArityMismatch{What: "assignment right-hand-side",
 				ValidLow: 2, ValidHigh: 2, Actual: 1},
 			"x y = 1"),
 		That("x y @z = 1").Throws(
-			errs.ArityMismatch{
-				What:     "assignment right-hand-side",
+			errs.ArityMismatch{What: "assignment right-hand-side",
 				ValidLow: 2, ValidHigh: -1, Actual: 1},
 			"x y @z = 1"),
 

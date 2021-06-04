@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
+	"src.elv.sh/pkg/eval/errs"
 )
 
 // Command and process control.
@@ -101,7 +103,7 @@ func exit(fm *Frame, codes ...int) error {
 	case 1:
 		code = codes[0]
 	default:
-		return ErrArgs
+		return errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: len(codes)}
 	}
 
 	preExit(fm)

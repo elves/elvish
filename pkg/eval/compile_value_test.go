@@ -219,8 +219,7 @@ func TestClosure(t *testing.T) {
 		That("[&a=[][0]]{ }").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// Option default value must be one value.
 		That("[&a=(put foo bar)]{ }").Throws(
-			errs.ArityMismatch{
-				What: "option default value", ValidLow: 1, ValidHigh: 1, Actual: 2},
+			errs.ArityMismatch{What: "option default value", ValidLow: 1, ValidHigh: 1, Actual: 2},
 			"(put foo bar)"),
 	)
 }

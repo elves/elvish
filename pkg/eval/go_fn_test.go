@@ -50,7 +50,7 @@ func TestGoFnCall(t *testing.T) {
 		t.Helper()
 		err := f.Call(fm, args, opts)
 		if !matchErr(wantErr, err) {
-			t.Errorf("Calling f didn't return error")
+			t.Errorf("Calling f returned wrong error:\nexp %v\ngot %v", wantErr, err)
 		}
 	}
 
@@ -197,20 +197,20 @@ func TestGoFnCall(t *testing.T) {
 	f = NewGoFn("f", func() {
 		t.Errorf("Function called when there are too many arguments")
 	})
-	callBad(theFrame, []interface{}{"x"}, theOptions, errs.ArityMismatch{
-		What: "arguments here", ValidLow: 0, ValidHigh: 0, Actual: 1})
+	callBad(theFrame, []interface{}{"x"}, theOptions, errs.ArityMismatch{What: "arguments",
+		ValidLow: 0, ValidHigh: 0, Actual: 1})
 
 	// Too few arguments.
 	f = NewGoFn("f", func(x string) {
 		t.Errorf("Function called when there are too few arguments")
 	})
-	callBad(theFrame, nil, theOptions, errs.ArityMismatch{
-		What: "arguments here", ValidLow: 1, ValidHigh: 1, Actual: 0})
+	callBad(theFrame, nil, theOptions, errs.ArityMismatch{What: "arguments",
+		ValidLow: 1, ValidHigh: 1, Actual: 0})
 	f = NewGoFn("f", func(x string, y ...string) {
 		t.Errorf("Function called when there are too few arguments")
 	})
-	callBad(theFrame, nil, theOptions, errs.ArityMismatch{
-		What: "arguments here", ValidLow: 1, ValidHigh: -1, Actual: 0})
+	callBad(theFrame, nil, theOptions, errs.ArityMismatch{What: "arguments",
+		ValidLow: 1, ValidHigh: -1, Actual: 0})
 
 	// Options when the function does not accept options.
 	f = NewGoFn("f", func() {

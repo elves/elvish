@@ -195,7 +195,7 @@ func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
 	case 2:
 		rawNums = []vals.Num{args[0], args[1], opts.Step}
 	default:
-		return ErrArgs
+		return errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: 2, Actual: len(args)}
 	}
 	switch step := opts.Step.(type) {
 	case int:
@@ -656,8 +656,7 @@ func count(fm *Frame, args ...interface{}) (int, error) {
 	default:
 		// The error matches what would be returned if the `Inputs` API was
 		// used. See GoFn.Call().
-		return 0, errs.ArityMismatch{
-			What: "arguments here", ValidLow: 0, ValidHigh: 1, Actual: nargs}
+		return 0, errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: nargs}
 	}
 	return n, nil
 }

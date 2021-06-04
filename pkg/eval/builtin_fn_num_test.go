@@ -220,7 +220,7 @@ func TestRandint(t *testing.T) {
 	Test(t,
 		That("randint 1 2").Puts(1),
 		That("i = (randint 10 100); >= $i 10; < $i 100").Puts(true, true),
-		That("randint 2 1").Throws(ErrArgs, "randint 2 1"),
+		That("randint 2 1").Throws(ErrorWithType(errs.BadValue{}), "randint 2 1"),
 		That("randint").Throws(ErrorWithType(errs.ArityMismatch{}), "randint"),
 		That("randint 1").Throws(ErrorWithType(errs.ArityMismatch{}), "randint 1"),
 		That("randint 1 2 3").Throws(ErrorWithType(errs.ArityMismatch{}), "randint 1 2 3"),
