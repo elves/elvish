@@ -76,7 +76,7 @@ func dedupCmds(allCmds []store.Cmd, newestFirst bool) []store.Cmd {
 	// Capacity allocation below is based on some personal empirical observation.
 	uniqCmds := make([]store.Cmd, 0, len(allCmds)/4)
 	seenCmds := make(map[string]bool, len(allCmds)/4)
-	for i := len(allCmds) - 1; i != 0; i-- {
+	for i := len(allCmds) - 1; i >= 0; i-- {
 		if !seenCmds[allCmds[i].Text] {
 			seenCmds[allCmds[i].Text] = true
 			uniqCmds = append(uniqCmds, allCmds[i])
