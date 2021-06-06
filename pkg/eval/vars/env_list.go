@@ -21,8 +21,8 @@ var (
 
 // Errors
 var (
-	ErrPathMustBeString = errors.New("path must be string")
-	ErrInvalidPathVal   = errors.New(`path cannot contain (semi)colon or \x00`)
+	ErrPathMustBeString          = errors.New("path must be string")
+	ErrPathContainsForbiddenChar = errors.New("path cannot contain NUL byte, colon on UNIX or semicolon on Windows")
 )
 
 // NewEnvListVar returns a variable whose value is a list synchronized with an
@@ -74,7 +74,7 @@ func (envli *envListVar) Set(v interface{}) error {
 		}
 		path := s
 		if strings.ContainsAny(path, forbiddenInPath) {
-			errElement = ErrInvalidPathVal
+			errElement = ErrPathContainsForbiddenChar
 			return false
 		}
 		paths = append(paths, s)
