@@ -106,7 +106,7 @@ func TestSleep(t *testing.T) {
 		That(`sleep -7`).Throws(ErrNegativeSleepDuration, "sleep -7"),
 		That(`sleep -3h`).Throws(ErrNegativeSleepDuration, "sleep -3h"),
 
-		That(`sleep 33/3`).Puts(11*time.Second), // rational number string
+		That(`sleep 1/2`).Puts(time.Second/2), // rational number string
 
 		// Verify the correct behavior if a numeric type, rather than a string, is passed to the
 		// command.
