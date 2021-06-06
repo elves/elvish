@@ -1,5 +1,8 @@
 package vars
 
+// Note: This doesn't have an associated env_list_tests.go because most of its functionality is
+// tested by TestSetEnv_PATH and related tests.
+
 import (
 	"errors"
 	"os"
@@ -18,8 +21,8 @@ var (
 
 // Errors
 var (
-	ErrPathMustBeString           = errors.New("path must be string")
-	ErrPathCannotContainColonZero = errors.New(`path cannot contain colon or \0`)
+	ErrPathMustBeString = errors.New("path must be string")
+	ErrInvalidPathVal   = errors.New(`path cannot contain (semi)colon or \x00`)
 )
 
 // NewEnvListVar returns a variable whose value is a list synchronized with an
@@ -71,7 +74,7 @@ func (envli *envListVar) Set(v interface{}) error {
 		}
 		path := s
 		if strings.ContainsAny(path, forbiddenInPath) {
-			errElement = ErrPathCannotContainColonZero
+			errElement = ErrInvalidPathVal
 			return false
 		}
 		paths = append(paths, s)
