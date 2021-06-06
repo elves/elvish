@@ -2017,7 +2017,14 @@ recursive functions:
 ```
 
 Under the hood, `fn` defines a variable with the given name plus `~` (see
-[variable suffix](#variable-suffix)).
+[variable suffix](#variable-suffix)). Example:
+
+```elvish-transcript
+~> fn f { echo hello from f }
+~> var v = $f~
+~> $v
+hello from f
+```
 
 # Pipeline
 
@@ -2083,9 +2090,9 @@ If an external command exits with a non-zero status, Elvish treats that as an
 exception.
 
 Flow commands -- `break`, `continue` and `return` -- are ordinary builtin
-commands that raise special "flow control" exceptions. The `for` and `while`
-commands capture `break` and `continue`, while `fn` modifies its closure to
-capture `return`.
+commands that raise special "flow control" exceptions. The `for`, `while`, and
+`peach` commands capture `break` and `continue`, while `fn` modifies its closure
+to capture `return`.
 
 One interesting implication is that since flow commands are just ordinary
 commands you can build functions on top of them. For instance, this function

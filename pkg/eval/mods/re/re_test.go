@@ -39,10 +39,11 @@ func TestRe(t *testing.T) {
 		That("re:find '(' x").Throws(AnyError),
 
 		// Without any flag, finds ax
-		That("put (re:find 'a(x|xy)' axy)[text]").Puts("ax"),
+		That("put (re:find 'a(x|xy)' AaxyZ)[text]").Puts("ax"),
 		// With &longest, finds axy
-		That("put (re:find &longest 'a(x|xy)' axy)[text]").Puts("axy"),
-		// TODO: Test &posix
+		That("put (re:find &longest 'a(x|xy)' AaxyZ)[text]").Puts("axy"),
+		// Basic verification of &posix behavior.
+		That("put (re:find &posix 'a(x|xy)+' AaxyxxxyZ)[text]").Puts("axyxxxy"),
 
 		That("re:replace '(ba|z)sh' '${1}SH' 'bash and zsh'").Puts("baSH and zSH"),
 		That("re:replace &literal '(ba|z)sh' '$sh' 'bash and zsh'").Puts("$sh and $sh"),
@@ -50,6 +51,7 @@ func TestRe(t *testing.T) {
 
 		// Invalid pattern in re:replace
 		That("re:replace '(' x bash").Throws(AnyError),
+		That("re:replace &posix '[[:argle:]]' x bash").Throws(AnyError),
 		// Replacement function outputs more than one value
 		That("re:replace x [x]{ put a b } xx").Throws(AnyError),
 		// Replacement function outputs non-string value

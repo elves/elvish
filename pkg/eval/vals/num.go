@@ -95,31 +95,13 @@ func UnifyNums(nums []Num, typ NumType) NumSlice {
 	case BigInt:
 		unified := make([]*big.Int, len(nums))
 		for i, num := range nums {
-			switch num := num.(type) {
-			case int:
-				unified[i] = big.NewInt(int64(num))
-			case *big.Int:
-				unified[i] = num
-			default:
-				panic("unreachable")
-			}
+			unified[i] = promoteToBigInt(num)
 		}
 		return unified
 	case BigRat:
 		unified := make([]*big.Rat, len(nums))
 		for i, num := range nums {
-			switch num := num.(type) {
-			case int:
-				unified[i] = big.NewRat(int64(num), 1)
-			case *big.Int:
-				var r big.Rat
-				r.SetInt(num)
-				unified[i] = &r
-			case *big.Rat:
-				unified[i] = num
-			default:
-				panic("unreachable")
-			}
+			unified[i] = promoteToBigRat(num)
 		}
 		return unified
 	case Float64:
@@ -128,6 +110,30 @@ func UnifyNums(nums []Num, typ NumType) NumSlice {
 			unified[i] = convertToFloat64(num)
 		}
 		return unified
+	default:
+		panic("unreachable")
+	}
+}
+
+// UnifyNums2 is like UnifyNums, but is optimized for two numbers.
+func UnifyNums2(n1, n2 Num, typ NumType) (u1, u2 Num) {
+	t1 := getNumType(n1)
+	if typ < t1 {
+		typ = t1
+	}
+	t2 := getNumType(n2)
+	if typ < t2 {
+		typ = t2
+	}
+	switch typ {
+	case Int:
+		return n1, n2
+	case BigInt:
+		return promoteToBigInt(n1), promoteToBigInt(n2)
+	case BigRat:
+		return promoteToBigRat(n1), promoteToBigRat(n2)
+	case Float64:
+		return convertToFloat64(n1), convertToFloat64(n2)
 	default:
 		panic("unreachable")
 	}
@@ -145,6 +151,32 @@ func getNumType(n Num) NumType {
 		return Float64
 	default:
 		panic("invalid num type " + fmt.Sprintf("%T", n))
+	}
+}
+
+func promoteToBigInt(n Num) *big.Int {
+	switch n := n.(type) {
+	case int:
+		return big.NewInt(int64(n))
+	case *big.Int:
+		return n
+	default:
+		panic("unreachable")
+	}
+}
+
+func promoteToBigRat(n Num) *big.Rat {
+	switch n := n.(type) {
+	case int:
+		return big.NewRat(int64(n), 1)
+	case *big.Int:
+		var r big.Rat
+		r.SetInt(n)
+		return &r
+	case *big.Rat:
+		return n
+	default:
+		panic("unreachable")
 	}
 }
 

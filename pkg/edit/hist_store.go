@@ -26,6 +26,7 @@ func (s *histStore) AddCmd(cmd store.Cmd) (int, error) {
 	return s.hs.AddCmd(cmd)
 }
 
+// AllCmds returns a slice of all interactive commands in oldest to newest order.
 func (s *histStore) AllCmds() ([]store.Cmd, error) {
 	s.m.Lock()
 	defer s.m.Unlock()

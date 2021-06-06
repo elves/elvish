@@ -2,6 +2,7 @@ package eval
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval/vals"
@@ -66,8 +67,8 @@ func init() {
 // @cf peach
 
 func runParallel(fm *Frame, functions ...Callable) error {
-	var waitg sync.WaitGroup
-	waitg.Add(len(functions))
+	var wg sync.WaitGroup
+	wg.Add(len(functions))
 	exceptions := make([]Exception, len(functions))
 	for i, function := range functions {
 		go func(fm2 *Frame, function Callable, pexc *Exception) {
@@ -75,11 +76,11 @@ func runParallel(fm *Frame, functions ...Callable) error {
 			if err != nil {
 				*pexc = err.(Exception)
 			}
-			waitg.Done()
+			wg.Done()
 		}(fm.fork("[run-parallel function]"), function, &exceptions[i])
 	}
 
-	waitg.Wait()
+	wg.Wait()
 	return MakePipelineError(exceptions)
 }
 
@@ -89,10 +90,18 @@ func runParallel(fm *Frame, functions ...Callable) error {
 // each $f $input-list?
 // ```
 //
-// Call `$f` on all inputs. Examples:
+// Call `$f` on all inputs.
+//
+// An exception raised from [`break`](#break) is caught by `each`, and will
+// cause it to terminate early.
+//
+// An exception raised from [`continue`](#continue) is swallowed and can be used
+// to terminate a single iteration early.
+//
+// Examples:
 //
 // ```elvish-transcript
-// ~> range 5 8 | each [x]{ ^ $x 2 }
+// ~> range 5 8 | each [x]{ * $x $x }
 // ▶ 25
 // ▶ 36
 // ▶ 49
@@ -139,18 +148,32 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 // peach $f $input-list?
 // ```
 //
-// Call `$f` on all inputs, possibly in parallel.
+// Calls `$f` on all inputs, possibly in parallel.
+//
+// Like `each`, an exception raised from [`break`](#break) will cause `peach`
+// to terminate early. However due to the parallel nature of `peach`, the exact
+// time of termination is non-deterministic and not even guranteed.
+//
+// An exception raised from [`continue`](#continue) is swallowed and can be used
+// to terminate a single iteration early.
 //
 // Example (your output will differ):
 //
 // ```elvish-transcript
-// ~> range 1 7 | peach [x]{ + $x 10 }
-// ▶ 12
-// ▶ 11
-// ▶ 13
-// ▶ 16
-// ▶ 15
-// ▶ 14
+// ~> range 1 10 | peach [x]{ + $x 10 }
+// ▶ (num 12)
+// ▶ (num 13)
+// ▶ (num 11)
+// ▶ (num 16)
+// ▶ (num 18)
+// ▶ (num 14)
+// ▶ (num 17)
+// ▶ (num 15)
+// ▶ (num 19)
+// ~> range 1 101 |
+//    peach [x]{ if (== 50 $x) { break } else { put $x } } |
+//    + (all) # 1+...+49 = 1225; 1+...+100 = 5050
+// ▶ (num 1328)
 // ```
 //
 // This command is intended for homogeneous processing of possibly unbound data. If
@@ -160,14 +183,16 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 // @cf each run-parallel
 
 func peach(fm *Frame, f Callable, inputs Inputs) error {
-	var w sync.WaitGroup
-	broken := false
+	var wg sync.WaitGroup
+	var broken int32
+	var errMu sync.Mutex
 	var err error
+
 	inputs(func(v interface{}) {
-		if broken || err != nil {
+		if atomic.LoadInt32(&broken) != 0 {
 			return
 		}
-		w.Add(1)
+		wg.Add(1)
 		go func() {
 			newFm := fm.fork("closure of peach")
 			newFm.ports[0] = DummyInputPort
@@ -179,16 +204,18 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 				case nil, Continue:
 					// nop
 				case Break:
-					broken = true
+					atomic.StoreInt32(&broken, 1)
 				default:
-					broken = true
+					errMu.Lock()
 					err = diag.Errors(err, ex)
+					defer errMu.Unlock()
+					atomic.StoreInt32(&broken, 1)
 				}
 			}
-			w.Done()
+			wg.Done()
 		}()
 	})
-	w.Wait()
+	wg.Wait()
 	return err
 }
 

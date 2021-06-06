@@ -319,10 +319,10 @@ func index(bitmap, bit uint32) uint32 {
 
 const (
 	m1  uint32 = 0x55555555
-	m2         = 0x33333333
-	m4         = 0x0f0f0f0f
-	m8         = 0x00ff00ff
-	m16        = 0x0000ffff
+	m2  uint32 = 0x33333333
+	m4  uint32 = 0x0f0f0f0f
+	m8  uint32 = 0x00ff00ff
+	m16 uint32 = 0x0000ffff
 )
 
 // TODO(xiaq): Use an optimized implementation.
