@@ -19,5 +19,8 @@ func TestPipe(t *testing.T) {
 		Hash(hash.DJB(hash.UIntPtr(pr.Fd()), hash.UIntPtr(pw.Fd()))).
 		Repr(fmt.Sprintf("<pipe{%v %v}>", pr.Fd(), pw.Fd())).
 		Equal(NewPipe(pr, pw)).
-		NotEqual(123, "a string", NewPipe(pw, pr))
+		NotEqual(123, "a string", NewPipe(pw, pr)).
+		AllKeys("r", "w").
+		Index("r", pr).
+		Index("w", pw)
 }

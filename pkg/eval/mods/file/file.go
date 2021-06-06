@@ -16,8 +16,6 @@ var fns = map[string]interface{}{
 	"close":    close,
 	"open":     open,
 	"pipe":     pipe,
-	"prclose":  prclose,
-	"pwclose":  pwclose,
 	"truncate": truncate,
 }
 
@@ -68,16 +66,16 @@ func close(f vals.File) error {
 // file:pipe
 // ```
 //
-// Create a new Unix pipe that can be used in redirections.
-//
-// A pipe contains both the read FD and the write FD. When redirecting command
-// input to a pipe with `<`, the read FD is used. When redirecting command output
-// to a pipe with `>`, the write FD is used. It is not supported to redirect both
-// input and output with `<>` to a pipe.
+// Create a new pipe that can be used in redirections. A pipe contains a read-end and write-end.
+// Each pipe object is a [pseudo-map](#pseudo-map) with fields `r` (the read-end [file
+// object](./language.html#File)) and `w` (the write-end).
+
+// When redirecting command input from a pipe with `<`, the read-end is used. When redirecting
+// command output to a pipe with `>`, the write-end is used. Redirecting both input and output with
+// `<>` to a pipe is not supported.
 //
 // Pipes have an OS-dependent buffer, so writing to a pipe without an active reader
-// does not necessarily block. Pipes **must** be explicitly closed with `prclose`
-// and `pwclose`.
+// does not necessarily block. Pipes **must** be explicitly closed with `file:close`.
 //
 // Putting values into pipes will cause those values to be discarded.
 //
@@ -89,44 +87,16 @@ func close(f vals.File) error {
 // ~> head -n1 < $p
 // lorem ipsum
 // ~> put 'lorem ipsum' > $p
-// ~> head -n1 < $p
-// # blocks
-// # $p should be closed with prclose and pwclose afterwards
+// ~> file:close $p[w] # close the write-end
+// ~> head -n1 < $p # blocks unless the write-end is closed
+// ~> file:close $p[r] # close the read-end
 // ```
 //
-// @cf prclose pwclose
+// @cf close
 
 func pipe() (vals.Pipe, error) {
 	r, w, err := os.Pipe()
 	return vals.NewPipe(r, w), err
-}
-
-//elvdoc:fn prclose
-//
-// ```elvish
-// file:prclose $pipe
-// ```
-//
-// Close the read end of a pipe.
-//
-// @cf pwclose pipe
-
-func prclose(p vals.Pipe) error {
-	return p.ReadEnd.Close()
-}
-
-//elvdoc:fn pwclose
-//
-// ```elvish
-// file:pwclose $pipe
-// ```
-//
-// Close the write end of a pipe.
-//
-// @cf prclose pipe
-
-func pwclose(p vals.Pipe) error {
-	return p.WriteEnd.Close()
 }
 
 //elvdoc:fn truncate

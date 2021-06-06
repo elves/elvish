@@ -147,8 +147,9 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // eawk $f $input-list?
 // ```
 //
-// For each input, call `$f` with the input followed by all its fields. The
-// function may call `break` and `continue`.
+// For each input, call `$f` with the input followed by all its fields. A
+// [`break`](./builtin.html#break) command will cause `eawk` to stop processing inputs. A
+// [`continue`](./builtin.html#continue) command will exit $f, but is ignored by `eawk`.
 //
 // It should behave the same as the following functions:
 //

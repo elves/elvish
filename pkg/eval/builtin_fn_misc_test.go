@@ -1,7 +1,6 @@
 package eval_test
 
 import (
-	"errors"
 	"os"
 	"testing"
 	"time"
@@ -103,20 +102,21 @@ func TestSleep(t *testing.T) {
 		That(`sleep 0.1ms`).Puts(100*time.Microsecond),
 		That(`sleep 3h5m7s`).Puts((3*3600+5*60+7)*time.Second),
 
-		That(`sleep 1x`).Throws(errors.New("invalid sleep duration"), "sleep 1x"),
-		That(`sleep -7`).Throws(errors.New("sleep duration must be >= zero"), "sleep -7"),
-		That(`sleep -3h`).Throws(errors.New("sleep duration must be >= zero"), "sleep -3h"),
+		That(`sleep 1x`).Throws(ErrInvalidSleepDuration, "sleep 1x"),
+		That(`sleep -7`).Throws(ErrNegativeSleepDuration, "sleep -7"),
+		That(`sleep -3h`).Throws(ErrNegativeSleepDuration, "sleep -3h"),
 
-		// Verify the correct behavior if a number rather than a string is
-		// passed to the command.
+		That(`sleep 1/2`).Puts(time.Second/2), // rational number string
+
+		// Verify the correct behavior if a numeric type, rather than a string, is passed to the
+		// command.
+		That(`sleep (num 42)`).Puts(42*time.Second),
 		That(`sleep (float64 0)`).Puts(0*time.Second),
 		That(`sleep (float64 1.7)`).Puts(1700*time.Millisecond),
-		That(`sleep (float64 -7)`).Throws(
-			errors.New("sleep duration must be >= zero"),
-			"sleep (float64 -7)"),
+		That(`sleep (float64 -7)`).Throws(ErrNegativeSleepDuration, "sleep (float64 -7)"),
 
 		// An invalid argument type should raise an exception.
-		That(`sleep [1]`).Throws(errors.New("invalid sleep duration"), "sleep [1]"),
+		That(`sleep [1]`).Throws(ErrInvalidSleepDuration, "sleep [1]"),
 	)
 }
 
