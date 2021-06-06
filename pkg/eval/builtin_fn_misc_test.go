@@ -106,10 +106,11 @@ func TestSleep(t *testing.T) {
 		That(`sleep -7`).Throws(ErrNegativeSleepDuration, "sleep -7"),
 		That(`sleep -3h`).Throws(ErrNegativeSleepDuration, "sleep -3h"),
 
-		// Verify the correct behavior if a number rather than a string is
-		// passed to the command.
-		//
-		// TODO: Augment these tests to use `(num ...)` as part of resolving https://b.elv.sh/1317.
+		That(`sleep 33/3`).Puts(11*time.Second), // rational number string
+
+		// Verify the correct behavior if a numeric type, rather than a string, is passed to the
+		// command.
+		That(`sleep (num 42)`).Puts(42*time.Second),
 		That(`sleep (float64 0)`).Puts(0*time.Second),
 		That(`sleep (float64 1.7)`).Puts(1700*time.Millisecond),
 		That(`sleep (float64 -7)`).Throws(ErrNegativeSleepDuration, "sleep (float64 -7)"),
