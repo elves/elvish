@@ -51,20 +51,23 @@ func TestWcswidth(t *testing.T) {
 
 func TestEawk(t *testing.T) {
 	Test(t,
+		That(`echo "  ax  by cz  \n11\t22 33" | eawk [@a]{ put $a[-1] }`).
+			Puts("cz", "33"),
+		// Bad input type
+		That(`num 42 | eawk [@a]{ fail "this should not run" }`).
+			Throws(ErrInputOfEawkMustBeString),
+		// Propagation of exception
 		That(`
-			echo "1\n2\n3\n4" | eawk [@a]{
+			to-lines [1 2 3 4] | eawk [@a]{
 				if (==s 3 $a[1]) {
 					fail "stop eawk"
 				}
 				put $a[1]
 			}
 		`).Puts("1", "2").Throws(FailError{"stop eawk"}),
-		That(`put (num 42) | eawk [@a]{ fail "this should not run" }`).
-			Throws(ErrInputOfEawkMustBeString),
-		That(`echo "  ax  by cz  \n11\t22 33" | eawk [@a]{ put $a[-1] }`).
-			Puts("cz", "33"),
+		// break
 		That(`
-			echo " a\nb\tc \nd\ne" | eawk [@a]{
+			to-lines [" a" "b\tc " "d" "e"] | eawk [@a]{
 				if (==s d $a[1]) {
 					break
 				} else {
@@ -72,8 +75,9 @@ func TestEawk(t *testing.T) {
 				}
 			}
 		`).Puts("a", "c"),
+		// continue
 		That(`
-			echo " a\nb\tc \nd\ne" | eawk [@a]{
+			to-lines [" a" "b\tc " "d" "e"] | eawk [@a]{
 				if (==s d $a[1]) {
 					continue
 				} else {
