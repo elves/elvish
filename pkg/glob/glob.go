@@ -8,9 +8,8 @@ import (
 	"unicode/utf8"
 )
 
-// TODO: Use native path separators (i.e., os.PathSeparator) instead of always using `/` when
-// building a path. When parsing a path note that Windows supports both `/` and `\` so Elvish should
-// as well. TBD is whether os.IsPathSeparator handles Windows correctly.
+// TODO: On Windows, preserve the original path separator (/ or \) specified in
+// the glob pattern.
 
 // PathInfo keeps a path resulting from glob expansion and its FileInfo. The
 // FileInfo is useful for efficiently determining if a given pathname satisfies
