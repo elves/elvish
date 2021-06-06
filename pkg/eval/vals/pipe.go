@@ -13,7 +13,7 @@ type Pipe struct {
 	ReadEnd, WriteEnd *os.File
 }
 
-var _ interface{} = Pipe{}
+var _ PseudoStructMap = Pipe{}
 
 // NewPipe creates a new Pipe value.
 func NewPipe(r, w *os.File) Pipe {
@@ -45,13 +45,11 @@ func (p Pipe) Repr(int) string {
 	return fmt.Sprintf("<pipe{%v %v}>", p.ReadEnd.Fd(), p.WriteEnd.Fd())
 }
 
-// Index returns the desired pipe endpoint that satisfies a reference such as `$p[r]`.
-func (p Pipe) Index(k interface{}) (interface{}, bool) {
-	switch k {
-	case "r":
-		return p.ReadEnd, true
-	case "w":
-		return p.WriteEnd, true
-	}
-	return nil, false
+// Fields returns fields of the Pipe value.
+func (p Pipe) Fields() StructMap {
+	return pipeFields{p.ReadEnd, p.WriteEnd}
 }
+
+type pipeFields struct{ R, W *os.File }
+
+func (pipeFields) IsStructMap() {}
