@@ -1,3 +1,5 @@
+ELVISH_MAKE_BIN ?= $(shell go env GOPATH)/bin/elvish
+
 default: test get
 
 get:
@@ -5,7 +7,8 @@ get:
 	if go env GOOS GOARCH | egrep -qx '(windows .*|linux (amd64|arm64))'; then \
 		export GOFLAGS=-buildmode=pie; \
 	fi; \
-	go get -trimpath -ldflags \
+	mkdir -p $(shell dirname $(ELVISH_MAKE_BIN))
+	go build -o $(ELVISH_MAKE_BIN) -trimpath -ldflags \
 		"-X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev.$$(git rev-parse HEAD)$$(git diff HEAD --quiet || printf +%s `uname -n`) \
 		 -X src.elv.sh/pkg/buildinfo.Reproducible=true" ./cmd/elvish
 
