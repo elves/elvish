@@ -8,6 +8,7 @@ import (
 
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vars"
 )
 
 func TestGetEnv(t *testing.T) {
@@ -60,6 +61,10 @@ func TestSetEnv_PATH(t *testing.T) {
 		That(`set-env PATH /test-path`),
 		That(`put $paths`).Puts(vals.MakeList("/test-path")),
 		That(`paths = [/test-path2 $@paths]`),
+		That(`paths = [$true]`).Throws(vars.ErrPathMustBeString),
+		That(`paths = ["/invalid`+string(os.PathListSeparator)+`:path"]`).
+			Throws(vars.ErrInvalidPathVal),
+		That(`paths = ["/invalid\000path"]`).Throws(vars.ErrInvalidPathVal),
 		That(`get-env PATH`).Puts("/test-path2"+listSep+"/test-path"),
 	)
 }
