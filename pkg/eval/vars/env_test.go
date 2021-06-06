@@ -12,8 +12,14 @@ func TestFromEnv(t *testing.T) {
 	if v.Get() != "foo" {
 		t.Errorf("envVariable.Get doesn't return env value")
 	}
-	v.Set("bar")
-	if os.Getenv(name) != "bar" {
+
+	err := v.Set("bar")
+	if err != nil || os.Getenv(name) != "bar" {
 		t.Errorf("envVariable.Set doesn't alter env value")
+	}
+
+	err = v.Set(true)
+	if err != errEnvMustBeString {
+		t.Errorf("envVariable.Set to a non-string value didn't return an error")
 	}
 }
