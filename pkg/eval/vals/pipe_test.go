@@ -2,28 +2,25 @@ package vals
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"src.elv.sh/pkg/persistent/hash"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestPipe(t *testing.T) {
-	r, w, err := os.Pipe()
-	if err != nil {
-		panic(err)
-	}
-	defer r.Close()
-	defer w.Close()
+	pr, pw := testutil.MustPipe()
+	defer pr.Close()
+	defer pw.Close()
 
-	TestValue(t, NewPipe(r, w)).
+	TestValue(t, NewPipe(pr, pw)).
 		Kind("pipe").
 		Bool(true).
-		Hash(hash.DJB(hash.UIntPtr(r.Fd()), hash.UIntPtr(w.Fd()))).
-		Repr(fmt.Sprintf("<pipe{%v %v}>", r.Fd(), w.Fd())).
-		Equal(NewPipe(r, w)).
-		NotEqual(123, "a string", NewPipe(w, r)).
+		Hash(hash.DJB(hash.UIntPtr(pr.Fd()), hash.UIntPtr(pw.Fd()))).
+		Repr(fmt.Sprintf("<pipe{%v %v}>", pr.Fd(), pw.Fd())).
+		Equal(NewPipe(pr, pw)).
+		NotEqual(123, "a string", NewPipe(pw, pr)).
 		AllKeys("r", "w").
-		Index("r", r).
-		Index("w", w)
+		Index("r", pr).
+		Index("w", pw)
 }
