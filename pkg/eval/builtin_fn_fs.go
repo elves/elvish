@@ -77,8 +77,8 @@ func cd(fm *Frame, args ...string) error {
 // dir-history
 // ```
 //
-// Return a list containing the directory history. Each element is a map with two
-// keys: `path` and `score`. The list is sorted by descending score.
+// Return a list containing the interactive directory history. Each element is a map with two keys:
+// `path` and `score`. The list is sorted by descending score.
 //
 // Example:
 //
@@ -86,6 +86,8 @@ func cd(fm *Frame, args ...string) error {
 // ~> dir-history | take 1
 // ▶ [&path=/Users/foo/.elvish &score=96.79928]
 // ```
+//
+// @cf edit:command-history
 
 type dirHistoryEntry struct {
 	Path  string

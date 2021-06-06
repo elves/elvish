@@ -72,6 +72,17 @@ func TestUnifyNums(t *testing.T) {
 	})
 }
 
+func TestUnifyNums2(t *testing.T) {
+	Test(t, Fn("UnifyNums2", UnifyNums2), Table{
+		Args(1, 2, Int).Rets(1, 2),
+		Args(1, bigInt(z), Int).Rets(big.NewInt(1), bigInt(z)),
+		Args(1, big.NewRat(1, 2), Int).Rets(big.NewRat(1, 1), big.NewRat(1, 2)),
+		Args(1, 2.0, Int).Rets(1.0, 2.0),
+
+		Args(1, 2, BigInt).Rets(big.NewInt(1), big.NewInt(2)),
+	})
+}
+
 func bigInt(s string) *big.Int {
 	z, ok := new(big.Int).SetString(s, 0)
 	if !ok {

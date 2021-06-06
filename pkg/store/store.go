@@ -16,7 +16,6 @@ type Store interface {
 	AddCmd(text string) (int, error)
 	DelCmd(seq int) error
 	Cmd(seq int) (string, error)
-	Cmds(from, upto int) ([]string, error)
 	CmdsWithSeq(from, upto int) ([]Cmd, error)
 	NextCmd(from int, prefix string) (Cmd, error)
 	PrevCmd(upto int, prefix string) (Cmd, error)

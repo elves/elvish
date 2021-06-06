@@ -216,7 +216,7 @@ func TestGoFnCall(t *testing.T) {
 	f = NewGoFn("f", func() {
 		t.Errorf("Function called when there are extra options")
 	})
-	callBad(theFrame, nil, RawOptions{"foo": "bar"}, errNoOptions)
+	callBad(theFrame, nil, RawOptions{"foo": "bar"}, ErrNoOptAccepted)
 
 	// Wrong argument type.
 	f = NewGoFn("f", func(x string) {

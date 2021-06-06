@@ -18,6 +18,11 @@ import (
 	"src.elv.sh/pkg/parse"
 )
 
+var (
+	ErrNegativeSleepDuration = errors.New("sleep duration must be >= zero")
+	ErrInvalidSleepDuration  = errors.New("invalid sleep duration")
+)
+
 // Builtins that have not been put into their own groups go here.
 
 func init() {
@@ -405,15 +410,15 @@ func sleep(fm *Frame, duration interface{}) error {
 		} else {
 			d, err = time.ParseDuration(duration)
 			if err != nil {
-				return errors.New("invalid sleep duration")
+				return ErrInvalidSleepDuration
 			}
 		}
 	default:
-		return errors.New("invalid sleep duration")
+		return ErrInvalidSleepDuration
 	}
 
 	if d < 0 {
-		return fmt.Errorf("sleep duration must be >= zero")
+		return ErrNegativeSleepDuration
 	}
 
 	select {

@@ -7,9 +7,9 @@ func SplitSigil(ref string) (sigil string, qname string) {
 	if ref == "" {
 		return "", ""
 	}
+	// TODO: Support % (and other sigils?) if https://b.elv.sh/584 is implemented for map explosion.
 	switch ref[0] {
 	case '@':
-		// TODO(xiaq): Support % later.
 		return ref[:1], ref[1:]
 	default:
 		return "", ref

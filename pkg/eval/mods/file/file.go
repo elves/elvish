@@ -1,18 +1,22 @@
 package file
 
 import (
+	"math/big"
 	"os"
+	"strconv"
 
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 )
 
 var Ns = eval.NsBuilder{}.AddGoFns("file:", fns).Ns()
 
 var fns = map[string]interface{}{
-	"close": close,
-	"open":  open,
-	"pipe":  pipe,
+	"close":    close,
+	"open":     open,
+	"pipe":     pipe,
+	"truncate": truncate,
 }
 
 //elvdoc:fn open
@@ -93,4 +97,46 @@ func close(f vals.File) error {
 func pipe() (vals.Pipe, error) {
 	r, w, err := os.Pipe()
 	return vals.NewPipe(r, w), err
+}
+
+//elvdoc:fn truncate
+//
+// ```elvish
+// file:truncate $filename $size
+// ```
+//
+// changes the size of the named file. If the file is a symbolic link, it
+// changes the size of the link's target. The size must be an integer between 0
+// and 2^64-1.
+
+func truncate(name string, rawSize vals.Num) error {
+	var size int64
+	switch rawSize := rawSize.(type) {
+	case int:
+		size = int64(rawSize)
+	case *big.Int:
+		if rawSize.IsInt64() {
+			size = rawSize.Int64()
+		} else {
+			return truncateSizeOutOfRange(rawSize.String())
+		}
+	default:
+		return errs.BadValue{
+			What:  "size argument to file:truncate",
+			Valid: "integer", Actual: "non-integer",
+		}
+	}
+	if size < 0 {
+		return truncateSizeOutOfRange(strconv.FormatInt(size, 10))
+	}
+	return os.Truncate(name, size)
+}
+
+func truncateSizeOutOfRange(size string) error {
+	return errs.OutOfRange{
+		What:      "size argument to file:truncate",
+		ValidLow:  "0",
+		ValidHigh: "2^64-1",
+		Actual:    size,
+	}
 }

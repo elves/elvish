@@ -858,23 +858,21 @@ const (
 
 func compare(a, b interface{}) ordering {
 	switch a := a.(type) {
-	case float64:
-		if b, ok := b.(float64); ok {
-			switch {
-			case math.IsNaN(a):
-				if math.IsNaN(b) {
-					return equal
-				}
-				return less
-			case math.IsNaN(b):
-				return more
-			case a == b:
-				return equal
-			case a < b:
-				return less
+	case int, *big.Int, *big.Rat, float64:
+		switch b.(type) {
+		case int, *big.Int, *big.Rat, float64:
+			a, b := vals.UnifyNums2(a, b, 0)
+			switch a := a.(type) {
+			case int:
+				return compareInt(a, b.(int))
+			case *big.Int:
+				return compareInt(a.Cmp(b.(*big.Int)), 0)
+			case *big.Rat:
+				return compareInt(a.Cmp(b.(*big.Rat)), 0)
+			case float64:
+				return compareFloat(a, b.(float64))
 			default:
-				// a > b
-				return more
+				panic("unreachable")
 			}
 		}
 	case string:
@@ -913,4 +911,33 @@ func compare(a, b interface{}) ordering {
 		}
 	}
 	return uncomparable
+}
+
+func compareInt(a, b int) ordering {
+	if a < b {
+		return less
+	} else if a > b {
+		return more
+	}
+	return equal
+}
+
+func compareFloat(a, b float64) ordering {
+	// For the sake of ordering, NaN's are considered equal to each
+	// other and smaller than all numbers
+	switch {
+	case math.IsNaN(a):
+		if math.IsNaN(b) {
+			return equal
+		}
+		return less
+	case math.IsNaN(b):
+		return more
+	case a < b:
+		return less
+	case a > b:
+		return more
+	default: // a == b
+		return equal
+	}
 }
