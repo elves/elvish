@@ -214,7 +214,7 @@ segs:
 		}
 		segs = segs[i:]
 
-		// NOTE A quick path when len(segs) == 0 can be implemented: match
+		// TODO: Implement a quick path when len(segs) == 0 by matching
 		// backwards.
 
 		// Match at the current position. If this is the last chunk, we need to
@@ -226,10 +226,11 @@ segs:
 		}
 
 		if startsWithStar {
-			// NOTE An optimization is to make the upper bound not len(names),
-			// but rather len(names) - LB(# bytes segs can match)
-			for i, r := range name {
-				j := i + len(string(r))
+			// TODO: Optimize by stopping at len(name) - LB(# bytes segs can
+			// match) rather than len(names)
+			for i := 0; i < len(name); {
+				r, rsize := utf8.DecodeRuneInString(name[i:])
+				j := i + rsize
 				// Match name[:j] with the starting *, and the rest with chunk.
 				if !startingStar.Match(r) {
 					break
@@ -239,6 +240,7 @@ segs:
 					name = rest
 					continue segs
 				}
+				i = j
 			}
 		}
 		return false
