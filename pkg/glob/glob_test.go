@@ -95,15 +95,39 @@ func testGlob(t *testing.T, abs bool) {
 		}
 		sort.Strings(wantResults)
 
-		results := []string{}
-		Glob(pattern, func(pathInfo PathInfo) bool {
-			results = append(results, pathInfo.Path)
-			return true
-		})
-		sort.Strings(results)
+		results := globPaths(pattern)
 
 		if !reflect.DeepEqual(results, wantResults) {
 			t.Errorf(`Glob(%q) => %v, want %v`, pattern, results, wantResults)
 		}
 	}
+}
+
+// Regression test for b.elv.sh/1220
+func TestGlob_InvalidUTF8InFilename(t *testing.T) {
+	_, cleanup := testutil.InTestDir()
+	defer cleanup()
+
+	name := string([]byte{255}) + ".txt"
+	f, err := os.Create(name)
+	if err != nil {
+		t.Skip("create: ", err)
+	}
+	f.Close()
+
+	paths := globPaths("*.txt")
+	wantPaths := []string{name}
+	if !reflect.DeepEqual(paths, wantPaths) {
+		t.Errorf("got %v, want %v", paths, wantPaths)
+	}
+}
+
+func globPaths(pattern string) []string {
+	paths := []string{}
+	Glob(pattern, func(pathInfo PathInfo) bool {
+		paths = append(paths, pathInfo.Path)
+		return true
+	})
+	sort.Strings(paths)
+	return paths
 }
