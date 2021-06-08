@@ -3,6 +3,7 @@ package glob
 import (
 	"os"
 	"reflect"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -105,6 +106,13 @@ func testGlob(t *testing.T, abs bool) {
 
 // Regression test for b.elv.sh/1220
 func TestGlob_InvalidUTF8InFilename(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// On Windows, filenames are converted to UTF-16 before being passed
+		// to API calls, meaning that all the invalid byte sequences will be
+		// normalized to U+FFFD, making this impossible to test.
+		t.Skip()
+	}
+
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
@@ -116,14 +124,6 @@ func TestGlob_InvalidUTF8InFilename(t *testing.T) {
 		t.Skip("create: ", err)
 	}
 	f.Close()
-
-	_, err = os.Stat(name)
-	if err != nil {
-		// The system may pretend to have created the file successfully,
-		// but substitute the invalid sequences with U+FFFD. This happens on
-		// Windows 10 with an NTFS filesystem.
-		t.Skip("stat: ", err)
-	}
 
 	paths := globPaths("*x")
 	wantPaths := []string{name}
