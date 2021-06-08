@@ -108,7 +108,7 @@ func TestGlob_InvalidUTF8InFilename(t *testing.T) {
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	name := string([]byte{255}) + ".c"
+	name := string([]byte{255}) + "x"
 	f, err := os.Create(name)
 	if err != nil {
 		// The system may refuse to create a file whose name is not UTF-8. This
@@ -125,7 +125,7 @@ func TestGlob_InvalidUTF8InFilename(t *testing.T) {
 		t.Skip("stat: ", err)
 	}
 
-	paths := globPaths("*.c")
+	paths := globPaths("*x")
 	wantPaths := []string{name}
 	if !reflect.DeepEqual(paths, wantPaths) {
 		t.Errorf("got %v, want %v", paths, wantPaths)
