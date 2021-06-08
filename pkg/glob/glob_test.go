@@ -111,9 +111,19 @@ func TestGlob_InvalidUTF8InFilename(t *testing.T) {
 	name := string([]byte{255}) + ".c"
 	f, err := os.Create(name)
 	if err != nil {
+		// The system may refuse to create a file whose name is not UTF-8. This
+		// happens on macOS 11 with an APFS filesystem.
 		t.Skip("create: ", err)
 	}
 	f.Close()
+
+	_, err = os.Stat(name)
+	if err != nil {
+		// The system may pretend to have created the file successfully,
+		// but substitute the invalid sequences with U+FFFD. This happens on
+		// Windows 10 with an NTFS filesystem.
+		t.Skip("stat: ", err)
+	}
 
 	paths := globPaths("*.c")
 	wantPaths := []string{name}
