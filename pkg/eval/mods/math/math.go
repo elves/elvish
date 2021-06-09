@@ -39,7 +39,7 @@ var fns = map[string]interface{}{
 	"min":           min,
 	"pow":           math.Pow,   // TODO: Make exactness-preserving for integer exponents
 	"pow10":         math.Pow10, // TODO: Make exactness-preserving for integer exponents
-	"round":         round,      // TODO: Make exactness-preserving
+	"round":         round,
 	"round-to-even": roundToEven,
 	"sin":           math.Sin,
 	"sinh":          math.Sinh,
