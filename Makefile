@@ -15,14 +15,12 @@ get:
 generate:
 	go generate ./...
 
-# Run unit tests -- with race detection if the platform supports it. Go's
-# Windows port supports race detection, but requires GCC, so we don't enable it
-# there.
+# Run unit tests, with race detection if the platform supports it.
 test:
 	go test $(shell ./tools/run-race.sh) ./...
 
-# Generate a basic test coverage report. This will open the report in your
-# browser. See also https://codecov.io/gh/elves/elvish/.
+# Generate a basic test coverage report, and open it in the browser. See also
+# https://apps.codecov.io/gh/elves/elvish/.
 cover:
 	go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
 	go tool cover -html=cover
