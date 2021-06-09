@@ -31,6 +31,7 @@ cover:
 # Ensure the style of Go and Markdown source files is consistent.
 style:
 	find . -name '*.go' | xargs goimports -w
+	find . -name '*.go' | xargs gofmt -s -w
 	find . -name '*.md' | xargs prettier --tab-width 4 --prose-wrap always --write
 
 # Check if the style of the Go and Markdown files is correct without modifying
