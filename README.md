@@ -8,14 +8,14 @@
 [![GoDoc](https://img.shields.io/badge/godoc-api-blue.svg)](https://godoc.elv.sh)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/ElvishShell)
 
-Elvish is an expressive programming language and a versatile interactive shell,
-combined into one seamless package. It runs on Linux, BSDs, macOS and Windows.
+Elvish is an expressive programming language and a versatile interactive shell
+combined into one seamless package. It runs on Linux, BSDs, macOS, and Windows.
 
 Despite its pre-1.0 status, it is already suitable for most daily interactive
 use.
 
 **Visit the official website https://elv.sh for prebuilt binaries, blog posts,
-documentation and other resources.**
+documentation, and other resources.**
 
 User groups (all connected thanks to [Matrix](https://matrix.org)):
 [![Gitter](https://img.shields.io/badge/gitter-elves/elvish-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish)
@@ -25,8 +25,8 @@ User groups (all connected thanks to [Matrix](https://matrix.org)):
 
 ## Building Elvish
 
-Most users do not need to build Elvish from source. Prebuilt binaries for the
-latest commit are provided for
+Most users do not need to build Elvish from source. Prebuilt binaries
+for the latest commit are provided for
 [Linux amd64](https://dl.elv.sh/linux-amd64/elvish-HEAD.tar.gz),
 [macOS amd64](https://dl.elv.sh/darwin-amd64/elvish-HEAD.tar.gz),
 [Windows amd64](https://dl.elv.sh/windows-amd64/elvish-HEAD.zip), and
