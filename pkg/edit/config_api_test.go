@@ -70,7 +70,7 @@ func TestAddCmdFilters(t *testing.T) {
 			name:        "callback outputs true",
 			rc:          "edit:add-cmd-filters = [[_]{ put $true }]",
 			input:       "echo\n",
-			wantHistory: []store.Cmd{store.Cmd{Text: "echo", Seq: 1}},
+			wantHistory: []store.Cmd{{Text: "echo", Seq: 1}},
 		},
 		{
 			name:        "callback outputs false",
@@ -94,7 +94,7 @@ func TestAddCmdFilters(t *testing.T) {
 			name:        "positive",
 			rc:          "edit:add-cmd-filters = [[cmd]{ ==s $cmd echo }]",
 			input:       "echo\n",
-			wantHistory: []store.Cmd{store.Cmd{Text: "echo", Seq: 1}},
+			wantHistory: []store.Cmd{{Text: "echo", Seq: 1}},
 		},
 		{
 			name:        "negative",
