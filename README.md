@@ -61,6 +61,12 @@ make get ELVISH_MAKE_BIN=./elvish # Install to the repo root
 make get ELVISH_MAKE_BIN=/usr/local/bin/elvish # Install to /usr/local/bin
 ```
 
+To build it without support for the interactive database daemon:
+
+```sh
+make get ELVISH_MAKE_TAGS=elv_daemon_stub
+```
+
 ## Packaging Elvish
 
 See [PACKAGING.md](PACKAGING.md) for notes for packagers.

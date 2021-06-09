@@ -1,3 +1,5 @@
+// +build !elv_daemon_stub
+
 // Package daemon implements a service for mediating access to the data store,
 // and its client.
 //

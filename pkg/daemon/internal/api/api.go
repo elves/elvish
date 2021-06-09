@@ -1,3 +1,5 @@
+// +build !elv_daemon_stub
+
 // Package api defines types and constants useful for the API between the daemon
 // service and client.
 package api

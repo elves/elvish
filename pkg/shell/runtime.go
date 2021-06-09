@@ -19,7 +19,6 @@ import (
 	"src.elv.sh/pkg/eval/mods/store"
 	"src.elv.sh/pkg/eval/mods/str"
 	"src.elv.sh/pkg/eval/mods/unix"
-	"src.elv.sh/pkg/rpc"
 )
 
 const (
@@ -180,7 +179,7 @@ func detectDaemon(sockpath string, cl daemon.Client) (daemonStatus, error) {
 	version, err := cl.Version()
 	if err != nil {
 		switch {
-		case err == rpc.ErrShutdown:
+		case err == daemon.ErrShutdown:
 			return connectionShutdown, err
 		case err.Error() == bolt.ErrInvalid.Error():
 			return daemonInvalidDB, err

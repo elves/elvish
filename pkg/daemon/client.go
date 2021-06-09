@@ -1,3 +1,5 @@
+// +build !elv_daemon_stub
+
 package daemon
 
 import (
@@ -15,6 +17,9 @@ var (
 	// ErrDaemonUnreachable is returned when the daemon cannot be reached after
 	// several retries.
 	ErrDaemonUnreachable = errors.New("daemon offline")
+	// This symbol exists so the sole use of this error in pkg/shell/runtime.detectDaemon() doesn't
+	// have to also import the rpc package.
+	ErrShutdown = rpc.ErrShutdown
 )
 
 // Client represents a daemon client.

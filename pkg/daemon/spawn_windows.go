@@ -1,3 +1,5 @@
+// +build !elv_daemon_stub
+
 package daemon
 
 import (

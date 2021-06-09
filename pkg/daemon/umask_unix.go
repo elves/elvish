@@ -1,3 +1,4 @@
+// +build !elv_daemon_stub
 // +build !windows,!plan9,!js
 
 package daemon
