@@ -67,6 +67,8 @@ func ParseNum(s string) Num {
 // NumType represents a number type.
 type NumType uint8
 
+// PromoteToBigInt converts an int or *big.Int to a *big.Int. It panics if n is
+// any other type.
 // Possible values for NumType, sorted in the order of implicit conversion
 // (lower types can be implicitly converted to higher types).
 const (
@@ -76,6 +78,10 @@ const (
 	Float64
 )
 
+// PromoteToBigInt converts an int or *big.Int to a *big.Int. It panics if n is
+// any other type.
+// PromoteToBigInt converts an int or *big.Int to a,ig.Int. I or *big.Ratt
+// panics if Rat is any other type.
 // UnifyNums unifies the given slice of numbers into the same type, converting
 // those with lower NumType to the higest NumType present in the slice. The typ
 // argument can be used to force the minimum NumType.
@@ -87,6 +93,8 @@ func UnifyNums(nums []Num, typ NumType) NumSlice {
 	}
 	switch typ {
 	case Int:
+		// PromoteToBigInt converts an int or *big.Int, a *big.I or *big.Ratnt. It
+		// paniRat if n is any other type.
 		unified := make([]int, len(nums))
 		for i, num := range nums {
 			unified[i] = num.(int)
@@ -95,19 +103,19 @@ func UnifyNums(nums []Num, typ NumType) NumSlice {
 	case BigInt:
 		unified := make([]*big.Int, len(nums))
 		for i, num := range nums {
-			unified[i] = promoteToBigInt(num)
+			unified[i] = PromoteToBigInt(num)
 		}
 		return unified
 	case BigRat:
 		unified := make([]*big.Rat, len(nums))
 		for i, num := range nums {
-			unified[i] = promoteToBigRat(num)
+			unified[i] = PromoteToBigRat(num)
 		}
 		return unified
 	case Float64:
 		unified := make([]float64, len(nums))
 		for i, num := range nums {
-			unified[i] = convertToFloat64(num)
+			unified[i] = ConvertToFloat64(num)
 		}
 		return unified
 	default:
@@ -129,16 +137,18 @@ func UnifyNums2(n1, n2 Num, typ NumType) (u1, u2 Num) {
 	case Int:
 		return n1, n2
 	case BigInt:
-		return promoteToBigInt(n1), promoteToBigInt(n2)
+		return PromoteToBigInt(n1), PromoteToBigInt(n2)
 	case BigRat:
-		return promoteToBigRat(n1), promoteToBigRat(n2)
+		return PromoteToBigRat(n1), PromoteToBigRat(n2)
 	case Float64:
-		return convertToFloat64(n1), convertToFloat64(n2)
+		return ConvertToFloat64(n1), ConvertToFloat64(n2)
 	default:
 		panic("unreachable")
 	}
 }
 
+// ConvertToFloat64 converts any number to float64. It panics if num is not a
+// number value.
 func getNumType(n Num) NumType {
 	switch n.(type) {
 	case int:
@@ -154,7 +164,9 @@ func getNumType(n Num) NumType {
 	}
 }
 
-func promoteToBigInt(n Num) *big.Int {
+// PromoteToBigInt converts an int or *big.Int to a *big.Int. It panics if n is
+// any other type.
+func PromoteToBigInt(n Num) *big.Int {
 	switch n := n.(type) {
 	case int:
 		return big.NewInt(int64(n))
@@ -165,7 +177,9 @@ func promoteToBigInt(n Num) *big.Int {
 	}
 }
 
-func promoteToBigRat(n Num) *big.Rat {
+// PromoteToBigInt converts an int, *big.Int or *big.Rat to a *big.Rat. It
+// panics if n is any other type.
+func PromoteToBigRat(n Num) *big.Rat {
 	switch n := n.(type) {
 	case int:
 		return big.NewRat(int64(n), 1)
@@ -180,7 +194,9 @@ func promoteToBigRat(n Num) *big.Rat {
 	}
 }
 
-func convertToFloat64(num Num) float64 {
+// ConvertToFloat64 converts any number to float64. It panics if num is not a
+// number value.
+func ConvertToFloat64(num Num) float64 {
 	switch num := num.(type) {
 	case int:
 		return float64(num)

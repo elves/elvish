@@ -126,6 +126,30 @@ func TestMath(t *testing.T) {
 		That("math:min 1.0 2.0").Puts(1.0),
 		That("math:min 3 NaN 5").Puts(math.NaN()),
 
+		// base is int, exp is int
+		That("math:pow 2 0").Puts(1),
+		That("math:pow 2 1").Puts(2),
+		That("math:pow 2 -1").Puts(big.NewRat(1, 2)),
+		That("math:pow 2 3").Puts(8),
+		That("math:pow 2 -3").Puts(big.NewRat(1, 8)),
+		// base is *big.Rat, exp is int
+		That("math:pow 2/3 0").Puts(1),
+		That("math:pow 2/3 1").Puts(big.NewRat(2, 3)),
+		That("math:pow 2/3 -1").Puts(big.NewRat(3, 2)),
+		That("math:pow 2/3 3").Puts(big.NewRat(8, 27)),
+		That("math:pow 2/3 -3").Puts(big.NewRat(27, 8)),
+		// exp is *big.Rat
+		That("math:pow 4 1/2").Puts(2.0),
+		// exp is float64
+		That("math:pow 2 2.0").Puts(4.0),
+		That("math:pow 1/2 2.0").Puts(0.25),
+		// base is float64
+		That("math:pow 2.0 2").Puts(4.0),
+
+		That("math:pow10 0").Puts(1),
+		That("math:pow10 3").Puts(1000),
+		That("math:pow10 -3").Puts(big.NewRat(1, 1000)),
+
 		// Tests below this line are tests against simple bindings for Go's math package.
 
 		That("put $math:pi").Puts(math.Pi),
@@ -218,16 +242,6 @@ func TestMath(t *testing.T) {
 
 		That("math:atanh 0").Puts(math.Atanh(0)),
 		That("math:atanh 1").Puts(math.Inf(1)),
-
-		That("math:pow nan 2").Puts(math.NaN()),
-		That("math:pow inf 2").Puts(math.Inf(1)),
-		That("math:pow 1 3").Puts(1.0),
-		That("math:pow 2 3").Puts(8.0),
-		That("math:pow -2 2").Puts(4.0),
-
-		That("math:pow10 0").Puts(1.0),
-		That("math:pow10 3").Puts(1000.0),
-		That("math:pow10 -3").Puts(0.001),
 	)
 }
 

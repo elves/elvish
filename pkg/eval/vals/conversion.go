@@ -71,7 +71,7 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 	case *float64:
 		n, err := elvToNum(src)
 		if err == nil {
-			*ptr = convertToFloat64(n)
+			*ptr = ConvertToFloat64(n)
 		}
 		return err
 	case *Num:

@@ -37,8 +37,8 @@ var fns = map[string]interface{}{
 	"log2":          math.Log2,
 	"max":           max,
 	"min":           min,
-	"pow":           math.Pow,   // TODO: Make exactness-preserving for integer exponents
-	"pow10":         math.Pow10, // TODO: Make exactness-preserving for integer exponents
+	"pow":           pow,
+	"pow10":         pow10,
 	"round":         round,
 	"round-to-even": roundToEven,
 	"sin":           math.Sin,
@@ -565,16 +565,77 @@ func min(rawNums ...vals.Num) (vals.Num, error) {
 // math:pow $base $exponent
 // ```
 //
-// Output the result of raising `$base` to the power of `$exponent`. Examples:
+// Outputs the result of raising `$base` to the power of `$exponent`.
+//
+// This function produces an exact result when `$base` is exact and `$exponent`
+// is an exact integer. Otherwise it produces an inexact result.
+//
+// Examples:
 //
 // ```elvish-transcript
 // ~> math:pow 3 2
-// ▶ (float64 9)
+// ▶ (num 9)
 // ~> math:pow -2 2
-// ▶ (float64 4)
+// ▶ (num 4)
+// ~> math:pow 1/2 3
+// ▶ (num 1/8)
+// ~> math:pow 1/2 -3
+// ▶ (num 8)
+// ~> math:pow 9 1/2
+// ▶ (num 3.0)
+// ~> math:pow 12 1.1
+// ▶ (num 15.38506624784179)
 // ```
-//
-// @cf math:pow10
+
+func pow(base, exp vals.Num) vals.Num {
+	if isExact(base) && isExactInt(exp) {
+		// Produce exact result
+		switch exp {
+		case 0:
+			return 1
+		case 1:
+			return base
+		case -1:
+			return new(big.Rat).Inv(vals.PromoteToBigRat(base))
+		}
+		exp := vals.PromoteToBigInt(exp)
+		if isExactInt(base) && exp.Sign() > 0 {
+			base := vals.PromoteToBigInt(base)
+			return new(big.Int).Exp(base, exp, nil)
+		}
+		base := vals.PromoteToBigRat(base)
+		if exp.Sign() < 0 {
+			base = new(big.Rat).Inv(base)
+			exp = new(big.Int).Neg(exp)
+		}
+		return new(big.Rat).SetFrac(
+			new(big.Int).Exp(base.Num(), exp, nil),
+			new(big.Int).Exp(base.Denom(), exp, nil))
+	}
+
+	// Produce inexact result
+	basef := vals.ConvertToFloat64(base)
+	expf := vals.ConvertToFloat64(exp)
+	return math.Pow(basef, expf)
+}
+
+func isExact(n vals.Num) bool {
+	switch n.(type) {
+	case int, *big.Int, *big.Rat:
+		return true
+	default:
+		return false
+	}
+}
+
+func isExactInt(n vals.Num) bool {
+	switch n.(type) {
+	case int, *big.Int:
+		return true
+	default:
+		return false
+	}
+}
 
 //elvdoc:fn pow10
 //
@@ -582,18 +643,16 @@ func min(rawNums ...vals.Num) (vals.Num, error) {
 // math:pow10 $exponent
 // ```
 //
-// Output the result of raising ten to the power of `$exponent` which must be
-// an integer. Note that `$exponent > 308` results in +Inf and `$exponent <
-// -323` results in zero. Examples:
+// Equivalent to `math:pow 10 $exponent`.
 //
-// ```elvish-transcript
-// ~> math:pow10 2
-// ▶ (float64 100)
-// ~> math:pow10 -3
-// ▶ (float64 0.001)
-// ```
+// This function is deprecated; use `math:pow 10 $exponent` instead.
 //
 // @cf math:pow
+
+func pow10(fm *eval.Frame, exp vals.Num) vals.Num {
+	fm.Deprecate(`the "math:pow10" command is deprecated; use "math:pow 10 $exponent" instead`, nil, 16)
+	return pow(10, exp)
+}
 
 //elvdoc:fn round
 //
@@ -816,7 +875,7 @@ func integerize(n vals.Num, fnFloat func(float64) float64, fnRat func(*big.Rat) 
 			// *big.Int, but we still try to be defensive here.
 			return n.Num()
 		}
-		return vals.NormalizeBigInt(fnRat(n))
+		return fnRat(n)
 	case float64:
 		return fnFloat(n)
 	default:
