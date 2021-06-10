@@ -91,6 +91,7 @@ func TestFromLines(t *testing.T) {
 func TestFromTerminated(t *testing.T) {
 	Test(t,
 		That(`print "a\nb\x00\x00c\x00d" | from-terminated "\x00"`).Puts("a\nb", "", "c", "d"),
+		That(`print "a\x00b\x00" | from-terminated "\x00"`).Puts("a", "b"),
 		That(`print aXbXcXXd | from-terminated "X"`).Puts("a", "b", "c", "", "d"),
 		That(`from-terminated "xyz"`).Throws(eval.ErrInvalidTerminator),
 	)

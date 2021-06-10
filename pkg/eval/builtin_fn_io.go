@@ -696,15 +696,19 @@ func fromJSONInterface(v interface{}) (interface{}, error) {
 // from-terminated $terminator
 // ```
 //
-// Splits byte input into lines at each `$terminator` character, and writes them to the value
-// output. Value input is ignored.
+// Splits byte input into lines at each `$terminator` character, and writes
+// them to the value output. If the byte input ends with `$terminator`, it is
+// dropped. Value input is ignored.
 //
 // The `$terminator` must be a single ASCII character such as `"\x00"` (NUL).
 //
 // ```elvish-transcript
 // ~> { echo a; echo b } | from-terminated "\x00"
 // ▶ "a\nb\n"
-// ~> print "a\000b" | from-terminated "\x00"
+// ~> print "a\x00b" | from-terminated "\x00"
+// ▶ a
+// ▶ b
+// ~> print "a\x00b\x00" | from-terminated "\x00"
 // ▶ a
 // ▶ b
 // ```
@@ -764,9 +768,9 @@ func toLines(fm *Frame, inputs Inputs) {
 // The `$terminator` must be a single ASCII character such as `"\x00"` (NUL).
 //
 // ```elvish-transcript
-// ~> put a b | to-terminated "\x00" | cat -evt
+// ~> put a b | to-terminated "\x00" | cat -v
 // a^@b^@
-// ~> to-terminated "\x00" [a b] | cat -evt
+// ~> to-terminated "\x00" [a b] | cat -v
 // a^@b^@
 // ```
 //
