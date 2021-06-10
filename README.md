@@ -5,7 +5,6 @@
 [![gccgo test status](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=gccgo&task=Test%20on%20gccgo)](https://cirrus-ci.com/github/elves/elvish/master)
 [![Test Coverage](https://img.shields.io/codecov/c/github/elves/elvish/master.svg?logo=Codecov&label=coverage)](https://app.codecov.io/gh/elves/elvish/branch/master)
 [![Go Report Card](https://goreportcard.com/badge/src.elv.sh)](https://goreportcard.com/report/src.elv.sh)
-[![GoDoc](https://img.shields.io/badge/godoc-api-blue.svg)](https://godoc.elv.sh)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/ElvishShell)
 
 Elvish is an expressive programming language and a versatile interactive shell,
@@ -29,14 +28,14 @@ Most users do not need to build Elvish from source. Prebuilt binaries for the
 latest commit are provided for
 [Linux amd64](https://dl.elv.sh/linux-amd64/elvish-HEAD.tar.gz),
 [macOS amd64](https://dl.elv.sh/darwin-amd64/elvish-HEAD.tar.gz),
-[Windows amd64](https://dl.elv.sh/windows-amd64/elvish-HEAD.zip), and
+[Windows amd64](https://dl.elv.sh/windows-amd64/elvish-HEAD.zip) and
 [many other platforms](https://elv.sh/get).
 
 To build Elvish from source, you need
 
--   A supported OS: Linux, {Free,Net,Open}BSD, macOS, or Windows.
+-   A supported OS: Linux, {Free,Net,Open}BSD, macOS, or Windows 10.
 
-    **NOTE**: Windows support is experimental, and only Windows 10 is supported.
+    **NOTE**: Windows 10 support is experimental.
 
 -   Go >= 1.15.
 
@@ -52,16 +51,15 @@ cd elvish
 make get
 ```
 
-This will install Elvish to `~/go/bin`; you might want to add it to your `PATH`.
+This will install Elvish to `~/go/bin` (or `$GOPATH/bin` if you have set
+`$GOPATH`). You might want to add the directory to your `PATH`.
 
-To install it elsewhere, override `GOBIN` in the `make` command:
+To install it elsewhere, override `ELVISH_MAKE_BIN` in the `make` command:
 
 ```sh
-make get GOBIN=$PWD # Install to the repo root (use $pwd if running in Elvish)
-make get GOBIN=/usr/local/bin # Install to /usr/local/bin
+make get ELVISH_MAKE_BIN=./elvish # Install to the repo root
+make get ELVISH_MAKE_BIN=/usr/local/bin/elvish # Install to /usr/local/bin
 ```
-
-Note that `GOBIN` must be an absolute path.
 
 ## Packaging Elvish
 
