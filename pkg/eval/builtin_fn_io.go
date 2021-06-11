@@ -768,10 +768,10 @@ func toLines(fm *Frame, inputs Inputs) {
 // The `$terminator` must be a single ASCII character such as `"\x00"` (NUL).
 //
 // ```elvish-transcript
-// ~> put a b | to-terminated "\x00" | cat -v
-// a^@b^@
-// ~> to-terminated "\x00" [a b] | cat -v
-// a^@b^@
+// ~> put a b | to-terminated "\x00" | slurp
+// ▶ "a\x00b\x00"
+// ~> to-terminated "\x00" [a b] | slurp
+// ▶ "a\x00b\x00"
 // ```
 //
 // @cf from-terminated to-lines
