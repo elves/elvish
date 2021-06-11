@@ -106,11 +106,11 @@ var keyCodeToRune = map[uint16]rune{
 // A subset of constants listed in
 // https://docs.microsoft.com/en-us/windows/console/key-event-record-str
 const (
-	leftAlt   uint32 = 0x02
-	leftCtrl  uint32 = 0x08
-	rightAlt  uint32 = 0x01
-	rightCtrl uint32 = 0x04
-	shift     uint32 = 0x10
+	leftAlt   = 0x02
+	leftCtrl  = 0x08
+	rightAlt  = 0x01
+	rightCtrl = 0x04
+	shift     = 0x10
 )
 
 // convertEvent converts the native sys.InputEvent type to a suitable Event
@@ -137,10 +137,10 @@ func convertEvent(event sys.InputEvent) Event {
 			if 0x20 <= r && r != 0x7f {
 				return KeyEvent(ui.Key{Rune: r})
 			}
-		} else if filteredMod&(leftCtrl|rightAlt) == leftCtrl|rightAlt && 0x20 <= r && r != 0x7f && currentKeyboardLayoutHasAltGr {
+		} else if filteredMod&(leftCtrl|rightAlt) == leftCtrl|rightAlt && 0x20 <= r && r != 0x7f {
 			// Handle AltGr key combinations if they result in a rune
 			// Shift is also ignored, since it is required for some chars
-			return KeyEvent(ui.Key{Rune: r})
+			return KeyEvent(ui.Key{Rune: r, Mod: ui.Mod(filteredMod &^ (leftCtrl | rightAlt | shift))})
 		}
 		mod := convertMod(filteredMod)
 		if mod == 0 && event.WVirtualKeyCode == 0x1b {
