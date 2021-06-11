@@ -21,6 +21,14 @@ func TestPipeline_Unix(t *testing.T) {
 			"{ yes; reached = $true } | nop",
 			"put $reached",
 		).Puts(false),
+		// Internal commands that encounters EPIPE also raises ReaderGone, which
+		// is then suppressed.
+		That("while $true { echo y } | nop").DoesNothing(),
+		That(
+			"var reached = $false",
+			"{ while $true { echo y }; reached = $true } | nop",
+			"put $reached",
+		).Puts(false),
 	)
 }
 

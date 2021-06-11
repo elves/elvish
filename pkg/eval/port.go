@@ -6,7 +6,9 @@ import (
 	"io"
 	"os"
 	"sync"
+	"syscall"
 
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/strutil"
 )
@@ -230,4 +232,38 @@ func PortsFromFiles(files [3]*os.File, prefix string) ([]*Port, func()) {
 		cleanup1()
 		cleanup2()
 	}
+}
+
+// ByteOutput defines the interface through which builtin commands access the
+// byte output.
+//
+// It is a thin wrapper around the underlying *os.File value, only exposing
+// the necessary methods for writing bytes and strings, and converting any
+// syscall.EPIPE errors to errs.ReaderGone.
+type ByteOutput interface {
+	io.Writer
+	io.StringWriter
+}
+
+type byteOutput struct {
+	f *os.File
+}
+
+func (bo byteOutput) Write(p []byte) (int, error) {
+	n, err := bo.f.Write(p)
+	return n, convertReaderGone(err)
+}
+
+func (bo byteOutput) WriteString(s string) (int, error) {
+	n, err := bo.f.WriteString(s)
+	return n, convertReaderGone(err)
+}
+
+func convertReaderGone(err error) error {
+	if pathErr, ok := err.(*os.PathError); ok {
+		if pathErr.Err == syscall.EPIPE {
+			return errs.ReaderGone{}
+		}
+	}
+	return err
 }

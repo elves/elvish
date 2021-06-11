@@ -473,7 +473,10 @@ func timeCmd(fm *Frame, opts timeOpt, f Callable) error {
 			err = errCb
 		}
 	} else {
-		fmt.Fprintln(fm.OutputFile(), dt)
+		_, errWrite := fmt.Fprintln(fm.ByteOutput(), dt)
+		if err == nil {
+			err = errWrite
+		}
 	}
 
 	return err

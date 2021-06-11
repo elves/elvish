@@ -100,12 +100,12 @@ func (fm *Frame) OutputChan() chan<- interface{} {
 	return fm.ports[1].Chan
 }
 
-// OutputFile returns a file onto which output can be written.
-func (fm *Frame) OutputFile() *os.File {
-	return fm.ports[1].File
+// ByteOutput returns a handle for writing byte outputs.
+func (fm *Frame) ByteOutput() ByteOutput {
+	return byteOutput{fm.ports[1].File}
 }
 
-// ErrorFile returns a file onto which error messages can be written.
+// ByteErrorFile returns a file onto which error messages can be written.
 func (fm *Frame) ErrorFile() *os.File {
 	return fm.ports[2].File
 }

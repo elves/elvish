@@ -84,14 +84,14 @@ func _gc() {
 //
 // This is only useful for debug purposes.
 
-func _stack(fm *Frame) {
-	out := fm.OutputFile()
+func _stack(fm *Frame) error {
 	// TODO(xiaq): Dup with main.go.
 	buf := make([]byte, 1024)
 	for runtime.Stack(buf, true) == cap(buf) {
 		buf = make([]byte, cap(buf)*2)
 	}
-	out.Write(buf)
+	_, err := fm.ByteOutput().Write(buf)
+	return err
 }
 
 //elvdoc:fn -log

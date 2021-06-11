@@ -187,14 +187,21 @@ type printOpts struct{ Sep string }
 
 func (o *printOpts) SetDefaultOptions() { o.Sep = " " }
 
-func print(fm *Frame, opts printOpts, args ...interface{}) {
-	out := fm.OutputFile()
+func print(fm *Frame, opts printOpts, args ...interface{}) error {
+	out := fm.ByteOutput()
 	for i, arg := range args {
 		if i > 0 {
-			out.WriteString(opts.Sep)
+			_, err := out.WriteString(opts.Sep)
+			if err != nil {
+				return err
+			}
 		}
-		out.WriteString(vals.ToString(arg))
+		_, err := out.WriteString(vals.ToString(arg))
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 //elvdoc:fn printf
@@ -272,13 +279,14 @@ func print(fm *Frame, opts printOpts, args ...interface{}) {
 //
 // @cf print echo pprint repr
 
-func printf(fm *Frame, template string, args ...interface{}) {
+func printf(fm *Frame, template string, args ...interface{}) error {
 	wrappedArgs := make([]interface{}, len(args))
 	for i, arg := range args {
 		wrappedArgs[i] = formatter{arg}
 	}
 
-	fmt.Fprintf(fm.OutputFile(), template, wrappedArgs...)
+	_, err := fmt.Fprintf(fm.ByteOutput(), template, wrappedArgs...)
+	return err
 }
 
 type formatter struct {
@@ -372,9 +380,13 @@ func writeFmt(state fmt.State, v rune, val interface{}) {
 //
 // Etymology: Bourne sh.
 
-func echo(fm *Frame, opts printOpts, args ...interface{}) {
-	print(fm, opts, args...)
-	fm.OutputFile().WriteString("\n")
+func echo(fm *Frame, opts printOpts, args ...interface{}) error {
+	err := print(fm, opts, args...)
+	if err != nil {
+		return err
+	}
+	_, err = fm.ByteOutput().WriteString("\n")
+	return err
 }
 
 //elvdoc:fn pprint
@@ -404,12 +416,19 @@ func echo(fm *Frame, opts printOpts, args ...interface{}) {
 //
 // @cf repr
 
-func pprint(fm *Frame, args ...interface{}) {
-	out := fm.OutputFile()
+func pprint(fm *Frame, args ...interface{}) error {
+	out := fm.ByteOutput()
 	for _, arg := range args {
-		out.WriteString(vals.Repr(arg, 0))
-		out.WriteString("\n")
+		_, err := out.WriteString(vals.Repr(arg, 0))
+		if err != nil {
+			return err
+		}
+		_, err = out.WriteString("\n")
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 //elvdoc:fn repr
@@ -430,15 +449,22 @@ func pprint(fm *Frame, args ...interface{}) {
 //
 // Etymology: [Python](https://docs.python.org/3/library/functions.html#repr).
 
-func repr(fm *Frame, args ...interface{}) {
-	out := fm.OutputFile()
+func repr(fm *Frame, args ...interface{}) error {
+	out := fm.ByteOutput()
 	for i, arg := range args {
 		if i > 0 {
-			out.WriteString(" ")
+			_, err := out.WriteString(" ")
+			if err != nil {
+				return err
+			}
 		}
-		out.WriteString(vals.Repr(arg, vals.NoPretty))
+		_, err := out.WriteString(vals.Repr(arg, vals.NoPretty))
+		if err != nil {
+			return err
+		}
 	}
-	out.WriteString("\n")
+	_, err := out.WriteString("\n")
+	return err
 }
 
 //elvdoc:fn show
@@ -462,9 +488,14 @@ func repr(fm *Frame, args ...interface{}) {
 // [tty 3], line 1: e = ?(fail lorem-ipsum)
 // ```
 
-func show(fm *Frame, v diag.Shower) {
-	fm.OutputFile().WriteString(v.Show(""))
-	fm.OutputFile().WriteString("\n")
+func show(fm *Frame, v diag.Shower) error {
+	out := fm.ByteOutput()
+	_, err := out.WriteString(v.Show(""))
+	if err != nil {
+		return err
+	}
+	_, err = out.WriteString("\n")
+	return err
 }
 
 const bytesReadBufferSize = 512
@@ -495,22 +526,8 @@ func onlyBytes(fm *Frame) error {
 	// Make sure the goroutine has finished before returning.
 	defer func() { <-valuesDone }()
 
-	// Forward bytes.
-	buf := make([]byte, bytesReadBufferSize)
-	for {
-		nr, errRead := fm.InputFile().Read(buf[:])
-		if nr > 0 {
-			// Even when there are write errors, we will continue reading. So we
-			// ignore the error.
-			fm.OutputFile().Write(buf[:nr])
-		}
-		if errRead != nil {
-			if errRead == io.EOF {
-				return nil
-			}
-			return errRead
-		}
-	}
+	_, err := io.Copy(fm.ByteOutput(), fm.InputFile())
+	return err
 }
 
 //elvdoc:fn only-values
@@ -711,9 +728,10 @@ func fromJSONInterface(v interface{}) (interface{}, error) {
 // @cf from-lines
 
 func toLines(fm *Frame, inputs Inputs) {
-	out := fm.OutputFile()
+	out := fm.ByteOutput()
 
 	inputs(func(v interface{}) {
+		// TODO: Don't ignore the error.
 		fmt.Fprintln(out, vals.ToString(v))
 	})
 }
@@ -738,7 +756,7 @@ func toLines(fm *Frame, inputs Inputs) {
 // @cf from-json
 
 func toJSON(fm *Frame, inputs Inputs) error {
-	encoder := json.NewEncoder(fm.OutputFile())
+	encoder := json.NewEncoder(fm.ByteOutput())
 
 	var errEncode error
 	inputs(func(v interface{}) {

@@ -70,7 +70,7 @@ func BenchmarkOutputCapture_Values(b *testing.B) {
 func BenchmarkOutputCapture_Bytes(b *testing.B) {
 	bytesToWrite := []byte("test")
 	benchmarkOutputCapture(b.N, func(fm *Frame) {
-		fm.OutputFile().Write(bytesToWrite)
+		fm.ByteOutput().Write(bytesToWrite)
 	})
 }
 
@@ -78,7 +78,7 @@ func BenchmarkOutputCapture_Mixed(b *testing.B) {
 	bytesToWrite := []byte("test")
 	benchmarkOutputCapture(b.N, func(fm *Frame) {
 		fm.OutputChan() <- false
-		fm.OutputFile().Write(bytesToWrite)
+		fm.ByteOutput().Write(bytesToWrite)
 	})
 }
 
