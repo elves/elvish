@@ -178,7 +178,7 @@ func extract(r io.Reader, ns string, w io.Writer) {
 		}
 	}
 
-	write := func(heading, prefix string, m map[string]string) {
+	write := func(heading, entryType, prefix string, m map[string]string) {
 		fmt.Fprintf(w, "# %s\n", heading)
 		names := make([]string, 0, len(m))
 		for k := range m {
@@ -190,22 +190,44 @@ func extract(r io.Reader, ns string, w io.Writer) {
 			})
 		for _, name := range names {
 			fmt.Fprintln(w)
-			fmt.Fprintf(w, "## %s\n", prefix+name)
+			fullName := prefix + name
+			// Create anchors for Docset. These anchors are used to show a ToC;
+			// the mkdsidx.py script also looks for those anchors to generate
+			// the SQLite index.
+			//
+			// Some builtin commands are documented together. Create an anchor
+			// for each of them.
+			for _, s := range strings.Fields(fullName) {
+				if strings.HasPrefix(s, "{#") {
+					continue
+				}
+				fmt.Fprintf(w,
+					"<a name='//apple_ref/cpp/%s/%s' class='dashAnchor'></a>\n\n",
+					entryType, s)
+			}
+			fmt.Fprintf(w, "## %s\n", fullName)
 			// The body is guaranteed to have a trailing newline, hence Fprint
 			// instead of Fprintln.
 			fmt.Fprint(w, m[name])
 		}
 	}
 
+	modname := ns
+	if modname == "" {
+		modname = "builtin:"
+	}
+	fmt.Fprintf(w,
+		"<a name='//apple_ref/cpp/Module/%s' class='dashAnchor'></a>\n\n", modname)
+
 	if len(varDocs) > 0 {
-		write("Variables", "$"+ns, varDocs)
+		write("Variables", "Variable", "$"+ns, varDocs)
 	}
 	if len(fnDocs) > 0 {
 		if len(varDocs) > 0 {
 			fmt.Fprintln(w)
 			fmt.Fprintln(w)
 		}
-		write("Functions", ns, fnDocs)
+		write("Functions", "Function", ns, fnDocs)
 	}
 }
 
