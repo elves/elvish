@@ -22,5 +22,5 @@ var website-docs = $website/ref
 mkdir -p $docset/Contents/Resources/Documents
 cp $bindir/docset-data/Info.plist $docset/Contents
 cp $website/ref/*.html $docset/Contents/Resources/Documents
-rm $docset/Contents/Resources/Documents/{index language}.html
+rm $docset/Contents/Resources/Documents/index.html
 python3 $bindir/mkdsidx.py $website/ref | sqlite3 $docset/Contents/Resources/docSet.dsidx
