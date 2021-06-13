@@ -6,16 +6,11 @@ import (
 	"log"
 	"os"
 	"sync"
-	"time"
 
 	"golang.org/x/sys/windows"
 	"src.elv.sh/pkg/sys"
 	"src.elv.sh/pkg/ui"
 )
-
-// TODO(xiaq): Put here to make edit package build on Windows. Refactor so
-// that isn't needed?
-const DefaultSeqTimeout = 10 * time.Millisecond
 
 type reader struct {
 	console   windows.Handle
@@ -113,8 +108,8 @@ const (
 	shift     = 0x10
 )
 
-// convertEvent converts the native sys.InputEvent type to a suitable Event
-// type. It returns nil if the event should be ignored.
+// Converts the native sys.InputEvent type to a suitable Event type. It returns
+// nil if the event should be ignored.
 func convertEvent(event sys.InputEvent) Event {
 	switch event := event.(type) {
 	case *sys.KeyEvent:
@@ -124,23 +119,30 @@ func convertEvent(event sys.InputEvent) Event {
 		}
 		r := rune(event.UChar[0]) + rune(event.UChar[1])<<8
 		filteredMod := event.DwControlKeyState & (leftAlt | leftCtrl | rightAlt | rightCtrl | shift)
-		if filteredMod == 0 {
-			// No modifier
-			// TODO: Deal with surrogate pairs
-			if 0x20 <= r && r != 0x7f {
+		if r >= 0x20 && r != 0x7f {
+			// This key inputs a character. The flags present in
+			// DwControlKeyState might indicate modifier keys that are needed to
+			// input this character (e.g. the Shift key when inputting 'A'), or
+			// modifier keys that are pressed in addition (e.g. the Alt key when
+			// pressing Alt-A). There doesn't seem to be an easy way to tell
+			// which is the case, so we rely on heuristics derived from
+			// real-world observations.
+			if filteredMod == 0 {
+				// TODO: Handle surrogate pairs
+				return KeyEvent(ui.Key{Rune: r})
+			} else if filteredMod == shift {
+				// A lone Shift seems to be always part of the character.
+				return KeyEvent(ui.Key{Rune: r})
+			} else if filteredMod == leftCtrl|rightAlt || filteredMod == leftCtrl|rightAlt|shift {
+				// The combination leftCtrl|rightAlt is used to represent AltGr.
+				// Furthermore, when the actual left Ctrl and right Alt are used
+				// together, the UChar field seems to be always 0; so if we are
+				// here, we can actually be sure that it's AltGr.
+				//
+				// Some characters require AltGr+Shift to intput, such as the
+				// upper-case sharp S on a German keyboard.
 				return KeyEvent(ui.Key{Rune: r})
 			}
-		} else if filteredMod == shift {
-			// If only the shift is held down, we try and see if this is a
-			// non-functional key by looking if the rune generated is a
-			// printable ASCII character.
-			if 0x20 <= r && r != 0x7f {
-				return KeyEvent(ui.Key{Rune: r})
-			}
-		} else if filteredMod&(leftCtrl|rightAlt) == leftCtrl|rightAlt && 0x20 <= r && r != 0x7f {
-			// Handle AltGr key combinations if they result in a rune
-			// Shift is also ignored, since it is required for some chars
-			return KeyEvent(ui.Key{Rune: r, Mod: ui.Mod(filteredMod &^ (leftCtrl | rightAlt | shift))})
 		}
 		mod := convertMod(filteredMod)
 		if mod == 0 && event.WVirtualKeyCode == 0x1b {
