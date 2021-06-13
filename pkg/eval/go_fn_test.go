@@ -50,7 +50,7 @@ func TestGoFnCall(t *testing.T) {
 		t.Helper()
 		err := f.Call(fm, args, opts)
 		if !matchErr(wantErr, err) {
-			t.Errorf("Calling f returned wrong error:\nexp %v\ngot %v", wantErr, err)
+			t.Errorf("Calling f returned error %v, want %v", err, wantErr)
 		}
 	}
 

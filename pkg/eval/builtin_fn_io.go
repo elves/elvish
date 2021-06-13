@@ -2,7 +2,6 @@ package eval
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,13 +10,13 @@ import (
 	"strings"
 
 	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/strutil"
 )
 
 // Input and output.
-
-var ErrInvalidTerminator = errors.New("terminator must be a single ASCII char")
 
 func init() {
 	addBuiltinFns(map[string]interface{}{
@@ -122,8 +121,8 @@ func put(fm *Frame, args ...interface{}) {
 // ```
 
 func readUpto(fm *Frame, terminator string) (string, error) {
-	if len(terminator) != 1 || terminator[0] > 127 {
-		return "", ErrInvalidTerminator
+	if err := checkTerminator(terminator); err != nil {
+		return "", err
 	}
 	in := fm.InputFile()
 	var buf []byte
@@ -142,6 +141,14 @@ func readUpto(fm *Frame, terminator string) (string, error) {
 		}
 	}
 	return string(buf), nil
+}
+
+func checkTerminator(s string) error {
+	if len(s) != 1 || s[0] > 127 {
+		return errs.BadValue{What: "terminator",
+			Valid: "a single ASCII character", Actual: parse.Quote(s)}
+	}
+	return nil
 }
 
 //elvdoc:fn read-line
@@ -718,8 +725,8 @@ func fromJSONInterface(v interface{}) (interface{}, error) {
 // @cf from-lines read-upto to-terminated
 
 func fromTerminated(fm *Frame, terminator string) error {
-	if len(terminator) != 1 || terminator[0] > 127 {
-		return ErrInvalidTerminator
+	if err := checkTerminator(terminator); err != nil {
+		return err
 	}
 	terminatedToChan(fm.InputFile(), fm.OutputChan(), terminator[0])
 	return nil
@@ -777,8 +784,8 @@ func toLines(fm *Frame, inputs Inputs) {
 // @cf from-terminated to-lines
 
 func toTerminated(fm *Frame, terminator string, inputs Inputs) error {
-	if len(terminator) != 1 || terminator[0] > 127 {
-		return ErrInvalidTerminator
+	if err := checkTerminator(terminator); err != nil {
+		return err
 	}
 
 	out := fm.OutputFile()

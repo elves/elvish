@@ -1,11 +1,11 @@
 package eval
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"math/big"
 	"math/rand"
+	"strconv"
 
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
@@ -587,12 +587,10 @@ func rem(a, b int) (int, error) {
 // ▶ 6
 // ```
 
-var ErrRandIntArgs = errors.New("$low >= $high")
-
 func randint(low, high int) (int, error) {
-	if low >= high {
-		return 0, errs.BadValue{What: "low value",
-			Valid: fmt.Sprintf("less than %d", high), Actual: fmt.Sprintf("%d", low)}
+	if high <= low {
+		return 0, errs.BadValue{What: "high value",
+			Valid: fmt.Sprint("larger than ", low), Actual: strconv.Itoa(high)}
 	}
 	return low + rand.Intn(high-low), nil
 }
