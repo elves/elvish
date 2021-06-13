@@ -36,9 +36,15 @@
 
   <link rel="stylesheet" href="{{ rootURL }}/fonts.css"/>
 
+	{{ $docsetMode := eq (getEnv "ELVISH_DOCSET_MODE") "1" }}
   <style>
     {{ .BaseCSS }}
     {{ .ExtraCSS }}
+    {{ if $docsetMode }}
+      .toc {
+        display: none;
+      }
+    {{ end }}
   </style>
 
   <script>
@@ -47,30 +53,32 @@
 </head>
 
 <body>
-  <div id="navbar-container"> <div id="navbar">
-    <div id="blog-title">
-      <code>
-        <a href="{{ rootURL }}/">
-          elvish
-        </a>
-      </code>
-    </div>
-    <ul id="nav-list">
-      {{ $homepageTitle := .HomepageTitle }}
-      {{ $curcat := .Category }}
-      {{ range $i, $info := .Categories }}
-        <li class="nav-item">
-          <a href="{{ rootURL }}/{{ $info.Name }}/"
-             class="nav-link {{ if eq $curcat $info.Name}}current{{ end }}">
-            <code>
-              {{ $info.Name }}
-            </code>
+  {{ if not $docsetMode }}
+    <div id="navbar-container"> <div id="navbar">
+      <div id="blog-title">
+        <code>
+          <a href="{{ rootURL }}/">
+            elvish
           </a>
-        </li>
-      {{ end }}
-    </ul>
-    <div class="clear"></div>
-  </div> </div>
+        </code>
+      </div>
+      <ul id="nav-list">
+        {{ $homepageTitle := .HomepageTitle }}
+        {{ $curcat := .Category }}
+        {{ range $i, $info := .Categories }}
+          <li class="nav-item">
+            <a href="{{ rootURL }}/{{ $info.Name }}/"
+               class="nav-link {{ if eq $curcat $info.Name}}current{{ end }}">
+              <code>
+                {{ $info.Name }}
+              </code>
+            </a>
+          </li>
+        {{ end }}
+      </ul>
+      <div class="clear"></div>
+    </div> </div>
+  {{ end }}
 
   {{/*
     The reference to "content" is a free one and has to be fixed elsewhere.
