@@ -1,4 +1,5 @@
 autoIndex = true
+prelude = "prelude"
 
 [[articles]]
 name = "language"
