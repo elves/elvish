@@ -21,7 +21,6 @@ func run(args []string, in io.Reader, out io.Writer) {
 	flags := flag.NewFlagSet("", flag.ExitOnError)
 	var (
 		directory = flags.Bool("dir", false, "read from .go files in directories")
-		filter    = flags.Bool("filter", false, "act as a Markdown file filter")
 		ns        = flags.String("ns", "", "namespace prefix")
 	)
 
@@ -34,33 +33,10 @@ func run(args []string, in io.Reader, out io.Writer) {
 	switch {
 	case *directory:
 		extractDirs(args, *ns, out)
-	case *filter:
-		// NOTE: Ignores arguments.
-		filterMarkdown(in, out)
 	case len(args) > 0:
 		extractFiles(args, *ns, out)
 	default:
 		extract(in, *ns, out)
-	}
-}
-
-const markdownLeader = "@elvdoc "
-
-var emptyReader = &strings.Reader{}
-
-func filterMarkdown(in io.Reader, out io.Writer) {
-	scanner := bufio.NewScanner(in)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if arg := strings.TrimPrefix(line, markdownLeader); arg != line {
-			args := strings.Fields(arg)
-			run(args, emptyReader, out)
-		} else {
-			fmt.Fprintln(out, line)
-		}
-	}
-	if err := scanner.Err(); err != nil && err != io.EOF {
-		log.Fatal(err)
 	}
 }
 
@@ -211,13 +187,6 @@ func extract(r io.Reader, ns string, w io.Writer) {
 			fmt.Fprint(w, m[name])
 		}
 	}
-
-	modname := ns
-	if modname == "" {
-		modname = "builtin:"
-	}
-	fmt.Fprintf(w,
-		"<a name='//apple_ref/cpp/Module/%s' class='dashAnchor'></a>\n\n", modname)
 
 	if len(varDocs) > 0 {
 		write("Variables", "Variable", "$"+ns, varDocs)

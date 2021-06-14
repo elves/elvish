@@ -5,56 +5,119 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
-const (
-	ttyshot = "@ttyshot "
-	cf      = "@cf "
-	dl      = "@dl "
+var (
+	repoPath   = flag.String("repo", "", "root of repo")
+	elvdocPath = flag.String("elvdoc", "", "Path to the elvdoc binary")
 )
 
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
+	flag.Parse()
+	filter(os.Stdin, os.Stdout)
+}
+
+func filter(in io.Reader, out io.Writer) {
+	f := filterer{}
+	f.filter(in, out)
+}
+
+type filterer struct {
+	module, modulePkg string
+}
+
+var macros = map[string]func(*filterer, string) string{
+	"@module ":  (*filterer).expandModule,
+	"@ttyshot ": (*filterer).expandTtyshot,
+	"@cf ":      (*filterer).expandCf,
+	"@dl ":      (*filterer).expandDl,
+}
+
+func (f *filterer) filter(in io.Reader, out io.Writer) {
+	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 		line := scanner.Text()
-		line = expandTtyshot(line)
-		line = expandCf(line)
-		line = expandDl(line)
-		fmt.Println(line)
+		for leader, expand := range macros {
+			i := strings.Index(line, leader)
+			if i >= 0 {
+				line = line[:i] + expand(f, line[i+len(leader):])
+				break
+			}
+		}
+		fmt.Fprintln(out, line)
+	}
+	if f.module != "" {
+		callElvdoc(out, f.module, f.modulePkg)
 	}
 }
 
-func expandTtyshot(line string) string {
-	i := strings.Index(line, ttyshot)
-	if i < 0 {
-		return line
+func (f *filterer) expandModule(rest string) string {
+	if *repoPath == "" || *elvdocPath == "" {
+		log.Println("-repo and -elvdoc are required to expand @module ", rest)
+		return ""
 	}
-	name := line[i+len(ttyshot):]
+	fields := strings.Fields(rest)
+	switch len(fields) {
+	case 1:
+		f.module = fields[0]
+		f.modulePkg = "pkg/eval/mods/" + f.module
+	case 2:
+		f.module = fields[0]
+		f.modulePkg = fields[1]
+	default:
+		log.Println("bad macro: @module ", rest)
+	}
+	// Module doc will be added at end of file
+	return fmt.Sprintf(
+		"<a name='//apple_ref/cpp/Module/%s' class='dashAnchor'></a>", f.module)
+}
+
+func callElvdoc(out io.Writer, module, modulePkg string) {
+	dir := filepath.Join(*repoPath, modulePkg)
+	ns := module + ":"
+	if module == "builtin" {
+		ns = ""
+	}
+
+	cmd := exec.Command(*elvdocPath, "-ns", ns, "-dir", dir)
+	r, w := io.Pipe()
+	cmd.Stdout = w
+	cmd.Stderr = os.Stderr
+	filterDone := make(chan struct{})
+	go func() {
+		filter(r, out)
+		close(filterDone)
+	}()
+	err := cmd.Run()
+	w.Close()
+	<-filterDone
+	r.Close()
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func (f *filterer) expandTtyshot(name string) string {
 	content, err := ioutil.ReadFile(path.Join("ttyshot", name+".html"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	var buf bytes.Buffer
-	buf.WriteString(line[:i])
-	buf.WriteString(`<pre class="ttyshot"><code>`)
-	buf.Write(bytes.Replace(
-		content, []byte("\n"), []byte("<br>"), -1))
-	buf.WriteString("</code></pre>")
-	return buf.String()
+	return fmt.Sprintf(`<pre class="ttyshot"><code>%s</code></pre>`,
+		bytes.Replace(content, []byte("\n"), []byte("<br>"), -1))
 }
 
-func expandCf(line string) string {
-	i := strings.Index(line, cf)
-	if i < 0 {
-		return line
-	}
-	targets := strings.Split(line[i+len(cf):], " ")
+func (f *filterer) expandCf(rest string) string {
+	targets := strings.Split(rest, " ")
 	var buf strings.Builder
 	buf.WriteString("See also")
 	for i, target := range targets {
@@ -91,17 +154,12 @@ func cfHref(target string) string {
 	return module + ".html#" + strings.ReplaceAll(target, ":", "")
 }
 
-func expandDl(line string) string {
-	i := strings.Index(line, dl)
-	if i < 0 {
-		return line
-	}
-	fields := strings.SplitN(line[i+len(dl):], " ", 2)
+func (f *filterer) expandDl(rest string) string {
+	fields := strings.SplitN(rest, " ", 2)
 	name := fields[0]
 	url := name
 	if len(fields) == 2 {
 		url = fields[1]
 	}
-	return line[:i] + fmt.Sprintf(
-		`<a href="https://dl.elv.sh/%s">%s</a>`, url, name)
+	return fmt.Sprintf(`<a href="https://dl.elv.sh/%s">%s</a>`, url, name)
 }

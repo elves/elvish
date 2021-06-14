@@ -1,5 +1,7 @@
 <!-- toc -->
 
+@module builtin pkg/eval
+
 # Introduction
 
 The builtin module contains facilities that are potentially useful to all users.
@@ -179,5 +181,3 @@ changed.)
 
 Those functions and variables are documented near the end of the respective
 sections. Their known problem is also discussed.
-
-@elvdoc -dir ../pkg/eval

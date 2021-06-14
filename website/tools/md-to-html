@@ -16,7 +16,6 @@ has number-sections && {
 
 mydir=$(dirname "$0")
 
-$mydir/elvdoc.bin -filter < $1 |
+$mydir/macros.bin -repo $mydir/../.. -elvdoc $mydir/elvdoc.bin < $1 |
   $mydir/highlight.bin |
-  $mydir/macros.bin |
   pandoc -f gfm+smart+attributes --data-dir=$mydir/pandoc-data --metadata title=${1%.md} -o $2 $opts
