@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Generate docset from reference docs.
 #
 # Docset is a format for packaging docs for offline consumption:
@@ -8,16 +10,14 @@
 # - python3
 # - sqlite3
 
-use path
-
-if (!= 2 (count $args)) {
+if test $# != 2; then
   echo "Usage: mkdocset.elv $website $docset"
   exit 1
-}
+fi
 
-var bindir = (path:dir (src)[name])
-var website docset = $@args
-var website-docs = $website/ref
+bindir=$(dirname "$0")
+website=$1
+docset=$2
 
 mkdir -p $docset/Contents/Resources/Documents
 cp $bindir/../favicons/favicon-16x16.png $docset/icon.png

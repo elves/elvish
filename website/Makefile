@@ -22,7 +22,7 @@ gen: tools $(HTMLS)
 # Generates docset into Elvish.docset.
 docset: tools $(HTMLS)
 	ELVISH_DOCSET_MODE=1 $(TOOLS_DIR)/genblog.bin . $(DOCSET_TMP_DIR)
-	elvish tools/mkdocset.elv $(DOCSET_TMP_DIR) $(DOCSET_DST_DIR)
+	./tools/mkdocset $(DOCSET_TMP_DIR) $(DOCSET_DST_DIR)
 
 tools:
 	for tool in $(TOOLS); do \
