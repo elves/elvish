@@ -1,5 +1,7 @@
 <!-- toc -->
 
+@module epm pkg/eval/mods/bundled/epm.elv.go
+
 # Introduction
 
 The Elvish Package Manager (`epm`) is a module bundled with Elvish for managing
@@ -38,89 +40,6 @@ This is a sample function in a sample module in a sample package
 
 The next section describes functions in the `epm` module, using the same
 notation as the [doc for the builtin module](builtin.html#usage-notation).
-
-# Functions
-
-## install
-
-```elvish
-epm:install &silent-if-installed=$false $pkg...
-```
-
-Install the named packages. By default, if a package is already installed, a
-message will be shown. This can be disabled by passing
-`&silent-if-installed=$true`, so that already-installed packages are silently
-ignored.
-
-## installed
-
-```elvish
-epm:installed
-```
-
-Return an array with all installed packages. `epm:list` can be used as an alias
-for `epm:installed`.
-
-## is-installed
-
-```elvish
-epm:is-installed $pkg
-```
-
-Returns a boolean value indicating whether the given package is installed.
-
-## metadata
-
-```elvish
-epm:metadata $pkg
-```
-
-Returns a hash containing the metadata for the given package. Metadata for a
-package includes the following base attributes:
-
--   `name`: name of the package
--   `installed`: a boolean indicating whether the package is currently installed
--   `method`: method by which it was installed (`git` or `rsync`)
--   `src`: source URL of the package
--   `dst`: where the package is (or would be) installed. Note that this
-    attribute is returned even if `installed` is `$false`.
-
-Additionally, packages can define arbitrary metadata attributes in a file called
-`metadata.json` in their top directory. The following attributes are
-recommended:
-
--   `description`: a human-readable description of the package
--   `maintainers`: an array containing the package maintainers, in
-    `Name <email>` format.
--   `homepage`: URL of the homepage for the package, if it has one.
--   `dependencies`: an array listing dependencies of the current package. Any
-    packages listed will be installed automatically by `epm:install` if they are
-    not yet installed.
-
-## query
-
-```elvish
-epm:query $pkg
-```
-
-Pretty print the available metadata of the given package.
-
-## uninstall
-
-```elvish
-epm:uninstall $pkg...
-```
-
-Uninstall named packages.
-
-## upgrade
-
-```elvish
-epm:upgrade $pkg...
-```
-
-Upgrade named packages. If no package name is given, upgrade all installed
-packages.
 
 # Custom package domains
 

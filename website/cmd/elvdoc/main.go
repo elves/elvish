@@ -94,6 +94,8 @@ func extract(r io.Reader, ns string, w io.Writer) {
 	// newline.
 	//
 	// Will discard the first line after the comment block.
+	//
+	// TODO: Support extracting elvdoc from Elvish sources too.
 	readCommentBlock := func() (string, error) {
 		builder := &strings.Builder{}
 		for {
