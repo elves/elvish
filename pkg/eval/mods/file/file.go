@@ -49,7 +49,7 @@ func open(name string) (vals.File, error) {
 //elvdoc:fn close
 //
 // ```elvish
-// ~> file:close $file
+// file:close $file
 // ```
 //
 // Closes a file opened with `open`.
