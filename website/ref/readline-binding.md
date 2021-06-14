@@ -1,5 +1,7 @@
 <!-- toc -->
 
+@module readline-binding pkg/eval/mods/bundled/readline-binding.elv.go
+
 # Introduction
 
 The `readline-binding` module provides readline-like key bindings, such as
