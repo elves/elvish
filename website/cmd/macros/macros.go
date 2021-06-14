@@ -33,7 +33,7 @@ func filter(in io.Reader, out io.Writer) {
 }
 
 type filterer struct {
-	module, modulePkg string
+	module, path string
 }
 
 var macros = map[string]func(*filterer, string) string{
@@ -57,7 +57,7 @@ func (f *filterer) filter(in io.Reader, out io.Writer) {
 		fmt.Fprintln(out, line)
 	}
 	if f.module != "" {
-		callElvdoc(out, f.module, f.modulePkg)
+		callElvdoc(out, f.module, f.path)
 	}
 }
 
@@ -70,10 +70,10 @@ func (f *filterer) expandModule(rest string) string {
 	switch len(fields) {
 	case 1:
 		f.module = fields[0]
-		f.modulePkg = "pkg/eval/mods/" + f.module
+		f.path = "pkg/eval/mods/" + f.module
 	case 2:
 		f.module = fields[0]
-		f.modulePkg = fields[1]
+		f.path = fields[1]
 	default:
 		log.Println("bad macro: @module ", rest)
 	}
@@ -82,14 +82,14 @@ func (f *filterer) expandModule(rest string) string {
 		"<a name='//apple_ref/cpp/Module/%s' class='dashAnchor'></a>", f.module)
 }
 
-func callElvdoc(out io.Writer, module, modulePkg string) {
-	dir := filepath.Join(*repoPath, modulePkg)
+func callElvdoc(out io.Writer, module, path string) {
+	fullPath := filepath.Join(*repoPath, path)
 	ns := module + ":"
 	if module == "builtin" {
 		ns = ""
 	}
 
-	cmd := exec.Command(*elvdocPath, "-ns", ns, "-dir", dir)
+	cmd := exec.Command(*elvdocPath, "-ns", ns, fullPath)
 	r, w := io.Pipe()
 	cmd.Stdout = w
 	cmd.Stderr = os.Stderr

@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -19,10 +18,7 @@ func main() {
 
 func run(args []string, in io.Reader, out io.Writer) {
 	flags := flag.NewFlagSet("", flag.ExitOnError)
-	var (
-		directory = flags.Bool("dir", false, "read from .go files in directories")
-		ns        = flags.String("ns", "", "namespace prefix")
-	)
+	var ns = flags.String("ns", "", "namespace prefix")
 
 	err := flags.Parse(args)
 	if err != nil {
@@ -30,46 +26,37 @@ func run(args []string, in io.Reader, out io.Writer) {
 	}
 	args = flags.Args()
 
-	switch {
-	case *directory:
-		extractDirs(args, *ns, out)
-	case len(args) > 0:
-		extractFiles(args, *ns, out)
-	default:
+	if len(args) > 0 {
+		extractPaths(args, *ns, out)
+	} else {
 		extract(in, *ns, out)
 	}
 }
 
-func extractDirs(dirs []string, ns string, out io.Writer) {
+func extractPaths(paths []string, ns string, out io.Writer) {
 	var files []string
-	for _, dir := range dirs {
-		files = append(files, goFilesInDirectory(dir)...)
+	for _, path := range paths {
+		stat, err := os.Stat(path)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if stat.IsDir() {
+			goFiles, err := filepath.Glob(filepath.Join(path, "*.go"))
+			if err != nil {
+				log.Fatal(err)
+			}
+			files = append(files, goFiles...)
+		} else {
+			files = append(files, path)
+		}
 	}
-	extractFiles(files, ns, out)
-}
 
-func extractFiles(files []string, ns string, out io.Writer) {
 	reader, cleanup, err := multiFile(files)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer cleanup()
 	extract(reader, ns, out)
-}
-
-// Returns all .go files in the given directory.
-func goFilesInDirectory(dir string) []string {
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		log.Fatalf("walk %v: %v", dir, err)
-	}
-	var paths []string
-	for _, file := range files {
-		if filepath.Ext(file.Name()) == ".go" {
-			paths = append(paths, filepath.Join(dir, file.Name()))
-		}
-	}
-	return paths
 }
 
 // Makes a reader that concatenates multiple files.
