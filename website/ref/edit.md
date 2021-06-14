@@ -1,5 +1,7 @@
 <!-- toc -->
 
+@module edit pkg/edit
+
 The `edit:` module is the interface to the Elvish editor.
 
 Function usages are given in the same format as in the
@@ -510,5 +512,3 @@ To see the difference between these definitions, consider the following string:
     words.
 
 -   It contains two alnum words, `abc` and `xyz`.
-
-@elvdoc -ns edit: -dir ../pkg/edit

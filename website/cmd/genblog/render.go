@@ -71,6 +71,7 @@ func newTemplate(name, root string, sources ...string) *template.Template {
 	t := template.New(name).Funcs(template.FuncMap(map[string]interface{}{
 		"is":      func(s string) bool { return s == name },
 		"rootURL": func() string { return root },
+		"getEnv":  os.Getenv,
 	}))
 	for _, source := range sources {
 		template.Must(t.Parse(source))

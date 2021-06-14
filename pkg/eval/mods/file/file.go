@@ -40,7 +40,7 @@ var fns = map[string]interface{}{
 // ~> close $f
 // ```
 //
-// @cf close
+// @cf file:close
 
 func open(name string) (vals.File, error) {
 	return os.Open(name)
@@ -54,7 +54,7 @@ func open(name string) (vals.File, error) {
 //
 // Closes a file opened with `open`.
 //
-// @cf open
+// @cf file:open
 
 func close(f vals.File) error {
 	return f.Close()
@@ -68,8 +68,8 @@ func close(f vals.File) error {
 //
 // Create a new pipe that can be used in redirections. A pipe contains a read-end and write-end.
 // Each pipe object is a [pseudo-map](#pseudo-map) with fields `r` (the read-end [file
-// object](./language.html#File)) and `w` (the write-end).
-
+// object](./language.html#file)) and `w` (the write-end).
+//
 // When redirecting command input from a pipe with `<`, the read-end is used. When redirecting
 // command output to a pipe with `>`, the write-end is used. Redirecting both input and output with
 // `<>` to a pipe is not supported.
@@ -92,7 +92,7 @@ func close(f vals.File) error {
 // ~> file:close $p[r] # close the read-end
 // ```
 //
-// @cf close
+// @cf file:close
 
 func pipe() (vals.Pipe, error) {
 	r, w, err := os.Pipe()
