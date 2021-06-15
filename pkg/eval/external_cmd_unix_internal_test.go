@@ -1,3 +1,5 @@
+// +build !windows,!plan9,!js
+
 package eval
 
 import (
