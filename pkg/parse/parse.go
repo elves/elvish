@@ -12,7 +12,6 @@ package parse
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"unicode"
@@ -52,13 +51,11 @@ func ParseAs(src Source, n Node, cfg Config) error {
 // Errors.
 var (
 	errShouldBeForm               = newError("", "form")
-	errBadLHS                     = errors.New("bad assignment LHS")
 	errBadRedirSign               = newError("bad redir sign", "'<'", "'>'", "'>>'", "'<>'")
 	errShouldBeFD                 = newError("", "a composite term representing fd")
 	errShouldBeFilename           = newError("", "a composite term representing filename")
 	errShouldBeArray              = newError("", "spaced")
 	errStringUnterminated         = newError("string not terminated")
-	errChainedAssignment          = newError("chained assignment not yet supported")
 	errInvalidEscape              = newError("invalid escape sequence")
 	errInvalidEscapeOct           = newError("invalid escape sequence", "octal digit")
 	errInvalidEscapeHex           = newError("invalid escape sequence", "hex digit")

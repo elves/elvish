@@ -16,7 +16,6 @@ func is(a, b parse.Node) bool {
 var (
 	aChunk    = &parse.Chunk{}
 	aPipeline = &parse.Pipeline{}
-	aForm     = &parse.Form{}
 	aArray    = &parse.Array{}
 	aIndexing = &parse.Indexing{}
 	aPrimary  = &parse.Primary{}
