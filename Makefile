@@ -1,9 +1,10 @@
 ELVISH_MAKE_BIN ?= $(shell go env GOPATH)/bin/elvish
+ELVISH_PLUGINS ?= 0
 
 default: test get
 
 get:
-	export CGO_ENABLED=0; \
+	export CGO_ENABLED=$(ELVISH_PLUGINS); \
 	if go env GOOS GOARCH | egrep -qx '(windows .*|linux (amd64|arm64))'; then \
 		export GOFLAGS=-buildmode=pie; \
 	fi; \

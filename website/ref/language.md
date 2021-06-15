@@ -2227,6 +2227,9 @@ fn f {
 }
 ```
 
+Note: If you build elvish with `ELVISH_PLUGINS=1` you can use go plugins with
+the extension `.so`.
+
 This module can now be imported by `use a`:
 
 ```elvish-transcript
