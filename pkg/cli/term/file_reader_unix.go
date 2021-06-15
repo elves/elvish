@@ -72,6 +72,8 @@ func (r *bReader) ReadByteWithTimeout(timeout time.Duration) (byte, error) {
 func (r *bReader) Stop() error {
 	_, err := r.wStop.Write([]byte{'q'})
 	r.mutex.Lock()
+	//lint:ignore SA2001 We only lock the mutex to make sure that
+	// ReadByteWithTimeout has exited, so we unlock it immediately.
 	r.mutex.Unlock()
 	return err
 }

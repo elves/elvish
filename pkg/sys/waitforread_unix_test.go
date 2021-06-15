@@ -4,15 +4,14 @@ package sys
 
 import (
 	"io"
-	"os"
 	"testing"
+
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestWaitForRead(t *testing.T) {
-	r0, w0, err := os.Pipe()
-	mustNil(err)
-	r1, w1, err := os.Pipe()
-	mustNil(err)
+	r0, w0 := testutil.MustPipe()
+	r1, w1 := testutil.MustPipe()
 	defer closeAll(r0, w0, r1, w1)
 
 	w0.WriteString("x")

@@ -1,6 +1,7 @@
 package vals
 
 import (
+	"math/big"
 	"os"
 	"testing"
 
@@ -14,6 +15,9 @@ func TestKind(t *testing.T) {
 		Args(nil).Rets("nil"),
 		Args(true).Rets("bool"),
 		Args("").Rets("string"),
+		Args(1).Rets("number"),
+		Args(bigInt(z)).Rets("number"),
+		Args(big.NewRat(1, 2)).Rets("number"),
 		Args(1.0).Rets("number"),
 		Args(os.Stdin).Rets("file"),
 		Args(EmptyList).Rets("list"),

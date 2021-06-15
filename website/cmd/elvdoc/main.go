@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -19,11 +18,7 @@ func main() {
 
 func run(args []string, in io.Reader, out io.Writer) {
 	flags := flag.NewFlagSet("", flag.ExitOnError)
-	var (
-		directory = flags.Bool("dir", false, "read from .go files in directories")
-		filter    = flags.Bool("filter", false, "act as a Markdown file filter")
-		ns        = flags.String("ns", "", "namespace prefix")
-	)
+	var ns = flags.String("ns", "", "namespace prefix")
 
 	err := flags.Parse(args)
 	if err != nil {
@@ -31,69 +26,37 @@ func run(args []string, in io.Reader, out io.Writer) {
 	}
 	args = flags.Args()
 
-	switch {
-	case *directory:
-		extractDirs(args, *ns, out)
-	case *filter:
-		// NOTE: Ignores arguments.
-		filterMarkdown(in, out)
-	case len(args) > 0:
-		extractFiles(args, *ns, out)
-	default:
+	if len(args) > 0 {
+		extractPaths(args, *ns, out)
+	} else {
 		extract(in, *ns, out)
 	}
 }
 
-const markdownLeader = "@elvdoc "
-
-var emptyReader = &strings.Reader{}
-
-func filterMarkdown(in io.Reader, out io.Writer) {
-	scanner := bufio.NewScanner(in)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if arg := strings.TrimPrefix(line, markdownLeader); arg != line {
-			args := strings.Fields(arg)
-			run(args, emptyReader, out)
+func extractPaths(paths []string, ns string, out io.Writer) {
+	var files []string
+	for _, path := range paths {
+		stat, err := os.Stat(path)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if stat.IsDir() {
+			goFiles, err := filepath.Glob(filepath.Join(path, "*.go"))
+			if err != nil {
+				log.Fatal(err)
+			}
+			files = append(files, goFiles...)
 		} else {
-			fmt.Fprintln(out, line)
+			files = append(files, path)
 		}
 	}
-	if err := scanner.Err(); err != nil && err != io.EOF {
-		log.Fatal(err)
-	}
-}
 
-func extractDirs(dirs []string, ns string, out io.Writer) {
-	var files []string
-	for _, dir := range dirs {
-		files = append(files, goFilesInDirectory(dir)...)
-	}
-	extractFiles(files, ns, out)
-}
-
-func extractFiles(files []string, ns string, out io.Writer) {
 	reader, cleanup, err := multiFile(files)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer cleanup()
 	extract(reader, ns, out)
-}
-
-// Returns all .go files in the given directory.
-func goFilesInDirectory(dir string) []string {
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		log.Fatalf("walk %v: %v", dir, err)
-	}
-	var paths []string
-	for _, file := range files {
-		if filepath.Ext(file.Name()) == ".go" {
-			paths = append(paths, filepath.Join(dir, file.Name()))
-		}
-	}
-	return paths
 }
 
 // Makes a reader that concatenates multiple files.
@@ -131,6 +94,8 @@ func extract(r io.Reader, ns string, w io.Writer) {
 	// newline.
 	//
 	// Will discard the first line after the comment block.
+	//
+	// TODO: Support extracting elvdoc from Elvish sources too.
 	readCommentBlock := func() (string, error) {
 		builder := &strings.Builder{}
 		for {
@@ -178,7 +143,7 @@ func extract(r io.Reader, ns string, w io.Writer) {
 		}
 	}
 
-	write := func(heading, prefix string, m map[string]string) {
+	write := func(heading, entryType, prefix string, m map[string]string) {
 		fmt.Fprintf(w, "# %s\n", heading)
 		names := make([]string, 0, len(m))
 		for k := range m {
@@ -190,7 +155,22 @@ func extract(r io.Reader, ns string, w io.Writer) {
 			})
 		for _, name := range names {
 			fmt.Fprintln(w)
-			fmt.Fprintf(w, "## %s\n", prefix+name)
+			fullName := prefix + name
+			// Create anchors for Docset. These anchors are used to show a ToC;
+			// the mkdsidx.py script also looks for those anchors to generate
+			// the SQLite index.
+			//
+			// Some builtin commands are documented together. Create an anchor
+			// for each of them.
+			for _, s := range strings.Fields(fullName) {
+				if strings.HasPrefix(s, "{#") {
+					continue
+				}
+				fmt.Fprintf(w,
+					"<a name='//apple_ref/cpp/%s/%s' class='dashAnchor'></a>\n\n",
+					entryType, s)
+			}
+			fmt.Fprintf(w, "## %s\n", fullName)
 			// The body is guaranteed to have a trailing newline, hence Fprint
 			// instead of Fprintln.
 			fmt.Fprint(w, m[name])
@@ -198,14 +178,14 @@ func extract(r io.Reader, ns string, w io.Writer) {
 	}
 
 	if len(varDocs) > 0 {
-		write("Variables", "$"+ns, varDocs)
+		write("Variables", "Variable", "$"+ns, varDocs)
 	}
 	if len(fnDocs) > 0 {
 		if len(varDocs) > 0 {
 			fmt.Fprintln(w)
 			fmt.Fprintln(w)
 		}
-		write("Functions", ns, fnDocs)
+		write("Functions", "Function", ns, fnDocs)
 	}
 }
 

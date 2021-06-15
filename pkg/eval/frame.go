@@ -112,22 +112,22 @@ func (fm *Frame) ErrorFile() *os.File {
 
 // IterateInputs calls the passed function for each input element.
 func (fm *Frame) IterateInputs(f func(interface{})) {
-	var w sync.WaitGroup
+	var wg sync.WaitGroup
 	inputs := make(chan interface{})
 
-	w.Add(2)
+	wg.Add(2)
 	go func() {
 		linesToChan(fm.InputFile(), inputs)
-		w.Done()
+		wg.Done()
 	}()
 	go func() {
 		for v := range fm.ports[0].Chan {
 			inputs <- v
 		}
-		w.Done()
+		wg.Done()
 	}()
 	go func() {
-		w.Wait()
+		wg.Wait()
 		close(inputs)
 	}()
 
@@ -142,6 +142,22 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 		line, err := filein.ReadString('\n')
 		if line != "" {
 			ch <- strutil.ChopLineEnding(line)
+		}
+		if err != nil {
+			if err != io.EOF {
+				logger.Println("error on reading:", err)
+			}
+			break
+		}
+	}
+}
+
+func terminatedToChan(r io.Reader, ch chan<- interface{}, terminator byte) {
+	filein := bufio.NewReader(r)
+	for {
+		line, err := filein.ReadString(terminator)
+		if line != "" {
+			ch <- strutil.ChopTerminator(line, terminator)
 		}
 		if err != nil {
 			if err != io.EOF {

@@ -62,7 +62,7 @@ func TestErrorInCurrent(t *testing.T) {
 	c.currentErr = errors.New("ERR")
 	startNavigation(f.App, NavigationSpec{Cursor: c})
 
-	buf := f.MakeBuffer(
+	f.TestTTY(t,
 		"", term.DotHere, "\n",
 		" NAVIGATING  \n", Styles,
 		"************ ",
@@ -73,11 +73,23 @@ func TestErrorInCurrent(t *testing.T) {
 		" f  ",
 	)
 
-	f.TTY.TestBuffer(t, buf)
-
 	// Test that Right does nothing.
 	f.TTY.Inject(term.K(ui.Right))
-	f.TTY.TestBuffer(t, buf)
+	// We can't just test that the buffer hasn't changed, because that might
+	// capture the state of the buffer before the Right key is handled. Instead
+	// we inject a key and test the result of that instead, to ensure that the
+	// Right key had no effect.
+	f.TTY.Inject(term.K('x'))
+	f.TestTTY(t,
+		"x", term.DotHere, "\n",
+		" NAVIGATING  \n", Styles,
+		"************ ",
+		" a   ERR            \n", Styles,
+		"     !!!",
+		" d  \n", Styles,
+		"////",
+		" f  ",
+	)
 }
 
 func TestErrorInParent(t *testing.T) {

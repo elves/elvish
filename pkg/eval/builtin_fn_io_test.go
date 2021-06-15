@@ -3,6 +3,7 @@ package eval_test
 import (
 	"testing"
 
+	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
 )
@@ -21,6 +22,9 @@ func TestReadUpto(t *testing.T) {
 		That("print abcd | { read-upto c; slurp }").Puts("abc", "d"),
 		// read-upto reads up to EOF
 		That("print abcd | read-upto z").Puts("abcd"),
+		That("print abcd | read-upto cd").Throws(
+			errs.BadValue{What: "terminator",
+				Valid: "a single ASCII character", Actual: "cd"}),
 	)
 }
 
@@ -87,6 +91,17 @@ func TestFromLines(t *testing.T) {
 	)
 }
 
+func TestFromTerminated(t *testing.T) {
+	Test(t,
+		That(`print "a\nb\x00\x00c\x00d" | from-terminated "\x00"`).Puts("a\nb", "", "c", "d"),
+		That(`print "a\x00b\x00" | from-terminated "\x00"`).Puts("a", "b"),
+		That(`print aXbXcXXd | from-terminated "X"`).Puts("a", "b", "c", "", "d"),
+		That(`from-terminated "xyz"`).Throws(
+			errs.BadValue{What: "terminator",
+				Valid: "a single ASCII character", Actual: "xyz"}),
+	)
+}
+
 func TestFromJson(t *testing.T) {
 	Test(t,
 		That(`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`).
@@ -101,6 +116,16 @@ func TestFromJson(t *testing.T) {
 func TestToLines(t *testing.T) {
 	Test(t,
 		That(`put "l\norem" ipsum | to-lines`).Prints("l\norem\nipsum\n"),
+	)
+}
+
+func TestToTerminated(t *testing.T) {
+	Test(t,
+		That(`put "l\norem" ipsum | to-terminated "\x00"`).Prints("l\norem\x00ipsum\x00"),
+		That(`to-terminated "X" [a b c]`).Prints("aXbXcX"),
+		That(`to-terminated "XYZ" [a b c]`).Throws(
+			errs.BadValue{What: "terminator",
+				Valid: "a single ASCII character", Actual: "XYZ"}),
 	)
 }
 

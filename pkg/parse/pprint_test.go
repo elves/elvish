@@ -7,7 +7,7 @@ import (
 	"src.elv.sh/pkg/tt"
 )
 
-var n = mustParse("ls $x[0]$y[1];echo")
+var n = mustParse("ls $x[0]$y[1];echo done >/redir-dest")
 
 var pprintASTTests = tt.Table{
 	tt.Args(n).Rets(
@@ -21,7 +21,11 @@ var pprintASTTests = tt.Table{
       Indexing ExprCtx=NormalExpr
         Primary ExprCtx=NormalExpr Type=Variable Value="y"
         Array/Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword Value="1"
-  Pipeline/Form/Compound/Indexing/Primary ExprCtx=CmdExpr Type=Bareword Value="echo"
+  Pipeline/Form
+    Compound/Indexing/Primary ExprCtx=CmdExpr Type=Bareword Value="echo"
+    Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword Value="done"
+    Redir Mode=Write RightIsFd=false
+      Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword Value="/redir-dest"
 `),
 }
 
@@ -35,7 +39,7 @@ func TestPPrintAST(t *testing.T) {
 
 var pprintParseTreeTests = tt.Table{
 	tt.Args(n).Rets(
-		`Chunk "ls $x[0]$y[1];echo" 0-18
+		`Chunk "ls $x[0]$y...redir-dest" 0-36
   Pipeline/Form "ls $x[0]$y[1]" 0-13
     Compound/Indexing/Primary "ls" 0-2
     Sep " " 2-3
@@ -51,7 +55,14 @@ var pprintParseTreeTests = tt.Table{
         Array/Compound/Indexing/Primary "1" 11-12
         Sep "]" 12-13
   Sep ";" 13-14
-  Pipeline/Form/Compound/Indexing/Primary "echo" 14-18
+  Pipeline/Form "echo done >/redir-dest" 14-36
+    Compound/Indexing/Primary "echo" 14-18
+    Sep " " 18-19
+    Compound/Indexing/Primary "done" 19-23
+    Sep " " 23-24
+    Redir ">/redir-dest" 24-36
+      Sep ">" 24-25
+      Compound/Indexing/Primary "/redir-dest" 25-36
 `),
 }
 

@@ -8,7 +8,8 @@ import (
 	"unicode/utf8"
 )
 
-// TODO: Use native path separators instead of always using /.
+// TODO: On Windows, preserve the original path separator (/ or \) specified in
+// the glob pattern.
 
 // PathInfo keeps a path resulting from glob expansion and its FileInfo. The
 // FileInfo is useful for efficiently determining if a given pathname satisfies
@@ -40,7 +41,7 @@ func (p Pattern) Glob(cb func(PathInfo) bool) bool {
 		segs = segs[1:]
 		dir += "/"
 	} else if runtime.GOOS == "windows" && len(segs) > 1 && IsLiteral(segs[0]) && IsSlash(segs[1]) {
-		// TODO: Handle UNC.
+		// TODO: Handle Windows UNC paths.
 		elem := segs[0].(Literal).Data
 		if isDrive(elem) {
 			segs = segs[2:]
@@ -51,9 +52,14 @@ func (p Pattern) Glob(cb func(PathInfo) bool) bool {
 	return glob(segs, dir, cb)
 }
 
+// isLetter returns true if the byte is an ASCII letter.
+func isLetter(chr byte) bool {
+	return ('a' <= chr && chr <= 'z') || ('A' <= chr && chr <= 'Z')
+}
+
+// isDrive returns true if the string looks like a Windows drive letter path prefix.
 func isDrive(s string) bool {
-	return len(s) == 2 && s[1] == ':' &&
-		(('a' <= s[0] && s[1] <= 'z') || ('A' <= s[0] && s[0] <= 'Z'))
+	return len(s) == 2 && s[1] == ':' && isLetter(s[0])
 }
 
 // glob finds all filenames matching the given Segments in the given dir, and
@@ -208,7 +214,7 @@ segs:
 		}
 		segs = segs[i:]
 
-		// NOTE A quick path when len(segs) == 0 can be implemented: match
+		// TODO: Implement a quick path when len(segs) == 0 by matching
 		// backwards.
 
 		// Match at the current position. If this is the last chunk, we need to
@@ -220,10 +226,11 @@ segs:
 		}
 
 		if startsWithStar {
-			// NOTE An optimization is to make the upper bound not len(names),
-			// but rather len(names) - LB(# bytes segs can match)
-			for i, r := range name {
-				j := i + len(string(r))
+			// TODO: Optimize by stopping at len(name) - LB(# bytes segs can
+			// match) rather than len(names)
+			for i := 0; i < len(name); {
+				r, rsize := utf8.DecodeRuneInString(name[i:])
+				j := i + rsize
 				// Match name[:j] with the starting *, and the rest with chunk.
 				if !startingStar.Match(r) {
 					break
@@ -233,6 +240,7 @@ segs:
 					name = rest
 					continue segs
 				}
+				i = j
 			}
 		}
 		return false

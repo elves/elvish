@@ -18,3 +18,13 @@ func TestChopLineEnding(t *testing.T) {
 		Args("text\ntext 2\n").Rets("text\ntext 2"),
 	})
 }
+
+func TestChopTerminator(t *testing.T) {
+	Test(t, Fn("ChopTerminator", ChopTerminator), Table{
+		Args("", byte('\x00')).Rets(""),
+		Args("foo", byte('\x00')).Rets("foo"),
+		Args("foo\x00", byte('\x00')).Rets("foo"),
+		Args("foo\x00\x00", byte('\x00')).Rets("foo\x00"),
+		Args("foo\x00bar\x00", byte('\x00')).Rets("foo\x00bar"),
+	})
+}

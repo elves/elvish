@@ -70,10 +70,7 @@ func TestFileReader_Stop(t *testing.T) {
 }
 
 func setupFileReader() (reader fileReader, writer *os.File, cleanup func()) {
-	pr, pw, err := os.Pipe()
-	if err != nil {
-		panic(err)
-	}
+	pr, pw := testutil.MustPipe()
 	r, err := newFileReader(pr)
 	if err != nil {
 		panic(err)

@@ -29,7 +29,7 @@ func TestAssoc(t *testing.T) {
 			Eq(MakeList("foo", "1", "2", "3")), nil),
 		Args(MakeList("0"), MakeList("0"), "1").Rets(nil, errIndexMustBeInteger),
 		Args(MakeList("0"), "1", "x").Rets(nil, errs.OutOfRange{
-			What: "index here", ValidLow: "0", ValidHigh: "0", Actual: "1"}),
+			What: "index", ValidLow: "0", ValidHigh: "0", Actual: "1"}),
 		// TODO: Support list assoc with slice
 		Args(MakeList("0", "1", "2", "3"), "1:3", MakeList("foo")).Rets(
 			nil, errAssocWithSlice),

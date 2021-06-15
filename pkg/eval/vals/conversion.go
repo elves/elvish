@@ -54,7 +54,7 @@ var (
 	errMustBeInteger      = errors.New("must be integer")
 )
 
-// ScanToGo converts an Elvish value to a Go value. the pointer points to. It
+// ScanToGo converts an Elvish value to a Go value that the pointer refers to. It
 // uses the type of the pointer to determine the destination type, and puts the
 // converted value in the location the pointer points to. Conversion only
 // happens when the destination type is int, float64 or rune; in other cases,
@@ -71,7 +71,7 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 	case *float64:
 		n, err := elvToNum(src)
 		if err == nil {
-			*ptr = convertToFloat64(n)
+			*ptr = ConvertToFloat64(n)
 		}
 		return err
 	case *Num:

@@ -3,6 +3,7 @@ package glob
 import (
 	"os"
 	"reflect"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -95,15 +96,48 @@ func testGlob(t *testing.T, abs bool) {
 		}
 		sort.Strings(wantResults)
 
-		results := []string{}
-		Glob(pattern, func(pathInfo PathInfo) bool {
-			results = append(results, pathInfo.Path)
-			return true
-		})
-		sort.Strings(results)
+		results := globPaths(pattern)
 
 		if !reflect.DeepEqual(results, wantResults) {
 			t.Errorf(`Glob(%q) => %v, want %v`, pattern, results, wantResults)
 		}
 	}
+}
+
+// Regression test for b.elv.sh/1220
+func TestGlob_InvalidUTF8InFilename(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// On Windows, filenames are converted to UTF-16 before being passed
+		// to API calls, meaning that all the invalid byte sequences will be
+		// normalized to U+FFFD, making this impossible to test.
+		t.Skip()
+	}
+
+	_, cleanup := testutil.InTestDir()
+	defer cleanup()
+
+	name := string([]byte{255}) + "x"
+	f, err := os.Create(name)
+	if err != nil {
+		// The system may refuse to create a file whose name is not UTF-8. This
+		// happens on macOS 11 with an APFS filesystem.
+		t.Skip("create: ", err)
+	}
+	f.Close()
+
+	paths := globPaths("*x")
+	wantPaths := []string{name}
+	if !reflect.DeepEqual(paths, wantPaths) {
+		t.Errorf("got %v, want %v", paths, wantPaths)
+	}
+}
+
+func globPaths(pattern string) []string {
+	paths := []string{}
+	Glob(pattern, func(pathInfo PathInfo) bool {
+		paths = append(paths, pathInfo.Path)
+		return true
+	})
+	sort.Strings(paths)
+	return paths
 }

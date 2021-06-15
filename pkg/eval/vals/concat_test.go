@@ -13,12 +13,14 @@ import (
 // of other types.
 type concatter struct{}
 
+var errBadFloat64 = errors.New("float64 is bad")
+
 func (concatter) Concat(rhs interface{}) (interface{}, error) {
 	switch rhs := rhs.(type) {
 	case string:
 		return "concatter " + rhs, nil
 	case float64:
-		return nil, errors.New("float64 is bad")
+		return nil, errBadFloat64
 	default:
 		return nil, ErrConcatNotImplemented
 	}
@@ -49,9 +51,9 @@ func TestConcat(t *testing.T) {
 		Args(concatter{}, "bar").Rets("concatter bar", nil),
 		// LHS implements Concatter but returns ErrConcatNotImplemented; RHS
 		// does not implement RConcatter
-		Args(concatter{}, 12).Rets(nil, cannotConcat{"!!vals.concatter", "!!int"}),
+		Args(concatter{}, 12).Rets(nil, cannotConcat{"!!vals.concatter", "number"}),
 		// LHS implements Concatter but returns another error
-		Args(concatter{}, 12.0).Rets(nil, errors.New("float64 is bad")),
+		Args(concatter{}, 12.0).Rets(nil, errBadFloat64),
 
 		// LHS does not implement Concatter but RHS implements RConcatter
 		Args(12, rconcatter{}).Rets("rconcatter", nil),

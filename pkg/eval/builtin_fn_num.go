@@ -1,9 +1,11 @@
 package eval
 
 import (
+	"fmt"
 	"math"
 	"math/big"
 	"math/rand"
+	"strconv"
 
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
@@ -246,15 +248,16 @@ func chainCompare(nums []vals.Num,
 
 	for i := 0; i < len(nums)-1; i++ {
 		var r bool
-		switch pair := vals.UnifyNums(nums[i:i+2], 0).(type) {
-		case []int:
-			r = p1(pair[0], pair[1])
-		case []*big.Int:
-			r = p2(pair[0], pair[1])
-		case []*big.Rat:
-			r = p3(pair[0], pair[1])
-		case []float64:
-			r = p4(pair[0], pair[1])
+		a, b := vals.UnifyNums2(nums[i], nums[i+1], 0)
+		switch a := a.(type) {
+		case int:
+			r = p1(a, b.(int))
+		case *big.Int:
+			r = p2(a, b.(*big.Int))
+		case *big.Rat:
+			r = p3(a, b.(*big.Rat))
+		case float64:
+			r = p4(a, b.(float64))
 		}
 		if !r {
 			return false
@@ -341,10 +344,7 @@ func add(rawNums ...vals.Num) vals.Num {
 
 func sub(rawNums ...vals.Num) (vals.Num, error) {
 	if len(rawNums) == 0 {
-		return nil, errs.ArityMismatch{
-			What:     "arguments here",
-			ValidLow: 1, ValidHigh: -1, Actual: 0,
-		}
+		return nil, errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: -1, Actual: 0}
 	}
 
 	nums := vals.UnifyNums(rawNums, vals.BigInt)
@@ -588,8 +588,9 @@ func rem(a, b int) (int, error) {
 // ```
 
 func randint(low, high int) (int, error) {
-	if low >= high {
-		return 0, ErrArgs
+	if high <= low {
+		return 0, errs.BadValue{What: "high value",
+			Valid: fmt.Sprint("larger than ", low), Actual: strconv.Itoa(high)}
 	}
 	return low + rand.Intn(high-low), nil
 }

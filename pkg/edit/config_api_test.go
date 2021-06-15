@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/store"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -49,7 +50,7 @@ func TestAddCmdFilters(t *testing.T) {
 		name        string
 		rc          string
 		input       string
-		wantHistory []string
+		wantHistory []store.Cmd
 	}{
 		// TODO: Enable the following two tests once error output can
 		// be tested.
@@ -69,7 +70,7 @@ func TestAddCmdFilters(t *testing.T) {
 			name:        "callback outputs true",
 			rc:          "edit:add-cmd-filters = [[_]{ put $true }]",
 			input:       "echo\n",
-			wantHistory: []string{"echo"},
+			wantHistory: []store.Cmd{{Text: "echo", Seq: 1}},
 		},
 		{
 			name:        "callback outputs false",
@@ -93,7 +94,7 @@ func TestAddCmdFilters(t *testing.T) {
 			name:        "positive",
 			rc:          "edit:add-cmd-filters = [[cmd]{ ==s $cmd echo }]",
 			input:       "echo\n",
-			wantHistory: []string{"echo"},
+			wantHistory: []store.Cmd{{Text: "echo", Seq: 1}},
 		},
 		{
 			name:        "negative",

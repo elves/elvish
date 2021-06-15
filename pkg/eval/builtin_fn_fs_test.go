@@ -10,6 +10,7 @@ import (
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/testutil"
 
+	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
@@ -46,7 +47,7 @@ func TestCd(t *testing.T) {
 	defer func() { fsutil.CurrentUser = user.Current }()
 
 	Test(t,
-		That(`cd dir1 dir2`).Throws(ErrArgs, "cd dir1 dir2"),
+		That(`cd dir1 dir2`).Throws(ErrorWithType(errs.ArityMismatch{}), "cd dir1 dir2"),
 		// Basic `cd` test and verification that `$pwd` is correct.
 		That(`old = $pwd; cd `+d1Path+`; put $pwd; cd $old; eq $old $pwd`).Puts(d1Path, true),
 		// Verify that `cd` with no arg defaults to the home directory.

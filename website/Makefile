@@ -1,6 +1,8 @@
 TOOLS_DIR := ./tools
-DST_DIR = ./_dst
+DST_DIR := ./_dst
 PUBLISH_DIR := ./_publish
+DOCSET_TMP_DIR := ./_docset_tmp
+DOCSET_DST_DIR := ./Elvish.docset
 
 MDS := home.md $(filter-out %/README.md,$(wildcard [^_]*/*.md))
 HTMLS := $(MDS:.md=.html)
@@ -16,6 +18,11 @@ default: gen
 gen: tools $(HTMLS)
 	$(TOOLS_DIR)/genblog.bin . $(DST_DIR)
 	ln -sf `pwd`/fonts.css `pwd`/favicons/* $(DST_DIR)/
+
+# Generates docset into Elvish.docset.
+docset: tools $(HTMLS)
+	ELVISH_DOCSET_MODE=1 $(TOOLS_DIR)/genblog.bin . $(DOCSET_TMP_DIR)
+	./tools/mkdocset $(DOCSET_TMP_DIR) $(DOCSET_DST_DIR)
 
 tools:
 	for tool in $(TOOLS); do \

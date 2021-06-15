@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	"src.elv.sh/pkg/testutil"
 	. "src.elv.sh/pkg/tt"
 )
 
@@ -69,6 +70,26 @@ func TestUnifyNums(t *testing.T) {
 		Args([]Num{1, 2, 3, 4}, BigInt).
 			Rets([]*big.Int{
 				big.NewInt(1), big.NewInt(2), big.NewInt(3), big.NewInt(4)}),
+	})
+}
+
+func TestUnifyNums2(t *testing.T) {
+	Test(t, Fn("UnifyNums2", UnifyNums2), Table{
+		Args(1, 2, Int).Rets(1, 2),
+		Args(1, bigInt(z), Int).Rets(big.NewInt(1), bigInt(z)),
+		Args(1, big.NewRat(1, 2), Int).Rets(big.NewRat(1, 1), big.NewRat(1, 2)),
+		Args(1, 2.0, Int).Rets(1.0, 2.0),
+
+		Args(1, 2, BigInt).Rets(big.NewInt(1), big.NewInt(2)),
+	})
+}
+
+func TestInvalidNumType(t *testing.T) {
+	Test(t, Fn("Recover", testutil.Recover), Table{
+		Args(func() { UnifyNums([]Num{int32(0)}, 0) }).Rets("invalid num type int32"),
+		Args(func() { PromoteToBigInt(int32(0)) }).Rets("invalid num type int32"),
+		Args(func() { PromoteToBigRat(int32(0)) }).Rets("invalid num type int32"),
+		Args(func() { ConvertToFloat64(int32(0)) }).Rets("invalid num type int32"),
 	})
 }
 

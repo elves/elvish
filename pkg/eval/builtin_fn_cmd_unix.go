@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/sys"
 )
@@ -21,14 +22,18 @@ var ErrNotInSameProcessGroup = errors.New("not in the same process group")
 //elvdoc:fn exec
 //
 // ```elvish
-// exec $command?
+// exec $command? $args...
 // ```
 //
 // Replace the Elvish process with an external `$command`, defaulting to
-// `elvish`. This decrements `$E:SHLVL` before starting the new process.
+// `elvish`, passing the given arguments. This decrements `$E:SHLVL` before
+// starting the new process.
 //
 // This command always raises an exception on Windows with the message "not
 // supported on Windows".
+
+// Reference to syscall.Exec, can be overriden in tests.
+var syscallExec = syscall.Exec
 
 func execFn(fm *Frame, args ...interface{}) error {
 	var argstrings []string
@@ -50,7 +55,7 @@ func execFn(fm *Frame, args ...interface{}) error {
 	preExit(fm)
 	decSHLVL()
 
-	return syscall.Exec(argstrings[0], argstrings, os.Environ())
+	return syscallExec(argstrings[0], argstrings, os.Environ())
 }
 
 // Decrements $E:SHLVL. Called from execFn to ensure that $E:SHLVL remains the
@@ -65,7 +70,7 @@ func decSHLVL() {
 
 func fg(pids ...int) error {
 	if len(pids) == 0 {
-		return ErrArgs
+		return errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: -1, Actual: len(pids)}
 	}
 	var thepgid int
 	for i, pid := range pids {

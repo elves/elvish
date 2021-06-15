@@ -201,8 +201,7 @@ func TestFor(t *testing.T) {
 		That("for x [][0] { }").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// More than one iterable.
 		That("for x (put a b) { }").Throws(
-			errs.ArityMismatch{
-				What:     "value being iterated",
+			errs.ArityMismatch{What: "value being iterated",
 				ValidLow: 1, ValidHigh: 1, Actual: 2},
 			"(put a b)"),
 	)

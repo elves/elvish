@@ -54,3 +54,9 @@ func TestSelect(t *testing.T) {
 	unix.Close(p1[0])
 	unix.Close(p2[0])
 }
+
+func mustNil(e error) {
+	if e != nil {
+		panic("error is not nil")
+	}
+}

@@ -37,7 +37,11 @@ import (
 // Whether or not the platform is Microsoft Windows.
 // This is read-only.
 
-//elvdoc:fn hostname &strip-domain=false
+//elvdoc:fn hostname
+//
+// ```elvish
+// platform:hostname &strip-domain=$false
+// ```
 //
 // Outputs the hostname of the system. If the option `&strip-domain` is `$true`,
 // strips the part after the first dot.

@@ -28,17 +28,6 @@ type compiler struct {
 	srcMeta parse.Source
 }
 
-type capture struct {
-	name string
-	// If true, the captured variable is from the immediate outer level scope,
-	// i.e. the local scope the lambda is evaluated in. Otherwise the captured
-	// variable is from a more outer level, i.e. the upvalue scope the lambda is
-	// evaluated in.
-	local bool
-	// Index to the captured variable.
-	index int
-}
-
 func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op nsOp, err error) {
 	g = g.clone()
 	cp := &compiler{
@@ -132,9 +121,9 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 	case "pipe~":
 		msg = `the "pipe" command is deprecated; use "file:pipe" instead`
 	case "prclose~":
-		msg = `the "prclose" command is deprecated; use "file:prclose" instead`
+		msg = `the "prclose" command is deprecated; use "file:close $p[r]" instead`
 	case "pwclose":
-		msg = `the "pwclose" command is deprecated; use "file:pwclose" instead`
+		msg = `the "pwclose" command is deprecated; use "file:close $p[w]" instead`
 	default:
 		return
 	}

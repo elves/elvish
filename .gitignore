@@ -21,7 +21,9 @@ _testmain.go
 
 *.exe
 
+/.vscode/
+
 # Project specific
-/cover
+cover
 /_bin/
 /elvish

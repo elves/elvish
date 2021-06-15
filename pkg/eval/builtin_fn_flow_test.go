@@ -30,7 +30,40 @@ func TestEach(t *testing.T) {
 	)
 }
 
-// TODO: test peach
+func TestPeach(t *testing.T) {
+	// Testing the `peach` builtin is a challenge since, by definition, the order of execution is
+	// undefined.
+	Test(t,
+		// Verify the output has the expected values when sorted.
+		That(`range 5 | peach [x]{ * 2 $x } | order`).Puts(0, 2, 4, 6, 8),
+		// Verify that successive runs produce the output in different order. This test can
+		// theoretically suffer false positives but the vast majority of the time this will produce
+		// the expected output in the first iteration. The probability it will produce the same
+		// order of output in 100 iterations is effectively zero.
+		That(`
+			fn f { range 100 | peach $put~ | put [(all)] }
+			var x = (f)
+			for _ [(range 100)] {
+				var y = (f)
+				if (not-eq $x $y) {
+					put $true
+					break
+				}
+			}
+		`).Puts(true),
+		// Verify that exceptions are propagated.
+		That(`peach [x]{ fail $x } [a]`).
+			Throws(FailError{"a"}, "fail $x ", "peach [x]{ fail $x } [a]"),
+		// Verify that `break` works by terminating the `peach` before the entire sequence is
+		// consumed.
+		That(`
+			var tot = 0
+			range 1 101 |
+				peach [x]{ if (== 50 $x) { break } else { put $x } } |
+				< (+ (all)) (+ (range 1 101))
+		`).Puts(true),
+	)
+}
 
 func TestFail(t *testing.T) {
 	Test(t,

@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
+
+	bolt "go.etcd.io/bbolt"
 )
 
 // MustGetTempStore returns a Store backed by a temporary file, and a cleanup
@@ -11,11 +14,17 @@ import (
 func MustGetTempStore() (DBStore, func()) {
 	f, err := ioutil.TempFile("", "elvish.test")
 	if err != nil {
-		panic(fmt.Sprintf("Failed to open temp file: %v", err))
+		panic(fmt.Sprintf("open temp file: %v", err))
 	}
-	st, err := NewStore(f.Name())
+	db, err := bolt.Open(f.Name(), 0644, &bolt.Options{
+		Timeout: time.Second, NoSync: true, NoFreelistSync: true})
 	if err != nil {
-		panic(fmt.Sprintf("Failed to create Store instance: %v", err))
+		panic(fmt.Sprintf("open boltdb: %v", err))
+	}
+
+	st, err := NewStoreFromDB(db)
+	if err != nil {
+		panic(fmt.Sprintf("create Store instance: %v", err))
 	}
 	return st, func() {
 		st.Close()
