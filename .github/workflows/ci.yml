@@ -133,6 +133,6 @@ jobs:
     - name: Set up Node prefix
       run: npm config set prefix $NPM_PREFIX
     - name: Set up prettier
-      run: npm install --global prettier@2.0.5
+      run: npm install --global prettier@2.3.1
     - name: Check style
       run: ./tools/checkstyle-md.sh
