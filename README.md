@@ -61,6 +61,12 @@ make get ELVISH_MAKE_BIN=./elvish # Install to the repo root
 make get ELVISH_MAKE_BIN=/usr/local/bin/elvish # Install to /usr/local/bin
 ```
 
+To install with plugin support, override `ELVISH_PLUGINS` in the `make` command:
+
+```sh
+make get ELVISH_PLUGINS=1 # Install with plugin support
+```
+
 ## Packaging Elvish
 
 See [PACKAGING.md](PACKAGING.md) for notes for packagers.

@@ -345,7 +345,7 @@ func use(fm *Frame, spec string, r diag.Ranger) (*Ns, error) {
 				return nil, err
 			}
 		}
-		path := filepath.Clean(dir + "/" + spec + ".elv")
+		path := filepath.Clean(dir + "/" + spec)
 		return useFromFile(fm, spec, path, r)
 	}
 	if ns, ok := fm.Evaler.modules[spec]; ok {
@@ -359,7 +359,7 @@ func use(fm *Frame, spec string, r diag.Ranger) (*Ns, error) {
 	if libDir == "" {
 		return nil, noSuchModule{spec}
 	}
-	return useFromFile(fm, spec, libDir+"/"+spec+".elv", r)
+	return useFromFile(fm, spec, libDir+"/"+spec, r)
 }
 
 // TODO: Make access to fm.Evaler.modules concurrency-safe.
@@ -367,14 +367,29 @@ func useFromFile(fm *Frame, spec, path string, r diag.Ranger) (*Ns, error) {
 	if ns, ok := fm.Evaler.modules[path]; ok {
 		return ns, nil
 	}
-	code, err := readFileUTF8(path)
+	_, err := os.Stat(path + ".so")
 	if err != nil {
-		if os.IsNotExist(err) {
+		code, err := readFileUTF8(path + ".elv")
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil, noSuchModule{spec}
+			}
+			return nil, err
+		}
+		return evalModule(fm, path, parse.Source{Name: path, Code: code, IsFile: true}, r)
+	} else {
+		plug, err := pluginOpen(path + ".so")
+		if err != nil {
 			return nil, noSuchModule{spec}
 		}
-		return nil, err
+		sym, err := plug.Lookup("Ns")
+		if err != nil {
+			return nil, err
+		}
+		ns := sym.(**Ns)
+		fm.Evaler.modules[path] = *ns
+		return *ns, nil
 	}
-	return evalModule(fm, path, parse.Source{Name: path, Code: code, IsFile: true}, r)
 }
 
 // TODO: Make access to fm.Evaler.modules concurrency-safe.
