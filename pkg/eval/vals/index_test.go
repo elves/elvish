@@ -130,5 +130,8 @@ func TestIndex(t *testing.T) {
 
 		Args(m, "foo").Rets("bar", nil),
 		Args(m, "bad").Rets(Any, NoSuchKey("bad")),
+
+		// Not indexable
+		Args(1, "foo").Rets(nil, errNotIndexable),
 	})
 }
