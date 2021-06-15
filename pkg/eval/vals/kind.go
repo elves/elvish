@@ -2,6 +2,7 @@ package vals
 
 import (
 	"fmt"
+	"math/big"
 )
 
 // Kinder wraps the Kind method.
@@ -27,7 +28,7 @@ func Kind(v interface{}) string {
 		return "bool"
 	case string:
 		return "string"
-	case float64:
+	case int, *big.Int, *big.Rat, float64:
 		return "number"
 	case Kinder:
 		return v.Kind()

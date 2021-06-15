@@ -51,7 +51,7 @@ func TestConcat(t *testing.T) {
 		Args(concatter{}, "bar").Rets("concatter bar", nil),
 		// LHS implements Concatter but returns ErrConcatNotImplemented; RHS
 		// does not implement RConcatter
-		Args(concatter{}, 12).Rets(nil, cannotConcat{"!!vals.concatter", "!!int"}),
+		Args(concatter{}, 12).Rets(nil, cannotConcat{"!!vals.concatter", "number"}),
 		// LHS implements Concatter but returns another error
 		Args(concatter{}, 12.0).Rets(nil, errBadFloat64),
 
