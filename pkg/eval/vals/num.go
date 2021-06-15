@@ -173,7 +173,7 @@ func PromoteToBigInt(n Num) *big.Int {
 	case *big.Int:
 		return n
 	default:
-		panic("unreachable")
+		panic("invalid num type " + fmt.Sprintf("%T", n))
 	}
 }
 
@@ -190,7 +190,7 @@ func PromoteToBigRat(n Num) *big.Rat {
 	case *big.Rat:
 		return n
 	default:
-		panic("unreachable")
+		panic("invalid num type " + fmt.Sprintf("%T", n))
 	}
 }
 
@@ -214,7 +214,7 @@ func ConvertToFloat64(num Num) float64 {
 	case float64:
 		return num
 	default:
-		panic("unreachable")
+		panic("invalid num type " + fmt.Sprintf("%T", num))
 	}
 }
 
