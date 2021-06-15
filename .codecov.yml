@@ -9,6 +9,7 @@ ignore:
   # Exclude test helpers from coverage calculation.
   - "pkg/cli/clitest"
   - "pkg/eval/evaltest"
+  - "pkg/eval/vals/testutils.go"
   - "pkg/prog/progtest"
   - "pkg/store/storetest"
   - "pkg/testutil/must.go"
