@@ -110,8 +110,8 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 	g := getopt.Getopt{Options: opts.opts, Config: getopt.GNUGetoptLong}
 	_, parsedArgs, ctx := g.Parse(args)
 
-	out := fm.OutputChan()
-	putShortOpt := func(opt *getopt.Option) {
+	out := fm.ValueOutput()
+	putShortOpt := func(opt *getopt.Option) error {
 		c := complexItem{Stem: "-" + string(opt.Short)}
 		if d, ok := opts.desc[opt]; ok {
 			if e, ok := opts.argDesc[opt]; ok {
@@ -120,9 +120,9 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 				c.Display = c.Stem + " (" + d + ")"
 			}
 		}
-		out <- c
+		return out.Put(c)
 	}
-	putLongOpt := func(opt *getopt.Option) {
+	putLongOpt := func(opt *getopt.Option) error {
 		c := complexItem{Stem: "--" + opt.Long}
 		if d, ok := opts.desc[opt]; ok {
 			if e, ok := opts.argDesc[opt]; ok {
@@ -131,7 +131,7 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 				c.Display = c.Stem + " (" + d + ")"
 			}
 		}
-		out <- c
+		return out.Put(c)
 	}
 	call := func(fn eval.Callable, args ...interface{}) {
 		fn.Call(fm, args, eval.NoOpts)
@@ -154,29 +154,44 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 	case getopt.NewOption:
 		for _, opt := range opts.opts {
 			if opt.Short != 0 {
-				putShortOpt(opt)
+				err := putShortOpt(opt)
+				if err != nil {
+					return err
+				}
 			}
 			if opt.Long != "" {
-				putLongOpt(opt)
+				err := putLongOpt(opt)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	case getopt.NewLongOption:
 		for _, opt := range opts.opts {
 			if opt.Long != "" {
-				putLongOpt(opt)
+				err := putLongOpt(opt)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	case getopt.LongOption:
 		for _, opt := range opts.opts {
 			if strings.HasPrefix(opt.Long, ctx.Text) {
-				putLongOpt(opt)
+				err := putLongOpt(opt)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	case getopt.ChainShortOption:
 		for _, opt := range opts.opts {
 			if opt.Short != 0 {
 				// TODO(xiaq): Loses chained options.
-				putShortOpt(opt)
+				err := putShortOpt(opt)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	case getopt.OptionArgument:

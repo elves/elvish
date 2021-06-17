@@ -38,15 +38,6 @@ func TestFile(t *testing.T) {
 
 		That(`
 			p = (file:pipe)
-			echo Zeppelin > $p
-			file:close $p[w]
-			echo Sabbath > $p
-			slurp < $p
-			file:close $p[r]
-		`).Puts("Zeppelin\n"),
-
-		That(`
-			p = (file:pipe)
 			echo Legolas > $p
 			file:close $p[r]
 			slurp < $p

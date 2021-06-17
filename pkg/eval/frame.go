@@ -95,9 +95,9 @@ func (fm *Frame) InputFile() *os.File {
 	return fm.ports[0].File
 }
 
-// OutputChan returns a channel onto which output can be written.
-func (fm *Frame) OutputChan() chan<- interface{} {
-	return fm.ports[1].Chan
+// ValueOutput returns a handle for writing value outputs.
+func (fm *Frame) ValueOutput() ValueOutput {
+	return valueOutput{fm.ports[1].Chan, fm.ports[1].readerGoneCh}
 }
 
 // ByteOutput returns a handle for writing byte outputs.
@@ -105,7 +105,7 @@ func (fm *Frame) ByteOutput() ByteOutput {
 	return byteOutput{fm.ports[1].File}
 }
 
-// ByteErrorFile returns a file onto which error messages can be written.
+// ErrorFile returns a file onto which error messages can be written.
 func (fm *Frame) ErrorFile() *os.File {
 	return fm.ports[2].File
 }
@@ -152,21 +152,7 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 	}
 }
 
-func terminatedToChan(r io.Reader, ch chan<- interface{}, terminator byte) {
-	filein := bufio.NewReader(r)
-	for {
-		line, err := filein.ReadString(terminator)
-		if line != "" {
-			ch <- strutil.ChopTerminator(line, terminator)
-		}
-		if err != nil {
-			if err != io.EOF {
-				logger.Println("error on reading:", err)
-			}
-			break
-		}
-	}
-}
+
 
 // fork returns a modified copy of ec. The ports are forked, and the name is
 // changed to the given value. Other fields are copied shallowly.

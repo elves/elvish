@@ -43,7 +43,7 @@ type findOpts struct {
 func (o *findOpts) SetDefaultOptions() { o.Max = -1 }
 
 func find(fm *eval.Frame, opts findOpts, argPattern, source string) error {
-	out := fm.OutputChan()
+	out := fm.ValueOutput()
 
 	pattern, err := makePattern(argPattern, opts.Posix, opts.Longest)
 	if err != nil {
@@ -64,7 +64,10 @@ func find(fm *eval.Frame, opts findOpts, argPattern, source string) error {
 			}
 			groups = groups.Cons(submatchStruct{text, start, end})
 		}
-		out <- matchStruct{source[start:end], start, end, groups}
+		err := out.Put(matchStruct{source[start:end], start, end, groups})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -131,7 +134,7 @@ func replace(fm *eval.Frame, opts replaceOpts, argPattern string, argRepl interf
 }
 
 func split(fm *eval.Frame, opts findOpts, argPattern, source string) error {
-	out := fm.OutputChan()
+	out := fm.ValueOutput()
 
 	pattern, err := makePattern(argPattern, opts.Posix, opts.Longest)
 	if err != nil {
@@ -140,7 +143,10 @@ func split(fm *eval.Frame, opts findOpts, argPattern, source string) error {
 
 	pieces := pattern.Split(source, opts.Max)
 	for _, piece := range pieces {
-		out <- piece
+		err := out.Put(piece)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

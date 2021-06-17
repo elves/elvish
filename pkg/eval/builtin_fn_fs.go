@@ -107,9 +107,12 @@ func dirs(fm *Frame) error {
 	if err != nil {
 		return err
 	}
-	out := fm.OutputChan()
+	out := fm.ValueOutput()
 	for _, dir := range dirs {
-		out <- dirHistoryEntry{dir.Path, dir.Score}
+		err := out.Put(dirHistoryEntry{dir.Path, dir.Score})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

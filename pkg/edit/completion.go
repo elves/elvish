@@ -308,15 +308,20 @@ func wrapArgGenerator(gen complete.ArgGenerator) wrappedArgGenerator {
 		if err != nil {
 			return err
 		}
-		ch := fm.OutputChan()
+		out := fm.ValueOutput()
 		for _, rawItem := range rawItems {
+			var v interface{}
 			switch rawItem := rawItem.(type) {
 			case complete.ComplexItem:
-				ch <- complexItem(rawItem)
+				v = complexItem(rawItem)
 			case complete.PlainItem:
-				ch <- string(rawItem)
+				v = string(rawItem)
 			default:
-				ch <- rawItem
+				v = rawItem
+			}
+			err := out.Put(v)
+			if err != nil {
+				return err
 			}
 		}
 		return nil
@@ -360,17 +365,17 @@ type wrappedMatcher func(fm *eval.Frame, opts matcherOpts, seed string, inputs e
 
 func wrapMatcher(m matcher) wrappedMatcher {
 	return func(fm *eval.Frame, opts matcherOpts, seed string, inputs eval.Inputs) {
-		out := fm.OutputChan()
+		out := fm.ValueOutput()
 		if opts.IgnoreCase || (opts.SmartCase && seed == strings.ToLower(seed)) {
 			if opts.IgnoreCase {
 				seed = strings.ToLower(seed)
 			}
 			inputs(func(v interface{}) {
-				out <- m(strings.ToLower(vals.ToString(v)), seed)
+				out.Put(m(strings.ToLower(vals.ToString(v)), seed))
 			})
 		} else {
 			inputs(func(v interface{}) {
-				out <- m(vals.ToString(v), seed)
+				out.Put(m(vals.ToString(v), seed))
 			})
 		}
 	}

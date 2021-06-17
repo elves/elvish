@@ -41,6 +41,27 @@ func TestPipeline(t *testing.T) {
 	)
 }
 
+func TestPipeline_ReaderGone(t *testing.T) {
+	// See UNIX-only tests in compile_effect_unix_test.go.
+	Test(t,
+		// Internal commands writing to byte output raises ReaderGone when the
+		// reader is exited, which is then suppressed.
+		That("while $true { echo y } | nop").DoesNothing(),
+		That(
+			"var reached = $false",
+			"{ while $true { echo y }; reached = $true } | nop",
+			"put $reached",
+		).Puts(false),
+		// Similar for value output.
+		That("while $true { put y } | nop").DoesNothing(),
+		That(
+			"var reached = $false",
+			"{ while $true { put y }; reached = $true } | nop",
+			"put $reached",
+		).Puts(false),
+	)
+}
+
 func TestCommand(t *testing.T) {
 	Test(t,
 		That("put foo").Puts("foo"),

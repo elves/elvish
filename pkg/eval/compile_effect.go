@@ -104,12 +104,15 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 			}
 			ch := make(chan interface{}, pipelineChanBufferSize)
 			readerGone := new(int32)
+			readerGoneCh := make(chan struct{})
 			newFm.ports[1] = &Port{
 				File: writer, Chan: ch,
-				closeFile: true, closeChan: true, readerGone: readerGone}
+				closeFile: true, closeChan: true,
+				readerGone: readerGone, readerGoneCh: readerGoneCh}
 			nextIn = &Port{
 				File: reader, Chan: ch,
-				closeFile: true, closeChan: false, readerGone: readerGone}
+				closeFile: true, closeChan: false,
+				readerGone: readerGone, readerGoneCh: readerGoneCh}
 		}
 		thisOp := formOp
 		thisExc := &excs[i]
@@ -121,13 +124,8 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 			}
 			if inputIsPipe {
 				input := newFm.ports[0]
+				close(input.readerGoneCh)
 				atomic.StoreInt32(input.readerGone, 1)
-				// If the command has channel input, drain it. This
-				// mitigates the effect of erroneous pipelines like
-				// "range 100 | cat"; without draining the pipeline will
-				// lock up.
-				for range newFm.InputChan() {
-				}
 			}
 			wg.Done()
 		}()

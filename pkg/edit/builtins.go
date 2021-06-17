@@ -189,11 +189,15 @@ func isSyntaxComplete(code string) bool {
 // ```
 // Breaks Elvish code into words.
 
-func wordify(fm *eval.Frame, code string) {
-	out := fm.OutputChan()
+func wordify(fm *eval.Frame, code string) error {
+	out := fm.ValueOutput()
 	for _, s := range parseutil.Wordify(code) {
-		out <- s
+		err := out.Put(s)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func initTTYBuiltins(app cli.App, tty cli.TTY, nb eval.NsBuilder) {

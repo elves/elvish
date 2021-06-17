@@ -498,10 +498,10 @@ func slash(fm *Frame, args ...vals.Num) error {
 	}
 	// Division
 	result, err := div(args...)
-	if err == nil {
-		fm.OutputChan() <- vals.FromGo(result)
+	if err != nil {
+		return err
 	}
-	return err
+	return fm.ValueOutput().Put(vals.FromGo(result))
 }
 
 // ErrDivideByZero is thrown when attempting to divide by zero.

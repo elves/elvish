@@ -224,18 +224,22 @@ func (b *goFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) e
 		in = append(in, reflect.ValueOf(inputs))
 	}
 
-	outs := reflect.ValueOf(b.impl).Call(in)
+	rets := reflect.ValueOf(b.impl).Call(in)
 
-	if len(outs) > 0 && outs[len(outs)-1].Type() == errorType {
-		err := outs[len(outs)-1].Interface()
+	if len(rets) > 0 && rets[len(rets)-1].Type() == errorType {
+		err := rets[len(rets)-1].Interface()
 		if err != nil {
 			return err.(error)
 		}
-		outs = outs[:len(outs)-1]
+		rets = rets[:len(rets)-1]
 	}
 
-	for _, out := range outs {
-		f.OutputChan() <- vals.FromGo(out.Interface())
+	out := f.ValueOutput()
+	for _, ret := range rets {
+		err := out.Put(vals.FromGo(ret.Interface()))
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

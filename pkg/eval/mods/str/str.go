@@ -353,12 +353,16 @@ func replace(opts maxOpt, old, repl, s string) string {
 //
 // @cf str:join
 
-func split(fm *eval.Frame, opts maxOpt, sep, s string) {
-	out := fm.OutputChan()
+func split(fm *eval.Frame, opts maxOpt, sep, s string) error {
+	out := fm.ValueOutput()
 	parts := strings.SplitN(s, sep, opts.Max)
 	for _, p := range parts {
-		out <- p
+		err := out.Put(p)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 //elvdoc:fn title
@@ -395,11 +399,15 @@ func split(fm *eval.Frame, opts maxOpt, sep, s string) {
 //
 // @cf from-codepoints
 
-func toCodepoints(fm *eval.Frame, s string) {
-	out := fm.OutputChan()
+func toCodepoints(fm *eval.Frame, s string) error {
+	out := fm.ValueOutput()
 	for _, r := range s {
-		out <- "0x" + strconv.FormatInt(int64(r), 16)
+		err := out.Put("0x" + strconv.FormatInt(int64(r), 16))
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 //elvdoc:fn to-lower
@@ -440,11 +448,15 @@ func toCodepoints(fm *eval.Frame, s string) {
 //
 // @cf from-utf8-bytes
 
-func toUtf8Bytes(fm *eval.Frame, s string) {
-	out := fm.OutputChan()
+func toUtf8Bytes(fm *eval.Frame, s string) error {
+	out := fm.ValueOutput()
 	for _, r := range []byte(s) {
-		out <- "0x" + strconv.FormatInt(int64(r), 16)
+		err := out.Put("0x" + strconv.FormatInt(int64(r), 16))
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 //elvdoc:fn to-title

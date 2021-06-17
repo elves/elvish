@@ -47,7 +47,7 @@ type cmdhistOpt struct{ CmdOnly, Dedup, NewestFirst bool }
 
 func (o *cmdhistOpt) SetDefaultOptions() {}
 
-func commandHistory(opts cmdhistOpt, fuser histutil.Store, ch chan<- interface{}) error {
+func commandHistory(opts cmdhistOpt, fuser histutil.Store, out eval.ValueOutput) error {
 	if fuser == nil {
 		return errStoreOffline
 	}
@@ -62,11 +62,17 @@ func commandHistory(opts cmdhistOpt, fuser histutil.Store, ch chan<- interface{}
 	}
 	if opts.CmdOnly {
 		for _, cmd := range cmds {
-			ch <- cmd.Text
+			err := out.Put(cmd.Text)
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		for _, cmd := range cmds {
-			ch <- vals.MakeMap("id", cmd.Seq, "cmd", cmd.Text)
+			err := out.Put(vals.MakeMap("id", cmd.Seq, "cmd", cmd.Text))
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -119,7 +125,7 @@ func insertLastWord(app cli.App, histStore histutil.Store) error {
 func initStoreAPI(app cli.App, nb eval.NsBuilder, fuser histutil.Store) {
 	nb.AddGoFns("<edit>", map[string]interface{}{
 		"command-history": func(fm *eval.Frame, opts cmdhistOpt) error {
-			return commandHistory(opts, fuser, fm.OutputChan())
+			return commandHistory(opts, fuser, fm.ValueOutput())
 		},
 		"insert-last-word": func() { insertLastWord(app, fuser) },
 	})

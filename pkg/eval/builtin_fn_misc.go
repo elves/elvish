@@ -88,11 +88,15 @@ func nop(opts RawOptions, args ...interface{}) {
 //
 // The terminology and definition of "kind" is subject to change.
 
-func kindOf(fm *Frame, args ...interface{}) {
-	out := fm.OutputChan()
+func kindOf(fm *Frame, args ...interface{}) error {
+	out := fm.ValueOutput()
 	for _, a := range args {
-		out <- vals.Kind(a)
+		err := out.Put(vals.Kind(a))
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 //elvdoc:fn constantly
@@ -131,11 +135,15 @@ func constantly(args ...interface{}) Callable {
 	// TODO(xiaq): Repr of this function is not right.
 	return NewGoFn(
 		"created by constantly",
-		func(fm *Frame) {
-			out := fm.OutputChan()
+		func(fm *Frame) error {
+			out := fm.ValueOutput()
 			for _, v := range args {
-				out <- v
+				err := out.Put(v)
+				if err != nil {
+					return err
+				}
 			}
+			return nil
 		},
 	)
 }
@@ -500,9 +508,12 @@ func _ifaddrs(fm *Frame) error {
 	if err != nil {
 		return err
 	}
-	out := fm.OutputChan()
+	out := fm.ValueOutput()
 	for _, addr := range addrs {
-		out <- addr.String()
+		err := out.Put(addr.String())
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

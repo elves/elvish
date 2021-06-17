@@ -35,7 +35,7 @@ func (o *testOptions) SetDefaultOptions() { o.Bar = "default" }
 // strictly.
 
 func TestGoFnCall(t *testing.T) {
-	theFrame := new(Frame)
+	theFrame := &Frame{ports: []*Port{{}, {Chan: make(chan interface{}, 10)}, {}}}
 	theOptions := map[string]interface{}{}
 
 	var f Callable
@@ -135,12 +135,11 @@ func TestGoFnCall(t *testing.T) {
 	callGood(theFrame, []interface{}{vals.MakeList("foo", "bar")}, theOptions)
 
 	// Conversion of implicit inputs.
-	inFrame := &Frame{ports: make([]*Port, 3)}
 	ch := make(chan interface{}, 10)
 	ch <- "foo"
 	ch <- "bar"
 	close(ch)
-	inFrame.ports[0] = &Port{Chan: ch}
+	inFrame := &Frame{ports: []*Port{{Chan: ch}, {}, {}}}
 	f = NewGoFn("f", func(i Inputs) {
 		var values []interface{}
 		i(func(x interface{}) {

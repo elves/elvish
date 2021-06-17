@@ -88,7 +88,7 @@ func TestUseMod(t *testing.T) {
 }
 
 func timeAfterMock(fm *Frame, d time.Duration) <-chan time.Time {
-	fm.OutputChan() <- d // report to the test framework the duration we received
+	fm.ValueOutput().Put(d) // report to the test framework the duration we received
 	return time.After(0)
 }
 

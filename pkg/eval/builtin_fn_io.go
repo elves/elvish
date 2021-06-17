@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -88,11 +89,15 @@ func init() {
 // [C](https://manpages.debian.org/stretch/manpages-dev/puts.3.en.html) and
 // [Ruby](https://ruby-doc.org/core-2.2.2/IO.html#method-i-puts) as `puts`.
 
-func put(fm *Frame, args ...interface{}) {
-	out := fm.OutputChan()
+func put(fm *Frame, args ...interface{}) error {
+	out := fm.ValueOutput()
 	for _, a := range args {
-		out <- a
+		err := out.Put(a)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 //elvdoc:fn read-upto
@@ -558,29 +563,30 @@ func onlyBytes(fm *Frame) error {
 // ```
 
 func onlyValues(fm *Frame) error {
-	// Forward values in a goroutine.
-	valuesDone := make(chan struct{})
+	// Discard bytes in a goroutine.
+	bytesDone := make(chan struct{})
 	go func() {
-		for v := range fm.InputChan() {
-			fm.OutputChan() <- v
-		}
-		close(valuesDone)
+		// Ignore the error
+		_, _ = io.Copy(blackholeWriter{}, fm.InputFile())
+		close(bytesDone)
 	}()
-	// Make sure the goroutine has finished before returning.
-	defer func() { <-valuesDone }()
+	// Wait for the goroutine to finish before returning.
+	defer func() { <-bytesDone }()
 
-	// Discard bytes.
-	buf := make([]byte, bytesReadBufferSize)
-	for {
-		_, errRead := fm.InputFile().Read(buf[:])
-		if errRead != nil {
-			if errRead == io.EOF {
-				return nil
-			}
-			return errRead
+	// Forward values.
+	out := fm.ValueOutput()
+	for v := range fm.InputChan() {
+		err := out.Put(v)
+		if err != nil {
+			return err
 		}
 	}
+	return nil
 }
+
+type blackholeWriter struct{}
+
+func (blackholeWriter) Write(p []byte) (int, error) { return len(p), nil }
 
 //elvdoc:fn slurp
 //
@@ -625,8 +631,24 @@ func slurp(fm *Frame) (string, error) {
 //
 // @cf from-terminated read-upto to-lines
 
-func fromLines(fm *Frame) {
-	linesToChan(fm.InputFile(), fm.OutputChan())
+func fromLines(fm *Frame) error {
+	filein := bufio.NewReader(fm.InputFile())
+	out := fm.ValueOutput()
+	for {
+		line, err := filein.ReadString('\n')
+		if line != "" {
+			err := out.Put(strutil.ChopLineEnding(line))
+			if err != nil {
+				return err
+			}
+		}
+		if err != nil {
+			if err != io.EOF {
+				return err
+			}
+			return nil
+		}
+	}
 }
 
 //elvdoc:fn from-json
@@ -664,7 +686,7 @@ func fromLines(fm *Frame) {
 
 func fromJSON(fm *Frame) error {
 	in := fm.InputFile()
-	out := fm.OutputChan()
+	out := fm.ValueOutput()
 
 	dec := json.NewDecoder(in)
 	for {
@@ -680,7 +702,10 @@ func fromJSON(fm *Frame) error {
 		if err != nil {
 			return err
 		}
-		out <- converted
+		err = out.Put(converted)
+		if err != nil {
+			return err
+		}
 	}
 }
 
@@ -745,8 +770,25 @@ func fromTerminated(fm *Frame, terminator string) error {
 	if err := checkTerminator(terminator); err != nil {
 		return err
 	}
-	terminatedToChan(fm.InputFile(), fm.OutputChan(), terminator[0])
-	return nil
+
+	filein := bufio.NewReader(fm.InputFile())
+	out := fm.ValueOutput()
+	for {
+		line, err := filein.ReadString(terminator[0])
+		if line != "" {
+			err := out.Put(strutil.ChopTerminator(line, terminator[0]))
+			if err != nil {
+				return err
+			}
+		}
+		if err != nil {
+			if err != io.EOF {
+				return err
+				logger.Println("error on reading:", err)
+			}
+			return nil
+		}
+	}
 }
 
 //elvdoc:fn to-lines

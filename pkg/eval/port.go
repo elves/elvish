@@ -15,16 +15,23 @@ import (
 
 // Port conveys data stream. It always consists of a byte band and a channel band.
 type Port struct {
-	File       *os.File
-	Chan       chan interface{}
-	closeFile  bool
-	closeChan  bool
-	readerGone *int32
+	File      *os.File
+	Chan      chan interface{}
+	closeFile bool
+	closeChan bool
+
+	// The following fields are only populated when the Port is connected to a
+	// pipe.
+	//
+	// When the reading end of File and Chan exits, it closes readerGoneCh,
+	// stores 1 in readerGone, before closing the reading end of File.
+	readerGoneCh chan struct{}
+	readerGone   *int32
 }
 
 // Returns a copy of the Port with the Close* flags unset.
 func (p *Port) fork() *Port {
-	return &Port{p.File, p.Chan, false, false, p.readerGone}
+	return &Port{p.File, p.Chan, false, false, p.readerGoneCh, p.readerGone}
 }
 
 // Closes a Port.
@@ -231,6 +238,30 @@ func PortsFromFiles(files [3]*os.File, prefix string) ([]*Port, func()) {
 	return []*Port{{File: files[0], Chan: ClosedChan}, port1, port2}, func() {
 		cleanup1()
 		cleanup2()
+	}
+}
+
+// ValueOutput defines the interface through which builtin commands access the
+// value output.
+//
+// The value output is backed by two channels, one for writing output, another
+// for the back-chanel signal that the reader of the channel has gone.
+type ValueOutput interface {
+	// Outputs a value. Returns errs.ReaderGone if the reader is gone.
+	Put(v interface{}) error
+}
+
+type valueOutput struct {
+	data       chan<- interface{}
+	readerGone <-chan struct{}
+}
+
+func (vo valueOutput) Put(v interface{}) error {
+	select {
+	case vo.data <- v:
+		return nil
+	case <-vo.readerGone:
+		return errs.ReaderGone{}
 	}
 }
 

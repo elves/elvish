@@ -402,7 +402,7 @@ func evalModule(fm *Frame, key string, src parse.Source, r diag.Ranger) (*Ns, er
 // false-ish values, the last value is output. If there are no arguments, it
 // outputs $true, as if there is a hidden $true before actual arguments.
 func compileAnd(cp *compiler, fn *parse.Form) effectOp {
-	return &andOrOp{cp.compoundOps(fn.Args), true, false}
+	return &andOrOp{fn.Range(), cp.compoundOps(fn.Args), true, false}
 }
 
 // compileOr compiles the "or" special form.
@@ -412,10 +412,11 @@ func compileAnd(cp *compiler, fn *parse.Form) effectOp {
 // true-ish values, the last value is output. If there are no arguments, it
 // outputs $false, as if there is a hidden $false before actual arguments.
 func compileOr(cp *compiler, fn *parse.Form) effectOp {
-	return &andOrOp{cp.compoundOps(fn.Args), false, true}
+	return &andOrOp{fn.Range(), cp.compoundOps(fn.Args), false, true}
 }
 
 type andOrOp struct {
+	diag.Ranging
 	argOps []valuesOp
 	init   bool
 	stopAt bool
@@ -423,6 +424,7 @@ type andOrOp struct {
 
 func (op *andOrOp) exec(fm *Frame) Exception {
 	var lastValue interface{} = vals.Bool(op.init)
+	out := fm.ValueOutput()
 	for _, argOp := range op.argOps {
 		values, exc := argOp.exec(fm)
 		if exc != nil {
@@ -430,14 +432,12 @@ func (op *andOrOp) exec(fm *Frame) Exception {
 		}
 		for _, value := range values {
 			if vals.Bool(value) == op.stopAt {
-				fm.OutputChan() <- value
-				return nil
+				return fm.errorp(op, out.Put(value))
 			}
 			lastValue = value
 		}
 	}
-	fm.OutputChan() <- lastValue
-	return nil
+	return fm.errorp(op, out.Put(lastValue))
 }
 
 func compileIf(cp *compiler, fn *parse.Form) effectOp {

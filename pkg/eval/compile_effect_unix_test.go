@@ -11,7 +11,7 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
-func TestPipeline_Unix(t *testing.T) {
+func TestPipeline_ReaderGone_Unix(t *testing.T) {
 	Test(t,
 		// External commands terminated by SIGPIPE due to reader exiting early
 		// raise ReaderGone, which is then suppressed.
@@ -19,14 +19,6 @@ func TestPipeline_Unix(t *testing.T) {
 		That(
 			"var reached = $false",
 			"{ yes; reached = $true } | nop",
-			"put $reached",
-		).Puts(false),
-		// Internal commands that encounters EPIPE also raises ReaderGone, which
-		// is then suppressed.
-		That("while $true { echo y } | nop").DoesNothing(),
-		That(
-			"var reached = $false",
-			"{ while $true { echo y }; reached = $true } | nop",
 			"put $reached",
 		).Puts(false),
 	)
