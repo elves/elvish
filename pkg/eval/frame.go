@@ -152,8 +152,6 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 	}
 }
 
-
-
 // fork returns a modified copy of ec. The ports are forked, and the name is
 // changed to the given value. Other fields are copied shallowly.
 func (fm *Frame) fork(name string) *Frame {
