@@ -6,6 +6,7 @@
 package buildinfo
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"runtime"
@@ -15,38 +16,58 @@ import (
 
 // Version identifies the version of Elvish. On development commits, it
 // identifies the next release.
-const Version = "v0.16.0"
+const Version = "0.16.0"
 
-// VersionSuffix is appended to Version in the output of "elvish -version" and
-// "elvish -buildinfo" to build the full version string. This can be overriden
-// when building Elvish; see PACKAGING.md for details.
+// VersionSuffix is appended to Version to build the full version string. It is public so it can be
+// overridden when building Elvish; see PACKAGING.md for details.
 var VersionSuffix = "-dev.unknown"
 
 // Reproducible identifies whether the build is reproducible. This can be
-// overriden when building Elvish; see PACKAGING.md for details.
+// overridden when building Elvish; see PACKAGING.md for details.
 var Reproducible = "false"
 
 // Program is the buildinfo subprogram.
 var Program prog.Program = program{}
 
+type Buildinfo struct {
+	Version      string `json:"version"`
+	Reproducible bool   `json:"reproducible"`
+	GoVersion    string `json:"goversion"`
+}
+
+func (Buildinfo) IsStructMap() {}
+
 type program struct{}
 
 func (program) ShouldRun(f *prog.Flags) bool { return f.Version || f.BuildInfo }
 
-func (program) Run(fds [3]*os.File, f *prog.Flags, _ []string) error {
-	fullVersion := Version + VersionSuffix
-	if f.Version {
-		fmt.Fprintln(fds[1], fullVersion)
-		return nil
+func GetBuildInfo() Buildinfo {
+	return Buildinfo{
+		Version:      Version + VersionSuffix,
+		Reproducible: Reproducible == "true",
+		GoVersion:    runtime.Version(),
 	}
-	if f.JSON {
-		fmt.Fprintf(fds[1],
-			`{"version":%s,"goversion":%s,"reproducible":%v}`+"\n",
-			quoteJSON(fullVersion), quoteJSON(runtime.Version()), Reproducible)
-	} else {
-		fmt.Fprintln(fds[1], "Version:", fullVersion)
-		fmt.Fprintln(fds[1], "Go version:", runtime.Version())
-		fmt.Fprintln(fds[1], "Reproducible build:", Reproducible)
+}
+
+func (program) Run(fds [3]*os.File, f *prog.Flags, _ []string) error {
+	bi := GetBuildInfo()
+	switch {
+	case f.JSON:
+		// Note: The only way this will be executed is if option -buildinfo is also present.
+		// See the ShouldRun() method above.
+		b, err := json.Marshal(bi)
+		if err != nil {
+			panic("unexpected buildinfo related error")
+		}
+		fmt.Fprintln(fds[1], string(b))
+	case f.BuildInfo:
+		fmt.Fprintln(fds[1], "Version:", bi.Version)
+		fmt.Fprintln(fds[1], "Go version:", bi.GoVersion)
+		fmt.Fprintln(fds[1], "Reproducible build:", bi.Reproducible)
+	case f.Version:
+		fmt.Fprintln(fds[1], bi.Version)
+	default:
+		panic("unexpected buildinfo related error")
 	}
 	return nil
 }

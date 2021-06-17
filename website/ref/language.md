@@ -378,19 +378,24 @@ lorem
 haha
 ```
 
+You can test if a key is present using [`has-key`](./builtin.html#has-key) and
+enumerate the keys using the [`keys`](./builtin.html#keys) builtins.
+
 ## Pseudo-map
 
-The concept of **pseudo-map** is not a concrete data type, but refer to certain
-data types that behave like maps in some aspects.
+A pseudo-map is not a single concrete data type. It refers to concrete types
+that behave like maps with some restrictions.
 
-A pseudo-map typically has a fixed set of keys, called **fields**. The values of
-a field can be accessed by [indexing](#indexing). However, unlike maps, it is
-usually not possible to add new keys, remove existing keys, or even assigning a
-new value to an existing key.
+A pseudo-map has a fixed set of keys whose values can be accessed by
+[indexing](#indexing) like you would for a regular [map](#map). Similarly, you
+can use commands like [`keys`](./builtin.html#keys) and
+[`has-key`](./builtin.html#keys) on such objects. However, unlike a normal map
+it is not possible to add new keys, remove existing keys, or even assign a new
+value to an existing key. In other words, a pseudo-map is immutable.
 
 The pseudo-map mechanism is often used for introspection. For example,
-[exceptions](#exception) and [user-defined functions](#function) are both
-structmaps.
+[exceptions](#exception), [user-defined functions](#function), and
+[`$buildinfo`](./builtin.html#buildinfo) are pseudo-maps.
 
 ## Nil
 

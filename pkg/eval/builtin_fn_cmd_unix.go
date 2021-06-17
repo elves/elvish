@@ -32,7 +32,7 @@ var ErrNotInSameProcessGroup = errors.New("not in the same process group")
 // This command always raises an exception on Windows with the message "not
 // supported on Windows".
 
-// Reference to syscall.Exec, can be overriden in tests.
+// Reference to syscall.Exec. Can be overridden in tests.
 var syscallExec = syscall.Exec
 
 func execFn(fm *Frame, args ...interface{}) error {

@@ -16,7 +16,8 @@ func TestVersion(t *testing.T) {
 
 	prog.Run(f.Fds(), Elvish("-version"), Program)
 
-	f.TestOut(t, 1, Version+VersionSuffix+"\n")
+	bi := GetBuildInfo()
+	f.TestOut(t, 1, bi.Version+"\n")
 	f.TestOut(t, 2, "")
 }
 
@@ -26,12 +27,11 @@ func TestBuildInfo(t *testing.T) {
 
 	prog.Run(f.Fds(), Elvish("-buildinfo"), Program)
 
+	bi := GetBuildInfo()
 	f.TestOut(t, 1,
 		fmt.Sprintf(
 			"Version: %v\nGo version: %v\nReproducible build: %v\n",
-			Version+VersionSuffix,
-			runtime.Version(),
-			Reproducible))
+			bi.Version, bi.GoVersion, bi.Reproducible))
 	f.TestOut(t, 2, "")
 }
 
@@ -42,14 +42,10 @@ func TestBuildInfo_JSON(t *testing.T) {
 	prog.Run(f.Fds(), Elvish("-buildinfo", "-json"), Program)
 
 	f.TestOut(t, 1,
-		mustToJSON(struct {
-			Version      string `json:"version"`
-			GoVersion    string `json:"goversion"`
-			Reproducible bool   `json:"reproducible"`
-		}{
-			Version + VersionSuffix,
-			runtime.Version(),
-			Reproducible == "true",
+		mustToJSON(Buildinfo{
+			Version:      Version + VersionSuffix,
+			GoVersion:    runtime.Version(),
+			Reproducible: Reproducible == "true",
 		})+"\n")
 	f.TestOut(t, 2, "")
 }
