@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"sync"
-	"syscall"
 
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
@@ -292,7 +291,7 @@ func (bo byteOutput) WriteString(s string) (int, error) {
 
 func convertReaderGone(err error) error {
 	if pathErr, ok := err.(*os.PathError); ok {
-		if pathErr.Err == syscall.EPIPE {
+		if pathErr.Err == epipe {
 			return errs.ReaderGone{}
 		}
 	}
