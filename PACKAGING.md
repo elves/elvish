@@ -25,7 +25,7 @@ follows:
 -   At development commits, `Version` contains the version of the next release.
     `VersionSuffix` is set to `-dev.unknown`.
 
-The `VersionSuffix` variable can be overriden at build time, by passing
+The `VersionSuffix` variable can be overridden at build time, by passing
 `-ldflags "-X src.elv.sh/pkg/buildinfo.VersionSuffix=-foobar"` to `go build`,
 `go install` or `go get`. This is necessary in several scenarios, which are
 documented below.

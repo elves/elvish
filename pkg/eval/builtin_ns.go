@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"syscall"
 
+	"src.elv.sh/pkg/buildinfo"
 	"src.elv.sh/pkg/eval/vars"
 )
 
@@ -78,14 +79,42 @@ import (
 //
 // The boolean true value.
 
+//elvdoc:var buildinfo
+//
+// A [psuedo-map](./language.html#pseudo-map) that exposes information about the Elvish binary.
+// Running `put $buildinfo | to-json` will produce the same output as `elvish -buildinfo -json`.
+//
+// @cf version
+
+//elvdoc:var version
+//
+// The full version of the Elvish binary as a string. This is the same information reported by
+// `elvish -version` and the value of `$buildinfo[version]`.
+//
+// **Note:** In general it is better to perform functionality tests rather than testing `$version`.
+// For example, do something like
+//
+// ```
+// has-key $builtin: new-var
+// ````
+//
+// to test if variable `new-var` is available rather than comparing against `$version` to see if the
+// elvish version is equal to or newer than the version that introduced `new-var`.
+//
+// @cf buildinfo
+
+var bi = buildinfo.GetBuildInfo()
+
 var builtinNs = NsBuilder{
-	"_":     vars.NewBlackhole(),
-	"pid":   vars.NewReadOnly(strconv.Itoa(syscall.Getpid())),
-	"ok":    vars.NewReadOnly(OK),
-	"nil":   vars.NewReadOnly(nil),
-	"true":  vars.NewReadOnly(true),
-	"false": vars.NewReadOnly(false),
-	"paths": vars.NewEnvListVar("PATH"),
+	"_":         vars.NewBlackhole(),
+	"pid":       vars.NewReadOnly(strconv.Itoa(syscall.Getpid())),
+	"ok":        vars.NewReadOnly(OK),
+	"nil":       vars.NewReadOnly(nil),
+	"true":      vars.NewReadOnly(true),
+	"false":     vars.NewReadOnly(false),
+	"buildinfo": vars.NewReadOnly(bi),
+	"version":   vars.NewReadOnly(bi.Version),
+	"paths":     vars.NewEnvListVar("PATH"),
 }
 
 func addBuiltinFns(fns map[string]interface{}) {
