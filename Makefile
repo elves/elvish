@@ -23,6 +23,7 @@ test:
 # https://apps.codecov.io/gh/elves/elvish/.
 cover:
 	go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
+	tools/cover-prune.sh .codecov.yml cover
 	go tool cover -html=cover
 	go tool cover -func=cover | tail -1 | awk '{ print "Overall coverage:", $$NF }'
 
