@@ -9,7 +9,7 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/parse/parseutil"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 var errStoreOffline = errors.New("store offline")
@@ -72,9 +72,9 @@ func commandHistory(opts cmdhistOpt, fuser histutil.Store, ch chan<- interface{}
 	return nil
 }
 
-func dedupCmds(allCmds []store.Cmd, newestFirst bool) []store.Cmd {
+func dedupCmds(allCmds []storedefs.Cmd, newestFirst bool) []storedefs.Cmd {
 	// Capacity allocation below is based on some personal empirical observation.
-	uniqCmds := make([]store.Cmd, 0, len(allCmds)/4)
+	uniqCmds := make([]storedefs.Cmd, 0, len(allCmds)/4)
 	seenCmds := make(map[string]bool, len(allCmds)/4)
 	for i := len(allCmds) - 1; i >= 0; i-- {
 		if !seenCmds[allCmds[i].Text] {
@@ -90,7 +90,7 @@ func dedupCmds(allCmds []store.Cmd, newestFirst bool) []store.Cmd {
 
 // Reverse the order of commands, in place, in the slice. This reorders the
 // command history between oldest or newest command being first in the slice.
-func reverseCmds(cmds []store.Cmd) {
+func reverseCmds(cmds []storedefs.Cmd) {
 	for i, j := 0, len(cmds)-1; i < j; i, j = i+1, j-1 {
 		cmds[i], cmds[j] = cmds[j], cmds[i]
 	}

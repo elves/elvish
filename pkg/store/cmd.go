@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 
 	bolt "go.etcd.io/bbolt"
+	. "src.elv.sh/pkg/store/storedefs"
 )
 
 func init() {

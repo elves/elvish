@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/cli/term"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 	"src.elv.sh/pkg/ui"
 )
 
 // Smoke tests for individual addons.
 
 func TestHistlistAddon(t *testing.T) {
-	f := setup(storeOp(func(s store.Store) {
+	f := setup(storeOp(func(s storedefs.Store) {
 		s.AddCmd("ls")
 		s.AddCmd("echo")
 		s.AddCmd("ls")
@@ -67,7 +67,7 @@ func TestHistlistAddon(t *testing.T) {
 }
 
 func TestLastCmdAddon(t *testing.T) {
-	f := setup(storeOp(func(s store.Store) {
+	f := setup(storeOp(func(s storedefs.Store) {
 		s.AddCmd("echo hello world")
 	}))
 	defer f.Cleanup()

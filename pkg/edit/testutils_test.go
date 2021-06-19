@@ -12,6 +12,7 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -21,7 +22,7 @@ type fixture struct {
 	Editor  *Editor
 	TTYCtrl clitest.TTYCtrl
 	Evaler  *eval.Evaler
-	Store   store.Store
+	Store   storedefs.Store
 	Home    string
 
 	width   int
@@ -42,7 +43,7 @@ func assign(name string, val interface{}) func(*fixture) {
 	}
 }
 
-func storeOp(storeFn func(store.Store)) func(*fixture) {
+func storeOp(storeFn func(storedefs.Store)) func(*fixture) {
 	return func(f *fixture) {
 		storeFn(f.Store)
 		// TODO(xiaq): Don't depend on this Elvish API.

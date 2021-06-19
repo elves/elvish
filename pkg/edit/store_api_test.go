@@ -5,11 +5,11 @@ import (
 
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 func TestCommandHistory(t *testing.T) {
-	f := setup(storeOp(func(s store.Store) {
+	f := setup(storeOp(func(s storedefs.Store) {
 		s.AddCmd("echo 0")
 		s.AddCmd("echo 1")
 		s.AddCmd("echo 2")
@@ -84,7 +84,7 @@ func cmdMap(id int, cmd string) vals.Map {
 }
 
 func TestInsertLastWord(t *testing.T) {
-	f := setup(storeOp(func(s store.Store) {
+	f := setup(storeOp(func(s storedefs.Store) {
 		s.AddCmd("echo foo bar")
 	}))
 	defer f.Cleanup()

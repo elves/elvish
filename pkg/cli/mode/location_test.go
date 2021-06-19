@@ -12,20 +12,20 @@ import (
 	"src.elv.sh/pkg/cli"
 	. "src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/term"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/ui"
 )
 
 type locationStore struct {
-	storedDirs []store.Dir
+	storedDirs []storedefs.Dir
 	dirsError  error
 	chdir      func(dir string) error
 	wd         string
 }
 
-func (ts locationStore) Dirs(blacklist map[string]struct{}) ([]store.Dir, error) {
-	dirs := []store.Dir{}
+func (ts locationStore) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
+	dirs := []storedefs.Dir{}
 	for _, dir := range ts.storedDirs {
 		if _, ok := blacklist[dir.Path]; ok {
 			continue
@@ -75,7 +75,7 @@ func TestLocation_FullWorkflow(t *testing.T) {
 
 	errChdir := errors.New("mock chdir error")
 	chdirCh := make(chan string, 100)
-	dirs := []store.Dir{
+	dirs := []storedefs.Dir{
 		{Path: filepath.Join(home, "go"), Score: 200},
 		{Path: home, Score: 100},
 		{Path: fixPath("/tmp/foo/bar/lorem/ipsum"), Score: 50},
@@ -123,7 +123,7 @@ func TestLocation_Hidden(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	dirs := []store.Dir{
+	dirs := []storedefs.Dir{
 		{Path: fixPath("/usr/bin"), Score: 200},
 		{Path: fixPath("/usr"), Score: 100},
 		{Path: fixPath("/tmp"), Score: 50},
@@ -144,7 +144,7 @@ func TestLocation_Pinned(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	dirs := []store.Dir{
+	dirs := []storedefs.Dir{
 		{Path: fixPath("/usr/bin"), Score: 200},
 		{Path: fixPath("/usr"), Score: 100},
 		{Path: fixPath("/tmp"), Score: 50},
@@ -167,7 +167,7 @@ func TestLocation_HideWd(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
-	dirs := []store.Dir{
+	dirs := []storedefs.Dir{
 		{Path: fixPath("/home"), Score: 200},
 		{Path: fixPath("/tmp"), Score: 50},
 	}
@@ -184,7 +184,7 @@ func TestLocation_Workspace(t *testing.T) {
 	defer f.Stop()
 
 	chdir := ""
-	dirs := []store.Dir{
+	dirs := []storedefs.Dir{
 		{Path: fixPath("home/src"), Score: 200},
 		{Path: fixPath("ws1/src"), Score: 150},
 		{Path: fixPath("ws2/bin"), Score: 100},

@@ -5,7 +5,7 @@ import (
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/tk"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -20,7 +20,7 @@ type HistlistSpec struct {
 	// Key bindings.
 	Bindings tk.Bindings
 	// AllCmds is called to retrieve all commands.
-	AllCmds func() ([]store.Cmd, error)
+	AllCmds func() ([]storedefs.Cmd, error)
 	// Dedup is called to determine whether deduplication should be done.
 	// Defaults to true if unset.
 	Dedup func() bool
@@ -82,12 +82,12 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 }
 
 type histlistItems struct {
-	entries []store.Cmd
+	entries []storedefs.Cmd
 	last    map[string]int
 }
 
 func (it histlistItems) filter(p func(string) bool, dedup bool) histlistItems {
-	var filtered []store.Cmd
+	var filtered []storedefs.Cmd
 	for i, entry := range it.entries {
 		text := entry.Text
 		if dedup && it.last[text] != i {

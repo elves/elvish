@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 var errMock = errors.New("mock error")
@@ -36,9 +36,9 @@ func TestFusuer_AddCmd_AddsBothToDBAndSession(t *testing.T) {
 	db := NewFaultyInMemoryDB("shared 1")
 	f := mustNewHybridStore(db)
 
-	f.AddCmd(store.Cmd{Text: "session 1"})
+	f.AddCmd(storedefs.Cmd{Text: "session 1"})
 
-	wantDBCmds := []store.Cmd{
+	wantDBCmds := []storedefs.Cmd{
 		{Text: "shared 1", Seq: 0}, {Text: "session 1", Seq: 1}}
 	if dbCmds, _ := db.CmdsWithSeq(-1, -1); !reflect.DeepEqual(dbCmds, wantDBCmds) {
 		t.Errorf("DB commands = %v, want %v", dbCmds, wantDBCmds)
@@ -48,7 +48,7 @@ func TestFusuer_AddCmd_AddsBothToDBAndSession(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	wantAllCmds := []store.Cmd{
+	wantAllCmds := []storedefs.Cmd{
 		{Text: "shared 1", Seq: 0},
 		{Text: "session 1", Seq: 1}}
 	if !reflect.DeepEqual(allCmds, wantAllCmds) {
@@ -61,7 +61,7 @@ func TestHybridStore_AddCmd_AddsToSessionEvenIfDBErrors(t *testing.T) {
 	f := mustNewHybridStore(db)
 	db.SetOneOffError(errMock)
 
-	_, err := f.AddCmd(store.Cmd{Text: "haha"})
+	_, err := f.AddCmd(storedefs.Cmd{Text: "haha"})
 	if err != errMock {
 		t.Errorf("AddCmd -> error %v, want %v", err, errMock)
 	}
@@ -70,7 +70,7 @@ func TestHybridStore_AddCmd_AddsToSessionEvenIfDBErrors(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	wantAllCmds := []store.Cmd{{Text: "haha", Seq: 1}}
+	wantAllCmds := []storedefs.Cmd{{Text: "haha", Seq: 1}}
 	if !reflect.DeepEqual(allCmds, wantAllCmds) {
 		t.Errorf("AllCmd -> %v, want %v", allCmds, wantAllCmds)
 	}
@@ -81,10 +81,10 @@ func TestHybridStore_AllCmds_IncludesFrozenSharedAndNewlyAdded(t *testing.T) {
 	f := mustNewHybridStore(db)
 
 	// Simulate adding commands from both the current session and other sessions.
-	f.AddCmd(store.Cmd{Text: "session 1"})
+	f.AddCmd(storedefs.Cmd{Text: "session 1"})
 	db.AddCmd("other session 1")
 	db.AddCmd("other session 2")
-	f.AddCmd(store.Cmd{Text: "session 2"})
+	f.AddCmd(storedefs.Cmd{Text: "session 2"})
 	db.AddCmd("other session 3")
 
 	// AllCmds should return all commands from the storage when the HybridStore
@@ -94,7 +94,7 @@ func TestHybridStore_AllCmds_IncludesFrozenSharedAndNewlyAdded(t *testing.T) {
 	if err != nil {
 		t.Errorf("AllCmds -> error %v, want nil", err)
 	}
-	wantAllCmds := []store.Cmd{
+	wantAllCmds := []storedefs.Cmd{
 		{Text: "shared 1", Seq: 0},
 		{Text: "session 1", Seq: 1},
 		{Text: "session 2", Seq: 4}}
@@ -106,14 +106,14 @@ func TestHybridStore_AllCmds_IncludesFrozenSharedAndNewlyAdded(t *testing.T) {
 func TestHybridStore_AllCmds_ReturnsSessionIfDBErrors(t *testing.T) {
 	db := NewFaultyInMemoryDB("shared 1")
 	f := mustNewHybridStore(db)
-	f.AddCmd(store.Cmd{Text: "session 1"})
+	f.AddCmd(storedefs.Cmd{Text: "session 1"})
 	db.SetOneOffError(errMock)
 
 	allCmds, err := f.AllCmds()
 	if err != errMock {
 		t.Errorf("AllCmds -> error %v, want %v", err, errMock)
 	}
-	wantAllCmds := []store.Cmd{{Text: "session 1", Seq: 1}}
+	wantAllCmds := []storedefs.Cmd{{Text: "session 1", Seq: 1}}
 	if !reflect.DeepEqual(allCmds, wantAllCmds) {
 		t.Errorf("AllCmd -> %v, want %v", allCmds, wantAllCmds)
 	}
@@ -123,19 +123,19 @@ func TestHybridStore_Cursor_OnlySession(t *testing.T) {
 	db := NewFaultyInMemoryDB()
 	f := mustNewHybridStore(db)
 	db.AddCmd("+ other session")
-	f.AddCmd(store.Cmd{Text: "+ session 1"})
-	f.AddCmd(store.Cmd{Text: "- no match"})
+	f.AddCmd(storedefs.Cmd{Text: "+ session 1"})
+	f.AddCmd(storedefs.Cmd{Text: "- no match"})
 
-	testCursorIteration(t, f.Cursor("+"), []store.Cmd{{Text: "+ session 1", Seq: 1}})
+	testCursorIteration(t, f.Cursor("+"), []storedefs.Cmd{{Text: "+ session 1", Seq: 1}})
 }
 
 func TestHybridStore_Cursor_OnlyShared(t *testing.T) {
 	db := NewFaultyInMemoryDB("- no match", "+ shared 1")
 	f := mustNewHybridStore(db)
 	db.AddCmd("+ other session")
-	f.AddCmd(store.Cmd{Text: "- no match"})
+	f.AddCmd(storedefs.Cmd{Text: "- no match"})
 
-	testCursorIteration(t, f.Cursor("+"), []store.Cmd{{Text: "+ shared 1", Seq: 1}})
+	testCursorIteration(t, f.Cursor("+"), []storedefs.Cmd{{Text: "+ shared 1", Seq: 1}})
 }
 
 func TestHybridStore_Cursor_SharedAndSession(t *testing.T) {
@@ -143,15 +143,15 @@ func TestHybridStore_Cursor_SharedAndSession(t *testing.T) {
 	f := mustNewHybridStore(db)
 	db.AddCmd("+ other session")
 	db.AddCmd("- no match")
-	f.AddCmd(store.Cmd{Text: "+ session 1"})
-	f.AddCmd(store.Cmd{Text: "- no match"})
+	f.AddCmd(storedefs.Cmd{Text: "+ session 1"})
+	f.AddCmd(storedefs.Cmd{Text: "- no match"})
 
-	testCursorIteration(t, f.Cursor("+"), []store.Cmd{
+	testCursorIteration(t, f.Cursor("+"), []storedefs.Cmd{
 		{Text: "+ shared 1", Seq: 1},
 		{Text: "+ session 1", Seq: 4}})
 }
 
-func testCursorIteration(t *testing.T, cursor Cursor, wantCmds []store.Cmd) {
+func testCursorIteration(t *testing.T, cursor Cursor, wantCmds []storedefs.Cmd) {
 	expectEndOfHistory := func() {
 		t.Helper()
 		if _, err := cursor.Get(); err != ErrEndOfHistory {

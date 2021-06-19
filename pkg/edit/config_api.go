@@ -11,7 +11,7 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 //elvdoc:var max-height
@@ -80,7 +80,7 @@ func initAddCmdFilters(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder,
 		if code != "" &&
 			callFilters(ev, "$<edit>:add-cmd-filters",
 				filters.Get().(vals.List), code) {
-			s.AddCmd(store.Cmd{Text: code, Seq: -1})
+			s.AddCmd(storedefs.Cmd{Text: code, Seq: -1})
 		}
 		// TODO(xiaq): Handle the error.
 	})

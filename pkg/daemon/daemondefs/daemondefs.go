@@ -7,12 +7,12 @@ package daemondefs
 import (
 	"io"
 
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 // Client represents a daemon client.
 type Client interface {
-	store.Store
+	storedefs.Store
 
 	ResetConn() error
 	Close() error

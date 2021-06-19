@@ -11,7 +11,7 @@ import (
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/fsutil"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -41,7 +41,7 @@ type LocationSpec struct {
 
 // LocationStore defines the interface for interacting with the directory history.
 type LocationStore interface {
-	Dirs(blacklist map[string]struct{}) ([]store.Dir, error)
+	Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error)
 	Chdir(dir string) error
 	Getwd() (string, error)
 }
@@ -57,14 +57,14 @@ func NewLocation(app cli.App, cfg LocationSpec) (Location, error) {
 		return nil, errNoDirectoryHistoryStore
 	}
 
-	dirs := []store.Dir{}
+	dirs := []storedefs.Dir{}
 	blacklist := map[string]struct{}{}
 	wsKind, wsRoot := "", ""
 
 	if cfg.IteratePinned != nil {
 		cfg.IteratePinned(func(s string) {
 			blacklist[s] = struct{}{}
-			dirs = append(dirs, store.Dir{Score: pinnedScore, Path: s})
+			dirs = append(dirs, storedefs.Dir{Score: pinnedScore, Path: s})
 		})
 	}
 	if cfg.IterateHidden != nil {
@@ -151,11 +151,11 @@ func (ws LocationWSIterator) Parse(path string) (kind, root string) {
 }
 
 type locationList struct {
-	dirs []store.Dir
+	dirs []storedefs.Dir
 }
 
 func (l locationList) filter(p func(string) bool) locationList {
-	var filteredDirs []store.Dir
+	var filteredDirs []storedefs.Dir
 	for _, dir := range l.dirs {
 		if p(fsutil.TildeAbbr(dir.Path)) {
 			filteredDirs = append(filteredDirs, dir)

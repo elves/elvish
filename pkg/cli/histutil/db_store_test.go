@@ -3,7 +3,7 @@ package histutil
 import (
 	"testing"
 
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 func TestDBStore_Cursor(t *testing.T) {
@@ -13,7 +13,7 @@ func TestDBStore_Cursor(t *testing.T) {
 		panic(err)
 	}
 
-	testCursorIteration(t, s.Cursor("+"), []store.Cmd{
+	testCursorIteration(t, s.Cursor("+"), []storedefs.Cmd{
 		{Text: "+ 1", Seq: 0},
 		{Text: "+ 3", Seq: 2},
 	})
@@ -21,7 +21,7 @@ func TestDBStore_Cursor(t *testing.T) {
 	// Test error conditions.
 	c := s.Cursor("+")
 
-	expect := func(wantCmd store.Cmd, wantErr error) {
+	expect := func(wantCmd storedefs.Cmd, wantErr error) {
 		t.Helper()
 		cmd, err := c.Get()
 		if cmd != wantCmd {
@@ -34,18 +34,18 @@ func TestDBStore_Cursor(t *testing.T) {
 
 	db.SetOneOffError(errMock)
 	c.Prev()
-	expect(store.Cmd{Seq: 3}, errMock)
+	expect(storedefs.Cmd{Seq: 3}, errMock)
 
 	c.Prev()
-	expect(store.Cmd{Text: "+ 3", Seq: 2}, nil)
+	expect(storedefs.Cmd{Text: "+ 3", Seq: 2}, nil)
 
 	db.SetOneOffError(errMock)
 	c.Prev()
-	expect(store.Cmd{Text: "+ 3", Seq: 2}, errMock)
+	expect(storedefs.Cmd{Text: "+ 3", Seq: 2}, errMock)
 
 	db.SetOneOffError(errMock)
 	c.Next()
-	expect(store.Cmd{Text: "+ 3", Seq: 2}, errMock)
+	expect(storedefs.Cmd{Text: "+ 3", Seq: 2}, errMock)
 }
 
 // Remaining methods tested with HybridStore.

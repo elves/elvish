@@ -1,6 +1,6 @@
 package histutil
 
-import "src.elv.sh/pkg/store"
+import "src.elv.sh/pkg/store/storedefs"
 
 // NewDedupCursor returns a cursor that skips over all duplicate entries.
 func NewDedupCursor(c Cursor) Cursor {
@@ -10,7 +10,7 @@ func NewDedupCursor(c Cursor) Cursor {
 type dedupCursor struct {
 	c       Cursor
 	current int
-	stack   []store.Cmd
+	stack   []storedefs.Cmd
 	occ     map[string]bool
 }
 
@@ -41,10 +41,10 @@ func (c *dedupCursor) Next() {
 	}
 }
 
-func (c *dedupCursor) Get() (store.Cmd, error) {
+func (c *dedupCursor) Get() (storedefs.Cmd, error) {
 	switch {
 	case c.current < 0:
-		return store.Cmd{}, ErrEndOfHistory
+		return storedefs.Cmd{}, ErrEndOfHistory
 	case c.current < len(c.stack):
 		return c.stack[c.current], nil
 	default:

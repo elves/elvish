@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 // TestSharedVar tests the shared variable functionality of a Store.
-func TestSharedVar(t *testing.T, tStore store.Store) {
+func TestSharedVar(t *testing.T, tStore storedefs.Store) {
 	varname := "foo"
 	value1 := "lorem ipsum"
 	value2 := "o mores, o tempora"

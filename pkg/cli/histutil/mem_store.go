@@ -3,25 +3,25 @@ package histutil
 import (
 	"strings"
 
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 // NewMemStore returns a Store that stores command history in memory.
 func NewMemStore(texts ...string) Store {
-	cmds := make([]store.Cmd, len(texts))
+	cmds := make([]storedefs.Cmd, len(texts))
 	for i, text := range texts {
-		cmds[i] = store.Cmd{Text: text, Seq: i}
+		cmds[i] = storedefs.Cmd{Text: text, Seq: i}
 	}
 	return &memStore{cmds}
 }
 
-type memStore struct{ cmds []store.Cmd }
+type memStore struct{ cmds []storedefs.Cmd }
 
-func (s *memStore) AllCmds() ([]store.Cmd, error) {
+func (s *memStore) AllCmds() ([]storedefs.Cmd, error) {
 	return s.cmds, nil
 }
 
-func (s *memStore) AddCmd(cmd store.Cmd) (int, error) {
+func (s *memStore) AddCmd(cmd storedefs.Cmd) (int, error) {
 	if cmd.Seq < 0 {
 		cmd.Seq = len(s.cmds) + 1
 	}
@@ -34,7 +34,7 @@ func (s *memStore) Cursor(prefix string) Cursor {
 }
 
 type memStoreCursor struct {
-	cmds   []store.Cmd
+	cmds   []storedefs.Cmd
 	prefix string
 	index  int
 }
@@ -61,9 +61,9 @@ func (c *memStoreCursor) Next() {
 	}
 }
 
-func (c *memStoreCursor) Get() (store.Cmd, error) {
+func (c *memStoreCursor) Get() (storedefs.Cmd, error) {
 	if c.index < 0 || c.index >= len(c.cmds) {
-		return store.Cmd{}, ErrEndOfHistory
+		return storedefs.Cmd{}, ErrEndOfHistory
 	}
 	return c.cmds[c.index], nil
 }

@@ -7,7 +7,7 @@ import (
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/daemon/internal/api"
 	"src.elv.sh/pkg/rpc"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 const retriesOnShutdown = 3
@@ -126,25 +126,25 @@ func (c *client) Cmd(seq int) (string, error) {
 	return res.Text, err
 }
 
-func (c *client) CmdsWithSeq(from, upto int) ([]store.Cmd, error) {
+func (c *client) CmdsWithSeq(from, upto int) ([]storedefs.Cmd, error) {
 	req := &api.CmdsWithSeqRequest{From: from, Upto: upto}
 	res := &api.CmdsWithSeqResponse{}
 	err := c.call("CmdsWithSeq", req, res)
 	return res.Cmds, err
 }
 
-func (c *client) NextCmd(from int, prefix string) (store.Cmd, error) {
+func (c *client) NextCmd(from int, prefix string) (storedefs.Cmd, error) {
 	req := &api.NextCmdRequest{From: from, Prefix: prefix}
 	res := &api.NextCmdResponse{}
 	err := c.call("NextCmd", req, res)
-	return store.Cmd{Text: res.Text, Seq: res.Seq}, err
+	return storedefs.Cmd{Text: res.Text, Seq: res.Seq}, err
 }
 
-func (c *client) PrevCmd(upto int, prefix string) (store.Cmd, error) {
+func (c *client) PrevCmd(upto int, prefix string) (storedefs.Cmd, error) {
 	req := &api.PrevCmdRequest{Upto: upto, Prefix: prefix}
 	res := &api.PrevCmdResponse{}
 	err := c.call("PrevCmd", req, res)
-	return store.Cmd{Text: res.Text, Seq: res.Seq}, err
+	return storedefs.Cmd{Text: res.Text, Seq: res.Seq}, err
 }
 
 func (c *client) AddDir(dir string, incFactor float64) error {
@@ -161,7 +161,7 @@ func (c *client) DelDir(dir string) error {
 	return err
 }
 
-func (c *client) Dirs(blacklist map[string]struct{}) ([]store.Dir, error) {
+func (c *client) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	req := &api.DirsRequest{Blacklist: blacklist}
 	res := &api.DirsResponse{}
 	err := c.call("Dirs", req, res)

@@ -12,10 +12,10 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/persistent/hashmap"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
-func initListings(ed *Editor, ev *eval.Evaler, st store.Store, histStore histutil.Store, nb eval.NsBuilder) {
+func initListings(ed *Editor, ev *eval.Evaler, st storedefs.Store, histStore histutil.Store, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(emptyBindingsMap)
 	app := ed.app
 	nb.AddNs("listing",
@@ -95,7 +95,7 @@ func initLastcmd(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBi
 		}).Ns())
 }
 
-func initLocation(ed *Editor, ev *eval.Evaler, st store.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
+func initLocation(ed *Editor, ev *eval.Evaler, st storedefs.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(emptyBindingsMap)
 	pinnedVar := newListVar(vals.EmptyList)
 	hiddenVar := newListVar(vals.EmptyList)
@@ -264,14 +264,14 @@ func adaptToIterateStringPair(variable vars.Var) func(func(string, string) bool)
 // Wraps an Evaler to implement the cli.DirStore interface.
 type dirStore struct {
 	ev *eval.Evaler
-	st store.Store
+	st storedefs.Store
 }
 
 func (d dirStore) Chdir(path string) error {
 	return d.ev.Chdir(path)
 }
 
-func (d dirStore) Dirs(blacklist map[string]struct{}) ([]store.Dir, error) {
+func (d dirStore) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	return d.st.Dirs(blacklist)
 }
 

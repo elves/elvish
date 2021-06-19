@@ -3,14 +3,14 @@ package histutil
 import (
 	"testing"
 
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 func TestDedupCursor(t *testing.T) {
 	s := NewMemStore("0", "1", "2")
 	c := NewDedupCursor(s.Cursor(""))
 
-	wantCmds := []store.Cmd{
+	wantCmds := []storedefs.Cmd{
 		{Text: "0", Seq: 0},
 		{Text: "1", Seq: 1},
 		{Text: "2", Seq: 2}}

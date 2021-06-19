@@ -3,7 +3,7 @@ package storetest
 import (
 	"testing"
 
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 var (
@@ -19,18 +19,18 @@ var (
 		{false, 5, "echo", 4, "echo bar", nil},
 		{false, 5, "put", 3, "put lorem", nil},
 		{false, 4, "echo", 1, "echo foo", nil},
-		{false, 3, "f", 0, "", store.ErrNoMatchingCmd},
-		{false, 1, "", 0, "", store.ErrNoMatchingCmd},
+		{false, 3, "f", 0, "", storedefs.ErrNoMatchingCmd},
+		{false, 1, "", 0, "", storedefs.ErrNoMatchingCmd},
 
 		{true, 1, "echo", 1, "echo foo", nil},
 		{true, 1, "put", 2, "put bar", nil},
 		{true, 2, "echo", 4, "echo bar", nil},
-		{true, 4, "put", 0, "", store.ErrNoMatchingCmd},
+		{true, 4, "put", 0, "", storedefs.ErrNoMatchingCmd},
 	}
 )
 
 // TestCmd tests the command history functionality of a Store.
-func TestCmd(t *testing.T, tStore store.Store) {
+func TestCmd(t *testing.T, tStore storedefs.Store) {
 	startSeq, err := tStore.NextCmdSeq()
 	if startSeq != 1 || err != nil {
 		t.Errorf("tStore.NextCmdSeq() => (%v, %v), want (1, nil)",
@@ -66,7 +66,7 @@ func TestCmd(t *testing.T, tStore store.Store) {
 			funcname = "tStore.NextCmd"
 		}
 		cmd, err := f(tt.seq, tt.prefix)
-		wantedCmd := store.Cmd{Text: tt.wantedCmd, Seq: tt.wantedSeq}
+		wantedCmd := storedefs.Cmd{Text: tt.wantedCmd, Seq: tt.wantedSeq}
 		if cmd != wantedCmd || !matchErr(err, tt.wantedErr) {
 			t.Errorf("%s(%v, %v) => (%v, %v), want (%v, %v)",
 				funcname, tt.seq, tt.prefix, cmd, err, wantedCmd, tt.wantedErr)
@@ -76,8 +76,8 @@ func TestCmd(t *testing.T, tStore store.Store) {
 	if err := tStore.DelCmd(1); err != nil {
 		t.Error("Failed to remove cmd")
 	}
-	if seq, err := tStore.Cmd(1); !matchErr(err, store.ErrNoMatchingCmd) {
+	if seq, err := tStore.Cmd(1); !matchErr(err, storedefs.ErrNoMatchingCmd) {
 		t.Errorf("Cmd(1) => (%v, %v), want (%v, %v)",
-			seq, err, "", store.ErrNoMatchingCmd)
+			seq, err, "", storedefs.ErrNoMatchingCmd)
 	}
 }
