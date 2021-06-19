@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	"src.elv.sh/pkg/daemon/client"
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/eval"
 	daemonmod "src.elv.sh/pkg/eval/mods/daemon"
@@ -24,7 +23,7 @@ const (
 
 // InitRuntime initializes the runtime. The caller should call CleanupRuntime
 // when the Evaler is no longer needed.
-func InitRuntime(stderr io.Writer, p Paths, spawn bool) *eval.Evaler {
+func InitRuntime(stderr io.Writer, p Paths, activate daemondefs.ActivateFunc) *eval.Evaler {
 	ev := eval.NewEvaler()
 	ev.SetLibDir(p.LibDir)
 	ev.AddModule("math", mathmod.Ns)
@@ -37,7 +36,7 @@ func InitRuntime(stderr io.Writer, p Paths, spawn bool) *eval.Evaler {
 		ev.AddModule("unix", unix.Ns)
 	}
 
-	if spawn && p.Sock != "" && p.Db != "" {
+	if activate != nil && p.Sock != "" && p.Db != "" {
 		spawnCfg := &daemondefs.SpawnConfig{
 			RunDir:   p.RunDir,
 			BinPath:  p.Bin,
@@ -46,7 +45,7 @@ func InitRuntime(stderr io.Writer, p Paths, spawn bool) *eval.Evaler {
 		}
 		// TODO(xiaq): Connect to daemon and install daemon module
 		// asynchronously.
-		cl, err := client.Activate(stderr, spawnCfg)
+		cl, err := activate(stderr, spawnCfg)
 		if err != nil {
 			fmt.Fprintln(stderr, "Cannot connect to daemon:", err)
 			fmt.Fprintln(stderr, daemonWontWorkMsg)

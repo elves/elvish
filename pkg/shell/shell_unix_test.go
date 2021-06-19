@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/daemon"
+	"src.elv.sh/pkg/daemon/client"
 	"src.elv.sh/pkg/testutil"
 
 	. "src.elv.sh/pkg/prog/progtest"
@@ -52,7 +53,7 @@ func TestShell_ConnectsToDaemon(t *testing.T) {
 	Script(f.Fds(),
 		[]string{"use daemon; print $daemon:pid"},
 		&ScriptConfig{
-			Cmd: true, SpawnDaemon: true,
+			Cmd: true, ActivateDaemon: client.Activate,
 			Paths: Paths{Sock: "sock", Db: "db", RunDir: "."}})
 	f.TestOut(t, 1, strconv.Itoa(os.Getpid()))
 	f.TestOut(t, 2, "")

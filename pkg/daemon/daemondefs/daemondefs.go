@@ -4,7 +4,11 @@
 // API does not need to depend on the concrete implementation.
 package daemondefs
 
-import "src.elv.sh/pkg/store"
+import (
+	"io"
+
+	"src.elv.sh/pkg/store"
+)
 
 // Client represents a daemon client.
 type Client interface {
@@ -17,6 +21,10 @@ type Client interface {
 	SockPath() string
 	Version() (int, error)
 }
+
+// ActivateFunc is a function that activates a daemon client, possibly by
+// spawning a new daemon and connecting to it.
+type ActivateFunc func(stderr io.Writer, spawnCfg *SpawnConfig) (Client, error)
 
 // SpawnConfig keeps configurations for spawning the daemon.
 type SpawnConfig struct {

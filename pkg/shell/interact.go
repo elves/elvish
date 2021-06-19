@@ -11,6 +11,7 @@ import (
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/edit"
 	"src.elv.sh/pkg/eval"
@@ -24,8 +25,8 @@ var interactiveRescueShell bool = true
 
 // InteractConfig keeps configuration for the interactive mode.
 type InteractConfig struct {
-	SpawnDaemon bool
-	Paths       Paths
+	ActivateDaemon daemondefs.ActivateFunc
+	Paths          Paths
 }
 
 // Interactive mode panic handler.
@@ -46,7 +47,7 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 	if interactiveRescueShell {
 		defer handlePanic()
 	}
-	ev, cleanup := setupShell(fds, cfg.Paths, cfg.SpawnDaemon)
+	ev, cleanup := setupShell(fds, cfg.Paths, cfg.ActivateDaemon)
 	defer cleanup()
 
 	// Build Editor.
