@@ -1,9 +1,10 @@
-package daemon
+package client
 
 import (
 	"errors"
 	"sync"
 
+	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/daemon/internal/api"
 	"src.elv.sh/pkg/rpc"
 	"src.elv.sh/pkg/store"
@@ -17,18 +18,6 @@ var (
 	ErrDaemonUnreachable = errors.New("daemon offline")
 )
 
-// Client represents a daemon client.
-type Client interface {
-	store.Store
-
-	ResetConn() error
-	Close() error
-
-	Pid() (int, error)
-	SockPath() string
-	Version() (int, error)
-}
-
 // Implementation of the Client interface.
 type client struct {
 	sockPath  string
@@ -38,7 +27,7 @@ type client struct {
 
 // NewClient creates a new Client instance that talks to the socket. Connection
 // creation is deferred to the first request.
-func NewClient(sockPath string) Client {
+func NewClient(sockPath string) daemondefs.Client {
 	return &client{sockPath, nil, sync.WaitGroup{}}
 }
 

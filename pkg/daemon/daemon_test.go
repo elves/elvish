@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"src.elv.sh/pkg/daemon/client"
+	"src.elv.sh/pkg/daemon/internal/api"
 	"src.elv.sh/pkg/prog"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/store/storetest"
@@ -25,7 +27,7 @@ func TestDaemon(t *testing.T) {
 	defer func() { <-serverDone }()
 
 	// Set up client.
-	client := NewClient("sock")
+	client := client.NewClient("sock")
 	defer client.Close()
 	for i := 0; i < 100; i++ {
 		client.ResetConn()
@@ -40,8 +42,8 @@ func TestDaemon(t *testing.T) {
 
 	// Server state requests.
 	gotVersion, err := client.Version()
-	if gotVersion != Version || err != nil {
-		t.Errorf(".Version() -> (%v, %v), want (%v, nil)", gotVersion, err, Version)
+	if gotVersion != api.Version || err != nil {
+		t.Errorf(".Version() -> (%v, %v), want (%v, nil)", gotVersion, err, api.Version)
 	}
 
 	gotPid, err := client.Pid()

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	"src.elv.sh/pkg/daemon"
+	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vars"
 )
@@ -15,17 +15,14 @@ import (
 var errDontKnowHowToSpawnDaemon = errors.New("don't know how to spawn daemon")
 
 // Ns makes the daemon: namespace.
-func Ns(d daemon.Client, spawnCfg *daemon.SpawnConfig) *eval.Ns {
+func Ns(d daemondefs.Client, spawn func() error) *eval.Ns {
 	getPid := func() (string, error) {
 		pid, err := d.Pid()
 		return string(strconv.Itoa(pid)), err
 	}
 
-	spawn := func() error {
-		if spawnCfg == nil {
-			return errDontKnowHowToSpawnDaemon
-		}
-		return daemon.Spawn(spawnCfg)
+	if spawn == nil {
+		spawn = func() error { return errDontKnowHowToSpawnDaemon }
 	}
 
 	// TODO: Deprecate the variable in favor of the function.
