@@ -55,7 +55,7 @@ func InitRuntime(stderr io.Writer, p Paths, spawn bool) *eval.Evaler {
 		// anyway. Daemon may eventually come online and become functional.
 		ev.SetDaemonClient(cl)
 		ev.AddModule("store", store.Ns(cl))
-		ev.AddModule("daemon", daemonmod.Ns(cl, func() error { return client.Spawn(spawnCfg) }))
+		ev.AddModule("daemon", daemonmod.Ns(cl))
 	}
 	return ev
 }
