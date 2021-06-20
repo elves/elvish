@@ -580,7 +580,7 @@ type forOp struct {
 func (op *forOp) exec(fm *Frame) Exception {
 	variable, err := derefLValue(fm, op.lvalue)
 	if err != nil {
-		return fm.errorp(op, err)
+		return fm.errorp(op.lvalue, err)
 	}
 	iterable, err := evalForValue(fm, op.iterOp, "value being iterated")
 	if err != nil {

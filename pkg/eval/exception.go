@@ -47,16 +47,6 @@ type StackTrace struct {
 	Next *StackTrace
 }
 
-// MakeStackTrace creates a new StackTrace from the given Context entries, using
-// the first entry as the head.
-func MakeStackTrace(entries ...*diag.Context) *StackTrace {
-	var s *StackTrace
-	for i := len(entries) - 1; i >= 0; i-- {
-		s = &StackTrace{Head: entries[i], Next: s}
-	}
-	return s
-}
-
 // Reason returns the Reason field if err is an Exception. Otherwise it returns
 // err itself.
 func Reason(err error) error {

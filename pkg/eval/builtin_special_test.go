@@ -72,12 +72,17 @@ func TestSet(t *testing.T) {
 }
 
 func TestDel(t *testing.T) {
+	restore := WithTempEnv("TEST_ENV", "test value")
+	defer restore()
+
 	Test(t,
 		// Deleting variable
 		That("x = 1; del x").DoesNothing(),
 		That("x = 1; del x; echo $x").DoesNotCompile(),
 		That("x = 1; del :x; echo $x").DoesNotCompile(),
 		That("x = 1; del local:x; echo $x").DoesNotCompile(),
+		// Deleting environment variable
+		That("has-env TEST_ENV", "del E:TEST_ENV", "has-env TEST_ENV").Puts(true, false),
 		// Deleting variable whose name contains special characters
 		That("'a/b' = foo; del 'a/b'").DoesNothing(),
 		// Deleting element
@@ -91,7 +96,7 @@ func TestDel(t *testing.T) {
 		// Deleting element of nonexistent variable
 		That("del x[0]").DoesNotCompile(),
 		// Deleting variable in non-local namespace
-		That("del a:b").DoesNotCompile(),
+		That("var a: = (ns [&b=$nil])", "del a:b").DoesNotCompile(),
 		// Variable name given with $
 		That("x = 1; del $x").DoesNotCompile(),
 		// Variable name not given as a single primary expression
@@ -102,6 +107,23 @@ func TestDel(t *testing.T) {
 		That("x = []; del @x").DoesNotCompile(),
 		// Variable name not quoted when it should be
 		That("'a/b' = foo; del a/b").DoesNotCompile(),
+
+		// Index is multiple values
+		That("x = [&k1=v1 &k2=v2]", "del x[k1 k2]").Throws(
+			ErrorWithMessage("index must evaluate to a single value in argument to del"),
+			"k1 k2"),
+		// Index expression throws exception
+		That("x = [&k]", "del x[(fail x)]").Throws(FailError{"x"}, "fail x"),
+		// Value does not support element removal
+		That("x = (num 1)", "del x[k]").Throws(
+			ErrorWithMessage("value does not support element removal"),
+			// TODO: Fix the stack trace so that it is "x[k]"
+			"x[k"),
+		// Intermediate element does not exist
+		That("x = [&]", "del x[k][0]").Throws(
+			ErrorWithMessage("no such key: k"),
+			// TODO: Fix the stack trace so that it is "x[k]"
+			"x"),
 	)
 }
 
@@ -113,6 +135,9 @@ func TestAnd(t *testing.T) {
 		That("and $true b").Puts("b"),
 		// short circuit
 		That("x = a; and $false (x = b); put $x").Puts(false, "a"),
+
+		// Exception
+		That("and a (fail x)").Throws(FailError{"x"}, "fail x"),
 	)
 }
 
@@ -124,6 +149,9 @@ func TestOr(t *testing.T) {
 		That("or $true b").Puts(true),
 		// short circuit
 		That("x = a; or $true (x = b); put $x").Puts(true, "a"),
+
+		// Exception
+		That("or $false (fail x)").Throws(FailError{"x"}, "fail x"),
 	)
 }
 
@@ -134,6 +162,9 @@ func TestIf(t *testing.T) {
 		That("if $false { put 1 } elif $false { put 2 } else { put 3 }").
 			Puts("3"),
 		That("if $false { put 2 } elif true { put 2 } else { put 3 }").Puts("2"),
+
+		// Exception in condition expression
+		That("if (fail x) { }").Throws(FailError{"x"}, "fail x"),
 	)
 }
 
@@ -170,13 +201,23 @@ func TestTry(t *testing.T) {
 
 func TestWhile(t *testing.T) {
 	Test(t,
-		// while
-		That("var x = 0; while (< $x 4) { put $x; set x = (+ $x 1) }").
-			Puts("0", 1, 2, 3),
-		That("var x = 0; while (< $x 4) { put $x; break }").Puts("0"),
+		That("var x = (num 0)", "while (< $x 4) { put $x; set x = (+ $x 1) }").
+			Puts(0, 1, 2, 3),
+		// break
+		That("var x = (num 0)", "while (< $x 4) { put $x; break }").Puts(0),
+		// continue
+		That("var x = (num 0)",
+			"while (< $x 4) { put $x; set x = (+ $x 1); continue; put bad }").
+			Puts(0, 1, 2, 3),
+		// Exception in body
 		That("var x = 0; while (< $x 4) { fail haha }").Throws(AnyError),
+		// Exception in condition
+		That("while (fail x) { }").Throws(FailError{"x"}, "fail x"),
+
+		// else branch - not taken
 		That("var x = 0; while (< $x 4) { put $x; set x = (+ $x 1) } else { put bad }").
 			Puts("0", 1, 2, 3),
+		// else branch - taken
 		That("while $false { put bad } else { put good }").Puts("good"),
 	)
 }
@@ -197,6 +238,10 @@ func TestFor(t *testing.T) {
 		// Invalid for loop lvalue. You can't use a var in a namespace other
 		// than the local namespace as the lvalue in a for loop.
 		That("for no-such-namespace:x [a b] { }").DoesNotCompile(),
+		// Exception with the variable
+		That("var a: = (ns [&])", "for a:b [] { }").Throws(
+			ErrorWithMessage("no variable $a:b"),
+			"a:b"),
 		// Exception when evaluating iterable.
 		That("for x [][0] { }").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// More than one iterable.
@@ -216,6 +261,9 @@ func TestFn(t *testing.T) {
 			Puts(6),
 		// Exception thrown by return is swallowed by a fn-defined function.
 		That("fn f []{ put a; return; put b }; f").Puts("a"),
+
+		// Error when evaluating the lambda
+		That("fn f [&opt=(fail x)]{ }").Throws(FailError{"x"}, "fail x"),
 	)
 }
 
