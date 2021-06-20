@@ -61,11 +61,20 @@ make get ELVISH_MAKE_BIN=./elvish # Install to the repo root
 make get ELVISH_MAKE_BIN=/usr/local/bin/elvish # Install to /usr/local/bin
 ```
 
-To install with plugin support, override `ELVISH_PLUGINS` in the `make` command:
+### Experimental plugin support
+
+Elvish has experimental support for building and importing plugins, modules
+written in Go.
+
+However, since plugin support relies on dynamic linking, it is not enabled in
+the official prebuilt binaries. You need to build Elvish from source, with
+`ELVISH_PLUGIN_SUPPORT=1`:
 
 ```sh
-make get ELVISH_PLUGINS=1 # Install with plugin support
+make get ELVISH_PLUGIN_SUPPORT=1
 ```
+
+To build a plugin, see this [example](https://github.com/elves/sample-plugin).
 
 ## Packaging Elvish
 

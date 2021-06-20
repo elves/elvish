@@ -2227,9 +2227,6 @@ fn f {
 }
 ```
 
-Note: If you build elvish with `ELVISH_PLUGINS=1` you can use go plugins with
-the extension `.so`.
-
 This module can now be imported by `use a`:
 
 ```elvish-transcript
@@ -2254,6 +2251,9 @@ f from x/y/z
 
 In general, a module defined in namespace will be the same as the file name
 (without the `.elv` extension).
+
+There is experimental support for importing modules written in Go. See the
+[project repository](https://github.com/elves/elvish) for details.
 
 ### Circular dependencies
 

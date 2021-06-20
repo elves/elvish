@@ -1,17 +1,24 @@
 ELVISH_MAKE_BIN ?= $(shell go env GOPATH)/bin/elvish
-ELVISH_PLUGINS ?= 0
+ELVISH_PLUGIN_SUPPORT ?= 0
+
+# Treat 0 as false and everything else as true (consistent with CGO_ENABLED).
+ifeq ($(ELVISH_PLUGIN_SUPPORT), 0)
+    REPRODUCIBLE := true
+else
+    REPRODUCIBLE := false
+endif
 
 default: test get
 
 get:
-	export CGO_ENABLED=$(ELVISH_PLUGINS); \
+	export CGO_ENABLED=$(ELVISH_PLUGIN_SUPPORT); \
 	if go env GOOS GOARCH | egrep -qx '(windows .*|linux (amd64|arm64))'; then \
 		export GOFLAGS=-buildmode=pie; \
 	fi; \
 	mkdir -p $(shell dirname $(ELVISH_MAKE_BIN))
 	go build -o $(ELVISH_MAKE_BIN) -trimpath -ldflags \
 		"-X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev.$$(git rev-parse HEAD)$$(git diff HEAD --quiet || printf +%s `uname -n`) \
-		 -X src.elv.sh/pkg/buildinfo.Reproducible=true" ./cmd/elvish
+		 -X src.elv.sh/pkg/buildinfo.Reproducible=$(REPRODUCIBLE)" ./cmd/elvish
 
 generate:
 	go generate ./...
