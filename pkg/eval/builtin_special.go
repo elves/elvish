@@ -386,7 +386,10 @@ func useFromFile(fm *Frame, spec, path string, r diag.Ranger) (*Ns, error) {
 		if err != nil {
 			return nil, err
 		}
-		ns := sym.(**Ns)
+		ns, ok := sym.(**Ns)
+		if !ok {
+			return nil, noSuchModule{spec}
+		}
 		fm.Evaler.modules[path] = *ns
 		return *ns, nil
 	}
