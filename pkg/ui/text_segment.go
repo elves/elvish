@@ -3,6 +3,7 @@ package ui
 import (
 	"bytes"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"src.elv.sh/pkg/eval/vals"
@@ -92,21 +93,14 @@ func (s *Segment) Index(k interface{}) (v interface{}, ok bool) {
 func (s *Segment) Concat(v interface{}) (interface{}, error) {
 	switch rhs := v.(type) {
 	case string:
-		return Text{
-			s,
-			&Segment{Text: rhs},
-		}, nil
-	case float64:
-		return Text{
-			s,
-			&Segment{Text: vals.ToString(rhs)},
-		}, nil
+		return Text{s, &Segment{Text: rhs}}, nil
 	case *Segment:
 		return Text{s, rhs}, nil
 	case Text:
 		return Text(append([]*Segment{s}, rhs...)), nil
+	case int, *big.Int, *big.Rat, float64:
+		return Text{s, &Segment{Text: vals.ToString(rhs)}}, nil
 	}
-
 	return nil, vals.ErrConcatNotImplemented
 }
 
@@ -114,15 +108,9 @@ func (s *Segment) Concat(v interface{}) (interface{}, error) {
 func (s *Segment) RConcat(v interface{}) (interface{}, error) {
 	switch lhs := v.(type) {
 	case string:
-		return Text{
-			&Segment{Text: lhs},
-			s,
-		}, nil
-	case float64:
-		return Text{
-			&Segment{Text: vals.ToString(lhs)},
-			s,
-		}, nil
+		return Text{&Segment{Text: lhs}, s}, nil
+	case int, *big.Int, *big.Rat, float64:
+		return Text{&Segment{Text: vals.ToString(lhs)}, s}, nil
 	}
 	return nil, vals.ErrConcatNotImplemented
 }

@@ -68,17 +68,26 @@ func TestStyledConcat(t *testing.T) {
 		That("print (styled-segment abc &bg-color=red)(styled-segment abc &fg-color=red)").Prints("\033[41mabc\033[m\033[31mabc\033[m"),
 		// segment+text
 		That("print (styled-segment abc &underlined=$true)(styled abc bright-cyan)").Prints("\033[4mabc\033[m\033[96mabc\033[m"),
-	)
-
-	Test(t,
+		// segment+num
+		That("print (float64 99)(styled-segment abc &blink)").Prints("99.0\033[5mabc\033[m"),
+		That("print (num 66)(styled-segment abc &blink)").Prints("66\033[5mabc\033[m"),
+		That("print (num 33)(styled-segment abc &blink)").Prints("33\033[5mabc\033[m"),
+		// num+segment
+		That("print (styled-segment abc &blink)(float64 88)").Prints("\033[5mabc\033[m88.0"),
+		That("print (styled-segment abc &blink)(num 44/3)").Prints("\033[5mabc\033[m44/3"),
+		That("print (styled-segment abc &blink)(num 42)").Prints("\033[5mabc\033[m42"),
 		// string+text
 		That("print abc(styled abc blink)").Prints("abc\033[5mabc\033[m"),
 		// text+string
 		That("print (styled abc blink)abc").Prints("\033[5mabc\033[mabc"),
 		// number+text
+		That("print (float64 13)(styled abc blink)").Prints("13.0\033[5mabc\033[m"),
 		That("print (num 13)(styled abc blink)").Prints("13\033[5mabc\033[m"),
+		That("print (num 4/3)(styled abc blink)").Prints("4/3\033[5mabc\033[m"),
 		// text+number
+		That("print (styled abc blink)(float64 127)").Prints("\033[5mabc\033[m127.0"),
 		That("print (styled abc blink)(num 13)").Prints("\033[5mabc\033[m13"),
+		That("print (styled abc blink)(num 3/4)").Prints("\033[5mabc\033[m3/4"),
 		// text+segment
 		That("print (styled abc inverse)(styled-segment abc &bg-color=white)").Prints("\033[7mabc\033[m\033[47mabc\033[m"),
 		// text+text
