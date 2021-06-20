@@ -334,13 +334,14 @@ candidates:
 -   Write strings to value output, e.g. "put cand1 cand2". Each string output
     becomes a candidate.
 
--   Use the `edit:complex-candidate` command:
+-   Use the `edit:complex-candidate` command, e.g.:
 
     ```elvish
-    edit:complex-candidate &code-suffix='' &display-suffix='' &style='' $stem
+    edit:complex-candidate &code-suffix='' &display=$stem' ('$description')'  $stem
     ```
 
-    **TODO**: Document this.
+    See [`edit:complex-candidate`](#editcomplex-candidate) for the full
+    description of the arguments is accepts.
 
 After receiving your candidates, Elvish will match your candidates against what
 the user has typed. Hence, normally you don't need to (and shouldn't) do any
