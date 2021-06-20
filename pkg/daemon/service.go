@@ -4,12 +4,12 @@ import (
 	"syscall"
 
 	"src.elv.sh/pkg/daemon/internal/api"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 // A net/rpc service for the daemon.
 type service struct {
-	store store.Store
+	store storedefs.Store
 	err   error
 }
 
@@ -20,7 +20,7 @@ func (s *service) Version(req *api.VersionRequest, res *api.VersionResponse) err
 	if s.err != nil {
 		return s.err
 	}
-	res.Version = Version
+	res.Version = api.Version
 	return nil
 }
 

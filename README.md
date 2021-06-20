@@ -4,6 +4,7 @@
 [![FreeBSD test status](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=freebsd&task=Test%20on%20FreeBSD)](https://cirrus-ci.com/github/elves/elvish/master)
 [![gccgo test status](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=gccgo&task=Test%20on%20gccgo)](https://cirrus-ci.com/github/elves/elvish/master)
 [![Test Coverage](https://img.shields.io/codecov/c/github/elves/elvish/master.svg?logo=Codecov&label=coverage)](https://app.codecov.io/gh/elves/elvish/branch/master)
+[![Go Reference](https://pkg.go.dev/badge/src.elv.sh@master.svg)](https://pkg.go.dev/src.elv.sh@master)
 [![Go Report Card](https://goreportcard.com/badge/src.elv.sh)](https://goreportcard.com/report/src.elv.sh)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/ElvishShell)
 
@@ -60,6 +61,21 @@ To install it elsewhere, override `ELVISH_MAKE_BIN` in the `make` command:
 make get ELVISH_MAKE_BIN=./elvish # Install to the repo root
 make get ELVISH_MAKE_BIN=/usr/local/bin/elvish # Install to /usr/local/bin
 ```
+
+### Experimental plugin support
+
+Elvish has experimental support for building and importing plugins, modules
+written in Go.
+
+However, since plugin support relies on dynamic linking, it is not enabled in
+the official prebuilt binaries. You need to build Elvish from source, with
+`ELVISH_PLUGIN_SUPPORT=1`:
+
+```sh
+make get ELVISH_PLUGIN_SUPPORT=1
+```
+
+To build a plugin, see this [example](https://github.com/elves/sample-plugin).
 
 ## Packaging Elvish
 

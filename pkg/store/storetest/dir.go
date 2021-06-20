@@ -5,12 +5,13 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 var (
 	dirsToAdd  = []string{"/usr/local", "/usr", "/usr/bin", "/usr"}
 	black      = map[string]struct{}{"/usr/local": {}}
-	wantedDirs = []store.Dir{
+	wantedDirs = []storedefs.Dir{
 		{
 			Path:  "/usr",
 			Score: store.DirScoreIncrement*store.DirScoreDecay*store.DirScoreDecay + store.DirScoreIncrement,
@@ -21,7 +22,7 @@ var (
 		},
 	}
 	dirToDel           = "/usr"
-	wantedDirsAfterDel = []store.Dir{
+	wantedDirsAfterDel = []storedefs.Dir{
 		{
 			Path:  "/usr/bin",
 			Score: store.DirScoreIncrement * store.DirScoreDecay,
@@ -30,7 +31,7 @@ var (
 )
 
 // TestDir tests the directory history functionality of a Store.
-func TestDir(t *testing.T, tStore store.Store) {
+func TestDir(t *testing.T, tStore storedefs.Store) {
 	for _, path := range dirsToAdd {
 		err := tStore.AddDir(path, 1)
 		if err != nil {

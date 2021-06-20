@@ -8,7 +8,7 @@ import (
 	. "src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/histutil"
 	"src.elv.sh/pkg/cli/term"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -24,7 +24,7 @@ func TestNewHistlist_NoStore(t *testing.T) {
 
 type faultyStore struct{}
 
-func (s faultyStore) AllCmds() ([]store.Cmd, error) { return nil, errMock }
+func (s faultyStore) AllCmds() ([]storedefs.Cmd, error) { return nil, errMock }
 
 func TestNewHistlist_StoreError(t *testing.T) {
 	f := Setup()
@@ -70,7 +70,7 @@ func TestHistlist(t *testing.T) {
 	f.TestTTY(t, "baz", term.DotHere)
 
 	// Test accepting when there is already some text.
-	st.AddCmd(store.Cmd{Text: "baz2"})
+	st.AddCmd(storedefs.Cmd{Text: "baz2"})
 	startHistlist(f.App, HistlistSpec{AllCmds: st.AllCmds})
 	f.TTY.Inject(term.K(ui.Enter))
 	f.TestTTY(t, "baz",

@@ -5,7 +5,7 @@ import (
 
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
-	"src.elv.sh/pkg/testutil"
+	. "src.elv.sh/pkg/testutil"
 
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
@@ -39,6 +39,9 @@ func TestIndexing(t *testing.T) {
 		That("put [&key=value][key]").Puts("value"),
 		That("put [&key=value][bad]").Throws(
 			vals.NoSuchKey("bad"), "[&key=value][bad]"),
+
+		That("put (fail x)[a]").Throws(FailError{"x"}, "fail x"),
+		That("put [foo][(fail x)]").Throws(FailError{"x"}, "fail x"),
 	)
 }
 
@@ -76,10 +79,9 @@ func TestStringLiteral(t *testing.T) {
 }
 
 func TestTilde(t *testing.T) {
-	home, cleanup := testutil.InTempHome()
-	testutil.MustCreateEmpty("file1")
-	testutil.MustCreateEmpty("file2")
+	home, cleanup := InTempHome()
 	defer cleanup()
+	ApplyDir(Dir{"file1": "", "file2": ""})
 
 	Test(t,
 		// Tilde
@@ -93,6 +95,13 @@ func TestTilde(t *testing.T) {
 		// TODO: Add regression test for #793.
 		// TODO: Add regression test for #1246.
 	)
+}
+
+func TestWildcard(t *testing.T) {
+	Test(t,
+		That("put ***").DoesNotCompile(),
+	)
+	// More tests in glob_test.go
 }
 
 func TestOutputCapture(t *testing.T) {
@@ -204,6 +213,14 @@ func TestClosure(t *testing.T) {
 		That("[a &k=v]{ put $a $k } foo &k=bar").Puts("foo", "bar"),
 		// Option default value.
 		That("[a &k=v]{ put $a $k } foo").Puts("foo", "v"),
+		// Option must have default value
+		That("[&k]{ }").DoesNotCompile(),
+		// Exception when evaluating option default value.
+		That("[&a=[][0]]{ }").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
+		// Option default value must be one value.
+		That("[&a=(put foo bar)]{ }").Throws(
+			errs.ArityMismatch{What: "option default value", ValidLow: 1, ValidHigh: 1, Actual: 2},
+			"(put foo bar)"),
 
 		// Argument name must be unqualified.
 		That("[a:b]{ }").DoesNotCompile(),
@@ -214,12 +231,7 @@ func TestClosure(t *testing.T) {
 		That("[&a:b=1]{ }").DoesNotCompile(),
 		// Option name must not be empty.
 		That("[&''=b]{ }").DoesNotCompile(),
-
-		// Exception when evaluating option default value.
-		That("[&a=[][0]]{ }").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
-		// Option default value must be one value.
-		That("[&a=(put foo bar)]{ }").Throws(
-			errs.ArityMismatch{What: "option default value", ValidLow: 1, ValidHigh: 1, Actual: 2},
-			"(put foo bar)"),
+		// Should not have multiple rest arguments.
+		That("[@a @b]{ }").DoesNotCompile(),
 	)
 }

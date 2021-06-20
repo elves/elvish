@@ -9,7 +9,7 @@ import (
 	"src.elv.sh/pkg/cli/histutil"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -97,7 +97,7 @@ func TestLastcmd(t *testing.T) {
 	f.App.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 		*s = tk.CodeAreaState{}
 	})
-	st.AddCmd(store.Cmd{Text: "foo bar baz", Seq: 1})
+	st.AddCmd(storedefs.Cmd{Text: "foo bar baz", Seq: 1})
 	startLastcmd(f.App, LastcmdSpec{Store: st})
 	f.TTY.Inject(term.K('0'))
 	f.TestTTY(t, "foo", term.DotHere)

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 
+	"src.elv.sh/pkg/daemon/client"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/prog"
@@ -56,7 +57,7 @@ type ExecuteResponse struct {
 func (web *Web) Main(fds [3]*os.File, _ []string) error {
 	p := shell.MakePaths(fds[2],
 		shell.Paths{Bin: web.BinPath, Sock: web.SockPath, Db: web.DbPath})
-	ev := shell.InitRuntime(fds[2], p, true)
+	ev := shell.InitRuntime(fds[2], p, client.Activate)
 	defer shell.CleanupRuntime(fds[2], ev)
 
 	h := httpHandler{ev}

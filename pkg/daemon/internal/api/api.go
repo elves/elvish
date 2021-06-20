@@ -3,8 +3,11 @@
 package api
 
 import (
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
+
+// Version is the API version. It should be bumped any time the API changes.
+const Version = -93
 
 // ServiceName is the name of the RPC service exposed by the daemon.
 const ServiceName = "Daemon"
@@ -69,7 +72,7 @@ type CmdsWithSeqRequest struct {
 }
 
 type CmdsWithSeqResponse struct {
-	Cmds []store.Cmd
+	Cmds []storedefs.Cmd
 }
 
 type NextCmdRequest struct {
@@ -112,7 +115,7 @@ type DirsRequest struct {
 }
 
 type DirsResponse struct {
-	Dirs []store.Dir
+	Dirs []storedefs.Dir
 }
 
 // SharedVar requests.

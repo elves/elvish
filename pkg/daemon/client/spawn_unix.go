@@ -1,6 +1,6 @@
 // +build !windows,!plan9,!js
 
-package daemon
+package client
 
 import (
 	"os"

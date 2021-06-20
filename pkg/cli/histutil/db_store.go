@@ -1,6 +1,8 @@
 package histutil
 
-import "src.elv.sh/pkg/store"
+import (
+	"src.elv.sh/pkg/store/storedefs"
+)
 
 // NewDBStore returns a Store backed by a database with the view of all
 // commands frozen at creation.
@@ -17,24 +19,24 @@ type dbStore struct {
 	upper int
 }
 
-func (s dbStore) AllCmds() ([]store.Cmd, error) {
+func (s dbStore) AllCmds() ([]storedefs.Cmd, error) {
 	return s.db.CmdsWithSeq(0, s.upper)
 }
 
-func (s dbStore) AddCmd(cmd store.Cmd) (int, error) {
+func (s dbStore) AddCmd(cmd storedefs.Cmd) (int, error) {
 	return s.db.AddCmd(cmd.Text)
 }
 
 func (s dbStore) Cursor(prefix string) Cursor {
 	return &dbStoreCursor{
-		s.db, prefix, s.upper, store.Cmd{Seq: s.upper}, ErrEndOfHistory}
+		s.db, prefix, s.upper, storedefs.Cmd{Seq: s.upper}, ErrEndOfHistory}
 }
 
 type dbStoreCursor struct {
 	db     DB
 	prefix string
 	upper  int
-	cmd    store.Cmd
+	cmd    storedefs.Cmd
 	err    error
 }
 
@@ -55,17 +57,17 @@ func (c *dbStoreCursor) Next() {
 		c.set(cmd, err, c.upper)
 	}
 	if cmd.Seq >= c.upper {
-		c.cmd = store.Cmd{Seq: c.upper}
+		c.cmd = storedefs.Cmd{Seq: c.upper}
 		c.err = ErrEndOfHistory
 	}
 }
 
-func (c *dbStoreCursor) set(cmd store.Cmd, err error, endSeq int) {
+func (c *dbStoreCursor) set(cmd storedefs.Cmd, err error, endSeq int) {
 	if err == nil {
 		c.cmd = cmd
 		c.err = nil
-	} else if err.Error() == store.ErrNoMatchingCmd.Error() {
-		c.cmd = store.Cmd{Seq: endSeq}
+	} else if err.Error() == storedefs.ErrNoMatchingCmd.Error() {
+		c.cmd = storedefs.Cmd{Seq: endSeq}
 		c.err = ErrEndOfHistory
 	} else {
 		// Don't change c.cmd
@@ -73,6 +75,6 @@ func (c *dbStoreCursor) set(cmd store.Cmd, err error, endSeq int) {
 	}
 }
 
-func (c *dbStoreCursor) Get() (store.Cmd, error) {
+func (c *dbStoreCursor) Get() (storedefs.Cmd, error) {
 	return c.cmd, c.err
 }

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/logutil"
@@ -19,32 +20,31 @@ import (
 var logger = logutil.GetLogger("[shell] ")
 
 // Program is the shell subprogram.
-var Program prog.Program = program{}
+type Program struct {
+	ActivateDaemon daemondefs.ActivateFunc
+}
 
-type program struct{}
+func (p Program) ShouldRun(*prog.Flags) bool { return true }
 
-func (program) ShouldRun(*prog.Flags) bool { return true }
-
-func (program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
-	p := MakePaths(fds[2],
-		Paths{Bin: f.Bin, Sock: f.Sock, Db: f.DB})
+func (p Program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
+	paths := MakePaths(fds[2], Paths{Bin: f.Bin, Sock: f.Sock, Db: f.DB})
 	if f.NoRc {
-		p.Rc = ""
+		paths.Rc = ""
 	}
 	if len(args) > 0 {
 		exit := Script(
 			fds, args, &ScriptConfig{
-				Paths: p,
+				Paths: paths,
 				Cmd:   f.CodeInArg, CompileOnly: f.CompileOnly, JSON: f.JSON})
 		return prog.Exit(exit)
 	}
-	Interact(fds, &InteractConfig{SpawnDaemon: true, Paths: p})
+	Interact(fds, &InteractConfig{ActivateDaemon: p.ActivateDaemon, Paths: paths})
 	return nil
 }
 
-func setupShell(fds [3]*os.File, p Paths, spawn bool) (*eval.Evaler, func()) {
+func setupShell(fds [3]*os.File, p Paths, activate daemondefs.ActivateFunc) (*eval.Evaler, func()) {
 	restoreTTY := term.SetupGlobal()
-	ev := InitRuntime(fds[2], p, spawn)
+	ev := InitRuntime(fds[2], p, activate)
 	restoreSHLVL := incSHLVL()
 	sigCh := sys.NotifySignals()
 

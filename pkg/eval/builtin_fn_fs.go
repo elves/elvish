@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"src.elv.sh/pkg/fsutil"
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 
 	"src.elv.sh/pkg/eval/errs"
 )
@@ -103,7 +103,7 @@ func dirs(fm *Frame) error {
 	if daemon == nil {
 		return ErrStoreNotConnected
 	}
-	dirs, err := daemon.Dirs(store.NoBlacklist)
+	dirs, err := daemon.Dirs(storedefs.NoBlacklist)
 	if err != nil {
 		return err
 	}

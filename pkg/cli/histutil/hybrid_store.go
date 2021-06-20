@@ -1,6 +1,6 @@
 package histutil
 
-import "src.elv.sh/pkg/store"
+import "src.elv.sh/pkg/store/storedefs"
 
 // NewHybridStore returns a store that provides a view of all the commands that
 // exists in the database, plus a in-memory session history.
@@ -19,13 +19,13 @@ type hybridStore struct {
 	shared, session Store
 }
 
-func (s hybridStore) AddCmd(cmd store.Cmd) (int, error) {
+func (s hybridStore) AddCmd(cmd storedefs.Cmd) (int, error) {
 	seq, err := s.shared.AddCmd(cmd)
-	s.session.AddCmd(store.Cmd{Text: cmd.Text, Seq: seq})
+	s.session.AddCmd(storedefs.Cmd{Text: cmd.Text, Seq: seq})
 	return seq, err
 }
 
-func (s hybridStore) AllCmds() ([]store.Cmd, error) {
+func (s hybridStore) AllCmds() ([]storedefs.Cmd, error) {
 	shared, err := s.shared.AllCmds()
 	session, err2 := s.session.AllCmds()
 	if err == nil {
@@ -72,7 +72,7 @@ func (c *hybridStoreCursor) Next() {
 	}
 }
 
-func (c *hybridStoreCursor) Get() (store.Cmd, error) {
+func (c *hybridStoreCursor) Get() (storedefs.Cmd, error) {
 	if c.useShared {
 		return c.shared.Get()
 	}

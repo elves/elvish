@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"sync"
 
-	"src.elv.sh/pkg/daemon"
+	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/eval/vals"
@@ -80,7 +80,7 @@ type Evaler struct {
 	// Dependencies.
 	//
 	// TODO: Remove these dependency by providing more general extension points.
-	daemonClient daemon.Client
+	daemonClient daemondefs.Client
 }
 
 // Editor is the interface that the line editor has to satisfy. It is needed so
@@ -332,14 +332,14 @@ func (ev *Evaler) AddAfterChdir(f func(string)) {
 }
 
 // SetDaemonClient sets the daemon client associated with the Evaler.
-func (ev *Evaler) SetDaemonClient(client daemon.Client) {
+func (ev *Evaler) SetDaemonClient(client daemondefs.Client) {
 	ev.mu.Lock()
 	defer ev.mu.Unlock()
 	ev.daemonClient = client
 }
 
 // DaemonClient returns the daemon client associated with the Evaler.
-func (ev *Evaler) DaemonClient() daemon.Client {
+func (ev *Evaler) DaemonClient() daemondefs.Client {
 	ev.mu.RLock()
 	defer ev.mu.RUnlock()
 	return ev.daemonClient

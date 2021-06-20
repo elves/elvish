@@ -3,16 +3,16 @@ package histutil
 import (
 	"strings"
 
-	"src.elv.sh/pkg/store"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 // DB is the interface of the storage database.
 type DB interface {
 	NextCmdSeq() (int, error)
 	AddCmd(cmd string) (int, error)
-	CmdsWithSeq(from, upto int) ([]store.Cmd, error)
-	PrevCmd(upto int, prefix string) (store.Cmd, error)
-	NextCmd(from int, prefix string) (store.Cmd, error)
+	CmdsWithSeq(from, upto int) ([]storedefs.Cmd, error)
+	PrevCmd(upto int, prefix string) (storedefs.Cmd, error)
+	NextCmd(from int, prefix string) (storedefs.Cmd, error)
 }
 
 // FaultyInMemoryDB is an in-memory DB implementation that can be injected
@@ -57,7 +57,7 @@ func (s *testDB) AddCmd(cmd string) (int, error) {
 	return len(s.cmds) - 1, nil
 }
 
-func (s *testDB) CmdsWithSeq(from, upto int) ([]store.Cmd, error) {
+func (s *testDB) CmdsWithSeq(from, upto int) ([]storedefs.Cmd, error) {
 	if err := s.error(); err != nil {
 		return nil, err
 	}
@@ -67,39 +67,39 @@ func (s *testDB) CmdsWithSeq(from, upto int) ([]store.Cmd, error) {
 	if upto < 0 || upto > len(s.cmds) {
 		upto = len(s.cmds)
 	}
-	var cmds []store.Cmd
+	var cmds []storedefs.Cmd
 	for i := from; i < upto; i++ {
-		cmds = append(cmds, store.Cmd{Text: s.cmds[i], Seq: i})
+		cmds = append(cmds, storedefs.Cmd{Text: s.cmds[i], Seq: i})
 	}
 	return cmds, nil
 }
 
-func (s *testDB) PrevCmd(upto int, prefix string) (store.Cmd, error) {
+func (s *testDB) PrevCmd(upto int, prefix string) (storedefs.Cmd, error) {
 	if s.oneOffError != nil {
-		return store.Cmd{}, s.error()
+		return storedefs.Cmd{}, s.error()
 	}
 	if upto < 0 || upto > len(s.cmds) {
 		upto = len(s.cmds)
 	}
 	for i := upto - 1; i >= 0; i-- {
 		if strings.HasPrefix(s.cmds[i], prefix) {
-			return store.Cmd{Text: s.cmds[i], Seq: i}, nil
+			return storedefs.Cmd{Text: s.cmds[i], Seq: i}, nil
 		}
 	}
-	return store.Cmd{}, store.ErrNoMatchingCmd
+	return storedefs.Cmd{}, storedefs.ErrNoMatchingCmd
 }
 
-func (s *testDB) NextCmd(from int, prefix string) (store.Cmd, error) {
+func (s *testDB) NextCmd(from int, prefix string) (storedefs.Cmd, error) {
 	if s.oneOffError != nil {
-		return store.Cmd{}, s.error()
+		return storedefs.Cmd{}, s.error()
 	}
 	if from < 0 {
 		from = 0
 	}
 	for i := from; i < len(s.cmds); i++ {
 		if strings.HasPrefix(s.cmds[i], prefix) {
-			return store.Cmd{Text: s.cmds[i], Seq: i}, nil
+			return storedefs.Cmd{Text: s.cmds[i], Seq: i}, nil
 		}
 	}
-	return store.Cmd{}, store.ErrNoMatchingCmd
+	return storedefs.Cmd{}, storedefs.ErrNoMatchingCmd
 }

@@ -7,6 +7,7 @@ import (
 
 	bolt "go.etcd.io/bbolt"
 	"src.elv.sh/pkg/logutil"
+	. "src.elv.sh/pkg/store/storedefs"
 )
 
 var logger = logutil.GetLogger("[store] ")

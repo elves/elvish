@@ -2252,6 +2252,9 @@ f from x/y/z
 In general, a module defined in namespace will be the same as the file name
 (without the `.elv` extension).
 
+There is experimental support for importing modules written in Go. See the
+[project repository](https://github.com/elves/elvish) for details.
+
 ### Circular dependencies
 
 Circular dependencies are allowed but has an important restriction. If a module

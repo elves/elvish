@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
+	"unicode"
 
 	"golang.org/x/sys/windows"
 	"src.elv.sh/pkg/sys"
@@ -22,7 +24,36 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("input: %#v", event)
+		switch event := event.(type) {
+		case *sys.KeyEvent:
+			typ := "up"
+			if event.BKeyDown != 0 {
+				typ = "down"
+			}
+			r := rune(event.UChar[0]) + rune(event.UChar[1])<<8
+			rs := "(" + string(r) + ")"
+			if unicode.IsControl(r) {
+				rs = "   "
+			}
+			var mods []string
+			testMod := func(mask uint32, name string) {
+				if event.DwControlKeyState&mask != 0 {
+					mods = append(mods, name)
+				}
+			}
+			testMod(0x1, "right alt")
+			testMod(0x2, "left alt")
+			testMod(0x4, "right ctrl")
+			testMod(0x8, "left ctrl")
+			testMod(0x10, "shift")
+			// testMod(0x20, "numslock")
+			testMod(0x40, "scrolllock")
+			testMod(0x80, "capslock")
+			testMod(0x100, "enhanced")
+
+			log.Printf("%4s, key code = %02x, char = %04x %s, mods = %s\n",
+				typ, event.WVirtualKeyCode, r, rs, strings.Join(mods, ", "))
+		}
 	}
 }
 
