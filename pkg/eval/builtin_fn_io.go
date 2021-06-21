@@ -814,13 +814,18 @@ func fromTerminated(fm *Frame, terminator string) error {
 //
 // @cf from-lines to-terminated
 
-func toLines(fm *Frame, inputs Inputs) {
+func toLines(fm *Frame, inputs Inputs) error {
 	out := fm.ByteOutput()
+	var errOut error
 
 	inputs(func(v interface{}) {
+		if errOut != nil {
+			return
+		}
 		// TODO: Don't ignore the error.
-		fmt.Fprintln(out, vals.ToString(v))
+		_, errOut = fmt.Fprintln(out, vals.ToString(v))
 	})
+	return errOut
 }
 
 //elvdoc:fn to-terminated
@@ -850,10 +855,14 @@ func toTerminated(fm *Frame, terminator string, inputs Inputs) error {
 	}
 
 	out := fm.ByteOutput()
+	var errOut error
 	inputs(func(v interface{}) {
-		fmt.Fprint(out, vals.ToString(v), terminator)
+		if errOut != nil {
+			return
+		}
+		_, errOut = fmt.Fprint(out, vals.ToString(v), terminator)
 	})
-	return nil
+	return errOut
 }
 
 //elvdoc:fn to-json

@@ -41,24 +41,28 @@ func TestPrint(t *testing.T) {
 	Test(t,
 		That(`print [foo bar]`).Prints("[foo bar]"),
 		That(`print foo bar &sep=,`).Prints("foo,bar"),
+		thatByteOutputErrorIsBubbled("print foo"),
 	)
 }
 
 func TestEcho(t *testing.T) {
 	Test(t,
 		That(`echo [foo bar]`).Prints("[foo bar]\n"),
+		thatByteOutputErrorIsBubbled("echo foo"),
 	)
 }
 
 func TestPprint(t *testing.T) {
 	Test(t,
 		That(`pprint [foo bar]`).Prints("[\n foo\n bar\n]\n"),
+		thatByteOutputErrorIsBubbled("pprint foo"),
 	)
 }
 
 func TestReprCmd(t *testing.T) {
 	Test(t,
 		That(`repr foo bar ['foo bar']`).Prints("foo bar ['foo bar']\n"),
+		thatByteOutputErrorIsBubbled("repr foo"),
 	)
 }
 
@@ -66,13 +70,22 @@ func TestShow(t *testing.T) {
 	Test(t,
 		// A sanity test that show writes something.
 		That(`show ?(fail foo) | !=s (slurp) ''`).Puts(true),
+		thatByteOutputErrorIsBubbled("repr ?(fail foo)"),
 	)
 }
 
 func TestOnlyBytesAndOnlyValues(t *testing.T) {
 	Test(t,
-		// Baseline for only-{bytes,values}
+		// Baseline
 		That(`{ print bytes; put values }`).Prints("bytes").Puts("values"),
+		That(`{ print bytes; put values } | only-bytes`).Prints("bytes").Puts(),
+		thatByteOutputErrorIsBubbled("{ print bytes; put values } | only-bytes"),
+	)
+}
+
+func TestOnlyValues(t *testing.T) {
+	Test(t,
+		// Baseline
 		That(`{ print bytes; put values } | only-bytes`).Prints("bytes").Puts(),
 		That(`{ print bytes; put values } | only-values`).Prints("").Puts("values"),
 	)
@@ -116,6 +129,7 @@ func TestFromJson(t *testing.T) {
 func TestToLines(t *testing.T) {
 	Test(t,
 		That(`put "l\norem" ipsum | to-lines`).Prints("l\norem\nipsum\n"),
+		thatByteOutputErrorIsBubbled("to-lines [foo]"),
 	)
 }
 
@@ -126,6 +140,7 @@ func TestToTerminated(t *testing.T) {
 		That(`to-terminated "XYZ" [a b c]`).Throws(
 			errs.BadValue{What: "terminator",
 				Valid: "a single ASCII character", Actual: "XYZ"}),
+		thatByteOutputErrorIsBubbled(`to-terminated "X" [a b c]`),
 	)
 }
 
@@ -136,6 +151,7 @@ func TestToJson(t *testing.T) {
 "foo"
 `),
 		That(`put [$nil foo] | to-json`).Prints("[null,\"foo\"]\n"),
+		thatByteOutputErrorIsBubbled("to-json [foo]"),
 	)
 }
 
@@ -173,5 +189,11 @@ func TestPrintf(t *testing.T) {
 		That(`printf '%d' 3.5`).Prints("%!d(cannot parse as integer: 3.5)"),
 		// Unsupported verb
 		That(`printf '%A' foo`).Prints("%!A(unsupported formatting verb)"),
+
+		thatByteOutputErrorIsBubbled("printf foo"),
 	)
+}
+
+func thatByteOutputErrorIsBubbled(code string) TestCase {
+	return That(code + " >&-").Throws(AnyError)
 }
