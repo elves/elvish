@@ -218,6 +218,11 @@ func TestCommand_Redir(t *testing.T) {
 		That("echo abc > bytes", "each $echo~ < bytes").Prints("abc\n"),
 		That("echo def > bytes", "only-values < bytes | count").Puts(0),
 
+		// Writing value output to file throws an exception.
+		That("put foo >a").Throws(ErrNoValueOutput, "put foo >a"),
+		// Writing value output to closed port throws an exception too.
+		That("put foo >&-").Throws(ErrNoValueOutput, "put foo >&-"),
+
 		// Invalid redirection destination.
 		That("echo []> test").Throws(
 			errs.BadValue{

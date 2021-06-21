@@ -2,6 +2,7 @@ package eval
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -19,18 +20,34 @@ type Port struct {
 	closeFile bool
 	closeChan bool
 
-	// The following fields are only populated when the Port is connected to a
-	// pipe.
-	//
-	// When the reading end of File and Chan exits, it closes readerGoneCh,
-	// stores 1 in readerGone, before closing the reading end of File.
-	readerGoneCh chan struct{}
-	readerGone   *int32
+	// The following two fields are populated as an additional control
+	// mechanism for output ports. When no more value should be send on Chan,
+	// chanSendError is populated and chanSendStop is closed. This is used for
+	// both detection of reader termination (see readerGone below) and closed
+	// ports.
+	sendStop  chan struct{}
+	sendError *error
+
+	// Only populated in output ports writing to another command in a pipeline.
+	// When the reading end of the pipe exits, it stores 1 in readerGone. This
+	// is used to check if an external command killed by SIGPIPE is caused by
+	// the termination of the reader of the pipe.
+	readerGone *int32
 }
+
+// ErrNoValueOutput is thrown when writing to a pipe without a value output
+// component.
+var ErrNoValueOutput = errors.New("port has no value output")
+
+// A closed channel, suitable as a value for Port.sendStop when there is no
+// reader to start with.
+var closedSendStop = make(chan struct{})
+
+func init() { close(closedSendStop) }
 
 // Returns a copy of the Port with the Close* flags unset.
 func (p *Port) fork() *Port {
-	return &Port{p.File, p.Chan, false, false, p.readerGoneCh, p.readerGone}
+	return &Port{p.File, p.Chan, false, false, p.sendStop, p.sendError, p.readerGone}
 }
 
 // Closes a Port.
@@ -251,16 +268,17 @@ type ValueOutput interface {
 }
 
 type valueOutput struct {
-	data       chan<- interface{}
-	readerGone <-chan struct{}
+	data      chan<- interface{}
+	sendStop  <-chan struct{}
+	sendError *error
 }
 
 func (vo valueOutput) Put(v interface{}) error {
 	select {
 	case vo.data <- v:
 		return nil
-	case <-vo.readerGone:
-		return errs.ReaderGone{}
+	case <-vo.sendStop:
+		return *vo.sendError
 	}
 }
 

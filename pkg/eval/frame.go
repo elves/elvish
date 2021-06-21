@@ -97,7 +97,8 @@ func (fm *Frame) InputFile() *os.File {
 
 // ValueOutput returns a handle for writing value outputs.
 func (fm *Frame) ValueOutput() ValueOutput {
-	return valueOutput{fm.ports[1].Chan, fm.ports[1].readerGoneCh}
+	p := fm.ports[1]
+	return valueOutput{p.Chan, p.sendStop, p.sendError}
 }
 
 // ByteOutput returns a handle for writing byte outputs.
