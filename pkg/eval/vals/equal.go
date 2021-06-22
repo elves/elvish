@@ -1,6 +1,7 @@
 package vals
 
 import (
+	"math/big"
 	"reflect"
 )
 
@@ -21,8 +22,20 @@ func Equal(x, y interface{}) bool {
 		return x == y
 	case bool:
 		return x == y
+	case int:
+		return x == y
 	case float64:
 		return x == y
+	case *big.Int:
+		if y, ok := y.(*big.Int); ok {
+			return x.Cmp(y) == 0
+		}
+		return false
+	case *big.Rat:
+		if y, ok := y.(*big.Rat); ok {
+			return x.Cmp(y) == 0
+		}
+		return false
 	case string:
 		return x == y
 	case Equaler:
