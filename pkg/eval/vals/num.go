@@ -147,8 +147,8 @@ func UnifyNums2(n1, n2 Num, typ NumType) (u1, u2 Num) {
 	}
 }
 
-// ConvertToFloat64 converts any number to float64. It panics if num is not a
-// number value.
+// getNumType returns the type of the interface if the value is a number; otherwise, it panics since
+// that is a "can't happen" case.
 func getNumType(n Num) NumType {
 	switch n.(type) {
 	case int:

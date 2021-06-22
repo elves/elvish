@@ -24,6 +24,7 @@ func Hash(v interface{}) uint32 {
 			return 1
 		}
 		return 0
+	// TODO: Add support for the other num types: int, *big.Int, *big.Rat.
 	case float64:
 		return hash.UInt64(math.Float64bits(v))
 	case string:
