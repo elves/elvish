@@ -12,9 +12,17 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
+func TestKindOf(t *testing.T) {
+	Test(t,
+		That("kind-of a []").Puts("string", "list"),
+		thatOutputErrorIsBubbled("kind-of a"),
+	)
+}
+
 func TestConstantly(t *testing.T) {
 	Test(t,
 		That(`f = (constantly foo); $f; $f`).Puts("foo", "foo"),
+		thatOutputErrorIsBubbled("(constantly foo)"),
 	)
 }
 
@@ -74,6 +82,8 @@ func TestTime(t *testing.T) {
 
 		That("time &on-end=[_]{ fail on-end } { fail body }").Throws(
 			FailError{"body"}),
+
+		thatOutputErrorIsBubbled("time { }"),
 	)
 }
 

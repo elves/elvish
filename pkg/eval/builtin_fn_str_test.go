@@ -29,6 +29,7 @@ func TestStringComparisonCommands(t *testing.T) {
 func TestToString(t *testing.T) {
 	Test(t,
 		That(`to-string str (num 1) $true`).Puts("str", "1", "$true"),
+		thatOutputErrorIsBubbled("to-string str"),
 	)
 }
 
@@ -38,6 +39,7 @@ func TestBase(t *testing.T) {
 		That(`base 16 42 233`).Puts("2a", "e9"),
 		That(`base 1 1`).Throws(AnyError),   // no base-1
 		That(`base 37 10`).Throws(AnyError), // no letter for base-37
+		thatOutputErrorIsBubbled("base 2 1"),
 	)
 }
 

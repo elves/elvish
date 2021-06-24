@@ -132,3 +132,18 @@ func (e errCmdExit) matchError(gotErr error) bool {
 	ge := gotErr.(eval.ExternalCmdExit)
 	return e.v.CmdName == ge.CmdName && e.v.WaitStatus == ge.WaitStatus
 }
+
+type errOneOf struct{ errs []error }
+
+func OneOfErrors(errs ...error) error { return errOneOf{errs} }
+
+func (e errOneOf) Error() string { return fmt.Sprint("one of", e.errs) }
+
+func (e errOneOf) matchError(gotError error) bool {
+	for _, want := range e.errs {
+		if matchErr(want, gotError) {
+			return true
+		}
+	}
+	return false
+}

@@ -408,9 +408,16 @@ func dissoc(a, k interface{}) (interface{}, error) {
 //
 // @cf one
 
-func all(fm *Frame, inputs Inputs) {
+func all(fm *Frame, inputs Inputs) error {
 	out := fm.ValueOutput()
-	inputs(func(v interface{}) { out.Put(v) })
+	var errOut error
+	inputs(func(v interface{}) {
+		if errOut != nil {
+			return
+		}
+		errOut = out.Put(v)
+	})
+	return errOut
 }
 
 //elvdoc:fn one
@@ -466,15 +473,20 @@ func one(fm *Frame, inputs Inputs) error {
 //
 // Etymology: Haskell.
 
-func take(fm *Frame, n int, inputs Inputs) {
+func take(fm *Frame, n int, inputs Inputs) error {
 	out := fm.ValueOutput()
+	var errOut error
 	i := 0
 	inputs(func(v interface{}) {
+		if errOut != nil {
+			return
+		}
 		if i < n {
-			out.Put(v)
+			errOut = out.Put(v)
 		}
 		i++
 	})
+	return errOut
 }
 
 //elvdoc:fn drop
@@ -504,15 +516,20 @@ func take(fm *Frame, n int, inputs Inputs) {
 //
 // @cf take
 
-func drop(fm *Frame, n int, inputs Inputs) {
+func drop(fm *Frame, n int, inputs Inputs) error {
 	out := fm.ValueOutput()
+	var errOut error
 	i := 0
 	inputs(func(v interface{}) {
+		if errOut != nil {
+			return
+		}
 		if i >= n {
-			out.Put(v)
+			errOut = out.Put(v)
 		}
 		i++
 	})
+	return errOut
 }
 
 //elvdoc:fn has-value

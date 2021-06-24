@@ -59,19 +59,14 @@ func TestRange(t *testing.T) {
 		// non-positive int step
 		That("range &step=0 10").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "0"}),
+		thatOutputErrorIsBubbled("range 1"),
 
-		That("range 10_000_000_000_000_000_000 10_000_000_000_000_000_003").
-			Puts(
-				vals.ParseNum("10_000_000_000_000_000_000"),
-				vals.ParseNum("10_000_000_000_000_000_001"),
-				vals.ParseNum("10_000_000_000_000_000_002")),
-		That("range 10_000_000_000_000_000_000 10_000_000_000_000_000_003 &step=2").
-			Puts(
-				vals.ParseNum("10_000_000_000_000_000_000"),
-				vals.ParseNum("10_000_000_000_000_000_002")),
+		That("range "+z+" "+z3).Puts(bigInt(z), bigInt(z1), bigInt(z2)),
+		That("range "+z+" "+z3+" &step=2").Puts(bigInt(z), bigInt(z2)),
 		// non-positive bigint step
 		That("range &step=-"+z+" 10").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-" + z}),
+		thatOutputErrorIsBubbled("range "+z+" "+z1),
 
 		That("range 23/10").Puts(0, 1, 2),
 		That("range 1/10 23/10").Puts(
@@ -81,6 +76,7 @@ func TestRange(t *testing.T) {
 		// non-positive bigrat step
 		That("range &step=-1/2 10").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-1/2"}),
+		thatOutputErrorIsBubbled("range 1/2 3/2"),
 
 		That("range 1.2").Puts(0.0, 1.0),
 		That("range &step=0.5 1 3").Puts(1.0, 1.5, 2.0, 2.5),
@@ -90,12 +86,14 @@ func TestRange(t *testing.T) {
 		// non-positive float64 step
 		That("range &step=-0.5 10").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-0.5"}),
+		thatOutputErrorIsBubbled("range 1.2"),
 	)
 }
 
 func TestRepeat(t *testing.T) {
 	Test(t,
 		That(`repeat 4 foo`).Puts("foo", "foo", "foo", "foo"),
+		thatOutputErrorIsBubbled("repeat 1 foo"),
 	)
 }
 
@@ -118,6 +116,7 @@ func TestAll(t *testing.T) {
 		That(`put foo bar | all`).Puts("foo", "bar"),
 		That(`echo foobar | all`).Puts("foobar"),
 		That(`all [foo bar]`).Puts("foo", "bar"),
+		thatOutputErrorIsBubbled("all [foo]"),
 	)
 }
 
@@ -129,18 +128,21 @@ func TestOne(t *testing.T) {
 		That(`one [foo]`).Puts("foo"),
 		That(`one []`).Throws(AnyError),
 		That(`one [foo bar]`).Throws(AnyError),
+		thatOutputErrorIsBubbled("one [foo]"),
 	)
 }
 
 func TestTake(t *testing.T) {
 	Test(t,
 		That(`range 100 | take 2`).Puts(0, 1),
+		thatOutputErrorIsBubbled("take 1 [foo]"),
 	)
 }
 
 func TestDrop(t *testing.T) {
 	Test(t,
 		That(`range 100 | drop 98`).Puts(98, 99),
+		thatOutputErrorIsBubbled("drop 1 [foo bar]"),
 	)
 }
 
@@ -184,6 +186,7 @@ func TestKeys(t *testing.T) {
 		// Windows does not have an external sort command. Disabled until we have a
 		// builtin sort command.
 		That(`keys [&a=foo &b=bar] | order`).Puts("a", "b"),
+		thatOutputErrorIsBubbled("keys [&a=foo]"),
 	)
 }
 
@@ -266,5 +269,7 @@ func TestOrder(t *testing.T) {
 		// are equal, an check that the order among them has not changed.
 		That("put l x o x r x e x m | order &less-than=[a b]{ eq $a x }").
 			Puts("x", "x", "x", "x", "l", "o", "r", "e", "m"),
+
+		thatOutputErrorIsBubbled("order [foo]"),
 	)
 }

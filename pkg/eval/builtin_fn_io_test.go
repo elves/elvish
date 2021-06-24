@@ -1,8 +1,10 @@
 package eval_test
 
 import (
+	"os"
 	"testing"
 
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
@@ -204,5 +206,5 @@ func TestPrintf(t *testing.T) {
 }
 
 func thatOutputErrorIsBubbled(code string) TestCase {
-	return That(code + " >&-").Throws(AnyError)
+	return That(code + " >&-").Throws(OneOfErrors(os.ErrInvalid, eval.ErrNoValueOutput))
 }

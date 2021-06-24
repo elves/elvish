@@ -45,6 +45,9 @@ func TestRe(t *testing.T) {
 		// Basic verification of &posix behavior.
 		That("put (re:find &posix 'a(x|xy)+' AaxyxxxyZ)[text]").Puts("axyxxxy"),
 
+		// re:find bubbles output error
+		That("re:find . ab >&-").Throws(eval.ErrNoValueOutput),
+
 		That("re:replace '(ba|z)sh' '${1}SH' 'bash and zsh'").Puts("baSH and zSH"),
 		That("re:replace &literal '(ba|z)sh' '$sh' 'bash and zsh'").Puts("$sh and $sh"),
 		That("re:replace '(ba|z)sh' [x]{ put [&bash=BaSh &zsh=ZsH][$x] } 'bash and zsh'").Puts("BaSh and ZsH"),
@@ -65,6 +68,9 @@ func TestRe(t *testing.T) {
 		That("re:split &max=2 : /usr/sbin:/usr/bin:/bin").Puts("/usr/sbin", "/usr/bin:/bin"),
 		// Invalid pattern in re:split
 		That("re:split '(' x").Throws(AnyError),
+
+		// re:split bubbles output error
+		That("re:split . ab >&-").Throws(eval.ErrNoValueOutput),
 
 		That("re:quote a.txt").Puts(`a\.txt`),
 		That("re:quote '(*)'").Puts(`\(\*\)`),

@@ -138,6 +138,7 @@ func TestAnd(t *testing.T) {
 
 		// Exception
 		That("and a (fail x)").Throws(FailError{"x"}, "fail x"),
+		thatOutputErrorIsBubbled("and a"),
 	)
 }
 
@@ -152,6 +153,7 @@ func TestOr(t *testing.T) {
 
 		// Exception
 		That("or $false (fail x)").Throws(FailError{"x"}, "fail x"),
+		thatOutputErrorIsBubbled("or a"),
 	)
 }
 

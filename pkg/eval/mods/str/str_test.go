@@ -97,14 +97,17 @@ func TestStr(t *testing.T) {
 
 		That(`str:split : /usr:/bin:/tmp`).Puts("/usr", "/bin", "/tmp"),
 		That(`str:split : /usr:/bin:/tmp &max=2`).Puts("/usr", "/bin:/tmp"),
+		That("str:split : a:b >&-").Throws(eval.ErrNoValueOutput),
 
 		That(`str:to-codepoints a`).Puts("0x61"),
 		That(`str:to-codepoints 你好`).Puts("0x4f60", "0x597d"),
 		That(`str:to-codepoints 你好 | str:from-codepoints (all)`).Puts("你好"),
+		That("str:to-codepoints a >&-").Throws(eval.ErrNoValueOutput),
 
 		That(`str:to-utf8-bytes a`).Puts("0x61"),
 		That(`str:to-utf8-bytes 你好`).Puts("0xe4", "0xbd", "0xa0", "0xe5", "0xa5", "0xbd"),
 		That(`str:to-utf8-bytes 你好 | str:from-utf8-bytes (all)`).Puts("你好"),
+		That("str:to-utf8-bytes a >&-").Throws(eval.ErrNoValueOutput),
 
 		That(`str:title abc`).Puts("Abc"),
 		That(`str:title "abc def"`).Puts("Abc Def"),
