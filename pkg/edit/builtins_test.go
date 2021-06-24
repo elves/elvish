@@ -6,7 +6,8 @@ import (
 
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
-	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/eval"
+	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/tt"
 	"src.elv.sh/pkg/ui"
 )
@@ -183,14 +184,14 @@ func TestSmartEnter_AcceptsCodeWhenWholeBufferIsComplete(t *testing.T) {
 }
 
 func TestWordify(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	TestWithSetup(t, setupWordify,
+		That("wordify 'ls str [list]'").Puts("ls", "str", "[list]"),
+		That("wordify foo >&-").Throws(AnyError),
+	)
+}
 
-	evals(f.Evaler, `@words = (edit:wordify 'ls str [list]')`)
-	wantWords := vals.MakeList("ls", "str", "[list]")
-	if words, _ := f.Evaler.Global().Index("words"); !vals.Equal(words, wantWords) {
-		t.Errorf("$words is %v, want %v", words, wantWords)
-	}
+func setupWordify(ev *eval.Evaler) {
+	ev.AddBuiltin(eval.NsBuilder{}.AddGoFn("", "wordify", wordify).Ns())
 }
 
 var bufferBuiltinsTests = []struct {

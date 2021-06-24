@@ -3,45 +3,63 @@ package edit
 import (
 	"testing"
 
-	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/eval"
+	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/parse"
 )
 
-func TestCompleteGetopt(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+func setupCompleteGetopt(ev *eval.Evaler) {
+	ev.AddBuiltin(eval.NsBuilder{}.AddGoFn("", "complete-getopt", completeGetopt).Ns())
 
-	evals(f.Evaler,
-		`fn complete [@args]{
-		   opt-specs = [ [&short=a &long=all &desc="Show all"]
-		                 [&short=n &long=name &desc="Set name" &arg-required=$true
-		                  &completer= [_]{ put name1 name2 }] ]
-		   arg-handlers = [ [_]{ put first1 first2 }
-		                    [_]{ put second1 second2 } ... ]
-		   edit:complete-getopt $args $opt-specs $arg-handlers
-		 }`,
-		`@arg1 = (complete '')`,
-		`@opts = (complete -)`,
-		`@long-opts = (complete --)`,
-		`@short-opt-arg = (complete -n '')`,
-		`@long-opt-arg = (complete --name '')`,
-		`@arg1-after-opt = (complete -a '')`,
-		`@arg2 = (complete arg1 '')`,
-		`@vararg = (complete arg1 arg2 '')`,
-	)
-	testGlobals(t, f.Evaler, map[string]interface{}{
-		"arg1": vals.MakeList("first1", "first2"),
-		"opts": vals.MakeList(
+	code := `fn complete [@args]{
+	           opt-specs = [ [&short=a &long=all &desc="Show all"]
+	                         [&short=n &long=name &desc="Set name" &arg-required=$true
+	                          &completer= [_]{ put name1 name2 }] ]
+	           arg-handlers = [ [_]{ put first1 first2 }
+	                            [_]{ put second1 second2 } ... ]
+	           complete-getopt $args $opt-specs $arg-handlers
+	         }`
+	ev.Eval(parse.Source{Name: "[test init]", Code: code}, eval.EvalCfg{})
+}
+
+func TestCompleteGetopt2(t *testing.T) {
+	TestWithSetup(t, setupCompleteGetopt,
+		// Complete argument
+		That("complete ''").Puts("first1", "first2"),
+		That("complete '' >&-").Throws(eval.ErrNoValueOutput),
+
+		// Complete option
+		That("complete -").Puts(
 			complexItem{Stem: "-a", Display: "-a (Show all)"},
 			complexItem{Stem: "--all", Display: "--all (Show all)"},
 			complexItem{Stem: "-n", Display: "-n (Set name)"},
 			complexItem{Stem: "--name", Display: "--name (Set name)"}),
-		"long-opts": vals.MakeList(
+		That("complete - >&-").Throws(eval.ErrNoValueOutput),
+
+		// Complte long option
+		That("complete --").Puts(
 			complexItem{Stem: "--all", Display: "--all (Show all)"},
 			complexItem{Stem: "--name", Display: "--name (Set name)"}),
-		"short-opt-arg":  vals.MakeList("name1", "name2"),
-		"long-opt-arg":   vals.MakeList("name1", "name2"),
-		"arg1-after-opt": vals.MakeList("first1", "first2"),
-		"arg2":           vals.MakeList("second1", "second2"),
-		"vararg":         vals.MakeList("second1", "second2"),
-	})
+		That("complete -- >&-").Throws(eval.ErrNoValueOutput),
+
+		// Complete argument of short option
+		That("complete -n ''").Puts("name1", "name2"),
+		That("complete -n '' >&-").Throws(eval.ErrNoValueOutput),
+
+		// Complete argument of long option
+		That("complete --name ''").Puts("name1", "name2"),
+		That("complete --name '' >&-").Throws(eval.ErrNoValueOutput),
+
+		// Complete (normal) argument after option that doesn't take an argument
+		That("complete -a ''").Puts("first1", "first2"),
+		That("complete -a '' >&-").Throws(eval.ErrNoValueOutput),
+
+		// Complete second argument
+		That("complete arg1 ''").Puts("second1", "second2"),
+		That("complete arg1 '' >&-").Throws(eval.ErrNoValueOutput),
+
+		// Complete variadic argument
+		That("complete arg1 arg2 ''").Puts("second1", "second2"),
+		That("complete arg1 arg2 '' >&-").Throws(eval.ErrNoValueOutput),
+	)
 }

@@ -133,8 +133,8 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 		}
 		return out.Put(c)
 	}
-	call := func(fn eval.Callable, args ...interface{}) {
-		fn.Call(fm, args, eval.NoOpts)
+	call := func(fn eval.Callable, args ...interface{}) error {
+		return fn.Call(fm, args, eval.NoOpts)
 	}
 
 	switch ctx.Type {
@@ -147,7 +147,7 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 			argHandler = argHandlers[len(argHandlers)-1]
 		}
 		if argHandler != nil {
-			call(argHandler, ctx.Text)
+			return call(argHandler, ctx.Text)
 		} else {
 			// TODO(xiaq): Notify that there is no suitable argument completer.
 		}
@@ -197,7 +197,7 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 	case getopt.OptionArgument:
 		gen := opts.argGenerator[ctx.Option.Option]
 		if gen != nil {
-			call(gen, ctx.Option.Argument)
+			return call(gen, ctx.Option.Argument)
 		}
 	}
 	return nil

@@ -59,6 +59,8 @@ func TestCompleteFilename(t *testing.T) {
 		vals.MakeList(
 			complexItem{Stem: "./d/a", CodeSuffix: " "},
 			complexItem{Stem: "./d/b", CodeSuffix: " "}))
+
+	testThatOutputErrorIsBubbled(t, f, "edit:complete-filename ls ''")
 }
 
 func TestComplexCandidate(t *testing.T) {
@@ -181,6 +183,8 @@ func TestBuiltinMatchers(t *testing.T) {
 		"substr": vals.MakeList(true, true, true, false, false, true, false, false),
 		"subseq": vals.MakeList(true, true, true, true, false, true, true, false),
 	})
+
+	testThatOutputErrorIsBubbled(t, f, "edit:match-prefix ab [ab]")
 }
 
 func TestBuiltinMatchers_Options(t *testing.T) {
@@ -201,4 +205,6 @@ func TestBuiltinMatchers_Options(t *testing.T) {
 		"c": vals.MakeList(true, true, true),
 		"d": vals.MakeList(false, true, false),
 	})
+
+	testThatOutputErrorIsBubbled(t, f, "edit:match-prefix &ignore-case ab [ab]")
 }

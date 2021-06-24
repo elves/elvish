@@ -144,3 +144,10 @@ func testGlobal(t *testing.T, ev *eval.Evaler, name string, wantVal interface{})
 			name, vals.Repr(val, vals.NoPretty), vals.Repr(wantVal, vals.NoPretty))
 	}
 }
+
+func testThatOutputErrorIsBubbled(t *testing.T, f *fixture, code string) {
+	t.Helper()
+	evals(f.Evaler, "var ret = (bool ?("+code+" >&-))")
+	// Exceptions are booleanly false
+	testGlobal(t, f.Evaler, "ret", false)
+}

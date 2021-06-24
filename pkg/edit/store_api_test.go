@@ -77,6 +77,9 @@ func TestCommandHistory(t *testing.T) {
 			"echo 2",
 			"echo 0",
 		))
+
+	testThatOutputErrorIsBubbled(t, f, "edit:command-history")
+	testThatOutputErrorIsBubbled(t, f, "edit:command-history &cmd-only")
 }
 
 func cmdMap(id int, cmd string) vals.Map {

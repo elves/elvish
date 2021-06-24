@@ -361,23 +361,31 @@ type matcherOpts struct {
 
 func (*matcherOpts) SetDefaultOptions() {}
 
-type wrappedMatcher func(fm *eval.Frame, opts matcherOpts, seed string, inputs eval.Inputs)
+type wrappedMatcher func(fm *eval.Frame, opts matcherOpts, seed string, inputs eval.Inputs) error
 
 func wrapMatcher(m matcher) wrappedMatcher {
-	return func(fm *eval.Frame, opts matcherOpts, seed string, inputs eval.Inputs) {
+	return func(fm *eval.Frame, opts matcherOpts, seed string, inputs eval.Inputs) error {
 		out := fm.ValueOutput()
+		var errOut error
 		if opts.IgnoreCase || (opts.SmartCase && seed == strings.ToLower(seed)) {
 			if opts.IgnoreCase {
 				seed = strings.ToLower(seed)
 			}
 			inputs(func(v interface{}) {
-				out.Put(m(strings.ToLower(vals.ToString(v)), seed))
+				if errOut != nil {
+					return
+				}
+				errOut = out.Put(m(strings.ToLower(vals.ToString(v)), seed))
 			})
 		} else {
 			inputs(func(v interface{}) {
-				out.Put(m(vals.ToString(v), seed))
+				if errOut != nil {
+					return
+				}
+				errOut = out.Put(m(vals.ToString(v), seed))
 			})
 		}
+		return errOut
 	}
 }
 
