@@ -15,10 +15,10 @@ func TestPipeline_ReaderGone_Unix(t *testing.T) {
 	Test(t,
 		// External commands terminated by SIGPIPE due to reader exiting early
 		// raise ReaderGone, which is then suppressed.
-		That("yes | nop").DoesNothing(),
+		That("yes | true").DoesNothing(),
 		That(
 			"var reached = $false",
-			"{ yes; reached = $true } | nop",
+			"{ yes; reached = $true } | true",
 			"put $reached",
 		).Puts(false),
 	)

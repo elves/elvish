@@ -120,7 +120,6 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 		thisExc := &excs[i]
 		go func() {
 			exc := thisOp.exec(newFm)
-			newFm.Close()
 			if exc != nil && !(outputIsPipe && isReaderGone(exc)) {
 				*thisExc = exc
 			}
@@ -130,6 +129,7 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 				close(input.sendStop)
 				atomic.StoreInt32(input.readerGone, 1)
 			}
+			newFm.Close()
 			wg.Done()
 		}()
 	}
