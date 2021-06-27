@@ -114,8 +114,14 @@ func is(args ...interface{}) bool {
 // eq $values...
 // ```
 //
-// Determine whether all `$value`s are structurally equivalent. Writes `$true` when
+// Determines whether all `$value`s are equal. Writes `$true` when
 // given no or one argument.
+//
+// Two values are equal when they have the same type and value.
+//
+// For complex data structures like lists and maps, comparison is done
+// recursively. A pseudo-map is equal to another pseudo-map with the same
+// internal type (which is not exposed to Elvish code now) and value.
 //
 // ```elvish-transcript
 // ~> eq a a
