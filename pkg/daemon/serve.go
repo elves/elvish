@@ -1,8 +1,6 @@
 package daemon
 
 import (
-	"errors"
-	"net"
 	"os"
 	"os/signal"
 	"sync"
@@ -73,7 +71,10 @@ func Serve(sockpath, dbpath string) {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			if !errors.Is(err, net.ErrClosed) {
+			select {
+			case <-quitChan:
+				// listener was closed explicitly; don't complain.
+			default:
 				logger.Printf("Failed to accept: %v", err)
 			}
 			break
