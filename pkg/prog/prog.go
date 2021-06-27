@@ -73,11 +73,11 @@ func newFlagSet(stderr io.Writer, f *Flags) *flag.FlagSet {
 	fs.BoolVar(&f.Web, "web", false, "run backend of web interface")
 	fs.IntVar(&f.Port, "port", defaultWebPort, "the port of the web backend")
 
-	fs.BoolVar(&f.Daemon, "daemon", false, "run daemon instead of shell")
+	fs.BoolVar(&f.Daemon, "daemon", false, "[internal flag] run the storage daemon instead of shell")
 
-	fs.StringVar(&f.Bin, "bin", "", "path to the elvish binary")
-	fs.StringVar(&f.DB, "db", "", "path to the database")
-	fs.StringVar(&f.Sock, "sock", "", "path to the daemon socket")
+	fs.StringVar(&f.Bin, "bin", "", "[internal flag] path to the elvish binary")
+	fs.StringVar(&f.DB, "db", "", "[internal flag] path to the database")
+	fs.StringVar(&f.Sock, "sock", "", "[internal flag] path to the daemon socket")
 
 	fs.IntVar(&DeprecationLevel, "deprecation-level", DeprecationLevel, "show warnings for all features deprecated as of version 0.X")
 
