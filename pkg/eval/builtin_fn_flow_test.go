@@ -36,16 +36,20 @@ func TestPeach(t *testing.T) {
 	Test(t,
 		// Verify the output has the expected values when sorted.
 		That(`range 5 | peach [x]{ * 2 $x } | order`).Puts(0, 2, 4, 6, 8),
-		// Verify that successive runs produce the output in different order. This test can
-		// theoretically suffer false positives but the vast majority of the time this will produce
-		// the expected output in the first iteration. The probability it will produce the same
-		// order of output in 100 iterations is effectively zero.
+		// Test that the order of output does not necessarily match the order of
+		// input.
+		//
+		// Most of the time this effect can be observed without the need of any
+		// jitter, but if the system only has one CPU core to execute goroutines
+		// (which can happen even when GOMAXPROCS > 1), the scheduling of
+		// goroutines can become deterministic. The random jitter fixes that by
+		// forcing goroutines to yield the thread and allow other goroutines to
+		// execute.
 		That(`
-			fn f { range 100 | peach $put~ | put [(all)] }
-			var x = (f)
-			for _ [(range 100)] {
-				var y = (f)
-				if (not-eq $x $y) {
+			var @in = (range 100)
+			while $true {
+				var @out = (all $in | peach [x]{ sleep (* (rand) 0.01); put $x })
+				if (not-eq $in $out) {
 					put $true
 					break
 				}
