@@ -18,8 +18,6 @@ type Paths struct {
 	Db      string
 	Rc      string
 	LibDir  string
-
-	Bin string
 }
 
 // MakePaths makes a populated Paths, using the given overrides.
@@ -37,14 +35,6 @@ func MakePaths(stderr io.Writer, overrides Paths) Paths {
 		setChild(&p.LibDir, p.DataDir, "lib")
 	}
 
-	if p.Bin == "" {
-		binFile, err := os.Executable()
-		if err == nil {
-			p.Bin = binFile
-		} else {
-			fmt.Fprintln(stderr, "warning: cannot get executable path:", err)
-		}
-	}
 	return p
 }
 

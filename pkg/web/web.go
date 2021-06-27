@@ -32,12 +32,11 @@ func (program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 	if f.CodeInArg {
 		return prog.BadUsage("-c cannot be used together with -web")
 	}
-	p := Web{BinPath: f.Bin, SockPath: f.Sock, DbPath: f.DB, Port: f.Port}
+	p := Web{SockPath: f.Sock, DbPath: f.DB, Port: f.Port}
 	return p.Main(fds, nil)
 }
 
 type Web struct {
-	BinPath  string
 	SockPath string
 	DbPath   string
 	Port     int
@@ -56,7 +55,7 @@ type ExecuteResponse struct {
 
 func (web *Web) Main(fds [3]*os.File, _ []string) error {
 	p := shell.MakePaths(fds[2],
-		shell.Paths{Bin: web.BinPath, Sock: web.SockPath, Db: web.DbPath})
+		shell.Paths{Sock: web.SockPath, Db: web.DbPath})
 	ev := shell.InitRuntime(fds[2], p, client.Activate)
 	defer shell.CleanupRuntime(fds[2], ev)
 

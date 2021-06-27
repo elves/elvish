@@ -39,7 +39,6 @@ func InitRuntime(stderr io.Writer, p Paths, activate daemondefs.ActivateFunc) *e
 	if activate != nil && p.Sock != "" && p.Db != "" {
 		spawnCfg := &daemondefs.SpawnConfig{
 			RunDir:   p.RunDir,
-			BinPath:  p.Bin,
 			DbPath:   p.Db,
 			SockPath: p.Sock,
 		}

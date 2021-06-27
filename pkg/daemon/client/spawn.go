@@ -20,14 +20,9 @@ import (
 // I/O or signals in the current terminal and keeps running after the current
 // process quits.
 func Spawn(cfg *daemondefs.SpawnConfig) error {
-	binPath := cfg.BinPath
-	// Determine binPath.
-	if binPath == "" {
-		bin, err := os.Executable()
-		if err != nil {
-			return errors.New("cannot find elvish: " + err.Error())
-		}
-		binPath = bin
+	binPath, err := os.Executable()
+	if err != nil {
+		return errors.New("cannot find elvish: " + err.Error())
 	}
 
 	var pathError error
@@ -56,7 +51,6 @@ func Spawn(cfg *daemondefs.SpawnConfig) error {
 	args := []string{
 		binPath,
 		"-daemon",
-		"-bin", binPath,
 		"-db", dbPath,
 		"-sock", sockPath,
 	}

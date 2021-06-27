@@ -27,7 +27,7 @@ type Program struct {
 func (p Program) ShouldRun(*prog.Flags) bool { return true }
 
 func (p Program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
-	paths := MakePaths(fds[2], Paths{Bin: f.Bin, Sock: f.Sock, Db: f.DB})
+	paths := MakePaths(fds[2], Paths{Sock: f.Sock, Db: f.DB})
 	if f.NoRc {
 		paths.Rc = ""
 	}

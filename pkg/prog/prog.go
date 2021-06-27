@@ -47,7 +47,7 @@ type Flags struct {
 	Daemon bool
 	Forked int
 
-	Bin, DB, Sock string
+	DB, Sock string
 }
 
 func newFlagSet(stderr io.Writer, f *Flags) *flag.FlagSet {
@@ -75,7 +75,6 @@ func newFlagSet(stderr io.Writer, f *Flags) *flag.FlagSet {
 
 	fs.BoolVar(&f.Daemon, "daemon", false, "[internal flag] run the storage daemon instead of shell")
 
-	fs.StringVar(&f.Bin, "bin", "", "[internal flag] path to the elvish binary")
 	fs.StringVar(&f.DB, "db", "", "[internal flag] path to the database")
 	fs.StringVar(&f.Sock, "sock", "", "[internal flag] path to the daemon socket")
 

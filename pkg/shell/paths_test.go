@@ -12,7 +12,7 @@ import (
 var j = filepath.Join
 
 func TestMakePaths_PopulatesUnsetSubPaths(t *testing.T) {
-	paths := MakePaths(os.Stderr, Paths{RunDir: "run", DataDir: "data", Bin: "bin"})
+	paths := MakePaths(os.Stderr, Paths{RunDir: "run", DataDir: "data"})
 	wantPaths := Paths{
 		RunDir: "run",
 		Sock:   j("run", "sock"),
@@ -21,8 +21,6 @@ func TestMakePaths_PopulatesUnsetSubPaths(t *testing.T) {
 		Db:      j("data", "db"),
 		Rc:      j("data", "rc.elv"),
 		LibDir:  j("data", "lib"),
-
-		Bin: "bin",
 	}
 	if paths != wantPaths {
 		t.Errorf("got paths %v, want %v", paths, wantPaths)
@@ -32,7 +30,7 @@ func TestMakePaths_PopulatesUnsetSubPaths(t *testing.T) {
 func TestMakePaths_RespectsSetSubPaths(t *testing.T) {
 	sock := "sock-override"
 	paths := MakePaths(os.Stderr, Paths{
-		RunDir: "run", DataDir: "data", Bin: "bin",
+		RunDir: "run", DataDir: "data",
 		Sock: sock,
 	})
 	if paths.Sock != sock {
@@ -47,7 +45,7 @@ func TestMakePaths_SetsAndCreatesDataDir(t *testing.T) {
 	defer cleanupEnv()
 
 	paths := MakePaths(os.Stderr, Paths{
-		RunDir: "run", Bin: "bin",
+		RunDir: "run",
 	})
 
 	wantDataDir := home + "/.elvish"
