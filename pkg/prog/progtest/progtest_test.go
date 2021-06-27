@@ -9,6 +9,7 @@ import (
 func TestOutputCaptureDoesNotDeadlock(t *testing.T) {
 	t.Helper()
 	f := Setup()
+	defer f.Cleanup()
 
 	// We need enough data to verify whether we're likely to deadlock due to
 	// filling the pipe before the test completes. Pipes typically buffer 8 to
