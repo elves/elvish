@@ -658,8 +658,12 @@ func fromLines(fm *Frame) error {
 // ```
 //
 // Takes bytes stdin, parses it as JSON and puts the result on structured stdout.
-// The input can contain multiple JSONs, which can, but do not have to, be
-// separated with whitespaces.
+// The input can contain multiple JSONs, and whitespace between them are ignored.
+//
+// Note that JSON's only number type corresponds to Elvish's floating-point
+// number type, and is always considered [inexact](language.html#exactness).
+// It may be necessary to coerce JSON numbers to exact numbers using
+// [exact-num](#exact-num).
 //
 // Examples:
 //
@@ -715,7 +719,6 @@ func fromJSONInterface(v interface{}) (interface{}, error) {
 	case nil, bool, string:
 		return v, nil
 	case float64:
-		// TODO: Decide if we want to normalize ints here.
 		return v, nil
 	case []interface{}:
 		vec := vals.EmptyList
