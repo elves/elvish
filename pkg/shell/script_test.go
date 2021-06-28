@@ -3,6 +3,7 @@ package shell
 import (
 	"testing"
 
+	"src.elv.sh/pkg/eval"
 	. "src.elv.sh/pkg/prog/progtest"
 )
 
@@ -11,7 +12,7 @@ func TestScript_File(t *testing.T) {
 	defer f.Cleanup()
 	MustWriteFile("a.elv", "echo hello")
 
-	Script(f.Fds(), []string{"a.elv"}, &ScriptConfig{})
+	Script(f.Fds(), []string{"a.elv"}, &ScriptConfig{Evaler: eval.NewEvaler()})
 
 	f.TestOut(t, 1, "hello\n")
 	f.TestOut(t, 2, "")
@@ -21,7 +22,7 @@ func TestScript_BadFile(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 
-	ret := Script(f.Fds(), []string{"a.elv"}, &ScriptConfig{})
+	ret := Script(f.Fds(), []string{"a.elv"}, &ScriptConfig{Evaler: eval.NewEvaler()})
 
 	if ret != 2 {
 		t.Errorf("got ret %v, want 2", ret)
@@ -34,7 +35,7 @@ func TestScript_Cmd(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 
-	Script(f.Fds(), []string{"echo hello"}, &ScriptConfig{Cmd: true})
+	Script(f.Fds(), []string{"echo hello"}, &ScriptConfig{Evaler: eval.NewEvaler(), Cmd: true})
 
 	f.TestOut(t, 1, "hello\n")
 	f.TestOut(t, 2, "")
@@ -89,7 +90,8 @@ func TestScript_Error(t *testing.T) {
 			f := Setup()
 			defer f.Cleanup()
 			exit := Script(f.Fds(), []string{test.code}, &ScriptConfig{
-				Cmd: true, CompileOnly: test.compileOnly, JSON: test.json})
+				Evaler: eval.NewEvaler(),
+				Cmd:    true, CompileOnly: test.compileOnly, JSON: test.json})
 			if exit != test.wantExit {
 				t.Errorf("got exit code %v, want 2", test.wantExit)
 			}

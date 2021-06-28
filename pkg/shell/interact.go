@@ -15,6 +15,8 @@ import (
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/edit"
 	"src.elv.sh/pkg/eval"
+	daemonmod "src.elv.sh/pkg/eval/mods/daemon"
+	"src.elv.sh/pkg/eval/mods/store"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/sys"
 )
@@ -25,8 +27,11 @@ var interactiveRescueShell bool = true
 
 // InteractConfig keeps configuration for the interactive mode.
 type InteractConfig struct {
+	Evaler *eval.Evaler
+	RC     string
+
 	ActivateDaemon daemondefs.ActivateFunc
-	Paths          Paths
+	SpawnConfig    *daemondefs.SpawnConfig
 }
 
 // Interactive mode panic handler.
@@ -47,8 +52,29 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 	if interactiveRescueShell {
 		defer handlePanic()
 	}
-	ev, cleanup := setupShell(fds, cfg.Paths, cfg.ActivateDaemon)
-	defer cleanup()
+	ev := cfg.Evaler
+
+	if cfg.ActivateDaemon != nil && cfg.SpawnConfig != nil {
+		// TODO(xiaq): Connect to daemon and install daemon module
+		// asynchronously.
+		cl, err := cfg.ActivateDaemon(fds[2], cfg.SpawnConfig)
+		if err != nil {
+			fmt.Fprintln(fds[2], "Cannot connect to daemon:", err)
+			fmt.Fprintln(fds[2], "Daemon-related functions will likely not work.")
+		}
+		defer func() {
+			err := cl.Close()
+			if err != nil {
+				fmt.Fprintln(fds[2],
+					"warning: failed to close connection to daemon:", err)
+			}
+		}()
+		// Even if error is not nil, we install daemon-related functionalities
+		// anyway. Daemon may eventually come online and become functional.
+		ev.SetDaemonClient(cl)
+		ev.AddModule("store", store.Ns(cl))
+		ev.AddModule("daemon", daemonmod.Ns(cl))
+	}
 
 	// Build Editor.
 	var ed editor
@@ -61,8 +87,8 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 	}
 
 	// Source rc.elv.
-	if cfg.Paths.Rc != "" {
-		err := sourceRC(fds, ev, ed, cfg.Paths.Rc)
+	if cfg.RC != "" {
+		err := sourceRC(fds, ev, ed, cfg.RC)
 		if err != nil {
 			diag.ShowError(fds[2], err)
 		}

@@ -24,28 +24,13 @@ func Spawn(cfg *daemondefs.SpawnConfig) error {
 	if err != nil {
 		return errors.New("cannot find elvish: " + err.Error())
 	}
-
-	var pathError error
-	abs := func(name string, path string) string {
-		if pathError != nil {
-			return ""
-		}
-		if path == "" {
-			pathError = fmt.Errorf("%s is required for spawning daemon", name)
-			return ""
-		}
-		absPath, err := filepath.Abs(path)
-		if err != nil {
-			pathError = fmt.Errorf("cannot resolve %s to absolute path: %s", name, err)
-		}
-		return absPath
+	dbPath, err := abs("DbPath", cfg.DbPath)
+	if err != nil {
+		return err
 	}
-	binPath = abs("BinPath", binPath)
-	dbPath := abs("DbPath", cfg.DbPath)
-	sockPath := abs("SockPath", cfg.SockPath)
-	runDir := abs("RunDir", cfg.RunDir)
-	if pathError != nil {
-		return pathError
+	sockPath, err := abs("SockPath", cfg.SockPath)
+	if err != nil {
+		return err
 	}
 
 	args := []string{
@@ -55,24 +40,34 @@ func Spawn(cfg *daemondefs.SpawnConfig) error {
 		"-sock", sockPath,
 	}
 
-	out, err := fsutil.ClaimFile(runDir, "daemon-*.log")
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
 	// The daemon does not read any input; open DevNull and use it for stdin. We
 	// could also just close the stdin, but on Unix that would make the first
 	// file opened by the daemon take FD 0.
 	in, err := os.OpenFile(os.DevNull, os.O_RDONLY, 0)
 	if err != nil {
-		in = os.Stdin
-	} else {
-		defer in.Close()
+		return err
 	}
+	defer in.Close()
+
+	out, err := fsutil.ClaimFile(cfg.RunDir, "daemon-*.log")
+	if err != nil {
+		return err
+	}
+	defer out.Close()
 
 	procattrs := procAttrForSpawn([]*os.File{in, out, out})
-	_, err = os.StartProcess(binPath, args, procattrs)
 
+	_, err = os.StartProcess(binPath, args, procattrs)
 	return err
+}
+
+func abs(name, path string) (string, error) {
+	if path == "" {
+		return "", fmt.Errorf("%s is required for spawning daemon", name)
+	}
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve %s to absolute path: %s", name, err)
+	}
+	return absPath, nil
 }

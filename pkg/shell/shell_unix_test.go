@@ -11,6 +11,8 @@ import (
 
 	"src.elv.sh/pkg/daemon"
 	"src.elv.sh/pkg/daemon/client"
+	"src.elv.sh/pkg/daemon/daemondefs"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/testutil"
 
 	. "src.elv.sh/pkg/prog/progtest"
@@ -48,13 +50,12 @@ func TestShell_ConnectsToDaemon(t *testing.T) {
 		t.Fatalf("timed out waiting for daemon to start")
 	}
 
-	// This test uses Script, but it also applies to Interact since the daemon
-	// connection logic is common to both modes.
-	Script(f.Fds(),
-		[]string{"use daemon; print $daemon:pid"},
-		&ScriptConfig{
-			Cmd: true, ActivateDaemon: client.Activate,
-			Paths: Paths{Sock: "sock", Db: "db", RunDir: "."}})
+	f.FeedIn("use daemon; print $daemon:pid\n")
+	Interact(f.Fds(),
+		&InteractConfig{
+			Evaler:         eval.NewEvaler(),
+			ActivateDaemon: client.Activate,
+			SpawnConfig:    &daemondefs.SpawnConfig{SockPath: "sock", DbPath: "db", RunDir: "."}})
+
 	f.TestOut(t, 1, strconv.Itoa(os.Getpid()))
-	f.TestOut(t, 2, "")
 }

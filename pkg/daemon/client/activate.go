@@ -36,7 +36,7 @@ const connectionShutdownFmt = "Socket file %s exists but is not responding to re
 var errInvalidDB = errors.New("daemon reported that database is invalid. If you upgraded Elvish from a pre-0.10 version, you need to upgrade your database by following instructions in https://github.com/elves/upgrade-db-for-0.10/")
 
 // Activate returns a daemon client, either by connecting to an existing daemon,
-// or spawning a new one.
+// or spawning a new one. It always returns a non-nil client, even if there was an error.
 func Activate(stderr io.Writer, spawnCfg *daemondefs.SpawnConfig) (daemondefs.Client, error) {
 	sockpath := spawnCfg.SockPath
 	cl := NewClient(sockpath)

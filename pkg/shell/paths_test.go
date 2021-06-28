@@ -2,41 +2,11 @@ package shell
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/testutil"
 )
-
-var j = filepath.Join
-
-func TestMakePaths_PopulatesUnsetSubPaths(t *testing.T) {
-	paths := MakePaths(os.Stderr, Paths{RunDir: "run", DataDir: "data"})
-	wantPaths := Paths{
-		RunDir: "run",
-		Sock:   j("run", "sock"),
-
-		DataDir: "data",
-		Db:      j("data", "db"),
-		Rc:      j("data", "rc.elv"),
-		LibDir:  j("data", "lib"),
-	}
-	if paths != wantPaths {
-		t.Errorf("got paths %v, want %v", paths, wantPaths)
-	}
-}
-
-func TestMakePaths_RespectsSetSubPaths(t *testing.T) {
-	sock := "sock-override"
-	paths := MakePaths(os.Stderr, Paths{
-		RunDir: "run", DataDir: "data",
-		Sock: sock,
-	})
-	if paths.Sock != sock {
-		t.Errorf("got paths.Sock = %q, want %q", paths.Sock, sock)
-	}
-}
 
 func TestMakePaths_SetsAndCreatesDataDir(t *testing.T) {
 	home, cleanupDir := testutil.TestDir()
@@ -44,9 +14,10 @@ func TestMakePaths_SetsAndCreatesDataDir(t *testing.T) {
 	cleanupEnv := testutil.WithTempEnv(env.HOME, home)
 	defer cleanupEnv()
 
-	paths := MakePaths(os.Stderr, Paths{
-		RunDir: "run",
-	})
+	paths, err := DataPaths()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	wantDataDir := home + "/.elvish"
 	if paths.DataDir != wantDataDir {
