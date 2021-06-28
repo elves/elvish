@@ -144,7 +144,16 @@ func toKey(v interface{}) (ui.Key, error) {
 
 //elvdoc:fn notify
 //
-// Prints a notification message above the editor.
+// ```elvish
+// edit:notify $message
+// ```
+//
+// Prints a notification message.
+//
+// If called while the editor is active, this will print the message above the
+// editor, and redraw the editor.
+//
+// If called while the editor is inactive, this is equivalent to `echo $message`.
 
 //elvdoc:fn return-line
 //
