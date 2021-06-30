@@ -787,8 +787,8 @@ func fromTerminated(fm *Frame, terminator string) error {
 		}
 		if err != nil {
 			if err != io.EOF {
-				return err
 				logger.Println("error on reading:", err)
+				return err
 			}
 			return nil
 		}
