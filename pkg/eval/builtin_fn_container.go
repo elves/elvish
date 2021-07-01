@@ -40,7 +40,8 @@ func init() {
 
 		"keys": keys,
 
-		"order": order,
+		"compare": compare,
+		"order":   order,
 	})
 }
 
@@ -801,6 +802,8 @@ func keys(fm *Frame, v interface{}) error {
 // ▶ 5
 // ▶ 10
 // ```
+//
+// @cf compare
 
 type orderOptions struct {
 	Reverse  bool
@@ -809,10 +812,10 @@ type orderOptions struct {
 
 func (opt *orderOptions) SetDefaultOptions() {}
 
-// ErrUncomparable is raised by the order command when inputs contain
+// ErrUncomparable is raised by the compare and order commands when inputs contain
 // uncomparable values.
 var ErrUncomparable = errs.BadValue{
-	What:  `inputs to "order"`,
+	What:  `inputs to "compare" or "order"`,
 	Valid: "comparable values", Actual: "uncomparable values"}
 
 func order(fm *Frame, opts orderOptions, inputs Inputs) error {
@@ -855,12 +858,12 @@ func order(fm *Frame, opts orderOptions, inputs Inputs) error {
 			return true
 		}
 	} else {
-		// Use default comparison implemented by compare.
+		// Use default comparison implemented by cmp.
 		lessFn = func(i, j int) bool {
 			if errSort != nil {
 				return true
 			}
-			o := compare(values[i], values[j])
+			o := cmp(values[i], values[j])
 			if o == uncomparable {
 				errSort = ErrUncomparable
 				return true
@@ -896,7 +899,58 @@ const (
 	uncomparable
 )
 
-func compare(a, b interface{}) ordering {
+//elvdoc:fn compare
+//
+// ```elvish
+// compare $a $b
+// ```
+//
+// Outputs -1 if `$a` is less than `$b`, 0 if equal, and 1 if greater than.
+//
+// The following comparison algorithm is used:
+//
+// - Numbers are compared numerically. `NaN` is treated as smaller than all other numbers.
+//
+// - Strings are compared lexicographically by bytes, which is equivalent to
+//   comparing by codepoints under UTF-8.
+//
+// - Lists are compared lexicographically by elements, if the elements at the
+//   same positions are comparable.
+//
+// If the ordering between two elements is not defined by the conditions above a "bad value"
+// exception is thrown.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> compare a b
+// ▶ 1
+// ~> compare b a
+// ▶ -1
+// ~> compare x x
+// ▶ 0
+// ~> order (float64 10) (float64 1)
+// ▶ 1
+// ```
+//
+// Beware that strings that look like numbers are treated as strings, not numbers.
+//
+// @cf order
+
+func compare(fm *Frame, a, b interface{}) (int, error) {
+	switch cmp(a, b) {
+	case less:
+		return -1, nil
+	case equal:
+		return 0, nil
+	case more:
+		return 1, nil
+	default:
+		return 0, ErrUncomparable
+	}
+}
+
+func cmp(a, b interface{}) ordering {
 	switch a := a.(type) {
 	case int, *big.Int, *big.Rat, float64:
 		switch b.(type) {
@@ -922,8 +976,7 @@ func compare(a, b interface{}) ordering {
 				return equal
 			case a < b:
 				return less
-			default:
-				// a > b
+			default: // a > b
 				return more
 			}
 		}
@@ -932,7 +985,7 @@ func compare(a, b interface{}) ordering {
 			aIt := a.Iterator()
 			bIt := b.Iterator()
 			for aIt.HasElem() && bIt.HasElem() {
-				o := compare(aIt.Elem(), bIt.Elem())
+				o := cmp(aIt.Elem(), bIt.Elem())
 				if o != equal {
 					return o
 				}
@@ -944,8 +997,7 @@ func compare(a, b interface{}) ordering {
 				return equal
 			case a.Len() < b.Len():
 				return less
-			default:
-				// a.Len() > b.Len()
+			default: // a.Len() > b.Len()
 				return more
 			}
 		}

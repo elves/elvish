@@ -195,6 +195,38 @@ func TestKeys(t *testing.T) {
 	)
 }
 
+func TestCompare(t *testing.T) {
+	Test(t,
+		// Comparing strings.
+		That("compare a b").Puts(-1),
+		That("compare b a").Puts(1),
+		That("compare x x").Puts(0),
+
+		// Comparing numbers.
+		That("compare (num 1) (num 2)").Puts(-1),
+		That("compare (num 2) (num 1)").Puts(1),
+		That("compare (num 3) (num 3)").Puts(0),
+
+		That("compare (num 1/4) (num 1/2)").Puts(-1),
+		That("compare (num 1/3) (num 0.2)").Puts(1),
+		That("compare (num 3.0) (num 3)").Puts(0),
+
+		That("compare (num nan) (num 3)").Puts(-1),
+		That("compare (num 3) (num nan)").Puts(1),
+		That("compare (num nan) (num nan)").Puts(0),
+
+		// Comparing lists.
+		That("compare [a, b] [a, a]").Puts(1),
+		That("compare [a, a] [a, b]").Puts(-1),
+		That("compare [x, y] [x, y]").Puts(0),
+
+		// Uncomparable values.
+		That("compare 1 (num 1)").Throws(ErrUncomparable),
+		That("compare x [x]").Throws(ErrUncomparable),
+		That("compare a [&a=x]").Throws(ErrUncomparable),
+	)
+}
+
 func TestOrder(t *testing.T) {
 	Test(t,
 		// Ordering strings
@@ -203,17 +235,20 @@ func TestOrder(t *testing.T) {
 		That("put 10 1 5 2 | order").Puts("1", "10", "2", "5"),
 
 		// Ordering numbers
-		// Only small integers
+		// Only small integers normalized to the "num" type.
 		That("put 10 1 1 | each $num~ | order").Puts(1, 1, 10),
 		That("put 10 1 5 2 -1 | each $num~ | order").Puts(-1, 1, 2, 5, 10),
-		// Small and large integers
+		// Small and large integers normalized to the "num" type.
 		That("put 1 "+z+" 2 "+z+" | each $num~ | order").Puts(1, 2, bigInt(z), bigInt(z)),
 		// Integers and rationals
 		That("put 1 2 3/2 3/2 | each $num~ | order").
 			Puts(1, big.NewRat(3, 2), big.NewRat(3, 2), 2),
-		// Integers and floats
+		// Integers and floats normalized to the "num" type.
 		That("put 1 1.5 2 1.5 | each $num~ | order").
 			Puts(1, 1.5, 1.5, 2),
+		// Mixed integers and floats.
+		That("put (num 1) (float64 1.5) (float64 2) (num 1.5) | order").
+			Puts(1, 1.5, 1.5, 2.0),
 		// For the sake of ordering, NaN's are considered smaller than other numbers
 		That("put NaN -1 NaN | each $num~ | order").Puts(math.NaN(), math.NaN(), -1),
 
@@ -232,7 +267,13 @@ func TestOrder(t *testing.T) {
 				vals.MakeList("a", 1.0), vals.MakeList("a", 2.0)),
 
 		// Attempting to order uncomparable values
-		That("put a (float64 1) b (float64 2) | order").
+		That("put (num 1) 1 | order").
+			Throws(ErrUncomparable, "order"),
+		That("put 1 (float64 1) | order").
+			Throws(ErrUncomparable, "order"),
+		That("put 1 (float64 1) b | order").
+			Throws(ErrUncomparable, "order"),
+		That("put [a] a | order").
 			Throws(ErrUncomparable, "order"),
 		That("put [a] [(float64 1)] | order").
 			Throws(ErrUncomparable, "order"),
