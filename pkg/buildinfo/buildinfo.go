@@ -29,45 +29,52 @@ var Reproducible = "false"
 // Program is the buildinfo subprogram.
 var Program prog.Program = program{}
 
-type Buildinfo struct {
+// Type contains all the build information fields.
+type Type struct {
 	Version      string `json:"version"`
 	Reproducible bool   `json:"reproducible"`
 	GoVersion    string `json:"goversion"`
 }
 
-func (Buildinfo) IsStructMap() {}
+func (Type) IsStructMap() {}
+
+// Value contains all the build information.
+var Value = Type{
+	Version:      Version + VersionSuffix,
+	Reproducible: Reproducible == "true",
+	GoVersion:    runtime.Version(),
+}
 
 type program struct{}
 
 func (program) ShouldRun(f *prog.Flags) bool { return f.Version || f.BuildInfo }
 
-func GetBuildInfo() Buildinfo {
-	return Buildinfo{
-		Version:      Version + VersionSuffix,
-		Reproducible: Reproducible == "true",
-		GoVersion:    runtime.Version(),
-	}
-}
-
 func (program) Run(fds [3]*os.File, f *prog.Flags, _ []string) error {
-	bi := GetBuildInfo()
 	switch {
-	case f.JSON:
-		// Note: The only way this will be executed is if option -buildinfo is also present.
-		// See the ShouldRun() method above.
-		b, err := json.Marshal(bi)
-		if err != nil {
-			panic("unexpected buildinfo related error")
-		}
-		fmt.Fprintln(fds[1], string(b))
 	case f.BuildInfo:
-		fmt.Fprintln(fds[1], "Version:", bi.Version)
-		fmt.Fprintln(fds[1], "Go version:", bi.GoVersion)
-		fmt.Fprintln(fds[1], "Reproducible build:", bi.Reproducible)
+		if f.JSON {
+			fmt.Fprintln(fds[1], mustToJSON(Value))
+		} else {
+			fmt.Fprintln(fds[1], "Version:", Value.Version)
+			fmt.Fprintln(fds[1], "Go version:", Value.GoVersion)
+			fmt.Fprintln(fds[1], "Reproducible build:", Value.Reproducible)
+		}
 	case f.Version:
-		fmt.Fprintln(fds[1], bi.Version)
+		if f.JSON {
+			fmt.Fprintln(fds[1], mustToJSON(Value.Version))
+		} else {
+			fmt.Fprintln(fds[1], Value.Version)
+		}
 	default:
-		panic("unexpected buildinfo related error")
+		panic("should not run buildinfo")
 	}
 	return nil
+}
+
+func mustToJSON(v interface{}) string {
+	b, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
 }

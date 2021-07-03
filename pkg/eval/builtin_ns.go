@@ -103,8 +103,6 @@ import (
 //
 // @cf buildinfo
 
-var bi = buildinfo.GetBuildInfo()
-
 var builtinNs = NsBuilder{
 	"_":         vars.NewBlackhole(),
 	"pid":       vars.NewReadOnly(strconv.Itoa(syscall.Getpid())),
@@ -112,8 +110,8 @@ var builtinNs = NsBuilder{
 	"nil":       vars.NewReadOnly(nil),
 	"true":      vars.NewReadOnly(true),
 	"false":     vars.NewReadOnly(false),
-	"buildinfo": vars.NewReadOnly(bi),
-	"version":   vars.NewReadOnly(bi.Version),
+	"buildinfo": vars.NewReadOnly(buildinfo.Value),
+	"version":   vars.NewReadOnly(buildinfo.Value.Version),
 	"paths":     vars.NewEnvListVar("PATH"),
 }
 

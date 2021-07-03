@@ -389,9 +389,11 @@ that behave like maps with some restrictions.
 A pseudo-map has a fixed set of keys whose values can be accessed by
 [indexing](#indexing) like you would for a regular [map](#map). Similarly, you
 can use commands like [`keys`](./builtin.html#keys) and
-[`has-key`](./builtin.html#keys) on such objects. However, unlike a normal map
-it is not possible to add new keys, remove existing keys, or even assign a new
-value to an existing key. In other words, a pseudo-map is immutable.
+[`has-key`](./builtin.html#keys) on such objects.
+
+Unlike a normal map, it is currently not possible to create a modified version
+of an existing pseudo-map: it is not possible to create a pseudo-map with new
+keys, without existing keys, or with a different value for a given key.
 
 The pseudo-map mechanism is often used for introspection. For example,
 [exceptions](#exception), [user-defined functions](#function), and
