@@ -27,6 +27,9 @@ generate:
 test:
 	go test $(shell ./tools/run-race.sh) ./...
 
+vet:
+	go vet ./...
+
 # Generate a basic test coverage report, and open it in the browser. See also
 # https://apps.codecov.io/gh/elves/elvish/.
 cover:
@@ -52,4 +55,4 @@ checkstyle-md:
 	./tools/checkstyle-md.sh
 
 .SILENT: checkstyle-go checkstyle-md
-.PHONY: default get generate test style checkstyle checkstyle-go checkstyle-md cover
+.PHONY: default get generate test vet style checkstyle checkstyle-go checkstyle-md cover

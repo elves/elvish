@@ -118,6 +118,17 @@ jobs:
     - name: Check style
       run: ./tools/checkstyle-go.sh
 
+  vet:
+    name: Run go vet
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+    - name: Run go vet
+      run: go vet ./...
+
   checkstyle-md:
     name: Check style of **.md
     runs-on: ubuntu-latest
