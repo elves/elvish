@@ -377,22 +377,22 @@ func useFromFile(fm *Frame, spec, path string, r diag.Ranger) (*Ns, error) {
 			return nil, err
 		}
 		return evalModule(fm, path, parse.Source{Name: path, Code: code, IsFile: true}, r)
-	} else {
-		plug, err := pluginOpen(path + ".so")
-		if err != nil {
-			return nil, noSuchModule{spec}
-		}
-		sym, err := plug.Lookup("Ns")
-		if err != nil {
-			return nil, err
-		}
-		ns, ok := sym.(**Ns)
-		if !ok {
-			return nil, noSuchModule{spec}
-		}
-		fm.Evaler.modules[path] = *ns
-		return *ns, nil
 	}
+
+	plug, err := pluginOpen(path + ".so")
+	if err != nil {
+		return nil, noSuchModule{spec}
+	}
+	sym, err := plug.Lookup("Ns")
+	if err != nil {
+		return nil, err
+	}
+	ns, ok := sym.(**Ns)
+	if !ok {
+		return nil, noSuchModule{spec}
+	}
+	fm.Evaler.modules[path] = *ns
+	return *ns, nil
 }
 
 // TODO: Make access to fm.Evaler.modules concurrency-safe.

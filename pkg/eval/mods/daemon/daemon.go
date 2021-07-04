@@ -2,17 +2,12 @@
 package daemon
 
 import (
-	"errors"
 	"strconv"
 
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vars"
 )
-
-// errDontKnowHowToSpawnDaemon is thrown by daemon:spawn when the Evaler's
-// DaemonSpawner field is nil.
-var errDontKnowHowToSpawnDaemon = errors.New("don't know how to spawn daemon")
 
 // Ns makes the daemon: namespace.
 func Ns(d daemondefs.Client) *eval.Ns {

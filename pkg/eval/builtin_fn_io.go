@@ -515,8 +515,6 @@ func show(fm *Frame, v diag.Shower) error {
 	return err
 }
 
-const bytesReadBufferSize = 512
-
 //elvdoc:fn only-bytes
 //
 // ```elvish
