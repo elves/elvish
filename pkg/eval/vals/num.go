@@ -78,10 +78,6 @@ const (
 	Float64
 )
 
-// PromoteToBigInt converts an int or *big.Int to a *big.Int. It panics if n is
-// any other type.
-// PromoteToBigInt converts an int or *big.Int to a,ig.Int. I or *big.Ratt
-// panics if Rat is any other type.
 // UnifyNums unifies the given slice of numbers into the same type, converting
 // those with lower NumType to the higest NumType present in the slice. The typ
 // argument can be used to force the minimum NumType.
@@ -177,7 +173,7 @@ func PromoteToBigInt(n Num) *big.Int {
 	}
 }
 
-// PromoteToBigInt converts an int, *big.Int or *big.Rat to a *big.Rat. It
+// PromoteToBigRat converts an int, *big.Int or *big.Rat to a *big.Rat. It
 // panics if n is any other type.
 func PromoteToBigRat(n Num) *big.Rat {
 	switch n := n.(type) {
@@ -201,13 +197,11 @@ func ConvertToFloat64(num Num) float64 {
 	case int:
 		return float64(num)
 	case *big.Int:
-		if num.IsInt64() {
-			// Might fit in float64
+		if num.IsInt64() { // might fit in float64
+			// TODO: Make this more robust so the "might fit" is "will fit".
 			return float64(num.Int64())
-		} else {
-			// Definitely won't fit in float64
-			return math.Inf(num.Sign())
 		}
+		return math.Inf(num.Sign()) // definitely won't fit in float64
 	case *big.Rat:
 		f, _ := num.Float64()
 		return f

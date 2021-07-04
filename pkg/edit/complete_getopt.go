@@ -148,9 +148,8 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 		}
 		if argHandler != nil {
 			return call(argHandler, ctx.Text)
-		} else {
-			// TODO(xiaq): Notify that there is no suitable argument completer.
 		}
+		// TODO(xiaq): Notify that there is no suitable argument completer.
 	case getopt.NewOption:
 		for _, opt := range opts.opts {
 			if opt.Short != 0 {
