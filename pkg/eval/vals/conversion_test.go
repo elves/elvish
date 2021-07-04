@@ -1,6 +1,7 @@
 package vals
 
 import (
+	"math"
 	"math/big"
 	"reflect"
 	"testing"
@@ -23,14 +24,29 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 		return ptr.Elem().Interface(), err
 	}
 
+	var z1, z2 big.Int
+	z1.SetUint64(math.MaxUint64)
+	z2.SetBit(&z2, 64, 1) // too big for a uint64
+
 	Test(t, Fn("ScanToGo", scanToGo), Table{
 		// int
 		Args("12", 0).Rets(12),
 		Args("0x12", 0).Rets(0x12),
-		Args(12.0, 0).Rets(0, errMustBeInteger),
-		Args(0.5, 0).Rets(0, errMustBeInteger),
-		Args(someType{}, 0).Rets(Any, errMustBeInteger),
+		Args(12.0, 0).Rets(0, WrongType{"integer", "(num 12.0)"}),
+		Args(0.5, 0).Rets(0, WrongType{"integer", "(num 0.5)"}),
+		Args(someType{}, 0).Rets(Any, WrongType{"integer", "<unknown {}>"}),
 		Args("x", 0).Rets(Any, cannotParseAs{"integer", "x"}),
+
+		// uint64
+		Args("12", uint64(0)).Rets(uint64(12)),
+		Args("0x12", uint64(0)).Rets(uint64(0x12)),
+		Args(&z1, uint64(0)).Rets(uint64(math.MaxUint64)),
+		Args(12.0, uint64(0)).Rets(Any, WrongType{"uint64", "(num 12.0)"}),
+		Args(-1, uint64(0)).Rets(Any, WrongType{"uint64", "(num -1)"}),
+		Args(0.5, uint64(0)).Rets(Any, WrongType{"uint64", "(num 0.5)"}),
+		Args(&z2, uint64(0)).Rets(Any, WrongType{"uint64", "(num " + z2.String() + ")"}),
+		Args(someType{}, uint64(0)).Rets(Any, WrongType{"number", "<unknown {}>"}),
+		Args("x", uint64(0)).Rets(Any, cannotParseAs{"number", "x"}),
 
 		// float64
 		Args(23, 0.0).Rets(23.0),
@@ -38,7 +54,7 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 		Args(1.2, 0.0).Rets(1.2),
 		Args("23", 0.0).Rets(23.0),
 		Args("0x23", 0.0).Rets(float64(0x23)),
-		Args(someType{}, 0.0).Rets(Any, errMustBeNumber),
+		Args(someType{}, 0.0).Rets(Any, WrongType{"number", "<unknown {}>"}),
 		Args("x", 0.0).Rets(Any, cannotParseAs{"number", "x"}),
 
 		// rune
@@ -75,7 +91,7 @@ func TestScanToGo_NumDst(t *testing.T) {
 		Args(12.0).Rets(12.0),
 
 		Args("bad").Rets(Any, cannotParseAs{"number", "bad"}),
-		Args(EmptyList).Rets(Any, errMustBeNumber),
+		Args(EmptyList).Rets(Any, WrongType{"number", "[]"}),
 	})
 }
 

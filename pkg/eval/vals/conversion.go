@@ -58,8 +58,6 @@ var (
 	errMustBeString       = errors.New("must be string")
 	errMustBeValidUTF8    = errors.New("must be valid UTF-8")
 	errMustHaveSingleRune = errors.New("must have a single rune")
-	errMustBeNumber       = errors.New("must be number")
-	errMustBeInteger      = errors.New("must be integer")
 )
 
 // ScanToGo converts an Elvish value, and stores it in the destination of ptr,
@@ -75,6 +73,12 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 		i, err := elvToInt(src)
 		if err == nil {
 			*ptr = i
+		}
+		return err
+	case *uint64:
+		n, err := elvToNum(src)
+		if err == nil {
+			*ptr, err = ConvertToUint64(n)
 		}
 		return err
 	case *float64:
@@ -127,7 +131,28 @@ func elvToInt(arg interface{}) (int, error) {
 		}
 		return 0, cannotParseAs{"integer", ReprPlain(arg)}
 	default:
-		return 0, errMustBeInteger
+		return 0, WrongType{"integer", Repr(arg, -1)}
+	}
+}
+
+// ConvertToUint64 takes a string or Num value and returns a uint64 if possible, else an error. This
+// deliberately does not treat negative numbers as unsigned ints. It also assumes the Elvish runtime
+// has normalized the number so that this function does not need to consider big.Rat objects that
+// have a divisor of one. Similarly for floating point values that have no fractional component.
+func ConvertToUint64(arg Num) (uint64, error) {
+	switch arg := arg.(type) {
+	case int:
+		if arg < 0 {
+			return 0, WrongType{"uint64", Repr(arg, -1)}
+		}
+		return uint64(arg), nil
+	case *big.Int:
+		if !arg.IsUint64() {
+			return 0, WrongType{"uint64", Repr(arg, -1)}
+		}
+		return arg.Uint64(), nil
+	default:
+		return 0, WrongType{"uint64", Repr(arg, -1)}
 	}
 }
 
@@ -142,7 +167,7 @@ func elvToNum(arg interface{}) (Num, error) {
 		}
 		return n, nil
 	default:
-		return 0, errMustBeNumber
+		return 0, WrongType{"number", Repr(arg, -1)}
 	}
 }
 

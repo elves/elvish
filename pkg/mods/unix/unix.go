@@ -17,7 +17,10 @@ const ExposeUnixNs = true
 
 // Ns is an Elvish namespace that contains variables and functions that deal
 // with features unique to UNIX-like operating systems. On
-var Ns = eval.BuildNs().
+var Ns = eval.BuildNsNamed("unix").
 	AddVars(map[string]vars.Var{
 		"umask": UmaskVariable{},
+	}).
+	AddGoFns(map[string]interface{}{
+		"ulimit": ulimit,
 	}).Ns()
