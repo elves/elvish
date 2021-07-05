@@ -95,3 +95,15 @@ type ReaderGone struct {
 func (e ReaderGone) Error() string {
 	return "reader gone"
 }
+
+// ArgError is used when an argument to a command does not have the expected type or there is some
+// other problem with the argument.
+type ArgError struct {
+	ArgNum int
+	Msg    string
+}
+
+// Error implements the error interface.
+func (err ArgError) Error() string {
+	return fmt.Sprintf("argument %d: %s", err.ArgNum, err.Msg)
+}

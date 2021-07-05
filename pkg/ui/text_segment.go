@@ -15,7 +15,7 @@ type Segment struct {
 	Text string
 }
 
-// Kind returns "styled-segment".
+// Kind is used by vals.Kind() to cause it to return the correct "kind" for these objects.
 func (*Segment) Kind() string { return "ui:text-segment" }
 
 // Repr returns the representation of this Segment. The string can be used to

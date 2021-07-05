@@ -31,10 +31,8 @@ type closure struct {
 
 var _ Callable = &closure{}
 
-// Kind returns "fn".
-func (*closure) Kind() string {
-	return "fn"
-}
+// Kind is used by vals.Kind() to cause it to return the correct "kind" for these objects.
+func (*closure) Kind() string { return "fn" }
 
 // Equal compares by address.
 func (c *closure) Equal(rhs interface{}) bool {

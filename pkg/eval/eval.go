@@ -83,6 +83,9 @@ type Evaler struct {
 	daemonClient daemondefs.Client
 }
 
+// Kind is used by vals.Kind() to cause it to return the correct "kind" for these objects.
+func (*Evaler) Kind() string { return "fn" }
+
 // Editor is the interface that the line editor has to satisfy. It is needed so
 // that this package does not depend on the edit package.
 type Editor interface {

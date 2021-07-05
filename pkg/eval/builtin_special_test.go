@@ -42,6 +42,8 @@ func TestVar(t *testing.T) {
 		// Shadowing.
 		That("var x = old; fn f { put $x }", "var x = new; put $x; f").
 			Puts("new", "old"),
+		// Invalid value for the LHS variable.
+		That("var x~ = $true").Throws(vals.WrongType{WantKind: "fn", GotKind: "bool"}),
 
 		// Variable name that must be quoted after $ must be quoted
 		That("var a/b").DoesNotCompile(),

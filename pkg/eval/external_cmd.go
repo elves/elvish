@@ -37,9 +37,13 @@ func NewExternalCmd(name string) Callable {
 	return externalCmd{name}
 }
 
-func (e externalCmd) Kind() string {
-	return "fn"
-}
+// Kind is used by vals.Kind() to cause it to return the correct "kind" for these objects.
+//
+// TODO: It's unclear whether this should return the same "kind" as builtin functions given the
+// difference in calling conventions and argument syntax. Document why "fn" is returned or change it
+// to "external". Whichever value is ultimately chosen, thus removing this TODO, the rationale for
+// the choice needs to be documented here as well as user facing documentation.
+func (externalCmd) Kind() string { return "fn" }
 
 func (e externalCmd) Equal(a interface{}) bool {
 	return e == a

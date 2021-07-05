@@ -123,10 +123,8 @@ func NewGoFn(name string, impl interface{}) Callable {
 	return b
 }
 
-// Kind returns "fn".
-func (*goFn) Kind() string {
-	return "fn"
-}
+// Kind is used by vals.Kind() to cause it to return the correct "kind" for these objects.
+func (*goFn) Kind() string { return "fn" }
 
 // Equal compares identity.
 func (b *goFn) Equal(rhs interface{}) bool {
@@ -196,9 +194,8 @@ func (b *goFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) e
 			panic("impossible")
 		}
 		ptr := reflect.New(typ)
-		err := vals.ScanToGo(arg, ptr.Interface())
-		if err != nil {
-			return fmt.Errorf("wrong type of argument %d: %v", i, err)
+		if err := vals.ScanToGo(arg, ptr.Interface()); err != nil {
+			return errs.ArgError{ArgNum: i, Msg: err.Error()}
 		}
 		in = append(in, ptr.Elem())
 	}

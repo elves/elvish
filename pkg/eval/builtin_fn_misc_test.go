@@ -14,6 +14,19 @@ import (
 
 func TestKindOf(t *testing.T) {
 	Test(t,
+		That("kind-of x").Puts("string"),
+		That("kind-of []").Puts("list"),
+		That("kind-of [&]").Puts("map"),
+		That("kind-of $true").Puts("bool"),
+		That("kind-of (eq x y)").Puts("bool"),
+		That("kind-of {}").Puts("string"),
+		That("kind-of []{}").Puts("fn"),
+		That("kind-of (float64 1)").Puts("number"),
+		That("kind-of (num 1)").Puts("number"),
+		That("kind-of (num 1/3)").Puts("number"),
+		That("kind-of $buildinfo").Puts("structmap"),
+		That("kind-of (styled x bold)").Puts("ui:text"),
+		That("kind-of (styled-segment x)").Puts("ui:text-segment"),
 		That("kind-of a []").Puts("string", "list"),
 		thatOutputErrorIsBubbled("kind-of a"),
 	)

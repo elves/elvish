@@ -49,10 +49,8 @@ func CombineNs(ns1 *Ns, ns2 *Ns) *Ns {
 	return ns
 }
 
-// Kind returns "ns".
-func (ns *Ns) Kind() string {
-	return "ns"
-}
+// Kind is used by vals.Kind() to cause it to return the correct "kind" for these objects.
+func (*Ns) Kind() string { return "ns" }
 
 // Hash returns a hash of the address of ns.
 func (ns *Ns) Hash() uint32 {
