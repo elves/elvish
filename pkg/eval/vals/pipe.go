@@ -20,10 +20,8 @@ func NewPipe(r, w *os.File) Pipe {
 	return Pipe{r, w}
 }
 
-// Kind returns "pipe".
-func (Pipe) Kind() string {
-	return "pipe"
-}
+// Kind is used by vals.Kind() to cause it to return the correct "kind" for these objects.
+func (Pipe) Kind() string { return "pipe" }
 
 // Equal compares based on the equality of the two consistuent files.
 func (p Pipe) Equal(rhs interface{}) bool {

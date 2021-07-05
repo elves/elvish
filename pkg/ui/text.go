@@ -28,7 +28,7 @@ func Concat(texts ...Text) Text {
 	return ret
 }
 
-// Kind returns "styled-text".
+// Kind is used by vals.Kind() to cause it to return the correct "kind" for these objects.
 func (Text) Kind() string { return "ui:text" }
 
 // Repr returns the representation of the current Text. It is just a wrapper

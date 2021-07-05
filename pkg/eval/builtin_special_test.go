@@ -53,7 +53,8 @@ func TestVar(t *testing.T) {
 			Puts("new", "old"),
 		// Explicit local: is allowed
 		That("var local:x = foo", "put $x").Puts("foo"),
-
+		// Invalid value for the LHS variable.
+		That("var x~ = $true").Throws(vals.WrongType{WantKind: "fn", GotKind: "bool"}),
 		// Variable name that must be quoted after $ must be quoted
 		That("var a/b").DoesNotCompile(),
 		// Multiple @ not allowed

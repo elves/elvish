@@ -109,10 +109,8 @@ func (exc *exception) Show(indent string) string {
 	return buf.String()
 }
 
-// Kind returns "exception".
-func (exc *exception) Kind() string {
-	return "exception"
-}
+// Kind is used by vals.Kind() to cause it to return the correct "kind" for these objects.
+func (*exception) Kind() string { return "exception" }
 
 // Repr returns a representation of the exception. It is lossy in that it does
 // not preserve the stacktrace.

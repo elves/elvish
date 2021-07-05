@@ -112,9 +112,8 @@ var keyNames = map[rune]string{
 	Backspace:          "Backspace",
 }
 
-func (k Key) Kind() string {
-	return "edit:key"
-}
+// Kind is used by vals.Kind() to cause it to return the correct "kind" for these objects.
+func (Key) Kind() string { return "edit:key" }
 
 func (k Key) Equal(other interface{}) bool {
 	return k == other
