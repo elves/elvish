@@ -283,7 +283,8 @@ func (c complexItem) IterateKeys(f func(interface{}) bool) {
 	vals.Feed(f, "stem", "code-suffix", "display")
 }
 
-func (c complexItem) Kind() string { return "map" }
+// Kind is used by vals.Kind() to cause it to return the correct "kind" for these objects.
+func (complexItem) Kind() string { return "map" }
 
 func (c complexItem) Equal(a interface{}) bool {
 	rhs, ok := a.(complexItem)

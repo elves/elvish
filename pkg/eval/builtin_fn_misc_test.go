@@ -13,6 +13,9 @@ import (
 )
 
 func TestKindOf(t *testing.T) {
+	// This verifies the linkage between the Elvish `kind-of` command and the vals.Kind() function
+	// it depends on. We otherwise rely on the unit tests of that function for the correctness of
+	// the behavior of `kind-of`.
 	Test(t,
 		That("kind-of a []").Puts("string", "list"),
 		thatOutputErrorIsBubbled("kind-of a"),

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
 
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
@@ -29,6 +30,7 @@ func TestEach(t *testing.T) {
 			Puts(0, 1, 2, 3, 5, 6, 7, 8, 9),
 		That(`range 10 | each [x]{ if (== $x 4) { fail haha }; put $x }`).
 			Puts(0, 1, 2, 3).Throws(AnyError),
+		That("each abc").Throws(errs.ArgError{ArgNum: 0, Msg: "wrong type: need fn, got string"}),
 		// TODO(xiaq): Test that "each" does not close the stdin.
 	)
 }

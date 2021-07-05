@@ -28,13 +28,13 @@ import (
 // entirely go away, as there might always be some mismatch between Elvish's
 // type system and Go's.
 
-type wrongType struct {
-	wantKind string
-	gotKind  string
+type WrongType struct {
+	WantKind string
+	GotKind  string
 }
 
-func (err wrongType) Error() string {
-	return fmt.Sprintf("wrong type: need %s, got %s", err.wantKind, err.gotKind)
+func (err WrongType) Error() string {
+	return fmt.Sprintf("wrong type: need %s, got %s", err.WantKind, err.GotKind)
 }
 
 type cannotParseAs struct {
@@ -90,11 +90,13 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 		// Do a generic `*ptr = src` via reflection
 		ptrType := TypeOf(ptr)
 		if ptrType.Kind() != reflect.Ptr {
+			// TODO: Change this to a panic or explain why it shouldn't panic given this should be a
+			// "can't happen" situation.
 			return fmt.Errorf("internal bug: need pointer to scan to, got %T", ptr)
 		}
 		dstType := ptrType.Elem()
 		if !TypeOf(src).AssignableTo(dstType) {
-			return wrongType{Kind(reflect.Zero(dstType).Interface()), Kind(src)}
+			return WrongType{Kind(ptr), Kind(src)}
 		}
 		ValueOf(ptr).Elem().Set(ValueOf(src))
 		return nil

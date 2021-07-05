@@ -4,6 +4,8 @@ package eval
 type Callable interface {
 	// Call calls the receiver in a Frame with arguments and options.
 	Call(fm *Frame, args []interface{}, opts map[string]interface{}) error
+	// Callable also implements the Kinder interface. See vals.Kind() for why this is needed.
+	Kind() string
 }
 
 var (

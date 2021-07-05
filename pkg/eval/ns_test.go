@@ -3,11 +3,13 @@ package eval_test
 import (
 	"testing"
 
+	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 )
 
 func TestNs(t *testing.T) {
 	Test(t,
+		That("ns $true").Throws(errs.ArgError{ArgNum: 0, Msg: "wrong type: need map, got bool"}),
 		That("kind-of (ns [&])").Puts("ns"),
 		// A Ns is only equal to itself
 		That("ns = (ns [&]); eq $ns $ns").Puts(true),
