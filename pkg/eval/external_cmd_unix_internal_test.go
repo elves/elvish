@@ -10,23 +10,23 @@ import (
 
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/testutil"
+	. "src.elv.sh/pkg/testutil"
 )
 
 func TestExec_Argv0Argv(t *testing.T) {
-	dir, cleanupFS := testutil.InTestDir()
+	dir, cleanupFS := InTestDir()
 	defer cleanupFS()
-	testutil.ApplyDir(testutil.Dir{
-		"bin": testutil.Dir{
-			"elvish": testutil.File{Perm: 0755},
-			"cat":    testutil.File{Perm: 0755},
+	ApplyDir(Dir{
+		"bin": Dir{
+			"elvish": File{Perm: 0755},
+			"cat":    File{Perm: 0755},
 		},
 	})
 
-	restorePATH := testutil.WithTempEnv("PATH", dir+"/bin")
+	restorePATH := WithTempEnv("PATH", dir+"/bin")
 	defer restorePATH()
 
-	restoreSHLVL := testutil.WithTempEnv(env.SHLVL, "1")
+	restoreSHLVL := WithTempEnv(env.SHLVL, "1")
 	defer restoreSHLVL()
 
 	var tests = []struct {
@@ -108,7 +108,7 @@ func TestDecSHLVL(t *testing.T) {
 
 func testDecSHLVL(t *testing.T, oldValue, newValue string) {
 	t.Helper()
-	restore := testutil.WithTempEnv(env.SHLVL, oldValue)
+	restore := WithTempEnv(env.SHLVL, oldValue)
 	defer restore()
 
 	decSHLVL()

@@ -197,11 +197,16 @@ func ConvertToFloat64(num Num) float64 {
 	case int:
 		return float64(num)
 	case *big.Int:
-		if num.IsInt64() { // might fit in float64
-			// TODO: Make this more robust so the "might fit" is "will fit".
+		if num.IsInt64() {
+			// Number can be converted losslessly to int64, so do that and then
+			// rely on the builtin conversion. Numbers too large to fit in
+			// float64 will be handled appropriately by the builtin conversion,
+			// overflowing to +Inf or -Inf.
 			return float64(num.Int64())
 		}
-		return math.Inf(num.Sign()) // definitely won't fit in float64
+		// Number doesn't fit in int64, so definitely won't fit in float64;
+		// handle this by overflowing.
+		return math.Inf(num.Sign())
 	case *big.Rat:
 		f, _ := num.Float64()
 		return f
