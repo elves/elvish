@@ -114,20 +114,9 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
     - name: Set up goimports
-      run: go get golang.org/x/tools/cmd/goimports
+      run: go install golang.org/x/tools/cmd/goimports@latest
     - name: Check style
       run: ./tools/checkstyle-go.sh
-
-  vet:
-    name: Run go vet
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Set up Go
-      uses: actions/setup-go@v2
-    - name: Run go vet
-      run: go vet ./...
 
   checkstyle-md:
     name: Check style of **.md
@@ -147,3 +136,16 @@ jobs:
       run: npm install --global prettier@2.3.1
     - name: Check style
       run: ./tools/checkstyle-md.sh
+
+  lint:
+    name: Run linters
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+    - name: Set up staticcheck
+      run: go install honnef.co/go/tools/cmd/staticcheck@2021.1
+    - name: Run linters
+      run: ./tools/lint.sh
