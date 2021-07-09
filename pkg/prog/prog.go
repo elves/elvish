@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"runtime/pprof"
 
@@ -53,7 +54,7 @@ type Flags struct {
 func newFlagSet(f *Flags) *flag.FlagSet {
 	fs := flag.NewFlagSet("elvish", flag.ContinueOnError)
 	// Error and usage will be printed explicitly.
-	fs.SetOutput(io.Discard)
+	fs.SetOutput(ioutil.Discard)
 
 	fs.StringVar(&f.Log, "log", "", "a file to write debug log to except for the daemon")
 	fs.StringVar(&f.CPUProfile, "cpuprofile", "", "write cpu profile to file")
