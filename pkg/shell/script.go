@@ -14,19 +14,15 @@ import (
 	"src.elv.sh/pkg/parse"
 )
 
-// ScriptConfig keeps configuration for the script mode.
-type ScriptConfig struct {
-	Evaler *eval.Evaler
-
+// Configuration for the script mode.
+type scriptCfg struct {
 	Cmd         bool
 	CompileOnly bool
 	JSON        bool
 }
 
-// Script executes a shell script.
-func Script(fds [3]*os.File, args []string, cfg *ScriptConfig) int {
-	ev := cfg.Evaler
-
+// Executes a shell script.
+func script(ev *eval.Evaler, fds [3]*os.File, args []string, cfg *scriptCfg) int {
 	arg0 := args[0]
 	ev.SetArgs(args[1:])
 

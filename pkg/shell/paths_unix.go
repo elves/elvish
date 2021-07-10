@@ -13,17 +13,13 @@ import (
 	"src.elv.sh/pkg/fsutil"
 )
 
-func dbPath() (string, error) {
-	return xdgHomePath(env.XDG_STATE_HOME, ".local/state", "elvish/db.bolt")
-}
-
-func rcPath() (string, error) {
+func newRCPath() (string, error) {
 	return xdgHomePath(env.XDG_CONFIG_HOME, ".config", "elvish/rc.elv")
 }
 
 const elvishLib = "elvish/lib"
 
-func libPaths() ([]string, string, error) {
+func newLibPaths() ([]string, string, error) {
 	var paths []string
 	libConfig, errConfig := xdgHomePath(env.XDG_CONFIG_HOME, ".config", elvishLib)
 	if errConfig == nil {
@@ -45,6 +41,10 @@ func libPaths() ([]string, string, error) {
 	return paths, libData, diag.Errors(errConfig, errData)
 }
 
+func newDBPath() (string, error) {
+	return xdgHomePath(env.XDG_STATE_HOME, ".local/state", "elvish/db.bolt")
+}
+
 func xdgHomePath(envName, fallback, suffix string) (string, error) {
 	dir := os.Getenv(envName)
 	if dir == "" {
@@ -64,8 +64,8 @@ func xdgHomePath(envName, fallback, suffix string) (string, error) {
 // $tmpdir/elvish-$uid (where $tmpdir is the system temporary directory). The
 // former is used if the XDG_RUNTIME_DIR environment variable exists and the
 // latter directory does not exist.
-func getSecureRunDir() (string, error) {
-	runDirs := getRunDirCandidates()
+func secureRunDir() (string, error) {
+	runDirs := runDirCandidates()
 	for _, runDir := range runDirs {
 		if checkExclusiveAccess(runDir) {
 			return runDir, nil
@@ -84,7 +84,7 @@ func getSecureRunDir() (string, error) {
 
 // Returns one or more candidates for the run directory, in descending order of
 // preference.
-func getRunDirCandidates() []string {
+func runDirCandidates() []string {
 	tmpDirPath := filepath.Join(os.TempDir(), fmt.Sprintf("elvish-%d", os.Getuid()))
 	if os.Getenv(env.XDG_RUNTIME_DIR) != "" {
 		xdgDirPath := filepath.Join(os.Getenv(env.XDG_RUNTIME_DIR), "elvish")

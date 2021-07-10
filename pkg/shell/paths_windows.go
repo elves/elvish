@@ -9,15 +9,7 @@ import (
 	"src.elv.sh/pkg/env"
 )
 
-func dbPath() (string, error) {
-	d, err := localAppData()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(d, "elvish", "db.bolt"), nil
-}
-
-func rcPath() (string, error) {
+func newRCPath() (string, error) {
 	d, err := roamingAppData()
 	if err != nil {
 		return "", err
@@ -25,7 +17,7 @@ func rcPath() (string, error) {
 	return filepath.Join(d, "elvish", "rc.elv"), nil
 }
 
-func libPaths() ([]string, string, error) {
+func newLibPaths() ([]string, string, error) {
 	local, err := localAppData()
 	if err != nil {
 		return nil, "", err
@@ -41,6 +33,14 @@ func libPaths() ([]string, string, error) {
 	return []string{roamingLib, localLib}, localLib, nil
 }
 
+func newDBPath() (string, error) {
+	d, err := localAppData()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(d, "elvish", "db.bolt"), nil
+}
+
 func localAppData() (string, error) {
 	return windows.KnownFolderPath(windows.FOLDERID_LocalAppData, windows.KF_FLAG_CREATE)
 }
@@ -51,7 +51,7 @@ func roamingAppData() (string, error) {
 
 // getSecureRunDir stats elvish-$USERNAME under the default temp dir, creating
 // it if it doesn't yet exist, and return the directory name.
-func getSecureRunDir() (string, error) {
+func secureRunDir() (string, error) {
 	username := os.Getenv(env.USERNAME)
 
 	runDir := filepath.Join(os.TempDir(), "elvish-"+username)

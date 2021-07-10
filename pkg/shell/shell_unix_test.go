@@ -51,9 +51,8 @@ func TestShell_ConnectsToDaemon(t *testing.T) {
 	}
 
 	f.FeedIn("use daemon; print $daemon:pid\n")
-	Interact(f.Fds(),
-		&InteractConfig{
-			Evaler:         eval.NewEvaler(),
+	interact(eval.NewEvaler(), f.Fds(),
+		&interactCfg{
 			ActivateDaemon: client.Activate,
 			SpawnConfig:    &daemondefs.SpawnConfig{SockPath: "sock", DbPath: "db", RunDir: "."}})
 

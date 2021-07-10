@@ -9,16 +9,15 @@ import (
 	"src.elv.sh/pkg/prog"
 )
 
-// RCPath returns the path of rc.elv, executed in interactive mode.
-func RCPath() (string, error) {
+func rcPath() (string, error) {
 	if legacyRC, exists := legacyDataPath("rc.elv", false); exists {
 		return legacyRC, nil
 	}
-	return rcPath()
+	return newRCPath()
 }
 
-func LibPaths() ([]string, string, error) {
-	paths, installPath, err := libPaths()
+func libPaths() ([]string, string, error) {
+	paths, installPath, err := newLibPaths()
 	if legacyLib, exists := legacyDataPath("lib", true); exists {
 		paths = append(paths, legacyLib)
 	}
@@ -28,7 +27,7 @@ func LibPaths() ([]string, string, error) {
 // Returns a SpawnConfig containing all the paths needed by the daemon. It
 // respects overrides of sock and db from CLI flags.
 func daemonPaths(flags *prog.Flags) (*daemondefs.SpawnConfig, error) {
-	runDir, err := getSecureRunDir()
+	runDir, err := secureRunDir()
 	if err != nil {
 		return nil, err
 	}
@@ -39,21 +38,24 @@ func daemonPaths(flags *prog.Flags) (*daemondefs.SpawnConfig, error) {
 
 	db := flags.DB
 	if db == "" {
-		if legacyPath, exists := legacyDataPath("db", false); exists {
-			db = legacyPath
-		} else {
-			p, err := dbPath()
-			if err != nil {
-				return nil, err
-			}
-			db = p
+		var err error
+		db, err = dbPath()
+		if err != nil {
+			return nil, err
 		}
-		err := os.MkdirAll(filepath.Dir(db), 0700)
+		err = os.MkdirAll(filepath.Dir(db), 0700)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return &daemondefs.SpawnConfig{DbPath: db, SockPath: sock, RunDir: runDir}, nil
+}
+
+func dbPath() (string, error) {
+	if legacyDB, exists := legacyDataPath("db", false); exists {
+		return legacyDB, nil
+	}
+	return newDBPath()
 }
 
 // Returns a path in the legacy data directory path, and whether it exists and

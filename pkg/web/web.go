@@ -51,8 +51,9 @@ type ExecuteResponse struct {
 }
 
 func (web *Web) Main(fds [3]*os.File, _ []string) error {
-	ev, cleanup := shell.InitEvaler(fds[2])
-	defer cleanup()
+	restore := shell.IncSHLVL()
+	defer restore()
+	ev := shell.MakeEvaler(fds[2])
 
 	h := httpHandler{ev}
 

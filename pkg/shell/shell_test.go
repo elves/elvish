@@ -8,31 +8,16 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
-func TestShell_SHLVL_NormalCase(t *testing.T) {
-	restore := testutil.WithTempEnv(env.SHLVL, "10")
-	defer restore()
-
-	testSHLVL(t, "11")
-}
-
-func TestShell_SHLVL_Unset(t *testing.T) {
-	restore := testutil.WithTempEnv(env.SHLVL, "")
-	defer restore()
-
-	os.Unsetenv(env.SHLVL)
-
-	testSHLVL(t, "1")
-}
-
-func TestShell_SHLVL_Invalid(t *testing.T) {
-	restore := testutil.WithTempEnv(env.SHLVL, "invalid")
-	defer restore()
-
-	testSHLVL(t, "1")
-}
-
-func TestShell_NegativeSHLVL_Increments(t *testing.T) {
-	// Other shells don't agree what the behavior should be:
+var incSHLVLTests = []struct {
+	name    string
+	old     string
+	unset   bool
+	wantNew string
+}{
+	{name: "normal", old: "10", wantNew: "11"},
+	{name: "unset", unset: true, wantNew: "1"},
+	{name: "invalid", old: "invalid", wantNew: "1"},
+	// Other shells don't agree on what to do when SHLVL is negative:
 	//
 	// ~> E:SHLVL=-100 bash -c 'echo $SHLVL'
 	// 0
@@ -42,30 +27,39 @@ func TestShell_NegativeSHLVL_Increments(t *testing.T) {
 	// 1
 	//
 	// Elvish follows Zsh here.
-	restore := testutil.WithTempEnv(env.SHLVL, "-100")
-	defer restore()
-
-	os.Setenv(env.SHLVL, "-100")
-	testSHLVL(t, "-99")
+	{name: "negative", old: "-100", wantNew: "-99"},
 }
 
-func testSHLVL(t *testing.T, wantSHLVL string) {
-	t.Helper()
-	oldValue, oldOK := os.LookupEnv(env.SHLVL)
+func TestIncSHLVL(t *testing.T) {
+	restore := testutil.WithTempEnv(env.SHLVL, "")
+	defer restore()
 
-	restore := incSHLVL()
-	shlvl := os.Getenv(env.SHLVL)
-	if shlvl != wantSHLVL {
-		t.Errorf("got SHLVL = %q, want %q", shlvl, wantSHLVL)
-	}
+	for _, test := range incSHLVLTests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.unset {
+				os.Unsetenv(env.SHLVL)
+			} else {
+				os.Setenv(env.SHLVL, test.old)
+			}
 
-	// Test that state of SHLVL is restored.
-	restore()
-	newValue, newOK := os.LookupEnv(env.SHLVL)
-	if newValue != oldValue {
-		t.Errorf("SHLVL not restored, %q -> %q", oldValue, newValue)
-	}
-	if oldOK != newOK {
-		t.Errorf("SHLVL existence not restored, %v -> %v", oldOK, newOK)
+			restore := IncSHLVL()
+			shlvl := os.Getenv(env.SHLVL)
+			if shlvl != test.wantNew {
+				t.Errorf("got SHLVL = %q, want %q", shlvl, test.wantNew)
+			}
+
+			restore()
+			// Test that state of SHLVL is restored.
+			restored, restoredSet := os.LookupEnv(env.SHLVL)
+			if test.unset {
+				if restoredSet {
+					t.Errorf("SHLVL not unset")
+				}
+			} else {
+				if restored != test.old {
+					t.Errorf("SHLVL restored to %q, want %q", restored, test.old)
+				}
+			}
+		})
 	}
 }

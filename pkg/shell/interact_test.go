@@ -16,7 +16,7 @@ func TestInteract_SingleCommand(t *testing.T) {
 	defer f.Cleanup()
 	f.FeedIn("echo hello\n")
 
-	Interact(f.Fds(), interactConfig(""))
+	interact(eval.NewEvaler(), f.Fds(), &interactCfg{})
 	f.TestOut(t, 1, "hello\n")
 }
 
@@ -25,7 +25,7 @@ func TestInteract_Exception(t *testing.T) {
 	defer f.Cleanup()
 	f.FeedIn("fail mock\n")
 
-	Interact(f.Fds(), interactConfig(""))
+	interact(eval.NewEvaler(), f.Fds(), &interactCfg{})
 	f.TestOutSnippet(t, 2, "fail mock")
 	f.TestOut(t, 1, "")
 }
@@ -37,7 +37,7 @@ func TestInteract_RcFile(t *testing.T) {
 
 	MustWriteFile("rc.elv", "echo hello from rc.elv")
 
-	Interact(f.Fds(), interactConfig("rc.elv"))
+	interact(eval.NewEvaler(), f.Fds(), &interactCfg{RC: "rc.elv"})
 	f.TestOut(t, 1, "hello from rc.elv\n")
 }
 
@@ -48,7 +48,7 @@ func TestInteract_RcFile_DoesNotCompile(t *testing.T) {
 
 	MustWriteFile("rc.elv", "echo $a")
 
-	Interact(f.Fds(), interactConfig("rc.elv"))
+	interact(eval.NewEvaler(), f.Fds(), &interactCfg{RC: "rc.elv"})
 	f.TestOutSnippet(t, 2, "variable $a not found")
 	f.TestOut(t, 1, "")
 }
@@ -60,7 +60,7 @@ func TestInteract_RcFile_Exception(t *testing.T) {
 
 	MustWriteFile("rc.elv", "fail mock")
 
-	Interact(f.Fds(), interactConfig("rc.elv"))
+	interact(eval.NewEvaler(), f.Fds(), &interactCfg{RC: "rc.elv"})
 	f.TestOutSnippet(t, 2, "fail mock")
 	f.TestOut(t, 1, "")
 }
@@ -70,10 +70,6 @@ func TestInteract_RcFile_NonexistentIsOK(t *testing.T) {
 	defer f.Cleanup()
 	f.FeedIn("")
 
-	Interact(f.Fds(), interactConfig("rc.elv"))
+	interact(eval.NewEvaler(), f.Fds(), &interactCfg{RC: "rc.elv"})
 	f.TestOut(t, 1, "")
-}
-
-func interactConfig(rc string) *InteractConfig {
-	return &InteractConfig{Evaler: eval.NewEvaler(), RC: rc}
 }
