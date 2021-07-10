@@ -51,8 +51,7 @@ type ExecuteResponse struct {
 }
 
 func (web *Web) Main(fds [3]*os.File, _ []string) error {
-	p, _ := shell.DataPaths()
-	ev, cleanup := shell.InitEvaler(p.LibDir)
+	ev, cleanup := shell.InitEvaler(fds[2])
 	defer cleanup()
 
 	h := httpHandler{ev}

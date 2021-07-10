@@ -23,15 +23,7 @@ type Program struct {
 func (p Program) ShouldRun(*prog.Flags) bool { return true }
 
 func (p Program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
-	dataPaths, err := DataPaths()
-	if err != nil {
-		fmt.Fprintln(fds[2], "Warning: could not create data directory", err)
-	}
-	if f.NoRc {
-		dataPaths.Rc = ""
-	}
-
-	ev, cleanup1 := InitEvaler(dataPaths.LibDir)
+	ev, cleanup1 := InitEvaler(fds[2])
 	defer cleanup1()
 	cleanup2 := initTTYAndSignal(fds[2])
 	defer cleanup2()
@@ -49,8 +41,16 @@ func (p Program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 		fmt.Fprintln(fds[2], "Warning:", err)
 		fmt.Fprintln(fds[2], "Storage daemon may not function.")
 	}
+	rc := ""
+	if !f.NoRc {
+		var err error
+		rc, err = RCPath()
+		if err != nil {
+			fmt.Fprintln(fds[2], "Warning:", err)
+		}
+	}
 	Interact(fds, &InteractConfig{
-		Evaler: ev, RC: dataPaths.Rc,
+		Evaler: ev, RC: rc,
 		ActivateDaemon: p.ActivateDaemon, SpawnConfig: spawnCfg})
 	return nil
 }

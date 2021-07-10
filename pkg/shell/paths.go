@@ -9,36 +9,20 @@ import (
 	"src.elv.sh/pkg/prog"
 )
 
-// Paths keeps all paths required for the Elvish runtime.
-type Paths struct {
-	DataDir string
-	Rc      string
-	LibDir  string
+// RCPath returns the path of rc.elv, executed in interactive mode.
+func RCPath() (string, error) {
+	if legacyRC, exists := legacyDataPath("rc.elv", false); exists {
+		return legacyRC, nil
+	}
+	return rcPath()
 }
 
-// DataPaths returns all the data paths needed by the shell.
-func DataPaths() (Paths, error) {
-	dataDir, err := ensureDataDir()
-	if err != nil {
-		return Paths{}, err
+func LibPaths() ([]string, string, error) {
+	paths, installPath, err := libPaths()
+	if legacyLib, exists := legacyDataPath("lib", true); exists {
+		paths = append(paths, legacyLib)
 	}
-	return Paths{
-		DataDir: dataDir,
-		Rc:      filepath.Join(dataDir, "rc.elv"),
-		LibDir:  filepath.Join(dataDir, "lib"),
-	}, nil
-}
-
-// Ensures Elvish's data directory exists, creating it if necessary. It returns
-// the path to the data directory (never with a trailing slash) and possible
-// error.
-func ensureDataDir() (string, error) {
-	home, err := fsutil.GetHome("")
-	if err != nil {
-		return "", err
-	}
-	ddir := home + "/.elvish"
-	return ddir, os.MkdirAll(ddir, 0700)
+	return paths, installPath, err
 }
 
 // Returns a SpawnConfig containing all the paths needed by the daemon. It
@@ -55,11 +39,34 @@ func daemonPaths(flags *prog.Flags) (*daemondefs.SpawnConfig, error) {
 
 	db := flags.DB
 	if db == "" {
-		dataDir, err := ensureDataDir()
+		if legacyPath, exists := legacyDataPath("db", false); exists {
+			db = legacyPath
+		} else {
+			p, err := dbPath()
+			if err != nil {
+				return nil, err
+			}
+			db = p
+		}
+		err := os.MkdirAll(filepath.Dir(db), 0700)
 		if err != nil {
 			return nil, err
 		}
-		db = filepath.Join(dataDir, "db")
 	}
 	return &daemondefs.SpawnConfig{DbPath: db, SockPath: sock, RunDir: runDir}, nil
+}
+
+// Returns a path in the legacy data directory path, and whether it exists and
+// matches the expected file/directory property.
+func legacyDataPath(name string, dir bool) (string, bool) {
+	home, err := fsutil.GetHome("")
+	if err != nil {
+		return "", false
+	}
+	p := filepath.Join(home, ".elvish", name)
+	info, err := os.Stat(p)
+	if err != nil || info.IsDir() != dir {
+		return "", false
+	}
+	return p, true
 }

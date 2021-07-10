@@ -355,11 +355,16 @@ func use(fm *Frame, spec string, r diag.Ranger) (*Ns, error) {
 		return evalModule(fm, spec,
 			parse.Source{Name: "[bundled " + spec + "]", Code: code}, r)
 	}
-	libDir := fm.Evaler.getLibDir()
-	if libDir == "" {
-		return nil, noSuchModule{spec}
+	// TODO: For non-relative imports, use the spec (instead of the full path)
+	// as the module key instead to avoid searching every time.
+	for _, dir := range fm.Evaler.getLibDirs() {
+		ns, err := useFromFile(fm, spec, filepath.Join(dir, spec), r)
+		if _, isNoSuchModule := err.(noSuchModule); isNoSuchModule {
+			continue
+		}
+		return ns, err
 	}
-	return useFromFile(fm, spec, libDir+"/"+spec, r)
+	return nil, noSuchModule{spec}
 }
 
 // TODO: Make access to fm.Evaler.modules concurrency-safe.
@@ -376,7 +381,8 @@ func useFromFile(fm *Frame, spec, path string, r diag.Ranger) (*Ns, error) {
 			}
 			return nil, err
 		}
-		return evalModule(fm, path, parse.Source{Name: path, Code: code, IsFile: true}, r)
+		src := parse.Source{Name: path + ".elv", Code: code, IsFile: true}
+		return evalModule(fm, path, src, r)
 	} else {
 		plug, err := pluginOpen(path + ".so")
 		if err != nil {

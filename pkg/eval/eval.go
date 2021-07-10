@@ -56,8 +56,10 @@ type Evaler struct {
 
 	// State of the module system.
 	//
-	// Library directory.
-	libDir string
+	// Directories to search libraries.
+	libDirs []string
+	// Default directory to install libraries.
+	libInstallDir string
 	// Internal modules are indexed by use specs. External modules are indexed by
 	// absolute paths.
 	modules map[string]*Ns
@@ -247,17 +249,23 @@ func (ev *Evaler) registerDeprecation(d deprecation) bool {
 }
 
 // Returns libdir.
-func (ev *Evaler) getLibDir() string {
+func (ev *Evaler) getLibDirs() []string {
 	ev.mu.RLock()
 	defer ev.mu.RUnlock()
-	return ev.libDir
+	return ev.libDirs
 }
 
 // SetLibDir sets the library directory for finding external modules.
-func (ev *Evaler) SetLibDir(libDir string) {
+func (ev *Evaler) SetLibDirs(libDirs []string) {
 	ev.mu.Lock()
 	defer ev.mu.Unlock()
-	ev.libDir = libDir
+	ev.libDirs = libDirs
+}
+
+func (ev *Evaler) SetLibInstallDir(libInstallDir string) {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.libInstallDir = libInstallDir
 }
 
 // AddModule add an internal module so that it can be used with "use $name" from

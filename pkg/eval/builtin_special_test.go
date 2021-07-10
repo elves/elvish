@@ -1,8 +1,6 @@
 package eval_test
 
 import (
-	"path/filepath"
-	"strings"
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
@@ -276,7 +274,7 @@ func TestUse_SetsVariableCorrectlyIfModuleCallsAddGlobal(t *testing.T) {
 
 	ApplyDir(Dir{"a.elv": "add-var"})
 	ev := NewEvaler()
-	ev.SetLibDir(libdir)
+	ev.SetLibDirs([]string{libdir})
 	addVar := func() {
 		ev.AddGlobal(NsBuilder{"b": vars.NewReadOnly("foo")}.Ns())
 	}
@@ -305,7 +303,7 @@ func TestUse_SupportsCircularDependency(t *testing.T) {
 		"b.elv": "var pre = bpre; use a; put $a:pre $a:post; var post = bpost",
 	})
 
-	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
+	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDirs([]string{libdir}) },
 		That(`use a`).Puts(
 			// When b.elv is imported from a.elv, $a:pre is set but $a:post is
 			// not
@@ -316,28 +314,40 @@ func TestUse_SupportsCircularDependency(t *testing.T) {
 }
 
 func TestUse(t *testing.T) {
-	libdir, cleanup := InTestDir()
-	defer cleanup()
+	libdir1, cleanup1 := InTestDir()
+	defer cleanup1()
 
-	MustMkdirAll(filepath.Join("a", "b", "c"))
+	ApplyDir(Dir{
+		"shadow.elv": "put lib1",
+	})
 
-	writeMod := func(name, content string) {
-		fname := filepath.Join(strings.Split(name, "/")...) + ".elv"
-		MustWriteFile(fname, []byte(content), 0600)
-	}
-	writeMod("has-init", "put has-init")
-	writeMod("put-x", "put $x")
-	writeMod("lorem", "name = lorem; fn put-name { put $name }")
-	writeMod("d", "name = d")
-	writeMod("a/b/c/d", "name = a/b/c/d")
-	writeMod("a/b/c/x",
-		"use ./d; d = $d:name; use ../../../lorem; lorem = $lorem:name")
+	libdir2, cleanup2 := InTestDir()
+	defer cleanup2()
 
-	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
+	ApplyDir(Dir{
+		"has-init.elv": "put has-init",
+		"put-x.elv":    "put $x",
+		"lorem.elv":    "name = lorem; fn put-name { put $name }",
+		"d.elv":        "name = d",
+		"shadow.elv":   "put lib2",
+		"a": Dir{
+			"b": Dir{
+				"c": Dir{
+					"d.elv": "name = a/b/c/d",
+					"x.elv": "use ./d; d = $d:name; use ../../../lorem; lorem = $lorem:name",
+				},
+			},
+		},
+	})
+
+	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDirs([]string{libdir1, libdir2}) },
 		That(`use lorem; put $lorem:name`).Puts("lorem"),
 		// imports are lexically scoped
 		// TODO: Support testing for compilation error
-		// That(`{ use lorem }; put $lorem:name`).ErrorsAny(),
+		That(`{ use lorem }; put $lorem:name`).DoesNotCompile(),
+
+		// prefers lib dir that appear earlier
+		That("use shadow").Puts("lib1"),
 
 		// use of imported variable is captured in upvalue
 		That(`use lorem; { put $lorem:name }`).Puts("lorem"),
@@ -384,7 +394,7 @@ func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	defer cleanup()
 	MustWriteFile("dep.elv", []byte("fn x { fopen x }"), 0600)
 
-	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
+	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDirs([]string{libdir}) },
 		// Importing module triggers check for deprecated features
 		That("use dep").PrintsStderrWith("is deprecated"),
 	)

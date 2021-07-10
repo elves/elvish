@@ -8,8 +8,54 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/fsutil"
 )
+
+func dbPath() (string, error) {
+	return xdgHomePath(env.XDG_STATE_HOME, ".local/state", "elvish/db.bolt")
+}
+
+func rcPath() (string, error) {
+	return xdgHomePath(env.XDG_CONFIG_HOME, ".config", "elvish/rc.elv")
+}
+
+const elvishLib = "elvish/lib"
+
+func libPaths() ([]string, string, error) {
+	var paths []string
+	libConfig, errConfig := xdgHomePath(env.XDG_CONFIG_HOME, ".config", elvishLib)
+	if errConfig == nil {
+		paths = append(paths, libConfig)
+	}
+	libData, errData := xdgHomePath(env.XDG_DATA_HOME, ".local/share", elvishLib)
+	if errData == nil {
+		paths = append(paths, libData)
+	}
+
+	libSystem := os.Getenv(env.XDG_DATA_DIRS)
+	if libSystem == "" {
+		libSystem = "/usr/local/share:/usr/share"
+	}
+	for _, p := range filepath.SplitList(libSystem) {
+		paths = append(paths, filepath.Join(p, elvishLib))
+	}
+
+	return paths, libData, diag.Errors(errConfig, errData)
+}
+
+func xdgHomePath(envName, fallback, suffix string) (string, error) {
+	dir := os.Getenv(envName)
+	if dir == "" {
+		home, err := fsutil.GetHome("")
+		if err != nil {
+			return "", fmt.Errorf("resolve ~/%s/%s: %w", fallback, suffix, err)
+		}
+		dir = filepath.Join(home, fallback)
+	}
+	return filepath.Join(dir, suffix), nil
+}
 
 // Returns a "run directory" for storing ephemeral files, which is guaranteed
 // to be only accessible to the current user.

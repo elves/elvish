@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"os/signal"
@@ -22,9 +23,14 @@ import (
 // InitEvaler creates an Evaler, sets the search directory for modules, installs
 // all the standard builtin modules, and increases SHLVL. It returns the Evaler
 // and a callback to restore the old SHLVL.
-func InitEvaler(libDir string) (*eval.Evaler, func()) {
+func InitEvaler(stderr io.Writer) (*eval.Evaler, func()) {
 	ev := eval.NewEvaler()
-	ev.SetLibDir(libDir)
+	libs, libInstall, err := LibPaths()
+	if err != nil {
+		fmt.Fprintln(stderr, "Warning:", err)
+	}
+	ev.SetLibDirs(libs)
+	ev.SetLibInstallDir(libInstall)
 	ev.AddModule("math", mathmod.Ns)
 	ev.AddModule("path", pathmod.Ns)
 	ev.AddModule("platform", platform.Ns)
