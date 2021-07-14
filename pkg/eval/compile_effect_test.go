@@ -6,6 +6,7 @@ import (
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval/mods/file"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/testutil"
 )
@@ -22,7 +23,10 @@ func TestChunk(t *testing.T) {
 }
 
 func TestPipeline(t *testing.T) {
-	Test(t,
+	setup := func(ev *Evaler) {
+		ev.AddGlobal(NsBuilder{}.AddNs("file", file.Ns).Ns())
+	}
+	TestWithSetup(t, setup,
 		// Pure byte pipeline
 		That(`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`).
 			Prints("A1bert\nBer1in\n"),
@@ -34,9 +38,9 @@ func TestPipeline(t *testing.T) {
 		That(
 			"notify-bg-job-success = $false",
 			"p = (pipe)",
-			"{ print foo > $p; pwclose $p }&",
+			"{ print foo > $p; file:close $p[w] }&",
 			"slurp < $p",
-			"prclose $p").Puts("foo"),
+			"file:close $p[r]").Puts("foo"),
 		// TODO: Add a useful hybrid pipeline sample
 	)
 }
@@ -181,10 +185,13 @@ func TestCommand_Assignment(t *testing.T) {
 }
 
 func TestCommand_Redir(t *testing.T) {
+	setup := func(ev *Evaler) {
+		ev.AddGlobal(NsBuilder{}.AddNs("file", file.Ns).Ns())
+	}
 	_, cleanup := testutil.InTestDir()
 	defer cleanup()
 
-	Test(t,
+	TestWithSetup(t, setup,
 		// Output and input redirection.
 		That("echo 233 > out1", " slurp < out1").Puts("233\n"),
 		// Append.
@@ -209,7 +216,7 @@ func TestCommand_Redir(t *testing.T) {
 		That(`echo haha > out3`, `f = (fopen out3)`, `slurp <$f`, ` fclose $f`).
 			Puts("haha\n"),
 		// Redirections from Pipe object.
-		That(`p = (pipe); echo haha > $p; pwclose $p; slurp < $p; prclose $p`).
+		That(`p = (pipe); echo haha > $p; file:close $p[w]; slurp < $p; file:close $p[r]`).
 			Puts("haha\n"),
 
 		// We can't read values from a file and shouldn't hang when iterating

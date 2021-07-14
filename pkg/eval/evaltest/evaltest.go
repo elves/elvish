@@ -145,9 +145,12 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...TestCase) {
 			}
 			if !matchErr(tt.want.Exception, r.Exception) {
 				t.Errorf("unexpected exception")
-				t.Logf("got: %v", r.Exception)
 				if exc, ok := r.Exception.(eval.Exception); ok {
+					// For an eval.Exception report the type of the underlying error.
+					t.Logf("got: %T: %v", exc.Reason(), exc)
 					t.Logf("stack trace: %#v", getStackTexts(exc.StackTrace()))
+				} else {
+					t.Logf("got: %T: %v", r.Exception, r.Exception)
 				}
 				t.Errorf("want: %v", tt.want.Exception)
 			}
