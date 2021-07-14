@@ -8,6 +8,7 @@ import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/mods/file"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/parse"
@@ -58,6 +59,7 @@ func setup(fns ...func(*fixture)) *fixture {
 
 	tty, ttyCtrl := clitest.NewFakeTTY()
 	ev := eval.NewEvaler()
+	ev.AddGlobal(eval.NsBuilder{}.AddNs("file", file.Ns).Ns())
 	ed := NewEditor(tty, ev, st)
 	ev.AddBuiltin(eval.NsBuilder{}.AddNs("edit", ed.Ns()).Ns())
 	evals(ev,

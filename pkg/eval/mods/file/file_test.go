@@ -43,8 +43,11 @@ func TestFile(t *testing.T) {
 			slurp < $p
 		`).Throws(AnyError),
 
-		That(`p = (file:pipe)`, `echo Legolas > $p`, `file:prclose $p`,
-			`slurp < $p`).Throws(AnyError),
+		// Verify that input redirection from a closed pipe throws an exception. That exception is a
+		// Go stdlib error whose stringified form looks something like "read |0: file already
+		// closed".
+		That(`p = (file:pipe)`, `echo Legolas > $p`, `file:close $p[r]`,
+			`slurp < $p`).Throws(ErrorWithType(&os.PathError{})),
 
 		// Side effect checked below
 		That("echo > file100", "file:truncate file100 100").DoesNothing(),
