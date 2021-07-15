@@ -40,7 +40,7 @@ func TestFile(t *testing.T) {
 			echo Legolas > $p
 			file:close $p[r]
 			slurp < $p
-		`).Throws(AnyError),
+		`).Throws(ErrorWithType(&os.PathError{})),
 
 		// Verify that input redirection from a closed pipe throws an exception. That exception is a
 		// Go stdlib error whose stringified form looks something like "read |0: file already

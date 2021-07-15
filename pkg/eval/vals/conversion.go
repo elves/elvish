@@ -28,12 +28,12 @@ import (
 // entirely go away, as there might always be some mismatch between Elvish's
 // type system and Go's.
 
-type wrongType struct {
+type WrongType struct {
 	wantKind string
 	gotKind  string
 }
 
-func (err wrongType) Error() string {
+func (err WrongType) Error() string {
 	return fmt.Sprintf("wrong type: need %s, got %s", err.wantKind, err.gotKind)
 }
 
@@ -100,7 +100,7 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 			} else {
 				dstKind = Kind(reflect.Zero(dstType).Interface())
 			}
-			return wrongType{dstKind, Kind(src)}
+			return WrongType{dstKind, Kind(src)}
 		}
 		ValueOf(ptr).Elem().Set(ValueOf(src))
 		return nil

@@ -50,7 +50,7 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 		Args("foo", "").Rets("foo"),
 		Args(someType{"foo"}, someType{}).Rets(someType{"foo"}),
 		Args(nil, nil).Rets(nil),
-		Args("x", someType{}).Rets(Any, wrongType{"!!vals.someType", "string"}),
+		Args("x", someType{}).Rets(Any, WrongType{"!!vals.someType", "string"}),
 	})
 }
 
@@ -88,7 +88,7 @@ func TestScanToGo_InterfaceDst(t *testing.T) {
 	Test(t, Fn("ScanToGo", scanToGo), Table{
 		Args(EmptyList).Rets(EmptyList),
 
-		Args("foo").Rets(Any, wrongType{"!!vector.Vector", "string"}),
+		Args("foo").Rets(Any, WrongType{"!!vector.Vector", "string"}),
 	})
 }
 

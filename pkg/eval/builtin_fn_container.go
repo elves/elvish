@@ -608,7 +608,7 @@ func one(fm *Frame, inputs Inputs) error {
 	if n == 1 {
 		return fm.ValueOutput().Put(val)
 	}
-	return fmt.Errorf("expect a single value, got %d", n)
+	return errs.ArityMismatch{What: "values", ValidLow: 1, ValidHigh: 1, Actual: n}
 }
 
 //elvdoc:fn take

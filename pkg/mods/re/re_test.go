@@ -1,6 +1,7 @@
 package re
 
 import (
+	"regexp/syntax"
 	"testing"
 
 	"src.elv.sh/pkg/eval"
@@ -18,7 +19,7 @@ func TestRe(t *testing.T) {
 		That("re:match '[a-z]' A").Puts(false),
 
 		// Invalid pattern in re:match
-		That("re:match '(' x").Throws(AnyError),
+		That("re:match '(' x").Throws(ErrorWithType(&syntax.Error{})),
 
 		That("re:find . ab").Puts(
 			matchStruct{"a", 0, 1, vals.MakeList(submatchStruct{"a", 0, 1})},
@@ -36,7 +37,7 @@ func TestRe(t *testing.T) {
 			Puts("a", 0, 1, vals.MakeList(submatchStruct{"a", 0, 1})),
 
 		// Invalid pattern in re:find
-		That("re:find '(' x").Throws(AnyError),
+		That("re:find '(' x").Throws(ErrorWithType(&syntax.Error{})),
 
 		// Without any flag, finds ax
 		That("put (re:find 'a(x|xy)' AaxyZ)[text]").Puts("ax"),
@@ -53,21 +54,21 @@ func TestRe(t *testing.T) {
 		That("re:replace '(ba|z)sh' {|x| put [&bash=BaSh &zsh=ZsH][$x] } 'bash and zsh'").Puts("BaSh and ZsH"),
 
 		// Invalid pattern in re:replace
-		That("re:replace '(' x bash").Throws(AnyError),
-		That("re:replace &posix '[[:argle:]]' x bash").Throws(AnyError),
+		That("re:replace '(' x bash").Throws(ErrorWithType(&syntax.Error{})),
+		That("re:replace &posix '[[:argle:]]' x bash").Throws(ErrorWithType(&syntax.Error{})),
 		// Replacement function outputs more than one value
-		That("re:replace x {|x| put a b } xx").Throws(AnyError),
+		That("re:replace x {|x| put a b } xx").Throws(ErrorWithType(&ReplaceError{})),
 		// Replacement function outputs non-string value
-		That("re:replace x {|x| put [] } xx").Throws(AnyError),
+		That("re:replace x {|x| put [] } xx").Throws(ErrorWithType(&ReplaceError{})),
 		// Replacement is not string or function
-		That("re:replace x [] xx").Throws(AnyError),
+		That("re:replace x [] xx").Throws(ErrorWithType(&ReplaceError{})),
 		// Replacement is function when &literal is set
-		That("re:replace &literal x {|_| put y } xx").Throws(AnyError),
+		That("re:replace &literal x {|_| put y } xx").Throws(ErrorWithType(&ReplaceError{})),
 
 		That("re:split : /usr/sbin:/usr/bin:/bin").Puts("/usr/sbin", "/usr/bin", "/bin"),
 		That("re:split &max=2 : /usr/sbin:/usr/bin:/bin").Puts("/usr/sbin", "/usr/bin:/bin"),
 		// Invalid pattern in re:split
-		That("re:split '(' x").Throws(AnyError),
+		That("re:split '(' x").Throws(ErrorWithType(&syntax.Error{})),
 
 		// re:split bubbles output error
 		That("re:split . ab >&-").Throws(eval.ErrNoValueOutput),
