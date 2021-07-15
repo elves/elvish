@@ -9,6 +9,7 @@ import (
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 type someOptions struct {
@@ -51,12 +52,12 @@ func TestGoFn_RawOptions(t *testing.T) {
 				}
 			})),
 		// Invalid option; regression test for #958.
-		That("f &bad=bar").Throws(AnyError).
+		That("f &bad=bar").Throws(BadOption{"bad"}).
 			WithSetup(f(func(opts someOptions) {
 				t.Errorf("function called when there are invalid options")
 			})),
 		// Invalid option type; regression test for #958.
-		That("f &foo=[]").Throws(AnyError).
+		That("f &foo=[]").Throws(ErrorWithType(vals.WrongType{})).
 			WithSetup(f(func(opts someOptions) {
 				t.Errorf("function called when there are invalid options")
 			})),
@@ -115,11 +116,11 @@ func TestGoFn_RawOptions(t *testing.T) {
 				t.Errorf("Function called when there are too few arguments")
 			})),
 		// Wrong argument type
-		That("f (num 1)").Throws(AnyError).
+		That("f (num 1)").Throws(ErrorWithType(WrongArgType{})).
 			WithSetup(f(func(x string) {
 				t.Errorf("Function called when arguments have wrong type")
 			})),
-		That("f str").Throws(AnyError).
+		That("f str").Throws(ErrorWithType(WrongArgType{})).
 			WithSetup(f(func(x int) {
 				t.Errorf("Function called when arguments have wrong type")
 			})),

@@ -17,6 +17,15 @@ var (
 	ErrNoOptAccepted = errors.New("function does not accept any options")
 )
 
+type WrongArgType struct {
+	argNum    int
+	typeError string
+}
+
+func (e WrongArgType) Error() string {
+	return fmt.Sprintf("wrong type for arg #%d: %s", e.argNum, e.typeError)
+}
+
 type goFn struct {
 	name string
 	impl interface{}
@@ -201,7 +210,7 @@ func (b *goFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) e
 		ptr := reflect.New(typ)
 		err := vals.ScanToGo(arg, ptr.Interface())
 		if err != nil {
-			return fmt.Errorf("wrong type of argument %d: %v", i, err)
+			return WrongArgType{i, err.Error()}
 		}
 		in = append(in, ptr.Elem())
 	}

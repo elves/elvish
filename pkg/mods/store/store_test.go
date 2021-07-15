@@ -58,7 +58,7 @@ func TestStore(t *testing.T) {
 		That("store:shared-var bar").Puts("ipsum"),
 		// Delete shared variables
 		That("store:del-shared-var foo").DoesNothing(),
-		That("store:shared-var foo").Throws(AnyError),
+		That("store:shared-var foo").Throws(store.ErrNoSharedVar),
 	)
 }
 

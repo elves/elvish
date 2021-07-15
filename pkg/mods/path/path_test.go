@@ -114,7 +114,7 @@ func TestPath_Symlink(t *testing.T) {
 		That("path:eval-symlinks d/f").Puts(filepath.Join("d", "f")),
 		That("path:eval-symlinks d/s-f").Puts(filepath.Join("d", "f")),
 		That("path:eval-symlinks s-d/f").Puts(filepath.Join("d", "f")),
-		That("path:eval-symlinks s-bad").Throws(AnyError),
+		That("path:eval-symlinks s-bad").Throws(ErrorWithType(&os.PathError{})),
 
 		That("path:is-dir s-d").Puts(false),
 		That("path:is-dir s-d &follow-symlink").Puts(true),
