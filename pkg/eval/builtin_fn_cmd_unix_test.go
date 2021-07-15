@@ -4,6 +4,7 @@
 package eval_test
 
 import (
+	"os/exec"
 	"testing"
 
 	. "src.elv.sh/pkg/eval/evaltest"
@@ -32,7 +33,7 @@ func TestSearchExternal(t *testing.T) {
 		// TODO: Replace the raw Go runtime `exec.LookPath` error with an
 		// Elvish error; possibly wrapping the Go runtime error. Then tighten
 		// this test to that specific error.
-		That("search-external random-invalid-command").Throws(AnyError),
+		That("search-external random-invalid-command").Throws(ErrorWithType(&exec.Error{})),
 	)
 }
 

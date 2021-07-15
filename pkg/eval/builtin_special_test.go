@@ -3,6 +3,7 @@ package eval_test
 import (
 	"testing"
 
+	"src.elv.sh/pkg/diag"
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
@@ -240,7 +241,7 @@ func TestWhile(t *testing.T) {
 			"while (< $x 4) { put $x; set x = (+ $x 1); continue; put bad }").
 			Puts(0, 1, 2, 3),
 		// Exception in body
-		That("var x = 0; while (< $x 4) { fail haha }").Throws(AnyError),
+		That("var x = 0; while (< $x 4) { fail haha }").Throws(FailError{"haha"}),
 		// Exception in condition
 		That("while (fail x) { }").Throws(FailError{"x"}, "fail x"),
 
@@ -407,7 +408,7 @@ func TestUse(t *testing.T) {
 
 		// Variables defined in the default global scope is invisible from
 		// modules
-		That("x = foo; use put-x").Throws(AnyError),
+		That("x = foo; use put-x").Throws(ErrorWithType(&diag.Error{})),
 
 		// Using an unknown module spec fails.
 		That("use unknown").Throws(ErrorWithType(NoSuchModule{})),

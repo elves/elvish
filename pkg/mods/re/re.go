@@ -53,6 +53,14 @@ var Ns = eval.BuildNsNamed("re").
 // ▶ $false
 // ```
 
+type ReplaceError struct {
+	What string
+}
+
+func (err *ReplaceError) Error() string {
+	return err.What
+}
+
 type matchOpts struct{ Posix bool }
 
 func (*matchOpts) SetDefaultOptions() {}
@@ -187,9 +195,9 @@ func replace(fm *eval.Frame, opts replaceOpts, argPattern string, argRepl interf
 	if opts.Literal {
 		repl, ok := argRepl.(string)
 		if !ok {
-			return "", fmt.Errorf(
+			return "", &ReplaceError{fmt.Sprintf(
 				"replacement must be string when literal is set, got %s",
-				vals.Kind(argRepl))
+				vals.Kind(argRepl))}
 		}
 		return pattern.ReplaceAllLiteralString(source, repl), nil
 	}
@@ -210,23 +218,23 @@ func replace(fm *eval.Frame, opts replaceOpts, argPattern string, argRepl interf
 				return ""
 			}
 			if len(values) != 1 {
-				errReplace = fmt.Errorf("replacement function must output exactly one value, got %d", len(values))
+				errReplace = &ReplaceError{fmt.Sprintf("replacement function must output exactly one value, got %d", len(values))}
 				return ""
 			}
 			output, ok := values[0].(string)
 			if !ok {
-				errReplace = fmt.Errorf(
+				errReplace = &ReplaceError{fmt.Sprintf(
 					"replacement function must output one string, got %s",
-					vals.Kind(values[0]))
+					vals.Kind(values[0]))}
 				return ""
 			}
 			return output
 		}
 		return pattern.ReplaceAllStringFunc(source, replFunc), errReplace
 	default:
-		return "", fmt.Errorf(
+		return "", &ReplaceError{fmt.Sprintf(
 			"replacement must be string or function, got %s",
-			vals.Kind(argRepl))
+			vals.Kind(argRepl))}
 	}
 }
 

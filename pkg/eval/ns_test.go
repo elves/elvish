@@ -3,6 +3,7 @@ package eval_test
 import (
 	"testing"
 
+	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 )
 

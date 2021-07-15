@@ -37,8 +37,8 @@ func TestBase(t *testing.T) {
 	Test(t,
 		That(`base 2 1 3 4 16 255`).Puts("1", "11", "100", "10000", "11111111"),
 		That(`base 16 42 233`).Puts("2a", "e9"),
-		That(`base 1 1`).Throws(AnyError),   // no base-1
-		That(`base 37 10`).Throws(AnyError), // no letter for base-37
+		That(`base 1 1`).Throws(ErrBadBase),
+		That(`base 37 10`).Throws(ErrBadBase),
 		thatOutputErrorIsBubbled("base 2 1"),
 	)
 }

@@ -127,11 +127,11 @@ func TestAll(t *testing.T) {
 func TestOne(t *testing.T) {
 	Test(t,
 		That(`put foo | one`).Puts("foo"),
-		That(`put | one`).Throws(AnyError),
-		That(`put foo bar | one`).Throws(AnyError),
+		That(`put | one`).Throws(ErrorWithType(errs.ArityMismatch{})),
+		That(`put foo bar | one`).Throws(ErrorWithType(errs.ArityMismatch{})),
 		That(`one [foo]`).Puts("foo"),
-		That(`one []`).Throws(AnyError),
-		That(`one [foo bar]`).Throws(AnyError),
+		That(`one []`).Throws(ErrorWithType(errs.ArityMismatch{})),
+		That(`one [foo bar]`).Throws(ErrorWithType(errs.ArityMismatch{})),
 		thatOutputErrorIsBubbled("one [foo]"),
 	)
 }

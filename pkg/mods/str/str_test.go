@@ -16,21 +16,21 @@ func TestStr(t *testing.T) {
 		ev.ExtendGlobal(eval.BuildNs().AddNs("str", Ns))
 	}
 	TestWithSetup(t, setup,
-		That(`str:compare abc`).Throws(AnyError),
+		That(`str:compare abc`).Throws(ErrorWithType(errs.ArityMismatch{})),
 		That(`str:compare abc abc`).Puts(0),
 		That(`str:compare abc def`).Puts(-1),
 		That(`str:compare def abc`).Puts(1),
 
-		That(`str:contains abc`).Throws(AnyError),
+		That(`str:contains abc`).Throws(ErrorWithType(errs.ArityMismatch{})),
 		That(`str:contains abcd x`).Puts(false),
 		That(`str:contains abcd bc`).Puts(true),
 		That(`str:contains abcd cde`).Puts(false),
 
-		That(`str:contains-any abc`).Throws(AnyError),
+		That(`str:contains-any abc`).Throws(ErrorWithType(errs.ArityMismatch{})),
 		That(`str:contains-any abcd x`).Puts(false),
 		That(`str:contains-any abcd xcy`).Puts(true),
 
-		That(`str:equal-fold abc`).Throws(AnyError),
+		That(`str:equal-fold abc`).Throws(ErrorWithType(errs.ArityMismatch{})),
 		That(`str:equal-fold ABC abc`).Puts(true),
 		That(`str:equal-fold abc ABC`).Puts(true),
 		That(`str:equal-fold abc A`).Puts(false),
@@ -67,19 +67,19 @@ func TestStr(t *testing.T) {
 			Valid:  "valid UTF-8 sequence",
 			Actual: "[255 3 170]"}),
 
-		That(`str:has-prefix abc`).Throws(AnyError),
+		That(`str:has-prefix abc`).Throws(ErrorWithType(errs.ArityMismatch{})),
 		That(`str:has-prefix abcd ab`).Puts(true),
 		That(`str:has-prefix abcd cd`).Puts(false),
 
-		That(`str:has-suffix abc`).Throws(AnyError),
+		That(`str:has-suffix abc`).Throws(ErrorWithType(errs.ArityMismatch{})),
 		That(`str:has-suffix abcd ab`).Puts(false),
 		That(`str:has-suffix abcd cd`).Puts(true),
 
-		That(`str:index abc`).Throws(AnyError),
+		That(`str:index abc`).Throws(ErrorWithType(errs.ArityMismatch{})),
 		That(`str:index abcd cd`).Puts(2),
 		That(`str:index abcd de`).Puts(-1),
 
-		That(`str:index-any abc`).Throws(AnyError),
+		That(`str:index-any abc`).Throws(ErrorWithType(errs.ArityMismatch{})),
 		That(`str:index-any "chicken" "aeiouy"`).Puts(2),
 		That(`str:index-any l33t aeiouy`).Puts(-1),
 
@@ -88,7 +88,7 @@ func TestStr(t *testing.T) {
 		That(`str:join : [(float64 1) 2]`).Throws(
 			errs.BadValue{What: "input to str:join", Valid: "string", Actual: "number"}),
 
-		That(`str:last-index abc`).Throws(AnyError),
+		That(`str:last-index abc`).Throws(ErrorWithType(errs.ArityMismatch{})),
 		That(`str:last-index "elven speak elvish" "elv"`).Puts(12),
 		That(`str:last-index "elven speak elvish" "romulan"`).Puts(-1),
 
@@ -111,38 +111,39 @@ func TestStr(t *testing.T) {
 
 		That(`str:title abc`).Puts("Abc"),
 		That(`str:title "abc def"`).Puts("Abc Def"),
-		That(`str:to-lower abc def`).Throws(AnyError),
+		That(`str:to-lower abc def`).Throws(ErrorWithType(errs.ArityMismatch{})),
 
 		That(`str:to-lower abc`).Puts("abc"),
 		That(`str:to-lower ABC`).Puts("abc"),
-		That(`str:to-lower ABC def`).Throws(AnyError),
+		That(`str:to-lower ABC def`).Throws(ErrorWithType(errs.ArityMismatch{})),
 
 		That(`str:to-title "her royal highness"`).Puts("HER ROYAL HIGHNESS"),
 		That(`str:to-title "хлеб"`).Puts("ХЛЕБ"),
 
 		That(`str:to-upper abc`).Puts("ABC"),
 		That(`str:to-upper ABC`).Puts("ABC"),
-		That(`str:to-upper ABC def`).Throws(AnyError),
+		That(`str:to-upper ABC def`).Throws(ErrorWithType(errs.ArityMismatch{})),
 
 		That(`str:trim "¡¡¡Hello, Elven!!!" "!¡"`).Puts("Hello, Elven"),
-		That(`str:trim def`).Throws(AnyError),
+		That(`str:trim def`).Throws(ErrorWithType(errs.ArityMismatch{})),
 
 		That(`str:trim-left "¡¡¡Hello, Elven!!!" "!¡"`).Puts("Hello, Elven!!!"),
-		That(`str:trim-left def`).Throws(AnyError),
+		That(`str:trim-left def`).Throws(ErrorWithType(errs.ArityMismatch{})),
 
 		That(`str:trim-prefix "¡¡¡Hello, Elven!!!" "¡¡¡Hello, "`).Puts("Elven!!!"),
 		That(`str:trim-prefix "¡¡¡Hello, Elven!!!" "¡¡¡Hola, "`).Puts("¡¡¡Hello, Elven!!!"),
-		That(`str:trim-prefix def`).Throws(AnyError),
+		That(`str:trim-prefix def`).Throws(ErrorWithType(errs.ArityMismatch{})),
 
 		That(`str:trim-right "¡¡¡Hello, Elven!!!" "!¡"`).Puts("¡¡¡Hello, Elven"),
-		That(`str:trim-right def`).Throws(AnyError),
+		That(`str:trim-right def`).Throws(ErrorWithType(errs.ArityMismatch{})),
 
 		That(`str:trim-space " \t\n Hello, Elven \n\t\r\n"`).Puts("Hello, Elven"),
 		That(`str:trim-space " \t\n Hello  Elven \n\t\r\n"`).Puts("Hello  Elven"),
-		That(`str:trim-space " \t\n Hello  Elven \n\t\r\n" argle`).Throws(AnyError),
+		That(`str:trim-space " \t\n Hello  Elven \n\t\r\n" argle`).
+			Throws(ErrorWithType(errs.ArityMismatch{})),
 
 		That(`str:trim-suffix "¡¡¡Hello, Elven!!!" ", Elven!!!"`).Puts("¡¡¡Hello"),
 		That(`str:trim-suffix "¡¡¡Hello, Elven!!!" ", Klingons!!!"`).Puts("¡¡¡Hello, Elven!!!"),
-		That(`str:trim-suffix "¡¡¡Hello, Elven!!!"`).Throws(AnyError),
+		That(`str:trim-suffix "¡¡¡Hello, Elven!!!"`).Throws(ErrorWithType(errs.ArityMismatch{})),
 	)
 }
