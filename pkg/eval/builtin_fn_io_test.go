@@ -1,6 +1,7 @@
 package eval_test
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -132,7 +133,7 @@ func TestFromJson(t *testing.T) {
 				"foo"),
 		That(`echo '[null, "foo"]' | from-json`).Puts(
 			vals.MakeList(nil, "foo")),
-		That(`echo 'invalid' | from-json`).Throws(AnyError),
+		That(`echo 'invalid' | from-json`).Throws(ErrorWithType(&json.SyntaxError{})),
 		thatOutputErrorIsBubbled(`echo '[]' | from-json`),
 	)
 }

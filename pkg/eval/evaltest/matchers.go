@@ -42,10 +42,6 @@ func matchRegexp(p, s string) bool {
 
 type errorMatcher interface{ matchError(error) bool }
 
-// AnyError is an error that can be passed to Case.Throws to match any non-nil
-// error.
-var AnyError = anyError{}
-
 // An errorMatcher for any error.
 type anyError struct{}
 

@@ -28,7 +28,7 @@ func TestEach(t *testing.T) {
 		That(`range 10 | each {|x| if (== $x 4) { continue }; put $x }`).
 			Puts(0, 1, 2, 3, 5, 6, 7, 8, 9),
 		That(`range 10 | each {|x| if (== $x 4) { fail haha }; put $x }`).
-			Puts(0, 1, 2, 3).Throws(AnyError),
+			Puts(0, 1, 2, 3).Throws(FailError{"haha"}),
 		// TODO(xiaq): Test that "each" does not close the stdin.
 	)
 }

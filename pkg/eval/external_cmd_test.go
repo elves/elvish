@@ -2,6 +2,7 @@ package eval_test
 
 import (
 	"os"
+	"os/exec"
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
@@ -30,6 +31,6 @@ func TestBuiltinFnExternal(t *testing.T) {
 		//
 		// The command shouldn't be found when run so we should get an
 		// exception along the lines of "executable file not found in $PATH".
-		That(`e = (external true); E:PATH=/ $e`).Throws(AnyError),
+		That(`e = (external true); E:PATH=/ $e`).Throws(ErrorWithType(&exec.Error{})),
 	)
 }

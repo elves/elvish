@@ -6,6 +6,7 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 func TestAddVar(t *testing.T) {
@@ -20,7 +21,7 @@ func TestAddVar(t *testing.T) {
 				What:  "name argument to edit:add-var",
 				Valid: "unqualified variable name", Actual: "a:b"}),
 		// Bad type
-		That("add-var a~ ''").Throws(AnyError),
+		That("add-var a~ ''").Throws(ErrorWithType(vals.WrongType{})),
 	)
 }
 
@@ -43,6 +44,6 @@ func TestAddVars(t *testing.T) {
 				What:  "key of argument to edit:add-vars",
 				Valid: "unqualified variable name", Actual: "a:b"}),
 		// Bad type
-		That("add-vars [&a~='']").Throws(AnyError),
+		That("add-vars [&a~='']").Throws(ErrorWithType(vals.WrongType{})),
 	)
 }

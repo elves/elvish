@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"errors"
 	"testing"
 )
 
@@ -24,7 +23,7 @@ var scanOptionsTests = []struct {
 		opts{}, opts{POSIX: true}, nil},
 	// Since "ignore" is not exported it will result in an error when used.
 	{RawOptions{"ignore": true},
-		opts{}, opts{ignore: false}, errors.New("unknown option ignore")},
+		opts{}, opts{ignore: false}, BadOption{"ignore"}},
 }
 
 func TestScanOptions(t *testing.T) {

@@ -9,6 +9,14 @@ import (
 	"src.elv.sh/pkg/strutil"
 )
 
+type BadOption struct {
+	OptName string
+}
+
+func (e BadOption) Error() string {
+	return "unknown option: " + parse.Quote(e.OptName)
+}
+
 // RawOptions is the type of an argument a Go-native function can take to
 // declare that it wants to parse options itself. See the doc of NewGoFn for
 // details.
@@ -44,7 +52,7 @@ func scanOptions(rawOpts RawOptions, ptr interface{}) error {
 	for k, v := range rawOpts {
 		fieldIdx, ok := fieldIdxForOpt[k]
 		if !ok {
-			return fmt.Errorf("unknown option %s", parse.Quote(k))
+			return BadOption{k}
 		}
 		err := vals.ScanToGo(v, struc.Field(fieldIdx).Addr().Interface())
 		if err != nil {
