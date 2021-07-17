@@ -88,9 +88,9 @@ func TestPromptStaleThreshold(t *testing.T) {
 		"???> ", Styles,
 		"+++++", term.DotHere)
 
-	evals(f.Evaler, `pwclose $pipe`)
+	evals(f.Evaler, `file:close $pipe[w]`)
 	f.TestTTY(t, "> ", term.DotHere)
-	evals(f.Evaler, `prclose $pipe`)
+	evals(f.Evaler, `file:close $pipe[r]`)
 }
 
 func TestPromptStaleTransform(t *testing.T) {
@@ -102,8 +102,8 @@ func TestPromptStaleTransform(t *testing.T) {
 	defer f.Cleanup()
 
 	f.TestTTY(t, "S???> S", term.DotHere)
-	evals(f.Evaler, `pwclose $pipe`)
-	evals(f.Evaler, `prclose $pipe`)
+	evals(f.Evaler, `file:close $pipe[w]`)
+	evals(f.Evaler, `file:close $pipe[r]`)
 }
 
 func TestPromptStaleTransform_Exception(t *testing.T) {
