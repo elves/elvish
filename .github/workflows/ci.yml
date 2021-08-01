@@ -58,6 +58,22 @@ jobs:
         name: cover-${{ env.ostype }}
         path: cover
 
+  # The purpose of running benchmarks in GitHub Actions is primarily to ensure
+  # that the benchmark code runs and doesn't crash. GitHub Action runners don't
+  # have a stable enough environment to produce reliable benchmark numbers.
+  benchmark:
+    name: Run benchmarks
+    runs-on: ubuntu-latest
+		steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16.x
+    - name: Run benchmarks
+      run: go test -bench=. ./...
+
   upload-coverage:
     name: Upload test coverage
     strategy:
