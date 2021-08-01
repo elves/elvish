@@ -947,9 +947,9 @@ and byte output might not agree with the order in which they happened:
 ▶ a
 ```
 
-If you want to capture the stdout and stderr byte streams independent of each
-other see the example in the [run-parallel](./builtin.html#run-parallel)
-documentation.
+**Note**: If you want to capture the stdout and stderr byte streams independent
+of each other, see the example in the
+[run-parallel](./builtin.html#run-parallel) documentation.
 
 ## Exception capture
 
