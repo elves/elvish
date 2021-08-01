@@ -79,6 +79,9 @@ var (
 	// DummyOutputPort is a port made up from DevNull and BlackholeChan,
 	// suitable as a placeholder output port.
 	DummyOutputPort = &Port{File: DevNull, Chan: BlackholeChan}
+
+	// DummyPorts contains 3 dummy ports, suitable as stdin, stdout and stderr.
+	DummyPorts = []*Port{DummyInputPort, DummyOutputPort, DummyOutputPort}
 )
 
 func getClosedChan() chan interface{} {
