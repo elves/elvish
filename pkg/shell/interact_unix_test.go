@@ -11,8 +11,7 @@ import (
 
 	"src.elv.sh/pkg/daemon"
 	"src.elv.sh/pkg/daemon/client"
-	"src.elv.sh/pkg/daemon/daemondefs"
-	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/testutil"
 
 	. "src.elv.sh/pkg/prog/progtest"
@@ -45,16 +44,15 @@ func TestShell_ConnectsToDaemon(t *testing.T) {
 	}()
 	select {
 	case <-hasSock:
-	// Do nothing
+		// Do nothing
 	case <-time.After(testutil.ScaledMs(100)):
 		t.Fatalf("timed out waiting for daemon to start")
 	}
 
 	f.FeedIn("use daemon; print $daemon:pid\n")
-	interact(eval.NewEvaler(), f.Fds(),
-		&interactCfg{
-			ActivateDaemon: client.Activate,
-			SpawnConfig:    &daemondefs.SpawnConfig{SockPath: "sock", DbPath: "db", RunDir: "."}})
 
+	exit := prog.Run(f.Fds(),
+		Elvish("-sock", "sock", "-db", "db"), Program{client.Activate})
+	TestExit(t, exit, 0)
 	f.TestOut(t, 1, strconv.Itoa(os.Getpid()))
 }

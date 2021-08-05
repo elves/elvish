@@ -3,26 +3,28 @@ package shell
 import (
 	"testing"
 
-	"src.elv.sh/pkg/eval"
 	. "src.elv.sh/pkg/prog/progtest"
 )
 
-func TestScript_File(t *testing.T) {
+func TestScript_RunFile(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 	MustWriteFile("a.elv", "echo hello")
 
-	script(eval.NewEvaler(), f.Fds(), []string{"a.elv"}, &scriptCfg{})
+	ret := run(f.Fds(), Elvish("a.elv"))
 
+	if ret != 0 {
+		t.Errorf("got ret %v, want 0", ret)
+	}
 	f.TestOut(t, 1, "hello\n")
 	f.TestOut(t, 2, "")
 }
 
-func TestScript_BadFile(t *testing.T) {
+func TestScript_RunNonExistentScript(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 
-	ret := script(eval.NewEvaler(), f.Fds(), []string{"a.elv"}, &scriptCfg{})
+	ret := run(f.Fds(), Elvish("non-existent.elv"))
 
 	if ret != 2 {
 		t.Errorf("got ret %v, want 2", ret)
@@ -31,57 +33,80 @@ func TestScript_BadFile(t *testing.T) {
 	f.TestOut(t, 1, "")
 }
 
-func TestScript_Cmd(t *testing.T) {
+func TestScript_RunCommandLineCode(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 
-	script(eval.NewEvaler(), f.Fds(), []string{"echo hello"}, &scriptCfg{Cmd: true})
+	ret := run(f.Fds(), Elvish("-c", "echo hello"))
 
+	if ret != 0 {
+		t.Errorf("got ret %v, want 0", ret)
+	}
 	f.TestOut(t, 1, "hello\n")
 	f.TestOut(t, 2, "")
 }
 
 var scriptErrorTests = []struct {
-	name        string
-	code        string
-	compileOnly bool
-	json        bool
-	wantExit    int
-	wantOut     string
-	wantErr     string
+	name     string
+	code     string
+	flags    []string
+	wantExit int
+	wantOut  string
+	wantErr  string
 }{
-	{name: "parse error",
+	{
+		name:     "parse error",
 		code:     "echo [",
 		wantExit: 2,
-		wantErr:  "parse error"},
-	{name: "parse error with -compileonly and -json",
-		code: "echo [", compileOnly: true, json: true,
+		wantErr:  "parse error",
+	},
+	{
+		name:     "parse error with -compileonly and -json",
+		code:     "echo [",
+		flags:    []string{"-compileonly", "-json"},
 		wantExit: 2,
-		wantOut:  `[{"fileName":"code from -c","start":6,"end":6,"message":"should be ']'"}]` + "\n"},
-	{name: "multiple parse errors with -compileonly and -json",
-		code: "echo [{", compileOnly: true, json: true,
+		wantOut:  `[{"fileName":"code from -c","start":6,"end":6,"message":"should be ']'"}]` + "\n",
+	},
+	{
+		name:     "multiple parse errors with -compileonly and -json",
+		code:     "echo [{",
+		flags:    []string{"-compileonly", "-json"},
 		wantExit: 2,
-		wantOut:  `[{"fileName":"code from -c","start":7,"end":7,"message":"should be ',' or '}'"},{"fileName":"code from -c","start":7,"end":7,"message":"should be ']'"}]` + "\n"},
-	{name: "compile error",
+		wantOut:  `[{"fileName":"code from -c","start":7,"end":7,"message":"should be ',' or '}'"},{"fileName":"code from -c","start":7,"end":7,"message":"should be ']'"}]` + "\n",
+	},
+	{
+		name:     "compile error",
 		code:     "echo $a",
 		wantExit: 2,
-		wantErr:  "compilation error"},
-	{name: "compile error with -compileonly and -json",
-		code: "echo $a", compileOnly: true, json: true,
+		wantErr:  "compilation error",
+	},
+	{
+		name:     "compile error with -compileonly and -json",
+		code:     "echo $a",
+		flags:    []string{"-compileonly", "-json"},
 		wantExit: 2,
-		wantOut:  `[{"fileName":"code from -c","start":5,"end":7,"message":"variable $a not found"}]` + "\n"},
-	{name: "parse error and compile error with -compileonly and -json",
-		code: "echo [$a", compileOnly: true, json: true,
+		wantOut:  `[{"fileName":"code from -c","start":5,"end":7,"message":"variable $a not found"}]` + "\n",
+	},
+	{
+		name:     "parse error and compile error with -compileonly and -json",
+		code:     "echo [$a",
+		flags:    []string{"-compileonly", "-json"},
 		wantExit: 2,
-		wantOut:  `[{"fileName":"code from -c","start":8,"end":8,"message":"should be ']'"},{"fileName":"code from -c","start":6,"end":8,"message":"variable $a not found"}]` + "\n"},
-	{name: "exception",
+		wantOut:  `[{"fileName":"code from -c","start":8,"end":8,"message":"should be ']'"},{"fileName":"code from -c","start":6,"end":8,"message":"variable $a not found"}]` + "\n",
+	},
+	{
+		name:     "exception",
 		code:     "fail failure",
 		wantExit: 2,
 		wantOut:  "",
-		wantErr:  "fail failure"},
-	{name: "exception with -compileonly",
-		code: "fail failure", compileOnly: true,
-		wantExit: 0},
+		wantErr:  "fail failure",
+	},
+	{
+		name:     "exception with -compileonly",
+		code:     "fail failure",
+		flags:    []string{"-compileonly"},
+		wantExit: 0,
+	},
 }
 
 func TestScript_Error(t *testing.T) {
@@ -89,10 +114,11 @@ func TestScript_Error(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			f := Setup()
 			defer f.Cleanup()
-			exit := script(
-				eval.NewEvaler(), f.Fds(), []string{test.code},
-				&scriptCfg{
-					Cmd: true, CompileOnly: test.compileOnly, JSON: test.json})
+
+			args := append([]string(nil), test.flags...)
+			args = append(args, "-c", test.code)
+			exit := run(f.Fds(), Elvish(args...))
+
 			if exit != test.wantExit {
 				t.Errorf("got exit code %v, want 2", test.wantExit)
 			}

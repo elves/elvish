@@ -50,19 +50,32 @@ func (p Program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 		return prog.Exit(exit)
 	}
 
-	spawnCfg, err := daemonPaths(f)
-	if err != nil {
-		fmt.Fprintln(fds[2], "Warning:", err)
-		fmt.Fprintln(fds[2], "Storage daemon may not function.")
+	var spawnCfg *daemondefs.SpawnConfig
+	if p.ActivateDaemon != nil {
+		var err error
+		spawnCfg, err = daemonPaths(f)
+		if err != nil {
+			fmt.Fprintln(fds[2], "Warning:", err)
+			fmt.Fprintln(fds[2], "Storage daemon may not function.")
+		}
 	}
+
 	rc := ""
-	if !f.NoRc {
+	switch {
+	case f.NoRc:
+	// Leave rc empty
+	case f.RC != "":
+		// Use explicit -rc flag value
+		rc = f.RC
+	default:
+		// Use default path to rc.elv
 		var err error
 		rc, err = rcPath()
 		if err != nil {
 			fmt.Fprintln(fds[2], "Warning:", err)
 		}
 	}
+
 	interact(ev, fds, &interactCfg{
 		RC:             rc,
 		ActivateDaemon: p.ActivateDaemon, SpawnConfig: spawnCfg})

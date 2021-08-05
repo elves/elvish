@@ -5,8 +5,14 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/testutil"
 )
+
+// Tests for the Program are in script_test.go and interact_test.go. This file
+// container test helpers and tests against helpers.
+
+func run(fds [3]*os.File, args []string) int { return prog.Run(fds, args, Program{}) }
 
 var incSHLVLTests = []struct {
 	name    string
