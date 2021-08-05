@@ -140,6 +140,14 @@ func Elvish(args ...string) []string {
 	return append([]string{"elvish"}, args...)
 }
 
+// TestError tests the exit code.
+func TestExit(t *testing.T, gotExit, wantExit int) {
+	t.Helper()
+	if gotExit != wantExit {
+		t.Errorf("got exit %v, want %v", gotExit, wantExit)
+	}
+}
+
 // TestError tests the error result of a program.
 func TestError(t *testing.T, f *Fixture, exit int, wantErrSnippet string) {
 	t.Helper()
