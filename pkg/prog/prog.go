@@ -40,6 +40,7 @@ type Flags struct {
 	Help, Version, BuildInfo, JSON bool
 
 	CodeInArg, CompileOnly, NoRc bool
+	RC                           string
 
 	Web  bool
 	Port int
@@ -69,6 +70,7 @@ func newFlagSet(stderr io.Writer, f *Flags) *flag.FlagSet {
 	fs.BoolVar(&f.CodeInArg, "c", false, "take first argument as code to execute")
 	fs.BoolVar(&f.CompileOnly, "compileonly", false, "Parse/Compile but do not execute")
 	fs.BoolVar(&f.NoRc, "norc", false, "run elvish without invoking rc.elv")
+	fs.StringVar(&f.RC, "rc", "", "path to rc.elv")
 
 	fs.BoolVar(&f.Web, "web", false, "run backend of web interface")
 	fs.IntVar(&f.Port, "port", defaultWebPort, "the port of the web backend")
