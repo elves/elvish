@@ -50,7 +50,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 
 	hs, err := newHistStore(st)
 	if err != nil {
-		// TODO(xiaq): Report the error.
+		_ = err // TODO(xiaq): Report the error.
 	}
 
 	initHighlighter(&appSpec, ev)

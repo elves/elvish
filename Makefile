@@ -51,5 +51,8 @@ checkstyle-go:
 checkstyle-md:
 	./tools/checkstyle-md.sh
 
-.SILENT: checkstyle-go checkstyle-md
-.PHONY: default get generate test style checkstyle checkstyle-go checkstyle-md cover
+lint:
+	./tools/lint.sh
+
+.SILENT: checkstyle-go checkstyle-md lint
+.PHONY: default get generate test style checkstyle checkstyle-go checkstyle-md lint cover

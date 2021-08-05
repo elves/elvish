@@ -515,8 +515,6 @@ func show(fm *Frame, v diag.Shower) error {
 	return err
 }
 
-const bytesReadBufferSize = 512
-
 //elvdoc:fn only-bytes
 //
 // ```elvish
@@ -787,8 +785,8 @@ func fromTerminated(fm *Frame, terminator string) error {
 		}
 		if err != nil {
 			if err != io.EOF {
-				return err
 				logger.Println("error on reading:", err)
+				return err
 			}
 			return nil
 		}

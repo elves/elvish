@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"runtime/pprof"
 
@@ -51,10 +52,10 @@ type Flags struct {
 	DB, Sock string
 }
 
-func newFlagSet(stderr io.Writer, f *Flags) *flag.FlagSet {
+func newFlagSet(f *Flags) *flag.FlagSet {
 	fs := flag.NewFlagSet("elvish", flag.ContinueOnError)
-	fs.SetOutput(stderr)
-	fs.Usage = func() { usage(stderr, fs) }
+	// Error and usage will be printed explicitly.
+	fs.SetOutput(ioutil.Discard)
 
 	fs.StringVar(&f.Log, "log", "", "a file to write debug log to except for the daemon")
 	fs.StringVar(&f.CPUProfile, "cpuprofile", "", "write cpu profile to file")
@@ -88,6 +89,7 @@ func newFlagSet(stderr io.Writer, f *Flags) *flag.FlagSet {
 func usage(out io.Writer, f *flag.FlagSet) {
 	fmt.Fprintln(out, "Usage: elvish [flags] [script]")
 	fmt.Fprintln(out, "Supported flags:")
+	f.SetOutput(out)
 	f.PrintDefaults()
 }
 
@@ -95,10 +97,19 @@ func usage(out io.Writer, f *flag.FlagSet) {
 // returns the exit status of the program.
 func Run(fds [3]*os.File, args []string, programs ...Program) int {
 	f := &Flags{}
-	fs := newFlagSet(fds[2], f)
+	fs := newFlagSet(f)
 	err := fs.Parse(args[1:])
 	if err != nil {
-		// Error and usage messages are already shown.
+		if err == flag.ErrHelp {
+			// (*flag.FlagSet).Parse returns ErrHelp when -h or -help was
+			// requested but *not* defined. Elvish defines -help, but not -h; so
+			// this means that -h has been requested. Handle this by printing
+			// the same message as an undefined flag.
+			fmt.Fprintln(fds[2], "flag provided but not defined: -h")
+		} else {
+			fmt.Fprintln(fds[2], err)
+		}
+		usage(fds[2], fs)
 		return 2
 	}
 
@@ -126,7 +137,6 @@ func Run(fds [3]*os.File, args []string, programs ...Program) int {
 	}
 
 	if f.Help {
-		fs.SetOutput(fds[1])
 		usage(fds[1], fs)
 		return 0
 	}

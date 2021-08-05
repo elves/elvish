@@ -42,22 +42,29 @@ func init() {
 // except that it does not perform any redirections.
 //
 // Here is an example that lets you pipe the stdout and stderr of a command to two
-// different commands:
+// different commands in order to independently capture the output of each byte stream:
 //
-// ```elvish
-// pout = (pipe)
-// perr = (pipe)
-// run-parallel {
-// foo > $pout 2> $perr
-// pwclose $pout
-// pwclose $perr
-// } {
-// bar < $pout
-// prclose $pout
-// } {
-// bar2 < $perr
-// prclose $perr
-// }
+// ```elvish-transcript
+// ~> fn capture [f]{
+//      var pout = (file:pipe)
+//      var perr = (file:pipe)
+//      var out err
+//      run-parallel {
+//        $f > $pout[w] 2> $perr[w]
+//        file:close $pout[w]
+//        file:close $perr[w]
+//      } {
+//        set out = (slurp < $pout[r])
+//        file:close $pout[r]
+//      } {
+//        set err = (slurp < $perr[r])
+//        file:close $perr[r]
+//      }
+//      put $out $err
+//    }
+// ~> capture { echo stdout-test; echo stderr-test >&2 }
+// ▶ "stdout-test\n"
+// ▶ "stderr-test\n"
 // ```
 //
 // This command is intended for doing a fixed number of heterogeneous things in

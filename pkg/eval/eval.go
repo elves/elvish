@@ -498,7 +498,9 @@ func (ev *Evaler) prepareFrame(src parse.Source, cfg EvalCfg) (*Frame, func()) {
 		intCh, intChCleanup = cfg.Interrupt()
 	}
 
-	fm := &Frame{ev, src, cfg.Global, new(Ns), intCh, cfg.Ports, nil, false}
+	ports := fillDefaultDummyPorts(cfg.Ports)
+
+	fm := &Frame{ev, src, cfg.Global, new(Ns), intCh, ports, nil, false}
 	return fm, func() {
 		if intChCleanup != nil {
 			intChCleanup()
@@ -506,11 +508,25 @@ func (ev *Evaler) prepareFrame(src parse.Source, cfg EvalCfg) (*Frame, func()) {
 		if cfg.PutInFg {
 			err := putSelfInFg()
 			if err != nil {
-				fmt.Fprintln(cfg.Ports[2].File,
+				fmt.Fprintln(ports[2].File,
 					"failed to put myself in foreground:", err)
 			}
 		}
 	}
+}
+
+func fillDefaultDummyPorts(ports []*Port) []*Port {
+	growPorts(&ports, 3)
+	if ports[0] == nil {
+		ports[0] = DummyInputPort
+	}
+	if ports[1] == nil {
+		ports[1] = DummyOutputPort
+	}
+	if ports[2] == nil {
+		ports[2] = DummyOutputPort
+	}
+	return ports
 }
 
 // Check checks the given source code for any parse error and compilation error.

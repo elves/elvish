@@ -105,7 +105,7 @@ func checkField(got interface{}, want interface{}, ctx string) error {
 
 	if got, ok := got.(Node); ok {
 		// Got a Node.
-		return checkNodeInField(got.(Node), want)
+		return checkNodeInField(got, want)
 	}
 	tgot := reflect.TypeOf(got)
 	if tgot.Kind() == reflect.Slice && tgot.Elem().Implements(nodeType) {

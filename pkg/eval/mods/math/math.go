@@ -693,12 +693,11 @@ func round(n vals.Num) vals.Num {
 			m = m.Mul(m, big2)
 			if m.CmpAbs(n.Denom()) < 0 {
 				return q
-			} else {
-				if n.Sign() < 0 {
-					return q.Sub(q, big1)
-				}
-				return q.Add(q, big1)
 			}
+			if n.Sign() < 0 {
+				return q.Sub(q, big1)
+			}
+			return q.Add(q, big1)
 		})
 }
 
@@ -741,12 +740,11 @@ func roundToEven(n vals.Num) vals.Num {
 			m = m.Mul(m, big2)
 			if diff := m.CmpAbs(n.Denom()); diff < 0 || diff == 0 && q.Bit(0) == 0 {
 				return q
-			} else {
-				if n.Sign() < 0 {
-					return q.Sub(q, big1)
-				}
-				return q.Add(q, big1)
 			}
+			if n.Sign() < 0 {
+				return q.Sub(q, big1)
+			}
+			return q.Add(q, big1)
 		})
 }
 

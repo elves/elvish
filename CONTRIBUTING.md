@@ -142,7 +142,7 @@ Install [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports) to
 format Go files, and [prettier](https://prettier.io/) to format Markdown files.
 
 ```sh
-go get golang.org/x/tools/cmd/goimports
+go install golang.org/x/tools/cmd/goimports@latest
 npm install --global prettier@2.3.1
 ```
 
@@ -152,6 +152,20 @@ automatically when saving Go or Markdown sources.
 
 Use `make checkstyle` to check if all Go and Markdown files are properly
 formatted.
+
+## Linting
+
+Install [staticcheck](https://staticcheck.io):
+
+```sh
+go install honnef.co/go/tools/cmd/staticcheck@2021.1
+```
+
+The other linter Elvish uses is the standard `go vet` command. Elvish doesn't
+use golint since it is
+[deprecated and frozen](https://github.com/golang/go/issues/38968).
+
+Use `make lint` to run `staticcheck` and `go vet`.
 
 ## Licensing
 

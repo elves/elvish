@@ -10,7 +10,6 @@ import (
 
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/testutil"
 	. "src.elv.sh/pkg/testutil"
 )
 
@@ -93,15 +92,6 @@ func TestExec_Argv0Argv(t *testing.T) {
 	}
 }
 
-var execSHLVLTests = []struct {
-	oldValue string
-	newValue string
-}{
-	{"3", "2"},
-	{"1", "0"},
-	{"0", "-1"},
-}
-
 func TestDecSHLVL(t *testing.T) {
 	// Valid integers are decremented, regardless of sign
 	testDecSHLVL(t, "-2", "-3")
@@ -118,7 +108,7 @@ func TestDecSHLVL(t *testing.T) {
 
 func testDecSHLVL(t *testing.T, oldValue, newValue string) {
 	t.Helper()
-	restore := testutil.WithTempEnv(env.SHLVL, oldValue)
+	restore := WithTempEnv(env.SHLVL, oldValue)
 	defer restore()
 
 	decSHLVL()

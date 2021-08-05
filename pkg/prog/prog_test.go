@@ -13,7 +13,16 @@ func TestBadFlag(t *testing.T) {
 
 	exit := Run(f.Fds(), Elvish("-bad-flag"))
 
-	TestError(t, f, exit, "flag provided but not defined: -bad-flag")
+	TestError(t, f, exit, "flag provided but not defined: -bad-flag\nUsage:")
+}
+
+func TestDashHTreatedAsBadFlag(t *testing.T) {
+	f := Setup()
+	defer f.Cleanup()
+
+	exit := Run(f.Fds(), Elvish("-h"))
+
+	TestError(t, f, exit, "flag provided but not defined: -h\nUsage:")
 }
 
 func TestCPUProfile(t *testing.T) {

@@ -18,12 +18,12 @@ func TestUmask(t *testing.T) {
 	}
 	TestWithSetup(t, setup,
 		// We have to start with a known umask value.
-		That(`unix:umask = 022`).Puts(),
+		That(`set unix:umask = 022`).Puts(),
 		That(`put $unix:umask`).Puts(`0o022`),
 		// Verify that mutating the value and outputting the new value works.
-		That(`unix:umask = 23`).Puts(),
+		That(`set unix:umask = 23`).Puts(),
 		That(`put $unix:umask`).Puts(`0o023`),
-		That(`unix:umask = 0o75`).Puts(),
+		That(`set unix:umask = 0o75`).Puts(),
 		That(`put $unix:umask`).Puts(`0o075`),
 		// Verify that a temporary umask change is reverted upon completion of
 		// the command. Both for builtin and external commands.
@@ -39,7 +39,9 @@ func TestUmask(t *testing.T) {
 		// We should be back to our expected umask given the preceding tests
 		// applied a temporary change to that process attribute.
 		That(`put $unix:umask`).Puts(`0o075`),
-		// An explicit float64 value should be handled correctly.
+		// An explicit num (int) value is handled correctly.
+		That(`unix:umask=(num 0o123) put $unix:umask`).Puts(`0o123`),
+		// An explicit float64 value is handled correctly.
 		That(`unix:umask=(float64 0o17) put $unix:umask`).Puts(`0o017`),
 		That(`set unix:umask = (float64 123.4)`).Throws(
 			errs.BadValue{What: "umask", Valid: validUmaskMsg, Actual: "123.4"}),
@@ -50,7 +52,7 @@ func TestUmask(t *testing.T) {
 
 		// An invalid data type should raise the expected exception.
 		That(`unix:umask = [1]`).Throws(errs.BadValue{
-			What: "umask", Valid: validUmaskMsg, Actual: "[1]"}),
+			What: "umask", Valid: validUmaskMsg, Actual: "list"}),
 
 		// Values outside the legal range should raise the expected exception.
 		That(`unix:umask = 0o1000`).Throws(errs.OutOfRange{

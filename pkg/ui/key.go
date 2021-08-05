@@ -191,6 +191,8 @@ func ParseKey(s string) (Key, error) {
 		k.Rune = rune(s[0])
 		if k.Rune < 0x20 {
 			if k.Mod&Ctrl != 0 {
+				//lint:ignore ST1005 We want this error to begin with "Ctrl" rather than "ctrl"
+				// since the user has to use the capitalized form when creating a key binding.
 				return Key{}, fmt.Errorf("Ctrl modifier with literal control char: %q", k.Rune)
 			}
 			// Convert literal control char to the equivalent canonical form;

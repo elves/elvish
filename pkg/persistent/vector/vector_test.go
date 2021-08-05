@@ -317,6 +317,7 @@ func benchmarkNativeAppend(b *testing.B, n int) {
 		for i := 0; i < n; i++ {
 			s = append(s, i)
 		}
+		_ = s
 	}
 }
 
