@@ -2,16 +2,26 @@ package shell
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/prog"
-	"src.elv.sh/pkg/prog/progtest"
-	"src.elv.sh/pkg/testutil"
+	. "src.elv.sh/pkg/prog/progtest"
+	. "src.elv.sh/pkg/testutil"
 )
 
-// More tests against Program's that are specific to script mode or interactive
-// mode are in script_test.go and interact_test.go respectively.
+func TestShell_LegacyLibPath(t *testing.T) {
+	f := setup(t)
+	MustWriteFile(filepath.Join(f.home, ".elvish", "lib", "a.elv"), "echo mod a")
+
+	exit := run(f.Fds(), Elvish("-c", "use a"))
+	TestExit(t, exit, 0)
+	f.TestOut(t, 1, "mod a\n")
+}
+
+// Most high-level tests against Program are specific to either script mode or
+// interactive mode, and are found in script_test.go and interact_test.go.
 
 var incSHLVLTests = []struct {
 	name    string
@@ -36,7 +46,7 @@ var incSHLVLTests = []struct {
 }
 
 func TestIncSHLVL(t *testing.T) {
-	testutil.Setenv(t, env.SHLVL, "")
+	Setenv(t, env.SHLVL, "")
 
 	for _, test := range incSHLVLTests {
 		t.Run(test.name, func(t *testing.T) {
@@ -69,14 +79,15 @@ func TestIncSHLVL(t *testing.T) {
 }
 
 type fixture struct {
-	*progtest.Fixture
+	*Fixture
 	home string
 }
 
-func setup(t testutil.Cleanuper) fixture {
-	testutil.Unsetenv(t, env.XDG_CONFIG_HOME)
-	home := testutil.TempHome(t)
-	return fixture{progtest.Setup(t), home}
+func setup(t Cleanuper) fixture {
+	Unsetenv(t, env.XDG_CONFIG_HOME)
+	Unsetenv(t, env.XDG_DATA_HOME)
+	home := TempHome(t)
+	return fixture{Setup(t), home}
 }
 
 func run(fds [3]*os.File, args []string) int { return prog.Run(fds, args, Program{}) }
