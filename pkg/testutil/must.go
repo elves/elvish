@@ -4,69 +4,63 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
+// MustPipe calls os.Pipe. It panics if an error occurs.
 func MustPipe() (*os.File, *os.File) {
 	r, w, err := os.Pipe()
-	if err != nil {
-		panic(err)
-	}
+	Must(err)
 	return r, w
 }
 
+// MustReadAllAndClose reads all bytes and closes the ReadCloser. It panics if
+// an error occurs.
 func MustReadAllAndClose(r io.ReadCloser) []byte {
 	bs, err := ioutil.ReadAll(r)
-	if err != nil {
-		panic(err)
-	}
-	r.Close()
+	Must(err)
+	Must(r.Close())
 	return bs
 }
 
-// MustMkdirAll calls os.MkdirAll and panics if an error is returned.
+// MustMkdirAll calls os.MkdirAll for each argument. It panics if an error
+// occurs.
 func MustMkdirAll(names ...string) {
 	for _, name := range names {
-		err := os.MkdirAll(name, 0700)
-		if err != nil {
-			panic(err)
-		}
+		Must(os.MkdirAll(name, 0700))
 	}
 }
 
-// MustCreateEmpty creates an empty file, and panics if an error occurs.
+// MustCreateEmpty creates empty file, after creating all ancestor directories
+// that don't exist. It panics if an error occurs.
 func MustCreateEmpty(names ...string) {
 	for _, name := range names {
+		Must(os.MkdirAll(filepath.Dir(name), 0700))
 		file, err := os.Create(name)
-		if err != nil {
-			panic(err)
-		}
-		file.Close()
+		Must(err)
+		Must(file.Close())
 	}
 }
 
-// MustWriteFile calls ioutil.WriteFile and panics if an error occurs.
+// MustWriteFile calls ioutil.WriteFile, after creating all ancestor directories
+// that don't exist. It panics if an error occurs.
 func MustWriteFile(filename string, data []byte, perm os.FileMode) {
-	err := ioutil.WriteFile(filename, data, perm)
-	if err != nil {
-		panic(err)
-	}
+	Must(os.MkdirAll(filepath.Dir(filename), 0700))
+	Must(ioutil.WriteFile(filename, data, perm))
 }
 
 // MustChdir calls os.Chdir and panics if it fails.
 func MustChdir(dir string) {
-	err := os.Chdir(dir)
-	if err != nil {
-		panic(err)
-	}
+	Must(os.Chdir(dir))
 }
 
 // Must panics if the error value is not nil. It is typically used like this:
 //
-//   testutil.Must(a_function())
+//   testutil.Must(someFunction(...))
 //
-// Where `a_function` returns a single error value. This is useful with
-// functions like os.Mkdir to succinctly ensure the test fails to proceed if a
-// "can't happen" failure does, in fact, happen.
+// Where someFunction returns a single error value. This is useful with
+// functions like os.Mkdir to succinctly ensure the test fails to proceed if an
+// operation required for the test setup results in an error.
 func Must(err error) {
 	if err != nil {
 		panic(err)
