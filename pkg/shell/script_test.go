@@ -8,7 +8,7 @@ import (
 )
 
 func TestScript_RunFile(t *testing.T) {
-	f := Setup(t)
+	f := setup(t)
 	testutil.MustWriteFile("a.elv", "echo hello")
 
 	ret := run(f.Fds(), Elvish("a.elv"))
@@ -21,7 +21,7 @@ func TestScript_RunFile(t *testing.T) {
 }
 
 func TestScript_RunNonExistentScript(t *testing.T) {
-	f := Setup(t)
+	f := setup(t)
 
 	ret := run(f.Fds(), Elvish("non-existent.elv"))
 
@@ -33,7 +33,7 @@ func TestScript_RunNonExistentScript(t *testing.T) {
 }
 
 func TestScript_RunCommandLineCode(t *testing.T) {
-	f := Setup(t)
+	f := setup(t)
 
 	ret := run(f.Fds(), Elvish("-c", "echo hello"))
 
@@ -110,7 +110,7 @@ var scriptErrorTests = []struct {
 func TestScript_Error(t *testing.T) {
 	for _, test := range scriptErrorTests {
 		t.Run(test.name, func(t *testing.T) {
-			f := Setup(t)
+			f := setup(t)
 
 			args := append([]string(nil), test.flags...)
 			args = append(args, "-c", test.code)

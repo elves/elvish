@@ -18,7 +18,7 @@ import (
 )
 
 func TestShell_ConnectsToDaemon(t *testing.T) {
-	f := Setup(t)
+	f := setup(t)
 
 	// Run the daemon in the same process for simplicity.
 	var wg sync.WaitGroup

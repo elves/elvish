@@ -10,7 +10,7 @@ import (
 )
 
 func TestInteract_SingleCommand(t *testing.T) {
-	f := Setup(t)
+	f := setup(t)
 	f.FeedIn("echo hello\n")
 
 	exit := run(f.Fds(), Elvish())
@@ -19,7 +19,7 @@ func TestInteract_SingleCommand(t *testing.T) {
 }
 
 func TestInteract_Exception(t *testing.T) {
-	f := Setup(t)
+	f := setup(t)
 	f.FeedIn("fail mock\n")
 
 	exit := run(f.Fds(), Elvish())
@@ -29,11 +29,9 @@ func TestInteract_Exception(t *testing.T) {
 }
 
 func TestInteract_LegacyRcFile(t *testing.T) {
-	f := Setup(t)
-	home := TempHome(t)
+	f := setup(t)
 	MustWriteFile(
-		filepath.Join(home, ".elvish", "rc.elv"),
-		"echo hello legacy rc.elv")
+		filepath.Join(f.home, ".elvish", "rc.elv"), "echo hello legacy rc.elv")
 	f.FeedIn("")
 
 	exit := run(f.Fds(), Elvish())
@@ -42,11 +40,9 @@ func TestInteract_LegacyRcFile(t *testing.T) {
 }
 
 func TestInteract_NewRcFile_Default(t *testing.T) {
-	f := Setup(t)
-	home := TempHome(t)
+	f := setup(t)
 	MustWriteFile(
-		filepath.Join(home, ".config", "elvish", "rc.elv"),
-		"echo hello new rc.elv")
+		filepath.Join(f.home, ".config", "elvish", "rc.elv"), "echo hello new rc.elv")
 
 	f.FeedIn("")
 
@@ -56,9 +52,7 @@ func TestInteract_NewRcFile_Default(t *testing.T) {
 }
 
 func TestInteract_NewRcFile_XDG_CONFIG_HOME(t *testing.T) {
-	f := Setup(t)
-	// Make an empty $HOME to prevent real ~/.elvish/rc.elv from being used
-	TempHome(t)
+	f := setup(t)
 	xdgConfigHome := Setenv(t, env.XDG_CONFIG_HOME, TempDir(t))
 	MustWriteFile(
 		filepath.Join(xdgConfigHome, "elvish", "rc.elv"),
@@ -72,7 +66,7 @@ func TestInteract_NewRcFile_XDG_CONFIG_HOME(t *testing.T) {
 }
 
 func TestInteract_RcFile(t *testing.T) {
-	f := Setup(t)
+	f := setup(t)
 	f.FeedIn("")
 	MustWriteFile("rc.elv", "echo hello from rc.elv")
 
@@ -82,7 +76,7 @@ func TestInteract_RcFile(t *testing.T) {
 }
 
 func TestInteract_RcFile_DoesNotCompile(t *testing.T) {
-	f := Setup(t)
+	f := setup(t)
 	f.FeedIn("")
 	MustWriteFile("rc.elv", "echo $a")
 
@@ -93,7 +87,7 @@ func TestInteract_RcFile_DoesNotCompile(t *testing.T) {
 }
 
 func TestInteract_RcFile_Exception(t *testing.T) {
-	f := Setup(t)
+	f := setup(t)
 	f.FeedIn("")
 	MustWriteFile("rc.elv", "fail mock")
 
@@ -104,7 +98,7 @@ func TestInteract_RcFile_Exception(t *testing.T) {
 }
 
 func TestInteract_RcFile_NonexistentIsOK(t *testing.T) {
-	f := Setup(t)
+	f := setup(t)
 	f.FeedIn("")
 
 	exit := run(f.Fds(), Elvish("-rc", "rc.elv"))

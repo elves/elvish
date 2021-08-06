@@ -6,6 +6,7 @@ import (
 
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/prog"
+	"src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -65,6 +66,17 @@ func TestIncSHLVL(t *testing.T) {
 			}
 		})
 	}
+}
+
+type fixture struct {
+	*progtest.Fixture
+	home string
+}
+
+func setup(t testutil.Cleanuper) fixture {
+	testutil.Unsetenv(t, env.XDG_CONFIG_HOME)
+	home := testutil.TempHome(t)
+	return fixture{progtest.Setup(t), home}
 }
 
 func run(fds [3]*os.File, args []string) int { return prog.Run(fds, args, Program{}) }
