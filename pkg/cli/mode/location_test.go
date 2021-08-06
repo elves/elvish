@@ -68,8 +68,7 @@ func TestNewLocation_StoreError(t *testing.T) {
 }
 
 func TestLocation_FullWorkflow(t *testing.T) {
-	home, cleanupHome := testutil.InTempHome()
-	defer cleanupHome()
+	home := testutil.InTempHome(t)
 	f := Setup()
 	defer f.Stop()
 

@@ -28,10 +28,6 @@ type ActivateFunc func(stderr io.Writer, spawnCfg *SpawnConfig) (Client, error)
 
 // SpawnConfig keeps configurations for spawning the daemon.
 type SpawnConfig struct {
-	// BinPath is the path to the Elvish binary itself, used when forking. This
-	// field is used only when spawning the daemon. If empty, it is
-	// automatically determined with os.Executable.
-	BinPath string
 	// DbPath is the path to the database.
 	DbPath string
 	// SockPath is the path to the socket on which the daemon will serve

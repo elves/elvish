@@ -10,7 +10,6 @@ import (
 
 func TestHistWalk_Up_EndOfHistory(t *testing.T) {
 	f := startHistwalkTest(t)
-	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K(ui.Up))
 	f.TestTTYNotes(t, "end of history")
@@ -18,7 +17,6 @@ func TestHistWalk_Up_EndOfHistory(t *testing.T) {
 
 func TestHistWalk_Down_EndOfHistory(t *testing.T) {
 	f := startHistwalkTest(t)
-	defer f.Cleanup()
 
 	// Not bound by default, so we need to use evals.
 	evals(f.Evaler, `edit:history:down`)
@@ -27,7 +25,6 @@ func TestHistWalk_Down_EndOfHistory(t *testing.T) {
 
 func TestHistWalk_Accept(t *testing.T) {
 	f := startHistwalkTest(t)
-	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K(ui.Right))
 	f.TestTTY(t,
@@ -38,7 +35,6 @@ func TestHistWalk_Accept(t *testing.T) {
 
 func TestHistWalk_Close(t *testing.T) {
 	f := startHistwalkTest(t)
-	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K('[', ui.Ctrl))
 	f.TestTTY(t, "~> ", term.DotHere)
@@ -46,17 +42,15 @@ func TestHistWalk_Close(t *testing.T) {
 
 func TestHistWalk_DownOrQuit(t *testing.T) {
 	f := startHistwalkTest(t)
-	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K(ui.Down))
 	f.TestTTY(t, "~> ", term.DotHere)
 }
 
 func TestHistory_FastForward(t *testing.T) {
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(t, storeOp(func(s storedefs.Store) {
 		s.AddCmd("echo a")
 	}))
-	defer f.Cleanup()
 
 	f.Store.AddCmd("echo b")
 	evals(f.Evaler, `edit:history:fast-forward`)
@@ -71,7 +65,7 @@ func TestHistory_FastForward(t *testing.T) {
 
 func startHistwalkTest(t *testing.T) *fixture {
 	// The part of the test shared by all tests.
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(t, storeOp(func(s storedefs.Store) {
 		s.AddCmd("echo a")
 	}))
 

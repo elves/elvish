@@ -10,13 +10,13 @@ import (
 	"strings"
 	"testing"
 
+	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/testutil"
 )
 
 // Fixture is a test fixture suitable for testing programs.
 type Fixture struct {
-	pipes      [3]*pipe
-	dirCleanup func()
+	pipes [3]*pipe
 }
 
 func captureOutput(p *pipe) {
@@ -27,20 +27,16 @@ func captureOutput(p *pipe) {
 	p.output <- b
 }
 
-// Setup sets up a test fixture. The caller is responsible for calling the
-// Cleanup method of the returned Fixture.
-func Setup() *Fixture {
-	_, dirCleanup := testutil.InTestDir()
+// Setup sets up a test fixture.
+func Setup(c testutil.Cleanuper) *Fixture {
+	testutil.InTempDir(c)
 	pipes := [3]*pipe{makePipe(false), makePipe(true), makePipe(true)}
-	return &Fixture{pipes, dirCleanup}
-}
-
-// Cleanup cleans up the test fixture.
-func (f *Fixture) Cleanup() {
-	f.pipes[0].close()
-	f.pipes[1].close()
-	f.pipes[2].close()
-	f.dirCleanup()
+	c.Cleanup(func() {
+		pipes[0].close()
+		pipes[1].close()
+		pipes[2].close()
+	})
+	return &Fixture{pipes}
 }
 
 // Fds returns the file descriptors in the fixture.
@@ -126,18 +122,17 @@ func (p *pipe) close() {
 	}
 }
 
-// MustWriteFile writes a file with the given name and content. It panics if the
-// write fails.
-func MustWriteFile(name, content string) {
-	err := ioutil.WriteFile(name, []byte(content), 0600)
-	if err != nil {
-		panic(err)
-	}
-}
-
 // Elvish returns an argument slice starting with "elvish".
 func Elvish(args ...string) []string {
 	return append([]string{"elvish"}, args...)
+}
+
+// TestError tests the exit code.
+func TestExit(t *testing.T, gotExit, wantExit int) {
+	t.Helper()
+	if gotExit != wantExit {
+		t.Errorf("got exit %v, want %v", gotExit, wantExit)
+	}
 }
 
 // TestError tests the error result of a program.
@@ -147,4 +142,12 @@ func TestError(t *testing.T, f *Fixture, exit int, wantErrSnippet string) {
 		t.Errorf("got exit %v, want 2", exit)
 	}
 	f.TestOutSnippet(t, 2, wantErrSnippet)
+}
+
+// SetDeprecationLevel sets prog.DeprecationLevel to the given value for the
+// duration of a test.
+func SetDeprecationLevel(c testutil.Cleanuper, level int) {
+	save := prog.DeprecationLevel
+	c.Cleanup(func() { prog.DeprecationLevel = save })
+	prog.DeprecationLevel = level
 }

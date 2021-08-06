@@ -2,38 +2,37 @@ package shell
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/prog"
 	. "src.elv.sh/pkg/prog/progtest"
+	. "src.elv.sh/pkg/testutil"
 )
 
-func TestShell_SHLVL_NormalCase(t *testing.T) {
-	restore := saveEnv(env.SHLVL)
-	defer restore()
+func TestShell_LegacyLibPath(t *testing.T) {
+	f := setup(t)
+	MustWriteFile(filepath.Join(f.home, ".elvish", "lib", "a.elv"), "echo mod a")
 
-	os.Setenv(env.SHLVL, "10")
-	testSHLVL(t, "11")
+	exit := f.run(Elvish("-c", "use a"))
+	TestExit(t, exit, 0)
+	f.TestOut(t, 1, "mod a\n")
 }
 
-func TestShell_SHLVL_Unset(t *testing.T) {
-	restore := saveEnv(env.SHLVL)
-	defer restore()
+// Most high-level tests against Program are specific to either script mode or
+// interactive mode, and are found in script_test.go and interact_test.go.
 
-	os.Unsetenv(env.SHLVL)
-	testSHLVL(t, "1")
-}
-
-func TestShell_SHLVL_Invalid(t *testing.T) {
-	restore := saveEnv(env.SHLVL)
-	defer restore()
-
-	os.Setenv(env.SHLVL, "invalid")
-	testSHLVL(t, "1")
-}
-
-func TestShell_NegativeSHLVL_Increments(t *testing.T) {
-	// Other shells don't agree what the behavior should be:
+var incSHLVLTests = []struct {
+	name    string
+	old     string
+	unset   bool
+	wantNew string
+}{
+	{name: "normal", old: "10", wantNew: "11"},
+	{name: "unset", unset: true, wantNew: "1"},
+	{name: "invalid", old: "invalid", wantNew: "1"},
+	// Other shells don't agree on what to do when SHLVL is negative:
 	//
 	// ~> E:SHLVL=-100 bash -c 'echo $SHLVL'
 	// 0
@@ -43,30 +42,52 @@ func TestShell_NegativeSHLVL_Increments(t *testing.T) {
 	// 1
 	//
 	// Elvish follows Zsh here.
-	restore := saveEnv(env.SHLVL)
-	defer restore()
-
-	os.Setenv(env.SHLVL, "-100")
-	testSHLVL(t, "-99")
+	{name: "negative", old: "-100", wantNew: "-99"},
 }
 
-func testSHLVL(t *testing.T, wantSHLVL string) {
-	t.Helper()
-	f := Setup()
-	defer f.Cleanup()
+func TestIncSHLVL(t *testing.T) {
+	Setenv(t, env.SHLVL, "")
 
-	oldValue, oldOK := os.LookupEnv(env.SHLVL)
+	for _, test := range incSHLVLTests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.unset {
+				os.Unsetenv(env.SHLVL)
+			} else {
+				os.Setenv(env.SHLVL, test.old)
+			}
 
-	Script(f.Fds(), []string{"print $E:SHLVL"}, &ScriptConfig{Cmd: true})
-	f.TestOut(t, 1, wantSHLVL)
-	f.TestOut(t, 2, "")
+			restore := IncSHLVL()
+			shlvl := os.Getenv(env.SHLVL)
+			if shlvl != test.wantNew {
+				t.Errorf("got SHLVL = %q, want %q", shlvl, test.wantNew)
+			}
 
-	// Test that state of SHLVL is restored.
-	newValue, newOK := os.LookupEnv(env.SHLVL)
-	if newValue != oldValue {
-		t.Errorf("SHLVL not restored, %q -> %q", oldValue, newValue)
-	}
-	if oldOK != newOK {
-		t.Errorf("SHLVL existence not restored, %v -> %v", oldOK, newOK)
+			restore()
+			// Test that state of SHLVL is restored.
+			restored, restoredSet := os.LookupEnv(env.SHLVL)
+			if test.unset {
+				if restoredSet {
+					t.Errorf("SHLVL not unset")
+				}
+			} else {
+				if restored != test.old {
+					t.Errorf("SHLVL restored to %q, want %q", restored, test.old)
+				}
+			}
+		})
 	}
 }
+
+type fixture struct {
+	*Fixture
+	home string
+}
+
+func setup(t Cleanuper) fixture {
+	Unsetenv(t, env.XDG_CONFIG_HOME)
+	Unsetenv(t, env.XDG_DATA_HOME)
+	home := TempHome(t)
+	return fixture{Setup(t), home}
+}
+
+func (f fixture) run(args []string) int { return prog.Run(f.Fds(), args, Program{}) }

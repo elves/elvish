@@ -14,8 +14,7 @@ import (
 )
 
 func TestBuiltinPwd(t *testing.T) {
-	tmpHome, cleanup := testutil.InTempHome()
-	defer cleanup()
+	tmpHome := testutil.InTempHome(t)
 
 	testutil.MustMkdirAll("dir1")
 	testutil.MustMkdirAll("dir2")

@@ -87,8 +87,7 @@ func TestPrompt_Eagerness0(t *testing.T) {
 	testNoUpdate(t, prompt)
 
 	// No update even if pwd has changed.
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 	prompt.Trigger(false)
 	testNoUpdate(t, prompt)
 
@@ -112,8 +111,7 @@ func TestPrompt_Eagerness5(t *testing.T) {
 	testNoUpdate(t, prompt)
 
 	// Update because the pwd has changed.
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 	prompt.Trigger(false)
 	testUpdate(t, prompt, ui.T("2> "))
 }

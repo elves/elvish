@@ -52,8 +52,9 @@ func (ev testEvaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
 	return (*eval.Evaler)(nil).PurelyEvalPrimary(pn)
 }
 
-func setupFs() func() {
-	_, cleanupFs := testutil.InTestDir()
+func TestComplete(t *testing.T) {
+	lscolors.SetTestLsColors(t)
+	testutil.InTempDir(t)
 	testutil.ApplyDir(testutil.Dir{
 		"a.exe":   testutil.File{Perm: 0755, Content: ""},
 		"non-exe": "",
@@ -61,15 +62,6 @@ func setupFs() func() {
 			"a.exe": testutil.File{Perm: 0755, Content: ""},
 		},
 	})
-	return cleanupFs
-}
-
-func TestComplete(t *testing.T) {
-	restoreLsColors := lscolors.WithTestLsColors()
-	defer restoreLsColors()
-
-	cleanupFs := setupFs()
-	defer cleanupFs()
 
 	var cfg Config
 	cfg = Config{

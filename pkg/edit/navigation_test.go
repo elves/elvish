@@ -12,8 +12,7 @@ import (
 )
 
 func TestNavigation(t *testing.T) {
-	f, cleanup := setupNav()
-	defer cleanup()
+	f := setupNav(t)
 
 	feedInput(f.TTYCtrl, "put")
 	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))
@@ -60,8 +59,7 @@ func TestNavigation(t *testing.T) {
 }
 
 func TestNavigation_WidthRatio(t *testing.T) {
-	f, cleanup := setupNav()
-	defer cleanup()
+	f := setupNav(t)
 
 	evals(f.Evaler, `@edit:navigation:width-ratio = 1 1 1`)
 	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))
@@ -80,8 +78,7 @@ func TestNavigation_WidthRatio(t *testing.T) {
 // start of the edit buffer, but the preceding char is a space, does not
 // insert another space.
 func TestNavigation_EnterDoesNotAddSpaceAfterSpace(t *testing.T) {
-	f, cleanup := setupNav()
-	defer cleanup()
+	f := setupNav(t)
 
 	feedInput(f.TTYCtrl, "put ")
 	f.TTYCtrl.Inject(term.K('N', ui.Ctrl)) // begin navigation mode
@@ -97,8 +94,7 @@ func TestNavigation_EnterDoesNotAddSpaceAfterSpace(t *testing.T) {
 // Test corner case: Inserting a selection when the CLI cursor is at the start
 // of the edit buffer omits the space char prefix.
 func TestNavigation_EnterDoesNotAddSpaceAtStartOfBuffer(t *testing.T) {
-	f, cleanup := setupNav()
-	defer cleanup()
+	f := setupNav(t)
 
 	f.TTYCtrl.Inject(term.K('N', ui.Ctrl)) // begin navigation mode
 	f.TTYCtrl.Inject(term.K(ui.Enter))     // insert the "a" file name
@@ -112,8 +108,8 @@ func TestNavigation_EnterDoesNotAddSpaceAtStartOfBuffer(t *testing.T) {
 // Test corner case: Inserting a selection when the CLI cursor is at the start
 // of a line buffer omits the space char prefix.
 func TestNavigation_EnterDoesNotAddSpaceAtStartOfLine(t *testing.T) {
-	f, cleanup := setupNav()
-	defer cleanup()
+	f := setupNav(t)
+
 	feedInput(f.TTYCtrl, "put [\n")
 	f.TTYCtrl.Inject(term.K('N', ui.Ctrl)) // begin navigation mode
 	f.TTYCtrl.Inject(term.K(ui.Enter))     // insert the "a" file name
@@ -128,8 +124,7 @@ func TestNavigation_EnterDoesNotAddSpaceAtStartOfLine(t *testing.T) {
 // Test corner case: Inserting the "selection" in an empty directory inserts
 // nothing. Regression test for https://b.elv.sh/1169.
 func TestNavigation_EnterDoesNothingInEmptyDir(t *testing.T) {
-	f, cleanup := setupNav()
-	defer cleanup()
+	f := setupNav(t)
 
 	feedInput(f.TTYCtrl, "pu")
 	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))     // begin navigation mode
@@ -157,15 +152,10 @@ var testDir = testutil.Dir{
 	},
 }
 
-func setupNav() (*fixture, func()) {
-	f := setup()
-	restoreLsColors := lscolors.WithTestLsColors()
-
+func setupNav(c testutil.Cleanuper) *fixture {
+	f := setup(c)
+	lscolors.SetTestLsColors(c)
 	testutil.ApplyDir(testDir)
 	testutil.MustChdir("d")
-
-	return f, func() {
-		restoreLsColors()
-		f.Cleanup()
-	}
+	return f
 }

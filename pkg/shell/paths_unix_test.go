@@ -13,20 +13,15 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
-// TODO(xiaq): Rewrite these tests to test the exported MakePaths instead of the
-// unexported getSecureRunDir.
-
 var elvishDashUID = fmt.Sprintf("elvish-%d", os.Getuid())
 
-func TestGetSecureRunDir_PrefersXDGWhenNeitherExists(t *testing.T) {
-	xdg, _, cleanup := setupForSecureRunDir()
-	defer cleanup()
+func TestSecureRunDir_PrefersXDGWhenNeitherExists(t *testing.T) {
+	xdg, _ := setupForSecureRunDir(t)
 	testSecureRunDir(t, filepath.Join(xdg, "elvish"), false)
 }
 
-func TestGetSecureRunDir_PrefersXDGWhenBothExist(t *testing.T) {
-	xdg, tmp, cleanup := setupForSecureRunDir()
-	defer cleanup()
+func TestSecureRunDir_PrefersXDGWhenBothExist(t *testing.T) {
+	xdg, tmp := setupForSecureRunDir(t)
 
 	os.MkdirAll(filepath.Join(xdg, "elvish"), 0700)
 	os.MkdirAll(filepath.Join(tmp, elvishDashUID), 0700)
@@ -34,45 +29,34 @@ func TestGetSecureRunDir_PrefersXDGWhenBothExist(t *testing.T) {
 	testSecureRunDir(t, filepath.Join(xdg, "elvish"), false)
 }
 
-func TestGetSecureRunDir_PrefersTmpWhenOnlyItExists(t *testing.T) {
-	_, tmp, cleanup := setupForSecureRunDir()
-	defer cleanup()
+func TestSecureRunDir_PrefersTmpWhenOnlyItExists(t *testing.T) {
+	_, tmp := setupForSecureRunDir(t)
 
 	os.MkdirAll(filepath.Join(tmp, elvishDashUID), 0700)
 
 	testSecureRunDir(t, filepath.Join(tmp, elvishDashUID), false)
 }
 
-func TestGetSecureRunDir_PrefersTmpWhenXdgEnvIsEmpty(t *testing.T) {
-	_, tmp, cleanup := setupForSecureRunDir()
-	defer cleanup()
+func TestSecureRunDir_PrefersTmpWhenXdgEnvIsEmpty(t *testing.T) {
+	_, tmp := setupForSecureRunDir(t)
 	os.Setenv(env.XDG_RUNTIME_DIR, "")
 	testSecureRunDir(t, filepath.Join(tmp, elvishDashUID), false)
 }
 
-func TestGetSecureRunDir_ReturnsErrorWhenUnableToMkdir(t *testing.T) {
-	xdg, _, cleanup := setupForSecureRunDir()
-	defer cleanup()
+func TestSecureRunDir_ReturnsErrorWhenUnableToMkdir(t *testing.T) {
+	xdg, _ := setupForSecureRunDir(t)
 	ioutil.WriteFile(filepath.Join(xdg, "elvish"), nil, 0600)
 	testSecureRunDir(t, "", true)
 }
 
-func setupForSecureRunDir() (xdgRuntimeDir, tmpDir string, cleanup func()) {
-	xdgRuntimeDir, xdgCleanup := testutil.TestDir()
-	tmpDir, tmpCleanup := testutil.TestDir()
-	envCleanup := withTempEnvs(map[string]string{
-		env.XDG_RUNTIME_DIR: xdgRuntimeDir,
-		"TMPDIR":            tmpDir,
-	})
-	return xdgRuntimeDir, tmpDir, func() {
-		envCleanup()
-		tmpCleanup()
-		xdgCleanup()
-	}
+func setupForSecureRunDir(c testutil.Cleanuper) (xdgRuntimeDir, tmpDir string) {
+	xdg := testutil.Setenv(c, env.XDG_RUNTIME_DIR, testutil.TempDir(c))
+	tmp := testutil.Setenv(c, "TMPDIR", testutil.TempDir(c))
+	return xdg, tmp
 }
 
 func testSecureRunDir(t *testing.T, wantRunDir string, wantErr bool) {
-	runDir, err := getSecureRunDir()
+	runDir, err := secureRunDir()
 	if runDir != wantRunDir {
 		t.Errorf("got rundir %q, want %q", runDir, wantRunDir)
 	}
@@ -80,31 +64,5 @@ func testSecureRunDir(t *testing.T, wantRunDir string, wantErr bool) {
 		t.Errorf("got nil err, want non-nil")
 	} else if !wantErr && err != nil {
 		t.Errorf("got err %v, want nil err", err)
-	}
-}
-
-// TODO(xiaq): Move to the testutil package and add tests.
-func withTempEnvs(envOverrides map[string]string) func() {
-	valuesToRestore := map[string]string{}
-
-	for key, value := range envOverrides {
-		original, exists := os.LookupEnv(key)
-
-		os.Setenv(key, value)
-
-		if exists {
-			valuesToRestore[key] = original
-		}
-	}
-
-	return func() {
-		for key := range envOverrides {
-			value, exists := valuesToRestore[key]
-			if exists {
-				os.Setenv(key, value)
-			} else {
-				os.Unsetenv(key)
-			}
-		}
 	}
 }

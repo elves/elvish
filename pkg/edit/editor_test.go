@@ -8,8 +8,7 @@ import (
 )
 
 func TestEditor_AddsHistoryAfterAccepting(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	feedInput(f.TTYCtrl, "echo x\n")
 	f.Wait()
@@ -18,8 +17,7 @@ func TestEditor_AddsHistoryAfterAccepting(t *testing.T) {
 }
 
 func TestEditor_DoesNotAddEmptyCommandToHistory(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	feedInput(f.TTYCtrl, "\n")
 	f.Wait()

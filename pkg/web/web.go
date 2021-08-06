@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 
-	"src.elv.sh/pkg/daemon/client"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/prog"
@@ -32,14 +31,12 @@ func (program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 	if f.CodeInArg {
 		return prog.BadUsage("-c cannot be used together with -web")
 	}
-	p := Web{SockPath: f.Sock, DbPath: f.DB, Port: f.Port}
+	p := Web{Port: f.Port}
 	return p.Main(fds, nil)
 }
 
 type Web struct {
-	SockPath string
-	DbPath   string
-	Port     int
+	Port int
 }
 
 type httpHandler struct {
@@ -54,10 +51,9 @@ type ExecuteResponse struct {
 }
 
 func (web *Web) Main(fds [3]*os.File, _ []string) error {
-	p := shell.MakePaths(fds[2],
-		shell.Paths{Sock: web.SockPath, Db: web.DbPath})
-	ev := shell.InitRuntime(fds[2], p, client.Activate)
-	defer shell.CleanupRuntime(fds[2], ev)
+	restore := shell.IncSHLVL()
+	defer restore()
+	ev := shell.MakeEvaler(fds[2])
 
 	h := httpHandler{ev}
 

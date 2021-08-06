@@ -64,9 +64,8 @@ func TestGlob_Absolute(t *testing.T) {
 }
 
 func testGlob(t *testing.T, abs bool) {
-	dir, cleanup := testutil.InTestDir()
+	dir := testutil.InTempDir(t)
 	dir = strings.ReplaceAll(dir, string(os.PathSeparator), "/")
-	defer cleanup()
 
 	for _, dir := range append(mkdirs, mkdirDots...) {
 		err := os.Mkdir(dir, 0755)
@@ -113,8 +112,7 @@ func TestGlob_InvalidUTF8InFilename(t *testing.T) {
 		t.Skip()
 	}
 
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 
 	name := string([]byte{255}) + "x"
 	f, err := os.Create(name)

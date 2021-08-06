@@ -8,7 +8,5 @@ import (
 )
 
 func TestDir(t *testing.T) {
-	tStore, cleanup := store.MustGetTempStore()
-	defer cleanup()
-	storetest.TestDir(t, tStore)
+	storetest.TestDir(t, store.MustTempStore(t))
 }

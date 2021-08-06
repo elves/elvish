@@ -3,7 +3,7 @@
 package eval_test
 
 import (
-	"path/filepath"
+	"os"
 	"strings"
 	"testing"
 
@@ -25,8 +25,7 @@ func TestPipeline_ReaderGone_Unix(t *testing.T) {
 }
 
 func TestCommand_Unix(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 
 	mustWriteScript("foo", "#!/bin/sh", "echo foo")
 	mustWriteScript("lorem/ipsum", "#!/bin/sh", "echo lorem ipsum")
@@ -46,6 +45,6 @@ func TestCommand_Unix(t *testing.T) {
 }
 
 func mustWriteScript(name string, lines ...string) {
-	testutil.MustMkdirAll(filepath.Dir(name))
-	testutil.MustWriteFile(name, []byte(strings.Join(lines, "\n")), 0700)
+	testutil.MustWriteFile(name, strings.Join(lines, "\n"))
+	testutil.Must(os.Chmod(name, 0700))
 }

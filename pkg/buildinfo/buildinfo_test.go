@@ -9,8 +9,7 @@ import (
 )
 
 func TestVersion(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	prog.Run(f.Fds(), Elvish("-version"), Program)
 
@@ -19,8 +18,7 @@ func TestVersion(t *testing.T) {
 }
 
 func TestVersion_JSON(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	prog.Run(f.Fds(), Elvish("-version", "-json"), Program)
 
@@ -29,8 +27,7 @@ func TestVersion_JSON(t *testing.T) {
 }
 
 func TestBuildInfo(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	prog.Run(f.Fds(), Elvish("-buildinfo"), Program)
 
@@ -42,8 +39,7 @@ func TestBuildInfo(t *testing.T) {
 }
 
 func TestBuildInfo_JSON(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	prog.Run(f.Fds(), Elvish("-buildinfo", "-json"), Program)
 

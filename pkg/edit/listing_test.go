@@ -11,13 +11,12 @@ import (
 // Smoke tests for individual addons.
 
 func TestHistlistAddon(t *testing.T) {
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(t, storeOp(func(s storedefs.Store) {
 		s.AddCmd("ls")
 		s.AddCmd("echo")
 		s.AddCmd("ls")
 		s.AddCmd("LS")
 	}))
-	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K('R', ui.Ctrl))
 	f.TestTTY(t,
@@ -67,10 +66,9 @@ func TestHistlistAddon(t *testing.T) {
 }
 
 func TestLastCmdAddon(t *testing.T) {
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(t, storeOp(func(s storedefs.Store) {
 		s.AddCmd("echo hello world")
 	}))
-	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K(',', ui.Alt))
 	f.TestTTY(t,
@@ -86,8 +84,7 @@ func TestLastCmdAddon(t *testing.T) {
 }
 
 func TestCustomListing_PassingList(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler,
 		`items = [[&to-filter=1 &to-accept=echo &to-show=echo]
@@ -113,8 +110,7 @@ func TestCustomListing_PassingList(t *testing.T) {
 }
 
 func TestCustomListing_PassingValueCallback(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler,
 		`f = [q]{ put [&to-accept='q '$q &to-show=(styled 'q '$q blue)] }`,
@@ -134,8 +130,7 @@ func TestCustomListing_PassingValueCallback(t *testing.T) {
 }
 
 func TestCustomListing_PassingBytesCallback(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler,
 		`f = [q]{ echo '# '$q }`,

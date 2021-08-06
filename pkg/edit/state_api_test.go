@@ -7,8 +7,7 @@ import (
 )
 
 func TestInsertAtDot(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	f.SetCodeBuffer(tk.CodeBuffer{Content: "ab", Dot: 1})
 	evals(f.Evaler, `edit:insert-at-dot XYZ`)
@@ -17,8 +16,7 @@ func TestInsertAtDot(t *testing.T) {
 }
 
 func TestReplaceInput(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	f.SetCodeBuffer(tk.CodeBuffer{Content: "ab", Dot: 1})
 	evals(f.Evaler, `edit:replace-input XYZ`)
@@ -27,8 +25,7 @@ func TestReplaceInput(t *testing.T) {
 }
 
 func TestDot(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	f.SetCodeBuffer(tk.CodeBuffer{Content: "code", Dot: 4})
 	evals(f.Evaler, `edit:-dot = 0`)
@@ -37,8 +34,7 @@ func TestDot(t *testing.T) {
 }
 
 func TestCurrentCommand(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler, `edit:current-command = code`)
 

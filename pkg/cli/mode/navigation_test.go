@@ -54,8 +54,7 @@ func TestErrorInDescend(t *testing.T) {
 }
 
 func TestErrorInCurrent(t *testing.T) {
-	f, cleanup := setup()
-	defer cleanup()
+	f := setupNav(t)
 	defer f.Stop()
 
 	c := getTestCursor()
@@ -93,8 +92,7 @@ func TestErrorInCurrent(t *testing.T) {
 }
 
 func TestErrorInParent(t *testing.T) {
-	f, cleanup := setup()
-	defer cleanup()
+	f := setupNav(t)
 	defer f.Stop()
 
 	c := getTestCursor()
@@ -115,8 +113,7 @@ func TestErrorInParent(t *testing.T) {
 }
 
 func TestWidthRatio(t *testing.T) {
-	f, cleanup := setup()
-	defer cleanup()
+	f := setupNav(t)
 	defer f.Stop()
 
 	c := getTestCursor()
@@ -156,8 +153,7 @@ func TestNavigation_FakeFS(t *testing.T) {
 }
 
 func TestNavigation_RealFS(t *testing.T) {
-	_, cleanupFs := testutil.InTestDir()
-	defer cleanupFs()
+	testutil.InTempDir(t)
 	testutil.ApplyDir(testDir)
 
 	testutil.MustChdir("d")
@@ -165,8 +161,7 @@ func TestNavigation_RealFS(t *testing.T) {
 }
 
 func testNavigation(t *testing.T, c NavigationCursor) {
-	f, cleanup := setup()
-	defer cleanup()
+	f := setupNav(t)
 	defer f.Stop()
 
 	w := startNavigation(f.App, NavigationSpec{Cursor: c})
@@ -316,9 +311,10 @@ func testNavigation(t *testing.T, c NavigationCursor) {
 	f.TTY.TestBuffer(t, d3NoneBuf)
 }
 
-func setup() (*Fixture, func()) {
-	restore := lscolors.WithTestLsColors()
-	return Setup(WithTTY(func(tty TTYCtrl) { tty.SetSize(6, 40) })), restore
+func setupNav(c testutil.Cleanuper) *Fixture {
+	lscolors.SetTestLsColors(c)
+	// Use a small TTY size to make the test buffer easier to build.
+	return Setup(WithTTY(func(tty TTYCtrl) { tty.SetSize(6, 40) }))
 }
 
 func startNavigation(app cli.App, spec NavigationSpec) Navigation {

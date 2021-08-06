@@ -1,68 +1,74 @@
 package shell
 
 import (
-	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
+	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/fsutil"
+	"src.elv.sh/pkg/prog"
 )
 
-// Paths keeps all paths required for the Elvish runtime.
-type Paths struct {
-	RunDir string
-	Sock   string
-
-	DataDir string
-	Db      string
-	Rc      string
-	LibDir  string
+func rcPath() (string, error) {
+	if legacyRC, exists := legacyDataPath("rc.elv", false); exists {
+		return legacyRC, nil
+	}
+	return newRCPath()
 }
 
-// MakePaths makes a populated Paths, using the given overrides.
-func MakePaths(stderr io.Writer, overrides Paths) Paths {
-	p := overrides
-	setDir(&p.RunDir, "secure run directory", getSecureRunDir, stderr)
-	if p.RunDir != "" {
-		setChild(&p.Sock, p.RunDir, "sock")
+func libPaths() ([]string, string, error) {
+	paths, installPath, err := newLibPaths()
+	if legacyLib, exists := legacyDataPath("lib", true); exists {
+		paths = append(paths, legacyLib)
 	}
-
-	setDir(&p.DataDir, "data directory", ensureDataDir, stderr)
-	if p.DataDir != "" {
-		setChild(&p.Db, p.DataDir, "db")
-		setChild(&p.Rc, p.DataDir, "rc.elv")
-		setChild(&p.LibDir, p.DataDir, "lib")
-	}
-
-	return p
+	return paths, installPath, err
 }
 
-func setDir(p *string, what string, f func() (string, error), stderr io.Writer) {
-	if *p == "" {
-		dir, err := f()
-		if err == nil {
-			*p = dir
-		} else {
-			fmt.Fprintf(stderr, "warning: cannot create %v: %v\n", what, err)
+// Returns a SpawnConfig containing all the paths needed by the daemon. It
+// respects overrides of sock and db from CLI flags.
+func daemonPaths(flags *prog.Flags) (*daemondefs.SpawnConfig, error) {
+	runDir, err := secureRunDir()
+	if err != nil {
+		return nil, err
+	}
+	sock := flags.Sock
+	if sock == "" {
+		sock = filepath.Join(runDir, "sock")
+	}
+
+	db := flags.DB
+	if db == "" {
+		var err error
+		db, err = dbPath()
+		if err != nil {
+			return nil, err
+		}
+		err = os.MkdirAll(filepath.Dir(db), 0700)
+		if err != nil {
+			return nil, err
 		}
 	}
+	return &daemondefs.SpawnConfig{DbPath: db, SockPath: sock, RunDir: runDir}, nil
 }
 
-func setChild(p *string, d, name string) {
-	if *p == "" {
-		*p = filepath.Join(d, name)
+func dbPath() (string, error) {
+	if legacyDB, exists := legacyDataPath("db", false); exists {
+		return legacyDB, nil
 	}
+	return newDBPath()
 }
 
-// Ensures Elvish's data directory exists, creating it if necessary. It returns
-// the path to the data directory (never with a trailing slash) and possible
-// error.
-func ensureDataDir() (string, error) {
+// Returns a path in the legacy data directory path, and whether it exists and
+// matches the expected file/directory property.
+func legacyDataPath(name string, dir bool) (string, bool) {
 	home, err := fsutil.GetHome("")
 	if err != nil {
-		return "", err
+		return "", false
 	}
-	ddir := home + "/.elvish"
-	return ddir, os.MkdirAll(ddir, 0700)
+	p := filepath.Join(home, ".elvish", name)
+	info, err := os.Stat(p)
+	if err != nil || info.IsDir() != dir {
+		return "", false
+	}
+	return p, true
 }

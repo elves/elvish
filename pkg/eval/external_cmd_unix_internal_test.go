@@ -14,8 +14,7 @@ import (
 )
 
 func TestExec_Argv0Argv(t *testing.T) {
-	dir, cleanupFS := InTestDir()
-	defer cleanupFS()
+	dir := InTempDir(t)
 	ApplyDir(Dir{
 		"bin": Dir{
 			"elvish": File{Perm: 0755},
@@ -23,11 +22,8 @@ func TestExec_Argv0Argv(t *testing.T) {
 		},
 	})
 
-	restorePATH := WithTempEnv("PATH", dir+"/bin")
-	defer restorePATH()
-
-	restoreSHLVL := WithTempEnv(env.SHLVL, "1")
-	defer restoreSHLVL()
+	Setenv(t, "PATH", dir+"/bin")
+	Setenv(t, env.SHLVL, "1")
 
 	var tests = []struct {
 		name      string
@@ -108,8 +104,7 @@ func TestDecSHLVL(t *testing.T) {
 
 func testDecSHLVL(t *testing.T, oldValue, newValue string) {
 	t.Helper()
-	restore := WithTempEnv(env.SHLVL, oldValue)
-	defer restore()
+	Setenv(t, env.SHLVL, oldValue)
 
 	decSHLVL()
 	if gotValue := os.Getenv(env.SHLVL); gotValue != newValue {

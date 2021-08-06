@@ -7,8 +7,7 @@ import (
 )
 
 func TestInsert_Abbr(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler, `edit:abbr = [&x=full]`)
 	f.TTYCtrl.Inject(term.K('x'), term.K('\n'))
@@ -19,8 +18,7 @@ func TestInsert_Abbr(t *testing.T) {
 }
 
 func TestInsert_Binding(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler,
 		`called = 0`,
@@ -37,8 +35,7 @@ func TestInsert_Binding(t *testing.T) {
 }
 
 func TestInsert_QuotePaste(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler, `edit:insert:quote-paste = $true`)
 
@@ -55,8 +52,7 @@ func TestInsert_QuotePaste(t *testing.T) {
 }
 
 func TestToggleQuotePaste(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler,
 		`v0 = $edit:insert:quote-paste`,

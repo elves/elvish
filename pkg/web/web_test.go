@@ -8,8 +8,7 @@ import (
 )
 
 func TestWeb_SpuriousArgument(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	exit := prog.Run(f.Fds(), Elvish("-web", "x"), Program)
 
@@ -17,8 +16,7 @@ func TestWeb_SpuriousArgument(t *testing.T) {
 }
 
 func TestWeb_SpuriousC(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	exit := prog.Run(f.Fds(), Elvish("-web", "-c"), Program)
 

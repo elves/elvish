@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -15,7 +16,10 @@ import (
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/edit"
 	"src.elv.sh/pkg/eval"
+	daemonmod "src.elv.sh/pkg/eval/mods/daemon"
+	"src.elv.sh/pkg/eval/mods/store"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/strutil"
 	"src.elv.sh/pkg/sys"
 )
 
@@ -23,32 +27,48 @@ import (
 // being launched. It should be set to false by interactive mode unit tests.
 var interactiveRescueShell bool = true
 
-// InteractConfig keeps configuration for the interactive mode.
-type InteractConfig struct {
+// Configuration for the interactive mode.
+type interactCfg struct {
+	RC string
+
 	ActivateDaemon daemondefs.ActivateFunc
-	Paths          Paths
+	SpawnConfig    *daemondefs.SpawnConfig
 }
 
-// Interactive mode panic handler.
-func handlePanic() {
-	r := recover()
-	if r != nil {
-		println()
-		print(sys.DumpStack())
-		println()
-		fmt.Println(r)
-		println("\nExecing recovery shell /bin/sh")
-		syscall.Exec("/bin/sh", []string{"/bin/sh"}, os.Environ())
-	}
+// Interface satisfied by the line editor. Used for swapping out the editor with
+// minEditor when necessary.
+type editor interface {
+	ReadCode() (string, error)
+	RunAfterCommandHooks(src parse.Source, duration float64, err error)
 }
 
-// Interact runs an interactive shell session.
-func Interact(fds [3]*os.File, cfg *InteractConfig) {
+// Runs an interactive shell session.
+func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 	if interactiveRescueShell {
 		defer handlePanic()
 	}
-	ev, cleanup := setupShell(fds, cfg.Paths, cfg.ActivateDaemon)
-	defer cleanup()
+
+	if cfg.ActivateDaemon != nil && cfg.SpawnConfig != nil {
+		// TODO(xiaq): Connect to daemon and install daemon module
+		// asynchronously.
+		cl, err := cfg.ActivateDaemon(fds[2], cfg.SpawnConfig)
+		if err != nil {
+			fmt.Fprintln(fds[2], "Cannot connect to daemon:", err)
+			fmt.Fprintln(fds[2], "Daemon-related functions will likely not work.")
+		}
+		defer func() {
+			err := cl.Close()
+			if err != nil {
+				fmt.Fprintln(fds[2],
+					"warning: failed to close connection to daemon:", err)
+			}
+		}()
+		// Even if error is not nil, we install daemon-related functionalities
+		// anyway. Daemon may eventually come online and become functional.
+		ev.SetDaemonClient(cl)
+		ev.AddModule("store", store.Ns(cl))
+		ev.AddModule("daemon", daemonmod.Ns(cl))
+	}
 
 	// Build Editor.
 	var ed editor
@@ -61,8 +81,8 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 	}
 
 	// Source rc.elv.
-	if cfg.Paths.Rc != "" {
-		err := sourceRC(fds, ev, ed, cfg.Paths.Rc)
+	if cfg.RC != "" {
+		err := sourceRC(fds, ev, ed, cfg.RC)
 		if err != nil {
 			diag.ShowError(fds[2], err)
 		}
@@ -114,6 +134,19 @@ func Interact(fds [3]*os.File, cfg *InteractConfig) {
 	}
 }
 
+// Interactive mode panic handler.
+func handlePanic() {
+	r := recover()
+	if r != nil {
+		println()
+		print(sys.DumpStack())
+		println()
+		fmt.Println(r)
+		println("\nExecing recovery shell /bin/sh")
+		syscall.Exec("/bin/sh", []string{"/bin/sh"}, os.Environ())
+	}
+}
+
 func sourceRC(fds [3]*os.File, ev *eval.Evaler, ed eval.Editor, rcPath string) error {
 	absPath, err := filepath.Abs(rcPath)
 	if err != nil {
@@ -130,4 +163,27 @@ func sourceRC(fds [3]*os.File, ev *eval.Evaler, ed eval.Editor, rcPath string) e
 	duration, err := evalInTTY(ev, fds, src)
 	ed.RunAfterCommandHooks(src, duration, err)
 	return err
+}
+
+type minEditor struct {
+	in  *bufio.Reader
+	out io.Writer
+}
+
+func newMinEditor(in, out *os.File) *minEditor {
+	return &minEditor{bufio.NewReader(in), out}
+}
+
+func (ed *minEditor) RunAfterCommandHooks(src parse.Source, duration float64, err error) {
+	// no-op; minEditor doesn't support this hook.
+}
+
+func (ed *minEditor) ReadCode() (string, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		wd = "?"
+	}
+	fmt.Fprintf(ed.out, "%s> ", wd)
+	line, err := ed.in.ReadString('\n')
+	return strutil.ChopLineEnding(line), err
 }

@@ -9,26 +9,20 @@ import (
 	"path/filepath"
 	"unicode/utf8"
 
-	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 )
 
-// ScriptConfig keeps configuration for the script mode.
-type ScriptConfig struct {
-	ActivateDaemon daemondefs.ActivateFunc
-	Paths          Paths
-
+// Configuration for the script mode.
+type scriptCfg struct {
 	Cmd         bool
 	CompileOnly bool
 	JSON        bool
 }
 
-// Script executes a shell script.
-func Script(fds [3]*os.File, args []string, cfg *ScriptConfig) int {
-	ev, cleanup := setupShell(fds, cfg.Paths, cfg.ActivateDaemon)
-	defer cleanup()
-
+// Executes a shell script.
+func script(ev *eval.Evaler, fds [3]*os.File, args []string, cfg *scriptCfg) int {
 	arg0 := args[0]
 	ev.SetArgs(args[1:])
 

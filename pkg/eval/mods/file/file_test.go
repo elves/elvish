@@ -17,8 +17,7 @@ func TestFile(t *testing.T) {
 	setup := func(ev *eval.Evaler) {
 		ev.AddGlobal(eval.NsBuilder{}.AddNs("file", Ns).Ns())
 	}
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 
 	TestWithSetup(t, setup,
 		That(`

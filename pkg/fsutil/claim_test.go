@@ -20,8 +20,7 @@ var claimFileTests = []struct {
 }
 
 func TestClaimFile(t *testing.T) {
-	_, cleanup := InTestDir()
-	defer cleanup()
+	InTempDir(t)
 
 	ApplyDir(Dir{
 		"a0.log": "",
@@ -38,8 +37,7 @@ func TestClaimFile(t *testing.T) {
 }
 
 func TestClaimFile_Concurrent(t *testing.T) {
-	_, cleanup := InTestDir()
-	defer cleanup()
+	InTempDir(t)
 
 	n := 9
 	ch := make(chan string, n)

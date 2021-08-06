@@ -11,8 +11,8 @@ import (
 )
 
 func TestCompletionAddon(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
+
 	testutil.ApplyDir(testutil.Dir{"a": "", "b": ""})
 
 	feedInput(f.TTYCtrl, "echo \t")
@@ -27,8 +27,8 @@ func TestCompletionAddon(t *testing.T) {
 }
 
 func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
+
 	testutil.ApplyDir(testutil.Dir{"foo1": "", "foo2": "", "foo": "", "fox": ""})
 
 	feedInput(f.TTYCtrl, "echo \t")
@@ -49,8 +49,8 @@ func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
 }
 
 func TestCompleteFilename(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
+
 	testutil.ApplyDir(testutil.Dir{"d": testutil.Dir{"a": "", "b": ""}})
 
 	evals(f.Evaler, `@cands = (edit:complete-filename ls ./d/a)`)
@@ -83,16 +83,14 @@ func TestComplexCandidate(t *testing.T) {
 func TestComplexCandidate_InEditModule(t *testing.T) {
 	// A sanity check that the complex-candidate command is part of the edit
 	// module.
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler, `stem = (edit:complex-candidate stem)[stem]`)
 	testGlobal(t, f.Evaler, "stem", "stem")
 }
 
 func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler,
 		`foo-args = []`,
@@ -117,8 +115,7 @@ func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
 }
 
 func TestCompletionArgCompleter_BytesOutput(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler,
 		`fn foo { }`,
@@ -139,8 +136,7 @@ func TestCompletionArgCompleter_BytesOutput(t *testing.T) {
 }
 
 func TestCompleteSudo(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler,
 		`fn foo { }`,
@@ -153,8 +149,8 @@ func TestCompleteSudo(t *testing.T) {
 }
 
 func TestCompletionMatcher(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
+
 	testutil.ApplyDir(testutil.Dir{"foo": "", "oof": ""})
 
 	evals(f.Evaler, `edit:completion:matcher[''] = $edit:match-substr~`)
@@ -170,8 +166,7 @@ func TestCompletionMatcher(t *testing.T) {
 }
 
 func TestBuiltinMatchers(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler,
 		`@prefix = (edit:match-prefix ab [ab abc cab acb ba [ab] [a b] [b a]])`,
@@ -188,8 +183,7 @@ func TestBuiltinMatchers(t *testing.T) {
 }
 
 func TestBuiltinMatchers_Options(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	// The two options work identically on all the builtin matchers, so we only
 	// test for match-prefix for simplicity.

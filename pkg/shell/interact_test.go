@@ -1,76 +1,82 @@
 package shell
 
 import (
-	"os"
+	"path/filepath"
 	"testing"
 
 	. "src.elv.sh/pkg/prog/progtest"
+	. "src.elv.sh/pkg/testutil"
 )
 
-func TestMain(m *testing.M) {
-	interactiveRescueShell = false
-	os.Exit(m.Run())
-}
-
 func TestInteract_SingleCommand(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := setup(t)
 	f.FeedIn("echo hello\n")
 
-	Interact(f.Fds(), &InteractConfig{})
+	exit := f.run(Elvish())
+	TestExit(t, exit, 0)
 	f.TestOut(t, 1, "hello\n")
 }
 
 func TestInteract_Exception(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := setup(t)
 	f.FeedIn("fail mock\n")
 
-	Interact(f.Fds(), &InteractConfig{})
+	exit := f.run(Elvish())
+	TestExit(t, exit, 0)
 	f.TestOutSnippet(t, 2, "fail mock")
 	f.TestOut(t, 1, "")
 }
 
-func TestInteract_RcFile(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+func TestInteract_LegacyRcFile(t *testing.T) {
+	f := setup(t)
+	MustWriteFile(
+		filepath.Join(f.home, ".elvish", "rc.elv"), "echo hello legacy rc.elv")
 	f.FeedIn("")
 
+	exit := f.run(Elvish())
+	TestExit(t, exit, 0)
+	f.TestOut(t, 1, "hello legacy rc.elv\n")
+}
+
+// Non-legacy RC file tested in interact_unix_test.go
+
+func TestInteract_RcFile(t *testing.T) {
+	f := setup(t)
+	f.FeedIn("")
 	MustWriteFile("rc.elv", "echo hello from rc.elv")
 
-	Interact(f.Fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
+	exit := f.run(Elvish("-rc", "rc.elv"))
+	TestExit(t, exit, 0)
 	f.TestOut(t, 1, "hello from rc.elv\n")
 }
 
 func TestInteract_RcFile_DoesNotCompile(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := setup(t)
 	f.FeedIn("")
-
 	MustWriteFile("rc.elv", "echo $a")
 
-	Interact(f.Fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
+	exit := f.run(Elvish("-rc", "rc.elv"))
+	TestExit(t, exit, 0)
 	f.TestOutSnippet(t, 2, "variable $a not found")
 	f.TestOut(t, 1, "")
 }
 
 func TestInteract_RcFile_Exception(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := setup(t)
 	f.FeedIn("")
-
 	MustWriteFile("rc.elv", "fail mock")
 
-	Interact(f.Fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
+	exit := f.run(Elvish("-rc", "rc.elv"))
+	TestExit(t, exit, 0)
 	f.TestOutSnippet(t, 2, "fail mock")
 	f.TestOut(t, 1, "")
 }
 
 func TestInteract_RcFile_NonexistentIsOK(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := setup(t)
 	f.FeedIn("")
 
-	Interact(f.Fds(), &InteractConfig{Paths: Paths{Rc: "rc.elv"}})
+	exit := f.run(Elvish("-rc", "rc.elv"))
+	TestExit(t, exit, 0)
 	f.TestOut(t, 1, "")
 }

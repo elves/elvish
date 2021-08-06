@@ -1,8 +1,6 @@
 package eval_test
 
 import (
-	"path/filepath"
-	"strings"
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
@@ -10,9 +8,9 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/prog/progtest"
 
 	. "src.elv.sh/pkg/eval/evaltest"
-	"src.elv.sh/pkg/prog"
 	. "src.elv.sh/pkg/testutil"
 )
 
@@ -72,8 +70,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestDel(t *testing.T) {
-	restore := WithTempEnv("TEST_ENV", "test value")
-	defer restore()
+	Setenv(t, "TEST_ENV", "test value")
 
 	Test(t,
 		// Deleting variable
@@ -271,12 +268,11 @@ func TestFn(t *testing.T) {
 
 // Regression test for #1225
 func TestUse_SetsVariableCorrectlyIfModuleCallsAddGlobal(t *testing.T) {
-	libdir, cleanup := InTestDir()
-	defer cleanup()
+	libdir := InTempDir(t)
 
 	ApplyDir(Dir{"a.elv": "add-var"})
 	ev := NewEvaler()
-	ev.SetLibDir(libdir)
+	ev.SetLibDirs([]string{libdir})
 	addVar := func() {
 		ev.AddGlobal(NsBuilder{"b": vars.NewReadOnly("foo")}.Ns())
 	}
@@ -297,15 +293,13 @@ func TestUse_SetsVariableCorrectlyIfModuleCallsAddGlobal(t *testing.T) {
 }
 
 func TestUse_SupportsCircularDependency(t *testing.T) {
-	libdir, cleanup := InTestDir()
-	defer cleanup()
-
+	libdir := InTempDir(t)
 	ApplyDir(Dir{
 		"a.elv": "var pre = apre; use b; put $b:pre $b:post; var post = apost",
 		"b.elv": "var pre = bpre; use a; put $a:pre $a:post; var post = bpost",
 	})
 
-	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
+	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDirs([]string{libdir}) },
 		That(`use a`).Puts(
 			// When b.elv is imported from a.elv, $a:pre is set but $a:post is
 			// not
@@ -316,28 +310,38 @@ func TestUse_SupportsCircularDependency(t *testing.T) {
 }
 
 func TestUse(t *testing.T) {
-	libdir, cleanup := InTestDir()
-	defer cleanup()
+	libdir1 := InTempDir(t)
 
-	MustMkdirAll(filepath.Join("a", "b", "c"))
+	ApplyDir(Dir{
+		"shadow.elv": "put lib1",
+	})
 
-	writeMod := func(name, content string) {
-		fname := filepath.Join(strings.Split(name, "/")...) + ".elv"
-		MustWriteFile(fname, []byte(content), 0600)
-	}
-	writeMod("has-init", "put has-init")
-	writeMod("put-x", "put $x")
-	writeMod("lorem", "name = lorem; fn put-name { put $name }")
-	writeMod("d", "name = d")
-	writeMod("a/b/c/d", "name = a/b/c/d")
-	writeMod("a/b/c/x",
-		"use ./d; d = $d:name; use ../../../lorem; lorem = $lorem:name")
+	libdir2 := InTempDir(t)
 
-	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
+	ApplyDir(Dir{
+		"has-init.elv": "put has-init",
+		"put-x.elv":    "put $x",
+		"lorem.elv":    "name = lorem; fn put-name { put $name }",
+		"d.elv":        "name = d",
+		"shadow.elv":   "put lib2",
+		"a": Dir{
+			"b": Dir{
+				"c": Dir{
+					"d.elv": "name = a/b/c/d",
+					"x.elv": "use ./d; d = $d:name; use ../../../lorem; lorem = $lorem:name",
+				},
+			},
+		},
+	})
+
+	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDirs([]string{libdir1, libdir2}) },
 		That(`use lorem; put $lorem:name`).Puts("lorem"),
 		// imports are lexically scoped
 		// TODO: Support testing for compilation error
-		// That(`{ use lorem }; put $lorem:name`).ErrorsAny(),
+		That(`{ use lorem }; put $lorem:name`).DoesNotCompile(),
+
+		// prefers lib dir that appear earlier
+		That("use shadow").Puts("lib1"),
 
 		// use of imported variable is captured in upvalue
 		That(`use lorem; { put $lorem:name }`).Puts("lorem"),
@@ -378,13 +382,11 @@ func TestUse(t *testing.T) {
 
 // Regression test for #1072
 func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
-	restore := prog.SetDeprecationLevel(16)
-	defer restore()
-	libdir, cleanup := InTestDir()
-	defer cleanup()
-	MustWriteFile("dep.elv", []byte("fn x { fopen x }"), 0600)
+	progtest.SetDeprecationLevel(t, 16)
+	libdir := InTempDir(t)
+	MustWriteFile("dep.elv", "fn x { fopen x }")
 
-	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
+	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDirs([]string{libdir}) },
 		// Importing module triggers check for deprecated features
 		That("use dep").PrintsStderrWith("is deprecated"),
 	)

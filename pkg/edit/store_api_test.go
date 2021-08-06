@@ -9,7 +9,7 @@ import (
 )
 
 func TestCommandHistory(t *testing.T) {
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(t, storeOp(func(s storedefs.Store) {
 		s.AddCmd("echo 0")
 		s.AddCmd("echo 1")
 		s.AddCmd("echo 2")
@@ -18,7 +18,6 @@ func TestCommandHistory(t *testing.T) {
 		s.AddCmd("echo 3")
 		s.AddCmd("echo 1")
 	}))
-	defer f.Cleanup()
 
 	// TODO(xiaq): Test session history too. See NewHybridStore and NewMemStore.
 
@@ -87,10 +86,9 @@ func cmdMap(id int, cmd string) vals.Map {
 }
 
 func TestInsertLastWord(t *testing.T) {
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(t, storeOp(func(s storedefs.Store) {
 		s.AddCmd("echo foo bar")
 	}))
-	defer f.Cleanup()
 
 	evals(f.Evaler, "edit:insert-last-word")
 	wantBuf := tk.CodeBuffer{Content: "bar", Dot: 3}

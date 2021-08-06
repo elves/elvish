@@ -11,11 +11,8 @@ import (
 )
 
 func TestBuiltinFnExternal(t *testing.T) {
-	tmpHome, cleanup := testutil.InTempHome()
-	defer cleanup()
-
-	restorePath := testutil.WithTempEnv("PATH", tmpHome+":"+os.Getenv("PATH"))
-	defer restorePath()
+	tmpHome := testutil.InTempHome(t)
+	testutil.Setenv(t, "PATH", tmpHome+":"+os.Getenv("PATH"))
 
 	Test(t,
 		That(`e = (external true); kind-of $e`).Puts("fn"),

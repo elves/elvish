@@ -12,15 +12,8 @@ import (
 )
 
 func TestGetwd(t *testing.T) {
-	tmpdir, cleanup := testutil.InTestDir()
-	defer cleanup()
+	tmpdir := testutil.InTempDir(t)
 	testutil.Must(os.Mkdir("a", 0700))
-
-	// On some systems /tmp is a symlink.
-	tmpdir, err := filepath.EvalSymlinks(tmpdir)
-	if err != nil {
-		panic(err)
-	}
 
 	var tests = []struct {
 		name   string
@@ -36,8 +29,7 @@ func TestGetwd(t *testing.T) {
 		{"wd not abbreviated when HOME is slash", "/", tmpdir, tmpdir},
 	}
 
-	oldHome := os.Getenv(env.HOME)
-	defer os.Setenv(env.HOME, oldHome)
+	testutil.SaveEnv(t, env.HOME)
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

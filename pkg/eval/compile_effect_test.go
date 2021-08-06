@@ -188,8 +188,7 @@ func TestCommand_Redir(t *testing.T) {
 	setup := func(ev *Evaler) {
 		ev.AddGlobal(NsBuilder{}.AddNs("file", file.Ns).Ns())
 	}
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 
 	TestWithSetup(t, setup,
 		// Output and input redirection.
