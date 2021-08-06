@@ -72,7 +72,7 @@ jobs:
       with:
         go-version: 1.16.x
     - name: Run benchmarks
-      run: go test -bench=. ./...
+      run: go test -bench=. -run='^$' ./...
 
   upload-coverage:
     name: Upload test coverage
