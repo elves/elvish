@@ -25,8 +25,7 @@ func TestPipeline_ReaderGone_Unix(t *testing.T) {
 }
 
 func TestCommand_Unix(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 
 	mustWriteScript("foo", "#!/bin/sh", "echo foo")
 	mustWriteScript("lorem/ipsum", "#!/bin/sh", "echo lorem ipsum")

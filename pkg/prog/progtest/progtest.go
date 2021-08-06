@@ -15,8 +15,7 @@ import (
 
 // Fixture is a test fixture suitable for testing programs.
 type Fixture struct {
-	pipes      [3]*pipe
-	dirCleanup func()
+	pipes [3]*pipe
 }
 
 func captureOutput(p *pipe) {
@@ -27,20 +26,16 @@ func captureOutput(p *pipe) {
 	p.output <- b
 }
 
-// Setup sets up a test fixture. The caller is responsible for calling the
-// Cleanup method of the returned Fixture.
-func Setup() *Fixture {
-	_, dirCleanup := testutil.InTestDir()
+// Setup sets up a test fixture.
+func Setup(c testutil.Cleanuper) *Fixture {
+	testutil.InTempDir(c)
 	pipes := [3]*pipe{makePipe(false), makePipe(true), makePipe(true)}
-	return &Fixture{pipes, dirCleanup}
-}
-
-// Cleanup cleans up the test fixture.
-func (f *Fixture) Cleanup() {
-	f.pipes[0].close()
-	f.pipes[1].close()
-	f.pipes[2].close()
-	f.dirCleanup()
+	c.Cleanup(func() {
+		pipes[0].close()
+		pipes[1].close()
+		pipes[2].close()
+	})
+	return &Fixture{pipes}
 }
 
 // Fds returns the file descriptors in the fixture.

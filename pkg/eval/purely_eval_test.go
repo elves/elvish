@@ -12,8 +12,7 @@ import (
 )
 
 func TestPurelyEvalCompound(t *testing.T) {
-	home, cleanup := testutil.InTempHome()
-	defer cleanup()
+	home := testutil.InTempHome(t)
 
 	var tests = []struct {
 		code      string

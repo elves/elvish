@@ -8,10 +8,8 @@ import (
 )
 
 func TestLsColors(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
-	restoreLsColors := WithTestLsColors()
-	defer restoreLsColors()
+	testutil.InTempDir(t)
+	SetTestLsColors(t)
 
 	// Test both feature-based and extension-based coloring.
 

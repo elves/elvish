@@ -19,8 +19,7 @@ import (
 // High-level sanity test.
 
 func TestHighlighter(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	feedInput(f.TTYCtrl, "put $true")
 	f.TestTTY(t,
@@ -79,18 +78,13 @@ func TestMakeHasCommand(t *testing.T) {
 		Ns())
 
 	// Set up environment.
-	testDir, cleanup := testutil.InTestDir()
-	defer cleanup()
-	oldPath := os.Getenv(env.PATH)
-	defer os.Setenv(env.PATH, oldPath)
+	testDir := testutil.InTempDir(t)
+	testutil.Setenv(t, env.PATH, filepath.Join(testDir, "bin"))
 	if runtime.GOOS == "windows" {
-		oldPathExt := os.Getenv(env.PATHEXT)
-		defer os.Setenv(env.PATHEXT, oldPathExt)
-		os.Unsetenv(env.PATHEXT) // force default value
+		testutil.Unsetenv(t, env.PATHEXT) // force default value
 	}
 
 	// Set up a directory in PATH.
-	os.Setenv(env.PATH, filepath.Join(testDir, "bin"))
 	mustMkdirAll("bin")
 	mustMkExecutable("bin/external")
 	mustMkExecutable("bin/@external")

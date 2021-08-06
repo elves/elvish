@@ -9,13 +9,13 @@ import (
 	"src.elv.sh/pkg/env"
 )
 
-// TestDir creates a temporary directory for testing. It returns the path of the
-// temporary directory and a cleanup function to remove the temporary directory.
-// The path has symlinks resolved with filepath.EvalSymlinks.
+// TempDir creates a temporary directory for testing that will be removed
+// after the test finishes. It is different from testing.TB.TempDir in that it
+// resolves symlinks in the path of the directory.
 //
 // It panics if the test directory cannot be created or symlinks cannot be
 // resolved. It is only suitable for use in tests.
-func TestDir() (string, func()) {
+func TempDir(c Cleanuper) string {
 	dir, err := ioutil.TempDir("", "elvishtest.")
 	if err != nil {
 		panic(err)
@@ -24,43 +24,42 @@ func TestDir() (string, func()) {
 	if err != nil {
 		panic(err)
 	}
-	return dir, func() {
+	c.Cleanup(func() {
 		err := os.RemoveAll(dir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to remove temp dir %s: %v\n", dir, err)
 		}
-	}
+	})
+	return dir
 }
 
-// InTestDir is like TestDir, but also changes into the test directory, and the
-// cleanup function also changes back to the original working directory.
-//
-// It panics if it could not get the working directory or change directory. It
-// is only suitable for use in tests.
-func InTestDir() (string, func()) {
+// TempHome is equivalent to Setenv(c, env.HOME, TempDir(c))
+func TempHome(c Cleanuper) string {
+	return Setenv(c, env.HOME, TempDir(c))
+}
+
+// Chdir changes into a directory, and restores the original working directory
+// when a test finishes. It returns the directory for easier chaining.
+func Chdir(c Cleanuper, dir string) string {
 	oldWd, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	dir, cleanup := TestDir()
 	Must(os.Chdir(dir))
-	return dir, func() {
+	c.Cleanup(func() {
 		Must(os.Chdir(oldWd))
-		cleanup()
-	}
+	})
+	return dir
 }
 
-// InTempHome is like InTestDir, but it also sets HOME to the temporary
-// directory and restores the original HOME in cleanup.
-func InTempHome() (string, func()) {
-	oldHome := os.Getenv(env.HOME)
-	tmpHome, cleanup := InTestDir()
-	os.Setenv(env.HOME, tmpHome)
+// InTempDir is equivalent to Chdir(c, TempDir(c)).
+func InTempDir(c Cleanuper) string {
+	return Chdir(c, TempDir(c))
+}
 
-	return tmpHome, func() {
-		os.Setenv(env.HOME, oldHome)
-		cleanup()
-	}
+// InTempHome is equivalent to Setenv(c, env.HOME, InTempDir(c))
+func InTempHome(c Cleanuper) string {
+	return Setenv(c, env.HOME, InTempDir(c))
 }
 
 // Dir describes the layout of a directory. The keys of the map represent

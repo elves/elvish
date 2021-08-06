@@ -20,7 +20,6 @@ func TestLocationAddon(t *testing.T) {
 		s.AddDir(`C:\tmp`, 1)
 		s.AddDir(`C:\home\elf`, 1)
 	}))
-	defer f.Cleanup()
 
 	evals(f.Evaler,
 		`edit:location:pinned = ['C:\opt']`,
@@ -44,7 +43,7 @@ func TestLocationAddon_Workspace(t *testing.T) {
 		s.AddDir(`ws\bin`, 1)
 		s.AddDir(`other-ws\bin`, 1)
 	}))
-	defer f.Cleanup()
+
 	testutil.ApplyDir(
 		testutil.Dir{
 			"ws1": testutil.Dir{
@@ -74,8 +73,8 @@ func TestLocationAddon_Workspace(t *testing.T) {
 }
 
 func TestLocation_AddDir(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
+
 	testutil.ApplyDir(
 		testutil.Dir{
 			"bin": testutil.Dir{},

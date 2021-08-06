@@ -22,8 +22,7 @@ func TestDetermineFeature(t *testing.T) {
 		}
 	}
 
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 
 	create("a", 0600)
 	// Regular file.

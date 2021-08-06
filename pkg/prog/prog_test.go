@@ -8,8 +8,7 @@ import (
 )
 
 func TestBadFlag(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	exit := Run(f.Fds(), Elvish("-bad-flag"))
 
@@ -17,8 +16,7 @@ func TestBadFlag(t *testing.T) {
 }
 
 func TestDashHTreatedAsBadFlag(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	exit := Run(f.Fds(), Elvish("-h"))
 
@@ -26,8 +24,7 @@ func TestDashHTreatedAsBadFlag(t *testing.T) {
 }
 
 func TestCPUProfile(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	Run(f.Fds(), Elvish("-cpuprofile", "cpuprof"), testProgram{shouldRun: true})
 	// There isn't much to test beyond a sanity check that the profile file now
@@ -39,8 +36,7 @@ func TestCPUProfile(t *testing.T) {
 }
 
 func TestCPUProfile_BadPath(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	Run(f.Fds(), Elvish("-cpuprofile", "/a/bad/path"), testProgram{shouldRun: true})
 	f.TestOut(t, 1, "")
@@ -49,8 +45,7 @@ func TestCPUProfile_BadPath(t *testing.T) {
 }
 
 func TestHelp(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	Run(f.Fds(), Elvish("-help"))
 
@@ -61,8 +56,7 @@ func TestHelp(t *testing.T) {
 func TestShowDeprecations(t *testing.T) {
 	restore := SetDeprecationLevel(0)
 	defer restore()
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	Run(f.Fds(), Elvish("-deprecation-level", "42"), testProgram{shouldRun: true})
 	if DeprecationLevel != 42 {
@@ -71,8 +65,7 @@ func TestShowDeprecations(t *testing.T) {
 }
 
 func TestNoProgram(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	exit := Run(f.Fds(), Elvish(), testProgram{}, testProgram{})
 
@@ -80,8 +73,7 @@ func TestNoProgram(t *testing.T) {
 }
 
 func TestGoodProgram(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	Run(f.Fds(), Elvish(), testProgram{},
 		testProgram{shouldRun: true, writeOut: "program 2"})
@@ -91,8 +83,7 @@ func TestGoodProgram(t *testing.T) {
 }
 
 func TestPreferEarlierProgram(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	Run(f.Fds(), Elvish(),
 		testProgram{shouldRun: true, writeOut: "program 1"},
@@ -103,8 +94,7 @@ func TestPreferEarlierProgram(t *testing.T) {
 }
 
 func TestBadUsageError(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	exit := Run(f.Fds(), Elvish(),
 		testProgram{shouldRun: true, returnErr: BadUsage("lorem ipsum")})
@@ -115,8 +105,7 @@ func TestBadUsageError(t *testing.T) {
 }
 
 func TestExitError(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	exit := Run(f.Fds(), Elvish(),
 		testProgram{shouldRun: true, returnErr: Exit(3)})
@@ -129,8 +118,7 @@ func TestExitError(t *testing.T) {
 }
 
 func TestExitError_0(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	exit := Run(f.Fds(), Elvish(),
 		testProgram{shouldRun: true, returnErr: Exit(0)})

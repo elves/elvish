@@ -23,8 +23,7 @@ var testDir = testutil.Dir{
 var anyDir = "^.*" + regexp.QuoteMeta(string(filepath.Separator))
 
 func TestPath(t *testing.T) {
-	tmpdir, cleanup := testutil.InTestDir()
-	defer cleanup()
+	tmpdir := testutil.InTempDir(t)
 	testutil.ApplyDir(testDir)
 
 	absPath, err := filepath.Abs("a/b/c.png")
@@ -98,8 +97,7 @@ var symlinks = []struct {
 }
 
 func TestPath_Symlink(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 	testutil.ApplyDir(testDir)
 	// testutil.ApplyDir(testDirSymlinks)
 	for _, link := range symlinks {

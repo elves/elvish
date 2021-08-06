@@ -10,9 +10,7 @@ import (
 )
 
 func TestGlob_Simple(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
-
+	testutil.InTempDir(t)
 	testutil.MustMkdirAll("z", "z2")
 	testutil.MustCreateEmpty("bar", "foo", "ipsum", "lorem")
 
@@ -25,9 +23,7 @@ func TestGlob_Simple(t *testing.T) {
 }
 
 func TestGlob_Recursive(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
-
+	testutil.InTempDir(t)
 	testutil.MustMkdirAll("1/2/3")
 	testutil.MustCreateEmpty("a.go", "1/a.go", "1/2/3/a.go")
 
@@ -39,8 +35,7 @@ func TestGlob_Recursive(t *testing.T) {
 }
 
 func TestGlob_NoMatch(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 
 	Test(t,
 		That("put a/b/nonexistent*").Throws(ErrWildcardNoMatch),
@@ -49,9 +44,7 @@ func TestGlob_NoMatch(t *testing.T) {
 }
 
 func TestGlob_MatchHidden(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
-
+	testutil.InTempDir(t)
 	testutil.MustMkdirAll("d", ".d")
 	testutil.MustCreateEmpty("a", ".a", "d/a", "d/.a", ".d/a", ".d/.a")
 
@@ -66,9 +59,7 @@ func TestGlob_MatchHidden(t *testing.T) {
 }
 
 func TestGlob_SetAndRange(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
-
+	testutil.InTempDir(t)
 	testutil.MustCreateEmpty("a1", "a2", "b1", "c1", "ipsum", "lorem")
 
 	Test(t,
@@ -81,9 +72,7 @@ func TestGlob_SetAndRange(t *testing.T) {
 }
 
 func TestGlob_But(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
-
+	testutil.InTempDir(t)
 	testutil.MustCreateEmpty("bar", "foo", "ipsum", "lorem")
 
 	Test(t,
@@ -93,9 +82,7 @@ func TestGlob_But(t *testing.T) {
 }
 
 func TestGlob_Type(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
-
+	testutil.InTempDir(t)
 	testutil.MustMkdirAll("d1", "d2", ".d", "b/c")
 	testutil.MustCreateEmpty("bar", "foo", "ipsum", "lorem", "d1/f1", "d2/fm")
 

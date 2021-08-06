@@ -7,9 +7,8 @@ import (
 	"testing"
 )
 
-func TestTestDir_DirIsValid(t *testing.T) {
-	dir, cleanup := TestDir()
-	defer cleanup()
+func TestTempDir_DirIsValid(t *testing.T) {
+	dir := TempDir(t)
 
 	stat, err := os.Stat(dir)
 	if err != nil {
@@ -20,9 +19,8 @@ func TestTestDir_DirIsValid(t *testing.T) {
 	}
 }
 
-func TestTestDir_DirHasSymlinksResolved(t *testing.T) {
-	dir, cleanup := TestDir()
-	defer cleanup()
+func TestTempDir_DirHasSymlinksResolved(t *testing.T) {
+	dir := TempDir(t)
 
 	resolved, err := filepath.EvalSymlinks(dir)
 	if err != nil {
@@ -33,45 +31,42 @@ func TestTestDir_DirHasSymlinksResolved(t *testing.T) {
 	}
 }
 
-func TestTestDir_CleanupRemovesDirRecursively(t *testing.T) {
-	dir, cleanup := TestDir()
+func TestTempDir_CleanupRemovesDirRecursively(t *testing.T) {
+	c := &cleanuper{}
+	dir := TempDir(c)
 
 	err := ioutil.WriteFile(filepath.Join(dir, "a"), []byte("test"), 0600)
 	if err != nil {
 		panic(err)
 	}
 
-	cleanup()
+	c.runCleanups()
 	if _, err := os.Stat(dir); err == nil {
 		t.Errorf("Dir %q still exists after cleanup", dir)
 	}
 }
 
-func TestInTestDir_ChangesIntoTempDir(t *testing.T) {
-	dir, cleanup := InTestDir()
-	defer cleanup()
+func TestChdir(t *testing.T) {
+	dir := TempDir(t)
+	original := getWd()
 
-	pwd := getWd()
-	if dir != pwd {
-		t.Errorf("InTestDir returns %q but pwd is %q", dir, pwd)
-	}
-}
-
-func TestInTestDir_CleanupChangesBackToOldWd(t *testing.T) {
-	before := getWd()
-
-	_, cleanup := InTestDir()
-	cleanup()
+	c := &cleanuper{}
+	Chdir(c, dir)
 
 	after := getWd()
-	if before != after {
-		t.Errorf("PWD is %q before InTestDir, but %q after cleanup", before, after)
+	if after != dir {
+		t.Errorf("pwd is now %q, want %q", after, dir)
+	}
+
+	c.runCleanups()
+	restored := getWd()
+	if restored != original {
+		t.Errorf("pwd restored to %q, want %q", restored, original)
 	}
 }
 
 func TestApplyDir_CreatesFiles(t *testing.T) {
-	_, cleanup := InTestDir()
-	defer cleanup()
+	InTempDir(t)
 
 	ApplyDir(Dir{
 		"a": "a content",
@@ -83,8 +78,7 @@ func TestApplyDir_CreatesFiles(t *testing.T) {
 }
 
 func TestApplyDir_CreatesDirectories(t *testing.T) {
-	_, cleanup := InTestDir()
-	defer cleanup()
+	InTempDir(t)
 
 	ApplyDir(Dir{
 		"d": Dir{
@@ -102,8 +96,7 @@ func TestApplyDir_CreatesDirectories(t *testing.T) {
 }
 
 func TestApplyDir_AllowsExistingDirectories(t *testing.T) {
-	_, cleanup := InTestDir()
-	defer cleanup()
+	InTempDir(t)
 
 	ApplyDir(Dir{"d": Dir{}})
 	ApplyDir(Dir{"d": Dir{"a": "content"}})

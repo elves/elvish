@@ -16,12 +16,11 @@ import (
 )
 
 func TestLocationAddon(t *testing.T) {
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(t, storeOp(func(s storedefs.Store) {
 		s.AddDir("/usr/bin", 1)
 		s.AddDir("/tmp", 1)
 		s.AddDir("/home/elf", 1)
 	}))
-	defer f.Cleanup()
 
 	evals(f.Evaler,
 		`edit:location:pinned = [/opt]`,
@@ -40,12 +39,12 @@ func TestLocationAddon(t *testing.T) {
 }
 
 func TestLocationAddon_Workspace(t *testing.T) {
-	f := setup(storeOp(func(s storedefs.Store) {
+	f := setup(t, storeOp(func(s storedefs.Store) {
 		s.AddDir("/usr/bin", 1)
 		s.AddDir("ws/bin", 1)
 		s.AddDir("other-ws/bin", 1)
 	}))
-	defer f.Cleanup()
+
 	testutil.ApplyDir(
 		testutil.Dir{
 			"ws1": testutil.Dir{
@@ -74,8 +73,8 @@ func TestLocationAddon_Workspace(t *testing.T) {
 }
 
 func TestLocation_AddDir(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
+
 	testutil.ApplyDir(
 		testutil.Dir{
 			"bin": testutil.Dir{},

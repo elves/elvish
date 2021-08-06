@@ -13,8 +13,7 @@ import (
 )
 
 func TestBindingTable(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler, `called = $false`)
 	evals(f.Evaler, `m = (edit:binding-table [&a={ called = $true }])`)
@@ -25,8 +24,7 @@ func TestBindingTable(t *testing.T) {
 }
 
 func TestCloseMode(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	f.Editor.app.SetAddon(tk.Empty{}, false)
 	evals(f.Evaler, `edit:close-mode`)
@@ -37,8 +35,7 @@ func TestCloseMode(t *testing.T) {
 }
 
 func TestDumpBuf(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	feedInput(f.TTYCtrl, "echo")
 	// Wait until the buffer we want has shown up.
@@ -54,8 +51,7 @@ func TestDumpBuf(t *testing.T) {
 }
 
 func TestInsertRaw(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	f.TTYCtrl.Inject(term.K('V', ui.Ctrl))
 	wantBuf := f.MakeBuffer(
@@ -84,16 +80,14 @@ func TestInsertRaw(t *testing.T) {
 }
 
 func TestEndOfHistory(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler, `edit:end-of-history`)
 	f.TestTTYNotes(t, "End of history")
 }
 
 func TestKey(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler, `k = (edit:key a)`)
 	wantK := ui.K('a')
@@ -103,8 +97,7 @@ func TestKey(t *testing.T) {
 }
 
 func TestRedraw(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler,
 		`edit:current-command = echo`,
@@ -120,8 +113,7 @@ func TestRedraw(t *testing.T) {
 }
 
 func TestClear(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler, `edit:current-command = echo`, `edit:clear`)
 	f.TestTTY(t,
@@ -133,8 +125,7 @@ func TestClear(t *testing.T) {
 }
 
 func TestReturnCode(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	f.Editor.app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 		s.Buffer.Content = "test code"
@@ -150,8 +141,7 @@ func TestReturnCode(t *testing.T) {
 }
 
 func TestReturnEOF(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler, `edit:return-eof`)
 	if _, err := f.Wait(); err != io.EOF {
@@ -160,8 +150,7 @@ func TestReturnEOF(t *testing.T) {
 }
 
 func TestSmartEnter_InsertsNewlineWhenIncomplete(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	f.SetCodeBuffer(tk.CodeBuffer{Content: "put [", Dot: 5})
 	evals(f.Evaler, `edit:smart-enter`)
@@ -172,8 +161,7 @@ func TestSmartEnter_InsertsNewlineWhenIncomplete(t *testing.T) {
 }
 
 func TestSmartEnter_AcceptsCodeWhenWholeBufferIsComplete(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	f.SetCodeBuffer(tk.CodeBuffer{Content: "put []", Dot: 5})
 	evals(f.Evaler, `edit:smart-enter`)
@@ -222,9 +210,8 @@ var bufferBuiltinsTests = []struct {
 }
 
 func TestBufferBuiltins(t *testing.T) {
-	f := setup()
+	f := setup(t)
 	app := f.Editor.app
-	defer f.Cleanup()
 
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {

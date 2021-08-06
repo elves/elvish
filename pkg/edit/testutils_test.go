@@ -26,10 +26,9 @@ type fixture struct {
 	Store   storedefs.Store
 	Home    string
 
-	width   int
-	codeCh  <-chan string
-	errCh   <-chan error
-	cleanup func()
+	width  int
+	codeCh <-chan string
+	errCh  <-chan error
 }
 
 func rc(codes ...string) func(*fixture) {
@@ -52,10 +51,11 @@ func storeOp(storeFn func(storedefs.Store)) func(*fixture) {
 	}
 }
 
-func setup(fns ...func(*fixture)) *fixture {
+func setup(t testutil.Cleanuper, fns ...func(*fixture)) *fixture {
 	st, cleanupStore := store.MustGetTempStore()
-	home, cleanupFs := testutil.InTempHome()
-	restorePATH := testutil.WithTempEnv("PATH", "")
+	t.Cleanup(cleanupStore)
+	home := testutil.InTempHome(t)
+	testutil.Setenv(t, "PATH", "")
 
 	tty, ttyCtrl := clitest.NewFakeTTY()
 	ev := eval.NewEvaler()
@@ -74,22 +74,15 @@ func setup(fns ...func(*fixture)) *fixture {
 	}
 	_, f.width = tty.Size()
 	f.codeCh, f.errCh = clitest.StartReadCode(f.Editor.ReadCode)
-	f.cleanup = func() {
+	t.Cleanup(func() {
 		f.Editor.app.CommitEOF()
 		f.Wait()
-		restorePATH()
-		cleanupFs()
-		cleanupStore()
-	}
+	})
 	return f
 }
 
 func (f *fixture) Wait() (string, error) {
 	return <-f.codeCh, <-f.errCh
-}
-
-func (f *fixture) Cleanup() {
-	f.cleanup()
 }
 
 func (f *fixture) MakeBuffer(args ...interface{}) *term.Buffer {

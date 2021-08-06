@@ -126,10 +126,9 @@ func (lc *colorist) GetStyle(fname string) string {
 	return lc.styleForFeature[feature]
 }
 
-// WithTestLsColors sets LS_COLORS to a value where directories are blue and
-// .png files are red. It returns a function to restore the old value. This
-// function is mainly useful in tests.
-func WithTestLsColors() func() {
+// SetTestLsColors sets LS_COLORS to a value where directories are blue and
+// .png files are red for the duration of a test.
+func SetTestLsColors(c testutil.Cleanuper) {
 	// ow (world-writable directory) needed for Windows.
-	return testutil.WithTempEnv("LS_COLORS", "di=34:ow=34:*.png=31")
+	testutil.Setenv(c, "LS_COLORS", "di=34:ow=34:*.png=31")
 }

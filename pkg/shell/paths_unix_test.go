@@ -16,14 +16,12 @@ import (
 var elvishDashUID = fmt.Sprintf("elvish-%d", os.Getuid())
 
 func TestSecureRunDir_PrefersXDGWhenNeitherExists(t *testing.T) {
-	xdg, _, cleanup := setupForSecureRunDir()
-	defer cleanup()
+	xdg, _ := setupForSecureRunDir(t)
 	testSecureRunDir(t, filepath.Join(xdg, "elvish"), false)
 }
 
 func TestSecureRunDir_PrefersXDGWhenBothExist(t *testing.T) {
-	xdg, tmp, cleanup := setupForSecureRunDir()
-	defer cleanup()
+	xdg, tmp := setupForSecureRunDir(t)
 
 	os.MkdirAll(filepath.Join(xdg, "elvish"), 0700)
 	os.MkdirAll(filepath.Join(tmp, elvishDashUID), 0700)
@@ -32,8 +30,7 @@ func TestSecureRunDir_PrefersXDGWhenBothExist(t *testing.T) {
 }
 
 func TestSecureRunDir_PrefersTmpWhenOnlyItExists(t *testing.T) {
-	_, tmp, cleanup := setupForSecureRunDir()
-	defer cleanup()
+	_, tmp := setupForSecureRunDir(t)
 
 	os.MkdirAll(filepath.Join(tmp, elvishDashUID), 0700)
 
@@ -41,32 +38,21 @@ func TestSecureRunDir_PrefersTmpWhenOnlyItExists(t *testing.T) {
 }
 
 func TestSecureRunDir_PrefersTmpWhenXdgEnvIsEmpty(t *testing.T) {
-	_, tmp, cleanup := setupForSecureRunDir()
-	defer cleanup()
+	_, tmp := setupForSecureRunDir(t)
 	os.Setenv(env.XDG_RUNTIME_DIR, "")
 	testSecureRunDir(t, filepath.Join(tmp, elvishDashUID), false)
 }
 
 func TestSecureRunDir_ReturnsErrorWhenUnableToMkdir(t *testing.T) {
-	xdg, _, cleanup := setupForSecureRunDir()
-	defer cleanup()
+	xdg, _ := setupForSecureRunDir(t)
 	ioutil.WriteFile(filepath.Join(xdg, "elvish"), nil, 0600)
 	testSecureRunDir(t, "", true)
 }
 
-func setupForSecureRunDir() (xdgRuntimeDir, tmpDir string, cleanup func()) {
-	xdgRuntimeDir, xdgCleanup := testutil.TestDir()
-	tmpDir, tmpCleanup := testutil.TestDir()
-
-	restore1 := testutil.WithTempEnv(env.XDG_RUNTIME_DIR, xdgRuntimeDir)
-	restore2 := testutil.WithTempEnv("TMPDIR", tmpDir)
-
-	return xdgRuntimeDir, tmpDir, func() {
-		restore2()
-		restore1()
-		tmpCleanup()
-		xdgCleanup()
-	}
+func setupForSecureRunDir(c testutil.Cleanuper) (xdgRuntimeDir, tmpDir string) {
+	xdg := testutil.Setenv(c, env.XDG_RUNTIME_DIR, testutil.TempDir(c))
+	tmp := testutil.Setenv(c, "TMPDIR", testutil.TempDir(c))
+	return xdg, tmp
 }
 
 func testSecureRunDir(t *testing.T, wantRunDir string, wantErr bool) {

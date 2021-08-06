@@ -22,8 +22,7 @@ func currentUser() (*user.User, error) {
 }
 
 func TestTildeAbbr(t *testing.T) {
-	tmpHome, cleanup := testutil.InTempHome()
-	defer cleanup()
+	tmpHome := testutil.InTempHome(t)
 
 	testutil.MustMkdirAll("dir")
 	testutil.MustCreateEmpty("file")
@@ -35,8 +34,7 @@ func TestTildeAbbr(t *testing.T) {
 }
 
 func TestCd(t *testing.T) {
-	tmpHome, cleanup := testutil.InTempHome()
-	defer cleanup()
+	tmpHome := testutil.InTempHome(t)
 
 	testutil.MustMkdirAll("d1")
 	d1Path := filepath.Join(tmpHome, "d1")

@@ -7,8 +7,7 @@ import (
 )
 
 func TestMinibuf(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler, `edit:minibuf:start`)
 	f.TestTTY(t,

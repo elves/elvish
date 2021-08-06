@@ -70,8 +70,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestDel(t *testing.T) {
-	restore := WithTempEnv("TEST_ENV", "test value")
-	defer restore()
+	Setenv(t, "TEST_ENV", "test value")
 
 	Test(t,
 		// Deleting variable
@@ -269,8 +268,7 @@ func TestFn(t *testing.T) {
 
 // Regression test for #1225
 func TestUse_SetsVariableCorrectlyIfModuleCallsAddGlobal(t *testing.T) {
-	libdir, cleanup := InTestDir()
-	defer cleanup()
+	libdir := InTempDir(t)
 
 	ApplyDir(Dir{"a.elv": "add-var"})
 	ev := NewEvaler()
@@ -295,9 +293,7 @@ func TestUse_SetsVariableCorrectlyIfModuleCallsAddGlobal(t *testing.T) {
 }
 
 func TestUse_SupportsCircularDependency(t *testing.T) {
-	libdir, cleanup := InTestDir()
-	defer cleanup()
-
+	libdir := InTempDir(t)
 	ApplyDir(Dir{
 		"a.elv": "var pre = apre; use b; put $b:pre $b:post; var post = apost",
 		"b.elv": "var pre = bpre; use a; put $a:pre $a:post; var post = bpost",
@@ -314,15 +310,13 @@ func TestUse_SupportsCircularDependency(t *testing.T) {
 }
 
 func TestUse(t *testing.T) {
-	libdir1, cleanup1 := InTestDir()
-	defer cleanup1()
+	libdir1 := InTempDir(t)
 
 	ApplyDir(Dir{
 		"shadow.elv": "put lib1",
 	})
 
-	libdir2, cleanup2 := InTestDir()
-	defer cleanup2()
+	libdir2 := InTempDir(t)
 
 	ApplyDir(Dir{
 		"has-init.elv": "put has-init",
@@ -390,8 +384,7 @@ func TestUse(t *testing.T) {
 func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	restore := prog.SetDeprecationLevel(16)
 	defer restore()
-	libdir, cleanup := InTestDir()
-	defer cleanup()
+	libdir := InTempDir(t)
 	MustWriteFile("dep.elv", "fn x { fopen x }")
 
 	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDirs([]string{libdir}) },

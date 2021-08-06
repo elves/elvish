@@ -8,8 +8,7 @@ import (
 )
 
 func TestCommandMode(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler, `edit:insert:binding[Ctrl-'['] = $edit:command:start~`)
 	feedInput(f.TTYCtrl, "echo")

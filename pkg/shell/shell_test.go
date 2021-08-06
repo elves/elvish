@@ -35,8 +35,7 @@ var incSHLVLTests = []struct {
 }
 
 func TestIncSHLVL(t *testing.T) {
-	restore := testutil.WithTempEnv(env.SHLVL, "")
-	defer restore()
+	testutil.Setenv(t, env.SHLVL, "")
 
 	for _, test := range incSHLVLTests {
 		t.Run(test.name, func(t *testing.T) {
@@ -69,12 +68,3 @@ func TestIncSHLVL(t *testing.T) {
 }
 
 func run(fds [3]*os.File, args []string) int { return prog.Run(fds, args, Program{}) }
-
-func tempDirEnv(envName string) (string, func()) {
-	dir, cleanDir := testutil.TestDir()
-	restoreEnv := testutil.WithTempEnv(envName, dir)
-	return dir, func() {
-		restoreEnv()
-		cleanDir()
-	}
-}

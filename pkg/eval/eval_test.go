@@ -41,8 +41,7 @@ func TestArgs(t *testing.T) {
 func TestEvalTimeDeprecate(t *testing.T) {
 	restore := prog.SetDeprecationLevel(42)
 	defer restore()
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 
 	TestWithSetup(t, func(ev *Evaler) {
 		ev.AddGlobal(NsBuilder{}.AddGoFn("", "dep", func(fm *Frame) {

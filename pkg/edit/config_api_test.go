@@ -9,10 +9,9 @@ import (
 )
 
 func TestBeforeReadline(t *testing.T) {
-	f := setup(rc(
+	f := setup(t, rc(
 		`called = 0`,
 		`edit:before-readline = [ { called = (+ $called 1) } ]`))
-	defer f.Cleanup()
 
 	// Wait for UI to stabilize so that we can be sure that before-readline hooks
 	// have been called.
@@ -22,8 +21,8 @@ func TestBeforeReadline(t *testing.T) {
 }
 
 func TestAfterReadline(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
+
 	evals(f.Evaler,
 		`called = 0`,
 		`called-with = ''`,
@@ -112,8 +111,7 @@ func TestAddCmdFilters(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			f := setup(rc(c.rc))
-			defer f.Cleanup()
+			f := setup(t, rc(c.rc))
 
 			feedInput(f.TTYCtrl, c.input)
 			f.Wait()
@@ -124,11 +122,10 @@ func TestAddCmdFilters(t *testing.T) {
 }
 
 func TestAddCmdFilters_SkipsRemainingOnFalse(t *testing.T) {
-	f := setup(rc(
+	f := setup(t, rc(
 		`called = $false`,
 		`@edit:add-cmd-filters = [_]{ put $false } [_]{ called = $true; put $true }`,
 	))
-	defer f.Cleanup()
 
 	feedInput(f.TTYCtrl, "echo\n")
 	f.Wait()
@@ -137,11 +134,10 @@ func TestAddCmdFilters_SkipsRemainingOnFalse(t *testing.T) {
 }
 
 func TestGlobalBindings(t *testing.T) {
-	f := setup(rc(
+	f := setup(t, rc(
 		`var called = $false`,
 		`edit:global-binding[Ctrl-X] = { set called = $true }`,
 	))
-	defer f.Cleanup()
 
 	f.TTYCtrl.Inject(term.K('X', ui.Ctrl))
 	f.TTYCtrl.Inject(term.K(ui.Enter))

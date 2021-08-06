@@ -79,8 +79,7 @@ func TestStringLiteral(t *testing.T) {
 }
 
 func TestTilde(t *testing.T) {
-	home, cleanup := InTempHome()
-	defer cleanup()
+	home := InTempHome(t)
 	ApplyDir(Dir{"file1": "", "file2": ""})
 
 	Test(t,

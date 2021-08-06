@@ -13,8 +13,7 @@ import (
 )
 
 func TestChdir(t *testing.T) {
-	dst, cleanup := testutil.TestDir()
-	defer cleanup()
+	dst := testutil.TempDir(t)
 
 	ev := NewEvaler()
 
@@ -45,8 +44,7 @@ func TestChdir(t *testing.T) {
 }
 
 func TestChdirElvishHooks(t *testing.T) {
-	dst, cleanup := testutil.TestDir()
-	defer cleanup()
+	dst := testutil.TempDir(t)
 
 	back := saveWd()
 	defer back()
@@ -63,8 +61,7 @@ func TestChdirElvishHooks(t *testing.T) {
 }
 
 func TestChdirError(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 
 	ev := NewEvaler()
 	err := ev.Chdir("i/dont/exist")

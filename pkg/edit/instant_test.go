@@ -8,8 +8,7 @@ import (
 )
 
 func TestInstantAddon_ValueOutput(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	evals(f.Evaler, "edit:-instant:start")
 	f.TestTTY(t,
@@ -38,8 +37,7 @@ func TestInstantAddon_ValueOutput(t *testing.T) {
 }
 
 func TestInstantAddon_ByteOutput(t *testing.T) {
-	f := setup()
-	defer f.Cleanup()
+	f := setup(t)
 
 	// We don't want to trigger the evaluation of "e", "ec", and "ech", so we
 	// start with a non-empty code buffer.

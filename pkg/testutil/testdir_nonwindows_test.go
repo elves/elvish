@@ -8,8 +8,7 @@ import (
 )
 
 func TestApplyDir_CreatesFileWithPerm(t *testing.T) {
-	_, cleanup := InTestDir()
-	defer cleanup()
+	InTempDir(t)
 
 	ApplyDir(Dir{
 		// For some unknown reason, termux on Android does not set the

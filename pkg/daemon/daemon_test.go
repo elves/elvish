@@ -15,8 +15,7 @@ import (
 
 func TestDaemon(t *testing.T) {
 	// Set up filesystem.
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 
 	// Set up server.
 	serverDone := make(chan struct{})
@@ -59,8 +58,7 @@ func TestDaemon(t *testing.T) {
 }
 
 func TestProgram_SpuriousArgument(t *testing.T) {
-	f := Setup()
-	defer f.Cleanup()
+	f := Setup(t)
 
 	exit := prog.Run(f.Fds(), Elvish("-daemon", "x"), Program)
 

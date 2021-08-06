@@ -88,8 +88,7 @@ func TestTime(t *testing.T) {
 }
 
 func TestUseMod(t *testing.T) {
-	_, cleanup := testutil.InTestDir()
-	defer cleanup()
+	testutil.InTempDir(t)
 	testutil.MustWriteFile("mod.elv", "x = value")
 
 	Test(t,
@@ -131,9 +130,7 @@ func TestSleep(t *testing.T) {
 }
 
 func TestResolve(t *testing.T) {
-	libdir, cleanup := testutil.InTestDir()
-	defer cleanup()
-
+	libdir := testutil.InTempDir(t)
 	testutil.MustWriteFile("mod.elv", "fn func { }")
 
 	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDirs([]string{libdir}) },
