@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -141,4 +142,12 @@ func TestError(t *testing.T, f *Fixture, exit int, wantErrSnippet string) {
 		t.Errorf("got exit %v, want 2", exit)
 	}
 	f.TestOutSnippet(t, 2, wantErrSnippet)
+}
+
+// SetDeprecationLevel sets prog.DeprecationLevel to the given value for the
+// duration of a test.
+func SetDeprecationLevel(c testutil.Cleanuper, level int) {
+	save := prog.DeprecationLevel
+	c.Cleanup(func() { prog.DeprecationLevel = save })
+	prog.DeprecationLevel = level
 }

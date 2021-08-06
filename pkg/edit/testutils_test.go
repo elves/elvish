@@ -51,11 +51,10 @@ func storeOp(storeFn func(storedefs.Store)) func(*fixture) {
 	}
 }
 
-func setup(t testutil.Cleanuper, fns ...func(*fixture)) *fixture {
-	st, cleanupStore := store.MustGetTempStore()
-	t.Cleanup(cleanupStore)
-	home := testutil.InTempHome(t)
-	testutil.Setenv(t, "PATH", "")
+func setup(c testutil.Cleanuper, fns ...func(*fixture)) *fixture {
+	st := store.MustTempStore(c)
+	home := testutil.InTempHome(c)
+	testutil.Setenv(c, "PATH", "")
 
 	tty, ttyCtrl := clitest.NewFakeTTY()
 	ev := eval.NewEvaler()
@@ -74,7 +73,7 @@ func setup(t testutil.Cleanuper, fns ...func(*fixture)) *fixture {
 	}
 	_, f.width = tty.Size()
 	f.codeCh, f.errCh = clitest.StartReadCode(f.Editor.ReadCode)
-	t.Cleanup(func() {
+	c.Cleanup(func() {
 		f.Editor.app.CommitEOF()
 		f.Wait()
 	})

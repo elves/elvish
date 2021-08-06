@@ -8,7 +8,5 @@ import (
 )
 
 func TestSharedVar(t *testing.T) {
-	tStore, cleanup := store.MustGetTempStore()
-	defer cleanup()
-	storetest.TestSharedVar(t, tStore)
+	storetest.TestSharedVar(t, store.MustTempStore(t))
 }

@@ -8,7 +8,5 @@ import (
 )
 
 func TestCmd(t *testing.T) {
-	tStore, cleanup := store.MustGetTempStore()
-	defer cleanup()
-	storetest.TestCmd(t, tStore)
+	storetest.TestCmd(t, store.MustTempStore(t))
 }

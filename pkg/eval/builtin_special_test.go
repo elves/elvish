@@ -8,9 +8,9 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/prog/progtest"
 
 	. "src.elv.sh/pkg/eval/evaltest"
-	"src.elv.sh/pkg/prog"
 	. "src.elv.sh/pkg/testutil"
 )
 
@@ -382,8 +382,7 @@ func TestUse(t *testing.T) {
 
 // Regression test for #1072
 func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
-	restore := prog.SetDeprecationLevel(16)
-	defer restore()
+	progtest.SetDeprecationLevel(t, 16)
 	libdir := InTempDir(t)
 	MustWriteFile("dep.elv", "fn x { fopen x }")
 

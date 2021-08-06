@@ -1,9 +1,10 @@
-package prog
+package prog_test
 
 import (
 	"os"
 	"testing"
 
+	. "src.elv.sh/pkg/prog"
 	. "src.elv.sh/pkg/prog/progtest"
 )
 
@@ -54,8 +55,7 @@ func TestHelp(t *testing.T) {
 }
 
 func TestShowDeprecations(t *testing.T) {
-	restore := SetDeprecationLevel(0)
-	defer restore()
+	SetDeprecationLevel(t, 0)
 	f := Setup(t)
 
 	Run(f.Fds(), Elvish("-deprecation-level", "42"), testProgram{shouldRun: true})

@@ -7,11 +7,13 @@ import (
 	"time"
 
 	bolt "go.etcd.io/bbolt"
+	"src.elv.sh/pkg/testutil"
 )
 
-// MustGetTempStore returns a Store backed by a temporary file, and a cleanup
-// function that should be called when the Store is no longer used.
-func MustGetTempStore() (DBStore, func()) {
+// MustTempStore returns a Store backed by a temporary file for testing. The
+// Store and its underlying file will be cleaned up properly after the test is
+// finished.
+func MustTempStore(c testutil.Cleanuper) DBStore {
 	f, err := ioutil.TempFile("", "elvish.test")
 	if err != nil {
 		panic(fmt.Sprintf("open temp file: %v", err))
@@ -26,12 +28,13 @@ func MustGetTempStore() (DBStore, func()) {
 	if err != nil {
 		panic(fmt.Sprintf("create Store instance: %v", err))
 	}
-	return st, func() {
+	c.Cleanup(func() {
 		st.Close()
 		f.Close()
 		err = os.Remove(f.Name())
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "failed to remove temp file:", err)
 		}
-	}
+	})
+	return st
 }

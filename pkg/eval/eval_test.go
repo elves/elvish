@@ -7,12 +7,12 @@ import (
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/prog/progtest"
 
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -39,8 +39,7 @@ func TestArgs(t *testing.T) {
 }
 
 func TestEvalTimeDeprecate(t *testing.T) {
-	restore := prog.SetDeprecationLevel(42)
-	defer restore()
+	progtest.SetDeprecationLevel(t, 42)
 	testutil.InTempDir(t)
 
 	TestWithSetup(t, func(ev *Evaler) {

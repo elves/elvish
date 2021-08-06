@@ -26,14 +26,6 @@ const defaultWebPort = 3171
 // 0.X.
 var DeprecationLevel = 15
 
-// SetDeprecationLevel sets ShowDeprecations to the given value, and returns a
-// function to restore the old value.
-func SetDeprecationLevel(level int) func() {
-	save := DeprecationLevel
-	DeprecationLevel = level
-	return func() { DeprecationLevel = save }
-}
-
 // Flags keeps command-line flags.
 type Flags struct {
 	Log, CPUProfile string

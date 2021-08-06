@@ -7,7 +7,7 @@ import (
 
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/prog"
+	"src.elv.sh/pkg/prog/progtest"
 )
 
 func TestDeprecatedBuiltin(t *testing.T) {
@@ -18,8 +18,7 @@ func TestDeprecatedBuiltin(t *testing.T) {
 
 func testCompileTimeDeprecation(t *testing.T, code, wantWarning string, level int) {
 	t.Helper()
-	restore := prog.SetDeprecationLevel(level)
-	defer restore()
+	progtest.SetDeprecationLevel(t, level)
 
 	ev := NewEvaler()
 	errOutput := new(bytes.Buffer)
