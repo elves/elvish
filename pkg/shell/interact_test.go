@@ -6,6 +6,7 @@ import (
 
 	"src.elv.sh/pkg/env"
 	. "src.elv.sh/pkg/prog/progtest"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestInteract_SingleCommand(t *testing.T) {
@@ -34,7 +35,7 @@ func TestInteract_LegacyRcFile(t *testing.T) {
 	defer f.Cleanup()
 	home, cleanupHome := tempDirEnv(env.HOME)
 	defer cleanupHome()
-	MustWriteFile(
+	testutil.MustWriteFile(
 		filepath.Join(home, ".elvish", "rc.elv"),
 		"echo hello legacy rc.elv")
 	f.FeedIn("")
@@ -49,7 +50,7 @@ func TestInteract_NewRcFile_Default(t *testing.T) {
 	defer f.Cleanup()
 	home, cleanupHome := tempDirEnv(env.HOME)
 	defer cleanupHome()
-	MustWriteFile(
+	testutil.MustWriteFile(
 		filepath.Join(home, ".config", "elvish", "rc.elv"),
 		"echo hello new rc.elv")
 
@@ -68,7 +69,7 @@ func TestInteract_NewRcFile_XDG_CONFIG_HOME(t *testing.T) {
 	defer cleanupHome()
 	xdgConfigHome, cleanupDir := tempDirEnv(env.XDG_CONFIG_HOME)
 	defer cleanupDir()
-	MustWriteFile(
+	testutil.MustWriteFile(
 		filepath.Join(xdgConfigHome, "elvish", "rc.elv"),
 		"echo hello XDG_CONFIG_HOME rc.elv")
 
@@ -83,7 +84,7 @@ func TestInteract_RcFile(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 	f.FeedIn("")
-	MustWriteFile("rc.elv", "echo hello from rc.elv")
+	testutil.MustWriteFile("rc.elv", "echo hello from rc.elv")
 
 	exit := run(f.Fds(), Elvish("-rc", "rc.elv"))
 	TestExit(t, exit, 0)
@@ -94,7 +95,7 @@ func TestInteract_RcFile_DoesNotCompile(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 	f.FeedIn("")
-	MustWriteFile("rc.elv", "echo $a")
+	testutil.MustWriteFile("rc.elv", "echo $a")
 
 	exit := run(f.Fds(), Elvish("-rc", "rc.elv"))
 	TestExit(t, exit, 0)
@@ -106,7 +107,7 @@ func TestInteract_RcFile_Exception(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
 	f.FeedIn("")
-	MustWriteFile("rc.elv", "fail mock")
+	testutil.MustWriteFile("rc.elv", "fail mock")
 
 	exit := run(f.Fds(), Elvish("-rc", "rc.elv"))
 	TestExit(t, exit, 0)

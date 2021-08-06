@@ -126,12 +126,6 @@ func (p *pipe) close() {
 	}
 }
 
-// MustWriteFile writes a file with the given name and content. It panics if the
-// write fails.
-func MustWriteFile(name, content string) {
-	testutil.MustWriteFile(name, []byte(content), 0600)
-}
-
 // Elvish returns an argument slice starting with "elvish".
 func Elvish(args ...string) []string {
 	return append([]string{"elvish"}, args...)

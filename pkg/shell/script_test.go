@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	. "src.elv.sh/pkg/prog/progtest"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestScript_RunFile(t *testing.T) {
 	f := Setup()
 	defer f.Cleanup()
-	MustWriteFile("a.elv", "echo hello")
+	testutil.MustWriteFile("a.elv", "echo hello")
 
 	ret := run(f.Fds(), Elvish("a.elv"))
 

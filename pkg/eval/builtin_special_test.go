@@ -392,7 +392,7 @@ func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	defer restore()
 	libdir, cleanup := InTestDir()
 	defer cleanup()
-	MustWriteFile("dep.elv", []byte("fn x { fopen x }"), 0600)
+	MustWriteFile("dep.elv", "fn x { fopen x }")
 
 	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDirs([]string{libdir}) },
 		// Importing module triggers check for deprecated features

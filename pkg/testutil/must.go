@@ -42,11 +42,11 @@ func MustCreateEmpty(names ...string) {
 	}
 }
 
-// MustWriteFile calls ioutil.WriteFile, after creating all ancestor directories
+// MustWriteFile writes data to a file, after creating all ancestor directories
 // that don't exist. It panics if an error occurs.
-func MustWriteFile(filename string, data []byte, perm os.FileMode) {
+func MustWriteFile(filename, data string) {
 	Must(os.MkdirAll(filepath.Dir(filename), 0700))
-	Must(ioutil.WriteFile(filename, data, perm))
+	Must(ioutil.WriteFile(filename, []byte(data), 0600))
 }
 
 // MustChdir calls os.Chdir and panics if it fails.

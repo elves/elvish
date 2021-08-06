@@ -3,7 +3,7 @@
 package eval_test
 
 import (
-	"path/filepath"
+	"os"
 	"strings"
 	"testing"
 
@@ -46,6 +46,6 @@ func TestCommand_Unix(t *testing.T) {
 }
 
 func mustWriteScript(name string, lines ...string) {
-	testutil.MustMkdirAll(filepath.Dir(name))
-	testutil.MustWriteFile(name, []byte(strings.Join(lines, "\n")), 0700)
+	testutil.MustWriteFile(name, strings.Join(lines, "\n"))
+	testutil.Must(os.Chmod(name, 0700))
 }
