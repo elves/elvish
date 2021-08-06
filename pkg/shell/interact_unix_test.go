@@ -4,6 +4,7 @@ package shell
 
 import (
 	"os"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"testing"
@@ -11,13 +12,40 @@ import (
 
 	"src.elv.sh/pkg/daemon"
 	"src.elv.sh/pkg/daemon/client"
+	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/prog"
-	"src.elv.sh/pkg/testutil"
 
 	. "src.elv.sh/pkg/prog/progtest"
+	. "src.elv.sh/pkg/testutil"
 )
 
-func TestShell_ConnectsToDaemon(t *testing.T) {
+func TestInteract_NewRcFile_Default(t *testing.T) {
+	f := setup(t)
+	MustWriteFile(
+		filepath.Join(f.home, ".config", "elvish", "rc.elv"), "echo hello new rc.elv")
+
+	f.FeedIn("")
+
+	exit := run(f.Fds(), Elvish())
+	TestExit(t, exit, 0)
+	f.TestOut(t, 1, "hello new rc.elv\n")
+}
+
+func TestInteract_NewRcFile_XDG_CONFIG_HOME(t *testing.T) {
+	f := setup(t)
+	xdgConfigHome := Setenv(t, env.XDG_CONFIG_HOME, TempDir(t))
+	MustWriteFile(
+		filepath.Join(xdgConfigHome, "elvish", "rc.elv"),
+		"echo hello XDG_CONFIG_HOME rc.elv")
+
+	f.FeedIn("")
+
+	exit := run(f.Fds(), Elvish())
+	TestExit(t, exit, 0)
+	f.TestOut(t, 1, "hello XDG_CONFIG_HOME rc.elv\n")
+}
+
+func TestInteract_ConnectsToDaemon(t *testing.T) {
 	f := setup(t)
 
 	// Run the daemon in the same process for simplicity.
@@ -44,7 +72,7 @@ func TestShell_ConnectsToDaemon(t *testing.T) {
 	select {
 	case <-hasSock:
 		// Do nothing
-	case <-time.After(testutil.ScaledMs(100)):
+	case <-time.After(ScaledMs(100)):
 		t.Fatalf("timed out waiting for daemon to start")
 	}
 

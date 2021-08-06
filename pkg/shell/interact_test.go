@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"src.elv.sh/pkg/env"
 	. "src.elv.sh/pkg/prog/progtest"
 	. "src.elv.sh/pkg/testutil"
 )
@@ -39,31 +38,7 @@ func TestInteract_LegacyRcFile(t *testing.T) {
 	f.TestOut(t, 1, "hello legacy rc.elv\n")
 }
 
-func TestInteract_NewRcFile_Default(t *testing.T) {
-	f := setup(t)
-	MustWriteFile(
-		filepath.Join(f.home, ".config", "elvish", "rc.elv"), "echo hello new rc.elv")
-
-	f.FeedIn("")
-
-	exit := run(f.Fds(), Elvish())
-	TestExit(t, exit, 0)
-	f.TestOut(t, 1, "hello new rc.elv\n")
-}
-
-func TestInteract_NewRcFile_XDG_CONFIG_HOME(t *testing.T) {
-	f := setup(t)
-	xdgConfigHome := Setenv(t, env.XDG_CONFIG_HOME, TempDir(t))
-	MustWriteFile(
-		filepath.Join(xdgConfigHome, "elvish", "rc.elv"),
-		"echo hello XDG_CONFIG_HOME rc.elv")
-
-	f.FeedIn("")
-
-	exit := run(f.Fds(), Elvish())
-	TestExit(t, exit, 0)
-	f.TestOut(t, 1, "hello XDG_CONFIG_HOME rc.elv\n")
-}
+// Non-legacy RC file tested in interact_unix_test.go
 
 func TestInteract_RcFile(t *testing.T) {
 	f := setup(t)
