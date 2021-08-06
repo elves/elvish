@@ -26,7 +26,7 @@ func TestInteract_NewRcFile_Default(t *testing.T) {
 
 	f.FeedIn("")
 
-	exit := run(f.Fds(), Elvish())
+	exit := f.run(Elvish())
 	TestExit(t, exit, 0)
 	f.TestOut(t, 1, "hello new rc.elv\n")
 }
@@ -40,7 +40,7 @@ func TestInteract_NewRcFile_XDG_CONFIG_HOME(t *testing.T) {
 
 	f.FeedIn("")
 
-	exit := run(f.Fds(), Elvish())
+	exit := f.run(Elvish())
 	TestExit(t, exit, 0)
 	f.TestOut(t, 1, "hello XDG_CONFIG_HOME rc.elv\n")
 }

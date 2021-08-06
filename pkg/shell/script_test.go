@@ -11,7 +11,7 @@ func TestScript_RunFile(t *testing.T) {
 	f := setup(t)
 	testutil.MustWriteFile("a.elv", "echo hello")
 
-	ret := run(f.Fds(), Elvish("a.elv"))
+	ret := f.run(Elvish("a.elv"))
 
 	if ret != 0 {
 		t.Errorf("got ret %v, want 0", ret)
@@ -23,7 +23,7 @@ func TestScript_RunFile(t *testing.T) {
 func TestScript_RunNonExistentScript(t *testing.T) {
 	f := setup(t)
 
-	ret := run(f.Fds(), Elvish("non-existent.elv"))
+	ret := f.run(Elvish("non-existent.elv"))
 
 	if ret != 2 {
 		t.Errorf("got ret %v, want 2", ret)
@@ -35,7 +35,7 @@ func TestScript_RunNonExistentScript(t *testing.T) {
 func TestScript_RunCommandLineCode(t *testing.T) {
 	f := setup(t)
 
-	ret := run(f.Fds(), Elvish("-c", "echo hello"))
+	ret := f.run(Elvish("-c", "echo hello"))
 
 	if ret != 0 {
 		t.Errorf("got ret %v, want 0", ret)
@@ -114,7 +114,7 @@ func TestScript_Error(t *testing.T) {
 
 			args := append([]string(nil), test.flags...)
 			args = append(args, "-c", test.code)
-			exit := run(f.Fds(), Elvish(args...))
+			exit := f.run(Elvish(args...))
 
 			if exit != test.wantExit {
 				t.Errorf("got exit code %v, want 2", test.wantExit)

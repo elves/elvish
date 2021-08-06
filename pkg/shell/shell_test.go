@@ -15,7 +15,7 @@ func TestShell_LegacyLibPath(t *testing.T) {
 	f := setup(t)
 	MustWriteFile(filepath.Join(f.home, ".elvish", "lib", "a.elv"), "echo mod a")
 
-	exit := run(f.Fds(), Elvish("-c", "use a"))
+	exit := f.run(Elvish("-c", "use a"))
 	TestExit(t, exit, 0)
 	f.TestOut(t, 1, "mod a\n")
 }
@@ -90,4 +90,4 @@ func setup(t Cleanuper) fixture {
 	return fixture{Setup(t), home}
 }
 
-func run(fds [3]*os.File, args []string) int { return prog.Run(fds, args, Program{}) }
+func (f fixture) run(args []string) int { return prog.Run(f.Fds(), args, Program{}) }
