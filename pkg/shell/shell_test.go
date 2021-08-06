@@ -9,10 +9,8 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
-// Tests for the Program are in script_test.go and interact_test.go. This file
-// container test helpers and tests against helpers.
-
-func run(fds [3]*os.File, args []string) int { return prog.Run(fds, args, Program{}) }
+// More tests against Program's that are specific to script mode or interactive
+// mode are in script_test.go and interact_test.go respectively.
 
 var incSHLVLTests = []struct {
 	name    string
@@ -67,5 +65,16 @@ func TestIncSHLVL(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func run(fds [3]*os.File, args []string) int { return prog.Run(fds, args, Program{}) }
+
+func tempDirEnv(envName string) (string, func()) {
+	dir, cleanDir := testutil.TestDir()
+	restoreEnv := testutil.WithTempEnv(envName, dir)
+	return dir, func() {
+		restoreEnv()
+		cleanDir()
 	}
 }
