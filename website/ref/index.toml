@@ -6,6 +6,10 @@ name = "language"
 title = "Language Specification"
 
 [[articles]]
+name = "command"
+title = "The Elvish Command"
+
+[[articles]]
 name = "builtin"
 title = "Builtin Functions and Variables"
 
