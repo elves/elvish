@@ -2335,8 +2335,9 @@ imported by the `use` command:
 ### User-defined modules
 
 You can define your own modules in Elvish by putting them under `~/.elvish/lib`
-and giving them a `.elv` extension. For instance, to define a module named `a`,
-store it in `~/.elvish/lib/a.elv`:
+and giving them a `.elv` extension. Or you can define modules [relative to the
+file that imports the module](language.html#relative-imports). For instance,
+to define a module named `a`, store it in `~/.elvish/lib/a.elv`:
 
 ```elvish-transcript
 ~> cat ~/.elvish/lib/a.elv
