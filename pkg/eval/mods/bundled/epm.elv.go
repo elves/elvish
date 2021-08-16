@@ -85,6 +85,7 @@ package bundled
 
 const epmElv = `use re
 use str
+use platform
 
 # Verbosity configuration
 debug-mode = $false
@@ -112,9 +113,9 @@ debug-mode = $false
 -lib-dir = (
   if $platform:is-windows {
     put $E:LocalAppData/elvish/lib
-  } else if (not-eq $E:XDG_DATA_HOME '') {
+  } elif (not-eq $E:XDG_DATA_HOME '') {
     put $E:XDG_DATA_HOME/elvish/lib
-  }  else {
+  } else {
     put ~/.local/share/elvish/lib
   }
 )
