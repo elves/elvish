@@ -109,15 +109,15 @@ debug-mode = $false
 ]
 
 # Internal configuration
--data-dir = (
-  if (not-eq $E:XDG_DATA_HOME '') {
-    put $E:XDG_DATA_HOME/elvish
+-lib-dir = (
+  if $platform:is-windows {
+    put $E:LocalAppData/elvish/lib
+  } else if (not-eq $E:XDG_DATA_HOME '') {
+    put $E:XDG_DATA_HOME/elvish/lib
   }  else {
-    put ~/.local/share/elvish
+    put ~/.local/share/elvish/lib
   }
 )
-
--lib-dir = $-data-dir/lib
 
 # General utility functions
 
