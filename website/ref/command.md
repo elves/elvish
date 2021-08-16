@@ -82,7 +82,7 @@ directories:
        `elvish/lib`, defaulting to `/usr/local/share/elvish/lib` and
        `/usr/share/elvish/lib` if `$XDG_DATA_DIRS` is unset or empty.
 
--   On Windows: `%LocalAppData%/elvish/lib`, followed by `%AppData%/elvish/lib`.
+-   On Windows: `%AppData%/elvish/lib`, followed by `%LocalAppData%/elvish/lib`.
 
 # Other command-line flags
 
