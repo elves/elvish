@@ -8,6 +8,7 @@ import (
 	"src.elv.sh/pkg/edit"
 	"src.elv.sh/pkg/eval"
 	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval/mods/platform"
 	"src.elv.sh/pkg/eval/mods/re"
 	"src.elv.sh/pkg/eval/mods/str"
 )
@@ -21,6 +22,7 @@ func TestEPM(t *testing.T) {
 		// standard modules.
 		ev.AddModule("re", re.Ns)
 		ev.AddModule("str", str.Ns)
+		ev.AddModule("platform", platform.Ns)
 	},
 		That("use epm").DoesNothing(),
 	)

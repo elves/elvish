@@ -38,8 +38,16 @@ Once installed, modules in this package can be imported with
 This is a sample function in a sample module in a sample package
 ```
 
-The next section describes functions in the `epm` module, using the same
-notation as the [doc for the builtin module](builtin.html#usage-notation).
+# Directory managed by `epm`
+
+Elvish searches for modules in [multiple
+directories](command.html#module-search-directories], and `epm` only manages one
+of them:
+
+-   On UNIX, `epm` manages `$XDG_DATA_HOME/elvish/lib`, defaulting to
+    `~/.local/share/elvish/lib` if `$XDG_DATA_HOME` is unset or empty;
+
+-   On Windows, `epm` manages `%LocalAppData%\elvish\lib`.
 
 # Custom package domains
 
