@@ -199,29 +199,19 @@ sometimes out of date.
 
 ## Arch Linux
 
-Install [`elvish-bin`](https://aur.archlinux.org/packages/elvish-bin/),
-[`elvish`](https://aur.archlinux.org/packages/elvish/) or
-[`elvish-git`](https://aur.archlinux.org/packages/elvish-git/) with your
-favorite AUR helper:
+Elvish is available in the official repository. This will install the latest
+release:
 
 ```elvish
-# Install the latest release from prebuilt binary
-yay -S elvish-bin
-# Install the latest release from source
-yay -S elvish
-# Install the HEAD commit
-yay -S elvish-git
+pacman -S elvish
 ```
 
-Alternatively, install prebuilt packages from the
-[Arch Linux CN repository](https://www.archlinuxcn.org/archlinux-cn-repo-and-mirror/):
+To install the HEAD version, install
+[`elvish-git`](https://aur.archlinux.org/packages/elvish-git/) from AUR with
+your favorite AUR helper:
 
 ```elvish
-# Add archlinuxcn repository
-printf '[archlinuxcn]\nServer = http://repo.archlinuxcn.org/$arch\n' | sudo tee -a /etc/pacman.conf
-# Install keyring
-pacman -Sy archlinuxcn-keyring
-pacman -S elvish
+yay -S elvish-git
 ```
 
 ## Fedora
