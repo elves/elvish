@@ -63,9 +63,9 @@ func TestPath(t *testing.T) {
 		That("x = (path:temp-dir 'x-*.y')", "rmdir $x", "put $x").Puts(
 			MatchingRegexp{Pattern: anyDir + `x-.*\.y$`}),
 		That("x = (path:temp-dir &dir=. 'x-*.y')", "rmdir $x", "put $x").Puts(
-			MatchingRegexp{Pattern: `^x-.*\.y$`}),
+			MatchingRegexp{Pattern: `^(\.[/\/])?x-.*\.y$`}),
 		That("x = (path:temp-dir &dir=.)", "rmdir $x", "put $x").Puts(
-			MatchingRegexp{Pattern: `^elvish-.*$`}),
+			MatchingRegexp{Pattern: `^(\.[/\/])?elvish-.*$`}),
 		That("path:temp-dir a b").Throws(
 			errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: 2},
 			"path:temp-dir a b"),
@@ -77,9 +77,9 @@ func TestPath(t *testing.T) {
 		That("f = (path:temp-file 'x-*.y')", "put $f[name]", "fclose $f", "rm $f[name]").
 			Puts(MatchingRegexp{Pattern: anyDir + `x-.*\.y$`}),
 		That("f = (path:temp-file &dir=. 'x-*.y')", "put $f[name]", "fclose $f", "rm $f[name]").
-			Puts(MatchingRegexp{Pattern: `^x-.*\.y$`}),
+			Puts(MatchingRegexp{Pattern: `^(\.[/\/])?x-.*\.y$`}),
 		That("f = (path:temp-file &dir=.)", "put $f[name]", "fclose $f", "rm $f[name]").
-			Puts(MatchingRegexp{Pattern: `^elvish-.*$`}),
+			Puts(MatchingRegexp{Pattern: `^(\.[/\/])?elvish-.*$`}),
 		That("path:temp-file a b").Throws(
 			errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: 2},
 			"path:temp-file a b"),
