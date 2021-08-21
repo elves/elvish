@@ -32,13 +32,14 @@ documented below.
 
 ### Packaging release versions
 
-If you are not applying any patches, there is nothing to do. The default value
-of `VersionSuffix`, which is empty, suffices.
+If you are using the standard Go toolchain and not applying any patches, there
+is nothing more to do; the default empty `VersionSuffix` suffices.
 
-If you have applied any patches, you **must** override `VersionSuffix` with a
-string that starts with `+` and can uniquely identify your patch. For official
-Linux distribution builds, this should identify your distribution, plus the
-version of the patch. Example:
+If you are using a non-standard toolchain, or have applied any patches that can
+affect the resulting binary, you **must** override `VersionSuffix` with a string
+that starts with `+` and can uniquely identify your toolchain and patch. For
+official Linux distribution builds, this should identify your distribution, plus
+the version of the patch. Example:
 
 ```sh
 go build -ldflags "-X src.elv.sh/pkg/buildinfo.VersionSuffix=+deb1" ./cmd/elvish
