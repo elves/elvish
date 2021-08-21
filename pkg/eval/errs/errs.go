@@ -28,7 +28,7 @@ func (e OutOfRange) Error() string {
 }
 
 // BadValue encodes an error where the value does not meet a requirement. For
-// out-of-range erros, use OutOfRange.
+// out-of-range errors, use OutOfRange.
 type BadValue struct {
 	What   string
 	Valid  string
@@ -73,7 +73,7 @@ func nValues(n int) string {
 
 // SetReadOnlyVar is returned by the Set method of a read-only variable.
 type SetReadOnlyVar struct {
-	// Name of the read-only variable. This fiels is initially empty, and
+	// Name of the read-only variable. This field is initially empty, and
 	// populated later when context information is available.
 	VarName string
 }

@@ -246,7 +246,7 @@ of explicitly constructing number values. Builtin
 [numeric commands](./builtin.html#numeric-commands) follow the same convention.
 
 When the word **number** appears unqualified in other sections of this document,
-it means either an explictly number-typed value (**typed number**), or its
+it means either an explicitly number-typed value (**typed number**), or its
 string representation.
 
 When a typed number is converted to a string (e.g. with `to-string`), the result
@@ -1313,7 +1313,7 @@ To force a particular order of evaluation, group expressions using a
 A **command form** is either an [ordinary command](#ordinary-command), a
 [special command](#special-command) or an
 [legacy assignment form](#legacy-assignment-form). All of three different types
-have access to [IO ports](#io-ports), which can be modifed via
+have access to [IO ports](#io-ports), which can be modified via
 [redirections](#redirection).
 
 When Elvish parses a command form, it applies the following process to decide
@@ -1858,7 +1858,7 @@ a booleanly false value is obtained, it outputs the value and stops. When given
 no arguments, it outputs `$true`.
 
 The `or` special command is the same except that it stops when a booleanly true
-value is obtained. When given no arguments, it outpus `$false`.
+value is obtained. When given no arguments, it outputs `$false`.
 
 ## Condition: `if` {#if}
 

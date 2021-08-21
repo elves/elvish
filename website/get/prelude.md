@@ -79,7 +79,7 @@ archive:
 After downloading the binary archive, following these steps to install it:
 
 ```elvish
-cd ~/Downloads # or whereever the binary archive was downloaded to
+cd ~/Downloads # or wherever the binary archive was downloaded to
 tar xvf elvish-HEAD.tar.gz # or elvish-v0.15.0.tar.gz for release version
 chmod +x elvish-HEAD # or elvish-v0.15.0 for release version
 sudo cp elvish-HEAD /usr/local/bin/elvish # or anywhere else on PATH
@@ -236,7 +236,7 @@ and by [Ubuntu](http://packages.ubuntu.com/elvish) since 17.10:
 apt install elvish
 ```
 
-However, only testing verions of Debian and Ubuntu tend to have the latest
+However, only testing versions of Debian and Ubuntu tend to have the latest
 Elvish release. If you are running a stable release of Debian or Ubuntu, it is
 recommended to use official [prebuilt binaries](#prebuilt-binaries) instead.
 

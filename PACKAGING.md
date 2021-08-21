@@ -62,7 +62,7 @@ go build -ldflags \
 ```
 
 If you have applied any patches that is not committed as a Git commit, you
-should also append a string that starts withs `+` and can uniquely identify your
+should also append a string that starts with `+` and can uniquely identify your
 patch.
 
 ## Reproducible builds

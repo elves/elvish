@@ -107,7 +107,7 @@ var fns = map[string]interface{}{
 // is-abs $path
 // ```
 //
-// Outputs `$true` if the path is an abolute path. Note that platforms like Windows have different
+// Outputs `$true` if the path is an absolute path. Note that platforms like Windows have different
 // rules than UNIX like platforms for what constitutes an absolute path. See the [Go
 // documentation](https://pkg.go.dev/path/filepath#IsAbs) for more details.
 //
@@ -129,7 +129,7 @@ var fns = map[string]interface{}{
 //
 // Outputs `$path` after resolving any symbolic links. If `$path` is relative the result will be
 // relative to the current directory, unless one of the components is an absolute symbolic link.
-// This function calls `path:clean` on the result before outputing it. This is analogous to the
+// This function calls `path:clean` on the result before outputting it. This is analogous to the
 // external `realpath` or `readlink` command found on many systems. See the [Go
 // documentation](https://pkg.go.dev/path/filepath#EvalSymlinks) for more details.
 
@@ -211,7 +211,7 @@ func isRegular(opts isOpts, path string) bool {
 //
 // The &dir option determines where the directory will be created; if it is an
 // empty string (the default), a system-dependent directory suitable for storing
-// temporary files will be used. The `$pattern` argument determins the name of
+// temporary files will be used. The `$pattern` argument determines the name of
 // the directory, where the last star will be replaced by a random string; it
 // defaults to `elvish-*`.
 //
@@ -261,7 +261,7 @@ func tempDir(opts mktempOpt, args ...string) (string, error) {
 //
 // The &dir option determines where the file will be created; if it is an
 // empty string (the default), a system-dependent directory suitable for storing
-// temporary files will be used. The `$pattern` argument determins the name of
+// temporary files will be used. The `$pattern` argument determines the name of
 // the file, where the last star will be replaced by a random string; it
 // defaults to `elvish-*`.
 //

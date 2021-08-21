@@ -319,7 +319,7 @@ func add(rawNums ...vals.Num) vals.Num {
 // - $x-num $y-num...
 // ```
 //
-// Outputs the result of substracting from `$x-num` all the `$y-num`s, working
+// Outputs the result of subtracting from `$x-num` all the `$y-num`s, working
 // from left to right. When no `$y-num` is given, outputs the negation of
 // `$x-num` instead (in other words, `- $x-num` is equivalent to `- 0 $x-num`).
 //

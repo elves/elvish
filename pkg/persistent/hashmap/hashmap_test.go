@@ -193,7 +193,7 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 		t.Errorf("m.Len = %d, want %d", m.Len(), 0)
 	}
 
-	// Assoc and Len, test by building a map simutaneously.
+	// Assoc and Len, test by building a map simultaneously.
 	ref := make(map[testKey]string, len(refEntries))
 	for _, e := range refEntries {
 		ref[e.k] = e.v

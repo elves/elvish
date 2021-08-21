@@ -157,6 +157,18 @@ jobs:
     - name: Check style
       run: ./tools/checkstyle-md.sh
 
+  codespell:
+    name: Check code spell
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Run codespell
+      uses: codespell-project/actions-codespell@master
+      with:
+        ignore_words_list: >-
+          upto,nd,ba,doas,fo,struc,indicies,shouldbe,iterm,lates,testof
+
   lint:
     name: Run linters
     runs-on: ubuntu-latest

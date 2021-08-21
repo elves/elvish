@@ -79,7 +79,7 @@ const (
 )
 
 // UnifyNums unifies the given slice of numbers into the same type, converting
-// those with lower NumType to the higest NumType present in the slice. The typ
+// those with lower NumType to the highest NumType present in the slice. The typ
 // argument can be used to force the minimum NumType.
 func UnifyNums(nums []Num, typ NumType) NumSlice {
 	for _, num := range nums {
