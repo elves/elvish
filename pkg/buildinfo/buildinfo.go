@@ -16,11 +16,11 @@ import (
 
 // Version identifies the version of Elvish. On development commits, it
 // identifies the next release.
-const Version = "0.16.0"
+const Version = "0.16.1"
 
 // VersionSuffix is appended to Version to build the full version string. It is public so it can be
 // overridden when building Elvish; see PACKAGING.md for details.
-var VersionSuffix = "-dev.unknown"
+var VersionSuffix = ""
 
 // Reproducible identifies whether the build is reproducible. This can be
 // overridden when building Elvish; see PACKAGING.md for details.
