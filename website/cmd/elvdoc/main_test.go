@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -29,6 +30,8 @@ var extractTests = []struct {
 `,
 		wantDoc: `# Functions
 
+<a name='//apple_ref/cpp/Function/cd' class='dashAnchor'></a>
+
 ## cd
 
 Changes directory.
@@ -51,11 +54,17 @@ Changes directory.
 		ns: "ns:",
 		wantDoc: `# Functions
 
+<a name='//apple_ref/cpp/Function/ns:a' class='dashAnchor'></a>
+
 ## ns:a
 A.
 
+<a name='//apple_ref/cpp/Function/ns:b' class='dashAnchor'></a>
+
 ## ns:b
 B.
+
+<a name='//apple_ref/cpp/Function/ns:-b' class='dashAnchor'></a>
 
 ## ns:-b
 -B.
@@ -76,11 +85,17 @@ B.
 `,
 		wantDoc: `# Functions
 
+<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
+
 ## a
 A.
 
+<a name='//apple_ref/cpp/Function/b' class='dashAnchor'></a>
+
 ## b
 B.
+
+<a name='//apple_ref/cpp/Function/c' class='dashAnchor'></a>
 
 ## c
 C.
@@ -99,11 +114,15 @@ C.
 `,
 		wantDoc: `# Variables
 
+<a name='//apple_ref/cpp/Variable/$b' class='dashAnchor'></a>
+
 ## $b
 B.
 
 
 # Functions
+
+<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
 
 ## a
 A.
@@ -117,6 +136,8 @@ A.
 //elvdoc:fn a
 // A.`,
 		wantDoc: `# Functions
+
+<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
 
 ## a
 A.
@@ -135,16 +156,22 @@ A.
 		ns: "ns:",
 		wantDoc: `# Variables
 
+<a name='//apple_ref/cpp/Variable/$ns:b' class='dashAnchor'></a>
+
 ## $ns:b
 B.
 
 
 # Functions
 
+<a name='//apple_ref/cpp/Function/ns:a' class='dashAnchor'></a>
+
 ## ns:a
 A.
 `,
 	}}
+
+var emptyReader = io.MultiReader()
 
 func TestExtract(t *testing.T) {
 	for _, test := range extractTests {
@@ -158,43 +185,13 @@ func TestExtract(t *testing.T) {
 }
 
 func TestRun_MultipleFiles(t *testing.T) {
-	teardown := setup()
-	defer teardown()
+	setupDir(t)
 
 	w := new(strings.Builder)
 	run([]string{"a.go", "b.go"}, emptyReader, w)
 	compare(t, w.String(), `# Variables
 
-## $v2
-
-Variable 2 from b.
-
-
-# Functions
-
-## f1
-
-Function 1 from b.
-
-## f2
-
-Function 2 from a.
-
-    Some indented code.
-`)
-}
-
-func TestRun_Directory(t *testing.T) {
-	teardown := setup()
-	defer teardown()
-
-	w := new(strings.Builder)
-	run([]string{"-dir", "."}, emptyReader, w)
-	compare(t, w.String(), `# Variables
-
-## $v1
-
-Variable 1 from c.
+<a name='//apple_ref/cpp/Variable/$v2' class='dashAnchor'></a>
 
 ## $v2
 
@@ -203,40 +200,19 @@ Variable 2 from b.
 
 # Functions
 
+<a name='//apple_ref/cpp/Function/f1' class='dashAnchor'></a>
+
 ## f1
 
 Function 1 from b.
 
-## f2
-
-Function 2 from a.
-
-    Some indented code.
-`)
-}
-
-func TestRun_Filter(t *testing.T) {
-	teardown := setup()
-	defer teardown()
-
-	in := strings.NewReader(`Some text.
-
-@elvdoc a.go
-
-Some more text.`)
-	out := new(strings.Builder)
-	run([]string{"-filter"}, in, out)
-	compare(t, out.String(), `Some text.
-
-# Functions
+<a name='//apple_ref/cpp/Function/f2' class='dashAnchor'></a>
 
 ## f2
 
 Function 2 from a.
 
     Some indented code.
-
-Some more text.
 `)
 }
 
@@ -248,10 +224,9 @@ func compare(t *testing.T, got, want string) {
 }
 
 // Set up a temporary directory with several .go files and directories
-// containing .go files. Returns a teardown function. Useful for testing the run
-// function.
-func setup() func() {
-	_, teardown := testutil.InTestDir()
+// containing .go files.
+func setupDir(c testutil.Cleanuper) {
+	testutil.InTempDir(c)
 	writeFile("a.go", `package x
 //elvdoc:fn f2
 //
@@ -288,7 +263,6 @@ func setup() func() {
 //
 // Variable v from subpkg/a.
 `)
-	return teardown
 }
 
 func writeFile(name, data string) {

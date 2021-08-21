@@ -26,6 +26,7 @@ generate:
 # Run unit tests, with race detection if the platform supports it.
 test:
 	go test $(shell ./tools/run-race.sh) ./...
+	cd website; go test $(shell ./tools/run-race.sh) ./...
 
 # Generate a basic test coverage report, and open it in the browser. See also
 # https://apps.codecov.io/gh/elves/elvish/.
