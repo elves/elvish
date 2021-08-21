@@ -11,7 +11,7 @@ type FilterSpec struct {
 	// Called with the filter text to get the filter predicate. If nil, the
 	// predicate performs substring match.
 	Maker func(string) func(string) bool
-	// Highlighter for the filter. If nil, the filter will not be higlighted.
+	// Highlighter for the filter. If nil, the filter will not be highlighted.
 	Highlighter func(string) (ui.Text, []error)
 }
 

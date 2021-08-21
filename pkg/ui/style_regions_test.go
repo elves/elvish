@@ -28,7 +28,7 @@ var styleRegionsTests = []struct {
 	},
 
 	{
-		Name:   "multiple continuos regions",
+		Name:   "multiple continuous regions",
 		String: "foobar",
 		Regions: []StylingRegion{
 			{r(1, 3), FgRed, 0},
@@ -38,7 +38,7 @@ var styleRegionsTests = []struct {
 	},
 
 	{
-		Name:   "multiple discontinuos regions in wrong order",
+		Name:   "multiple discontinuous regions in wrong order",
 		String: "foobar",
 		Regions: []StylingRegion{
 			{r(4, 5), FgGreen, 0},

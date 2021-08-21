@@ -524,7 +524,7 @@ var testCases = []struct {
 		),
 	},
 	{
-		name: "carriage return seperating elements in a lists",
+		name: "carriage return separating elements in a lists",
 		code: "a [a\rb]",
 		node: &Chunk{},
 		want: a(

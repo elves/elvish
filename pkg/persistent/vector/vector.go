@@ -114,7 +114,7 @@ func (v *vector) Index(i int) (interface{}, bool) {
 	}
 
 	// The following is very similar to sliceFor, but is implemented separately
-	// to avoid unncessary copying.
+	// to avoid unnecessary copying.
 	if i >= v.treeSize() {
 		return v.tail[i&chunkMask], true
 	}

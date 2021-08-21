@@ -28,7 +28,7 @@ var typeCbMap = map[string]func(os.FileMode) bool{
 }
 
 const (
-	// noMatchOK indicates that the "nomatch-ok" glob index modifer was
+	// noMatchOK indicates that the "nomatch-ok" glob index modifier was
 	// present.
 	noMatchOK globFlag = 1 << iota
 )

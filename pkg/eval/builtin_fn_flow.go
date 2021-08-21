@@ -159,7 +159,7 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 //
 // Like `each`, an exception raised from [`break`](#break) will cause `peach`
 // to terminate early. However due to the parallel nature of `peach`, the exact
-// time of termination is non-deterministic and not even guranteed.
+// time of termination is non-deterministic and not even guaranteed.
 //
 // An exception raised from [`continue`](#continue) is swallowed and can be used
 // to terminate a single iteration early.

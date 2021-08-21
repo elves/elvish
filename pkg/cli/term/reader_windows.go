@@ -139,7 +139,7 @@ func convertEvent(event sys.InputEvent) Event {
 				// together, the UChar field seems to be always 0; so if we are
 				// here, we can actually be sure that it's AltGr.
 				//
-				// Some characters require AltGr+Shift to intput, such as the
+				// Some characters require AltGr+Shift to input, such as the
 				// upper-case sharp S on a German keyboard.
 				return KeyEvent(ui.Key{Rune: r})
 			}

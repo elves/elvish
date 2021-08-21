@@ -34,7 +34,7 @@ func (p Pipe) Equal(rhs interface{}) bool {
 	return Equal(p.ReadEnd, q.ReadEnd) && Equal(p.WriteEnd, q.WriteEnd)
 }
 
-// Hash calculates the hash based on the two consituent files.
+// Hash calculates the hash based on the two constituent files.
 func (p Pipe) Hash() uint32 {
 	return hash.DJB(Hash(p.ReadEnd), Hash(p.WriteEnd))
 }

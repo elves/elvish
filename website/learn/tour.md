@@ -17,7 +17,7 @@ in the _advanced language features_ section.
 ## Comparison with bash
 
 If you are familiar with bash, the following table shows some (rough)
-correspondance between Elvish and bash syntax:
+correspondence between Elvish and bash syntax:
 
 <table>
   <tr>
@@ -496,7 +496,7 @@ general-purpose primitives:
       <a href="../ref/builtin.html#each"><code>each</code></a>
     </td>
     <td>
-      Applies a function to all values from value intput
+      Applies a function to all values from value input
     </td>
   </tr>
   <tr>
