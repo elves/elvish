@@ -5,7 +5,7 @@
 [![gccgo test status](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=gccgo&task=Test%20on%20gccgo)](https://cirrus-ci.com/github/elves/elvish/master)
 [![Test Coverage](https://img.shields.io/codecov/c/github/elves/elvish/master.svg?logo=Codecov&label=coverage)](https://app.codecov.io/gh/elves/elvish/branch/master)
 [![Go Reference](https://pkg.go.dev/badge/src.elv.sh@master.svg)](https://pkg.go.dev/src.elv.sh@master)
-[![Go Report Card](https://goreportcard.com/badge/src.elv.sh)](https://goreportcard.com/report/src.elv.sh)
+[![Packaging status](https://repology.org/badge/tiny-repos/elvish.svg)](https://repology.org/project/elvish/versions)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/ElvishShell)
 
 Elvish is an expressive programming language and a versatile interactive shell,

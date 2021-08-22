@@ -195,8 +195,11 @@ issues when you change your login shell to Elvish.
 
 Elvish is available from many package managers. Installing Elvish with the
 package manager makes it easy to upgrade Elvish alongside the rest of your
-system. However, these packages are not maintained by Elvish developers and are
-sometimes out of date.
+system.
+
+Beware that these packages are not maintained by Elvish developers and are
+sometimes out of date. For a comprehensive list of packages and their freshness,
+see [this Repology page](https://repology.org/project/elvish/versions).
 
 ## Arch Linux
 
