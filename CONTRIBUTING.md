@@ -129,12 +129,8 @@ generated file you should re-generate it.
 
 Use the standard command, `go generate ./...` to regenerate all files.
 
-Dependencies of the generation rules:
-
--   The `stringer` tool: Install with
-    `go get -u golang.org/x/tools/cmd/stringer`;
-
--   An installed `elvish` in your PATH;
+Some of the generation rules depend on the `stringer` tool. Install with
+`go install golang.org/x/tools/cmd/stringer@latest`.
 
 ## Formatting source files
 
