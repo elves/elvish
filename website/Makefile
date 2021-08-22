@@ -39,7 +39,7 @@ publish: gen
 
 clean:
 	rm -f $(HTMLS) _tools/*.bin
-	rm -rf $(DST_DIR)
+	rm -rf $(DST_DIR) $(DOCSET_TMP_DIR) $(DOCSET_DST_DIR)
 
 .PHONY: default gen tools genblog publish clean
 .SECONDARY: $(TOOL_BINARIES)
