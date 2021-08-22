@@ -82,8 +82,8 @@ func compileVar(cp *compiler, fn *parse.Form) effectOp {
 		if len(cn.Indexings) != 1 {
 			cp.errorpf(cn, "variable name must be a single string literal")
 		}
-		if len(cn.Indexings[0].Indicies) > 0 {
-			cp.errorpf(cn, "variable name must not have indicies")
+		if len(cn.Indexings[0].Indices) > 0 {
+			cp.errorpf(cn, "variable name must not have indices")
 		}
 		pn := cn.Indexings[0].Head
 		if !parse.ValidLHSVariable(pn, true) {
@@ -150,7 +150,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 			cp.errorpf(cn, delArgMsg)
 			continue
 		}
-		head, indices := cn.Indexings[0].Head, cn.Indexings[0].Indicies
+		head, indices := cn.Indexings[0].Head, cn.Indexings[0].Indices
 		if head.Type == parse.Variable {
 			cp.errorpf(cn, "arguments to del must drop $")
 		} else if !parse.ValidLHSVariable(head, false) {

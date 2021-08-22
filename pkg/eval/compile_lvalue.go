@@ -48,7 +48,7 @@ func (cp *compiler) parseCompoundLValues(ns []*parse.Compound) lvaluesGroup {
 func (cp *compiler) parseIndexingLValue(n *parse.Indexing) lvaluesGroup {
 	if n.Head.Type == parse.Braced {
 		// Braced list of lvalues may not have indices.
-		if len(n.Indicies) > 0 {
+		if len(n.Indices) > 0 {
 			cp.errorpf(n, "braced list may not have indices when used as lvalue")
 		}
 		return cp.parseCompoundLValues(n.Head.Braced)
@@ -60,7 +60,7 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing) lvaluesGroup {
 	varUse := n.Head.Value
 	sigil, qname := SplitSigil(varUse)
 	var ref *varRef
-	if len(n.Indicies) == 0 {
+	if len(n.Indices) == 0 {
 		ref = resolveVarRef(cp, qname, nil)
 		if ref == nil {
 			segs := SplitQNameSegs(qname)
@@ -80,12 +80,12 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing) lvaluesGroup {
 			cp.errorpf(n, "cannot find variable $%s", qname)
 		}
 	}
-	ends := make([]int, len(n.Indicies)+1)
+	ends := make([]int, len(n.Indices)+1)
 	ends[0] = n.Head.Range().To
-	for i, idx := range n.Indicies {
+	for i, idx := range n.Indices {
 		ends[i+1] = idx.Range().To
 	}
-	lv := lvalue{n.Range(), ref, cp.arrayOps(n.Indicies), ends}
+	lv := lvalue{n.Range(), ref, cp.arrayOps(n.Indices), ends}
 	restIndex := -1
 	if sigil == "@" {
 		restIndex = 0

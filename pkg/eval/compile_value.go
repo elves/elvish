@@ -206,10 +206,10 @@ func (cp *compiler) arrayOps(ns []*parse.Array) []valuesOp {
 }
 
 func (cp *compiler) indexingOp(n *parse.Indexing) valuesOp {
-	if len(n.Indicies) == 0 {
+	if len(n.Indices) == 0 {
 		return cp.primaryOp(n.Head)
 	}
-	return &indexingOp{n.Range(), cp.primaryOp(n.Head), cp.arrayOps(n.Indicies)}
+	return &indexingOp{n.Range(), cp.primaryOp(n.Head), cp.arrayOps(n.Indices)}
 }
 
 func (cp *compiler) indexingOps(ns []*parse.Indexing) []valuesOp {

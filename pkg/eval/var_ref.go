@@ -13,7 +13,7 @@ import (
 //
 // During compilation, a qualified variable name (whether in lvalue, like "x
 // = foo", or in variable use, like "$x") is searched in compiler's staticNs
-// tables to determine which scope they belong to, as well as their indicies in
+// tables to determine which scope they belong to, as well as their indices in
 // that scope. This step is just called "resolve" in the code, and it stores
 // information in a varRef struct.
 //

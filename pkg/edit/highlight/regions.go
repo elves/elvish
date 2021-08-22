@@ -176,7 +176,7 @@ func emitVariableRegion(n *parse.Compound, f func(parse.Node, regionKind, string
 }
 
 func isBarewordCompound(n *parse.Compound) bool {
-	return len(n.Indexings) == 1 && len(n.Indexings[0].Indicies) == 0 && n.Indexings[0].Head.Type == parse.Bareword
+	return len(n.Indexings) == 1 && len(n.Indexings[0].Indices) == 0 && n.Indexings[0].Head.Type == parse.Bareword
 }
 
 func emitRegionsInIf(n *parse.Form, f func(parse.Node, regionKind, string)) {

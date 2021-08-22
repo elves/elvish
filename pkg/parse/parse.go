@@ -422,9 +422,9 @@ func startsCompound(r rune, ctx ExprCtx) bool {
 // Indexing = Primary { '[' Array ']' }
 type Indexing struct {
 	node
-	ExprCtx  ExprCtx
-	Head     *Primary
-	Indicies []*Array
+	ExprCtx ExprCtx
+	Head    *Primary
+	Indices []*Array
 }
 
 func (in *Indexing) parse(ps *parser) {
@@ -434,7 +434,7 @@ func (in *Indexing) parse(ps *parser) {
 			ps.error(errShouldBeArray)
 		}
 
-		ps.parse(&Array{}).addTo(&in.Indicies, in)
+		ps.parse(&Array{}).addTo(&in.Indices, in)
 
 		if !parseSep(in, ps, ']') {
 			ps.error(errShouldBeRBracket)

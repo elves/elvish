@@ -10,7 +10,7 @@ import (
 // Primary returns a primary node and true if that's the only child of the
 // compound node. Otherwise it returns nil and false.
 func Primary(n *parse.Compound) (*parse.Primary, bool) {
-	if len(n.Indexings) == 1 && len(n.Indexings[0].Indicies) == 0 {
+	if len(n.Indexings) == 1 && len(n.Indexings[0].Indices) == 0 {
 		return n.Indexings[0].Head, true
 	}
 	return nil, false
@@ -58,7 +58,7 @@ func Shape(n *parse.Compound) string {
 		return "compound expression"
 	}
 	in := n.Indexings[0]
-	if len(in.Indicies) > 0 {
+	if len(in.Indices) > 0 {
 		return "indexing expression"
 	}
 	pn := in.Head

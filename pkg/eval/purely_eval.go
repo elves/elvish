@@ -15,7 +15,7 @@ func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (strin
 	tilde := false
 	head := ""
 	for _, in := range cn.Indexings {
-		if len(in.Indicies) > 0 {
+		if len(in.Indices) > 0 {
 			return "", false
 		}
 		if upto >= 0 && in.To > upto {

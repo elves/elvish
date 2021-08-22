@@ -195,7 +195,7 @@ var testCases = []struct {
 		code: "$b[c][d][\ne\n]",
 		node: &Indexing{},
 		want: ast{"Indexing", fs{
-			"Head": "$b", "Indicies": []string{"c", "d", "\ne\n"}}},
+			"Head": "$b", "Indices": []string{"c", "d", "\ne\n"}}},
 	},
 
 	// Primary

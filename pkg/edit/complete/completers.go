@@ -112,7 +112,7 @@ func completeIndex(n parse.Node, cfg Config) (*context, []RawItem, error) {
 		if is(parent(n), aIndexing) {
 			// We are just after an opening bracket.
 			indexing := parent(n).(*parse.Indexing)
-			if len(indexing.Indicies) == 1 {
+			if len(indexing.Indices) == 1 {
 				if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 					return generateForEmpty(indexee, n.Range().To)
 				}
@@ -123,7 +123,7 @@ func completeIndex(n parse.Node, cfg Config) (*context, []RawItem, error) {
 			if is(parent(array), aIndexing) {
 				// We are after an existing index and spaces.
 				indexing := parent(array).(*parse.Indexing)
-				if len(indexing.Indicies) == 1 {
+				if len(indexing.Indices) == 1 {
 					if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 						return generateForEmpty(indexee, n.Range().To)
 					}
@@ -141,7 +141,7 @@ func completeIndex(n parse.Node, cfg Config) (*context, []RawItem, error) {
 				if is(parent(array), aIndexing) {
 					// We are just after an incomplete index.
 					indexing := parent(array).(*parse.Indexing)
-					if len(indexing.Indicies) == 1 {
+					if len(indexing.Indices) == 1 {
 						if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 							ctx := &context{
 								"index", seed, primary.Type, compound.Range()}

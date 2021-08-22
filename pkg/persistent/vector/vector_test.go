@@ -368,18 +368,18 @@ func benchmarkIndexSeqPersistent(b *testing.B, n int) {
 	}
 }
 
-var randIndicies []int
+var randIndices []int
 
 func init() {
-	randIndicies = make([]int, N4)
+	randIndices = make([]int, N4)
 	for i := 0; i < N4; i++ {
-		randIndicies[i] = rand.Intn(N4)
+		randIndices[i] = rand.Intn(N4)
 	}
 }
 
 func BenchmarkIndexRandNative(b *testing.B) {
 	for r := 0; r < b.N; r++ {
-		for _, i := range randIndicies {
+		for _, i := range randIndices {
 			x = sliceN4[i]
 		}
 	}
@@ -387,7 +387,7 @@ func BenchmarkIndexRandNative(b *testing.B) {
 
 func BenchmarkIndexRandPersistent(b *testing.B) {
 	for r := 0; r < b.N; r++ {
-		for _, i := range randIndicies {
+		for _, i := range randIndices {
 			x, _ = vectorN4.Index(i)
 		}
 	}
