@@ -171,6 +171,8 @@ Install [codespell] to check spelling:
 pip install --user codespell==2.1.0
 ```
 
+Use `make codespell` to run it.
+
 ## Licensing
 
 By contributing, you agree to license your code under the same license as

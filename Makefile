@@ -55,5 +55,8 @@ checkstyle-md:
 lint:
 	./tools/lint.sh
 
+codespell:
+	codespell --skip .git
+
 .SILENT: checkstyle-go checkstyle-md lint
 .PHONY: default get generate test style checkstyle checkstyle-go checkstyle-md lint cover
