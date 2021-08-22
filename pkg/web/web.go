@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -75,7 +74,7 @@ func (h httpHandler) handleMainPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h httpHandler) handleExecute(w http.ResponseWriter, r *http.Request) {
-	bytes, err := ioutil.ReadAll(r.Body)
+	bytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println("cannot read request body:", err)
 		return

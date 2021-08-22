@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -606,7 +605,7 @@ func (blackholeWriter) Write(p []byte) (int, error) { return len(p), nil }
 // [`File::Slurp`](http://search.cpan.org/~uri/File-Slurp-9999.19/lib/File/Slurp.pm).
 
 func slurp(fm *Frame) (string, error) {
-	b, err := ioutil.ReadAll(fm.InputFile())
+	b, err := io.ReadAll(fm.InputFile())
 	return string(b), err
 }
 

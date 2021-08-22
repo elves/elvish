@@ -1,12 +1,12 @@
 package client
 
 import (
-	"io/ioutil"
 	"net"
+	"os"
 )
 
 func dial(path string) (net.Conn, error) {
-	buf, err := ioutil.ReadFile(path)
+	buf, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

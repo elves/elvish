@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -271,5 +270,5 @@ func writeFile(name, data string) {
 	if err != nil {
 		panic(err)
 	}
-	ioutil.WriteFile(name, []byte(data), 0600)
+	os.WriteFile(name, []byte(data), 0600)
 }

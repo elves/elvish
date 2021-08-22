@@ -5,7 +5,6 @@ package shell
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -46,7 +45,7 @@ func TestSecureRunDir_PrefersTmpWhenXdgEnvIsEmpty(t *testing.T) {
 
 func TestSecureRunDir_ReturnsErrorWhenUnableToMkdir(t *testing.T) {
 	xdg, _ := setupForSecureRunDir(t)
-	ioutil.WriteFile(filepath.Join(xdg, "elvish"), nil, 0600)
+	os.WriteFile(filepath.Join(xdg, "elvish"), nil, 0600)
 	testSecureRunDir(t, "", true)
 }
 

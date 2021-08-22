@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -102,7 +101,7 @@ func decodeTOML(fname string, v interface{}) {
 }
 
 func readFile(fname string) string {
-	content, err := ioutil.ReadFile(fname)
+	content, err := os.ReadFile(fname)
 	if err != nil {
 		log.Fatal(err)
 	}

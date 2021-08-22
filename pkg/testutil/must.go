@@ -2,7 +2,6 @@ package testutil
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -17,7 +16,7 @@ func MustPipe() (*os.File, *os.File) {
 // MustReadAllAndClose reads all bytes and closes the ReadCloser. It panics if
 // an error occurs.
 func MustReadAllAndClose(r io.ReadCloser) []byte {
-	bs, err := ioutil.ReadAll(r)
+	bs, err := io.ReadAll(r)
 	Must(err)
 	Must(r.Close())
 	return bs
@@ -46,7 +45,7 @@ func MustCreateEmpty(names ...string) {
 // that don't exist. It panics if an error occurs.
 func MustWriteFile(filename, data string) {
 	Must(os.MkdirAll(filepath.Dir(filename), 0700))
-	Must(ioutil.WriteFile(filename, []byte(data), 0600))
+	Must(os.WriteFile(filename, []byte(data), 0600))
 }
 
 // MustChdir calls os.Chdir and panics if it fails.

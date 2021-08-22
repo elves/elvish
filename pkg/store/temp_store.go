@@ -2,7 +2,6 @@ package store
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 // Store and its underlying file will be cleaned up properly after the test is
 // finished.
 func MustTempStore(c testutil.Cleanuper) DBStore {
-	f, err := ioutil.TempFile("", "elvish.test")
+	f, err := os.CreateTemp("", "elvish.test")
 	if err != nil {
 		panic(fmt.Sprintf("open temp file: %v", err))
 	}

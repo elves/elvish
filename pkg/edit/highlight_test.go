@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -152,7 +151,7 @@ func mustMkExecutable(path string) {
 	if runtime.GOOS == "windows" {
 		path += ".exe"
 	}
-	err := ioutil.WriteFile(path, nil, 0700)
+	err := os.WriteFile(path, nil, 0700)
 	if err != nil {
 		panic(err)
 	}

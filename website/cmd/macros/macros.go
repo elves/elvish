@@ -8,7 +8,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -108,7 +107,7 @@ func callElvdoc(out io.Writer, module, path string) {
 }
 
 func (f *filterer) expandTtyshot(name string) string {
-	content, err := ioutil.ReadFile(path.Join("ttyshot", name+".html"))
+	content, err := os.ReadFile(path.Join("ttyshot", name+".html"))
 	if err != nil {
 		log.Fatal(err)
 	}

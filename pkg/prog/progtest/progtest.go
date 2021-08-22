@@ -5,7 +5,7 @@
 package progtest
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -20,7 +20,7 @@ type Fixture struct {
 }
 
 func captureOutput(p *pipe) {
-	b, err := ioutil.ReadAll(p.r)
+	b, err := io.ReadAll(p.r)
 	if err != nil {
 		panic(err)
 	}

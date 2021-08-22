@@ -1,7 +1,7 @@
 package edit
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"os/user"
 	"sync"
@@ -151,7 +151,7 @@ func callForStyledText(nt notifier, ev *eval.Evaler, ctx string, fn eval.Callabl
 	}
 	// Byte output is added to the prompt as a single unstyled text.
 	bytesCb := func(r *os.File) {
-		allBytes, err := ioutil.ReadAll(r)
+		allBytes, err := io.ReadAll(r)
 		if err != nil {
 			nt.notifyf("error reading prompt byte output: %v", err)
 		}

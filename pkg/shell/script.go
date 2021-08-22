@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"unicode/utf8"
@@ -75,7 +74,7 @@ func script(ev *eval.Evaler, fds [3]*os.File, args []string, cfg *scriptCfg) int
 var errSourceNotUTF8 = errors.New("source is not UTF-8")
 
 func readFileUTF8(fname string) (string, error) {
-	bytes, err := ioutil.ReadFile(fname)
+	bytes, err := os.ReadFile(fname)
 	if err != nil {
 		return "", err
 	}

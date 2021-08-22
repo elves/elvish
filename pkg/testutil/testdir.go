@@ -2,7 +2,6 @@ package testutil
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -16,7 +15,7 @@ import (
 // It panics if the test directory cannot be created or symlinks cannot be
 // resolved. It is only suitable for use in tests.
 func TempDir(c Cleanuper) string {
-	dir, err := ioutil.TempDir("", "elvishtest.")
+	dir, err := os.MkdirTemp("", "elvishtest.")
 	if err != nil {
 		panic(err)
 	}
@@ -83,9 +82,9 @@ func applyDir(dir Dir, prefix string) {
 		path := filepath.Join(prefix, name)
 		switch file := file.(type) {
 		case string:
-			Must(ioutil.WriteFile(path, []byte(file), 0644))
+			Must(os.WriteFile(path, []byte(file), 0644))
 		case File:
-			Must(ioutil.WriteFile(path, []byte(file.Content), file.Perm))
+			Must(os.WriteFile(path, []byte(file.Content), file.Perm))
 		case Dir:
 			Must(os.MkdirAll(path, 0755))
 			applyDir(file, path)

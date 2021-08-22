@@ -1,7 +1,6 @@
 package testutil
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -35,7 +34,7 @@ func TestTempDir_CleanupRemovesDirRecursively(t *testing.T) {
 	c := &cleanuper{}
 	dir := TempDir(c)
 
-	err := ioutil.WriteFile(filepath.Join(dir, "a"), []byte("test"), 0600)
+	err := os.WriteFile(filepath.Join(dir, "a"), []byte("test"), 0600)
 	if err != nil {
 		panic(err)
 	}
@@ -118,7 +117,7 @@ func getWd() string {
 
 func testFileContent(t *testing.T, filename string, wantContent string) {
 	t.Helper()
-	content, err := ioutil.ReadFile(filename)
+	content, err := os.ReadFile(filename)
 	if err != nil {
 		t.Errorf("Could not read %v: %v", filename, err)
 		return

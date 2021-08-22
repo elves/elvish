@@ -3,13 +3,12 @@ package logutil
 
 import (
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 )
 
 var (
-	out = ioutil.Discard
+	out = io.Discard
 	// If out is set by SetOutputFile, outFile is set and keeps the same value
 	// as out. Otherwise, outFile is nil.
 	outFile *os.File
@@ -41,10 +40,10 @@ func SetOutput(newout io.Writer) {
 // SetOutputFile redirects the output of all loggers obtained with GetLogger to
 // the named file. If the old output was a file opened by SetOutputFile, it is
 // closed. The new file is truncated. SetOutFile("") is equivalent to
-// SetOutput(ioutil.Discard).
+// SetOutput(io.Discard).
 func SetOutputFile(fname string) error {
 	if fname == "" {
-		SetOutput(ioutil.Discard)
+		SetOutput(io.Discard)
 		return nil
 	}
 	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)

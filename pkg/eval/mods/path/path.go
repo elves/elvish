@@ -2,7 +2,6 @@
 package path
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -247,7 +246,7 @@ func tempDir(opts mktempOpt, args ...string) (string, error) {
 			ValidLow: 0, ValidHigh: 1, Actual: len(args)}
 	}
 
-	return ioutil.TempDir(opts.Dir, pattern)
+	return os.MkdirTemp(opts.Dir, pattern)
 }
 
 //elvdoc:fn temp-file
@@ -302,5 +301,5 @@ func tempFile(opts mktempOpt, args ...string) (*os.File, error) {
 			ValidLow: 0, ValidHigh: 1, Actual: len(args)}
 	}
 
-	return ioutil.TempFile(opts.Dir, pattern)
+	return os.CreateTemp(opts.Dir, pattern)
 }

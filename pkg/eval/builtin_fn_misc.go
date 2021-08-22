@@ -5,9 +5,9 @@ package eval
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net"
+	"os"
 	"sync"
 	"time"
 	"unicode/utf8"
@@ -300,7 +300,7 @@ func useMod(fm *Frame, spec string) (*Ns, error) {
 }
 
 func readFileUTF8(fname string) (string, error) {
-	bytes, err := ioutil.ReadFile(fname)
+	bytes, err := os.ReadFile(fname)
 	if err != nil {
 		return "", err
 	}

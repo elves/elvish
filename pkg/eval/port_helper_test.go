@@ -2,7 +2,6 @@ package eval
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -37,7 +36,7 @@ func TestEvalerPorts(t *testing.T) {
 }
 
 func mustReadAllString(r io.Reader) string {
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	if err != nil {
 		panic(err)
 	}
