@@ -30,7 +30,7 @@ func Serve(sockpath, dbpath string) {
 		logger.Printf("serving anyway")
 	}
 
-	quitSignals := make(chan os.Signal)
+	quitSignals := make(chan os.Signal, 1)
 	quitChan := make(chan struct{})
 	signal.Notify(quitSignals, syscall.SIGTERM, syscall.SIGINT)
 	go func() {

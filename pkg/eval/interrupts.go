@@ -29,7 +29,7 @@ func (fm *Frame) IsInterrupted() bool {
 // has been received by the process. It also returns a function that should be
 // called when the channel is no longer needed.
 func ListenInterrupts() (<-chan struct{}, func()) {
-	sigCh := make(chan os.Signal)
+	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGQUIT)
 	// Channel to return, closed after receiving the first SIGINT or SIGQUIT.
 	intCh := make(chan struct{})
