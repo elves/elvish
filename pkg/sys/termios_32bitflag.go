@@ -1,3 +1,4 @@
+//go:build (386 && darwin) || (arm && darwin) || dragonfly || freebsd || linux || netbsd || openbsd || solaris
 // +build 386,darwin arm,darwin dragonfly freebsd linux netbsd openbsd solaris
 
 package sys

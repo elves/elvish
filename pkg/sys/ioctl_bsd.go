@@ -1,3 +1,4 @@
+//go:build darwin || dragonfly || freebsd || netbsd || openbsd
 // +build darwin dragonfly freebsd netbsd openbsd
 
 // Copyright 2015 go-termios Author. All Rights Reserved.
