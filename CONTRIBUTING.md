@@ -167,6 +167,14 @@ use golint since it is
 
 Use `make lint` to run `staticcheck` and `go vet`.
 
+## Checking spelling
+
+Install [codespell] to check spelling:
+
+```sh
+pip install --user codespell==2.1.0
+```
+
 ## Licensing
 
 By contributing, you agree to license your code under the same license as

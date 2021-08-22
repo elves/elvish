@@ -158,16 +158,17 @@ jobs:
       run: ./tools/checkstyle-md.sh
 
   codespell:
-    name: Check code spell
+    name: Check spelling
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+    - name: Install codespell
+      run: pip install codespell==2.1.0
     - name: Run codespell
-      uses: codespell-project/actions-codespell@master
-      with:
-        ignore_words_list: >-
-          upto,nd,ba,doas,fo,struc,indicies,shouldbe,iterm,lates,testof
+      run: codespell
 
   lint:
     name: Run linters
