@@ -10,12 +10,11 @@ test_task:
         image: debian:unstable-slim
       setup_script:
         - apt-get -y update
-        - apt-get -y install ca-certificates gccgo-go
+        - apt-get -y install ca-certificates gccgo-11
+        - ln -sf /usr/bin/go-11 /usr/local/bin/go
       env:
         # gccgo doesn't support race test
         TEST_FLAG: ""
-      # Debian's gccgo hasn't caught up with Go 1.16 yet
-      allow_failures: true
     - name: Test on FreeBSD
       freebsd_instance:
         image_family: freebsd-12-1
