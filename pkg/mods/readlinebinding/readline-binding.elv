@@ -1,7 +1,3 @@
-package readlinebinding
-
-// Code contains the source code of the readline-binding module.
-const Code = `
 edit:global-binding[Ctrl-G] = $edit:close-mode~
 
 b=[k f]{ edit:insert:binding[$k] = $f } {
@@ -62,4 +58,3 @@ b=[k f]{ edit:listing:binding[$k] = $f } {
 b=[k f]{ edit:histlist:binding[$k] = $f } {
     $b Alt-d $edit:histlist:toggle-dedup~
 }
-`

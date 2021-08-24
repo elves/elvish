@@ -1,90 +1,4 @@
-package epm
-
-// TODO: Move the elvdoc into the Elvish source code after support is added.
-
-//elvdoc:fn install
-//
-// ```elvish
-// epm:install &silent-if-installed=$false $pkg...
-// ```
-//
-// Install the named packages. By default, if a package is already installed, a
-// message will be shown. This can be disabled by passing
-// `&silent-if-installed=$true`, so that already-installed packages are silently
-// ignored.
-
-//elvdoc:fn installed
-//
-// ```elvish
-// epm:installed
-// ```
-//
-// Return an array with all installed packages. `epm:list` can be used as an alias
-// for `epm:installed`.
-
-//elvdoc:fn is-installed
-//
-// ```elvish
-// epm:is-installed $pkg
-// ```
-//
-// Returns a boolean value indicating whether the given package is installed.
-
-//elvdoc:fn metadata
-//
-// ```elvish
-// epm:metadata $pkg
-// ```
-//
-// Returns a hash containing the metadata for the given package. Metadata for a
-// package includes the following base attributes:
-//
-// -   `name`: name of the package
-// -   `installed`: a boolean indicating whether the package is currently installed
-// -   `method`: method by which it was installed (`git` or `rsync`)
-// -   `src`: source URL of the package
-// -   `dst`: where the package is (or would be) installed. Note that this
-//     attribute is returned even if `installed` is `$false`.
-//
-// Additionally, packages can define arbitrary metadata attributes in a file called
-// `metadata.json` in their top directory. The following attributes are
-// recommended:
-//
-// -   `description`: a human-readable description of the package
-// -   `maintainers`: an array containing the package maintainers, in
-//     `Name <email>` format.
-// -   `homepage`: URL of the homepage for the package, if it has one.
-// -   `dependencies`: an array listing dependencies of the current package. Any
-//     packages listed will be installed automatically by `epm:install` if they are
-//     not yet installed.
-
-//elvdoc:fn query
-//
-// ```elvish
-// epm:query $pkg
-// ```
-//
-// Pretty print the available metadata of the given package.
-
-//elvdoc:fn uninstall
-//
-// ```elvish
-// epm:uninstall $pkg...
-// ```
-//
-// Uninstall named packages.
-
-//elvdoc:fn upgrade
-//
-// ```elvish
-// epm:upgrade $pkg...
-// ```
-//
-// Upgrade named packages. If no package name is given, upgrade all installed
-// packages.
-
-// Code contains the source code of the epm module.
-const Code = `use re
+use re
 use str
 use platform
 
@@ -148,6 +62,14 @@ fn -error [text]{
 fn dest [pkg]{
   put $-lib-dir/$pkg
 }
+
+#elvdoc:fn is-installed
+#
+# ```elvish
+# epm:is-installed $pkg
+# ```
+#
+# Returns a boolean value indicating whether the given package is installed.
 
 fn is-installed [pkg]{
   bool ?(test -e (dest $pkg))
@@ -328,6 +250,34 @@ fn -uninstall-package [pkg]{
 ######################################################################
 # Main user-facing functions
 
+#elvdoc:fn metadata
+#
+# ```elvish
+# epm:metadata $pkg
+# ```
+#
+# Returns a hash containing the metadata for the given package. Metadata for a
+# package includes the following base attributes:
+#
+# -   `name`: name of the package
+# -   `installed`: a boolean indicating whether the package is currently installed
+# -   `method`: method by which it was installed (`git` or `rsync`)
+# -   `src`: source URL of the package
+# -   `dst`: where the package is (or would be) installed. Note that this
+#     attribute is returned even if `installed` is `$false`.
+#
+# Additionally, packages can define arbitrary metadata attributes in a file called
+# `metadata.json` in their top directory. The following attributes are
+# recommended:
+#
+# -   `description`: a human-readable description of the package
+# -   `maintainers`: an array containing the package maintainers, in
+#     `Name <email>` format.
+# -   `homepage`: URL of the homepage for the package, if it has one.
+# -   `dependencies`: an array listing dependencies of the current package. Any
+#     packages listed will be installed automatically by `epm:install` if they are
+#     not yet installed.
+
 # Read and parse the package metadata, if it exists
 fn metadata [pkg]{
   # Base metadata attributes
@@ -345,6 +295,14 @@ fn metadata [pkg]{
   }
   put $res
 }
+
+#elvdoc:fn query
+#
+# ```elvish
+# epm:query $pkg
+# ```
+#
+# Pretty print the available metadata of the given package.
 
 # Print out information about a package
 fn query [pkg]{
@@ -368,6 +326,15 @@ fn query [pkg]{
   }
 }
 
+#elvdoc:fn installed
+#
+# ```elvish
+# epm:installed
+# ```
+#
+# Return an array with all installed packages. `epm:list` can be used as an alias
+# for `epm:installed`.
+
 # List installed packages
 fn installed {
   put $-lib-dir/*[nomatch-ok] | each [dir]{
@@ -386,6 +353,17 @@ fn installed {
 
 # epm:list is an alias for epm:installed
 fn list { installed }
+
+#elvdoc:fn install
+#
+# ```elvish
+# epm:install &silent-if-installed=$false $pkg...
+# ```
+#
+# Install the named packages. By default, if a package is already installed, a
+# message will be shown. This can be disabled by passing
+# `&silent-if-installed=$true`, so that already-installed packages are silently
+# ignored.
 
 # Install and upgrade are method-specific, so we call the
 # corresponding functions using -package-op
@@ -420,6 +398,15 @@ fn install [&silent-if-installed=$false @pkgs]{
   }
 }
 
+#elvdoc:fn upgrade
+#
+# ```elvish
+# epm:upgrade $pkg...
+# ```
+#
+# Upgrade named packages. If no package name is given, upgrade all installed
+# packages.
+
 fn upgrade [@pkgs]{
   if (eq $pkgs []) {
     pkgs = [(installed)]
@@ -434,6 +421,14 @@ fn upgrade [@pkgs]{
   }
 }
 
+#elvdoc:fn uninstall
+#
+# ```elvish
+# epm:uninstall $pkg...
+# ```
+#
+# Uninstall named packages.
+
 # Uninstall is the same for everyone, just remove the directory
 fn uninstall [@pkgs]{
   if (eq $pkgs []) {
@@ -443,4 +438,4 @@ fn uninstall [@pkgs]{
   for pkg $pkgs {
     -uninstall-package $pkg
   }
-}`
+}

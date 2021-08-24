@@ -129,6 +129,32 @@ A.
 	},
 
 	{
+		name: "Elvish source",
+		src: `
+#elvdoc:fn a
+# A.
+
+#elvdoc:var b
+# B.
+`,
+		wantDoc: `# Variables
+
+<a name='//apple_ref/cpp/Variable/$b' class='dashAnchor'></a>
+
+## $b
+B.
+
+
+# Functions
+
+<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
+
+## a
+A.
+`,
+	},
+
+	{
 		name: "Source without trailing newline",
 		src: `package x
 

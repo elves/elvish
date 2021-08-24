@@ -41,11 +41,10 @@ func extractPaths(paths []string, ns string, out io.Writer) {
 			log.Fatal(err)
 		}
 		if stat.IsDir() {
-			goFiles, err := filepath.Glob(filepath.Join(path, "*.go"))
-			if err != nil {
-				log.Fatal(err)
-			}
+			goFiles := mustGlob(filepath.Join(path, "*.go"))
 			files = append(files, goFiles...)
+			elvFiles := mustGlob(filepath.Join(path, "*.elv"))
+			files = append(files, elvFiles...)
 		} else {
 			files = append(files, path)
 		}
@@ -57,6 +56,14 @@ func extractPaths(paths []string, ns string, out io.Writer) {
 	}
 	defer cleanup()
 	extract(reader, ns, out)
+}
+
+func mustGlob(p string) []string {
+	files, err := filepath.Glob(p)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return files
 }
 
 // Makes a reader that concatenates multiple files.
@@ -88,43 +95,45 @@ func extract(r io.Reader, ns string, w io.Writer) {
 	varDocs := make(map[string]string)
 
 	// Reads a block of line comments, i.e. a continuous range of lines that
-	// start with //. Returns the content, with the leading // and any spaces
-	// after it removed. The content always ends with a newline, even if the
-	// last line of the comment is the last line of the file without a trailing
-	// newline.
+	// start with a comment leader (// or #). Returns the content, with the
+	// comment leader and any spaces after it removed. The content always ends
+	// with a newline, even if the last line of the comment is the last line of
+	// the file without a trailing newline.
 	//
-	// Will discard the first line after the comment block.
-	//
-	// TODO: Support extracting elvdoc from Elvish sources too.
+	// Discards the first line after the comment block.
 	readCommentBlock := func() (string, error) {
 		builder := &strings.Builder{}
 		for {
 			line, err := bufr.ReadString('\n')
 			if err == io.EOF && len(line) > 0 {
 				// We pretend that the file always have a trailing newline even
-				// if it does not exist. The next ReadString will return io.EOF
-				// again with an empty line.
+				// if it does not. The next ReadString will return io.EOF again
+				// with an empty line.
 				line += "\n"
 				err = nil
 			}
-			if !strings.HasPrefix(line, "//") || err != nil {
+			line, isComment := stripCommentLeader(line)
+			if isComment && err == nil {
+				// Trim any spaces after the comment leader. The line already
+				// has a trailing newline, so no need to write \n.
+				builder.WriteString(strings.TrimPrefix(line, " "))
+			} else {
 				// Discard this line, finalize the builder, and return.
 				return builder.String(), err
 			}
-			// The line already has a trailing newline.
-			builder.WriteString(strings.TrimPrefix(line[len("//"):], " "))
 		}
 	}
 
 	for {
 		line, err := bufr.ReadString('\n')
+		line, isComment := stripCommentLeader(line)
 
 		const (
-			varDocPrefix = "//elvdoc:var "
-			fnDocPrefix  = "//elvdoc:fn "
+			varDocPrefix = "elvdoc:var "
+			fnDocPrefix  = "elvdoc:fn "
 		)
 
-		if err == nil {
+		if isComment && err == nil {
 			switch {
 			case strings.HasPrefix(line, varDocPrefix):
 				varName := line[len(varDocPrefix) : len(line)-1]
@@ -187,6 +196,15 @@ func extract(r io.Reader, ns string, w io.Writer) {
 		}
 		write("Functions", "Function", ns, fnDocs)
 	}
+}
+
+func stripCommentLeader(s string) (string, bool) {
+	if strings.HasPrefix(s, "#") {
+		return s[1:], true
+	} else if strings.HasPrefix(s, "//") {
+		return s[2:], true
+	}
+	return s, false
 }
 
 var sortSymbol = map[string]string{
