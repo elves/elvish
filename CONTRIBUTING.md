@@ -132,7 +132,11 @@ Use the standard command, `go generate ./...` to regenerate all files.
 Some of the generation rules depend on the `stringer` tool. Install with
 `go install golang.org/x/tools/cmd/stringer@latest`.
 
-## Formatting source files
+## Code hygiene
+
+Some basic aspects of code hygiene are checked in the CI.
+
+### Formatting
 
 Install [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports) to
 format Go files, and [prettier](https://prettier.io/) to format Markdown files.
@@ -149,7 +153,7 @@ automatically when saving Go or Markdown sources.
 Use `make checkstyle` to check if all Go and Markdown files are properly
 formatted.
 
-## Linting
+### Linting
 
 Install [staticcheck](https://staticcheck.io):
 
@@ -163,15 +167,27 @@ use golint since it is
 
 Use `make lint` to run `staticcheck` and `go vet`.
 
-## Checking spelling
+### Spell checking
 
-Install [codespell] to check spelling:
+Install [codespell](https://github.com/codespell-project/codespell) to check
+spelling:
 
 ```sh
 pip install --user codespell==2.1.0
 ```
 
 Use `make codespell` to run it.
+
+### Running all checks
+
+Use this command to run all checks:
+
+```sh
+make test checkstyle lint codespell
+```
+
+You can put this in `.git/hooks/pre-push` to ensure that your published commits
+pass all the checks.
 
 ## Licensing
 
