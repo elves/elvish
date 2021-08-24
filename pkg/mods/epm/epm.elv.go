@@ -1,4 +1,4 @@
-package bundled
+package epm
 
 // TODO: Move the elvdoc into the Elvish source code after support is added.
 
@@ -83,7 +83,8 @@ package bundled
 // Upgrade named packages. If no package name is given, upgrade all installed
 // packages.
 
-const epmElv = `use re
+// Code contains the source code of the epm module.
+const Code = `use re
 use str
 use platform
 

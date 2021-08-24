@@ -1,6 +1,7 @@
-package bundled
+package readlinebinding
 
-const readlineBindingElv = `
+// Code contains the source code of the readline-binding module.
+const Code = `
 edit:global-binding[Ctrl-G] = $edit:close-mode~
 
 b=[k f]{ edit:insert:binding[$k] = $f } {

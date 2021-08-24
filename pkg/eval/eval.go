@@ -63,6 +63,8 @@ type Evaler struct {
 	// Internal modules are indexed by use specs. External modules are indexed by
 	// absolute paths.
 	modules map[string]*Ns
+	// Source code of internal bundled modules indexed by use specs.
+	bundledModules map[string]string
 
 	// Various states and configs exposed to Elvish code.
 	//
@@ -156,7 +158,8 @@ func NewEvaler() *Evaler {
 
 		deprecations: newDeprecationRegistry(),
 
-		modules: map[string]*Ns{"builtin": builtin},
+		modules:        map[string]*Ns{"builtin": builtin},
+		bundledModules: map[string]string{},
 
 		valuePrefix:        defaultValuePrefix,
 		notifyBgJobSuccess: defaultNotifyBgJobSuccess,
@@ -274,6 +277,14 @@ func (ev *Evaler) AddModule(name string, mod *Ns) {
 	ev.mu.Lock()
 	defer ev.mu.Unlock()
 	ev.modules[name] = mod
+}
+
+// AddBundledModule add an internal bundled module so that it can be used with
+// "use $name" from script.
+func (ev *Evaler) AddBundledModule(name, code string) {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.bundledModules[name] = code
 }
 
 // ValuePrefix returns the prefix to prepend to value outputs when writing them

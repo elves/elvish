@@ -69,7 +69,7 @@ func (f *filterer) expandModule(rest string) string {
 	switch len(fields) {
 	case 1:
 		f.module = fields[0]
-		f.path = "pkg/eval/mods/" + f.module
+		f.path = "pkg/mods/" + strings.ReplaceAll(f.module, "-", "")
 	case 2:
 		f.module = fields[0]
 		f.path = fields[1]

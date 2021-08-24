@@ -6,8 +6,8 @@ import (
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
-	"src.elv.sh/pkg/eval/mods/file"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/mods/file"
 	"src.elv.sh/pkg/testutil"
 )
 

@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"src.elv.sh/pkg/diag"
-	"src.elv.sh/pkg/eval/mods/bundled"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/parse"
@@ -331,8 +330,6 @@ func (op useOp) exec(fm *Frame) Exception {
 	return nil
 }
 
-var bundledModules = bundled.Get()
-
 func use(fm *Frame, spec string, r diag.Ranger) (*Ns, error) {
 	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") {
 		var dir string
@@ -351,7 +348,7 @@ func use(fm *Frame, spec string, r diag.Ranger) (*Ns, error) {
 	if ns, ok := fm.Evaler.modules[spec]; ok {
 		return ns, nil
 	}
-	if code, ok := bundledModules[spec]; ok {
+	if code, ok := fm.Evaler.bundledModules[spec]; ok {
 		return evalModule(fm, spec,
 			parse.Source{Name: "[bundled " + spec + "]", Code: code}, r)
 	}

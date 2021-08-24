@@ -13,14 +13,9 @@ import (
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/eval/mods/file"
-	mathmod "src.elv.sh/pkg/eval/mods/math"
-	pathmod "src.elv.sh/pkg/eval/mods/path"
-	"src.elv.sh/pkg/eval/mods/platform"
-	"src.elv.sh/pkg/eval/mods/re"
-	"src.elv.sh/pkg/eval/mods/str"
-	"src.elv.sh/pkg/eval/mods/unix"
 	"src.elv.sh/pkg/logutil"
+	"src.elv.sh/pkg/mods"
+	"src.elv.sh/pkg/mods/unix"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/sys"
@@ -93,12 +88,7 @@ func MakeEvaler(stderr io.Writer) *eval.Evaler {
 	}
 	ev.SetLibDirs(libs)
 	ev.SetLibInstallDir(libInstall)
-	ev.AddModule("math", mathmod.Ns)
-	ev.AddModule("path", pathmod.Ns)
-	ev.AddModule("platform", platform.Ns)
-	ev.AddModule("re", re.Ns)
-	ev.AddModule("str", str.Ns)
-	ev.AddModule("file", file.Ns)
+	mods.AddTo(ev)
 	if unix.ExposeUnixNs {
 		ev.AddModule("unix", unix.Ns)
 	}

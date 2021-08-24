@@ -1,6 +1,6 @@
 <!-- toc -->
 
-@module epm pkg/eval/mods/bundled/epm.elv.go
+@module epm
 
 # Introduction
 
