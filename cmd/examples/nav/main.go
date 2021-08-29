@@ -17,7 +17,7 @@ func main() {
 			term.K('x'): func(tk.Widget) { app.CommitCode() },
 		},
 	})
-	app.SetAddon(w, false)
+	app.PushAddon(w)
 
 	code, err := app.ReadCode()
 	fmt.Println("code:", code)

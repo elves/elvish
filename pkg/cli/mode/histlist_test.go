@@ -98,6 +98,8 @@ func TestHistlist_Dedup(t *testing.T) {
 		"   2 ls                                           ", Styles,
 		"++++++++++++++++++++++++++++++++++++++++++++++++++")
 
+	f.App.PopAddon(false)
+
 	// With dedup
 	startHistlist(f.App,
 		HistlistSpec{AllCmds: st.AllCmds, Dedup: func() bool { return true }})

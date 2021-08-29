@@ -201,7 +201,7 @@ func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, sma
 		Filter: filterSpec, Bindings: bindings,
 	})
 	if w != nil {
-		app.SetAddon(w, false)
+		app.PushAddon(w)
 	}
 	if err != nil {
 		app.Notify(err.Error())

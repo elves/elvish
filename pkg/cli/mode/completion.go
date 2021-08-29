@@ -62,7 +62,7 @@ func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
 				})
 			},
 			OnAccept: func(it tk.Items, i int) {
-				app.SetAddon(nil, true)
+				app.PopAddon(true)
 			},
 			ExtendStyle: true,
 		},

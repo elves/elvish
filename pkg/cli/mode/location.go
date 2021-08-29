@@ -107,7 +107,7 @@ func NewLocation(app cli.App, cfg LocationSpec) (Location, error) {
 				if err != nil {
 					app.Notify(err.Error())
 				}
-				app.SetAddon(nil, false)
+				app.PopAddon(false)
 			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {

@@ -140,11 +140,9 @@ func initLocation(ed *Editor, ev *eval.Evaler, st storedefs.Store, commonBinding
 // Accepts the current selected listing item.
 
 func listingAccept(app cli.App) {
-	w, ok := app.CopyState().Addon.(tk.ComboBox)
-	if !ok {
-		return
+	if w, ok := comboBoxAddon(app); ok {
+		w.ListBox().Accept()
 	}
-	w.ListBox().Accept()
 }
 
 //elvdoc:fn listing:accept-close
@@ -207,19 +205,15 @@ func listingLeft(app cli.App) { listingSelect(app, tk.Left) }
 func listingRight(app cli.App) { listingSelect(app, tk.Right) }
 
 func listingSelect(app cli.App, f func(tk.ListBoxState) int) {
-	w, ok := app.CopyState().Addon.(tk.ComboBox)
-	if !ok {
-		return
+	if w, ok := comboBoxAddon(app); ok {
+		w.ListBox().Select(f)
 	}
-	w.ListBox().Select(f)
 }
 
 func listingRefilter(app cli.App) {
-	w, ok := app.CopyState().Addon.(tk.ComboBox)
-	if !ok {
-		return
+	if w, ok := comboBoxAddon(app); ok {
+		w.Refilter()
 	}
-	w.Refilter()
 }
 
 //elvdoc:var location:hidden
@@ -281,10 +275,19 @@ func (d dirStore) Getwd() (string, error) {
 
 func startMode(app cli.App, w tk.Widget, err error) {
 	if w != nil {
-		app.SetAddon(w, false)
+		app.PushAddon(w)
 		app.Redraw()
 	}
 	if err != nil {
 		app.Notify(err.Error())
 	}
+}
+
+func comboBoxAddon(app cli.App) (tk.ComboBox, bool) {
+	if addons := app.CopyState().Addons; len(addons) > 0 {
+		if w, ok := addons[len(addons)-1].(tk.ComboBox); ok {
+			return w, true
+		}
+	}
+	return nil, false
 }

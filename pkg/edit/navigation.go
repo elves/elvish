@@ -157,8 +157,12 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 func neg(b bool) bool { return !b }
 
 func getNavigation(app cli.App) (mode.Navigation, bool) {
-	w, ok := app.CopyState().Addon.(mode.Navigation)
-	return w, ok
+	if addons := app.CopyState().Addons; len(addons) > 0 {
+		if w, ok := addons[len(addons)-1].(mode.Navigation); ok {
+			return w, true
+		}
+	}
+	return nil, false
 }
 
 func actOnNavigation(app cli.App, f func(mode.Navigation)) func() {

@@ -70,7 +70,7 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 						buf.InsertAtDot("\n" + text)
 					}
 				})
-				app.SetAddon(nil, false)
+				app.PopAddon(false)
 			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {

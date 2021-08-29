@@ -24,12 +24,13 @@ type App interface {
 	CopyState() State
 	// CodeArea returns the codearea widget of the app.
 	CodeArea() tk.CodeArea
-	// SetAddon sets the current addon to the given widget. If there is an
-	// existing addon, it is closed first. If the existing addon implements
-	// interface{ Close(bool) }, the Close method is called with the accept
-	// argument. To close the current addon without setting a new one, call
-	// SetAddon(nil, accept).
-	SetAddon(w tk.Widget, accept bool)
+
+	// PushAddon pushes a widget to the addon stack.
+	PushAddon(w tk.Widget)
+	// PopAddon pops the last widget from the addon stack. If the widget
+	// implements interface{ Close(accept bool) }, the Close method is called
+	// first. This method does nothing if the addon stack is empty.
+	PopAddon(accept bool)
 
 	// CommitEOF causes the main loop to exit with EOF. If this method is called
 	// when an event is being handled, the main loop will exit after the handler
@@ -74,13 +75,9 @@ type app struct {
 type State struct {
 	// Notes that have been added since the last redraw.
 	Notes []string
-	// An addon widget. When non-nil, it is shown under the codearea widget and
-	// terminal events are handled by it.
-	//
-	// The cursor is placed on the addon by default. If the addon widget
-	// implements interface{ Focus() bool }, the Focus method is called to
-	// determine that instead.
-	Addon tk.Widget
+	// The addon stack. All widgets are shown under the codearea widget. The
+	// last widget handles terminal events.
+	Addons []tk.Widget
 }
 
 // NewApp creates a new App from the given specification.
@@ -148,7 +145,10 @@ func (a *app) MutateState(f func(*State)) {
 func (a *app) CopyState() State {
 	a.StateMutex.RLock()
 	defer a.StateMutex.RUnlock()
-	return a.State
+	return State{
+		append([]string(nil), a.State.Notes...),
+		append([]tk.Widget(nil), a.State.Addons...),
+	}
 }
 
 func (a *app) CodeArea() tk.CodeArea {
@@ -159,13 +159,22 @@ type closer interface {
 	Close(bool)
 }
 
-func (a *app) SetAddon(w tk.Widget, accept bool) {
+func (a *app) PushAddon(w tk.Widget) {
 	a.StateMutex.Lock()
 	defer a.StateMutex.Unlock()
-	if c, ok := a.State.Addon.(closer); ok {
+	a.State.Addons = append(a.State.Addons, w)
+}
+
+func (a *app) PopAddon(accept bool) {
+	a.StateMutex.Lock()
+	defer a.StateMutex.Unlock()
+	if len(a.State.Addons) == 0 {
+		return
+	}
+	if c, ok := a.State.Addons[len(a.State.Addons)-1].(closer); ok {
 		c.Close(accept)
 	}
-	a.State.Addon = w
+	a.State.Addons = a.State.Addons[:len(a.State.Addons)-1]
 }
 
 func (a *app) resetAllStates() {
@@ -188,8 +197,8 @@ func (a *app) handle(e event) {
 		}
 	case term.Event:
 		var target tk.Widget
-		if listing := a.CopyState().Addon; listing != nil {
-			target = listing
+		if addons := a.CopyState().Addons; len(addons) > 0 {
+			target = addons[len(addons)-1]
 		} else {
 			target = a.codeArea
 		}
@@ -217,10 +226,11 @@ func (a *app) redraw(flag redrawFlag) {
 	}
 
 	var notes []string
-	var addon tk.Renderer
+	var addons []tk.Widget
 	a.MutateState(func(s *State) {
-		notes, addon = s.Notes, s.Addon
+		notes = s.Notes
 		s.Notes = nil
+		addons = append([]tk.Widget(nil), s.Addons...)
 	})
 
 	bufNotes := renderNotes(notes, width)
@@ -240,7 +250,7 @@ func (a *app) redraw(flag redrawFlag) {
 		a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 		a.TTY.ResetBuffer()
 	} else {
-		bufMain := renderApp(a.codeArea, addon, width, height)
+		bufMain := renderApp(a.codeArea, addons, width, height)
 		a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 	}
 }
@@ -266,12 +276,15 @@ type focuser interface {
 }
 
 // Renders the codearea, and uses the rest of the height for the listing.
-func renderApp(codeArea, addon tk.Renderer, width, height int) *term.Buffer {
+func renderApp(codeArea tk.Renderer, addons []tk.Widget, width, height int) *term.Buffer {
 	buf := codeArea.Render(width, height)
-	if addon != nil && len(buf.Lines) < height {
-		bufListing := addon.Render(width, height-len(buf.Lines))
+	for _, w := range addons {
+		if len(buf.Lines) >= height {
+			break
+		}
+		bufListing := w.Render(width, height-len(buf.Lines))
 		focus := true
-		if focuser, ok := addon.(focuser); ok {
+		if focuser, ok := w.(focuser); ok {
 			focus = focuser.Focus()
 		}
 		buf.Extend(bufListing, focus)

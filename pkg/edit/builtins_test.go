@@ -26,11 +26,11 @@ func TestBindingTable(t *testing.T) {
 func TestCloseMode(t *testing.T) {
 	f := setup(t)
 
-	f.Editor.app.SetAddon(tk.Empty{}, false)
+	f.Editor.app.PushAddon(tk.Empty{})
 	evals(f.Evaler, `edit:close-mode`)
 
-	if listing := f.Editor.app.CopyState().Addon; listing != nil {
-		t.Errorf("got listing %v, want nil", listing)
+	if addons := f.Editor.app.CopyState().Addons; len(addons) > 0 {
+		t.Errorf("got addons %v, want nil or empty slice", addons)
 	}
 }
 

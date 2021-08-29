@@ -43,7 +43,7 @@ func dumpBuf(tty cli.TTY) string {
 // Closes the current active mode.
 
 func closeMode(app cli.App) {
-	app.SetAddon(nil, false)
+	app.PopAddon(false)
 }
 
 //elvdoc:fn end-of-history
@@ -110,7 +110,7 @@ func insertRaw(app cli.App, tty cli.TTY) {
 				app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 					s.Buffer.InsertAtDot(string(event.Rune))
 				})
-				app.SetAddon(nil, false)
+				app.PopAddon(false)
 				return true
 			default:
 				return false
@@ -118,7 +118,7 @@ func insertRaw(app cli.App, tty cli.TTY) {
 		}),
 		Name: " RAW ",
 	})
-	app.SetAddon(w, false)
+	app.PushAddon(w)
 }
 
 //elvdoc:fn key

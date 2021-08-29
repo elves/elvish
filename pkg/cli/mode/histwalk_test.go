@@ -31,8 +31,8 @@ func TestHistWalk(t *testing.T) {
 			Bindings: tk.MapBindings{
 				term.K(ui.Up):        func(w tk.Widget) { w.(Histwalk).Prev() },
 				term.K(ui.Down):      func(w tk.Widget) { w.(Histwalk).Next() },
-				term.K('[', ui.Ctrl): func(tk.Widget) { f.App.SetAddon(nil, false) },
-				term.K(ui.Enter):     func(tk.Widget) { f.App.SetAddon(nil, true) },
+				term.K('[', ui.Ctrl): func(tk.Widget) { f.App.PopAddon(false) },
+				term.K(ui.Enter):     func(tk.Widget) { f.App.PopAddon(true) },
 			},
 		}
 	}
@@ -118,6 +118,6 @@ func startHistwalk(app cli.App, cfg HistwalkSpec) {
 		app.Notify(err.Error())
 		return
 	}
-	app.SetAddon(w, false)
+	app.PushAddon(w)
 	app.Redraw()
 }

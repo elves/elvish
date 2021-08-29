@@ -36,7 +36,7 @@ var errMock = errors.New("mock error")
 
 func startMode(app cli.App, w tk.Widget, err error) {
 	if w != nil {
-		app.SetAddon(w, false)
+		app.PushAddon(w)
 		app.Redraw()
 	}
 	if err != nil {

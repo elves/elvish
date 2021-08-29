@@ -36,7 +36,7 @@ func TestCompletion_Close(t *testing.T) {
 	f := setupStartedCompletion(t)
 	defer f.Stop()
 
-	f.App.SetAddon(nil, false)
+	f.App.PopAddon(false)
 	f.App.Redraw()
 	f.TestTTY(t /* nothing */)
 }
@@ -61,7 +61,7 @@ func setupStartedCompletion(t *testing.T) *Fixture {
 				ShowStyle: ui.Style{Foreground: ui.Blue}},
 		},
 	})
-	f.App.SetAddon(w, false)
+	f.App.PushAddon(w)
 	f.App.Redraw()
 	f.TestTTY(t,
 		"foo\n", Styles,

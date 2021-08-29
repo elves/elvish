@@ -33,7 +33,7 @@ func initCommandAPI(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 					Bindings: bindings,
 					Name:     " COMMAND ",
 				})
-				ed.app.SetAddon(w, false)
+				ed.app.PushAddon(w)
 			},
 		}).Ns())
 }

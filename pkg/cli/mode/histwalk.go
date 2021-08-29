@@ -48,7 +48,7 @@ func (w *histwalk) Handle(event term.Event) bool {
 	if handled {
 		return true
 	}
-	w.app.SetAddon(nil, true)
+	w.app.PopAddon(true)
 	return w.app.CodeArea().Handle(event)
 }
 

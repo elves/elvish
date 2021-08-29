@@ -56,7 +56,7 @@ func NewListing(app cli.App, spec ListingSpec) (Listing, error) {
 	accept := func(s string) {
 		retain := spec.Accept(s)
 		if !retain {
-			app.SetAddon(nil, false)
+			app.PopAddon(false)
 		}
 	}
 	w := tk.NewComboBox(tk.ComboBoxSpec{

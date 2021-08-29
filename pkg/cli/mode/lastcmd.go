@@ -61,7 +61,7 @@ func NewLastcmd(app cli.App, cfg LastcmdSpec) (Lastcmd, error) {
 		app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
 			s.Buffer.InsertAtDot(text)
 		})
-		app.SetAddon(nil, false)
+		app.PopAddon(false)
 	}
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{Prompt: modePrompt(" LASTCMD ", true)},

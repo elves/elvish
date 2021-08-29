@@ -48,7 +48,7 @@ func instantStart(app cli.App, ev *eval.Evaler, bindings tk.Bindings) {
 	w, err := mode.NewInstant(app,
 		mode.InstantSpec{Bindings: bindings, Execute: execute})
 	if w != nil {
-		app.SetAddon(w, false)
+		app.PushAddon(w)
 		app.Redraw()
 	}
 	if err != nil {

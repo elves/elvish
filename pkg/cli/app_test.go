@@ -109,7 +109,7 @@ func TestReadCode_CallsAfterReadline(t *testing.T) {
 func TestReadCode_FinalRedraw(t *testing.T) {
 	f := Setup(WithSpec(func(spec *AppSpec) {
 		spec.CodeAreaState.Buffer.Content = "code"
-		spec.State.Addon = tk.Label{Content: ui.T("addon")}
+		spec.State.Addons = []tk.Widget{tk.Label{Content: ui.T("addon")}}
 	}))
 
 	// Wait until the stable state.
@@ -334,18 +334,24 @@ func TestReadCode_HidesRPromptInFinalRedrawIfNotPersistent(t *testing.T) {
 
 // Addon.
 
-func TestReadCode_LetsAddonHandleEvents(t *testing.T) {
+func TestReadCode_LetsLastWidgetHandleEvents(t *testing.T) {
 	f := Setup(WithSpec(func(spec *AppSpec) {
-		spec.State.Addon = tk.NewCodeArea(tk.CodeAreaSpec{
-			Prompt: func() ui.Text { return ui.T("addon> ") },
-		})
+		spec.State.Addons = []tk.Widget{
+			tk.NewCodeArea(tk.CodeAreaSpec{
+				Prompt: func() ui.Text { return ui.T("addon1> ") },
+			}),
+			tk.NewCodeArea(tk.CodeAreaSpec{
+				Prompt: func() ui.Text { return ui.T("addon2> ") },
+			}),
+		}
 	}))
 	defer f.Stop()
 
 	feedInput(f.TTY, "input")
 
 	wantBuf := bb().Newline(). // empty main code area
-					Write("addon> input").SetDotHere(). // addon
+					Write("addon1> ").Newline().         // addon1 did not handle inputs
+					Write("addon2> input").SetDotHere(). // addon2 handled inputs
 					Buffer()
 	f.TTY.TestBuffer(t, wantBuf)
 }
@@ -359,7 +365,7 @@ func (a testAddon) Focus() bool { return a.focus }
 
 func TestReadCode_RespectsAddonFocusMethod(t *testing.T) {
 	addon := testAddon{}
-	f := Setup(WithSpec(func(spec *AppSpec) { spec.State.Addon = &addon }))
+	f := Setup(WithSpec(func(spec *AppSpec) { spec.State.Addons = []tk.Widget{&addon} }))
 	defer f.Stop()
 
 	wantBuf := bb().
@@ -383,10 +389,10 @@ func TestReadCode_UsesGlobalBindingsWithCodeAreaTarget(t *testing.T) {
 }
 
 func TestReadCode_UsesGlobalBindingsWithAddonTarget(t *testing.T) {
-	testGlobalBindings(t, tk.Empty{})
+	testGlobalBindings(t, []tk.Widget{tk.Empty{}})
 }
 
-func testGlobalBindings(t *testing.T, addon tk.Widget) {
+func testGlobalBindings(t *testing.T, addons []tk.Widget) {
 	gotWidgetCh := make(chan tk.Widget, 1)
 	f := Setup(WithSpec(func(spec *AppSpec) {
 		spec.GlobalBindings = tk.MapBindings{
@@ -394,15 +400,15 @@ func testGlobalBindings(t *testing.T, addon tk.Widget) {
 				gotWidgetCh <- w
 			},
 		}
-		spec.State.Addon = addon
+		spec.State.Addons = addons
 	}))
 	defer f.Stop()
 
 	f.TTY.Inject(term.K('X', ui.Ctrl))
 	select {
 	case gotWidget := <-gotWidgetCh:
-		if addon != nil {
-			if gotWidget != addon {
+		if len(addons) > 0 {
+			if gotWidget != addons[len(addons)-1] {
 				t.Error("global binding not called with addon")
 			}
 		} else {

@@ -52,12 +52,12 @@ func main() {
 					Replace: diag.Ranging{From: 0, To: 0}, Items: candidates(),
 				})
 				if err == nil {
-					app.SetAddon(w, false)
+					app.PushAddon(w)
 				}
 			},
 		},
 		GlobalBindings: tk.MapBindings{
-			term.K('[', ui.Ctrl): func(tk.Widget) { app.SetAddon(nil, false) },
+			term.K('[', ui.Ctrl): func(tk.Widget) { app.PopAddon(false) },
 		},
 	})
 

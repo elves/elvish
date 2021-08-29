@@ -51,14 +51,14 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder)
 			"down-or-quit": func() {
 				err := histwalkDo(app, mode.Histwalk.Next)
 				if err == histutil.ErrEndOfHistory {
-					app.SetAddon(nil, false)
+					app.PopAddon(false)
 				} else {
 					notifyError(app, err)
 				}
 			},
 			// TODO: Remove these builtins in favor of two universal accept and
 			// close builtins
-			"accept": func() { app.SetAddon(nil, true) },
+			"accept": func() { app.PopAddon(true) },
 
 			"fast-forward": hs.FastForward,
 		}).Ns())
@@ -69,7 +69,7 @@ func histwalkStart(app cli.App, hs *histStore, bindings tk.Bindings) error {
 	w, err := mode.NewHistwalk(app, mode.HistwalkSpec{
 		Bindings: bindings, Store: hs, Prefix: buf.Content[:buf.Dot]})
 	if w != nil {
-		app.SetAddon(w, false)
+		app.PushAddon(w)
 	}
 	return err
 }
@@ -77,7 +77,11 @@ func histwalkStart(app cli.App, hs *histStore, bindings tk.Bindings) error {
 var errNotInHistoryMode = errors.New("not in history mode")
 
 func histwalkDo(app cli.App, f func(mode.Histwalk) error) error {
-	w, ok := app.CopyState().Addon.(mode.Histwalk)
+	addons := app.CopyState().Addons
+	if len(addons) == 0 {
+		return errNotInHistoryMode
+	}
+	w, ok := addons[len(addons)-1].(mode.Histwalk)
 	if !ok {
 		return errNotInHistoryMode
 	}
