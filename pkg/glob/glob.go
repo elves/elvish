@@ -2,7 +2,6 @@
 package glob
 
 import (
-	"io/ioutil"
 	"os"
 	"runtime"
 	"unicode/utf8"
@@ -174,13 +173,12 @@ func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 	return true
 }
 
-// readDir is just like ioutil.ReadDir except that it treats an argument of ""
-// as ".".
-func readDir(dir string) ([]os.FileInfo, error) {
+// readDir is just like os.ReadDir except that it treats an argument of "" as ".".
+func readDir(dir string) ([]os.DirEntry, error) {
 	if dir == "" {
 		dir = "."
 	}
-	return ioutil.ReadDir(dir)
+	return os.ReadDir(dir)
 }
 
 // matchElement matches a path element against segments, which may not contain
