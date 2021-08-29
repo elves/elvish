@@ -2,7 +2,6 @@ package fsutil
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -36,7 +35,7 @@ func ClaimFile(dir, pattern string) (*os.File, error) {
 	}
 	asterisk := strings.IndexByte(pattern, '*')
 	prefix, suffix := pattern[:asterisk], pattern[asterisk+1:]
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}

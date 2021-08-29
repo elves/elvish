@@ -1,7 +1,6 @@
 package fsutil
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,9 +35,10 @@ func IsExecutable(path string) bool {
 func EachExternal(f func(string)) {
 	for _, dir := range searchPaths() {
 		// TODO(xiaq): Ignore error.
-		infos, _ := ioutil.ReadDir(dir)
+		infos, _ := os.ReadDir(dir)
 		for _, info := range infos {
-			if !info.IsDir() && (info.Mode()&0111 != 0) {
+			finfo, _ := info.Info()
+			if !finfo.IsDir() && (finfo.Mode()&0111 != 0) {
 				f(info.Name())
 			}
 		}
