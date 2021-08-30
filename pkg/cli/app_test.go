@@ -407,14 +407,8 @@ func testGlobalBindings(t *testing.T, addons []tk.Widget) {
 	f.TTY.Inject(term.K('X', ui.Ctrl))
 	select {
 	case gotWidget := <-gotWidgetCh:
-		if len(addons) > 0 {
-			if gotWidget != addons[len(addons)-1] {
-				t.Error("global binding not called with addon")
-			}
-		} else {
-			if gotWidget != f.App.CodeArea() {
-				t.Error("global binding not called with code area")
-			}
+		if gotWidget != f.App.ActiveWidget() {
+			t.Error("global binding not called with the active widget")
 		}
 	case <-time.After(testutil.ScaledMs(100)):
 		t.Error("global binding not called")

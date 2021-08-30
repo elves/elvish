@@ -43,6 +43,10 @@ var errNoCandidates = errors.New("no candidates")
 
 // NewCompletion starts the completion UI.
 func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
+	codeArea, ok := app.ActiveWidget().(tk.CodeArea)
+	if !ok {
+		return nil, ErrActiveWidgetNotCodeArea
+	}
 	if len(cfg.Items) == 0 {
 		return nil, errNoCandidates
 	}
@@ -56,7 +60,7 @@ func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
 			Bindings:   cfg.Bindings,
 			OnSelect: func(it tk.Items, i int) {
 				text := it.(completionItems)[i].ToInsert
-				app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+				codeArea.MutateState(func(s *tk.CodeAreaState) {
 					s.Pending = tk.PendingCode{
 						From: cfg.Replace.From, To: cfg.Replace.To, Content: text}
 				})
@@ -70,7 +74,7 @@ func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
 			w.ListBox().Reset(filterCompletionItems(cfg.Items, cfg.Filter.makePredicate(p)), 0)
 		},
 	})
-	return completion{w, app.CodeArea()}, nil
+	return completion{w, codeArea}, nil
 }
 
 func (w completion) Close(accept bool) {

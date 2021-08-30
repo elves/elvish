@@ -30,6 +30,10 @@ type HistlistSpec struct {
 
 // NewHistlist creates a new histlist mode.
 func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
+	codeArea, ok := app.ActiveWidget().(tk.CodeArea)
+	if !ok {
+		return nil, ErrActiveWidgetNotCodeArea
+	}
 	if spec.AllCmds == nil {
 		return nil, errNoHistoryStore
 	}
@@ -62,7 +66,7 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 			Bindings: spec.Bindings,
 			OnAccept: func(it tk.Items, i int) {
 				text := it.(histlistItems).entries[i].Text
-				app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+				codeArea.MutateState(func(s *tk.CodeAreaState) {
 					buf := &s.Buffer
 					if buf.Content == "" {
 						buf.InsertAtDot(text)

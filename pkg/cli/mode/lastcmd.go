@@ -36,6 +36,10 @@ var _ = LastcmdStore(histutil.Store(nil))
 
 // NewLastcmd creates a new lastcmd mode.
 func NewLastcmd(app cli.App, cfg LastcmdSpec) (Lastcmd, error) {
+	codeArea, ok := app.ActiveWidget().(tk.CodeArea)
+	if !ok {
+		return nil, ErrActiveWidgetNotCodeArea
+	}
 	if cfg.Store == nil {
 		return nil, errNoHistoryStore
 	}
@@ -58,7 +62,7 @@ func NewLastcmd(app cli.App, cfg LastcmdSpec) (Lastcmd, error) {
 	}
 
 	accept := func(text string) {
-		app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+		codeArea.MutateState(func(s *tk.CodeAreaState) {
 			s.Buffer.InsertAtDot(text)
 		})
 		app.PopAddon(false)

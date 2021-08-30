@@ -30,8 +30,9 @@ type HistwalkSpec struct {
 }
 
 type histwalk struct {
-	app    cli.App
-	cursor histutil.Cursor
+	app      cli.App
+	codeArea tk.CodeArea
+	cursor   histutil.Cursor
 	HistwalkSpec
 }
 
@@ -49,7 +50,7 @@ func (w *histwalk) Handle(event term.Event) bool {
 		return true
 	}
 	w.app.PopAddon(true)
-	return w.app.CodeArea().Handle(event)
+	return w.codeArea.Handle(event)
 }
 
 func (w *histwalk) Focus() bool { return false }
@@ -58,6 +59,10 @@ var errNoHistoryStore = errors.New("no history store")
 
 // NewHistwalk creates a new Histwalk mode.
 func NewHistwalk(app cli.App, cfg HistwalkSpec) (Histwalk, error) {
+	codeArea, ok := app.ActiveWidget().(tk.CodeArea)
+	if !ok {
+		return nil, ErrActiveWidgetNotCodeArea
+	}
 	if cfg.Store == nil {
 		return nil, errNoHistoryStore
 	}
@@ -70,7 +75,7 @@ func NewHistwalk(app cli.App, cfg HistwalkSpec) (Histwalk, error) {
 	if err != nil {
 		return nil, err
 	}
-	w := histwalk{app: app, HistwalkSpec: cfg, cursor: cursor}
+	w := histwalk{app: app, codeArea: codeArea, HistwalkSpec: cfg, cursor: cursor}
 	w.updatePending()
 	return &w, nil
 }
@@ -95,7 +100,7 @@ func (w *histwalk) walk(f func(histutil.Cursor), undo func(histutil.Cursor)) err
 }
 
 func (w *histwalk) Close(accept bool) {
-	w.app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+	w.codeArea.MutateState(func(s *tk.CodeAreaState) {
 		if accept {
 			s.ApplyPending()
 		} else {
@@ -106,7 +111,7 @@ func (w *histwalk) Close(accept bool) {
 
 func (w *histwalk) updatePending() {
 	cmd, _ := w.cursor.Get()
-	w.app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+	w.codeArea.MutateState(func(s *tk.CodeAreaState) {
 		s.Pending = tk.PendingCode{
 			From: len(w.Prefix), To: len(s.Buffer.Content),
 			Content: cmd.Text[len(w.Prefix):],

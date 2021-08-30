@@ -31,6 +31,10 @@ type App interface {
 	// implements interface{ Close(accept bool) }, the Close method is called
 	// first. This method does nothing if the addon stack is empty.
 	PopAddon(accept bool)
+	// ActiveWidget returns the currently active widget. If the addon stack is
+	// non-empty, it returns the last addon. Otherwise it returns the main code
+	// area widget.
+	ActiveWidget() tk.Widget
 
 	// CommitEOF causes the main loop to exit with EOF. If this method is called
 	// when an event is being handled, the main loop will exit after the handler
@@ -177,6 +181,15 @@ func (a *app) PopAddon(accept bool) {
 	a.State.Addons = a.State.Addons[:len(a.State.Addons)-1]
 }
 
+func (a *app) ActiveWidget() tk.Widget {
+	a.StateMutex.Lock()
+	defer a.StateMutex.Unlock()
+	if len(a.State.Addons) > 0 {
+		return a.State.Addons[len(a.State.Addons)-1]
+	}
+	return a.codeArea
+}
+
 func (a *app) resetAllStates() {
 	a.MutateState(func(s *State) { *s = State{} })
 	a.codeArea.MutateState(
@@ -196,12 +209,7 @@ func (a *app) handle(e event) {
 			a.RedrawFull()
 		}
 	case term.Event:
-		var target tk.Widget
-		if addons := a.CopyState().Addons; len(addons) > 0 {
-			target = addons[len(addons)-1]
-		} else {
-			target = a.codeArea
-		}
+		target := a.ActiveWidget()
 		handled := target.Handle(e)
 		if !handled {
 			a.GlobalBindings.Handle(target, e)

@@ -2,7 +2,15 @@
 // task.
 package mode
 
-import "src.elv.sh/pkg/ui"
+import (
+	"errors"
+
+	"src.elv.sh/pkg/ui"
+)
+
+// ErrActiveWidgetNotCodeArea is returned when an operation requires the active
+// widget to be a code area but it is not.
+var ErrActiveWidgetNotCodeArea = errors.New("active widget is not a code area")
 
 // Returns text styled as a modeline.
 func modeLine(content string, space bool) ui.Text {

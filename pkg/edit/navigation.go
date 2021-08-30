@@ -119,14 +119,18 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 			"width-ratio": widthRatioVar,
 		}.AddGoFns("<edit:navigation>", map[string]interface{}{
 			"start": func() {
-				w := mode.NewNavigation(app, mode.NavigationSpec{
+				w, err := mode.NewNavigation(app, mode.NavigationSpec{
 					Bindings: bindings,
 					WidthRatio: func() [3]int {
 						return convertNavWidthRatio(widthRatioVar.Get())
 					},
 					Filter: filterSpec,
 				})
-				startMode(app, w, nil)
+				if err != nil {
+					app.Notify(err.Error())
+				} else {
+					startMode(app, w, nil)
+				}
 			},
 			"left":  actOnNavigation(app, mode.Navigation.Ascend),
 			"right": actOnNavigation(app, mode.Navigation.Descend),

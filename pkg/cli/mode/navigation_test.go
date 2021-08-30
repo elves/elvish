@@ -318,7 +318,7 @@ func setupNav(c testutil.Cleanuper) *Fixture {
 }
 
 func startNavigation(app cli.App, spec NavigationSpec) Navigation {
-	w := NewNavigation(app, spec)
+	w, _ := NewNavigation(app, spec)
 	startMode(app, w, nil)
 	return w
 }

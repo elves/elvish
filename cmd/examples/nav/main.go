@@ -12,7 +12,7 @@ import (
 
 func main() {
 	app := cli.NewApp(cli.AppSpec{})
-	w := mode.NewNavigation(app, mode.NavigationSpec{
+	w, _ := mode.NewNavigation(app, mode.NavigationSpec{
 		Bindings: tk.MapBindings{
 			term.K('x'): func(tk.Widget) { app.CommitCode() },
 		},
