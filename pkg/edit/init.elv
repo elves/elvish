@@ -1,16 +1,11 @@
-package edit
-
-// Elvish code for default bindings, hooks, and similar initializations. This assumes the `edit`
-// namespace as the global namespace.
-const elvInit = `
 after-command = [
-	# Capture the most recent interactive command duration in $edit:command-duration
-	# as a convenience for prompt functions. Note: The first time this is run is after
-	# shell.sourceRC() finishes so the initial value of command-duration is the time
-	# to execute the user's interactive configuration script.
-	[m]{
-		command-duration = $m[duration]
-	}
+  # Capture the most recent interactive command duration in $edit:command-duration
+  # as a convenience for prompt functions. Note: The first time this is run is after
+  # shell.sourceRC() finishes so the initial value of command-duration is the time
+  # to execute the user's interactive configuration script.
+  [m]{
+    command-duration = $m[duration]
+  }
 ]
 
 global-binding = (binding-table [
@@ -54,17 +49,17 @@ insert:binding = (binding-table [
 ])
 
 command:binding = (binding-table [
- &'$'= $move-dot-eol~
- &0=   $move-dot-sol~
- &D=   $kill-line-right~
- &b=   $move-dot-left-word~
- &h=   $move-dot-left~
- &i=   $close-mode~
- &j=   $move-dot-down~
- &k=   $move-dot-up~
- &l=   $move-dot-right~
- &w=   $move-dot-right-word~
- &x=   $kill-rune-right~
+  &'$'= $move-dot-eol~
+  &0=   $move-dot-sol~
+  &D=   $kill-line-right~
+  &b=   $move-dot-left-word~
+  &h=   $move-dot-left~
+  &i=   $close-mode~
+  &j=   $move-dot-down~
+  &k=   $move-dot-up~
+  &l=   $move-dot-right~
+  &w=   $move-dot-right-word~
+  &x=   $kill-rune-right~
 ])
 
 listing:binding = (binding-table [
@@ -119,6 +114,3 @@ lastcmd:binding = (binding-table [
 minibuf:binding = (binding-table [
   &
 ])
-`
-
-// vi: set et:

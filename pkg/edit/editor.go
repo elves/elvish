@@ -6,6 +6,7 @@
 package edit
 
 import (
+	_ "embed"
 	"fmt"
 	"sync"
 
@@ -94,9 +95,12 @@ func initExceptionsAPI(ed *Editor, nb eval.NsBuilder) {
 	nb.Add("exceptions", vars.FromPtrWithMutex(&ed.excList, &ed.excMutex))
 }
 
+//go:embed init.elv
+var initElv string
+
 // Initialize the `edit` module by executing the pre-defined Elvish code for the module.
 func initElvishState(ev *eval.Evaler, ns *eval.Ns) {
-	src := parse.Source{Name: "[RC file]", Code: elvInit}
+	src := parse.Source{Name: "[init.elv]", Code: initElv}
 	err := ev.Eval(src, eval.EvalCfg{Global: ns})
 	if err != nil {
 		panic(err)
