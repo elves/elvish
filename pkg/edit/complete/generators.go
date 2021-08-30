@@ -97,7 +97,7 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 		dirToRead = "."
 	}
 
-	infos, err := os.ReadDir(dirToRead)
+	files, err := os.ReadDir(dirToRead)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list directory %s: %v", dirToRead, err)
 	}
@@ -105,9 +105,12 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 	lsColor := lscolors.GetColorist()
 
 	// Make candidates out of elements that match the file component.
-	for _, info := range infos {
-		name := info.Name()
-		finfo, _ := info.Info()
+	for _, file := range files {
+		name := file.Name()
+		info, err := file.Info()
+		if err != nil {
+			continue
+		}
 		// Show dot files iff file part of pattern starts with dot, and vice
 		// versa.
 		if dotfile(fileprefix) != dotfile(name) {
@@ -115,7 +118,7 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 		}
 		// Only accept searchable directories and executable files if
 		// executableOnly is true.
-		if onlyExecutable && (finfo.Mode()&0111) == 0 {
+		if onlyExecutable && (info.Mode()&0111) == 0 {
 			continue
 		}
 
@@ -125,10 +128,10 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 		// Will be set to an empty space for non-directories
 		suffix := " "
 
-		if finfo.IsDir() {
+		if info.IsDir() {
 			full += pathSeparator
 			suffix = ""
-		} else if finfo.Mode()&os.ModeSymlink != 0 {
+		} else if info.Mode()&os.ModeSymlink != 0 {
 			stat, err := os.Stat(full)
 			if err == nil && stat.IsDir() {
 				// Symlink to directory.

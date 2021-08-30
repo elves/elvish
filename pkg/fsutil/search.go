@@ -34,12 +34,14 @@ func IsExecutable(path string) bool {
 // permission bit, which doesn't exist on Windows.
 func EachExternal(f func(string)) {
 	for _, dir := range searchPaths() {
-		// TODO(xiaq): Ignore error.
-		infos, _ := os.ReadDir(dir)
-		for _, info := range infos {
-			finfo, _ := info.Info()
-			if !finfo.IsDir() && (finfo.Mode()&0111 != 0) {
-				f(info.Name())
+		files, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, file := range files {
+			info, err := file.Info()
+			if err == nil && !info.IsDir() && (info.Mode()&0111 != 0) {
+				f(file.Name())
 			}
 		}
 	}
