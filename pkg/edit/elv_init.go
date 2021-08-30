@@ -15,6 +15,7 @@ after-command = [
 
 global-binding = (binding-table [
   &Ctrl-'['= $close-mode~
+  &Alt-x=    $minibuf:start~
 ])
 
 insert:binding = (binding-table [
@@ -47,7 +48,6 @@ insert:binding = (binding-table [
   &Ctrl-N= $navigation:start~
   &Tab=    $completion:smart-start~
   &Up=     $history:start~
-  &Alt-x=  $minibuf:start~
 
   &Enter=   $smart-enter~
   &Ctrl-D=  $return-eof~
