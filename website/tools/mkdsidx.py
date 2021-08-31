@@ -1,6 +1,7 @@
 import glob
 import os
 import sys
+import urllib.parse
 
 import bs4
 
@@ -25,6 +26,7 @@ def main(args):
         for anchor in anchors:
             name = anchor['name']
             entry_type, symbol = name.split('/')[-2:]
+            symbol = urllib.parse.unquote(symbol)
             print(
                 'INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES '
                 ' ("%s", "%s", "%s#%s");' % (symbol, entry_type, filename, name))
