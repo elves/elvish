@@ -111,6 +111,37 @@ lastcmd:binding = (binding-table [
   &
 ])
 
+# TODO: Avoid duplicating the bindings here by having a base binding table
+# shared by insert and minibuf modes (like how the listing modes all share
+# listing:binding).
 minibuf:binding = (binding-table [
-  &
+  &Left=  $move-dot-left~
+  &Right= $move-dot-right~
+
+  &Ctrl-Left=  $move-dot-left-word~
+  &Ctrl-Right= $move-dot-right-word~
+  &Alt-Left=   $move-dot-left-word~
+  &Alt-Right=  $move-dot-right-word~
+  &Alt-b=      $move-dot-left-word~
+  &Alt-f=      $move-dot-right-word~
+
+  &Home= $move-dot-sol~
+  &End=  $move-dot-eol~
+
+  &Backspace= $kill-rune-left~
+  &Ctrl-H=    $kill-rune-left~
+  &Delete=    $kill-rune-right~
+  &Ctrl-W=    $kill-word-left~
+  &Ctrl-U=    $kill-line-left~
+  &Ctrl-K=    $kill-line-right~
+
+  &Ctrl-V= $insert-raw~
+
+  &Alt-,=  $lastcmd:start~
+  &Alt-.=  $insert-last-word~
+  &Ctrl-R= $histlist:start~
+  &Ctrl-L= $location:start~
+  &Ctrl-N= $navigation:start~
+  &Tab=    $completion:smart-start~
+  &Up=     $history:start~
 ])
