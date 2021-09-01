@@ -2,7 +2,6 @@ package complete
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -98,7 +97,7 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 		dirToRead = "."
 	}
 
-	infos, err := ioutil.ReadDir(dirToRead)
+	files, err := os.ReadDir(dirToRead)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list directory %s: %v", dirToRead, err)
 	}
@@ -106,8 +105,12 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 	lsColor := lscolors.GetColorist()
 
 	// Make candidates out of elements that match the file component.
-	for _, info := range infos {
-		name := info.Name()
+	for _, file := range files {
+		name := file.Name()
+		info, err := file.Info()
+		if err != nil {
+			continue
+		}
 		// Show dot files iff file part of pattern starts with dot, and vice
 		// versa.
 		if dotfile(fileprefix) != dotfile(name) {

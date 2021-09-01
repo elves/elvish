@@ -53,17 +53,17 @@ Changes directory.
 		ns: "ns:",
 		wantDoc: `# Functions
 
-<a name='//apple_ref/cpp/Function/ns:a' class='dashAnchor'></a>
+<a name='//apple_ref/cpp/Function/ns%3Aa' class='dashAnchor'></a>
 
 ## ns:a
 A.
 
-<a name='//apple_ref/cpp/Function/ns:b' class='dashAnchor'></a>
+<a name='//apple_ref/cpp/Function/ns%3Ab' class='dashAnchor'></a>
 
 ## ns:b
 B.
 
-<a name='//apple_ref/cpp/Function/ns:-b' class='dashAnchor'></a>
+<a name='//apple_ref/cpp/Function/ns%3A-b' class='dashAnchor'></a>
 
 ## ns:-b
 -B.
@@ -113,7 +113,7 @@ C.
 `,
 		wantDoc: `# Variables
 
-<a name='//apple_ref/cpp/Variable/$b' class='dashAnchor'></a>
+<a name='//apple_ref/cpp/Variable/%24b' class='dashAnchor'></a>
 
 ## $b
 B.
@@ -139,7 +139,7 @@ A.
 `,
 		wantDoc: `# Variables
 
-<a name='//apple_ref/cpp/Variable/$b' class='dashAnchor'></a>
+<a name='//apple_ref/cpp/Variable/%24b' class='dashAnchor'></a>
 
 ## $b
 B.
@@ -181,7 +181,7 @@ A.
 		ns: "ns:",
 		wantDoc: `# Variables
 
-<a name='//apple_ref/cpp/Variable/$ns:b' class='dashAnchor'></a>
+<a name='//apple_ref/cpp/Variable/%24ns%3Ab' class='dashAnchor'></a>
 
 ## $ns:b
 B.
@@ -189,7 +189,7 @@ B.
 
 # Functions
 
-<a name='//apple_ref/cpp/Function/ns:a' class='dashAnchor'></a>
+<a name='//apple_ref/cpp/Function/ns%3Aa' class='dashAnchor'></a>
 
 ## ns:a
 A.
@@ -216,7 +216,7 @@ func TestRun_MultipleFiles(t *testing.T) {
 	run([]string{"a.go", "b.go"}, emptyReader, w)
 	compare(t, w.String(), `# Variables
 
-<a name='//apple_ref/cpp/Variable/$v2' class='dashAnchor'></a>
+<a name='//apple_ref/cpp/Variable/%24v2' class='dashAnchor'></a>
 
 ## $v2
 

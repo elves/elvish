@@ -1,7 +1,6 @@
 package fsutil
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,11 +34,14 @@ func IsExecutable(path string) bool {
 // permission bit, which doesn't exist on Windows.
 func EachExternal(f func(string)) {
 	for _, dir := range searchPaths() {
-		// TODO(xiaq): Ignore error.
-		infos, _ := ioutil.ReadDir(dir)
-		for _, info := range infos {
-			if !info.IsDir() && (info.Mode()&0111 != 0) {
-				f(info.Name())
+		files, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, file := range files {
+			info, err := file.Info()
+			if err == nil && !info.IsDir() && (info.Mode()&0111 != 0) {
+				f(file.Name())
 			}
 		}
 	}

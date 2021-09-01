@@ -27,6 +27,14 @@ like `./get` will cause the browser to open the corresponding directory, instead
 of the `index.html` file under it, and we use JavaScript to patch such URLs
 dynamically.
 
+## Building the docset
+
+Building the docset requires the following additional dependencies:
+
+-   Python 3 with Beautiful Soup 4 (install with `pip install bs4`).
+
+-   SQLite3 CLI.
+
 # Commit History
 
 These files used to live in a

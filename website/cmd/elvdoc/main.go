@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"html"
 	"io"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -177,7 +179,7 @@ func extract(r io.Reader, ns string, w io.Writer) {
 				}
 				fmt.Fprintf(w,
 					"<a name='//apple_ref/cpp/%s/%s' class='dashAnchor'></a>\n\n",
-					entryType, s)
+					entryType, url.QueryEscape(html.UnescapeString(s)))
 			}
 			fmt.Fprintf(w, "## %s\n", fullName)
 			// The body is guaranteed to have a trailing newline, hence Fprint
