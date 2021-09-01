@@ -25,10 +25,10 @@ type InstantSpec struct {
 
 type instant struct {
 	InstantSpec
-	attached tk.CodeArea
-	textView tk.TextView
-	lastCode string
-	lastErr  error
+	attachedTo tk.CodeArea
+	textView   tk.TextView
+	lastCode   string
+	lastErr    error
 }
 
 func (w *instant) Render(width, height int) *term.Buffer {
@@ -52,14 +52,14 @@ func (w *instant) Focus() bool { return false }
 func (w *instant) Handle(event term.Event) bool {
 	handled := w.Bindings.Handle(w, event)
 	if !handled {
-		handled = w.attached.Handle(event)
+		handled = w.attachedTo.Handle(event)
 	}
 	w.update(false)
 	return handled
 }
 
 func (w *instant) update(force bool) {
-	code := w.attached.CopyState().Buffer.Content
+	code := w.attachedTo.CopyState().Buffer.Content
 	if code == w.lastCode && !force {
 		return
 	}
@@ -77,9 +77,9 @@ var errExecutorIsRequired = errors.New("executor is required")
 
 // NewInstant creates a new instant mode.
 func NewInstant(app cli.App, cfg InstantSpec) (Instant, error) {
-	codeArea, ok := app.ActiveWidget().(tk.CodeArea)
-	if !ok {
-		return nil, ErrActiveWidgetNotCodeArea
+	codeArea, err := FocusedCodeArea(app)
+	if err != nil {
+		return nil, err
 	}
 	if cfg.Execute == nil {
 		return nil, errExecutorIsRequired
@@ -89,7 +89,7 @@ func NewInstant(app cli.App, cfg InstantSpec) (Instant, error) {
 	}
 	w := instant{
 		InstantSpec: cfg,
-		attached:    codeArea,
+		attachedTo:  codeArea,
 		textView:    tk.NewTextView(tk.TextViewSpec{Scrollable: true}),
 	}
 	w.update(true)

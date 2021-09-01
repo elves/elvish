@@ -27,7 +27,7 @@ type ListingSpec struct {
 	// return value is true, the listing will not be closed after accpeting.
 	// If unspecified, the Accept function default to a function that does
 	// nothing other than returning false.
-	Accept func(string) bool
+	Accept func(string)
 	// Whether to automatically accept when there is only one item.
 	AutoAccept bool
 }
@@ -48,16 +48,14 @@ func NewListing(app cli.App, spec ListingSpec) (Listing, error) {
 		return nil, errGetItemsMustBeSpecified
 	}
 	if spec.Accept == nil {
-		spec.Accept = func(string) bool { return false }
+		spec.Accept = func(string) {}
 	}
 	if spec.Caption == "" {
 		spec.Caption = " LISTING "
 	}
 	accept := func(s string) {
-		retain := spec.Accept(s)
-		if !retain {
-			app.PopAddon(false)
-		}
+		app.PopAddon(false)
+		spec.Accept(s)
 	}
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{

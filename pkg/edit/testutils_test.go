@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
@@ -99,7 +100,7 @@ func (f *fixture) TestTTYNotes(t *testing.T, args ...interface{}) {
 }
 
 func (f *fixture) SetCodeBuffer(b tk.CodeBuffer) {
-	f.Editor.app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+	codeArea(f.Editor.app).MutateState(func(s *tk.CodeAreaState) {
 		s.Buffer = b
 	})
 }
@@ -145,3 +146,5 @@ func testThatOutputErrorIsBubbled(t *testing.T, f *fixture, code string) {
 	// Exceptions are booleanly false
 	testGlobal(t, f.Evaler, "ret", false)
 }
+
+func codeArea(app cli.App) tk.CodeArea { return app.ActiveWidget().(tk.CodeArea) }

@@ -30,9 +30,9 @@ type HistlistSpec struct {
 
 // NewHistlist creates a new histlist mode.
 func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
-	codeArea, ok := app.ActiveWidget().(tk.CodeArea)
-	if !ok {
-		return nil, ErrActiveWidgetNotCodeArea
+	codeArea, err := FocusedCodeArea(app)
+	if err != nil {
+		return nil, err
 	}
 	if spec.AllCmds == nil {
 		return nil, errNoHistoryStore

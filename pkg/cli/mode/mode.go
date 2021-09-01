@@ -5,12 +5,23 @@ package mode
 import (
 	"errors"
 
+	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/ui"
 )
 
-// ErrActiveWidgetNotCodeArea is returned when an operation requires the active
-// widget to be a code area but it is not.
-var ErrActiveWidgetNotCodeArea = errors.New("active widget is not a code area")
+// ErrFocusedWidgetNotCodeArea is returned when an operation requires the
+// focused widget to be a code area but it is not.
+var ErrFocusedWidgetNotCodeArea = errors.New("focused widget is not a code area")
+
+// FocusedCodeArea returns a CodeArea widget if the currently focused widget is
+// a CodeArea. Otherwise it returns the error ErrFocusedWidgetNotCodeArea.
+func FocusedCodeArea(a cli.App) (tk.CodeArea, error) {
+	if w, ok := a.FocusedWidget().(tk.CodeArea); ok {
+		return w, nil
+	}
+	return nil, ErrFocusedWidgetNotCodeArea
+}
 
 // Returns text styled as a modeline.
 func modeLine(content string, space bool) ui.Text {

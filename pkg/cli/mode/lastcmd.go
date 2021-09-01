@@ -36,9 +36,9 @@ var _ = LastcmdStore(histutil.Store(nil))
 
 // NewLastcmd creates a new lastcmd mode.
 func NewLastcmd(app cli.App, cfg LastcmdSpec) (Lastcmd, error) {
-	codeArea, ok := app.ActiveWidget().(tk.CodeArea)
-	if !ok {
-		return nil, ErrActiveWidgetNotCodeArea
+	codeArea, err := FocusedCodeArea(app)
+	if err != nil {
+		return nil, err
 	}
 	if cfg.Store == nil {
 		return nil, errNoHistoryStore

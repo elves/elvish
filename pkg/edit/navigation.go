@@ -34,6 +34,10 @@ func navInsertSelected(app cli.App) {
 	if !ok {
 		return
 	}
+	codeArea, ok := focusedCodeArea(app)
+	if !ok {
+		return
+	}
 	fname := w.SelectedName()
 	if fname == "" {
 		// User pressed Alt-Enter or Enter in an empty directory with nothing
@@ -41,7 +45,7 @@ func navInsertSelected(app cli.App) {
 		return
 	}
 
-	app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+	codeArea.MutateState(func(s *tk.CodeAreaState) {
 		dot := s.Buffer.Dot
 		if dot != 0 && !strings.ContainsRune(" \n", rune(s.Buffer.Content[dot-1])) {
 			// The dot is not at the beginning of a buffer, and the previous
@@ -161,10 +165,8 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 func neg(b bool) bool { return !b }
 
 func getNavigation(app cli.App) (mode.Navigation, bool) {
-	if addons := app.CopyState().Addons; len(addons) > 0 {
-		if w, ok := addons[len(addons)-1].(mode.Navigation); ok {
-			return w, true
-		}
+	if w, ok := app.ActiveWidget().(mode.Navigation); ok {
+		return w, true
 	}
 	return nil, false
 }

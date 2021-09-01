@@ -127,7 +127,7 @@ func TestClear(t *testing.T) {
 func TestReturnCode(t *testing.T) {
 	f := setup(t)
 
-	f.Editor.app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+	codeArea(f.Editor.app).MutateState(func(s *tk.CodeAreaState) {
 		s.Buffer.Content = "test code"
 	})
 	evals(f.Evaler, `edit:return-line`)
@@ -155,7 +155,7 @@ func TestSmartEnter_InsertsNewlineWhenIncomplete(t *testing.T) {
 	f.SetCodeBuffer(tk.CodeBuffer{Content: "put [", Dot: 5})
 	evals(f.Evaler, `edit:smart-enter`)
 	wantBuf := tk.CodeBuffer{Content: "put [\n", Dot: 6}
-	if buf := f.Editor.app.CodeArea().CopyState().Buffer; buf != wantBuf {
+	if buf := codeArea(f.Editor.app).CopyState().Buffer; buf != wantBuf {
 		t.Errorf("got code buffer %v, want %v", buf, wantBuf)
 	}
 }
@@ -215,11 +215,11 @@ func TestBufferBuiltins(t *testing.T) {
 
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {
-			app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+			codeArea(app).MutateState(func(s *tk.CodeAreaState) {
 				s.Buffer = test.bufBefore
 			})
 			evals(f.Evaler, "edit:"+test.name)
-			if buf := app.CodeArea().CopyState().Buffer; buf != test.bufAfter {
+			if buf := codeArea(app).CopyState().Buffer; buf != test.bufAfter {
 				t.Errorf("got buf %v, want %v", buf, test.bufAfter)
 			}
 		})

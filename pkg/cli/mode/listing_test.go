@@ -39,42 +39,15 @@ func TestListing_Accept_ClosingListing(t *testing.T) {
 
 	startListing(f.App, ListingSpec{
 		GetItems: fooAndGreenBar,
-		Accept: func(t string) bool {
-			f.App.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+		Accept: func(t string) {
+			f.App.ActiveWidget().(tk.CodeArea).MutateState(func(s *tk.CodeAreaState) {
 				s.Buffer.InsertAtDot(t)
 			})
-			return false
 		},
 	})
 	// foo will be selected
 	f.TTY.Inject(term.K('\n'))
 	f.TestTTY(t, "foo", term.DotHere)
-}
-
-func TestListing_Accept_NotClosingListing(t *testing.T) {
-	f := Setup()
-	defer f.Stop()
-
-	startListing(f.App, ListingSpec{
-		GetItems: fooAndGreenBar,
-		Accept: func(t string) bool {
-			f.App.CodeArea().MutateState(func(s *tk.CodeAreaState) {
-				s.Buffer.InsertAtDot(t)
-			})
-			return true
-		},
-	})
-	// foo will be selected
-	f.TTY.Inject(term.K('\n'))
-	f.TestTTY(t,
-		"foo\n",
-		" LISTING  ", Styles,
-		"********* ", term.DotHere, "\n",
-		"foo                                               \n", Styles,
-		"++++++++++++++++++++++++++++++++++++++++++++++++++",
-		"bar                                               ", Styles,
-		"vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
-	)
 }
 
 func TestListing_Accept_DefaultNop(t *testing.T) {
@@ -100,11 +73,10 @@ func TestListing_AutoAccept(t *testing.T) {
 			}
 			return []ListingItem{{"bar", ui.T("bar")}}, 0
 		},
-		Accept: func(t string) bool {
-			f.App.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+		Accept: func(t string) {
+			f.App.ActiveWidget().(tk.CodeArea).MutateState(func(s *tk.CodeAreaState) {
 				s.Buffer.InsertAtDot(t)
 			})
-			return false
 		},
 		AutoAccept: true,
 	})

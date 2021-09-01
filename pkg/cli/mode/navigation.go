@@ -54,7 +54,7 @@ type navigationState struct {
 type navigation struct {
 	NavigationSpec
 	app        cli.App
-	attached   tk.CodeArea
+	attachedTo tk.CodeArea
 	codeArea   tk.CodeArea
 	colView    tk.ColView
 	lastFilter string
@@ -89,7 +89,7 @@ func (w *navigation) Handle(event term.Event) bool {
 		}
 		return false
 	}
-	return w.attached.Handle(event)
+	return w.attachedTo.Handle(event)
 }
 
 func (w *navigation) Render(width, height int) *term.Buffer {
@@ -148,9 +148,9 @@ func (w *navigation) descend() {
 
 // NewNavigation creates a new navigation mode.
 func NewNavigation(app cli.App, spec NavigationSpec) (Navigation, error) {
-	codeArea, ok := app.ActiveWidget().(tk.CodeArea)
-	if !ok {
-		return nil, ErrActiveWidgetNotCodeArea
+	codeArea, err := FocusedCodeArea(app)
+	if err != nil {
+		return nil, err
 	}
 	if spec.Cursor == nil {
 		spec.Cursor = NewOSNavigationCursor()
@@ -163,7 +163,7 @@ func NewNavigation(app cli.App, spec NavigationSpec) (Navigation, error) {
 	w = &navigation{
 		NavigationSpec: spec,
 		app:            app,
-		attached:       codeArea,
+		attachedTo:     codeArea,
 		codeArea: tk.NewCodeArea(tk.CodeAreaSpec{
 			Prompt: func() ui.Text {
 				if w.CopyState().ShowHidden {

@@ -81,7 +81,7 @@ func TestLastcmd(t *testing.T) {
 	f.TestTTY(t, "bar", term.DotHere)
 
 	// Test submission by Enter.
-	f.App.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+	f.App.ActiveWidget().(tk.CodeArea).MutateState(func(s *tk.CodeAreaState) {
 		*s = tk.CodeAreaState{}
 	})
 	startLastcmd(f.App, LastcmdSpec{
@@ -94,7 +94,7 @@ func TestLastcmd(t *testing.T) {
 	f.TestTTY(t, "foo,bar,baz", term.DotHere)
 
 	// Default wordifier.
-	f.App.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+	f.App.ActiveWidget().(tk.CodeArea).MutateState(func(s *tk.CodeAreaState) {
 		*s = tk.CodeAreaState{}
 	})
 	st.AddCmd(storedefs.Cmd{Text: "foo bar baz", Seq: 1})

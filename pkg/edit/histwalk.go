@@ -65,7 +65,11 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder)
 }
 
 func histwalkStart(app cli.App, hs *histStore, bindings tk.Bindings) error {
-	buf := app.CodeArea().CopyState().Buffer
+	codeArea, ok := focusedCodeArea(app)
+	if !ok {
+		return nil
+	}
+	buf := codeArea.CopyState().Buffer
 	w, err := mode.NewHistwalk(app, mode.HistwalkSpec{
 		Bindings: bindings, Store: hs, Prefix: buf.Content[:buf.Dot]})
 	if w != nil {

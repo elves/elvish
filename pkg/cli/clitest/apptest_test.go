@@ -20,7 +20,7 @@ func TestFixture(t *testing.T) {
 	defer f.Stop()
 
 	// Verify that the functions passed to Setup have taken effect.
-	if f.App.CodeArea().CopyState().Buffer.Content != "test" {
+	if f.App.ActiveWidget().(tk.CodeArea).CopyState().Buffer.Content != "test" {
 		t.Errorf("WithSpec did not work")
 	}
 

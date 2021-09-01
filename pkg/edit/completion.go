@@ -160,7 +160,11 @@ func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) co
 // prefix and that prefix starts with the seed, inserts the prefix instead.
 
 func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, smart bool) {
-	buf := app.CodeArea().CopyState().Buffer
+	codeArea, ok := focusedCodeArea(app)
+	if !ok {
+		return
+	}
+	buf := codeArea.CopyState().Buffer
 	result, err := complete.Complete(
 		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot}, cfg)
 	if err != nil {
@@ -181,7 +185,7 @@ func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, sma
 		}
 		if prefix != "" {
 			insertedPrefix := false
-			app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+			codeArea.MutateState(func(s *tk.CodeAreaState) {
 				rep := s.Buffer.Content[result.Replace.From:result.Replace.To]
 				if len(prefix) > len(rep) && strings.HasPrefix(prefix, rep) {
 					s.Pending = tk.PendingCode{

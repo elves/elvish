@@ -107,6 +107,10 @@ func reverseCmds(cmds []storedefs.Cmd) {
 // Inserts the last word of the last command.
 
 func insertLastWord(app cli.App, histStore histutil.Store) error {
+	codeArea, ok := focusedCodeArea(app)
+	if !ok {
+		return nil
+	}
 	c := histStore.Cursor("")
 	c.Prev()
 	cmd, err := c.Get()
@@ -115,7 +119,7 @@ func insertLastWord(app cli.App, histStore histutil.Store) error {
 	}
 	words := parseutil.Wordify(cmd.Text)
 	if len(words) > 0 {
-		app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+		codeArea.MutateState(func(s *tk.CodeAreaState) {
 			s.Buffer.InsertAtDot(words[len(words)-1])
 		})
 	}

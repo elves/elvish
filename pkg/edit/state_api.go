@@ -18,7 +18,11 @@ import (
 // inserted text.
 
 func insertAtDot(app cli.App, text string) {
-	app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+	codeArea, ok := focusedCodeArea(app)
+	if !ok {
+		return
+	}
+	codeArea.MutateState(func(s *tk.CodeAreaState) {
 		s.Buffer.InsertAtDot(text)
 	})
 }
@@ -32,7 +36,11 @@ func insertAtDot(app cli.App, text string) {
 // Equivalent to assigning `$text` to `$edit:current-command`.
 
 func replaceInput(app cli.App, text string) {
-	app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+	codeArea, ok := focusedCodeArea(app)
+	if !ok {
+		return
+	}
+	codeArea.MutateState(func(s *tk.CodeAreaState) {
 		s.Buffer = tk.CodeBuffer{Content: text, Dot: len(text)}
 	})
 }
@@ -51,6 +59,9 @@ func replaceInput(app cli.App, text string) {
 // This API is subject to change.
 
 func initStateAPI(app cli.App, nb eval.NsBuilder) {
+	// State API always operates on the root CodeArea widget
+	codeArea := app.ActiveWidget().(tk.CodeArea)
+
 	nb.AddGoFns("<edit>", map[string]interface{}{
 		"insert-at-dot": func(s string) { insertAtDot(app, s) },
 		"replace-input": func(s string) { replaceInput(app, s) },
@@ -62,13 +73,13 @@ func initStateAPI(app cli.App, nb eval.NsBuilder) {
 		if err != nil {
 			return err
 		}
-		app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+		codeArea.MutateState(func(s *tk.CodeAreaState) {
 			s.Buffer.Dot = dot
 		})
 		return nil
 	}
 	getDot := func() interface{} {
-		return vals.FromGo(app.CodeArea().CopyState().Buffer.Dot)
+		return vals.FromGo(codeArea.CopyState().Buffer.Dot)
 	}
 	nb.Add("-dot", vars.FromSetGet(setDot, getDot))
 
@@ -82,7 +93,7 @@ func initStateAPI(app cli.App, nb eval.NsBuilder) {
 		return nil
 	}
 	getCurrentCommand := func() interface{} {
-		return vals.FromGo(app.CodeArea().CopyState().Buffer.Content)
+		return vals.FromGo(codeArea.CopyState().Buffer.Content)
 	}
 	nb.Add("current-command", vars.FromSetGet(setCurrentCommand, getCurrentCommand))
 }

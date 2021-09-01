@@ -22,8 +22,6 @@ type App interface {
 	MutateState(f func(*State))
 	// CopyState returns a copy of the a state.
 	CopyState() State
-	// CodeArea returns the codearea widget of the app.
-	CodeArea() tk.CodeArea
 
 	// PushAddon pushes a widget to the addon stack.
 	PushAddon(w tk.Widget)
@@ -31,10 +29,15 @@ type App interface {
 	// implements interface{ Close(accept bool) }, the Close method is called
 	// first. This method does nothing if the addon stack is empty.
 	PopAddon(accept bool)
+
 	// ActiveWidget returns the currently active widget. If the addon stack is
 	// non-empty, it returns the last addon. Otherwise it returns the main code
 	// area widget.
 	ActiveWidget() tk.Widget
+	// FocusedWidget returns the currently focused widget. It is searched like
+	// ActiveWidget, but skips widgets that implement interface{ Focus() bool }
+	// and return false when .Focus() is called.
+	FocusedWidget() tk.Widget
 
 	// CommitEOF causes the main loop to exit with EOF. If this method is called
 	// when an event is being handled, the main loop will exit after the handler
@@ -190,6 +193,18 @@ func (a *app) ActiveWidget() tk.Widget {
 	return a.codeArea
 }
 
+func (a *app) FocusedWidget() tk.Widget {
+	a.StateMutex.Lock()
+	defer a.StateMutex.Unlock()
+	addons := a.State.Addons
+	for i := len(addons) - 1; i >= 0; i-- {
+		if hasFocus(addons[i]) {
+			return addons[i]
+		}
+	}
+	return a.codeArea
+}
+
 func (a *app) resetAllStates() {
 	a.MutateState(func(s *State) { *s = State{} })
 	a.codeArea.MutateState(
@@ -279,10 +294,6 @@ func renderNotes(notes []string, width int) *term.Buffer {
 	return bb.Buffer()
 }
 
-type focuser interface {
-	Focus() bool
-}
-
 // Renders the codearea, and uses the rest of the height for the listing.
 func renderApp(codeArea tk.Renderer, addons []tk.Widget, width, height int) *term.Buffer {
 	buf := codeArea.Render(width, height)
@@ -291,13 +302,16 @@ func renderApp(codeArea tk.Renderer, addons []tk.Widget, width, height int) *ter
 			break
 		}
 		bufListing := w.Render(width, height-len(buf.Lines))
-		focus := true
-		if focuser, ok := w.(focuser); ok {
-			focus = focuser.Focus()
-		}
-		buf.Extend(bufListing, focus)
+		buf.Extend(bufListing, hasFocus(w))
 	}
 	return buf
+}
+
+func hasFocus(w interface{}) bool {
+	if f, ok := w.(interface{ Focus() bool }); ok {
+		return f.Focus()
+	}
+	return true
 }
 
 func (a *app) ReadCode() (string, error) {

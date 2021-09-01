@@ -52,7 +52,7 @@ func TestReadCode_ResetsStateBeforeReturning(t *testing.T) {
 
 	f.Stop()
 
-	if code := f.App.CodeArea().CopyState().Buffer; code != (tk.CodeBuffer{}) {
+	if code := f.App.ActiveWidget().(tk.CodeArea).CopyState().Buffer; code != (tk.CodeBuffer{}) {
 		t.Errorf("Editor state has CodeBuffer %v, want empty", code)
 	}
 }

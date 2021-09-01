@@ -43,9 +43,9 @@ var errNoCandidates = errors.New("no candidates")
 
 // NewCompletion starts the completion UI.
 func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
-	codeArea, ok := app.ActiveWidget().(tk.CodeArea)
-	if !ok {
-		return nil, ErrActiveWidgetNotCodeArea
+	codeArea, err := FocusedCodeArea(app)
+	if err != nil {
+		return nil, err
 	}
 	if len(cfg.Items) == 0 {
 		return nil, errNoCandidates

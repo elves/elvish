@@ -102,12 +102,16 @@ func clear(app cli.App, tty cli.TTY) {
 // Requests the next terminal input to be inserted uninterpreted.
 
 func insertRaw(app cli.App, tty cli.TTY) {
+	codeArea, ok := focusedCodeArea(app)
+	if !ok {
+		return
+	}
 	tty.SetRawInput(1)
 	w := mode.NewStub(mode.StubSpec{
 		Bindings: tk.FuncBindings(func(w tk.Widget, event term.Event) bool {
 			switch event := event.(type) {
 			case term.KeyEvent:
-				app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+				codeArea.MutateState(func(s *tk.CodeAreaState) {
 					s.Buffer.InsertAtDot(string(event.Rune))
 				})
 				app.PopAddon(false)
@@ -172,14 +176,21 @@ func toKey(v interface{}) (ui.Key, error) {
 // Elvish code. Accepts the current line otherwise.
 
 func smartEnter(app cli.App) {
-	// TODO(xiaq): Fix the race condition.
-	buf := app.CodeArea().CopyState().Buffer
-	if isSyntaxComplete(buf.Content) {
+	codeArea, ok := focusedCodeArea(app)
+	if !ok {
+		return
+	}
+	commit := false
+	codeArea.MutateState(func(s *tk.CodeAreaState) {
+		buf := &s.Buffer
+		if isSyntaxComplete(buf.Content) {
+			commit = true
+		} else {
+			buf.InsertAtDot("\n")
+		}
+	})
+	if commit {
 		app.CommitCode()
-	} else {
-		app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
-			s.Buffer.InsertAtDot("\n")
-		})
 	}
 }
 
@@ -274,7 +285,11 @@ func bufferBuiltins(app cli.App) map[string]interface{} {
 		// Make a lexically scoped copy of fn.
 		fn2 := fn
 		m[name] = func() {
-			app.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+			codeArea, ok := focusedCodeArea(app)
+			if !ok {
+				return
+			}
+			codeArea.MutateState(func(s *tk.CodeAreaState) {
 				fn2(&s.Buffer)
 			})
 		}
@@ -601,4 +616,14 @@ func moveDotRightGeneralWord(categorize categorizer, buffer string, dot int) int
 	skipCat(0)
 
 	return len(buffer) - len(right)
+}
+
+// Like mode.FocusedCodeArea, but handles the error by writing a notification.
+func focusedCodeArea(app cli.App) (tk.CodeArea, bool) {
+	codeArea, err := mode.FocusedCodeArea(app)
+	if err != nil {
+		app.Notify(err.Error())
+		return nil, false
+	}
+	return codeArea, true
 }

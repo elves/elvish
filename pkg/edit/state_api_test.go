@@ -43,7 +43,7 @@ func TestCurrentCommand(t *testing.T) {
 
 func testCodeBuffer(t *testing.T, ed *Editor, wantBuf tk.CodeBuffer) {
 	t.Helper()
-	if buf := ed.app.CodeArea().CopyState().Buffer; buf != wantBuf {
+	if buf := codeArea(ed.app).CopyState().Buffer; buf != wantBuf {
 		t.Errorf("content = %v, want %v", buf, wantBuf)
 	}
 }

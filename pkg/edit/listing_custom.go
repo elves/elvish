@@ -97,11 +97,10 @@ func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, item
 			}
 			return items, selected
 		},
-		Accept: func(s string) bool {
+		Accept: func(s string) {
 			if opts.Accept != nil {
 				callWithNotifyPorts(ed, fm.Evaler, opts.Accept, s)
 			}
-			return false
 		},
 		AutoAccept: opts.AutoAccept,
 	})
