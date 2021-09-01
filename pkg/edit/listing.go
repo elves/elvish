@@ -140,7 +140,7 @@ func initLocation(ed *Editor, ev *eval.Evaler, st storedefs.Store, commonBinding
 // Accepts the current selected listing item.
 
 func listingAccept(app cli.App) {
-	if w, ok := comboBoxAddon(app); ok {
+	if w, ok := activeComboBox(app); ok {
 		w.ListBox().Accept()
 	}
 }
@@ -205,13 +205,13 @@ func listingLeft(app cli.App) { listingSelect(app, tk.Left) }
 func listingRight(app cli.App) { listingSelect(app, tk.Right) }
 
 func listingSelect(app cli.App, f func(tk.ListBoxState) int) {
-	if w, ok := comboBoxAddon(app); ok {
+	if w, ok := activeComboBox(app); ok {
 		w.ListBox().Select(f)
 	}
 }
 
 func listingRefilter(app cli.App) {
-	if w, ok := comboBoxAddon(app); ok {
+	if w, ok := activeComboBox(app); ok {
 		w.Refilter()
 	}
 }
@@ -283,11 +283,7 @@ func startMode(app cli.App, w tk.Widget, err error) {
 	}
 }
 
-func comboBoxAddon(app cli.App) (tk.ComboBox, bool) {
-	if addons := app.CopyState().Addons; len(addons) > 0 {
-		if w, ok := addons[len(addons)-1].(tk.ComboBox); ok {
-			return w, true
-		}
-	}
-	return nil, false
+func activeComboBox(app cli.App) (tk.ComboBox, bool) {
+	w, ok := app.ActiveWidget().(tk.ComboBox)
+	return w, ok
 }

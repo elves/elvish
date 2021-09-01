@@ -30,7 +30,7 @@ import (
 // Inserts the selected filename.
 
 func navInsertSelected(app cli.App) {
-	w, ok := getNavigation(app)
+	w, ok := activeNavigation(app)
 	if !ok {
 		return
 	}
@@ -109,7 +109,7 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	widthRatioVar := newListVar(vals.MakeList(1.0, 3.0, 4.0))
 
 	selectedFileVar := vars.FromGet(func() interface{} {
-		if w, ok := getNavigation(ed.app); ok {
+		if w, ok := activeNavigation(ed.app); ok {
 			return w.SelectedName()
 		}
 		return nil
@@ -164,16 +164,14 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 
 func neg(b bool) bool { return !b }
 
-func getNavigation(app cli.App) (mode.Navigation, bool) {
-	if w, ok := app.ActiveWidget().(mode.Navigation); ok {
-		return w, true
-	}
-	return nil, false
+func activeNavigation(app cli.App) (mode.Navigation, bool) {
+	w, ok := app.ActiveWidget().(mode.Navigation)
+	return w, ok
 }
 
 func actOnNavigation(app cli.App, f func(mode.Navigation)) func() {
 	return func() {
-		if w, ok := getNavigation(app); ok {
+		if w, ok := activeNavigation(app); ok {
 			f(w)
 		}
 	}

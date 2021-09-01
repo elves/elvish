@@ -81,11 +81,7 @@ func histwalkStart(app cli.App, hs *histStore, bindings tk.Bindings) error {
 var errNotInHistoryMode = errors.New("not in history mode")
 
 func histwalkDo(app cli.App, f func(mode.Histwalk) error) error {
-	addons := app.CopyState().Addons
-	if len(addons) == 0 {
-		return errNotInHistoryMode
-	}
-	w, ok := addons[len(addons)-1].(mode.Histwalk)
+	w, ok := app.ActiveWidget().(mode.Histwalk)
 	if !ok {
 		return errNotInHistoryMode
 	}

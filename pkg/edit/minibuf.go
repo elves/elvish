@@ -32,11 +32,7 @@ func minibufStart(ed *Editor, ev *eval.Evaler, bindings tk.Bindings) {
 
 func minibufSubmit(ed *Editor, ev *eval.Evaler) {
 	app := ed.app
-	addons := app.CopyState().Addons
-	if len(addons) == 0 {
-		return
-	}
-	codeArea, ok := addons[len(addons)-1].(tk.CodeArea)
+	codeArea, ok := app.ActiveWidget().(tk.CodeArea)
 	if !ok {
 		return
 	}
