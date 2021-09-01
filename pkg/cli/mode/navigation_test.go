@@ -311,6 +311,13 @@ func testNavigation(t *testing.T, c NavigationCursor) {
 	f.TTY.TestBuffer(t, d3NoneBuf)
 }
 
+func TestNewNavigation_FocusedWidgetNotCodeArea(t *testing.T) {
+	testFocusedWidgetNotCodeArea(t, func(app cli.App) error {
+		_, err := NewNavigation(app, NavigationSpec{})
+		return err
+	})
+}
+
 func setupNav(c testutil.Cleanuper) *Fixture {
 	lscolors.SetTestLsColors(c)
 	// Use a small TTY size to make the test buffer easier to build.

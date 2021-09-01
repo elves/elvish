@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"src.elv.sh/pkg/cli"
 	. "src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/ui"
@@ -73,4 +74,12 @@ func TestNewInstant_NoExecutor(t *testing.T) {
 	if err != errExecutorIsRequired {
 		t.Error("expect errExecutorIsRequired")
 	}
+}
+
+func TestNewInstant_FocusedWidgetNotCodeArea(t *testing.T) {
+	testFocusedWidgetNotCodeArea(t, func(app cli.App) error {
+		_, err := NewInstant(app, InstantSpec{
+			Execute: func(string) ([]string, error) { return nil, nil }})
+		return err
+	})
 }

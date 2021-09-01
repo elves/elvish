@@ -22,6 +22,14 @@ func TestNewHistlist_NoStore(t *testing.T) {
 	}
 }
 
+func TestNewHistlist_FocusedWidgetNotCodeArea(t *testing.T) {
+	testFocusedWidgetNotCodeArea(t, func(app cli.App) error {
+		st := histutil.NewMemStore("foo")
+		_, err := NewHistlist(app, HistlistSpec{AllCmds: st.AllCmds})
+		return err
+	})
+}
+
 type faultyStore struct{}
 
 func (s faultyStore) AllCmds() ([]storedefs.Cmd, error) { return nil, errMock }

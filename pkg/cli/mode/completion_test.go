@@ -3,6 +3,7 @@ package mode
 import (
 	"testing"
 
+	"src.elv.sh/pkg/cli"
 	. "src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/diag"
@@ -48,6 +49,13 @@ func TestNewCompletion_NoItems(t *testing.T) {
 	if err != errNoCandidates {
 		t.Errorf("should return errNoCandidates")
 	}
+}
+
+func TestNewCompletion_FocusedWidgetNotCodeArea(t *testing.T) {
+	testFocusedWidgetNotCodeArea(t, func(app cli.App) error {
+		_, err := NewCompletion(app, CompletionSpec{Items: []CompletionItem{{}}})
+		return err
+	})
 }
 
 func setupStartedCompletion(t *testing.T) *Fixture {

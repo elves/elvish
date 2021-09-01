@@ -68,6 +68,14 @@ func TestHistWalk(t *testing.T) {
 	f.TestTTY(t, "ls -a", term.DotHere)
 }
 
+func TestHistWalk_FocusedWidgetNotCodeArea(t *testing.T) {
+	testFocusedWidgetNotCodeArea(t, func(app cli.App) error {
+		store := histutil.NewMemStore("foo")
+		_, err := NewHistwalk(app, HistwalkSpec{Store: store})
+		return err
+	})
+}
+
 func TestHistWalk_NoWalker(t *testing.T) {
 	f := Setup()
 	defer f.Stop()

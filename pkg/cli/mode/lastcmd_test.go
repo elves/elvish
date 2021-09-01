@@ -23,6 +23,14 @@ func TestNewLastcmd_NoStore(t *testing.T) {
 	}
 }
 
+func TestNewLastcmd_FocusedWidgetNotCodeArea(t *testing.T) {
+	testFocusedWidgetNotCodeArea(t, func(app cli.App) error {
+		st := histutil.NewMemStore("foo")
+		_, err := NewLastcmd(app, LastcmdSpec{Store: st})
+		return err
+	})
+}
+
 func TestNewLastcmd_StoreError(t *testing.T) {
 	f := Setup()
 	defer f.Stop()

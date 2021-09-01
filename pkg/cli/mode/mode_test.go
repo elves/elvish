@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/tt"
 	"src.elv.sh/pkg/ui"
@@ -34,6 +35,10 @@ func testModeLine(t *testing.T, fn *tt.FnToTest) {
 
 var errMock = errors.New("mock error")
 
+var withNonCodeAreaAddon = clitest.WithSpec(func(spec *cli.AppSpec) {
+	spec.State.Addons = []tk.Widget{tk.Label{}}
+})
+
 func startMode(app cli.App, w tk.Widget, err error) {
 	if w != nil {
 		app.PushAddon(w)
@@ -41,5 +46,15 @@ func startMode(app cli.App, w tk.Widget, err error) {
 	}
 	if err != nil {
 		app.Notify(err.Error())
+	}
+}
+
+func testFocusedWidgetNotCodeArea(t *testing.T, fn func(cli.App) error) {
+	t.Helper()
+
+	f := clitest.Setup(withNonCodeAreaAddon)
+	defer f.Stop()
+	if err := fn(f.App); err != ErrFocusedWidgetNotCodeArea {
+		t.Errorf("should return ErrFocusedWidgetNotCodeArea, got %v", err)
 	}
 }
