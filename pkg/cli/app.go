@@ -158,10 +158,6 @@ func (a *app) CopyState() State {
 	}
 }
 
-func (a *app) CodeArea() tk.CodeArea {
-	return a.codeArea
-}
-
 type closer interface {
 	Close(bool)
 }
