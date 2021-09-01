@@ -4,6 +4,7 @@ import (
 	"io"
 	"testing"
 
+	"src.elv.sh/pkg/cli/mode"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
@@ -222,6 +223,28 @@ func TestBufferBuiltins(t *testing.T) {
 			if buf := codeArea(app).CopyState().Buffer; buf != test.bufAfter {
 				t.Errorf("got buf %v, want %v", buf, test.bufAfter)
 			}
+		})
+	}
+}
+
+// Builtins that expect the focused widget to be code areas. This
+// includes some builtins defined in files other than builtins.go.
+var focusedWidgetNotCodeAreaTests = []string{
+	"edit:insert-raw",
+	"edit:smart-enter",
+	"edit:move-dot-right", // other buffer builtins not tested
+	"edit:completion:start",
+	"edit:history:start",
+}
+
+func TestBuiltins_FocusedWidgetNotCodeArea(t *testing.T) {
+	for _, code := range focusedWidgetNotCodeAreaTests {
+		t.Run(code, func(t *testing.T) {
+			f := setup(t)
+			f.Editor.app.PushAddon(tk.Label{})
+
+			evals(f.Evaler, code)
+			f.TestTTYNotes(t, mode.ErrFocusedWidgetNotCodeArea.Error())
 		})
 	}
 }
