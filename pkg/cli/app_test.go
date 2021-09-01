@@ -356,31 +356,76 @@ func TestReadCode_LetsLastWidgetHandleEvents(t *testing.T) {
 	f.TTY.TestBuffer(t, wantBuf)
 }
 
+func TestReadCode_PutsCursorOnLastWidgetWithFocus(t *testing.T) {
+	f := Setup(WithSpec(func(spec *AppSpec) {
+		spec.State.Addons = []tk.Widget{
+			testAddon{tk.Label{Content: ui.T("addon1> ")}, true},
+			testAddon{tk.Label{Content: ui.T("addon2> ")}, false},
+		}
+	}))
+	defer f.Stop()
+
+	f.TestTTY(t, "\n", // main code area is empty
+		term.DotHere, "addon1> ", "\n", // addon 1 has focus
+		"addon2> ", // addon 2 has no focus
+	)
+}
+
+func TestPushAddonPopAddon(t *testing.T) {
+	f := Setup()
+	defer f.Stop()
+
+	f.TestTTY(t /* nothing */)
+
+	f.App.PushAddon(tk.Label{Content: ui.T("addon1> ")})
+	f.App.Redraw()
+	f.TestTTY(t, "\n",
+		term.DotHere, "addon1> ")
+
+	f.App.PushAddon(tk.Label{Content: ui.T("addon2> ")})
+	f.App.Redraw()
+	f.TestTTY(t, "\n",
+		"addon1> \n",
+		term.DotHere, "addon2> ")
+
+	f.App.PopAddon(false)
+	f.App.Redraw()
+	f.TestTTY(t, "\n",
+		term.DotHere, "addon1> ")
+
+	f.App.PopAddon(false)
+	f.App.Redraw()
+	f.TestTTY(t /* nothing */)
+
+	// Popping addon when there is no addon does nothing
+	f.App.PopAddon(false)
+	// Add something to the codearea to ensure that we're not just looking at
+	// the previous buffer
+	f.TTY.Inject(term.K(' '))
+	f.TestTTY(t, " ", term.DotHere)
+}
+
+func TestReadCode_HidesAddonsWhenNotEnoughSpace(t *testing.T) {
+	f := Setup(
+		func(spec *AppSpec, tty TTYCtrl) {
+			spec.State.Addons = []tk.Widget{
+				tk.Label{Content: ui.T("addon1> ")},
+				tk.Label{Content: ui.T("addon2> ")}, // no space for this
+			}
+			tty.SetSize(2, 40)
+		})
+	defer f.Stop()
+
+	f.TestTTY(t, "\n",
+		term.DotHere, "addon1> ")
+}
+
 type testAddon struct {
-	tk.Empty
+	tk.Label
 	focus bool
 }
 
 func (a testAddon) Focus() bool { return a.focus }
-
-func TestReadCode_RespectsAddonFocusMethod(t *testing.T) {
-	addon := testAddon{}
-	f := Setup(WithSpec(func(spec *AppSpec) { spec.State.Addons = []tk.Widget{&addon} }))
-	defer f.Stop()
-
-	wantBuf := bb().
-		SetDotHere(). // main code area has focus
-		Newline().Buffer()
-	f.TTY.TestBuffer(t, wantBuf)
-
-	addon.focus = true
-	f.App.Redraw()
-
-	wantBuf = bb().
-		Newline().SetDotHere(). // addon has focus
-		Buffer()
-	f.TTY.TestBuffer(t, wantBuf)
-}
 
 // Misc features.
 
