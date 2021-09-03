@@ -5,7 +5,7 @@ import (
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/histutil"
-	"src.elv.sh/pkg/cli/mode"
+	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 )
@@ -45,11 +45,11 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder)
 			"binding": bindingVar,
 		}.AddGoFns("<edit:history>", map[string]interface{}{
 			"start": func() { notifyError(app, histwalkStart(app, hs, bindings)) },
-			"up":    func() { notifyError(app, histwalkDo(app, mode.Histwalk.Prev)) },
+			"up":    func() { notifyError(app, histwalkDo(app, modes.Histwalk.Prev)) },
 
-			"down": func() { notifyError(app, histwalkDo(app, mode.Histwalk.Next)) },
+			"down": func() { notifyError(app, histwalkDo(app, modes.Histwalk.Next)) },
 			"down-or-quit": func() {
-				err := histwalkDo(app, mode.Histwalk.Next)
+				err := histwalkDo(app, modes.Histwalk.Next)
 				if err == histutil.ErrEndOfHistory {
 					app.PopAddon(false)
 				} else {
@@ -70,7 +70,7 @@ func histwalkStart(app cli.App, hs *histStore, bindings tk.Bindings) error {
 		return nil
 	}
 	buf := codeArea.CopyState().Buffer
-	w, err := mode.NewHistwalk(app, mode.HistwalkSpec{
+	w, err := modes.NewHistwalk(app, modes.HistwalkSpec{
 		Bindings: bindings, Store: hs, Prefix: buf.Content[:buf.Dot]})
 	if w != nil {
 		app.PushAddon(w)
@@ -80,8 +80,8 @@ func histwalkStart(app cli.App, hs *histStore, bindings tk.Bindings) error {
 
 var errNotInHistoryMode = errors.New("not in history mode")
 
-func histwalkDo(app cli.App, f func(mode.Histwalk) error) error {
-	w, ok := app.ActiveWidget().(mode.Histwalk)
+func histwalkDo(app cli.App, f func(modes.Histwalk) error) error {
+	w, ok := app.ActiveWidget().(modes.Histwalk)
 	if !ok {
 		return errNotInHistoryMode
 	}

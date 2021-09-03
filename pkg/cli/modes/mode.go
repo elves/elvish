@@ -1,6 +1,6 @@
 // Package mode implements modes, which are widgets tailored for a specific
 // task.
-package mode
+package modes
 
 import (
 	"errors"

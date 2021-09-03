@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode"
+	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 )
 
 func main() {
 	app := cli.NewApp(cli.AppSpec{})
-	w, _ := mode.NewNavigation(app, mode.NavigationSpec{
+	w, _ := modes.NewNavigation(app, modes.NavigationSpec{
 		Bindings: tk.MapBindings{
 			term.K('x'): func(tk.Widget) { app.CommitCode() },
 		},

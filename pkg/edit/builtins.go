@@ -7,7 +7,7 @@ import (
 	"unicode/utf8"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode"
+	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
@@ -107,7 +107,7 @@ func insertRaw(app cli.App, tty cli.TTY) {
 		return
 	}
 	tty.SetRawInput(1)
-	w := mode.NewStub(mode.StubSpec{
+	w := modes.NewStub(modes.StubSpec{
 		Bindings: tk.FuncBindings(func(w tk.Widget, event term.Event) bool {
 			switch event := event.(type) {
 			case term.KeyEvent:
@@ -620,7 +620,7 @@ func moveDotRightGeneralWord(categorize categorizer, buffer string, dot int) int
 
 // Like mode.FocusedCodeArea, but handles the error by writing a notification.
 func focusedCodeArea(app cli.App) (tk.CodeArea, bool) {
-	codeArea, err := mode.FocusedCodeArea(app)
+	codeArea, err := modes.FocusedCodeArea(app)
 	if err != nil {
 		app.Notify(err.Error())
 		return nil, false

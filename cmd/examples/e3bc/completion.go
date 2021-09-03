@@ -1,6 +1,6 @@
 package main
 
-import "src.elv.sh/pkg/cli/mode"
+import "src.elv.sh/pkg/cli/modes"
 
 var items = []string{
 	// Functions
@@ -14,10 +14,10 @@ var items = []string{
 	"limits", "quit", "warranty",
 }
 
-func candidates() []mode.CompletionItem {
-	candidates := make([]mode.CompletionItem, len(items))
+func candidates() []modes.CompletionItem {
+	candidates := make([]modes.CompletionItem, len(items))
 	for i, item := range items {
-		candidates[i] = mode.CompletionItem{ToShow: item, ToInsert: item}
+		candidates[i] = modes.CompletionItem{ToShow: item, ToInsert: item}
 	}
 	return candidates
 }

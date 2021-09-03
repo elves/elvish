@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode"
+	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
@@ -123,7 +123,7 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 			"width-ratio": widthRatioVar,
 		}.AddGoFns("<edit:navigation>", map[string]interface{}{
 			"start": func() {
-				w, err := mode.NewNavigation(app, mode.NavigationSpec{
+				w, err := modes.NewNavigation(app, modes.NavigationSpec{
 					Bindings: bindings,
 					WidthRatio: func() [3]int {
 						return convertNavWidthRatio(widthRatioVar.Get())
@@ -136,40 +136,40 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 					startMode(app, w, nil)
 				}
 			},
-			"left":  actOnNavigation(app, mode.Navigation.Ascend),
-			"right": actOnNavigation(app, mode.Navigation.Descend),
+			"left":  actOnNavigation(app, modes.Navigation.Ascend),
+			"right": actOnNavigation(app, modes.Navigation.Descend),
 			"up": actOnNavigation(app,
-				func(w mode.Navigation) { w.Select(tk.Prev) }),
+				func(w modes.Navigation) { w.Select(tk.Prev) }),
 			"down": actOnNavigation(app,
-				func(w mode.Navigation) { w.Select(tk.Next) }),
+				func(w modes.Navigation) { w.Select(tk.Next) }),
 			"page-up": actOnNavigation(app,
-				func(w mode.Navigation) { w.Select(tk.PrevPage) }),
+				func(w modes.Navigation) { w.Select(tk.PrevPage) }),
 			"page-down": actOnNavigation(app,
-				func(w mode.Navigation) { w.Select(tk.NextPage) }),
+				func(w modes.Navigation) { w.Select(tk.NextPage) }),
 
 			"file-preview-up": actOnNavigation(app,
-				func(w mode.Navigation) { w.ScrollPreview(-1) }),
+				func(w modes.Navigation) { w.ScrollPreview(-1) }),
 			"file-preview-down": actOnNavigation(app,
-				func(w mode.Navigation) { w.ScrollPreview(1) }),
+				func(w modes.Navigation) { w.ScrollPreview(1) }),
 
 			"insert-selected":          func() { navInsertSelected(app) },
 			"insert-selected-and-quit": func() { navInsertSelectedAndQuit(app) },
 
 			"trigger-filter": actOnNavigation(app,
-				func(w mode.Navigation) { w.MutateFiltering(neg) }),
+				func(w modes.Navigation) { w.MutateFiltering(neg) }),
 			"trigger-shown-hidden": actOnNavigation(app,
-				func(w mode.Navigation) { w.MutateShowHidden(neg) }),
+				func(w modes.Navigation) { w.MutateShowHidden(neg) }),
 		}).Ns())
 }
 
 func neg(b bool) bool { return !b }
 
-func activeNavigation(app cli.App) (mode.Navigation, bool) {
-	w, ok := app.ActiveWidget().(mode.Navigation)
+func activeNavigation(app cli.App) (modes.Navigation, bool) {
+	w, ok := app.ActiveWidget().(modes.Navigation)
 	return w, ok
 }
 
-func actOnNavigation(app cli.App, f func(mode.Navigation)) func() {
+func actOnNavigation(app cli.App, f func(modes.Navigation)) func() {
 	return func() {
 		if w, ok := activeNavigation(app); ok {
 			f(w)

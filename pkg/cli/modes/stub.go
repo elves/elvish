@@ -1,4 +1,4 @@
-package mode
+package modes
 
 import (
 	"src.elv.sh/pkg/cli/term"

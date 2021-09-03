@@ -5,13 +5,13 @@ import (
 	"errors"
 	"sort"
 
-	"src.elv.sh/pkg/cli/mode"
+	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/parse/parseutil"
 )
 
-type item = mode.CompletionItem
+type item = modes.CompletionItem
 
 // An error returned by Complete if the config has not supplied a PureEvaler.
 var errNoPureEvaler = errors.New("no PureEvaler supplied")
@@ -44,13 +44,13 @@ type ArgGenerator func(args []string) ([]RawItem, error)
 type Result struct {
 	Name    string
 	Replace diag.Ranging
-	Items   []mode.CompletionItem
+	Items   []modes.CompletionItem
 }
 
 // RawItem represents completion items before the quoting pass.
 type RawItem interface {
 	String() string
-	Cook(parse.PrimaryType) mode.CompletionItem
+	Cook(parse.PrimaryType) modes.CompletionItem
 }
 
 // PureEvaler encapsulates the functionality the completion algorithm needs from
@@ -94,7 +94,7 @@ func Complete(code CodeBuffer, cfg Config) (*Result, error) {
 			continue
 		}
 		rawItems = cfg.Filterer(ctx.name, ctx.seed, rawItems)
-		items := make([]mode.CompletionItem, len(rawItems))
+		items := make([]modes.CompletionItem, len(rawItems))
 		for i, rawCand := range rawItems {
 			items[i] = rawCand.Cook(ctx.quote)
 		}
@@ -107,8 +107,8 @@ func Complete(code CodeBuffer, cfg Config) (*Result, error) {
 	return nil, errNoCompletion
 }
 
-func dedup(items []mode.CompletionItem) []mode.CompletionItem {
-	var result []mode.CompletionItem
+func dedup(items []modes.CompletionItem) []modes.CompletionItem {
+	var result []modes.CompletionItem
 	for i, item := range items {
 		if i == 0 || item.ToInsert != items[i-1].ToInsert {
 			result = append(result, item)

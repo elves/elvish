@@ -3,7 +3,7 @@ package edit
 // Implementation of the editor "command" mode.
 
 import (
-	"src.elv.sh/pkg/cli/mode"
+	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/eval"
 )
 
@@ -29,7 +29,7 @@ func initCommandAPI(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 			"binding": bindingVar,
 		}.AddGoFns("<edit:command>:", map[string]interface{}{
 			"start": func() {
-				w := mode.NewStub(mode.StubSpec{
+				w := modes.NewStub(modes.StubSpec{
 					Bindings: bindings,
 					Name:     " COMMAND ",
 				})

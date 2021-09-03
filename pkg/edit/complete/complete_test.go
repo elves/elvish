@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/cli/lscolors"
-	"src.elv.sh/pkg/cli/mode"
+	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
@@ -102,11 +102,11 @@ func TestComplete(t *testing.T) {
 		},
 	}
 
-	allFileNameItems := []mode.CompletionItem{
+	allFileNameItems := []modes.CompletionItem{
 		fc("a.exe", " "), fc("d"+string(os.PathSeparator), ""), fc("non-exe", " "),
 	}
 
-	allCommandItems := []mode.CompletionItem{
+	allCommandItems := []modes.CompletionItem{
 		c("bar = "), c("fn"), c("foo = "), c("for"), c("if"), c("ls"), c("make"),
 		c("ns:"),
 	}
@@ -120,7 +120,7 @@ func TestComplete(t *testing.T) {
 		Args(cb("ls "), dupCfg).Rets(
 			&Result{
 				Name: "argument", Replace: r(3, 3),
-				Items: []mode.CompletionItem{
+				Items: []modes.CompletionItem{
 					c("a"), c("b"),
 				},
 			},
@@ -134,13 +134,13 @@ func TestComplete(t *testing.T) {
 		Args(cb("ls a"), cfg).Rets(
 			&Result{
 				Name: "argument", Replace: r(3, 4),
-				Items: []mode.CompletionItem{fc("a.exe", " ")}},
+				Items: []modes.CompletionItem{fc("a.exe", " ")}},
 			nil),
 		// GenerateForSudo completing external commands.
 		Args(cb("sudo "), cfg).Rets(
 			&Result{
 				Name: "argument", Replace: r(5, 5),
-				Items: []mode.CompletionItem{c("ls"), c("make")}},
+				Items: []modes.CompletionItem{c("ls"), c("make")}},
 			nil),
 		// GenerateForSudo completing non-command arguments.
 		Args(cb("sudo ls "), cfg).Rets(
@@ -152,12 +152,12 @@ func TestComplete(t *testing.T) {
 		Args(cb("ls a "), argGeneratorDebugCfg).Rets(
 			&Result{
 				Name: "argument", Replace: r(5, 5),
-				Items: []mode.CompletionItem{c(`[]string{"ls", "a", ""}`)}},
+				Items: []modes.CompletionItem{c(`[]string{"ls", "a", ""}`)}},
 			nil),
 		Args(cb("ls a b"), argGeneratorDebugCfg).Rets(
 			&Result{
 				Name: "argument", Replace: r(5, 6),
-				Items: []mode.CompletionItem{c(`[]string{"ls", "a", "b"}`)}},
+				Items: []modes.CompletionItem{c(`[]string{"ls", "a", "b"}`)}},
 			nil),
 
 		// Complete commands at an empty buffer, generating special forms,
@@ -194,7 +194,7 @@ func TestComplete(t *testing.T) {
 		Args(cb("e:"), cfg).Rets(
 			&Result{
 				Name: "command", Replace: r(0, 2),
-				Items: []mode.CompletionItem{c("e:ls"), c("e:make")}},
+				Items: []modes.CompletionItem{c("e:ls"), c("e:make")}},
 			nil),
 
 		// TODO(xiaq): Add tests for completing indices.
@@ -206,26 +206,26 @@ func TestComplete(t *testing.T) {
 		Args(cb("p > a"), cfg).Rets(
 			&Result{
 				Name: "redir", Replace: r(4, 5),
-				Items: []mode.CompletionItem{fc("a.exe", " ")}},
+				Items: []modes.CompletionItem{fc("a.exe", " ")}},
 			nil),
 
 		// Completing variables.
 		Args(cb("p $"), cfg).Rets(
 			&Result{
 				Name: "variable", Replace: r(3, 3),
-				Items: []mode.CompletionItem{
+				Items: []modes.CompletionItem{
 					c("bar"), c("fn~"), c("foo"), c("ns1:"), c("ns2:"), c("ns:")}},
 			nil),
 		Args(cb("p $f"), cfg).Rets(
 			&Result{
 				Name: "variable", Replace: r(3, 4),
-				Items: []mode.CompletionItem{c("fn~"), c("foo")}},
+				Items: []modes.CompletionItem{c("fn~"), c("foo")}},
 			nil),
 		//       0123456
 		Args(cb("p $ns1:"), cfg).Rets(
 			&Result{
 				Name: "variable", Replace: r(7, 7),
-				Items: []mode.CompletionItem{c("lorem")}},
+				Items: []modes.CompletionItem{c("lorem")}},
 			nil),
 	})
 
@@ -235,7 +235,7 @@ func TestComplete(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		allLocalCommandItems := []mode.CompletionItem{
+		allLocalCommandItems := []modes.CompletionItem{
 			fc("./a.exe", " "), fc("./d/", ""), fc("./d2/", ""),
 		}
 		tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
@@ -244,7 +244,7 @@ func TestComplete(t *testing.T) {
 			Args(cb("p > d"), cfg).Rets(
 				&Result{
 					Name: "redir", Replace: r(4, 5),
-					Items: []mode.CompletionItem{fc("d/", ""), fc("d2/", "")}},
+					Items: []modes.CompletionItem{fc("d/", ""), fc("d2/", "")}},
 				nil,
 			),
 
@@ -269,10 +269,10 @@ func TestComplete(t *testing.T) {
 
 func cb(s string) CodeBuffer { return CodeBuffer{s, len(s)} }
 
-func c(s string) mode.CompletionItem { return mode.CompletionItem{ToShow: s, ToInsert: s} }
+func c(s string) modes.CompletionItem { return modes.CompletionItem{ToShow: s, ToInsert: s} }
 
-func fc(s, suffix string) mode.CompletionItem {
-	return mode.CompletionItem{ToShow: s, ToInsert: parse.Quote(s) + suffix,
+func fc(s, suffix string) modes.CompletionItem {
+	return modes.CompletionItem{ToShow: s, ToInsert: parse.Quote(s) + suffix,
 		ShowStyle: ui.StyleFromSGR(lscolors.GetColorist().GetStyle(s))}
 }
 

@@ -4,7 +4,7 @@ import (
 	"io"
 	"testing"
 
-	"src.elv.sh/pkg/cli/mode"
+	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
@@ -244,7 +244,7 @@ func TestBuiltins_FocusedWidgetNotCodeArea(t *testing.T) {
 			f.Editor.app.PushAddon(tk.Label{})
 
 			evals(f.Evaler, code)
-			f.TestTTYNotes(t, mode.ErrFocusedWidgetNotCodeArea.Error())
+			f.TestTTYNotes(t, modes.ErrFocusedWidgetNotCodeArea.Error())
 		})
 	}
 }

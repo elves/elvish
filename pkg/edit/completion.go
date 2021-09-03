@@ -9,7 +9,7 @@ import (
 	"unicode/utf8"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode"
+	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/edit/complete"
 	"src.elv.sh/pkg/eval"
@@ -200,7 +200,7 @@ func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, sma
 			}
 		}
 	}
-	w, err := mode.NewCompletion(app, mode.CompletionSpec{
+	w, err := modes.NewCompletion(app, modes.CompletionSpec{
 		Name: result.Name, Replace: result.Replace, Items: result.Items,
 		Filter: filterSpec, Bindings: bindings,
 	})

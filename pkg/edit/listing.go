@@ -5,7 +5,7 @@ import (
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/histutil"
-	"src.elv.sh/pkg/cli/mode"
+	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/edit/filter"
 	"src.elv.sh/pkg/eval"
@@ -43,7 +43,7 @@ func initListings(ed *Editor, ev *eval.Evaler, st storedefs.Store, histStore his
 	initLocation(ed, ev, st, bindingVar, nb)
 }
 
-var filterSpec = mode.FilterSpec{
+var filterSpec = modes.FilterSpec{
 	Maker: func(f string) func(string) bool {
 		q, _ := filter.Compile(f)
 		if q == nil {
@@ -63,7 +63,7 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 			"binding": bindingVar,
 		}.AddGoFns("<edit:histlist>", map[string]interface{}{
 			"start": func() {
-				w, err := mode.NewHistlist(ed.app, mode.HistlistSpec{
+				w, err := modes.NewHistlist(ed.app, modes.HistlistSpec{
 					Bindings: bindings,
 					AllCmds:  histStore.AllCmds,
 					Dedup: func() bool {
@@ -89,7 +89,7 @@ func initLastcmd(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBi
 			"binding": bindingVar,
 		}.AddGoFn("<edit:lastcmd>", "start", func() {
 			// TODO: Specify wordifier
-			w, err := mode.NewLastcmd(ed.app, mode.LastcmdSpec{
+			w, err := modes.NewLastcmd(ed.app, modes.LastcmdSpec{
 				Bindings: bindings, Store: histStore})
 			startMode(ed.app, w, err)
 		}).Ns())
@@ -102,7 +102,7 @@ func initLocation(ed *Editor, ev *eval.Evaler, st storedefs.Store, commonBinding
 	workspacesVar := newMapVar(vals.EmptyMap)
 
 	bindings := newMapBindings(ed, ev, bindingVar, commonBindingVar)
-	workspaceIterator := mode.LocationWSIterator(
+	workspaceIterator := modes.LocationWSIterator(
 		adaptToIterateStringPair(workspacesVar))
 
 	nb.AddNs("location",
@@ -112,7 +112,7 @@ func initLocation(ed *Editor, ev *eval.Evaler, st storedefs.Store, commonBinding
 			"pinned":     pinnedVar,
 			"workspaces": workspacesVar,
 		}.AddGoFn("<edit:location>", "start", func() {
-			w, err := mode.NewLocation(ed.app, mode.LocationSpec{
+			w, err := modes.NewLocation(ed.app, modes.LocationSpec{
 				Bindings: bindings, Store: dirStore{ev, st},
 				IteratePinned:     adaptToIterateString(pinnedVar),
 				IterateHidden:     adaptToIterateString(hiddenVar),

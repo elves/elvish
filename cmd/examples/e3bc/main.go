@@ -9,7 +9,7 @@ import (
 
 	"src.elv.sh/cmd/examples/e3bc/bc"
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/mode"
+	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/diag"
@@ -48,7 +48,7 @@ func main() {
 					// Only complete with an empty buffer
 					return
 				}
-				w, err := mode.NewCompletion(app, mode.CompletionSpec{
+				w, err := modes.NewCompletion(app, modes.CompletionSpec{
 					Replace: diag.Ranging{From: 0, To: 0}, Items: candidates(),
 				})
 				if err == nil {

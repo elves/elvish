@@ -1,4 +1,4 @@
-package mode
+package modes
 
 import (
 	"errors"
