@@ -80,6 +80,10 @@ func (w *textView) Render(width, height int) *term.Buffer {
 	return buf
 }
 
+func (w *textView) MaxHeight(width, height int) int {
+	return len(w.CopyState().Lines)
+}
+
 func (w *textView) getStateForRender(height int) (lines []string, first int) {
 	w.MutateState(func(s *TextViewState) {
 		if s.First > len(s.Lines)-height && len(s.Lines)-height >= 0 {

@@ -53,6 +53,10 @@ func (w *comboBox) Render(width, height int) *term.Buffer {
 	return buf
 }
 
+func (w *comboBox) MaxHeight(width, height int) int {
+	return w.codeArea.MaxHeight(width, height) + w.listBox.MaxHeight(width, height)
+}
+
 // Handle first lets the listbox handle the event, and if it is unhandled, lets
 // the codearea handle it. If the codearea has handled the event and the code
 // content has changed, it calls OnFilter with the new content.

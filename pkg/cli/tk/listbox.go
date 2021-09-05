@@ -85,6 +85,25 @@ func (w *listBox) Render(width, height int) *term.Buffer {
 	return w.renderVertical(width, height)
 }
 
+func (w *listBox) MaxHeight(width, height int) int {
+	s := w.CopyState()
+	if s.Items == nil || s.Items.Len() == 0 {
+		return 0
+	}
+	if w.Horizontal {
+		_, h := getHorizontalWindow(s, w.Padding, width, height)
+		return h
+	}
+	h := 0
+	for i := 0; i < s.Items.Len(); i++ {
+		h += s.Items.Show(i).CountLines()
+		if h >= height {
+			return height
+		}
+	}
+	return h
+}
+
 const listBoxColGap = 2
 
 func (w *listBox) renderHorizontal(width, height int) *term.Buffer {

@@ -95,8 +95,8 @@ func getVerticalWindow(state ListBoxState, height int) (first, crop int) {
 	return 0, 0
 }
 
-// Determines the window to show in horizontal  It returns the first item
-// to show and the amount of height required.
+// Determines the window to show in horizontal. Returns the first item to show
+// and the amount of height required.
 func getHorizontalWindow(state ListBoxState, padding, width, height int) (int, int) {
 	items := state.Items
 	n := items.Len()

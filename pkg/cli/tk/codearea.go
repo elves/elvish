@@ -146,12 +146,20 @@ func (w *codeArea) Submit() {
 // Render renders the code area, including the prompt and rprompt, highlighted
 // code, the cursor, and compilation errors in the code content.
 func (w *codeArea) Render(width, height int) *term.Buffer {
+	b := w.render(width)
+	truncateToHeight(b, height)
+	return b
+}
+
+func (w *codeArea) MaxHeight(width, height int) int {
+	return len(w.render(width).Lines)
+}
+
+func (w *codeArea) render(width int) *term.Buffer {
 	view := getView(w)
 	bb := term.NewBufferBuilder(width)
 	renderView(view, bb)
-	b := bb.Buffer()
-	truncateToHeight(b, height)
-	return b
+	return bb.Buffer()
 }
 
 // Handle handles KeyEvent's of non-function keys, as well as PasteSetting

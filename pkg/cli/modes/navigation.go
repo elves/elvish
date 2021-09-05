@@ -99,6 +99,10 @@ func (w *navigation) Render(width, height int) *term.Buffer {
 	return buf
 }
 
+func (w *navigation) MaxHeight(width, height int) int {
+	return w.codeArea.MaxHeight(width, height) + w.colView.MaxHeight(width, height)
+}
+
 func (w *navigation) Focus() bool {
 	return w.CopyState().Filtering
 }

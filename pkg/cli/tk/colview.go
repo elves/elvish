@@ -95,26 +95,47 @@ const colViewColGap = 1
 // Render renders all the columns side by side, putting the dot in the focused
 // column.
 func (w *colView) Render(width, height int) *term.Buffer {
+	cols, widths := w.prepareRender(width)
+	if len(cols) == 0 {
+		return &term.Buffer{Width: width}
+	}
+	var buf term.Buffer
+	for i, col := range cols {
+		if i > 0 {
+			buf.Width += colViewColGap
+		}
+		bufCol := col.Render(widths[i], height)
+		buf.ExtendRight(bufCol)
+	}
+	return &buf
+}
+
+func (w *colView) MaxHeight(width, height int) int {
+	cols, widths := w.prepareRender(width)
+	max := 0
+	for i, col := range cols {
+		colMax := col.MaxHeight(widths[i], height)
+		if max < colMax {
+			max = colMax
+		}
+	}
+	return max
+}
+
+// Returns widgets in and widths of columns.
+func (w *colView) prepareRender(width int) ([]Widget, []int) {
 	state := w.CopyState()
 	ncols := len(state.Columns)
 	if ncols == 0 {
 		// No column.
-		return &term.Buffer{Width: width}
+		return nil, nil
 	}
 	if width < ncols {
 		// To narrow; give up by rendering nothing.
-		return &term.Buffer{Width: width}
+		return nil, nil
 	}
-	colWidths := distribute(width-(ncols-1)*colViewColGap, w.Weights(ncols))
-	var buf term.Buffer
-	for i, col := range state.Columns {
-		if i > 0 {
-			buf.Width += colViewColGap
-		}
-		bufCol := col.Render(colWidths[i], height)
-		buf.ExtendRight(bufCol)
-	}
-	return &buf
+	widths := distribute(width-(ncols-1)*colViewColGap, w.Weights(ncols))
+	return state.Columns, widths
 }
 
 // Handle handles the event first by consulting the overlay handler, and then

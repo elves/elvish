@@ -12,6 +12,11 @@ func (Empty) Render(width, height int) *term.Buffer {
 	return term.NewBufferBuilder(width).Buffer()
 }
 
+// MaxHeight returns 1, since this widget always occupies one line.
+func (Empty) MaxHeight(width, height int) int {
+	return 1
+}
+
 // Handle always returns false.
 func (Empty) Handle(event term.Event) bool {
 	return false

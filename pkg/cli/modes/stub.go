@@ -24,10 +24,18 @@ type stub struct {
 }
 
 func (w stub) Render(width, height int) *term.Buffer {
-	buf := term.NewBufferBuilder(width).
-		WriteStyled(modeLine(w.Name, false)).SetDotHere().Buffer()
+	buf := w.render(width)
 	buf.TrimToLines(0, height)
 	return buf
+}
+
+func (w stub) MaxHeight(width, height int) int {
+	return len(w.render(width).Lines)
+}
+
+func (w stub) render(width int) *term.Buffer {
+	return term.NewBufferBuilder(width).
+		WriteStyled(modeLine(w.Name, false)).SetDotHere().Buffer()
 }
 
 func (w stub) Handle(event term.Event) bool {

@@ -32,18 +32,26 @@ type instant struct {
 }
 
 func (w *instant) Render(width, height int) *term.Buffer {
+	buf := w.render(width, height)
+	buf.TrimToLines(0, height)
+	return buf
+}
+
+func (w *instant) MaxHeight(width, height int) int {
+	return len(w.render(width, height).Lines)
+}
+
+func (w *instant) render(width, height int) *term.Buffer {
 	bb := term.NewBufferBuilder(width).
 		WriteStyled(modeLine(" INSTANT ", false)).SetDotHere()
 	if w.lastErr != nil {
 		bb.Newline().Write(w.lastErr.Error(), ui.FgRed)
 	}
 	buf := bb.Buffer()
-	if len(buf.Lines) >= height {
-		buf.TrimToLines(0, height)
-		return buf
+	if len(buf.Lines) < height {
+		bufTextView := w.textView.Render(width, height-len(buf.Lines))
+		buf.Extend(bufTextView, false)
 	}
-	bufTextView := w.textView.Render(width, height-len(buf.Lines))
-	buf.Extend(bufTextView, false)
 	return buf
 }
 

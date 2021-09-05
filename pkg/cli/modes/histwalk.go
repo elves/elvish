@@ -37,11 +37,19 @@ type histwalk struct {
 }
 
 func (w *histwalk) Render(width, height int) *term.Buffer {
-	cmd, _ := w.cursor.Get()
-	content := modeLine(fmt.Sprintf(" HISTORY #%d ", cmd.Seq), false)
-	buf := term.NewBufferBuilder(width).WriteStyled(content).Buffer()
+	buf := w.render(width)
 	buf.TrimToLines(0, height)
 	return buf
+}
+
+func (w *histwalk) MaxHeight(width, height int) int {
+	return len(w.render(width).Lines)
+}
+
+func (w *histwalk) render(width int) *term.Buffer {
+	cmd, _ := w.cursor.Get()
+	content := modeLine(fmt.Sprintf(" HISTORY #%d ", cmd.Seq), false)
+	return term.NewBufferBuilder(width).WriteStyled(content).Buffer()
 }
 
 func (w *histwalk) Handle(event term.Event) bool {

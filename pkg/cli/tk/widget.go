@@ -12,13 +12,22 @@ import (
 // render itself.
 type Widget interface {
 	Renderer
+	MaxHeighter
 	Handler
 }
 
 // Renderer wraps the Render method.
 type Renderer interface {
-	// Render onto a region of bound width and height.
+	// Render renders onto a region of bound width and height.
 	Render(width, height int) *term.Buffer
+}
+
+// MaxHeighter wraps the MaxHeight method.
+type MaxHeighter interface {
+	// MaxHeight returns the maximum height needed when rendering onto a region
+	// of bound width and height. The returned value may be larger than the
+	// height argument.
+	MaxHeight(width, height int) int
 }
 
 // Handler wraps the Handle method.

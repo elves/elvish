@@ -416,8 +416,9 @@ func TestReadCode_HidesAddonsWhenNotEnoughSpace(t *testing.T) {
 		})
 	defer f.Stop()
 
-	f.TestTTY(t, "\n",
-		term.DotHere, "addon1> ")
+	f.TestTTY(t,
+		"addon1> \n",
+		term.DotHere, "addon2> ")
 }
 
 type testAddon struct {

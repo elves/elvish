@@ -192,10 +192,8 @@ func testNavigation(t *testing.T, c NavigationCursor) {
 		"     ++++++++++++++                    -",
 		" d    d2                               │\n", Styles,
 		"#### //////////////                    -",
-		" f    d3                                \n", Styles,
+		" f    d3                                ", Styles,
 		"     //////////////                    X",
-		"                                        ", Styles,
-		"                                       X",
 	)
 	f.TTY.TestBuffer(t, d1Buf2)
 

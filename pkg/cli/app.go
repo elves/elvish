@@ -4,6 +4,7 @@ package cli
 import (
 	"io"
 	"os"
+	"sort"
 	"sync"
 	"syscall"
 
@@ -259,7 +260,7 @@ func (a *app) redraw(flag redrawFlag) {
 		if hideRPrompt {
 			a.codeArea.MutateState(func(s *tk.CodeAreaState) { s.HideRPrompt = true })
 		}
-		bufMain := renderApp(a.codeArea, nil /* addon */, width, height)
+		bufMain := renderApp([]tk.Widget{a.codeArea /* no addon */}, width, height)
 		if hideRPrompt {
 			a.codeArea.MutateState(func(s *tk.CodeAreaState) { s.HideRPrompt = false })
 		}
@@ -269,7 +270,7 @@ func (a *app) redraw(flag redrawFlag) {
 		a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 		a.TTY.ResetBuffer()
 	} else {
-		bufMain := renderApp(a.codeArea, addons, width, height)
+		bufMain := renderApp(append([]tk.Widget{a.codeArea}, addons...), width, height)
 		a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 	}
 }
@@ -291,16 +292,93 @@ func renderNotes(notes []string, width int) *term.Buffer {
 }
 
 // Renders the codearea, and uses the rest of the height for the listing.
-func renderApp(codeArea tk.Renderer, addons []tk.Widget, width, height int) *term.Buffer {
-	buf := codeArea.Render(width, height)
-	for _, w := range addons {
-		if len(buf.Lines) >= height {
-			break
+func renderApp(widgets []tk.Widget, width, height int) *term.Buffer {
+	heights, focus := distributeHeight(widgets, width, height)
+	var buf *term.Buffer
+	for i, w := range widgets {
+		if heights[i] == 0 {
+			continue
 		}
-		bufListing := w.Render(width, height-len(buf.Lines))
-		buf.Extend(bufListing, hasFocus(w))
+		buf2 := w.Render(width, heights[i])
+		if buf == nil {
+			buf = buf2
+		} else {
+			buf.Extend(buf2, i == focus)
+		}
 	}
 	return buf
+}
+
+// Distributes the height among all the widgets. Returns the height for each
+// widget, and the index of the widget currently focused.
+func distributeHeight(widgets []tk.Widget, width, height int) ([]int, int) {
+	var focus int
+	for i, w := range widgets {
+		if hasFocus(w) {
+			focus = i
+		}
+	}
+	n := len(widgets)
+	heights := make([]int, n)
+	if height <= n {
+		// Not enough (or just enough) height to render every widget with a
+		// height of 1.
+		remain := height
+		// Start from the focused widget, and extend downwards as much as
+		// possible.
+		for i := focus; i < n && remain > 0; i++ {
+			heights[i] = 1
+			remain--
+		}
+		// If there is still space remaining, start from the focused widget
+		// again, and extend upwards as much as possible.
+		for i := focus - 1; i >= 0 && remain > 0; i-- {
+			heights[i] = 1
+			remain--
+		}
+		return heights, focus
+	}
+
+	maxHeights := make([]int, n)
+	for i, w := range widgets {
+		maxHeights[i] = w.MaxHeight(width, height)
+	}
+
+	// The algorithm below achieves the following goals:
+	//
+	// 1. If maxHeights[u] > maxHeights[v], heights[u] >= heights[v];
+	//
+	// 2. While achieving goal 1, have as many widgets u s.t. heights[u] ==
+	//    maxHeights[u].
+	//
+	// This is done by allocating the height among the widgets following an
+	// non-decreasing order of maxHeights. At each step:
+	//
+	// - If it's possible to allocate maxHeights[u] to all remaining widgets,
+	//   then allocate maxHeights[u] to widget u;
+	//
+	// - If not, allocate the remaining budget evenly - rounding down at each
+	//   step, so the widgets with smaller maxHeights gets smaller heights.
+
+	indices := make([]int, n)
+	for i := range indices {
+		indices[i] = i
+	}
+	sort.Slice(indices, func(i, j int) bool {
+		return maxHeights[indices[i]] < maxHeights[indices[j]]
+	})
+
+	remain := height
+	for rank, idx := range indices {
+		if remain >= maxHeights[idx] {
+			heights[idx] = maxHeights[idx]
+		} else {
+			heights[idx] = remain / (n - rank)
+		}
+		remain -= heights[idx]
+	}
+
+	return heights, focus
 }
 
 func hasFocus(w interface{}) bool {
