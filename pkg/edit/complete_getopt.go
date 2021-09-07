@@ -282,8 +282,7 @@ func parseGetoptOptSpecs(v interface{}) (parsedOptSpecs, error) {
 			r, size := utf8.DecodeRuneInString(s)
 			if r == utf8.RuneError || size != len(s) {
 				err = fmt.Errorf(
-					"short option should be exactly one rune, got %v",
-					parse.Quote(s))
+					"short should be exactly one rune, got %v", parse.Quote(s))
 				return false
 			}
 			opt.Short = r

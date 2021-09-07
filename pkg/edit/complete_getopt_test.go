@@ -13,7 +13,8 @@ func setupCompleteGetopt(ev *eval.Evaler) {
 
 	code := `fn complete [@args]{
 	           opt-specs = [ [&short=a &long=all &desc="Show all"]
-	                         [&short=n &long=name &desc="Set name" &arg-required=$true
+	                         [&short=n &long=name &desc="Set name"
+	                          &arg-required=$true &arg-desc='new-name'
 	                          &completer= [_]{ put name1 name2 }] ]
 	           arg-handlers = [ [_]{ put first1 first2 }
 	                            [_]{ put second1 second2 } ... ]
@@ -22,7 +23,7 @@ func setupCompleteGetopt(ev *eval.Evaler) {
 	ev.Eval(parse.Source{Name: "[test init]", Code: code}, eval.EvalCfg{})
 }
 
-func TestCompleteGetopt2(t *testing.T) {
+func TestCompleteGetopt(t *testing.T) {
 	TestWithSetup(t, setupCompleteGetopt,
 		// Complete argument
 		That("complete ''").Puts("first1", "first2"),
@@ -32,14 +33,16 @@ func TestCompleteGetopt2(t *testing.T) {
 		That("complete -").Puts(
 			complexItem{Stem: "-a", Display: "-a (Show all)"},
 			complexItem{Stem: "--all", Display: "--all (Show all)"},
-			complexItem{Stem: "-n", Display: "-n (Set name)"},
-			complexItem{Stem: "--name", Display: "--name (Set name)"}),
+			complexItem{Stem: "-n", Display: "-n new-name (Set name)"},
+			complexItem{Stem: "--name", Display: "--name new-name (Set name)"}),
 		That("complete - >&-").Throws(eval.ErrNoValueOutput),
 
-		// Complte long option
+		// Complete long option
 		That("complete --").Puts(
 			complexItem{Stem: "--all", Display: "--all (Show all)"},
-			complexItem{Stem: "--name", Display: "--name (Set name)"}),
+			complexItem{Stem: "--name", Display: "--name new-name (Set name)"}),
+		That("complete --a").Puts(
+			complexItem{Stem: "--all", Display: "--all (Show all)"}),
 		That("complete -- >&-").Throws(eval.ErrNoValueOutput),
 
 		// Complete argument of short option
@@ -61,5 +64,40 @@ func TestCompleteGetopt2(t *testing.T) {
 		// Complete variadic argument
 		That("complete arg1 arg2 ''").Puts("second1", "second2"),
 		That("complete arg1 arg2 '' >&-").Throws(eval.ErrNoValueOutput),
+	)
+}
+
+func TestCompleteGetopt_TypeCheck(t *testing.T) {
+	TestWithSetup(t, setupCompleteGetopt,
+		That("complete-getopt [foo []] [] []").
+			Throws(ErrorWithMessage("arg should be string, got list")),
+
+		That("complete-getopt [] [foo] []").
+			Throws(ErrorWithMessage("opt should be map, got string")),
+		That("complete-getopt [] [[&short=[]]] []").
+			Throws(ErrorWithMessage("short should be string, got list")),
+		That("complete-getopt [] [[&short=foo]] []").
+			Throws(ErrorWithMessage("short should be exactly one rune, got foo")),
+		That("complete-getopt [] [[&long=[]]] []").
+			Throws(ErrorWithMessage("long should be string, got list")),
+		That("complete-getopt [] [[&]] []").
+			Throws(ErrorWithMessage("opt should have at least one of short and long forms")),
+		That("complete-getopt [] [[&short=a &arg-required=foo]] []").
+			Throws(ErrorWithMessage("arg-required should be bool, got string")),
+		That("complete-getopt [] [[&short=a &arg-optional=foo]] []").
+			Throws(ErrorWithMessage("arg-optional should be bool, got string")),
+		That("complete-getopt [] [[&short=a &arg-required=$true &arg-optional=$true]] []").
+			Throws(ErrorWithMessage("opt cannot have both arg-required and arg-optional")),
+		That("complete-getopt [] [[&short=a &desc=[]]] []").
+			Throws(ErrorWithMessage("desc should be string, got list")),
+		That("complete-getopt [] [[&short=a &arg-desc=[]]] []").
+			Throws(ErrorWithMessage("arg-desc should be string, got list")),
+		That("complete-getopt [] [[&short=a &completer=[]]] []").
+			Throws(ErrorWithMessage("completer should be fn, got list")),
+
+		That("complete-getopt [] [] [foo]").
+			Throws(ErrorWithMessage("string except for ... not allowed as argument handler, got foo")),
+		That("complete-getopt [] [] [[]]").
+			Throws(ErrorWithMessage("argument handler should be fn, got list")),
 	)
 }
