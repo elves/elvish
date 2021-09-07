@@ -33,11 +33,11 @@ func TestCompletion_Accept(t *testing.T) {
 	f.TestTTY(t, "foo", term.DotHere)
 }
 
-func TestCompletion_Close(t *testing.T) {
+func TestCompletion_Dismiss(t *testing.T) {
 	f := setupStartedCompletion(t)
 	defer f.Stop()
 
-	f.App.PopAddon(false)
+	f.App.PopAddon()
 	f.App.Redraw()
 	f.TestTTY(t /* nothing */)
 }

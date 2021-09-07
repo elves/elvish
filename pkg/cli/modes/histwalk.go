@@ -57,7 +57,8 @@ func (w *histwalk) Handle(event term.Event) bool {
 	if handled {
 		return true
 	}
-	w.app.PopAddon(true)
+	w.attachedTo.MutateState((*tk.CodeAreaState).ApplyPending)
+	w.app.PopAddon()
 	return w.attachedTo.Handle(event)
 }
 
@@ -106,14 +107,8 @@ func (w *histwalk) walk(f func(histutil.Cursor), undo func(histutil.Cursor)) err
 	return err
 }
 
-func (w *histwalk) Close(accept bool) {
-	w.attachedTo.MutateState(func(s *tk.CodeAreaState) {
-		if accept {
-			s.ApplyPending()
-		} else {
-			s.Pending = tk.PendingCode{}
-		}
-	})
+func (w *histwalk) Dismiss() {
+	w.attachedTo.MutateState(func(s *tk.CodeAreaState) { s.Pending = tk.PendingCode{} })
 }
 
 func (w *histwalk) updatePending() {

@@ -66,7 +66,8 @@ func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
 				})
 			},
 			OnAccept: func(it tk.Items, i int) {
-				app.PopAddon(true)
+				codeArea.MutateState((*tk.CodeAreaState).ApplyPending)
+				app.PopAddon()
 			},
 			ExtendStyle: true,
 		},
@@ -77,14 +78,8 @@ func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
 	return completion{w, codeArea}, nil
 }
 
-func (w completion) Close(accept bool) {
-	w.attached.MutateState(func(s *tk.CodeAreaState) {
-		if accept {
-			s.ApplyPending()
-		} else {
-			s.Pending = tk.PendingCode{}
-		}
-	})
+func (w completion) Dismiss() {
+	w.attached.MutateState(func(s *tk.CodeAreaState) { s.Pending = tk.PendingCode{} })
 }
 
 type completionItems []CompletionItem

@@ -36,7 +36,7 @@ func minibufSubmit(ed *Editor, ev *eval.Evaler) {
 	if !ok {
 		return
 	}
-	ed.app.PopAddon(false)
+	ed.app.PopAddon()
 	code := codeArea.CopyState().Buffer.Content
 	src := parse.Source{Name: "[minibuf]", Code: code}
 	notifyPort, cleanup := makeNotifyPort(ed)

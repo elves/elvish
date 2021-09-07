@@ -57,7 +57,7 @@ func main() {
 			},
 		},
 		GlobalBindings: tk.MapBindings{
-			term.K('[', ui.Ctrl): func(tk.Widget) { app.PopAddon(false) },
+			term.K('[', ui.Ctrl): func(tk.Widget) { app.PopAddon() },
 		},
 	})
 

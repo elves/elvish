@@ -31,8 +31,7 @@ func TestHistWalk(t *testing.T) {
 			Bindings: tk.MapBindings{
 				term.K(ui.Up):        func(w tk.Widget) { w.(Histwalk).Prev() },
 				term.K(ui.Down):      func(w tk.Widget) { w.(Histwalk).Next() },
-				term.K('[', ui.Ctrl): func(tk.Widget) { f.App.PopAddon(false) },
-				term.K(ui.Enter):     func(tk.Widget) { f.App.PopAddon(true) },
+				term.K('[', ui.Ctrl): func(tk.Widget) { f.App.PopAddon() },
 			},
 		}
 	}
@@ -64,8 +63,8 @@ func TestHistWalk(t *testing.T) {
 	// Start over and accept.
 	startHistwalk(f.App, getCfg())
 	f.TTY.TestBuffer(t, buf5)
-	f.TTY.Inject(term.K(ui.Enter))
-	f.TestTTY(t, "ls -a", term.DotHere)
+	f.TTY.Inject(term.K(' '))
+	f.TestTTY(t, "ls -a ", term.DotHere)
 }
 
 func TestHistWalk_FocusedWidgetNotCodeArea(t *testing.T) {

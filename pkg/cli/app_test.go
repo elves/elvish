@@ -388,17 +388,17 @@ func TestPushAddonPopAddon(t *testing.T) {
 		"addon1> \n",
 		term.DotHere, "addon2> ")
 
-	f.App.PopAddon(false)
+	f.App.PopAddon()
 	f.App.Redraw()
 	f.TestTTY(t, "\n",
 		term.DotHere, "addon1> ")
 
-	f.App.PopAddon(false)
+	f.App.PopAddon()
 	f.App.Redraw()
 	f.TestTTY(t /* nothing */)
 
 	// Popping addon when there is no addon does nothing
-	f.App.PopAddon(false)
+	f.App.PopAddon()
 	// Add something to the codearea to ensure that we're not just looking at
 	// the previous buffer
 	f.TTY.Inject(term.K(' '))

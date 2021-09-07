@@ -27,9 +27,9 @@ type App interface {
 	// PushAddon pushes a widget to the addon stack.
 	PushAddon(w tk.Widget)
 	// PopAddon pops the last widget from the addon stack. If the widget
-	// implements interface{ Close(accept bool) }, the Close method is called
+	// implements interface{ Dismiss() }, the Dismiss method is called
 	// first. This method does nothing if the addon stack is empty.
-	PopAddon(accept bool)
+	PopAddon()
 
 	// ActiveWidget returns the currently active widget. If the addon stack is
 	// non-empty, it returns the last addon. Otherwise it returns the main code
@@ -159,8 +159,8 @@ func (a *app) CopyState() State {
 	}
 }
 
-type closer interface {
-	Close(bool)
+type dismisser interface {
+	Dismiss()
 }
 
 func (a *app) PushAddon(w tk.Widget) {
@@ -169,14 +169,14 @@ func (a *app) PushAddon(w tk.Widget) {
 	a.State.Addons = append(a.State.Addons, w)
 }
 
-func (a *app) PopAddon(accept bool) {
+func (a *app) PopAddon() {
 	a.StateMutex.Lock()
 	defer a.StateMutex.Unlock()
 	if len(a.State.Addons) == 0 {
 		return
 	}
-	if c, ok := a.State.Addons[len(a.State.Addons)-1].(closer); ok {
-		c.Close(accept)
+	if d, ok := a.State.Addons[len(a.State.Addons)-1].(dismisser); ok {
+		d.Dismiss()
 	}
 	a.State.Addons = a.State.Addons[:len(a.State.Addons)-1]
 }

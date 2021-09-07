@@ -51,14 +51,11 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder)
 			"down-or-quit": func() {
 				err := histwalkDo(app, modes.Histwalk.Next)
 				if err == histutil.ErrEndOfHistory {
-					app.PopAddon(false)
+					app.PopAddon()
 				} else {
 					notifyError(app, err)
 				}
 			},
-			// TODO: Remove these builtins in favor of two universal accept and
-			// close builtins
-			"accept": func() { app.PopAddon(true) },
 
 			"fast-forward": hs.FastForward,
 		}).Ns())
