@@ -8,6 +8,68 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
+func TestListingBuiltins(t *testing.T) {
+	// Use the custom listing mode since it doesn't require special setup. The
+	// builtins work the same across all listing modes.
+
+	f := setup(t)
+	evals(f.Evaler,
+		`fn item [x]{ put [&to-show=$x &to-accept=$x &to-filter=$x] }`,
+		`edit:listing:start-custom [(item 1) (item 2) (item 3)]`)
+	buf1 := f.MakeBuffer(
+		"~> \n",
+		" LISTING  ", Styles,
+		"********* ", term.DotHere, "\n",
+		"1                                                 ", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+		"2                                                 \n",
+		"3                                                 ",
+	)
+	f.TTYCtrl.TestBuffer(t, buf1)
+
+	evals(f.Evaler, "edit:listing:down", "edit:redraw")
+	buf2 := f.MakeBuffer(
+		"~> \n",
+		" LISTING  ", Styles,
+		"********* ", term.DotHere, "\n",
+		"1                                                 \n",
+		"2                                                 \n", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+		"3                                                 ",
+	)
+	f.TTYCtrl.TestBuffer(t, buf2)
+
+	evals(f.Evaler, "edit:listing:down", "edit:redraw")
+	buf3 := f.MakeBuffer(
+		"~> \n",
+		" LISTING  ", Styles,
+		"********* ", term.DotHere, "\n",
+		"1                                                 \n",
+		"2                                                 \n",
+		"3                                                 ", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+	)
+	f.TTYCtrl.TestBuffer(t, buf3)
+
+	evals(f.Evaler, "edit:listing:down", "edit:redraw")
+	f.TTYCtrl.TestBuffer(t, buf3)
+
+	evals(f.Evaler, "edit:listing:down-cycle", "edit:redraw")
+	f.TTYCtrl.TestBuffer(t, buf1)
+
+	evals(f.Evaler, "edit:listing:up", "edit:redraw")
+	f.TTYCtrl.TestBuffer(t, buf1)
+
+	evals(f.Evaler, "edit:listing:up-cycle", "edit:redraw")
+	f.TTYCtrl.TestBuffer(t, buf3)
+
+	evals(f.Evaler, "edit:listing:page-up", "edit:redraw")
+	f.TTYCtrl.TestBuffer(t, buf1)
+
+	evals(f.Evaler, "edit:listing:page-down", "edit:redraw")
+	f.TTYCtrl.TestBuffer(t, buf3)
+}
+
 // Smoke tests for individual addons.
 
 func TestHistlistAddon(t *testing.T) {

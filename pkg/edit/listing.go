@@ -22,20 +22,16 @@ func initListings(ed *Editor, ev *eval.Evaler, st storedefs.Store, histStore his
 		eval.NsBuilder{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:listing>:", map[string]interface{}{
-			"accept":       func() { listingAccept(app) },
-			"accept-close": func() { listingAcceptClose(app) },
-			"up":           func() { listingUp(app) },
-			"down":         func() { listingDown(app) },
-			"up-cycle":     func() { listingUpCycle(app) },
-			"down-cycle":   func() { listingDownCycle(app) },
-			"page-up":      func() { listingPageUp(app) },
-			"page-down":    func() { listingPageDown(app) },
+			"accept":     func() { listingAccept(app) },
+			"up":         func() { listingUp(app) },
+			"down":       func() { listingDown(app) },
+			"up-cycle":   func() { listingUpCycle(app) },
+			"down-cycle": func() { listingDownCycle(app) },
+			"page-up":    func() { listingPageUp(app) },
+			"page-down":  func() { listingPageDown(app) },
 			"start-custom": func(fm *eval.Frame, opts customListingOpts, items interface{}) {
 				listingStartCustom(ed, fm, opts, items)
 			},
-			/*
-				"toggle-filtering": cli.ListingToggleFiltering,
-			*/
 		}).Ns())
 
 	initHistlist(ed, ev, histStore, bindingVar, nb)
@@ -143,15 +139,6 @@ func listingAccept(app cli.App) {
 	if w, ok := activeComboBox(app); ok {
 		w.ListBox().Accept()
 	}
-}
-
-//elvdoc:fn listing:accept-close
-//
-// Accepts the current selected listing item and closes the listing.
-
-func listingAcceptClose(app cli.App) {
-	listingAccept(app)
-	closeMode(app)
 }
 
 //elvdoc:fn listing:up
