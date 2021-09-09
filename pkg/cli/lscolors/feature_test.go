@@ -60,11 +60,13 @@ func TestDetermineFeature(t *testing.T) {
 	err = createNamedPipe("fifo")
 	test("named pipe", "fifo", featureNamedPipe, opt{setupErr: err})
 
-	l, err := net.Listen("unix", "sock")
-	if err == nil {
-		defer l.Close()
+	if runtime.GOOS != "windows" {
+		l, err := net.Listen("unix", "sock")
+		if err == nil {
+			defer l.Close()
+		}
+		test("socket", "sock", featureSocket, opt{setupErr: err})
 	}
-	test("socket", "sock", featureSocket, opt{setupErr: err})
 
 	// TODO: Test featureDoor on Solaris
 
