@@ -16,7 +16,7 @@ func TestLsColors(t *testing.T) {
 	colorist := GetColorist()
 
 	os.Mkdir("dir", 0755)
-	create("a.png", 0644)
+	create("a.png")
 
 	wantDirStyle := "34"
 	if style := colorist.GetStyle("dir"); style != wantDirStyle {
