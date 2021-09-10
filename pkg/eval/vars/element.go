@@ -124,7 +124,7 @@ func HeadOfElement(v Var) Var {
 
 // ElementErrorLevel returns the level of an error returned by MakeElement or
 // DelElement. Level 0 represents that the error is about the variable itself.
-// If the argument was not returned from MakeVariable, -1 is returned.
+// Returns -1 if the argument was not returned from MakeElement or DelElement.
 func ElementErrorLevel(err error) int {
 	if err, ok := err.(elemErr); ok {
 		return err.level

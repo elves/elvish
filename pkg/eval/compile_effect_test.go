@@ -117,6 +117,12 @@ func TestCommand_Assignment(t *testing.T) {
 		That("a @b c = 1 2; put $a $b $c").Puts("1", vals.EmptyList, "2"),
 		That("@a = ; put $a").Puts(vals.EmptyList),
 
+		// Unsupported LHS expressions
+		That("a'b' = foo").DoesNotCompile(),
+		That("@a @b = foo").DoesNotCompile(),
+		That("{a b}[idx] = foo").DoesNotCompile(),
+		That("[] = foo").DoesNotCompile(),
+
 		// List element assignment
 		That("var li = [foo bar]; set li[0] = 233; put $@li").Puts("233", "bar"),
 		// Variable in list assignment must already be defined. Regression test
@@ -127,6 +133,12 @@ func TestCommand_Assignment(t *testing.T) {
 			"put $di[k] $di[k2]").Puts("lorem", "ipsum"),
 		That("var d = [&a=[&b=v]]; put $d[a][b]; set d[a][b] = u; put $d[a][b]").
 			Puts("v", "u"),
+		That("var li = [foo]; set li[(fail foo)] = bar").Throws(FailError{"foo"}),
+		That("var li = [foo]; set li[0 1] = foo bar").
+			Throws(ErrorWithMessage("multi indexing not implemented")),
+		That("var li = [[]]; set li[1][2] = bar").
+			Throws(errs.OutOfRange{What: "index",
+				ValidLow: "0", ValidHigh: "0", Actual: "1"}, "li[1][2]"),
 
 		// Temporary assignment.
 		That("var a b = alice bob; {a,@b}=(put amy ben) put $a $@b; put $a $b").
@@ -158,6 +170,8 @@ func TestCommand_Assignment(t *testing.T) {
 		That("nil = 1").Throws(errs.SetReadOnlyVar{VarName: "nil"}, "nil"),
 		That("a true b = 1 2 3").Throws(errs.SetReadOnlyVar{VarName: "true"}, "true"),
 		That("@true = 1").Throws(errs.SetReadOnlyVar{VarName: "@true"}, "@true"),
+		That("true @r = 1").Throws(errs.SetReadOnlyVar{VarName: "true"}, "true"),
+		That("@r true = 1").Throws(errs.SetReadOnlyVar{VarName: "true"}, "true"),
 		// A readonly var as a target for the `except` clause should error.
 		That("try { fail reason } except nil { }").Throws(errs.SetReadOnlyVar{VarName: "nil"}, "nil"),
 		That("try { fail reason } except x { }").DoesNothing(),
