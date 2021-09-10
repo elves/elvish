@@ -3,20 +3,9 @@ package eval_test
 import (
 	"testing"
 
+	"src.elv.sh/pkg/eval"
 	. "src.elv.sh/pkg/eval/evaltest"
 )
-
-func TestStyledString(t *testing.T) {
-	Test(t,
-		That("print (styled abc hopefully-never-exists)").Throws(ErrorWithMessage(
-			"hopefully-never-exists is not a valid style transformer")),
-
-		That("print (styled abc bold)").Prints("\033[1mabc\033[m"),
-		That("print (styled abc red cyan)").Prints("\033[36mabc\033[m"),
-		That("print (styled abc bg-green)").Prints("\033[42mabc\033[m"),
-		That("print (styled abc no-dim)").Prints("abc"),
-	)
-}
 
 func TestStyledSegment(t *testing.T) {
 	Test(t,
@@ -32,11 +21,23 @@ func TestStyledSegment(t *testing.T) {
 			Prints("abc"),
 		That("print (styled (styled-segment abc &inverse=$true) toggle-inverse)").
 			Prints("abc"),
+
+		That("styled-segment []").Throws(ErrorWithMessage(
+			"argument to styled-segment must be a string or a styled segment")),
+		That("styled-segment text &foo=bar").
+			Throws(ErrorWithMessage("unrecognized option 'foo'")),
 	)
 }
 
-func TestStyledText(t *testing.T) {
+func TestStyled(t *testing.T) {
 	Test(t,
+		// Transform string
+		That("print (styled abc bold)").Prints("\033[1mabc\033[m"),
+		That("print (styled abc red cyan)").Prints("\033[36mabc\033[m"),
+		That("print (styled abc bg-green)").Prints("\033[42mabc\033[m"),
+		That("print (styled abc no-dim)").Prints("abc"),
+
+		// Transform already styled text
 		That("print (styled (styled abc red) blue)").
 			Prints("\033[34mabc\033[m"),
 		That("print (styled (styled abc italic) red)").
@@ -46,6 +47,25 @@ func TestStyledText(t *testing.T) {
 		That("print (styled (styled abc inverse) no-inverse)").Prints("abc"),
 		That("print (styled (styled abc inverse) toggle-inverse)").Prints("abc"),
 		That("print (styled (styled abc inverse) toggle-inverse toggle-inverse)").Prints("\033[7mabc\033[m"),
+
+		// Function as transformer
+		That("print (styled abc [s]{ put $s })").Prints("abc"),
+		That("print (styled abc [s]{ styled-segment $s &bold=$true &italic=$false })").Prints("\033[1mabc\033[m"),
+		That("print (styled abc italic [s]{ styled-segment $s &bold=$true &italic=$false })").Prints("\033[1mabc\033[m"),
+
+		That("styled abc [s]{ fail bad }").Throws(eval.FailError{"bad"}),
+		That("styled abc [s]{ put a b }").Throws(ErrorWithMessage(
+			"styling function must return a single segment; got 2 values")),
+		That("styled abc [s]{ put [] }").Throws(ErrorWithMessage(
+			"styling function must return a segment; got list")),
+
+		// Bad usage
+		That("styled abc hopefully-never-exists").Throws(ErrorWithMessage(
+			"hopefully-never-exists is not a valid style transformer")),
+		That("styled []").Throws(ErrorWithMessage(
+			"expected string, styled segment or styled text; got list")),
+		That("styled abc []").Throws(ErrorWithMessage(
+			"need string or callable; got list")),
 	)
 }
 
@@ -92,29 +112,6 @@ func TestStyledConcat(t *testing.T) {
 		That("print (styled abc inverse)(styled-segment abc &bg-color=white)").Prints("\033[7mabc\033[m\033[47mabc\033[m"),
 		// text+text
 		That("print (styled abc bold)(styled abc dim)").Prints("\033[1mabc\033[m\033[2mabc\033[m"),
-	)
-}
-
-func TestFunctionalStyleStylings(t *testing.T) {
-	// lambda
-	Test(t,
-		That("print (styled abc [s]{ put $s })").Prints("abc"),
-		That("print (styled abc [s]{ styled-segment $s &bold=$true &italic=$false })").Prints("\033[1mabc\033[m"),
-		That("print (styled abc italic [s]{ styled-segment $s &bold=$true &italic=$false })").Prints("\033[1mabc\033[m"),
-	)
-
-	// fn
-	Test(t,
-		That("fn f [s]{ put $s }; print (styled abc $f~)").Prints("abc"),
-		That("fn f [s]{ styled-segment $s &bold=$true &italic=$false }; print (styled abc $f~)").Prints("\033[1mabc\033[m"),
-		That("fn f [s]{ styled-segment $s &bold=$true &italic=$false }; print (styled abc italic $f~)").Prints("\033[1mabc\033[m"),
-	)
-
-	// var
-	Test(t,
-		That("f = [s]{ put $s }; print (styled abc $f)").Prints("abc"),
-		That("f = [s]{ styled-segment $s &bold=$true &italic=$false }; print (styled abc $f)").Prints("\033[1mabc\033[m"),
-		That("f = [s]{ styled-segment $s &bold=$true &italic=$false }; print (styled abc italic $f)").Prints("\033[1mabc\033[m"),
 	)
 }
 
