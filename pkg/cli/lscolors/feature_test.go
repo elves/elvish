@@ -18,6 +18,7 @@ type opt struct {
 
 func TestDetermineFeature(t *testing.T) {
 	testutil.InTempDir(t)
+	setUmask(t, 0)
 
 	test := func(name, fname string, wantFeature feature, o opt) {
 		t.Helper()
@@ -44,6 +45,7 @@ func TestDetermineFeature(t *testing.T) {
 
 	err := create("a")
 	test("regular file", "a", featureRegular, opt{setupErr: err})
+	test("regular file mh=true", "a", featureRegular, opt{setupErr: err, mh: true})
 
 	err = os.Symlink("a", "l")
 	test("symlink", "l", featureSymlink, opt{setupErr: err})
@@ -54,7 +56,7 @@ func TestDetermineFeature(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		err := os.Link("a", "a2")
 		test("multi hard link", "a", featureMultiHardLink, opt{mh: true, setupErr: err})
-		test("ignoring multi hard link", "a", featureRegular, opt{setupErr: err})
+		test("multi hard link with mh=false", "a", featureRegular, opt{setupErr: err})
 	}
 
 	err = createNamedPipe("fifo")
@@ -75,6 +77,15 @@ func TestDetermineFeature(t *testing.T) {
 
 	blk, err := findDevice(os.ModeDevice)
 	test("block device", blk, featureBlockDevice, opt{setupErr: err})
+
+	err = mkdir("d")
+	test("normal dir", "d", featureDirectory, opt{setupErr: err})
+	err = mkdirMode("d-wws", 0777|os.ModeSticky)
+	test("world-writable sticky dir", "d-wws", featureWorldWritableStickyDirectory, opt{setupErr: err})
+	err = mkdirMode("d-ww", 0777)
+	test("world-writable dir", "d-ww", featureWorldWritableDirectory, opt{setupErr: err})
+	err = mkdirMode("d-s", 0700|os.ModeSticky)
+	test("sticky dir", "d-s", featureStickyDirectory, opt{setupErr: err})
 
 	err = createMode("xu", 0100)
 	test("executable by user", "xu", featureExecutable, opt{setupErr: err})
@@ -104,15 +115,9 @@ func createMode(fname string, mode os.FileMode) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	info, err := f.Stat()
-	if err != nil {
-		return err
-	}
-	if info.Mode() != mode {
-		return fmt.Errorf("created file has mode %v, want %v", info.Mode(), mode)
-	}
-	return nil
+	f.Close()
+	return checkMode(fname, mode)
+
 }
 
 func findDevice(typ os.FileMode) (string, error) {
@@ -126,4 +131,26 @@ func findDevice(typ os.FileMode) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("can't find %v device under /dev", typ)
+}
+
+func mkdir(fname string) error {
+	return os.Mkdir(fname, 0700)
+}
+
+func mkdirMode(fname string, mode os.FileMode) error {
+	if err := os.Mkdir(fname, mode); err != nil {
+		return err
+	}
+	return checkMode(fname, mode|os.ModeDir)
+}
+
+func checkMode(fname string, wantMode os.FileMode) error {
+	info, err := os.Lstat(fname)
+	if err != nil {
+		return err
+	}
+	if mode := info.Mode(); mode != wantMode {
+		return fmt.Errorf("created file has mode %v, want %v", mode, wantMode)
+	}
+	return nil
 }
