@@ -63,6 +63,8 @@ var runeMatchers = map[string]func(rune) bool{
 	"upper":   unicode.IsUpper,
 }
 
+func (gp globPattern) Kind() string { return "glob-pattern" }
+
 func (gp globPattern) Index(k interface{}) (interface{}, error) {
 	modifierv, ok := k.(string)
 	if !ok {

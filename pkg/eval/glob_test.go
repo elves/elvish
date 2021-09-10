@@ -58,17 +58,19 @@ func TestGlob_MatchHidden(t *testing.T) {
 	)
 }
 
-func TestGlob_SetAndRange(t *testing.T) {
+func TestGlob_RuneMatchers(t *testing.T) {
 	testutil.InTempDir(t)
 	testutil.MustCreateEmpty("a1", "a2", "b1", "c1", "ipsum", "lorem")
 
 	Test(t,
+		That("put *[letter]").Puts("ipsum", "lorem"),
 		That("put ?[set:ab]*").Puts("a1", "a2", "b1"),
 		That("put ?[range:a-c]*").Puts("a1", "a2", "b1", "c1"),
 		That("put ?[range:a~c]*").Puts("a1", "a2", "b1"),
 		That("put *[range:a-z]").Puts("ipsum", "lorem"),
+		That("put *[range:a-zz]").Throws(ErrorWithMessage("bad range modifier: a-zz")),
+		That("put *[range:foo]").Throws(ErrorWithMessage("bad range modifier: foo")),
 	)
-
 }
 
 func TestGlob_But(t *testing.T) {
@@ -88,9 +90,25 @@ func TestGlob_Type(t *testing.T) {
 
 	Test(t,
 		That("put **[type:dir]").Puts("b/c", "b", "d1", "d2"),
+		That("put **[type:regular]f*").Puts("d1/f1", "d2/fm", "foo"),
 		That("put **[type:regular]").Puts("d1/f1", "d2/fm", "bar", "foo", "ipsum", "lorem"),
 		That("put **[type:regular]m").Puts("d2/fm", "ipsum", "lorem"),
+		That("put *[type:dir][type:regular]").Throws(ErrMultipleTypeModifiers),
 		That("put **[type:dir]f*[type:regular]").Throws(ErrMultipleTypeModifiers),
 		That("put **[type:unknown]").Throws(ErrUnknownTypeModifier),
+	)
+}
+
+func TestGlob_BadOperation(t *testing.T) {
+	testutil.InTempDir(t)
+
+	Test(t,
+		That("put *[[]]").Throws(ErrModifierMustBeString),
+		That("put *[bad-mod]").Throws(ErrorWithMessage("unknown modifier bad-mod")),
+
+		That("put *{ }").
+			Throws(ErrorWithMessage("cannot concatenate glob-pattern and fn")),
+		That("put { }*").
+			Throws(ErrorWithMessage("cannot concatenate fn and glob-pattern")),
 	)
 }
