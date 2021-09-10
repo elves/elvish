@@ -111,17 +111,17 @@ func readEvent(rd byteReaderWithTimeout) (event Event, err error) {
 				// Mouse event.
 				cb := readRune()
 				if cb == runeEndOfSeq {
-					badSeq("Incomplete mouse event")
+					badSeq("incomplete mouse event")
 					return
 				}
 				cx := readRune()
 				if cx == runeEndOfSeq {
-					badSeq("Incomplete mouse event")
+					badSeq("incomplete mouse event")
 					return
 				}
 				cy := readRune()
 				if cy == runeEndOfSeq {
-					badSeq("Incomplete mouse event")
+					badSeq("incomplete mouse event")
 					return
 				}
 				down := true
@@ -148,7 +148,7 @@ func readEvent(rd byteReaderWithTimeout) (event Event, err error) {
 					nums[cur] = nums[cur]*10 + int(r-'0')
 				case r == runeEndOfSeq:
 					// Incomplete CSI.
-					badSeq("Incomplete CSI")
+					badSeq("incomplete CSI")
 					return
 				default: // Treat as a terminator.
 					break CSISeq

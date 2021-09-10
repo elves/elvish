@@ -4,8 +4,10 @@
 package term
 
 import (
+	"os"
 	"testing"
 
+	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -52,6 +54,7 @@ var readEventTests = []struct {
 	{"\033[A", K(ui.Up)},
 	{"\033[H", K(ui.Home)},
 	// Modifiers.
+	{"\033[1;0A", K(ui.Up)},
 	{"\033[1;1A", K(ui.Up)},
 	{"\033[1;2A", K(ui.Up, ui.Shift)},
 	{"\033[1;3A", K(ui.Up, ui.Alt)},
@@ -117,14 +120,13 @@ var readEventTests = []struct {
 	{"\033[<16;3;4M", MouseEvent{Pos{4, 3}, true, 0, ui.Ctrl}},
 }
 
-func TestReadEvent(t *testing.T) {
-	r, w, cleanup := setupFileReader()
-	defer cleanup()
+func TestReader_ReadEvent(t *testing.T) {
+	r, w := setupReader(t)
 
 	for _, test := range readEventTests {
 		t.Run(test.input, func(t *testing.T) {
 			w.WriteString(test.input)
-			ev, err := readEvent(r)
+			ev, err := r.ReadEvent()
 			if ev != test.want {
 				t.Errorf("got event %v, want %v", ev, test.want)
 			}
@@ -133,4 +135,87 @@ func TestReadEvent(t *testing.T) {
 			}
 		})
 	}
+}
+
+var readEventBadSeqTests = []struct {
+	input      string
+	wantErrMsg string
+}{
+	// mouse event should have exactly 3 bytes after \033[M
+	{"\033[M", "incomplete mouse event"},
+	{"\033[M1", "incomplete mouse event"},
+	{"\033[M12", "incomplete mouse event"},
+
+	// CSI needs to be terminated by something that is not a parameter
+	{"\033[1", "incomplete CSI"},
+	{"\033[;", "incomplete CSI"},
+	{"\033[1;", "incomplete CSI"},
+
+	// CPR should have exactly 2 parameters
+	{"\033[1R", "bad CPR"},
+	{"\033[1;2;3R", "bad CPR"},
+
+	// SGR mouse event should have exactly 3 parameters
+	{"\033[<1;2m", "bad SGR mouse event"},
+
+	// csiSeqByLast should have 0 or 2 parameters
+	{"\033[1;2;3A", "bad CSI"},
+	// csiSeqByLast with 2 parameters should have first parameter = 1
+	{"\033[2;1A", "bad CSI"},
+	// xterm-style modifier should be 0 to 16
+	{"\033[1;17A", "bad CSI"},
+	// unknown CSI terminator
+	{"\033[x", "bad CSI"},
+
+	// G3 allows a small list of allowed bytes after \033O
+	{"\033Ox", "bad G3"},
+}
+
+func TestReader_ReadEvent_BadSeq(t *testing.T) {
+	r, w := setupReader(t)
+
+	for _, test := range readEventBadSeqTests {
+		t.Run(test.input, func(t *testing.T) {
+			w.WriteString(test.input)
+			ev, err := r.ReadEvent()
+			if err == nil {
+				t.Fatalf("got nil err with event %v, want non-nil error", ev)
+			}
+			errMsg := err.(seqError).msg
+			if errMsg != test.wantErrMsg {
+				t.Errorf("got err with message %v, want %v", errMsg, test.wantErrMsg)
+			}
+		})
+	}
+}
+
+func TestReader_ReadRawEvent(t *testing.T) {
+	rd, w := setupReader(t)
+
+	for _, test := range readEventTests {
+		input := test.input
+		t.Run(input, func(t *testing.T) {
+			w.WriteString(input)
+			for _, r := range input {
+				ev, err := rd.ReadRawEvent()
+				if err != nil {
+					t.Errorf("got error %v, want nil", err)
+				}
+				if ev != K(r) {
+					t.Errorf("got event %v, want %v", ev, K(r))
+				}
+			}
+		})
+	}
+}
+
+func setupReader(t *testing.T) (Reader, *os.File) {
+	pr, pw := testutil.MustPipe()
+	r := newReader(pr)
+	t.Cleanup(func() {
+		r.Close()
+		pr.Close()
+		pw.Close()
+	})
+	return r, pw
 }
