@@ -78,7 +78,7 @@ func TestDetermineFeature(t *testing.T) {
 	blk, err := findDevice(os.ModeDevice)
 	test("block device", blk, featureBlockDevice, opt{setupErr: err})
 
-	err = mkdir("d")
+	err = mkdirMode("d", 0700)
 	test("normal dir", "d", featureDirectory, opt{setupErr: err})
 	err = mkdirMode("d-wws", 0777|os.ModeSticky)
 	test("world-writable sticky dir", "d-wws", featureWorldWritableStickyDirectory, opt{setupErr: err})
@@ -131,10 +131,6 @@ func findDevice(typ os.FileMode) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("can't find %v device under /dev", typ)
-}
-
-func mkdir(fname string) error {
-	return os.Mkdir(fname, 0700)
 }
 
 func mkdirMode(fname string, mode os.FileMode) error {
