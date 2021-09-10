@@ -90,9 +90,10 @@ func TestGlob_Type(t *testing.T) {
 
 	Test(t,
 		That("put **[type:dir]").Puts("b/c", "b", "d1", "d2"),
-		That("put **[type:regular]f*").Puts("d1/f1", "d2/fm", "foo"),
-		That("put **[type:regular]").Puts("d1/f1", "d2/fm", "bar", "foo", "ipsum", "lorem"),
 		That("put **[type:regular]m").Puts("d2/fm", "ipsum", "lorem"),
+		That("put **[type:regular]f*").Puts("d1/f1", "d2/fm", "foo"),
+		That("put **f*[type:regular]").Puts("d1/f1", "d2/fm", "foo"),
+
 		That("put *[type:dir][type:regular]").Throws(ErrMultipleTypeModifiers),
 		That("put **[type:dir]f*[type:regular]").Throws(ErrMultipleTypeModifiers),
 		That("put **[type:unknown]").Throws(ErrUnknownTypeModifier),
