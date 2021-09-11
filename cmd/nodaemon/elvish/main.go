@@ -1,7 +1,5 @@
-// Elvish is a cross-platform shell, supporting Linux, BSDs and Windows. It
-// features an expressive programming language, with features like namespacing
-// and anonymous functions, and a fully programmable user interface with
-// friendly defaults. It is suitable for both interactive use and scripting.
+// Command elvish is an alternative main program of Elvish that does not include
+// the daemon subprogram.
 package main
 
 import (
