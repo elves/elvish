@@ -109,7 +109,7 @@ func Activate(stderr io.Writer, spawnCfg *daemondefs.SpawnConfig) (daemondefs.Cl
 }
 
 func detectDaemon(sockpath string, cl daemondefs.Client) (daemonStatus, error) {
-	_, err := os.Stat(sockpath)
+	_, err := os.Lstat(sockpath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return sockfileMissing, err

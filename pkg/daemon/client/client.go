@@ -2,6 +2,7 @@ package client
 
 import (
 	"errors"
+	"net"
 	"sync"
 
 	"src.elv.sh/pkg/daemon/daemondefs"
@@ -61,7 +62,7 @@ func (c *client) call(f string, req, res interface{}) error {
 
 	for attempt := 0; attempt < retriesOnShutdown; attempt++ {
 		if c.rpcClient == nil {
-			conn, err := dial(c.sockPath)
+			conn, err := net.Dial("unix", c.sockPath)
 			if err != nil {
 				return err
 			}

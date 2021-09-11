@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"net"
 	"os"
 	"os/signal"
 	"sync"
@@ -17,7 +18,7 @@ import (
 func Serve(sockpath, dbpath string) {
 	logger.Println("pid is", syscall.Getpid())
 	logger.Println("going to listen", sockpath)
-	listener, err := listen(sockpath)
+	listener, err := net.Listen("unix", sockpath)
 	if err != nil {
 		logger.Printf("failed to listen on %s: %v", sockpath, err)
 		logger.Println("aborting")
