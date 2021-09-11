@@ -28,8 +28,6 @@ type Program struct {
 	ActivateDaemon daemondefs.ActivateFunc
 }
 
-func (p Program) ShouldRun(*prog.Flags) bool { return true }
-
 func (p Program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 	cleanup1 := IncSHLVL()
 	defer cleanup1()

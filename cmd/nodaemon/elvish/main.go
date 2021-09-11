@@ -16,7 +16,7 @@ import (
 func main() {
 	os.Exit(prog.Run(
 		[3]*os.File{os.Stdin, os.Stdout, os.Stderr}, os.Args,
-		buildinfo.Program, daemonStub{}, shell.Program{}))
+		prog.Composite(buildinfo.Program, daemonStub{}, shell.Program{})))
 }
 
 var errNoDaemon = errors.New("daemon is not supported in this build")

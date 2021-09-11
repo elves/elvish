@@ -16,6 +16,7 @@ import (
 func main() {
 	os.Exit(prog.Run(
 		[3]*os.File{os.Stdin, os.Stdout, os.Stderr}, os.Args,
-		buildinfo.Program, daemon.Program, web.Program,
-		shell.Program{ActivateDaemon: client.Activate}))
+		prog.Composite(
+			buildinfo.Program, daemon.Program, web.Program,
+			shell.Program{ActivateDaemon: client.Activate})))
 }

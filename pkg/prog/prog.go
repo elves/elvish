@@ -7,6 +7,7 @@ package prog
 // interface.
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -77,16 +78,16 @@ func newFlagSet(f *Flags) *flag.FlagSet {
 	return fs
 }
 
-func usage(out io.Writer, f *flag.FlagSet) {
+func usage(out io.Writer, fs *flag.FlagSet) {
 	fmt.Fprintln(out, "Usage: elvish [flags] [script]")
 	fmt.Fprintln(out, "Supported flags:")
-	f.SetOutput(out)
-	f.PrintDefaults()
+	fs.SetOutput(out)
+	fs.PrintDefaults()
 }
 
 // Run parses command-line flags and runs the first applicable subprogram. It
 // returns the exit status of the program.
-func Run(fds [3]*os.File, args []string, programs ...Program) int {
+func Run(fds [3]*os.File, args []string, p Program) int {
 	f := &Flags{}
 	fs := newFlagSet(f)
 	err := fs.Parse(args[1:])
@@ -132,12 +133,6 @@ func Run(fds [3]*os.File, args []string, programs ...Program) int {
 		return 0
 	}
 
-	p := findProgram(f, programs)
-	if p == nil {
-		fmt.Fprintln(fds[2], "program bug: no suitable subprogram")
-		return 2
-	}
-
 	err = p.Run(fds, f, fs.Args())
 	if err == nil {
 		return 0
@@ -154,17 +149,32 @@ func Run(fds [3]*os.File, args []string, programs ...Program) int {
 	return 2
 }
 
-func findProgram(f *Flags, programs []Program) Program {
-	for _, program := range programs {
-		if program.ShouldRun(f) {
-			return program
-		}
-	}
-	return nil
+// Composite returns a Program that tries each of the given programs,
+// terminating at the first one that doesn't return NotSuitable().
+func Composite(programs ...Program) Program {
+	return compositeProgram(programs)
 }
 
-// BadUsage returns an error that may be returned by Program.Main, which
-// requests the main program to print out a message, the usage information and
+type compositeProgram []Program
+
+func (cp compositeProgram) Run(fds [3]*os.File, f *Flags, args []string) error {
+	for _, p := range cp {
+		err := p.Run(fds, f, args)
+		if err != ErrNotSuitable {
+			return err
+		}
+	}
+	// If we have reached here, all subprograms have returned errNotSuitable
+	return ErrNotSuitable
+}
+
+// ErrNotSuitable is a special error that may be returned by Program.Run, to
+// signify that this Program should not be run. It is useful when a Program is
+// used in Composite.
+var ErrNotSuitable = errors.New("internal error: no suitable subprogram")
+
+// BadUsage returns a special error that may be returned by Program.Run. It
+// causes the main function to print out a message, the usage information and
 // exit with 2.
 func BadUsage(msg string) error { return badUsageError{msg} }
 
@@ -172,8 +182,9 @@ type badUsageError struct{ msg string }
 
 func (e badUsageError) Error() string { return e.msg }
 
-// Exit returns an error that may be returned by Program.Main, which requests the
-// main program to exit with the given code. If the exit code is 0, it returns nil.
+// Exit returns a special error that may be returned by Program.Run. It causes
+// the main function to exit with the given code without printing any error
+// messages. Exit(0) returns nil.
 func Exit(exit int) error {
 	if exit == 0 {
 		return nil
@@ -187,8 +198,6 @@ func (e exitError) Error() string { return "" }
 
 // Program represents a subprogram.
 type Program interface {
-	// ShouldRun returns whether the subprogram should run.
-	ShouldRun(f *Flags) bool
 	// Run runs the subprogram.
 	Run(fds [3]*os.File, f *Flags, args []string) error
 }

@@ -47,8 +47,6 @@ var Value = Type{
 
 type program struct{}
 
-func (program) ShouldRun(f *prog.Flags) bool { return f.Version || f.BuildInfo }
-
 func (program) Run(fds [3]*os.File, f *prog.Flags, _ []string) error {
 	switch {
 	case f.BuildInfo:
@@ -66,7 +64,7 @@ func (program) Run(fds [3]*os.File, f *prog.Flags, _ []string) error {
 			fmt.Fprintln(fds[1], Value.Version)
 		}
 	default:
-		panic("should not run buildinfo")
+		return prog.ErrNotSuitable
 	}
 	return nil
 }

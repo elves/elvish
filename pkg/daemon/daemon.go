@@ -19,9 +19,10 @@ var Program prog.Program = program{}
 
 type program struct{}
 
-func (program) ShouldRun(f *prog.Flags) bool { return f.Daemon }
-
 func (program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
+	if !f.Daemon {
+		return prog.ErrNotSuitable
+	}
 	if len(args) > 0 {
 		return prog.BadUsage("arguments are not allowed with -daemon")
 	}
