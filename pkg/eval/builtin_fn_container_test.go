@@ -31,17 +31,17 @@ func TestMakeMap(t *testing.T) {
 		That("make-map [[k1 v1] [k2 v2]]").
 			Puts(vals.MakeMap("k1", "v1", "k2", "v2")),
 		That("make-map [kv]").Puts(vals.MakeMap("k", "v")),
-		That("make-map [{ }]").
+		That("make-map [{ } [k v]]").
 			Throws(
 				errs.BadValue{
 					What: "input to make-map", Valid: "iterable", Actual: "fn"},
-				"make-map [{ }]"),
-		That("make-map [[k]]").
+				"make-map [{ } [k v]]"),
+		That("make-map [[k v] [k]]").
 			Throws(
 				errs.BadValue{
 					What: "input to make-map", Valid: "iterable with 2 elements",
 					Actual: "list with 1 elements"},
-				"make-map [[k]]"),
+				"make-map [[k v] [k]]"),
 	)
 }
 
@@ -87,6 +87,9 @@ func TestRange(t *testing.T) {
 		That("range &step=-0.5 10").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-0.5"}),
 		thatOutputErrorIsBubbled("range 1.2"),
+
+		That("range").Throws(ErrorWithType(errs.ArityMismatch{})),
+		That("range 0 1 2").Throws(ErrorWithType(errs.ArityMismatch{})),
 	)
 }
 
@@ -108,6 +111,7 @@ func TestAssoc(t *testing.T) {
 func TestDissoc(t *testing.T) {
 	Test(t,
 		That(`has-key (dissoc [&k=v] k) k`).Puts(false),
+		That("dissoc foo 0").Throws(ErrorWithMessage("cannot dissoc")),
 	)
 }
 
@@ -116,7 +120,7 @@ func TestAll(t *testing.T) {
 		That(`put foo bar | all`).Puts("foo", "bar"),
 		That(`echo foobar | all`).Puts("foobar"),
 		That(`all [foo bar]`).Puts("foo", "bar"),
-		thatOutputErrorIsBubbled("all [foo]"),
+		thatOutputErrorIsBubbled("all [foo bar]"),
 	)
 }
 
@@ -135,14 +139,14 @@ func TestOne(t *testing.T) {
 func TestTake(t *testing.T) {
 	Test(t,
 		That(`range 100 | take 2`).Puts(0, 1),
-		thatOutputErrorIsBubbled("take 1 [foo]"),
+		thatOutputErrorIsBubbled("take 1 [foo bar]"),
 	)
 }
 
 func TestDrop(t *testing.T) {
 	Test(t,
 		That(`range 100 | drop 98`).Puts(98, 99),
-		thatOutputErrorIsBubbled("drop 1 [foo bar]"),
+		thatOutputErrorIsBubbled("drop 1 [foo bar lorem]"),
 	)
 }
 
@@ -186,6 +190,7 @@ func TestKeys(t *testing.T) {
 		// Windows does not have an external sort command. Disabled until we have a
 		// builtin sort command.
 		That(`keys [&a=foo &b=bar] | order`).Puts("a", "b"),
+		That("keys (num 1)").Throws(ErrorWithMessage("cannot iterate keys of number")),
 		thatOutputErrorIsBubbled("keys [&a=foo]"),
 	)
 }
