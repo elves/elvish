@@ -16,12 +16,6 @@ func (i iterator) Iterate(f func(interface{}) bool) {
 // A non-implementation of Iterator.
 type nonIterator struct{}
 
-func TestCannotIterate_Error(t *testing.T) {
-	Test(t, Fn("error.Error", error.Error), Table{
-		Args(cannotIterate{"num"}).Rets("cannot iterate num"),
-	})
-}
-
 func TestCanIterate(t *testing.T) {
 	Test(t, Fn("CanIterate", CanIterate), Table{
 		Args("foo").Rets(true),
