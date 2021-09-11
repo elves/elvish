@@ -62,7 +62,7 @@ func scanToGoNum(src interface{}) (Num, error) {
 	return n, err
 }
 
-func TestScanToGoNum(t *testing.T) {
+func TestScanToGo_Num(t *testing.T) {
 	Test(t, Fn("ScanToGo", scanToGoNum), Table{
 		// Strings are automatically converted
 		Args("12").Rets(12),
@@ -75,6 +75,13 @@ func TestScanToGoNum(t *testing.T) {
 		Args(big.NewRat(1, 2)).Rets(big.NewRat(1, 2)),
 		Args(12.0).Rets(12.0),
 	})
+}
+
+func TestScanToGo_ErrorsWithNonPointerDst(t *testing.T) {
+	err := ScanToGo("", 1)
+	if err == nil {
+		t.Errorf("did not return error")
+	}
 }
 
 func TestFromGo(t *testing.T) {

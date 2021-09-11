@@ -25,5 +25,8 @@ func TestHasKey(t *testing.T) {
 		Args(MakeList("lorem", "ipsum"), "0").Rets(true),
 		Args(MakeList("lorem", "ipsum"), "0:").Rets(true),
 		Args(MakeList("lorem", "ipsum"), "2").Rets(false),
+
+		// Non-container
+		Args(1, "0").Rets(false),
 	})
 }

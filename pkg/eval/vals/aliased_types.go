@@ -35,7 +35,7 @@ var EmptyMap = hashmap.New(Equal, Hash)
 // panics if the number of arguments is odd.
 func MakeMap(a ...interface{}) hashmap.Map {
 	if len(a)%2 == 1 {
-		panic("Odd number of arguments to MakeMap")
+		panic("odd number of arguments to MakeMap")
 	}
 	m := EmptyMap
 	for i := 0; i < len(a); i += 2 {

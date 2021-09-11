@@ -1,9 +1,11 @@
 package vals
 
 import (
+	"os"
 	"testing"
 
 	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/testutil"
 	. "src.elv.sh/pkg/tt"
 )
 
@@ -38,6 +40,9 @@ func TestIndex(t *testing.T) {
 		Args("abc", "1..=").Rets("bc", nil),
 		Args("abc", "..=1").Rets("ab", nil),
 		Args("abc", "..=").Rets("abc", nil),
+		// String slices not at rune boundary.
+		Args("你好", "2..").Rets(Any, errIndexNotAtRuneBoundary),
+		Args("你好", "..2").Rets(Any, errIndexNotAtRuneBoundary),
 
 		// List indices
 		// ============
@@ -133,5 +138,19 @@ func TestIndex(t *testing.T) {
 
 		// Not indexable
 		Args(1, "foo").Rets(nil, errNotIndexable),
+	})
+}
+
+func TestIndex_File(t *testing.T) {
+	testutil.InTempDir(t)
+	f, err := os.Create("f")
+	if err != nil {
+		t.Skip("create file:", err)
+	}
+
+	Test(t, Fn("Index", Index), Table{
+		Args(f, "fd").Rets(int(f.Fd()), nil),
+		Args(f, "name").Rets(f.Name(), nil),
+		Args(f, "x").Rets(nil, NoSuchKey("x")),
 	})
 }
