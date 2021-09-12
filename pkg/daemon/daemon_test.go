@@ -1,12 +1,11 @@
 package daemon
 
 import (
-	"io"
 	"syscall"
 	"testing"
+	"time"
 
 	"src.elv.sh/pkg/daemon/client"
-	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/daemon/internal/api"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/store/storetest"
@@ -29,13 +28,18 @@ func TestProgram_ServesClientRequests(t *testing.T) {
 	defer func() { <-serverDone }()
 
 	// Set up client.
-	client, err := client.Activate(io.Discard,
-		&daemondefs.SpawnConfig{SockPath: "sock", DbPath: "db", RunDir: "."})
-	if err != nil {
-		close(serverDone)
-		t.Fatal("failed to activate client: ", err)
-	}
+	client := client.NewClient("sock")
 	defer client.Close()
+	for i := 0; i < 100; i++ {
+		client.ResetConn()
+		_, err := client.Version()
+		if err == nil {
+			break
+		} else if i == 99 {
+			t.Fatalf("Failed to connect after %v", testutil.ScaledMs(1000))
+		}
+		time.Sleep(testutil.ScaledMs(10))
+	}
 
 	// Test server state requests.
 	gotVersion, err := client.Version()
