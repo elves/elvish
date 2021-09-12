@@ -5,7 +5,6 @@ package lscolors
 
 import (
 	"errors"
-	"testing"
 )
 
 var errNotSupportedOnNonUNIX = errors.New("not supported on non-UNIX OS")
@@ -13,5 +12,3 @@ var errNotSupportedOnNonUNIX = errors.New("not supported on non-UNIX OS")
 func createNamedPipe(fname string) error {
 	return errNotSupportedOnNonUNIX
 }
-
-func setUmask(t *testing.T, m int) {}

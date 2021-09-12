@@ -18,7 +18,7 @@ type opt struct {
 
 func TestDetermineFeature(t *testing.T) {
 	testutil.InTempDir(t)
-	setUmask(t, 0)
+	testutil.Umask(t, 0)
 
 	test := func(name, fname string, wantFeature feature, o opt) {
 		t.Helper()
