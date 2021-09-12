@@ -8,75 +8,40 @@ import (
 	. "src.elv.sh/pkg/testutil"
 )
 
-func TestInteract_SingleCommand(t *testing.T) {
-	f := setup(t)
-	f.FeedIn("echo hello\n")
-
-	exit := f.run(Elvish())
-	TestExit(t, exit, 0)
-	f.TestOut(t, 1, "hello\n")
-}
-
-func TestInteract_Exception(t *testing.T) {
-	f := setup(t)
-	f.FeedIn("fail mock\n")
-
-	exit := f.run(Elvish())
-	TestExit(t, exit, 0)
-	f.TestOutSnippet(t, 2, "fail mock")
-	f.TestOut(t, 1, "")
-}
-
-func TestInteract_LegacyRcFile(t *testing.T) {
-	f := setup(t)
-	MustWriteFile(
-		filepath.Join(f.home, ".elvish", "rc.elv"), "echo hello legacy rc.elv")
-	f.FeedIn("")
-
-	exit := f.run(Elvish())
-	TestExit(t, exit, 0)
-	f.TestOut(t, 1, "hello legacy rc.elv\n")
-}
-
-// Non-legacy RC file tested in interact_unix_test.go
-
-func TestInteract_RcFile(t *testing.T) {
-	f := setup(t)
-	f.FeedIn("")
+func TestInteract(t *testing.T) {
+	setupHomePaths(t)
+	InTempDir(t)
 	MustWriteFile("rc.elv", "echo hello from rc.elv")
+	MustWriteFile("rc-dnc.elv", "echo $a")
+	MustWriteFile("rc-fail.elv", "fail bad")
 
-	exit := f.run(Elvish("-rc", "rc.elv"))
-	TestExit(t, exit, 0)
-	f.TestOut(t, 1, "hello from rc.elv\n")
+	Test(t, Program{},
+		thatElvishInteract().WithStdin("echo hello\n").WritesStdout("hello\n"),
+		thatElvishInteract().WithStdin("fail mock\n").WritesStderrContaining("fail mock"),
+
+		thatElvishInteract("-rc", "rc.elv").WritesStdout("hello from rc.elv\n"),
+		// rc file does not compile
+		thatElvishInteract("-rc", "rc-dnc.elv").
+			WritesStderrContaining("variable $a not found"),
+		// rc file throws exception
+		thatElvishInteract("-rc", "rc-fail.elv").WritesStderrContaining("fail bad"),
+		// rc file not existing is OK
+		thatElvishInteract("-rc", "rc-nonexistent.elv").DoesNothing(),
+	)
 }
 
-func TestInteract_RcFile_DoesNotCompile(t *testing.T) {
-	f := setup(t)
-	f.FeedIn("")
-	MustWriteFile("rc.elv", "echo $a")
+func TestInteract_DefaultRCPath(t *testing.T) {
+	home := setupHomePaths(t)
+	// Legacy RC path
+	MustWriteFile(
+		filepath.Join(home, ".elvish", "rc.elv"), "echo hello legacy rc.elv")
+	// Note: non-legacy path is tested in interact_unix_test.go
 
-	exit := f.run(Elvish("-rc", "rc.elv"))
-	TestExit(t, exit, 0)
-	f.TestOutSnippet(t, 2, "variable $a not found")
-	f.TestOut(t, 1, "")
+	Test(t, Program{},
+		thatElvishInteract().WritesStdout("hello legacy rc.elv\n"),
+	)
 }
 
-func TestInteract_RcFile_Exception(t *testing.T) {
-	f := setup(t)
-	f.FeedIn("")
-	MustWriteFile("rc.elv", "fail mock")
-
-	exit := f.run(Elvish("-rc", "rc.elv"))
-	TestExit(t, exit, 0)
-	f.TestOutSnippet(t, 2, "fail mock")
-	f.TestOut(t, 1, "")
-}
-
-func TestInteract_RcFile_NonexistentIsOK(t *testing.T) {
-	f := setup(t)
-	f.FeedIn("")
-
-	exit := f.run(Elvish("-rc", "rc.elv"))
-	TestExit(t, exit, 0)
-	f.TestOut(t, 1, "")
+func thatElvishInteract(args ...string) Case {
+	return ThatElvish(args...).WritesStderrContaining("")
 }

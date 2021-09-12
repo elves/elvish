@@ -6,18 +6,17 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/env"
-	"src.elv.sh/pkg/prog"
 	. "src.elv.sh/pkg/prog/progtest"
 	. "src.elv.sh/pkg/testutil"
 )
 
 func TestShell_LegacyLibPath(t *testing.T) {
-	f := setup(t)
-	MustWriteFile(filepath.Join(f.home, ".elvish", "lib", "a.elv"), "echo mod a")
+	home := setupHomePaths(t)
+	MustWriteFile(filepath.Join(home, ".elvish", "lib", "a.elv"), "echo mod a")
 
-	exit := f.run(Elvish("-c", "use a"))
-	TestExit(t, exit, 0)
-	f.TestOut(t, 1, "mod a\n")
+	Test(t, Program{},
+		ThatElvish("-c", "use a").WritesStdout("mod a\n"),
+	)
 }
 
 // Most high-level tests against Program are specific to either script mode or
@@ -78,16 +77,10 @@ func TestIncSHLVL(t *testing.T) {
 	}
 }
 
-type fixture struct {
-	*Fixture
-	home string
-}
+// Common test utilities.
 
-func setup(t Cleanuper) fixture {
+func setupHomePaths(t Cleanuper) string {
 	Unsetenv(t, env.XDG_CONFIG_HOME)
 	Unsetenv(t, env.XDG_DATA_HOME)
-	home := TempHome(t)
-	return fixture{Setup(t), home}
+	return TempHome(t)
 }
-
-func (f fixture) run(args []string) int { return prog.Run(f.Fds(), args, Program{}) }

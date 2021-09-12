@@ -6,123 +6,89 @@ import (
 
 	. "src.elv.sh/pkg/prog"
 	. "src.elv.sh/pkg/prog/progtest"
+	"src.elv.sh/pkg/testutil"
 )
 
-func TestBadFlag(t *testing.T) {
-	f := Setup(t)
+func TestCommonFlagHandling(t *testing.T) {
+	testutil.InTempDir(t)
 
-	exit := Run(f.Fds(), Elvish("-bad-flag"), testProgram{})
+	Test(t, testProgram{},
+		ThatElvish("-bad-flag").
+			ExitsWith(2).
+			WritesStderrContaining("flag provided but not defined: -bad-flag\nUsage:"),
+		// -h is treated as a bad flag
+		ThatElvish("-h").
+			ExitsWith(2).
+			WritesStderrContaining("flag provided but not defined: -h\nUsage:"),
 
-	TestError(t, f, exit, "flag provided but not defined: -bad-flag\nUsage:")
-}
+		ThatElvish("-help").
+			WritesStdoutContaining("Usage: elvish [flags] [script]"),
 
-func TestDashHTreatedAsBadFlag(t *testing.T) {
-	f := Setup(t)
+		ThatElvish("-cpuprofile", "cpuprof").DoesNothing(),
+		ThatElvish("-cpuprofile", "/a/bad/path").
+			WritesStderrContaining("Warning: cannot create CPU profile:"),
+	)
 
-	exit := Run(f.Fds(), Elvish("-h"), testProgram{})
-
-	TestError(t, f, exit, "flag provided but not defined: -h\nUsage:")
-}
-
-func TestCPUProfile(t *testing.T) {
-	f := Setup(t)
-
-	Run(f.Fds(), Elvish("-cpuprofile", "cpuprof"), testProgram{})
-	// There isn't much to test beyond a sanity check that the profile file now
-	// exists.
+	// Check for the effect of -cpuprofile. There isn't much to test beyond a
+	// sanity check that the profile file now exists.
 	_, err := os.Stat("cpuprof")
 	if err != nil {
 		t.Errorf("CPU profile file does not exist: %v", err)
 	}
 }
 
-func TestCPUProfile_BadPath(t *testing.T) {
-	f := Setup(t)
-
-	Run(f.Fds(), Elvish("-cpuprofile", "/a/bad/path"), testProgram{})
-	f.TestOut(t, 1, "")
-	f.TestOutSnippet(t, 2, "Warning: cannot create CPU profile:")
-	f.TestOutSnippet(t, 2, "Continuing without CPU profiling.")
-}
-
-func TestHelp(t *testing.T) {
-	f := Setup(t)
-
-	Run(f.Fds(), Elvish("-help"), testProgram{})
-
-	f.TestOutSnippet(t, 1, "Usage: elvish [flags] [script]")
-	f.TestOut(t, 2, "")
-}
-
 func TestShowDeprecations(t *testing.T) {
 	SetDeprecationLevel(t, 0)
-	f := Setup(t)
 
-	Run(f.Fds(), Elvish("-deprecation-level", "42"), testProgram{})
+	Test(t, testProgram{},
+		ThatElvish("-deprecation-level", "42").DoesNothing(),
+	)
+
 	if DeprecationLevel != 42 {
 		t.Errorf("ShowDeprecations = %d, want 42", DeprecationLevel)
 	}
 }
 
 func TestNoSuitableSubprogram(t *testing.T) {
-	f := Setup(t)
-
-	exit := Run(f.Fds(), Elvish(), testProgram{notSuitable: true})
-
-	TestError(t, f, exit, "internal error: no suitable subprogram")
+	Test(t, testProgram{notSuitable: true},
+		ThatElvish().
+			ExitsWith(2).
+			WritesStderr("internal error: no suitable subprogram\n"),
+	)
 }
 
 func TestComposite(t *testing.T) {
-	f := Setup(t)
-
-	Run(f.Fds(), Elvish(),
-		Composite(testProgram{notSuitable: true}, testProgram{writeOut: "program 2"}))
-
-	f.TestOut(t, 1, "program 2")
-	f.TestOut(t, 2, "")
+	Test(t,
+		Composite(testProgram{notSuitable: true}, testProgram{writeOut: "program 2"}),
+		ThatElvish().WritesStdout("program 2"),
+	)
 }
 
 func TestComposite_PreferEarlierSubprogram(t *testing.T) {
-	f := Setup(t)
-
-	Run(f.Fds(), Elvish(),
+	Test(t,
 		Composite(
-			testProgram{writeOut: "program 1"}, testProgram{writeOut: "program 2"}))
-
-	f.TestOut(t, 1, "program 1")
-	f.TestOut(t, 2, "")
+			testProgram{writeOut: "program 1"}, testProgram{writeOut: "program 2"}),
+		ThatElvish().WritesStdout("program 1"),
+	)
 }
 
 func TestBadUsageError(t *testing.T) {
-	f := Setup(t)
-
-	exit := Run(f.Fds(), Elvish(), testProgram{returnErr: BadUsage("lorem ipsum")})
-
-	TestError(t, f, exit, "lorem ipsum")
-	f.TestOutSnippet(t, 2, "Usage:")
-	f.TestOut(t, 1, "")
+	Test(t,
+		testProgram{returnErr: BadUsage("lorem ipsum")},
+		ThatElvish().ExitsWith(2).WritesStderrContaining("lorem ipsum\n"),
+	)
 }
 
 func TestExitError(t *testing.T) {
-	f := Setup(t)
-
-	exit := Run(f.Fds(), Elvish(), testProgram{returnErr: Exit(3)})
-
-	if exit != 3 {
-		t.Errorf("exit = %v, want 3", exit)
-	}
-	f.TestOut(t, 2, "")
-	f.TestOut(t, 1, "")
+	Test(t, testProgram{returnErr: Exit(3)},
+		ThatElvish().ExitsWith(3),
+	)
 }
 
 func TestExitError_0(t *testing.T) {
-	f := Setup(t)
-
-	exit := Run(f.Fds(), Elvish(), testProgram{returnErr: Exit(0)})
-
-	if exit != 0 {
-		t.Errorf("exit = %v, want 0", exit)
-	}
+	Test(t, testProgram{returnErr: Exit(0)},
+		ThatElvish().ExitsWith(0),
+	)
 }
 
 type testProgram struct {

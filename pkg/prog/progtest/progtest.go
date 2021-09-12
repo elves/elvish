@@ -1,10 +1,20 @@
-// Package progtest provides utilities for testing subprograms.
+// Package progtest provides a framework for testing subprograms.
 //
-// This package intentionally has no test file; it is excluded from test
-// coverage.
+// The entry point for the framework is the Test function, which accepts a
+// *testing.T, the Program implementation under test, and any number of test
+// cases.
+//
+// Test cases are constructed using the ThatElvish function, followed by method
+// calls that add additional information to it.
+//
+// Example:
+//
+//     Test(t, someProgram,
+//          ThatElvish("-c", "echo hello").WritesStdout("hello\n"))
 package progtest
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -14,134 +24,156 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
-// Fixture is a test fixture suitable for testing programs.
-type Fixture struct {
-	pipes [3]*pipe
+// Case is a test case that can be used in Test.
+type Case struct {
+	args  []string
+	stdin string
+	want  result
 }
 
-func captureOutput(p *pipe) {
-	b, err := io.ReadAll(p.r)
-	if err != nil {
-		panic(err)
+type result struct {
+	exitCode int
+	stdout   output
+	stderr   output
+}
+
+type output struct {
+	content string
+	partial bool
+}
+
+func (o output) String() string {
+	if o.partial {
+		return fmt.Sprintf("text containing %q", o.content)
 	}
-	p.output <- b
+	return fmt.Sprintf("%q", o.content)
 }
 
-// Setup sets up a test fixture.
-func Setup(c testutil.Cleanuper) *Fixture {
-	testutil.InTempDir(c)
-	pipes := [3]*pipe{makePipe(false), makePipe(true), makePipe(true)}
-	c.Cleanup(func() {
-		pipes[0].close()
-		pipes[1].close()
-		pipes[2].close()
-	})
-	return &Fixture{pipes}
+// ThatElvish returns a new Case with the specified CLI arguments.
+//
+// The new Case expects the program run to exit with 0, and write nothing to
+// stdout or stderr.
+//
+// When combined with subsequent method calls, a test case reads like English.
+// For example, a test for the fact that "elvish -c hello" writes "hello\n" to
+// stdout reads:
+//
+//     ThatElvish("-c", "hello").WritesStdout("hello\n")
+func ThatElvish(args ...string) Case {
+	return Case{args: append([]string{"elvish"}, args...)}
 }
 
-// Fds returns the file descriptors in the fixture.
-func (f *Fixture) Fds() [3]*os.File {
-	return [3]*os.File{f.pipes[0].r, f.pipes[1].w, f.pipes[2].w}
+// WithStdin returns an altered Case that provides the given input to stdin of
+// the program.
+func (c Case) WithStdin(s string) Case {
+	c.stdin = s
+	return c
 }
 
-// FeedIn feeds input to the standard input.
-func (f *Fixture) FeedIn(s string) {
-	_, err := f.pipes[0].w.WriteString(s)
-	if err != nil {
-		panic(err)
-	}
-	f.pipes[0].w.Close()
-	f.pipes[0].wClosed = true
+// DoesNothing returns c itself. It is useful to make tests that otherwise don't
+// have any expectations, for example:
+//
+//     ThatElvish("-c", "nop").DoesNothing()
+func (c Case) DoesNothing() Case {
+	return c
 }
 
-// TestOut tests that the output on the given FD matches the given text.
-func (f *Fixture) TestOut(t *testing.T, fd int, wantOut string) {
+// ExitsWith returns an altered Case that requires the program run to return
+// with the given exit code.
+func (c Case) ExitsWith(code int) Case {
+	c.want.exitCode = code
+	return c
+}
+
+// WritesStdout returns an altered Case that requires the program run to write
+// exactly the given text to stdout.
+func (c Case) WritesStdout(s string) Case {
+	c.want.stdout = output{content: s}
+	return c
+}
+
+// WritesStdoutContaining returns an altered Case that requires the program run
+// to write output to stdout that contains the given text as a substring.
+func (c Case) WritesStdoutContaining(s string) Case {
+	c.want.stdout = output{content: s, partial: true}
+	return c
+}
+
+// WritesStderr returns an altered Case that requires the program run to write
+// exactly the given text to stderr.
+func (c Case) WritesStderr(s string) Case {
+	c.want.stderr = output{content: s}
+	return c
+}
+
+// WritesStderrContaining returns an altered Case that requires the program run
+// to write output to stderr that contains the given text as a substring.
+func (c Case) WritesStderrContaining(s string) Case {
+	c.want.stderr = output{content: s, partial: true}
+	return c
+}
+
+// Test runs test cases against a given program.
+func Test(t *testing.T, p prog.Program, cases ...Case) {
 	t.Helper()
-	if out := f.pipes[fd].get(); out != wantOut {
-		t.Errorf("got out %q, want %q", out, wantOut)
+	for _, c := range cases {
+		t.Run(strings.Join(c.args, " "), func(t *testing.T) {
+			t.Helper()
+			r := run(p, c.args, c.stdin)
+			if r.exitCode != c.want.exitCode {
+				t.Errorf("got exit code %v, want %v", r.exitCode, c.want.exitCode)
+			}
+			if !matchOutput(r.stdout, c.want.stdout) {
+				t.Errorf("got stdout %v, want %v", r.stdout, c.want.stdout)
+			}
+			if !matchOutput(r.stderr, c.want.stderr) {
+				t.Errorf("got stderr %v, want %v", r.stderr, c.want.stderr)
+			}
+		})
 	}
 }
 
-// TestOutSnippet tests that the output on the given FD contains the given text.
-func (f *Fixture) TestOutSnippet(t *testing.T, fd int, wantOutSnippet string) {
-	t.Helper()
-	if err := f.pipes[fd].get(); !strings.Contains(err, wantOutSnippet) {
-		t.Errorf("got out %q, want string containing %q", err, wantOutSnippet)
-	}
-}
-
-type pipe struct {
-	r, w             *os.File
-	rClosed, wClosed bool
-	saved            string
-	output           chan []byte
-}
-
-func makePipe(capture bool) *pipe {
-	r, w, err := os.Pipe()
+func run(p prog.Program, args []string, stdin string) result {
+	r0, w0 := testutil.MustPipe()
+	// TODO: This assumes that stdin fits in the pipe buffer. Don't assume that.
+	_, err := w0.WriteString(stdin)
 	if err != nil {
 		panic(err)
 	}
-	if !capture {
-		return &pipe{r: r, w: w}
-	}
-	output := make(chan []byte, 1)
-	p := pipe{r: r, w: w, output: output}
-	go captureOutput(&p)
-	return &p
+	w0.Close()
+	defer r0.Close()
+
+	w1, get1 := capturedOutput()
+	w2, get2 := capturedOutput()
+
+	exitCode := prog.Run([3]*os.File{r0, w1, w2}, args, p)
+	return result{exitCode, output{content: get1()}, output{content: get2()}}
 }
 
-func (p *pipe) get() string {
-	if !p.wClosed {
+func matchOutput(got, want output) bool {
+	if want.partial {
+		return strings.Contains(got.content, want.content)
+	}
+	return got.content == want.content
+}
+
+func capturedOutput() (*os.File, func() string) {
+	r, w := testutil.MustPipe()
+	output := make(chan string, 1)
+	go func() {
+		b, err := io.ReadAll(r)
+		if err != nil {
+			panic(err)
+		}
+		r.Close()
+		output <- string(b)
+	}()
+	return w, func() string {
 		// Close the write side so captureOutput goroutine sees EOF and
 		// terminates allowing us to capture and cache the output.
-		p.w.Close()
-		p.wClosed = true
-		if p.output != nil {
-			p.saved = string(<-p.output)
-		}
+		w.Close()
+		return <-output
 	}
-	return p.saved
-}
-
-func (p *pipe) close() {
-	if !p.wClosed {
-		p.w.Close()
-		p.wClosed = true
-		if p.output != nil {
-			p.saved = string(<-p.output)
-		}
-	}
-	if !p.rClosed {
-		p.r.Close()
-		p.rClosed = true
-	}
-	if p.output != nil {
-		close(p.output)
-		p.output = nil
-	}
-}
-
-// Elvish returns an argument slice starting with "elvish".
-func Elvish(args ...string) []string {
-	return append([]string{"elvish"}, args...)
-}
-
-// TestError tests the exit code.
-func TestExit(t *testing.T, gotExit, wantExit int) {
-	t.Helper()
-	if gotExit != wantExit {
-		t.Errorf("got exit %v, want %v", gotExit, wantExit)
-	}
-}
-
-// TestError tests the error result of a program.
-func TestError(t *testing.T, f *Fixture, exit int, wantErrSnippet string) {
-	t.Helper()
-	if exit != 2 {
-		t.Errorf("got exit %v, want 2", exit)
-	}
-	f.TestOutSnippet(t, 2, wantErrSnippet)
 }
 
 // SetDeprecationLevel sets prog.DeprecationLevel to the given value for the

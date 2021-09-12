@@ -1,11 +1,12 @@
-// Framework for testing Elvish script. This file does not have a _test.go
-// suffix so that it can be used from other packages that also want to test the
-// modules they implement (e.g. edit: and re:).
+// Package evaltest provides a framework for testing Elvish script.
 //
 // The entry point for the framework is the Test function, which accepts a
-// *testing.T and a variadic number of test cases. Test cases are constructed
-// using the That function followed by methods that add constraints on the test
-// case. Overall, a test looks like:
+// *testing.T and any number of test cases.
+//
+// Test cases are constructed using the That function, followed by method calls
+// that add additional information to it.
+//
+// Example:
 //
 //     Test(t,
 //         That("put x").Puts("x"),

@@ -7,7 +7,6 @@ import (
 
 	"src.elv.sh/pkg/daemon/client"
 	"src.elv.sh/pkg/daemon/internal/api"
-	"src.elv.sh/pkg/prog"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/store/storetest"
 	"src.elv.sh/pkg/testutil"
@@ -58,9 +57,9 @@ func TestDaemon(t *testing.T) {
 }
 
 func TestProgram_SpuriousArgument(t *testing.T) {
-	f := Setup(t)
-
-	exit := prog.Run(f.Fds(), Elvish("-daemon", "x"), Program)
-
-	TestError(t, f, exit, "arguments are not allowed with -daemon")
+	Test(t, Program,
+		ThatElvish("-daemon", "x").
+			ExitsWith(2).
+			WritesStderrContaining("arguments are not allowed with -daemon"),
+	)
 }

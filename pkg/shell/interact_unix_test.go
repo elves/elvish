@@ -4,9 +4,9 @@
 package shell
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -14,40 +14,35 @@ import (
 	"src.elv.sh/pkg/daemon"
 	"src.elv.sh/pkg/daemon/client"
 	"src.elv.sh/pkg/env"
-	"src.elv.sh/pkg/prog"
 
 	. "src.elv.sh/pkg/prog/progtest"
 	. "src.elv.sh/pkg/testutil"
 )
 
 func TestInteract_NewRcFile_Default(t *testing.T) {
-	f := setup(t)
+	home := setupHomePaths(t)
 	MustWriteFile(
-		filepath.Join(f.home, ".config", "elvish", "rc.elv"), "echo hello new rc.elv")
+		filepath.Join(home, ".config", "elvish", "rc.elv"), "echo hello new rc.elv")
 
-	f.FeedIn("")
-
-	exit := f.run(Elvish())
-	TestExit(t, exit, 0)
-	f.TestOut(t, 1, "hello new rc.elv\n")
+	Test(t, Program{},
+		thatElvishInteract().WritesStdout("hello new rc.elv\n"),
+	)
 }
 
 func TestInteract_NewRcFile_XDG_CONFIG_HOME(t *testing.T) {
-	f := setup(t)
+	setupHomePaths(t)
 	xdgConfigHome := Setenv(t, env.XDG_CONFIG_HOME, TempDir(t))
 	MustWriteFile(
 		filepath.Join(xdgConfigHome, "elvish", "rc.elv"),
 		"echo hello XDG_CONFIG_HOME rc.elv")
 
-	f.FeedIn("")
-
-	exit := f.run(Elvish())
-	TestExit(t, exit, 0)
-	f.TestOut(t, 1, "hello XDG_CONFIG_HOME rc.elv\n")
+	Test(t, Program{},
+		thatElvishInteract().WritesStdout("hello XDG_CONFIG_HOME rc.elv\n"),
+	)
 }
 
 func TestInteract_ConnectsToDaemon(t *testing.T) {
-	f := setup(t)
+	InTempDir(t)
 
 	// Run the daemon in the same process for simplicity.
 	var wg sync.WaitGroup
@@ -77,10 +72,9 @@ func TestInteract_ConnectsToDaemon(t *testing.T) {
 		t.Fatalf("timed out waiting for daemon to start")
 	}
 
-	f.FeedIn("use daemon; print $daemon:pid\n")
-
-	exit := prog.Run(f.Fds(),
-		Elvish("-sock", "sock", "-db", "db"), Program{client.Activate})
-	TestExit(t, exit, 0)
-	f.TestOut(t, 1, strconv.Itoa(os.Getpid()))
+	Test(t, Program{client.Activate},
+		thatElvishInteract("-sock", "sock", "-db", "db").
+			WithStdin("use daemon; echo $daemon:pid\n").
+			WritesStdout(fmt.Sprintln(os.Getpid())),
+	)
 }
