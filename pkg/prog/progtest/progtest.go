@@ -133,6 +133,13 @@ func Test(t *testing.T, p prog.Program, cases ...Case) {
 	}
 }
 
+// Run runs a Program with the given arguments. It returns the Program's exit
+// code and output to stdout and stderr.
+func Run(p prog.Program, args ...string) (exit int, stdout, stderr string) {
+	r := run(p, args, "")
+	return r.exitCode, r.stdout.content, r.stderr.content
+}
+
 func run(p prog.Program, args []string, stdin string) result {
 	r0, w0 := testutil.MustPipe()
 	// TODO: This assumes that stdin fits in the pipe buffer. Don't assume that.

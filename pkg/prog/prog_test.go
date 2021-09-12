@@ -5,8 +5,13 @@ import (
 	"testing"
 
 	. "src.elv.sh/pkg/prog"
-	. "src.elv.sh/pkg/prog/progtest"
+	"src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
+)
+
+var (
+	Test       = progtest.Test
+	ThatElvish = progtest.ThatElvish
 )
 
 func TestCommonFlagHandling(t *testing.T) {
@@ -38,7 +43,7 @@ func TestCommonFlagHandling(t *testing.T) {
 }
 
 func TestShowDeprecations(t *testing.T) {
-	SetDeprecationLevel(t, 0)
+	progtest.SetDeprecationLevel(t, 0)
 
 	Test(t, testProgram{},
 		ThatElvish("-deprecation-level", "42").DoesNothing(),
