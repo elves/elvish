@@ -29,13 +29,13 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
-// TestCase is a test case for Test.
-type TestCase struct {
+// Case is a test case that can be used in Test.
+type Case struct {
 	codes []string
-	want  Result
+	want  result
 }
 
-type Result struct {
+type result struct {
 	ValueOut  []interface{}
 	BytesOut  []byte
 	StderrOut []byte
@@ -44,54 +44,55 @@ type Result struct {
 	Exception        error
 }
 
-// The following functions and methods are used to build Test structs. They are
-// supposed to read like English, so a test that "put x" should put "x" reads:
-//
-// That("put x").Puts("x")
-
-// That returns a new Test with the specified source code. Multiple arguments
+// That returns a new Case with the specified source code. Multiple arguments
 // are joined with newlines. To specify multiple pieces of code that are
 // executed separately, use the Then method to append code pieces.
-func That(lines ...string) TestCase {
-	return TestCase{codes: []string{strings.Join(lines, "\n")}}
+//
+// When combined with subsequent method calls, a test case reads like English.
+// For example, a test for the fact that "put x" puts "x" reads:
+//
+//     That("put x").Puts("x")
+func That(lines ...string) Case {
+	return Case{codes: []string{strings.Join(lines, "\n")}}
 }
 
-// Then returns a new Test that executes the given code in addition. Multiple
+// Then returns a new Case that executes the given code in addition. Multiple
 // arguments are joined with newlines.
-func (t TestCase) Then(lines ...string) TestCase {
-	t.codes = append(t.codes, strings.Join(lines, "\n"))
-	return t
+func (c Case) Then(lines ...string) Case {
+	c.codes = append(c.codes, strings.Join(lines, "\n"))
+	return c
 }
 
-// DoesNothing returns t unchanged. It is used to mark that a piece of code
-// should simply does nothing. In particular, it shouldn't have any output and
-// does not error.
-func (t TestCase) DoesNothing() TestCase {
-	return t
+// DoesNothing returns t unchanged. It is useful to mark tests that don't have
+// any side effects, for example:
+//
+//     That("nop").DoesNothing()
+func (c Case) DoesNothing() Case {
+	return c
 }
 
-// Puts returns an altered TestCase that requires the source code to produce the
+// Puts returns an altered Case that requires the source code to produce the
 // specified values in the value channel when evaluated.
-func (t TestCase) Puts(vs ...interface{}) TestCase {
-	t.want.ValueOut = vs
-	return t
+func (c Case) Puts(vs ...interface{}) Case {
+	c.want.ValueOut = vs
+	return c
 }
 
-// Prints returns an altered TestCase that requires the source code to produce
-// the specified output in the byte pipe when evaluated.
-func (t TestCase) Prints(s string) TestCase {
-	t.want.BytesOut = []byte(s)
-	return t
+// Prints returns an altered Case that requires the source code to produce the
+// specified output in the byte pipe when evaluated.
+func (c Case) Prints(s string) Case {
+	c.want.BytesOut = []byte(s)
+	return c
 }
 
-// PrintsStderrWith returns an altered TestCase that requires the stderr
-// output to contain the given text.
-func (t TestCase) PrintsStderrWith(s string) TestCase {
-	t.want.StderrOut = []byte(s)
-	return t
+// PrintsStderrWith returns an altered Case that requires the stderr output to
+// contain the given text.
+func (c Case) PrintsStderrWith(s string) Case {
+	c.want.StderrOut = []byte(s)
+	return c
 }
 
-// Throws returns an altered TestCase that requires the source code to throw an
+// Throws returns an altered Case that requires the source code to throw an
 // exception with the given reason. The reason supports special matcher values
 // constructed by functions like ErrorWithMessage.
 //
@@ -99,28 +100,28 @@ func (t TestCase) PrintsStderrWith(s string) TestCase {
 // stacktrace matching the given source fragments, frame by frame (innermost
 // frame first). If no stacktrace string is given, the stack trace of the
 // exception is not checked.
-func (t TestCase) Throws(reason error, stacks ...string) TestCase {
-	t.want.Exception = exc{reason, stacks}
-	return t
+func (c Case) Throws(reason error, stacks ...string) Case {
+	c.want.Exception = exc{reason, stacks}
+	return c
 }
 
-// DoesNotCompile returns an altered TestCase that requires the source code to
-// fail compilation.
-func (t TestCase) DoesNotCompile() TestCase {
-	t.want.CompilationError = anyError{}
-	return t
+// DoesNotCompile returns an altered Case that requires the source code to fail
+// compilation.
+func (c Case) DoesNotCompile() Case {
+	c.want.CompilationError = anyError{}
+	return c
 }
 
 // Test runs test cases. For each test case, a new Evaler is created with
 // NewEvaler.
-func Test(t *testing.T, tests ...TestCase) {
+func Test(t *testing.T, tests ...Case) {
 	t.Helper()
 	TestWithSetup(t, func(*eval.Evaler) {}, tests...)
 }
 
 // TestWithSetup runs test cases. For each test case, a new Evaler is created
 // with NewEvaler and passed to the setup function.
-func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...TestCase) {
+func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 	t.Helper()
 	for _, tt := range tests {
 		t.Run(strings.Join(tt.codes, "\n"), func(t *testing.T) {
@@ -159,8 +160,8 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...TestCase) {
 	}
 }
 
-func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) Result {
-	var r Result
+func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) result {
+	var r result
 
 	port1, collect1 := capturePort()
 	port2, collect2 := capturePort()

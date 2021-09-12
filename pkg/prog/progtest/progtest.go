@@ -70,7 +70,7 @@ func (c Case) WithStdin(s string) Case {
 	return c
 }
 
-// DoesNothing returns c itself. It is useful to make tests that otherwise don't
+// DoesNothing returns c itself. It is useful to mark tests that otherwise don't
 // have any expectations, for example:
 //
 //     ThatElvish("-c", "nop").DoesNothing()
