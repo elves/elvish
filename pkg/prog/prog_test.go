@@ -64,6 +64,15 @@ func TestComposite(t *testing.T) {
 	)
 }
 
+func TestComposite_NoSuitableSubprogram(t *testing.T) {
+	Test(t,
+		Composite(testProgram{notSuitable: true}, testProgram{notSuitable: true}),
+		ThatElvish().
+			ExitsWith(2).
+			WritesStderr("internal error: no suitable subprogram\n"),
+	)
+}
+
 func TestComposite_PreferEarlierSubprogram(t *testing.T) {
 	Test(t,
 		Composite(

@@ -56,8 +56,12 @@ func TestDaemon(t *testing.T) {
 	storetest.TestSharedVar(t, client)
 }
 
-func TestProgram_SpuriousArgument(t *testing.T) {
+func TestProgram_BadCLI(t *testing.T) {
 	Test(t, Program,
+		ThatElvish().
+			ExitsWith(2).
+			WritesStderr("internal error: no suitable subprogram\n"),
+
 		ThatElvish("-daemon", "x").
 			ExitsWith(2).
 			WritesStderrContaining("arguments are not allowed with -daemon"),
