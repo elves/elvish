@@ -32,6 +32,7 @@ func TestProgram_ServesClientRequests(t *testing.T) {
 	client, err := client.Activate(io.Discard,
 		&daemondefs.SpawnConfig{SockPath: "sock", DbPath: "db", RunDir: "."})
 	if err != nil {
+		close(serverDone)
 		t.Fatal("failed to activate client: ", err)
 	}
 	defer client.Close()
