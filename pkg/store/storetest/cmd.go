@@ -1,6 +1,7 @@
 package storetest
 
 import (
+	"reflect"
 	"testing"
 
 	"src.elv.sh/pkg/store/storedefs"
@@ -30,40 +31,62 @@ var (
 )
 
 // TestCmd tests the command history functionality of a Store.
-func TestCmd(t *testing.T, tStore storedefs.Store) {
-	startSeq, err := tStore.NextCmdSeq()
+func TestCmd(t *testing.T, store storedefs.Store) {
+	startSeq, err := store.NextCmdSeq()
 	if startSeq != 1 || err != nil {
-		t.Errorf("tStore.NextCmdSeq() => (%v, %v), want (1, nil)",
+		t.Errorf("store.NextCmdSeq() => (%v, %v), want (1, nil)",
 			startSeq, err)
 	}
+
+	// AddCmd
 	for i, cmd := range cmds {
 		wantSeq := startSeq + i
-		seq, err := tStore.AddCmd(cmd)
+		seq, err := store.AddCmd(cmd)
 		if seq != wantSeq || err != nil {
-			t.Errorf("tStore.AddCmd(%v) => (%v, %v), want (%v, nil)",
+			t.Errorf("store.AddCmd(%v) => (%v, %v), want (%v, nil)",
 				cmd, seq, err, wantSeq)
 		}
 	}
-	endSeq, err := tStore.NextCmdSeq()
+
+	endSeq, err := store.NextCmdSeq()
 	wantedEndSeq := startSeq + len(cmds)
 	if endSeq != wantedEndSeq || err != nil {
-		t.Errorf("tStore.NextCmdSeq() => (%v, %v), want (%v, nil)",
+		t.Errorf("store.NextCmdSeq() => (%v, %v), want (%v, nil)",
 			endSeq, err, wantedEndSeq)
 	}
+
+	// CmdsWithSeq
+	wantCmdWithSeqs := make([]storedefs.Cmd, len(cmds))
+	for i, cmd := range cmds {
+		wantCmdWithSeqs[i] = storedefs.Cmd{Text: cmd, Seq: i + 1}
+	}
+	for i := 0; i < len(cmds); i++ {
+		for j := i; j <= len(cmds); j++ {
+			cmdWithSeqs, err := store.CmdsWithSeq(i+1, j+1)
+			if !equalCmds(cmdWithSeqs, wantCmdWithSeqs[i:j]) || err != nil {
+				t.Errorf("store.CmdsWithSeq(%v, %v) -> (%v, %v), want (%v, nil)",
+					i+1, j+1, cmdWithSeqs, err, wantCmdWithSeqs[i:j])
+			}
+		}
+	}
+
+	// Cmd
 	for i, wantedCmd := range cmds {
 		seq := i + startSeq
-		cmd, err := tStore.Cmd(seq)
+		cmd, err := store.Cmd(seq)
 		if cmd != wantedCmd || err != nil {
-			t.Errorf("tStore.Cmd(%v) => (%v, %v), want (%v, nil)",
+			t.Errorf("store.Cmd(%v) => (%v, %v), want (%v, nil)",
 				seq, cmd, err, wantedCmd)
 		}
 	}
+
+	// PrevCmd and NextCmd
 	for _, tt := range searches {
-		f := tStore.PrevCmd
-		funcname := "tStore.PrevCmd"
+		f := store.PrevCmd
+		funcname := "store.PrevCmd"
 		if tt.next {
-			f = tStore.NextCmd
-			funcname = "tStore.NextCmd"
+			f = store.NextCmd
+			funcname = "store.NextCmd"
 		}
 		cmd, err := f(tt.seq, tt.prefix)
 		wantedCmd := storedefs.Cmd{Text: tt.wantedCmd, Seq: tt.wantedSeq}
@@ -73,11 +96,16 @@ func TestCmd(t *testing.T, tStore storedefs.Store) {
 		}
 	}
 
-	if err := tStore.DelCmd(1); err != nil {
+	// DelCmd
+	if err := store.DelCmd(1); err != nil {
 		t.Error("Failed to remove cmd")
 	}
-	if seq, err := tStore.Cmd(1); !matchErr(err, storedefs.ErrNoMatchingCmd) {
+	if seq, err := store.Cmd(1); !matchErr(err, storedefs.ErrNoMatchingCmd) {
 		t.Errorf("Cmd(1) => (%v, %v), want (%v, %v)",
 			seq, err, "", storedefs.ErrNoMatchingCmd)
 	}
+}
+
+func equalCmds(a, b []storedefs.Cmd) bool {
+	return (len(a) == 0 && len(b) == 0) || reflect.DeepEqual(a, b)
 }
