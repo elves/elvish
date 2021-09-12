@@ -13,7 +13,6 @@
 //         That("echo x").Prints("x\n"))
 //
 // If some setup is needed, use the TestWithSetup function instead.
-
 package evaltest
 
 import (
