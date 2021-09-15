@@ -96,15 +96,17 @@ func startServer(t *testing.T) {
 func startClient(t *testing.T) (daemondefs.Client, error) {
 	client := client.NewClient("sock")
 	t.Cleanup(func() { client.Close() })
-	for i := 0; i < 100; i++ {
+	start := time.Now()
+	timeout := testutil.ScaledMs(1000)
+	for {
 		client.ResetConn()
 		_, err := client.Version()
 		if err == nil {
 			return client, nil
 		}
-		if i < 99 {
-			time.Sleep(testutil.ScaledMs(10))
+		if time.Since(start) > timeout {
+			return nil, fmt.Errorf("Failed to connect after %v: %v", timeout, err)
 		}
+		time.Sleep(testutil.ScaledMs(10))
 	}
-	return nil, fmt.Errorf("Failed to connect after %v", testutil.ScaledMs(1000))
 }
