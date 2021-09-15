@@ -85,9 +85,11 @@ func startServerClientPair(t *testing.T) daemondefs.Client {
 }
 
 func startServer(t *testing.T) {
-	exit, _, stderr := Run(Program, "elvish", "-daemon", "-sock", "sock", "-db", "db")
+	exit, stdout, stderr := Run(Program, "elvish", "-daemon", "-sock", "sock", "-db", "db")
 	if exit != 0 {
-		t.Logf("daemon exited with %v; stderr:\n%v", exit, stderr)
+		fmt.Println("daemon exited with", exit)
+		fmt.Print("stdout:\n", stdout)
+		fmt.Print("stderr:\n", stderr)
 	}
 }
 
