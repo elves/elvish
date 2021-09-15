@@ -48,6 +48,8 @@ func TestProgram_ServesClientRequests(t *testing.T) {
 }
 
 func TestProgram_StillServesIfCannotOpenDB(t *testing.T) {
+	t.SkipNow()
+
 	setup(t)
 	testutil.MustWriteFile("db", "not a valid bolt database")
 	client := startServerClientPair(t)
