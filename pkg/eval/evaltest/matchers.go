@@ -13,7 +13,7 @@ import (
 // using Approximately.
 const ApproximatelyThreshold = 1e-15
 
-// Approximately can be passed to TestCase.Puts to match a float64 within the
+// Approximately can be passed to Case.Puts to match a float64 within the
 // threshold defined by ApproximatelyThreshold.
 type Approximately struct{ F float64 }
 
@@ -28,9 +28,8 @@ func matchFloat64(a, b, threshold float64) bool {
 	return math.Abs(a-b) <= threshold
 }
 
-// MatchingRegexp can be passed to TestCase.Puts to match a any string that
-// matches a regexp pattern. If the pattern is not a valid regexp, the test will
-// panic.
+// MatchingRegexp can be passed to Case.Puts to match a any string that matches
+// a regexp pattern. If the pattern is not a valid regexp, the test will panic.
 type MatchingRegexp struct{ Pattern string }
 
 func matchRegexp(p, s string) bool {
@@ -43,8 +42,8 @@ func matchRegexp(p, s string) bool {
 
 type errorMatcher interface{ matchError(error) bool }
 
-// AnyError is an error that can be passed to TestCase.Throws to match any
-// non-nil error.
+// AnyError is an error that can be passed to Case.Throws to match any non-nil
+// error.
 var AnyError = anyError{}
 
 // An errorMatcher for any error.
@@ -86,8 +85,8 @@ func getStackTexts(tb *eval.StackTrace) []string {
 	return texts
 }
 
-// ErrorWithType returns an error that can be passed to the TestCase.Throws
-// to match any error with the same type as the argument.
+// ErrorWithType returns an error that can be passed to the Case.Throws to match
+// any error with the same type as the argument.
 func ErrorWithType(v error) error { return errWithType{v} }
 
 // An errorMatcher for any error with the given type.
@@ -99,8 +98,8 @@ func (e errWithType) matchError(e2 error) bool {
 	return reflect.TypeOf(e.v) == reflect.TypeOf(e2)
 }
 
-// ErrorWithMessage returns an error that can be passed to TestCase.Throws to
-// match any error with the given message.
+// ErrorWithMessage returns an error that can be passed to Case.Throws to match
+// any error with the given message.
 func ErrorWithMessage(msg string) error { return errWithMessage{msg} }
 
 // An errorMatcher for any error with the given message.
@@ -112,7 +111,7 @@ func (e errWithMessage) matchError(e2 error) bool {
 	return e2 != nil && e.msg == e2.Error()
 }
 
-// CmdExit returns an error that can be passed to TestCase.Throws to match an
+// CmdExit returns an error that can be passed to Case.Throws to match an
 // eval.ExternalCmdExit ignoring the Pid field.
 func CmdExit(v eval.ExternalCmdExit) error { return errCmdExit{v} }
 
