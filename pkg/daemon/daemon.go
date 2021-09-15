@@ -27,6 +27,6 @@ func (program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 		return prog.BadUsage("arguments are not allowed with -daemon")
 	}
 	setUmaskForDaemon()
-	Serve(f.Sock, f.DB)
-	return nil
+	exit := Serve(f.Sock, f.DB)
+	return prog.Exit(exit)
 }

@@ -17,9 +17,6 @@ type service struct {
 
 // Version returns the API version number.
 func (s *service) Version(req *api.VersionRequest, res *api.VersionResponse) error {
-	if s.err != nil {
-		return s.err
-	}
 	res.Version = api.Version
 	return nil
 }

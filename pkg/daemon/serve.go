@@ -15,14 +15,14 @@ import (
 // Serve runs the daemon service, listening on the socket specified by sockpath
 // and serving data from dbpath. It quits upon receiving SIGTERM, SIGINT or when
 // all active clients have disconnected.
-func Serve(sockpath, dbpath string) {
+func Serve(sockpath, dbpath string) int {
 	logger.Println("pid is", syscall.Getpid())
 	logger.Println("going to listen", sockpath)
 	listener, err := net.Listen("unix", sockpath)
 	if err != nil {
 		logger.Printf("failed to listen on %s: %v", sockpath, err)
 		logger.Println("aborting")
-		os.Exit(2)
+		return 2
 	}
 
 	st, err := store.NewStore(dbpath)
@@ -45,9 +45,11 @@ func Serve(sockpath, dbpath string) {
 		if err != nil {
 			logger.Printf("failed to remove socket %s: %v", sockpath, err)
 		}
-		err = st.Close()
-		if err != nil {
-			logger.Printf("failed to close storage: %v", err)
+		if st != nil {
+			err = st.Close()
+			if err != nil {
+				logger.Printf("failed to close storage: %v", err)
+			}
 		}
 		err = listener.Close()
 		if err != nil {
@@ -55,8 +57,8 @@ func Serve(sockpath, dbpath string) {
 		}
 	}()
 
-	svc := &service{st, err}
-	rpc.RegisterName(api.ServiceName, svc)
+	server := rpc.NewServer()
+	server.RegisterName(api.ServiceName, &service{st, err})
 
 	logger.Println("starting to serve RPC calls")
 
@@ -87,10 +89,11 @@ func Serve(sockpath, dbpath string) {
 			activeClient.Add(1)
 		}
 		go func() {
-			rpc.DefaultServer.ServeConn(conn)
+			server.ServeConn(conn)
 			activeClient.Done()
 		}()
 	}
 
 	logger.Println("exiting")
+	return 0
 }
