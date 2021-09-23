@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 	"testing"
 	"time"
 
@@ -45,28 +44,15 @@ func TestInteract_ConnectsToDaemon(t *testing.T) {
 	InTempDir(t)
 
 	// Run the daemon in the same process for simplicity.
-	var wg sync.WaitGroup
-	wg.Add(1)
-	defer wg.Wait()
+	daemonDone := make(chan struct{})
+	defer func() { <-daemonDone }()
+	readyCh := make(chan struct{})
 	go func() {
-		daemon.Serve("sock", "db")
-		wg.Done()
-	}()
-	// Block until the socket file exists, so that Elvish will not try to spawn
-	// again.
-	hasSock := make(chan struct{})
-	go func() {
-		defer close(hasSock)
-		for {
-			_, err := os.Stat("sock")
-			if err == nil {
-				return
-			}
-			time.Sleep(time.Millisecond)
-		}
+		daemon.Serve("sock", "db", daemon.ServeChans{Ready: readyCh})
+		close(daemonDone)
 	}()
 	select {
-	case <-hasSock:
+	case <-readyCh:
 		// Do nothing
 	case <-time.After(ScaledMs(100)):
 		t.Fatalf("timed out waiting for daemon to start")

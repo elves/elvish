@@ -4,7 +4,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"src.elv.sh/pkg/daemon/internal/api"
@@ -12,10 +11,19 @@ import (
 	"src.elv.sh/pkg/store"
 )
 
+// ServeChans keeps channels that can be passed to Serve.
+type ServeChans struct {
+	// If not nil, will be closed when the daemon is ready to serve requests.
+	Ready chan<- struct{}
+	// Causes the daemon to abort if closed or sent data.
+	Quit <-chan interface{}
+}
+
 // Serve runs the daemon service, listening on the socket specified by sockpath
-// and serving data from dbpath. It quits upon receiving SIGTERM, SIGINT or when
-// all active clients have disconnected.
-func Serve(sockpath, dbpath string) int {
+// and serving data from dbpath. It quits upon receiving SIGTERM or SIGINT, when
+// all active clients have disconnected, or when chans.Quit is closed or sent
+// data.
+func Serve(sockpath, dbpath string, chans ServeChans) int {
 	logger.Println("pid is", syscall.Getpid())
 	logger.Println("going to listen", sockpath)
 	listener, err := net.Listen("unix", sockpath)
@@ -31,69 +39,98 @@ func Serve(sockpath, dbpath string) int {
 		logger.Printf("serving anyway")
 	}
 
-	quitSignals := make(chan os.Signal, 1)
-	quitChan := make(chan struct{})
-	signal.Notify(quitSignals, syscall.SIGTERM, syscall.SIGINT)
-	go func() {
-		select {
-		case sig := <-quitSignals:
-			logger.Printf("received signal %s", sig)
-		case <-quitChan:
-			logger.Printf("all clients exited")
-		}
-		err := os.Remove(sockpath)
-		if err != nil {
-			logger.Printf("failed to remove socket %s: %v", sockpath, err)
-		}
-		if st != nil {
-			err = st.Close()
-			if err != nil {
-				logger.Printf("failed to close storage: %v", err)
-			}
-		}
-		err = listener.Close()
-		if err != nil {
-			logger.Printf("failed to close listener: %v", err)
-		}
-	}()
-
 	server := rpc.NewServer()
 	server.RegisterName(api.ServiceName, &service{st, err})
 
-	logger.Println("starting to serve RPC calls")
-
-	firstClient := true
-	activeClient := sync.WaitGroup{}
-	// prevent daemon exit before serving first client
-	activeClient.Add(1)
+	connCh := make(chan net.Conn, 10)
+	listenErrCh := make(chan error, 1)
 	go func() {
-		activeClient.Wait()
-		close(quitChan)
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				listenErrCh <- err
+				close(listenErrCh)
+				return
+			}
+			connCh <- conn
+		}
 	}()
 
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			select {
-			case <-quitChan:
-				// listener was closed explicitly; don't complain.
-			default:
-				logger.Printf("Failed to accept: %v", err)
-			}
-			break
-		}
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
 
-		if firstClient {
-			firstClient = false
-		} else {
-			activeClient.Add(1)
+	conns := make(map[net.Conn]struct{})
+	connDoneCh := make(chan net.Conn, 10)
+
+	interrupt := func() bool {
+		if len(conns) == 0 {
+			logger.Println("exiting since there are no clients")
+			return true
 		}
-		go func() {
-			server.ServeConn(conn)
-			activeClient.Done()
-		}()
+		logger.Printf("going to close %v active connections", len(conns))
+		for conn := range conns {
+			err := conn.Close()
+			if err != nil {
+				logger.Println("failed to close connection:", err)
+			}
+		}
+		return false
 	}
 
-	logger.Println("exiting")
+	if chans.Ready != nil {
+		close(chans.Ready)
+	}
+
+loop:
+	for {
+		select {
+		case v := <-chans.Quit:
+			logger.Printf("received quit request %v", v)
+			if interrupt() {
+				break loop
+			}
+		case sig := <-sigCh:
+			logger.Printf("received signal %s", sig)
+			if interrupt() {
+				break loop
+			}
+		case err := <-listenErrCh:
+			logger.Println("could not listen:", err)
+			if len(conns) == 0 {
+				logger.Println("exiting since there are no clients")
+				break loop
+			}
+			logger.Println("continuing to serve until all existing clients exit")
+		case conn := <-connCh:
+			conns[conn] = struct{}{}
+			go func() {
+				server.ServeConn(conn)
+				connDoneCh <- conn
+			}()
+		case conn := <-connDoneCh:
+			delete(conns, conn)
+			if len(conns) == 0 {
+				logger.Println("all clients disconnected, exiting")
+				break loop
+			}
+		}
+	}
+
+	err = os.Remove(sockpath)
+	if err != nil {
+		logger.Printf("failed to remove socket %s: %v", sockpath, err)
+	}
+	if st != nil {
+		err = st.Close()
+		if err != nil {
+			logger.Printf("failed to close storage: %v", err)
+		}
+	}
+	err = listener.Close()
+	if err != nil {
+		logger.Printf("failed to close listener: %v", err)
+	}
+	// Ensure that the listener goroutine has exited before returning
+	<-listenErrCh
 	return 0
 }

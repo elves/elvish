@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/daemon/client"
-	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/daemon/internal/api"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/store/storetest"
@@ -27,7 +26,8 @@ func TestProgram_TerminatesIfCannotListen(t *testing.T) {
 
 func TestProgram_ServesClientRequests(t *testing.T) {
 	setup(t)
-	client := startServerClientPair(t)
+	startServer(t)
+	client := client.NewClient("sock")
 
 	// Test server state requests.
 	gotVersion, err := client.Version()
@@ -48,11 +48,10 @@ func TestProgram_ServesClientRequests(t *testing.T) {
 }
 
 func TestProgram_StillServesIfCannotOpenDB(t *testing.T) {
-	t.SkipNow()
-
 	setup(t)
 	testutil.MustWriteFile("db", "not a valid bolt database")
-	client := startServerClientPair(t)
+	startServer(t)
+	client := client.NewClient("sock")
 
 	_, err := client.AddCmd("cmd")
 	if err == nil {
@@ -77,38 +76,30 @@ func setup(t *testing.T) {
 	testutil.InTempDir(t)
 }
 
-func startServerClientPair(t *testing.T) daemondefs.Client {
-	go startServer(t)
-	client, err := startClient(t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return client
-}
-
 func startServer(t *testing.T) {
-	exit, stdout, stderr := Run(Program, "elvish", "-daemon", "-sock", "sock", "-db", "db")
-	if exit != 0 {
-		fmt.Println("daemon exited with", exit)
-		fmt.Print("stdout:\n", stdout)
-		fmt.Print("stderr:\n", stderr)
-	}
-}
+	t.Helper()
 
-func startClient(t *testing.T) (daemondefs.Client, error) {
-	client := client.NewClient("sock")
-	t.Cleanup(func() { client.Close() })
-	start := time.Now()
-	timeout := testutil.ScaledMs(1000)
-	for {
-		client.ResetConn()
-		_, err := client.Version()
-		if err == nil {
-			return client, nil
+	readyCh := make(chan struct{})
+	quitCh := make(chan interface{})
+	doneCh := make(chan struct{})
+	go func() {
+		exit, stdout, stderr := Run(
+			program{ServeChans{Ready: readyCh, Quit: quitCh}},
+			"elvish", "-daemon", "-sock", "sock", "-db", "db")
+		if exit != 0 {
+			fmt.Println("daemon exited with", exit)
+			fmt.Print("stdout:\n", stdout)
+			fmt.Print("stderr:\n", stderr)
 		}
-		if time.Since(start) > timeout {
-			return nil, fmt.Errorf("Failed to connect after %v: %v", timeout, err)
-		}
-		time.Sleep(testutil.ScaledMs(10))
+		close(doneCh)
+	}()
+	select {
+	case <-readyCh:
+	case <-time.After(testutil.ScaledMs(100)):
+		t.Fatal("timed out waiting for daemon to start")
 	}
+	t.Cleanup(func() {
+		close(quitCh)
+		<-doneCh
+	})
 }

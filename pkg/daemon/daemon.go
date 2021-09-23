@@ -17,9 +17,11 @@ var logger = logutil.GetLogger("[daemon] ")
 // Program is the daemon subprogram.
 var Program prog.Program = program{}
 
-type program struct{}
+type program struct {
+	ServeChans ServeChans
+}
 
-func (program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
+func (p program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 	if !f.Daemon {
 		return prog.ErrNotSuitable
 	}
@@ -27,6 +29,6 @@ func (program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 		return prog.BadUsage("arguments are not allowed with -daemon")
 	}
 	setUmaskForDaemon()
-	exit := Serve(f.Sock, f.DB)
+	exit := Serve(f.Sock, f.DB, p.ServeChans)
 	return prog.Exit(exit)
 }
