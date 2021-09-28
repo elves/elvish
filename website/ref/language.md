@@ -169,10 +169,11 @@ writes out `\*`.
 A string is a (possibly empty) sequence of bytes.
 
 [Single-quoted string literals](#single-quoted-string),
-[double-quoted string literals](#double-quoted-string)and [barewords](#bareword)
-all evaluate to string values. Unless otherwise noted, different syntaxes of
-string literals are equivalent in the code. For instance, `xyz`, `'xyz'` and
-`"xyz"` are different syntaxes for the same string with content `xyz`.
+[double-quoted string literals](#double-quoted-string) and
+[barewords](#bareword) all evaluate to string values. Unless otherwise noted,
+different syntaxes of string literals are equivalent in the code. For instance,
+`xyz`, `'xyz'` and `"xyz"` are different syntaxes for the same string with
+content `xyz`.
 
 Strings that contain UTF-8 encoded text can be [indexed](#indexing) with a
 **byte index** where a codepoint starts, which results in the codepoint that
@@ -2392,18 +2393,34 @@ itself or defined by the user.
 
 ### Importing modules with `use`
 
-Modules are imported using the `use` special command, which accepts a **module
-spec** and an optional alias:
+Modules are imported using the `use` special command. It requires a **module
+spec** and allows a namespace alias:
 
 ```elvish
 use $spec $alias?
 ```
 
-Both the module spec and the alias must appear as a single string literal.
+The module spec and the alias must both be a simple [string literal](#string).
+[Compound strings](#compounding) such as `'a'/b` are not allowed.
 
-The module spec specifies which module to import, and the alias, if given,
-specifies the namespace to import the module under. By default, the namespace is
-derived from the module spec, by taking the part after the last slash.
+The module spec specifies which module to import. The alias, if given, specifies
+the namespace to import the module under. By default, the namespace is derived
+from the module spec by taking the part after the last slash.
+
+Module specs fall into three categories that are resolved in the following
+order:
+
+1. **Relative**: These are [relative](#relative-imports) to the file containing
+   the `use` command.
+
+1. **User defined**: These match a [user defined module](#user-defined-modules)
+   in a [module search directory](#module-search-directories).
+
+1. **Pre-defined**: These match the name of a
+   [pre-defined module](#pre-defined-modules), such as `math` or `str`.
+
+If a module spec doesn't match any of the above a "no such module"
+[exception](#exception) is raised.
 
 Examples:
 
@@ -2525,10 +2542,10 @@ functions.
 
 ### Relative imports
 
-The module spec may being with `./` or `../`, which introduce **relative
-imports**. When `use` is invoked from a file, this will import the file relative
-to the location of the file. When `use` is invoked at the interactive prompt,
-this will import the file relative to the current working directory.
+The module spec may begin with `./` or `../` to introduce a **relative import**.
+When `use` is invoked from a file this will import the file relative to the
+location of the file. When `use` is invoked from an interactive prompt, this
+will import the file relative to the current working directory.
 
 ### Scoping of imports
 
