@@ -349,13 +349,11 @@ func TestUse_SupportsCircularDependency(t *testing.T) {
 
 func TestUse(t *testing.T) {
 	libdir1 := InTempDir(t)
-
 	ApplyDir(Dir{
 		"shadow.elv": "put lib1",
 	})
 
 	libdir2 := InTempDir(t)
-
 	ApplyDir(Dir{
 		"has-init.elv": "put has-init",
 		"put-x.elv":    "put $x",
@@ -410,7 +408,10 @@ func TestUse(t *testing.T) {
 		// modules
 		That("x = foo; use put-x").Throws(AnyError),
 
-		// TODO: Test module namespace
+		// Using an unknown module spec fails.
+		That("use unknown").Throws(ErrorWithType(NoSuchModule{})),
+		That("use ./unknown").Throws(ErrorWithType(NoSuchModule{})),
+		That("use ../unknown").Throws(ErrorWithType(NoSuchModule{})),
 
 		// Nonexistent module
 		That("use non-existent").Throws(ErrorWithMessage("no such module: non-existent")),

@@ -36,9 +36,11 @@ var builtinSpecials map[string]compileBuiltin
 // intended for external consumption, e.g. the syntax highlighter.
 var IsBuiltinSpecial = map[string]bool{}
 
-type noSuchModule struct{ spec string }
+// NoSuchModule encodes an error where a module spec cannot be resolved.
+type NoSuchModule struct{ spec string }
 
-func (err noSuchModule) Error() string { return "no such module: " + err.spec }
+// Error implements the error interface.
+func (err NoSuchModule) Error() string { return "no such module: " + err.spec }
 
 func init() {
 	// Needed to avoid initialization loop
@@ -316,7 +318,12 @@ func (op useOp) exec(fm *Frame) Exception {
 	return nil
 }
 
+// TODO: Add support for module specs relative to a package/workspace.
+// See https://github.com/elves/elvish/issues/1421.
 func use(fm *Frame, spec string, r diag.Ranger) (*Ns, error) {
+	// Handle relative imports. Note that this deliberately does not support Windows backslash as a
+	// path separator because module specs are meant to be platform independent. If necessary, we
+	// translate a module spec to an appropriate path for the platform.
 	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") {
 		var dir string
 		if fm.srcMeta.IsFile {
@@ -331,6 +338,8 @@ func use(fm *Frame, spec string, r diag.Ranger) (*Ns, error) {
 		path := filepath.Clean(dir + "/" + spec)
 		return useFromFile(fm, spec, path, r)
 	}
+
+	// Handle imports of pre-defined modules like `builtin` and `str`.
 	if ns, ok := fm.Evaler.modules[spec]; ok {
 		return ns, nil
 	}
@@ -338,16 +347,21 @@ func use(fm *Frame, spec string, r diag.Ranger) (*Ns, error) {
 		return evalModule(fm, spec,
 			parse.Source{Name: "[bundled " + spec + "]", Code: code}, r)
 	}
+
+	// Handle imports relative to the Elvish module search directories.
+	//
 	// TODO: For non-relative imports, use the spec (instead of the full path)
 	// as the module key instead to avoid searching every time.
 	for _, dir := range fm.Evaler.LibDirs {
 		ns, err := useFromFile(fm, spec, filepath.Join(dir, spec), r)
-		if _, isNoSuchModule := err.(noSuchModule); isNoSuchModule {
+		if _, isNoSuchModule := err.(NoSuchModule); isNoSuchModule {
 			continue
 		}
 		return ns, err
 	}
-	return nil, noSuchModule{spec}
+
+	// Sadly, we couldn't resolve the module spec.
+	return nil, NoSuchModule{spec}
 }
 
 // TODO: Make access to fm.Evaler.modules concurrency-safe.
@@ -360,7 +374,7 @@ func useFromFile(fm *Frame, spec, path string, r diag.Ranger) (*Ns, error) {
 		code, err := readFileUTF8(path + ".elv")
 		if err != nil {
 			if os.IsNotExist(err) {
-				return nil, noSuchModule{spec}
+				return nil, NoSuchModule{spec}
 			}
 			return nil, err
 		}
@@ -370,7 +384,7 @@ func useFromFile(fm *Frame, spec, path string, r diag.Ranger) (*Ns, error) {
 
 	plug, err := pluginOpen(path + ".so")
 	if err != nil {
-		return nil, noSuchModule{spec}
+		return nil, NoSuchModule{spec}
 	}
 	sym, err := plug.Lookup("Ns")
 	if err != nil {
@@ -378,7 +392,7 @@ func useFromFile(fm *Frame, spec, path string, r diag.Ranger) (*Ns, error) {
 	}
 	ns, ok := sym.(**Ns)
 	if !ok {
-		return nil, noSuchModule{spec}
+		return nil, NoSuchModule{spec}
 	}
 	fm.Evaler.modules[path] = *ns
 	return *ns, nil
