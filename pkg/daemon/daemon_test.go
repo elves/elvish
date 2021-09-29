@@ -3,6 +3,7 @@ package daemon
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"syscall"
 	"testing"
 	"time"
@@ -64,10 +65,9 @@ func TestProgram_StillServesIfCannotOpenDB(t *testing.T) {
 func TestProgram_QuitsOnSignalChannelWithNoClient(t *testing.T) {
 	setup(t)
 	sigCh := make(chan os.Signal)
-	doneCh := startServerSigCh(t, sigCh)
+	startServerSigCh(t, sigCh)
 	close(sigCh)
-
-	waitDone(t, doneCh)
+	// startServerSigCh will wait for server to terminate at cleanup
 }
 
 func TestProgram_QuitsOnSignalChannelWithClients(t *testing.T) {
@@ -89,20 +89,22 @@ func TestProgram_QuitsOnSystemSignal_SIGINT(t *testing.T) {
 }
 
 func TestProgram_QuitsOnSystemSignal_SIGTERM(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("SIGTERM doesn't exist on Windows")
+	}
 	testProgram_QuitsOnSystemSignal(t, syscall.SIGTERM)
 }
 
 func testProgram_QuitsOnSystemSignal(t *testing.T, sig os.Signal) {
 	t.Helper()
 	setup(t)
-	doneCh := startServerSigCh(t, nil)
+	startServerSigCh(t, nil)
 	p, err := os.FindProcess(os.Getpid())
 	if err != nil {
 		t.Fatalf("FindProcess: %v", err)
 	}
 	p.Signal(sig)
-
-	waitDone(t, doneCh)
+	// startServerSigCh will wait for server to terminate at cleanup
 }
 
 func TestProgram_BadCLI(t *testing.T) {
@@ -148,7 +150,7 @@ func startServerSigCh(t *testing.T, sigCh <-chan os.Signal) <-chan struct{} {
 	case <-time.After(testutil.ScaledMs(1000)):
 		t.Fatal("timed out waiting for daemon to start")
 	}
-	t.Cleanup(func() { <-doneCh })
+	t.Cleanup(func() { waitDone(t, doneCh) })
 	return doneCh
 }
 
