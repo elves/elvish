@@ -15,14 +15,14 @@ import (
 type ServeChans struct {
 	// If not nil, will be closed when the daemon is ready to serve requests.
 	Ready chan<- struct{}
-	// Causes the daemon to abort if closed or sent data.
-	Quit <-chan interface{}
+	// Causes the daemon to abort if closed or sent any date. If nil, Serve will
+	// set up its own signal channel by listening to SIGINT and SIGTERM.
+	Signal <-chan os.Signal
 }
 
 // Serve runs the daemon service, listening on the socket specified by sockpath
-// and serving data from dbpath. It quits upon receiving SIGTERM or SIGINT, when
-// all active clients have disconnected, or when chans.Quit is closed or sent
-// data.
+// and serving data from dbpath until all clients have exited. See doc for
+// ServeChans for additional options.
 func Serve(sockpath, dbpath string, chans ServeChans) int {
 	logger.Println("pid is", syscall.Getpid())
 	logger.Println("going to listen", sockpath)
@@ -56,8 +56,12 @@ func Serve(sockpath, dbpath string, chans ServeChans) int {
 		}
 	}()
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
+	sigCh := chans.Signal
+	if sigCh == nil {
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
+		sigCh = ch
+	}
 
 	conns := make(map[net.Conn]struct{})
 	connDoneCh := make(chan net.Conn, 10)
@@ -84,11 +88,6 @@ func Serve(sockpath, dbpath string, chans ServeChans) int {
 loop:
 	for {
 		select {
-		case v := <-chans.Quit:
-			logger.Printf("received quit request %v", v)
-			if interrupt() {
-				break loop
-			}
 		case sig := <-sigCh:
 			logger.Printf("received signal %s", sig)
 			if interrupt() {

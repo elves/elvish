@@ -2,11 +2,13 @@ package daemon
 
 import (
 	"fmt"
+	"os"
 	"syscall"
 	"testing"
 	"time"
 
 	"src.elv.sh/pkg/daemon/client"
+	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/daemon/internal/api"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/store/storetest"
@@ -27,7 +29,7 @@ func TestProgram_TerminatesIfCannotListen(t *testing.T) {
 func TestProgram_ServesClientRequests(t *testing.T) {
 	setup(t)
 	startServer(t)
-	client := client.NewClient("sock")
+	client := startClient(t)
 
 	// Test server state requests.
 	gotVersion, err := client.Version()
@@ -51,12 +53,56 @@ func TestProgram_StillServesIfCannotOpenDB(t *testing.T) {
 	setup(t)
 	testutil.MustWriteFile("db", "not a valid bolt database")
 	startServer(t)
-	client := client.NewClient("sock")
+	client := startClient(t)
 
 	_, err := client.AddCmd("cmd")
 	if err == nil {
 		t.Errorf("got nil error, want non-nil")
 	}
+}
+
+func TestProgram_QuitsOnSignalChannelWithNoClient(t *testing.T) {
+	setup(t)
+	sigCh := make(chan os.Signal)
+	doneCh := startServerSigCh(t, sigCh)
+	close(sigCh)
+
+	waitDone(t, doneCh)
+}
+
+func TestProgram_QuitsOnSignalChannelWithClients(t *testing.T) {
+	setup(t)
+	sigCh := make(chan os.Signal)
+	doneCh := startServerSigCh(t, sigCh)
+	client := startClient(t)
+	close(sigCh)
+
+	waitDone(t, doneCh)
+	_, err := client.Version()
+	if err == nil {
+		t.Errorf("client.Version() returns nil error, want non-nil")
+	}
+}
+
+func TestProgram_QuitsOnSystemSignal_SIGINT(t *testing.T) {
+	testProgram_QuitsOnSystemSignal(t, syscall.SIGINT)
+}
+
+func TestProgram_QuitsOnSystemSignal_SIGTERM(t *testing.T) {
+	testProgram_QuitsOnSystemSignal(t, syscall.SIGTERM)
+}
+
+func testProgram_QuitsOnSystemSignal(t *testing.T, sig os.Signal) {
+	t.Helper()
+	setup(t)
+	doneCh := startServerSigCh(t, nil)
+	p, err := os.FindProcess(os.Getpid())
+	if err != nil {
+		t.Fatalf("FindProcess: %v", err)
+	}
+	p.Signal(sig)
+
+	waitDone(t, doneCh)
 }
 
 func TestProgram_BadCLI(t *testing.T) {
@@ -76,15 +122,19 @@ func setup(t *testing.T) {
 	testutil.InTempDir(t)
 }
 
-func startServer(t *testing.T) {
-	t.Helper()
+func startServer(t *testing.T) <-chan struct{} {
+	sigCh := make(chan os.Signal)
+	doneCh := startServerSigCh(t, sigCh)
+	t.Cleanup(func() { close(sigCh) })
+	return doneCh
+}
 
+func startServerSigCh(t *testing.T, sigCh <-chan os.Signal) <-chan struct{} {
 	readyCh := make(chan struct{})
-	quitCh := make(chan interface{})
 	doneCh := make(chan struct{})
 	go func() {
 		exit, stdout, stderr := Run(
-			program{ServeChans{Ready: readyCh, Quit: quitCh}},
+			program{ServeChans{Ready: readyCh, Signal: sigCh}},
 			"elvish", "-daemon", "-sock", "sock", "-db", "db")
 		if exit != 0 {
 			fmt.Println("daemon exited with", exit)
@@ -95,11 +145,26 @@ func startServer(t *testing.T) {
 	}()
 	select {
 	case <-readyCh:
-	case <-time.After(testutil.ScaledMs(100)):
+	case <-time.After(testutil.ScaledMs(1000)):
 		t.Fatal("timed out waiting for daemon to start")
 	}
-	t.Cleanup(func() {
-		close(quitCh)
-		<-doneCh
-	})
+	t.Cleanup(func() { <-doneCh })
+	return doneCh
+}
+
+func startClient(t *testing.T) daemondefs.Client {
+	cl := client.NewClient("sock")
+	if _, err := cl.Version(); err != nil {
+		t.Errorf("failed to start client: %v", err)
+	}
+	t.Cleanup(func() { cl.Close() })
+	return cl
+}
+
+func waitDone(t *testing.T, doneCh <-chan struct{}) {
+	select {
+	case <-doneCh:
+	case <-time.After(testutil.ScaledMs(1000)):
+		t.Error("timed out waiting for daemon to quit")
+	}
 }
