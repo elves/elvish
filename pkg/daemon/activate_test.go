@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"io"
+	"runtime"
 	"testing"
 
 	"src.elv.sh/pkg/daemon/daemondefs"
@@ -19,7 +20,9 @@ func TestActivate_WhenServerExists(t *testing.T) {
 }
 
 func TestActivate_FailsIfCannotStatSock(t *testing.T) {
-	t.Skip()
+	if runtime.GOOS == "windows" {
+		t.Skip()
+	}
 	setup(t)
 	testutil.MustCreateEmpty("not-dir")
 	_, err := Activate(io.Discard,
