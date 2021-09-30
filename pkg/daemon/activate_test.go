@@ -18,7 +18,17 @@ func TestActivate_WhenServerExists(t *testing.T) {
 	}
 }
 
-func TestActivate_FailsIfSockExistsAndIsNotSocket(t *testing.T) {
+func TestActivate_FailsIfCannotStatSock(t *testing.T) {
+	setup(t)
+	testutil.MustCreateEmpty("not-dir")
+	_, err := Activate(io.Discard,
+		&daemondefs.SpawnConfig{DbPath: "db", SockPath: "not-dir/sock", RunDir: "."})
+	if err == nil {
+		t.Errorf("got error nil, want non-nil")
+	}
+}
+
+func TestActivate_FailsIfCannotDialSock(t *testing.T) {
 	setup(t)
 	testutil.MustCreateEmpty("sock")
 	_, err := Activate(io.Discard,
