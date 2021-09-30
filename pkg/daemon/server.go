@@ -1,15 +1,43 @@
+// Package daemon implements a service for mediating access to the data store,
+// and its client.
+//
+// Most RPCs exposed by the service correspond to the methods of Store in the
+// store package and are not documented here.
 package daemon
 
 import (
 	"net"
+	"net/rpc"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"src.elv.sh/pkg/daemon/internal/api"
-	"src.elv.sh/pkg/rpc"
+	"src.elv.sh/pkg/logutil"
+	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/store"
 )
+
+var logger = logutil.GetLogger("[daemon] ")
+
+// Program is the daemon subprogram.
+var Program prog.Program = program{}
+
+type program struct {
+	ServeChans ServeChans
+}
+
+func (p program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
+	if !f.Daemon {
+		return prog.ErrNotSuitable
+	}
+	if len(args) > 0 {
+		return prog.BadUsage("arguments are not allowed with -daemon")
+	}
+	setUmaskForDaemon()
+	exit := Serve(f.Sock, f.DB, p.ServeChans)
+	return prog.Exit(exit)
+}
 
 // ServeChans keeps channels that can be passed to Serve.
 type ServeChans struct {

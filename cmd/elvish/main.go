@@ -9,7 +9,6 @@ import (
 
 	"src.elv.sh/pkg/buildinfo"
 	"src.elv.sh/pkg/daemon"
-	"src.elv.sh/pkg/daemon/client"
 	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/shell"
 )
@@ -19,5 +18,5 @@ func main() {
 		[3]*os.File{os.Stdin, os.Stdout, os.Stderr}, os.Args,
 		prog.Composite(
 			buildinfo.Program, daemon.Program,
-			shell.Program{ActivateDaemon: client.Activate})))
+			shell.Program{ActivateDaemon: daemon.Activate})))
 }

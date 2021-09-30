@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"src.elv.sh/pkg/daemon/client"
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/daemon/internal/api"
 	. "src.elv.sh/pkg/prog/progtest"
@@ -131,7 +130,7 @@ func startServerSigCh(t *testing.T, sigCh <-chan os.Signal) <-chan struct{} {
 }
 
 func startClient(t *testing.T) daemondefs.Client {
-	cl := client.NewClient("sock")
+	cl := NewClient("sock")
 	if _, err := cl.Version(); err != nil {
 		t.Errorf("failed to start client: %v", err)
 	}

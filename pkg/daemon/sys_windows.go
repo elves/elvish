@@ -1,18 +1,20 @@
-package client
+package daemon
 
 import (
 	"os"
 	"syscall"
 )
 
+// No-op on Windows.
+func setUmaskForDaemon() {}
+
 // A subset of possible process creation flags, value taken from
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ms684863(v=vs.85).aspx
 const (
-	CREATE_BREAKAWAY_FROM_JOB = 0x01000000
-	CREATE_NEW_PROCESS_GROUP  = 0x00000200
-	DETACHED_PROCESS          = 0x00000008
-
-	daemonCreationFlags = CREATE_BREAKAWAY_FROM_JOB | CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS
+	createBreakwayFromJob = 0x01000000
+	createNewProcessGroup = 0x00000200
+	detachedProcess       = 0x00000008
+	daemonCreationFlags   = createBreakwayFromJob | createNewProcessGroup | detachedProcess
 )
 
 func procAttrForSpawn(files []*os.File) *os.ProcAttr {

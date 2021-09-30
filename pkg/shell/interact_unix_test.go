@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/daemon"
-	"src.elv.sh/pkg/daemon/client"
 	"src.elv.sh/pkg/env"
 
 	. "src.elv.sh/pkg/prog/progtest"
@@ -58,7 +57,7 @@ func TestInteract_ConnectsToDaemon(t *testing.T) {
 		t.Fatalf("timed out waiting for daemon to start")
 	}
 
-	Test(t, Program{client.Activate},
+	Test(t, Program{daemon.Activate},
 		thatElvishInteract("-sock", "sock", "-db", "db").
 			WithStdin("use daemon; echo $daemon:pid\n").
 			WritesStdout(fmt.Sprintln(os.Getpid())),

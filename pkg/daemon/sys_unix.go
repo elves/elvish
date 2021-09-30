@@ -1,12 +1,17 @@
 //go:build !windows && !plan9 && !js
 // +build !windows,!plan9,!js
 
-package client
+package daemon
 
 import (
 	"os"
 	"syscall"
+
+	"golang.org/x/sys/unix"
 )
+
+// Make sure that files created by the daemon is not accessible to other users.
+func setUmaskForDaemon() { unix.Umask(0077) }
 
 func procAttrForSpawn(files []*os.File) *os.ProcAttr {
 	return &os.ProcAttr{
