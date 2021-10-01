@@ -27,8 +27,8 @@ func TestProgram_TerminatesIfCannotListen(t *testing.T) {
 
 func TestProgram_ServesClientRequests(t *testing.T) {
 	setup(t)
-	startServer(t)
-	client := startClient(t)
+	startServer(t, cli("sock", "db"))
+	client := startClient(t, "sock")
 
 	// Test server state requests.
 	gotVersion, err := client.Version()
@@ -51,8 +51,8 @@ func TestProgram_ServesClientRequests(t *testing.T) {
 func TestProgram_StillServesIfCannotOpenDB(t *testing.T) {
 	setup(t)
 	testutil.MustWriteFile("db", "not a valid bolt database")
-	startServer(t)
-	client := startClient(t)
+	startServer(t, cli("sock", "db"))
+	client := startClient(t, "sock")
 
 	_, err := client.AddCmd("cmd")
 	if err == nil {
@@ -63,7 +63,7 @@ func TestProgram_StillServesIfCannotOpenDB(t *testing.T) {
 func TestProgram_QuitsOnSignalChannelWithNoClient(t *testing.T) {
 	setup(t)
 	sigCh := make(chan os.Signal)
-	startServerSigCh(t, sigCh)
+	startServerSigCh(t, cli("sock", "db"), sigCh)
 	close(sigCh)
 	// startServerSigCh will wait for server to terminate at cleanup
 }
@@ -71,8 +71,8 @@ func TestProgram_QuitsOnSignalChannelWithNoClient(t *testing.T) {
 func TestProgram_QuitsOnSignalChannelWithClients(t *testing.T) {
 	setup(t)
 	sigCh := make(chan os.Signal)
-	doneCh := startServerSigCh(t, sigCh)
-	client := startClient(t)
+	doneCh := startServerSigCh(t, cli("sock", "db"), sigCh)
+	client := startClient(t, "sock")
 	close(sigCh)
 
 	waitDone(t, doneCh)
@@ -99,20 +99,19 @@ func setup(t *testing.T) {
 	testutil.InTempDir(t)
 }
 
-func startServer(t *testing.T) <-chan struct{} {
+func startServer(t *testing.T, args []string) <-chan struct{} {
 	sigCh := make(chan os.Signal)
-	doneCh := startServerSigCh(t, sigCh)
+	doneCh := startServerSigCh(t, args, sigCh)
 	t.Cleanup(func() { close(sigCh) })
 	return doneCh
 }
 
-func startServerSigCh(t *testing.T, sigCh <-chan os.Signal) <-chan struct{} {
+func startServerSigCh(t *testing.T, args []string, sigCh <-chan os.Signal) <-chan struct{} {
 	readyCh := make(chan struct{})
 	doneCh := make(chan struct{})
 	go func() {
 		exit, stdout, stderr := Run(
-			program{ServeChans{Ready: readyCh, Signal: sigCh}},
-			"elvish", "-daemon", "-sock", "sock", "-db", "db")
+			program{ServeChans{Ready: readyCh, Signal: sigCh}}, args...)
 		if exit != 0 {
 			fmt.Println("daemon exited with", exit)
 			fmt.Print("stdout:\n", stdout)
@@ -129,7 +128,11 @@ func startServerSigCh(t *testing.T, sigCh <-chan os.Signal) <-chan struct{} {
 	return doneCh
 }
 
-func startClient(t *testing.T) daemondefs.Client {
+func cli(sock, db string) []string {
+	return []string{"elvish", "-daemon", "-sock", sock, "-db", db}
+}
+
+func startClient(t *testing.T, sock string) daemondefs.Client {
 	cl := NewClient("sock")
 	if _, err := cl.Version(); err != nil {
 		t.Errorf("failed to start client: %v", err)

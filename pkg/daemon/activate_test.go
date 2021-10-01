@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"io"
+	"os"
 	"runtime"
 	"testing"
 
@@ -9,9 +10,21 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
-func TestActivate_WhenServerExists(t *testing.T) {
+func TestActivate_ConnectsToExistingServer(t *testing.T) {
 	setup(t)
-	startServer(t)
+	startServer(t, cli("sock", "db"))
+	_, err := Activate(io.Discard,
+		&daemondefs.SpawnConfig{DbPath: "db", SockPath: "sock", RunDir: "."})
+	if err != nil {
+		t.Errorf("got error %v, want nil", err)
+	}
+}
+
+func TestActivate_SpawnsNewServer(t *testing.T) {
+	setupForActivate(t, func(name string, argv []string, attr *os.ProcAttr) error {
+		startServer(t, argv)
+		return nil
+	})
 	_, err := Activate(io.Discard,
 		&daemondefs.SpawnConfig{DbPath: "db", SockPath: "sock", RunDir: "."})
 	if err != nil {
@@ -48,4 +61,16 @@ func TestActivate_FailsIfCannotDialSock(t *testing.T) {
 	if err == nil {
 		t.Errorf("got error nil, want non-nil")
 	}
+}
+
+func setupForActivate(t *testing.T, f func(string, []string, *os.ProcAttr) error) {
+	setup(t)
+
+	saveStartProcess := startProcess
+	t.Cleanup(func() { startProcess = saveStartProcess })
+	startProcess = f
+
+	saveDaemonSpawnTimeout := daemonSpawnTimeout
+	t.Cleanup(func() { daemonSpawnTimeout = saveDaemonSpawnTimeout })
+	daemonSpawnTimeout = testutil.ScaledMs(1000)
 }

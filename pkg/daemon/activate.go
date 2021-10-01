@@ -14,9 +14,9 @@ import (
 	"src.elv.sh/pkg/fsutil"
 )
 
-const (
-	daemonWaitLoops   = 100
-	daemonWaitPerLoop = 10 * time.Millisecond
+var (
+	daemonSpawnTimeout     = time.Second
+	daemonSpawnWaitPerLoop = 10 * time.Millisecond
 )
 
 type daemonStatus int
@@ -76,7 +76,8 @@ func Activate(stderr io.Writer, spawnCfg *daemondefs.SpawnConfig) (daemondefs.Cl
 	}
 
 	// Wait for daemon to come online
-	for i := 0; i <= daemonWaitLoops; i++ {
+	start := time.Now()
+	for time.Since(start) < daemonSpawnTimeout {
 		cl.ResetConn()
 		status, err := detectDaemon(sockpath, cl)
 
@@ -96,9 +97,9 @@ func Activate(stderr io.Writer, spawnCfg *daemondefs.SpawnConfig) (daemondefs.Cl
 		default:
 			return cl, fmt.Errorf("code bug: unknown daemon status %d", status)
 		}
-		time.Sleep(daemonWaitPerLoop)
+		time.Sleep(daemonSpawnWaitPerLoop)
 	}
-	return cl, fmt.Errorf("daemon unreachable after waiting for %s", daemonWaitLoops*daemonWaitPerLoop)
+	return cl, fmt.Errorf("daemon did not come up within %v", daemonSpawnTimeout)
 }
 
 func detectDaemon(sockpath string, cl daemondefs.Client) (daemonStatus, error) {
@@ -135,6 +136,12 @@ func killDaemon(cl daemondefs.Client) error {
 		return fmt.Errorf("cannot find daemon process (pid=%d): %v", pid, err)
 	}
 	return process.Signal(os.Interrupt)
+}
+
+// Can be overridden in tests to avoid actual forking.
+var startProcess = func(name string, argv []string, attr *os.ProcAttr) error {
+	_, err := os.StartProcess(name, argv, attr)
+	return err
 }
 
 // Spawns a daemon process in the background by invoking BinPath, passing
@@ -184,7 +191,7 @@ func spawn(cfg *daemondefs.SpawnConfig) error {
 
 	procattrs := procAttrForSpawn([]*os.File{in, out, out})
 
-	_, err = os.StartProcess(binPath, args, procattrs)
+	err = startProcess(binPath, args, procattrs)
 	return err
 }
 

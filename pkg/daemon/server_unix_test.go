@@ -20,7 +20,7 @@ func TestProgram_QuitsOnSystemSignal_SIGTERM(t *testing.T) {
 func testProgram_QuitsOnSystemSignal(t *testing.T, sig os.Signal) {
 	t.Helper()
 	setup(t)
-	startServerSigCh(t, nil)
+	startServerSigCh(t, cli("sock", "db"), nil)
 	p, err := os.FindProcess(os.Getpid())
 	if err != nil {
 		t.Fatalf("FindProcess: %v", err)
