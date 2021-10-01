@@ -20,13 +20,21 @@ func TestActivate_WhenServerExists(t *testing.T) {
 }
 
 func TestActivate_FailsIfCannotStatSock(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip()
-	}
 	setup(t)
-	testutil.MustCreateEmpty("not-dir")
+	// Build a path for which Lstat will return a non-nil err such that
+	// os.IsNotExist(err) is false.
+	badSockPath := ""
+	if runtime.GOOS != "windows" {
+		// POSIX lstat(2) returns ENOTDIR instead of ENOENT if a path prefix is
+		// not a directory.
+		testutil.MustCreateEmpty("not-dir")
+		badSockPath = "not-dir/sock"
+	} else {
+		// Use a syntactically invalid drive letter on Windows.
+		badSockPath = `CD:\sock`
+	}
 	_, err := Activate(io.Discard,
-		&daemondefs.SpawnConfig{DbPath: "db", SockPath: "not-dir/sock", RunDir: "."})
+		&daemondefs.SpawnConfig{DbPath: "db", SockPath: badSockPath, RunDir: "."})
 	if err == nil {
 		t.Errorf("got error nil, want non-nil")
 	}
