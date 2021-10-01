@@ -184,3 +184,16 @@ jobs:
       run: go install honnef.co/go/tools/cmd/staticcheck@2021.1
     - name: Run linters
       run: ./tools/lint.sh
+
+  lsif:
+    name: Upload SourceGraph LSIF
+    if: github.repository == 'elves/elvish' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    container: sourcegraph/lsif-go:latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Generate LSIF data
+      run: lsif-go
+    - name: Upload LSIF data
+      run: src lsif upload -github-token=${{ secrets.GITHUB_TOKEN }} -ignore-upload-failure
