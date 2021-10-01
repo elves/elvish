@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"io"
+	"net"
 	"os"
 	"runtime"
 	"testing"
@@ -21,14 +22,42 @@ func TestActivate_ConnectsToExistingServer(t *testing.T) {
 }
 
 func TestActivate_SpawnsNewServer(t *testing.T) {
+	activated := 0
 	setupForActivate(t, func(name string, argv []string, attr *os.ProcAttr) error {
 		startServer(t, argv)
+		activated++
 		return nil
 	})
+
 	_, err := Activate(io.Discard,
 		&daemondefs.SpawnConfig{DbPath: "db", SockPath: "sock", RunDir: "."})
 	if err != nil {
 		t.Errorf("got error %v, want nil", err)
+	}
+	if activated != 1 {
+		t.Errorf("got activated %v times, want 1", activated)
+	}
+}
+
+func TestActivate_RemovesHangingSocketAndSpawnsNewServer(t *testing.T) {
+	// TODO: Make this test pass
+	t.Skip()
+
+	activated := 0
+	setupForActivate(t, func(name string, argv []string, attr *os.ProcAttr) error {
+		startServer(t, argv)
+		activated++
+		return nil
+	})
+	makeHangingUNIXSocket(t, "sock")
+
+	_, err := Activate(io.Discard,
+		&daemondefs.SpawnConfig{DbPath: "db", SockPath: "sock", RunDir: "."})
+	if err != nil {
+		t.Errorf("got error %v, want nil", err)
+	}
+	if activated != 1 {
+		t.Errorf("got activated %v times, want 1", activated)
 	}
 }
 
@@ -73,4 +102,26 @@ func setupForActivate(t *testing.T, f func(string, []string, *os.ProcAttr) error
 	saveDaemonSpawnTimeout := daemonSpawnTimeout
 	t.Cleanup(func() { daemonSpawnTimeout = saveDaemonSpawnTimeout })
 	daemonSpawnTimeout = testutil.ScaledMs(1000)
+}
+
+//lint:ignore U1000 will be used later
+func makeHangingUNIXSocket(t *testing.T, path string) {
+	t.Helper()
+
+	l, err := net.Listen("unix", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// We need to call l.Close() to make the socket hang, but that will
+	// helpfully remove the socket file. Work around this by renaming the socket
+	// file.
+	err = os.Rename(path, path+".save")
+	if err != nil {
+		t.Fatal(err)
+	}
+	l.Close()
+	err = os.Rename(path+".save", path)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
