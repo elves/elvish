@@ -5,6 +5,9 @@ import (
 	"syscall"
 )
 
+// https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
+var errConnRefused = syscall.Errno(10061)
+
 // No-op on Windows.
 func setUmaskForDaemon() {}
 

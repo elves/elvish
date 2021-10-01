@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/rpc"
 	"os"
 	"path/filepath"
 	"time"
@@ -25,12 +24,12 @@ const (
 	daemonOK daemonStatus = iota
 	sockfileMissing
 	sockfileOtherError
-	connectionShutdown
+	connectionRefused
 	connectionOtherError
 	daemonOutdated
 )
 
-const connectionShutdownFmt = "Socket file %s exists but is not responding to request. This is likely due to abnormal shutdown of the daemon. Going to remove socket file and re-spawn a daemon.\n"
+const connectionRefusedFmt = "Socket file %s exists but refuses requests. This is likely because the daemon was terminated abnormally. Going to remove socket file and re-spawn the daemon.\n"
 
 // Activate returns a daemon client, either by connecting to an existing daemon,
 // or spawning a new one. It always returns a non-nil client, even if there was an error.
@@ -45,21 +44,21 @@ func Activate(stderr io.Writer, spawnCfg *daemondefs.SpawnConfig) (daemondefs.Cl
 	case sockfileMissing:
 		shouldSpawn = true
 	case sockfileOtherError:
-		return cl, fmt.Errorf("socket file %s inaccessible: %v", sockpath, err)
-	case connectionShutdown:
-		fmt.Fprintf(stderr, connectionShutdownFmt, sockpath)
+		return cl, fmt.Errorf("socket file %s inaccessible: %w", sockpath, err)
+	case connectionRefused:
+		fmt.Fprintf(stderr, connectionRefusedFmt, sockpath)
 		err := os.Remove(sockpath)
 		if err != nil {
-			return cl, fmt.Errorf("failed to remove socket file: %v", err)
+			return cl, fmt.Errorf("failed to remove socket file: %w", err)
 		}
 		shouldSpawn = true
 	case connectionOtherError:
-		return cl, fmt.Errorf("unexpected RPC error on socket %s: %v", sockpath, err)
+		return cl, fmt.Errorf("unexpected RPC error on socket %s: %w", sockpath, err)
 	case daemonOutdated:
 		fmt.Fprintln(stderr, "Daemon is outdated; going to kill old daemon and re-spawn")
 		err := killDaemon(cl)
 		if err != nil {
-			return cl, fmt.Errorf("failed to kill old daemon: %v", err)
+			return cl, fmt.Errorf("failed to kill old daemon: %w", err)
 		}
 		shouldSpawn = true
 	default:
@@ -72,7 +71,7 @@ func Activate(stderr io.Writer, spawnCfg *daemondefs.SpawnConfig) (daemondefs.Cl
 
 	err = spawn(spawnCfg)
 	if err != nil {
-		return cl, fmt.Errorf("failed to spawn daemon: %v", err)
+		return cl, fmt.Errorf("failed to spawn daemon: %w", err)
 	}
 
 	// Wait for daemon to come online
@@ -87,11 +86,11 @@ func Activate(stderr io.Writer, spawnCfg *daemondefs.SpawnConfig) (daemondefs.Cl
 		case sockfileMissing:
 			// Continue waiting
 		case sockfileOtherError:
-			return cl, fmt.Errorf("socket file %s inaccessible: %v", sockpath, err)
-		case connectionShutdown:
+			return cl, fmt.Errorf("socket file %s inaccessible: %w", sockpath, err)
+		case connectionRefused:
 			// Continue waiting
 		case connectionOtherError:
-			return cl, fmt.Errorf("unexpected RPC error on socket %s: %v", sockpath, err)
+			return cl, fmt.Errorf("unexpected RPC error on socket %s: %w", sockpath, err)
 		case daemonOutdated:
 			return cl, fmt.Errorf("code bug: newly spawned daemon is outdated")
 		default:
@@ -113,12 +112,10 @@ func detectDaemon(sockpath string, cl daemondefs.Client) (daemonStatus, error) {
 
 	version, err := cl.Version()
 	if err != nil {
-		switch {
-		case err == rpc.ErrShutdown:
-			return connectionShutdown, err
-		default:
-			return connectionOtherError, err
+		if errors.Is(err, errConnRefused) {
+			return connectionRefused, err
 		}
+		return connectionOtherError, err
 	}
 	if version < api.Version {
 		return daemonOutdated, nil
@@ -129,11 +126,11 @@ func detectDaemon(sockpath string, cl daemondefs.Client) (daemonStatus, error) {
 func killDaemon(cl daemondefs.Client) error {
 	pid, err := cl.Pid()
 	if err != nil {
-		return fmt.Errorf("cannot get pid of daemon: %v", err)
+		return fmt.Errorf("cannot get pid of daemon: %w", err)
 	}
 	process, err := os.FindProcess(pid)
 	if err != nil {
-		return fmt.Errorf("cannot find daemon process (pid=%d): %v", pid, err)
+		return fmt.Errorf("cannot find daemon process (pid=%d): %w", pid, err)
 	}
 	return process.Signal(os.Interrupt)
 }

@@ -40,9 +40,6 @@ func TestActivate_SpawnsNewServer(t *testing.T) {
 }
 
 func TestActivate_RemovesHangingSocketAndSpawnsNewServer(t *testing.T) {
-	// TODO: Make this test pass
-	t.Skip()
-
 	activated := 0
 	setupForActivate(t, func(name string, argv []string, attr *os.ProcAttr) error {
 		startServer(t, argv)
@@ -104,7 +101,6 @@ func setupForActivate(t *testing.T, f func(string, []string, *os.ProcAttr) error
 	daemonSpawnTimeout = testutil.ScaledMs(1000)
 }
 
-//lint:ignore U1000 will be used later
 func makeHangingUNIXSocket(t *testing.T, path string) {
 	t.Helper()
 
