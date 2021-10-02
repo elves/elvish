@@ -13,6 +13,27 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
+func TestActivate_InterruptsOutdatedServerAndSpawnsNewServer(t *testing.T) {
+	activated := 0
+	setupForActivate(t, func(name string, argv []string, attr *os.ProcAttr) error {
+		startServer(t, argv)
+		activated++
+		return nil
+	})
+	version := api.Version - 1
+	oldServer := startServerOpts(t, cli("sock", "db"), ServeOpts{Version: &version})
+
+	_, err := Activate(io.Discard,
+		&daemondefs.SpawnConfig{DbPath: "db", SockPath: "sock", RunDir: "."})
+	if err != nil {
+		t.Errorf("got error %v, want nil", err)
+	}
+	if activated != 1 {
+		t.Errorf("got activated %v times, want 1", activated)
+	}
+	oldServer.WaitQuit()
+}
+
 func TestActivate_FailsIfUnableToRemoveHangingSocket(t *testing.T) {
 	if u, err := user.Current(); err != nil || u.Uid == "0" {
 		t.Skip("current user is root or unknown")
