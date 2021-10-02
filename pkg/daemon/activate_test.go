@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"testing"
+	"time"
 
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/daemon/internal/api"
@@ -118,9 +119,14 @@ func setupForActivate(t *testing.T, f func(string, []string, *os.ProcAttr) error
 	t.Cleanup(func() { startProcess = saveStartProcess })
 	startProcess = f
 
-	saveDaemonSpawnTimeout := daemonSpawnTimeout
-	t.Cleanup(func() { daemonSpawnTimeout = saveDaemonSpawnTimeout })
-	daemonSpawnTimeout = testutil.ScaledMs(1000)
+	scaleDuration(t, &daemonSpawnTimeout)
+	scaleDuration(t, &daemonKillTimeout)
+}
+
+func scaleDuration(t *testing.T, d *time.Duration) {
+	save := *d
+	t.Cleanup(func() { *d = save })
+	*d = testutil.ScaledMs(int(*d / time.Millisecond))
 }
 
 func makeHangingUNIXSocket(t *testing.T, path string) {

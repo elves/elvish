@@ -100,6 +100,7 @@ func setup(t *testing.T) {
 
 // Calls startServerOpts with a Signals channel that gets closed during cleanup.
 func startServer(t *testing.T, args []string) server {
+	t.Helper()
 	sigCh := make(chan os.Signal)
 	s := startServerOpts(t, args, ServeOpts{Signals: sigCh})
 	// Cleanup functions added later are run earlier. This will be run before
@@ -112,6 +113,7 @@ func startServer(t *testing.T, args []string) server {
 // Start server with custom ServeOpts (opts.Ready is ignored). Makes sure that
 // the server terminates during cleanup.
 func startServerOpts(t *testing.T, args []string, opts ServeOpts) server {
+	t.Helper()
 	readyCh := make(chan struct{})
 	opts.Ready = readyCh
 	doneCh := make(chan serverResult)

@@ -16,6 +16,9 @@ import (
 var (
 	daemonSpawnTimeout     = time.Second
 	daemonSpawnWaitPerLoop = 10 * time.Millisecond
+
+	daemonKillTimeout     = time.Second
+	daemonKillWaitPerLoop = 10 * time.Millisecond
 )
 
 type daemonStatus int
@@ -56,7 +59,7 @@ func Activate(stderr io.Writer, spawnCfg *daemondefs.SpawnConfig) (daemondefs.Cl
 		return cl, fmt.Errorf("unexpected RPC error on socket %s: %w", sockpath, err)
 	case daemonOutdated:
 		fmt.Fprintln(stderr, "Daemon is outdated; going to kill old daemon and re-spawn")
-		err := killDaemon(cl)
+		err := killDaemon(sockpath, cl)
 		if err != nil {
 			return cl, fmt.Errorf("failed to kill old daemon: %w", err)
 		}
@@ -123,16 +126,33 @@ func detectDaemon(sockpath string, cl daemondefs.Client) (daemonStatus, error) {
 	return daemonOK, nil
 }
 
-func killDaemon(cl daemondefs.Client) error {
+func killDaemon(sockpath string, cl daemondefs.Client) error {
 	pid, err := cl.Pid()
 	if err != nil {
-		return fmt.Errorf("cannot get pid of daemon: %w", err)
+		return fmt.Errorf("kill daemon: %w", err)
 	}
 	process, err := os.FindProcess(pid)
 	if err != nil {
-		return fmt.Errorf("cannot find daemon process (pid=%d): %w", pid, err)
+		return fmt.Errorf("kill daemon: %w", err)
 	}
-	return process.Signal(os.Interrupt)
+	err = process.Signal(os.Interrupt)
+	if err != nil {
+		return fmt.Errorf("kill daemon: %w", err)
+	}
+	// Wait until the old daemon has removed the socket file, so that it doesn't
+	// inadvertently remove the socket file of the new daemon we will start.
+	start := time.Now()
+	for time.Since(start) < daemonKillTimeout {
+		_, err := os.Lstat(sockpath)
+		if err == nil {
+			time.Sleep(daemonKillWaitPerLoop)
+		} else if os.IsNotExist(err) {
+			return nil
+		} else {
+			return fmt.Errorf("kill daemon: %w", err)
+		}
+	}
+	return fmt.Errorf("kill daemon: daemon did not remove socket within %v", daemonKillTimeout)
 }
 
 // Can be overridden in tests to avoid actual forking.
