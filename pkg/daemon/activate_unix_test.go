@@ -6,6 +6,7 @@ package daemon
 import (
 	"io"
 	"os"
+	"os/user"
 	"testing"
 
 	"src.elv.sh/pkg/daemon/daemondefs"
@@ -13,6 +14,9 @@ import (
 )
 
 func TestActivate_FailsIfUnableToRemoveHangingSocket(t *testing.T) {
+	if u, err := user.Current(); err != nil || u.Uid == "0" {
+		t.Skip("current user is root or unknown")
+	}
 	activated := 0
 	setupForActivate(t, func(name string, argv []string, attr *os.ProcAttr) error {
 		activated++
