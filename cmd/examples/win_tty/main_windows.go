@@ -21,10 +21,15 @@ func main() {
 		log.Fatalf("GetStdHandle(STD_INPUT_HANDLE): %v", err)
 	}
 	for {
-		event, err := ewindows.ReadInputEvent(console)
+		var buf [1]ewindows.InputRecord
+		nr, err := ewindows.ReadConsoleInput(console, buf[:])
+		if nr == 0 {
+			log.Fatal("no event read")
+		}
 		if err != nil {
 			log.Fatal(err)
 		}
+		event := buf[0].GetEvent()
 		switch event := event.(type) {
 		case *ewindows.KeyEvent:
 			typ := "up"
