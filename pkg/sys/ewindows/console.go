@@ -1,30 +1,15 @@
+//go:build windows
+// +build windows
+
 package ewindows
 
 import (
-	"errors"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
 
-var (
-	readConsoleInput = kernel32.NewProc("ReadConsoleInputW")
-	errNr0           = errors.New("ReadConsoleInput reads 0 records")
-)
-
-// ReadInputEvent wraps ReadConsoleInput into a Go-friendly interface.
-func ReadInputEvent(h windows.Handle) (InputEvent, error) {
-	var buf [1]InputRecord
-	nr, err := ReadConsoleInput(h, buf[:])
-	if err != nil {
-		return nil, err
-	} else if nr == 0 {
-		return nil, errNr0
-	}
-	return buf[0].GetEvent(), nil
-}
-
-// ReadConsoleInput input wraps the homonymous Windows API call.
+// https://docs.microsoft.com/en-us/windows/console/readconsoleinput
 //
 // BOOL WINAPI ReadConsoleInput(
 // 	_In_  HANDLE        hConsoleInput,
@@ -32,6 +17,9 @@ func ReadInputEvent(h windows.Handle) (InputEvent, error) {
 // 	_In_  DWORD         nLength,
 // 	_Out_ LPDWORD       lpNumberOfEventsRead
 //   );
+var readConsoleInput = kernel32.NewProc("ReadConsoleInputW")
+
+// ReadConsoleInput input wraps the homonymous Windows API call.
 func ReadConsoleInput(h windows.Handle, buf []InputRecord) (int, error) {
 	var nr uintptr
 	r, _, err := readConsoleInput.Call(uintptr(h),
