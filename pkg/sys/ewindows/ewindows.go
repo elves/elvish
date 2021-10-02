@@ -1,2 +1,2 @@
-// Package ewindows provides extra system utilities for Windows.
+// Package ewindows provides extra Windows-specific system utilities.
 package ewindows

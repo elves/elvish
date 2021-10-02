@@ -1,2 +1,2 @@
-// Package eunix provides extra system utilities for UNIX.
+// Package eunix provides extra UNIX-specific system utilities.
 package eunix

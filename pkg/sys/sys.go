@@ -1,6 +1,6 @@
-// Package sys provide portable system utilities.
+// Package sys provide system utilities with the same API across OSes.
 //
-// The subpackages provide non-portable system utilities.
+// The subpackages eunix and ewindows provide OS-specific utilities.
 package sys
 
 import (
