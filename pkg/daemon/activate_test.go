@@ -67,7 +67,7 @@ func TestActivate_InterruptsOutdatedServerAndSpawnsNewServer(t *testing.T) {
 		return nil
 	})
 	version := api.Version - 1
-	oldDone := startServerOpts(t, cli("sock", "db"), ServeOpts{Version: &version})
+	oldServer := startServerOpts(t, cli("sock", "db"), ServeOpts{Version: &version})
 
 	_, err := Activate(io.Discard,
 		&daemondefs.SpawnConfig{DbPath: "db", SockPath: "sock", RunDir: "."})
@@ -77,7 +77,7 @@ func TestActivate_InterruptsOutdatedServerAndSpawnsNewServer(t *testing.T) {
 	if activated != 1 {
 		t.Errorf("got activated %v times, want 1", activated)
 	}
-	waitDone(t, oldDone)
+	oldServer.WaitQuit()
 }
 
 func TestActivate_FailsIfCannotStatSock(t *testing.T) {

@@ -1,7 +1,6 @@
 package daemon
 
 import (
-	"fmt"
 	"os"
 	"syscall"
 	"testing"
@@ -71,11 +70,11 @@ func TestProgram_QuitsOnSignalChannelWithNoClient(t *testing.T) {
 func TestProgram_QuitsOnSignalChannelWithClients(t *testing.T) {
 	setup(t)
 	sigCh := make(chan os.Signal)
-	doneCh := startServerOpts(t, cli("sock", "db"), ServeOpts{Signals: sigCh})
+	server := startServerOpts(t, cli("sock", "db"), ServeOpts{Signals: sigCh})
 	client := startClient(t, "sock")
 	close(sigCh)
 
-	waitDone(t, doneCh)
+	server.WaitQuit()
 	_, err := client.Version()
 	if err == nil {
 		t.Errorf("client.Version() returns nil error, want non-nil")
@@ -100,38 +99,56 @@ func setup(t *testing.T) {
 }
 
 // Calls startServerOpts with a Signals channel that gets closed during cleanup.
-func startServer(t *testing.T, args []string) <-chan struct{} {
+func startServer(t *testing.T, args []string) server {
 	sigCh := make(chan os.Signal)
-	doneCh := startServerOpts(t, args, ServeOpts{Signals: sigCh})
+	s := startServerOpts(t, args, ServeOpts{Signals: sigCh})
 	// Cleanup functions added later are run earlier. This will be run before
 	// the cleanup function added by startServerOpts that waits for the server
 	// to terminate.
 	t.Cleanup(func() { close(sigCh) })
-	return doneCh
+	return s
 }
 
 // Start server with custom ServeOpts (opts.Ready is ignored). Makes sure that
 // the server terminates during cleanup.
-func startServerOpts(t *testing.T, args []string, opts ServeOpts) <-chan struct{} {
+func startServerOpts(t *testing.T, args []string, opts ServeOpts) server {
 	readyCh := make(chan struct{})
 	opts.Ready = readyCh
-	doneCh := make(chan struct{})
+	doneCh := make(chan serverResult)
 	go func() {
 		exit, stdout, stderr := Run(program{opts}, args...)
-		if exit != 0 {
-			fmt.Println("daemon exited with", exit)
-			fmt.Print("stdout:\n", stdout)
-			fmt.Print("stderr:\n", stderr)
-		}
+		doneCh <- serverResult{exit, stdout, stderr}
 		close(doneCh)
 	}()
 	select {
 	case <-readyCh:
-	case <-time.After(testutil.ScaledMs(1000)):
+	case <-time.After(testutil.ScaledMs(2000)):
 		t.Fatal("timed out waiting for daemon to start")
 	}
-	t.Cleanup(func() { waitDone(t, doneCh) })
-	return doneCh
+	s := server{t, doneCh}
+	t.Cleanup(func() { s.WaitQuit() })
+	return s
+}
+
+type server struct {
+	t  *testing.T
+	ch <-chan serverResult
+}
+
+type serverResult struct {
+	exit           int
+	stdout, stderr string
+}
+
+func (s server) WaitQuit() (serverResult, bool) {
+	s.t.Helper()
+	select {
+	case r := <-s.ch:
+		return r, true
+	case <-time.After(testutil.ScaledMs(2000)):
+		s.t.Error("timed out waiting for daemon to quit")
+		return serverResult{}, false
+	}
 }
 
 func cli(sock, db string) []string {
@@ -145,13 +162,4 @@ func startClient(t *testing.T, sock string) daemondefs.Client {
 	}
 	t.Cleanup(func() { cl.Close() })
 	return cl
-}
-
-func waitDone(t *testing.T, doneCh <-chan struct{}) {
-	t.Helper()
-	select {
-	case <-doneCh:
-	case <-time.After(testutil.ScaledMs(1000)):
-		t.Error("timed out waiting for daemon to quit")
-	}
 }
