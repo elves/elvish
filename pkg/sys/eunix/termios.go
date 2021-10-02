@@ -5,7 +5,7 @@
 // https://github.com/go-termios/termios
 // Author: John Lenton <chipaca@github.com>
 
-package sys
+package eunix
 
 import (
 	"unsafe"

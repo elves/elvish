@@ -1,7 +1,7 @@
 //go:build !windows && !plan9 && !darwin
 // +build !windows,!plan9,!darwin
 
-package sys
+package eunix
 
 import (
 	"testing"

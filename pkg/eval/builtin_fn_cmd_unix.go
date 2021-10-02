@@ -13,7 +13,7 @@ import (
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/sys"
+	"src.elv.sh/pkg/sys/eunix"
 )
 
 // ErrNotInSameProcessGroup is thrown when the process IDs passed to fg are not
@@ -86,7 +86,7 @@ func fg(pids ...int) error {
 		}
 	}
 
-	err := sys.Tcsetpgrp(0, thepgid)
+	err := eunix.Tcsetpgrp(0, thepgid)
 	if err != nil {
 		return err
 	}

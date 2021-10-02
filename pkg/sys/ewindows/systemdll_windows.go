@@ -1,4 +1,4 @@
-package sys
+package ewindows
 
 import "golang.org/x/sys/windows"
 

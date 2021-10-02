@@ -1,7 +1,7 @@
 //go:build (386 && darwin) || (arm && darwin) || dragonfly || freebsd || linux || netbsd || openbsd || solaris
 // +build 386,darwin arm,darwin dragonfly freebsd linux netbsd openbsd solaris
 
-package sys
+package eunix
 
 // The type of Termios.Lflag is different on different platforms.
 // This file is for those where Lflag is uint32.

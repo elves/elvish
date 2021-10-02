@@ -33,7 +33,7 @@ const (
 
 // setupVT performs setup for VT-like terminals.
 func setupVT(out *os.File) error {
-	_, width := sys.GetWinsize(out)
+	_, width := sys.WinSize(out)
 
 	s := ""
 	/*

@@ -14,11 +14,9 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// SIGWINCH is the Window size change signal.
-const SIGWINCH = unix.SIGWINCH
+const sigWINCH = unix.SIGWINCH
 
-// GetWinsize queries the size of the terminal referenced by the given file.
-func GetWinsize(file *os.File) (row, col int) {
+func winSize(file *os.File) (row, col int) {
 	fd := int(file.Fd())
 	ws, err := unix.IoctlGetWinsize(fd, unix.TIOCGWINSZ)
 	if err != nil {

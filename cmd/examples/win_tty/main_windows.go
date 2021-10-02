@@ -7,7 +7,8 @@ import (
 	"unicode"
 
 	"golang.org/x/sys/windows"
-	"src.elv.sh/pkg/sys"
+
+	"src.elv.sh/pkg/sys/ewindows"
 )
 
 func main() {
@@ -20,12 +21,12 @@ func main() {
 		log.Fatalf("GetStdHandle(STD_INPUT_HANDLE): %v", err)
 	}
 	for {
-		event, err := sys.ReadInputEvent(console)
+		event, err := ewindows.ReadInputEvent(console)
 		if err != nil {
 			log.Fatal(err)
 		}
 		switch event := event.(type) {
-		case *sys.KeyEvent:
+		case *ewindows.KeyEvent:
 			typ := "up"
 			if event.BKeyDown != 0 {
 				typ = "down"

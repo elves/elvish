@@ -1,7 +1,7 @@
 // Created by cgo -godefs - DO NOT EDIT
 // cgo.exe -godefs types_src_windows.go
 
-package sys
+package ewindows
 
 type (
 	Coord struct {

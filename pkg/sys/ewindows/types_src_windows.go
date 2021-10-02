@@ -1,7 +1,7 @@
 //go:build ignore
 // +build ignore
 
-package sys
+package ewindows
 
 /*
 #include <windows.h>

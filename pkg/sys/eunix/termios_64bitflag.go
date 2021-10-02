@@ -1,7 +1,7 @@
 //go:build (amd64 && darwin) || (arm64 && darwin)
 // +build amd64,darwin arm64,darwin
 
-package sys
+package eunix
 
 // The type of Termios.Lflag is different on different platforms.
 // This file is for those where Lflag is uint64.

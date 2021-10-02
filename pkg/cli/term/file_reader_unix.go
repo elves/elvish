@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"src.elv.sh/pkg/sys"
+	"src.elv.sh/pkg/sys/eunix"
 )
 
 // A helper for reading from a file.
@@ -43,7 +43,7 @@ func (r *bReader) ReadByteWithTimeout(timeout time.Duration) (byte, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	for {
-		ready, err := sys.WaitForRead(timeout, r.file, r.rStop)
+		ready, err := eunix.WaitForRead(timeout, r.file, r.rStop)
 		if err != nil {
 			if err == syscall.EINTR {
 				continue

@@ -71,7 +71,7 @@ func (t *aTTY) Setup() (func(), error) {
 }
 
 func (t *aTTY) Size() (h, w int) {
-	return sys.GetWinsize(t.out)
+	return sys.WinSize(t.out)
 }
 
 func (t *aTTY) ReadEvent() (term.Event, error) {

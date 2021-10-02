@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/sys/unix"
 	"src.elv.sh/pkg/diag"
-	"src.elv.sh/pkg/sys"
+	"src.elv.sh/pkg/sys/eunix"
 )
 
 func setup(in, out *os.File) (func() error, error) {
@@ -17,7 +17,7 @@ func setup(in, out *os.File) (func() error, error) {
 	// same terminal are equivalent.
 
 	fd := int(in.Fd())
-	term, err := sys.TermiosForFd(fd)
+	term, err := eunix.TermiosForFd(fd)
 	if err != nil {
 		return nil, fmt.Errorf("can't get terminal attribute: %s", err)
 	}

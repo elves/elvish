@@ -8,7 +8,7 @@ import (
 	"os/signal"
 )
 
-func NotifySignals() chan os.Signal {
+func notifySignals() chan os.Signal {
 	// This catches every signal regardless of whether it is ignored.
 	sigCh := make(chan os.Signal, sigsChanBufferSize)
 	signal.Notify(sigCh)
