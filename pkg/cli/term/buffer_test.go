@@ -132,6 +132,17 @@ var bufferTrimToLinesTests = []struct {
 			Line{Cell{"a", ""}}, Line{Cell{"b", ""}},
 		}},
 	},
+	// Negative low is treated as 0.
+
+	{
+		&Buffer{Width: 10, Lines: Lines{
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}, Line{Cell{"c", ""}}, Line{Cell{"d", ""}},
+		}},
+		-1, 2,
+		&Buffer{Width: 10, Lines: Lines{
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}},
+		}},
+	},
 	// With dot.
 	{
 		&Buffer{Width: 10, Lines: Lines{
@@ -281,6 +292,10 @@ var bufferTTYStringTests = []struct {
 	want string
 }{
 	{
+		nil,
+		"nil",
+	},
+	{
 		NewBufferBuilder(4).
 			Write("ABCD").
 			Newline().
@@ -294,15 +309,16 @@ var bufferTTYStringTests = []struct {
 	},
 	{
 		NewBufferBuilder(4).
-			Write("AB").SetDotHere().
-			WriteStringSGR("C", "1").
-			WriteStringSGR("D", "7").
+			Write("A").SetDotHere().
+			WriteStringSGR("B", "1").
+			WriteStringSGR("C", "7").
+			Write("D").
 			Newline().
 			WriteStringSGR("XY", "7").
 			Buffer(),
-		"Width = 4, Dot = (0, 2)\n" +
+		"Width = 4, Dot = (0, 1)\n" +
 			"┌────┐\n" +
-			"│AB\033[1mC\033[;7mD\033[m│\n" +
+			"│A\033[1mB\033[;7mC\033[mD│\n" +
 			"│\033[7mXY\033[m$ │\n" +
 			"└────┘\n",
 	},

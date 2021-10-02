@@ -5,6 +5,7 @@ package term
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"src.elv.sh/pkg/testutil"
@@ -181,9 +182,10 @@ func TestReader_ReadEvent_BadSeq(t *testing.T) {
 			if err == nil {
 				t.Fatalf("got nil err with event %v, want non-nil error", ev)
 			}
-			errMsg := err.(seqError).msg
-			if errMsg != test.wantErrMsg {
-				t.Errorf("got err with message %v, want %v", errMsg, test.wantErrMsg)
+			errMsg := err.Error()
+			if !strings.HasPrefix(errMsg, test.wantErrMsg) {
+				t.Errorf("got err with message %v, want message starting with %v",
+					errMsg, test.wantErrMsg)
 			}
 		})
 	}
@@ -211,7 +213,7 @@ func TestReader_ReadRawEvent(t *testing.T) {
 
 func setupReader(t *testing.T) (Reader, *os.File) {
 	pr, pw := testutil.MustPipe()
-	r := newReader(pr)
+	r := NewReader(pr)
 	t.Cleanup(func() {
 		r.Close()
 		pr.Close()
