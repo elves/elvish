@@ -158,8 +158,6 @@ func convertEvent(event ewindows.InputEvent) Event {
 			return nil
 		}
 		return KeyEvent(ui.Key{Rune: r, Mod: mod})
-	//case *ewindows.MouseEvent:
-	//case *ewindows.WindowBufferSizeEvent:
 	default:
 		// Other events are ignored.
 		return nil
