@@ -8,8 +8,6 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-var Args = tt.Args
-
 func TestConvertEvent(t *testing.T) {
 	tt.Test(t, tt.Fn("convertEvent", convertEvent), tt.Table{
 		// Only convert KeyEvent
