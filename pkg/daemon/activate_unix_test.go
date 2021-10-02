@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/daemon/daemondefs"
+	"src.elv.sh/pkg/daemon/internal/api"
 	"src.elv.sh/pkg/testutil"
 )
 
