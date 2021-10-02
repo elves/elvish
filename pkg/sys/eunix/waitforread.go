@@ -6,6 +6,8 @@ package eunix
 import (
 	"os"
 	"time"
+
+	"golang.org/x/sys/unix"
 )
 
 // WaitForRead blocks until any of the given files is ready to be read or
@@ -13,7 +15,7 @@ import (
 // indicating which files are ready to be read and any possible error.
 func WaitForRead(timeout time.Duration, files ...*os.File) (ready []bool, err error) {
 	maxfd := 0
-	fdset := NewFdSet()
+	fdset := &unix.FdSet{}
 	for _, file := range files {
 		fd := int(file.Fd())
 		if maxfd < fd {
@@ -21,10 +23,18 @@ func WaitForRead(timeout time.Duration, files ...*os.File) (ready []bool, err er
 		}
 		fdset.Set(fd)
 	}
-	err = Select(maxfd+1, fdset, nil, nil, timeout)
+	_, err = unix.Select(maxfd+1, fdset, nil, nil, optionalTimeval(timeout))
 	ready = make([]bool, len(files))
 	for i, file := range files {
 		ready[i] = fdset.IsSet(int(file.Fd()))
 	}
 	return ready, err
+}
+
+func optionalTimeval(d time.Duration) *unix.Timeval {
+	if d < 0 {
+		return nil
+	}
+	timeval := unix.NsecToTimeval(int64(d))
+	return &timeval
 }
