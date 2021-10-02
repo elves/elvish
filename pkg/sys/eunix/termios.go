@@ -63,3 +63,11 @@ func (term *Termios) SetEcho(v bool) {
 func (term *Termios) SetICRNL(v bool) {
 	setFlag(&term.Iflag, unix.ICRNL, v)
 }
+
+func setFlag(flag *termiosFlag, mask termiosFlag, v bool) {
+	if v {
+		*flag |= mask
+	} else {
+		*flag &= ^mask
+	}
+}

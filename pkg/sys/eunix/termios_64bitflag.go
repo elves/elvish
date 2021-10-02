@@ -1,15 +1,10 @@
-//go:build (amd64 && darwin) || (arm64 && darwin)
-// +build amd64,darwin arm64,darwin
+//go:build darwin && (amd64 || arm64)
+// +build darwin
+// +build amd64 arm64
 
 package eunix
 
-// The type of Termios.Lflag is different on different platforms.
-// This file is for those where Lflag is uint64.
+// Only Darwin uses 64-bit flags in Termios on 64-bit architectures. See:
+// https://cs.opensource.google/search?q=%5BIOCL%5Dflag.*uint64&sq=&ss=go%2Fx%2Fsys
 
-func setFlag(flag *uint64, mask uint64, v bool) {
-	if v {
-		*flag |= mask
-	} else {
-		*flag &= ^mask
-	}
-}
+type termiosFlag = uint64
