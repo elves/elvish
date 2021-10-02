@@ -9,15 +9,16 @@ import (
 
 // A net/rpc service for the daemon.
 type service struct {
-	store storedefs.Store
-	err   error
+	version int
+	store   storedefs.Store
+	err     error
 }
 
 // Implementations of RPC methods.
 
 // Version returns the API version number.
 func (s *service) Version(req *api.VersionRequest, res *api.VersionResponse) error {
-	res.Version = api.Version
+	res.Version = s.version
 	return nil
 }
 

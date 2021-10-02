@@ -47,7 +47,7 @@ func TestInteract_ConnectsToDaemon(t *testing.T) {
 	defer func() { <-daemonDone }()
 	readyCh := make(chan struct{})
 	go func() {
-		daemon.Serve("sock", "db", daemon.ServeChans{Ready: readyCh})
+		daemon.Serve("sock", "db", daemon.ServeOpts{Ready: readyCh})
 		close(daemonDone)
 	}()
 	select {

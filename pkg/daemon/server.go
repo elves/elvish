@@ -24,7 +24,7 @@ var logger = logutil.GetLogger("[daemon] ")
 var Program prog.Program = program{}
 
 type program struct {
-	ServeChans ServeChans
+	ServeOpts ServeOpts
 }
 
 func (p program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
@@ -35,23 +35,25 @@ func (p program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 		return prog.BadUsage("arguments are not allowed with -daemon")
 	}
 	setUmaskForDaemon()
-	exit := Serve(f.Sock, f.DB, p.ServeChans)
+	exit := Serve(f.Sock, f.DB, p.ServeOpts)
 	return prog.Exit(exit)
 }
 
-// ServeChans keeps channels that can be passed to Serve.
-type ServeChans struct {
+// ServeOpts keeps options that can be passed to Serve.
+type ServeOpts struct {
 	// If not nil, will be closed when the daemon is ready to serve requests.
 	Ready chan<- struct{}
 	// Causes the daemon to abort if closed or sent any date. If nil, Serve will
 	// set up its own signal channel by listening to SIGINT and SIGTERM.
-	Signal <-chan os.Signal
+	Signals <-chan os.Signal
+	// If not nil, overrides the response of the Version RPC.
+	Version *int
 }
 
 // Serve runs the daemon service, listening on the socket specified by sockpath
 // and serving data from dbpath until all clients have exited. See doc for
 // ServeChans for additional options.
-func Serve(sockpath, dbpath string, chans ServeChans) int {
+func Serve(sockpath, dbpath string, opts ServeOpts) int {
 	logger.Println("pid is", syscall.Getpid())
 	logger.Println("going to listen", sockpath)
 	listener, err := net.Listen("unix", sockpath)
@@ -68,7 +70,11 @@ func Serve(sockpath, dbpath string, chans ServeChans) int {
 	}
 
 	server := rpc.NewServer()
-	server.RegisterName(api.ServiceName, &service{st, err})
+	version := api.Version
+	if opts.Version != nil {
+		version = *opts.Version
+	}
+	server.RegisterName(api.ServiceName, &service{version, st, err})
 
 	connCh := make(chan net.Conn, 10)
 	listenErrCh := make(chan error, 1)
@@ -84,7 +90,7 @@ func Serve(sockpath, dbpath string, chans ServeChans) int {
 		}
 	}()
 
-	sigCh := chans.Signal
+	sigCh := opts.Signals
 	if sigCh == nil {
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
@@ -109,8 +115,8 @@ func Serve(sockpath, dbpath string, chans ServeChans) int {
 		return false
 	}
 
-	if chans.Ready != nil {
-		close(chans.Ready)
+	if opts.Ready != nil {
+		close(opts.Ready)
 	}
 
 loop:
