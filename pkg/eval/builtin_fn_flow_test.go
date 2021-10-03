@@ -13,6 +13,7 @@ func TestRunParallel(t *testing.T) {
 	Test(t,
 		That(`run-parallel { put lorem } { echo ipsum }`).
 			Puts("lorem").Prints("ipsum\n"),
+		That(`run-parallel { } { fail foo }`).Throws(FailError{"foo"}),
 	)
 }
 
@@ -24,6 +25,8 @@ func TestEach(t *testing.T) {
 		That(`each $put~ [1 233]`).Puts("1", "233"),
 		That(`range 10 | each [x]{ if (== $x 4) { break }; put $x }`).
 			Puts(0, 1, 2, 3),
+		That(`range 10 | each [x]{ if (== $x 4) { continue }; put $x }`).
+			Puts(0, 1, 2, 3, 5, 6, 7, 8, 9),
 		That(`range 10 | each [x]{ if (== $x 4) { fail haha }; put $x }`).
 			Puts(0, 1, 2, 3).Throws(AnyError),
 		// TODO(xiaq): Test that "each" does not close the stdin.
@@ -36,6 +39,11 @@ func TestPeach(t *testing.T) {
 	Test(t,
 		// Verify the output has the expected values when sorted.
 		That(`range 5 | peach [x]{ * 2 $x } | order`).Puts(0, 2, 4, 6, 8),
+
+		// Handling of "continue".
+		That(`range 5 | peach [x]{ if (== $x 2) { continue }; * 2 $x } | order`).
+			Puts(0, 2, 6, 8),
+
 		// Test that the order of output does not necessarily match the order of
 		// input.
 		//
