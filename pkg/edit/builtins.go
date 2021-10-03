@@ -157,7 +157,8 @@ func toKey(v interface{}) (ui.Key, error) {
 // If called while the editor is active, this will print the message above the
 // editor, and redraw the editor.
 //
-// If called while the editor is inactive, this is equivalent to `echo $message`.
+// If called while the editor is inactive, the message will be queued, and shown
+// once the editor becomes active.
 
 //elvdoc:fn return-line
 //
