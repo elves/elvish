@@ -14,22 +14,6 @@ import (
 // ErrStoreNotConnected is thrown by dir-history when the store is not connected.
 var ErrStoreNotConnected = errors.New("store not connected")
 
-//elvdoc:fn path-\*
-//
-// ```elvish
-// path-abs $path
-// path-base $path
-// path-clean $path
-// path-dir $path
-// path-ext $path
-// ```
-//
-// See [godoc of path/filepath](https://godoc.org/path/filepath). Go errors are
-// turned into exceptions.
-//
-// These functions are deprecated. Use the equivalent functions in the
-// [path:](path.html) module.
-
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		// Directory
