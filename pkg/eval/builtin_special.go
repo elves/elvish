@@ -355,7 +355,7 @@ func use(fm *Frame, spec string, r diag.Ranger) (*Ns, error) {
 	}
 	// TODO: For non-relative imports, use the spec (instead of the full path)
 	// as the module key instead to avoid searching every time.
-	for _, dir := range fm.Evaler.getLibDirs() {
+	for _, dir := range fm.Evaler.libDirs {
 		ns, err := useFromFile(fm, spec, filepath.Join(dir, spec), r)
 		if _, isNoSuchModule := err.(noSuchModule); isNoSuchModule {
 			continue

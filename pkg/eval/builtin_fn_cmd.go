@@ -112,7 +112,7 @@ func exit(fm *Frame, codes ...int) error {
 }
 
 func preExit(fm *Frame) {
-	for _, hook := range fm.Evaler.beforeExitHooks() {
+	for _, hook := range fm.Evaler.beforeExit {
 		hook()
 	}
 }

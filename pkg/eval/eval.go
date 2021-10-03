@@ -42,27 +42,36 @@ const (
 // persisted between evaluation of different pieces of code. An Evaler is safe
 // to use concurrently.
 type Evaler struct {
-	// All mutations to Evaler should be guarded by this mutex.
+	// Command-line arguments, exposed as $args.
+	args vals.List
+	// Hooks to run before exit or exec.
+	beforeExit []func()
+	// TODO: Remove after the dir-history command is removed.
+	daemonClient daemondefs.Client
+	// Directories to search libraries.
+	libDirs []string
+	// Source code of internal bundled modules indexed by use specs.
+	bundledModules map[string]string
+
+	// Mutations to fields above are not guarded by the mutex, and must only
+	// happen before the Evaler is used to evaluate any code.
+
+	mu sync.RWMutex
+
+	// Mutations to fields below should be guarded by this mutex.
 	//
 	// Note that this is *not* a GIL; most state mutations when executing Elvish
 	// code is localized and do not need to hold this mutex.
 	//
 	// TODO: Actually guard all mutations by this mutex.
-	mu sync.RWMutex
 
 	global, builtin *Ns
 
 	deprecations deprecationRegistry
 
-	// State of the module system.
-	//
-	// Directories to search libraries.
-	libDirs []string
 	// Internal modules are indexed by use specs. External modules are indexed by
 	// absolute paths.
 	modules map[string]*Ns
-	// Source code of internal bundled modules indexed by use specs.
-	bundledModules map[string]string
 
 	// Various states and configs exposed to Elvish code.
 	//
@@ -74,15 +83,9 @@ type Evaler struct {
 	notifyBgJobSuccess bool
 	// The current number of background jobs, exposed as $num-bg-jobs.
 	numBgJobs int
-	// Command-line arguments, exposed as $args.
-	args vals.List
+
 	// Chdir hooks, exposed indirectly as $before-chdir and $after-chdir.
 	beforeChdir, afterChdir []func(string)
-
-	beforeExit []func()
-
-	// TODO: Remove after the dir-history command is removed.
-	daemonClient daemondefs.Client
 }
 
 // Editor is the interface that the line editor has to satisfy. It is needed so
@@ -181,9 +184,7 @@ func NewEvaler() *Evaler {
 		Add("num-bg-jobs", vars.FromGet(func() interface{} {
 			return strconv.Itoa(ev.getNumBgJobs())
 		})).
-		Add("args", vars.FromGet(func() interface{} {
-			return ev.getArgs()
-		})).
+		Add("args", vars.FromGet(func() interface{} { return ev.args })).
 		Ns()
 	builtin.slots = append(builtin.slots, moreBuiltins.slots...)
 	builtin.names = append(builtin.names, moreBuiltins.names...)
@@ -249,17 +250,9 @@ func (ev *Evaler) registerDeprecation(d deprecation) bool {
 	return ev.deprecations.register(d)
 }
 
-// Returns libdir.
-func (ev *Evaler) getLibDirs() []string {
-	ev.mu.RLock()
-	defer ev.mu.RUnlock()
-	return ev.libDirs
-}
-
-// SetLibDir sets the library directory for finding external modules.
+// SetLibDir sets the library directory for finding external modules. This
+// method must be called before the Evaler is used to evaluate any code.
 func (ev *Evaler) SetLibDirs(libDirs []string) {
-	ev.mu.Lock()
-	defer ev.mu.Unlock()
 	ev.libDirs = libDirs
 }
 
@@ -272,10 +265,9 @@ func (ev *Evaler) AddModule(name string, mod *Ns) {
 }
 
 // AddBundledModule add an internal bundled module so that it can be used with
-// "use $name" from script.
+// "use $name" from script. This method must be called before the Evaler is used
+// to evaluate any code.
 func (ev *Evaler) AddBundledModule(name, code string) {
-	ev.mu.Lock()
-	defer ev.mu.Unlock()
 	ev.bundledModules[name] = code
 }
 
@@ -305,19 +297,11 @@ func (ev *Evaler) addNumBgJobs(delta int) {
 	ev.numBgJobs += delta
 }
 
-func (ev *Evaler) getArgs() vals.List {
-	ev.mu.RLock()
-	defer ev.mu.RUnlock()
-	return ev.args
-}
-
 // SetArgs sets the value of the $args variable to a list of strings, built from
-// the given slice.
+// the given slice. This method must be called before the Evaler is used to
+// evaluate any code.
 func (ev *Evaler) SetArgs(args []string) {
-	v := listOfStrings(args)
-	ev.mu.Lock()
-	defer ev.mu.Unlock()
-	ev.args = v
+	ev.args = listOfStrings(args)
 }
 
 // Returns copies of beforeChdir and afterChdir.
@@ -342,31 +326,21 @@ func (ev *Evaler) AddAfterChdir(f func(string)) {
 	ev.afterChdir = append(ev.afterChdir, f)
 }
 
-func (ev *Evaler) beforeExitHooks() []func() {
-	ev.mu.Lock()
-	defer ev.mu.Unlock()
-	return append(([]func())(nil), ev.beforeExit...)
-}
-
 // AddBeforeExit adds a function to run before the Elvish process exits or gets
-// replaced (via "exec" on UNIX).
+// replaced (via "exec" on UNIX). This method must be called before the Evaler
+// is used to evaluate any code.
 func (ev *Evaler) AddBeforeExit(f func()) {
-	ev.mu.Lock()
-	defer ev.mu.Unlock()
 	ev.beforeExit = append(ev.beforeExit, f)
 }
 
-// SetDaemonClient sets the daemon client associated with the Evaler.
+// SetDaemonClient sets the daemon client associated with the Evaler. This
+// method must be called before the Evaler is used to evaluate any code.
 func (ev *Evaler) SetDaemonClient(client daemondefs.Client) {
-	ev.mu.Lock()
-	defer ev.mu.Unlock()
 	ev.daemonClient = client
 }
 
 // DaemonClient returns the daemon client associated with the Evaler.
 func (ev *Evaler) DaemonClient() daemondefs.Client {
-	ev.mu.RLock()
-	defer ev.mu.RUnlock()
 	return ev.daemonClient
 }
 
