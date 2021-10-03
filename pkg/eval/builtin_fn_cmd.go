@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 
@@ -113,11 +112,7 @@ func exit(fm *Frame, codes ...int) error {
 }
 
 func preExit(fm *Frame) {
-	daemon := fm.Evaler.DaemonClient()
-	if daemon != nil {
-		err := daemon.Close()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
+	for _, hook := range fm.Evaler.beforeExitHooks() {
+		hook()
 	}
 }

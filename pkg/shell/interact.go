@@ -66,6 +66,7 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 		// Even if error is not nil, we install daemon-related functionalities
 		// anyway. Daemon may eventually come online and become functional.
 		ev.SetDaemonClient(cl)
+		ev.AddBeforeExit(func() { cl.Close() })
 		ev.AddModule("store", store.Ns(cl))
 		ev.AddModule("daemon", daemon.Ns(cl))
 	}

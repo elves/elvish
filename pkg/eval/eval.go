@@ -79,9 +79,9 @@ type Evaler struct {
 	// Chdir hooks, exposed indirectly as $before-chdir and $after-chdir.
 	beforeChdir, afterChdir []func(string)
 
-	// Dependencies.
-	//
-	// TODO: Remove these dependency by providing more general extension points.
+	beforeExit []func()
+
+	// TODO: Remove after the dir-history command is removed.
 	daemonClient daemondefs.Client
 }
 
@@ -342,6 +342,20 @@ func (ev *Evaler) AddAfterChdir(f func(string)) {
 	ev.afterChdir = append(ev.afterChdir, f)
 }
 
+func (ev *Evaler) beforeExitHooks() []func() {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	return append(([]func())(nil), ev.beforeExit...)
+}
+
+// AddBeforeExit adds a function to run before the Elvish process exits or gets
+// replaced (via "exec" on UNIX).
+func (ev *Evaler) AddBeforeExit(f func()) {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.beforeExit = append(ev.beforeExit, f)
+}
+
 // SetDaemonClient sets the daemon client associated with the Evaler.
 func (ev *Evaler) SetDaemonClient(client daemondefs.Client) {
 	ev.mu.Lock()
@@ -356,8 +370,8 @@ func (ev *Evaler) DaemonClient() daemondefs.Client {
 	return ev.daemonClient
 }
 
-// Chdir changes the current directory. On success it also updates the PWD
-// environment variable and records the new directory in the directory history.
+// Chdir changes the current directory, and updates $E:PWD on success
+//
 // It runs the functions in beforeChdir immediately before changing the
 // directory, and the functions in afterChdir immediately after (if chdir was
 // successful). It returns nil as long as the directory changing part succeeds.
