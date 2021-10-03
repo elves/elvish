@@ -381,6 +381,10 @@ haha
 You can test if a key is present using [`has-key`](./builtin.html#has-key) and
 enumerate the keys using the [`keys`](./builtin.html#keys) builtins.
 
+**Note**: Since `&` is a [metacharacter](#metacharacters), key-value pairs do
+not have to follow whitespaces; `[&a=lorem&b=ipsum]` is equivalent to
+`[&a=lorem &b=ipsum]`, just less readable.
+
 ## Pseudo-map
 
 A pseudo-map is not a single concrete data type. It refers to concrete types
@@ -1423,6 +1427,10 @@ is equivalent to `&key=$true`:
 ~> f &opt
 ▶ $true
 ```
+
+**Note**: Since `&` is a [metacharacter](#metacharacters), it can be used to
+start an option immediately after the command name; `echo&sep=, a b` is
+equivalent to `echo &sep=, a b`, just less readable.
 
 ## Special command
 
