@@ -413,7 +413,9 @@ not assigned.
 There are two boolean values, `$true` and `$false`.
 
 When converting non-boolean values to the boolean type, `$nil` and exceptions
-convert to `$false`. All the other non-boolean values convert to `$true`.
+convert to `$false`; such values and `$false` itself are **booleanly false**.
+All the other non-boolean values convert to `$true`; such values and `$true`
+itself are **booleanly true**.
 
 ## Exception
 
@@ -1859,14 +1861,58 @@ Example of deleting map element:
 ▶ [[&k=v]]
 ```
 
-## Logics: `and` and `or` {#and-or}
+## Logics: `and`, `or`, `coalesce` {#and-or-coalesce}
 
-The `and` special command evaluates its arguments from left to right; as soon as
-a booleanly false value is obtained, it outputs the value and stops. When given
-no arguments, it outputs `$true`.
+The `and` special command outputs the first [booleanly false](#boolean) value
+the arguments evaluate to, or `$true` when given no value. Examples:
 
-The `or` special command is the same except that it stops when a booleanly true
-value is obtained. When given no arguments, it outputs `$false`.
+```elvish-transcript
+~> and $true $false
+▶ $false
+~> and a b c
+▶ c
+~> and a $false
+▶ $false
+```
+
+The `or` special command outputs the first [booleanly true](#boolean) value the
+arguments evaluate to, or `$false` when given no value. Examples:
+
+```elvish-transcript
+~> or $true $false
+▶ $true
+~> or a b c
+▶ a
+~> or $false a b
+▶ a
+```
+
+The `coalesce` special command outputs the first non-[nil](#nil) value the
+arguments evaluate to, or `$nil` when given no value. Examples:
+
+```elvish-transcript
+~> coalesce $nil a b
+▶ a
+~> coalesce $nil $nil
+▶ $nil
+~> coalesce $nil $nil a
+▶ a
+~> coalesce a b
+▶ a
+```
+
+All three commands use short-circuit evaluation, and stop evaluating arguments
+as soon as it sees a value satisfying the termination condition. For example,
+none of the following throws an exception:
+
+```elvish-transcript
+~> and $false (fail foo)
+▶ $false
+~> or $true (fail foo)
+▶ $true
+~> coalesce a (fail foo)
+▶ a
+```
 
 ## Condition: `if` {#if}
 

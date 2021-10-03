@@ -154,6 +154,21 @@ func TestOr(t *testing.T) {
 	)
 }
 
+func TestCoalesce(t *testing.T) {
+	Test(t,
+		That("coalesce a b").Puts("a"),
+		That("coalesce $nil b").Puts("b"),
+		That("coalesce $nil $nil").Puts(nil),
+		That("coalesce").Puts(nil),
+		// exception propagation
+		That("coalesce $nil (fail foo)").Throws(FailError{"foo"}),
+		// short circuit
+		That("coalesce a (fail foo)").Puts("a"),
+
+		thatOutputErrorIsBubbled("coalesce a"),
+	)
+}
+
 func TestIf(t *testing.T) {
 	Test(t,
 		That("if true { put then }").Puts("then"),

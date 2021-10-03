@@ -50,8 +50,9 @@ func init() {
 
 		"use": compileUse,
 
-		"and": compileAnd,
-		"or":  compileOr,
+		"and":      compileAnd,
+		"or":       compileOr,
+		"coalesce": compileCoalesce,
 
 		"if":    compileIf,
 		"while": compileWhile,
@@ -459,6 +460,33 @@ func (op *andOrOp) exec(fm *Frame) Exception {
 		}
 	}
 	return fm.errorp(op, out.Put(lastValue))
+}
+
+// Compiles the "coalesce" special form, which is like "or", but evaluates until
+// a non-nil value is found.
+func compileCoalesce(cp *compiler, fn *parse.Form) effectOp {
+	return &coalesceOp{fn.Range(), cp.compoundOps(fn.Args)}
+}
+
+type coalesceOp struct {
+	diag.Ranging
+	argOps []valuesOp
+}
+
+func (op *coalesceOp) exec(fm *Frame) Exception {
+	out := fm.ValueOutput()
+	for _, argOp := range op.argOps {
+		values, exc := argOp.exec(fm)
+		if exc != nil {
+			return exc
+		}
+		for _, value := range values {
+			if value != nil {
+				return fm.errorp(op, out.Put(value))
+			}
+		}
+	}
+	return fm.errorp(op, out.Put(nil))
 }
 
 func compileIf(cp *compiler, fn *parse.Form) effectOp {
