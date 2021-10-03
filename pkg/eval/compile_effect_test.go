@@ -37,7 +37,7 @@ func TestPipeline(t *testing.T) {
 		// Background pipeline.
 		That(
 			"notify-bg-job-success = $false",
-			"p = (pipe)",
+			"p = (file:pipe)",
 			"{ print foo > $p; file:close $p[w] }&",
 			"slurp < $p",
 			"file:close $p[r]").Puts("foo"),
@@ -230,10 +230,10 @@ func TestCommand_Redir(t *testing.T) {
 		That(`{ echo foo >&4 } 4>out5`, `slurp < out5`).Puts("foo\n"),
 
 		// Redirections from File object.
-		That(`echo haha > out3`, `f = (fopen out3)`, `slurp <$f`, ` fclose $f`).
+		That(`echo haha > out3`, `f = (file:open out3)`, `slurp <$f`, ` file:close $f`).
 			Puts("haha\n"),
 		// Redirections from Pipe object.
-		That(`p = (pipe); echo haha > $p; file:close $p[w]; slurp < $p; file:close $p[r]`).
+		That(`p = (file:pipe); echo haha > $p; file:close $p[w]; slurp < $p; file:close $p[r]`).
 			Puts("haha\n"),
 
 		// We can't read values from a file and shouldn't hang when iterating

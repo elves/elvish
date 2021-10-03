@@ -38,7 +38,6 @@ var fns = map[string]interface{}{
 	"max":           max,
 	"min":           min,
 	"pow":           pow,
-	"pow10":         pow10,
 	"round":         round,
 	"round-to-even": roundToEven,
 	"sin":           math.Sin,
@@ -633,23 +632,6 @@ func isExactInt(n vals.Num) bool {
 	default:
 		return false
 	}
-}
-
-//elvdoc:fn pow10
-//
-// ```elvish
-// math:pow10 $exponent
-// ```
-//
-// Equivalent to `math:pow 10 $exponent`.
-//
-// This function is deprecated; use `math:pow 10 $exponent` instead.
-//
-// @cf math:pow
-
-func pow10(fm *eval.Frame, exp vals.Num) vals.Num {
-	fm.Deprecate(`the "math:pow10" command is deprecated; use "math:pow 10 $exponent" instead`, nil, 16)
-	return pow(10, exp)
 }
 
 //elvdoc:fn round

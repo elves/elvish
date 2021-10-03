@@ -72,7 +72,7 @@ func TestPromptEagerness(t *testing.T) {
 
 func TestPromptStaleThreshold(t *testing.T) {
 	f := setup(t, rc(
-		`pipe = (pipe)`,
+		`pipe = (file:pipe)`,
 		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
 		`edit:prompt-stale-threshold = `+scaledMsAsSec(50)))
 
@@ -87,7 +87,7 @@ func TestPromptStaleThreshold(t *testing.T) {
 
 func TestPromptStaleTransform(t *testing.T) {
 	f := setup(t, rc(
-		`pipe = (pipe)`,
+		`pipe = (file:pipe)`,
 		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
 		`edit:prompt-stale-threshold = `+scaledMsAsSec(50),
 		`edit:prompt-stale-transform = [a]{ put S; put $a; put S }`))
@@ -99,7 +99,7 @@ func TestPromptStaleTransform(t *testing.T) {
 
 func TestPromptStaleTransform_Exception(t *testing.T) {
 	f := setup(t, rc(
-		`pipe = (pipe)`,
+		`pipe = (file:pipe)`,
 		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
 		`edit:prompt-stale-threshold = `+scaledMsAsSec(50),
 		`edit:prompt-stale-transform = [_]{ fail ERROR }`))

@@ -146,10 +146,6 @@ func TestMath(t *testing.T) {
 		// base is float64
 		That("math:pow 2.0 2").Puts(4.0),
 
-		That("math:pow10 0").Puts(1),
-		That("math:pow10 3").Puts(1000),
-		That("math:pow10 -3").Puts(big.NewRat(1, 1000)),
-
 		// Tests below this line are tests against simple bindings for Go's math package.
 
 		That("put $math:pi").Puts(math.Pi),

@@ -9,6 +9,7 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/mods/file"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -31,7 +32,7 @@ func TestPath(t *testing.T) {
 		panic("unable to convert a/b/c.png to an absolute path")
 	}
 
-	TestWithSetup(t, importPathModule,
+	TestWithSetup(t, importModules,
 		// This block of tests is not meant to be comprehensive. Their primary purpose is to simply
 		// ensure the Elvish command is correctly mapped to the relevant Go function. We assume the
 		// Go function behaves correctly.
@@ -70,15 +71,15 @@ func TestPath(t *testing.T) {
 			errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: 2},
 			"path:temp-dir a b"),
 
-		That("f = (path:temp-file)", "fclose $f", "put $f[fd]", "rm $f[name]").
+		That("f = (path:temp-file)", "file:close $f", "put $f[fd]", "rm $f[name]").
 			Puts(-1),
-		That("f = (path:temp-file)", "put $f[name]", "fclose $f", "rm $f[name]").
+		That("f = (path:temp-file)", "put $f[name]", "file:close $f", "rm $f[name]").
 			Puts(MatchingRegexp{Pattern: anyDir + `elvish-.*$`}),
-		That("f = (path:temp-file 'x-*.y')", "put $f[name]", "fclose $f", "rm $f[name]").
+		That("f = (path:temp-file 'x-*.y')", "put $f[name]", "file:close $f", "rm $f[name]").
 			Puts(MatchingRegexp{Pattern: anyDir + `x-.*\.y$`}),
-		That("f = (path:temp-file &dir=. 'x-*.y')", "put $f[name]", "fclose $f", "rm $f[name]").
+		That("f = (path:temp-file &dir=. 'x-*.y')", "put $f[name]", "file:close $f", "rm $f[name]").
 			Puts(MatchingRegexp{Pattern: `^(\.[/\\])?x-.*\.y$`}),
-		That("f = (path:temp-file &dir=.)", "put $f[name]", "fclose $f", "rm $f[name]").
+		That("f = (path:temp-file &dir=.)", "put $f[name]", "file:close $f", "rm $f[name]").
 			Puts(MatchingRegexp{Pattern: `^(\.[/\\])?elvish-.*$`}),
 		That("path:temp-file a b").Throws(
 			errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: 2},
@@ -109,7 +110,7 @@ func TestPath_Symlink(t *testing.T) {
 		}
 	}
 
-	TestWithSetup(t, importPathModule,
+	TestWithSetup(t, importModules,
 		That("path:eval-symlinks d/f").Puts(filepath.Join("d", "f")),
 		That("path:eval-symlinks d/s-f").Puts(filepath.Join("d", "f")),
 		That("path:eval-symlinks s-d/f").Puts(filepath.Join("d", "f")),
@@ -135,6 +136,6 @@ func TestPath_Symlink(t *testing.T) {
 	)
 }
 
-func importPathModule(ev *eval.Evaler) {
-	ev.AddGlobal(eval.NsBuilder{}.AddNs("path", Ns).Ns())
+func importModules(ev *eval.Evaler) {
+	ev.AddGlobal(eval.NsBuilder{}.AddNs("path", Ns).AddNs("file", file.Ns).Ns())
 }

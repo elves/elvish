@@ -11,7 +11,7 @@ import (
 )
 
 func TestDeprecatedBuiltin(t *testing.T) {
-	testCompileTimeDeprecation(t, "fopen a", `the "fopen" command is deprecated`, 16)
+	testCompileTimeDeprecation(t, "dir-history", `the "dir-history" command is deprecated`, 17)
 	// Deprecations of other builtins are implemented in the same way, so we
 	// don't test them repeatedly
 }

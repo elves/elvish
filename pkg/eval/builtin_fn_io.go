@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 
@@ -54,13 +53,6 @@ func init() {
 		"to-lines":      toLines,
 		"to-json":       toJSON,
 		"to-terminated": toTerminated,
-
-		// File and pipe
-		"fopen":   fopen,
-		"fclose":  fclose,
-		"pipe":    pipe,
-		"prclose": prclose,
-		"pwclose": pwclose,
 	})
 }
 
@@ -896,122 +888,4 @@ func toJSON(fm *Frame, inputs Inputs) error {
 		errEncode = encoder.Encode(v)
 	})
 	return errEncode
-}
-
-//elvdoc:fn fopen
-//
-// ```elvish
-// fopen $filename
-// ```
-//
-// Open a file. Currently, `fopen` only supports opening a file for reading. File
-// must be closed with `fclose` explicitly. Example:
-//
-// ```elvish-transcript
-// ~> cat a.txt
-// This is
-// a file.
-// ~> f = (fopen a.txt)
-// ~> cat < $f
-// This is
-// a file.
-// ~> fclose $f
-// ```
-//
-// This function is deprecated; use [file:open](./file.html#open) instead.
-//
-// @cf fclose
-
-func fopen(name string) (vals.File, error) {
-	// TODO support opening files for writing etc as well.
-	return os.Open(name)
-}
-
-//elvdoc:fn fclose
-//
-// ```elvish
-// fclose $file
-// ```
-//
-// Close a file opened with `fopen`.
-//
-// This function is deprecated; use [file:close](./file.html#close) instead.
-//
-// @cf fopen
-
-func fclose(f vals.File) error {
-	return f.Close()
-}
-
-//elvdoc:fn pipe
-//
-// ```elvish
-// pipe
-// ```
-//
-// Create a new Unix pipe that can be used in redirections.
-//
-// A pipe contains both the read FD and the write FD. When redirecting command
-// input to a pipe with `<`, the read FD is used. When redirecting command output
-// to a pipe with `>`, the write FD is used. It is not supported to redirect both
-// input and output with `<>` to a pipe.
-//
-// Pipes have an OS-dependent buffer, so writing to a pipe without an active reader
-// does not necessarily block. Pipes **must** be explicitly closed with `prclose`
-// and `pwclose`.
-//
-// Putting values into pipes will cause those values to be discarded.
-//
-// Examples (assuming the pipe has a large enough buffer):
-//
-// ```elvish-transcript
-// ~> p = (pipe)
-// ~> echo 'lorem ipsum' > $p
-// ~> head -n1 < $p
-// lorem ipsum
-// ~> put 'lorem ipsum' > $p
-// ~> head -n1 < $p
-// # blocks
-// # $p should be closed with prclose and pwclose afterwards
-// ```
-//
-// This function is deprecated; use [file:pipe](./file.html#pipe) instead.
-//
-// @cf prclose pwclose
-
-func pipe() (vals.Pipe, error) {
-	r, w, err := os.Pipe()
-	return vals.NewPipe(r, w), err
-}
-
-//elvdoc:fn prclose
-//
-// ```elvish
-// prclose $pipe
-// ```
-//
-// Close the read end of a pipe.
-//
-// This function is deprecated; use [file:prclose](./file.html#prclose) instead.
-//
-// @cf pwclose pipe
-
-func prclose(p vals.Pipe) error {
-	return p.ReadEnd.Close()
-}
-
-//elvdoc:fn pwclose
-//
-// ```elvish
-// pwclose $pipe
-// ```
-//
-// Close the write end of a pipe.
-//
-// This function is deprecated; use [file:pwclose](./file.html#pwclose) instead.
-//
-// @cf prclose pipe
-
-func pwclose(p vals.Pipe) error {
-	return p.WriteEnd.Close()
 }
