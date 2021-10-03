@@ -16,7 +16,7 @@ import (
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/edit"
 	"src.elv.sh/pkg/eval"
-	daemonmod "src.elv.sh/pkg/mods/daemon"
+	"src.elv.sh/pkg/mods/daemon"
 	"src.elv.sh/pkg/mods/store"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/strutil"
@@ -67,7 +67,7 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 		// anyway. Daemon may eventually come online and become functional.
 		ev.SetDaemonClient(cl)
 		ev.AddModule("store", store.Ns(cl))
-		ev.AddModule("daemon", daemonmod.Ns(cl))
+		ev.AddModule("daemon", daemon.Ns(cl))
 	}
 
 	// Build Editor.
