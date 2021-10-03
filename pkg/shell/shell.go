@@ -80,12 +80,11 @@ func (p Program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 // Writer if it could not initialize module search directories.
 func MakeEvaler(stderr io.Writer) *eval.Evaler {
 	ev := eval.NewEvaler()
-	libs, libInstall, err := libPaths()
+	libs, err := libPaths()
 	if err != nil {
 		fmt.Fprintln(stderr, "Warning:", err)
 	}
 	ev.SetLibDirs(libs)
-	ev.SetLibInstallDir(libInstall)
 	mods.AddTo(ev)
 	if unix.ExposeUnixNs {
 		ev.AddModule("unix", unix.Ns)

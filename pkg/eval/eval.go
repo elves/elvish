@@ -58,8 +58,6 @@ type Evaler struct {
 	//
 	// Directories to search libraries.
 	libDirs []string
-	// Default directory to install libraries.
-	libInstallDir string
 	// Internal modules are indexed by use specs. External modules are indexed by
 	// absolute paths.
 	modules map[string]*Ns
@@ -263,12 +261,6 @@ func (ev *Evaler) SetLibDirs(libDirs []string) {
 	ev.mu.Lock()
 	defer ev.mu.Unlock()
 	ev.libDirs = libDirs
-}
-
-func (ev *Evaler) SetLibInstallDir(libInstallDir string) {
-	ev.mu.Lock()
-	defer ev.mu.Unlock()
-	ev.libInstallDir = libInstallDir
 }
 
 // AddModule add an internal module so that it can be used with "use $name" from

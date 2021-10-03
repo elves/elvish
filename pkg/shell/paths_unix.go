@@ -20,7 +20,7 @@ func newRCPath() (string, error) {
 
 const elvishLib = "elvish/lib"
 
-func newLibPaths() ([]string, string, error) {
+func newLibPaths() ([]string, error) {
 	var paths []string
 	libConfig, errConfig := xdgHomePath(env.XDG_CONFIG_HOME, ".config", elvishLib)
 	if errConfig == nil {
@@ -39,7 +39,7 @@ func newLibPaths() ([]string, string, error) {
 		paths = append(paths, filepath.Join(p, elvishLib))
 	}
 
-	return paths, libData, diag.Errors(errConfig, errData)
+	return paths, diag.Errors(errConfig, errData)
 }
 
 func newDBPath() (string, error) {

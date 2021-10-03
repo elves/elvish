@@ -16,12 +16,12 @@ func rcPath() (string, error) {
 	return newRCPath()
 }
 
-func libPaths() ([]string, string, error) {
-	paths, installPath, err := newLibPaths()
+func libPaths() ([]string, error) {
+	paths, err := newLibPaths()
 	if legacyLib, exists := legacyDataPath("lib", true); exists {
 		paths = append(paths, legacyLib)
 	}
-	return paths, installPath, err
+	return paths, err
 }
 
 // Returns a SpawnConfig containing all the paths needed by the daemon. It
