@@ -232,6 +232,12 @@ func TestFor(t *testing.T) {
 		That("for x [a] { put $x } else { put $x }").Puts("a"),
 		// continue
 		That("for x [a b] { put $x; continue; put $x; }").Puts("a", "b"),
+		// else
+		That("for x [] { } else { put else }").Puts("else"),
+		That("for x [a] { } else { put else }").DoesNothing(),
+		// Propagating exception.
+		That("for x [a] { fail foo }").Throws(FailError{"foo"}),
+
 		// More than one iterator.
 		That("for {x,y} [] { }").DoesNotCompile(),
 		// Invalid for loop lvalue. You can't use a var in a namespace other
@@ -248,6 +254,8 @@ func TestFor(t *testing.T) {
 			errs.ArityMismatch{What: "value being iterated",
 				ValidLow: 1, ValidHigh: 1, Actual: 2},
 			"(put a b)"),
+		// Non-iterable value
+		That("for x (num 0) { }").Throws(ErrorWithMessage("cannot iterate number")),
 	)
 }
 
@@ -373,6 +381,9 @@ func TestUse(t *testing.T) {
 		That("x = foo; use put-x").Throws(AnyError),
 
 		// TODO: Test module namespace
+
+		// Nonexistent module
+		That("use non-existent").Throws(ErrorWithMessage("no such module: non-existent")),
 
 		// Wrong uses of "use".
 		That("use").DoesNotCompile(),

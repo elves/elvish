@@ -209,6 +209,9 @@ func TestCommand_Redir(t *testing.T) {
 		That("echo 233 > out1", " slurp < out1").Puts("233\n"),
 		// Append.
 		That("echo 1 > out; echo 2 >> out; slurp < out").Puts("1\n2\n"),
+		// Read and write.
+		// TODO: Add a meaningful use case that uses both read and write.
+		That("echo 233 <> out1", " slurp < out1").Puts("233\n"),
 
 		// Redirections from special form.
 		That(`for x [lorem ipsum] { echo $x } > out2`, `slurp < out2`).
@@ -218,6 +221,7 @@ func TestCommand_Redir(t *testing.T) {
 		That(`{ echo foobar >&2 } 2> out3`, `slurp < out3`).
 			Puts("foobar\n"),
 		// Using named FDs as source and destination.
+		That("echo 233 stdout> out1", " slurp stdin< out1").Puts("233\n"),
 		That(`{ echo foobar >&stderr } stderr> out4`, `slurp < out4`).
 			Puts("foobar\n"),
 		// Using a new FD as source throws an exception.
@@ -261,6 +265,10 @@ func TestCommand_Redir(t *testing.T) {
 				What:  "redirection source",
 				Valid: "string, file or pipe", Actual: "list"},
 			"[]"),
+
+		// Exception when evaluating source or destination.
+		That("echo > (fail foo)").Throws(FailError{"foo"}, "fail foo"),
+		That("echo (fail foo)> file").Throws(FailError{"foo"}, "fail foo"),
 	)
 }
 

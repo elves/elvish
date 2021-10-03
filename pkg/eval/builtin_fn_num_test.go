@@ -166,6 +166,7 @@ func TestArithmeticCommands(t *testing.T) {
 		// Mixing of types not tested for commands below; they share the same
 		// code path as +.
 
+		That("-").Throws(ErrorWithType(errs.ArityMismatch{})),
 		// One argument - negation
 		That("- 233").Puts(-233),
 		That("- "+z).Puts(bigInt("-"+z)),
@@ -175,6 +176,8 @@ func TestArithmeticCommands(t *testing.T) {
 		That("- 20 10 2").Puts(8),
 		// bigint
 		That("- "+args(zz3, z1)).Puts(bigInt(z2)),
+		// bigrat
+		That("- 1/2 1/3").Puts(big.NewRat(1, 6)),
 		// float64
 		That("- 2.0 1.0 0.5").Puts(0.5),
 
@@ -184,6 +187,8 @@ func TestArithmeticCommands(t *testing.T) {
 		That("* 2 7 4").Puts(56),
 		// bigint
 		That("* 2 "+z1).Puts(bigInt(zz2)),
+		// bigrat
+		That("* 1/2 1/3").Puts(big.NewRat(1, 6)),
 		// float64
 		That("* 2.0 0.5 1.75").Puts(1.75),
 		// 0 * non-infinity
