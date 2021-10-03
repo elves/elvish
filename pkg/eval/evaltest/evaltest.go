@@ -31,6 +31,7 @@ import (
 // Case is a test case that can be used in Test.
 type Case struct {
 	codes []string
+	setup func(ev *eval.Evaler)
 	want  result
 }
 
@@ -59,6 +60,13 @@ func That(lines ...string) Case {
 // arguments are joined with newlines.
 func (c Case) Then(lines ...string) Case {
 	c.codes = append(c.codes, strings.Join(lines, "\n"))
+	return c
+}
+
+// Then returns a new Case with the given setup function executed on the Evaler
+// before the code is executed.
+func (c Case) WithSetup(f func(*eval.Evaler)) Case {
+	c.setup = f
 	return c
 }
 
@@ -127,6 +135,9 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 			t.Helper()
 			ev := eval.NewEvaler()
 			setup(ev)
+			if tt.setup != nil {
+				tt.setup(ev)
+			}
 
 			r := evalAndCollect(t, ev, tt.codes)
 

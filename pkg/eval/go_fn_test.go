@@ -1,256 +1,168 @@
-package eval
+package eval_test
 
 import (
 	"errors"
 	"math/big"
 	"reflect"
 	"testing"
-	"unsafe"
 
+	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
-
-	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/persistent/hash"
+	. "src.elv.sh/pkg/eval/evaltest"
 )
 
-func TestGoFnAsValue(t *testing.T) {
-	fn1 := NewGoFn("fn1", func() {})
-	fn2 := NewGoFn("fn2", func() {})
-	vals.TestValue(t, fn1).
-		Kind("fn").
-		Hash(hash.Pointer(unsafe.Pointer(fn1.(*goFn)))).
-		Equal(fn1).
-		NotEqual(fn2).
-		Repr("<builtin fn1>")
-}
-
-type testOptions struct {
+type someOptions struct {
 	Foo string
 	Bar string
 }
 
-func (o *testOptions) SetDefaultOptions() { o.Bar = "default" }
+func (o *someOptions) SetDefaultOptions() { o.Bar = "default" }
 
-// TODO: Break down this test into multiple small ones, and test errors more
-// strictly.
+//lint:ignore ST1012 test code
+var anError = errors.New("an error")
 
-func TestGoFnCall(t *testing.T) {
-	theFrame := &Frame{ports: []*Port{{}, {Chan: make(chan interface{}, 10)}, {}}}
-	theOptions := map[string]interface{}{}
+type namedSlice []string
 
-	var f Callable
-	callGood := func(fm *Frame, args []interface{}, opts map[string]interface{}) {
-		t.Helper()
-		err := f.Call(fm, args, opts)
-		if err != nil {
-			t.Errorf("Failed to call f: %v", err)
-		}
-	}
-	callBad := func(fm *Frame, args []interface{}, opts map[string]interface{}, wantErr error) {
-		t.Helper()
-		err := f.Call(fm, args, opts)
-		if !matchErr(wantErr, err) {
-			t.Errorf("Calling f returned error %v, want %v", err, wantErr)
-		}
-	}
+func TestGoFn_RawOptions(t *testing.T) {
+	Test(t,
+		That("f").DoesNothing().
+			WithSetup(f(func() {})),
 
-	// *Frame parameter gets the Frame.
-	f = NewGoFn("f", func(f *Frame) {
-		if f != theFrame {
-			t.Errorf("*Frame parameter doesn't get current frame")
-		}
-	})
-	callGood(theFrame, nil, theOptions)
+		// RawOptions
+		That("f &foo=bar").DoesNothing().
+			WithSetup(f(func(opts RawOptions) {
+				if opts["foo"] != "bar" {
+					t.Errorf("RawOptions parameter doesn't get options")
+				}
+			})),
+		// Options when the function does not accept options.
+		That("f &foo=bar").Throws(ErrNoOptAccepted).
+			WithSetup(f(func() {
+				t.Errorf("Function called when there are extra options")
+			})),
+		// Parsed options
+		That("f &foo=bar").DoesNothing().
+			WithSetup(f(func(opts someOptions) {
+				if opts.Foo != "bar" {
+					t.Errorf("ScanOptions parameter doesn't get options")
+				}
+				if opts.Bar != "default" {
+					t.Errorf("ScanOptions parameter doesn't use default value")
+				}
+			})),
+		// Invalid option; regression test for #958.
+		That("f &bad=bar").Throws(AnyError).
+			WithSetup(f(func(opts someOptions) {
+				t.Errorf("function called when there are invalid options")
+			})),
+		// Invalid option type; regression test for #958.
+		That("f &foo=[]").Throws(AnyError).
+			WithSetup(f(func(opts someOptions) {
+				t.Errorf("function called when there are invalid options")
+			})),
 
-	// RawOptions parameter gets options.
-	f = NewGoFn("f", func(opts RawOptions) {
-		if opts["foo"] != "bar" {
-			t.Errorf("RawOptions parameter doesn't get options")
-		}
-	})
-	callGood(theFrame, nil, RawOptions{"foo": "bar"})
+		// Argument
+		That("f lorem ipsum").DoesNothing().
+			WithSetup(f(func(x, y string) {
+				if x != "lorem" {
+					t.Errorf("Argument x not passed")
+				}
+				if y != "ipsum" {
+					t.Errorf("Argument y not passed")
+				}
+			})),
+		// Variadic arguments
+		That("f lorem ipsum").DoesNothing().
+			WithSetup(f(func(args ...string) {
+				wantArgs := []string{"lorem", "ipsum"}
+				if !reflect.DeepEqual(args, wantArgs) {
+					t.Errorf("got args %v, want %v", args, wantArgs)
+				}
+			})),
+		// Argument conversion
+		That("f 314 1.25").DoesNothing().
+			WithSetup(f(func(i int, f float64) {
+				if i != 314 {
+					t.Errorf("Integer argument i not passed")
+				}
+				if f != 1.25 {
+					t.Errorf("Float argument f not passed")
+				}
+			})),
+		// Inputs
+		That("f [foo bar]").DoesNothing().
+			WithSetup(f(testInputs(t, "foo", "bar"))),
+		That("f [foo bar]").DoesNothing().
+			WithSetup(f(testInputs(t, "foo", "bar"))),
+		// Too many arguments
+		That("f x").
+			Throws(errs.ArityMismatch{What: "arguments",
+				ValidLow: 0, ValidHigh: 0, Actual: 1}).
+			WithSetup(f(func() {
+				t.Errorf("Function called when there are too many arguments")
+			})),
+		// Too few arguments
+		That("f").
+			Throws(errs.ArityMismatch{What: "arguments",
+				ValidLow: 1, ValidHigh: 1, Actual: 0}).
+			WithSetup(f(func(x string) {
+				t.Errorf("Function called when there are too few arguments")
+			})),
+		That("f").
+			Throws(errs.ArityMismatch{What: "arguments",
+				ValidLow: 1, ValidHigh: -1, Actual: 0}).
+			WithSetup(f(func(x string, y ...string) {
+				t.Errorf("Function called when there are too few arguments")
+			})),
+		// Wrong argument type
+		That("f (num 1)").Throws(AnyError).
+			WithSetup(f(func(x string) {
+				t.Errorf("Function called when arguments have wrong type")
+			})),
+		That("f str").Throws(AnyError).
+			WithSetup(f(func(x int) {
+				t.Errorf("Function called when arguments have wrong type")
+			})),
 
-	// ScanOptions parameters gets scanned options.
-	f = NewGoFn("f", func(opts testOptions) {
-		if opts.Foo != "bar" {
-			t.Errorf("ScanOptions parameter doesn't get options")
-		}
-		if opts.Bar != "default" {
-			t.Errorf("ScanOptions parameter doesn't use default value")
-		}
-	})
-	callGood(theFrame, nil, RawOptions{"foo": "bar"})
+		// Return value
+		That("f").Puts("foo").
+			WithSetup(f(func() string { return "foo" })),
+		// Return value conversion
+		That("f").Puts(314).
+			WithSetup(f(func() *big.Int { return big.NewInt(314) })),
+		// Slice and array return value
+		That("f").Puts("foo", "bar").
+			WithSetup(f(func() []string { return []string{"foo", "bar"} })),
+		That("f").Puts("foo", "bar").
+			WithSetup(f(func() [2]string { return [2]string{"foo", "bar"} })),
+		// Named types with underlying slice type treated as a single value
+		That("f").Puts(namedSlice{"foo", "bar"}).
+			WithSetup(f(func() namedSlice { return namedSlice{"foo", "bar"} })),
 
-	// Combination of Frame and RawOptions.
-	f = NewGoFn("f", func(f *Frame, opts RawOptions) {
-		if f != theFrame {
-			t.Errorf("*Frame parameter doesn't get current frame")
-		}
-		if opts["foo"] != "bar" {
-			t.Errorf("RawOptions parameter doesn't get options")
-		}
-	})
-	callGood(theFrame, nil, RawOptions{"foo": "bar"})
-
-	// Argument passing.
-	f = NewGoFn("f", func(x, y string) {
-		if x != "lorem" {
-			t.Errorf("Argument x not passed")
-		}
-		if y != "ipsum" {
-			t.Errorf("Argument y not passed")
-		}
-	})
-	callGood(theFrame, []interface{}{"lorem", "ipsum"}, theOptions)
-
-	// Variadic arguments.
-	f = NewGoFn("f", func(x ...string) {
-		if len(x) != 2 || x[0] != "lorem" || x[1] != "ipsum" {
-			t.Errorf("Variadic argument not passed")
-		}
-	})
-	callGood(theFrame, []interface{}{"lorem", "ipsum"}, theOptions)
-
-	// Conversion into int and float64.
-	f = NewGoFn("f", func(i int, f float64) {
-		if i != 314 {
-			t.Errorf("Integer argument i not passed")
-		}
-		if f != 1.25 {
-			t.Errorf("Float argument f not passed")
-		}
-	})
-	callGood(theFrame, []interface{}{"314", "1.25"}, theOptions)
-
-	// Conversion of supplied inputs.
-	f = NewGoFn("f", func(i Inputs) {
-		var values []interface{}
-		i(func(x interface{}) {
-			values = append(values, x)
-		})
-		if len(values) != 2 || values[0] != "foo" || values[1] != "bar" {
-			t.Errorf("Inputs parameter didn't get supplied inputs")
-		}
-	})
-	callGood(theFrame, []interface{}{vals.MakeList("foo", "bar")}, theOptions)
-
-	// Conversion of implicit inputs.
-	ch := make(chan interface{}, 10)
-	ch <- "foo"
-	ch <- "bar"
-	close(ch)
-	inFrame := &Frame{ports: []*Port{{Chan: ch}, {}, {}}}
-	f = NewGoFn("f", func(i Inputs) {
-		var values []interface{}
-		i(func(x interface{}) {
-			values = append(values, x)
-		})
-		if len(values) != 2 || values[0] != "foo" || values[1] != "bar" {
-			t.Errorf("Inputs parameter didn't get implicit inputs")
-		}
-	})
-	callGood(inFrame, []interface{}{vals.MakeList("foo", "bar")}, theOptions)
-
-	// Outputting of return values.
-	outFrame := &Frame{ports: make([]*Port, 3)}
-	ch = make(chan interface{}, 10)
-	outFrame.ports[1] = &Port{Chan: ch}
-	f = NewGoFn("f", func() string { return "ret" })
-	callGood(outFrame, nil, theOptions)
-	select {
-	case ret := <-ch:
-		if ret != "ret" {
-			t.Errorf("Output is not the same as return value")
-		}
-	default:
-		t.Errorf("Return value is not outputted")
-	}
-
-	// Conversion of return values.
-	f = NewGoFn("f", func() *big.Int { return big.NewInt(314) })
-	callGood(outFrame, nil, theOptions)
-	select {
-	case ret := <-ch:
-		if ret != 314 {
-			t.Errorf("Return value is not converted to int")
-		}
-	default:
-		t.Errorf("Return value is not outputted")
-	}
-
-	// Passing of error return value.
-	theError := errors.New("the error")
-	f = NewGoFn("f", func() (string, error) {
-		return "x", theError
-	})
-	if f.Call(outFrame, nil, theOptions) != theError {
-		t.Errorf("Returned error is not passed")
-	}
-	select {
-	case <-ch:
-		t.Errorf("Return value is outputted when error is not nil")
-	default:
-	}
-
-	// Too many arguments.
-	f = NewGoFn("f", func() {
-		t.Errorf("Function called when there are too many arguments")
-	})
-	callBad(theFrame, []interface{}{"x"}, theOptions, errs.ArityMismatch{What: "arguments",
-		ValidLow: 0, ValidHigh: 0, Actual: 1})
-
-	// Too few arguments.
-	f = NewGoFn("f", func(x string) {
-		t.Errorf("Function called when there are too few arguments")
-	})
-	callBad(theFrame, nil, theOptions, errs.ArityMismatch{What: "arguments",
-		ValidLow: 1, ValidHigh: 1, Actual: 0})
-	f = NewGoFn("f", func(x string, y ...string) {
-		t.Errorf("Function called when there are too few arguments")
-	})
-	callBad(theFrame, nil, theOptions, errs.ArityMismatch{What: "arguments",
-		ValidLow: 1, ValidHigh: -1, Actual: 0})
-
-	// Options when the function does not accept options.
-	f = NewGoFn("f", func() {
-		t.Errorf("Function called when there are extra options")
-	})
-	callBad(theFrame, nil, RawOptions{"foo": "bar"}, ErrNoOptAccepted)
-
-	// Wrong argument type.
-	f = NewGoFn("f", func(x string) {
-		t.Errorf("Function called when arguments have wrong type")
-	})
-	callBad(theFrame, []interface{}{1}, theOptions, anyError{})
-
-	// Wrong argument type: cannot convert to int.
-	f = NewGoFn("f", func(x int) {
-		t.Errorf("Function called when arguments have wrong type")
-	})
-	callBad(theFrame, []interface{}{"x"}, theOptions, anyError{})
-
-	// Wrong argument type: cannot convert to float64.
-	f = NewGoFn("f", func(x float64) {
-		t.Errorf("Function called when arguments have wrong type")
-	})
-	callBad(theFrame, []interface{}{"x"}, theOptions, anyError{})
-
-	// Invalid option; regression test for #958.
-	f = NewGoFn("f", func(opts testOptions) {})
-	callBad(theFrame, nil, RawOptions{"bad": ""}, anyError{})
-
-	// Invalid option type; regression test for #958.
-	f = NewGoFn("f", func(opts testOptions) {})
-	callBad(theFrame, nil, RawOptions{"foo": vals.EmptyList}, anyError{})
+		// Error return value
+		That("f").Throws(anError).
+			WithSetup(f(func() (string, error) { return "x", anError })),
+		That("f").DoesNothing().
+			WithSetup(f(func() error { return nil })),
+	)
 }
 
-type anyError struct{}
-
-func (anyError) Error() string { return "any error" }
-
-func matchErr(want, got error) bool {
-	if (want == anyError{}) {
-		return got != nil
+func f(body interface{}) func(*Evaler) {
+	return func(ev *Evaler) {
+		ev.AddGlobal(NsBuilder{}.AddGoFn("", "f", body).Ns())
 	}
-	return reflect.DeepEqual(want, got)
+}
+
+func testInputs(t *testing.T, wantValues ...interface{}) func(Inputs) {
+	return func(i Inputs) {
+		t.Helper()
+		var values []interface{}
+		i(func(x interface{}) {
+			values = append(values, x)
+		})
+		wantValues := []interface{}{"foo", "bar"}
+		if !reflect.DeepEqual(values, wantValues) {
+			t.Errorf("Inputs parameter didn't get supplied inputs")
+		}
+	}
 }
