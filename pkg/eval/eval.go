@@ -46,6 +46,8 @@ type Evaler struct {
 	args vals.List
 	// Hooks to run before exit or exec.
 	beforeExit []func()
+	// Chdir hooks, exposed indirectly as $before-chdir and $after-chdir.
+	beforeChdir, afterChdir []func(string)
 	// TODO: Remove after the dir-history command is removed.
 	daemonClient daemondefs.Client
 	// Directories to search libraries.
@@ -83,9 +85,6 @@ type Evaler struct {
 	notifyBgJobSuccess bool
 	// The current number of background jobs, exposed as $num-bg-jobs.
 	numBgJobs int
-
-	// Chdir hooks, exposed indirectly as $before-chdir and $after-chdir.
-	beforeChdir, afterChdir []func(string)
 }
 
 // Editor is the interface that the line editor has to satisfy. It is needed so
@@ -304,25 +303,15 @@ func (ev *Evaler) SetArgs(args []string) {
 	ev.args = listOfStrings(args)
 }
 
-// Returns copies of beforeChdir and afterChdir.
-func (ev *Evaler) chdirHooks() ([]func(string), []func(string)) {
-	ev.mu.RLock()
-	defer ev.mu.RUnlock()
-	return append(([]func(string))(nil), ev.beforeChdir...),
-		append(([]func(string))(nil), ev.afterChdir...)
-}
-
-// AddBeforeChdir adds a function to run before changing directory.
+// AddBeforeChdir adds a function to run before changing directory. This method
+// must be called before the Evaler is used to evaluate any code.
 func (ev *Evaler) AddBeforeChdir(f func(string)) {
-	ev.mu.Lock()
-	defer ev.mu.Unlock()
 	ev.beforeChdir = append(ev.beforeChdir, f)
 }
 
-// AddAfterChdir adds a function to run after changing directory.
+// AddAfterChdir adds a function to run after changing directory. This method
+// must be called before the Evaler is used to evaluate any code.
 func (ev *Evaler) AddAfterChdir(f func(string)) {
-	ev.mu.Lock()
-	defer ev.mu.Unlock()
 	ev.afterChdir = append(ev.afterChdir, f)
 }
 
@@ -350,9 +339,7 @@ func (ev *Evaler) DaemonClient() daemondefs.Client {
 // directory, and the functions in afterChdir immediately after (if chdir was
 // successful). It returns nil as long as the directory changing part succeeds.
 func (ev *Evaler) Chdir(path string) error {
-	beforeChdir, afterChdir := ev.chdirHooks()
-
-	for _, hook := range beforeChdir {
+	for _, hook := range ev.beforeChdir {
 		hook(path)
 	}
 
@@ -361,7 +348,7 @@ func (ev *Evaler) Chdir(path string) error {
 		return err
 	}
 
-	for _, hook := range afterChdir {
+	for _, hook := range ev.afterChdir {
 		hook(path)
 	}
 
