@@ -383,7 +383,7 @@ enumerate the keys using the [`keys`](./builtin.html#keys) builtins.
 
 **Note**: Since `&` is a [metacharacter](#metacharacters), key-value pairs do
 not have to follow whitespaces; `[&a=lorem&b=ipsum]` is equivalent to
-`[&a=lorem &b=ipsum]`, just less readable.
+`[&a=lorem &b=ipsum]`, just less readable. This might change in future.
 
 ## Pseudo-map
 
@@ -1432,7 +1432,8 @@ is equivalent to `&key=$true`:
 
 **Note**: Since `&` is a [metacharacter](#metacharacters), it can be used to
 start an option immediately after the command name; `echo&sep=, a b` is
-equivalent to `echo &sep=, a b`, just less readable.
+equivalent to `echo &sep=, a b`, just less readable. This might change in
+future.
 
 ## Special command
 
