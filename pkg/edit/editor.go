@@ -112,6 +112,11 @@ func (ed *Editor) ReadCode() (string, error) {
 	return ed.app.ReadCode()
 }
 
+// Notify adds a note to the notification buffer.
+func (ed *Editor) Notify(note string) {
+	ed.app.Notify(note)
+}
+
 // RunAfterCommandHooks runs callbacks involving the interactive completion of a command line.
 func (ed *Editor) RunAfterCommandHooks(src parse.Source, duration float64, err error) {
 	for _, f := range ed.AfterCommand {

@@ -25,6 +25,12 @@ func TestEditor_DoesNotAddEmptyCommandToHistory(t *testing.T) {
 	testCommands(t, f.Store /* no commands */)
 }
 
+func TestEditor_Notify(t *testing.T) {
+	f := setup(t)
+	f.Editor.Notify("note")
+	f.TestTTYNotes(t, "note")
+}
+
 func testCommands(t *testing.T, store storedefs.Store, wantCmds ...storedefs.Cmd) {
 	t.Helper()
 	cmds, err := store.CmdsWithSeq(0, 1024)

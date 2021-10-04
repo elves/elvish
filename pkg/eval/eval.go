@@ -54,6 +54,9 @@ type Evaler struct {
 	libDirs []string
 	// Source code of internal bundled modules indexed by use specs.
 	bundledModules map[string]string
+	// Callback to notify the success or failure of background jobs. Must not be
+	// mutated once the Evaler is used to evaluate any code.
+	BgJobNotify func(string)
 
 	// Mutations to fields above are not guarded by the mutex, and must only
 	// happen before the Evaler is used to evaluate any code.

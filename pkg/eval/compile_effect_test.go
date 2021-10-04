@@ -2,6 +2,7 @@ package eval_test
 
 import (
 	"testing"
+	"time"
 
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
@@ -23,10 +24,7 @@ func TestChunk(t *testing.T) {
 }
 
 func TestPipeline(t *testing.T) {
-	setup := func(ev *Evaler) {
-		ev.AddGlobal(NsBuilder{}.AddNs("file", file.Ns).Ns())
-	}
-	TestWithSetup(t, setup,
+	Test(t,
 		// Pure byte pipeline
 		That(`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`).
 			Prints("A1bert\nBer1in\n"),
@@ -34,14 +32,63 @@ func TestPipeline(t *testing.T) {
 		That(`put 233 42 19 | each [x]{+ $x 10}`).Puts(243, 52, 29),
 		// Pipeline draining.
 		That(`range 100 | put x`).Puts("x"),
-		// Background pipeline.
+		// TODO: Add a useful hybrid pipeline sample
+	)
+}
+
+func TestPipeline_BgJob(t *testing.T) {
+	setup := func(ev *Evaler) {
+		ev.AddGlobal(NsBuilder{}.AddNs("file", file.Ns).Ns())
+	}
+
+	notes1 := make(chan string)
+	notes2 := make(chan string)
+
+	putNote := func(ch chan<- string) func(*Evaler) {
+		return func(ev *Evaler) {
+			ev.BgJobNotify = func(note string) { ch <- note }
+		}
+	}
+	verifyNote := func(notes <-chan string, wantNote string) func(t *testing.T) {
+		return func(t *testing.T) {
+			select {
+			case note := <-notes:
+				if note != wantNote {
+					t.Errorf("got note %q, want %q", note, wantNote)
+				}
+			case <-time.After(testutil.ScaledMs(100)):
+				t.Errorf("timeout waiting for notification")
+			}
+		}
+	}
+
+	TestWithSetup(t, setup,
 		That(
 			"notify-bg-job-success = $false",
 			"p = (file:pipe)",
 			"{ print foo > $p; file:close $p[w] }&",
-			"slurp < $p",
-			"file:close $p[r]").Puts("foo"),
-		// TODO: Add a useful hybrid pipeline sample
+			"slurp < $p; file:close $p[r]").
+			Puts("foo"),
+		// Notification
+		That(
+			"notify-bg-job-success = $true",
+			"p = (file:pipe)",
+			"fn f { file:close $p[w] }",
+			"f &",
+			"slurp < $p; file:close $p[r]").
+			Puts("").
+			WithSetup(putNote(notes1)).
+			Passes(verifyNote(notes1, "job f & finished")),
+		// Notification, with exception
+		That(
+			"notify-bg-job-success = $true",
+			"p = (file:pipe)",
+			"fn f { file:close $p[w]; fail foo }",
+			"f &",
+			"slurp < $p; file:close $p[r]").
+			Puts("").
+			WithSetup(putNote(notes2)).
+			Passes(verifyNote(notes2, "job f & finished, errors = foo")),
 	)
 }
 

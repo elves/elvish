@@ -139,13 +139,15 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 		go func() {
 			wg.Wait()
 			fm.Evaler.addNumBgJobs(-1)
-			msg := "job " + op.source + " finished"
-			err := MakePipelineError(excs)
-			if err != nil {
-				msg += ", errors = " + err.Error()
-			}
-			if fm.Evaler.getNotifyBgJobSuccess() || err != nil {
-				fm.ErrorFile().WriteString(msg + "\n")
+			if notify := fm.Evaler.BgJobNotify; notify != nil {
+				msg := "job " + op.source + " finished"
+				err := MakePipelineError(excs)
+				if err != nil {
+					msg += ", errors = " + err.Error()
+				}
+				if fm.Evaler.getNotifyBgJobSuccess() || err != nil {
+					notify(msg)
+				}
 			}
 		}()
 		return nil

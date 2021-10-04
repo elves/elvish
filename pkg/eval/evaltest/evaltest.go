@@ -30,9 +30,10 @@ import (
 
 // Case is a test case that can be used in Test.
 type Case struct {
-	codes []string
-	setup func(ev *eval.Evaler)
-	want  result
+	codes  []string
+	setup  func(ev *eval.Evaler)
+	verify func(t *testing.T)
+	want   result
 }
 
 type result struct {
@@ -75,6 +76,12 @@ func (c Case) WithSetup(f func(*eval.Evaler)) Case {
 //
 //     That("nop").DoesNothing()
 func (c Case) DoesNothing() Case {
+	return c
+}
+
+// Puts returns an altered Case that runs an additional verification function.
+func (c Case) Passes(f func(t *testing.T)) Case {
+	c.verify = f
 	return c
 }
 
@@ -141,6 +148,9 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 
 			r := evalAndCollect(t, ev, tt.codes)
 
+			if tt.verify != nil {
+				tt.verify(t)
+			}
 			if !matchOut(tt.want.ValueOut, r.ValueOut) {
 				t.Errorf("got value out %v, want %v",
 					reprs(r.ValueOut), reprs(tt.want.ValueOut))
