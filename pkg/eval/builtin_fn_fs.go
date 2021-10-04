@@ -83,7 +83,7 @@ type dirHistoryEntry struct {
 func (dirHistoryEntry) IsStructMap() {}
 
 func dirs(fm *Frame) error {
-	daemon := fm.Evaler.DaemonClient()
+	daemon := fm.Evaler.DaemonClient
 	if daemon == nil {
 		return ErrStoreNotConnected
 	}

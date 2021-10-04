@@ -295,7 +295,7 @@ func TestUse_SetsVariableCorrectlyIfModuleCallsAddGlobal(t *testing.T) {
 
 	ApplyDir(Dir{"a.elv": "add-var"})
 	ev := NewEvaler()
-	ev.SetLibDirs([]string{libdir})
+	ev.LibDirs = []string{libdir}
 	addVar := func() {
 		ev.AddGlobal(NsBuilder{"b": vars.NewReadOnly("foo")}.Ns())
 	}
@@ -322,7 +322,7 @@ func TestUse_SupportsCircularDependency(t *testing.T) {
 		"b.elv": "var pre = bpre; use a; put $a:pre $a:post; var post = bpost",
 	})
 
-	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDirs([]string{libdir}) },
+	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
 		That(`use a`).Puts(
 			// When b.elv is imported from a.elv, $a:pre is set but $a:post is
 			// not
@@ -357,7 +357,7 @@ func TestUse(t *testing.T) {
 		},
 	})
 
-	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDirs([]string{libdir1, libdir2}) },
+	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir1, libdir2} },
 		That(`use lorem; put $lorem:name`).Puts("lorem"),
 		// imports are lexically scoped
 		// TODO: Support testing for compilation error
@@ -412,7 +412,7 @@ func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	libdir := InTempDir(t)
 	MustWriteFile("dep.elv", "fn x { dir-history }")
 
-	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDirs([]string{libdir}) },
+	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
 		// Importing module triggers check for deprecated features
 		That("use dep").PrintsStderrWith("is deprecated"),
 	)

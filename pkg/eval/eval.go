@@ -42,28 +42,27 @@ const (
 // persisted between evaluation of different pieces of code. An Evaler is safe
 // to use concurrently.
 type Evaler struct {
+	// The following fields must only be set before the Evaler is used to
+	// evaluate any code; mutating them afterwards may cause race conditions.
+
 	// Command-line arguments, exposed as $args.
-	args vals.List
+	Args vals.List
 	// Hooks to run before exit or exec.
-	beforeExit []func()
+	BeforeExit []func()
 	// Chdir hooks, exposed indirectly as $before-chdir and $after-chdir.
-	beforeChdir, afterChdir []func(string)
+	BeforeChdir, AfterChdir []func(string)
 	// TODO: Remove after the dir-history command is removed.
-	daemonClient daemondefs.Client
+	DaemonClient daemondefs.Client
 	// Directories to search libraries.
-	libDirs []string
+	LibDirs []string
 	// Source code of internal bundled modules indexed by use specs.
-	bundledModules map[string]string
+	BundledModules map[string]string
 	// Callback to notify the success or failure of background jobs. Must not be
 	// mutated once the Evaler is used to evaluate any code.
 	BgJobNotify func(string)
 
-	// Mutations to fields above are not guarded by the mutex, and must only
-	// happen before the Evaler is used to evaluate any code.
-
 	mu sync.RWMutex
-
-	// Mutations to fields below should be guarded by this mutex.
+	// Mutations to fields below must be guarded by mutex.
 	//
 	// Note that this is *not* a GIL; most state mutations when executing Elvish
 	// code is localized and do not need to hold this mutex.
@@ -88,12 +87,6 @@ type Evaler struct {
 	notifyBgJobSuccess bool
 	// The current number of background jobs, exposed as $num-bg-jobs.
 	numBgJobs int
-}
-
-// Editor is the interface that the line editor has to satisfy. It is needed so
-// that this package does not depend on the edit package.
-type Editor interface {
-	RunAfterCommandHooks(src parse.Source, duration float64, err error)
 }
 
 //elvdoc:var after-chdir
@@ -162,17 +155,17 @@ func NewEvaler() *Evaler {
 		deprecations: newDeprecationRegistry(),
 
 		modules:        map[string]*Ns{"builtin": builtin},
-		bundledModules: map[string]string{},
+		BundledModules: map[string]string{},
 
 		valuePrefix:        defaultValuePrefix,
 		notifyBgJobSuccess: defaultNotifyBgJobSuccess,
 		numBgJobs:          0,
-		args:               vals.EmptyList,
+		Args:               vals.EmptyList,
 	}
 
-	ev.beforeChdir = []func(string){
+	ev.BeforeChdir = []func(string){
 		adaptChdirHook("before-chdir", ev, &beforeChdirElvish)}
-	ev.afterChdir = []func(string){
+	ev.AfterChdir = []func(string){
 		adaptChdirHook("after-chdir", ev, &afterChdirElvish)}
 
 	moreBuiltins := NsBuilder{}.
@@ -186,7 +179,7 @@ func NewEvaler() *Evaler {
 		Add("num-bg-jobs", vars.FromGet(func() interface{} {
 			return strconv.Itoa(ev.getNumBgJobs())
 		})).
-		Add("args", vars.FromGet(func() interface{} { return ev.args })).
+		Add("args", vars.FromGet(func() interface{} { return ev.Args })).
 		Ns()
 	builtin.slots = append(builtin.slots, moreBuiltins.slots...)
 	builtin.names = append(builtin.names, moreBuiltins.names...)
@@ -252,25 +245,12 @@ func (ev *Evaler) registerDeprecation(d deprecation) bool {
 	return ev.deprecations.register(d)
 }
 
-// SetLibDir sets the library directory for finding external modules. This
-// method must be called before the Evaler is used to evaluate any code.
-func (ev *Evaler) SetLibDirs(libDirs []string) {
-	ev.libDirs = libDirs
-}
-
 // AddModule add an internal module so that it can be used with "use $name" from
 // script.
 func (ev *Evaler) AddModule(name string, mod *Ns) {
 	ev.mu.Lock()
 	defer ev.mu.Unlock()
 	ev.modules[name] = mod
-}
-
-// AddBundledModule add an internal bundled module so that it can be used with
-// "use $name" from script. This method must be called before the Evaler is used
-// to evaluate any code.
-func (ev *Evaler) AddBundledModule(name, code string) {
-	ev.bundledModules[name] = code
 }
 
 // ValuePrefix returns the prefix to prepend to value outputs when writing them
@@ -303,37 +283,26 @@ func (ev *Evaler) addNumBgJobs(delta int) {
 // the given slice. This method must be called before the Evaler is used to
 // evaluate any code.
 func (ev *Evaler) SetArgs(args []string) {
-	ev.args = listOfStrings(args)
+	ev.Args = listOfStrings(args)
 }
 
 // AddBeforeChdir adds a function to run before changing directory. This method
 // must be called before the Evaler is used to evaluate any code.
 func (ev *Evaler) AddBeforeChdir(f func(string)) {
-	ev.beforeChdir = append(ev.beforeChdir, f)
+	ev.BeforeChdir = append(ev.BeforeChdir, f)
 }
 
 // AddAfterChdir adds a function to run after changing directory. This method
 // must be called before the Evaler is used to evaluate any code.
 func (ev *Evaler) AddAfterChdir(f func(string)) {
-	ev.afterChdir = append(ev.afterChdir, f)
+	ev.AfterChdir = append(ev.AfterChdir, f)
 }
 
 // AddBeforeExit adds a function to run before the Elvish process exits or gets
 // replaced (via "exec" on UNIX). This method must be called before the Evaler
 // is used to evaluate any code.
 func (ev *Evaler) AddBeforeExit(f func()) {
-	ev.beforeExit = append(ev.beforeExit, f)
-}
-
-// SetDaemonClient sets the daemon client associated with the Evaler. This
-// method must be called before the Evaler is used to evaluate any code.
-func (ev *Evaler) SetDaemonClient(client daemondefs.Client) {
-	ev.daemonClient = client
-}
-
-// DaemonClient returns the daemon client associated with the Evaler.
-func (ev *Evaler) DaemonClient() daemondefs.Client {
-	return ev.daemonClient
+	ev.BeforeExit = append(ev.BeforeExit, f)
 }
 
 // Chdir changes the current directory, and updates $E:PWD on success
@@ -342,7 +311,7 @@ func (ev *Evaler) DaemonClient() daemondefs.Client {
 // directory, and the functions in afterChdir immediately after (if chdir was
 // successful). It returns nil as long as the directory changing part succeeds.
 func (ev *Evaler) Chdir(path string) error {
-	for _, hook := range ev.beforeChdir {
+	for _, hook := range ev.BeforeChdir {
 		hook(path)
 	}
 
@@ -351,7 +320,7 @@ func (ev *Evaler) Chdir(path string) error {
 		return err
 	}
 
-	for _, hook := range ev.afterChdir {
+	for _, hook := range ev.AfterChdir {
 		hook(path)
 	}
 

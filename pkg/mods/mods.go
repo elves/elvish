@@ -21,6 +21,6 @@ func AddTo(ev *eval.Evaler) {
 	ev.AddModule("re", re.Ns)
 	ev.AddModule("str", str.Ns)
 	ev.AddModule("file", file.Ns)
-	ev.AddBundledModule("epm", epm.Code)
-	ev.AddBundledModule("readline-binding", readlinebinding.Code)
+	ev.BundledModules["epm"] = epm.Code
+	ev.BundledModules["readline-binding"] = readlinebinding.Code
 }

@@ -84,7 +84,7 @@ func MakeEvaler(stderr io.Writer) *eval.Evaler {
 	if err != nil {
 		fmt.Fprintln(stderr, "Warning:", err)
 	}
-	ev.SetLibDirs(libs)
+	ev.LibDirs = libs
 	mods.AddTo(ev)
 	if unix.ExposeUnixNs {
 		ev.AddModule("unix", unix.Ns)

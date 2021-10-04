@@ -65,7 +65,7 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 		}()
 		// Even if error is not nil, we install daemon-related functionalities
 		// anyway. Daemon may eventually come online and become functional.
-		ev.SetDaemonClient(cl)
+		ev.DaemonClient = cl
 		ev.AddBeforeExit(func() { cl.Close() })
 		ev.AddModule("store", store.Ns(cl))
 		ev.AddModule("daemon", daemon.Ns(cl))
@@ -74,7 +74,7 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(fds[0]) {
-		newed := edit.NewEditor(cli.NewTTY(fds[0], fds[2]), ev, ev.DaemonClient())
+		newed := edit.NewEditor(cli.NewTTY(fds[0], fds[2]), ev, ev.DaemonClient)
 		ev.AddBuiltin(eval.NsBuilder{}.AddNs("edit", newed.Ns()).Ns())
 		ev.BgJobNotify = newed.Notify
 		ed = newed
@@ -149,7 +149,7 @@ func handlePanic() {
 	}
 }
 
-func sourceRC(fds [3]*os.File, ev *eval.Evaler, ed eval.Editor, rcPath string) error {
+func sourceRC(fds [3]*os.File, ev *eval.Evaler, ed editor, rcPath string) error {
 	absPath, err := filepath.Abs(rcPath)
 	if err != nil {
 		return fmt.Errorf("cannot get full path of rc.elv: %v", err)

@@ -349,13 +349,13 @@ func use(fm *Frame, spec string, r diag.Ranger) (*Ns, error) {
 	if ns, ok := fm.Evaler.modules[spec]; ok {
 		return ns, nil
 	}
-	if code, ok := fm.Evaler.bundledModules[spec]; ok {
+	if code, ok := fm.Evaler.BundledModules[spec]; ok {
 		return evalModule(fm, spec,
 			parse.Source{Name: "[bundled " + spec + "]", Code: code}, r)
 	}
 	// TODO: For non-relative imports, use the spec (instead of the full path)
 	// as the module key instead to avoid searching every time.
-	for _, dir := range fm.Evaler.libDirs {
+	for _, dir := range fm.Evaler.LibDirs {
 		ns, err := useFromFile(fm, spec, filepath.Join(dir, spec), r)
 		if _, isNoSuchModule := err.(noSuchModule); isNoSuchModule {
 			continue
