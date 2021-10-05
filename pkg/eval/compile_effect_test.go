@@ -56,7 +56,7 @@ func TestPipeline_BgJob(t *testing.T) {
 				if note != wantNote {
 					t.Errorf("got note %q, want %q", note, wantNote)
 				}
-			case <-time.After(testutil.ScaledMs(100)):
+			case <-time.After(testutil.Scaled(100 * time.Millisecond)):
 				t.Errorf("timeout waiting for notification")
 			}
 		}

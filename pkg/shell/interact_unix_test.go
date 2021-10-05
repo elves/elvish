@@ -53,7 +53,7 @@ func TestInteract_ConnectsToDaemon(t *testing.T) {
 	select {
 	case <-readyCh:
 		// Do nothing
-	case <-time.After(ScaledMs(100)):
+	case <-time.After(Scaled(100 * time.Millisecond)):
 		t.Fatalf("timed out waiting for daemon to start")
 	}
 

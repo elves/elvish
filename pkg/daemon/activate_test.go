@@ -104,7 +104,7 @@ func setupForActivate(t *testing.T, f func(string, []string, *os.ProcAttr) error
 func scaleDuration(t *testing.T, d *time.Duration) {
 	save := *d
 	t.Cleanup(func() { *d = save })
-	*d = testutil.ScaledMs(int(*d / time.Millisecond))
+	*d = testutil.Scaled(*d)
 }
 
 func makeHangingUNIXSocket(t *testing.T, path string) {

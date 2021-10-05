@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 
 	"src.elv.sh/pkg/testutil"
 )
@@ -48,7 +49,7 @@ func TestFileReader_ReadByteWithTimeout_Timeout(t *testing.T) {
 	r, _, cleanup := setupFileReader()
 	defer cleanup()
 
-	_, err := r.ReadByteWithTimeout(testutil.ScaledMs(1))
+	_, err := r.ReadByteWithTimeout(testutil.Scaled(time.Millisecond))
 	if err != errTimeout {
 		t.Errorf("got err %v, want %v", err, errTimeout)
 	}

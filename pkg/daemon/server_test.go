@@ -124,7 +124,7 @@ func startServerOpts(t *testing.T, args []string, opts ServeOpts) server {
 	}()
 	select {
 	case <-readyCh:
-	case <-time.After(testutil.ScaledMs(2000)):
+	case <-time.After(testutil.Scaled(2 * time.Second)):
 		t.Fatal("timed out waiting for daemon to start")
 	}
 	s := server{t, doneCh}
@@ -147,7 +147,7 @@ func (s server) WaitQuit() (serverResult, bool) {
 	select {
 	case r := <-s.ch:
 		return r, true
-	case <-time.After(testutil.ScaledMs(2000)):
+	case <-time.After(testutil.Scaled(2 * time.Second)):
 		s.t.Error("timed out waiting for daemon to quit")
 		return serverResult{}, false
 	}

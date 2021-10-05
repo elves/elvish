@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/term"
@@ -162,5 +163,5 @@ func TestDefaultRPrompt(t *testing.T) {
 }
 
 func scaledMsAsSec(ms int) string {
-	return fmt.Sprint(testutil.ScaledMs(ms).Seconds())
+	return fmt.Sprint(testutil.Scaled(time.Duration(ms) * time.Millisecond).Seconds())
 }

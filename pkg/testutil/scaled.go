@@ -8,12 +8,11 @@ import (
 	"src.elv.sh/pkg/env"
 )
 
-// ScaledMs returns ms milliseconds, scaled by the ELVISH_TEST_TIME_SCALE
-// environment variable. If the variable does not exist, the scale defaults to
+// Scaled returns d scaled by $E:ELVISH_TEST_TIME_SCALE. If the environment
+// variable does not exist or contains an invalid value, the scale defaults to
 // 1.
-func ScaledMs(ms int) time.Duration {
-	return time.Duration(
-		float64(ms) * float64(time.Millisecond) * getTestTimeScale())
+func Scaled(d time.Duration) time.Duration {
+	return time.Duration(float64(d) * getTestTimeScale())
 }
 
 func getTestTimeScale() float64 {

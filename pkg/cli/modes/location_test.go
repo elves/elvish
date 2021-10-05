@@ -113,7 +113,7 @@ func TestLocation_FullWorkflow(t *testing.T) {
 		if got != wantChdir {
 			t.Errorf("Chdir called with %s, want %s", got, wantChdir)
 		}
-	case <-time.After(testutil.ScaledMs(1000)):
+	case <-time.After(testutil.Scaled(time.Second)):
 		t.Errorf("Chdir not called")
 	}
 }

@@ -456,7 +456,7 @@ func testGlobalBindings(t *testing.T, addons []tk.Widget) {
 		if gotWidget != f.App.ActiveWidget() {
 			t.Error("global binding not called with the active widget")
 		}
-	case <-time.After(testutil.ScaledMs(100)):
+	case <-time.After(testutil.Scaled(100 * time.Millisecond)):
 		t.Error("global binding not called")
 	}
 }

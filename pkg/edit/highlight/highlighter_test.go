@@ -24,7 +24,7 @@ var styles = ui.RuneStylesheet{
 
 func TestHighlighter_HighlightRegions(t *testing.T) {
 	// Force commands to be delivered synchronously.
-	MaxBlockForLate = testutil.ScaledMs(100)
+	MaxBlockForLate = testutil.Scaled(100 * time.Millisecond)
 	hl := NewHighlighter(Config{
 		HasCommand: func(name string) bool { return name == "ls" },
 	})
@@ -102,7 +102,7 @@ type c struct {
 	mustLate    bool
 }
 
-var lateTimeout = testutil.ScaledMs(100)
+var lateTimeout = testutil.Scaled(100 * time.Millisecond)
 
 func testThat(t *testing.T, hl *Highlighter, c c) {
 	initial, _ := hl.Get(c.given)
@@ -127,11 +127,11 @@ func testThat(t *testing.T, hl *Highlighter, c c) {
 func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
 	// When the HasCommand callback takes longer than maxBlockForLate, late
 	// results are delivered asynchronously.
-	MaxBlockForLate = testutil.ScaledMs(1)
+	MaxBlockForLate = testutil.Scaled(time.Millisecond)
 	hl := NewHighlighter(Config{
 		// HasCommand is slow and only recognizes "ls".
 		HasCommand: func(cmd string) bool {
-			time.Sleep(testutil.ScaledMs(10))
+			time.Sleep(testutil.Scaled(10 * time.Millisecond))
 			return cmd == "ls"
 		}})
 
@@ -150,11 +150,11 @@ func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
 func TestHighlighter_HasCommand_LateResult_Sync(t *testing.T) {
 	// When the HasCommand callback takes shorter than maxBlockForLate, late
 	// results are delivered asynchronously.
-	MaxBlockForLate = testutil.ScaledMs(100)
+	MaxBlockForLate = testutil.Scaled(100 * time.Millisecond)
 	hl := NewHighlighter(Config{
 		// HasCommand is fast and only recognizes "ls".
 		HasCommand: func(cmd string) bool {
-			time.Sleep(testutil.ScaledMs(1))
+			time.Sleep(testutil.Scaled(time.Millisecond))
 			return cmd == "ls"
 		}})
 
@@ -175,7 +175,7 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	// "ls" and is dropped.
 
 	// Make sure that the HasCommand callback takes longer than maxBlockForLate.
-	MaxBlockForLate = testutil.ScaledMs(1)
+	MaxBlockForLate = testutil.Scaled(time.Millisecond)
 
 	hlSecond := make(chan struct{})
 	hl := NewHighlighter(Config{
@@ -184,10 +184,10 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 				// Make sure that the second highlight has been requested before
 				// returning.
 				<-hlSecond
-				time.Sleep(testutil.ScaledMs(10))
+				time.Sleep(testutil.Scaled(10 * time.Millisecond))
 				return false
 			}
-			time.Sleep(testutil.ScaledMs(10))
+			time.Sleep(testutil.Scaled(10 * time.Millisecond))
 			close(hlSecond)
 			return cmd == "ls"
 		}})
@@ -205,7 +205,7 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	select {
 	case late := <-hl.LateUpdates():
 		t.Errorf("want nothing from LateUpdates, got %v", late)
-	case <-time.After(testutil.ScaledMs(50)):
+	case <-time.After(testutil.Scaled(50 * time.Millisecond)):
 		// We have waited for 50 ms and there are no late updates; test passes.
 	}
 }

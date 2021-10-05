@@ -20,7 +20,7 @@ func interruptedTimeAfterMock(fm *Frame, d time.Duration) <-chan time.Time {
 		go func() {
 			// Wait a little bit to ensure that the control flow in the "sleep"
 			// function is in the select block when the interrupt is sent.
-			time.Sleep(testutil.ScaledMs(1))
+			time.Sleep(testutil.Scaled(time.Millisecond))
 			p, _ := os.FindProcess(os.Getpid())
 			p.Signal(os.Interrupt)
 		}()

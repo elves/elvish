@@ -290,7 +290,7 @@ func (t TTYCtrl) LastNotesBuffer() *term.Buffer {
 func testBuffer(t *testing.T, want *term.Buffer, ch <-chan *term.Buffer) bool {
 	t.Helper()
 
-	timeout := time.After(testutil.ScaledMs(100))
+	timeout := time.After(testutil.Scaled(100 * time.Millisecond))
 	for {
 		select {
 		case buf := <-ch:

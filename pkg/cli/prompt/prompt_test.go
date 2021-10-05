@@ -30,7 +30,7 @@ func TestPrompt_StalePrompt(t *testing.T) {
 	prompt := New(Config{
 		Compute: compute,
 		StaleThreshold: func() time.Duration {
-			return testutil.ScaledMs(10)
+			return testutil.Scaled(10 * time.Millisecond)
 		},
 	})
 
@@ -175,7 +175,7 @@ func testNoUpdate(t *testing.T, p *Prompt) {
 	select {
 	case update := <-p.LateUpdates():
 		t.Errorf("unexpected update %v", update)
-	case <-time.After(testutil.ScaledMs(10)):
+	case <-time.After(testutil.Scaled(10 * time.Millisecond)):
 		// OK
 	}
 }
