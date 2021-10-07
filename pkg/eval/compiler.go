@@ -19,6 +19,8 @@ type compiler struct {
 	scopes []*staticNs
 	// Sources of captured variables.
 	captures []*staticUpNs
+	// Pragmas tied to scopes.
+	pragmas []*scopePragma
 	// Destination of warning messages. This is currently only used for
 	// deprecation messages.
 	warn io.Writer
@@ -28,10 +30,15 @@ type compiler struct {
 	srcMeta parse.Source
 }
 
+type scopePragma struct {
+	unknownCommandIsExternal bool
+}
+
 func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op nsOp, err error) {
 	g = g.clone()
 	cp := &compiler{
 		b, []*staticNs{g}, []*staticUpNs{new(staticUpNs)},
+		[]*scopePragma{{unknownCommandIsExternal: true}},
 		w, newDeprecationRegistry(), tree.Source}
 	defer func() {
 		r := recover()
@@ -91,8 +98,13 @@ func GetCompilationError(e interface{}) *diag.Error {
 	}
 	return nil
 }
+
 func (cp *compiler) thisScope() *staticNs {
 	return cp.scopes[len(cp.scopes)-1]
+}
+
+func (cp *compiler) currentPragma() *scopePragma {
+	return cp.pragmas[len(cp.pragmas)-1]
 }
 
 func (cp *compiler) pushScope() (*staticNs, *staticUpNs) {
@@ -100,6 +112,8 @@ func (cp *compiler) pushScope() (*staticNs, *staticUpNs) {
 	up := new(staticUpNs)
 	cp.scopes = append(cp.scopes, sc)
 	cp.captures = append(cp.captures, up)
+	currentPragmaCopy := *cp.currentPragma()
+	cp.pragmas = append(cp.pragmas, &currentPragmaCopy)
 	return sc, up
 }
 
@@ -108,6 +122,8 @@ func (cp *compiler) popScope() {
 	cp.scopes = cp.scopes[:len(cp.scopes)-1]
 	cp.captures[len(cp.captures)-1] = nil
 	cp.captures = cp.captures[:len(cp.captures)-1]
+	cp.pragmas[len(cp.pragmas)-1] = nil
+	cp.pragmas = cp.pragmas[:len(cp.pragmas)-1]
 }
 
 func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {

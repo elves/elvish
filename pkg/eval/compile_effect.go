@@ -226,8 +226,10 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 		// commands are already handled above).
 		if _, fnRef := resolveCmdHeadInternally(cp, head, n.Head); fnRef != nil {
 			headOp = variableOp{n.Head.Range(), false, head + FnSuffix, fnRef}
-		} else {
+		} else if cp.currentPragma().unknownCommandIsExternal || fsutil.DontSearch(head) {
 			headOp = literalValues(n.Head, NewExternalCmd(head))
+		} else {
+			cp.errorpf(n.Head, "unknown command disallowed by current pragma")
 		}
 	} else {
 		// Head is not a literal string: evaluate as a normal expression.
@@ -399,7 +401,7 @@ func evalForCommand(fm *Frame, op valuesOp, what string) (Callable, error) {
 	return nil, fm.errorp(op, errs.BadValue{
 		What:   what,
 		Valid:  "callable or string containing slash",
-		Actual: vals.Kind(value)})
+		Actual: vals.Repr(value, vals.NoPretty)})
 }
 
 func allTrue(vs []interface{}) bool {

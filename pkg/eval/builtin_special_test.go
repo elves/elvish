@@ -14,6 +14,17 @@ import (
 	. "src.elv.sh/pkg/testutil"
 )
 
+func TestPragma(t *testing.T) {
+	Test(t,
+		That("pragma unknown-command").DoesNotCompile(),
+		That("pragma unknown-command =").DoesNotCompile(),
+		That("pragma unknown-command x").DoesNotCompile(),
+		That("pragma bad-name = some-value").DoesNotCompile(),
+		That("pragma unknown-command = bad").DoesNotCompile(),
+	)
+	// Actual effect of the unknown-command pragma is tested in TestCommand_External
+}
+
 func TestVar(t *testing.T) {
 	Test(t,
 		// Declaring one variable

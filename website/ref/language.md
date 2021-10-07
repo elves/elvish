@@ -1340,14 +1340,24 @@ An **ordinary command** form consists of a command head, and any number of
 arguments and options.
 
 The first expression in an ordinary command is the command **head**. If the head
-is a single string literal it is subject to **static resolution**:
+is a single string literal, it is subject to **static resolution**:
 
 -   If a variable with name `head~` (where `head` is the value of the head)
     exists, the head will evaluate as if it is `$head~`; i.e., a function
     invocation.
 
--   Otherwise, the head will evaluate to an external command with the name
-    `head`.
+-   If the head contains at least one slash, it is treated as an external
+    command with the value as its path relative to the current directory.
+
+-   Otherwise, the head is considered "unknown", and the behavior is controlled
+    by the `unknown-command` [pragma](#pragma):
+
+    -   If the `unknown-command` pragma is set to `external` (the default), the
+        head is treated as the name of an external command, to be searched in
+        the `$E:PATH` during runtime.
+
+    -   If the `unknown-command` pragma is set to `disallow`, such command heads
+        trigger a compilation error.
 
 If the head is not a single string literal, it is evaluated as a normal
 expression. The expression must evaluate to one value, and the value must be one
@@ -2143,6 +2153,40 @@ Under the hood, `fn` defines a variable with the given name plus `~` (see
 ~> $v
 hello from f
 ```
+
+## Language pragmas: `pragma` {#pragma}
+
+The `pragma` special command can be used to set **pragmas** that affect the
+behavior of the Elvish language. The syntax looks like:
+
+```
+pragma <name> = <value>
+```
+
+The name must appear literally. The value must also appear literally, unless
+otherwise specified.
+
+Pragmas apply from the point it appears, to the end of the lexical scope it
+appears in, including subscopes.
+
+The following pragmas are available:
+
+-   The `unknown-command` pragma affects the resolution of command heads, and
+    can take one of two values, `external` (the default) and `disallow`. See
+    [ordinary command](#ordinary-command) for details.
+
+    **Note**: `pragma unknown-command = disallow` enables a style where uses of
+    external commands must be explicitly via the `e:` namespace. You can also
+    explicitly declare a set of external commands to use directly, like the
+    following:
+
+    ```elvish
+    pragma unknown-command = disallow
+    var ls = $e:ls~
+    var cat = $e:cat~
+    # ls and cat can be used directly;
+    # other external commands must be prefixed with e:
+    ```
 
 # Pipeline
 

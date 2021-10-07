@@ -58,6 +58,8 @@ func init() {
 		"while": compileWhile,
 		"for":   compileFor,
 		"try":   compileTry,
+
+		"pragma": compilePragma,
 	}
 	for name := range builtinSpecials {
 		IsBuiltinSpecial[name] = true
@@ -763,6 +765,37 @@ func (op *tryOp) exec(fm *Frame) Exception {
 		}
 	}
 	return fm.errorp(op, err)
+}
+
+// PragmaForm = 'pragma' 'fallback-resolver' '=' { Compound }
+func compilePragma(cp *compiler, fn *parse.Form) effectOp {
+	args := cp.walkArgs(fn)
+	nameNode := args.next()
+	name := stringLiteralOrError(cp, nameNode, "pragma name")
+	eqNode := args.next()
+	eq := stringLiteralOrError(cp, eqNode, "literal =")
+	if eq != "=" {
+		cp.errorpf(eqNode, "must be literal =")
+	}
+	valueNode := args.next()
+	args.mustEnd()
+
+	switch name {
+	case "unknown-command":
+		value := stringLiteralOrError(cp, valueNode, "value for unknown-command")
+		switch value {
+		case "disallow":
+			cp.currentPragma().unknownCommandIsExternal = false
+		case "external":
+			cp.currentPragma().unknownCommandIsExternal = true
+		default:
+			cp.errorpf(valueNode,
+				"invalid value for unknown-command: %s", parse.Quote(value))
+		}
+	default:
+		cp.errorpf(nameNode, "unknown pragma %s", parse.Quote(name))
+	}
+	return nopOp{}
 }
 
 func (cp *compiler) compileOneLValue(n *parse.Compound) lvalue {

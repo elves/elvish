@@ -126,7 +126,7 @@ func TestCommand(t *testing.T) {
 			errs.BadValue{
 				What:   "command",
 				Valid:  "callable or string containing slash",
-				Actual: "list"},
+				Actual: "[]"},
 			"[]"),
 		// Command errors when when argument errors.
 		That("put [][1]").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
