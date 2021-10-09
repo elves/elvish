@@ -7,6 +7,9 @@ jobs:
   check_website:
     name: Check freshness
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        host: [cdg, hkg]
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -14,7 +17,7 @@ jobs:
       run: |
         ts=$(git show -s --format=%ct HEAD)
         for i in `seq 30`; do
-          website_ts=$(curl https://elv.sh/commit-ts.txt)
+          website_ts=$(curl https://${{ matrix.host }}.elv.sh/commit-ts.txt)
           if test "$website_ts" -ge "$ts"; then
             echo "website ($website_ts) >= current ($ts)"
             exit 0
