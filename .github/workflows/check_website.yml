@@ -1,0 +1,25 @@
+name: Check website
+
+on:
+  push:
+
+jobs:
+  check_website:
+    name: Check freshness
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Compare timestamp
+      run: |
+        ts=$(git show -s --format=%ct HEAD)
+        for i in `seq 30`; do
+          website_ts=$(curl https://elv.sh/commit-ts.txt)
+          if test "$website_ts" -ge "$ts"; then
+            exit 0
+          else
+            echo "website ($website_ts) < current ($ts)"
+          fi
+        done
+        echo "Timeout"
+        exit 1
