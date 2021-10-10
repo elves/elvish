@@ -68,47 +68,30 @@ func init() {
 
 // VarForm = 'var' { VariablePrimary } [ '=' { Compound } ]
 func compileVar(cp *compiler, fn *parse.Form) effectOp {
-	lhs := lvaluesGroup{rest: -1}
+	eqIndex := -1
 	for i, cn := range fn.Args {
 		if parse.SourceText(cn) == "=" {
-			var rhs valuesOp
-			if i == len(fn.Args)-1 {
-				rhs = nopValuesOp{diag.PointRanging(fn.Range().To)}
-			} else {
-				rhs = seqValuesOp{
-					diag.MixedRanging(fn.Args[i+1], fn.Args[len(fn.Args)-1]),
-					cp.compoundOps(fn.Args[i+1:])}
-			}
-			return &assignOp{fn.Range(), lhs, rhs}
+			eqIndex = i
+			break
 		}
-		if len(cn.Indexings) != 1 {
-			cp.errorpf(cn, "variable name must be a single string literal")
-		}
-		if len(cn.Indexings[0].Indices) > 0 {
-			cp.errorpf(cn, "variable name must not have indices")
-		}
-		pn := cn.Indexings[0].Head
-		if !parse.ValidLHSVariable(pn, true) {
-			cp.errorpf(cn, "invalid variable name")
-		}
-
-		name := pn.Value
-		if !IsUnqualified(name) {
-			cp.errorpf(cn, "variable declared in var must be unqualified")
-		}
-		sigil, name := SplitSigil(name)
-		if sigil == "@" {
-			if lhs.rest != -1 {
-				cp.errorpf(cn, "multiple variable names with @ not allowed")
-			}
-			lhs.rest = i
-		}
-		slotIndex := cp.thisScope().add(name)
-		lhs.lvalues = append(lhs.lvalues,
-			lvalue{cn.Range(), &varRef{localScope, slotIndex, nil}, nil, nil})
 	}
-	// If there is no assignment, there is no work to be done at eval-time.
-	return nopOp{}
+
+	if eqIndex == -1 {
+		cp.parseCompoundLValues(fn.Args, newLValue)
+		// Just create new variables, nothing extra to do at runtime.
+		return nopOp{}
+	}
+	// Compile rhs before lhs before many potential shadowing
+	var rhs valuesOp
+	if eqIndex == len(fn.Args)-1 {
+		rhs = nopValuesOp{diag.PointRanging(fn.Range().To)}
+	} else {
+		rhs = seqValuesOp{
+			diag.MixedRanging(fn.Args[eqIndex+1], fn.Args[len(fn.Args)-1]),
+			cp.compoundOps(fn.Args[eqIndex+1:])}
+	}
+	lhs := cp.parseCompoundLValues(fn.Args[:eqIndex], newLValue)
+	return &assignOp{fn.Range(), lhs, rhs}
 }
 
 // IsUnqualified returns whether name is an unqualified variable name.
@@ -129,7 +112,7 @@ func compileSet(cp *compiler, fn *parse.Form) effectOp {
 	if eq == -1 {
 		cp.errorpf(diag.PointRanging(fn.Range().To), "need = and right-hand-side")
 	}
-	lhs := cp.parseCompoundLValues(fn.Args[:eq])
+	lhs := cp.parseCompoundLValues(fn.Args[:eq], setLValue)
 	var rhs valuesOp
 	if eq == len(fn.Args)-1 {
 		rhs = nopValuesOp{diag.PointRanging(fn.Range().To)}
@@ -608,7 +591,7 @@ func compileFor(cp *compiler, fn *parse.Form) effectOp {
 	elseNode := args.nextMustLambdaIfAfter("else")
 	args.mustEnd()
 
-	lvalue := cp.compileOneLValue(varNode)
+	lvalue := cp.compileOneLValue(varNode, setLValue|newLValue)
 
 	iterOp := cp.compoundOp(iterNode)
 	bodyOp := cp.primaryOp(bodyNode)
@@ -702,7 +685,7 @@ func compileTry(cp *compiler, fn *parse.Form) effectOp {
 	var bodyOp, exceptOp, elseOp, finallyOp valuesOp
 	bodyOp = cp.primaryOp(bodyNode)
 	if exceptVarNode != nil {
-		exceptVar = cp.compileOneLValue(exceptVarNode)
+		exceptVar = cp.compileOneLValue(exceptVarNode, setLValue|newLValue)
 	}
 	if exceptNode != nil {
 		exceptOp = cp.primaryOp(exceptNode)
@@ -798,11 +781,11 @@ func compilePragma(cp *compiler, fn *parse.Form) effectOp {
 	return nopOp{}
 }
 
-func (cp *compiler) compileOneLValue(n *parse.Compound) lvalue {
+func (cp *compiler) compileOneLValue(n *parse.Compound, f lvalueFlag) lvalue {
 	if len(n.Indexings) != 1 {
 		cp.errorpf(n, "must be valid lvalue")
 	}
-	lvalues := cp.parseIndexingLValue(n.Indexings[0])
+	lvalues := cp.parseIndexingLValue(n.Indexings[0], f)
 	if lvalues.rest != -1 {
 		cp.errorpf(lvalues.lvalues[lvalues.rest], "rest variable not allowed")
 	}

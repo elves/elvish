@@ -51,13 +51,15 @@ func TestVar(t *testing.T) {
 		// Shadowing.
 		That("var x = old; fn f { put $x }", "var x = new; put $x; f").
 			Puts("new", "old"),
+		// Explicit local: is allowed
+		That("var local:x = foo", "put $x").Puts("foo"),
 
 		// Variable name that must be quoted after $ must be quoted
 		That("var a/b").DoesNotCompile(),
 		// Multiple @ not allowed
 		That("var x @y @z = a b c d").DoesNotCompile(),
-		// Namespace not allowed
-		That("var local:a").DoesNotCompile(),
+		// Non-local not allowed
+		That("var ns:a").DoesNotCompile(),
 		// Index not allowed
 		That("var a[0]").DoesNotCompile(),
 		// Composite expression not allowed
@@ -71,6 +73,8 @@ func TestSet(t *testing.T) {
 		That("var x; set x = foo", "put $x").Puts("foo"),
 		// An empty RHS is technically legal although rarely useful.
 		That("var x; set @x =", "put $x").Puts(vals.EmptyList),
+		// Variable must already exist
+		That("set x = foo").DoesNotCompile(),
 		// Not duplicating tests with TestCommand_Assignment.
 		//
 		// TODO: After legacy assignment form is removed, transfer tests here.

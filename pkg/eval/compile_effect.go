@@ -171,7 +171,7 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 			return nopOp{}
 		}
 		for _, a := range n.Assignments {
-			lvalues := cp.parseIndexingLValue(a.Left)
+			lvalues := cp.parseIndexingLValue(a.Left, setLValue|newLValue)
 			tempLValues = append(tempLValues, lvalues.lvalues...)
 		}
 		logger.Println("temporary assignment of", len(n.Assignments), "pairs")
@@ -205,7 +205,7 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 			lhsNodes := make([]*parse.Compound, i+1)
 			lhsNodes[0] = n.Head
 			copy(lhsNodes[1:], n.Args[:i])
-			lhs := cp.parseCompoundLValues(lhsNodes)
+			lhs := cp.parseCompoundLValues(lhsNodes, setLValue|newLValue)
 
 			rhsOps := cp.compoundOps(n.Args[i+1:])
 			var rhsRange diag.Ranging
@@ -414,7 +414,7 @@ func allTrue(vs []interface{}) bool {
 }
 
 func (cp *compiler) assignmentOp(n *parse.Assignment) effectOp {
-	lhs := cp.parseIndexingLValue(n.Left)
+	lhs := cp.parseIndexingLValue(n.Left, setLValue|newLValue)
 	rhs := cp.compoundOp(n.Right)
 	return &assignOp{n.Range(), lhs, rhs}
 }

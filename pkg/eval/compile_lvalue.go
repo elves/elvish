@@ -26,13 +26,20 @@ type lvalue struct {
 	ends     []int
 }
 
-func (cp *compiler) parseCompoundLValues(ns []*parse.Compound) lvaluesGroup {
+type lvalueFlag uint
+
+const (
+	setLValue lvalueFlag = 1 << iota
+	newLValue
+)
+
+func (cp *compiler) parseCompoundLValues(ns []*parse.Compound, f lvalueFlag) lvaluesGroup {
 	g := lvaluesGroup{nil, -1}
 	for _, n := range ns {
 		if len(n.Indexings) != 1 {
 			cp.errorpf(n, "lvalue may not be composite expressions")
 		}
-		more := cp.parseIndexingLValue(n.Indexings[0])
+		more := cp.parseIndexingLValue(n.Indexings[0], f)
 		if more.rest == -1 {
 			g.lvalues = append(g.lvalues, more.lvalues...)
 		} else if g.rest != -1 {
@@ -45,13 +52,13 @@ func (cp *compiler) parseCompoundLValues(ns []*parse.Compound) lvaluesGroup {
 	return g
 }
 
-func (cp *compiler) parseIndexingLValue(n *parse.Indexing) lvaluesGroup {
+func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvaluesGroup {
 	if n.Head.Type == parse.Braced {
 		// Braced list of lvalues may not have indices.
 		if len(n.Indices) > 0 {
 			cp.errorpf(n, "braced list may not have indices when used as lvalue")
 		}
-		return cp.parseCompoundLValues(n.Head.Braced)
+		return cp.parseCompoundLValues(n.Head.Braced, f)
 	}
 	// A basic lvalue.
 	if !parse.ValidLHSVariable(n.Head, true) {
@@ -59,27 +66,30 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing) lvaluesGroup {
 	}
 	varUse := n.Head.Value
 	sigil, qname := SplitSigil(varUse)
+
 	var ref *varRef
-	if len(n.Indices) == 0 {
-		ref = resolveVarRef(cp, qname, nil)
-		if ref == nil {
-			segs := SplitQNameSegs(qname)
-			if len(segs) == 1 {
-				// Unqualified name - implicit local
-				ref = &varRef{localScope, cp.thisScope().addInner(segs[0]), nil}
-			} else if len(segs) == 2 && (segs[0] == "local:" || segs[0] == ":") {
-				// Qualified local name
-				ref = &varRef{localScope, cp.thisScope().addInner(segs[1]), nil}
-			} else {
-				cp.errorpf(n, "cannot create variable $%s; new variables can only be created in the local scope", qname)
-			}
-		}
-	} else {
+	if f&setLValue != 0 {
 		ref = resolveVarRef(cp, qname, n)
-		if ref == nil {
+	}
+	if ref == nil {
+		if f&newLValue == 0 {
 			cp.errorpf(n, "cannot find variable $%s", qname)
 		}
+		if len(n.Indices) > 0 {
+			cp.errorpf(n, "name for new variable must not have indices")
+		}
+		segs := SplitQNameSegs(qname)
+		if len(segs) == 1 {
+			// Unqualified name - implicit local
+			ref = &varRef{localScope, cp.thisScope().add(segs[0]), nil}
+		} else if len(segs) == 2 && (segs[0] == "local:" || segs[0] == ":") {
+			// Qualified local name
+			ref = &varRef{localScope, cp.thisScope().add(segs[1]), nil}
+		} else {
+			cp.errorpf(n, "cannot create variable $%s; new variables can only be created in the local scope", qname)
+		}
 	}
+
 	ends := make([]int, len(n.Indices)+1)
 	ends[0] = n.Head.Range().To
 	for i, idx := range n.Indices {
