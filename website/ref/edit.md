@@ -131,10 +131,10 @@ The occasions when the prompt should get updated can be controlled with
 -   The prompt is always updated when the editor becomes active -- when Elvish
     starts, or a command finishes execution, or when the user presses Enter.
 
--   If `$edit-prompt-eagerness` >= 5, it is updated when the working directory
+-   If `$edit:-prompt-eagerness` >= 5, it is updated when the working directory
     changes.
 
--   If `$edit-prompt-eagerness` >= 10, it is updated on each keystroke.
+-   If `$edit:-prompt-eagerness` >= 10, it is updated on each keystroke.
 
 The default value is 5.
 
