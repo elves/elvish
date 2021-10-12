@@ -70,7 +70,7 @@ import (
 //elvdoc:fn complex-candidate
 //
 // ```elvish
-// edit:complex-candidate $stem &display='' &code-suffix=''
+// edit:complex-candidate $stem &display='' &code-suffix='' &case-insensitive=$false
 // ```
 //
 // Builds a complex candidate. This is mainly useful in [argument
@@ -84,10 +84,14 @@ import (
 // when it is accepted. By default, a quoted version of `$stem` is inserted. If
 // `$code-suffix` is non-empty, it is added to that text, and the suffix is not
 // quoted.
+//
+// The `&case-insensitive` option affects whether the candidate will be matched
+// according to its casing or not
 
 type complexCandidateOpts struct {
-	CodeSuffix string
-	Display    string
+	CodeSuffix      string
+	Display         string
+	CaseInsensitive bool
 }
 
 func (*complexCandidateOpts) SetDefaultOptions() {}
@@ -98,9 +102,35 @@ func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) co
 		display = stem
 	}
 	return complexItem{
-		Stem:       stem,
-		CodeSuffix: opts.CodeSuffix,
-		Display:    display,
+		Stem:            stem,
+		CaseInsensitive: opts.CaseInsensitive,
+		CodeSuffix:      opts.CodeSuffix,
+		Display:         display,
+	}
+}
+
+//elvdoc:fn external-command-candidate
+//
+// ```elvish
+// edit:external-command-candidate $name &is-namespaced=$false
+// ```
+//
+// Builds a candidate for an external command. This is mainly useful in
+// [argument completers](#argument-completer).
+//
+// The `&is-namespaced` option controls whether the candidate has "e:" prefixed
+// to it for matching and displaying
+
+type externalCommandCandidateOpts struct {
+	IsNamespaced bool
+}
+
+func (o *externalCommandCandidateOpts) SetDefaultOptions() {}
+
+func externalCommandCandidate(fm *eval.Frame, opts externalCommandCandidateOpts, name string) externalCommand {
+	return externalCommand{
+		Name:         name,
+		IsNamespaced: opts.IsNamespaced,
 	}
 }
 
@@ -234,13 +264,14 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 		return complete.GenerateForSudo(cfg(), args)
 	}
 	nb.AddGoFns("<edit>", map[string]interface{}{
-		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
-		"complete-getopt":   completeGetopt,
-		"complete-sudo":     wrapArgGenerator(generateForSudo),
-		"complex-candidate": complexCandidate,
-		"match-prefix":      wrapMatcher(strings.HasPrefix),
-		"match-subseq":      wrapMatcher(strutil.HasSubseq),
-		"match-substr":      wrapMatcher(strings.Contains),
+		"complete-filename":          wrapArgGenerator(complete.GenerateFileNames),
+		"complete-getopt":            completeGetopt,
+		"complete-sudo":              wrapArgGenerator(generateForSudo),
+		"complex-candidate":          complexCandidate,
+		"external-command-candidate": externalCommandCandidate,
+		"match-prefix":               wrapMatcher(strings.HasPrefix),
+		"match-subseq":               wrapMatcher(strutil.HasSubseq),
+		"match-substr":               wrapMatcher(strings.Contains),
 	})
 	app := ed.app
 	nb.AddNs("completion",
@@ -268,6 +299,8 @@ func (c complexItem) Index(k interface{}) (interface{}, bool) {
 	switch k {
 	case "stem":
 		return c.Stem, true
+	case "case-insensitive":
+		return c.CaseInsensitive, true
 	case "code-suffix":
 		return c.CodeSuffix, true
 	case "display":
@@ -277,7 +310,7 @@ func (c complexItem) Index(k interface{}) (interface{}, bool) {
 }
 
 func (c complexItem) IterateKeys(f func(interface{}) bool) {
-	vals.Feed(f, "stem", "code-suffix", "display")
+	vals.Feed(f, "stem", "case-insensitive", "code-suffix", "display")
 }
 
 func (c complexItem) Kind() string { return "map" }
@@ -285,21 +318,92 @@ func (c complexItem) Kind() string { return "map" }
 func (c complexItem) Equal(a interface{}) bool {
 	rhs, ok := a.(complexItem)
 	return ok && c.Stem == rhs.Stem &&
-		c.CodeSuffix == rhs.CodeSuffix && c.Display == rhs.Display
+		c.CodeSuffix == rhs.CodeSuffix &&
+		c.Display == rhs.Display &&
+		c.CaseInsensitive == rhs.CaseInsensitive
 }
 
 func (c complexItem) Hash() uint32 {
+	var caseInsensitiveHash uint32
+	if c.CaseInsensitive {
+		caseInsensitiveHash = 1
+	} else {
+		caseInsensitiveHash = 0
+	}
+
 	h := hash.DJBInit
 	h = hash.DJBCombine(h, hash.String(c.Stem))
 	h = hash.DJBCombine(h, hash.String(c.CodeSuffix))
 	h = hash.DJBCombine(h, hash.String(c.Display))
+	h = hash.DJBCombine(h, hash.UInt32(caseInsensitiveHash))
 	return h
 }
 
 func (c complexItem) Repr(indent int) string {
+	var caseInsensitiveRepr string
+	if c.CaseInsensitive {
+		caseInsensitiveRepr = "$true"
+	} else {
+
+		caseInsensitiveRepr = "$false"
+	}
+
 	// TODO(xiaq): Pretty-print when indent >= 0
-	return fmt.Sprintf("(edit:complex-candidate %s &code-suffix=%s &display=%s)",
-		parse.Quote(c.Stem), parse.Quote(c.CodeSuffix), parse.Quote(c.Display))
+	return fmt.Sprintf("(edit:complex-candidate %s &code-suffix=%s &display=%s &case-insensitive=%s)",
+		parse.Quote(c.Stem), parse.Quote(c.CodeSuffix), parse.Quote(c.Display), caseInsensitiveRepr)
+}
+
+// A wrapper type implementing Elvish value methods.
+type externalCommand complete.ExternalCommand
+
+func (e externalCommand) Index(k interface{}) (interface{}, bool) {
+	switch k {
+	case "name":
+		return e.Name, true
+	case "is-namespaced":
+		return e.IsNamespaced, true
+	}
+	return nil, false
+}
+
+func (e externalCommand) IterateKeys(f func(interface{}) bool) {
+	vals.Feed(f, "name", "is-namespaced")
+}
+
+func (e externalCommand) Kind() string { return "map" }
+
+func (e externalCommand) Equal(a interface{}) bool {
+	rhs, ok := a.(externalCommand)
+	return ok && e.Name == rhs.Name &&
+		e.IsNamespaced == rhs.IsNamespaced
+}
+
+func (e externalCommand) Hash() uint32 {
+	var isNamespacedHash uint32
+	if e.IsNamespaced {
+		isNamespacedHash = 1
+	} else {
+		isNamespacedHash = 0
+	}
+
+	h := hash.DJBInit
+	h = hash.DJBCombine(h, hash.String(e.Name))
+	h = hash.DJBCombine(h, hash.UInt32(isNamespacedHash))
+	return h
+}
+
+func (e externalCommand) Repr(indent int) string {
+	var isNamespacedRepr string
+	if e.IsNamespaced {
+		isNamespacedRepr = "$true"
+	} else {
+
+		isNamespacedRepr = "$false"
+	}
+
+	// TODO: Pretty-print when indent >= 0
+	return fmt.Sprintf("(edit:external-command-candidate %s &is-namespaced=%s)",
+		parse.Quote(e.Name), isNamespacedRepr)
 }
 
 type wrappedArgGenerator func(*eval.Frame, ...string) error
@@ -318,6 +422,8 @@ func wrapArgGenerator(gen complete.ArgGenerator) wrappedArgGenerator {
 			switch rawItem := rawItem.(type) {
 			case complete.ComplexItem:
 				v = complexItem(rawItem)
+			case complete.ExternalCommand:
+				v = externalCommand(rawItem)
 			case complete.PlainItem:
 				v = string(rawItem)
 			default:
@@ -479,6 +585,8 @@ func adaptArgGeneratorMap(ev *eval.Evaler, m vals.Map) complete.ArgGenerator {
 					collect(complete.PlainItem(v))
 				case complexItem:
 					collect(complete.ComplexItem(v))
+				case externalCommand:
+					collect(complete.ExternalCommand(v))
 				default:
 					collect(complete.PlainItem(vals.ToString(v)))
 				}

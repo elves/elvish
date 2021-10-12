@@ -58,7 +58,7 @@ func generateCommands(seed string, ev PureEvaler) ([]RawItem, error) {
 	if strings.HasPrefix(seed, "e:") {
 		// Generate all external commands with the e: prefix, and be done.
 		ev.EachExternal(func(command string) {
-			addPlainItem("e:" + command)
+			cands = append(cands, ExternalCommand{Name: command, IsNamespaced: true})
 		})
 		return cands, nil
 	}
@@ -66,7 +66,9 @@ func generateCommands(seed string, ev PureEvaler) ([]RawItem, error) {
 	// Generate all special forms.
 	ev.EachSpecial(addPlainItem)
 	// Generate all external commands (without the e: prefix).
-	ev.EachExternal(addPlainItem)
+	ev.EachExternal(func(s string) {
+		cands = append(cands, ExternalCommand{Name: s, IsNamespaced: false})
+	})
 
 	sigil, qname := eval.SplitSigil(seed)
 	ns, _ := eval.SplitIncompleteQNameNs(qname)
@@ -118,7 +120,7 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 		}
 		// Only accept searchable directories and executable files if
 		// executableOnly is true.
-		if onlyExecutable && (info.Mode()&0111) == 0 {
+		if onlyExecutable && fsutil.IsExecutableByInfo(info) {
 			continue
 		}
 
@@ -141,9 +143,10 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 		}
 
 		items = append(items, ComplexItem{
-			Stem:         full,
-			CodeSuffix:   suffix,
-			DisplayStyle: ui.StyleFromSGR(lsColor.GetStyle(full)),
+			Stem:            full,
+			CaseInsensitive: IsCaseInsensitiveOs,
+			CodeSuffix:      suffix,
+			DisplayStyle:    ui.StyleFromSGR(lsColor.GetStyle(full)),
 		})
 	}
 

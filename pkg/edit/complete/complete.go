@@ -50,6 +50,7 @@ type Result struct {
 // RawItem represents completion items before the quoting pass.
 type RawItem interface {
 	String() string
+	HasPrefix(seed string) bool
 	Cook(parse.PrimaryType) modes.CompletionItem
 }
 

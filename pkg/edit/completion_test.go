@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/edit/complete"
 	"src.elv.sh/pkg/eval"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
@@ -57,8 +58,8 @@ func TestCompleteFilename(t *testing.T) {
 	testGlobal(t, f.Evaler,
 		"cands",
 		vals.MakeList(
-			complexItem{Stem: "./d/a", CodeSuffix: " "},
-			complexItem{Stem: "./d/b", CodeSuffix: " "}))
+			complexItem{Stem: "./d/a", CodeSuffix: " ", CaseInsensitive: complete.IsCaseInsensitiveOs},
+			complexItem{Stem: "./d/b", CodeSuffix: " ", CaseInsensitive: complete.IsCaseInsensitiveOs}))
 
 	testThatOutputErrorIsBubbled(t, f, "edit:complete-filename ls ''")
 }
@@ -68,9 +69,9 @@ func TestComplexCandidate(t *testing.T) {
 		ev.AddGlobal(eval.NsBuilder{}.AddGoFn("", "cc", complexCandidate).Ns())
 	},
 		That("kind-of (cc stem)").Puts("map"),
-		That("keys (cc stem)").Puts("stem", "code-suffix", "display"),
-		That("repr (cc a/b &code-suffix=' ' &display=A/B)").Prints(
-			"(edit:complex-candidate a/b &code-suffix=' ' &display=A/B)\n"),
+		That("keys (cc stem)").Puts("stem", "case-insensitive", "code-suffix", "display"),
+		That("repr (cc a/b &code-suffix=' ' &display=A/B &case-insensitive=$false)").Prints(
+			"(edit:complex-candidate a/b &code-suffix=' ' &display=A/B &case-insensitive=$false)\n"),
 		That("eq (cc stem) (cc stem)").Puts(true),
 		That("eq (cc stem &code-suffix=' ') (cc stem)").Puts(false),
 		That("eq (cc stem &display=STEM) (cc stem)").Puts(false),
