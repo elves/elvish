@@ -245,6 +245,10 @@ func TestCommand_Assignment(t *testing.T) {
 	)
 }
 
+func TestCommand_LegacyAssignmentIsDeprecated(t *testing.T) {
+	testCompileTimeDeprecation(t, "a = foo", "legacy assignment form is deprecated", 17)
+}
+
 func TestCommand_Redir(t *testing.T) {
 	setup := func(ev *Evaler) {
 		ev.AddGlobal(NsBuilder{}.AddNs("file", file.Ns).Ns())

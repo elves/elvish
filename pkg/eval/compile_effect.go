@@ -202,6 +202,7 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 	// argument whose source is a literal "=".
 	for i, arg := range n.Args {
 		if parse.SourceText(arg) == "=" {
+			cp.deprecate(n, "legacy assignment form is deprecated, use var or set instead; migrate scripts with https://go.elv.sh/u0.17", 17)
 			lhsNodes := make([]*parse.Compound, i+1)
 			lhsNodes[0] = n.Head
 			copy(lhsNodes[1:], n.Args[:i])
