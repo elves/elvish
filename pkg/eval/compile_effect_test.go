@@ -213,18 +213,16 @@ func TestCommand_Assignment(t *testing.T) {
 
 		// Assignment errors when the RHS errors.
 		That("x = [][1]").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
-		// Assignment to read-only var is an error.
-		That("nil = 1").Throws(errs.SetReadOnlyVar{VarName: "nil"}, "nil"),
-		That("a true b = 1 2 3").Throws(errs.SetReadOnlyVar{VarName: "true"}, "true"),
-		That("@true = 1").Throws(errs.SetReadOnlyVar{VarName: "@true"}, "@true"),
-		That("true @r = 1").Throws(errs.SetReadOnlyVar{VarName: "true"}, "true"),
-		That("@r true = 1").Throws(errs.SetReadOnlyVar{VarName: "true"}, "true"),
-		// A readonly var as a target for the `except` clause should error.
-		That("try { fail reason } except nil { }").Throws(errs.SetReadOnlyVar{VarName: "nil"}, "nil"),
+		// Assignment to read-only var is a compile-time error.
+		That("nil = 1").DoesNotCompile(),
+		That("a true b = 1 2 3").DoesNotCompile(),
+		That("@true = 1").DoesNotCompile(),
+		That("true @r = 1").DoesNotCompile(),
+		That("@r true = 1").DoesNotCompile(),
+		// A readonly var as a target for the "except" clause is also a
+		// compile-time error.
+		That("try { fail reason } except nil { }").DoesNotCompile(),
 		That("try { fail reason } except x { }").DoesNothing(),
-		// Evaluation of the assignability occurs at run-time so, if no exception is raised, this
-		// otherwise invalid use of `nil` is okay.
-		That("try { } except nil { }").DoesNothing(),
 		// Arity mismatch.
 		That("x = 1 2").Throws(
 			errs.ArityMismatch{What: "assignment right-hand-side",

@@ -23,7 +23,7 @@ type closure struct {
 	OptNames    []string
 	OptDefaults []interface{}
 	Op          effectOp
-	NewLocal    []string
+	NewLocal    []staticVarInfo
 	Captured    *Ns
 	SrcMeta     parse.Source
 	DefRange    diag.Ranging
@@ -97,10 +97,10 @@ func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 
 	// Populate local scope with arguments, options, and newly created locals.
 	localSize := len(c.ArgNames) + len(c.OptNames) + len(c.NewLocal)
-	local := &Ns{make([]vars.Var, localSize), make([]string, localSize), make([]bool, localSize)}
+	local := &Ns{make([]vars.Var, localSize), make([]staticVarInfo, localSize)}
 
 	for i, name := range c.ArgNames {
-		local.names[i] = name
+		local.infos[i] = staticVarInfo{name, false, false}
 	}
 	if c.RestArg == -1 {
 		for i := range c.ArgNames {
@@ -124,14 +124,15 @@ func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 		if !ok {
 			v = c.OptDefaults[i]
 		}
-		local.names[offset+i] = name
+		local.infos[offset+i] = staticVarInfo{name, false, false}
 		local.slots[offset+i] = vars.FromInit(v)
 	}
 
 	offset += len(c.OptNames)
-	for i, name := range c.NewLocal {
-		local.names[offset+i] = name
-		local.slots[offset+i] = MakeVarFromName(name)
+	for i, info := range c.NewLocal {
+		local.infos[offset+i] = info
+		// TODO: Take info.readOnly into account too when creating variable
+		local.slots[offset+i] = MakeVarFromName(info.name)
 	}
 
 	fm.local = local

@@ -21,3 +21,15 @@ func (rv readOnly) Set(val interface{}) error {
 func (rv readOnly) Get() interface{} {
 	return rv.value
 }
+
+// IsReadOnly returns whether v is a read-only variable.
+func IsReadOnly(v Var) bool {
+	switch v.(type) {
+	case readOnly:
+		return true
+	case roCallback:
+		return true
+	default:
+		return false
+	}
+}

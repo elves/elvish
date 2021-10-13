@@ -26,6 +26,7 @@ import (
 // qualified name.
 type varRef struct {
 	scope    varScope
+	info     staticVarInfo
 	index    int
 	subNames []string
 }
@@ -43,9 +44,9 @@ const (
 // An interface satisfied by both *compiler and *Frame. Used to implement
 // resolveVarRef as a function that works for both types.
 type scopeSearcher interface {
-	searchLocal(k string) int
-	searchCapture(k string) int
-	searchBuiltin(k string, r diag.Ranger) int
+	searchLocal(k string) (staticVarInfo, int)
+	searchCapture(k string) (staticVarInfo, int)
+	searchBuiltin(k string, r diag.Ranger) (staticVarInfo, int)
 }
 
 // Resolves a qname into a varRef.
@@ -65,17 +66,16 @@ func resolveVarRef(s scopeSearcher, qname string, r diag.Ranger) *varRef {
 
 func resolveVarRefLocal(s scopeSearcher, qname string) *varRef {
 	first, rest := SplitQName(qname)
-	index := s.searchLocal(first)
-	if index != -1 {
-		return &varRef{scope: localScope, index: index, subNames: SplitQNameSegs(rest)}
+	if info, index := s.searchLocal(first); index != -1 {
+		return &varRef{localScope, info, index, SplitQNameSegs(rest)}
 	}
 	return nil
 }
 
 func resolveVarRefCapture(s scopeSearcher, qname string) *varRef {
 	first, rest := SplitQName(qname)
-	if index := s.searchCapture(first); index != -1 {
-		return &varRef{scope: captureScope, index: index, subNames: SplitQNameSegs(rest)}
+	if info, index := s.searchCapture(first); index != -1 {
+		return &varRef{captureScope, info, index, SplitQNameSegs(rest)}
 	}
 	return nil
 }
@@ -97,8 +97,8 @@ func resolveVarRefBuiltin(s scopeSearcher, qname string, r diag.Ranger) *varRef 
 			return &varRef{scope: envScope, subNames: []string{rest}}
 		}
 	}
-	if index := s.searchBuiltin(first, r); index != -1 {
-		return &varRef{scope: builtinScope, index: index, subNames: SplitQNameSegs(rest)}
+	if info, index := s.searchBuiltin(first, r); index != -1 {
+		return &varRef{builtinScope, info, index, SplitQNameSegs(rest)}
 	}
 	return nil
 }
@@ -154,13 +154,13 @@ func derefBase(fm *Frame, ref *varRef) (vars.Var, []string) {
 	}
 }
 
-func (cp *compiler) searchLocal(k string) int {
-	return cp.thisScope().lookup(k)
+func (cp *compiler) searchLocal(k string) (staticVarInfo, int) {
+	return cp.thisScope().lookupInfo(k)
 }
 
-func (cp *compiler) searchCapture(k string) int {
+func (cp *compiler) searchCapture(k string) (staticVarInfo, int) {
 	for i := len(cp.scopes) - 2; i >= 0; i-- {
-		index := cp.scopes[i].lookup(k)
+		info, index := cp.scopes[i].lookupInfo(k)
 		if index != -1 {
 			// Record the capture from i+1 to len(cp.scopes)-1, and reuse the
 			// index to keep the index into the previous scope.
@@ -168,28 +168,28 @@ func (cp *compiler) searchCapture(k string) int {
 			for j := i + 2; j < len(cp.scopes); j++ {
 				index = cp.captures[j].add(k, false, index)
 			}
-			return index
+			return info, index
 		}
 	}
-	return -1
+	return staticVarInfo{}, -1
 }
 
-func (cp *compiler) searchBuiltin(k string, r diag.Ranger) int {
-	index := cp.builtin.lookup(k)
+func (cp *compiler) searchBuiltin(k string, r diag.Ranger) (staticVarInfo, int) {
+	info, index := cp.builtin.lookupInfo(k)
 	if index != -1 {
 		cp.checkDeprecatedBuiltin(k, r)
 	}
-	return index
+	return info, index
 }
 
-func (fm *Frame) searchLocal(k string) int {
-	return fm.local.lookup(k)
+func (fm *Frame) searchLocal(k string) (staticVarInfo, int) {
+	return fm.local.lookupInfo(k)
 }
 
-func (fm *Frame) searchCapture(k string) int {
-	return fm.up.lookup(k)
+func (fm *Frame) searchCapture(k string) (staticVarInfo, int) {
+	return fm.up.lookupInfo(k)
 }
 
-func (fm *Frame) searchBuiltin(k string, r diag.Ranger) int {
-	return fm.Evaler.Builtin().lookup(k)
+func (fm *Frame) searchBuiltin(k string, r diag.Ranger) (staticVarInfo, int) {
+	return fm.Evaler.Builtin().lookupInfo(k)
 }

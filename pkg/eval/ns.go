@@ -16,34 +16,41 @@ type Ns struct {
 	// All variables in the namespace. Static variable accesses are compiled
 	// into indexed accesses into this slice.
 	slots []vars.Var
-	// Names for the variables, used for introspection. Typical real programs
-	// only contain a small number of names in each namespace, in which case a
-	// linear search in a slice is usually faster than map access.
-	names []string
-	// Whether the variable has been deleted. Deleted variables can still be
-	// kept in the Ns since there might be a reference to them in a closure.
-	// Shadowed variables are also considered deleted.
-	deleted []bool
+	// Static information for each variable, including the variable name.
+	//
+	// This slice is used for various purposes in introspection and compilation.
+	// Variable lookup by name also uses this; since typical real programs only
+	// contain a small number of names in each namespace, in which case a linear
+	// search in a slice is usually faster than map access.
+	infos []staticVarInfo
+}
+
+// Static information known about a variable.
+type staticVarInfo struct {
+	name     string
+	readOnly bool
+	// Deleted variables can still be kept in the Ns since there might be a
+	// reference to them in a closure. Shadowed variables are also considered
+	// deleted.
+	deleted bool
 }
 
 // CombineNs returns an *Ns that contains all the bindings from both ns1 and
 // ns2. Names in ns2 takes precedence over those in ns1.
-func CombineNs(ns1 *Ns, ns2 *Ns) *Ns {
+func CombineNs(ns1, ns2 *Ns) *Ns {
 	ns := &Ns{
 		append([]vars.Var(nil), ns2.slots...),
-		append([]string(nil), ns2.names...),
-		append([]bool(nil), ns2.deleted...)}
+		append([]staticVarInfo(nil), ns2.infos...)}
 	hasName := map[string]bool{}
-	for i, name := range ns.names {
-		if !ns.deleted[i] {
-			hasName[name] = true
+	for _, info := range ns.infos {
+		if !info.deleted {
+			hasName[info.name] = true
 		}
 	}
-	for i, name := range ns1.names {
-		if !ns1.deleted[i] && !hasName[name] {
+	for i, info := range ns1.infos {
+		if !info.deleted && !hasName[info.name] {
 			ns.slots = append(ns.slots, ns1.slots[i])
-			ns.names = append(ns.names, name)
-			ns.deleted = append(ns.deleted, false)
+			ns.infos = append(ns.infos, info)
 		}
 	}
 	return ns
@@ -97,21 +104,26 @@ func (ns *Ns) IndexName(k string) vars.Var {
 }
 
 func (ns *Ns) lookup(k string) int {
-	for i, name := range ns.names {
-		if name == k && !ns.deleted[i] {
-			return i
+	_, i := ns.lookupInfo(k)
+	return i
+}
+
+func (ns *Ns) lookupInfo(k string) (staticVarInfo, int) {
+	for i, info := range ns.infos {
+		if info.name == k && !info.deleted {
+			return info, i
 		}
 	}
-	return -1
+	return staticVarInfo{}, -1
 }
 
 // IterateKeys produces the names of all the variables in this Ns.
 func (ns *Ns) IterateKeys(f func(interface{}) bool) {
-	for i, name := range ns.names {
-		if ns.slots[i] == nil || ns.deleted[i] {
+	for i, info := range ns.infos {
+		if ns.slots[i] == nil || info.deleted {
 			continue
 		}
-		if !f(name) {
+		if !f(info.name) {
 			break
 		}
 	}
@@ -121,17 +133,17 @@ func (ns *Ns) IterateKeys(f func(interface{}) bool) {
 // type-safe version of IterateKeys and is useful for introspection from Go
 // code. It doesn't support breaking early.
 func (ns *Ns) IterateNames(f func(string)) {
-	for i, name := range ns.names {
-		if ns.slots[i] != nil && !ns.deleted[i] {
-			f(name)
+	for i, info := range ns.infos {
+		if ns.slots[i] != nil && !info.deleted {
+			f(info.name)
 		}
 	}
 }
 
 // HasName reports whether the Ns has a variable with the given name.
 func (ns *Ns) HasName(k string) bool {
-	for i, name := range ns.names {
-		if name == k && !ns.deleted[i] {
+	for i, info := range ns.infos {
+		if info.name == k && !info.deleted {
 			return ns.slots[i] != nil
 		}
 	}
@@ -139,7 +151,7 @@ func (ns *Ns) HasName(k string) bool {
 }
 
 func (ns *Ns) static() *staticNs {
-	return &staticNs{ns.names, ns.deleted}
+	return &staticNs{ns.infos}
 }
 
 // NsBuilder is a helper type used for building an Ns.
@@ -177,11 +189,11 @@ func (nb NsBuilder) AddGoFns(nsName string, fns map[string]interface{}) NsBuilde
 // Ns builds a namespace.
 func (nb NsBuilder) Ns() *Ns {
 	n := len(nb)
-	ns := &Ns{make([]vars.Var, n), make([]string, n), make([]bool, n)}
+	ns := &Ns{make([]vars.Var, n), make([]staticVarInfo, n)}
 	i := 0
 	for name, variable := range nb {
 		ns.slots[i] = variable
-		ns.names[i] = name
+		ns.infos[i] = staticVarInfo{name, vars.IsReadOnly(variable), false}
 		i++
 	}
 	return ns
@@ -193,18 +205,16 @@ func (nb NsBuilder) Ns() *Ns {
 // compiler gains more information about the namespace. The zero value of
 // staticNs is an empty namespace.
 type staticNs struct {
-	names   []string
-	deleted []bool
+	infos []staticVarInfo
 }
 
 func (ns *staticNs) clone() *staticNs {
-	return &staticNs{
-		append([]string{}, ns.names...), append([]bool{}, ns.deleted...)}
+	return &staticNs{append([]staticVarInfo(nil), ns.infos...)}
 }
 
 func (ns *staticNs) del(k string) {
 	if i := ns.lookup(k); i != -1 {
-		ns.deleted[i] = true
+		ns.infos[i].deleted = true
 	}
 }
 
@@ -216,39 +226,44 @@ func (ns *staticNs) add(k string) int {
 
 // Adds a name, assuming that it either doesn't exist yet or has been deleted.
 func (ns *staticNs) addInner(k string) int {
-	ns.names = append(ns.names, k)
-	ns.deleted = append(ns.deleted, false)
-	return len(ns.names) - 1
+	ns.infos = append(ns.infos, staticVarInfo{k, false, false})
+	return len(ns.infos) - 1
 }
 
 func (ns *staticNs) lookup(k string) int {
-	for i, name := range ns.names {
-		if name == k && !ns.deleted[i] {
-			return i
+	_, i := ns.lookupInfo(k)
+	return i
+}
+
+func (ns *staticNs) lookupInfo(k string) (staticVarInfo, int) {
+	for i, info := range ns.infos {
+		if info.name == k && !info.deleted {
+			return info, i
 		}
 	}
-	return -1
+	return staticVarInfo{}, -1
 }
 
 type staticUpNs struct {
-	names []string
-	// For each name, whether the upvalue comes from the immediate outer scope,
-	// i.e. the local scope a lambda is evaluated in.
-	local []bool
-	// Index of the upvalue variable, either into the local scope (if
-	// the corresponding value in local is true) or the up scope (if the
-	// corresponding value in local is false).
-	index []int
+	infos []upvalInfo
+}
+
+type upvalInfo struct {
+	name string
+	// Whether the upvalue comes from the immediate outer scope, i.e. the local
+	// scope a lambda is evaluated in.
+	local bool
+	// Index of the upvalue variable. If local is true, this is an index into
+	// the local scope. If local is false, this is an index into the up scope.
+	index int
 }
 
 func (up *staticUpNs) add(k string, local bool, index int) int {
-	for i, name := range up.names {
-		if name == k {
+	for i, info := range up.infos {
+		if info.name == k {
 			return i
 		}
 	}
-	up.names = append(up.names, k)
-	up.local = append(up.local, local)
-	up.index = append(up.index, index)
-	return len(up.names) - 1
+	up.infos = append(up.infos, upvalInfo{k, local, index})
+	return len(up.infos) - 1
 }

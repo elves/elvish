@@ -182,8 +182,7 @@ func NewEvaler() *Evaler {
 		Add("args", vars.FromGet(func() interface{} { return ev.Args })).
 		Ns()
 	builtin.slots = append(builtin.slots, moreBuiltins.slots...)
-	builtin.names = append(builtin.names, moreBuiltins.names...)
-	builtin.deleted = append(builtin.deleted, make([]bool, len(moreBuiltins.names))...)
+	builtin.infos = append(builtin.infos, moreBuiltins.infos...)
 
 	return ev
 }

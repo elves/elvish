@@ -3,7 +3,6 @@ package eval_test
 import (
 	"testing"
 
-	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 )
 
@@ -26,6 +25,6 @@ func TestNs(t *testing.T) {
 
 func TestBuiltinFunctionsReadOnly(t *testing.T) {
 	Test(t,
-		That("return~ = { }").Throws(errs.SetReadOnlyVar{VarName: "return~"}, "return~"),
+		That("return~ = { }").DoesNotCompile(),
 	)
 }

@@ -64,18 +64,19 @@ type nsOp struct {
 // Prepares the local namespace, and returns the namespace and a function for
 // executing the inner effectOp. Mutates fm.local.
 func (op nsOp) prepare(fm *Frame) (*Ns, func() Exception) {
-	if len(op.template.names) > len(fm.local.names) {
-		n := len(op.template.names)
-		newLocal := &Ns{make([]vars.Var, n), op.template.names, op.template.deleted}
+	if len(op.template.infos) > len(fm.local.infos) {
+		n := len(op.template.infos)
+		newLocal := &Ns{make([]vars.Var, n), op.template.infos}
 		copy(newLocal.slots, fm.local.slots)
-		for i := len(fm.local.names); i < n; i++ {
-			newLocal.slots[i] = MakeVarFromName(newLocal.names[i])
+		for i := len(fm.local.infos); i < n; i++ {
+			// TODO: Take readOnly into account too
+			newLocal.slots[i] = MakeVarFromName(newLocal.infos[i].name)
 		}
 		fm.local = newLocal
 	} else {
-		// If no new has been created, there might still be some existing
-		// variables deleted.
-		fm.local = &Ns{fm.local.slots, fm.local.names, op.template.deleted}
+		// If no new variable has been created, there might still be some
+		// existing variables deleted.
+		fm.local = &Ns{fm.local.slots, op.template.infos}
 	}
 	return fm.local, func() Exception { return op.inner.exec(fm) }
 }

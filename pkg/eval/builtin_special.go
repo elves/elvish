@@ -154,7 +154,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 				f = delEnvVarOp{fn.Range(), ref.subNames[0]}
 			} else if ref.scope == localScope && len(ref.subNames) == 0 {
 				f = delLocalVarOp{ref.index}
-				cp.thisScope().deleted[ref.index] = true
+				cp.thisScope().infos[ref.index].deleted = true
 			} else {
 				cp.errorpf(cn, "only variables in local: or E: can be deleted")
 				continue

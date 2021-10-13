@@ -70,6 +70,9 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvalues
 	var ref *varRef
 	if f&setLValue != 0 {
 		ref = resolveVarRef(cp, qname, n)
+		if ref != nil && len(ref.subNames) == 0 && ref.info.readOnly {
+			cp.errorpf(n, "variable $%s is read-only", qname)
+		}
 	}
 	if ref == nil {
 		if f&newLValue == 0 {
@@ -81,10 +84,14 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvalues
 		segs := SplitQNameSegs(qname)
 		if len(segs) == 1 {
 			// Unqualified name - implicit local
-			ref = &varRef{localScope, cp.thisScope().add(segs[0]), nil}
+			name := segs[0]
+			ref = &varRef{localScope,
+				staticVarInfo{name, false, false}, cp.thisScope().add(name), nil}
 		} else if len(segs) == 2 && (segs[0] == "local:" || segs[0] == ":") {
+			name := segs[1]
 			// Qualified local name
-			ref = &varRef{localScope, cp.thisScope().add(segs[1]), nil}
+			ref = &varRef{localScope,
+				staticVarInfo{name, false, false}, cp.thisScope().add(name), nil}
 		} else {
 			cp.errorpf(n, "cannot create variable $%s; new variables can only be created in the local scope", qname)
 		}
