@@ -339,31 +339,44 @@ var testCases = []struct {
 		node: &Chunk{},
 		want: a(
 			ast{"Compound/Indexing/Primary", fs{
-				"Type": Lambda, "Elements": []ast{}, "Chunk": "",
+				"Type": Lambda, "LegacyLambda": true, "Elements": []ast{}, "Chunk": "",
 			}},
 			ast{"Compound/Indexing/Primary", fs{
-				"Type": Lambda, "Elements": []ast{}, "Chunk": " ",
+				"Type": Lambda, "LegacyLambda": true, "Elements": []ast{}, "Chunk": " ",
 			}},
 			ast{"Compound/Indexing/Primary", fs{
-				"Type": Lambda, "Elements": []ast{}, "Chunk": " echo 233 ",
+				"Type": Lambda, "LegacyLambda": true, "Elements": []ast{}, "Chunk": " echo 233 ",
 			}},
 			ast{"Compound/Indexing/Primary", fs{
-				"Type": Lambda, "Elements": []string{"x", "y"}, "Chunk": "puts $x $y",
+				"Type": Lambda, "LegacyLambda": true, "Elements": []string{"x", "y"}, "Chunk": "puts $x $y",
 			}},
 			ast{"Compound/Indexing/Primary", fs{
-				"Type": Lambda, "Elements": []ast{}, "Chunk": " put haha",
+				"Type": Lambda, "Elements": []ast{}, "Chunk": "put haha",
 			}},
 		),
 	},
 	{
-		name: "lambda with arguments and options",
+		name: "new-style lambda with arguments and options",
+		code: "{|a b &k=v|}",
+		node: &Primary{},
+		want: ast{"Primary", fs{
+			"Type":         Lambda,
+			"LegacyLambda": false,
+			"Elements":     []string{"a", "b"},
+			"MapPairs":     []string{"&k=v"},
+			"Chunk":        "",
+		}},
+	},
+	{
+		name: "legacy lambda with arguments and options",
 		code: "[a b &k=v]{}",
 		node: &Primary{},
 		want: ast{"Primary", fs{
-			"Type":     Lambda,
-			"Elements": []string{"a", "b"},
-			"MapPairs": []string{"&k=v"},
-			"Chunk":    "",
+			"Type":         Lambda,
+			"LegacyLambda": true,
+			"Elements":     []string{"a", "b"},
+			"MapPairs":     []string{"&k=v"},
+			"Chunk":        "",
 		}},
 	},
 	{
@@ -520,7 +533,7 @@ var testCases = []struct {
 		node: &Chunk{},
 		want: a(
 			ast{"Compound/Indexing/Primary",
-				fs{"Type": Lambda, "Chunk": " \rfoo\r\nbar "}},
+				fs{"Type": Lambda, "Chunk": "foo\r\nbar "}},
 		),
 	},
 	{

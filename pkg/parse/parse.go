@@ -68,6 +68,7 @@ var (
 	errShouldBeRParen             = newError("", "')'")
 	errShouldBeCompound           = newError("", "compound")
 	errShouldBeEqual              = newError("", "'='")
+	errShouldBePipe               = newError("", "'|'")
 	errBothElementsAndPairs       = newError("cannot contain both list elements and map pairs")
 	errShouldBeNewline            = newError("", "newline")
 )
@@ -476,6 +477,8 @@ type Primary struct {
 	node
 	ExprCtx ExprCtx
 	Type    PrimaryType
+	// Legacy lambda uses [args]{ body } instead of { |args| body }
+	LegacyLambda bool
 	// The unquoted string value. Valid for Bareword, SingleQuoted,
 	// DoubleQuoted, Variable, Wildcard and Tilde.
 	Value    string
@@ -801,6 +804,7 @@ items:
 		ps.error(errShouldBeRBracket)
 	}
 	if parseSep(pn, ps, '{') {
+		pn.LegacyLambda = true
 		pn.lambda(ps)
 	} else {
 		if loneAmpersand || len(pn.MapPairs) > 0 {
@@ -818,6 +822,28 @@ items:
 // lambda parses a lambda expression. The opening brace has been seen.
 func (pn *Primary) lambda(ps *parser) {
 	pn.Type = Lambda
+	if !pn.LegacyLambda {
+		parseSpacesAndNewlines(pn, ps)
+		if parseSep(pn, ps, '|') {
+			parseSpacesAndNewlines(pn, ps)
+		items:
+			for {
+				r := ps.peek()
+				switch {
+				case r == '&':
+					ps.parse(&MapPair{}).addTo(&pn.MapPairs, pn)
+				case startsCompound(r, NormalExpr):
+					ps.parse(&Compound{}).addTo(&pn.Elements, pn)
+				default:
+					break items
+				}
+				parseSpacesAndNewlines(pn, ps)
+			}
+			if !parseSep(pn, ps, '|') {
+				ps.error(errShouldBePipe)
+			}
+		}
+	}
 	ps.parse(&Chunk{}).addAs(&pn.Chunk, pn)
 	if !parseSep(pn, ps, '}') {
 		ps.error(errShouldBeRBrace)
@@ -829,7 +855,7 @@ func (pn *Primary) lambda(ps *parser) {
 func (pn *Primary) lbrace(ps *parser) {
 	parseSep(pn, ps, '{')
 
-	if r := ps.peek(); r == ';' || r == '\r' || r == '\n' || IsInlineWhitespace(r) {
+	if r := ps.peek(); r == ';' || r == '\r' || r == '\n' || r == '|' || IsInlineWhitespace(r) {
 		pn.lambda(ps)
 		return
 	}

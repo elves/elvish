@@ -13,19 +13,19 @@ var pprintASTTests = tt.Table{
 	tt.Args(n).Rets(
 		`Chunk
   Pipeline/Form
-    Compound/Indexing/Primary ExprCtx=CmdExpr Type=Bareword Value="ls"
+    Compound/Indexing/Primary ExprCtx=CmdExpr Type=Bareword LegacyLambda=false Value="ls"
     Compound ExprCtx=NormalExpr
       Indexing ExprCtx=NormalExpr
-        Primary ExprCtx=NormalExpr Type=Variable Value="x"
-        Array/Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword Value="0"
+        Primary ExprCtx=NormalExpr Type=Variable LegacyLambda=false Value="x"
+        Array/Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword LegacyLambda=false Value="0"
       Indexing ExprCtx=NormalExpr
-        Primary ExprCtx=NormalExpr Type=Variable Value="y"
-        Array/Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword Value="1"
+        Primary ExprCtx=NormalExpr Type=Variable LegacyLambda=false Value="y"
+        Array/Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword LegacyLambda=false Value="1"
   Pipeline/Form
-    Compound/Indexing/Primary ExprCtx=CmdExpr Type=Bareword Value="echo"
-    Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword Value="done"
+    Compound/Indexing/Primary ExprCtx=CmdExpr Type=Bareword LegacyLambda=false Value="echo"
+    Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword LegacyLambda=false Value="done"
     Redir Mode=Write RightIsFd=false
-      Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword Value="/redir-dest"
+      Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword LegacyLambda=false Value="/redir-dest"
 `),
 }
 

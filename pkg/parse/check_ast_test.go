@@ -84,8 +84,9 @@ func checkAST(n Node, want ast) error {
 			}
 		} else {
 			// Not specified. Check if got is a zero value of its type.
-			if !reflect.DeepEqual(got, reflect.Zero(reflect.TypeOf(got)).Interface()) {
-				return fmt.Errorf("want zero, got %v (field %s of: %s)", got, fieldname, summary(n))
+			zero := reflect.Zero(reflect.TypeOf(got)).Interface()
+			if !reflect.DeepEqual(got, zero) {
+				return fmt.Errorf("want %v, got %v (field %s of: %s)", zero, got, fieldname, summary(n))
 			}
 		}
 	}

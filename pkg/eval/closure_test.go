@@ -38,13 +38,13 @@ func TestClosureAsValue(t *testing.T) {
 		That("put [@r]{ }[rest-arg]").Puts("0"),
 		That("all [&opt=def]{ }[opt-names]").Puts("opt"),
 		That("all [&opt=def]{ }[opt-defaults]").Puts("def"),
-		That("put { body }[body]").Puts(" body "),
+		That("put { body }[body]").Puts("body "),
 		That("put [x @y]{ body }[def]").Puts("[x @y]{ body }"),
 		That("put { body }[src][code]").
 			Puts("put { body }[src][code]"),
 
 		// Regression test for https://b.elv.sh/1126
-		That("fn f { body }; put $f~[body]").Puts(" body "),
+		That("fn f { body }; put $f~[body]").Puts("body "),
 	)
 }
 
