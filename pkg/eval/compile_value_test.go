@@ -234,3 +234,7 @@ func TestClosure(t *testing.T) {
 		That("[@a @b]{ }").DoesNotCompile(),
 	)
 }
+
+func TestClosure_LegacySyntaxIsDeprecated(t *testing.T) {
+	testCompileTimeDeprecation(t, "a = []{ }", "legacy lambda syntax is deprecated", 17)
+}
