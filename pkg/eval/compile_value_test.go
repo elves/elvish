@@ -177,6 +177,12 @@ func TestVariableUse(t *testing.T) {
 	)
 }
 
+func TestVariableUse_DeprecatedSpecialNamespaces(t *testing.T) {
+	testCompileTimeDeprecation(t, "var a; put $local:a", "the local: special namespace is deprecated", 17)
+	testCompileTimeDeprecation(t, "var a; { put $up:a }", "the up: special namespace is deprecated", 17)
+	testCompileTimeDeprecation(t, "var a; { put $:a }", "the empty namespace is deprecated", 17)
+}
+
 func TestClosure(t *testing.T) {
 	Test(t,
 		That("[]{ }").DoesNothing(),

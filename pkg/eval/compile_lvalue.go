@@ -88,6 +88,11 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvalues
 			ref = &varRef{localScope,
 				staticVarInfo{name, false, false}, cp.thisScope().add(name), nil}
 		} else if len(segs) == 2 && (segs[0] == "local:" || segs[0] == ":") {
+			if segs[0] == "local:" {
+				cp.deprecate(n, "the local: special namespace is deprecated; use the variable directly", 17)
+			} else {
+				cp.deprecate(n, "the empty namespace is deprecated; use the variable directly", 17)
+			}
 			name := segs[1]
 			// Qualified local name
 			ref = &varRef{localScope,

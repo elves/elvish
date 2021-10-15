@@ -247,6 +247,16 @@ func TestCommand_LegacyAssignmentIsDeprecated(t *testing.T) {
 	testCompileTimeDeprecation(t, "a = foo", "legacy assignment form is deprecated", 17)
 }
 
+func TestCommand_DeprecatedSpecialNamespacesInAssignment(t *testing.T) {
+	testCompileTimeDeprecation(t, "var local:a = foo", "the local: special namespace is deprecated", 17)
+	testCompileTimeDeprecation(t, "var a; set local:a = foo", "the local: special namespace is deprecated", 17)
+
+	testCompileTimeDeprecation(t, "var a; { set up:a = foo }", "the up: special namespace is deprecated", 17)
+
+	testCompileTimeDeprecation(t, "var :a = foo", "the empty namespace is deprecated", 17)
+	testCompileTimeDeprecation(t, "var a; { set :a = foo }", "the empty namespace is deprecated", 17)
+}
+
 func TestCommand_Redir(t *testing.T) {
 	setup := func(ev *Evaler) {
 		ev.AddGlobal(NsBuilder{}.AddNs("file", file.Ns).Ns())

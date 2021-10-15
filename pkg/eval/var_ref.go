@@ -51,7 +51,12 @@ type scopeSearcher interface {
 
 // Resolves a qname into a varRef.
 func resolveVarRef(s scopeSearcher, qname string, r diag.Ranger) *varRef {
-	qname = strings.TrimPrefix(qname, ":")
+	if strings.HasPrefix(qname, ":") {
+		qname = qname[1:]
+		if cp, ok := s.(*compiler); ok {
+			cp.deprecate(r, "the empty namespace is deprecated; use the variable directly instead", 17)
+		}
+	}
 	if ref := resolveVarRefLocal(s, qname); ref != nil {
 		return ref
 	}
@@ -86,8 +91,14 @@ func resolveVarRefBuiltin(s scopeSearcher, qname string, r diag.Ranger) *varRef 
 		// Try special namespace first.
 		switch first {
 		case "local:":
+			if cp, ok := s.(*compiler); ok {
+				cp.deprecate(r, "the local: special namespace is deprecated; use the variable directly instead", 17)
+			}
 			return resolveVarRefLocal(s, rest)
 		case "up:":
+			if cp, ok := s.(*compiler); ok {
+				cp.deprecate(r, "the up: special namespace is deprecated; use the variable directly if it is not shadowed", 17)
+			}
 			return resolveVarRefCapture(s, rest)
 		case "e:":
 			if strings.HasSuffix(rest, FnSuffix) {
