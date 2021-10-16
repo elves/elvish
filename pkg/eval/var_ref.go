@@ -166,12 +166,12 @@ func derefBase(fm *Frame, ref *varRef) (vars.Var, []string) {
 }
 
 func (cp *compiler) searchLocal(k string) (staticVarInfo, int) {
-	return cp.thisScope().lookupInfo(k)
+	return cp.thisScope().lookup(k)
 }
 
 func (cp *compiler) searchCapture(k string) (staticVarInfo, int) {
 	for i := len(cp.scopes) - 2; i >= 0; i-- {
-		info, index := cp.scopes[i].lookupInfo(k)
+		info, index := cp.scopes[i].lookup(k)
 		if index != -1 {
 			// Record the capture from i+1 to len(cp.scopes)-1, and reuse the
 			// index to keep the index into the previous scope.
@@ -186,7 +186,7 @@ func (cp *compiler) searchCapture(k string) (staticVarInfo, int) {
 }
 
 func (cp *compiler) searchBuiltin(k string, r diag.Ranger) (staticVarInfo, int) {
-	info, index := cp.builtin.lookupInfo(k)
+	info, index := cp.builtin.lookup(k)
 	if index != -1 {
 		cp.checkDeprecatedBuiltin(k, r)
 	}
@@ -194,13 +194,13 @@ func (cp *compiler) searchBuiltin(k string, r diag.Ranger) (staticVarInfo, int) 
 }
 
 func (fm *Frame) searchLocal(k string) (staticVarInfo, int) {
-	return fm.local.lookupInfo(k)
+	return fm.local.lookup(k)
 }
 
 func (fm *Frame) searchCapture(k string) (staticVarInfo, int) {
-	return fm.up.lookupInfo(k)
+	return fm.up.lookup(k)
 }
 
 func (fm *Frame) searchBuiltin(k string, r diag.Ranger) (staticVarInfo, int) {
-	return fm.Evaler.Builtin().lookupInfo(k)
+	return fm.Evaler.Builtin().lookup(k)
 }

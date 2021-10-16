@@ -93,22 +93,18 @@ func (ns *Ns) Index(k interface{}) (interface{}, bool) {
 	return nil, false
 }
 
-// IndexName looks up a variable with the given name, and returns its value if it exists, or nil if
-// it does not. This is the type-safe version of Index and is useful for introspection from Go code.
+// IndexName looks up a variable with the given name, and returns its value if
+// it exists, or nil if it does not. This is the type-safe version of Index and
+// is useful for introspection from Go code.
 func (ns *Ns) IndexName(k string) vars.Var {
-	i := ns.lookup(k)
+	_, i := ns.lookup(k)
 	if i != -1 {
 		return ns.slots[i]
 	}
 	return nil
 }
 
-func (ns *Ns) lookup(k string) int {
-	_, i := ns.lookupInfo(k)
-	return i
-}
-
-func (ns *Ns) lookupInfo(k string) (staticVarInfo, int) {
+func (ns *Ns) lookup(k string) (staticVarInfo, int) {
 	for i, info := range ns.infos {
 		if info.name == k && !info.deleted {
 			return info, i
@@ -213,29 +209,20 @@ func (ns *staticNs) clone() *staticNs {
 }
 
 func (ns *staticNs) del(k string) {
-	if i := ns.lookup(k); i != -1 {
+	if _, i := ns.lookup(k); i != -1 {
 		ns.infos[i].deleted = true
 	}
 }
 
-// Adds a name, shadowing any existing one.
+// Adds a name, shadowing any existing one, and returns the index for the new
+// name.
 func (ns *staticNs) add(k string) int {
 	ns.del(k)
-	return ns.addInner(k)
-}
-
-// Adds a name, assuming that it either doesn't exist yet or has been deleted.
-func (ns *staticNs) addInner(k string) int {
 	ns.infos = append(ns.infos, staticVarInfo{k, false, false})
 	return len(ns.infos) - 1
 }
 
-func (ns *staticNs) lookup(k string) int {
-	_, i := ns.lookupInfo(k)
-	return i
-}
-
-func (ns *staticNs) lookupInfo(k string) (staticVarInfo, int) {
+func (ns *staticNs) lookup(k string) (staticVarInfo, int) {
 	for i, info := range ns.infos {
 		if info.name == k && !info.deleted {
 			return info, i
