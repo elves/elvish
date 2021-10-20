@@ -91,7 +91,7 @@ the `PATH` instead and create a desktop shortcut.
 
 # Using Elvish as your default shell
 
-On non-Windows systems, the best way to use Elvish as your default shell is to
+The best way to use Elvish as your default shell is to
 configure your terminal to launch Elvish:
 
 <table>
@@ -124,6 +124,33 @@ configure your terminal to launch Elvish:
       <span class="key">Login Shell</span> to
       <span class="key">Custom Shell</span>, and put the path to Elvish in the
       textbox.
+    </td>
+  </tr>
+  <tr class="table-section">
+    <td colspan="2" class="notice">
+      Terminals for Windows
+    </td>
+  </tr>
+  <tr>
+    <td>Windows Terminal</td>
+    <td>
+      Press <span class="key">Ctrl</span>+<span class="key">,</span> to
+      open <i>Settings</i>. Go to <span class="key">Add a new profile &gt; New
+      empty profile</span>. Fill in the 'Name' and enter path to Elvish in
+      the 'Command line' textbox. Go to <span class="key">Startup</span>
+      option and select Elvish as the 'Default profile'. Hit
+      <span class="key">Save</span>.
+    </td>
+  </tr>
+  <tr>
+    <td>ConEmu</td>
+    <td>
+      Press <span class="key">Win</span>+<span class="key">Alt</span>+
+      <span class="key">T</span> to open the <i>Startup Tasks</i> dialog.
+      Click on <span class="key">±</span> button to create a new task,
+      give it Elvish alias, enter the path to Elvish in the 'Commands'
+      textbox and tick the 'Default task for new console' checkbox.
+      Click on <span class="key">Save settings</span> to finish.
     </td>
   </tr>
   <tr class="table-section">
@@ -262,6 +289,15 @@ To install from MacPorts:
 ```elvish
 sudo port selfupdate
 sudo port install elvish
+```
+
+## Windows
+
+Elvish is available in the Main bucket of [Scoop](https://scoop.sh). This will
+install the latest release:
+
+```elvish
+scoop install elvish
 ```
 
 ## FreeBSD
