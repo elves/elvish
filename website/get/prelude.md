@@ -293,8 +293,9 @@ sudo port install elvish
 
 ## Windows
 
-Elvish is available in the Main bucket of [Scoop](https://scoop.sh). This will
-install the latest release:
+Elvish is available in the Main
+[bucket](https://github.com/ScoopInstaller/Main/blob/master/bucket/elvish.json)
+of [Scoop](https://scoop.sh). This will install the latest release:
 
 ```elvish
 scoop install elvish
