@@ -153,8 +153,8 @@ func TestDrop(t *testing.T) {
 func TestHasKey(t *testing.T) {
 	Test(t,
 		That(`has-key [foo bar] 0`).Puts(true),
-		That(`has-key [foo bar] 0:1`).Puts(true),
-		That(`has-key [foo bar] 0:20`).Puts(false),
+		That(`has-key [foo bar] 0..1`).Puts(true),
+		That(`has-key [foo bar] 0..20`).Puts(false),
 		That(`has-key [&lorem=ipsum &foo=bar] lorem`).Puts(true),
 		That(`has-key [&lorem=ipsum &foo=bar] loremwsq`).Puts(false),
 	)
