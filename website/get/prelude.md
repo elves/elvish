@@ -91,8 +91,8 @@ the `PATH` instead and create a desktop shortcut.
 
 # Using Elvish as your default shell
 
-The best way to use Elvish as your default shell is to
-configure your terminal to launch Elvish:
+The best way to use Elvish as your default shell is to configure your terminal
+to launch Elvish:
 
 <table>
   <tr>
