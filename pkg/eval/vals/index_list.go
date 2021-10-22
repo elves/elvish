@@ -137,9 +137,6 @@ func parseIndexString(s string, n int) (slice bool, i int, j int, err error) {
 }
 
 func splitIndexString(s string) (low, sep, high string) {
-	if i := strings.IndexRune(s, ':'); i >= 0 {
-		return s[:i], ":", s[i+1:]
-	}
 	if i := strings.Index(s, "..="); i >= 0 {
 		return s[:i], "..=", s[i+3:]
 	}

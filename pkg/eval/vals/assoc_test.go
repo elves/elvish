@@ -19,8 +19,8 @@ func (a customAssocer) Assoc(k, v interface{}) (interface{}, error) {
 func TestAssoc(t *testing.T) {
 	Test(t, Fn("Assoc", Assoc), Table{
 		Args("0123", "0", "foo").Rets("foo123", nil),
-		Args("0123", "1:3", "bar").Rets("0bar3", nil),
-		Args("0123", "1:3", 12).Rets(nil, errReplacementMustBeString),
+		Args("0123", "1..3", "bar").Rets("0bar3", nil),
+		Args("0123", "1..3", 12).Rets(nil, errReplacementMustBeString),
 		Args("0123", "x", "y").Rets(nil, errIndexMustBeInteger),
 
 		Args(MakeList("0", "1", "2", "3"), "0", "foo").Rets(
@@ -31,7 +31,7 @@ func TestAssoc(t *testing.T) {
 		Args(MakeList("0"), "1", "x").Rets(nil, errs.OutOfRange{
 			What: "index", ValidLow: "0", ValidHigh: "0", Actual: "1"}),
 		// TODO: Support list assoc with slice
-		Args(MakeList("0", "1", "2", "3"), "1:3", MakeList("foo")).Rets(
+		Args(MakeList("0", "1", "2", "3"), "1..3", MakeList("foo")).Rets(
 			nil, errAssocWithSlice),
 
 		Args(MakeMap("k", "v", "k2", "v2"), "k", "newv").Rets(

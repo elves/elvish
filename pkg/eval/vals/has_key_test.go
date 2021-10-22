@@ -23,7 +23,7 @@ func TestHasKey(t *testing.T) {
 		Args(keysIterator{vs("lorem")}, "ipsum").Rets(false),
 		// Fallback to Len
 		Args(MakeList("lorem", "ipsum"), "0").Rets(true),
-		Args(MakeList("lorem", "ipsum"), "0:").Rets(true),
+		Args(MakeList("lorem", "ipsum"), "0..").Rets(true),
 		Args(MakeList("lorem", "ipsum"), "2").Rets(false),
 
 		// Non-container
