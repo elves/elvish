@@ -231,7 +231,7 @@ see [this Repology page](https://repology.org/project/elvish/versions).
 ## Arch Linux
 
 Elvish is available in the official repository. This will install the latest
-release:
+packaged release:
 
 ```elvish
 pacman -S elvish
@@ -253,7 +253,7 @@ RPM packages are available from
 ```elvish
 # Add FZUG repo
 dnf config-manager --add-repo=http://repo.fdzh.org/FZUG/FZUG.repo
-# Install Elvish
+# Install latest packaged release
 dnf install elvish
 ```
 
@@ -278,7 +278,7 @@ Elvish is packaged by both [Homebrew](https://brew.sh) and
 To install from Homebrew:
 
 ```elvish
-# Install latest release
+# Install latest packaged release
 brew install elvish
 # Or install HEAD:
 brew install --HEAD elvish
@@ -295,7 +295,7 @@ sudo port install elvish
 
 Elvish is available in the Main
 [bucket](https://github.com/ScoopInstaller/Main/blob/master/bucket/elvish.json)
-of [Scoop](https://scoop.sh). This will install the latest release:
+of [Scoop](https://scoop.sh). This will install the latest packaged release:
 
 ```elvish
 scoop install elvish
@@ -304,7 +304,7 @@ scoop install elvish
 ## FreeBSD
 
 Elvish is available in the FreeBSD ports tree and as a prebuilt package. Both
-methods will install the latest release.
+methods will install the latest packaged release.
 
 To install with `pkg`:
 
@@ -322,7 +322,7 @@ make install
 ## OpenBSD
 
 Elvish is available in the official OpenBSD package repository. This will
-install the latest release:
+install the latest packaged release:
 
 ```elvish
 doas pkg_add elvish
@@ -334,7 +334,7 @@ Elvish is packaged in
 [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/shells/elvish/default.nix):
 
 ```elvish
-# Install latest release
+# Install latest packaged release
 nix-env -i elvish
 ```
 
