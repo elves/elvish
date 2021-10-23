@@ -2433,13 +2433,15 @@ imported by the `use` command:
 
 ### User-defined modules
 
-You can define your own modules in Elvish by putting them under `~/.elvish/lib`
-and giving them a `.elv` extension (but see
-[relative imports](#relative-imports) for an alternative). For instance, to
-define a module named `a`, store it in `~/.elvish/lib/a.elv`:
+You can define your own modules in Elvish by putting them under one of the
+[module search directories](command.html#module-search-directories) and giving
+them a `.elv` extension (but see [relative imports](#relative-imports) for an
+alternative). For instance, to define a module named `a`, you can put the
+following in `~/.config/elvish/lib/a.elv` (on Windows, replace `~/.config` with
+`~\AppData\Roaming`):
 
 ```elvish-transcript
-~> cat ~/.elvish/lib/a.elv
+~> cat ~/.config/elvish/lib/a.elv
 echo "mod a loading"
 fn f {
   echo "f from mod a"
@@ -2455,11 +2457,11 @@ mod a loading
 f from mod a
 ```
 
-Similarly, a module defined in `~/.elvish/lib/x/y/z.elv` can be imported by
-`use x/y/z`:
+Similarly, a module defined in `~/.config/elvish/lib/x/y/z.elv` can be imported
+by `use x/y/z`:
 
 ```elvish-transcript
-~> cat .elvish/lib/x/y/z.elv
+~> cat .config/elvish/lib/x/y/z.elv
 fn f {
   echo "f from x/y/z"
 }
@@ -2560,7 +2562,7 @@ external command `ls`, unless you shadow it in the very same module.
 Modules are cached after one import. Subsequent imports do not re-execute the
 module; they only serve the bring it into the current scope. Moreover, the cache
 is keyed by the path of the module, not the name under which it is imported. For
-instance, if you have the following in `~/.elvish/lib/a/b.elv`:
+instance, if you have the following in `~/.config/elvish/lib/a/b.elv`:
 
 ```elvish
 echo importing

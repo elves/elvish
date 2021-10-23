@@ -38,16 +38,19 @@ Once installed, modules in this package can be imported with
 This is a sample function in a sample module in a sample package
 ```
 
-# Directory managed by `epm`
+# The `epm`-managed directory
 
-Elvish searches for modules in [multiple
-directories](command.html#module-search-directories], and `epm` only manages one
-of them:
+Elvish searches for modules in
+[multiple directories](command.html#module-search-directories), and `epm` only
+manages one of them:
 
 -   On UNIX, `epm` manages `$XDG_DATA_HOME/elvish/lib`, defaulting to
     `~/.local/share/elvish/lib` if `$XDG_DATA_HOME` is unset or empty;
 
 -   On Windows, `epm` manages `%LocalAppData%\elvish\lib`.
+
+This directory is called the `epm`-managed directory, and its path is available
+as [`$epm:managed-dir`](#epm-managed-dir).
 
 # Custom package domains
 
@@ -59,9 +62,9 @@ be fetched. For example, the package hosted at
 https://github.com/elves/sample-pkg is identified as
 `github.com/elves/sample-pkg`.
 
-Packages are stored under `~/.elvish/lib/` in a path identical to their name.
-For example, the package mentioned above is stored at
-`~/.elvish/lib/github.com/elves/sample-pkg`.
+Packages are stored under the `epm`-managed directory in a path identical to
+their name. For example, the package mentioned above is stored at
+`$epm:managed-dir/github.com/elves/sample-pkg`.
 
 Each domain must be configured with the following information:
 
@@ -93,10 +96,10 @@ Each domain must be configured with the following information:
 ```
 
 You can define your own domain by creating a file named `epm-domain.cfg` in the
-appropriate directory under `~/.elvish/lib/`. For example, if you want to define
-an `elvish-dev` domain which installs packages from your local `~/dev/elvish/`
-directory, you must create the file `~/.elvish/lib/elvish-dev/epm-domain.cfg`
-with the following JSON content:
+appropriate directory under `$epm:managed-dir`. For example, if you want to
+define an `elvish-dev` domain which installs packages from your local
+`~/dev/elvish/` directory, you must create the file
+`$epm:managed-dir/elvish-dev/epm-domain.cfg` with the following JSON content:
 
 ```json
 {
@@ -108,11 +111,11 @@ with the following JSON content:
 
 You can then install any directory under `~/dev/elvish/` as a package. For
 example, if you have a directory `~/dev/elvish/utilities/`, the following
-command will install it under `~/.elvish/lib/elvish-dev/utilities`:
+command will install it under `$epm:managed-dir/elvish-dev/utilities`:
 
 ```elvish
 epm:install elvish-dev/utilities
 ```
 
 When you make any changes to your source directory, `epm:upgrade` will
-synchronize those changes to `~/.elvish/lib`.
+synchronize those changes to `$epm:managed-dir`.

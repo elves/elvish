@@ -24,8 +24,11 @@ debug-mode = $false
   ]
 ]
 
-# Internal configuration
--lib-dir = (
+#elvdoc:var managed-dir
+#
+# The path of the `epm`-managed directory.
+
+managed-dir = (
   if $platform:is-windows {
     put $E:LocalAppData/elvish/lib
   } elif (not-eq $E:XDG_DATA_HOME '') {
@@ -60,7 +63,7 @@ fn -error [text]{
 }
 
 fn dest [pkg]{
-  put $-lib-dir/$pkg
+  put $managed-dir/$pkg
 }
 
 #elvdoc:fn is-installed
@@ -162,7 +165,7 @@ fn -tilde-expand [p]{
 # Return the filename of the domain config file for the given domain
 # (regardless of whether it exists)
 fn -domain-config-file [dom]{
-  put $-lib-dir/$dom/epm-domain.cfg
+  put $managed-dir/$dom/epm-domain.cfg
 }
 
 # Return the filename of the metadata file for the given package
@@ -337,16 +340,16 @@ fn query [pkg]{
 
 # List installed packages
 fn installed {
-  put $-lib-dir/*[nomatch-ok] | each [dir]{
-    dom = (str:replace $-lib-dir/ '' $dir)
+  put $managed-dir/*[nomatch-ok] | each [dir]{
+    dom = (str:replace $managed-dir/ '' $dir)
     cfg = (-domain-config $dom)
     # Only list domains for which we know the config, so that the user
     # can have his own non-package directories under ~/.elvish/lib
     # without conflicts.
     if $cfg {
       lvl = $cfg[levels]
-      pat = '^\Q'$-lib-dir'/\E('(repeat (+ $lvl 1) '[^/]+' | str:join '/')')/$'
-      put (each [d]{ re:find $pat $d } [ $-lib-dir/$dom/**[nomatch-ok]/ ] )[groups][1][text]
+      pat = '^\Q'$managed-dir'/\E('(repeat (+ $lvl 1) '[^/]+' | str:join '/')')/$'
+      put (each [d]{ re:find $pat $d } [ $managed-dir/$dom/**[nomatch-ok]/ ] )[groups][1][text]
     }
   }
 }

@@ -760,9 +760,10 @@ example, [the `str:` module](../ref/str.html) provides string utilities:
 ▶ FOO
 ```
 
-You can define your own modules by putting `.elv` files in `~/.elvish/lib`. For
-example, to define a module called `foo`, put the following in
-`~/.elvish/lib/foo.elv`:
+You can define your own modules by putting `.elv` files in
+`~/.config/elvish/lib` (or `~\AppData\Roaming\elvish\lib`). For example, to
+define a module called `foo`, put the following in `foo.elv` under the
+aforementioned directory:
 
 ```elvish
 fn f {
