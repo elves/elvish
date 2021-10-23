@@ -322,10 +322,10 @@ func TestUse_SetsVariableCorrectlyIfModuleCallsAddGlobal(t *testing.T) {
 	}
 
 	g := ev.Global()
-	if g.IndexName("a:").Get().(*Ns) == nil {
+	if g.IndexString("a:").Get().(*Ns) == nil {
 		t.Errorf("$a: is nil")
 	}
-	if g.IndexName("b").Get().(string) != "foo" {
+	if g.IndexString("b").Get().(string) != "foo" {
 		t.Errorf(`$b is not "foo"`)
 	}
 }

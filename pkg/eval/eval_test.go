@@ -73,7 +73,7 @@ func TestEval_AlternativeGlobal(t *testing.T) {
 		t.Errorf("got error %v, want nil", err)
 	}
 	// Regression test for #1223
-	if ev.Global().HasName("a") {
+	if ev.Global().HasKeyString("a") {
 		t.Errorf("$a from alternative global leaked into Evaler global")
 	}
 }
@@ -93,10 +93,10 @@ func TestEval_Concurrent(t *testing.T) {
 	}()
 	wg.Wait()
 	g := ev.Global()
-	if !g.HasName("a") {
+	if !g.HasKeyString("a") {
 		t.Errorf("variable $a not created")
 	}
-	if !g.HasName("b") {
+	if !g.HasKeyString("b") {
 		t.Errorf("variable $b not created")
 	}
 }

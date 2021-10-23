@@ -11,17 +11,21 @@ import (
 // Ns is the runtime representation of a namespace. The zero value of Ns is an
 // empty namespace. To create a non-empty Ns, use either NsBuilder or CombineNs.
 //
-// An Ns is immutable after creation.
+// An Ns is immutable after its associated code chunk has finished execution.
 type Ns struct {
 	// All variables in the namespace. Static variable accesses are compiled
 	// into indexed accesses into this slice.
 	slots []vars.Var
-	// Static information for each variable, including the variable name.
+	// Static information for each variable, reflecting the state when the
+	// associated code chunk has finished execution.
 	//
-	// This slice is used for various purposes in introspection and compilation.
-	// Variable lookup by name also uses this; since typical real programs only
-	// contain a small number of names in each namespace, in which case a linear
-	// search in a slice is usually faster than map access.
+	// This is only used for introspection and seeding the compilation of a new
+	// code chunk. Normal static variable accesses are compiled into indexed
+	// accesses into the slots slice.
+	//
+	// This is a slice instead of a map with the names of variables as keys,
+	// because most namespaces are small enough for linear lookup to be faster
+	// than map access.
 	infos []staticVarInfo
 }
 
@@ -84,7 +88,7 @@ func (ns *Ns) Repr(int) string {
 // introspection from Go code, use IndexName.
 func (ns *Ns) Index(k interface{}) (interface{}, bool) {
 	if ks, ok := k.(string); ok {
-		variable := ns.IndexName(ks)
+		variable := ns.IndexString(ks)
 		if variable == nil {
 			return nil, false
 		}
@@ -96,7 +100,7 @@ func (ns *Ns) Index(k interface{}) (interface{}, bool) {
 // IndexName looks up a variable with the given name, and returns its value if
 // it exists, or nil if it does not. This is the type-safe version of Index and
 // is useful for introspection from Go code.
-func (ns *Ns) IndexName(k string) vars.Var {
+func (ns *Ns) IndexString(k string) vars.Var {
 	_, i := ns.lookup(k)
 	if i != -1 {
 		return ns.slots[i]
@@ -115,8 +119,8 @@ func (ns *Ns) lookup(k string) (staticVarInfo, int) {
 
 // IterateKeys produces the names of all the variables in this Ns.
 func (ns *Ns) IterateKeys(f func(interface{}) bool) {
-	for i, info := range ns.infos {
-		if ns.slots[i] == nil || info.deleted {
+	for _, info := range ns.infos {
+		if info.deleted {
 			continue
 		}
 		if !f(info.name) {
@@ -125,22 +129,22 @@ func (ns *Ns) IterateKeys(f func(interface{}) bool) {
 	}
 }
 
-// IterateNames produces the names of all variables in the Ns. It is the
+// IterateKeysString produces the names of all variables in the Ns. It is the
 // type-safe version of IterateKeys and is useful for introspection from Go
 // code. It doesn't support breaking early.
-func (ns *Ns) IterateNames(f func(string)) {
-	for i, info := range ns.infos {
-		if ns.slots[i] != nil && !info.deleted {
+func (ns *Ns) IterateKeysString(f func(string)) {
+	for _, info := range ns.infos {
+		if !info.deleted {
 			f(info.name)
 		}
 	}
 }
 
-// HasName reports whether the Ns has a variable with the given name.
-func (ns *Ns) HasName(k string) bool {
-	for i, info := range ns.infos {
+// HasKeyString reports whether the Ns has a variable with the given name.
+func (ns *Ns) HasKeyString(k string) bool {
+	for _, info := range ns.infos {
 		if info.name == k && !info.deleted {
-			return ns.slots[i] != nil
+			return true
 		}
 	}
 	return false
