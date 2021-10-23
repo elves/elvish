@@ -84,6 +84,8 @@ directories:
 
 -   On Windows: `%AppData%\elvish\lib`, followed by `%LocalAppData%\elvish\lib`.
 
+If the legacy `~/.elvish/lib` directory exists, it is also searched.
+
 # Other command-line flags
 
 Running `elvish -help` lists all supported command-line flags, which are not
