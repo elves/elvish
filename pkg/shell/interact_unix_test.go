@@ -44,7 +44,13 @@ func TestInteract_ConnectsToDaemon(t *testing.T) {
 
 	// Run the daemon in the same process for simplicity.
 	daemonDone := make(chan struct{})
-	defer func() { <-daemonDone }()
+	defer func() {
+		select {
+		case <-daemonDone:
+		case <-time.After(Scaled(2 * time.Second)):
+			t.Errorf("timed out waiting for daemon to quit")
+		}
+	}()
 	readyCh := make(chan struct{})
 	go func() {
 		daemon.Serve("sock", "db", daemon.ServeOpts{Ready: readyCh})
