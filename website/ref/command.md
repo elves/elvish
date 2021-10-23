@@ -9,8 +9,8 @@ modules.
 
 # Using Elvish interactively
 
-Invoking Elvish with no argument (other than flags and their arguments) runs it
-in **interactive mode**.
+Invoking Elvish with no argument runs it in **interactive mode** (unless there
+are flags that suppress this behavior).
 
 In this mode, Elvish runs a REPL
 ([read-eval-print loop](https://en.wikipedia.org/wiki/Read–eval–print_loop))
@@ -54,8 +54,8 @@ history. Its path is determined as follows:
 
 # Running a script
 
-Invoking Elvish with one or more arguments (excluding flags and their arguments)
-will cause Elvish to execute a script.
+Invoking Elvish with one or more arguments will cause Elvish to execute a script
+(unless there are flags that suppress this behavior).
 
 If the `-c` flag is given, the first argument is executed as a single
 [code chunk](language.html#code-chunk).
