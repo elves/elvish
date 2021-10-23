@@ -329,11 +329,14 @@ func replace(opts maxOpt, old, repl, s string) string {
 //elvdoc:fn split
 //
 // ```elvish
-// str:split $sep $string
+// str:split &max=-1 $sep $string
 // ```
 //
 // Splits `$string` by `$sep`. If `$sep` is an empty string, split it into
 // codepoints.
+//
+// If the `&max` option is non-negative, stops after producing the maximum
+// number of results.
 //
 // ```elvish-transcript
 // ~> str:split , lorem,ipsum
@@ -342,6 +345,9 @@ func replace(opts maxOpt, old, repl, s string) string {
 // ~> str:split '' 你好
 // ▶ 你
 // ▶ 好
+// ~> str:split &max=2 ' ' 'a b c d'
+// ▶ a
+// ▶ 'b c d'
 // ```
 //
 // **Note**: This command does not support splitting by regular expressions,
