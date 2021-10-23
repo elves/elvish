@@ -8,7 +8,7 @@ import (
 )
 
 func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
-	nb.AddGoFns("<edit>:", map[string]interface{}{
+	nb.AddGoFns(map[string]interface{}{
 		"add-var":  addVar,
 		"add-vars": addVars,
 	})
@@ -45,7 +45,7 @@ func addVar(fm *eval.Frame, name string, val interface{}) error {
 	if err != nil {
 		return err
 	}
-	fm.Evaler.AddGlobal(eval.NsBuilder{name: vars.FromInit(val)}.Ns())
+	fm.Evaler.ExtendGlobal(eval.BuildNs().AddVar(name, vars.FromInit(val)))
 	return nil
 }
 
@@ -59,7 +59,7 @@ func addVar(fm *eval.Frame, name string, val interface{}) error {
 // `edit:add-var` for each key-value pair in the map.
 
 func addVars(fm *eval.Frame, m vals.Map) error {
-	nb := eval.NsBuilder{}
+	nb := eval.BuildNs()
 	for it := m.Iterator(); it.HasElem(); it.Next() {
 		k, val := it.Elem()
 		name, ok := k.(string)
@@ -78,8 +78,8 @@ func addVars(fm *eval.Frame, m vals.Map) error {
 		if err != nil {
 			return err
 		}
-		nb[name] = variable
+		nb.AddVar(name, variable)
 	}
-	fm.Evaler.AddGlobal(nb.Ns())
+	fm.Evaler.ExtendGlobal(nb)
 	return nil
 }

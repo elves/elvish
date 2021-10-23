@@ -26,7 +26,7 @@ import (
 func initMaxHeight(appSpec *cli.AppSpec, nb eval.NsBuilder) {
 	maxHeight := newIntVar(-1)
 	appSpec.MaxHeight = func() int { return maxHeight.GetRaw().(int) }
-	nb.Add("max-height", maxHeight)
+	nb.AddVar("max-height", maxHeight)
 }
 
 func initReadlineHooks(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder) {
@@ -41,7 +41,7 @@ func initReadlineHooks(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder)
 
 func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder) {
 	hook := newListVar(vals.EmptyList)
-	nb["before-readline"] = hook
+	nb.AddVar("before-readline", hook)
 	appSpec.BeforeReadline = append(appSpec.BeforeReadline, func() {
 		callHooks(ev, "$<edit>:before-readline", hook.Get().(vals.List))
 	})
@@ -54,7 +54,7 @@ func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder
 
 func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder) {
 	hook := newListVar(vals.EmptyList)
-	nb["after-readline"] = hook
+	nb.AddVar("after-readline", hook)
 	appSpec.AfterReadline = append(appSpec.AfterReadline, func(code string) {
 		callHooks(ev, "$<edit>:after-readline", hook.Get().(vals.List), code)
 	})
@@ -74,7 +74,7 @@ func initAddCmdFilters(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder,
 	ignoreLeadingSpace := eval.NewGoFn("<ignore-cmd-with-leading-space>",
 		func(s string) bool { return !strings.HasPrefix(s, " ") })
 	filters := newListVar(vals.MakeList(ignoreLeadingSpace))
-	nb["add-cmd-filters"] = filters
+	nb.AddVar("add-cmd-filters", filters)
 
 	appSpec.AfterReadline = append(appSpec.AfterReadline, func(code string) {
 		if code != "" &&
@@ -95,7 +95,7 @@ func initAddCmdFilters(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder,
 func initGlobalBindings(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(emptyBindingsMap)
 	appSpec.GlobalBindings = newMapBindings(nt, ev, bindingVar)
-	nb.Add("global-binding", bindingVar)
+	nb.AddVar("global-binding", bindingVar)
 }
 
 func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}) {

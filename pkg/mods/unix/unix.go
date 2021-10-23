@@ -8,6 +8,7 @@ package unix
 
 import (
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vars"
 )
 
 // ExposeUnixNs indicate whether this module should be exposed as a usable
@@ -16,6 +17,7 @@ const ExposeUnixNs = true
 
 // Ns is an Elvish namespace that contains variables and functions that deal
 // with features unique to UNIX-like operating systems. On
-var Ns = eval.NsBuilder{
-	"umask": UmaskVariable{},
-}.Ns()
+var Ns = eval.BuildNs().
+	AddVars(map[string]vars.Var{
+		"umask": UmaskVariable{},
+	}).Ns()

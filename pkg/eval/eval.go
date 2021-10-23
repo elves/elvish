@@ -168,21 +168,17 @@ func NewEvaler() *Evaler {
 	ev.AfterChdir = []func(string){
 		adaptChdirHook("after-chdir", ev, &afterChdirElvish)}
 
-	moreBuiltins := NsBuilder{}.
-		Add("pwd", NewPwdVar(ev)).
-		Add("before-chdir", vars.FromPtr(&beforeChdirElvish)).
-		Add("after-chdir", vars.FromPtr(&afterChdirElvish)).
-		Add("value-out-indicator", vars.FromPtrWithMutex(
-			&ev.valuePrefix, &ev.mu)).
-		Add("notify-bg-job-success", vars.FromPtrWithMutex(
-			&ev.notifyBgJobSuccess, &ev.mu)).
-		Add("num-bg-jobs", vars.FromGet(func() interface{} {
-			return strconv.Itoa(ev.getNumBgJobs())
-		})).
-		Add("args", vars.FromGet(func() interface{} { return ev.Args })).
-		Ns()
-	builtin.slots = append(builtin.slots, moreBuiltins.slots...)
-	builtin.infos = append(builtin.infos, moreBuiltins.infos...)
+	ev.ExtendBuiltin(BuildNs().
+		AddVar("pwd", NewPwdVar(ev)).
+		AddVar("before-chdir", vars.FromPtr(&beforeChdirElvish)).
+		AddVar("after-chdir", vars.FromPtr(&afterChdirElvish)).
+		AddVar("value-out-indicator",
+			vars.FromPtrWithMutex(&ev.valuePrefix, &ev.mu)).
+		AddVar("notify-bg-job-success",
+			vars.FromPtrWithMutex(&ev.notifyBgJobSuccess, &ev.mu)).
+		AddVar("num-bg-jobs",
+			vars.FromGet(func() interface{} { return strconv.Itoa(ev.getNumBgJobs()) })).
+		AddVar("args", vars.FromGet(func() interface{} { return ev.Args })))
 
 	return ev
 }
@@ -217,11 +213,11 @@ func (ev *Evaler) Global() *Ns {
 	return ev.global
 }
 
-// AddGlobal merges the given *Ns into the global namespace.
-func (ev *Evaler) AddGlobal(ns *Ns) {
+// ExtendGlobal extends the global namespace with the given namespace.
+func (ev *Evaler) ExtendGlobal(ns Nser) {
 	ev.mu.Lock()
 	defer ev.mu.Unlock()
-	ev.global = CombineNs(ev.global, ns)
+	ev.global = CombineNs(ev.global, ns.Ns())
 }
 
 // Builtin returns the builtin Ns.
@@ -231,11 +227,11 @@ func (ev *Evaler) Builtin() *Ns {
 	return ev.builtin
 }
 
-// AddBuiltin merges the given *Ns into the builtin namespace.
-func (ev *Evaler) AddBuiltin(ns *Ns) {
+// ExtendBuiltin extends the builtin namespace with the given namespace.
+func (ev *Evaler) ExtendBuiltin(ns Nser) {
 	ev.mu.Lock()
 	defer ev.mu.Unlock()
-	ev.builtin = CombineNs(ev.builtin, ns)
+	ev.builtin = CombineNs(ev.builtin, ns.Ns())
 }
 
 func (ev *Evaler) registerDeprecation(d deprecation) bool {

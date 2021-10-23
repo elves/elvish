@@ -75,7 +75,7 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 	var ed editor
 	if sys.IsATTY(fds[0]) {
 		newed := edit.NewEditor(cli.NewTTY(fds[0], fds[2]), ev, ev.DaemonClient)
-		ev.AddBuiltin(eval.NsBuilder{}.AddNs("edit", newed.Ns()).Ns())
+		ev.ExtendBuiltin(eval.BuildNs().AddNs("edit", newed))
 		ev.BgJobNotify = newed.Notify
 		ed = newed
 	} else {

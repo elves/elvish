@@ -121,13 +121,12 @@ func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.N
 		quotePaste.Set(!quotePaste.Get().(bool))
 	}
 
-	nb.Add("abbr", abbrVar)
-	nb.Add("small-word-abbr", SmallWordAbbrVar)
-	nb.AddGoFn("<edit>", "toggle-quote-paste", toggleQuotePaste)
-	nb.AddNs("insert", eval.NsBuilder{
-		"binding":     bindingVar,
-		"quote-paste": quotePaste,
-	}.Ns())
+	nb.AddVar("abbr", abbrVar)
+	nb.AddVar("small-word-abbr", SmallWordAbbrVar)
+	nb.AddGoFn("toggle-quote-paste", toggleQuotePaste)
+	nb.AddNs("insert", eval.BuildNs().
+		AddVar("binding", bindingVar).
+		AddVar("quote-paste", quotePaste))
 }
 
 func makeMapIterator(mv vars.PtrVar) func(func(a, b string)) {

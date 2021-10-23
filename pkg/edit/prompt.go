@@ -59,19 +59,19 @@ func initPrompts(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.NsB
 
 	rpromptPersistentVar := newBoolVar(false)
 	appSpec.RPromptPersistent = func() bool { return rpromptPersistentVar.Get().(bool) }
-	nb["rprompt-persistent"] = rpromptPersistentVar
+	nb.AddVar("rprompt-persistent", rpromptPersistentVar)
 }
 
 func initPrompt(p *cli.Prompt, name string, val eval.Callable, nt notifier, ev *eval.Evaler, nb eval.NsBuilder) {
 	computeVar := vars.FromPtr(&val)
-	nb[name] = computeVar
+	nb.AddVar(name, computeVar)
 	eagernessVar := newIntVar(5)
-	nb["-"+name+"-eagerness"] = eagernessVar
+	nb.AddVar("-"+name+"-eagerness", eagernessVar)
 	staleThresholdVar := newFloatVar(0.2)
-	nb[name+"-stale-threshold"] = staleThresholdVar
+	nb.AddVar(name+"-stale-threshold", staleThresholdVar)
 	staleTransformVar := newFnVar(
 		eval.NewGoFn("<default stale transform>", defaultStaleTransform))
-	nb[name+"-stale-transform"] = staleTransformVar
+	nb.AddVar(name+"-stale-transform", staleTransformVar)
 
 	*p = prompt.New(prompt.Config{
 		Compute: func() ui.Text {

@@ -11,7 +11,14 @@ import (
 )
 
 // Ns is the namespace for the re: module.
-var Ns = eval.NsBuilder{}.AddGoFns("re:", fns).Ns()
+var Ns = eval.BuildNsNamed("re").
+	AddGoFns(map[string]interface{}{
+		"quote":   regexp.QuoteMeta,
+		"match":   match,
+		"find":    find,
+		"replace": replace,
+		"split":   split,
+	}).Ns()
 
 //elvdoc:fn quote
 //
@@ -27,14 +34,6 @@ var Ns = eval.NsBuilder{}.AddGoFns("re:", fns).Ns()
 // ~> re:quote '(*)'
 // ▶ '\(\*\)'
 // ```
-
-var fns = map[string]interface{}{
-	"quote":   regexp.QuoteMeta,
-	"match":   match,
-	"find":    find,
-	"replace": replace,
-	"split":   split,
-}
 
 //elvdoc:fn match
 //

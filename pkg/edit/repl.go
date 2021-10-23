@@ -40,10 +40,10 @@ func initRepl(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	var commandDuration float64
 	// TODO: Ensure that this variable can only be written from the Elvish code
 	// in elv_init.go.
-	nb.Add("command-duration", vars.FromPtr(&commandDuration))
+	nb.AddVar("command-duration", vars.FromPtr(&commandDuration))
 
 	afterCommandHook := newListVar(vals.EmptyList)
-	nb["after-command"] = afterCommandHook
+	nb.AddVar("after-command", afterCommandHook)
 	ed.AfterCommand = append(ed.AfterCommand,
 		func(src parse.Source, duration float64, err error) {
 			m := vals.MakeMap("src", src, "duration", duration, "error", err)

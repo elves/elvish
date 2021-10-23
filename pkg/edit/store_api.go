@@ -127,7 +127,7 @@ func insertLastWord(app cli.App, histStore histutil.Store) error {
 }
 
 func initStoreAPI(app cli.App, nb eval.NsBuilder, fuser histutil.Store) {
-	nb.AddGoFns("<edit>", map[string]interface{}{
+	nb.AddGoFns(map[string]interface{}{
 		"command-history": func(fm *eval.Frame, opts cmdhistOpt) error {
 			return commandHistory(opts, fuser, fm.ValueOutput())
 		},

@@ -15,6 +15,43 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 )
 
+var Ns = eval.BuildNsNamed("str").
+	AddGoFns(map[string]interface{}{
+		"compare":      strings.Compare,
+		"contains":     strings.Contains,
+		"contains-any": strings.ContainsAny,
+		"count":        strings.Count,
+		"equal-fold":   strings.EqualFold,
+		// TODO: Fields, FieldsFunc
+		"from-codepoints": fromCodepoints,
+		"from-utf8-bytes": fromUtf8Bytes,
+		"has-prefix":      strings.HasPrefix,
+		"has-suffix":      strings.HasSuffix,
+		"index":           strings.Index,
+		"index-any":       strings.IndexAny,
+		// TODO: IndexFunc
+		"join":       join,
+		"last-index": strings.LastIndex,
+		// TODO: LastIndexFunc, Map, Repeat
+		"replace": replace,
+		"split":   split,
+		// TODO: SplitAfter
+		"title":         strings.Title,
+		"to-codepoints": toCodepoints,
+		"to-lower":      strings.ToLower,
+		"to-title":      strings.ToTitle,
+		"to-upper":      strings.ToUpper,
+		"to-utf8-bytes": toUtf8Bytes,
+		// TODO: ToLowerSpecial, ToTitleSpecial, ToUpperSpecial
+		"trim":       strings.Trim,
+		"trim-left":  strings.TrimLeft,
+		"trim-right": strings.TrimRight,
+		// TODO: TrimLeft,Right}Func
+		"trim-space":  strings.TrimSpace,
+		"trim-prefix": strings.TrimPrefix,
+		"trim-suffix": strings.TrimSuffix,
+	}).Ns()
+
 //elvdoc:fn compare
 //
 // ```elvish
@@ -581,41 +618,3 @@ func toUtf8Bytes(fm *eval.Frame, s string) error {
 // ~> str:trim-suffix "¡¡¡Hello, Elven!!!" ", Klingons!!!"
 // ▶ '¡¡¡Hello, Elven!!!'
 // ```
-
-var Ns = eval.NsBuilder{}.AddGoFns("str:", fns).Ns()
-
-var fns = map[string]interface{}{
-	"compare":      strings.Compare,
-	"contains":     strings.Contains,
-	"contains-any": strings.ContainsAny,
-	"count":        strings.Count,
-	"equal-fold":   strings.EqualFold,
-	// TODO: Fields, FieldsFunc
-	"from-codepoints": fromCodepoints,
-	"from-utf8-bytes": fromUtf8Bytes,
-	"has-prefix":      strings.HasPrefix,
-	"has-suffix":      strings.HasSuffix,
-	"index":           strings.Index,
-	"index-any":       strings.IndexAny,
-	// TODO: IndexFunc
-	"join":       join,
-	"last-index": strings.LastIndex,
-	// TODO: LastIndexFunc, Map, Repeat
-	"replace": replace,
-	"split":   split,
-	// TODO: SplitAfter
-	"title":         strings.Title,
-	"to-codepoints": toCodepoints,
-	"to-lower":      strings.ToLower,
-	"to-title":      strings.ToTitle,
-	"to-upper":      strings.ToUpper,
-	"to-utf8-bytes": toUtf8Bytes,
-	// TODO: ToLowerSpecial, ToTitleSpecial, ToUpperSpecial
-	"trim":       strings.Trim,
-	"trim-left":  strings.TrimLeft,
-	"trim-right": strings.TrimRight,
-	// TODO: TrimLeft,Right}Func
-	"trim-space":  strings.TrimSpace,
-	"trim-prefix": strings.TrimPrefix,
-	"trim-suffix": strings.TrimSuffix,
-}

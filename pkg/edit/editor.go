@@ -46,7 +46,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	// Declare the Editor with a nil App first; some initialization functions
 	// require a notifier as an argument, but does not use it immediately.
 	ed := &Editor{excList: vals.EmptyList}
-	nb := eval.NsBuilder{}
+	nb := eval.BuildNsNamed("edit")
 	appSpec := cli.AppSpec{TTY: tty}
 
 	hs, err := newHistStore(st)
@@ -92,7 +92,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 // examining tracebacks and other metadata.
 
 func initExceptionsAPI(ed *Editor, nb eval.NsBuilder) {
-	nb.Add("exceptions", vars.FromPtrWithMutex(&ed.excList, &ed.excMutex))
+	nb.AddVar("exceptions", vars.FromPtrWithMutex(&ed.excList, &ed.excMutex))
 }
 
 //go:embed init.elv

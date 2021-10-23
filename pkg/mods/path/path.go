@@ -10,21 +10,20 @@ import (
 )
 
 // Ns is the namespace for the re: module.
-var Ns = eval.NsBuilder{}.AddGoFns("path:", fns).Ns()
-
-var fns = map[string]interface{}{
-	"abs":           filepath.Abs,
-	"base":          filepath.Base,
-	"clean":         filepath.Clean,
-	"dir":           filepath.Dir,
-	"ext":           filepath.Ext,
-	"eval-symlinks": filepath.EvalSymlinks,
-	"is-abs":        filepath.IsAbs,
-	"is-dir":        isDir,
-	"is-regular":    isRegular,
-	"temp-dir":      tempDir,
-	"temp-file":     tempFile,
-}
+var Ns = eval.BuildNsNamed("path").
+	AddGoFns(map[string]interface{}{
+		"abs":           filepath.Abs,
+		"base":          filepath.Base,
+		"clean":         filepath.Clean,
+		"dir":           filepath.Dir,
+		"ext":           filepath.Ext,
+		"eval-symlinks": filepath.EvalSymlinks,
+		"is-abs":        filepath.IsAbs,
+		"is-dir":        isDir,
+		"is-regular":    isRegular,
+		"temp-dir":      tempDir,
+		"temp-file":     tempFile,
+	}).Ns()
 
 //elvdoc:fn abs
 //

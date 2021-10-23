@@ -38,8 +38,7 @@ func rc(codes ...string) func(*fixture) {
 
 func assign(name string, val interface{}) func(*fixture) {
 	return func(f *fixture) {
-		f.Evaler.AddGlobal(eval.CombineNs(f.Evaler.Global(),
-			eval.NsBuilder{"temp": vars.NewReadOnly(val)}.Ns()))
+		f.Evaler.ExtendGlobal(eval.BuildNs().AddVar("temp", vars.NewReadOnly(val)))
 		evals(f.Evaler, name+` = $temp`)
 	}
 }
@@ -59,9 +58,9 @@ func setup(c testutil.Cleanuper, fns ...func(*fixture)) *fixture {
 
 	tty, ttyCtrl := clitest.NewFakeTTY()
 	ev := eval.NewEvaler()
-	ev.AddGlobal(eval.NsBuilder{}.AddNs("file", file.Ns).Ns())
+	ev.ExtendGlobal(eval.BuildNs().AddNs("file", file.Ns))
 	ed := NewEditor(tty, ev, st)
-	ev.AddBuiltin(eval.NsBuilder{}.AddNs("edit", ed.Ns()).Ns())
+	ev.ExtendBuiltin(eval.BuildNs().AddNs("edit", ed))
 	evals(ev,
 		// This is the same as the default prompt for non-root users. This makes
 		// sure that the tests will work when run as root.

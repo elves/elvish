@@ -10,7 +10,7 @@ import (
 
 func TestAddVar(t *testing.T) {
 	TestWithSetup(t, func(ev *eval.Evaler) {
-		ev.AddGlobal(eval.NsBuilder{}.AddGoFn("", "add-var", addVar).Ns())
+		ev.ExtendGlobal(eval.BuildNs().AddGoFn("add-var", addVar))
 	},
 		That("add-var foo bar").Then("put $foo").Puts("bar"),
 
@@ -26,7 +26,7 @@ func TestAddVar(t *testing.T) {
 
 func TestAddVars(t *testing.T) {
 	TestWithSetup(t, func(ev *eval.Evaler) {
-		ev.AddGlobal(eval.NsBuilder{}.AddGoFn("", "add-vars", addVars).Ns())
+		ev.ExtendGlobal(eval.BuildNs().AddGoFn("add-vars", addVars))
 	},
 		That("add-vars [&foo=bar]").Then("put $foo").Puts("bar"),
 		That("add-vars [&a=A &b=B]").Then("put $a $b").Puts("A", "B"),

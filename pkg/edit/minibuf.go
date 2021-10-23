@@ -11,11 +11,11 @@ func initMinibuf(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(emptyBindingsMap)
 	bindings := newMapBindings(ed, ev, bindingVar)
 	nb.AddNs("minibuf",
-		eval.NsBuilder{
-			"binding": bindingVar,
-		}.AddGoFns("<edit:minibuf>:", map[string]interface{}{
-			"start": func() { minibufStart(ed, ev, bindings) },
-		}).Ns())
+		eval.BuildNsNamed("edit:minibuf").
+			AddVar("binding", bindingVar).
+			AddGoFns(map[string]interface{}{
+				"start": func() { minibufStart(ed, ev, bindings) },
+			}))
 }
 
 func minibufStart(ed *Editor, ev *eval.Evaler, bindings tk.Bindings) {

@@ -25,15 +25,15 @@ func initCommandAPI(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(emptyBindingsMap)
 	bindings := newMapBindings(ed, ev, bindingVar)
 	nb.AddNs("command",
-		eval.NsBuilder{
-			"binding": bindingVar,
-		}.AddGoFns("<edit:command>:", map[string]interface{}{
-			"start": func() {
-				w := modes.NewStub(modes.StubSpec{
-					Bindings: bindings,
-					Name:     " COMMAND ",
-				})
-				ed.app.PushAddon(w)
-			},
-		}).Ns())
+		eval.BuildNsNamed("edit:command").
+			AddVar("binding", bindingVar).
+			AddGoFns(map[string]interface{}{
+				"start": func() {
+					w := modes.NewStub(modes.StubSpec{
+						Bindings: bindings,
+						Name:     " COMMAND ",
+					})
+					ed.app.PushAddon(w)
+				},
+			}))
 }

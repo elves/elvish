@@ -43,9 +43,9 @@ func TestEvalTimeDeprecate(t *testing.T) {
 	testutil.InTempDir(t)
 
 	TestWithSetup(t, func(ev *Evaler) {
-		ev.AddGlobal(NsBuilder{}.AddGoFn("", "dep", func(fm *Frame) {
+		ev.ExtendGlobal(BuildNs().AddGoFn("dep", func(fm *Frame) {
 			fm.Deprecate("deprecated", nil, 42)
-		}).Ns())
+		}))
 	},
 		That("dep").PrintsStderrWith("deprecated"),
 		// Deprecation message is only shown once.
@@ -67,7 +67,7 @@ func TestMultipleEval(t *testing.T) {
 
 func TestEval_AlternativeGlobal(t *testing.T) {
 	ev := NewEvaler()
-	g := NsBuilder{"a": vars.NewReadOnly("")}.Ns()
+	g := BuildNs().AddVar("a", vars.NewReadOnly("")).Ns()
 	err := ev.Eval(parse.Source{Code: "nop $a"}, EvalCfg{Global: g})
 	if err != nil {
 		t.Errorf("got error %v, want nil", err)

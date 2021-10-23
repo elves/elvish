@@ -180,7 +180,7 @@ func TestWordify(t *testing.T) {
 }
 
 func setupWordify(ev *eval.Evaler) {
-	ev.AddBuiltin(eval.NsBuilder{}.AddGoFn("", "wordify", wordify).Ns())
+	ev.ExtendBuiltin(eval.BuildNs().AddGoFn("wordify", wordify))
 }
 
 var bufferBuiltinsTests = []struct {

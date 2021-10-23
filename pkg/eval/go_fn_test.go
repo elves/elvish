@@ -149,7 +149,7 @@ func TestGoFn_RawOptions(t *testing.T) {
 
 func f(body interface{}) func(*Evaler) {
 	return func(ev *Evaler) {
-		ev.AddGlobal(NsBuilder{}.AddGoFn("", "f", body).Ns())
+		ev.ExtendGlobal(BuildNs().AddGoFn("f", body))
 	}
 }
 

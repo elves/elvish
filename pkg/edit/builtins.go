@@ -227,7 +227,7 @@ func wordify(fm *eval.Frame, code string) error {
 }
 
 func initTTYBuiltins(app cli.App, tty cli.TTY, nb eval.NsBuilder) {
-	nb.AddGoFns("<edit>", map[string]interface{}{
+	nb.AddGoFns(map[string]interface{}{
 		"-dump-buf":  func() string { return dumpBuf(tty) },
 		"insert-raw": func() { insertRaw(app, tty) },
 		"clear":      func() { clear(app, tty) },
@@ -235,7 +235,7 @@ func initTTYBuiltins(app cli.App, tty cli.TTY, nb eval.NsBuilder) {
 }
 
 func initMiscBuiltins(app cli.App, nb eval.NsBuilder) {
-	nb.AddGoFns("<edit>", map[string]interface{}{
+	nb.AddGoFns(map[string]interface{}{
 		"binding-table":  makeBindingMap,
 		"close-mode":     func() { closeMode(app) },
 		"end-of-history": func() { endOfHistory(app) },
@@ -277,7 +277,7 @@ var bufferBuiltinsData = map[string]func(*tk.CodeBuffer){
 }
 
 func initBufferBuiltins(app cli.App, nb eval.NsBuilder) {
-	nb.AddGoFns("<edit>", bufferBuiltins(app))
+	nb.AddGoFns(bufferBuiltins(app))
 }
 
 func bufferBuiltins(app cli.App) map[string]interface{} {

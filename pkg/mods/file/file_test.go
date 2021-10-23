@@ -15,7 +15,7 @@ const z = "100000000000000000000"
 
 func TestFile(t *testing.T) {
 	setup := func(ev *eval.Evaler) {
-		ev.AddGlobal(eval.NsBuilder{}.AddNs("file", Ns).Ns())
+		ev.ExtendGlobal(eval.BuildNs().AddNs("file", Ns))
 	}
 	testutil.InTempDir(t)
 

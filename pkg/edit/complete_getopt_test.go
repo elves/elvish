@@ -9,7 +9,7 @@ import (
 )
 
 func setupCompleteGetopt(ev *eval.Evaler) {
-	ev.AddBuiltin(eval.NsBuilder{}.AddGoFn("", "complete-getopt", completeGetopt).Ns())
+	ev.ExtendBuiltin(eval.BuildNs().AddGoFn("complete-getopt", completeGetopt))
 
 	code := `fn complete [@args]{
 	           opt-specs = [ [&short=a &long=all &desc="Show all"]

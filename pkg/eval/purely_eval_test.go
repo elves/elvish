@@ -40,13 +40,10 @@ func TestPurelyEvalCompound(t *testing.T) {
 	}
 
 	ev := NewEvaler()
-	g := NsBuilder{
-		"x": vars.NewReadOnly("bar"),
-		"y": vars.NewReadOnly(vals.MakeList()),
-	}.
-		AddNs("ns", NsBuilder{"x": vars.NewReadOnly("foo")}.Ns()).
-		Ns()
-	ev.AddGlobal(g)
+	ev.ExtendGlobal(BuildNs().
+		AddVar("x", vars.NewReadOnly("bar")).
+		AddVar("y", vars.NewReadOnly(vals.MakeList())).
+		AddNs("ns", BuildNs().AddVar("x", vars.NewReadOnly("foo"))))
 
 	for _, test := range tests {
 		t.Run(test.code, func(t *testing.T) {

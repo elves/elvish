@@ -17,7 +17,7 @@ func TestReadlineBinding(t *testing.T) {
 	TestWithSetup(t, func(ev *eval.Evaler) {
 		mods.AddTo(ev)
 		ed := edit.NewEditor(cli.NewTTY(os.Stdin, os.Stderr), ev, nil)
-		ev.AddBuiltin(eval.NsBuilder{}.AddNs("edit", ed.Ns()).Ns())
+		ev.ExtendBuiltin(eval.BuildNs().AddNs("edit", ed))
 	},
 		That("use readline-binding").DoesNothing(),
 	)

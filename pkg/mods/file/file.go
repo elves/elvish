@@ -10,14 +10,13 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 )
 
-var Ns = eval.NsBuilder{}.AddGoFns("file:", fns).Ns()
-
-var fns = map[string]interface{}{
-	"close":    close,
-	"open":     open,
-	"pipe":     pipe,
-	"truncate": truncate,
-}
+var Ns = eval.BuildNsNamed("file").
+	AddGoFns(map[string]interface{}{
+		"close":    close,
+		"open":     open,
+		"pipe":     pipe,
+		"truncate": truncate,
+	}).Ns()
 
 //elvdoc:fn open
 //

@@ -12,28 +12,26 @@ import (
 var testVar = vars.NewReadOnly("")
 
 var eachVariableInTopTests = []struct {
-	builtin   *eval.Ns
-	global    *eval.Ns
+	builtin   eval.Nser
+	global    eval.Nser
 	ns        string
 	wantNames []string
 }{
 	{
-		builtin:   eval.NsBuilder{"foo": testVar, "bar": testVar}.Ns(),
-		global:    eval.NsBuilder{"lorem": testVar, "ipsum": testVar}.Ns(),
+		builtin:   eval.BuildNs().AddVar("foo", testVar).AddVar("bar", testVar),
+		global:    eval.BuildNs().AddVar("lorem", testVar).AddVar("ipsum", testVar),
 		ns:        "",
 		wantNames: []string{"bar", "foo", "ipsum", "lorem"},
 	},
 	{
-		builtin: eval.NsBuilder{
-			"mod:": vars.NewReadOnly(eval.NsBuilder{"a": testVar, "b": testVar}.Ns()),
-		}.Ns(),
+		builtin: eval.BuildNs().AddNs("mod",
+			eval.BuildNs().AddVar("a", testVar).AddVar("b", testVar)),
 		ns:        "mod:",
 		wantNames: []string{"a", "b"},
 	},
 	{
-		global: eval.NsBuilder{
-			"mod:": vars.NewReadOnly(eval.NsBuilder{"a": testVar, "b": testVar}.Ns()),
-		}.Ns(),
+		global: eval.BuildNs().AddNs("mod",
+			eval.BuildNs().AddVar("a", testVar).AddVar("b", testVar)),
 		ns:        "mod:",
 		wantNames: []string{"a", "b"},
 	},
@@ -60,24 +58,24 @@ func TestEachVariableInTop(t *testing.T) {
 }
 
 var eachNsInTopTests = []struct {
-	builtin   *eval.Ns
-	global    *eval.Ns
+	builtin   eval.Nser
+	global    eval.Nser
 	wantNames []string
 }{
 	{
 		wantNames: []string{"E:", "e:"},
 	},
 	{
-		builtin:   eval.NsBuilder{"foo:": testVar}.Ns(),
+		builtin:   eval.BuildNs().AddNs("foo", eval.BuildNs()),
 		wantNames: []string{"E:", "e:", "foo:"},
 	},
 	{
-		global:    eval.NsBuilder{"foo:": testVar}.Ns(),
+		global:    eval.BuildNs().AddNs("foo", eval.BuildNs()),
 		wantNames: []string{"E:", "e:", "foo:"},
 	},
 	{
-		builtin:   eval.NsBuilder{"foo:": testVar}.Ns(),
-		global:    eval.NsBuilder{"bar:": testVar}.Ns(),
+		builtin:   eval.BuildNs().AddNs("foo", eval.BuildNs()),
+		global:    eval.BuildNs().AddNs("bar", eval.BuildNs()),
 		wantNames: []string{"E:", "bar:", "e:", "foo:"},
 	},
 }
@@ -97,9 +95,9 @@ func TestEachNsInTop(t *testing.T) {
 	}
 }
 
-func getNs(ns *eval.Ns) *eval.Ns {
+func getNs(ns eval.Nser) *eval.Ns {
 	if ns == nil {
 		return new(eval.Ns)
 	}
-	return ns
+	return ns.Ns()
 }

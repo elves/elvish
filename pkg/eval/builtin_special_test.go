@@ -305,16 +305,16 @@ func TestFn(t *testing.T) {
 }
 
 // Regression test for #1225
-func TestUse_SetsVariableCorrectlyIfModuleCallsAddGlobal(t *testing.T) {
+func TestUse_SetsVariableCorrectlyIfModuleCallsExtendGlobal(t *testing.T) {
 	libdir := InTempDir(t)
 
 	ApplyDir(Dir{"a.elv": "add-var"})
 	ev := NewEvaler()
 	ev.LibDirs = []string{libdir}
 	addVar := func() {
-		ev.AddGlobal(NsBuilder{"b": vars.NewReadOnly("foo")}.Ns())
+		ev.ExtendGlobal(BuildNs().AddVar("b", vars.NewReadOnly("foo")))
 	}
-	ev.AddBuiltin(NsBuilder{}.AddGoFn("", "add-var", addVar).Ns())
+	ev.ExtendBuiltin(BuildNs().AddGoFn("add-var", addVar))
 
 	err := ev.Eval(parse.Source{Code: "use a"}, EvalCfg{})
 	if err != nil {

@@ -65,7 +65,7 @@ func TestCompleteFilename(t *testing.T) {
 
 func TestComplexCandidate(t *testing.T) {
 	TestWithSetup(t, func(ev *eval.Evaler) {
-		ev.AddGlobal(eval.NsBuilder{}.AddGoFn("", "cc", complexCandidate).Ns())
+		ev.ExtendGlobal(eval.BuildNs().AddGoFn("cc", complexCandidate))
 	},
 		That("kind-of (cc stem)").Puts("map"),
 		That("keys (cc stem)").Puts("stem", "code-suffix", "display"),

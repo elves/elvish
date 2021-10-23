@@ -23,7 +23,7 @@ var minIntString = strconv.Itoa(minInt)
 
 func TestMath(t *testing.T) {
 	setup := func(ev *eval.Evaler) {
-		ev.AddGlobal(eval.NsBuilder{}.AddNs("math", Ns).Ns())
+		ev.ExtendGlobal(eval.BuildNs().AddNs("math", Ns))
 	}
 	TestWithSetup(t, setup,
 		That("math:abs 2").Puts(2),

@@ -19,20 +19,20 @@ func initListings(ed *Editor, ev *eval.Evaler, st storedefs.Store, histStore his
 	bindingVar := newBindingVar(emptyBindingsMap)
 	app := ed.app
 	nb.AddNs("listing",
-		eval.NsBuilder{
-			"binding": bindingVar,
-		}.AddGoFns("<edit:listing>:", map[string]interface{}{
-			"accept":     func() { listingAccept(app) },
-			"up":         func() { listingUp(app) },
-			"down":       func() { listingDown(app) },
-			"up-cycle":   func() { listingUpCycle(app) },
-			"down-cycle": func() { listingDownCycle(app) },
-			"page-up":    func() { listingPageUp(app) },
-			"page-down":  func() { listingPageDown(app) },
-			"start-custom": func(fm *eval.Frame, opts customListingOpts, items interface{}) {
-				listingStartCustom(ed, fm, opts, items)
-			},
-		}).Ns())
+		eval.BuildNsNamed("edit:listing").
+			AddVar("binding", bindingVar).
+			AddGoFns(map[string]interface{}{
+				"accept":     func() { listingAccept(app) },
+				"up":         func() { listingUp(app) },
+				"down":       func() { listingDown(app) },
+				"up-cycle":   func() { listingUpCycle(app) },
+				"down-cycle": func() { listingDownCycle(app) },
+				"page-up":    func() { listingPageUp(app) },
+				"page-down":  func() { listingPageDown(app) },
+				"start-custom": func(fm *eval.Frame, opts customListingOpts, items interface{}) {
+					listingStartCustom(ed, fm, opts, items)
+				},
+			}))
 
 	initHistlist(ed, ev, histStore, bindingVar, nb)
 	initLastcmd(ed, ev, histStore, bindingVar, nb)
@@ -55,40 +55,40 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 	bindings := newMapBindings(ed, ev, bindingVar, commonBindingVar)
 	dedup := newBoolVar(true)
 	nb.AddNs("histlist",
-		eval.NsBuilder{
-			"binding": bindingVar,
-		}.AddGoFns("<edit:histlist>", map[string]interface{}{
-			"start": func() {
-				w, err := modes.NewHistlist(ed.app, modes.HistlistSpec{
-					Bindings: bindings,
-					AllCmds:  histStore.AllCmds,
-					Dedup: func() bool {
-						return dedup.Get().(bool)
-					},
-					Filter: filterSpec,
-				})
-				startMode(ed.app, w, err)
-			},
-			"toggle-dedup": func() {
-				dedup.Set(!dedup.Get().(bool))
-				listingRefilter(ed.app)
-				ed.app.Redraw()
-			},
-		}).Ns())
+		eval.BuildNsNamed("edit:histlist").
+			AddVar("binding", bindingVar).
+			AddGoFns(map[string]interface{}{
+				"start": func() {
+					w, err := modes.NewHistlist(ed.app, modes.HistlistSpec{
+						Bindings: bindings,
+						AllCmds:  histStore.AllCmds,
+						Dedup: func() bool {
+							return dedup.Get().(bool)
+						},
+						Filter: filterSpec,
+					})
+					startMode(ed.app, w, err)
+				},
+				"toggle-dedup": func() {
+					dedup.Set(!dedup.Get().(bool))
+					listingRefilter(ed.app)
+					ed.app.Redraw()
+				},
+			}))
 }
 
 func initLastcmd(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(emptyBindingsMap)
 	bindings := newMapBindings(ed, ev, bindingVar, commonBindingVar)
 	nb.AddNs("lastcmd",
-		eval.NsBuilder{
-			"binding": bindingVar,
-		}.AddGoFn("<edit:lastcmd>", "start", func() {
-			// TODO: Specify wordifier
-			w, err := modes.NewLastcmd(ed.app, modes.LastcmdSpec{
-				Bindings: bindings, Store: histStore})
-			startMode(ed.app, w, err)
-		}).Ns())
+		eval.BuildNsNamed("edit:lastcmd").
+			AddVar("binding", bindingVar).
+			AddGoFn("start", func() {
+				// TODO: Specify wordifier
+				w, err := modes.NewLastcmd(ed.app, modes.LastcmdSpec{
+					Bindings: bindings, Store: histStore})
+				startMode(ed.app, w, err)
+			}))
 }
 
 func initLocation(ed *Editor, ev *eval.Evaler, st storedefs.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {
@@ -102,21 +102,23 @@ func initLocation(ed *Editor, ev *eval.Evaler, st storedefs.Store, commonBinding
 		adaptToIterateStringPair(workspacesVar))
 
 	nb.AddNs("location",
-		eval.NsBuilder{
-			"binding":    bindingVar,
-			"hidden":     hiddenVar,
-			"pinned":     pinnedVar,
-			"workspaces": workspacesVar,
-		}.AddGoFn("<edit:location>", "start", func() {
-			w, err := modes.NewLocation(ed.app, modes.LocationSpec{
-				Bindings: bindings, Store: dirStore{ev, st},
-				IteratePinned:     adaptToIterateString(pinnedVar),
-				IterateHidden:     adaptToIterateString(hiddenVar),
-				IterateWorkspaces: workspaceIterator,
-				Filter:            filterSpec,
-			})
-			startMode(ed.app, w, err)
-		}).Ns())
+		eval.BuildNsNamed("edit:location").
+			AddVars(map[string]vars.Var{
+				"binding":    bindingVar,
+				"hidden":     hiddenVar,
+				"pinned":     pinnedVar,
+				"workspaces": workspacesVar,
+			}).
+			AddGoFn("start", func() {
+				w, err := modes.NewLocation(ed.app, modes.LocationSpec{
+					Bindings: bindings, Store: dirStore{ev, st},
+					IteratePinned:     adaptToIterateString(pinnedVar),
+					IterateHidden:     adaptToIterateString(hiddenVar),
+					IterateWorkspaces: workspaceIterator,
+					Filter:            filterSpec,
+				})
+				startMode(ed.app, w, err)
+			}))
 	ev.AddAfterChdir(func(string) {
 		wd, err := os.Getwd()
 		if err != nil {

@@ -116,50 +116,52 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	})
 
 	app := ed.app
-	nb.Add("selected-file", selectedFileVar)
+	nb.AddVar("selected-file", selectedFileVar)
 	nb.AddNs("navigation",
-		eval.NsBuilder{
-			"binding":     bindingVar,
-			"width-ratio": widthRatioVar,
-		}.AddGoFns("<edit:navigation>", map[string]interface{}{
-			"start": func() {
-				w, err := modes.NewNavigation(app, modes.NavigationSpec{
-					Bindings: bindings,
-					WidthRatio: func() [3]int {
-						return convertNavWidthRatio(widthRatioVar.Get())
-					},
-					Filter: filterSpec,
-				})
-				if err != nil {
-					app.Notify(err.Error())
-				} else {
-					startMode(app, w, nil)
-				}
-			},
-			"left":  actOnNavigation(app, modes.Navigation.Ascend),
-			"right": actOnNavigation(app, modes.Navigation.Descend),
-			"up": actOnNavigation(app,
-				func(w modes.Navigation) { w.Select(tk.Prev) }),
-			"down": actOnNavigation(app,
-				func(w modes.Navigation) { w.Select(tk.Next) }),
-			"page-up": actOnNavigation(app,
-				func(w modes.Navigation) { w.Select(tk.PrevPage) }),
-			"page-down": actOnNavigation(app,
-				func(w modes.Navigation) { w.Select(tk.NextPage) }),
+		eval.BuildNsNamed("edit:navigation").
+			AddVars(map[string]vars.Var{
+				"binding":     bindingVar,
+				"width-ratio": widthRatioVar,
+			}).
+			AddGoFns(map[string]interface{}{
+				"start": func() {
+					w, err := modes.NewNavigation(app, modes.NavigationSpec{
+						Bindings: bindings,
+						WidthRatio: func() [3]int {
+							return convertNavWidthRatio(widthRatioVar.Get())
+						},
+						Filter: filterSpec,
+					})
+					if err != nil {
+						app.Notify(err.Error())
+					} else {
+						startMode(app, w, nil)
+					}
+				},
+				"left":  actOnNavigation(app, modes.Navigation.Ascend),
+				"right": actOnNavigation(app, modes.Navigation.Descend),
+				"up": actOnNavigation(app,
+					func(w modes.Navigation) { w.Select(tk.Prev) }),
+				"down": actOnNavigation(app,
+					func(w modes.Navigation) { w.Select(tk.Next) }),
+				"page-up": actOnNavigation(app,
+					func(w modes.Navigation) { w.Select(tk.PrevPage) }),
+				"page-down": actOnNavigation(app,
+					func(w modes.Navigation) { w.Select(tk.NextPage) }),
 
-			"file-preview-up": actOnNavigation(app,
-				func(w modes.Navigation) { w.ScrollPreview(-1) }),
-			"file-preview-down": actOnNavigation(app,
-				func(w modes.Navigation) { w.ScrollPreview(1) }),
+				"file-preview-up": actOnNavigation(app,
+					func(w modes.Navigation) { w.ScrollPreview(-1) }),
+				"file-preview-down": actOnNavigation(app,
+					func(w modes.Navigation) { w.ScrollPreview(1) }),
 
-			"insert-selected":          func() { navInsertSelected(app) },
-			"insert-selected-and-quit": func() { navInsertSelectedAndQuit(app) },
+				"insert-selected":          func() { navInsertSelected(app) },
+				"insert-selected-and-quit": func() { navInsertSelectedAndQuit(app) },
 
-			"trigger-filter": actOnNavigation(app,
-				func(w modes.Navigation) { w.MutateFiltering(neg) }),
-			"trigger-shown-hidden": actOnNavigation(app,
-				func(w modes.Navigation) { w.MutateShowHidden(neg) }),
-		}).Ns())
+				"trigger-filter": actOnNavigation(app,
+					func(w modes.Navigation) { w.MutateFiltering(neg) }),
+				"trigger-shown-hidden": actOnNavigation(app,
+					func(w modes.Navigation) { w.MutateShowHidden(neg) }),
+			}))
 }
 
 func neg(b bool) bool { return !b }

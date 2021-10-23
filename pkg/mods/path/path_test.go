@@ -137,5 +137,5 @@ func TestPath_Symlink(t *testing.T) {
 }
 
 func importModules(ev *eval.Evaler) {
-	ev.AddGlobal(eval.NsBuilder{}.AddNs("path", Ns).AddNs("file", file.Ns).Ns())
+	ev.ExtendGlobal(eval.BuildNs().AddNs("path", Ns).AddNs("file", file.Ns))
 }

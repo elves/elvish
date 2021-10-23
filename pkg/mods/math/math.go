@@ -13,40 +13,40 @@ import (
 )
 
 // Ns is the namespace for the math: module.
-var Ns = eval.NsBuilder{
-	"e":  vars.NewReadOnly(math.E),
-	"pi": vars.NewReadOnly(math.Pi),
-}.AddGoFns("math:", fns).Ns()
-
-var fns = map[string]interface{}{
-	"abs":           abs,
-	"acos":          math.Acos,
-	"acosh":         math.Acosh,
-	"asin":          math.Asin,
-	"asinh":         math.Asinh,
-	"atan":          math.Atan,
-	"atanh":         math.Atanh,
-	"ceil":          ceil,
-	"cos":           math.Cos,
-	"cosh":          math.Cosh,
-	"floor":         floor,
-	"is-inf":        isInf,
-	"is-nan":        isNaN,
-	"log":           math.Log,
-	"log10":         math.Log10,
-	"log2":          math.Log2,
-	"max":           max,
-	"min":           min,
-	"pow":           pow,
-	"round":         round,
-	"round-to-even": roundToEven,
-	"sin":           math.Sin,
-	"sinh":          math.Sinh,
-	"sqrt":          math.Sqrt,
-	"tan":           math.Tan,
-	"tanh":          math.Tanh,
-	"trunc":         trunc,
-}
+var Ns = eval.BuildNsNamed("math").
+	AddVars(map[string]vars.Var{
+		"e":  vars.NewReadOnly(math.E),
+		"pi": vars.NewReadOnly(math.Pi),
+	}).
+	AddGoFns(map[string]interface{}{
+		"abs":           abs,
+		"acos":          math.Acos,
+		"acosh":         math.Acosh,
+		"asin":          math.Asin,
+		"asinh":         math.Asinh,
+		"atan":          math.Atan,
+		"atanh":         math.Atanh,
+		"ceil":          ceil,
+		"cos":           math.Cos,
+		"cosh":          math.Cosh,
+		"floor":         floor,
+		"is-inf":        isInf,
+		"is-nan":        isNaN,
+		"log":           math.Log,
+		"log10":         math.Log10,
+		"log2":          math.Log2,
+		"max":           max,
+		"min":           min,
+		"pow":           pow,
+		"round":         round,
+		"round-to-even": roundToEven,
+		"sin":           math.Sin,
+		"sinh":          math.Sinh,
+		"sqrt":          math.Sqrt,
+		"tan":           math.Tan,
+		"tanh":          math.Tanh,
+		"trunc":         trunc,
+	}).Ns()
 
 //elvdoc:var e
 //

@@ -14,6 +14,7 @@ import (
 	"src.elv.sh/pkg/edit/complete"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/persistent/hash"
@@ -233,7 +234,7 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	generateForSudo := func(args []string) ([]complete.RawItem, error) {
 		return complete.GenerateForSudo(cfg(), args)
 	}
-	nb.AddGoFns("<edit>", map[string]interface{}{
+	nb.AddGoFns(map[string]interface{}{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
 		"complete-getopt":   completeGetopt,
 		"complete-sudo":     wrapArgGenerator(generateForSudo),
@@ -244,21 +245,23 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	})
 	app := ed.app
 	nb.AddNs("completion",
-		eval.NsBuilder{
-			"arg-completer": argGeneratorMapVar,
-			"binding":       bindingVar,
-			"matcher":       matcherMapVar,
-		}.AddGoFns("<edit:completion>:", map[string]interface{}{
-			"accept":      func() { listingAccept(app) },
-			"smart-start": func() { completionStart(app, bindings, cfg(), true) },
-			"start":       func() { completionStart(app, bindings, cfg(), false) },
-			"up":          func() { listingUp(app) },
-			"down":        func() { listingDown(app) },
-			"up-cycle":    func() { listingUpCycle(app) },
-			"down-cycle":  func() { listingDownCycle(app) },
-			"left":        func() { listingLeft(app) },
-			"right":       func() { listingRight(app) },
-		}).Ns())
+		eval.BuildNsNamed("edit:completion").
+			AddVars(map[string]vars.Var{
+				"arg-completer": argGeneratorMapVar,
+				"binding":       bindingVar,
+				"matcher":       matcherMapVar,
+			}).
+			AddGoFns(map[string]interface{}{
+				"accept":      func() { listingAccept(app) },
+				"smart-start": func() { completionStart(app, bindings, cfg(), true) },
+				"start":       func() { completionStart(app, bindings, cfg(), false) },
+				"up":          func() { listingUp(app) },
+				"down":        func() { listingDown(app) },
+				"up-cycle":    func() { listingUpCycle(app) },
+				"down-cycle":  func() { listingDownCycle(app) },
+				"left":        func() { listingLeft(app) },
+				"right":       func() { listingRight(app) },
+			}))
 }
 
 // A wrapper type implementing Elvish value methods.

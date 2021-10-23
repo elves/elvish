@@ -103,7 +103,7 @@ import (
 //
 // @cf buildinfo
 
-var builtinNs = NsBuilder{
+var builtinNs = BuildNsNamed("").AddVars(map[string]vars.Var{
 	"_":         vars.NewBlackhole(),
 	"pid":       vars.NewReadOnly(strconv.Itoa(syscall.Getpid())),
 	"ok":        vars.NewReadOnly(OK),
@@ -113,8 +113,8 @@ var builtinNs = NsBuilder{
 	"buildinfo": vars.NewReadOnly(buildinfo.Value),
 	"version":   vars.NewReadOnly(buildinfo.Value.Version),
 	"paths":     vars.NewEnvListVar("PATH"),
-}
+})
 
 func addBuiltinFns(fns map[string]interface{}) {
-	builtinNs.AddGoFns("", fns)
+	builtinNs.AddGoFns(fns)
 }

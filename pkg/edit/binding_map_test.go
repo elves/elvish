@@ -10,7 +10,7 @@ import (
 func TestBindingMap(t *testing.T) {
 	// TODO
 	TestWithSetup(t, func(ev *eval.Evaler) {
-		ev.AddBuiltin(eval.NsBuilder{}.AddGoFn("", "binding-map", makeBindingMap).Ns())
+		ev.ExtendBuiltin(eval.BuildNs().AddGoFn("binding-map", makeBindingMap))
 	},
 		// Checking key and value when constructing
 		That("binding-map [&[]={ }]").

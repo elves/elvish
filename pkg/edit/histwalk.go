@@ -41,24 +41,24 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder)
 	bindings := newMapBindings(ed, ev, bindingVar)
 	app := ed.app
 	nb.AddNs("history",
-		eval.NsBuilder{
-			"binding": bindingVar,
-		}.AddGoFns("<edit:history>", map[string]interface{}{
-			"start": func() { notifyError(app, histwalkStart(app, hs, bindings)) },
-			"up":    func() { notifyError(app, histwalkDo(app, modes.Histwalk.Prev)) },
+		eval.BuildNsNamed("edit:history").
+			AddVar("binding", bindingVar).
+			AddGoFns(map[string]interface{}{
+				"start": func() { notifyError(app, histwalkStart(app, hs, bindings)) },
+				"up":    func() { notifyError(app, histwalkDo(app, modes.Histwalk.Prev)) },
 
-			"down": func() { notifyError(app, histwalkDo(app, modes.Histwalk.Next)) },
-			"down-or-quit": func() {
-				err := histwalkDo(app, modes.Histwalk.Next)
-				if err == histutil.ErrEndOfHistory {
-					app.PopAddon()
-				} else {
-					notifyError(app, err)
-				}
-			},
+				"down": func() { notifyError(app, histwalkDo(app, modes.Histwalk.Next)) },
+				"down-or-quit": func() {
+					err := histwalkDo(app, modes.Histwalk.Next)
+					if err == histutil.ErrEndOfHistory {
+						app.PopAddon()
+					} else {
+						notifyError(app, err)
+					}
+				},
 
-			"fast-forward": hs.FastForward,
-		}).Ns())
+				"fast-forward": hs.FastForward,
+			}))
 }
 
 func histwalkStart(app cli.App, hs *histStore, bindings tk.Bindings) error {

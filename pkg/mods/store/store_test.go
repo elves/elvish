@@ -19,7 +19,7 @@ func TestStore(t *testing.T) {
 	ns := Ns(s)
 
 	setup := func(ev *eval.Evaler) {
-		ev.AddGlobal(eval.NsBuilder{}.AddNs("store", ns).Ns())
+		ev.ExtendGlobal(eval.BuildNs().AddNs("store", ns))
 	}
 	TestWithSetup(t, setup,
 		// Add commands

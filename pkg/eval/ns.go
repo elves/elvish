@@ -29,6 +29,11 @@ type Ns struct {
 	infos []staticVarInfo
 }
 
+// Nser is anything that can be converted to an *Ns.
+type Nser interface {
+	Ns() *Ns
+}
+
 // Static information known about a variable.
 type staticVarInfo struct {
 	name     string
@@ -57,6 +62,11 @@ func CombineNs(ns1, ns2 *Ns) *Ns {
 			ns.infos = append(ns.infos, info)
 		}
 	}
+	return ns
+}
+
+// Ns returns ns itself.
+func (ns *Ns) Ns() *Ns {
 	return ns
 }
 
@@ -155,43 +165,69 @@ func (ns *Ns) static() *staticNs {
 }
 
 // NsBuilder is a helper type used for building an Ns.
-type NsBuilder map[string]vars.Var
+type NsBuilder struct {
+	prefix string
+	m      map[string]vars.Var
+}
+
+// BuildNs returns a helper for building an Ns.
+func BuildNs() NsBuilder {
+	return BuildNsNamed("")
+}
+
+// BuildNs returns a helper for building an Ns with the given name. The name is
+// only used for the names of Go functions.
+func BuildNsNamed(name string) NsBuilder {
+	prefix := ""
+	if name != "" {
+		prefix = "<" + name + ">:"
+	}
+	return NsBuilder{prefix, make(map[string]vars.Var)}
+}
 
 // Add adds a variable.
-func (nb NsBuilder) Add(name string, v vars.Var) NsBuilder {
-	nb[name] = v
+func (nb NsBuilder) AddVar(name string, v vars.Var) NsBuilder {
+	nb.m[name] = v
+	return nb
+}
+
+// AddVars adds all the variables given in the map.
+func (nb NsBuilder) AddVars(m map[string]vars.Var) NsBuilder {
+	for name, v := range m {
+		nb.AddVar(name, v)
+	}
 	return nb
 }
 
 // AddFn adds a function. The resulting variable will be read-only.
 func (nb NsBuilder) AddFn(name string, v Callable) NsBuilder {
-	return nb.Add(name+FnSuffix, vars.NewReadOnly(v))
+	return nb.AddVar(name+FnSuffix, vars.NewReadOnly(v))
 }
 
 // AddNs adds a sub-namespace. The resulting variable will be read-only.
-func (nb NsBuilder) AddNs(name string, v *Ns) NsBuilder {
-	return nb.Add(name+NsSuffix, vars.NewReadOnly(v))
+func (nb NsBuilder) AddNs(name string, v Nser) NsBuilder {
+	return nb.AddVar(name+NsSuffix, vars.NewReadOnly(v.Ns()))
 }
 
 // AddGoFn adds a Go function. The resulting variable will be read-only.
-func (nb NsBuilder) AddGoFn(nsName, name string, impl interface{}) NsBuilder {
-	return nb.AddFn(name, NewGoFn(nsName+name, impl))
+func (nb NsBuilder) AddGoFn(name string, impl interface{}) NsBuilder {
+	return nb.AddFn(name, NewGoFn(nb.prefix+name, impl))
 }
 
 // AddGoFns adds Go functions. The resulting variables will be read-only.
-func (nb NsBuilder) AddGoFns(nsName string, fns map[string]interface{}) NsBuilder {
+func (nb NsBuilder) AddGoFns(fns map[string]interface{}) NsBuilder {
 	for name, impl := range fns {
-		nb.AddGoFn(nsName, name, impl)
+		nb.AddGoFn(name, impl)
 	}
 	return nb
 }
 
 // Ns builds a namespace.
 func (nb NsBuilder) Ns() *Ns {
-	n := len(nb)
+	n := len(nb.m)
 	ns := &Ns{make([]vars.Var, n), make([]staticVarInfo, n)}
 	i := 0
-	for name, variable := range nb {
+	for name, variable := range nb.m {
 		ns.slots[i] = variable
 		ns.infos[i] = staticVarInfo{name, vars.IsReadOnly(variable), false}
 		i++

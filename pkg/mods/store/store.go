@@ -112,21 +112,22 @@ import (
 // Deletes the shared variable with the given name.
 
 func Ns(s storedefs.Store) *eval.Ns {
-	return eval.NsBuilder{}.AddGoFns("store:", map[string]interface{}{
-		"next-cmd-seq": s.NextCmdSeq,
-		"add-cmd":      s.AddCmd,
-		"del-cmd":      s.DelCmd,
-		"cmd":          s.Cmd,
-		"cmds":         s.CmdsWithSeq,
-		"next-cmd":     s.NextCmd,
-		"prev-cmd":     s.PrevCmd,
+	return eval.BuildNsNamed("store").
+		AddGoFns(map[string]interface{}{
+			"next-cmd-seq": s.NextCmdSeq,
+			"add-cmd":      s.AddCmd,
+			"del-cmd":      s.DelCmd,
+			"cmd":          s.Cmd,
+			"cmds":         s.CmdsWithSeq,
+			"next-cmd":     s.NextCmd,
+			"prev-cmd":     s.PrevCmd,
 
-		"add-dir": func(dir string) error { return s.AddDir(dir, 1) },
-		"del-dir": s.DelDir,
-		"dirs":    func() ([]storedefs.Dir, error) { return s.Dirs(storedefs.NoBlacklist) },
+			"add-dir": func(dir string) error { return s.AddDir(dir, 1) },
+			"del-dir": s.DelDir,
+			"dirs":    func() ([]storedefs.Dir, error) { return s.Dirs(storedefs.NoBlacklist) },
 
-		"shared-var":     s.SharedVar,
-		"set-shared-var": s.SetSharedVar,
-		"del-shared-var": s.DelSharedVar,
-	}).Ns()
+			"shared-var":     s.SharedVar,
+			"set-shared-var": s.SetSharedVar,
+			"del-shared-var": s.DelSharedVar,
+		}).Ns()
 }

@@ -38,7 +38,7 @@ func TestPipeline(t *testing.T) {
 
 func TestPipeline_BgJob(t *testing.T) {
 	setup := func(ev *Evaler) {
-		ev.AddGlobal(NsBuilder{}.AddNs("file", file.Ns).Ns())
+		ev.ExtendGlobal(BuildNs().AddNs("file", file.Ns))
 	}
 
 	notes1 := make(chan string)
@@ -259,7 +259,7 @@ func TestCommand_DeprecatedSpecialNamespacesInAssignment(t *testing.T) {
 
 func TestCommand_Redir(t *testing.T) {
 	setup := func(ev *Evaler) {
-		ev.AddGlobal(NsBuilder{}.AddNs("file", file.Ns).Ns())
+		ev.ExtendGlobal(BuildNs().AddNs("file", file.Ns))
 	}
 	testutil.InTempDir(t)
 
