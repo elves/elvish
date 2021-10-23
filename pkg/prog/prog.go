@@ -17,10 +17,6 @@ import (
 	"src.elv.sh/pkg/logutil"
 )
 
-// Default port on which the web interface runs. The number is chosen because it
-// resembles "elvi".
-const defaultWebPort = 3171
-
 // DeprecationLevel is a global flag that controls which deprecations to show.
 // If its value is X, Elvish shows deprecations that should be shown for version
 // 0.X.
@@ -35,7 +31,6 @@ type Flags struct {
 	CodeInArg, CompileOnly, NoRc bool
 	RC                           string
 
-	Web  bool
 	Port int
 
 	Daemon bool
@@ -55,7 +50,7 @@ func newFlagSet(f *Flags) *flag.FlagSet {
 	fs.BoolVar(&f.Help, "help", false, "show usage help and quit")
 	fs.BoolVar(&f.Version, "version", false, "show version and quit")
 	fs.BoolVar(&f.BuildInfo, "buildinfo", false, "show build info and quit")
-	fs.BoolVar(&f.JSON, "json", false, "show output in JSON. Useful with -buildinfo.")
+	fs.BoolVar(&f.JSON, "json", false, "show output in JSON. Useful with -buildinfo and -compileonly")
 
 	// The `-i` option is for compatibility with POSIX shells so that programs, such as the `script`
 	// command, will work when asked to launch an interactive Elvish shell.
@@ -64,9 +59,6 @@ func newFlagSet(f *Flags) *flag.FlagSet {
 	fs.BoolVar(&f.CompileOnly, "compileonly", false, "Parse/Compile but do not execute")
 	fs.BoolVar(&f.NoRc, "norc", false, "run elvish without invoking rc.elv")
 	fs.StringVar(&f.RC, "rc", "", "path to rc.elv")
-
-	fs.BoolVar(&f.Web, "web", false, "run backend of web interface")
-	fs.IntVar(&f.Port, "port", defaultWebPort, "the port of the web backend")
 
 	fs.BoolVar(&f.Daemon, "daemon", false, "[internal flag] run the storage daemon instead of shell")
 
