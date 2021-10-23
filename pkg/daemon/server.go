@@ -100,10 +100,9 @@ func Serve(sockpath, dbpath string, opts ServeOpts) int {
 	conns := make(map[net.Conn]struct{})
 	connDoneCh := make(chan net.Conn, 10)
 
-	interrupt := func() bool {
+	interrupt := func() {
 		if len(conns) == 0 {
 			logger.Println("exiting since there are no clients")
-			return true
 		}
 		logger.Printf("going to close %v active connections", len(conns))
 		for conn := range conns {
@@ -112,7 +111,6 @@ func Serve(sockpath, dbpath string, opts ServeOpts) int {
 				logger.Println("failed to close connection:", err)
 			}
 		}
-		return false
 	}
 
 	if opts.Ready != nil {
@@ -123,10 +121,9 @@ loop:
 	for {
 		select {
 		case sig := <-sigCh:
-			logger.Printf("received signal %s", sig)
-			if interrupt() {
-				break loop
-			}
+			logger.Printf("received signal %v", sig)
+			interrupt()
+			break loop
 		case err := <-listenErrCh:
 			logger.Println("could not listen:", err)
 			if len(conns) == 0 {
