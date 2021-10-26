@@ -17,15 +17,16 @@ func _() {
 	_ = x[Tilde-6]
 	_ = x[ExceptionCapture-7]
 	_ = x[OutputCapture-8]
-	_ = x[List-9]
-	_ = x[Lambda-10]
-	_ = x[Map-11]
-	_ = x[Braced-12]
+	_ = x[StringOutputCapture-9]
+	_ = x[List-10]
+	_ = x[Lambda-11]
+	_ = x[Map-12]
+	_ = x[Braced-13]
 }
 
-const _PrimaryType_name = "BadPrimaryBarewordSingleQuotedDoubleQuotedVariableWildcardTildeExceptionCaptureOutputCaptureListLambdaMapBraced"
+const _PrimaryType_name = "BadPrimaryBarewordSingleQuotedDoubleQuotedVariableWildcardTildeExceptionCaptureOutputCaptureStringOutputCaptureListLambdaMapBraced"
 
-var _PrimaryType_index = [...]uint8{0, 10, 18, 30, 42, 50, 58, 63, 79, 92, 96, 102, 105, 111}
+var _PrimaryType_index = [...]uint8{0, 10, 18, 30, 42, 50, 58, 63, 79, 92, 111, 115, 121, 124, 130}
 
 func (i PrimaryType) String() string {
 	if i < 0 || i >= PrimaryType(len(_PrimaryType_index)-1) {

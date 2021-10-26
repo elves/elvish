@@ -76,7 +76,7 @@ func completeCommand(n parse.Node, cfg Config) (*context, []RawItem, error) {
 			return generateForEmpty(n.Range().To)
 		case is(parent, aPrimary):
 			ptype := parent.(*parse.Primary).Type
-			if ptype == parse.OutputCapture || ptype == parse.ExceptionCapture || ptype == parse.Lambda {
+			if ptype == parse.OutputCapture || ptype == parse.ExceptionCapture || ptype == parse.StringOutputCapture || ptype == parse.Lambda {
 				// Case 3: At the beginning of output, exception capture or lambda.
 				//
 				// TODO: Don't trigger after "{|".

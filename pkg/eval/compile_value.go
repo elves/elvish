@@ -276,6 +276,8 @@ func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 		return literalValues(n, "~")
 	case parse.ExceptionCapture:
 		return exceptionCaptureOp{n.Range(), cp.chunkOp(n.Chunk)}
+	case parse.StringOutputCapture:
+		return stringOutputCaptureOp{n.Range(), cp.chunkOp(n.Chunk)}
 	case parse.OutputCapture:
 		return outputCaptureOp{n.Range(), cp.chunkOp(n.Chunk)}
 	case parse.List:
@@ -350,6 +352,25 @@ func (op exceptionCaptureOp) exec(fm *Frame) ([]interface{}, Exception) {
 		return []interface{}{OK}, nil
 	}
 	return []interface{}{exc}, nil
+}
+
+type stringOutputCaptureOp struct {
+	diag.Ranging
+	subop effectOp
+}
+
+func (op stringOutputCaptureOp) exec(fm *Frame) ([]interface{}, Exception) {
+	outPort, collect, err := CapturePort()
+	if err != nil {
+		return nil, fm.errorp(op, err)
+	}
+	exc := op.subop.exec(fm.forkWithOutput("[string output capture]", outPort))
+	vs := collect()
+	strs := make([]string, len(vs))
+	for i, v := range vs {
+		strs[i] = vals.ToString(v)
+	}
+	return []interface{}{strings.Join(strs, "\n")}, exc
 }
 
 type outputCaptureOp struct {

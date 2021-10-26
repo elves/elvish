@@ -120,6 +120,14 @@ func TestExceptionCapture(t *testing.T) {
 	)
 }
 
+func TestStringOutputCapture(t *testing.T) {
+	Test(t,
+		// String output capture
+		That("put $(print \"\")").Puts(""),
+		That("put $(print \"lorem\nipsum\")").Puts("lorem\nipsum"),
+	)
+}
+
 func TestVariableUse(t *testing.T) {
 	Test(t,
 		That("x = foo", "put $x").Puts("foo"),

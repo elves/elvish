@@ -483,7 +483,7 @@ type Primary struct {
 	// DoubleQuoted, Variable, Wildcard and Tilde.
 	Value    string
 	Elements []*Compound // Valid for List and Lambda
-	Chunk    *Chunk      // Valid for OutputCapture, ExitusCapture and Lambda
+	Chunk    *Chunk      // Valid for OutputCapture, StringOutputCapture, ExitusCapture and Lambda
 	MapPairs []*MapPair  // Valid for Map and Lambda
 	Braced   []*Compound // Valid for Braced
 }
@@ -502,6 +502,7 @@ const (
 	Tilde
 	ExceptionCapture
 	OutputCapture
+	StringOutputCapture
 	List
 	Lambda
 	Map
@@ -528,7 +529,11 @@ func (pn *Primary) parse(ps *parser) {
 	case '"':
 		pn.doubleQuoted(ps)
 	case '$':
-		pn.variable(ps)
+		if ps.hasPrefix("$(") {
+			pn.stringOutputCapture(ps)
+		} else {
+			pn.variable(ps)
+		}
 	case '*':
 		pn.starWildcard(ps)
 	case '?':
@@ -759,6 +764,20 @@ func (pn *Primary) exitusCapture(ps *parser) {
 func (pn *Primary) outputCapture(ps *parser) {
 	pn.Type = OutputCapture
 	parseSep(pn, ps, '(')
+
+	ps.parse(&Chunk{}).addAs(&pn.Chunk, pn)
+
+	if !parseSep(pn, ps, ')') {
+		ps.error(errShouldBeRParen)
+	}
+}
+
+func (pn *Primary) stringOutputCapture(ps *parser) {
+	ps.next()
+	ps.next()
+	addSep(pn, ps)
+
+	pn.Type = StringOutputCapture
 
 	ps.parse(&Chunk{}).addAs(&pn.Chunk, pn)
 

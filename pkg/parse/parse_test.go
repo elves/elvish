@@ -408,6 +408,17 @@ var testCases = []struct {
 			}}),
 	},
 	{
+		name: "string output capture",
+		code: "a $() $(b;c)",
+		node: &Chunk{},
+		want: a(
+			ast{"Compound/Indexing/Primary", fs{
+				"Type": StringOutputCapture, "Chunk": ""}},
+			ast{"Compound/Indexing/Primary", fs{
+				"Type": StringOutputCapture, "Chunk": "b;c",
+			}}),
+	},
+	{
 		name: "braced list",
 		code: "{,a,c\ng\n}",
 		node: &Primary{},
