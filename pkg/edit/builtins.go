@@ -275,7 +275,10 @@ var bufferBuiltinsData = map[string]func(*tk.CodeBuffer){
 	"kill-line-left":        makeKill(moveDotSOL),
 	"kill-line-right":       makeKill(moveDotEOL),
 
-	"transpose-rune": makeTransform(transposeRunes),
+	"transpose-rune":       makeTransform(transposeRunes),
+	"transpose-word":       makeTransform(transposeWord),
+	"transpose-small-word": makeTransform(transposeSmallWord),
+	"transpose-alnum-word": makeTransform(transposeAlnumWord),
 }
 
 func initBufferBuiltins(app cli.App, nb eval.NsBuilder) {
@@ -494,6 +497,16 @@ func moveDotRightWord(buffer string, dot int) int {
 	return moveDotRightGeneralWord(categorizeWord, buffer, dot)
 }
 
+//elvdoc:fn transpose-word
+//
+// Swaps the words to the left and right of the dot. If the dot is
+// at the beginning of the buffer, swaps the first two words, and if it is
+// at the end, it swaps the last two.
+
+func transposeWord(buffer string, dot int) (string, int) {
+	return transposeGeneralWord(categorizeWord, buffer, dot)
+}
+
 func categorizeWord(r rune) int {
 	switch {
 	case unicode.IsSpace(r):
@@ -527,6 +540,16 @@ func moveDotRightSmallWord(buffer string, dot int) int {
 	return moveDotRightGeneralWord(tk.CategorizeSmallWord, buffer, dot)
 }
 
+//elvdoc:fn transpose-small-word
+//
+// Swaps the small words to the left and right of the dot. If the dot is
+// at the beginning of the buffer, swaps the first two small words, and if
+// it is at the end, it swaps the last two.
+
+func transposeSmallWord(buffer string, dot int) (string, int) {
+	return transposeGeneralWord(tk.CategorizeSmallWord, buffer, dot)
+}
+
 //elvdoc:fn move-dot-left-alnum-word
 //
 // Moves the dot to the beginning of the last alnum word to the left of the dot.
@@ -549,6 +572,16 @@ func moveDotLeftAlnumWord(buffer string, dot int) int {
 
 func moveDotRightAlnumWord(buffer string, dot int) int {
 	return moveDotRightGeneralWord(categorizeAlnum, buffer, dot)
+}
+
+//elvdoc:fn transpose-alnum-word
+//
+// Swaps the alnum words to the left and right of the dot. If the dot is
+// at the beginning of the buffer, swaps the first alnum words, and if it is
+// at the end, it swaps the last two.
+
+func transposeAlnumWord(buffer string, dot int) (string, int) {
+	return transposeGeneralWord(categorizeAlnum, buffer, dot)
 }
 
 func categorizeAlnum(r rune) int {
@@ -618,24 +651,24 @@ type categorizer func(rune) int
 
 // Skip only word characters left from pos in buffer and return that position.
 //
-// Note that a word character must be to the left of pos.
-func (categorize categorizer) skipWordLeft(buffer string, pos int) int {
+// Note that a word character must be to the left of pos. If it is a
+// whitespace character, this will instead skip whitespace.
+func skipWordLeft(categorize categorizer, buffer string, pos int) int {
 	if pos == 0 {
 		return pos
 	}
 
 	r, _ := utf8.DecodeLastRuneInString(buffer[:pos])
 	cat := categorize(r)
-	// assert cat is not 0
-	return categorize.skipCatLeft(cat, buffer, pos)
+	return skipCatLeft(categorize, cat, buffer, pos)
 }
 
 // Skip whitespace left from pos in buffer and return that position.
-func (categorize categorizer) skipWsLeft(buffer string, pos int) int {
-	return categorize.skipCatLeft(0, buffer, pos)
+func skipWsLeft(categorize categorizer, buffer string, pos int) int {
+	return skipCatLeft(categorize, 0, buffer, pos)
 }
 
-func (categorize categorizer) skipCatLeft(cat int, buffer string, pos int) int {
+func skipCatLeft(categorize categorizer, cat int, buffer string, pos int) int {
 	left := strings.TrimRightFunc(buffer[:pos], func(r rune) bool {
 		return categorize(r) == cat
 	})
@@ -645,24 +678,24 @@ func (categorize categorizer) skipCatLeft(cat int, buffer string, pos int) int {
 
 // Skip only word characters right from pos in buffer and return that position.
 //
-// Note that a word character must be to the right of pos.
-func (categorize categorizer) skipWordRight(buffer string, pos int) int {
+// Note that a word character must be to the right of pos. If it is a
+// whitespace character, this will instead skip whitespace.
+func skipWordRight(categorize categorizer, buffer string, pos int) int {
 	if pos == len(buffer) {
 		return pos
 	}
 
 	r, _ := utf8.DecodeRuneInString(buffer[pos:])
 	cat := categorize(r)
-	// assert cat is not 0
-	return categorize.skipCatRight(cat, buffer, pos)
+	return skipCatRight(categorize, cat, buffer, pos)
 }
 
 // Skip whitespace right from pos in buffer and return that position.
-func (categorize categorizer) skipWsRight(buffer string, pos int) int {
-	return categorize.skipCatRight(0, buffer, pos)
+func skipWsRight(categorize categorizer, buffer string, pos int) int {
+	return skipCatRight(categorize, 0, buffer, pos)
 }
 
-func (categorize categorizer) skipCatRight(cat int, buffer string, pos int) int {
+func skipCatRight(categorize categorizer, cat int, buffer string, pos int) int {
 	right := strings.TrimLeftFunc(buffer[pos:], func(r rune) bool {
 		return categorize(r) == cat
 	})
@@ -674,10 +707,10 @@ func (categorize categorizer) skipCatRight(cat int, buffer string, pos int) int 
 // categorizer.
 func moveDotLeftGeneralWord(categorize categorizer, buffer string, dot int) int {
 	// skip trailing whitespaces left of dot
-	pos := categorize.skipWsLeft(buffer, dot)
+	pos := skipWsLeft(categorize, buffer, dot)
 
 	// skip this word
-	pos = categorize.skipWordLeft(buffer, pos)
+	pos = skipWordLeft(categorize, buffer, pos)
 
 	return pos
 }
@@ -686,7 +719,7 @@ func moveDotLeftGeneralWord(categorize categorizer, buffer string, dot int) int 
 // categorizer.
 func moveDotRightGeneralWord(categorize categorizer, buffer string, dot int) int {
 	// skip leading whitespaces right of dot
-	pos := categorize.skipWsRight(buffer, dot)
+	pos := skipWsRight(categorize, buffer, dot)
 
 	// check whether any whitespace was skipped; if whitespace was
 	// skipped, then dot is already successfully moved to next
@@ -698,11 +731,55 @@ func moveDotRightGeneralWord(categorize categorizer, buffer string, dot int) int
 	// no whitespace was skipped, so we still have to skip to the next word
 
 	// skip this word
-	pos = categorize.skipWordRight(buffer, pos)
+	pos = skipWordRight(categorize, buffer, pos)
 	// skip remaining whitespace
-	pos = categorize.skipWsRight(buffer, pos)
+	pos = skipWsRight(categorize, buffer, pos)
 
 	return pos
+}
+
+// Transpose the words around the cursor, using the word flavor described
+// by the categorizer.
+func transposeGeneralWord(categorize categorizer, buffer string, dot int) (string, int) {
+	if strings.TrimFunc(buffer, func(r rune) bool { return categorize(r) == 0 }) == "" {
+		// buffer contains only whitespace
+		return buffer, dot
+	}
+
+	// after skipping whitespace, find the end of the right word
+	pos := skipWsRight(categorize, buffer, dot)
+	var rightEnd int
+	if pos == len(buffer) {
+		// there is only whitespace to the right of the dot
+		rightEnd = skipWsLeft(categorize, buffer, pos)
+	} else {
+		rightEnd = skipWordRight(categorize, buffer, pos)
+	}
+	// if the dot started in the middle of a word, 'pos' is the same as dot,
+	// so we should skip word characters to the left to find the start of the
+	// word
+	rightStart := skipWordLeft(categorize, buffer, rightEnd)
+
+	leftEnd := skipWsLeft(categorize, buffer, rightStart)
+	var leftStart int
+	if leftEnd == 0 {
+		// right word is the first word, use it as the left word and find a
+		// new right word
+		leftStart = rightStart
+		leftEnd = rightEnd
+
+		rightStart = skipWsRight(categorize, buffer, leftEnd)
+		if rightStart == len(buffer) {
+			// there is only one word in the buffer
+			return buffer, dot
+		}
+
+		rightEnd = skipWordRight(categorize, buffer, rightStart)
+	} else {
+		leftStart = skipWordLeft(categorize, buffer, leftEnd)
+	}
+
+	return buffer[:leftStart] + buffer[rightStart:rightEnd] + buffer[leftEnd:rightStart] + buffer[leftStart:leftEnd] + buffer[rightEnd:], rightEnd
 }
 
 // Like mode.FocusedCodeArea, but handles the error by writing a notification.
