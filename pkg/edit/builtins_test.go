@@ -234,6 +234,51 @@ var bufferBuiltinsTests = []struct {
 		tk.CodeBuffer{Content: "a", Dot: 0},
 		tk.CodeBuffer{Content: "a", Dot: 0},
 	},
+	{
+		"transpose-word with dot at beginning",
+		tk.CodeBuffer{Content: "ab  bc cd", Dot: 0},
+		tk.CodeBuffer{Content: "bc  ab cd", Dot: 6},
+	},
+	{
+		"transpose-word with dot in between words",
+		tk.CodeBuffer{Content: "ab  bc cd", Dot: 6},
+		tk.CodeBuffer{Content: "ab  cd bc", Dot: 9},
+	},
+	{
+		"transpose-word with dot at end",
+		tk.CodeBuffer{Content: "ab  bc cd", Dot: 9},
+		tk.CodeBuffer{Content: "ab  cd bc", Dot: 9},
+	},
+	{
+		"transpose-word with dot in the middle of a word",
+		tk.CodeBuffer{Content: "ab  bc cd", Dot: 5},
+		tk.CodeBuffer{Content: "bc  ab cd", Dot: 6},
+	},
+	{
+		"transpose-word with one word",
+		tk.CodeBuffer{Content: " ab  ", Dot: 4},
+		tk.CodeBuffer{Content: " ab  ", Dot: 4},
+	},
+	{
+		"transpose-word with no words",
+		tk.CodeBuffer{Content: " \t\n  ", Dot: 4},
+		tk.CodeBuffer{Content: " \t\n  ", Dot: 4},
+	},
+	{
+		"transpose-word with complex input",
+		tk.CodeBuffer{Content: "cd ~/downloads;", Dot: 4},
+		tk.CodeBuffer{Content: "~/downloads;", Dot: 15},
+	},
+	{
+		"transpose-small-word",
+		tk.CodeBuffer{Content: "cd ~/downloads;", Dot: 4},
+		tk.CodeBuffer{Content: "~/ cddownloads;", Dot: 5},
+	},
+	{
+		"transpose-alnum-word",
+		tk.CodeBuffer{Content: "cd ~/downloads;", Dot: 4},
+		tk.CodeBuffer{Content: "downloads ~/cd;", Dot: 14},
+	},
 }
 
 func TestBufferBuiltins(t *testing.T) {
