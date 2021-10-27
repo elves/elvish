@@ -563,60 +563,93 @@ func categorizeAlnum(r rune) int {
 // different word categories.
 type categorizer func(rune) int
 
+// Skip only word characters left from pos in buffer and return that position.
+//
+// Note that a word character must be to the left of pos.
+func (categorize categorizer) skipWordLeft(buffer string, pos int) int {
+	if pos == 0 {
+		return pos
+	}
+
+	r, _ := utf8.DecodeLastRuneInString(buffer[:pos])
+	cat := categorize(r)
+	// assert cat is not 0
+	return categorize.skipCatLeft(cat, buffer, pos)
+}
+
+// Skip whitespace left from pos in buffer and return that position.
+func (categorize categorizer) skipWsLeft(buffer string, pos int) int {
+	return categorize.skipCatLeft(0, buffer, pos)
+}
+
+func (categorize categorizer) skipCatLeft(cat int, buffer string, pos int) int {
+	left := strings.TrimRightFunc(buffer[:pos], func(r rune) bool {
+		return categorize(r) == cat
+	})
+
+	return len(left)
+}
+
+// Skip only word characters right from pos in buffer and return that position.
+//
+// Note that a word character must be to the right of pos.
+func (categorize categorizer) skipWordRight(buffer string, pos int) int {
+	if pos == len(buffer) {
+		return pos
+	}
+
+	r, _ := utf8.DecodeRuneInString(buffer[pos:])
+	cat := categorize(r)
+	// assert cat is not 0
+	return categorize.skipCatRight(cat, buffer, pos)
+}
+
+// Skip whitespace right from pos in buffer and return that position.
+func (categorize categorizer) skipWsRight(buffer string, pos int) int {
+	return categorize.skipCatRight(0, buffer, pos)
+}
+
+func (categorize categorizer) skipCatRight(cat int, buffer string, pos int) int {
+	right := strings.TrimLeftFunc(buffer[pos:], func(r rune) bool {
+		return categorize(r) == cat
+	})
+
+	return len(buffer) - len(right)
+}
+
 // Move the dot left one word, using the word flavor described by the
 // categorizer.
 func moveDotLeftGeneralWord(categorize categorizer, buffer string, dot int) int {
-	left := buffer[:dot]
-	skipCat := func(cat int) {
-		left = strings.TrimRightFunc(left, func(r rune) bool {
-			return categorize(r) == cat
-		})
-	}
-
 	// skip trailing whitespaces left of dot
-	skipCat(0)
-
-	// get category of last rune
-	r, _ := utf8.DecodeLastRuneInString(left)
-	cat := categorize(r)
+	pos := categorize.skipWsLeft(buffer, dot)
 
 	// skip this word
-	skipCat(cat)
+	pos = categorize.skipWordLeft(buffer, pos)
 
-	return len(left)
+	return pos
 }
 
 // Move the dot right one word, using the word flavor described by the
 // categorizer.
 func moveDotRightGeneralWord(categorize categorizer, buffer string, dot int) int {
-	right := buffer[dot:]
-	skipCat := func(cat int) {
-		right = strings.TrimLeftFunc(right, func(r rune) bool {
-			return categorize(r) == cat
-		})
-	}
-
 	// skip leading whitespaces right of dot
-	skipCat(0)
+	pos := categorize.skipWsRight(buffer, dot)
 
 	// check whether any whitespace was skipped; if whitespace was
 	// skipped, then dot is already successfully moved to next
 	// non-whitespace run
-	if dot < len(buffer)-len(right) {
-		return len(buffer) - len(right)
+	if dot < pos {
+		return pos
 	}
 
 	// no whitespace was skipped, so we still have to skip to the next word
 
-	// get category of first rune
-	r, _ := utf8.DecodeRuneInString(right)
-	cat := categorize(r)
 	// skip this word
-	skipCat(cat)
+	pos = categorize.skipWordRight(buffer, pos)
 	// skip remaining whitespace
-	skipCat(0)
+	pos = categorize.skipWsRight(buffer, pos)
 
-	return len(buffer) - len(right)
+	return pos
 }
 
 // Like mode.FocusedCodeArea, but handles the error by writing a notification.
