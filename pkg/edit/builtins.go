@@ -274,6 +274,8 @@ var bufferBuiltinsData = map[string]func(*tk.CodeBuffer){
 	"kill-right-alnum-word": makeKill(moveDotRightAlnumWord),
 	"kill-line-left":        makeKill(moveDotSOL),
 	"kill-line-right":       makeKill(moveDotEOL),
+
+	"transpose-rune": makeTransform(transposeRunes),
 }
 
 func initBufferBuiltins(app cli.App, nb eval.NsBuilder) {
@@ -423,6 +425,47 @@ func moveDotDown(buffer string, dot int) int {
 	sol := strutil.FindLastSOL(buffer[:dot])
 	width := wcwidth.Of(buffer[sol:dot])
 	return nextSOL + len(wcwidth.Trim(buffer[nextSOL:nextEOL], width))
+}
+
+//elvdoc:fn transpose-rune
+//
+// Swaps the characters to the left and right of the dot. If the dot is
+// at the beginning of the buffer, swaps the first two characters, and
+// if it is at the end, it swaps the last two.
+
+func transposeRunes(buffer string, dot int) (string, int) {
+	if len(buffer) == 0 {
+		return buffer, dot
+	}
+
+	var res string
+	var newDot int
+	// transpose at the beginning of the buffer transposes the first two
+	// characters, and at the end the last two
+	if dot == 0 {
+		first, firstLen := utf8.DecodeRuneInString(buffer)
+		if firstLen == len(buffer) {
+			return buffer, dot
+		}
+		second, secondLen := utf8.DecodeRuneInString(buffer[firstLen:])
+		res = string(second) + string(first) + buffer[firstLen+secondLen:]
+		newDot = firstLen + secondLen
+	} else if dot == len(buffer) {
+		second, secondLen := utf8.DecodeLastRuneInString(buffer)
+		if secondLen == len(buffer) {
+			return buffer, dot
+		}
+		first, firstLen := utf8.DecodeLastRuneInString(buffer[:len(buffer)-secondLen])
+		res = buffer[:len(buffer)-firstLen-secondLen] + string(second) + string(first)
+		newDot = len(res)
+	} else {
+		first, firstLen := utf8.DecodeLastRuneInString(buffer[:dot])
+		second, secondLen := utf8.DecodeRuneInString(buffer[dot:])
+		res = buffer[:dot-firstLen] + string(second) + string(first) + buffer[dot+secondLen:]
+		newDot = dot + secondLen
+	}
+
+	return res, newDot
 }
 
 // TODO(xiaq): Document the concepts of words, small words and alnum words.

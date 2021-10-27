@@ -2,6 +2,7 @@ package edit
 
 import (
 	"io"
+	"strings"
 	"testing"
 
 	"src.elv.sh/pkg/cli/modes"
@@ -208,6 +209,31 @@ var bufferBuiltinsTests = []struct {
 		tk.CodeBuffer{Content: "ab", Dot: 1},
 		tk.CodeBuffer{Content: "a", Dot: 1},
 	},
+	{
+		"transpose-rune with dot at beginning",
+		tk.CodeBuffer{Content: "abc", Dot: 0},
+		tk.CodeBuffer{Content: "bac", Dot: 2},
+	},
+	{
+		"transpose-rune with dot in middle",
+		tk.CodeBuffer{Content: "abc", Dot: 1},
+		tk.CodeBuffer{Content: "bac", Dot: 2},
+	},
+	{
+		"transpose-rune with dot at end",
+		tk.CodeBuffer{Content: "abc", Dot: 3},
+		tk.CodeBuffer{Content: "acb", Dot: 3},
+	},
+	{
+		"transpose-rune with one character and dot at end",
+		tk.CodeBuffer{Content: "a", Dot: 1},
+		tk.CodeBuffer{Content: "a", Dot: 1},
+	},
+	{
+		"transpose-rune with one character and dot at beginning",
+		tk.CodeBuffer{Content: "a", Dot: 0},
+		tk.CodeBuffer{Content: "a", Dot: 0},
+	},
 }
 
 func TestBufferBuiltins(t *testing.T) {
@@ -219,7 +245,8 @@ func TestBufferBuiltins(t *testing.T) {
 			codeArea(app).MutateState(func(s *tk.CodeAreaState) {
 				s.Buffer = test.bufBefore
 			})
-			evals(f.Evaler, "edit:"+test.name)
+			cmd := strings.Split(test.name, " ")[0]
+			evals(f.Evaler, "edit:"+cmd)
 			if buf := codeArea(app).CopyState().Buffer; buf != test.bufAfter {
 				t.Errorf("got buf %v, want %v", buf, test.bufAfter)
 			}
