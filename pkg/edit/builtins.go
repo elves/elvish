@@ -324,6 +324,16 @@ func makeKill(m pureMover) func(*tk.CodeBuffer) {
 	}
 }
 
+// A pure function that takes the current buffer and dot, and returns a new
+// value for the buffer and dot.
+type transformer func(buffer string, dot int) (string, int)
+
+func makeTransform(t transformer) func(*tk.CodeBuffer) {
+	return func(buf *tk.CodeBuffer) {
+		buf.Content, buf.Dot = t(buf.Content, buf.Dot)
+	}
+}
+
 // Implementation of pure movers.
 
 //elvdoc:fn move-dot-left
