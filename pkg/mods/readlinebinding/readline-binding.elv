@@ -26,6 +26,9 @@ b=[k f]{ edit:insert:binding[$k] = $f } {
     # Ctrl-N and Ctrl-L occupied by readline binding, $b to Alt- instead.
     $b Alt-n $edit:navigation:start~
     $b Alt-l $edit:location:start~
+
+    $b Ctrl-t $edit:transpose-rune~
+    $b Alt-t $edit:transpose-word~
 }
 
 b=[k f]{ edit:completion:binding[$k] = $f } {
