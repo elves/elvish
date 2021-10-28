@@ -154,8 +154,8 @@ func NewEvaler() *Evaler {
 
 		deprecations: newDeprecationRegistry(),
 
-		modules:        map[string]*Ns{"builtin": builtin},
-		BundledModules: map[string]string{},
+		modules:        make(map[string]*Ns),
+		BundledModules: make(map[string]string),
 
 		valuePrefix:        defaultValuePrefix,
 		notifyBgJobSuccess: defaultNotifyBgJobSuccess,
@@ -179,6 +179,9 @@ func NewEvaler() *Evaler {
 		AddVar("num-bg-jobs",
 			vars.FromGet(func() interface{} { return strconv.Itoa(ev.getNumBgJobs()) })).
 		AddVar("args", vars.FromGet(func() interface{} { return ev.Args })))
+
+	// Install the "builtin" module after extension is complete.
+	ev.modules["builtin"] = ev.builtin
 
 	return ev
 }
