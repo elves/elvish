@@ -23,11 +23,11 @@
 
 /* Expanded view. */
 
-#demo-container.expanded {
+#demo-container.expanded, body.no-js #demo-container {
   width: 100%;
 }
 
-#demo-container.expanded .demo-wrapper {
+#demo-container.expanded .demo-wrapper, body.no-js #demo-container .demo-wrapper {
   width: 100%;
 }
 

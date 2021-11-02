@@ -13,6 +13,10 @@ body {
     line-height: 1.4em;
 }
 
+body.has-js .no-js, body.no-js .has-js {
+    display: none !important;
+}
+
 img {
     max-width: 100%;
 }

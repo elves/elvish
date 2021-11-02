@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
   var current = 0,
-      expanded = true;
+      expanded = false;
       demoWindow = document.getElementById("demo-window"),
       demoContainer = document.getElementById("demo-container"),
       demoSwitcher = document.getElementById("demo-switcher"),
@@ -86,12 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
     li.appendChild(link);
     demoSwitcher.appendChild(li);
   }
-
-  /* Switcher built. Hide the warning text, show the expand button, unexpand
-   * and hide scrollbar. */
-  document.getElementById('no-js').className = "no-display";
-  demoContainer.className = "";
-  expanded = false;
 
   /* Resizing breaks sliding, fix it. */
   window.addEventListener('resize', function() { scrollTo(current, true); });

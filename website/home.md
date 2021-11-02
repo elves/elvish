@@ -2,7 +2,7 @@
 shell, combined into one seamless package. It runs on Linux, BSDs, macOS and
 Windows.
 
-<div id="no-js">
+<div class="no-js">
   <h1>Demos</h1>
   <p>
     Enable JavaScript to see demos as slides.
@@ -12,7 +12,7 @@ Windows.
 <ul id="demo-switcher">
 </ul>
 
-<div id="demo-window"> <div id="demo-container" class="expanded">
+<div id="demo-window"> <div id="demo-container">
   <div class="demo-wrapper"> <div class="demo">
     <div class="demo-col demo-description">
       <h2>Powerful Pipelines</h2>
