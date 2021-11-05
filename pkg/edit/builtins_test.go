@@ -267,7 +267,7 @@ var bufferBuiltinsTests = []struct {
 	{
 		"transpose-word with complex input",
 		tk.CodeBuffer{Content: "cd ~/downloads;", Dot: 4},
-		tk.CodeBuffer{Content: "~/downloads;", Dot: 15},
+		tk.CodeBuffer{Content: "~/downloads; cd", Dot: 15},
 	},
 	{
 		"transpose-small-word",
