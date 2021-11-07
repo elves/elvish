@@ -210,6 +210,11 @@ var bufferBuiltinsTests = []struct {
 		tk.CodeBuffer{Content: "a", Dot: 1},
 	},
 	{
+		"transpose-rune with empty buffer",
+		tk.CodeBuffer{Content: "", Dot: 0},
+		tk.CodeBuffer{Content: "", Dot: 0},
+	},
+	{
 		"transpose-rune with dot at beginning",
 		tk.CodeBuffer{Content: "abc", Dot: 0},
 		tk.CodeBuffer{Content: "bac", Dot: 2},
