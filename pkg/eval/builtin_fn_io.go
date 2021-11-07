@@ -76,6 +76,9 @@ func init() {
 // ▶ <closure 0xc4202607e0>
 // ```
 //
+// **Note**: It is almost never necessary to use `put (...)` - just write the
+// `...` part. For example, `put (eq a b)` is the equivalent to just `eq a b`.
+//
 // Etymology: Various languages, in particular
 // [C](https://manpages.debian.org/stretch/manpages-dev/puts.3.en.html) and
 // [Ruby](https://ruby-doc.org/core-2.2.2/IO.html#method-i-puts) as `puts`.
