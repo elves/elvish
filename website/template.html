@@ -129,6 +129,7 @@
       var lastScrollY = 0;
       var topPx = 0;
       element.style.position = 'sticky';
+      element.style.zIndex = 100;
       document.addEventListener('scroll', function(ev) {
         // Use a negative top property on sticky elements to control how much
         // of it is visible. Keep it in sync with the scroll position, and cap
