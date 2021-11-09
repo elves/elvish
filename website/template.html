@@ -35,7 +35,7 @@
 
   <link rel="stylesheet" href="{{ rootURL }}/fonts.css"/>
 
-	{{ $docsetMode := eq (getEnv "ELVISH_DOCSET_MODE") "1" -}}
+  {{ $docsetMode := eq (getEnv "ELVISH_DOCSET_MODE") "1" -}}
   <style>
     {{ .BaseCSS }}
     {{ .ExtraCSS }}
