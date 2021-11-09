@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
   var current = 0,
-      expanded = false;
+      expanded = false,
       demoWindow = document.getElementById("demo-window"),
       demoContainer = document.getElementById("demo-container"),
       demoSwitcher = document.getElementById("demo-switcher"),
