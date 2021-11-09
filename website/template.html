@@ -120,6 +120,26 @@
         }
       }
     }
+
+    // Make the navbar sticky only when scrolling up. This makes the navbar
+    // easily accessible without taking up vertical space when reading.
+    makeStickyWhenScrollingUp(document.getElementById('navbar-container'));
+
+    function makeStickyWhenScrollingUp(element) {
+      var lastScrollY = 0;
+      var topPx = 0;
+      element.style.position = 'sticky';
+      document.addEventListener('scroll', function(ev) {
+        // Use a negative top property on sticky elements to control how much
+        // of it is visible. Keep it in sync with the scroll position, and cap
+        // it between -element.offsetHeight (entirely hidden) and 0 (entirely
+        // visible).
+        topPx += lastScrollY - window.scrollY;
+        topPx = Math.max(-element.offsetHeight, Math.min(0, topPx));
+        element.style.top = topPx + 'px';
+        lastScrollY = window.scrollY;
+      });
+    }
   </script>
 </body>
 </html>
