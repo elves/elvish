@@ -33,10 +33,15 @@
   <meta name="msapplication-TileColor" content="#da532c">
   <meta name="theme-color" content="#ffffff">
 
-  <link rel="stylesheet" href="{{ rootURL }}/fonts.css"/>
-
   {{ $docsetMode := eq (getEnv "ELVISH_DOCSET_MODE") "1" -}}
   <style>
+    {{ fontFace "Source Serif" 400 "normal" "SourceSerif4-Regular" }}
+    {{ fontFace "Source Serif" 400 "italic" "SourceSerif4-It" }}
+    {{ fontFace "Source Serif" 600 "normal" "SourceSerif4-Semibold" }}
+    {{ fontFace "Source Serif" 600 "italic" "SourceSerif4-SemiboldIt" }}
+    {{ fontFace "Fira Mono" 400 "normal" "FiraMono-Regular" }}
+    {{ fontFace "Fira Mono" 600 "italic" "FiraMono-Bold" }}
+
     {{ .BaseCSS }}
     {{ .ExtraCSS }}
     {{ if $docsetMode }}

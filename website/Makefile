@@ -17,7 +17,8 @@ default: gen
 # Generates the website into the dst directory.
 gen: tools $(HTMLS)
 	$(TOOLS_DIR)/genblog.bin . $(DST_DIR)
-	ln -sf `pwd`/fonts.css `pwd`/favicons/* $(DST_DIR)/
+	ln -sf `pwd`/fonts `pwd`/favicons/* $(DST_DIR)/
+	rm -f $(DST_DIR)/fonts.css # clean up leftover fonts.css
 
 # Generates docset into Elvish.docset.
 docset: tools $(HTMLS)
