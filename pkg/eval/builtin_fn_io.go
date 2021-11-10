@@ -221,10 +221,13 @@ func print(fm *Frame, opts printOpts, args ...interface{}) error {
 // printf $template $value...
 // ```
 //
-// Prints values to the byte stream according to a template.
+// Prints values to the byte stream according to a template. If you need to inject the output into
+// the value stream use this pattern: `printf .... | slurp`. That ensures that any newlines in the
+// output of `printf` do not cause its output to be broken into multiple values, thus eliminating
+// the newlines, which will occur if you do `put (printf ....)`.
 //
-// Like [`print`](#print), this command does not add an implicit newline; use
-// an explicit `"\n"` in the formatting template instead.
+// Like [`print`](#print), this command does not add an implicit newline; include an explicit `"\n"`
+// in the formatting template instead. For example, `printf "%.1f\n" (/ 10.0 3)`.
 //
 // See Go's [`fmt`](https://golang.org/pkg/fmt/#hdr-Printing) package for
 // details about the formatting verbs and the various flags that modify the
