@@ -67,7 +67,7 @@ func contentIs(what string) string {
 		what)
 }
 
-const fontFaceTemplate = `@font-face { font-family: %v; font-weight: %v; font-style: %v; font-stretch: normal; font-display: swap; src: url("%v/fonts/%v.woff2") format("woff");}`
+const fontFaceTemplate = `@font-face { font-family: %v; font-weight: %v; font-style: %v; font-stretch: normal; font-display: block; src: url("%v/fonts/%v.woff2") format("woff");}`
 
 func newTemplate(name, root string, sources ...string) *template.Template {
 	t := template.New(name).Funcs(template.FuncMap(map[string]interface{}{
