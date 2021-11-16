@@ -220,7 +220,7 @@ can be constructed by passing their **string representation** to the
 [`num`](builtin.html#num) builtin command:
 
 -   **Integers** are written in decimal (e.g. `10`), hexadecimal (e.g. `0xA`),
-    octal (e.g. `0o12`) or binary (e.g. `0b1010`).
+    octal (e.g. `012`, or `0o12`) or binary (e.g. `0b1010`).
 
 -   **Rationals** are written as two exact integers joined by `/`, e.g. `1/2` or
     `0x10/100` (16/100).
