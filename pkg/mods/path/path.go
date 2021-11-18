@@ -142,7 +142,7 @@ var Ns = eval.BuildNsNamed("path").
 // directory. Setting option `&follow-symlink` to true will cause the last element of the path, if
 // it is a symlink, to be resolved before doing the test.
 //
-// @cf eval-symlinks
+// @cf path:is-regular
 //
 // ```elvish-transcript
 // ~> touch not-a-dir
@@ -178,7 +178,10 @@ func isDir(opts isOpts, path string) bool {
 // regular file. Setting option `&follow-symlink` to true will cause the last element of the path,
 // if it is a symlink, to be resolved before doing the test.
 //
-// @cf eval-symlinks
+// **Note:** This isn't named `is-file` because a UNIX file may be a "bag of bytes" or may be a
+// named pipe, device special file (e.g., */dev/tty*), etc.
+//
+// @cf path:is-dir
 //
 // ```elvish-transcript
 // ~> touch not-a-dir
