@@ -579,7 +579,9 @@ func rem(a, b int) (int, error) {
 // randint $low $high
 // ```
 //
-// Output a pseudo-random integer in the interval [$low, $high). Example:
+// Output a pseudo-random integer in the [half-open
+// interval](https://en.wikipedia.org/wiki/Interval_(mathematics)#Terminology)
+// [$low, $high). Example:
 //
 // ```elvish-transcript
 // ~> # Emulate dice
