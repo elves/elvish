@@ -576,10 +576,11 @@ func rem(a, b int) (int, error) {
 //elvdoc:fn randint
 //
 // ```elvish
-// randint $low $high
+// randint $low? $high
 // ```
 //
-// Output a pseudo-random integer N such that `$low <= N < $high`. Example:
+// Output a pseudo-random integer N such that `$low <= N < $high`. If not given,
+// `$low` defaults to 0. Examples:
 //
 // ```elvish-transcript
 // ~> # Emulate dice
@@ -587,7 +588,17 @@ func rem(a, b int) (int, error) {
 // ▶ 6
 // ```
 
-func randint(low, high int) (int, error) {
+func randint(args ...int) (int, error) {
+	var low, high int
+	switch len(args) {
+	case 1:
+		low, high = 0, args[0]
+	case 2:
+		low, high = args[0], args[1]
+	default:
+		return -1, errs.ArityMismatch{What: "arguments",
+			ValidLow: 1, ValidHigh: 2, Actual: len(args)}
+	}
 	if high <= low {
 		return 0, errs.BadValue{What: "high value",
 			Valid: fmt.Sprint("larger than ", low), Actual: strconv.Itoa(high)}
