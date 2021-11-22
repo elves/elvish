@@ -2,6 +2,8 @@ name: Check website
 
 on:
   push:
+    branches:
+      - master
 
 jobs:
   check_website:
