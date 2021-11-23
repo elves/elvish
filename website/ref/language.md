@@ -222,6 +222,10 @@ can be constructed by passing their **string representation** to the
 -   **Integers** are written in decimal (e.g. `10`), hexadecimal (e.g. `0xA`),
     octal (e.g. `0o12`) or binary (e.g. `0b1010`).
 
+    **NOTE**: Integers with leading zeros are now parsed as octal (e.g. `010` is
+    the same as `0o10`, or `8`), but this is subject to change
+    ([#1372](https://b.elv.sh/1371)).
+
 -   **Rationals** are written as two exact integers joined by `/`, e.g. `1/2` or
     `0x10/100` (16/100).
 
@@ -229,9 +233,10 @@ can be constructed by passing their **string representation** to the
     using scientific notation (e.g. `1e1` or `1.0e1`). There are also three
     additional special floating-point values: `+Inf`, `-Inf` and `NaN`.
 
-Digits may be separately by underscores, which are ignored; this permits
+Digits may be separated by underscores, which are ignored; this permits
 separating the digits into groups to improve readability. For example, `1000000`
-and `1_000_000` are equivalent, so are `1.234_56e3` and `1.23456e3`.
+and `1_000_000` are equivalent, so are `1.234_56e3` and `1.23456e3`, or `1_2_3`
+and `123`.
 
 The string representation is case-insensitive.
 
