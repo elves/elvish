@@ -137,27 +137,52 @@ func makeMap(input Inputs) (vals.Map, error) {
 //elvdoc:fn range
 //
 // ```elvish
-// range &step=1 $low? $high
+// range &step=0 $start? $end
 // ```
 //
-// Output `$low`, `$low` + `$step`, ..., proceeding as long as smaller than
-// `$high` or until overflow. If not given, `$low` defaults to 0. The `$step`
-// must be positive.
+// The `$start?` value defaults to zero.
 //
-// This command is [exactness-preserving](#exactness-preserving).
+// There are two cases depending on whether `$start` is smaller or larger than `$end`:
+//
+// 1) If `$start` is smaller than `$end` count up. The `&step` value must be positive and defaults
+// to one. Output `$start`, `$start` + `$step`, ..., proceeding as long as the value is smaller than
+// `$end` or until overflow.
+//
+// 1) If `$start` is larger than `$end` count down. The `&step` value must be negative and defaults
+// to negative one. Output `$start`, `$start` + `$step`, ..., proceeding as long as the value is
+// larger than `$end` or until overflow.
+//
+// Note that in both cases the `$end` value is not included in the output. The range is the
+// [half-open interval](https://en.wikipedia.org/wiki/Interval_(mathematics)#Terminology)
+// [`$start`, `$end`).
+//
+// The special `&step` value zero is replaced by -1 or +1 as appropriated for whether range is
+// counting down or up respectively.
+//
+// This command is [exactness-preserving](#exactness-preserving). If the arguments don't make sense
+// a "bad value" exception is raised.
 //
 // Examples:
 //
 // ```elvish-transcript
 // ~> range 4
-// ▶ 0
-// ▶ 1
-// ▶ 2
-// ▶ 3
-// ~> range 1 6 &step=2
-// ▶ 1
-// ▶ 3
-// ▶ 5
+// ▶ (num 0)
+// ▶ (num 1)
+// ▶ (num 2)
+// ▶ (num 3)
+// ~> range 4 0
+// ▶ (num 4)
+// ▶ (num 3)
+// ▶ (num 2)
+// ▶ (num 1)
+// ~> range -3 3 &step=2
+// ▶ (num -3)
+// ▶ (num -1)
+// ▶ (num 1)
+// ~> range 3 -3 &step=-2
+// ▶ (num 3)
+// ▶ (num 1)
+// ▶ (num -1)
 // ```
 //
 // When using floating-point numbers, beware that numerical errors can result in
@@ -185,7 +210,7 @@ func makeMap(input Inputs) (vals.Map, error) {
 
 type rangeOpts struct{ Step vals.Num }
 
-func (o *rangeOpts) SetDefaultOptions() { o.Step = 1 }
+func (o *rangeOpts) SetDefaultOptions() { o.Step = 0 }
 
 func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
 	var rawNums []vals.Num
@@ -197,48 +222,31 @@ func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
 	default:
 		return errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: 2, Actual: len(args)}
 	}
-	switch step := opts.Step.(type) {
-	case int:
-		if step <= 0 {
-			return errs.BadValue{
-				What: "step", Valid: "positive", Actual: strconv.Itoa(step)}
-		}
-	case *big.Int:
-		if step.Sign() <= 0 {
-			return errs.BadValue{
-				What: "step", Valid: "positive", Actual: step.String()}
-		}
-	case *big.Rat:
-		if step.Sign() <= 0 {
-			return errs.BadValue{
-				What: "step", Valid: "positive", Actual: step.String()}
-		}
-	case float64:
-		if step <= 0 {
-			return errs.BadValue{
-				What: "step", Valid: "positive", Actual: vals.ToString(step)}
-		}
-	}
-	nums := vals.UnifyNums(rawNums, vals.Int)
 
 	out := fm.ValueOutput()
+	nums := vals.UnifyNums(rawNums, vals.Int)
 	switch nums := nums.(type) {
 	case []int:
-		lower, upper, step := nums[0], nums[1], nums[2]
-		for cur := lower; cur < upper; cur += step {
+		step, curValid, err := rangeInt(nums)
+		if err != nil {
+			return err
+		}
+		start, end := nums[0], nums[1]
+		for prev, cur := start-step, start; curValid(prev, cur, end); cur += step {
 			err := out.Put(vals.FromGo(cur))
 			if err != nil {
 				return err
 			}
-			if cur+step <= cur {
-				// Overflow
-				break
-			}
+			prev = cur
 		}
 	case []*big.Int:
-		lower, upper, step := nums[0], nums[1], nums[2]
+		step, curValid, err := rangeBigInt(nums)
+		if err != nil {
+			return err
+		}
+		start, end := nums[0], nums[1]
 		cur := &big.Int{}
-		for cur.Set(lower); cur.Cmp(upper) < 0; {
+		for cur.Set(start); curValid(cur, end); {
 			err := out.Put(vals.FromGo(cur))
 			if err != nil {
 				return err
@@ -248,9 +256,13 @@ func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
 			cur = next
 		}
 	case []*big.Rat:
-		lower, upper, step := nums[0], nums[1], nums[2]
+		step, curValid, err := rangeBigRat(nums)
+		if err != nil {
+			return err
+		}
+		start, end := nums[0], nums[1]
 		cur := &big.Rat{}
-		for cur.Set(lower); cur.Cmp(upper) < 0; {
+		for cur.Set(start); curValid(cur, end); {
 			err := out.Put(vals.FromGo(cur))
 			if err != nil {
 				return err
@@ -260,22 +272,131 @@ func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
 			cur = next
 		}
 	case []float64:
-		lower, upper, step := nums[0], nums[1], nums[2]
-		for cur := lower; cur < upper; cur += step {
+		step, curValid, err := rangeFloat64(nums)
+		if err != nil {
+			return err
+		}
+		start, end := nums[0], nums[1]
+		for prev, cur := start-step, start; curValid(prev, cur, end); cur += step {
 			err := out.Put(vals.FromGo(cur))
 			if err != nil {
 				return err
 			}
-			if cur+step <= cur {
-				// Overflow
-				break
-			}
+			prev = cur
 		}
 	default:
 		panic("unreachable")
 	}
 
 	return nil
+}
+
+func rangeInt(nums []int) (int, func(int, int, int) bool, error) {
+	start, end, step := nums[0], nums[1], nums[2]
+	if step == 0 {
+		if start <= end {
+			step = 1
+		} else {
+			step = -1
+		}
+	}
+
+	if step < 0 && start < end {
+		return 0, nil, errs.BadValue{
+			What: "step", Valid: "positive", Actual: strconv.Itoa(step)}
+	}
+	if step > 0 && start > end {
+		return 0, nil, errs.BadValue{
+			What: "step", Valid: "negative", Actual: strconv.Itoa(step)}
+	}
+
+	if step > 0 {
+		curValid := func(prev, cur, end int) bool { return cur > prev && cur < end }
+		return step, curValid, nil
+	}
+	curValid := func(prev, cur, end int) bool { return cur < prev && cur > end }
+	return step, curValid, nil
+}
+
+func rangeBigInt(nums []*big.Int) (*big.Int, func(*big.Int, *big.Int) bool, error) {
+	start, end, step := nums[0], nums[1], nums[2]
+	if step.Sign() == 0 {
+		if start.Cmp(end) <= 0 {
+			step = big.NewInt(1)
+		} else {
+			step = big.NewInt(-1)
+		}
+	}
+
+	if step.Sign() < 0 && start.Cmp(end) < 0 {
+		return big.NewInt(0), nil, errs.BadValue{
+			What: "step", Valid: "positive", Actual: step.String()}
+	}
+	if step.Sign() > 0 && start.Cmp(end) > 0 {
+		return big.NewInt(0), nil, errs.BadValue{
+			What: "step", Valid: "negative", Actual: step.String()}
+	}
+
+	if step.Sign() > 0 {
+		curValid := func(cur, end *big.Int) bool { return cur.Cmp(end) < 0 }
+		return step, curValid, nil
+	}
+	curValid := func(cur, end *big.Int) bool { return cur.Cmp(end) > 0 }
+	return step, curValid, nil
+}
+
+func rangeBigRat(nums []*big.Rat) (*big.Rat, func(*big.Rat, *big.Rat) bool, error) {
+	start, end, step := nums[0], nums[1], nums[2]
+	if step.Sign() == 0 {
+		if start.Cmp(end) <= 0 {
+			step = big.NewRat(1, 1)
+		} else {
+			step = big.NewRat(-1, 1)
+		}
+	}
+
+	if step.Sign() < 0 && start.Cmp(end) < 0 {
+		return big.NewRat(0, 1), nil, errs.BadValue{
+			What: "step", Valid: "positive", Actual: step.String()}
+	}
+	if step.Sign() > 0 && start.Cmp(end) > 0 {
+		return big.NewRat(0, 1), nil, errs.BadValue{
+			What: "step", Valid: "negative", Actual: step.String()}
+	}
+
+	if step.Sign() > 0 {
+		curValid := func(cur, end *big.Rat) bool { return cur.Cmp(end) < 0 }
+		return step, curValid, nil
+	}
+	curValid := func(cur, end *big.Rat) bool { return cur.Cmp(end) > 0 }
+	return step, curValid, nil
+}
+
+func rangeFloat64(nums []float64) (float64, func(float64, float64, float64) bool, error) {
+	start, end, step := nums[0], nums[1], nums[2]
+	if step == 0 {
+		if start <= end {
+			step = 1
+		} else {
+			step = -1
+		}
+	}
+
+	if step < 0 && start < end {
+		return 0, nil, errs.BadValue{
+			What: "step", Valid: "positive", Actual: vals.ToString(step)}
+	}
+	if step > 0 && start > end {
+		return 0, nil, errs.BadValue{
+			What: "step", Valid: "negative", Actual: vals.ToString(step)}
+	}
+
+	if step > 0 {
+		curValid := func(prev, cur, end float64) bool { return cur > prev && cur < end }
+		return step, curValid, nil
+	}
+	curValid := func(prev, cur, end float64) bool { return cur < prev && cur > end }
+	return step, curValid, nil
 }
 
 //elvdoc:fn repeat
