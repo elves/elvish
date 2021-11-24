@@ -50,46 +50,77 @@ var maxDenseIntInFloat = float64(1 << 53)
 
 func TestRange(t *testing.T) {
 	Test(t,
+		// Basic argument sanity checks.
+		That("range").Throws(ErrorWithType(errs.ArityMismatch{})),
+		That("range 0 1 2").Throws(ErrorWithType(errs.ArityMismatch{})),
+
+		// Int count up.
 		That("range 3").Puts(0, 1, 2),
 		That("range 1 3").Puts(1, 2),
-		That("range 0 10 &step=3").Puts(0, 3, 6, 9),
-		// int overflow
+		// Int count down.
+		That("range -1 10 &step=3").Puts(-1, 2, 5, 8),
+		That("range 3 -3").Puts(3, 2, 1, 0, -1, -2),
+		// Invalid step given the "start" and "end" values of the range.
+		That("range &step=-1 1").
+			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-1"}),
+		That("range &step=1 1 0").
+			Throws(errs.BadValue{What: "step", Valid: "negative", Actual: "1"}),
+		// Int overflow.
 		That("range &step=2 "+args(vals.ToString(maxInt-3), vals.ToString(maxInt))).
 			Puts(maxInt-3, maxInt-1),
-		// non-positive int step
-		That("range &step=0 10").
-			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "0"}),
-		thatOutputErrorIsBubbled("range 1"),
+		thatOutputErrorIsBubbled("range 2"),
 
+		// An explicit zero step is the same as not specifying a step. Thus telling `range` to
+		// decide whether a +1 or -1 step is appropriate.
+		That("range &step=0 2").Puts(0, 1),
+		That("range &step=0 2 0").Puts(2, 1),
+
+		// Big int count up.
 		That("range "+z+" "+z3).Puts(bigInt(z), bigInt(z1), bigInt(z2)),
 		That("range "+z+" "+z3+" &step=2").Puts(bigInt(z), bigInt(z2)),
-		// non-positive bigint step
+		// Big int count down.
+		That("range "+z3+" "+z).Puts(bigInt(z3), bigInt(z2), bigInt(z1)),
+		That("range "+z3+" "+z+" &step=-2").Puts(bigInt(z3), bigInt(z1)),
+		// Invalid big int step.
 		That("range &step=-"+z+" 10").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-" + z}),
+		That("range &step="+z+" 10 0").
+			Throws(errs.BadValue{What: "step", Valid: "negative", Actual: z}),
 		thatOutputErrorIsBubbled("range "+z+" "+z1),
 
+		// Rational count up.
 		That("range 23/10").Puts(0, 1, 2),
 		That("range 1/10 23/10").Puts(
 			big.NewRat(1, 10), big.NewRat(11, 10), big.NewRat(21, 10)),
+		That("range 23/10 1/10").Puts(
+			big.NewRat(23, 10), big.NewRat(13, 10), big.NewRat(3, 10)),
 		That("range 1/10 9/10 &step=3/10").Puts(
 			big.NewRat(1, 10), big.NewRat(4, 10), big.NewRat(7, 10)),
-		// non-positive bigrat step
+		// Rational count down.
+		That("range 9/10 0/10 &step=-3/10").Puts(
+			big.NewRat(9, 10), big.NewRat(6, 10), big.NewRat(3, 10)),
+		// Invalid rational step.
 		That("range &step=-1/2 10").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-1/2"}),
+		That("range &step=1/2 10 0").
+			Throws(errs.BadValue{What: "step", Valid: "negative", Actual: "1/2"}),
 		thatOutputErrorIsBubbled("range 1/2 3/2"),
 
+		// Float64 count up.
 		That("range 1.2").Puts(0.0, 1.0),
 		That("range &step=0.5 1 3").Puts(1.0, 1.5, 2.0, 2.5),
-		// float64 overflow
+		// Float64 count down.
+		That("range 1.2 -1.2").Puts(1.2, Approximately{F: 0.2}, Approximately{F: -0.8}),
+		That("range &step=-0.5 3 1").Puts(3.0, 2.5, 2.0, 1.5),
+		// Float64 overflow.
 		That("range "+args(vals.ToString(maxDenseIntInFloat-2), "+inf")).
 			Puts(maxDenseIntInFloat-2, maxDenseIntInFloat-1, maxDenseIntInFloat),
-		// non-positive float64 step
+		// Invalid float64 step.
 		That("range &step=-0.5 10").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-0.5"}),
+		That("range &step=0.5 10 0").
+			Throws(errs.BadValue{What: "step", Valid: "negative", Actual: "0.5"}),
 		thatOutputErrorIsBubbled("range 1.2"),
-
-		That("range").Throws(ErrorWithType(errs.ArityMismatch{})),
-		That("range 0 1 2").Throws(ErrorWithType(errs.ArityMismatch{})),
 	)
 }
 
