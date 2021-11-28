@@ -91,7 +91,7 @@ func TestPromptStaleTransform(t *testing.T) {
 		`pipe = (file:pipe)`,
 		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
 		`edit:prompt-stale-threshold = `+scaledMsAsSec(50),
-		`edit:prompt-stale-transform = [a]{ put S; put $a; put S }`))
+		`edit:prompt-stale-transform = {|a|  put S; put $a; put S }`))
 
 	f.TestTTY(t, "S???> S", term.DotHere)
 	evals(f.Evaler, `file:close $pipe[w]`)
@@ -103,7 +103,7 @@ func TestPromptStaleTransform_Exception(t *testing.T) {
 		`pipe = (file:pipe)`,
 		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
 		`edit:prompt-stale-threshold = `+scaledMsAsSec(50),
-		`edit:prompt-stale-transform = [_]{ fail ERROR }`))
+		`edit:prompt-stale-transform = {|_|  fail ERROR }`))
 
 	f.TestTTYNotes(t,
 		"[prompt stale transform error] ERROR\n",

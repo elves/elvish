@@ -185,12 +185,12 @@ func TestVariableUse_DeprecatedSpecialNamespaces(t *testing.T) {
 
 func TestClosure(t *testing.T) {
 	Test(t,
-		That("[]{ }").DoesNothing(),
-		That("[x]{put $x} foo").Puts("foo"),
+		That("{|| }").DoesNothing(),
+		That("{|x| put $x} foo").Puts("foo"),
 
 		// Assigning to captured variable
-		That("var x = lorem; []{set x = ipsum}; put $x").Puts("ipsum"),
-		That("var x = lorem; []{ put $x; set x = ipsum }; put $x").
+		That("var x = lorem; {|| set x = ipsum}; put $x").Puts("ipsum"),
+		That("var x = lorem; {|| put $x; set x = ipsum }; put $x").
 			Puts("lorem", "ipsum"),
 
 		// Assigning to element of captured variable
@@ -198,46 +198,46 @@ func TestClosure(t *testing.T) {
 		That("x = [a]; { x[0] = b }; put $x[0]").Puts("b"),
 
 		// Shadowing
-		That("var x = ipsum; []{ var x = lorem; put $x }; put $x").
+		That("var x = ipsum; { var x = lorem; put $x }; put $x").
 			Puts("lorem", "ipsum"),
 
 		// Shadowing by argument
-		That("var x = ipsum; [x]{ put $x; set x = BAD } lorem; put $x").
+		That("var x = ipsum; {|x| put $x; set x = BAD } lorem; put $x").
 			Puts("lorem", "ipsum"),
 
 		// Closure captures new local variables every time
-		That("fn f []{ var x = (num 0); put { set x = (+ $x 1) } { put $x } }",
+		That("fn f { var x = (num 0); put { set x = (+ $x 1) } { put $x } }",
 			"var inc1 put1 = (f); $put1; $inc1; $put1",
 			"var inc2 put2 = (f); $put2; $inc2; $put2").Puts(0, 1, 0, 1),
 
 		// Rest argument.
-		That("[x @xs]{ put $x $xs } a b c").Puts("a", vals.MakeList("b", "c")),
-		That("[a @b c]{ put $a $b $c } a b c d").
+		That("{|x @xs| put $x $xs } a b c").Puts("a", vals.MakeList("b", "c")),
+		That("{|a @b c| put $a $b $c } a b c d").
 			Puts("a", vals.MakeList("b", "c"), "d"),
 		// Options.
-		That("[a &k=v]{ put $a $k } foo &k=bar").Puts("foo", "bar"),
+		That("{|a &k=v| put $a $k } foo &k=bar").Puts("foo", "bar"),
 		// Option default value.
-		That("[a &k=v]{ put $a $k } foo").Puts("foo", "v"),
+		That("{|a &k=v| put $a $k } foo").Puts("foo", "v"),
 		// Option must have default value
-		That("[&k]{ }").DoesNotCompile(),
+		That("{|&k| }").DoesNotCompile(),
 		// Exception when evaluating option default value.
-		That("[&a=[][0]]{ }").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
+		That("{|&a=[][0]| }").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// Option default value must be one value.
-		That("[&a=(put foo bar)]{ }").Throws(
+		That("{|&a=(put foo bar)| }").Throws(
 			errs.ArityMismatch{What: "option default value", ValidLow: 1, ValidHigh: 1, Actual: 2},
 			"(put foo bar)"),
 
 		// Argument name must be unqualified.
-		That("[a:b]{ }").DoesNotCompile(),
+		That("{|a:b| }").DoesNotCompile(),
 		// Argument name must not be empty.
-		That("['']{ }").DoesNotCompile(),
-		That("[@]{ }").DoesNotCompile(),
+		That("{|''| }").DoesNotCompile(),
+		That("{|@| }").DoesNotCompile(),
 		// Option name must be unqualified.
-		That("[&a:b=1]{ }").DoesNotCompile(),
+		That("{|&a:b=1| }").DoesNotCompile(),
 		// Option name must not be empty.
-		That("[&''=b]{ }").DoesNotCompile(),
+		That("{|&''=b| }").DoesNotCompile(),
 		// Should not have multiple rest arguments.
-		That("[@a @b]{ }").DoesNotCompile(),
+		That("{|@a @b| }").DoesNotCompile(),
 	)
 }
 

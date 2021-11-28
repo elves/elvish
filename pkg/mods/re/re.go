@@ -165,7 +165,7 @@ func find(fm *eval.Frame, opts findOpts, argPattern, source string) error {
 // ▶ 'baSH and zSH'
 // ~> re:replace '(ba|z)sh' elvish 'bash and zsh rock'
 // ▶ 'elvish and elvish rock'
-// ~> re:replace '(ba|z)sh' [x]{ put [&bash=BaSh &zsh=ZsH][$x] } 'bash and zsh'
+// ~> re:replace '(ba|z)sh' {|x| put [&bash=BaSh &zsh=ZsH][$x] } 'bash and zsh'
 // ▶ 'BaSh and ZsH'
 // ```
 

@@ -49,14 +49,14 @@ func TestStyled(t *testing.T) {
 		That("print (styled (styled abc inverse) toggle-inverse toggle-inverse)").Prints("\033[7mabc\033[m"),
 
 		// Function as transformer
-		That("print (styled abc [s]{ put $s })").Prints("abc"),
-		That("print (styled abc [s]{ styled-segment $s &bold=$true &italic=$false })").Prints("\033[1mabc\033[m"),
-		That("print (styled abc italic [s]{ styled-segment $s &bold=$true &italic=$false })").Prints("\033[1mabc\033[m"),
+		That("print (styled abc {|s| put $s })").Prints("abc"),
+		That("print (styled abc {|s| styled-segment $s &bold=$true &italic=$false })").Prints("\033[1mabc\033[m"),
+		That("print (styled abc italic {|s| styled-segment $s &bold=$true &italic=$false })").Prints("\033[1mabc\033[m"),
 
-		That("styled abc [s]{ fail bad }").Throws(eval.FailError{"bad"}),
-		That("styled abc [s]{ put a b }").Throws(ErrorWithMessage(
+		That("styled abc {|_| fail bad }").Throws(eval.FailError{"bad"}),
+		That("styled abc {|_| put a b }").Throws(ErrorWithMessage(
 			"styling function must return a single segment; got 2 values")),
-		That("styled abc [s]{ put [] }").Throws(ErrorWithMessage(
+		That("styled abc {|_| put [] }").Throws(ErrorWithMessage(
 			"styling function must return a segment; got list")),
 
 		// Bad usage

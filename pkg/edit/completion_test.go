@@ -95,7 +95,7 @@ func TestCompletionArgCompleter_ArgsAndValueOutput(t *testing.T) {
 	evals(f.Evaler,
 		`foo-args = []`,
 		`fn foo { }`,
-		`edit:completion:arg-completer[foo] = [@args]{
+		`edit:completion:arg-completer[foo] = {|@args|
 		   foo-args = $args
 		   put 1val
 		   edit:complex-candidate 2val &display=2VAL
@@ -119,7 +119,7 @@ func TestCompletionArgCompleter_BytesOutput(t *testing.T) {
 
 	evals(f.Evaler,
 		`fn foo { }`,
-		`edit:completion:arg-completer[foo] = [@args]{
+		`edit:completion:arg-completer[foo] = {|@args|
 		   echo 1val
 		   echo 2val
 		 }`)
@@ -140,7 +140,7 @@ func TestCompleteSudo(t *testing.T) {
 
 	evals(f.Evaler,
 		`fn foo { }`,
-		`edit:completion:arg-completer[foo] = [@args]{
+		`edit:completion:arg-completer[foo] = {|@args|
 		   echo val1
 		   echo val2
 		 }`,

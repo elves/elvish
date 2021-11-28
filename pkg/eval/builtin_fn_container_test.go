@@ -241,38 +241,38 @@ func TestOrder(t *testing.T) {
 		That("put foo bar ipsum | order &reverse").Puts("ipsum", "foo", "bar"),
 
 		// &less-than
-		That("put 1 10 2 5 | order &less-than=[a b]{ < $a $b }").
+		That("put 1 10 2 5 | order &less-than={|a b| < $a $b }").
 			Puts("1", "2", "5", "10"),
 
 		// &less-than writing more than one value
-		That("put 1 10 2 5 | order &less-than=[a b]{ put $true $false }").
+		That("put 1 10 2 5 | order &less-than={|a b| put $true $false }").
 			Throws(
 				errs.BadValue{
 					What:  "output of the &less-than callback",
 					Valid: "a single boolean", Actual: "2 values"},
-				"order &less-than=[a b]{ put $true $false }"),
+				"order &less-than={|a b| put $true $false }"),
 
 		// &less-than writing non-boolean value
-		That("put 1 10 2 5 | order &less-than=[a b]{ put x }").
+		That("put 1 10 2 5 | order &less-than={|a b| put x }").
 			Throws(
 				errs.BadValue{
 					What:  "output of the &less-than callback",
 					Valid: "boolean", Actual: "string"},
-				"order &less-than=[a b]{ put x }"),
+				"order &less-than={|a b| put x }"),
 
 		// &less-than throwing an exception
-		That("put 1 10 2 5 | order &less-than=[a b]{ fail bad }").
+		That("put 1 10 2 5 | order &less-than={|a b| fail bad }").
 			Throws(
 				FailError{"bad"},
-				"fail bad ", "order &less-than=[a b]{ fail bad }"),
+				"fail bad ", "order &less-than={|a b| fail bad }"),
 
 		// &less-than and &reverse
-		That("put 1 10 2 5 | order &reverse &less-than=[a b]{ < $a $b }").
+		That("put 1 10 2 5 | order &reverse &less-than={|a b| < $a $b }").
 			Puts("10", "5", "2", "1"),
 
 		// Sort should be stable - test by pretending that all values but one
 		// are equal, an check that the order among them has not changed.
-		That("put l x o x r x e x m | order &less-than=[a b]{ eq $a x }").
+		That("put l x o x r x e x m | order &less-than={|a b| eq $a x }").
 			Puts("x", "x", "x", "x", "l", "o", "r", "e", "m"),
 
 		thatOutputErrorIsBubbled("order [foo]"),
