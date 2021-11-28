@@ -63,12 +63,12 @@ import (
 // Example:
 //
 // ```elvish-transcript
-// ~> fn complete [@args]{
+// ~> fn complete {|@args|
 //      opt-specs = [ [&short=a &long=all &desc="Show all"]
 //                    [&short=n &desc="Set name" &arg-required=$true
-//                     &completer= [_]{ put name1 name2 }] ]
-//      arg-handlers = [ [_]{ put first1 first2 }
-//                       [_]{ put second1 second2 } ... ]
+//                     &completer= {|_| put name1 name2 }] ]
+//      arg-handlers = [ {|_| put first1 first2 }
+//                       {|_| put second1 second2 } ... ]
 //      edit:complete-getopt $args $opt-specs $arg-handlers
 //    }
 // ~> complete ''

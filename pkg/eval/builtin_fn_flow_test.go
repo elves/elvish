@@ -23,11 +23,11 @@ func TestEach(t *testing.T) {
 		That(`echo "1\n233" | each $put~`).Puts("1", "233"),
 		That(`echo "1\r\n233" | each $put~`).Puts("1", "233"),
 		That(`each $put~ [1 233]`).Puts("1", "233"),
-		That(`range 10 | each [x]{ if (== $x 4) { break }; put $x }`).
+		That(`range 10 | each {|x| if (== $x 4) { break }; put $x }`).
 			Puts(0, 1, 2, 3),
-		That(`range 10 | each [x]{ if (== $x 4) { continue }; put $x }`).
+		That(`range 10 | each {|x| if (== $x 4) { continue }; put $x }`).
 			Puts(0, 1, 2, 3, 5, 6, 7, 8, 9),
-		That(`range 10 | each [x]{ if (== $x 4) { fail haha }; put $x }`).
+		That(`range 10 | each {|x| if (== $x 4) { fail haha }; put $x }`).
 			Puts(0, 1, 2, 3).Throws(AnyError),
 		// TODO(xiaq): Test that "each" does not close the stdin.
 	)
@@ -38,10 +38,10 @@ func TestPeach(t *testing.T) {
 	// undefined.
 	Test(t,
 		// Verify the output has the expected values when sorted.
-		That(`range 5 | peach [x]{ * 2 $x } | order`).Puts(0, 2, 4, 6, 8),
+		That(`range 5 | peach {|x| * 2 $x } | order`).Puts(0, 2, 4, 6, 8),
 
 		// Handling of "continue".
-		That(`range 5 | peach [x]{ if (== $x 2) { continue }; * 2 $x } | order`).
+		That(`range 5 | peach {|x| if (== $x 2) { continue }; * 2 $x } | order`).
 			Puts(0, 2, 6, 8),
 
 		// Test that the order of output does not necessarily match the order of
@@ -56,7 +56,7 @@ func TestPeach(t *testing.T) {
 		That(`
 			var @in = (range 100)
 			while $true {
-				var @out = (all $in | peach [x]{ sleep (* (rand) 0.01); put $x })
+				var @out = (all $in | peach {|x| sleep (* (rand) 0.01); put $x })
 				if (not-eq $in $out) {
 					put $true
 					break
@@ -64,14 +64,14 @@ func TestPeach(t *testing.T) {
 			}
 		`).Puts(true),
 		// Verify that exceptions are propagated.
-		That(`peach [x]{ fail $x } [a]`).
-			Throws(FailError{"a"}, "fail $x ", "peach [x]{ fail $x } [a]"),
+		That(`peach {|x| fail $x } [a]`).
+			Throws(FailError{"a"}, "fail $x ", "peach {|x| fail $x } [a]"),
 		// Verify that `break` works by terminating the `peach` before the entire sequence is
 		// consumed.
 		That(`
 			var tot = 0
 			range 1 101 |
-				peach [x]{ if (== 50 $x) { break } else { put $x } } |
+				peach {|x| if (== 50 $x) { break } else { put $x } } |
 				< (+ (all)) (+ (range 1 101))
 		`).Puts(true),
 	)

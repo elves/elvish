@@ -229,7 +229,7 @@ func (op *delElemOp) exec(fm *Frame) Exception {
 
 // FnForm = 'fn' StringPrimary LambdaPrimary
 //
-// fn f []{foobar} is a shorthand for set '&'f = []{foobar}.
+// fn f { foobar } is a shorthand for set '&'f = { foobar }.
 func compileFn(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	nameNode := args.next()

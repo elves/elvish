@@ -52,8 +52,8 @@ func TestChdirElvishHooks(t *testing.T) {
 	Test(t,
 		That(`
 			dir-in-before dir-in-after = '' ''
-			@before-chdir = [dst]{ dir-in-before = $dst }
-			@after-chdir  = [dst]{ dir-in-after  = $dst }
+			@before-chdir = {|dst| dir-in-before = $dst }
+			@after-chdir  = {|dst| dir-in-after  = $dst }
 			cd `+parse.Quote(dst)+`
 			put $dir-in-before $dir-in-after
 			`).Puts(dst, dst),

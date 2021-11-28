@@ -45,7 +45,7 @@ func init() {
 // different commands in order to independently capture the output of each byte stream:
 //
 // ```elvish-transcript
-// ~> fn capture [f]{
+// ~> fn capture {|f|
 //      var pout = (file:pipe)
 //      var perr = (file:pipe)
 //      var out err
@@ -108,11 +108,11 @@ func runParallel(fm *Frame, functions ...Callable) error {
 // Examples:
 //
 // ```elvish-transcript
-// ~> range 5 8 | each [x]{ * $x $x }
+// ~> range 5 8 | each {|x|  * $x $x }
 // ▶ 25
 // ▶ 36
 // ▶ 49
-// ~> each [x]{ put $x[:3] } [lorem ipsum]
+// ~> each {|x|  put $x[:3] } [lorem ipsum]
 // ▶ lor
 // ▶ ips
 // ```
@@ -167,7 +167,7 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 // Example (your output will differ):
 //
 // ```elvish-transcript
-// ~> range 1 10 | peach [x]{ + $x 10 }
+// ~> range 1 10 | peach {|x|  + $x 10 }
 // ▶ (num 12)
 // ▶ (num 13)
 // ▶ (num 11)
@@ -178,7 +178,7 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 // ▶ (num 15)
 // ▶ (num 19)
 // ~> range 1 101 |
-//    peach [x]{ if (== 50 $x) { break } else { put $x } } |
+//    peach {|x|  if (== 50 $x) { break } else { put $x } } |
 //    + (all) # 1+...+49 = 1225; 1+...+100 = 5050
 // ▶ (num 1328)
 // ```
@@ -341,7 +341,7 @@ func returnFn() error {
 //
 // ```elvish-transcript
 // ~> use builtin
-// ~> fn break []{ put 'break'; builtin:break; put 'should not appear' }
+// ~> fn break { put 'break'; builtin:break; put 'should not appear' }
 // ~> for x [a b c] { put $x; break; put 'unexpected' }
 // ▶ a
 // ▶ break
@@ -368,7 +368,7 @@ func breakFn() error {
 //
 // ```elvish-transcript
 // ~> use builtin
-// ~> fn continue []{ put 'continue'; builtin:continue; put 'should not appear' }
+// ~> fn continue { put 'continue'; builtin:continue; put 'should not appear' }
 // ~> for x [a b c] { put $x; continue; put 'unexpected' }
 // ▶ a
 // ▶ continue

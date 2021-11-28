@@ -161,8 +161,8 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // It should behave the same as the following functions:
 //
 // ```elvish
-// fn eawk [f @rest]{
-//   each [line]{
+// fn eawk {|f @rest|
+//   each {|line|
 //     @fields = (re:split '[ \t]+'
 //     (re:replace '^[ \t]+|[ \t]+$' '' $line))
 //     $f $line $@fields
@@ -179,7 +179,7 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // lorem
 // 1
 // ~> echo ' lorem ipsum
-// 1 2' | eawk [line a b]{ put $a }
+// 1 2' | eawk {|line a b| put $a }
 // ▶ lorem
 // ▶ 1
 // ```

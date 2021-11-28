@@ -23,7 +23,7 @@ func BenchmarkEval_ForLoop100WithEmptyBody(b *testing.B) {
 }
 
 func BenchmarkEval_EachLoop100WithEmptyBody(b *testing.B) {
-	benchmarkEval(b, "range 100 | each [x]{ }")
+	benchmarkEval(b, "range 100 | each {|_| }")
 }
 
 func BenchmarkEval_LocalVariableAccess(b *testing.B) {

@@ -18,28 +18,28 @@ func TestClosureAsValue(t *testing.T) {
 		That("x = { }; put [&$x= foo][$x]").Puts("foo"),
 
 		// Argument arity mismatch.
-		That("f = [x]{ }", "$f a b").Throws(
+		That("f = {|x| }", "$f a b").Throws(
 			errs.ArityMismatch{What: "arguments",
 				ValidLow: 1, ValidHigh: 1, Actual: 2},
 			"$f a b"),
-		That("f = [x y]{ }", "$f a").Throws(
+		That("f = {|x y| }", "$f a").Throws(
 			errs.ArityMismatch{What: "arguments", ValidLow: 2, ValidHigh: 2, Actual: 1},
 			"$f a"),
-		That("f = [x y @rest]{ }", "$f a").Throws(
+		That("f = {|x y @rest| }", "$f a").Throws(
 			errs.ArityMismatch{What: "arguments", ValidLow: 2, ValidHigh: -1, Actual: 1},
 			"$f a"),
 
 		// Unsupported option.
-		That("f = [&valid1=1 &valid2=2]{ }; $f &bad1=1 &bad2=2").Throws(
+		That("f = {|&valid1=1 &valid2=2| }; $f &bad1=1 &bad2=2").Throws(
 			eval.UnsupportedOptionsError{[]string{"bad1", "bad2"}},
 			"$f &bad1=1 &bad2=2"),
 
-		That("all [a b]{ }[arg-names]").Puts("a", "b"),
-		That("put [@r]{ }[rest-arg]").Puts("0"),
-		That("all [&opt=def]{ }[opt-names]").Puts("opt"),
-		That("all [&opt=def]{ }[opt-defaults]").Puts("def"),
+		That("all {|a b| }[arg-names]").Puts("a", "b"),
+		That("put {|@r| }[rest-arg]").Puts("0"),
+		That("all {|&opt=def| }[opt-names]").Puts("opt"),
+		That("all {|&opt=def| }[opt-defaults]").Puts("def"),
 		That("put { body }[body]").Puts("body "),
-		That("put [x @y]{ body }[def]").Puts("[x @y]{ body }"),
+		That("put {|x @y| body }[def]").Puts("{|x @y| body }"),
 		That("put { body }[src][code]").
 			Puts("put { body }[src][code]"),
 

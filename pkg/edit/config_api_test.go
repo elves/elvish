@@ -27,7 +27,7 @@ func TestAfterReadline(t *testing.T) {
 		`called = 0`,
 		`called-with = ''`,
 		`edit:after-readline = [
-	             [code]{ called = (+ $called 1); called-with = $code } ]`)
+		{|code| called = (+ $called 1); called-with = $code } ]`)
 
 	// Wait for UI to stabilize so that we can be sure that after-readline hooks
 	// are *not* called.
@@ -61,43 +61,43 @@ func TestAddCmdFilters(t *testing.T) {
 		// },
 		// {
 		// 	name:        "callback outputs nothing",
-		// 	rc:          "edit:add-cmd-filters = [[_]{}]",
+		// 	rc:          "edit:add-cmd-filters = [{|_| }]",
 		// 	input:       "echo\n",
 		// 	wantHistory: []string{"echo"},
 		// },
 		{
 			name:        "callback outputs true",
-			rc:          "edit:add-cmd-filters = [[_]{ put $true }]",
+			rc:          "edit:add-cmd-filters = [{|_| put $true }]",
 			input:       "echo\n",
 			wantHistory: []storedefs.Cmd{{Text: "echo", Seq: 1}},
 		},
 		{
 			name:        "callback outputs false",
-			rc:          "edit:add-cmd-filters = [[_]{ put $false }]",
+			rc:          "edit:add-cmd-filters = [{|_| put $false }]",
 			input:       "echo\n",
 			wantHistory: nil,
 		},
 		{
 			name:        "false-true chain",
-			rc:          "edit:add-cmd-filters = [[_]{ put $false } [_]{ put $true }]",
+			rc:          "edit:add-cmd-filters = [{|_| put $false } {|_|  put $true }]",
 			input:       "echo\n",
 			wantHistory: nil,
 		},
 		{
 			name:        "true-false chain",
-			rc:          "edit:add-cmd-filters = [[_]{ put $true } [_]{ put $false }]",
+			rc:          "edit:add-cmd-filters = [{|_|  put $true } {|_|  put $false }]",
 			input:       "echo\n",
 			wantHistory: nil,
 		},
 		{
 			name:        "positive",
-			rc:          "edit:add-cmd-filters = [[cmd]{ ==s $cmd echo }]",
+			rc:          "edit:add-cmd-filters = [{|cmd| ==s $cmd echo }]",
 			input:       "echo\n",
 			wantHistory: []storedefs.Cmd{{Text: "echo", Seq: 1}},
 		},
 		{
 			name:        "negative",
-			rc:          "edit:add-cmd-filters = [[cmd]{ ==s $cmd echo }]",
+			rc:          "edit:add-cmd-filters = [{|cmd| ==s $cmd echo }]",
 			input:       "echo x\n",
 			wantHistory: nil,
 		},
@@ -124,7 +124,7 @@ func TestAddCmdFilters(t *testing.T) {
 func TestAddCmdFilters_SkipsRemainingOnFalse(t *testing.T) {
 	f := setup(t, rc(
 		`called = $false`,
-		`@edit:add-cmd-filters = [_]{ put $false } [_]{ called = $true; put $true }`,
+		`@edit:add-cmd-filters = {|_|  put $false } {|_|  called = $true; put $true }`,
 	))
 
 	feedInput(f.TTYCtrl, "echo\n")

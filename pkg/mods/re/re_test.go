@@ -50,19 +50,19 @@ func TestRe(t *testing.T) {
 
 		That("re:replace '(ba|z)sh' '${1}SH' 'bash and zsh'").Puts("baSH and zSH"),
 		That("re:replace &literal '(ba|z)sh' '$sh' 'bash and zsh'").Puts("$sh and $sh"),
-		That("re:replace '(ba|z)sh' [x]{ put [&bash=BaSh &zsh=ZsH][$x] } 'bash and zsh'").Puts("BaSh and ZsH"),
+		That("re:replace '(ba|z)sh' {|x| put [&bash=BaSh &zsh=ZsH][$x] } 'bash and zsh'").Puts("BaSh and ZsH"),
 
 		// Invalid pattern in re:replace
 		That("re:replace '(' x bash").Throws(AnyError),
 		That("re:replace &posix '[[:argle:]]' x bash").Throws(AnyError),
 		// Replacement function outputs more than one value
-		That("re:replace x [x]{ put a b } xx").Throws(AnyError),
+		That("re:replace x {|x| put a b } xx").Throws(AnyError),
 		// Replacement function outputs non-string value
-		That("re:replace x [x]{ put [] } xx").Throws(AnyError),
+		That("re:replace x {|x| put [] } xx").Throws(AnyError),
 		// Replacement is not string or function
 		That("re:replace x [] xx").Throws(AnyError),
 		// Replacement is function when &literal is set
-		That("re:replace &literal x [_]{ put y } xx").Throws(AnyError),
+		That("re:replace &literal x {|_| put y } xx").Throws(AnyError),
 
 		That("re:split : /usr/sbin:/usr/bin:/bin").Puts("/usr/sbin", "/usr/bin", "/bin"),
 		That("re:split &max=2 : /usr/sbin:/usr/bin:/bin").Puts("/usr/sbin", "/usr/bin:/bin"),
