@@ -232,7 +232,7 @@ func resolve(fm *Frame, head string) string {
 // compilation error: variable $z not found
 // [ttz 2], line 1: put $z
 // ~> saved-ns = $nil
-// ~> eval &on-end={|ns|  saved-ns = $ns } 'z = lorem'
+// ~> eval &on-end={|ns| saved-ns = $ns } 'z = lorem'
 // ~> put $saved-ns[z]
 // ▶ lorem
 // ```

@@ -79,13 +79,13 @@ func TestAddCmdFilters(t *testing.T) {
 		},
 		{
 			name:        "false-true chain",
-			rc:          "edit:add-cmd-filters = [{|_| put $false } {|_|  put $true }]",
+			rc:          "edit:add-cmd-filters = [{|_| put $false } {|_| put $true }]",
 			input:       "echo\n",
 			wantHistory: nil,
 		},
 		{
 			name:        "true-false chain",
-			rc:          "edit:add-cmd-filters = [{|_|  put $true } {|_|  put $false }]",
+			rc:          "edit:add-cmd-filters = [{|_| put $true } {|_| put $false }]",
 			input:       "echo\n",
 			wantHistory: nil,
 		},
@@ -124,7 +124,7 @@ func TestAddCmdFilters(t *testing.T) {
 func TestAddCmdFilters_SkipsRemainingOnFalse(t *testing.T) {
 	f := setup(t, rc(
 		`called = $false`,
-		`@edit:add-cmd-filters = {|_|  put $false } {|_|  called = $true; put $true }`,
+		`@edit:add-cmd-filters = {|_| put $false } {|_| called = $true; put $true }`,
 	))
 
 	feedInput(f.TTYCtrl, "echo\n")

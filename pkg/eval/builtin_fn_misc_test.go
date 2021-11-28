@@ -77,10 +77,10 @@ func TestTime(t *testing.T) {
 			"time &on-end={|x| duration = $x } { echo foo } | out = (all)",
 			"put $out", "kind-of $duration").Puts("foo", "number"),
 		That("time { fail body } | nop (all)").Throws(FailError{"body"}),
-		That("time &on-end={|_|  fail on-end } { }").Throws(
+		That("time &on-end={|_| fail on-end } { }").Throws(
 			FailError{"on-end"}),
 
-		That("time &on-end={|_|  fail on-end } { fail body }").Throws(
+		That("time &on-end={|_| fail on-end } { fail body }").Throws(
 			FailError{"body"}),
 
 		thatOutputErrorIsBubbled("time { }"),

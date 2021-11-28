@@ -16,8 +16,8 @@ func setupCompleteGetopt(ev *eval.Evaler) {
 	                         [&short=n &long=name &desc="Set name"
 	                          &arg-required=$true &arg-desc='new-name'
 	                          &completer= {|_| put name1 name2 }] ]
-	           arg-handlers = [ {|_|  put first1 first2 }
-	                            {|_|  put second1 second2 } ... ]
+	           arg-handlers = [ {|_| put first1 first2 }
+	                            {|_| put second1 second2 } ... ]
 	           complete-getopt $args $opt-specs $arg-handlers
 	         }`
 	ev.Eval(parse.Source{Name: "[test init]", Code: code}, eval.EvalCfg{})

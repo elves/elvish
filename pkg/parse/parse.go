@@ -477,7 +477,7 @@ type Primary struct {
 	node
 	ExprCtx ExprCtx
 	Type    PrimaryType
-	// Legacy lambda uses {|args| body } instead of { |args| body }
+	// Legacy lambda uses [args]{ body } instead of { |args| body }
 	LegacyLambda bool
 	// The unquoted string value. Valid for Bareword, SingleQuoted,
 	// DoubleQuoted, Variable, Wildcard and Tilde.

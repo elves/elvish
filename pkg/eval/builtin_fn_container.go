@@ -777,7 +777,7 @@ func keys(fm *Frame, v interface{}) error {
 // ▶ c
 // ▶ b
 // ▶ a
-// ~> order &less-than={|a b|  eq $a x } [l x o r x e x m]
+// ~> order &less-than={|a b| eq $a x } [l x o r x e x m]
 // ▶ x
 // ▶ x
 // ▶ x
@@ -796,7 +796,7 @@ func keys(fm *Frame, v interface{}) error {
 // ▶ 1
 // ▶ 10
 // ▶ 5
-// ~> order &less-than={|a b|  < $a $b } [5 1 10]
+// ~> order &less-than={|a b| < $a $b } [5 1 10]
 // ▶ 1
 // ▶ 5
 // ▶ 10
