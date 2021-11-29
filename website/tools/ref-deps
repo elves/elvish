@@ -6,6 +6,7 @@
 
 cat ${1%.html}.md |
   awk '/^@module/{ if (NF == 3) { print $3 } else { print "pkg/mods/" $2 } }' |
+  sed 's/-//g' |
   while read dir; do
-    echo ../$dir ../$dir/*.go
+    echo ../$dir ../$dir/*
   done
