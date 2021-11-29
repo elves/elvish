@@ -179,6 +179,8 @@ jobs:
     defaults:
       run:
         shell: sh
+    env:
+      CGO_ENABLED: 0
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
