@@ -181,8 +181,8 @@ jobs:
     steps:
     - name: Set up workspace
       run: |
-        id
         mkdir -p $GITHUB_WORKSPACE
+        ls -lR $GITHUB_WORKSPACE
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Check relative links
