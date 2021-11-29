@@ -180,6 +180,8 @@ jobs:
       run:
         shell: sh
     steps:
+    - name: Set up /go
+      run: chown 1001 /go
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Check relative links
