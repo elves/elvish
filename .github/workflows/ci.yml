@@ -175,14 +175,11 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: theelves/up
+      options: --user 1001
     defaults:
       run:
         shell: sh
     steps:
-    - name: Set up workspace
-      run: |
-        mkdir -p $GITHUB_WORKSPACE
-        ls -lR $GITHUB_WORKSPACE
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Check relative links
