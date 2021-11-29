@@ -170,6 +170,19 @@ jobs:
     - name: Run codespell
       run: codespell
 
+  check-rellinks:
+    name: Check relative links
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+    - name: Install dependencies
+      run: pip install beautifulsoup4
+    - name: Check relative links
+      run: make -C website check-rellinks
+
   lint:
     name: Run linters
     runs-on: ubuntu-latest
