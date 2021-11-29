@@ -24,6 +24,9 @@ docset: $(TOOL_BINS) $(HTMLS)
 publish: gen
 	rsync -aLv --delete ./_dst/ $(PUBLISH_DIR)/
 
+check-rellinks: gen
+	python3 tools/check-rellinks.py $(DST_DIR)
+
 clean:
 	rm -rf $(TOOL_BINS) $(HTMLS) $(DST_DIR) $(DOCSET_TMP_DIR) $(DOCSET_DST_DIR)
 
