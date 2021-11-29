@@ -175,13 +175,11 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: theelves/up
-      options: --user 1001
+      options: --user 0
     defaults:
       run:
         shell: sh
     steps:
-    - name: Set up /go
-      run: sudo chown 1001 /go
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Check relative links
