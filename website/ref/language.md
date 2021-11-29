@@ -265,12 +265,12 @@ Integers and rationals are **exact** numbers; their precision is only limited by
 the available memory, and many (but not all) operations on them are guaranteed
 to produce mathematically correct results.
 
-Floating-point numbers are IEE 754 double-precision. Since operations on
-floating-point numbers in general are not guaranteed to be precise, they are
-always considered **inexact**.
+Floating-point numbers are [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754)
+double-precision. Since operations on floating-point numbers in general are not
+guaranteed to be precise, they are always considered **inexact**.
 
-For more details, see also the discussion on
-[exactness-preserving commands](./builtin.html#exactness-preserving-commands).
+This distinction is important for some builtin commands; see
+[exactness-preserving commands](./builtin.html#exactness-preserving).
 
 ## List
 
