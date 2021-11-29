@@ -283,14 +283,14 @@ func multiErrorFn(excs ...Exception) error {
 //elvdoc:fn return
 //
 // Raises the special "return" exception. When raised inside a named function
-// (defined by the [`fn` keyword](../language.html#function-definition-fn)) it
-// is captured by the function and causes the function to terminate. It is not
-// captured by an anonymous function (aka [lambda](../language.html#lambda)).
+// (defined by the [`fn` keyword](language.html#fn)) it is captured by the
+// function and causes the function to terminate. It is not captured by an
+// ordinary anonymous function.
 //
 // Because `return` raises an exception it can be caught by a
-// [`try`](language.html#exception-control-try) block. If not caught, either
-// implicitly by a named function or explicitly, it causes a failure like any
-// other uncaught exception.
+// [`try`](language.html#try) block. If not caught, either implicitly by a
+// named function or explicitly, it causes a failure like any other uncaught
+// exception.
 //
 // See the discussion about [flow commands and
 // exceptions](language.html#exception-and-flow-commands)
@@ -330,9 +330,8 @@ func returnFn() error {
 // captured and causes the loop to terminate.
 //
 // Because `break` raises an exception it can be caught by a
-// [`try`](language.html#exception-control-try) block. If not caught, either
-// implicitly by a loop or explicitly, it causes a failure like any other
-// uncaught exception.
+// [`try`](language.html#try) block. If not caught, either implicitly by a loop
+// or explicitly, it causes a failure like any other uncaught exception.
 //
 // See the discussion about [flow commands and exceptions](language.html#exception-and-flow-commands)
 //
@@ -357,9 +356,8 @@ func breakFn() error {
 // captured and causes the loop to begin its next iteration.
 //
 // Because `continue` raises an exception it can be caught by a
-// [`try`](language.html#exception-control-try) block. If not caught, either
-// implicitly by a loop or explicitly, it causes a failure like any other
-// uncaught exception.
+// [`try`](language.html#try) block. If not caught, either implicitly by a loop
+// or explicitly, it causes a failure like any other uncaught exception.
 //
 // See the discussion about [flow commands and exceptions](language.html#exception-and-flow-commands)
 //

@@ -4,8 +4,7 @@
 
 The semantics of Elvish is unique in many aspects when compared to other shells.
 This can be surprising if you are used to other shells, and it is a result of
-the [design choice](../ref/philosophy.html) of making Elvish a full-fledged
-programming language.
+the design choice of making Elvish a full-fledged programming language.
 
 # Structureful IO
 
@@ -202,7 +201,7 @@ echo "after false"
 An alternative way to describe this is that Elvish **does** have exit statuses,
 but non-zero exit statuses terminates execution by default. You can handle
 non-zero exit statuses by wrapping the command in a
-[`try`](../language.html#exception-control-try) block.
+[`try`](../ref/language.html#try) block.
 
 Compare with POSIX shells, the behavior of Elvish is similar to `set -e` or
 `set -o errexit`, or having implicit `&&` operators joining all the commands.

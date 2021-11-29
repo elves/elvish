@@ -50,7 +50,7 @@ manages one of them:
 -   On Windows, `epm` manages `%LocalAppData%\elvish\lib`.
 
 This directory is called the `epm`-managed directory, and its path is available
-as [`$epm:managed-dir`](#epm-managed-dir).
+as [`$epm:managed-dir`](#epmmanaged-dir).
 
 # Custom package domains
 

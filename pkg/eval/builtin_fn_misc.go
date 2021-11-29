@@ -376,7 +376,7 @@ var TimeAfter = func(fm *Frame, d time.Duration) <-chan time.Time {
 // contexts that might be executing in parallel as a consequence of a command
 // such as [`peach`](#peach).
 //
-// A duration can be a simple [number](../language.html#number) (with optional
+// A duration can be a simple [number](language.html#number) (with optional
 // fractional value) without an explicit unit suffix, with an implicit unit of
 // seconds.
 //

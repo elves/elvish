@@ -436,7 +436,7 @@ turn a pseudo-map. The reason pseudo-map has has a `type` field identifying how
 the exception was raised, and further fields depending on the type:
 
 -   If the `type` field is `fail`, the exception was raised by the
-    [fail](builtins.html#fail) command.
+    [fail](builtin.html#fail) command.
 
     In this case, the `content` field contains the argument to `fail`.
 
@@ -498,8 +498,9 @@ Examples:
 ## File
 
 There is no literal syntax for the file type. This type is returned by commands
-such as [file:open](file.html#open) and [path:temp-file](path.html#temp-file).
-It can be used as the target of a redirection rather than a filename.
+such as [file:open](file.html#fileopen) and
+[path:temp-file](path.html#pathtemp-file). It can be used as the target of a
+redirection rather than a filename.
 
 A file object is a [pseudo-map](#pseudo-map) with fields `fd` (an int) and
 `name` (a string). If the file is closed the fd will be -1.
@@ -2419,7 +2420,7 @@ order:
    the `use` command.
 
 1. **User defined**: These match a [user defined module](#user-defined-modules)
-   in a [module search directory](#module-search-directories).
+   in a [module search directory](command.html#module-search-directories).
 
 1. **Pre-defined**: These match the name of a
    [pre-defined module](#pre-defined-modules), such as `math` or `str`.

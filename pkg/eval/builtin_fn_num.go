@@ -69,7 +69,7 @@ func init() {
 // command outputs it as is.
 //
 // This command is usually not needed for working with numbers; see the
-// discussion of [numerical commands](#numerical-commands).
+// discussion of [numeric commands](#numeric-commands).
 //
 // Examples:
 //

@@ -268,7 +268,8 @@ apt install elvish
 
 However, only testing versions of Debian and Ubuntu tend to have the latest
 Elvish release. If you are running a stable release of Debian or Ubuntu, it is
-recommended to use official [prebuilt binaries](#prebuilt-binaries) instead.
+recommended to [install an official binaries](#installing-an-official-binary)
+instead.
 
 ## macOS
 

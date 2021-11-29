@@ -267,8 +267,8 @@ func tempDir(opts mktempOpt, args ...string) (string, error) {
 // defaults to `elvish-*`.
 //
 // It is the caller's responsibility to close the file with
-// [`file:close`](file.html#close). The caller should also remove the file if it
-// is intended to be temporary (with `rm $f[name]`).
+// [`file:close`](file.html#fileclose). The caller should also remove the file
+// if it is intended to be temporary (with `rm $f[name]`).
 //
 // ```elvish-transcript
 // ~> f = path:temp-file
