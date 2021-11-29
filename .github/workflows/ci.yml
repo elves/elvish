@@ -176,6 +176,10 @@ jobs:
     container:
       image: theelves/up
     steps:
+    - name: Set up workspace
+      run: |
+        mkdir -p $GITHUB_WORKSPACE
+        chown $USER $GITHUB_WORKSPACE
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Check relative links
