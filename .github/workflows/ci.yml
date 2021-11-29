@@ -182,7 +182,9 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.17.x
-    - name: Install dependencies
+    - name: Install pandoc
+      run: apt install pandoc
+    - name: Install Python dependencies
       run: pip install beautifulsoup4
     - name: Check relative links
       run: make -C website check-rellinks
