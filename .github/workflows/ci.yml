@@ -175,6 +175,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: theelves/up
+    defaults:
+      run:
+        shell: sh
     steps:
     - name: Set up workspace
       run: |
