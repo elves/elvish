@@ -340,7 +340,7 @@ candidates:
     edit:complex-candidate &code-suffix='' &display=$stem' ('$description')'  $stem
     ```
 
-    See [`edit:complex-candidate`](#editcomplex-candidate) for the full
+    See [`edit:complex-candidate`](#edit:complex-candidate) for the full
     description of the arguments is accepts.
 
 After receiving your candidates, Elvish will match your candidates against what

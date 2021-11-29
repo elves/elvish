@@ -498,8 +498,8 @@ Examples:
 ## File
 
 There is no literal syntax for the file type. This type is returned by commands
-such as [file:open](file.html#fileopen) and
-[path:temp-file](path.html#pathtemp-file). It can be used as the target of a
+such as [file:open](file.html#file:open) and
+[path:temp-file](path.html#path:temp-file). It can be used as the target of a
 redirection rather than a filename.
 
 A file object is a [pseudo-map](#pseudo-map) with fields `fd` (an int) and
@@ -2452,7 +2452,7 @@ imported by the `use` command:
 -   [store](store.html)
 -   [str](str.html)
 -   [unix](unix.html) is only available on UNIX-like platforms (see
-    [`$platform:is-unix`](platform.html#platformis-unix))
+    [`$platform:is-unix`](platform.html#platform:is-unix))
 
 ### User-defined modules
 

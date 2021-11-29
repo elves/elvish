@@ -20,7 +20,7 @@ var extractTests = []struct {
 	{name: "Source without elvdoc", src: "package x\n// not elvdoc", wantDoc: ""},
 
 	{
-		name: "Source with doc-fn",
+		name: "Source with elvdoc:fn",
 		src: `package x
 
 //elvdoc:fn cd
@@ -31,9 +31,27 @@ var extractTests = []struct {
 
 <a name='//apple_ref/cpp/Function/cd' class='dashAnchor'></a>
 
-## cd
+## cd {#cd}
 
 Changes directory.
+`,
+	},
+
+	{
+		name: "symbol with punctuation and specified ID",
+		src: `package x
+
+//elvdoc:fn + {#add}
+//
+// Add.
+`,
+		wantDoc: `# Functions
+
+<a name='//apple_ref/cpp/Function/%2B' class='dashAnchor'></a>
+
+## + {#add}
+
+Add.
 `,
 	},
 
@@ -55,17 +73,17 @@ Changes directory.
 
 <a name='//apple_ref/cpp/Function/ns%3Aa' class='dashAnchor'></a>
 
-## ns:a
+## ns:a {#ns:a}
 A.
 
 <a name='//apple_ref/cpp/Function/ns%3Ab' class='dashAnchor'></a>
 
-## ns:b
+## ns:b {#ns:b}
 B.
 
 <a name='//apple_ref/cpp/Function/ns%3A-b' class='dashAnchor'></a>
 
-## ns:-b
+## ns:-b {#ns:-b}
 -B.
 `,
 	},
@@ -86,17 +104,17 @@ B.
 
 <a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
 
-## a
+## a {#a}
 A.
 
 <a name='//apple_ref/cpp/Function/b' class='dashAnchor'></a>
 
-## b
+## b {#b}
 B.
 
 <a name='//apple_ref/cpp/Function/c' class='dashAnchor'></a>
 
-## c
+## c {#c}
 C.
 `,
 	},
@@ -115,7 +133,7 @@ C.
 
 <a name='//apple_ref/cpp/Variable/%24b' class='dashAnchor'></a>
 
-## $b
+## $b {#b}
 B.
 
 
@@ -123,7 +141,7 @@ B.
 
 <a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
 
-## a
+## a {#a}
 A.
 `,
 	},
@@ -141,7 +159,7 @@ A.
 
 <a name='//apple_ref/cpp/Variable/%24b' class='dashAnchor'></a>
 
-## $b
+## $b {#b}
 B.
 
 
@@ -149,7 +167,7 @@ B.
 
 <a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
 
-## a
+## a {#a}
 A.
 `,
 	},
@@ -164,7 +182,7 @@ A.
 
 <a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
 
-## a
+## a {#a}
 A.
 `,
 	},
@@ -183,7 +201,7 @@ A.
 
 <a name='//apple_ref/cpp/Variable/%24ns%3Ab' class='dashAnchor'></a>
 
-## $ns:b
+## $ns:b {#ns:b}
 B.
 
 
@@ -191,7 +209,7 @@ B.
 
 <a name='//apple_ref/cpp/Function/ns%3Aa' class='dashAnchor'></a>
 
-## ns:a
+## ns:a {#ns:a}
 A.
 `,
 	}}
@@ -218,7 +236,7 @@ func TestRun_MultipleFiles(t *testing.T) {
 
 <a name='//apple_ref/cpp/Variable/%24v2' class='dashAnchor'></a>
 
-## $v2
+## $v2 {#v2}
 
 Variable 2 from b.
 
@@ -227,13 +245,13 @@ Variable 2 from b.
 
 <a name='//apple_ref/cpp/Function/f1' class='dashAnchor'></a>
 
-## f1
+## f1 {#f1}
 
 Function 1 from b.
 
 <a name='//apple_ref/cpp/Function/f2' class='dashAnchor'></a>
 
-## f2
+## f2 {#f2}
 
 Function 2 from a.
 
