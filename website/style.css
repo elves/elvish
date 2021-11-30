@@ -410,7 +410,7 @@ pre.ttyshot, pre.ttyshot code {
     padding-left: 0.15em;
 }
 
-*:active > .anchor, *:hover > .anchor {
+*:hover > .anchor {
     opacity: 1;
 }
 
