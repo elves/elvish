@@ -2,12 +2,12 @@ title = "Elvish Shell"
 author = "Qi Xiao"
 feedPosts = 10
 template = "template.html"
-baseCSS = ["reset.css", "style.css"]
+baseCSS = ["reset.css", "style.css", "icon-font.css"]
 rootURL = "https://elv.sh"
 
 [index]
 name = "home"
-extraCSS = ["icon-font.css", "home.css"]
+extraCSS = ["home.css"]
 extraJS = ["home.js"]
 
 [[categories]]
