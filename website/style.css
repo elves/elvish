@@ -406,9 +406,11 @@ pre.ttyshot, pre.ttyshot code {
 .anchor {
     opacity: 0;
     font-size: 90%;
+    color: inherit;
+    padding-left: 0.15em;
 }
 
-*:hover > .anchor {
+*:active > .anchor, *:hover > .anchor {
     opacity: 1;
 }
 
