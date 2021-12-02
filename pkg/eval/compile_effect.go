@@ -116,12 +116,10 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 				// Store in input port for ease of retrieval later
 				sendStop: sendStop, sendError: sendError, readerGone: readerGone}
 		}
-		thisOp := formOp
-		thisExc := &excs[i]
-		go func() {
-			exc := thisOp.exec(newFm)
+		f := func(formOp effectOp, pexc *Exception) {
+			exc := formOp.exec(newFm)
 			if exc != nil && !(outputIsPipe && isReaderGone(exc)) {
-				*thisExc = exc
+				*pexc = exc
 			}
 			if inputIsPipe {
 				input := newFm.ports[0]
@@ -131,7 +129,12 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 			}
 			newFm.Close()
 			wg.Done()
-		}()
+		}
+		if i == nforms-1 && !op.bg {
+			f(formOp, &excs[i])
+		} else {
+			go f(formOp, &excs[i])
+		}
 	}
 
 	if op.bg {
