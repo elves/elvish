@@ -94,7 +94,13 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 		}
 		dstType := ptrType.Elem()
 		if !TypeOf(src).AssignableTo(dstType) {
-			return wrongType{Kind(reflect.Zero(dstType).Interface()), Kind(src)}
+			var dstKind string
+			if dstType.Kind() == reflect.Interface {
+				dstKind = "!!" + dstType.String()
+			} else {
+				dstKind = Kind(reflect.Zero(dstType).Interface())
+			}
+			return wrongType{dstKind, Kind(src)}
 		}
 		ValueOf(ptr).Elem().Set(ValueOf(src))
 		return nil

@@ -12,17 +12,17 @@ type someType struct {
 	foo string
 }
 
-// A wrapper around ScanToGo, to make it easier to test. Instead of supplying a
-// pointer to the destination, an initial value to the destination is supplied
-// and the result is returned.
-func scanToGo2(src interface{}, dstInit interface{}) (interface{}, error) {
-	ptr := reflect.New(TypeOf(dstInit))
-	err := ScanToGo(src, ptr.Interface())
-	return ptr.Elem().Interface(), err
-}
+func TestScanToGo_ConcreteTypeDst(t *testing.T) {
+	// A wrapper around ScanToGo, to make it easier to test. Instead of
+	// supplying a pointer to the destination, an initial value to the
+	// destination is supplied and the result is returned.
+	scanToGo := func(src interface{}, dstInit interface{}) (interface{}, error) {
+		ptr := reflect.New(TypeOf(dstInit))
+		err := ScanToGo(src, ptr.Interface())
+		return ptr.Elem().Interface(), err
+	}
 
-func TestScanToGo(t *testing.T) {
-	Test(t, Fn("ScanToGo", scanToGo2), Table{
+	Test(t, Fn("ScanToGo", scanToGo), Table{
 		// int
 		Args("12", 0).Rets(12),
 		Args("0x12", 0).Rets(0x12),
@@ -40,8 +40,6 @@ func TestScanToGo(t *testing.T) {
 		Args(someType{}, 0.0).Rets(Any, errMustBeNumber),
 		Args("x", 0.0).Rets(Any, cannotParseAs{"number", "x"}),
 
-		// Num is tested below
-
 		// rune
 		Args("x", ' ').Rets('x'),
 		Args(someType{}, ' ').Rets(Any, errMustBeString),
@@ -56,14 +54,14 @@ func TestScanToGo(t *testing.T) {
 	})
 }
 
-func scanToGoNum(src interface{}) (Num, error) {
-	var n Num
-	err := ScanToGo(src, &n)
-	return n, err
-}
+func TestScanToGo_NumDst(t *testing.T) {
+	scanToGo := func(src interface{}) (Num, error) {
+		var n Num
+		err := ScanToGo(src, &n)
+		return n, err
+	}
 
-func TestScanToGo_Num(t *testing.T) {
-	Test(t, Fn("ScanToGo", scanToGoNum), Table{
+	Test(t, Fn("ScanToGo", scanToGo), Table{
 		// Strings are automatically converted
 		Args("12").Rets(12),
 		Args(z).Rets(bigInt(z)),
@@ -74,6 +72,23 @@ func TestScanToGo_Num(t *testing.T) {
 		Args(bigInt(z)).Rets(bigInt(z)),
 		Args(big.NewRat(1, 2)).Rets(big.NewRat(1, 2)),
 		Args(12.0).Rets(12.0),
+
+		Args("bad").Rets(Any, cannotParseAs{"number", "bad"}),
+		Args(EmptyList).Rets(Any, errMustBeNumber),
+	})
+}
+
+func TestScanToGo_InterfaceDst(t *testing.T) {
+	scanToGo := func(src interface{}) (interface{}, error) {
+		var l List
+		err := ScanToGo(src, &l)
+		return l, err
+	}
+
+	Test(t, Fn("ScanToGo", scanToGo), Table{
+		Args(EmptyList).Rets(EmptyList),
+
+		Args("foo").Rets(Any, wrongType{"!!vector.Vector", "string"}),
 	})
 }
 
