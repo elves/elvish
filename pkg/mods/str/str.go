@@ -352,7 +352,7 @@ func join(sep string, inputs eval.Inputs) (string, error) {
 // non-negative, it determines the max number of substitutions.
 //
 // **Note**: This command does not support searching by regular expressions, `$old`
-// is always interpreted as a plain string. Use [re:replace](re.html#replace) if
+// is always interpreted as a plain string. Use [re:replace](re.html#re:replace) if
 // you need to search by regex.
 
 type maxOpt struct{ Max int }
@@ -388,7 +388,7 @@ func replace(opts maxOpt, old, repl, s string) string {
 // ```
 //
 // **Note**: This command does not support splitting by regular expressions,
-// `$sep` is always interpreted as a plain string. Use [re:split](re.html#split)
+// `$sep` is always interpreted as a plain string. Use [re:split](re.html#re:split)
 // if you need to split by regex.
 //
 // Etymology: Various languages, in particular
@@ -440,7 +440,7 @@ func split(fm *eval.Frame, opts maxOpt, sep, s string) error {
 //
 // The output format is subject to change.
 //
-// @cf from-codepoints
+// @cf str:from-codepoints
 
 func toCodepoints(fm *eval.Frame, s string) error {
 	out := fm.ValueOutput()
@@ -489,7 +489,7 @@ func toCodepoints(fm *eval.Frame, s string) error {
 //
 // The output format is subject to change.
 //
-// @cf from-utf8-bytes
+// @cf str:from-utf8-bytes
 
 func toUtf8Bytes(fm *eval.Frame, s string) error {
 	out := fm.ValueOutput()
@@ -552,7 +552,7 @@ func toUtf8Bytes(fm *eval.Frame, s string) error {
 // ```
 //
 // Outputs `$str` with all leading Unicode code points contained in `$cutset`
-// removed. To remove a prefix string use [`str:trim-prefix`](#strtrim-prefix).
+// removed. To remove a prefix string use [`str:trim-prefix`](#str:trim-prefix).
 //
 // ```elvish-transcript
 // ~> str:trim-left "¡¡¡Hello, Elven!!!" "!¡"
@@ -582,7 +582,7 @@ func toUtf8Bytes(fm *eval.Frame, s string) error {
 // ```
 //
 // Outputs `$str` with all leading Unicode code points contained in `$cutset`
-// removed. To remove a suffix string use [`str:trim-suffix`](#strtrim-suffix).
+// removed. To remove a suffix string use [`str:trim-suffix`](#str:trim-suffix).
 //
 // ```elvish-transcript
 // ~> str:trim-right "¡¡¡Hello, Elven!!!" "!¡"

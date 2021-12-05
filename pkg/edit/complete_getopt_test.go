@@ -11,13 +11,13 @@ import (
 func setupCompleteGetopt(ev *eval.Evaler) {
 	ev.ExtendBuiltin(eval.BuildNs().AddGoFn("complete-getopt", completeGetopt))
 
-	code := `fn complete [@args]{
+	code := `fn complete {|@args|
 	           opt-specs = [ [&short=a &long=all &desc="Show all"]
 	                         [&short=n &long=name &desc="Set name"
 	                          &arg-required=$true &arg-desc='new-name'
-	                          &completer= [_]{ put name1 name2 }] ]
-	           arg-handlers = [ [_]{ put first1 first2 }
-	                            [_]{ put second1 second2 } ... ]
+	                          &completer= {|_| put name1 name2 }] ]
+	           arg-handlers = [ {|_| put first1 first2 }
+	                            {|_| put second1 second2 } ... ]
 	           complete-getopt $args $opt-specs $arg-handlers
 	         }`
 	ev.Eval(parse.Source{Name: "[test init]", Code: code}, eval.EvalCfg{})

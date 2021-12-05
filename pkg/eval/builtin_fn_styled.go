@@ -29,7 +29,7 @@ func init() {
 // Probably the only reason to use it is to build custom style transformers:
 //
 // ```elvish
-// fn my-awesome-style-transformer [seg]{ styled-segment $seg &bold=(not $seg[dim]) &dim=(not $seg[italic]) &italic=$seg[bold] }
+// fn my-awesome-style-transformer {|seg| styled-segment $seg &bold=(not $seg[dim]) &dim=(not $seg[italic]) &italic=$seg[bold] }
 // styled abc $my-awesome-style-transformer~
 // ```
 //

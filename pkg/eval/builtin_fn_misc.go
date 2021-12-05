@@ -115,7 +115,7 @@ func kindOf(fm *Frame, args ...interface{}) error {
 // ▶ ipsum
 // ```
 //
-// The above example is actually equivalent to simply `f = []{ put lorem ipsum }`;
+// The above example is actually equivalent to simply `f = { put lorem ipsum }`;
 // it is most useful when the argument is **not** a literal value, e.g.
 //
 // ```elvish-transcript
@@ -126,7 +126,7 @@ func kindOf(fm *Frame, args ...interface{}) error {
 // ▶ Darwin
 // ```
 //
-// The above code only calls `uname` once, while if you do `f = []{ put (uname) }`,
+// The above code only calls `uname` once, while if you do `f = { put (uname) }`,
 // every time you invoke `$f`, `uname` will be called.
 //
 // Etymology: [Clojure](https://clojuredocs.org/clojure.core/constantly).
@@ -232,7 +232,7 @@ func resolve(fm *Frame, head string) string {
 // compilation error: variable $z not found
 // [ttz 2], line 1: put $z
 // ~> saved-ns = $nil
-// ~> eval &on-end=[ns]{ saved-ns = $ns } 'z = lorem'
+// ~> eval &on-end={|ns| saved-ns = $ns } 'z = lorem'
 // ~> put $saved-ns[z]
 // ▶ lorem
 // ```
@@ -376,7 +376,7 @@ var TimeAfter = func(fm *Frame, d time.Duration) <-chan time.Time {
 // contexts that might be executing in parallel as a consequence of a command
 // such as [`peach`](#peach).
 //
-// A duration can be a simple [number](../language.html#number) (with optional
+// A duration can be a simple [number](language.html#number) (with optional
 // fractional value) without an explicit unit suffix, with an implicit unit of
 // seconds.
 //
@@ -459,10 +459,10 @@ func sleep(fm *Frame, duration interface{}) error {
 // ~> time { sleep 0.01 }
 // 1.288977ms
 // ~> t = ''
-// ~> time &on-end=[x]{ t = $x } { sleep 1 }
+// ~> time &on-end={|x| t = $x } { sleep 1 }
 // ~> put $t
 // ▶ (float64 1.000925004)
-// ~> time &on-end=[x]{ t = $x } { sleep 0.01 }
+// ~> time &on-end={|x| t = $x } { sleep 0.01 }
 // ~> put $t
 // ▶ (float64 0.011030208)
 // ```

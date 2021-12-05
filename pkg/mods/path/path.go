@@ -142,8 +142,6 @@ var Ns = eval.BuildNsNamed("path").
 // directory. Setting option `&follow-symlink` to true will cause the last element of the path, if
 // it is a symlink, to be resolved before doing the test.
 //
-// @cf eval-symlinks
-//
 // ```elvish-transcript
 // ~> touch not-a-dir
 // ~> path:is-dir not-a-dir
@@ -151,6 +149,8 @@ var Ns = eval.BuildNsNamed("path").
 // ~> path:is-dir /tmp
 // ▶ true
 // ```
+//
+// @cf path:is-regular
 
 type isOpts struct{ FollowSymlink bool }
 
@@ -178,7 +178,8 @@ func isDir(opts isOpts, path string) bool {
 // regular file. Setting option `&follow-symlink` to true will cause the last element of the path,
 // if it is a symlink, to be resolved before doing the test.
 //
-// @cf eval-symlinks
+// **Note:** This isn't named `is-file` because a UNIX file may be a "bag of bytes" or may be a
+// named pipe, device special file (e.g. `/dev/tty`), etc.
 //
 // ```elvish-transcript
 // ~> touch not-a-dir
@@ -187,6 +188,8 @@ func isDir(opts isOpts, path string) bool {
 // ~> path:is-dir /tmp
 // ▶ false
 // ```
+//
+// @cf path:is-dir
 
 func isRegular(opts isOpts, path string) bool {
 	var fi os.FileInfo
@@ -264,8 +267,8 @@ func tempDir(opts mktempOpt, args ...string) (string, error) {
 // defaults to `elvish-*`.
 //
 // It is the caller's responsibility to close the file with
-// [`file:close`](file.html#close). The caller should also remove the file if it
-// is intended to be temporary (with `rm $f[name]`).
+// [`file:close`](file.html#file:close). The caller should also remove the file
+// if it is intended to be temporary (with `rm $f[name]`).
 //
 // ```elvish-transcript
 // ~> f = path:temp-file

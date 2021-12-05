@@ -29,7 +29,7 @@ func TestPipeline(t *testing.T) {
 		That(`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`).
 			Prints("A1bert\nBer1in\n"),
 		// Pure value pipeline
-		That(`put 233 42 19 | each [x]{+ $x 10}`).Puts(243, 52, 29),
+		That(`put 233 42 19 | each {|x|+ $x 10}`).Puts(243, 52, 29),
 		// Pipeline draining.
 		That(`range 100 | put x`).Puts("x"),
 		// TODO: Add a useful hybrid pipeline sample

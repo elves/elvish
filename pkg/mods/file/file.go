@@ -66,7 +66,7 @@ func close(f vals.File) error {
 // ```
 //
 // Create a new pipe that can be used in redirections. A pipe contains a read-end and write-end.
-// Each pipe object is a [pseudo-map](#pseudo-map) with fields `r` (the read-end [file
+// Each pipe object is a [pseudo-map](language.html#pseudo-map) with fields `r` (the read-end [file
 // object](./language.html#file)) and `w` (the write-end).
 //
 // When redirecting command input from a pipe with `<`, the read-end is used. When redirecting

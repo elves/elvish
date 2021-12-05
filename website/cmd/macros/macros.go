@@ -147,10 +147,8 @@ func cfHref(target string) string {
 		// unqualified name (e.g. #put).
 		return "builtin.html#" + symbol
 	}
-	// A link to a non-builtin page. The section names are always qualified
-	// names (e.g str:join), but pandoc strips the colons from the anchor (e.g.
-	// #strjoin).
-	return module + ".html#" + strings.ReplaceAll(target, ":", "")
+	// A link to a non-builtin page.
+	return module + ".html#" + target
 }
 
 func (f *filterer) expandDl(rest string) string {

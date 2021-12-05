@@ -13,7 +13,7 @@ import (
 //elvdoc:var after-command
 //
 // A list of functions to call after each interactive command completes. There is one pre-defined
-// function used to populate the [`$edit:command-duration`](./edit.html#editcommand-duration)
+// function used to populate the [`$edit:command-duration`](./edit.html#edit:command-duration)
 // variable. Each function is called with a single [map](https://elv.sh/ref/language.html#map)
 // argument containing the following keys:
 //

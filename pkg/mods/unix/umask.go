@@ -39,7 +39,7 @@ const (
 // restored. **Warning**: Since the umask applies to the entire process, not
 // individual threads, changing it temporarily in this manner is dangerous if
 // you are doing anything in parallel. Such as via the
-// [`peach`](ref/builtin.html#peach) command.
+// [`peach`](builtin.html#peach) command.
 
 // UmaskVariable is a variable whose value always reflects the current file
 // creation permission mask. Setting it changes the current file creation

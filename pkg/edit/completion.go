@@ -118,8 +118,8 @@ func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) co
 //
 // ```elvish
 // use str
-// fn match-prefix [seed @input]{
-//   each [x]{ str:has-prefix (to-string $x) $seed } $@input
+// fn match-prefix {|seed @input|
+//   each {|x| str:has-prefix (to-string $x) $seed } $@input
 // }
 // ```
 
@@ -146,8 +146,8 @@ func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) co
 //
 // ```elvish
 // use str
-// fn match-substr [seed @input]{
-//   each [x]{ str:has-contains (to-string $x) $seed } $@input
+// fn match-substr {|seed @input|
+//   each {|x| str:has-contains (to-string $x) $seed } $@input
 // }
 // ```
 

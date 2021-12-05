@@ -45,7 +45,7 @@ func init() {
 // different commands in order to independently capture the output of each byte stream:
 //
 // ```elvish-transcript
-// ~> fn capture [f]{
+// ~> fn capture {|f|
 //      var pout = (file:pipe)
 //      var perr = (file:pipe)
 //      var out err
@@ -108,11 +108,11 @@ func runParallel(fm *Frame, functions ...Callable) error {
 // Examples:
 //
 // ```elvish-transcript
-// ~> range 5 8 | each [x]{ * $x $x }
+// ~> range 5 8 | each {|x| * $x $x }
 // ▶ 25
 // ▶ 36
 // ▶ 49
-// ~> each [x]{ put $x[:3] } [lorem ipsum]
+// ~> each {|x| put $x[:3] } [lorem ipsum]
 // ▶ lor
 // ▶ ips
 // ```
@@ -167,7 +167,7 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 // Example (your output will differ):
 //
 // ```elvish-transcript
-// ~> range 1 10 | peach [x]{ + $x 10 }
+// ~> range 1 10 | peach {|x| + $x 10 }
 // ▶ (num 12)
 // ▶ (num 13)
 // ▶ (num 11)
@@ -178,7 +178,7 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 // ▶ (num 15)
 // ▶ (num 19)
 // ~> range 1 101 |
-//    peach [x]{ if (== 50 $x) { break } else { put $x } } |
+//    peach {|x| if (== 50 $x) { break } else { put $x } } |
 //    + (all) # 1+...+49 = 1225; 1+...+100 = 5050
 // ▶ (num 1328)
 // ```
@@ -283,14 +283,14 @@ func multiErrorFn(excs ...Exception) error {
 //elvdoc:fn return
 //
 // Raises the special "return" exception. When raised inside a named function
-// (defined by the [`fn` keyword](../language.html#function-definition-fn)) it
-// is captured by the function and causes the function to terminate. It is not
-// captured by an anonymous function (aka [lambda](../language.html#lambda)).
+// (defined by the [`fn` keyword](language.html#fn)) it is captured by the
+// function and causes the function to terminate. It is not captured by an
+// ordinary anonymous function.
 //
 // Because `return` raises an exception it can be caught by a
-// [`try`](language.html#exception-control-try) block. If not caught, either
-// implicitly by a named function or explicitly, it causes a failure like any
-// other uncaught exception.
+// [`try`](language.html#try) block. If not caught, either implicitly by a
+// named function or explicitly, it causes a failure like any other uncaught
+// exception.
 //
 // See the discussion about [flow commands and
 // exceptions](language.html#exception-and-flow-commands)
@@ -330,9 +330,8 @@ func returnFn() error {
 // captured and causes the loop to terminate.
 //
 // Because `break` raises an exception it can be caught by a
-// [`try`](language.html#exception-control-try) block. If not caught, either
-// implicitly by a loop or explicitly, it causes a failure like any other
-// uncaught exception.
+// [`try`](language.html#try) block. If not caught, either implicitly by a loop
+// or explicitly, it causes a failure like any other uncaught exception.
 //
 // See the discussion about [flow commands and exceptions](language.html#exception-and-flow-commands)
 //
@@ -341,7 +340,7 @@ func returnFn() error {
 //
 // ```elvish-transcript
 // ~> use builtin
-// ~> fn break []{ put 'break'; builtin:break; put 'should not appear' }
+// ~> fn break { put 'break'; builtin:break; put 'should not appear' }
 // ~> for x [a b c] { put $x; break; put 'unexpected' }
 // ▶ a
 // ▶ break
@@ -357,9 +356,8 @@ func breakFn() error {
 // captured and causes the loop to begin its next iteration.
 //
 // Because `continue` raises an exception it can be caught by a
-// [`try`](language.html#exception-control-try) block. If not caught, either
-// implicitly by a loop or explicitly, it causes a failure like any other
-// uncaught exception.
+// [`try`](language.html#try) block. If not caught, either implicitly by a loop
+// or explicitly, it causes a failure like any other uncaught exception.
 //
 // See the discussion about [flow commands and exceptions](language.html#exception-and-flow-commands)
 //
@@ -368,7 +366,7 @@ func breakFn() error {
 //
 // ```elvish-transcript
 // ~> use builtin
-// ~> fn continue []{ put 'continue'; builtin:continue; put 'should not appear' }
+// ~> fn continue { put 'continue'; builtin:continue; put 'should not appear' }
 // ~> for x [a b c] { put $x; continue; put 'unexpected' }
 // ▶ a
 // ▶ continue

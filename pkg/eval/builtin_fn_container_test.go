@@ -45,51 +45,85 @@ func TestMakeMap(t *testing.T) {
 	)
 }
 
-var maxInt = 1<<((unsafe.Sizeof(0)*8)-1) - 1
-var maxDenseIntInFloat = float64(1 << 53)
+var (
+	maxInt = 1<<((unsafe.Sizeof(0)*8)-1) - 1
+	minInt = -maxInt - 1
+
+	maxDenseIntInFloat = float64(1 << 53)
+)
 
 func TestRange(t *testing.T) {
 	Test(t,
+		// Basic argument sanity checks.
+		That("range").Throws(ErrorWithType(errs.ArityMismatch{})),
+		That("range 0 1 2").Throws(ErrorWithType(errs.ArityMismatch{})),
+
+		// Int count up.
 		That("range 3").Puts(0, 1, 2),
 		That("range 1 3").Puts(1, 2),
-		That("range 0 10 &step=3").Puts(0, 3, 6, 9),
-		// int overflow
-		That("range &step=2 "+args(vals.ToString(maxInt-3), vals.ToString(maxInt))).
-			Puts(maxInt-3, maxInt-1),
-		// non-positive int step
-		That("range &step=0 10").
-			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "0"}),
-		thatOutputErrorIsBubbled("range 1"),
+		// Int count down.
+		That("range -1 10 &step=3").Puts(-1, 2, 5, 8),
+		That("range 3 -3").Puts(3, 2, 1, 0, -1, -2),
+		// Near maxInt or minInt.
+		That("range "+args(maxInt-2, maxInt)).Puts(maxInt-2, maxInt-1),
+		That("range "+args(maxInt, maxInt-2)).Puts(maxInt, maxInt-1),
+		That("range "+args(minInt, minInt+2)).Puts(minInt, minInt+1),
+		That("range "+args(minInt+2, minInt)).Puts(minInt+2, minInt+1),
+		// Invalid step given the "start" and "end" values of the range.
+		That("range &step=-1 1").
+			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-1"}),
+		That("range &step=1 1 0").
+			Throws(errs.BadValue{What: "step", Valid: "negative", Actual: "1"}),
+		thatOutputErrorIsBubbled("range 2"),
 
+		// Big int count up.
 		That("range "+z+" "+z3).Puts(bigInt(z), bigInt(z1), bigInt(z2)),
 		That("range "+z+" "+z3+" &step=2").Puts(bigInt(z), bigInt(z2)),
-		// non-positive bigint step
+		// Big int count down.
+		That("range "+z3+" "+z).Puts(bigInt(z3), bigInt(z2), bigInt(z1)),
+		That("range "+z3+" "+z+" &step=-2").Puts(bigInt(z3), bigInt(z1)),
+		// Invalid big int step.
 		That("range &step=-"+z+" 10").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-" + z}),
+		That("range &step="+z+" 10 0").
+			Throws(errs.BadValue{What: "step", Valid: "negative", Actual: z}),
 		thatOutputErrorIsBubbled("range "+z+" "+z1),
 
+		// Rational count up.
 		That("range 23/10").Puts(0, 1, 2),
 		That("range 1/10 23/10").Puts(
 			big.NewRat(1, 10), big.NewRat(11, 10), big.NewRat(21, 10)),
+		That("range 23/10 1/10").Puts(
+			big.NewRat(23, 10), big.NewRat(13, 10), big.NewRat(3, 10)),
 		That("range 1/10 9/10 &step=3/10").Puts(
 			big.NewRat(1, 10), big.NewRat(4, 10), big.NewRat(7, 10)),
-		// non-positive bigrat step
+		// Rational count down.
+		That("range 9/10 0/10 &step=-3/10").Puts(
+			big.NewRat(9, 10), big.NewRat(6, 10), big.NewRat(3, 10)),
+		// Invalid rational step.
 		That("range &step=-1/2 10").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-1/2"}),
+		That("range &step=1/2 10 0").
+			Throws(errs.BadValue{What: "step", Valid: "negative", Actual: "1/2"}),
 		thatOutputErrorIsBubbled("range 1/2 3/2"),
 
+		// Float64 count up.
 		That("range 1.2").Puts(0.0, 1.0),
 		That("range &step=0.5 1 3").Puts(1.0, 1.5, 2.0, 2.5),
-		// float64 overflow
-		That("range "+args(vals.ToString(maxDenseIntInFloat-2), "+inf")).
+		// Float64 count down.
+		That("range 1.2 -1.2").Puts(1.2, Approximately{F: 0.2}, Approximately{F: -0.8}),
+		That("range &step=-0.5 3 1").Puts(3.0, 2.5, 2.0, 1.5),
+		// Near maxDenseIntInFloat.
+		That("range "+args(maxDenseIntInFloat-2, "+inf")).
 			Puts(maxDenseIntInFloat-2, maxDenseIntInFloat-1, maxDenseIntInFloat),
-		// non-positive float64 step
+		That("range "+args(maxDenseIntInFloat, maxDenseIntInFloat-2)).
+			Puts(maxDenseIntInFloat, maxDenseIntInFloat-1),
+		// Invalid float64 step.
 		That("range &step=-0.5 10").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-0.5"}),
+		That("range &step=0.5 10 0").
+			Throws(errs.BadValue{What: "step", Valid: "negative", Actual: "0.5"}),
 		thatOutputErrorIsBubbled("range 1.2"),
-
-		That("range").Throws(ErrorWithType(errs.ArityMismatch{})),
-		That("range 0 1 2").Throws(ErrorWithType(errs.ArityMismatch{})),
 	)
 }
 
@@ -282,38 +316,38 @@ func TestOrder(t *testing.T) {
 		That("put foo bar ipsum | order &reverse").Puts("ipsum", "foo", "bar"),
 
 		// &less-than
-		That("put 1 10 2 5 | order &less-than=[a b]{ < $a $b }").
+		That("put 1 10 2 5 | order &less-than={|a b| < $a $b }").
 			Puts("1", "2", "5", "10"),
 
 		// &less-than writing more than one value
-		That("put 1 10 2 5 | order &less-than=[a b]{ put $true $false }").
+		That("put 1 10 2 5 | order &less-than={|a b| put $true $false }").
 			Throws(
 				errs.BadValue{
 					What:  "output of the &less-than callback",
 					Valid: "a single boolean", Actual: "2 values"},
-				"order &less-than=[a b]{ put $true $false }"),
+				"order &less-than={|a b| put $true $false }"),
 
 		// &less-than writing non-boolean value
-		That("put 1 10 2 5 | order &less-than=[a b]{ put x }").
+		That("put 1 10 2 5 | order &less-than={|a b| put x }").
 			Throws(
 				errs.BadValue{
 					What:  "output of the &less-than callback",
 					Valid: "boolean", Actual: "string"},
-				"order &less-than=[a b]{ put x }"),
+				"order &less-than={|a b| put x }"),
 
 		// &less-than throwing an exception
-		That("put 1 10 2 5 | order &less-than=[a b]{ fail bad }").
+		That("put 1 10 2 5 | order &less-than={|a b| fail bad }").
 			Throws(
 				FailError{"bad"},
-				"fail bad ", "order &less-than=[a b]{ fail bad }"),
+				"fail bad ", "order &less-than={|a b| fail bad }"),
 
 		// &less-than and &reverse
-		That("put 1 10 2 5 | order &reverse &less-than=[a b]{ < $a $b }").
+		That("put 1 10 2 5 | order &reverse &less-than={|a b| < $a $b }").
 			Puts("10", "5", "2", "1"),
 
 		// Sort should be stable - test by pretending that all values but one
 		// are equal, an check that the order among them has not changed.
-		That("put l x o x r x e x m | order &less-than=[a b]{ eq $a x }").
+		That("put l x o x r x e x m | order &less-than={|a b| eq $a x }").
 			Puts("x", "x", "x", "x", "l", "o", "r", "e", "m"),
 
 		thatOutputErrorIsBubbled("order [foo]"),

@@ -291,16 +291,16 @@ func TestFor(t *testing.T) {
 
 func TestFn(t *testing.T) {
 	Test(t,
-		That("fn f [x]{ put x=$x'.' }; f lorem; f ipsum").
+		That("fn f {|x| put x=$x'.' }; f lorem; f ipsum").
 			Puts("x=lorem.", "x=ipsum."),
 		// Recursive functions with fn. Regression test for #1206.
-		That("fn f [n]{ if (== $n 0) { num 1 } else { * $n (f (- $n 1)) } }; f 3").
+		That("fn f {|n| if (== $n 0) { num 1 } else { * $n (f (- $n 1)) } }; f 3").
 			Puts(6),
 		// Exception thrown by return is swallowed by a fn-defined function.
-		That("fn f []{ put a; return; put b }; f").Puts("a"),
+		That("fn f { put a; return; put b }; f").Puts("a"),
 
 		// Error when evaluating the lambda
-		That("fn f [&opt=(fail x)]{ }").Throws(FailError{"x"}, "fail x"),
+		That("fn f {|&opt=(fail x)| }").Throws(FailError{"x"}, "fail x"),
 	)
 }
 

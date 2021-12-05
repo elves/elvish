@@ -402,6 +402,18 @@ pre.ttyshot, pre.ttyshot code {
     background-color: gray;
 }
 
+/** Header anchors. */
+.anchor {
+    opacity: 0;
+    font-size: 90%;
+    color: inherit;
+    padding-left: 0.15em;
+}
+
+*:hover > .anchor {
+    opacity: 1;
+}
+
 /**
  * Dark theme.
  */
@@ -467,5 +479,3 @@ td, th {
 .dark td, .dark th {
     border-color: #444;
 }
-
-

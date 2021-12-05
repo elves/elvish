@@ -170,6 +170,23 @@ jobs:
     - name: Run codespell
       run: codespell
 
+  check-rellinks:
+    name: Check relative links
+    runs-on: ubuntu-latest
+    container:
+      image: theelves/up
+      options: --user 0
+    defaults:
+      run:
+        shell: sh
+    env:
+      CGO_ENABLED: 0
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Check relative links
+      run: make -C website check-rellinks
+
   lint:
     name: Run linters
     runs-on: ubuntu-latest

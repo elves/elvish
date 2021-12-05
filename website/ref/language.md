@@ -222,6 +222,10 @@ can be constructed by passing their **string representation** to the
 -   **Integers** are written in decimal (e.g. `10`), hexadecimal (e.g. `0xA`),
     octal (e.g. `0o12`) or binary (e.g. `0b1010`).
 
+    **NOTE**: Integers with leading zeros are now parsed as octal (e.g. `010` is
+    the same as `0o10`, or `8`), but this is subject to change
+    ([#1372](https://b.elv.sh/1371)).
+
 -   **Rationals** are written as two exact integers joined by `/`, e.g. `1/2` or
     `0x10/100` (16/100).
 
@@ -229,9 +233,10 @@ can be constructed by passing their **string representation** to the
     using scientific notation (e.g. `1e1` or `1.0e1`). There are also three
     additional special floating-point values: `+Inf`, `-Inf` and `NaN`.
 
-Digits may be separately by underscores, which are ignored; this permits
+Digits may be separated by underscores, which are ignored; this permits
 separating the digits into groups to improve readability. For example, `1000000`
-and `1_000_000` are equivalent, so are `1.234_56e3` and `1.23456e3`.
+and `1_000_000` are equivalent, so are `1.234_56e3` and `1.23456e3`, or `1_2_3`
+and `123`.
 
 The string representation is case-insensitive.
 
@@ -260,12 +265,12 @@ Integers and rationals are **exact** numbers; their precision is only limited by
 the available memory, and many (but not all) operations on them are guaranteed
 to produce mathematically correct results.
 
-Floating-point numbers are IEE 754 double-precision. Since operations on
-floating-point numbers in general are not guaranteed to be precise, they are
-always considered **inexact**.
+Floating-point numbers are [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754)
+double-precision. Since operations on floating-point numbers in general are not
+guaranteed to be precise, they are always considered **inexact**.
 
-For more details, see also the discussion on
-[exactness-preserving commands](./builtin.html#exactness-preserving-commands).
+This distinction is important for some builtin commands; see
+[exactness-preserving commands](./builtin.html#exactness-preserving).
 
 ## List
 
@@ -431,7 +436,7 @@ turn a pseudo-map. The reason pseudo-map has has a `type` field identifying how
 the exception was raised, and further fields depending on the type:
 
 -   If the `type` field is `fail`, the exception was raised by the
-    [fail](builtins.html#fail) command.
+    [fail](builtin.html#fail) command.
 
     In this case, the `content` field contains the argument to `fail`.
 
@@ -493,8 +498,9 @@ Examples:
 ## File
 
 There is no literal syntax for the file type. This type is returned by commands
-such as [file:open](file.html#open) and [path:temp-file](path.html#temp-file).
-It can be used as the target of a redirection rather than a filename.
+such as [file:open](file.html#file:open) and
+[path:temp-file](path.html#path:temp-file). It can be used as the target of a
+redirection rather than a filename.
 
 A file object is a [pseudo-map](#pseudo-map) with fields `fd` (an int) and
 `name` (a string). If the file is closed the fd will be -1.
@@ -2414,7 +2420,7 @@ order:
    the `use` command.
 
 1. **User defined**: These match a [user defined module](#user-defined-modules)
-   in a [module search directory](#module-search-directories).
+   in a [module search directory](command.html#module-search-directories).
 
 1. **Pre-defined**: These match the name of a
    [pre-defined module](#pre-defined-modules), such as `math` or `str`.
@@ -2446,7 +2452,7 @@ imported by the `use` command:
 -   [store](store.html)
 -   [str](str.html)
 -   [unix](unix.html) is only available on UNIX-like platforms (see
-    [`$platform:is-unix`](platform.html#platformis-unix))
+    [`$platform:is-unix`](platform.html#platform:is-unix))
 
 ### User-defined modules
 

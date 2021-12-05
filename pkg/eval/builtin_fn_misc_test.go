@@ -46,7 +46,7 @@ func TestEval(t *testing.T) {
 			Throws(vals.NoSuchKey("x"), "$n[x]"),
 		// However, newly created variable can be accessed in the final
 		// namespace using &on-end.
-		That("eval &on-end=[n]{ put $n[x] } 'x = foo'").Puts("foo"),
+		That("eval &on-end={|n| put $n[x] } 'x = foo'").Puts("foo"),
 		// Parse error.
 		That("eval '['").Throws(AnyError),
 		// Compilation error.
@@ -74,13 +74,13 @@ func TestTime(t *testing.T) {
 		// checks here.
 		That("time { echo foo } | a _ = (all)", "put $a").Puts("foo"),
 		That("duration = ''",
-			"time &on-end=[x]{ duration = $x } { echo foo } | out = (all)",
+			"time &on-end={|x| duration = $x } { echo foo } | out = (all)",
 			"put $out", "kind-of $duration").Puts("foo", "number"),
 		That("time { fail body } | nop (all)").Throws(FailError{"body"}),
-		That("time &on-end=[_]{ fail on-end } { }").Throws(
+		That("time &on-end={|_| fail on-end } { }").Throws(
 			FailError{"on-end"}),
 
-		That("time &on-end=[_]{ fail on-end } { fail body }").Throws(
+		That("time &on-end={|_| fail on-end } { fail body }").Throws(
 			FailError{"body"}),
 
 		thatOutputErrorIsBubbled("time { }"),
