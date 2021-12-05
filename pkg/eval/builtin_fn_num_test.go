@@ -8,6 +8,7 @@ import (
 
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/vals"
 
 	. "src.elv.sh/pkg/eval/evaltest"
 )
@@ -252,6 +253,10 @@ func bigRat(s string) *big.Rat {
 	return z
 }
 
-func args(s ...string) string {
+func args(vs ...interface{}) string {
+	s := make([]string, len(vs))
+	for i, v := range vs {
+		s[i] = vals.ToString(v)
+	}
 	return strings.Join(s, " ")
 }

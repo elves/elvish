@@ -45,8 +45,12 @@ func TestMakeMap(t *testing.T) {
 	)
 }
 
-var maxInt = 1<<((unsafe.Sizeof(0)*8)-1) - 1
-var maxDenseIntInFloat = float64(1 << 53)
+var (
+	maxInt = 1<<((unsafe.Sizeof(0)*8)-1) - 1
+	minInt = -maxInt - 1
+
+	maxDenseIntInFloat = float64(1 << 53)
+)
 
 func TestRange(t *testing.T) {
 	Test(t,
@@ -60,20 +64,17 @@ func TestRange(t *testing.T) {
 		// Int count down.
 		That("range -1 10 &step=3").Puts(-1, 2, 5, 8),
 		That("range 3 -3").Puts(3, 2, 1, 0, -1, -2),
+		// Near maxInt or minInt.
+		That("range "+args(maxInt-2, maxInt)).Puts(maxInt-2, maxInt-1),
+		That("range "+args(maxInt, maxInt-2)).Puts(maxInt, maxInt-1),
+		That("range "+args(minInt, minInt+2)).Puts(minInt, minInt+1),
+		That("range "+args(minInt+2, minInt)).Puts(minInt+2, minInt+1),
 		// Invalid step given the "start" and "end" values of the range.
 		That("range &step=-1 1").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-1"}),
 		That("range &step=1 1 0").
 			Throws(errs.BadValue{What: "step", Valid: "negative", Actual: "1"}),
-		// Int overflow.
-		That("range &step=2 "+args(vals.ToString(maxInt-3), vals.ToString(maxInt))).
-			Puts(maxInt-3, maxInt-1),
 		thatOutputErrorIsBubbled("range 2"),
-
-		// An explicit zero step is the same as not specifying a step. Thus telling `range` to
-		// decide whether a +1 or -1 step is appropriate.
-		That("range &step=0 2").Puts(0, 1),
-		That("range &step=0 2 0").Puts(2, 1),
 
 		// Big int count up.
 		That("range "+z+" "+z3).Puts(bigInt(z), bigInt(z1), bigInt(z2)),
@@ -112,9 +113,11 @@ func TestRange(t *testing.T) {
 		// Float64 count down.
 		That("range 1.2 -1.2").Puts(1.2, Approximately{F: 0.2}, Approximately{F: -0.8}),
 		That("range &step=-0.5 3 1").Puts(3.0, 2.5, 2.0, 1.5),
-		// Float64 overflow.
-		That("range "+args(vals.ToString(maxDenseIntInFloat-2), "+inf")).
+		// Near maxDenseIntInFloat.
+		That("range "+args(maxDenseIntInFloat-2, "+inf")).
 			Puts(maxDenseIntInFloat-2, maxDenseIntInFloat-1, maxDenseIntInFloat),
+		That("range "+args(maxDenseIntInFloat, maxDenseIntInFloat-2)).
+			Puts(maxDenseIntInFloat, maxDenseIntInFloat-1),
 		// Invalid float64 step.
 		That("range &step=-0.5 10").
 			Throws(errs.BadValue{What: "step", Valid: "positive", Actual: "-0.5"}),

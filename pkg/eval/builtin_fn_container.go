@@ -6,7 +6,6 @@ import (
 	"math"
 	"math/big"
 	"sort"
-	"strconv"
 
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
@@ -137,30 +136,24 @@ func makeMap(input Inputs) (vals.Map, error) {
 //elvdoc:fn range
 //
 // ```elvish
-// range &step=0 $start? $end
+// range &step $start=0 $end
 // ```
 //
-// The `$start?` value defaults to zero.
+// Outputs numbers, starting from `$start` and ending before `$end`, using
+// `&step` as the increment.
 //
-// There are two cases depending on whether `$start` is smaller or larger than `$end`:
+// - If `$start` <= `$end`, `&step` defaults to 1, and `range` outputs values as
+//   long as they are smaller than `$end`. An exception is thrown if `&step` is
+//   given a negative value.
 //
-// 1) If `$start` is smaller than `$end` count up. The `&step` value must be positive and defaults
-// to one. Output `$start`, `$start` + `$step`, ..., proceeding as long as the value is smaller than
-// `$end` or until overflow.
+// - If `$start` > `$end`, `&step` defaults to -1, and `range` outputs values as
+//   long as they are greater than `$end`. An exception is thrown if `&step` is
+//   given a positive value.
 //
-// 1) If `$start` is larger than `$end` count down. The `&step` value must be negative and defaults
-// to negative one. Output `$start`, `$start` + `$step`, ..., proceeding as long as the value is
-// larger than `$end` or until overflow.
+// As a special case, if the outputs are floating point numbers, `range` also
+// terminates if the values stop changing.
 //
-// Note that in both cases the `$end` value is not included in the output. The range is the
-// [half-open interval](https://en.wikipedia.org/wiki/Interval_(mathematics)#Terminology)
-// [`$start`, `$end`).
-//
-// The special `&step` value zero is replaced by -1 or +1 as appropriated for whether range is
-// counting down or up respectively.
-//
-// This command is [exactness-preserving](#exactness-preserving). If the arguments don't make sense
-// a "bad value" exception is raised.
+// This command is [exactness-preserving](#exactness-preserving).
 //
 // Examples:
 //
@@ -183,6 +176,9 @@ func makeMap(input Inputs) (vals.Map, error) {
 // ▶ (num 3)
 // ▶ (num 1)
 // ▶ (num -1)
+// ~> range (- (math:pow 2 53) 1) +inf
+// ▶ (num 9007199254740991.0)
+// ▶ (num 9007199254740992.0)
 // ```
 //
 // When using floating-point numbers, beware that numerical errors can result in
@@ -210,193 +206,237 @@ func makeMap(input Inputs) (vals.Map, error) {
 
 type rangeOpts struct{ Step vals.Num }
 
-func (o *rangeOpts) SetDefaultOptions() { o.Step = 0 }
+// TODO: The default value can only be used implicitly; passing "range
+// &step=nil" results in an error.
+func (o *rangeOpts) SetDefaultOptions() { o.Step = nil }
 
 func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
 	var rawNums []vals.Num
 	switch len(args) {
 	case 1:
-		rawNums = []vals.Num{0, args[0], opts.Step}
+		rawNums = []vals.Num{0, args[0]}
 	case 2:
-		rawNums = []vals.Num{args[0], args[1], opts.Step}
+		rawNums = []vals.Num{args[0], args[1]}
 	default:
 		return errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: 2, Actual: len(args)}
 	}
+	if opts.Step != nil {
+		rawNums = append(rawNums, opts.Step)
+	}
+	nums := vals.UnifyNums(rawNums, vals.Int)
 
 	out := fm.ValueOutput()
-	nums := vals.UnifyNums(rawNums, vals.Int)
+
 	switch nums := nums.(type) {
 	case []int:
-		step, curValid, err := rangeInt(nums)
-		if err != nil {
-			return err
-		}
-		start, end := nums[0], nums[1]
-		for prev, cur := start-step, start; curValid(prev, cur, end); cur += step {
-			err := out.Put(vals.FromGo(cur))
-			if err != nil {
-				return err
-			}
-			prev = cur
-		}
+		return rangeInt(nums, out)
 	case []*big.Int:
-		step, curValid, err := rangeBigInt(nums)
-		if err != nil {
-			return err
-		}
-		start, end := nums[0], nums[1]
-		cur := &big.Int{}
-		for cur.Set(start); curValid(cur, end); {
-			err := out.Put(vals.FromGo(cur))
-			if err != nil {
-				return err
-			}
-			next := &big.Int{}
-			next.Add(cur, step)
-			cur = next
-		}
+		return rangeBigInt(nums, out)
 	case []*big.Rat:
-		step, curValid, err := rangeBigRat(nums)
-		if err != nil {
-			return err
-		}
-		start, end := nums[0], nums[1]
-		cur := &big.Rat{}
-		for cur.Set(start); curValid(cur, end); {
-			err := out.Put(vals.FromGo(cur))
-			if err != nil {
-				return err
-			}
-			next := &big.Rat{}
-			next.Add(cur, step)
-			cur = next
-		}
+		return rangeBitRat(nums, out)
 	case []float64:
-		step, curValid, err := rangeFloat64(nums)
-		if err != nil {
-			return err
-		}
-		start, end := nums[0], nums[1]
-		for prev, cur := start-step, start; curValid(prev, cur, end); cur += step {
-			err := out.Put(vals.FromGo(cur))
-			if err != nil {
-				return err
-			}
-			prev = cur
-		}
+		return rangeFloat64(nums, out)
 	default:
 		panic("unreachable")
 	}
+}
 
+func rangeInt(nums []int, out ValueOutput) error {
+	start, end := nums[0], nums[1]
+	var step int
+	if start <= end {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step <= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "positive", Actual: vals.ToString(step)}
+			}
+		} else {
+			step = 1
+		}
+		for cur := start; cur < end; cur += step {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			if cur+step <= cur {
+				break
+			}
+		}
+	} else {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step >= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "negative", Actual: vals.ToString(step)}
+			}
+		} else {
+			step = -1
+		}
+		for cur := start; cur > end; cur += step {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			if cur+step >= cur {
+				break
+			}
+		}
+	}
 	return nil
 }
 
-func rangeInt(nums []int) (int, func(int, int, int) bool, error) {
-	start, end, step := nums[0], nums[1], nums[2]
-	if step == 0 {
-		if start <= end {
+// TODO: Use type parameters to deduplicate this with rangeInt when Elvish
+// requires Go 1.18.
+func rangeFloat64(nums []float64, out ValueOutput) error {
+	start, end := nums[0], nums[1]
+	var step float64
+	if start <= end {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step <= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "positive", Actual: vals.ToString(step)}
+			}
+		} else {
 			step = 1
+		}
+		for cur := start; cur < end; cur += step {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			if cur+step <= cur {
+				break
+			}
+		}
+	} else {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step >= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "negative", Actual: vals.ToString(step)}
+			}
 		} else {
 			step = -1
 		}
-	}
-
-	if step < 0 && start < end {
-		return 0, nil, errs.BadValue{
-			What: "step", Valid: "positive", Actual: strconv.Itoa(step)}
-	}
-	if step > 0 && start > end {
-		return 0, nil, errs.BadValue{
-			What: "step", Valid: "negative", Actual: strconv.Itoa(step)}
-	}
-
-	if step > 0 {
-		curValid := func(prev, cur, end int) bool { return cur > prev && cur < end }
-		return step, curValid, nil
-	}
-	curValid := func(prev, cur, end int) bool { return cur < prev && cur > end }
-	return step, curValid, nil
-}
-
-func rangeBigInt(nums []*big.Int) (*big.Int, func(*big.Int, *big.Int) bool, error) {
-	start, end, step := nums[0], nums[1], nums[2]
-	if step.Sign() == 0 {
-		if start.Cmp(end) <= 0 {
-			step = big.NewInt(1)
-		} else {
-			step = big.NewInt(-1)
+		for cur := start; cur > end; cur += step {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			if cur+step >= cur {
+				break
+			}
 		}
 	}
-
-	if step.Sign() < 0 && start.Cmp(end) < 0 {
-		return big.NewInt(0), nil, errs.BadValue{
-			What: "step", Valid: "positive", Actual: step.String()}
-	}
-	if step.Sign() > 0 && start.Cmp(end) > 0 {
-		return big.NewInt(0), nil, errs.BadValue{
-			What: "step", Valid: "negative", Actual: step.String()}
-	}
-
-	if step.Sign() > 0 {
-		curValid := func(cur, end *big.Int) bool { return cur.Cmp(end) < 0 }
-		return step, curValid, nil
-	}
-	curValid := func(cur, end *big.Int) bool { return cur.Cmp(end) > 0 }
-	return step, curValid, nil
+	return nil
 }
 
-func rangeBigRat(nums []*big.Rat) (*big.Rat, func(*big.Rat, *big.Rat) bool, error) {
-	start, end, step := nums[0], nums[1], nums[2]
-	if step.Sign() == 0 {
-		if start.Cmp(end) <= 0 {
-			step = big.NewRat(1, 1)
+var (
+	bigInt1    = big.NewInt(1)
+	bigIntNeg1 = big.NewInt(-1)
+)
+
+func rangeBigInt(nums []*big.Int, out ValueOutput) error {
+	start, end := nums[0], nums[1]
+	var step *big.Int
+	if start.Cmp(end) <= 0 {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step.Sign() <= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "positive", Actual: vals.ToString(step)}
+			}
 		} else {
-			step = big.NewRat(-1, 1)
+			step = bigInt1
+		}
+		var cur, next *big.Int
+		for cur = start; cur.Cmp(end) < 0; cur = next {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			next = &big.Int{}
+			next.Add(cur, step)
+			cur = next
+		}
+	} else {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step.Sign() >= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "negative", Actual: vals.ToString(step)}
+			}
+		} else {
+			step = bigIntNeg1
+		}
+		var cur, next *big.Int
+		for cur = start; cur.Cmp(end) > 0; cur = next {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			next = &big.Int{}
+			next.Add(cur, step)
+			cur = next
 		}
 	}
-
-	if step.Sign() < 0 && start.Cmp(end) < 0 {
-		return big.NewRat(0, 1), nil, errs.BadValue{
-			What: "step", Valid: "positive", Actual: step.String()}
-	}
-	if step.Sign() > 0 && start.Cmp(end) > 0 {
-		return big.NewRat(0, 1), nil, errs.BadValue{
-			What: "step", Valid: "negative", Actual: step.String()}
-	}
-
-	if step.Sign() > 0 {
-		curValid := func(cur, end *big.Rat) bool { return cur.Cmp(end) < 0 }
-		return step, curValid, nil
-	}
-	curValid := func(cur, end *big.Rat) bool { return cur.Cmp(end) > 0 }
-	return step, curValid, nil
+	return nil
 }
 
-func rangeFloat64(nums []float64) (float64, func(float64, float64, float64) bool, error) {
-	start, end, step := nums[0], nums[1], nums[2]
-	if step == 0 {
-		if start <= end {
-			step = 1
+var (
+	bigRat1    = big.NewRat(1, 1)
+	bigRatNeg1 = big.NewRat(-1, 1)
+)
+
+// TODO: Use type parameters to deduplicate this with rangeBitInt when Elvish
+// requires Go 1.18.
+func rangeBitRat(nums []*big.Rat, out ValueOutput) error {
+	start, end := nums[0], nums[1]
+	var step *big.Rat
+	if start.Cmp(end) <= 0 {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step.Sign() <= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "positive", Actual: vals.ToString(step)}
+			}
 		} else {
-			step = -1
+			step = bigRat1
+		}
+		var cur, next *big.Rat
+		for cur = start; cur.Cmp(end) < 0; cur = next {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			next = &big.Rat{}
+			next.Add(cur, step)
+			cur = next
+		}
+	} else {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step.Sign() >= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "negative", Actual: vals.ToString(step)}
+			}
+		} else {
+			step = bigRatNeg1
+		}
+		var cur, next *big.Rat
+		for cur = start; cur.Cmp(end) > 0; cur = next {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			next = &big.Rat{}
+			next.Add(cur, step)
+			cur = next
 		}
 	}
-
-	if step < 0 && start < end {
-		return 0, nil, errs.BadValue{
-			What: "step", Valid: "positive", Actual: vals.ToString(step)}
-	}
-	if step > 0 && start > end {
-		return 0, nil, errs.BadValue{
-			What: "step", Valid: "negative", Actual: vals.ToString(step)}
-	}
-
-	if step > 0 {
-		curValid := func(prev, cur, end float64) bool { return cur > prev && cur < end }
-		return step, curValid, nil
-	}
-	curValid := func(prev, cur, end float64) bool { return cur < prev && cur > end }
-	return step, curValid, nil
+	return nil
 }
 
 //elvdoc:fn repeat
