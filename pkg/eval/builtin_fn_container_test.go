@@ -268,16 +268,16 @@ func TestOrder(t *testing.T) {
 		That("put foo bar bar | order").Puts("bar", "bar", "foo"),
 		That("put 10 1 5 2 | order").Puts("1", "10", "2", "5"),
 
-		// Ordering numbers
-		// Only small integers normalized to the "num" type.
+		// Ordering typed numbers
+		// Only small integers
 		That("put 10 1 1 | each $num~ | order").Puts(1, 1, 10),
 		That("put 10 1 5 2 -1 | each $num~ | order").Puts(-1, 1, 2, 5, 10),
-		// Small and large integers normalized to the "num" type.
+		// Small and large integers
 		That("put 1 "+z+" 2 "+z+" | each $num~ | order").Puts(1, 2, bigInt(z), bigInt(z)),
 		// Integers and rationals
 		That("put 1 2 3/2 3/2 | each $num~ | order").
 			Puts(1, big.NewRat(3, 2), big.NewRat(3, 2), 2),
-		// Integers and floats normalized to the "num" type.
+		// Integers and floats
 		That("put 1 1.5 2 1.5 | each $num~ | order").
 			Puts(1, 1.5, 1.5, 2),
 		// Mixed integers and floats.

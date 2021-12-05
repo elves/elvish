@@ -904,20 +904,8 @@ func keys(fm *Frame, v interface{}) error {
 // argument. If the function throws an exception, `order` rethrows the exception
 // without outputting any value.
 //
-// If `&less-than` has value `$nil` (the default if not set), the following
-// comparison algorithm is used:
-//
-// - Numbers are compared numerically. For the sake of sorting, `NaN` is treated
-//   as smaller than all other numbers.
-//
-// - Strings are compared lexicographically by bytes, which is equivalent to
-//   comparing by codepoints under UTF-8.
-//
-// - Lists are compared lexicographically by elements, if the elements at the
-//   same positions are comparable.
-//
-// If the ordering between two elements are not defined by the conditions above,
-// no value is outputted and an exception is thrown.
+// If `&less-than` has value `$nil` (the default if not set), it is equivalent
+// to `{|a b| eq -1 (compare $a $b) }`.
 //
 // Examples:
 //
@@ -1066,35 +1054,40 @@ const (
 // compare $a $b
 // ```
 //
-// Outputs -1 if `$a` is less than `$b`, 0 if equal, and 1 if greater than.
+// Outputs -1 if `$a` < `$b`, 0 if `$a` = `$b`, and 1 if `$a` > `$b`.
 //
 // The following comparison algorithm is used:
 //
-// - Numbers are compared numerically. `NaN` is treated as smaller than all other numbers.
+// - Typed numbers are compared numerically. The comparison is consistent with
+//   the [number comparison commands](#num-cmp), except that `NaN` values are
+//   considered equal to each other and smaller than all other numbers.
 //
-// - Strings are compared lexicographically by bytes, which is equivalent to
-//   comparing by codepoints under UTF-8.
+// - Strings are compared lexicographically by bytes, consistent with the
+//   [string comparison commands](#str-cmp). For UTF-8 encoded strings, this is
+//   equivalent to comparing by codepoints.
 //
 // - Lists are compared lexicographically by elements, if the elements at the
 //   same positions are comparable.
 //
-// If the ordering between two elements is not defined by the conditions above a "bad value"
-// exception is thrown.
+// If the ordering between two elements is not defined by the conditions above,
+// i.e. if the value of `$a` or `$b` is not covered by any of the cases above or
+// if they belong to different cases, a "bad value" exception is thrown.
 //
 // Examples:
 //
 // ```elvish-transcript
 // ~> compare a b
-// ▶ 1
+// ▶ (num 1)
 // ~> compare b a
-// ▶ -1
+// ▶ (num -1)
 // ~> compare x x
-// ▶ 0
-// ~> order (float64 10) (float64 1)
-// ▶ 1
+// ▶ (num 0)
+// ~> compare (float64 10) (float64 1)
+// ▶ (num 1)
 // ```
 //
-// Beware that strings that look like numbers are treated as strings, not numbers.
+// Beware that strings that look like numbers are treated as strings, not
+// numbers.
 //
 // @cf order
 
