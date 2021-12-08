@@ -202,6 +202,16 @@ func makeMap(input Inputs) (vals.Map, error) {
 // ▶ (num 3/5)
 // ```
 //
+// One usage of this command is to execute something a fixed number of times by
+// combining with [each](#each):
+//
+// ```elvish-transcript
+// ~> range 3 | each {|_| echo foo }
+// foo
+// foo
+// foo
+// ```
+//
 // Etymology:
 // [Python](https://docs.python.org/3/library/functions.html#func-range).
 
