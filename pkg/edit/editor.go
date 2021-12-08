@@ -16,6 +16,7 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/store/storedefs"
+	"src.elv.sh/pkg/ui"
 )
 
 // Editor is the interactive line editor for Elvish.
@@ -113,7 +114,7 @@ func (ed *Editor) ReadCode() (string, error) {
 }
 
 // Notify adds a note to the notification buffer.
-func (ed *Editor) Notify(note string) {
+func (ed *Editor) Notify(note ui.Text) {
 	ed.app.Notify(note)
 }
 
@@ -132,7 +133,7 @@ func (ed *Editor) Ns() *eval.Ns {
 }
 
 func (ed *Editor) notifyf(format string, args ...interface{}) {
-	ed.app.Notify(fmt.Sprintf(format, args...))
+	ed.app.Notify(ui.T(fmt.Sprintf(format, args...)))
 }
 
 func (ed *Editor) notifyError(ctx string, e error) {

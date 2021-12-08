@@ -21,6 +21,7 @@ import (
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/strutil"
 	"src.elv.sh/pkg/sys"
+	"src.elv.sh/pkg/ui"
 )
 
 // InteractiveRescueShell determines whether a panic results in a rescue shell
@@ -76,7 +77,7 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 	if sys.IsATTY(fds[0]) {
 		newed := edit.NewEditor(cli.NewTTY(fds[0], fds[2]), ev, ev.DaemonClient)
 		ev.ExtendBuiltin(eval.BuildNs().AddNs("edit", newed))
-		ev.BgJobNotify = newed.Notify
+		ev.BgJobNotify = func(s string) { newed.Notify(ui.T(s)) }
 		ed = newed
 	} else {
 		ed = newMinEditor(fds[0], fds[2])

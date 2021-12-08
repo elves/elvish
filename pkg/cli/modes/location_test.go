@@ -105,7 +105,9 @@ func TestLocation_FullWorkflow(t *testing.T) {
 	// There should be no change to codearea after accepting.
 	f.TestTTY(t /* nothing */)
 	// Error from Chdir should be sent to notes.
-	f.TestTTYNotes(t, "mock chdir error")
+	f.TestTTYNotes(t,
+		"error: mock chdir error", Styles,
+		"!!!!!!")
 	// Chdir should be called.
 	wantChdir := fixPath("/tmp/foo/bar/lorem/ipsum")
 	select {

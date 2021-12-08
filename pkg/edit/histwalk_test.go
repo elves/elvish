@@ -12,7 +12,9 @@ func TestHistWalk_Up_EndOfHistory(t *testing.T) {
 	f := startHistwalkTest(t)
 
 	f.TTYCtrl.Inject(term.K(ui.Up))
-	f.TestTTYNotes(t, "end of history")
+	f.TestTTYNotes(t,
+		"error: end of history", Styles,
+		"!!!!!!")
 }
 
 func TestHistWalk_Down_EndOfHistory(t *testing.T) {
@@ -20,7 +22,9 @@ func TestHistWalk_Down_EndOfHistory(t *testing.T) {
 
 	// Not bound by default, so we need to use evals.
 	evals(f.Evaler, `edit:history:down`)
-	f.TestTTYNotes(t, "end of history")
+	f.TestTTYNotes(t,
+		"error: end of history", Styles,
+		"!!!!!!")
 }
 
 func TestHistWalk_Accept(t *testing.T) {

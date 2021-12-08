@@ -52,6 +52,6 @@ func instantStart(app cli.App, ev *eval.Evaler, bindings tk.Bindings) {
 		app.Redraw()
 	}
 	if err != nil {
-		app.Notify(err.Error())
+		app.Notify(modes.ErrorText(err))
 	}
 }

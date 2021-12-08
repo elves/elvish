@@ -105,7 +105,7 @@ func NewLocation(app cli.App, cfg LocationSpec) (Location, error) {
 				}
 				err := cfg.Store.Chdir(path)
 				if err != nil {
-					app.Notify(err.Error())
+					app.Notify(ErrorText(err))
 				}
 				app.PopAddon()
 			},

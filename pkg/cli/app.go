@@ -11,6 +11,7 @@ import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/sys"
+	"src.elv.sh/pkg/ui"
 )
 
 // App represents a CLI app.
@@ -56,7 +57,7 @@ type App interface {
 	// regardless of whether the App is active or not.
 	RedrawFull()
 	// Notify adds a note and requests a redraw.
-	Notify(note string)
+	Notify(note ui.Text)
 }
 
 type app struct {
@@ -82,7 +83,7 @@ type app struct {
 // State represents mutable state of an App.
 type State struct {
 	// Notes that have been added since the last redraw.
-	Notes []string
+	Notes []ui.Text
 	// The addon stack. All widgets are shown under the codearea widget. The
 	// last widget handles terminal events.
 	Addons []tk.Widget
@@ -154,7 +155,7 @@ func (a *app) CopyState() State {
 	a.StateMutex.RLock()
 	defer a.StateMutex.RUnlock()
 	return State{
-		append([]string(nil), a.State.Notes...),
+		append([]ui.Text(nil), a.State.Notes...),
 		append([]tk.Widget(nil), a.State.Addons...),
 	}
 }
@@ -245,7 +246,7 @@ func (a *app) redraw(flag redrawFlag) {
 		height = maxHeight
 	}
 
-	var notes []string
+	var notes []ui.Text
 	var addons []tk.Widget
 	a.MutateState(func(s *State) {
 		notes = s.Notes
@@ -277,7 +278,7 @@ func (a *app) redraw(flag redrawFlag) {
 
 // Renders notes. This does not respect height so that overflow notes end up in
 // the scrollback buffer.
-func renderNotes(notes []string, width int) *term.Buffer {
+func renderNotes(notes []ui.Text, width int) *term.Buffer {
 	if len(notes) == 0 {
 		return nil
 	}
@@ -286,7 +287,7 @@ func renderNotes(notes []string, width int) *term.Buffer {
 		if i > 0 {
 			bb.Newline()
 		}
-		bb.Write(note)
+		bb.WriteStyled(note)
 	}
 	return bb.Buffer()
 }
@@ -491,7 +492,7 @@ func (a *app) CommitCode() {
 	a.loop.Return(code, nil)
 }
 
-func (a *app) Notify(note string) {
+func (a *app) Notify(note ui.Text) {
 	a.MutateState(func(s *State) { s.Notes = append(s.Notes, note) })
 	a.Redraw()
 }

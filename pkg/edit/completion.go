@@ -169,7 +169,7 @@ func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, sma
 	result, err := complete.Complete(
 		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot}, cfg)
 	if err != nil {
-		app.Notify(err.Error())
+		app.Notify(modes.ErrorText(err))
 		return
 	}
 	if smart {
@@ -209,7 +209,7 @@ func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, sma
 		app.PushAddon(w)
 	}
 	if err != nil {
-		app.Notify(err.Error())
+		app.Notify(modes.ErrorText(err))
 	}
 }
 

@@ -37,7 +37,9 @@ func TestErrorInAscend(t *testing.T) {
 	startNavigation(f.App, NavigationSpec{Cursor: c})
 
 	f.TTY.Inject(term.K(ui.Left))
-	f.TestTTYNotes(t, "cannot ascend")
+	f.TestTTYNotes(t,
+		"error: cannot ascend", Styles,
+		"!!!!!!")
 }
 
 func TestErrorInDescend(t *testing.T) {
@@ -50,7 +52,9 @@ func TestErrorInDescend(t *testing.T) {
 
 	f.TTY.Inject(term.K(ui.Down))
 	f.TTY.Inject(term.K(ui.Right))
-	f.TestTTYNotes(t, "cannot descend")
+	f.TestTTYNotes(t,
+		"error: cannot descend", Styles,
+		"!!!!!!")
 }
 
 func TestErrorInCurrent(t *testing.T) {

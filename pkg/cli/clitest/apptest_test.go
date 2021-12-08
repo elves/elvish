@@ -6,6 +6,7 @@ import (
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
+	"src.elv.sh/pkg/ui"
 )
 
 func TestFixture(t *testing.T) {
@@ -32,7 +33,7 @@ func TestFixture(t *testing.T) {
 
 	f.TestTTY(t, "test", term.DotHere)
 
-	f.App.Notify("something")
+	f.App.Notify(ui.T("something"))
 	f.TestTTYNotes(t, "something")
 
 	f.App.CommitCode()

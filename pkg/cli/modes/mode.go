@@ -40,3 +40,8 @@ func modePrompt(content string, space bool) func() ui.Text {
 // Prompt returns a callback suitable as the prompt in the codearea of a
 // mode widget.
 var Prompt = modePrompt
+
+// ErrorText returns a red "error:" followed by unstyled space and err.Error().
+func ErrorText(err error) ui.Text {
+	return ui.Concat(ui.T("error:", ui.FgRed), ui.T(" "), ui.T(err.Error()))
+}

@@ -117,7 +117,7 @@ func (w *navigation) ascend() {
 
 	err = w.Cursor.Ascend()
 	if err != nil {
-		w.app.Notify(err.Error())
+		w.app.Notify(ErrorText(err))
 	} else {
 		w.codeArea.MutateState(func(s *tk.CodeAreaState) {
 			s.Buffer = tk.CodeBuffer{}
@@ -141,7 +141,7 @@ func (w *navigation) descend() {
 	}
 	err := w.Cursor.Descend(selected.Name())
 	if err != nil {
-		w.app.Notify(err.Error())
+		w.app.Notify(ErrorText(err))
 	} else {
 		w.codeArea.MutateState(func(s *tk.CodeAreaState) {
 			s.Buffer = tk.CodeBuffer{}

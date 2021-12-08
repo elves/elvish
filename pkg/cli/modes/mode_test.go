@@ -45,7 +45,7 @@ func startMode(app cli.App, w tk.Widget, err error) {
 		app.Redraw()
 	}
 	if err != nil {
-		app.Notify(err.Error())
+		app.Notify(ErrorText(err))
 	}
 }
 

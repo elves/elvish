@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/store/storedefs"
+	"src.elv.sh/pkg/ui"
 )
 
 func TestEditor_AddsHistoryAfterAccepting(t *testing.T) {
@@ -27,7 +28,7 @@ func TestEditor_DoesNotAddEmptyCommandToHistory(t *testing.T) {
 
 func TestEditor_Notify(t *testing.T) {
 	f := setup(t)
-	f.Editor.Notify("note")
+	f.Editor.Notify(ui.T("note"))
 	f.TestTTYNotes(t, "note")
 }
 

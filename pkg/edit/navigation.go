@@ -133,7 +133,7 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 						Filter: filterSpec,
 					})
 					if err != nil {
-						app.Notify(err.Error())
+						app.Notify(modes.ErrorText(err))
 					} else {
 						startMode(app, w, nil)
 					}

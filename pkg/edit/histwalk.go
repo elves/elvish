@@ -87,6 +87,6 @@ func histwalkDo(app cli.App, f func(modes.Histwalk) error) error {
 
 func notifyError(app cli.App, err error) {
 	if err != nil {
-		app.Notify(err.Error())
+		app.Notify(modes.ErrorText(err))
 	}
 }

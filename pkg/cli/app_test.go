@@ -513,8 +513,8 @@ func TestReadCode_ShowNotes(t *testing.T) {
 	<-inHandler
 
 	// Write two notes, and unblock the event handler
-	f.App.Notify("note")
-	f.App.Notify("note 2")
+	f.App.Notify(ui.T("note"))
+	f.App.Notify(ui.T("note 2"))
 	unblock <- struct{}{}
 
 	// Test that the note is rendered onto the notes buffer.

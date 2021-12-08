@@ -8,6 +8,8 @@ import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/parse/parseutil"
 	"src.elv.sh/pkg/ui"
@@ -46,7 +48,7 @@ func closeMode(app cli.App) {
 // Adds a notification saying "End of history".
 
 func endOfHistory(app cli.App) {
-	app.Notify("End of history")
+	app.Notify(ui.T("End of history"))
 }
 
 //elvdoc:fn redraw
@@ -147,13 +149,30 @@ func toKey(v interface{}) (ui.Key, error) {
 // edit:notify $message
 // ```
 //
-// Prints a notification message.
+// Prints a notification message. The argument may be a string or a [styled
+// text](builtin.html#styled).
 //
 // If called while the editor is active, this will print the message above the
 // editor, and redraw the editor.
 //
 // If called while the editor is inactive, the message will be queued, and shown
 // once the editor becomes active.
+
+func notify(app cli.App, x interface{}) error {
+	// TODO: De-duplicate with the implementation of the styled builtin.
+	var t ui.Text
+	switch x := x.(type) {
+	case string:
+		t = ui.T(x)
+	case ui.Text:
+		t = x.Clone()
+	default:
+		return errs.BadValue{What: "argument to edit:notify",
+			Valid: "string, styled segment or styled text", Actual: vals.Kind(x)}
+	}
+	app.Notify(t)
+	return nil
+}
 
 //elvdoc:fn return-line
 //
@@ -235,7 +254,7 @@ func initMiscBuiltins(app cli.App, nb eval.NsBuilder) {
 		"close-mode":     func() { closeMode(app) },
 		"end-of-history": func() { endOfHistory(app) },
 		"key":            toKey,
-		"notify":         app.Notify,
+		"notify":         func(x interface{}) error { return notify(app, x) },
 		"redraw":         func(opts redrawOpts) { redraw(app, opts) },
 		"return-line":    app.CommitCode,
 		"return-eof":     app.CommitEOF,
@@ -248,7 +267,7 @@ func initMiscBuiltins(app cli.App, nb eval.NsBuilder) {
 func focusedCodeArea(app cli.App) (tk.CodeArea, bool) {
 	codeArea, err := modes.FocusedCodeArea(app)
 	if err != nil {
-		app.Notify(err.Error())
+		app.Notify(modes.ErrorText(err))
 		return nil, false
 	}
 	return codeArea, true

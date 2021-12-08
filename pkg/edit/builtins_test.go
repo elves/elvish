@@ -126,6 +126,23 @@ func TestClear(t *testing.T) {
 	}
 }
 
+func TestNotify(t *testing.T) {
+	f := setup(t)
+	evals(f.Evaler, "edit:notify string")
+	f.TestTTYNotes(t, "string")
+
+	evals(f.Evaler, "edit:notify (styled styled red)")
+	f.TestTTYNotes(t,
+		"styled", Styles,
+		"!!!!!!")
+
+	evals(f.Evaler, "var err = ?(edit:notify [])")
+	if _, hasErr := getGlobal(f.Evaler, "err").(error); !hasErr {
+		t.Errorf("calling edit:notify with [] did not result in error")
+		// TODO: Test the exact error
+	}
+}
+
 func TestReturnCode(t *testing.T) {
 	f := setup(t)
 
@@ -321,7 +338,9 @@ func TestBuiltins_FocusedWidgetNotCodeArea(t *testing.T) {
 			f.Editor.app.PushAddon(tk.Label{})
 
 			evals(f.Evaler, code)
-			f.TestTTYNotes(t, modes.ErrFocusedWidgetNotCodeArea.Error())
+			f.TestTTYNotes(t,
+				"error: "+modes.ErrFocusedWidgetNotCodeArea.Error(), Styles,
+				"!!!!!!")
 		})
 	}
 }
