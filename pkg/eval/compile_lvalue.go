@@ -118,8 +118,9 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvalues
 
 type assignOp struct {
 	diag.Ranging
-	lhs lvaluesGroup
-	rhs valuesOp
+	lhs  lvaluesGroup
+	rhs  valuesOp
+	temp bool
 }
 
 func (op *assignOp) exec(fm *Frame) Exception {
@@ -127,7 +128,7 @@ func (op *assignOp) exec(fm *Frame) Exception {
 	for i, lvalue := range op.lhs.lvalues {
 		variable, err := derefLValue(fm, lvalue)
 		if err != nil {
-			return fm.errorp(op, err)
+			return fm.errorp(op.lhs.lvalues[i], err)
 		}
 		variables[i] = variable
 	}
@@ -137,15 +138,16 @@ func (op *assignOp) exec(fm *Frame) Exception {
 		return exc
 	}
 
-	if op.lhs.rest == -1 {
+	rest, temp := op.lhs.rest, op.temp
+	if rest == -1 {
 		if len(variables) != len(values) {
 			return fm.errorp(op, errs.ArityMismatch{What: "assignment right-hand-side",
 				ValidLow: len(variables), ValidHigh: len(variables), Actual: len(values)})
 		}
 		for i, variable := range variables {
-			err := variable.Set(values[i])
-			if err != nil {
-				return fm.errorp(op.lhs.lvalues[i], err)
+			exc := set(fm, op.lhs.lvalues[i], temp, variable, values[i])
+			if exc != nil {
+				return exc
 			}
 		}
 	} else {
@@ -153,24 +155,47 @@ func (op *assignOp) exec(fm *Frame) Exception {
 			return fm.errorp(op, errs.ArityMismatch{What: "assignment right-hand-side",
 				ValidLow: len(variables) - 1, ValidHigh: -1, Actual: len(values)})
 		}
-		rest := op.lhs.rest
 		for i := 0; i < rest; i++ {
-			err := variables[i].Set(values[i])
-			if err != nil {
-				return fm.errorp(op.lhs.lvalues[i], err)
+			exc := set(fm, op.lhs.lvalues[i], temp, variables[i], values[i])
+			if exc != nil {
+				return exc
 			}
 		}
 		restOff := len(values) - len(variables)
-		err := variables[rest].Set(vals.MakeList(values[rest : rest+restOff+1]...))
-		if err != nil {
-			return fm.errorp(op.lhs.lvalues[rest], err)
+		exc := set(fm, op.lhs.lvalues[rest], temp,
+			variables[rest], vals.MakeList(values[rest:rest+restOff+1]...))
+		if exc != nil {
+			return exc
 		}
 		for i := rest + 1; i < len(variables); i++ {
-			err := variables[i].Set(values[i+restOff])
-			if err != nil {
-				return fm.errorp(op.lhs.lvalues[i], err)
+			exc := set(fm, op.lhs.lvalues[i], temp, variables[i], values[i+restOff])
+			if exc != nil {
+				return exc
 			}
 		}
+	}
+	return nil
+}
+
+func set(fm *Frame, r diag.Ranger, temp bool, variable vars.Var, value interface{}) Exception {
+	if temp {
+		saved := variable.Get()
+		err := variable.Set(value)
+		if err != nil {
+			return fm.errorp(r, err)
+		}
+		fm.addDefer(func(fm *Frame) Exception {
+			err := variable.Set(saved)
+			if err != nil {
+				return fm.errorpf(r, "restore variable: %w", err)
+			}
+			return nil
+		})
+		return nil
+	}
+	err := variable.Set(value)
+	if err != nil {
+		return fm.errorp(r, err)
 	}
 	return nil
 }

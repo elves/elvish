@@ -448,7 +448,7 @@ func (ev *Evaler) prepareFrame(src parse.Source, cfg EvalCfg) (*Frame, func()) {
 
 	ports := fillDefaultDummyPorts(cfg.Ports)
 
-	fm := &Frame{ev, src, cfg.Global, new(Ns), intCh, ports, nil, false}
+	fm := &Frame{ev, src, cfg.Global, new(Ns), nil, intCh, ports, nil, false}
 	return fm, func() {
 		if intChCleanup != nil {
 			intChCleanup()

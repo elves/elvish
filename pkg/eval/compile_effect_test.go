@@ -239,7 +239,7 @@ func TestCommand_Assignment(t *testing.T) {
 
 		// Trying to add a new name in a namespace throws an exception.
 		// Regression test for #1214.
-		That("ns: = (ns [&]); ns:a = b").Throws(NoSuchVariable("ns:a"), "ns:a = b"),
+		That("ns: = (ns [&]); ns:a = b").Throws(NoSuchVariable("ns:a"), "ns:a"),
 	)
 }
 

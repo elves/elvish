@@ -130,8 +130,8 @@ func emitRegionsInForm(n *parse.Form, f func(parse.Node, regionKind, string)) {
 	// accepted).
 	head := sourceText(n.Head)
 	switch head {
-	case "var", "set":
-		emitRegionsInVarSet(n, f)
+	case "var", "set", "tmp":
+		emitRegionsInAssign(n, f)
 	case "if":
 		emitRegionsInIf(n, f)
 	case "for":
@@ -156,7 +156,7 @@ func emitRegionsInForm(n *parse.Form, f func(parse.Node, regionKind, string)) {
 	}
 }
 
-func emitRegionsInVarSet(n *parse.Form, f func(parse.Node, regionKind, string)) {
+func emitRegionsInAssign(n *parse.Form, f func(parse.Node, regionKind, string)) {
 	// Highlight all LHS, and = as a keyword.
 	for _, arg := range n.Args {
 		if parse.SourceText(arg) == "=" {

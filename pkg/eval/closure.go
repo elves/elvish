@@ -137,7 +137,14 @@ func (c *closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 
 	fm.local = local
 	fm.srcMeta = c.SrcMeta
-	return c.Op.exec(fm)
+	fm.defers = new([]func(*Frame) Exception)
+	exc := c.Op.exec(fm)
+	excDefer := fm.runDefers()
+	// TODO: Combine exc and excDefer if both are not nil
+	if excDefer != nil && exc == nil {
+		exc = excDefer
+	}
+	return exc
 }
 
 var (

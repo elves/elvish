@@ -1,6 +1,8 @@
 package edit
 
 import (
+	"strings"
+
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
@@ -35,7 +37,7 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 // ```
 
 func addVar(fm *eval.Frame, name string, val interface{}) error {
-	if !eval.IsUnqualified(name) {
+	if !isUnqualified(name) {
 		return errs.BadValue{
 			What:  "name argument to edit:add-var",
 			Valid: "unqualified variable name", Actual: name}
@@ -68,7 +70,7 @@ func addVars(fm *eval.Frame, m vals.Map) error {
 				What:  "key of argument to edit:add-vars",
 				Valid: "string", Actual: vals.Kind(k)}
 		}
-		if !eval.IsUnqualified(name) {
+		if !isUnqualified(name) {
 			return errs.BadValue{
 				What:  "key of argument to edit:add-vars",
 				Valid: "unqualified variable name", Actual: name}
@@ -82,4 +84,9 @@ func addVars(fm *eval.Frame, m vals.Map) error {
 	}
 	fm.Evaler.ExtendGlobal(nb)
 	return nil
+}
+
+func isUnqualified(name string) bool {
+	i := strings.IndexByte(name, ':')
+	return i == -1 || i == len(name)-1
 }

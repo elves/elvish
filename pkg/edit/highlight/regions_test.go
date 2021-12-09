@@ -84,6 +84,14 @@ func TestGetRegions(t *testing.T) {
 			{8, 11, lexicalRegion, barewordRegion}, // foo
 		}),
 
+		// The "tmp" special command
+		Args("tmp x = foo").Rets([]region{
+			{0, 3, semanticRegion, commandRegion},  // tmp
+			{4, 5, semanticRegion, variableRegion}, // x
+			{6, 7, semanticRegion, keywordRegion},  // =
+			{8, 11, lexicalRegion, barewordRegion}, // foo
+		}),
+
 		// The "if" special command.
 
 		Args("if x { }").Rets([]region{

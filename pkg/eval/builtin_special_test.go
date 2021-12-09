@@ -1,6 +1,7 @@
 package eval_test
 
 import (
+	"errors"
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
@@ -82,6 +83,58 @@ func TestSet(t *testing.T) {
 		// = is required.
 		That("var x; set x").DoesNotCompile(),
 	)
+}
+
+func TestSet_Error(t *testing.T) {
+	TestWithSetup(t, func(ev *Evaler) { addBadVar(ev, 0) },
+		That("set bad = foo").Throws(errBadVar, "bad"),
+		That("var a; set bad @a = foo").Throws(errBadVar, "bad"),
+		That("var a; set a @bad = foo").Throws(errBadVar, "@bad"),
+		That("var a; set @a bad = foo").Throws(errBadVar, "bad"),
+	)
+}
+
+func TestTmp(t *testing.T) {
+	Test(t,
+		That("var x = foo; put $x; { tmp x = bar; put $x }; put $x").
+			Puts("foo", "bar", "foo"),
+
+		That("var x; tmp x = y").DoesNotCompile(),
+		That("{ tmp x = y }").DoesNotCompile(),
+	)
+}
+
+func TestTmp_ErrorSetting(t *testing.T) {
+	TestWithSetup(t, func(ev *Evaler) { addBadVar(ev, 0) },
+		That("{ tmp bad = foo }").Throws(errBadVar, "bad", "{ tmp bad = foo }"),
+	)
+}
+
+func TestTmp_ErrorRestoring(t *testing.T) {
+	TestWithSetup(t, func(ev *Evaler) { addBadVar(ev, 1) },
+		That("{ tmp bad = foo; put after }").
+			Puts("after").
+			Throws(ErrorWithMessage("restore variable: bad var"),
+				"bad", "{ tmp bad = foo; put after }"),
+	)
+}
+
+func addBadVar(ev *Evaler, allowedSets int) {
+	ev.ExtendGlobal(BuildNs().AddVar("bad", &badVar{allowedSets}))
+}
+
+var errBadVar = errors.New("bad var")
+
+type badVar struct{ allowedSets int }
+
+func (v *badVar) Get() interface{} { return nil }
+
+func (v *badVar) Set(interface{}) error {
+	if v.allowedSets == 0 {
+		return errBadVar
+	}
+	v.allowedSets--
+	return nil
 }
 
 func TestDel(t *testing.T) {

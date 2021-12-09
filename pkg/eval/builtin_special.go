@@ -47,6 +47,7 @@ func init() {
 	builtinSpecials = map[string]compileBuiltin{
 		"var": compileVar,
 		"set": compileSet,
+		"tmp": compileTmp,
 		"del": compileDel,
 		"fn":  compileFn,
 
@@ -70,61 +71,52 @@ func init() {
 
 // VarForm = 'var' { VariablePrimary } [ '=' { Compound } ]
 func compileVar(cp *compiler, fn *parse.Form) effectOp {
-	eqIndex := -1
-	for i, cn := range fn.Args {
-		if parse.SourceText(cn) == "=" {
-			eqIndex = i
-			break
-		}
-	}
-
-	if eqIndex == -1 {
-		cp.parseCompoundLValues(fn.Args, newLValue)
+	lhsArgs, rhs := compileLHSRHS(cp, fn)
+	lhs := cp.parseCompoundLValues(lhsArgs, newLValue)
+	if rhs == nil {
 		// Just create new variables, nothing extra to do at runtime.
 		return nopOp{}
 	}
-	// Compile rhs before lhs before many potential shadowing
-	var rhs valuesOp
-	if eqIndex == len(fn.Args)-1 {
-		rhs = nopValuesOp{diag.PointRanging(fn.Range().To)}
-	} else {
-		rhs = seqValuesOp{
-			diag.MixedRanging(fn.Args[eqIndex+1], fn.Args[len(fn.Args)-1]),
-			cp.compoundOps(fn.Args[eqIndex+1:])}
-	}
-	lhs := cp.parseCompoundLValues(fn.Args[:eqIndex], newLValue)
-	return &assignOp{fn.Range(), lhs, rhs}
-}
-
-// IsUnqualified returns whether name is an unqualified variable name.
-func IsUnqualified(name string) bool {
-	i := strings.IndexByte(name, ':')
-	return i == -1 || i == len(name)-1
+	return &assignOp{fn.Range(), lhs, rhs, false}
 }
 
 // SetForm = 'set' { LHS } '=' { Compound }
 func compileSet(cp *compiler, fn *parse.Form) effectOp {
-	eq := -1
-	for i, cn := range fn.Args {
-		if parse.SourceText(cn) == "=" {
-			eq = i
-			break
-		}
+	lhs, rhs := compileSetArgs(cp, fn)
+	return &assignOp{fn.Range(), lhs, rhs, false}
+}
+
+// TmpForm = 'tmp' { LHS } '=' { Compound }
+func compileTmp(cp *compiler, fn *parse.Form) effectOp {
+	if len(cp.scopes) <= 1 {
+		cp.errorpf(fn, "tmp may only be used inside a function")
 	}
-	if eq == -1 {
+	lhs, rhs := compileSetArgs(cp, fn)
+	return &assignOp{fn.Range(), lhs, rhs, true}
+}
+
+func compileSetArgs(cp *compiler, fn *parse.Form) (lvaluesGroup, valuesOp) {
+	lhsArgs, rhs := compileLHSRHS(cp, fn)
+	if rhs == nil {
 		cp.errorpf(diag.PointRanging(fn.Range().To), "need = and right-hand-side")
 	}
-	lhs := cp.parseCompoundLValues(fn.Args[:eq], setLValue)
-	var rhs valuesOp
-	if eq == len(fn.Args)-1 {
-		rhs = nopValuesOp{diag.PointRanging(fn.Range().To)}
-	} else {
-		rhs = seqValuesOp{
-			diag.MixedRanging(fn.Args[eq+1], fn.Args[len(fn.Args)-1]),
-			cp.compoundOps(fn.Args[eq+1:])}
-	}
-	return &assignOp{fn.Range(), lhs, rhs}
+	lhs := cp.parseCompoundLValues(lhsArgs, setLValue)
+	return lhs, rhs
+}
 
+func compileLHSRHS(cp *compiler, fn *parse.Form) ([]*parse.Compound, valuesOp) {
+	for i, cn := range fn.Args {
+		if parse.SourceText(cn) == "=" {
+			lhs := fn.Args[:i]
+			if i == len(fn.Args)-1 {
+				return lhs, nopValuesOp{diag.PointRanging(fn.Range().To)}
+			}
+			return lhs, seqValuesOp{
+				diag.MixedRanging(fn.Args[i+1], fn.Args[len(fn.Args)-1]),
+				cp.compoundOps(fn.Args[i+1:])}
+		}
+	}
+	return fn.Args, nil
 }
 
 const delArgMsg = "arguments to del must be variable or variable elements"

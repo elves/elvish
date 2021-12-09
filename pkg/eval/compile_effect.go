@@ -220,7 +220,7 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 			}
 			rhs := seqValuesOp{rhsRange, rhsOps}
 
-			return formBody{assignOp: &assignOp{n.Range(), lhs, rhs}}
+			return formBody{assignOp: &assignOp{n.Range(), lhs, rhs, false}}
 		}
 	}
 
@@ -420,7 +420,7 @@ func allTrue(vs []interface{}) bool {
 func (cp *compiler) assignmentOp(n *parse.Assignment) effectOp {
 	lhs := cp.parseIndexingLValue(n.Left, setLValue|newLValue)
 	rhs := cp.compoundOp(n.Right)
-	return &assignOp{n.Range(), lhs, rhs}
+	return &assignOp{n.Range(), lhs, rhs, false}
 }
 
 func (cp *compiler) assignmentOps(ns []*parse.Assignment) []effectOp {
