@@ -1738,7 +1738,7 @@ referenced by a function. Example:
 ▶ old
 ```
 
-## Setting the value of variables or elements: `set` {#set}
+## Assigning variables or elements: `set` {#set}
 
 The `set` special command sets the value of variables or elements.
 
@@ -1827,6 +1827,29 @@ mutation applied, and assigns it to the variable. Example:
 ~> put $li $li2
 ▶ [lorem bar]
 ▶ [foo bar]
+```
+
+## Temporarily assigning variables or elements: `tmp` {#tmp}
+
+The `tmp` command has the same syntax as [`set`](#set), and also requires all
+variables to already exist (use the [`var`](#var) special command to declare new
+variables).
+
+Unlike `var`, it saves the values of all variables before assigning them new
+values, and will restore them to the saved values when the current function has
+finished.
+
+The `tmp` command can only be used inside a function.
+
+Examples:
+
+```elvish-transcript
+~> var x = foo
+~> fn f { echo $x }
+~> { tmp x = bar; f }
+bar
+~> f
+foo
 ```
 
 ## Deleting variables or elements: `del` {#del}
