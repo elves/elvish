@@ -17,13 +17,21 @@ var (
 	ErrNoOptAccepted = errors.New("function does not accept any options")
 )
 
+// WrongArgType is thrown when calling a native function with an argument of the
+// wrong type.
 type WrongArgType struct {
 	argNum    int
-	typeError string
+	typeError error
 }
 
+// Error implements the error interface.
 func (e WrongArgType) Error() string {
-	return fmt.Sprintf("wrong type for arg #%d: %s", e.argNum, e.typeError)
+	return fmt.Sprintf("wrong type for arg #%d: %v", e.argNum, e.typeError)
+}
+
+// Unwrap returns the wrapped type error.
+func (e WrongArgType) Unwrap() error {
+	return e.typeError
 }
 
 type goFn struct {
@@ -210,7 +218,7 @@ func (b *goFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) e
 		ptr := reflect.New(typ)
 		err := vals.ScanToGo(arg, ptr.Interface())
 		if err != nil {
-			return WrongArgType{i, err.Error()}
+			return WrongArgType{i, err}
 		}
 		in = append(in, ptr.Elem())
 	}

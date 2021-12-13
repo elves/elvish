@@ -9,11 +9,13 @@ import (
 	"src.elv.sh/pkg/strutil"
 )
 
-type BadOption struct {
+// UnknownOption is thrown by a native function when called with an unknown option.
+type UnknownOption struct {
 	OptName string
 }
 
-func (e BadOption) Error() string {
+// Error implements the error interface.
+func (e UnknownOption) Error() string {
 	return "unknown option: " + parse.Quote(e.OptName)
 }
 
@@ -52,7 +54,7 @@ func scanOptions(rawOpts RawOptions, ptr interface{}) error {
 	for k, v := range rawOpts {
 		fieldIdx, ok := fieldIdxForOpt[k]
 		if !ok {
-			return BadOption{k}
+			return UnknownOption{k}
 		}
 		err := vals.ScanToGo(v, struc.Field(fieldIdx).Addr().Interface())
 		if err != nil {

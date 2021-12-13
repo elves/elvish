@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
 )
@@ -57,13 +58,13 @@ func TestRe(t *testing.T) {
 		That("re:replace '(' x bash").Throws(ErrorWithType(&syntax.Error{})),
 		That("re:replace &posix '[[:argle:]]' x bash").Throws(ErrorWithType(&syntax.Error{})),
 		// Replacement function outputs more than one value
-		That("re:replace x {|x| put a b } xx").Throws(ErrorWithType(&ReplaceError{})),
+		That("re:replace x {|x| put a b } xx").Throws(ErrorWithType(&errs.ArityMismatch{})),
 		// Replacement function outputs non-string value
-		That("re:replace x {|x| put [] } xx").Throws(ErrorWithType(&ReplaceError{})),
+		That("re:replace x {|x| put [] } xx").Throws(ErrorWithType(&errs.BadValue{})),
 		// Replacement is not string or function
-		That("re:replace x [] xx").Throws(ErrorWithType(&ReplaceError{})),
+		That("re:replace x [] xx").Throws(ErrorWithType(&errs.BadValue{})),
 		// Replacement is function when &literal is set
-		That("re:replace &literal x {|_| put y } xx").Throws(ErrorWithType(&ReplaceError{})),
+		That("re:replace &literal x {|_| put y } xx").Throws(ErrorWithType(&errs.BadValue{})),
 
 		That("re:split : /usr/sbin:/usr/bin:/bin").Puts("/usr/sbin", "/usr/bin", "/bin"),
 		That("re:split &max=2 : /usr/sbin:/usr/bin:/bin").Puts("/usr/sbin", "/usr/bin:/bin"),

@@ -23,7 +23,7 @@ var scanOptionsTests = []struct {
 		opts{}, opts{POSIX: true}, nil},
 	// Since "ignore" is not exported it will result in an error when used.
 	{RawOptions{"ignore": true},
-		opts{}, opts{ignore: false}, BadOption{"ignore"}},
+		opts{}, opts{ignore: false}, UnknownOption{"ignore"}},
 }
 
 func TestScanOptions(t *testing.T) {

@@ -52,7 +52,7 @@ func TestGoFn_RawOptions(t *testing.T) {
 				}
 			})),
 		// Invalid option; regression test for #958.
-		That("f &bad=bar").Throws(BadOption{"bad"}).
+		That("f &bad=bar").Throws(UnknownOption{"bad"}).
 			WithSetup(f(func(opts someOptions) {
 				t.Errorf("function called when there are invalid options")
 			})),

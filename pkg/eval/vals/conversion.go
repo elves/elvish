@@ -28,11 +28,14 @@ import (
 // entirely go away, as there might always be some mismatch between Elvish's
 // type system and Go's.
 
+// WrongType is returned by ScanToGo if the source value doesn't have a
+// compatible type.
 type WrongType struct {
 	wantKind string
 	gotKind  string
 }
 
+// Error implements the error interface.
 func (err WrongType) Error() string {
 	return fmt.Sprintf("wrong type: need %s, got %s", err.wantKind, err.gotKind)
 }

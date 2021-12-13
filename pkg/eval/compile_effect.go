@@ -479,9 +479,9 @@ type redirOp struct {
 	flag    int
 }
 
-type InvalidFD struct{ Fd int }
+type InvalidFD struct{ FD int }
 
-func (err InvalidFD) Error() string { return fmt.Sprintf("invalid fd: %d", err.Fd) }
+func (err InvalidFD) Error() string { return fmt.Sprintf("invalid fd: %d", err.FD) }
 
 func (op *redirOp) exec(fm *Frame) Exception {
 	var dst int
@@ -519,7 +519,7 @@ func (op *redirOp) exec(fm *Frame) Exception {
 				// Ensure that writing to value output throws an exception
 				sendStop: closedSendStop, sendError: &ErrNoValueOutput}
 		case src >= len(fm.ports) || fm.ports[src] == nil:
-			return fm.errorp(op, InvalidFD{Fd: src})
+			return fm.errorp(op, InvalidFD{FD: src})
 		default:
 			fm.ports[dst] = fm.ports[src].fork()
 		}

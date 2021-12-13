@@ -284,7 +284,7 @@ func TestCommand_Redir(t *testing.T) {
 		That(`{ echo foobar >&stderr } stderr> out4`, `slurp < out4`).
 			Puts("foobar\n"),
 		// Using a new FD as source throws an exception.
-		That(`echo foo >&4`).Throws(InvalidFD{Fd: 4}),
+		That(`echo foo >&4`).Throws(InvalidFD{FD: 4}),
 		// Using a new FD as destination is OK, and makes it available.
 		That(`{ echo foo >&4 } 4>out5`, `slurp < out5`).Puts("foo\n"),
 
