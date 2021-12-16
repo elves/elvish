@@ -65,14 +65,15 @@ func ParseNum(s string) Num {
 }
 
 // NumType represents a number type.
-type NumType uint8
+type NumType int8
 
-// PromoteToBigInt converts an int or *big.Int to a *big.Int. It panics if n is
-// any other type.
-// Possible values for NumType, sorted in the order of implicit conversion
-// (lower types can be implicitly converted to higher types).
+// Possible values for NumType, sorted in the order of implicit conversion (lower types can be
+// implicitly converted to higher types). These are used by functions like UnifyNums and UnifyNums2
+// to specify which number type the caller desires all values to be. We use iota-13 rather than iota
+// as the base value to catch mistakes where a caller is using an explicit int (e.g., zero) rather
+// than one of these symbols.
 const (
-	Int NumType = iota
+	Int NumType = iota - 13
 	BigInt
 	BigRat
 	Float64

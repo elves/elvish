@@ -86,7 +86,7 @@ func TestUnifyNums2(t *testing.T) {
 
 func TestInvalidNumType(t *testing.T) {
 	Test(t, Fn("Recover", testutil.Recover), Table{
-		Args(func() { UnifyNums([]Num{int32(0)}, 0) }).Rets("invalid num type int32"),
+		Args(func() { UnifyNums([]Num{int32(0)}, Int) }).Rets("invalid num type int32"),
 		Args(func() { PromoteToBigInt(int32(0)) }).Rets("invalid num type int32"),
 		Args(func() { PromoteToBigRat(int32(0)) }).Rets("invalid num type int32"),
 		Args(func() { ConvertToFloat64(int32(0)) }).Rets("invalid num type int32"),

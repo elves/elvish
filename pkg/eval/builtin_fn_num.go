@@ -248,7 +248,7 @@ func chainCompare(nums []vals.Num,
 
 	for i := 0; i < len(nums)-1; i++ {
 		var r bool
-		a, b := vals.UnifyNums2(nums[i], nums[i+1], 0)
+		a, b := vals.UnifyNums2(nums[i], nums[i+1], vals.Int)
 		switch a := a.(type) {
 		case int:
 			r = p1(a, b.(int))

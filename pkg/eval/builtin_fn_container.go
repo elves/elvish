@@ -1119,7 +1119,7 @@ func cmp(a, b interface{}) ordering {
 	case int, *big.Int, *big.Rat, float64:
 		switch b.(type) {
 		case int, *big.Int, *big.Rat, float64:
-			a, b := vals.UnifyNums2(a, b, 0)
+			a, b := vals.UnifyNums2(a, b, vals.Int)
 			switch a := a.(type) {
 			case int:
 				return compareInt(a, b.(int))

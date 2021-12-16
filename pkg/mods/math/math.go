@@ -456,7 +456,7 @@ func max(rawNums ...vals.Num) (vals.Num, error) {
 	if len(rawNums) == 0 {
 		return nil, errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: -1, Actual: 0}
 	}
-	nums := vals.UnifyNums(rawNums, 0)
+	nums := vals.UnifyNums(rawNums, vals.Int)
 	switch nums := nums.(type) {
 	case []int:
 		n := nums[0]
@@ -519,7 +519,7 @@ func min(rawNums ...vals.Num) (vals.Num, error) {
 	if len(rawNums) == 0 {
 		return nil, errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: -1, Actual: 0}
 	}
-	nums := vals.UnifyNums(rawNums, 0)
+	nums := vals.UnifyNums(rawNums, vals.Int)
 	switch nums := nums.(type) {
 	case []int:
 		n := nums[0]
