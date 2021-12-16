@@ -3,23 +3,21 @@ package vals
 import (
 	"reflect"
 	"testing"
-
-	"src.elv.sh/pkg/tt"
 )
 
-// ValueTester is a helper for testing properties of a value.
-type ValueTester struct {
+// Tester is a helper for testing properties of a value.
+type Tester struct {
 	t *testing.T
 	v interface{}
 }
 
 // TestValue returns a ValueTester.
-func TestValue(t *testing.T, v interface{}) ValueTester {
-	return ValueTester{t, v}
+func TestValue(t *testing.T, v interface{}) Tester {
+	return Tester{t, v}
 }
 
 // Kind tests the Kind of the value.
-func (vt ValueTester) Kind(wantKind string) ValueTester {
+func (vt Tester) Kind(wantKind string) Tester {
 	vt.t.Helper()
 	kind := Kind(vt.v)
 	if kind != wantKind {
@@ -29,7 +27,7 @@ func (vt ValueTester) Kind(wantKind string) ValueTester {
 }
 
 // Bool tests the Boool of the value.
-func (vt ValueTester) Bool(wantBool bool) ValueTester {
+func (vt Tester) Bool(wantBool bool) Tester {
 	vt.t.Helper()
 	b := Bool(vt.v)
 	if b != wantBool {
@@ -39,7 +37,7 @@ func (vt ValueTester) Bool(wantBool bool) ValueTester {
 }
 
 // Hash tests the Hash of the value.
-func (vt ValueTester) Hash(wantHash uint32) ValueTester {
+func (vt Tester) Hash(wantHash uint32) Tester {
 	vt.t.Helper()
 	hash := Hash(vt.v)
 	if hash != wantHash {
@@ -49,7 +47,7 @@ func (vt ValueTester) Hash(wantHash uint32) ValueTester {
 }
 
 // Len tests the Len of the value.
-func (vt ValueTester) Len(wantLen int) ValueTester {
+func (vt Tester) Len(wantLen int) Tester {
 	vt.t.Helper()
 	kind := Len(vt.v)
 	if kind != wantLen {
@@ -59,7 +57,7 @@ func (vt ValueTester) Len(wantLen int) ValueTester {
 }
 
 // Repr tests the Repr of the value.
-func (vt ValueTester) Repr(wantRepr string) ValueTester {
+func (vt Tester) Repr(wantRepr string) Tester {
 	vt.t.Helper()
 	kind := Repr(vt.v, NoPretty)
 	if kind != wantRepr {
@@ -69,7 +67,7 @@ func (vt ValueTester) Repr(wantRepr string) ValueTester {
 }
 
 // Equal tests that the value is Equal to every of the given values.
-func (vt ValueTester) Equal(others ...interface{}) ValueTester {
+func (vt Tester) Equal(others ...interface{}) Tester {
 	vt.t.Helper()
 	for _, other := range others {
 		eq := Equal(vt.v, other)
@@ -81,7 +79,7 @@ func (vt ValueTester) Equal(others ...interface{}) ValueTester {
 }
 
 // NotEqual tests that the value is not Equal to any of the given values.
-func (vt ValueTester) NotEqual(others ...interface{}) ValueTester {
+func (vt Tester) NotEqual(others ...interface{}) Tester {
 	vt.t.Helper()
 	for _, other := range others {
 		eq := Equal(vt.v, other)
@@ -93,7 +91,7 @@ func (vt ValueTester) NotEqual(others ...interface{}) ValueTester {
 }
 
 // HasKey tests that the value has each of the given keys.
-func (vt ValueTester) HasKey(keys ...interface{}) ValueTester {
+func (vt Tester) HasKey(keys ...interface{}) Tester {
 	vt.t.Helper()
 	for _, key := range keys {
 		has := HasKey(vt.v, key)
@@ -105,7 +103,7 @@ func (vt ValueTester) HasKey(keys ...interface{}) ValueTester {
 }
 
 // HasNoKey tests that the value does not have any of the given keys.
-func (vt ValueTester) HasNoKey(keys ...interface{}) ValueTester {
+func (vt Tester) HasNoKey(keys ...interface{}) Tester {
 	vt.t.Helper()
 	for _, key := range keys {
 		has := HasKey(vt.v, key)
@@ -122,7 +120,7 @@ func (vt ValueTester) HasNoKey(keys ...interface{}) ValueTester {
 // NOTE: This now checks equality using reflect.DeepEqual, since all the builtin
 // types have string keys. This can be changed in future to use Equal is the
 // need arises.
-func (vt ValueTester) AllKeys(wantKeys ...interface{}) ValueTester {
+func (vt Tester) AllKeys(wantKeys ...interface{}) Tester {
 	vt.t.Helper()
 	keys, err := collectKeys(vt.v)
 	if err != nil {
@@ -145,7 +143,7 @@ func collectKeys(v interface{}) ([]interface{}, error) {
 
 // Index tests that Index'ing the value with the given key returns the wanted value
 // and no error.
-func (vt ValueTester) Index(key, wantVal interface{}) ValueTester {
+func (vt Tester) Index(key, wantVal interface{}) Tester {
 	vt.t.Helper()
 	got, err := Index(vt.v, key)
 	if err != nil {
@@ -159,7 +157,7 @@ func (vt ValueTester) Index(key, wantVal interface{}) ValueTester {
 
 // IndexError tests that Index'ing the value with the given key returns the given
 // error.
-func (vt ValueTester) IndexError(key interface{}, wantErr error) ValueTester {
+func (vt Tester) IndexError(key interface{}, wantErr error) Tester {
 	vt.t.Helper()
 	_, err := Index(vt.v, key)
 	if !reflect.DeepEqual(err, wantErr) {
@@ -170,7 +168,7 @@ func (vt ValueTester) IndexError(key interface{}, wantErr error) ValueTester {
 
 // Assoc tests that Assoc'ing the value with the given key-value pair returns
 // the wanted new value and no error.
-func (vt ValueTester) Assoc(key, val, wantNew interface{}) ValueTester {
+func (vt Tester) Assoc(key, val, wantNew interface{}) Tester {
 	vt.t.Helper()
 	got, err := Assoc(vt.v, key, val)
 	if err != nil {
@@ -184,7 +182,7 @@ func (vt ValueTester) Assoc(key, val, wantNew interface{}) ValueTester {
 
 // AssocError tests that Assoc'ing the value with the given key-value pair
 // returns the given error.
-func (vt ValueTester) AssocError(key, val interface{}, wantErr error) ValueTester {
+func (vt Tester) AssocError(key, val interface{}, wantErr error) Tester {
 	vt.t.Helper()
 	_, err := Assoc(vt.v, key, val)
 	if !reflect.DeepEqual(err, wantErr) {
@@ -192,10 +190,3 @@ func (vt ValueTester) AssocError(key, val interface{}, wantErr error) ValueTeste
 	}
 	return vt
 }
-
-// Eq returns a tt.Matcher that matches using the Equal function.
-func Eq(r interface{}) tt.Matcher { return equalMatcher{r} }
-
-type equalMatcher struct{ want interface{} }
-
-func (em equalMatcher) Match(got tt.RetValue) bool { return Equal(got, em.want) }

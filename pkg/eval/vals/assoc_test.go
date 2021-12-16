@@ -24,9 +24,9 @@ func TestAssoc(t *testing.T) {
 		Args("0123", "x", "y").Rets(nil, errIndexMustBeInteger),
 
 		Args(MakeList("0", "1", "2", "3"), "0", "foo").Rets(
-			Eq(MakeList("foo", "1", "2", "3")), nil),
+			eq(MakeList("foo", "1", "2", "3")), nil),
 		Args(MakeList("0", "1", "2", "3"), 0, "foo").Rets(
-			Eq(MakeList("foo", "1", "2", "3")), nil),
+			eq(MakeList("foo", "1", "2", "3")), nil),
 		Args(MakeList("0"), MakeList("0"), "1").Rets(nil, errIndexMustBeInteger),
 		Args(MakeList("0"), "1", "x").Rets(nil, errs.OutOfRange{
 			What: "index", ValidLow: "0", ValidHigh: "0", Actual: "1"}),
@@ -35,9 +35,9 @@ func TestAssoc(t *testing.T) {
 			nil, errAssocWithSlice),
 
 		Args(MakeMap("k", "v", "k2", "v2"), "k", "newv").Rets(
-			Eq(MakeMap("k", "newv", "k2", "v2")), nil),
+			eq(MakeMap("k", "newv", "k2", "v2")), nil),
 		Args(MakeMap("k", "v"), "k2", "v2").Rets(
-			Eq(MakeMap("k", "v", "k2", "v2")), nil),
+			eq(MakeMap("k", "v", "k2", "v2")), nil),
 
 		Args(customAssocer{}, "x", "y").Rets("custom result", errCustomAssoc),
 
