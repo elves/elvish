@@ -11,7 +11,6 @@ import (
 
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/persistent/vector"
 )
 
 var (
@@ -52,7 +51,7 @@ func (envli *envListVar) Get() interface{} {
 		return envli.cacheValue
 	}
 	envli.cacheFor = value
-	v := vector.Empty
+	v := vals.EmptyList
 	for _, path := range strings.Split(value, pathListSeparator) {
 		v = v.Cons(path)
 	}

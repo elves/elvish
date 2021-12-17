@@ -10,7 +10,6 @@ import (
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
-	"src.elv.sh/pkg/persistent/hashmap"
 )
 
 // Sequence, list and maps.
@@ -62,7 +61,7 @@ func init() {
 // ▶ value
 // ```
 
-func nsFn(m hashmap.Map) (*Ns, error) {
+func nsFn(m vals.Map) (*Ns, error) {
 	nb := BuildNs()
 	for it := m.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
@@ -741,7 +740,7 @@ func drop(fm *Frame, n int, inputs Inputs) error {
 
 func hasValue(container, value interface{}) (bool, error) {
 	switch container := container.(type) {
-	case hashmap.Map:
+	case vals.Map:
 		for it := container.Iterator(); it.HasElem(); it.Next() {
 			_, v := it.Elem()
 			if vals.Equal(v, value) {

@@ -16,7 +16,6 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/logutil"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/persistent/vector"
 )
 
 var logger = logutil.GetLogger("[eval] ")
@@ -146,7 +145,7 @@ type Evaler struct {
 // NewEvaler creates a new Evaler.
 func NewEvaler() *Evaler {
 	builtin := builtinNs.Ns()
-	beforeChdirElvish, afterChdirElvish := vector.Empty, vector.Empty
+	beforeChdirElvish, afterChdirElvish := vals.EmptyList, vals.EmptyList
 
 	ev := &Evaler{
 		global:  new(Ns),
@@ -186,7 +185,7 @@ func NewEvaler() *Evaler {
 	return ev
 }
 
-func adaptChdirHook(name string, ev *Evaler, pfns *vector.Vector) func(string) {
+func adaptChdirHook(name string, ev *Evaler, pfns *vals.List) func(string) {
 	return func(path string) {
 		ports, cleanup := PortsFromStdFiles(ev.ValuePrefix())
 		defer cleanup()

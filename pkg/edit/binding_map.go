@@ -7,7 +7,6 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/persistent/hashmap"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -16,7 +15,7 @@ var errValueShouldBeFn = errors.New("value should be function")
 // A special Map that converts its key to ui.Key and ensures that its values
 // satisfy eval.CallableValue.
 type bindingsMap struct {
-	hashmap.Map
+	vals.Map
 }
 
 var emptyBindingsMap = bindingsMap{vals.EmptyMap}
@@ -89,7 +88,7 @@ func (bt bindingsMap) Dissoc(k interface{}) interface{} {
 	return bindingsMap{bt.Map.Dissoc(key)}
 }
 
-func makeBindingMap(raw hashmap.Map) (bindingsMap, error) {
+func makeBindingMap(raw vals.Map) (bindingsMap, error) {
 	converted := vals.EmptyMap
 	for it := raw.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()

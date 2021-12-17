@@ -5,7 +5,6 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
-	"src.elv.sh/pkg/persistent/hashmap"
 )
 
 //elvdoc:var abbr
@@ -131,7 +130,7 @@ func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.N
 
 func makeMapIterator(mv vars.PtrVar) func(func(a, b string)) {
 	return func(f func(a, b string)) {
-		for it := mv.GetRaw().(hashmap.Map).Iterator(); it.HasElem(); it.Next() {
+		for it := mv.GetRaw().(vals.Map).Iterator(); it.HasElem(); it.Next() {
 			k, v := it.Elem()
 			ks, kok := k.(string)
 			vs, vok := v.(string)

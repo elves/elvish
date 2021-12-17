@@ -11,7 +11,6 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
-	"src.elv.sh/pkg/persistent/hashmap"
 	"src.elv.sh/pkg/store/storedefs"
 )
 
@@ -229,7 +228,7 @@ func adaptToIterateString(variable vars.Var) func(func(string)) {
 
 func adaptToIterateStringPair(variable vars.Var) func(func(string, string) bool) {
 	return func(f func(a, b string) bool) {
-		m := variable.Get().(hashmap.Map)
+		m := variable.Get().(vals.Map)
 		for it := m.Iterator(); it.HasElem(); it.Next() {
 			k, v := it.Elem()
 			ks, kok := k.(string)

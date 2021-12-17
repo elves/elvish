@@ -7,7 +7,6 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/persistent/vector"
 )
 
 // Ns is the namespace for the re: module.
@@ -111,7 +110,7 @@ func find(fm *eval.Frame, opts findOpts, argPattern, source string) error {
 
 	for _, match := range matches {
 		start, end := match[0], match[1]
-		groups := vector.Empty
+		groups := vals.EmptyList
 		for i := 0; i < len(match); i += 2 {
 			start, end := match[i], match[i+1]
 			text := ""

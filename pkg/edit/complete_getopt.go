@@ -10,7 +10,6 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/getopt"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/persistent/hashmap"
 )
 
 //elvdoc:fn complete-getopt
@@ -236,7 +235,7 @@ func parseGetoptOptSpecs(v interface{}) (parsedOptSpecs, error) {
 
 	var err error
 	errIterate := vals.Iterate(v, func(v interface{}) bool {
-		m, ok := v.(hashmap.Map)
+		m, ok := v.(vals.Map)
 		if !ok {
 			err = fmt.Errorf("opt should be map, got %s", vals.Kind(v))
 			return false
