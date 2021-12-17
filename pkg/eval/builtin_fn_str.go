@@ -155,16 +155,16 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // ```
 //
 // For each input, call `$f` with the input followed by all its fields. A
-// [`break`](./builtin.html#break) command will cause `eawk` to stop processing inputs. A
-// [`continue`](./builtin.html#continue) command will exit $f, but is ignored by `eawk`.
+// [`break`](./builtin.html#break) command will cause `eawk` to stop processing
+// inputs. A [`continue`](./builtin.html#continue) command will exit $f, but is
+// ignored by `eawk`.
 //
 // It should behave the same as the following functions:
 //
 // ```elvish
 // fn eawk {|f @rest|
 //   each {|line|
-//     @fields = (re:split '[ \t]+'
-//     (re:replace '^[ \t]+|[ \t]+$' '' $line))
+//     var @fields = (re:split '[ \t]+' (str:trim $line " \t"))
 //     $f $line $@fields
 //   } $@rest
 // }
@@ -174,12 +174,19 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // anonymous functions. Example:
 //
 // ```elvish-transcript
-// ~> echo ' lorem ipsum
-// 1 2' | awk '{ print $1 }'
+// ~> echo " lorem ipsum\n1 2" | awk '{ print $1 }'
 // lorem
 // 1
-// ~> echo ' lorem ipsum
-// 1 2' | eawk {|line a b| put $a }
+// ~> echo " lorem ipsum\n1 2" | eawk {|line a b| put $a }
+// ▶ lorem
+// ▶ 1
+// ```
+//
+// **Note**: Since Elvish allows variable names consisting solely of digits, you
+// can also do the following:
+//
+// ```elvish-transcript
+// ~> echo " lorem ipsum\n1 2" | eawk {|0 1 2| put $1 }
 // ▶ lorem
 // ▶ 1
 // ```
