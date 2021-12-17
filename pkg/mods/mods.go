@@ -11,6 +11,7 @@ import (
 	"src.elv.sh/pkg/mods/re"
 	"src.elv.sh/pkg/mods/readlinebinding"
 	"src.elv.sh/pkg/mods/str"
+	"src.elv.sh/pkg/mods/unix"
 )
 
 // AddTo adds all standard library modules to the Evaler.
@@ -21,6 +22,9 @@ func AddTo(ev *eval.Evaler) {
 	ev.AddModule("re", re.Ns)
 	ev.AddModule("str", str.Ns)
 	ev.AddModule("file", file.Ns)
+	if unix.ExposeUnixNs {
+		ev.AddModule("unix", unix.Ns)
+	}
 	ev.BundledModules["epm"] = epm.Code
 	ev.BundledModules["readline-binding"] = readlinebinding.Code
 }

@@ -15,7 +15,6 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/logutil"
 	"src.elv.sh/pkg/mods"
-	"src.elv.sh/pkg/mods/unix"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/sys"
@@ -86,9 +85,6 @@ func MakeEvaler(stderr io.Writer) *eval.Evaler {
 	}
 	ev.LibDirs = libs
 	mods.AddTo(ev)
-	if unix.ExposeUnixNs {
-		ev.AddModule("unix", unix.Ns)
-	}
 	return ev
 }
 
