@@ -637,8 +637,15 @@ user-defined function, it has the following fields:
 # Variable
 
 A variable is a named storage location for holding a value. The following
-characters can be used in variable names (a subset of bareword characters)
-without quoting:
+characters can be used in variable names without quoting:
+
+-   ASCII letters (a-z and A-Z) and numbers (0-9);
+
+-   The symbols `-_:~`;
+
+-   Non-ASCII codepoints that are printable, as defined by
+    [unicode.IsPrint](https://godoc.org/unicode#IsPrint) in Go's standard
+    library.
 
 A variable exist after it is declared (either explicitly using [`var`](#var) or
 implicitly using the [legacy assignment form](#legacy-assignment-form)), and its
