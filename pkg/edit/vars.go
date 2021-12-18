@@ -19,21 +19,42 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 //elvdoc:fn add-var
 //
 // ```elvish
-// edit:add-var $name $value
+// edit:add-var $name $init
 // ```
 //
-// Declares a new variable in the REPL. The new variable becomes available
-// during the next REPL cycle.
+// Declares a new variable in the REPL with an initial value. The new variable
+// becomes available during the next REPL cycle.
 //
-// Equivalent to running `var $name = $value` at the REPL, but `$name` can be
+// Equivalent to running `var $name = $init` at the REPL, but `$name` can be
 // dynamic.
 //
-// Example:
+// This is most useful for modules to modify the REPL namespace. Example:
 //
 // ```elvish-transcript
-// ~> edit:add-var foo bar
+// ~> cat .config/elvish/lib/a.elv
+// for i [(range 10)] {
+//   edit:add-var foo$i $i
+// }
+// ~> use a
+// ~> put $foo1 $foo2
+// ▶ (num 1)
+// ▶ (num 2)
+// ```
+//
+// Note that if you pass a variable as the `$init` argument, `edit:add-var`
+// doesn't add the variable "itself" to the REPL namespace, it creates a new
+// variable, only using the existing variable's value:
+//
+// ```elvish-transcript
+// ~> cat .config/elvish/lib/b.elv
+// var foo = foo
+// edit:add-var foo $foo
+// ~> use b
 // ~> put $foo
-// ▶ bar
+// ▶ foo
+// ~> set foo = bar
+// ~> echo $b:foo
+// foo
 // ```
 
 func addVar(fm *eval.Frame, name string, val interface{}) error {
