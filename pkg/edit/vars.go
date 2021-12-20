@@ -22,10 +22,10 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 // edit:add-var $name $init
 // ```
 //
-// Declares a new variable in the REPL with an initial value. The new variable
-// becomes available during the next REPL cycle.
+// Defines a new variable in the interactive REPL with an initial value. The new variable becomes
+// available during the next REPL cycle.
 //
-// Equivalent to running `var $name = $init` at the REPL, but `$name` can be
+// Equivalent to running `var $name = $init` at a REPL prompt, but `$name` can be
 // dynamic.
 //
 // This is most useful for modules to modify the REPL namespace. Example:
@@ -41,9 +41,8 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 // ▶ (num 2)
 // ```
 //
-// Note that if you pass a variable as the `$init` argument, `edit:add-var`
-// doesn't add the variable "itself" to the REPL namespace, it creates a new
-// variable, only using the existing variable's value:
+// Note that `edit:add-var` doesn't add (or alias) the `$init` variable "itself" to the REPL
+// namespace, It creates a new REPL variable using the existing value of the variable:
 //
 // ```elvish-transcript
 // ~> cat .config/elvish/lib/b.elv
@@ -55,6 +54,34 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 // ~> set foo = bar
 // ~> echo $b:foo
 // foo
+// ```
+//
+// Because of the above behavior this mechanism is perhaps most useful for adding a module namespace
+// or function to the REPL namespace. For example, you might include this in your
+// `~/.config/elvish/rc.elv` in order to make your Elvish interactive config work on both Windows
+// and UNIX-like systems:
+//
+// ```elvish-transcript
+// use platform
+// if $platform:is-unix {
+//   use unix
+//   edit:add-var unix: $unix:
+// }
+//
+// Similarly you might have functions, such as `$util:ff~` to "find files", that you want to be able
+// to use in the REPL without needing the module prefix (i.e., `ff` rather than `util:ff`) to use
+// the functions interactively. You might add a statement like this to your
+// `~/.config/elvish/rc.elv`:
+//
+// ```elvish-transcript
+// edit:add-var ff~ $util:ff~
+// ```
+//
+// Alternatively, in the `~/.config/elvish/lib/util.elv` module:
+//
+// ```elvish-transcript
+// fn ff { ... }
+// edit:add-var ff~ $ff~
 // ```
 
 func addVar(fm *eval.Frame, name string, val interface{}) error {
