@@ -41,8 +41,10 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 // ▶ (num 2)
 // ```
 //
-// Note that `edit:add-var` doesn't add (or alias) the `$init` variable "itself" to the REPL
-// namespace, It creates a new REPL variable using the existing value of the variable:
+// Note that if you pass a variable as the `$init` argument, `edit:add-var`
+// doesn't add the variable "itself" to the REPL namespace. The variable in the
+// REPL namespace will have the initial value set to the variable's value, but
+// it is not an alias of the original variable:
 //
 // ```elvish-transcript
 // ~> cat .config/elvish/lib/b.elv
@@ -56,32 +58,34 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 // foo
 // ```
 //
-// Because of the above behavior this mechanism is perhaps most useful for adding a module namespace
-// or function to the REPL namespace. For example, you might include this in your
-// `~/.config/elvish/rc.elv` in order to make your Elvish interactive config work on both Windows
-// and UNIX-like systems:
+// One common use of this command is to put the definitions of functions
+// intended for REPL use in a module instead of `rc.elv`. For example, if you
+// want to define `ll` as `ls -l`, you can do so in `rc.elv` directly:
 //
-// ```elvish-transcript
+// ```elvish
+// fn ll {|@a| ls -l $@a }
+// ```
+//
+// But if you move the definition into a module (say `util.elv` in one of the
+// [module search directories](command.html#module-search-directories), this
+// function can only be used as `util:ll` (after `use util`). To make it usable
+// directly as `ll`, you can add the following to `util.elv`:
+//
+// ```elvish
+// edit:add-var ll~ $ll~
+// ```
+//
+// Another use case is to add a module or function to the REPL namespace
+// conditionally. For example, to only import [the `unix` module](unix.html)
+// when actually running on UNIX, you can put the following in
+// [`rc.elv`](command.html#rc-file):
+//
+// ```elvish
 // use platform
 // if $platform:is-unix {
 //   use unix
 //   edit:add-var unix: $unix:
 // }
-//
-// Similarly you might have functions, such as `$util:ff~` to "find files", that you want to be able
-// to use in the REPL without needing the module prefix (i.e., `ff` rather than `util:ff`) to use
-// the functions interactively. You might add a statement like this to your
-// `~/.config/elvish/rc.elv`:
-//
-// ```elvish-transcript
-// edit:add-var ff~ $util:ff~
-// ```
-//
-// Alternatively, in the `~/.config/elvish/lib/util.elv` module:
-//
-// ```elvish-transcript
-// fn ff { ... }
-// edit:add-var ff~ $ff~
 // ```
 
 func addVar(fm *eval.Frame, name string, val interface{}) error {
