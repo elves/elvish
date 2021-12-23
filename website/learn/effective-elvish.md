@@ -223,7 +223,7 @@ lorem
 456
 ```
 
-Note that it is more concise to write `mygrep ... < in.txt`.
+**Note:** that it is more concise to write `mygrep ... < in.txt`.
 
 However, this line-oriented behavior is not always desirable: not all Unix
 commands output newline-separated data. When you want to get the output as is,
