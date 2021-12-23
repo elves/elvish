@@ -140,7 +140,7 @@ Elvish, it is easy to think of `put` as **the** command to "return" values and
 write code like this:
 
 ```elvish-transcript
-~> fn split-by-comma [s]{ use str; put (str:split , $s) }
+~> fn split-by-comma {|s| use str; put (str:split , $s) }
 ~> split-by-comma foo,bar
 ▶ foo
 ▶ bar
@@ -149,7 +149,7 @@ write code like this:
 The `split-by-comma` function works, but it can be written more concisely as:
 
 ```elvish-transcript
-~> fn split-by-comma [s]{ use str; str:split , $s }
+~> fn split-by-comma {|s| use str; str:split , $s }
 ~> split-by-comma foo,bar
 ▶ foo
 ▶ bar
@@ -212,7 +212,7 @@ in Elvish:
 
 ```elvish-transcript
 ~> use re
-~> fn mygrep [p]{ each [line]{ if (re:match $p $line) { echo $line } } }
+~> fn mygrep {|p| each {|line| if (re:match $p $line) { echo $line } } }
 ~> cat in.txt
 abc
 123
@@ -223,8 +223,7 @@ lorem
 456
 ```
 
-(Note that it is more concise to write `mygrep ... < in.txt`, but due to
-[a bug](https://github.com/elves/elvish/issues/600) this does not work.)
+Note that it is more concise to write `mygrep ... < in.txt`.
 
 However, this line-oriented behavior is not always desirable: not all Unix
 commands output newline-separated data. When you want to get the output as is,
@@ -290,7 +289,7 @@ rejoin them with semicolons, you can write:
 ```elvish-transcript
 ~> csv = a,b,foo,bar
 ~> use str
-~> str:join ';' [(each [x]{ put $x,$x } [(str:split , $csv)])]
+~> str:join ';' [(each {|x| put $x,$x } [(str:split , $csv)])]
 ▶ 'a,a;b,b;foo,foo;bar,bar'
 ```
 
@@ -307,7 +306,7 @@ program at hand, there is a much better way to write it:
 ```elvish-transcript
 ~> csv = a,b,foo,bar
 ~> use str
-~> str:split , $csv | each [x]{ put $x,$x } | str:join ';'
+~> str:split , $csv | each {|x| put $x,$x } | str:join ';'
 ▶ 'a,a;b,b;foo,foo;bar,bar'
 ```
 
@@ -381,7 +380,7 @@ not need to wait for its previous command to finish running before it can start
 processing data. Try this in your terminal:
 
 ```elvish-transcript
-~> each $str:to-upper~ | each [x]{ put $x$x }
+~> each $str:to-upper~ | each {|x| put $x$x }
 (Start typing)
 abc
 ▶ ABCABC
