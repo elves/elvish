@@ -87,7 +87,8 @@ Generally, elvdocs for functions have the following structure:
 -   One or more `elvish-transcript` code blocks showing example usages, which
     are transcripts of actual REPL input and output. Transcripts must use the
     default prompt `~>` and default value output indicator `▶`. You can use
-    `elvish -norc` if you have customized either in your `rc.elv`.
+    `elvish -norc` if you have customized either in your
+    [`rc.elv`](https://elv.sh/ref/command.html#rc-file).
 
 Place the comment block before the implementation of the function. If the
 function has no implementation (e.g. it is a simple wrapper of a function from

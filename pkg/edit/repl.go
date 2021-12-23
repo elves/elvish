@@ -32,7 +32,7 @@ import (
 //
 // Duration, in seconds, of the most recent interactive command. This can be useful in your prompt
 // to provide feedback on how long a command took to run. The initial value of this variable is the
-// time to evaluate your `~/.elvish/rc.elv` script before printing the first prompt.
+// time to evaluate your [`rc.elv`](command.html#rc-file) before printing the first prompt.
 //
 // @cf edit:after-command
 

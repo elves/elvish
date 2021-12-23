@@ -2599,7 +2599,7 @@ some-mod:some-func # not valid
 The imported modules themselves are also evaluated in a separate scope. That
 means that functions and variables defined in the module does not pollute the
 default namespace, and vice versa. For instance, if you define `ls` as a wrapper
-function in `rc.elv`:
+function in your [`rc.elv`](command.html#rc-file):
 
 ```elvish
 fn ls [@a]{

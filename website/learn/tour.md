@@ -805,6 +805,9 @@ when Elvish decides that a command is an external command.
 
 # Interactive features
 
+Read [the API of the interactive editor](../ref/edit.html) to learn more about
+UI customization options.
+
 ## Tab completion
 
 Press <span class="key">Tab</span> to start completion. For example, after
@@ -903,10 +906,13 @@ navigation mode; this is useful when you want to insert multiple filenames.
 
 ## Startup script
 
-Elvish's startup script is `~/.elvish/rc.elv`.
+Elvish's interactive startup script is [`rc.elv`](../ref/command.html#rc-file).
+Non-interactive Elvish sessions do not have a startup script.
 
-Elvish doesn't support aliases, but you can get a similar experience simply by
-defining functions:
+## POSIX aliases
+
+Elvish doesn't support POSIX aliases, but you can get a similar experience
+simply by defining functions:
 
 ```elvish
 fn ls [@a]{ e:ls --color $@a }
@@ -914,6 +920,8 @@ fn ls [@a]{ e:ls --color $@a }
 
 The `e:` prefix (for "external") ensures that the external command named `ls`
 will be called. Otherwise this definition will result in infinite recursion.
+
+## Prompt customization
 
 The left and right prompts can be customized by assigning functions to
 `edit:prompt` and `edit:rprompt`. The following configuration simulates the
@@ -931,13 +939,13 @@ This is how it looks:
 
 @ttyshot tour/unicode-prompts
 
-Another common task in the startup script is to set the search path. You can do
-it directly via `$E:PATH`, but you can also manipulate as a list in
+## Changing the external command search path
+
+Another common task in the interactive startup script is to set the search path.
+You can do it by modifying `$E:PATH` (the env var) directly. You can also
+manipulate that env var indirectly by modifying
 [`$paths`](../ref/builtin.html#paths):
 
 ```elvish
 set paths = [/opts/bin /bin /usr/bin]
 ```
-
-Read [the API of the interactive editor](../ref/edit.html) to learn more about
-UI customization options.

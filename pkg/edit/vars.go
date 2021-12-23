@@ -58,9 +58,9 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 // foo
 // ```
 //
-// One common use of this command is to put the definitions of functions
-// intended for REPL use in a module instead of `rc.elv`. For example, if you
-// want to define `ll` as `ls -l`, you can do so in `rc.elv` directly:
+// One common use of this command is to put the definitions of functions intended for REPL use in a
+// module instead of your [`rc.elv`](command.html#rc-file). For example, if you want to define `ll`
+// as `ls -l`, you can do so in your [`rc.elv`](command.html#rc-file) directly:
 //
 // ```elvish
 // fn ll {|@a| ls -l $@a }
