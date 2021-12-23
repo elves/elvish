@@ -6,7 +6,7 @@
 
 The `readline-binding` module provides readline-like key bindings, such as
 binding <span class="key">Ctrl-A</span> to move the cursor to the start of the
-line. To use, put the following in `~/.elvish/rc.elv`:
+line. To use, put the following in your [`rc.elv`](command.html#rc-file):
 
 ```elvish
 use readline-binding
@@ -17,5 +17,5 @@ class="key">Ctrl-L</span> will be bound to a function that clears the terminal
 screen rather than start location mode.
 
 See the
-[source code](https://github.com/elves/elvish/blob/master/pkg/mods/bundled/readline-binding.elv.go)
+[source code](https://src.elv.sh/pkg/mods/readlinebinding/readline-binding.elv)
 for details.
