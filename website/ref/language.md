@@ -542,7 +542,7 @@ Functions defined without a signature list do not accept any arguments or
 options. To do so, write a signature list. Here is an example:
 
 ```elvish-transcript
-~> f = [a b]{ put $b $a }
+~> f = {|a b| put $b $a }
 ~> $f lorem ipsum
 ▶ ipsum
 ▶ lorem
@@ -552,7 +552,7 @@ There must be no space between `]` and `{`; otherwise Elvish will parse the
 signature as a list, followed by a lambda without signature:
 
 ```elvish-transcript
-~> put [a]{ nop }
+~> put {|a| nop }
 ▶ <closure 0xc420153d80>
 ~> put [a] { nop }
 ▶ [a]
@@ -564,14 +564,14 @@ Like in the left hand of assignments, if you prefix one of the arguments with
 remaining arguments:
 
 ```elvish-transcript
-~> f = [a @rest]{ put $a $rest }
+~> f = {|a @rest| put $a $rest }
 ~> $f lorem
 ▶ lorem
 ▶ []
 ~> $f lorem ipsum dolar sit
 ▶ lorem
 ▶ [ipsum dolar sit]
-~> f = [a @rest b]{ put $a $rest $b }
+~> f = {|a @rest b| put $a $rest $b }
 ~> $f lorem ipsum dolar sit
 ▶ lorem
 ▶ [ipsum dolar]
@@ -583,7 +583,7 @@ You can also declare options in the signature. The syntax is `&name=default`
 value of the option will be kept in a variable called `name`:
 
 ```elvish-transcript
-~> f = [&opt=default]{ echo "Value of $opt is "$opt }
+~> f = {|&opt=default| echo "Value of $opt is "$opt }
 ~> $f
 Value of $opt is default
 ~> $f &opt=foobar
@@ -596,18 +596,18 @@ If you call a function with too few arguments, too many arguments or unknown
 options, an exception is thrown:
 
 ```elvish-transcript
-~> [a]{ echo $a } foo bar
+~> {|a| echo $a } foo bar
 Exception: need 1 arguments, got 2
-[tty], line 1: [a]{ echo $a } foo bar
-~> [a b]{ echo $a $b } foo
+[tty], line 1: {|a| echo $a } foo bar
+~> {|a b| echo $a $b } foo
 Exception: need 2 arguments, got 1
-[tty], line 1: [a b]{ echo $a $b } foo
-~> [a b @rest]{ echo $a $b $rest } foo
+[tty], line 1: {|a b| echo $a $b } foo
+~> {|a b @rest| echo $a $b $rest } foo
 Exception: need 2 or more arguments, got 1
-[tty], line 1: [a b @rest]{ echo $a $b $rest } foo
-~> [&k=v]{ echo $k } &k2=v2
+[tty], line 1: {|a b @rest| echo $a $b $rest } foo
+~> {|&k=v| echo $k } &k2=v2
 Exception: unknown option k2
-[tty], line 1: [&k=v]{ echo $k } &k2=v2
+[tty], line 1: {|&k=v| echo $k } &k2=v2
 ```
 
 A user-defined function is a [pseudo-map](#pseudo-map). If `$f` is a
@@ -1397,7 +1397,7 @@ a,b,c
 is equivalent to `&key=$true`:
 
 ```elvish-transcript
-~> fn f [&opt=$false]{ put $opt }
+~> fn f {|&opt=$false| put $opt }
 ~> f &opt
 ▶ $true
 ```
@@ -1934,7 +1934,7 @@ The condition part is an expression, not a command like in other shells.
 Example:
 
 ```elvish
-fn tell-language [fname]{
+fn tell-language {|fname|
     if (has-suffix $fname .go) {
         echo $fname" is a Go file!"
     } elif (has-suffix $fname .c) {
@@ -2124,7 +2124,7 @@ The lambda may refer to the function being defined. This makes it easy to define
 recursive functions:
 
 ```elvish-transcript
-~> fn f [n]{ if (== $n 0) { put 1 } else { * $n (f (- $n 1)) } }
+~> fn f {|n| if (== $n 0) { put 1 } else { * $n (f (- $n 1)) } }
 ~> f 3
 ▶ (float64 6)
 ```
@@ -2548,7 +2548,7 @@ default namespace, and vice versa. For instance, if you define `ls` as a wrapper
 function in your [`rc.elv`](command.html#rc-file):
 
 ```elvish
-fn ls [@a]{
+fn ls {|@a|
     e:ls --color=auto $@a
 }
 ```
