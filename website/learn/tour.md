@@ -909,7 +909,7 @@ navigation mode; this is useful when you want to insert multiple filenames.
 Elvish's interactive startup script is [`rc.elv`](../ref/command.html#rc-file).
 Non-interactive Elvish sessions do not have a startup script.
 
-## POSIX aliases
+### POSIX aliases
 
 Elvish doesn't support POSIX aliases, but you can get a similar experience
 simply by defining functions:
@@ -921,7 +921,7 @@ fn ls [@a]{ e:ls --color $@a }
 The `e:` prefix (for "external") ensures that the external command named `ls`
 will be called. Otherwise this definition will result in infinite recursion.
 
-## Prompt customization
+### Prompt customization
 
 The left and right prompts can be customized by assigning functions to
 `edit:prompt` and `edit:rprompt`. The following configuration simulates the
@@ -929,22 +929,28 @@ default prompts, but uses fancy Unicode:
 
 ```elvish
 # "tilde-abbr" abbreviates home directory to a tilde.
-edit:prompt = { tilde-abbr $pwd; put '❱ ' }
+set edit:prompt = { tilde-abbr $pwd; put '❱ ' }
 # "constantly" returns a function that always writes the same value(s) to
 # output; "styled" writes styled output.
-edit:rprompt = (constantly (styled (whoami)✸(hostname) inverse))
+set edit:rprompt = (constantly (styled (whoami)✸(hostname) inverse))
 ```
 
 This is how it looks:
 
 @ttyshot tour/unicode-prompts
 
-## Changing the external command search path
+### Changing PATH
 
 Another common task in the interactive startup script is to set the search path.
-You can do it by modifying `$E:PATH` (the env var) directly. You can also
-manipulate that env var indirectly by modifying
-[`$paths`](../ref/builtin.html#paths):
+You can do set the environment variable directly (all environment variables have
+a `E:` prefix):
+
+```elvish
+set E:PATH = /opts/bin:/bin:/usr/bin
+```
+
+But it is usually nicer to set the [`$paths`](../ref/builtin.html#paths)
+instead:
 
 ```elvish
 set paths = [/opts/bin /bin /usr/bin]
