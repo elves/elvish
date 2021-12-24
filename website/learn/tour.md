@@ -525,7 +525,7 @@ example, the `each` command takes value inputs, and applies a lambda to each one
 of them:
 
 ```elvish-transcript
-~> put foo bar | each [x]{ echo 'I got '$x }
+~> put foo bar | each {|x| echo 'I got '$x }
 I got foo
 I got bar
 ```
@@ -652,7 +652,7 @@ from [brace expansion](#brace-expansion).
 Lambdas can take arguments and options, which can be written in a **signature**:
 
 ```elvish-transcript
-~> var f = [a b &opt=default]{
+~> var f = {|a b &opt=default|
      echo "a = "$a
      echo "b = "$b
      echo "opt = "$opt
@@ -915,7 +915,7 @@ Elvish doesn't support POSIX aliases, but you can get a similar experience
 simply by defining functions:
 
 ```elvish
-fn ls [@a]{ e:ls --color $@a }
+fn ls {|@a| e:ls --color $@a }
 ```
 
 The `e:` prefix (for "external") ensures that the external command named `ls`
