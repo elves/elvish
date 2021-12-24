@@ -643,6 +643,8 @@ func one(fm *Frame, inputs Inputs) error {
 // ```
 //
 // Etymology: Haskell.
+//
+// @cf drop
 
 func take(fm *Frame, n int, inputs Inputs) error {
 	out := fm.ValueOutput()
