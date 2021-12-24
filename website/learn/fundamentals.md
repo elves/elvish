@@ -415,17 +415,17 @@ done
 The for-loop we just show can also be written in a functional style:
 
 ```elvish
-each [name]{
+each {|name|
     echo 'Hello, '$name'!'
 } $first-triumvirate
 ```
 
-This looks similar to the for-loop version, but it makes use of a remarkable construct -- an **anonymous function**, also known as a **lambda**. In elvish, a lambda is syntactically formed by an argument list followed immediately (without space) by a function body enclosed in braces. Here, `[name]{ echo 'Hello, '$name'!' }` is a lambda that takes exactly one argument and calls `echo` to do the helloing. We pass it along a list to the `each` builtin, which runs the function on each element of the list.
+This looks similar to the for-loop version, but it makes use of a remarkable construct -- an **anonymous function**, also known as a **lambda**. In elvish, a lambda is syntactically formed by an argument list followed immediately (without space) by a function body enclosed in braces. Here, `{|name| echo 'Hello, '$name'!' }` is a lambda that takes exactly one argument and calls `echo` to do the helloing. We pass it along a list to the `each` builtin, which runs the function on each element of the list.
 
 Functions, like strings and lists, can be stored in variables:
 
 ```elvish
-hello=[name]{ echo 'Hello, '$name'!' }
+hello={|name| echo 'Hello, '$name'!' }
 each $hello $first-triumvirate
 ```
 
@@ -438,7 +438,7 @@ $hello 'Mark Antony' # Hello, Mark Anthony!
 You must have noticed that you have to use `$hello` instead of `hello` to call the function. This is because the *hello-the-variable* and *hello-the-command* are different enitites. To define new commands, use the `fn` special form:
 
 ```elvish
-fn hello [name]{
+fn hello {|name|
     echo 'Hello, '$name'!'
 }
 hello Cicero # Hello, Cicero!
@@ -457,7 +457,7 @@ each $hello~ $first-triumvirate # (Hello to the first triumvirate)
 Conversely, defining a variable `hello~` will also create a command named `hello`:
 
 ```elvish
-hello~ = [name]{ echo "Hello, hello, "$name"!" }
+hello~ = {|name| echo "Hello, hello, "$name"!" }
 hello Augustus # Hello, Augustus!
 ```
 
