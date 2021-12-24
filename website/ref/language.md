@@ -716,57 +716,6 @@ Compilation error: variable $nonexistent not found
 [tty], line 1: echo pre-error; echo $nonexistent
 ```
 
-When you assign a variable, Elvish does a similar searching. If the variable
-cannot be found, instead of causing an error, it will be created in the current
-scope:
-
-```elvish-transcript
-~> x = 12
-~> { x = 13 } # assigns to x in the global scope
-~> echo $x
-13
-~> { z = foo } # creates z in the inner scope
-~> echo $z
-Compilation error: variable $z not found
-[tty], line 1: echo $z
-```
-
-One implication of this behavior is that Elvish will not shadow your variable in
-outer scopes.
-
-There is a `local:` namespace that always refers to the current scope, and by
-using it it is possible to force Elvish to shadow variables:
-
-```elvish-transcript
-~> x = 12
-~> { local:x = 13; echo $x } # force shadowing
-13
-~> echo $x
-12
-```
-
-After force shadowing, you can still access the variable in the outer scope
-using the `up:` namespace, which always **skips** the innermost scope:
-
-```elvish-transcript
-~> x = 12
-~> { local:x = 14; echo $x $up:x }
-14 12
-```
-
-The `local:` and `up:` namespaces can also be used on unshadowed variables,
-although they are not useful in those cases:
-
-```elvish-transcript
-~> foo = a
-~> { echo $up:foo } # $up:foo is the same as $foo
-a
-~> { bar = b; echo $local:bar } # $local:bar is the same as $bar
-b
-```
-
-It is not possible to refer to a specific outer scope.
-
 You cannot create new variables in the `builtin:` namespace, although existing
 variables in it can be assigned new values.
 
@@ -805,8 +754,7 @@ referring to a local variable `$n`. Closure semantics means that:
 ▶ 1
 ```
 
-Variables that get "captured" in closures are called **upvalues**; this is why
-the pseudo-namespace for variables in outer scopes is called `up:`. When
+Variables that get "captured" in closures are called **upvalues**;. When
 capturing upvalues, Elvish only captures the variables that are used. In the
 following example, `$m` is not an upvalue of `$g` because it is not used:
 
@@ -2399,8 +2347,6 @@ call the `start` function within the nested namespace.
 ## Special namespaces
 
 The following namespaces have special meanings to the language:
-
--   `local:` and `up:` refer to lexical scopes, and have been documented above.
 
 -   `e:` refers to externals. For instance, `e:ls` refers to the external
     command `ls`.
