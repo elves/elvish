@@ -41,7 +41,7 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 // ▶ (num 2)
 // ```
 //
-// Note that if you pass a variable as the `$init` argument, `edit:add-var`
+// Note that if you use a variable as the `$init` argument, `edit:add-var`
 // doesn't add the variable "itself" to the REPL namespace. The variable in the
 // REPL namespace will have the initial value set to the variable's value, but
 // it is not an alias of the original variable:
