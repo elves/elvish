@@ -191,7 +191,7 @@ more.
 
 ## Comments
 
-Comments start with `#` and extends to the end of the line:
+Comments start with `#` and extend to the end of the line:
 
 ```elvish-transcript
 ~> echo foo # this is a comment
