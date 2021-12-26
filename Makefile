@@ -45,8 +45,12 @@ lint:
 codespell:
 	codespell --skip .git
 
+ttyshot: website/tools/ttyshot.go
+	make -C website tools/ttyshot.bin
+
+
 check-content:
 	./tools/check-content.sh
 
 .SILENT: checkstyle-go checkstyle-md lint
-.PHONY: default get generate test cover style checkstyle checkstyle-go checkstyle-md lint codespell check-content
+.PHONY: default get generate test cover style checkstyle checkstyle-go checkstyle-md lint codespell check-content ttyshot

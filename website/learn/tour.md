@@ -930,8 +930,7 @@ Type to filter:
 
 ## Navigation mode
 
-Press <kbd>Ctrl-N</kbd> to start the builtin filesystem navigator, or
-**navigation mode**.
+Press <kbd>Ctrl-N</kbd> to start the builtin filesystem navigator.
 
 @ttyshot tour/navigation
 
@@ -961,18 +960,13 @@ will be called. Otherwise this definition will result in infinite recursion.
 ### Prompt customization
 
 The left and right prompts can be customized by assigning functions to
-`edit:prompt` and `edit:rprompt`. The following configuration simulates the
-default prompts, but uses fancy Unicode:
-
-```elvish
-# "tilde-abbr" abbreviates home directory to a tilde.
-set edit:prompt = { tilde-abbr $pwd; put '❱ ' }
-# "constantly" returns a function that always writes the same value(s) to
-# output; "styled" writes styled output.
-set edit:rprompt = (constantly (styled (whoami)✸(hostname) inverse))
-```
-
-This is how it looks:
+[`edit:prompt`](../ref/edit.html#edit:prompt) and
+[`edit:rprompt`](../ref/edit.html#edit:rprompt). The following example defines
+prompts similar to the default, but uses fancy Unicode. The
+[`tilde-abbr`](../ref/builtin.html#tilde-abbr) command abbreviates home
+directory to a tilde. The [`constantly`](../ref/builtin.html#constantly) command
+returns a function that always writes the same value(s) to the value output. The
+[`styled`](../ref/builtin.html#styled) command writes styled output.
 
 @ttyshot tour/unicode-prompts
 

@@ -68,12 +68,12 @@ var parseStylingTests = []struct {
 	s           string
 	wantStyling Styling
 }{
-	{"default", FgDefault},
+	{"default", ExplicitFgDefault},
 	{"red", FgRed},
-	{"fg-default", FgDefault},
+	{"fg-default", ExplicitFgDefault},
 	{"fg-red", FgRed},
 
-	{"bg-default", BgDefault},
+	{"bg-default", ExplicitBgDefault},
 	{"bg-red", BgRed},
 
 	{"bold", Bold},
