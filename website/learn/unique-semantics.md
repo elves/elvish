@@ -106,7 +106,7 @@ as well. For instance, the `each` command takes **input** from the
 value-oriented channel, and apply a function to each value:
 
 ```elvish-transcript
-~> put lorem ipsum | each [x]{ echo "Got "$x }
+~> put lorem ipsum | each {|x| echo "Got "$x }
 Got lorem
 Got ipsum
 ```

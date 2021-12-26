@@ -542,7 +542,7 @@ Functions defined without a signature list do not accept any arguments or
 options. To do so, write a signature list. Here is an example:
 
 ```elvish-transcript
-~> f = [a b]{ put $b $a }
+~> f = {|a b| put $b $a }
 ~> $f lorem ipsum
 ▶ ipsum
 ▶ lorem
@@ -552,7 +552,7 @@ There must be no space between `]` and `{`; otherwise Elvish will parse the
 signature as a list, followed by a lambda without signature:
 
 ```elvish-transcript
-~> put [a]{ nop }
+~> put {|a| nop }
 ▶ <closure 0xc420153d80>
 ~> put [a] { nop }
 ▶ [a]
@@ -564,14 +564,14 @@ Like in the left hand of assignments, if you prefix one of the arguments with
 remaining arguments:
 
 ```elvish-transcript
-~> f = [a @rest]{ put $a $rest }
+~> f = {|a @rest| put $a $rest }
 ~> $f lorem
 ▶ lorem
 ▶ []
 ~> $f lorem ipsum dolar sit
 ▶ lorem
 ▶ [ipsum dolar sit]
-~> f = [a @rest b]{ put $a $rest $b }
+~> f = {|a @rest b| put $a $rest $b }
 ~> $f lorem ipsum dolar sit
 ▶ lorem
 ▶ [ipsum dolar]
@@ -583,7 +583,7 @@ You can also declare options in the signature. The syntax is `&name=default`
 value of the option will be kept in a variable called `name`:
 
 ```elvish-transcript
-~> f = [&opt=default]{ echo "Value of $opt is "$opt }
+~> f = {|&opt=default| echo "Value of $opt is "$opt }
 ~> $f
 Value of $opt is default
 ~> $f &opt=foobar
@@ -596,18 +596,18 @@ If you call a function with too few arguments, too many arguments or unknown
 options, an exception is thrown:
 
 ```elvish-transcript
-~> [a]{ echo $a } foo bar
+~> {|a| echo $a } foo bar
 Exception: need 1 arguments, got 2
-[tty], line 1: [a]{ echo $a } foo bar
-~> [a b]{ echo $a $b } foo
+[tty], line 1: {|a| echo $a } foo bar
+~> {|a b| echo $a $b } foo
 Exception: need 2 arguments, got 1
-[tty], line 1: [a b]{ echo $a $b } foo
-~> [a b @rest]{ echo $a $b $rest } foo
+[tty], line 1: {|a b| echo $a $b } foo
+~> {|a b @rest| echo $a $b $rest } foo
 Exception: need 2 or more arguments, got 1
-[tty], line 1: [a b @rest]{ echo $a $b $rest } foo
-~> [&k=v]{ echo $k } &k2=v2
+[tty], line 1: {|a b @rest| echo $a $b $rest } foo
+~> {|&k=v| echo $k } &k2=v2
 Exception: unknown option k2
-[tty], line 1: [&k=v]{ echo $k } &k2=v2
+[tty], line 1: {|&k=v| echo $k } &k2=v2
 ```
 
 A user-defined function is a [pseudo-map](#pseudo-map). If `$f` is a
@@ -716,57 +716,6 @@ Compilation error: variable $nonexistent not found
 [tty], line 1: echo pre-error; echo $nonexistent
 ```
 
-When you assign a variable, Elvish does a similar searching. If the variable
-cannot be found, instead of causing an error, it will be created in the current
-scope:
-
-```elvish-transcript
-~> x = 12
-~> { x = 13 } # assigns to x in the global scope
-~> echo $x
-13
-~> { z = foo } # creates z in the inner scope
-~> echo $z
-Compilation error: variable $z not found
-[tty], line 1: echo $z
-```
-
-One implication of this behavior is that Elvish will not shadow your variable in
-outer scopes.
-
-There is a `local:` namespace that always refers to the current scope, and by
-using it it is possible to force Elvish to shadow variables:
-
-```elvish-transcript
-~> x = 12
-~> { local:x = 13; echo $x } # force shadowing
-13
-~> echo $x
-12
-```
-
-After force shadowing, you can still access the variable in the outer scope
-using the `up:` namespace, which always **skips** the innermost scope:
-
-```elvish-transcript
-~> x = 12
-~> { local:x = 14; echo $x $up:x }
-14 12
-```
-
-The `local:` and `up:` namespaces can also be used on unshadowed variables,
-although they are not useful in those cases:
-
-```elvish-transcript
-~> foo = a
-~> { echo $up:foo } # $up:foo is the same as $foo
-a
-~> { bar = b; echo $local:bar } # $local:bar is the same as $bar
-b
-```
-
-It is not possible to refer to a specific outer scope.
-
 You cannot create new variables in the `builtin:` namespace, although existing
 variables in it can be assigned new values.
 
@@ -805,8 +754,7 @@ referring to a local variable `$n`. Closure semantics means that:
 ▶ 1
 ```
 
-Variables that get "captured" in closures are called **upvalues**; this is why
-the pseudo-namespace for variables in outer scopes is called `up:`. When
+Variables that get "captured" in closures are called **upvalues**;. When
 capturing upvalues, Elvish only captures the variables that are used. In the
 following example, `$m` is not an upvalue of `$g` because it is not used:
 
@@ -1449,7 +1397,7 @@ a,b,c
 is equivalent to `&key=$true`:
 
 ```elvish-transcript
-~> fn f [&opt=$false]{ put $opt }
+~> fn f {|&opt=$false| put $opt }
 ~> f &opt
 ▶ $true
 ```
@@ -1986,7 +1934,7 @@ The condition part is an expression, not a command like in other shells.
 Example:
 
 ```elvish
-fn tell-language [fname]{
+fn tell-language {|fname|
     if (has-suffix $fname .go) {
         echo $fname" is a Go file!"
     } elif (has-suffix $fname .c) {
@@ -2176,7 +2124,7 @@ The lambda may refer to the function being defined. This makes it easy to define
 recursive functions:
 
 ```elvish-transcript
-~> fn f [n]{ if (== $n 0) { put 1 } else { * $n (f (- $n 1)) } }
+~> fn f {|n| if (== $n 0) { put 1 } else { * $n (f (- $n 1)) } }
 ~> f 3
 ▶ (float64 6)
 ```
@@ -2400,8 +2348,6 @@ call the `start` function within the nested namespace.
 
 The following namespaces have special meanings to the language:
 
--   `local:` and `up:` refer to lexical scopes, and have been documented above.
-
 -   `e:` refers to externals. For instance, `e:ls` refers to the external
     command `ls`.
 
@@ -2602,7 +2548,7 @@ default namespace, and vice versa. For instance, if you define `ls` as a wrapper
 function in your [`rc.elv`](command.html#rc-file):
 
 ```elvish
-fn ls [@a]{
+fn ls {|@a|
     e:ls --color=auto $@a
 }
 ```

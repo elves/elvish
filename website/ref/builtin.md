@@ -18,7 +18,7 @@ cases where it is useful to do that:
 
     ```elvish
     use builtin
-    fn cd [@args]{
+    fn cd {|@args|
         echo running my cd function
         builtin:cd $@args
     }
@@ -85,7 +85,7 @@ two ways:
     ```elvish-transcript
     ~> count [lorem ipsum] # count number of elements in argument
     2
-    ~> each [x]{ + 1 $x } [10 100] # apply to each element in argument
+    ~> each {|x| + 1 $x } [10 100] # apply to each element in argument
     ▶ 11
     ▶ 101
     ```
