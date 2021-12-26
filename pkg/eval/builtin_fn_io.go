@@ -20,7 +20,8 @@ import (
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		// Value output
-		"put": put,
+		"put":    put,
+		"repeat": repeat,
 
 		// Bytes input
 		"read-upto": readUpto,
@@ -87,6 +88,36 @@ func put(fm *Frame, args ...interface{}) error {
 	out := fm.ValueOutput()
 	for _, a := range args {
 		err := out.Put(a)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+//elvdoc:fn repeat
+//
+// ```elvish
+// repeat $n $value
+// ```
+//
+// Output `$value` for `$n` times. Example:
+//
+// ```elvish-transcript
+// ~> repeat 0 lorem
+// ~> repeat 4 NAN
+// ▶ NAN
+// ▶ NAN
+// ▶ NAN
+// ▶ NAN
+// ```
+//
+// Etymology: [Clojure](https://clojuredocs.org/clojure.core/repeat).
+
+func repeat(fm *Frame, n int, v interface{}) error {
+	out := fm.ValueOutput()
+	for i := 0; i < n; i++ {
+		err := out.Put(v)
 		if err != nil {
 			return err
 		}

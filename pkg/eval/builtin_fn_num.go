@@ -52,6 +52,8 @@ func init() {
 		// Random
 		"rand":    rand.Float64,
 		"randint": randint,
+
+		"range": rangeFn,
 	})
 }
 
@@ -604,4 +606,320 @@ func randint(args ...int) (int, error) {
 			Valid: fmt.Sprint("larger than ", low), Actual: strconv.Itoa(high)}
 	}
 	return low + rand.Intn(high-low), nil
+}
+
+//elvdoc:fn range
+//
+// ```elvish
+// range &step $start=0 $end
+// ```
+//
+// Outputs numbers, starting from `$start` and ending before `$end`, using
+// `&step` as the increment.
+//
+// - If `$start` <= `$end`, `&step` defaults to 1, and `range` outputs values as
+//   long as they are smaller than `$end`. An exception is thrown if `&step` is
+//   given a negative value.
+//
+// - If `$start` > `$end`, `&step` defaults to -1, and `range` outputs values as
+//   long as they are greater than `$end`. An exception is thrown if `&step` is
+//   given a positive value.
+//
+// As a special case, if the outputs are floating point numbers, `range` also
+// terminates if the values stop changing.
+//
+// This command is [exactness-preserving](#exactness-preserving).
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> range 4
+// ▶ (num 0)
+// ▶ (num 1)
+// ▶ (num 2)
+// ▶ (num 3)
+// ~> range 4 0
+// ▶ (num 4)
+// ▶ (num 3)
+// ▶ (num 2)
+// ▶ (num 1)
+// ~> range -3 3 &step=2
+// ▶ (num -3)
+// ▶ (num -1)
+// ▶ (num 1)
+// ~> range 3 -3 &step=-2
+// ▶ (num 3)
+// ▶ (num 1)
+// ▶ (num -1)
+// ~> range (- (math:pow 2 53) 1) +inf
+// ▶ (num 9007199254740991.0)
+// ▶ (num 9007199254740992.0)
+// ```
+//
+// When using floating-point numbers, beware that numerical errors can result in
+// an incorrect number of outputs:
+//
+// ```elvish-transcript
+// ~> range 0.9 &step=0.3
+// ▶ (num 0.0)
+// ▶ (num 0.3)
+// ▶ (num 0.6)
+// ▶ (num 0.8999999999999999)
+// ```
+//
+// Avoid this problem by using exact rationals:
+//
+// ```elvish-transcript
+// ~> range 9/10 &step=3/10
+// ▶ (num 0)
+// ▶ (num 3/10)
+// ▶ (num 3/5)
+// ```
+//
+// One usage of this command is to execute something a fixed number of times by
+// combining with [each](#each):
+//
+// ```elvish-transcript
+// ~> range 3 | each {|_| echo foo }
+// foo
+// foo
+// foo
+// ```
+//
+// Etymology:
+// [Python](https://docs.python.org/3/library/functions.html#func-range).
+
+type rangeOpts struct{ Step vals.Num }
+
+// TODO: The default value can only be used implicitly; passing "range
+// &step=nil" results in an error.
+func (o *rangeOpts) SetDefaultOptions() { o.Step = nil }
+
+func rangeFn(fm *Frame, opts rangeOpts, args ...vals.Num) error {
+	var rawNums []vals.Num
+	switch len(args) {
+	case 1:
+		rawNums = []vals.Num{0, args[0]}
+	case 2:
+		rawNums = []vals.Num{args[0], args[1]}
+	default:
+		return errs.ArityMismatch{What: "arguments", ValidLow: 1, ValidHigh: 2, Actual: len(args)}
+	}
+	if opts.Step != nil {
+		rawNums = append(rawNums, opts.Step)
+	}
+	nums := vals.UnifyNums(rawNums, vals.Int)
+
+	out := fm.ValueOutput()
+
+	switch nums := nums.(type) {
+	case []int:
+		return rangeInt(nums, out)
+	case []*big.Int:
+		return rangeBigInt(nums, out)
+	case []*big.Rat:
+		return rangeBitRat(nums, out)
+	case []float64:
+		return rangeFloat64(nums, out)
+	default:
+		panic("unreachable")
+	}
+}
+
+func rangeInt(nums []int, out ValueOutput) error {
+	start, end := nums[0], nums[1]
+	var step int
+	if start <= end {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step <= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "positive", Actual: vals.ToString(step)}
+			}
+		} else {
+			step = 1
+		}
+		for cur := start; cur < end; cur += step {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			if cur+step <= cur {
+				break
+			}
+		}
+	} else {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step >= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "negative", Actual: vals.ToString(step)}
+			}
+		} else {
+			step = -1
+		}
+		for cur := start; cur > end; cur += step {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			if cur+step >= cur {
+				break
+			}
+		}
+	}
+	return nil
+}
+
+// TODO: Use type parameters to deduplicate this with rangeInt when Elvish
+// requires Go 1.18.
+func rangeFloat64(nums []float64, out ValueOutput) error {
+	start, end := nums[0], nums[1]
+	var step float64
+	if start <= end {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step <= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "positive", Actual: vals.ToString(step)}
+			}
+		} else {
+			step = 1
+		}
+		for cur := start; cur < end; cur += step {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			if cur+step <= cur {
+				break
+			}
+		}
+	} else {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step >= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "negative", Actual: vals.ToString(step)}
+			}
+		} else {
+			step = -1
+		}
+		for cur := start; cur > end; cur += step {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			if cur+step >= cur {
+				break
+			}
+		}
+	}
+	return nil
+}
+
+var (
+	bigInt1    = big.NewInt(1)
+	bigIntNeg1 = big.NewInt(-1)
+)
+
+func rangeBigInt(nums []*big.Int, out ValueOutput) error {
+	start, end := nums[0], nums[1]
+	var step *big.Int
+	if start.Cmp(end) <= 0 {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step.Sign() <= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "positive", Actual: vals.ToString(step)}
+			}
+		} else {
+			step = bigInt1
+		}
+		var cur, next *big.Int
+		for cur = start; cur.Cmp(end) < 0; cur = next {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			next = &big.Int{}
+			next.Add(cur, step)
+			cur = next
+		}
+	} else {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step.Sign() >= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "negative", Actual: vals.ToString(step)}
+			}
+		} else {
+			step = bigIntNeg1
+		}
+		var cur, next *big.Int
+		for cur = start; cur.Cmp(end) > 0; cur = next {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			next = &big.Int{}
+			next.Add(cur, step)
+			cur = next
+		}
+	}
+	return nil
+}
+
+var (
+	bigRat1    = big.NewRat(1, 1)
+	bigRatNeg1 = big.NewRat(-1, 1)
+)
+
+// TODO: Use type parameters to deduplicate this with rangeBitInt when Elvish
+// requires Go 1.18.
+func rangeBitRat(nums []*big.Rat, out ValueOutput) error {
+	start, end := nums[0], nums[1]
+	var step *big.Rat
+	if start.Cmp(end) <= 0 {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step.Sign() <= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "positive", Actual: vals.ToString(step)}
+			}
+		} else {
+			step = bigRat1
+		}
+		var cur, next *big.Rat
+		for cur = start; cur.Cmp(end) < 0; cur = next {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			next = &big.Rat{}
+			next.Add(cur, step)
+			cur = next
+		}
+	} else {
+		if len(nums) == 3 {
+			step = nums[2]
+			if step.Sign() >= 0 {
+				return errs.BadValue{
+					What: "step", Valid: "negative", Actual: vals.ToString(step)}
+			}
+		} else {
+			step = bigRatNeg1
+		}
+		var cur, next *big.Rat
+		for cur = start; cur.Cmp(end) > 0; cur = next {
+			err := out.Put(vals.FromGo(cur))
+			if err != nil {
+				return err
+			}
+			next = &big.Rat{}
+			next.Add(cur, step)
+			cur = next
+		}
+	}
+	return nil
 }

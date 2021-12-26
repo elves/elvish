@@ -1,6 +1,12 @@
 package eval
 
-import "src.elv.sh/pkg/eval/vals"
+import (
+	"math"
+	"math/big"
+
+	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/vals"
+)
 
 // Basic predicate commands.
 
@@ -35,11 +41,12 @@ import "src.elv.sh/pkg/eval/vals"
 
 func init() {
 	addBuiltinFns(map[string]interface{}{
-		"bool":   vals.Bool,
-		"not":    not,
-		"is":     is,
-		"eq":     eq,
-		"not-eq": notEq,
+		"bool":    vals.Bool,
+		"not":     not,
+		"is":      is,
+		"eq":      eq,
+		"not-eq":  notEq,
+		"compare": compare,
 	})
 }
 
@@ -174,4 +181,159 @@ func notEq(args ...interface{}) bool {
 		}
 	}
 	return true
+}
+
+//elvdoc:fn compare
+//
+// ```elvish
+// compare $a $b
+// ```
+//
+// Outputs -1 if `$a` < `$b`, 0 if `$a` = `$b`, and 1 if `$a` > `$b`.
+//
+// The following comparison algorithm is used:
+//
+// - Typed numbers are compared numerically. The comparison is consistent with
+//   the [number comparison commands](#num-cmp), except that `NaN` values are
+//   considered equal to each other and smaller than all other numbers.
+//
+// - Strings are compared lexicographically by bytes, consistent with the
+//   [string comparison commands](#str-cmp). For UTF-8 encoded strings, this is
+//   equivalent to comparing by codepoints.
+//
+// - Lists are compared lexicographically by elements, if the elements at the
+//   same positions are comparable.
+//
+// If the ordering between two elements is not defined by the conditions above,
+// i.e. if the value of `$a` or `$b` is not covered by any of the cases above or
+// if they belong to different cases, a "bad value" exception is thrown.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> compare a b
+// ▶ (num 1)
+// ~> compare b a
+// ▶ (num -1)
+// ~> compare x x
+// ▶ (num 0)
+// ~> compare (float64 10) (float64 1)
+// ▶ (num 1)
+// ```
+//
+// Beware that strings that look like numbers are treated as strings, not
+// numbers.
+//
+// @cf order
+
+// ErrUncomparable is raised by the compare and order commands when inputs contain
+// uncomparable values.
+var ErrUncomparable = errs.BadValue{
+	What:  `inputs to "compare" or "order"`,
+	Valid: "comparable values", Actual: "uncomparable values"}
+
+func compare(fm *Frame, a, b interface{}) (int, error) {
+	switch cmp(a, b) {
+	case less:
+		return -1, nil
+	case equal:
+		return 0, nil
+	case more:
+		return 1, nil
+	default:
+		return 0, ErrUncomparable
+	}
+}
+
+type ordering uint8
+
+const (
+	less ordering = iota
+	equal
+	more
+	uncomparable
+)
+
+func cmp(a, b interface{}) ordering {
+	switch a := a.(type) {
+	case int, *big.Int, *big.Rat, float64:
+		switch b.(type) {
+		case int, *big.Int, *big.Rat, float64:
+			a, b := vals.UnifyNums2(a, b, 0)
+			switch a := a.(type) {
+			case int:
+				return compareInt(a, b.(int))
+			case *big.Int:
+				return compareInt(a.Cmp(b.(*big.Int)), 0)
+			case *big.Rat:
+				return compareInt(a.Cmp(b.(*big.Rat)), 0)
+			case float64:
+				return compareFloat(a, b.(float64))
+			default:
+				panic("unreachable")
+			}
+		}
+	case string:
+		if b, ok := b.(string); ok {
+			switch {
+			case a == b:
+				return equal
+			case a < b:
+				return less
+			default: // a > b
+				return more
+			}
+		}
+	case vals.List:
+		if b, ok := b.(vals.List); ok {
+			aIt := a.Iterator()
+			bIt := b.Iterator()
+			for aIt.HasElem() && bIt.HasElem() {
+				o := cmp(aIt.Elem(), bIt.Elem())
+				if o != equal {
+					return o
+				}
+				aIt.Next()
+				bIt.Next()
+			}
+			switch {
+			case a.Len() == b.Len():
+				return equal
+			case a.Len() < b.Len():
+				return less
+			default: // a.Len() > b.Len()
+				return more
+			}
+		}
+	}
+	return uncomparable
+}
+
+func compareInt(a, b int) ordering {
+	if a < b {
+		return less
+	} else if a > b {
+		return more
+	}
+	return equal
+}
+
+func compareFloat(a, b float64) ordering {
+	// For the sake of ordering, NaN's are considered equal to each
+	// other and smaller than all numbers
+	switch {
+	case math.IsNaN(a):
+		if math.IsNaN(b) {
+			return equal
+		}
+		return less
+	case math.IsNaN(b):
+		return more
+	case a < b:
+		return less
+	case a > b:
+		return more
+	default: // a == b
+		return equal
+	}
 }
