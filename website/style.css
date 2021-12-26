@@ -337,6 +337,7 @@ pre.ttyshot {
 }
 
 pre.ttyshot, pre.ttyshot code {
+    color: black;
     background-color: white;
 }
 
@@ -346,59 +347,119 @@ pre.ttyshot, pre.ttyshot code {
     }
 }
 
-/* SGR classes, used in ttyshots. */
+/* SGR classes used in ttyshots. */
 .sgr-1 {
     font-weight: bold;
 }
 .sgr-4 {
     text-decoration: underline;
 }
-.sgr-7 {
-    color: white;
-    background-color: black;
+.sgr-7 { /* inverse */
+    color: white !important;
+    background-color: black !important;
 }
-.sgr-31 {
-    color: darkred; /* red in tty */
+.sgr-39 { /* default foreground color */
+    color: black;
 }
-.sgr-41 {
-    background-color: darkred; /* red in tty */
+.sgr-49 { /* default background color */
+    background-color: white;
 }
-.sgr-32 {
-    color: green; /* green in tty */
+
+.sgr-30 { /* fg black */
+    color: #000000;
 }
-.sgr-42, .sgr-7.sgr-32 {
-    background-color: green; /* green in tty */
+.sgr-40 { /* bg black */
+    background-color: #000000;
 }
-.sgr-33 {
-    color: goldenrod; /* yellow in tty */
+.sgr-31 { /* fg dark red */
+    color: #8B0000;
 }
-.sgr-43, .sgr-7.sgr-33 {
-    background-color: goldenrod; /* yellow in tty */
+.sgr-41 { /* bg dark red */
+    background-color: #8B0000;
 }
-.sgr-34 {
-    color: blue;
+.sgr-32 { /* fg dark green */
+    color: #008000;
 }
-.sgr-44, .sgr-7.sgr-34 {
-    color: white; /* Hacky hacky, just to make the nav ttyshot work */
-    background-color: blue;
+.sgr-42 { /* bg dark green */
+    background-color: #008000;
 }
-.sgr-35 {
-    color: darkorchid; /* magenta in tty */
+.sgr-33 { /* fg dark yellow */
+    color: #DAA520;
 }
-.sgr-45, .sgr-7.sgr-35 {
-    background-color: darkorchid; /* magenta in tty */
+.sgr-43 { /* bg dark yellow */
+    background-color: #DAA520;
 }
-.sgr-36 {
-    color: darkcyan; /* cyan in tty */
+.sgr-34 { /* fg dark blue */
+    color: #00008B;
 }
-.sgr-46, .sgr-7.sgr-36 {
-    background-color: darkcyan; /* cyan in tty */
+.sgr-44 { /* bg dark blue */
+    background-color: #00008B;
 }
-.sgr-37 {
-    color: lightgray;
+.sgr-35 { /* fg dark magenta */
+    color: #FF00FF;
 }
-.sgr-47, .sgr-7.sgr-37 {
-    background-color: gray;
+.sgr-45 { /* bg dark magenta */
+    background-color: #FF00FF;
+}
+.sgr-36 { /* fg dark cyan */
+    color: #008B8B;
+}
+.sgr-46 { /* bg dark cyan */
+    background-color: #008B8B;
+}
+.sgr-37 { /* fg white */
+    color: #E5E5E5;
+}
+.sgr-47 { /* bg white */
+    background-color: #E5E5E5;
+}
+.sgr-90 { /* fg bright black (grey) */
+    color: #7F7F7F;
+}
+.sgr-100 { /* bg bright black (grey) */
+    background-color: #7F7F7F;
+}
+.sgr-91 { /* fg bright red */
+    color: #FF0000;
+}
+.sgr-101 { /* bg bright red */
+    background-color: #FF0000;
+}
+.sgr-92 { /* fg bright green */
+    color: #00FF00;
+}
+.sgr-102 { /* bg bright green */
+    background-color: #00FF00;
+}
+.sgr-93 { /* fg bright yellow */
+    color: #FFFF00;
+}
+.sgr-103 { /* bg bright yellow */
+    background-color: #FFFF00;
+}
+.sgr-94 { /* fg bright blue */
+    color: #0000FF;
+}
+.sgr-104 { /* bg bright blue */
+    background-color: #0000FF;
+}
+.sgr-95 { /* fg bright magenta */
+    color: #F984E5;
+}
+.sgr-105 { /* bg bright magenta */
+    background-color: #F984E5;
+}
+.sgr-96 { /* fg bright cyan */
+    color: #00FFFF;
+}
+.sgr-106 { /* bg bright cyan */
+    background-color: #00FFFF;
+}
+.sgr-97 { /* fg bright white */
+    color: #FFFFFF;
+}
+.sgr-107 { /* bg bright white */
+    background-color: #FFFFFF;
 }
 
 /** Header anchors. */

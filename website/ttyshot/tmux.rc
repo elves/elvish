@@ -1,0 +1,4 @@
+# Disable the tmux status line.
+set-option -g status off
+# Ensure 256 and RGB support is enabled.
+set-option -g terminal-features *:256:RGB

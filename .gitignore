@@ -25,3 +25,5 @@ _testmain.go
 cover
 /_bin/
 /elvish
+/ttyshot
+/website/ttyshot/**/*.raw
