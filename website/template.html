@@ -133,17 +133,28 @@
     function makeStickyWhenScrollingUp(element) {
       var lastScrollY = 0;
       var topPx = 0;
+      var jumped = window.location.hash !== '';
       element.style.position = 'sticky';
       element.style.zIndex = 100;
+      element.style.top = '0px';
       document.addEventListener('scroll', function(ev) {
-        // Use a negative top property on sticky elements to control how much
-        // of it is visible. Keep it in sync with the scroll position, and cap
-        // it between -element.offsetHeight (entirely hidden) and 0 (entirely
-        // visible).
-        topPx += lastScrollY - window.scrollY;
-        topPx = Math.max(-element.offsetHeight, Math.min(0, topPx));
+        if (jumped) {
+          // Hide the element after jumping to an anchor.
+          jumped = false;
+          topPx = -element.offsetHeight;
+        } else {
+          // Use a negative top property on sticky elements to control how much
+          // of it is visible. Keep it in sync with the scroll position, and cap
+          // it between -element.offsetHeight (entirely hidden) and 0 (entirely
+          // visible).
+          topPx += lastScrollY - window.scrollY;
+          topPx = Math.max(-element.offsetHeight, Math.min(0, topPx));
+        }
         element.style.top = topPx + 'px';
         lastScrollY = window.scrollY;
+      });
+      window.addEventListener('hashchange', function(ev) {
+        jumped = true;
       });
     }
   </script>
