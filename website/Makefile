@@ -30,6 +30,9 @@ check-rellinks: gen
 clean:
 	rm -rf $(TOOL_BINS) $(HTMLS) $(DST_DIR) $(DOCSET_TMP_DIR) $(DOCSET_DST_DIR)
 
+ttyshot/%.html:
+	@echo Exclude ttyshots from the pattern rule for %.html
+
 .PHONY: gen docset publish clean
 
 .SECONDEXPANSION:
@@ -37,5 +40,5 @@ clean:
 tools/%.bin: cmd/% $$(wildcard cmd/%/*.go)
 	go build -o $@ ./$<
 
-%.html: %.md $(TOOL_BINS) tools/md-to-html $$(shell tools/ref-deps $$@)
+%.html: %.md $(TOOL_BINS) tools/md-to-html $$(shell tools/extra-deps $$@)
 	tools/md-to-html $< $@

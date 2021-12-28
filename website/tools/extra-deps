@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Outputs the Go files a reference doc may depend on.
+# Outputs the extra dependencies of a doc.
 #
 # Must be run from the website directory.
 
@@ -10,3 +10,6 @@ cat ${1%.html}.md |
   while read dir; do
     echo ../$dir ../$dir/*
   done
+
+cat ${1%.html}.md |
+  awk '/^@ttyshot/{ print "ttyshot/" $2 ".html" }'
