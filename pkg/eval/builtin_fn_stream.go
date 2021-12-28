@@ -27,38 +27,82 @@ func init() {
 //elvdoc:fn all
 //
 // ```elvish
-// all $input-list?
+// all $inputs?
 // ```
 //
-// Passes inputs to the output as is. Byte inputs into values, one per line.
+// Takes [value inputs](#value-inputs), and outputs those values unchanged.
 //
-// This is an identity function for commands with value outputs: `a | all` is
-// equivalent to `a` if it only outputs values.
+// This is an [identity
+// function](https://en.wikipedia.org/wiki/Identity_function) for the value
+// channel; in other words, `a | all` is equivalent to just `a` if `a` only has
+// value output.
 //
-// This function is useful for turning inputs into arguments, like:
-//
-// ```elvish-transcript
-// ~> use str
-// ~> put 'lorem,ipsum' | str:split , (all)
-// ▶ lorem
-// ▶ ipsum
-// ```
-//
-// Or capturing all inputs in a variable:
+// This command can be used inside output capture (i.e. `(all)`) to turn value
+// inputs into arguments. For example:
 //
 // ```elvish-transcript
-// ~> x = [(all)]
-// foo
-// bar
-// (Press ^D)
-// ~> put $x
+// ~> echo '["foo","bar"] ["lorem","ipsum"]' | from-json
 // ▶ [foo bar]
+// ▶ [lorem ipsum]
+// ~> echo '["foo","bar"] ["lorem","ipsum"]' | from-json | put (all)[0]
+// ▶ foo
+// ▶ lorem
 // ```
 //
-// When given a list, it outputs all elements of the list:
+// The latter pipeline is equivalent to the following:
 //
 // ```elvish-transcript
-// ~> all [foo bar]
+// ~> put (echo '["foo","bar"] ["lorem","ipsum"]' | from-json)[0]
+// ▶ foo
+// ▶ lorem
+// ```
+//
+// In general, when `(all)` appears in the last command of a pipeline, it is
+// equivalent to just moving the previous commands of the pipeline into `()`.
+// The choice is a stylistic one; the `(all)` variant is longer overall, but can
+// be more readable since it allows you to avoid putting an excessively long
+// pipeline inside an output capture, and keeps the data flow within the
+// pipeline.
+//
+// Putting the value capture inside `[]` (i.e. `[(all)]`) is useful for storing
+// all value inputs in a list for further processing:
+//
+// ```elvish-transcript
+// ~> fn f { var inputs = [(all)]; put $inputs[1] }
+// ~> put foo bar baz | f
+// ▶ bar
+// ```
+//
+// The `all` command can also take "inputs" from an iterable argument. This can
+// be used to flatten lists or strings (although not recursively):
+//
+// ```elvish-transcript
+// ~> all [foo [lorem ipsum]]
+// ▶ foo
+// ▶ [lorem ipsum]
+// ~> all foo
+// ▶ f
+// ▶ o
+// ▶ o
+// ```
+//
+// This can be used together with `(one)` to turn a single iterable value in the
+// pipeline into its elements:
+//
+// ```elvish-transcript
+// ~> echo '["foo","bar","lorem"]' | from-json
+// ▶ [foo bar lorem]
+// ~> echo '["foo","bar","lorem"]' | from-json | all (one)
+// ▶ foo
+// ▶ bar
+// ▶ lorem
+// ```
+//
+// When given byte inputs, the `all` command currently functions like
+// [`from-lines`](#from-lines), although this behavior is subject to change:
+//
+// ```elvish-transcript
+// ~> print "foo\nbar\n" | all
 // ▶ foo
 // ▶ bar
 // ```
@@ -80,14 +124,14 @@ func all(fm *Frame, inputs Inputs) error {
 //elvdoc:fn one
 //
 // ```elvish
-// one $input-list?
+// one $inputs?
 // ```
 //
-// Passes inputs to outputs, if there is only a single one. Otherwise raises an
-// exception.
+// Takes exactly one [value input](#value-inputs) and outputs it. If there are
+// more than one value inputs, raises an exception.
 //
 // This function can be used in a similar way to [`all`](#all), but is a better
-// choice when you expect that there is exactly one output:
+// choice when you expect that there is exactly one output.
 //
 // @cf all
 
@@ -109,13 +153,18 @@ func one(fm *Frame, inputs Inputs) error {
 //elvdoc:fn take
 //
 // ```elvish
-// take $n $input-list?
+// take $n $inputs?
 // ```
 //
-// Retain the first `$n` input elements. If `$n` is larger than the number of input
-// elements, the entire input is retained. Examples:
+// Outputs the first `$n` [value inputs](#value-inputs). If `$n` is larger than
+// the number of value inputs, outputs everything.
+//
+// Examples:
 //
 // ```elvish-transcript
+// ~> range 2 | take 10
+// ▶ 0
+// ▶ 1
 // ~> take 3 [a b c d e]
 // ▶ a
 // ▶ b
@@ -123,9 +172,6 @@ func one(fm *Frame, inputs Inputs) error {
 // ~> use str
 // ~> str:split ' ' 'how are you?' | take 1
 // ▶ how
-// ~> range 2 | take 10
-// ▶ 0
-// ▶ 1
 // ```
 //
 // Etymology: Haskell.
@@ -151,15 +197,19 @@ func take(fm *Frame, n int, inputs Inputs) error {
 //elvdoc:fn drop
 //
 // ```elvish
-// drop $n $input-list?
+// drop $n $inputs?
 // ```
 //
-// Drop the first `$n` elements of the input. If `$n` is larger than the number of
-// input elements, the entire input is dropped.
+// Ignores the first `$n` [value inputs](#value-inputs) and outputs the rest.
+// If `$n` is larger than the number of value inputs, outputs nothing.
 //
 // Example:
 //
 // ```elvish-transcript
+// ~> range 10 | drop 8
+// ▶ (num 8)
+// ▶ (num 9)
+// ~> range 2 | drop 10
 // ~> drop 2 [a b c d e]
 // ▶ c
 // ▶ d
@@ -168,7 +218,6 @@ func take(fm *Frame, n int, inputs Inputs) error {
 // ~> str:split ' ' 'how are you?' | drop 1
 // ▶ are
 // ▶ 'you?'
-// ~> range 2 | drop 10
 // ```
 //
 // Etymology: Haskell.
@@ -251,8 +300,9 @@ func count(fm *Frame, args ...interface{}) (int, error) {
 // order &reverse=$false $less-than=$nil $inputs?
 // ```
 //
-// Outputs the input values sorted in ascending order. The sort is guaranteed to
-// be [stable](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability).
+// Outputs the [value inputs](#value-inputs) sorted
+// in ascending order. The sorting process is guaranteed to be
+// [stable](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability).
 //
 // The `&reverse` option, if true, reverses the order of output.
 //

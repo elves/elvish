@@ -94,10 +94,10 @@ func runParallel(fm *Frame, functions ...Callable) error {
 //elvdoc:fn each
 //
 // ```elvish
-// each $f $input-list?
+// each $f $inputs?
 // ```
 //
-// Call `$f` on all inputs.
+// Calls `$f` on each [value input](#value-inputs).
 //
 // An exception raised from [`break`](#break) is caught by `each`, and will
 // cause it to terminate early.
@@ -152,14 +152,14 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 //elvdoc:fn peach
 //
 // ```elvish
-// peach $f $input-list?
+// peach $f $inputs?
 // ```
 //
-// Calls `$f` on all inputs, possibly in parallel.
+// Calls `$f` for each [value input](#value-inputs), possibly in parallel.
 //
 // Like `each`, an exception raised from [`break`](#break) will cause `peach`
 // to terminate early. However due to the parallel nature of `peach`, the exact
-// time of termination is non-deterministic and not even guaranteed.
+// time of termination is non-deterministic, and termination is not guaranteed.
 //
 // An exception raised from [`continue`](#continue) is swallowed and can be used
 // to terminate a single iteration early.

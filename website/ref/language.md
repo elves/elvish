@@ -695,7 +695,8 @@ bar
 ```
 
 If a variable is not in any of the lexical scopes, Elvish tries to resolve it in
-the `builtin:` namespace, and if that also fails, fails with an error:
+the [builtin namespace](builtin.html), and if that also fails, fails with an
+error:
 
 ```elvish-transcript
 ~> echo $pid # builtin
@@ -715,9 +716,6 @@ This can be more clearly observed in the following example:
 Compilation error: variable $nonexistent not found
 [tty], line 1: echo pre-error; echo $nonexistent
 ```
-
-You cannot create new variables in the `builtin:` namespace, although existing
-variables in it can be assigned new values.
 
 ## Closure semantics
 
@@ -2362,11 +2360,6 @@ The following namespaces have special meanings to the language:
     This **is** always needed, because unlike command resolution, variable
     resolution does not fall back onto environment variables.
 
--   `builtin:` refers to builtin functions and variables.
-
-    You don't need to use this explicitly unless you have defined names that
-    shadows builtin counterparts.
-
 ## Modules
 
 Apart from the special namespaces, the most common usage of namespaces is to
@@ -2417,8 +2410,9 @@ use a/b/c foo # imports the "a/b/c" module as "foo:"
 Elvish's standard library provides the following pre-defined modules that can be
 imported by the `use` command:
 
--   [edit](edit.html) is only available in interactive mode. As a special case
-    it does not need importing via `use`, but this may change in the future.
+-   [builtin](builtin.html)
+-   [edit](edit.html): only available in interactive mode. As a special case it
+    does not need importing via `use`, but this may change in the future.
 -   [epm](epm.html)
 -   [math](math.html)
 -   [path](path.html)
@@ -2427,7 +2421,7 @@ imported by the `use` command:
 -   [readline-binding](readline-binding.html)
 -   [store](store.html)
 -   [str](str.html)
--   [unix](unix.html) is only available on UNIX-like platforms (see
+-   [unix](unix.html): only available on UNIX-like platforms (see
     [`$platform:is-unix`](platform.html#platform:is-unix))
 
 ### User-defined modules

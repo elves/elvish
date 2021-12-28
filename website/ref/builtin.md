@@ -8,13 +8,20 @@ The builtin module contains facilities that are potentially useful to all users.
 
 ## Using builtin: explicitly
 
-The builtin module is consulted implicitly when resolving unqualified names, so
-you usually don't need to specify `builtin:` explicitly. However, there are some
-cases where it is useful to do that:
+The builtin module is consulted implicitly when
+[resolving unqualified names](language.html#scoping-rule), and Elvish's
+namespacing mechanism makes it impossible for other modules to redefine builtin
+symbols. It's almost always sufficient (and safe) to use builtin functions and
+variables with their unqualified names.
 
--   When a builtin function is shadowed by a local function, you can still use
-    the builtin function by specifying `builtin:`. This is especially useful
-    when wrapping a builtin function:
+Nonetheless, the builtin module is also available as a
+[pre-defined module](language.html#pre-defined-modules). It can be imported with
+`use builtin`, which makes all the builtin symbols available under the
+`builtin:` namespace. This can be useful in several cases:
+
+-   To refer to a builtin function when it is shadowed locally. This is
+    especially useful when the function that shadows the builtin one is a
+    wrapper:
 
     ```elvish
     use builtin
@@ -24,7 +31,10 @@ cases where it is useful to do that:
     }
     ```
 
--   Introspecting the builtin module, for example `keys $builtin:`.
+    Note that the shadowing of `cd` is only in effect in the local lexical
+    scope.
+
+-   To introspect the builtin module, for example `keys $builtin:`.
 
 ## Usage Notation
 
@@ -40,7 +50,7 @@ Optional arguments are represented with a trailing `?`, while variadic arguments
 with a trailing `...`. For instance, the `count` command takes an optional list:
 
 ```elvish
-count $input-list?
+count $inputs?
 ```
 
 While the `put` command takes an arbitrary number of arguments:
@@ -58,29 +68,36 @@ echo &sep=' ' $value...
 
 (When you calling functions, options are always optional.)
 
-## Supplying Input
+## Commands taking value inputs {#value-inputs}
 
-Some builtin functions, e.g. `count` and `each`, can take their input in one of
-two ways:
+Most commands that take value inputs (e.g. `count`, `each`) can take the inputs
+in one of two ways:
 
-1. From pipe:
+1.  From the pipeline:
 
     ```elvish-transcript
     ~> put lorem ipsum | count # count number of inputs
     2
-    ~> put 10 100 | each [x]{ + 1 $x } # apply function to each input
-    ▶ 11
-    ▶ 101
+    ~> put 10 100 | each {|x| + 1 $x } # apply function to each input
+    ▶ (num 11)
+    ▶ (num 101)
     ```
 
-    Byte pipes are also possible; one line becomes one input:
+    If the previous command outputs bytes, one line becomes one string input, as
+    if there is an implicit [`from-lines`](#from-lines) (this behavior is
+    subject to change):
 
     ```elvish-transcript
-    ~> echo "a\nb\nc" | count # count number of lines
+    ~> print "a\nb\nc\n" | count # count number of lines
     ▶ 3
+    ~> use str
+    ~> print "a\nb\nc\n" | each $str:to-upper~ # apply to each line
+    ▶ A
+    ▶ B
+    ▶ C
     ```
 
-1. From an argument -- an iterable value:
+1.  From an argument -- an iterable value:
 
     ```elvish-transcript
     ~> count [lorem ipsum] # count number of elements in argument
@@ -90,7 +107,7 @@ two ways:
     ▶ 101
     ```
 
-    Strings, and in future, other sequence types are also possible:
+    Strings, and in future, other sequence types are also supported:
 
     ```elvish-transcript
     ~> count lorem
@@ -98,13 +115,11 @@ two ways:
     ```
 
 When documenting such commands, the optional argument is always written as
-`$input-list?`. On the other hand, a trailing `$input-list?` always indicates
-that a command can take its input in one of two ways above: this fact is not
-repeated below.
+`$inputs?`.
 
 **Note**: You should prefer the first form, unless using it requires explicit
 `put` commands. Avoid `count [(some-command)]` or
-`each $some-func [(some-command)]`; they are, most of the time, equivalent to
+`each $some-func [(some-command)]`; they are equivalent to
 `some-command | count` or `some-command | each $some-func`.
 
 **Rationale**: An alternative way to design this is to make (say) `count` take
@@ -117,7 +132,7 @@ in the argument, even if there is no file.
 
 ## Numeric commands
 
-Anywhere a command expects a number argument, that argument can be supplied
+Wherever a command expects a number argument, that argument can be supplied
 either with a [typed number](language.html#number) or a string that can be
 converted to a number. This includes numeric comparison commands like `==`.
 
@@ -145,7 +160,7 @@ integers or rationals), they will always output an exact number. Examples:
 ▶ (num 60/17)
 ```
 
-If the condition above is not satisfied - i.e. when a numeric command is not
+If the condition above is not satisfied -- i.e. when a numeric command is not
 designated exactness-preserving, or when at least one of the arguments is
 inexact (i.e. a floating-point number), the result is an inexact number, unless
 otherwise documented. Examples:
@@ -164,13 +179,7 @@ There are some cases where the result is exact despite the use of inexact
 arguments or non-exactness-preserving commands. Such cases are always documented
 in their respective commands.
 
-## Predicates
-
-Predicates are functions that write exactly one output that is either `$true` or
-`$false`. They are described like "Determine ..." or "Test ...". See [`is`](#is)
-for one example.
-
-## "Do Not Use" Functions and Variables
+## Unstable features
 
 The name of some variables and functions have a leading `-`. This is a
 convention to say that it is subject to change and should not be depended upon.

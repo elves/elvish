@@ -151,13 +151,13 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 //elvdoc:fn eawk
 //
 // ```elvish
-// eawk $f $input-list?
+// eawk $f $inputs?
 // ```
 //
-// For each input, call `$f` with the input followed by all its fields. A
-// [`break`](./builtin.html#break) command will cause `eawk` to stop processing
-// inputs. A [`continue`](./builtin.html#continue) command will exit $f, but is
-// ignored by `eawk`.
+// For each [value input](#value-inputs), calls `$f` with the input followed by
+// all its fields. A [`break`](./builtin.html#break) command will cause `eawk`
+// to stop processing inputs. A [`continue`](./builtin.html#continue) command
+// will exit $f, but is ignored by `eawk`.
 //
 // It should behave the same as the following functions:
 //

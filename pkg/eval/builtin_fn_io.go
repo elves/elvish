@@ -824,11 +824,11 @@ func fromTerminated(fm *Frame, terminator string) error {
 //elvdoc:fn to-lines
 //
 // ```elvish
-// to-lines $input?
+// to-lines $inputs?
 // ```
 //
-// Writes each value input to a separate line in the byte output. Byte input is
-// ignored.
+// Writes each [value input](#value-inputs) to a separate line in the byte
+// output. Byte input is ignored.
 //
 // ```elvish-transcript
 // ~> put a b | to-lines
@@ -861,12 +861,14 @@ func toLines(fm *Frame, inputs Inputs) error {
 //elvdoc:fn to-terminated
 //
 // ```elvish
-// to-terminated $terminator $input?
+// to-terminated $terminator $inputs?
 // ```
 //
-// Writes each value input to the byte output with the specified terminator character. Byte input is
-// ignored.  This behavior is useful, for example, when feeding output into a program that accepts
-// NUL terminated lines to avoid ambiguities if the values contains newline characters.
+// Writes each [value input](#value-inputs) to the byte output with the
+// specified terminator character. Byte input is ignored. This behavior is
+// useful, for example, when feeding output into a program that accepts NUL
+// terminated lines to avoid ambiguities if the values contains newline
+// characters.
 //
 // The `$terminator` must be a single ASCII character such as `"\x00"` (NUL).
 //

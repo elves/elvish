@@ -66,9 +66,9 @@ func nsFn(m vals.Map) (*Ns, error) {
 // make-map $input?
 // ```
 //
-// Outputs a map from an input consisting of containers with two elements. The
-// first element of each container is used as the key, and the second element is
-// used as the value.
+// Outputs a map from the [value inputs](#value-inputs), each of which must be
+// an iterable value with with two elements. The first element of each value
+// is used as the key, and the second element is used as the value.
 //
 // If the same key appears multiple times, the last value is used.
 //
