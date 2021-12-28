@@ -1,6 +1,7 @@
 package modes
 
 import (
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -157,7 +158,7 @@ func NewNavigation(app cli.App, spec NavigationSpec) (Navigation, error) {
 		return nil, err
 	}
 	if spec.Cursor == nil {
-		spec.Cursor = NewOSNavigationCursor()
+		spec.Cursor = NewOSNavigationCursor(os.Chdir)
 	}
 	if spec.WidthRatio == nil {
 		spec.WidthRatio = func() [3]int { return [3]int{1, 3, 4} }

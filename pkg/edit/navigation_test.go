@@ -145,6 +145,26 @@ func TestNavigation_EnterDoesNothingInEmptyDir(t *testing.T) {
 	)
 }
 
+func TestNavigation_UsesEvalerChdir(t *testing.T) {
+	f := setupNav(t)
+	afterChdirCalled := false
+	f.Evaler.AfterChdir = append(f.Evaler.AfterChdir, func(dir string) {
+		afterChdirCalled = true
+	})
+
+	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))
+	f.TTYCtrl.Inject(term.K(ui.Down))      // select directory "e"
+	f.TTYCtrl.Inject(term.K(ui.Right))     // mode into "e"
+	f.TTYCtrl.Inject(term.K('[', ui.Ctrl)) // quit navigation mode
+
+	f.TestTTY(t,
+		filepath.Join("~", "d", "e"), "> ", term.DotHere)
+
+	if !afterChdirCalled {
+		t.Errorf("afterChdir not called")
+	}
+}
+
 var testDir = testutil.Dir{
 	"d": testutil.Dir{
 		"a": "",
