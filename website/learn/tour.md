@@ -167,7 +167,7 @@ more.
 ## Double-quoted strings
 
 Like many non-shell programming languages and `$''` in bash, double-quoted
-strings support C-like escape sequences (e.g. `\\n` for newline):
+strings support C-like escape sequences (e.g. `\n` for newline):
 
 ```elvish-transcript
 ~> echo "foo\nbar"
