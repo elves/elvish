@@ -12,7 +12,8 @@ use the following procedure:
 2.  Add a keybinding for taking ttyshots:
 
     ```elvish
-    edit:global-binding[Alt-x] = { print (edit:-dump-buf) > ~/ttyshot.html }
+    var header = '<!-- Follow website/ttyshot/README.md to regenerate -->'
+    edit:global-binding[Alt-x] = { print $header(edit:-dump-buf) > ~/ttyshot.html }
     ```
 
 3.  Make sure that the terminal width is 58, to be consistent with existing
@@ -20,3 +21,7 @@ use the following procedure:
 
 4.  Put Elvish in the state you want, and press Alt-X. The ttyshot is saved at
     `~/ttyshot.html`.
+
+Some of the ttyshots also show the output of commands. Since `edit:-dump-buf`
+only captures the Elvish UI, you need to manually append the command output when
+updating such ttyshots.
