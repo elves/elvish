@@ -89,46 +89,57 @@ quotes (`"`). All enclosed characters represent themselves, except backslashes
 (`\`), which introduces **escape sequences**. Double quotes are not allowed
 inside double-quoted strings, except after backslashes.
 
-The following escape sequences are supported:
+The following escape sequences are supported (the
+["U+" notation](https://en.wikipedia.org/wiki/Unicode#Architecture_and_terminology)
+represents Unicode codepoints in hexadecimal):
 
--   `\cX`, where _X_ is a character with codepoint between 0x40 and 0x5F,
-    represents the codepoint that is 0x40 lower than _X_. For example, `\cI` is
-    the tab character: 0x49 (`I`) - 0x40 = 0x09 (tab). There is one special
-    case: A question-mark is converted to del; i.e., `\c?` or `\^?` is
-    equivalent to `\x7F`.
+-   The following escape sequences represent some special characters:
 
--   `\^X` is the same as `\cX`.
+    -   `\a` is U+0007 BEL (bell).
 
--   `\[0..7][0..7][0..7]` is a byte written as an octal value. There must be
-    three octal digits following the backslash. For example, `\000` is the nul
-    character, and `\101` is the same as `A`, but `\0` is an invalid escape
-    sequence (too few digits).
+    -   `\b` is U+0008 BS (backspace).
 
--   `\x..` is a Unicode code point represented by two hexadecimal digits.
+    -   `\t` is U+0009 HT (horizontal tabulation).
 
--   `\u....` is a Unicode code point represented by four hexadecimal digits.
+    -   `\n` is U+000A LF (line feed), the standard line termination character
+        on Unix.
 
--   `\U......` is a Unicode code point represented by eight hexadecimal digits.
+    -   `\v` is U+000B VT (vertical tabulation).
 
--   The following single character escape sequences:
+    -   `\f` is U+000C FF (form feed).
 
-    -   `\a` is the "bell" character, equivalent to `\007` or `\x07`.
+    -   `\r` is U+000D CR (carriage return).
 
-    -   `\b` is the "backspace" character, equivalent to `\010` or `\x08`.
+    -   `\"` is U+0022, the double quote `"` itself.
 
-    -   `\f` is the "form feed" character, equivalent to `\014` or `\x0c`.
+    -   `\\` is U+005C, the backslash `\` itself.
 
-    -   `\n` is the "new line" character, equivalent to `\012` or `\x0a`.
+-   The following escape sequences encode any Unicode codepoint using their
+    numeric values:
 
-    -   `\r` is the "carriage return" character, equivalent to `\015` or `\x0d`.
+    -   `\` followed by exactly three octal digits.
 
-    -   `\t` is the "tab" character, equivalent to `\011` or `\x09`.
+    -   `\x` followed by exactly two hexadecimal digits.
 
-    -   `\v` is the "vertical tab" character, equivalent to `\013` or `\x0b`.
+    -   `\u` followed by exactly four hexadecimal digits.
 
-    -   `\\` is the "backslash" character, equivalent to `\134` or `\x5c`.
+    -   `\U` followed by exactly eight hexadecimal digits.
 
-    -   `\"` is the "double-quote" character, equivalent to `\042` or `\x22`.
+    Example: The character `A` can be encoded as `\101`, `\x41`, `\u0041` or
+    `\U00000041`.
+
+    Note that `\0`, while supported by C, is invalid; write `\000` instead.
+
+-   The following escape sequences encode ASCII control characters with the
+    traditional [caret notation](https://en.wikipedia.org/wiki/Caret_notation):
+
+    -   `\^` followed by a single character between U+0040 and U+005F represents
+        the codepoint that is 0x40 lower than it. For example, `\^I` is the tab
+        character: 0x49 (`I`) - 0x40 = 0x09 (TAB).
+
+    -   `\^?` represents DEL (U+007F).
+
+    -   `\c` followed by character _X_ is equivalent to `\^` followed by _X_.
 
 An unsupported escape sequence results in a parse error.
 
