@@ -20,8 +20,8 @@ import (
 // Examples:
 //
 // ```elvish
-// edit:abbr['||'] = '| less'
-// edit:abbr['>dn'] = '2>/dev/null'
+// set edit:abbr['||'] = '| less'
+// set edit:abbr['>dn'] = '2>/dev/null'
 // ```
 //
 // With the definitions above, typing `||` anywhere expands to `| less`, and
@@ -54,7 +54,7 @@ import (
 // As an example, with the following configuration:
 //
 // ```elvish
-// edit:small-word-abbr['gcm'] = 'git checkout master'
+// set edit:small-word-abbr['gcm'] = 'git checkout master'
 // ```
 //
 // In the following scenarios, the `gcm` abbreviation is expanded:
@@ -81,7 +81,7 @@ import (
 // example, with the following configuration:
 //
 // ```elvish
-// edit:small-word-abbr['>dn'] = ' 2>/dev/null'
+// set edit:small-word-abbr['>dn'] = ' 2>/dev/null'
 // ```
 //
 // The abbreviation `>dn` starts with a punctuation character, and ends with an
@@ -92,8 +92,8 @@ import (
 // Some extra examples of small-word abbreviations:
 //
 // ```elvish
-// edit:small-word-abbr['gcp'] = 'git cherry-pick -x'
-// edit:small-word-abbr['ll'] = 'ls -ltr'
+// set edit:small-word-abbr['gcp'] = 'git cherry-pick -x'
+// set edit:small-word-abbr['ll'] = 'ls -ltr'
 // ```
 //
 // If both a [simple abbreviation](#edit:abbr) and a small-word abbreviation can

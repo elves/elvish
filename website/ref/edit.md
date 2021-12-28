@@ -56,16 +56,16 @@ sequences is mostly for compatibility with external cross-shell prompts.
 The default prompt and rprompt are equivalent to:
 
 ```elvish
-edit:prompt = { tilde-abbr $pwd; put '> ' }
-edit:rprompt = (constantly (styled (whoami)@(hostname) inverse))
+set edit:prompt = { tilde-abbr $pwd; put '> ' }
+set edit:rprompt = (constantly (styled (whoami)@(hostname) inverse))
 ```
 
-More prompt functions:
+Some more examples:
 
 ```elvish-transcript
 ~> edit:prompt = { tilde-abbr $pwd; styled '> ' green }
 ~> # ">" is now green
-~> edit:prompt = { echo '$' }
+~> set edit:prompt = { echo '$' }
 $
 # Cursor will be on the next line as `echo` outputs a trailing newline
 ```
@@ -92,21 +92,21 @@ output is interpreted in the same way as prompt functions. Some examples are:
 
 ```elvish
 # The following effectively disables marking of stale prompt.
-edit:prompt-stale-transform = [x]{ put $x }
+set edit:prompt-stale-transform = [x]{ put $x }
 # Show stale prompts in inverse; equivalent to the default.
-edit:prompt-stale-transform = [x]{ styled $x inverse }
+set edit:prompt-stale-transform = [x]{ styled $x inverse }
 # Gray out stale prompts.
-edit:prompt-stale-transform = [x]{ styled $x bright-black }
+set edit:prompt-stale-transform = [x]{ styled $x bright-black }
 ```
 
 To see the transformer in action, try the following example (assuming default
 `$edit:prompt-stale-transform`):
 
 ```elvish
-n = 0
-edit:prompt = { sleep 2; put $n; n = (+ $n 1); put ': ' }
-edit:-prompt-eagerness = 10 # update prompt on each keystroke
-edit:prompt-stale-threshold = 0.5
+var n = 0
+set edit:prompt = { sleep 2; put $n; n = (+ $n 1); put ': ' }
+set edit:-prompt-eagerness = 10 # update prompt on each keystroke
+set edit:prompt-stale-threshold = 0.5
 ```
 
 And then start typing. Type one character; the prompt becomes inverse after 0.5
@@ -145,7 +145,7 @@ press Enter, it is erased. If you want to keep it, simply set
 `$edit:rprompt-persistent` to `$true`:
 
 ```elvish
-edit:rprompt-persistent = $true
+set edit:rprompt-persistent = $true
 ```
 
 ## Keybindings
@@ -162,14 +162,14 @@ A binding tables is simply a map that maps keys to functions. For instance, to
 bind `Alt-x` in insert mode to exit Elvish, simply do:
 
 ```elvish
-edit:insert:binding[Alt-x] = { exit }
+set edit:insert:binding[Alt-x] = { exit }
 ```
 
 Outputs from a bound function always appear above the Elvish prompt. You can see
 this by doing the following:
 
 ```elvish
-edit:insert:binding[Alt-x] = { echo 'output from a bound function!' }
+set edit:insert:binding[Alt-x] = { echo 'output from a bound function!' }
 ```
 
 and press <span class="key">Alt-x</span> in insert mode. It allows you to put
@@ -183,7 +183,7 @@ internal tracking of the terminal state, you should also do a full redraw with
 <span class="key">Ctrl-L</span> to clearing the terminal:
 
 ```elvish
-edit:insert:binding[Ctrl-L] = { clear > /dev/tty; edit:redraw &full=$true }
+set edit:insert:binding[Ctrl-L] = { clear > /dev/tty; edit:redraw &full=$true }
 ```
 
 (The same functionality is already available as a builtin, `edit:clear`.)
@@ -198,10 +198,10 @@ names such as `x` and `Y` as well as function key names such as `Enter`.
 Key names have zero or more modifiers from the following symbols:
 
 ```
-    A  Alt
-    C  Ctrl
-    M  Meta
-    S  Shift
+A  Alt
+C  Ctrl
+M  Meta
+S  Shift
 ```
 
 Modifiers, if present, end with either a `-` or `+`; e.g., `S-F1`, `Ctrl-X` or
@@ -211,10 +211,10 @@ The key name may be a simple character such as `x` or a function key from these
 symbols:
 
 ```
-    F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11  F12
-    Up  Down  Right  Left
-    Home  Insert  Delete  End  PageUp  PageDown
-    Tab  Enter  Backspace
+F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11  F12
+Up  Down  Right  Left
+Home  Insert  Delete  End  PageUp  PageDown
+Tab  Enter  Backspace
 ```
 
 **Note:** `Tab` is an alias for `"\t"` (aka `Ctrl-I`), `Enter` for `"\n"` (aka
@@ -248,7 +248,7 @@ mode, not the target mode. For instance, if you want to be able to use
 `$edit:insert:binding[Alt-l]`:
 
 ```elvish
-edit:insert:binding[Alt-l] = { edit:location:start }
+set edit:insert:binding[Alt-l] = { edit:location:start }
 ```
 
 One tricky case is the history mode. You can press
@@ -262,8 +262,8 @@ So for instance if you want to be able to use <span class="key">Ctrl-P</span>
 for this, you need to modify both bindings:
 
 ```elvish
-edit:insert:binding[Ctrl-P] =  { edit:history:start }
-edit:history:binding[Ctrl-P] = { edit:history:up }
+set edit:insert:binding[Ctrl-P] =  { edit:history:start }
+set edit:history:binding[Ctrl-P] = { edit:history:up }
 ```
 
 ## Filter DSL
@@ -358,10 +358,10 @@ It only supports completing the `install` and `remove` command and package names
 after that:
 
 ```elvish
-all-packages = [(apt-cache search '' | eawk [0 1 @rest]{ put $1 })]
+var all-packages = [(apt-cache search '' | eawk [0 1 @rest]{ put $1 })]
 
-edit:completion:arg-completer[apt] = [@args]{
-    n = (count $args)
+set edit:completion:arg-completer[apt] = {|@args|
+    var n = (count $args)
     if (== $n 2) {
         # apt x<Tab> -- complete a subcommand name
         put install uninstall
@@ -381,13 +381,13 @@ fn all-git-branches {
     git branch -a --format="%(refname:strip=2)" | eawk [0 1 @rest]{ put $1 }
 }
 
-common-git-commands = [
+var common-git-commands = [
   add branch checkout clone commit diff init log merge
   pull push rebase reset revert show stash status
 ]
 
-edit:arg-completer[git] = [@args]{
-    n = (count $args)
+set edit:arg-completer[git] = {|@args|
+    var n = (count $args)
     if (== $n 2) {
         put $@common-git-commands
     } elif (>= $n 3) {
@@ -417,7 +417,7 @@ As an example, the following code configures a prefix matcher for all completion
 types:
 
 ```elvish
-edit:completion:matcher[''] = [seed]{ each [cand]{ has-prefix $cand $seed } }
+set edit:completion:matcher[''] = {|seed| each [cand]{ has-prefix $cand $seed } }
 ```
 
 Elvish provides three builtin matchers, `edit:match-prefix`, `edit:match-substr`
@@ -426,7 +426,7 @@ accept two options `&ignore-case` and `&smart-case`. For example, if you want
 completion of arguments to use prefix matching and ignore case, use:
 
 ```elvish
-edit:completion:matcher[argument] = [seed]{ edit:match-prefix $seed &ignore-case=$true }
+set edit:completion:matcher[argument] = {|seed| edit:match-prefix $seed &ignore-case=$true }
 ```
 
 The default value of `$edit:completion:matcher` is `[&''=$edit:match-prefix~]`,
@@ -463,9 +463,9 @@ These are the editor/REPL hooks:
 Example usage:
 
 ```elvish
-edit:before-readline = [{ echo 'going to read' }]
-edit:after-readline = [[line]{ echo 'just read '$line }]
-edit:after-command = [[m]{ echo 'command took '$m[duration]' seconds' }]
+set edit:before-readline = [{ echo 'going to read' }]
+set edit:after-readline = [{|line| echo 'just read '$line }]
+set edit:after-command = [{|m| echo 'command took '$m[duration]' seconds' }]
 ```
 
 Given the above hooks...
