@@ -559,17 +559,6 @@ options. To do so, write a signature list. Here is an example:
 ▶ lorem
 ```
 
-There must be no space between `]` and `{`; otherwise Elvish will parse the
-signature as a list, followed by a lambda without signature:
-
-```elvish-transcript
-~> put {|a| nop }
-▶ <closure 0xc420153d80>
-~> put [a] { nop }
-▶ [a]
-▶ <closure 0xc42004a480>
-```
-
 Like in the left hand of assignments, if you prefix one of the arguments with
 `@`, it becomes a **rest argument**, and its value is a list containing all the
 remaining arguments:
