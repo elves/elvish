@@ -12,19 +12,15 @@
 # care if the files are modified. If not, just list the pathnames that need to
 # be reformatted without actually modifying those files.
 
-if test "$CI" = ""
-then
+if test "$CI" = ""; then
     echo 'Markdown files that need changes:'
     ! find . -name '*.md' |
-        xargs prettier --tab-width 4 --prose-wrap always --list-different |
+        xargs prettier --list-different |
         sed 's/^/  /' | grep . && echo '  None!'
 else
     echo 'Markdown files need these changes:'
-    if ! find . -name '*.md' |
-        xargs prettier --tab-width 4 --prose-wrap always --check >/dev/null
-    then
-        find . -name '*.md' |
-            xargs prettier --tab-width 4 --prose-wrap always --write >/dev/null
+    if ! find . -name '*.md' | xargs prettier --check >/dev/null; then
+        find . -name '*.md' | xargs prettier --write >/dev/null
         find . -name '*.md' | xargs git diff
         exit 1
     fi

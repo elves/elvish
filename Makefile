@@ -40,7 +40,7 @@ cover:
 style:
 	find . -name '*.go' | xargs goimports -w
 	find . -name '*.go' | xargs gofmt -s -w
-	find . -name '*.md' | xargs prettier --tab-width 4 --prose-wrap always --write
+	find . -name '*.md' | xargs prettier --write
 
 # Check if the style of the Go and Markdown files is correct without modifying
 # those files.
