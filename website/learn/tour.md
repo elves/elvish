@@ -825,7 +825,7 @@ Basic operations should be quite intuitive:
 
 -   To accept the selected candidate, press <span class="key">Enter</span>.
 
--   To cancel, press <span class="key">Escape.</span>
+-   To cancel, press <span class="key">Escape</span>.
 
 As indicated by the horizontal scrollbar, you can scroll to the right to find
 additional results that don't fit in the terminal.
