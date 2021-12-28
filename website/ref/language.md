@@ -159,8 +159,8 @@ parsed as [metacharacters](#metacharacters).
 
 **Note**: since the backslash (`\`) is a valid bareword character in Elvish, it
 cannot be used to escape metacharacter. Use quotes instead: for example, to echo
-a star, write `echo "*"` or `echo '*'`, not `echo \*`. The last command just
-writes out `\*`.
+a star, write `echo "*"` or `echo '*'`, not `echo \*`. The last command will try
+to output filenames starting with `\`.
 
 # Value types
 
