@@ -9,6 +9,7 @@ import (
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 
+	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/testutil"
@@ -25,6 +26,15 @@ func TestConstantly(t *testing.T) {
 	Test(t,
 		That(`f = (constantly foo); $f; $f`).Puts("foo", "foo"),
 		thatOutputErrorIsBubbled("(constantly foo)"),
+	)
+}
+
+func TestCallCommand(t *testing.T) {
+	Test(t,
+		That(`call {|arg &opt=v| put $arg $opt } [foo] [&opt=bar]`).
+			Puts("foo", "bar"),
+		That(`call { } [foo] [&[]=bar]`).
+			Throws(errs.BadValue{What: "option key", Valid: "string", Actual: "list"}),
 	)
 }
 

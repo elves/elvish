@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/parse"
 )
@@ -29,6 +30,8 @@ func init() {
 		"nop":        nop,
 		"kind-of":    kindOf,
 		"constantly": constantly,
+
+		"call": call,
 
 		"resolve": resolve,
 
@@ -146,6 +149,43 @@ func constantly(args ...interface{}) Callable {
 			return nil
 		},
 	)
+}
+
+//elvdoc:fn -call
+//
+// ```elvish
+// call $fn $args $opts
+// ```
+//
+// Calls `$fn` with `$args` as the arguments, and `$opts` as the option. Useful
+// for calling a function with dynamic option keys.
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> var f = {|a &k1=v1 &k2=v2| put $a $k1 $k2 }
+// ~> call $f [foo] [&k1=bar]
+// ▶ foo
+// ▶ bar
+// ▶ v2
+// ```
+
+func call(fm *Frame, fn Callable, argsVal vals.List, optsVal vals.Map) error {
+	args := make([]interface{}, 0, argsVal.Len())
+	for it := argsVal.Iterator(); it.HasElem(); it.Next() {
+		args = append(args, it.Elem())
+	}
+	opts := make(map[string]interface{}, optsVal.Len())
+	for it := optsVal.Iterator(); it.HasElem(); it.Next() {
+		k, v := it.Elem()
+		ks, ok := k.(string)
+		if !ok {
+			return errs.BadValue{What: "option key",
+				Valid: "string", Actual: vals.Kind(k)}
+		}
+		opts[ks] = v
+	}
+	return fn.Call(fm.fork("-call"), args, opts)
 }
 
 //elvdoc:fn resolve
