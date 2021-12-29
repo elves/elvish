@@ -7,26 +7,29 @@ import (
 	"reflect"
 	"strconv"
 	"unicode/utf8"
+
+	"src.elv.sh/pkg/eval/errs"
 )
 
-// Conversion between native and Elvish values.
+// Conversion between "Go values" (those expected by native Go functions) and
+// "Elvish values" (those participating in the Elvish runtime).
 //
-// Elvish uses native Go types most of the time - string, bool, hashmap.Map,
-// vector.Vector, etc., and there is no need for any conversions. There are some
-// exceptions, for instance int and rune, since Elvish currently lacks integer
-// types.
+// Among the conversion functions, ScanToGo and FromGo implement the implicit
+// conversion used when calling native Go functions from Elvish. The API is
+// asymmetric; this has to do with two characteristics of Elvish's type system:
 //
-// There is a many-to-one relationship between Go types and Elvish types. A
-// Go value can always be converted to an Elvish value unambiguously, but to
-// convert an Elvish value into a Go value one must know the destination type
-// first. For example, all of the Go values int(1), rune('1') and string("1")
-// convert to Elvish "1"; conversely, Elvish "1" may be converted to any of the
-// aforementioned three possible values, depending on the destination type.
+// - Elvish doesn't have a dedicated rune type and uses strings to represent
+//   them.
 //
-// In future, Elvish may gain distinct types for integers and characters, making
-// the examples above unnecessary; however, the conversion logic may not
-// entirely go away, as there might always be some mismatch between Elvish's
-// type system and Go's.
+// - Elvish permits using strings that look like numbers in place of numbers.
+//
+// As a result, while FromGo can always convert a "Go value" to an "Elvish
+// value" unambiguously, ScanToGo can't do that in the opposite direction.
+// For example, "1" may be converted into "1", '1' or 1, depending on what
+// the destination type is, and the process may fail. Thus ScanToGo takes the
+// pointer to the destination as an argument, and returns an error.
+//
+// The rest of the conversion functions need to explicitly invoked.
 
 // WrongType is returned by ScanToGo if the source value doesn't have a
 // compatible type.
@@ -57,12 +60,13 @@ var (
 	errMustBeInteger      = errors.New("must be integer")
 )
 
-// ScanToGo converts an Elvish value to a Go value that the pointer refers to. It
-// uses the type of the pointer to determine the destination type, and puts the
-// converted value in the location the pointer points to. Conversion only
-// happens when the destination type is int, float64 or rune; in other cases,
-// this function just checks that the source value is already assignable to the
-// destination.
+// ScanToGo converts an Elvish value, and stores it in the destination of ptr,
+// which must be a pointer.
+//
+// If ptr has type *int, *float64, *Num or *rune, it performs a suitable
+// conversion, and returns an error if the conversion fails. In other cases,
+// this function just tries to perform "*ptr = src" via reflection and returns
+// an error if the assignment can't be done.
 func ScanToGo(src interface{}, ptr interface{}) error {
 	switch ptr := ptr.(type) {
 	case *int:
@@ -110,23 +114,6 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 	}
 }
 
-// FromGo converts a Go value to an Elvish value. Most types are returned as
-// is, but exact numerical types are normalized to one of int, *big.Int and
-// *big.Rat, using the small representation that can hold the value, and runes
-// are converted to strings.
-func FromGo(a interface{}) interface{} {
-	switch a := a.(type) {
-	case *big.Int:
-		return NormalizeBigInt(a)
-	case *big.Rat:
-		return NormalizeBigRat(a)
-	case rune:
-		return string(a)
-	default:
-		return a
-	}
-}
-
 func elvToInt(arg interface{}) (int, error) {
 	switch arg := arg.(type) {
 	case int:
@@ -171,4 +158,76 @@ func elvToRune(arg interface{}) (rune, error) {
 		return -1, errMustHaveSingleRune
 	}
 	return r, nil
+}
+
+// ScanListToGo converts a List to a slice, using ScanToGo to convert each
+// element.
+func ScanListToGo(src List, ptr interface{}) error {
+	n := src.Len()
+	values := reflect.MakeSlice(reflect.TypeOf(ptr).Elem(), n, n)
+	i := 0
+	for it := src.Iterator(); it.HasElem(); it.Next() {
+		err := ScanToGo(it.Elem(), values.Index(i).Addr().Interface())
+		if err != nil {
+			return err
+		}
+		i++
+	}
+	reflect.ValueOf(ptr).Elem().Set(values)
+	return nil
+}
+
+// Optional wraps the last pointer passed to ScanListElementsToGo, to indicate
+// that it is optional.
+func Optional(ptr interface{}) interface{} { return optional{ptr} }
+
+type optional struct{ ptr interface{} }
+
+// ScanListElementsToGo unpacks elements from a list, storing the each element
+// in the given pointers with ScanToGo.
+//
+// The last pointer may be wrapped with Optional to indicate that it is
+// optional.
+func ScanListElementsToGo(src List, ptrs ...interface{}) error {
+	if o, ok := ptrs[len(ptrs)-1].(optional); ok {
+		switch src.Len() {
+		case len(ptrs) - 1:
+			ptrs = ptrs[:len(ptrs)-1]
+		case len(ptrs):
+			ptrs[len(ptrs)-1] = o.ptr
+		default:
+			return errs.ArityMismatch{What: "list elements",
+				ValidLow: len(ptrs) - 1, ValidHigh: len(ptrs), Actual: src.Len()}
+		}
+	} else if src.Len() != len(ptrs) {
+		return errs.ArityMismatch{What: "list elements",
+			ValidLow: len(ptrs), ValidHigh: len(ptrs), Actual: src.Len()}
+	}
+
+	i := 0
+	for it := src.Iterator(); it.HasElem(); it.Next() {
+		err := ScanToGo(it.Elem(), ptrs[i])
+		if err != nil {
+			return err
+		}
+		i++
+	}
+	return nil
+}
+
+// FromGo converts a Go value to an Elvish value.
+//
+// Exact numbers are normalized to the smallest types that can hold them, and
+// runes are converted to strings. Values of other types are returned unchanged.
+func FromGo(a interface{}) interface{} {
+	switch a := a.(type) {
+	case *big.Int:
+		return NormalizeBigInt(a)
+	case *big.Rat:
+		return NormalizeBigRat(a)
+	case rune:
+		return string(a)
+	default:
+		return a
+	}
 }

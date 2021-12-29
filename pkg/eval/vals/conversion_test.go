@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/tt"
 )
 
@@ -97,6 +98,65 @@ func TestScanToGo_ErrorsWithNonPointerDst(t *testing.T) {
 	if err == nil {
 		t.Errorf("did not return error")
 	}
+}
+
+func TestScanListToGo(t *testing.T) {
+	// A wrapper around ScanListToGo, to make it easier to test.
+	scanListToGo := func(src List, dstInit interface{}) (interface{}, error) {
+		ptr := reflect.New(TypeOf(dstInit))
+		ptr.Elem().Set(reflect.ValueOf(dstInit))
+		err := ScanListToGo(src, ptr.Interface())
+		return ptr.Elem().Interface(), err
+	}
+
+	Test(t, Fn("ScanListToGo", scanListToGo), Table{
+		Args(MakeList("1", "2"), []int{}).Rets([]int{1, 2}),
+		Args(MakeList("1", "2"), []string{}).Rets([]string{"1", "2"}),
+
+		Args(MakeList("1", "a"), []int{}).Rets([]int{}, cannotParseAs{"integer", "a"}),
+	})
+}
+
+func TestScanListElementsToGo(t *testing.T) {
+	// A wrapper around ScanListElementsToGo, to make it easier to test.
+	scanListElementsToGo := func(src List, inits ...interface{}) ([]interface{}, error) {
+		ptrs := make([]interface{}, len(inits))
+		for i, init := range inits {
+			if o, ok := init.(optional); ok {
+				// Wrapping the init value with Optional translates to wrapping
+				// the pointer with Optional.
+				ptrs[i] = Optional(reflect.New(TypeOf(o.ptr)).Interface())
+			} else {
+				ptrs[i] = reflect.New(TypeOf(init)).Interface()
+			}
+		}
+		err := ScanListElementsToGo(src, ptrs...)
+		vals := make([]interface{}, len(ptrs))
+		for i, ptr := range ptrs {
+			if o, ok := ptr.(optional); ok {
+				vals[i] = reflect.ValueOf(o.ptr).Elem().Interface()
+			} else {
+				vals[i] = reflect.ValueOf(ptr).Elem().Interface()
+			}
+		}
+		return vals, err
+	}
+
+	Test(t, Fn("ScanListElementsToGo", scanListElementsToGo), Table{
+		Args(MakeList("1", "2"), 0, 0).Rets([]interface{}{1, 2}),
+		Args(MakeList("1", "2"), "", "").Rets([]interface{}{"1", "2"}),
+		Args(MakeList("1", "2"), 0, Optional(0)).Rets([]interface{}{1, 2}),
+		Args(MakeList("1"), 0, Optional(0)).Rets([]interface{}{1, 0}),
+
+		Args(MakeList("a"), 0).Rets([]interface{}{0},
+			cannotParseAs{"integer", "a"}),
+		Args(MakeList("1"), 0, 0).Rets([]interface{}{0, 0},
+			errs.ArityMismatch{What: "list elements",
+				ValidLow: 2, ValidHigh: 2, Actual: 1}),
+		Args(MakeList("1"), 0, 0, Optional(0)).Rets([]interface{}{0, 0, 0},
+			errs.ArityMismatch{What: "list elements",
+				ValidLow: 2, ValidHigh: 3, Actual: 1}),
+	})
 }
 
 func TestFromGo(t *testing.T) {
