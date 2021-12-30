@@ -22,6 +22,10 @@ name = "epm"
 title = "epm: The Elvish Package Manager"
 
 [[articles]]
+name = "flag"
+title = "flag: Command-line flag parsing"
+
+[[articles]]
 name = "file"
 title = "file: File Utilities"
 

@@ -5,6 +5,7 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/mods/epm"
 	"src.elv.sh/pkg/mods/file"
+	"src.elv.sh/pkg/mods/flag"
 	"src.elv.sh/pkg/mods/math"
 	"src.elv.sh/pkg/mods/path"
 	"src.elv.sh/pkg/mods/platform"
@@ -22,6 +23,7 @@ func AddTo(ev *eval.Evaler) {
 	ev.AddModule("re", re.Ns)
 	ev.AddModule("str", str.Ns)
 	ev.AddModule("file", file.Ns)
+	ev.AddModule("flag", flag.Ns)
 	if unix.ExposeUnixNs {
 		ev.AddModule("unix", unix.Ns)
 	}

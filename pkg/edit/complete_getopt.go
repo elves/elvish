@@ -90,6 +90,8 @@ import (
 // ▶ second1
 // ▶ second2
 // ```
+//
+// @cf flag:parse-getopt
 
 func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) error {
 	args, err := parseGetoptArgs(vArgs)
