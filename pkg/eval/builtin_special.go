@@ -487,13 +487,13 @@ func compileIf(cp *compiler, fn *parse.Form) effectOp {
 	condLeader := "if"
 	for {
 		condNodes = append(condNodes, args.next())
-		bodyNodes = append(bodyNodes, args.nextMustLambda(condLeader))
+		bodyNodes = append(bodyNodes, args.nextMustThunk(condLeader))
 		if !args.nextIs("elif") {
 			break
 		}
 		condLeader = "elif"
 	}
-	elseNode := args.nextMustLambdaIfAfter("else")
+	elseNode := args.nextMustThunkIfAfter("else")
 	args.mustEnd()
 
 	condOps := cp.compoundOps(condNodes)
@@ -537,8 +537,8 @@ func (op *ifOp) exec(fm *Frame) Exception {
 func compileWhile(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	condNode := args.next()
-	bodyNode := args.nextMustLambda("while body")
-	elseNode := args.nextMustLambdaIfAfter("else")
+	bodyNode := args.nextMustThunk("while body")
+	elseNode := args.nextMustThunkIfAfter("else")
 	args.mustEnd()
 
 	condOp := cp.compoundOp(condNode)
@@ -593,8 +593,8 @@ func compileFor(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	varNode := args.next()
 	iterNode := args.next()
-	bodyNode := args.nextMustLambda("for body")
-	elseNode := args.nextMustLambdaIfAfter("else")
+	bodyNode := args.nextMustThunk("for body")
+	elseNode := args.nextMustThunkIfAfter("else")
 	args.mustEnd()
 
 	lvalue := cp.compileOneLValue(varNode, setLValue|newLValue)
@@ -669,7 +669,7 @@ func (op *forOp) exec(fm *Frame) Exception {
 func compileTry(cp *compiler, fn *parse.Form) effectOp {
 	logger.Println("compiling try")
 	args := cp.walkArgs(fn)
-	bodyNode := args.nextMustLambda("try body")
+	bodyNode := args.nextMustThunk("try body")
 	logger.Printf("body is %q", parse.SourceText(bodyNode))
 	var exceptVarNode *parse.Compound
 	var exceptNode *parse.Primary
@@ -681,10 +681,10 @@ func compileTry(cp *compiler, fn *parse.Form) effectOp {
 			exceptVarNode = n
 			args.next()
 		}
-		exceptNode = args.nextMustLambda("except body")
+		exceptNode = args.nextMustThunk("except body")
 	}
-	elseNode := args.nextMustLambdaIfAfter("else")
-	finallyNode := args.nextMustLambdaIfAfter("finally")
+	elseNode := args.nextMustThunkIfAfter("else")
+	finallyNode := args.nextMustThunkIfAfter("finally")
 	args.mustEnd()
 
 	var exceptVar lvalue

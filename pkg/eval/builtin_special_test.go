@@ -238,6 +238,16 @@ func TestCoalesce(t *testing.T) {
 	)
 }
 
+func TestSpecialFormThunks(t *testing.T) {
+	// Regression test for b.elv.sh/1456
+	Test(t,
+		That("for x [] {|arg| }").DoesNotCompile(),
+		That("for x [] {|&opt=val| }").DoesNotCompile(),
+		// The other special forms use the same utility under the hood and are
+		// not repeated
+	)
+}
+
 func TestIf(t *testing.T) {
 	Test(t,
 		That("if true { put then }").Puts("then"),

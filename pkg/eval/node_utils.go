@@ -69,7 +69,20 @@ func (aw *argsWalker) nextMustLambda(what string) *parse.Primary {
 	return pn
 }
 
-func (aw *argsWalker) nextMustLambdaIfAfter(leader string) *parse.Primary {
+// nextMustThunk fetches the next argument, raising an error if it is not a
+// thunk.
+func (aw *argsWalker) nextMustThunk(what string) *parse.Primary {
+	n := aw.nextMustLambda(what)
+	if len(n.Elements) > 0 {
+		aw.cp.errorpf(n, "%s must not have arguments", what)
+	}
+	if len(n.MapPairs) > 0 {
+		aw.cp.errorpf(n, "%s must not have options", what)
+	}
+	return n
+}
+
+func (aw *argsWalker) nextMustThunkIfAfter(leader string) *parse.Primary {
 	if aw.nextIs(leader) {
 		return aw.nextMustLambda(leader + " body")
 	}
