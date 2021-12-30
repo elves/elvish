@@ -186,9 +186,9 @@ type closureFields struct{ c *closure }
 
 func (closureFields) IsStructMap() {}
 
-func (cf closureFields) ArgNames() vals.List { return listOfStrings(cf.c.ArgNames) }
+func (cf closureFields) ArgNames() vals.List { return vals.MakeListFromStrings(cf.c.ArgNames...) }
 func (cf closureFields) RestArg() string     { return strconv.Itoa(cf.c.RestArg) }
-func (cf closureFields) OptNames() vals.List { return listOfStrings(cf.c.OptNames) }
+func (cf closureFields) OptNames() vals.List { return vals.MakeListFromStrings(cf.c.OptNames...) }
 func (cf closureFields) Src() parse.Source   { return cf.c.SrcMeta }
 
 func (cf closureFields) OptDefaults() vals.List {
@@ -202,12 +202,4 @@ func (cf closureFields) Body() string {
 
 func (cf closureFields) Def() string {
 	return cf.c.SrcMeta.Code[cf.c.DefRange.From:cf.c.DefRange.To]
-}
-
-func listOfStrings(ss []string) vals.List {
-	list := vals.EmptyList
-	for _, s := range ss {
-		list = list.Cons(s)
-	}
-	return list
 }

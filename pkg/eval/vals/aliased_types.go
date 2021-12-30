@@ -25,6 +25,15 @@ func MakeList(vs ...interface{}) vector.Vector {
 	return vec
 }
 
+// MakeListFromStrings creates a new List from strings.
+func MakeListFromStrings(ss ...string) vector.Vector {
+	vec := vector.Empty
+	for _, s := range ss {
+		vec = vec.Cons(s)
+	}
+	return vec
+}
+
 // Map is an alias for the underlying type used for maps in Elvish.
 type Map = hashmap.Map
 

@@ -280,7 +280,7 @@ func (ev *Evaler) addNumBgJobs(delta int) {
 // the given slice. This method must be called before the Evaler is used to
 // evaluate any code.
 func (ev *Evaler) SetArgs(args []string) {
-	ev.Args = listOfStrings(args)
+	ev.Args = vals.MakeListFromStrings(args...)
 }
 
 // AddBeforeChdir adds a function to run before changing directory. This method
