@@ -18,9 +18,9 @@ var testDir = testutil.Dir{
 	"d": testutil.Dir{
 		"d1": "content\td1\nline 2",
 		"d2": testutil.Dir{
-			"d21":     "content d21",
-			"d22":     "content d22",
-			"d23.png": "",
+			"d21":       "content d21",
+			"d22":       "content d22",
+			"other.png": "",
 		},
 		"d3":  testutil.Dir{},
 		".dh": "hidden",
@@ -213,7 +213,7 @@ func testNavigation(t *testing.T, c NavigationCursor) {
 		"                    ++++++++++++++++++++",
 		" d    d2             d22                \n", Styles,
 		"#### ##############",
-		" f    d3             d23.png            ", Styles,
+		" f    d3             other.png          ", Styles,
 		"     ////////////// !!!!!!!!!!!!!!!!!!!!",
 	)
 	f.TTY.TestBuffer(t, d2Buf)
@@ -229,7 +229,7 @@ func testNavigation(t *testing.T, c NavigationCursor) {
 		"     ++++++++++++++",
 		" d2   d22          \n", Styles,
 		"####",
-		" d3   d23.png      ", Styles,
+		" d3   other.png    ", Styles,
 		"//// !!!!!!!!!!!!!!",
 	)
 	f.TTY.TestBuffer(t, d21Buf)
@@ -267,24 +267,51 @@ func testNavigation(t *testing.T, c NavigationCursor) {
 	)
 	w.MutateShowHidden(func(bool) bool { return false })
 
-	// Test filtering; current column shows d1, d2, d3 before filtering.
+	// Test filtering; current column shows d1, d2, d3 before filtering, and
+	// only shows d2 after filtering.
 	w.MutateFiltering(func(bool) bool { return true })
-	f.TTY.Inject(term.K('3'))
+	f.TTY.Inject(term.K('2'))
 	f.TestTTY(t,
 		"\n",
-		" NAVIGATING  3", Styles,
+		" NAVIGATING  2", Styles,
 		"************  ", term.DotHere, "\n",
-		" a    d3            \n", Styles,
-		"     ##############",
-		" d  \n", Styles,
+		" a    d2             d21                \n", Styles,
+		"     ############## ++++++++++++++++++++",
+		" d                   d22                \n", Styles,
 		"####",
-		" f  ",
+		" f                   other.png          ", Styles,
+		"                    !!!!!!!!!!!!!!!!!!!!",
 	)
 	w.MutateFiltering(func(bool) bool { return false })
 
-	// Now move into d3, an empty directory. Test that the filter has been
-	// cleared.
-	w.Select(tk.Next)
+	// Now move into d2, and test that the filter has been cleared when
+	// descending.
+	w.Descend()
+	f.App.Redraw()
+	f.TTY.TestBuffer(t, d21Buf)
+
+	// Apply a filter within d2.
+	w.MutateFiltering(func(bool) bool { return true })
+	f.TTY.Inject(term.K('2'))
+	f.TestTTY(t,
+		"\n",
+		" NAVIGATING  2", Styles,
+		"************  ", term.DotHere, "\n",
+		" d1   d21           content d21\n", Styles,
+		"     ++++++++++++++",
+		" d2   d22          \n", Styles,
+		"####",
+		" d3 ", Styles,
+		"////",
+	)
+	w.MutateFiltering(func(bool) bool { return false })
+
+	// Ascend, and test that the filter has been cleared again when ascending.
+	w.Ascend()
+	f.App.Redraw()
+	f.TTY.TestBuffer(t, d2Buf)
+
+	// Now move into d3, an empty directory.
 	w.Select(tk.Next)
 	w.Descend()
 	f.App.Redraw()

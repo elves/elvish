@@ -123,6 +123,7 @@ func (w *navigation) ascend() {
 		w.codeArea.MutateState(func(s *tk.CodeAreaState) {
 			s.Buffer = tk.CodeBuffer{}
 		})
+		w.lastFilter = ""
 		updateState(w, currentName)
 	}
 }
@@ -147,6 +148,7 @@ func (w *navigation) descend() {
 		w.codeArea.MutateState(func(s *tk.CodeAreaState) {
 			s.Buffer = tk.CodeBuffer{}
 		})
+		w.lastFilter = ""
 		updateState(w, "")
 	}
 }
