@@ -468,7 +468,7 @@ func (op *lambdaOp) exec(fm *Frame) ([]interface{}, Exception) {
 		}
 		optDefaults[i] = defaultValue
 	}
-	return []interface{}{&closure{op.argNames, op.restArg, op.optNames, optDefaults, op.subop, op.newLocal, capture, op.srcMeta, op.Range()}}, nil
+	return []interface{}{&Closure{op.argNames, op.restArg, op.optNames, optDefaults, op.srcMeta, op.Range(), op.subop, op.newLocal, capture}}, nil
 }
 
 type mapOp struct {

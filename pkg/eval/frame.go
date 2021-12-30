@@ -154,9 +154,9 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 	}
 }
 
-// fork returns a modified copy of ec. The ports are forked, and the name is
+// Fork returns a modified copy of fm. The ports are forked, and the name is
 // changed to the given value. Other fields are copied shallowly.
-func (fm *Frame) fork(name string) *Frame {
+func (fm *Frame) Fork(name string) *Frame {
 	newPorts := make([]*Port, len(fm.ports))
 	for i, p := range fm.ports {
 		if p != nil {
@@ -173,7 +173,7 @@ func (fm *Frame) fork(name string) *Frame {
 
 // A shorthand for forking a frame and setting the output port.
 func (fm *Frame) forkWithOutput(name string, p *Port) *Frame {
-	newFm := fm.fork(name)
+	newFm := fm.Fork(name)
 	newFm.ports[1] = p
 	return newFm
 }

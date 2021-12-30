@@ -185,7 +185,7 @@ func call(fm *Frame, fn Callable, argsVal vals.List, optsVal vals.Map) error {
 		}
 		opts[ks] = v
 	}
-	return fn.Call(fm.fork("-call"), args, opts)
+	return fn.Call(fm.Fork("-call"), args, opts)
 }
 
 //elvdoc:fn resolve
@@ -294,7 +294,7 @@ func eval(fm *Frame, opts evalOpts, code string) error {
 	// nil as the second argument.
 	newNs, exc := fm.Eval(src, nil, ns)
 	if opts.OnEnd != nil {
-		newFm := fm.fork("on-end callback of eval")
+		newFm := fm.Fork("on-end callback of eval")
 		errCb := opts.OnEnd.Call(newFm, []interface{}{newNs}, NoOpts)
 		if exc == nil {
 			return errCb
@@ -518,7 +518,7 @@ func timeCmd(fm *Frame, opts timeOpt, f Callable) error {
 
 	dt := t1.Sub(t0)
 	if opts.OnEnd != nil {
-		newFm := fm.fork("on-end callback of time")
+		newFm := fm.Fork("on-end callback of time")
 		errCb := opts.OnEnd.Call(newFm, []interface{}{dt.Seconds()}, NoOpts)
 		if err == nil {
 			err = errCb

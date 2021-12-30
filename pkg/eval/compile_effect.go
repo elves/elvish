@@ -72,7 +72,7 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 	}
 
 	if op.bg {
-		fm = fm.fork("background job" + op.source)
+		fm = fm.Fork("background job" + op.source)
 		fm.intCh = nil
 		fm.background = true
 		fm.Evaler.addNumBgJobs(1)
@@ -88,7 +88,7 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 
 	// For each form, create a dedicated evalCtx and run asynchronously
 	for i, formOp := range op.subops {
-		newFm := fm.fork("[form op]")
+		newFm := fm.Fork("[form op]")
 		inputIsPipe := i > 0
 		outputIsPipe := i < nforms-1
 		if inputIsPipe {

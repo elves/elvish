@@ -252,8 +252,8 @@ func (op fnOp) exec(fm *Frame) Exception {
 	if exc != nil {
 		return exc
 	}
-	c := values[0].(*closure)
-	c.Op = fnWrap{c.Op}
+	c := values[0].(*Closure)
+	c.op = fnWrap{c.op}
 	return fm.errorp(op.keywordRange, fm.local.slots[op.varIndex].Set(c))
 }
 
@@ -520,16 +520,16 @@ func (op *ifOp) exec(fm *Frame) Exception {
 	}
 	elseFn := execLambdaOp(fm, op.elseOp)
 	for i, condOp := range op.condOps {
-		condValues, exc := condOp.exec(fm.fork("if cond"))
+		condValues, exc := condOp.exec(fm.Fork("if cond"))
 		if exc != nil {
 			return exc
 		}
 		if allTrue(condValues) {
-			return fm.errorp(op, bodies[i].Call(fm.fork("if body"), NoArgs, NoOpts))
+			return fm.errorp(op, bodies[i].Call(fm.Fork("if body"), NoArgs, NoOpts))
 		}
 	}
 	if op.elseOp != nil {
-		return fm.errorp(op, elseFn.Call(fm.fork("if else"), NoArgs, NoOpts))
+		return fm.errorp(op, elseFn.Call(fm.Fork("if else"), NoArgs, NoOpts))
 	}
 	return nil
 }
@@ -562,7 +562,7 @@ func (op *whileOp) exec(fm *Frame) Exception {
 
 	iterated := false
 	for {
-		condValues, exc := op.condOp.exec(fm.fork("while cond"))
+		condValues, exc := op.condOp.exec(fm.Fork("while cond"))
 		if exc != nil {
 			return exc
 		}
@@ -570,7 +570,7 @@ func (op *whileOp) exec(fm *Frame) Exception {
 			break
 		}
 		iterated = true
-		err := body.Call(fm.fork("while"), NoArgs, NoOpts)
+		err := body.Call(fm.Fork("while"), NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(Exception)
 			if exc.Reason() == Continue {
@@ -584,7 +584,7 @@ func (op *whileOp) exec(fm *Frame) Exception {
 	}
 
 	if op.elseOp != nil && !iterated {
-		return fm.errorp(op, elseBody.Call(fm.fork("while else"), NoArgs, NoOpts))
+		return fm.errorp(op, elseBody.Call(fm.Fork("while else"), NoArgs, NoOpts))
 	}
 	return nil
 }
@@ -639,7 +639,7 @@ func (op *forOp) exec(fm *Frame) Exception {
 			errElement = err
 			return false
 		}
-		err = body.Call(fm.fork("for"), NoArgs, NoOpts)
+		err = body.Call(fm.Fork("for"), NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(Exception)
 			if exc.Reason() == Continue {
@@ -661,7 +661,7 @@ func (op *forOp) exec(fm *Frame) Exception {
 	}
 
 	if !iterated && elseBody != nil {
-		return fm.errorp(op, elseBody.Call(fm.fork("for else"), NoArgs, NoOpts))
+		return fm.errorp(op, elseBody.Call(fm.Fork("for else"), NoArgs, NoOpts))
 	}
 	return nil
 }
@@ -729,7 +729,7 @@ func (op *tryOp) exec(fm *Frame) Exception {
 	elseFn := execLambdaOp(fm, op.elseOp)
 	finally := execLambdaOp(fm, op.finallyOp)
 
-	err := body.Call(fm.fork("try body"), NoArgs, NoOpts)
+	err := body.Call(fm.Fork("try body"), NoArgs, NoOpts)
 	if err != nil {
 		if except != nil {
 			if exceptVar != nil {
@@ -738,15 +738,15 @@ func (op *tryOp) exec(fm *Frame) Exception {
 					return fm.errorp(op.exceptVar, err)
 				}
 			}
-			err = except.Call(fm.fork("try except"), NoArgs, NoOpts)
+			err = except.Call(fm.Fork("try except"), NoArgs, NoOpts)
 		}
 	} else {
 		if elseFn != nil {
-			err = elseFn.Call(fm.fork("try else"), NoArgs, NoOpts)
+			err = elseFn.Call(fm.Fork("try else"), NoArgs, NoOpts)
 		}
 	}
 	if finally != nil {
-		errFinally := finally.Call(fm.fork("try finally"), NoArgs, NoOpts)
+		errFinally := finally.Call(fm.Fork("try finally"), NoArgs, NoOpts)
 		if errFinally != nil {
 			// TODO: If err is not nil, this discards err. Use something similar
 			// to pipeline exception to expose both.
