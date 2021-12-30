@@ -105,12 +105,11 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 		return err
 	}
 
-	// TODO(xiaq): Make the Config field configurable
-	g := getopt.Getopt{Options: opts.opts, Config: getopt.GNUGetoptLong}
-	_, parsedArgs, ctx := g.Parse(args)
+	// TODO: Make the Config field configurable
+	_, parsedArgs, ctx := getopt.Complete(args, opts.opts, getopt.GNU)
 
 	out := fm.ValueOutput()
-	putShortOpt := func(opt *getopt.Option) error {
+	putShortOpt := func(opt *getopt.OptionSpec) error {
 		c := complexItem{Stem: "-" + string(opt.Short)}
 		if d, ok := opts.desc[opt]; ok {
 			if e, ok := opts.argDesc[opt]; ok {
@@ -121,7 +120,7 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 		}
 		return out.Put(c)
 	}
-	putLongOpt := func(opt *getopt.Option) error {
+	putLongOpt := func(opt *getopt.OptionSpec) error {
 		c := complexItem{Stem: "--" + opt.Long}
 		if d, ok := opts.desc[opt]; ok {
 			if e, ok := opts.argDesc[opt]; ok {
@@ -137,7 +136,7 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 	}
 
 	switch ctx.Type {
-	case getopt.NewOptionOrArgument, getopt.Argument:
+	case getopt.OptionOrArgument, getopt.Argument:
 		// Find argument handler.
 		var argHandler eval.Callable
 		if len(parsedArgs) < len(argHandlers) {
@@ -149,7 +148,7 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 			return call(argHandler, ctx.Text)
 		}
 		// TODO(xiaq): Notify that there is no suitable argument completer.
-	case getopt.NewOption:
+	case getopt.AnyOption:
 		for _, opt := range opts.opts {
 			if opt.Short != 0 {
 				err := putShortOpt(opt)
@@ -164,18 +163,9 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 				}
 			}
 		}
-	case getopt.NewLongOption:
-		for _, opt := range opts.opts {
-			if opt.Long != "" {
-				err := putLongOpt(opt)
-				if err != nil {
-					return err
-				}
-			}
-		}
 	case getopt.LongOption:
 		for _, opt := range opts.opts {
-			if strings.HasPrefix(opt.Long, ctx.Text) {
+			if opt.Long != "" && strings.HasPrefix(opt.Long, ctx.Text) {
 				err := putLongOpt(opt)
 				if err != nil {
 					return err
@@ -193,7 +183,7 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 			}
 		}
 	case getopt.OptionArgument:
-		gen := opts.argGenerator[ctx.Option.Option]
+		gen := opts.argGenerator[ctx.Option.Spec]
 		if gen != nil {
 			return call(gen, ctx.Option.Argument)
 		}
@@ -222,16 +212,16 @@ func parseGetoptArgs(v interface{}) ([]string, error) {
 }
 
 type parsedOptSpecs struct {
-	opts         []*getopt.Option
-	desc         map[*getopt.Option]string
-	argDesc      map[*getopt.Option]string
-	argGenerator map[*getopt.Option]eval.Callable
+	opts         []*getopt.OptionSpec
+	desc         map[*getopt.OptionSpec]string
+	argDesc      map[*getopt.OptionSpec]string
+	argGenerator map[*getopt.OptionSpec]eval.Callable
 }
 
 func parseGetoptOptSpecs(v interface{}) (parsedOptSpecs, error) {
 	result := parsedOptSpecs{
-		nil, map[*getopt.Option]string{},
-		map[*getopt.Option]string{}, map[*getopt.Option]eval.Callable{}}
+		nil, map[*getopt.OptionSpec]string{},
+		map[*getopt.OptionSpec]string{}, map[*getopt.OptionSpec]eval.Callable{}}
 
 	var err error
 	errIterate := vals.Iterate(v, func(v interface{}) bool {
@@ -241,7 +231,7 @@ func parseGetoptOptSpecs(v interface{}) (parsedOptSpecs, error) {
 			return false
 		}
 
-		opt := &getopt.Option{}
+		opt := &getopt.OptionSpec{}
 
 		getStringField := func(k string) (string, bool, error) {
 			v, ok := m.Index(k)
@@ -317,9 +307,9 @@ func parseGetoptOptSpecs(v interface{}) (parsedOptSpecs, error) {
 				"opt cannot have both arg-required and arg-optional")
 			return false
 		case argRequired:
-			opt.HasArg = getopt.RequiredArgument
+			opt.Arity = getopt.RequiredArgument
 		case argOptional:
-			opt.HasArg = getopt.OptionalArgument
+			opt.Arity = getopt.OptionalArgument
 		}
 
 		if s, ok, errGet := getStringField("desc"); ok {

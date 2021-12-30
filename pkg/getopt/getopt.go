@@ -8,107 +8,96 @@
 // the flag package in the standard library instead.
 package getopt
 
-//go:generate stringer -type=Config,HasArg,ContextType -output=string.go
+//go:generate stringer -type=Config,Arity,ContextType -output=string.go
 
-import "strings"
+import (
+	"fmt"
+	"strings"
 
-// Getopt specifies the syntax of command-line arguments.
-type Getopt struct {
-	Options []*Option
-	Config  Config
-}
+	"src.elv.sh/pkg/diag"
+)
 
 // Config configurates the parsing behavior.
 type Config uint
 
 const (
-	// DoubleDashTerminatesOptions indicates that all elements after an argument
-	// "--" are treated as arguments.
-	DoubleDashTerminatesOptions Config = 1 << iota
-	// FirstArgTerminatesOptions indicates that all elements after the first
-	// argument are treated as arguments.
-	FirstArgTerminatesOptions
-	// LongOnly indicates that long options may be started by either one or two
-	// dashes, and short options are not allowed. Should replicate the behavior
-	// of getopt_long_only and the
-	// flag package of the Go standard library.
+	// Stop parsing options after "--".
+	StopAfterDoubleDash Config = 1 << iota
+	// Stop parsing options before the first non-option argument.
+	StopBeforeFirstNonOption
+	// Allow long options to start with "-", and disallow short options.
+	// Replicates the behavior of getopt_long_only and the flag package.
 	LongOnly
-	// GNUGetoptLong is a configuration that should replicate the behavior of
-	// GNU getopt_long.
-	GNUGetoptLong = DoubleDashTerminatesOptions
-	// POSIXGetopt is a configuration that should replicate the behavior of
-	// POSIX getopt.
-	POSIXGetopt = DoubleDashTerminatesOptions | FirstArgTerminatesOptions
+
+	// Config to replicate the behavior of GNU's getopt_long.
+	GNU = StopAfterDoubleDash
+	// Config to replicate the behavior of BSD's getopt_long.
+	BSD = StopAfterDoubleDash | StopBeforeFirstNonOption
 )
 
-// HasAll tests whether a configuration has all specified flags set.
-func (conf Config) HasAll(flags Config) bool {
-	return (conf & flags) == flags
-}
+// Tests whether a configuration has all specified flags set.
+func (c Config) has(bits Config) bool { return c&bits == bits }
 
-// Option is a command-line option.
-type Option struct {
+// OptionSpec is a command-line option.
+type OptionSpec struct {
 	// Short option. Set to 0 for long-only.
 	Short rune
 	// Long option. Set to "" for short-only.
 	Long string
 	// Whether the option takes an argument, and whether it is required.
-	HasArg HasArg
+	Arity Arity
 }
 
-// HasArg indicates whether an option takes an argument, and whether it is
+// Arity indicates whether an option takes an argument, and whether it is
 // required.
-type HasArg uint
+type Arity uint
 
 const (
-	// NoArgument indicates that an option takes no argument.
-	NoArgument HasArg = iota
-	// RequiredArgument indicates that an option must take an argument. The
-	// argument can come either directly after a short option (-oarg), after a
-	// long option followed by an equal sign (--long=arg), or as a subsequent
-	// argument after the option (-o arg, --long arg).
+	// The option takes no argument.
+	NoArgument Arity = iota
+	// The option requires an argument. The argument can come either directly
+	// after a short option (-oarg), after a long option followed by an equal
+	// sign (--long=arg), or as a separate argument after the option (-o arg,
+	// --long arg).
 	RequiredArgument
-	// OptionalArgument indicates that an option takes an optional argument.
-	// The argument can come either directly after a short option (-oarg) or
-	// after a long option followed by an equal sign (--long=arg).
+	// The option takes an optional argument. The argument can come either
+	// directly after a short option (-oarg) or after a long option followed by
+	// an equal sign (--long=arg).
 	OptionalArgument
 )
 
-// ParsedOption represents a parsed option.
-type ParsedOption struct {
-	Option   *Option
+// Option represents a parsed option.
+type Option struct {
+	Spec     *OptionSpec
+	Unknown  bool
 	Long     bool
 	Argument string
 }
 
-// Context indicates what may come after the supplied argument list.
+// Context describes the context of the last argument.
 type Context struct {
 	// The nature of the context.
 	Type ContextType
 	// Current option, with a likely incomplete Argument. Non-nil when Type is
 	// OptionArgument.
-	Option *ParsedOption
+	Option *Option
 	// Current partial long option name or argument. Non-empty when Type is
 	// LongOption or Argument.
 	Text string
 }
 
-// ContextType encodes what may be appended to the last element of the argument
-// list.
+// ContextType encodes how the last argument can be completed.
 type ContextType uint
 
 const (
-	// NewOptionOrArgument indicates that the last element may be either a new
+	// OptionOrArgument indicates that the last element may be either a new
 	// option or a new argument. Returned when it is an empty string.
-	NewOptionOrArgument ContextType = iota
-	// NewOption indicates that the last element must be new option, short or
+	OptionOrArgument ContextType = iota
+	// AnyOption indicates that the last element must be new option, short or
 	// long. Returned when it is "-".
-	NewOption
-	// NewLongOption indicates that the last element must be a new long option.
-	// Returned when it is "--".
-	NewLongOption
-	// LongOption indicates that the last element is a long option, but not its
-	// argument. The partial name of the long option is stored in Context.Text.
+	AnyOption
+	// LongOption indicates that the last element is a long option (but not its
+	// argument). The partial name of the long option is stored in Context.Text.
 	LongOption
 	// ChainShortOption indicates that a new short option may be chained.
 	// Returned when the last element consists of a chain of options that take
@@ -117,105 +106,121 @@ const (
 	// OptionArgument indicates that the last element list must be an argument
 	// to an option. The option in question is stored in Context.Option.
 	OptionArgument
-	// Argument indicates that the last element is an argument. The partial
-	// argument is stored in Context.Text.
+	// Argument indicates that the last element is a non-option argument. The
+	// partial argument is stored in Context.Text.
 	Argument
 )
 
-func (g *Getopt) findShort(r rune) *Option {
-	for _, opt := range g.Options {
-		if r == opt.Short {
-			return opt
+// Parse parses an argument list. It returns the parsed options, the non-option
+// arguments, and any error.
+func Parse(args []string, specs []*OptionSpec, cfg Config) ([]*Option, []string, error) {
+	opts, nonOptArgs, opt, _ := parse(args, specs, cfg)
+	var err error
+	if opt != nil {
+		err = fmt.Errorf("missing argument for %s", optionPart(opt))
+	}
+	for _, opt := range opts {
+		if opt.Unknown {
+			err = diag.Errors(err, fmt.Errorf("unknown option %s", optionPart(opt)))
 		}
 	}
-	return nil
+	return opts, nonOptArgs, err
 }
 
-// parseShort parse short options, without the leading dash. It returns the
-// parsed options and whether an argument is still to be seen.
-func (g *Getopt) parseShort(s string) ([]*ParsedOption, bool) {
-	var opts []*ParsedOption
-	var needArg bool
-	for i, r := range s {
-		opt := g.findShort(r)
-		if opt != nil {
-			if opt.HasArg == NoArgument {
-				opts = append(opts, &ParsedOption{opt, false, ""})
-				continue
+func optionPart(opt *Option) string {
+	if opt.Long {
+		return "--" + opt.Spec.Long
+	}
+	return "-" + string(opt.Spec.Short)
+}
+
+// Complete parses an argument list for completion. It returns the parsed
+// options, the non-option arguments, and the context of the last argument. It
+// tolerates unknown options, assuming that they take optional arguments.
+func Complete(args []string, specs []*OptionSpec, cfg Config) ([]*Option, []string, Context) {
+	opts, nonOptArgs, opt, stopOpt := parse(args[:len(args)-1], specs, cfg)
+
+	arg := args[len(args)-1]
+	var ctx Context
+	switch {
+	case opt != nil:
+		opt.Argument = arg
+		ctx = Context{Type: OptionArgument, Option: opt}
+	case stopOpt:
+		ctx = Context{Type: Argument, Text: arg}
+	case arg == "":
+		ctx = Context{Type: OptionOrArgument}
+	case arg == "-":
+		ctx = Context{Type: AnyOption}
+	case strings.HasPrefix(arg, "--"):
+		if !strings.ContainsRune(arg, '=') {
+			ctx = Context{Type: LongOption, Text: arg[2:]}
+		} else {
+			newopt, _ := parseLong(arg[2:], specs)
+			ctx = Context{Type: OptionArgument, Option: newopt}
+		}
+	case strings.HasPrefix(arg, "-"):
+		if cfg.has(LongOnly) {
+			if !strings.ContainsRune(arg, '=') {
+				ctx = Context{Type: LongOption, Text: arg[1:]}
 			} else {
-				parsed := &ParsedOption{opt, false, s[i+len(string(r)):]}
-				opts = append(opts, parsed)
-				needArg = parsed.Argument == "" && opt.HasArg == RequiredArgument
-				break
+				newopt, _ := parseLong(arg[1:], specs)
+				ctx = Context{Type: OptionArgument, Option: newopt}
+			}
+		} else {
+			newopts, _ := parseShort(arg[1:], specs)
+			if newopts[len(newopts)-1].Spec.Arity == NoArgument {
+				opts = append(opts, newopts...)
+				ctx = Context{Type: ChainShortOption}
+			} else {
+				opts = append(opts, newopts[:len(newopts)-1]...)
+				ctx = Context{Type: OptionArgument, Option: newopts[len(newopts)-1]}
 			}
 		}
-		// Unknown option, treat as taking an optional argument
-		parsed := &ParsedOption{
-			&Option{r, "", OptionalArgument}, false, s[i+len(string(r)):]}
-		opts = append(opts, parsed)
-		break
+	default:
+		ctx = Context{Type: Argument, Text: arg}
 	}
-	return opts, needArg
+	return opts, nonOptArgs, ctx
 }
 
-// parseLong parse a long option, without the leading dashes. It returns the
-// parsed option and whether an argument is still to be seen.
-func (g *Getopt) parseLong(s string) (*ParsedOption, bool) {
-	eq := strings.IndexRune(s, '=')
-	for _, opt := range g.Options {
-		if s == opt.Long {
-			return &ParsedOption{opt, true, ""}, opt.HasArg == RequiredArgument
-		} else if eq != -1 && s[:eq] == opt.Long {
-			return &ParsedOption{opt, true, s[eq+1:]}, false
-		}
-	}
-	// Unknown option, treat as taking an optional argument
-	if eq == -1 {
-		return &ParsedOption{&Option{0, s, OptionalArgument}, true, ""}, false
-	}
-	return &ParsedOption{&Option{0, s[:eq], OptionalArgument}, true, s[eq+1:]}, false
-}
-
-// Parse parses an argument list.
-func (g *Getopt) Parse(elems []string) ([]*ParsedOption, []string, *Context) {
+func parse(args []string, spec []*OptionSpec, cfg Config) ([]*Option, []string, *Option, bool) {
 	var (
-		opts []*ParsedOption
-		args []string
-		// Non-nil only when the last element was an option with required
+		opts       []*Option
+		nonOptArgs []string
+		// Non-nil only when the last argument was an option with required
 		// argument, but the argument has not been seen.
-		opt *ParsedOption
-		// True if an option terminator has been seen. The criteria of option
-		// terminators is determined by the configuration.
-		noopt bool
+		opt *Option
+		// Whether option parsing has been stopped. The condition is controlled
+		// by the StopAfterDoubleDash and StopBeforeFirstNonOption bits in cfg.
+		stopOpt bool
 	)
-	var elem string
-	hasPrefix := func(p string) bool { return strings.HasPrefix(elem, p) }
-	for _, elem = range elems[:len(elems)-1] {
-		if opt != nil {
-			opt.Argument = elem
+	for _, arg := range args {
+		switch {
+		case opt != nil:
+			opt.Argument = arg
 			opts = append(opts, opt)
 			opt = nil
-		} else if noopt {
-			args = append(args, elem)
-		} else if g.Config.HasAll(DoubleDashTerminatesOptions) && elem == "--" {
-			noopt = true
-		} else if hasPrefix("--") {
-			newopt, needArg := g.parseLong(elem[2:])
+		case stopOpt:
+			nonOptArgs = append(nonOptArgs, arg)
+		case cfg.has(StopAfterDoubleDash) && arg == "--":
+			stopOpt = true
+		case strings.HasPrefix(arg, "--") && arg != "--":
+			newopt, needArg := parseLong(arg[2:], spec)
 			if needArg {
 				opt = newopt
 			} else {
 				opts = append(opts, newopt)
 			}
-		} else if hasPrefix("-") {
-			if g.Config.HasAll(LongOnly) {
-				newopt, needArg := g.parseLong(elem[1:])
+		case strings.HasPrefix(arg, "-") && arg != "--" && arg != "-":
+			if cfg.has(LongOnly) {
+				newopt, needArg := parseLong(arg[1:], spec)
 				if needArg {
 					opt = newopt
 				} else {
 					opts = append(opts, newopt)
 				}
 			} else {
-				newopts, needArg := g.parseShort(elem[1:])
+				newopts, needArg := parseShort(arg[1:], spec)
 				if needArg {
 					opts = append(opts, newopts[:len(newopts)-1]...)
 					opt = newopts[len(newopts)-1]
@@ -223,53 +228,70 @@ func (g *Getopt) Parse(elems []string) ([]*ParsedOption, []string, *Context) {
 					opts = append(opts, newopts...)
 				}
 			}
-		} else {
-			args = append(args, elem)
-			if g.Config.HasAll(FirstArgTerminatesOptions) {
-				noopt = true
+		default:
+			nonOptArgs = append(nonOptArgs, arg)
+			if cfg.has(StopBeforeFirstNonOption) {
+				stopOpt = true
 			}
 		}
 	}
-	elem = elems[len(elems)-1]
-	ctx := &Context{}
-	if opt != nil {
-		opt.Argument = elem
-		ctx.Type, ctx.Option = OptionArgument, opt
-	} else if noopt {
-		ctx.Type, ctx.Text = Argument, elem
-	} else if elem == "" {
-		ctx.Type = NewOptionOrArgument
-	} else if elem == "-" {
-		ctx.Type = NewOption
-	} else if elem == "--" {
-		ctx.Type = NewLongOption
-	} else if hasPrefix("--") {
-		if !strings.ContainsRune(elem, '=') {
-			ctx.Type, ctx.Text = LongOption, elem[2:]
-		} else {
-			newopt, _ := g.parseLong(elem[2:])
-			ctx.Type, ctx.Option = OptionArgument, newopt
-		}
-	} else if hasPrefix("-") {
-		if g.Config.HasAll(LongOnly) {
-			if !strings.ContainsRune(elem, '=') {
-				ctx.Type, ctx.Text = LongOption, elem[1:]
+	return opts, nonOptArgs, opt, stopOpt
+}
+
+// Parses short options, without the leading dash. Returns the parsed options
+// and whether an argument is still to be seen.
+func parseShort(s string, specs []*OptionSpec) ([]*Option, bool) {
+	var opts []*Option
+	var needArg bool
+	for i, r := range s {
+		opt := findShort(r, specs)
+		if opt != nil {
+			if opt.Arity == NoArgument {
+				opts = append(opts, &Option{Spec: opt})
+				continue
 			} else {
-				newopt, _ := g.parseLong(elem[1:])
-				ctx.Type, ctx.Option = OptionArgument, newopt
-			}
-		} else {
-			newopts, _ := g.parseShort(elem[1:])
-			if newopts[len(newopts)-1].Option.HasArg == NoArgument {
-				opts = append(opts, newopts...)
-				ctx.Type = ChainShortOption
-			} else {
-				opts = append(opts, newopts[:len(newopts)-1]...)
-				ctx.Type, ctx.Option = OptionArgument, newopts[len(newopts)-1]
+				parsed := &Option{Spec: opt, Argument: s[i+len(string(r)):]}
+				opts = append(opts, parsed)
+				needArg = parsed.Argument == "" && opt.Arity == RequiredArgument
+				break
 			}
 		}
-	} else {
-		ctx.Type, ctx.Text = Argument, elem
+		// Unknown option, treat as taking an optional argument
+		parsed := &Option{
+			Spec: &OptionSpec{r, "", OptionalArgument}, Unknown: true,
+			Argument: s[i+len(string(r)):]}
+		opts = append(opts, parsed)
+		break
 	}
-	return opts, args, ctx
+	return opts, needArg
+}
+
+func findShort(r rune, specs []*OptionSpec) *OptionSpec {
+	for _, opt := range specs {
+		if r == opt.Short {
+			return opt
+		}
+	}
+	return nil
+}
+
+// Parses a long option, without the leading dashes. Returns the parsed option
+// and whether an argument is still to be seen.
+func parseLong(s string, specs []*OptionSpec) (*Option, bool) {
+	eq := strings.IndexRune(s, '=')
+	for _, opt := range specs {
+		if s == opt.Long {
+			return &Option{Spec: opt, Long: true}, opt.Arity == RequiredArgument
+		} else if eq != -1 && s[:eq] == opt.Long {
+			return &Option{Spec: opt, Long: true, Argument: s[eq+1:]}, false
+		}
+	}
+	// Unknown option, treat as taking an optional argument
+	if eq == -1 {
+		return &Option{
+			Spec: &OptionSpec{0, s, OptionalArgument}, Unknown: true, Long: true}, false
+	}
+	return &Option{
+		Spec: &OptionSpec{0, s[:eq], OptionalArgument}, Unknown: true,
+		Long: true, Argument: s[eq+1:]}, false
 }
