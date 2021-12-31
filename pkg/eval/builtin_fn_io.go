@@ -345,11 +345,11 @@ func (f formatter) Format(state fmt.State, r rune) {
 		writeFmt(state, 's', vals.ToString(wrapped))
 	case 'q':
 		// TODO: Support using the precision flag to specify indentation.
-		writeFmt(state, 's', vals.Repr(wrapped, vals.NoPretty))
+		writeFmt(state, 's', vals.ReprPlain(wrapped))
 	case 'v':
 		var s string
 		if state.Flag('#') {
-			s = vals.Repr(wrapped, vals.NoPretty)
+			s = vals.ReprPlain(wrapped)
 		} else {
 			s = vals.ToString(wrapped)
 		}
@@ -503,7 +503,7 @@ func repr(fm *Frame, args ...interface{}) error {
 				return err
 			}
 		}
-		_, err := out.WriteString(vals.Repr(arg, vals.NoPretty))
+		_, err := out.WriteString(vals.ReprPlain(arg))
 		if err != nil {
 			return err
 		}

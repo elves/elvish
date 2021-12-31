@@ -83,7 +83,7 @@ func makeNotifyPort(nt notifier) (*eval.Port, func()) {
 	go func() {
 		// Relay value outputs
 		for v := range ch {
-			nt.notifyf("[value out] %s", vals.Repr(v, vals.NoPretty))
+			nt.notifyf("[value out] %s", vals.ReprPlain(v))
 		}
 		wg.Done()
 	}()

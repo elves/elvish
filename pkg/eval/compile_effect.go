@@ -405,7 +405,7 @@ func evalForCommand(fm *Frame, op valuesOp, what string) (Callable, error) {
 	return nil, fm.errorp(op, errs.BadValue{
 		What:   what,
 		Valid:  "callable or string containing slash",
-		Actual: vals.Repr(value, vals.NoPretty)})
+		Actual: vals.ReprPlain(value)})
 }
 
 func allTrue(vs []interface{}) bool {
@@ -533,7 +533,7 @@ func (op *redirOp) exec(fm *Frame) Exception {
 	case string:
 		f, err := os.OpenFile(src, op.flag, defaultFileRedirPerm)
 		if err != nil {
-			return fm.errorpf(op, "failed to open file %s: %s", vals.Repr(src, vals.NoPretty), err)
+			return fm.errorpf(op, "failed to open file %s: %s", vals.ReprPlain(src), err)
 		}
 		fm.ports[dst] = fileRedirPort(op.mode, f, true)
 	case vals.File:
@@ -609,7 +609,7 @@ func evalForFd(fm *Frame, op valuesOp, closeOK bool, what string) (int, error) {
 		valid = "fd name or number or '-'"
 	}
 	return -1, fm.errorp(op, errs.BadValue{
-		What: what, Valid: valid, Actual: vals.Repr(value, vals.NoPretty)})
+		What: what, Valid: valid, Actual: vals.ReprPlain(value)})
 }
 
 type seqOp struct{ subops []effectOp }

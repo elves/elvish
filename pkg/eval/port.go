@@ -232,7 +232,7 @@ func FilePort(f *os.File, valuePrefix string) (*Port, func()) {
 	go func() {
 		for v := range ch {
 			f.WriteString(valuePrefix)
-			f.WriteString(vals.Repr(v, vals.NoPretty))
+			f.WriteString(vals.ReprPlain(v))
 			f.WriteString("\n")
 		}
 		close(relayDone)
