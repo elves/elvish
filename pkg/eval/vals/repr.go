@@ -26,7 +26,8 @@ type Reprer interface {
 
 // ReprPlain is like Repr, but without pretty-printing.
 func ReprPlain(v interface{}) string {
-	return Repr(v, math.MinInt)
+	// TODO: Change to math.MinInt when Go 1.17 is required.
+	return Repr(v, math.MinInt32)
 }
 
 // Repr returns the representation for a value, a string that is preferably
