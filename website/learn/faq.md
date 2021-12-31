@@ -51,7 +51,7 @@ other interfaces, and the author might explore this space at a later stage.
 
 # Why is Elvish called Elvish?
 
-Elvish is named after **elven** items in in
+Elvish is named after **elven** items in
 [roguelikes](https://en.wikipedia.org/wiki/Roguelike), which has a reputation of
 high quality. You can think of Elvish as an abbreviation of "elven shell".
 
