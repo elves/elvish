@@ -151,7 +151,7 @@ func constantly(args ...interface{}) Callable {
 	)
 }
 
-//elvdoc:fn -call
+//elvdoc:fn call
 //
 // ```elvish
 // call $fn $args $opts
