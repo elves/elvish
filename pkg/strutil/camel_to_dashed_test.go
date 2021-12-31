@@ -1,23 +1,16 @@
 package strutil
 
-import "testing"
+import (
+	"testing"
 
-var tests = []struct {
-	camel string
-	want  string
-}{
-	{"CamelCase", "camel-case"},
-	{"camelCase", "-camel-case"},
-	{"123", "123"},
-	{"你好", "你好"},
-}
+	. "src.elv.sh/pkg/tt"
+)
 
 func TestCamelToDashed(t *testing.T) {
-	for _, test := range tests {
-		camel, want := test.camel, test.want
-		dashed := CamelToDashed(camel)
-		if dashed != want {
-			t.Errorf("CamelToDashed(%q) => %q, want %q", camel, dashed, want)
-		}
-	}
+	Test(t, Fn("CamelToDashed", CamelToDashed), Table{
+		Args("CamelCase").Rets("camel-case"),
+		Args("camelCase").Rets("-camel-case"),
+		Args("HTTP").Rets("http"),
+		Args("HTTPRequest").Rets("http-request"),
+	})
 }

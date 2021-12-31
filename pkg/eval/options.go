@@ -26,8 +26,8 @@ type RawOptions map[string]interface{}
 
 // Takes a raw option map and a pointer to a struct, and populate the struct
 // with options. A field named FieldName corresponds to the option named
-// field-name, unless the field has a explicit "name" tag. Fields typed
-// ParsedOptions are ignored.
+// field-name. Options that don't have corresponding fields in the struct causes
+// an error.
 func scanOptions(rawOpts RawOptions, ptr interface{}) error {
 	ptrValue := reflect.ValueOf(ptr)
 	if ptrValue.Kind() != reflect.Ptr || ptrValue.Elem().Kind() != reflect.Struct {
@@ -42,12 +42,8 @@ func scanOptions(rawOpts RawOptions, ptr interface{}) error {
 		if !struc.Field(i).CanSet() {
 			continue // ignore unexported fields
 		}
-
 		f := struc.Type().Field(i)
-		optName := f.Tag.Get("name")
-		if optName == "" {
-			optName = strutil.CamelToDashed(f.Name)
-		}
+		optName := strutil.CamelToDashed(f.Name)
 		fieldIdxForOpt[optName] = i
 	}
 

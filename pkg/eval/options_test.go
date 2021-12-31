@@ -6,7 +6,6 @@ import (
 
 type opts struct {
 	FooBar string
-	POSIX  bool `name:"posix"`
 	Min    int
 	ignore bool // this should be ignored since it isn't exported
 }
@@ -19,8 +18,6 @@ var scanOptionsTests = []struct {
 }{
 	{RawOptions{"foo-bar": "lorem ipsum"},
 		opts{}, opts{FooBar: "lorem ipsum"}, nil},
-	{RawOptions{"posix": true},
-		opts{}, opts{POSIX: true}, nil},
 	// Since "ignore" is not exported it will result in an error when used.
 	{RawOptions{"ignore": true},
 		opts{}, opts{ignore: false}, UnknownOption{"ignore"}},
