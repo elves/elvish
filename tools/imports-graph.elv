@@ -3,7 +3,6 @@ use re
 use str
 
 var prefix = src.elv.sh/
-var merge-clusters = $false
 
 fn keep-if {|p| each {|x| if ($p $x) { put $x }} }
 fn get {|x k def| if (has-key $x $k) { put $x[$k] } else { put $def } }
