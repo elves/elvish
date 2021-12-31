@@ -6,9 +6,11 @@ import (
 	"math/big"
 	"reflect"
 	"strconv"
+	"sync"
 	"unicode/utf8"
 
 	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/strutil"
 )
 
 // Conversion between "Go values" (those expected by native Go functions) and
@@ -213,6 +215,68 @@ func ScanListElementsToGo(src List, ptrs ...interface{}) error {
 		i++
 	}
 	return nil
+}
+
+// ScanMapToGo scans map elements into ptr, which must be a pointer to a struct.
+// Struct field names are converted to map keys with CamelToDashed.
+//
+// The map may contains keys that don't correspond to struct fields, and it
+// doesn't have to contain all keys that correspond to struct fields.
+func ScanMapToGo(src Map, ptr interface{}) error {
+	// Iterate over the struct keys instead of the map: since extra keys are
+	// allowed, the map may be very big, while the size of the struct is bound.
+	keys, _ := StructFieldsInfo(reflect.TypeOf(ptr).Elem())
+	structValue := reflect.ValueOf(ptr).Elem()
+	for i, key := range keys {
+		if key == "" {
+			continue
+		}
+		val, ok := src.Index(key)
+		if !ok {
+			continue
+		}
+		err := ScanToGo(val, structValue.Field(i).Addr().Interface())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// StructFieldsInfo takes a type for a struct, and returns a slice for each
+// field name, converted with CamelToDashed, and a reverse index. Unexported
+// fields result in an empty string in the slice, and is omitted from the
+// reverse index.
+func StructFieldsInfo(t reflect.Type) ([]string, map[string]int) {
+	if info, ok := structFieldsInfoCache.Load(t); ok {
+		info := info.(structFieldsInfo)
+		return info.keys, info.keyIdx
+	}
+	info := makeStructFieldsInfo(t)
+	structFieldsInfoCache.Store(t, info)
+	return info.keys, info.keyIdx
+}
+
+var structFieldsInfoCache sync.Map
+
+type structFieldsInfo struct {
+	keys   []string
+	keyIdx map[string]int
+}
+
+func makeStructFieldsInfo(t reflect.Type) structFieldsInfo {
+	keys := make([]string, t.NumField())
+	keyIdx := make(map[string]int)
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if field.PkgPath != "" {
+			continue
+		}
+		key := strutil.CamelToDashed(field.Name)
+		keyIdx[key] = i
+		keys[i] = key
+	}
+	return structFieldsInfo{keys, keyIdx}
 }
 
 // FromGo converts a Go value to an Elvish value.

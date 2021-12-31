@@ -159,6 +159,35 @@ func TestScanListElementsToGo(t *testing.T) {
 	})
 }
 
+type aStruct struct {
+	Foo int
+	bar interface{}
+}
+
+func TestScanMapToGo(t *testing.T) {
+	// A wrapper around ScanMapToGo, to make it easier to test.
+	scanMapToGo := func(src Map, dstInit interface{}) (interface{}, error) {
+		ptr := reflect.New(TypeOf(dstInit))
+		ptr.Elem().Set(reflect.ValueOf(dstInit))
+		err := ScanMapToGo(src, ptr.Interface())
+		return ptr.Elem().Interface(), err
+	}
+
+	Test(t, Fn("ScanListToGo", scanMapToGo), Table{
+		Args(MakeMap("foo", "1"), aStruct{}).Rets(aStruct{Foo: 1}),
+		// More fields is OK
+		Args(MakeMap("foo", "1", "bar", "x"), aStruct{}).Rets(aStruct{Foo: 1}),
+		// Fewer fields is OK
+		Args(MakeMap(), aStruct{}).Rets(aStruct{}),
+		// Unexported fields are ignored
+		Args(MakeMap("bar", 20), aStruct{bar: 10}).Rets(aStruct{bar: 10}),
+
+		// Conversion error
+		Args(MakeMap("foo", "a"), aStruct{}).
+			Rets(aStruct{}, cannotParseAs{"integer", "a"}),
+	})
+}
+
 func TestFromGo(t *testing.T) {
 	Test(t, Fn("FromGo", FromGo), Table{
 		// BigInt -> int, when in range

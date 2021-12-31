@@ -1,45 +1,30 @@
 package eval
 
 import (
+	"reflect"
 	"testing"
+
+	. "src.elv.sh/pkg/tt"
 )
 
 type opts struct {
-	FooBar string
-	Min    int
-	ignore bool // this should be ignored since it isn't exported
-}
-
-var scanOptionsTests = []struct {
-	rawOpts  RawOptions
-	preScan  opts
-	postScan opts
-	err      error
-}{
-	{RawOptions{"foo-bar": "lorem ipsum"},
-		opts{}, opts{FooBar: "lorem ipsum"}, nil},
-	// Since "ignore" is not exported it will result in an error when used.
-	{RawOptions{"ignore": true},
-		opts{}, opts{ignore: false}, UnknownOption{"ignore"}},
+	Foo string
+	bar int
 }
 
 func TestScanOptions(t *testing.T) {
-	// scanOptions requires a pointer to struct.
-	err := scanOptions(RawOptions{}, opts{})
-	if err == nil {
-		t.Errorf("Scan should have reported invalid options arg error")
+	// A wrapper of ScanOptions, to make it easier to test
+	wrapper := func(src RawOptions, dstInit interface{}) (interface{}, error) {
+		ptr := reflect.New(reflect.TypeOf(dstInit))
+		ptr.Elem().Set(reflect.ValueOf(dstInit))
+		err := scanOptions(src, ptr.Interface())
+		return ptr.Elem().Interface(), err
 	}
 
-	for _, test := range scanOptionsTests {
-		opts := test.preScan
-		err := scanOptions(test.rawOpts, &opts)
-
-		if ((err == nil) != (test.err == nil)) ||
-			(err != nil && test.err != nil && err.Error() != test.err.Error()) {
-			t.Errorf("Scan error mismatch %v: want %q, got %q", test.rawOpts, test.err, err)
-		}
-		if opts != test.postScan {
-			t.Errorf("Scan %v => %v, want %v", test.rawOpts, opts, test.postScan)
-		}
-	}
+	Test(t, Fn("scanOptions", wrapper), Table{
+		Args(RawOptions{"foo": "lorem ipsum"}, opts{}).
+			Rets(opts{Foo: "lorem ipsum"}, nil),
+		Args(RawOptions{"bar": 20}, opts{bar: 10}).
+			Rets(opts{bar: 10}, UnknownOption{"bar"}),
+	})
 }
