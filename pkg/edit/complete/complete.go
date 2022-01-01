@@ -45,6 +45,7 @@ type Result struct {
 	Name    string
 	Replace diag.Ranging
 	Items   []modes.CompletionItem
+	Seed    string
 }
 
 // RawItem represents completion items before the quoting pass.
@@ -78,9 +79,6 @@ func Complete(code CodeBuffer, cfg Config) (*Result, error) {
 	if cfg.PureEvaler == nil {
 		return nil, errNoPureEvaler
 	}
-	if cfg.Filterer == nil {
-		cfg.Filterer = FilterPrefix
-	}
 	if cfg.ArgGenerator == nil {
 		cfg.ArgGenerator = GenerateFileNames
 	}
@@ -93,7 +91,9 @@ func Complete(code CodeBuffer, cfg Config) (*Result, error) {
 		if err == errNoCompletion {
 			continue
 		}
-		rawItems = cfg.Filterer(ctx.name, ctx.seed, rawItems)
+		if cfg.Filterer != nil {
+			rawItems = cfg.Filterer(ctx.name, ctx.seed, rawItems)
+		}
 		items := make([]modes.CompletionItem, len(rawItems))
 		for i, rawCand := range rawItems {
 			items[i] = rawCand.Cook(ctx.quote)
@@ -102,7 +102,7 @@ func Complete(code CodeBuffer, cfg Config) (*Result, error) {
 			return items[i].ToShow < items[j].ToShow
 		})
 		items = dedup(items)
-		return &Result{Name: ctx.name, Items: items, Replace: ctx.interval}, nil
+		return &Result{Name: ctx.name, Seed: ctx.seed, Items: items, Replace: ctx.interval}, nil
 	}
 	return nil, errNoCompletion
 }

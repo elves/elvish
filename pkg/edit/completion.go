@@ -173,12 +173,21 @@ func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, sma
 		return
 	}
 	if smart {
+		// If all candidates starting with result.Seed have a longer common
+		// prefix than result.Seed, we should simply insert the prefix.
 		prefix := ""
-		for i, item := range result.Items {
-			if i == 0 {
+		found := false
+		for _, item := range result.Items {
+			if !strings.HasPrefix(item.ToInsert, result.Seed) {
+				continue
+			}
+			if !found {
+				found = true
 				prefix = item.ToInsert
 				continue
 			}
+			// We can ignore the first len(result.Seed) characters but this
+			// won't be a bottleneck.
 			prefix = commonPrefix(prefix, item.ToInsert)
 			if prefix == "" {
 				break
@@ -203,7 +212,7 @@ func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, sma
 	}
 	w, err := modes.NewCompletion(app, modes.CompletionSpec{
 		Name: result.Name, Replace: result.Replace, Items: result.Items,
-		Filter: filterSpec, Bindings: bindings,
+		Filter: filterSpec, Bindings: bindings, Seed: result.Seed,
 	})
 	if w != nil {
 		app.PushAddon(w)
@@ -405,7 +414,7 @@ func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer
 				"matcher for %s not a function, falling back to prefix matching", ctxName)
 		}
 		if matcher == nil {
-			return complete.FilterPrefix(ctxName, seed, rawItems)
+			return rawItems
 		}
 		input := make(chan interface{})
 		stopInputFeeder := make(chan struct{})
