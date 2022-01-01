@@ -168,6 +168,7 @@ func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, sma
 	buf := codeArea.CopyState().Buffer
 	result, err := complete.Complete(
 		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot}, cfg)
+	seed := buf.Content[result.Replace.From:result.Replace.To]
 	if err != nil {
 		app.Notify(modes.ErrorText(err))
 		return
@@ -178,7 +179,7 @@ func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, sma
 		prefix := ""
 		found := false
 		for _, item := range result.Items {
-			if !strings.HasPrefix(item.ToInsert, result.Seed) {
+			if cfg.Filterer == nil && !strings.HasPrefix(item.ToInsert, seed) {
 				continue
 			}
 			if !found {
@@ -212,9 +213,13 @@ func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, sma
 	}
 	w, err := modes.NewCompletion(app, modes.CompletionSpec{
 		Name: result.Name, Replace: result.Replace, Items: result.Items,
-		Filter: filterSpec, Bindings: bindings, Seed: result.Seed,
+		Filter: filterSpec, Bindings: bindings,
 	})
 	if w != nil {
+		w.CodeArea().MutateState(func(s *tk.CodeAreaState) {
+			s.Buffer.InsertAtDot(seed)
+		})
+		w.Refilter()
 		app.PushAddon(w)
 	}
 	if err != nil {

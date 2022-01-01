@@ -22,7 +22,6 @@ type CompletionSpec struct {
 	Replace  diag.Ranging
 	Items    []CompletionItem
 	Filter   FilterSpec
-	Seed     string
 }
 
 // CompletionItem represents a completion item, also known as a candidate.
@@ -55,7 +54,6 @@ func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
 		CodeArea: tk.CodeAreaSpec{
 			Prompt:      modePrompt(" COMPLETING "+cfg.Name+" ", true),
 			Highlighter: cfg.Filter.Highlighter,
-			State:       tk.CodeAreaState{Buffer: tk.CodeBuffer{Content: cfg.Seed, Dot: len(cfg.Seed)}},
 		},
 		ListBox: tk.ListBoxSpec{
 			Horizontal: true,
@@ -77,7 +75,6 @@ func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
 			w.ListBox().Reset(filterCompletionItems(cfg.Items, cfg.Filter.makePredicate(p)), 0)
 		},
 	})
-	w.Refilter()
 	return completion{w, codeArea}, nil
 }
 

@@ -45,7 +45,6 @@ type Result struct {
 	Name    string
 	Replace diag.Ranging
 	Items   []modes.CompletionItem
-	Seed    string
 }
 
 // RawItem represents completion items before the quoting pass.
@@ -102,7 +101,7 @@ func Complete(code CodeBuffer, cfg Config) (*Result, error) {
 			return items[i].ToShow < items[j].ToShow
 		})
 		items = dedup(items)
-		return &Result{Name: ctx.name, Seed: ctx.seed, Items: items, Replace: ctx.interval}, nil
+		return &Result{Name: ctx.name, Items: items, Replace: ctx.interval}, nil
 	}
 	return nil, errNoCompletion
 }

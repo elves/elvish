@@ -42,7 +42,7 @@ func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
 		"~> echo foo \n", Styles,
 		"   vvvv ____",
 		" COMPLETING argument  ", Styles,
-		"********************* ", term.DotHere, "\n",
+		"********************* ", "fo", term.DotHere, "\n",
 		"foo  foo1  foo2  fox", Styles,
 		"+++                 ",
 	)
@@ -159,7 +159,7 @@ func TestCompletionMatcher(t *testing.T) {
 		"~> echo foo \n", Styles,
 		"   vvvv ____",
 		" COMPLETING argument  ", Styles,
-		"********************* ", term.DotHere, "\n",
+		"********************* ", "f", term.DotHere, "\n",
 		"foo  oof", Styles,
 		"+++     ",
 	)
