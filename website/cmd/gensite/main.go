@@ -66,7 +66,7 @@ func main() {
 	allPaths := []string{""}
 
 	// Render a category index.
-	renderCategoryIndex := func(name, prelude, css, js string, articles []articleMeta) {
+	renderCategoryIndex := func(name, prelude, css, js string, groups []group) {
 		// Add category index to the sitemap, without "/index.html"
 		allPaths = append(allPaths, name)
 		// Create directory
@@ -77,7 +77,7 @@ func main() {
 		}
 
 		// Generate index
-		cd := &categoryDot{base, name, prelude, articles, css, js}
+		cd := &categoryDot{base, name, prelude, groups, css, js}
 		executeToFile(categoryTmpl, cd, filepath.Join(catDir, "index.html"))
 	}
 
@@ -100,11 +100,11 @@ func main() {
 		}
 		css := catInDir(srcFile(cat.Name), catConf.ExtraCSS)
 		js := catInDir(srcFile(cat.Name), catConf.ExtraJS)
-		var articles []articleMeta
+		var groups []group
 		if catConf.AutoIndex {
-			articles = catConf.Articles
+			groups = makeGroups(catConf.Articles, catConf.Groups)
 		}
-		renderCategoryIndex(cat.Name, prelude, css, js, articles)
+		renderCategoryIndex(cat.Name, prelude, css, js, groups)
 
 		// Generate articles
 		for _, am := range catConf.Articles {
@@ -132,7 +132,7 @@ func main() {
 		sort.Slice(allArticleMetas, func(i, j int) bool {
 			return allArticleMetas[i].Timestamp > allArticleMetas[j].Timestamp
 		})
-		renderCategoryIndex("all", "", "", "", allArticleMetas)
+		renderCategoryIndex("all", "", "", "", []group{{Articles: allArticleMetas}})
 	}
 
 	// Generate index page. XXX(xiaq): duplicated code with generating ordinary
@@ -152,4 +152,29 @@ func main() {
 	for _, p := range allPaths {
 		fmt.Fprintf(file, "%s/%s\n", conf.RootURL, p)
 	}
+}
+
+func makeGroups(articles []articleMeta, groupMetas []groupMeta) []group {
+	groups := make(map[int]*group)
+	for _, am := range articles {
+		g := groups[am.Group]
+		if g == nil {
+			g = &group{}
+			if 0 <= am.Group && am.Group < len(groupMetas) {
+				g.groupMeta = groupMetas[am.Group]
+			}
+			groups[am.Group] = g
+		}
+		g.Articles = append(g.Articles, am)
+	}
+	indices := make([]int, 0, len(groups))
+	for i := range groups {
+		indices = append(indices, i)
+	}
+	sort.Ints(indices)
+	sortedGroups := make([]group, len(groups))
+	for i, idx := range indices {
+		sortedGroups[i] = *groups[idx]
+	}
+	return sortedGroups
 }

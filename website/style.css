@@ -245,13 +245,12 @@ code, pre {
  * Category content.
  **/
 
-.category-prelude {
-    padding-top: 4%;
-    margin-bottom: -20px;
+#content.category {
+    padding-top: 16px;
 }
 
-.article-list {
-    padding: 4% 0;
+.category-prelude, .group-intro, .article-list {
+    margin-top: 16px;
 }
 
 .article-list > li {

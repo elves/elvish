@@ -4,10 +4,17 @@ prelude = "prelude"
 [[articles]]
 name = "language"
 title = "Language Specification"
+group = -1
 
 [[articles]]
 name = "command"
 title = "The Elvish Command"
+group = -1
+
+[[groups]]
+intro = """
+Modules in the Elvish standard library:
+"""
 
 [[articles]]
 name = "builtin"

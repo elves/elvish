@@ -39,6 +39,7 @@ type categoryConf struct {
 	ExtraCSS  []string
 	ExtraJS   []string
 	Articles  []articleMeta
+	Groups    []groupMeta
 }
 
 // articleMeta represents the metadata of an article, found in a category
@@ -46,6 +47,8 @@ type categoryConf struct {
 type articleMeta struct {
 	Name      string
 	Title     string
+	Note      string
+	Group     int
 	Timestamp string
 	ExtraCSS  []string
 	ExtraJS   []string
@@ -61,6 +64,17 @@ type article struct {
 	ExtraCSS     string
 	ExtraJS      string
 	LastModified rfc3339Time
+}
+
+// Metadata of a group, found in a category index.toml.
+type groupMeta struct {
+	Intro string
+}
+
+// All information about a group to render it.
+type group struct {
+	groupMeta
+	Articles []articleMeta
 }
 
 type recentArticles struct {

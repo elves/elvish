@@ -181,25 +181,31 @@
 
 {{ define "category-content" }}
   {{ $category := .Category }}
-  <div id="content">
-    {{ if ne .Prelude "" }}
-      <div class="category-prelude article">
-        <article class="article">
-          {{ .Prelude }}
-        </article>
-      </div>
+  <div id="content" class="category">
+    {{ if .Prelude }}
+      <article class="category-prelude article">
+        {{ .Prelude }}
+      </article>
     {{ end }}
-    <ul class="article-list">
-      {{ range $article := .Articles }}
-        <li>
-          <a href="{{ rootURL }}/{{ $category }}/{{ $article.Name }}.html"
-             class="article-link">{{ $article.Title }}</a>
-          <span class="article-timestamp">
-            {{ $article.Timestamp }}
-          </span>
-          <div class="clear"></div>
-        </li>
+    {{ range $group := .Groups }}
+      {{ if $group.Intro }}
+        <div class="group-intro">{{ $group.Intro }}</div>
       {{ end }}
-    </ul>
+      <ul class="article-list">
+        {{ range $article := $group.Articles }}
+          <li>
+            <a href="{{ rootURL }}/{{ $category }}/{{ $article.Name }}.html"
+               class="article-link">{{ $article.Title }}</a>
+            {{ if $article.Note }}
+              &mdash; {{ $article.Note }}
+            {{ end }}
+            <span class="article-timestamp">
+              {{ $article.Timestamp }}
+            </span>
+            <div class="clear"></div>
+          </li>
+        {{ end }}
+      </ul>
+    {{ end }}
   </div>
 {{ end }}

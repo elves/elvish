@@ -41,7 +41,7 @@ type categoryDot struct {
 	*baseDot
 	Category string
 	Prelude  string
-	Articles []articleMeta
+	Groups   []group
 	ExtraCSS string
 	ExtraJS  string
 }

@@ -1,22 +1,38 @@
 autoIndex = true
 
-[[articles]]
-name = "tour"
-title = "Quick Tour"
-extraCSS = ["tour.css"]
+[[groups]]
+intro = "Start with:"
 
 [[articles]]
 name = "fundamentals"
 title = "Fundamentals"
+note = "if you are new to shells"
+group = 0
+
+[[articles]]
+name = "tour"
+title = "Quick Tour"
+note = "if you have experience with other shells"
+extraCSS = ["tour.css"]
+group = 0
+
+[[groups]]
+intro = "Advanced topics:"
 
 [[articles]]
 name = "unique-semantics"
-title = "Some Unique Semantics"
+title = "Unique Semantics"
+group = 1
 
 [[articles]]
 name = "effective-elvish"
 title = "Effective Elvish"
+group = 1
+
+[[groups]]
+intro = "Design and history:"
 
 [[articles]]
 name = "faq"
 title = "FAQ"
+group = 2
