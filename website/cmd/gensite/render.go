@@ -8,12 +8,12 @@ import (
 	"time"
 )
 
-// This file contains functions and types for rendering the blog.
+// This file contains functions and types for rendering the site.
 
 // baseDot is the base for all "dot" structures used as the environment of the
 // HTML template.
 type baseDot struct {
-	BlogTitle     string
+	SiteTitle     string
 	Author        string
 	RootURL       string
 	HomepageTitle string
@@ -23,7 +23,7 @@ type baseDot struct {
 	BaseCSS     string
 }
 
-func newBaseDot(bc *blogConf, css string) *baseDot {
+func newBaseDot(bc *siteConf, css string) *baseDot {
 	b := &baseDot{bc.Title, bc.Author, bc.RootURL,
 		bc.Index.Title, bc.Categories, make(map[string]string), css}
 	for _, m := range bc.Categories {

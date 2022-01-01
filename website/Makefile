@@ -6,17 +6,17 @@ DOCSET_DST_DIR := ./Elvish.docset
 MDS := home.md $(filter-out %/README.md,$(wildcard [^_]*/*.md))
 HTMLS := $(MDS:.md=.html)
 
-TOOL_PKGS := highlight macros elvdoc genblog
+TOOL_PKGS := highlight macros elvdoc gensite
 TOOL_BINS := $(addprefix tools/,$(addsuffix .bin,$(TOOL_PKGS)))
 
 # Generates the website into $(DST_DIR).
 gen: $(TOOL_BINS) $(HTMLS)
-	tools/genblog.bin . $(DST_DIR)
+	tools/gensite.bin . $(DST_DIR)
 	ln -sf `pwd`/fonts `pwd`/favicons/* $(DST_DIR)/
 
 # Generates docset into $(DOCSET_DST_DIR).
 docset: $(TOOL_BINS) $(HTMLS)
-	ELVISH_DOCSET_MODE=1 tools/genblog.bin . $(DOCSET_TMP_DIR)
+	ELVISH_DOCSET_MODE=1 tools/gensite.bin . $(DOCSET_TMP_DIR)
 	./tools/mkdocset $(DOCSET_TMP_DIR) $(DOCSET_DST_DIR)
 
 # Synchronizes the generated website into $(PUBLISH_DIR), which is passed to

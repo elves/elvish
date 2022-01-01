@@ -7,15 +7,14 @@ exceptions are the homepage (`home.md`) and the download page
 
 # Building
 
-The website is a purely static one. It is built with a custom toolchain with the
-following dependencies:
+The website is a collection of static HTML files, built from Markdown files with
+a custom toolchain. You need the following software to build it:
 
--   GNU Make (any "reasonably modern" version should do).
+-   Go, with the same version requirement as Elvish itself.
 
 -   Pandoc 2.2.1 (other versions in the 2.x series might also work).
 
--   A Go toolchain, for building [genblog](https://github.com/xiaq/genblog) and
-    some custom preprocessors in the `tools` directory.
+-   GNU Make (any "reasonably modern" version should do).
 
 To build the website, just run `make`. The built website is in the `_dst`
 directory. You can then open `_dst/index.html` or run an HTTP server within

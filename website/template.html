@@ -16,11 +16,11 @@
 
   <title>
     {{ if is "homepage" -}}
-      {{ .BlogTitle }}
+      {{ .SiteTitle }}
     {{- else if is "category" -}}
       {{ index .CategoryMap .Category }}
     {{- else -}}
-      {{ .Title }} - {{ .BlogTitle }}
+      {{ .Title }} - {{ .SiteTitle }}
     {{- end }}
   </title>
 
@@ -75,7 +75,7 @@
 
   {{ if not $docsetMode }}
     <div id="navbar-container"> <div id="navbar">
-      <div id="blog-title">
+      <div id="site-title">
         <code>
           <a href="{{ rootURL }}/">
             elvish

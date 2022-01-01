@@ -10,10 +10,10 @@ import (
 )
 
 // This file contains functions and types for parsing and manipulating the
-// in-memory representation of the blog.
+// in-memory representation of the site.
 
-// blogConf represents the global blog configuration.
-type blogConf struct {
+// siteConf represents the global site configuration.
+type siteConf struct {
 	Title      string
 	Author     string
 	Categories []categoryMeta
@@ -25,14 +25,14 @@ type blogConf struct {
 }
 
 // categoryMeta represents the metadata of a cateogory, found in the global
-// blog configuration.
+// site configuration.
 type categoryMeta struct {
 	Name  string
 	Title string
 }
 
 // categoryConf represents the configuration of a category. Note that the
-// metadata is found in the global blog configuration and not duplicated here.
+// metadata is found in the global site configuration and not duplicated here.
 type categoryConf struct {
 	Prelude   string
 	AutoIndex bool

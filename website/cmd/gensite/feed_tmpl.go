@@ -2,7 +2,7 @@ package main
 
 const feedTemplText = `<?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-	<title>{{ .BlogTitle }}</title>
+	<title>{{ .SiteTitle }}</title>
 	<link href="{{ .RootURL }}"/>
 	<link rel="self" href="{{ .RootURL }}/feed.atom"/>
 	<updated>{{ .LastModified }}</updated>

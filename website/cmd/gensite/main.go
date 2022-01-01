@@ -12,7 +12,7 @@ import (
 func main() {
 	args := os.Args[1:]
 	if len(args) != 2 {
-		log.Fatal("Usage: genblog <src dir> <dst dir>")
+		log.Fatal("Usage: gensite <src dir> <dst dir>")
 	}
 	srcDir, dstDir := args[0], args[1]
 	srcFile := func(elem ...string) string {
@@ -24,8 +24,8 @@ func main() {
 		return filepath.Join(elem...)
 	}
 
-	// Read blog configuration.
-	conf := &blogConf{}
+	// Read site configuration.
+	conf := &siteConf{}
 	decodeTOML(srcFile("index.toml"), conf)
 	if conf.RootURL == "" {
 		log.Fatal("RootURL must be specified; needed by feed and sitemap")

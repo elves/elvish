@@ -52,17 +52,17 @@ a {
 /**
  * Elements in the navbar.
  *
- * The navbar is made up of two elements, #blog-title and ul#nav-list. The
+ * The navbar is made up of two elements, #site-title and ul#nav-list. The
  * latter contains li.nav-item which contains an a.nav-link.
  */
 
-#blog-title, #nav-list {
+#site-title, #nav-list {
     display: inline-block;
     /* Add spacing between lines when the navbar cannot fit in one line. */
     line-height: 1.4em;
 }
 
-#blog-title {
+#site-title {
     font-size: 1.2em;
     margin-right: 0.6em;
     /* Move the title upward 1px so that it looks more aligned with the
@@ -71,7 +71,7 @@ a {
     top: 1px;
 }
 
-#blog-title a {
+#site-title a {
     color: #5b5;
 }
 
