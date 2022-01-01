@@ -124,7 +124,7 @@ func (gp globPattern) Index(k interface{}) (interface{}, error) {
 				return nil, badRangeExpr
 			}
 		} else {
-			return nil, fmt.Errorf("unknown modifier %s", vals.Repr(modifierv, vals.NoPretty))
+			return nil, fmt.Errorf("unknown modifier %s", vals.ReprPlain(modifierv))
 		}
 		err := gp.addMatcher(matcher)
 		return gp, err

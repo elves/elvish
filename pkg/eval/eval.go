@@ -34,7 +34,6 @@ const (
 const (
 	defaultValuePrefix        = "▶ "
 	defaultNotifyBgJobSuccess = true
-	initIndent                = vals.NoPretty
 )
 
 // Evaler provides methods for evaluating code, and maintains state that is

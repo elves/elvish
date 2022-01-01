@@ -10,9 +10,6 @@ import (
 	"src.elv.sh/pkg/parse"
 )
 
-// NoPretty can be passed to Repr to suppress pretty-printing.
-const NoPretty = math.MinInt32
-
 // Reprer wraps the Repr method.
 type Reprer interface {
 	// Repr returns a string that represents a Value. The string either be a
@@ -27,12 +24,19 @@ type Reprer interface {
 	Repr(indent int) string
 }
 
-// Repr returns the representation for a value, a string that is preferably (but
-// not necessarily) an Elvish expression that evaluates to the argument. If
-// indent >= 0, the representation is pretty-printed. It is implemented for the
-// builtin types nil, bool and string, the File, List and Map types, StructMap
-// types, and types satisfying the Reprer interface. For other types, it uses
-// fmt.Sprint with the format "<unknown %v>".
+// ReprPlain is like Repr, but without pretty-printing.
+func ReprPlain(v interface{}) string {
+	// TODO: Change to math.MinInt when Go 1.17 is required.
+	return Repr(v, math.MinInt32)
+}
+
+// Repr returns the representation for a value, a string that is preferably
+// (but not necessarily) an Elvish expression that evaluates to the argument.
+// The representation is pretty-printed, using indent as the initial level of
+// indentation. It is implemented for the builtin types nil, bool and string,
+// the File, List and Map types, StructMap types, and types satisfying the
+// Reprer interface. For other types, it uses fmt.Sprint with the format
+// "<unknown %v>".
 func Repr(v interface{}, indent int) string {
 	switch v := v.(type) {
 	case nil:

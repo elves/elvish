@@ -59,7 +59,7 @@ func (vt Tester) Len(wantLen int) Tester {
 // Repr tests the Repr of the value.
 func (vt Tester) Repr(wantRepr string) Tester {
 	vt.t.Helper()
-	kind := Repr(vt.v, NoPretty)
+	kind := ReprPlain(vt.v)
 	if kind != wantRepr {
 		vt.t.Errorf("Repr(v) = %s, want %s", kind, wantRepr)
 	}

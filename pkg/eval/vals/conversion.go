@@ -125,7 +125,7 @@ func elvToInt(arg interface{}) (int, error) {
 		if err == nil {
 			return int(num), nil
 		}
-		return 0, cannotParseAs{"integer", Repr(arg, -1)}
+		return 0, cannotParseAs{"integer", ReprPlain(arg)}
 	default:
 		return 0, errMustBeInteger
 	}
@@ -138,7 +138,7 @@ func elvToNum(arg interface{}) (Num, error) {
 	case string:
 		n := ParseNum(arg)
 		if n == nil {
-			return 0, cannotParseAs{"number", Repr(arg, -1)}
+			return 0, cannotParseAs{"number", ReprPlain(arg)}
 		}
 		return n, nil
 	default:

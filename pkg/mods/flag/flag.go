@@ -196,7 +196,7 @@ func addFlag(fs *flag.FlagSet, name string, value interface{}, description strin
 	default:
 		return errs.BadValue{What: "flag default value",
 			Valid:  "boolean, number, string or list",
-			Actual: vals.Repr(value, vals.NoPretty)}
+			Actual: vals.ReprPlain(value)}
 	}
 	return nil
 }

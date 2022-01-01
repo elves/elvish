@@ -32,7 +32,7 @@ func NoSuchKey(k interface{}) error {
 }
 
 func (err noSuchKeyError) Error() string {
-	return "no such key: " + Repr(err.key, NoPretty)
+	return "no such key: " + ReprPlain(err.key)
 }
 
 // Index indexes a value with the given key. It is implemented for the builtin

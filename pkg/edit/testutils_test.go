@@ -135,7 +135,7 @@ func testGlobal(t *testing.T, ev *eval.Evaler, name string, wantVal interface{})
 	t.Helper()
 	if val := getGlobal(ev, name); !vals.Equal(val, wantVal) {
 		t.Errorf("$%s = %s, want %s",
-			name, vals.Repr(val, vals.NoPretty), vals.Repr(wantVal, vals.NoPretty))
+			name, vals.ReprPlain(val), vals.ReprPlain(wantVal))
 	}
 }
 

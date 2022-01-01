@@ -81,8 +81,8 @@ func TestDelElement(t *testing.T) {
 			DelElement(FromPtr(&m), test.indices)
 			if !vals.Equal(m, test.newContainer) {
 				t.Errorf("After deleting, map is %v, want %v",
-					vals.Repr(m, vals.NoPretty),
-					vals.Repr(test.newContainer, vals.NoPretty))
+					vals.ReprPlain(m),
+					vals.ReprPlain(test.newContainer))
 			}
 		})
 	}

@@ -15,10 +15,8 @@ func (reprer) Repr(int) string { return "<reprer>" }
 
 type nonReprer struct{}
 
-func repr(a interface{}) string { return Repr(a, NoPretty) }
-
-func TestRepr(t *testing.T) {
-	Test(t, Fn("repr", repr), Table{
+func TestReprPlain(t *testing.T) {
+	Test(t, Fn("ReprPlain", ReprPlain), Table{
 		Args(nil).Rets("$nil"),
 
 		Args(false).Rets("$false"),

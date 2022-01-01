@@ -267,7 +267,7 @@ func match(got, want interface{}) bool {
 func reprs(values []interface{}) []string {
 	s := make([]string, len(values))
 	for i, v := range values {
-		s[i] = vals.Repr(v, vals.NoPretty)
+		s[i] = vals.ReprPlain(v)
 	}
 	return s
 }
