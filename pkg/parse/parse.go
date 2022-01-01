@@ -159,24 +159,17 @@ func (fn *Form) parse(ps *parser) {
 	parseSpaces(fn, ps)
 	for startsCompound(ps.peek(), CmdExpr) {
 		initial := ps.save()
-		parsedCmd := ps.parse(&Compound{ExprCtx: CmdExpr})
+		cmdNode := &Compound{ExprCtx: CmdExpr}
+		parsedCmd := ps.parse(cmdNode)
 
-		if s := SourceText(parsedCmd.n); strings.ContainsRune(s, '=') {
-			postCmd := ps.save()
-			ps.restore(initial)
-			parsedAssignment := ps.parse(&Assignment{})
-			if len(ps.errors.Entries) == len(initial.errors.Entries) {
-				parsedAssignment.addTo(&fn.Assignments, fn)
-				parseSpaces(fn, ps)
-				continue
-			} else {
-				ps.restore(postCmd)
-			}
+		if !parsableAsAssignment(cmdNode) {
+			parsedCmd.addAs(&fn.Head, fn)
+			parseSpaces(fn, ps)
+			break
 		}
-
-		parsedCmd.addAs(&fn.Head, fn)
+		ps.restore(initial)
+		ps.parse(&Assignment{}).addTo(&fn.Assignments, fn)
 		parseSpaces(fn, ps)
-		break
 	}
 
 	if fn.Head == nil {
@@ -218,6 +211,29 @@ func (fn *Form) parse(ps *parser) {
 	}
 }
 
+func parsableAsAssignment(cn *Compound) bool {
+	if len(cn.Indexings) == 0 {
+		return false
+	}
+	switch cn.Indexings[0].Head.Type {
+	case Braced, SingleQuoted, DoubleQuoted:
+		return len(cn.Indexings) >= 2 &&
+			strings.HasPrefix(SourceText(cn.Indexings[1]), "=")
+	case Bareword:
+		name := cn.Indexings[0].Head.Value
+		eq := strings.IndexByte(name, '=')
+		if eq >= 0 {
+			return validBarewordVariableName(name[:eq], true)
+		} else {
+			return validBarewordVariableName(name, true) &&
+				len(cn.Indexings) >= 2 &&
+				strings.HasPrefix(SourceText(cn.Indexings[1]), "=")
+		}
+	default:
+		return false
+	}
+}
+
 func startsForm(r rune) bool {
 	return IsInlineWhitespace(r) || startsCompound(r, CmdExpr)
 }
@@ -253,22 +269,25 @@ func ValidLHSVariable(p *Primary, allowSigil bool) bool {
 	case Bareword:
 		// Bareword variable names may only contain runes that are valid in raw
 		// variable names
-		if p.Value == "" {
-			return false
-		}
-		name := p.Value
-		if allowSigil && name[0] == '@' {
-			name = name[1:]
-		}
-		for _, r := range name {
-			if !allowedInVariableName(r) {
-				return false
-			}
-		}
-		return true
+		return validBarewordVariableName(p.Value, allowSigil)
 	default:
 		return false
 	}
+}
+
+func validBarewordVariableName(name string, allowSigil bool) bool {
+	if name == "" {
+		return false
+	}
+	if allowSigil && name[0] == '@' {
+		name = name[1:]
+	}
+	for _, r := range name {
+		if !allowedInVariableName(r) {
+			return false
+		}
+	}
+	return true
 }
 
 // Redir = { Compound } { '<'|'>'|'<>'|'>>' } { Space } ( '&'? Compound )
