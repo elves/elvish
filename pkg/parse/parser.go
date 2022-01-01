@@ -33,6 +33,20 @@ func (ps *parser) parse(n Node) parsed {
 	return parsed{n}
 }
 
+type parserState struct {
+	pos     int
+	overEOF int
+	errors  Error
+}
+
+func (ps *parser) save() parserState {
+	return parserState{ps.pos, ps.overEOF, ps.errors}
+}
+
+func (ps *parser) restore(s parserState) {
+	ps.pos, ps.overEOF, ps.errors = s.pos, s.overEOF, s.errors
+}
+
 var nodeType = reflect.TypeOf((*Node)(nil)).Elem()
 
 type parsed struct {

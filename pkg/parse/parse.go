@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strings"
 	"unicode"
 
 	"src.elv.sh/pkg/diag"
@@ -156,12 +157,29 @@ type Form struct {
 
 func (fn *Form) parse(ps *parser) {
 	parseSpaces(fn, ps)
-	for fn.tryAssignment(ps) {
+	for startsCompound(ps.peek(), CmdExpr) {
+		initial := ps.save()
+		parsedCmd := ps.parse(&Compound{ExprCtx: CmdExpr})
+
+		if s := SourceText(parsedCmd.n); strings.ContainsRune(s, '=') {
+			postCmd := ps.save()
+			ps.restore(initial)
+			parsedAssignment := ps.parse(&Assignment{})
+			if len(ps.errors.Entries) == len(initial.errors.Entries) {
+				parsedAssignment.addTo(&fn.Assignments, fn)
+				parseSpaces(fn, ps)
+				continue
+			} else {
+				ps.restore(postCmd)
+			}
+		}
+
+		parsedCmd.addAs(&fn.Head, fn)
 		parseSpaces(fn, ps)
+		break
 	}
 
-	// Parse head.
-	if !startsCompound(ps.peek(), CmdExpr) {
+	if fn.Head == nil {
 		if len(fn.Assignments) > 0 {
 			// Assignment-only form.
 			return
@@ -169,8 +187,6 @@ func (fn *Form) parse(ps *parser) {
 		// Bad form.
 		ps.error(fmt.Errorf("bad rune at form head: %q", ps.peek()))
 	}
-	ps.parse(&Compound{ExprCtx: CmdExpr}).addAs(&fn.Head, fn)
-	parseSpaces(fn, ps)
 
 	for {
 		r := ps.peek()
@@ -200,27 +216,6 @@ func (fn *Form) parse(ps *parser) {
 		}
 		parseSpaces(fn, ps)
 	}
-}
-
-// tryAssignment tries to parse an assignment. If succeeded, it adds the parsed
-// assignment to fn.Assignments and returns true. Otherwise it rewinds the
-// parser and returns false.
-func (fn *Form) tryAssignment(ps *parser) bool {
-	if !startsIndexing(ps.peek(), LHSExpr) {
-		return false
-	}
-
-	pos := ps.pos
-	errorEntries := ps.errors.Entries
-	parsedAssignment := ps.parse(&Assignment{})
-	// If errors were added, revert
-	if len(ps.errors.Entries) > len(errorEntries) {
-		ps.errors.Entries = errorEntries
-		ps.pos = pos
-		return false
-	}
-	parsedAssignment.addTo(&fn.Assignments, fn)
-	return true
 }
 
 func startsForm(r rune) bool {
