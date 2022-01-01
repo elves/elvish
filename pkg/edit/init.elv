@@ -44,6 +44,8 @@ insert:binding = (binding-table [
   &Tab=    $completion:smart-start~
   &Up=     $history:start~
 
+  &Alt-Enter={ insert-at-dot "\n" }
+
   &Enter=   $smart-enter~
   &Ctrl-D=  $return-eof~
 ])
