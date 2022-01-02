@@ -1,24 +1,16 @@
 package eval
 
 import (
-	"errors"
-
-	"src.elv.sh/pkg/fsutil"
-	"src.elv.sh/pkg/store/storedefs"
-
 	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/fsutil"
 )
 
 // Filesystem commands.
 
-// ErrStoreNotConnected is thrown by dir-history when the store is not connected.
-var ErrStoreNotConnected = errors.New("store not connected")
-
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		// Directory
-		"cd":          cd,
-		"dir-history": dirs,
+		"cd": cd,
 
 		// Path
 		"tilde-abbr": tildeAbbr,
@@ -55,50 +47,6 @@ func cd(fm *Frame, args ...string) error {
 	}
 
 	return fm.Evaler.Chdir(dir)
-}
-
-//elvdoc:fn dir-history
-//
-// ```elvish
-// dir-history
-// ```
-//
-// Return a list containing the interactive directory history. Each element is a map with two keys:
-// `path` and `score`. The list is sorted by descending score.
-//
-// Example:
-//
-// ```elvish-transcript
-// ~> dir-history | take 1
-// ▶ [&path=/Users/foo/.elvish &score=96.79928]
-// ```
-//
-// @cf edit:command-history
-
-type dirHistoryEntry struct {
-	Path  string
-	Score float64
-}
-
-func (dirHistoryEntry) IsStructMap() {}
-
-func dirs(fm *Frame) error {
-	daemon := fm.Evaler.DaemonClient
-	if daemon == nil {
-		return ErrStoreNotConnected
-	}
-	dirs, err := daemon.Dirs(storedefs.NoBlacklist)
-	if err != nil {
-		return err
-	}
-	out := fm.ValueOutput()
-	for _, dir := range dirs {
-		err := out.Put(dirHistoryEntry{dir.Path, dir.Score})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 //elvdoc:fn tilde-abbr

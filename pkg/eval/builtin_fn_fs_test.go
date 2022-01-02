@@ -7,13 +7,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/testutil"
-
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/testutil"
 )
 
 // For error injection into the fsutil.GetHome function.
@@ -55,13 +53,5 @@ func TestCd(t *testing.T) {
 		// determine the user's home directory.
 		That(`unset-env HOME; cd; set-env HOME `+tmpHome).Throws(
 			errors.New("can't resolve ~: user unknown"), "cd"),
-	)
-}
-
-func TestDirHistory(t *testing.T) {
-	// TODO: Add a Store mock so we can test the behavior when a history Store
-	// is available.
-	Test(t,
-		That(`dir-history`).Throws(ErrStoreNotConnected, "dir-history"),
 	)
 }

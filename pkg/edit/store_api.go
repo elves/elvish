@@ -40,8 +40,6 @@ var errStoreOffline = errors.New("store offline")
 // edit:command-history | put [(all)][-1][cmd]
 // edit:command-history &cmd-only &newest-first | take 1
 // ```
-//
-// @cf builtin:dir-history
 
 type cmdhistOpt struct{ CmdOnly, Dedup, NewestFirst bool }
 

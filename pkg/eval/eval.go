@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"sync"
 
-	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/eval/vals"
@@ -49,8 +48,6 @@ type Evaler struct {
 	BeforeExit []func()
 	// Chdir hooks, exposed indirectly as $before-chdir and $after-chdir.
 	BeforeChdir, AfterChdir []func(string)
-	// TODO: Remove after the dir-history command is removed.
-	DaemonClient daemondefs.Client
 	// Directories to search libraries.
 	LibDirs []string
 	// Source code of internal bundled modules indexed by use specs.

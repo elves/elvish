@@ -49,6 +49,7 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 		defer handlePanic()
 	}
 
+	var daemonClient daemondefs.Client
 	if cfg.ActivateDaemon != nil && cfg.SpawnConfig != nil {
 		// TODO(xiaq): Connect to daemon and install daemon module
 		// asynchronously.
@@ -64,9 +65,9 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 					"warning: failed to close connection to daemon:", err)
 			}
 		}()
+		daemonClient = cl
 		// Even if error is not nil, we install daemon-related functionalities
 		// anyway. Daemon may eventually come online and become functional.
-		ev.DaemonClient = cl
 		ev.AddBeforeExit(func() { cl.Close() })
 		ev.AddModule("store", store.Ns(cl))
 		ev.AddModule("daemon", daemon.Ns(cl))
@@ -75,7 +76,7 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(fds[0]) {
-		newed := edit.NewEditor(cli.NewTTY(fds[0], fds[2]), ev, ev.DaemonClient)
+		newed := edit.NewEditor(cli.NewTTY(fds[0], fds[2]), ev, daemonClient)
 		ev.ExtendBuiltin(eval.BuildNs().AddNs("edit", newed))
 		ev.BgJobNotify = func(s string) { newed.Notify(ui.T(s)) }
 		ed = newed

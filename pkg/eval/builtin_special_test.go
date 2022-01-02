@@ -490,7 +490,7 @@ func TestUse(t *testing.T) {
 func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	progtest.SetDeprecationLevel(t, 17)
 	libdir := InTempDir(t)
-	MustWriteFile("dep.elv", "fn x { dir-history }")
+	MustWriteFile("dep.elv", "a = b")
 
 	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
 		// Importing module triggers check for deprecated features

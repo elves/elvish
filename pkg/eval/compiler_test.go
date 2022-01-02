@@ -11,7 +11,9 @@ import (
 )
 
 func TestDeprecatedBuiltin(t *testing.T) {
-	testCompileTimeDeprecation(t, "dir-history", `the "dir-history" command is deprecated`, 17)
+	// There is no builtin deprecated for 0.18.x yet. Uncomment this when there is one.
+	//testCompileTimeDeprecation(t, "deprecated-builtin", `the "deprecated-builtin" command is deprecated`, 17)
+
 	// Deprecations of other builtins are implemented in the same way, so we
 	// don't test them repeatedly
 }

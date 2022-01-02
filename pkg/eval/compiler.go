@@ -129,10 +129,13 @@ func (cp *compiler) popScope() {
 
 func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 	msg := ""
-	minLevel := 17
+	minLevel := 18
+	// There is no builtin deprecated for 0.18.x yet. But this function is
+	// only called for builtins that actually exist, so no harm checking for a
+	// non-existent command here.
 	switch name {
-	case "dir-history~":
-		msg = `the "dir-history" command is deprecated; use "store:dirs" instead`
+	case "deprecated-builtin~":
+		msg = `the "deprecated-builtin" command is deprecated; use "new-builtin" instead`
 	default:
 		return
 	}
