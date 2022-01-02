@@ -5,6 +5,11 @@
 Welcome to the quick tour of Elvish. This tour works best if you have used
 another shell or programming language before.
 
+If you are familiar with traditional shells like Bash, the sections
+[basic shell language](#basic-shell-language) and
+[shell scripting commands](#shell-scripting-commands) can help you "translate"
+your knowledge into Elvish.
+
 If you are mainly interested in using Elvish interactively, jump directly to
 [interactive features](#interactive-features).
 
@@ -116,6 +121,11 @@ correspondence between Elvish and bash syntax:
   <tr>
     <td><a href="#background-jobs">Background jobs</a></td>
     <td colspan="2"><code>echo foo &amp;</code></td>
+  </tr>
+  <tr>
+    <td><a href="#command-sequence">Command sequence</a></td>
+    <td><code>a; b</code></td>
+    <td><code>a && b</code></td>
   </tr>
 
 </table>
@@ -432,6 +442,34 @@ to terminate the first command with `;` or newline: `echo foo &; echo bar`.
 
 Read the language reference on
 [background pipelines](../ref/language.html#background-pipeline) to learn more.
+
+## Command sequence
+
+Join commands with a `;` or newline to run them sequentially (insert a newline
+with <span class="key">Alt-Enter</span>):
+
+```elvish-transcript
+~> echo a; echo b
+a
+b
+~> echo a
+   echo b
+a
+b
+```
+
+In Elvish, when a command fails (e.g. when an external command exits with a
+non-zero status), execution gets terminated.
+
+```elvish-transcript
+~> echo before; false; echo after
+before
+Exception: false exited with 1
+[tty 2], line 1: echo before; false; echo after
+```
+
+In this aspect, Elvish's behavior is similar to joining all commands with `&&`
+or setting `set -e` in traditional shells:
 
 # Advanced language features
 
@@ -955,3 +993,60 @@ instead:
 ```elvish
 set paths = [/opts/bin /bin /usr/bin]
 ```
+
+# Shell scripting commands
+
+Elvish has its own set of [builtin commands](../ref/builtin.html). This section
+helps you find commands that correspond to commands in traditional shells.
+
+## command
+
+To force Elvish to treat a command as an external command, prefix it with
+[`e:`](../ref/language.html#special-namespaces).
+
+## export
+
+In Elvish, environment variables live in the
+[`E:`](../ref/language.html#special-namespaces) namespace. There is no concept
+of exporting a variable to the environment; environment variables are always
+"exported" to child processes, and non-environment variables never are.
+
+## source
+
+To build reusable libraries, use Elvish's
+[module mechanism](../ref/language.html#modules).
+
+To execute a dynamic piece of code for side effect, use
+[`eval`](../ref/builtin.html#eval). If the code lives in a file, write
+`eval (slurp < /path/to/file)`.
+
+Due to Elvish's scoping rules, files executed using either of the mechanism
+above can't create new variables in the current namespace. For example,
+`eval 'var foo = bar'; echo $foo` won't work. However, the REPL's namespace
+_can_ be manipulated with [`edit:add-var`](../ref/edit.html#edit:add-var).
+
+## test
+
+To test files, use commands in the [path](../ref/path.html) module.
+
+To compare numbers, use
+[number comparison commands](../ref/builtin.html#num-cmp).
+
+To compare strings, use
+[string comparison commands](../ref/builtin.html#str-cmp).
+
+To perform boolean operations, use
+[`and`](../ref/language.html#and-or-coalesce),
+[`or`](../ref/language.html#and-or-coalesce) or
+[`not`](../ref/builtin.html#not). **Note**: `and` and `or` are part of the
+language rather than the builtin module, since they perform
+[short-circuit evaluation](https://en.wikipedia.org/wiki/Short-circuit_evaluation)
+and don't always evaluate all the arguments.
+
+## which
+
+To check if an external command exists, use
+[has-external](../ref/builtin.html#has-external).
+
+To query the path of an external command, use
+[search-external](../ref/builtin.html#search-external).

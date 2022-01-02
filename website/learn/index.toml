@@ -6,13 +6,13 @@ intro = "Start with:"
 [[articles]]
 name = "fundamentals"
 title = "Fundamentals"
-note = "if you are new to shells"
+note = "if you are new to shells and programming"
 group = 0
 
 [[articles]]
 name = "tour"
 title = "Quick Tour"
-note = "if you have experience with other shells"
+note = "if you have experience with other shells or programming languages"
 extraCSS = ["tour.css"]
 group = 0
 
