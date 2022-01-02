@@ -12,4 +12,4 @@ cat ${1%.html}.md |
   done
 
 cat ${1%.html}.md |
-  awk '/^@ttyshot/{ print "ttyshot/" $2 ".html" }'
+  awk '$1 == "@ttyshot" { print "ttyshot/" $2 ".html" }'
