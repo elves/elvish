@@ -55,12 +55,6 @@ func main() {
 	// Last modified time of the newest post, used in the feed.
 	var lastModified time.Time
 
-	// Whether the "all" category has been requested.
-	hasAllCategory := false
-	// Meta of all articles, used to generate the index of the "all", if if is
-	// requested.
-	allArticleMetas := []articleMeta{}
-
 	// Paths of all generated URLs, relative to the destination directory,
 	// always without "index.html". Used to generate the sitemap.
 	allPaths := []string{""}
@@ -82,15 +76,6 @@ func main() {
 	}
 
 	for _, cat := range conf.Categories {
-		if cat.Name == "all" {
-			// The "all" category has been requested. It is a pseudo-category in
-			// that it doesn't need to have any associated category
-			// configuration file. We cannot render the category index now
-			// because we haven't seen all articles yet. Render it later.
-			hasAllCategory = true
-			continue
-		}
-
 		catConf := &categoryConf{}
 		decodeTOML(srcFile(cat.Name, "index.toml"), catConf)
 
@@ -122,17 +107,8 @@ func main() {
 			ad := &articleDot{base, a}
 			executeToFile(articleTmpl, ad, dstFile(p))
 
-			allArticleMetas = append(allArticleMetas, a.articleMeta)
 			recents.insert(a)
 		}
-	}
-
-	// Generate "all category"
-	if hasAllCategory {
-		sort.Slice(allArticleMetas, func(i, j int) bool {
-			return allArticleMetas[i].Timestamp > allArticleMetas[j].Timestamp
-		})
-		renderCategoryIndex("all", "", "", "", []group{{Articles: allArticleMetas}})
 	}
 
 	// Generate index page. XXX(xiaq): duplicated code with generating ordinary
