@@ -168,11 +168,15 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 	var tempLValues []lvalue
 	var assignmentOps []effectOp
 	if len(n.Assignments) > 0 {
-		assignmentOps = cp.assignmentOps(n.Assignments)
 		if n.Head == nil {
 			cp.errorpf(n, `using the syntax of temporary assignment for non-temporary assignment is no longer supported; use "var" or "set" instead`)
 			return nopOp{}
+		} else {
+			as := n.Assignments
+			cp.deprecate(diag.MixedRanging(as[0], as[len(as)-1]),
+				`the legacy temporary assignment syntax is deprecated; use "tmp" instead`, 18)
 		}
+		assignmentOps = cp.assignmentOps(n.Assignments)
 		for _, a := range n.Assignments {
 			lvalues := cp.parseIndexingLValue(a.Left, setLValue|newLValue)
 			tempLValues = append(tempLValues, lvalues.lvalues...)

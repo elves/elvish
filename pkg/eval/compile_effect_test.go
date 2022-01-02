@@ -243,6 +243,11 @@ func TestCommand_Assignment(t *testing.T) {
 	)
 }
 
+func TestCommand_LegacyTemporaryAssignmentSyntaxIsDeprecated(t *testing.T) {
+	testCompileTimeDeprecation(t, "a=foo echo $a",
+		"the legacy temporary assignment syntax is deprecated", 18)
+}
+
 func TestCommand_LegacyAssignmentIsDeprecated(t *testing.T) {
 	testCompileTimeDeprecation(t, "a = foo", "legacy assignment form is deprecated", 17)
 }
