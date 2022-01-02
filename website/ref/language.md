@@ -114,21 +114,32 @@ represents Unicode codepoints in hexadecimal):
 
     -   `\\` is U+005C, the backslash `\` itself.
 
--   The following escape sequences encode any Unicode codepoint using their
-    numeric values:
+-   The following escape sequences encode any byte using their numeric values:
 
     -   `\` followed by exactly three octal digits.
 
     -   `\x` followed by exactly two hexadecimal digits.
 
+    **Examples**: The character "A" (U+0041) is encoded using a single byte in
+    UTF-8 (0x41), can be written as `\x41` or `\101`. The character "ß" (U+00DF)
+    is encoded using two bytes in UTF-8 (0xc3 and 0x9f), and can be written as
+    `\xc3\x9f` or `\303\237` (**not** as `\xdf` or `\337`). These notations can
+    be used to write arbitrary byte sequences that are not necessary valid UTF-8
+    sequences.
+
+    **Note**: `\0`, while supported by C, is invalid in Elvish; write `\000`
+    instead.
+
+-   The following escape sequences encode any Unicode codepoint using their
+    numeric values:
+
     -   `\u` followed by exactly four hexadecimal digits.
 
     -   `\U` followed by exactly eight hexadecimal digits.
 
-    Example: The character `A` can be encoded as `\101`, `\x41`, `\u0041` or
-    `\U00000041`.
-
-    Note that `\0`, while supported by C, is invalid; write `\000` instead.
+    **Examples**: The character "A" (U+0041) can be written as `\u0041` or
+    `\U00000041`. The character "ß" (U+00DF) can be written as `\u00df` or
+    `\U000000df`.
 
 -   The following escape sequences encode ASCII control characters with the
     traditional [caret notation](https://en.wikipedia.org/wiki/Caret_notation):

@@ -236,12 +236,21 @@ var testCases = []struct {
 		}},
 	},
 	{
-		name: "double-quoted string with numerical escape sequences",
-		code: `"b\^[\x1b\u548c\U0002CE23\123\n\t\\"`,
+		name: "double-quoted string with numerical escape sequences for codepoints",
+		code: `"b\^[\u548c\U0002CE23\n\t\\"`,
 		node: &Primary{},
 		want: ast{"Primary", fs{
 			"Type":  DoubleQuoted,
-			"Value": "b\x1b\x1b\u548c\U0002CE23\123\n\t\\",
+			"Value": "b\x1b\u548c\U0002CE23\n\t\\",
+		}},
+	},
+	{
+		name: "double-quoted string with numerical escape sequences for bytes",
+		code: `"\123\321 \x7f\xff"`,
+		node: &Primary{},
+		want: ast{"Primary", fs{
+			"Type":  DoubleQuoted,
+			"Value": "\123\321 \x7f\xff",
 		}},
 	},
 	{
@@ -474,6 +483,13 @@ var testCases = []struct {
 		node:        &Chunk{},
 		wantErrPart: "a",
 		wantErrMsg:  "invalid escape sequence, should be octal digit",
+	},
+	{
+		name:        "overflow in octal escape sequence",
+		code:        `a "\400"`,
+		node:        &Chunk{},
+		wantErrPart: "\\400",
+		wantErrMsg:  "invalid octal escape sequence, should be below 256",
 	},
 	{
 		name:        "invalid single-char escape sequence",

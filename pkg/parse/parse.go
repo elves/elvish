@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math"
 	"strings"
 	"unicode"
 
@@ -59,6 +60,7 @@ var (
 	errStringUnterminated         = newError("string not terminated")
 	errInvalidEscape              = newError("invalid escape sequence")
 	errInvalidEscapeOct           = newError("invalid escape sequence", "octal digit")
+	errInvalidEscapeOctOverflow   = newError("invalid octal escape sequence", "below 256")
 	errInvalidEscapeHex           = newError("invalid escape sequence", "hex digit")
 	errInvalidEscapeControl       = newError("invalid control sequence", "a codepoint between 0x3F and 0x5F")
 	errShouldBePrimary            = newError("", "single-quoted string", "double-quoted string", "bareword")
@@ -646,7 +648,11 @@ func (pn *Primary) doubleQuotedInner(ps *parser) {
 					}
 					rr = rr*16 + d
 				}
-				buf.WriteRune(rr)
+				if r == 'x' {
+					buf.WriteByte(byte(rr))
+				} else {
+					buf.WriteRune(rr)
+				}
 			case '0', '1', '2', '3', '4', '5', '6', '7': // three octal digits
 				rr := r - '0'
 				for i := 0; i < 2; i++ {
@@ -658,7 +664,12 @@ func (pn *Primary) doubleQuotedInner(ps *parser) {
 					}
 					rr = rr*8 + (r - '0')
 				}
-				buf.WriteRune(rr)
+				if rr <= math.MaxUint8 {
+					buf.WriteByte(byte(rr))
+				} else {
+					r := diag.Ranging{From: ps.pos - 4, To: ps.pos}
+					ps.errorp(r, errInvalidEscapeOctOverflow)
+				}
 			default:
 				if rr, ok := doubleEscape[r]; ok {
 					buf.WriteRune(rr)
