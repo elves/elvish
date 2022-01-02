@@ -361,6 +361,12 @@ Unlike traditional shells, variables must be declared before being used; if the
 `foo` variable wasn't declared with `var` first, `echo $foo` results in an
 error.
 
+Elvish does not perform `$IFS` splitting on variables, so `$foo` always
+evaluates to one value, even if it contains whitespaces and newlines. You never
+need to write `echo "$foo"` again. (And in fact,
+[double-quoted strings](../ref/language.html#double-quoted-string) do not
+support interpolation).
+
 Also unlike traditional shells, environment variables in Elvish live in a
 separate `E:` namespace:
 
@@ -369,7 +375,8 @@ separate `E:` namespace:
 /home/elf
 ```
 
-Read the language reference on [variables](../ref/language.html#variable) and
+Read the language reference on [variables](../ref/language.html#variable),
+[variable use](../ref/language.html#variable-use) and
 [special namespaces](../ref/language.html#special-namespaces) to learn more.
 
 ## Redirections
