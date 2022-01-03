@@ -4,7 +4,6 @@ import (
 	"sort"
 	"strings"
 
-	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 )
 
@@ -138,18 +137,6 @@ func emitRegionsInForm(n *parse.Form, f func(parse.Node, regionKind, string)) {
 		emitRegionsInFor(n, f)
 	case "try":
 		emitRegionsInTry(n, f)
-	}
-	if !eval.IsBuiltinSpecial[head] {
-		for i, arg := range n.Args {
-			if parse.SourceText(arg) == "=" {
-				// Highlight left hands of legacy assignment form.
-				emitVariableRegion(n.Head, f)
-				for j := 0; j < i; j++ {
-					emitVariableRegion(n.Args[j], f)
-				}
-				return
-			}
-		}
 	}
 	if isBarewordCompound(n.Head) {
 		f(n.Head, semanticRegion, commandRegion)

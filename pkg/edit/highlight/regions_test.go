@@ -52,15 +52,7 @@ func TestGetRegions(t *testing.T) {
 			{2, 12, lexicalRegion, commentRegion}, // # comment
 		}),
 
-		// LHS of assignments.
-
-		Args("x y = foo bar").Rets([]region{
-			{0, 1, semanticRegion, variableRegion},  // x
-			{2, 3, semanticRegion, variableRegion},  // y
-			{4, 5, lexicalRegion, barewordRegion},   // =
-			{6, 9, lexicalRegion, barewordRegion},   // foo
-			{10, 13, lexicalRegion, barewordRegion}, // bar
-		}),
+		// LHS of temporary assignments.
 		Args("x=foo ls").Rets([]region{
 			{0, 1, semanticRegion, variableRegion}, // x
 			{1, 2, lexicalRegion, "="},
