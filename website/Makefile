@@ -34,6 +34,9 @@ ttyshot/%.html:
 
 .PHONY: gen docset publish check-rellinks clean
 
+# Don't remove intermediate targets
+.SECONDARY:
+
 .SECONDEXPANSION:
 
 tools/%.bin: cmd/% $$(wildcard cmd/%/*.go)
