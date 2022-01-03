@@ -527,10 +527,10 @@ func repr(fm *Frame, args ...interface{}) error {
 // Example:
 //
 // ```elvish-transcript
-// ~> e = ?(fail lorem-ipsum)
+// ~> var e = ?(fail lorem-ipsum)
 // ~> show $e
 // Exception: lorem-ipsum
-// [tty 3], line 1: e = ?(fail lorem-ipsum)
+// [tty 3], line 1: var e = ?(fail lorem-ipsum)
 // ```
 
 func show(fm *Frame, v diag.Shower) error {

@@ -32,7 +32,7 @@ var Ns = eval.BuildNsNamed("file").
 // This is
 // a file.
 // ~> use file
-// ~> f = (file:open a.txt)
+// ~> var f = (file:open a.txt)
 // ~> cat < $f
 // This is
 // a file.
@@ -81,7 +81,7 @@ func close(f vals.File) error {
 // Examples (assuming the pipe has a large enough buffer):
 //
 // ```elvish-transcript
-// ~> p = (file:pipe)
+// ~> var p = (file:pipe)
 // ~> echo 'lorem ipsum' > $p
 // ~> head -n1 < $p
 // lorem ipsum

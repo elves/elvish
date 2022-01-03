@@ -37,10 +37,10 @@ func init() {
 // values as their values. Examples:
 //
 // ```elvish-transcript
-// ~> n = (ns [&name=value])
+// ~> var n = (ns [&name=value])
 // ~> put $n[name]
 // ▶ value
-// ~> n: = (ns [&name=value])
+// ~> var n: = (ns [&name=value])
 // ~> put $n:name
 // ▶ value
 // ```

@@ -34,7 +34,7 @@ func init() {
 // Construct a callable value for the external program `$program`. Example:
 //
 // ```elvish-transcript
-// ~> x = (external man)
+// ~> var x = (external man)
 // ~> $x ls # opens the manpage for ls
 // ```
 //

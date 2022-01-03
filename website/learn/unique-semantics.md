@@ -271,7 +271,7 @@ To use predicates in `if`, you simply capture its output with `()`. So the
 second command is written in Elvish as:
 
 ```elvish
-n = 10
+var n = 10
 if (> $n 2) {
   echo 'executes when $n > 2'
 }

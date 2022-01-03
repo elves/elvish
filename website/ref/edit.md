@@ -63,7 +63,7 @@ set edit:rprompt = (constantly (styled (whoami)@(hostname) inverse))
 Some more examples:
 
 ```elvish-transcript
-~> edit:prompt = { tilde-abbr $pwd; styled '> ' green }
+~> set edit:prompt = { tilde-abbr $pwd; styled '> ' green }
 ~> # ">" is now green
 ~> set edit:prompt = { echo '$' }
 $
@@ -104,7 +104,7 @@ To see the transformer in action, try the following example (assuming default
 
 ```elvish
 var n = 0
-set edit:prompt = { sleep 2; put $n; n = (+ $n 1); put ': ' }
+set edit:prompt = { sleep 2; put $n; set n = (+ $n 1); put ': ' }
 set edit:-prompt-eagerness = 10 # update prompt on each keystroke
 set edit:prompt-stale-threshold = 0.5
 ```

@@ -91,8 +91,8 @@ type Evaler struct {
 // following example also shows `$before-chdir`:
 //
 // ```elvish-transcript
-// ~> before-chdir = [{|dir| echo "Going to change to "$dir", pwd is "$pwd }]
-// ~> after-chdir = [{|dir| echo "Changed to "$dir", pwd is "$pwd }]
+// ~> set before-chdir = [{|dir| echo "Going to change to "$dir", pwd is "$pwd }]
+// ~> set after-chdir = [{|dir| echo "Changed to "$dir", pwd is "$pwd }]
 // ~> cd /usr
 // Going to change to /usr, pwd is /Users/xiaq
 // Changed to /usr, pwd is /usr
@@ -130,7 +130,7 @@ type Evaler struct {
 // ~> put lorem ipsum
 // ▶ lorem
 // ▶ ipsum
-// ~> value-out-indicator = 'val> '
+// ~> set value-out-indicator = 'val> '
 // ~> put lorem ipsum
 // val> lorem
 // val> ipsum

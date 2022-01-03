@@ -31,10 +31,9 @@ func init() {
 		"kind-of":    kindOf,
 		"constantly": constantly,
 
-		"call": call,
-
+		// Introspection
+		"call":    call,
 		"resolve": resolve,
-
 		"eval":    eval,
 		"use-mod": useMod,
 
@@ -112,25 +111,26 @@ func kindOf(fm *Frame, args ...interface{}) error {
 // Examples:
 //
 // ```elvish-transcript
-// ~> f=(constantly lorem ipsum)
+// ~> var f = (constantly lorem ipsum)
 // ~> $f
 // ▶ lorem
 // ▶ ipsum
 // ```
 //
-// The above example is actually equivalent to simply `f = { put lorem ipsum }`;
+// The above example is equivalent to simply `var f = { put lorem ipsum }`;
 // it is most useful when the argument is **not** a literal value, e.g.
 //
 // ```elvish-transcript
-// ~> f = (constantly (uname))
+// ~> var f = (constantly (uname))
 // ~> $f
 // ▶ Darwin
 // ~> $f
 // ▶ Darwin
 // ```
 //
-// The above code only calls `uname` once, while if you do `f = { put (uname) }`,
-// every time you invoke `$f`, `uname` will be called.
+// The above code only calls `uname` once when defining `$f`. In contrast, if
+// `$f` is defined as `var f = { put (uname) }`, every time you invoke `$f`,
+// `uname` will be called.
 //
 // Etymology: [Clojure](https://clojuredocs.org/clojure.core/constantly).
 
@@ -247,10 +247,10 @@ func resolve(fm *Frame, head string) string {
 // ```elvish-transcript
 // ~> eval 'put x'
 // ▶ x
-// ~> x = foo
+// ~> var x = foo
 // ~> eval 'put $x'
 // ▶ foo
-// ~> ns = (ns [&x=bar])
+// ~> var ns = (ns [&x=bar])
 // ~> eval &ns=$ns 'put $x'
 // ▶ bar
 // ```
@@ -258,8 +258,8 @@ func resolve(fm *Frame, head string) string {
 // Examples that modify existing variables:
 //
 // ```elvish-transcript
-// ~> y = foo
-// ~> eval 'y = bar'
+// ~> var y = foo
+// ~> eval 'set y = bar'
 // ~> put $y
 // ▶ bar
 // ```
@@ -267,14 +267,29 @@ func resolve(fm *Frame, head string) string {
 // Examples that creates new variables and uses the callback to access it:
 //
 // ```elvish-transcript
-// ~> eval 'z = lorem'
+// ~> eval 'var z = lorem'
 // ~> put $z
 // compilation error: variable $z not found
 // [ttz 2], line 1: put $z
-// ~> saved-ns = $nil
-// ~> eval &on-end={|ns| saved-ns = $ns } 'z = lorem'
+// ~> var saved-ns = $nil
+// ~> eval &on-end={|ns| set saved-ns = $ns } 'var z = lorem'
 // ~> put $saved-ns[z]
 // ▶ lorem
+// ```
+//
+// Note that when using variables from an outer scope, only those
+// that have been referenced are captured as upvalues (see [closure
+// semantics](language.html#closure-semantics)) and thus accessible to `eval`:
+//
+// ```elvish-transcript
+// ~> var a b
+// ~> fn f {|code| nop $a; eval $code }
+// ~> f 'echo $a'
+// $nil
+// ~> f 'echo $b'
+// Exception: compilation error: variable $b not found
+// [eval 2], line 1: echo $b
+// Traceback: [... omitted ...]
 // ```
 
 type evalOpts struct {
@@ -330,7 +345,7 @@ func nextEvalCount() int {
 // Examples:
 //
 // ```elvish-transcript
-// ~> echo 'x = value' > a.elv
+// ~> echo 'var x = value' > a.elv
 // ~> put (use-mod ./a)[x]
 // ▶ value
 // ```
@@ -498,11 +513,11 @@ func sleep(fm *Frame, duration interface{}) error {
 // 1.006060647s
 // ~> time { sleep 0.01 }
 // 1.288977ms
-// ~> t = ''
-// ~> time &on-end={|x| t = $x } { sleep 1 }
+// ~> var t = ''
+// ~> time &on-end={|x| set t = $x } { sleep 1 }
 // ~> put $t
 // ▶ (float64 1.000925004)
-// ~> time &on-end={|x| t = $x } { sleep 0.01 }
+// ~> time &on-end={|x| set t = $x } { sleep 0.01 }
 // ~> put $t
 // ▶ (float64 0.011030208)
 // ```

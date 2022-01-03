@@ -34,7 +34,7 @@ var ErrNonExistentEnvVar = errors.New("non-existent environment variable")
 // Unset an environment variable. Example:
 //
 // ```elvish-transcript
-// ~> E:X = foo
+// ~> set E:X = foo
 // ~> unset-env X
 // ~> has-env X
 // ▶ $false

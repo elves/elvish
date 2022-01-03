@@ -37,7 +37,7 @@ func init() {
 // it. Valid indices are the same as the options to `styled-segment` plus `text`.
 //
 // ```elvish
-// s = (styled-segment abc &bold)
+// var s = (styled-segment abc &bold)
 // put $s[text]
 // put $s[fg-color]
 // put $s[bold]
@@ -128,7 +128,7 @@ func styledSegment(options RawOptions, input interface{}) (*ui.Segment, error) {
 // They can be accessed by indexing into it.
 //
 // ```elvish
-// s = (styled abc red)(styled def green)
+// var s = (styled abc red)(styled def green)
 // put $s[0] $s[1]
 // ```
 

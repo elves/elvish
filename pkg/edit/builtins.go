@@ -27,7 +27,7 @@ import (
 // Example:
 //
 // ```elvish
-// edit:global-binding[Ctrl-X] = { edit:-dump-buf > ~/a.html }
+// set edit:global-binding[Ctrl-X] = { print (edit:-dump-buf) > ~/a.html }
 // ```
 
 func dumpBuf(tty cli.TTY) string {

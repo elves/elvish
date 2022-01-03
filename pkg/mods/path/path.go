@@ -271,22 +271,22 @@ func tempDir(opts mktempOpt, args ...string) (string, error) {
 // if it is intended to be temporary (with `rm $f[name]`).
 //
 // ```elvish-transcript
-// ~> f = path:temp-file
+// ~> var f = (path:temp-file)
 // ~> put $f[name]
 // ▶ /tmp/elvish-RANDOMSTR
 // ~> echo hello > $f
 // ~> cat $f[name]
 // hello
-// ~> f = path:temp-file x-
+// ~> var f = (path:temp-file) x-
 // ~> put $f[name]
 // ▶ /tmp/x-RANDOMSTR
-// ~> f = path:temp-file 'x-*.y'
+// ~> var f = (path:temp-file) 'x-*.y'
 // ~> put $f[name]
 // ▶ /tmp/x-RANDOMSTR.y
-// ~> f = path:temp-file &dir=.
+// ~> var f = (path:temp-file) &dir=.
 // ~> put $f[name]
 // ▶ elvish-RANDOMSTR
-// ~> f = path:temp-file &dir=/some/dir
+// ~> var f = (path:temp-file) &dir=/some/dir
 // ~> put $f[name]
 // ▶ /some/dir/elvish-RANDOMSTR
 // ```

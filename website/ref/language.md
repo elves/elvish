@@ -67,8 +67,7 @@ The following characters are parsed as metacharacters under certain conditions:
     [tilde expansion](#tilde-expansion);
 
 -   `=` is a metacharacter when used for terminating [map keys](#map) or option
-    keys, or denoting [legacy assignment form](#legacy-assignment-form) or
-    [temporary assignments](#temporary-assignment).
+    keys, or denoting or [temporary assignments](#temporary-assignment).
 
 ## Single-quoted string
 
@@ -316,7 +315,7 @@ by whitespace. Examples:
 characters, so don't use them to separate elements:
 
 ```elvish-transcript
-~> li = [a, b]
+~> var li = [a, b]
 ~> put $li
 ▶ [a, b]
 ~> put $li[0]
@@ -358,7 +357,7 @@ one of two forms:
 Examples:
 
 ```elvish-transcript
-~> li = [lorem ipsum foo bar]
+~> var li = [lorem ipsum foo bar]
 ~> put $li[0]
 ▶ lorem
 ~> put $li[-1]
@@ -399,7 +398,7 @@ A map can be indexed by any of its keys. Unlike strings and lists, there is no
 support for slices, and `..` and `..=` have no special meanings. Examples:
 
 ```elvish-transcript
-~> map = [&a=lorem &b=ipsum &a..b=haha]
+~> var map = [&a=lorem &b=ipsum &a..b=haha]
 ~> echo $map[a]
 lorem
 ~> echo $map[a..b]
@@ -548,7 +547,7 @@ function.
 Here is an example without a signature:
 
 ```elvish-transcript
-~> f = { echo "Inside a lambda" }
+~> var f = { echo "Inside a lambda" }
 ~> put $f
 ▶ <closure 0x18a1a340>
 ```
@@ -564,7 +563,7 @@ Functions defined without a signature list do not accept any arguments or
 options. To do so, write a signature list. Here is an example:
 
 ```elvish-transcript
-~> f = {|a b| put $b $a }
+~> var f = {|a b| put $b $a }
 ~> $f lorem ipsum
 ▶ ipsum
 ▶ lorem
@@ -575,14 +574,14 @@ Like in the left hand of assignments, if you prefix one of the arguments with
 remaining arguments:
 
 ```elvish-transcript
-~> f = {|a @rest| put $a $rest }
+~> var f = {|a @rest| put $a $rest }
 ~> $f lorem
 ▶ lorem
 ▶ []
 ~> $f lorem ipsum dolar sit
 ▶ lorem
 ▶ [ipsum dolar sit]
-~> f = {|a @rest b| put $a $rest $b }
+~> set f = {|a @rest b| put $a $rest $b }
 ~> $f lorem ipsum dolar sit
 ▶ lorem
 ▶ [ipsum dolar]
@@ -594,7 +593,7 @@ You can also declare options in the signature. The syntax is `&name=default`
 value of the option will be kept in a variable called `name`:
 
 ```elvish-transcript
-~> f = {|&opt=default| echo "Value of $opt is "$opt }
+~> var f = {|&opt=default| echo "Value of $opt is "$opt }
 ~> $f
 Value of $opt is default
 ~> $f &opt=foobar
@@ -658,10 +657,9 @@ characters can be used in variable names without quoting:
     [unicode.IsPrint](https://godoc.org/unicode#IsPrint) in Go's standard
     library.
 
-A variable exist after it is declared (either explicitly using [`var`](#var) or
-implicitly using the [legacy assignment form](#legacy-assignment-form)), and its
-value may be mutated by further assignments. It can be [used](#variable-use) as
-an expression or part of an expression.
+A variable exist after it is declared using [`var`](#var), and its value may be
+mutated by further assignments. It can be [used](#variable-use) as an expression
+or part of an expression.
 
 **Note**: In most other shells, variables can map directly to environmental
 variables: `$PATH` is the same as the `PATH` environment variable. This is not
@@ -698,8 +696,8 @@ When you use a variable, Elvish looks for it in the current lexical scope, then
 its parent lexical scope and so forth, until the outermost scope:
 
 ```elvish-transcript
-~> x = 12
-~> { echo $x } # $x is in the global scope
+~> var x = 12
+~> { echo $x } # $x is in the outer scope
 12
 ~> { y = bar; { echo $y } } # $y is in the outer scope
 bar
@@ -747,16 +745,16 @@ referring to a local variable `$n`. Closure semantics means that:
 
 ```elvish-transcript
 ~> fn make-adder {
-     n = 0
-     put { put $n } { n = (+ $n 1) }
+     var n = 0
+     put { put $n } { set n = (+ $n 1) }
    }
-~> getter adder = (make-adder)
+~> var getter adder = (make-adder)
 ~> $getter # $getter outputs $n
 ▶ 0
 ~> $adder # $adder increments $n
 ~> $getter # $getter and $setter refer to the same $n
 ▶ 1
-~> getter2 adder2 = (make-adder)
+~> var getter2 adder2 = (make-adder)
 ~> $getter2 # $getter2 and $getter refer to different $n
 ▶ 0
 ~> $getter
@@ -768,12 +766,11 @@ capturing upvalues, Elvish only captures the variables that are used. In the
 following example, `$m` is not an upvalue of `$g` because it is not used:
 
 ```elvish-transcript
-~> fn f { m = 2; n = 3; put { put $n } }
-~> g = (f)
+~> fn f { var m = 2; var n = 3; put { put $n } }
+~> var g = (f)
 ```
 
-This effect is not currently observable, but will become so when namespaces
-[become introspectable](https://github.com/elves/elvish/issues/492).
+**Note**: This effect has impacts on the [`eval`](builtin.html#eval) command.
 
 # Expressions
 
@@ -796,8 +793,8 @@ A **variable use** expression is formed by a `$` followed by the name of the
 variable. Examples:
 
 ```elvish-transcript
-~> foo = bar
-~> x y = 3 4
+~> var foo = bar
+~> var x y = 3 4
 ~> put $foo
 ▶ bar
 ~> put $x
@@ -824,10 +821,10 @@ in which cases the value of the string specifies the name of the variable.
 Examples:
 
 ```elvish-transcript
-~> "\n" = foo
+~> var "\n" = foo
 ~> put $"\n"
 ▶ foo
-~> '!!!' = bar
+~> var '!!!' = bar
 ~> put $'!!!'
 ▶ bar
 ```
@@ -841,9 +838,9 @@ evaluated:
 ~> echo $x
 Compilation error: variable $x not found
 [tty], line 1: echo $x
-~> f = { echo $x }
+~> fn f { echo $x }
 compilation error: variable $x not found
-[tty 1], line 1: f = { echo $x }
+[tty 1], line 1: fn f { echo $x }
 ```
 
 If a variable contains a list value, you can add `@` before the variable name;
@@ -851,7 +848,7 @@ this evaluates to all the elements within the list. This is called **exploding**
 the variable:
 
 ```elvish-transcript
-~> li = [lorem ipsum foo bar]
+~> var li = [lorem ipsum foo bar]
 ~> put $li
 ▶ [lorem ipsum foo bar]
 ~> put $@li
@@ -875,13 +872,13 @@ pipe, and evaluates to all the values that have been output.
 ```elvish-transcript
 ~> + 1 10 100
 ▶ 111
-~> x = (+ 1 10 100)
+~> var x = (+ 1 10 100)
 ~> put $x
 ▶ 111
 ~> put lorem ipsum
 ▶ lorem
 ▶ ipsum
-~> x y = (put lorem ipsum)
+~> var x y = (put lorem ipsum)
 ~> put $x
 ▶ lorem
 ~> put $y
@@ -964,7 +961,7 @@ if ?(test -d ./a) {
 combine output capture and exception capture:
 
 ```elvish
-output = (error = ?(commands-that-may-fail))
+var output = (var error = ?(commands-that-may-fail))
 ```
 
 ## Braced list
@@ -1013,10 +1010,10 @@ An **indexing expression** is formed by appending one or more indices inside a
 pair of brackets (`[]`) after another expression (the indexee). Examples:
 
 ```elvish-transcript
-~> li = [foo bar]
+~> var li = [foo bar]
 ~> put $li[0]
 ▶ foo
-~> li = [[foo bar] quux]
+~> var li = [[foo bar] quux]
 ~> put $li[0][0]
 ▶ foo
 ~> put [[foo bar]][0][0]
@@ -1073,7 +1070,7 @@ of all the constituent expressions. Examples:
 ```elvish-transcript
 ~> put 'a'b"c" # compounding three string literals
 ▶ abc
-~> v = value
+~> var v = value
 ~> put '$v is '$v # compounding one string literal with one string variable
 ▶ '$v is value'
 ```
@@ -1082,7 +1079,7 @@ When one or more of the constituent expressions evaluate to multiple values, the
 result is all possible combinations:
 
 ```elvish-transcript
-~> li = [foo bar]
+~> var li = [foo bar]
 ~> put {a b}-$li[0 1]
 ▶ a-foo
 ▶ a-bar
@@ -1287,17 +1284,12 @@ To force a particular order of evaluation, group expressions using a
 
 # Command forms
 
-A **command form** is either an [ordinary command](#ordinary-command), a
-[special command](#special-command) or an
-[legacy assignment form](#legacy-assignment-form). All of three different types
-have access to [IO ports](#io-ports), which can be modified via
-[redirections](#redirection).
+A **command form** is either an [ordinary command](#ordinary-command) or a
+[special command](#special-command). Both types have access to
+[IO ports](#io-ports), which can be modified via [redirections](#redirection).
 
 When Elvish parses a command form, it applies the following process to decide
 its type:
-
--   If the command form contains an unquoted equal sign surrounded by inline
-    whitespaces, it is an ordinary assignment.
 
 -   If the first expression in the command form contains a single string
     literal, and the string value matches one of the special commands, it is a
@@ -1344,7 +1336,7 @@ Examples of commands using static resolution:
 ```elvish-transcript
 ~> put x # resolves to builtin function $put~
 ▶ x
-~> f~ = { put 'this is f' }
+~> var f~ = { put 'this is f' }
 ~> f # resolves to user-defined function $f~
 ▶ 'this is f'
 ~> whoami # resolves to external command whoami
@@ -1369,10 +1361,10 @@ fly and calling it immediately.
 Examples of commands using a dynamic string head:
 
 ```elvish-transcript
-~> x = /bin/whoami
+~> var x = /bin/whoami
 ~> $x
 elf
-~> x = whoami
+~> set x = whoami
 ~> $x # dynamic strings can only used when containing slash
 Exception: bad value: command must be callable or string containing slash, but is string
 [tty 10], line 1: $x
@@ -1422,20 +1414,10 @@ A **special command** form has the same syntax with an ordinary command, but how
 it is executed depends on the command head. See
 [special commands](#special-commands).
 
-## Legacy assignment form
-
-If any argument in a command form is an unquoted equal sign (`=`), the command
-form is treated as an assignment form: the arguments to the left of `=`,
-including the head, are treated as lvalues, and the arguments to the right of
-`=` are treated as values to assign to those lvalues.
-
-If any lvalue refers to a variable that doesn't yet exist, it is created first.
-
-This is a legacy syntax that will be deprecated in future. Use the [`var`](#var)
-special command to declare variables, and the [`set`](#set) special command set
-the values of variables.
-
 ## Temporary assignment
+
+**Note**: Starting from 0.18.0, this syntax will be deprecated in favor of the
+[`tmp`](#tmp) special command.
 
 You can prepend any command form with **temporary assignments**, which gives
 variables temporarily values during the execution of that command.
@@ -1443,7 +1425,7 @@ variables temporarily values during the execution of that command.
 In the following example, `$x` and `$y` are temporarily assigned 100 and 200:
 
 ```elvish-transcript
-~> x y = 1 2
+~> var x y = 1 2
 ~> x=100 y=200 + $x $y
 ▶ 300
 ~> echo $x $y
@@ -1454,22 +1436,21 @@ In contrary to normal assignments, there should be no whitespaces around the
 equal sign `=`. To have multiple variables in the left-hand side, use braces:
 
 ```elvish-transcript
-~> x y = 1 2
+~> var x y = 1 2
 ~> fn f { put 100 200 }
 ~> {x,y}=(f) + $x $y
 ▶ 300
 ```
 
 If you use a previously undefined variable in a temporary assignment, its value
-will become the empty string after the command finishes. This behavior will
-likely change; don't rely on it.
+will become the empty string after the command finishes.
 
-Since ordinary assignments are also command forms, they can also be prepended
-with temporary assignments:
+Since `var` and `set` are also commands, they can also be prepended with
+temporary assignments:
 
 ```elvish-transcript
-~> x=1
-~> x=100 y = (+ 133 $x)
+~> var x = 1
+~> x=100 var y = (+ 133 $x)
 ~> put $x $y
 ▶ 1
 ▶ 233
@@ -1489,11 +1470,6 @@ bash-4.4$ x=1
 bash-4.4$ x=100 echo $x
 1
 ```
-
-**Note**: Elvish currently supports using the syntax of temporary assignments
-for ordinary assignments, when they are not followed by a command form; for
-example, `a=x` behaves like an ordinary assignment `a = x`. This will likely go
-away; don't rely on it.
 
 ## IO ports
 
@@ -1746,7 +1722,7 @@ Examples:
 ~> set x = foo
 ~> put $x
 ▶ foo
-~> x y = lorem ipsum
+~> set x y = lorem ipsum
 ~> put $x $y
 ▶ lorem
 ▶ ipsum
@@ -1825,7 +1801,7 @@ side of assignments.
 Example of deleting variable:
 
 ```elvish-transcript
-~> x = 2
+~> var x = 2
 ~> echo $x
 2
 ~> del x
@@ -1838,7 +1814,7 @@ If the variable name contains any character that cannot appear unquoted after
 `$`, it must be quoted, even if it is otherwise a valid bareword:
 
 ```elvish-transcript
-~> 'a/b' = foo
+~> var 'a/b' = foo
 ~> del 'a/b'
 ```
 
@@ -1846,7 +1822,7 @@ Deleting a variable does not affect closures that have already captured it; it
 only removes the name. Example:
 
 ```elvish-transcript
-~> x = value
+~> var x = value
 ~> fn f { put $x }
 ~> del x
 ~> f
@@ -1856,11 +1832,11 @@ only removes the name. Example:
 Example of deleting map element:
 
 ```elvish-transcript
-~> m = [&k=v &k2=v2]
+~> var m = [&k=v &k2=v2]
 ~> del m[k2]
 ~> put $m
 ▶ [&k=v]
-~> l = [[&k=v &k2=v2]]
+~> var l = [[&k=v &k2=v2]]
 ~> del l[0][k2]
 ~> put $l
 ▶ [[&k=v]]
