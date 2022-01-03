@@ -205,29 +205,6 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 		}
 	}
 
-	// Determine if the form is a legacy assignment form, by looking for an
-	// argument whose source is a literal "=".
-	for i, arg := range n.Args {
-		if parse.SourceText(arg) == "=" {
-			cp.deprecate(n, "legacy assignment form is deprecated, use var or set instead; migrate scripts with https://go.elv.sh/u0.17", 17)
-			lhsNodes := make([]*parse.Compound, i+1)
-			lhsNodes[0] = n.Head
-			copy(lhsNodes[1:], n.Args[:i])
-			lhs := cp.parseCompoundLValues(lhsNodes, setLValue|newLValue)
-
-			rhsOps := cp.compoundOps(n.Args[i+1:])
-			var rhsRange diag.Ranging
-			if len(rhsOps) > 0 {
-				rhsRange = diag.MixedRanging(rhsOps[0], rhsOps[len(rhsOps)-1])
-			} else {
-				rhsRange = diag.PointRanging(n.Range().To)
-			}
-			rhs := seqValuesOp{rhsRange, rhsOps}
-
-			return formBody{assignOp: &assignOp{n.Range(), lhs, rhs, false}}
-		}
-	}
-
 	var headOp valuesOp
 	if head, ok := cmpd.StringLiteral(n.Head); ok {
 		// Head is a literal string: resolve to function or external (special

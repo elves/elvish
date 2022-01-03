@@ -136,11 +136,11 @@ func TestVariableUse(t *testing.T) {
 		// ------------------
 
 		// Pseudo-namespace local: accesses the local scope.
-		That("var x = outer; { local:x = inner; put $local:x }").Puts("inner"),
+		That("var x = outer; { var local:x = inner; put $local:x }").Puts("inner"),
 		// Pseudo-namespace up: accesses upvalues.
-		That("var x = outer; { local:x = inner; put $up:x }").Puts("outer"),
+		That("var x = outer; { var local:x = inner; put $up:x }").Puts("outer"),
 		// Unqualified name prefers local: to up:.
-		That("var x = outer; { local:x = inner; put $x }").Puts("inner"),
+		That("var x = outer; { var local:x = inner; put $x }").Puts("inner"),
 		// Unqualified name resolves to upvalue if no local name exists.
 		That("var x = outer; { put $x }").Puts("outer"),
 		// Unqualified name resolves to builtin if no local name or upvalue

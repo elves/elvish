@@ -7,7 +7,6 @@ import (
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
-	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/mods/file"
 	"src.elv.sh/pkg/testutil"
 )
@@ -150,106 +149,29 @@ func TestCommand_Special(t *testing.T) {
 	)
 }
 
-func TestCommand_Assignment(t *testing.T) {
-	// NOTE: TestClosure has more tests for the interaction between assignment
-	// and variable scoping.
-
+func TestCommand_LegacyTemporaryAssignment(t *testing.T) {
 	Test(t,
-		// Spacey assignment.
-		That("a = foo; put $a").Puts("foo"),
-		That("a b = foo bar; put $a $b").Puts("foo", "bar"),
-		That("a @b = 2 3 foo; put $a $b").Puts("2", vals.MakeList("3", "foo")),
-		That("a @b c = 1 2 3 4; put $a $b $c").
-			Puts("1", vals.MakeList("2", "3"), "4"),
-		That("a @b c = 1 2; put $a $b $c").Puts("1", vals.EmptyList, "2"),
-		That("@a = ; put $a").Puts(vals.EmptyList),
-
-		// Unsupported LHS expressions
-		That("a'b' = foo").DoesNotCompile(),
-		That("@a @b = foo").DoesNotCompile(),
-		That("{a b}[idx] = foo").DoesNotCompile(),
-		That("[] = foo").DoesNotCompile(),
-
-		// List element assignment
-		That("var li = [foo bar]; set li[0] = 233; put $@li").Puts("233", "bar"),
-		// Variable in list assignment must already be defined. Regression test
-		// for b.elv.sh/889.
-		That("set foobarlorem[0] = a").DoesNotCompile(),
-		// Map element assignment
-		That("var di = [&k=v]; set di[k] = lorem; set di[k2] = ipsum",
-			"put $di[k] $di[k2]").Puts("lorem", "ipsum"),
-		That("var d = [&a=[&b=v]]; put $d[a][b]; set d[a][b] = u; put $d[a][b]").
-			Puts("v", "u"),
-		That("var li = [foo]; set li[(fail foo)] = bar").Throws(FailError{"foo"}),
-		That("var li = [foo]; set li[0 1] = foo bar").
-			Throws(ErrorWithMessage("multi indexing not implemented")),
-		That("var li = [[]]; set li[1][2] = bar").
-			Throws(errs.OutOfRange{What: "index",
-				ValidLow: "0", ValidHigh: "0", Actual: "1"}, "li[1][2]"),
-
-		// Temporary assignment.
 		That("var a b = alice bob; {a,@b}=(put amy ben) put $a $@b; put $a $b").
 			Puts("amy", "ben", "alice", "bob"),
 		// Temporary assignment of list element.
-		That("l = [a]; l[0]=x put $l[0]; put $l[0]").Puts("x", "a"),
+		That("var l = [a]; l[0]=x put $l[0]; put $l[0]").Puts("x", "a"),
 		// Temporary assignment of map element.
-		That("m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]").Puts("v2", "v"),
+		That("var m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]").Puts("v2", "v"),
 		// Temporary assignment before special form.
 		That("li=[foo bar] for x $li { put $x }").Puts("foo", "bar"),
 		// Multiple LHSs in temporary assignments.
 		That("{a b}={foo bar} put $a $b").Puts("foo", "bar"),
 		That("@a=(put a b) put $@a").Puts("a", "b"),
 		That("{a,@b}=(put a b c) put $@b").Puts("b", "c"),
-		// Spacey assignment with temporary assignment
-		That("x = 1; x=2 y = (+ 1 $x); put $x $y").Puts("1", 3),
 		// Using syntax of temporary assignment for non-temporary assignment no
 		// longer compiles
 		That("x=y").DoesNotCompile(),
-
-		// Concurrently creating a new variable and accessing existing variable.
-		// Run with "go test -race".
-		That("x = 1", "put $x | y = (all)").DoesNothing(),
-		That("nop (x = 1) | nop").DoesNothing(),
-
-		// Assignment errors when the RHS errors.
-		That("x = [][1]").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
-		// Assignment to read-only var is a compile-time error.
-		That("nil = 1").DoesNotCompile(),
-		That("a true b = 1 2 3").DoesNotCompile(),
-		That("@true = 1").DoesNotCompile(),
-		That("true @r = 1").DoesNotCompile(),
-		That("@r true = 1").DoesNotCompile(),
-		// A readonly var as a target for the "except" clause is also a
-		// compile-time error.
-		That("try { fail reason } except nil { }").DoesNotCompile(),
-		That("try { fail reason } except x { }").DoesNothing(),
-		// Arity mismatch.
-		That("x = 1 2").Throws(
-			errs.ArityMismatch{What: "assignment right-hand-side",
-				ValidLow: 1, ValidHigh: 1, Actual: 2},
-			"x = 1 2"),
-		That("x y = 1").Throws(
-			errs.ArityMismatch{What: "assignment right-hand-side",
-				ValidLow: 2, ValidHigh: 2, Actual: 1},
-			"x y = 1"),
-		That("x y @z = 1").Throws(
-			errs.ArityMismatch{What: "assignment right-hand-side",
-				ValidLow: 2, ValidHigh: -1, Actual: 1},
-			"x y @z = 1"),
-
-		// Trying to add a new name in a namespace throws an exception.
-		// Regression test for #1214.
-		That("ns: = (ns [&]); ns:a = b").Throws(NoSuchVariable("ns:a"), "ns:a"),
 	)
 }
 
 func TestCommand_LegacyTemporaryAssignmentSyntaxIsDeprecated(t *testing.T) {
 	testCompileTimeDeprecation(t, "a=foo echo $a",
 		"the legacy temporary assignment syntax is deprecated", 18)
-}
-
-func TestCommand_LegacyAssignmentIsDeprecated(t *testing.T) {
-	testCompileTimeDeprecation(t, "a = foo", "legacy assignment form is deprecated", 17)
 }
 
 func TestCommand_DeprecatedSpecialNamespacesInAssignment(t *testing.T) {

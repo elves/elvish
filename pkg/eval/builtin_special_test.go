@@ -28,6 +28,9 @@ func TestPragma(t *testing.T) {
 }
 
 func TestVar(t *testing.T) {
+	// NOTE: TestClosure has more tests for the interaction between assignment
+	// and variable scoping.
+
 	Test(t,
 		// Declaring one variable
 		That("var x", "put $x").Puts(nil),
@@ -56,6 +59,27 @@ func TestVar(t *testing.T) {
 		// Explicit local: is allowed
 		That("var local:x = foo", "put $x").Puts("foo"),
 
+		// Concurrently creating a new variable and accessing existing variable.
+		// Run with "go test -race".
+		That("var x = 1", "put $x | var y = (all)").DoesNothing(),
+		That("nop (var x = 1) | nop").DoesNothing(),
+
+		// Assignment errors when the RHS errors.
+		That("var x = [][1]").Throws(ErrorWithType(errs.OutOfRange{}), "[][1]"),
+		// Arity mismatch.
+		That("var x = 1 2").Throws(
+			errs.ArityMismatch{What: "assignment right-hand-side",
+				ValidLow: 1, ValidHigh: 1, Actual: 2},
+			"var x = 1 2"),
+		That("var x y = 1").Throws(
+			errs.ArityMismatch{What: "assignment right-hand-side",
+				ValidLow: 2, ValidHigh: 2, Actual: 1},
+			"var x y = 1"),
+		That("var x y @z = 1").Throws(
+			errs.ArityMismatch{What: "assignment right-hand-side",
+				ValidLow: 2, ValidHigh: -1, Actual: 1},
+			"var x y @z = 1"),
+
 		// Variable name that must be quoted after $ must be quoted
 		That("var a/b").DoesNotCompile(),
 		// Multiple @ not allowed
@@ -77,16 +101,38 @@ func TestSet(t *testing.T) {
 		That("var x; set @x =", "put $x").Puts(vals.EmptyList),
 		// Variable must already exist
 		That("set x = foo").DoesNotCompile(),
-		// Not duplicating tests with TestCommand_Assignment.
-		//
-		// TODO: After legacy assignment form is removed, transfer tests here.
+		// List element assignment
+		That("var li = [foo bar]; set li[0] = 233; put $@li").Puts("233", "bar"),
+		// Variable in list assignment must already be defined. Regression test
+		// for b.elv.sh/889.
+		That("set foobarlorem[0] = a").DoesNotCompile(),
+		// Map element assignment
+		That("var di = [&k=v]; set di[k] = lorem; set di[k2] = ipsum",
+			"put $di[k] $di[k2]").Puts("lorem", "ipsum"),
+		That("var d = [&a=[&b=v]]; put $d[a][b]; set d[a][b] = u; put $d[a][b]").
+			Puts("v", "u"),
+		That("var li = [foo]; set li[(fail foo)] = bar").Throws(FailError{"foo"}),
+		That("var li = [foo]; set li[0 1] = foo bar").
+			Throws(ErrorWithMessage("multi indexing not implemented")),
+		That("var li = [[]]; set li[1][2] = bar").
+			Throws(errs.OutOfRange{What: "index",
+				ValidLow: "0", ValidHigh: "0", Actual: "1"}, "li[1][2]"),
+
+		// Assignment to read-only var is a compile-time error.
+		That("set nil = 1").DoesNotCompile(),
+		That("var a b; set a true b = 1 2 3").DoesNotCompile(),
+		That("set @true = 1").DoesNotCompile(),
+		That("var r; set true @r = 1").DoesNotCompile(),
+		That("var r; set @r true = 1").DoesNotCompile(),
+
+		// Error conditions already covered by TestVar are not repeated.
 
 		// = is required.
 		That("var x; set x").DoesNotCompile(),
 	)
 }
 
-func TestSet_Error(t *testing.T) {
+func TestSet_ErrorInSetMethod(t *testing.T) {
 	TestWithSetup(t, func(ev *Evaler) { addBadVar(ev, 0) },
 		That("set bad = foo").Throws(errBadVar, "bad"),
 		That("var a; set bad @a = foo").Throws(errBadVar, "bad"),
@@ -284,6 +330,11 @@ func TestTry(t *testing.T) {
 
 		// wrong syntax
 		That("try { nop } except @a { }").DoesNotCompile(),
+
+		// A readonly var as a target for the "except" clause is a compile-time
+		// error.
+		That("try { fail reason } except nil { }").DoesNotCompile(),
+		That("try { fail reason } except x { }").DoesNothing(),
 
 		// A quoted var name, that would be invalid as a bareword, should be allowed as the referent
 		// in a `try...except...` block.
