@@ -56,8 +56,6 @@ func TestVar(t *testing.T) {
 		// Shadowing.
 		That("var x = old; fn f { put $x }", "var x = new; put $x; f").
 			Puts("new", "old"),
-		// Explicit local: is allowed
-		That("var local:x = foo", "put $x").Puts("foo"),
 
 		// Concurrently creating a new variable and accessing existing variable.
 		// Run with "go test -race".

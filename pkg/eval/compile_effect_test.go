@@ -174,16 +174,6 @@ func TestCommand_LegacyTemporaryAssignmentSyntaxIsDeprecated(t *testing.T) {
 		"the legacy temporary assignment syntax is deprecated", 18)
 }
 
-func TestCommand_DeprecatedSpecialNamespacesInAssignment(t *testing.T) {
-	testCompileTimeDeprecation(t, "var local:a = foo", "the local: special namespace is deprecated", 17)
-	testCompileTimeDeprecation(t, "var a; set local:a = foo", "the local: special namespace is deprecated", 17)
-
-	testCompileTimeDeprecation(t, "var a; { set up:a = foo }", "the up: special namespace is deprecated", 17)
-
-	testCompileTimeDeprecation(t, "var :a = foo", "the empty namespace is deprecated", 17)
-	testCompileTimeDeprecation(t, "var a; { set :a = foo }", "the empty namespace is deprecated", 17)
-}
-
 func TestCommand_Redir(t *testing.T) {
 	setup := func(ev *Evaler) {
 		ev.ExtendGlobal(BuildNs().AddNs("file", file.Ns))

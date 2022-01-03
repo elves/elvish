@@ -135,20 +135,15 @@ func TestVariableUse(t *testing.T) {
 		// Variable namespace
 		// ------------------
 
-		// Pseudo-namespace local: accesses the local scope.
-		That("var x = outer; { var local:x = inner; put $local:x }").Puts("inner"),
-		// Pseudo-namespace up: accesses upvalues.
-		That("var x = outer; { var local:x = inner; put $up:x }").Puts("outer"),
-		// Unqualified name prefers local: to up:.
-		That("var x = outer; { var local:x = inner; put $x }").Puts("inner"),
+		// Unqualified name resolves to local name before upvalue.
+		That("var x = outer; { var x = inner; put $x }").Puts("inner"),
 		// Unqualified name resolves to upvalue if no local name exists.
 		That("var x = outer; { put $x }").Puts("outer"),
 		// Unqualified name resolves to builtin if no local name or upvalue
 		// exists.
 		That("put $true").Puts(true),
-		// A name can be explicitly unqualified by having a leading colon.
-		That("var x = val; put $:x").Puts("val"),
-		That("put $:true").Puts(true),
+		// Names like $:foo are reserved for now.
+		That("var x = val; put $:x").DoesNotCompile(),
 
 		// Pseudo-namespace E: provides read-write access to environment
 		// variables. Colons inside the name are supported.
@@ -165,22 +160,7 @@ func TestVariableUse(t *testing.T) {
 		That("var ns: = (ns [&a= val]); put $ns:a").Puts("val"),
 		// Multi-level namespace access is supported.
 		That("var ns: = (ns [&a:= (ns [&b= val])]); put $ns:a:b").Puts("val"),
-		// Multi-level namespace access can have a leading colon to signal that
-		// the first component is unqualified.
-		That("var ns: = (ns [&a:= (ns [&b= val])]); put $:ns:a:b").Puts("val"),
-		// Multi-level namespace access can be combined with the local:
-		// pseudo-namespaces.
-		That("var ns: = (ns [&a:= (ns [&b= val])]); put $local:ns:a:b").Puts("val"),
-		// Multi-level namespace access can be combined with the up:
-		// pseudo-namespaces.
-		That("var ns: = (ns [&a:= (ns [&b= val])]); { put $up:ns:a:b }").Puts("val"),
 	)
-}
-
-func TestVariableUse_DeprecatedSpecialNamespaces(t *testing.T) {
-	testCompileTimeDeprecation(t, "var a; put $local:a", "the local: special namespace is deprecated", 17)
-	testCompileTimeDeprecation(t, "var a; { put $up:a }", "the up: special namespace is deprecated", 17)
-	testCompileTimeDeprecation(t, "var a; { put $:a }", "the empty namespace is deprecated", 17)
 }
 
 func TestClosure(t *testing.T) {
