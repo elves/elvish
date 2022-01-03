@@ -45,7 +45,8 @@ func TestCd(t *testing.T) {
 	Test(t,
 		That(`cd dir1 dir2`).Throws(ErrorWithType(errs.ArityMismatch{}), "cd dir1 dir2"),
 		// Basic `cd` test and verification that `$pwd` is correct.
-		That(`old = $pwd; cd `+d1Path+`; put $pwd; cd $old; eq $old $pwd`).Puts(d1Path, true),
+		That("var old = $pwd", "cd "+d1Path, "put $pwd", "cd $old", "eq $old $pwd").
+			Puts(d1Path, true),
 		// Verify that `cd` with no arg defaults to the home directory.
 		That(`cd `+d1Path+`; cd; eq $pwd $E:HOME`).Puts(true),
 		// Verify that `cd` with no arg and no $E:HOME var fails since our

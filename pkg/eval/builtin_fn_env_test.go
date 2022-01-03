@@ -60,11 +60,12 @@ func TestSetEnv_PATH(t *testing.T) {
 	Test(t,
 		That(`set-env PATH /test-path`),
 		That(`put $paths`).Puts(vals.MakeList("/test-path")),
-		That(`paths = [/test-path2 $@paths]`),
-		That(`paths = [$true]`).Throws(vars.ErrPathMustBeString),
-		That(`paths = ["/invalid`+string(os.PathListSeparator)+`:path"]`).
+		That(`set paths = [/test-path2 $@paths]`),
+		That(`set paths = [$true]`).Throws(vars.ErrPathMustBeString),
+		That(`set paths = ["/invalid`+string(os.PathListSeparator)+`:path"]`).
 			Throws(vars.ErrPathContainsForbiddenChar),
-		That(`paths = ["/invalid\000path"]`).Throws(vars.ErrPathContainsForbiddenChar),
+		That(`set paths = ["/invalid\000path"]`).
+			Throws(vars.ErrPathContainsForbiddenChar),
 		That(`get-env PATH`).Puts("/test-path2"+listSep+"/test-path"),
 	)
 }

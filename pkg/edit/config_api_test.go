@@ -10,8 +10,8 @@ import (
 
 func TestBeforeReadline(t *testing.T) {
 	f := setup(t, rc(
-		`called = 0`,
-		`edit:before-readline = [ { called = (+ $called 1) } ]`))
+		`var called = 0`,
+		`set edit:before-readline = [ { set called = (+ $called 1) } ]`))
 
 	// Wait for UI to stabilize so that we can be sure that before-readline hooks
 	// have been called.
@@ -24,10 +24,10 @@ func TestAfterReadline(t *testing.T) {
 	f := setup(t)
 
 	evals(f.Evaler,
-		`called = 0`,
-		`called-with = ''`,
-		`edit:after-readline = [
-		{|code| called = (+ $called 1); called-with = $code } ]`)
+		`var called = 0`,
+		`var called-with = ''`,
+		`set edit:after-readline = [
+		{|code| set called = (+ $called 1); set called-with = $code } ]`)
 
 	// Wait for UI to stabilize so that we can be sure that after-readline hooks
 	// are *not* called.
@@ -67,37 +67,37 @@ func TestAddCmdFilters(t *testing.T) {
 		// },
 		{
 			name:        "callback outputs true",
-			rc:          "edit:add-cmd-filters = [{|_| put $true }]",
+			rc:          "set edit:add-cmd-filters = [{|_| put $true }]",
 			input:       "echo\n",
 			wantHistory: []storedefs.Cmd{{Text: "echo", Seq: 1}},
 		},
 		{
 			name:        "callback outputs false",
-			rc:          "edit:add-cmd-filters = [{|_| put $false }]",
+			rc:          "set edit:add-cmd-filters = [{|_| put $false }]",
 			input:       "echo\n",
 			wantHistory: nil,
 		},
 		{
 			name:        "false-true chain",
-			rc:          "edit:add-cmd-filters = [{|_| put $false } {|_| put $true }]",
+			rc:          "set edit:add-cmd-filters = [{|_| put $false } {|_| put $true }]",
 			input:       "echo\n",
 			wantHistory: nil,
 		},
 		{
 			name:        "true-false chain",
-			rc:          "edit:add-cmd-filters = [{|_| put $true } {|_| put $false }]",
+			rc:          "set edit:add-cmd-filters = [{|_| put $true } {|_| put $false }]",
 			input:       "echo\n",
 			wantHistory: nil,
 		},
 		{
 			name:        "positive",
-			rc:          "edit:add-cmd-filters = [{|cmd| ==s $cmd echo }]",
+			rc:          "set edit:add-cmd-filters = [{|cmd| ==s $cmd echo }]",
 			input:       "echo\n",
 			wantHistory: []storedefs.Cmd{{Text: "echo", Seq: 1}},
 		},
 		{
 			name:        "negative",
-			rc:          "edit:add-cmd-filters = [{|cmd| ==s $cmd echo }]",
+			rc:          "set edit:add-cmd-filters = [{|cmd| ==s $cmd echo }]",
 			input:       "echo x\n",
 			wantHistory: nil,
 		},
@@ -123,8 +123,8 @@ func TestAddCmdFilters(t *testing.T) {
 
 func TestAddCmdFilters_SkipsRemainingOnFalse(t *testing.T) {
 	f := setup(t, rc(
-		`called = $false`,
-		`@edit:add-cmd-filters = {|_| put $false } {|_| called = $true; put $true }`,
+		`var called = $false`,
+		`set @edit:add-cmd-filters = {|_| put $false } {|_| called = $true; put $true }`,
 	))
 
 	feedInput(f.TTYCtrl, "echo\n")
@@ -136,7 +136,7 @@ func TestAddCmdFilters_SkipsRemainingOnFalse(t *testing.T) {
 func TestGlobalBindings(t *testing.T) {
 	f := setup(t, rc(
 		`var called = $false`,
-		`edit:global-binding[Ctrl-X] = { set called = $true }`,
+		`set edit:global-binding[Ctrl-X] = { set called = $true }`,
 	))
 
 	f.TTYCtrl.Inject(term.K('X', ui.Ctrl))

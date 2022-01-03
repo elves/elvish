@@ -149,8 +149,8 @@ func TestCustomListing_PassingList(t *testing.T) {
 	f := setup(t)
 
 	evals(f.Evaler,
-		`items = [[&to-filter=1 &to-accept=echo &to-show=echo]
-		          [&to-filter=2  &to-accept=put &to-show=(styled put green)]]`,
+		`var items = [[&to-filter=1 &to-accept=echo &to-show=echo]
+		              [&to-filter=2  &to-accept=put &to-show=(styled put green)]]`,
 		`edit:listing:start-custom $items &accept=$edit:insert-at-dot~ &caption=A`)
 	f.TestTTY(t,
 		"~> \n",
@@ -175,7 +175,7 @@ func TestCustomListing_PassingValueCallback(t *testing.T) {
 	f := setup(t)
 
 	evals(f.Evaler,
-		`f = {|q| put [&to-accept='q '$q &to-show=(styled 'q '$q blue)] }`,
+		`var f = {|q| put [&to-accept='q '$q &to-show=(styled 'q '$q blue)] }`,
 		`edit:listing:start-custom $f &caption=A`)
 	// Query.
 	f.TTYCtrl.Inject(term.K('x'))
@@ -195,7 +195,7 @@ func TestCustomListing_PassingBytesCallback(t *testing.T) {
 	f := setup(t)
 
 	evals(f.Evaler,
-		`f = {|q| echo '# '$q }`,
+		`var f = {|q| echo '# '$q }`,
 		`edit:listing:start-custom $f &accept=$edit:insert-at-dot~ &caption=A `+
 			`&binding=(edit:binding-table [&Ctrl-X=$edit:listing:accept~])`)
 	// Test that the query function is used to generate candidates. Also test

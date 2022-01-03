@@ -21,7 +21,7 @@ func TestCommandHistory(t *testing.T) {
 
 	// TODO(xiaq): Test session history too. See NewHybridStore and NewMemStore.
 
-	evals(f.Evaler, `@cmds = (edit:command-history)`)
+	evals(f.Evaler, `var @cmds = (edit:command-history)`)
 	testGlobal(t, f.Evaler,
 		"cmds",
 		vals.MakeList(
@@ -34,7 +34,7 @@ func TestCommandHistory(t *testing.T) {
 			cmdMap(7, "echo 1"),
 		))
 
-	evals(f.Evaler, `@cmds = (edit:command-history &newest-first)`)
+	evals(f.Evaler, `var @cmds = (edit:command-history &newest-first)`)
 	testGlobal(t, f.Evaler,
 		"cmds",
 		vals.MakeList(
@@ -47,7 +47,7 @@ func TestCommandHistory(t *testing.T) {
 			cmdMap(1, "echo 0"),
 		))
 
-	evals(f.Evaler, `@cmds = (edit:command-history &dedup)`)
+	evals(f.Evaler, `var @cmds = (edit:command-history &dedup)`)
 	testGlobal(t, f.Evaler,
 		"cmds",
 		vals.MakeList(
@@ -57,7 +57,7 @@ func TestCommandHistory(t *testing.T) {
 			cmdMap(7, "echo 1"),
 		))
 
-	evals(f.Evaler, `@cmds = (edit:command-history &dedup &newest-first)`)
+	evals(f.Evaler, `var @cmds = (edit:command-history &dedup &newest-first)`)
 	testGlobal(t, f.Evaler,
 		"cmds",
 		vals.MakeList(
@@ -67,7 +67,7 @@ func TestCommandHistory(t *testing.T) {
 			cmdMap(1, "echo 0"),
 		))
 
-	evals(f.Evaler, `@cmds = (edit:command-history &dedup &newest-first &cmd-only)`)
+	evals(f.Evaler, `var @cmds = (edit:command-history &dedup &newest-first &cmd-only)`)
 	testGlobal(t, f.Evaler,
 		"cmds",
 		vals.MakeList(

@@ -48,17 +48,17 @@ func TestUmask(t *testing.T) {
 			errs.BadValue{What: "umask", Valid: validUmaskMsg, Actual: "123.4"}),
 
 		// An invalid string should raise the expected exception.
-		That(`unix:umask = 022z`).Throws(errs.BadValue{
+		That(`set unix:umask = 022z`).Throws(errs.BadValue{
 			What: "umask", Valid: validUmaskMsg, Actual: "022z"}),
 
 		// An invalid data type should raise the expected exception.
-		That(`unix:umask = [1]`).Throws(errs.BadValue{
+		That(`set unix:umask = [1]`).Throws(errs.BadValue{
 			What: "umask", Valid: validUmaskMsg, Actual: "list"}),
 
 		// Values outside the legal range should raise the expected exception.
-		That(`unix:umask = 0o1000`).Throws(errs.OutOfRange{
+		That(`set unix:umask = 0o1000`).Throws(errs.OutOfRange{
 			What: "umask", ValidLow: "0", ValidHigh: "0o777", Actual: "0o1000"}),
-		That(`unix:umask = -1`).Throws(errs.OutOfRange{
+		That(`set unix:umask = -1`).Throws(errs.OutOfRange{
 			What: "umask", ValidLow: "0", ValidHigh: "0o777", Actual: "-0o1"}),
 	)
 }

@@ -71,9 +71,9 @@ func TestStyled(t *testing.T) {
 
 func TestStyled_DoesNotModifyArgument(t *testing.T) {
 	Test(t,
-		That("x = (styled text); _ = (styled $x red); put $x[0][fg-color]").
+		That("var x = (styled text); var y = (styled $x red); put $x[0][fg-color]").
 			Puts("default"),
-		That("x = (styled-segment text); _ = (styled $x red); put $x[fg-color]").
+		That("var x = (styled-segment text); var y = (styled $x red); put $x[fg-color]").
 			Puts("default"),
 	)
 }
@@ -125,7 +125,7 @@ func TestStyledIndexing(t *testing.T) {
 	Test(t,
 		That("put (styled abc red)[0][bold]").Puts(false),
 		That("put (styled abc red)[0][bg-color]").Puts("default"),
-		That("t = (styled-segment abc &underlined=$true)(styled abc bright-cyan); put $t[1][fg-color]").Puts("bright-cyan"),
-		That("t = (styled-segment abc &underlined=$true)(styled abc bright-cyan); put $t[1][underlined]").Puts(false),
+		That("var t = (styled-segment abc &underlined=$true)(styled abc bright-cyan); put $t[1][fg-color]").Puts("bright-cyan"),
+		That("var t = (styled-segment abc &underlined=$true)(styled abc bright-cyan); put $t[1][underlined]").Puts(false),
 	)
 }

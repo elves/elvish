@@ -64,15 +64,15 @@ func TestPipeline_BgJob(t *testing.T) {
 
 	TestWithSetup(t, setup,
 		That(
-			"notify-bg-job-success = $false",
-			"p = (file:pipe)",
+			"set notify-bg-job-success = $false",
+			"var p = (file:pipe)",
 			"{ print foo > $p; file:close $p[w] }&",
 			"slurp < $p; file:close $p[r]").
 			Puts("foo"),
 		// Notification
 		That(
-			"notify-bg-job-success = $true",
-			"p = (file:pipe)",
+			"set notify-bg-job-success = $true",
+			"var p = (file:pipe)",
 			"fn f { file:close $p[w] }",
 			"f &",
 			"slurp < $p; file:close $p[r]").
@@ -81,8 +81,8 @@ func TestPipeline_BgJob(t *testing.T) {
 			Passes(verifyNote(notes1, "job f & finished")),
 		// Notification, with exception
 		That(
-			"notify-bg-job-success = $true",
-			"p = (file:pipe)",
+			"set notify-bg-job-success = $true",
+			"var p = (file:pipe)",
 			"fn f { file:close $p[w]; fail foo }",
 			"f &",
 			"slurp < $p; file:close $p[r]").
@@ -294,10 +294,10 @@ func TestCommand_Redir(t *testing.T) {
 		That(`{ echo foo >&4 } 4>out5`, `slurp < out5`).Puts("foo\n"),
 
 		// Redirections from File object.
-		That(`echo haha > out3`, `f = (file:open out3)`, `slurp <$f`, ` file:close $f`).
+		That(`echo haha > out3`, `var f = (file:open out3)`, `slurp <$f`, ` file:close $f`).
 			Puts("haha\n"),
 		// Redirections from Pipe object.
-		That(`p = (file:pipe); echo haha > $p; file:close $p[w]; slurp < $p; file:close $p[r]`).
+		That(`var p = (file:pipe); echo haha > $p; file:close $p[w]; slurp < $p; file:close $p[r]`).
 			Puts("haha\n"),
 
 		// We can't read values from a file and shouldn't hang when iterating

@@ -29,7 +29,7 @@ func TestNavigation(t *testing.T) {
 	)
 
 	// Test $edit:selected-file.
-	evals(f.Evaler, `file = $edit:selected-file`)
+	evals(f.Evaler, `var file = $edit:selected-file`)
 	wantFile := "a"
 	if file, _ := f.Evaler.Global().Index("file"); file != wantFile {
 		t.Errorf("Got $edit:selected-file %q, want %q", file, wantFile)
@@ -61,7 +61,7 @@ func TestNavigation(t *testing.T) {
 func TestNavigation_WidthRatio(t *testing.T) {
 	f := setupNav(t)
 
-	evals(f.Evaler, `@edit:navigation:width-ratio = 1 1 1`)
+	evals(f.Evaler, `set @edit:navigation:width-ratio = 1 1 1`)
 	f.TTYCtrl.Inject(term.K('N', ui.Ctrl))
 	f.TestTTY(t,
 		filepath.Join("~", "d"), "> ", term.DotHere, "\n",

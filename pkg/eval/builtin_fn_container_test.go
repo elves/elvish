@@ -16,7 +16,7 @@ import (
 func TestNsCmd(t *testing.T) {
 	Test(t,
 		That("put (ns [&name=value])[name]").Puts("value"),
-		That("n: = (ns [&name=value]); put $n:name").Puts("value"),
+		That("var n: = (ns [&name=value]); put $n:name").Puts("value"),
 		That("ns [&[]=[]]").Throws(errs.BadValue{
 			What:  `key of argument of "ns"`,
 			Valid: "string", Actual: "list"}),

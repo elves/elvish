@@ -122,38 +122,38 @@ func TestExceptionCapture(t *testing.T) {
 
 func TestVariableUse(t *testing.T) {
 	Test(t,
-		That("x = foo", "put $x").Puts("foo"),
+		That("var x = foo", "put $x").Puts("foo"),
 		// Must exist before use
 		That("put $x").DoesNotCompile(),
 		That("put $x[0]").DoesNotCompile(),
 		// Compounding
-		That("x = SHELL", "put 'WOW, SUCH '$x', MUCH COOL'\n").
+		That("var x = SHELL", "put 'WOW, SUCH '$x', MUCH COOL'\n").
 			Puts("WOW, SUCH SHELL, MUCH COOL"),
 		// Splicing
-		That("x = [elvish rules]", "put $@x").Puts("elvish", "rules"),
+		That("var x = [elvish rules]", "put $@x").Puts("elvish", "rules"),
 
 		// Variable namespace
 		// ------------------
 
 		// Pseudo-namespace local: accesses the local scope.
-		That("x = outer; { local:x = inner; put $local:x }").Puts("inner"),
+		That("var x = outer; { local:x = inner; put $local:x }").Puts("inner"),
 		// Pseudo-namespace up: accesses upvalues.
-		That("x = outer; { local:x = inner; put $up:x }").Puts("outer"),
+		That("var x = outer; { local:x = inner; put $up:x }").Puts("outer"),
 		// Unqualified name prefers local: to up:.
-		That("x = outer; { local:x = inner; put $x }").Puts("inner"),
+		That("var x = outer; { local:x = inner; put $x }").Puts("inner"),
 		// Unqualified name resolves to upvalue if no local name exists.
-		That("x = outer; { put $x }").Puts("outer"),
+		That("var x = outer; { put $x }").Puts("outer"),
 		// Unqualified name resolves to builtin if no local name or upvalue
 		// exists.
 		That("put $true").Puts(true),
 		// A name can be explicitly unqualified by having a leading colon.
-		That("x = val; put $:x").Puts("val"),
+		That("var x = val; put $:x").Puts("val"),
 		That("put $:true").Puts(true),
 
 		// Pseudo-namespace E: provides read-write access to environment
 		// variables. Colons inside the name are supported.
 		That("set-env a:b VAL; put $E:a:b").Puts("VAL"),
-		That("E:a:b = VAL2; get-env a:b").Puts("VAL2"),
+		That("set E:a:b = VAL2; get-env a:b").Puts("VAL2"),
 
 		// Pseudo-namespace e: provides readonly access to external commands.
 		// Only names ending in ~ are resolved, and resolution always succeeds
@@ -162,18 +162,18 @@ func TestVariableUse(t *testing.T) {
 		That("put $e:a:b~").Puts(NewExternalCmd("a:b")),
 
 		// A "normal" namespace access indexes the namespace as a variable.
-		That("ns: = (ns [&a= val]); put $ns:a").Puts("val"),
+		That("var ns: = (ns [&a= val]); put $ns:a").Puts("val"),
 		// Multi-level namespace access is supported.
-		That("ns: = (ns [&a:= (ns [&b= val])]); put $ns:a:b").Puts("val"),
+		That("var ns: = (ns [&a:= (ns [&b= val])]); put $ns:a:b").Puts("val"),
 		// Multi-level namespace access can have a leading colon to signal that
 		// the first component is unqualified.
-		That("ns: = (ns [&a:= (ns [&b= val])]); put $:ns:a:b").Puts("val"),
+		That("var ns: = (ns [&a:= (ns [&b= val])]); put $:ns:a:b").Puts("val"),
 		// Multi-level namespace access can be combined with the local:
 		// pseudo-namespaces.
-		That("ns: = (ns [&a:= (ns [&b= val])]); put $local:ns:a:b").Puts("val"),
+		That("var ns: = (ns [&a:= (ns [&b= val])]); put $local:ns:a:b").Puts("val"),
 		// Multi-level namespace access can be combined with the up:
 		// pseudo-namespaces.
-		That("ns: = (ns [&a:= (ns [&b= val])]); { put $up:ns:a:b }").Puts("val"),
+		That("var ns: = (ns [&a:= (ns [&b= val])]); { put $up:ns:a:b }").Puts("val"),
 	)
 }
 
@@ -194,8 +194,8 @@ func TestClosure(t *testing.T) {
 			Puts("lorem", "ipsum"),
 
 		// Assigning to element of captured variable
-		That("x = a; { x = b }; put $x").Puts("b"),
-		That("x = [a]; { x[0] = b }; put $x[0]").Puts("b"),
+		That("var x = a; { set x = b }; put $x").Puts("b"),
+		That("var x = [a]; { set x[0] = b }; put $x[0]").Puts("b"),
 
 		// Shadowing
 		That("var x = ipsum; { var x = lorem; put $x }; put $x").

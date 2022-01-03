@@ -22,13 +22,13 @@ func TestFile(t *testing.T) {
 	TestWithSetup(t, setup,
 		That(`
 			echo haha > out3
-			f = (file:open out3)
+			var f = (file:open out3)
 			slurp < $f
 			file:close $f
 		`).Puts("haha\n"),
 
 		That(`
-			p = (file:pipe)
+			var p = (file:pipe)
 			echo haha > $p
 			file:close $p[w]
 			slurp < $p
@@ -36,7 +36,7 @@ func TestFile(t *testing.T) {
 		`).Puts("haha\n"),
 
 		That(`
-			p = (file:pipe)
+			var p = (file:pipe)
 			echo Legolas > $p
 			file:close $p[r]
 			slurp < $p
@@ -45,7 +45,7 @@ func TestFile(t *testing.T) {
 		// Verify that input redirection from a closed pipe throws an exception. That exception is a
 		// Go stdlib error whose stringified form looks something like "read |0: file already
 		// closed".
-		That(`p = (file:pipe)`, `echo Legolas > $p`, `file:close $p[r]`,
+		That(`var p = (file:pipe)`, `echo Legolas > $p`, `file:close $p[r]`,
 			`slurp < $p`).Throws(ErrorWithType(&os.PathError{})),
 
 		// Side effect checked below

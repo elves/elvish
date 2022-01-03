@@ -22,8 +22,8 @@ func TestLocationAddon(t *testing.T) {
 	}))
 
 	evals(f.Evaler,
-		`edit:location:pinned = ['C:\opt']`,
-		`edit:location:hidden = ['C:\tmp']`)
+		`set edit:location:pinned = ['C:\opt']`,
+		`set edit:location:hidden = ['C:\tmp']`)
 	f.TTYCtrl.Inject(term.K('L', ui.Ctrl))
 
 	f.TestTTY(t,
@@ -55,7 +55,7 @@ func TestLocationAddon_Workspace(t *testing.T) {
 	}
 
 	evals(f.Evaler,
-		`edit:location:workspaces = [&ws='`+
+		`set edit:location:workspaces = [&ws='`+
 			regexp.QuoteMeta(f.Home)+`\\'ws.]`)
 
 	f.TTYCtrl.Inject(term.K('L', ui.Ctrl))
@@ -81,7 +81,7 @@ func TestLocation_AddDir(t *testing.T) {
 			"ws1": testutil.Dir{
 				"bin": testutil.Dir{}}})
 	evals(f.Evaler,
-		`edit:location:workspaces = [&ws='`+
+		`set edit:location:workspaces = [&ws='`+
 			regexp.QuoteMeta(f.Home)+`\\'ws.]`)
 
 	chdir := func(path string) {

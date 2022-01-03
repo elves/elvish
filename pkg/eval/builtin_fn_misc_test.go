@@ -24,7 +24,7 @@ func TestKindOf(t *testing.T) {
 
 func TestConstantly(t *testing.T) {
 	Test(t,
-		That(`f = (constantly foo); $f; $f`).Puts("foo", "foo"),
+		That(`var f = (constantly foo); $f; $f`).Puts("foo", "foo"),
 		thatOutputErrorIsBubbled("(constantly foo)"),
 	)
 }
@@ -42,23 +42,23 @@ func TestEval(t *testing.T) {
 	Test(t,
 		That("eval 'put x'").Puts("x"),
 		// Using variable from the local scope.
-		That("x = foo; eval 'put $x'").Puts("foo"),
+		That("var x = foo; eval 'put $x'").Puts("foo"),
 		// Setting a variable in the local scope.
-		That("x = foo; eval 'x = bar'; put $x").Puts("bar"),
+		That("var x = foo; eval 'set x = bar'; put $x").Puts("bar"),
 		// Using variable from the upvalue scope.
-		That("x = foo; { nop $x; eval 'put $x' }").Puts("foo"),
+		That("var x = foo; { nop $x; eval 'put $x' }").Puts("foo"),
 		// Specifying a namespace.
-		That("n = (ns [&x=foo]); eval 'put $x' &ns=$n").Puts("foo"),
+		That("var n = (ns [&x=foo]); eval 'put $x' &ns=$n").Puts("foo"),
 		// Altering variables in the specified namespace.
-		That("n = (ns [&x=foo]); eval 'x = bar' &ns=$n; put $n[x]").Puts("bar"),
+		That("var n = (ns [&x=foo]); eval 'set x = bar' &ns=$n; put $n[x]").Puts("bar"),
 		// Newly created variables do not appear in the local namespace.
 		That("eval 'x = foo'; put $x").DoesNotCompile(),
 		// Newly created variables do not alter the specified namespace, either.
-		That("n = (ns [&]); eval &ns=$n 'x = foo'; put $n[x]").
+		That("var n = (ns [&]); eval &ns=$n 'var x = foo'; put $n[x]").
 			Throws(vals.NoSuchKey("x"), "$n[x]"),
 		// However, newly created variable can be accessed in the final
 		// namespace using &on-end.
-		That("eval &on-end={|n| put $n[x] } 'x = foo'").Puts("foo"),
+		That("eval &on-end={|n| put $n[x] } 'var x = foo'").Puts("foo"),
 		// Parse error.
 		That("eval '['").Throws(ErrorWithType(&parse.Error{})),
 		// Compilation error.
@@ -84,9 +84,9 @@ func TestTime(t *testing.T) {
 	Test(t,
 		// Since runtime duration is non-deterministic, we only have some sanity
 		// checks here.
-		That("time { echo foo } | a _ = (all)", "put $a").Puts("foo"),
-		That("duration = ''",
-			"time &on-end={|x| duration = $x } { echo foo } | out = (all)",
+		That("time { echo foo } | var a _ = (all)", "put $a").Puts("foo"),
+		That("var duration = ''",
+			"time &on-end={|x| set duration = $x } { echo foo } | var out = (all)",
 			"put $out", "kind-of $duration").Puts("foo", "number"),
 		That("time { fail body } | nop (all)").Throws(FailError{"body"}),
 		That("time &on-end={|_| fail on-end } { }").Throws(
@@ -101,7 +101,7 @@ func TestTime(t *testing.T) {
 
 func TestUseMod(t *testing.T) {
 	testutil.InTempDir(t)
-	testutil.MustWriteFile("mod.elv", "x = value")
+	testutil.MustWriteFile("mod.elv", "var x = value")
 
 	Test(t,
 		That("put (use-mod ./mod)[x]").Puts("value"),

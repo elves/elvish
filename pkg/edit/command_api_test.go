@@ -10,7 +10,7 @@ import (
 func TestCommandMode(t *testing.T) {
 	f := setup(t)
 
-	evals(f.Evaler, `edit:insert:binding[Ctrl-'['] = $edit:command:start~`)
+	evals(f.Evaler, `set edit:insert:binding[Ctrl-'['] = $edit:command:start~`)
 	feedInput(f.TTYCtrl, "echo")
 	f.TTYCtrl.Inject(term.K('[', ui.Ctrl))
 	f.TestTTY(t,

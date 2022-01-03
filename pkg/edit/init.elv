@@ -1,19 +1,19 @@
-after-command = [
+set after-command = [
   # Capture the most recent interactive command duration in $edit:command-duration
   # as a convenience for prompt functions. Note: The first time this is run is after
   # shell.sourceRC() finishes so the initial value of command-duration is the time
   # to execute the user's interactive configuration script.
   [m]{
-    command-duration = $m[duration]
+    set command-duration = $m[duration]
   }
 ]
 
-global-binding = (binding-table [
+set global-binding = (binding-table [
   &Ctrl-'['= $close-mode~
   &Alt-x=    $minibuf:start~
 ])
 
-insert:binding = (binding-table [
+set insert:binding = (binding-table [
   &Left=  $move-dot-left~
   &Right= $move-dot-right~
 
@@ -50,7 +50,7 @@ insert:binding = (binding-table [
   &Ctrl-D=  $return-eof~
 ])
 
-command:binding = (binding-table [
+set command:binding = (binding-table [
   &'$'= $move-dot-eol~
   &0=   $move-dot-sol~
   &D=   $kill-line-right~
@@ -64,18 +64,18 @@ command:binding = (binding-table [
   &x=   $kill-rune-right~
 ])
 
-listing:binding = (binding-table [
+set listing:binding = (binding-table [
   &Up=        $listing:up~
   &Down=      $listing:down~
   &Tab=       $listing:down-cycle~
   &Shift-Tab= $listing:up-cycle~
 ])
 
-histlist:binding = (binding-table [
+set histlist:binding = (binding-table [
   &Ctrl-D= $histlist:toggle-dedup~
 ])
 
-navigation:binding = (binding-table [
+set navigation:binding = (binding-table [
   &Left=     $navigation:left~
   &Right=    $navigation:right~
   &Up=       $navigation:up~
@@ -90,7 +90,7 @@ navigation:binding = (binding-table [
   &Ctrl-H=   $navigation:trigger-shown-hidden~
 ])
 
-completion:binding = (binding-table [
+set completion:binding = (binding-table [
   &Down=     $completion:down~
   &Up=       $completion:up~
   &Tab=      $completion:down-cycle~
@@ -99,24 +99,24 @@ completion:binding = (binding-table [
   &Right=    $completion:right~
 ])
 
-history:binding = (binding-table [
+set history:binding = (binding-table [
   &Up=       $history:up~
   &Down=     $history:down-or-quit~
   &Ctrl-'['= $close-mode~
 ])
 
-lastcmd:binding = (binding-table [
+set lastcmd:binding = (binding-table [
   &Alt-,=  $listing:accept~
 ])
 
--instant:binding = (binding-table [
+set -instant:binding = (binding-table [
   &
 ])
 
 # TODO: Avoid duplicating the bindings here by having a base binding table
 # shared by insert and minibuf modes (like how the listing modes all share
 # listing:binding).
-minibuf:binding = (binding-table [
+set minibuf:binding = (binding-table [
   &Left=  $move-dot-left~
   &Right= $move-dot-right~
 

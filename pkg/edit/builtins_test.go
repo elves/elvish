@@ -17,8 +17,8 @@ import (
 func TestBindingTable(t *testing.T) {
 	f := setup(t)
 
-	evals(f.Evaler, `called = $false`)
-	evals(f.Evaler, `m = (edit:binding-table [&a={ called = $true }])`)
+	evals(f.Evaler, `var called = $false`)
+	evals(f.Evaler, `var m = (edit:binding-table [&a={ set called = $true }])`)
 	_, ok := getGlobal(f.Evaler, "m").(bindingsMap)
 	if !ok {
 		t.Errorf("edit:binding-table did not create BindingMap variable")
@@ -46,7 +46,7 @@ func TestDumpBuf(t *testing.T) {
 		"   vvvv", term.DotHere,
 	)
 
-	evals(f.Evaler, `html = (edit:-dump-buf)`)
+	evals(f.Evaler, `var html = (edit:-dump-buf)`)
 	testGlobal(t, f.Evaler,
 		"html",
 		`~&gt; <span class="sgr-32">echo</span>`+"\n")
@@ -91,7 +91,7 @@ func TestEndOfHistory(t *testing.T) {
 func TestKey(t *testing.T) {
 	f := setup(t)
 
-	evals(f.Evaler, `k = (edit:key a)`)
+	evals(f.Evaler, `var k = (edit:key a)`)
 	wantK := ui.K('a')
 	if k, _ := f.Evaler.Global().Index("k"); k != wantK {
 		t.Errorf("$k is %v, want %v", k, wantK)
@@ -102,7 +102,7 @@ func TestRedraw(t *testing.T) {
 	f := setup(t)
 
 	evals(f.Evaler,
-		`edit:current-command = echo`,
+		`set edit:current-command = echo`,
 		`edit:redraw`)
 	f.TestTTY(t,
 		"~> echo", Styles,
@@ -117,7 +117,7 @@ func TestRedraw(t *testing.T) {
 func TestClear(t *testing.T) {
 	f := setup(t)
 
-	evals(f.Evaler, `edit:current-command = echo`, `edit:clear`)
+	evals(f.Evaler, `set edit:current-command = echo`, `edit:clear`)
 	f.TestTTY(t,
 		"~> echo", Styles,
 		"   vvvv", term.DotHere)

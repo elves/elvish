@@ -143,17 +143,17 @@ func TestDel(t *testing.T) {
 
 	Test(t,
 		// Deleting variable
-		That("x = 1; del x").DoesNothing(),
-		That("x = 1; del x; echo $x").DoesNotCompile(),
-		That("x = 1; del :x; echo $x").DoesNotCompile(),
-		That("x = 1; del local:x; echo $x").DoesNotCompile(),
+		That("var x = 1; del x").DoesNothing(),
+		That("var x = 1; del x; echo $x").DoesNotCompile(),
+		That("var x = 1; del :x; echo $x").DoesNotCompile(),
+		That("var x = 1; del local:x; echo $x").DoesNotCompile(),
 		// Deleting environment variable
 		That("has-env TEST_ENV", "del E:TEST_ENV", "has-env TEST_ENV").Puts(true, false),
 		// Deleting variable whose name contains special characters
-		That("'a/b' = foo; del 'a/b'").DoesNothing(),
+		That("var 'a/b' = foo; del 'a/b'").DoesNothing(),
 		// Deleting element
-		That("x = [&k=v &k2=v2]; del x[k2]; keys $x").Puts("k"),
-		That("x = [[&k=v &k2=v2]]; del x[0][k2]; keys $x[0]").Puts("k"),
+		That("var x = [&k=v &k2=v2]; del x[k2]; keys $x").Puts("k"),
+		That("var x = [[&k=v &k2=v2]]; del x[0][k2]; keys $x[0]").Puts("k"),
 
 		// Error cases
 
@@ -164,29 +164,29 @@ func TestDel(t *testing.T) {
 		// Deleting variable in non-local namespace
 		That("var a: = (ns [&b=$nil])", "del a:b").DoesNotCompile(),
 		// Variable name given with $
-		That("x = 1; del $x").DoesNotCompile(),
+		That("var x = 1; del $x").DoesNotCompile(),
 		// Variable name not given as a single primary expression
-		That("ab = 1; del a'b'").DoesNotCompile(),
+		That("var ab = 1; del a'b'").DoesNotCompile(),
 		// Variable name not a string
 		That("del [a]").DoesNotCompile(),
 		// Variable name has sigil
-		That("x = []; del @x").DoesNotCompile(),
+		That("var x = []; del @x").DoesNotCompile(),
 		// Variable name not quoted when it should be
-		That("'a/b' = foo; del a/b").DoesNotCompile(),
+		That("var 'a/b' = foo; del a/b").DoesNotCompile(),
 
 		// Index is multiple values
-		That("x = [&k1=v1 &k2=v2]", "del x[k1 k2]").Throws(
+		That("var x = [&k1=v1 &k2=v2]", "del x[k1 k2]").Throws(
 			ErrorWithMessage("index must evaluate to a single value in argument to del"),
 			"k1 k2"),
 		// Index expression throws exception
-		That("x = [&k]", "del x[(fail x)]").Throws(FailError{"x"}, "fail x"),
+		That("var x = [&k]", "del x[(fail x)]").Throws(FailError{"x"}, "fail x"),
 		// Value does not support element removal
-		That("x = (num 1)", "del x[k]").Throws(
+		That("var x = (num 1)", "del x[k]").Throws(
 			ErrorWithMessage("value does not support element removal"),
 			// TODO: Fix the stack trace so that it is "x[k]"
 			"x[k"),
 		// Intermediate element does not exist
-		That("x = [&]", "del x[k][0]").Throws(
+		That("var x = [&]", "del x[k][0]").Throws(
 			ErrorWithMessage("no such key: k"),
 			// TODO: Fix the stack trace so that it is "x[k]"
 			"x"),
@@ -200,7 +200,7 @@ func TestAnd(t *testing.T) {
 		That("and $false b").Puts(false),
 		That("and $true b").Puts("b"),
 		// short circuit
-		That("x = a; and $false (x = b); put $x").Puts(false, "a"),
+		That("var x = a; and $false (x = b); put $x").Puts(false, "a"),
 
 		// Exception
 		That("and a (fail x)").Throws(FailError{"x"}, "fail x"),
@@ -215,7 +215,7 @@ func TestOr(t *testing.T) {
 		That("or $false b").Puts("b"),
 		That("or $true b").Puts(true),
 		// short circuit
-		That("x = a; or $true (x = b); put $x").Puts(true, "a"),
+		That("var x = a; or $true (x = b); put $x").Puts(true, "a"),
 
 		// Exception
 		That("or $false (fail x)").Throws(FailError{"x"}, "fail x"),
@@ -421,14 +421,14 @@ func TestUse(t *testing.T) {
 	ApplyDir(Dir{
 		"has-init.elv": "put has-init",
 		"put-x.elv":    "put $x",
-		"lorem.elv":    "name = lorem; fn put-name { put $name }",
-		"d.elv":        "name = d",
+		"lorem.elv":    "var name = lorem; fn put-name { put $name }",
+		"d.elv":        "var name = d",
 		"shadow.elv":   "put lib2",
 		"a": Dir{
 			"b": Dir{
 				"c": Dir{
-					"d.elv": "name = a/b/c/d",
-					"x.elv": "use ./d; d = $d:name; use ../../../lorem; lorem = $lorem:name",
+					"d.elv": "var name = a/b/c/d",
+					"x.elv": "use ./d; var d = $d:name; use ../../../lorem; var lorem = $lorem:name",
 				},
 			},
 		},
@@ -470,7 +470,7 @@ func TestUse(t *testing.T) {
 
 		// Variables defined in the default global scope is invisible from
 		// modules
-		That("x = foo; use put-x").Throws(ErrorWithType(&diag.Error{})),
+		That("var x = foo; use put-x").Throws(ErrorWithType(&diag.Error{})),
 
 		// Using an unknown module spec fails.
 		That("use unknown").Throws(ErrorWithType(NoSuchModule{})),
@@ -488,9 +488,9 @@ func TestUse(t *testing.T) {
 
 // Regression test for #1072
 func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
-	progtest.SetDeprecationLevel(t, 17)
+	progtest.SetDeprecationLevel(t, 18)
 	libdir := InTempDir(t)
-	MustWriteFile("dep.elv", "a = b")
+	MustWriteFile("dep.elv", "a=b nop $a")
 
 	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
 		// Importing module triggers check for deprecated features

@@ -9,7 +9,7 @@ import (
 func TestInsert_Abbr(t *testing.T) {
 	f := setup(t)
 
-	evals(f.Evaler, `edit:abbr = [&x=full]`)
+	evals(f.Evaler, `set edit:abbr = [&x=full]`)
 	f.TTYCtrl.Inject(term.K('x'), term.K('\n'))
 
 	if code := <-f.codeCh; code != "full" {
@@ -21,8 +21,8 @@ func TestInsert_Binding(t *testing.T) {
 	f := setup(t)
 
 	evals(f.Evaler,
-		`called = 0`,
-		`edit:insert:binding[x] = { called = (+ $called 1) }`)
+		`var called = 0`,
+		`set edit:insert:binding[x] = { set called = (+ $called 1) }`)
 
 	f.TTYCtrl.Inject(term.K('x'), term.K('\n'))
 
@@ -37,7 +37,7 @@ func TestInsert_Binding(t *testing.T) {
 func TestInsert_QuotePaste(t *testing.T) {
 	f := setup(t)
 
-	evals(f.Evaler, `edit:insert:quote-paste = $true`)
+	evals(f.Evaler, `set edit:insert:quote-paste = $true`)
 
 	f.TTYCtrl.Inject(
 		term.PasteSetting(true),
@@ -55,11 +55,11 @@ func TestToggleQuotePaste(t *testing.T) {
 	f := setup(t)
 
 	evals(f.Evaler,
-		`v0 = $edit:insert:quote-paste`,
+		`var v0 = $edit:insert:quote-paste`,
 		`edit:toggle-quote-paste`,
-		`v1 = $edit:insert:quote-paste`,
+		`var v1 = $edit:insert:quote-paste`,
 		`edit:toggle-quote-paste`,
-		`v2 = $edit:insert:quote-paste`)
+		`var v2 = $edit:insert:quote-paste`)
 
 	v0 := getGlobal(f.Evaler, "v0").(bool)
 	v1 := getGlobal(f.Evaler, "v1").(bool)

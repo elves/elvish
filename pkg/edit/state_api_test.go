@@ -28,7 +28,7 @@ func TestDot(t *testing.T) {
 	f := setup(t)
 
 	f.SetCodeBuffer(tk.CodeBuffer{Content: "code", Dot: 4})
-	evals(f.Evaler, `edit:-dot = 0`)
+	evals(f.Evaler, `set edit:-dot = 0`)
 
 	testCodeBuffer(t, f.Editor, tk.CodeBuffer{Content: "code", Dot: 0})
 }
@@ -36,7 +36,7 @@ func TestDot(t *testing.T) {
 func TestCurrentCommand(t *testing.T) {
 	f := setup(t)
 
-	evals(f.Evaler, `edit:current-command = code`)
+	evals(f.Evaler, `set edit:current-command = code`)
 
 	testCodeBuffer(t, f.Editor, tk.CodeBuffer{Content: "code", Dot: 4})
 }

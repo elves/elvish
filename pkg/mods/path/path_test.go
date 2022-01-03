@@ -59,27 +59,27 @@ func TestPath(t *testing.T) {
 		That("path:is-regular bad").Puts(false),
 
 		// Verify the commands for creating temporary filesystem objects work correctly.
-		That("x = (path:temp-dir)", "rmdir $x", "put $x").Puts(
+		That("var x = (path:temp-dir)", "rmdir $x", "put $x").Puts(
 			MatchingRegexp{Pattern: anyDir + `elvish-.*$`}),
-		That("x = (path:temp-dir 'x-*.y')", "rmdir $x", "put $x").Puts(
+		That("var x = (path:temp-dir 'x-*.y')", "rmdir $x", "put $x").Puts(
 			MatchingRegexp{Pattern: anyDir + `x-.*\.y$`}),
-		That("x = (path:temp-dir &dir=. 'x-*.y')", "rmdir $x", "put $x").Puts(
+		That("var x = (path:temp-dir &dir=. 'x-*.y')", "rmdir $x", "put $x").Puts(
 			MatchingRegexp{Pattern: `^(\.[/\\])?x-.*\.y$`}),
-		That("x = (path:temp-dir &dir=.)", "rmdir $x", "put $x").Puts(
+		That("var x = (path:temp-dir &dir=.)", "rmdir $x", "put $x").Puts(
 			MatchingRegexp{Pattern: `^(\.[/\\])?elvish-.*$`}),
 		That("path:temp-dir a b").Throws(
 			errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: 2},
 			"path:temp-dir a b"),
 
-		That("f = (path:temp-file)", "file:close $f", "put $f[fd]", "rm $f[name]").
+		That("var f = (path:temp-file)", "file:close $f", "put $f[fd]", "rm $f[name]").
 			Puts(-1),
-		That("f = (path:temp-file)", "put $f[name]", "file:close $f", "rm $f[name]").
+		That("var f = (path:temp-file)", "put $f[name]", "file:close $f", "rm $f[name]").
 			Puts(MatchingRegexp{Pattern: anyDir + `elvish-.*$`}),
-		That("f = (path:temp-file 'x-*.y')", "put $f[name]", "file:close $f", "rm $f[name]").
+		That("var f = (path:temp-file 'x-*.y')", "put $f[name]", "file:close $f", "rm $f[name]").
 			Puts(MatchingRegexp{Pattern: anyDir + `x-.*\.y$`}),
-		That("f = (path:temp-file &dir=. 'x-*.y')", "put $f[name]", "file:close $f", "rm $f[name]").
+		That("var f = (path:temp-file &dir=. 'x-*.y')", "put $f[name]", "file:close $f", "rm $f[name]").
 			Puts(MatchingRegexp{Pattern: `^(\.[/\\])?x-.*\.y$`}),
-		That("f = (path:temp-file &dir=.)", "put $f[name]", "file:close $f", "rm $f[name]").
+		That("var f = (path:temp-file &dir=.)", "put $f[name]", "file:close $f", "rm $f[name]").
 			Puts(MatchingRegexp{Pattern: `^(\.[/\\])?elvish-.*$`}),
 		That("path:temp-file a b").Throws(
 			errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: 2},

@@ -15,22 +15,22 @@ func TestClosureAsValue(t *testing.T) {
 		// Basic operations as a value.
 		That("kind-of { }").Puts("fn"),
 		That("eq { } { }").Puts(false),
-		That("x = { }; put [&$x= foo][$x]").Puts("foo"),
+		That("var x = { }; put [&$x= foo][$x]").Puts("foo"),
 
 		// Argument arity mismatch.
-		That("f = {|x| }", "$f a b").Throws(
+		That("var f = {|x| }", "$f a b").Throws(
 			errs.ArityMismatch{What: "arguments",
 				ValidLow: 1, ValidHigh: 1, Actual: 2},
 			"$f a b"),
-		That("f = {|x y| }", "$f a").Throws(
+		That("var f = {|x y| }", "$f a").Throws(
 			errs.ArityMismatch{What: "arguments", ValidLow: 2, ValidHigh: 2, Actual: 1},
 			"$f a"),
-		That("f = {|x y @rest| }", "$f a").Throws(
+		That("var f = {|x y @rest| }", "$f a").Throws(
 			errs.ArityMismatch{What: "arguments", ValidLow: 2, ValidHigh: -1, Actual: 1},
 			"$f a"),
 
 		// Unsupported option.
-		That("f = {|&valid1=1 &valid2=2| }; $f &bad1=1 &bad2=2").Throws(
+		That("var f = {|&valid1=1 &valid2=2| }; $f &bad1=1 &bad2=2").Throws(
 			eval.UnsupportedOptionsError{[]string{"bad1", "bad2"}},
 			"$f &bad1=1 &bad2=2"),
 

@@ -39,7 +39,7 @@ func rc(codes ...string) func(*fixture) {
 func assign(name string, val interface{}) func(*fixture) {
 	return func(f *fixture) {
 		f.Evaler.ExtendGlobal(eval.BuildNs().AddVar("temp", vars.NewReadOnly(val)))
-		evals(f.Evaler, name+` = $temp`)
+		evals(f.Evaler, "set "+name+" = $temp")
 	}
 }
 
@@ -64,9 +64,9 @@ func setup(c testutil.Cleanuper, fns ...func(*fixture)) *fixture {
 	evals(ev,
 		// This is the same as the default prompt for non-root users. This makes
 		// sure that the tests will work when run as root.
-		"edit:prompt = { tilde-abbr $pwd; put '> ' }",
+		"set edit:prompt = { tilde-abbr $pwd; put '> ' }",
 		// This will simplify most tests against the terminal.
-		"edit:rprompt = { }")
+		"set edit:rprompt = { }")
 	f := &fixture{Editor: ed, TTYCtrl: ttyCtrl, Evaler: ev, Store: st, Home: home}
 	for _, fn := range fns {
 		fn(f)

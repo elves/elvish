@@ -13,7 +13,7 @@ import (
 )
 
 func TestPrompt_ValueOutput(t *testing.T) {
-	f := setup(t, rc(`edit:prompt = { put '#'; num 13; styled '> ' red }`))
+	f := setup(t, rc(`set edit:prompt = { put '#'; num 13; styled '> ' red }`))
 
 	f.TestTTY(t,
 		"#13> ", Styles,
@@ -21,13 +21,13 @@ func TestPrompt_ValueOutput(t *testing.T) {
 }
 
 func TestPrompt_ByteOutput(t *testing.T) {
-	f := setup(t, rc(`edit:prompt = { print 'bytes> ' }`))
+	f := setup(t, rc(`set edit:prompt = { print 'bytes> ' }`))
 
 	f.TestTTY(t, "bytes> ", term.DotHere)
 }
 
 func TestPrompt_ParsesSGRInByteOutput(t *testing.T) {
-	f := setup(t, rc(`edit:prompt = { print "\033[31mred\033[m> " }`))
+	f := setup(t, rc(`set edit:prompt = { print "\033[31mred\033[m> " }`))
 
 	f.TestTTY(t,
 		"red> ", Styles,
@@ -35,24 +35,24 @@ func TestPrompt_ParsesSGRInByteOutput(t *testing.T) {
 }
 
 func TestPrompt_NotifiesInvalidValueOutput(t *testing.T) {
-	f := setup(t, rc(`edit:prompt = { put good [bad] good2 }`))
+	f := setup(t, rc(`set edit:prompt = { put good [bad] good2 }`))
 
 	f.TestTTY(t, "goodgood2", term.DotHere)
 	f.TestTTYNotes(t, "invalid output type from prompt: list")
 }
 
 func TestPrompt_NotifiesException(t *testing.T) {
-	f := setup(t, rc(`edit:prompt = { fail ERROR }`))
+	f := setup(t, rc(`set edit:prompt = { fail ERROR }`))
 
 	f.TestTTYNotes(t,
 		"[prompt error] ERROR\n",
 		`see stack trace with "show $edit:exceptions[0]"`)
-	evals(f.Evaler, `excs = (count $edit:exceptions)`)
+	evals(f.Evaler, `var excs = (count $edit:exceptions)`)
 	testGlobal(t, f.Evaler, "excs", 1)
 }
 
 func TestRPrompt(t *testing.T) {
-	f := setup(t, rc(`edit:rprompt = { put 'RRR' }`))
+	f := setup(t, rc(`set edit:rprompt = { put 'RRR' }`))
 
 	f.TestTTY(t, "~> ", term.DotHere,
 		strings.Repeat(" ", clitest.FakeTTYWidth-6)+"RRR")
@@ -60,9 +60,9 @@ func TestRPrompt(t *testing.T) {
 
 func TestPromptEagerness(t *testing.T) {
 	f := setup(t, rc(
-		`i = 0`,
-		`edit:prompt = { i = (+ $i 1); put $i'> ' }`,
-		`edit:-prompt-eagerness = 10`))
+		`var i = 0`,
+		`set edit:prompt = { set i = (+ $i 1); put $i'> ' }`,
+		`set edit:-prompt-eagerness = 10`))
 
 	f.TestTTY(t, "1> ", term.DotHere)
 	// With eagerness = 10, any key press will cause the prompt to be
@@ -73,9 +73,9 @@ func TestPromptEagerness(t *testing.T) {
 
 func TestPromptStaleThreshold(t *testing.T) {
 	f := setup(t, rc(
-		`pipe = (file:pipe)`,
-		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
-		`edit:prompt-stale-threshold = `+scaledMsAsSec(50)))
+		`var pipe = (file:pipe)`,
+		`set edit:prompt = { nop (slurp < $pipe); put '> ' }`,
+		`set edit:prompt-stale-threshold = `+scaledMsAsSec(50)))
 
 	f.TestTTY(t,
 		"???> ", Styles,
@@ -88,10 +88,10 @@ func TestPromptStaleThreshold(t *testing.T) {
 
 func TestPromptStaleTransform(t *testing.T) {
 	f := setup(t, rc(
-		`pipe = (file:pipe)`,
-		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
-		`edit:prompt-stale-threshold = `+scaledMsAsSec(50),
-		`edit:prompt-stale-transform = {|a| put S; put $a; put S }`))
+		`var pipe = (file:pipe)`,
+		`set edit:prompt = { nop (slurp < $pipe); put '> ' }`,
+		`set edit:prompt-stale-threshold = `+scaledMsAsSec(50),
+		`set edit:prompt-stale-transform = {|a| put S; put $a; put S }`))
 
 	f.TestTTY(t, "S???> S", term.DotHere)
 	evals(f.Evaler, `file:close $pipe[w]`)
@@ -100,34 +100,34 @@ func TestPromptStaleTransform(t *testing.T) {
 
 func TestPromptStaleTransform_Exception(t *testing.T) {
 	f := setup(t, rc(
-		`pipe = (file:pipe)`,
-		`edit:prompt = { nop (slurp < $pipe); put '> ' }`,
-		`edit:prompt-stale-threshold = `+scaledMsAsSec(50),
-		`edit:prompt-stale-transform = {|_| fail ERROR }`))
+		`var pipe = (file:pipe)`,
+		`set edit:prompt = { nop (slurp < $pipe); put '> ' }`,
+		`set edit:prompt-stale-threshold = `+scaledMsAsSec(50),
+		`set edit:prompt-stale-transform = {|_| fail ERROR }`))
 
 	f.TestTTYNotes(t,
 		"[prompt stale transform error] ERROR\n",
 		`see stack trace with "show $edit:exceptions[0]"`)
-	evals(f.Evaler, `excs = (count $edit:exceptions)`)
+	evals(f.Evaler, `var excs = (count $edit:exceptions)`)
 	testGlobal(t, f.Evaler, "excs", 1)
 }
 
 func TestRPromptPersistent_True(t *testing.T) {
-	testRPromptPersistent(t, `edit:rprompt-persistent = $true`,
+	testRPromptPersistent(t, `set edit:rprompt-persistent = $true`,
 		"~> "+strings.Repeat(" ", clitest.FakeTTYWidth-6)+"RRR",
 		"\n", term.DotHere,
 	)
 }
 
 func TestRPromptPersistent_False(t *testing.T) {
-	testRPromptPersistent(t, `edit:rprompt-persistent = $false`,
+	testRPromptPersistent(t, `set edit:rprompt-persistent = $false`,
 		"~> ", // no rprompt
 		"\n", term.DotHere,
 	)
 }
 
 func testRPromptPersistent(t *testing.T, code string, finalBuf ...interface{}) {
-	f := setup(t, rc(`edit:rprompt = { put RRR }`, code))
+	f := setup(t, rc(`set edit:rprompt = { put RRR }`, code))
 
 	// Make sure that the UI has stabilized before hitting Enter.
 	f.TestTTY(t,
