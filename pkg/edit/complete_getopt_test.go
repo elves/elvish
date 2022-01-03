@@ -6,6 +6,7 @@ import (
 	"src.elv.sh/pkg/eval"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/ui"
 )
 
 func setupCompleteGetopt(ev *eval.Evaler) {
@@ -31,18 +32,18 @@ func TestCompleteGetopt(t *testing.T) {
 
 		// Complete option
 		That("complete -").Puts(
-			complexItem{Stem: "-a", Display: "-a (Show all)"},
-			complexItem{Stem: "--all", Display: "--all (Show all)"},
-			complexItem{Stem: "-n", Display: "-n new-name (Set name)"},
-			complexItem{Stem: "--name", Display: "--name new-name (Set name)"}),
+			complexItem{Stem: "-a", Display: ui.T("-a (Show all)")},
+			complexItem{Stem: "--all", Display: ui.T("--all (Show all)")},
+			complexItem{Stem: "-n", Display: ui.T("-n new-name (Set name)")},
+			complexItem{Stem: "--name", Display: ui.T("--name new-name (Set name)")}),
 		That("complete - >&-").Throws(eval.ErrNoValueOutput),
 
 		// Complete long option
 		That("complete --").Puts(
-			complexItem{Stem: "--all", Display: "--all (Show all)"},
-			complexItem{Stem: "--name", Display: "--name new-name (Set name)"}),
+			complexItem{Stem: "--all", Display: ui.T("--all (Show all)")},
+			complexItem{Stem: "--name", Display: ui.T("--name new-name (Set name)")}),
 		That("complete --a").Puts(
-			complexItem{Stem: "--all", Display: "--all (Show all)"}),
+			complexItem{Stem: "--all", Display: ui.T("--all (Show all)")}),
 		That("complete -- >&-").Throws(eval.ErrNoValueOutput),
 
 		// Complete argument of short option

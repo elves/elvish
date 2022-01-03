@@ -64,9 +64,8 @@ func setupStartedCompletion(t *testing.T) *Fixture {
 		Name:    "WORD",
 		Replace: diag.Ranging{From: 0, To: 0},
 		Items: []CompletionItem{
-			{ToShow: "foo", ToInsert: "foo"},
-			{ToShow: "foo bar", ToInsert: "'foo bar'",
-				ShowStyle: ui.Style{Foreground: ui.Blue}},
+			{ToShow: ui.T("foo"), ToInsert: "foo"},
+			{ToShow: ui.T("foo bar", ui.FgBlue), ToInsert: "'foo bar'"},
 		},
 	})
 	f.App.PushAddon(w)

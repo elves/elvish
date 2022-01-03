@@ -141,9 +141,9 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 		}
 
 		items = append(items, ComplexItem{
-			Stem:         full,
-			CodeSuffix:   suffix,
-			DisplayStyle: ui.StyleFromSGR(lsColor.GetStyle(full)),
+			Stem:       full,
+			CodeSuffix: suffix,
+			Display:    ui.T(full, ui.StylingFromSGR(lsColor.GetStyle(full))),
 		})
 	}
 

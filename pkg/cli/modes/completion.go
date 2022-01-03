@@ -2,6 +2,7 @@ package modes
 
 import (
 	"errors"
+	"strings"
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/tk"
@@ -27,9 +28,7 @@ type CompletionSpec struct {
 // CompletionItem represents a completion item, also known as a candidate.
 type CompletionItem struct {
 	// Used in the UI and for filtering.
-	ToShow string
-	// Style to use in the UI.
-	ShowStyle ui.Style
+	ToShow ui.Text
 	// Used when inserting a candidate.
 	ToInsert string
 }
@@ -87,15 +86,20 @@ type completionItems []CompletionItem
 func filterCompletionItems(all []CompletionItem, p func(string) bool) completionItems {
 	var filtered []CompletionItem
 	for _, candidate := range all {
-		if p(candidate.ToShow) {
+		if p(unstyle(candidate.ToShow)) {
 			filtered = append(filtered, candidate)
 		}
 	}
 	return filtered
 }
 
-func (it completionItems) Show(i int) ui.Text {
-	return ui.Text{&ui.Segment{Style: it[i].ShowStyle, Text: it[i].ToShow}}
-}
+func (it completionItems) Show(i int) ui.Text { return it[i].ToShow }
+func (it completionItems) Len() int           { return len(it) }
 
-func (it completionItems) Len() int { return len(it) }
+func unstyle(t ui.Text) string {
+	var sb strings.Builder
+	for _, seg := range t {
+		sb.WriteString(seg.Text)
+	}
+	return sb.String()
+}

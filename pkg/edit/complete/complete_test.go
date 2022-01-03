@@ -269,11 +269,12 @@ func TestComplete(t *testing.T) {
 
 func cb(s string) CodeBuffer { return CodeBuffer{s, len(s)} }
 
-func c(s string) modes.CompletionItem { return modes.CompletionItem{ToShow: s, ToInsert: s} }
+func c(s string) modes.CompletionItem { return modes.CompletionItem{ToShow: ui.T(s), ToInsert: s} }
 
 func fc(s, suffix string) modes.CompletionItem {
-	return modes.CompletionItem{ToShow: s, ToInsert: parse.Quote(s) + suffix,
-		ShowStyle: ui.StyleFromSGR(lscolors.GetColorist().GetStyle(s))}
+	return modes.CompletionItem{
+		ToShow:   ui.T(s, ui.StylingFromSGR(lscolors.GetColorist().GetStyle(s))),
+		ToInsert: parse.Quote(s) + suffix}
 }
 
 func r(i, j int) diag.Ranging { return diag.Ranging{From: i, To: j} }

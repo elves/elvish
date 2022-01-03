@@ -10,6 +10,7 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/getopt"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/ui"
 )
 
 //elvdoc:fn complete-getopt
@@ -115,9 +116,9 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 		c := complexItem{Stem: "-" + string(opt.Short)}
 		if d, ok := opts.desc[opt]; ok {
 			if e, ok := opts.argDesc[opt]; ok {
-				c.Display = c.Stem + " " + e + " (" + d + ")"
+				c.Display = ui.T(c.Stem + " " + e + " (" + d + ")")
 			} else {
-				c.Display = c.Stem + " (" + d + ")"
+				c.Display = ui.T(c.Stem + " (" + d + ")")
 			}
 		}
 		return out.Put(c)
@@ -126,9 +127,9 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 		c := complexItem{Stem: "--" + opt.Long}
 		if d, ok := opts.desc[opt]; ok {
 			if e, ok := opts.argDesc[opt]; ok {
-				c.Display = c.Stem + " " + e + " (" + d + ")"
+				c.Display = ui.T(c.Stem + " " + e + " (" + d + ")")
 			} else {
-				c.Display = c.Stem + " (" + d + ")"
+				c.Display = ui.T(c.Stem + " (" + d + ")")
 			}
 		}
 		return out.Put(c)

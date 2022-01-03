@@ -1,6 +1,9 @@
 package main
 
-import "src.elv.sh/pkg/cli/modes"
+import (
+	"src.elv.sh/pkg/cli/modes"
+	"src.elv.sh/pkg/ui"
+)
 
 var items = []string{
 	// Functions
@@ -17,7 +20,7 @@ var items = []string{
 func candidates() []modes.CompletionItem {
 	candidates := make([]modes.CompletionItem, len(items))
 	for i, item := range items {
-		candidates[i] = modes.CompletionItem{ToShow: item, ToInsert: item}
+		candidates[i] = modes.CompletionItem{ToShow: ui.T(item), ToInsert: item}
 	}
 	return candidates
 }

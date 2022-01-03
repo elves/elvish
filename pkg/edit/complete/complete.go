@@ -94,13 +94,13 @@ func Complete(code CodeBuffer, cfg Config) (*Result, error) {
 			continue
 		}
 		rawItems = cfg.Filterer(ctx.name, ctx.seed, rawItems)
+		sort.Slice(rawItems, func(i, j int) bool {
+			return rawItems[i].String() < rawItems[j].String()
+		})
 		items := make([]modes.CompletionItem, len(rawItems))
 		for i, rawCand := range rawItems {
 			items[i] = rawCand.Cook(ctx.quote)
 		}
-		sort.Slice(items, func(i, j int) bool {
-			return items[i].ToShow < items[j].ToShow
-		})
 		items = dedup(items)
 		return &Result{Name: ctx.name, Items: items, Replace: ctx.interval}, nil
 	}

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"unicode/utf8"
@@ -13,12 +14,14 @@ import (
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/edit/complete"
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/persistent/hash"
 	"src.elv.sh/pkg/strutil"
+	"src.elv.sh/pkg/ui"
 )
 
 //elvdoc:var completion:arg-completer
@@ -88,21 +91,29 @@ import (
 
 type complexCandidateOpts struct {
 	CodeSuffix string
-	Display    string
+	Display    interface{}
 }
 
 func (*complexCandidateOpts) SetDefaultOptions() {}
 
-func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) complexItem {
-	display := opts.Display
-	if display == "" {
-		display = stem
+func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) (complexItem, error) {
+	var display ui.Text
+	switch displayOpt := opts.Display.(type) {
+	case nil:
+		// Leave display = nil
+	case string:
+		display = ui.T(displayOpt)
+	case ui.Text:
+		display = displayOpt
+	default:
+		return complexItem{}, errs.BadValue{What: "&display",
+			Valid: "string or styled", Actual: vals.ReprPlain(displayOpt)}
 	}
 	return complexItem{
 		Stem:       stem,
 		CodeSuffix: opts.CodeSuffix,
 		Display:    display,
-	}
+	}, nil
 }
 
 //elvdoc:fn match-prefix
@@ -288,21 +299,21 @@ func (c complexItem) Kind() string { return "map" }
 func (c complexItem) Equal(a interface{}) bool {
 	rhs, ok := a.(complexItem)
 	return ok && c.Stem == rhs.Stem &&
-		c.CodeSuffix == rhs.CodeSuffix && c.Display == rhs.Display
+		c.CodeSuffix == rhs.CodeSuffix && reflect.DeepEqual(c.Display, rhs.Display)
 }
 
 func (c complexItem) Hash() uint32 {
 	h := hash.DJBInit
 	h = hash.DJBCombine(h, hash.String(c.Stem))
 	h = hash.DJBCombine(h, hash.String(c.CodeSuffix))
-	h = hash.DJBCombine(h, hash.String(c.Display))
+	// TODO: Add c.Display
 	return h
 }
 
 func (c complexItem) Repr(indent int) string {
 	// TODO(xiaq): Pretty-print when indent >= 0
 	return fmt.Sprintf("(edit:complex-candidate %s &code-suffix=%s &display=%s)",
-		parse.Quote(c.Stem), parse.Quote(c.CodeSuffix), parse.Quote(c.Display))
+		parse.Quote(c.Stem), parse.Quote(c.CodeSuffix), vals.Repr(c.Display, indent+1))
 }
 
 type wrappedArgGenerator func(*eval.Frame, ...string) error
