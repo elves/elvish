@@ -343,49 +343,23 @@ var testCases = []struct {
 		),
 	},
 	{
-		name: "lambda",
-		code: "a []{} [ ]{ } []{ echo 233 } [ x y ]{puts $x $y} { put haha}",
-		node: &Chunk{},
-		want: a(
-			ast{"Compound/Indexing/Primary", fs{
-				"Type": Lambda, "LegacyLambda": true, "Elements": []ast{}, "Chunk": "",
-			}},
-			ast{"Compound/Indexing/Primary", fs{
-				"Type": Lambda, "LegacyLambda": true, "Elements": []ast{}, "Chunk": " ",
-			}},
-			ast{"Compound/Indexing/Primary", fs{
-				"Type": Lambda, "LegacyLambda": true, "Elements": []ast{}, "Chunk": " echo 233 ",
-			}},
-			ast{"Compound/Indexing/Primary", fs{
-				"Type": Lambda, "LegacyLambda": true, "Elements": []string{"x", "y"}, "Chunk": "puts $x $y",
-			}},
-			ast{"Compound/Indexing/Primary", fs{
-				"Type": Lambda, "Elements": []ast{}, "Chunk": "put haha",
-			}},
-		),
-	},
-	{
-		name: "new-style lambda with arguments and options",
-		code: "{|a b &k=v|}",
+		name: "lambda without signature",
+		code: "{ echo}",
 		node: &Primary{},
 		want: ast{"Primary", fs{
-			"Type":         Lambda,
-			"LegacyLambda": false,
-			"Elements":     []string{"a", "b"},
-			"MapPairs":     []string{"&k=v"},
-			"Chunk":        "",
+			"Type":  Lambda,
+			"Chunk": "echo",
 		}},
 	},
 	{
-		name: "legacy lambda with arguments and options",
-		code: "[a b &k=v]{}",
+		name: "new-style lambda with arguments and options",
+		code: "{|a b &k=v| echo}",
 		node: &Primary{},
 		want: ast{"Primary", fs{
-			"Type":         Lambda,
-			"LegacyLambda": true,
-			"Elements":     []string{"a", "b"},
-			"MapPairs":     []string{"&k=v"},
-			"Chunk":        "",
+			"Type":     Lambda,
+			"Elements": []string{"a", "b"},
+			"MapPairs": []string{"&k=v"},
+			"Chunk":    " echo",
 		}},
 	},
 	{

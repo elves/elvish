@@ -3,7 +3,7 @@ set after-command = [
   # as a convenience for prompt functions. Note: The first time this is run is after
   # shell.sourceRC() finishes so the initial value of command-duration is the time
   # to execute the user's interactive configuration script.
-  [m]{
+  {|m|
     set command-duration = $m[duration]
   }
 ]

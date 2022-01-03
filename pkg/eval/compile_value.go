@@ -367,9 +367,6 @@ func (op outputCaptureOp) exec(fm *Frame) ([]interface{}, Exception) {
 }
 
 func (cp *compiler) lambda(n *parse.Primary) valuesOp {
-	if n.LegacyLambda {
-		cp.deprecate(n, "legacy lambda syntax is deprecated; migrate scripts with https://go.elv.sh/u0.17", 17)
-	}
 	// Parse signature.
 	var (
 		argNames      []string
