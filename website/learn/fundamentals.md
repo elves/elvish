@@ -168,7 +168,7 @@ Which works until you want a different message. One way to solve this is using
 **variables**:
 
 ```elvish-transcript
-~> name = John
+~> var name = John
 ~> echo Hello, $name!
 Hello, John!
 ```
@@ -178,7 +178,7 @@ the previous command. To greet a different person, you can just change the value
 of the variable, and the command doesn't need to change:
 
 ```elvish-transcript
-~> name = Jane
+~> var name = Jane
 ~> echo Hello, $name!
 Hello, Jane!
 ```
@@ -187,7 +187,7 @@ Using variables has another advantage: after defining a variable, you can use it
 as many times as you want:
 
 ```elvish-transcript
-~> name = Jane
+~> var name = Jane
 ~> echo Hello, $name!
 Hello, Jane!
 ~> echo Bye, $name!
@@ -221,7 +221,7 @@ store a **list** of values in one variable; a list can be written by surrounding
 some values with `[` and `]`. For example:
 
 ```elvish-transcript
-~> list = [linux bsd macos windows]
+~> var list = [linux bsd macos windows]
 ~> echo $list
 [linux bsd macos windows]
 ```
@@ -294,8 +294,8 @@ Since `$args` is a list, we can retrieve the individual elements with
 `$args[0]`, `$args[1]`, etc.. Let's rewrite our greet-and-bye script, taking the
 name as an argument. Put this in `greet-and-bye.elv`:
 
-```
-name = $args[0]
+```elvish
+var name = $args[0]
 echo Hello, $name!
 echo Bye, $name!
 ```
@@ -344,7 +344,7 @@ running this command directly, we can first **capture** its output in a
 variable:
 
 ```elvish-transcript
-~> os = (uname)
+~> var os = (uname)
 ~> echo Hello, $E:USER, $os user!
 Hello, elf, Linux user!
 ```

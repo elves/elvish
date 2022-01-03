@@ -32,7 +32,7 @@ Elvish offers first-class support for data structures such as lists and maps.
 Here is an example that uses a list:
 
 ```elvish-transcript
-~> li = [foo bar 'lorem ipsum']
+~> var li = [foo bar 'lorem ipsum']
 ~> kind-of $li # "kind" is like type
 ▶ list
 ~> count $li # count the number of elements in a list
@@ -51,7 +51,7 @@ capture to recover it:
 ~> fn f {
      echo [foo bar 'lorem ipsum']
    }
-~> li = (f) # (...) is output capture, like $(...) in other shells
+~> var li = (f) # (...) is output capture, like $(...) in other shells
 ~> kind-of $li
 ▶ string
 ~> count $li # count the number of bytes, since $li is now a string
@@ -68,7 +68,7 @@ Elvish provides a `put` command to output structured values as they are:
 ~> fn f {
      put [foo bar 'lorem ipsum']
    }
-~> li = (f)
+~> var li = (f)
 ~> kind-of $li
 ▶ list
 ~> count $li
@@ -364,9 +364,9 @@ underlying map, so `m['foo']` is also changed.
 This is not the case for Elvish:
 
 ```elvish-transcript
-~> m = [&foo=bar &lorem=ipsum]
-~> m2 = $m
-~> m2[foo] = quux
+~> var m = [&foo=bar &lorem=ipsum]
+~> var m2 = $m
+~> set m2[foo] = quux
 ~> put $m[foo]
 ▶ bar
 ```
@@ -413,9 +413,9 @@ assign an element of `$m2`, Elvish turns that into an assignment of `$m2`
 itself:
 
 ```elvish
-m2[foo] = quux
+set m2[foo] = quux
 # is just syntax sugar for:
-m2 = (assoc $m2 foo quux)
+set m2 = (assoc $m2 foo quux)
 ```
 
 The sort of immutable data structures that support cheap creation of "slight

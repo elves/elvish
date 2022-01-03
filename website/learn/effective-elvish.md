@@ -97,7 +97,7 @@ this is `put`:
 ```elvish-transcript
 ~> put foo
 ▶ foo
-~> x = (put foo)
+~> var x = (put foo)
 ~> put $x
 ▶ foo
 ```
@@ -109,7 +109,7 @@ old byte-based output as well. But let's try this:
 ~> put "a\nb" [foo bar]
 ▶ "a\nb"
 ▶ [foo bar]
-~> s li = (put "a\nb" [foo bar])
+~> var s li = (put "a\nb" [foo bar])
 ~> put $s
 ▶ "a\nb"
 ~> put $li[0]
@@ -129,7 +129,7 @@ write to structured output, like `str:split`:
 ~> str:split , foo,bar
 ▶ foo
 ▶ bar
-~> words = [(str:split , foo,bar)]
+~> var words = [(str:split , foo,bar)]
 ~> put $words
 ▶ [foo bar]
 ```
@@ -177,7 +177,7 @@ can write to both, and output capture will capture both:
 ~> f
 bytes
 ▶ value
-~> outs = [(f)]
+~> var outs = [(f)]
 ~> put $outs
 ▶ [bytes value]
 ```
@@ -187,7 +187,7 @@ byte and value outputs, and it can recover the output sent to `echo`. When byte
 output contains multiple lines, each line becomes one value:
 
 ```elvish-transcript
-~> x = [(echo "lorem\nipsum")]
+~> var x = [(echo "lorem\nipsum")]
 ~> put $x
 ▶ [lorem ipsum]
 ```
@@ -287,7 +287,7 @@ comma-separated value, reduplicate each value (using commas as separators), and
 rejoin them with semicolons, you can write:
 
 ```elvish-transcript
-~> csv = a,b,foo,bar
+~> var csv = a,b,foo,bar
 ~> use str
 ~> str:join ';' [(each {|x| put $x,$x } [(str:split , $csv)])]
 ▶ 'a,a;b,b;foo,foo;bar,bar'
@@ -304,7 +304,7 @@ The answer to that particular question is in the next subsection, but for the
 program at hand, there is a much better way to write it:
 
 ```elvish-transcript
-~> csv = a,b,foo,bar
+~> var csv = a,b,foo,bar
 ~> use str
 ~> str:split , $csv | each {|x| put $x,$x } | str:join ';'
 ▶ 'a,a;b,b;foo,foo;bar,bar'
@@ -421,7 +421,7 @@ list:
 ▶ a
 ▶ b
 ▶ c
-~> li = (str:split , a,b,c)
+~> var li = (str:split , a,b,c)
 Exception: arity mismatch: assignment right-hand-side must be 1 value, but is 3 values
 [tty], line 1: li = (str:split , a,b,c)
 ```
@@ -433,10 +433,10 @@ constructing a list or using rest variables:
 
 ```elvish-transcript
 ~> use str
-~> li = [(str:split , a,b,c)]
+~> var li = [(str:split , a,b,c)]
 ~> put $li
 ▶ [a b c]
-~> @li = (str:split , a,b,c) # equivalent and slightly shorter
+~> var @li = (str:split , a,b,c) # equivalent and slightly shorter
 ```
 
 ## Assigning Multiple Variables
