@@ -5,6 +5,7 @@ import (
 
 	. "src.elv.sh/pkg/eval"
 
+	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
 )
@@ -93,5 +94,19 @@ func TestReturn(t *testing.T) {
 	Test(t,
 		That("return").Throws(Return),
 		// Use of return inside fn is tested in TestFn
+	)
+}
+
+func TestDefer(t *testing.T) {
+	Test(t,
+		That("{ defer { put a }; put b }").Puts("b", "a"),
+		That("defer { }").
+			Throws(ErrorWithMessage("defer must be called from within a closure")),
+		That("{ defer { fail foo } }").
+			Throws(FailError{"foo"}, "fail foo ", "{ defer { fail foo } }"),
+		That("{ defer {|x| } }").Throws(
+			errs.ArityMismatch{What: "arguments",
+				ValidLow: 1, ValidHigh: 1, Actual: 0},
+			"defer {|x| } ", "{ defer {|x| } }"),
 	)
 }

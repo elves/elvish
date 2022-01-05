@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"sync"
 	"sync/atomic"
 
@@ -21,6 +22,7 @@ func init() {
 		"return":      returnFn,
 		"break":       breakFn,
 		"continue":    continueFn,
+		"defer":       deferFn,
 		// Iterations.
 		"each":  each,
 		"peach": peach,
@@ -378,4 +380,42 @@ func breakFn() error {
 
 func continueFn() error {
 	return Continue
+}
+
+//elvdoc:fn defer
+//
+// ```elvish
+// defer $fn
+// ```
+//
+// Schedules a function to be called when execution reaches the end of the
+// current closure. The function is called with no arguments or options, and any
+// exception it throws gets propagated.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> { defer { put foo }; put bar }
+// ▶ bar
+// ▶ foo
+// ~> defer { put foo }
+// Exception: defer must be called from within a closure
+// [tty 2], line 1: defer { put foo }
+// ```
+
+var errDeferNotInClosure = errors.New("defer must be called from within a closure")
+
+func deferFn(fm *Frame, fn Callable) error {
+	if fm.defers == nil {
+		return errDeferNotInClosure
+	}
+	deferTraceback := fm.traceback
+	fm.addDefer(func(fm *Frame) Exception {
+		err := fn.Call(fm, NoArgs, NoOpts)
+		if exc, ok := err.(Exception); ok {
+			return exc
+		}
+		return &exception{err, deferTraceback}
+	})
+	return nil
 }
