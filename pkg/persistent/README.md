@@ -2,9 +2,6 @@
 
 This is a Go clone of Clojure's persistent data structures.
 
-The API is not stable yet. **DO NOT USE** unless you are willing to cope with
-API changes.
-
 License is
 [Eclipse Public License 1.0](http://opensource.org/licenses/eclipse-1.0.php)
 (like Clojure).
@@ -28,32 +25,27 @@ fully replicated here.
 
 Compared to native slices,
 
--   Adding elements is anywhere from 2x to 8x as slow.
+-   Adding elements is anywhere from 5x to 9x as slow.
 
--   Sequential read is about 9x as slow.
+-   Read (sequential or random) is about 6x as slow.
 
--   Random read is about 7x as slow.
-
-Benchmarked on an early 2015 MacBook Pro, with Go 1.9:
+Benchmarked on an MacBook Air (M1, 2020), with Go 1.17.5:
 
 ```
-goos: darwin
-goarch: amd64
-pkg: github.com/xiaq/persistent/vector
-BenchmarkConsNativeN1-4                  1000000              2457 ns/op
-BenchmarkConsNativeN2-4                   300000              4418 ns/op
-BenchmarkConsNativeN3-4                    30000             55424 ns/op
-BenchmarkConsNativeN4-4                      300           4493289 ns/op
-BenchmarkConsPersistentN1-4               100000             12250 ns/op 4.99x
-BenchmarkConsPersistentN2-4                50000             26394 ns/op 5.97x
-BenchmarkConsPersistentN3-4                 3000            452146 ns/op 8.16x
-BenchmarkConsPersistentN4-4                  100          13057887 ns/op 2.91x
-BenchmarkNthSeqNativeN4-4                  30000             43156 ns/op
-BenchmarkNthSeqPersistentN4-4               3000            399193 ns/op 9.25x
-BenchmarkNthRandNative-4                   20000             73860 ns/op
-BenchmarkNthRandPersistent-4                3000            546124 ns/op 7.39x
-BenchmarkEqualNative-4                     50000             23828 ns/op
-BenchmarkEqualPersistent-4                  2000           1020893 ns/op 42.84x
+BenchmarkConjNativeN1-8              1779234           673.3 ns/op
+BenchmarkConjNativeN2-8               948654          1220 ns/op
+BenchmarkConjNativeN3-8                61242         20138 ns/op
+BenchmarkConjNativeN4-8                 1222        968176 ns/op
+BenchmarkConjPersistentN1-8           264488          4462 ns/op 6.63x
+BenchmarkConjPersistentN2-8           119526          9885 ns/op 8.10x
+BenchmarkConjPersistentN3-8             6760        173995 ns/op 8.64x
+BenchmarkConjPersistentN4-8              212       5576977 ns/op 5.76x
+BenchmarkIndexSeqNativeN4-8            32031         37344 ns/op
+BenchmarkIndexSeqPersistentN4-8         6145        192151 ns/op 5.15x
+BenchmarkIndexRandNative-8             31366         38016 ns/op
+BenchmarkIndexRandPersistent-8          5434        216284 ns/op 5.69x
+BenchmarkEqualNative-8                110090         10738 ns/op
+BenchmarkEqualPersistent-8              2121        557334 ns/op 51.90x
 ```
 
 ### Hash map
@@ -62,22 +54,22 @@ Compared to native maps, adding elements is about 3-6x slow. Difference is more
 pronunced when keys are sequential integers, but that workload is very rare in
 the real world.
 
-Benchmarked on an early 2015 MacBook Pro, with Go 1.9:
+Benchmarked on an MacBook Air (M1, 2020), with Go 1.17.5:
 
 ```
 goos: darwin
-goarch: amd64
-pkg: github.com/xiaq/persistent/hashmap
-BenchmarkSequentialConsNative1-4                  300000              4143 ns/op
-BenchmarkSequentialConsNative2-4                   10000            130423 ns/op
-BenchmarkSequentialConsNative3-4                     300           4600842 ns/op
-BenchmarkSequentialConsPersistent1-4              100000             14005 ns/op 3.38x
-BenchmarkSequentialConsPersistent2-4                2000            641820 ns/op 4.92x
-BenchmarkSequentialConsPersistent3-4                  20          55180306 ns/op 11.99x
-BenchmarkRandomStringsConsNative1-4               200000              7536 ns/op
-BenchmarkRandomStringsConsNative2-4                 5000            264489 ns/op
-BenchmarkRandomStringsConsNative3-4                  100          12132244 ns/op
-BenchmarkRandomStringsConsPersistent1-4            50000             29109 ns/op 3.86x
-BenchmarkRandomStringsConsPersistent2-4             1000           1327321 ns/op 5.02x
-BenchmarkRandomStringsConsPersistent3-4               20          74204196 ns/op 6.12x
+goarch: arm64
+pkg: src.elv.sh/pkg/persistent/hashmap
+BenchmarkSequentialConjNative1-8              620540          1900 ns/op
+BenchmarkSequentialConjNative2-8               22918         52209 ns/op
+BenchmarkSequentialConjNative3-8                 567       2115886 ns/op
+BenchmarkSequentialConjPersistent1-8          169776          7026 ns/op 3.70x
+BenchmarkSequentialConjPersistent2-8            3374        354031 ns/op 6.78x
+BenchmarkSequentialConjPersistent3-8              51      23091870 ns/op 10.91x
+BenchmarkRandomStringsConjNative1-8           379147          3155 ns/op
+BenchmarkRandomStringsConjNative2-8            10000        117332 ns/op
+BenchmarkRandomStringsConjNative3-8              292       4034937 ns/op
+BenchmarkRandomStringsConjPersistent1-8        96504         12207 ns/op 3.87x
+BenchmarkRandomStringsConjPersistent2-8         1910        615644 ns/op 5.25x
+BenchmarkRandomStringsConjPersistent3-8           33      31928604 ns/op 7.91x
 ```
