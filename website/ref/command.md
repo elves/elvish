@@ -65,6 +65,8 @@ the content of the file is executed as a single code chunk.
 
 The remaining arguments are put in [`$args`](builtin.html#args).
 
+When running a script, Elvish does not evaluate the [RC file](#rc-file).
+
 # Module search directories
 
 When importing [modules](language.html#modules), Elvish searches the following
