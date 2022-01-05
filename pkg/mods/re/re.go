@@ -119,7 +119,7 @@ func find(fm *eval.Frame, opts findOpts, argPattern, source string) error {
 			if start >= 0 && end >= 0 {
 				text = source[start:end]
 			}
-			groups = groups.Cons(submatchStruct{text, start, end})
+			groups = groups.Conj(submatchStruct{text, start, end})
 		}
 		err := out.Put(matchStruct{source[start:end], start, end, groups})
 		if err != nil {

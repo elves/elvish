@@ -35,11 +35,11 @@ type Vector interface {
 	// Assoc returns an almost identical Vector, with the i-th element
 	// replaced. If the index is smaller than 0 or greater than the length of
 	// the vector, it returns nil. If the index is equal to the size of the
-	// vector, it is equivalent to Cons.
+	// vector, it is equivalent to Conj.
 	Assoc(i int, val interface{}) Vector
-	// Cons returns an almost identical Vector, with an additional element
+	// Conj returns an almost identical Vector, with an additional element
 	// appended to the end.
-	Cons(val interface{}) Vector
+	Conj(val interface{}) Vector
 	// Pop returns an almost identical Vector, with the last element removed. It
 	// returns nil if the vector is already empty.
 	Pop() Vector
@@ -142,7 +142,7 @@ func (v *vector) Assoc(i int, val interface{}) Vector {
 	if i < 0 || i > v.count {
 		return nil
 	} else if i == v.count {
-		return v.Cons(val)
+		return v.Conj(val)
 	}
 	if i >= v.treeSize() {
 		newTail := append([]interface{}(nil), v.tail...)
@@ -165,7 +165,7 @@ func doAssoc(height uint, n node, i int, val interface{}) node {
 	return m
 }
 
-func (v *vector) Cons(val interface{}) Vector {
+func (v *vector) Conj(val interface{}) Vector {
 	// Room in tail?
 	if v.count-v.treeSize() < tailMaxLen {
 		newTail := make([]interface{}, len(v.tail)+1)
@@ -299,12 +299,12 @@ func (s *subVector) Assoc(i int, val interface{}) Vector {
 	if i < 0 || s.begin+i > s.end {
 		return nil
 	} else if s.begin+i == s.end {
-		return s.Cons(val)
+		return s.Conj(val)
 	}
 	return s.v.Assoc(s.begin+i, val).SubVector(s.begin, s.end)
 }
 
-func (s *subVector) Cons(val interface{}) Vector {
+func (s *subVector) Conj(val interface{}) Vector {
 	return s.v.Assoc(s.end, val).SubVector(s.begin, s.end+1)
 }
 

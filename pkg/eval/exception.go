@@ -211,7 +211,7 @@ func (f peFields) Type() string { return "pipeline" }
 func (f peFields) Exceptions() vals.List {
 	li := vals.EmptyList
 	for _, exc := range f.pe.Errors {
-		li = li.Cons(exc)
+		li = li.Conj(exc)
 	}
 	return li
 }

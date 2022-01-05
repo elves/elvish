@@ -24,7 +24,7 @@ func init() {
 func TestVector(t *testing.T) {
 	run := func(n int) {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
-			v := testCons(t, n)
+			v := testConj(t, n)
 			testIndex(t, v, 0, n)
 			testAssoc(t, v, "233")
 			testIterator(t, v.Iterator(), 0, n)
@@ -44,7 +44,7 @@ func TestIterator_VectorWithNil(t *testing.T) {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
 			v := Empty
 			for i := 0; i < n; i++ {
-				v = v.Cons(nil)
+				v = v.Conj(nil)
 			}
 
 			iterated := 0
@@ -65,14 +65,14 @@ func TestIterator_VectorWithNil(t *testing.T) {
 	run(N4)
 }
 
-// testCons creates a vector containing 0...n-1 with Cons, and ensures that the
-// length of the old and new vectors are expected after each Cons. It returns
+// testConj creates a vector containing 0...n-1 with Conj, and ensures that the
+// length of the old and new vectors are expected after each Conj. It returns
 // the created vector.
-func testCons(t *testing.T, n int) Vector {
+func testConj(t *testing.T, n int) Vector {
 	v := Empty
 	for i := 0; i < n; i++ {
 		oldv := v
-		v = v.Cons(i)
+		v = v.Conj(i)
 
 		if count := oldv.Len(); count != i {
 			t.Errorf("oldv.Count() == %v, want %v", count, i)
@@ -167,7 +167,7 @@ func testPop(t *testing.T, v Vector) {
 func TestSubVector(t *testing.T) {
 	v := Empty
 	for i := 0; i < 10; i++ {
-		v = v.Cons(i)
+		v = v.Conj(i)
 	}
 
 	sv := v.SubVector(0, 4)
@@ -183,8 +183,8 @@ func TestSubVector(t *testing.T) {
 	if !checkVector(sv.Assoc(1, "233"), 1, "233", 3) {
 		t.Errorf("v[0:4].Assoc is not expected")
 	}
-	if !checkVector(sv.Cons("233"), 1, 2, 3, "233") {
-		t.Errorf("v[0:4].Cons is not expected")
+	if !checkVector(sv.Conj("233"), 1, 2, 3, "233") {
+		t.Errorf("v[0:4].Conj is not expected")
 	}
 	if !checkVector(sv.Pop(), 1, 2) {
 		t.Errorf("v[0:4].Pop is not expected")
@@ -225,7 +225,7 @@ func TestSubVector(t *testing.T) {
 func TestSubVector_BeginFromTail(t *testing.T) {
 	v := Empty
 	for i := 0; i < 65; i++ {
-		v = v.Cons(i)
+		v = v.Conj(i)
 	}
 	sv := v.SubVector(64, 65)
 	testIterator(t, sv.Iterator(), 64, 65)
@@ -247,10 +247,10 @@ func TestVectorEqual(t *testing.T) {
 	v1, v2 := Empty, Empty
 	for i := 0; i < N3; i++ {
 		elem := rand.Int63()
-		v1 = v1.Cons(elem)
-		v2 = v2.Cons(elem)
+		v1 = v1.Conj(elem)
+		v2 = v2.Conj(elem)
 		if !eqVector(v1, v2) {
-			t.Errorf("Not equal after Cons'ing %d elements", i+1)
+			t.Errorf("Not equal after Conj'ing %d elements", i+1)
 		}
 	}
 }
@@ -301,15 +301,15 @@ func TestMarshalJSON(t *testing.T) {
 func makeVector(elements ...interface{}) Vector {
 	v := Empty
 	for _, element := range elements {
-		v = v.Cons(element)
+		v = v.Conj(element)
 	}
 	return v
 }
 
-func BenchmarkConsNativeN1(b *testing.B) { benchmarkNativeAppend(b, N1) }
-func BenchmarkConsNativeN2(b *testing.B) { benchmarkNativeAppend(b, N2) }
-func BenchmarkConsNativeN3(b *testing.B) { benchmarkNativeAppend(b, N3) }
-func BenchmarkConsNativeN4(b *testing.B) { benchmarkNativeAppend(b, N4) }
+func BenchmarkConjNativeN1(b *testing.B) { benchmarkNativeAppend(b, N1) }
+func BenchmarkConjNativeN2(b *testing.B) { benchmarkNativeAppend(b, N2) }
+func BenchmarkConjNativeN3(b *testing.B) { benchmarkNativeAppend(b, N3) }
+func BenchmarkConjNativeN4(b *testing.B) { benchmarkNativeAppend(b, N4) }
 
 func benchmarkNativeAppend(b *testing.B, n int) {
 	for r := 0; r < b.N; r++ {
@@ -321,16 +321,16 @@ func benchmarkNativeAppend(b *testing.B, n int) {
 	}
 }
 
-func BenchmarkConsPersistentN1(b *testing.B) { benchmarkCons(b, N1) }
-func BenchmarkConsPersistentN2(b *testing.B) { benchmarkCons(b, N2) }
-func BenchmarkConsPersistentN3(b *testing.B) { benchmarkCons(b, N3) }
-func BenchmarkConsPersistentN4(b *testing.B) { benchmarkCons(b, N4) }
+func BenchmarkConjPersistentN1(b *testing.B) { benchmarkConj(b, N1) }
+func BenchmarkConjPersistentN2(b *testing.B) { benchmarkConj(b, N2) }
+func BenchmarkConjPersistentN3(b *testing.B) { benchmarkConj(b, N3) }
+func BenchmarkConjPersistentN4(b *testing.B) { benchmarkConj(b, N4) }
 
-func benchmarkCons(b *testing.B, n int) {
+func benchmarkConj(b *testing.B, n int) {
 	for r := 0; r < b.N; r++ {
 		v := Empty
 		for i := 0; i < n; i++ {
-			v = v.Cons(i)
+			v = v.Conj(i)
 		}
 	}
 }
@@ -342,7 +342,7 @@ var (
 
 func init() {
 	for i := 0; i < N4; i++ {
-		vectorN4 = vectorN4.Cons(i)
+		vectorN4 = vectorN4.Conj(i)
 	}
 }
 
@@ -426,8 +426,8 @@ func BenchmarkEqualPersistent(b *testing.B) {
 	b.StopTimer()
 	v1, v2 := Empty, Empty
 	for i := 0; i < N4; i++ {
-		v1 = v1.Cons(i)
-		v2 = v2.Cons(i)
+		v1 = v1.Conj(i)
+		v2 = v2.Conj(i)
 	}
 	b.StartTimer()
 

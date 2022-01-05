@@ -333,7 +333,7 @@ func (op listOp) exec(fm *Frame) ([]interface{}, Exception) {
 			return nil, exc
 		}
 		for _, moreValue := range moreValues {
-			list = list.Cons(moreValue)
+			list = list.Conj(moreValue)
 		}
 	}
 	return []interface{}{list}, nil

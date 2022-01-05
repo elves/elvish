@@ -53,7 +53,7 @@ func (envli *envListVar) Get() interface{} {
 	envli.cacheFor = value
 	v := vals.EmptyList
 	for _, path := range strings.Split(value, pathListSeparator) {
-		v = v.Cons(path)
+		v = v.Conj(path)
 	}
 	envli.cacheValue = v
 	return envli.cacheValue

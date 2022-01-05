@@ -367,7 +367,7 @@ func parseGetopt(opts parseGetoptOptions, argsVal vals.List, specsVal vals.List)
 
 	flagsList := vals.EmptyList
 	for _, flag := range flags {
-		flagsList = flagsList.Cons(
+		flagsList = flagsList.Conj(
 			vals.MakeMap(
 				"spec", originalSpecMap[flag.Spec],
 				"arg", flag.Argument,

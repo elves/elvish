@@ -20,7 +20,7 @@ var EmptyList = vector.Empty
 func MakeList(vs ...interface{}) vector.Vector {
 	vec := vector.Empty
 	for _, v := range vs {
-		vec = vec.Cons(v)
+		vec = vec.Conj(v)
 	}
 	return vec
 }
@@ -29,7 +29,7 @@ func MakeList(vs ...interface{}) vector.Vector {
 func MakeListFromStrings(ss ...string) vector.Vector {
 	vec := vector.Empty
 	for _, s := range ss {
-		vec = vec.Cons(s)
+		vec = vec.Conj(s)
 	}
 	return vec
 }

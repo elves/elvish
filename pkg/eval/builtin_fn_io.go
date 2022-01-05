@@ -753,7 +753,7 @@ func fromJSONInterface(v interface{}) (interface{}, error) {
 			if err != nil {
 				return nil, err
 			}
-			vec = vec.Cons(converted)
+			vec = vec.Conj(converted)
 		}
 		return vec, nil
 	case map[string]interface{}:

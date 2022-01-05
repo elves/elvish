@@ -5,8 +5,8 @@ package list
 type List interface {
 	// Len returns the number of values in the list.
 	Len() int
-	// Cons returns a new list with an additional value in the front.
-	Cons(interface{}) List
+	// Conj returns a new list with an additional value in the front.
+	Conj(interface{}) List
 	// First returns the first value in the list.
 	First() interface{}
 	// Rest returns the list after the first value.
@@ -26,7 +26,7 @@ func (l *list) Len() int {
 	return l.count
 }
 
-func (l *list) Cons(val interface{}) List {
+func (l *list) Conj(val interface{}) List {
 	return &list{val, l, l.count + 1}
 }
 
