@@ -21,8 +21,9 @@ var errNoDaemon = errors.New("daemon is not supported in this build")
 
 type daemonStub struct{}
 
-func (daemonStub) ShouldRun(f *prog.Flags) bool { return f.Daemon }
-
 func (daemonStub) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
-	return errNoDaemon
+	if f.Daemon {
+		return errNoDaemon
+	}
+	return prog.ErrNotSuitable
 }
