@@ -48,17 +48,17 @@ A **whitespace** is any of the following:
 The following **metacharacters** serve to introduce or delimit syntax
 constructs:
 
-| Metacharacter | Use                                                         |
-| ------------- | ----------------------------------------------------------- |
-| `$`           | Referencing variables                                       |
-| `*` and `?`   | Forming wildcard                                            |
-| `\|`          | Separating forms in a pipeline                              |
-| `&`           | Marking background pipelines; introducing key-value pairs   |
-| `;`           | Separating pipelines                                        |
-| `<` and `>`   | Introducing IO redirections                                 |
-| `(` and `)`   | Enclosing output captures                                   |
-| `[` and `]`   | Enclosing list literals, map literals or function signature |
-| `{` and `}`   | Enclosing lambda literals or brace expressions              |
+| Metacharacter | Use                                                          |
+| ------------- | ------------------------------------------------------------ |
+| `$`           | Referencing variables                                        |
+| `*` and `?`   | Forming wildcard                                             |
+| `\|`          | Separating forms in a pipeline; enclosing function signature |
+| `&`           | Marking background pipelines; introducing key-value pairs    |
+| `;`           | Separating pipelines                                         |
+| `<` and `>`   | Introducing IO redirections                                  |
+| `(` and `)`   | Enclosing output captures                                    |
+| `[` and `]`   | Enclosing list or map literals                               |
+| `{` and `}`   | Enclosing lambda literals or brace expressions               |
 
 The following characters are parsed as metacharacters under certain conditions:
 
