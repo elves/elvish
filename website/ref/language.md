@@ -48,26 +48,35 @@ A **whitespace** is any of the following:
 The following **metacharacters** serve to introduce or delimit syntax
 constructs:
 
-| Metacharacter | Use                                                          |
-| ------------- | ------------------------------------------------------------ |
-| `$`           | Referencing variables                                        |
-| `*` and `?`   | Forming wildcard                                             |
-| `\|`          | Separating forms in a pipeline; enclosing function signature |
-| `&`           | Marking background pipelines; introducing key-value pairs    |
-| `;`           | Separating pipelines                                         |
-| `<` and `>`   | Introducing IO redirections                                  |
-| `(` and `)`   | Enclosing output captures                                    |
-| `[` and `]`   | Enclosing list or map literals                               |
-| `{` and `}`   | Enclosing lambda literals or brace expressions               |
+-   `$`: introduces [variable use](#variable-use)
+
+-   `*` and `?`: forms [wildcards](#wildcard-expansion)
+
+-   `(` and `)`: encloses [output captures](#output-capture)
+
+-   `[` and `]`: encloses [list](#list) or [map](#map) literals
+
+-   `{` and `}`: encloses [lambda literals](#function) or
+    [braced lists](#braced-list)
+
+-   `<` and `>`: introduces [IO redirections](#redirection)
+
+-   `;`: separates pipelines in a [code chunk](#code-chunk)
+
+-   `|`: separates forms in a [pipeline](#pipeline); encloses
+    [function](#function) signature
+
+-   `&`: marks [background pipelines](#background-pipeline); introduces
+    key-value pairs in [map literals](#map), [options](#ordinary-command), or
+    [function](#function) signatures
 
 The following characters are parsed as metacharacters under certain conditions:
 
--   `~` is a metacharacter if it appears at the beginning of a compound
-    expression, in which case it is subject to
-    [tilde expansion](#tilde-expansion);
+-   `~`: introduces [tilde expansion](#tilde-expansion) if appearing at the
+    beginning of a compound expression
 
--   `=` is a metacharacter when used for terminating [map keys](#map) or option
-    keys, or denoting or [temporary assignments](#temporary-assignment).
+-   `=`: terminates [map keys](#map), option keys, or the variable name in
+    [temporary assignments](#temporary-assignment)
 
 ## Single-quoted string
 
