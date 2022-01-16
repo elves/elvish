@@ -124,13 +124,12 @@ func initLocation(ed *Editor, ev *eval.Evaler, st storedefs.Store, commonBinding
 			// TODO(xiaq): Surface the error.
 			return
 		}
-		// If st is not ready - don't try to call it
 		if st != nil {
 			st.AddDir(wd, 1)
-		}
-		kind, root := workspaceIterator.Parse(wd)
-		if kind != "" && st != nil {
-			st.AddDir(kind+wd[len(root):], 1)
+			kind, root := workspaceIterator.Parse(wd)
+			if kind != "" {
+				st.AddDir(kind+wd[len(root):], 1)
+			}
 		}
 	})
 }
