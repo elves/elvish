@@ -22,6 +22,11 @@ User groups (all connected thanks to [Matrix](https://matrix.org)):
 [![#elvish on libera.chat](https://img.shields.io/badge/libera.chat-%23elvish-blue.svg)](https://web.libera.chat/#elvish)
 [![#users:elves.sh](https://img.shields.io/badge/matrix-%23users:elv.sh-blue.svg)](https://matrix.to/#/#users:elves.sh)
 
+## Running Elvish
+
+See [this document](https://elv.sh/ref/command.html#rc-file) for how to use the
+`elvish` command and its CLI flags and arguments.
+
 ## Building Elvish
 
 Most users do not need to build Elvish from source. Prebuilt binaries for the
