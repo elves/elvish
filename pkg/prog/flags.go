@@ -25,7 +25,7 @@ func (fs *FlagSet) DaemonPaths() *DaemonPaths {
 func (fs *FlagSet) JSON() *bool {
 	if fs.json == nil {
 		var json bool
-		fs.BoolVar(&json, "json", false, "show output in JSON. Useful with -buildinfo and -compileonly")
+		fs.BoolVar(&json, "json", false, "show output in JSON. Useful with -buildinfo, -version and -compileonly")
 		fs.json = &json
 	}
 	return fs.json

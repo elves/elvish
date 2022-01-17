@@ -90,5 +90,70 @@ If the legacy `~/.elvish/lib` directory exists, it is also searched.
 
 # Other command-line flags
 
-Running `elvish -help` lists all supported command-line flags, which are not
-repeated here.
+-   `-buildinfo`: Output information about how `elvish` was built then quit. See
+    also `-version` and `-json`. For example:
+
+    ```
+    ~> elvish -buildinfo
+    Version: 0.18.0-dev.4350ad48b1bb798068ec6a01f149382cd0607e2f
+    Go version: go1.17.2
+    Reproducible build: true
+    ```
+
+-   `-compileonly`: Compile the Elvish program without risking any side-effects
+    from executing the program. This is useful to identify problems with an
+    Elvish program that can be detected at compile time. At present it cannot be
+    used for verifying that the interactive config is syntactically valid
+    without executing the config. See also `-json`.
+
+-   `-cpuprofile` _/path/to/profile_: Write a Go CPU profile to the specified
+    file. The profile data can be explored using `go tool pprof`. See
+    [this](https://go.dev/blog/pprof) blog article for an exploration of how to
+    work with Go CPU profiles.
+
+-   `-deprecation-level` _n_: Show warnings for features deprecated as of
+    version 0._n_; e.g., 0.18. The default value is the specific `elvish`
+    version you are running. Using this flag can be useful when you have
+    installed a new version of Elvish but have not yet updated your scripts to
+    conform to the new syntax and grammar supported by that new version. In
+    practice this is only useful for suppressing warnings related to the most
+    recent version by specifying the minor number of the previous version;
+    however, that may change in the future.
+
+-   `-help`: Show usage information and quit.
+
+-   `-i`: Force interactive mode. This is silently ignored. It is supported to
+    improve compatibility with how POSIX shells are sometimes instantiated.
+
+-   `-json`: Output the information from the `-buildinfo`, `-compileonly`, and
+    `-version` flags in JSON format.
+
+-   `-log` _/path/to/log-file_: Write information about the behavior of Elvish
+    to the named log file. This does not affect the Elvish daemon which always
+    writes to a system specific path.
+
+    TODO: Document the rules for the daemon log file path name.
+
+-   `-norc`: Don't read the [default RC file](#rc-file). This is only meaningful
+    for interactive shells.
+
+-   `-rc` _/path/to/rc_: Use _/path/to/rc_ rather than the
+    [default RC file](#rc-file). This can be useful for testing a new
+    interactive configuration before installing it as your default config.
+
+-   `-version`: Output the `elvish` version then quit. See also `-buildinfo` and
+    `-json`.
+
+# Internal use only command-line flags
+
+These flags are internal to Elvish. Do not use them unless you are a developer
+who knows what you're doing.
+
+-   `-bin` _/path/to/elvish_: Path to the `elvish` binary.
+
+-   `-daemon`: Run the daemon instead of an Elvish shell.
+
+-   `-db` _/path/to/db_: Path to the interactive database.
+
+-   `-sock` _/path/to/daemon_socket_: Path to the UNIX domain socket used by, or
+    to communicate with, the daemon.
