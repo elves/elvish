@@ -92,11 +92,11 @@ output is interpreted in the same way as prompt functions. Some examples are:
 
 ```elvish
 # The following effectively disables marking of stale prompt.
-set edit:prompt-stale-transform = [x]{ put $x }
+set edit:prompt-stale-transform = {|x| put $x }
 # Show stale prompts in inverse; equivalent to the default.
-set edit:prompt-stale-transform = [x]{ styled $x inverse }
+set edit:prompt-stale-transform = {|x| styled $x inverse }
 # Gray out stale prompts.
-set edit:prompt-stale-transform = [x]{ styled $x bright-black }
+set edit:prompt-stale-transform = {|x| styled $x bright-black }
 ```
 
 To see the transformer in action, try the following example (assuming default
@@ -358,7 +358,7 @@ It only supports completing the `install` and `remove` command and package names
 after that:
 
 ```elvish
-var all-packages = [(apt-cache search '' | eawk [0 1 @rest]{ put $1 })]
+var all-packages = [(apt-cache search '' | eawk {|0 1 @rest| put $1 })]
 
 set edit:completion:arg-completer[apt] = {|@args|
     var n = (count $args)
@@ -378,7 +378,7 @@ completing some common subcommands and then branch names after that:
 fn all-git-branches {
     # Note: this assumes a recent version of git that supports the format
     # string used.
-    git branch -a --format="%(refname:strip=2)" | eawk [0 1 @rest]{ put $1 }
+    git branch -a --format="%(refname:strip=2)" | eawk {|0 1 @rest| put $1 }
 }
 
 var common-git-commands = [
@@ -417,7 +417,7 @@ As an example, the following code configures a prefix matcher for all completion
 types:
 
 ```elvish
-set edit:completion:matcher[''] = {|seed| each [cand]{ has-prefix $cand $seed } }
+set edit:completion:matcher[''] = {|seed| each {|cand| has-prefix $cand $seed } }
 ```
 
 Elvish provides three builtin matchers, `edit:match-prefix`, `edit:match-substr`
@@ -440,8 +440,8 @@ functionality is provided by variables that are a list of functions.
 **NOTE**: Hook variables may be initialized with a non-empty list, and you may
 have modules that add their own hooks. In general you should append to a hook
 variable rather than assign a list of functions to it. That is, rather than
-doing `set edit:some-hook = [ []{ put 'I ran' } ]` you should do
-`set edit:some-hook = [ $@hook-var []{ put 'I ran' } ]`.
+doing `set edit:some-hook = [ { put 'I ran' } ]` you should do
+`set edit:some-hook = [ $@hook-var { put 'I ran' } ]`.
 
 These are the editor/REPL hooks:
 
