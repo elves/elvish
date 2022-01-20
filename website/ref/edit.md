@@ -386,7 +386,7 @@ var common-git-commands = [
   pull push rebase reset revert show stash status
 ]
 
-set edit:arg-completer[git] = {|@args|
+set edit:completion:arg-completer[git] = {|@args|
     var n = (count $args)
     if (== $n 2) {
         put $@common-git-commands
