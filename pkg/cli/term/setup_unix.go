@@ -52,7 +52,7 @@ func setup(in, out *os.File) (func() error, error) {
 	return restore, errSetupVT
 }
 
-func setupGlobal() func() {
+func setupGlobal(in, out *os.File) func() {
 	return func() {}
 }
 
