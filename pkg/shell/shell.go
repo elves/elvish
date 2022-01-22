@@ -30,7 +30,7 @@ type Program struct {
 func (p Program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 	cleanup1 := IncSHLVL()
 	defer cleanup1()
-	cleanup2 := initTTYAndSignal(fds[2])
+	cleanup2 := initTTYAndSignal(fds)
 	defer cleanup2()
 
 	ev := MakeEvaler(fds[2])
@@ -105,14 +105,14 @@ func IncSHLVL() func() {
 	}
 }
 
-func initTTYAndSignal(stderr io.Writer) func() {
-	restoreTTY := term.SetupGlobal()
+func initTTYAndSignal(fds [3]*os.File) func() {
+	restoreTTY := term.SetupGlobal(fds[0], fds[2])
 
 	sigCh := sys.NotifySignals()
 	go func() {
 		for sig := range sigCh {
 			logger.Println("signal", sig)
-			handleSignal(sig, stderr)
+			handleSignal(sig, fds[2])
 		}
 	}()
 

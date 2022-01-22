@@ -16,8 +16,8 @@ func Setup(in, out *os.File) (func() error, error) {
 }
 
 // SetupGlobal sets up the terminal for the entire Elvish session.
-func SetupGlobal() func() {
-	return setupGlobal()
+func SetupGlobal(in, out *os.File) func() {
+	return setupGlobal(in, out)
 }
 
 // Sanitize sanitizes the terminal after an external command has executed.
