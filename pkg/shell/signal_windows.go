@@ -3,7 +3,12 @@ package shell
 import (
 	"io"
 	"os"
+	"syscall"
 )
 
-func handleSignal(os.Signal, io.Writer) {
+func handleSignal(sig os.Signal, stderr io.Writer) {
+	switch sig {
+	case syscall.SIGTERM:
+		os.Exit(0)
+	}
 }
