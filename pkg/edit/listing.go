@@ -256,6 +256,11 @@ func (d dirStore) Chdir(path string) error {
 }
 
 func (d dirStore) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
+	if d.st == nil {
+		// A "no daemon" build won't have have a storedefs.Store object.
+		// Fail gracefully rather than panic.
+		return []storedefs.Dir{}, nil
+	}
 	return d.st.Dirs(blacklist)
 }
 
