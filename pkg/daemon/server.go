@@ -7,7 +7,6 @@ package daemon
 
 import (
 	"net"
-	"net/rpc"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,6 +14,7 @@ import (
 	"src.elv.sh/pkg/daemon/internal/api"
 	"src.elv.sh/pkg/logutil"
 	"src.elv.sh/pkg/prog"
+	"src.elv.sh/pkg/rpc"
 	"src.elv.sh/pkg/store"
 )
 
