@@ -31,12 +31,10 @@ type Flags struct {
 	CodeInArg, CompileOnly, NoRc bool
 	RC                           string
 
-	Port int
-
-	Daemon bool
-	Forked int
-
+	Daemon   bool
 	DB, Sock string
+
+	LSP bool
 }
 
 func newFlagSet(f *Flags) *flag.FlagSet {
@@ -64,6 +62,8 @@ func newFlagSet(f *Flags) *flag.FlagSet {
 
 	fs.StringVar(&f.DB, "db", "", "[internal flag] path to the database")
 	fs.StringVar(&f.Sock, "sock", "", "[internal flag] path to the daemon socket")
+
+	fs.BoolVar(&f.LSP, "lsp", false, "run LSP server instead of shell")
 
 	fs.IntVar(&DeprecationLevel, "deprecation-level", DeprecationLevel, "show warnings for all features deprecated as of version 0.X")
 

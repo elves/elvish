@@ -1,4 +1,4 @@
-package main
+package lsp
 
 import (
 	"context"
@@ -17,30 +17,14 @@ var (
 		Code: jsonrpc2.CodeInvalidParams, Message: "invalid params"}
 )
 
-func makeHandler() jsonrpc2.Handler {
-	s := server{make(map[lsp.DocumentURI]string)}
-
-	methods := map[string]method{
-		"initialize":             s.initialize,
-		"textDocument/didOpen":   s.didOpen,
-		"textDocument/didChange": s.didChange,
-		"textDocument/didClose":  s.didClose,
-
-		// Required by spec.
-		"initialized": noop,
-		// Called by clients even when server doesn't advertise support:
-		// https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeWatchedFiles
-		"workspace/didChangeWatchedFiles": noop,
-	}
-	handler := func(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (interface{}, error) {
+func routingHandler(methods map[string]method) jsonrpc2.Handler {
+	return jsonrpc2.HandlerWithError(func(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (interface{}, error) {
 		fn, ok := methods[req.Method]
 		if !ok {
 			return nil, errMethodNotFound
 		}
 		return fn(ctx, conn, *req.Params)
-	}
-
-	return jsonrpc2.HandlerWithError(handler)
+	})
 }
 
 type method func(context.Context, jsonrpc2.JSONRPC2, json.RawMessage) (interface{}, error)
@@ -50,7 +34,21 @@ func noop(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMessage) (interface{
 }
 
 type server struct {
-	files map[lsp.DocumentURI]string
+}
+
+func (s *server) handler() jsonrpc2.Handler {
+	return routingHandler(map[string]method{
+		"initialize":             s.initialize,
+		"textDocument/didOpen":   s.didOpen,
+		"textDocument/didChange": s.didChange,
+
+		"textDocument/didClose": noop,
+		// Required by spec.
+		"initialized": noop,
+		// Called by clients even when server doesn't advertise support:
+		// https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeWatchedFiles
+		"workspace/didChangeWatchedFiles": noop,
+	})
 }
 
 func (s *server) initialize(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMessage) (interface{}, error) {
@@ -72,8 +70,8 @@ func (s *server) didOpen(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams 
 		return nil, errInvalidParams
 	}
 
-	s.files[params.TextDocument.URI] = params.TextDocument.Text
-	go s.update(ctx, conn, params.TextDocument.URI)
+	uri, content := params.TextDocument.URI, params.TextDocument.Text
+	go update(ctx, conn, uri, content)
 	return nil, nil
 }
 
@@ -83,29 +81,18 @@ func (s *server) didChange(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParam
 		return nil, errInvalidParams
 	}
 
-	s.files[params.TextDocument.URI] = params.ContentChanges[0].Text
-	go s.update(ctx, conn, params.TextDocument.URI)
+	uri, content := params.TextDocument.URI, params.ContentChanges[0].Text
+	go update(ctx, conn, uri, content)
 	return nil, nil
 }
 
-func (s *server) didClose(_ context.Context, _ jsonrpc2.JSONRPC2, rawParams json.RawMessage) (interface{}, error) {
-	var params lsp.DidCloseTextDocumentParams
-	if json.Unmarshal(rawParams, &params) != nil {
-		return nil, errInvalidParams
-	}
-
-	delete(s.files, params.TextDocument.URI)
-	return nil, nil
-}
-
-func (s *server) update(ctx context.Context, conn jsonrpc2.JSONRPC2, uri lsp.DocumentURI) {
+func update(ctx context.Context, conn jsonrpc2.JSONRPC2, uri lsp.DocumentURI, content string) {
 	conn.Notify(ctx, "textDocument/publishDiagnostics",
-		lsp.PublishDiagnosticsParams{URI: uri, Diagnostics: s.diagnostics(uri)})
+		lsp.PublishDiagnosticsParams{URI: uri, Diagnostics: diagnostics(uri, content)})
 }
 
-func (s *server) diagnostics(fileURI lsp.DocumentURI) []lsp.Diagnostic {
-	code := s.files[fileURI]
-	_, err := parse.Parse(parse.Source{Name: string(fileURI), Code: code}, parse.Config{})
+func diagnostics(fileURI lsp.DocumentURI, content string) []lsp.Diagnostic {
+	_, err := parse.Parse(parse.Source{Name: string(fileURI), Code: content}, parse.Config{})
 	if err == nil {
 		return []lsp.Diagnostic{}
 	}
@@ -114,7 +101,7 @@ func (s *server) diagnostics(fileURI lsp.DocumentURI) []lsp.Diagnostic {
 	diags := make([]lsp.Diagnostic, len(entries))
 	for i, err := range entries {
 		diags[i] = lsp.Diagnostic{
-			Range:    rangeToLSP(code, err),
+			Range:    rangeToLSP(content, err),
 			Severity: lsp.Error,
 			Source:   "parse",
 			Message:  err.Message,
