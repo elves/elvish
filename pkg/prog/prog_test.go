@@ -1,6 +1,7 @@
 package prog_test
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -14,10 +15,8 @@ var (
 	ThatElvish = progtest.ThatElvish
 )
 
-func TestCommonFlagHandling(t *testing.T) {
-	testutil.InTempDir(t)
-
-	Test(t, testProgram{},
+func TestFlagHandling(t *testing.T) {
+	Test(t, &testProgram{},
 		ThatElvish("-bad-flag").
 			ExitsWith(2).
 			WritesStderrContaining("flag provided but not defined: -bad-flag\nUsage:"),
@@ -28,24 +27,47 @@ func TestCommonFlagHandling(t *testing.T) {
 
 		ThatElvish("-help").
 			WritesStdoutContaining("Usage: elvish [flags] [script]"),
-
-		ThatElvish("-cpuprofile", "cpuprof").DoesNothing(),
-		ThatElvish("-cpuprofile", "/a/bad/path").
-			WritesStderrContaining("Warning: cannot create CPU profile:"),
 	)
+}
 
-	// Check for the effect of -cpuprofile. There isn't much to test beyond a
-	// sanity check that the profile file now exists.
-	_, err := os.Stat("cpuprof")
+func TestLogFlag(t *testing.T) {
+	testutil.InTempDir(t)
+	Test(t, &testProgram{},
+		ThatElvish("-log", "log").DoesNothing())
+	_, err := os.Stat("log")
 	if err != nil {
-		t.Errorf("CPU profile file does not exist: %v", err)
+		t.Errorf("log file was not created: %v", err)
 	}
+}
+
+func TestCustomFlag(t *testing.T) {
+	Test(t, &testProgram{customFlag: true},
+		ThatElvish("-flag", "foo").
+			WritesStdout("-flag foo\n"),
+	)
+}
+
+func TestSharedFlags(t *testing.T) {
+	Test(t, &testProgram{sharedFlags: true},
+		ThatElvish("-sock", "sock", "-db", "db", "-json").
+			WritesStdout("-sock sock -db db -json true\n"),
+	)
+}
+
+func TestSharedFlags_MultiplePrograms(t *testing.T) {
+	Test(t,
+		Composite(
+			&testProgram{sharedFlags: true, nextProgram: true},
+			&testProgram{sharedFlags: true}),
+		ThatElvish("-sock", "sock", "-db", "db", "-json").
+			WritesStdout("-sock sock -db db -json true\n"),
+	)
 }
 
 func TestShowDeprecations(t *testing.T) {
 	progtest.SetDeprecationLevel(t, 0)
 
-	Test(t, testProgram{},
+	Test(t, &testProgram{},
 		ThatElvish("-deprecation-level", "42").DoesNothing(),
 	)
 
@@ -55,7 +77,7 @@ func TestShowDeprecations(t *testing.T) {
 }
 
 func TestNoSuitableSubprogram(t *testing.T) {
-	Test(t, testProgram{notSuitable: true},
+	Test(t, &testProgram{nextProgram: true},
 		ThatElvish().
 			ExitsWith(2).
 			WritesStderr("internal error: no suitable subprogram\n"),
@@ -64,14 +86,14 @@ func TestNoSuitableSubprogram(t *testing.T) {
 
 func TestComposite(t *testing.T) {
 	Test(t,
-		Composite(testProgram{notSuitable: true}, testProgram{writeOut: "program 2"}),
+		Composite(&testProgram{nextProgram: true}, &testProgram{writeOut: "program 2"}),
 		ThatElvish().WritesStdout("program 2"),
 	)
 }
 
 func TestComposite_NoSuitableSubprogram(t *testing.T) {
 	Test(t,
-		Composite(testProgram{notSuitable: true}, testProgram{notSuitable: true}),
+		Composite(&testProgram{nextProgram: true}, &testProgram{nextProgram: true}),
 		ThatElvish().
 			ExitsWith(2).
 			WritesStderr("internal error: no suitable subprogram\n"),
@@ -81,40 +103,63 @@ func TestComposite_NoSuitableSubprogram(t *testing.T) {
 func TestComposite_PreferEarlierSubprogram(t *testing.T) {
 	Test(t,
 		Composite(
-			testProgram{writeOut: "program 1"}, testProgram{writeOut: "program 2"}),
+			&testProgram{writeOut: "program 1"}, &testProgram{writeOut: "program 2"}),
 		ThatElvish().WritesStdout("program 1"),
 	)
 }
 
 func TestBadUsageError(t *testing.T) {
 	Test(t,
-		testProgram{returnErr: BadUsage("lorem ipsum")},
+		&testProgram{returnErr: BadUsage("lorem ipsum")},
 		ThatElvish().ExitsWith(2).WritesStderrContaining("lorem ipsum\n"),
 	)
 }
 
 func TestExitError(t *testing.T) {
-	Test(t, testProgram{returnErr: Exit(3)},
+	Test(t, &testProgram{returnErr: Exit(3)},
 		ThatElvish().ExitsWith(3),
 	)
 }
 
 func TestExitError_0(t *testing.T) {
-	Test(t, testProgram{returnErr: Exit(0)},
+	Test(t, &testProgram{returnErr: Exit(0)},
 		ThatElvish().ExitsWith(0),
 	)
 }
 
 type testProgram struct {
-	notSuitable bool
+	nextProgram bool
 	writeOut    string
 	returnErr   error
+	customFlag  bool
+	sharedFlags bool
+
+	flag        string
+	daemonPaths *DaemonPaths
+	json        *bool
 }
 
-func (p testProgram) Run(fds [3]*os.File, _ *Flags, args []string) error {
-	if p.notSuitable {
-		return ErrNotSuitable
+func (p *testProgram) RegisterFlags(f *FlagSet) {
+	if p.customFlag {
+		f.StringVar(&p.flag, "flag", "default", "a flag")
+	}
+	if p.sharedFlags {
+		p.daemonPaths = f.DaemonPaths()
+		p.json = f.JSON()
+	}
+}
+
+func (p *testProgram) Run(fds [3]*os.File, args []string) error {
+	if p.nextProgram {
+		return ErrNextProgram
 	}
 	fds[1].WriteString(p.writeOut)
+	if p.customFlag {
+		fmt.Fprintf(fds[1], "-flag %s\n", p.flag)
+	}
+	if p.sharedFlags {
+		fmt.Fprintf(fds[1], "-sock %s -db %s -json %v\n",
+			p.daemonPaths.Sock, p.daemonPaths.DB, *p.json)
+	}
 	return p.returnErr
 }

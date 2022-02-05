@@ -17,7 +17,7 @@ func TestProgram_TerminatesIfCannotListen(t *testing.T) {
 	setup(t)
 	testutil.MustCreateEmpty("sock")
 
-	Test(t, Program,
+	Test(t, &Program{},
 		ThatElvish("-daemon", "-sock", "sock", "-db", "db").
 			ExitsWith(2).
 			WritesStdoutContaining("failed to listen on sock"),
@@ -82,7 +82,7 @@ func TestProgram_QuitsOnSignalChannelWithClients(t *testing.T) {
 }
 
 func TestProgram_BadCLI(t *testing.T) {
-	Test(t, Program,
+	Test(t, &Program{},
 		ThatElvish().
 			ExitsWith(2).
 			WritesStderr("internal error: no suitable subprogram\n"),
@@ -118,7 +118,7 @@ func startServerOpts(t *testing.T, args []string, opts ServeOpts) server {
 	opts.Ready = readyCh
 	doneCh := make(chan serverResult)
 	go func() {
-		exit, stdout, stderr := Run(program{opts}, args...)
+		exit, stdout, stderr := Run(&Program{serveOpts: opts}, args...)
 		doneCh <- serverResult{exit, stdout, stderr}
 		close(doneCh)
 	}()

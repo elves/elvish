@@ -14,7 +14,7 @@ func TestShell_LegacyLibPath(t *testing.T) {
 	home := setupHomePaths(t)
 	MustWriteFile(filepath.Join(home, ".elvish", "lib", "a.elv"), "echo mod a")
 
-	Test(t, Program{},
+	Test(t, &Program{},
 		ThatElvish("-c", "use a").WritesStdout("mod a\n"),
 	)
 }

@@ -113,7 +113,7 @@ func TestJSONRPCErrors(t *testing.T) {
 }
 
 func TestProgramErrors(t *testing.T) {
-	progtest.Test(t, Program,
+	progtest.Test(t, &Program{},
 		progtest.ThatElvish("").
 			ExitsWith(2).
 			WritesStderr("internal error: no suitable subprogram\n"))
@@ -164,7 +164,7 @@ func setup(t *testing.T) *clientFixture {
 	// Run server
 	done := make(chan struct{})
 	go func() {
-		prog.Run([3]*os.File{r0, w1, nil}, []string{"elvish", "-lsp"}, Program)
+		prog.Run([3]*os.File{r0, w1, nil}, []string{"elvish", "-lsp"}, &Program{})
 		close(done)
 	}()
 	t.Cleanup(func() { <-done })

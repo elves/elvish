@@ -18,6 +18,6 @@ func main() {
 	os.Exit(prog.Run(
 		[3]*os.File{os.Stdin, os.Stdout, os.Stderr}, os.Args,
 		prog.Composite(
-			buildinfo.Program, daemon.Program, lsp.Program,
-			shell.Program{ActivateDaemon: daemon.Activate})))
+			&buildinfo.Program{}, &daemon.Program{}, &lsp.Program{},
+			&shell.Program{ActivateDaemon: daemon.Activate})))
 }

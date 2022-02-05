@@ -26,17 +26,17 @@ func libPaths() ([]string, error) {
 
 // Returns a SpawnConfig containing all the paths needed by the daemon. It
 // respects overrides of sock and db from CLI flags.
-func daemonPaths(flags *prog.Flags) (*daemondefs.SpawnConfig, error) {
+func daemonPaths(p *prog.DaemonPaths) (*daemondefs.SpawnConfig, error) {
 	runDir, err := secureRunDir()
 	if err != nil {
 		return nil, err
 	}
-	sock := flags.Sock
+	sock := p.Sock
 	if sock == "" {
 		sock = filepath.Join(runDir, "sock")
 	}
 
-	db := flags.DB
+	db := p.DB
 	if db == "" {
 		var err error
 		db, err = dbPath()

@@ -17,7 +17,9 @@ func TestOutputCaptureDoesNotDeadlock(t *testing.T) {
 
 type noisyProgram struct{}
 
-func (noisyProgram) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
+func (noisyProgram) RegisterFlags(f *prog.FlagSet) {}
+
+func (noisyProgram) Run(fds [3]*os.File, args []string) error {
 	// We need enough data to verify whether we're likely to deadlock due to
 	// filling the pipe before the test completes. Pipes typically buffer 8 to
 	// 128 KiB.

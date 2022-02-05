@@ -26,9 +26,6 @@ var VersionSuffix = "-dev.unknown"
 // overridden when building Elvish; see PACKAGING.md for details.
 var Reproducible = "false"
 
-// Program is the buildinfo subprogram.
-var Program prog.Program = program{}
-
 // Type contains all the build information fields.
 type Type struct {
 	Version      string `json:"version"`
@@ -45,26 +42,36 @@ var Value = Type{
 	GoVersion:    runtime.Version(),
 }
 
-type program struct{}
+// Program is the buildinfo subprogram.
+type Program struct {
+	version, buildinfo bool
+	json               *bool
+}
 
-func (program) Run(fds [3]*os.File, f *prog.Flags, _ []string) error {
+func (p *Program) RegisterFlags(fs *prog.FlagSet) {
+	fs.BoolVar(&p.version, "version", false, "show version and quit")
+	fs.BoolVar(&p.buildinfo, "buildinfo", false, "show build info and quit")
+	p.json = fs.JSON()
+}
+
+func (p *Program) Run(fds [3]*os.File, _ []string) error {
 	switch {
-	case f.BuildInfo:
-		if f.JSON {
+	case p.buildinfo:
+		if *p.json {
 			fmt.Fprintln(fds[1], mustToJSON(Value))
 		} else {
 			fmt.Fprintln(fds[1], "Version:", Value.Version)
 			fmt.Fprintln(fds[1], "Go version:", Value.GoVersion)
 			fmt.Fprintln(fds[1], "Reproducible build:", Value.Reproducible)
 		}
-	case f.Version:
-		if f.JSON {
+	case p.version:
+		if *p.json {
 			fmt.Fprintln(fds[1], mustToJSON(Value.Version))
 		} else {
 			fmt.Fprintln(fds[1], Value.Version)
 		}
 	default:
-		return prog.ErrNotSuitable
+		return prog.ErrNextProgram
 	}
 	return nil
 }

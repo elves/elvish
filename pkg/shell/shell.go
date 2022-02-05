@@ -25,9 +25,31 @@ var logger = logutil.GetLogger("[shell] ")
 // Program is the shell subprogram.
 type Program struct {
 	ActivateDaemon daemondefs.ActivateFunc
+
+	codeInArg   bool
+	compileOnly bool
+	noRC        bool
+	rc          string
+	json        *bool
+	daemonPaths *prog.DaemonPaths
 }
 
-func (p Program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
+func (p *Program) RegisterFlags(fs *prog.FlagSet) {
+	// Support -i so that programs that expect shells to support it (like
+	// "script") don't error when they invoke Elvish.
+	fs.Bool("i", false, "force interactive mode; currently ignored")
+	fs.BoolVar(&p.codeInArg, "c", false, "take first argument as code to execute")
+	fs.BoolVar(&p.compileOnly, "compileonly", false, "Parse/Compile but do not execute")
+	fs.BoolVar(&p.noRC, "norc", false, "run elvish without invoking rc.elv")
+	fs.StringVar(&p.rc, "rc", "", "path to rc.elv")
+
+	p.json = fs.JSON()
+	if p.ActivateDaemon != nil {
+		p.daemonPaths = fs.DaemonPaths()
+	}
+}
+
+func (p *Program) Run(fds [3]*os.File, args []string) error {
 	cleanup1 := IncSHLVL()
 	defer cleanup1()
 	cleanup2 := initTTYAndSignal(fds[2])
@@ -38,14 +60,14 @@ func (p Program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 	if len(args) > 0 {
 		exit := script(
 			ev, fds, args, &scriptCfg{
-				Cmd: f.CodeInArg, CompileOnly: f.CompileOnly, JSON: f.JSON})
+				Cmd: p.codeInArg, CompileOnly: p.compileOnly, JSON: *p.json})
 		return prog.Exit(exit)
 	}
 
 	var spawnCfg *daemondefs.SpawnConfig
 	if p.ActivateDaemon != nil {
 		var err error
-		spawnCfg, err = daemonPaths(f)
+		spawnCfg, err = daemonPaths(p.daemonPaths)
 		if err != nil {
 			fmt.Fprintln(fds[2], "Warning:", err)
 			fmt.Fprintln(fds[2], "Storage daemon may not function.")
@@ -54,11 +76,11 @@ func (p Program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
 
 	rc := ""
 	switch {
-	case f.NoRc:
-	// Leave rc empty
-	case f.RC != "":
+	case p.noRC:
+		// Leave rc empty
+	case p.rc != "":
 		// Use explicit -rc flag value
-		rc = f.RC
+		rc = p.rc
 	default:
 		// Use default path to rc.elv
 		var err error

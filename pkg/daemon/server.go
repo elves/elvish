@@ -21,21 +21,31 @@ import (
 var logger = logutil.GetLogger("[daemon] ")
 
 // Program is the daemon subprogram.
-var Program prog.Program = program{}
-
-type program struct {
-	ServeOpts ServeOpts
+type Program struct {
+	run   bool
+	paths *prog.DaemonPaths
+	// Used in tests.
+	serveOpts ServeOpts
 }
 
-func (p program) Run(fds [3]*os.File, f *prog.Flags, args []string) error {
-	if !f.Daemon {
-		return prog.ErrNotSuitable
+func (p *Program) RegisterFlags(fs *prog.FlagSet) {
+	fs.BoolVar(&p.run, "daemon", false, "[internal flag] run the storage daemon instead of shell")
+	p.paths = fs.DaemonPaths()
+}
+
+func (p *Program) Run(fds [3]*os.File, args []string) error {
+	if !p.run {
+		return prog.ErrNextProgram
 	}
 	if len(args) > 0 {
 		return prog.BadUsage("arguments are not allowed with -daemon")
 	}
+
+	// The stdout is redirected to a unique log file (see the spawn function),
+	// so just use it for logging.
+	logutil.SetOutput(fds[1])
 	setUmaskForDaemon()
-	exit := Serve(f.Sock, f.DB, p.ServeOpts)
+	exit := Serve(p.paths.Sock, p.paths.DB, p.serveOpts)
 	return prog.Exit(exit)
 }
 

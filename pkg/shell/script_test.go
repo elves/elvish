@@ -11,7 +11,7 @@ func TestScript(t *testing.T) {
 	testutil.InTempDir(t)
 	testutil.MustWriteFile("a.elv", "echo hello")
 
-	Test(t, Program{},
+	Test(t, &Program{},
 		ThatElvish("a.elv").WritesStdout("hello\n"),
 		ThatElvish("-c", "echo hello").WritesStdout("hello\n"),
 		ThatElvish("non-existent.elv").

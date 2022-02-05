@@ -15,7 +15,7 @@ func TestInteract(t *testing.T) {
 	MustWriteFile("rc-dnc.elv", "echo $a")
 	MustWriteFile("rc-fail.elv", "fail bad")
 
-	Test(t, Program{},
+	Test(t, &Program{},
 		thatElvishInteract().WithStdin("echo hello\n").WritesStdout("hello\n"),
 		thatElvishInteract().WithStdin("fail mock\n").WritesStderrContaining("fail mock"),
 
@@ -37,7 +37,7 @@ func TestInteract_DefaultRCPath(t *testing.T) {
 		filepath.Join(home, ".elvish", "rc.elv"), "echo hello legacy rc.elv")
 	// Note: non-legacy path is tested in interact_unix_test.go
 
-	Test(t, Program{},
+	Test(t, &Program{},
 		thatElvishInteract().WritesStdout("hello legacy rc.elv\n"),
 	)
 }

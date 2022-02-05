@@ -10,13 +10,17 @@ import (
 )
 
 // Program is the LSP subprogram.
-var Program prog.Program = program{}
+type Program struct {
+	run bool
+}
 
-type program struct{}
+func (p *Program) RegisterFlags(fs *prog.FlagSet) {
+	fs.BoolVar(&p.run, "lsp", false, "run language server instead of shell")
+}
 
-func (program) Run(fds [3]*os.File, f *prog.Flags, _ []string) error {
-	if !f.LSP {
-		return prog.ErrNotSuitable
+func (p *Program) Run(fds [3]*os.File, _ []string) error {
+	if !p.run {
+		return prog.ErrNextProgram
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

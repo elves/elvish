@@ -22,7 +22,7 @@ func TestInteract_NewRcFile_Default(t *testing.T) {
 	MustWriteFile(
 		filepath.Join(home, ".config", "elvish", "rc.elv"), "echo hello new rc.elv")
 
-	Test(t, Program{},
+	Test(t, &Program{},
 		thatElvishInteract().WritesStdout("hello new rc.elv\n"),
 	)
 }
@@ -34,7 +34,7 @@ func TestInteract_NewRcFile_XDG_CONFIG_HOME(t *testing.T) {
 		filepath.Join(xdgConfigHome, "elvish", "rc.elv"),
 		"echo hello XDG_CONFIG_HOME rc.elv")
 
-	Test(t, Program{},
+	Test(t, &Program{},
 		thatElvishInteract().WritesStdout("hello XDG_CONFIG_HOME rc.elv\n"),
 	)
 }
@@ -63,7 +63,7 @@ func TestInteract_ConnectsToDaemon(t *testing.T) {
 		t.Fatalf("timed out waiting for daemon to start")
 	}
 
-	Test(t, Program{daemon.Activate},
+	Test(t, &Program{ActivateDaemon: daemon.Activate},
 		thatElvishInteract("-sock", "sock", "-db", "db").
 			WithStdin("use daemon; echo $daemon:pid\n").
 			WritesStdout(fmt.Sprintln(os.Getpid())),

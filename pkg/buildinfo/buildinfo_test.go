@@ -8,7 +8,7 @@ import (
 )
 
 func TestProgram(t *testing.T) {
-	Test(t, Program,
+	Test(t, &Program{},
 		ThatElvish("-version").WritesStdout(Value.Version+"\n"),
 		ThatElvish("-version", "-json").WritesStdout(mustToJSON(Value.Version)+"\n"),
 
