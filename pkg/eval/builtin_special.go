@@ -150,7 +150,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 				f = delLocalVarOp{ref.index}
 				cp.thisScope().infos[ref.index].deleted = true
 			} else {
-				cp.errorpf(cn, "only variables in local: or E: can be deleted")
+				cp.errorpf(cn, "only variables in the local scope or E: can be deleted")
 				continue
 			}
 		} else {

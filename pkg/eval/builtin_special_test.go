@@ -189,8 +189,6 @@ func TestDel(t *testing.T) {
 		// Deleting variable
 		That("var x = 1; del x").DoesNothing(),
 		That("var x = 1; del x; echo $x").DoesNotCompile(),
-		That("var x = 1; del :x; echo $x").DoesNotCompile(),
-		That("var x = 1; del local:x; echo $x").DoesNotCompile(),
 		// Deleting environment variable
 		That("has-env TEST_ENV", "del E:TEST_ENV", "has-env TEST_ENV").Puts(true, false),
 		// Deleting variable whose name contains special characters
