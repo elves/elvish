@@ -170,6 +170,15 @@ jobs:
     - name: Run codespell
       run: codespell
 
+  check-content:
+    name: Check content
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Run check-content.sh
+      run: ./tools/check-content.sh
+
   check-rellinks:
     name: Check relative links
     runs-on: ubuntu-latest

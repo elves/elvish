@@ -58,5 +58,8 @@ lint:
 codespell:
 	codespell --skip .git
 
+check-content:
+	./tools/check-content.sh
+
 .SILENT: checkstyle-go checkstyle-md lint
-.PHONY: default get generate test style checkstyle checkstyle-go checkstyle-md lint cover
+.PHONY: default get generate test cover style checkstyle checkstyle-go checkstyle-md lint codespell check-content
