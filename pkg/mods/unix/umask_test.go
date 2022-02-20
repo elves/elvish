@@ -6,18 +6,14 @@ package unix
 import (
 	"testing"
 
-	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
-	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval/evaltest"
 )
 
 // Note that this unit test assumes a UNIX environment with a POSIX compatible
 // /bin/sh program.
 func TestUmask(t *testing.T) {
-	setup := func(ev *eval.Evaler) {
-		ev.ExtendGlobal(eval.BuildNs().AddNs("unix", Ns))
-	}
-	TestWithSetup(t, setup,
+	evaltest.TestWithSetup(t, useUNIX,
 		// We have to start with a known umask value.
 		That(`set unix:umask = 022`).Puts(),
 		That(`put $unix:umask`).Puts(`0o022`),

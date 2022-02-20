@@ -9,6 +9,7 @@ package unix
 import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/logutil"
 )
 
 // ExposeUnixNs indicate whether this module should be exposed as a usable
@@ -19,5 +20,8 @@ const ExposeUnixNs = true
 // with features unique to UNIX-like operating systems. On
 var Ns = eval.BuildNs().
 	AddVars(map[string]vars.Var{
-		"umask": UmaskVariable{},
+		"umask":   UmaskVariable{},
+		"rlimits": rlimitsVar{},
 	}).Ns()
+
+var logger = logutil.GetLogger("[mods/unix] ")
