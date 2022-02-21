@@ -16,8 +16,8 @@ _This document is incomplete._
 The Elvish editor has different **modes**, and exactly one mode is active at the
 same time. Each mode has its own UI and keybindings. For instance, the default
 **insert mode** lets you modify the current command. The **completion mode**
-(triggered by <span class="key">Tab</span> by default) shows you all candidates
-for completion, and you can use arrow keys to navigate those candidates.
+(triggered by <kbd>Tab</kbd> by default) shows you all candidates for
+completion, and you can use arrow keys to navigate those candidates.
 
 @ttyshot completion-mode
 
@@ -172,15 +172,15 @@ this by doing the following:
 set edit:insert:binding[Alt-x] = { echo 'output from a bound function!' }
 ```
 
-and press <span class="key">Alt-x</span> in insert mode. It allows you to put
-debugging outputs in bound functions without messing up the terminal.
+and press <kbd>Alt-x</kbd> in insert mode. It allows you to put debugging
+outputs in bound functions without messing up the terminal.
 
 Internally, this is implemented by connecting their output to a pipe. This does
 the correct thing in most cases, but if you are sure you want to do something to
 the terminal, redirect the output to `/dev/tty`. Since this will break Elvish's
 internal tracking of the terminal state, you should also do a full redraw with
-`edit:redraw &full=$true`. For instance, the following binds
-<span class="key">Ctrl-L</span> to clearing the terminal:
+`edit:redraw &full=$true`. For instance, the following binds <kbd>Ctrl-L</kbd>
+to clearing the terminal:
 
 ```elvish
 set edit:insert:binding[Ctrl-L] = { clear > /dev/tty; edit:redraw &full=$true }
@@ -244,22 +244,21 @@ listing mode is active.
 
 Note that keybindings to **start** modes live in the binding table of the insert
 mode, not the target mode. For instance, if you want to be able to use
-<span class="key">Alt-l</span> to start location mode, you should modify
+<kbd>Alt-l</kbd> to start location mode, you should modify
 `$edit:insert:binding[Alt-l]`:
 
 ```elvish
 set edit:insert:binding[Alt-l] = { edit:location:start }
 ```
 
-One tricky case is the history mode. You can press
-<span class="key">▲&#xfe0e;</span> to start searching for history, and continue
-pressing it to search further. However, when the first press happens, the editor
-is in insert mode, while with subsequent presses, the editor is in history mode.
-Hence this binding actually relies on two entries, `$edit:insert:binding[Up]`
-and `$edit:history:binding[Up]`.
+One tricky case is the history mode. You can press <kbd>▲&#xfe0e;</kbd> to start
+searching for history, and continue pressing it to search further. However, when
+the first press happens, the editor is in insert mode, while with subsequent
+presses, the editor is in history mode. Hence this binding actually relies on
+two entries, `$edit:insert:binding[Up]` and `$edit:history:binding[Up]`.
 
-So for instance if you want to be able to use <span class="key">Ctrl-P</span>
-for this, you need to modify both bindings:
+So for instance if you want to be able to use <kbd>Ctrl-P</kbd> for this, you
+need to modify both bindings:
 
 ```elvish
 set edit:insert:binding[Ctrl-P] =  { edit:history:start }
@@ -292,14 +291,14 @@ an implicit `[and ...]`.
 
 There are two types of completions in Elvish: completion for internal data and
 completion for command arguments. The former includes completion for variable
-names (e.g. `echo $`<span class="key">Tab</span>) and indices (e.g.
-`echo $edit:insert:binding[`<span class="key">Tab</span>). These are the
-completions that Elvish can provide itself because they only depend on the
-internal state of Elvish.
+names (e.g. `echo $`<kbd>Tab</kbd>) and indices (e.g.
+`echo $edit:insert:binding[`<kbd>Tab</kbd>). These are the completions that
+Elvish can provide itself because they only depend on the internal state of
+Elvish.
 
-The latter, in turn, is what happens when you type e.g. `cat`<span
-class="key">Tab</span>. Elvish cannot provide completions for them without full
-knowledge of the command.
+The latter, in turn, is what happens when you type e.g. `cat`<kbd>Tab</kbd>.
+Elvish cannot provide completions for them without full knowledge of the
+command.
 
 Command argument completions are programmable via the
 `$edit:completion:arg-completer` variable. When Elvish is completing an argument
@@ -307,17 +306,15 @@ of command `$x`, it will call the value stored in
 `$edit:completion:arg-completer[$x]`, with all the existing arguments, plus the
 command name in the front.
 
-For example, if the user types `man 1`<span class="key">Tab</span>, Elvish will
-call:
+For example, if the user types `man 1`<kbd>Tab</kbd>, Elvish will call:
 
 ```elvish
 $edit:completion:arg-completer[man] man 1
 ```
 
-If the user is starting a new argument when hitting <span
-class="key">Tab</span>, Elvish will call the completer with a trailing empty
-string. For instance, if you do `man 1`<span class="key">Space</span><span
-class="key">Tab</span>, Elvish will call:
+If the user is starting a new argument when hitting <kbd>Tab</kbd>, Elvish will
+call the completer with a trailing empty string. For instance, if you do
+`man 1`<kbd>Space</kbd><kbd>Tab</kbd>, Elvish will call:
 
 ```elvish
 $edit:completion:arg-completer[man] man 1 ""
@@ -401,7 +398,7 @@ set edit:completion:arg-completer[git] = {|@args|
 As stated above, after the completer outputs candidates, Elvish matches them
 with them with what the user has typed. For clarity, the part of the user input
 that is relevant to tab completion is called for the **seed** of the completion.
-For instance, in `echo x`<span class="key">Tab</span>, the seed is `x`.
+For instance, in `echo x`<kbd>Tab</kbd>, the seed is `x`.
 
 Elvish first indexes the matcher table -- `$edit:completion:matcher` -- with the
 completion type to find a **matcher**. The **completion type** is currently one

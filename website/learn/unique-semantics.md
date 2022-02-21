@@ -188,8 +188,8 @@ echo "after bad" # not executed
 ```
 
 (If you run this interactively, you need to enter a literal newline after `bad`
-by pressing <span class="key">Alt-Enter</span> to make sure that it is executed
-in the same chunk as `echo "after bad"`.)
+by pressing <kbd>Alt-Enter</kbd> to make sure that it is executed in the same
+chunk as `echo "after bad"`.)
 
 And, non-zero exit status from external commands are turned into exceptions:
 

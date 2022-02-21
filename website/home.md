@@ -60,7 +60,7 @@ Windows.
       </p>
       <p>
         Backed by a real database, Elvish remembers all the directories you
-        have been to, all the time. Just press <span class="key">Ctrl-L</span>
+        have been to, all the time. Just press <kbd>Ctrl-L</kbd>
         and search, as you do in a browser.
       </p>
     </div>
@@ -79,7 +79,7 @@ Windows.
       </p>
       <p>
         No more cycling through history one command at a time.
-        Press <span class="key">Ctrl-R</span> and start searching your entire
+        Press <kbd>Ctrl-R</kbd> and start searching your entire
         command history.
       </p>
     </div>
@@ -96,8 +96,8 @@ Windows.
         a shell?
       </p>
       <p>
-        You no longer have to make a choice. Press <span
-        class="key">Ctrl-N</span> to start exploring directories and
+        You no longer have to make a choice. Press
+        <kbd>Ctrl-N</kbd> to start exploring directories and
         preview files, with the full power of a shell still under your
         fingertip.
       </p>

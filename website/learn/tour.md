@@ -453,7 +453,7 @@ Read the language reference on
 ## Command sequence
 
 Join commands with a `;` or newline to run them sequentially (insert a newline
-with <span class="key">Alt-Enter</span>):
+with <kbd>Alt-Enter</kbd>):
 
 ```elvish-transcript
 ~> echo a; echo b
@@ -855,22 +855,19 @@ UI customization options.
 
 ## Tab completion
 
-Press <span class="key">Tab</span> to start completion. For example, after
-typing `vim` and <span class="key">Space</span>, press
-<span class="key">Tab</span> to complete filenames:
+Press <kbd>Tab</kbd> to start completion. For example, after typing `vim` and
+<kbd>Space</kbd>, press <kbd>Tab</kbd> to complete filenames:
 
 @ttyshot tour/completion
 
 Basic operations should be quite intuitive:
 
--   To navigate the candidate list, use arrow keys <span class="key">▲</span>
-    <span class="key">▼</span> <span class="key">◀</span>
-    <span class="key">▶</span> or <span class="key">Tab</span> and
-    <span class="key">Shift-Tab</span>.
+-   To navigate the candidate list, use arrow keys <kbd>▲</kbd> <kbd>▼</kbd>
+    <kbd>◀</kbd> <kbd>▶</kbd> or <kbd>Tab</kbd> and <kbd>Shift-Tab</kbd>.
 
--   To accept the selected candidate, press <span class="key">Enter</span>.
+-   To accept the selected candidate, press <kbd>Enter</kbd>.
 
--   To cancel, press <span class="key">Escape</span>.
+-   To cancel, press <kbd>Escape</kbd>.
 
 As indicated by the horizontal scrollbar, you can scroll to the right to find
 additional results that don't fit in the terminal.
@@ -890,45 +887,43 @@ Elvish has several UI features for working with command history.
 
 ### History walking
 
-Press <span class="key">▲</span> to fetch the last command. This is called
-**history walking** mode:
+Press <kbd>▲</kbd> to fetch the last command. This is called **history walking**
+mode:
 
 @ttyshot tour/history-walk
 
-Press <span class="key">▲</span> to go further back, <span class="key">▼</span>
-to go forward, or <span class="key">Escape</span> to cancel.
+Press <kbd>▲</kbd> to go further back, <kbd>▼</kbd> to go forward, or
+<kbd>Escape</kbd> to cancel.
 
 To restrict to commands that start with a prefix, simply type the prefix before
-pressing <span class="key">▲</span>. For example, to walk through commands
-starting with `echo`, type `echo` before pressing <span class="key">▲</span>:
+pressing <kbd>▲</kbd>. For example, to walk through commands starting with
+`echo`, type `echo` before pressing <kbd>▲</kbd>:
 
 @ttyshot tour/history-walk-prefix
 
 ### History listing
 
-Press <span class="key">Ctrl-R</span> to list the full command history:
+Press <kbd>Ctrl-R</kbd> to list the full command history:
 
 @ttyshot tour/history-list
 
-Like in completion mode, type to filter the list, press
-<span class="key">▲</span> and <span class="key">▼</span> to navigate the list,
-<span class="key">Enter</span> to insert the selected entry, or <span
-class="key">Escape</span> to cancel.
+Like in completion mode, type to filter the list, press <kbd>▲</kbd> and
+<kbd>▼</kbd> to navigate the list, <kbd>Enter</kbd> to insert the selected
+entry, or <kbd>Escape</kbd> to cancel.
 
 ### Last command
 
 Finally, Elvish has a **last command** mode dedicated to inserting parts of the
-last command. Press <span class="key">Alt-,</span> to trigger it:
+last command. Press <kbd>Alt-,</kbd> to trigger it:
 
 @ttyshot tour/lastcmd
 
 ## Directory history
 
-Elvish remembers which directories you have visited. Press <span
-class="key">Ctrl-L</span> to list visited directories. Use
-<span class="key">▲</span> and <span class="key">▼</span> to navigate the list,
-<span class="key">Enter</span> to change to that directory, or
-<span class="key">Escape</span> to cancel.
+Elvish remembers which directories you have visited. Press <kbd>Ctrl-L</kbd> to
+list visited directories. Use <kbd>▲</kbd> and <kbd>▼</kbd> to navigate the
+list, <kbd>Enter</kbd> to change to that directory, or <kbd>Escape</kbd> to
+cancel.
 
 @ttyshot tour/location
 
@@ -938,16 +933,16 @@ Type to filter:
 
 ## Navigation mode
 
-Press <span class="key">Ctrl-N</span> to start the builtin filesystem navigator,
-or **navigation mode**.
+Press <kbd>Ctrl-N</kbd> to start the builtin filesystem navigator, or
+**navigation mode**.
 
 @ttyshot tour/navigation
 
 Unlike other modes, the cursor stays in the main buffer in navigation mode. This
 allows you to continue typing commands; while doing that, you can press
-<span class="key">Enter</span> to insert the selected filename. You can also
-press <span class="key">Alt-Enter</span> to insert the filename without exiting
-navigation mode; this is useful when you want to insert multiple filenames.
+<kbd>Enter</kbd> to insert the selected filename. You can also press
+<kbd>Alt-Enter</kbd> to insert the filename without exiting navigation mode;
+this is useful when you want to insert multiple filenames.
 
 ## Startup script
 

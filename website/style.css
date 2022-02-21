@@ -309,11 +309,11 @@ hr:after {
     background-color: white;
 }
 
-.key {
+kbd {
     display: inline-block;
     border: 1px solid black;
     border-radius: 3px;
-    padding: 0 2px;
+    padding: 0 3px;
     margin: 1px;
     font-size: 85%;
     font-family: "Lucida Grande", Arial, sans-serif;

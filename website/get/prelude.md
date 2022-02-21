@@ -107,22 +107,22 @@ to launch Elvish:
   <tr>
     <td>Terminal.app</td>
     <td>
-      Open <span class="key">Terminal &gt; Preferences</span>.
-      Ensure you are on the <span class="key">Profiles</span> tab, which
+      Open <kbd>Terminal &gt; Preferences</kbd>.
+      Ensure you are on the <kbd>Profiles</kbd> tab, which
       should be the default tab. In the right-hand panel, select the
-      <span class="key">Shell</span> tab. Tick
-      <span class="key">Run command</span>, put the path to Elvish in the
-      textbox, and untick <span class="key">Run inside shell</span>.
+      <kbd>Shell</kbd> tab. Tick
+      <kbd>Run command</kbd>, put the path to Elvish in the
+      textbox, and untick <kbd>Run inside shell</kbd>.
     </td>
   </tr>
   <tr>
     <td>iTerm2</td>
     <td>
-      Open <span class="key">iTerm &gt; Preferences</span>. Select the
-      <span class="key">Profiles</span> tab. In the right-hand panel under
-      <span class="key">Command</span>, change the dropdown from
-      <span class="key">Login Shell</span> to
-      <span class="key">Custom Shell</span>, and put the path to Elvish in the
+      Open <kbd>iTerm &gt; Preferences</kbd>. Select the
+      <kbd>Profiles</kbd> tab. In the right-hand panel under
+      <kbd>Command</kbd>, change the dropdown from
+      <kbd>Login Shell</kbd> to
+      <kbd>Custom Shell</kbd>, and put the path to Elvish in the
       textbox.
     </td>
   </tr>
@@ -134,23 +134,23 @@ to launch Elvish:
   <tr>
     <td>Windows Terminal</td>
     <td>
-      Press <span class="key">Ctrl</span>+<span class="key">,</span> to
-      open <i>Settings</i>. Go to <span class="key">Add a new profile &gt; New
-      empty profile</span>. Fill in the 'Name' and enter path to Elvish in
-      the 'Command line' textbox. Go to <span class="key">Startup</span>
+      Press <kbd>Ctrl</kbd>+<kbd>,</kbd> to
+      open <i>Settings</i>. Go to <kbd>Add a new profile &gt; New
+      empty profile</kbd>. Fill in the 'Name' and enter path to Elvish in
+      the 'Command line' textbox. Go to <kbd>Startup</kbd>
       option and select Elvish as the 'Default profile'. Hit
-      <span class="key">Save</span>.
+      <kbd>Save</kbd>.
     </td>
   </tr>
   <tr>
     <td>ConEmu</td>
     <td>
-      Press <span class="key">Win</span>+<span class="key">Alt</span>+
-      <span class="key">T</span> to open the <i>Startup Tasks</i> dialog.
-      Click on <span class="key">±</span> button to create a new task,
+      Press <kbd>Win</kbd>+<kbd>Alt</kbd>+
+      <kbd>T</kbd> to open the <i>Startup Tasks</i> dialog.
+      Click on <kbd>±</kbd> button to create a new task,
       give it Elvish alias, enter the path to Elvish in the 'Commands'
       textbox and tick the 'Default task for new console' checkbox.
-      Click on <span class="key">Save settings</span> to finish.
+      Click on <kbd>Save settings</kbd> to finish.
     </td>
   </tr>
   <tr class="table-section">
@@ -161,25 +161,25 @@ to launch Elvish:
   <tr>
     <td>GNOME Terminal</td>
     <td>
-      Open <span class="key">Edit &gt; Preferences</span>. In the right-hand
-      panel, select the <span class="key">Command</span> tab, tick
-      <span class="key">Run a custom command instead of my shell</span>,
-      and set <span class="key">Custom command</span> to the path to Elvish.
+      Open <kbd>Edit &gt; Preferences</kbd>. In the right-hand
+      panel, select the <kbd>Command</kbd> tab, tick
+      <kbd>Run a custom command instead of my shell</kbd>,
+      and set <kbd>Custom command</kbd> to the path to Elvish.
     </td>
   </tr>
   <tr>
     <td>Konsole</td>
     <td>
-      Open <span class="key">Settings &gt; Edit Current Profile</span>.
-      Set <span class="key">Command</span> to the path to Elvish.
+      Open <kbd>Settings &gt; Edit Current Profile</kbd>.
+      Set <kbd>Command</kbd> to the path to Elvish.
     </td>
   </tr>
   <tr>
     <td>XFCE Terminal</td>
     <td>
-      Open <span class="key">Edit &gt; Preferences</span>. Check
-      <span class="key">Run a custom command instead of my shell</span>,
-      and set <span class="key">Custom command</span> to the path to Elvish.
+      Open <kbd>Edit &gt; Preferences</kbd>. Check
+      <kbd>Run a custom command instead of my shell</kbd>,
+      and set <kbd>Custom command</kbd> to the path to Elvish.
     </td>
   </tr>
   <tr class="table-section">
