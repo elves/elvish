@@ -34,7 +34,7 @@ func completeArg(n parse.Node, cfg Config) (*context, []RawItem, error) {
 			// Case 1: starting a new argument.
 			ctx := &context{"argument", "", parse.Bareword, range0(n.Range().To)}
 			args := purelyEvalForm(form, "", n.Range().To, ev)
-			items, err := cfg.ArgGenerator(args)
+			items, err := generateArgs(args, cfg)
 			return ctx, items, err
 		}
 	}
@@ -45,7 +45,7 @@ func completeArg(n parse.Node, cfg Config) (*context, []RawItem, error) {
 					// Case 2: in an incomplete argument.
 					ctx := &context{"argument", seed, primary.Type, compound.Range()}
 					args := purelyEvalForm(form, seed, compound.Range().From, ev)
-					items, err := cfg.ArgGenerator(args)
+					items, err := generateArgs(args, cfg)
 					return ctx, items, err
 				}
 			}

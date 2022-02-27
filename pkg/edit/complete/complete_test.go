@@ -107,8 +107,7 @@ func TestComplete(t *testing.T) {
 	}
 
 	allCommandItems := []modes.CompletionItem{
-		c("bar = "), c("fn"), c("foo = "), c("for"), c("if"), c("ls"), c("make"),
-		c("ns:"),
+		c("fn"), c("for"), c("if"), c("ls"), c("make"), c("ns:"),
 	}
 
 	tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
@@ -159,6 +158,42 @@ func TestComplete(t *testing.T) {
 				Name: "argument", Replace: r(5, 6),
 				Items: []modes.CompletionItem{c(`[]string{"ls", "a", "b"}`)}},
 			nil),
+
+		// Complete for special command "set".
+		Args(cb("set "), cfg).Rets(
+			&Result{
+				Name: "argument", Replace: r(4, 4),
+				Items: []modes.CompletionItem{
+					c("bar"), c("fn~"), c("foo"), c("ns:"),
+				},
+			}),
+		Args(cb("set @"), cfg).Rets(
+			&Result{
+				Name: "argument", Replace: r(4, 5),
+				Items: []modes.CompletionItem{
+					c("@bar"), c("@fn~"), c("@foo"), c("@ns:"),
+				},
+			}),
+		Args(cb("set ns1:"), cfg).Rets(
+			&Result{
+				Name: "argument", Replace: r(4, 8),
+				Items: []modes.CompletionItem{
+					c("ns1:lorem"),
+				},
+			}),
+		Args(cb("set a = "), cfg).Rets(
+			&Result{
+				Name: "argument", Replace: r(8, 8),
+				Items: nil,
+			}),
+		// "tmp" has the same completer.
+		Args(cb("tmp "), cfg).Rets(
+			&Result{
+				Name: "argument", Replace: r(4, 4),
+				Items: []modes.CompletionItem{
+					c("bar"), c("fn~"), c("foo"), c("ns:"),
+				},
+			}),
 
 		// Complete commands at an empty buffer, generating special forms,
 		// externals, functions, namespaces and variable assignments.

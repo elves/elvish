@@ -10,6 +10,7 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/fsutil"
+	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -35,6 +36,28 @@ func GenerateForSudo(cfg Config, args []string) ([]RawItem, error) {
 }
 
 // Internal generators, used from completers.
+
+func generateArgs(args []string, cfg Config) ([]RawItem, error) {
+	switch args[0] {
+	case "set", "tmp":
+		for _, arg := range args[1:] {
+			if arg == "=" {
+				return nil, nil
+			}
+		}
+		seed := args[len(args)-1]
+		sigil, qname := eval.SplitSigil(seed)
+		ns, _ := eval.SplitIncompleteQNameNs(qname)
+		var items []RawItem
+		cfg.PureEvaler.EachVariableInNs(ns, func(varname string) {
+			items = append(items, noQuoteItem(sigil+parse.QuoteVariableName(ns+varname)))
+		})
+		return items, nil
+	}
+
+	items, err := cfg.ArgGenerator(args)
+	return items, err
+}
 
 func generateExternalCommands(seed string, ev PureEvaler) ([]RawItem, error) {
 	if fsutil.DontSearch(seed) {
@@ -79,8 +102,6 @@ func generateCommands(seed string, ev PureEvaler) ([]RawItem, error) {
 					ns + varname[:len(varname)-len(eval.FnSuffix)])
 			case strings.HasSuffix(varname, eval.NsSuffix):
 				addPlainItem(ns + varname)
-			default:
-				cands = append(cands, noQuoteItem(ns+varname+" = "))
 			}
 		})
 	}
