@@ -8,7 +8,6 @@ import (
 	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/parse/parseutil"
 )
 
 type item = modes.CompletionItem
@@ -87,9 +86,9 @@ func Complete(code CodeBuffer, cfg Config) (*Result, error) {
 
 	// Ignore the error; the function always returns a valid *ChunkNode.
 	tree, _ := parse.Parse(parse.Source{Name: "[interactive]", Code: code.Content}, parse.Config{})
-	leaf := parseutil.FindLeafNode(tree.Root, code.Dot)
+	path := findNodePath(tree.Root, code.Dot)
 	for _, completer := range completers {
-		ctx, rawItems, err := completer(leaf, cfg)
+		ctx, rawItems, err := completer(path, cfg)
 		if err == errNoCompletion {
 			continue
 		}

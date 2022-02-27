@@ -7,22 +7,6 @@ import (
 	"src.elv.sh/pkg/parse"
 )
 
-// FindLeafNode finds the leaf node at a specific position. It returns nil if
-// position is out of bound.
-func FindLeafNode(n parse.Node, p int) parse.Node {
-descend:
-	for len(parse.Children(n)) > 0 {
-		for _, ch := range parse.Children(n) {
-			if ch.Range().From <= p && p <= ch.Range().To {
-				n = ch
-				continue descend
-			}
-		}
-		return nil
-	}
-	return n
-}
-
 // Wordify turns a piece of source code into words.
 func Wordify(src string) []string {
 	tree, _ := parse.Parse(parse.Source{Code: src}, parse.Config{})
