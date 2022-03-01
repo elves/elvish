@@ -2008,8 +2008,8 @@ Syntax:
 ```elvish-transcript
 try {
     <try-block>
-} except except-varname {
-    <except-block>
+} catch catch-varname {
+    <catch-block>
 } else {
     <else-block>
 } finally {
@@ -2022,24 +2022,27 @@ follows:
 
 1.  The `try-block` is always executed first.
 
-2.  If `except` is present and an exception occurs in `try-block`, it is caught
-    and stored in `except-varname`, and `except-block` is then executed.
-    Example:
+2.  If `catch` is present, any exception that occurs in `try-block` is caught
+    and stored in `catch-varname`, and `catch-block` is then executed. Example:
 
     ```elvish-transcript
-    ~> try { fail bad } except e { put $e }
+    ~> try { fail bad } catch e { put $e }
     ▶ ?(fail bad)
     ```
 
-    Note that if `except` is not present, exceptions thrown from `try` are not
-    caught: for instance, `try { fail bad }` throws `bad`; it is equivalent to a
-    plain `fail bad`.
+    If `catch` is not present, exceptions thrown from `try` are not caught: for
+    instance, `try { fail bad } finally { echo foo }` will echo `foo`, but the
+    exception is not caught and will be propagated further.
 
-    Note that the word after `except` names a variable, not a matching
-    condition. Exception matching is not supported yet. For instance, you may
-    want to only match exceptions that were created with `fail bad` with
-    `except bad`, but in fact this creates a variable `$bad` that contains
-    whatever exception was thrown.
+    **Note**: this keyword is spelt `except` in Elvish 0.17.x and before, but is
+    otherwise the same. Using `except` still works in Elvish 0.18.x but is
+    deprecated; it will be removed in Elvish 0.19.0.
+
+    **Note**: the word after `catch` names a variable, not a matching condition.
+    Exception matching is not supported yet. For instance, you may want to only
+    match exceptions that were created with `fail bad` with `except bad`, but in
+    fact this creates a variable `$bad` that contains whatever exception was
+    thrown.
 
 3.  If no exception occurs and `else` is present, `else-block` is executed.
     Example:
@@ -2063,24 +2066,28 @@ follows:
     final
     ```
 
-5.  If the exception was not caught (i.e. `except` is not present), it is
+5.  If the exception was not caught (i.e. `catch` is not present), it is
     rethrown.
 
+At least one of `catch` and `finally` must be present, since a lone
+`try { ... }` does not do anything on its own, and is almost certainly a
+mistake. To swallow exceptions, an explicit `catch` clause must be given.
+
 Exceptions thrown in blocks other than `try-block` are not caught. If an
-exception was thrown and either `except-block` or `finally-block` throws another
+exception was thrown and either `catch-block` or `finally-block` throws another
 exception, the original exception is lost. Examples:
 
 ```elvish-transcript
-~> try { fail bad } except e { fail worse }
+~> try { fail bad } catch e { fail worse }
 Exception: worse
 Traceback:
   [tty], line 1:
-    try { fail bad } except e { fail worse }
-~> try { fail bad } except e { fail worse } finally { fail worst }
+    try { fail bad } catch e { fail worse }
+~> try { fail bad } catch e { fail worse } finally { fail worst }
 Exception: worst
 Traceback:
   [tty], line 1:
-    try { fail bad } except e { fail worse } finally { fail worst }
+    try { fail bad } catch e { fail worse } finally { fail worst }
 ```
 
 ## Function definition: `fn` {#fn}
