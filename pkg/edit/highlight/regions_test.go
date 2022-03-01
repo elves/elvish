@@ -159,6 +159,16 @@ func TestGetRegions(t *testing.T) {
 			{28, 29, lexicalRegion, "}"},
 		}),
 
+		// Regression test for b.elv.sh/1358.
+		Args("try { } except { }").Rets([]region{
+			{0, 3, semanticRegion, commandRegion}, // try
+			{4, 5, lexicalRegion, "{"},
+			{6, 7, lexicalRegion, "}"},
+			{8, 14, semanticRegion, keywordRegion}, // except
+			{15, 16, lexicalRegion, "{"},
+			{17, 18, lexicalRegion, "}"},
+		}),
+
 		Args("try { } finally { }").Rets([]region{
 			{0, 3, semanticRegion, commandRegion}, // try
 			{4, 5, lexicalRegion, "{"},

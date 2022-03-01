@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/parse/cmpd"
 )
 
 var sourceText = parse.SourceText
@@ -199,15 +200,22 @@ func emitRegionsInTry(n *parse.Form, f func(parse.Node, regionKind, string)) {
 		return false
 	}
 	if matchKW("except") {
-		if i+1 < len(n.Args) && len(n.Args[i+1].Indexings) > 0 {
+		if i+1 < len(n.Args) && isStringLiteral(n.Args[i+1]) {
 			f(n.Args[i+1], semanticRegion, variableRegion)
+			i += 3
+		} else {
+			i += 2
 		}
-		i += 3
 	}
 	if matchKW("else") {
 		i += 2
 	}
 	matchKW("finally")
+}
+
+func isStringLiteral(n *parse.Compound) bool {
+	_, ok := cmpd.StringLiteral(n)
+	return ok
 }
 
 func emitRegionsInPrimary(n *parse.Primary, f func(parse.Node, regionKind, string)) {
