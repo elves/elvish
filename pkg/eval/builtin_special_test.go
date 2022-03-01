@@ -305,38 +305,46 @@ func TestIf(t *testing.T) {
 
 func TestTry(t *testing.T) {
 	Test(t,
-		That("try { nop } except { put bad } else { put good }").Puts("good"),
-		That("try { e:false } except - { put bad } else { put good }").
+		That("try { nop } catch { put bad } else { put good }").Puts("good"),
+		That("try { fail tr } catch - { put bad } else { put good }").
 			Puts("bad"),
-		That("try { fail tr }").Throws(ErrorWithMessage("tr")),
 		That("try { fail tr } finally { put final }").
 			Puts("final").
 			Throws(ErrorWithMessage("tr")),
 
-		That("try { fail tr } except { fail ex } finally { put final }").
+		That("try { fail tr } catch { fail ex } finally { put final }").
 			Puts("final").
 			Throws(ErrorWithMessage("ex")),
 
-		That("try { fail tr } except { put ex } finally { fail final }").
+		That("try { fail tr } catch { put ex } finally { fail final }").
 			Puts("ex").
 			Throws(ErrorWithMessage("final")),
 
-		That("try { fail tr } except { fail ex } finally { fail final }").
+		That("try { fail tr } catch { fail ex } finally { fail final }").
 			Throws(ErrorWithMessage("final")),
 
-		// wrong syntax
-		That("try { nop } except @a { }").DoesNotCompile(),
+		// except is a deprecated synonym for catch
+		That("try { fail tr } except { put bad }").Puts("bad"),
+		// Must have catch or finally
+		That("try { fail tr }").DoesNotCompile(),
+		// Rest variable not allowed
+		That("try { nop } catch @a { }").DoesNotCompile(),
 
-		// A readonly var as a target for the "except" clause is a compile-time
+		// A readonly var as a target for the "catch" clause is a compile-time
 		// error.
-		That("try { fail reason } except nil { }").DoesNotCompile(),
-		That("try { fail reason } except x { }").DoesNothing(),
+		That("try { fail reason } catch nil { }").DoesNotCompile(),
+		That("try { fail reason } catch x { }").DoesNothing(),
 
 		// A quoted var name, that would be invalid as a bareword, should be allowed as the referent
 		// in a `try...except...` block.
-		That("try { fail hard } except 'x=' { put 'x= ='(to-string $'x=') }").
+		That("try { fail hard } catch 'x=' { put 'x= ='(to-string $'x=') }").
 			Puts("x= =[&reason=[&content=hard &type=fail]]"),
 	)
+}
+
+func TestTry_ExceptIsDeprecated(t *testing.T) {
+	testCompileTimeDeprecation(t, "try { } except { }",
+		`"except" is deprecated; use "catch" instead`, 18)
 }
 
 func TestWhile(t *testing.T) {

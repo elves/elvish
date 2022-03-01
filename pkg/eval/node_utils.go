@@ -48,10 +48,14 @@ func (aw *argsWalker) next() *parse.Compound {
 	return n
 }
 
+func (aw *argsWalker) peekIs(text string) bool {
+	return aw.more() && parse.SourceText(aw.form.Args[aw.idx]) == text
+}
+
 // nextIs returns whether the next argument's source matches the given text. It
 // also consumes the argument if it is.
 func (aw *argsWalker) nextIs(text string) bool {
-	if aw.more() && parse.SourceText(aw.form.Args[aw.idx]) == text {
+	if aw.peekIs(text) {
 		aw.idx++
 		return true
 	}

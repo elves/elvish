@@ -671,30 +671,37 @@ func compileTry(cp *compiler, fn *parse.Form) effectOp {
 	args := cp.walkArgs(fn)
 	bodyNode := args.nextMustThunk("try body")
 	logger.Printf("body is %q", parse.SourceText(bodyNode))
-	var exceptVarNode *parse.Compound
-	var exceptNode *parse.Primary
-	if args.nextIs("except") {
-		logger.Println("except-ing")
+	var catchVarNode *parse.Compound
+	var catchNode *parse.Primary
+	if args.peekIs("except") {
+		cp.deprecate(args.peek(),
+			`"except" is deprecated; use "catch" instead`, 18)
+	}
+	if args.nextIs("except") || args.nextIs("catch") {
 		// Parse an optional lvalue into exceptVarNode.
 		n := args.peek()
 		if _, ok := cmpd.StringLiteral(n); ok {
-			exceptVarNode = n
+			catchVarNode = n
 			args.next()
 		}
-		exceptNode = args.nextMustThunk("except body")
+		catchNode = args.nextMustThunk("catch body")
 	}
 	elseNode := args.nextMustThunkIfAfter("else")
 	finallyNode := args.nextMustThunkIfAfter("finally")
 	args.mustEnd()
 
-	var exceptVar lvalue
-	var bodyOp, exceptOp, elseOp, finallyOp valuesOp
-	bodyOp = cp.primaryOp(bodyNode)
-	if exceptVarNode != nil {
-		exceptVar = cp.compileOneLValue(exceptVarNode, setLValue|newLValue)
+	if catchNode == nil && finallyNode == nil {
+		cp.errorpf(fn, "try must be followed by a catch block or a finally block")
 	}
-	if exceptNode != nil {
-		exceptOp = cp.primaryOp(exceptNode)
+
+	var catchVar lvalue
+	var bodyOp, catchOp, elseOp, finallyOp valuesOp
+	bodyOp = cp.primaryOp(bodyNode)
+	if catchVarNode != nil {
+		catchVar = cp.compileOneLValue(catchVarNode, setLValue|newLValue)
+	}
+	if catchNode != nil {
+		catchOp = cp.primaryOp(catchNode)
 	}
 	if elseNode != nil {
 		elseOp = cp.primaryOp(elseNode)
@@ -703,14 +710,14 @@ func compileTry(cp *compiler, fn *parse.Form) effectOp {
 		finallyOp = cp.primaryOp(finallyNode)
 	}
 
-	return &tryOp{fn.Range(), bodyOp, exceptVar, exceptOp, elseOp, finallyOp}
+	return &tryOp{fn.Range(), bodyOp, catchVar, catchOp, elseOp, finallyOp}
 }
 
 type tryOp struct {
 	diag.Ranging
 	bodyOp    valuesOp
-	exceptVar lvalue
-	exceptOp  valuesOp
+	catchVar  lvalue
+	catchOp   valuesOp
 	elseOp    valuesOp
 	finallyOp valuesOp
 }
@@ -718,27 +725,27 @@ type tryOp struct {
 func (op *tryOp) exec(fm *Frame) Exception {
 	body := execLambdaOp(fm, op.bodyOp)
 	var exceptVar vars.Var
-	if op.exceptVar.ref != nil {
+	if op.catchVar.ref != nil {
 		var err error
-		exceptVar, err = derefLValue(fm, op.exceptVar)
+		exceptVar, err = derefLValue(fm, op.catchVar)
 		if err != nil {
 			return fm.errorp(op, err)
 		}
 	}
-	except := execLambdaOp(fm, op.exceptOp)
+	catch := execLambdaOp(fm, op.catchOp)
 	elseFn := execLambdaOp(fm, op.elseOp)
 	finally := execLambdaOp(fm, op.finallyOp)
 
 	err := body.Call(fm.Fork("try body"), NoArgs, NoOpts)
 	if err != nil {
-		if except != nil {
+		if catch != nil {
 			if exceptVar != nil {
 				err := exceptVar.Set(err.(Exception))
 				if err != nil {
-					return fm.errorp(op.exceptVar, err)
+					return fm.errorp(op.catchVar, err)
 				}
 			}
-			err = except.Call(fm.Fork("try except"), NoArgs, NoOpts)
+			err = catch.Call(fm.Fork("try catch"), NoArgs, NoOpts)
 		}
 	} else {
 		if elseFn != nil {
