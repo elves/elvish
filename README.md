@@ -13,19 +13,27 @@ combined into one seamless package. It runs on Linux, BSDs, macOS and Windows.
 Despite its pre-1.0 status, it is already suitable for most daily interactive
 use.
 
-**Visit the official website https://elv.sh for prebuilt binaries, blog posts,
-documentation and other resources.**
-
 User groups (all connected thanks to [Matrix](https://matrix.org)):
 [![Gitter](https://img.shields.io/badge/gitter-elves/elvish-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish)
 [![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg)](https://telegram.me/elvish)
-[![#elvish on libera.chat](https://img.shields.io/badge/libera.chat-%23elvish-blue.svg)](https://web.libera.chat/#elvish)
 [![#users:elves.sh](https://img.shields.io/badge/matrix-%23users:elv.sh-blue.svg)](https://matrix.to/#/#users:elves.sh)
 
-## Running Elvish
+## Documentation
 
-See [this document](https://elv.sh/ref/command.html#rc-file) for how to use the
-`elvish` command and its CLI flags and arguments.
+Documentation for Elvish lives on the official website https://elv.sh,
+including:
+
+-   [Learning material](https://elv.sh/learn);
+
+-   [Reference docs](https://elv.sh/ref), including the
+    [language reference](https://elv.sh/ref/language.html),
+    [the `elvish` command](https://elv.sh/ref/command.html), and all the modules
+    in the standard library;
+
+-   [Blog posts](https://elv.sh/blog), including release notes.
+
+The source for the documentation is in the
+[website](https://github.com/elves/elvish/tree/master/website) directory.
 
 ## Building Elvish
 
