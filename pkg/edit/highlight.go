@@ -100,7 +100,7 @@ func hasFn(ns *eval.Ns, name string) bool {
 
 func isDirOrExecutable(fname string) bool {
 	stat, err := os.Stat(fname)
-	return err == nil && (stat.IsDir() || stat.Mode()&0111 != 0)
+	return err == nil && (stat.IsDir() || fsutil.IsExecutable(stat))
 }
 
 func hasExternalCommand(cmd string) bool {

@@ -2,6 +2,8 @@ package lscolors
 
 import (
 	"os"
+
+	"src.elv.sh/pkg/fsutil"
 )
 
 type feature int
@@ -34,11 +36,10 @@ const (
 	featureRegular
 )
 
-// Weirdly, permission masks for group and other are missing on platforms other
-// than linux, darwin and netbsd. So we replicate some of them here.
 const (
-	worldWritable = 02   // Writable by other
-	executable    = 0111 // Executable
+	// Some platforms, such as Windows, have simulated UNIX style permission masks.
+	// On Windows the only two permission masks are 0o666 (RW) and 0o444 (RO).
+	worldWritable = 0o002
 )
 
 func determineFeature(fname string, mh bool) (feature, error) {
@@ -105,7 +106,7 @@ func determineFeature(fname string, mh bool) (feature, error) {
 		return featureSetuid, nil
 	case is(m, os.ModeSetgid):
 		return featureSetgid, nil
-	case m&executable != 0:
+	case fsutil.IsExecutable(stat):
 		return featureExecutable, nil
 	}
 

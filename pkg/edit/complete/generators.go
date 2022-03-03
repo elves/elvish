@@ -128,7 +128,7 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 	// Make candidates out of elements that match the file component.
 	for _, file := range files {
 		name := file.Name()
-		info, err := file.Info()
+		stat, err := file.Info()
 		if err != nil {
 			continue
 		}
@@ -139,7 +139,7 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 		}
 		// Only accept searchable directories and executable files if
 		// executableOnly is true.
-		if onlyExecutable && (info.Mode()&0111) == 0 {
+		if onlyExecutable && (stat.Mode()&0111) == 0 {
 			continue
 		}
 
@@ -149,13 +149,12 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 		// Will be set to an empty space for non-directories
 		suffix := " "
 
-		if info.IsDir() {
+		if stat.IsDir() {
 			full += pathSeparator
 			suffix = ""
-		} else if info.Mode()&os.ModeSymlink != 0 {
+		} else if stat.Mode()&os.ModeSymlink != 0 {
 			stat, err := os.Stat(full)
-			if err == nil && stat.IsDir() {
-				// Symlink to directory.
+			if err == nil && stat.IsDir() { // symlink to directory
 				full += pathSeparator
 				suffix = ""
 			}

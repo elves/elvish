@@ -1,6 +1,3 @@
-//go:build !windows && !plan9 && !js
-// +build !windows,!plan9,!js
-
 package fsutil
 
 import (
@@ -14,21 +11,22 @@ import (
 func TestEachExternal(t *testing.T) {
 	binPath := testutil.InTempDir(t)
 
-	testutil.Setenv(t, "PATH", "/foo:"+binPath+":/bar")
+	testutil.Setenv(t, "PATH", "Z:\\foo;"+binPath+";Z:\\bar")
 
 	testutil.ApplyDir(testutil.Dir{
-		"dir":  testutil.Dir{},
-		"file": "",
-		"cmdx": "#!/bin/sh",
-		"cmd1": testutil.File{Perm: 0755, Content: "#!/bin/sh"},
-		"cmd2": testutil.File{Perm: 0755, Content: "#!/bin/sh"},
-		"cmd3": testutil.File{Perm: 0755, Content: ""},
+		"dir":      testutil.Dir{},
+		"file.txt": "",
+		"prog.bat": testutil.File{Perm: 0o666, Content: ""},
+		"prog.cmd": testutil.File{Perm: 0o755, Content: ""},
+		"prog.txt": testutil.File{Perm: 0o755, Content: ""},
+		"PROG.EXE": "", // validate that explicit file perms don't matter
 	})
 
-	wantCmds := []string{"cmd1", "cmd2", "cmd3"}
+	wantCmds := []string{"prog.bat", "prog.cmd", "PROG.EXE"}
 	gotCmds := []string{}
 	EachExternal(func(cmd string) { gotCmds = append(gotCmds, cmd) })
 
+	sort.Strings(wantCmds)
 	sort.Strings(gotCmds)
 	if !reflect.DeepEqual(wantCmds, gotCmds) {
 		t.Errorf("EachExternal want %q got %q", wantCmds, gotCmds)
