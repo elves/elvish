@@ -15,7 +15,7 @@ type Program struct {
 }
 
 func (p *Program) RegisterFlags(fs *prog.FlagSet) {
-	fs.BoolVar(&p.run, "lsp", false, "run language server instead of shell")
+	fs.BoolVar(&p.run, "lsp", false, "Run the builtin language server")
 }
 
 func (p *Program) Run(fds [3]*os.File, _ []string) error {

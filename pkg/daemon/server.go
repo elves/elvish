@@ -29,7 +29,8 @@ type Program struct {
 }
 
 func (p *Program) RegisterFlags(fs *prog.FlagSet) {
-	fs.BoolVar(&p.run, "daemon", false, "[internal flag] run the storage daemon instead of shell")
+	fs.BoolVar(&p.run, "daemon", false,
+		"[internal flag] Run the storage daemon instead of an Elvish shell")
 	p.paths = fs.DaemonPaths()
 }
 

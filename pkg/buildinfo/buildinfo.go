@@ -49,8 +49,10 @@ type Program struct {
 }
 
 func (p *Program) RegisterFlags(fs *prog.FlagSet) {
-	fs.BoolVar(&p.version, "version", false, "show version and quit")
-	fs.BoolVar(&p.buildinfo, "buildinfo", false, "show build info and quit")
+	fs.BoolVar(&p.version, "version", false,
+		"Output the Elvish version and quit")
+	fs.BoolVar(&p.buildinfo, "buildinfo", false,
+		"Output information about the Elvish build and quit")
 	p.json = fs.JSON()
 }
 

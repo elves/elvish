@@ -29,7 +29,7 @@ type Program interface {
 }
 
 func usage(out io.Writer, fs *flag.FlagSet) {
-	fmt.Fprintln(out, "Usage: elvish [flags] [script]")
+	fmt.Fprintln(out, "Usage: elvish [flags] [script] [args]")
 	fmt.Fprintln(out, "Supported flags:")
 	fs.SetOutput(out)
 	fs.PrintDefaults()
@@ -44,9 +44,12 @@ func Run(fds [3]*os.File, args []string, p Program) int {
 
 	var log string
 	var help bool
-	fs.StringVar(&log, "log", "", "a file to write debug log to except for the daemon")
-	fs.BoolVar(&help, "help", false, "show usage help and quit")
-	fs.IntVar(&DeprecationLevel, "deprecation-level", DeprecationLevel, "show warnings for all features deprecated as of version 0.X")
+	fs.StringVar(&log, "log", "",
+		"Path to a file to write debug logs")
+	fs.BoolVar(&help, "help", false,
+		"Show usage help and quit")
+	fs.IntVar(&DeprecationLevel, "deprecation-level", DeprecationLevel,
+		"Show warnings for all features deprecated as of version 0.X")
 
 	p.RegisterFlags(&FlagSet{FlagSet: fs})
 

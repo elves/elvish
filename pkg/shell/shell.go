@@ -37,11 +37,16 @@ type Program struct {
 func (p *Program) RegisterFlags(fs *prog.FlagSet) {
 	// Support -i so that programs that expect shells to support it (like
 	// "script") don't error when they invoke Elvish.
-	fs.Bool("i", false, "force interactive mode; currently ignored")
-	fs.BoolVar(&p.codeInArg, "c", false, "take first argument as code to execute")
-	fs.BoolVar(&p.compileOnly, "compileonly", false, "Parse/Compile but do not execute")
-	fs.BoolVar(&p.noRC, "norc", false, "run elvish without invoking rc.elv")
-	fs.StringVar(&p.rc, "rc", "", "path to rc.elv")
+	fs.Bool("i", false,
+		"A no-op flag, introduced for POSIX compatibility")
+	fs.BoolVar(&p.codeInArg, "c", false,
+		"Treat the first argument as code to execute")
+	fs.BoolVar(&p.compileOnly, "compileonly", false,
+		"Parse and compile Elvish code without executing it")
+	fs.BoolVar(&p.noRC, "norc", false,
+		"Don't read the RC file when running interactively")
+	fs.StringVar(&p.rc, "rc", "",
+		"Path to the RC file when running interactively")
 
 	p.json = fs.JSON()
 	if p.ActivateDaemon != nil {
