@@ -1,4 +1,5 @@
-ELVISH_MAKE_BIN ?= $(shell go env GOPATH)/bin/elvish
+ELVISH_MAKE_BIN ?= $(or $(GOBIN),$(shell go env GOPATH)/bin)/elvish$(shell go env GOEXE)
+ELVISH_MAKE_BIN := $(subst \,/,$(ELVISH_MAKE_BIN))
 ELVISH_PLUGIN_SUPPORT ?= 0
 
 # Treat 0 as false and everything else as true (consistent with CGO_ENABLED).
