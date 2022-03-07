@@ -34,6 +34,7 @@ func handler(s *server) jsonrpc2.Handler {
 		"initialize":              s.initialize,
 		"textDocument/didOpen":    s.didOpen,
 		"textDocument/didChange":  s.didChange,
+		"textDocument/hover":      s.hover,
 		"textDocument/completion": s.completion,
 
 		"textDocument/didClose": noop,
@@ -100,6 +101,10 @@ func (s *server) didChange(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParam
 	s.content[uri] = content
 	go publishDiagnostics(ctx, conn, uri, content)
 	return nil, nil
+}
+
+func (s *server) hover(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (interface{}, error) {
+	return lsp.Hover{}, nil
 }
 
 func (s *server) completion(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (interface{}, error) {

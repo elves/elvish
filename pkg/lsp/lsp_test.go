@@ -90,6 +90,18 @@ func TestDidChangeDiagnostics(t *testing.T) {
 	}
 }
 
+func TestHover(t *testing.T) {
+	f := setup(t)
+
+	f.conn.Notify(bgCtx, "textDocument/didOpen", didOpenParams(""))
+	// Hover is a no-op now; just check that it doesn't error.
+	var hover lsp.Hover
+	err := f.conn.Call(bgCtx, "textDocument/hover", struct{}{}, &hover)
+	if err != nil {
+		t.Errorf("got error %v", err)
+	}
+}
+
 var completionTests = []struct {
 	name     string
 	text     string
