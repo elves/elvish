@@ -24,10 +24,10 @@ func (p *Program) Run(fds [3]*os.File, _ []string) error {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	s := server{}
+	s := newServer()
 	conn := jsonrpc2.NewConn(ctx,
 		jsonrpc2.NewBufferedStream(transport{fds[0], fds[1]}, jsonrpc2.VSCodeObjectCodec{}),
-		s.handler())
+		handler(s))
 	<-conn.DisconnectNotify()
 	return nil
 }

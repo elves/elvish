@@ -235,7 +235,7 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	argGeneratorMapVar := newMapVar(vals.EmptyMap)
 	cfg := func() complete.Config {
 		return complete.Config{
-			PureEvaler: pureEvaler{ev},
+			PureEvaler: PureEvaler(ev),
 			Filterer: adaptMatcherMap(
 				ed, ev, matcherMapVar.Get().(vals.Map)),
 			ArgGenerator: adaptArgGeneratorMap(
@@ -542,6 +542,9 @@ func lookupFn(m vals.Map, ctxName string) (eval.Callable, bool) {
 }
 
 type pureEvaler struct{ ev *eval.Evaler }
+
+// PureEvaler returns a complete.PureEvaler from an eval.Evaler.
+func PureEvaler(ev *eval.Evaler) complete.PureEvaler { return pureEvaler{ev} }
 
 func (pureEvaler) EachExternal(f func(string)) { fsutil.EachExternal(f) }
 

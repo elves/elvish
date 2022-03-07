@@ -16,6 +16,8 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
+var bgCtx = context.Background()
+
 var diagTests = []struct {
 	name      string
 	text      string
@@ -69,8 +71,7 @@ func TestDidOpenDiagnostics(t *testing.T) {
 	f := setup(t)
 	for _, test := range diagTests {
 		t.Run(test.name, func(t *testing.T) {
-			f.conn.Notify(context.Background(),
-				"textDocument/didOpen", didOpenParams(test.text))
+			f.conn.Notify(bgCtx, "textDocument/didOpen", didOpenParams(test.text))
 			checkDiag(t, f, diagParam(test.wantDiags))
 		})
 	}
@@ -78,14 +79,52 @@ func TestDidOpenDiagnostics(t *testing.T) {
 
 func TestDidChangeDiagnostics(t *testing.T) {
 	f := setup(t)
-	f.conn.Notify(context.Background(), "textDocument/didOpen", didOpenParams(""))
+	f.conn.Notify(bgCtx, "textDocument/didOpen", didOpenParams(""))
 	checkDiag(t, f, diagParam([]lsp.Diagnostic{}))
 
 	for _, test := range diagTests {
 		t.Run(test.name, func(t *testing.T) {
-			f.conn.Notify(context.Background(),
-				"textDocument/didChange", didChangeParams(test.text))
+			f.conn.Notify(bgCtx, "textDocument/didChange", didChangeParams(test.text))
 			checkDiag(t, f, diagParam(test.wantDiags))
+		})
+	}
+}
+
+var completionTests = []struct {
+	name     string
+	text     string
+	params   lsp.CompletionParams
+	wantKind lsp.CompletionItemKind
+}{
+	{"command", "", completionParams(0, 0), lsp.CIKFunction},
+	{"variable", "put $", completionParams(0, 5), lsp.CIKVariable},
+	{"bad", "put [", completionParams(0, 5), 0},
+}
+
+func TestCompletion(t *testing.T) {
+	f := setup(t)
+	testutil.Setenv(t, "PATH", "")
+
+	for _, test := range completionTests {
+		t.Run(test.name, func(t *testing.T) {
+			var items []lsp.CompletionItem
+			f.conn.Notify(bgCtx, "textDocument/didOpen", didOpenParams(test.text))
+			err := f.conn.Call(bgCtx, "textDocument/completion", test.params, &items)
+			if err != nil {
+				t.Errorf("got error %v", err)
+			}
+			if test.wantKind == 0 {
+				if len(items) > 0 {
+					t.Errorf("got %v items, want 0", len(items))
+				}
+			} else {
+				if len(items) == 0 {
+					t.Fatalf("got 0 items, want non-zero")
+				}
+				if items[0].Kind != test.wantKind {
+					t.Errorf("got kind %v, want %v", items[0].Kind, test.wantKind)
+				}
+			}
 		})
 	}
 }
@@ -98,6 +137,7 @@ var jsonrpcErrorTests = []struct {
 	{"unknown/method", struct{}{}, errMethodNotFound},
 	{"textDocument/didOpen", []int{}, errInvalidParams},
 	{"textDocument/didChange", []int{}, errInvalidParams},
+	{"textDocument/completion", []int{}, errInvalidParams},
 }
 
 func TestJSONRPCErrors(t *testing.T) {
@@ -149,6 +189,15 @@ func checkDiag(t *testing.T, f *clientFixture, want lsp.PublishDiagnosticsParams
 		}
 	case <-time.After(testutil.Scaled(time.Second)):
 		t.Errorf("time out")
+	}
+}
+
+func completionParams(line, char int) lsp.CompletionParams {
+	return lsp.CompletionParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{URI: testURI},
+			Position:     lsp.Position{Line: line, Character: char},
+		},
 	}
 }
 
