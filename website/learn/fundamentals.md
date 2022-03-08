@@ -72,7 +72,7 @@ notations:
 ```elvish-transcript
 ~> * 17 28 # multiplication
 ▶ 476
-~> ^ 2 10 # exponention
+~> math:pow 2 10 # exponention
 ▶ 1024
 ```
 
