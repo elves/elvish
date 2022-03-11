@@ -62,14 +62,14 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	var cmdRegions []cmdRegion
 
 	for _, r := range regions {
-		if r.begin > lastEnd {
+		if r.Begin > lastEnd {
 			// Add inter-region text.
-			text = append(text, &ui.Segment{Text: code[lastEnd:r.begin]})
+			text = append(text, &ui.Segment{Text: code[lastEnd:r.Begin]})
 		}
 
-		regionCode := code[r.begin:r.end]
+		regionCode := code[r.Begin:r.End]
 		var styling ui.Styling
-		if r.typ == commandRegion {
+		if r.Type == commandRegion {
 			if cfg.HasCommand != nil {
 				// Do not highlight now, but collect the index of the region and the
 				// segment.
@@ -79,7 +79,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 				styling = stylingForGoodCommand
 			}
 		} else {
-			styling = stylingFor[r.typ]
+			styling = stylingFor[r.Type]
 		}
 		seg := &ui.Segment{Text: regionCode}
 		if styling != nil {
@@ -87,7 +87,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 		}
 
 		text = append(text, seg)
-		lastEnd = r.end
+		lastEnd = r.End
 	}
 	if len(code) > lastEnd {
 		// Add text after the last region as unstyled.

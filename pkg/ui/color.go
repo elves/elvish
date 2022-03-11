@@ -83,17 +83,17 @@ func (c xterm256Color) fgSGR() string  { return "38;5;" + strconv.Itoa(int(c)) }
 func (c xterm256Color) bgSGR() string  { return "48;5;" + strconv.Itoa(int(c)) }
 func (c xterm256Color) String() string { return "color" + strconv.Itoa(int(c)) }
 
-type trueColor struct{ r, g, b uint8 }
+type trueColor struct{ R, G, B uint8 }
 
 func (c trueColor) fgSGR() string { return "38;2;" + c.rgbSGR() }
 func (c trueColor) bgSGR() string { return "48;2;" + c.rgbSGR() }
 
 func (c trueColor) String() string {
-	return fmt.Sprintf("#%02x%02x%02x", c.r, c.g, c.b)
+	return fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B)
 }
 
 func (c trueColor) rgbSGR() string {
-	return fmt.Sprintf("%d;%d;%d", c.r, c.g, c.b)
+	return fmt.Sprintf("%d;%d;%d", c.R, c.G, c.B)
 }
 
 func parseColor(name string) Color {

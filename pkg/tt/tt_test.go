@@ -2,6 +2,7 @@ package tt
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -41,7 +42,7 @@ func TestTTFailDefaultFmtOneReturn(t *testing.T) {
 		Fn("add", add),
 		Table{Args(1, 10).Rets(12)},
 	)
-	assertOneError(t, testT, "add(1, 10) -> 11, want 12")
+	assertOneError(t, testT, "add(1, 10) returns (-want +got):\n")
 }
 
 func TestTTFailDefaultFmtMultiReturn(t *testing.T) {
@@ -50,7 +51,7 @@ func TestTTFailDefaultFmtMultiReturn(t *testing.T) {
 		Fn("addsub", addsub),
 		Table{Args(1, 10).Rets(11, -90)},
 	)
-	assertOneError(t, testT, "addsub(1, 10) -> (11, -9), want (11, -90)")
+	assertOneError(t, testT, "addsub(1, 10) returns (-want +got):\n")
 }
 
 func TestTTFailCustomFmt(t *testing.T) {
@@ -60,16 +61,17 @@ func TestTTFailCustomFmt(t *testing.T) {
 		Table{Args(1, 10).Rets(11, -90)},
 	)
 	assertOneError(t, testT,
-		"addsub(x = 1, y = 10) -> (a = 11, b = -9), want (a = 11, b = -90)")
+		"addsub(x = 1, y = 10) returns (-want +got):\n")
 }
 
-func assertOneError(t *testing.T, testT testT, want string) {
+func assertOneError(t *testing.T, testT testT, wantPrefix string) {
+	t.Helper()
 	switch len(testT) {
 	case 0:
 		t.Errorf("Test didn't error when it should")
 	case 1:
-		if testT[0] != want {
-			t.Errorf("Test wrote message %q, want %q", testT[0], want)
+		if !strings.HasPrefix(testT[0], wantPrefix) {
+			t.Errorf("Test wrote message:\ngot:  %q\nwant: %q...", testT[0], wantPrefix)
 		}
 	default:
 		t.Errorf("Test wrote too many error messages")

@@ -4,9 +4,11 @@
 package tt
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
+	"strings"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // Table represents a test table.
@@ -74,20 +76,19 @@ func Test(t T, fn *FnToTest, tests Table) {
 		rets := call(fn.body, test.args)
 		for _, retsMatcher := range test.retsMatchers {
 			if !match(retsMatcher, rets) {
-				var argsString, retsString, wantRetsString string
+				var args string
 				if fn.argsFmt == "" {
-					argsString = sprintArgs(test.args...)
+					args = sprintArgs(test.args...)
 				} else {
-					argsString = fmt.Sprintf(fn.argsFmt, test.args...)
+					args = fmt.Sprintf(fn.argsFmt, test.args...)
 				}
-				if fn.retsFmt == "" {
-					retsString = sprintRets(rets...)
-					wantRetsString = sprintRets(retsMatcher...)
+				var diff string
+				if len(retsMatcher) == 1 && len(rets) == 1 {
+					diff = cmp.Diff(retsMatcher[0], rets[0], cmpopt)
 				} else {
-					retsString = fmt.Sprintf(fn.retsFmt, rets...)
-					wantRetsString = fmt.Sprintf(fn.retsFmt, retsMatcher...)
+					diff = cmp.Diff(retsMatcher, rets, cmpopt)
 				}
-				t.Errorf("%s(%s) -> %s, want %s", fn.name, argsString, retsString, wantRetsString)
+				t.Errorf("%s(%s) returns (-want +got):\n%s", fn.name, args, diff)
 			}
 		}
 	}
@@ -127,18 +128,7 @@ func matchOne(m, a interface{}) bool {
 }
 
 func sprintArgs(args ...interface{}) string {
-	return sprintCommaDelimited(args...)
-}
-
-func sprintRets(rets ...interface{}) string {
-	if len(rets) == 1 {
-		return fmt.Sprint(rets[0])
-	}
-	return "(" + sprintCommaDelimited(rets...) + ")"
-}
-
-func sprintCommaDelimited(args ...interface{}) string {
-	var b bytes.Buffer
+	var b strings.Builder
 	for i, arg := range args {
 		if i > 0 {
 			b.WriteString(", ")

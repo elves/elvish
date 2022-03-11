@@ -10,7 +10,7 @@ import (
 )
 
 type someType struct {
-	foo string
+	Foo string
 }
 
 func TestScanToGo_ConcreteTypeDst(t *testing.T) {
@@ -163,6 +163,9 @@ type aStruct struct {
 	Foo int
 	bar interface{}
 }
+
+// Equal is required by cmp.Diff, since aStruct contains unexported fields.
+func (a aStruct) Equal(b aStruct) bool { return a == b }
 
 func TestScanMapToGo(t *testing.T) {
 	// A wrapper around ScanMapToGo, to make it easier to test.

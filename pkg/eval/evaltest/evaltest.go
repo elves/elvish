@@ -22,10 +22,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/tt"
 )
 
 // Case is a test case that can be used in Test.
@@ -137,35 +139,35 @@ func Test(t *testing.T, tests ...Case) {
 // with NewEvaler and passed to the setup function.
 func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 	t.Helper()
-	for _, tt := range tests {
-		t.Run(strings.Join(tt.codes, "\n"), func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(strings.Join(tc.codes, "\n"), func(t *testing.T) {
 			t.Helper()
 			ev := eval.NewEvaler()
 			setup(ev)
-			if tt.setup != nil {
-				tt.setup(ev)
+			if tc.setup != nil {
+				tc.setup(ev)
 			}
 
-			r := evalAndCollect(t, ev, tt.codes)
+			r := evalAndCollect(t, ev, tc.codes)
 
-			if tt.verify != nil {
-				tt.verify(t)
+			if tc.verify != nil {
+				tc.verify(t)
 			}
-			if !matchOut(tt.want.ValueOut, r.ValueOut) {
-				t.Errorf("got value out %v, want %v",
-					reprs(r.ValueOut), reprs(tt.want.ValueOut))
+			if !matchOut(tc.want.ValueOut, r.ValueOut) {
+				t.Errorf("got value out (-want +got):\n%s",
+					cmp.Diff(r.ValueOut, tc.want.ValueOut, tt.CommonCmpOpt))
 			}
-			if !bytes.Equal(tt.want.BytesOut, r.BytesOut) {
-				t.Errorf("got bytes out %q, want %q", r.BytesOut, tt.want.BytesOut)
+			if !bytes.Equal(tc.want.BytesOut, r.BytesOut) {
+				t.Errorf("got bytes out %q, want %q", r.BytesOut, tc.want.BytesOut)
 			}
-			if !bytes.Contains(r.StderrOut, tt.want.StderrOut) {
-				t.Errorf("got stderr out %q, want %q", r.StderrOut, tt.want.StderrOut)
+			if !bytes.Contains(r.StderrOut, tc.want.StderrOut) {
+				t.Errorf("got stderr out %q, want %q", r.StderrOut, tc.want.StderrOut)
 			}
-			if !matchErr(tt.want.CompilationError, r.CompilationError) {
+			if !matchErr(tc.want.CompilationError, r.CompilationError) {
 				t.Errorf("got compilation error %v, want %v",
-					r.CompilationError, tt.want.CompilationError)
+					r.CompilationError, tc.want.CompilationError)
 			}
-			if !matchErr(tt.want.Exception, r.Exception) {
+			if !matchErr(tc.want.Exception, r.Exception) {
 				t.Errorf("unexpected exception")
 				if exc, ok := r.Exception.(eval.Exception); ok {
 					// For an eval.Exception report the type of the underlying error.
@@ -174,7 +176,7 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 				} else {
 					t.Logf("got: %T: %v", r.Exception, r.Exception)
 				}
-				t.Errorf("want: %v", tt.want.Exception)
+				t.Errorf("want: %v", tc.want.Exception)
 			}
 		})
 	}
@@ -262,14 +264,6 @@ func match(got, want interface{}) bool {
 		}
 	}
 	return vals.Equal(got, want)
-}
-
-func reprs(values []interface{}) []string {
-	s := make([]string, len(values))
-	for i, v := range values {
-		s[i] = vals.ReprPlain(v)
-	}
-	return s
 }
 
 func matchErr(want, got error) bool {

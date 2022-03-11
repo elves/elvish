@@ -12,21 +12,21 @@ var sourceText = parse.SourceText
 
 // Represents a region to be highlighted.
 type region struct {
-	begin int
-	end   int
+	Begin int
+	End   int
 	// Regions can be lexical or semantic. Lexical regions always correspond to
 	// a leaf node in the parse tree, either a parse.Primary node or a parse.Sep
 	// node. Semantic regions may span several leaves and override all lexical
 	// regions in it.
-	kind regionKind
+	Kind regionKind
 	// In lexical regions for Primary nodes, this field corresponds to the Type
 	// field of the node (e.g. "bareword", "single-quoted"). In lexical regions
 	// for Sep nodes, this field is simply the source text itself (e.g. "(",
-	// "|"), except for comments, which have typ == "comment".
+	// "|"), except for comments, which have Type == "comment".
 	//
 	// In semantic regions, this field takes a value from a fixed list (see
 	// below).
-	typ string
+	Type string
 }
 
 type regionKind int
@@ -79,11 +79,11 @@ func fixRegions(regions []region) []region {
 	// Sort regions by the begin position, putting semantic regions before
 	// lexical regions.
 	sort.Slice(regions, func(i, j int) bool {
-		if regions[i].begin < regions[j].begin {
+		if regions[i].Begin < regions[j].Begin {
 			return true
 		}
-		if regions[i].begin == regions[j].begin {
-			return regions[i].kind == semanticRegion && regions[j].kind == lexicalRegion
+		if regions[i].Begin == regions[j].Begin {
+			return regions[i].Kind == semanticRegion && regions[j].Kind == lexicalRegion
 		}
 		return false
 	})
@@ -91,11 +91,11 @@ func fixRegions(regions []region) []region {
 	var newRegions []region
 	lastEnd := 0
 	for _, r := range regions {
-		if r.begin < lastEnd {
+		if r.Begin < lastEnd {
 			continue
 		}
 		newRegions = append(newRegions, r)
-		lastEnd = r.end
+		lastEnd = r.End
 	}
 	return newRegions
 }

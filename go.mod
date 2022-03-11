@@ -2,6 +2,7 @@ module src.elv.sh
 
 require (
 	github.com/creack/pty v1.1.15
+	github.com/google/go-cmp v0.5.7
 	github.com/mattn/go-isatty v0.0.14
 	github.com/sourcegraph/go-lsp v0.0.0-20200429204803-219e11d77f5d
 	github.com/sourcegraph/jsonrpc2 v0.1.0

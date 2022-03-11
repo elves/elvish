@@ -12,6 +12,9 @@ type opts struct {
 	bar int
 }
 
+// Equal is required by cmp.Diff, since opts contains unexported fields.
+func (o opts) Equal(p opts) bool { return o == p }
+
 func TestScanOptions(t *testing.T) {
 	// A wrapper of ScanOptions, to make it easier to test
 	wrapper := func(src RawOptions, dstInit interface{}) (interface{}, error) {
