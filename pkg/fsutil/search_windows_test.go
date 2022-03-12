@@ -1,10 +1,10 @@
 package fsutil
 
 import (
-	"reflect"
-	"sort"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -26,9 +26,9 @@ func TestEachExternal(t *testing.T) {
 	gotCmds := []string{}
 	EachExternal(func(cmd string) { gotCmds = append(gotCmds, cmd) })
 
-	sort.Strings(wantCmds)
-	sort.Strings(gotCmds)
-	if !reflect.DeepEqual(wantCmds, gotCmds) {
-		t.Errorf("EachExternal want %q got %q", wantCmds, gotCmds)
+	if diff := cmp.Diff(wantCmds, gotCmds, sortStringSlices); diff != "" {
+		t.Errorf("EachExternal (-want +got): \n%s", diff)
 	}
 }
+
+var sortStringSlices = cmpopts.SortSlices(func(a, b string) bool { return a < b })

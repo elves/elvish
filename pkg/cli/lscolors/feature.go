@@ -36,11 +36,9 @@ const (
 	featureRegular
 )
 
-const (
-	// Some platforms, such as Windows, have simulated UNIX style permission masks.
-	// On Windows the only two permission masks are 0o666 (RW) and 0o444 (RO).
-	worldWritable = 0o002
-)
+// Some platforms, such as Windows, have simulated UNIX style permission masks.
+// On Windows the only two permission masks are 0o666 (RW) and 0o444 (RO).
+const worldWritable = 0o002
 
 func determineFeature(fname string, mh bool) (feature, error) {
 	stat, err := os.Lstat(fname)

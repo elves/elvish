@@ -15,6 +15,13 @@ func DontSearch(exe string) bool {
 		strings.ContainsRune(exe, '/')
 }
 
+// IsExecutable returns whether the FileInfo refers to an executable file.
+//
+// This is determined by permission bits on UNIX, and by file name on Windows.
+func IsExecutable(stat os.FileInfo) bool {
+	return isExecutable(stat)
+}
+
 // EachExternal calls f for each executable file found while scanning the directories of $E:PATH.
 //
 // NOTE: EachExternal may generate the same command multiple times; once for each time it appears in
