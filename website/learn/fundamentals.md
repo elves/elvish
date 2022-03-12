@@ -70,14 +70,23 @@ comes first, making the syntax a bit different from common mathematical
 notations:
 
 ```elvish-transcript
+~> + 17 28 # addition
+▶ (num 45)
 ~> * 17 28 # multiplication
-▶ 476
-~> math:pow 2 10 # exponention
-▶ 1024
+▶ (num 476)
 ```
 
 The commands above all come with Elvish; they are **builtin commands**. There
 are [many more](../ref/builtin.html) of them.
+
+Some builtin commands are in importabled modules. For example, the command to
+compute exponention lives in the `math:` module:
+
+```elvish-transcript
+~> use math
+~> math:pow 2 10
+▶ (num 1024)
+```
 
 Another kind of commands is **external commands**. They are separate programs
 from Elvish, and either come with the operating system or are installed by you
