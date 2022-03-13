@@ -57,7 +57,7 @@ func (p *Program) RegisterFlags(fs *prog.FlagSet) {
 func (p *Program) Run(fds [3]*os.File, args []string) error {
 	cleanup1 := IncSHLVL()
 	defer cleanup1()
-	cleanup2 := initTTYAndSignal(fds)
+	cleanup2 := initSignal(fds)
 	defer cleanup2()
 
 	ev := MakeEvaler(fds[2])
@@ -132,9 +132,7 @@ func IncSHLVL() func() {
 	}
 }
 
-func initTTYAndSignal(fds [3]*os.File) func() {
-	restoreTTY := term.SetupGlobal(fds[0], fds[2])
-
+func initSignal(fds [3]*os.File) func() {
 	sigCh := sys.NotifySignals()
 	go func() {
 		for sig := range sigCh {
@@ -143,18 +141,19 @@ func initTTYAndSignal(fds [3]*os.File) func() {
 		}
 	}()
 
-	return func() {
-		signal.Stop(sigCh)
-		restoreTTY()
-	}
+	return func() { signal.Stop(sigCh) }
 }
 
-func evalInTTY(ev *eval.Evaler, fds [3]*os.File, src parse.Source) (float64, error) {
+func evalInTTY(fds [3]*os.File, ev *eval.Evaler, ed editor, src parse.Source) error {
 	start := time.Now()
 	ports, cleanup := eval.PortsFromFiles(fds, ev.ValuePrefix())
 	defer cleanup()
+	restore := term.SetupForEval(fds[0], fds[1])
+	defer restore()
 	err := ev.Eval(src, eval.EvalCfg{
 		Ports: ports, Interrupt: eval.ListenInterrupts, PutInFg: true})
-	end := time.Now()
-	return end.Sub(start).Seconds(), err
+	if ed != nil {
+		ed.RunAfterCommandHooks(src, time.Since(start).Seconds(), err)
+	}
+	return err
 }

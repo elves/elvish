@@ -1,109 +1,64 @@
 package term
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
 	"golang.org/x/sys/windows"
 )
 
-func TestSetupGlobalTerminal(t *testing.T) {
-	in, out, release, err := createStdInOut()
-	if err != nil {
-		t.Errorf("cannot open stdin/stdout %v", err)
-		return
-	}
-	defer release()
+func TestSetupForEval(t *testing.T) {
+	// open CONOUT$ manually because os.Stdout is redirected during testing
+	out := openFile(t, "CONOUT$", os.O_RDWR, 0)
+	defer out.Close()
 
-	initialOutMode, _ := getConsoleMode(out)
-	initialOutMode = initialOutMode &^ windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING
-	setConsoleMode(out, initialOutMode)
+	// Start with ENABLE_VIRTUAL_TERMINAL_PROCESSING
+	initialOutMode := getConsoleMode(t, out) | windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING
+	setConsoleMode(t, out, initialOutMode)
 
-	// check that mode is for control sequences
-	restore := setupGlobal(in, out)
-	err = assertConsoleMode(
-		out,
-		initialOutMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-	if err != nil {
-		t.Errorf("got err %v, want nil", err)
-		return
+	// Clear ENABLE_VIRTUAL_TERMINAL_PROCESSING
+	modifiedOutMode := initialOutMode &^ windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING
+	setConsoleMode(t, out, modifiedOutMode)
+
+	// Check that SetupForEval sets ENABLE_VIRTUAL_TERMINAL_PROCESSING without
+	// changing other bits
+	restore := setupForEval(nil, out)
+	if got := getConsoleMode(t, out); got != initialOutMode {
+		t.Errorf("got console mode %v, want %v", got, initialOutMode)
 	}
 
-	// check that mode is restored
+	// Check that restore is a no-op
+	setConsoleMode(t, out, modifiedOutMode)
+
 	restore()
-	err = assertConsoleMode(
-		out,
-		initialOutMode)
-	if err != nil {
-		t.Errorf("got err %v, want nil", err)
-		return
+	if got := getConsoleMode(t, out); got != modifiedOutMode {
+		t.Errorf("got console mode %v, want %v", got, modifiedOutMode)
 	}
 }
 
-func TestSanitizeTerminal(t *testing.T) {
-	in, out, release, err := createStdInOut()
+func openFile(t *testing.T, name string, flag int, perm os.FileMode) *os.File {
+	t.Helper()
+	out, err := os.OpenFile(name, flag, perm)
 	if err != nil {
-		t.Errorf("cannot open stdin/stdout %v", err)
-		return
+		t.Fatalf("open %s: %v", name, err)
 	}
-	defer release()
-
-	initialOutMode, _ := getConsoleMode(out)
-	setConsoleMode(out, initialOutMode)
-
-	setupGlobal(in, out)
-
-	// break console mode
-	setConsoleMode(out, initialOutMode&^windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-
-	sanitize(in, out)
-
-	// check that sanitized
-	err = assertConsoleMode(
-		out,
-		initialOutMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-	if err != nil {
-		t.Errorf("got err %v, want nil", err)
-		return
-	}
+	return out
 }
 
-func assertConsoleMode(file *os.File, want uint32) error {
-	got, err := getConsoleMode(file)
-	if err != nil {
-		return err
-	} else if got != want {
-		return fmt.Errorf("got %b, want %b", got, want)
-	} else {
-		return nil
-	}
-}
-
-// open stdin/stdout manually because os.Stdin/os.Stdout cannot use in testing
-func createStdInOut() (*os.File, *os.File, func(), error) {
-	in, err := os.OpenFile("CONIN$", os.O_RDWR, 0)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	out, err := os.OpenFile("CONOUT$", os.O_RDWR, 0)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	release := func() {
-		in.Close()
-		out.Close()
-	}
-	return in, out, release, nil
-}
-
-func setConsoleMode(file *os.File, mode uint32) error {
+func setConsoleMode(t *testing.T, file *os.File, mode uint32) {
+	t.Helper()
 	err := windows.SetConsoleMode(windows.Handle(file.Fd()), mode)
-	return err
+	if err != nil {
+		t.Fatal("SetConsoleMode:", err)
+	}
 }
 
-func getConsoleMode(file *os.File) (uint32, error) {
+func getConsoleMode(t *testing.T, file *os.File) uint32 {
+	t.Helper()
 	var mode uint32
 	err := windows.GetConsoleMode(windows.Handle(file.Fd()), &mode)
-	return mode, err
+	if err != nil {
+		t.Fatal("GetConsoleMode:", err)
+	}
+	return mode
 }

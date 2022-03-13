@@ -52,8 +52,10 @@ func setup(in, out *os.File) (func() error, error) {
 	return restore, errSetupVT
 }
 
-func setupGlobal(in, out *os.File) func() {
-	return func() {}
+func setupForEval(in, out *os.File) func() {
+	// There is nothing to set up on UNIX, but we try to sanitize the terminal
+	// when evaluation finishes.
+	return func() { sanitize(in, out) }
 }
 
 func sanitize(in, out *os.File) {

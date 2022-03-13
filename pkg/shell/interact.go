@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/cli"
-	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/edit"
@@ -92,8 +91,6 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 		}
 	}
 
-	term.Sanitize(fds[0], fds[2])
-
 	cooldown := time.Second
 	cmdNum := 0
 
@@ -128,10 +125,8 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
-		src := parse.Source{Name: fmt.Sprintf("[tty %v]", cmdNum), Code: line}
-		duration, err := evalInTTY(ev, fds, src)
-		ed.RunAfterCommandHooks(src, duration, err)
-		term.Sanitize(fds[0], fds[2])
+		err = evalInTTY(fds, ev, ed,
+			parse.Source{Name: fmt.Sprintf("[tty %v]", cmdNum), Code: line})
 		if err != nil {
 			diag.ShowError(fds[2], err)
 		}
@@ -163,10 +158,7 @@ func sourceRC(fds [3]*os.File, ev *eval.Evaler, ed editor, rcPath string) error 
 		}
 		return err
 	}
-	src := parse.Source{Name: absPath, Code: code, IsFile: true}
-	duration, err := evalInTTY(ev, fds, src)
-	ed.RunAfterCommandHooks(src, duration, err)
-	return err
+	return evalInTTY(fds, ev, ed, parse.Source{Name: absPath, Code: code, IsFile: true})
 }
 
 type minEditor struct {
