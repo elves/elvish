@@ -154,36 +154,36 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 				tc.verify(t)
 			}
 			if !matchOut(tc.want.ValueOut, r.ValueOut) {
-				t.Errorf("got value out (-want +got):\n%s",
-					cmp.Diff(r.ValueOut, tc.want.ValueOut, tt.CommonCmpOpt))
+				t.Errorf("value out (-Wanted +Actual):\n%s",
+					cmp.Diff(tc.want.ValueOut, r.ValueOut, tt.CommonCmpOpt))
 			}
 			if !bytes.Equal(tc.want.BytesOut, r.BytesOut) {
-				t.Errorf("got bytes out %q, want %q", r.BytesOut, tc.want.BytesOut)
+				t.Errorf("bytes out:\nWanted: %q\nActual: %q", tc.want.BytesOut, r.BytesOut)
 			}
 			if tc.want.StderrOut == nil {
 				if len(r.StderrOut) > 0 {
-					t.Errorf("got stderr out %q, want empty", r.StderrOut)
+					t.Errorf("stderr out):\nWanted: %q\nActual: %q", "", r.StderrOut)
 				}
 			} else {
 				if !bytes.Contains(r.StderrOut, tc.want.StderrOut) {
-					t.Errorf("got stderr out %q, want output containing %q",
-						r.StderrOut, tc.want.StderrOut)
+					t.Errorf("stderr out contains):\nWanted: %q\nActual: %q",
+						tc.want.StderrOut, r.StderrOut)
 				}
 			}
 			if !matchErr(tc.want.CompilationError, r.CompilationError) {
-				t.Errorf("got compilation error %v, want %v",
-					r.CompilationError, tc.want.CompilationError)
+				t.Errorf("compilation error:\nWanted: %v\nActual: %v",
+					tc.want.CompilationError, r.CompilationError)
 			}
 			if !matchErr(tc.want.Exception, r.Exception) {
-				t.Errorf("unexpected exception")
 				if exc, ok := r.Exception.(eval.Exception); ok {
 					// For an eval.Exception report the type of the underlying error.
-					t.Logf("got: %T: %v", exc.Reason(), exc)
-					t.Logf("stack trace: %#v", getStackTexts(exc.StackTrace()))
+					t.Errorf("unexpected exception:\nWanted: %v\nActual: %T: %v",
+						tc.want.Exception, exc.Reason(), exc)
+					t.Logf("Stack Trace:\n%#v", getStackTexts(exc.StackTrace()))
 				} else {
-					t.Logf("got: %T: %v", r.Exception, r.Exception)
+					t.Errorf("unexpected exception:\nWanted: %v\nActual: %T: %v",
+						tc.want.Exception, r.Exception, r.Exception)
 				}
-				t.Errorf("want: %v", tc.want.Exception)
 			}
 		})
 	}

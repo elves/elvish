@@ -88,7 +88,7 @@ func Test(t T, fn *FnToTest, tests Table) {
 				} else {
 					diff = cmp.Diff(retsMatcher, rets, cmpopt)
 				}
-				t.Errorf("%s(%s) returns (-want +got):\n%s", fn.name, args, diff)
+				t.Errorf("%s(%s) returns (-Wanted +Actual):\n%s", fn.name, args, diff)
 			}
 		}
 	}
