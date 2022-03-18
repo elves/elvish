@@ -5,6 +5,7 @@ variables:
 
 before_script:
   - go version
+  - apk add git
 
 test:
   script:
