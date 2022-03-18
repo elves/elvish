@@ -16,7 +16,7 @@ import (
 
 // Version identifies the version of Elvish. On development commits, it
 // identifies the next release.
-const Version = "0.18.0"
+const Version = "0.19.0"
 
 // VersionSuffix is appended to Version to build the full version string. It is public so it can be
 // overridden when building Elvish; see PACKAGING.md for details.
