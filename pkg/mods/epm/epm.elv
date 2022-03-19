@@ -132,7 +132,7 @@ set -method-handler = [
       -info "Updating "$pkg
       try {
         git -C $dest pull
-      } except _ {
+      } catch _ {
           -error "Something failed, please check error above and retry."
       }
     }
@@ -393,7 +393,7 @@ fn install {|&silent-if-installed=$false @pkgs|
         # place)
         try {
           install $@deps
-        } except e {
+        } catch e {
           -error "Dependency installation failed. Uninstalling "$pkg", please check the errors above and try again."
           -uninstall-package $pkg
         }
