@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"fmt"
 	"io"
 	"reflect"
 	"testing"
@@ -34,7 +33,8 @@ func TestLoop_RunReturnsAfterReturnCalled(t *testing.T) {
 	supplyInputs(lp, "x")
 	buf, err := lp.Run()
 	if buf != "buffer" || err != io.EOF {
-		fmt.Printf("Run -> (%v, %v), want (%v, %v)", buf, err, "buffer", io.EOF)
+		t.Errorf("CLI continued after 'return'\nWanted: %v, %v\nActual: %v, %v",
+			buf, io.EOF, buf, err)
 	}
 }
 
