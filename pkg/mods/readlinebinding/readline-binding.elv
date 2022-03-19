@@ -1,6 +1,7 @@
 set edit:global-binding[Ctrl-G] = $edit:close-mode~
 
-b={|k f| set edit:insert:binding[$k] = $f } {
+{
+    var b = {|k f| set edit:insert:binding[$k] = $f }
     $b Ctrl-A $edit:move-dot-sol~
     $b Ctrl-B $edit:move-dot-left~
     $b Ctrl-D {
@@ -31,14 +32,16 @@ b={|k f| set edit:insert:binding[$k] = $f } {
     $b Alt-t $edit:transpose-word~
 }
 
-b={|k f| set edit:completion:binding[$k] = $f } {
+{
+    var b = {|k f| set edit:completion:binding[$k] = $f }
     $b Ctrl-B $edit:completion:left~
     $b Ctrl-F $edit:completion:right~
     $b Ctrl-N $edit:completion:down~
     $b Ctrl-P $edit:completion:up~
 }
 
-b={|k f| set edit:navigation:binding[$k] = $f } {
+{
+    var b = {|k f| set edit:navigation:binding[$k] = $f }
     $b Ctrl-B $edit:navigation:left~
     $b Ctrl-F $edit:navigation:right~
     $b Ctrl-N $edit:navigation:down~
@@ -46,18 +49,21 @@ b={|k f| set edit:navigation:binding[$k] = $f } {
     $b Alt-f  $edit:navigation:trigger-filter~
 }
 
-b={|k f| set edit:history:binding[$k] = $f } {
+{
+    var b = {|k f| set edit:history:binding[$k] = $f }
     $b Ctrl-N $edit:history:down-or-quit~
     $b Ctrl-P $edit:history:up~
 }
 
-b={|k f| set edit:listing:binding[$k] = $f } {
+{
+    var b = {|k f| set edit:listing:binding[$k] = $f }
     $b Ctrl-N $edit:listing:down~
     $b Ctrl-P $edit:listing:up~
     $b Ctrl-V $edit:listing:page-down~
     $b Alt-v  $edit:listing:page-up~
 }
 
-b={|k f| set edit:histlist:binding[$k] = $f } {
+{
+    var b = {|k f| set edit:histlist:binding[$k] = $f }
     $b Alt-d $edit:histlist:toggle-dedup~
 }
