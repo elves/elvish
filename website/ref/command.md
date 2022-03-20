@@ -46,8 +46,8 @@ history. Its path is determined as follows:
 
 -   Otherwise:
 
-    -   On UNIX (including macOS), `$XDG_DATA_HOME/elvish/db.bolt` is used,
-        defaulting to `~/.local/state/elvish/db.bolt` if `$XDG_DATA_HOME` is
+    -   On UNIX (including macOS), `$XDG_STATE_HOME/elvish/db.bolt` is used,
+        defaulting to `~/.local/state/elvish/db.bolt` if `$XDG_STATE_HOME` is
         unset or empty.
 
     -   On Windows, `%LocalAppData%\elvish\db.bolt` is used.
