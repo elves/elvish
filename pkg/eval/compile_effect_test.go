@@ -152,17 +152,23 @@ func TestCommand_Special(t *testing.T) {
 func TestCommand_LegacyTemporaryAssignment(t *testing.T) {
 	Test(t,
 		That("var a b = alice bob; {a,@b}=(put amy ben) put $a $@b; put $a $b").
-			Puts("amy", "ben", "alice", "bob"),
+			Puts("amy", "ben", "alice", "bob").PrintsStderrWith("deprecated"),
 		// Temporary assignment of list element.
-		That("var l = [a]; l[0]=x put $l[0]; put $l[0]").Puts("x", "a"),
+		That("var l = [a]; l[0]=x put $l[0]; put $l[0]").
+			Puts("x", "a").PrintsStderrWith("deprecated"),
 		// Temporary assignment of map element.
-		That("var m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]").Puts("v2", "v"),
+		That("var m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]").
+			Puts("v2", "v").PrintsStderrWith("deprecated"),
 		// Temporary assignment before special form.
-		That("li=[foo bar] for x $li { put $x }").Puts("foo", "bar"),
+		That("li=[foo bar] for x $li { put $x }").
+			Puts("foo", "bar").PrintsStderrWith("deprecated"),
 		// Multiple LHSs in temporary assignments.
-		That("{a b}={foo bar} put $a $b").Puts("foo", "bar"),
-		That("@a=(put a b) put $@a").Puts("a", "b"),
-		That("{a,@b}=(put a b c) put $@b").Puts("b", "c"),
+		That("{a b}={foo bar} put $a $b").
+			Puts("foo", "bar").PrintsStderrWith("deprecated"),
+		That("@a=(put a b) put $@a").
+			Puts("a", "b").PrintsStderrWith("deprecated"),
+		That("{a,@b}=(put a b c) put $@b").
+			Puts("b", "c").PrintsStderrWith("deprecated"),
 		// Using syntax of temporary assignment for non-temporary assignment no
 		// longer compiles
 		That("x=y").DoesNotCompile(),

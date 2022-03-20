@@ -324,7 +324,8 @@ func TestTry(t *testing.T) {
 			Throws(ErrorWithMessage("final")),
 
 		// except is a deprecated synonym for catch
-		That("try { fail tr } except { put bad }").Puts("bad"),
+		That("try { fail tr } except { put bad }").
+			Puts("bad").PrintsStderrWith("deprecated"),
 		// Must have catch or finally
 		That("try { fail tr }").DoesNotCompile(),
 		// Rest variable not allowed

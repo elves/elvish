@@ -234,8 +234,7 @@ func (fm *Frame) Deprecate(msg string, ctx *diag.Context, minLevel int) {
 		return
 	}
 	if ctx == nil {
-		fmt.Fprintf(fm.ErrorFile(), "deprecation: \033[31;1m%s\033[m\n", msg)
-		return
+		ctx = fm.traceback.Head
 	}
 	if fm.Evaler.registerDeprecation(deprecation{ctx.Name, ctx.Ranging, msg}) {
 		err := diag.Error{Type: "deprecation", Message: msg, Context: *ctx}

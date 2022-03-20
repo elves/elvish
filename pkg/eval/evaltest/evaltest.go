@@ -160,8 +160,15 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 			if !bytes.Equal(tc.want.BytesOut, r.BytesOut) {
 				t.Errorf("got bytes out %q, want %q", r.BytesOut, tc.want.BytesOut)
 			}
-			if !bytes.Contains(r.StderrOut, tc.want.StderrOut) {
-				t.Errorf("got stderr out %q, want %q", r.StderrOut, tc.want.StderrOut)
+			if tc.want.StderrOut == nil {
+				if len(r.StderrOut) > 0 {
+					t.Errorf("got stderr out %q, want empty", r.StderrOut)
+				}
+			} else {
+				if !bytes.Contains(r.StderrOut, tc.want.StderrOut) {
+					t.Errorf("got stderr out %q, want output containing %q",
+						r.StderrOut, tc.want.StderrOut)
+				}
 			}
 			if !matchErr(tc.want.CompilationError, r.CompilationError) {
 				t.Errorf("got compilation error %v, want %v",

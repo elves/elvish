@@ -31,6 +31,7 @@ func TestBuiltinFnExternal(t *testing.T) {
 		//
 		// The command shouldn't be found when run so we should get an
 		// exception along the lines of "executable file not found in $PATH".
-		That("var e = (external true); E:PATH=/ $e").Throws(ErrorWithType(&exec.Error{})),
+		That("var e = (external true); { tmp E:PATH = /; $e }").
+			Throws(ErrorWithType(&exec.Error{})),
 	)
 }

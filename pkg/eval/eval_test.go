@@ -48,8 +48,8 @@ func TestEvalTimeDeprecate(t *testing.T) {
 		}))
 	},
 		That("dep").PrintsStderrWith("deprecated"),
-		// Deprecation message is only shown once.
-		That("dep 2> tmp.txt; dep").DoesNothing(),
+		// Deprecation message from the same location is only shown once.
+		That("fn f { dep }", "f 2> tmp.txt; f").DoesNothing(),
 	)
 }
 
