@@ -37,11 +37,11 @@ import (
 // Num is a stand-in type for int, *big.Int, *big.Rat or float64. This type
 // doesn't offer type safety, but is useful as a marker; for example, it is
 // respected when parsing function arguments.
-type Num interface{}
+type Num any
 
 // NumSlice is a stand-in type for []int, []*big.Int, []*big.Rat or []float64.
 // This type doesn't offer type safety, but is useful as a marker.
-type NumSlice interface{}
+type NumSlice any
 
 // ParseNum parses a string into a suitable number type. If the string does not
 // represent a valid number, it returns nil.

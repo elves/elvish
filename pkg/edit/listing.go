@@ -20,7 +20,7 @@ func initListings(ed *Editor, ev *eval.Evaler, st storedefs.Store, histStore his
 	nb.AddNs("listing",
 		eval.BuildNsNamed("edit:listing").
 			AddVar("binding", bindingVar).
-			AddGoFns(map[string]interface{}{
+			AddGoFns(map[string]any{
 				"accept":     func() { listingAccept(app) },
 				"up":         func() { listingUp(app) },
 				"down":       func() { listingDown(app) },
@@ -28,7 +28,7 @@ func initListings(ed *Editor, ev *eval.Evaler, st storedefs.Store, histStore his
 				"down-cycle": func() { listingDownCycle(app) },
 				"page-up":    func() { listingPageUp(app) },
 				"page-down":  func() { listingPageDown(app) },
-				"start-custom": func(fm *eval.Frame, opts customListingOpts, items interface{}) {
+				"start-custom": func(fm *eval.Frame, opts customListingOpts, items any) {
 					listingStartCustom(ed, fm, opts, items)
 				},
 			}))
@@ -56,7 +56,7 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 	nb.AddNs("histlist",
 		eval.BuildNsNamed("edit:histlist").
 			AddVar("binding", bindingVar).
-			AddGoFns(map[string]interface{}{
+			AddGoFns(map[string]any{
 				"start": func() {
 					w, err := modes.NewHistlist(ed.app, modes.HistlistSpec{
 						Bindings: bindings,
@@ -221,7 +221,7 @@ func listingRefilter(app cli.App) {
 
 func adaptToIterateString(variable vars.Var) func(func(string)) {
 	return func(f func(s string)) {
-		vals.Iterate(variable.Get(), func(v interface{}) bool {
+		vals.Iterate(variable.Get(), func(v any) bool {
 			f(vals.ToString(v))
 			return true
 		})

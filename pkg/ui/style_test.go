@@ -22,7 +22,7 @@ func TestStyleSGR(t *testing.T) {
 
 type mergeFromOptionsTest struct {
 	style     Style
-	options   map[string]interface{}
+	options   map[string]any
 	wantStyle Style
 	wantErr   string
 }
@@ -40,32 +40,32 @@ var mergeFromOptionsTests = []mergeFromOptionsTest{
 	// Merging with existing options.
 	{
 		style: Style{Bold: true, Dim: true},
-		options: map[string]interface{}{
+		options: map[string]any{
 			"bold": false, "fg-color": "red",
 		},
 		wantStyle: Style{Dim: true, Foreground: Red},
 	},
 	// Bad key.
 	{
-		options: map[string]interface{}{"bad": true},
+		options: map[string]any{"bad": true},
 		wantErr: "unrecognized option 'bad'",
 	},
 	// Bad type for color field.
 	{
-		options: map[string]interface{}{"fg-color": true},
+		options: map[string]any{"fg-color": true},
 		wantErr: "value for option 'fg-color' must be a valid color string",
 	},
 	// Bad type for bool field.
 	{
-		options: map[string]interface{}{"bold": ""},
+		options: map[string]any{"bold": ""},
 		wantErr: "value for option 'bold' must be a bool value",
 	},
 }
 
 // A helper for constructing a test case whose input is a single key-value pair.
-func kv(k string, v interface{}, s Style) mergeFromOptionsTest {
+func kv(k string, v any, s Style) mergeFromOptionsTest {
 	return mergeFromOptionsTest{
-		options: map[string]interface{}{k: v}, wantStyle: s,
+		options: map[string]any{k: v}, wantStyle: s,
 	}
 }
 

@@ -41,7 +41,7 @@ type handleTest struct {
 	Event  term.Event
 	Events []term.Event
 
-	WantNewState  interface{}
+	WantNewState  any
 	WantUnhandled bool
 }
 
@@ -84,15 +84,15 @@ func testHandle(t *testing.T, tests []handleTest) {
 	}
 }
 
-func getState(v interface{}) interface{} {
+func getState(v any) any {
 	return reflectState(v).Interface()
 }
 
-func setState(v, state interface{}) {
+func setState(v, state any) {
 	reflectState(v).Set(reflect.ValueOf(state))
 }
 
-func reflectState(v interface{}) reflect.Value {
+func reflectState(v any) reflect.Value {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() == reflect.Ptr {
 		rv = reflect.Indirect(rv)

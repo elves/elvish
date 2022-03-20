@@ -9,7 +9,7 @@ type Booler interface {
 // Bool converts a value to bool. It is implemented for nil, the builtin bool
 // type, and types implementing the Booler interface. For all other values, it
 // returns true.
-func Bool(v interface{}) bool {
+func Bool(v any) bool {
 	switch v := v.(type) {
 	case nil:
 		return false

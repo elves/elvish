@@ -36,7 +36,7 @@ type Editor struct {
 // the *Editor type; functions may take a notifier instead of *Editor argument
 // to make it clear that they do not depend on other parts of *Editor.
 type notifier interface {
-	notifyf(format string, args ...interface{})
+	notifyf(format string, args ...any)
 	notifyError(ctx string, e error)
 }
 
@@ -132,7 +132,7 @@ func (ed *Editor) Ns() *eval.Ns {
 	return ed.ns
 }
 
-func (ed *Editor) notifyf(format string, args ...interface{}) {
+func (ed *Editor) notifyf(format string, args ...any) {
 	ed.app.Notify(ui.T(fmt.Sprintf(format, args...)))
 }
 

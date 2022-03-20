@@ -23,7 +23,7 @@ func (*Segment) Kind() string { return "ui:text-segment" }
 // the Segment represents an unstyled string only this string is returned.
 func (s *Segment) Repr(int) string {
 	buf := new(bytes.Buffer)
-	addIfNotEqual := func(key string, val, cmp interface{}) {
+	addIfNotEqual := func(key string, val, cmp any) {
 		if val != cmp {
 			var valString string
 			if c, ok := val.(Color); ok {
@@ -52,12 +52,12 @@ func (s *Segment) Repr(int) string {
 }
 
 // IterateKeys feeds the function with all valid attributes of styled-segment.
-func (*Segment) IterateKeys(fn func(v interface{}) bool) {
+func (*Segment) IterateKeys(fn func(v any) bool) {
 	vals.Feed(fn, "text", "fg-color", "bg-color", "bold", "dim", "italic", "underlined", "blink", "inverse")
 }
 
 // Index provides access to the attributes of a styled-segment.
-func (s *Segment) Index(k interface{}) (v interface{}, ok bool) {
+func (s *Segment) Index(k any) (v any, ok bool) {
 	switch k {
 	case "text":
 		v = s.Text
@@ -90,7 +90,7 @@ func (s *Segment) Index(k interface{}) (v interface{}, ok bool) {
 
 // Concat implements Segment+string, Segment+float64, Segment+Segment and
 // Segment+Text.
-func (s *Segment) Concat(v interface{}) (interface{}, error) {
+func (s *Segment) Concat(v any) (any, error) {
 	switch rhs := v.(type) {
 	case string:
 		return Text{s, &Segment{Text: rhs}}, nil
@@ -105,7 +105,7 @@ func (s *Segment) Concat(v interface{}) (interface{}, error) {
 }
 
 // RConcat implements string+Segment and float64+Segment.
-func (s *Segment) RConcat(v interface{}) (interface{}, error) {
+func (s *Segment) RConcat(v any) (any, error) {
 	switch lhs := v.(type) {
 	case string:
 		return Text{&Segment{Text: lhs}, s}, nil

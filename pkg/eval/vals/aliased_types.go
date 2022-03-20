@@ -17,7 +17,7 @@ type List = vector.Vector
 var EmptyList = vector.Empty
 
 // MakeList creates a new List from values.
-func MakeList(vs ...interface{}) vector.Vector {
+func MakeList(vs ...any) vector.Vector {
 	vec := vector.Empty
 	for _, v := range vs {
 		vec = vec.Conj(v)
@@ -42,7 +42,7 @@ var EmptyMap = hashmap.New(Equal, Hash)
 
 // MakeMap creates a map from arguments that are alternately keys and values. It
 // panics if the number of arguments is odd.
-func MakeMap(a ...interface{}) hashmap.Map {
+func MakeMap(a ...any) hashmap.Map {
 	if len(a)%2 == 1 {
 		panic("odd number of arguments to MakeMap")
 	}

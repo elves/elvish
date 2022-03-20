@@ -17,7 +17,7 @@ func Ns(d daemondefs.Client) *eval.Ns {
 	}
 
 	// TODO: Deprecate the variable in favor of the function.
-	getPidVar := func() interface{} {
+	getPidVar := func() any {
 		pid, err := getPid()
 		if err != nil {
 			return "-1"
@@ -30,7 +30,7 @@ func Ns(d daemondefs.Client) *eval.Ns {
 			"pid":  vars.FromGet(getPidVar),
 			"sock": vars.NewReadOnly(string(d.SockPath())),
 		}).
-		AddGoFns(map[string]interface{}{
+		AddGoFns(map[string]any{
 			"pid": getPid,
 		}).Ns()
 }

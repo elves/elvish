@@ -11,7 +11,7 @@ import (
 
 // Ns is the namespace for the re: module.
 var Ns = eval.BuildNsNamed("re").
-	AddGoFns(map[string]interface{}{
+	AddGoFns(map[string]any{
 		"quote":   regexp.QuoteMeta,
 		"match":   match,
 		"find":    find,
@@ -176,7 +176,7 @@ type replaceOpts struct {
 
 func (*replaceOpts) SetDefaultOptions() {}
 
-func replace(fm *eval.Frame, opts replaceOpts, argPattern string, argRepl interface{}, source string) (string, error) {
+func replace(fm *eval.Frame, opts replaceOpts, argPattern string, argRepl any, source string) (string, error) {
 
 	pattern, err := makePattern(argPattern, opts.Posix, opts.Longest)
 	if err != nil {
@@ -201,7 +201,7 @@ func replace(fm *eval.Frame, opts replaceOpts, argPattern string, argRepl interf
 				return ""
 			}
 			values, err := fm.CaptureOutput(func(fm *eval.Frame) error {
-				return repl.Call(fm, []interface{}{s}, eval.NoOpts)
+				return repl.Call(fm, []any{s}, eval.NoOpts)
 			})
 			if err != nil {
 				errReplace = err

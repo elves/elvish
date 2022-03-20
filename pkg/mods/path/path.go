@@ -11,7 +11,7 @@ import (
 
 // Ns is the namespace for the re: module.
 var Ns = eval.BuildNsNamed("path").
-	AddGoFns(map[string]interface{}{
+	AddGoFns(map[string]any{
 		"abs":           filepath.Abs,
 		"base":          filepath.Base,
 		"clean":         filepath.Clean,

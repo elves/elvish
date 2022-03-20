@@ -40,7 +40,7 @@ import (
 // @cf not
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]any{
 		"bool":    vals.Bool,
 		"not":     not,
 		"is":      is,
@@ -76,7 +76,7 @@ func init() {
 //
 // @cf bool
 
-func not(v interface{}) bool {
+func not(v any) bool {
 	return !vals.Bool(v)
 }
 
@@ -106,7 +106,7 @@ func not(v interface{}) bool {
 //
 // Etymology: [Python](https://docs.python.org/3/reference/expressions.html#is).
 
-func is(args ...interface{}) bool {
+func is(args ...any) bool {
 	for i := 0; i+1 < len(args); i++ {
 		if args[i] != args[i+1] {
 			return false
@@ -145,7 +145,7 @@ func is(args ...interface{}) bool {
 //
 // Etymology: [Perl](https://perldoc.perl.org/perlop.html#Equality-Operators).
 
-func eq(args ...interface{}) bool {
+func eq(args ...any) bool {
 	for i := 0; i+1 < len(args); i++ {
 		if !vals.Equal(args[i], args[i+1]) {
 			return false
@@ -174,7 +174,7 @@ func eq(args ...interface{}) bool {
 //
 // @cf eq
 
-func notEq(args ...interface{}) bool {
+func notEq(args ...any) bool {
 	for i := 0; i+1 < len(args); i++ {
 		if vals.Equal(args[i], args[i+1]) {
 			return false
@@ -232,7 +232,7 @@ var ErrUncomparable = errs.BadValue{
 	What:  `inputs to "compare" or "order"`,
 	Valid: "comparable values", Actual: "uncomparable values"}
 
-func compare(fm *Frame, a, b interface{}) (int, error) {
+func compare(fm *Frame, a, b any) (int, error) {
 	switch cmp(a, b) {
 	case less:
 		return -1, nil
@@ -254,7 +254,7 @@ const (
 	uncomparable
 )
 
-func cmp(a, b interface{}) ordering {
+func cmp(a, b any) ordering {
 	switch a := a.(type) {
 	case int, *big.Int, *big.Rat, float64:
 		switch b.(type) {

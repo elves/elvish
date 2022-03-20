@@ -69,7 +69,7 @@ var (
 // conversion, and returns an error if the conversion fails. In other cases,
 // this function just tries to perform "*ptr = src" via reflection and returns
 // an error if the assignment can't be done.
-func ScanToGo(src interface{}, ptr interface{}) error {
+func ScanToGo(src any, ptr any) error {
 	switch ptr := ptr.(type) {
 	case *int:
 		i, err := elvToInt(src)
@@ -116,7 +116,7 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 	}
 }
 
-func elvToInt(arg interface{}) (int, error) {
+func elvToInt(arg any) (int, error) {
 	switch arg := arg.(type) {
 	case int:
 		return arg, nil
@@ -131,7 +131,7 @@ func elvToInt(arg interface{}) (int, error) {
 	}
 }
 
-func elvToNum(arg interface{}) (Num, error) {
+func elvToNum(arg any) (Num, error) {
 	switch arg := arg.(type) {
 	case int, *big.Int, *big.Rat, float64:
 		return arg, nil
@@ -146,7 +146,7 @@ func elvToNum(arg interface{}) (Num, error) {
 	}
 }
 
-func elvToRune(arg interface{}) (rune, error) {
+func elvToRune(arg any) (rune, error) {
 	ss, ok := arg.(string)
 	if !ok {
 		return -1, errMustBeString
@@ -164,7 +164,7 @@ func elvToRune(arg interface{}) (rune, error) {
 
 // ScanListToGo converts a List to a slice, using ScanToGo to convert each
 // element.
-func ScanListToGo(src List, ptr interface{}) error {
+func ScanListToGo(src List, ptr any) error {
 	n := src.Len()
 	values := reflect.MakeSlice(reflect.TypeOf(ptr).Elem(), n, n)
 	i := 0
@@ -181,16 +181,16 @@ func ScanListToGo(src List, ptr interface{}) error {
 
 // Optional wraps the last pointer passed to ScanListElementsToGo, to indicate
 // that it is optional.
-func Optional(ptr interface{}) interface{} { return optional{ptr} }
+func Optional(ptr any) any { return optional{ptr} }
 
-type optional struct{ ptr interface{} }
+type optional struct{ ptr any }
 
 // ScanListElementsToGo unpacks elements from a list, storing the each element
 // in the given pointers with ScanToGo.
 //
 // The last pointer may be wrapped with Optional to indicate that it is
 // optional.
-func ScanListElementsToGo(src List, ptrs ...interface{}) error {
+func ScanListElementsToGo(src List, ptrs ...any) error {
 	if o, ok := ptrs[len(ptrs)-1].(optional); ok {
 		switch src.Len() {
 		case len(ptrs) - 1:
@@ -222,7 +222,7 @@ func ScanListElementsToGo(src List, ptrs ...interface{}) error {
 //
 // The map may contains keys that don't correspond to struct fields, and it
 // doesn't have to contain all keys that correspond to struct fields.
-func ScanMapToGo(src Map, ptr interface{}) error {
+func ScanMapToGo(src Map, ptr any) error {
 	// Iterate over the struct keys instead of the map: since extra keys are
 	// allowed, the map may be very big, while the size of the struct is bound.
 	keys, _ := StructFieldsInfo(reflect.TypeOf(ptr).Elem())
@@ -283,7 +283,7 @@ func makeStructFieldsInfo(t reflect.Type) structFieldsInfo {
 //
 // Exact numbers are normalized to the smallest types that can hold them, and
 // runes are converted to strings. Values of other types are returned unchanged.
-func FromGo(a interface{}) interface{} {
+func FromGo(a any) any {
 	switch a := a.(type) {
 	case *big.Int:
 		return NormalizeBigInt(a)

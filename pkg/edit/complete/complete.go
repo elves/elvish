@@ -59,7 +59,7 @@ type PureEvaler interface {
 	EachSpecial(func(special string))
 	EachNs(func(string))
 	EachVariableInNs(string, func(string))
-	PurelyEvalPrimary(pn *parse.Primary) interface{}
+	PurelyEvalPrimary(pn *parse.Primary) any
 	PurelyEvalCompound(*parse.Compound) (string, bool)
 	PurelyEvalPartialCompound(*parse.Compound, int) (string, bool)
 }

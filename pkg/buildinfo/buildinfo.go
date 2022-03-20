@@ -78,7 +78,7 @@ func (p *Program) Run(fds [3]*os.File, _ []string) error {
 	return nil
 }
 
-func mustToJSON(v interface{}) string {
+func mustToJSON(v any) string {
 	b, err := json.Marshal(v)
 	if err != nil {
 		panic(err)

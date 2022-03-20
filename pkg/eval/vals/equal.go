@@ -9,14 +9,14 @@ import (
 type Equaler interface {
 	// Equal compares the receiver to another value. Two equal values must have
 	// the same hash code.
-	Equal(other interface{}) bool
+	Equal(other any) bool
 }
 
 // Equal returns whether two values are equal. It is implemented for the builtin
 // types bool and string, the File, List, Map types, StructMap types, and types
 // satisfying the Equaler interface. For other types, it uses reflect.DeepEqual
 // to compare the two values.
-func Equal(x, y interface{}) bool {
+func Equal(x, y any) bool {
 	switch x := x.(type) {
 	case nil:
 		return x == y

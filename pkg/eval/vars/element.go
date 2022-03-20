@@ -6,12 +6,12 @@ import (
 
 type elem struct {
 	variable Var
-	assocers []interface{}
-	indices  []interface{}
-	setValue interface{}
+	assocers []any
+	indices  []any
+	setValue any
 }
 
-func (ev *elem) Set(v0 interface{}) error {
+func (ev *elem) Set(v0 any) error {
 	var err error
 	v := v0
 	// Evaluate the actual new value from inside out. See comments in
@@ -28,7 +28,7 @@ func (ev *elem) Set(v0 interface{}) error {
 	return err
 }
 
-func (ev *elem) Get() interface{} {
+func (ev *elem) Get() any {
 	// TODO(xiaq): This is only called from fixNilVariables. We don't want to
 	// waste time accessing the variable, so we simply return the value that was
 	// set.
@@ -37,7 +37,7 @@ func (ev *elem) Get() interface{} {
 
 // MakeElement returns a variable, that when set, simulates the mutation of an
 // element.
-func MakeElement(v Var, indices []interface{}) (Var, error) {
+func MakeElement(v Var, indices []any) (Var, error) {
 	// Assignment of indexed variables actually assigns the variable, with
 	// the right hand being a nested series of Assocs. As the simplest
 	// example, `a[0] = x` is equivalent to `a = (assoc $a 0 x)`. A more
@@ -54,7 +54,7 @@ func MakeElement(v Var, indices []interface{}) (Var, error) {
 	//
 	// When the right-hand side of the assignment becomes available, the new
 	// value for $a is evaluated by doing Assoc from inside out.
-	assocers := make([]interface{}, len(indices))
+	assocers := make([]any, len(indices))
 	varValue := v.Get()
 	assocers[0] = varValue
 	for i, index := range indices[:len(indices)-1] {
@@ -71,14 +71,14 @@ func MakeElement(v Var, indices []interface{}) (Var, error) {
 // DelElement deletes an element. It uses a similar process to MakeElement,
 // except that the last level of container needs to be Dissoc-able instead of
 // Assoc-able.
-func DelElement(variable Var, indices []interface{}) error {
+func DelElement(variable Var, indices []any) error {
 	var err error
 	// In "del a[0][1][2]",
 	//
 	// indices:   0  1     2
 	// assocers: $a $a[0]
 	// dissocer:          $a[0][1]
-	assocers := make([]interface{}, len(indices)-1)
+	assocers := make([]any, len(indices)-1)
 	container := variable.Get()
 	for i, index := range indices[:len(indices)-1] {
 		assocers[i] = container

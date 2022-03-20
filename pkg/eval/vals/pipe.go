@@ -26,7 +26,7 @@ func (Pipe) Kind() string {
 }
 
 // Equal compares based on the equality of the two consistuent files.
-func (p Pipe) Equal(rhs interface{}) bool {
+func (p Pipe) Equal(rhs any) bool {
 	q, ok := rhs.(Pipe)
 	if !ok {
 		return false

@@ -10,7 +10,7 @@ import (
 type HasKeyer interface {
 	// HasKey returns whether the receiver has the given argument as a valid
 	// key.
-	HasKey(interface{}) bool
+	HasKey(any) bool
 }
 
 // HasKey returns whether a container has a key. It is implemented for the Map
@@ -18,7 +18,7 @@ type HasKeyer interface {
 // back to iterating keys using IterateKeys, and if that fails, it falls back to
 // calling Len and checking if key is a valid numeric or slice index. Otherwise
 // it returns false.
-func HasKey(container, key interface{}) bool {
+func HasKey(container, key any) bool {
 	switch container := container.(type) {
 	case HasKeyer:
 		return container.HasKey(key)
@@ -30,7 +30,7 @@ func HasKey(container, key interface{}) bool {
 		return hasKeyStructMap(container.Fields(), key)
 	default:
 		var found bool
-		err := IterateKeys(container, func(k interface{}) bool {
+		err := IterateKeys(container, func(k any) bool {
 			if key == k {
 				found = true
 			}
@@ -49,7 +49,7 @@ func HasKey(container, key interface{}) bool {
 	}
 }
 
-func hasKeyStructMap(m StructMap, k interface{}) bool {
+func hasKeyStructMap(m StructMap, k any) bool {
 	kstring, ok := k.(string)
 	if !ok || kstring == "" {
 		return false

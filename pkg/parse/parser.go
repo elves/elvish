@@ -53,13 +53,13 @@ type parsed struct {
 	n Node
 }
 
-func (p parsed) addAs(ptr interface{}, parent Node) {
+func (p parsed) addAs(ptr any, parent Node) {
 	dst := reflect.ValueOf(ptr).Elem()
 	dst.Set(reflect.ValueOf(p.n)) // *ptr = p.n
 	addChild(parent, p.n)
 }
 
-func (p parsed) addTo(ptr interface{}, parent Node) {
+func (p parsed) addTo(ptr any, parent Node) {
 	dst := reflect.ValueOf(ptr).Elem()
 	dst.Set(reflect.Append(dst, reflect.ValueOf(p.n))) // *ptr = append(*ptr, n)
 	addChild(parent, p.n)

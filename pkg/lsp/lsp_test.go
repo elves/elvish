@@ -143,7 +143,7 @@ func TestCompletion(t *testing.T) {
 
 var jsonrpcErrorTests = []struct {
 	method  string
-	params  interface{}
+	params  any
 	wantErr error
 }{
 	{"unknown/method", struct{}{}, errMethodNotFound},
@@ -262,7 +262,7 @@ func (c *client) handler() jsonrpc2.Handler {
 	})
 }
 
-func (c *client) publishDiagnostics(_ context.Context, _ jsonrpc2.JSONRPC2, rawParams json.RawMessage) (interface{}, error) {
+func (c *client) publishDiagnostics(_ context.Context, _ jsonrpc2.JSONRPC2, rawParams json.RawMessage) (any, error) {
 	var params lsp.PublishDiagnosticsParams
 	err := json.Unmarshal(rawParams, &params)
 	if err != nil {

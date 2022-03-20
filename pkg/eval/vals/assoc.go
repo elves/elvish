@@ -8,7 +8,7 @@ import (
 type Assocer interface {
 	// Assoc returns a slightly modified version of the receiver with key k
 	// associated with value v.
-	Assoc(k, v interface{}) (interface{}, error)
+	Assoc(k, v any) (any, error)
 }
 
 var (
@@ -21,7 +21,7 @@ var (
 // the container, in which the key associated with the value. It is implemented
 // for the builtin type string, List and Map types, StructMap types, and types
 // satisfying the Assocer interface. For other types, it returns an error.
-func Assoc(a, k, v interface{}) (interface{}, error) {
+func Assoc(a, k, v any) (any, error) {
 	switch a := a.(type) {
 	case string:
 		return assocString(a, k, v)
@@ -35,7 +35,7 @@ func Assoc(a, k, v interface{}) (interface{}, error) {
 	return nil, errAssocUnsupported
 }
 
-func assocString(s string, k, v interface{}) (interface{}, error) {
+func assocString(s string, k, v any) (any, error) {
 	i, j, err := convertStringIndex(k, s)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func assocString(s string, k, v interface{}) (interface{}, error) {
 	return s[:i] + repl + s[j:], nil
 }
 
-func assocList(l List, k, v interface{}) (interface{}, error) {
+func assocList(l List, k, v any) (any, error) {
 	index, err := ConvertListIndex(k, l.Len())
 	if err != nil {
 		return nil, err

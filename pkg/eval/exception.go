@@ -124,7 +124,7 @@ func (exc *exception) Repr(indent int) string {
 }
 
 // Equal compares by address.
-func (exc *exception) Equal(rhs interface{}) bool {
+func (exc *exception) Equal(rhs any) bool {
 	return exc == rhs
 }
 

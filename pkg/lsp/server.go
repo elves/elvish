@@ -46,14 +46,14 @@ func handler(s *server) jsonrpc2.Handler {
 	})
 }
 
-type method func(context.Context, jsonrpc2.JSONRPC2, json.RawMessage) (interface{}, error)
+type method func(context.Context, jsonrpc2.JSONRPC2, json.RawMessage) (any, error)
 
-func noop(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMessage) (interface{}, error) {
+func noop(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMessage) (any, error) {
 	return nil, nil
 }
 
 func routingHandler(methods map[string]method) jsonrpc2.Handler {
-	return jsonrpc2.HandlerWithError(func(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (interface{}, error) {
+	return jsonrpc2.HandlerWithError(func(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (any, error) {
 		fn, ok := methods[req.Method]
 		if !ok {
 			return nil, errMethodNotFound
@@ -64,7 +64,7 @@ func routingHandler(methods map[string]method) jsonrpc2.Handler {
 
 // Handler implementations. These are all called synchronously.
 
-func (s *server) initialize(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMessage) (interface{}, error) {
+func (s *server) initialize(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMessage) (any, error) {
 	return &lsp.InitializeResult{
 		Capabilities: lsp.ServerCapabilities{
 			TextDocumentSync: &lsp.TextDocumentSyncOptionsOrKind{
@@ -77,7 +77,7 @@ func (s *server) initialize(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMe
 	}, nil
 }
 
-func (s *server) didOpen(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (interface{}, error) {
+func (s *server) didOpen(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (any, error) {
 	var params lsp.DidOpenTextDocumentParams
 	if json.Unmarshal(rawParams, &params) != nil {
 		return nil, errInvalidParams
@@ -89,7 +89,7 @@ func (s *server) didOpen(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams 
 	return nil, nil
 }
 
-func (s *server) didChange(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (interface{}, error) {
+func (s *server) didChange(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (any, error) {
 	var params lsp.DidChangeTextDocumentParams
 	if json.Unmarshal(rawParams, &params) != nil {
 		return nil, errInvalidParams
@@ -103,11 +103,11 @@ func (s *server) didChange(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParam
 	return nil, nil
 }
 
-func (s *server) hover(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (interface{}, error) {
+func (s *server) hover(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (any, error) {
 	return lsp.Hover{}, nil
 }
 
-func (s *server) completion(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (interface{}, error) {
+func (s *server) completion(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (any, error) {
 	var params lsp.CompletionParams
 	if json.Unmarshal(rawParams, &params) != nil {
 		return nil, errInvalidParams

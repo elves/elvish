@@ -62,12 +62,12 @@ func initStateAPI(app cli.App, nb eval.NsBuilder) {
 	// State API always operates on the root CodeArea widget
 	codeArea := app.ActiveWidget().(tk.CodeArea)
 
-	nb.AddGoFns(map[string]interface{}{
+	nb.AddGoFns(map[string]any{
 		"insert-at-dot": func(s string) { insertAtDot(app, s) },
 		"replace-input": func(s string) { replaceInput(app, s) },
 	})
 
-	setDot := func(v interface{}) error {
+	setDot := func(v any) error {
 		var dot int
 		err := vals.ScanToGo(v, &dot)
 		if err != nil {
@@ -78,12 +78,12 @@ func initStateAPI(app cli.App, nb eval.NsBuilder) {
 		})
 		return nil
 	}
-	getDot := func() interface{} {
+	getDot := func() any {
 		return vals.FromGo(codeArea.CopyState().Buffer.Dot)
 	}
 	nb.AddVar("-dot", vars.FromSetGet(setDot, getDot))
 
-	setCurrentCommand := func(v interface{}) error {
+	setCurrentCommand := func(v any) error {
 		var content string
 		err := vals.ScanToGo(v, &content)
 		if err != nil {
@@ -92,7 +92,7 @@ func initStateAPI(app cli.App, nb eval.NsBuilder) {
 		replaceInput(app, content)
 		return nil
 	}
-	getCurrentCommand := func() interface{} {
+	getCurrentCommand := func() any {
 		return vals.FromGo(codeArea.CopyState().Buffer.Content)
 	}
 	nb.AddVar("current-command", vars.FromSetGet(setCurrentCommand, getCurrentCommand))

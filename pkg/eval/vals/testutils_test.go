@@ -3,8 +3,8 @@ package vals
 import "src.elv.sh/pkg/tt"
 
 // Returns a tt.Matcher that matches using the Equal function.
-func eq(r interface{}) tt.Matcher { return equalMatcher{r} }
+func eq(r any) tt.Matcher { return equalMatcher{r} }
 
-type equalMatcher struct{ want interface{} }
+type equalMatcher struct{ want any }
 
 func (em equalMatcher) Match(got tt.RetValue) bool { return Equal(got, em.want) }

@@ -27,7 +27,7 @@ func initCommandAPI(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	nb.AddNs("command",
 		eval.BuildNsNamed("edit:command").
 			AddVar("binding", bindingVar).
-			AddGoFns(map[string]interface{}{
+			AddGoFns(map[string]any{
 				"start": func() {
 					w := modes.NewStub(modes.StubSpec{
 						Bindings: bindings,

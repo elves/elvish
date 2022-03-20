@@ -98,7 +98,7 @@ func initGlobalBindings(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb e
 	nb.AddVar("global-binding", bindingVar)
 }
 
-func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}) {
+func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...any) {
 	if hook.Len() == 0 {
 		return
 	}
@@ -126,7 +126,7 @@ func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...interface{}
 	}
 }
 
-func callFilters(ev *eval.Evaler, name string, filters vals.List, args ...interface{}) bool {
+func callFilters(ev *eval.Evaler, name string, filters vals.List, args ...any) bool {
 	if filters.Len() == 0 {
 		return true
 	}

@@ -93,7 +93,7 @@ var (
 	rlimits     map[int]*unix.Rlimit
 )
 
-func (rlimitsVar) Get() interface{} {
+func (rlimitsVar) Get() any {
 	rlimitMutex.Lock()
 	defer rlimitMutex.Unlock()
 
@@ -112,7 +112,7 @@ func (rlimitsVar) Get() interface{} {
 	return rlimitsMap
 }
 
-func (rlimitsVar) Set(v interface{}) error {
+func (rlimitsVar) Set(v any) error {
 	newRlimits, err := parseRlimitsMap(v)
 	if err != nil {
 		return err
@@ -156,7 +156,7 @@ func initRlimits() {
 	}
 }
 
-func parseRlimitsMap(val interface{}) (map[int]*unix.Rlimit, error) {
+func parseRlimitsMap(val any) (map[int]*unix.Rlimit, error) {
 	if err := checkRlimitsMapKeys(val); err != nil {
 		return nil, err
 	}
@@ -174,13 +174,13 @@ func parseRlimitsMap(val interface{}) (map[int]*unix.Rlimit, error) {
 	return limits, nil
 }
 
-func checkRlimitsMapKeys(val interface{}) error {
+func checkRlimitsMapKeys(val any) error {
 	wantedKeys := make(map[string]struct{}, len(rlimitKeys))
 	for _, key := range rlimitKeys {
 		wantedKeys[key] = struct{}{}
 	}
 	var errKey error
-	err := vals.IterateKeys(val, func(k interface{}) bool {
+	err := vals.IterateKeys(val, func(k any) bool {
 		ks, ok := k.(string)
 		if !ok {
 			errKey = errs.BadValue{What: "key of $unix:rlimits",
@@ -209,7 +209,7 @@ func checkRlimitsMapKeys(val interface{}) error {
 	return nil
 }
 
-func parseRlimitMap(val interface{}) (*unix.Rlimit, error) {
+func parseRlimitMap(val any) (*unix.Rlimit, error) {
 	if err := checkRlimitMapKeys(val); err != nil {
 		return nil, err
 	}
@@ -224,9 +224,9 @@ func parseRlimitMap(val interface{}) (*unix.Rlimit, error) {
 	return &unix.Rlimit{Cur: cur, Max: max}, nil
 }
 
-func checkRlimitMapKeys(val interface{}) error {
+func checkRlimitMapKeys(val any) error {
 	var errKey error
-	err := vals.IterateKeys(val, func(k interface{}) bool {
+	err := vals.IterateKeys(val, func(k any) bool {
 		if k != "cur" && k != "max" {
 			errKey = errs.BadValue{What: "key of rlimit value",
 				Valid: "cur or max", Actual: vals.ReprPlain(k)}
@@ -241,7 +241,7 @@ func checkRlimitMapKeys(val interface{}) error {
 	return errKey
 }
 
-func indexRlimitMap(m interface{}, key string) (rlimT, error) {
+func indexRlimitMap(m any, key string) (rlimT, error) {
 	val, err := vals.Index(m, key)
 	if err != nil {
 		return unix.RLIM_INFINITY, nil

@@ -18,7 +18,7 @@ import (
 // Input and output.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]any{
 		// Value output
 		"put":    put,
 		"repeat": repeat,
@@ -84,7 +84,7 @@ func init() {
 // [C](https://manpages.debian.org/stretch/manpages-dev/puts.3.en.html) and
 // [Ruby](https://ruby-doc.org/core-2.2.2/IO.html#method-i-puts) as `puts`.
 
-func put(fm *Frame, args ...interface{}) error {
+func put(fm *Frame, args ...any) error {
 	out := fm.ValueOutput()
 	for _, a := range args {
 		err := out.Put(a)
@@ -114,7 +114,7 @@ func put(fm *Frame, args ...interface{}) error {
 //
 // Etymology: [Clojure](https://clojuredocs.org/clojure.core/repeat).
 
-func repeat(fm *Frame, n int, v interface{}) error {
+func repeat(fm *Frame, n int, v any) error {
 	out := fm.ValueOutput()
 	for i := 0; i < n; i++ {
 		err := out.Put(v)
@@ -229,7 +229,7 @@ type printOpts struct{ Sep string }
 
 func (o *printOpts) SetDefaultOptions() { o.Sep = " " }
 
-func print(fm *Frame, opts printOpts, args ...interface{}) error {
+func print(fm *Frame, opts printOpts, args ...any) error {
 	out := fm.ByteOutput()
 	for i, arg := range args {
 		if i > 0 {
@@ -324,8 +324,8 @@ func print(fm *Frame, opts printOpts, args ...interface{}) error {
 //
 // @cf print echo pprint repr
 
-func printf(fm *Frame, template string, args ...interface{}) error {
-	wrappedArgs := make([]interface{}, len(args))
+func printf(fm *Frame, template string, args ...any) error {
+	wrappedArgs := make([]any, len(args))
 	for i, arg := range args {
 		wrappedArgs[i] = formatter{arg}
 	}
@@ -335,7 +335,7 @@ func printf(fm *Frame, template string, args ...interface{}) error {
 }
 
 type formatter struct {
-	wrapped interface{}
+	wrapped any
 }
 
 func (f formatter) Format(state fmt.State, r rune) {
@@ -377,7 +377,7 @@ func (f formatter) Format(state fmt.State, r rune) {
 
 // Writes to State using the flag it stores, but with a potentially different
 // verb and value.
-func writeFmt(state fmt.State, v rune, val interface{}) {
+func writeFmt(state fmt.State, v rune, val any) {
 	// Reconstruct the verb string.
 	var sb strings.Builder
 	sb.WriteRune('%')
@@ -425,7 +425,7 @@ func writeFmt(state fmt.State, v rune, val interface{}) {
 //
 // Etymology: Bourne sh.
 
-func echo(fm *Frame, opts printOpts, args ...interface{}) error {
+func echo(fm *Frame, opts printOpts, args ...any) error {
 	err := print(fm, opts, args...)
 	if err != nil {
 		return err
@@ -461,7 +461,7 @@ func echo(fm *Frame, opts printOpts, args ...interface{}) error {
 //
 // @cf repr
 
-func pprint(fm *Frame, args ...interface{}) error {
+func pprint(fm *Frame, args ...any) error {
 	out := fm.ByteOutput()
 	for _, arg := range args {
 		_, err := out.WriteString(vals.Repr(arg, 0))
@@ -494,7 +494,7 @@ func pprint(fm *Frame, args ...interface{}) error {
 //
 // Etymology: [Python](https://docs.python.org/3/library/functions.html#repr).
 
-func repr(fm *Frame, args ...interface{}) error {
+func repr(fm *Frame, args ...any) error {
 	out := fm.ByteOutput()
 	for i, arg := range args {
 		if i > 0 {
@@ -720,7 +720,7 @@ func fromJSON(fm *Frame) error {
 
 	dec := json.NewDecoder(in)
 	for {
-		var v interface{}
+		var v any
 		err := dec.Decode(&v)
 		if err != nil {
 			if err == io.EOF {
@@ -740,13 +740,13 @@ func fromJSON(fm *Frame) error {
 }
 
 // Converts a interface{} that results from json.Unmarshal to an Elvish value.
-func fromJSONInterface(v interface{}) (interface{}, error) {
+func fromJSONInterface(v any) (any, error) {
 	switch v := v.(type) {
 	case nil, bool, string:
 		return v, nil
 	case float64:
 		return v, nil
-	case []interface{}:
+	case []any:
 		vec := vals.EmptyList
 		for _, elem := range v {
 			converted, err := fromJSONInterface(elem)
@@ -756,7 +756,7 @@ func fromJSONInterface(v interface{}) (interface{}, error) {
 			vec = vec.Conj(converted)
 		}
 		return vec, nil
-	case map[string]interface{}:
+	case map[string]any:
 		m := vals.EmptyMap
 		for key, val := range v {
 			convertedVal, err := fromJSONInterface(val)
@@ -848,7 +848,7 @@ func toLines(fm *Frame, inputs Inputs) error {
 	out := fm.ByteOutput()
 	var errOut error
 
-	inputs(func(v interface{}) {
+	inputs(func(v any) {
 		if errOut != nil {
 			return
 		}
@@ -888,7 +888,7 @@ func toTerminated(fm *Frame, terminator string, inputs Inputs) error {
 
 	out := fm.ByteOutput()
 	var errOut error
-	inputs(func(v interface{}) {
+	inputs(func(v any) {
 		if errOut != nil {
 			return
 		}
@@ -920,7 +920,7 @@ func toJSON(fm *Frame, inputs Inputs) error {
 	encoder := json.NewEncoder(fm.ByteOutput())
 
 	var errEncode error
-	inputs(func(v interface{}) {
+	inputs(func(v any) {
 		if errEncode != nil {
 			return
 		}

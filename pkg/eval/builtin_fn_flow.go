@@ -14,7 +14,7 @@ import (
 // TODO(xiaq): Document "multi-error".
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]any{
 		"run-parallel": runParallel,
 		// Exception and control
 		"fail":        fail,
@@ -128,12 +128,12 @@ func runParallel(fm *Frame, functions ...Callable) error {
 func each(fm *Frame, f Callable, inputs Inputs) error {
 	broken := false
 	var err error
-	inputs(func(v interface{}) {
+	inputs(func(v any) {
 		if broken {
 			return
 		}
 		newFm := fm.Fork("closure of each")
-		ex := f.Call(newFm, []interface{}{v}, NoOpts)
+		ex := f.Call(newFm, []any{v}, NoOpts)
 		newFm.Close()
 
 		if ex != nil {
@@ -197,7 +197,7 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 	var errMu sync.Mutex
 	var err error
 
-	inputs(func(v interface{}) {
+	inputs(func(v any) {
 		if atomic.LoadInt32(&broken) != 0 {
 			return
 		}
@@ -205,7 +205,7 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 		go func() {
 			newFm := fm.Fork("closure of peach")
 			newFm.ports[0] = DummyInputPort
-			ex := f.Call(newFm, []interface{}{v}, NoOpts)
+			ex := f.Call(newFm, []any{v}, NoOpts)
 			newFm.Close()
 
 			if ex != nil {
@@ -229,7 +229,7 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 }
 
 // FailError is an error returned by the "fail" command.
-type FailError struct{ Content interface{} }
+type FailError struct{ Content any }
 
 // Error returns the string representation of the cause.
 func (e FailError) Error() string { return vals.ToString(e.Content) }
@@ -241,8 +241,8 @@ type failFields struct{ e FailError }
 
 func (failFields) IsStructMap() {}
 
-func (f failFields) Type() string         { return "fail" }
-func (f failFields) Content() interface{} { return f.e.Content }
+func (f failFields) Type() string { return "fail" }
+func (f failFields) Content() any { return f.e.Content }
 
 //elvdoc:fn fail
 //
@@ -269,7 +269,7 @@ func (f failFields) Content() interface{} { return f.e.Content }
 //     fail ?(f)
 // ```
 
-func fail(v interface{}) error {
+func fail(v any) error {
 	if e, ok := v.(error); ok {
 		// MAYBE TODO: if v is an exception, attach a "rethrown" stack trace,
 		// like Java

@@ -17,7 +17,7 @@ func stringLiteralOrError(cp *compiler, n *parse.Compound, what string) string {
 }
 
 type errorpfer interface {
-	errorpf(r diag.Ranger, fmt string, args ...interface{})
+	errorpf(r diag.Ranger, fmt string, args ...any)
 }
 
 // argsWalker is used by builtin special forms to implement argument parsing.

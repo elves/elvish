@@ -15,7 +15,7 @@ type concatter struct{}
 
 var errBadFloat64 = errors.New("float64 is bad")
 
-func (concatter) Concat(rhs interface{}) (interface{}, error) {
+func (concatter) Concat(rhs any) (any, error) {
 	switch rhs := rhs.(type) {
 	case string:
 		return "concatter " + rhs, nil
@@ -29,7 +29,7 @@ func (concatter) Concat(rhs interface{}) (interface{}, error) {
 // An implementation of RConcatter that accepts all types.
 type rconcatter struct{}
 
-func (rconcatter) RConcat(lhs interface{}) (interface{}, error) {
+func (rconcatter) RConcat(lhs any) (any, error) {
 	return "rconcatter", nil
 }
 

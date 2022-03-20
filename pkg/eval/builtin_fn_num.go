@@ -27,7 +27,7 @@ import (
 // ```
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]any{
 		// Constructor
 		"float64":   toFloat64,
 		"num":       num,

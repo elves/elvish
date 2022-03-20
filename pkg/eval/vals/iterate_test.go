@@ -7,9 +7,9 @@ import (
 )
 
 // An implementation of Iterator.
-type iterator struct{ elements []interface{} }
+type iterator struct{ elements []any }
 
-func (i iterator) Iterate(f func(interface{}) bool) {
+func (i iterator) Iterate(f func(any) bool) {
 	Feed(f, i.elements...)
 }
 

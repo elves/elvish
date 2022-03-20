@@ -36,7 +36,7 @@ func rc(codes ...string) func(*fixture) {
 	return func(f *fixture) { evals(f.Evaler, codes...) }
 }
 
-func assign(name string, val interface{}) func(*fixture) {
+func assign(name string, val any) func(*fixture) {
 	return func(f *fixture) {
 		f.Evaler.ExtendGlobal(eval.BuildNs().AddVar("temp", vars.NewReadOnly(val)))
 		evals(f.Evaler, "set "+name+" = $temp")
@@ -84,16 +84,16 @@ func (f *fixture) Wait() (string, error) {
 	return <-f.codeCh, <-f.errCh
 }
 
-func (f *fixture) MakeBuffer(args ...interface{}) *term.Buffer {
+func (f *fixture) MakeBuffer(args ...any) *term.Buffer {
 	return term.NewBufferBuilder(f.width).MarkLines(args...).Buffer()
 }
 
-func (f *fixture) TestTTY(t *testing.T, args ...interface{}) {
+func (f *fixture) TestTTY(t *testing.T, args ...any) {
 	t.Helper()
 	f.TTYCtrl.TestBuffer(t, f.MakeBuffer(args...))
 }
 
-func (f *fixture) TestTTYNotes(t *testing.T, args ...interface{}) {
+func (f *fixture) TestTTYNotes(t *testing.T, args ...any) {
 	t.Helper()
 	f.TTYCtrl.TestNotesBuffer(t, f.MakeBuffer(args...))
 }
@@ -119,19 +119,19 @@ func evals(ev *eval.Evaler, codes ...string) {
 	}
 }
 
-func getGlobal(ev *eval.Evaler, name string) interface{} {
+func getGlobal(ev *eval.Evaler, name string) any {
 	v, _ := ev.Global().Index(name)
 	return v
 }
 
-func testGlobals(t *testing.T, ev *eval.Evaler, wantVals map[string]interface{}) {
+func testGlobals(t *testing.T, ev *eval.Evaler, wantVals map[string]any) {
 	t.Helper()
 	for name, wantVal := range wantVals {
 		testGlobal(t, ev, name, wantVal)
 	}
 }
 
-func testGlobal(t *testing.T, ev *eval.Evaler, name string, wantVal interface{}) {
+func testGlobal(t *testing.T, ev *eval.Evaler, name string, wantVal any) {
 	t.Helper()
 	if val := getGlobal(ev, name); !vals.Equal(val, wantVal) {
 		t.Errorf("$%s = %s, want %s",

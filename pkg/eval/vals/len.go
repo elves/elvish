@@ -18,7 +18,7 @@ var _ Lener = vector.Vector(nil)
 // well-defined length. It is implemented for the builtin type string, StructMap
 // types, and types satisfying the Lener interface. For other types, it returns
 // -1.
-func Len(v interface{}) int {
+func Len(v any) int {
 	switch v := v.(type) {
 	case string:
 		return len(v)

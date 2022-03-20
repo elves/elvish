@@ -20,7 +20,7 @@ func (e UnknownOption) Error() string {
 // RawOptions is the type of an argument a Go-native function can take to
 // declare that it wants to parse options itself. See the doc of NewGoFn for
 // details.
-type RawOptions map[string]interface{}
+type RawOptions map[string]any
 
 // Takes a raw option map and a pointer to a struct, and populate the struct
 // with options. A field named FieldName corresponds to the option named
@@ -29,7 +29,7 @@ type RawOptions map[string]interface{}
 //
 // Similar to vals.ScanMapToGo, but requires rawOpts to contain a subset of keys
 // supported by the struct.
-func scanOptions(rawOpts RawOptions, ptr interface{}) error {
+func scanOptions(rawOpts RawOptions, ptr any) error {
 	_, keyIdx := vals.StructFieldsInfo(reflect.TypeOf(ptr).Elem())
 	structValue := reflect.ValueOf(ptr).Elem()
 	for k, v := range rawOpts {

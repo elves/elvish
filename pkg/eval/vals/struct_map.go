@@ -108,7 +108,7 @@ func (it *structMapIterator) Next() bool {
 	return it.i < len(fields)
 }
 
-func (it *structMapIterator) Get(v reflect.Value) (string, interface{}) {
+func (it *structMapIterator) Get(v reflect.Value) (string, any) {
 	name := it.info.fieldNames[it.i]
 	if it.i < it.info.plainFields {
 		return name, v.Field(it.i).Interface()

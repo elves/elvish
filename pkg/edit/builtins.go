@@ -131,7 +131,7 @@ func insertRaw(app cli.App, tty cli.TTY) {
 
 var errMustBeKeyOrString = errors.New("must be key or string")
 
-func toKey(v interface{}) (ui.Key, error) {
+func toKey(v any) (ui.Key, error) {
 	switch v := v.(type) {
 	case ui.Key:
 		return v, nil
@@ -157,7 +157,7 @@ func toKey(v interface{}) (ui.Key, error) {
 // If called while the editor is inactive, the message will be queued, and shown
 // once the editor becomes active.
 
-func notify(app cli.App, x interface{}) error {
+func notify(app cli.App, x any) error {
 	// TODO: De-duplicate with the implementation of the styled builtin.
 	var t ui.Text
 	switch x := x.(type) {
@@ -240,7 +240,7 @@ func wordify(fm *eval.Frame, code string) error {
 }
 
 func initTTYBuiltins(app cli.App, tty cli.TTY, nb eval.NsBuilder) {
-	nb.AddGoFns(map[string]interface{}{
+	nb.AddGoFns(map[string]any{
 		"-dump-buf":  func() string { return dumpBuf(tty) },
 		"insert-raw": func() { insertRaw(app, tty) },
 		"clear":      func() { clear(app, tty) },
@@ -248,12 +248,12 @@ func initTTYBuiltins(app cli.App, tty cli.TTY, nb eval.NsBuilder) {
 }
 
 func initMiscBuiltins(app cli.App, nb eval.NsBuilder) {
-	nb.AddGoFns(map[string]interface{}{
+	nb.AddGoFns(map[string]any{
 		"binding-table":  makeBindingMap,
 		"close-mode":     func() { closeMode(app) },
 		"end-of-history": func() { endOfHistory(app) },
 		"key":            toKey,
-		"notify":         func(x interface{}) error { return notify(app, x) },
+		"notify":         func(x any) error { return notify(app, x) },
 		"redraw":         func(opts redrawOpts) { redraw(app, opts) },
 		"return-line":    app.CommitCode,
 		"return-eof":     app.CommitEOF,

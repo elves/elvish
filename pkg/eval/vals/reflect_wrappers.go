@@ -3,7 +3,7 @@ package vals
 import "reflect"
 
 var (
-	dummy              interface{}
+	dummy              any
 	nilValue           = reflect.ValueOf(&dummy).Elem()
 	emptyInterfaceType = reflect.TypeOf(&dummy).Elem()
 )
@@ -11,7 +11,7 @@ var (
 // ValueOf is like reflect.ValueOf, except that when given an argument of nil,
 // it does not return a zero Value, but the Value for the zero value of the
 // empty interface.
-func ValueOf(i interface{}) reflect.Value {
+func ValueOf(i any) reflect.Value {
 	if i == nil {
 		return nilValue
 	}
@@ -20,7 +20,7 @@ func ValueOf(i interface{}) reflect.Value {
 
 // TypeOf is like reflect.TypeOf, except that when given an argument of nil, it
 // does not return nil, but the Type for the empty interface.
-func TypeOf(i interface{}) reflect.Type {
+func TypeOf(i any) reflect.Type {
 	if i == nil {
 		return emptyInterfaceType
 	}

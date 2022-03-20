@@ -18,7 +18,7 @@ type Hasher interface {
 // types bool and string, the File, List, Map types, StructMap types, and types
 // satisfying the Hasher interface. For other values, it returns 0 (which is OK
 // in terms of correctness).
-func Hash(v interface{}) uint32 {
+func Hash(v any) uint32 {
 	switch v := v.(type) {
 	case bool:
 		if v {

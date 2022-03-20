@@ -13,7 +13,7 @@ import (
 )
 
 func initBufferBuiltins(app cli.App, nb eval.NsBuilder) {
-	m := make(map[string]interface{})
+	m := make(map[string]any)
 	for name, fn := range bufferBuiltinsData {
 		// Make a lexically scoped copy of fn.
 		fn := fn

@@ -63,7 +63,7 @@ func (c *testCursor) Descend(name string) error {
 }
 
 func getFile(root testutil.Dir, path []string) (NavigationFile, error) {
-	var f interface{} = root
+	var f any = root
 	for _, p := range path {
 		d, ok := f.(testutil.Dir)
 		if !ok {
@@ -91,7 +91,7 @@ func getDirFile(root testutil.Dir, path []string) (NavigationFile, error) {
 
 type testFile struct {
 	name string
-	data interface{}
+	data any
 }
 
 func (f testFile) Name() string { return f.name }

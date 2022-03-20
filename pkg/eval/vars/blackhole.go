@@ -2,11 +2,11 @@ package vars
 
 type blackhole struct{}
 
-func (blackhole) Set(interface{}) error {
+func (blackhole) Set(any) error {
 	return nil
 }
 
-func (blackhole) Get() interface{} {
+func (blackhole) Get() any {
 	return nil
 }
 

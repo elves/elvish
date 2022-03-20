@@ -22,7 +22,7 @@ type Closure struct {
 	// The index of the rest argument. -1 if there is no rest argument.
 	RestArg     int
 	OptNames    []string
-	OptDefaults []interface{}
+	OptDefaults []any
 	SrcMeta     parse.Source
 	DefRange    diag.Ranging
 	op          effectOp
@@ -38,7 +38,7 @@ func (*Closure) Kind() string {
 }
 
 // Equal compares by address.
-func (c *Closure) Equal(rhs interface{}) bool {
+func (c *Closure) Equal(rhs any) bool {
 	return c == rhs
 }
 
@@ -53,7 +53,7 @@ func (c *Closure) Repr(int) string {
 }
 
 // Call calls a closure.
-func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{}) error {
+func (c *Closure) Call(fm *Frame, args []any, opts map[string]any) error {
 	// Check number of arguments.
 	if c.RestArg != -1 {
 		if len(args) < len(c.ArgNames)-1 {

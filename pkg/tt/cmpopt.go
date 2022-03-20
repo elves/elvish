@@ -22,16 +22,16 @@ var cmpopt = cmp.Options([]cmp.Option{
 	CommonCmpOpt,
 })
 
-func transformList(l vector.Vector) []interface{} {
-	res := make([]interface{}, 0, l.Len())
+func transformList(l vector.Vector) []any {
+	res := make([]any, 0, l.Len())
 	for it := l.Iterator(); it.HasElem(); it.Next() {
 		res = append(res, it.Elem())
 	}
 	return res
 }
 
-func transformMap(m hashmap.Map) map[interface{}]interface{} {
-	res := make(map[interface{}]interface{}, m.Len())
+func transformMap(m hashmap.Map) map[any]any {
+	res := make(map[any]any, m.Len())
 	for it := m.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		res[k] = v

@@ -7,7 +7,7 @@ import (
 
 var errIndexNotAtRuneBoundary = errors.New("index not at rune boundary")
 
-func indexString(s string, index interface{}) (string, error) {
+func indexString(s string, index any) (string, error) {
 	i, j, err := convertStringIndex(index, s)
 	if err != nil {
 		return "", err
@@ -15,7 +15,7 @@ func indexString(s string, index interface{}) (string, error) {
 	return s[i:j], nil
 }
 
-func convertStringIndex(rawIndex interface{}, s string) (int, int, error) {
+func convertStringIndex(rawIndex any, s string) (int, int, error) {
 	index, err := ConvertListIndex(rawIndex, len(s))
 	if err != nil {
 		return 0, 0, err

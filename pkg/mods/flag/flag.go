@@ -15,7 +15,7 @@ import (
 
 // Ns is the namespace for the flag: module.
 var Ns = eval.BuildNsNamed("flag").
-	AddGoFns(map[string]interface{}{
+	AddGoFns(map[string]any{
 		"call":         call,
 		"parse":        parse,
 		"parse-getopt": parseGetopt,
@@ -63,15 +63,15 @@ func call(fm *eval.Frame, fn *eval.Closure, argsVal vals.List) error {
 	if err != nil {
 		return err
 	}
-	m := make(map[string]interface{})
+	m := make(map[string]any)
 	fs.VisitAll(func(f *flag.Flag) {
 		m[f.Name] = f.Value.(flag.Getter).Get()
 	})
 	return fn.Call(fm.Fork("parse:call"), callArgs(fs.Args()), m)
 }
 
-func callArgs(ss []string) []interface{} {
-	vs := make([]interface{}, len(ss))
+func callArgs(ss []string) []any {
+	vs := make([]any, len(ss))
 	for i, s := range ss {
 		vs[i] = s
 	}
@@ -157,7 +157,7 @@ func parse(argsVal vals.List, specsVal vals.List) (vals.Map, vals.List, error) {
 	for _, spec := range specs {
 		var (
 			name        string
-			value       interface{}
+			value       any
 			description string
 		)
 		vals.ScanListElementsToGo(spec, &name, &value, &description)
@@ -183,7 +183,7 @@ func newFlagSet(name string) *flag.FlagSet {
 	return fs
 }
 
-func addFlag(fs *flag.FlagSet, name string, value interface{}, description string) error {
+func addFlag(fs *flag.FlagSet, name string, value any, description string) error {
 	switch value := value.(type) {
 	case bool:
 		fs.Bool(name, value, description)
@@ -204,13 +204,13 @@ func addFlag(fs *flag.FlagSet, name string, value interface{}, description strin
 type numFlag struct{ value vals.Num }
 
 func (nf *numFlag) String() string     { return vals.ToString(nf.value) }
-func (nf *numFlag) Get() interface{}   { return nf.value }
+func (nf *numFlag) Get() any           { return nf.value }
 func (nf *numFlag) Set(s string) error { return vals.ScanToGo(s, &nf.value) }
 
 type listFlag struct{ value vals.List }
 
-func (lf *listFlag) String() string   { return vals.ToString(lf.value) }
-func (lf *listFlag) Get() interface{} { return lf.value }
+func (lf *listFlag) String() string { return vals.ToString(lf.value) }
+func (lf *listFlag) Get() any       { return lf.value }
 
 func (lf *listFlag) Set(s string) error {
 	lf.value = vals.MakeListFromStrings(strings.Split(s, ",")...)

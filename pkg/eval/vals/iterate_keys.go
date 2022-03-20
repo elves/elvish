@@ -8,7 +8,7 @@ import (
 type KeysIterator interface {
 	// IterateKeys calls the passed function with each key within the receiver.
 	// The iteration is aborted if the function returns false.
-	IterateKeys(func(v interface{}) bool)
+	IterateKeys(func(v any) bool)
 }
 
 type cannotIterateKeysOf struct{ kind string }
@@ -22,7 +22,7 @@ func (err cannotIterateKeysOf) Error() string {
 // It is implemented for the Map type, StructMap types, and types satisfying the
 // IterateKeyser interface. For these types, it always returns a nil error. For
 // other types, it doesn't do anything and returns an error.
-func IterateKeys(v interface{}, f func(interface{}) bool) error {
+func IterateKeys(v any, f func(any) bool) error {
 	switch v := v.(type) {
 	case KeysIterator:
 		v.IterateKeys(f)
@@ -43,7 +43,7 @@ func IterateKeys(v interface{}, f func(interface{}) bool) error {
 	return nil
 }
 
-func iterateKeysStructMap(v StructMap, f func(interface{}) bool) {
+func iterateKeysStructMap(v StructMap, f func(any) bool) {
 	for _, k := range getStructMapInfo(reflect.TypeOf(v)).fieldNames {
 		if k == "" {
 			continue

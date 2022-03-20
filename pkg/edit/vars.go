@@ -10,7 +10,7 @@ import (
 )
 
 func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
-	nb.AddGoFns(map[string]interface{}{
+	nb.AddGoFns(map[string]any{
 		"add-var":  addVar,
 		"add-vars": addVars,
 	})
@@ -88,7 +88,7 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 // }
 // ```
 
-func addVar(fm *eval.Frame, name string, val interface{}) error {
+func addVar(fm *eval.Frame, name string, val any) error {
 	if !isUnqualified(name) {
 		return errs.BadValue{
 			What:  "name argument to edit:add-var",

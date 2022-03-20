@@ -27,7 +27,7 @@ type RuneStylesheet map[rune]Styling
 //       "---      xxx      ------"
 //       "lorem    ipsum    dolar",
 //   )
-func MarkLines(args ...interface{}) Text {
+func MarkLines(args ...any) Text {
 	var text Text
 	for i := 0; i < len(args); i++ {
 		line, ok := args[i].(string)

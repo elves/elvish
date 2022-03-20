@@ -8,11 +8,11 @@ import (
 // Tester is a helper for testing properties of a value.
 type Tester struct {
 	t *testing.T
-	v interface{}
+	v any
 }
 
 // TestValue returns a ValueTester.
-func TestValue(t *testing.T, v interface{}) Tester {
+func TestValue(t *testing.T, v any) Tester {
 	return Tester{t, v}
 }
 
@@ -67,7 +67,7 @@ func (vt Tester) Repr(wantRepr string) Tester {
 }
 
 // Equal tests that the value is Equal to every of the given values.
-func (vt Tester) Equal(others ...interface{}) Tester {
+func (vt Tester) Equal(others ...any) Tester {
 	vt.t.Helper()
 	for _, other := range others {
 		eq := Equal(vt.v, other)
@@ -79,7 +79,7 @@ func (vt Tester) Equal(others ...interface{}) Tester {
 }
 
 // NotEqual tests that the value is not Equal to any of the given values.
-func (vt Tester) NotEqual(others ...interface{}) Tester {
+func (vt Tester) NotEqual(others ...any) Tester {
 	vt.t.Helper()
 	for _, other := range others {
 		eq := Equal(vt.v, other)
@@ -91,7 +91,7 @@ func (vt Tester) NotEqual(others ...interface{}) Tester {
 }
 
 // HasKey tests that the value has each of the given keys.
-func (vt Tester) HasKey(keys ...interface{}) Tester {
+func (vt Tester) HasKey(keys ...any) Tester {
 	vt.t.Helper()
 	for _, key := range keys {
 		has := HasKey(vt.v, key)
@@ -103,7 +103,7 @@ func (vt Tester) HasKey(keys ...interface{}) Tester {
 }
 
 // HasNoKey tests that the value does not have any of the given keys.
-func (vt Tester) HasNoKey(keys ...interface{}) Tester {
+func (vt Tester) HasNoKey(keys ...any) Tester {
 	vt.t.Helper()
 	for _, key := range keys {
 		has := HasKey(vt.v, key)
@@ -120,7 +120,7 @@ func (vt Tester) HasNoKey(keys ...interface{}) Tester {
 // NOTE: This now checks equality using reflect.DeepEqual, since all the builtin
 // types have string keys. This can be changed in future to use Equal is the
 // need arises.
-func (vt Tester) AllKeys(wantKeys ...interface{}) Tester {
+func (vt Tester) AllKeys(wantKeys ...any) Tester {
 	vt.t.Helper()
 	keys, err := collectKeys(vt.v)
 	if err != nil {
@@ -132,9 +132,9 @@ func (vt Tester) AllKeys(wantKeys ...interface{}) Tester {
 	return vt
 }
 
-func collectKeys(v interface{}) ([]interface{}, error) {
-	var keys []interface{}
-	err := IterateKeys(v, func(k interface{}) bool {
+func collectKeys(v any) ([]any, error) {
+	var keys []any
+	err := IterateKeys(v, func(k any) bool {
 		keys = append(keys, k)
 		return true
 	})
@@ -143,7 +143,7 @@ func collectKeys(v interface{}) ([]interface{}, error) {
 
 // Index tests that Index'ing the value with the given key returns the wanted value
 // and no error.
-func (vt Tester) Index(key, wantVal interface{}) Tester {
+func (vt Tester) Index(key, wantVal any) Tester {
 	vt.t.Helper()
 	got, err := Index(vt.v, key)
 	if err != nil {
@@ -157,7 +157,7 @@ func (vt Tester) Index(key, wantVal interface{}) Tester {
 
 // IndexError tests that Index'ing the value with the given key returns the given
 // error.
-func (vt Tester) IndexError(key interface{}, wantErr error) Tester {
+func (vt Tester) IndexError(key any, wantErr error) Tester {
 	vt.t.Helper()
 	_, err := Index(vt.v, key)
 	if !reflect.DeepEqual(err, wantErr) {
@@ -168,7 +168,7 @@ func (vt Tester) IndexError(key interface{}, wantErr error) Tester {
 
 // Assoc tests that Assoc'ing the value with the given key-value pair returns
 // the wanted new value and no error.
-func (vt Tester) Assoc(key, val, wantNew interface{}) Tester {
+func (vt Tester) Assoc(key, val, wantNew any) Tester {
 	vt.t.Helper()
 	got, err := Assoc(vt.v, key, val)
 	if err != nil {
@@ -182,7 +182,7 @@ func (vt Tester) Assoc(key, val, wantNew interface{}) Tester {
 
 // AssocError tests that Assoc'ing the value with the given key-value pair
 // returns the given error.
-func (vt Tester) AssocError(key, val interface{}, wantErr error) Tester {
+func (vt Tester) AssocError(key, val any, wantErr error) Tester {
 	vt.t.Helper()
 	_, err := Assoc(vt.v, key, val)
 	if !reflect.DeepEqual(err, wantErr) {

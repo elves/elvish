@@ -12,7 +12,7 @@ type customAssocer struct{}
 
 var errCustomAssoc = errors.New("custom assoc error")
 
-func (a customAssocer) Assoc(k, v interface{}) (interface{}, error) {
+func (a customAssocer) Assoc(k, v any) (any, error) {
 	return "custom result", errCustomAssoc
 }
 

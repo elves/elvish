@@ -41,7 +41,7 @@ func (bt bindingsMap) Repr(indent int) string {
 }
 
 // Index converts the index to ui.Key and uses the Index of the inner Map.
-func (bt bindingsMap) Index(index interface{}) (interface{}, error) {
+func (bt bindingsMap) Index(index any) (any, error) {
 	key, err := toKey(index)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (bt bindingsMap) Index(index interface{}) (interface{}, error) {
 	return vals.Index(bt.Map, key)
 }
 
-func (bt bindingsMap) HasKey(k interface{}) bool {
+func (bt bindingsMap) HasKey(k any) bool {
 	_, ok := bt.Map.Index(k)
 	return ok
 }
@@ -64,7 +64,7 @@ func (bt bindingsMap) GetKey(k ui.Key) eval.Callable {
 
 // Assoc converts the index to ui.Key, ensures that the value is CallableValue,
 // uses the Assoc of the inner Map and converts the result to a BindingTable.
-func (bt bindingsMap) Assoc(k, v interface{}) (interface{}, error) {
+func (bt bindingsMap) Assoc(k, v any) (any, error) {
 	key, err := toKey(k)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (bt bindingsMap) Assoc(k, v interface{}) (interface{}, error) {
 
 // Dissoc converts the key to ui.Key and calls the Dissoc method of the inner
 // map.
-func (bt bindingsMap) Dissoc(k interface{}) interface{} {
+func (bt bindingsMap) Dissoc(k any) any {
 	key, err := toKey(k)
 	if err != nil {
 		// Key is invalid; dissoc is no-op.

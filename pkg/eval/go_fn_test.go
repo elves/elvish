@@ -148,20 +148,20 @@ func TestGoFn_RawOptions(t *testing.T) {
 	)
 }
 
-func f(body interface{}) func(*Evaler) {
+func f(body any) func(*Evaler) {
 	return func(ev *Evaler) {
 		ev.ExtendGlobal(BuildNs().AddGoFn("f", body))
 	}
 }
 
-func testInputs(t *testing.T, wantValues ...interface{}) func(Inputs) {
+func testInputs(t *testing.T, wantValues ...any) func(Inputs) {
 	return func(i Inputs) {
 		t.Helper()
-		var values []interface{}
-		i(func(x interface{}) {
+		var values []any
+		i(func(x any) {
 			values = append(values, x)
 		})
-		wantValues := []interface{}{"foo", "bar"}
+		wantValues := []any{"foo", "bar"}
 		if !reflect.DeepEqual(values, wantValues) {
 			t.Errorf("Inputs parameter didn't get supplied inputs")
 		}

@@ -17,7 +17,7 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 	// A wrapper around ScanToGo, to make it easier to test. Instead of
 	// supplying a pointer to the destination, an initial value to the
 	// destination is supplied and the result is returned.
-	scanToGo := func(src interface{}, dstInit interface{}) (interface{}, error) {
+	scanToGo := func(src any, dstInit any) (any, error) {
 		ptr := reflect.New(TypeOf(dstInit))
 		err := ScanToGo(src, ptr.Interface())
 		return ptr.Elem().Interface(), err
@@ -56,7 +56,7 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 }
 
 func TestScanToGo_NumDst(t *testing.T) {
-	scanToGo := func(src interface{}) (Num, error) {
+	scanToGo := func(src any) (Num, error) {
 		var n Num
 		err := ScanToGo(src, &n)
 		return n, err
@@ -80,7 +80,7 @@ func TestScanToGo_NumDst(t *testing.T) {
 }
 
 func TestScanToGo_InterfaceDst(t *testing.T) {
-	scanToGo := func(src interface{}) (interface{}, error) {
+	scanToGo := func(src any) (any, error) {
 		var l List
 		err := ScanToGo(src, &l)
 		return l, err
@@ -102,7 +102,7 @@ func TestScanToGo_ErrorsWithNonPointerDst(t *testing.T) {
 
 func TestScanListToGo(t *testing.T) {
 	// A wrapper around ScanListToGo, to make it easier to test.
-	scanListToGo := func(src List, dstInit interface{}) (interface{}, error) {
+	scanListToGo := func(src List, dstInit any) (any, error) {
 		ptr := reflect.New(TypeOf(dstInit))
 		ptr.Elem().Set(reflect.ValueOf(dstInit))
 		err := ScanListToGo(src, ptr.Interface())
@@ -119,8 +119,8 @@ func TestScanListToGo(t *testing.T) {
 
 func TestScanListElementsToGo(t *testing.T) {
 	// A wrapper around ScanListElementsToGo, to make it easier to test.
-	scanListElementsToGo := func(src List, inits ...interface{}) ([]interface{}, error) {
-		ptrs := make([]interface{}, len(inits))
+	scanListElementsToGo := func(src List, inits ...any) ([]any, error) {
+		ptrs := make([]any, len(inits))
 		for i, init := range inits {
 			if o, ok := init.(optional); ok {
 				// Wrapping the init value with Optional translates to wrapping
@@ -131,7 +131,7 @@ func TestScanListElementsToGo(t *testing.T) {
 			}
 		}
 		err := ScanListElementsToGo(src, ptrs...)
-		vals := make([]interface{}, len(ptrs))
+		vals := make([]any, len(ptrs))
 		for i, ptr := range ptrs {
 			if o, ok := ptr.(optional); ok {
 				vals[i] = reflect.ValueOf(o.ptr).Elem().Interface()
@@ -143,17 +143,17 @@ func TestScanListElementsToGo(t *testing.T) {
 	}
 
 	Test(t, Fn("ScanListElementsToGo", scanListElementsToGo), Table{
-		Args(MakeList("1", "2"), 0, 0).Rets([]interface{}{1, 2}),
-		Args(MakeList("1", "2"), "", "").Rets([]interface{}{"1", "2"}),
-		Args(MakeList("1", "2"), 0, Optional(0)).Rets([]interface{}{1, 2}),
-		Args(MakeList("1"), 0, Optional(0)).Rets([]interface{}{1, 0}),
+		Args(MakeList("1", "2"), 0, 0).Rets([]any{1, 2}),
+		Args(MakeList("1", "2"), "", "").Rets([]any{"1", "2"}),
+		Args(MakeList("1", "2"), 0, Optional(0)).Rets([]any{1, 2}),
+		Args(MakeList("1"), 0, Optional(0)).Rets([]any{1, 0}),
 
-		Args(MakeList("a"), 0).Rets([]interface{}{0},
+		Args(MakeList("a"), 0).Rets([]any{0},
 			cannotParseAs{"integer", "a"}),
-		Args(MakeList("1"), 0, 0).Rets([]interface{}{0, 0},
+		Args(MakeList("1"), 0, 0).Rets([]any{0, 0},
 			errs.ArityMismatch{What: "list elements",
 				ValidLow: 2, ValidHigh: 2, Actual: 1}),
-		Args(MakeList("1"), 0, 0, Optional(0)).Rets([]interface{}{0, 0, 0},
+		Args(MakeList("1"), 0, 0, Optional(0)).Rets([]any{0, 0, 0},
 			errs.ArityMismatch{What: "list elements",
 				ValidLow: 2, ValidHigh: 3, Actual: 1}),
 	})
@@ -161,7 +161,7 @@ func TestScanListElementsToGo(t *testing.T) {
 
 type aStruct struct {
 	Foo int
-	bar interface{}
+	bar any
 }
 
 // Equal is required by cmp.Diff, since aStruct contains unexported fields.
@@ -169,7 +169,7 @@ func (a aStruct) Equal(b aStruct) bool { return a == b }
 
 func TestScanMapToGo(t *testing.T) {
 	// A wrapper around ScanMapToGo, to make it easier to test.
-	scanMapToGo := func(src Map, dstInit interface{}) (interface{}, error) {
+	scanMapToGo := func(src Map, dstInit any) (any, error) {
 		ptr := reflect.New(TypeOf(dstInit))
 		ptr.Elem().Set(reflect.ValueOf(dstInit))
 		err := ScanMapToGo(src, ptr.Interface())

@@ -21,7 +21,7 @@ func pprintAST(n Node, w io.Writer) {
 type field struct {
 	name  string
 	tag   reflect.StructTag
-	value interface{}
+	value any
 }
 
 var zeroValue reflect.Value

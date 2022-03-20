@@ -36,7 +36,7 @@ func (e WrongArgType) Unwrap() error {
 
 type goFn struct {
 	name string
-	impl interface{}
+	impl any
 
 	// Type information of impl.
 
@@ -63,7 +63,7 @@ type optionsPtr interface {
 // Inputs is the type that the last parameter of a Go-native function can take.
 // When that is the case, it is a callback to get inputs. See the doc of GoFn
 // for details.
-type Inputs func(func(interface{}))
+type Inputs func(func(any))
 
 var (
 	frameType      = reflect.TypeOf((*Frame)(nil))
@@ -107,7 +107,7 @@ var (
 // If the last return value has nominal type error and is not nil, it is turned
 // into an exception and no return value is written. If the last return value is
 // a nil error, it is ignored.
-func NewGoFn(name string, impl interface{}) Callable {
+func NewGoFn(name string, impl any) Callable {
 	implType := reflect.TypeOf(impl)
 	b := &goFn{name: name, impl: impl}
 
@@ -149,7 +149,7 @@ func (*goFn) Kind() string {
 }
 
 // Equal compares identity.
-func (b *goFn) Equal(rhs interface{}) bool {
+func (b *goFn) Equal(rhs any) bool {
 	return b == rhs
 }
 
@@ -168,7 +168,7 @@ func (b *goFn) Repr(int) string {
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
 // Call calls the implementation using reflection.
-func (b *goFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) error {
+func (b *goFn) Call(f *Frame, args []any, opts map[string]any) error {
 	if b.variadicArg != nil {
 		if len(args) < len(b.normalArgs) {
 			return errs.ArityMismatch{What: "arguments",
@@ -233,9 +233,9 @@ func (b *goFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) e
 			if !vals.CanIterate(iterable) {
 				return fmt.Errorf("%s cannot be iterated", vals.Kind(iterable))
 			}
-			inputs = func(f func(interface{})) {
+			inputs = func(f func(any)) {
 				// CanIterate(iterable) is true
-				_ = vals.Iterate(iterable, func(v interface{}) bool {
+				_ = vals.Iterate(iterable, func(v any) bool {
 					f(v)
 					return true
 				})

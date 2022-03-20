@@ -170,9 +170,9 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 	return items, nil
 }
 
-func generateIndices(v interface{}) []RawItem {
+func generateIndices(v any) []RawItem {
 	var items []RawItem
-	vals.IterateKeys(v, func(k interface{}) bool {
+	vals.IterateKeys(v, func(k any) bool {
 		if kstring, ok := k.(string); ok {
 			items = append(items, PlainItem(kstring))
 		}

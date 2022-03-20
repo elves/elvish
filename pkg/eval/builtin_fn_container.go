@@ -12,7 +12,7 @@ import (
 // Lists and maps.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]any{
 		"ns": nsFn,
 
 		"make-map": makeMap,
@@ -88,7 +88,7 @@ func nsFn(m vals.Map) (*Ns, error) {
 func makeMap(input Inputs) (vals.Map, error) {
 	m := vals.EmptyMap
 	var errMakeMap error
-	input(func(v interface{}) {
+	input(func(v any) {
 		if errMakeMap != nil {
 			return
 		}
@@ -144,7 +144,7 @@ func makeMap(input Inputs) (vals.Map, error) {
 //
 // @cf dissoc
 
-func assoc(a, k, v interface{}) (interface{}, error) {
+func assoc(a, k, v any) (any, error) {
 	return vals.Assoc(a, k, v)
 }
 
@@ -168,7 +168,7 @@ var errCannotDissoc = errors.New("cannot dissoc")
 //
 // @cf assoc
 
-func dissoc(a, k interface{}) (interface{}, error) {
+func dissoc(a, k any) (any, error) {
 	a2 := vals.Dissoc(a, k)
 	if a2 == nil {
 		return nil, errCannotDissoc
@@ -211,7 +211,7 @@ func dissoc(a, k interface{}) (interface{}, error) {
 // ▶ $false
 // ```
 
-func hasValue(container, value interface{}) (bool, error) {
+func hasValue(container, value any) (bool, error) {
 	switch container := container.(type) {
 	case vals.Map:
 		for it := container.Iterator(); it.HasElem(); it.Next() {
@@ -223,7 +223,7 @@ func hasValue(container, value interface{}) (bool, error) {
 		return false, nil
 	default:
 		var found bool
-		err := vals.Iterate(container, func(v interface{}) bool {
+		err := vals.Iterate(container, func(v any) bool {
 			found = (v == value)
 			return !found
 		})
@@ -279,7 +279,7 @@ func hasValue(container, value interface{}) (bool, error) {
 // ▶ $false
 // ```
 
-func hasKey(container, key interface{}) bool {
+func hasKey(container, key any) bool {
 	return vals.HasKey(container, key)
 }
 
@@ -302,10 +302,10 @@ func hasKey(container, key interface{}) bool {
 //
 // Note that there is no guaranteed order for the keys of a map.
 
-func keys(fm *Frame, v interface{}) error {
+func keys(fm *Frame, v any) error {
 	out := fm.ValueOutput()
 	var errPut error
-	errIterate := vals.IterateKeys(v, func(k interface{}) bool {
+	errIterate := vals.IterateKeys(v, func(k any) bool {
 		errPut = out.Put(k)
 		return errPut == nil
 	})

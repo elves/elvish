@@ -21,6 +21,6 @@ func Complain(w io.Writer, msg string) {
 }
 
 // Complainf is like Complain, but accepts a format string and arguments.
-func Complainf(w io.Writer, format string, args ...interface{}) {
+func Complainf(w io.Writer, format string, args ...any) {
 	Complain(w, fmt.Sprintf(format, args...))
 }

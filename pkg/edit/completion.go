@@ -91,7 +91,7 @@ import (
 
 type complexCandidateOpts struct {
 	CodeSuffix string
-	Display    interface{}
+	Display    any
 }
 
 func (*complexCandidateOpts) SetDefaultOptions() {}
@@ -245,7 +245,7 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	generateForSudo := func(args []string) ([]complete.RawItem, error) {
 		return complete.GenerateForSudo(cfg(), args)
 	}
-	nb.AddGoFns(map[string]interface{}{
+	nb.AddGoFns(map[string]any{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
 		"complete-getopt":   completeGetopt,
 		"complete-sudo":     wrapArgGenerator(generateForSudo),
@@ -262,7 +262,7 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 				"binding":       bindingVar,
 				"matcher":       matcherMapVar,
 			}).
-			AddGoFns(map[string]interface{}{
+			AddGoFns(map[string]any{
 				"accept":      func() { listingAccept(app) },
 				"smart-start": func() { completionStart(app, bindings, cfg(), true) },
 				"start":       func() { completionStart(app, bindings, cfg(), false) },
@@ -278,7 +278,7 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 // A wrapper type implementing Elvish value methods.
 type complexItem complete.ComplexItem
 
-func (c complexItem) Index(k interface{}) (interface{}, bool) {
+func (c complexItem) Index(k any) (any, bool) {
 	switch k {
 	case "stem":
 		return c.Stem, true
@@ -290,13 +290,13 @@ func (c complexItem) Index(k interface{}) (interface{}, bool) {
 	return nil, false
 }
 
-func (c complexItem) IterateKeys(f func(interface{}) bool) {
+func (c complexItem) IterateKeys(f func(any) bool) {
 	vals.Feed(f, "stem", "code-suffix", "display")
 }
 
 func (c complexItem) Kind() string { return "map" }
 
-func (c complexItem) Equal(a interface{}) bool {
+func (c complexItem) Equal(a any) bool {
 	rhs, ok := a.(complexItem)
 	return ok && c.Stem == rhs.Stem &&
 		c.CodeSuffix == rhs.CodeSuffix && reflect.DeepEqual(c.Display, rhs.Display)
@@ -328,7 +328,7 @@ func wrapArgGenerator(gen complete.ArgGenerator) wrappedArgGenerator {
 		}
 		out := fm.ValueOutput()
 		for _, rawItem := range rawItems {
-			var v interface{}
+			var v any
 			switch rawItem := rawItem.(type) {
 			case complete.ComplexItem:
 				v = complexItem(rawItem)
@@ -389,14 +389,14 @@ func wrapMatcher(m matcher) wrappedMatcher {
 			if opts.IgnoreCase {
 				seed = strings.ToLower(seed)
 			}
-			inputs(func(v interface{}) {
+			inputs(func(v any) {
 				if errOut != nil {
 					return
 				}
 				errOut = out.Put(m(strings.ToLower(vals.ToString(v)), seed))
 			})
 		} else {
-			inputs(func(v interface{}) {
+			inputs(func(v any) {
 				if errOut != nil {
 					return
 				}
@@ -418,7 +418,7 @@ func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer
 		if matcher == nil {
 			return complete.FilterPrefix(ctxName, seed, rawItems)
 		}
-		input := make(chan interface{})
+		input := make(chan any)
 		stopInputFeeder := make(chan struct{})
 		defer close(stopInputFeeder)
 		// Feed a string representing all raw candidates to the input channel.
@@ -441,7 +441,7 @@ func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer
 		}
 
 		err = ev.Call(matcher,
-			eval.CallCfg{Args: []interface{}{seed}, From: "[editor matcher]"},
+			eval.CallCfg{Args: []any{seed}, From: "[editor matcher]"},
 			eval.EvalCfg{Ports: []*eval.Port{
 				// TODO: Supply the Chan component of port 2.
 				{Chan: input, File: eval.DevNull}, port1, {File: os.Stderr}}})
@@ -475,7 +475,7 @@ func adaptArgGeneratorMap(ev *eval.Evaler, m vals.Map) complete.ArgGenerator {
 		if gen == nil {
 			return complete.GenerateFileNames(args)
 		}
-		argValues := make([]interface{}, len(args))
+		argValues := make([]any, len(args))
 		for i, arg := range args {
 			argValues[i] = arg
 		}
@@ -486,7 +486,7 @@ func adaptArgGeneratorMap(ev *eval.Evaler, m vals.Map) complete.ArgGenerator {
 			defer outputMutex.Unlock()
 			output = append(output, item)
 		}
-		valueCb := func(ch <-chan interface{}) {
+		valueCb := func(ch <-chan any) {
 			for v := range ch {
 				switch v := v.(type) {
 				case string:
@@ -562,7 +562,7 @@ func (pe pureEvaler) EachVariableInNs(ns string, f func(string)) {
 	eachVariableInTop(pe.ev.Builtin(), pe.ev.Global(), ns, f)
 }
 
-func (pe pureEvaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
+func (pe pureEvaler) PurelyEvalPrimary(pn *parse.Primary) any {
 	return pe.ev.PurelyEvalPrimary(pn)
 }
 

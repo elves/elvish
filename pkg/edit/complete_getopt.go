@@ -94,7 +94,7 @@ import (
 //
 // @cf flag:parse-getopt
 
-func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) error {
+func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers any) error {
 	args, err := parseGetoptArgs(vArgs)
 	if err != nil {
 		return err
@@ -134,7 +134,7 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 		}
 		return out.Put(c)
 	}
-	call := func(fn eval.Callable, args ...interface{}) error {
+	call := func(fn eval.Callable, args ...any) error {
 		return fn.Call(fm, args, eval.NoOpts)
 	}
 
@@ -196,10 +196,10 @@ func completeGetopt(fm *eval.Frame, vArgs, vOpts, vArgHandlers interface{}) erro
 
 // TODO(xiaq): Simplify most of the parsing below with reflection.
 
-func parseGetoptArgs(v interface{}) ([]string, error) {
+func parseGetoptArgs(v any) ([]string, error) {
 	var args []string
 	var err error
-	errIterate := vals.Iterate(v, func(v interface{}) bool {
+	errIterate := vals.Iterate(v, func(v any) bool {
 		arg, ok := v.(string)
 		if !ok {
 			err = fmt.Errorf("arg should be string, got %s", vals.Kind(v))
@@ -221,13 +221,13 @@ type parsedOptSpecs struct {
 	argGenerator map[*getopt.OptionSpec]eval.Callable
 }
 
-func parseGetoptOptSpecs(v interface{}) (parsedOptSpecs, error) {
+func parseGetoptOptSpecs(v any) (parsedOptSpecs, error) {
 	result := parsedOptSpecs{
 		nil, map[*getopt.OptionSpec]string{},
 		map[*getopt.OptionSpec]string{}, map[*getopt.OptionSpec]eval.Callable{}}
 
 	var err error
-	errIterate := vals.Iterate(v, func(v interface{}) bool {
+	errIterate := vals.Iterate(v, func(v any) bool {
 		m, ok := v.(vals.Map)
 		if !ok {
 			err = fmt.Errorf("opt should be map, got %s", vals.Kind(v))
@@ -343,11 +343,11 @@ func parseGetoptOptSpecs(v interface{}) (parsedOptSpecs, error) {
 	return result, err
 }
 
-func parseGetoptArgHandlers(v interface{}) ([]eval.Callable, bool, error) {
+func parseGetoptArgHandlers(v any) ([]eval.Callable, bool, error) {
 	var argHandlers []eval.Callable
 	var variadic bool
 	var err error
-	errIterate := vals.Iterate(v, func(v interface{}) bool {
+	errIterate := vals.Iterate(v, func(v any) bool {
 		sv, ok := v.(string)
 		if ok {
 			if sv == "..." {

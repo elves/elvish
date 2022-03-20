@@ -8,7 +8,7 @@ import (
 
 type dissocer struct{}
 
-func (dissocer) Dissoc(interface{}) interface{} { return "custom ret" }
+func (dissocer) Dissoc(any) any { return "custom ret" }
 
 func TestDissoc(t *testing.T) {
 	Test(t, Fn("Dissoc", Dissoc), Table{

@@ -70,7 +70,7 @@ func contentIs(what string) string {
 const fontFaceTemplate = `@font-face { font-family: %v; font-weight: %v; font-style: %v; font-stretch: normal; font-display: block; src: url("%v/fonts/%v.woff2") format("woff");}`
 
 func newTemplate(name, root string, sources ...string) *template.Template {
-	t := template.New(name).Funcs(template.FuncMap(map[string]interface{}{
+	t := template.New(name).Funcs(template.FuncMap(map[string]any{
 		"is":      func(s string) bool { return s == name },
 		"rootURL": func() string { return root },
 		"getEnv":  os.Getenv,
@@ -92,7 +92,7 @@ func openForWrite(fname string) *os.File {
 	return file
 }
 
-func executeToFile(t *template.Template, data interface{}, fname string) {
+func executeToFile(t *template.Template, data any, fname string) {
 	file := openForWrite(fname)
 	defer file.Close()
 	err := t.Execute(file, data)

@@ -115,6 +115,6 @@ var builtinNs = BuildNsNamed("").AddVars(map[string]vars.Var{
 	"paths":     vars.NewEnvListVar("PATH"),
 })
 
-func addBuiltinFns(fns map[string]interface{}) {
+func addBuiltinFns(fns map[string]any) {
 	builtinNs.AddGoFns(fns)
 }

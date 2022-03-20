@@ -65,7 +65,7 @@ var runeMatchers = map[string]func(rune) bool{
 
 func (gp globPattern) Kind() string { return "glob-pattern" }
 
-func (gp globPattern) Index(k interface{}) (interface{}, error) {
+func (gp globPattern) Index(k any) (any, error) {
 	modifierv, ok := k.(string)
 	if !ok {
 		return nil, ErrModifierMustBeString
@@ -132,7 +132,7 @@ func (gp globPattern) Index(k interface{}) (interface{}, error) {
 	return gp, nil
 }
 
-func (gp globPattern) Concat(v interface{}) (interface{}, error) {
+func (gp globPattern) Concat(v any) (any, error) {
 	switch rhs := v.(type) {
 	case string:
 		gp.append(stringToSegments(rhs)...)
@@ -155,7 +155,7 @@ func (gp globPattern) Concat(v interface{}) (interface{}, error) {
 	return nil, vals.ErrConcatNotImplemented
 }
 
-func (gp globPattern) RConcat(v interface{}) (interface{}, error) {
+func (gp globPattern) RConcat(v any) (any, error) {
 	switch lhs := v.(type) {
 	case string:
 		segs := stringToSegments(lhs)
@@ -228,13 +228,13 @@ func stringToSegments(s string) []glob.Segment {
 	return segs
 }
 
-func doGlob(gp globPattern, abort <-chan struct{}) ([]interface{}, error) {
+func doGlob(gp globPattern, abort <-chan struct{}) ([]any, error) {
 	but := make(map[string]struct{})
 	for _, s := range gp.Buts {
 		but[s] = struct{}{}
 	}
 
-	vs := make([]interface{}, 0)
+	vs := make([]any, 0)
 	if !gp.Glob(func(pathInfo glob.PathInfo) bool {
 		select {
 		case <-abort:

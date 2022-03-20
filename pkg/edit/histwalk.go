@@ -43,7 +43,7 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder)
 	nb.AddNs("history",
 		eval.BuildNsNamed("edit:history").
 			AddVar("binding", bindingVar).
-			AddGoFns(map[string]interface{}{
+			AddGoFns(map[string]any{
 				"start": func() { notifyError(app, histwalkStart(app, hs, bindings)) },
 				"up":    func() { notifyError(app, histwalkDo(app, modes.Histwalk.Prev)) },
 

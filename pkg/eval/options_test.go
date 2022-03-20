@@ -17,7 +17,7 @@ func (o opts) Equal(p opts) bool { return o == p }
 
 func TestScanOptions(t *testing.T) {
 	// A wrapper of ScanOptions, to make it easier to test
-	wrapper := func(src RawOptions, dstInit interface{}) (interface{}, error) {
+	wrapper := func(src RawOptions, dstInit any) (any, error) {
 		ptr := reflect.New(reflect.TypeOf(dstInit))
 		ptr.Elem().Set(reflect.ValueOf(dstInit))
 		err := scanOptions(src, ptr.Interface())

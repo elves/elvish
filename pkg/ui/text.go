@@ -42,7 +42,7 @@ func (t Text) Repr(indent int) string {
 }
 
 // IterateKeys feeds the function with all valid indices of the styled-text.
-func (t Text) IterateKeys(fn func(interface{}) bool) {
+func (t Text) IterateKeys(fn func(any) bool) {
 	for i := 0; i < len(t); i++ {
 		if !fn(strconv.Itoa(i)) {
 			break
@@ -51,7 +51,7 @@ func (t Text) IterateKeys(fn func(interface{}) bool) {
 }
 
 // Index provides access to the underlying styled-segment.
-func (t Text) Index(k interface{}) (interface{}, error) {
+func (t Text) Index(k any) (any, error) {
 	index, err := vals.ConvertListIndex(k, len(t))
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (t Text) Index(k interface{}) (interface{}, error) {
 }
 
 // Concat implements Text+string, Text+number, Text+Segment and Text+Text.
-func (t Text) Concat(rhs interface{}) (interface{}, error) {
+func (t Text) Concat(rhs any) (any, error) {
 	switch rhs := rhs.(type) {
 	case string:
 		return Concat(t, T(rhs)), nil
@@ -79,7 +79,7 @@ func (t Text) Concat(rhs interface{}) (interface{}, error) {
 }
 
 // RConcat implements string+Text and number+Text.
-func (t Text) RConcat(lhs interface{}) (interface{}, error) {
+func (t Text) RConcat(lhs any) (any, error) {
 	switch lhs := lhs.(type) {
 	case string:
 		return Concat(T(lhs), t), nil

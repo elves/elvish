@@ -79,12 +79,12 @@ func navInsertSelectedAndQuit(app cli.App) {
 // A list of 3 integers, used for specifying the width ratio of the 3 columns in
 // navigation mode.
 
-func convertNavWidthRatio(v interface{}) [3]int {
+func convertNavWidthRatio(v any) [3]int {
 	var (
 		numbers []int
 		hasErr  bool
 	)
-	vals.Iterate(v, func(elem interface{}) bool {
+	vals.Iterate(v, func(elem any) bool {
 		var i int
 		err := vals.ScanToGo(elem, &i)
 		if err != nil {
@@ -108,7 +108,7 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	bindings := newMapBindings(ed, ev, bindingVar)
 	widthRatioVar := newListVar(vals.MakeList(1.0, 3.0, 4.0))
 
-	selectedFileVar := vars.FromGet(func() interface{} {
+	selectedFileVar := vars.FromGet(func() any {
 		if w, ok := activeNavigation(ed.app); ok {
 			return w.SelectedName()
 		}
@@ -123,7 +123,7 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 				"binding":     bindingVar,
 				"width-ratio": widthRatioVar,
 			}).
-			AddGoFns(map[string]interface{}{
+			AddGoFns(map[string]any{
 				"start": func() {
 					w, err := modes.NewNavigation(app, modes.NavigationSpec{
 						Bindings: bindings,

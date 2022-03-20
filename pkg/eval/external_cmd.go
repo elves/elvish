@@ -41,7 +41,7 @@ func (e externalCmd) Kind() string {
 	return "fn"
 }
 
-func (e externalCmd) Equal(a interface{}) bool {
+func (e externalCmd) Equal(a any) bool {
 	return e == a
 }
 
@@ -54,7 +54,7 @@ func (e externalCmd) Repr(int) string {
 }
 
 // Call calls an external command.
-func (e externalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]interface{}) error {
+func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 	if len(opts) > 0 {
 		return ErrExternalCmdOpts
 	}

@@ -107,7 +107,7 @@ func (ra *recentArticles) insert(a article) {
 }
 
 // decodeFile decodes the named file in TOML into a pointer.
-func decodeTOML(fname string, v interface{}) {
+func decodeTOML(fname string, v any) {
 	_, err := toml.DecodeFile(fname, v)
 	if err != nil {
 		log.Fatalln(err)

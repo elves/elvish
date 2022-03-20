@@ -59,7 +59,7 @@ func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (strin
 // If this cannot be done, it returns nil.
 //
 // Currently, only string literals and variables with no @ can be evaluated.
-func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
+func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) any {
 	switch pn.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return pn.Value

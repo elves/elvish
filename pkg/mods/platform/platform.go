@@ -83,6 +83,6 @@ var Ns = eval.BuildNsNamed("platform").
 		"is-unix":    vars.NewReadOnly(isUnix),
 		"is-windows": vars.NewReadOnly(isWindows),
 	}).
-	AddGoFns(map[string]interface{}{
+	AddGoFns(map[string]any{
 		"hostname": hostname,
 	}).Ns()

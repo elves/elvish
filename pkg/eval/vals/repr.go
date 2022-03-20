@@ -25,7 +25,7 @@ type Reprer interface {
 }
 
 // ReprPlain is like Repr, but without pretty-printing.
-func ReprPlain(v interface{}) string {
+func ReprPlain(v any) string {
 	return Repr(v, math.MinInt)
 }
 
@@ -36,7 +36,7 @@ func ReprPlain(v interface{}) string {
 // the File, List and Map types, StructMap types, and types satisfying the
 // Reprer interface. For other types, it uses fmt.Sprint with the format
 // "<unknown %v>".
-func Repr(v interface{}, indent int) string {
+func Repr(v any, indent int) string {
 	switch v := v.(type) {
 	case nil:
 		return "$nil"

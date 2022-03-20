@@ -35,7 +35,7 @@ var ErrNotInSameProcessGroup = errors.New("not in the same process group")
 // Reference to syscall.Exec. Can be overridden in tests.
 var syscallExec = syscall.Exec
 
-func execFn(fm *Frame, args ...interface{}) error {
+func execFn(fm *Frame, args ...any) error {
 	var argstrings []string
 	if len(args) == 0 {
 		argstrings = []string{"elvish"}

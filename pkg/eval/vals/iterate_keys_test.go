@@ -6,11 +6,11 @@ import (
 	. "src.elv.sh/pkg/tt"
 )
 
-func vs(xs ...interface{}) []interface{} { return xs }
+func vs(xs ...any) []any { return xs }
 
-type keysIterator struct{ keys []interface{} }
+type keysIterator struct{ keys []any }
 
-func (k keysIterator) IterateKeys(f func(interface{}) bool) {
+func (k keysIterator) IterateKeys(f func(any) bool) {
 	Feed(f, k.keys...)
 }
 
@@ -26,8 +26,8 @@ func TestIterateKeys(t *testing.T) {
 }
 
 func TestIterateKeys_Map_Break(t *testing.T) {
-	var gotKey interface{}
-	IterateKeys(MakeMap("k", "v", "k2", "v2"), func(k interface{}) bool {
+	var gotKey any
+	IterateKeys(MakeMap("k", "v", "k2", "v2"), func(k any) bool {
 		if gotKey != nil {
 			t.Errorf("callback called again after returning false")
 		}
@@ -40,8 +40,8 @@ func TestIterateKeys_Map_Break(t *testing.T) {
 }
 
 func TestIterateKeys_StructMap_Break(t *testing.T) {
-	var gotKey interface{}
-	IterateKeys(testStructMap{}, func(k interface{}) bool {
+	var gotKey any
+	IterateKeys(testStructMap{}, func(k any) bool {
 		if gotKey != nil {
 			t.Errorf("callback called again after returning false")
 		}
@@ -54,7 +54,7 @@ func TestIterateKeys_StructMap_Break(t *testing.T) {
 }
 
 func TestIterateKeys_Unsupported(t *testing.T) {
-	err := IterateKeys(1, func(interface{}) bool { return true })
+	err := IterateKeys(1, func(any) bool { return true })
 	wantErr := cannotIterateKeysOf{"number"}
 	if err != wantErr {
 		t.Errorf("got error %v, want %v", err, wantErr)

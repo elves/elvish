@@ -23,7 +23,7 @@ var Getwd func() (string, error) = os.Getwd
 
 // Get returns the current working directory. It returns "/unknown/pwd" when
 // it cannot be determined.
-func (pwdVar) Get() interface{} {
+func (pwdVar) Get() any {
 	pwd, err := Getwd()
 	if err != nil {
 		// This should really use the path separator appropriate for the
@@ -36,7 +36,7 @@ func (pwdVar) Get() interface{} {
 }
 
 // Set changes the current working directory.
-func (pwd pwdVar) Set(v interface{}) error {
+func (pwd pwdVar) Set(v any) error {
 	path, ok := v.(string)
 	if !ok {
 		return vars.ErrPathMustBeString

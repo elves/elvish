@@ -93,7 +93,7 @@ func completeCommand(np nodePath, cfg Config) (*context, []RawItem, error) {
 // $a[<Tab> is supported, but $a[x][<Tab> is not.
 func completeIndex(np nodePath, cfg Config) (*context, []RawItem, error) {
 	ev := cfg.PureEvaler
-	generateForEmpty := func(v interface{}, pos int) (*context, []RawItem, error) {
+	generateForEmpty := func(v any, pos int) (*context, []RawItem, error) {
 		ctx := &context{"index", "", parse.Bareword, range0(pos)}
 		return ctx, generateIndices(v), nil
 	}

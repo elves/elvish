@@ -127,12 +127,12 @@ func defaultStaleTransform(original ui.Text) ui.Text {
 
 // Calls a function with the given arguments and closed input, and concatenates
 // its outputs to a styled text. Used to call prompts and stale transformers.
-func callForStyledText(nt notifier, ev *eval.Evaler, ctx string, fn eval.Callable, args ...interface{}) ui.Text {
+func callForStyledText(nt notifier, ev *eval.Evaler, ctx string, fn eval.Callable, args ...any) ui.Text {
 	var (
 		result      ui.Text
 		resultMutex sync.Mutex
 	)
-	add := func(v interface{}) {
+	add := func(v any) {
 		resultMutex.Lock()
 		defer resultMutex.Unlock()
 		newResult, err := result.Concat(v)
@@ -144,7 +144,7 @@ func callForStyledText(nt notifier, ev *eval.Evaler, ctx string, fn eval.Callabl
 	}
 
 	// Value outputs are concatenated.
-	valuesCb := func(ch <-chan interface{}) {
+	valuesCb := func(ch <-chan any) {
 		for v := range ch {
 			add(v)
 		}

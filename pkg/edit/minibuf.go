@@ -13,7 +13,7 @@ func initMinibuf(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	nb.AddNs("minibuf",
 		eval.BuildNsNamed("edit:minibuf").
 			AddVar("binding", bindingVar).
-			AddGoFns(map[string]interface{}{
+			AddGoFns(map[string]any{
 				"start": func() { minibufStart(ed, ev, bindings) },
 			}))
 }

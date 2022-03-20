@@ -52,7 +52,7 @@ var _ vars.Var = UmaskVariable{}
 var umaskMutex sync.Mutex
 
 // Get returns the current file creation umask as a string.
-func (UmaskVariable) Get() interface{} {
+func (UmaskVariable) Get() any {
 	// Note: The seemingly redundant syscall is because the unix.Umask() API
 	// doesn't allow querying the current value without changing it. So ensure
 	// we reinstate the current value.
@@ -65,7 +65,7 @@ func (UmaskVariable) Get() interface{} {
 
 // Set changes the current file creation umask. It can be called with a string
 // (the usual case) or a float64.
-func (UmaskVariable) Set(v interface{}) error {
+func (UmaskVariable) Set(v any) error {
 	var umask int
 
 	switch v := v.(type) {

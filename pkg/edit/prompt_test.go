@@ -126,7 +126,7 @@ func TestRPromptPersistent_False(t *testing.T) {
 	)
 }
 
-func testRPromptPersistent(t *testing.T, code string, finalBuf ...interface{}) {
+func testRPromptPersistent(t *testing.T, code string, finalBuf ...any) {
 	f := setup(t, rc(`set edit:rprompt = { put RRR }`, code))
 
 	// Make sure that the UI has stabilized before hitting Enter.

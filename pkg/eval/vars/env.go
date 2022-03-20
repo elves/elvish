@@ -11,7 +11,7 @@ type envVariable struct {
 	name string
 }
 
-func (ev envVariable) Set(val interface{}) error {
+func (ev envVariable) Set(val any) error {
 	if s, ok := val.(string); ok {
 		os.Setenv(ev.name, s)
 		return nil
@@ -19,7 +19,7 @@ func (ev envVariable) Set(val interface{}) error {
 	return errEnvMustBeString
 }
 
-func (ev envVariable) Get() interface{} {
+func (ev envVariable) Get() any {
 	return os.Getenv(ev.name)
 }
 

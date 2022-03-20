@@ -172,8 +172,8 @@ func NewEvaler() *Evaler {
 		AddVar("notify-bg-job-success",
 			vars.FromPtrWithMutex(&ev.notifyBgJobSuccess, &ev.mu)).
 		AddVar("num-bg-jobs",
-			vars.FromGet(func() interface{} { return strconv.Itoa(ev.getNumBgJobs()) })).
-		AddVar("args", vars.FromGet(func() interface{} { return ev.Args })))
+			vars.FromGet(func() any { return strconv.Itoa(ev.getNumBgJobs()) })).
+		AddVar("args", vars.FromGet(func() any { return ev.Args })))
 
 	// Install the "builtin" module after extension is complete.
 	ev.modules["builtin"] = ev.builtin
@@ -185,7 +185,7 @@ func adaptChdirHook(name string, ev *Evaler, pfns *vals.List) func(string) {
 	return func(path string) {
 		ports, cleanup := PortsFromStdFiles(ev.ValuePrefix())
 		defer cleanup()
-		callCfg := CallCfg{Args: []interface{}{path}, From: "[hook " + name + "]"}
+		callCfg := CallCfg{Args: []any{path}, From: "[hook " + name + "]"}
 		evalCfg := EvalCfg{Ports: ports[:]}
 		for it := (*pfns).Iterator(); it.HasElem(); it.Next() {
 			fn, ok := it.Elem().(Callable)
@@ -406,9 +406,9 @@ func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
 // CallCfg keeps configuration for the (*Evaler).Call method.
 type CallCfg struct {
 	// Arguments to pass to the the function.
-	Args []interface{}
+	Args []any
 	// Options to pass to the function.
-	Opts map[string]interface{}
+	Opts map[string]any
 	// The name of the internal source that is calling the function.
 	From string
 }

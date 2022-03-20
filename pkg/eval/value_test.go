@@ -9,7 +9,7 @@ import (
 )
 
 var reprTests = []struct {
-	v    interface{}
+	v    any
 	want string
 }{
 	{"233", "233"},

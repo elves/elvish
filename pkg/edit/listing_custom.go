@@ -29,7 +29,7 @@ func (*customListingOpts) SetDefaultOptions() {}
 //
 // Starts a custom listing addon.
 
-func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, items interface{}) {
+func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, items any) {
 	var bindings tk.Bindings
 	if opts.Binding.Map != nil {
 		bindings = newMapBindings(ed, fm.Evaler, vars.FromPtr(&opts.Binding))
@@ -44,7 +44,7 @@ func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, item
 				defer itemsMutex.Unlock()
 				items = append(items, item)
 			}
-			valuesCb := func(ch <-chan interface{}) {
+			valuesCb := func(ch <-chan any) {
 				for v := range ch {
 					if item, itemOk := getListingItem(v); itemOk {
 						collect(item)
@@ -64,7 +64,7 @@ func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, item
 					}
 				}
 			}
-			f := func(fm *eval.Frame) error { return fn.Call(fm, []interface{}{q}, eval.NoOpts) }
+			f := func(fm *eval.Frame) error { return fn.Call(fm, []any{q}, eval.NoOpts) }
 			err := fm.PipeOutput(f, valuesCb, bytesCb)
 			// TODO(xiaq): Report the error.
 			_ = err
@@ -73,7 +73,7 @@ func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, item
 	} else {
 		getItems = func(q string) []modes.ListingItem {
 			convertedItems := []modes.ListingItem{}
-			vals.Iterate(items, func(v interface{}) bool {
+			vals.Iterate(items, func(v any) bool {
 				toFilter, toFilterOk := getToFilter(v)
 				item, itemOk := getListingItem(v)
 				if toFilterOk && itemOk && strings.Contains(toFilter, q) {
@@ -107,13 +107,13 @@ func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, item
 	startMode(ed.app, w, err)
 }
 
-func getToFilter(v interface{}) (string, bool) {
+func getToFilter(v any) (string, bool) {
 	toFilterValue, _ := vals.Index(v, "to-filter")
 	toFilter, toFilterOk := toFilterValue.(string)
 	return toFilter, toFilterOk
 }
 
-func getListingItem(v interface{}) (item modes.ListingItem, ok bool) {
+func getListingItem(v any) (item modes.ListingItem, ok bool) {
 	toAcceptValue, _ := vals.Index(v, "to-accept")
 	toAccept, toAcceptOk := toAcceptValue.(string)
 	toShowValue, _ := vals.Index(v, "to-show")

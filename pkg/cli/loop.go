@@ -26,7 +26,7 @@ type loopReturn struct {
 }
 
 // A placeholder type for events.
-type event interface{}
+type event any
 
 // Callback for redrawing the editor UI to the terminal.
 type redrawCb func(flag redrawFlag)

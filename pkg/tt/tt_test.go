@@ -12,7 +12,7 @@ type testT []string
 
 func (t *testT) Helper() {}
 
-func (t *testT) Errorf(format string, args ...interface{}) {
+func (t *testT) Errorf(format string, args ...any) {
 	*t = append(*t, fmt.Sprintf(format, args...))
 }
 

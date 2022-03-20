@@ -12,6 +12,6 @@ func pluginOpen(name string) (pluginStub, error) {
 	return pluginStub{}, errPluginNotImplemented
 }
 
-func (pluginStub) Lookup(symName string) (interface{}, error) {
+func (pluginStub) Lookup(symName string) (any, error) {
 	return nil, errPluginNotImplemented
 }

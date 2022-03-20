@@ -184,7 +184,7 @@ func TestBuiltinMatchers(t *testing.T) {
 		`var @substr = (edit:match-substr ab [ab abc cab acb ba [ab] [a b] [b a]])`,
 		`var @subseq = (edit:match-subseq ab [ab abc cab acb ba [ab] [a b] [b a]])`,
 	)
-	testGlobals(t, f.Evaler, map[string]interface{}{
+	testGlobals(t, f.Evaler, map[string]any{
 		"prefix": vals.MakeList(true, true, false, false, false, false, false, false),
 		"substr": vals.MakeList(true, true, true, false, false, true, false, false),
 		"subseq": vals.MakeList(true, true, true, true, false, true, true, false),
@@ -204,7 +204,7 @@ func TestBuiltinMatchers_Options(t *testing.T) {
 		`var @c = (edit:match-prefix &smart-case  ab [abc aBc Abc])`,
 		`var @d = (edit:match-prefix &smart-case  aB [abc aBc AbC])`,
 	)
-	testGlobals(t, f.Evaler, map[string]interface{}{
+	testGlobals(t, f.Evaler, map[string]any{
 		"a": vals.MakeList(true, true, true),
 		"b": vals.MakeList(true, true, true),
 		"c": vals.MakeList(true, true, true),

@@ -116,7 +116,7 @@ func (k Key) Kind() string {
 	return "edit:key"
 }
 
-func (k Key) Equal(other interface{}) bool {
+func (k Key) Equal(other any) bool {
 	return k == other
 }
 

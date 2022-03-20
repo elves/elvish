@@ -5,20 +5,20 @@ import (
 )
 
 type readOnly struct {
-	value interface{}
+	value any
 }
 
 // NewReadOnly creates a variable that is read-only and always returns an error
 // on Set.
-func NewReadOnly(v interface{}) Var {
+func NewReadOnly(v any) Var {
 	return readOnly{v}
 }
 
-func (rv readOnly) Set(val interface{}) error {
+func (rv readOnly) Set(val any) error {
 	return errs.SetReadOnlyVar{}
 }
 
-func (rv readOnly) Get() interface{} {
+func (rv readOnly) Get() any {
 	return rv.value
 }
 

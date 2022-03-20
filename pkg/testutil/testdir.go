@@ -64,7 +64,7 @@ func InTempHome(c Cleanuper) string {
 // Dir describes the layout of a directory. The keys of the map represent
 // filenames. Each value is either a string (for the content of a regular file
 // with permission 0644), a File, or a Dir.
-type Dir map[string]interface{}
+type Dir map[string]any
 
 // File describes a file to create.
 type File struct {

@@ -38,7 +38,7 @@ func TestAfterReadline(t *testing.T) {
 	feedInput(f.TTYCtrl, "test code\n")
 	f.Wait()
 
-	testGlobals(t, f.Evaler, map[string]interface{}{
+	testGlobals(t, f.Evaler, map[string]any{
 		"called":      1,
 		"called-with": "test code",
 	})

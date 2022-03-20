@@ -58,7 +58,7 @@ var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 // TODO(xiaq): Document -override-wcswidth.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]any{
 		"<s":  func(a, b string) bool { return a < b },
 		"<=s": func(a, b string) bool { return a <= b },
 		"==s": func(a, b string) bool { return a == b },
@@ -92,7 +92,7 @@ func init() {
 // ▶ '[&k=v]'
 // ```
 
-func toString(fm *Frame, args ...interface{}) error {
+func toString(fm *Frame, args ...any) error {
 	out := fm.ValueOutput()
 	for _, a := range args {
 		err := out.Put(vals.ToString(a))
@@ -194,7 +194,7 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 func eawk(fm *Frame, f Callable, inputs Inputs) error {
 	broken := false
 	var err error
-	inputs(func(v interface{}) {
+	inputs(func(v any) {
 		if broken {
 			return
 		}
@@ -204,7 +204,7 @@ func eawk(fm *Frame, f Callable, inputs Inputs) error {
 			err = ErrInputOfEawkMustBeString
 			return
 		}
-		args := []interface{}{line}
+		args := []any{line}
 		for _, field := range eawkWordSep.Split(strings.Trim(line, " \t"), -1) {
 			args = append(args, field)
 		}

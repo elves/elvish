@@ -253,7 +253,7 @@ func bigRat(s string) *big.Rat {
 	return z
 }
 
-func args(vs ...interface{}) string {
+func args(vs ...any) string {
 	s := make([]string, len(vs))
 	for i, v := range vs {
 		s[i] = vals.ToString(v)

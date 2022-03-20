@@ -39,7 +39,7 @@ type Case struct {
 }
 
 type result struct {
-	ValueOut  []interface{}
+	ValueOut  []any
 	BytesOut  []byte
 	StderrOut []byte
 
@@ -89,7 +89,7 @@ func (c Case) Passes(f func(t *testing.T)) Case {
 
 // Puts returns an altered Case that requires the source code to produce the
 // specified values in the value channel when evaluated.
-func (c Case) Puts(vs ...interface{}) Case {
+func (c Case) Puts(vs ...any) Case {
 	c.want.ValueOut = vs
 	return c
 }
@@ -220,11 +220,11 @@ func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) result {
 
 // Like eval.CapturePort, but captures values and bytes separately. Also panics
 // if it cannot create a pipe.
-func capturePort() (*eval.Port, func() ([]interface{}, []byte)) {
-	var values []interface{}
+func capturePort() (*eval.Port, func() ([]any, []byte)) {
+	var values []any
 	var bytes []byte
 	port, done, err := eval.PipePort(
-		func(ch <-chan interface{}) {
+		func(ch <-chan any) {
 			for v := range ch {
 				values = append(values, v)
 			}
@@ -235,13 +235,13 @@ func capturePort() (*eval.Port, func() ([]interface{}, []byte)) {
 	if err != nil {
 		panic(err)
 	}
-	return port, func() ([]interface{}, []byte) {
+	return port, func() ([]any, []byte) {
 		done()
 		return values, bytes
 	}
 }
 
-func matchOut(want, got []interface{}) bool {
+func matchOut(want, got []any) bool {
 	if len(got) != len(want) {
 		return false
 	}
@@ -253,7 +253,7 @@ func matchOut(want, got []interface{}) bool {
 	return true
 }
 
-func match(got, want interface{}) bool {
+func match(got, want any) bool {
 	switch got := got.(type) {
 	case float64:
 		// Special-case float64 to correctly handle NaN and support

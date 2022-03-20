@@ -83,7 +83,7 @@ func (op nsOp) prepare(fm *Frame) (*Ns, func() Exception) {
 
 const compilationErrorType = "compilation error"
 
-func (cp *compiler) errorpf(r diag.Ranger, format string, args ...interface{}) {
+func (cp *compiler) errorpf(r diag.Ranger, format string, args ...any) {
 	// The panic is caught by the recover in compile above.
 	panic(&diag.Error{
 		Type:    compilationErrorType,
@@ -93,7 +93,7 @@ func (cp *compiler) errorpf(r diag.Ranger, format string, args ...interface{}) {
 
 // GetCompilationError returns a *diag.Error if the given value is a compilation
 // error. Otherwise it returns nil.
-func GetCompilationError(e interface{}) *diag.Error {
+func GetCompilationError(e any) *diag.Error {
 	if e, ok := e.(*diag.Error); ok && e.Type == compilationErrorType {
 		return e
 	}

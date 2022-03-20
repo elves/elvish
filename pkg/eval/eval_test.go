@@ -117,8 +117,8 @@ func TestCall(t *testing.T) {
 	passedOpt := "opt value"
 	ev.Call(fn,
 		CallCfg{
-			Args: []interface{}{passedArg},
-			Opts: map[string]interface{}{"opt": passedOpt},
+			Args: []any{passedArg},
+			Opts: map[string]any{"opt": passedOpt},
 			From: "[TestCall]"},
 		EvalCfg{})
 

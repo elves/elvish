@@ -12,7 +12,7 @@ var (
 	errIndexMustBeInteger = errors.New("index must must be integer")
 )
 
-func indexList(l List, rawIndex interface{}) (interface{}, error) {
+func indexList(l List, rawIndex any) (any, error) {
 	index, err := ConvertListIndex(rawIndex, l.Len())
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func adjustAndCheckIndex(i, n int, includeN bool) (int, error) {
 
 // ConvertListIndex parses a list index, check whether it is valid, and returns
 // the converted structure.
-func ConvertListIndex(rawIndex interface{}, n int) (*ListIndex, error) {
+func ConvertListIndex(rawIndex any, n int) (*ListIndex, error) {
 	switch rawIndex := rawIndex.(type) {
 	case int:
 		index, err := adjustAndCheckIndex(rawIndex, n, false)

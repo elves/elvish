@@ -4,12 +4,12 @@ import "testing"
 
 func TestFromSetGet(t *testing.T) {
 	getCalled := false
-	get := func() interface{} {
+	get := func() any {
 		getCalled = true
 		return "cb"
 	}
-	var setCalledWith interface{}
-	set := func(v interface{}) error {
+	var setCalledWith any
+	set := func(v any) error {
 		setCalledWith = v
 		return nil
 	}
@@ -29,7 +29,7 @@ func TestFromSetGet(t *testing.T) {
 
 func TestFromGet(t *testing.T) {
 	getCalled := false
-	get := func() interface{} {
+	get := func() any {
 		getCalled = true
 		return "cb"
 	}

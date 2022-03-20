@@ -113,7 +113,7 @@ import (
 
 func Ns(s storedefs.Store) *eval.Ns {
 	return eval.BuildNsNamed("store").
-		AddGoFns(map[string]interface{}{
+		AddGoFns(map[string]any{
 			"next-cmd-seq": s.NextCmdSeq,
 			"add-cmd":      s.AddCmd,
 			"del-cmd":      s.DelCmd,

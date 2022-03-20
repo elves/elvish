@@ -18,7 +18,7 @@ var Ns = eval.BuildNsNamed("math").
 		"e":  vars.NewReadOnly(math.E),
 		"pi": vars.NewReadOnly(math.Pi),
 	}).
-	AddGoFns(map[string]interface{}{
+	AddGoFns(map[string]any{
 		"abs":           abs,
 		"acos":          math.Acos,
 		"acosh":         math.Acosh,

@@ -11,7 +11,7 @@ import (
 // Stream manipulation.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]any{
 		"all": all,
 		"one": one,
 
@@ -112,7 +112,7 @@ func init() {
 func all(fm *Frame, inputs Inputs) error {
 	out := fm.ValueOutput()
 	var errOut error
-	inputs(func(v interface{}) {
+	inputs(func(v any) {
 		if errOut != nil {
 			return
 		}
@@ -136,9 +136,9 @@ func all(fm *Frame, inputs Inputs) error {
 // @cf all
 
 func one(fm *Frame, inputs Inputs) error {
-	var val interface{}
+	var val any
 	n := 0
-	inputs(func(v interface{}) {
+	inputs(func(v any) {
 		if n == 0 {
 			val = v
 		}
@@ -182,7 +182,7 @@ func take(fm *Frame, n int, inputs Inputs) error {
 	out := fm.ValueOutput()
 	var errOut error
 	i := 0
-	inputs(func(v interface{}) {
+	inputs(func(v any) {
 		if errOut != nil {
 			return
 		}
@@ -228,7 +228,7 @@ func drop(fm *Frame, n int, inputs Inputs) error {
 	out := fm.ValueOutput()
 	var errOut error
 	i := 0
-	inputs(func(v interface{}) {
+	inputs(func(v any) {
 		if errOut != nil {
 			return
 		}
@@ -264,12 +264,12 @@ func drop(fm *Frame, n int, inputs Inputs) error {
 // The count implementation uses a custom varargs based implementation rather
 // than the more common `Inputs` API (see pkg/eval/go_fn.go) because this
 // allows the implementation to be O(1) for the common cases rather than O(n).
-func count(fm *Frame, args ...interface{}) (int, error) {
+func count(fm *Frame, args ...any) (int, error) {
 	var n int
 	switch nargs := len(args); nargs {
 	case 0:
 		// Count inputs.
-		fm.IterateInputs(func(interface{}) {
+		fm.IterateInputs(func(any) {
 			n++
 		})
 	case 1:
@@ -278,7 +278,7 @@ func count(fm *Frame, args ...interface{}) (int, error) {
 		if len := vals.Len(v); len >= 0 {
 			n = len
 		} else {
-			err := vals.Iterate(v, func(interface{}) bool {
+			err := vals.Iterate(v, func(any) bool {
 				n++
 				return true
 			})
@@ -370,8 +370,8 @@ type orderOptions struct {
 func (opt *orderOptions) SetDefaultOptions() {}
 
 func order(fm *Frame, opts orderOptions, inputs Inputs) error {
-	var values []interface{}
-	inputs(func(v interface{}) { values = append(values, v) })
+	var values []any
+	inputs(func(v any) { values = append(values, v) })
 
 	var errSort error
 	var lessFn func(i, j int) bool
@@ -380,11 +380,11 @@ func order(fm *Frame, opts orderOptions, inputs Inputs) error {
 			if errSort != nil {
 				return true
 			}
-			var args []interface{}
+			var args []any
 			if opts.Reverse {
-				args = []interface{}{values[j], values[i]}
+				args = []any{values[j], values[i]}
 			} else {
-				args = []interface{}{values[i], values[j]}
+				args = []any{values[i], values[j]}
 			}
 			outputs, err := fm.CaptureOutput(func(fm *Frame) error {
 				return opts.LessThan.Call(fm, args, NoOpts)

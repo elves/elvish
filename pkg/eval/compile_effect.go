@@ -102,7 +102,7 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 			if e != nil {
 				return fm.errorpf(op, "failed to create pipe: %s", e)
 			}
-			ch := make(chan interface{}, pipelineChanBufferSize)
+			ch := make(chan any, pipelineChanBufferSize)
 			sendStop := make(chan struct{})
 			sendError := new(error)
 			readerGone := new(int32)
@@ -264,7 +264,7 @@ func (op *formOp) exec(fm *Frame) (errRet Exception) {
 		// There is a temporary assignment.
 		// Save variables.
 		var saveVars []vars.Var
-		var saveVals []interface{}
+		var saveVals []any
 		for _, lv := range op.tempLValues {
 			variable, err := derefLValue(fm, lv)
 			if err != nil {
@@ -338,7 +338,7 @@ func (op *formOp) exec(fm *Frame) (errRet Exception) {
 		return fm.errorp(cmd.headOp, err)
 	}
 
-	var args []interface{}
+	var args []any
 	for _, argOp := range cmd.argOps {
 		moreArgs, exc := argOp.exec(fm)
 		if exc != nil {
@@ -348,8 +348,8 @@ func (op *formOp) exec(fm *Frame) (errRet Exception) {
 	}
 
 	// TODO(xiaq): This conversion should be avoided.
-	convertedOpts := make(map[string]interface{})
-	exc := cmd.optsOp.exec(fm, func(k, v interface{}) Exception {
+	convertedOpts := make(map[string]any)
+	exc := cmd.optsOp.exec(fm, func(k, v any) Exception {
 		if ks, ok := k.(string); ok {
 			convertedOpts[ks] = v
 			return nil
@@ -389,7 +389,7 @@ func evalForCommand(fm *Frame, op valuesOp, what string) (Callable, error) {
 		Actual: vals.ReprPlain(value)})
 }
 
-func allTrue(vs []interface{}) bool {
+func allTrue(vs []any) bool {
 	for _, v := range vs {
 		if !vals.Bool(v) {
 			return false

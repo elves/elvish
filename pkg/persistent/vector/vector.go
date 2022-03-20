@@ -31,15 +31,15 @@ type Vector interface {
 	Len() int
 	// Index returns the i-th element of the vector, if it exists. The second
 	// return value indicates whether the element exists.
-	Index(i int) (interface{}, bool)
+	Index(i int) (any, bool)
 	// Assoc returns an almost identical Vector, with the i-th element
 	// replaced. If the index is smaller than 0 or greater than the length of
 	// the vector, it returns nil. If the index is equal to the size of the
 	// vector, it is equivalent to Conj.
-	Assoc(i int, val interface{}) Vector
+	Assoc(i int, val any) Vector
 	// Conj returns an almost identical Vector, with an additional element
 	// appended to the end.
-	Conj(val interface{}) Vector
+	Conj(val any) Vector
 	// Pop returns an almost identical Vector, with the last element removed. It
 	// returns nil if the vector is already empty.
 	Pop() Vector
@@ -58,7 +58,7 @@ type Vector interface {
 //     }
 type Iterator interface {
 	// Elem returns the element at the current position.
-	Elem() interface{}
+	Elem() any
 	// HasElem returns whether the iterator is pointing to an element.
 	HasElem() bool
 	// Next moves the iterator to the next position.
@@ -70,17 +70,17 @@ type vector struct {
 	// height of the tree structure, defined to be 0 when root is a leaf.
 	height uint
 	root   node
-	tail   []interface{}
+	tail   []any
 }
 
 // Empty is an empty Vector.
 var Empty Vector = &vector{}
 
 // node is a node in the vector tree. It is always of the size nodeSize.
-type node *[nodeSize]interface{}
+type node *[nodeSize]any
 
 func newNode() node {
-	return node(&[nodeSize]interface{}{})
+	return node(&[nodeSize]any{})
 }
 
 func clone(n node) node {
@@ -88,8 +88,8 @@ func clone(n node) node {
 	return node(&a)
 }
 
-func nodeFromSlice(s []interface{}) node {
-	var n [nodeSize]interface{}
+func nodeFromSlice(s []any) node {
+	var n [nodeSize]any
 	copy(n[:], s)
 	return &n
 }
@@ -108,7 +108,7 @@ func (v *vector) treeSize() int {
 	return ((v.count - 1) >> chunkBits) << chunkBits
 }
 
-func (v *vector) Index(i int) (interface{}, bool) {
+func (v *vector) Index(i int) (any, bool) {
 	if i < 0 || i >= v.count {
 		return nil, false
 	}
@@ -127,7 +127,7 @@ func (v *vector) Index(i int) (interface{}, bool) {
 
 // sliceFor returns the slice where the i-th element is stored. The index must
 // be in bound.
-func (v *vector) sliceFor(i int) []interface{} {
+func (v *vector) sliceFor(i int) []any {
 	if i >= v.treeSize() {
 		return v.tail
 	}
@@ -138,14 +138,14 @@ func (v *vector) sliceFor(i int) []interface{} {
 	return n[:]
 }
 
-func (v *vector) Assoc(i int, val interface{}) Vector {
+func (v *vector) Assoc(i int, val any) Vector {
 	if i < 0 || i > v.count {
 		return nil
 	} else if i == v.count {
 		return v.Conj(val)
 	}
 	if i >= v.treeSize() {
-		newTail := append([]interface{}(nil), v.tail...)
+		newTail := append([]any(nil), v.tail...)
 		newTail[i&chunkMask] = val
 		return &vector{v.count, v.height, v.root, newTail}
 	}
@@ -154,7 +154,7 @@ func (v *vector) Assoc(i int, val interface{}) Vector {
 
 // doAssoc returns an almost identical tree, with the i-th element replaced by
 // val.
-func doAssoc(height uint, n node, i int, val interface{}) node {
+func doAssoc(height uint, n node, i int, val any) node {
 	m := clone(n)
 	if height == 0 {
 		m[i&chunkMask] = val
@@ -165,10 +165,10 @@ func doAssoc(height uint, n node, i int, val interface{}) node {
 	return m
 }
 
-func (v *vector) Conj(val interface{}) Vector {
+func (v *vector) Conj(val any) Vector {
 	// Room in tail?
 	if v.count-v.treeSize() < tailMaxLen {
-		newTail := make([]interface{}, len(v.tail)+1)
+		newTail := make([]any, len(v.tail)+1)
 		copy(newTail, v.tail)
 		newTail[len(v.tail)] = val
 		return &vector{v.count + 1, v.height, v.root, newTail}
@@ -186,7 +186,7 @@ func (v *vector) Conj(val interface{}) Vector {
 	} else {
 		newRoot = v.pushTail(v.height, v.root, tailNode)
 	}
-	return &vector{v.count + 1, newHeight, newRoot, []interface{}{val}}
+	return &vector{v.count + 1, newHeight, newRoot, []any{val}}
 }
 
 // pushTail returns a tree with tail appended.
@@ -223,7 +223,7 @@ func (v *vector) Pop() Vector {
 		return Empty
 	}
 	if v.count-v.treeSize() > 1 {
-		newTail := make([]interface{}, len(v.tail)-1)
+		newTail := make([]any, len(v.tail)-1)
 		copy(newTail, v.tail)
 		return &vector{v.count - 1, v.height, v.root, newTail}
 	}
@@ -288,14 +288,14 @@ func (s *subVector) Len() int {
 	return s.end - s.begin
 }
 
-func (s *subVector) Index(i int) (interface{}, bool) {
+func (s *subVector) Index(i int) (any, bool) {
 	if i < 0 || s.begin+i >= s.end {
 		return nil, false
 	}
 	return s.v.Index(s.begin + i)
 }
 
-func (s *subVector) Assoc(i int, val interface{}) Vector {
+func (s *subVector) Assoc(i int, val any) Vector {
 	if i < 0 || s.begin+i > s.end {
 		return nil
 	} else if s.begin+i == s.end {
@@ -304,7 +304,7 @@ func (s *subVector) Assoc(i int, val interface{}) Vector {
 	return s.v.Assoc(s.begin+i, val).SubVector(s.begin, s.end)
 }
 
-func (s *subVector) Conj(val interface{}) Vector {
+func (s *subVector) Conj(val any) Vector {
 	return s.v.Assoc(s.end, val).SubVector(s.begin, s.end+1)
 }
 
@@ -344,7 +344,7 @@ type pathEntry struct {
 	index int
 }
 
-func (e pathEntry) current() interface{} {
+func (e pathEntry) current() any {
 	return e.node[e.index]
 }
 
@@ -368,7 +368,7 @@ func newIteratorWithRange(v *vector, begin, end int) *iterator {
 	return it
 }
 
-func (it *iterator) Elem() interface{} {
+func (it *iterator) Elem() any {
 	if it.index >= it.treeSize {
 		return it.v.tail[it.index-it.treeSize]
 	}

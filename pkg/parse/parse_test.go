@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func a(c ...interface{}) ast {
+func a(c ...any) ast {
 	// Shorthand used for checking Compound and levels beneath.
 	return ast{"Chunk/Pipeline/Form", fs{"Head": "a", "Args": c}}
 }

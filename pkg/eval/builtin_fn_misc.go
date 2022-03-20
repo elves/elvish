@@ -26,7 +26,7 @@ var (
 // Builtins that have not been put into their own groups go here.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]any{
 		"nop":        nop,
 		"kind-of":    kindOf,
 		"constantly": constantly,
@@ -69,7 +69,7 @@ func init() {
 // Etymology: Various languages, in particular NOP in
 // [assembly languages](https://en.wikipedia.org/wiki/NOP).
 
-func nop(opts RawOptions, args ...interface{}) {
+func nop(opts RawOptions, args ...any) {
 	// Do nothing
 }
 
@@ -90,7 +90,7 @@ func nop(opts RawOptions, args ...interface{}) {
 //
 // The terminology and definition of "kind" is subject to change.
 
-func kindOf(fm *Frame, args ...interface{}) error {
+func kindOf(fm *Frame, args ...any) error {
 	out := fm.ValueOutput()
 	for _, a := range args {
 		err := out.Put(vals.Kind(a))
@@ -134,7 +134,7 @@ func kindOf(fm *Frame, args ...interface{}) error {
 //
 // Etymology: [Clojure](https://clojuredocs.org/clojure.core/constantly).
 
-func constantly(args ...interface{}) Callable {
+func constantly(args ...any) Callable {
 	// TODO(xiaq): Repr of this function is not right.
 	return NewGoFn(
 		"created by constantly",
@@ -171,11 +171,11 @@ func constantly(args ...interface{}) Callable {
 // ```
 
 func call(fm *Frame, fn Callable, argsVal vals.List, optsVal vals.Map) error {
-	args := make([]interface{}, 0, argsVal.Len())
+	args := make([]any, 0, argsVal.Len())
 	for it := argsVal.Iterator(); it.HasElem(); it.Next() {
 		args = append(args, it.Elem())
 	}
-	opts := make(map[string]interface{}, optsVal.Len())
+	opts := make(map[string]any, optsVal.Len())
 	for it := optsVal.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		ks, ok := k.(string)
@@ -310,7 +310,7 @@ func eval(fm *Frame, opts evalOpts, code string) error {
 	newNs, exc := fm.Eval(src, nil, ns)
 	if opts.OnEnd != nil {
 		newFm := fm.Fork("on-end callback of eval")
-		errCb := opts.OnEnd.Call(newFm, []interface{}{newNs}, NoOpts)
+		errCb := opts.OnEnd.Call(newFm, []any{newNs}, NoOpts)
 		if exc == nil {
 			return errCb
 		}
@@ -459,7 +459,7 @@ var TimeAfter = func(fm *Frame, d time.Duration) <-chan time.Time {
 // [tty 8], line 1: sleep -1
 // ```
 
-func sleep(fm *Frame, duration interface{}) error {
+func sleep(fm *Frame, duration any) error {
 	var f float64
 	var d time.Duration
 
@@ -534,7 +534,7 @@ func timeCmd(fm *Frame, opts timeOpt, f Callable) error {
 	dt := t1.Sub(t0)
 	if opts.OnEnd != nil {
 		newFm := fm.Fork("on-end callback of time")
-		errCb := opts.OnEnd.Call(newFm, []interface{}{dt.Seconds()}, NoOpts)
+		errCb := opts.OnEnd.Call(newFm, []any{dt.Seconds()}, NoOpts)
 		if err == nil {
 			err = errCb
 		}

@@ -16,7 +16,7 @@ import (
 )
 
 var Ns = eval.BuildNsNamed("str").
-	AddGoFns(map[string]interface{}{
+	AddGoFns(map[string]any{
 		"compare":      strings.Compare,
 		"contains":     strings.Contains,
 		"contains-any": strings.ContainsAny,
@@ -307,7 +307,7 @@ func join(sep string, inputs eval.Inputs) (string, error) {
 	var buf bytes.Buffer
 	var errJoin error
 	first := true
-	inputs(func(v interface{}) {
+	inputs(func(v any) {
 		if errJoin != nil {
 			return
 		}

@@ -10,7 +10,7 @@ import (
 
 type customEqualer struct{ ret bool }
 
-func (c customEqualer) Equal(interface{}) bool { return c.ret }
+func (c customEqualer) Equal(any) bool { return c.ret }
 
 type customStruct struct{ a, b string }
 

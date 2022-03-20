@@ -116,7 +116,7 @@ func testIterator(t *testing.T, it Iterator, begin, end int) {
 }
 
 // testAssoc tests Assoc by replacing each element.
-func testAssoc(t *testing.T, v Vector, subst interface{}) {
+func testAssoc(t *testing.T, v Vector, subst any) {
 	n := v.Len()
 	for i := 0; i <= n; i++ {
 		oldv := v
@@ -231,7 +231,7 @@ func TestSubVector_BeginFromTail(t *testing.T) {
 	testIterator(t, sv.Iterator(), 64, 65)
 }
 
-func checkVector(v Vector, values ...interface{}) bool {
+func checkVector(v Vector, values ...any) bool {
 	if v.Len() != len(values) {
 		return false
 	}
@@ -298,7 +298,7 @@ func TestMarshalJSON(t *testing.T) {
 	}
 }
 
-func makeVector(elements ...interface{}) Vector {
+func makeVector(elements ...any) Vector {
 	v := Empty
 	for _, element := range elements {
 		v = v.Conj(element)
@@ -313,7 +313,7 @@ func BenchmarkConjNativeN4(b *testing.B) { benchmarkNativeAppend(b, N4) }
 
 func benchmarkNativeAppend(b *testing.B, n int) {
 	for r := 0; r < b.N; r++ {
-		var s []interface{}
+		var s []any
 		for i := 0; i < n; i++ {
 			s = append(s, i)
 		}
@@ -336,7 +336,7 @@ func benchmarkConj(b *testing.B, n int) {
 }
 
 var (
-	sliceN4  = make([]interface{}, N4)
+	sliceN4  = make([]any, N4)
 	vectorN4 = Empty
 )
 
@@ -346,7 +346,7 @@ func init() {
 	}
 }
 
-var x interface{}
+var x any
 
 func BenchmarkIndexSeqNativeN4(b *testing.B) { benchmarkIndexSeqNative(b, N4) }
 

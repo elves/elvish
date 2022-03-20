@@ -14,7 +14,7 @@ var rlimTValid = "number between 0 and " + strconv.FormatInt(math.MaxInt64, 10)
 
 const maxInt = int64(^uint(0) >> 1)
 
-func convertRlimT(x int64) interface{} {
+func convertRlimT(x int64) any {
 	if x <= maxInt {
 		return int(x)
 	}
@@ -22,7 +22,7 @@ func convertRlimT(x int64) interface{} {
 
 }
 
-func parseRlimT(val interface{}) (int64, bool) {
+func parseRlimT(val any) (int64, bool) {
 	switch val := val.(type) {
 	case int:
 		return int64(val), true

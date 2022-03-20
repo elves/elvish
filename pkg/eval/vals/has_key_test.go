@@ -6,9 +6,9 @@ import (
 	. "src.elv.sh/pkg/tt"
 )
 
-type hasKeyer struct{ key interface{} }
+type hasKeyer struct{ key any }
 
-func (h hasKeyer) HasKey(k interface{}) bool { return k == h.key }
+func (h hasKeyer) HasKey(k any) bool { return k == h.key }
 
 func TestHasKey(t *testing.T) {
 	Test(t, Fn("HasKey", HasKey), Table{

@@ -172,9 +172,9 @@ var errBadVar = errors.New("bad var")
 
 type badVar struct{ allowedSets int }
 
-func (v *badVar) Get() interface{} { return nil }
+func (v *badVar) Get() any { return nil }
 
-func (v *badVar) Set(interface{}) error {
+func (v *badVar) Set(any) error {
 	if v.allowedSets == 0 {
 		return errBadVar
 	}

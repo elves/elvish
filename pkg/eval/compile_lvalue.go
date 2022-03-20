@@ -167,7 +167,7 @@ func (op *assignOp) exec(fm *Frame) Exception {
 	return nil
 }
 
-func set(fm *Frame, r diag.Ranger, temp bool, variable vars.Var, value interface{}) Exception {
+func set(fm *Frame, r diag.Ranger, temp bool, variable vars.Var, value any) Exception {
 	if temp {
 		saved := variable.Get()
 		err := variable.Set(value)
@@ -207,7 +207,7 @@ func derefLValue(fm *Frame, lv lvalue) (vars.Var, error) {
 	if len(lv.indexOps) == 0 {
 		return variable, nil
 	}
-	indices := make([]interface{}, len(lv.indexOps))
+	indices := make([]any, len(lv.indexOps))
 	for i, op := range lv.indexOps {
 		values, exc := op.exec(fm)
 		if exc != nil {

@@ -6,14 +6,14 @@ import (
 )
 
 func TestFeed(t *testing.T) {
-	var fed []interface{}
+	var fed []any
 
-	Feed(func(x interface{}) bool {
+	Feed(func(x any) bool {
 		fed = append(fed, x)
 		return x != 10
 	}, 1, 2, 3, 10, 11, 12, 13)
 
-	wantFed := []interface{}{1, 2, 3, 10}
+	wantFed := []any{1, 2, 3, 10}
 	if !reflect.DeepEqual(fed, wantFed) {
 		t.Errorf("Fed %v, want %v", fed, wantFed)
 	}

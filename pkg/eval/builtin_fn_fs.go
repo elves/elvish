@@ -8,7 +8,7 @@ import (
 // Filesystem commands.
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]any{
 		// Directory
 		"cd": cd,
 

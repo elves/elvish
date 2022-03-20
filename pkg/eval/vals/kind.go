@@ -20,7 +20,7 @@ type Kinder interface {
 // and document the rationale for the choice in the doc string for `func
 // (ExternalCmd) Kind()` as well as user facing documentation. It's not
 // obvious why this returns "fn" rather than "external" for that case.
-func Kind(v interface{}) string {
+func Kind(v any) string {
 	switch v := v.(type) {
 	case nil:
 		return "nil"

@@ -18,12 +18,12 @@ type Table []*Case
 // setters that augment and return itself; those calls can be chained like
 // C(...).Rets(...).
 type Case struct {
-	args         []interface{}
-	retsMatchers [][]interface{}
+	args         []any
+	retsMatchers [][]any
 }
 
 // Args returns a new Case with the given arguments.
-func Args(args ...interface{}) *Case {
+func Args(args ...any) *Case {
 	return &Case{args: args}
 }
 
@@ -31,7 +31,7 @@ func Args(args ...interface{}) *Case {
 // the given values. It returns the receiver. The arguments may implement the
 // Matcher interface, in which case its Match method is called with the actual
 // return value. Otherwise, reflect.DeepEqual is used to determine matches.
-func (c *Case) Rets(matchers ...interface{}) *Case {
+func (c *Case) Rets(matchers ...any) *Case {
 	c.retsMatchers = append(c.retsMatchers, matchers)
 	return c
 }
@@ -39,13 +39,13 @@ func (c *Case) Rets(matchers ...interface{}) *Case {
 // FnToTest describes a function to test.
 type FnToTest struct {
 	name    string
-	body    interface{}
+	body    any
 	argsFmt string
 	retsFmt string
 }
 
 // Fn makes a new FnToTest with the given function name and body.
-func Fn(name string, body interface{}) *FnToTest {
+func Fn(name string, body any) *FnToTest {
 	return &FnToTest{name: name, body: body}
 }
 
@@ -66,7 +66,7 @@ func (fn *FnToTest) RetsFmt(s string) *FnToTest {
 // T is the interface for accessing testing.T.
 type T interface {
 	Helper()
-	Errorf(format string, args ...interface{})
+	Errorf(format string, args ...any)
 }
 
 // Test tests a function against test cases.
@@ -95,7 +95,7 @@ func Test(t T, fn *FnToTest, tests Table) {
 }
 
 // RetValue is an empty interface used in the Matcher interface.
-type RetValue interface{}
+type RetValue any
 
 // Matcher wraps the Match method.
 type Matcher interface {
@@ -111,7 +111,7 @@ type anyMatcher struct{}
 
 func (anyMatcher) Match(RetValue) bool { return true }
 
-func match(matchers, actual []interface{}) bool {
+func match(matchers, actual []any) bool {
 	for i, matcher := range matchers {
 		if !matchOne(matcher, actual[i]) {
 			return false
@@ -120,14 +120,14 @@ func match(matchers, actual []interface{}) bool {
 	return true
 }
 
-func matchOne(m, a interface{}) bool {
+func matchOne(m, a any) bool {
 	if m, ok := m.(Matcher); ok {
 		return m.Match(a)
 	}
 	return reflect.DeepEqual(m, a)
 }
 
-func sprintArgs(args ...interface{}) string {
+func sprintArgs(args ...any) string {
 	var b strings.Builder
 	for i, arg := range args {
 		if i > 0 {
@@ -138,7 +138,7 @@ func sprintArgs(args ...interface{}) string {
 	return b.String()
 }
 
-func call(fn interface{}, args []interface{}) []interface{} {
+func call(fn any, args []any) []any {
 	argsReflect := make([]reflect.Value, len(args))
 	for i, arg := range args {
 		if arg == nil {
@@ -148,14 +148,14 @@ func call(fn interface{}, args []interface{}) []interface{} {
 			// TODO(xiaq): This is now always using a nil value with type
 			// interface{}. For more usability, inspect the type of fn to see
 			// which type of nil this argument should be.
-			var v interface{}
+			var v any
 			argsReflect[i] = reflect.ValueOf(&v).Elem()
 		} else {
 			argsReflect[i] = reflect.ValueOf(arg)
 		}
 	}
 	retsReflect := reflect.ValueOf(fn).Call(argsReflect)
-	rets := make([]interface{}, len(retsReflect))
+	rets := make([]any, len(retsReflect))
 	for i, retReflect := range retsReflect {
 		rets[i] = retReflect.Interface()
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 var Ns = eval.BuildNsNamed("file").
-	AddGoFns(map[string]interface{}{
+	AddGoFns(map[string]any{
 		"close":    close,
 		"open":     open,
 		"pipe":     pipe,

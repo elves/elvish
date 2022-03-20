@@ -382,7 +382,7 @@ func distributeHeight(widgets []tk.Widget, width, height int) ([]int, int) {
 	return heights, focus
 }
 
-func hasFocus(w interface{}) bool {
+func hasFocus(w any) bool {
 	if f, ok := w.(interface{ Focus() bool }); ok {
 		return f.Focus()
 	}

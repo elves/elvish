@@ -80,7 +80,7 @@ type storeMatcher struct {
 	typ reflect.Type
 }
 
-func store(p interface{}) nodesMatcher {
+func store(p any) nodesMatcher {
 	dst := reflect.ValueOf(p).Elem()
 	return storeMatcher{dst, dst.Type()}
 }

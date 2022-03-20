@@ -60,7 +60,7 @@ func indexLayeredBindings(k ui.Key, maps ...bindingsMap) eval.Callable {
 
 var bindingSource = parse.Source{Name: "[editor binding]"}
 
-func callWithNotifyPorts(nt notifier, ev *eval.Evaler, f eval.Callable, args ...interface{}) {
+func callWithNotifyPorts(nt notifier, ev *eval.Evaler, f eval.Callable, args ...any) {
 	notifyPort, cleanup := makeNotifyPort(nt)
 	defer cleanup()
 
@@ -73,7 +73,7 @@ func callWithNotifyPorts(nt notifier, ev *eval.Evaler, f eval.Callable, args ...
 }
 
 func makeNotifyPort(nt notifier) (*eval.Port, func()) {
-	ch := make(chan interface{})
+	ch := make(chan any)
 	r, w, err := os.Pipe()
 	if err != nil {
 		panic(err)

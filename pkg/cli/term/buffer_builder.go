@@ -125,7 +125,7 @@ var DotHere = struct{ x struct{} }{}
 
 // MarkLines is like calling WriteStyled with ui.MarkLines(args...), but accepts
 // an additional special parameter DotHere to mark the position of the dot.
-func (bb *BufferBuilder) MarkLines(args ...interface{}) *BufferBuilder {
+func (bb *BufferBuilder) MarkLines(args ...any) *BufferBuilder {
 	for i, arg := range args {
 		if arg == DotHere {
 			return bb.WriteStyled(ui.MarkLines(args[:i]...)).

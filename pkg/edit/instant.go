@@ -27,7 +27,7 @@ func initInstant(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	nb.AddNs("-instant",
 		eval.BuildNsNamed("edit:-instant").
 			AddVar("binding", bindingVar).
-			AddGoFns(map[string]interface{}{
+			AddGoFns(map[string]any{
 				"start": func() { instantStart(ed.app, ev, bindings) },
 			}))
 }

@@ -56,7 +56,7 @@ func (c *client) Close() error {
 	return c.ResetConn()
 }
 
-func (c *client) call(f string, req, res interface{}) error {
+func (c *client) call(f string, req, res any) error {
 	c.waits.Add(1)
 	defer c.waits.Done()
 

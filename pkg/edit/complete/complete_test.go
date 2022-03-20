@@ -48,7 +48,7 @@ func (ev testEvaler) PurelyEvalCompound(cn *parse.Compound) (string, bool) {
 	return (*eval.Evaler)(nil).PurelyEvalCompound(cn)
 }
 
-func (ev testEvaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
+func (ev testEvaler) PurelyEvalPrimary(pn *parse.Primary) any {
 	return (*eval.Evaler)(nil).PurelyEvalPrimary(pn)
 }
 

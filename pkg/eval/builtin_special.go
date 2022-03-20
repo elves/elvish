@@ -198,7 +198,7 @@ func (op *delElemOp) Range() diag.Ranging {
 }
 
 func (op *delElemOp) exec(fm *Frame) Exception {
-	var indices []interface{}
+	var indices []any
 	for _, indexOp := range op.indexOps {
 		indexValues, exc := indexOp.exec(fm)
 		if exc != nil {
@@ -436,7 +436,7 @@ type andOrOp struct {
 }
 
 func (op *andOrOp) exec(fm *Frame) Exception {
-	var lastValue interface{} = vals.Bool(op.init)
+	var lastValue any = vals.Bool(op.init)
 	out := fm.ValueOutput()
 	for _, argOp := range op.argOps {
 		values, exc := argOp.exec(fm)
@@ -632,7 +632,7 @@ func (op *forOp) exec(fm *Frame) Exception {
 
 	iterated := false
 	var errElement error
-	errIterate := vals.Iterate(iterable, func(v interface{}) bool {
+	errIterate := vals.Iterate(iterable, func(v any) bool {
 		iterated = true
 		err := variable.Set(v)
 		if err != nil {

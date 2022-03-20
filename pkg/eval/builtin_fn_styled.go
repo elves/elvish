@@ -12,7 +12,7 @@ import (
 var errStyledSegmentArgType = errors.New("argument to styled-segment must be a string or a styled segment")
 
 func init() {
-	addBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]any{
 		"styled-segment": styledSegment,
 		"styled":         styled,
 	})
@@ -46,7 +46,7 @@ func init() {
 // Turns a string or ui.Segment into a new ui.Segment with the attributes
 // from the supplied options applied to it. If the input is already a Segment its
 // attributes are copied and modified.
-func styledSegment(options RawOptions, input interface{}) (*ui.Segment, error) {
+func styledSegment(options RawOptions, input any) (*ui.Segment, error) {
 	var text string
 	var style ui.Style
 
@@ -132,7 +132,7 @@ func styledSegment(options RawOptions, input interface{}) (*ui.Segment, error) {
 // put $s[0] $s[1]
 // ```
 
-func styled(fm *Frame, input interface{}, stylings ...interface{}) (ui.Text, error) {
+func styled(fm *Frame, input any, stylings ...any) (ui.Text, error) {
 	var text ui.Text
 
 	switch input := input.(type) {
@@ -160,7 +160,7 @@ func styled(fm *Frame, input interface{}, stylings ...interface{}) (ui.Text, err
 		case Callable:
 			for i, seg := range text {
 				vs, err := fm.CaptureOutput(func(fm *Frame) error {
-					return styling.Call(fm, []interface{}{seg}, NoOpts)
+					return styling.Call(fm, []any{seg}, NoOpts)
 				})
 				if err != nil {
 					return nil, err
