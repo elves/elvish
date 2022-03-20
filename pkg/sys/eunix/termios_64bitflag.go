@@ -1,6 +1,4 @@
 //go:build darwin && (amd64 || arm64)
-// +build darwin
-// +build amd64 arm64
 
 package eunix
 

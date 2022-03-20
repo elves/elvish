@@ -159,7 +159,7 @@ formatted.
 Install [staticcheck](https://staticcheck.io):
 
 ```sh
-go install honnef.co/go/tools/cmd/staticcheck@2021.1
+go install honnef.co/go/tools/cmd/staticcheck@master
 ```
 
 The other linter Elvish uses is the standard `go vet` command. Elvish doesn't

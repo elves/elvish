@@ -1,5 +1,4 @@
 //go:build !openbsd && !darwin && !windows && !plan9 && !js
-// +build !openbsd,!darwin,!windows,!plan9,!js
 
 package unix
 

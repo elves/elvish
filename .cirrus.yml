@@ -1,26 +1,33 @@
 test_task:
   env:
     ELVISH_TEST_TIME_SCALE: 20
+  go_toolchain_cache:
+    fingerprint_key: 1.18
+    folder: $HOME/sdk
   go_modules_cache:
     fingerprint_script: cat go.sum
-    folder: $GOPATH/pkg/mod
+    folder: $HOME/go/pkg/mod
   matrix:
-    - name: Test on gccgo
-      container:
-        image: debian:unstable-slim
-      setup_script:
-        - apt-get -y update
-        - apt-get -y install ca-certificates gccgo-11
-        - ln -sf /usr/bin/go-11 /usr/local/bin/go
-      env:
-        # gccgo doesn't support race test
-        TEST_FLAG: ""
+    # Re-enable gccgo when it supports Go 1.18.
+    #- name: Test on gccgo
+    #  container:
+    #    image: debian:unstable-slim
+    #  setup_script:
+    #    - apt-get -y update
+    #    - apt-get -y install ca-certificates gccgo-11
+    #    - ln -sf /usr/bin/go-11 /usr/local/bin/go
+    #  env:
+    #    # gccgo doesn't support race test
+    #    TEST_FLAG: ""
     - name: Test on FreeBSD
       freebsd_instance:
-        image_family: freebsd-12-1
-      setup_script: pkg install -y go
+        image_family: freebsd-13-0
       env:
-        GOPATH: $HOME/go
         TEST_FLAG: -race
-  go_version_script: go version
-  test_script: go test $TEST_FLAG ./...
+        PATH: $HOME/go/bin:$PATH
+      setup_script: |
+        pkg install -y go git
+        go install golang.org/dl/go1.18@latest
+        go1.18 download
+  go_version_script: go1.18 version
+  test_script: go1.18 test $TEST_FLAG ./...

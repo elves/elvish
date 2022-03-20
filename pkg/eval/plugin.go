@@ -1,5 +1,4 @@
 //go:build !gccgo
-// +build !gccgo
 
 package eval
 

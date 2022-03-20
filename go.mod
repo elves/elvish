@@ -10,4 +10,6 @@ require (
 	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9
 )
 
-go 1.16
+require golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
+
+go 1.18

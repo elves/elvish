@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine as builder
+FROM golang:1.18-alpine as builder
 RUN apk update && \
     apk add --virtual build-deps make git
 # Build Elvish

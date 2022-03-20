@@ -16,15 +16,23 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu, macos, windows]
-        go-version: [1.17.x]
-        include:
-          # Test old supported Go version
-          - os: ubuntu
-            go-version: 1.16.x
+        go-version: [1.18.x]
+        # We usually support building Elvish with Go 1.N-1 too, but since Go
+        # 1.18 brought a lot of improvements, we dropped support for Go 1.17
+        # when Go 1.18 is released. When Go 1.19 is released, uncomment the
+        # stanza below to test on Go 1.18 too.
+        #include:
+        #  # Test old supported Go version
+        #  - os: ubuntu
+        #    go-version: 1.18.x
     env:
       ELVISH_TEST_TIME_SCALE: 20
     runs-on: ${{ matrix.os }}-latest
     steps:
+    # autocrlf is problematic for fuzz testdata.
+    - name: Turn off autocrlf
+      if: matrix.os == 'windows'
+      run: git config --global core.autocrlf false
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Set up cache
@@ -51,10 +59,10 @@ jobs:
       if: matrix.os == 'ubuntu'
       run: echo ostype=linux >> $GITHUB_ENV
     - name: Generate test coverage
-      if: matrix.go-version == '1.17.x'
+      if: matrix.go-version == '1.18.x'
       run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
     - name: Save test coverage
-      if: matrix.go-version == '1.17.x'
+      if: matrix.go-version == '1.18.x'
       uses: actions/upload-artifact@v2
       with:
         name: cover-${{ env.ostype }}
@@ -72,7 +80,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17.x
+        go-version: 1.18.x
     - name: Run benchmarks
       run: go test -bench=. -run='^$' ./...
 
@@ -108,12 +116,12 @@ jobs:
         path: |
           ~/go/pkg/mod
           ~/.cache/go-build
-        key: buildall/${{ matrix.os }}/1.17.x/${{ hashFiles('go.sum') }}/${{ github.sha }}
-        restore-keys: buildall/${{ matrix.os }}/1.17.x/${{ hashFiles('go.sum') }}
+        key: buildall/${{ matrix.os }}/1.18.x/${{ hashFiles('go.sum') }}/${{ github.sha }}
+        restore-keys: buildall/${{ matrix.os }}/1.18.x/${{ hashFiles('go.sum') }}
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17.x
+        go-version: 1.18.x
     - name: Build binaries
       # TODO: Use PR number for suffix when running for PR
       run: ELVISH_REPRODUCIBLE=dev ./tools/buildall.sh . bin HEAD
@@ -132,7 +140,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17.x
+        go-version: 1.18.x
     - name: Set up goimports
       run: go install golang.org/x/tools/cmd/goimports@latest
     - name: Check style
@@ -205,9 +213,9 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17.x
+        go-version: 1.18.x
     - name: Set up staticcheck
-      run: go install honnef.co/go/tools/cmd/staticcheck@2021.1
+      run: go install honnef.co/go/tools/cmd/staticcheck@master
     - name: Run linters
       run: ./tools/lint.sh
 
