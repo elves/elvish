@@ -1,8 +1,6 @@
 package complete
 
 import (
-	"reflect"
-
 	"src.elv.sh/pkg/parse"
 )
 
@@ -51,44 +49,36 @@ type nodesMatcher interface {
 }
 
 // Matches one node of a given type, without storing it.
-//
-// TODO: Avoid reflection with generics when Elvish requires Go 1.18.
-type typedMatcher struct{ typ reflect.Type }
+type typedMatcher[T parse.Node] struct{}
 
-func typed(n parse.Node) nodesMatcher { return typedMatcher{reflect.TypeOf(n)} }
-
-func (m typedMatcher) matchNodes(ns []parse.Node) ([]parse.Node, bool) {
-	if len(ns) > 0 && reflect.TypeOf(ns[0]) == m.typ {
-		return ns[1:], true
+func (m typedMatcher[T]) matchNodes(ns []parse.Node) ([]parse.Node, bool) {
+	if len(ns) > 0 {
+		if _, ok := ns[0].(T); ok {
+			return ns[1:], true
+		}
 	}
 	return nil, false
 }
 
 var (
-	aChunk    = typed(&parse.Chunk{})
-	aPipeline = typed(&parse.Pipeline{})
-	aArray    = typed(&parse.Array{})
-	aRedir    = typed(&parse.Redir{})
-	aSep      = typed(&parse.Sep{})
+	aChunk    = typedMatcher[*parse.Chunk]{}
+	aPipeline = typedMatcher[*parse.Pipeline]{}
+	aArray    = typedMatcher[*parse.Array]{}
+	aRedir    = typedMatcher[*parse.Redir]{}
+	aSep      = typedMatcher[*parse.Sep]{}
 )
 
 // Matches one node of a certain type, and stores it into a pointer.
-//
-// TODO: Avoid reflection with generics when Elvish requires Go 1.18.
-type storeMatcher struct {
-	p   reflect.Value
-	typ reflect.Type
-}
+type storeMatcher[T parse.Node] struct{ p *T }
 
-func store(p any) nodesMatcher {
-	dst := reflect.ValueOf(p).Elem()
-	return storeMatcher{dst, dst.Type()}
-}
+func store[T parse.Node](p *T) nodesMatcher { return storeMatcher[T]{p} }
 
-func (m storeMatcher) matchNodes(ns []parse.Node) ([]parse.Node, bool) {
-	if len(ns) > 0 && reflect.TypeOf(ns[0]) == m.typ {
-		m.p.Set(reflect.ValueOf(ns[0]))
-		return ns[1:], true
+func (m storeMatcher[T]) matchNodes(ns []parse.Node) ([]parse.Node, bool) {
+	if len(ns) > 0 {
+		if n, ok := ns[0].(T); ok {
+			*m.p = n
+			return ns[1:], true
+		}
 	}
 	return nil, false
 }

@@ -168,6 +168,9 @@ use golint since it is
 
 Use `make lint` to run `staticcheck` and `go vet`.
 
+**Note**: As of writing, `staticcheck` doesn't support generics yet (it will
+crash when checking code using generics), so it has been temporarily disabled.
+
 ### Spell checking
 
 Install [codespell](https://github.com/codespell-project/codespell) to check
