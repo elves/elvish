@@ -2,8 +2,12 @@ test_task:
   env:
     ELVISH_TEST_TIME_SCALE: 20
   go_toolchain_cache:
-    fingerprint_key: 1.18
-    folder: $HOME/sdk
+    fingerprint_key: go1.18
+    folder: /usr/local/go
+    populate_script: |
+      pkg install -y curl
+      curl -LO https://go.dev/dl/go1.18.freebsd-amd64.tar.gz
+      tar -C /usr/local -xf go1.18.freebsd-amd64.tar.gz
   go_modules_cache:
     fingerprint_script: cat go.sum
     folder: $HOME/go/pkg/mod
@@ -24,10 +28,7 @@ test_task:
         image_family: freebsd-13-0
       env:
         TEST_FLAG: -race
-        PATH: $HOME/go/bin:$PATH
-      setup_script: |
-        pkg install -y go git
-        go install golang.org/dl/go1.18@latest
-        go1.18 download
-  go_version_script: go1.18 version
-  test_script: go1.18 test $TEST_FLAG ./...
+        PATH: /usr/local/go/bin:$PATH
+      setup_script: pkg install -y git
+  go_version_script: go version
+  test_script: go test $TEST_FLAG ./...
