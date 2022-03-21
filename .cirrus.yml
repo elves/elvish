@@ -12,17 +12,16 @@ test_task:
     fingerprint_script: cat go.sum
     folder: $HOME/go/pkg/mod
   matrix:
-    # Re-enable gccgo when it supports Go 1.18.
-    #- name: Test on gccgo
-    #  container:
-    #    image: debian:unstable-slim
-    #  setup_script:
-    #    - apt-get -y update
-    #    - apt-get -y install ca-certificates gccgo-11
-    #    - ln -sf /usr/bin/go-11 /usr/local/bin/go
-    #  env:
-    #    # gccgo doesn't support race test
-    #    TEST_FLAG: ""
+    - name: Test on gccgo
+      container:
+        image: debian:unstable-slim
+      setup_script:
+        - apt-get -y update
+        - apt-get -y install ca-certificates git gccgo-12
+        - ln -sf /usr/bin/go-12 /usr/local/bin/go
+      env:
+        # gccgo doesn't support race test
+        TEST_FLAG: ""
     - name: Test on FreeBSD
       freebsd_instance:
         image_family: freebsd-13-0
