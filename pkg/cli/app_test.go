@@ -28,7 +28,7 @@ func TestReadCode_AbortsWhenTTYSetupReturnsError(t *testing.T) {
 	_, err := f.Wait()
 
 	if err != ttySetupErr {
-		t.Errorf("ReadCode returns error %v, want %v", err, ttySetupErr)
+		t.Errorf("ReadCode unexpected error\nWanted: %v\nActual: %v", ttySetupErr, err)
 	}
 }
 
@@ -41,7 +41,7 @@ func TestReadCode_RestoresTTYBeforeReturning(t *testing.T) {
 	f.Stop()
 
 	if restoreCalled != 1 {
-		t.Errorf("Restore callback called %d times, want once", restoreCalled)
+		t.Errorf("Restore callback called:\nWanted: %d\nActual: %d", 1, restoreCalled)
 	}
 }
 
@@ -53,7 +53,7 @@ func TestReadCode_ResetsStateBeforeReturning(t *testing.T) {
 	f.Stop()
 
 	if code := f.App.ActiveWidget().(tk.CodeArea).CopyState().Buffer; code != (tk.CodeBuffer{}) {
-		t.Errorf("Editor state has CodeBuffer %v, want empty", code)
+		t.Errorf("Editor state CodeBuffer:\nWanted: (empty)\nActual: %v", code)
 	}
 }
 
@@ -98,8 +98,8 @@ func TestReadCode_CallsAfterReadline(t *testing.T) {
 	case calledWith := <-callCh:
 		wantCalledWith := "abc"
 		if calledWith != wantCalledWith {
-			t.Errorf("AfterReadline hook called with %v, want %v",
-				calledWith, wantCalledWith)
+			t.Errorf("AfterReadline hook called with:\nWanted: %v\nActual: %v",
+				wantCalledWith, calledWith)
 		}
 	case <-time.After(time.Second):
 		t.Errorf("AfterReadline not called")
@@ -523,7 +523,7 @@ func TestReadCode_ShowNotes(t *testing.T) {
 
 	// Test that notes are flushed after being rendered.
 	if n := len(f.App.CopyState().Notes); n > 0 {
-		t.Errorf("State.Notes has %d elements after redrawing, want 0", n)
+		t.Errorf("State.Notes element count after redrawing:\nWanted: %d\nActual: %d", 0, n)
 	}
 }
 
@@ -560,10 +560,11 @@ func TestReadCode_DoesNotReadMoreEventsThanNeeded(t *testing.T) {
 	f.TTY.Inject(term.K('a'), term.K('\n'), term.K('b'))
 	code, err := f.Wait()
 	if code != "a" || err != nil {
-		t.Errorf("got (%q, %v), want (%q, nil)", code, err, "a")
+		t.Errorf("ReadCode got unexpected event:\nWanted: %q, %v\nActual: %q, %v",
+			"a", nil, code, err)
 	}
 	if event := <-f.TTY.EventCh(); event != term.K('b') {
-		t.Errorf("got event %v, want %v", event, term.K('b'))
+		t.Errorf("ReadCode got unexpected event:\nWanted: %v\nActual: %v", term.K('b'), event)
 	}
 }
 

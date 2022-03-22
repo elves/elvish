@@ -16,7 +16,7 @@ func TestFakeTTY_Setup(t *testing.T) {
 
 	restore, err := tty.Setup()
 	if err != nil {
-		t.Errorf("Setup -> error %v, want nil", err)
+		t.Errorf("FakeTTY Setup():\nWanted: %v\nActual: %v", nil, err)
 	}
 	restore()
 	if restoreCalled != 1 {
@@ -29,7 +29,7 @@ func TestFakeTTY_Size(t *testing.T) {
 	ttyCtrl.SetSize(20, 30)
 	h, w := tty.Size()
 	if h != 20 || w != 30 {
-		t.Errorf("Size -> (%v, %v), want (20, 30)", h, w)
+		t.Errorf("FakeTTY Size():\nWanted: 20, 30\nActual: %v, %v", h, w)
 	}
 }
 
@@ -37,7 +37,7 @@ func TestFakeTTY_SetRawInput(t *testing.T) {
 	tty, ttyCtrl := NewFakeTTY()
 	tty.SetRawInput(2)
 	if raw := ttyCtrl.RawInput(); raw != 2 {
-		t.Errorf("RawInput() -> %v, want 2", raw)
+		t.Errorf("FakeTTY RawInput():\nWanted: %v\nActual: %v", 2, raw)
 	}
 }
 
@@ -45,10 +45,11 @@ func TestFakeTTY_Events(t *testing.T) {
 	tty, ttyCtrl := NewFakeTTY()
 	ttyCtrl.Inject(term.K('a'), term.K('b'))
 	if event, err := tty.ReadEvent(); event != term.K('a') || err != nil {
-		t.Errorf("Got (%v, %v), want (%v, nil)", event, err, term.K('a'))
+		t.Errorf("FakeTTY ReadEvent():\nWanted: %v, %v\nActual: %v, %v",
+			term.K('a'), nil, event, err)
 	}
 	if event := <-ttyCtrl.EventCh(); event != term.K('b') {
-		t.Errorf("Got event %v, want K('b')", event)
+		t.Errorf("FakeTTY event:\nWanted: %v\nActual: %v", term.K('b'), event)
 	}
 }
 
@@ -58,11 +59,11 @@ func TestFakeTTY_Signals(t *testing.T) {
 	ttyCtrl.InjectSignal(os.Interrupt, os.Kill)
 	signal := <-signals
 	if signal != os.Interrupt {
-		t.Errorf("Got signal %v, want %v", signal, os.Interrupt)
+		t.Errorf("FakeTTY unexpected signal:\nWanted: %v\nActual: %v", os.Interrupt, signal)
 	}
 	signal = <-signals
 	if signal != os.Kill {
-		t.Errorf("Got signal %v, want %v", signal, os.Kill)
+		t.Errorf("FakeTTY unexpected signal:\nWanted: %v\nActual: %v", os.Kill, signal)
 	}
 }
 
@@ -77,28 +78,34 @@ func TestFakeTTY_Buffer(t *testing.T) {
 	tty, ttyCtrl := NewFakeTTY()
 
 	if ttyCtrl.LastNotesBuffer() != nil {
-		t.Errorf("LastNotesBuffer -> %v, want nil", ttyCtrl.LastNotesBuffer())
+		t.Errorf("FakeTTY LastNotesBuffer():\nWanted: %v\nActual: %v",
+			nil, ttyCtrl.LastNotesBuffer())
 	}
 	if ttyCtrl.LastBuffer() != nil {
-		t.Errorf("LastBuffer -> %v, want nil", ttyCtrl.LastBuffer())
+		t.Errorf("FakeTTY LastBuffer():\nWanted: %v\nActual: %v",
+			nil, ttyCtrl.LastBuffer())
 	}
 
 	tty.UpdateBuffer(bufNotes1, buf1, true)
 	if ttyCtrl.LastNotesBuffer() != bufNotes1 {
-		t.Errorf("LastBuffer -> %v, want %v", ttyCtrl.LastNotesBuffer(), bufNotes1)
+		t.Errorf("FakeTTY LastNotesBuffer():\nWanted: %v\nActual: %v",
+			bufNotes1, ttyCtrl.LastNotesBuffer())
 	}
 	if ttyCtrl.LastBuffer() != buf1 {
-		t.Errorf("LastBuffer -> %v, want %v", ttyCtrl.LastBuffer(), buf1)
+		t.Errorf("FakeTTY LastBuffer():\nWanted: %v\nActual: %v",
+			buf1, ttyCtrl.LastBuffer())
 	}
 	ttyCtrl.TestBuffer(t, buf1)
 	ttyCtrl.TestNotesBuffer(t, bufNotes1)
 
 	tty.UpdateBuffer(bufNotes2, buf2, true)
 	if ttyCtrl.LastNotesBuffer() != bufNotes2 {
-		t.Errorf("LastBuffer -> %v, want %v", ttyCtrl.LastNotesBuffer(), bufNotes2)
+		t.Errorf("FakeTTY LastNotesBuffer():\nWanted: %v\nActual: %v",
+			bufNotes2, ttyCtrl.LastNotesBuffer())
 	}
 	if ttyCtrl.LastBuffer() != buf2 {
-		t.Errorf("LastBuffer -> %v, want %v", ttyCtrl.LastBuffer(), buf2)
+		t.Errorf("FakeTTY LastBuffer():\nWanted: %v\nActual: %v",
+			buf2, ttyCtrl.LastBuffer())
 	}
 	ttyCtrl.TestBuffer(t, buf2)
 	ttyCtrl.TestNotesBuffer(t, bufNotes2)
@@ -123,7 +130,7 @@ func TestFakeTTY_ClearScreen(t *testing.T) {
 	fakeTTY, ttyCtrl := NewFakeTTY()
 	for i := 0; i < 5; i++ {
 		if cleared := ttyCtrl.ScreenCleared(); cleared != i {
-			t.Errorf("ScreenCleared -> %v, want %v", cleared, i)
+			t.Errorf("FakeTTY ScreenCleared():\nWanted: %v\nActual: %v", i, cleared)
 		}
 		fakeTTY.ClearScreen()
 	}
@@ -132,13 +139,13 @@ func TestFakeTTY_ClearScreen(t *testing.T) {
 func TestGetTTYCtrl_FakeTTY(t *testing.T) {
 	fakeTTY, ttyCtrl := NewFakeTTY()
 	if got, ok := GetTTYCtrl(fakeTTY); got != ttyCtrl || !ok {
-		t.Errorf("-> %v, %v, want %v, %v", got, ok, ttyCtrl, true)
+		t.Errorf("GetTTYCtrl():\nWanted: %v, %v\nActual: %v, %v", ttyCtrl, true, got, ok)
 	}
 }
 
 func TestGetTTYCtrl_RealTTY(t *testing.T) {
 	realTTY := cli.NewTTY(os.Stdin, os.Stderr)
 	if _, ok := GetTTYCtrl(realTTY); ok {
-		t.Errorf("-> _, true, want _, false")
+		t.Errorf("GetTTYCtrl() error:\nWanted: %v\nActual: %v", false, true)
 	}
 }
