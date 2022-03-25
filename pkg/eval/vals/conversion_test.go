@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/eval/errs"
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 type someType struct {
@@ -23,35 +23,35 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 		return ptr.Elem().Interface(), err
 	}
 
-	Test(t, Fn("ScanToGo", scanToGo), Table{
+	tt.Test(t, tt.Fn("ScanToGo", scanToGo), tt.Table{
 		// int
-		Args("12", 0).Rets(12),
-		Args("0x12", 0).Rets(0x12),
-		Args(12.0, 0).Rets(0, errMustBeInteger),
-		Args(0.5, 0).Rets(0, errMustBeInteger),
-		Args(someType{}, 0).Rets(Any, errMustBeInteger),
-		Args("x", 0).Rets(Any, cannotParseAs{"integer", "x"}),
+		tt.Args("12", 0).Rets(12),
+		tt.Args("0x12", 0).Rets(0x12),
+		tt.Args(12.0, 0).Rets(0, errMustBeInteger),
+		tt.Args(0.5, 0).Rets(0, errMustBeInteger),
+		tt.Args(someType{}, 0).Rets(tt.Any, errMustBeInteger),
+		tt.Args("x", 0).Rets(tt.Any, cannotParseAs{"integer", "x"}),
 
 		// float64
-		Args(23, 0.0).Rets(23.0),
-		Args(big.NewRat(1, 2), 0.0).Rets(0.5),
-		Args(1.2, 0.0).Rets(1.2),
-		Args("23", 0.0).Rets(23.0),
-		Args("0x23", 0.0).Rets(float64(0x23)),
-		Args(someType{}, 0.0).Rets(Any, errMustBeNumber),
-		Args("x", 0.0).Rets(Any, cannotParseAs{"number", "x"}),
+		tt.Args(23, 0.0).Rets(23.0),
+		tt.Args(big.NewRat(1, 2), 0.0).Rets(0.5),
+		tt.Args(1.2, 0.0).Rets(1.2),
+		tt.Args("23", 0.0).Rets(23.0),
+		tt.Args("0x23", 0.0).Rets(float64(0x23)),
+		tt.Args(someType{}, 0.0).Rets(tt.Any, errMustBeNumber),
+		tt.Args("x", 0.0).Rets(tt.Any, cannotParseAs{"number", "x"}),
 
 		// rune
-		Args("x", ' ').Rets('x'),
-		Args(someType{}, ' ').Rets(Any, errMustBeString),
-		Args("\xc3\x28", ' ').Rets(Any, errMustBeValidUTF8), // Invalid UTF8
-		Args("ab", ' ').Rets(Any, errMustHaveSingleRune),
+		tt.Args("x", ' ').Rets('x'),
+		tt.Args(someType{}, ' ').Rets(tt.Any, errMustBeString),
+		tt.Args("\xc3\x28", ' ').Rets(tt.Any, errMustBeValidUTF8), // Invalid UTF8
+		tt.Args("ab", ' ').Rets(tt.Any, errMustHaveSingleRune),
 
 		// Other types don't undergo any conversion, as long as the types match
-		Args("foo", "").Rets("foo"),
-		Args(someType{"foo"}, someType{}).Rets(someType{"foo"}),
-		Args(nil, nil).Rets(nil),
-		Args("x", someType{}).Rets(Any, WrongType{"!!vals.someType", "string"}),
+		tt.Args("foo", "").Rets("foo"),
+		tt.Args(someType{"foo"}, someType{}).Rets(someType{"foo"}),
+		tt.Args(nil, nil).Rets(nil),
+		tt.Args("x", someType{}).Rets(tt.Any, WrongType{"!!vals.someType", "string"}),
 	})
 }
 
@@ -62,20 +62,20 @@ func TestScanToGo_NumDst(t *testing.T) {
 		return n, err
 	}
 
-	Test(t, Fn("ScanToGo", scanToGo), Table{
+	tt.Test(t, tt.Fn("ScanToGo", scanToGo), tt.Table{
 		// Strings are automatically converted
-		Args("12").Rets(12),
-		Args(z).Rets(bigInt(z)),
-		Args("1/2").Rets(big.NewRat(1, 2)),
-		Args("12.0").Rets(12.0),
+		tt.Args("12").Rets(12),
+		tt.Args(z).Rets(bigInt(z)),
+		tt.Args("1/2").Rets(big.NewRat(1, 2)),
+		tt.Args("12.0").Rets(12.0),
 		// Already numbers
-		Args(12).Rets(12),
-		Args(bigInt(z)).Rets(bigInt(z)),
-		Args(big.NewRat(1, 2)).Rets(big.NewRat(1, 2)),
-		Args(12.0).Rets(12.0),
+		tt.Args(12).Rets(12),
+		tt.Args(bigInt(z)).Rets(bigInt(z)),
+		tt.Args(big.NewRat(1, 2)).Rets(big.NewRat(1, 2)),
+		tt.Args(12.0).Rets(12.0),
 
-		Args("bad").Rets(Any, cannotParseAs{"number", "bad"}),
-		Args(EmptyList).Rets(Any, errMustBeNumber),
+		tt.Args("bad").Rets(tt.Any, cannotParseAs{"number", "bad"}),
+		tt.Args(EmptyList).Rets(tt.Any, errMustBeNumber),
 	})
 }
 
@@ -86,10 +86,10 @@ func TestScanToGo_InterfaceDst(t *testing.T) {
 		return l, err
 	}
 
-	Test(t, Fn("ScanToGo", scanToGo), Table{
-		Args(EmptyList).Rets(EmptyList),
+	tt.Test(t, tt.Fn("ScanToGo", scanToGo), tt.Table{
+		tt.Args(EmptyList).Rets(EmptyList),
 
-		Args("foo").Rets(Any, WrongType{"!!vector.Vector", "string"}),
+		tt.Args("foo").Rets(tt.Any, WrongType{"!!vector.Vector", "string"}),
 	})
 }
 
@@ -109,11 +109,11 @@ func TestScanListToGo(t *testing.T) {
 		return ptr.Elem().Interface(), err
 	}
 
-	Test(t, Fn("ScanListToGo", scanListToGo), Table{
-		Args(MakeList("1", "2"), []int{}).Rets([]int{1, 2}),
-		Args(MakeList("1", "2"), []string{}).Rets([]string{"1", "2"}),
+	tt.Test(t, tt.Fn("ScanListToGo", scanListToGo), tt.Table{
+		tt.Args(MakeList("1", "2"), []int{}).Rets([]int{1, 2}),
+		tt.Args(MakeList("1", "2"), []string{}).Rets([]string{"1", "2"}),
 
-		Args(MakeList("1", "a"), []int{}).Rets([]int{}, cannotParseAs{"integer", "a"}),
+		tt.Args(MakeList("1", "a"), []int{}).Rets([]int{}, cannotParseAs{"integer", "a"}),
 	})
 }
 
@@ -142,18 +142,18 @@ func TestScanListElementsToGo(t *testing.T) {
 		return vals, err
 	}
 
-	Test(t, Fn("ScanListElementsToGo", scanListElementsToGo), Table{
-		Args(MakeList("1", "2"), 0, 0).Rets([]any{1, 2}),
-		Args(MakeList("1", "2"), "", "").Rets([]any{"1", "2"}),
-		Args(MakeList("1", "2"), 0, Optional(0)).Rets([]any{1, 2}),
-		Args(MakeList("1"), 0, Optional(0)).Rets([]any{1, 0}),
+	tt.Test(t, tt.Fn("ScanListElementsToGo", scanListElementsToGo), tt.Table{
+		tt.Args(MakeList("1", "2"), 0, 0).Rets([]any{1, 2}),
+		tt.Args(MakeList("1", "2"), "", "").Rets([]any{"1", "2"}),
+		tt.Args(MakeList("1", "2"), 0, Optional(0)).Rets([]any{1, 2}),
+		tt.Args(MakeList("1"), 0, Optional(0)).Rets([]any{1, 0}),
 
-		Args(MakeList("a"), 0).Rets([]any{0},
+		tt.Args(MakeList("a"), 0).Rets([]any{0},
 			cannotParseAs{"integer", "a"}),
-		Args(MakeList("1"), 0, 0).Rets([]any{0, 0},
+		tt.Args(MakeList("1"), 0, 0).Rets([]any{0, 0},
 			errs.ArityMismatch{What: "list elements",
 				ValidLow: 2, ValidHigh: 2, Actual: 1}),
-		Args(MakeList("1"), 0, 0, Optional(0)).Rets([]any{0, 0, 0},
+		tt.Args(MakeList("1"), 0, 0, Optional(0)).Rets([]any{0, 0, 0},
 			errs.ArityMismatch{What: "list elements",
 				ValidLow: 2, ValidHigh: 3, Actual: 1}),
 	})
@@ -176,35 +176,35 @@ func TestScanMapToGo(t *testing.T) {
 		return ptr.Elem().Interface(), err
 	}
 
-	Test(t, Fn("ScanListToGo", scanMapToGo), Table{
-		Args(MakeMap("foo", "1"), aStruct{}).Rets(aStruct{Foo: 1}),
+	tt.Test(t, tt.Fn("ScanListToGo", scanMapToGo), tt.Table{
+		tt.Args(MakeMap("foo", "1"), aStruct{}).Rets(aStruct{Foo: 1}),
 		// More fields is OK
-		Args(MakeMap("foo", "1", "bar", "x"), aStruct{}).Rets(aStruct{Foo: 1}),
+		tt.Args(MakeMap("foo", "1", "bar", "x"), aStruct{}).Rets(aStruct{Foo: 1}),
 		// Fewer fields is OK
-		Args(MakeMap(), aStruct{}).Rets(aStruct{}),
+		tt.Args(MakeMap(), aStruct{}).Rets(aStruct{}),
 		// Unexported fields are ignored
-		Args(MakeMap("bar", 20), aStruct{bar: 10}).Rets(aStruct{bar: 10}),
+		tt.Args(MakeMap("bar", 20), aStruct{bar: 10}).Rets(aStruct{bar: 10}),
 
 		// Conversion error
-		Args(MakeMap("foo", "a"), aStruct{}).
+		tt.Args(MakeMap("foo", "a"), aStruct{}).
 			Rets(aStruct{}, cannotParseAs{"integer", "a"}),
 	})
 }
 
 func TestFromGo(t *testing.T) {
-	Test(t, Fn("FromGo", FromGo), Table{
+	tt.Test(t, tt.Fn("FromGo", FromGo), tt.Table{
 		// BigInt -> int, when in range
-		Args(bigInt(z)).Rets(bigInt(z)),
-		Args(big.NewInt(100)).Rets(100),
+		tt.Args(bigInt(z)).Rets(bigInt(z)),
+		tt.Args(big.NewInt(100)).Rets(100),
 		// BigRat -> BigInt or int, when denominator is 1
-		Args(bigRat(z1 + "/" + z)).Rets(bigRat(z1 + "/" + z)),
-		Args(bigRat(z + "/1")).Rets(bigInt(z)),
-		Args(bigRat("2/1")).Rets(2),
+		tt.Args(bigRat(z1 + "/" + z)).Rets(bigRat(z1 + "/" + z)),
+		tt.Args(bigRat(z + "/1")).Rets(bigInt(z)),
+		tt.Args(bigRat("2/1")).Rets(2),
 		// rune -> string
-		Args('x').Rets("x"),
+		tt.Args('x').Rets("x"),
 
 		// Other types don't undergo any conversion
-		Args(nil).Rets(nil),
-		Args(someType{"foo"}).Rets(someType{"foo"}),
+		tt.Args(nil).Rets(nil),
+		tt.Args(someType{"foo"}).Rets(someType{"foo"}),
 	})
 }

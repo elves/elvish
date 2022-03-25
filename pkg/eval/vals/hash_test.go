@@ -8,7 +8,7 @@ import (
 	"unsafe"
 
 	"src.elv.sh/pkg/persistent/hash"
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 type hasher struct{}
@@ -23,19 +23,19 @@ func TestHash(t *testing.T) {
 	z.Add(z, big.NewInt(9))
 	// z = 5 << wordSize + 9
 
-	Test(t, Fn("Hash", Hash), Table{
-		Args(false).Rets(uint32(0)),
-		Args(true).Rets(uint32(1)),
-		Args(1).Rets(uint32(1)),
-		Args(z).Rets(hash.DJB(1, 9, 5)),
-		Args(big.NewRat(3, 2)).Rets(hash.DJB(Hash(big.NewInt(3)), Hash(big.NewInt(2)))),
-		Args(1.0).Rets(hash.UInt64(math.Float64bits(1.0))),
-		Args("foo").Rets(hash.String("foo")),
-		Args(os.Stdin).Rets(hash.UIntPtr(os.Stdin.Fd())),
-		Args(MakeList("foo", "bar")).Rets(hash.DJB(Hash("foo"), Hash("bar"))),
-		Args(MakeMap("foo", "bar")).
+	tt.Test(t, tt.Fn("Hash", Hash), tt.Table{
+		tt.Args(false).Rets(uint32(0)),
+		tt.Args(true).Rets(uint32(1)),
+		tt.Args(1).Rets(uint32(1)),
+		tt.Args(z).Rets(hash.DJB(1, 9, 5)),
+		tt.Args(big.NewRat(3, 2)).Rets(hash.DJB(Hash(big.NewInt(3)), Hash(big.NewInt(2)))),
+		tt.Args(1.0).Rets(hash.UInt64(math.Float64bits(1.0))),
+		tt.Args("foo").Rets(hash.String("foo")),
+		tt.Args(os.Stdin).Rets(hash.UIntPtr(os.Stdin.Fd())),
+		tt.Args(MakeList("foo", "bar")).Rets(hash.DJB(Hash("foo"), Hash("bar"))),
+		tt.Args(MakeMap("foo", "bar")).
 			Rets(hash.DJB(Hash("foo"), Hash("bar"))),
-		Args(hasher{}).Rets(uint32(42)),
-		Args(nonHasher{}).Rets(uint32(0)),
+		tt.Args(hasher{}).Rets(uint32(42)),
+		tt.Args(nonHasher{}).Rets(uint32(0)),
 	})
 }

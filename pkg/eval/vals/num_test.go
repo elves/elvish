@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/testutil"
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 // Test utilities.
@@ -25,71 +25,70 @@ const (
 )
 
 func TestParseNum(t *testing.T) {
-	Test(t, Fn("ParseNum", ParseNum), Table{
-		Args("1").Rets(1),
+	tt.Test(t, tt.Fn("ParseNum", ParseNum), tt.Table{
+		tt.Args("1").Rets(1),
 
-		Args(z).Rets(bigInt(z)),
+		tt.Args(z).Rets(bigInt(z)),
 
-		Args("1/2").Rets(big.NewRat(1, 2)),
-		Args("2/1").Rets(2),
-		Args(z + "/1").Rets(bigInt(z)),
+		tt.Args("1/2").Rets(big.NewRat(1, 2)),
+		tt.Args("2/1").Rets(2),
+		tt.Args(z + "/1").Rets(bigInt(z)),
 
-		Args("1.0").Rets(1.0),
-		Args("1e-5").Rets(1e-5),
+		tt.Args("1.0").Rets(1.0),
+		tt.Args("1e-5").Rets(1e-5),
 
-		Args("x").Rets(nil),
-		Args("x/y").Rets(nil),
+		tt.Args("x").Rets(nil),
+		tt.Args("x/y").Rets(nil),
 	})
 }
 
 func TestUnifyNums(t *testing.T) {
-	Test(t, Fn("UnifyNums", UnifyNums), Table{
-		Args([]Num{1, 2, 3, 4}, Int).
+	tt.Test(t, tt.Fn("UnifyNums", UnifyNums), tt.Table{
+		tt.Args([]Num{1, 2, 3, 4}, Int).
 			Rets([]int{1, 2, 3, 4}),
 
-		Args([]Num{1, 2, 3, bigInt(z)}, Int).
+		tt.Args([]Num{1, 2, 3, bigInt(z)}, Int).
 			Rets([]*big.Int{big.NewInt(1), big.NewInt(2), big.NewInt(3), bigInt(z)}),
 
-		Args([]Num{1, 2, 3, big.NewRat(1, 2)}, Int).
+		tt.Args([]Num{1, 2, 3, big.NewRat(1, 2)}, Int).
 			Rets([]*big.Rat{
 				big.NewRat(1, 1), big.NewRat(2, 1),
 				big.NewRat(3, 1), big.NewRat(1, 2)}),
-		Args([]Num{1, 2, bigInt(z), big.NewRat(1, 2)}, Int).
+		tt.Args([]Num{1, 2, bigInt(z), big.NewRat(1, 2)}, Int).
 			Rets([]*big.Rat{
 				big.NewRat(1, 1), big.NewRat(2, 1), bigRat(z), big.NewRat(1, 2)}),
 
-		Args([]Num{1, 2, 3, 4.0}, Int).
+		tt.Args([]Num{1, 2, 3, 4.0}, Int).
 			Rets([]float64{1, 2, 3, 4}),
-		Args([]Num{1, 2, big.NewRat(1, 2), 4.0}, Int).
+		tt.Args([]Num{1, 2, big.NewRat(1, 2), 4.0}, Int).
 			Rets([]float64{1, 2, 0.5, 4}),
-		Args([]Num{1, 2, big.NewInt(3), 4.0}, Int).
+		tt.Args([]Num{1, 2, big.NewInt(3), 4.0}, Int).
 			Rets([]float64{1, 2, 3, 4}),
-		Args([]Num{1, 2, bigInt(z), 4.0}, Int).
+		tt.Args([]Num{1, 2, bigInt(z), 4.0}, Int).
 			Rets([]float64{1, 2, math.Inf(1), 4}),
 
-		Args([]Num{1, 2, 3, 4}, BigInt).
+		tt.Args([]Num{1, 2, 3, 4}, BigInt).
 			Rets([]*big.Int{
 				big.NewInt(1), big.NewInt(2), big.NewInt(3), big.NewInt(4)}),
 	})
 }
 
 func TestUnifyNums2(t *testing.T) {
-	Test(t, Fn("UnifyNums2", UnifyNums2), Table{
-		Args(1, 2, Int).Rets(1, 2),
-		Args(1, bigInt(z), Int).Rets(big.NewInt(1), bigInt(z)),
-		Args(1, big.NewRat(1, 2), Int).Rets(big.NewRat(1, 1), big.NewRat(1, 2)),
-		Args(1, 2.0, Int).Rets(1.0, 2.0),
-
-		Args(1, 2, BigInt).Rets(big.NewInt(1), big.NewInt(2)),
+	tt.Test(t, tt.Fn("UnifyNums2", UnifyNums2), tt.Table{
+		tt.Args(1, 2, Int).Rets(1, 2),
+		tt.Args(1, bigInt(z), Int).Rets(big.NewInt(1), bigInt(z)),
+		tt.Args(1, big.NewRat(1, 2), Int).Rets(big.NewRat(1, 1), big.NewRat(1, 2)),
+		tt.Args(1, 2.0, Int).Rets(1.0, 2.0),
+		tt.Args(1, 2, BigInt).Rets(big.NewInt(1), big.NewInt(2)),
 	})
 }
 
 func TestInvalidNumType(t *testing.T) {
-	Test(t, Fn("Recover", testutil.Recover), Table{
-		Args(func() { UnifyNums([]Num{int32(0)}, 0) }).Rets("invalid num type int32"),
-		Args(func() { PromoteToBigInt(int32(0)) }).Rets("invalid num type int32"),
-		Args(func() { PromoteToBigRat(int32(0)) }).Rets("invalid num type int32"),
-		Args(func() { ConvertToFloat64(int32(0)) }).Rets("invalid num type int32"),
+	tt.Test(t, tt.Fn("Recover", testutil.Recover), tt.Table{
+		tt.Args(func() { UnifyNums([]Num{int32(0)}, 0) }).Rets("invalid num type int32"),
+		tt.Args(func() { PromoteToBigInt(int32(0)) }).Rets("invalid num type int32"),
+		tt.Args(func() { PromoteToBigRat(int32(0)) }).Rets("invalid num type int32"),
+		tt.Args(func() { ConvertToFloat64(int32(0)) }).Rets("invalid num type int32"),
 	})
 }
 

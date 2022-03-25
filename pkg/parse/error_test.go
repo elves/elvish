@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/diag"
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 func TestGetError(t *testing.T) {
 	parseError := makeError()
-	Test(t, Fn("GetError", GetError), Table{
-		Args(parseError).Rets(parseError),
-		Args(errors.New("random error")).Rets((*Error)(nil)),
+	tt.Test(t, tt.Fn("GetError", GetError), tt.Table{
+		tt.Args(parseError).Rets(parseError),
+		tt.Args(errors.New("random error")).Rets((*Error)(nil)),
 	})
 }
 

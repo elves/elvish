@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 type opts struct {
@@ -24,10 +24,10 @@ func TestScanOptions(t *testing.T) {
 		return ptr.Elem().Interface(), err
 	}
 
-	Test(t, Fn("scanOptions", wrapper), Table{
-		Args(RawOptions{"foo": "lorem ipsum"}, opts{}).
+	tt.Test(t, tt.Fn("scanOptions", wrapper), tt.Table{
+		tt.Args(RawOptions{"foo": "lorem ipsum"}, opts{}).
 			Rets(opts{Foo: "lorem ipsum"}, nil),
-		Args(RawOptions{"bar": 20}, opts{bar: 10}).
+		tt.Args(RawOptions{"bar": 20}, opts{bar: 10}).
 			Rets(opts{bar: 10}, UnknownOption{"bar"}),
 	})
 }

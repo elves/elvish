@@ -3,7 +3,7 @@ package vals
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 func vs(xs ...any) []any { return xs }
@@ -17,11 +17,11 @@ func (k keysIterator) IterateKeys(f func(any) bool) {
 type nonKeysIterator struct{}
 
 func TestIterateKeys(t *testing.T) {
-	Test(t, Fn("collectKeys", collectKeys), Table{
-		Args(MakeMap("k1", "v1", "k2", "v2")).Rets(vs("k1", "k2"), nil),
-		Args(keysIterator{vs("lorem", "ipsum")}).Rets(vs("lorem", "ipsum")),
-		Args(nonKeysIterator{}).Rets(
-			Any, cannotIterateKeysOf{"!!vals.nonKeysIterator"}),
+	tt.Test(t, tt.Fn("collectKeys", collectKeys), tt.Table{
+		tt.Args(MakeMap("k1", "v1", "k2", "v2")).Rets(vs("k1", "k2"), nil),
+		tt.Args(keysIterator{vs("lorem", "ipsum")}).Rets(vs("lorem", "ipsum")),
+		tt.Args(nonKeysIterator{}).Rets(
+			tt.Any, cannotIterateKeysOf{"!!vals.nonKeysIterator"}),
 	})
 }
 

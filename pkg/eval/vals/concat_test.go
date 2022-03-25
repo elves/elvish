@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 // An implementation for Concatter that accepts strings, returns a special
@@ -34,28 +34,28 @@ func (rconcatter) RConcat(lhs any) (any, error) {
 }
 
 func TestConcat(t *testing.T) {
-	Test(t, Fn("Concat", Concat), Table{
-		Args("foo", "bar").Rets("foobar", nil),
+	tt.Test(t, tt.Fn("Concat", Concat), tt.Table{
+		tt.Args("foo", "bar").Rets("foobar", nil),
 		// string+number
-		Args("foo", 2).Rets("foo2", nil),
-		Args("foo", bigInt(z)).Rets("foo"+z, nil),
-		Args("foo", big.NewRat(1, 2)).Rets("foo1/2", nil),
-		Args("foo", 2.0).Rets("foo2.0", nil),
+		tt.Args("foo", 2).Rets("foo2", nil),
+		tt.Args("foo", bigInt(z)).Rets("foo"+z, nil),
+		tt.Args("foo", big.NewRat(1, 2)).Rets("foo1/2", nil),
+		tt.Args("foo", 2.0).Rets("foo2.0", nil),
 		// number+string
-		Args(2, "foo").Rets("2foo", nil),
-		Args(bigInt(z), "foo").Rets(z+"foo", nil),
-		Args(big.NewRat(1, 2), "foo").Rets("1/2foo", nil),
-		Args(2.0, "foo").Rets("2.0foo", nil),
+		tt.Args(2, "foo").Rets("2foo", nil),
+		tt.Args(bigInt(z), "foo").Rets(z+"foo", nil),
+		tt.Args(big.NewRat(1, 2), "foo").Rets("1/2foo", nil),
+		tt.Args(2.0, "foo").Rets("2.0foo", nil),
 
 		// LHS implements Concatter and succeeds
-		Args(concatter{}, "bar").Rets("concatter bar", nil),
+		tt.Args(concatter{}, "bar").Rets("concatter bar", nil),
 		// LHS implements Concatter but returns ErrConcatNotImplemented; RHS
 		// does not implement RConcatter
-		Args(concatter{}, 12).Rets(nil, cannotConcat{"!!vals.concatter", "number"}),
+		tt.Args(concatter{}, 12).Rets(nil, cannotConcat{"!!vals.concatter", "number"}),
 		// LHS implements Concatter but returns another error
-		Args(concatter{}, 12.0).Rets(nil, errBadFloat64),
+		tt.Args(concatter{}, 12.0).Rets(nil, errBadFloat64),
 
 		// LHS does not implement Concatter but RHS implements RConcatter
-		Args(12, rconcatter{}).Rets("rconcatter", nil),
+		tt.Args(12, rconcatter{}).Rets("rconcatter", nil),
 	})
 }

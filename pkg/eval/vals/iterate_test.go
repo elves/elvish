@@ -3,7 +3,7 @@ package vals
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 // An implementation of Iterator.
@@ -17,20 +17,20 @@ func (i iterator) Iterate(f func(any) bool) {
 type nonIterator struct{}
 
 func TestCanIterate(t *testing.T) {
-	Test(t, Fn("CanIterate", CanIterate), Table{
-		Args("foo").Rets(true),
-		Args(MakeList("foo", "bar")).Rets(true),
-		Args(iterator{vs("a", "b")}).Rets(true),
-		Args(nonIterator{}).Rets(false),
+	tt.Test(t, tt.Fn("CanIterate", CanIterate), tt.Table{
+		tt.Args("foo").Rets(true),
+		tt.Args(MakeList("foo", "bar")).Rets(true),
+		tt.Args(iterator{vs("a", "b")}).Rets(true),
+		tt.Args(nonIterator{}).Rets(false),
 	})
 }
 
 func TestCollect(t *testing.T) {
-	Test(t, Fn("Collect", Collect), Table{
-		Args("foo").Rets(vs("f", "o", "o"), nil),
-		Args(MakeList("foo", "bar")).Rets(vs("foo", "bar"), nil),
-		Args(iterator{vs("a", "b")}).Rets(vs("a", "b"), nil),
-		Args(nonIterator{}).Rets(vs(), cannotIterate{"!!vals.nonIterator"}),
+	tt.Test(t, tt.Fn("Collect", Collect), tt.Table{
+		tt.Args("foo").Rets(vs("f", "o", "o"), nil),
+		tt.Args(MakeList("foo", "bar")).Rets(vs("foo", "bar"), nil),
+		tt.Args(iterator{vs("a", "b")}).Rets(vs("a", "b"), nil),
+		tt.Args(nonIterator{}).Rets(vs(), cannotIterate{"!!vals.nonIterator"}),
 	})
 }
 
