@@ -3,7 +3,7 @@ package vals
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 type customBooler struct{ b bool }
@@ -13,7 +13,7 @@ func (b customBooler) Bool() bool { return b.b }
 type customNonBooler struct{}
 
 func TestBool(t *testing.T) {
-	Test(t, Fn("Bool", Bool), Table{
+	tt.Test(t, tt.Fn("Bool", Bool), tt.Table{
 		Args(nil).Rets(false),
 
 		Args(true).Rets(true),

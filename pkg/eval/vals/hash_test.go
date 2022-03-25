@@ -8,7 +8,7 @@ import (
 	"unsafe"
 
 	"src.elv.sh/pkg/persistent/hash"
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 type hasher struct{}
@@ -23,7 +23,7 @@ func TestHash(t *testing.T) {
 	z.Add(z, big.NewInt(9))
 	// z = 5 << wordSize + 9
 
-	Test(t, Fn("Hash", Hash), Table{
+	tt.Test(t, tt.Fn("Hash", Hash), tt.Table{
 		Args(false).Rets(uint32(0)),
 		Args(true).Rets(uint32(1)),
 		Args(1).Rets(uint32(1)),

@@ -7,22 +7,24 @@ import (
 	"src.elv.sh/pkg/tt"
 )
 
+var Args = tt.Args
+
 func TestBufToHTML(t *testing.T) {
 	tt.Test(t, tt.Fn("bufToHTML", bufToHTML), tt.Table{
 		// Just plain text.
-		tt.Args(
+		Args(
 			bb().Write("abc").Buffer(),
 		).Rets(
 			`abc` + "\n",
 		),
 		// Just styled text.
-		tt.Args(
+		Args(
 			bb().WriteStringSGR("abc", "31").Buffer(),
 		).Rets(
 			`<span class="sgr-31">abc</span>` + "\n",
 		),
 		// Mixing plain and styled texts.
-		tt.Args(
+		Args(
 			bb().
 				WriteStringSGR("abc", "31").
 				Write(" def ").
@@ -32,7 +34,7 @@ func TestBufToHTML(t *testing.T) {
 			`<span class="sgr-31">abc</span> def <span class="sgr-1">xyz</span>` + "\n",
 		),
 		// Multiple lines.
-		tt.Args(
+		Args(
 			bb().
 				WriteStringSGR("abc", "31").
 				Newline().Write("def").

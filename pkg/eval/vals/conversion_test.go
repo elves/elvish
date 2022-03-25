@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/eval/errs"
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 type someType struct {
@@ -23,14 +23,14 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 		return ptr.Elem().Interface(), err
 	}
 
-	Test(t, Fn("ScanToGo", scanToGo), Table{
+	tt.Test(t, tt.Fn("ScanToGo", scanToGo), tt.Table{
 		// int
 		Args("12", 0).Rets(12),
 		Args("0x12", 0).Rets(0x12),
 		Args(12.0, 0).Rets(0, errMustBeInteger),
 		Args(0.5, 0).Rets(0, errMustBeInteger),
-		Args(someType{}, 0).Rets(Any, errMustBeInteger),
-		Args("x", 0).Rets(Any, cannotParseAs{"integer", "x"}),
+		Args(someType{}, 0).Rets(tt.Any, errMustBeInteger),
+		Args("x", 0).Rets(tt.Any, cannotParseAs{"integer", "x"}),
 
 		// float64
 		Args(23, 0.0).Rets(23.0),
@@ -38,20 +38,20 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 		Args(1.2, 0.0).Rets(1.2),
 		Args("23", 0.0).Rets(23.0),
 		Args("0x23", 0.0).Rets(float64(0x23)),
-		Args(someType{}, 0.0).Rets(Any, errMustBeNumber),
-		Args("x", 0.0).Rets(Any, cannotParseAs{"number", "x"}),
+		Args(someType{}, 0.0).Rets(tt.Any, errMustBeNumber),
+		Args("x", 0.0).Rets(tt.Any, cannotParseAs{"number", "x"}),
 
 		// rune
 		Args("x", ' ').Rets('x'),
-		Args(someType{}, ' ').Rets(Any, errMustBeString),
-		Args("\xc3\x28", ' ').Rets(Any, errMustBeValidUTF8), // Invalid UTF8
-		Args("ab", ' ').Rets(Any, errMustHaveSingleRune),
+		Args(someType{}, ' ').Rets(tt.Any, errMustBeString),
+		Args("\xc3\x28", ' ').Rets(tt.Any, errMustBeValidUTF8), // Invalid UTF8
+		Args("ab", ' ').Rets(tt.Any, errMustHaveSingleRune),
 
 		// Other types don't undergo any conversion, as long as the types match
 		Args("foo", "").Rets("foo"),
 		Args(someType{"foo"}, someType{}).Rets(someType{"foo"}),
 		Args(nil, nil).Rets(nil),
-		Args("x", someType{}).Rets(Any, WrongType{"!!vals.someType", "string"}),
+		Args("x", someType{}).Rets(tt.Any, WrongType{"!!vals.someType", "string"}),
 	})
 }
 
@@ -62,7 +62,7 @@ func TestScanToGo_NumDst(t *testing.T) {
 		return n, err
 	}
 
-	Test(t, Fn("ScanToGo", scanToGo), Table{
+	tt.Test(t, tt.Fn("ScanToGo", scanToGo), tt.Table{
 		// Strings are automatically converted
 		Args("12").Rets(12),
 		Args(z).Rets(bigInt(z)),
@@ -74,8 +74,8 @@ func TestScanToGo_NumDst(t *testing.T) {
 		Args(big.NewRat(1, 2)).Rets(big.NewRat(1, 2)),
 		Args(12.0).Rets(12.0),
 
-		Args("bad").Rets(Any, cannotParseAs{"number", "bad"}),
-		Args(EmptyList).Rets(Any, errMustBeNumber),
+		Args("bad").Rets(tt.Any, cannotParseAs{"number", "bad"}),
+		Args(EmptyList).Rets(tt.Any, errMustBeNumber),
 	})
 }
 
@@ -86,10 +86,10 @@ func TestScanToGo_InterfaceDst(t *testing.T) {
 		return l, err
 	}
 
-	Test(t, Fn("ScanToGo", scanToGo), Table{
+	tt.Test(t, tt.Fn("ScanToGo", scanToGo), tt.Table{
 		Args(EmptyList).Rets(EmptyList),
 
-		Args("foo").Rets(Any, WrongType{"!!vector.Vector", "string"}),
+		Args("foo").Rets(tt.Any, WrongType{"!!vector.Vector", "string"}),
 	})
 }
 
@@ -109,7 +109,7 @@ func TestScanListToGo(t *testing.T) {
 		return ptr.Elem().Interface(), err
 	}
 
-	Test(t, Fn("ScanListToGo", scanListToGo), Table{
+	tt.Test(t, tt.Fn("ScanListToGo", scanListToGo), tt.Table{
 		Args(MakeList("1", "2"), []int{}).Rets([]int{1, 2}),
 		Args(MakeList("1", "2"), []string{}).Rets([]string{"1", "2"}),
 
@@ -142,7 +142,7 @@ func TestScanListElementsToGo(t *testing.T) {
 		return vals, err
 	}
 
-	Test(t, Fn("ScanListElementsToGo", scanListElementsToGo), Table{
+	tt.Test(t, tt.Fn("ScanListElementsToGo", scanListElementsToGo), tt.Table{
 		Args(MakeList("1", "2"), 0, 0).Rets([]any{1, 2}),
 		Args(MakeList("1", "2"), "", "").Rets([]any{"1", "2"}),
 		Args(MakeList("1", "2"), 0, Optional(0)).Rets([]any{1, 2}),
@@ -176,7 +176,7 @@ func TestScanMapToGo(t *testing.T) {
 		return ptr.Elem().Interface(), err
 	}
 
-	Test(t, Fn("ScanListToGo", scanMapToGo), Table{
+	tt.Test(t, tt.Fn("ScanListToGo", scanMapToGo), tt.Table{
 		Args(MakeMap("foo", "1"), aStruct{}).Rets(aStruct{Foo: 1}),
 		// More fields is OK
 		Args(MakeMap("foo", "1", "bar", "x"), aStruct{}).Rets(aStruct{Foo: 1}),
@@ -192,7 +192,7 @@ func TestScanMapToGo(t *testing.T) {
 }
 
 func TestFromGo(t *testing.T) {
-	Test(t, Fn("FromGo", FromGo), Table{
+	tt.Test(t, tt.Fn("FromGo", FromGo), tt.Table{
 		// BigInt -> int, when in range
 		Args(bigInt(z)).Rets(bigInt(z)),
 		Args(big.NewInt(100)).Rets(100),

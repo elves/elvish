@@ -4,8 +4,10 @@ import (
 	"reflect"
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
+
+var Args = tt.Args
 
 type opts struct {
 	Foo string
@@ -24,7 +26,7 @@ func TestScanOptions(t *testing.T) {
 		return ptr.Elem().Interface(), err
 	}
 
-	Test(t, Fn("scanOptions", wrapper), Table{
+	tt.Test(t, tt.Fn("scanOptions", wrapper), tt.Table{
 		Args(RawOptions{"foo": "lorem ipsum"}, opts{}).
 			Rets(opts{Foo: "lorem ipsum"}, nil),
 		Args(RawOptions{"bar": 20}, opts{bar: 10}).

@@ -349,18 +349,18 @@ func TestBuiltins_FocusedWidgetNotCodeArea(t *testing.T) {
 
 func TestMoveDotLeftRight(t *testing.T) {
 	tt.Test(t, tt.Fn("moveDotLeft", moveDotLeft), tt.Table{
-		tt.Args("foo", 0).Rets(0),
-		tt.Args("bar", 3).Rets(2),
-		tt.Args("精灵", 0).Rets(0),
-		tt.Args("精灵", 3).Rets(0),
-		tt.Args("精灵", 6).Rets(3),
+		Args("foo", 0).Rets(0),
+		Args("bar", 3).Rets(2),
+		Args("精灵", 0).Rets(0),
+		Args("精灵", 3).Rets(0),
+		Args("精灵", 6).Rets(3),
 	})
 	tt.Test(t, tt.Fn("moveDotRight", moveDotRight), tt.Table{
-		tt.Args("foo", 0).Rets(1),
-		tt.Args("bar", 3).Rets(3),
-		tt.Args("精灵", 0).Rets(3),
-		tt.Args("精灵", 3).Rets(6),
-		tt.Args("精灵", 6).Rets(6),
+		Args("foo", 0).Rets(1),
+		Args("bar", 3).Rets(3),
+		Args("精灵", 0).Rets(3),
+		Args("精灵", 3).Rets(6),
+		Args("精灵", 6).Rets(6),
 	})
 }
 
@@ -369,24 +369,24 @@ func TestMoveDotSOLEOL(t *testing.T) {
 	// Index:
 	//         012 34567
 	tt.Test(t, tt.Fn("moveDotSOL", moveDotSOL), tt.Table{
-		tt.Args(buffer, 0).Rets(0),
-		tt.Args(buffer, 1).Rets(0),
-		tt.Args(buffer, 2).Rets(0),
-		tt.Args(buffer, 3).Rets(0),
-		tt.Args(buffer, 4).Rets(4),
-		tt.Args(buffer, 5).Rets(4),
-		tt.Args(buffer, 6).Rets(4),
-		tt.Args(buffer, 7).Rets(4),
+		Args(buffer, 0).Rets(0),
+		Args(buffer, 1).Rets(0),
+		Args(buffer, 2).Rets(0),
+		Args(buffer, 3).Rets(0),
+		Args(buffer, 4).Rets(4),
+		Args(buffer, 5).Rets(4),
+		Args(buffer, 6).Rets(4),
+		Args(buffer, 7).Rets(4),
 	})
 	tt.Test(t, tt.Fn("moveDotEOL", moveDotEOL), tt.Table{
-		tt.Args(buffer, 0).Rets(3),
-		tt.Args(buffer, 1).Rets(3),
-		tt.Args(buffer, 2).Rets(3),
-		tt.Args(buffer, 3).Rets(3),
-		tt.Args(buffer, 4).Rets(7),
-		tt.Args(buffer, 5).Rets(7),
-		tt.Args(buffer, 6).Rets(7),
-		tt.Args(buffer, 7).Rets(7),
+		Args(buffer, 0).Rets(3),
+		Args(buffer, 1).Rets(3),
+		Args(buffer, 2).Rets(3),
+		Args(buffer, 3).Rets(3),
+		Args(buffer, 4).Rets(7),
+		Args(buffer, 5).Rets(7),
+		Args(buffer, 6).Rets(7),
+		Args(buffer, 7).Rets(7),
 	})
 }
 
@@ -397,33 +397,33 @@ func TestMoveDotUpDown(t *testing.T) {
 	// + 10 *  0        1
 
 	tt.Test(t, tt.Fn("moveDotUp", moveDotUp), tt.Table{
-		tt.Args(buffer, 0).Rets(0),  // a -> a
-		tt.Args(buffer, 1).Rets(1),  // b -> b
-		tt.Args(buffer, 2).Rets(2),  // c -> c
-		tt.Args(buffer, 3).Rets(3),  // EOL1 -> EOL1
-		tt.Args(buffer, 4).Rets(0),  // 精 -> a
-		tt.Args(buffer, 7).Rets(2),  // 灵 -> c
-		tt.Args(buffer, 10).Rets(3), // 语 -> EOL1
-		tt.Args(buffer, 13).Rets(3), // EOL2 -> EOL1
-		tt.Args(buffer, 14).Rets(4), // d -> 精
-		tt.Args(buffer, 15).Rets(4), // e -> 精 (jump left half width)
-		tt.Args(buffer, 16).Rets(7), // f -> 灵
-		tt.Args(buffer, 17).Rets(7), // EOL3 -> 灵 (jump left half width)
+		Args(buffer, 0).Rets(0),  // a -> a
+		Args(buffer, 1).Rets(1),  // b -> b
+		Args(buffer, 2).Rets(2),  // c -> c
+		Args(buffer, 3).Rets(3),  // EOL1 -> EOL1
+		Args(buffer, 4).Rets(0),  // 精 -> a
+		Args(buffer, 7).Rets(2),  // 灵 -> c
+		Args(buffer, 10).Rets(3), // 语 -> EOL1
+		Args(buffer, 13).Rets(3), // EOL2 -> EOL1
+		Args(buffer, 14).Rets(4), // d -> 精
+		Args(buffer, 15).Rets(4), // e -> 精 (jump left half width)
+		Args(buffer, 16).Rets(7), // f -> 灵
+		Args(buffer, 17).Rets(7), // EOL3 -> 灵 (jump left half width)
 	})
 
 	tt.Test(t, tt.Fn("moveDotDown", moveDotDown), tt.Table{
-		tt.Args(buffer, 0).Rets(4),   // a -> 精
-		tt.Args(buffer, 1).Rets(4),   // b -> 精 (jump left half width)
-		tt.Args(buffer, 2).Rets(7),   // c -> 灵
-		tt.Args(buffer, 3).Rets(7),   // EOL1 -> 灵 (jump left half width)
-		tt.Args(buffer, 4).Rets(14),  // 精 -> d
-		tt.Args(buffer, 7).Rets(16),  // 灵 -> f
-		tt.Args(buffer, 10).Rets(17), // 语 -> EOL3
-		tt.Args(buffer, 13).Rets(17), // EOL2 -> EOL3
-		tt.Args(buffer, 14).Rets(14), // d -> d
-		tt.Args(buffer, 15).Rets(15), // e -> e
-		tt.Args(buffer, 16).Rets(16), // f -> f
-		tt.Args(buffer, 17).Rets(17), // EOL3 -> EOL3
+		Args(buffer, 0).Rets(4),   // a -> 精
+		Args(buffer, 1).Rets(4),   // b -> 精 (jump left half width)
+		Args(buffer, 2).Rets(7),   // c -> 灵
+		Args(buffer, 3).Rets(7),   // EOL1 -> 灵 (jump left half width)
+		Args(buffer, 4).Rets(14),  // 精 -> d
+		Args(buffer, 7).Rets(16),  // 灵 -> f
+		Args(buffer, 10).Rets(17), // 语 -> EOL3
+		Args(buffer, 13).Rets(17), // EOL2 -> EOL3
+		Args(buffer, 14).Rets(14), // d -> d
+		Args(buffer, 15).Rets(15), // e -> e
+		Args(buffer, 16).Rets(16), // f -> f
+		Args(buffer, 17).Rets(17), // EOL3 -> EOL3
 	})
 }
 
@@ -453,86 +453,86 @@ var wordMoveTestBuffer = "cd ~/downloads; rm -rf 2018aug07-pics/*;"
 var (
 	// word boundaries: 0 3 16 19 23
 	moveDotLeftWordTests = tt.Table{
-		tt.Args(wordMoveTestBuffer, 0).Rets(0),
-		tt.Args(wordMoveTestBuffer, 1).Rets(0),
-		tt.Args(wordMoveTestBuffer, 2).Rets(0),
-		tt.Args(wordMoveTestBuffer, 3).Rets(0),
-		tt.Args(wordMoveTestBuffer, 4).Rets(3),
-		tt.Args(wordMoveTestBuffer, 16).Rets(3),
-		tt.Args(wordMoveTestBuffer, 19).Rets(16),
-		tt.Args(wordMoveTestBuffer, 23).Rets(19),
-		tt.Args(wordMoveTestBuffer, 40).Rets(23),
+		Args(wordMoveTestBuffer, 0).Rets(0),
+		Args(wordMoveTestBuffer, 1).Rets(0),
+		Args(wordMoveTestBuffer, 2).Rets(0),
+		Args(wordMoveTestBuffer, 3).Rets(0),
+		Args(wordMoveTestBuffer, 4).Rets(3),
+		Args(wordMoveTestBuffer, 16).Rets(3),
+		Args(wordMoveTestBuffer, 19).Rets(16),
+		Args(wordMoveTestBuffer, 23).Rets(19),
+		Args(wordMoveTestBuffer, 40).Rets(23),
 	}
 	moveDotRightWordTests = tt.Table{
-		tt.Args(wordMoveTestBuffer, 0).Rets(3),
-		tt.Args(wordMoveTestBuffer, 1).Rets(3),
-		tt.Args(wordMoveTestBuffer, 2).Rets(3),
-		tt.Args(wordMoveTestBuffer, 3).Rets(16),
-		tt.Args(wordMoveTestBuffer, 16).Rets(19),
-		tt.Args(wordMoveTestBuffer, 19).Rets(23),
-		tt.Args(wordMoveTestBuffer, 23).Rets(40),
+		Args(wordMoveTestBuffer, 0).Rets(3),
+		Args(wordMoveTestBuffer, 1).Rets(3),
+		Args(wordMoveTestBuffer, 2).Rets(3),
+		Args(wordMoveTestBuffer, 3).Rets(16),
+		Args(wordMoveTestBuffer, 16).Rets(19),
+		Args(wordMoveTestBuffer, 19).Rets(23),
+		Args(wordMoveTestBuffer, 23).Rets(40),
 	}
 
 	// small-word boundaries: 0 3 5 14 16 19 20 23 32 33 37
 	moveDotLeftSmallWordTests = tt.Table{
-		tt.Args(wordMoveTestBuffer, 0).Rets(0),
-		tt.Args(wordMoveTestBuffer, 1).Rets(0),
-		tt.Args(wordMoveTestBuffer, 2).Rets(0),
-		tt.Args(wordMoveTestBuffer, 3).Rets(0),
-		tt.Args(wordMoveTestBuffer, 4).Rets(3),
-		tt.Args(wordMoveTestBuffer, 5).Rets(3),
-		tt.Args(wordMoveTestBuffer, 14).Rets(5),
-		tt.Args(wordMoveTestBuffer, 16).Rets(14),
-		tt.Args(wordMoveTestBuffer, 19).Rets(16),
-		tt.Args(wordMoveTestBuffer, 20).Rets(19),
-		tt.Args(wordMoveTestBuffer, 23).Rets(20),
-		tt.Args(wordMoveTestBuffer, 32).Rets(23),
-		tt.Args(wordMoveTestBuffer, 33).Rets(32),
-		tt.Args(wordMoveTestBuffer, 37).Rets(33),
-		tt.Args(wordMoveTestBuffer, 40).Rets(37),
+		Args(wordMoveTestBuffer, 0).Rets(0),
+		Args(wordMoveTestBuffer, 1).Rets(0),
+		Args(wordMoveTestBuffer, 2).Rets(0),
+		Args(wordMoveTestBuffer, 3).Rets(0),
+		Args(wordMoveTestBuffer, 4).Rets(3),
+		Args(wordMoveTestBuffer, 5).Rets(3),
+		Args(wordMoveTestBuffer, 14).Rets(5),
+		Args(wordMoveTestBuffer, 16).Rets(14),
+		Args(wordMoveTestBuffer, 19).Rets(16),
+		Args(wordMoveTestBuffer, 20).Rets(19),
+		Args(wordMoveTestBuffer, 23).Rets(20),
+		Args(wordMoveTestBuffer, 32).Rets(23),
+		Args(wordMoveTestBuffer, 33).Rets(32),
+		Args(wordMoveTestBuffer, 37).Rets(33),
+		Args(wordMoveTestBuffer, 40).Rets(37),
 	}
 	moveDotRightSmallWordTests = tt.Table{
-		tt.Args(wordMoveTestBuffer, 0).Rets(3),
-		tt.Args(wordMoveTestBuffer, 1).Rets(3),
-		tt.Args(wordMoveTestBuffer, 2).Rets(3),
-		tt.Args(wordMoveTestBuffer, 3).Rets(5),
-		tt.Args(wordMoveTestBuffer, 5).Rets(14),
-		tt.Args(wordMoveTestBuffer, 14).Rets(16),
-		tt.Args(wordMoveTestBuffer, 16).Rets(19),
-		tt.Args(wordMoveTestBuffer, 19).Rets(20),
-		tt.Args(wordMoveTestBuffer, 20).Rets(23),
-		tt.Args(wordMoveTestBuffer, 23).Rets(32),
-		tt.Args(wordMoveTestBuffer, 32).Rets(33),
-		tt.Args(wordMoveTestBuffer, 33).Rets(37),
-		tt.Args(wordMoveTestBuffer, 37).Rets(40),
+		Args(wordMoveTestBuffer, 0).Rets(3),
+		Args(wordMoveTestBuffer, 1).Rets(3),
+		Args(wordMoveTestBuffer, 2).Rets(3),
+		Args(wordMoveTestBuffer, 3).Rets(5),
+		Args(wordMoveTestBuffer, 5).Rets(14),
+		Args(wordMoveTestBuffer, 14).Rets(16),
+		Args(wordMoveTestBuffer, 16).Rets(19),
+		Args(wordMoveTestBuffer, 19).Rets(20),
+		Args(wordMoveTestBuffer, 20).Rets(23),
+		Args(wordMoveTestBuffer, 23).Rets(32),
+		Args(wordMoveTestBuffer, 32).Rets(33),
+		Args(wordMoveTestBuffer, 33).Rets(37),
+		Args(wordMoveTestBuffer, 37).Rets(40),
 	}
 
 	// alnum-word boundaries: 0 5 16 20 23 33
 	moveDotLeftAlnumWordTests = tt.Table{
-		tt.Args(wordMoveTestBuffer, 0).Rets(0),
-		tt.Args(wordMoveTestBuffer, 1).Rets(0),
-		tt.Args(wordMoveTestBuffer, 2).Rets(0),
-		tt.Args(wordMoveTestBuffer, 3).Rets(0),
-		tt.Args(wordMoveTestBuffer, 4).Rets(0),
-		tt.Args(wordMoveTestBuffer, 5).Rets(0),
-		tt.Args(wordMoveTestBuffer, 6).Rets(5),
-		tt.Args(wordMoveTestBuffer, 16).Rets(5),
-		tt.Args(wordMoveTestBuffer, 20).Rets(16),
-		tt.Args(wordMoveTestBuffer, 23).Rets(20),
-		tt.Args(wordMoveTestBuffer, 33).Rets(23),
-		tt.Args(wordMoveTestBuffer, 40).Rets(33),
+		Args(wordMoveTestBuffer, 0).Rets(0),
+		Args(wordMoveTestBuffer, 1).Rets(0),
+		Args(wordMoveTestBuffer, 2).Rets(0),
+		Args(wordMoveTestBuffer, 3).Rets(0),
+		Args(wordMoveTestBuffer, 4).Rets(0),
+		Args(wordMoveTestBuffer, 5).Rets(0),
+		Args(wordMoveTestBuffer, 6).Rets(5),
+		Args(wordMoveTestBuffer, 16).Rets(5),
+		Args(wordMoveTestBuffer, 20).Rets(16),
+		Args(wordMoveTestBuffer, 23).Rets(20),
+		Args(wordMoveTestBuffer, 33).Rets(23),
+		Args(wordMoveTestBuffer, 40).Rets(33),
 	}
 	moveDotRightAlnumWordTests = tt.Table{
-		tt.Args(wordMoveTestBuffer, 0).Rets(5),
-		tt.Args(wordMoveTestBuffer, 1).Rets(5),
-		tt.Args(wordMoveTestBuffer, 2).Rets(5),
-		tt.Args(wordMoveTestBuffer, 3).Rets(5),
-		tt.Args(wordMoveTestBuffer, 4).Rets(5),
-		tt.Args(wordMoveTestBuffer, 5).Rets(16),
-		tt.Args(wordMoveTestBuffer, 16).Rets(20),
-		tt.Args(wordMoveTestBuffer, 20).Rets(23),
-		tt.Args(wordMoveTestBuffer, 23).Rets(33),
-		tt.Args(wordMoveTestBuffer, 33).Rets(40),
+		Args(wordMoveTestBuffer, 0).Rets(5),
+		Args(wordMoveTestBuffer, 1).Rets(5),
+		Args(wordMoveTestBuffer, 2).Rets(5),
+		Args(wordMoveTestBuffer, 3).Rets(5),
+		Args(wordMoveTestBuffer, 4).Rets(5),
+		Args(wordMoveTestBuffer, 5).Rets(16),
+		Args(wordMoveTestBuffer, 16).Rets(20),
+		Args(wordMoveTestBuffer, 20).Rets(23),
+		Args(wordMoveTestBuffer, 23).Rets(33),
+		Args(wordMoveTestBuffer, 33).Rets(40),
 	}
 )
 

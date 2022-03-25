@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 func TestToString(t *testing.T) {
-	Test(t, Fn("ToString", ToString), Table{
+	tt.Test(t, tt.Fn("ToString", ToString), tt.Table{
 		// string
 		Args("a").Rets("a"),
 

@@ -5,13 +5,13 @@ import (
 	"os"
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 type xtype int
 
 func TestKind(t *testing.T) {
-	Test(t, Fn("Kind", Kind), Table{
+	tt.Test(t, tt.Fn("Kind", Kind), tt.Table{
 		Args(nil).Rets("nil"),
 		Args(true).Rets("bool"),
 		Args("").Rets("string"),
@@ -22,9 +22,7 @@ func TestKind(t *testing.T) {
 		Args(os.Stdin).Rets("file"),
 		Args(EmptyList).Rets("list"),
 		Args(EmptyMap).Rets("map"),
-
 		Args(xtype(0)).Rets("!!vals.xtype"),
-
 		Args(os.Stdin).Rets("file"),
 	})
 }

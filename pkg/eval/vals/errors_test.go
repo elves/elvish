@@ -3,11 +3,11 @@ package vals
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 func TestErrors(t *testing.T) {
-	Test(t, Fn("error.Error", error.Error), Table{
+	tt.Test(t, tt.Fn("error.Error", error.Error), tt.Table{
 		Args(cannotIterate{"num"}).Rets("cannot iterate num"),
 		Args(cannotIterateKeysOf{"num"}).Rets("cannot iterate keys of num"),
 	})

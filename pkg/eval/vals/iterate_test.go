@@ -3,7 +3,7 @@ package vals
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 // An implementation of Iterator.
@@ -17,7 +17,7 @@ func (i iterator) Iterate(f func(any) bool) {
 type nonIterator struct{}
 
 func TestCanIterate(t *testing.T) {
-	Test(t, Fn("CanIterate", CanIterate), Table{
+	tt.Test(t, tt.Fn("CanIterate", CanIterate), tt.Table{
 		Args("foo").Rets(true),
 		Args(MakeList("foo", "bar")).Rets(true),
 		Args(iterator{vs("a", "b")}).Rets(true),
@@ -26,7 +26,7 @@ func TestCanIterate(t *testing.T) {
 }
 
 func TestCollect(t *testing.T) {
-	Test(t, Fn("Collect", Collect), Table{
+	tt.Test(t, tt.Fn("Collect", Collect), tt.Table{
 		Args("foo").Rets(vs("f", "o", "o"), nil),
 		Args(MakeList("foo", "bar")).Rets(vs("foo", "bar"), nil),
 		Args(iterator{vs("a", "b")}).Rets(vs("a", "b"), nil),

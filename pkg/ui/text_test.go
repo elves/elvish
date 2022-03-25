@@ -7,8 +7,6 @@ import (
 	"src.elv.sh/pkg/tt"
 )
 
-var Args = tt.Args
-
 func TestT(t *testing.T) {
 	tt.Test(t, tt.Fn("T", T), tt.Table{
 		Args("test").Rets(Text{&Segment{Text: "test"}}),

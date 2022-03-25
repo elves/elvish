@@ -10,7 +10,7 @@ import (
 var n = mustParse("ls $x[0]$y[1];echo done >/redir-dest")
 
 var pprintASTTests = tt.Table{
-	tt.Args(n).Rets(
+	Args(n).Rets(
 		`Chunk
   Pipeline/Form
     Compound/Indexing/Primary ExprCtx=CmdExpr Type=Bareword Value="ls"
@@ -38,7 +38,7 @@ func TestPPrintAST(t *testing.T) {
 }
 
 var pprintParseTreeTests = tt.Table{
-	tt.Args(n).Rets(
+	Args(n).Rets(
 		`Chunk "ls $x[0]$y...redir-dest" 0-36
   Pipeline/Form "ls $x[0]$y[1]" 0-13
     Compound/Indexing/Primary "ls" 0-2

@@ -3,11 +3,11 @@ package parse
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 func TestQuote(t *testing.T) {
-	Test(t, Fn("Quote", Quote).ArgsFmt("(%q)"), Table{
+	tt.Test(t, tt.Fn("Quote", Quote).ArgsFmt("(%q)"), tt.Table{
 		// Empty string is single-quoted.
 		Args("").Rets(`''`),
 
@@ -37,7 +37,7 @@ func TestQuote(t *testing.T) {
 }
 
 func TestQuoteAs(t *testing.T) {
-	Test(t, Fn("QuoteAs", QuoteAs).ArgsFmt("(%q, %s)"), Table{
+	tt.Test(t, tt.Fn("QuoteAs", QuoteAs).ArgsFmt("(%q, %s)"), tt.Table{
 		// DoubleQuote is always respected.
 		Args("", DoubleQuoted).Rets(`""`, DoubleQuoted),
 		Args("a", DoubleQuoted).Rets(`"a"`, DoubleQuoted),
@@ -52,7 +52,7 @@ func TestQuoteAs(t *testing.T) {
 }
 
 func TestQuoteVariableName(t *testing.T) {
-	Test(t, Fn("QuoteVariableName", QuoteVariableName).ArgsFmt("(%q)"), Table{
+	tt.Test(t, tt.Fn("QuoteVariableName", QuoteVariableName).ArgsFmt("(%q)"), tt.Table{
 		Args("").Rets("''"),
 		Args("foo").Rets("foo"),
 		Args("a/b").Rets("'a/b'"),
