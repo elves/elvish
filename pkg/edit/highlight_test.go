@@ -41,10 +41,10 @@ func TestCheck(t *testing.T) {
 	ev.ExtendGlobal(eval.BuildNs().AddVar("good", vars.FromInit(0)))
 
 	tt.Test(t, tt.Fn("check", check), tt.Table{
-		tt.Args(ev, mustParse("")).Rets(noError),
-		tt.Args(ev, mustParse("echo $good")).Rets(noError),
+		Args(ev, mustParse("")).Rets(noError),
+		Args(ev, mustParse("echo $good")).Rets(noError),
 		// TODO: Check the range of the returned error
-		tt.Args(ev, mustParse("echo $bad")).Rets(anyError),
+		Args(ev, mustParse("echo $bad")).Rets(anyError),
 	})
 }
 
@@ -95,38 +95,38 @@ func TestMakeHasCommand(t *testing.T) {
 
 	tt.Test(t, tt.Fn("hasCommand", hasCommand), tt.Table{
 		// Builtin special form
-		tt.Args(ev, "if").Rets(true),
+		Args(ev, "if").Rets(true),
 
 		// Builtin function
-		tt.Args(ev, "put").Rets(true),
+		Args(ev, "put").Rets(true),
 
 		// User-defined function
-		tt.Args(ev, "good").Rets(true),
+		Args(ev, "good").Rets(true),
 
 		// Function in modules
-		tt.Args(ev, "a:good").Rets(true),
-		tt.Args(ev, "a:b:good").Rets(true),
-		tt.Args(ev, "a:bad").Rets(false),
-		tt.Args(ev, "a:b:bad").Rets(false),
+		Args(ev, "a:good").Rets(true),
+		Args(ev, "a:b:good").Rets(true),
+		Args(ev, "a:bad").Rets(false),
+		Args(ev, "a:b:bad").Rets(false),
 
 		// Non-searching directory and external
-		tt.Args(ev, "./a").Rets(true),
-		tt.Args(ev, "a/b").Rets(true),
-		tt.Args(ev, "a/b/c/executable").Rets(true),
-		tt.Args(ev, "./bad").Rets(false),
-		tt.Args(ev, "a/bad").Rets(false),
+		Args(ev, "./a").Rets(true),
+		Args(ev, "a/b").Rets(true),
+		Args(ev, "a/b/c/executable").Rets(true),
+		Args(ev, "./bad").Rets(false),
+		Args(ev, "a/bad").Rets(false),
 
 		// External in PATH
-		tt.Args(ev, "external").Rets(true),
-		tt.Args(ev, "@external").Rets(true),
-		tt.Args(ev, "ex:tern:al").Rets(colonInFilenameOk),
+		Args(ev, "external").Rets(true),
+		Args(ev, "@external").Rets(true),
+		Args(ev, "ex:tern:al").Rets(colonInFilenameOk),
 		// With explicit e:
-		tt.Args(ev, "e:external").Rets(true),
-		tt.Args(ev, "e:bad-external").Rets(false),
+		Args(ev, "e:external").Rets(true),
+		Args(ev, "e:bad-external").Rets(false),
 
 		// Non-existent
-		tt.Args(ev, "bad").Rets(false),
-		tt.Args(ev, "a:").Rets(false),
+		Args(ev, "bad").Rets(false),
+		Args(ev, "a:").Rets(false),
 	})
 }
 

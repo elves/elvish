@@ -8,8 +8,6 @@ import (
 	"src.elv.sh/pkg/tt"
 )
 
-var Args = tt.Args
-
 func TestSplitSigil(t *testing.T) {
 	tt.Test(t, tt.Fn("SplitSigil", SplitSigil), tt.Table{
 		Args("").Rets("", ""),

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/eval/errs"
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 type customAssocer struct{}
@@ -17,7 +17,7 @@ func (a customAssocer) Assoc(k, v any) (any, error) {
 }
 
 func TestAssoc(t *testing.T) {
-	Test(t, Fn("Assoc", Assoc), Table{
+	tt.Test(t, tt.Fn("Assoc", Assoc), tt.Table{
 		Args("0123", "0", "foo").Rets("foo123", nil),
 		Args("0123", "1..3", "bar").Rets("0bar3", nil),
 		Args("0123", "1..3", 12).Rets(nil, errReplacementMustBeString),

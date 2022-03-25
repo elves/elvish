@@ -6,8 +6,6 @@ import (
 	"src.elv.sh/pkg/tt"
 )
 
-var Args = tt.Args
-
 func TestGetVerticalWindow(t *testing.T) {
 	tt.Test(t, tt.Fn("getVerticalWindow", getVerticalWindow), tt.Table{
 		// selected = 0: always show a widow starting from 0, regardless of

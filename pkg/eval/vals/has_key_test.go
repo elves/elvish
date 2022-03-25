@@ -3,7 +3,7 @@ package vals
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 type hasKeyer struct{ key any }
@@ -11,7 +11,7 @@ type hasKeyer struct{ key any }
 func (h hasKeyer) HasKey(k any) bool { return k == h.key }
 
 func TestHasKey(t *testing.T) {
-	Test(t, Fn("HasKey", HasKey), Table{
+	tt.Test(t, tt.Fn("HasKey", HasKey), tt.Table{
 		// Map
 		Args(MakeMap("k", "v"), "k").Rets(true),
 		Args(MakeMap("k", "v"), "bad").Rets(false),

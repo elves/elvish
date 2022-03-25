@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 type reprer struct{}
@@ -16,7 +16,7 @@ func (reprer) Repr(int) string { return "<reprer>" }
 type nonReprer struct{}
 
 func TestReprPlain(t *testing.T) {
-	Test(t, Fn("ReprPlain", ReprPlain), Table{
+	tt.Test(t, tt.Fn("ReprPlain", ReprPlain), tt.Table{
 		Args(nil).Rets("$nil"),
 
 		Args(false).Rets("$false"),

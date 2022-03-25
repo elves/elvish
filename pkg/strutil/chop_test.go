@@ -3,11 +3,11 @@ package strutil
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 func TestChopLineEnding(t *testing.T) {
-	Test(t, Fn("ChopLineEnding", ChopLineEnding), Table{
+	tt.Test(t, tt.Fn("ChopLineEnding", ChopLineEnding), tt.Table{
 		Args("").Rets(""),
 		Args("text").Rets("text"),
 		Args("text\n").Rets("text"),
@@ -20,7 +20,7 @@ func TestChopLineEnding(t *testing.T) {
 }
 
 func TestChopTerminator(t *testing.T) {
-	Test(t, Fn("ChopTerminator", ChopTerminator), Table{
+	tt.Test(t, tt.Fn("ChopTerminator", ChopTerminator), tt.Table{
 		Args("", byte('\x00')).Rets(""),
 		Args("foo", byte('\x00')).Rets("foo"),
 		Args("foo\x00", byte('\x00')).Rets("foo"),

@@ -7,8 +7,6 @@ import (
 	"src.elv.sh/pkg/tt"
 )
 
-var Args = tt.Args
-
 func TestNewReadOnly(t *testing.T) {
 	v := NewReadOnly("haha")
 	if v.Get() != "haha" {

@@ -6,14 +6,16 @@ import (
 	"src.elv.sh/pkg/tt"
 )
 
+var Args = tt.Args
+
 func TestMarkLines(t *testing.T) {
 	stylesheet := RuneStylesheet{
 		'-': Inverse,
 		'x': Stylings(FgBlue, BgGreen),
 	}
 	tt.Test(t, tt.Fn("MarkLines", MarkLines), tt.Table{
-		tt.Args("foo  bar foobar").Rets(T("foo  bar foobar")),
-		tt.Args(
+		Args("foo  bar foobar").Rets(T("foo  bar foobar")),
+		Args(
 			"foo  bar foobar", stylesheet,
 			"---  xxx ------",
 		).Rets(
@@ -24,7 +26,7 @@ func TestMarkLines(t *testing.T) {
 				T(" "),
 				T("foobar", Inverse)),
 		),
-		tt.Args(
+		Args(
 			"foo  bar foobar", stylesheet,
 			"---",
 		).Rets(
@@ -32,7 +34,7 @@ func TestMarkLines(t *testing.T) {
 				T("foo", Inverse),
 				T("  bar foobar")),
 		),
-		tt.Args(
+		Args(
 			"plain1",
 			"plain2",
 			"foo  bar foobar\n", stylesheet,

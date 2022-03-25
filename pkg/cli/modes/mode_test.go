@@ -11,6 +11,8 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
+var Args = tt.Args
+
 func TestModeLine(t *testing.T) {
 	testModeLine(t, tt.Fn("Line", modeLine))
 }
@@ -22,9 +24,9 @@ func TestModePrompt(t *testing.T) {
 
 func testModeLine(t *testing.T, fn *tt.FnToTest) {
 	tt.Test(t, fn, tt.Table{
-		tt.Args("TEST", false).Rets(
+		Args("TEST", false).Rets(
 			ui.T("TEST", ui.Bold, ui.FgWhite, ui.BgMagenta)),
-		tt.Args("TEST", true).Rets(
+		Args("TEST", true).Rets(
 			ui.Concat(
 				ui.T("TEST", ui.Bold, ui.FgWhite, ui.BgMagenta),
 				ui.T(" "))),

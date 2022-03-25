@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	. "src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/tt"
 )
 
 // An implementation for Concatter that accepts strings, returns a special
@@ -34,7 +34,7 @@ func (rconcatter) RConcat(lhs any) (any, error) {
 }
 
 func TestConcat(t *testing.T) {
-	Test(t, Fn("Concat", Concat), Table{
+	tt.Test(t, tt.Fn("Concat", Concat), tt.Table{
 		Args("foo", "bar").Rets("foobar", nil),
 		// string+number
 		Args("foo", 2).Rets("foo2", nil),
