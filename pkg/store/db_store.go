@@ -7,7 +7,7 @@ import (
 
 	bolt "go.etcd.io/bbolt"
 	"src.elv.sh/pkg/logutil"
-	. "src.elv.sh/pkg/store/storedefs"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 var logger = logutil.GetLogger("[store] ")
@@ -20,7 +20,7 @@ var initDB = map[string](func(*bolt.Tx) error){}
 // wg.Add(1) in the main goroutine before spawning another goroutine, and
 // call wg.Done() in the spawned goroutine after the operation is finished.
 type DBStore interface {
-	Store
+	storedefs.Store
 	Close() error
 }
 

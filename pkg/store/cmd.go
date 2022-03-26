@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 
 	bolt "go.etcd.io/bbolt"
-	. "src.elv.sh/pkg/store/storedefs"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 func init() {
@@ -58,7 +58,7 @@ func (s *dbStore) Cmd(seq int) (string, error) {
 		b := tx.Bucket([]byte(bucketCmd))
 		v := b.Get(marshalSeq(uint64(seq)))
 		if v == nil {
-			return ErrNoMatchingCmd
+			return storedefs.ErrNoMatchingCmd
 		}
 		cmd = string(v)
 		return nil
@@ -68,21 +68,21 @@ func (s *dbStore) Cmd(seq int) (string, error) {
 
 // IterateCmds iterates all the commands in the specified range, and calls the
 // callback with the content of each command sequentially.
-func (s *dbStore) IterateCmds(from, upto int, f func(Cmd)) error {
+func (s *dbStore) IterateCmds(from, upto int, f func(storedefs.Cmd)) error {
 	return s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketCmd))
 		c := b.Cursor()
 		for k, v := c.Seek(marshalSeq(uint64(from))); k != nil && unmarshalSeq(k) < uint64(upto); k, v = c.Next() {
-			f(Cmd{Text: string(v), Seq: int(unmarshalSeq(k))})
+			f(storedefs.Cmd{Text: string(v), Seq: int(unmarshalSeq(k))})
 		}
 		return nil
 	})
 }
 
 // CmdsWithSeq returns all commands within the specified range.
-func (s *dbStore) CmdsWithSeq(from, upto int) ([]Cmd, error) {
-	var cmds []Cmd
-	err := s.IterateCmds(from, upto, func(cmd Cmd) {
+func (s *dbStore) CmdsWithSeq(from, upto int) ([]storedefs.Cmd, error) {
+	var cmds []storedefs.Cmd
+	err := s.IterateCmds(from, upto, func(cmd storedefs.Cmd) {
 		cmds = append(cmds, cmd)
 	})
 	return cmds, err
@@ -90,27 +90,27 @@ func (s *dbStore) CmdsWithSeq(from, upto int) ([]Cmd, error) {
 
 // NextCmd finds the first command after the given sequence number (inclusive)
 // with the given prefix.
-func (s *dbStore) NextCmd(from int, prefix string) (Cmd, error) {
-	var cmd Cmd
+func (s *dbStore) NextCmd(from int, prefix string) (storedefs.Cmd, error) {
+	var cmd storedefs.Cmd
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketCmd))
 		c := b.Cursor()
 		p := []byte(prefix)
 		for k, v := c.Seek(marshalSeq(uint64(from))); k != nil; k, v = c.Next() {
 			if bytes.HasPrefix(v, p) {
-				cmd = Cmd{Text: string(v), Seq: int(unmarshalSeq(k))}
+				cmd = storedefs.Cmd{Text: string(v), Seq: int(unmarshalSeq(k))}
 				return nil
 			}
 		}
-		return ErrNoMatchingCmd
+		return storedefs.ErrNoMatchingCmd
 	})
 	return cmd, err
 }
 
 // PrevCmd finds the last command before the given sequence number (exclusive)
 // with the given prefix.
-func (s *dbStore) PrevCmd(upto int, prefix string) (Cmd, error) {
-	var cmd Cmd
+func (s *dbStore) PrevCmd(upto int, prefix string) (storedefs.Cmd, error) {
+	var cmd storedefs.Cmd
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketCmd))
 		c := b.Cursor()
@@ -121,7 +121,7 @@ func (s *dbStore) PrevCmd(upto int, prefix string) (Cmd, error) {
 		if k == nil { // upto > LAST
 			k, v = c.Last()
 			if k == nil {
-				return ErrNoMatchingCmd
+				return storedefs.ErrNoMatchingCmd
 			}
 		} else {
 			k, v = c.Prev() // upto exists, find the previous one
@@ -129,11 +129,11 @@ func (s *dbStore) PrevCmd(upto int, prefix string) (Cmd, error) {
 
 		for ; k != nil; k, v = c.Prev() {
 			if bytes.HasPrefix(v, p) {
-				cmd = Cmd{Text: string(v), Seq: int(unmarshalSeq(k))}
+				cmd = storedefs.Cmd{Text: string(v), Seq: int(unmarshalSeq(k))}
 				return nil
 			}
 		}
-		return ErrNoMatchingCmd
+		return storedefs.ErrNoMatchingCmd
 	})
 	return cmd, err
 }

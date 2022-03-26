@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	bolt "go.etcd.io/bbolt"
-	. "src.elv.sh/pkg/store/storedefs"
+	"src.elv.sh/pkg/store/storedefs"
 )
 
 // Parameters for directory history scores.
@@ -70,8 +70,8 @@ func (s *dbStore) DelDir(d string) error {
 
 // Dirs lists all directories in the directory history whose names are not
 // in the blacklist. The results are ordered by scores in descending order.
-func (s *dbStore) Dirs(blacklist map[string]struct{}) ([]Dir, error) {
-	var dirs []Dir
+func (s *dbStore) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
+	var dirs []storedefs.Dir
 
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketDir))
@@ -81,7 +81,7 @@ func (s *dbStore) Dirs(blacklist map[string]struct{}) ([]Dir, error) {
 			if _, ok := blacklist[d]; ok {
 				continue
 			}
-			dirs = append(dirs, Dir{
+			dirs = append(dirs, storedefs.Dir{
 				Path:  d,
 				Score: unmarshalScore(v),
 			})
@@ -92,7 +92,7 @@ func (s *dbStore) Dirs(blacklist map[string]struct{}) ([]Dir, error) {
 	return dirs, err
 }
 
-type dirList []Dir
+type dirList []storedefs.Dir
 
 func (dl dirList) Len() int {
 	return len(dl)
