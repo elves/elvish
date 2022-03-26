@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	. "src.elv.sh/pkg/prog"
+	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
 )
@@ -56,7 +56,7 @@ func TestSharedFlags(t *testing.T) {
 
 func TestSharedFlags_MultiplePrograms(t *testing.T) {
 	Test(t,
-		Composite(
+		prog.Composite(
 			&testProgram{sharedFlags: true, nextProgram: true},
 			&testProgram{sharedFlags: true}),
 		ThatElvish("-sock", "sock", "-db", "db", "-json").
@@ -71,8 +71,8 @@ func TestShowDeprecations(t *testing.T) {
 		ThatElvish("-deprecation-level", "42").DoesNothing(),
 	)
 
-	if DeprecationLevel != 42 {
-		t.Errorf("ShowDeprecations = %d, want 42", DeprecationLevel)
+	if prog.DeprecationLevel != 42 {
+		t.Errorf("ShowDeprecations = %d, want 42", prog.DeprecationLevel)
 	}
 }
 
@@ -86,14 +86,14 @@ func TestNoSuitableSubprogram(t *testing.T) {
 
 func TestComposite(t *testing.T) {
 	Test(t,
-		Composite(&testProgram{nextProgram: true}, &testProgram{writeOut: "program 2"}),
+		prog.Composite(&testProgram{nextProgram: true}, &testProgram{writeOut: "program 2"}),
 		ThatElvish().WritesStdout("program 2"),
 	)
 }
 
 func TestComposite_NoSuitableSubprogram(t *testing.T) {
 	Test(t,
-		Composite(&testProgram{nextProgram: true}, &testProgram{nextProgram: true}),
+		prog.Composite(&testProgram{nextProgram: true}, &testProgram{nextProgram: true}),
 		ThatElvish().
 			ExitsWith(2).
 			WritesStderr("internal error: no suitable subprogram\n"),
@@ -102,7 +102,7 @@ func TestComposite_NoSuitableSubprogram(t *testing.T) {
 
 func TestComposite_PreferEarlierSubprogram(t *testing.T) {
 	Test(t,
-		Composite(
+		prog.Composite(
 			&testProgram{writeOut: "program 1"}, &testProgram{writeOut: "program 2"}),
 		ThatElvish().WritesStdout("program 1"),
 	)
@@ -110,19 +110,19 @@ func TestComposite_PreferEarlierSubprogram(t *testing.T) {
 
 func TestBadUsageError(t *testing.T) {
 	Test(t,
-		&testProgram{returnErr: BadUsage("lorem ipsum")},
+		&testProgram{returnErr: prog.BadUsage("lorem ipsum")},
 		ThatElvish().ExitsWith(2).WritesStderrContaining("lorem ipsum\n"),
 	)
 }
 
 func TestExitError(t *testing.T) {
-	Test(t, &testProgram{returnErr: Exit(3)},
+	Test(t, &testProgram{returnErr: prog.Exit(3)},
 		ThatElvish().ExitsWith(3),
 	)
 }
 
 func TestExitError_0(t *testing.T) {
-	Test(t, &testProgram{returnErr: Exit(0)},
+	Test(t, &testProgram{returnErr: prog.Exit(0)},
 		ThatElvish().ExitsWith(0),
 	)
 }
@@ -135,11 +135,11 @@ type testProgram struct {
 	sharedFlags bool
 
 	flag        string
-	daemonPaths *DaemonPaths
+	daemonPaths *prog.DaemonPaths
 	json        *bool
 }
 
-func (p *testProgram) RegisterFlags(f *FlagSet) {
+func (p *testProgram) RegisterFlags(f *prog.FlagSet) {
 	if p.customFlag {
 		f.StringVar(&p.flag, "flag", "default", "a flag")
 	}
@@ -151,7 +151,7 @@ func (p *testProgram) RegisterFlags(f *FlagSet) {
 
 func (p *testProgram) Run(fds [3]*os.File, args []string) error {
 	if p.nextProgram {
-		return ErrNextProgram
+		return prog.ErrNextProgram
 	}
 	fds[1].WriteString(p.writeOut)
 	if p.customFlag {
