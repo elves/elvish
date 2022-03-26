@@ -5,7 +5,7 @@ import (
 
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
-	. "src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/testutil"
 
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
@@ -79,8 +79,8 @@ func TestStringLiteral(t *testing.T) {
 }
 
 func TestTilde(t *testing.T) {
-	home := InTempHome(t)
-	ApplyDir(Dir{"file1": "", "file2": ""})
+	home := testutil.InTempHome(t)
+	testutil.ApplyDir(testutil.Dir{"file1": "", "file2": ""})
 
 	Test(t,
 		// Tilde

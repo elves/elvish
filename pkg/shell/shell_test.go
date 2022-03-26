@@ -7,12 +7,12 @@ import (
 
 	"src.elv.sh/pkg/env"
 	. "src.elv.sh/pkg/prog/progtest"
-	. "src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestShell_LegacyLibPath(t *testing.T) {
 	home := setupHomePaths(t)
-	MustWriteFile(filepath.Join(home, ".elvish", "lib", "a.elv"), "echo mod a")
+	testutil.MustWriteFile(filepath.Join(home, ".elvish", "lib", "a.elv"), "echo mod a")
 
 	Test(t, &Program{},
 		ThatElvish("-c", "use a").WritesStdout("mod a\n"),
@@ -45,7 +45,7 @@ var incSHLVLTests = []struct {
 }
 
 func TestIncSHLVL(t *testing.T) {
-	Setenv(t, env.SHLVL, "")
+	testutil.Setenv(t, env.SHLVL, "")
 
 	for _, test := range incSHLVLTests {
 		t.Run(test.name, func(t *testing.T) {
@@ -79,8 +79,8 @@ func TestIncSHLVL(t *testing.T) {
 
 // Common test utilities.
 
-func setupHomePaths(t Cleanuper) string {
-	Unsetenv(t, env.XDG_CONFIG_HOME)
-	Unsetenv(t, env.XDG_DATA_HOME)
-	return TempHome(t)
+func setupHomePaths(t testutil.Cleanuper) string {
+	testutil.Unsetenv(t, env.XDG_CONFIG_HOME)
+	testutil.Unsetenv(t, env.XDG_DATA_HOME)
+	return testutil.TempHome(t)
 }

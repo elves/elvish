@@ -6,7 +6,7 @@ import (
 	"sort"
 	"testing"
 
-	. "src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/testutil"
 )
 
 var claimFileTests = []struct {
@@ -20,13 +20,13 @@ var claimFileTests = []struct {
 }
 
 func TestClaimFile(t *testing.T) {
-	InTempDir(t)
+	testutil.InTempDir(t)
 
-	ApplyDir(Dir{
+	testutil.ApplyDir(testutil.Dir{
 		"a0.log": "",
 		"a1.log": "",
 		"a8.log": "",
-		"d":      Dir{}})
+		"d":      testutil.Dir{}})
 
 	for _, test := range claimFileTests {
 		name := claimFileAndGetName(test.dir, test.pattern)
@@ -37,7 +37,7 @@ func TestClaimFile(t *testing.T) {
 }
 
 func TestClaimFile_Concurrent(t *testing.T) {
-	InTempDir(t)
+	testutil.InTempDir(t)
 
 	n := 9
 	ch := make(chan string, n)
