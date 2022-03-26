@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	. "src.elv.sh/pkg/pprof"
+	"src.elv.sh/pkg/pprof"
 	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
@@ -18,7 +18,7 @@ var (
 func TestProgram(t *testing.T) {
 	testutil.InTempDir(t)
 
-	Test(t, prog.Composite(&Program{}, noopProgram{}),
+	Test(t, prog.Composite(&pprof.Program{}, noopProgram{}),
 		ThatElvish("-cpuprofile", "cpuprof").DoesNothing(),
 		ThatElvish("-cpuprofile", "/a/bad/path").
 			WritesStderrContaining("Warning: cannot create CPU profile:"),
