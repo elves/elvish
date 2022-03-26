@@ -13,12 +13,12 @@ import (
 	"src.elv.sh/pkg/env"
 
 	. "src.elv.sh/pkg/prog/progtest"
-	. "src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestInteract_NewRcFile_Default(t *testing.T) {
 	home := setupHomePaths(t)
-	MustWriteFile(
+	testutil.MustWriteFile(
 		filepath.Join(home, ".config", "elvish", "rc.elv"), "echo hello new rc.elv")
 
 	Test(t, &Program{},
@@ -28,8 +28,8 @@ func TestInteract_NewRcFile_Default(t *testing.T) {
 
 func TestInteract_NewRcFile_XDG_CONFIG_HOME(t *testing.T) {
 	setupHomePaths(t)
-	xdgConfigHome := Setenv(t, env.XDG_CONFIG_HOME, TempDir(t))
-	MustWriteFile(
+	xdgConfigHome := testutil.Setenv(t, env.XDG_CONFIG_HOME, testutil.TempDir(t))
+	testutil.MustWriteFile(
 		filepath.Join(xdgConfigHome, "elvish", "rc.elv"),
 		"echo hello XDG_CONFIG_HOME rc.elv")
 
@@ -39,14 +39,14 @@ func TestInteract_NewRcFile_XDG_CONFIG_HOME(t *testing.T) {
 }
 
 func TestInteract_ConnectsToDaemon(t *testing.T) {
-	InTempDir(t)
+	testutil.InTempDir(t)
 
 	// Run the daemon in the same process for simplicity.
 	daemonDone := make(chan struct{})
 	defer func() {
 		select {
 		case <-daemonDone:
-		case <-time.After(Scaled(2 * time.Second)):
+		case <-time.After(testutil.Scaled(2 * time.Second)):
 			t.Errorf("timed out waiting for daemon to quit")
 		}
 	}()
@@ -58,7 +58,7 @@ func TestInteract_ConnectsToDaemon(t *testing.T) {
 	select {
 	case <-readyCh:
 		// Do nothing
-	case <-time.After(Scaled(2 * time.Second)):
+	case <-time.After(testutil.Scaled(2 * time.Second)):
 		t.Fatalf("timed out waiting for daemon to start")
 	}
 
