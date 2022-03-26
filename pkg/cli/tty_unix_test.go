@@ -7,11 +7,11 @@ import (
 	"testing"
 
 	"golang.org/x/sys/unix"
-	. "src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli"
 )
 
 func TestTTYSignal(t *testing.T) {
-	tty := NewTTY(os.Stdin, os.Stderr)
+	tty := cli.NewTTY(os.Stdin, os.Stderr)
 	sigch := tty.NotifySignals()
 
 	err := unix.Kill(unix.Getpid(), unix.SIGUSR1)

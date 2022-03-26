@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	. "src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli"
 	. "src.elv.sh/pkg/cli/clitest"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
@@ -46,7 +46,7 @@ func TestReadCode_RestoresTTYBeforeReturning(t *testing.T) {
 }
 
 func TestReadCode_ResetsStateBeforeReturning(t *testing.T) {
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.CodeAreaState.Buffer.Content = "some code"
 	}))
 
@@ -59,7 +59,7 @@ func TestReadCode_ResetsStateBeforeReturning(t *testing.T) {
 
 func TestReadCode_CallsBeforeReadline(t *testing.T) {
 	callCh := make(chan bool, 1)
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.BeforeReadline = []func(){func() { callCh <- true }}
 	}))
 	defer f.Stop()
@@ -74,7 +74,7 @@ func TestReadCode_CallsBeforeReadline(t *testing.T) {
 
 func TestReadCode_CallsBeforeReadlineBeforePromptTrigger(t *testing.T) {
 	callCh := make(chan string, 2)
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.BeforeReadline = []func(){func() { callCh <- "hook" }}
 		spec.Prompt = testPrompt{trigger: func(bool) { callCh <- "prompt" }}
 	}))
@@ -87,7 +87,7 @@ func TestReadCode_CallsBeforeReadlineBeforePromptTrigger(t *testing.T) {
 
 func TestReadCode_CallsAfterReadline(t *testing.T) {
 	callCh := make(chan string, 1)
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.AfterReadline = []func(string){func(s string) { callCh <- s }}
 	}))
 
@@ -107,7 +107,7 @@ func TestReadCode_CallsAfterReadline(t *testing.T) {
 }
 
 func TestReadCode_FinalRedraw(t *testing.T) {
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.CodeAreaState.Buffer.Content = "code"
 		spec.State.Addons = []tk.Widget{tk.Label{Content: ui.T("addon")}}
 	}))
@@ -237,13 +237,13 @@ func TestReadCode_RedrawsOnLateUpdateFromHighlighter(t *testing.T) {
 	f.TTY.TestBuffer(t, bb().Write("code", ui.FgRed).SetDotHere().Buffer())
 }
 
-func withHighlighter(hl Highlighter) func(*AppSpec, TTYCtrl) {
-	return WithSpec(func(spec *AppSpec) { spec.Highlighter = hl })
+func withHighlighter(hl cli.Highlighter) func(*cli.AppSpec, TTYCtrl) {
+	return WithSpec(func(spec *cli.AppSpec) { spec.Highlighter = hl })
 }
 
 func TestReadCode_ShowsPrompt(t *testing.T) {
-	f := Setup(WithSpec(func(spec *AppSpec) {
-		spec.Prompt = NewConstPrompt(ui.T("> "))
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
+		spec.Prompt = cli.NewConstPrompt(ui.T("> "))
 	}))
 	defer f.Stop()
 
@@ -253,7 +253,7 @@ func TestReadCode_ShowsPrompt(t *testing.T) {
 
 func TestReadCode_CallsPromptTrigger(t *testing.T) {
 	triggerCh := make(chan bool, 1)
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.Prompt = testPrompt{trigger: func(bool) { triggerCh <- true }}
 	}))
 	defer f.Stop()
@@ -272,7 +272,7 @@ func TestReadCode_RedrawsOnLateUpdateFromPrompt(t *testing.T) {
 		get:         func() ui.Text { return ui.T(promptContent) },
 		lateUpdates: make(chan struct{}),
 	}
-	f := Setup(WithSpec(func(spec *AppSpec) { spec.Prompt = prompt }))
+	f := Setup(WithSpec(func(spec *cli.AppSpec) { spec.Prompt = prompt }))
 	defer f.Stop()
 
 	// Wait until old prompt is rendered
@@ -284,8 +284,8 @@ func TestReadCode_RedrawsOnLateUpdateFromPrompt(t *testing.T) {
 }
 
 func TestReadCode_ShowsRPrompt(t *testing.T) {
-	f := Setup(WithSpec(func(spec *AppSpec) {
-		spec.RPrompt = NewConstPrompt(ui.T("R"))
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
+		spec.RPrompt = cli.NewConstPrompt(ui.T("R"))
 	}))
 	defer f.Stop()
 
@@ -299,9 +299,9 @@ func TestReadCode_ShowsRPrompt(t *testing.T) {
 }
 
 func TestReadCode_ShowsRPromptInFinalRedrawIfPersistent(t *testing.T) {
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.CodeAreaState.Buffer.Content = "code"
-		spec.RPrompt = NewConstPrompt(ui.T("R"))
+		spec.RPrompt = cli.NewConstPrompt(ui.T("R"))
 		spec.RPromptPersistent = func() bool { return true }
 	}))
 	defer f.Stop()
@@ -316,9 +316,9 @@ func TestReadCode_ShowsRPromptInFinalRedrawIfPersistent(t *testing.T) {
 }
 
 func TestReadCode_HidesRPromptInFinalRedrawIfNotPersistent(t *testing.T) {
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.CodeAreaState.Buffer.Content = "code"
-		spec.RPrompt = NewConstPrompt(ui.T("R"))
+		spec.RPrompt = cli.NewConstPrompt(ui.T("R"))
 		spec.RPromptPersistent = func() bool { return false }
 	}))
 	defer f.Stop()
@@ -335,7 +335,7 @@ func TestReadCode_HidesRPromptInFinalRedrawIfNotPersistent(t *testing.T) {
 // Addon.
 
 func TestReadCode_LetsLastWidgetHandleEvents(t *testing.T) {
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.State.Addons = []tk.Widget{
 			tk.NewCodeArea(tk.CodeAreaSpec{
 				Prompt: func() ui.Text { return ui.T("addon1> ") },
@@ -357,7 +357,7 @@ func TestReadCode_LetsLastWidgetHandleEvents(t *testing.T) {
 }
 
 func TestReadCode_PutsCursorOnLastWidgetWithFocus(t *testing.T) {
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.State.Addons = []tk.Widget{
 			testAddon{tk.Label{Content: ui.T("addon1> ")}, true},
 			testAddon{tk.Label{Content: ui.T("addon2> ")}, false},
@@ -407,7 +407,7 @@ func TestPushAddonPopAddon(t *testing.T) {
 
 func TestReadCode_HidesAddonsWhenNotEnoughSpace(t *testing.T) {
 	f := Setup(
-		func(spec *AppSpec, tty TTYCtrl) {
+		func(spec *cli.AppSpec, tty TTYCtrl) {
 			spec.State.Addons = []tk.Widget{
 				tk.Label{Content: ui.T("addon1> ")},
 				tk.Label{Content: ui.T("addon2> ")}, // no space for this
@@ -440,7 +440,7 @@ func TestReadCode_UsesGlobalBindingsWithAddonTarget(t *testing.T) {
 
 func testGlobalBindings(t *testing.T, addons []tk.Widget) {
 	gotWidgetCh := make(chan tk.Widget, 1)
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.GlobalBindings = tk.MapBindings{
 			term.K('X', ui.Ctrl): func(w tk.Widget) {
 				gotWidgetCh <- w
@@ -462,7 +462,7 @@ func testGlobalBindings(t *testing.T, addons []tk.Widget) {
 }
 
 func TestReadCode_DoesNotUseGlobalBindingsIfHandledByWidget(t *testing.T) {
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.GlobalBindings = tk.MapBindings{
 			term.K('a'): func(w tk.Widget) {},
 		}
@@ -476,7 +476,7 @@ func TestReadCode_DoesNotUseGlobalBindingsIfHandledByWidget(t *testing.T) {
 }
 
 func TestReadCode_TrimsBufferToMaxHeight(t *testing.T) {
-	f := Setup(func(spec *AppSpec, tty TTYCtrl) {
+	f := Setup(func(spec *cli.AppSpec, tty TTYCtrl) {
 		spec.MaxHeight = func() int { return 2 }
 		// The code needs 3 lines to completely show.
 		spec.CodeAreaState.Buffer.Content = strings.Repeat("a", 15)
@@ -495,7 +495,7 @@ func TestReadCode_ShowNotes(t *testing.T) {
 	// for testing the behavior of writing multiple notes.
 	inHandler := make(chan struct{})
 	unblock := make(chan struct{})
-	f := Setup(WithSpec(func(spec *AppSpec) {
+	f := Setup(WithSpec(func(spec *cli.AppSpec) {
 		spec.CodeAreaBindings = tk.MapBindings{
 			term.K('a'): func(tk.Widget) {
 				inHandler <- struct{}{}
@@ -528,7 +528,7 @@ func TestReadCode_ShowNotes(t *testing.T) {
 }
 
 func TestReadCode_DoesNotCrashWithNilTTY(t *testing.T) {
-	f := Setup(WithSpec(func(spec *AppSpec) { spec.TTY = nil }))
+	f := Setup(WithSpec(func(spec *cli.AppSpec) { spec.TTY = nil }))
 	defer f.Stop()
 }
 
