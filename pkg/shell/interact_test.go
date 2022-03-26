@@ -5,15 +5,15 @@ import (
 	"testing"
 
 	. "src.elv.sh/pkg/prog/progtest"
-	. "src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestInteract(t *testing.T) {
 	setupHomePaths(t)
-	InTempDir(t)
-	MustWriteFile("rc.elv", "echo hello from rc.elv")
-	MustWriteFile("rc-dnc.elv", "echo $a")
-	MustWriteFile("rc-fail.elv", "fail bad")
+	testutil.InTempDir(t)
+	testutil.MustWriteFile("rc.elv", "echo hello from rc.elv")
+	testutil.MustWriteFile("rc-dnc.elv", "echo $a")
+	testutil.MustWriteFile("rc-fail.elv", "fail bad")
 
 	Test(t, &Program{},
 		thatElvishInteract().WithStdin("echo hello\n").WritesStdout("hello\n"),
@@ -33,7 +33,7 @@ func TestInteract(t *testing.T) {
 func TestInteract_DefaultRCPath(t *testing.T) {
 	home := setupHomePaths(t)
 	// Legacy RC path
-	MustWriteFile(
+	testutil.MustWriteFile(
 		filepath.Join(home, ".elvish", "rc.elv"), "echo hello legacy rc.elv")
 	// Note: non-legacy path is tested in interact_unix_test.go
 
