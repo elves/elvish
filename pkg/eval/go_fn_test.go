@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
@@ -31,13 +31,13 @@ func TestGoFn_RawOptions(t *testing.T) {
 
 		// RawOptions
 		That("f &foo=bar").DoesNothing().
-			WithSetup(f(func(opts RawOptions) {
+			WithSetup(f(func(opts eval.RawOptions) {
 				if opts["foo"] != "bar" {
 					t.Errorf("RawOptions parameter doesn't get options")
 				}
 			})),
 		// Options when the function does not accept options.
-		That("f &foo=bar").Throws(ErrNoOptAccepted).
+		That("f &foo=bar").Throws(eval.ErrNoOptAccepted).
 			WithSetup(f(func() {
 				t.Errorf("Function called when there are extra options")
 			})),
@@ -52,7 +52,7 @@ func TestGoFn_RawOptions(t *testing.T) {
 				}
 			})),
 		// Invalid option; regression test for #958.
-		That("f &bad=bar").Throws(UnknownOption{"bad"}).
+		That("f &bad=bar").Throws(eval.UnknownOption{"bad"}).
 			WithSetup(f(func(opts someOptions) {
 				t.Errorf("function called when there are invalid options")
 			})),
@@ -116,11 +116,11 @@ func TestGoFn_RawOptions(t *testing.T) {
 				t.Errorf("Function called when there are too few arguments")
 			})),
 		// Wrong argument type
-		That("f (num 1)").Throws(ErrorWithType(WrongArgType{})).
+		That("f (num 1)").Throws(ErrorWithType(eval.WrongArgType{})).
 			WithSetup(f(func(x string) {
 				t.Errorf("Function called when arguments have wrong type")
 			})),
-		That("f str").Throws(ErrorWithType(WrongArgType{})).
+		That("f str").Throws(ErrorWithType(eval.WrongArgType{})).
 			WithSetup(f(func(x int) {
 				t.Errorf("Function called when arguments have wrong type")
 			})),
@@ -148,14 +148,14 @@ func TestGoFn_RawOptions(t *testing.T) {
 	)
 }
 
-func f(body any) func(*Evaler) {
-	return func(ev *Evaler) {
-		ev.ExtendGlobal(BuildNs().AddGoFn("f", body))
+func f(body any) func(*eval.Evaler) {
+	return func(ev *eval.Evaler) {
+		ev.ExtendGlobal(eval.BuildNs().AddGoFn("f", body))
 	}
 }
 
-func testInputs(t *testing.T, wantValues ...any) func(Inputs) {
-	return func(i Inputs) {
+func testInputs(t *testing.T, wantValues ...any) func(eval.Inputs) {
+	return func(i eval.Inputs) {
 		t.Helper()
 		var values []any
 		i(func(x any) {

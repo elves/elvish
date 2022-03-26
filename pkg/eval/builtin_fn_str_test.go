@@ -3,7 +3,7 @@ package eval_test
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	. "src.elv.sh/pkg/eval/evaltest"
 )
 
@@ -37,8 +37,8 @@ func TestBase(t *testing.T) {
 	Test(t,
 		That(`base 2 1 3 4 16 255`).Puts("1", "11", "100", "10000", "11111111"),
 		That(`base 16 42 233`).Puts("2a", "e9"),
-		That(`base 1 1`).Throws(ErrBadBase),
-		That(`base 37 10`).Throws(ErrBadBase),
+		That(`base 1 1`).Throws(eval.ErrBadBase),
+		That(`base 37 10`).Throws(eval.ErrBadBase),
 		thatOutputErrorIsBubbled("base 2 1"),
 	)
 }
@@ -57,7 +57,7 @@ func TestEawk(t *testing.T) {
 			Puts("cz", "33"),
 		// Bad input type
 		That(`num 42 | eawk {|@a| fail "this should not run" }`).
-			Throws(ErrInputOfEawkMustBeString),
+			Throws(eval.ErrInputOfEawkMustBeString),
 		// Propagation of exception
 		That(`
 			to-lines [1 2 3 4] | eawk {|@a|
@@ -66,7 +66,7 @@ func TestEawk(t *testing.T) {
 				}
 				put $a[1]
 			}
-		`).Puts("1", "2").Throws(FailError{"stop eawk"}),
+		`).Puts("1", "2").Throws(eval.FailError{"stop eawk"}),
 		// break
 		That(`
 			to-lines [" a" "b\tc " "d" "e"] | eawk {|@a|

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/diag"
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -109,7 +109,7 @@ func TestSet(t *testing.T) {
 			"put $di[k] $di[k2]").Puts("lorem", "ipsum"),
 		That("var d = [&a=[&b=v]]; put $d[a][b]; set d[a][b] = u; put $d[a][b]").
 			Puts("v", "u"),
-		That("var li = [foo]; set li[(fail foo)] = bar").Throws(FailError{"foo"}),
+		That("var li = [foo]; set li[(fail foo)] = bar").Throws(eval.FailError{"foo"}),
 		That("var li = [foo]; set li[0 1] = foo bar").
 			Throws(ErrorWithMessage("multi indexing not implemented")),
 		That("var li = [[]]; set li[1][2] = bar").
@@ -131,7 +131,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestSet_ErrorInSetMethod(t *testing.T) {
-	TestWithSetup(t, func(ev *Evaler) { addBadVar(ev, 0) },
+	TestWithSetup(t, func(ev *eval.Evaler) { addBadVar(ev, 0) },
 		That("set bad = foo").Throws(errBadVar, "bad"),
 		That("var a; set bad @a = foo").Throws(errBadVar, "bad"),
 		That("var a; set a @bad = foo").Throws(errBadVar, "@bad"),
@@ -150,13 +150,13 @@ func TestTmp(t *testing.T) {
 }
 
 func TestTmp_ErrorSetting(t *testing.T) {
-	TestWithSetup(t, func(ev *Evaler) { addBadVar(ev, 0) },
+	TestWithSetup(t, func(ev *eval.Evaler) { addBadVar(ev, 0) },
 		That("{ tmp bad = foo }").Throws(errBadVar, "bad", "{ tmp bad = foo }"),
 	)
 }
 
 func TestTmp_ErrorRestoring(t *testing.T) {
-	TestWithSetup(t, func(ev *Evaler) { addBadVar(ev, 1) },
+	TestWithSetup(t, func(ev *eval.Evaler) { addBadVar(ev, 1) },
 		That("{ tmp bad = foo; put after }").
 			Puts("after").
 			Throws(ErrorWithMessage("restore variable: bad var"),
@@ -164,8 +164,8 @@ func TestTmp_ErrorRestoring(t *testing.T) {
 	)
 }
 
-func addBadVar(ev *Evaler, allowedSets int) {
-	ev.ExtendGlobal(BuildNs().AddVar("bad", &badVar{allowedSets}))
+func addBadVar(ev *eval.Evaler, allowedSets int) {
+	ev.ExtendGlobal(eval.BuildNs().AddVar("bad", &badVar{allowedSets}))
 }
 
 var errBadVar = errors.New("bad var")
@@ -221,7 +221,7 @@ func TestDel(t *testing.T) {
 			ErrorWithMessage("index must evaluate to a single value in argument to del"),
 			"k1 k2"),
 		// Index expression throws exception
-		That("var x = [&k]", "del x[(fail x)]").Throws(FailError{"x"}, "fail x"),
+		That("var x = [&k]", "del x[(fail x)]").Throws(eval.FailError{"x"}, "fail x"),
 		// Value does not support element removal
 		That("var x = (num 1)", "del x[k]").Throws(
 			ErrorWithMessage("value does not support element removal"),
@@ -245,7 +245,7 @@ func TestAnd(t *testing.T) {
 		That("var x = a; and $false (x = b); put $x").Puts(false, "a"),
 
 		// Exception
-		That("and a (fail x)").Throws(FailError{"x"}, "fail x"),
+		That("and a (fail x)").Throws(eval.FailError{"x"}, "fail x"),
 		thatOutputErrorIsBubbled("and a"),
 	)
 }
@@ -260,7 +260,7 @@ func TestOr(t *testing.T) {
 		That("var x = a; or $true (x = b); put $x").Puts(true, "a"),
 
 		// Exception
-		That("or $false (fail x)").Throws(FailError{"x"}, "fail x"),
+		That("or $false (fail x)").Throws(eval.FailError{"x"}, "fail x"),
 		thatOutputErrorIsBubbled("or a"),
 	)
 }
@@ -272,7 +272,7 @@ func TestCoalesce(t *testing.T) {
 		That("coalesce $nil $nil").Puts(nil),
 		That("coalesce").Puts(nil),
 		// exception propagation
-		That("coalesce $nil (fail foo)").Throws(FailError{"foo"}),
+		That("coalesce $nil (fail foo)").Throws(eval.FailError{"foo"}),
 		// short circuit
 		That("coalesce a (fail foo)").Puts("a"),
 
@@ -299,7 +299,7 @@ func TestIf(t *testing.T) {
 		That("if $false { put 2 } elif true { put 2 } else { put 3 }").Puts("2"),
 
 		// Exception in condition expression
-		That("if (fail x) { }").Throws(FailError{"x"}, "fail x"),
+		That("if (fail x) { }").Throws(eval.FailError{"x"}, "fail x"),
 	)
 }
 
@@ -359,9 +359,9 @@ func TestWhile(t *testing.T) {
 			"while (< $x 4) { put $x; set x = (+ $x 1); continue; put bad }").
 			Puts(0, 1, 2, 3),
 		// Exception in body
-		That("var x = 0; while (< $x 4) { fail haha }").Throws(FailError{"haha"}),
+		That("var x = 0; while (< $x 4) { fail haha }").Throws(eval.FailError{"haha"}),
 		// Exception in condition
-		That("while (fail x) { }").Throws(FailError{"x"}, "fail x"),
+		That("while (fail x) { }").Throws(eval.FailError{"x"}, "fail x"),
 
 		// else branch - not taken
 		That("var x = 0; while (< $x 4) { put $x; set x = (+ $x 1) } else { put bad }").
@@ -386,7 +386,7 @@ func TestFor(t *testing.T) {
 		That("for x [] { } else { put else }").Puts("else"),
 		That("for x [a] { } else { put else }").DoesNothing(),
 		// Propagating exception.
-		That("for x [a] { fail foo }").Throws(FailError{"foo"}),
+		That("for x [a] { fail foo }").Throws(eval.FailError{"foo"}),
 
 		// More than one iterator.
 		That("for {x,y} [] { }").DoesNotCompile(),
@@ -420,7 +420,7 @@ func TestFn(t *testing.T) {
 		That("fn f { put a; return; put b }; f").Puts("a"),
 
 		// Error when evaluating the lambda
-		That("fn f {|&opt=(fail x)| }").Throws(FailError{"x"}, "fail x"),
+		That("fn f {|&opt=(fail x)| }").Throws(eval.FailError{"x"}, "fail x"),
 	)
 }
 
@@ -429,20 +429,20 @@ func TestUse_SetsVariableCorrectlyIfModuleCallsExtendGlobal(t *testing.T) {
 	libdir := testutil.InTempDir(t)
 
 	testutil.ApplyDir(testutil.Dir{"a.elv": "add-var"})
-	ev := NewEvaler()
+	ev := eval.NewEvaler()
 	ev.LibDirs = []string{libdir}
 	addVar := func() {
-		ev.ExtendGlobal(BuildNs().AddVar("b", vars.NewReadOnly("foo")))
+		ev.ExtendGlobal(eval.BuildNs().AddVar("b", vars.NewReadOnly("foo")))
 	}
-	ev.ExtendBuiltin(BuildNs().AddGoFn("add-var", addVar))
+	ev.ExtendBuiltin(eval.BuildNs().AddGoFn("add-var", addVar))
 
-	err := ev.Eval(parse.Source{Code: "use a"}, EvalCfg{})
+	err := ev.Eval(parse.Source{Code: "use a"}, eval.EvalCfg{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	g := ev.Global()
-	if g.IndexString("a:").Get().(*Ns) == nil {
+	if g.IndexString("a:").Get().(*eval.Ns) == nil {
 		t.Errorf("$a: is nil")
 	}
 	if g.IndexString("b").Get().(string) != "foo" {
@@ -457,7 +457,7 @@ func TestUse_SupportsCircularDependency(t *testing.T) {
 		"b.elv": "var pre = bpre; use a; put $a:pre $a:post; var post = bpost",
 	})
 
-	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
+	TestWithSetup(t, func(ev *eval.Evaler) { ev.LibDirs = []string{libdir} },
 		That(`use a`).Puts(
 			// When b.elv is imported from a.elv, $a:pre is set but $a:post is
 			// not
@@ -490,7 +490,7 @@ func TestUse(t *testing.T) {
 		},
 	})
 
-	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir1, libdir2} },
+	TestWithSetup(t, func(ev *eval.Evaler) { ev.LibDirs = []string{libdir1, libdir2} },
 		That(`use lorem; put $lorem:name`).Puts("lorem"),
 		// imports are lexically scoped
 		// TODO: Support testing for compilation error
@@ -529,9 +529,9 @@ func TestUse(t *testing.T) {
 		That("var x = foo; use put-x").Throws(ErrorWithType(&diag.Error{})),
 
 		// Using an unknown module spec fails.
-		That("use unknown").Throws(ErrorWithType(NoSuchModule{})),
-		That("use ./unknown").Throws(ErrorWithType(NoSuchModule{})),
-		That("use ../unknown").Throws(ErrorWithType(NoSuchModule{})),
+		That("use unknown").Throws(ErrorWithType(eval.NoSuchModule{})),
+		That("use ./unknown").Throws(ErrorWithType(eval.NoSuchModule{})),
+		That("use ../unknown").Throws(ErrorWithType(eval.NoSuchModule{})),
 
 		// Nonexistent module
 		That("use non-existent").Throws(ErrorWithMessage("no such module: non-existent")),
@@ -548,7 +548,7 @@ func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	libdir := testutil.InTempDir(t)
 	testutil.MustWriteFile("dep.elv", "a=b nop $a")
 
-	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
+	TestWithSetup(t, func(ev *eval.Evaler) { ev.LibDirs = []string{libdir} },
 		// Importing module triggers check for deprecated features
 		That("use dep").PrintsStderrWith("is deprecated"),
 	)

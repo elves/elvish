@@ -3,7 +3,7 @@ package eval_test
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/testutil"
 
@@ -40,8 +40,8 @@ func TestIndexing(t *testing.T) {
 		That("put [&key=value][bad]").Throws(
 			vals.NoSuchKey("bad"), "[&key=value][bad]"),
 
-		That("put (fail x)[a]").Throws(FailError{"x"}, "fail x"),
-		That("put [foo][(fail x)]").Throws(FailError{"x"}, "fail x"),
+		That("put (fail x)[a]").Throws(eval.FailError{"x"}, "fail x"),
+		That("put [foo][(fail x)]").Throws(eval.FailError{"x"}, "fail x"),
 	)
 }
 
@@ -154,7 +154,7 @@ func TestVariableUse(t *testing.T) {
 		// Only names ending in ~ are resolved, and resolution always succeeds
 		// regardless of whether the command actually exists. Colons inside the
 		// name are supported.
-		That("put $e:a:b~").Puts(NewExternalCmd("a:b")),
+		That("put $e:a:b~").Puts(eval.NewExternalCmd("a:b")),
 
 		// A "normal" namespace access indexes the namespace as a variable.
 		That("var ns: = (ns [&a= val]); put $ns:a").Puts("val"),

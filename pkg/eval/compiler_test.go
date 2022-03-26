@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/prog/progtest"
 )
@@ -22,7 +22,7 @@ func testCompileTimeDeprecation(t *testing.T, code, wantWarning string, level in
 	t.Helper()
 	progtest.SetDeprecationLevel(t, level)
 
-	ev := NewEvaler()
+	ev := eval.NewEvaler()
 	errOutput := new(bytes.Buffer)
 
 	parseErr, compileErr := ev.Check(parse.Source{Code: code}, errOutput)

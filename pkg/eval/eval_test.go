@@ -6,7 +6,7 @@ import (
 	"syscall"
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/prog/progtest"
 
 	. "src.elv.sh/pkg/eval/evaltest"
@@ -34,7 +34,7 @@ func TestArgs(t *testing.T) {
 	Test(t,
 		That("put $args").Puts(vals.EmptyList))
 	TestWithSetup(t,
-		func(ev *Evaler) { ev.SetArgs([]string{"foo", "bar"}) },
+		func(ev *eval.Evaler) { ev.SetArgs([]string{"foo", "bar"}) },
 		That("put $args").Puts(vals.MakeList("foo", "bar")))
 }
 
@@ -42,8 +42,8 @@ func TestEvalTimeDeprecate(t *testing.T) {
 	progtest.SetDeprecationLevel(t, 42)
 	testutil.InTempDir(t)
 
-	TestWithSetup(t, func(ev *Evaler) {
-		ev.ExtendGlobal(BuildNs().AddGoFn("dep", func(fm *Frame) {
+	TestWithSetup(t, func(ev *eval.Evaler) {
+		ev.ExtendGlobal(eval.BuildNs().AddGoFn("dep", func(fm *eval.Frame) {
 			fm.Deprecate("deprecated", nil, 42)
 		}))
 	},
@@ -66,9 +66,9 @@ func TestMultipleEval(t *testing.T) {
 }
 
 func TestEval_AlternativeGlobal(t *testing.T) {
-	ev := NewEvaler()
-	g := BuildNs().AddVar("a", vars.NewReadOnly("")).Ns()
-	err := ev.Eval(parse.Source{Code: "nop $a"}, EvalCfg{Global: g})
+	ev := eval.NewEvaler()
+	g := eval.BuildNs().AddVar("a", vars.NewReadOnly("")).Ns()
+	err := ev.Eval(parse.Source{Code: "nop $a"}, eval.EvalCfg{Global: g})
 	if err != nil {
 		t.Errorf("got error %v, want nil", err)
 	}
@@ -79,16 +79,16 @@ func TestEval_AlternativeGlobal(t *testing.T) {
 }
 
 func TestEval_Concurrent(t *testing.T) {
-	ev := NewEvaler()
+	ev := eval.NewEvaler()
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
-		ev.Eval(parse.Source{Code: "var a"}, EvalCfg{})
+		ev.Eval(parse.Source{Code: "var a"}, eval.EvalCfg{})
 		wg.Done()
 	}()
 	go func() {
-		ev.Eval(parse.Source{Code: "var b"}, EvalCfg{})
+		ev.Eval(parse.Source{Code: "var b"}, eval.EvalCfg{})
 		wg.Done()
 	}()
 	wg.Wait()
@@ -106,9 +106,9 @@ type fooOpts struct{ Opt string }
 func (*fooOpts) SetDefaultOptions() {}
 
 func TestCall(t *testing.T) {
-	ev := NewEvaler()
+	ev := eval.NewEvaler()
 	var gotOpt, gotArg string
-	fn := NewGoFn("foo", func(fm *Frame, opts fooOpts, arg string) {
+	fn := eval.NewGoFn("foo", func(fm *eval.Frame, opts fooOpts, arg string) {
 		gotOpt = opts.Opt
 		gotArg = arg
 	})
@@ -116,11 +116,11 @@ func TestCall(t *testing.T) {
 	passedArg := "arg value"
 	passedOpt := "opt value"
 	ev.Call(fn,
-		CallCfg{
+		eval.CallCfg{
 			Args: []any{passedArg},
 			Opts: map[string]any{"opt": passedOpt},
 			From: "[TestCall]"},
-		EvalCfg{})
+		eval.EvalCfg{})
 
 	if gotArg != passedArg {
 		t.Errorf("got arg %q, want %q", gotArg, passedArg)
@@ -146,7 +146,7 @@ var checkTests = []struct {
 }
 
 func TestCheck(t *testing.T) {
-	ev := NewEvaler()
+	ev := eval.NewEvaler()
 	for _, test := range checkTests {
 		t.Run(test.name, func(t *testing.T) {
 			parseErr, compileErr := ev.Check(parse.Source{Code: test.code}, nil)

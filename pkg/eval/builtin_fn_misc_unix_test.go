@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/testutil"
 
 	. "src.elv.sh/pkg/eval/evaltest"
 )
 
-func interruptedTimeAfterMock(fm *Frame, d time.Duration) <-chan time.Time {
+func interruptedTimeAfterMock(fm *eval.Frame, d time.Duration) <-chan time.Time {
 	if d == time.Second {
 		// Special-case intended to verity that a sleep can be interrupted.
 		go func() {
@@ -29,10 +29,10 @@ func interruptedTimeAfterMock(fm *Frame, d time.Duration) <-chan time.Time {
 }
 
 func TestInterruptedSleep(t *testing.T) {
-	TimeAfter = interruptedTimeAfterMock
+	eval.TimeAfter = interruptedTimeAfterMock
 	Test(t,
 		// Special-case that should result in the sleep being interrupted. See
 		// timeAfterMock above.
-		That(`sleep 1s`).Throws(ErrInterrupted, "sleep 1s"),
+		That(`sleep 1s`).Throws(eval.ErrInterrupted, "sleep 1s"),
 	)
 }

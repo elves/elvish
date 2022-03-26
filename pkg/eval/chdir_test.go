@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/env"
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/parse"
@@ -15,7 +15,7 @@ import (
 func TestChdir(t *testing.T) {
 	dst := testutil.TempDir(t)
 
-	ev := NewEvaler()
+	ev := eval.NewEvaler()
 
 	argDirInBefore, argDirInAfter := "", ""
 	ev.AddBeforeChdir(func(dir string) { argDirInBefore = dir })
@@ -63,7 +63,7 @@ func TestChdirElvishHooks(t *testing.T) {
 func TestChdirError(t *testing.T) {
 	testutil.InTempDir(t)
 
-	ev := NewEvaler()
+	ev := eval.NewEvaler()
 	err := ev.Chdir("i/dont/exist")
 	if err == nil {
 		t.Errorf("Chdir => no error when dir does not exist")

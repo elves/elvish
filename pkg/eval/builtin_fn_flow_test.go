@@ -3,7 +3,7 @@ package eval_test
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
@@ -14,7 +14,7 @@ func TestRunParallel(t *testing.T) {
 	Test(t,
 		That(`run-parallel { put lorem } { echo ipsum }`).
 			Puts("lorem").Prints("ipsum\n"),
-		That(`run-parallel { } { fail foo }`).Throws(FailError{"foo"}),
+		That(`run-parallel { } { fail foo }`).Throws(eval.FailError{"foo"}),
 	)
 }
 
@@ -29,7 +29,7 @@ func TestEach(t *testing.T) {
 		That(`range 10 | each {|x| if (== $x 4) { continue }; put $x }`).
 			Puts(0, 1, 2, 3, 5, 6, 7, 8, 9),
 		That(`range 10 | each {|x| if (== $x 4) { fail haha }; put $x }`).
-			Puts(0, 1, 2, 3).Throws(FailError{"haha"}),
+			Puts(0, 1, 2, 3).Throws(eval.FailError{"haha"}),
 		// TODO(xiaq): Test that "each" does not close the stdin.
 	)
 }
@@ -66,7 +66,7 @@ func TestPeach(t *testing.T) {
 		`).Puts(true),
 		// Verify that exceptions are propagated.
 		That(`peach {|x| fail $x } [a]`).
-			Throws(FailError{"a"}, "fail $x ", "peach {|x| fail $x } [a]"),
+			Throws(eval.FailError{"a"}, "fail $x ", "peach {|x| fail $x } [a]"),
 		// Verify that `break` works by terminating the `peach` before the entire sequence is
 		// consumed.
 		That(`
@@ -80,11 +80,11 @@ func TestPeach(t *testing.T) {
 
 func TestFail(t *testing.T) {
 	Test(t,
-		That("fail haha").Throws(FailError{"haha"}, "fail haha"),
+		That("fail haha").Throws(eval.FailError{"haha"}, "fail haha"),
 		That("fn f { fail haha }", "fail ?(f)").Throws(
-			FailError{"haha"}, "fail haha ", "f"),
+			eval.FailError{"haha"}, "fail haha ", "f"),
 		That("fail []").Throws(
-			FailError{vals.EmptyList}, "fail []"),
+			eval.FailError{vals.EmptyList}, "fail []"),
 		That("put ?(fail 1)[reason][type]").Puts("fail"),
 		That("put ?(fail 1)[reason][content]").Puts("1"),
 	)
@@ -92,7 +92,7 @@ func TestFail(t *testing.T) {
 
 func TestReturn(t *testing.T) {
 	Test(t,
-		That("return").Throws(Return),
+		That("return").Throws(eval.Return),
 		// Use of return inside fn is tested in TestFn
 	)
 }
@@ -103,7 +103,7 @@ func TestDefer(t *testing.T) {
 		That("defer { }").
 			Throws(ErrorWithMessage("defer must be called from within a closure")),
 		That("{ defer { fail foo } }").
-			Throws(FailError{"foo"}, "fail foo ", "{ defer { fail foo } }"),
+			Throws(eval.FailError{"foo"}, "fail foo ", "{ defer { fail foo } }"),
 		That("{ defer {|x| } }").Throws(
 			errs.ArityMismatch{What: "arguments",
 				ValidLow: 1, ValidHigh: 1, Actual: 0},

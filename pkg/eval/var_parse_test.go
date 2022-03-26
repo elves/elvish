@@ -3,7 +3,7 @@ package eval_test
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 
 	"src.elv.sh/pkg/tt"
 )
@@ -11,7 +11,7 @@ import (
 var Args = tt.Args
 
 func TestSplitSigil(t *testing.T) {
-	tt.Test(t, tt.Fn("SplitSigil", SplitSigil), tt.Table{
+	tt.Test(t, tt.Fn("SplitSigil", eval.SplitSigil), tt.Table{
 		Args("").Rets("", ""),
 		Args("x").Rets("", "x"),
 		Args("@x").Rets("@", "x"),
@@ -21,7 +21,7 @@ func TestSplitSigil(t *testing.T) {
 }
 
 func TestSplitQName(t *testing.T) {
-	tt.Test(t, tt.Fn("SplitQName", SplitQName), tt.Table{
+	tt.Test(t, tt.Fn("SplitQName", eval.SplitQName), tt.Table{
 		Args("").Rets("", ""),
 		Args("a").Rets("a", ""),
 		Args("a:").Rets("a:", ""),
@@ -33,7 +33,7 @@ func TestSplitQName(t *testing.T) {
 }
 
 func TestSplitQNameSegs(t *testing.T) {
-	tt.Test(t, tt.Fn("SplitQNameSegs", SplitQNameSegs), tt.Table{
+	tt.Test(t, tt.Fn("SplitQNameSegs", eval.SplitQNameSegs), tt.Table{
 		Args("").Rets([]string{}),
 		Args("a").Rets([]string{"a"}),
 		Args("a:").Rets([]string{"a:"}),
@@ -45,7 +45,7 @@ func TestSplitQNameSegs(t *testing.T) {
 }
 
 func TestSplitIncompleteQNameNs(t *testing.T) {
-	tt.Test(t, tt.Fn("SplitIncompleteQNameNs", SplitIncompleteQNameNs), tt.Table{
+	tt.Test(t, tt.Fn("SplitIncompleteQNameNs", eval.SplitIncompleteQNameNs), tt.Table{
 		Args("").Rets("", ""),
 		Args("a").Rets("", "a"),
 		Args("a:").Rets("a:", ""),

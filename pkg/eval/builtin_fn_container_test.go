@@ -6,7 +6,7 @@ import (
 	"testing"
 	"unsafe"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 
 	. "src.elv.sh/pkg/eval/evaltest"
@@ -255,9 +255,9 @@ func TestCompare(t *testing.T) {
 		That("compare [x, y] [x, y]").Puts(0),
 
 		// Uncomparable values.
-		That("compare 1 (num 1)").Throws(ErrUncomparable),
-		That("compare x [x]").Throws(ErrUncomparable),
-		That("compare a [&a=x]").Throws(ErrUncomparable),
+		That("compare 1 (num 1)").Throws(eval.ErrUncomparable),
+		That("compare x [x]").Throws(eval.ErrUncomparable),
+		That("compare a [&a=x]").Throws(eval.ErrUncomparable),
 	)
 }
 
@@ -302,15 +302,15 @@ func TestOrder(t *testing.T) {
 
 		// Attempting to order uncomparable values
 		That("put (num 1) 1 | order").
-			Throws(ErrUncomparable, "order"),
+			Throws(eval.ErrUncomparable, "order"),
 		That("put 1 (float64 1) | order").
-			Throws(ErrUncomparable, "order"),
+			Throws(eval.ErrUncomparable, "order"),
 		That("put 1 (float64 1) b | order").
-			Throws(ErrUncomparable, "order"),
+			Throws(eval.ErrUncomparable, "order"),
 		That("put [a] a | order").
-			Throws(ErrUncomparable, "order"),
+			Throws(eval.ErrUncomparable, "order"),
 		That("put [a] [(float64 1)] | order").
-			Throws(ErrUncomparable, "order"),
+			Throws(eval.ErrUncomparable, "order"),
 
 		// &reverse
 		That("put foo bar ipsum | order &reverse").Puts("ipsum", "foo", "bar"),
@@ -338,7 +338,7 @@ func TestOrder(t *testing.T) {
 		// &less-than throwing an exception
 		That("put 1 10 2 5 | order &less-than={|a b| fail bad }").
 			Throws(
-				FailError{"bad"},
+				eval.FailError{"bad"},
 				"fail bad ", "order &less-than={|a b| fail bad }"),
 
 		// &less-than and &reverse

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 
@@ -213,12 +213,12 @@ func TestArithmeticCommands(t *testing.T) {
 		// 0 / non-zero
 		That("/ 0 1/2 0.1").Puts(0),
 		// anything / 0
-		That("/ 0 0").Throws(ErrDivideByZero, "/ 0 0"),
-		That("/ 1 0").Throws(ErrDivideByZero, "/ 1 0"),
-		That("/ 1.0 0").Throws(ErrDivideByZero, "/ 1.0 0"),
+		That("/ 0 0").Throws(eval.ErrDivideByZero, "/ 0 0"),
+		That("/ 1 0").Throws(eval.ErrDivideByZero, "/ 1 0"),
+		That("/ 1.0 0").Throws(eval.ErrDivideByZero, "/ 1.0 0"),
 
 		That("% 23 7").Puts(2),
-		That("% 1 0").Throws(ErrDivideByZero, "% 1 0"),
+		That("% 1 0").Throws(eval.ErrDivideByZero, "% 1 0"),
 	)
 }
 

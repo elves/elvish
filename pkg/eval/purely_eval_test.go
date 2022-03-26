@@ -3,7 +3,7 @@ package eval_test
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/testutil"
 
 	"src.elv.sh/pkg/eval/vals"
@@ -39,11 +39,11 @@ func TestPurelyEvalCompound(t *testing.T) {
 		{code: "$@x", wantBad: true},
 	}
 
-	ev := NewEvaler()
-	ev.ExtendGlobal(BuildNs().
+	ev := eval.NewEvaler()
+	ev.ExtendGlobal(eval.BuildNs().
 		AddVar("x", vars.NewReadOnly("bar")).
 		AddVar("y", vars.NewReadOnly(vals.MakeList())).
-		AddNs("ns", BuildNs().AddVar("x", vars.NewReadOnly("foo"))))
+		AddNs("ns", eval.BuildNs().AddVar("x", vars.NewReadOnly("foo"))))
 
 	for _, test := range tests {
 		t.Run(test.code, func(t *testing.T) {

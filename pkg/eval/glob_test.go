@@ -3,7 +3,7 @@ package eval_test
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/testutil"
@@ -38,7 +38,7 @@ func TestGlob_NoMatch(t *testing.T) {
 	testutil.InTempDir(t)
 
 	Test(t,
-		That("put a/b/nonexistent*").Throws(ErrWildcardNoMatch),
+		That("put a/b/nonexistent*").Throws(eval.ErrWildcardNoMatch),
 		That("put a/b/nonexistent*[nomatch-ok]").DoesNothing(),
 	)
 }
@@ -94,9 +94,9 @@ func TestGlob_Type(t *testing.T) {
 		That("put **[type:regular]f*").Puts("d1/f1", "d2/fm", "foo"),
 		That("put **f*[type:regular]").Puts("d1/f1", "d2/fm", "foo"),
 
-		That("put *[type:dir][type:regular]").Throws(ErrMultipleTypeModifiers),
-		That("put **[type:dir]f*[type:regular]").Throws(ErrMultipleTypeModifiers),
-		That("put **[type:unknown]").Throws(ErrUnknownTypeModifier),
+		That("put *[type:dir][type:regular]").Throws(eval.ErrMultipleTypeModifiers),
+		That("put **[type:dir]f*[type:regular]").Throws(eval.ErrMultipleTypeModifiers),
+		That("put **[type:unknown]").Throws(eval.ErrUnknownTypeModifier),
 	)
 }
 
@@ -104,7 +104,7 @@ func TestGlob_BadOperation(t *testing.T) {
 	testutil.InTempDir(t)
 
 	Test(t,
-		That("put *[[]]").Throws(ErrModifierMustBeString),
+		That("put *[[]]").Throws(eval.ErrModifierMustBeString),
 		That("put *[bad-mod]").Throws(ErrorWithMessage("unknown modifier bad-mod")),
 
 		That("put *{ }").

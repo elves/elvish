@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/diag"
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 
 	"src.elv.sh/pkg/eval/errs"
@@ -64,7 +64,7 @@ func TestEval(t *testing.T) {
 		// Compilation error.
 		That("eval 'put $x'").Throws(ErrorWithType(&diag.Error{})),
 		// Exception.
-		That("eval 'fail x'").Throws(FailError{"x"}),
+		That("eval 'fail x'").Throws(eval.FailError{"x"}),
 	)
 }
 
@@ -88,12 +88,12 @@ func TestTime(t *testing.T) {
 		That("var duration = ''",
 			"time &on-end={|x| set duration = $x } { echo foo } | var out = (all)",
 			"put $out", "kind-of $duration").Puts("foo", "number"),
-		That("time { fail body } | nop (all)").Throws(FailError{"body"}),
+		That("time { fail body } | nop (all)").Throws(eval.FailError{"body"}),
 		That("time &on-end={|_| fail on-end } { }").Throws(
-			FailError{"on-end"}),
+			eval.FailError{"on-end"}),
 
 		That("time &on-end={|_| fail on-end } { fail body }").Throws(
-			FailError{"body"}),
+			eval.FailError{"body"}),
 
 		thatOutputErrorIsBubbled("time { }"),
 	)
@@ -108,13 +108,13 @@ func TestUseMod(t *testing.T) {
 	)
 }
 
-func timeAfterMock(fm *Frame, d time.Duration) <-chan time.Time {
+func timeAfterMock(fm *eval.Frame, d time.Duration) <-chan time.Time {
 	fm.ValueOutput().Put(d) // report to the test framework the duration we received
 	return time.After(0)
 }
 
 func TestSleep(t *testing.T) {
-	TimeAfter = timeAfterMock
+	eval.TimeAfter = timeAfterMock
 	Test(t,
 		That(`sleep 0`).Puts(0*time.Second),
 		That(`sleep 1`).Puts(1*time.Second),
@@ -123,9 +123,9 @@ func TestSleep(t *testing.T) {
 		That(`sleep 0.1ms`).Puts(100*time.Microsecond),
 		That(`sleep 3h5m7s`).Puts((3*3600+5*60+7)*time.Second),
 
-		That(`sleep 1x`).Throws(ErrInvalidSleepDuration, "sleep 1x"),
-		That(`sleep -7`).Throws(ErrNegativeSleepDuration, "sleep -7"),
-		That(`sleep -3h`).Throws(ErrNegativeSleepDuration, "sleep -3h"),
+		That(`sleep 1x`).Throws(eval.ErrInvalidSleepDuration, "sleep 1x"),
+		That(`sleep -7`).Throws(eval.ErrNegativeSleepDuration, "sleep -7"),
+		That(`sleep -3h`).Throws(eval.ErrNegativeSleepDuration, "sleep -3h"),
 
 		That(`sleep 1/2`).Puts(time.Second/2), // rational number string
 
@@ -134,10 +134,10 @@ func TestSleep(t *testing.T) {
 		That(`sleep (num 42)`).Puts(42*time.Second),
 		That(`sleep (float64 0)`).Puts(0*time.Second),
 		That(`sleep (float64 1.7)`).Puts(1700*time.Millisecond),
-		That(`sleep (float64 -7)`).Throws(ErrNegativeSleepDuration, "sleep (float64 -7)"),
+		That(`sleep (float64 -7)`).Throws(eval.ErrNegativeSleepDuration, "sleep (float64 -7)"),
 
 		// An invalid argument type should raise an exception.
-		That(`sleep [1]`).Throws(ErrInvalidSleepDuration, "sleep [1]"),
+		That(`sleep [1]`).Throws(eval.ErrInvalidSleepDuration, "sleep [1]"),
 	)
 }
 
@@ -145,7 +145,7 @@ func TestResolve(t *testing.T) {
 	libdir := testutil.InTempDir(t)
 	testutil.MustWriteFile("mod.elv", "fn func { }")
 
-	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
+	TestWithSetup(t, func(ev *eval.Evaler) { ev.LibDirs = []string{libdir} },
 		That("resolve for").Puts("special"),
 		That("resolve put").Puts("$put~"),
 		That("fn f { }; resolve f").Puts("$f~"),

@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/testutil"
 
 	. "src.elv.sh/pkg/eval/evaltest"
@@ -52,9 +52,9 @@ func TestBuiltinPwd(t *testing.T) {
 
 // Verify the behavior when the CWD cannot be determined.
 func TestBuiltinPwd_GetwdError(t *testing.T) {
-	origGetwd := Getwd
-	Getwd = mockGetwdWithError
-	defer func() { Getwd = origGetwd }()
+	origGetwd := eval.Getwd
+	eval.Getwd = mockGetwdWithError
+	defer func() { eval.Getwd = origGetwd }()
 
 	Test(t,
 		That(`put $pwd`).Puts("/unknown/pwd"),

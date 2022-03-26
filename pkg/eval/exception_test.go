@@ -8,7 +8,7 @@ import (
 	"unsafe"
 
 	"src.elv.sh/pkg/diag"
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
@@ -18,14 +18,14 @@ import (
 
 func TestReason(t *testing.T) {
 	err := errors.New("ordinary error")
-	tt.Test(t, tt.Fn("Reason", Reason), tt.Table{
+	tt.Test(t, tt.Fn("Reason", eval.Reason), tt.Table{
 		tt.Args(err).Rets(err),
 		tt.Args(makeException(err)).Rets(err),
 	})
 }
 
 func TestException(t *testing.T) {
-	err := FailError{"error"}
+	err := eval.FailError{"error"}
 	exc := makeException(err)
 	vals.TestValue(t, exc).
 		Kind("exception").
@@ -38,21 +38,21 @@ func TestException(t *testing.T) {
 		IndexError("stack", vals.NoSuchKey("stack")).
 		Repr("[&reason=[&content=error &type=fail]]")
 
-	vals.TestValue(t, OK).
+	vals.TestValue(t, eval.OK).
 		Kind("exception").
 		Bool(true).
 		Repr("$ok")
 }
 
-func makeException(cause error, entries ...*diag.Context) Exception {
-	return NewException(cause, makeStackTrace(entries...))
+func makeException(cause error, entries ...*diag.Context) eval.Exception {
+	return eval.NewException(cause, makeStackTrace(entries...))
 }
 
 // Creates a new StackTrace, using the first entry as the head.
-func makeStackTrace(entries ...*diag.Context) *StackTrace {
-	var s *StackTrace
+func makeStackTrace(entries ...*diag.Context) *eval.StackTrace {
+	var s *eval.StackTrace
 	for i := len(entries) - 1; i >= 0; i-- {
-		s = &StackTrace{Head: entries[i], Next: s}
+		s = &eval.StackTrace{Head: entries[i], Next: s}
 	}
 	return s
 }
@@ -88,13 +88,13 @@ func TestErrorMethods(t *testing.T) {
 	tt.Test(t, tt.Fn("Error", error.Error), tt.Table{
 		tt.Args(makeException(errors.New("err"))).Rets("err"),
 
-		tt.Args(MakePipelineError([]Exception{
+		tt.Args(eval.MakePipelineError([]eval.Exception{
 			makeException(errors.New("err1")),
 			makeException(errors.New("err2"))})).Rets("(err1 | err2)"),
 
-		tt.Args(Return).Rets("return"),
-		tt.Args(Break).Rets("break"),
-		tt.Args(Continue).Rets("continue"),
-		tt.Args(Flow(1000)).Rets("!(BAD FLOW: 1000)"),
+		tt.Args(eval.Return).Rets("return"),
+		tt.Args(eval.Break).Rets("break"),
+		tt.Args(eval.Continue).Rets("continue"),
+		tt.Args(eval.Flow(1000)).Rets("!(BAD FLOW: 1000)"),
 	})
 }

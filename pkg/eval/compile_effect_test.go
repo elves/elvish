@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/mods/file"
@@ -18,7 +18,7 @@ func TestChunk(t *testing.T) {
 		// Outputs of pipelines in a chunk are concatenated
 		That("put x; put y; put z").Puts("x", "y", "z"),
 		// A failed pipeline cause the whole chunk to fail
-		That("put a; e:false; put b").Puts("a").Throws(ErrorWithType(ExternalCmdExit{})),
+		That("put a; e:false; put b").Puts("a").Throws(ErrorWithType(eval.ExternalCmdExit{})),
 	)
 }
 
@@ -36,15 +36,15 @@ func TestPipeline(t *testing.T) {
 }
 
 func TestPipeline_BgJob(t *testing.T) {
-	setup := func(ev *Evaler) {
-		ev.ExtendGlobal(BuildNs().AddNs("file", file.Ns))
+	setup := func(ev *eval.Evaler) {
+		ev.ExtendGlobal(eval.BuildNs().AddNs("file", file.Ns))
 	}
 
 	notes1 := make(chan string)
 	notes2 := make(chan string)
 
-	putNote := func(ch chan<- string) func(*Evaler) {
-		return func(ev *Evaler) {
+	putNote := func(ch chan<- string) func(*eval.Evaler) {
+		return func(ev *eval.Evaler) {
 			ev.BgJobNotify = func(note string) { ch <- note }
 		}
 	}
@@ -181,8 +181,8 @@ func TestCommand_LegacyTemporaryAssignmentSyntaxIsDeprecated(t *testing.T) {
 }
 
 func TestCommand_Redir(t *testing.T) {
-	setup := func(ev *Evaler) {
-		ev.ExtendGlobal(BuildNs().AddNs("file", file.Ns))
+	setup := func(ev *eval.Evaler) {
+		ev.ExtendGlobal(eval.BuildNs().AddNs("file", file.Ns))
 	}
 	testutil.InTempDir(t)
 
@@ -207,7 +207,7 @@ func TestCommand_Redir(t *testing.T) {
 		That(`{ echo foobar >&stderr } stderr> out4`, `slurp < out4`).
 			Puts("foobar\n"),
 		// Using a new FD as source throws an exception.
-		That(`echo foo >&4`).Throws(InvalidFD{FD: 4}),
+		That(`echo foo >&4`).Throws(eval.InvalidFD{FD: 4}),
 		// Using a new FD as destination is OK, and makes it available.
 		That(`{ echo foo >&4 } 4>out5`, `slurp < out5`).Puts("foo\n"),
 
@@ -225,9 +225,9 @@ func TestCommand_Redir(t *testing.T) {
 		That("echo def > bytes", "only-values < bytes | count").Puts(0),
 
 		// Writing value output to file throws an exception.
-		That("put foo >a").Throws(ErrNoValueOutput, "put foo >a"),
+		That("put foo >a").Throws(eval.ErrNoValueOutput, "put foo >a"),
 		// Writing value output to closed port throws an exception too.
-		That("put foo >&-").Throws(ErrNoValueOutput, "put foo >&-"),
+		That("put foo >&-").Throws(eval.ErrNoValueOutput, "put foo >&-"),
 
 		// Invalid redirection destination.
 		That("echo []> test").Throws(
@@ -249,8 +249,8 @@ func TestCommand_Redir(t *testing.T) {
 			"[]"),
 
 		// Exception when evaluating source or destination.
-		That("echo > (fail foo)").Throws(FailError{"foo"}, "fail foo"),
-		That("echo (fail foo)> file").Throws(FailError{"foo"}, "fail foo"),
+		That("echo > (fail foo)").Throws(eval.FailError{"foo"}, "fail foo"),
+		That("echo (fail foo)> file").Throws(eval.FailError{"foo"}, "fail foo"),
 	)
 }
 
