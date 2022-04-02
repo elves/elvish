@@ -124,12 +124,12 @@ jobs:
         go-version: 1.18.x
     - name: Build binaries
       # TODO: Use PR number for suffix when running for PR
-      run: ELVISH_REPRODUCIBLE=dev ./tools/buildall.sh . bin HEAD
+      run: ELVISH_BUILD_VARIANT=official ./tools/buildall.sh . ~/elvish-bin HEAD
     - name: Upload binaries
       uses: actions/upload-artifact@v2
       with:
         name: bin
-        path: bin/**/*
+        path: ~/elvish-bin/**/*
 
   checkstyle-go:
     name: Check style of **.go
