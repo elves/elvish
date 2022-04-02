@@ -23,14 +23,14 @@ User groups (all connected thanks to [Matrix](https://matrix.org)):
 Documentation for Elvish lives on the official website https://elv.sh,
 including:
 
--   [Learning material](https://elv.sh/learn);
+-   [Learning material](https://elv.sh/learn)
 
 -   [Reference docs](https://elv.sh/ref), including the
     [language reference](https://elv.sh/ref/language.html),
     [the `elvish` command](https://elv.sh/ref/command.html), and all the modules
-    in the standard library;
+    in the standard library
 
--   [Blog posts](https://elv.sh/blog), including release notes.
+-   [Blog posts](https://elv.sh/blog), including release notes
 
 The source for the documentation is in the
 [website](https://github.com/elves/elvish/tree/master/website) directory.
@@ -41,6 +41,7 @@ Most users do not need to build Elvish from source. Prebuilt binaries for the
 latest commit are provided for
 [Linux amd64](https://dl.elv.sh/linux-amd64/elvish-HEAD.tar.gz),
 [macOS amd64](https://dl.elv.sh/darwin-amd64/elvish-HEAD.tar.gz),
+[macOS arm64](https://dl.elv.sh/darwin-arm64/elvish-HEAD.tar.gz),
 [Windows amd64](https://dl.elv.sh/windows-amd64/elvish-HEAD.zip) and
 [many other platforms](https://elv.sh/get).
 
@@ -64,8 +65,8 @@ cd elvish
 make get
 ```
 
-This will install Elvish to `~/go/bin` (or `$GOPATH/bin` if you have set
-`$GOPATH`). You might want to add the directory to your `PATH`.
+This will install Elvish to `$GOBIN`, which defaults to `$GOPATH/bin` or
+`~/go/bin` if `$GOPATH` is not set.
 
 To install it elsewhere, override `ELVISH_MAKE_BIN` in the `make` command:
 
@@ -80,11 +81,11 @@ Elvish has experimental support for building and importing plugins, modules
 written in Go.
 
 However, since plugin support relies on dynamic linking, it is not enabled in
-the official prebuilt binaries. You need to build Elvish from source, with
-`ELVISH_PLUGIN_SUPPORT=1`:
+the official prebuilt binaries. You need to build Elvish from source, and make
+sure that CGo is enabled:
 
 ```sh
-make get ELVISH_PLUGIN_SUPPORT=1
+make get CGO_ENABLED=1
 ```
 
 To build a plugin, see this [example](https://github.com/elves/sample-plugin).

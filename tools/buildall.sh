@@ -6,21 +6,15 @@
 # and building $DST_DIR/$GOOS-$GOARCH/elvish-$SUFFIX for each supported
 # combination of $GOOS and $GOARCH.
 #
-# It also creates and an archive for each binary file, and puts it in the same
+# It also creates an archive for each binary file, and puts it in the same
 # directory. For GOOS=windows, the archive is a .zip file. For all other GOOS,
 # the archive is a .tar.gz file.
 #
 # If the sha256sum command is available, this script also creates a sha256sum
 # file for each binary and archive file, and puts it in the same directory.
 #
-# The ELVISH_REPRODUCIBLE environment variable, if set, instructs the script to
-# mark the binary as a reproducible build. It must take one of the two following
-# values:
-#
-# - release: SRC_DIR must contain the source code for a tagged release.
-#
-# - dev: SRC_DIR must be a Git repository checked out from the latest master
-#        branch.
+# The value of the ELVISH_BUILD_VARIANT environment variable will be used to
+# override src.elv.sh/pkg/buildinfo.BuildVariant.
 #
 # This script is not whitespace-correct; avoid whitespaces in directory names.
 
@@ -38,18 +32,6 @@ fi
 SRC_DIR=$1
 DST_DIR=$2
 SUFFIX=$3
-
-LD_FLAGS=
-if test -n "$ELVISH_REPRODUCIBLE"; then
-    LD_FLAGS="-X src.elv.sh/pkg/buildinfo.Reproducible=true"
-    if test "$ELVISH_REPRODUCIBLE" = dev; then
-        LD_FLAGS="$LD_FLAGS -X src.elv.sh/pkg/buildinfo.VersionSuffix=-dev.$(git -C $SRC_DIR rev-parse HEAD)"
-    elif test "$ELVISH_REPRODUCIBLE" = release; then
-        : # nothing to do
-    else
-        echo "$ELVISH_REPRODUCIBLE must be 'dev' or 'release' when set"
-    fi
-fi
 
 export GOOS GOARCH GOFLAGS
 export CGO_ENABLED=0
@@ -94,7 +76,9 @@ buildone() {
     fi
 
     printf '%s' "Building for $GOOS-$GOARCH... "
-    go build -trimpath -ldflags "$LD_FLAGS"\
+    go build \
+      -trimpath \
+      -ldflags "-X src.elv.sh/pkg/buildinfo.BuildVariant=$ELVISH_BUILD_VARIANT" \
       -o $BIN_DIR/$BIN $SRC_DIR/cmd/elvish || {
         echo "Failed"
         return
