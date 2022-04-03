@@ -74,9 +74,9 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: bin-checksums
-        path: ~/elvish-bin
+        path: elvish-bin
     - name: Check binary checksums
-      working-directory: ~/elvish-bin
+      working-directory: elvish-bin
       run: |
         ret=0
         for f in */elvish-HEAD.sha256sum; do
