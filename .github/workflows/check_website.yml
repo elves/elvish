@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  check_website:
+  check_freshness:
     name: Check freshness
     runs-on: ubuntu-latest
     strategy:
@@ -30,3 +30,63 @@ jobs:
         done
         echo "Timeout"
         exit 1
+
+  build_binaries:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: buildall/${{ matrix.os }}/1.18.x/${{ hashFiles('go.sum') }}/${{ github.sha }}
+        restore-keys: buildall/${{ matrix.os }}/1.18.x/${{ hashFiles('go.sum') }}
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.18.x
+    - name: Build binaries
+      run: ELVISH_BUILD_VARIANT=official ./tools/buildall.sh . ~/elvish-bin HEAD
+    - name: Upload binaries
+      uses: actions/upload-artifact@v2
+      with:
+        name: bin
+        path: ~/elvish-bin/**/*
+    - name: Upload binary checksums
+      uses: actions/upload-artifact@v2
+      with:
+        name: bin-checksums
+        path: ~/elvish-bin/**/elvish-HEAD.sha256sum
+
+  check_binary_checksums:
+    name: Check binary checksums
+    needs: [check_freshness, build_binaries]
+    strategy:
+      matrix:
+        host: [cdg, hkg]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download binary checksums
+      uses: actions/download-artifact@v2
+      with:
+        name: bin-checksums
+        path: ~/elvish-bin
+    - name: Check binary checksums
+      working-directory: ~/elvish-bin
+      run: |
+        ret=0
+        for f in */elvish-HEAD.sha256sum; do
+          website_sum=$(curl https://${{ matrix.host }}.dl.elv.sh/$f | awk '{print $1}')
+          github_sum=$(cat $f | awk '{print $1}')
+          if test "$website_sum" = "$github_sum"; then
+            echo "$f: website == github ($github_sum)"
+          else
+            echo "$f: website ($website_sum) != github ($github_sum)"
+            ret=1
+          fi
+        done
+        exit $ret
