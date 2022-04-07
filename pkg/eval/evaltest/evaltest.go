@@ -155,7 +155,7 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 			}
 			if !matchOut(tc.want.ValueOut, r.ValueOut) {
 				t.Errorf("got value out (-want +got):\n%s",
-					cmp.Diff(r.ValueOut, tc.want.ValueOut, tt.CommonCmpOpt))
+					cmp.Diff(tc.want.ValueOut, r.ValueOut, tt.CommonCmpOpt))
 			}
 			if !bytes.Equal(tc.want.BytesOut, r.BytesOut) {
 				t.Errorf("got bytes out %q, want %q", r.BytesOut, tc.want.BytesOut)
