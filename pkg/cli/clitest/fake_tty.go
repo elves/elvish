@@ -213,12 +213,14 @@ func (t TTYCtrl) ScreenCleared() int {
 	return t.cleared
 }
 
-// TestBuffer verifies that a buffer will appear within the timeout of 4
-// seconds, and fails the test if it doesn't
+// TestBuffer verifies that a buffer will appear within 100ms, and aborts the
+// test if it doesn't.
 func (t TTYCtrl) TestBuffer(tt *testing.T, b *term.Buffer) {
 	tt.Helper()
-	ok := testBuffer(tt, b, t.bufCh)
+	ok := testBuffer(b, t.bufCh)
 	if !ok {
+		tt.Logf("wanted buffer not shown:\n%s", b.TTYString())
+
 		t.bufMutex.RLock()
 		defer t.bufMutex.RUnlock()
 		lastBuf := t.LastBuffer()
@@ -232,15 +234,18 @@ func (t TTYCtrl) TestBuffer(tt *testing.T, b *term.Buffer) {
 				}
 			}
 		}
+		tt.FailNow()
 	}
 }
 
-// TestNotesBuffer verifies that a notes buffer will appear within the timeout of 4
-// seconds, and fails the test if it doesn't
+// TestNotesBuffer verifies that a notes buffer will appear within 100ms, and
+// aborts the test if it doesn't.
 func (t TTYCtrl) TestNotesBuffer(tt *testing.T, b *term.Buffer) {
 	tt.Helper()
-	ok := testBuffer(tt, b, t.notesBufCh)
+	ok := testBuffer(b, t.notesBufCh)
 	if !ok {
+		tt.Logf("wanted notes buffer not shown:\n%s", b.TTYString())
+
 		t.bufMutex.RLock()
 		defer t.bufMutex.RUnlock()
 		bufs := t.NotesBufferHistory()
@@ -250,6 +255,7 @@ func (t TTYCtrl) TestNotesBuffer(tt *testing.T, b *term.Buffer) {
 				tt.Logf("#%d:\n%s", i, buf.TTYString())
 			}
 		}
+		tt.FailNow()
 	}
 }
 
@@ -286,10 +292,8 @@ func (t TTYCtrl) LastNotesBuffer() *term.Buffer {
 	return t.notesBufs[len(t.notesBufs)-1]
 }
 
-// Tests that an expected buffer will appear within the timeout.
-func testBuffer(t *testing.T, want *term.Buffer, ch <-chan *term.Buffer) bool {
-	t.Helper()
-
+// Tests that an buffer appears on the channel within 100ms.
+func testBuffer(want *term.Buffer, ch <-chan *term.Buffer) bool {
 	timeout := time.After(testutil.Scaled(100 * time.Millisecond))
 	for {
 		select {
@@ -298,8 +302,6 @@ func testBuffer(t *testing.T, want *term.Buffer, ch <-chan *term.Buffer) bool {
 				return true
 			}
 		case <-timeout:
-			t.Errorf("Wanted buffer not shown")
-			t.Logf("Want: %s", want.TTYString())
 			return false
 		}
 	}
