@@ -281,8 +281,8 @@ func TestOrder(t *testing.T) {
 		That("put 1 1.5 2 1.5 | each $num~ | order").
 			Puts(1, 1.5, 1.5, 2),
 		// Mixed integers and floats.
-		That("put (num 1) (float64 1.5) (float64 2) (num 1.5) | order").
-			Puts(1, 1.5, 1.5, 2.0),
+		That("put (num 1) (num 1.5) (num 2) (num 1.5) | order").
+			Puts(1, 1.5, 1.5, 2),
 		// For the sake of ordering, NaN's are considered smaller than other numbers
 		That("put NaN -1 NaN | each $num~ | order").Puts(math.NaN(), math.NaN(), -1),
 
@@ -296,16 +296,16 @@ func TestOrder(t *testing.T) {
 			Puts(
 				vals.MakeList("a", "b"),
 				vals.MakeList("a", "c"), vals.MakeList("b", "b")),
-		That("put [a] [] [a (float64 2)] [a (float64 1)] | order").
+		That("put [a] [] [a (num 2)] [a (num 1)] | order").
 			Puts(vals.EmptyList, vals.MakeList("a"),
-				vals.MakeList("a", 1.0), vals.MakeList("a", 2.0)),
+				vals.MakeList("a", 1), vals.MakeList("a", 2)),
 
 		// Attempting to order uncomparable values
 		That("put (num 1) 1 | order").
 			Throws(ErrUncomparable, "order"),
-		That("put 1 (float64 1) | order").
+		That("put 1 (num 1) | order").
 			Throws(ErrUncomparable, "order"),
-		That("put 1 (float64 1) b | order").
+		That("put 1 (num 1) b | order").
 			Throws(ErrUncomparable, "order"),
 		That("put [a] a | order").
 			Throws(ErrUncomparable, "order"),

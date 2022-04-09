@@ -516,10 +516,10 @@ func sleep(fm *Frame, duration any) error {
 // ~> var t = ''
 // ~> time &on-end={|x| set t = $x } { sleep 1 }
 // ~> put $t
-// ▶ (float64 1.000925004)
+// ▶ (num 1.000925004)
 // ~> time &on-end={|x| set t = $x } { sleep 0.01 }
 // ~> put $t
-// ▶ (float64 0.011030208)
+// ▶ (num 0.011030208)
 // ```
 
 type timeOpt struct{ OnEnd Callable }

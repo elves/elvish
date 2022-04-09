@@ -129,13 +129,10 @@ func (cp *compiler) popScope() {
 
 func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 	msg := ""
-	minLevel := 18
-	// There is no builtin deprecated for 0.18.x yet. But this function is
-	// only called for builtins that actually exist, so no harm checking for a
-	// non-existent command here.
+	minLevel := 19
 	switch name {
-	case "deprecated-builtin~":
-		msg = `the "deprecated-builtin" command is deprecated; use "new-builtin" instead`
+	case "float64~":
+		msg = `the "float64" command is deprecated; use "num" or "inexact-num" instead`
 	default:
 		return
 	}

@@ -322,10 +322,10 @@ func count(fm *Frame, args ...any) (int, error) {
 // ▶ bar
 // ▶ foo
 // ▶ ipsum
-// ~> order [(float64 10) (float64 1) (float64 5)]
-// ▶ (float64 1)
-// ▶ (float64 5)
-// ▶ (float64 10)
+// ~> order [(num 10) (num 1) (num 5)]
+// ▶ (num 1)
+// ▶ (num 5)
+// ▶ (num 10)
 // ~> order [[a b] [a] [b b] [a c]]
 // ▶ [a]
 // ▶ [a b]

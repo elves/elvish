@@ -139,9 +139,9 @@ func abs(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:acos 1
-// ▶ (float64 1)
+// ▶ (num 1)
 // ~> math:acos 1.00001
-// ▶ (float64 NaN)
+// ▶ (num NaN)
 // ```
 
 //elvdoc:fn acosh
@@ -154,9 +154,9 @@ func abs(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:acosh 1
-// ▶ (float64 0)
+// ▶ (num 0)
 // ~> math:acosh 0
-// ▶ (float64 NaN)
+// ▶ (num NaN)
 // ```
 
 //elvdoc:fn asin
@@ -169,11 +169,11 @@ func abs(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:asin 0
-// ▶ (float64 0)
+// ▶ (num 0)
 // ~> math:asin 1
-// ▶ (float64 1.5707963267948966)
+// ▶ (num 1.5707963267948966)
 // ~> math:asin 1.00001
-// ▶ (float64 NaN)
+// ▶ (num NaN)
 // ```
 
 //elvdoc:fn asinh
@@ -186,9 +186,9 @@ func abs(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:asinh 0
-// ▶ (float64 0)
+// ▶ (num 0)
 // ~> math:asinh inf
-// ▶ (float64 +Inf)
+// ▶ (num +Inf)
 // ```
 
 //elvdoc:fn atan
@@ -201,9 +201,9 @@ func abs(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:atan 0
-// ▶ (float64 0)
+// ▶ (num 0)
 // ~> math:atan $math:inf
-// ▶ (float64 1.5707963267948966)
+// ▶ (num 1.5707963267948966)
 // ```
 
 //elvdoc:fn atanh
@@ -216,9 +216,9 @@ func abs(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:atanh 0
-// ▶ (float64 0)
+// ▶ (num 0)
 // ~> math:atanh 1
-// ▶ (float64 +Inf)
+// ▶ (num +Inf)
 // ```
 
 //elvdoc:fn ceil
@@ -273,9 +273,9 @@ func ceil(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:cos 0
-// ▶ (float64 1)
+// ▶ (num 1)
 // ~> math:cos 3.14159265
-// ▶ (float64 -1)
+// ▶ (num -1)
 // ```
 
 //elvdoc:fn cosh
@@ -288,7 +288,7 @@ func ceil(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:cosh 0
-// ▶ (float64 1)
+// ▶ (num 1)
 // ```
 
 //elvdoc:fn floor
@@ -373,9 +373,9 @@ func isInf(opts isInfOpts, n vals.Num) bool {
 // ```elvish-transcript
 // ~> math:is-nan 123
 // ▶ $false
-// ~> math:is-nan (float64 inf)
+// ~> math:is-nan (num inf)
 // ▶ $false
-// ~> math:is-nan (float64 nan)
+// ~> math:is-nan (num nan)
 // ▶ $true
 // ```
 
@@ -396,9 +396,9 @@ func isNaN(n vals.Num) bool {
 //
 // ```elvish-transcript
 // ~> math:log 1.0
-// ▶ (float64 1)
+// ▶ (num 1)
 // ~> math:log -2.3
-// ▶ (float64 NaN)
+// ▶ (num NaN)
 // ```
 
 //elvdoc:fn log10
@@ -411,9 +411,9 @@ func isNaN(n vals.Num) bool {
 //
 // ```elvish-transcript
 // ~> math:log10 100.0
-// ▶ (float64 2)
+// ▶ (num 2)
 // ~> math:log10 -1.7
-// ▶ (float64 NaN)
+// ▶ (num NaN)
 // ```
 
 //elvdoc:fn log2
@@ -426,9 +426,9 @@ func isNaN(n vals.Num) bool {
 //
 // ```elvish-transcript
 // ~> math:log2 8
-// ▶ (float64 3)
+// ▶ (num 3)
 // ~> math:log2 -5.3
-// ▶ (float64 NaN)
+// ▶ (num NaN)
 // ```
 
 //elvdoc:fn max
@@ -740,9 +740,9 @@ func roundToEven(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:sin 0
-// ▶ (float64 0)
+// ▶ (num 0)
 // ~> math:sin 3.14159265
-// ▶ (float64 3.5897930298416118e-09)
+// ▶ (num 3.5897930298416118e-09)
 // ```
 
 //elvdoc:fn sinh
@@ -755,7 +755,7 @@ func roundToEven(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:sinh 0
-// ▶ (float64 0)
+// ▶ (num 0)
 // ```
 
 //elvdoc:fn sqrt
@@ -768,11 +768,11 @@ func roundToEven(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:sqrt 0
-// ▶ (float64 0)
+// ▶ (num 0)
 // ~> math:sqrt 4
-// ▶ (float64 2)
+// ▶ (num 2)
 // ~> math:sqrt -4
-// ▶ (float64 NaN)
+// ▶ (num NaN)
 // ```
 
 //elvdoc:fn tan
@@ -785,9 +785,9 @@ func roundToEven(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:tan 0
-// ▶ (float64 0)
+// ▶ (num 0)
 // ~> math:tan 3.14159265
-// ▶ (float64 -0.0000000035897930298416118)
+// ▶ (num -0.0000000035897930298416118)
 // ```
 
 //elvdoc:fn tanh
@@ -800,7 +800,7 @@ func roundToEven(n vals.Num) vals.Num {
 //
 // ```elvish-transcript
 // ~> math:tanh 0
-// ▶ (float64 0)
+// ▶ (num 0)
 // ```
 
 //elvdoc:fn trunc

@@ -11,8 +11,7 @@ import (
 )
 
 func TestDeprecatedBuiltin(t *testing.T) {
-	// There is no builtin deprecated for 0.18.x yet. Uncomment this when there is one.
-	//testCompileTimeDeprecation(t, "deprecated-builtin", `the "deprecated-builtin" command is deprecated`, 17)
+	testCompileTimeDeprecation(t, "float64", `the "float64" command is deprecated`, 19)
 
 	// Deprecations of other builtins are implemented in the same way, so we
 	// don't test them repeatedly

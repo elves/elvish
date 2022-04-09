@@ -45,10 +45,19 @@ func TestExactNum(t *testing.T) {
 	)
 }
 
+func TestInexactNum(t *testing.T) {
+	Test(t,
+		That("inexact-num 1").Puts(1.0),
+		That("inexact-num 1.0").Puts(1.0),
+		That("inexact-num (num 1)").Puts(1.0),
+		That("inexact-num (num 1.0)").Puts(1.0),
+	)
+}
+
 func TestFloat64(t *testing.T) {
 	Test(t,
 		That("float64 1").Puts(1.0),
-		That("float64 (float64 1)").Puts(1.0),
+		That("float64 (num 1)").Puts(1.0),
 	)
 }
 

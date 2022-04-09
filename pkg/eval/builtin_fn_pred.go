@@ -217,7 +217,7 @@ func notEq(args ...any) bool {
 // ▶ (num -1)
 // ~> compare x x
 // ▶ (num 0)
-// ~> compare (float64 10) (float64 1)
+// ~> compare (num 10) (num 1)
 // ▶ (num 1)
 // ```
 //

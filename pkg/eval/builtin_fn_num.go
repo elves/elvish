@@ -29,9 +29,10 @@ import (
 func init() {
 	addBuiltinFns(map[string]any{
 		// Constructor
-		"float64":   toFloat64,
-		"num":       num,
-		"exact-num": exactNum,
+		"float64":     toFloat64,
+		"num":         num,
+		"exact-num":   exactNum,
+		"inexact-num": inexactNum,
 
 		// Comparison
 		"<":  lt,
@@ -87,6 +88,8 @@ func init() {
 // ~> num (num 10)
 // ▶ (num 10)
 // ```
+//
+// @cf exact-num inexact-num
 
 func num(n vals.Num) vals.Num {
 	// Conversion is actually handled in vals/conversion.go.
@@ -123,6 +126,8 @@ func num(n vals.Num) vals.Num {
 // ~> exact-num 0.1
 // ▶ (num 3602879701896397/36028797018963968)
 // ```
+//
+// @cf num inexact-num
 
 func exactNum(n vals.Num) (vals.Num, error) {
 	if f, ok := n.(float64); ok {
@@ -136,6 +141,62 @@ func exactNum(n vals.Num) (vals.Num, error) {
 	return n, nil
 }
 
+//elvdoc:fn inexact-num
+//
+// ```elvish
+// inexact-num $string-or-number
+// ```
+//
+// Coerces the argument to an inexact number.
+//
+// If the argument is a string, it is converted to a typed number first. If the
+// argument is already an inexact number, it is returned as is.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> inexact-num (num 1)
+// ▶ (num 1.0)
+// ~> inexact-num (num 0.5)
+// ▶ (num 0.5)
+// ~> inexact-num (num 1/2)
+// ▶ (num 0.5)
+// ~> inexact-num 1/2
+// ▶ (num 0.5)
+// ```
+//
+// Since the underlying representation for inexact numbers has limited range,
+// numbers with very large magnitudes may be converted to an infinite value:
+//
+// ```elvish-transcript
+// ~> inexact-num 1000000000000000000
+// ▶ (num 1e+18)
+// ~> inexact-num 10000000000000000000
+// ▶ (num +Inf)
+// ~> inexact-num -10000000000000000000
+// ▶ (num -Inf)
+// ```
+//
+// Likewise, numbers with very small magnitudes may be converted to 0:
+//
+// ```elvish-transcript
+// ~> use math
+// ~> math:pow 10 -323
+// ▶ (num 1/100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)
+// ~> inexact-num (math:pow 10 -323)
+// ▶ (num 1e-323)
+// ~> math:pow 10 -324
+// ▶ (num 1/1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)
+// ~> inexact-num (math:pow 10 -324)
+// ▶ (num 0.0)
+// ```
+//
+// @cf num exact-num
+
+func inexactNum(f float64) float64 {
+	return f
+}
+
 //elvdoc:fn float64
 //
 // ```elvish
@@ -144,7 +205,8 @@ func exactNum(n vals.Num) (vals.Num, error) {
 //
 // Constructs a floating-point number.
 //
-// This command is deprecated; use [`num`](#num) instead.
+// This command is deprecated; use [`num`](#num) to construct a typed number, or
+// [`inexact-num`](#inexact-num) to construct an inexact number.
 
 func toFloat64(f float64) float64 {
 	return f

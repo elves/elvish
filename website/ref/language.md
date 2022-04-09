@@ -2127,7 +2127,7 @@ recursive functions:
 ```elvish-transcript
 ~> fn f {|n| if (== $n 0) { put 1 } else { * $n (f (- $n 1)) } }
 ~> f 3
-▶ (float64 6)
+▶ (num 6)
 ```
 
 Under the hood, `fn` defines a variable with the given name plus `~` (see

@@ -37,9 +37,7 @@ func TestUmask(t *testing.T) {
 		That(`put $unix:umask`).Puts(`0o075`),
 		// An explicit num (int) value is handled correctly.
 		That(`{ tmp unix:umask = (num 0o123); put $unix:umask }`).Puts(`0o123`),
-		// An explicit float64 value is handled correctly.
-		That(`{ tmp unix:umask = (float64 0o17); put $unix:umask }`).Puts(`0o017`),
-		That(`set unix:umask = (float64 123.4)`).Throws(
+		That(`set unix:umask = (num 123.4)`).Throws(
 			errs.BadValue{What: "umask", Valid: validUmaskMsg, Actual: "123.4"}),
 
 		// An invalid string should raise the expected exception.

@@ -132,9 +132,9 @@ func TestSleep(t *testing.T) {
 		// Verify the correct behavior if a numeric type, rather than a string, is passed to the
 		// command.
 		That(`sleep (num 42)`).Puts(42*time.Second),
-		That(`sleep (float64 0)`).Puts(0*time.Second),
-		That(`sleep (float64 1.7)`).Puts(1700*time.Millisecond),
-		That(`sleep (float64 -7)`).Throws(ErrNegativeSleepDuration, "sleep (float64 -7)"),
+		That(`sleep (num 0)`).Puts(0*time.Second),
+		That(`sleep (num 1.7)`).Puts(1700*time.Millisecond),
+		That(`sleep (num -7)`).Throws(ErrNegativeSleepDuration, "sleep (num -7)"),
 
 		// An invalid argument type should raise an exception.
 		That(`sleep [1]`).Throws(ErrInvalidSleepDuration, "sleep [1]"),

@@ -155,8 +155,8 @@ func TestMath(t *testing.T) {
 		That("math:trunc -2.1").Puts(-2.0),
 		That("math:trunc 2.5").Puts(2.0),
 		That("math:trunc -2.5").Puts(-2.0),
-		That("math:trunc (float64 Inf)").Puts(math.Inf(1)),
-		That("math:trunc (float64 NaN)").Puts(math.NaN()),
+		That("math:trunc (num Inf)").Puts(math.Inf(1)),
+		That("math:trunc (num NaN)").Puts(math.NaN()),
 
 		That("math:log $math:e").Puts(1.0),
 		That("math:log 1").Puts(0.0),

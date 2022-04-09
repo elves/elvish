@@ -625,15 +625,14 @@ Read the language reference on [lists](../ref/language.html#list) and
 
 ## Numbers
 
-Elvish has a double-precision floating-point number type, `float64`. There is no
-dedicated syntax for it; instead, it can constructed using the `float64`
-builtin:
+Elvish has a number type. There is no dedicated syntax for it; instead, it can
+constructed using the `num` builtin:
 
 ```elvish-transcript
-~> float64 1
-▶ (float64 1)
-~> float64 1e2
-▶ (float64 100)
+~> num 1
+▶ (num 1)
+~> num 1e2
+▶ (num 100)
 ```
 
 Most arithmetic commands in Elvish support both typed numbers and strings that
@@ -641,10 +640,10 @@ can be converted to numbers. They usually output typed numbers:
 
 ```elvish-transcript
 ~> + 1 2
-▶ (float64 3)
+▶ (num 3)
 ~> use math
-~> math:pow (float64 10) 3
-▶ (float64 1000)
+~> math:pow (num 10) 3
+▶ (num 1000)
 ```
 
 **Note**: The set of number types will likely expand in future.

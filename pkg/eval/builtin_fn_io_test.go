@@ -177,7 +177,7 @@ func TestPrintf(t *testing.T) {
 		That(`printf "%v" abc`).Prints("abc"),
 		That(`printf "%#v" "abc xyz"`).Prints(`'abc xyz'`),
 		That(`printf '%5.3s' 3.1415`).Prints("  3.1"),
-		That(`printf '%5.3s' (float64 3.1415)`).Prints("  3.1"),
+		That(`printf '%5.3s' (num 3.1415)`).Prints("  3.1"),
 
 		That(`printf '%t' $true`).Prints("true"),
 		That(`printf '%t' $nil`).Prints("false"),
@@ -188,7 +188,7 @@ func TestPrintf(t *testing.T) {
 		That(`printf '%08b' 5`).Prints("00000101"),
 
 		That(`printf '%.1f' 3.1415`).Prints("3.1"),
-		That(`printf '%.1f' (float64 3.1415)`).Prints("3.1"),
+		That(`printf '%.1f' (num 3.1415)`).Prints("3.1"),
 
 		// Does not interpret escape sequences
 		That(`printf '%s\n%s\n' abc xyz`).Prints("abc\\nxyz\\n"),
