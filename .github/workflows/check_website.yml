@@ -23,7 +23,7 @@ jobs:
       run: |
         ts=$(git show -s --format=%ct HEAD)
         for i in `seq 30`; do
-          website_ts=$(curl https://${{ matrix.host }}.elv.sh/commit-ts.txt)
+          website_ts=$(curl -sS https://${{ matrix.host }}.elv.sh/commit-ts.txt)
           if test "$website_ts" -ge "$ts"; then
             echo "website ($website_ts) >= current ($ts)"
             exit 0
@@ -84,7 +84,7 @@ jobs:
       run: |
         ret=0
         for f in */elvish-HEAD.sha256sum; do
-          website_sum=$(curl https://${{ matrix.host }}.dl.elv.sh/$f | awk '{print $1}')
+          website_sum=$(curl -sS https://${{ matrix.host }}.dl.elv.sh/$f | awk '{print $1}')
           github_sum=$(cat $f | awk '{print $1}')
           if test "$website_sum" = "$github_sum"; then
             echo "$f: website == github ($github_sum)"
