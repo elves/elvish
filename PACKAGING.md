@@ -15,7 +15,7 @@ distribution you are building for, and any patch level you have applied for
 Elvish. This will allow Elvish developers to easily identify any
 distribution-specific issue:
 
-```
+```sh
 go build -ldflags '-X src.elv.sh/pkg/buildinfo.BuildVariant=deb1' ./cmd/elvish
 ```
 
@@ -72,7 +72,7 @@ of the following parts:
 If that doesn't work for your build environment, the output of `elvish -version`
 will instead be:
 
-```sh
+```
 0.19.0-dev.unknown
 ```
 
