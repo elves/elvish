@@ -182,11 +182,3 @@ func capturedOutput() (*os.File, func() string) {
 		return <-output
 	}
 }
-
-// SetDeprecationLevel sets prog.DeprecationLevel to the given value for the
-// duration of a test.
-func SetDeprecationLevel(c testutil.Cleanuper, level int) {
-	save := prog.DeprecationLevel
-	c.Cleanup(func() { prog.DeprecationLevel = save })
-	prog.DeprecationLevel = level
-}

@@ -65,7 +65,7 @@ func TestSharedFlags_MultiplePrograms(t *testing.T) {
 }
 
 func TestShowDeprecations(t *testing.T) {
-	progtest.SetDeprecationLevel(t, 0)
+	testutil.Set(t, &DeprecationLevel, 0)
 
 	Test(t, &testProgram{},
 		ThatElvish("-deprecation-level", "42").DoesNothing(),

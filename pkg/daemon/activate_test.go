@@ -93,18 +93,13 @@ func TestActivate_FailsIfCannotDialSock(t *testing.T) {
 func setupForActivate(t *testing.T, f func(string, []string, *os.ProcAttr) error) {
 	setup(t)
 
-	saveStartProcess := startProcess
-	t.Cleanup(func() { startProcess = saveStartProcess })
-	startProcess = f
-
+	testutil.Set(t, &startProcess, f)
 	scaleDuration(t, &daemonSpawnTimeout)
 	scaleDuration(t, &daemonKillTimeout)
 }
 
 func scaleDuration(t *testing.T, d *time.Duration) {
-	save := *d
-	t.Cleanup(func() { *d = save })
-	*d = testutil.Scaled(*d)
+	testutil.Set(t, d, testutil.Scaled(*d))
 }
 
 func makeHangingUNIXSocket(t *testing.T, path string) {

@@ -7,34 +7,14 @@ import (
 
 	"src.elv.sh/pkg/eval"
 	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/testutil"
 )
-
-const (
-	testHostname = "mach1.domain.tld"
-	testMachname = "mach1"
-)
-
-var (
-	hostnameFail  = true
-	errNoHostname = errors.New("hostname cannot be determined")
-)
-
-func hostnameMock() (string, error) {
-	if hostnameFail {
-		hostnameFail = false
-		return "", errNoHostname
-	}
-	return testHostname, nil
-}
 
 func TestPlatform(t *testing.T) {
-	savedOsHostname := osHostname
-	osHostname = hostnameMock
-	hostnameFail = true
-	defer func() { osHostname = savedOsHostname }()
-	setup := func(ev *eval.Evaler) {
-		ev.ExtendGlobal(eval.BuildNs().AddNs("platform", Ns))
-	}
+	testutil.Set(t, &osHostname, func() (string, error) {
+		return "mach1.domain.tld", nil
+	})
+
 	TestWithSetup(t, setup,
 		That(`put $platform:arch`).Puts(runtime.GOARCH),
 		That(`put $platform:os`).Puts(runtime.GOOS),
@@ -44,11 +24,22 @@ func TestPlatform(t *testing.T) {
 			// https://github.com/golang/go/issues/40152
 			// TODO(zhsj): remove workaround after gcc 11 is the default in CI.
 			bool(runtime.GOOS != "windows" && runtime.GOOS != "plan9" && runtime.GOOS != "js")),
-		// The first time we invoke the mock it acts as if we can't determine
-		// the hostname. Make sure that is turned into the expected exception.
-		That(`platform:hostname`).Throws(errNoHostname),
-
-		That(`platform:hostname`).Puts(testHostname),
-		That(`platform:hostname &strip-domain`).Puts(testMachname),
+		That(`platform:hostname`).Puts("mach1.domain.tld"),
+		That(`platform:hostname &strip-domain`).Puts("mach1"),
 	)
+}
+
+func TestPlatform_HostNameError(t *testing.T) {
+	errNoHostname := errors.New("hostname cannot be determined")
+
+	testutil.Set(t, &osHostname, func() (string, error) {
+		return "", errNoHostname
+	})
+	TestWithSetup(t, setup,
+		That(`platform:hostname`).Throws(errNoHostname),
+	)
+}
+
+func setup(ev *eval.Evaler) {
+	ev.ExtendGlobal(eval.BuildNs().AddNs("platform", Ns))
 }

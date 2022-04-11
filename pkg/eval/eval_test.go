@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/prog/progtest"
+	"src.elv.sh/pkg/prog"
 
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
@@ -39,7 +39,7 @@ func TestArgs(t *testing.T) {
 }
 
 func TestEvalTimeDeprecate(t *testing.T) {
-	progtest.SetDeprecationLevel(t, 42)
+	testutil.Set(t, &prog.DeprecationLevel, 42)
 	testutil.InTempDir(t)
 
 	TestWithSetup(t, func(ev *Evaler) {

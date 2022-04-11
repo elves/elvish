@@ -12,10 +12,11 @@ import (
 	"src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestRlimits(t *testing.T) {
-	mock(t, &getRlimit, func(res int, lim *unix.Rlimit) error {
+	testutil.Set(t, &getRlimit, func(res int, lim *unix.Rlimit) error {
 		switch res {
 		case unix.RLIMIT_CPU:
 			*lim = unix.Rlimit{Cur: unix.RLIM_INFINITY, Max: unix.RLIM_INFINITY}
@@ -28,7 +29,7 @@ func TestRlimits(t *testing.T) {
 	})
 
 	var cpuCur, cpuMax int
-	mock(t, &setRlimit, func(res int, lim *unix.Rlimit) error {
+	testutil.Set(t, &setRlimit, func(res int, lim *unix.Rlimit) error {
 		switch res {
 		case unix.RLIMIT_CPU:
 			cpuCur = rlimTToInt(lim.Cur)
@@ -92,12 +93,4 @@ func rlimTToInt(r rlimT) int {
 		return -1
 	}
 	return int(r)
-}
-
-type rlimitFunc = func(int, *unix.Rlimit) error
-
-func mock(t *testing.T, p *rlimitFunc, f rlimitFunc) {
-	saved := *p
-	*p = f
-	t.Cleanup(func() { *p = saved })
 }
