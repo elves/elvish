@@ -14,7 +14,9 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-var pathSeparator = string(filepath.Separator)
+const pathSeparator = string(filepath.Separator)
+
+var eachExternal = fsutil.EachExternal
 
 // GenerateFileNames returns filename candidates that are suitable for completing
 // the last argument. It can be used in Config.ArgGenerator.
@@ -23,13 +25,13 @@ func GenerateFileNames(args []string) ([]RawItem, error) {
 }
 
 // GenerateForSudo generates candidates for sudo.
-func GenerateForSudo(cfg Config, args []string) ([]RawItem, error) {
+func GenerateForSudo(args []string, ev *eval.Evaler, cfg Config) ([]RawItem, error) {
 	switch {
 	case len(args) < 2:
 		return nil, errNoCompletion
 	case len(args) == 2:
 		// Complete external commands.
-		return generateExternalCommands(args[1], cfg.PureEvaler)
+		return generateExternalCommands(args[1], ev)
 	default:
 		return cfg.ArgGenerator(args[1:])
 	}
@@ -37,7 +39,7 @@ func GenerateForSudo(cfg Config, args []string) ([]RawItem, error) {
 
 // Internal generators, used from completers.
 
-func generateArgs(args []string, cfg Config) ([]RawItem, error) {
+func generateArgs(args []string, ev *eval.Evaler, cfg Config) ([]RawItem, error) {
 	switch args[0] {
 	case "set", "tmp":
 		for _, arg := range args[1:] {
@@ -49,7 +51,7 @@ func generateArgs(args []string, cfg Config) ([]RawItem, error) {
 		sigil, qname := eval.SplitSigil(seed)
 		ns, _ := eval.SplitIncompleteQNameNs(qname)
 		var items []RawItem
-		cfg.PureEvaler.EachVariableInNs(ns, func(varname string) {
+		eachVariableInNs(ev, ns, func(varname string) {
 			items = append(items, noQuoteItem(sigil+parse.QuoteVariableName(ns+varname)))
 		})
 		return items, nil
@@ -59,17 +61,17 @@ func generateArgs(args []string, cfg Config) ([]RawItem, error) {
 	return items, err
 }
 
-func generateExternalCommands(seed string, ev PureEvaler) ([]RawItem, error) {
+func generateExternalCommands(seed string, ev *eval.Evaler) ([]RawItem, error) {
 	if fsutil.DontSearch(seed) {
 		// Completing a local external command name.
 		return generateFileNames(seed, true)
 	}
 	var items []RawItem
-	ev.EachExternal(func(s string) { items = append(items, PlainItem(s)) })
+	eachExternal(func(s string) { items = append(items, PlainItem(s)) })
 	return items, nil
 }
 
-func generateCommands(seed string, ev PureEvaler) ([]RawItem, error) {
+func generateCommands(seed string, ev *eval.Evaler) ([]RawItem, error) {
 	if fsutil.DontSearch(seed) {
 		// Completing a local external command name.
 		return generateFileNames(seed, true)
@@ -80,22 +82,24 @@ func generateCommands(seed string, ev PureEvaler) ([]RawItem, error) {
 
 	if strings.HasPrefix(seed, "e:") {
 		// Generate all external commands with the e: prefix, and be done.
-		ev.EachExternal(func(command string) {
+		eachExternal(func(command string) {
 			addPlainItem("e:" + command)
 		})
 		return cands, nil
 	}
 
 	// Generate all special forms.
-	ev.EachSpecial(addPlainItem)
+	for name := range eval.IsBuiltinSpecial {
+		addPlainItem(name)
+	}
 	// Generate all external commands (without the e: prefix).
-	ev.EachExternal(addPlainItem)
+	eachExternal(addPlainItem)
 
 	sigil, qname := eval.SplitSigil(seed)
 	ns, _ := eval.SplitIncompleteQNameNs(qname)
 	if sigil == "" {
 		// Generate functions, namespaces, and variable assignments.
-		ev.EachVariableInNs(ns, func(varname string) {
+		eachVariableInNs(ev, ns, func(varname string) {
 			switch {
 			case strings.HasSuffix(varname, eval.FnSuffix):
 				addPlainItem(

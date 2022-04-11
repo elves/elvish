@@ -8,7 +8,7 @@ import (
 	"src.elv.sh/pkg/parse"
 )
 
-var completers = []func(nodePath, Config) (*context, []RawItem, error){
+var completers = []func(nodePath, *eval.Evaler, Config) (*context, []RawItem, error){
 	completeCommand,
 	completeIndex,
 	completeRedir,
@@ -23,15 +23,13 @@ type context struct {
 	interval diag.Ranging
 }
 
-func completeArg(np nodePath, cfg Config) (*context, []RawItem, error) {
-	ev := cfg.PureEvaler
-
+func completeArg(np nodePath, ev *eval.Evaler, cfg Config) (*context, []RawItem, error) {
 	var form *parse.Form
 	if np.match(aSep, store(&form)) && form.Head != nil {
 		// Case 1: starting a new argument.
 		ctx := &context{"argument", "", parse.Bareword, range0(np[0].Range().To)}
 		args := purelyEvalForm(form, "", np[0].Range().To, ev)
-		items, err := generateArgs(args, cfg)
+		items, err := generateArgs(args, ev, cfg)
 		return ctx, items, err
 	}
 
@@ -40,15 +38,14 @@ func completeArg(np nodePath, cfg Config) (*context, []RawItem, error) {
 		// Case 2: in an incomplete argument.
 		ctx := &context{"argument", expr.s, expr.quote, expr.compound.Range()}
 		args := purelyEvalForm(form, expr.s, expr.compound.Range().From, ev)
-		items, err := generateArgs(args, cfg)
+		items, err := generateArgs(args, ev, cfg)
 		return ctx, items, err
 	}
 
 	return nil, nil, errNoCompletion
 }
 
-func completeCommand(np nodePath, cfg Config) (*context, []RawItem, error) {
-	ev := cfg.PureEvaler
+func completeCommand(np nodePath, ev *eval.Evaler, cfg Config) (*context, []RawItem, error) {
 	generateForEmpty := func(pos int) (*context, []RawItem, error) {
 		ctx := &context{"command", "", parse.Bareword, range0(pos)}
 		items, err := generateCommands("", ev)
@@ -91,8 +88,7 @@ func completeCommand(np nodePath, cfg Config) (*context, []RawItem, error) {
 
 // NOTE: This now only supports a single level of indexing; for instance,
 // $a[<Tab> is supported, but $a[x][<Tab> is not.
-func completeIndex(np nodePath, cfg Config) (*context, []RawItem, error) {
-	ev := cfg.PureEvaler
+func completeIndex(np nodePath, ev *eval.Evaler, cfg Config) (*context, []RawItem, error) {
 	generateForEmpty := func(v any, pos int) (*context, []RawItem, error) {
 		ctx := &context{"index", "", parse.Bareword, range0(pos)}
 		return ctx, generateIndices(v), nil
@@ -124,8 +120,7 @@ func completeIndex(np nodePath, cfg Config) (*context, []RawItem, error) {
 	return nil, nil, errNoCompletion
 }
 
-func completeRedir(np nodePath, cfg Config) (*context, []RawItem, error) {
-	ev := cfg.PureEvaler
+func completeRedir(np nodePath, ev *eval.Evaler, cfg Config) (*context, []RawItem, error) {
 	if np.match(aSep, aRedir) {
 		// Empty redirection target.
 		ctx := &context{"redir", "", parse.Bareword, range0(np[0].Range().To)}
@@ -144,8 +139,7 @@ func completeRedir(np nodePath, cfg Config) (*context, []RawItem, error) {
 	return nil, nil, errNoCompletion
 }
 
-func completeVariable(np nodePath, cfg Config) (*context, []RawItem, error) {
-	ev := cfg.PureEvaler
+func completeVariable(np nodePath, ev *eval.Evaler, cfg Config) (*context, []RawItem, error) {
 	primary, ok := np[0].(*parse.Primary)
 	if !ok || primary.Type != parse.Variable {
 		return nil, nil, errNoCompletion
@@ -160,11 +154,11 @@ func completeVariable(np nodePath, cfg Config) (*context, []RawItem, error) {
 		diag.Ranging{From: begin, To: primary.Range().To}}
 
 	var items []RawItem
-	ev.EachVariableInNs(ns, func(varname string) {
+	eachVariableInNs(ev, ns, func(varname string) {
 		items = append(items, noQuoteItem(parse.QuoteVariableName(varname)))
 	})
 
-	ev.EachNs(func(thisNs string) {
+	eachNs(ev, func(thisNs string) {
 		// This is to match namespaces that are "nested" under the current
 		// namespace.
 		if hasProperPrefix(thisNs, ns) {
@@ -175,7 +169,7 @@ func completeVariable(np nodePath, cfg Config) (*context, []RawItem, error) {
 	return ctx, items, nil
 }
 
-func purelyEvalForm(form *parse.Form, seed string, upto int, ev PureEvaler) []string {
+func purelyEvalForm(form *parse.Form, seed string, upto int, ev *eval.Evaler) []string {
 	// Find out head of the form and preceding arguments.
 	// If form.Head is not a simple compound, head will be "", just what we want.
 	head, _ := ev.PurelyEvalPartialCompound(form.Head, -1)

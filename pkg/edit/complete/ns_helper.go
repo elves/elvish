@@ -1,35 +1,36 @@
-package edit
+package complete
 
 import (
 	"os"
 	"strings"
 
 	"src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/fsutil"
 )
+
+var environ = os.Environ
 
 // Calls the passed function for each variable name in namespace ns that can be
 // found from the top context.
-func eachVariableInTop(builtin, global *eval.Ns, ns string, f func(s string)) {
+func eachVariableInNs(ev *eval.Evaler, ns string, f func(s string)) {
 	switch ns {
 	case "", ":":
-		global.IterateKeysString(f)
-		builtin.IterateKeysString(f)
+		ev.Global().IterateKeysString(f)
+		ev.Builtin().IterateKeysString(f)
 	case "e:":
-		fsutil.EachExternal(func(cmd string) {
+		eachExternal(func(cmd string) {
 			f(cmd + eval.FnSuffix)
 		})
 	case "E:":
-		for _, s := range os.Environ() {
+		for _, s := range environ() {
 			if i := strings.IndexByte(s, '='); i > 0 {
 				f(s[:i])
 			}
 		}
 	default:
 		segs := eval.SplitQNameSegs(ns)
-		mod := global.IndexString(segs[0])
+		mod := ev.Global().IndexString(segs[0])
 		if mod == nil {
-			mod = builtin.IndexString(segs[0])
+			mod = ev.Builtin().IndexString(segs[0])
 		}
 		for _, seg := range segs[1:] {
 			if mod == nil {
@@ -45,17 +46,17 @@ func eachVariableInTop(builtin, global *eval.Ns, ns string, f func(s string)) {
 
 // Calls the passed function for each namespace that can be used from the top
 // context.
-func eachNsInTop(builtin, global *eval.Ns, f func(s string)) {
+func eachNs(ev *eval.Evaler, f func(s string)) {
 	f("e:")
 	f("E:")
 
-	global.IterateKeysString(func(name string) {
+	ev.Global().IterateKeysString(func(name string) {
 		if strings.HasSuffix(name, eval.NsSuffix) {
 			f(name)
 		}
 	})
 
-	builtin.IterateKeysString(func(name string) {
+	ev.Builtin().IterateKeysString(func(name string) {
 		if strings.HasSuffix(name, eval.NsSuffix) {
 			f(name)
 		}

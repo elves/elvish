@@ -17,7 +17,6 @@ import (
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
-	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/persistent/hash"
 	"src.elv.sh/pkg/strutil"
@@ -171,14 +170,14 @@ func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) (c
 // Starts the completion mode. However, if all the candidates share a non-empty
 // prefix and that prefix starts with the seed, inserts the prefix instead.
 
-func completionStart(app cli.App, bindings tk.Bindings, cfg complete.Config, smart bool) {
+func completionStart(app cli.App, bindings tk.Bindings, ev *eval.Evaler, cfg complete.Config, smart bool) {
 	codeArea, ok := focusedCodeArea(app)
 	if !ok {
 		return
 	}
 	buf := codeArea.CopyState().Buffer
 	result, err := complete.Complete(
-		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot}, cfg)
+		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot}, ev, cfg)
 	if err != nil {
 		app.Notify(modes.ErrorText(err))
 		return
@@ -235,7 +234,6 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	argGeneratorMapVar := newMapVar(vals.EmptyMap)
 	cfg := func() complete.Config {
 		return complete.Config{
-			PureEvaler: PureEvaler(ev),
 			Filterer: adaptMatcherMap(
 				ed, ev, matcherMapVar.Get().(vals.Map)),
 			ArgGenerator: adaptArgGeneratorMap(
@@ -243,7 +241,7 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 		}
 	}
 	generateForSudo := func(args []string) ([]complete.RawItem, error) {
-		return complete.GenerateForSudo(cfg(), args)
+		return complete.GenerateForSudo(args, ev, cfg())
 	}
 	nb.AddGoFns(map[string]any{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
@@ -264,8 +262,8 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 			}).
 			AddGoFns(map[string]any{
 				"accept":      func() { listingAccept(app) },
-				"smart-start": func() { completionStart(app, bindings, cfg(), true) },
-				"start":       func() { completionStart(app, bindings, cfg(), false) },
+				"smart-start": func() { completionStart(app, bindings, ev, cfg(), true) },
+				"start":       func() { completionStart(app, bindings, ev, cfg(), false) },
 				"up":          func() { listingUp(app) },
 				"down":        func() { listingDown(app) },
 				"up-cycle":    func() { listingUpCycle(app) },
@@ -539,37 +537,4 @@ func lookupFn(m vals.Map, ctxName string) (eval.Callable, bool) {
 		return nil, false
 	}
 	return fn, true
-}
-
-type pureEvaler struct{ ev *eval.Evaler }
-
-// PureEvaler returns a complete.PureEvaler from an eval.Evaler.
-func PureEvaler(ev *eval.Evaler) complete.PureEvaler { return pureEvaler{ev} }
-
-func (pureEvaler) EachExternal(f func(string)) { fsutil.EachExternal(f) }
-
-func (pureEvaler) EachSpecial(f func(string)) {
-	for name := range eval.IsBuiltinSpecial {
-		f(name)
-	}
-}
-
-func (pe pureEvaler) EachNs(f func(string)) {
-	eachNsInTop(pe.ev.Builtin(), pe.ev.Global(), f)
-}
-
-func (pe pureEvaler) EachVariableInNs(ns string, f func(string)) {
-	eachVariableInTop(pe.ev.Builtin(), pe.ev.Global(), ns, f)
-}
-
-func (pe pureEvaler) PurelyEvalPrimary(pn *parse.Primary) any {
-	return pe.ev.PurelyEvalPrimary(pn)
-}
-
-func (pe pureEvaler) PurelyEvalCompound(cn *parse.Compound) (string, bool) {
-	return pe.ev.PurelyEvalCompound(cn)
-}
-
-func (pe pureEvaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (string, bool) {
-	return pe.ev.PurelyEvalPartialCompound(cn, upto)
 }

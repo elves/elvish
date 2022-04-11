@@ -7,7 +7,6 @@ import (
 	lsp "github.com/sourcegraph/go-lsp"
 	"github.com/sourcegraph/jsonrpc2"
 	"src.elv.sh/pkg/diag"
-	"src.elv.sh/pkg/edit"
 	"src.elv.sh/pkg/edit/complete"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
@@ -21,12 +20,12 @@ var (
 )
 
 type server struct {
-	evaler  complete.PureEvaler
+	evaler  *eval.Evaler
 	content map[lsp.DocumentURI]string
 }
 
 func newServer() *server {
-	return &server{edit.PureEvaler(eval.NewEvaler()), make(map[lsp.DocumentURI]string)}
+	return &server{eval.NewEvaler(), make(map[lsp.DocumentURI]string)}
 }
 
 func handler(s *server) jsonrpc2.Handler {
@@ -118,7 +117,8 @@ func (s *server) completion(ctx context.Context, conn jsonrpc2.JSONRPC2, rawPara
 		complete.CodeBuffer{
 			Content: content,
 			Dot:     lspPositionToIdx(content, params.Position)},
-		complete.Config{PureEvaler: s.evaler},
+		s.evaler,
+		complete.Config{},
 	)
 
 	if err != nil {

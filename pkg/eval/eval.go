@@ -232,6 +232,14 @@ func (ev *Evaler) ExtendBuiltin(ns Nser) {
 	ev.builtin = CombineNs(ev.builtin, ns.Ns())
 }
 
+// ReplaceBuiltin replaces the builtin namespace. It should only be used in
+// tests.
+func (ev *Evaler) ReplaceBuiltin(ns *Ns) {
+	ev.mu.Lock()
+	defer ev.mu.Unlock()
+	ev.builtin = ns
+}
+
 func (ev *Evaler) registerDeprecation(d deprecation) bool {
 	ev.mu.Lock()
 	defer ev.mu.Unlock()

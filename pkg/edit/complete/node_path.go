@@ -1,6 +1,7 @@
 package complete
 
 import (
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 )
 
@@ -86,13 +87,13 @@ func (m storeMatcher[T]) matchNodes(ns []parse.Node) ([]parse.Node, bool) {
 // Matches an expression that can be evaluated statically. Consumes 3 nodes
 // (Primary, Indexing and Compound).
 type simpleExprMatcher struct {
-	ev       PureEvaler
+	ev       *eval.Evaler
 	s        string
 	compound *parse.Compound
 	quote    parse.PrimaryType
 }
 
-func simpleExpr(ev PureEvaler) *simpleExprMatcher {
+func simpleExpr(ev *eval.Evaler) *simpleExprMatcher {
 	return &simpleExprMatcher{ev: ev}
 }
 
