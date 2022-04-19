@@ -141,7 +141,7 @@ Start your Elvish journey in this very website!
 Join any of the following channels -- they are all all bridged together thanks
 to [Matrix](https://matrix.org)!
 
--   Telegram: [@elvish](https://telegram.me/elvish)
+-   Telegram: [Elvish user group](https://t.me/+Pv5ZYgTXD-YaKwcP)
 
 -   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
 
