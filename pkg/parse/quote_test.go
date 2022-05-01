@@ -24,8 +24,7 @@ func TestQuote(t *testing.T) {
 
 		// Double quote when there is unprintable char.
 		Args("a\nb").Rets(`"a\nb"`),
-		Args("\x1b\"\\").Rets(`"\e\"\\"`),
-		Args("\x00").Rets(`"\x00"`),
+		Args("\000\x1b\"\\").Rets(`"\x00\e\"\\"`),
 		Args("\u0600").Rets(`"\u0600"`),         // Arabic number sign
 		Args("\U000110BD").Rets(`"\U000110bd"`), // Kathi number sign
 
@@ -47,6 +46,9 @@ func TestQuoteAs(t *testing.T) {
 		Args("a", SingleQuoted).Rets(`'a'`, SingleQuoted),
 		Args("\n", SingleQuoted).Rets(`"\n"`, DoubleQuoted),
 
+		// Verify bareword invalid UTF-8 case.
+		Args("bad\xffUTF-8", Bareword).Rets(`"bad\xffUTF-8"`, DoubleQuoted),
+
 		// Bareword tested above in TestQuote.
 	})
 }
@@ -57,5 +59,6 @@ func TestQuoteVariableName(t *testing.T) {
 		Args("foo").Rets("foo"),
 		Args("a/b").Rets("'a/b'"),
 		Args("\x1b").Rets(`"\e"`),
+		Args("bad\xffUTF-8").Rets(`"bad\xffUTF-8"`),
 	})
 }

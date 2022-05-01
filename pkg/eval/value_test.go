@@ -16,6 +16,7 @@ var reprTests = []struct {
 	{"a\nb", `"a\nb"`},
 	{"foo bar", "'foo bar'"},
 	{"a\x00b", `"a\x00b"`},
+	{"a\033b", `"a\eb"`},
 	{true, "$true"},
 	{false, "$false"},
 	{vals.EmptyList, "[]"},

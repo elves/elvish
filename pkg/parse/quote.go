@@ -3,6 +3,7 @@ package parse
 import (
 	"bytes"
 	"unicode"
+	"unicode/utf8"
 )
 
 // Quote returns a valid Elvish expression that evaluates to the given string.
@@ -22,8 +23,9 @@ func QuoteVariableName(s string) string {
 
 	// Keep track of whether it is a valid (unquoted) variable name.
 	bare := true
-	for _, r := range s {
-		if !unicode.IsPrint(r) {
+	for s2 := s; len(s2) > 0; {
+		r, w := utf8.DecodeRuneInString(s2)
+		if r == utf8.RuneError || !unicode.IsPrint(r) {
 			// Contains unprintable character; force double quote.
 			return quoteDouble(s)
 		}
@@ -31,6 +33,7 @@ func QuoteVariableName(s string) string {
 			bare = false
 			break
 		}
+		s2 = s2[w:]
 	}
 
 	if bare {
@@ -53,14 +56,16 @@ func QuoteAs(s string, q PrimaryType) (string, PrimaryType) {
 
 	// Keep track of whether it is a valid bareword.
 	bare := s[0] != '~'
-	for _, r := range s {
-		if !unicode.IsPrint(r) {
+	for s2 := s; len(s2) > 0; {
+		r, w := utf8.DecodeRuneInString(s2)
+		if r == utf8.RuneError || !unicode.IsPrint(r) {
 			// Contains unprintable character; force double quote.
 			return quoteDouble(s), DoubleQuoted
 		}
 		if !allowedInBareword(r, strictExpr) {
 			bare = false
 		}
+		s2 = s2[w:]
 	}
 
 	if q == Bareword && bare {
@@ -82,6 +87,8 @@ func quoteSingle(s string) string {
 	return buf.String()
 }
 
+// rtohex is optimized for the common cases encountered when encoding Elvish strings and should be
+// more efficient than using fmt.Sprintf("%x").
 func rtohex(r rune, w int) []byte {
 	bytes := make([]byte, w)
 	for i := w - 1; i >= 0; i-- {
@@ -99,26 +106,39 @@ func rtohex(r rune, w int) []byte {
 func quoteDouble(s string) string {
 	var buf bytes.Buffer
 	buf.WriteByte('"')
-	for _, r := range s {
+	for len(s) > 0 {
+		r, w := utf8.DecodeRuneInString(s)
+		if r == utf8.RuneError {
+			// An invalid UTF-8 sequence was seen -- encode first byte as a hex literal.
+			buf.WriteByte('\\')
+			buf.WriteByte('x')
+			buf.Write(rtohex(rune(s[0]), 2))
+			s = s[w:]
+			continue
+		}
+
+		// The common case -- a valid UTF-8 sequence was decoded so we have a rune.
 		if e, ok := doubleUnescape[r]; ok {
-			// Takes care of " and \ as well.
+			// Handle " and \ as well as things like \n.
 			buf.WriteByte('\\')
 			buf.WriteRune(e)
-		} else if !unicode.IsPrint(r) {
-			buf.WriteByte('\\')
-			if r <= 0xff {
-				buf.WriteByte('x')
-				buf.Write(rtohex(r, 2))
-			} else if r <= 0xffff {
-				buf.WriteByte('u')
-				buf.Write(rtohex(r, 4))
-			} else {
-				buf.WriteByte('U')
-				buf.Write(rtohex(r, 8))
-			}
-		} else {
+		} else if unicode.IsPrint(r) {
 			buf.WriteRune(r)
+		} else if r <= ' ' {
+			// Control char not handled by doubleUnescape.
+			buf.WriteByte('\\')
+			buf.WriteByte('x')
+			buf.Write(rtohex(r, 2))
+		} else if r <= 0xffff {
+			buf.WriteByte('\\')
+			buf.WriteByte('u')
+			buf.Write(rtohex(r, 4))
+		} else {
+			buf.WriteByte('\\')
+			buf.WriteByte('U')
+			buf.Write(rtohex(r, 8))
 		}
+		s = s[w:]
 	}
 	buf.WriteByte('"')
 	return buf.String()

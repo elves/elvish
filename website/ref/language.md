@@ -118,6 +118,8 @@ represents Unicode codepoints in hexadecimal):
 
     -   `\r` is U+000D CR (carriage return).
 
+    -   `\e` is U+001B ESC (escape).
+
     -   `\"` is U+0022, the double quote `"` itself.
 
     -   `\\` is U+005C, the backslash `\` itself.
@@ -135,8 +137,8 @@ represents Unicode codepoints in hexadecimal):
     be used to write arbitrary byte sequences that are not necessary valid UTF-8
     sequences.
 
-    **Note**: `\0`, while supported by C, is invalid in Elvish; write `\000`
-    instead.
+    **Note**: `\0`, while supported by C, is invalid in Elvish; write `\x00` or
+    `\000` instead.
 
 -   The following escape sequences encode any Unicode codepoint using their
     numeric values:
