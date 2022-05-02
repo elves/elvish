@@ -711,8 +711,6 @@ b = bar
 opt = option
 ```
 
-There must be no space between the `]` and `{` in this case.
-
 Read the language reference on [functions](../ref/language.html#function) to
 learn more about functions.
 
