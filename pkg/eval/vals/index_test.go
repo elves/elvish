@@ -34,6 +34,7 @@ func TestIndex(t *testing.T) {
 		Args("abc", "1..=").Rets("bc", nil),
 		Args("abc", "..=1").Rets("ab", nil),
 		Args("abc", "..=").Rets("abc", nil),
+		Args("abc", "..=-1").Rets("abc", nil),
 		// String slices not at rune boundary.
 		Args("你好", "2..").Rets(Any, errIndexNotAtRuneBoundary),
 		Args("你好", "..2").Rets(Any, errIndexNotAtRuneBoundary),
@@ -92,6 +93,7 @@ func TestIndex(t *testing.T) {
 		Args(li4, "..=-2").Rets(eq(MakeList("foo", "bar", "lorem")), nil),
 		Args(li4, "3..=").Rets(eq(MakeList("ipsum")), nil),
 		Args(li4, "..=").Rets(eq(li4), nil),
+		Args(li4, "..=-1").Rets(eq(li4), nil),
 
 		// Slice index out of range.
 		Args(li4, "-5..1").Rets(nil, errs.OutOfRange{

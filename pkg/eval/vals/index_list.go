@@ -129,7 +129,11 @@ func parseIndexString(s string, n int) (slice bool, i int, j int, err error) {
 		}
 		if sep == "..=" {
 			// TODO: Handle j == MaxInt-1
-			j++
+			if j == -1 { // subtle corner case that is same as no high value
+				j = n
+			} else {
+				j++
+			}
 		}
 	}
 	// Two numbers
