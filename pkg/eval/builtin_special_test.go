@@ -147,6 +147,8 @@ func TestTmp(t *testing.T) {
 
 		That("var x; tmp x = y").DoesNotCompile(),
 		That("{ tmp x = y }").DoesNotCompile(),
+		That("{ tmp E:X = y; put $E:X }; has-env X; put $E:X").
+			Puts("y", false, nil),
 	)
 }
 

@@ -12,6 +12,10 @@ type envVariable struct {
 }
 
 func (ev envVariable) Set(val any) error {
+	if val == nil {
+		return os.Unsetenv(ev.name)
+	}
+
 	if s, ok := val.(string); ok {
 		os.Setenv(ev.name, s)
 		return nil
@@ -20,7 +24,11 @@ func (ev envVariable) Set(val any) error {
 }
 
 func (ev envVariable) Get() any {
-	return os.Getenv(ev.name)
+	if v, exist := os.LookupEnv(ev.name); exist {
+		return v
+	}
+
+	return nil
 }
 
 // FromEnv returns a Var corresponding to the named environment variable.
