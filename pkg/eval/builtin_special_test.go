@@ -128,6 +128,10 @@ func TestSet(t *testing.T) {
 
 		// = is required.
 		That("var x; set x").DoesNotCompile(),
+
+		// set a non-exist environment
+		That("has-env X; set E:X = x; get-env X; unset-env X").
+			Puts(false, "x"),
 	)
 }
 
@@ -147,6 +151,11 @@ func TestTmp(t *testing.T) {
 
 		That("var x; tmp x = y").DoesNotCompile(),
 		That("{ tmp x = y }").DoesNotCompile(),
+
+		That("has-env X; { tmp E:X = y; put $E:X }; has-env X; put $E:X").
+			Puts(false, "y", false, ""),
+		That("set-env X x; { tmp E:X = y; put $E:X }; get-env X; put $E:X; unset-env X").
+			Puts("y", "x", "x"),
 	)
 }
 

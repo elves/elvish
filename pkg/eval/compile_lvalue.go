@@ -170,11 +170,24 @@ func (op *assignOp) exec(fm *Frame) Exception {
 func set(fm *Frame, r diag.Ranger, temp bool, variable vars.Var, value any) Exception {
 	if temp {
 		saved := variable.Get()
+
+		needUnsetEnv := false
+		if envVar, ok := variable.(vars.EnvVariable); ok {
+			needUnsetEnv = !envVar.Exists()
+		}
+
 		err := variable.Set(value)
 		if err != nil {
 			return fm.errorp(r, err)
 		}
 		fm.addDefer(func(fm *Frame) Exception {
+			if needUnsetEnv {
+				if err := variable.(vars.EnvVariable).Unset(); err != nil {
+					return fm.errorpf(r, "unset environment variable: %w", err)
+				}
+				return nil
+			}
+
 			err := variable.Set(saved)
 			if err != nil {
 				return fm.errorpf(r, "restore variable: %w", err)
