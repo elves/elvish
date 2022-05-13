@@ -31,7 +31,7 @@ var -default-domain-config = [
 var managed-dir = (
   if $platform:is-windows {
     put $E:LocalAppData/elvish/lib
-  } elif (not-eq $E:XDG_DATA_HOME '') {
+  } elif (has-env XDG_DATA_HOME) {
     put $E:XDG_DATA_HOME/elvish/lib
   } else {
     put ~/.local/share/elvish/lib
