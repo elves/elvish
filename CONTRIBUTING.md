@@ -1,5 +1,7 @@
 # Contributor's Manual
 
+testing
+
 ## Human communication
 
 The project lead is @xiaq, who is reachable in the user group most of the time.
