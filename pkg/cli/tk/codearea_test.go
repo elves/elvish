@@ -276,7 +276,7 @@ var codeAreaHandleTests = []handleTest{
 	{
 		Name: "abbreviation expansion",
 		Given: NewCodeArea(CodeAreaSpec{
-			Abbreviations: func(f func(abbr, full string)) {
+			SimpleAbbreviations: func(f func(abbr, full string)) {
 				f("dn", "/dev/null")
 			},
 		}),
@@ -286,7 +286,7 @@ var codeAreaHandleTests = []handleTest{
 	{
 		Name: "abbreviation expansion 2",
 		Given: NewCodeArea(CodeAreaSpec{
-			Abbreviations: func(f func(abbr, full string)) {
+			SimpleAbbreviations: func(f func(abbr, full string)) {
 				f("||", " | less")
 			},
 		}),
@@ -296,7 +296,7 @@ var codeAreaHandleTests = []handleTest{
 	{
 		Name: "abbreviation expansion after other content",
 		Given: NewCodeArea(CodeAreaSpec{
-			Abbreviations: func(f func(abbr, full string)) {
+			SimpleAbbreviations: func(f func(abbr, full string)) {
 				f("||", " | less")
 			},
 		}),
@@ -306,7 +306,7 @@ var codeAreaHandleTests = []handleTest{
 	{
 		Name: "abbreviation expansion preferring longest",
 		Given: NewCodeArea(CodeAreaSpec{
-			Abbreviations: func(f func(abbr, full string)) {
+			SimpleAbbreviations: func(f func(abbr, full string)) {
 				f("n", "none")
 				f("dn", "/dev/null")
 			},
@@ -317,7 +317,7 @@ var codeAreaHandleTests = []handleTest{
 	{
 		Name: "abbreviation expansion interrupted by function key",
 		Given: NewCodeArea(CodeAreaSpec{
-			Abbreviations: func(f func(abbr, full string)) {
+			SimpleAbbreviations: func(f func(abbr, full string)) {
 				f("dn", "/dev/null")
 			},
 		}),
@@ -366,6 +366,36 @@ var codeAreaHandleTests = []handleTest{
 		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "gh ", Dot: 3}},
 	},
 	{
+		Name: "command abbreviation expansion",
+		Given: NewCodeArea(CodeAreaSpec{
+			CommandAbbreviations: func(f func(abbr, full string)) {
+				f("eh", "echo hello")
+			},
+		}),
+		Events:       []term.Event{term.K('e'), term.K('h'), term.K(' ')},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "echo hello ", Dot: 11}},
+	},
+	{
+		Name: "command abbreviation expansion not at start of line",
+		Given: NewCodeArea(CodeAreaSpec{
+			CommandAbbreviations: func(f func(abbr, full string)) {
+				f("eh", "echo hello")
+			},
+		}),
+		Events:       []term.Event{term.K('x'), term.K('|'), term.K('e'), term.K('h'), term.K(' ')},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "x|echo hello ", Dot: 13}},
+	},
+	{
+		Name: "no command abbreviation expansion when not in command position",
+		Given: NewCodeArea(CodeAreaSpec{
+			CommandAbbreviations: func(f func(abbr, full string)) {
+				f("eh", "echo hello")
+			},
+		}),
+		Events:       []term.Event{term.K('x'), term.K(' '), term.K('e'), term.K('h'), term.K(' ')},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "x eh ", Dot: 5}},
+	},
+	{
 		Name: "key bindings",
 		Given: NewCodeArea(CodeAreaSpec{Bindings: MapBindings{
 			term.K('a'): func(w Widget) {
@@ -411,7 +441,7 @@ func TestCodeArea_Handle_UnhandledEvents(t *testing.T) {
 
 func TestCodeArea_Handle_AbbreviationExpansionInterruptedByExternalMutation(t *testing.T) {
 	w := NewCodeArea(CodeAreaSpec{
-		Abbreviations: func(f func(abbr, full string)) {
+		SimpleAbbreviations: func(f func(abbr, full string)) {
 			f("dn", "/dev/null")
 		},
 	})

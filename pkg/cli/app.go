@@ -130,15 +130,16 @@ func NewApp(spec AppSpec) App {
 	lp.RedrawCb(a.redraw)
 
 	a.codeArea = tk.NewCodeArea(tk.CodeAreaSpec{
-		Bindings:      spec.CodeAreaBindings,
-		Highlighter:   a.Highlighter.Get,
-		Prompt:        a.Prompt.Get,
-		RPrompt:       a.RPrompt.Get,
-		Abbreviations: spec.Abbreviations,
-		QuotePaste:    spec.QuotePaste,
-		OnSubmit:      a.CommitCode,
-		State:         spec.CodeAreaState,
+		Bindings:    spec.CodeAreaBindings,
+		Highlighter: a.Highlighter.Get,
+		Prompt:      a.Prompt.Get,
+		RPrompt:     a.RPrompt.Get,
+		QuotePaste:  spec.QuotePaste,
+		OnSubmit:    a.CommitCode,
+		State:       spec.CodeAreaState,
 
+		SimpleAbbreviations:    spec.SimpleAbbreviations,
+		CommandAbbreviations:   spec.CommandAbbreviations,
 		SmallWordAbbreviations: spec.SmallWordAbbreviations,
 	})
 

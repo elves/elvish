@@ -19,9 +19,10 @@ type AppSpec struct {
 
 	GlobalBindings   tk.Bindings
 	CodeAreaBindings tk.Bindings
-	Abbreviations    func(f func(abbr, full string))
 	QuotePaste       func() bool
 
+	SimpleAbbreviations    func(f func(abbr, full string))
+	CommandAbbreviations   func(f func(abbr, full string))
 	SmallWordAbbreviations func(f func(abbr, full string))
 
 	CodeAreaState tk.CodeAreaState

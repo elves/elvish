@@ -2,6 +2,7 @@ package tk
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 	"sync"
 	"unicode"
@@ -36,9 +37,10 @@ type CodeAreaSpec struct {
 	// Right-prompt callback.
 	RPrompt func() ui.Text
 	// A function that calls the callback with string pairs for abbreviations
-	// and their expansions. If this function is not given, the Widget does not
-	// expand any abbreviations.
-	Abbreviations          func(f func(abbr, full string))
+	// and their expansions. If no function is provided the Widget does not
+	// expand any abbreviations of the specified type.
+	SimpleAbbreviations    func(f func(abbr, full string))
+	CommandAbbreviations   func(f func(abbr, full string))
 	SmallWordAbbreviations func(f func(abbr, full string))
 	// A function that returns whether pasted texts (from bracketed pastes)
 	// should be quoted. If this function is not given, the Widget defaults to
@@ -123,8 +125,11 @@ func NewCodeArea(spec CodeAreaSpec) CodeArea {
 	if spec.RPrompt == nil {
 		spec.RPrompt = func() ui.Text { return nil }
 	}
-	if spec.Abbreviations == nil {
-		spec.Abbreviations = func(func(a, f string)) {}
+	if spec.SimpleAbbreviations == nil {
+		spec.SimpleAbbreviations = func(func(a, f string)) {}
+	}
+	if spec.CommandAbbreviations == nil {
+		spec.CommandAbbreviations = func(func(a, f string)) {}
 	}
 	if spec.SmallWordAbbreviations == nil {
 		spec.SmallWordAbbreviations = func(func(a, f string)) {}
@@ -208,12 +213,11 @@ func (w *codeArea) handlePasteSetting(start bool) bool {
 	return true
 }
 
-// Tries to expand a simple abbreviation. This function assumes that the state
-// mutex is already being held.
+// Tries to expand a simple abbreviation. This function assumes the state mutex is held.
 func (w *codeArea) expandSimpleAbbr() {
 	var abbr, full string
 	// Find the longest matching abbreviation.
-	w.Abbreviations(func(a, f string) {
+	w.SimpleAbbreviations(func(a, f string) {
 		if strings.HasSuffix(w.inserts, a) && len(a) > len(abbr) {
 			abbr, full = a, f
 		}
@@ -228,12 +232,58 @@ func (w *codeArea) expandSimpleAbbr() {
 	}
 }
 
-// Tries to expand a word abbreviation. This function assumes that the state
-// mutex is already being held.
-func (w *codeArea) expandWordAbbr(trigger rune, categorizer func(rune) int) {
+// Try to expand a command abbreviation. This function assumes the state mutex is held.
+//
+// We use a regex rather than parse.Parse() because dealing with the the latter requires a lot of
+// code. A simple regex is far simpler and good enough for this use case. The regex essentially
+// matches commands at the start of the line (with potential leading whitespace) and similarly after
+// the opening brace of a lambda or pipeline char. There are two corner cases it doesn't handle:
+//
+// 1) It doesn't handle a caret followed by a newline if the token on the last line would otherwise
+// be treated as a command given what preceded the caret.
+//
+// 2) It only handles bareword commands.
+var commandRegex = regexp.MustCompile(`(?:^|\||;|{)\s*([\p{L}\p{Nd}!%+,-./:@\_]+)\s\z`)
+
+func (w *codeArea) expandCommandAbbr() {
+	code := &w.State.Buffer
+	if code.Dot < len(code.Content) {
+		// Command abbreviations are only expanded when inserting at the end of the buffer.
+		return
+	}
+
+	// See if there is something that looks like a bareword at the end of the buffer.
+	matches := commandRegex.FindSubmatch([]byte(code.Content))
+	if len(matches) == 0 {
+		return
+	}
+
+	// Find an abbreviation matching the command.
+	command := string(matches[1])
+	var expansion string
+	w.CommandAbbreviations(func(a, e string) {
+		if a == command {
+			expansion = e
+		}
+	})
+	if len(expansion) == 0 {
+		return
+	}
+
+	// We found a matching abbreviation -- replace it with its expansion.
+	newContent := code.Content[:code.Dot-len(command)-1] + expansion + " "
+	*code = CodeBuffer{
+		Content: newContent,
+		Dot:     len(newContent),
+	}
+	w.resetInserts()
+}
+
+// Try to expand a small word abbreviation. This function assumes the state mutex is held.
+func (w *codeArea) expandSmallWordAbbr(trigger rune, categorizer func(rune) int) {
 	c := &w.State.Buffer
 	if c.Dot < len(c.Content) {
-		// Word abbreviations are only expanded at the end of the buffer.
+		// Word abbreviations are only expanded when inserting at the end of the buffer.
 		return
 	}
 	triggerLen := len(string(trigger))
@@ -333,8 +383,11 @@ func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 		w.State.Buffer.InsertAtDot(s)
 		w.inserts += s
 		w.lastCodeBuffer = w.State.Buffer
+		if key.Rune == ' ' {
+			w.expandCommandAbbr()
+		}
 		w.expandSimpleAbbr()
-		w.expandWordAbbr(key.Rune, CategorizeSmallWord)
+		w.expandSmallWordAbbr(key.Rune, CategorizeSmallWord)
 		return true
 	}
 }
