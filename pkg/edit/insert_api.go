@@ -9,7 +9,7 @@ import (
 
 //elvdoc:var abbr
 //
-// A map from (simple) abbreviations to their expansions.
+// A map from simple abbreviations to their expansions.
 //
 // An abbreviation is replaced by its expansion when it is typed in full
 // and consecutively, without being interrupted by the use of other editing
@@ -29,11 +29,31 @@ import (
 // the cursor left, and typing another `|` does **not** expand to `| less`,
 // since the abbreviation `||` was not typed consecutively.
 //
-// @cf edit:small-word-abbr
+// @cf edit:command-abbr edit:small-word-abbr
+
+//elvdoc:var command-abbr
+//
+// A map from command abbreviations to their expansions.
+//
+// A command abbreviation is replaced by its expansion when it is typed in full and consecutively at
+// the end of the line, without being interrupted by the use of other editing functionalities, such
+// as cursor movements. It is only expanded when the abbreviation is seen in the command position
+// followed by a space. This is similar to Fish shell abbreviations but does not trigger the
+// expansion when pressing Enter -- you must type a space first.
+//
+// Examples:
+//
+// ```elvish
+// set edit:command-abbr['l'] = 'less'
+// set edit:command-abbr['gc'] = 'git commit'
+// ```
+//
+// @cf edit:abbr edit:small-word-abbr
 
 //elvdoc:var small-word-abbr
 //
-// A map from small-word abbreviations and their expansions.
+// A map from small-word abbreviations to their expansions. Note that you probably want to create
+// [command abbreviation](#command-abbr) rather than a small-word abbreviation.
 //
 // A small-word abbreviation is replaced by its expansion after it is typed in
 // full and consecutively, and followed by another character (the *trigger*
@@ -49,7 +69,8 @@ import (
 //
 // -   The cursor must be at the end of the buffer.
 //
-// If more than one abbreviations would match, the longest one is used.
+// If more than one abbreviations would match, the longest one is used. See the description of
+// [small words](#word-types) for more information.
 //
 // As an example, with the following configuration:
 //
@@ -99,16 +120,20 @@ import (
 // If both a [simple abbreviation](#edit:abbr) and a small-word abbreviation can
 // be expanded, the simple abbreviation has priority.
 //
-// @cf edit:abbr
+// @cf edit:abbr edit:command-abbr
 
 func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.NsBuilder) {
-	abbr := vals.EmptyMap
-	abbrVar := vars.FromPtr(&abbr)
-	appSpec.Abbreviations = makeMapIterator(abbrVar)
+	simpleAbbr := vals.EmptyMap
+	simpleAbbrVar := vars.FromPtr(&simpleAbbr)
+	appSpec.SimpleAbbreviations = makeMapIterator(simpleAbbrVar)
 
-	SmallWordAbbr := vals.EmptyMap
-	SmallWordAbbrVar := vars.FromPtr(&SmallWordAbbr)
-	appSpec.SmallWordAbbreviations = makeMapIterator(SmallWordAbbrVar)
+	commandAbbr := vals.EmptyMap
+	commandAbbrVar := vars.FromPtr(&commandAbbr)
+	appSpec.CommandAbbreviations = makeMapIterator(commandAbbrVar)
+
+	smallWordAbbr := vals.EmptyMap
+	smallWordAbbrVar := vars.FromPtr(&smallWordAbbr)
+	appSpec.SmallWordAbbreviations = makeMapIterator(smallWordAbbrVar)
 
 	bindingVar := newBindingVar(emptyBindingsMap)
 	appSpec.CodeAreaBindings = newMapBindings(nt, ev, bindingVar)
@@ -120,8 +145,9 @@ func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.N
 		quotePaste.Set(!quotePaste.Get().(bool))
 	}
 
-	nb.AddVar("abbr", abbrVar)
-	nb.AddVar("small-word-abbr", SmallWordAbbrVar)
+	nb.AddVar("abbr", simpleAbbrVar)
+	nb.AddVar("command-abbr", commandAbbrVar)
+	nb.AddVar("small-word-abbr", smallWordAbbrVar)
 	nb.AddGoFn("toggle-quote-paste", toggleQuotePaste)
 	nb.AddNs("insert", eval.BuildNs().
 		AddVar("binding", bindingVar).
