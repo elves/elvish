@@ -8,6 +8,7 @@ on:
 jobs:
   check_freshness:
     name: Check freshness
+    if: github.repository == 'elves/elvish'
     runs-on: ubuntu-latest
     strategy:
       matrix:
