@@ -165,7 +165,12 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: theelves/up
-      options: --user 0
+      # Git commands (invoked by Go when stamping VCS info) can fail
+      # if the running user is not the same as the owner of .git
+      # (https://github.blog/2022-04-12-git-security-vulnerability-announced/).
+      #
+      # The checkout action uses UID 1001, so use that for the container too.
+      options: --user 1001
     defaults:
       run:
         shell: sh
