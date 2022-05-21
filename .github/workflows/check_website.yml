@@ -5,10 +5,6 @@ on:
     branches:
       - master
 
-concurrency:
-  group: ${{ github.workflow }}
-  cancel-in-progress: true
-
 jobs:
   check_freshness:
     name: Check freshness
@@ -98,4 +94,11 @@ jobs:
             ret=1
           fi
         done
+        if test $ret != 0; then
+          latest_sha=$(curl -sS -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/elves/elvish/commits/master/)
+          if test ${{ github.sha }} != "$latest_sha"; then
+            echo "Ignoring the mismatch since there is a newer commit now"
+            ret=0
+          fi
+        fi
         exit $ret
