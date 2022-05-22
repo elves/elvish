@@ -15,7 +15,11 @@ var ErrNonExistentEnvVar = errors.New("non-existent environment variable")
 // set-env $name $value
 // ```
 //
-// Sets an environment variable to the given value. Example:
+// Sets an environment variable to the given value. Calling `set-env VAR_NAME
+// value` is similar to `set E:VAR_NAME = value`, but allows the variable name
+// to be dynamic.
+//
+// Example:
 //
 // ```elvish-transcript
 // ~> set-env X foobar
@@ -31,7 +35,10 @@ var ErrNonExistentEnvVar = errors.New("non-existent environment variable")
 // unset-env $name
 // ```
 //
-// Unset an environment variable. Example:
+// Unset an environment variable. Calling `unset-env VAR_NAME` is similar to
+// `del E:VAR_NAME`, but allows the variable name to be dynamic.
+//
+// Example:
 //
 // ```elvish-transcript
 // ~> set E:X = foo
@@ -59,7 +66,10 @@ func init() {
 // has-env $name
 // ```
 //
-// Test whether an environment variable exists. Examples:
+// Test whether an environment variable exists. This command has no equivalent
+// operation using the `E:` namespace (but see https://b.elv.sh/1026).
+//
+// Examples:
 //
 // ```elvish-transcript
 // ~> has-env PATH
@@ -82,7 +92,13 @@ func hasEnv(key string) bool {
 // ```
 //
 // Gets the value of an environment variable. Throws an exception if the
-// environment variable does not exist. Examples:
+// environment variable does not exist.
+//
+// Calling `get-env VAR_NAME` is similar to `put $E:VAR_NAME`, but allows the
+// variable name to be dynamic, and throws an exception instead of producing an
+// empty string for nonexistent environment variables.
+//
+// Examples:
 //
 // ```elvish-transcript
 // ~> get-env LANG
