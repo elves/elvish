@@ -159,7 +159,7 @@ formatted.
 Install [staticcheck](https://staticcheck.io):
 
 ```sh
-go install honnef.co/go/tools/cmd/staticcheck@master
+go install honnef.co/go/tools/cmd/staticcheck@v0.3.2
 ```
 
 The other linter Elvish uses is the standard `go vet` command. Elvish doesn't
@@ -167,9 +167,6 @@ use golint since it is
 [deprecated and frozen](https://github.com/golang/go/issues/38968).
 
 Use `make lint` to run `staticcheck` and `go vet`.
-
-**Note**: As of writing, `staticcheck` doesn't support generics yet (it will
-crash when checking code using generics), so it has been temporarily disabled.
 
 ### Spell checking
 

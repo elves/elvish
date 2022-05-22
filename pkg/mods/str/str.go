@@ -36,6 +36,8 @@ var Ns = eval.BuildNsNamed("str").
 		"replace": replace,
 		"split":   split,
 		// TODO: SplitAfter
+		//lint:ignore SA1019 Elvish builtins need to be formally deprecated
+		// before removal
 		"title":         strings.Title,
 		"to-codepoints": toCodepoints,
 		"to-lower":      strings.ToLower,

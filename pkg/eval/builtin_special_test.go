@@ -14,7 +14,6 @@ import (
 	"src.elv.sh/pkg/testutil"
 
 	. "src.elv.sh/pkg/eval/evaltest"
-	. "src.elv.sh/pkg/testutil"
 )
 
 func TestPragma(t *testing.T) {
@@ -184,7 +183,7 @@ func (v *badVar) Set(any) error {
 }
 
 func TestDel(t *testing.T) {
-	Setenv(t, "TEST_ENV", "test value")
+	testutil.Setenv(t, "TEST_ENV", "test value")
 
 	Test(t,
 		// Deleting variable
@@ -427,9 +426,9 @@ func TestFn(t *testing.T) {
 
 // Regression test for #1225
 func TestUse_SetsVariableCorrectlyIfModuleCallsExtendGlobal(t *testing.T) {
-	libdir := InTempDir(t)
+	libdir := testutil.InTempDir(t)
 
-	ApplyDir(Dir{"a.elv": "add-var"})
+	testutil.ApplyDir(testutil.Dir{"a.elv": "add-var"})
 	ev := NewEvaler()
 	ev.LibDirs = []string{libdir}
 	addVar := func() {
@@ -452,8 +451,8 @@ func TestUse_SetsVariableCorrectlyIfModuleCallsExtendGlobal(t *testing.T) {
 }
 
 func TestUse_SupportsCircularDependency(t *testing.T) {
-	libdir := InTempDir(t)
-	ApplyDir(Dir{
+	libdir := testutil.InTempDir(t)
+	testutil.ApplyDir(testutil.Dir{
 		"a.elv": "var pre = apre; use b; put $b:pre $b:post; var post = apost",
 		"b.elv": "var pre = bpre; use a; put $a:pre $a:post; var post = bpost",
 	})
@@ -469,21 +468,21 @@ func TestUse_SupportsCircularDependency(t *testing.T) {
 }
 
 func TestUse(t *testing.T) {
-	libdir1 := InTempDir(t)
-	ApplyDir(Dir{
+	libdir1 := testutil.InTempDir(t)
+	testutil.ApplyDir(testutil.Dir{
 		"shadow.elv": "put lib1",
 	})
 
-	libdir2 := InTempDir(t)
-	ApplyDir(Dir{
+	libdir2 := testutil.InTempDir(t)
+	testutil.ApplyDir(testutil.Dir{
 		"has-init.elv": "put has-init",
 		"put-x.elv":    "put $x",
 		"lorem.elv":    "var name = lorem; fn put-name { put $name }",
 		"d.elv":        "var name = d",
 		"shadow.elv":   "put lib2",
-		"a": Dir{
-			"b": Dir{
-				"c": Dir{
+		"a": testutil.Dir{
+			"b": testutil.Dir{
+				"c": testutil.Dir{
 					"d.elv": "var name = a/b/c/d",
 					"x.elv": "use ./d; var d = $d:name; use ../../../lorem; var lorem = $lorem:name",
 				},
@@ -546,8 +545,8 @@ func TestUse(t *testing.T) {
 // Regression test for #1072
 func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	testutil.Set(t, &prog.DeprecationLevel, 18)
-	libdir := InTempDir(t)
-	MustWriteFile("dep.elv", "a=b nop $a")
+	libdir := testutil.InTempDir(t)
+	testutil.MustWriteFile("dep.elv", "a=b nop $a")
 
 	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
 		// Importing module triggers check for deprecated features
