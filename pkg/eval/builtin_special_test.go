@@ -436,7 +436,7 @@ func TestUse_SetsVariableCorrectlyIfModuleCallsExtendGlobal(t *testing.T) {
 	}
 	ev.ExtendBuiltin(BuildNs().AddGoFn("add-var", addVar))
 
-	err := ev.Eval(parse.Source{Code: "use a"}, EvalCfg{})
+	err := ev.Eval(parse.Source{Name: "[test]", Code: "use a"}, EvalCfg{})
 	if err != nil {
 		t.Fatal(err)
 	}

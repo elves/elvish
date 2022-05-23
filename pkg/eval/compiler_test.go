@@ -25,7 +25,7 @@ func testCompileTimeDeprecation(t *testing.T, code, wantWarning string, level in
 	ev := NewEvaler()
 	errOutput := new(bytes.Buffer)
 
-	parseErr, compileErr := ev.Check(parse.Source{Code: code}, errOutput)
+	parseErr, compileErr := ev.Check(parse.Source{Name: "[test]", Code: code}, errOutput)
 	if parseErr != nil {
 		t.Errorf("got parse err %v", parseErr)
 	}
