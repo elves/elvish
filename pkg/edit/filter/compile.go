@@ -24,7 +24,7 @@ func Compile(q string) (Filter, error) {
 
 func parseFilter(q string) (*parse.Filter, error) {
 	qn := &parse.Filter{}
-	err := parse.ParseAs(parse.Source{Name: "filter", Code: q}, qn, parse.Config{})
+	err := parse.ParseAs(parse.Source{Name: "[filter]", Code: q}, qn, parse.Config{})
 	return qn, err
 }
 

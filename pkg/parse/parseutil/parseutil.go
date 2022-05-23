@@ -9,7 +9,7 @@ import (
 
 // Wordify turns a piece of source code into words.
 func Wordify(src string) []string {
-	tree, _ := parse.Parse(parse.Source{Code: src}, parse.Config{})
+	tree, _ := parse.Parse(parse.Source{Name: "[unknown]", Code: src}, parse.Config{})
 	return wordifyInner(tree.Root, nil)
 }
 

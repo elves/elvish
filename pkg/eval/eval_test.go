@@ -68,7 +68,7 @@ func TestMultipleEval(t *testing.T) {
 func TestEval_AlternativeGlobal(t *testing.T) {
 	ev := NewEvaler()
 	g := BuildNs().AddVar("a", vars.NewReadOnly("")).Ns()
-	err := ev.Eval(parse.Source{Code: "nop $a"}, EvalCfg{Global: g})
+	err := ev.Eval(parse.Source{Name: "[test]", Code: "nop $a"}, EvalCfg{Global: g})
 	if err != nil {
 		t.Errorf("got error %v, want nil", err)
 	}
@@ -84,11 +84,11 @@ func TestEval_Concurrent(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
-		ev.Eval(parse.Source{Code: "var a"}, EvalCfg{})
+		ev.Eval(parse.Source{Name: "[test]", Code: "var a"}, EvalCfg{})
 		wg.Done()
 	}()
 	go func() {
-		ev.Eval(parse.Source{Code: "var b"}, EvalCfg{})
+		ev.Eval(parse.Source{Name: "[test]", Code: "var b"}, EvalCfg{})
 		wg.Done()
 	}()
 	wg.Wait()
@@ -149,7 +149,7 @@ func TestCheck(t *testing.T) {
 	ev := NewEvaler()
 	for _, test := range checkTests {
 		t.Run(test.name, func(t *testing.T) {
-			parseErr, compileErr := ev.Check(parse.Source{Code: test.code}, nil)
+			parseErr, compileErr := ev.Check(parse.Source{Name: "[test]", Code: test.code}, nil)
 			if (parseErr != nil) != test.wantParseErr {
 				t.Errorf("got parse error %v, when wantParseErr = %v",
 					parseErr, test.wantParseErr)
