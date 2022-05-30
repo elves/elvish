@@ -672,10 +672,11 @@ or part of an expression.
 
 **Note**: In most other shells, variables can map directly to environmental
 variables: `$PATH` is the same as the `PATH` environment variable. This is not
-the case in Elvish. Instead, environment variables are put in a dedicated `E:`
-namespace; the environment variable `PATH` is known as `$E:PATH`. The `$PATH`
-variable, on the other hand, does not exist initially, and if you have defined
-it, only lives in a certain lexical scope within the Elvish interpreter.
+the case in Elvish. Instead, environment variables are put in a dedicated
+[`E:` namespace](#special-namespaces); the environment variable `PATH` is known
+as `$E:PATH`. The `$PATH` variable, on the other hand, does not exist initially,
+and if you have defined it, only lives in a certain lexical scope within the
+Elvish interpreter.
 
 You will notice that variables sometimes have a leading dollar `$`, and
 sometimes not. The tradition is that they do when they are used for their
@@ -2358,10 +2359,16 @@ The following namespaces have special meanings to the language:
     an external command.
 
 -   `E:` refers to environment variables. For instance, `$E:USER` is the
-    environment variable `USER`.
+    environment variable `USER`. If the environment variable does not exist it
+    expands to an empty string. If you care that the env var is not set use
+    [`has-env`](./builtin.html#has-env) or [`get-env`](./builtin.html#get-env).
+    This behavior makes it easy to deal with the common case where you don't
+    care if the env var is unset, or set to an empty string, by doing this:
+    `eq $E:UNSET_VAR ''`.
 
-    This **is** always needed, because unlike command resolution, variable
-    resolution does not fall back onto environment variables.
+    Using `$E:...` (or [`get-env`](./builtin.html#get-env)) **is always needed**
+    when expanding an environment variable because variable resolution does not
+    fall back onto environment variables like it does in POSIX shells.
 
 ## Modules
 
