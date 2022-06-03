@@ -72,6 +72,7 @@ func (s *server) initialize(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMe
 					Change:    lsp.TDSKFull,
 				},
 			},
+			CompletionProvider: &lsp.CompletionOptions{},
 		},
 	}, nil
 }
