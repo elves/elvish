@@ -2360,15 +2360,18 @@ The following namespaces have special meanings to the language:
 
 -   `E:` refers to environment variables. For instance, `$E:USER` is the
     environment variable `USER`. If the environment variable does not exist it
-    expands to an empty string. If you care that the env var is not set use
-    [`has-env`](./builtin.html#has-env) or [`get-env`](./builtin.html#get-env).
-    This behavior makes it easy to deal with the common case where you don't
-    care if the env var is unset, or set to an empty string, by doing this:
-    `eq $E:UNSET_VAR ''`.
+    expands to an empty string.
 
-    Using `$E:...` (or [`get-env`](./builtin.html#get-env)) **is always needed**
-    when expanding an environment variable because variable resolution does not
-    fall back onto environment variables like it does in POSIX shells.
+    **Note**: The `E:` namespace does not distinguish environment variables that
+    are unset and those that are set but empty; for example, `eq $E:VAR ''`
+    outputs `$true` if the `VAR` environment variable is either unset or empty.
+    To make that distinction, use [`has-env`](./builtin.html#has-env) or
+    [`get-env`](./builtin.html#get-env).
+
+    **Note**: Unlike POSIX shells and the `e:` namespace, evaluation of
+    variables do not fall back to the `E:` namespace; thus using `$E:...` (or
+    [`get-env`](./builtin.html#get-env)) **is always needed** when expanding an
+    environment variable.
 
 ## Modules
 
