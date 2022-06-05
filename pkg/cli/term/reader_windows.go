@@ -71,9 +71,9 @@ func (r *reader) Close() {
 	if err != nil {
 		log.Println("SetEvent:", err)
 	}
+	r.mutex.Lock()
 	//lint:ignore SA2001 We only lock the mutex to make sure that ReadEvent has
 	//exited, so we unlock it immediately.
-	r.mutex.Lock()
 	r.mutex.Unlock()
 	err = windows.CloseHandle(r.stopEvent)
 	if err != nil {
