@@ -11,7 +11,7 @@ func TestEnvVariable(t *testing.T) {
 	name := "elvish_test"
 	testutil.Unsetenv(t, name)
 
-	v := FromEnv(name).(EnvVariable)
+	v := FromEnv(name).(envVariable)
 
 	if set := v.IsSet(); set != false {
 		t.Errorf("EnvVariable.Set returns true for unset env variable")

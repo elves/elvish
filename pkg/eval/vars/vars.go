@@ -6,3 +6,10 @@ type Var interface {
 	Set(v any) error
 	Get() any
 }
+
+// UnsettableVar represents an Elvish variable that can be in an unset state.
+type UnsettableVar interface {
+	Var
+	Unset() error
+	IsSet() bool
+}

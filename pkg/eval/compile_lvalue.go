@@ -171,9 +171,10 @@ func set(fm *Frame, r diag.Ranger, temp bool, variable vars.Var, value any) Exce
 	if temp {
 		saved := variable.Get()
 
-		needUnsetEnv := false
-		if envVar, ok := variable.(vars.EnvVariable); ok {
-			needUnsetEnv = !envVar.IsSet()
+		needUnset := false
+		unsettable, ok := variable.(vars.UnsettableVar)
+		if ok {
+			needUnset = !unsettable.IsSet()
 		}
 
 		err := variable.Set(value)
@@ -181,9 +182,9 @@ func set(fm *Frame, r diag.Ranger, temp bool, variable vars.Var, value any) Exce
 			return fm.errorp(r, err)
 		}
 		fm.addDefer(func(fm *Frame) Exception {
-			if needUnsetEnv {
-				if err := variable.(vars.EnvVariable).Unset(); err != nil {
-					return fm.errorpf(r, "unset environment variable: %w", err)
+			if needUnset {
+				if err := unsettable.Unset(); err != nil {
+					return fm.errorpf(r, "unset variable: %w", err)
 				}
 				return nil
 			}

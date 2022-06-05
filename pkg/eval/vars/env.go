@@ -7,11 +7,11 @@ import (
 
 var errEnvMustBeString = errors.New("environment variable can only be set string values")
 
-type EnvVariable struct {
+type envVariable struct {
 	name string
 }
 
-func (ev EnvVariable) Set(val any) error {
+func (ev envVariable) Set(val any) error {
 	if s, ok := val.(string); ok {
 		os.Setenv(ev.name, s)
 		return nil
@@ -19,20 +19,20 @@ func (ev EnvVariable) Set(val any) error {
 	return errEnvMustBeString
 }
 
-func (ev EnvVariable) Get() any {
+func (ev envVariable) Get() any {
 	return os.Getenv(ev.name)
 }
 
-func (ev EnvVariable) Unset() error {
+func (ev envVariable) Unset() error {
 	return os.Unsetenv(ev.name)
 }
 
-func (ev EnvVariable) IsSet() bool {
+func (ev envVariable) IsSet() bool {
 	_, ok := os.LookupEnv(ev.name)
 	return ok
 }
 
 // FromEnv returns a Var corresponding to the named environment variable.
-func FromEnv(name string) Var {
-	return EnvVariable{name}
+func FromEnv(name string) UnsettableVar {
+	return envVariable{name}
 }
