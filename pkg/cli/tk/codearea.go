@@ -223,56 +223,55 @@ func (w *codeArea) expandSimpleAbbr() {
 		}
 	})
 	if len(abbr) > 0 {
-		c := &w.State.Buffer
-		*c = CodeBuffer{
-			Content: c.Content[:c.Dot-len(abbr)] + full + c.Content[c.Dot:],
-			Dot:     c.Dot - len(abbr) + len(full),
+		buf := &w.State.Buffer
+		*buf = CodeBuffer{
+			Content: buf.Content[:buf.Dot-len(abbr)] + full + buf.Content[buf.Dot:],
+			Dot:     buf.Dot - len(abbr) + len(full),
 		}
 		w.resetInserts()
 	}
 }
 
-// Try to expand a command abbreviation. This function assumes the state mutex is held.
-//
-// We use a regex rather than parse.Parse() because dealing with the the latter requires a lot of
-// code. A simple regex is far simpler and good enough for this use case. The regex essentially
-// matches commands at the start of the line (with potential leading whitespace) and similarly after
-// the opening brace of a lambda or pipeline char. There are two corner cases it doesn't handle:
-//
-// 1) It doesn't handle a caret followed by a newline if the token on the last line would otherwise
-// be treated as a command given what preceded the caret.
-//
-// 2) It only handles bareword commands.
-var commandRegex = regexp.MustCompile(`(?:^|\||;|{)\s*([\p{L}\p{Nd}!%+,-./:@\_]+)\s\z`)
+var commandRegex = regexp.MustCompile(`(?:^|[^^]\n|\||;|{\s|\()\s*([\p{L}\p{M}\p{N}!%+,\-./:@\\_<>*]+)(\s)$`)
 
+// Tries to expand a command abbreviation. This function assumes the state mutex
+// is held.
+//
+// We use a regex rather than parse.Parse() because dealing with the the latter
+// requires a lot of code. A simple regex is far simpler and good enough for
+// this use case. The regex essentially matches commands at the start of the
+// line (with potential leading whitespace) and similarly after the opening
+// brace of a lambda or pipeline char.
+//
+// This only handles bareword commands.
 func (w *codeArea) expandCommandAbbr() {
-	code := &w.State.Buffer
-	if code.Dot < len(code.Content) {
+	buf := &w.State.Buffer
+	if buf.Dot < len(buf.Content) {
 		// Command abbreviations are only expanded when inserting at the end of the buffer.
 		return
 	}
 
 	// See if there is something that looks like a bareword at the end of the buffer.
-	matches := commandRegex.FindSubmatch([]byte(code.Content))
+	matches := commandRegex.FindStringSubmatch(buf.Content)
 	if len(matches) == 0 {
 		return
 	}
 
 	// Find an abbreviation matching the command.
-	command := string(matches[1])
+	command, whitespace := matches[1], matches[2]
 	var expansion string
 	w.CommandAbbreviations(func(a, e string) {
 		if a == command {
 			expansion = e
 		}
 	})
-	if len(expansion) == 0 {
+	if expansion == "" {
 		return
 	}
 
 	// We found a matching abbreviation -- replace it with its expansion.
-	newContent := code.Content[:code.Dot-len(command)-1] + expansion + " "
-	*code = CodeBuffer{
+	newContent := buf.Content[:buf.Dot-len(command)-1] + expansion + whitespace
+	*buf = CodeBuffer{
 		Content: newContent,
 		Dot:     len(newContent),
 	}
@@ -281,8 +280,8 @@ func (w *codeArea) expandCommandAbbr() {
 
 // Try to expand a small word abbreviation. This function assumes the state mutex is held.
 func (w *codeArea) expandSmallWordAbbr(trigger rune, categorizer func(rune) int) {
-	c := &w.State.Buffer
-	if c.Dot < len(c.Content) {
+	buf := &w.State.Buffer
+	if buf.Dot < len(buf.Content) {
 		// Word abbreviations are only expanded when inserting at the end of the buffer.
 		return
 	}
@@ -314,8 +313,8 @@ func (w *codeArea) expandSmallWordAbbr(trigger rune, categorizer func(rune) int)
 		}
 		// Verify the rune preceding the abbreviation, if any, creates a word
 		// boundary.
-		if len(c.Content) > len(a)+triggerLen {
-			r1, _ := utf8.DecodeLastRuneInString(c.Content[:len(c.Content)-len(a)-triggerLen])
+		if len(buf.Content) > len(a)+triggerLen {
+			r1, _ := utf8.DecodeLastRuneInString(buf.Content[:len(buf.Content)-len(a)-triggerLen])
 			r2, _ := utf8.DecodeRuneInString(a)
 			if categorizer(r1) == categorizer(r2) {
 				return
@@ -324,9 +323,9 @@ func (w *codeArea) expandSmallWordAbbr(trigger rune, categorizer func(rune) int)
 		abbr, full = a, f
 	})
 	if len(abbr) > 0 {
-		*c = CodeBuffer{
-			Content: c.Content[:c.Dot-len(abbr)-triggerLen] + full + string(trigger),
-			Dot:     c.Dot - len(abbr) + len(full),
+		*buf = CodeBuffer{
+			Content: buf.Content[:buf.Dot-len(abbr)-triggerLen] + full + string(trigger),
+			Dot:     buf.Dot - len(abbr) + len(full),
 		}
 		w.resetInserts()
 	}
@@ -383,7 +382,7 @@ func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 		w.State.Buffer.InsertAtDot(s)
 		w.inserts += s
 		w.lastCodeBuffer = w.State.Buffer
-		if key.Rune == ' ' {
+		if parse.IsWhitespace(key.Rune) {
 			w.expandCommandAbbr()
 		}
 		w.expandSimpleAbbr()

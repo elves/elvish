@@ -386,6 +386,17 @@ var codeAreaHandleTests = []handleTest{
 		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "x|echo hello ", Dot: 13}},
 	},
 	{
+		Name: "command abbreviation expansion at start of second line",
+		Given: NewCodeArea(CodeAreaSpec{
+			CommandAbbreviations: func(f func(abbr, full string)) {
+				f("eh", "echo hello")
+			},
+			State: CodeAreaState{Buffer: CodeBuffer{Content: "echo\n", Dot: 5}},
+		}),
+		Events:       []term.Event{term.K('e'), term.K('h'), term.K(' ')},
+		WantNewState: CodeAreaState{Buffer: CodeBuffer{Content: "echo\necho hello ", Dot: 16}},
+	},
+	{
 		Name: "no command abbreviation expansion when not in command position",
 		Given: NewCodeArea(CodeAreaSpec{
 			CommandAbbreviations: func(f func(abbr, full string)) {

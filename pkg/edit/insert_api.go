@@ -35,11 +35,12 @@ import (
 //
 // A map from command abbreviations to their expansions.
 //
-// A command abbreviation is replaced by its expansion when it is typed in full and consecutively at
-// the end of the line, without being interrupted by the use of other editing functionalities, such
-// as cursor movements. It is only expanded when the abbreviation is seen in the command position
-// followed by a space. This is similar to Fish shell abbreviations but does not trigger the
-// expansion when pressing Enter -- you must type a space first.
+// A command abbreviation is replaced by its expansion when seen in the command
+// position followed by a [whitespace](language.html#whitespace). This is
+// similar to the Fish shell's
+// [abbreviations](https://fishshell.com/docs/current/cmds/abbr.html), but does
+// not trigger when executing a command with Enter -- you must type a space
+// first.
 //
 // Examples:
 //
@@ -52,8 +53,7 @@ import (
 
 //elvdoc:var small-word-abbr
 //
-// A map from small-word abbreviations to their expansions. Note that you probably want to create
-// [command abbreviation](#command-abbr) rather than a small-word abbreviation.
+// A map from small-word abbreviations to their expansions.
 //
 // A small-word abbreviation is replaced by its expansion after it is typed in
 // full and consecutively, and followed by another character (the *trigger*
