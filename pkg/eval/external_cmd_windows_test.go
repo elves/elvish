@@ -7,5 +7,5 @@ import (
 )
 
 func exitWaitStatus(exit uint32) syscall.WaitStatus {
-	return syscall.WaitStatus{exit}
+	return syscall.WaitStatus{ExitCode: exit}
 }
