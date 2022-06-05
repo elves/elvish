@@ -1,0 +1,56 @@
+{
+    "name": "elvish",
+    "displayName": "Elvish",
+    "description": "Elvish language support for Visual Studio Code",
+    "version": "0.1.0",
+    "publisher": "elves",
+    "license": "BSD-2-Clause",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/elves/elvish"
+    },
+    "engines": {
+        "vscode": "^1.65.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "activationEvents": [
+        "onLanguage:elvish"
+    ],
+    "main": "./extension.js",
+    "contributes": {
+        "languages": [{
+            "id": "elvish",
+            "aliases": ["Elvish", "elvish"],
+            "extensions": [".elv"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "elvish",
+            "scopeName": "source.elvish",
+            "path": "./elvish.tmLanguage.json"
+        }],
+        "configuration": {
+            "title": "Elvish",
+            "properties": {
+                "elvish.trace.server": {
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "off",
+                    "description": "Trace communication between VS Code and the Elvish language server. Trace messages are shown in the Elvish Language Server output channel."
+                }
+            }
+        }
+    },
+	"scripts": {
+	},
+    "dependencies": {
+        "vscode-languageclient": "^7.0.0"
+    }
+}

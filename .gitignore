@@ -21,8 +21,6 @@ _testmain.go
 
 *.exe
 
-/.vscode/
-
 # Project specific
 cover
 /_bin/

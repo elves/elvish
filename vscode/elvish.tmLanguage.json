@@ -1,0 +1,117 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Elvish",
+	"scopeName": "source.elvish",
+	"fileTypes": [
+		"elv"
+	],
+	"patterns": [
+		{
+			"name": "string.quoted.double.elvish",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.elvish",
+					"match": "\\\\."
+				}
+			]
+		},
+		{
+			"name": "string.quoted.single.elvish",
+			"begin": "'",
+			"end": "'"
+		},
+
+		{
+			"name": "comment.line.number-sign.elvish",
+			"begin": "#",
+			"end": "$"
+		},
+
+		{
+			"name": "variable.other.elvish",
+			"match": "\\$[\\w\\d_:~-]+"
+		},
+		{
+			"match": "(?<=^|\\{ |\\{\t|\\(|\\||\\;)\\s*(var|set|tmp|del)((\\s+[\\w\\d_:~-]+)*)",
+			"captures": {
+				"1": {
+					"name": "keyword.other.elvish"
+				},
+				"2": {
+					"name": "variable.other.elvish"
+				}
+			}
+		},
+		{
+			"match": "(?<=^|\\{ |\\{\t|\\(|\\||\\;)\\s*(for)\\s+([\\w\\d_:~-]+)",
+			"captures": {
+				"1": {
+					"name": "keyword.control.elvish"
+				},
+				"2": {
+					"name": "variable.other.elvish"
+				}
+			}
+		},
+		{
+			"match": "}\\s+(catch|except)\\s+([\\w\\d_:~-]+)",
+			"captures": {
+				"1": {
+					"name": "keyword.control.elvish"
+				},
+				"2": {
+					"name": "variable.other.elvish"
+				}
+			}
+		},
+
+		{
+			"match": "(?<=^|\\{ |\\{\t|\\(|\\||\\;)\\s*(nop|!=|!=s|%|\\*|\\+|-gc|-ifaddrs|-log|-override-wcwidth|-stack|-|/|<|<=|<=s|<s|==|==s|>|>=|>=s|>s|all|assoc|base|bool|break|call|cd|compare|constantly|continue|count|defer|deprecate|dissoc|drop|each|eawk|echo|eq|eval|exact-num|exec|exit|external|fail|fg|float64|from-json|from-lines|from-terminated|get-env|has-env|has-external|has-key|has-value|is|keys|kind-of|make-map|multi-error|nop|not-eq|not|ns|num|one|only-bytes|only-values|order|peach|pprint|print|printf|put|rand|randint|range|read-line|read-upto|repeat|repr|resolve|return|run-parallel|search-external|set-env|show|sleep|slurp|src|styled|styled-segment|take|tilde-abbr|time|to-json|to-lines|to-string|to-terminated|unset-env|use-mod|wcswidth)(?=[\\s)}<>;|&])",
+			"captures": {
+				"1": {
+					"name": "support.function"
+				}
+			}
+		},
+
+		{
+			"match": "(?<=^|\\{ |\\{\t|\\(|\\||\\;)\\s*(and|or|coalesce)(?=[\\s)}<>;|&])",
+			"captures": {
+				"1": {
+					"name": "keyword.operator.elvish"
+				}
+			}
+		},
+		{
+			"match": "(?<=^|\\{ |\\{\t|\\(|\\||\\;)\\s*(use|var|set|tmp|del|pragma|fn)(?=[\\s)}<>;|&])",
+			"captures": {
+				"1": {
+					"name": "keyword.other.elvish"
+				}
+			}
+		},
+		{
+			"match": "(?<=^|\\{ |\\{\t|\\(|\\||\\;)\\s*(while|for|try|if)(?=[\\s)}<>;|&])",
+			"captures": {
+				"1": {
+					"name": "keyword.control.elvish"
+				}
+			}
+		},
+		{
+			"match": "}\\s+(elif|else|finally)\\s+([\\w\\d_:~-]+)",
+			"captures": {
+				"1": {
+					"name": "keyword.control.elvish"
+				}
+			}
+		},
+
+		{
+			"name": "keyword.operator.elvish",
+			"match": "[*?|&;<>()\\[\\]{}]"
+		}
+	]
+}
