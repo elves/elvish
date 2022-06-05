@@ -27,7 +27,7 @@ func (ev EnvVariable) Unset() error {
 	return os.Unsetenv(ev.name)
 }
 
-func (ev EnvVariable) Exists() bool {
+func (ev EnvVariable) IsSet() bool {
 	_, ok := os.LookupEnv(ev.name)
 	return ok
 }

@@ -144,6 +144,8 @@ func TestSet_ErrorInSetMethod(t *testing.T) {
 }
 
 func TestTmp(t *testing.T) {
+	testutil.Unsetenv(t, "X")
+
 	Test(t,
 		That("var x = foo; put $x; { tmp x = bar; put $x }; put $x").
 			Puts("foo", "bar", "foo"),

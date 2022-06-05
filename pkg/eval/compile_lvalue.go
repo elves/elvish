@@ -173,7 +173,7 @@ func set(fm *Frame, r diag.Ranger, temp bool, variable vars.Var, value any) Exce
 
 		needUnsetEnv := false
 		if envVar, ok := variable.(vars.EnvVariable); ok {
-			needUnsetEnv = !envVar.Exists()
+			needUnsetEnv = !envVar.IsSet()
 		}
 
 		err := variable.Set(value)
