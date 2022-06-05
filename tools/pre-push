@@ -1,0 +1,27 @@
+#!/bin/sh -e
+
+# To use this script as a Git hook:
+#
+#   cd .git/hooks # from repo root
+#   ln -s ../../tools/pre-push .
+
+if ! git diff HEAD --quiet; then
+    if git diff --cached --quiet; then
+        echo 'Local changes exist and none is staged; stashing.'
+        git stash
+        trap 'r=$?; git stash pop; trap - EXIT; exit $r' EXIT INT HUP TERM
+    else
+        echo 'Local changes exist and some are staged; not stashing.'
+        echo 'Make a commit, stash all the changes, or unstage all the changes.'
+        exit 1
+	fi
+fi
+
+make test checkstyle lint codespell
+make -C website check-rellinks
+# A quick cross compilation test. Not exhaustive, but will catch most issues.
+if test `go env GOOS` = windows; then
+    GOOS=linux GOARCH=amd64 go build ./...
+else
+    GOOS=windows GOARCH=amd64 go build ./...
+fi
