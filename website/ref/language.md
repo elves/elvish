@@ -913,10 +913,10 @@ makes `\r\n` also valid line separators:
 ▶ b
 ```
 
-**Note 1**. Only the last newline is ever removed, so empty lines are preserved;
+**Note**: Only the last newline is ever removed, so empty lines are preserved;
 `(echo "a\n")` evaluates to two values, `"a"` and `""`.
 
-**Note 2**. One consequence of this mechanism is that you can not distinguish
+**Note**: One consequence of this mechanism is that you can not distinguish
 outputs that lack a trailing newline from outputs that have one; `(echo what)`
 evaluates to the same value as `(print what)`. If such a distinction is needed,
 use [`slurp`](builtin.html#slurp) to preserve the original bytes output.
@@ -934,6 +934,10 @@ and byte output might not agree with the order in which they happened:
 **Note**: If you want to capture the stdout and stderr byte streams independent
 of each other, see the example in the
 [run-parallel](./builtin.html#run-parallel) documentation.
+
+**Note**: Output capture expressions do not introduce new scopes. For example,
+`nop (var x = foo)` will leave the variable `$x` defined. To introduce a new
+scope, wrap the code inside a [lambda](#function), e.g. `nop ({ var x = foo })`.
 
 ## Exception capture
 
@@ -1964,6 +1968,10 @@ if ?(test -d .git) {
 However, for Elvish's builtin predicates that output values instead of throw
 exceptions, the output capture construct `()` should be used.
 
+**Note**: The `if` command itself doesn't introduce a new scope. For example,
+`if (var x = foo; put $x) { }` will leave the variable `$x` defined. However,
+the body blocks introduce new scopes because they are [lambdas](#function).
+
 ## Conditional loop: `while` {#while}
 
 Syntax:
@@ -1980,6 +1988,10 @@ Execute the body as long as the condition evaluates to a booleanly true value.
 
 The else body, if present, is executed if the body has never been executed (i.e.
 the condition evaluates to a booleanly false value in the very beginning).
+
+**Note**: The `while` command itself doesn't introduce a new scope. For example,
+`while (var x = foo; put $x) { }` will leave the variable `$x` defined. However,
+the body blocks introduce new scopes because they are [lambdas](#function).
 
 ## Iterative loop: `for` {#for}
 
