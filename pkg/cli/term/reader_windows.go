@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"unicode/utf16"
 
 	"golang.org/x/sys/windows"
 
@@ -37,6 +38,7 @@ func (r *reader) ReadEvent() (Event, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	handles := []windows.Handle{r.console, r.stopEvent}
+	var leadingSurrogate *surrogateKeyEvent
 	for {
 		triggered, _, err := ewindows.WaitForMultipleObjects(handles, false, ewindows.INFINITE)
 		if err != nil {
@@ -55,6 +57,16 @@ func (r *reader) ReadEvent() (Event, error) {
 			return nil, err
 		}
 		event := convertEvent(buf[0].GetEvent())
+		if surrogate, ok := event.(surrogateKeyEvent); ok {
+			if leadingSurrogate == nil {
+				leadingSurrogate = &surrogate
+				// Keep reading the trailing surrogate.
+				continue
+			} else {
+				r := utf16.DecodeRune(leadingSurrogate.r, surrogate.r)
+				return KeyEvent{Rune: r}, nil
+			}
+		}
 		if event != nil {
 			return event, nil
 		}
@@ -111,6 +123,10 @@ const (
 	shift     = 0x10
 )
 
+type surrogateKeyEvent struct{ r rune }
+
+func (surrogateKeyEvent) isEvent() {}
+
 // Converts the native ewindows.InputEvent type to a suitable Event type. It returns
 // nil if the event should be ignored.
 func convertEvent(event ewindows.InputEvent) Event {
@@ -131,8 +147,11 @@ func convertEvent(event ewindows.InputEvent) Event {
 			// which is the case, so we rely on heuristics derived from
 			// real-world observations.
 			if filteredMod == 0 {
-				// TODO: Handle surrogate pairs
-				return KeyEvent(ui.Key{Rune: r})
+				if utf16.IsSurrogate(r) {
+					return surrogateKeyEvent{r}
+				} else {
+					return KeyEvent(ui.Key{Rune: r})
+				}
 			} else if filteredMod == shift {
 				// A lone Shift seems to be always part of the character.
 				return KeyEvent(ui.Key{Rune: r})

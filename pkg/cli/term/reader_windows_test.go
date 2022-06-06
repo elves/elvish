@@ -2,6 +2,7 @@ package term
 
 import (
 	"testing"
+	"unicode/utf16"
 
 	"src.elv.sh/pkg/sys/ewindows"
 	"src.elv.sh/pkg/tt"
@@ -9,6 +10,8 @@ import (
 )
 
 func TestConvertEvent(t *testing.T) {
+	r1, r2 := utf16.EncodeRune('😀')
+
 	tt.Test(t, tt.Fn("convertEvent", convertEvent), tt.Table{
 		// Only convert KeyEvent
 		Args(&ewindows.MouseEvent{}).Rets(nil),
@@ -19,6 +22,9 @@ func TestConvertEvent(t *testing.T) {
 		Args(charKeyEvent('A', shift)).Rets(K('A')),
 		Args(charKeyEvent('µ', leftCtrl|rightAlt)).Rets(K('µ')),
 		Args(charKeyEvent('ẞ', leftCtrl|rightAlt|shift)).Rets(K('ẞ')),
+
+		Args(charKeyEvent(uint16(r1), 0)).Rets(surrogateKeyEvent{r1}),
+		Args(charKeyEvent(uint16(r2), 0)).Rets(surrogateKeyEvent{r2}),
 
 		Args(funcKeyEvent(0x1b, 0)).Rets(K('[', ui.Ctrl)),
 
