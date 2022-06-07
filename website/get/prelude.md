@@ -245,18 +245,6 @@ your favorite AUR helper:
 yay -S elvish-git
 ```
 
-## Fedora
-
-RPM packages are available from
-[the FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository):
-
-```elvish
-# Add FZUG repo
-dnf config-manager --add-repo=http://repo.fdzh.org/FZUG/FZUG.repo
-# Install latest packaged release
-dnf install elvish
-```
-
 ## Debian / Ubuntu
 
 Elvish is packaged by [Debian](https://packages.debian.org/elvish) since buster
