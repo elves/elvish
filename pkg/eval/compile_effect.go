@@ -498,7 +498,7 @@ func (op *redirOp) exec(fm *Frame) Exception {
 			// close
 			fm.ports[dst] = &Port{
 				// Ensure that writing to value output throws an exception
-				sendStop: closedSendStop, sendError: &ErrNoValueOutput}
+				sendStop: closedSendStop, sendError: &ErrPortDoesNotSupportValueOutput}
 		case src >= len(fm.ports) || fm.ports[src] == nil:
 			return fm.errorp(op, InvalidFD{FD: src})
 		default:
@@ -552,7 +552,7 @@ func fileRedirPort(mode parse.RedirMode, f *os.File, closeFile bool) *Port {
 	return &Port{
 		File: f, closeFile: closeFile,
 		// Throws errValueOutputIsClosed when writing.
-		Chan: nil, sendStop: closedSendStop, sendError: &ErrNoValueOutput,
+		Chan: nil, sendStop: closedSendStop, sendError: &ErrPortDoesNotSupportValueOutput,
 	}
 }
 

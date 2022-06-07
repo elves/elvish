@@ -1610,7 +1610,7 @@ date: stdout: Bad file descriptor
 Exception: date exited with 1
 [tty 3], line 1: date >&-
 ~> put foo >&-
-Exception: port has no value output
+Exception: port does not support value output
 [tty 37], line 1: put foo >&-
 ```
 
@@ -2234,7 +2234,7 @@ closed pipe, so the following loop will terminate with an exception:
 
 ```elvish-transcript
 ~> while $true { put foo } > &-
-Exception: port has no value output
+Exception: port does not support value output
 [tty 9], line 1: while $true { put foo } > &-
 ```
 

@@ -35,9 +35,9 @@ type Port struct {
 	readerGone *int32
 }
 
-// ErrNoValueOutput is thrown when writing to a pipe without a value output
-// component.
-var ErrNoValueOutput = errors.New("port has no value output")
+// ErrPortDoesNotSupportValueOutput is thrown when writing to a port that does
+// not support value output.
+var ErrPortDoesNotSupportValueOutput = errors.New("port does not support value output")
 
 // A closed channel, suitable as a value for Port.sendStop when there is no
 // reader to start with.

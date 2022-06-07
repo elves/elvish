@@ -48,7 +48,7 @@ func TestRe(t *testing.T) {
 		That("put (re:find &posix 'a(x|xy)+' AaxyxxxyZ)[text]").Puts("axyxxxy"),
 
 		// re:find bubbles output error
-		That("re:find . ab >&-").Throws(eval.ErrNoValueOutput),
+		That("re:find . ab >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
 
 		That("re:replace '(ba|z)sh' '${1}SH' 'bash and zsh'").Puts("baSH and zSH"),
 		That("re:replace &literal '(ba|z)sh' '$sh' 'bash and zsh'").Puts("$sh and $sh"),
@@ -72,7 +72,7 @@ func TestRe(t *testing.T) {
 		That("re:split '(' x").Throws(ErrorWithType(&syntax.Error{})),
 
 		// re:split bubbles output error
-		That("re:split . ab >&-").Throws(eval.ErrNoValueOutput),
+		That("re:split . ab >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
 
 		That("re:quote a.txt").Puts(`a\.txt`),
 		That("re:quote '(*)'").Puts(`\(\*\)`),

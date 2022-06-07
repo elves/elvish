@@ -207,5 +207,5 @@ func TestPrintf(t *testing.T) {
 }
 
 func thatOutputErrorIsBubbled(code string) Case {
-	return That(code + " >&-").Throws(OneOfErrors(os.ErrInvalid, eval.ErrNoValueOutput))
+	return That(code + " >&-").Throws(OneOfErrors(os.ErrInvalid, eval.ErrPortDoesNotSupportValueOutput))
 }

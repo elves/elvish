@@ -28,7 +28,7 @@ func TestCompleteGetopt(t *testing.T) {
 	TestWithSetup(t, setupCompleteGetopt,
 		// Complete argument
 		That("complete ''").Puts("first1", "first2"),
-		That("complete '' >&-").Throws(eval.ErrNoValueOutput),
+		That("complete '' >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
 
 		// Complete option
 		That("complete -").Puts(
@@ -36,7 +36,7 @@ func TestCompleteGetopt(t *testing.T) {
 			complexItem{Stem: "--all", Display: ui.T("--all (Show all)")},
 			complexItem{Stem: "-n", Display: ui.T("-n new-name (Set name)")},
 			complexItem{Stem: "--name", Display: ui.T("--name new-name (Set name)")}),
-		That("complete - >&-").Throws(eval.ErrNoValueOutput),
+		That("complete - >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
 
 		// Complete long option
 		That("complete --").Puts(
@@ -44,27 +44,27 @@ func TestCompleteGetopt(t *testing.T) {
 			complexItem{Stem: "--name", Display: ui.T("--name new-name (Set name)")}),
 		That("complete --a").Puts(
 			complexItem{Stem: "--all", Display: ui.T("--all (Show all)")}),
-		That("complete -- >&-").Throws(eval.ErrNoValueOutput),
+		That("complete -- >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
 
 		// Complete argument of short option
 		That("complete -n ''").Puts("name1", "name2"),
-		That("complete -n '' >&-").Throws(eval.ErrNoValueOutput),
+		That("complete -n '' >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
 
 		// Complete argument of long option
 		That("complete --name ''").Puts("name1", "name2"),
-		That("complete --name '' >&-").Throws(eval.ErrNoValueOutput),
+		That("complete --name '' >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
 
 		// Complete (normal) argument after option that doesn't take an argument
 		That("complete -a ''").Puts("first1", "first2"),
-		That("complete -a '' >&-").Throws(eval.ErrNoValueOutput),
+		That("complete -a '' >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
 
 		// Complete second argument
 		That("complete arg1 ''").Puts("second1", "second2"),
-		That("complete arg1 '' >&-").Throws(eval.ErrNoValueOutput),
+		That("complete arg1 '' >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
 
 		// Complete variadic argument
 		That("complete arg1 arg2 ''").Puts("second1", "second2"),
-		That("complete arg1 arg2 '' >&-").Throws(eval.ErrNoValueOutput),
+		That("complete arg1 arg2 '' >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
 	)
 }
 
