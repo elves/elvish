@@ -27,7 +27,6 @@ var (
 
 func init() {
 	addBuiltinFns(map[string]any{
-		"nop":        nop,
 		"kind-of":    kindOf,
 		"constantly": constantly,
 
@@ -68,6 +67,8 @@ func init() {
 //
 // Etymology: Various languages, in particular NOP in
 // [assembly languages](https://en.wikipedia.org/wiki/NOP).
+
+var nopGoFn = NewGoFn("nop", nop)
 
 func nop(opts RawOptions, args ...any) {
 	// Do nothing

@@ -148,20 +148,15 @@ func (c *Closure) Call(fm *Frame, args []any, opts map[string]any) error {
 	return exc
 }
 
-var (
-	fnDefault = NewGoFn("nop~", nop)
-	nsDefault = &Ns{}
-)
-
 // MakeVarFromName creates a Var with a suitable type constraint inferred from
 // the name.
 func MakeVarFromName(name string) vars.Var {
 	switch {
 	case strings.HasSuffix(name, FnSuffix):
-		val := fnDefault
+		val := nopGoFn
 		return vars.FromPtr(&val)
 	case strings.HasSuffix(name, NsSuffix):
-		val := nsDefault
+		val := &Ns{}
 		return vars.FromPtr(&val)
 	default:
 		return vars.FromInit(nil)

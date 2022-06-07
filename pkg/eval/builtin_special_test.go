@@ -41,6 +41,7 @@ func TestVar(t *testing.T) {
 		// Declaring a variable whose name ends in "~" initializes it to the
 		// builtin nop function.
 		That("var cmd~; cmd &ignored-opt ignored-arg").DoesNothing(),
+		That("var cmd~; is $cmd~ $nop~").Puts(true),
 		// Declaring multiple variables
 		That("var x y", "put $x $y").Puts(nil, nil),
 		// Declaring one variable with initial value
