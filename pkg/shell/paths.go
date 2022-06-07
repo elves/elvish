@@ -61,14 +61,23 @@ func dbPath() (string, error) {
 // Returns a path in the legacy data directory path, and whether it exists and
 // matches the expected file/directory property.
 func legacyDataPath(name string, dir bool) (string, bool) {
+	dataDir, exists := legacyDataDir()
+	if !exists {
+		return "", false
+	}
+	p := filepath.Join(dataDir, name)
+	info, err := os.Stat(p)
+	return p, err == nil && info.IsDir() == dir
+}
+
+// Returns the legacy data directory ~/.elvish and whether it exists as a
+// directory.
+func legacyDataDir() (string, bool) {
 	home, err := fsutil.GetHome("")
 	if err != nil {
 		return "", false
 	}
-	p := filepath.Join(home, ".elvish", name)
+	p := filepath.Join(home, ".elvish")
 	info, err := os.Stat(p)
-	if err != nil || info.IsDir() != dir {
-		return "", false
-	}
-	return p, true
+	return p, err == nil && info.IsDir()
 }

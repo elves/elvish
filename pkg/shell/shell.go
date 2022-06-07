@@ -54,11 +54,22 @@ func (p *Program) RegisterFlags(fs *prog.FlagSet) {
 	}
 }
 
+const legacyDataDirWarning = `Warning: ~/.elvish will be ignored from Elvish 0.20.0.
+
+Move files in ~/.elvish to their new locations, as documented in https://elv.sh/ref/command.html, and remove ~/.elvish.
+
+When moving the database file, kill the daemon with "use daemon; kill $daemon:pid" before doing so. The daemon will respawn when you launch another Elvish instance.
+`
+
 func (p *Program) Run(fds [3]*os.File, args []string) error {
 	cleanup1 := IncSHLVL()
 	defer cleanup1()
 	cleanup2 := initSignal(fds)
 	defer cleanup2()
+
+	if _, hasLegacyDataDir := legacyDataDir(); hasLegacyDataDir {
+		fmt.Fprint(fds[2], legacyDataDirWarning)
+	}
 
 	ev := MakeEvaler(fds[2])
 

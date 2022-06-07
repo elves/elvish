@@ -17,7 +17,7 @@ import (
 )
 
 func TestInteract_NewRcFile_Default(t *testing.T) {
-	home := setupHomePaths(t)
+	home := setupCleanHomePaths(t)
 	testutil.MustWriteFile(
 		filepath.Join(home, ".config", "elvish", "rc.elv"), "echo hello new rc.elv")
 
@@ -27,7 +27,7 @@ func TestInteract_NewRcFile_Default(t *testing.T) {
 }
 
 func TestInteract_NewRcFile_XDG_CONFIG_HOME(t *testing.T) {
-	setupHomePaths(t)
+	setupCleanHomePaths(t)
 	xdgConfigHome := testutil.Setenv(t, env.XDG_CONFIG_HOME, testutil.TempDir(t))
 	testutil.MustWriteFile(
 		filepath.Join(xdgConfigHome, "elvish", "rc.elv"),

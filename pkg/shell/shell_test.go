@@ -10,12 +10,24 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
+func TestShell_WarnsAboutLegacyDataDir(t *testing.T) {
+	home := setupCleanHomePaths(t)
+	testutil.MustMkdirAll(filepath.Join(home, ".elvish"))
+
+	Test(t, &Program{},
+		ThatElvish().
+			WritesStderrContaining(legacyDataDirWarning),
+	)
+}
+
 func TestShell_LegacyLibPath(t *testing.T) {
-	home := setupHomePaths(t)
+	home := setupCleanHomePaths(t)
 	testutil.MustWriteFile(filepath.Join(home, ".elvish", "lib", "a.elv"), "echo mod a")
 
 	Test(t, &Program{},
-		ThatElvish("-c", "use a").WritesStdout("mod a\n"),
+		ThatElvish("-c", "use a").
+			WritesStdout("mod a\n").
+			WritesStderrContaining(legacyDataDirWarning),
 	)
 }
 
@@ -79,7 +91,7 @@ func TestIncSHLVL(t *testing.T) {
 
 // Common test utilities.
 
-func setupHomePaths(t testutil.Cleanuper) string {
+func setupCleanHomePaths(t testutil.Cleanuper) string {
 	testutil.Unsetenv(t, env.XDG_CONFIG_HOME)
 	testutil.Unsetenv(t, env.XDG_DATA_HOME)
 	return testutil.TempHome(t)

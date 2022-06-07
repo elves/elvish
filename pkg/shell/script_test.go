@@ -8,6 +8,7 @@ import (
 )
 
 func TestScript(t *testing.T) {
+	setupCleanHomePaths(t)
 	testutil.InTempDir(t)
 	testutil.MustWriteFile("a.elv", "echo hello")
 

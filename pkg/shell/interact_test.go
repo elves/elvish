@@ -9,7 +9,7 @@ import (
 )
 
 func TestInteract(t *testing.T) {
-	setupHomePaths(t)
+	setupCleanHomePaths(t)
 	testutil.InTempDir(t)
 	testutil.MustWriteFile("rc.elv", "echo hello from rc.elv")
 	testutil.MustWriteFile("rc-dnc.elv", "echo $a")
@@ -31,7 +31,7 @@ func TestInteract(t *testing.T) {
 }
 
 func TestInteract_DefaultRCPath(t *testing.T) {
-	home := setupHomePaths(t)
+	home := setupCleanHomePaths(t)
 	// Legacy RC path
 	testutil.MustWriteFile(
 		filepath.Join(home, ".elvish", "rc.elv"), "echo hello legacy rc.elv")
