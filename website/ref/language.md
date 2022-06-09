@@ -1984,8 +1984,8 @@ unless <condition> {
 }
 ```
 
-The `unless` special command evaluates the condition to a booleanly true 
-value and skips its body.
+The `unless` special command evaluates the condition to a booleanly true value
+and skips its body.
 
 The condition part is an expression, not a command like in other shells.
 Example:
@@ -2028,10 +2028,10 @@ unless ?(test -d ~/.asdf) {
 However, for Elvish's builtin predicates that output values instead of throw
 exceptions, the output capture construct `()` should be used.
 
-**Note**: Similarly to the `if` command, the `unless` command itself doesn't 
-introduce a new scope. For example, `unless (var x = foo; put $x) { }` will leave
-the variable `$x` defined. However, the body block introduces a new scope because 
-it is a [lambdas](#function).
+**Note**: Similarly to the `if` command, the `unless` command itself doesn't
+introduce a new scope. For example, `unless (var x = foo; put $x) { }` will
+leave the variable `$x` defined. However, the body block introduces a new scope
+because it is a [lambdas](#function).
 
 ## Conditional loop: `while` {#while}
 
