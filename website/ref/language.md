@@ -1972,6 +1972,67 @@ exceptions, the output capture construct `()` should be used.
 `if (var x = foo; put $x) { }` will leave the variable `$x` defined. However,
 the body blocks introduce new scopes because they are [lambdas](#function).
 
+## Condition: `unless` {#unless}
+
+**TODO**: Document the syntax notation, and add more examples.
+
+Syntax:
+
+```elvish-transcript
+unless <condition> {
+    <body>
+}
+```
+
+The `unless` special command evaluates the condition to a booleanly true 
+value and skips its body.
+
+The condition part is an expression, not a command like in other shells.
+Example:
+
+```elvish
+unless (path:is-dir ~/.asdf) {
+    echo "no asdf install found"
+}
+```
+
+Is equivalent to:
+
+```elvish
+if (not (path:is-dir ~/.asdf) {
+   echo "no asdf install found"
+}
+```
+
+The condition part must be syntactically a single expression, but it can
+evaluate to multiple values, in which case they are and'ed:
+
+```elvish
+unless (put $true $false) {
+    echo "will be executed"
+}
+```
+
+If the expression evaluates to 0 values, it is considered true, consistent with
+how `and` works.
+
+Tip: a combination of `unless` and `?()` gives you a semantics close to other
+shells:
+
+```elvish
+unless ?(test -d ~/.asdf) {
+    mkdir ~/.asdf
+}
+```
+
+However, for Elvish's builtin predicates that output values instead of throw
+exceptions, the output capture construct `()` should be used.
+
+**Note**: Similarly to the `if` command, the `unless` command itself doesn't 
+introduce a new scope. For example, `unless (var x = foo; put $x) { }` will leave
+the variable `$x` defined. However, the body block introduces a new scope because 
+it is a [lambdas](#function).
+
 ## Conditional loop: `while` {#while}
 
 Syntax:
