@@ -315,6 +315,15 @@ func TestIf(t *testing.T) {
 	)
 }
 
+func TestUnless(t *testing.T) {
+	Test(t,
+		That("unless true { put then }").DoesNothing(),
+		That("unless $false { put then }").Puts("then"),
+		// Exception in condition expression
+		That("unless (fail x) { }").Throws(FailError{"x"}, "fail x"),
+	)
+}
+
 func TestTry(t *testing.T) {
 	Test(t,
 		That("try { nop } catch { put bad } else { put good }").Puts("good"),
