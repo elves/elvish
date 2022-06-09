@@ -119,9 +119,10 @@ func MakeEvaler(stderr io.Writer) *eval.Evaler {
 	ev := eval.NewEvaler()
 	libs, err := libPaths()
 	if err != nil {
-		fmt.Fprintln(stderr, "Warning:", err)
+		fmt.Fprintln(stderr, "Warning: resolving lib paths:", err)
+	} else {
+		ev.LibDirs = libs
 	}
-	ev.LibDirs = libs
 	mods.AddTo(ev)
 	return ev
 }

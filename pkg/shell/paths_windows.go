@@ -9,37 +9,12 @@ import (
 	"src.elv.sh/pkg/env"
 )
 
-func newRCPath() (string, error) {
-	d, err := roamingAppData()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(d, "elvish", "rc.elv"), nil
-}
-
-func newLibPaths() ([]string, error) {
-	local, err := localAppData()
-	if err != nil {
-		return nil, err
-	}
-	localLib := filepath.Join(local, "elvish", "lib")
-
-	roaming, err := roamingAppData()
-	if err != nil {
-		return nil, err
-	}
-	roamingLib := filepath.Join(roaming, "elvish", "lib")
-
-	return []string{roamingLib, localLib}, nil
-}
-
-func newDBPath() (string, error) {
-	d, err := localAppData()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(d, "elvish", "db.bolt"), nil
-}
+var (
+	defaultConfigHome = roamingAppData
+	defaultDataHome   = localAppData
+	defaultDataDirs   = []string{}
+	defaultStateHome  = localAppData
+)
 
 func localAppData() (string, error) {
 	return windows.KnownFolderPath(windows.FOLDERID_LocalAppData, windows.KF_FLAG_CREATE)
