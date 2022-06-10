@@ -1981,11 +1981,14 @@ Syntax:
 ```elvish-transcript
 unless <condition> {
     <body>
+} else {
+    <else-body>
 }
 ```
 
-The `unless` special command evaluates the condition to a booleanly true value
-and skips its body.
+The `unless` special command evaluates the condition to a booleanly true value,
+skips its body and executes the else body, if the else body is present. It is
+the negation of the `if` special command except no `elif` clauses are allowed.
 
 The condition part is an expression, not a command like in other shells.
 Example:
@@ -2010,6 +2013,8 @@ evaluate to multiple values, in which case they are and'ed:
 ```elvish
 unless (put $true $false) {
     echo "will be executed"
+} else {
+    echo "will not be executed"
 }
 ```
 
