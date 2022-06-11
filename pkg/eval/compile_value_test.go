@@ -74,8 +74,6 @@ func TestStringLiteral(t *testing.T) {
 	Test(t,
 		That(`put 'such \"''literal'`).Puts(`such \"'literal`),
 		That(`put "much \n\033[31;1m$cool\033[m"`).Puts("much \n\033[31;1m$cool\033[m"),
-		That(`put "x\302\222\302\214y"`).Puts("x\u0092\u008cy"),
-		That(`put "x\u0092\u008cy"`).Puts("x\u0092\u008cy"),
 	)
 }
 

@@ -23,17 +23,15 @@ func QuoteVariableName(s string) string {
 
 	// Keep track of whether it is a valid (unquoted) variable name.
 	bare := true
-	for s2 := s; len(s2) > 0; {
-		r, w := utf8.DecodeRuneInString(s2)
-		if r == utf8.RuneError || !unicode.IsPrint(r) {
-			// Contains unprintable character; force double quote.
+	for _, r := range s {
+		if r == unicode.ReplacementChar || !unicode.IsPrint(r) {
+			// Contains invalid UTF-8 sequence or unprintable character; force
+			// double quote.
 			return quoteDouble(s)
 		}
 		if !allowedInVariableName(r) {
 			bare = false
-			break
 		}
-		s2 = s2[w:]
 	}
 
 	if bare {
@@ -42,7 +40,7 @@ func QuoteVariableName(s string) string {
 	return quoteSingle(s)
 }
 
-// QuoteAs returns a representation of s in elvish syntax, preferring the syntax
+// QuoteAs returns a representation of s in Elvish syntax, preferring the syntax
 // specified by q, which must be one of Bareword, SingleQuoted, or DoubleQuoted.
 // It returns the quoted string and the actual quoting.
 func QuoteAs(s string, q PrimaryType) (string, PrimaryType) {
@@ -56,16 +54,15 @@ func QuoteAs(s string, q PrimaryType) (string, PrimaryType) {
 
 	// Keep track of whether it is a valid bareword.
 	bare := s[0] != '~'
-	for s2 := s; len(s2) > 0; {
-		r, w := utf8.DecodeRuneInString(s2)
-		if r == utf8.RuneError || !unicode.IsPrint(r) {
-			// Contains unprintable character; force double quote.
+	for _, r := range s {
+		if r == unicode.ReplacementChar || !unicode.IsPrint(r) {
+			// Contains invalid UTF-8 sequence or unprintable character; force
+			// double quote.
 			return quoteDouble(s), DoubleQuoted
 		}
 		if !allowedInBareword(r, strictExpr) {
 			bare = false
 		}
-		s2 = s2[w:]
 	}
 
 	if q == Bareword && bare {
@@ -106,26 +103,24 @@ func rtohex(r rune, w int) []byte {
 func quoteDouble(s string) string {
 	var buf bytes.Buffer
 	buf.WriteByte('"')
-	for len(s) > 0 {
+	for s != "" {
 		r, w := utf8.DecodeRuneInString(s)
-		if r == utf8.RuneError {
+		if r == utf8.RuneError && w == 1 {
 			// An invalid UTF-8 sequence was seen -- encode first byte as a hex literal.
 			buf.WriteByte('\\')
 			buf.WriteByte('x')
 			buf.Write(rtohex(rune(s[0]), 2))
-			s = s[w:]
-			continue
-		}
-
-		// The common case -- a valid UTF-8 sequence was decoded so we have a rune.
-		if e, ok := doubleUnescape[r]; ok {
-			// Handle " and \ as well as things like \n.
+		} else if e, ok := doubleUnescape[r]; ok {
+			// This handles the escaping of " and \ too.
 			buf.WriteByte('\\')
 			buf.WriteRune(e)
-		} else if unicode.IsPrint(r) {
+		} else if unicode.IsPrint(r) && r != utf8.RuneError {
+			// RuneError is technically printable, but don't print it directly
+			// to avoid confusion.
 			buf.WriteRune(r)
-		} else if r <= ' ' {
-			// Control char not handled by doubleUnescape.
+		} else if r <= 0x7f {
+			// Unprintable characters in the ASCII range can be escaped with \x
+			// since they are one byte in UTF-8.
 			buf.WriteByte('\\')
 			buf.WriteByte('x')
 			buf.Write(rtohex(r, 2))
