@@ -34,7 +34,7 @@
 			"match": "\\$[\\w\\d_:~-]+"
 		},
 		{
-			"match": "(?<=^|\\{ |\\{\t|\\(|\\||\\;)\\s*(var|set|tmp|del)((\\s+[\\w\\d_:~-]+)*)",
+			"match": "(?<=^|\\{ |\\{\t|\\(|\\||\\;)\\s*(var|set|tmp|del)((\\s+[\\w\\d_:~-]+)+)",
 			"captures": {
 				"1": {
 					"name": "keyword.other.elvish"
@@ -101,7 +101,7 @@
 			}
 		},
 		{
-			"match": "}\\s+(elif|else|finally)\\s+([\\w\\d_:~-]+)",
+			"match": "}\\s+(elif|else|catch|except|finally)(?=[\\s)}<>;|&])",
 			"captures": {
 				"1": {
 					"name": "keyword.control.elvish"

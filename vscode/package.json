@@ -2,7 +2,7 @@
     "name": "elvish",
     "displayName": "Elvish",
     "description": "Elvish language support for Visual Studio Code",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "publisher": "elves",
     "license": "BSD-2-Clause",
     "icon": "icon.png",
