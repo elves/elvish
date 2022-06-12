@@ -303,6 +303,11 @@ func TestComplete(t *testing.T) {
 		Args(cb("p $local-ns1:bad:bad:"), ev, cfg).Rets(
 			&Result{Name: "variable", Replace: r(21, 21)},
 			nil),
+
+		// No completion in supported context.
+		Args(cb("nop ["), ev, cfg).Rets((*Result)(nil), errNoCompletion),
+		// No completion after parse error.
+		Args(cb("nop `"), ev, cfg).Rets((*Result)(nil), errNoCompletion),
 	})
 
 	// Symlinks and executable bits are not available on Windows.
