@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"src.elv.sh/pkg/env"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
 )
@@ -30,7 +31,7 @@ func TestInteract(t *testing.T) {
 	)
 }
 
-func TestInteract_DefaultRCPath(t *testing.T) {
+func TestInteract_RCPath_Legacy(t *testing.T) {
 	home := setupCleanHomePaths(t)
 	// Legacy RC path
 	testutil.MustWriteFile(
@@ -38,7 +39,21 @@ func TestInteract_DefaultRCPath(t *testing.T) {
 	// Note: non-legacy path is tested in interact_unix_test.go
 
 	Test(t, &Program{},
-		thatElvishInteract().WritesStdout("hello legacy rc.elv\n"),
+		thatElvishInteract().
+			WritesStdout("hello legacy rc.elv\n").
+			WritesStderrContaining(legacyRcPathWarning),
+	)
+}
+
+func TestInteract_RCPath_XDG_CONFIG_HOME(t *testing.T) {
+	setupCleanHomePaths(t)
+	xdgConfigHome := testutil.Setenv(t, env.XDG_CONFIG_HOME, testutil.TempDir(t))
+	testutil.MustWriteFile(
+		filepath.Join(xdgConfigHome, "elvish", "rc.elv"),
+		"echo hello XDG_CONFIG_HOME rc.elv")
+
+	Test(t, &Program{},
+		thatElvishInteract().WritesStdout("hello XDG_CONFIG_HOME rc.elv\n"),
 	)
 }
 

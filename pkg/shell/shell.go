@@ -54,22 +54,11 @@ func (p *Program) RegisterFlags(fs *prog.FlagSet) {
 	}
 }
 
-const legacyDataDirWarning = `Warning: ~/.elvish will be ignored from Elvish 0.20.0.
-
-Move files in ~/.elvish to their new locations, as documented in https://elv.sh/ref/command.html, and remove ~/.elvish.
-
-When moving the database file, kill the daemon with "use daemon; kill $daemon:pid" before doing so. The daemon will respawn when you launch another Elvish instance.
-`
-
 func (p *Program) Run(fds [3]*os.File, args []string) error {
 	cleanup1 := IncSHLVL()
 	defer cleanup1()
 	cleanup2 := initSignal(fds)
 	defer cleanup2()
-
-	if _, hasLegacyDataDir := legacyDataDir(); hasLegacyDataDir {
-		fmt.Fprint(fds[2], legacyDataDirWarning)
-	}
 
 	ev := MakeEvaler(fds[2])
 
@@ -83,7 +72,7 @@ func (p *Program) Run(fds [3]*os.File, args []string) error {
 	var spawnCfg *daemondefs.SpawnConfig
 	if p.ActivateDaemon != nil {
 		var err error
-		spawnCfg, err = daemonPaths(p.daemonPaths)
+		spawnCfg, err = daemonPaths(p.daemonPaths, fds[2])
 		if err != nil {
 			fmt.Fprintln(fds[2], "Warning:", err)
 			fmt.Fprintln(fds[2], "Storage daemon may not function.")
@@ -100,7 +89,7 @@ func (p *Program) Run(fds [3]*os.File, args []string) error {
 	default:
 		// Use default path to rc.elv
 		var err error
-		rc, err = rcPath()
+		rc, err = rcPath(fds[2])
 		if err != nil {
 			fmt.Fprintln(fds[2], "Warning:", err)
 		}
@@ -117,7 +106,7 @@ func (p *Program) Run(fds [3]*os.File, args []string) error {
 // Writer if it could not initialize module search directories.
 func MakeEvaler(stderr io.Writer) *eval.Evaler {
 	ev := eval.NewEvaler()
-	libs, err := libPaths()
+	libs, err := libPaths(stderr)
 	if err != nil {
 		fmt.Fprintln(stderr, "Warning: resolving lib paths:", err)
 	} else {

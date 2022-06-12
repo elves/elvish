@@ -16,25 +16,14 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
-func TestInteract_NewRcFile_Default(t *testing.T) {
+func TestInteract_RCPath_Default(t *testing.T) {
 	home := setupCleanHomePaths(t)
+	testutil.Unsetenv(t, env.XDG_CONFIG_HOME)
 	testutil.MustWriteFile(
 		filepath.Join(home, ".config", "elvish", "rc.elv"), "echo hello new rc.elv")
 
 	Test(t, &Program{},
 		thatElvishInteract().WritesStdout("hello new rc.elv\n"),
-	)
-}
-
-func TestInteract_NewRcFile_XDG_CONFIG_HOME(t *testing.T) {
-	setupCleanHomePaths(t)
-	xdgConfigHome := testutil.Setenv(t, env.XDG_CONFIG_HOME, testutil.TempDir(t))
-	testutil.MustWriteFile(
-		filepath.Join(xdgConfigHome, "elvish", "rc.elv"),
-		"echo hello XDG_CONFIG_HOME rc.elv")
-
-	Test(t, &Program{},
-		thatElvishInteract().WritesStdout("hello XDG_CONFIG_HOME rc.elv\n"),
 	)
 }
 

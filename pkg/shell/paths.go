@@ -2,6 +2,7 @@ package shell
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,8 +13,11 @@ import (
 	"src.elv.sh/pkg/prog"
 )
 
-func rcPath() (string, error) {
+const legacyRcPathWarning = `Warning: ~/.elvish/rc.elv will be ignored from Elvish 0.20.0. Move it to its new location, as documented in https://elv.sh/ref/command.html#rc-file.`
+
+func rcPath(w io.Writer) (string, error) {
 	if legacyRC, exists := legacyDataPath("rc.elv", false); exists {
+		fmt.Fprintln(w, legacyRcPathWarning)
 		return legacyRC, nil
 	} else if configHome := os.Getenv(env.XDG_CONFIG_HOME); configHome != "" {
 		return filepath.Join(configHome, "elvish", "rc.elv"), nil
@@ -24,7 +28,9 @@ func rcPath() (string, error) {
 	}
 }
 
-func libPaths() ([]string, error) {
+const legacyLibPathWarning = `Warning: ~/.elvish/lib will be ignored from Elvish 0.20.0. Move libraries to one of the new module search directories, as documented in https://elv.sh/ref/command.html#module-search-directories.`
+
+func libPaths(w io.Writer) ([]string, error) {
 	var paths []string
 
 	if configHome := os.Getenv(env.XDG_CONFIG_HOME); configHome != "" {
@@ -52,6 +58,7 @@ func libPaths() ([]string, error) {
 	}
 
 	if legacyLib, exists := legacyDataPath("lib", true); exists {
+		fmt.Fprintln(w, legacyLibPathWarning)
 		paths = append(paths, legacyLib)
 	}
 	return paths, nil
@@ -59,7 +66,7 @@ func libPaths() ([]string, error) {
 
 // Returns a SpawnConfig containing all the paths needed by the daemon. It
 // respects overrides of sock and db from CLI flags.
-func daemonPaths(p *prog.DaemonPaths) (*daemondefs.SpawnConfig, error) {
+func daemonPaths(p *prog.DaemonPaths, w io.Writer) (*daemondefs.SpawnConfig, error) {
 	runDir, err := secureRunDir()
 	if err != nil {
 		return nil, err
@@ -72,7 +79,7 @@ func daemonPaths(p *prog.DaemonPaths) (*daemondefs.SpawnConfig, error) {
 	db := p.DB
 	if db == "" {
 		var err error
-		db, err = dbPath()
+		db, err = dbPath(w)
 		if err != nil {
 			return nil, err
 		}
@@ -84,8 +91,11 @@ func daemonPaths(p *prog.DaemonPaths) (*daemondefs.SpawnConfig, error) {
 	return &daemondefs.SpawnConfig{DbPath: db, SockPath: sock, RunDir: runDir}, nil
 }
 
-func dbPath() (string, error) {
+const legacyDbPathWarning = `Warning: ~/.elvish/db will be ignored from Elvish 0.20.0. Kill the daemon with "use daemon; kill $daemon:pid", and move the db to its new location, as documented in https://elv.sh/ref/command.html#database-file. The daemon will respawn when you launch another Elvish instance.`
+
+func dbPath(w io.Writer) (string, error) {
 	if legacyDB, exists := legacyDataPath("db", false); exists {
+		fmt.Fprintln(w, legacyDbPathWarning)
 		return legacyDB, nil
 	} else if stateHome := os.Getenv(env.XDG_STATE_HOME); stateHome != "" {
 		return filepath.Join(stateHome, "elvish", "db.bolt"), nil

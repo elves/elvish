@@ -10,24 +10,14 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
-func TestShell_WarnsAboutLegacyDataDir(t *testing.T) {
-	home := setupCleanHomePaths(t)
-	testutil.MustMkdirAll(filepath.Join(home, ".elvish"))
-
-	Test(t, &Program{},
-		ThatElvish().
-			WritesStderrContaining(legacyDataDirWarning),
-	)
-}
-
-func TestShell_LegacyLibPath(t *testing.T) {
+func TestShell_LibPath_Legacy(t *testing.T) {
 	home := setupCleanHomePaths(t)
 	testutil.MustWriteFile(filepath.Join(home, ".elvish", "lib", "a.elv"), "echo mod a")
 
 	Test(t, &Program{},
 		ThatElvish("-c", "use a").
 			WritesStdout("mod a\n").
-			WritesStderrContaining(legacyDataDirWarning),
+			WritesStderrContaining(legacyLibPathWarning),
 	)
 }
 
