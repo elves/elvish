@@ -27,7 +27,7 @@ func completeArg(np nodePath, ev *eval.Evaler, cfg Config) (*context, []RawItem,
 		// Case 1: starting a new argument.
 		ctx := &context{"argument", "", parse.Bareword, range0(np[0].Range().To)}
 		args := purelyEvalForm(form, "", np[0].Range().To, ev)
-		items, err := generateArgs(args, ev, cfg)
+		items, err := generateArgs(args, ev, np, cfg)
 		return ctx, items, err
 	}
 
@@ -36,7 +36,7 @@ func completeArg(np nodePath, ev *eval.Evaler, cfg Config) (*context, []RawItem,
 		// Case 2: in an incomplete argument.
 		ctx := &context{"argument", expr.s, expr.quote, expr.compound.Range()}
 		args := purelyEvalForm(form, expr.s, expr.compound.Range().From, ev)
-		items, err := generateArgs(args, ev, cfg)
+		items, err := generateArgs(args, ev, np, cfg)
 		return ctx, items, err
 	}
 
@@ -46,7 +46,7 @@ func completeArg(np nodePath, ev *eval.Evaler, cfg Config) (*context, []RawItem,
 func completeCommand(np nodePath, ev *eval.Evaler, cfg Config) (*context, []RawItem, error) {
 	generateForEmpty := func(pos int) (*context, []RawItem, error) {
 		ctx := &context{"command", "", parse.Bareword, range0(pos)}
-		items, err := generateCommands("", ev)
+		items, err := generateCommands("", ev, np)
 		return ctx, items, err
 	}
 
@@ -77,7 +77,7 @@ func completeCommand(np nodePath, ev *eval.Evaler, cfg Config) (*context, []RawI
 	if np.match(expr, store(&form)) && form.Head == expr.compound {
 		// Case 4: At an already started command.
 		ctx := &context{"command", expr.s, expr.quote, expr.compound.Range()}
-		items, err := generateCommands(expr.s, ev)
+		items, err := generateCommands(expr.s, ev, np)
 		return ctx, items, err
 	}
 
@@ -152,7 +152,7 @@ func completeVariable(np nodePath, ev *eval.Evaler, cfg Config) (*context, []Raw
 		diag.Ranging{From: begin, To: primary.Range().To}}
 
 	var items []RawItem
-	eachVariableInNs(ev, ns, func(varname string) {
+	eachVariableInNs(ev, np, ns, func(varname string) {
 		items = append(items, noQuoteItem(parse.QuoteVariableName(varname)))
 	})
 	if ns == "" {

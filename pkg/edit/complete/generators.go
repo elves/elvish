@@ -39,7 +39,7 @@ func GenerateForSudo(args []string, ev *eval.Evaler, cfg Config) ([]RawItem, err
 
 // Internal generators, used from completers.
 
-func generateArgs(args []string, ev *eval.Evaler, cfg Config) ([]RawItem, error) {
+func generateArgs(args []string, ev *eval.Evaler, np nodePath, cfg Config) ([]RawItem, error) {
 	switch args[0] {
 	case "set", "tmp":
 		for _, arg := range args[1:] {
@@ -51,7 +51,7 @@ func generateArgs(args []string, ev *eval.Evaler, cfg Config) ([]RawItem, error)
 		sigil, qname := eval.SplitSigil(seed)
 		ns, _ := eval.SplitIncompleteQNameNs(qname)
 		var items []RawItem
-		eachVariableInNs(ev, ns, func(varname string) {
+		eachVariableInNs(ev, np, ns, func(varname string) {
 			items = append(items, noQuoteItem(sigil+parse.QuoteVariableName(ns+varname)))
 		})
 		return items, nil
@@ -71,7 +71,7 @@ func generateExternalCommands(seed string, ev *eval.Evaler) ([]RawItem, error) {
 	return items, nil
 }
 
-func generateCommands(seed string, ev *eval.Evaler) ([]RawItem, error) {
+func generateCommands(seed string, ev *eval.Evaler, np nodePath) ([]RawItem, error) {
 	if fsutil.DontSearch(seed) {
 		// Completing a local external command name.
 		return generateFileNames(seed, true)
@@ -99,7 +99,7 @@ func generateCommands(seed string, ev *eval.Evaler) ([]RawItem, error) {
 	ns, _ := eval.SplitIncompleteQNameNs(qname)
 	if sigil == "" {
 		// Generate functions, namespaces, and variable assignments.
-		eachVariableInNs(ev, ns, func(varname string) {
+		eachVariableInNs(ev, np, ns, func(varname string) {
 			switch {
 			case strings.HasSuffix(varname, eval.FnSuffix):
 				addPlainItem(

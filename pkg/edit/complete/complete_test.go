@@ -228,7 +228,6 @@ func TestComplete(t *testing.T) {
 		Args(cb("a ?("), ev, cfg).Rets(
 			&Result{Name: "command", Replace: r(4, 4), Items: allCommandItems},
 			nil),
-
 		// Complete external commands with the e: prefix.
 		Args(cb("e:"), ev, cfg).Rets(
 			&Result{
@@ -236,6 +235,12 @@ func TestComplete(t *testing.T) {
 				Items: []modes.CompletionItem{
 					ci("e:external-cmd1"), ci("e:external-cmd2"),
 				}},
+			nil),
+		// Commands newly defined by fn are supported too.
+		Args(cb("fn new-fn { }; new-"), ev, cfg).Rets(
+			&Result{
+				Name: "command", Replace: r(15, 19),
+				Items: []modes.CompletionItem{ci("new-fn")}},
 			nil),
 
 		// TODO(xiaq): Add tests for completing indices.
@@ -251,6 +256,8 @@ func TestComplete(t *testing.T) {
 			nil),
 
 		// Completing variables.
+
+		// All variables.
 		Args(cb("p $"), ev, cfg).Rets(
 			&Result{
 				Name: "variable", Replace: r(3, 3),
@@ -264,6 +271,7 @@ func TestComplete(t *testing.T) {
 					ci("local-var1"), ci("local-var2"),
 				}},
 			nil),
+		// Variables with a prefix.
 		Args(cb("p $local-"), ev, cfg).Rets(
 			&Result{
 				Name: "variable", Replace: r(3, 9),
@@ -273,12 +281,41 @@ func TestComplete(t *testing.T) {
 					ci("local-var1"), ci("local-var2"),
 				}},
 			nil),
+		// Variables newly defined in the code, in the current scope.
+		Args(cb("var new-var; p $new-"), ev, cfg).Rets(
+			&Result{
+				Name: "variable", Replace: r(16, 20),
+				Items: []modes.CompletionItem{ci("new-var")}},
+			nil),
+		// Variables newly defined in the code, in an outer scope.
+		Args(cb("var new-var; { p $new-"), ev, cfg).Rets(
+			&Result{
+				Name: "variable", Replace: r(18, 22),
+				Items: []modes.CompletionItem{ci("new-var")}},
+			nil),
+		// Variables newly defined in the code, but in a scope not visible from
+		// the point of completion, are not included.
+		Args(cb("{ var new-var } p $new-"), ev, cfg).Rets(
+			&Result{
+				Name: "variable", Replace: r(19, 23),
+				Items: nil,
+			},
+			nil),
+		// Variables defined by fn are supported too.
+		Args(cb("fn new-fn { }; p $new-"), ev, cfg).Rets(
+			&Result{
+				Name: "variable", Replace: r(18, 22),
+				Items: []modes.CompletionItem{ci("new-fn~")}},
+			nil),
+
+		// Variables in a namespace.
 		//       01234567890123
 		Args(cb("p $local-ns1:"), ev, cfg).Rets(
 			&Result{
 				Name: "variable", Replace: r(13, 13),
 				Items: []modes.CompletionItem{ci("lorem")}},
 			nil),
+		// Variables in the special e: namespace.
 		//       012345
 		Args(cb("p $e:"), ev, cfg).Rets(
 			&Result{
@@ -287,6 +324,7 @@ func TestComplete(t *testing.T) {
 					ci("external-cmd1~"), ci("external-cmd2~"),
 				}},
 			nil),
+		// Variable in the special E: namespace.
 		//       012345
 		Args(cb("p $E:"), ev, cfg).Rets(
 			&Result{
@@ -295,10 +333,12 @@ func TestComplete(t *testing.T) {
 					ci("ENV1"), ci("ENV2"),
 				}},
 			nil),
+		// Variables in a nonexistent namespace.
 		//       01234567
 		Args(cb("p $bad:"), ev, cfg).Rets(
 			&Result{Name: "variable", Replace: r(7, 7)},
 			nil),
+		// Variables in a nested nonexistent namespace.
 		//       0123456789012345678901
 		Args(cb("p $local-ns1:bad:bad:"), ev, cfg).Rets(
 			&Result{Name: "variable", Replace: r(21, 21)},
