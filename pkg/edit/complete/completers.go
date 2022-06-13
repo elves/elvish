@@ -1,8 +1,6 @@
 package complete
 
 import (
-	"strings"
-
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
@@ -157,14 +155,9 @@ func completeVariable(np nodePath, ev *eval.Evaler, cfg Config) (*context, []Raw
 	eachVariableInNs(ev, ns, func(varname string) {
 		items = append(items, noQuoteItem(parse.QuoteVariableName(varname)))
 	})
-
-	eachNs(ev, func(thisNs string) {
-		// This is to match namespaces that are "nested" under the current
-		// namespace.
-		if hasProperPrefix(thisNs, ns) {
-			items = append(items, noQuoteItem(parse.QuoteVariableName(thisNs[len(ns):])))
-		}
-	})
+	if ns == "" {
+		items = append(items, noQuoteItem("e:"), noQuoteItem("E:"))
+	}
 
 	return ctx, items, nil
 }
@@ -190,8 +183,4 @@ func purelyEvalForm(form *parse.Form, seed string, upto int, ev *eval.Evaler) []
 
 func range0(pos int) diag.Ranging {
 	return diag.Ranging{From: pos, To: pos}
-}
-
-func hasProperPrefix(s, p string) bool {
-	return len(s) > len(p) && strings.HasPrefix(s, p)
 }

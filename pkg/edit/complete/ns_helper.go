@@ -43,22 +43,3 @@ func eachVariableInNs(ev *eval.Evaler, ns string, f func(s string)) {
 		}
 	}
 }
-
-// Calls the passed function for each namespace that can be used from the top
-// context.
-func eachNs(ev *eval.Evaler, f func(s string)) {
-	f("e:")
-	f("E:")
-
-	ev.Global().IterateKeysString(func(name string) {
-		if strings.HasSuffix(name, eval.NsSuffix) {
-			f(name)
-		}
-	})
-
-	ev.Builtin().IterateKeysString(func(name string) {
-		if strings.HasSuffix(name, eval.NsSuffix) {
-			f(name)
-		}
-	})
-}
