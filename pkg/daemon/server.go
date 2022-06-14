@@ -117,10 +117,9 @@ func Serve(sockpath, dbpath string, opts ServeOpts) int {
 		}
 		logger.Printf("going to close %v active connections", len(conns))
 		for conn := range conns {
-			err := conn.Close()
-			if err != nil {
-				logger.Println("failed to close connection:", err)
-			}
+			// Ignore the error - if we can't close the connection it's because
+			// the client has closed it. There is nothing we can do anyway.
+			conn.Close()
 		}
 	}
 
