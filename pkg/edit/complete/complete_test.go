@@ -287,6 +287,18 @@ func TestComplete(t *testing.T) {
 				Name: "variable", Replace: r(16, 20),
 				Items: []modes.CompletionItem{ci("new-var")}},
 			nil),
+		// Sigils in "var" are not part of the variable name.
+		Args(cb("var @new-var = a b; p $new-"), ev, cfg).Rets(
+			&Result{
+				Name: "variable", Replace: r(23, 27),
+				Items: []modes.CompletionItem{ci("new-var")}},
+			nil),
+		// Function parameters are recognized as newly defined variables too.
+		Args(cb("{ |new-var| p $new-"), ev, cfg).Rets(
+			&Result{
+				Name: "variable", Replace: r(15, 19),
+				Items: []modes.CompletionItem{ci("new-var")}},
+			nil),
 		// Variables newly defined in the code, in an outer scope.
 		Args(cb("var new-var; { p $new-"), ev, cfg).Rets(
 			&Result{
@@ -301,6 +313,7 @@ func TestComplete(t *testing.T) {
 				Items: nil,
 			},
 			nil),
+
 		// Variables defined by fn are supported too.
 		Args(cb("fn new-fn { }; p $new-"), ev, cfg).Rets(
 			&Result{

@@ -53,6 +53,14 @@ func eachDefinedVariable(n parse.Node, pos int, f func(string)) {
 	if fn, ok := n.(*parse.Form); ok {
 		eachDefinedVariableInForm(fn, f)
 	}
+	if pn, ok := n.(*parse.Primary); ok && pn.Type == parse.Lambda {
+		for _, param := range pn.Elements {
+			if varRef, ok := cmpd.StringLiteral(param); ok {
+				_, name := eval.SplitSigil(varRef)
+				f(name)
+			}
+		}
+	}
 	for _, ch := range parse.Children(n) {
 		if ch.Range().From > pos {
 			break
@@ -79,7 +87,8 @@ func eachDefinedVariableInForm(fn *parse.Form, f func(string)) {
 			}
 			// TODO: This simplified version may not match the actual
 			// algorithm used by the compiler to parse an LHS.
-			if name, ok := cmpd.StringLiteral(arg); ok {
+			if varRef, ok := cmpd.StringLiteral(arg); ok {
+				_, name := eval.SplitSigil(varRef)
 				f(name)
 			}
 		}
