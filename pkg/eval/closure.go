@@ -182,9 +182,9 @@ type closureFields struct{ c *Closure }
 
 func (closureFields) IsStructMap() {}
 
-func (cf closureFields) ArgNames() vals.List { return vals.MakeListFromStrings(cf.c.ArgNames...) }
+func (cf closureFields) ArgNames() vals.List { return vals.MakeListSlice(cf.c.ArgNames) }
 func (cf closureFields) RestArg() string     { return strconv.Itoa(cf.c.RestArg) }
-func (cf closureFields) OptNames() vals.List { return vals.MakeListFromStrings(cf.c.OptNames...) }
+func (cf closureFields) OptNames() vals.List { return vals.MakeListSlice(cf.c.OptNames) }
 func (cf closureFields) Src() parse.Source   { return cf.c.SrcMeta }
 
 func (cf closureFields) OptDefaults() vals.List {

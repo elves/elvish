@@ -18,18 +18,14 @@ var EmptyList = vector.Empty
 
 // MakeList creates a new List from values.
 func MakeList(vs ...any) vector.Vector {
+	return MakeListSlice(vs)
+}
+
+// MakeListSlice creates a new List from a slice.
+func MakeListSlice[T any](vs []T) vector.Vector {
 	vec := vector.Empty
 	for _, v := range vs {
 		vec = vec.Conj(v)
-	}
-	return vec
-}
-
-// MakeListFromStrings creates a new List from strings.
-func MakeListFromStrings(ss ...string) vector.Vector {
-	vec := vector.Empty
-	for _, s := range ss {
-		vec = vec.Conj(s)
 	}
 	return vec
 }

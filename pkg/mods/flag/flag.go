@@ -174,7 +174,7 @@ func parse(argsVal vals.List, specsVal vals.List) (vals.Map, vals.List, error) {
 	fs.VisitAll(func(f *flag.Flag) {
 		m = m.Assoc(f.Name, f.Value.(flag.Getter).Get())
 	})
-	return m, vals.MakeListFromStrings(fs.Args()...), nil
+	return m, vals.MakeListSlice(fs.Args()), nil
 }
 
 func newFlagSet(name string) *flag.FlagSet {
@@ -213,7 +213,7 @@ func (lf *listFlag) String() string { return vals.ToString(lf.value) }
 func (lf *listFlag) Get() any       { return lf.value }
 
 func (lf *listFlag) Set(s string) error {
-	lf.value = vals.MakeListFromStrings(strings.Split(s, ",")...)
+	lf.value = vals.MakeListSlice(strings.Split(s, ","))
 	return nil
 }
 
@@ -374,5 +374,5 @@ func parseGetopt(opts parseGetoptOptions, argsVal vals.List, specsVal vals.List)
 				"long", flag.Long))
 	}
 
-	return flagsList, vals.MakeListFromStrings(nonFlagArgs...), nil
+	return flagsList, vals.MakeListSlice(nonFlagArgs), nil
 }
