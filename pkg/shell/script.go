@@ -10,6 +10,7 @@ import (
 
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/parse"
 )
 
@@ -23,7 +24,7 @@ type scriptCfg struct {
 // Executes a shell script.
 func script(ev *eval.Evaler, fds [3]*os.File, args []string, cfg *scriptCfg) int {
 	arg0 := args[0]
-	ev.SetArgs(args[1:])
+	ev.Args = vals.MakeListSlice(args[1:])
 
 	var name, code string
 	if cfg.Cmd {

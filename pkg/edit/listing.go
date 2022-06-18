@@ -118,7 +118,7 @@ func initLocation(ed *Editor, ev *eval.Evaler, st storedefs.Store, commonBinding
 				})
 				startMode(ed.app, w, err)
 			}))
-	ev.AddAfterChdir(func(string) {
+	ev.AfterChdir = append(ev.AfterChdir, func(string) {
 		wd, err := os.Getwd()
 		if err != nil {
 			// TODO(xiaq): Surface the error.

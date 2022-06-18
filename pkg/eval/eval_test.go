@@ -34,7 +34,7 @@ func TestArgs(t *testing.T) {
 	Test(t,
 		That("put $args").Puts(vals.EmptyList))
 	TestWithSetup(t,
-		func(ev *Evaler) { ev.SetArgs([]string{"foo", "bar"}) },
+		func(ev *Evaler) { ev.Args = vals.MakeList("foo", "bar") },
 		That("put $args").Puts(vals.MakeList("foo", "bar")))
 }
 

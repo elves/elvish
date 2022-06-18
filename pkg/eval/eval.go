@@ -280,32 +280,6 @@ func (ev *Evaler) addNumBgJobs(delta int) {
 	ev.numBgJobs += delta
 }
 
-// SetArgs sets the value of the $args variable to a list of strings, built from
-// the given slice. This method must be called before the Evaler is used to
-// evaluate any code.
-func (ev *Evaler) SetArgs(args []string) {
-	ev.Args = vals.MakeListSlice(args)
-}
-
-// AddBeforeChdir adds a function to run before changing directory. This method
-// must be called before the Evaler is used to evaluate any code.
-func (ev *Evaler) AddBeforeChdir(f func(string)) {
-	ev.BeforeChdir = append(ev.BeforeChdir, f)
-}
-
-// AddAfterChdir adds a function to run after changing directory. This method
-// must be called before the Evaler is used to evaluate any code.
-func (ev *Evaler) AddAfterChdir(f func(string)) {
-	ev.AfterChdir = append(ev.AfterChdir, f)
-}
-
-// AddBeforeExit adds a function to run before the Elvish process exits or gets
-// replaced (via "exec" on UNIX). This method must be called before the Evaler
-// is used to evaluate any code.
-func (ev *Evaler) AddBeforeExit(f func()) {
-	ev.BeforeExit = append(ev.BeforeExit, f)
-}
-
 // Chdir changes the current directory, and updates $E:PWD on success
 //
 // It runs the functions in beforeChdir immediately before changing the

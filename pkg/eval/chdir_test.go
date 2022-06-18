@@ -18,8 +18,8 @@ func TestChdir(t *testing.T) {
 	ev := NewEvaler()
 
 	argDirInBefore, argDirInAfter := "", ""
-	ev.AddBeforeChdir(func(dir string) { argDirInBefore = dir })
-	ev.AddAfterChdir(func(dir string) { argDirInAfter = dir })
+	ev.BeforeChdir = append(ev.BeforeChdir, func(dir string) { argDirInBefore = dir })
+	ev.AfterChdir = append(ev.AfterChdir, func(dir string) { argDirInAfter = dir })
 
 	back := saveWd()
 	defer back()
