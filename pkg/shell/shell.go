@@ -55,12 +55,12 @@ func (p *Program) RegisterFlags(fs *prog.FlagSet) {
 }
 
 func (p *Program) Run(fds [3]*os.File, args []string) error {
-	cleanup1 := IncSHLVL()
+	cleanup1 := incSHLVL()
 	defer cleanup1()
 	cleanup2 := initSignal(fds)
 	defer cleanup2()
 
-	ev := MakeEvaler(fds[2])
+	ev := makeEvaler(fds[2])
 
 	if len(args) > 0 {
 		exit := script(
@@ -101,10 +101,12 @@ func (p *Program) Run(fds [3]*os.File, args []string) error {
 	return nil
 }
 
-// MakeEvaler creates an Evaler, sets the module search directories and installs
-// all the standard builtin modules. It writes a warning message to the supplied
-// Writer if it could not initialize module search directories.
-func MakeEvaler(stderr io.Writer) *eval.Evaler {
+// Creates an Evaler, sets the module search directories and installs all the
+// standard builtin modules.
+//
+// It writes a warning message to the supplied Writer if it could not initialize
+// module search directories.
+func makeEvaler(stderr io.Writer) *eval.Evaler {
 	ev := eval.NewEvaler()
 	libs, err := libPaths(stderr)
 	if err != nil {
@@ -116,9 +118,9 @@ func MakeEvaler(stderr io.Writer) *eval.Evaler {
 	return ev
 }
 
-// IncSHLVL increments the SHLVL environment variable. It returns a function to
-// restore the original value of SHLVL.
-func IncSHLVL() func() {
+// Increments the SHLVL environment variable. It returns a function to restore
+// the original value of SHLVL.
+func incSHLVL() func() {
 	oldValue, hadValue := os.LookupEnv(env.SHLVL)
 	i, err := strconv.Atoi(oldValue)
 	if err != nil {

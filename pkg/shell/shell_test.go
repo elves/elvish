@@ -100,24 +100,18 @@ var incSHLVLTests = []struct {
 	{name: "negative", old: "-100", wantNew: "-99"},
 }
 
-func TestIncSHLVL(t *testing.T) {
-	testutil.Setenv(t, env.SHLVL, "")
-
+func TestShell_SHLVL(t *testing.T) {
 	for _, test := range incSHLVLTests {
 		t.Run(test.name, func(t *testing.T) {
 			if test.unset {
-				os.Unsetenv(env.SHLVL)
+				testutil.Unsetenv(t, env.SHLVL)
 			} else {
-				os.Setenv(env.SHLVL, test.old)
+				testutil.Setenv(t, env.SHLVL, test.old)
 			}
 
-			restore := IncSHLVL()
-			shlvl := os.Getenv(env.SHLVL)
-			if shlvl != test.wantNew {
-				t.Errorf("got SHLVL = %q, want %q", shlvl, test.wantNew)
-			}
+			Test(t, &Program{},
+				ThatElvish("-c", "print $E:SHLVL").WritesStdout(test.wantNew))
 
-			restore()
 			// Test that state of SHLVL is restored.
 			restored, restoredSet := os.LookupEnv(env.SHLVL)
 			if test.unset {
