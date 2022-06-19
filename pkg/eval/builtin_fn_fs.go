@@ -36,7 +36,7 @@ func cd(fm *Frame, args ...string) error {
 	switch len(args) {
 	case 0:
 		var err error
-		dir, err = fsutil.GetHome("")
+		dir, err = getHome("")
 		if err != nil {
 			return err
 		}

@@ -3,7 +3,6 @@ package eval
 import (
 	"strings"
 
-	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
 )
 
@@ -46,7 +45,7 @@ func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (strin
 			i = len(head)
 		}
 		uname := head[:i]
-		home, err := fsutil.GetHome(uname)
+		home, err := getHome(uname)
 		if err != nil {
 			return "", false
 		}

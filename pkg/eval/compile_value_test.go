@@ -1,14 +1,16 @@
 package eval_test
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
-	"src.elv.sh/pkg/testutil"
-
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/fsutil"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestCompound(t *testing.T) {
@@ -81,17 +83,44 @@ func TestTilde(t *testing.T) {
 	home := testutil.InTempHome(t)
 	testutil.ApplyDir(testutil.Dir{"file1": "", "file2": ""})
 
+	otherHome := testutil.TempDir(t)
+	testutil.ApplyDirIn(testutil.Dir{"other1": "", "other2": ""}, otherHome)
+	testutil.Set(t, GetHome, func(name string) (string, error) {
+		switch name {
+		case "":
+			return fsutil.GetHome("")
+		case "other":
+			return otherHome, nil
+		default:
+			return "", fmt.Errorf("don't know home of %q", name)
+		}
+	})
+
 	Test(t,
-		// Tilde
-		// -----
 		That("put ~").Puts(home),
 		That("put ~/src").Puts(home+"/src"),
 		// Make sure that tilde processing retains trailing slashes.
 		That("put ~/src/").Puts(home+"/src/"),
 		// Tilde and wildcard.
 		That("put ~/*").Puts(home+"/file1", home+"/file2"),
-		// TODO: Add regression test for #793.
-		// TODO: Add regression test for #1246.
+
+		// Regression test for b.elv.sh/1246.
+		That("put ~other").Puts(otherHome),
+		// Regression test for #793.
+		That("put ~other/*").Puts(otherHome+"/other1", otherHome+"/other2"),
+
+		// TODO: This should be a compilation error.
+		That("put ~*").Throws(ErrCannotDetermineUsername, "~*"),
+	)
+}
+
+func TestTilde_ErrorForCurrentUser(t *testing.T) {
+	err := errors.New("fake error")
+	testutil.Set(t, GetHome, func(name string) (string, error) { return "", err })
+
+	Test(t,
+		That("put ~").Throws(err, "~"),
+		That("put ~/foo").Throws(err, "~/foo"),
 	)
 }
 
@@ -159,6 +188,14 @@ func TestVariableUse(t *testing.T) {
 		That("var ns: = (ns [&a= val]); put $ns:a").Puts("val"),
 		// Multi-level namespace access is supported.
 		That("var ns: = (ns [&a:= (ns [&b= val])]); put $ns:a:b").Puts("val"),
+	)
+}
+
+func TestVariableUse_NonExistentVariableInModule(t *testing.T) {
+	TestWithSetup(t, func(ev *Evaler) { ev.AddModule("mod", &Ns{}) },
+		// Variables in other modules are checked at runtime.
+		That("use mod; put $mod:bad").Throws(
+			ErrorWithMessage("variable $mod:bad not found"), "$mod:bad"),
 	)
 }
 

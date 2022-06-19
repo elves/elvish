@@ -22,6 +22,9 @@ type valuesOp interface {
 
 var outputCaptureBufferSize = 16
 
+// Can be mutated for testing.
+var getHome = fsutil.GetHome
+
 func (cp *compiler) compoundOp(n *parse.Compound) valuesOp {
 	if len(n.Indexings) == 0 {
 		return literalValues(n, "")
@@ -45,7 +48,7 @@ func (cp *compiler) compoundOp(n *parse.Compound) valuesOp {
 type loneTildeOp struct{ diag.Ranging }
 
 func (op loneTildeOp) exec(fm *Frame) ([]any, Exception) {
-	home, err := fsutil.GetHome("")
+	home, err := getHome("")
 	if err != nil {
 		return nil, fm.errorp(op, err)
 	}
@@ -154,7 +157,7 @@ func doTilde(v any) (any, error) {
 			uname = s[:i]
 			rest = s[i:]
 		}
-		dir, err := fsutil.GetHome(uname)
+		dir, err := getHome(uname)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +175,7 @@ func doTilde(v any) (any, error) {
 			if isSlash {
 				// ~username or ~username/xxx. Replace the first segment with
 				// the home directory of the specified user.
-				dir, err := fsutil.GetHome(seg.Data)
+				dir, err := getHome(seg.Data)
 				if err != nil {
 					return nil, err
 				}
@@ -180,7 +183,7 @@ func doTilde(v any) (any, error) {
 				return v, nil
 			}
 		case glob.Slash:
-			dir, err := fsutil.GetHome("")
+			dir, err := getHome("")
 			if err != nil {
 				return nil, err
 			}
