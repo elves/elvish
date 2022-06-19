@@ -63,7 +63,7 @@ type ServeOpts struct {
 
 // Serve runs the daemon service, listening on the socket specified by sockpath
 // and serving data from dbpath until all clients have exited. See doc for
-// ServeChans for additional options.
+// ServeOpts for additional options.
 func Serve(sockpath, dbpath string, opts ServeOpts) int {
 	logger.Println("pid is", syscall.Getpid())
 	logger.Println("going to listen", sockpath)
