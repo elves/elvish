@@ -10,11 +10,16 @@ import (
 func TestScript(t *testing.T) {
 	setupCleanHomePaths(t)
 	testutil.InTempDir(t)
-	testutil.MustWriteFile("a.elv", "echo hello")
+	testutil.MustWriteFile("hello.elv", "echo hello")
+	testutil.MustWriteFile("invalid-utf8.elv", "\xff")
 
 	Test(t, &Program{},
-		ThatElvish("a.elv").WritesStdout("hello\n"),
+		ThatElvish("hello.elv").WritesStdout("hello\n"),
 		ThatElvish("-c", "echo hello").WritesStdout("hello\n"),
+
+		ThatElvish("invalid-utf8.elv").
+			ExitsWith(2).
+			WritesStderrContaining("cannot read script"),
 		ThatElvish("non-existent.elv").
 			ExitsWith(2).
 			WritesStderrContaining("cannot read script"),
@@ -24,6 +29,10 @@ func TestScript(t *testing.T) {
 			ExitsWith(2).
 			WritesStderrContaining("parse error"),
 		// parse error with -compileonly
+		ThatElvish("-compileonly", "-c", "echo [").
+			ExitsWith(2).
+			WritesStderrContaining("parse error"),
+		// parse error with -compileonly -json
 		ThatElvish("-compileonly", "-json", "-c", "echo [").
 			ExitsWith(2).
 			WritesStdout(`[{"fileName":"code from -c","start":6,"end":6,"message":"should be ']'"}]`+"\n"),
@@ -37,6 +46,10 @@ func TestScript(t *testing.T) {
 			ExitsWith(2).
 			WritesStderrContaining("compilation error"),
 		// compilation error with -compileonly
+		ThatElvish("-compileonly", "-c", "echo $a").
+			ExitsWith(2).
+			WritesStderrContaining("compilation error"),
+		// compilation error with -compileonly -json
 		ThatElvish("-compileonly", "-json", "-c", "echo $a").
 			ExitsWith(2).
 			WritesStdout(`[{"fileName":"code from -c","start":5,"end":7,"message":"variable $a not found"}]`+"\n"),
