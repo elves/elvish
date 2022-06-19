@@ -173,8 +173,8 @@ func doTilde(v any) (any, error) {
 			}
 			_, isSlash := v.Segments[1].(glob.Slash)
 			if isSlash {
-				// ~username or ~username/xxx. Replace the first segment with
-				// the home directory of the specified user.
+				// ~username/xxx. Replace the first segment with the home
+				// directory of the specified user.
 				dir, err := getHome(seg.Data)
 				if err != nil {
 					return nil, err

@@ -92,7 +92,7 @@ func TestTilde(t *testing.T) {
 		case "other":
 			return otherHome, nil
 		default:
-			return "", fmt.Errorf("don't know home of %q", name)
+			return "", fmt.Errorf("don't know home of %v", name)
 		}
 	})
 
@@ -109,6 +109,8 @@ func TestTilde(t *testing.T) {
 		// Regression test for #793.
 		That("put ~other/*").Puts(otherHome+"/other1", otherHome+"/other2"),
 
+		That("put ~bad/*").Throws(ErrorWithMessage("don't know home of bad"), "~bad/*"),
+
 		// TODO: This should be a compilation error.
 		That("put ~*").Throws(ErrCannotDetermineUsername, "~*"),
 	)
@@ -121,6 +123,7 @@ func TestTilde_ErrorForCurrentUser(t *testing.T) {
 	Test(t,
 		That("put ~").Throws(err, "~"),
 		That("put ~/foo").Throws(err, "~/foo"),
+		That("put ~/*").Throws(err, "~/*"),
 	)
 }
 
