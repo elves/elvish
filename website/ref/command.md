@@ -45,7 +45,7 @@ history. Its path is determined as follows:
 2.  If the `XDG_STATE_HOME` environment variable is defined and non-empty,
     `$XDG_STATE_HOME/elvish/db.bolt` is used.
 
-3.  Othersie, `~/.local/state/elvish/db.bolt` (non-Windows OSes) or
+3.  Otherwise, `~/.local/state/elvish/db.bolt` (non-Windows OSes) or
     `%LocalAppData%\elvish\db.bolt` is used.
 
 # Running a script

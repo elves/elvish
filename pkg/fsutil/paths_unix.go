@@ -1,6 +1,6 @@
-//go:build !windows && !plan9
+//go:build !windows && !plan9 && !js
 
-package shell
+package fsutil
 
 import (
 	"fmt"
@@ -9,22 +9,21 @@ import (
 	"syscall"
 
 	"src.elv.sh/pkg/env"
-	"src.elv.sh/pkg/fsutil"
 )
 
-func defaultConfigHome() (string, error) { return homePath(".config") }
-
-func defaultDataHome() (string, error) { return homePath(".local/share") }
-
-var defaultDataDirs = []string{
+var DefaultDataDirs = []string{
 	"/usr/local/share/elvish/lib",
 	"/usr/share/elvish/lib",
 }
 
-func defaultStateHome() (string, error) { return homePath(".local/state") }
+func DefaultConfigHome() (string, error) { return homePath(".config/elvish") }
+
+func DefaultDataHome() (string, error) { return homePath(".local/share/elvish") }
+
+func DefaultStateHome() (string, error) { return homePath(".local/state/elvish") }
 
 func homePath(suffix string) (string, error) {
-	home, err := fsutil.GetHome("")
+	home, err := GetHome("")
 	if err != nil {
 		return "", fmt.Errorf("resolve ~/%s: %w", suffix, err)
 	}
@@ -38,7 +37,7 @@ func homePath(suffix string) (string, error) {
 // $tmpdir/elvish-$uid (where $tmpdir is the system temporary directory). The
 // former is used if the XDG_RUNTIME_DIR environment variable exists and the
 // latter directory does not exist.
-func secureRunDir() (string, error) {
+func SecureRunDir() (string, error) {
 	runDirs := runDirCandidates()
 	for _, runDir := range runDirs {
 		if checkExclusiveAccess(runDir) {

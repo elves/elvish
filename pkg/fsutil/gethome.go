@@ -13,8 +13,7 @@ import (
 // string, it finds the home directory of the current user.
 func GetHome(uname string) (string, error) {
 	if uname == "" {
-		// Use $HOME as override if we are looking for the home of the current
-		// variable.
+		// Use $HOME as override if we are looking for the home of the current user.
 		home := os.Getenv(env.HOME)
 		if home != "" {
 			return strings.TrimRight(home, pathSep), nil

@@ -18,13 +18,12 @@ func rcPath(w io.Writer) (string, error) {
 	if legacyRC, exists := legacyDataPath("rc.elv", false); exists {
 		fmt.Fprintln(w, legacyRcPathWarning)
 		return legacyRC, nil
-	} else if configHome := os.Getenv(env.XDG_CONFIG_HOME); configHome != "" {
-		return filepath.Join(configHome, "elvish", "rc.elv"), nil
-	} else if configHome, err := defaultConfigHome(); err == nil {
-		return filepath.Join(configHome, "elvish", "rc.elv"), nil
-	} else {
-		return "", fmt.Errorf("find rc.elv: %w", err)
 	}
+	configHome, err := fsutil.ConfigHome()
+	if err == nil {
+		return filepath.Join(configHome, "rc.elv"), nil
+	}
+	return "", fmt.Errorf("find rc.elv: %w", err)
 }
 
 const legacyLibPathWarning = `Warning: ~/.elvish/lib will be ignored from Elvish 0.20.0. Move libraries to one of the new module search directories, as documented in https://elv.sh/ref/command.html#module-search-directories.`
@@ -32,21 +31,17 @@ const legacyLibPathWarning = `Warning: ~/.elvish/lib will be ignored from Elvish
 func libPaths(w io.Writer) ([]string, error) {
 	var paths []string
 
-	if configHome := os.Getenv(env.XDG_CONFIG_HOME); configHome != "" {
-		paths = append(paths, filepath.Join(configHome, "elvish", "lib"))
-	} else if configHome, err := defaultConfigHome(); err == nil {
-		paths = append(paths, filepath.Join(configHome, "elvish", "lib"))
-	} else {
-		return nil, fmt.Errorf("find roaming lib directory: %w", err)
+	configHome, err := fsutil.ConfigHome()
+	if err != nil {
+		return nil, fmt.Errorf("can't find roaming lib directory: %w", err)
 	}
+	paths = append(paths, filepath.Join(configHome, "lib"))
 
-	if dataHome := os.Getenv(env.XDG_DATA_HOME); dataHome != "" {
-		paths = append(paths, filepath.Join(dataHome, "elvish", "lib"))
-	} else if dataHome, err := defaultDataHome(); err == nil {
-		paths = append(paths, filepath.Join(dataHome, "elvish", "lib"))
-	} else {
-		return nil, fmt.Errorf("find local lib directory: %w", err)
+	dataHome, err := fsutil.DataHome()
+	if err != nil {
+		return nil, fmt.Errorf("can't find local lib directory: %w", err)
 	}
+	paths = append(paths, filepath.Join(dataHome, "lib"))
 
 	if dataDirs := os.Getenv(env.XDG_DATA_DIRS); dataDirs != "" {
 		// XDG requires the paths be joined with ":". However, on Windows ":"
@@ -56,7 +51,7 @@ func libPaths(w io.Writer) ([]string, error) {
 			paths = append(paths, filepath.Join(dataDir, "elvish", "lib"))
 		}
 	} else {
-		paths = append(paths, defaultDataDirs...)
+		paths = append(paths, fsutil.DefaultDataDirs...)
 	}
 
 	if legacyLib, exists := legacyDataPath("lib", true); exists {
@@ -69,7 +64,7 @@ func libPaths(w io.Writer) ([]string, error) {
 // Returns a SpawnConfig containing all the paths needed by the daemon. It
 // respects overrides of sock and db from CLI flags.
 func daemonPaths(p *prog.DaemonPaths, w io.Writer) (*daemondefs.SpawnConfig, error) {
-	runDir, err := secureRunDir()
+	runDir, err := fsutil.SecureRunDir()
 	if err != nil {
 		return nil, err
 	}
@@ -99,13 +94,13 @@ func dbPath(w io.Writer) (string, error) {
 	if legacyDB, exists := legacyDataPath("db", false); exists {
 		fmt.Fprintln(w, legacyDbPathWarning)
 		return legacyDB, nil
-	} else if stateHome := os.Getenv(env.XDG_STATE_HOME); stateHome != "" {
-		return filepath.Join(stateHome, "elvish", "db.bolt"), nil
-	} else if stateHome, err := defaultStateHome(); err == nil {
-		return filepath.Join(stateHome, "elvish", "db.bolt"), nil
-	} else {
+	}
+
+	stateHome, err := fsutil.StateHome()
+	if err != nil {
 		return "", fmt.Errorf("find db: %w", err)
 	}
+	return filepath.Join(stateHome, "db.bolt"), nil
 }
 
 // Returns a path in the legacy data directory path, and whether it exists and

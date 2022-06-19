@@ -9,6 +9,7 @@ import (
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/fsutil"
 )
 
 //elvdoc:var arch
@@ -35,6 +36,25 @@ import (
 //elvdoc:var is-windows
 //
 // Whether or not the platform is Microsoft Windows.
+// This is read-only.
+
+//elvdoc:var config-home
+//
+// The directory containing the *rc.elv* file as defined [here](./command.html#rc-file).
+// This is read-only.
+
+//elvdoc:var data-home
+//
+// The directory containing third-party Elvish modules managed by [`epm`](./epm.html) as defined
+// [here](./command.html#module-search-directories).
+// This is read-only.
+
+//elvdoc:var state-home
+//
+// The directory containing the Elvish database file as defined
+// [here](./command.html#database-file). This is a good place for modules to create files that are
+// usually considered private to a particular machine running Elvish. That is, files that normally
+// aren't synced to other machines.
 // This is read-only.
 
 //elvdoc:fn hostname
@@ -76,12 +96,30 @@ func hostname(opts hostnameOpt) (string, error) {
 	return parts[0], nil
 }
 
+func getConfigHome() any {
+	cfgHome, _ := fsutil.ConfigHome()
+	return cfgHome
+}
+
+func getDataHome() any {
+	dataHome, _ := fsutil.DataHome()
+	return dataHome
+}
+
+func getStateHome() any {
+	stateHome, _ := fsutil.StateHome()
+	return stateHome
+}
+
 var Ns = eval.BuildNsNamed("platform").
 	AddVars(map[string]vars.Var{
-		"arch":       vars.NewReadOnly(runtime.GOARCH),
-		"os":         vars.NewReadOnly(runtime.GOOS),
-		"is-unix":    vars.NewReadOnly(isUnix),
-		"is-windows": vars.NewReadOnly(isWindows),
+		"arch":        vars.NewReadOnly(runtime.GOARCH),
+		"os":          vars.NewReadOnly(runtime.GOOS),
+		"is-unix":     vars.NewReadOnly(isUnix),
+		"is-windows":  vars.NewReadOnly(isWindows),
+		"config-home": vars.FromGet(getConfigHome),
+		"data-home":   vars.FromGet(getDataHome),
+		"state-home":  vars.FromGet(getStateHome),
 	}).
 	AddGoFns(map[string]any{
 		"hostname": hostname,

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -55,7 +56,7 @@ func setupForSecureRunDir(c testutil.Cleanuper) (xdgRuntimeDir, tmpDir string) {
 }
 
 func testSecureRunDir(t *testing.T, wantRunDir string, wantErr bool) {
-	runDir, err := secureRunDir()
+	runDir, err := fsutil.SecureRunDir()
 	if runDir != wantRunDir {
 		t.Errorf("got rundir %q, want %q", runDir, wantRunDir)
 	}

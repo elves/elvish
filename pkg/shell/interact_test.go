@@ -12,6 +12,7 @@ import (
 	"src.elv.sh/pkg/daemon"
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/must"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
@@ -53,9 +54,13 @@ func TestInteract_RCPath_Legacy(t *testing.T) {
 
 func TestInteract_RCPath_XDG_CONFIG_HOME(t *testing.T) {
 	setupCleanHomePaths(t)
-	xdgConfigHome := testutil.Setenv(t, env.XDG_CONFIG_HOME, testutil.TempDir(t))
+	testutil.Setenv(t, env.XDG_CONFIG_HOME, testutil.TempDir(t))
+	configHome, err := fsutil.ConfigHome()
+	if err != nil {
+		t.Errorf("fsutil.ConfigHome() failed: %v", err)
+	}
 	must.WriteFile(
-		filepath.Join(xdgConfigHome, "elvish", "rc.elv"),
+		filepath.Join(configHome, "rc.elv"),
 		"echo hello XDG_CONFIG_HOME rc.elv")
 
 	Test(t, &Program{},
