@@ -10,6 +10,59 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
+func TestShell_LibPath_XDGPaths(t *testing.T) {
+	xdgConfigHome := testutil.TempDir(t)
+	testutil.ApplyDirIn(testutil.Dir{
+		"elvish": testutil.Dir{
+			"lib": testutil.Dir{
+				"a.elv": "echo a from xdg-config-home",
+			},
+		},
+	}, xdgConfigHome)
+	testutil.Setenv(t, env.XDG_CONFIG_HOME, xdgConfigHome)
+
+	xdgDataHome := testutil.TempDir(t)
+	testutil.ApplyDirIn(testutil.Dir{
+		"elvish": testutil.Dir{
+			"lib": testutil.Dir{
+				"a.elv": "echo a from xdg-data-home",
+				"b.elv": "echo b from xdg-data-home",
+			},
+		},
+	}, xdgDataHome)
+	testutil.Setenv(t, env.XDG_DATA_HOME, xdgDataHome)
+
+	xdgDataDir1 := testutil.TempDir(t)
+	testutil.ApplyDirIn(testutil.Dir{
+		"elvish": testutil.Dir{
+			"lib": testutil.Dir{
+				"a.elv": "echo a from xdg-data-dir-1",
+				"b.elv": "echo b from xdg-data-dir-1",
+				"c.elv": "echo c from xdg-data-dir-1",
+			},
+		},
+	}, xdgDataDir1)
+	xdgDataDir2 := testutil.TempDir(t)
+	testutil.ApplyDirIn(testutil.Dir{
+		"elvish": testutil.Dir{
+			"lib": testutil.Dir{
+				"a.elv": "echo a from xdg-data-dir-2",
+				"b.elv": "echo b from xdg-data-dir-2",
+				"c.elv": "echo c from xdg-data-dir-2",
+				"d.elv": "echo d from xdg-data-dir-2",
+			},
+		},
+	}, xdgDataDir2)
+	testutil.Setenv(t, env.XDG_DATA_DIRS, xdgDataDir1+":"+xdgDataDir2)
+
+	Test(t, &Program{},
+		ThatElvish("-c", "use a").WritesStdout("a from xdg-config-home\n"),
+		ThatElvish("-c", "use b").WritesStdout("b from xdg-data-home\n"),
+		ThatElvish("-c", "use c").WritesStdout("c from xdg-data-dir-1\n"),
+		ThatElvish("-c", "use d").WritesStdout("d from xdg-data-dir-2\n"),
+	)
+}
+
 func TestShell_LibPath_Legacy(t *testing.T) {
 	home := setupCleanHomePaths(t)
 	testutil.MustWriteFile(filepath.Join(home, ".elvish", "lib", "a.elv"), "echo mod a")

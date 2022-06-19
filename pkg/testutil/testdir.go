@@ -74,12 +74,13 @@ type File struct {
 
 // ApplyDir creates the given filesystem layout in the current directory.
 func ApplyDir(dir Dir) {
-	applyDir(dir, "")
+	ApplyDirIn(dir, "")
 }
 
-func applyDir(dir Dir, prefix string) {
+// ApplyDirIn creates the given filesystem layout in a given directory.
+func ApplyDirIn(dir Dir, root string) {
 	for name, file := range dir {
-		path := filepath.Join(prefix, name)
+		path := filepath.Join(root, name)
 		switch file := file.(type) {
 		case string:
 			Must(os.WriteFile(path, []byte(file), 0644))
@@ -87,7 +88,7 @@ func applyDir(dir Dir, prefix string) {
 			Must(os.WriteFile(path, []byte(file.Content), file.Perm))
 		case Dir:
 			Must(os.MkdirAll(path, 0755))
-			applyDir(file, path)
+			ApplyDirIn(file, path)
 		default:
 			panic(fmt.Sprintf("file is neither string, Dir, or Symlink: %v", file))
 		}

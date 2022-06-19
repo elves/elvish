@@ -52,7 +52,9 @@ func libPaths(w io.Writer) ([]string, error) {
 	if dataDirs := os.Getenv(env.XDG_DATA_DIRS); dataDirs != "" {
 		// We intentionally do not use filepath.SplitList and always follow the
 		// semantics of XDG, even on Windows.
-		paths = append(paths, strings.Split(dataDirs, ":")...)
+		for _, dataDir := range strings.Split(dataDirs, ":") {
+			paths = append(paths, filepath.Join(dataDir, "elvish", "lib"))
+		}
 	} else {
 		paths = append(paths, defaultDataDirs...)
 	}
