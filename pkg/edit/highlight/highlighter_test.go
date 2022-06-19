@@ -24,7 +24,7 @@ var styles = ui.RuneStylesheet{
 
 func TestHighlighter_HighlightRegions(t *testing.T) {
 	// Force commands to be delivered synchronously.
-	MaxBlockForLate = testutil.Scaled(100 * time.Millisecond)
+	testutil.Set(t, &maxBlockForLate, testutil.Scaled(100*time.Millisecond))
 	hl := NewHighlighter(Config{
 		HasCommand: func(name string) bool { return name == "ls" },
 	})
@@ -127,7 +127,7 @@ func testThat(t *testing.T, hl *Highlighter, c c) {
 func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
 	// When the HasCommand callback takes longer than maxBlockForLate, late
 	// results are delivered asynchronously.
-	MaxBlockForLate = testutil.Scaled(time.Millisecond)
+	testutil.Set(t, &maxBlockForLate, testutil.Scaled(time.Millisecond))
 	hl := NewHighlighter(Config{
 		// HasCommand is slow and only recognizes "ls".
 		HasCommand: func(cmd string) bool {
@@ -150,7 +150,7 @@ func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
 func TestHighlighter_HasCommand_LateResult_Sync(t *testing.T) {
 	// When the HasCommand callback takes shorter than maxBlockForLate, late
 	// results are delivered asynchronously.
-	MaxBlockForLate = testutil.Scaled(100 * time.Millisecond)
+	testutil.Set(t, &maxBlockForLate, testutil.Scaled(100*time.Millisecond))
 	hl := NewHighlighter(Config{
 		// HasCommand is fast and only recognizes "ls".
 		HasCommand: func(cmd string) bool {
@@ -175,7 +175,7 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	// "ls" and is dropped.
 
 	// Make sure that the HasCommand callback takes longer than maxBlockForLate.
-	MaxBlockForLate = testutil.Scaled(time.Millisecond)
+	testutil.Set(t, &maxBlockForLate, testutil.Scaled(time.Millisecond))
 
 	hlSecond := make(chan struct{})
 	hl := NewHighlighter(Config{

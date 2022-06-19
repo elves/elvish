@@ -409,15 +409,9 @@ func deprecate(fm *Frame, msg string) {
 	fm.Deprecate(msg, ctx, 0)
 }
 
-// TimeAfter is used by the sleep command to obtain a channel that is delivered
-// a value after the specified time.
-//
-// It is a variable to allow for unit tests to efficiently test the behavior of
-// the `sleep` command, both by eliminating an actual sleep and verifying the
-// duration was properly parsed.
-var TimeAfter = func(fm *Frame, d time.Duration) <-chan time.Time {
-	return time.After(d)
-}
+// Reference to time.After, can be mutated for testing. Takes an additional
+// Frame argument to allow inspection of the value of d in tests.
+var timeAfter = func(fm *Frame, d time.Duration) <-chan time.Time { return time.After(d) }
 
 //elvdoc:fn sleep
 //
@@ -486,7 +480,7 @@ func sleep(fm *Frame, duration any) error {
 	select {
 	case <-fm.Interrupts():
 		return ErrInterrupted
-	case <-TimeAfter(fm, d):
+	case <-timeAfter(fm, d):
 		return nil
 	}
 }

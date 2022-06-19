@@ -52,15 +52,7 @@ func TestBuiltinPwd(t *testing.T) {
 
 // Verify the behavior when the CWD cannot be determined.
 func TestBuiltinPwd_GetwdError(t *testing.T) {
-	origGetwd := Getwd
-	Getwd = mockGetwdWithError
-	defer func() { Getwd = origGetwd }()
+	testutil.Set(t, Getwd, func() (string, error) { return "", errors.New("cwd unknown") })
 
-	Test(t,
-		That(`put $pwd`).Puts("/unknown/pwd"),
-	)
-}
-
-func mockGetwdWithError() (string, error) {
-	return "", errors.New("cwd unknown")
+	Test(t, That(`put $pwd`).Puts("/unknown/pwd"))
 }

@@ -108,13 +108,13 @@ func TestUseMod(t *testing.T) {
 	)
 }
 
-func timeAfterMock(fm *Frame, d time.Duration) <-chan time.Time {
-	fm.ValueOutput().Put(d) // report to the test framework the duration we received
-	return time.After(0)
-}
-
 func TestSleep(t *testing.T) {
-	TimeAfter = timeAfterMock
+	testutil.Set(t, TimeAfter,
+		func(fm *Frame, d time.Duration) <-chan time.Time {
+			fm.ValueOutput().Put(d)
+			return time.After(0)
+		})
+
 	Test(t,
 		That(`sleep 0`).Puts(0*time.Second),
 		That(`sleep 1`).Puts(1*time.Second),

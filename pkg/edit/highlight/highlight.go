@@ -22,9 +22,8 @@ type cmdRegion struct {
 	cmd string
 }
 
-// MaxBlockForLate specifies the maximum wait time to block for late results.
-// It can be changed for test cases.
-var MaxBlockForLate = 10 * time.Millisecond
+// Maximum wait time to block for late results. Can be changed for test cases.
+var maxBlockForLate = 10 * time.Millisecond
 
 // Highlights a piece of Elvish code.
 func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error) {
@@ -117,7 +116,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 		select {
 		case late := <-lateCh:
 			return late, errors
-		case <-time.After(MaxBlockForLate):
+		case <-time.After(maxBlockForLate):
 			go func() {
 				lateCb(<-lateCh)
 			}()
