@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
-	"os"
 	"sync"
 	"time"
-	"unicode/utf8"
 
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval/errs"
@@ -353,17 +351,6 @@ func nextEvalCount() int {
 
 func useMod(fm *Frame, spec string) (*Ns, error) {
 	return use(fm, spec, nil)
-}
-
-func readFileUTF8(fname string) (string, error) {
-	bytes, err := os.ReadFile(fname)
-	if err != nil {
-		return "", err
-	}
-	if !utf8.Valid(bytes) {
-		return "", fmt.Errorf("%s: source is not valid UTF-8", fname)
-	}
-	return string(bytes), nil
 }
 
 //elvdoc:fn deprecate

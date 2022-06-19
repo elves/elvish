@@ -17,9 +17,11 @@ package eval
 // closures functioning as code blocks.
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval/vals"
@@ -388,6 +390,17 @@ func useFromFile(fm *Frame, spec, path string, r diag.Ranger) (*Ns, error) {
 	}
 	fm.Evaler.modules[path] = *ns
 	return *ns, nil
+}
+
+func readFileUTF8(fname string) (string, error) {
+	bytes, err := os.ReadFile(fname)
+	if err != nil {
+		return "", err
+	}
+	if !utf8.Valid(bytes) {
+		return "", fmt.Errorf("%s: source is not valid UTF-8", fname)
+	}
+	return string(bytes), nil
 }
 
 // TODO: Make access to fm.Evaler.modules concurrency-safe.

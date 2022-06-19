@@ -2,6 +2,7 @@ package eval_test
 
 import (
 	"errors"
+	"path/filepath"
 	"testing"
 
 	"src.elv.sh/pkg/diag"
@@ -482,7 +483,8 @@ func TestUse_SupportsCircularDependency(t *testing.T) {
 func TestUse(t *testing.T) {
 	libdir1 := testutil.InTempDir(t)
 	testutil.ApplyDir(testutil.Dir{
-		"shadow.elv": "put lib1",
+		"shadow.elv":       "put lib1",
+		"invalid-utf8.elv": "\xff",
 	})
 
 	libdir2 := testutil.InTempDir(t)
@@ -544,6 +546,10 @@ func TestUse(t *testing.T) {
 		That("use unknown").Throws(ErrorWithType(NoSuchModule{})),
 		That("use ./unknown").Throws(ErrorWithType(NoSuchModule{})),
 		That("use ../unknown").Throws(ErrorWithType(NoSuchModule{})),
+
+		// Invalid UTF-8 in module file
+		That("use invalid-utf8").Throws(ErrorWithMessage(
+			filepath.Join(libdir1, "invalid-utf8.elv")+": source is not valid UTF-8")),
 
 		// Nonexistent module
 		That("use non-existent").Throws(ErrorWithMessage("no such module: non-existent")),
