@@ -365,102 +365,55 @@ pre.ttyshot, pre.ttyshot code {
     background-color: white;
 }
 
-.sgr-30 { /* fg black */
-    color: #000000;
-}
-.sgr-40 { /* bg black */
-    background-color: #000000;
-}
-.sgr-31 { /* fg dark red */
-    color: #8B0000;
-}
-.sgr-41 { /* bg dark red */
-    background-color: #8B0000;
-}
-.sgr-32 { /* fg dark green */
-    color: #008000;
-}
-.sgr-42 { /* bg dark green */
-    background-color: #008000;
-}
-.sgr-33 { /* fg dark yellow */
-    color: #DAA520;
-}
-.sgr-43 { /* bg dark yellow */
-    background-color: #DAA520;
-}
-.sgr-34 { /* fg dark blue */
-    color: #00008B;
-}
-.sgr-44 { /* bg dark blue */
-    background-color: #00008B;
-}
-.sgr-35 { /* fg dark magenta */
-    color: #FF00FF;
-}
-.sgr-45 { /* bg dark magenta */
-    background-color: #FF00FF;
-}
-.sgr-36 { /* fg dark cyan */
-    color: #008B8B;
-}
-.sgr-46 { /* bg dark cyan */
-    background-color: #008B8B;
-}
-.sgr-37 { /* fg white */
-    color: #E5E5E5;
-}
-.sgr-47 { /* bg white */
-    background-color: #E5E5E5;
-}
-.sgr-90 { /* fg bright black (grey) */
-    color: #7F7F7F;
-}
-.sgr-100 { /* bg bright black (grey) */
-    background-color: #7F7F7F;
-}
-.sgr-91 { /* fg bright red */
-    color: #FF0000;
-}
-.sgr-101 { /* bg bright red */
-    background-color: #FF0000;
-}
-.sgr-92 { /* fg bright green */
-    color: #00FF00;
-}
-.sgr-102 { /* bg bright green */
-    background-color: #00FF00;
-}
-.sgr-93 { /* fg bright yellow */
-    color: #FFFF00;
-}
-.sgr-103 { /* bg bright yellow */
-    background-color: #FFFF00;
-}
-.sgr-94 { /* fg bright blue */
-    color: #0000FF;
-}
-.sgr-104 { /* bg bright blue */
-    background-color: #0000FF;
-}
-.sgr-95 { /* fg bright magenta */
-    color: #F984E5;
-}
-.sgr-105 { /* bg bright magenta */
-    background-color: #F984E5;
-}
-.sgr-96 { /* fg bright cyan */
-    color: #00FFFF;
-}
-.sgr-106 { /* bg bright cyan */
-    background-color: #00FFFF;
-}
-.sgr-97 { /* fg bright white */
-    color: #FFFFFF;
-}
-.sgr-107 { /* bg bright white */
-    background-color: #FFFFFF;
-}
+/* black */
+.sgr-30 { color: black; }
+.sgr-40 { background-color: black; }
+/* red */
+.sgr-31 { color: maroon; }
+.sgr-41 { background-color: maroon; }
+/* green */
+.sgr-32 { color: green; }
+.sgr-42 { background-color: green; }
+/* yellow */
+.sgr-33 { color: goldenrod; }
+.sgr-43 { background-color: goldrenrod; }
+/* blue */
+.sgr-34 { color: navy; }
+.sgr-44 { background-color: navy; }
+/* magenta */
+.sgr-35 { color: darkorchid; }
+.sgr-45 { background-color: darkorchid; }
+/* cyan */
+.sgr-36 { color: darkcyan; }
+.sgr-46 { background-color: darkcyan; }
+/* white */
+.sgr-37 { color: lightgrey; }
+.sgr-47 { background-color: lightgrey; }
+
+/* bright black */
+.sgr-90 { color: grey; }
+.sgr-100 { background-color: grey; }
+/* bright red */
+.sgr-91 { color: red; }
+.sgr-101 { background-color: red; }
+/* bright green */
+.sgr-92 { color: lime; }
+.sgr-102 { background-color: lime; }
+/* light yellow */
+.sgr-93 { color: yellow; }
+.sgr-103 { background-color: yellow; }
+/* light blue */
+.sgr-94 { color: blue; }
+.sgr-104 { background-color: blue; }
+/* bright magenta */
+.sgr-95 { color: fuchsia; }
+.sgr-105 { background-color: fuchsia; }
+/* bright cyan */
+.sgr-96 { color: aqua; }
+.sgr-106 { background-color: aqua; }
+/* bright white */
+.sgr-97 { color: white; }
+.sgr-107 { background-color: white; }
 
 /** Header anchors. */
 .anchor {
