@@ -105,14 +105,8 @@ func exit(fm *Frame, codes ...int) error {
 		return errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: len(codes)}
 	}
 
-	preExit(fm)
+	fm.Evaler.PreExit()
 	os.Exit(code)
 	// Does not return
 	panic("os.Exit returned")
-}
-
-func preExit(fm *Frame) {
-	for _, hook := range fm.Evaler.BeforeExit {
-		hook()
-	}
 }

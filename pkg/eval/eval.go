@@ -45,7 +45,7 @@ type Evaler struct {
 	// Command-line arguments, exposed as $args.
 	Args vals.List
 	// Hooks to run before exit or exec.
-	BeforeExit []func()
+	PreExitHooks []func()
 	// Chdir hooks, exposed indirectly as $before-chdir and $after-chdir.
 	BeforeChdir, AfterChdir []func(string)
 	// Directories to search libraries.
@@ -199,6 +199,13 @@ func adaptChdirHook(name string, ev *Evaler, pfns *vals.List) func(string) {
 				fmt.Fprintln(os.Stderr, err)
 			}
 		}
+	}
+}
+
+// PreExit runs all pre-exit hooks.
+func (ev *Evaler) PreExit() {
+	for _, hook := range ev.PreExitHooks {
+		hook()
 	}
 }
 

@@ -57,19 +57,15 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 			fmt.Fprintln(fds[2], "Cannot connect to daemon:", err)
 			fmt.Fprintln(fds[2], "Daemon-related functions will likely not work.")
 		}
-		defer func() {
-			err := cl.Close()
-			if err != nil {
-				fmt.Fprintln(fds[2],
-					"warning: failed to close connection to daemon:", err)
-			}
-		}()
-		daemonClient = cl
-		// Even if error is not nil, we install daemon-related functionalities
-		// anyway. Daemon may eventually come online and become functional.
-		ev.BeforeExit = append(ev.BeforeExit, func() { cl.Close() })
-		ev.AddModule("store", store.Ns(cl))
-		ev.AddModule("daemon", daemon.Ns(cl))
+		if cl != nil {
+			// Even if error is not nil, we install daemon-related
+			// functionalities anyway. Daemon may eventually come online and
+			// become functional.
+			daemonClient = cl
+			ev.PreExitHooks = append(ev.PreExitHooks, func() { cl.Close() })
+			ev.AddModule("store", store.Ns(cl))
+			ev.AddModule("daemon", daemon.Ns(cl))
+		}
 	}
 
 	// Build Editor.

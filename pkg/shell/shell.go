@@ -61,6 +61,7 @@ func (p *Program) Run(fds [3]*os.File, args []string) error {
 	defer cleanup2()
 
 	ev := makeEvaler(fds[2])
+	defer ev.PreExit()
 
 	if len(args) > 0 {
 		exit := script(

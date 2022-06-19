@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -62,13 +63,31 @@ func TestInteract_RCPath_XDG_CONFIG_HOME(t *testing.T) {
 }
 
 func TestInteract_ConnectsToDaemon(t *testing.T) {
-	testutil.InTempDir(t)
 	sockPath := startDaemon(t)
 
 	Test(t, &Program{ActivateDaemon: fakeActivate(sockPath)},
 		thatElvishInteract().
 			WithStdin("use daemon; echo $daemon:pid\n").
 			WritesStdout(fmt.Sprintln(os.Getpid())),
+	)
+}
+
+func TestInteract_DoesNotStoreEmptyCommandInHistory(t *testing.T) {
+	sockPath := startDaemon(t)
+	Test(t, &Program{ActivateDaemon: fakeActivate(sockPath)},
+		thatElvishInteract().
+			WithStdin("\n"+"use store; print (store:next-cmd-seq)\n").
+			WritesStdout("1"),
+	)
+}
+
+func TestInteract_ErrorInActivateDaemon(t *testing.T) {
+	activate := func(io.Writer, *daemondefs.SpawnConfig) (daemondefs.Client, error) {
+		return nil, errors.New("fake error")
+	}
+	Test(t, &Program{ActivateDaemon: activate},
+		thatElvishInteract().
+			WritesStderrContaining("Cannot connect to daemon: fake error"),
 	)
 }
 
@@ -104,7 +123,7 @@ func thatElvishInteract(args ...string) Case {
 func startDaemon(t *testing.T) string {
 	t.Helper()
 	// Run the daemon in the same process for simplicity.
-	dir := t.TempDir()
+	dir := testutil.TempDir(t)
 	sockPath := filepath.Join(dir, "sock")
 	sigCh := make(chan os.Signal)
 	readyCh := make(chan struct{})

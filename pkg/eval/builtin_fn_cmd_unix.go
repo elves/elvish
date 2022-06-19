@@ -52,7 +52,7 @@ func execFn(fm *Frame, args ...any) error {
 		return err
 	}
 
-	preExit(fm)
+	fm.Evaler.PreExit()
 	decSHLVL()
 
 	return syscallExec(argstrings[0], argstrings, os.Environ())
