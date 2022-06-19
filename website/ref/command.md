@@ -81,7 +81,8 @@ directories:
     `%LocalAppData%\elvish\lib` (Windows) is searched.
 
 3.  If the `XDG_DATA_DIRS` environment variable is defined and non-empty, it is
-    treated as a colon-delimited list of paths, which are all searched.
+    treated as a colon-delimited list of paths (semicolon-delimited on Windows),
+    which are all searched.
 
     Otherwise, `/usr/local/share/elvish/lib` and `/usr/share/elvish/lib` are
     searched on non-Windows OSes. On Windows, no directories are searched.

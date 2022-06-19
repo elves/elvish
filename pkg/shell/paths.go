@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/env"
@@ -50,9 +49,10 @@ func libPaths(w io.Writer) ([]string, error) {
 	}
 
 	if dataDirs := os.Getenv(env.XDG_DATA_DIRS); dataDirs != "" {
-		// We intentionally do not use filepath.SplitList and always follow the
-		// semantics of XDG, even on Windows.
-		for _, dataDir := range strings.Split(dataDirs, ":") {
+		// XDG requires the paths be joined with ":". However, on Windows ":"
+		// appear after the drive letter, so it's infeasible to use it to also
+		// join paths.
+		for _, dataDir := range filepath.SplitList(dataDirs) {
 			paths = append(paths, filepath.Join(dataDir, "elvish", "lib"))
 		}
 	} else {

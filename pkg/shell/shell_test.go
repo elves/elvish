@@ -53,7 +53,8 @@ func TestShell_LibPath_XDGPaths(t *testing.T) {
 			},
 		},
 	}, xdgDataDir2)
-	testutil.Setenv(t, env.XDG_DATA_DIRS, xdgDataDir1+":"+xdgDataDir2)
+	testutil.Setenv(t, env.XDG_DATA_DIRS,
+		xdgDataDir1+string(filepath.ListSeparator)+xdgDataDir2)
 
 	Test(t, &Program{},
 		ThatElvish("-c", "use a").WritesStdout("a from xdg-config-home\n"),
