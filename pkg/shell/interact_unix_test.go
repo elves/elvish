@@ -22,3 +22,14 @@ func TestInteract_RCPath_Default(t *testing.T) {
 		thatElvishInteract().WritesStdout("hello new rc.elv\n"),
 	)
 }
+
+func TestInteract_DBPath_Default(t *testing.T) {
+	sockPath := startDaemon(t)
+	home := setupCleanHomePaths(t)
+
+	Test(t, &Program{ActivateDaemon: fakeActivate(sockPath)},
+		thatElvishInteract().
+			WritesStderrContaining("db requested: "+
+				filepath.Join(home, ".local", "state", "elvish", "db.bolt")),
+	)
+}

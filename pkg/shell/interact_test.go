@@ -2,12 +2,14 @@ package shell
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"src.elv.sh/pkg/daemon"
+	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/env"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
@@ -37,10 +39,8 @@ func TestInteract_Eval(t *testing.T) {
 
 func TestInteract_RCPath_Legacy(t *testing.T) {
 	home := setupCleanHomePaths(t)
-	// Legacy RC path
 	testutil.MustWriteFile(
 		filepath.Join(home, ".elvish", "rc.elv"), "echo hello legacy rc.elv")
-	// Note: non-legacy path is tested in interact_unix_test.go
 
 	Test(t, &Program{},
 		thatElvishInteract().
@@ -63,35 +63,79 @@ func TestInteract_RCPath_XDG_CONFIG_HOME(t *testing.T) {
 
 func TestInteract_ConnectsToDaemon(t *testing.T) {
 	testutil.InTempDir(t)
+	sockPath := startDaemon(t)
 
+	Test(t, &Program{ActivateDaemon: fakeActivate(sockPath)},
+		thatElvishInteract().
+			WithStdin("use daemon; echo $daemon:pid\n").
+			WritesStdout(fmt.Sprintln(os.Getpid())),
+	)
+}
+
+func TestInteract_DBPath_Legacy(t *testing.T) {
+	sockPath := startDaemon(t)
+	home := setupCleanHomePaths(t)
+	legacyDBPath := filepath.Join(home, ".elvish", "db")
+	testutil.MustWriteFile(legacyDBPath, "")
+
+	Test(t, &Program{ActivateDaemon: fakeActivate(sockPath)},
+		thatElvishInteract().
+			WritesStderrContaining("db requested: "+legacyDBPath),
+	)
+}
+
+func TestInteract_DBPath_XDG_STATE_HOME(t *testing.T) {
+	sockPath := startDaemon(t)
+	setupCleanHomePaths(t)
+	xdgStateHome := testutil.Setenv(t, env.XDG_STATE_HOME, t.TempDir())
+
+	Test(t, &Program{ActivateDaemon: fakeActivate(sockPath)},
+		thatElvishInteract().
+			WritesStderrContaining("db requested: "+
+				filepath.Join(xdgStateHome, "elvish", "db.bolt")),
+	)
+}
+
+func thatElvishInteract(args ...string) Case {
+	return ThatElvish(args...).WritesStderrContaining("")
+}
+
+// Starts a daemon, and returns the socket path to connect it with.
+func startDaemon(t *testing.T) string {
+	t.Helper()
 	// Run the daemon in the same process for simplicity.
+	dir := t.TempDir()
+	sockPath := filepath.Join(dir, "sock")
+	sigCh := make(chan os.Signal)
+	readyCh := make(chan struct{})
 	daemonDone := make(chan struct{})
-	defer func() {
+	go func() {
+		daemon.Serve(sockPath, filepath.Join(dir, "db.bolt"),
+			daemon.ServeOpts{Ready: readyCh, Signals: sigCh})
+		close(daemonDone)
+	}()
+	t.Cleanup(func() {
+		t.Helper()
+		close(sigCh)
 		select {
 		case <-daemonDone:
 		case <-time.After(testutil.Scaled(2 * time.Second)):
 			t.Errorf("timed out waiting for daemon to quit")
 		}
-	}()
-	readyCh := make(chan struct{})
-	go func() {
-		daemon.Serve("sock", "db", daemon.ServeOpts{Ready: readyCh})
-		close(daemonDone)
-	}()
+	})
 	select {
 	case <-readyCh:
 		// Do nothing
 	case <-time.After(testutil.Scaled(2 * time.Second)):
 		t.Fatalf("timed out waiting for daemon to start")
 	}
-
-	Test(t, &Program{ActivateDaemon: daemon.Activate},
-		thatElvishInteract("-sock", "sock", "-db", "db").
-			WithStdin("use daemon; echo $daemon:pid\n").
-			WritesStdout(fmt.Sprintln(os.Getpid())),
-	)
+	return sockPath
 }
 
-func thatElvishInteract(args ...string) Case {
-	return ThatElvish(args...).WritesStderrContaining("")
+func fakeActivate(sockPath string) daemondefs.ActivateFunc {
+	return func(stderr io.Writer, cfg *daemondefs.SpawnConfig) (daemondefs.Client, error) {
+		fmt.Fprintln(stderr, "db requested:", cfg.DbPath)
+		// Always connect to the in-process daemon just started.
+		return daemon.NewClient(sockPath), nil
+	}
 }
