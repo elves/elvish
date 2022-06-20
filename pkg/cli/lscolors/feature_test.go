@@ -70,7 +70,10 @@ func TestDetermineFeature(t *testing.T) {
 		test("socket", "sock", featureSocket, opt{setupErr: err})
 	}
 
-	// TODO: Test featureDoor on Solaris
+	testutil.Set(t, &isDoorFunc,
+		func(info os.FileInfo) bool { return info.Name() == "door" })
+	err = create("door")
+	test("door (fake)", "door", featureDoor, opt{setupErr: err})
 
 	chr, err := findDevice(os.ModeDevice | os.ModeCharDevice)
 	test("char device", chr, featureCharDevice, opt{setupErr: err})

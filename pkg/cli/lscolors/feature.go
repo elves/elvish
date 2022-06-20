@@ -40,6 +40,9 @@ const (
 // On Windows the only two permission masks are 0o666 (RW) and 0o444 (RO).
 const worldWritable = 0o002
 
+// Can be mutated in tests.
+var isDoorFunc = isDoor
+
 func determineFeature(fname string, mh bool) (feature, error) {
 	stat, err := os.Lstat(fname)
 
@@ -69,7 +72,7 @@ func determineFeature(fname string, mh bool) (feature, error) {
 		return featureNamedPipe, nil
 	case is(m, os.ModeSocket): // Never on Windows
 		return featureSocket, nil
-	case isDoor(stat):
+	case isDoorFunc(stat):
 		return featureDoor, nil
 	case is(m, os.ModeCharDevice):
 		return featureCharDevice, nil
