@@ -7,6 +7,7 @@ import (
 
 	"src.elv.sh/pkg/diag"
 	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/parse"
 
 	"src.elv.sh/pkg/eval/errs"
@@ -101,7 +102,7 @@ func TestTime(t *testing.T) {
 
 func TestUseMod(t *testing.T) {
 	testutil.InTempDir(t)
-	testutil.MustWriteFile("mod.elv", "var x = value")
+	must.WriteFile("mod.elv", "var x = value")
 
 	Test(t,
 		That("put (use-mod ./mod)[x]").Puts("value"),
@@ -143,7 +144,7 @@ func TestSleep(t *testing.T) {
 
 func TestResolve(t *testing.T) {
 	libdir := testutil.InTempDir(t)
-	testutil.MustWriteFile("mod.elv", "fn func { }")
+	must.WriteFile("mod.elv", "fn func { }")
 
 	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
 		That("resolve for").Puts("special"),

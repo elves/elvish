@@ -10,6 +10,7 @@ import (
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/testutil"
@@ -564,7 +565,7 @@ func TestUse(t *testing.T) {
 func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	testutil.Set(t, &prog.DeprecationLevel, 18)
 	libdir := testutil.InTempDir(t)
-	testutil.MustWriteFile("dep.elv", "a=b nop $a")
+	must.WriteFile("dep.elv", "a=b nop $a")
 
 	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
 		// Importing module triggers check for deprecated features

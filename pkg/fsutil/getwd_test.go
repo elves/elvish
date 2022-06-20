@@ -8,12 +8,13 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/testutil"
 )
 
 func TestGetwd(t *testing.T) {
 	tmpdir := testutil.InTempDir(t)
-	testutil.Must(os.Mkdir("a", 0700))
+	must.OK(os.Mkdir("a", 0700))
 
 	var tests = []struct {
 		name   string
@@ -34,7 +35,7 @@ func TestGetwd(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			os.Setenv(env.HOME, test.home)
-			testutil.MustChdir(test.chdir)
+			must.Chdir(test.chdir)
 			if gotWd := Getwd(); gotWd != test.wantWd {
 				t.Errorf("Getwd() -> %v, want %v", gotWd, test.wantWd)
 			}
@@ -51,8 +52,8 @@ func TestGetwd(t *testing.T) {
 	// have the same behavior as Linux. So far only macOS has been checked.
 	if runtime.GOOS == "linux" {
 		wd := path.Join(tmpdir, "a")
-		testutil.MustChdir(wd)
-		testutil.Must(os.Remove(wd))
+		must.Chdir(wd)
+		must.OK(os.Remove(wd))
 		if gotwd := Getwd(); gotwd != "?" {
 			t.Errorf("Getwd() -> %v, want ?", gotwd)
 		}

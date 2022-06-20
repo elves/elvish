@@ -4,15 +4,15 @@ import (
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
-
 	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/testutil"
 )
 
 func TestGlob_Simple(t *testing.T) {
 	testutil.InTempDir(t)
-	testutil.MustMkdirAll("z", "z2")
-	testutil.MustCreateEmpty("bar", "foo", "ipsum", "lorem")
+	must.MkdirAll("z", "z2")
+	must.CreateEmpty("bar", "foo", "ipsum", "lorem")
 
 	Test(t,
 		That("put *").Puts("bar", "foo", "ipsum", "lorem", "z", "z2"),
@@ -24,8 +24,8 @@ func TestGlob_Simple(t *testing.T) {
 
 func TestGlob_Recursive(t *testing.T) {
 	testutil.InTempDir(t)
-	testutil.MustMkdirAll("1/2/3")
-	testutil.MustCreateEmpty("a.go", "1/a.go", "1/2/3/a.go")
+	must.MkdirAll("1/2/3")
+	must.CreateEmpty("a.go", "1/a.go", "1/2/3/a.go")
 
 	Test(t,
 		That("put **").Puts("1/2/3/a.go", "1/2/3", "1/2", "1/a.go", "1", "a.go"),
@@ -45,8 +45,8 @@ func TestGlob_NoMatch(t *testing.T) {
 
 func TestGlob_MatchHidden(t *testing.T) {
 	testutil.InTempDir(t)
-	testutil.MustMkdirAll("d", ".d")
-	testutil.MustCreateEmpty("a", ".a", "d/a", "d/.a", ".d/a", ".d/.a")
+	must.MkdirAll("d", ".d")
+	must.CreateEmpty("a", ".a", "d/a", "d/.a", ".d/a", ".d/.a")
 
 	Test(t,
 		That("put *").Puts("a", "d"),
@@ -60,7 +60,7 @@ func TestGlob_MatchHidden(t *testing.T) {
 
 func TestGlob_RuneMatchers(t *testing.T) {
 	testutil.InTempDir(t)
-	testutil.MustCreateEmpty("a1", "a2", "b1", "c1", "ipsum", "lorem")
+	must.CreateEmpty("a1", "a2", "b1", "c1", "ipsum", "lorem")
 
 	Test(t,
 		That("put *[letter]").Puts("ipsum", "lorem"),
@@ -75,7 +75,7 @@ func TestGlob_RuneMatchers(t *testing.T) {
 
 func TestGlob_But(t *testing.T) {
 	testutil.InTempDir(t)
-	testutil.MustCreateEmpty("bar", "foo", "ipsum", "lorem")
+	must.CreateEmpty("bar", "foo", "ipsum", "lorem")
 
 	Test(t,
 		// Nonexistent files can also be excluded
@@ -85,8 +85,8 @@ func TestGlob_But(t *testing.T) {
 
 func TestGlob_Type(t *testing.T) {
 	testutil.InTempDir(t)
-	testutil.MustMkdirAll("d1", "d2", ".d", "b/c")
-	testutil.MustCreateEmpty("bar", "foo", "ipsum", "lorem", "d1/f1", "d2/fm")
+	must.MkdirAll("d1", "d2", ".d", "b/c")
+	must.CreateEmpty("bar", "foo", "ipsum", "lorem", "d1/f1", "d2/fm")
 
 	Test(t,
 		That("put **[type:dir]").Puts("b/c", "b", "d1", "d2"),

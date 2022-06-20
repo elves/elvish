@@ -6,12 +6,12 @@ import (
 	"io"
 	"testing"
 
-	"src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/must"
 )
 
 func TestWaitForRead(t *testing.T) {
-	r0, w0 := testutil.MustPipe()
-	r1, w1 := testutil.MustPipe()
+	r0, w0 := must.Pipe()
+	r1, w1 := must.Pipe()
 	defer closeAll(r0, w0, r1, w1)
 
 	w0.WriteString("x")

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/must"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
 )
@@ -66,7 +67,7 @@ func TestShell_LibPath_XDGPaths(t *testing.T) {
 
 func TestShell_LibPath_Legacy(t *testing.T) {
 	home := setupCleanHomePaths(t)
-	testutil.MustWriteFile(filepath.Join(home, ".elvish", "lib", "a.elv"), "echo mod a")
+	must.WriteFile(filepath.Join(home, ".elvish", "lib", "a.elv"), "echo mod a")
 
 	Test(t, &Program{},
 		ThatElvish("-c", "use a").

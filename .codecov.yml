@@ -14,8 +14,6 @@ ignore:
   - "pkg/eval/vals/tester.go"
   - "pkg/prog/progtest"
   - "pkg/store/storetest"
-  - "pkg/testutil/must.go"
+  - "pkg/must"
   # Exclude the copied rpc package.
   - "pkg/rpc"
-  # The web UI is not being worked on now, also exclude it.
-  - "pkg/web"

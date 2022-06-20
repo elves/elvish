@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/daemon/daemondefs"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -67,7 +68,7 @@ func TestActivate_FailsIfCannotStatSock(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		// POSIX lstat(2) returns ENOTDIR instead of ENOENT if a path prefix is
 		// not a directory.
-		testutil.MustCreateEmpty("not-dir")
+		must.CreateEmpty("not-dir")
 		badSockPath = "not-dir/sock"
 	} else {
 		// Use a syntactically invalid drive letter on Windows.
@@ -82,7 +83,7 @@ func TestActivate_FailsIfCannotStatSock(t *testing.T) {
 
 func TestActivate_FailsIfCannotDialSock(t *testing.T) {
 	setup(t)
-	testutil.MustCreateEmpty("sock")
+	must.CreateEmpty("sock")
 	_, err := Activate(io.Discard,
 		&daemondefs.SpawnConfig{DbPath: "db", SockPath: "sock", RunDir: "."})
 	if err == nil {

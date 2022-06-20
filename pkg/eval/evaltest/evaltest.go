@@ -25,8 +25,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/tt"
 )
 
@@ -230,7 +230,7 @@ func capturePort() (*eval.Port, func() ([]any, []byte)) {
 			}
 		},
 		func(r *os.File) {
-			bytes = testutil.MustReadAllAndClose(r)
+			bytes = must.ReadAllAndClose(r)
 		})
 	if err != nil {
 		panic(err)

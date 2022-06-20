@@ -11,6 +11,7 @@ import (
 
 	lsp "github.com/sourcegraph/go-lsp"
 	"github.com/sourcegraph/jsonrpc2"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
@@ -219,8 +220,8 @@ type clientFixture struct {
 }
 
 func setup(t *testing.T) *clientFixture {
-	r0, w0 := testutil.MustPipe()
-	r1, w1 := testutil.MustPipe()
+	r0, w0 := must.Pipe()
+	r1, w1 := must.Pipe()
 
 	// Run server
 	done := make(chan struct{})

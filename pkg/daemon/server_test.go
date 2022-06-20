@@ -8,6 +8,7 @@ import (
 
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/daemon/internal/api"
+	"src.elv.sh/pkg/must"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/store/storetest"
 	"src.elv.sh/pkg/testutil"
@@ -15,7 +16,7 @@ import (
 
 func TestProgram_TerminatesIfCannotListen(t *testing.T) {
 	setup(t)
-	testutil.MustCreateEmpty("sock")
+	must.CreateEmpty("sock")
 
 	Test(t, &Program{},
 		ThatElvish("-daemon", "-sock", "sock", "-db", "db").
@@ -49,7 +50,7 @@ func TestProgram_ServesClientRequests(t *testing.T) {
 
 func TestProgram_StillServesIfCannotOpenDB(t *testing.T) {
 	setup(t)
-	testutil.MustWriteFile("db", "not a valid bolt database")
+	must.WriteFile("db", "not a valid bolt database")
 	startServer(t, cli("sock", "db"))
 	client := startClient(t, "sock")
 

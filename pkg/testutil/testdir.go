@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/must"
 )
 
 // TempDir creates a temporary directory for testing that will be removed
@@ -44,9 +45,9 @@ func Chdir(c Cleanuper, dir string) string {
 	if err != nil {
 		panic(err)
 	}
-	Must(os.Chdir(dir))
+	must.Chdir(dir)
 	c.Cleanup(func() {
-		Must(os.Chdir(oldWd))
+		must.Chdir(oldWd)
 	})
 	return dir
 }
@@ -83,11 +84,11 @@ func ApplyDirIn(dir Dir, root string) {
 		path := filepath.Join(root, name)
 		switch file := file.(type) {
 		case string:
-			Must(os.WriteFile(path, []byte(file), 0644))
+			must.OK(os.WriteFile(path, []byte(file), 0644))
 		case File:
-			Must(os.WriteFile(path, []byte(file.Content), file.Perm))
+			must.OK(os.WriteFile(path, []byte(file.Content), file.Perm))
 		case Dir:
-			Must(os.MkdirAll(path, 0755))
+			must.OK(os.MkdirAll(path, 0755))
 			ApplyDirIn(file, path)
 		default:
 			panic(fmt.Sprintf("file is neither string, Dir, or Symlink: %v", file))

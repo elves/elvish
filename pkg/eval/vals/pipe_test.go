@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"testing"
 
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/persistent/hash"
-	"src.elv.sh/pkg/testutil"
 )
 
 func TestPipe(t *testing.T) {
-	pr, pw := testutil.MustPipe()
+	pr, pw := must.Pipe()
 	defer pr.Close()
 	defer pw.Close()
 

@@ -12,6 +12,7 @@ import (
 	"src.elv.sh/pkg/daemon"
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/env"
+	"src.elv.sh/pkg/must"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
 )
@@ -19,9 +20,9 @@ import (
 func TestInteract_Eval(t *testing.T) {
 	setupCleanHomePaths(t)
 	testutil.InTempDir(t)
-	testutil.MustWriteFile("rc.elv", "echo hello from rc.elv")
-	testutil.MustWriteFile("rc-dnc.elv", "echo $a")
-	testutil.MustWriteFile("rc-fail.elv", "fail bad")
+	must.WriteFile("rc.elv", "echo hello from rc.elv")
+	must.WriteFile("rc-dnc.elv", "echo $a")
+	must.WriteFile("rc-fail.elv", "fail bad")
 
 	Test(t, &Program{},
 		thatElvishInteract().WithStdin("echo hello\n").WritesStdout("hello\n"),
@@ -40,7 +41,7 @@ func TestInteract_Eval(t *testing.T) {
 
 func TestInteract_RCPath_Legacy(t *testing.T) {
 	home := setupCleanHomePaths(t)
-	testutil.MustWriteFile(
+	must.WriteFile(
 		filepath.Join(home, ".elvish", "rc.elv"), "echo hello legacy rc.elv")
 
 	Test(t, &Program{},
@@ -53,7 +54,7 @@ func TestInteract_RCPath_Legacy(t *testing.T) {
 func TestInteract_RCPath_XDG_CONFIG_HOME(t *testing.T) {
 	setupCleanHomePaths(t)
 	xdgConfigHome := testutil.Setenv(t, env.XDG_CONFIG_HOME, testutil.TempDir(t))
-	testutil.MustWriteFile(
+	must.WriteFile(
 		filepath.Join(xdgConfigHome, "elvish", "rc.elv"),
 		"echo hello XDG_CONFIG_HOME rc.elv")
 
@@ -95,7 +96,7 @@ func TestInteract_DBPath_Legacy(t *testing.T) {
 	sockPath := startDaemon(t)
 	home := setupCleanHomePaths(t)
 	legacyDBPath := filepath.Join(home, ".elvish", "db")
-	testutil.MustWriteFile(legacyDBPath, "")
+	must.WriteFile(legacyDBPath, "")
 
 	Test(t, &Program{ActivateDaemon: fakeActivate(sockPath)},
 		thatElvishInteract().

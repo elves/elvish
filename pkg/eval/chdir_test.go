@@ -6,8 +6,8 @@ import (
 
 	"src.elv.sh/pkg/env"
 	. "src.elv.sh/pkg/eval"
-
 	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/testutil"
 )
@@ -78,6 +78,6 @@ func saveWd() func() {
 		panic(err)
 	}
 	return func() {
-		testutil.MustChdir(wd)
+		must.Chdir(wd)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -71,7 +72,7 @@ func TestFileReader_Stop(t *testing.T) {
 }
 
 func setupFileReader() (reader fileReader, writer *os.File, cleanup func()) {
-	pr, pw := testutil.MustPipe()
+	pr, pw := must.Pipe()
 	r, err := newFileReader(pr)
 	if err != nil {
 		panic(err)

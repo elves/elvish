@@ -8,6 +8,7 @@ import (
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/testutil"
 )
@@ -15,8 +16,8 @@ import (
 func TestTildeAbbr(t *testing.T) {
 	tmpHome := testutil.InTempHome(t)
 
-	testutil.MustMkdirAll("dir")
-	testutil.MustCreateEmpty("file")
+	must.MkdirAll("dir")
+	must.CreateEmpty("file")
 
 	Test(t,
 		That("tilde-abbr "+parse.Quote(filepath.Join(tmpHome, "foobar"))).
@@ -27,7 +28,7 @@ func TestTildeAbbr(t *testing.T) {
 func TestCd(t *testing.T) {
 	tmpHome := testutil.InTempHome(t)
 
-	testutil.MustMkdirAll("d1")
+	must.MkdirAll("d1")
 	d1Path := filepath.Join(tmpHome, "d1")
 
 	Test(t,

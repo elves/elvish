@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/cli/lscolors"
-	"src.elv.sh/pkg/testutil"
-
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/must"
+	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -176,6 +176,6 @@ func setupNav(c testutil.Cleanuper) *fixture {
 	f := setup(c)
 	lscolors.SetTestLsColors(c)
 	testutil.ApplyDir(testDir)
-	testutil.MustChdir("d")
+	must.Chdir("d")
 	return f
 }

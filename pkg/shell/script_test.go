@@ -3,6 +3,7 @@ package shell
 import (
 	"testing"
 
+	"src.elv.sh/pkg/must"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
 )
@@ -10,8 +11,8 @@ import (
 func TestScript(t *testing.T) {
 	setupCleanHomePaths(t)
 	testutil.InTempDir(t)
-	testutil.MustWriteFile("hello.elv", "echo hello")
-	testutil.MustWriteFile("invalid-utf8.elv", "\xff")
+	must.WriteFile("hello.elv", "echo hello")
+	must.WriteFile("invalid-utf8.elv", "\xff")
 
 	Test(t, &Program{},
 		ThatElvish("hello.elv").WritesStdout("hello\n"),

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/testutil"
 
 	. "src.elv.sh/pkg/eval/evaltest"
@@ -16,8 +17,8 @@ import (
 func TestBuiltinPwd(t *testing.T) {
 	tmpHome := testutil.InTempHome(t)
 
-	testutil.MustMkdirAll("dir1")
-	testutil.MustMkdirAll("dir2")
+	must.MkdirAll("dir1")
+	must.MkdirAll("dir2")
 	dir1 := filepath.Join(tmpHome, "dir1")
 	dir2 := filepath.Join(tmpHome, "dir2")
 

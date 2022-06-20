@@ -10,7 +10,7 @@ import (
 
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/daemon/internal/api"
-	"src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/must"
 )
 
 func TestActivate_InterruptsOutdatedServerAndSpawnsNewServer(t *testing.T) {
@@ -43,7 +43,7 @@ func TestActivate_FailsIfUnableToRemoveHangingSocket(t *testing.T) {
 		activated++
 		return nil
 	})
-	testutil.MustMkdirAll("d")
+	must.MkdirAll("d")
 	makeHangingUNIXSocket(t, "d/sock")
 	// Remove write permission so that removing d/sock will fail
 	os.Chmod("d", 0600)

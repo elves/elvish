@@ -20,8 +20,8 @@ import (
 	"strings"
 	"testing"
 
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/prog"
-	"src.elv.sh/pkg/testutil"
 )
 
 // Case is a test case that can be used in Test.
@@ -141,7 +141,7 @@ func Run(p prog.Program, args ...string) (exit int, stdout, stderr string) {
 }
 
 func run(p prog.Program, args []string, stdin string) result {
-	r0, w0 := testutil.MustPipe()
+	r0, w0 := must.Pipe()
 	// TODO: This assumes that stdin fits in the pipe buffer. Don't assume that.
 	_, err := w0.WriteString(stdin)
 	if err != nil {
@@ -165,7 +165,7 @@ func matchOutput(got, want output) bool {
 }
 
 func capturedOutput() (*os.File, func() string) {
-	r, w := testutil.MustPipe()
+	r, w := must.Pipe()
 	output := make(chan string, 1)
 	go func() {
 		b, err := io.ReadAll(r)

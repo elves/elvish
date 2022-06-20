@@ -9,6 +9,7 @@ import (
 	"src.elv.sh/pkg/cli/lscolors"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/ui"
 )
@@ -160,7 +161,7 @@ func TestNavigation_RealFS(t *testing.T) {
 	testutil.InTempDir(t)
 	testutil.ApplyDir(testDir)
 
-	testutil.MustChdir("d")
+	must.Chdir("d")
 	testNavigation(t, nil)
 }
 

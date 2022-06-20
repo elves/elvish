@@ -9,6 +9,7 @@ import (
 
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -68,6 +69,6 @@ func TestCommand_External(t *testing.T) {
 }
 
 func mustWriteScript(name string, lines ...string) {
-	testutil.MustWriteFile(name, strings.Join(lines, "\n"))
-	testutil.Must(os.Chmod(name, 0700))
+	must.WriteFile(name, strings.Join(lines, "\n"))
+	must.OK(os.Chmod(name, 0700))
 }
