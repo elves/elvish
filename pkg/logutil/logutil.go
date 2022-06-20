@@ -31,7 +31,6 @@ func SetOutput(newout io.Writer) {
 		outFile = nil
 	}
 	out = newout
-	outFile = nil
 	for _, logger := range loggers {
 		logger.SetOutput(out)
 	}
