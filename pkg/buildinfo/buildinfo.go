@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/prog"
 )
 
@@ -44,25 +45,27 @@ type Type struct {
 func (Type) IsStructMap() {}
 
 // Value contains all the build information.
-var Value Type
-
-func init() {
-	version := devVersion(VersionBase, VCSOverride, debug.ReadBuildInfo)
-	if BuildVariant != "" {
-		version += "+" + BuildVariant
-	}
-	Value = Type{
-		Version:   version,
-		GoVersion: runtime.Version(),
-	}
+var Value = Type{
+	Version:   devVersionWithVariant(VersionBase, VCSOverride, BuildVariant),
+	GoVersion: runtime.Version(),
 }
 
-func devVersion(next, vcsOverride string, f func() (*debug.BuildInfo, bool)) string {
+func devVersionWithVariant(next, vcsOverride, variant string) string {
+	version := devVersion(next, vcsOverride)
+	if variant != "" {
+		version += "+" + variant
+	}
+	return version
+}
+
+var readBuildInfo = debug.ReadBuildInfo
+
+func devVersion(next, vcsOverride string) string {
 	if vcsOverride != "" {
 		return next + "-dev.0." + vcsOverride
 	}
 	fallback := next + "-dev.unknown"
-	bi, ok := f()
+	bi, ok := readBuildInfo()
 	if !ok {
 		return fallback
 	}
@@ -135,9 +138,5 @@ func (p *Program) Run(fds [3]*os.File, _ []string) error {
 }
 
 func mustToJSON(v any) string {
-	b, err := json.Marshal(v)
-	if err != nil {
-		panic(err)
-	}
-	return string(b)
+	return string(must.OK1(json.Marshal(v)))
 }
