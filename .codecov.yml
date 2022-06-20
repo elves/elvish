@@ -10,6 +10,7 @@ ignore:
   #
   # The following patterns are also consumed by a hacky sed script in tools/prune-cover.sh.
   - "pkg/cli/clitest"
+  - "pkg/cli/histutil/test_db.go"
   - "pkg/eval/evaltest"
   - "pkg/eval/vals/tester.go"
   - "pkg/prog/progtest"
