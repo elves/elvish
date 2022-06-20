@@ -13,6 +13,11 @@ type Tester struct {
 
 // TestValue returns a ValueTester.
 func TestValue(t *testing.T, v any) Tester {
+	// Hack to get test coverage on the marker method IsStructMap, which is
+	// never invoked.
+	if m, ok := v.(StructMap); ok {
+		m.IsStructMap()
+	}
 	return Tester{t, v}
 }
 
