@@ -140,13 +140,28 @@ func TestWidthRatio(t *testing.T) {
 	)
 }
 
-func TestGetSelectedName(t *testing.T) {
+func TestNavigation_SelectedName(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
 
 	w := startNavigation(f.App, NavigationSpec{Cursor: getTestCursor()})
 
 	wantName := "d1"
+	if name := w.SelectedName(); name != wantName {
+		t.Errorf("Got name %q, want %q", name, wantName)
+	}
+}
+
+func TestNavigation_SelectedName_EmptyDirectory(t *testing.T) {
+	f := Setup()
+	defer f.Stop()
+
+	cursor := &testCursor{
+		root: testutil.Dir{"d": testutil.Dir{}},
+		pwd:  []string{"d"}}
+	w := startNavigation(f.App, NavigationSpec{Cursor: cursor})
+
+	wantName := ""
 	if name := w.SelectedName(); name != wantName {
 		t.Errorf("Got name %q, want %q", name, wantName)
 	}
@@ -272,7 +287,7 @@ func testNavigation(t *testing.T, c NavigationCursor) {
 	// only shows d2 after filtering.
 	w.MutateFiltering(func(bool) bool { return true })
 	f.TTY.Inject(term.K('2'))
-	f.TestTTY(t,
+	dFilter2Buf := f.MakeBuffer(
 		"\n",
 		" NAVIGATING  2", Styles,
 		"************  ", term.DotHere, "\n",
@@ -283,6 +298,11 @@ func testNavigation(t *testing.T, c NavigationCursor) {
 		" f                   other.png          ", Styles,
 		"                    !!!!!!!!!!!!!!!!!!!!",
 	)
+	f.TTY.TestBuffer(t, dFilter2Buf)
+
+	// Unbound key while filtering is ignored.
+	f.TTY.Inject(term.K('a', ui.Alt))
+	f.TTY.TestBuffer(t, dFilter2Buf)
 	w.MutateFiltering(func(bool) bool { return false })
 
 	// Now move into d2, and test that the filter has been cleared when
