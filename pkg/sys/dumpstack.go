@@ -2,7 +2,7 @@ package sys
 
 import "runtime"
 
-const dumpStackBufSizeInit = 4096
+const dumpStackBufSizeInit = 8192
 
 func DumpStack() string {
 	buf := make([]byte, dumpStackBufSizeInit)
