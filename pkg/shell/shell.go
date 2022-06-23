@@ -145,7 +145,10 @@ func initSignal(fds [3]*os.File) func() {
 		}
 	}()
 
-	return func() { signal.Stop(sigCh) }
+	return func() {
+		signal.Stop(sigCh)
+		close(sigCh)
+	}
 }
 
 func evalInTTY(fds [3]*os.File, ev *eval.Evaler, ed editor, src parse.Source) error {
