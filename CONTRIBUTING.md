@@ -144,7 +144,7 @@ format Go files, and [prettier](https://prettier.io/) to format Markdown files.
 
 ```sh
 go install golang.org/x/tools/cmd/goimports@latest
-npm install --global prettier@2.3.1
+npm install --global prettier@2.7.1
 ```
 
 Once you have installed the tools, use `make style` to format Go and Markdown
