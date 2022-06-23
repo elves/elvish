@@ -53,6 +53,16 @@ func ReadAllAndClose(r io.ReadCloser) []byte {
 	return v
 }
 
+// ReadFile wraps os.ReadFile.
+func ReadFile(fname string) []byte {
+	return OK1(os.ReadFile(fname))
+}
+
+// ReadFileString converts the result of ReadFile to a string.
+func ReadFileString(fname string) string {
+	return string(ReadFile(fname))
+}
+
 // MkdirAll calls os.MkdirAll for each argument.
 func MkdirAll(names ...string) {
 	for _, name := range names {

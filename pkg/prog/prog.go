@@ -70,7 +70,9 @@ func Run(fds [3]*os.File, args []string, p Program) int {
 
 	if log != "" {
 		err = logutil.SetOutputFile(log)
-		if err != nil {
+		if err == nil {
+			defer logutil.SetOutput(io.Discard)
+		} else {
 			fmt.Fprintln(fds[2], err)
 		}
 	}
