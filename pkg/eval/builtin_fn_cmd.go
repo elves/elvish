@@ -95,6 +95,9 @@ func searchExternal(cmd string) (string, error) {
 //
 // Exit the Elvish process with `$status` (defaulting to 0).
 
+// Can be overridden in tests.
+var osExit = os.Exit
+
 func exit(fm *Frame, codes ...int) error {
 	code := 0
 	switch len(codes) {
@@ -106,7 +109,6 @@ func exit(fm *Frame, codes ...int) error {
 	}
 
 	fm.Evaler.PreExit()
-	os.Exit(code)
-	// Does not return
-	panic("os.Exit returned")
+	osExit(code)
+	return nil
 }

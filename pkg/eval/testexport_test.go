@@ -4,5 +4,6 @@ package eval
 var (
 	GetHome   = &getHome
 	Getwd     = &getwd
+	OSExit    = &osExit
 	TimeAfter = &timeAfter
 )
