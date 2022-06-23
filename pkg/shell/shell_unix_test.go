@@ -1,3 +1,5 @@
+//go:build !windows && !plan9 && !js
+
 package shell
 
 import (
