@@ -7,10 +7,15 @@ import (
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/vars"
 )
 
 // Ns is the namespace for the re: module.
 var Ns = eval.BuildNsNamed("path").
+	AddVars(map[string]vars.Var{
+		"list-separator": vars.NewReadOnly(string(filepath.ListSeparator)),
+		"separator":      vars.NewReadOnly(string(filepath.Separator)),
+	}).
 	AddGoFns(map[string]any{
 		"abs":           filepath.Abs,
 		"base":          filepath.Base,
@@ -21,9 +26,30 @@ var Ns = eval.BuildNsNamed("path").
 		"is-abs":        filepath.IsAbs,
 		"is-dir":        isDir,
 		"is-regular":    isRegular,
+		"join":          filepath.Join,
 		"temp-dir":      tempDir,
 		"temp-file":     tempFile,
 	}).Ns()
+
+//elvdoc:var list-separator
+//
+// OS-specific path list separator. Colon on UNIX and semi-colon on Windows. This variable is
+// read-only.
+//
+// ```elvish-transcript
+// ~> put $path:list-separator
+// ▶ :
+// ```
+
+//elvdoc:var separator
+//
+// OS-specific path separator. Forward slash on UNIX and backslash on Windows. This variable is
+// read-only.
+//
+// ```elvish-transcript
+// ~> put $path:separator
+// ▶ /
+// ```
 
 //elvdoc:fn abs
 //
@@ -130,6 +156,24 @@ var Ns = eval.BuildNsNamed("path").
 // This function calls `path:clean` on the result before outputting it. This is analogous to the
 // external `realpath` or `readlink` command found on many systems. See the [Go
 // documentation](https://pkg.go.dev/path/filepath#EvalSymlinks) for more details.
+
+//elvdoc:fn join
+//
+// ```elvish
+// path:join $path-component...
+// ```
+//
+// Join joins any number of path elements into a single path, separating them with an OS specific
+// separator. Empty elements are ignored. The result is cleaned. However, if the argument list is
+// empty or all its elements are empty, Join returns an empty string. On Windows, the result will
+// only be a UNC path if the first non-empty element is a UNC path.
+//
+// ```elvish-transcript
+// ~> path:join home user bin
+// ▶ home/user/bin
+// ~> path:join $path:separator home user bin
+// ▶ /home/user/bin
+// ```
 
 //elvdoc:fn is-dir
 //
