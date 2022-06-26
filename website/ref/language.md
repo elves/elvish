@@ -2432,6 +2432,32 @@ use a/b/c # imports the "a/b/c" module as "c:"
 use a/b/c foo # imports the "a/b/c" module as "foo:"
 ```
 
+### Conditionally importing modules with `use`
+
+You may want to import a module in an interactive session only if a specific
+condition is true. You might think the solution is straightforward and put
+something like this in your [_rc.elv_](./command.html#rc-file):
+
+```elvish
+if (a-condition) {
+    use a-module
+}
+```
+
+The problem is that the `a-module` namespace is scoped to the `if` block and
+won't be available at an interactive prompt. The solution is to use the
+[`edit:add-var`](./edit.html#edit:add-var) command. Here's a concrete example:
+
+```elvish
+# This will conditionally import the unix module into the interactive
+# namespace so that we don't get an exception when running on MS Windows
+# (which doesn't provide the builtin unix module).
+if $platform:is-unix {
+    use unix
+    edit:add-var unix: $unix:
+}
+```
+
 ### Pre-defined modules
 
 Elvish's standard library provides the following pre-defined modules that can be
