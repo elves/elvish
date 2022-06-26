@@ -2,6 +2,8 @@
 package runtime
 
 import (
+	"os"
+
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -38,6 +40,24 @@ import (
 //
 // @cf $runtime:rc-path
 
+//elvdoc:var elvish-path
+//
+// The path to the elvish binary. If that could not be determined the value will be the empty
+// string.
+//
+// This is read-only.
+
+func elvishPath() any {
+	// TODO: Decide what to do if os.Executable returns an error. It appears that all platforms
+	// return an empty string. Which makes sense and is probably good enough for our purposes.
+	// Nonetheless, we explicitly encode that logic rather than rely on the behavior of
+	// os.Executable. TBD is whether we should instead raise an exception.
+	if binPath, err := os.Executable(); err == nil {
+		return binPath
+	}
+	return ""
+}
+
 // Ns returns the namespace for the runtime: module.
 //
 // All the public properties of the Evaler should be set before this function is
@@ -45,6 +65,7 @@ import (
 func Ns(ev *eval.Evaler) *eval.Ns {
 	return eval.BuildNsNamed("runtime").
 		AddVars(map[string]vars.Var{
+			"elvish-path":       vars.FromGet(elvishPath),
 			"lib-dirs":          vars.NewReadOnly(vals.MakeListSlice(ev.LibDirs)),
 			"rc-path":           vars.NewReadOnly(nonEmptyOrNil(ev.RcPath)),
 			"effective-rc-path": vars.NewReadOnly(nonEmptyOrNil(ev.EffectiveRcPath)),
