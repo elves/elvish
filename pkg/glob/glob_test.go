@@ -20,6 +20,15 @@ var (
 		"lorem", "ipsum",
 		"d1/e/f/g/X", "d2/e/f/g/X"}
 	createDots = []string{".x", ".el/x"}
+	symlinks   = []struct {
+		path   string
+		target string
+	}{
+		{"d1/s-f", "f"},
+		{"s-d", "d2"},
+		{"s-d-f", "d1/f"},
+		{"s-bad", "bad"},
+	}
 )
 
 type globCase struct {
@@ -28,22 +37,21 @@ type globCase struct {
 }
 
 var globCases = []globCase{
-	{"*", []string{"a", "b", "c", "d1", "d2", "dX", "dXY", "lorem", "ipsum"}},
+	{"*", []string{"a", "b", "c", "d1", "d2", "dX", "dXY", "lorem", "ipsum", "s-bad", "s-d", "s-d-f"}},
 	{".", []string{"."}},
-	{"./*", []string{"./a", "./b", "./c", "./d1", "./d2", "./dX", "./dXY", "./lorem", "./ipsum"}},
+	{"./*", []string{"./a", "./b", "./c", "./d1", "./d2", "./dX", "./dXY", "./lorem", "./ipsum", "./s-bad", "./s-d", "./s-d-f"}},
 	{"..", []string{".."}},
 	{"a/..", []string{"a/.."}},
-	{"a/../*", []string{"a/../a", "a/../b", "a/../c", "a/../d1", "a/../d2", "a/../dX", "a/../dXY", "a/../lorem", "a/../ipsum"}},
+	{"a/../*", []string{"a/../a", "a/../b", "a/../c", "a/../d1", "a/../d2", "a/../dX", "a/../dXY", "a/../ipsum", "a/../lorem", "a/../s-bad", "a/../s-d", "a/../s-d-f"}},
 	{"*/", []string{"a/", "b/", "c/", "d1/", "d2/"}},
-	{"**", append(mkdirs, creates...)},
+	{"**", []string{"a", "a/X", "a/Y", "b", "b/X", "c", "c/Y", "d1", "d1/e", "d1/e/f", "d1/e/f/g", "d1/e/f/g/X", "d1/s-f", "d2", "d2/e", "d2/e/f", "d2/e/f/g", "d2/e/f/g/X", "dX", "dXY", "ipsum", "lorem", "s-bad", "s-d", "s-d-f"}},
 	{"*/X", []string{"a/X", "b/X"}},
 	{"**X", []string{"a/X", "b/X", "dX", "d1/e/f/g/X", "d2/e/f/g/X"}},
 	{"*/*/*", []string{"d1/e/f", "d2/e/f"}},
 	{"l*m", []string{"lorem"}},
 	{"d*", []string{"d1", "d2", "dX", "dXY"}},
 	{"d*/", []string{"d1/", "d2/"}},
-	{"d**", []string{"d1", "d1/e", "d1/e/f", "d1/e/f/g", "d1/e/f/g/X",
-		"d2", "d2/e", "d2/e/f", "d2/e/f/g", "d2/e/f/g/X", "dX", "dXY"}},
+	{"d**", []string{"d1", "d1/e", "d1/e/f", "d1/e/f/g", "d1/e/f/g/X", "d1/s-f", "d2", "d2/e", "d2/e/f", "d2/e/f/g", "d2/e/f/g/X", "dX", "dXY"}},
 	{"?", []string{"a", "b", "c"}},
 	{"??", []string{"d1", "d2", "dX"}},
 
@@ -80,6 +88,15 @@ func testGlob(t *testing.T, abs bool) {
 		}
 		f.Close()
 	}
+	for _, link := range symlinks {
+		err := os.Symlink(link.target, link.path)
+		if err != nil {
+			// Creating symlinks requires a special permission on Windows. If
+			// the user doesn't have that permission, just skip the whole test.
+			t.Skip(err)
+		}
+	}
+
 	for _, tc := range globCases {
 		pattern := tc.pattern
 		if abs {

@@ -72,19 +72,19 @@ func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 		elem := segs[0].(Literal).Data
 		segs = segs[2:]
 		dir += elem + "/"
-		if info, err := os.Stat(dir); err != nil || !info.IsDir() {
+		if info, err := os.Lstat(dir); err != nil || !info.IsDir() {
 			return true
 		}
 	}
 
 	if len(segs) == 0 {
-		if info, err := os.Stat(dir); err == nil {
+		if info, err := os.Lstat(dir); err == nil {
 			return cb(PathInfo{dir, info})
 		}
 		return true
 	} else if len(segs) == 1 && IsLiteral(segs[0]) {
 		path := dir + segs[0].(Literal).Data
-		if info, err := os.Stat(path); err == nil {
+		if info, err := os.Lstat(path); err == nil {
 			return cb(PathInfo{path, info})
 		}
 		return true
@@ -161,7 +161,7 @@ func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 		name := info.Name()
 		if matchElement(segs, name) {
 			dirname := dir + name
-			info, err := os.Stat(dirname)
+			info, err := os.Lstat(dirname)
 			if err != nil {
 				return true
 			}
