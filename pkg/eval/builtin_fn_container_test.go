@@ -350,6 +350,18 @@ func TestOrder(t *testing.T) {
 		That("put l x o x r x e x m | order &less-than={|a b| eq $a x }").
 			Puts("x", "x", "x", "x", "l", "o", "r", "e", "m"),
 
+		// &dedupe eliminates consecutive identical values
+		That("put a b c a b c | order &dedupe").Puts("a", "b", "c"),
+		That("put [a] [b] [c] [c d] [c] [a] [b] | order &dedupe").Puts(
+			vals.MakeListSlice([]string{"a"}),
+			vals.MakeListSlice([]string{"b"}),
+			vals.MakeListSlice([]string{"c"}),
+			vals.MakeListSlice([]string{"c", "d"})),
+		That("put 10 1 10 2 5 2 | order &dedupe &reverse &less-than={|a b| < $a $b }").
+			Puts("10", "5", "2", "1"),
+		That("put l x o x r x e x m | order &dedupe &less-than={|a b| eq $a x }").
+			Puts("x", "l", "o", "r", "e", "m"),
+
 		thatOutputErrorIsBubbled("order [foo]"),
 	)
 }

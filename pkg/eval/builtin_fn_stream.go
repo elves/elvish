@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"reflect"
 	"sort"
 
 	"src.elv.sh/pkg/eval/errs"
@@ -297,14 +298,16 @@ func count(fm *Frame, args ...any) (int, error) {
 //elvdoc:fn order
 //
 // ```elvish
-// order &reverse=$false $less-than=$nil $inputs?
+// order &reverse=$false &dedupe=$false &less-than=$nil $inputs?
 // ```
 //
 // Outputs the [value inputs](#value-inputs) sorted
 // in ascending order. The sorting process is guaranteed to be
 // [stable](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability).
 //
-// The `&reverse` option, if true, reverses the order of output.
+// The `&reverse` option, if true, reverses the order of output from ascending to descending.
+//
+// The `&dedupe` option, if true, eliminates all but one of consecutive identical values.
 //
 // The `&less-than` option, if given, establishes the ordering of the elements.
 // Its value should be a function that takes two arguments and outputs a single
@@ -331,7 +334,7 @@ func count(fm *Frame, args ...any) (int, error) {
 // ▶ [a b]
 // ▶ [a c]
 // ▶ [b b]
-// ~> order &reverse [a c b]
+// ~> order &dedupe &reverse [a c a b a b]
 // ▶ c
 // ▶ b
 // ▶ a
@@ -364,6 +367,7 @@ func count(fm *Frame, args ...any) (int, error) {
 
 type orderOptions struct {
 	Reverse  bool
+	Dedupe   bool
 	LessThan Callable
 }
 
@@ -432,7 +436,14 @@ func order(fm *Frame, opts orderOptions, inputs Inputs) error {
 		return errSort
 	}
 	out := fm.ValueOutput()
+	var prev any
 	for _, v := range values {
+		if opts.Dedupe {
+			if reflect.DeepEqual(prev, v) {
+				continue
+			}
+			prev = v
+		}
 		err := out.Put(v)
 		if err != nil {
 			return err
