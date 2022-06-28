@@ -1,7 +1,11 @@
 package eval
 
 import (
+	"errors"
 	"fmt"
+	"math"
+	"math/big"
+	"reflect"
 	"sort"
 
 	"src.elv.sh/pkg/eval/errs"
@@ -15,8 +19,9 @@ func init() {
 		"all": all,
 		"one": one,
 
-		"take": take,
-		"drop": drop,
+		"take":   take,
+		"drop":   drop,
+		"dedupe": dedupe,
 
 		"count": count,
 
@@ -237,6 +242,103 @@ func drop(fm *Frame, n int, inputs Inputs) error {
 		}
 		i++
 	})
+	return errOut
+}
+
+//elvdoc:fn dedupe
+//
+// ```elvish
+// dedupe &count=$false &repeated=$false &unique=$false $inputs?
+// ```
+//
+// Outputs it inputs with consecutive duplicate values eliminated.
+//
+// The `&count` option, if true, causes a tuple to be output that includes the number of duplicates
+// and the value.
+//
+// The `&repeated` option, if true, causes the value to be output only if it occurs more than once
+// consecutively. That is, values that are repeated.
+//
+// The `&unique` option, if true, causes the value to be output only if it occurs just once
+// consecutively. That is, values that are not repeated.
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> dedupe [a b c c]
+// ▶ a
+// ▶ b
+// ▶ c
+// ~> dedupe &repeated [a b c c]
+// ▶ c
+// ~> dedupe &unique [a b c c]
+// ▶ a
+// ▶ b
+// ~> put [1] [2] [2 1] [2 1] [3] [3] [3] | dedupe
+// ▶ [1]
+// ▶ [2]
+// ▶ [2 1]
+// ▶ [3]
+// ~> put 1 1 2 2 2 3 3 3 3 | dedupe &count
+// ▶ [2, 1]
+// ▶ [3, 2]
+// ▶ [4, 3]
+// ```
+
+type dedupeOptions struct {
+	Count    bool
+	Repeated bool
+	Unique   bool
+}
+
+func (opt *dedupeOptions) SetDefaultOptions() {}
+
+var ErrDedupeOptions = errors.New("cannot specify both &repeated and &unique options")
+
+func dedupe(fm *Frame, opts dedupeOptions, inputs Inputs) error {
+	out := fm.ValueOutput()
+	var errOut error
+	var noVal struct{}
+	var prev any = &noVal
+	var count int64 = 0
+
+	if opts.Repeated && opts.Unique {
+		return ErrDedupeOptions
+	}
+
+	inputs(func(v any) {
+		if prev == &noVal {
+			prev = v
+			count = 1
+		} else if reflect.DeepEqual(prev, v) {
+			count++
+			if count <= 0 {
+				panic(fmt.Sprintf("more than %d duplicate values", int64(math.MaxInt64)))
+			}
+		} else {
+			if (!opts.Repeated && !opts.Unique) ||
+				(opts.Repeated && count > 1) || (opts.Unique && count == 1) {
+				if opts.Count {
+					errOut = out.Put(vals.MakeList(big.NewInt(count), prev))
+				} else {
+					errOut = out.Put(prev)
+				}
+			}
+			prev = v
+			count = 1
+			if errOut != nil {
+				return
+			}
+		}
+	})
+	if (!opts.Repeated && !opts.Unique) ||
+		(opts.Repeated && count > 1) || (opts.Unique && count == 1) {
+		if opts.Count {
+			errOut = out.Put(vals.MakeList(big.NewInt(count), prev))
+		} else {
+			errOut = out.Put(prev)
+		}
+	}
 	return errOut
 }
 

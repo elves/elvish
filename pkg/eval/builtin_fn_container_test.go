@@ -184,6 +184,36 @@ func TestDrop(t *testing.T) {
 	)
 }
 
+func TestDedupe(t *testing.T) {
+	Test(t,
+		That(`dedupe [a b a a]`).Puts("a", "b", "a"),
+		That(`put [1] [2] [2] [2 1] [3] [3] [3] | dedupe`).Puts(
+			vals.MakeListSlice([]string{"1"}),
+			vals.MakeListSlice([]string{"2"}),
+			vals.MakeListSlice([]string{"2", "1"}),
+			vals.MakeListSlice([]string{"3"})),
+		That(`put $nil $true 1 1 2 2 2 3 3 3 3 | dedupe &count`).Puts(
+			vals.MakeList(big.NewInt(1), nil),
+			vals.MakeList(big.NewInt(1), true),
+			vals.MakeList(big.NewInt(2), "1"),
+			vals.MakeList(big.NewInt(3), "2"),
+			vals.MakeList(big.NewInt(4), "3")),
+		That(`put $nil $true 1 1 2 2 2 3 3 3 3 | dedupe &count &repeated`).Puts(
+			vals.MakeList(big.NewInt(2), "1"),
+			vals.MakeList(big.NewInt(3), "2"),
+			vals.MakeList(big.NewInt(4), "3")),
+		That(`put $nil $true 1 1 2 2 2 3 3 3 3 | dedupe &count &unique`).Puts(
+			vals.MakeList(big.NewInt(1), nil),
+			vals.MakeList(big.NewInt(1), true)),
+		That(`put $nil $true 1 1 2 2 2 3 3 3 3 | dedupe &repeated`).Puts(
+			"1", "2", "3"),
+		That(`put $nil $true 1 1 2 2 2 3 3 3 3 | dedupe &unique`).Puts(
+			nil, true),
+		That(`dedupe &repeated &unique`).Throws(ErrDedupeOptions),
+		thatOutputErrorIsBubbled("dedupe [foo bar lorem]"),
+	)
+}
+
 func TestHasKey(t *testing.T) {
 	Test(t,
 		That(`has-key [foo bar] 0`).Puts(true),
