@@ -13,6 +13,10 @@ gen: tools/gensite.bin $(HTMLS)
 	tools/gensite.bin . $(DST_DIR)
 	ln -sf `pwd`/fonts `pwd`/favicons/* $(DST_DIR)/
 
+# Generates the .go file containing documentation for the `help` command.
+help: tools/md-to-help tools/elvdoc.bin tools/highlight.bin tools/gen-help.bin
+	tools/md-to-help
+
 # Generates docset into $(DOCSET_DST_DIR).
 docset: tools/gensite.bin $(HTMLS)
 	ELVISH_DOCSET_MODE=1 tools/gensite.bin . $(DOCSET_TMP_DIR)
@@ -32,7 +36,7 @@ clean:
 ttyshot/%.html:
 	@echo Exclude ttyshots from the pattern rule for %.html
 
-.PHONY: gen docset publish check-rellinks clean
+.PHONY: gen help docset publish check-rellinks clean
 
 # Don't remove intermediate targets
 .SECONDARY:

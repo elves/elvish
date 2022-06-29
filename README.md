@@ -53,6 +53,8 @@ To build Elvish from source, you need
 
 -   Go >= 1.18.
 
+-   The [`glow`](https://github.com/charmbracelet/glow) command
+
 To build Elvish from source, follow these steps:
 
 ```sh

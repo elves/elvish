@@ -49,10 +49,12 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go-version }}
-    - name: Test with race detection
-      run: |
-        go test -race ./...
-        cd website; go test -race ./...
+    - name: Add GOBIN to PATH
+      run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+    - name: Install glow to generate the documentation for the "help" command
+      run: go install github.com/charmbracelet/glow@latest
+    - name: Test with race detection if supported
+      run: make test
     - name: Set ostype to ${{ matrix.os }}
       run: echo ostype=${{ matrix.os }} >> $GITHUB_ENV
     - name: Set ostype to linux
@@ -81,6 +83,10 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.18.x
+    - name: Add GOBIN to PATH
+      run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+    - name: Install documentation stub
+      run: cp pkg/help/documentation.go.stub pkg/help/documentation.go
     - name: Run benchmarks
       run: go test -bench=. -run='^$' ./...
 
@@ -192,6 +198,8 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.18.x
+    - name: Install documentation stub
+      run: cp pkg/help/documentation.go.stub pkg/help/documentation.go
     - name: Set up staticcheck
       run: go install honnef.co/go/tools/cmd/staticcheck@v0.3.2
     - name: Run linters

@@ -28,12 +28,24 @@ func matchFloat64(a, b, threshold float64) bool {
 	return math.Abs(a-b) <= threshold
 }
 
-// MatchingRegexp can be passed to Case.Puts to match a any string that matches
-// a regexp pattern. If the pattern is not a valid regexp, the test will panic.
+// MatchingRegexp can be passed to Case.Puts and Case.Prints to match a any string that matches the
+// regexp pattern. If the pattern is not a valid regexp, the test will panic.
 type MatchingRegexp struct{ Pattern string }
+
+// NonMatchingRegexp can be passed to Case.Puts and Case.Prints to match a any string that does not
+// match the regexp pattern. If the pattern is not a valid regexp, the test will panic.
+type NonMatchingRegexp struct{ Pattern string }
 
 func matchRegexp(p, s string) bool {
 	matched, err := regexp.MatchString(p, s)
+	if err != nil {
+		panic(err)
+	}
+	return matched
+}
+
+func matchRegexpBytes(p string, b []byte) bool {
+	matched, err := regexp.Match(p, b)
 	if err != nil {
 		panic(err)
 	}

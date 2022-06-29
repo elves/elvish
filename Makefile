@@ -3,7 +3,7 @@ ELVISH_MAKE_BIN := $(subst \,/,$(ELVISH_MAKE_BIN))
 
 default: test get
 
-get:
+get: pkg/help/documentation.go
 	mkdir -p $(shell dirname $(ELVISH_MAKE_BIN))
 	go build -o $(ELVISH_MAKE_BIN) ./cmd/elvish
 
@@ -11,13 +11,13 @@ generate:
 	go generate ./...
 
 # Run unit tests, with race detection if the platform supports it.
-test:
+test: pkg/help/documentation.go
 	go test $(shell ./tools/run-race.sh) ./...
 	cd website; go test $(shell ./tools/run-race.sh) ./...
 
 # Generate a basic test coverage report, and open it in the browser. See also
 # https://apps.codecov.io/gh/elves/elvish/.
-cover:
+cover: pkg/help/documentation.go
 	go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
 	./tools/prune-cover.sh .codecov.yml cover
 	go tool cover -html=cover
@@ -48,5 +48,8 @@ codespell:
 check-content:
 	./tools/check-content.sh
 
+pkg/help/documentation.go:
+	$(MAKE) -C website help
+
 .SILENT: checkstyle-go checkstyle-md lint
-.PHONY: default get generate test cover style checkstyle checkstyle-go checkstyle-md lint codespell check-content
+.PHONY: default get generate test cover style checkstyle checkstyle-go checkstyle-md lint codespell check-content pkg/help/documentation.go

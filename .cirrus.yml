@@ -20,15 +20,13 @@ test_task:
     #    - apt-get -y update
     #    - apt-get -y install ca-certificates gccgo-11
     #    - ln -sf /usr/bin/go-11 /usr/local/bin/go
-    #  env:
-    #    # gccgo doesn't support race test
-    #    TEST_FLAG: ""
     - name: Test on FreeBSD
       freebsd_instance:
         image_family: freebsd-13-0
       env:
-        TEST_FLAG: -race
-        PATH: /usr/local/go/bin:$PATH
-      setup_script: pkg install -y git
+        PATH: /usr/local/go/bin:$HOME/go/bin:$PATH
+      setup_script:
+        - pkg install -y git
+        - go install github.com/charmbracelet/glow@latest
   go_version_script: go version
-  test_script: go test $TEST_FLAG ./...
+  test_script: gmake test
