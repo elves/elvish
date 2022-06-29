@@ -1,0 +1,6 @@
+// This is a stub that substitutes for the real documentation.go in CI
+// workflows where we don't want to pay the cost of generating the real file.
+package help
+
+var fnHelpDocs = map[string]Text{}
+var varHelpDocs = map[string]Text{}

@@ -217,14 +217,17 @@ A.
 var emptyReader = io.MultiReader()
 
 func TestExtract(t *testing.T) {
+	// Test extraction with non-raw output.
 	for _, test := range extractTests {
 		t.Run(test.name, func(t *testing.T) {
 			r := strings.NewReader(test.src)
 			w := new(strings.Builder)
-			extract(r, test.ns, w)
+			extract(r, test.ns, false, w)
 			compare(t, w.String(), test.wantDoc)
 		})
 	}
+
+	// TODO: Test extraction with raw output.
 }
 
 func TestRun_MultipleFiles(t *testing.T) {

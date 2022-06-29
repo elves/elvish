@@ -1,4 +1,5 @@
 #!/bin/sh
+mydir=$(dirname "$0")
 in=$1
 out=$2
 opts=
@@ -14,8 +15,6 @@ has number-sections && {
     opts="$opts --number-sections"
 }
 
-mydir=$(dirname "$0")
-
-$mydir/macros.bin -repo $mydir/../.. -elvdoc $mydir/elvdoc.bin < $1 |
+$mydir/macros.bin -repo $mydir/../.. -elvdoc $mydir/elvdoc.bin < $in |
   $mydir/highlight.bin |
-  pandoc -f gfm+smart+attributes --data-dir=$mydir/pandoc --lua-filter=$mydir/pandoc/header-anchors.lua --metadata title=${1%.md} -o $2 $opts
+  pandoc -f gfm+smart+attributes --data-dir=$mydir/pandoc --lua-filter=$mydir/pandoc/header-anchors.lua --metadata title=${1%.md} -o $out $opts

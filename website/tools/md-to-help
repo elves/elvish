@@ -1,0 +1,16 @@
+#!/bin/sh
+mydir=$(dirname "$0")
+(
+    $mydir/elvdoc.bin -raw -ns builtin: ../pkg/eval
+    $mydir/elvdoc.bin -raw -ns edit: ../pkg/edit
+    for mod in ../pkg/mods/*
+    do
+        if [ -d "$mod" ]
+        then
+            $mydir/elvdoc.bin -raw -ns $(basename "$mod"): "$mod"
+        fi
+    done
+) |
+    $mydir/highlight.bin -raw |
+    glow --style $mydir/glow.json --width 80 - |
+    $mydir/gen-help.bin > ../pkg/help/documentation.go

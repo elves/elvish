@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -21,6 +22,7 @@ func main() {
 func run(args []string, in io.Reader, out io.Writer) {
 	flags := flag.NewFlagSet("", flag.ExitOnError)
 	var ns = flags.String("ns", "", "namespace prefix")
+	var raw = flags.Bool("raw", false, "raw output (for generating help text)")
 
 	err := flags.Parse(args)
 	if err != nil {
@@ -29,13 +31,13 @@ func run(args []string, in io.Reader, out io.Writer) {
 	args = flags.Args()
 
 	if len(args) > 0 {
-		extractPaths(args, *ns, out)
+		extractPaths(args, *ns, *raw, out)
 	} else {
-		extract(in, *ns, out)
+		extract(in, *ns, *raw, out)
 	}
 }
 
-func extractPaths(paths []string, ns string, out io.Writer) {
+func extractPaths(paths []string, ns string, raw bool, out io.Writer) {
 	var files []string
 	for _, path := range paths {
 		stat, err := os.Stat(path)
@@ -57,7 +59,7 @@ func extractPaths(paths []string, ns string, out io.Writer) {
 		log.Fatal(err)
 	}
 	defer cleanup()
-	extract(reader, ns, out)
+	extract(reader, ns, raw, out)
 }
 
 func mustGlob(p string) []string {
@@ -90,7 +92,107 @@ func multiFile(names []string) (io.Reader, func(), error) {
 	}, nil
 }
 
-func extract(r io.Reader, ns string, w io.Writer) {
+// htmlMarkdownFunc outputs data suitable for embedding Elvish variable and function documentation
+// in HTML pages.
+func htmlMarkdownFunc(w io.Writer, heading, entryType, prefix string, m map[string]string) {
+	fmt.Fprintf(w, "# %s\n", heading)
+	names := make([]string, 0, len(m))
+	for k := range m {
+		names = append(names, k)
+	}
+	sort.Slice(names,
+		func(i, j int) bool {
+			return symbolForSort(names[i]) < symbolForSort(names[j])
+		})
+	for _, name := range names {
+		fmt.Fprintln(w)
+		fullName := prefix + name
+		// Create anchors for Docset. These anchors are used to show a ToC;
+		// the mkdsidx.py script also looks for those anchors to generate
+		// the SQLite index.
+		//
+		// Some builtin commands are documented together. Create an anchor
+		// for each of them.
+		for _, s := range strings.Fields(fullName) {
+			if strings.HasPrefix(s, "{#") {
+				continue
+			}
+			fmt.Fprintf(w,
+				"<a name='//apple_ref/cpp/%s/%s' class='dashAnchor'></a>\n\n",
+				entryType, url.QueryEscape(html.UnescapeString(s)))
+		}
+		if strings.Contains(fullName, "{#") {
+			fmt.Fprintf(w, "## %s\n", fullName)
+		} else {
+			// pandoc strips punctuations from the ID, turning "mod:name"
+			// into "modname". Explicitly preserve the original full name
+			// by specifying an attribute. We still strip the leading $ for
+			// variables since pandoc will treat "{#$foo}" as part of the
+			// title.
+			id := strings.TrimPrefix(fullName, "$")
+			fmt.Fprintf(w, "## %s {#%s}\n", fullName, id)
+		}
+		// The body is guaranteed to have a trailing newline, hence Fprint
+		// instead of Fprintln.
+		fmt.Fprint(w, m[name])
+	}
+}
+
+// rawMarkdownFunc outputs data suitable for embedding Elvish variable and function documentation in
+// the Elvish binary for use by the builtin `help` command.
+var specialSymsRe = regexp.MustCompile(`(.*) {#[^}]+}$`)
+
+func rawMarkdownFunc(w io.Writer, heading, entryType, prefix string, m map[string]string) {
+	_ = heading
+	for name, definition := range m {
+		fmt.Fprintln(w)
+		match := specialSymsRe.FindStringSubmatch(name)
+		var fullNames []string
+		if len(match) == 0 { // the common case
+			fullNames = []string{prefix + name}
+		} else { // the uncommon case
+			// This is a special-case for a handful of builtin functions, such as `+`, `==`, and
+			// `==s`. We ignore the alias provided in the comment (e.g., "add", "num-cmp" and
+			// "str-cmp") for generating the output and use the individual special strings.
+			for _, name := range strings.Split(match[1], " ") {
+				fullNames = append(fullNames, prefix+name)
+			}
+		}
+		if fullNames[0][0] != '$' {
+			// TODO: Modify the documentation to use "```elvish-usage" then remove this hack.
+			if strings.HasPrefix(definition, "\n```elvish\n") {
+				definition = "\n```elvish-usage\n" + definition[len("\n```elvish\n"):]
+			}
+		}
+		// The use of `@@elvdoc` rather than `## elvdoc` is to keep the Markdown to terminal
+		// transformer from handling this magic line. In contrast to htmlMarkdownFunc.
+		for _, fullName := range fullNames {
+			if fullName[0] == '$' {
+				fmt.Fprintln(w, "@@elvdoc:var:"+fullName[1:])
+			} else {
+				fmt.Fprintln(w, "@@elvdoc:fn:"+fullName)
+			}
+			fmt.Fprint(w, rawMarkupTransforms(definition))
+		}
+	}
+}
+
+// This handles some simple transformations of the Markdown extensions used by the Elvish
+// documentation into something friendlier for the `help` command.
+func rawMarkupTransforms(definition string) string {
+	var result strings.Builder
+	result.Grow(len(definition) + 2*len(definition)/10)
+	for _, line := range strings.Split(definition, "\n") {
+		if strings.HasPrefix(line, "@cf ") {
+			line = "See also: " + line[len("@cf "):]
+		}
+		result.WriteString(line)
+		result.WriteByte('\n')
+	}
+	return result.String()
+}
+
+func extract(r io.Reader, ns string, raw bool, w io.Writer) {
 	bufr := bufio.NewReader(r)
 
 	fnDocs := make(map[string]string)
@@ -154,59 +256,22 @@ func extract(r io.Reader, ns string, w io.Writer) {
 		}
 	}
 
-	write := func(heading, entryType, prefix string, m map[string]string) {
-		fmt.Fprintf(w, "# %s\n", heading)
-		names := make([]string, 0, len(m))
-		for k := range m {
-			names = append(names, k)
-		}
-		sort.Slice(names,
-			func(i, j int) bool {
-				return symbolForSort(names[i]) < symbolForSort(names[j])
-			})
-		for _, name := range names {
-			fmt.Fprintln(w)
-			fullName := prefix + name
-			// Create anchors for Docset. These anchors are used to show a ToC;
-			// the mkdsidx.py script also looks for those anchors to generate
-			// the SQLite index.
-			//
-			// Some builtin commands are documented together. Create an anchor
-			// for each of them.
-			for _, s := range strings.Fields(fullName) {
-				if strings.HasPrefix(s, "{#") {
-					continue
-				}
-				fmt.Fprintf(w,
-					"<a name='//apple_ref/cpp/%s/%s' class='dashAnchor'></a>\n\n",
-					entryType, url.QueryEscape(html.UnescapeString(s)))
-			}
-			if strings.Contains(fullName, "{#") {
-				fmt.Fprintf(w, "## %s\n", fullName)
-			} else {
-				// pandoc strips punctuations from the ID, turning "mod:name"
-				// into "modname". Explicitly preserve the original full name
-				// by specifying an attribute. We still strip the leading $ for
-				// variables since pandoc will treat "{#$foo}" as part of the
-				// title.
-				id := strings.TrimPrefix(fullName, "$")
-				fmt.Fprintf(w, "## %s {#%s}\n", fullName, id)
-			}
-			// The body is guaranteed to have a trailing newline, hence Fprint
-			// instead of Fprintln.
-			fmt.Fprint(w, m[name])
-		}
+	var write func(w io.Writer, heading, entryType, prefix string, m map[string]string)
+	if raw {
+		write = rawMarkdownFunc
+	} else {
+		write = htmlMarkdownFunc
 	}
 
 	if len(varDocs) > 0 {
-		write("Variables", "Variable", "$"+ns, varDocs)
+		write(w, "Variables", "Variable", "$"+ns, varDocs)
 	}
 	if len(fnDocs) > 0 {
-		if len(varDocs) > 0 {
+		if !raw && len(varDocs) > 0 {
 			fmt.Fprintln(w)
 			fmt.Fprintln(w)
 		}
-		write("Functions", "Function", ns, fnDocs)
+		write(w, "Functions", "Function", ns, fnDocs)
 	}
 }
 

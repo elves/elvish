@@ -17,6 +17,7 @@ package evaltest
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -40,7 +41,7 @@ type Case struct {
 
 type result struct {
 	ValueOut  []any
-	BytesOut  []byte
+	BytesOut  any
 	StderrOut []byte
 
 	CompilationError error
@@ -96,8 +97,8 @@ func (c Case) Puts(vs ...any) Case {
 
 // Prints returns an altered Case that requires the source code to produce the
 // specified output in the byte pipe when evaluated.
-func (c Case) Prints(s string) Case {
-	c.want.BytesOut = []byte(s)
+func (c Case) Prints(v any) Case {
+	c.want.BytesOut = v
 	return c
 }
 
@@ -157,7 +158,7 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 				t.Errorf("got value out (-want +got):\n%s",
 					cmp.Diff(tc.want.ValueOut, r.ValueOut, tt.CommonCmpOpt))
 			}
-			if !bytes.Equal(tc.want.BytesOut, r.BytesOut) {
+			if !matchBytes(tc.want.BytesOut, r.BytesOut) {
 				t.Errorf("got bytes out %q, want %q", r.BytesOut, tc.want.BytesOut)
 			}
 			if tc.want.StderrOut == nil {
@@ -268,9 +269,34 @@ func match(got, want any) bool {
 		switch want := want.(type) {
 		case MatchingRegexp:
 			return matchRegexp(want.Pattern, got)
+		case NonMatchingRegexp:
+			return !matchRegexp(want.Pattern, got)
 		}
 	}
 	return vals.Equal(got, want)
+}
+
+func matchBytes(want, got any) bool {
+	if want == nil {
+		return len(got.([]byte)) == 0
+	}
+	switch got := got.(type) {
+	case []byte:
+		switch want := want.(type) {
+		case string:
+			return bytes.Equal(got, []byte(want))
+		case []byte:
+			return bytes.Equal(got, want)
+		case MatchingRegexp:
+			return matchRegexpBytes(want.Pattern, got)
+		case NonMatchingRegexp:
+			return !matchRegexpBytes(want.Pattern, got)
+		default:
+			panic(fmt.Sprintf("unrecognized want type: %T", want))
+		}
+	default:
+		panic(fmt.Sprintf("unrecognized got type: %T", got))
+	}
 }
 
 func matchErr(want, got error) bool {

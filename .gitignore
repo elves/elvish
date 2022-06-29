@@ -22,6 +22,7 @@ _testmain.go
 *.exe
 
 # Project specific
-cover
+/cover
 /_bin/
 /elvish
+/pkg/help/documentation.go
