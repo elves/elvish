@@ -50,10 +50,19 @@ func init() {
 //elvdoc:fn nop
 //
 // ```elvish
-// nop &any-opt= $value...
+// nop &any-opt=$any-value $value...
 // ```
 //
-// Accepts arbitrary arguments and options and does exactly nothing.
+// Accepts arbitrary options and arguments and does exactly nothing. That is, regardless of the
+// options or arguments passed to this command it always succeeds and outputs nothing. It can be
+// thought of as a "sink" that consumes its inputs regardless of what they are. See, for example,
+// the documentation of [pipeline exceptions](./language.html#pipeline-exception) for one use case
+// of this command.
+//
+// Note that this explicitly does not consume any byte or value stream input. It only ignores
+// explicit arguments. This allows examples such as `while $true { put foo } | nop` to produce the
+// intended result. Obviously it results in an infinite loop if you do `while $true { put foo } |
+// nop (all)` since the `all` command is unaware it is executed in a `nop` context.
 //
 // Examples:
 //
@@ -64,7 +73,7 @@ func init() {
 // ```
 //
 // Etymology: Various languages, in particular NOP in
-// [assembly languages](https://en.wikipedia.org/wiki/NOP).
+// [assembly languages](https://en.wikipedia.org/wiki/NOP_(code)).
 
 var nopGoFn = NewGoFn("nop", nop)
 
