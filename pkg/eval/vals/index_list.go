@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	errIndexMustBeInteger = errors.New("index must must be integer")
+	errIndexMustBeInteger = errors.New("index must be integer")
 )
 
 func indexList(l List, rawIndex any) (any, error) {

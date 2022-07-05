@@ -236,7 +236,7 @@ func transposeRunes(buffer string, dot int) (string, int) {
 
 //elvdoc:fn kill-word-left
 //
-// Deletes the the last word to the left of the dot.
+// Deletes the last word to the left of the dot.
 
 func moveDotLeftWord(buffer string, dot int) int {
 	return moveDotLeftGeneralWord(categorizeWord, buffer, dot)
@@ -248,7 +248,7 @@ func moveDotLeftWord(buffer string, dot int) int {
 
 //elvdoc:fn kill-word-right
 //
-// Deletes the the first word to the right of the dot.
+// Deletes the first word to the right of the dot.
 
 func moveDotRightWord(buffer string, dot int) int {
 	return moveDotRightGeneralWord(categorizeWord, buffer, dot)
@@ -279,7 +279,7 @@ func categorizeWord(r rune) int {
 
 //elvdoc:fn kill-small-word-left
 //
-// Deletes the the last small word to the left of the dot.
+// Deletes the last small word to the left of the dot.
 
 func moveDotLeftSmallWord(buffer string, dot int) int {
 	return moveDotLeftGeneralWord(tk.CategorizeSmallWord, buffer, dot)
@@ -291,7 +291,7 @@ func moveDotLeftSmallWord(buffer string, dot int) int {
 
 //elvdoc:fn kill-small-word-right
 //
-// Deletes the the first small word to the right of the dot.
+// Deletes the first small word to the right of the dot.
 
 func moveDotRightSmallWord(buffer string, dot int) int {
 	return moveDotRightGeneralWord(tk.CategorizeSmallWord, buffer, dot)
@@ -313,7 +313,7 @@ func transposeSmallWord(buffer string, dot int) (string, int) {
 
 //elvdoc:fn kill-alnum-word-left
 //
-// Deletes the the last alnum word to the left of the dot.
+// Deletes the last alnum word to the left of the dot.
 
 func moveDotLeftAlnumWord(buffer string, dot int) int {
 	return moveDotLeftGeneralWord(categorizeAlnum, buffer, dot)
@@ -325,7 +325,7 @@ func moveDotLeftAlnumWord(buffer string, dot int) int {
 
 //elvdoc:fn kill-alnum-word-right
 //
-// Deletes the the first alnum word to the right of the dot.
+// Deletes the first alnum word to the right of the dot.
 
 func moveDotRightAlnumWord(buffer string, dot int) int {
 	return moveDotRightGeneralWord(categorizeAlnum, buffer, dot)
@@ -484,7 +484,7 @@ func transposeGeneralWord(categorize categorizer, buffer string, dot int) (strin
 	return buffer[:leftStart] + buffer[rightStart:rightEnd] + buffer[leftEnd:rightStart] + buffer[leftStart:leftEnd] + buffer[rightEnd:], rightEnd
 }
 
-// Skips all runes to the left of the dot that belongs to the the same category.
+// Skips all runes to the left of the dot that belongs to the same category.
 func skipSameCatLeft(categorize categorizer, buffer string, pos int) int {
 	if pos == 0 {
 		return pos
@@ -508,7 +508,7 @@ func skipCatLeft(categorize categorizer, cat int, buffer string, pos int) int {
 	return len(left)
 }
 
-// Skips all runes to the right of the dot that belongs to the the same
+// Skips all runes to the right of the dot that belongs to the same
 // category.
 func skipSameCatRight(categorize categorizer, buffer string, pos int) int {
 	if pos == len(buffer) {

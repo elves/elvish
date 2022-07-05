@@ -133,7 +133,7 @@ type Evaler struct {
 
 //elvdoc:var value-out-indicator
 //
-// A string put before value outputs (such as those of of `put`). Defaults to
+// A string put before value outputs (such as those of `put`). Defaults to
 // `'▶ '`. Example:
 //
 // ```elvish-transcript
@@ -404,7 +404,7 @@ func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
 
 // CallCfg keeps configuration for the (*Evaler).Call method.
 type CallCfg struct {
-	// Arguments to pass to the the function.
+	// Arguments to pass to the function.
 	Args []any
 	// Options to pass to the function.
 	Opts map[string]any

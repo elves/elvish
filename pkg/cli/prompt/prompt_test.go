@@ -66,7 +66,7 @@ func TestPrompt_StalePrompt(t *testing.T) {
 	// Now the new prompt should be marked stale immediately.
 	testUpdate(t, prompt, ui.T("3> ", ui.Inverse))
 	unblock()
-	// However, the the two refreshes we requested early only trigger one
+	// However, the two refreshes we requested early only trigger one
 	// re-computation, because they are requested while the compute function is
 	// stuck, so they can be safely merged.
 	testUpdate(t, prompt, ui.T("4> "))

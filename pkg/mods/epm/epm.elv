@@ -233,7 +233,7 @@ fn -package-op {|pkg what|
         fail "Unknown operation '"$what"' for package "$pkg
       }
     } else {
-      fail "Unknown method '"$method"', specified in in config file "(-domain-config-file $dom)
+      fail "Unknown method '"$method"', specified in config file "(-domain-config-file $dom)
     }
   } else {
     -error "No config for domain '"$dom"'."
