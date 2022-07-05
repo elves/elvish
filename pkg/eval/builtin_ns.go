@@ -94,9 +94,9 @@ import (
 // **Note:** In general it is better to perform functionality tests rather than testing `$version`.
 // For example, do something like
 //
-// ```
+// ```elvish
 // has-key $builtin: new-var
-// ````
+// ```
 //
 // to test if variable `new-var` is available rather than comparing against `$version` to see if the
 // elvish version is equal to or newer than the version that introduced `new-var`.

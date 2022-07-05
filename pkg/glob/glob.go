@@ -248,7 +248,7 @@ segs:
 
 // matchFixedLength returns whether a run of fixed-length segments (Literal and
 // Question) matches a prefix of name. It returns whether the match is
-// successful and if if it is, the remaining part of name.
+// successful and if it is, the remaining part of name.
 func matchFixedLength(segs []Segment, name string) (bool, string) {
 	for _, seg := range segs {
 		if name == "" {
