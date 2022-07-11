@@ -284,6 +284,10 @@ func multiErrorFn(excs ...Exception) error {
 
 //elvdoc:fn return
 //
+// ```elvish
+// return
+// ```
+//
 // Raises the special "return" exception. When raised inside a named function
 // (defined by the [`fn` keyword](language.html#fn)) it is captured by the
 // function and causes the function to terminate. It is not captured by an
@@ -328,6 +332,10 @@ func returnFn() error {
 
 //elvdoc:fn break
 //
+// ```elvish
+// break
+// ```
+//
 // Raises the special "break" exception. When raised inside a loop it is
 // captured and causes the loop to terminate.
 //
@@ -353,6 +361,10 @@ func breakFn() error {
 }
 
 //elvdoc:fn continue
+//
+// ```elvish
+// continue
+// ```
 //
 // Raises the special "continue" exception. When raised inside a loop it is
 // captured and causes the loop to begin its next iteration.
