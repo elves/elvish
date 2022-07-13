@@ -2,12 +2,14 @@ package eval
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
 	"strings"
 
+	"gopkg.in/yaml.v3"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
@@ -48,11 +50,13 @@ func init() {
 		"slurp":           slurp,
 		"from-lines":      fromLines,
 		"from-json":       fromJSON,
+		"from-yaml":       fromYAML,
 		"from-terminated": fromTerminated,
 
 		// Value to bytes
 		"to-lines":      toLines,
 		"to-json":       toJSON,
+		"to-yaml":       toYAML,
 		"to-terminated": toTerminated,
 	})
 }
@@ -739,12 +743,66 @@ func fromJSON(fm *Frame) error {
 	}
 }
 
+//elvdoc:fn from-yaml
+//
+// ```elvish
+// from-yaml
+// ```
+//
+// Takes bytes stdin, parses it as YAML and puts the result on structured stdout.
+// The input can contain multiple YAMLs.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> echo '"a"' | from-yaml
+// ▶ a
+// ~> echo '- lorem
+//          - ipsum' | from-yaml
+// ▶ [lorem ipsum]
+// ~> echo 'lorem: "ipsum"' | from-yaml
+// ▶ [&lorem=ipsum]
+// ~> # multiple YAMLs separated by "---"
+// ~> echo 'a
+//         ---
+//         b' | from-yaml
+// ▶ a
+// ▶ b
+// ```
+//
+// @cf to-yaml
+
+func fromYAML(fm *Frame) error {
+	in := fm.InputFile()
+	out := fm.ValueOutput()
+
+	dec := yaml.NewDecoder(in)
+	for {
+		var v any
+		err := dec.Decode(&v)
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+		converted, err := fromJSONInterface(v)
+		if err != nil {
+			return err
+		}
+		err = out.Put(converted)
+		if err != nil {
+			return err
+		}
+	}
+}
+
 // Converts a interface{} that results from json.Unmarshal to an Elvish value.
 func fromJSONInterface(v any) (any, error) {
 	switch v := v.(type) {
 	case nil, bool, string:
 		return v, nil
-	case float64:
+	case int, float64:
 		return v, nil
 	case []any:
 		vec := vals.EmptyList
@@ -927,4 +985,49 @@ func toJSON(fm *Frame, inputs Inputs) error {
 		errEncode = encoder.Encode(v)
 	})
 	return errEncode
+}
+
+//elvdoc:fn to-yaml
+//
+// ```elvish
+// to-yaml
+// ```
+//
+// Takes structured stdin, convert it to YAML and puts the result on bytes stdout.
+//
+// ```elvish-transcript
+// ~> put a | to-yaml
+// a
+// ~> put [lorem ipsum] | to-yaml
+// - lorem
+// - ipsum
+// ~> put [&lorem=ipsum] | to-yaml
+// lorem: ipsum
+// ```
+//
+// @cf from-yaml
+
+func toYAML(fm *Frame, inputs Inputs) error {
+	b := fm.ByteOutput()
+	buf := &bytes.Buffer{}
+	jsonEncoder := json.NewEncoder(buf)
+	yamlEncoder := yaml.NewEncoder(b)
+
+	var err error
+	inputs(func(v any) {
+		if err != nil {
+			return
+		}
+		err = jsonEncoder.Encode(v)
+		if err != nil {
+			return
+		}
+		var jsonObj interface{}
+		if err = yaml.Unmarshal(buf.Bytes(), &jsonObj); err != nil {
+			return
+		}
+		buf.Reset()
+		err = yamlEncoder.Encode(jsonObj)
+	})
+	return err
 }

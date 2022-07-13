@@ -138,6 +138,22 @@ func TestFromJson(t *testing.T) {
 	)
 }
 
+func TestFromYAML(t *testing.T) {
+	Test(t,
+		That(`echo 'a:
+    - 1
+    - 2
+k: v
+---
+foo' | from-yaml`).
+			Puts(vals.MakeMap("k", "v", "a", vals.MakeList(1, 2)),
+				"foo"),
+		That(`echo '[null, "foo"]' | from-yaml`).Puts(
+			vals.MakeList(nil, "foo")),
+		// thatOutputErrorIsBubbled(`echo '[]' | from-yaml`),
+	)
+}
+
 func TestToLines(t *testing.T) {
 	Test(t,
 		That(`put "l\norem" ipsum | to-lines`).Prints("l\norem\nipsum\n"),
@@ -164,6 +180,23 @@ func TestToJson(t *testing.T) {
 `),
 		That(`put [$nil foo] | to-json`).Prints("[null,\"foo\"]\n"),
 		thatOutputErrorIsBubbled("to-json [foo]"),
+	)
+}
+
+func TestToYAML(t *testing.T) {
+	Test(t,
+		That(`put [&k=v &a=[1 2]] foo | to-yaml`).
+			Prints(`a:
+    - "1"
+    - "2"
+k: v
+---
+foo
+`),
+		That(`put [$nil foo] | to-yaml`).Prints(`- null
+- foo
+`),
+		// thatOutputErrorIsBubbled("to-yaml [foo]"),
 	)
 }
 

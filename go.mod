@@ -8,6 +8,7 @@ require (
 	github.com/sourcegraph/jsonrpc2 v0.1.0
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
