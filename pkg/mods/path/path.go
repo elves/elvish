@@ -118,11 +118,8 @@ var Ns = eval.BuildNsNamed("path").
 
 //elvdoc:fn eval-symlinks
 //
-// ```elvish-transcript
-// ~> mkdir bin
-// ~> ln -s bin sbin
-// ~> path:eval-symlinks ./sbin/a_command
-// ▶ bin/a_command
+// ```elvish
+// eval-symlinks $path
 // ```
 //
 // Outputs `$path` after resolving any symbolic links. If `$path` is relative the result will be
@@ -130,6 +127,13 @@ var Ns = eval.BuildNsNamed("path").
 // This function calls `path:clean` on the result before outputting it. This is analogous to the
 // external `realpath` or `readlink` command found on many systems. See the [Go
 // documentation](https://pkg.go.dev/path/filepath#EvalSymlinks) for more details.
+//
+// ```elvish-transcript
+// ~> mkdir bin
+// ~> ln -s bin sbin
+// ~> path:eval-symlinks ./sbin/a_command
+// ▶ bin/a_command
+// ```
 
 //elvdoc:fn is-dir
 //

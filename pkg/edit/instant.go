@@ -14,6 +14,10 @@ import (
 
 //elvdoc:fn -instant:start
 //
+// ```elvish
+// edit:-instant:start
+// ```
+//
 // Starts the instant mode. In instant mode, any text entered at the command
 // line is evaluated immediately, with the output displayed.
 //

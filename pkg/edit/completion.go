@@ -163,9 +163,17 @@ func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) (c
 
 //elvdoc:fn completion:start
 //
+// ```elvish
+// edit:completion:start
+// ```
+//
 // Start the completion mode.
 
 //elvdoc:fn completion:smart-start
+//
+// ```elvish
+// edit:completion:smart-start
+// ```
 //
 // Starts the completion mode. However, if all the candidates share a non-empty
 // prefix and that prefix starts with the seed, inserts the prefix instead.
@@ -224,6 +232,10 @@ func completionStart(app cli.App, bindings tk.Bindings, ev *eval.Evaler, cfg com
 }
 
 //elvdoc:fn completion:close
+//
+// ```elvish
+// edit:completion:close
+// ```
 //
 // Closes the completion mode UI.
 
