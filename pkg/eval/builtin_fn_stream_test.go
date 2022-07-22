@@ -127,6 +127,10 @@ func TestOrder(t *testing.T) {
 		// &less-than
 		That("put 1 10 2 5 | order &less-than={|a b| < $a $b }").
 			Puts("1", "2", "5", "10"),
+		That("put 10 1 5 2 | order &less-than=$nil").
+			Puts("1", "10", "2", "5"),
+		That("put 10 1 5 2 | order").
+			Puts("1", "10", "2", "5"),
 
 		// &less-than writing more than one value
 		That("put 1 10 2 5 | order &less-than={|a b| put $true $false }").
