@@ -57,6 +57,7 @@ set command:binding = (binding-table [
   &b=   $move-dot-left-word~
   &h=   $move-dot-left~
   &i=   $close-mode~
+  &a=   { $move-dot-right~; $close-mode~ }
   &j=   $move-dot-down~
   &k=   $move-dot-up~
   &l=   $move-dot-right~
