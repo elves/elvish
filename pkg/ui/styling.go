@@ -41,8 +41,7 @@ func Stylings(ts ...Styling) Styling { return jointStyling(ts) }
 var (
 	Reset Styling = reset{}
 
-	ImplicitFgDefault Styling = setForeground{nil}
-	ExplicitFgDefault Styling = setForeground{Default}
+	FgDefault Styling = setForeground{nil}
 
 	FgBlack   Styling = setForeground{Black}
 	FgRed     Styling = setForeground{Red}
@@ -62,8 +61,7 @@ var (
 	FgBrightCyan    Styling = setForeground{BrightCyan}
 	FgBrightWhite   Styling = setForeground{BrightWhite}
 
-	ImplicitBgDefault Styling = setBackground{nil}
-	ExplicitBgDefault Styling = setBackground{Default}
+	BgDefault Styling = setBackground{nil}
 
 	BgBlack   Styling = setBackground{Black}
 	BgRed     Styling = setBackground{Red}
@@ -184,13 +182,13 @@ var boolFields = map[string]boolField{
 func parseOneStyling(name string) Styling {
 	switch {
 	case name == "default" || name == "fg-default":
-		return ExplicitFgDefault
+		return FgDefault
 	case strings.HasPrefix(name, "fg-"):
 		if color := parseColor(name[len("fg-"):]); color != nil {
 			return setForeground{color}
 		}
 	case name == "bg-default":
-		return ExplicitBgDefault
+		return BgDefault
 	case strings.HasPrefix(name, "bg-"):
 		if color := parseColor(name[len("bg-"):]); color != nil {
 			return setBackground{color}

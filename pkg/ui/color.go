@@ -23,7 +23,6 @@ var (
 	Magenta Color = ansiColor(5)
 	Cyan    Color = ansiColor(6)
 	White   Color = ansiColor(7)
-	Default Color = ansiColor(9)
 
 	BrightBlack   Color = ansiBrightColor(0)
 	BrightRed     Color = ansiBrightColor(1)
@@ -42,7 +41,8 @@ func XTerm256Color(i uint8) Color { return xterm256Color(i) }
 func TrueColor(r, g, b uint8) Color { return trueColor{r, g, b} }
 
 var colorNames = []string{
-	"black", "red", "green", "yellow", "blue", "magenta", "cyan", "white", "unknown", "default",
+	"black", "red", "green", "yellow",
+	"blue", "magenta", "cyan", "white",
 }
 
 var colorByName = map[string]Color{
@@ -54,7 +54,6 @@ var colorByName = map[string]Color{
 	"magenta": Magenta,
 	"cyan":    Cyan,
 	"white":   White,
-	"default": Default,
 
 	"bright-black":   BrightBlack,
 	"bright-red":     BrightRed,
