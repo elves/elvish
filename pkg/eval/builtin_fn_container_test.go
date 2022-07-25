@@ -249,6 +249,12 @@ func TestCompare(t *testing.T) {
 		That("compare (num 3) (num nan)").Puts(1),
 		That("compare (num nan) (num nan)").Puts(0),
 
+		// Comparing booleans.
+		That("compare $true $false").Puts(1),
+		That("compare $false $true").Puts(-1),
+		That("compare $false $false").Puts(0),
+		That("compare $true $true").Puts(0),
+
 		// Comparing lists.
 		That("compare [a, b] [a, a]").Puts(1),
 		That("compare [a, a] [a, b]").Puts(-1),
@@ -285,6 +291,10 @@ func TestOrder(t *testing.T) {
 			Puts(1, 1.5, 1.5, 2),
 		// For the sake of ordering, NaN's are considered smaller than other numbers
 		That("put NaN -1 NaN | each $num~ | order").Puts(math.NaN(), math.NaN(), -1),
+
+		// Ordering booleans
+		That("put $true $false $true | order").Puts(false, true, true),
+		That("put $false $true $false | order").Puts(false, false, true),
 
 		// Ordering lists
 		That("put [b] [a] | order").Puts(vals.MakeList("a"), vals.MakeList("b")),

@@ -305,6 +305,17 @@ func cmp(a, b any) ordering {
 				return more
 			}
 		}
+	case bool:
+		if b, ok := b.(bool); ok {
+			switch {
+			case a == b:
+				return equal
+			case !a: // `&& b` is implicit
+				return less
+			default: // a && !b
+				return more
+			}
+		}
 	}
 	return uncomparable
 }
