@@ -71,10 +71,9 @@ set @_ = (range 5 | each {|_|
 # Sync the history we just manufactured with this elvish process.
 edit:history:fast-forward
 
-# Change the appearance of the indicator that prefaces values output by `put`
-# (or any other command that writes to the value stream) to be styled so it
-# is colorful and stands out.
-set value-out-indicator = (print (styled '▶ ' bright-magenta))
+set @edit:before-readline = {
+    print ""
+}
 
 # Warning: Ugly hack ahead.
 #
@@ -90,27 +89,15 @@ set value-out-indicator = (print (styled '▶ ' bright-magenta))
 var cmd-num = (num 0)
 set edit:before-readline = [$@edit:before-readline {
     set cmd-num = (+ 1 $cmd-num)
+    echo '['$cmd-num']'
 }]
-var cmd-num-style = ["fg-black" "fg-bright-black"]
-set edit:prompt = {
-    # The inclusion of bg-default is critical to ensure that the ttyshot code
-    # can reliably detect the prompt and correct the foreground color.
-    styled '['$cmd-num']' bg-default $cmd-num-style[(% $cmd-num 2)]
-    put ' '(tilde-abbr $pwd)'> '
-}
 
 set edit:rprompt = (constantly (styled 'elf@host' inverse))
-set edit:rprompt-persistent = $false
 
 # These functions are used in some of the ttyshot scripts to ensure consistent
 # output that doesn't leak info about the machine used to create the ttyshot.
-fn whoami {
-    put elf
-}
-
-fn hostname {
-    put host.example.com
-}
+fn whoami { echo elf }
+fn hostname { echo host.example.com }
 
 # This command is useful for verifying the display of basic text styles.
 # Specifically: bold, underline, and the 16 legacy tty colors. Start a
