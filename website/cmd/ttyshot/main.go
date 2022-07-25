@@ -12,22 +12,28 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"strings"
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Fprintf(os.Stderr, "Expected one argument, got %d\n", len(os.Args)-1)
+	err := run(os.Args)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	specPath := os.Args[1]
+}
+
+func run(args []string) error {
+	if len(args) != 2 {
+		return errors.New("Usage: ttyshot spec")
+	}
+	specPath := args[1]
 	if !strings.HasSuffix(specPath, ".spec") {
-		fmt.Fprintf(os.Stderr, "Expected extension \".spec\", found %q\n", path.Ext(specPath))
-		os.Exit(2)
+		return fmt.Errorf("expected extension \".spec\", found %q", path.Ext(specPath))
 	}
 	basePath := specPath[:len(specPath)-len(".spec")]
 	htmlPath := basePath + ".html"
@@ -35,27 +41,26 @@ func main() {
 
 	content, err := os.ReadFile(specPath)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-
 	script, err := parseSpec(content)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	outFile, err := os.OpenFile(htmlPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-
 	rawFile, err := os.OpenFile(rawPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	homePath, dbPath, cleanup := initEnv()
-	defer cleanup()
-	if err := createTtyshot(homePath, dbPath, script, outFile, rawFile); err != nil {
-		log.Fatal(err)
+	homePath, dbPath, cleanup, err := initEnv()
+	if err != nil {
+		return fmt.Errorf("set up environment: %w", err)
 	}
+	defer cleanup()
+	return createTtyshot(homePath, dbPath, script, outFile, rawFile)
 }

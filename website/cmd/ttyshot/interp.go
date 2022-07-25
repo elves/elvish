@@ -2,9 +2,9 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,17 +29,17 @@ var promptFmt = "[%d]"
 
 // Create a hermetic environment for generating a ttyshot. We want to ensure we don't use the real
 // home directory, or interactive history, of the person running this tool.
-func initEnv() (string, string, func()) {
+func initEnv() (string, string, func(), error) {
 	// There are systems, such as macOs, which generate a temp dir that includes symlinks in the
 	// path. For example, `/var/` => `/private/var`. Expand those symlinks so that Elvish command
 	// `tilde-abbr` will behave as expected.
 	homePath, err := os.MkdirTemp("", "ttyshot-*")
 	if err != nil {
-		log.Fatal("unable to create temp home: " + err.Error())
+		return "", "", nil, fmt.Errorf("create temp home: %w", err)
 	}
 	homePath, err = filepath.EvalSymlinks(homePath)
 	if err != nil {
-		log.Fatal("unable to resolve symlinks in homePath: " + err.Error())
+		return "", "", nil, fmt.Errorf("resolve symlinks in homePath: %w", err)
 	}
 	// We'll put the Elvish and Tmux socket files in this directory. This makes the "navigation"
 	// mode ttyshots a trifle less confusing.
@@ -57,7 +57,7 @@ func initEnv() (string, string, func()) {
 	// Create the Elvish local state directory in the hermetic home.
 	dotLocalStateElvish := filepath.Join(homePath, ".local", "state", "elvish")
 	if err := os.MkdirAll(dotLocalStateElvish, 0o700); err != nil {
-		log.Fatal("mkdir -p " + dotLocalStateElvish + ": " + err.Error())
+		return "", "", nil, fmt.Errorf("create state dir: %w", err)
 	}
 
 	// Copy the Elvish source code to the hermetic home for use in demos of things like Elvish's
@@ -67,7 +67,7 @@ func initEnv() (string, string, func()) {
 		Args: []string{"cp-elvish.sh", homePath},
 	}
 	if err := copySrcCmd.Run(); err != nil {
-		log.Fatal(err)
+		return "", "", nil, err
 	}
 
 	// Create a couple of other directories to make demos of "navigation" mode more interesting.
@@ -82,12 +82,12 @@ func initEnv() (string, string, func()) {
 
 	cleanup := func() {
 		if err := os.RemoveAll(homePath); err != nil {
-			log.Fatal("Unable to remove temp HOME: " + err.Error())
+			fmt.Fprintln(os.Stderr, "Warning: unable to remove temp HOME:", err.Error())
 		}
 	}
 
 	dbPath := filepath.Join(dotLocalStateElvish, "db.bolt")
-	return homePath, dbPath, cleanup
+	return homePath, dbPath, cleanup, nil
 }
 
 func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *os.File) error {
@@ -110,7 +110,7 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *o
 				return
 			}
 			if err != nil {
-				log.Fatal(err)
+				panic(err)
 			}
 			for i := 0; i < n; i++ {
 				ttyOutput <- content[i]
@@ -119,7 +119,10 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *o
 	}()
 
 	var ttyImage bytes.Buffer
-	triggerTtyCapture, ttyCaptureDone := spawnElvish(homePath, dbPath, slave, &ttyImage)
+	triggerTtyCapture, ttyCaptureDone, err := spawnElvish(homePath, dbPath, slave, &ttyImage)
+	if err != nil {
+		return err
+	}
 	trimEmptyLines, err := executeScript(script, master, ttyOutput)
 	if err != nil {
 		return err
@@ -150,11 +153,10 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *o
 	return nil
 }
 
-func spawnElvish(homePath, dbPath string, slave *os.File,
-	ttyImage *bytes.Buffer) (chan bool, chan bool) {
+func spawnElvish(homePath, dbPath string, slave *os.File, ttyImage *bytes.Buffer) (chan bool, chan bool, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
-		log.Fatal("unable to determine the CWD: " + err.Error())
+		return nil, nil, err
 	}
 
 	triggerTtyCapture := make(chan bool)
@@ -166,16 +168,16 @@ func spawnElvish(homePath, dbPath string, slave *os.File,
 
 	elvishPath, err := exec.LookPath("elvish")
 	if err != nil {
-		log.Fatal("unable to find elvish: " + err.Error())
+		return nil, nil, fmt.Errorf("find elvish: %w", err)
 	}
 	tmuxPath, err := exec.LookPath("tmux")
 	if err != nil {
-		log.Fatal("unable to find tmux: " + err.Error())
+		return nil, nil, fmt.Errorf("find tmux: %w", err)
 	}
 
 	devnul, err := os.OpenFile(os.DevNull, os.O_RDWR, 0)
 	if err != nil {
-		log.Fatal("unable to open os.DevNull: " + err.Error())
+		return nil, nil, fmt.Errorf("open %v: %w", os.DevNull, err)
 	}
 
 	daemonCmd := exec.Cmd{
@@ -186,14 +188,14 @@ func spawnElvish(homePath, dbPath string, slave *os.File,
 		Stderr: devnul,
 	}
 	// Run the Elvish daemon using the hermetic home.
+	if err := daemonCmd.Start(); err != nil {
+		return nil, nil, fmt.Errorf("spawn elvish daemon: %w", err)
+	}
 	go func() {
-		if err := daemonCmd.Start(); err != nil {
-			log.Fatal(err)
-		}
-		// The daemon will exit when the Elvish shell we're intereacting with exits. So we simply
-		// need to wait for the daemon to terminate.
+		// The daemon will exit when the Elvish shell we're intereacting with
+		// exits. So we simply need to wait for the daemon to terminate.
 		if err := daemonCmd.Wait(); err != nil {
-			log.Fatal(err)
+			fmt.Fprintln(os.Stderr, "Warning: daemon error:", err)
 		}
 	}()
 	// Wait for the Elvish daemon to create the socket file before we start the Elvish shell.
@@ -206,7 +208,7 @@ func spawnElvish(homePath, dbPath string, slave *os.File,
 			break
 		}
 		if time.Now().Sub(launchTime) > time.Duration(5*time.Second) {
-			log.Fatal("Elvish daemon failed to create socket in a reasonable interval")
+			return nil, nil, errors.New("Elvish daemon failed to create socket in a reasonable interval")
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
@@ -240,7 +242,7 @@ func spawnElvish(homePath, dbPath string, slave *os.File,
 	go func() {
 		<-triggerTtyCapture
 		if err := captureCmd.Run(); err != nil {
-			log.Fatal(err)
+			fmt.Fprintln(os.Stderr, "Error: tmux capture-pane failed:", err)
 		}
 		killTmuxCmd := exec.Cmd{
 			Path:   tmuxPath,
@@ -255,7 +257,7 @@ func spawnElvish(homePath, dbPath string, slave *os.File,
 		ttyCaptureDone <- true
 	}()
 
-	return triggerTtyCapture, ttyCaptureDone
+	return triggerTtyCapture, ttyCaptureDone, nil
 }
 
 var cmdNum int = 0
