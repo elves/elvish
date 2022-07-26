@@ -16,8 +16,10 @@ import (
 )
 
 var (
-	ErrNegativeSleepDuration = errors.New("sleep duration must be >= zero")
-	ErrInvalidSleepDuration  = errors.New("invalid sleep duration")
+	ErrNegativeSleepDuration    = errors.New("sleep duration must be >= zero")
+	ErrInvalidSleepDuration     = errors.New("invalid sleep duration")
+	ErrInvalidBenchmarkDuration = errors.New("benchmark duration must be > zero")
+	ErrInvalidBenchmarkIter     = errors.New("benchmark iterations must be > zero")
 )
 
 // Builtins that have not been put into their own groups go here.
@@ -36,8 +38,9 @@ func init() {
 		"deprecate": deprecate,
 
 		// Time
-		"sleep": sleep,
-		"time":  timeCmd,
+		"benchmark": benchmark,
+		"sleep":     sleep,
+		"time":      timeCmd,
 
 		"-ifaddrs": _ifaddrs,
 	})
@@ -500,6 +503,8 @@ func sleep(fm *Frame, duration any) error {
 // ~> put $t
 // ▶ (num 0.011030208)
 // ```
+//
+// @cf benchmark
 
 type timeOpt struct{ OnEnd Callable }
 
@@ -525,6 +530,159 @@ func timeCmd(fm *Frame, opts timeOpt, f Callable) error {
 	}
 
 	return err
+}
+
+//elvdoc:fn benchmark
+//
+// ```elvish
+// benchmark &min-iters=5 &min-time=10s &on-run=$nil &on-end=$nil $callable
+// ```
+//
+// Runs `$callable` one or more times and call `$on-end` with the shortest
+// duration as a number in seconds. If `&on-end` is `$nil` (the default) print
+// the duration in human-readable form; e.g., 1.000564042s.
+//
+// If `$callable` throws an exception, the exception is propagated after the
+// `&on-end` (or default) printing is done.
+//
+// If `$on-end` throws an exception, it is propagated, unless `$callable` has
+// already thrown an exception.
+//
+// The `&min-iters` option defines the minimum number of iterations to execute
+// regardless of the total run time. The default is five. The number of
+// iterations must be greater than zero.
+//
+// The `&min-time` option defines the minimum duration to run the benchmark. The
+// default is ten seconds. The duration can be a simple
+// [number](language.html#number) (with optional fractional part) without an
+// explicit unit suffix -- in which case the unit is seconds. The duration can
+// also be a string written as a sequence of decimal numbers, each with optional
+// fraction, plus a unit suffix. For example, "300ms", "1.5h" or "1h45m7s".
+// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". The duration
+// must be greater than or equal to zero.
+//
+// Note: A given execution must satisfy both the `&min-iters` and `&min-time`
+// constraints.
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> var run-times = []
+// ~> benchmark &min-time=40s &min-iters=3 ^
+//      &on-run={|x| set run-times = [$@run-times $x] } ^
+//      &on-end={|x| echo "fastest "$x } { sleep 10s }
+// fastest 10.000564042
+// ~> pprint $run-times
+// [
+//  (num 10.003042292)
+//  (num 10.000564042)
+//  (num 10.001751125)
+//  (num 10.001130667)
+// ]
+// ```
+//
+// @cf time
+
+type benchmarkOpt struct {
+	OnEnd    Callable
+	OnRun    Callable
+	MinIters string
+	MinTime  string
+	minIters int
+	minTime  time.Duration
+}
+
+const (
+	defaultMinIters = 5
+	defaultMinTime  = time.Duration(10 * time.Second)
+)
+
+func (o *benchmarkOpt) SetDefaultOptions() {
+	o.minIters = defaultMinIters
+	o.minTime = defaultMinTime
+}
+
+func benchmark(fm *Frame, opts benchmarkOpt, f Callable) error {
+	if err := parseBenchmarkOpts(&opts); err != nil {
+		return err
+	}
+	shortestDuration, err := runBenchmark(fm, opts, f)
+	if opts.OnEnd == nil {
+		_, errOut := fmt.Fprintln(fm.ByteOutput(), shortestDuration)
+		if err == nil {
+			err = errOut
+		}
+	} else {
+		newFm := fm.Fork("on-end callback of benchmark")
+		errOut := opts.OnEnd.Call(newFm, []any{shortestDuration.Seconds()}, NoOpts)
+		if err == nil {
+			err = errOut
+		}
+	}
+	return err
+}
+
+func parseBenchmarkOpts(opts *benchmarkOpt) error {
+	if opts.MinIters != "" {
+		if err := vals.ScanToGo(opts.MinIters, &opts.minIters); err != nil {
+			return ErrInvalidBenchmarkIter
+		}
+		if opts.minIters <= 0 {
+			return ErrInvalidBenchmarkIter
+		}
+	}
+
+	if opts.MinTime != "" {
+		var d time.Duration
+		var f float64
+		if err := vals.ScanToGo(opts.MinTime, &f); err == nil {
+			// It is a simple number we treat as a (fractional) number of seconds.
+			d = time.Duration(f * float64(time.Second))
+		} else {
+			// See if it is a duration string rather than a simple number.
+			d, err = time.ParseDuration(opts.MinTime)
+			if err != nil {
+				return ErrInvalidBenchmarkDuration
+			}
+		}
+		if d < 0 {
+			return ErrInvalidBenchmarkDuration
+		}
+		opts.minTime = d
+	}
+
+	return nil
+}
+
+var TimeNow = time.Now // so unit testing can stub it
+
+func runBenchmark(fm *Frame, opts benchmarkOpt, f Callable) (time.Duration, error) {
+	var totalTime time.Duration
+	var shortestDuration time.Duration = 1<<63 - 1
+	for iter := 1; ; iter++ {
+		t0 := TimeNow()
+		err := f.Call(fm, NoArgs, NoOpts)
+		t1 := TimeNow()
+		if err != nil {
+			return 0, err
+		}
+		dt := t1.Sub(t0)
+		if dt < shortestDuration {
+			shortestDuration = dt
+		}
+		if opts.OnRun != nil {
+			newFm := fm.Fork("on-run callback of benchmark")
+			err := opts.OnRun.Call(newFm, []any{dt.Seconds()}, NoOpts)
+			if err != nil {
+				return 0, err
+			}
+		}
+		totalTime += dt
+		if iter >= opts.minIters && totalTime >= opts.minTime {
+			break
+		}
+	}
+	return shortestDuration, nil
 }
 
 //elvdoc:fn -ifaddrs
