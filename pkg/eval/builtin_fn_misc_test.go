@@ -100,6 +100,49 @@ func TestTime(t *testing.T) {
 	)
 }
 
+func TestBenchmark(t *testing.T) {
+	var currentSeconds int64 = 1
+	var double bool = false
+	testutil.Set(t, &TimeNow, func() time.Time {
+		if double {
+			double = false
+			currentSeconds *= 2
+		} else {
+			double = true
+		}
+		return time.Unix(currentSeconds, 0)
+	})
+
+	Test(t,
+		That("benchmark &min-time=abc { nop }").Throws(ErrInvalidBenchmarkDuration),
+		That("benchmark &min-time=0x  { nop }").Throws(ErrInvalidBenchmarkDuration),
+		That("benchmark &min-time=-1s { nop }").Throws(ErrInvalidBenchmarkDuration),
+		That("benchmark &min-iters=a  { nop }").Throws(ErrInvalidBenchmarkIter),
+		That("benchmark &min-iters=0  { nop }").Throws(ErrInvalidBenchmarkIter),
+		That("benchmark &min-iters=-1  { nop }").Throws(ErrInvalidBenchmarkIter),
+		That("benchmark { fail body }").Throws(FailError{"body"}).Prints("0s\n"),
+		That("benchmark &on-run={|x| fail on-run } { nop }").
+			WithSetup(func(_ *Evaler) { currentSeconds = 1 }).
+			Throws(FailError{"on-run"}).
+			Prints("0s\n"),
+		That("benchmark &min-time=0 { nop }").
+			WithSetup(func(_ *Evaler) { currentSeconds = 1 }).
+			Prints("1s\n"),
+		That("benchmark &min-iters=1 &min-time=10s "+
+			"&on-end={|x| printf '%.0fs\n' $x } "+
+			"&on-run={|x| printf '%.0fs\n' $x } { nop }").
+			WithSetup(func(_ *Evaler) { currentSeconds = 1 }).
+			Prints("1s\n2s\n4s\n8s\n1s\n"),
+		That("benchmark &min-iters=3 &min-time=0 "+
+			"&on-end={|x| printf '%.0fs\n' $x } "+
+			"&on-run={|x| printf '%.0fs\n' $x } { nop }").
+			WithSetup(func(_ *Evaler) { currentSeconds = 1 }).
+			Prints("1s\n2s\n4s\n1s\n"),
+
+		thatOutputErrorIsBubbled("benchmark { }"),
+	)
+}
+
 func TestUseMod(t *testing.T) {
 	testutil.InTempDir(t)
 	must.WriteFile("mod.elv", "var x = value")

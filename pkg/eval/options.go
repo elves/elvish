@@ -37,6 +37,16 @@ func scanOptions(rawOpts RawOptions, ptr any) error {
 		if !ok {
 			return UnknownOption{k}
 		}
+
+		// An option with no value (e.g., `&a-opt`) has `$true` as its default value. However, if
+		// the option struct member is a string we want an empty string as the default value.
+		switch b := v.(type) {
+		case bool:
+			if b && structValue.Field(fieldIdx).Type().Name() == "string" {
+				v = ""
+			}
+		}
+
 		err := vals.ScanToGo(v, structValue.Field(fieldIdx).Addr().Interface())
 		if err != nil {
 			return err
