@@ -2034,8 +2034,7 @@ try {
 }
 ```
 
-Only `try` and `try-block` are required. This control structure behaves as
-follows:
+This control structure behaves as follows:
 
 1.  The `try-block` is always executed first.
 
@@ -2086,9 +2085,9 @@ follows:
 5.  If the exception was not caught (i.e. `catch` is not present), it is
     rethrown.
 
-At least one of `catch` and `finally` must be present, since a lone
-`try { ... }` does not do anything on its own, and is almost certainly a
-mistake. To swallow exceptions, an explicit `catch` clause must be given.
+At least one of `catch` and `finally` must be present since a lone `try { ... }`
+does not do anything on its own and is almost certainly a mistake. To swallow
+exceptions an explicit `catch` clause must be given.
 
 Exceptions thrown in blocks other than `try-block` are not caught. If an
 exception was thrown and either `catch-block` or `finally-block` throws another
