@@ -22,8 +22,7 @@ const (
 	terminalCols = 60
 )
 
-var promptRe = regexp.MustCompile(`^\[\d+\]$`)
-var promptFmt = "[%d]"
+var promptMarker = "[PROMPT]"
 
 //go:embed cp-elvish.sh tmux.conf rc.elv
 var assets embed.FS
@@ -158,6 +157,7 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawSave *o
 	// unwanted empty lines at the bottom of the ttyshot. The latter behavior occurs if the ttyshot
 	// specification includes the `trim-empty` directive.
 	ttyshot = strings.TrimRight(ttyshot, "\n")
+	ttyshot = strings.ReplaceAll(ttyshot, promptMarker+"\n", "")
 	outFile.WriteString(sgrTextToHTML(ttyshot))
 	outFile.WriteString("\n")
 	return nil
@@ -234,9 +234,8 @@ func executeScript(script []demoOp, ctrl *os.File, ttyOutput chan byte) (bool, e
 		case opSleep:
 			time.Sleep(op.val.(time.Duration))
 		case opWaitForPrompt:
-			expected := fmt.Sprintf(promptFmt, nextCmdNum)
-			waitForOutput(ttyOutput, expected,
-				func(content []byte) bool { return bytes.Contains(content, []byte(expected)) })
+			waitForOutput(ttyOutput, promptMarker,
+				func(content []byte) bool { return bytes.Contains(content, []byte(promptMarker)) })
 			nextCmdNum++
 		case opWaitForString:
 			expected := op.val.([]byte)
@@ -294,17 +293,6 @@ func sgrTextToHTML(ttyshot string) string {
 			newline = true
 			text = c.Text[:len(c.Text)-1]
 		}
-		// This "undoes" the ugly hack in rc.elv that requires we gratuitously
-		// modify the style of the prompt to make it practical to recognize a prompt when executing
-		// a ttyshot script.
-		if promptRe.Match([]byte(text)) {
-			// It looks like the text might be a shell prompt. Check if the styling matches the case
-			// that needs to be fixed.
-			if len(classes) >= 1 && classes[0] == "sgr-90" {
-				classes[0] = "sgr-30" // fg-bright-black => fg-black
-			}
-		}
-
 		fmt.Fprintf(&sb,
 			`<span class="%s">%s</span>`, strings.Join(classes, " "), html.EscapeString(text))
 		if newline {

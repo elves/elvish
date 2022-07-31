@@ -78,10 +78,8 @@ set edit:global-binding[Alt-q] = {
 
 set edit:max-height = 16
 
-var cmd-num = (num 0)
 set edit:before-readline = [$@edit:before-readline {
-    set cmd-num = (+ 1 $cmd-num)
-    echo '['$cmd-num']'
+    echo '[PROMPT]'
 }]
 
 set edit:rprompt = (constantly (styled 'elf@host' inverse))
