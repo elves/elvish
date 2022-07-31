@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"html"
 	"os"
@@ -180,46 +179,18 @@ func spawnElvish(homePath, dbPath string, slave *os.File, ttyImage *bytes.Buffer
 		return nil, nil, fmt.Errorf("open %v: %w", os.DevNull, err)
 	}
 
-	daemonCmd := exec.Cmd{
-		Path:   elvishPath,
-		Args:   []string{"elvish", "-daemon", "-sock", elvSock, "-db", dbPath},
-		Stdin:  devnul,
-		Stdout: devnul,
-		Stderr: devnul,
-	}
-	// Run the Elvish daemon using the hermetic home.
-	if err := daemonCmd.Start(); err != nil {
-		return nil, nil, fmt.Errorf("spawn elvish daemon: %w", err)
-	}
-	go func() {
-		// The daemon will exit when the Elvish shell we're intereacting with
-		// exits. So we simply need to wait for the daemon to terminate.
-		if err := daemonCmd.Wait(); err != nil {
-			fmt.Fprintln(os.Stderr, "Warning: daemon error:", err)
-		}
-	}()
-	// Wait for the Elvish daemon to create the socket file before we start the Elvish shell.
-	// This isn't strictly speaking necessary but helps avoid race conditions and makes it more
-	// likely we'll abort with a useful diagnostic if the daemon fails to start.
-	launchTime := time.Now()
-	time.Sleep(10 * time.Millisecond)
-	for {
-		if _, err := os.Stat(elvSock); err == nil {
-			break
-		}
-		if time.Now().Sub(launchTime) > time.Duration(5*time.Second) {
-			return nil, nil, errors.New("Elvish daemon failed to create socket in a reasonable interval")
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-
 	// Start tmux and have it start the hermetic Elvish shell.
 	elvRcPath := filepath.Join(cwd, "website/ttyshot/ttyshot.rc")
 	tmuxCmd := exec.Cmd{
 		Path: tmuxPath,
 		Args: []string{
-			"tmux", "-S", tmuxSock, "-f", "website/ttyshot/tmux.rc", "new-session", "-s", "ttyshot",
-			"-c", homePath, elvishPath, "-rc", elvRcPath, "-sock", elvSock},
+			tmuxPath,
+			"-S", tmuxSock,
+			"-f", "website/ttyshot/tmux.rc",
+			"new-session",
+			"-s", "ttyshot",
+			"-c", homePath,
+			elvishPath, "-rc", elvRcPath, "-sock", elvSock},
 		Stdin:  slave,
 		Stdout: slave,
 		Stderr: slave,
