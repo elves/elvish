@@ -143,6 +143,8 @@ to [Matrix](https://matrix.org)!
 
 -   Telegram: [Elvish user group](https://t.me/+Pv5ZYgTXD-YaKwcP)
 
+-   IRC: [#elvish](https://web.libera.chat/#elvish) on Libera Chat
+
 -   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
 
 -   Matrix: [#users:elv.sh](https://matrix.to/#/#users:elv.sh)
