@@ -71,21 +71,11 @@ set @_ = (range 5 | each {|_|
 # Sync the history we just manufactured with this elvish process.
 edit:history:fast-forward
 
-set @edit:before-readline = {
-    print ""
+set edit:global-binding[Alt-q] = {
+    tmux capture-pane -p -e > ~/tmp/ttyshot.raw
+    exit
 }
 
-# Warning: Ugly hack ahead.
-#
-# The left-hand prompt is complicated because we need to circumvent the
-# optimizations done by Elvish when rendering the prompt. If we don't change
-# the style of the "<n>" component (the command number) of the prompt then the
-# emitted sequence of bytes won't always have the fixed portion ("<", ">") and
-# variable portion ("n") adjacent in the emitted byte stream. Which makes it
-# really hard for the ttyshot program to reliably recognize when a new prompt
-# is written. So force Elvish to rewrite the entire command number sequence by
-# changing the style of that text whenever a new prompt, not just an update to
-# an existing prompt, is written.
 var cmd-num = (num 0)
 set edit:before-readline = [$@edit:before-readline {
     set cmd-num = (+ 1 $cmd-num)

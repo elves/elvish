@@ -105,11 +105,13 @@ func initEnv() (string, string, func(), error) {
 	return homePath, dbPath, cleanup, nil
 }
 
-func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *os.File) error {
+func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawSave *os.File) error {
 	ctrl, tty, err := pty.Open()
 	if err != nil {
 		return err
 	}
+	defer ctrl.Close()
+	defer tty.Close()
 	winsize := pty.Winsize{Rows: terminalRows, Cols: terminalCols}
 	pty.Setsize(ctrl, &winsize)
 
@@ -133,8 +135,7 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *o
 		}
 	}()
 
-	var ttyImage bytes.Buffer
-	triggerTtyCapture, ttyCaptureDone, err := spawnElvish(homePath, dbPath, tty, &ttyImage)
+	doneCh, err := spawnElvish(homePath, dbPath, tty)
 	if err != nil {
 		return err
 	}
@@ -143,18 +144,18 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *o
 		return err
 	}
 
-	// Give the ttyshot image a chance to stabilize. Yes, this is not guaranteed to work, but in
-	// practice it's rarely needed and even pausing a handful of milliseconds will usually suffice.
-	time.Sleep(100 * time.Millisecond)
-	triggerTtyCapture <- true
-	<-ttyCaptureDone
-	// Close the pty ctrl to signal EOF to the processes running inside the simulated terminal.
-	// This helps ensure processes running inside the simulated terminal will terminate once we're
-	// done capturing the "ttyshot".
-	ctrl.Close()
+	err = <-doneCh
+	if err != nil {
+		return err
+	}
 
-	ttyshot := ttyImage.String()
-	rawFile.WriteString(ttyshot)
+	ttyshotBytes, err := os.ReadFile(filepath.Join(homePath, "tmp", "ttyshot.raw"))
+	if err != nil {
+		return err
+	}
+	ttyshot := string(ttyshotBytes)
+
+	rawSave.Write(ttyshotBytes)
 	// Trim the last, or all, trailing newlines in order to eliminate from the generated HTML
 	// unwanted empty lines at the bottom of the ttyshot. The latter behavior occurs if the ttyshot
 	// specification includes the `trim-empty` directive.
@@ -168,26 +169,18 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *o
 	return nil
 }
 
-func spawnElvish(homePath, dbPath string, tty *os.File, ttyImage *bytes.Buffer) (chan bool, chan bool, error) {
-	triggerTtyCapture := make(chan bool)
-	ttyCaptureDone := make(chan bool)
-
+func spawnElvish(homePath, dbPath string, tty *os.File) (<-chan error, error) {
 	// Construct a file name for the tmux and Elvish daemon socket files in the temp home path.
 	tmuxSock := filepath.Join(homePath, "tmp", "tmux.sock")
 	elvSock := filepath.Join(homePath, "tmp", "elv.sock")
 
 	elvishPath, err := exec.LookPath("elvish")
 	if err != nil {
-		return nil, nil, fmt.Errorf("find elvish: %w", err)
+		return nil, fmt.Errorf("find elvish: %w", err)
 	}
 	tmuxPath, err := exec.LookPath("tmux")
 	if err != nil {
-		return nil, nil, fmt.Errorf("find tmux: %w", err)
-	}
-
-	devnul, err := os.OpenFile(os.DevNull, os.O_RDWR, 0)
-	if err != nil {
-		return nil, nil, fmt.Errorf("open %v: %w", os.DevNull, err)
+		return nil, fmt.Errorf("find tmux: %w", err)
 	}
 
 	// Start tmux and have it start the hermetic Elvish shell.
@@ -206,40 +199,13 @@ func spawnElvish(homePath, dbPath string, tty *os.File, ttyImage *bytes.Buffer) 
 		Stdout: tty,
 		Stderr: tty,
 	}
+
+	doneCh := make(chan error)
 	go func() {
-		// We ignore the Run() error return value because it will normally tell us the tmux exit
-		// status was one. We could explicitly test for that error and only call log.Fatal if it was
-		// some other error but there really isn't a good reason to do so.
-		tmuxCmd.Run()
+		doneCh <- tmuxCmd.Run()
 	}()
 
-	// Capture the output of the Elvish shell.
-	captureCmd := exec.Cmd{
-		Path:   tmuxPath,
-		Args:   []string{"tmux", "-S", tmuxSock, "capture-pane", "-t", "ttyshot", "-p", "-e"},
-		Stdin:  devnul,
-		Stdout: ttyImage,
-		Stderr: os.Stderr,
-	}
-	go func() {
-		<-triggerTtyCapture
-		if err := captureCmd.Run(); err != nil {
-			fmt.Fprintln(os.Stderr, "Error: tmux capture-pane failed:", err)
-		}
-		killTmuxCmd := exec.Cmd{
-			Path:   tmuxPath,
-			Args:   []string{"tmux", "-S", tmuxSock, "kill-server"},
-			Stdin:  devnul,
-			Stdout: devnul,
-			Stderr: devnul,
-		}
-		if err := killTmuxCmd.Run(); err != nil {
-			fmt.Fprintf(os.Stderr, "Killing tmux returned error: %v\n", err)
-		}
-		ttyCaptureDone <- true
-	}()
-
-	return triggerTtyCapture, ttyCaptureDone, nil
+	return doneCh, nil
 }
 
 func executeScript(script []demoOp, ctrl *os.File, ttyOutput chan byte) (bool, error) {
@@ -292,6 +258,9 @@ func executeScript(script []demoOp, ctrl *os.File, ttyOutput chan byte) (bool, e
 			panic("unhandled op")
 		}
 	}
+	// Alt-q is bound to a function that captures the content of the pane and
+	// exits
+	ctrl.Write([]byte{'\033', 'q'})
 	return trimEmptyLines, nil
 }
 
