@@ -242,11 +242,10 @@ func spawnElvish(homePath, dbPath string, tty *os.File, ttyImage *bytes.Buffer) 
 	return triggerTtyCapture, ttyCaptureDone, nil
 }
 
-var cmdNum int = 0
-
 func executeScript(script []demoOp, ctrl *os.File, ttyOutput chan byte) (bool, error) {
 	trimEmptyLines := false
 	implicitEnter := true
+	nextCmdNum := 1
 	for _, op := range script {
 		switch op.what {
 		case opText:
@@ -275,10 +274,10 @@ func executeScript(script []demoOp, ctrl *os.File, ttyOutput chan byte) (bool, e
 		case opSleep:
 			time.Sleep(op.val.(time.Duration))
 		case opWaitForPrompt:
-			cmdNum++
-			expected := fmt.Sprintf(promptFmt, cmdNum)
+			expected := fmt.Sprintf(promptFmt, nextCmdNum)
 			waitForOutput(ttyOutput, expected,
 				func(content []byte) bool { return bytes.Contains(content, []byte(expected)) })
+			nextCmdNum++
 		case opWaitForString:
 			expected := op.val.([]byte)
 			waitForOutput(ttyOutput, string(expected),
