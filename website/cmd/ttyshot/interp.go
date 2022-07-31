@@ -17,10 +17,8 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-// Note: This depends on a custom tmux.conf that disables the status line. Otherwise the simulated tty
-// would need to have 17 rows to achieve the desired snapshot dimensions.
 const (
-	terminalRows = 16
+	terminalRows = 100
 	terminalCols = 60
 )
 
@@ -139,7 +137,7 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawSave *o
 	if err != nil {
 		return err
 	}
-	trimEmptyLines, err := executeScript(script, ctrl, ttyOutput)
+	_, err = executeScript(script, ctrl, ttyOutput)
 	if err != nil {
 		return err
 	}
@@ -159,11 +157,7 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawSave *o
 	// Trim the last, or all, trailing newlines in order to eliminate from the generated HTML
 	// unwanted empty lines at the bottom of the ttyshot. The latter behavior occurs if the ttyshot
 	// specification includes the `trim-empty` directive.
-	if !trimEmptyLines {
-		ttyshot = strings.TrimSuffix(ttyshot, "\n")
-	} else {
-		ttyshot = strings.TrimRight(ttyshot, "\n")
-	}
+	ttyshot = strings.TrimRight(ttyshot, "\n")
 	outFile.WriteString(sgrTextToHTML(ttyshot))
 	outFile.WriteString("\n")
 	return nil
