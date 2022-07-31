@@ -90,12 +90,12 @@ func initEnv() (string, string, func(), error) {
 }
 
 func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *os.File) error {
-	master, slave, err := pty.Open()
+	ctrl, tty, err := pty.Open()
 	if err != nil {
 		return err
 	}
 	winsize := pty.Winsize{Rows: terminalRows, Cols: terminalCols}
-	pty.Setsize(master, &winsize)
+	pty.Setsize(ctrl, &winsize)
 
 	// Relay the output of the ttyshot Elvish session to the channel that will capture and evaluate
 	// the output; e.g., to detect whether a prompt was seen.
@@ -103,7 +103,7 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *o
 	go func() {
 		for {
 			content := make([]byte, 1024)
-			n, err := master.Read(content)
+			n, err := ctrl.Read(content)
 			if n == 0 {
 				close(ttyOutput)
 				return
@@ -118,11 +118,11 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *o
 	}()
 
 	var ttyImage bytes.Buffer
-	triggerTtyCapture, ttyCaptureDone, err := spawnElvish(homePath, dbPath, slave, &ttyImage)
+	triggerTtyCapture, ttyCaptureDone, err := spawnElvish(homePath, dbPath, tty, &ttyImage)
 	if err != nil {
 		return err
 	}
-	trimEmptyLines, err := executeScript(script, master, ttyOutput)
+	trimEmptyLines, err := executeScript(script, ctrl, ttyOutput)
 	if err != nil {
 		return err
 	}
@@ -132,10 +132,10 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *o
 	time.Sleep(100 * time.Millisecond)
 	triggerTtyCapture <- true
 	<-ttyCaptureDone
-	// Close the pty master to signal EOF to the processes running inside the simulated terminal.
+	// Close the pty ctrl to signal EOF to the processes running inside the simulated terminal.
 	// This helps ensure processes running inside the simulated terminal will terminate once we're
 	// done capturing the "ttyshot".
-	master.Close()
+	ctrl.Close()
 
 	ttyshot := ttyImage.String()
 	rawFile.WriteString(ttyshot)
@@ -152,7 +152,7 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *o
 	return nil
 }
 
-func spawnElvish(homePath, dbPath string, slave *os.File, ttyImage *bytes.Buffer) (chan bool, chan bool, error) {
+func spawnElvish(homePath, dbPath string, tty *os.File, ttyImage *bytes.Buffer) (chan bool, chan bool, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, nil, err
@@ -191,9 +191,9 @@ func spawnElvish(homePath, dbPath string, slave *os.File, ttyImage *bytes.Buffer
 			"-s", "ttyshot",
 			"-c", homePath,
 			elvishPath, "-rc", elvRcPath, "-sock", elvSock},
-		Stdin:  slave,
-		Stdout: slave,
-		Stderr: slave,
+		Stdin:  tty,
+		Stdout: tty,
+		Stderr: tty,
 	}
 	go func() {
 		// We ignore the Run() error return value because it will normally tell us the tmux exit
@@ -233,32 +233,32 @@ func spawnElvish(homePath, dbPath string, slave *os.File, ttyImage *bytes.Buffer
 
 var cmdNum int = 0
 
-func executeScript(script []demoOp, master *os.File, ttyOutput chan byte) (bool, error) {
+func executeScript(script []demoOp, ctrl *os.File, ttyOutput chan byte) (bool, error) {
 	trimEmptyLines := false
 	implicitEnter := true
 	for _, op := range script {
 		switch op.what {
 		case opText:
 			text := op.val.([]byte)
-			master.Write(text)
+			ctrl.Write(text)
 			if implicitEnter {
-				master.Write([]byte{'\r'})
+				ctrl.Write([]byte{'\r'})
 			}
 		case opAlt:
-			master.Write([]byte{'\033', op.val.(byte)})
+			ctrl.Write([]byte{'\033', op.val.(byte)})
 		case opCtrl:
-			master.Write([]byte{op.val.(byte) & 0x1F})
+			ctrl.Write([]byte{op.val.(byte) & 0x1F})
 		case opEnter:
-			master.Write([]byte{'\r'})
+			ctrl.Write([]byte{'\r'})
 			implicitEnter = true
 		case opUp:
-			master.Write([]byte{'\033', '[', 'A'})
+			ctrl.Write([]byte{'\033', '[', 'A'})
 		case opDown:
-			master.Write([]byte{'\033', '[', 'B'})
+			ctrl.Write([]byte{'\033', '[', 'B'})
 		case opRight:
-			master.Write([]byte{'\033', '[', 'C'})
+			ctrl.Write([]byte{'\033', '[', 'C'})
 		case opLeft:
-			master.Write([]byte{'\033', '[', 'D'})
+			ctrl.Write([]byte{'\033', '[', 'D'})
 		case opNoEnter:
 			implicitEnter = false
 		case opSleep:
