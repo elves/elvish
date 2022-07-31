@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"embed"
 	"fmt"
 	"html"
 	"os"
@@ -16,7 +17,7 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-// Note: This depends on a custom tmux.rc that disables the status line. Otherwise the simulated tty
+// Note: This depends on a custom tmux.conf that disables the status line. Otherwise the simulated tty
 // would need to have 17 rows to achieve the desired snapshot dimensions.
 const (
 	terminalRows = 16
@@ -25,6 +26,9 @@ const (
 
 var promptRe = regexp.MustCompile(`^\[\d+\]$`)
 var promptFmt = "[%d]"
+
+//go:embed cp-elvish.sh tmux.conf rc.elv
+var assets embed.FS
 
 // Create a hermetic environment for generating a ttyshot. We want to ensure we don't use the real
 // home directory, or interactive history, of the person running this tool.
@@ -42,7 +46,18 @@ func initEnv() (string, string, func(), error) {
 	}
 	// We'll put the Elvish and Tmux socket files in this directory. This makes the "navigation"
 	// mode ttyshots a trifle less confusing.
-	os.Mkdir(filepath.Join(homePath, "tmp"), 0o700)
+	tmp := filepath.Join(homePath, "tmp")
+	os.Mkdir(tmp, 0o700)
+
+	entries, _ := assets.ReadDir(".")
+	for _, entry := range entries {
+		name := entry.Name()
+		content, _ := assets.ReadFile(name)
+		err := os.WriteFile(filepath.Join(tmp, name), content, 0o700)
+		if err != nil {
+			return "", "", nil, fmt.Errorf("write embedded file %q: %w", name, err)
+		}
+	}
 
 	// We don't pass any XDG env vars to the Elvish programs we spawn. We want them to rely solely
 	// on HOME in order to force using our hermetic home.
@@ -61,9 +76,10 @@ func initEnv() (string, string, func(), error) {
 
 	// Copy the Elvish source code to the hermetic home for use in demos of things like Elvish's
 	// "navigation" mode.
+	copySrcPath := filepath.Join(tmp, "cp-elvish.sh")
 	copySrcCmd := exec.Cmd{
-		Path: "website/tools/cp-elvish.sh",
-		Args: []string{"cp-elvish.sh", homePath},
+		Path: copySrcPath,
+		Args: []string{copySrcPath, homePath},
 	}
 	if err := copySrcCmd.Run(); err != nil {
 		return "", "", nil, err
@@ -153,11 +169,6 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawFile *o
 }
 
 func spawnElvish(homePath, dbPath string, tty *os.File, ttyImage *bytes.Buffer) (chan bool, chan bool, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, nil, err
-	}
-
 	triggerTtyCapture := make(chan bool)
 	ttyCaptureDone := make(chan bool)
 
@@ -180,13 +191,13 @@ func spawnElvish(homePath, dbPath string, tty *os.File, ttyImage *bytes.Buffer) 
 	}
 
 	// Start tmux and have it start the hermetic Elvish shell.
-	elvRcPath := filepath.Join(cwd, "website/ttyshot/ttyshot.rc")
+	elvRcPath := filepath.Join(homePath, "tmp", "rc.elv")
 	tmuxCmd := exec.Cmd{
 		Path: tmuxPath,
 		Args: []string{
 			tmuxPath,
 			"-S", tmuxSock,
-			"-f", "website/ttyshot/tmux.rc",
+			"-f", filepath.Join(homePath, "tmp", "tmux.conf"),
 			"new-session",
 			"-s", "ttyshot",
 			"-c", homePath,
@@ -321,7 +332,7 @@ func sgrTextToHTML(ttyshot string) string {
 			newline = true
 			text = c.Text[:len(c.Text)-1]
 		}
-		// This "undoes" the ugly hack in website/ttyshot/ttyshot.rc that requires we gratuitously
+		// This "undoes" the ugly hack in rc.elv that requires we gratuitously
 		// modify the style of the prompt to make it practical to recognize a prompt when executing
 		// a ttyshot script.
 		if promptRe.Match([]byte(text)) {
