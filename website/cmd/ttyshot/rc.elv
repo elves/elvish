@@ -72,7 +72,7 @@ set @_ = (range 5 | each {|_|
 edit:history:fast-forward
 
 set edit:global-binding[Alt-q] = {
-    tmux capture-pane -p -e > ~/tmp/ttyshot.raw
+    tmux capture-pane -epN > ~/tmp/ttyshot.raw
     exit
 }
 
