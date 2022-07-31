@@ -2,12 +2,6 @@ use math
 //prompt
 var stateColors = [&open=fg-bright-green &closed=fg-red]
 //prompt
-curl -s $url > /tmp/x
-//prompt
-head -n 5 /tmp/x
-//prompt
-rm /tmp/x
-//prompt
 fn colored {|state|
     put (styled {$state"  "}[..6] $stateColors[$state])
 }
