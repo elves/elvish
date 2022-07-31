@@ -1,6 +1,6 @@
 /home.html
 /*/*.html
-/ttyshot/**.raw
+/ttyshot/**/*.raw
 !/ttyshot/**.html
 /tools/*.bin
 /_*
