@@ -39,7 +39,7 @@ ttyshot/%.html: ttyshot/%.spec tools/ttyshot.bin
 
 .SECONDEXPANSION:
 
-tools/%.bin: cmd/% $$(wildcard cmd/%/*.go)
+tools/%.bin: cmd/% $$(wildcard cmd/%/*)
 	go build -o $@ ./$<
 
 %.html: %.md tools/md-to-html $(MD_TO_HTML_TOOLS) $$(shell tools/extra-deps $$@)
