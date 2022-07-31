@@ -1,4 +1,3 @@
-//trim-empty
 cd elvish
 //prompt
 //no-enter

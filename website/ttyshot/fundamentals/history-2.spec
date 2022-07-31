@@ -1,4 +1,3 @@
-//trim-empty
 //no-enter
 ra
 //up

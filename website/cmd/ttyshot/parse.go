@@ -9,20 +9,19 @@ import (
 
 // Operations for driving a demo ttyshot.
 const (
-	opEnter          = iota // enable implicit Enter key and send an Enter key
-	opNoEnter               // inhibit implicit Enter key
-	opTrimEmptyLines        // trim trailing empty lines -- can occur anywhere in the spec
-	opUp                    // send Up arrow sequence
-	opDown                  // send Down arrow sequence
-	opRight                 // send Right arrow sequence
-	opLeft                  // send Left arrow sequence
-	opText                  // send the provided text, optionally followed by Enter
-	opAlt                   // send an alt sequence
-	opCtrl                  // send a control character
-	opSleep                 // sleep for the specified duration
-	opWaitForPrompt         // wait for the expected "<n>" (command number) in the next prompt
-	opWaitForRegexp         // wait for sequence of bytes matching the regexp
-	opWaitForString         // wait for the literal sequence of bytes
+	opEnter         = iota // enable implicit Enter key and send an Enter key
+	opNoEnter              // inhibit implicit Enter key
+	opUp                   // send Up arrow sequence
+	opDown                 // send Down arrow sequence
+	opRight                // send Right arrow sequence
+	opLeft                 // send Left arrow sequence
+	opText                 // send the provided text, optionally followed by Enter
+	opAlt                  // send an alt sequence
+	opCtrl                 // send a control character
+	opSleep                // sleep for the specified duration
+	opWaitForPrompt        // wait for the expected "<n>" (command number) in the next prompt
+	opWaitForRegexp        // wait for sequence of bytes matching the regexp
+	opWaitForString        // wait for the literal sequence of bytes
 )
 
 type demoOp struct {
@@ -64,10 +63,6 @@ func parseDirective(directive []byte) (demoOp, error) {
 
 	if bytes.Equal(directive, []byte("no-enter")) {
 		return demoOp{opNoEnter, nil}, nil
-	}
-
-	if bytes.Equal(directive, []byte("trim-empty")) {
-		return demoOp{opTrimEmptyLines, nil}, nil
 	}
 
 	if bytes.Equal(directive, []byte("enter")) {

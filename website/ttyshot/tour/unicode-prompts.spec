@@ -1,4 +1,3 @@
-//trim-empty
 set edit:rprompt = (constantly ^
     (styled (whoami)"\u00A7"(hostname) inverse))
 //prompt

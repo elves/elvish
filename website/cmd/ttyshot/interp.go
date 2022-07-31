@@ -136,10 +136,7 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawSave *o
 	if err != nil {
 		return err
 	}
-	_, err = executeScript(script, ctrl, ttyOutput)
-	if err != nil {
-		return err
-	}
+	executeScript(script, ctrl, ttyOutput)
 
 	err = <-doneCh
 	if err != nil {
@@ -202,8 +199,7 @@ func spawnElvish(homePath, dbPath string, tty *os.File) (<-chan error, error) {
 	return doneCh, nil
 }
 
-func executeScript(script []demoOp, ctrl *os.File, ttyOutput chan byte) (bool, error) {
-	trimEmptyLines := false
+func executeScript(script []demoOp, ctrl *os.File, ttyOutput chan byte) {
 	implicitEnter := true
 	nextCmdNum := 1
 	for _, op := range script {
@@ -245,8 +241,6 @@ func executeScript(script []demoOp, ctrl *os.File, ttyOutput chan byte) (bool, e
 			expected := op.val.(*regexp.Regexp)
 			waitForOutput(ttyOutput, expected.String(),
 				func(content []byte) bool { return expected.Match(content) })
-		case opTrimEmptyLines:
-			trimEmptyLines = true
 		default:
 			panic("unhandled op")
 		}
@@ -254,7 +248,6 @@ func executeScript(script []demoOp, ctrl *os.File, ttyOutput chan byte) (bool, e
 	// Alt-q is bound to a function that captures the content of the pane and
 	// exits
 	ctrl.Write([]byte{'\033', 'q'})
-	return trimEmptyLines, nil
 }
 
 func waitForOutput(ttyOutput chan byte, expected string, matcher func([]byte) bool) []byte {

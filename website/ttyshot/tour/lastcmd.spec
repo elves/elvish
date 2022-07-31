@@ -1,4 +1,3 @@
-//trim-empty
 echo abc def
 //prompt
 //no-enter
