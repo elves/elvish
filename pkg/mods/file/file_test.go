@@ -68,6 +68,12 @@ func TestFile(t *testing.T) {
 			What:  "size argument to file:truncate",
 			Valid: "integer", Actual: "non-integer",
 		}),
+
+		// TODO: Improve these tests if, and when, https://b.elv.sh/1595 is resolved.
+		That("file:is-tty").Puts(false),
+		That("file:is-tty x").Puts(false),
+		That("var p = (file:pipe); file:is-tty $p[w]").Puts(false),
+		That("file:is-tty x y").Throws(ErrorWithType(errs.ArityMismatch{})),
 	)
 
 	fi, err := os.Stat("file100")

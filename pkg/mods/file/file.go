@@ -8,15 +8,63 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/sys"
 )
 
 var Ns = eval.BuildNsNamed("file").
 	AddGoFns(map[string]any{
 		"close":    close,
+		"is-tty":   isTty,
 		"open":     open,
 		"pipe":     pipe,
 		"truncate": truncate,
 	}).Ns()
+
+//elvdoc:fn is-tty
+//
+// ```elvish
+// file:is-tty $file-obj?
+// ```
+//
+// Outputs `$true` if `$file-obj` is open on a tty (i.e., a terminal device);
+// otherwise, outputs `$false`. If the `$file-obj` argument is omitted the
+// default output byte stream is tested.
+//
+// ```elvish-transcript
+// ~> file:is-tty
+// ▶ $true
+// ~> var fh = (file:open /dev/tty)
+// ~> file:is-tty $fh
+// ▶ $true
+// ~> if (file:is-tty) { echo no } else { echo yes }
+// yes
+// ~> var fh = (file:pipe)
+// ~> file:is-tty $fh
+// ▶ $false
+// ~> var fh = (file:open /dev/null)
+// ~> file:is-tty $fh
+// ▶ $false
+// ```
+
+func isTty(fm *eval.Frame, fileObj ...any) (bool, error) {
+	switch len(fileObj) {
+	case 0:
+		if sys.IsATTY(fm.ByteOutput().File()) {
+			return true, nil
+		}
+		return false, nil
+	case 1:
+		if f, ok := fileObj[0].(*os.File); ok {
+			if sys.IsATTY(f) {
+				return true, nil
+			}
+		}
+		return false, nil
+	default:
+		return false, errs.ArityMismatch{
+			What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: len(fileObj)}
+	}
+}
 
 //elvdoc:fn open
 //
