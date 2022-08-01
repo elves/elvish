@@ -294,10 +294,15 @@ func (vo valueOutput) Put(v any) error {
 type ByteOutput interface {
 	io.Writer
 	io.StringWriter
+	File() *os.File
 }
 
 type byteOutput struct {
 	f *os.File
+}
+
+func (bo byteOutput) File() *os.File {
+	return bo.f
 }
 
 func (bo byteOutput) Write(p []byte) (int, error) {
