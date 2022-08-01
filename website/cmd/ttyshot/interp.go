@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/creack/pty"
-	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -24,7 +23,7 @@ const (
 
 var promptMarker = "[PROMPT]"
 
-//go:embed cp-elvish.sh tmux.conf rc.elv
+//go:embed cp-elvish.sh rc.elv
 var assets embed.FS
 
 // Create a hermetic environment for generating a ttyshot. We want to ensure we don't use the real
@@ -56,15 +55,6 @@ func initEnv() (string, string, func(), error) {
 		}
 	}
 
-	// We don't pass any XDG env vars to the Elvish programs we spawn. We want them to rely solely
-	// on HOME in order to force using our hermetic home.
-	os.Setenv("HOME", homePath)
-	os.Unsetenv(env.XDG_CONFIG_HOME)
-	os.Unsetenv(env.XDG_DATA_DIRS)
-	os.Unsetenv(env.XDG_DATA_HOME)
-	os.Unsetenv(env.XDG_STATE_HOME)
-	os.Unsetenv(env.XDG_RUNTIME_DIR)
-
 	// Create the Elvish local state directory in the hermetic home.
 	dotLocalStateElvish := filepath.Join(homePath, ".local", "state", "elvish")
 	if err := os.MkdirAll(dotLocalStateElvish, 0o700); err != nil {
@@ -85,12 +75,6 @@ func initEnv() (string, string, func(), error) {
 	// Create a couple of other directories to make demos of "navigation" mode more interesting.
 	os.Mkdir(filepath.Join(homePath, "bash"), 0o700)
 	os.Mkdir(filepath.Join(homePath, "zsh"), 0o700)
-
-	// Ensure the terminal type seen by tmux is a widely recognized terminal definition. This makes
-	// it possible to generate ttyshots in a continuous deployment environment. It's also good to
-	// decouple invocations from an environment we don't control if this is run by hand from an
-	// interactive shell whose TERM value we can't predict.
-	_ = os.Setenv("TERM", "xterm-256color")
 
 	cleanup := func() {
 		if err := os.RemoveAll(homePath); err != nil {
@@ -180,12 +164,17 @@ func spawnElvish(homePath, dbPath string, tty *os.File) (<-chan error, error) {
 		Path: tmuxPath,
 		Args: []string{
 			tmuxPath,
-			"-S", tmuxSock,
-			"-f", filepath.Join(homePath, "tmp", "tmux.conf"),
-			"new-session",
-			"-s", "ttyshot",
-			"-c", homePath,
-			elvishPath, "-rc", elvRcPath, "-sock", elvSock},
+			"-S", tmuxSock, "-f", "/dev/null", "-u", "-T", "256,RGB",
+			"new-session", elvishPath, "-rc", elvRcPath, "-sock", elvSock},
+		Dir: homePath,
+		Env: []string{
+			"HOME=" + homePath,
+			"PATH=" + os.Getenv("PATH"),
+			// The actual value doesn't matter here, as long as it can be looked
+			// up in terminfo. We rely on the -T flag above to force tmux to
+			// support certain terminal features.
+			"TERM=xterm",
+		},
 		Stdin:  tty,
 		Stdout: tty,
 		Stderr: tty,
