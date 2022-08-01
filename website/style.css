@@ -348,9 +348,15 @@ pre.ttyshot, pre.ttyshot code {
 }
 
 /* SGR classes used in ttyshots. */
+/*
+ * Bold texts are wider and can break alignment in ttyshots, so ignore sgr-1
+ * (for now).
+ */
+/*
 .sgr-1 {
     font-weight: bold;
 }
+*/
 .sgr-4 {
     text-decoration: underline;
 }
