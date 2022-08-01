@@ -77,10 +77,10 @@ func setupHome() (string, error) {
 	return homePath, err
 }
 
-func createTtyshot(homePath string, script []demoOp, outFile, rawSave *os.File) error {
+func createTtyshot(homePath string, script []demoOp, saveRaw string) ([]byte, error) {
 	ctrl, tty, err := pty.Open()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer ctrl.Close()
 	defer tty.Close()
@@ -107,32 +107,35 @@ func createTtyshot(homePath string, script []demoOp, outFile, rawSave *os.File) 
 		}
 	}()
 
+	rawPath := filepath.Join(homePath, ".tmp", "ttyshot.raw")
+	if saveRaw != "" {
+		saveRaw, err := filepath.Abs(saveRaw)
+		if err != nil {
+			return nil, fmt.Errorf("resolve path to raw dump file: %w", err)
+		}
+		os.Symlink(saveRaw, rawPath)
+	}
+
 	doneCh, err := spawnElvish(homePath, tty)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	executeScript(script, ctrl, ttyOutput)
 
 	err = <-doneCh
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	ttyshotBytes, err := os.ReadFile(filepath.Join(homePath, ".tmp", "ttyshot.raw"))
+	rawBytes, err := os.ReadFile(rawPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	ttyshot := string(ttyshotBytes)
 
-	rawSave.Write(ttyshotBytes)
-	// Trim the last, or all, trailing newlines in order to eliminate from the generated HTML
-	// unwanted empty lines at the bottom of the ttyshot. The latter behavior occurs if the ttyshot
-	// specification includes the `trim-empty` directive.
+	ttyshot := string(rawBytes)
 	ttyshot = strings.TrimRight(ttyshot, "\n")
 	ttyshot = strings.ReplaceAll(ttyshot, promptMarker+"\n", "")
-	outFile.WriteString(sgrTextToHTML(ttyshot))
-	outFile.WriteString("\n")
-	return nil
+	return []byte(sgrTextToHTML(ttyshot) + "\n"), nil
 }
 
 func spawnElvish(homePath string, tty *os.File) (<-chan error, error) {

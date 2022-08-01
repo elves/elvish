@@ -4,7 +4,7 @@ HTMLS := $(SPECS:.spec=.html)
 all: $(HTMLS)
 
 %.html: %.spec ../tools/ttyshot.bin
-	../tools/ttyshot.bin $<
+	../tools/ttyshot.bin -o $@ $<
 
 .PHONY: all
 

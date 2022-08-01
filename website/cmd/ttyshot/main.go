@@ -12,15 +12,13 @@
 package main
 
 import (
-	"errors"
+	"flag"
 	"fmt"
 	"os"
-	"path"
-	"strings"
 )
 
 func main() {
-	err := run(os.Args)
+	err := run(os.Args[1:])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -28,31 +26,26 @@ func main() {
 }
 
 func run(args []string) error {
-	if len(args) != 2 {
-		return errors.New("Usage: ttyshot spec")
+	fs := flag.NewFlagSet("ttyshot", flag.ExitOnError)
+	outFlag := fs.String("o", "", "output file (defaults to spec-path + .html)")
+	saveRawFlag := fs.String("save-raw", "", "if non-empty, save output of capture-pane to this file")
+	fs.Usage = func() {
+		fmt.Fprintln(fs.Output(), "Usage: ttyshot [flags] spec-path")
+		fs.PrintDefaults()
 	}
-	specPath := args[1]
-	if !strings.HasSuffix(specPath, ".spec") {
-		return fmt.Errorf("expected extension \".spec\", found %q", path.Ext(specPath))
-	}
-	basePath := specPath[:len(specPath)-len(".spec")]
-	htmlPath := basePath + ".html"
-	rawPath := basePath + ".raw"
 
+	fs.Parse(args)
+	if len(fs.Args()) != 1 {
+		fs.Usage()
+		os.Exit(1)
+	}
+
+	specPath := fs.Args()[0]
 	content, err := os.ReadFile(specPath)
 	if err != nil {
 		return err
 	}
-	script, err := parseSpec(content)
-	if err != nil {
-		return err
-	}
-
-	outFile, err := os.OpenFile(htmlPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
-	if err != nil {
-		return err
-	}
-	rawFile, err := os.OpenFile(rawPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	spec, err := parseSpec(content)
 	if err != nil {
 		return err
 	}
@@ -68,5 +61,14 @@ func run(args []string) error {
 		}
 	}()
 
-	return createTtyshot(homePath, script, outFile, rawFile)
+	out, err := createTtyshot(homePath, spec, *saveRawFlag)
+	if err != nil {
+		return err
+	}
+
+	outPath := *outFlag
+	if outPath == "" {
+		outPath = specPath + ".html"
+	}
+	return os.WriteFile(outPath, out, 0o644)
 }
