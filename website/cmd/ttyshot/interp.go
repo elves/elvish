@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"embed"
+	_ "embed"
 	"fmt"
 	"html"
 	"os"
@@ -23,60 +23,58 @@ const (
 
 var promptMarker = "[PROMPT]"
 
-//go:embed cp-elvish.sh rc.elv
-var assets embed.FS
+//go:embed rc.elv
+var rcElv string
 
 // Create a hermetic environment for generating a ttyshot. We want to ensure we don't use the real
 // home directory, or interactive history, of the person running this tool.
-func initEnv() (string, func(), error) {
-	// There are systems, such as macOs, which generate a temp dir that includes symlinks in the
-	// path. For example, `/var/` => `/private/var`. Expand those symlinks so that Elvish command
-	// `tilde-abbr` will behave as expected.
+func setupHome() (string, error) {
 	homePath, err := os.MkdirTemp("", "ttyshot-*")
 	if err != nil {
-		return "", nil, fmt.Errorf("create temp home: %w", err)
+		return "", fmt.Errorf("create temp home: %w", err)
 	}
-	homePath, err = filepath.EvalSymlinks(homePath)
+
+	// The temporary directory may include symlinks in the path. Expand them so
+	// that commands like tilde-abbr behaves as expected.
+	resolvedHomePath, err := filepath.EvalSymlinks(homePath)
 	if err != nil {
-		return "", nil, fmt.Errorf("resolve symlinks in homePath: %w", err)
+		return homePath, fmt.Errorf("resolve symlinks in homePath: %w", err)
 	}
-	// We'll put the Elvish and Tmux socket files in this directory. This makes the "navigation"
-	// mode ttyshots a trifle less confusing.
-	tmp := filepath.Join(homePath, "tmp")
-	os.Mkdir(tmp, 0o700)
+	homePath = resolvedHomePath
 
-	entries, _ := assets.ReadDir(".")
-	for _, entry := range entries {
-		name := entry.Name()
-		content, _ := assets.ReadFile(name)
-		err := os.WriteFile(filepath.Join(tmp, name), content, 0o700)
-		if err != nil {
-			return "", nil, fmt.Errorf("write embedded file %q: %w", name, err)
-		}
-	}
+	err = ApplyDir(Dir{
+		// Directories to be used in navigation mode.
+		"bash": Dir{},
+		"elvish": Dir{
+			"0.x.0-release-notes.md": "This is the draft release notes for 0.x.0.",
+			"CONTRIBUTING.md":        "",
+			"Dockerfile":             "",
+			"LICENSE":                "",
+			"Makefile":               "",
+			"PACKAGING.md":           "",
+			"README.md":              "",
+			"SECURITY.md":            "",
+			"cmd":                    Dir{},
+			"go.mod":                 "",
+			"go.sum":                 "",
+			"pkg":                    Dir{},
+			"syntaxes":               Dir{},
+			"tools":                  Dir{},
+			"vscode":                 Dir{},
+			"website":                Dir{},
+		},
+		"zsh": Dir{},
 
-	// Copy the Elvish source code to the hermetic home for use in demos of things like Elvish's
-	// "navigation" mode.
-	copySrcPath := filepath.Join(tmp, "cp-elvish.sh")
-	copySrcCmd := exec.Cmd{
-		Path: copySrcPath,
-		Args: []string{copySrcPath, homePath},
-	}
-	if err := copySrcCmd.Run(); err != nil {
-		return "", nil, err
-	}
+		// Will keep tmux and elvish's sockets, and raw output of capture-pane
+		".tmp": Dir{},
 
-	// Create a couple of other directories to make demos of "navigation" mode more interesting.
-	os.Mkdir(filepath.Join(homePath, "bash"), 0o700)
-	os.Mkdir(filepath.Join(homePath, "zsh"), 0o700)
-
-	cleanup := func() {
-		if err := os.RemoveAll(homePath); err != nil {
-			fmt.Fprintln(os.Stderr, "Warning: unable to remove temp HOME:", err.Error())
-		}
-	}
-
-	return homePath, cleanup, nil
+		".config": Dir{
+			"elvish": Dir{
+				"rc.elv": rcElv,
+			},
+		},
+	}, homePath)
+	return homePath, err
 }
 
 func createTtyshot(homePath string, script []demoOp, outFile, rawSave *os.File) error {
@@ -120,7 +118,7 @@ func createTtyshot(homePath string, script []demoOp, outFile, rawSave *os.File) 
 		return err
 	}
 
-	ttyshotBytes, err := os.ReadFile(filepath.Join(homePath, "tmp", "ttyshot.raw"))
+	ttyshotBytes, err := os.ReadFile(filepath.Join(homePath, ".tmp", "ttyshot.raw"))
 	if err != nil {
 		return err
 	}
@@ -139,8 +137,8 @@ func createTtyshot(homePath string, script []demoOp, outFile, rawSave *os.File) 
 
 func spawnElvish(homePath string, tty *os.File) (<-chan error, error) {
 	// Construct a file name for the tmux and Elvish daemon socket files in the temp home path.
-	tmuxSock := filepath.Join(homePath, "tmp", "tmux.sock")
-	elvSock := filepath.Join(homePath, "tmp", "elv.sock")
+	tmuxSock := filepath.Join(homePath, ".tmp", "tmux.sock")
+	elvSock := filepath.Join(homePath, ".tmp", "elv.sock")
 
 	elvishPath, err := exec.LookPath("elvish")
 	if err != nil {
@@ -152,13 +150,12 @@ func spawnElvish(homePath string, tty *os.File) (<-chan error, error) {
 	}
 
 	// Start tmux and have it start the hermetic Elvish shell.
-	elvRcPath := filepath.Join(homePath, "tmp", "rc.elv")
 	tmuxCmd := exec.Cmd{
 		Path: tmuxPath,
 		Args: []string{
 			tmuxPath,
 			"-S", tmuxSock, "-f", "/dev/null", "-u", "-T", "256,RGB",
-			"new-session", elvishPath, "-rc", elvRcPath, "-sock", elvSock},
+			"new-session", elvishPath, "-sock", elvSock},
 		Dir: homePath,
 		Env: []string{
 			"HOME=" + homePath,

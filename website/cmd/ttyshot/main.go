@@ -57,10 +57,16 @@ func run(args []string) error {
 		return err
 	}
 
-	homePath, cleanup, err := initEnv()
+	homePath, err := setupHome()
 	if err != nil {
-		return fmt.Errorf("set up environment: %w", err)
+		return fmt.Errorf("set up temporary home: %w", err)
 	}
-	defer cleanup()
+	defer func() {
+		err := os.RemoveAll(homePath)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Warning: unable to remove temp HOME:", err)
+		}
+	}()
+
 	return createTtyshot(homePath, script, outFile, rawFile)
 }
