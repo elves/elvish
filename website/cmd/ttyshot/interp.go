@@ -28,17 +28,17 @@ var assets embed.FS
 
 // Create a hermetic environment for generating a ttyshot. We want to ensure we don't use the real
 // home directory, or interactive history, of the person running this tool.
-func initEnv() (string, string, func(), error) {
+func initEnv() (string, func(), error) {
 	// There are systems, such as macOs, which generate a temp dir that includes symlinks in the
 	// path. For example, `/var/` => `/private/var`. Expand those symlinks so that Elvish command
 	// `tilde-abbr` will behave as expected.
 	homePath, err := os.MkdirTemp("", "ttyshot-*")
 	if err != nil {
-		return "", "", nil, fmt.Errorf("create temp home: %w", err)
+		return "", nil, fmt.Errorf("create temp home: %w", err)
 	}
 	homePath, err = filepath.EvalSymlinks(homePath)
 	if err != nil {
-		return "", "", nil, fmt.Errorf("resolve symlinks in homePath: %w", err)
+		return "", nil, fmt.Errorf("resolve symlinks in homePath: %w", err)
 	}
 	// We'll put the Elvish and Tmux socket files in this directory. This makes the "navigation"
 	// mode ttyshots a trifle less confusing.
@@ -51,14 +51,8 @@ func initEnv() (string, string, func(), error) {
 		content, _ := assets.ReadFile(name)
 		err := os.WriteFile(filepath.Join(tmp, name), content, 0o700)
 		if err != nil {
-			return "", "", nil, fmt.Errorf("write embedded file %q: %w", name, err)
+			return "", nil, fmt.Errorf("write embedded file %q: %w", name, err)
 		}
-	}
-
-	// Create the Elvish local state directory in the hermetic home.
-	dotLocalStateElvish := filepath.Join(homePath, ".local", "state", "elvish")
-	if err := os.MkdirAll(dotLocalStateElvish, 0o700); err != nil {
-		return "", "", nil, fmt.Errorf("create state dir: %w", err)
 	}
 
 	// Copy the Elvish source code to the hermetic home for use in demos of things like Elvish's
@@ -69,7 +63,7 @@ func initEnv() (string, string, func(), error) {
 		Args: []string{copySrcPath, homePath},
 	}
 	if err := copySrcCmd.Run(); err != nil {
-		return "", "", nil, err
+		return "", nil, err
 	}
 
 	// Create a couple of other directories to make demos of "navigation" mode more interesting.
@@ -82,11 +76,10 @@ func initEnv() (string, string, func(), error) {
 		}
 	}
 
-	dbPath := filepath.Join(dotLocalStateElvish, "db.bolt")
-	return homePath, dbPath, cleanup, nil
+	return homePath, cleanup, nil
 }
 
-func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawSave *os.File) error {
+func createTtyshot(homePath string, script []demoOp, outFile, rawSave *os.File) error {
 	ctrl, tty, err := pty.Open()
 	if err != nil {
 		return err
@@ -116,7 +109,7 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawSave *o
 		}
 	}()
 
-	doneCh, err := spawnElvish(homePath, dbPath, tty)
+	doneCh, err := spawnElvish(homePath, tty)
 	if err != nil {
 		return err
 	}
@@ -144,7 +137,7 @@ func createTtyshot(homePath, dbPath string, script []demoOp, outFile, rawSave *o
 	return nil
 }
 
-func spawnElvish(homePath, dbPath string, tty *os.File) (<-chan error, error) {
+func spawnElvish(homePath string, tty *os.File) (<-chan error, error) {
 	// Construct a file name for the tmux and Elvish daemon socket files in the temp home path.
 	tmuxSock := filepath.Join(homePath, "tmp", "tmux.sock")
 	elvSock := filepath.Join(homePath, "tmp", "elv.sock")

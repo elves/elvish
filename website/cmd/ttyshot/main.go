@@ -57,10 +57,10 @@ func run(args []string) error {
 		return err
 	}
 
-	homePath, dbPath, cleanup, err := initEnv()
+	homePath, cleanup, err := initEnv()
 	if err != nil {
 		return fmt.Errorf("set up environment: %w", err)
 	}
 	defer cleanup()
-	return createTtyshot(homePath, dbPath, script, outFile, rawFile)
+	return createTtyshot(homePath, script, outFile, rawFile)
 }
