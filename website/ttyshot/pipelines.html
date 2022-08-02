@@ -1,21 +1,21 @@
-<span class="">~&gt; </span><span class="sgr-32">use</span><span class=""> math                                                 
-~&gt; </span><span class="sgr-32">var</span><span class=""> </span><span class="sgr-35">stateColors</span><span class=""> </span><span class="sgr-33">=</span><span class=""> </span><span class="sgr-1">[&amp;</span><span class="">open=fg-bright-green </span><span class="sgr-1">&amp;</span><span class="">closed=fg-red</span><span class="sgr-1">]</span><span class=""> 
-~&gt; </span><span class="sgr-32">fn</span><span class=""> colored </span><span class="sgr-1">{</span><span class="sgr-32">|</span><span class="">state</span><span class="sgr-32">|</span><span class="">                                      
-       </span><span class="sgr-32">put</span><span class=""> </span><span class="sgr-1">(</span><span class="sgr-32">styled</span><span class=""> </span><span class="sgr-1">{</span><span class="sgr-35">$state</span><span class="sgr-33">&#34;  &#34;</span><span class="sgr-1">}[</span><span class="">..6</span><span class="sgr-1">]</span><span class=""> </span><span class="sgr-35">$stateColors</span><span class="sgr-1">[</span><span class="sgr-35">$state</span><span class="sgr-1">])</span><span class="">  
-   </span><span class="sgr-1">}</span><span class="">                                                        
-~&gt; </span><span class="sgr-32">var</span><span class=""> </span><span class="sgr-35">url</span><span class=""> </span><span class="sgr-33">=</span><span class=""> </span><span class="sgr-33">&#34;https://api.github.com/repos/elves/elvish/issu</span>
-<span class="">   </span><span class="sgr-33">es?state=all&amp;sort=updated&amp;per_page=5&#34;</span><span class="">                    
-~&gt; </span><span class="sgr-32">curl</span><span class=""> -s </span><span class="sgr-35">$url</span><span class=""> </span><span class="sgr-32">|</span><span class=""> </span><span class="sgr-32">from-json</span><span class=""> </span><span class="sgr-32">|</span><span class=""> </span><span class="sgr-32">all</span><span class=""> </span><span class="sgr-1">(</span><span class="sgr-32">one</span><span class="sgr-1">)</span><span class=""> </span><span class="sgr-32">|</span><span class="">                   
-   </span><span class="sgr-32">each</span><span class=""> </span><span class="sgr-1">{</span><span class="sgr-32">|</span><span class="">issue</span><span class="sgr-32">|</span><span class="">                                            
-       </span><span class="sgr-32">var</span><span class=""> </span><span class="sgr-35">id</span><span class=""> </span><span class="sgr-33">=</span><span class=""> </span><span class="sgr-1">(</span><span class="sgr-32">exact-num</span><span class=""> </span><span class="sgr-35">$issue</span><span class="sgr-1">[</span><span class="">number</span><span class="sgr-1">])</span><span class="">                  
-       </span><span class="sgr-32">var</span><span class=""> </span><span class="sgr-35">t</span><span class=""> </span><span class="sgr-33">=</span><span class=""> </span><span class="sgr-35">$issue</span><span class="sgr-1">[</span><span class="">title</span><span class="sgr-1">]</span><span class="">                                
-       </span><span class="sgr-32">var</span><span class=""> </span><span class="sgr-35">title</span><span class=""> </span><span class="sgr-33">=</span><span class=""> </span><span class="sgr-35">$t</span><span class="sgr-1">[</span><span class="">..</span><span class="sgr-1">(</span><span class="sgr-32">math:min</span><span class=""> 45 </span><span class="sgr-1">(</span><span class="sgr-32">count</span><span class=""> </span><span class="sgr-35">$t</span><span class="sgr-1">))]</span><span class="">           
-       </span><span class="sgr-32">var</span><span class=""> </span><span class="sgr-35">state</span><span class=""> </span><span class="sgr-33">=</span><span class=""> </span><span class="sgr-35">$issue</span><span class="sgr-1">[</span><span class="">state</span><span class="sgr-1">]</span><span class="">                            
-       </span><span class="sgr-32">echo</span><span class=""> </span><span class="sgr-1">(</span><span class="sgr-32">colored</span><span class=""> </span><span class="sgr-35">$state</span><span class="sgr-1">)</span><span class=""> </span><span class="sgr-35">$id</span><span class=""> </span><span class="sgr-35">$title</span><span class="">                     
-   </span><span class="sgr-1">}</span><span class="">                                                        </span>
-<span class="sgr-92">open  </span><span class=""> 1263 A `file:is-tty` command would be useful</span>
-<span class="sgr-92">open  </span><span class=""> 1593 A mechanism to trap &#34;interrupts&#34; would be use</span>
-<span class="sgr-92">open  </span><span class=""> 1591 Add a &amp;benchmark option to the time command</span>
-<span class="sgr-92">open  </span><span class=""> 1592 Should `make style` implicitly run the `codes</span>
-<span class="sgr-92">open  </span><span class=""> 1587 vi append command binding
-~&gt;                                                  </span><span class="sgr-7">elf@host</span>
+~&gt; <span class="sgr-32">use</span> math
+~&gt; <span class="sgr-32">var</span> <span class="sgr-35">stateColors</span> <span class="sgr-33">=</span> <span class="sgr-1">[&amp;</span>open=fg-bright-green <span class="sgr-1">&amp;</span>closed=fg-red<span class="sgr-1">]</span>
+~&gt; <span class="sgr-32">fn</span> colored <span class="sgr-1">{</span><span class="sgr-32">|</span>state<span class="sgr-32">|</span>
+       <span class="sgr-32">put</span> <span class="sgr-1">(</span><span class="sgr-32">styled</span> <span class="sgr-1">{</span><span class="sgr-35">$state</span><span class="sgr-33">"  "</span><span class="sgr-1">}[</span>..6<span class="sgr-1">]</span> <span class="sgr-35">$stateColors</span><span class="sgr-1">[</span><span class="sgr-35">$state</span><span class="sgr-1">])</span>
+   <span class="sgr-1">}</span>
+~&gt; <span class="sgr-32">var</span> <span class="sgr-35">url</span> <span class="sgr-33">=</span> <span class="sgr-33">"https://api.github.com/repos/elves/elvish/issu</span>
+   <span class="sgr-33">es?state=all&amp;sort=updated&amp;per_page=5"</span>
+~&gt; <span class="sgr-32">curl</span> -s <span class="sgr-35">$url</span> <span class="sgr-32">|</span> <span class="sgr-32">from-json</span> <span class="sgr-32">|</span> <span class="sgr-32">all</span> <span class="sgr-1">(</span><span class="sgr-32">one</span><span class="sgr-1">)</span> <span class="sgr-32">|</span>
+   <span class="sgr-32">each</span> <span class="sgr-1">{</span><span class="sgr-32">|</span>issue<span class="sgr-32">|</span>
+       <span class="sgr-32">var</span> <span class="sgr-35">id</span> <span class="sgr-33">=</span> <span class="sgr-1">(</span><span class="sgr-32">exact-num</span> <span class="sgr-35">$issue</span><span class="sgr-1">[</span>number<span class="sgr-1">])</span>
+       <span class="sgr-32">var</span> <span class="sgr-35">t</span> <span class="sgr-33">=</span> <span class="sgr-35">$issue</span><span class="sgr-1">[</span>title<span class="sgr-1">]</span>
+       <span class="sgr-32">var</span> <span class="sgr-35">title</span> <span class="sgr-33">=</span> <span class="sgr-35">$t</span><span class="sgr-1">[</span>..<span class="sgr-1">(</span><span class="sgr-32">math:min</span> 45 <span class="sgr-1">(</span><span class="sgr-32">count</span> <span class="sgr-35">$t</span><span class="sgr-1">))]</span>
+       <span class="sgr-32">var</span> <span class="sgr-35">state</span> <span class="sgr-33">=</span> <span class="sgr-35">$issue</span><span class="sgr-1">[</span>state<span class="sgr-1">]</span>
+       <span class="sgr-32">echo</span> <span class="sgr-1">(</span><span class="sgr-32">colored</span> <span class="sgr-35">$state</span><span class="sgr-1">)</span> <span class="sgr-35">$id</span> <span class="sgr-35">$title</span>
+   <span class="sgr-1">}</span>
+<span class="sgr-92">open  </span> 1263 A `file:is-tty` command would be useful
+<span class="sgr-92">open  </span> 1593 A mechanism to trap "interrupts" would be use
+<span class="sgr-92">open  </span> 1591 Add a &amp;benchmark option to the time command
+<span class="sgr-92">open  </span> 1592 Should `make style` implicitly run the `codes
+<span class="sgr-92">open  </span> 1587 vi append command binding
+~&gt;                                                  <span class="sgr-7">elf@host</span>

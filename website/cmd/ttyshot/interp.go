@@ -6,7 +6,6 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"html"
 	"io"
 	"os"
 	"os/exec"
@@ -221,7 +220,7 @@ func waitForOutput(f *os.File, expected string, matcher func([]byte) bool) error
 	deadline := time.Now().Add(30 * time.Second)
 	for {
 		budget := time.Until(deadline)
-		if budget < 0 {
+		if budget <= 0 {
 			break
 		}
 		ready, err := eunix.WaitForRead(budget, f)
@@ -242,24 +241,38 @@ func waitForOutput(f *os.File, expected string, matcher func([]byte) bool) error
 	return fmt.Errorf("timed out waiting for %s in tmux output; output so far: %q", expected, buf)
 }
 
+var htmlEscaper = strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;")
+
 func sgrTextToHTML(ttyshot string) string {
 	t := ui.ParseSGREscapedText(ttyshot)
 
 	var sb strings.Builder
-	for _, c := range t {
-		var classes []string
-		for _, c := range c.Style.SGRValues() {
-			classes = append(classes, "sgr-"+c)
+	for i, line := range t.SplitByRune('\n') {
+		if i > 0 {
+			sb.WriteRune('\n')
 		}
-		text, newline := c.Text, false
-		if c.Text[len(c.Text)-1] == '\n' {
-			newline = true
-			text = c.Text[:len(c.Text)-1]
-		}
-		fmt.Fprintf(&sb,
-			`<span class="%s">%s</span>`, strings.Join(classes, " "), html.EscapeString(text))
-		if newline {
-			sb.Write([]byte{'\n'})
+		for j, seg := range line {
+			var classes []string
+			for _, c := range seg.Style.SGRValues() {
+				classes = append(classes, "sgr-"+c)
+			}
+			text := seg.Text
+			// We pass -N to tmux capture-pane in order to correctly preserve
+			// trailing spaces that have background colors. However, this
+			// preserves unstyled trailing spaces too, which makes the ttyshot
+			// harder to copy-paste, so strip it.
+			if len(classes) == 0 && j == len(line)-1 {
+				text = strings.TrimRight(text, " ")
+			}
+			if text == "" {
+				continue
+			}
+			escapedText := htmlEscaper.Replace(text)
+			if len(classes) == 0 {
+				sb.WriteString(escapedText)
+			} else {
+				fmt.Fprintf(&sb, `<span class="%s">%s</span>`, strings.Join(classes, " "), escapedText)
+			}
 		}
 	}
 
