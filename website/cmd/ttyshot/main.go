@@ -1,3 +1,5 @@
+//go:build !windows && !plan9 && !js
+
 // Generate a ttyshot HTML image from a ttyshot specification.
 //
 // Usage: ./ttyshot website/ttyshot/*.spec
