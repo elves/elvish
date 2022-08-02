@@ -360,15 +360,15 @@ pre.ttyshot, pre.ttyshot code {
 .sgr-4 {
     text-decoration: underline;
 }
-.sgr-7 { /* inverse */
-    color: white !important;
-    background-color: black !important;
+/*
+ * SGR 7 (inverse) has some special handling by the ttyshot program; see
+ * comments there.
+ */
+.sgr-7fg {
+    color: white;
 }
-.sgr-39 { /* default foreground color */
-    color: black;
-}
-.sgr-49 { /* default background color */
-    background-color: white;
+.sgr-7bg {
+    background-color: black;
 }
 
 /* black */
@@ -479,8 +479,10 @@ pre.ttyshot, pre.ttyshot code {
 .dark pre.ttyshot, .dark pre.ttyshot code {
     background: black;
 }
-.dark .sgr-7 {
+.dark .sgr-7fg {
     color: black;
+}
+.dark .sgr-7bg {
     background-color: #eee;
 }
 

@@ -252,8 +252,26 @@ func sgrTextToHTML(ttyshot string) string {
 			sb.WriteRune('\n')
 		}
 		for j, seg := range line {
+			style := seg.Style
 			var classes []string
-			for _, c := range seg.Style.SGRValues() {
+			if style.Inverse {
+				// The inverse attribute means that the foreground and
+				// background colors should be swapped, which cannot be
+				// expressed in pure CSS. To work around this, this code swaps
+				// the foreground and background colors, and uses two special
+				// CSS classes to indicate that the foreground/background should
+				// take the inverse of the default color.
+				style.Inverse = false
+				style.Foreground, style.Background = style.Background, style.Foreground
+				if style.Foreground == nil {
+					classes = append(classes, "sgr-7fg")
+				}
+				if style.Background == nil {
+					classes = append(classes, "sgr-7bg")
+				}
+			}
+
+			for _, c := range style.SGRValues() {
 				classes = append(classes, "sgr-"+c)
 			}
 			text := seg.Text
