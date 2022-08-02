@@ -21,7 +21,7 @@ import (
 
 const (
 	terminalRows = 100
-	terminalCols = 60
+	terminalCols = 58
 )
 
 var promptMarker = "[PROMPT]"
@@ -49,22 +49,22 @@ func setupHome() (string, error) {
 		// Directories to be used in navigation mode.
 		"bash": Dir{},
 		"elvish": Dir{
-			"0.x.0-release-notes.md": "This is the draft release notes for 0.x.0.",
-			"CONTRIBUTING.md":        "",
-			"Dockerfile":             "",
-			"LICENSE":                "",
-			"Makefile":               "",
-			"PACKAGING.md":           "",
-			"README.md":              "",
-			"SECURITY.md":            "",
-			"cmd":                    Dir{},
-			"go.mod":                 "",
-			"go.sum":                 "",
-			"pkg":                    Dir{},
-			"syntaxes":               Dir{},
-			"tools":                  Dir{},
-			"vscode":                 Dir{},
-			"website":                Dir{},
+			"1.0-release.md":  "1.0 has not been released yet.",
+			"CONTRIBUTING.md": "",
+			"Dockerfile":      "",
+			"LICENSE":         "",
+			"Makefile":        "",
+			"PACKAGING.md":    "",
+			"README.md":       "",
+			"SECURITY.md":     "",
+			"cmd":             Dir{},
+			"go.mod":          "",
+			"go.sum":          "",
+			"pkg":             Dir{},
+			"syntaxes":        Dir{},
+			"tools":           Dir{},
+			"vscode":          Dir{},
+			"website":         Dir{},
 		},
 		"zsh": Dir{},
 

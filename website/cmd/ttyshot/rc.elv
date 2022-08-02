@@ -77,6 +77,7 @@ set edit:global-binding[Alt-q] = {
 }
 
 set edit:max-height = 16
+set edit:navigation:width-ratio = [8 18 30]
 
 set edit:before-readline = [$@edit:before-readline {
     echo '[PROMPT]'
