@@ -8,7 +8,6 @@
 //   for f [website/ttyshot/**.spec] { put $f; ./ttyshot $f >/dev/tty 2>&1 }
 //
 // This assumes working `elvish` and `tmux` programs in $E:PATH.
-//
 package main
 
 import (
@@ -45,7 +44,7 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
-	spec, err := parseSpec(content)
+	spec, err := parseSpec(string(content))
 	if err != nil {
 		return err
 	}

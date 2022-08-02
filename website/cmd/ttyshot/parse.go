@@ -1,125 +1,117 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"regexp"
-	"time"
+	"strings"
 )
+
+type opType int
 
 // Operations for driving a demo ttyshot.
 const (
-	opEnter         = iota // enable implicit Enter key and send an Enter key
-	opNoEnter              // inhibit implicit Enter key
-	opUp                   // send Up arrow sequence
-	opDown                 // send Down arrow sequence
-	opRight                // send Right arrow sequence
-	opLeft                 // send Left arrow sequence
-	opText                 // send the provided text, optionally followed by Enter
-	opAlt                  // send an alt sequence
-	opCtrl                 // send a control character
-	opSleep                // sleep for the specified duration
-	opWaitForPrompt        // wait for the expected "<n>" (command number) in the next prompt
-	opWaitForRegexp        // wait for sequence of bytes matching the regexp
-	opWaitForString        // wait for the literal sequence of bytes
+	opEnter         opType = iota // enable implicit Enter key and send an Enter key
+	opNoEnter                     // inhibit implicit Enter key
+	opUp                          // send Up arrow sequence
+	opDown                        // send Down arrow sequence
+	opRight                       // send Right arrow sequence
+	opLeft                        // send Left arrow sequence
+	opText                        // send the provided text, optionally followed by Enter
+	opAlt                         // send an alt sequence
+	opCtrl                        // send a control character
+	opWaitForPrompt               // wait for prompt marker
+	opWaitForRegexp               // wait for sequence of bytes matching the regexp
+	opWaitForString               // wait for the literal sequence of bytes
 )
 
-type demoOp struct {
-	what int
-	val  any
+type op struct {
+	typ opType
+	val any
 }
 
-func parseSpec(content []byte) ([]demoOp, error) {
-	lines := bytes.Split(content, []byte{'\n'})
-	ops := make([]demoOp, 1, len(lines)+2)
-	ops[0] = demoOp{opWaitForPrompt, nil}
+func parseSpec(content string) ([]op, error) {
+	lines := strings.Split(content, "\n")
+	ops := make([]op, 1, len(lines)+2)
+	ops[0] = op{opWaitForPrompt, nil}
 
 	for _, line := range lines {
 		if len(line) == 0 {
 			continue // ignore empty lines
 		}
-		if bytes.HasPrefix(line, []byte("//")) {
+		if strings.HasPrefix(line, "//") {
 			directive, err := parseDirective(line[2:])
 			if err != nil {
 				return ops, err
 			}
 			ops = append(ops, directive)
 		} else {
-			ops = append(ops, demoOp{opText, line})
+			ops = append(ops, op{opText, line})
 		}
 	}
 
 	return ops, nil
 }
 
-func parseDirective(directive []byte) (demoOp, error) {
-	if bytes.HasPrefix(directive, []byte("sleep ")) {
-		duration, err := time.ParseDuration(string(directive[6:]) + "s")
-		if err != nil {
-			return demoOp{}, err
-		}
-		return demoOp{opSleep, duration}, nil
+func parseDirective(directive string) (op, error) {
+	if directive == "no-enter" {
+		return op{opNoEnter, nil}, nil
 	}
 
-	if bytes.Equal(directive, []byte("no-enter")) {
-		return demoOp{opNoEnter, nil}, nil
-	}
-
-	if bytes.Equal(directive, []byte("enter")) {
-		return demoOp{opEnter, nil}, nil
+	if directive == "enter" {
+		return op{opEnter, nil}, nil
 	}
 
 	// Tab is frequently used so it's useful to support it as a directive rather than requiring
 	// `//ctrl I`.
-	if bytes.Equal(directive, []byte("tab")) {
-		return demoOp{opCtrl, byte('I')}, nil
+	if directive == "tab" {
+		return op{opCtrl, byte('I')}, nil
 	}
 
-	if bytes.HasPrefix(directive, []byte("ctrl ")) {
+	if strings.HasPrefix(directive, "ctrl ") {
 		if len(directive) != 6 {
-			return demoOp{}, errors.New("invalid ctrl directive: " + string(directive))
+			return op{}, errors.New("invalid ctrl directive: " + string(directive))
 		}
-		return demoOp{opCtrl, directive[5]}, nil
+		return op{opCtrl, directive[5]}, nil
 	}
 
-	if bytes.HasPrefix(directive, []byte("alt ")) {
+	if strings.HasPrefix(directive, "alt ") {
 		if len(directive) != 5 {
-			return demoOp{}, errors.New("invalid alt directive: " + string(directive))
+			return op{}, errors.New("invalid alt directive: " + string(directive))
 		}
-		return demoOp{opAlt, directive[4]}, nil
+		return op{opAlt, directive[4]}, nil
 	}
 
-	if bytes.Equal(directive, []byte("prompt")) {
-		return demoOp{opWaitForPrompt, nil}, nil
+	if directive == "prompt" {
+		return op{opWaitForPrompt, nil}, nil
 	}
 
-	if bytes.Equal(directive, []byte("up")) {
-		return demoOp{opUp, nil}, nil
+	if directive == "up" {
+		return op{opUp, nil}, nil
 	}
 
-	if bytes.Equal(directive, []byte("down")) {
-		return demoOp{opDown, nil}, nil
+	if directive == "down" {
+		return op{opDown, nil}, nil
 	}
 
-	if bytes.Equal(directive, []byte("right")) {
-		return demoOp{opRight, nil}, nil
+	if directive == "right" {
+		return op{opRight, nil}, nil
 	}
 
-	if bytes.Equal(directive, []byte("left")) {
-		return demoOp{opLeft, nil}, nil
+	if directive == "left" {
+		return op{opLeft, nil}, nil
 	}
 
-	if bytes.HasPrefix(directive, []byte("wait-for-re ")) {
+	if strings.HasPrefix(directive, "wait-for-re ") {
 		re, err := regexp.Compile(string(directive[12:]))
 		if err != nil {
-			return demoOp{}, errors.New("invalid wait-for-re value: " + string(directive[12:]))
+			return op{}, errors.New("invalid wait-for-re value: " + string(directive[12:]))
 		}
-		return demoOp{opWaitForRegexp, re}, nil
+		return op{opWaitForRegexp, re}, nil
 	}
 
-	if bytes.HasPrefix(directive, []byte("wait-for-str ")) {
-		return demoOp{opWaitForString, directive[13:]}, nil
+	if strings.HasPrefix(directive, "wait-for-str ") {
+		return op{opWaitForString, directive[13:]}, nil
 	}
 
-	return demoOp{}, errors.New("unrecognized directive: " + string(directive))
+	return op{}, errors.New("unrecognized directive: " + string(directive))
 }

@@ -26,8 +26,8 @@ var promptMarker = "[PROMPT]"
 //go:embed rc.elv
 var rcElv string
 
-// Create a hermetic environment for generating a ttyshot. We want to ensure we don't use the real
-// home directory, or interactive history, of the person running this tool.
+// Creates a temporary home directory for running tmux and elvish in. The caller
+// is responsible for removing the directory.
 func setupHome() (string, error) {
 	homePath, err := os.MkdirTemp("", "ttyshot-*")
 	if err != nil {
@@ -77,7 +77,7 @@ func setupHome() (string, error) {
 	return homePath, err
 }
 
-func createTtyshot(homePath string, script []demoOp, saveRaw string) ([]byte, error) {
+func createTtyshot(homePath string, script []op, saveRaw string) ([]byte, error) {
 	ctrl, tty, err := pty.Open()
 	if err != nil {
 		return nil, err
@@ -139,10 +139,6 @@ func createTtyshot(homePath string, script []demoOp, saveRaw string) ([]byte, er
 }
 
 func spawnElvish(homePath string, tty *os.File) (<-chan error, error) {
-	// Construct a file name for the tmux and Elvish daemon socket files in the temp home path.
-	tmuxSock := filepath.Join(homePath, ".tmp", "tmux.sock")
-	elvSock := filepath.Join(homePath, ".tmp", "elv.sock")
-
 	elvishPath, err := exec.LookPath("elvish")
 	if err != nil {
 		return nil, fmt.Errorf("find elvish: %w", err)
@@ -152,7 +148,10 @@ func spawnElvish(homePath string, tty *os.File) (<-chan error, error) {
 		return nil, fmt.Errorf("find tmux: %w", err)
 	}
 
-	// Start tmux and have it start the hermetic Elvish shell.
+	tmuxSock := filepath.Join(homePath, ".tmp", "tmux.sock")
+	elvSock := filepath.Join(homePath, ".tmp", "elv.sock")
+
+	// Start tmux and have it start a hermetic Elvish session.
 	tmuxCmd := exec.Cmd{
 		Path: tmuxPath,
 		Args: []string{
@@ -181,14 +180,14 @@ func spawnElvish(homePath string, tty *os.File) (<-chan error, error) {
 	return doneCh, nil
 }
 
-func executeScript(script []demoOp, ctrl *os.File, ttyOutput chan byte) {
+func executeScript(script []op, ctrl *os.File, ttyOutput chan byte) {
 	implicitEnter := true
 	nextCmdNum := 1
 	for _, op := range script {
-		switch op.what {
+		switch op.typ {
 		case opText:
-			text := op.val.([]byte)
-			ctrl.Write(text)
+			text := op.val.(string)
+			ctrl.WriteString(text)
 			if implicitEnter {
 				ctrl.Write([]byte{'\r'})
 			}
@@ -209,16 +208,14 @@ func executeScript(script []demoOp, ctrl *os.File, ttyOutput chan byte) {
 			ctrl.Write([]byte{'\033', '[', 'D'})
 		case opNoEnter:
 			implicitEnter = false
-		case opSleep:
-			time.Sleep(op.val.(time.Duration))
 		case opWaitForPrompt:
 			waitForOutput(ttyOutput, promptMarker,
 				func(content []byte) bool { return bytes.Contains(content, []byte(promptMarker)) })
 			nextCmdNum++
 		case opWaitForString:
-			expected := op.val.([]byte)
+			expected := op.val.(string)
 			waitForOutput(ttyOutput, string(expected),
-				func(content []byte) bool { return bytes.Contains(content, expected) })
+				func(content []byte) bool { return bytes.Contains(content, []byte(expected)) })
 		case opWaitForRegexp:
 			expected := op.val.(*regexp.Regexp)
 			waitForOutput(ttyOutput, expected.String(),
