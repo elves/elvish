@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 	"html"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/creack/pty"
+	"src.elv.sh/pkg/sys/eunix"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -87,26 +89,6 @@ func createTtyshot(homePath string, script []op, saveRaw string) ([]byte, error)
 	winsize := pty.Winsize{Rows: terminalRows, Cols: terminalCols}
 	pty.Setsize(ctrl, &winsize)
 
-	// Relay the output of the ttyshot Elvish session to the channel that will capture and evaluate
-	// the output; e.g., to detect whether a prompt was seen.
-	ttyOutput := make(chan byte, 32*1024)
-	go func() {
-		for {
-			content := make([]byte, 1024)
-			n, err := ctrl.Read(content)
-			if n == 0 {
-				close(ttyOutput)
-				return
-			}
-			if err != nil {
-				panic(err)
-			}
-			for i := 0; i < n; i++ {
-				ttyOutput <- content[i]
-			}
-		}
-	}()
-
 	rawPath := filepath.Join(homePath, ".tmp", "ttyshot.raw")
 	if saveRaw != "" {
 		saveRaw, err := filepath.Abs(saveRaw)
@@ -120,7 +102,7 @@ func createTtyshot(homePath string, script []op, saveRaw string) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-	executeScript(script, ctrl, ttyOutput)
+	executeScript(script, ctrl)
 
 	err = <-doneCh
 	if err != nil {
@@ -180,7 +162,7 @@ func spawnElvish(homePath string, tty *os.File) (<-chan error, error) {
 	return doneCh, nil
 }
 
-func executeScript(script []op, ctrl *os.File, ttyOutput chan byte) {
+func executeScript(script []op, ctrl *os.File) {
 	implicitEnter := true
 	nextCmdNum := 1
 	for _, op := range script {
@@ -209,16 +191,16 @@ func executeScript(script []op, ctrl *os.File, ttyOutput chan byte) {
 		case opNoEnter:
 			implicitEnter = false
 		case opWaitForPrompt:
-			waitForOutput(ttyOutput, promptMarker,
+			waitForOutput(ctrl, promptMarker,
 				func(content []byte) bool { return bytes.Contains(content, []byte(promptMarker)) })
 			nextCmdNum++
 		case opWaitForString:
 			expected := op.val.(string)
-			waitForOutput(ttyOutput, string(expected),
+			waitForOutput(ctrl, expected,
 				func(content []byte) bool { return bytes.Contains(content, []byte(expected)) })
 		case opWaitForRegexp:
 			expected := op.val.(*regexp.Regexp)
-			waitForOutput(ttyOutput, expected.String(),
+			waitForOutput(ctrl, expected.String(),
 				func(content []byte) bool { return expected.Match(content) })
 		default:
 			panic("unhandled op")
@@ -229,26 +211,33 @@ func executeScript(script []op, ctrl *os.File, ttyOutput chan byte) {
 	ctrl.Write([]byte{'\033', 'q'})
 }
 
-func waitForOutput(ttyOutput chan byte, expected string, matcher func([]byte) bool) []byte {
-	text := make([]byte, 0, 4096)
-	// It shouldn't take more than a couple of seconds to see the expected output so use a timeout
-	// an order of magnitude longer to allow for overloaded systems.
-	timeout := time.After(30 * time.Second)
+func waitForOutput(f *os.File, expected string, matcher func([]byte) bool) error {
+	var buf bytes.Buffer
+	// It shouldn't take more than a couple of seconds to see the expected
+	// output, so use a timeout an order of magnitude longer to allow for
+	// overloaded systems.
+	deadline := time.Now().Add(30 * time.Second)
 	for {
-		var newByte byte
-		select {
-		case newByte = <-ttyOutput:
-		case <-timeout:
-			fmt.Fprintf(os.Stderr, "Timeout waiting for text matching: %q\n", expected)
-			fmt.Fprintf(os.Stderr, "This is what we've captured so far:\n%q\n", text)
-			os.Exit(3)
-		}
-		text = append(text, newByte)
-		if matcher(text) {
+		budget := time.Until(deadline)
+		if budget < 0 {
 			break
 		}
+		ready, err := eunix.WaitForRead(budget, f)
+		if err != nil {
+			return fmt.Errorf("waiting for tmux output: %w", err)
+		}
+		if !ready[0] {
+			break
+		}
+		_, err = io.CopyN(&buf, f, 1)
+		if err != nil {
+			return fmt.Errorf("reading tmux output: %w", err)
+		}
+		if matcher(buf.Bytes()) {
+			return nil
+		}
 	}
-	return text
+	return fmt.Errorf("timed out waiting for %s in tmux output; output so far: %q", expected, buf)
 }
 
 func sgrTextToHTML(ttyshot string) string {
