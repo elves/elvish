@@ -15,6 +15,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
+	"log"
 	"os"
 )
 
@@ -29,6 +31,7 @@ func main() {
 func run(args []string) error {
 	fs := flag.NewFlagSet("ttyshot", flag.ExitOnError)
 	outFlag := fs.String("o", "", "output file (defaults to spec-path + .html)")
+	verboseFlag := fs.Bool("v", false, "enable verbose logging")
 	saveRawFlag := fs.String("save-raw", "", "if non-empty, save output of capture-pane to this file")
 	fs.Usage = func() {
 		fmt.Fprintln(fs.Output(), "Usage: ttyshot [flags] spec-path")
@@ -39,6 +42,10 @@ func run(args []string) error {
 	if len(fs.Args()) != 1 {
 		fs.Usage()
 		os.Exit(1)
+	}
+
+	if !*verboseFlag {
+		log.SetOutput(io.Discard)
 	}
 
 	specPath := fs.Args()[0]

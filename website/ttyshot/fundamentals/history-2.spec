@@ -5,4 +5,3 @@ randint 1 7
 //no-enter
 ra
 //up
-//wait-for-str HISTORY #

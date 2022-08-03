@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -165,7 +164,6 @@ func spawnElvish(homePath string, tty *os.File) (<-chan error, error) {
 
 func executeScript(script []op, ctrl *os.File) {
 	implicitEnter := true
-	nextCmdNum := 1
 	for _, op := range script {
 		switch op.typ {
 		case opText:
@@ -193,16 +191,7 @@ func executeScript(script []op, ctrl *os.File) {
 			implicitEnter = false
 		case opWaitForPrompt:
 			waitForOutput(ctrl, promptMarker,
-				func(content []byte) bool { return bytes.Contains(content, []byte(promptMarker)) })
-			nextCmdNum++
-		case opWaitForString:
-			expected := op.val.(string)
-			waitForOutput(ctrl, expected,
-				func(content []byte) bool { return bytes.Contains(content, []byte(expected)) })
-		case opWaitForRegexp:
-			expected := op.val.(*regexp.Regexp)
-			waitForOutput(ctrl, expected.String(),
-				func(content []byte) bool { return expected.Match(content) })
+				func(bs []byte) bool { return bytes.HasSuffix(bs, []byte(promptMarker)) })
 		default:
 			panic("unhandled op")
 		}

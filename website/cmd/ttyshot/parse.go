@@ -4,7 +4,6 @@ package main
 
 import (
 	"errors"
-	"regexp"
 	"strings"
 )
 
@@ -22,8 +21,6 @@ const (
 	opAlt                         // send an alt sequence
 	opCtrl                        // send a control character
 	opWaitForPrompt               // wait for prompt marker
-	opWaitForRegexp               // wait for sequence of bytes matching the regexp
-	opWaitForString               // wait for the literal sequence of bytes
 )
 
 type op struct {
@@ -101,18 +98,6 @@ func parseDirective(directive string) (op, error) {
 
 	if directive == "left" {
 		return op{opLeft, nil}, nil
-	}
-
-	if strings.HasPrefix(directive, "wait-for-re ") {
-		re, err := regexp.Compile(string(directive[12:]))
-		if err != nil {
-			return op{}, errors.New("invalid wait-for-re value: " + string(directive[12:]))
-		}
-		return op{opWaitForRegexp, re}, nil
-	}
-
-	if strings.HasPrefix(directive, "wait-for-str ") {
-		return op{opWaitForString, directive[13:]}, nil
 	}
 
 	return op{}, errors.New("unrecognized directive: " + string(directive))
