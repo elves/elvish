@@ -349,12 +349,10 @@ pre.ttyshot, pre.ttyshot code {
 /* SGR classes used in ttyshots. */
 .sgr-1 {
     /*
-     * Bold text is wider than regular text in most fonts, so emulate bold font
-     * with -webkit-text-stroke instead. This property is supported by most
-     * browsers:
-     * https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-text-stroke#browser_compatibility
+     * Bold text is wider than regular text in most fonts, and can break
+     * vertical alignment in ttyshots. Emulate bold font with text-shadow.
      */
-    -webkit-text-stroke: 0.04em;
+    text-shadow: 0.05em 0 0;
 }
 .sgr-4 {
     text-decoration: underline;
