@@ -1,10 +1,10 @@
 set edit:rprompt = (constantly ^
   (styled (whoami)✸(hostname) inverse))
-//prompt
+#prompt
 set edit:prompt = {
   tilde-abbr $pwd
   styled '❱ ' bright-red
 }
-//prompt
-//no-enter
+#prompt
+#no-enter
 # Fancy unicode prompts!

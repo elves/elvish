@@ -1,5 +1,5 @@
 cd elvish
-//prompt
-//no-enter
+#prompt
+#no-enter
 vim 
-//tab
+#tab

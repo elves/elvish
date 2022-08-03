@@ -1,7 +1,7 @@
 if $true { echo good } else { echo bad }
-//prompt
+#prompt
 for x [lorem ipsum] { put $x.pdf }
-//prompt
+#prompt
 try {
   fail 'bad error'
 } catch e {
@@ -9,4 +9,4 @@ try {
 } finally {
   put done
 }
-//prompt
+#prompt

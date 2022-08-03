@@ -1,5 +1,5 @@
-//no-enter
+#no-enter
 echo
-//up
-//up
-//up
+#up
+#up
+#up

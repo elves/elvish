@@ -1,6 +1,6 @@
 cd elvish
-//prompt
-//no-enter
+#prompt
+#no-enter
 echo 
-//tab
+#tab
 .md

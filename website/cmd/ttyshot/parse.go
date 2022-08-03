@@ -37,8 +37,8 @@ func parseSpec(content string) ([]op, error) {
 		if len(line) == 0 {
 			continue // ignore empty lines
 		}
-		if strings.HasPrefix(line, "//") {
-			directive, err := parseDirective(line[2:])
+		if strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "# ") {
+			directive, err := parseDirective(line[1:])
 			if err != nil {
 				return ops, err
 			}

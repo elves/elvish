@@ -1,7 +1,7 @@
 randint 1 7
-//prompt
+#prompt
 # more commands ...
-//prompt
-//no-enter
+#prompt
+#no-enter
 ra
-//up
+#up

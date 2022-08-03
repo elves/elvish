@@ -1,5 +1,5 @@
 echo abc def
-//prompt
-//no-enter
+#prompt
+#no-enter
 vim 
-//alt ,
+#alt ,
