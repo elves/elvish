@@ -1,23 +1,13 @@
-~&gt; <span class="sgr-32">use</span> math
-~&gt; <span class="sgr-32">var</span> <span class="sgr-35">stateColors</span> <span class="sgr-33">=</span> <span class="sgr-1">[&amp;</span>open=fg-bright-green <span class="sgr-1">&amp;</span>closed=fg-red
-   <span class="sgr-1">]</span>
-~&gt; <span class="sgr-32">fn</span> colored <span class="sgr-1">{</span><span class="sgr-32">|</span>state<span class="sgr-32">|</span>
-       <span class="sgr-32">put</span> <span class="sgr-1">(</span><span class="sgr-32">styled</span> <span class="sgr-1">{</span><span class="sgr-35">$state</span><span class="sgr-33">"  "</span><span class="sgr-1">}[</span>..6<span class="sgr-1">]</span> <span class="sgr-35">$stateColors</span><span class="sgr-1">[</span><span class="sgr-35">$state</span><span class="sgr-1">])</span>
-
-   <span class="sgr-1">}</span>
-~&gt; <span class="sgr-32">var</span> <span class="sgr-35">url</span> <span class="sgr-33">=</span> <span class="sgr-33">"https://api.github.com/repos/elves/elvish/is</span>
-   <span class="sgr-33">sues?state=all&amp;sort=updated&amp;per_page=5"</span>
-~&gt; <span class="sgr-32">curl</span> -s <span class="sgr-35">$url</span> <span class="sgr-32">|</span> <span class="sgr-32">from-json</span> <span class="sgr-32">|</span> <span class="sgr-32">all</span> <span class="sgr-1">(</span><span class="sgr-32">one</span><span class="sgr-1">)</span> <span class="sgr-32">|</span>
-   <span class="sgr-32">each</span> <span class="sgr-1">{</span><span class="sgr-32">|</span>issue<span class="sgr-32">|</span>
-       <span class="sgr-32">var</span> <span class="sgr-35">id</span> <span class="sgr-33">=</span> <span class="sgr-1">(</span><span class="sgr-32">exact-num</span> <span class="sgr-35">$issue</span><span class="sgr-1">[</span>number<span class="sgr-1">])</span>
-       <span class="sgr-32">var</span> <span class="sgr-35">t</span> <span class="sgr-33">=</span> <span class="sgr-35">$issue</span><span class="sgr-1">[</span>title<span class="sgr-1">]</span>
-       <span class="sgr-32">var</span> <span class="sgr-35">title</span> <span class="sgr-33">=</span> <span class="sgr-35">$t</span><span class="sgr-1">[</span>..<span class="sgr-1">(</span><span class="sgr-32">math:min</span> 45 <span class="sgr-1">(</span><span class="sgr-32">count</span> <span class="sgr-35">$t</span><span class="sgr-1">))]</span>
-       <span class="sgr-32">var</span> <span class="sgr-35">state</span> <span class="sgr-33">=</span> <span class="sgr-35">$issue</span><span class="sgr-1">[</span>state<span class="sgr-1">]</span>
-       <span class="sgr-32">echo</span> <span class="sgr-1">(</span><span class="sgr-32">colored</span> <span class="sgr-35">$state</span><span class="sgr-1">)</span> <span class="sgr-35">$id</span> <span class="sgr-35">$title</span>
-   <span class="sgr-1">}</span>
-<span class="sgr-92">open  </span> 1263 A `file:is-tty` command would be useful
-<span class="sgr-92">open  </span> 1593 A mechanism to trap "interrupts" would be use
-<span class="sgr-92">open  </span> 1591 Add a &amp;benchmark option to the time command
-<span class="sgr-92">open  </span> 1592 Should `make style` implicitly run the `codes
-<span class="sgr-92">open  </span> 1587 vi append command binding
+~&gt; <span class="sgr-32">curl</span> -sL api.github.com/repos/elves/elvish/issues <span class="sgr-32">|</span>
+     <span class="sgr-32">all</span> <span class="sgr-1">(</span><span class="sgr-32">from-json</span><span class="sgr-1">)</span> <span class="sgr-32">|</span>
+     <span class="sgr-32">each</span> <span class="sgr-1">{</span><span class="sgr-32">|</span>x<span class="sgr-32">|</span> <span class="sgr-32">echo</span> <span class="sgr-1">(</span><span class="sgr-32">exact-num</span> <span class="sgr-35">$x</span><span class="sgr-1">[</span>number<span class="sgr-1">])</span>: <span class="sgr-35">$x</span><span class="sgr-1">[</span>title<span class="sgr-1">]</span> <span class="sgr-1">}</span> <span class="sgr-32">|</span>
+     <span class="sgr-32">head</span> -n 7
+1593: A mechanism to trap "interrupts" would be useful
+1592: Should `make style` implicitly run the `codespell` t
+arget?
+1591: Add a &amp;benchmark option to the time command
+1590: Correct the documentation for the `try` command
+1588: Support comparing booleans
+1587: vi append command binding
+1586: Add a `&amp;benchmark` option to the `time` command
 ~&gt;                                                <span class="sgr-7fg sgr-7bg">elf@host</span>

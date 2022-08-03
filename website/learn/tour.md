@@ -962,13 +962,14 @@ will be called. Otherwise this definition will result in infinite recursion.
 The left and right prompts can be customized by assigning functions to
 [`edit:prompt`](../ref/edit.html#edit:prompt) and
 [`edit:rprompt`](../ref/edit.html#edit:rprompt). The following example defines
-prompts similar to the default, but uses fancy Unicode. The
-[`tilde-abbr`](../ref/builtin.html#tilde-abbr) command abbreviates home
+prompts similar to the default, but uses fancy Unicode.
+
+@ttyshot tour/unicode-prompts
+
+The [`tilde-abbr`](../ref/builtin.html#tilde-abbr) command abbreviates home
 directory to a tilde. The [`constantly`](../ref/builtin.html#constantly) command
 returns a function that always writes the same value(s) to the value output. The
 [`styled`](../ref/builtin.html#styled) command writes styled output.
-
-@ttyshot tour/unicode-prompts
 
 ### Changing PATH
 
