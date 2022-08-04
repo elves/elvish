@@ -855,7 +855,7 @@ UI customization options.
 Press <kbd>Tab</kbd> to start completion. For example, after typing `vim` and
 <kbd>Space</kbd>, press <kbd>Tab</kbd> to complete filenames:
 
-@ttyshot tour/completion
+@ttyshot learn/tour/completion
 
 Basic operations should be quite intuitive:
 
@@ -873,7 +873,7 @@ You may have noticed that the cursor has moved to the right of "COMPLETING
 argument". This indicates that you can continue typing to filter candidates. For
 example, after typing `.md`, the UI looks like this:
 
-@ttyshot tour/completion-filter
+@ttyshot learn/tour/completion-filter
 
 Read the reference on [completion API](../ref/edit.html#completion-api) to learn
 how to program and customize tab completion.
@@ -887,7 +887,7 @@ Elvish has several UI features for working with command history.
 Press <kbd>▲</kbd> to fetch the last command. This is called **history walking**
 mode:
 
-@ttyshot tour/history-walk
+@ttyshot learn/tour/history-walk
 
 Press <kbd>▲</kbd> to go further back, <kbd>▼</kbd> to go forward, or
 <kbd>Escape</kbd> to cancel.
@@ -896,13 +896,13 @@ To restrict to commands that start with a prefix, simply type the prefix before
 pressing <kbd>▲</kbd>. For example, to walk through commands starting with
 `echo`, type `echo` before pressing <kbd>▲</kbd>:
 
-@ttyshot tour/history-walk-prefix
+@ttyshot learn/tour/history-walk-prefix
 
 ### History listing
 
 Press <kbd>Ctrl-R</kbd> to list the full command history:
 
-@ttyshot tour/history-list
+@ttyshot learn/tour/history-list
 
 Like in completion mode, type to filter the list, press <kbd>▲</kbd> and
 <kbd>▼</kbd> to navigate the list, <kbd>Enter</kbd> to insert the selected
@@ -913,7 +913,7 @@ entry, or <kbd>Escape</kbd> to cancel.
 Finally, Elvish has a **last command** mode dedicated to inserting parts of the
 last command. Press <kbd>Alt-,</kbd> to trigger it:
 
-@ttyshot tour/lastcmd
+@ttyshot learn/tour/lastcmd
 
 ## Directory history
 
@@ -922,17 +922,17 @@ list visited directories. Use <kbd>▲</kbd> and <kbd>▼</kbd> to navigate the
 list, <kbd>Enter</kbd> to change to that directory, or <kbd>Escape</kbd> to
 cancel.
 
-@ttyshot tour/location
+@ttyshot learn/tour/location
 
 Type to filter:
 
-@ttyshot tour/location-filter
+@ttyshot learn/tour/location-filter
 
 ## Navigation mode
 
 Press <kbd>Ctrl-N</kbd> to start the builtin filesystem navigator.
 
-@ttyshot tour/navigation
+@ttyshot learn/tour/navigation
 
 Unlike other modes, the cursor stays in the main buffer in navigation mode. This
 allows you to continue typing commands; while doing that, you can press
@@ -964,7 +964,7 @@ The left and right prompts can be customized by assigning functions to
 [`edit:rprompt`](../ref/edit.html#edit:rprompt). The following example defines
 prompts similar to the default, but uses fancy Unicode.
 
-@ttyshot tour/unicode-prompts
+@ttyshot learn/tour/unicode-prompts
 
 The [`tilde-abbr`](../ref/builtin.html#tilde-abbr) command abbreviates home
 directory to a tilde. The [`constantly`](../ref/builtin.html#constantly) command

@@ -29,9 +29,13 @@ check-rellinks: gen
 clean:
 	rm -rf tools/*.bin $(HTMLS) $(DST_DIR) $(DOCSET_TMP_DIR) $(DOCSET_DST_DIR)
 
-ttyshot/%.html:
-	@echo Exclude ttyshots from the pattern rule for %.html
-
+ifdef TTYSHOT
+%.ttyshot.html: %.ttyshot tools/ttyshot.bin
+	tools/ttyshot.bin -o $@ $<
+else
+%.ttyshot.html:
+	@: ttyshot generation disabled by default
+endif
 
 .PHONY: gen docset publish check-rellinks clean
 

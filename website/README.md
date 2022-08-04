@@ -34,6 +34,57 @@ Building the docset requires the following additional dependencies:
 
 -   SQLite3 CLI.
 
+To build the docset, run `make docset`. The generated docset is in
+`Elvish.docset`.
+
+# Ttyshots
+
+Some of the pages include "ttyshots" that show the content of Elvish sessions.
+They are HTML files with terminal attributes converted to CSS classes, generated
+from corresponding instruction files. By convention, the instruction files have
+names ending in `.ttyshot`, and the generated HTML files have names ending in
+`.ttyshot.html`.
+
+The generation process depends on [`tmux`](https://github.com/tmux/tmux) and a
+built `elvish` in `PATH`. Windows is not supported.
+
+## Instruction syntax
+
+Each line in a ttyshot instruction file is one of the following:
+
+-   `#prompt` instructs waiting for a new shell prompt.
+
+-   `#`_`command`_, where `command` is a string that does **not** start with a
+    space and is not `prompt`, is a command sent to `tmux`. The most useful one
+    (and only one being used now) is `send-keys`.
+
+-   Anything else is treated as text that should be sent directly to the Elvish
+    prompt.
+
+For example, the following instructions runs `cd /tmp`, waits for the next
+prompt, and sends Ctrl-N to trigger navigation mode:
+
+```
+cd /tmp
+#prompt
+#send-keys ctrl-L
+```
+
+## Generating ttyshots
+
+Unlike other generated website artifacts, generated ttyshots are committed into
+the repository, and the `Makefile` rule to generate them is disabled by default.
+This is because the process to generate ttyshots is relatively slow and may have
+network dependencies.
+
+To turn on ttyshot generation, pass `TTYSHOT=1` to `make`. For example, to
+generate a single ttyshot, run `make TTYSHOT=1 foo.ttyshot.html`. To build the
+website with ttyshot generation enabled, run `make TTYSHOT=1`.
+
+The first time you generate ttyshots, `make` will build the `ttyshot` tool, and
+regenerate all ttyshots. Subsequent runs will only regenerate ttyshots whose
+instruction files have changed.
+
 # Commit History
 
 These files used to live in a

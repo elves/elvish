@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 )
@@ -107,7 +106,7 @@ func callElvdoc(out io.Writer, module, path string) {
 }
 
 func (f *filterer) expandTtyshot(name string) string {
-	content, err := os.ReadFile(path.Join("ttyshot", name+".html"))
+	content, err := os.ReadFile(name + ".ttyshot.html")
 	if err != nil {
 		log.Fatal(err)
 	}
