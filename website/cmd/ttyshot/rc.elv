@@ -1,26 +1,8 @@
 # This is the interactive configuration for generating Elvish "ttyshots".
 
-# Use all the embedded modules so that a ttyshot that depends on one of them
-# doesn't need to explicitly include a `use` command. Note that we
-# unconditionally `use unix` because we don't support generating ttyshots on
-# non-UNIX systems.
-#
-# Note: We explicitly do not `use readline-binding` because it changes the
-# default key bindings. We want the ttyshot specifications to be able to
-# depend on the default key bindings. But this list should otherwise include
-# all embedded modules -- even if a ttyshot doesn't currently rely on it.
-use builtin
-use epm
-use file
-use flag
-use math
-use path
-use platform
-use re
-use store
-use str
-use unix
+{
 
+use store
 # Populate the interactive location history.
 range 9 | each {|_| store:add-dir $E:HOME }
 range 9 | each {|_| store:add-dir $E:HOME/elvish }
@@ -68,6 +50,8 @@ set @_ = (range 5 | each {|_|
     store:add-cmd 'math:min 3 1 30'
 })
 
+} # use store
+
 # Sync the history we just manufactured with this elvish process.
 edit:history:fast-forward
 
@@ -89,35 +73,3 @@ set edit:rprompt = (constantly (styled 'elf@host' inverse))
 # output that doesn't leak info about the machine used to create the ttyshot.
 fn whoami { echo elf }
 fn hostname { echo host.example.com }
-
-# This command is useful for verifying the display of basic text styles.
-# Specifically: bold, underline, and the 16 legacy tty colors. Start a
-# "ttyshot" session and run `styles`. Then view the results in a web browser.
-fn styles {||
-    var colors = [black red green yellow blue magenta cyan white]
-    print (styled ' under ' underlined)
-    print (styled ' bold ' bold)
-    print (styled ' bold+under ' bold underlined)
-    echo
-
-    for c $colors {
-        print (styled ' '$c' ' bg-$c)
-    }
-    echo
-    for c $colors {
-        print (styled ' '$c' ' bg-bright-$c)
-    }
-    echo
-    for c $colors {
-        print (styled ' '$c' ' fg-$c)
-    }
-    echo
-    for c $colors {
-        print (styled ' '$c' ' fg-bright-$c)
-    }
-    echo
-    for c $colors {
-        print (styled ' '$c' ' fg-bright-$c underlined bold)
-    }
-    echo
-}
