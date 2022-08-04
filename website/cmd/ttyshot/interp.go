@@ -25,7 +25,10 @@ const (
 	terminalCols = 58
 )
 
-var promptMarker = "[PROMPT]"
+const (
+	cutMarker    = "[CUT]"
+	promptMarker = "[PROMPT]"
+)
 
 //go:embed rc.elv
 var rcElv string
@@ -122,14 +125,19 @@ func createTtyshot(homePath string, script []op, saveRaw string) ([]byte, error)
 	}
 
 	ttyshot := string(rawBytes)
+	// Remove all content before the last cutMarker.
+	segments := strings.Split(ttyshot, cutMarker+"\n")
+	ttyshot = segments[len(segments)-1]
+
 	// Strip all the prompt markers, and the content after the last prompt
 	// marker if the last instruction was #prompt (in which case the content
 	// will just be an empty prompt).
-	segments := strings.Split(ttyshot, promptMarker+"\n")
+	segments = strings.Split(ttyshot, promptMarker+"\n")
 	if len(script) > 0 && script[len(script)-1].typ == opPrompt {
 		segments = segments[:len(segments)-1]
 	}
 	ttyshot = strings.Join(segments, "")
+
 	ttyshot = strings.TrimRight(ttyshot, "\n")
 	return []byte(sgrTextToHTML(ttyshot) + "\n"), nil
 }
