@@ -7,10 +7,12 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/creack/pty"
@@ -102,7 +104,8 @@ func createTtyshot(homePath string, script []op, saveRaw string) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-	executeScript(script, ctrl)
+	executeScript(script, ctrl, homePath)
+	log.Println("executed script, waiting for tmux to exit")
 
 	// Drain outputs from the terminal. This is needed so that tmux can exit
 	// properly without blocking on flushing outputs.
@@ -157,18 +160,21 @@ func spawnElvish(homePath string, tty *os.File) (<-chan error, error) {
 		Stdout: tty,
 		Stderr: tty,
 	}
+	log.Println("started tmux, socket", tmuxSock)
 
-	doneCh := make(chan error)
+	doneCh := make(chan error, 1)
 	go func() {
 		doneCh <- tmuxCmd.Run()
+		log.Println("tmux exited")
 	}()
 
 	return doneCh, nil
 }
 
-func executeScript(script []op, ctrl *os.File) {
+func executeScript(script []op, ctrl *os.File, homePath string) {
 	implicitEnter := true
 	for _, op := range script {
+		log.Println("executing", op)
 		switch op.typ {
 		case opText:
 			text := op.val.(string)
@@ -194,12 +200,27 @@ func executeScript(script []op, ctrl *os.File) {
 		case opNoEnter:
 			implicitEnter = false
 		case opWaitForPrompt:
-			waitForOutput(ctrl, promptMarker,
+			err := waitForOutput(ctrl, promptMarker,
 				func(bs []byte) bool { return bytes.HasSuffix(bs, []byte(promptMarker)) })
+			if err != nil {
+				// TODO: Handle the error properly
+				panic(err)
+			}
+		case opTmux:
+			tmuxSock := filepath.Join(homePath, ".tmp", "tmux.sock")
+			tmuxCmd := exec.Command("tmux",
+				append([]string{"-S", tmuxSock}, op.val.([]string)...)...)
+			tmuxCmd.Env = []string{}
+			err := tmuxCmd.Run()
+			if err != nil {
+				// TODO: Handle the error properly
+				panic(err)
+			}
 		default:
 			panic("unhandled op")
 		}
 	}
+	log.Println("sending Alt-q")
 	// Alt-q is bound to a function that captures the content of the pane and
 	// exits
 	ctrl.Write([]byte{'\033', 'q'})
@@ -218,6 +239,9 @@ func waitForOutput(f *os.File, expected string, matcher func([]byte) bool) error
 		}
 		ready, err := eunix.WaitForRead(budget, f)
 		if err != nil {
+			if err == syscall.EINTR {
+				continue
+			}
 			return fmt.Errorf("waiting for tmux output: %w", err)
 		}
 		if !ready[0] {

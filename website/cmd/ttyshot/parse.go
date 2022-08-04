@@ -21,6 +21,7 @@ const (
 	opAlt                         // send an alt sequence
 	opCtrl                        // send a control character
 	opWaitForPrompt               // wait for prompt marker
+	opTmux                        // run tmux command
 )
 
 type op struct {
@@ -98,6 +99,10 @@ func parseDirective(directive string) (op, error) {
 
 	if directive == "left" {
 		return op{opLeft, nil}, nil
+	}
+
+	if strings.HasPrefix(directive, "send-keys ") {
+		return op{opTmux, strings.Fields(directive)}, nil
 	}
 
 	return op{}, errors.New("unrecognized directive: " + string(directive))
