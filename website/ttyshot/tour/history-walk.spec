@@ -1,2 +1,1 @@
-#no-enter
-#up
+#send-keys Up

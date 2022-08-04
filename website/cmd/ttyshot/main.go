@@ -53,10 +53,7 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
-	spec, err := parseSpec(string(content))
-	if err != nil {
-		return err
-	}
+	spec := parseSpec(string(content))
 
 	homePath, err := setupHome()
 	if err != nil {

@@ -1,2 +1,1 @@
-#no-enter
-#ctrl R
+#send-keys C-R

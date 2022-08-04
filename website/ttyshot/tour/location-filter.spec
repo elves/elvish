@@ -1,3 +1,1 @@
-#no-enter
-#ctrl L
-local
+#send-keys C-L local

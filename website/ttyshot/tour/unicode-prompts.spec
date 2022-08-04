@@ -6,5 +6,4 @@ set edit:prompt = {
   styled '❱ ' bright-red
 }
 #prompt
-#no-enter
-# Fancy unicode prompts!
+#send-keys # Space Fancy Space unicode Space prompts!

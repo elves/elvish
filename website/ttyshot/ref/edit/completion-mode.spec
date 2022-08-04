@@ -1,5 +1,3 @@
 cd elvish
 #prompt
-#no-enter
-vim 
-#tab
+#send-keys vim Space Tab

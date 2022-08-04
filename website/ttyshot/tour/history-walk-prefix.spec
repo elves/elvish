@@ -1,5 +1,1 @@
-#no-enter
-echo
-#up
-#up
-#up
+#send-keys echo Up Up Up

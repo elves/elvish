@@ -1,4 +1,1 @@
-#no-enter
-#ctrl R
-#up
-#up
+#send-keys C-R Up Up

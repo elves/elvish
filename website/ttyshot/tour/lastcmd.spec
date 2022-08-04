@@ -1,5 +1,3 @@
 echo abc def
 #prompt
-#no-enter
-vim 
-#alt ,
+#send-keys vim Space M-,

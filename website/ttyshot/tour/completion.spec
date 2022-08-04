@@ -1,5 +1,3 @@
 cd elvish
 #prompt
-#no-enter
-echo 
-#tab
+#send-keys echo Space Tab

@@ -1,4 +1,3 @@
 cd elvish
 #prompt
-#no-enter
-#ctrl N
+#send-keys C-N

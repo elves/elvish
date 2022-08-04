@@ -172,34 +172,14 @@ func spawnElvish(homePath string, tty *os.File) (<-chan error, error) {
 }
 
 func executeScript(script []op, ctrl *os.File, homePath string) {
-	implicitEnter := true
 	for _, op := range script {
 		log.Println("executing", op)
 		switch op.typ {
 		case opText:
 			text := op.val.(string)
 			ctrl.WriteString(text)
-			if implicitEnter {
-				ctrl.Write([]byte{'\r'})
-			}
-		case opAlt:
-			ctrl.Write([]byte{'\033', op.val.(byte)})
-		case opCtrl:
-			ctrl.Write([]byte{op.val.(byte) & 0x1F})
-		case opEnter:
-			ctrl.Write([]byte{'\r'})
-			implicitEnter = true
-		case opUp:
-			ctrl.Write([]byte{'\033', '[', 'A'})
-		case opDown:
-			ctrl.Write([]byte{'\033', '[', 'B'})
-		case opRight:
-			ctrl.Write([]byte{'\033', '[', 'C'})
-		case opLeft:
-			ctrl.Write([]byte{'\033', '[', 'D'})
-		case opNoEnter:
-			implicitEnter = false
-		case opWaitForPrompt:
+			ctrl.WriteString("\r")
+		case opPrompt:
 			err := waitForOutput(ctrl, promptMarker,
 				func(bs []byte) bool { return bytes.HasSuffix(bs, []byte(promptMarker)) })
 			if err != nil {
