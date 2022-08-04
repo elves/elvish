@@ -104,6 +104,10 @@ func createTtyshot(homePath string, script []op, saveRaw string) ([]byte, error)
 	}
 	executeScript(script, ctrl)
 
+	// Drain outputs from the terminal. This is needed so that tmux can exit
+	// properly without blocking on flushing outputs.
+	go io.Copy(io.Discard, ctrl)
+
 	err = <-doneCh
 	if err != nil {
 		return nil, err
