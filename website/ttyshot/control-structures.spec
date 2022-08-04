@@ -9,4 +9,3 @@ try {
 } finally {
   put done
 }
-#prompt

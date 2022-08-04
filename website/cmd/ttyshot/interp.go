@@ -122,8 +122,15 @@ func createTtyshot(homePath string, script []op, saveRaw string) ([]byte, error)
 	}
 
 	ttyshot := string(rawBytes)
+	// Strip all the prompt markers, and the content after the last prompt
+	// marker if the last instruction was #prompt (in which case the content
+	// will just be an empty prompt).
+	segments := strings.Split(ttyshot, promptMarker+"\n")
+	if len(script) > 0 && script[len(script)-1].typ == opPrompt {
+		segments = segments[:len(segments)-1]
+	}
+	ttyshot = strings.Join(segments, "")
 	ttyshot = strings.TrimRight(ttyshot, "\n")
-	ttyshot = strings.ReplaceAll(ttyshot, promptMarker+"\n", "")
 	return []byte(sgrTextToHTML(ttyshot) + "\n"), nil
 }
 
