@@ -51,8 +51,8 @@ func indexLayeredBindings(k ui.Key, maps ...bindingsMap) eval.Callable {
 		}
 	}
 	for _, m := range maps {
-		if m.HasKey(ui.Default) {
-			return m.GetKey(ui.Default)
+		if m.HasKey(ui.DefaultKey) {
+			return m.GetKey(ui.DefaultKey)
 		}
 	}
 	return nil

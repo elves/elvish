@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/BurntSushi/toml v1.0.0
+	github.com/creack/pty v1.1.15
 	src.elv.sh v0.17.0
 )
 

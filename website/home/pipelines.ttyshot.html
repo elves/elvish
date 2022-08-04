@@ -1,0 +1,15 @@
+~&gt; <span class="sgr-32">curl</span> -sL api.github.com/repos/elves/elvish/issues <span class="sgr-32">|</span>
+     <span class="sgr-32">all</span> <span class="sgr-1">(</span><span class="sgr-32">from-json</span><span class="sgr-1">)</span> <span class="sgr-32">|</span>
+     <span class="sgr-32">each</span> <span class="sgr-1">{</span><span class="sgr-32">|</span>x<span class="sgr-32">|</span> <span class="sgr-32">echo</span> <span class="sgr-1">(</span><span class="sgr-32">exact-num</span> <span class="sgr-35">$x</span><span class="sgr-1">[</span>number<span class="sgr-1">])</span>: <span class="sgr-35">$x</span><span class="sgr-1">[</span>title<span class="sgr-1">]</span> <span class="sgr-1">}</span> <span class="sgr-32">|</span>
+     <span class="sgr-32">head</span> -n 10
+1593: A mechanism to trap "interrupts" would be useful
+1592: Should `make style` implicitly run the `codespell` t
+arget?
+1591: Add a &amp;benchmark option to the time command
+1590: Correct the documentation for the `try` command
+1588: Support comparing booleans
+1587: vi append command binding
+1586: Add a `&amp;benchmark` option to the `time` command
+1585: boolean values are not comparable
+1584: Documentation fixups
+1583: Implement a `help` command

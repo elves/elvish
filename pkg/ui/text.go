@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/wcwidth"
@@ -202,11 +203,30 @@ func (t Text) String() string {
 	return t.VTString()
 }
 
-// VTString renders the styled text using VT-style escape sequences.
+// VTString renders the styled text using VT-style escape sequences. Any
+// existing SGR state will be cleared.
 func (t Text) VTString() string {
-	var buf bytes.Buffer
+	var sb strings.Builder
+	clean := false
 	for _, seg := range t {
-		buf.WriteString(seg.VTString())
+		sgr := seg.SGR()
+		if sgr == "" {
+			if !clean {
+				sb.WriteString("\033[m")
+			}
+			clean = true
+		} else {
+			if clean {
+				sb.WriteString("\033[" + sgr + "m")
+			} else {
+				sb.WriteString("\033[;" + sgr + "m")
+			}
+			clean = false
+		}
+		sb.WriteString(seg.Text)
 	}
-	return buf.String()
+	if !clean {
+		sb.WriteString("\033[m")
+	}
+	return sb.String()
 }

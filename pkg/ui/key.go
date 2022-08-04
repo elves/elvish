@@ -26,7 +26,7 @@ func K(r rune, mods ...Mod) Key {
 }
 
 // Default is used in the key binding table to indicate a default binding.
-var Default = Key{DefaultBindingRune, 0}
+var DefaultKey = Key{DefaultBindingRune, 0}
 
 // Mod represents a modifier key.
 type Mod byte
