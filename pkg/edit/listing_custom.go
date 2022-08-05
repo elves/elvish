@@ -28,6 +28,11 @@ func (*customListingOpts) SetDefaultOptions() {}
 //elvdoc:fn listing:start-custom
 //
 // Starts a custom listing addon.
+//
+// ```elvish
+// var opts = (put 0 1 | each {|n| put [&to-accept=$n &to-filter=$n &to-show=(styled $n green)] } | put [(all)])
+// edit:listing:start-custom &caption='Pick One' &accept={|o| echo $o } $opts
+// ```
 
 func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, items any) {
 	var bindings tk.Bindings
