@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
@@ -51,11 +52,15 @@ func init() {
 		"%": rem,
 
 		// Random
-		"rand":    rand.Float64,
-		"randint": randint,
+		"rand":      rand.Float64,
+		"randint":   randint,
+		"-randseed": randseed,
 
 		"range": rangeFn,
 	})
+
+	// For rand and randint.
+	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 //elvdoc:fn num
@@ -669,6 +674,16 @@ func randint(args ...int) (int, error) {
 	}
 	return low + rand.Intn(high-low), nil
 }
+
+//elvdoc:fn -randseed
+//
+// ```elvish
+// -randseed $seed
+// ```
+//
+// Sets the seed for the random number generator.
+
+func randseed(x int) { rand.Seed(int64(x)) }
 
 //elvdoc:fn range
 //

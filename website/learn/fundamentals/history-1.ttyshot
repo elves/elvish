@@ -1,3 +1,5 @@
+ -randseed 1; echo '[CUT]'
+#prompt
 randint 1 7
 #prompt
 #send-keys Up

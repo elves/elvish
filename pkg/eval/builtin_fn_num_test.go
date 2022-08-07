@@ -3,8 +3,10 @@ package eval_test
 import (
 	"math"
 	"math/big"
+	"math/rand"
 	"strings"
 	"testing"
+	"time"
 
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
@@ -243,6 +245,16 @@ func TestRandint(t *testing.T) {
 			"randint 2 1"),
 		That("randint").Throws(ErrorWithType(errs.ArityMismatch{}), "randint"),
 		That("randint 1 2 3").Throws(ErrorWithType(errs.ArityMismatch{}), "randint 1 2 3"),
+	)
+}
+
+func TestRandSeed(t *testing.T) {
+	// Reseed to make other RNG-dependent tests non-deterministic
+	defer rand.Seed(time.Now().UTC().UnixNano())
+
+	Test(t,
+		// Observe that the effect of -randseed is making randint deterministic
+		That("fn f { -randseed 0; randint 10 }; eq (f) (f)").Puts(true),
 	)
 }
 

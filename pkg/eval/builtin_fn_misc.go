@@ -5,7 +5,6 @@ package eval
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 	"net"
 	"sync"
 	"time"
@@ -43,8 +42,6 @@ func init() {
 		"-ifaddrs": _ifaddrs,
 	})
 
-	// For rand and randint.
-	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 //elvdoc:fn nop
