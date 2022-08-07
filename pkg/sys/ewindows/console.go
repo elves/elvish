@@ -12,11 +12,12 @@ import (
 // https://docs.microsoft.com/en-us/windows/console/readconsoleinput
 //
 // BOOL WINAPI ReadConsoleInput(
-// 	_In_  HANDLE        hConsoleInput,
-// 	_Out_ PINPUT_RECORD lpBuffer,
-// 	_In_  DWORD         nLength,
-// 	_Out_ LPDWORD       lpNumberOfEventsRead
-//   );
+//
+//		_In_  HANDLE        hConsoleInput,
+//		_Out_ PINPUT_RECORD lpBuffer,
+//		_In_  DWORD         nLength,
+//		_Out_ LPDWORD       lpNumberOfEventsRead
+//	  );
 var readConsoleInput = kernel32.NewProc("ReadConsoleInputW")
 
 // ReadConsoleInput input wraps the homonymous Windows API call.

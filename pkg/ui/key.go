@@ -166,9 +166,9 @@ var modifierByName = map[string]Mod{
 
 // ParseKey parses a symbolic key. The syntax is:
 //
-//   Key = { Mod ('+' | '-') } BareKey
+//	Key = { Mod ('+' | '-') } BareKey
 //
-//   BareKey = FunctionKeyName | SingleRune
+//	BareKey = FunctionKeyName | SingleRune
 func ParseKey(s string) (Key, error) {
 	var k Key
 

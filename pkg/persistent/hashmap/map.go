@@ -25,10 +25,10 @@ type Map interface {
 
 // Iterator is an iterator over map elements. It can be used like this:
 //
-//     for it := m.Iterator(); it.HasElem(); it.Next() {
-//         key, value := it.Elem()
-//         // do something with elem...
-//     }
+//	for it := m.Iterator(); it.HasElem(); it.Next() {
+//	    key, value := it.Elem()
+//	    // do something with elem...
+//	}
 type Iterator interface {
 	// Elem returns the current key-value pair.
 	Elem() (any, any)

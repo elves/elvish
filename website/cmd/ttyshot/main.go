@@ -6,8 +6,8 @@
 //
 // You can recreate all the ttyshots by running the following from the project top-level directory:
 //
-//   make ttyshot
-//   for f [website/ttyshot/**.spec] { put $f; ./ttyshot $f >/dev/tty 2>&1 }
+//	make ttyshot
+//	for f [website/ttyshot/**.spec] { put $f; ./ttyshot $f >/dev/tty 2>&1 }
 //
 // This assumes working `elvish` and `tmux` programs in $E:PATH.
 package main
