@@ -112,14 +112,14 @@ type Evaler struct {
 // are writing a plugin that works with the interactive mode, it's better to use
 // [`edit:notify`](edit.html#edit:notify).
 //
-// @cf before-chdir
+// @cf $before-chdir
 
 //elvdoc:var before-chdir
 //
 // A list of functions to run before changing directory. These functions are always
 // called with the new working directory.
 //
-// @cf after-chdir
+// @cf $after-chdir
 
 //elvdoc:var num-bg-jobs
 //

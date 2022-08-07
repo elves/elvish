@@ -19,7 +19,7 @@ import (
 // Enter command mode. This mode is intended to emulate Vi's command mode, but
 // it is very incomplete right now.
 //
-// @cf edit:command:binding
+// @cf $edit:command:binding
 
 func initCommandAPI(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	bindingVar := newBindingVar(emptyBindingsMap)

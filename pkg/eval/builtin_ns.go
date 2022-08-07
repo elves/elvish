@@ -84,7 +84,7 @@ import (
 // A [psuedo-map](./language.html#pseudo-map) that exposes information about the Elvish binary.
 // Running `put $buildinfo | to-json` will produce the same output as `elvish -buildinfo -json`.
 //
-// @cf version
+// @cf $version
 
 //elvdoc:var version
 //
@@ -101,7 +101,7 @@ import (
 // to test if variable `new-var` is available rather than comparing against `$version` to see if the
 // elvish version is equal to or newer than the version that introduced `new-var`.
 //
-// @cf buildinfo
+// @cf $buildinfo
 
 var builtinNs = BuildNsNamed("").AddVars(map[string]vars.Var{
 	"_":              vars.NewBlackhole(),
