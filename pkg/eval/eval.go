@@ -102,6 +102,12 @@ type Evaler struct {
 // /usr/local>
 // ```
 //
+// **Note**: The use of `echo` above is for illustrative purposes. When Elvish
+// is used interactively, the working directory may be changed in location mode
+// or navigation mode, and outputs from `echo` can garble the terminal. If you
+// are writing a plugin that works with the interactive mode, it's better to use
+// [`edit:notify`](edit.html#edit:notify).
+//
 // @cf before-chdir
 
 //elvdoc:var before-chdir
