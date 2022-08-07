@@ -55,6 +55,10 @@ type Evaler struct {
 	// Callback to notify the success or failure of background jobs. Must not be
 	// mutated once the Evaler is used to evaluate any code.
 	BgJobNotify func(string)
+	// Path to the rc file, and path to the rc file actually evaluated. These
+	// are not used by the Evaler itself right now; they are here so that they
+	// can be exposed to the runtime: module.
+	RcPath, EffectiveRcPath string
 
 	mu sync.RWMutex
 	// Mutations to fields below must be guarded by mutex.
