@@ -1,3 +1,5 @@
+# Source for Elvish's website
+
 This directory contains source for Elvish's official website.
 
 The documents are written in GitHub-flavored markdown sprinkled with some HTML
@@ -5,7 +7,7 @@ and custom macros. Most of them can be viewed directly in GitHub; notable
 exceptions are the homepage (`home.md`) and the download page
 (`get/prelude.md`).
 
-# Building
+## Building
 
 The website is a collection of static HTML files, built from Markdown files with
 a custom toolchain. You need the following software to build it:
@@ -26,7 +28,7 @@ like `./get` will cause the browser to open the corresponding directory, instead
 of the `index.html` file under it, and we use JavaScript to patch such URLs
 dynamically.
 
-## Building the docset
+### Building the docset
 
 Building the docset requires the following additional dependencies:
 
@@ -37,7 +39,7 @@ Building the docset requires the following additional dependencies:
 To build the docset, run `make docset`. The generated docset is in
 `Elvish.docset`.
 
-# Transcripts
+## Transcripts
 
 Documents can contain **transcripts** of Elvish sessions, identified by the
 language tag `elvish-transcript`. A simple example:
@@ -66,7 +68,7 @@ of Elvish code:
 As long as you use Elvish's default prompt, you should be able to rely on this
 heuristic.
 
-# Ttyshots
+## Ttyshots
 
 Some of the pages include "ttyshots" that show the content of Elvish sessions.
 They are HTML files with terminal attributes converted to CSS classes, generated
@@ -77,7 +79,7 @@ names ending in `.ttyshot`, and the generated HTML files have names ending in
 The generation process depends on [`tmux`](https://github.com/tmux/tmux) and a
 built `elvish` in `PATH`. Windows is not supported.
 
-## Instruction syntax
+### Instruction syntax
 
 Ttyshot instruction files look like Elvish transcripts, with the following
 differences:
@@ -98,7 +100,7 @@ trigger navigation mode at the next prompt:
 ~> #send-keys ctrl-L
 ```
 
-## Generating ttyshots
+### Generating ttyshots
 
 Unlike other generated website artifacts, generated ttyshots are committed into
 the repository, and the `Makefile` rule to generate them is disabled by default.
@@ -114,7 +116,7 @@ The first time you generate ttyshots, `make` will build the `ttyshot` tool, and
 regenerate all ttyshots. Subsequent runs will only regenerate ttyshots whose
 instruction files have changed.
 
-# Commit History
+## Commit History
 
 These files used to live in a
 [separate repository](https://github.com/elves/elvish.io). However, because
