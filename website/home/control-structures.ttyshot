@@ -1,13 +1,11 @@
-if $true { echo good } else { echo bad }
-#prompt
-for x [lorem ipsum] {
-  echo $x.pdf
-}
-#prompt
-try {
-  fail 'bad error'
-} catch e {
-  echo error $e
-} else {
-  echo ok
-}
+~> if $true { echo good } else { echo bad }
+~> for x [lorem ipsum] {
+     echo $x.pdf
+   }
+~> try {
+     fail 'bad error'
+   } catch e {
+     echo error $e
+   } else {
+     echo ok
+   }

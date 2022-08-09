@@ -1,3 +1,2 @@
-echo abc def
-#prompt
-#send-keys vim Space M-,
+~> echo abc def
+~> #send-keys vim Space M-,

@@ -37,6 +37,35 @@ Building the docset requires the following additional dependencies:
 To build the docset, run `make docset`. The generated docset is in
 `Elvish.docset`.
 
+# Transcripts
+
+Documents can contain **transcripts** of Elvish sessions, identified by the
+language tag `elvish-transcript`. A simple example:
+
+````markdown
+```elvish-transcript
+~> echo foo |
+   str:to-upper (one)
+▶ FOO
+```
+````
+
+When the website is built, the toolchain will highlight the
+`echo foo | str:to-upper (one)` part correctly as Elvish code.
+
+To be exact, the toolchain uses the following heuristic to determine the range
+of Elvish code:
+
+-   It looks for what looks like a prompt, which starts with either `~` or `/`,
+    ends with `>` and a space, with no spaces in between.
+
+-   It then extends the range downwards, as long as the line starts with N
+    whitespaces, where N is the length of the prompt (including the trailing
+    space).
+
+As long as you use Elvish's default prompt, you should be able to rely on this
+heuristic.
+
 # Ttyshots
 
 Some of the pages include "ttyshots" that show the content of Elvish sessions.
@@ -50,24 +79,23 @@ built `elvish` in `PATH`. Windows is not supported.
 
 ## Instruction syntax
 
-Each line in a ttyshot instruction file is one of the following:
+Ttyshot instruction files look like Elvish transcripts, with the following
+differences:
 
--   `#prompt` instructs waiting for a new shell prompt.
+-   It should not contain the output of commands. Anything that is not part of
+    an input at a prompt causes a parse error.
 
--   `#`_`command`_, where `command` is a string that does **not** start with a
-    space and is not `prompt`, is a command sent to `tmux`. The most useful one
-    (and only one being used now) is `send-keys`.
+-   If the Elvish code starts with `#` followed immediately by a letter, it is
+    treated instead as a command to sent to `tmux`.
 
--   Anything else is treated as text that should be sent directly to the Elvish
-    prompt.
+    The most useful one (and only one being used now) is `send-keys`.
 
-For example, the following instructions runs `cd /tmp`, waits for the next
-prompt, and sends Ctrl-N to trigger navigation mode:
+For example, the following instructions runs `cd /tmp`, and sends Ctrl-N to
+trigger navigation mode at the next prompt:
 
 ```
-cd /tmp
-#prompt
-#send-keys ctrl-L
+~> cd /tmp
+~> #send-keys ctrl-L
 ```
 
 ## Generating ttyshots
@@ -77,9 +105,10 @@ the repository, and the `Makefile` rule to generate them is disabled by default.
 This is because the process to generate ttyshots is relatively slow and may have
 network dependencies.
 
-To turn on ttyshot generation, pass `TTYSHOT=1` to `make`. For example, to
-generate a single ttyshot, run `make TTYSHOT=1 foo.ttyshot.html`. To build the
-website with ttyshot generation enabled, run `make TTYSHOT=1`.
+To turn on ttyshot generation, pass `TTYSHOT=1` to `make` (where `1` can be
+replaced by any non-empty string). For example, to generate a single ttyshot,
+run `make TTYSHOT=1 foo.ttyshot.html`. To build the website with ttyshot
+generation enabled, run `make TTYSHOT=1`.
 
 The first time you generate ttyshots, `make` will build the `ttyshot` tool, and
 regenerate all ttyshots. Subsequent runs will only regenerate ttyshots whose

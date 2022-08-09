@@ -3,48 +3,48 @@
 package main
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 )
 
-type opType int
-
-// Operations for driving a demo ttyshot.
-const (
-	opText   opType = iota // send the provided text, optionally followed by Enter
-	opPrompt               // wait for prompt marker
-	opTmux                 // run tmux command
-)
-
 type op struct {
-	typ opType
-	val any
+	codeLines   []string
+	tmuxCommand []string
 }
 
-func parseSpec(content string) []op {
+var (
+	ps1Pattern  = regexp.MustCompile(`^[~/][^ ]*> `)
+	tmuxPattern = regexp.MustCompile(`^#[a-z]`)
+)
+
+func parseSpec(content string) ([]op, error) {
 	lines := strings.Split(content, "\n")
-	ops := make([]op, 1, len(lines)+2)
-	ops[0] = op{opPrompt, nil}
 
-	for _, line := range lines {
-		if len(line) == 0 {
-			continue // ignore empty lines
+	var ops []op
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+		if line == "" {
+			continue
 		}
-		var newOp op
-		if line == "#prompt" {
-			newOp = op{opPrompt, nil}
-		} else if strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "# ") {
-			newOp = op{opTmux, strings.Fields(line[1:])}
-		} else {
-			newOp = op{opText, line}
+		ps1 := ps1Pattern.FindString(line)
+		if ps1 == "" {
+			return nil, fmt.Errorf("invalid line %v", i+1)
 		}
-		ops = append(ops, newOp)
+		content := line[len(ps1):]
+		if tmuxPattern.MatchString(content) {
+			ops = append(ops, op{tmuxCommand: strings.Fields(content[1:])})
+			continue
+		}
+
+		codeLines := []string{content}
+		ps2 := strings.Repeat(" ", len(ps1))
+		for i++; i < len(lines) && strings.HasPrefix(lines[i], ps2); i++ {
+			codeLines = append(codeLines, lines[i][len(ps2):])
+		}
+		i--
+		ops = append(ops, op{codeLines: codeLines})
 	}
 
-	if len(ops) > 0 && ops[len(ops)-1].typ == opText {
-		// The termination of the ttyshot process relies on the editor to be
-		// active, so add an implicit #prompt.
-		ops = append(ops, op{opPrompt, nil})
-	}
-
-	return ops
+	return ops, nil
 }

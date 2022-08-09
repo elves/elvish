@@ -31,7 +31,7 @@ clean:
 
 ifdef TTYSHOT
 %.ttyshot.html: %.ttyshot tools/ttyshot.bin
-	tools/ttyshot.bin -o $@ $<
+	tools/ttyshot.bin $(if $(findstring verbose,$(TTYSHOT)),-v,) -o $@ $<
 else
 %.ttyshot.html:
 	@: ttyshot generation disabled by default
