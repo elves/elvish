@@ -97,7 +97,7 @@ trigger navigation mode at the next prompt:
 
 ```
 ~> cd /tmp
-~> #send-keys ctrl-L
+~> #send-keys C-N
 ```
 
 ### Generating ttyshots
