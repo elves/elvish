@@ -19,7 +19,7 @@
     "activationEvents": [
         "onLanguage:elvish"
     ],
-    "main": "./extension.js",
+    "main": "./dist/extension.js",
     "contributes": {
         "languages": [
             {
@@ -86,8 +86,14 @@
             }
         }
     },
-    "scripts": {},
+    "scripts": {
+        "vscode:prepublish": "npm run build",
+        "build": "esbuild ./extension.js --bundle --outfile=./dist/extension.js --external:vscode --format=cjs --platform=node --minify --sourcemap"
+    },
     "dependencies": {
         "vscode-languageclient": "^7.0.0"
+    },
+    "devDependencies": {
+        "esbuild": "^0.15.0"
     }
 }
