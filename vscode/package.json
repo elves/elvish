@@ -2,7 +2,7 @@
     "name": "elvish",
     "displayName": "Elvish",
     "description": "Elvish language support for Visual Studio Code",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "publisher": "elves",
     "license": "BSD-2-Clause",
     "icon": "icon.png",
@@ -21,17 +21,55 @@
     ],
     "main": "./extension.js",
     "contributes": {
-        "languages": [{
-            "id": "elvish",
-            "aliases": ["Elvish", "elvish"],
-            "extensions": [".elv"],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "elvish",
-            "scopeName": "source.elvish",
-            "path": "./elvish.tmLanguage.json"
-        }],
+        "languages": [
+            {
+                "id": "elvish",
+                "aliases": [
+                    "Elvish",
+                    "elvish"
+                ],
+                "extensions": [
+                    ".elv"
+                ],
+                "configuration": "./language-configuration.json"
+            },
+            {
+                "id": "elvish-transcript",
+                "aliases": [
+                    "Elvish transcript",
+                    "elvish transcript"
+                ],
+                "extensions": [
+                    ".ttyshot"
+                ]
+            }
+        ],
+        "grammars": [
+            {
+                "language": "elvish",
+                "scopeName": "source.elvish",
+                "path": "./syntaxes/elvish.tmLanguage.json"
+            },
+            {
+                "language": "elvish-transcript",
+                "scopeName": "source.elvish-transcript",
+                "path": "./syntaxes/elvish-transcript.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.block.elvish": "elvish"
+                }
+            },
+            {
+                "scopeName": "source.elvish.in.markdown",
+                "path": "./syntaxes/elvish-in-markdown.tmLanguage.json",
+                "injectTo": [
+                    "text.html.markdown"
+                ],
+                "embeddedLanguages": {
+                    "meta.embedded.block.elvish": "elvish",
+                    "meta.embedded.block.elvish-transcript": "elvish-transcript"
+                }
+            }
+        ],
         "configuration": {
             "title": "Elvish",
             "properties": {
@@ -48,8 +86,7 @@
             }
         }
     },
-	"scripts": {
-	},
+    "scripts": {},
     "dependencies": {
         "vscode-languageclient": "^7.0.0"
     }
