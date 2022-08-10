@@ -1,15 +1,8 @@
 //go:build !windows && !plan9 && !js
 
-// Generate a ttyshot HTML image from a ttyshot specification.
+// Command ttyshot generates a ttyshot HTML image from a ttyshot specification.
 //
-// Usage: ./ttyshot website/ttyshot/*.spec
-//
-// You can recreate all the ttyshots by running the following from the project top-level directory:
-//
-//	make ttyshot
-//	for f [website/ttyshot/**.spec] { put $f; ./ttyshot $f >/dev/tty 2>&1 }
-//
-// This assumes working `elvish` and `tmux` programs in $E:PATH.
+// See documentation in http://src.elv.sh/website#ttyshots.
 package main
 
 import (
