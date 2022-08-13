@@ -1,9 +1,7 @@
-set edit:rprompt = (constantly ^
-  (styled (whoami)✸(hostname) inverse))
-#prompt
-set edit:prompt = {
-  tilde-abbr $pwd
-  styled '❱ ' bright-red
-}
-#prompt
-#send-keys # Space Fancy Space unicode Space prompts!
+~> set edit:rprompt = (constantly ^
+     (styled (whoami)✸(hostname) inverse))
+~> set edit:prompt = {
+     tilde-abbr $pwd
+     styled '❱ ' bright-red
+   }
+~> #send-keys # Space Fancy Space unicode Space prompts!

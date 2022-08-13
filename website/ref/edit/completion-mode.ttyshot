@@ -1,3 +1,2 @@
-cd elvish; echo '[CUT]'
-#prompt
-#send-keys vim Space Tab
+~> cd elvish; echo '[CUT]'
+~> #send-keys vim Space Tab

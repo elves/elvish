@@ -107,7 +107,7 @@ func createTtyshot(homePath string, script []op, saveRaw string) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-	executeScript(script, ctrl, homePath)
+	finalEmptyPrompt := executeScript(script, ctrl, homePath)
 	log.Println("executed script, waiting for tmux to exit")
 
 	// Drain outputs from the terminal. This is needed so that tmux can exit
@@ -129,11 +129,9 @@ func createTtyshot(homePath string, script []op, saveRaw string) ([]byte, error)
 	segments := strings.Split(ttyshot, cutMarker+"\n")
 	ttyshot = segments[len(segments)-1]
 
-	// Strip all the prompt markers, and the content after the last prompt
-	// marker if the last instruction was #prompt (in which case the content
-	// will just be an empty prompt).
+	// Strip all the prompt markers and the final empty prompt.
 	segments = strings.Split(ttyshot, promptMarker+"\n")
-	if len(script) > 0 && script[len(script)-1].typ == opPrompt {
+	if finalEmptyPrompt {
 		segments = segments[:len(segments)-1]
 	}
 	ttyshot = strings.Join(segments, "")
@@ -186,39 +184,58 @@ func spawnElvish(homePath string, tty *os.File) (<-chan error, error) {
 	return doneCh, nil
 }
 
-func executeScript(script []op, ctrl *os.File, homePath string) {
+func executeScript(script []op, ctrl *os.File, homePath string) (finalEmptyPrompt bool) {
 	for _, op := range script {
+		log.Println("waiting for prompt")
+		err := waitForPrompt(ctrl)
+		if err != nil {
+			// TODO: Handle the error properly
+			panic(err)
+		}
+
 		log.Println("executing", op)
-		switch op.typ {
-		case opText:
-			text := op.val.(string)
-			ctrl.WriteString(text)
-			ctrl.WriteString("\r")
-		case opPrompt:
-			err := waitForOutput(ctrl, promptMarker,
-				func(bs []byte) bool { return bytes.HasSuffix(bs, []byte(promptMarker)) })
-			if err != nil {
-				// TODO: Handle the error properly
-				panic(err)
+		if op.codeLines != nil {
+			for i, line := range op.codeLines {
+				if i > 0 {
+					// Use Alt-Enter to avoid committing the code
+					ctrl.WriteString("\033\r")
+				}
+				ctrl.WriteString(line)
 			}
-		case opTmux:
+			ctrl.WriteString("\r")
+		} else {
 			tmuxSock := filepath.Join(homePath, ".tmp", "tmux.sock")
 			tmuxCmd := exec.Command("tmux",
-				append([]string{"-S", tmuxSock}, op.val.([]string)...)...)
+				append([]string{"-S", tmuxSock}, op.tmuxCommand...)...)
 			tmuxCmd.Env = []string{}
 			err := tmuxCmd.Run()
 			if err != nil {
 				// TODO: Handle the error properly
 				panic(err)
 			}
-		default:
-			panic("unhandled op")
 		}
 	}
+
+	if len(script) > 0 && script[len(script)-1].codeLines != nil {
+		log.Println("waiting for final empty prompt")
+		finalEmptyPrompt = true
+		err := waitForPrompt(ctrl)
+		if err != nil {
+			// TODO: Handle the error properly
+			panic(err)
+		}
+	}
+
 	log.Println("sending Alt-q")
 	// Alt-q is bound to a function that captures the content of the pane and
 	// exits
 	ctrl.Write([]byte{'\033', 'q'})
+	return finalEmptyPrompt
+}
+
+func waitForPrompt(f *os.File) error {
+	return waitForOutput(f, promptMarker,
+		func(bs []byte) bool { return bytes.HasSuffix(bs, []byte(promptMarker)) })
 }
 
 func waitForOutput(f *os.File, expected string, matcher func([]byte) bool) error {
