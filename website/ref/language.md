@@ -2577,6 +2577,9 @@ fn ls {|@a|
 That definition is not visible in module files: `ls` will still refer to the
 external command `ls`, unless you shadow it in the very same module.
 
+Note: to conditionally import a module into a REPL, see the
+[relevant section on `edit:add-var`](edit.html#conditionally-importing-a-module).
+
 ### Re-importing
 
 Modules are cached after one import. Subsequent imports do not re-execute the
