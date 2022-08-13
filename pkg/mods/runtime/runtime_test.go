@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"os"
 	"testing"
 
 	"src.elv.sh/pkg/eval"
@@ -18,10 +19,14 @@ func TestRuntime(t *testing.T) {
 
 		ev.ExtendGlobal(eval.BuildNs().AddNs("runtime", Ns(ev)))
 	}
+
+	elvishPath, _ := os.Executable()
+
 	evaltest.TestWithSetup(t, setup,
 		That("put $runtime:lib-dirs").Puts(vals.MakeList("/lib/1", "/lib/2")),
 		That("put $runtime:rc-path").Puts("/path/to/rc.elv"),
 		That("put $runtime:effective-rc-path").Puts("/path/to/effective/rc.elv"),
+		That(`put $runtime:elvish-path`).Puts(elvishPath),
 	)
 }
 
