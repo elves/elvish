@@ -169,6 +169,39 @@ func TestGetRegions(t *testing.T) {
 			{17, 18, lexicalRegion, "}"},
 		}),
 
+		Args("try { } catch e { }").Rets([]region{
+			{0, 3, semanticRegion, commandRegion}, // try
+			{4, 5, lexicalRegion, "{"},
+			{6, 7, lexicalRegion, "}"},
+			{8, 13, semanticRegion, keywordRegion},   // catch
+			{14, 15, semanticRegion, variableRegion}, // e
+			{16, 17, lexicalRegion, "{"},
+			{18, 19, lexicalRegion, "}"},
+		}),
+
+		Args("try { } catch e { } else { }").Rets([]region{
+			{0, 3, semanticRegion, commandRegion}, // try
+			{4, 5, lexicalRegion, "{"},
+			{6, 7, lexicalRegion, "}"},
+			{8, 13, semanticRegion, keywordRegion},   // catch
+			{14, 15, semanticRegion, variableRegion}, // e
+			{16, 17, lexicalRegion, "{"},
+			{18, 19, lexicalRegion, "}"},
+			{20, 24, semanticRegion, keywordRegion}, // else
+			{25, 26, lexicalRegion, "{"},
+			{27, 28, lexicalRegion, "}"},
+		}),
+
+		// Regression test for b.elv.sh/1358.
+		Args("try { } catch { }").Rets([]region{
+			{0, 3, semanticRegion, commandRegion}, // try
+			{4, 5, lexicalRegion, "{"},
+			{6, 7, lexicalRegion, "}"},
+			{8, 13, semanticRegion, keywordRegion}, // catch
+			{14, 15, lexicalRegion, "{"},
+			{16, 17, lexicalRegion, "}"},
+		}),
+
 		Args("try { } finally { }").Rets([]region{
 			{0, 3, semanticRegion, commandRegion}, // try
 			{4, 5, lexicalRegion, "{"},
