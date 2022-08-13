@@ -1,12 +1,14 @@
 package runtime
 
 import (
+	"errors"
 	"os"
 	"testing"
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/testutil"
 )
 
 var That = evaltest.That
@@ -31,10 +33,14 @@ func TestRuntime(t *testing.T) {
 }
 
 func TestRuntime_NilPath(t *testing.T) {
+	testutil.Set(t, &osExecutable,
+		func() (string, error) { return "bad", errors.New("bad") })
+
 	setup := func(ev *eval.Evaler) {
 		ev.ExtendGlobal(eval.BuildNs().AddNs("runtime", Ns(ev)))
 	}
 	evaltest.TestWithSetup(t, setup,
+		That("put $runtime:elvish-path").Puts(nil),
 		That("put $runtime:rc-path").Puts(nil),
 		That("put $runtime:effective-rc-path").Puts(nil),
 	)

@@ -13,6 +13,8 @@ import (
 //
 // A list containing
 // [module search directories](command.html#module-search-directories).
+//
+// This variable is read-only.
 
 //elvdoc:var rc-path
 //
@@ -21,6 +23,8 @@ import (
 //
 // If there was an error in determining the path of the RC file, this variable
 // is `$nil`.
+//
+// This variable is read-only.
 //
 // @cf $runtime:effective-rc-path
 
@@ -38,34 +42,33 @@ import (
 // - Otherwise (when Elvish is running interactively and invoked without
 //   `-norc` or `-rc`), this variable has the same value as `$rc-path`.
 //
+// This variable is read-only.
+//
 // @cf $runtime:rc-path
 
 //elvdoc:var elvish-path
 //
-// The path to the elvish binary. If that could not be determined the value will be the empty
-// string.
+// The path to the Elvish binary.
 //
-// This is read-only.
+// If there was an error in determining the path, this variable is `$nil`.
+//
+// This variable is read-only.
 
-func elvishPath() any {
-	// TODO: Decide what to do if os.Executable returns an error. It appears that all platforms
-	// return an empty string. Which makes sense and is probably good enough for our purposes.
-	// Nonetheless, we explicitly encode that logic rather than rely on the behavior of
-	// os.Executable. TBD is whether we should instead raise an exception.
-	if binPath, err := os.Executable(); err == nil {
-		return binPath
-	}
-	return ""
-}
+var osExecutable = os.Executable
 
 // Ns returns the namespace for the runtime: module.
 //
 // All the public properties of the Evaler should be set before this function is
 // called.
 func Ns(ev *eval.Evaler) *eval.Ns {
+	elvishPath, err := osExecutable()
+	if err != nil {
+		elvishPath = ""
+	}
+
 	return eval.BuildNsNamed("runtime").
 		AddVars(map[string]vars.Var{
-			"elvish-path":       vars.FromGet(elvishPath),
+			"elvish-path":       vars.NewReadOnly(nonEmptyOrNil(elvishPath)),
 			"lib-dirs":          vars.NewReadOnly(vals.MakeListSlice(ev.LibDirs)),
 			"rc-path":           vars.NewReadOnly(nonEmptyOrNil(ev.RcPath)),
 			"effective-rc-path": vars.NewReadOnly(nonEmptyOrNil(ev.EffectiveRcPath)),
