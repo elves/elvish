@@ -33,23 +33,13 @@ var Ns = eval.BuildNsNamed("path").
 
 //elvdoc:var list-separator
 //
-// OS-specific path list separator. Colon on UNIX and semi-colon on Windows. This variable is
-// read-only.
-//
-// ```elvish-transcript
-// ~> put $path:list-separator
-// ▶ :
-// ```
+// OS-specific path list separator. Colon (`:`) on UNIX and semicolon (`;`) on
+// Windows. This variable is read-only.
 
 //elvdoc:var separator
 //
-// OS-specific path separator. Forward slash on UNIX and backslash on Windows. This variable is
-// read-only.
-//
-// ```elvish-transcript
-// ~> put $path:separator
-// ▶ /
-// ```
+// OS-specific path separator. Forward slash (`/`) on UNIX and backslash (`\\`)
+// on Windows. This variable is read-only.
 
 //elvdoc:fn abs
 //
@@ -163,10 +153,11 @@ var Ns = eval.BuildNsNamed("path").
 // path:join $path-component...
 // ```
 //
-// Join joins any number of path elements into a single path, separating them with an OS specific
-// separator. Empty elements are ignored. The result is cleaned. However, if the argument list is
-// empty or all its elements are empty, Join returns an empty string. On Windows, the result will
-// only be a UNC path if the first non-empty element is a UNC path.
+// Joins any number of path elements into a single path, separating them with an
+// [OS specific separator](#path:separator). Empty elements are ignored. The
+// result is [cleaned](#path:clean). However, if the argument list is empty or
+// all its elements are empty, Join returns an empty string. On Windows, the
+// result will only be a UNC path if the first non-empty element is a UNC path.
 //
 // ```elvish-transcript
 // ~> path:join home user bin
