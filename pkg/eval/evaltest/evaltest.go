@@ -45,6 +45,7 @@ type result struct {
 
 	CompilationError error
 	Exception        error
+	Panic            any
 }
 
 // That returns a new Case with the specified source code. Multiple arguments
@@ -81,9 +82,19 @@ func (c Case) DoesNothing() Case {
 	return c
 }
 
-// Puts returns an altered Case that runs an additional verification function.
+// Passes returns an altered Case that runs an additional verification function.
 func (c Case) Passes(f func(t *testing.T)) Case {
 	c.verify = f
+	return c
+}
+
+// PanicsWith returns an altered Case that requires the source to produce the
+// specified panic error.
+func (c Case) PanicsWith(e error) Case {
+	if c.want.Panic != nil {
+		panic("PanicsWith() can only be used once per test case")
+	}
+	c.want.Panic = e
 	return c
 }
 
@@ -117,6 +128,9 @@ func (c Case) PrintsStderrWith(s string) Case {
 // frame first). If no stacktrace string is given, the stack trace of the
 // exception is not checked.
 func (c Case) Throws(reason error, stacks ...string) Case {
+	if c.want.Exception != nil {
+		panic("Throws() can only be used once per test case")
+	}
 	c.want.Exception = exc{reason, stacks}
 	return c
 }
@@ -140,6 +154,7 @@ func Test(t *testing.T, tests ...Case) {
 func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 	t.Helper()
 	for _, tc := range tests {
+
 		t.Run(strings.Join(tc.codes, "\n"), func(t *testing.T) {
 			t.Helper()
 			ev := eval.NewEvaler()
@@ -174,6 +189,19 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 				t.Errorf("got compilation error %v, want %v",
 					r.CompilationError, tc.want.CompilationError)
 			}
+			if r.Panic == nil {
+				if tc.want.Panic != nil {
+					t.Errorf("got no panic, want %#v", tc.want.Panic)
+				}
+			} else {
+				if tc.want.Panic == nil {
+					t.Errorf("got panic %#v, want no panic", r.Panic)
+					panic(r.Panic)
+				}
+				if r.Panic != tc.want.Panic {
+					t.Errorf("got panic %#v, want %#v", r.Panic, tc.want.Panic)
+				}
+			}
 			if !matchErr(tc.want.Exception, r.Exception) {
 				t.Errorf("unexpected exception")
 				if exc, ok := r.Exception.(eval.Exception); ok {
@@ -189,8 +217,10 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 	}
 }
 
-func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) result {
-	var r result
+func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) (r result) {
+	defer func() { // capture any panic caused by running the test
+		r.Panic = recover()
+	}()
 
 	port1, collect1 := capturePort()
 	port2, collect2 := capturePort()

@@ -3,8 +3,10 @@ package eval
 import (
 	"os"
 	"os/exec"
+	"strconv"
 
 	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/prog"
 )
 
 // Command and process control.
@@ -93,7 +95,8 @@ func searchExternal(cmd string) (string, error) {
 // exit $status?
 // ```
 //
-// Exit the Elvish process with `$status` (defaulting to 0).
+// Exit the Elvish process with `$status` (defaulting to 0). The status must be
+// in the range 0 to 255 inclusive.
 
 // Can be overridden in tests.
 var osExit = os.Exit
@@ -108,7 +111,18 @@ func exit(fm *Frame, codes ...int) error {
 		return errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: len(codes)}
 	}
 
+	// On Windows the exit status has the range [0..2^32). Nonetheless, we
+	// enforce the limits of traditional UNIX systems to avoid aliasing problems
+	// on those systems (e.g., with respect to reporting signals as a reason for
+	// the exit). Also, a wider range on Windows isn't particularly useful.
+	if code < 0 || code > 255 {
+		return errs.OutOfRange{What: "exit code", ValidLow: "0", ValidHigh: "255",
+			Actual: strconv.Itoa(code)}
+	}
+
+	// We panic rather than directly calling os.Exit() because we want to run
+	// any defer'ed functions. Such as those that capture profiling data. See
+	// handlePanic() for where we perform the actual exit.
 	fm.Evaler.PreExit()
-	osExit(code)
-	return nil
+	panic(prog.ExitStatus{Status: code})
 }

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 
 	"src.elv.sh/pkg/logutil"
 )
@@ -20,6 +21,13 @@ import (
 // If its value is X, Elvish shows deprecations that should be shown for version
 // 0.X.
 var DeprecationLevel = 18
+
+func GetExitStatus(e any) *ExitStatus {
+	if e, ok := e.(ExitStatus); ok {
+		return &e
+	}
+	return nil
+}
 
 // Program represents a subprogram.
 type Program interface {
@@ -37,7 +45,7 @@ func usage(out io.Writer, fs *flag.FlagSet) {
 
 // Run parses command-line flags and runs the first applicable subprogram. It
 // returns the exit status of the program.
-func Run(fds [3]*os.File, args []string, p Program) int {
+func Run(fds [3]*os.File, args []string, p Program) (status int) {
 	fs := flag.NewFlagSet("elvish", flag.ContinueOnError)
 	// Error and usage will be printed explicitly.
 	fs.SetOutput(io.Discard)
@@ -82,6 +90,19 @@ func Run(fds [3]*os.File, args []string, p Program) int {
 		return 0
 	}
 
+	defer func() {
+		r := recover()
+		if r == nil {
+			return
+		} else if e := GetExitStatus(r); e != nil {
+			// Save the exit status and stop the panic.
+			status = e.Status
+		} else {
+			// Resume the panic; it is not supposed to be handled here.
+			panic(r)
+		}
+	}()
+
 	err = p.Run(fds, fs.Args())
 	if err == nil {
 		return 0
@@ -92,11 +113,14 @@ func Run(fds [3]*os.File, args []string, p Program) int {
 	if msg := err.Error(); msg != "" {
 		fmt.Fprintln(fds[2], msg)
 	}
+	// There are other errors possible here such as "internal error: no suitable
+	// subprogram" that do not require additional handling but should result in
+	// a return status of two.
 	switch err := err.(type) {
 	case badUsageError:
 		usage(fds[2], fs)
-	case exitError:
-		return err.exit
+	case ExitStatus:
+		return err.Status
 	}
 	return 2
 }
@@ -143,15 +167,17 @@ type badUsageError struct{ msg string }
 func (e badUsageError) Error() string { return e.msg }
 
 // Exit returns a special error that may be returned by Program.Run. It causes
-// the main function to exit with the given code without printing any error
-// messages. Exit(0) returns nil.
-func Exit(exit int) error {
-	if exit == 0 {
+// the main function to exit with the given status without printing any error
+// messages. Exit(0) returns nil since a zero exit status is not an error.
+func Exit(status int) error {
+	if status == 0 {
 		return nil
 	}
-	return exitError{exit}
+	return ExitStatus{Status: status}
 }
 
-type exitError struct{ exit int }
+type ExitStatus struct{ Status int }
 
-func (e exitError) Error() string { return "" }
+func (e ExitStatus) String() string { return strconv.Itoa(e.Status) }
+
+func (e ExitStatus) Error() string { return "" }

@@ -18,6 +18,7 @@ import (
 	"src.elv.sh/pkg/mods/daemon"
 	"src.elv.sh/pkg/mods/store"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/strutil"
 	"src.elv.sh/pkg/sys"
 	"src.elv.sh/pkg/ui"
@@ -133,6 +134,10 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 func handlePanic() {
 	r := recover()
 	if r != nil {
+		if e := prog.GetExitStatus(r); e != nil {
+			// The panic is a result of an `exit` command so do the actual exit.
+			os.Exit(e.Status)
+		}
 		println()
 		print(sys.DumpStack())
 		println()
