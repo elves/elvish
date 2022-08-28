@@ -46,6 +46,14 @@ func TestDrop(t *testing.T) {
 	)
 }
 
+func TestCompact(t *testing.T) {
+	Test(t,
+		That(`put a a b b c | compact`).Puts("a", "b", "c"),
+		That(`put a b a | compact`).Puts("a", "b", "a"),
+		thatOutputErrorIsBubbled("compact [a a]"),
+	)
+}
+
 func TestCount(t *testing.T) {
 	Test(t,
 		That(`range 100 | count`).Puts(100),

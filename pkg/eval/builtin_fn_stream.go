@@ -15,8 +15,9 @@ func init() {
 		"all": all,
 		"one": one,
 
-		"take": take,
-		"drop": drop,
+		"take":    take,
+		"drop":    drop,
+		"compact": compact,
 
 		"count": count,
 
@@ -236,6 +237,51 @@ func drop(fm *Frame, n int, inputs Inputs) error {
 			errOut = out.Put(v)
 		}
 		i++
+	})
+	return errOut
+}
+
+//elvdoc:fn drop
+//
+// ```elvish
+// compact $inputs?
+// ```
+//
+// Replaces consecutive runs of equal values with a single copy. Similar to the
+// `uniq` command on Unix.
+//
+// Examples:
+//
+// ```elvish-transcript
+// ~> put a a b b c | compact
+// ▶ a
+// ▶ b
+// ▶ c
+// ~> compact [a a b b c]
+// ▶ a
+// ▶ b
+// ▶ c
+// ~> put a b a | compact
+// ▶ a
+// ▶ b
+// ▶ a
+// ```
+
+func compact(fm *Frame, inputs Inputs) error {
+	out := fm.ValueOutput()
+	first := true
+	var errOut error
+	var prev any
+
+	inputs(func(v any) {
+		if errOut != nil {
+			return
+		}
+		if first || !vals.Equal(v, prev) {
+			errOut = out.Put(v)
+			first = false
+			prev = v
+		}
 	})
 	return errOut
 }
