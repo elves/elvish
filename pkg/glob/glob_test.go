@@ -92,8 +92,13 @@ func testGlob(t *testing.T, abs bool) {
 		err := os.Symlink(link.target, link.path)
 		if err != nil {
 			// Creating symlinks requires a special permission on Windows. If
-			// the user doesn't have that permission, just skip the whole test.
-			t.Skip(err)
+			// the user doesn't have that permission, create the symlink as an
+			// ordinary file instead.
+			f, err := os.Create(link.path)
+			if err != nil {
+				panic(err)
+			}
+			f.Close()
 		}
 	}
 
