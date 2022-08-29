@@ -68,10 +68,16 @@ func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 	// Consume non-wildcard path elements simply by following the path. This may
 	// seem like an optimization, but is actually required for "." and ".." to
 	// be used as path elements, as they do not appear in the result of ReadDir.
+	// It is also required for handling directory components that are actually
+	// symbolic links to directories.
 	for len(segs) > 1 && IsLiteral(segs[0]) && IsSlash(segs[1]) {
 		elem := segs[0].(Literal).Data
 		segs = segs[2:]
 		dir += elem + "/"
+		// This will correctly resolve symbolic links when they appear literally
+		// (e.g. in "link-to-dir/*") despite the use of Lstat, since a trailing
+		// slash always causes symbolic links to be resolved
+		// (https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_13).
 		if info, err := os.Lstat(dir); err != nil || !info.IsDir() {
 			return true
 		}
