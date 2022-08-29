@@ -139,6 +139,7 @@ type textVTStringTest struct {
 }
 
 func testTextVTString(t *testing.T, tests []textVTStringTest) {
+	t.Helper()
 	for _, test := range tests {
 		vtString := test.text.VTString()
 		if vtString != test.wantVTString {

@@ -9,17 +9,17 @@ func TestColorSGR(t *testing.T) {
 	// Test the SGR sequences of colors indirectly via VTString of Text, since
 	// that is how they are used.
 	testTextVTString(t, []textVTStringTest{
-		{T("foo", FgRed), "\033[31mfoo\033[m"},
-		{T("foo", BgRed), "\033[41mfoo\033[m"},
+		{T("foo", FgRed), "\033[;31mfoo\033[m"},
+		{T("foo", BgRed), "\033[;41mfoo\033[m"},
 
-		{T("foo", FgBrightRed), "\033[91mfoo\033[m"},
-		{T("foo", BgBrightRed), "\033[101mfoo\033[m"},
+		{T("foo", FgBrightRed), "\033[;91mfoo\033[m"},
+		{T("foo", BgBrightRed), "\033[;101mfoo\033[m"},
 
-		{T("foo", Fg(XTerm256Color(30))), "\033[38;5;30mfoo\033[m"},
-		{T("foo", Bg(XTerm256Color(30))), "\033[48;5;30mfoo\033[m"},
+		{T("foo", Fg(XTerm256Color(30))), "\033[;38;5;30mfoo\033[m"},
+		{T("foo", Bg(XTerm256Color(30))), "\033[;48;5;30mfoo\033[m"},
 
-		{T("foo", Fg(TrueColor(30, 40, 50))), "\033[38;2;30;40;50mfoo\033[m"},
-		{T("foo", Bg(TrueColor(30, 40, 50))), "\033[48;2;30;40;50mfoo\033[m"},
+		{T("foo", Fg(TrueColor(30, 40, 50))), "\033[;38;2;30;40;50mfoo\033[m"},
+		{T("foo", Bg(TrueColor(30, 40, 50))), "\033[;48;2;30;40;50mfoo\033[m"},
 	})
 }
 

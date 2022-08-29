@@ -68,23 +68,29 @@ func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 	// Consume non-wildcard path elements simply by following the path. This may
 	// seem like an optimization, but is actually required for "." and ".." to
 	// be used as path elements, as they do not appear in the result of ReadDir.
+	// It is also required for handling directory components that are actually
+	// symbolic links to directories.
 	for len(segs) > 1 && IsLiteral(segs[0]) && IsSlash(segs[1]) {
 		elem := segs[0].(Literal).Data
 		segs = segs[2:]
 		dir += elem + "/"
-		if info, err := os.Stat(dir); err != nil || !info.IsDir() {
+		// This will correctly resolve symbolic links when they appear literally
+		// (e.g. in "link-to-dir/*") despite the use of Lstat, since a trailing
+		// slash always causes symbolic links to be resolved
+		// (https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_13).
+		if info, err := os.Lstat(dir); err != nil || !info.IsDir() {
 			return true
 		}
 	}
 
 	if len(segs) == 0 {
-		if info, err := os.Stat(dir); err == nil {
+		if info, err := os.Lstat(dir); err == nil {
 			return cb(PathInfo{dir, info})
 		}
 		return true
 	} else if len(segs) == 1 && IsLiteral(segs[0]) {
 		path := dir + segs[0].(Literal).Data
-		if info, err := os.Stat(path); err == nil {
+		if info, err := os.Lstat(path); err == nil {
 			return cb(PathInfo{path, info})
 		}
 		return true
@@ -161,7 +167,7 @@ func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 		name := info.Name()
 		if matchElement(segs, name) {
 			dirname := dir + name
-			info, err := os.Stat(dirname)
+			info, err := os.Lstat(dirname)
 			if err != nil {
 				return true
 			}
@@ -248,7 +254,7 @@ segs:
 
 // matchFixedLength returns whether a run of fixed-length segments (Literal and
 // Question) matches a prefix of name. It returns whether the match is
-// successful and if if it is, the remaining part of name.
+// successful and if it is, the remaining part of name.
 func matchFixedLength(segs []Segment, name string) (bool, string) {
 	for _, seg := range segs {
 		if name == "" {

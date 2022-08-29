@@ -144,11 +144,12 @@ func (s *Segment) String() string {
 	return s.VTString()
 }
 
-// VTString renders the styled segment using VT-style escape sequences.
+// VTString renders the styled segment using VT-style escape sequences. Any
+// existing SGR state will be cleared.
 func (s *Segment) VTString() string {
 	sgr := s.SGR()
 	if sgr == "" {
-		return s.Text
+		return "\033[m" + s.Text
 	}
-	return fmt.Sprintf("\033[%sm%s\033[m", sgr, s.Text)
+	return fmt.Sprintf("\033[;%sm%s\033[m", sgr, s.Text)
 }

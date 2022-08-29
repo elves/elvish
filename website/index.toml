@@ -7,8 +7,8 @@ rootURL = "https://elv.sh"
 
 [index]
 name = "home"
-extraCSS = ["home.css"]
-extraJS = ["home.js"]
+extraCSS = ["home/home.css"]
+extraJS = ["home/home.js"]
 
 [[categories]]
 name = "get"

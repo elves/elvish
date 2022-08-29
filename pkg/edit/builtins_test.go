@@ -437,17 +437,16 @@ func TestMoveDotUpDown(t *testing.T) {
 // and periods (.) to indicate trailing runes of words. Indices are also
 // annotated.
 //
-//   cd ~/downloads; rm -rf 2018aug07-pics/*;
-//   ^. ^........... ^. ^.. ^................  (word)
-//   ^. ^.^........^ ^. ^^. ^........^^...^..  (small-word)
-//   ^.   ^........  ^.  ^. ^........ ^...     (alnum-word)
-//   01234567890123456789012345678901234567890
-//   0         1         2         3         4
+//	cd ~/downloads; rm -rf 2018aug07-pics/*;
+//	^. ^........... ^. ^.. ^................  (word)
+//	^. ^.^........^ ^. ^^. ^........^^...^..  (small-word)
+//	^.   ^........  ^.  ^. ^........ ^...     (alnum-word)
+//	01234567890123456789012345678901234567890
+//	0         1         2         3         4
 //
-//   word boundaries:         0 3      16 19    23
-//   small-word boundaries:   0 3 5 14 16 19 20 23 32 33 37
-//   alnum-word boundaries:   0   5    16    20 23    33
-//
+//	word boundaries:         0 3      16 19    23
+//	small-word boundaries:   0 3 5 14 16 19 20 23 32 33 37
+//	alnum-word boundaries:   0   5    16    20 23    33
 var wordMoveTestBuffer = "cd ~/downloads; rm -rf 2018aug07-pics/*;"
 
 var (

@@ -1,0 +1,4 @@
+~>  -randseed 2; echo '[CUT]'
+~> randint 1 7
+~> # more commands ...
+~> #send-keys ra Up

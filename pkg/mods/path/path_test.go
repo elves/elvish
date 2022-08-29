@@ -36,6 +36,8 @@ func TestPath(t *testing.T) {
 		// This block of tests is not meant to be comprehensive. Their primary purpose is to simply
 		// ensure the Elvish command is correctly mapped to the relevant Go function. We assume the
 		// Go function behaves correctly.
+		That("put $path:list-separator").Puts(string(filepath.ListSeparator)),
+		That("put $path:separator").Puts(string(filepath.Separator)),
 		That("path:abs a/b/c.png").Puts(absPath),
 		That("path:base a/b/d.png").Puts("d.png"),
 		That("path:clean ././x").Puts("x"),
@@ -45,6 +47,7 @@ func TestPath(t *testing.T) {
 		That("path:ext a/b/s").Puts(""),
 		That("path:is-abs a/b/s").Puts(false),
 		That("path:is-abs "+absPath).Puts(true),
+		That("path:join a b c").Puts(filepath.Join("a", "b", "c")),
 
 		// Elvish "path:" module functions that are not trivial wrappers around a Go stdlib function
 		// should have comprehensive tests below this comment.

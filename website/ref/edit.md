@@ -19,7 +19,7 @@ same time. Each mode has its own UI and keybindings. For instance, the default
 (triggered by <kbd>Tab</kbd> by default) shows you all candidates for
 completion, and you can use arrow keys to navigate those candidates.
 
-@ttyshot completion-mode
+@ttyshot ref/edit/completion-mode
 
 Each mode has its own submodule under `edit:`. For instance, builtin functions
 and configuration variables for the completion mode can be found in the

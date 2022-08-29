@@ -29,7 +29,7 @@ import (
 // the cursor left, and typing another `|` does **not** expand to `| less`,
 // since the abbreviation `||` was not typed consecutively.
 //
-// @cf edit:command-abbr edit:small-word-abbr
+// @cf $edit:command-abbr $edit:small-word-abbr
 
 //elvdoc:var command-abbr
 //
@@ -49,7 +49,7 @@ import (
 // set edit:command-abbr['gc'] = 'git commit'
 // ```
 //
-// @cf edit:abbr edit:small-word-abbr
+// @cf $edit:abbr $edit:small-word-abbr
 
 //elvdoc:var small-word-abbr
 //
@@ -120,7 +120,7 @@ import (
 // If both a [simple abbreviation](#edit:abbr) and a small-word abbreviation can
 // be expanded, the simple abbreviation has priority.
 //
-// @cf edit:abbr edit:command-abbr
+// @cf $edit:abbr $edit:command-abbr
 
 func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.NsBuilder) {
 	simpleAbbr := vals.EmptyMap

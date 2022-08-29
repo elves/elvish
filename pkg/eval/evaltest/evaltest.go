@@ -8,9 +8,9 @@
 //
 // Example:
 //
-//     Test(t,
-//         That("put x").Puts("x"),
-//         That("echo x").Prints("x\n"))
+//	Test(t,
+//	    That("put x").Puts("x"),
+//	    That("echo x").Prints("x\n"))
 //
 // If some setup is needed, use the TestWithSetup function instead.
 package evaltest
@@ -54,7 +54,7 @@ type result struct {
 // When combined with subsequent method calls, a test case reads like English.
 // For example, a test for the fact that "put x" puts "x" reads:
 //
-//     That("put x").Puts("x")
+//	That("put x").Puts("x")
 func That(lines ...string) Case {
 	return Case{codes: []string{strings.Join(lines, "\n")}}
 }
@@ -76,7 +76,7 @@ func (c Case) WithSetup(f func(*eval.Evaler)) Case {
 // DoesNothing returns t unchanged. It is useful to mark tests that don't have
 // any side effects, for example:
 //
-//     That("nop").DoesNothing()
+//	That("nop").DoesNothing()
 func (c Case) DoesNothing() Case {
 	return c
 }

@@ -464,8 +464,8 @@ There is no literal syntax for exceptions. See the discussion of
 about this data type.
 
 An exception is a [pseudo-map](#pseudo-map) with a `reason` field, which is in
-turn a pseudo-map. The reason pseudo-map has has a `type` field identifying how
-the exception was raised, and further fields depending on the type:
+turn a pseudo-map. The reason pseudo-map has a `type` field identifying how the
+exception was raised, and further fields depending on the type:
 
 -   If the `type` field is `fail`, the exception was raised by the
     [fail](builtin.html#fail) command.
@@ -742,7 +742,7 @@ Compilation error: variable $nonexistent not found
 
 When a function literal refers to a variable in an outer scope, the function
 will keep that variable alive, even if that variable is the local variable of an
-outer function that that function has returned. This is called
+outer function that function has returned. This is called
 [closure semantics](<https://en.wikipedia.org/wiki/Closure_(computer_programming)>),
 because the function literal "closes" over the environment it is defined in.
 
@@ -1214,6 +1214,8 @@ wildcard:
     -   `dir` will match if the path is a directory.
 
     -   `regular` will match if the path is a regular file.
+
+    Symbolic links are considered to be regular files.
 
 Although global modifiers affect the entire wildcard pattern, you can add it
 after any wildcard, and the effect is the same. For example,
@@ -2023,7 +2025,7 @@ Syntax:
 ```elvish-transcript
 try {
     <try-block>
-} catch catch-varname {
+} catch exception-var {
     <catch-block>
 } else {
     <else-block>
@@ -2038,7 +2040,7 @@ follows:
 1.  The `try-block` is always executed first.
 
 2.  If `catch` is present, any exception that occurs in `try-block` is caught
-    and stored in `catch-varname`, and `catch-block` is then executed. Example:
+    and stored in `exception-var`, and `catch-block` is then executed. Example:
 
     ```elvish-transcript
     ~> try { fail bad } catch e { put $e }
@@ -2576,6 +2578,9 @@ fn ls {|@a|
 
 That definition is not visible in module files: `ls` will still refer to the
 external command `ls`, unless you shadow it in the very same module.
+
+Note: to conditionally import a module into a REPL, see the
+[relevant section on `edit:add-var`](edit.html#conditionally-importing-a-module).
 
 ### Re-importing
 

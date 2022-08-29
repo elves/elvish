@@ -30,10 +30,12 @@ var (
 // timeout.
 //
 // DWORD WINAPI WaitForMultipleObjects(
-//   _In_       DWORD  nCount,
-//   _In_ const HANDLE *lpHandles,
-//   _In_       BOOL   bWaitAll,
-//   _In_       DWORD  dwMilliseconds
+//
+//	_In_       DWORD  nCount,
+//	_In_ const HANDLE *lpHandles,
+//	_In_       BOOL   bWaitAll,
+//	_In_       DWORD  dwMilliseconds
+//
 // );
 func WaitForMultipleObjects(handles []windows.Handle, waitAll bool,
 	timeout uint32) (trigger int, abandoned bool, err error) {

@@ -52,10 +52,10 @@ type Vector interface {
 
 // Iterator is an iterator over vector elements. It can be used like this:
 //
-//     for it := v.Iterator(); it.HasElem(); it.Next() {
-//         elem := it.Elem()
-//         // do something with elem...
-//     }
+//	for it := v.Iterator(); it.HasElem(); it.Next() {
+//	    elem := it.Elem()
+//	    // do something with elem...
+//	}
 type Iterator interface {
 	// Elem returns the element at the current position.
 	Elem() any

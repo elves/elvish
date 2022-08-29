@@ -58,9 +58,11 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 // foo
 // ```
 //
+// ### Importing definition from a module into the REPL
+//
 // One common use of this command is to put the definitions of functions intended for REPL use in a
 // module instead of your [`rc.elv`](command.html#rc-file). For example, if you want to define `ll`
-// as `ls -l`, you can do so in your [`rc.elv`](command.html#rc-file) directly:
+// as `ls -l`, you can do so in your `rc.elv` directly:
 //
 // ```elvish
 // fn ll {|@a| ls -l $@a }
@@ -75,10 +77,26 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 // edit:add-var ll~ $ll~
 // ```
 //
+// ### Conditionally importing a module
+//
 // Another use case is to add a module or function to the REPL namespace
 // conditionally. For example, to only import [the `unix` module](unix.html)
-// when actually running on UNIX, you can put the following in
-// [`rc.elv`](command.html#rc-file):
+// when actually running on UNIX, a straightforward solution is to do the
+// following in `rc.elv`:
+//
+// ```elvish
+// use platform
+// if $platform:is-unix {
+//   use unix
+// }
+// ```
+//
+// This doesn't work however, since what `use` does is introducing a variable
+// named `$unix:`. Since all variables in Elvish are lexically scoped, the
+// `$unix:` variable is only valid inside the `if` block.
+//
+// This can be fixed by explicitly introducing the `$unix:` variable to the REPL
+// namespace. The following works both from `rc.elv` and from a module:
 //
 // ```elvish
 // use platform

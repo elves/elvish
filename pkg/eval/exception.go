@@ -14,7 +14,7 @@ import (
 )
 
 // Exception represents exceptions. It is both a Value accessible to Elvish
-// code, and can be returned by methods like like (*Evaler).Eval.
+// code, and can be returned by methods like (*Evaler).Eval.
 type Exception interface {
 	error
 	diag.Shower

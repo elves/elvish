@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 )
@@ -107,7 +106,7 @@ func callElvdoc(out io.Writer, module, path string) {
 }
 
 func (f *filterer) expandTtyshot(name string) string {
-	content, err := os.ReadFile(path.Join("ttyshot", name+".html"))
+	content, err := os.ReadFile(name + ".ttyshot.html")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -135,9 +134,13 @@ func (f *filterer) expandCf(rest string) string {
 
 // Returns the href for a `@cf` reference.
 func cfHref(target string) string {
+	// Anchors strip the leading $ due to pandoc's limitations; see comment in
+	// website/cmd/elvdoc/main.go.
+	target = strings.TrimPrefix(target, "$")
+
 	i := strings.IndexRune(target, ':')
 	if i == -1 {
-		// A link within the builtin page. Use unqualified name (e.g. #put).
+		// A link within the same module.
 		return "#" + target
 	}
 

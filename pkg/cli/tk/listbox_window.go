@@ -13,17 +13,17 @@ var respectDistance = 2
 // show, and how many initial lines to crop. The window determined by this
 // algorithm has the following properties:
 //
-// * It always includes the selected item.
+//   - It always includes the selected item.
 //
-// * The combined height of all the entries in the window is equal to
-//   min(height, combined height of all entries).
+//   - The combined height of all the entries in the window is equal to
+//     min(height, combined height of all entries).
 //
-// * There are at least respectDistance rows above the first row of the selected
-//   item, as well as that many rows below the last row of the selected item,
-//   unless the height is too small.
+//   - There are at least respectDistance rows above the first row of the selected
+//     item, as well as that many rows below the last row of the selected item,
+//     unless the height is too small.
 //
-// * Among all values satisfying the above conditions, the value of first is
-//   the one closest to lastFirst.
+//   - Among all values satisfying the above conditions, the value of first is
+//     the one closest to lastFirst.
 func getVerticalWindow(state ListBoxState, height int) (first, crop int) {
 	items, selected, lastFirst := state.Items, state.Selected, state.First
 	n := items.Len()

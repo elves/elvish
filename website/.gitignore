@@ -1,6 +1,7 @@
-/home.html
-/*/*.html
-!/ttyshot/*.html
+*.html
+!/template.html
+!*.ttyshot.html
+*.raw
 /tools/*.bin
 /_*
 /Elvish.docset

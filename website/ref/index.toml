@@ -57,6 +57,10 @@ name = "readline-binding"
 title = "readline-binding: Readline-like Key Bindings"
 
 [[articles]]
+name = "runtime"
+title = "runtime: Information About the Elvish Runtime"
+
+[[articles]]
 name = "store"
 title = "store: API for the Elvish Persistent Data Store"
 

@@ -9,8 +9,8 @@
 //
 // Example:
 //
-//     Test(t, someProgram,
-//          ThatElvish("-c", "echo hello").WritesStdout("hello\n"))
+//	Test(t, someProgram,
+//	     ThatElvish("-c", "echo hello").WritesStdout("hello\n"))
 package progtest
 
 import (
@@ -58,7 +58,7 @@ func (o output) String() string {
 // For example, a test for the fact that "elvish -c hello" writes "hello\n" to
 // stdout reads:
 //
-//     ThatElvish("-c", "hello").WritesStdout("hello\n")
+//	ThatElvish("-c", "hello").WritesStdout("hello\n")
 func ThatElvish(args ...string) Case {
 	return Case{args: append([]string{"elvish"}, args...)}
 }
@@ -73,7 +73,7 @@ func (c Case) WithStdin(s string) Case {
 // DoesNothing returns c itself. It is useful to mark tests that otherwise don't
 // have any expectations, for example:
 //
-//     ThatElvish("-c", "nop").DoesNothing()
+//	ThatElvish("-c", "nop").DoesNothing()
 func (c Case) DoesNothing() Case {
 	return c
 }
