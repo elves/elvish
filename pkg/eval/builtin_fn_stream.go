@@ -241,7 +241,7 @@ func drop(fm *Frame, n int, inputs Inputs) error {
 	return errOut
 }
 
-//elvdoc:fn drop
+//elvdoc:fn compact
 //
 // ```elvish
 // compact $inputs?
