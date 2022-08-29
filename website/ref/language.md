@@ -1215,6 +1215,8 @@ wildcard:
 
     -   `regular` will match if the path is a regular file.
 
+    Symbolic links are considered to be regular files.
+
 Although global modifiers affect the entire wildcard pattern, you can add it
 after any wildcard, and the effect is the same. For example,
 `put */*[nomatch-ok].cpp` and `put *[nomatch-ok]/*.cpp` do the same thing. On
