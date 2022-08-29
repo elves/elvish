@@ -619,10 +619,8 @@ func div(rawNums ...vals.Num) (vals.Num, error) {
 // % $x $y
 // ```
 //
-// Output the remainder after dividing `$x` by `$y`. The result has the same sign as `$x`. Both must
-// be integers that can be represented by a native machine word (this limit may be lifted in the
-// future). This means that integers otherwise supported by Elvish, but that are outside the range
-// of the system `int` can result in an exception.
+// Outputs the remainder after dividing `$x` by `$y`. The result has the same
+// sign as `$x`.
 //
 // Examples:
 //
@@ -633,9 +631,19 @@ func div(rawNums ...vals.Num) (vals.Num, error) {
 // ▶ (num -1)
 // ~> % 10 -3
 // ▶ (num 1)
+// ```
+//
+// Note that `%` requires both arguments to be within the range of signed
+// integers the size of a [machine
+// word](https://en.wikipedia.org/wiki/Word_(computer_architecture)), and throws
+// an exception otherwise:
+//
+// ```elvish-transcript
 // ~> % (math:pow 2 63) 3
 // Exception: wrong type for arg #0: must be integer
 // ```
+//
+// This limit may be lifted in the future.
 
 func rem(a, b int) (int, error) {
 	// TODO: Support other number types
