@@ -219,7 +219,7 @@ func TestCompare(t *testing.T) {
 	)
 }
 
-func TestOrder(t *testing.T) {
+func TestOrder_Bool(t *testing.T) {
 	Test(t,
 		// Ordering booleans
 		That("put $true $false $true | order").Puts(false, true, true),
