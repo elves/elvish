@@ -201,6 +201,12 @@ func TestCompare(t *testing.T) {
 		That("compare (num 3) (num nan)").Puts(1),
 		That("compare (num nan) (num nan)").Puts(0),
 
+		// Comparing booleans.
+		That("compare $true $false").Puts(1),
+		That("compare $false $true").Puts(-1),
+		That("compare $false $false").Puts(0),
+		That("compare $true $true").Puts(0),
+
 		// Comparing lists.
 		That("compare [a, b] [a, a]").Puts(1),
 		That("compare [a, a] [a, b]").Puts(-1),
@@ -210,5 +216,13 @@ func TestCompare(t *testing.T) {
 		That("compare 1 (num 1)").Throws(ErrUncomparable),
 		That("compare x [x]").Throws(ErrUncomparable),
 		That("compare a [&a=x]").Throws(ErrUncomparable),
+	)
+}
+
+func TestOrder_Bool(t *testing.T) {
+	Test(t,
+		// Ordering booleans
+		That("put $true $false $true | order").Puts(false, true, true),
+		That("put $false $true $false | order").Puts(false, false, true),
 	)
 }
