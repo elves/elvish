@@ -310,9 +310,10 @@ func cmp(a, b any) ordering {
 			switch {
 			case a == b:
 				return equal
-			case !a: // `&& b` is implicit
+			//lint:ignore S1002 using booleans as values, not conditions
+			case a == false: // b == true is implicit
 				return less
-			default: // a && !b
+			default: // a == true && b == false
 				return more
 			}
 		}

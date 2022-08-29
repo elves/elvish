@@ -73,6 +73,10 @@ func TestOrder(t *testing.T) {
 		That("put foo bar bar | order").Puts("bar", "bar", "foo"),
 		That("put 10 1 5 2 | order").Puts("1", "10", "2", "5"),
 
+		// Ordering booleans
+		That("put $true $false $true | order").Puts(false, true, true),
+		That("put $false $true $false | order").Puts(false, false, true),
+
 		// Ordering typed numbers
 		// Only small integers
 		That("put 10 1 1 | each $num~ | order").Puts(1, 1, 10),
