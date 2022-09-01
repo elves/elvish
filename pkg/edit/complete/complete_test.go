@@ -363,8 +363,35 @@ func TestComplete(t *testing.T) {
 		Args(cb("nop `"), ev, cfg).Rets((*Result)(nil), errNoCompletion),
 	})
 
-	// Symlinks and executable bits are not available on Windows.
-	if runtime.GOOS != "windows" {
+	if runtime.GOOS == "windows" {
+		// Symlinks require admin permissions on Windows, so we won't test them
+
+		// Check completions with forward slash
+		allLocalCommandItems := []modes.CompletionItem{
+			fci("./a.exe", " "), fci("./d\\", ""),
+		}
+		tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
+			// Complete local external commands.
+			Args(cb("./"), ev, cfg).Rets(
+				&Result{
+					Name: "command", Replace: r(0, 2),
+					Items: allLocalCommandItems},
+				nil),
+		})
+
+		// Check completions with bckward slash
+		allLocalCommandItems = []modes.CompletionItem{
+			fci(".\\a.exe", " "), fci(".\\d\\", ""),
+		}
+		tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
+			// Complete local external commands.
+			Args(cb(".\\"), ev, cfg).Rets(
+				&Result{
+					Name: "command", Replace: r(0, 2),
+					Items: allLocalCommandItems},
+				nil),
+		})
+	} else {
 		err := os.Symlink("d", "d2")
 		if err != nil {
 			panic(err)
@@ -383,9 +410,6 @@ func TestComplete(t *testing.T) {
 			),
 
 			// Complete local external commands.
-			//
-			// TODO(xiaq): Make this test applicable to Windows by using a
-			// different criteria for executable files on Window.
 			Args(cb("./"), ev, cfg).Rets(
 				&Result{
 					Name: "command", Replace: r(0, 2),
