@@ -105,6 +105,11 @@ directories:
     [interactively](#using-elvish-interactively) (so can't be used to check the
     [RC file](#rc-file), for example).
 
+-   `-cpuprofile`: Treat the next argument as a file name in which to save CPU
+    profiling data; e.g., `-cpuprofile /tmp/cpu.prof`. See this
+    [document](https://go.dev/doc/diagnostics#profiling) for more information
+    about utilizing the profiling data.
+
 -   `-deprecation-level n`: Show warnings for features deprecated as of
     version 0._n_.
 
@@ -131,6 +136,11 @@ directories:
 -   `-log /path/to/log-file`: Path to a file to write debug logs to.
 
 -   `-lsp`: Run the builtin language server.
+
+-   `-memprofile`: Treat the next argument as a file name in which to save
+    memory profiling data; e.g., `-memprofile /tmp/mem.prof`. See this
+    [document](https://go.dev/doc/diagnostics#profiling) for more information
+    about utilizing the profiling data.
 
 -   `-norc`: Don't read the [RC file](#rc-file) when running
     [interactively](#using-elvish-interactively). The `-rc` flag is ignored if

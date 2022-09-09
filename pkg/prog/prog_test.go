@@ -40,6 +40,35 @@ func TestLogFlag(t *testing.T) {
 	}
 }
 
+// This test does nothing more than verify the profiling flags actually create
+// the expected files and that an invalid file name for the profile data fails.
+// It does not validate that the profiling data is valid.
+func TestProfilingFlags(t *testing.T) {
+	testutil.InTempDir(t)
+
+	Test(t, &testProgram{},
+		ThatElvish("-cpuprofile", "cpu.prof").DoesNothing())
+	if _, err := os.Stat("cpu.prof"); err != nil {
+		t.Errorf("cpu profile file was not created: %v", err)
+	}
+	Test(t, &testProgram{},
+		ThatElvish("-cpuprofile", "/invalid-dir/cpu.prof").WritesStderrContaining("cannot create"))
+	if _, err := os.Stat("/invalid-dir/cpu.prof"); err == nil {
+		t.Errorf("cpu profile file %q was unexpectedly created", "/invalid-dir/cpu.prof")
+	}
+
+	Test(t, &testProgram{},
+		ThatElvish("-memprofile", "mem.prof").DoesNothing())
+	if _, err := os.Stat("mem.prof"); err != nil {
+		t.Errorf("mem profile file was not created: %v", err)
+	}
+	Test(t, &testProgram{},
+		ThatElvish("-memprofile", "/invalid-dir/mem.prof").WritesStderrContaining("cannot create"))
+	if _, err := os.Stat("/invalid-dir/mem.prof"); err == nil {
+		t.Errorf("mem profile file %q was unexpectedly created", "/invalid-dir/mem.prof")
+	}
+}
+
 func TestCustomFlag(t *testing.T) {
 	Test(t, &testProgram{customFlag: true},
 		ThatElvish("-flag", "foo").

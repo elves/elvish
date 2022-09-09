@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
+	"runtime/pprof"
 
 	"src.elv.sh/pkg/logutil"
 )
@@ -36,16 +38,23 @@ func usage(out io.Writer, fs *flag.FlagSet) {
 }
 
 // Run parses command-line flags and runs the first applicable subprogram. It
-// returns the exit status of the program.
+// returns the exit status of the subprogram.
 func Run(fds [3]*os.File, args []string, p Program) int {
 	fs := flag.NewFlagSet("elvish", flag.ContinueOnError)
-	// Error and usage will be printed explicitly.
-	fs.SetOutput(io.Discard)
+	fs.SetOutput(io.Discard) // errors and usage will be printed explicitly
 
-	var log string
-	var help bool
+	var (
+		cpuProfile string
+		memProfile string
+		log        string
+		help       bool
+	)
+	fs.StringVar(&cpuProfile, "cpuprofile", "",
+		"File name to write CPU profiling data")
+	fs.StringVar(&memProfile, "memprofile", "",
+		"File name to write memory profiling data")
 	fs.StringVar(&log, "log", "",
-		"Path to a file to write debug logs")
+		"File name to write debug logs")
 	fs.BoolVar(&help, "help", false,
 		"Show usage help and quit")
 	fs.IntVar(&DeprecationLevel, "deprecation-level", DeprecationLevel,
@@ -68,6 +77,11 @@ func Run(fds [3]*os.File, args []string, p Program) int {
 		return 2
 	}
 
+	if help {
+		usage(fds[1], fs)
+		return 0
+	}
+
 	if log != "" {
 		err = logutil.SetOutputFile(log)
 		if err == nil {
@@ -77,9 +91,34 @@ func Run(fds [3]*os.File, args []string, p Program) int {
 		}
 	}
 
-	if help {
-		usage(fds[1], fs)
-		return 0
+	if cpuProfile != "" {
+		f, err := os.Create(cpuProfile)
+		if err != nil {
+			fmt.Fprintf(fds[2], "Warning: cannot create CPU profile file %q: %v\n",
+				cpuProfile, err)
+			fmt.Fprintln(fds[2], "Continuing without CPU profiling.")
+		} else {
+			pprof.StartCPUProfile(f)
+			defer f.Close()
+			defer pprof.StopCPUProfile()
+		}
+	}
+
+	if memProfile != "" {
+		f, err := os.Create(memProfile)
+		if err != nil {
+			fmt.Fprintf(fds[2], "Warning: cannot create memory profile file %q: %v\n",
+				memProfile, err)
+			fmt.Fprintln(fds[2], "Continuing without memory profiling.")
+		} else {
+			defer f.Close()
+			defer func() {
+				runtime.GC() // get up-to-date statistics
+				if err := pprof.WriteHeapProfile(f); err != nil {
+					fmt.Fprintln(fds[2], "Could not write memory profile: ", err)
+				}
+			}()
+		}
 	}
 
 	err = p.Run(fds, fs.Args())
