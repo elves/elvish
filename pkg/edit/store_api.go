@@ -102,6 +102,10 @@ func reverseCmds(cmds []storedefs.Cmd) {
 
 //elvdoc:fn insert-last-word
 //
+// ```elvish
+// edit:insert-last-word
+// ```
+//
 // Inserts the last word of the last command.
 
 func insertLastWord(app cli.App, histStore histutil.Store) error {

@@ -17,16 +17,24 @@ import (
 
 //elvdoc:fn binding-table
 //
+// ```elvish
+// edit:binding-table $map
+// ```
+//
 // Converts a normal map into a binding map.
 
 //elvdoc:fn -dump-buf
+//
+// ```elvish
+// edit:-dump-buf
+// ```
 //
 // Dumps the current UI buffer as HTML. This command is used to generate
 // "ttyshots" on the [website](https://elv.sh).
 //
 // Example:
 //
-// ```elvish
+// ```elvish-transcript
 // set edit:global-binding[Ctrl-X] = { print (edit:-dump-buf) > ~/a.html }
 // ```
 
@@ -36,6 +44,10 @@ func dumpBuf(tty cli.TTY) string {
 
 //elvdoc:fn close-mode
 //
+// ```elvish
+// edit:close-mode
+// ```
+//
 // Closes the current active mode.
 
 func closeMode(app cli.App) {
@@ -43,6 +55,10 @@ func closeMode(app cli.App) {
 }
 
 //elvdoc:fn end-of-history
+//
+// ```elvish
+// edit:end-of-history
+// ```
 //
 // Adds a notification saying "End of history".
 
@@ -94,6 +110,10 @@ func clear(app cli.App, tty cli.TTY) {
 }
 
 //elvdoc:fn insert-raw
+//
+// ```elvish
+// edit:insert-raw
+// ```
 //
 // Requests the next terminal input to be inserted uninterpreted.
 
@@ -175,16 +195,28 @@ func notify(app cli.App, x any) error {
 
 //elvdoc:fn return-line
 //
+// ```elvish
+// edit:return-line
+// ```
+//
 // Causes the Elvish REPL to end the current read iteration and evaluate the
 // code it just read. If called from a key binding, takes effect after the key
 // binding returns.
 
 //elvdoc:fn return-eof
 //
+// ```elvish
+// edit:return-eof
+// ```
+//
 // Causes the Elvish REPL to terminate. If called from a key binding, takes
 // effect after the key binding returns.
 
 //elvdoc:fn smart-enter
+//
+// ```elvish
+// edit:smart-enter
+// ```
 //
 // Inserts a literal newline if the current code is not syntactically complete
 // Elvish code. Accepts the current line otherwise.
@@ -222,10 +254,10 @@ func isSyntaxComplete(code string) bool {
 
 //elvdoc:fn wordify
 //
-//
 // ```elvish
 // edit:wordify $code
 // ```
+//
 // Breaks Elvish code into words.
 
 func wordify(fm *eval.Frame, code string) error {

@@ -136,6 +136,10 @@ func initLocation(ed *Editor, ev *eval.Evaler, st storedefs.Store, commonBinding
 
 //elvdoc:fn listing:accept
 //
+// ```elvish
+// edit:listing:accept
+// ```
+//
 // Accepts the current selected listing item.
 
 func listingAccept(app cli.App) {
@@ -146,17 +150,29 @@ func listingAccept(app cli.App) {
 
 //elvdoc:fn listing:up
 //
+// ```elvish
+// edit:listing:up
+// ```
+//
 // Moves the cursor up in listing mode.
 
 func listingUp(app cli.App) { listingSelect(app, tk.Prev) }
 
 //elvdoc:fn listing:down
 //
+// ```elvish
+// edit:listing:down
+// ```
+//
 // Moves the cursor down in listing mode.
 
 func listingDown(app cli.App) { listingSelect(app, tk.Next) }
 
 //elvdoc:fn listing:up-cycle
+//
+// ```elvish
+// edit:listing:up-cycle
+// ```
 //
 // Moves the cursor up in listing mode, or to the last item if the first item is
 // currently selected.
@@ -165,6 +181,10 @@ func listingUpCycle(app cli.App) { listingSelect(app, tk.PrevWrap) }
 
 //elvdoc:fn listing:down-cycle
 //
+// ```elvish
+// edit:listing:down-cycle
+// ```
+//
 // Moves the cursor down in listing mode, or to the first item if the last item is
 // currently selected.
 
@@ -172,11 +192,19 @@ func listingDownCycle(app cli.App) { listingSelect(app, tk.NextWrap) }
 
 //elvdoc:fn listing:page-up
 //
+// ```elvish
+// edit:listing:page-up
+// ```
+//
 // Moves the cursor up one page.
 
 func listingPageUp(app cli.App) { listingSelect(app, tk.PrevPage) }
 
 //elvdoc:fn listing:page-down
+//
+// ```elvish
+// edit:listing:page-down
+// ```
 //
 // Moves the cursor down one page.
 
@@ -184,11 +212,19 @@ func listingPageDown(app cli.App) { listingSelect(app, tk.NextPage) }
 
 //elvdoc:fn listing:left
 //
+// ```elvish
+// edit:listing:left
+// ```
+//
 // Moves the cursor left in listing mode.
 
 func listingLeft(app cli.App) { listingSelect(app, tk.Left) }
 
 //elvdoc:fn listing:right
+//
+// ```elvish
+// edit:listing:right
+// ```
 //
 // Moves the cursor right in listing mode.
 
@@ -208,14 +244,26 @@ func listingRefilter(app cli.App) {
 
 //elvdoc:var location:hidden
 //
+// ```elvish
+// edit:location:hidden
+// ```
+//
 // A list of directories to hide in the location addon.
 
 //elvdoc:var location:pinned
+//
+// ```elvish
+// edit:location:pinned
+// ```
 //
 // A list of directories to always show at the top of the list of the location
 // addon.
 
 //elvdoc:var location:workspaces
+//
+// ```elvish
+// edit:location:workspaces
+// ```
 //
 // A map mapping types of workspaces to their patterns.
 

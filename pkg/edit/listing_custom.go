@@ -27,6 +27,10 @@ func (*customListingOpts) SetDefaultOptions() {}
 
 //elvdoc:fn listing:start-custom
 //
+// ```elvish
+// edit:listing:start-custom
+// ```
+//
 // Starts a custom listing addon.
 
 func listingStartCustom(ed *Editor, fm *eval.Frame, opts customListingOpts, items any) {

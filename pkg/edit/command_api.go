@@ -16,6 +16,10 @@ import (
 
 //elvdoc:fn command:start
 //
+// ```elvish
+// edit:command:start
+// ```
+//
 // Enter command mode. This mode is intended to emulate Vi's command mode, but
 // it is very incomplete right now.
 //
