@@ -363,32 +363,32 @@ func TestComplete(t *testing.T) {
 		Args(cb("nop `"), ev, cfg).Rets((*Result)(nil), errNoCompletion),
 	})
 
+	// Completions of filename involving symlinks and local commands.
+
 	if runtime.GOOS == "windows" {
 		// Symlinks require admin permissions on Windows, so we won't test them
 
-		// Check completions with forward slash
-		allLocalCommandItems := []modes.CompletionItem{
-			fci("./a.exe", " "), fci("./d\\", ""),
-		}
+		// Completing local commands after forward slash
 		tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
 			// Complete local external commands.
 			Args(cb("./"), ev, cfg).Rets(
 				&Result{
 					Name: "command", Replace: r(0, 2),
-					Items: allLocalCommandItems},
+					Items: []modes.CompletionItem{
+						fci("./a.exe", " "), fci(`./d\`, "")},
+				},
 				nil),
 		})
 
-		// Check completions with bckward slash
-		allLocalCommandItems = []modes.CompletionItem{
-			fci(".\\a.exe", " "), fci(".\\d\\", ""),
-		}
+		// Completing local commands after backslash
 		tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
 			// Complete local external commands.
-			Args(cb(".\\"), ev, cfg).Rets(
+			Args(cb(`.\`), ev, cfg).Rets(
 				&Result{
 					Name: "command", Replace: r(0, 2),
-					Items: allLocalCommandItems},
+					Items: []modes.CompletionItem{
+						fci(`.\a.exe`, " "), fci(`.\d\`, "")},
+				},
 				nil),
 		})
 	} else {
