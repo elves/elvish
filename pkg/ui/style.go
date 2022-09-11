@@ -17,8 +17,8 @@ type Style struct {
 	Inverse    bool
 }
 
-// SGR returns SGR sequence for the style.
-func (s Style) SGR() string {
+// SGRValues returns an array of the individual SGR values for the style.
+func (s Style) SGRValues() []string {
 	var sgr []string
 
 	addIf := func(b bool, code string) {
@@ -38,8 +38,12 @@ func (s Style) SGR() string {
 	if s.Background != nil {
 		sgr = append(sgr, s.Background.bgSGR())
 	}
+	return sgr
+}
 
-	return strings.Join(sgr, ";")
+// SGR returns, for the Style, a string that can be included in an ANSI X3.64 SGR sequence.
+func (s Style) SGR() string {
+	return strings.Join(s.SGRValues(), ";")
 }
 
 // MergeFromOptions merges all recognized values from a map to the current

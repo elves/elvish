@@ -237,7 +237,7 @@ var commandRegex = regexp.MustCompile(`(?:^|[^^]\n|\||;|{\s|\()\s*([\p{L}\p{M}\p
 // Tries to expand a command abbreviation. This function assumes the state mutex
 // is held.
 //
-// We use a regex rather than parse.Parse() because dealing with the the latter
+// We use a regex rather than parse.Parse() because dealing with the latter
 // requires a lot of code. A simple regex is far simpler and good enough for
 // this use case. The regex essentially matches commands at the start of the
 // line (with potential leading whitespace) and similarly after the opening

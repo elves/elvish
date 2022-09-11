@@ -305,6 +305,18 @@ func cmp(a, b any) ordering {
 				return more
 			}
 		}
+	case bool:
+		if b, ok := b.(bool); ok {
+			switch {
+			case a == b:
+				return equal
+			//lint:ignore S1002 using booleans as values, not conditions
+			case a == false: // b == true is implicit
+				return less
+			default: // a == true && b == false
+				return more
+			}
+		}
 	}
 	return uncomparable
 }

@@ -199,7 +199,7 @@ func emitRegionsInTry(n *parse.Form, f func(parse.Node, regionKind, string)) {
 		}
 		return false
 	}
-	if matchKW("except") {
+	if matchKW("except") || matchKW("catch") {
 		if i+1 < len(n.Args) && isStringLiteral(n.Args[i+1]) {
 			f(n.Args[i+1], semanticRegion, variableRegion)
 			i += 3

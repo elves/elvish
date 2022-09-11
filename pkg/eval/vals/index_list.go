@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	errIndexMustBeInteger = errors.New("index must must be integer")
+	errIndexMustBeInteger = errors.New("index must be integer")
 )
 
 func indexList(l List, rawIndex any) (any, error) {
@@ -101,7 +101,8 @@ func ConvertListIndex(rawIndex any, n int) (*ListIndex, error) {
 }
 
 // Index = Number |
-//         Number ( ':' | '..' | '..=' ) Number
+//
+//	Number ( ':' | '..' | '..=' ) Number
 func parseIndexString(s string, n int) (slice bool, i int, j int, err error) {
 	low, sep, high := splitIndexString(s)
 	if sep == "" {

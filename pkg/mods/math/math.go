@@ -50,19 +50,11 @@ var Ns = eval.BuildNsNamed("math").
 
 //elvdoc:var e
 //
-// ```elvish
-// $math:e
-// ```
-//
 // Approximate value of
 // [`e`](https://en.wikipedia.org/wiki/E_(mathematical_constant)):
 // 2.718281.... This variable is read-only.
 
 //elvdoc:var pi
-//
-// ```elvish
-// $math:pi
-// ```
 //
 // Approximate value of [`π`](https://en.wikipedia.org/wiki/Pi): 3.141592.... This
 // variable is read-only.

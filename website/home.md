@@ -27,7 +27,7 @@ Windows.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
-      @ttyshot pipelines
+      @ttyshot home/pipelines
     </div>
   </div> </div>
 
@@ -46,7 +46,7 @@ Windows.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
-      @ttyshot control-structures
+      @ttyshot home/control-structures
     </div>
   </div> </div>
 
@@ -65,7 +65,7 @@ Windows.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
-      @ttyshot location-mode
+      @ttyshot home/location-mode
     </div>
   </div> </div>
 
@@ -84,7 +84,7 @@ Windows.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
-      @ttyshot histlist-mode
+      @ttyshot home/histlist-mode
     </div>
   </div> </div>
 
@@ -103,7 +103,7 @@ Windows.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
-      @ttyshot navigation-mode
+      @ttyshot home/navigation-mode
     </div>
   </div> </div>
 </div> </div>
@@ -142,6 +142,8 @@ Join any of the following channels -- they are all all bridged together thanks
 to [Matrix](https://matrix.org)!
 
 -   Telegram: [Elvish user group](https://t.me/+Pv5ZYgTXD-YaKwcP)
+
+-   IRC: [#elvish](https://web.libera.chat/#elvish) on Libera Chat
 
 -   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
 

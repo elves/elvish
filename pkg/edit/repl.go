@@ -26,7 +26,7 @@ import (
 // * `error`: An [exception](../ref/language.html#exception) object if the command terminated with
 // an exception, else [`$nil`](../ref/language.html#nil).
 //
-// @cf edit:command-duration
+// @cf $edit:command-duration
 
 //elvdoc:var command-duration
 //
@@ -34,7 +34,7 @@ import (
 // to provide feedback on how long a command took to run. The initial value of this variable is the
 // time to evaluate your [`rc.elv`](command.html#rc-file) before printing the first prompt.
 //
-// @cf edit:after-command
+// @cf $edit:after-command
 
 func initRepl(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	var commandDuration float64

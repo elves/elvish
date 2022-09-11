@@ -8,6 +8,7 @@ import (
 	"html"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 
 	"src.elv.sh/pkg/edit/highlight"
@@ -61,10 +62,7 @@ func collectFenced(indent string) string {
 	return buf.String()
 }
 
-const (
-	ps1 = "~> "
-	ps2 = "   "
-)
+var ps1Pattern = regexp.MustCompile(`^[~/][^ ]*> `)
 
 func convertTranscript(transcript string) string {
 	scanner := bufio.NewScanner(bytes.NewBufferString(transcript))
@@ -78,8 +76,9 @@ func convertTranscript(transcript string) string {
 		} else {
 			line = scanner.Text()
 		}
-		if strings.HasPrefix(line, ps1) {
+		if ps1 := ps1Pattern.FindString(line); ps1 != "" {
 			elvishBuf := bytes.NewBufferString(line[len(ps1):] + "\n")
+			ps2 := strings.Repeat(" ", len(ps1))
 			for scanner.Scan() {
 				line = scanner.Text()
 				if strings.HasPrefix(line, ps2) {

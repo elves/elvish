@@ -147,7 +147,8 @@ func startsPipeline(r rune) bool {
 }
 
 // Form = { Space } { { Assignment } { Space } }
-//        { Compound } { Space } { ( Compound | MapPair | Redir ) { Space } }
+//
+//	{ Compound } { Space } { ( Compound | MapPair | Redir ) { Space } }
 type Form struct {
 	node
 	Assignments []*Assignment

@@ -1,0 +1,2 @@
+~> echo abc def
+~> #send-keys vim Space M-,

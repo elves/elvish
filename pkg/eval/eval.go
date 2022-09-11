@@ -55,6 +55,10 @@ type Evaler struct {
 	// Callback to notify the success or failure of background jobs. Must not be
 	// mutated once the Evaler is used to evaluate any code.
 	BgJobNotify func(string)
+	// Path to the rc file, and path to the rc file actually evaluated. These
+	// are not used by the Evaler itself right now; they are here so that they
+	// can be exposed to the runtime: module.
+	RcPath, EffectiveRcPath string
 
 	mu sync.RWMutex
 	// Mutations to fields below must be guarded by mutex.
@@ -102,14 +106,20 @@ type Evaler struct {
 // /usr/local>
 // ```
 //
-// @cf before-chdir
+// **Note**: The use of `echo` above is for illustrative purposes. When Elvish
+// is used interactively, the working directory may be changed in location mode
+// or navigation mode, and outputs from `echo` can garble the terminal. If you
+// are writing a plugin that works with the interactive mode, it's better to use
+// [`edit:notify`](edit.html#edit:notify).
+//
+// @cf $before-chdir
 
 //elvdoc:var before-chdir
 //
 // A list of functions to run before changing directory. These functions are always
 // called with the new working directory.
 //
-// @cf after-chdir
+// @cf $after-chdir
 
 //elvdoc:var num-bg-jobs
 //
@@ -123,7 +133,7 @@ type Evaler struct {
 
 //elvdoc:var value-out-indicator
 //
-// A string put before value outputs (such as those of of `put`). Defaults to
+// A string put before value outputs (such as those of `put`). Defaults to
 // `'▶ '`. Example:
 //
 // ```elvish-transcript
@@ -394,7 +404,7 @@ func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
 
 // CallCfg keeps configuration for the (*Evaler).Call method.
 type CallCfg struct {
-	// Arguments to pass to the the function.
+	// Arguments to pass to the function.
 	Args []any
 	// Options to pass to the function.
 	Opts map[string]any

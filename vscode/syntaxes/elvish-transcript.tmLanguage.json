@@ -1,0 +1,20 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Elvish transcript",
+	"scopeName": "source.elvish-transcript",
+	"fileTypes": [
+		"ttyshot"
+	],
+	"patterns": [
+		{
+			"begin": "(^|\\G)[~/][^ ]*> ",
+			"while": "(^|\\G)   ",
+			"contentName": "meta.embedded.block.elvish",
+			"patterns": [
+				{
+					"include": "source.elvish"
+				}
+			]
+		}
+	]
+}

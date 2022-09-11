@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -60,10 +61,11 @@ func (p *Program) Run(fds [3]*os.File, args []string) error {
 	cleanup2 := initSignal(fds)
 	defer cleanup2()
 
-	ev := makeEvaler(fds[2])
+	interactive := len(args) == 0
+	ev := p.makeEvaler(fds[2], interactive)
 	defer ev.PreExit()
 
-	if len(args) > 0 {
+	if !interactive {
 		exit := script(
 			ev, fds, args, &scriptCfg{
 				Cmd: p.codeInArg, CompileOnly: p.compileOnly, JSON: *p.json})
@@ -80,24 +82,8 @@ func (p *Program) Run(fds [3]*os.File, args []string) error {
 		}
 	}
 
-	rc := ""
-	switch {
-	case p.noRC:
-		// Leave rc empty
-	case p.rc != "":
-		// Use explicit -rc flag value
-		rc = p.rc
-	default:
-		// Use default path to rc.elv
-		var err error
-		rc, err = rcPath(fds[2])
-		if err != nil {
-			fmt.Fprintln(fds[2], "Warning:", err)
-		}
-	}
-
 	interact(ev, fds, &interactCfg{
-		RC:             rc,
+		RC:             ev.EffectiveRcPath,
 		ActivateDaemon: p.ActivateDaemon, SpawnConfig: spawnCfg})
 	return nil
 }
@@ -107,14 +93,37 @@ func (p *Program) Run(fds [3]*os.File, args []string) error {
 //
 // It writes a warning message to the supplied Writer if it could not initialize
 // module search directories.
-func makeEvaler(stderr io.Writer) *eval.Evaler {
+func (p *Program) makeEvaler(stderr io.Writer, interactive bool) *eval.Evaler {
 	ev := eval.NewEvaler()
+
+	var errRc error
+	ev.RcPath, errRc = rcPath(stderr)
+	switch {
+	case !interactive || p.noRC:
+		// Leave ev.ActualRcPath empty
+	case p.rc != "":
+		// Use explicit -rc flag value
+		var err error
+		ev.EffectiveRcPath, err = filepath.Abs(p.rc)
+		if err != nil {
+			fmt.Fprintln(stderr, "Warning:", err)
+		}
+	default:
+		if errRc == nil {
+			// Use default path stored in ev.RcPath
+			ev.EffectiveRcPath = ev.RcPath
+		} else {
+			fmt.Fprintln(stderr, "Warning:", errRc)
+		}
+	}
+
 	libs, err := libPaths(stderr)
 	if err != nil {
 		fmt.Fprintln(stderr, "Warning: resolving lib paths:", err)
 	} else {
 		ev.LibDirs = libs
 	}
+
 	mods.AddTo(ev)
 	return ev
 }

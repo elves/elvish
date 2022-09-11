@@ -1,0 +1,2 @@
+~> cd elvish; echo '[CUT]'
+~> #send-keys C-N

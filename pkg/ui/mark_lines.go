@@ -6,27 +6,27 @@ type RuneStylesheet map[rune]Styling
 // MarkLines provides a way to construct a styled text by separating the content
 // and the styling.
 //
-// The arguments are groups of either
+// # The arguments are groups of either
 //
 // * A single string, in which case it represents an unstyled line;
 //
-// * Three arguments that can be passed to MarkLine, in which case they are passed
-//   to MarkLine and the return value is used as a styled line.
+//   - Three arguments that can be passed to MarkLine, in which case they are passed
+//     to MarkLine and the return value is used as a styled line.
 //
 // Lines represented by all the groups are joined together.
 //
 // This function is mainly useful for constructing multi-line Text's with
 // alignment across those lines. An example:
 //
-//   var stylesheet = map[rune]string{
-//       '-': Reverse,
-//       'x': Stylings(Blue, BgGreen),
-//   }
-//   var text = FromMarkedLines(
-//       "foo      bar      foobar", stylesheet,
-//       "---      xxx      ------"
-//       "lorem    ipsum    dolar",
-//   )
+//	var stylesheet = map[rune]string{
+//	    '-': Reverse,
+//	    'x': Stylings(Blue, BgGreen),
+//	}
+//	var text = FromMarkedLines(
+//	    "foo      bar      foobar", stylesheet,
+//	    "---      xxx      ------"
+//	    "lorem    ipsum    dolar",
+//	)
 func MarkLines(args ...any) Text {
 	var text Text
 	for i := 0; i < len(args); i++ {

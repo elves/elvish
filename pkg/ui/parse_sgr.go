@@ -131,6 +131,10 @@ func StylingFromSGR(s string) Styling {
 			moreStyling = Bg(trueColor{
 				uint8(codes[2]), uint8(codes[3]), uint8(codes[4])})
 			consume = 5
+		case code == 39:
+			moreStyling = FgDefault
+		case code == 49:
+			moreStyling = BgDefault
 		default:
 			// Do nothing; skip this code
 		}

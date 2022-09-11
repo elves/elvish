@@ -8,15 +8,15 @@ func TestStyleSGR(t *testing.T) {
 	// Test the SGR sequences of style attributes indirectly via VTString of
 	// Text, since that is how they are used.
 	testTextVTString(t, []textVTStringTest{
-		{T("foo", Bold), "\033[1mfoo\033[m"},
-		{T("foo", Dim), "\033[2mfoo\033[m"},
-		{T("foo", Italic), "\033[3mfoo\033[m"},
-		{T("foo", Underlined), "\033[4mfoo\033[m"},
-		{T("foo", Blink), "\033[5mfoo\033[m"},
-		{T("foo", Inverse), "\033[7mfoo\033[m"},
-		{T("foo", FgRed), "\033[31mfoo\033[m"},
-		{T("foo", BgRed), "\033[41mfoo\033[m"},
-		{T("foo", Bold, FgRed, BgBlue), "\033[1;31;44mfoo\033[m"},
+		{T("foo", Bold), "\033[;1mfoo\033[m"},
+		{T("foo", Dim), "\033[;2mfoo\033[m"},
+		{T("foo", Italic), "\033[;3mfoo\033[m"},
+		{T("foo", Underlined), "\033[;4mfoo\033[m"},
+		{T("foo", Blink), "\033[;5mfoo\033[m"},
+		{T("foo", Inverse), "\033[;7mfoo\033[m"},
+		{T("foo", FgRed), "\033[;31mfoo\033[m"},
+		{T("foo", BgRed), "\033[;41mfoo\033[m"},
+		{T("foo", Bold, FgRed, BgBlue), "\033[;1;31;44mfoo\033[m"},
 	})
 }
 

@@ -1,0 +1,2 @@
+~> cd elvish
+~> #send-keys echo Space Tab

@@ -16,6 +16,7 @@ use.
 User groups (all connected thanks to [Matrix](https://matrix.org)):
 [![Gitter](https://img.shields.io/badge/gitter-elves/elvish-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish)
 [![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg)](https://telegram.me/elvish)
+[![#elvish on libera.chat](https://img.shields.io/badge/libera.chat-%23elvish-blue.svg)](https://web.libera.chat/#elvish)
 [![#users:elv.sh](https://img.shields.io/badge/matrix-%23users:elv.sh-blue.svg)](https://matrix.to/#/#users:elv.sh)
 
 ## Documentation

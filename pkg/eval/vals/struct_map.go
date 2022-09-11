@@ -17,16 +17,16 @@ import (
 //
 // Example:
 //
-//   type someStruct struct {
-//       FooBar int
-//       lorem  string
-//   }
+//	type someStruct struct {
+//	    FooBar int
+//	    lorem  string
+//	}
 //
-//   func (someStruct) IsStructMap() { }
+//	func (someStruct) IsStructMap() { }
 //
-//   func (s SomeStruct) Ipsum() string { return s.lorem }
+//	func (s SomeStruct) Ipsum() string { return s.lorem }
 //
-//   func (s SomeStruct) OtherMethod(int) { }
+//	func (s SomeStruct) OtherMethod(int) { }
 //
 // An instance of someStruct behaves like a read-only map with 3 fields:
 // foo-bar, lorem and ipsum.
