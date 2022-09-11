@@ -23,25 +23,6 @@ import (
 //
 // Converts a normal map into a binding map.
 
-//elvdoc:fn -dump-buf
-//
-// ```elvish
-// edit:-dump-buf
-// ```
-//
-// Dumps the current UI buffer as HTML. This command is used to generate
-// "ttyshots" on the [website](https://elv.sh).
-//
-// Example:
-//
-// ```elvish-transcript
-// set edit:global-binding[Ctrl-X] = { print (edit:-dump-buf) > ~/a.html }
-// ```
-
-func dumpBuf(tty cli.TTY) string {
-	return bufToHTML(tty.Buffer())
-}
-
 //elvdoc:fn close-mode
 //
 // ```elvish
@@ -273,7 +254,6 @@ func wordify(fm *eval.Frame, code string) error {
 
 func initTTYBuiltins(app cli.App, tty cli.TTY, nb eval.NsBuilder) {
 	nb.AddGoFns(map[string]any{
-		"-dump-buf":  func() string { return dumpBuf(tty) },
 		"insert-raw": func() { insertRaw(app, tty) },
 		"clear":      func() { clear(app, tty) },
 	})

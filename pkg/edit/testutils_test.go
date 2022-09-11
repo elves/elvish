@@ -16,9 +16,14 @@ import (
 	"src.elv.sh/pkg/store"
 	"src.elv.sh/pkg/store/storedefs"
 	"src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/tt"
 )
 
-var Styles = clitest.Styles
+// Aliases.
+var (
+	Args   = tt.Args
+	Styles = clitest.Styles
+)
 
 type fixture struct {
 	Editor  *Editor

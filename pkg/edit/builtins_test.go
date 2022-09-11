@@ -36,22 +36,6 @@ func TestCloseMode(t *testing.T) {
 	}
 }
 
-func TestDumpBuf(t *testing.T) {
-	f := setup(t)
-
-	feedInput(f.TTYCtrl, "echo")
-	// Wait until the buffer we want has shown up.
-	f.TestTTY(t,
-		"~> echo", Styles,
-		"   vvvv", term.DotHere,
-	)
-
-	evals(f.Evaler, `var html = (edit:-dump-buf)`)
-	testGlobal(t, f.Evaler,
-		"html",
-		`~&gt; <span class="sgr-32">echo</span>`+"\n")
-}
-
 func TestInsertRaw(t *testing.T) {
 	f := setup(t)
 
