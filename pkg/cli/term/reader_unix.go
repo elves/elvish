@@ -278,8 +278,9 @@ var g3Seq = map[rune]ui.Key{
 // expressible using the escape sequences described below.
 
 // CSI-style key sequences identified by the last rune. For instance, \e[A is
-// Up. When modified, two numerical arguments are added, the first always beging
-// 1 and the second identifying the modifier. For instance, \e[1;5A is Ctrl-Up.
+// Up. When modified, two numerical arguments are added, the first always
+// beginning with 1 and the second identifying the modifier. For instance,
+// \e[1;5A is Ctrl-Up.
 var csiSeqByLast = map[rune]ui.Key{
 	// xterm, urxvt, tmux
 	'A': ui.K(ui.Up), 'B': ui.K(ui.Down), 'C': ui.K(ui.Right), 'D': ui.K(ui.Left),

@@ -620,7 +620,7 @@ and support slicing too:
 ▶ v2
 ```
 
-Read the language reference on [lists](../ref/language.html#list) and
+Read the language reference on [lists](../ref/language.html#lists) and
 [maps](../ref/language.html#map) to learn more.
 
 ## Numbers

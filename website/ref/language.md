@@ -54,7 +54,7 @@ constructs:
 
 -   `(` and `)`: encloses [output captures](#output-capture)
 
--   `[` and `]`: encloses [list](#list) or [map](#map) literals
+-   `[` and `]`: encloses [list](#lists) or [map](#map) literals
 
 -   `{` and `}`: encloses [lambda literals](#function) or
     [braced lists](#braced-list)
@@ -236,7 +236,7 @@ string that parses to a number. Examples:
     ```
 
 Such strings may also be indexed with a slice (see documentation of
-[list](#list) for slice syntax). The range determined by the slice is also
+[list](#lists) for slice syntax). The range determined by the slice is also
 interpreted as byte indices, and the range must begin and end at codepoint
 boundaries.
 
@@ -304,7 +304,7 @@ guaranteed to be precise, they are always considered **inexact**.
 This distinction is important for some builtin commands; see
 [exactness-preserving commands](./builtin.html#exactness-preserving).
 
-## List
+## Lists
 
 A list is a value containing a sequence of values. Values in a list are called
 its **elements**. Each element has an index, starting from zero.
@@ -795,7 +795,7 @@ elements.
 
 ## Literal
 
-Literals of [strings](#string), [lists](#list), [maps](#map) and
+Literals of [strings](#string), [lists](#lists), [maps](#map) and
 [functions](#function) all evaluate to one value of their corresponding types.
 They are described in their respective sections.
 

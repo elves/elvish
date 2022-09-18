@@ -37,7 +37,8 @@ const (
 )
 
 // Some platforms, such as Windows, have simulated UNIX style permission masks.
-// On Windows the only two permission masks are 0o666 (RW) and 0o444 (RO).
+// On Windows the only two permission masks are 0o666 (read-write everyone) and
+// 0o444 (read-only everyone).
 const worldWritable = 0o002
 
 // Can be mutated in tests.
