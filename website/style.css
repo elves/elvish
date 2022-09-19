@@ -206,7 +206,7 @@ code, pre {
  * Table of content.
  */
 
-.toc {
+#pandoc-toc-wrapper {
     background-color: #f0f0f0;
     padding: 1em;
     margin: 0 16px 16px 0;
@@ -219,23 +219,23 @@ code, pre {
     clear: both;
 }
 
-#toc-list {
+#pandoc-toc {
     margin-left: -0.6em;
 }
 
 @media (min-width: 600px) and (max-width: 899px) {
-    #toc-list {
+    #pandoc-toc {
         column-count: 2;
     }
 }
 
 @media (min-width: 900px) {
-    #toc-list {
+    #pandoc-toc {
         column-count: 3;
     }
 }
 
-#toc-list li {
+#pandoc-toc li {
     list-style: none;
     /* Keep first-level ToC within one column */
     break-inside: avoid;
@@ -460,7 +460,7 @@ pre.ttyshot, pre.ttyshot code {
     background-color: #181818;
 }
 
-.dark .toc {
+.dark #pandoc-toc-wrapper {
     background-color: #181818;
 }
 

@@ -1,13 +1,17 @@
-<div class="toc">
-  <p>Table of Content: <span id="toc-toggle-wrapper"></span></p>
-  <div id="toc-list">
+<div id="pandoc-toc-wrapper">
+  <p>Table of Content: <span id="pandoc-toc-toggle-wrapper"></span></p>
+  <div id="pandoc-toc">
+    <!--
+    Note: links in the generated ToC have IDs starting with "toc-", so
+    avoid that prefix elsewhere.
+    -->
     $toc$
   </div>
   <script>
   (function() {
     var shown = true,
-        tocToggleWrapper = document.getElementById('toc-toggle-wrapper'),
-        tocList = document.getElementById('toc-list');
+        tocToggleWrapper = document.getElementById('pandoc-toc-toggle-wrapper'),
+        tocList = document.getElementById('pandoc-toc');
     var tocToggle = document.createElement('a');
     tocToggle.innerText = "[Hide]";
     tocToggle.href = "";
