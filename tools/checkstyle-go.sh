@@ -1,15 +1,33 @@
 #!/bin/sh -e
 
-# Check if the style of the Go source files is correct without modifying those
-# files.
+# Verify the style of the Go source files without modifying them.
+status=0
 
-# The grep is needed because `goimports -d` and `gofmt -d` always exits with 0.
+x="$(find . -name '*.go' | xargs goimports -d)"
+if [ "$x" != "" ]; then
+    echo
+    echo '==================================='
+    echo 'Go files need these import changes:'
+    echo '==================================='
+    echo
+    echo "$x"
+    echo
+    status=1
+fi
 
-echo 'Go files need these changes:'
-if find . -name '*.go' | xargs goimports -d | grep .; then
-    exit 1
+x="$(find . -name '*.go' | xargs gofmt -s -d)"
+if [ "$x" != "" ]; then
+    echo
+    echo '==========================================='
+    echo 'Go files need that need formatting changes:'
+    echo '==========================================='
+    echo
+    echo "$x"
+    echo
+    status=1
 fi
-if find . -name '*.go' | xargs gofmt -s -d | grep .; then
-    exit 1
+
+if test "$CI" != ""; then
+    exit $status
 fi
-echo '  None!'
+exit 0

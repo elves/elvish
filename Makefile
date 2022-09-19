@@ -33,8 +33,11 @@ style:
 	find . -name '*.go' | xargs gofmt -s -w
 	find . -name '*.md' | xargs prettier --write
 
-# Check if the style of the Go and Markdown files is correct without modifying
-# those files.
+# Ensure the project has zero lint.
+lint: checkstyle-go checkstyle-md check-content codelint
+	make -C website check-rellinks
+	make codespell
+
 checkstyle: checkstyle-go checkstyle-md
 
 checkstyle-go:
@@ -43,14 +46,14 @@ checkstyle-go:
 checkstyle-md:
 	./tools/checkstyle-md.sh
 
-lint:
+codelint:
 	./tools/lint.sh
 
 codespell:
-	codespell --skip .git
+	./tools/codespell.sh
 
 check-content:
 	./tools/check-content.sh
 
-.SILENT: checkstyle-go checkstyle-md lint
-.PHONY: default get generate test cover style checkstyle checkstyle-go checkstyle-md lint codespell check-content
+.SILENT: check-content checkstyle-go checkstyle-md codelint codespell lint
+.PHONY: default get generate test cover style checkstyle checkstyle-go checkstyle-md lint codelint codespell check-content

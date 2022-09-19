@@ -37,6 +37,7 @@ else
 	@: ttyshot generation disabled by default
 endif
 
+.SILENT: check-rellinks gen
 .PHONY: gen docset publish check-rellinks clean
 
 # Don't remove intermediate targets

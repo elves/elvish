@@ -13,16 +13,29 @@
 # be reformatted without actually modifying those files.
 
 if test "$CI" = ""; then
-    echo 'Markdown files that need changes:'
-    ! find . -name '*.md' |
-        xargs prettier --list-different |
-        sed 's/^/  /' | grep . && echo '  None!'
-else
-    echo 'Markdown files need these changes:'
-    if ! find . -name '*.md' | xargs prettier --check >/dev/null; then
-        find . -name '*.md' | xargs prettier --write >/dev/null
-        find . -name '*.md' | xargs git diff
-        exit 1
+    # Presumably we're being run interactively by a developer.
+    x="$(find . -name '*.md' | xargs prettier --list-different || true)"
+    if test "$x" != ""; then
+        echo
+        echo '==========================================='
+        echo 'Markdown files that need formatting changes'
+        echo '(run "make style" to fix the problems):'
+        echo '==========================================='
+        echo
+        echo "$x"
+        echo
     fi
-    echo '  None!'
+    exit 0
+fi
+
+if ! find . -name '*.md' | xargs prettier --check >/dev/null; then
+    echo
+    echo '=================================='
+    echo 'Markdown files need these changes:'
+    echo '=================================='
+    echo
+    find . -name '*.md' | xargs prettier --write >/dev/null
+    find . -name '*.md' | xargs git diff
+    echo
+    exit 1
 fi

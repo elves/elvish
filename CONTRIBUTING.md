@@ -19,7 +19,7 @@ GNU Make is required.
 
 The [`tools`](tools) directory contains scripts too complex to fit in the
 `Makefile`. Among them, [`tools/pre-push`](tools/pre-push) can be used as a Git
-hook, and covers a large subset (but not all) of CI checks.
+hook, and covers all of the CI checks.
 
 ## Testing changes
 
@@ -145,26 +145,14 @@ Some of the generation rules depend on the `stringer` tool. Install with
 
 ## Code hygiene
 
-Some basic aspects of code hygiene are checked in the CI.
+Some basic aspects of code hygiene are checked in the continuous-integration
+environment. You are encouraged to install the lint tools and run them before
+opening a pull-request.
 
-### Formatting
+### Installing Lint Tools Used By This Project
 
-Install [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports) to
-format Go files, and [prettier](https://prettier.io/) to format Markdown files.
-
-```sh
-go install golang.org/x/tools/cmd/goimports@latest
-npm install --global prettier@2.7.1
-```
-
-Once you have installed the tools, use `make style` to format Go and Markdown
-files. If you prefer, you can also configure your editor to run these commands
-automatically when saving Go or Markdown sources.
-
-Use `make checkstyle` to check if all Go and Markdown files are properly
-formatted.
-
-### Linting
+You'll need several tools to check that your changes do not introduce "lint";
+that is, style or correctness issues.
 
 Install [staticcheck](https://staticcheck.io):
 
@@ -176,9 +164,13 @@ The other linter Elvish uses is the standard `go vet` command. Elvish doesn't
 use golint since it is
 [deprecated and frozen](https://github.com/golang/go/issues/38968).
 
-Use `make lint` to run `staticcheck` and `go vet`.
+Install [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports) to
+format Go files, and [prettier](https://prettier.io/) to format Markdown files.
 
-### Spell checking
+```sh
+go install golang.org/x/tools/cmd/goimports@latest
+npm install --global prettier@2.7.1
+```
 
 Install [codespell](https://github.com/codespell-project/codespell) to check
 spelling:
@@ -187,18 +179,26 @@ spelling:
 pip install --user codespell==2.1.0
 ```
 
-Use `make codespell` to run it.
+### Checking For Lint Problems
 
-### Running all checks
+Run `make lint` to execute all lint checks.
 
-Use this command to run all checks:
+The lint tests are run by the continuous-integration environment. It is
+recommended that you use `tools/pre-push`. That script will run `make lint`,
+`make test`, and also perform some other sanity checks such as a
+cross-compilation succeeding. Thus helping ensure you aren't surprised by CI
+failures due to style, spelling, and other lint mistakes as well as more
+fundamental problems (e.g., unit tests failing). See the comment at the top of
+`tools/pre-push` for how to use it.
 
-```sh
-make test checkstyle lint codespell
-```
+There are also `make` targets for each individual lint tool if you want to run a
+specific lint check. See the `Makefile` for details.
 
-You can put this in `.git/hooks/pre-push` to ensure that your published commits
-pass all the checks.
+### Fixing Style Problems
+
+Run `make style` to format Go and Markdown files. If you prefer, you can also
+configure your editor to run that command automatically when saving Go or
+Markdown files.
 
 ## Licensing
 
