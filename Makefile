@@ -1,9 +1,14 @@
 ELVISH_MAKE_BIN ?= $(or $(GOBIN),$(shell go env GOPATH)/bin)/elvish$(shell go env GOEXE)
 ELVISH_MAKE_BIN := $(subst \,/,$(ELVISH_MAKE_BIN))
+GO_MIN_VERSION ?= 1.18
 
 default: test get
 
 get:
+ifneq ($(shell printf '%s\ngo%s\n' $$(go version | grep -oE 'go[0-9.]+') $(GO_MIN_VERSION) | sort -rCV; echo $$?), 0)
+	$(error go version must >= $(GO_MIN_VERSION))
+endif
+
 	mkdir -p $(shell dirname $(ELVISH_MAKE_BIN))
 	go build -o $(ELVISH_MAKE_BIN) ./cmd/elvish
 

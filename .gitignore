@@ -25,3 +25,6 @@ _testmain.go
 cover
 /_bin/
 /elvish
+
+# IDE
+.idea
