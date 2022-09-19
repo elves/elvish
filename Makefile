@@ -4,6 +4,9 @@ ELVISH_MAKE_PKG ?= ./cmd/elvish
 
 default: test get
 
+# This target emulates the behavior of "go install ./cmd/elvish", except that
+# the build output and the main package to build can be overridden with
+# environment variables.
 get:
 	mkdir -p $(shell dirname $(ELVISH_MAKE_BIN))
 	go build -o $(ELVISH_MAKE_BIN) $(ELVISH_MAKE_PKG)

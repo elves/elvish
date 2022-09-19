@@ -48,45 +48,80 @@ latest commit are provided for
 
 To build Elvish from source, you need
 
--   A supported OS: Linux, {Free,Net,Open}BSD, macOS, or Windows 10.
-
-    **NOTE**: Windows 10 support is experimental.
+-   A supported OS: Linux, {Free,Net,Open}BSD, macOS, or Windows 10. Windows 10
+    support is experimental.
 
 -   Go >= 1.18.
 
-To build Elvish from source, follow these steps:
+To build Elvish from source, run one of the following commands:
 
 ```sh
-# 1. Start from any directory you want to store Elvish's source code
-# 2. Clone the Git repository
-git clone https://github.com/elves/elvish
-# 3. Change into the repository
-cd elvish
-# 4. Build and install Elvish
-make get
+go install src.elv.sh/cmd/elvish@master # Install latest commit
+go install src.elv.sh/cmd/elvish@latest # Install latest released version
+go install src.elv.sh/cmd/elvish@v0.18.0 # Install a specific version
 ```
 
-This will install Elvish to `$GOBIN`, which defaults to `$GOPATH/bin` or
-`~/go/bin` if `$GOPATH` is not set.
+### Controlling the installation location
 
-To install it elsewhere, override `ELVISH_MAKE_BIN` in the `make` command:
+The
+[`go install`](https://pkg.go.dev/cmd/go#hdr-Compile_and_install_packages_and_dependencies)
+command installs Elvish to `$GOBIN`; the binary name is `elvish`. You can
+control the installation location by overriding `$GOBIN`, for example by
+prepending `env GOBIN=...` to the `go install` command.
+
+If `$GOBIN` is not set, the installation location defaults to `$GOPATH/bin`,
+which in turn defaults to `~/go/bin` if `$GOPATH` is also not set.
+
+The installation directory is probably not in your OS's default `$PATH`. You
+should either either add it to `$PATH`, or manually copy the Elvish binary to a
+directory already in `$PATH`.
+
+### Building a variant
+
+Elvish has several _build variants_ with slightly different feature sets. For
+example, the `withpprof` build variant has
+[profiling support](https://pkg.go.dev/runtime/pprof).
+
+These build variants are just alternative main packages. For example, to build
+the `withpprof` variant, run the following command (change the part after `@` to
+get different versions):
 
 ```sh
-make get ELVISH_MAKE_BIN=./elvish # Install to the repo root
-make get ELVISH_MAKE_BIN=/usr/local/bin/elvish # Install to /usr/local/bin
+go install src.elv.sh/cmd/withpprof/elvish@master
 ```
 
-### Experimental plugin support
+### Building from a local source tree
+
+If you are modifying Elvish's source code, you will want to clone Elvish's Git
+repository and build Elvish from the local source tree instead. To do this, run
+the following from the root of the source tree:
+
+```sh
+go install ./cmd/elvish
+```
+
+There is no need to specify a version like `@master`; when inside a source tree,
+`go install` will always use the whatever source code is present.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more notes for contributors.
+
+### Building with experimental plugin support
 
 Elvish has experimental support for building and importing plugins, modules
-written in Go.
+written in Go. It relies on Go's [plugin support](https://pkg.go.dev/plugin),
+which is only available on a few platforms.
 
-However, since plugin support relies on dynamic linking, it is not enabled in
-the official prebuilt binaries. You need to build Elvish from source, and make
-sure that CGo is enabled:
+Plugin support requires building Elvish with [cgo](https://pkg.go.dev/cmd/cgo).
+The official [prebuilt binaries](https://elv.sh/get) are built without cgo for
+compatibility and reproducibility, but by default the Go toolchain builds with
+cgo enabled.
+
+If you have built Elvish from source on a platform with plugin support, your
+Elvish build probably already supports plugins. To force cgo to be used when
+building Elvish, you can do the following:
 
 ```sh
-make get CGO_ENABLED=1
+env CGO_ENABLED=1 go install ./cmd/elvish
 ```
 
 To build a plugin, see this [example](https://github.com/elves/sample-plugin).
@@ -98,3 +133,7 @@ See [PACKAGING.md](PACKAGING.md) for notes for packagers.
 ## Contributing to Elvish
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for notes for contributors.
+
+## Reporting security issues
+
+See [SECURITY.md](SECURITY.md) for how to report security issues.

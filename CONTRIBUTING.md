@@ -11,6 +11,16 @@ On the other hand, if you find it easier to express your thoughts directly in
 code, it is also completely fine to directly send a pull request, as long as you
 don't mind the risk of the PR being rejected due to lack of prior discussion.
 
+## Using development scripts
+
+The [`Makefile`](Makefile) contains targets encapsulating some common workflows.
+They are not necessary for developing Elvish, but can save you a few keystrokes.
+GNU Make is required.
+
+The [`tools`](tools) directory contains scripts too complex to fit in the
+`Makefile`. Among them, [`tools/pre-push`](tools/pre-push) can be used as a Git
+hook, and covers a large subset (but not all) of CI checks.
+
 ## Testing changes
 
 Write comprehensive unit tests for your code, and make sure that existing tests
