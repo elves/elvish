@@ -1,11 +1,12 @@
 ELVISH_MAKE_BIN ?= $(or $(GOBIN),$(shell go env GOPATH)/bin)/elvish$(shell go env GOEXE)
 ELVISH_MAKE_BIN := $(subst \,/,$(ELVISH_MAKE_BIN))
+ELVISH_MAKE_PKG ?= ./cmd/elvish
 
 default: test get
 
 get:
 	mkdir -p $(shell dirname $(ELVISH_MAKE_BIN))
-	go build -o $(ELVISH_MAKE_BIN) ./cmd/elvish
+	go build -o $(ELVISH_MAKE_BIN) $(ELVISH_MAKE_PKG)
 
 generate:
 	go generate ./...
