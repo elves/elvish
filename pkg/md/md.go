@@ -15,6 +15,7 @@ package md
 
 import (
 	"fmt"
+	"html"
 	"regexp"
 	"strings"
 	"unicode"
@@ -130,6 +131,7 @@ var isASCIIPunct = map[byte]bool{
 }
 
 var (
+	entityRegexp  = regexp.MustCompile(`^&(?:[a-zA-Z0-9]+|#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6});`)
 	openTagRegexp = regexp.MustCompile(fmt.Sprintf(`^<`+
 		`[a-zA-Z][a-zA-Z0-9-]*`+ // tag name
 		(`(?:`+
@@ -348,6 +350,14 @@ func (p *inlineParser) render() {
 				}
 			}
 			parseText()
+		case '&':
+			entity := entityRegexp.FindString(p.text[begin:])
+			if entity != "" {
+				p.buf.push(piece{text: p.syntax.escape(html.UnescapeString(entity))})
+				p.pos = begin + len(entity)
+			} else {
+				parseText()
+			}
 		case '\\':
 			if p.pos < len(p.text) && isASCIIPunct[p.text[p.pos]] {
 				begin++
@@ -552,7 +562,7 @@ func (p *linkTailParser) parse() (n int, dest, title string) {
 	if p.pos == len(p.text) || p.text[p.pos] != ')' {
 		return -1, "", ""
 	}
-	return p.pos + 1, destBuilder.String(), titleBuilder.String()
+	return p.pos + 1, html.UnescapeString(destBuilder.String()), html.UnescapeString(titleBuilder.String())
 }
 
 func (p *linkTailParser) skipWhitespaces() {
@@ -590,7 +600,7 @@ func isASCIIControl(b byte) bool {
 
 func isMeta(b byte) bool {
 	switch b {
-	case '[', ']', '*', '_', '`', '\\', '!', '<', '\n':
+	case '!', '[', ']', '*', '_', '`', '\\', '&', '<', '\n':
 		return true
 	default:
 		return false
