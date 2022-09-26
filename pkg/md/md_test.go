@@ -68,7 +68,7 @@ func TestConvertInline(t *testing.T) {
 			if strings.HasPrefix(tc.Markdown, "#") {
 				t.Skipf("Header not supported")
 			}
-			if strings.HasPrefix(tc.Markdown, "```") || strings.HasPrefix(tc.Markdown, "    ") {
+			if strings.HasPrefix(tc.Markdown, "```") || strings.HasPrefix(tc.Markdown, "~~~") || strings.HasPrefix(tc.Markdown, "    ") {
 				t.Skipf("Code block not supported")
 			}
 			if strings.Contains(tc.Markdown, "\n\n") {
@@ -87,19 +87,22 @@ func TestConvertInline(t *testing.T) {
 
 func supportedSection(section string) bool {
 	switch section {
-	case "Entity and numeric character references",
-		"Inlines",
-		"Code spans",
-		"Emphasis and strong emphasis",
-		"Links",
-		"Autolinks",
-		"Images",
-		"Raw HTML",
-		"Hard line breaks",
-		"Soft line breaks",
-		"Textual content":
-		return true
-	default:
+	case "Tabs",
+		"Precedence",
+		"Thematic breaks",
+		"ATX headings",
+		"Setext headings",
+		"Indented code blocks",
+		"Fenced code blocks",
+		"HTML blocks",
+		"Link reference definitions",
+		"Paragraphs",
+		"Blank lines",
+		"Block quotes",
+		"List items",
+		"Lists":
 		return false
+	default:
+		return true
 	}
 }
