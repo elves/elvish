@@ -26,10 +26,6 @@ type Store interface {
 	AddDir(dir string, incFactor float64) error
 	DelDir(dir string) error
 	Dirs(blacklist map[string]struct{}) ([]Dir, error)
-
-	SharedVar(name string) (string, error)
-	SetSharedVar(name, value string) error
-	DelSharedVar(name string) error
 }
 
 // Dir is an entry in the directory history.

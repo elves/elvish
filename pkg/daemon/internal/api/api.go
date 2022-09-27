@@ -117,26 +117,3 @@ type DirsRequest struct {
 type DirsResponse struct {
 	Dirs []storedefs.Dir
 }
-
-// SharedVar requests.
-
-type SharedVarRequest struct {
-	Name string
-}
-
-type SharedVarResponse struct {
-	Value string
-}
-
-type SetSharedVarRequest struct {
-	Name  string
-	Value string
-}
-
-type SetSharedVarResponse struct{}
-
-type DelSharedVarRequest struct {
-	Name string
-}
-
-type DelSharedVarResponse struct{}

@@ -85,32 +85,6 @@ import (
 //
 // Each entry is represented by a pseudo-map with fields `path` and `score`.
 
-//elvdoc:fn shared-var
-//
-// ```elvish
-// store:shared-var $name
-// ```
-//
-// Outputs the value of the shared variable with the given name. Throws an error
-// if the shared variable doesn't exist.
-
-//elvdoc:fn set-shared-var
-//
-// ```elvish
-// store:set-shared-var $name $value
-// ```
-//
-// Sets the value of the shared variable with the given name, creating it if it
-// doesn't exist. The value must be a string.
-
-//elvdoc:fn del-shared-var
-//
-// ```elvish
-// store:del-shared-var $name
-// ```
-//
-// Deletes the shared variable with the given name.
-
 func Ns(s storedefs.Store) *eval.Ns {
 	return eval.BuildNsNamed("store").
 		AddGoFns(map[string]any{
@@ -125,9 +99,5 @@ func Ns(s storedefs.Store) *eval.Ns {
 			"add-dir": func(dir string) error { return s.AddDir(dir, 1) },
 			"del-dir": s.DelDir,
 			"dirs":    func() ([]storedefs.Dir, error) { return s.Dirs(storedefs.NoBlacklist) },
-
-			"shared-var":     s.SharedVar,
-			"set-shared-var": s.SetSharedVar,
-			"del-shared-var": s.DelSharedVar,
 		}).Ns()
 }
