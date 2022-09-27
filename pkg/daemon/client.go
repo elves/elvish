@@ -168,22 +168,3 @@ func (c *client) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	err := c.call("Dirs", req, res)
 	return res.Dirs, err
 }
-
-func (c *client) SharedVar(name string) (string, error) {
-	req := &api.SharedVarRequest{Name: name}
-	res := &api.SharedVarResponse{}
-	err := c.call("SharedVar", req, res)
-	return res.Value, err
-}
-
-func (c *client) SetSharedVar(name, value string) error {
-	req := &api.SetSharedVarRequest{Name: name, Value: value}
-	res := &api.SetSharedVarResponse{}
-	return c.call("SetSharedVar", req, res)
-}
-
-func (c *client) DelSharedVar(name string) error {
-	req := &api.DelSharedVarRequest{Name: name}
-	res := &api.DelSharedVarResponse{}
-	return c.call("DelSharedVar", req, res)
-}

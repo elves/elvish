@@ -49,16 +49,6 @@ func TestStore(t *testing.T) {
 		That("store:del-dir /foo").DoesNothing(),
 		That("store:dirs").Puts(
 			dir("/bar", store.DirScoreIncrement)),
-
-		// Set shared variables
-		That("store:set-shared-var foo lorem").DoesNothing(),
-		That("store:set-shared-var bar ipsum").DoesNothing(),
-		// Query shared variables
-		That("store:shared-var foo").Puts("lorem"),
-		That("store:shared-var bar").Puts("ipsum"),
-		// Delete shared variables
-		That("store:del-shared-var foo").DoesNothing(),
-		That("store:shared-var foo").Throws(store.ErrNoSharedVar),
 	)
 }
 

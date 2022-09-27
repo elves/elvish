@@ -112,26 +112,3 @@ func (s *service) Dirs(req *api.DirsRequest, res *api.DirsResponse) error {
 	res.Dirs = dirs
 	return err
 }
-
-func (s *service) SharedVar(req *api.SharedVarRequest, res *api.SharedVarResponse) error {
-	if s.err != nil {
-		return s.err
-	}
-	value, err := s.store.SharedVar(req.Name)
-	res.Value = value
-	return err
-}
-
-func (s *service) SetSharedVar(req *api.SetSharedVarRequest, res *api.SetSharedVarResponse) error {
-	if s.err != nil {
-		return s.err
-	}
-	return s.store.SetSharedVar(req.Name, req.Value)
-}
-
-func (s *service) DelSharedVar(req *api.DelSharedVarRequest, res *api.DelSharedVarResponse) error {
-	if s.err != nil {
-		return s.err
-	}
-	return s.store.DelSharedVar(req.Name)
-}

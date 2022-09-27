@@ -45,7 +45,6 @@ func TestProgram_ServesClientRequests(t *testing.T) {
 	// Test store requests.
 	storetest.TestCmd(t, client)
 	storetest.TestDir(t, client)
-	storetest.TestSharedVar(t, client)
 }
 
 func TestProgram_StillServesIfCannotOpenDB(t *testing.T) {
