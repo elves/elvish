@@ -24,13 +24,16 @@ import (
 
 // OutputSyntax specifies the output syntax.
 type OutputSyntax struct {
-	Paragraph TagPair
-	Code      TagPair
-	Em        TagPair
-	Strong    TagPair
-	Link      func(dest, title string) (string, string)
-	Image     func(dest, alt, title string) string
-	Escape    func(string) string
+	ThematicBreak  func(original string) string
+	Heading        func(level int) TagPair
+	Paragraph      TagPair
+	Blockquote     TagPair
+	CodeSpan       TagPair
+	Emphasis       TagPair
+	StrongEmphasis TagPair
+	Link           func(dest, title string) TagPair
+	Image          func(dest, alt, title string) string
+	Escape         func(string) string
 }
 
 // TagPair specifies a pair of "tags" to enclose a construct in the output.
@@ -43,79 +46,105 @@ func Render(text string, syntax OutputSyntax) string {
 	p := blockParser{
 		lines:  lineSplitter{text, 0},
 		syntax: syntax,
-		blocks: []block{{typ: documentBlock}},
 	}
 	p.render()
 	return p.sb.String()
 }
 
 type blockParser struct {
-	lines  lineSplitter
-	syntax OutputSyntax
-	blocks []block
-	sb     strings.Builder
+	lines      lineSplitter
+	syntax     OutputSyntax
+	containers []container
+	paragraph  []string
+	sb         strings.Builder
 }
+
+var (
+	blockquoteMarkerRegexp = regexp.MustCompile(`^ {0,3}> ?`)
+	thematicBreakRegexp    = regexp.MustCompile(`^[ \t]*((?:-[ \t]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})$`)
+	atxHeadingRegexp       = regexp.MustCompile(`^ *(#{1,6})(?:[ \t]|$)`)
+	atxHeadingCloserRegexp = regexp.MustCompile(`[ \t]#+[ \t]*$`)
+)
 
 func (p *blockParser) render() {
 	for p.lines.more() {
 		line := p.lines.next()
-		if line == "\n" {
-			switch p.leaf().typ {
-			case documentBlock:
-				// Nothing to do
-			case paragraphBlock:
-				p.pop()
+		i := 0
+		for i = 0; i < len(p.containers); i++ {
+			markerLen := p.containers[i].findMarker(line)
+			if markerLen == 0 {
+				break
 			}
+			line = line[markerLen:]
+		}
+
+		if m := blockquoteMarkerRegexp.FindString(line); m != "" {
+			p.popParagraph(i)
+			for m != "" {
+				p.appendContainer(container{typ: blockquoteContainer})
+				line = line[len(m):]
+				m = blockquoteMarkerRegexp.FindString(line)
+			}
+			i = len(p.containers)
+		}
+
+		if strings.Trim(line, " \t") == "" {
+			p.popParagraph(i)
+		} else if thematicBreakRegexp.MatchString(line) {
+			p.popParagraph(i)
+			p.sb.WriteString(p.syntax.ThematicBreak(line))
+			p.sb.WriteByte('\n')
+		} else if m := atxHeadingRegexp.FindStringSubmatchIndex(line); m != nil {
+			p.popParagraph(i)
+			// ATX headings always span one line only, so render it right away
+			// without pushing a node.
+			openerStart, openerEnd := m[2], m[3]
+			opener := line[openerStart:openerEnd]
+			line = strings.TrimRight(line[openerEnd:], " \t")
+			if closer := atxHeadingCloserRegexp.FindString(line); closer != "" {
+				line = line[:len(line)-len(closer)]
+			}
+			p.renderLeaf(p.syntax.Heading(len(opener)), strings.Trim(line, " \t"))
 		} else {
-			switch p.leaf().typ {
-			case documentBlock:
-				p.push(paragraphBlock).text.WriteString(line)
-			case paragraphBlock:
-				p.leaf().text.WriteString(line)
+			if len(p.paragraph) == 0 {
+				p.popParagraph(i)
 			}
+			p.addParagraphLine(line)
 		}
 	}
-	for len(p.blocks) > 0 {
-		p.pop()
-	}
+	p.popParagraph(0)
 }
 
-func (p *blockParser) push(typ blockType) *block {
-	switch typ {
-	case paragraphBlock:
-		p.sb.WriteString(p.syntax.Paragraph.Start)
-	}
-	p.blocks = append(p.blocks, block{typ: typ})
-	return p.leaf()
+func (p *blockParser) appendContainer(c container) {
+	p.containers = append(p.containers, c)
+	p.sb.WriteString(c.tagPair(&p.syntax).Start)
+	p.sb.WriteByte('\n')
 }
 
-func (p *blockParser) leaf() *block { return &p.blocks[len(p.blocks)-1] }
+func (p *blockParser) addParagraphLine(line string) {
+	p.paragraph = append(p.paragraph, line)
+}
 
-func (p *blockParser) pop() {
-	leaf := p.leaf()
-	switch leaf.typ {
-	case paragraphBlock:
-		text := strings.Trim(strings.TrimSuffix(leaf.text.String(), "\n"), " \t")
-		p.sb.WriteString(renderInline(text, p.syntax))
-		p.sb.WriteString(p.syntax.Paragraph.End)
+func (p *blockParser) popParagraph(i int) {
+	if len(p.paragraph) > 0 {
+		text := strings.Trim(strings.Join(p.paragraph, "\n"), " \t")
+		p.renderLeaf(p.syntax.Paragraph, text)
+		p.paragraph = p.paragraph[:0]
+	}
+	for j := len(p.containers) - 1; j >= i; j-- {
+		p.sb.WriteString(p.containers[i].tagPair(&p.syntax).End)
 		p.sb.WriteByte('\n')
 	}
-	p.blocks = p.blocks[:len(p.blocks)-1]
+	p.containers = p.containers[:i]
 }
 
-type block struct {
-	typ  blockType
-	text strings.Builder
+func (p *blockParser) renderLeaf(tags TagPair, content string) {
+	p.sb.WriteString(tags.Start)
+	p.sb.WriteString(renderInline(content, p.syntax))
+	p.sb.WriteString(tags.End)
+	p.sb.WriteByte('\n')
 }
 
-type blockType uint
-
-const (
-	documentBlock blockType = iota
-	paragraphBlock
-)
-
-// Splits a string into lines, preserving the trailing newlines.
 type lineSplitter struct {
 	text string
 	pos  int
@@ -133,7 +162,33 @@ func (s *lineSplitter) next() string {
 		return s.text[begin:]
 	}
 	s.pos += delta + 1
-	return s.text[begin:s.pos]
+	return s.text[begin : s.pos-1]
+}
+
+type container struct {
+	typ containerType
+}
+
+type containerType uint8
+
+const (
+	blockquoteContainer containerType = iota
+)
+
+func (c container) findMarker(line string) int {
+	switch c.typ {
+	case blockquoteContainer:
+		return len(blockquoteMarkerRegexp.FindString(line))
+	}
+	panic("unreachable")
+}
+
+func (c container) tagPair(syntax *OutputSyntax) TagPair {
+	switch c.typ {
+	case blockquoteContainer:
+		return syntax.Blockquote
+	}
+	panic("unreachable")
 }
 
 type buffer struct {
@@ -313,9 +368,9 @@ func (p *inlineParser) render() {
 			}
 			unlink(opener)
 			if opener.typ == '[' {
-				start, end := p.syntax.Link(dest, title)
-				p.buf.pieces[opener.bufIdx] = piece{appendMarkup: []string{start}}
-				p.buf.push(piece{appendMarkup: []string{end}})
+				tags := p.syntax.Link(dest, title)
+				p.buf.pieces[opener.bufIdx] = piece{appendMarkup: []string{tags.Start}}
+				p.buf.push(piece{appendMarkup: []string{tags.End}})
 			} else {
 				var altBuilder strings.Builder
 				for _, piece := range p.buf.pieces[opener.bufIdx+1:] {
@@ -363,9 +418,9 @@ func (p *inlineParser) render() {
 				continue
 			}
 			p.buf.push(piece{
-				prependMarkup: []string{p.syntax.Code.Start},
+				prependMarkup: []string{p.syntax.CodeSpan.Start},
 				text:          p.syntax.Escape(normalizeCodeSpanContent(p.text[p.pos:closer])),
-				appendMarkup:  []string{p.syntax.Code.End}})
+				appendMarkup:  []string{p.syntax.CodeSpan.End}})
 			p.pos = closer + (p.pos - begin)
 		case '<':
 			if p.pos == len(p.text) {
@@ -441,11 +496,11 @@ func (p *inlineParser) render() {
 						if email {
 							dest = "mailto:" + dest
 						}
-						start, end := p.syntax.Link(dest, "")
+						tags := p.syntax.Link(dest, "")
 						p.buf.push(piece{
-							prependMarkup: []string{start},
+							prependMarkup: []string{tags.Start},
 							text:          text,
-							appendMarkup:  []string{end},
+							appendMarkup:  []string{tags.End},
 						})
 						continue
 					}
@@ -467,21 +522,23 @@ func (p *inlineParser) render() {
 			}
 			parseText()
 		case '\n':
-			last := &p.buf.pieces[len(p.buf.pieces)-1]
-			if last.prependMarkup == nil && last.appendMarkup == nil {
-				if p.pos == len(p.text) {
-					last.text = strings.TrimRight(last.text, " ")
-				} else {
-					hardLineBreak := false
-					if strings.HasSuffix(last.text, "\\") {
-						hardLineBreak = true
-						last.text = last.text[:len(last.text)-1]
-					} else {
-						hardLineBreak = strings.HasSuffix(last.text, "  ")
+			if len(p.buf.pieces) > 0 {
+				last := &p.buf.pieces[len(p.buf.pieces)-1]
+				if last.prependMarkup == nil && last.appendMarkup == nil {
+					if p.pos == len(p.text) {
 						last.text = strings.TrimRight(last.text, " ")
-					}
-					if hardLineBreak {
-						p.buf.push(piece{prependMarkup: []string{"<br />"}})
+					} else {
+						hardLineBreak := false
+						if strings.HasSuffix(last.text, "\\") {
+							hardLineBreak = true
+							last.text = last.text[:len(last.text)-1]
+						} else {
+							hardLineBreak = strings.HasSuffix(last.text, "  ")
+							last.text = strings.TrimRight(last.text, " ")
+						}
+						if hardLineBreak {
+							p.buf.push(piece{prependMarkup: []string{"<br />"}})
+						}
 					}
 				}
 			}
@@ -530,14 +587,14 @@ func (p *inlineParser) processEmphasis(bottom *delim) {
 		strong := len(openerPiece.text) >= 2 && len(closerPiece.text) >= 2
 		if strong {
 			openerPiece.text = openerPiece.text[2:]
-			openerPiece.appendMarkup = append(openerPiece.appendMarkup, p.syntax.Strong.Start)
+			openerPiece.appendMarkup = append(openerPiece.appendMarkup, p.syntax.StrongEmphasis.Start)
 			closerPiece.text = closerPiece.text[2:]
-			closerPiece.prependMarkup = append(closerPiece.prependMarkup, p.syntax.Strong.End)
+			closerPiece.prependMarkup = append(closerPiece.prependMarkup, p.syntax.StrongEmphasis.End)
 		} else {
 			openerPiece.text = openerPiece.text[1:]
-			openerPiece.appendMarkup = append(openerPiece.appendMarkup, p.syntax.Em.Start)
+			openerPiece.appendMarkup = append(openerPiece.appendMarkup, p.syntax.Emphasis.Start)
 			closerPiece.text = closerPiece.text[1:]
-			closerPiece.prependMarkup = append(closerPiece.prependMarkup, p.syntax.Em.End)
+			closerPiece.prependMarkup = append(closerPiece.prependMarkup, p.syntax.Emphasis.End)
 		}
 		opener.next = closer
 		closer.prev = opener

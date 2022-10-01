@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -12,18 +13,52 @@ import (
 	"src.elv.sh/pkg/must"
 )
 
-//go:embed spec.json
-var specJSON []byte
-
-var spec []struct {
+type testCase struct {
 	Markdown string `json:"markdown"`
 	HTML     string `json:"html"`
 	Example  int    `json:"example"`
 	Section  string `json:"section"`
+	Name     string
+}
+
+//go:embed spec.json
+var specJSON []byte
+
+var testCases []testCase
+
+var additionalCases = []testCase{
+	{
+		Markdown: `> a
+>> b
+`,
+		HTML: `<blockquote>
+<p>a</p>
+<blockquote>
+<p>b</p>
+</blockquote>
+</blockquote>
+`,
+		Name: "Increasing blockquote level",
+	},
+	{
+		Markdown: `>> a
+>
+> b
+`,
+		HTML: `<blockquote>
+<blockquote>
+<p>a</p>
+</blockquote>
+<p>b</p>
+</blockquote>
+`,
+		Name: "Reducing blockquote level",
+	},
 }
 
 func init() {
-	must.OK(json.Unmarshal(specJSON, &spec))
+	must.OK(json.Unmarshal(specJSON, &testCases))
+	testCases = append(testCases, additionalCases...)
 }
 
 var (
@@ -37,18 +72,24 @@ var (
 )
 
 var htmlSyntax = OutputSyntax{
-	Paragraph: TagPair{Start: "<p>", End: "</p>"},
-	Code:      TagPair{Start: "<code>", End: "</code>"},
-	Em:        TagPair{Start: "<em>", End: "</em>"},
-	Strong:    TagPair{Start: "<strong>", End: "</strong>"},
-	Link: func(dest, title string) (string, string) {
+	ThematicBreak: func(_ string) string { return "<hr />" },
+	Heading: func(level int) TagPair {
+		tag := "h" + strconv.Itoa(level)
+		return TagPair{Start: "<" + tag + ">", End: "</" + tag + ">"}
+	},
+	Paragraph:      TagPair{Start: "<p>", End: "</p>"},
+	Blockquote:     TagPair{Start: "<blockquote>", End: "</blockquote>"},
+	CodeSpan:       TagPair{Start: "<code>", End: "</code>"},
+	Emphasis:       TagPair{Start: "<em>", End: "</em>"},
+	StrongEmphasis: TagPair{Start: "<strong>", End: "</strong>"},
+	Link: func(dest, title string) TagPair {
 		start := ""
 		if title == "" {
 			start = fmt.Sprintf(`<a href="%s">`, escapeDest(dest))
 		} else {
 			start = fmt.Sprintf(`<a href="%s" title="%s">`, escapeDest(dest), escapeHTML(title))
 		}
-		return start, "</a>"
+		return TagPair{Start: start, End: "</a>"}
 	},
 	Image: func(dest, alt, title string) string {
 		if title == "" {
@@ -60,20 +101,25 @@ var htmlSyntax = OutputSyntax{
 }
 
 var (
-	linkRef  = regexp.MustCompile(`(^|\n)\[([^\\\[\]]|\\[\\\[\]])+\]:`)
-	listItem = regexp.MustCompile(`(^|\n)\* `)
+	linkRef   = regexp.MustCompile(`(^|\n)\[([^\\\[\]]|\\[\\\[\]])+\]:`)
+	listItem  = regexp.MustCompile(`(^|\n)[*-] `)
+	codeBlock = regexp.MustCompile("(^|\n)>*(```|~~~|    )")
 )
 
 func TestRender(t *testing.T) {
-	for _, tc := range spec {
-		t.Run(fmt.Sprintf("%s/%d", tc.Section, tc.Example), func(t *testing.T) {
-			if !supportedSection(tc.Section) {
+	for _, tc := range testCases {
+		name := tc.Name
+		if name == "" {
+			name = fmt.Sprintf("%s/%d", tc.Section, tc.Example)
+		}
+		t.Run(name, func(t *testing.T) {
+			if unsupportedSection(tc.Section) {
 				t.Skipf("Section %q not supported", tc.Section)
 			}
-			if strings.HasPrefix(tc.Markdown, "#") {
-				t.Skipf("Header not supported")
+			if reason := unsupportedExample(tc.Example); reason != "" {
+				t.Skipf("Example %d not supported: %s", tc.Example, reason)
 			}
-			if strings.HasPrefix(tc.Markdown, "```") || strings.HasPrefix(tc.Markdown, "~~~") || strings.HasPrefix(tc.Markdown, "    ") {
+			if codeBlock.MatchString(tc.Markdown) {
 				t.Skipf("Code block not supported")
 			}
 			if linkRef.MatchString(tc.Markdown) {
@@ -94,23 +140,29 @@ func TestRender(t *testing.T) {
 	}
 }
 
-func supportedSection(section string) bool {
+func unsupportedSection(section string) bool {
 	switch section {
 	case "Tabs",
 		"Precedence",
-		"Thematic breaks",
-		"ATX headings",
 		"Setext headings",
 		"Indented code blocks",
 		"Fenced code blocks",
 		"HTML blocks",
 		"Link reference definitions",
 		"Blank lines",
-		"Block quotes",
 		"List items",
 		"Lists":
-		return false
-	default:
 		return true
+	default:
+		return false
+	}
+}
+
+func unsupportedExample(example int) string {
+	switch example {
+	case 59:
+		return "has setext heading"
+	default:
+		return ""
 	}
 }
