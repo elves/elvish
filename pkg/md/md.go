@@ -22,6 +22,64 @@ import (
 	"unicode/utf8"
 )
 
+// OutputSyntax specifies the output syntax.
+type OutputSyntax struct {
+	Paragraph TagPair
+	Code      TagPair
+	Em        TagPair
+	Strong    TagPair
+	Link      func(dest, title string) (string, string)
+	Image     func(dest, alt, title string) string
+	Escape    func(string) string
+}
+
+// TagPair specifies a pair of "tags" to enclose a construct in the output.
+type TagPair struct {
+	Start, End string
+}
+
+// Render parses markdown and renders it according to the output syntax.
+func Render(text string, syntax OutputSyntax) string {
+	var sb strings.Builder
+	lines := lineSplitter{text, 0}
+	root := blockNode{}
+	for lines.more() {
+		line := lines.next()
+		root.contentBuilder.WriteString(line)
+	}
+	content := strings.Trim(strings.TrimSuffix(root.contentBuilder.String(), "\n"), " \t")
+	sb.WriteString(syntax.Paragraph.Start)
+	sb.WriteString(renderInline(content, syntax))
+	sb.WriteString(syntax.Paragraph.End)
+	sb.WriteByte('\n')
+	return sb.String()
+}
+
+type blockNode struct {
+	contentBuilder strings.Builder
+}
+
+// Splits a string into lines, preserving the trailing newlines.
+type lineSplitter struct {
+	text string
+	pos  int
+}
+
+func (s *lineSplitter) more() bool {
+	return s.pos < len(s.text)
+}
+
+func (s *lineSplitter) next() string {
+	begin := s.pos
+	delta := strings.IndexByte(s.text[begin:], '\n')
+	if delta == -1 {
+		s.pos = len(s.text)
+		return s.text[begin:]
+	}
+	s.pos += delta + 1
+	return s.text[begin:s.pos]
+}
+
 type buffer struct {
 	pieces []piece
 }
@@ -95,19 +153,7 @@ func (s *delimStack) push(n *delim) {
 	s.top.prev = n
 }
 
-type outSyntax struct {
-	codeStart   string
-	codeEnd     string
-	emStart     string
-	emEnd       string
-	strongStart string
-	strongEnd   string
-	link        func(dest, title string) (string, string)
-	image       func(dest, alt, title string) string
-	escape      func(string) string
-}
-
-func renderInline(text string, syntax outSyntax) string {
+func renderInline(text string, syntax OutputSyntax) string {
 	p := inlineParser{text, syntax, 0, makeDelimStack(), buffer{}}
 	p.render()
 	return p.buf.String()
@@ -115,7 +161,7 @@ func renderInline(text string, syntax outSyntax) string {
 
 type inlineParser struct {
 	text   string
-	syntax outSyntax
+	syntax OutputSyntax
 	pos    int
 	delims delimStack
 	buf    buffer
@@ -151,8 +197,8 @@ var (
 )
 
 func (p *inlineParser) render() {
-	if p.syntax.escape == nil {
-		p.syntax.escape = func(s string) string { return s }
+	if p.syntax.Escape == nil {
+		p.syntax.Escape = func(s string) string { return s }
 	}
 
 	for p.pos < len(p.text) {
@@ -164,7 +210,7 @@ func (p *inlineParser) render() {
 			for p.pos < len(p.text) && !isMeta(p.text[p.pos]) {
 				p.pos++
 			}
-			p.buf.push(piece{text: p.syntax.escape(p.text[begin:p.pos])})
+			p.buf.push(piece{text: p.syntax.Escape(p.text[begin:p.pos])})
 		}
 
 		switch b {
@@ -211,7 +257,7 @@ func (p *inlineParser) render() {
 			}
 			unlink(opener)
 			if opener.typ == '[' {
-				start, end := p.syntax.link(dest, title)
+				start, end := p.syntax.Link(dest, title)
 				p.buf.pieces[opener.bufIdx] = piece{appendMarkup: []string{start}}
 				p.buf.push(piece{appendMarkup: []string{end}})
 			} else {
@@ -224,7 +270,7 @@ func (p *inlineParser) render() {
 				alt := altBuilder.String()
 				p.buf.push(piece{
 					altText:      alt,
-					appendMarkup: []string{p.syntax.image(dest, alt, title)}})
+					appendMarkup: []string{p.syntax.Image(dest, alt, title)}})
 			}
 		case '*', '_':
 			// Consume the entire run of * or _.
@@ -261,9 +307,9 @@ func (p *inlineParser) render() {
 				continue
 			}
 			p.buf.push(piece{
-				prependMarkup: []string{p.syntax.codeStart},
-				text:          p.syntax.escape(normalizeCodeSpanContent(p.text[p.pos:closer])),
-				appendMarkup:  []string{p.syntax.codeEnd}})
+				prependMarkup: []string{p.syntax.Code.Start},
+				text:          p.syntax.Escape(normalizeCodeSpanContent(p.text[p.pos:closer])),
+				appendMarkup:  []string{p.syntax.Code.End}})
 			p.pos = closer + (p.pos - begin)
 		case '<':
 			if p.pos == len(p.text) {
@@ -334,12 +380,12 @@ func (p *inlineParser) render() {
 					}
 					if autolink != "" {
 						p.pos = begin + len(autolink)
-						text := p.syntax.escape(autolink[1 : len(autolink)-1])
+						text := p.syntax.Escape(autolink[1 : len(autolink)-1])
 						dest := text
 						if email {
 							dest = "mailto:" + dest
 						}
-						start, end := p.syntax.link(dest, "")
+						start, end := p.syntax.Link(dest, "")
 						p.buf.push(piece{
 							prependMarkup: []string{start},
 							text:          text,
@@ -353,7 +399,7 @@ func (p *inlineParser) render() {
 		case '&':
 			entity := entityRegexp.FindString(p.text[begin:])
 			if entity != "" {
-				p.buf.push(piece{text: p.syntax.escape(html.UnescapeString(entity))})
+				p.buf.push(piece{text: p.syntax.Escape(html.UnescapeString(entity))})
 				p.pos = begin + len(entity)
 			} else {
 				parseText()
@@ -428,14 +474,14 @@ func (p *inlineParser) processEmphasis(bottom *delim) {
 		strong := len(openerPiece.text) >= 2 && len(closerPiece.text) >= 2
 		if strong {
 			openerPiece.text = openerPiece.text[2:]
-			openerPiece.appendMarkup = append(openerPiece.appendMarkup, p.syntax.strongStart)
+			openerPiece.appendMarkup = append(openerPiece.appendMarkup, p.syntax.Strong.Start)
 			closerPiece.text = closerPiece.text[2:]
-			closerPiece.prependMarkup = append(closerPiece.prependMarkup, p.syntax.strongEnd)
+			closerPiece.prependMarkup = append(closerPiece.prependMarkup, p.syntax.Strong.End)
 		} else {
 			openerPiece.text = openerPiece.text[1:]
-			openerPiece.appendMarkup = append(openerPiece.appendMarkup, p.syntax.emStart)
+			openerPiece.appendMarkup = append(openerPiece.appendMarkup, p.syntax.Em.Start)
 			closerPiece.text = closerPiece.text[1:]
-			closerPiece.prependMarkup = append(closerPiece.prependMarkup, p.syntax.emEnd)
+			closerPiece.prependMarkup = append(closerPiece.prependMarkup, p.syntax.Em.End)
 		}
 		opener.next = closer
 		closer.prev = opener

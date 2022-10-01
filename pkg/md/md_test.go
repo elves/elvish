@@ -1,4 +1,4 @@
-package md
+package md_test
 
 import (
 	_ "embed"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	. "src.elv.sh/pkg/md"
 	"src.elv.sh/pkg/must"
 )
 
@@ -34,14 +35,12 @@ var (
 		"ä", "%C3%A4", " ", "%C2%A0").Replace
 )
 
-var htmlSyntax = outSyntax{
-	codeStart:   "<code>",
-	codeEnd:     "</code>",
-	emStart:     "<em>",
-	emEnd:       "</em>",
-	strongStart: "<strong>",
-	strongEnd:   "</strong>",
-	link: func(dest, title string) (string, string) {
+var htmlSyntax = OutputSyntax{
+	Paragraph: TagPair{Start: "<p>", End: "</p>"},
+	Code:      TagPair{Start: "<code>", End: "</code>"},
+	Em:        TagPair{Start: "<em>", End: "</em>"},
+	Strong:    TagPair{Start: "<strong>", End: "</strong>"},
+	Link: func(dest, title string) (string, string) {
 		start := ""
 		if title == "" {
 			start = fmt.Sprintf(`<a href="%s">`, escapeDest(dest))
@@ -50,16 +49,16 @@ var htmlSyntax = outSyntax{
 		}
 		return start, "</a>"
 	},
-	image: func(dest, alt, title string) string {
+	Image: func(dest, alt, title string) string {
 		if title == "" {
 			return fmt.Sprintf(`<img src="%s" alt="%s" />`, escapeDest(dest), escapeHTML(alt))
 		}
 		return fmt.Sprintf(`<img src="%s" alt="%s" title="%s" />`, escapeDest(dest), escapeHTML(alt), escapeHTML(title))
 	},
-	escape: escapeHTML,
+	Escape: escapeHTML,
 }
 
-func TestConvertInline(t *testing.T) {
+func TestRender(t *testing.T) {
 	for _, tc := range spec {
 		t.Run(fmt.Sprintf("%s/%d", tc.Section, tc.Example), func(t *testing.T) {
 			if !supportedSection(tc.Section) {
@@ -74,12 +73,13 @@ func TestConvertInline(t *testing.T) {
 			if strings.Contains(tc.Markdown, "\n\n") {
 				t.Skipf("Multiple blocks not supported")
 			}
+			if strings.HasPrefix(tc.Markdown, "<a ") {
+				t.Skipf("HTML block not supported")
+			}
 
-			want := strings.TrimSuffix(strings.TrimPrefix(
-				strings.TrimRight(tc.HTML, "\n"), "<p>"), "</p>")
-			got := strings.TrimRight(renderInline(tc.Markdown, htmlSyntax), "\n")
-			if want != got {
-				t.Errorf("input:\n%swant:\n%s\ngot:\n%s", tc.Markdown, want, got)
+			got := Render(tc.Markdown, htmlSyntax)
+			if got != tc.HTML {
+				t.Errorf("input:\n%sgot:\n%swant:\n%s", tc.Markdown, got, tc.HTML)
 			}
 		})
 	}
