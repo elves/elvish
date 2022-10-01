@@ -40,24 +40,80 @@ type TagPair struct {
 
 // Render parses markdown and renders it according to the output syntax.
 func Render(text string, syntax OutputSyntax) string {
-	var sb strings.Builder
-	lines := lineSplitter{text, 0}
-	root := blockNode{}
-	for lines.more() {
-		line := lines.next()
-		root.contentBuilder.WriteString(line)
+	p := blockParser{
+		lines:  lineSplitter{text, 0},
+		syntax: syntax,
+		blocks: []block{{typ: documentBlock}},
 	}
-	content := strings.Trim(strings.TrimSuffix(root.contentBuilder.String(), "\n"), " \t")
-	sb.WriteString(syntax.Paragraph.Start)
-	sb.WriteString(renderInline(content, syntax))
-	sb.WriteString(syntax.Paragraph.End)
-	sb.WriteByte('\n')
-	return sb.String()
+	p.render()
+	return p.sb.String()
 }
 
-type blockNode struct {
-	contentBuilder strings.Builder
+type blockParser struct {
+	lines  lineSplitter
+	syntax OutputSyntax
+	blocks []block
+	sb     strings.Builder
 }
+
+func (p *blockParser) render() {
+	for p.lines.more() {
+		line := p.lines.next()
+		if line == "\n" {
+			switch p.leaf().typ {
+			case documentBlock:
+				// Nothing to do
+			case paragraphBlock:
+				p.pop()
+			}
+		} else {
+			switch p.leaf().typ {
+			case documentBlock:
+				p.push(paragraphBlock).text.WriteString(line)
+			case paragraphBlock:
+				p.leaf().text.WriteString(line)
+			}
+		}
+	}
+	for len(p.blocks) > 0 {
+		p.pop()
+	}
+}
+
+func (p *blockParser) push(typ blockType) *block {
+	switch typ {
+	case paragraphBlock:
+		p.sb.WriteString(p.syntax.Paragraph.Start)
+	}
+	p.blocks = append(p.blocks, block{typ: typ})
+	return p.leaf()
+}
+
+func (p *blockParser) leaf() *block { return &p.blocks[len(p.blocks)-1] }
+
+func (p *blockParser) pop() {
+	leaf := p.leaf()
+	switch leaf.typ {
+	case paragraphBlock:
+		text := strings.Trim(strings.TrimSuffix(leaf.text.String(), "\n"), " \t")
+		p.sb.WriteString(renderInline(text, p.syntax))
+		p.sb.WriteString(p.syntax.Paragraph.End)
+		p.sb.WriteByte('\n')
+	}
+	p.blocks = p.blocks[:len(p.blocks)-1]
+}
+
+type block struct {
+	typ  blockType
+	text strings.Builder
+}
+
+type blockType uint
+
+const (
+	documentBlock blockType = iota
+	paragraphBlock
+)
 
 // Splits a string into lines, preserving the trailing newlines.
 type lineSplitter struct {

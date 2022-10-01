@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -58,6 +59,11 @@ var htmlSyntax = OutputSyntax{
 	Escape: escapeHTML,
 }
 
+var (
+	linkRef  = regexp.MustCompile(`(^|\n)\[([^\\\[\]]|\\[\\\[\]])+\]:`)
+	listItem = regexp.MustCompile(`(^|\n)\* `)
+)
+
 func TestRender(t *testing.T) {
 	for _, tc := range spec {
 		t.Run(fmt.Sprintf("%s/%d", tc.Section, tc.Example), func(t *testing.T) {
@@ -70,8 +76,11 @@ func TestRender(t *testing.T) {
 			if strings.HasPrefix(tc.Markdown, "```") || strings.HasPrefix(tc.Markdown, "~~~") || strings.HasPrefix(tc.Markdown, "    ") {
 				t.Skipf("Code block not supported")
 			}
-			if strings.Contains(tc.Markdown, "\n\n") {
-				t.Skipf("Multiple blocks not supported")
+			if linkRef.MatchString(tc.Markdown) {
+				t.Skipf("Link reference not supported")
+			}
+			if listItem.MatchString(tc.Markdown) {
+				t.Skipf("List item not supported")
 			}
 			if strings.HasPrefix(tc.Markdown, "<a ") {
 				t.Skipf("HTML block not supported")
@@ -96,7 +105,6 @@ func supportedSection(section string) bool {
 		"Fenced code blocks",
 		"HTML blocks",
 		"Link reference definitions",
-		"Paragraphs",
 		"Blank lines",
 		"Block quotes",
 		"List items",
