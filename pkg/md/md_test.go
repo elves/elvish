@@ -55,6 +55,18 @@ var additionalCases = []testCase{
 `,
 		Name: "Blockquote supplemental/Reducing level",
 	},
+	{
+		Markdown: "- ```\n  a\n\n  ```\n",
+		HTML: `<ul>
+<li>
+<pre><code>a
+
+</code></pre>
+</li>
+</ul>
+`,
+		Name: "Code fence supplemental/Empty line in list item",
+	},
 }
 
 func init() {
@@ -76,6 +88,15 @@ var htmlSyntax = OutputSyntax{
 	ThematicBreak: func(_ string) string { return htmlSelfCloseTag("hr") },
 	Heading: func(level int) TagPair {
 		return htmlTagPair("h" + strconv.Itoa(level))
+	},
+	CodeBlock: func(info string) TagPair {
+		var codeAttrs []string
+		if info != "" {
+			language, _, _ := strings.Cut(info, " ")
+			codeAttrs = []string{"class", "language-" + language}
+		}
+		return combineHTMLTagPairs(
+			htmlTagPair("pre"), htmlTagPair("code", codeAttrs...))
 	},
 	Paragraph:  htmlTagPair("p"),
 	Blockquote: htmlTagPair("blockquote"),
@@ -136,10 +157,10 @@ func combineHTMLTagPairs(p TagPair, more ...TagPair) TagPair {
 }
 
 var (
-	linkRef       = regexp.MustCompile(`(^|\n) {0,3}\[([^\\\[\]]|\\[\\\[\]])+\]:`)
-	codeBlock     = regexp.MustCompile("(^|\n)[ >]*(```|~~~|    )")
-	emptyListItem = regexp.MustCompile(`(^|\n)([-+*]|[0-9]{1,9}[.)])(\n|$)`)
-	htmlBlock     = regexp.MustCompile(`(^|\n)(<a |<!--)`)
+	linkRef           = regexp.MustCompile(`(^|\n) {0,3}\[([^\\\[\]]|\\[\\\[\]])+\]:`)
+	indentedCodeBlock = regexp.MustCompile("(^|\n)[ >]*(    )")
+	emptyListItem     = regexp.MustCompile(`(^|\n)([-+*]|[0-9]{1,9}[.)])(\n|$)`)
+	htmlBlock         = regexp.MustCompile(`(^|\n)(<a |<!--)`)
 )
 
 func TestRender(t *testing.T) {
@@ -155,8 +176,8 @@ func TestRender(t *testing.T) {
 			if reason := unsupportedExample(tc.Example); reason != "" {
 				t.Skipf("Example %d not supported: %s", tc.Example, reason)
 			}
-			if codeBlock.MatchString(tc.Markdown) {
-				t.Skipf("Code block not supported")
+			if indentedCodeBlock.MatchString(tc.Markdown) {
+				t.Skipf("Indented code block not supported")
 			}
 			if linkRef.MatchString(tc.Markdown) {
 				t.Skipf("Link reference not supported")
@@ -182,7 +203,6 @@ func unsupportedSection(section string) bool {
 	case "Tabs",
 		"Setext headings",
 		"Indented code blocks",
-		"Fenced code blocks",
 		"HTML blocks",
 		"Link reference definitions":
 		return true
@@ -193,9 +213,11 @@ func unsupportedSection(section string) bool {
 
 func unsupportedExample(example int) string {
 	switch example {
-	case 59, 300:
-		return "has setext heading"
-	case 320, 321, 323:
+	case 24, 34:
+		return "backslash and entity in code fence info string not supported"
+	case 59, 141, 300:
+		return "setext heading not supported"
+	case 318, 320, 321, 323:
 		return "tight list not implemented"
 	default:
 		return ""

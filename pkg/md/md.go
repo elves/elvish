@@ -27,6 +27,7 @@ import (
 type OutputSyntax struct {
 	ThematicBreak  func(original string) string
 	Heading        func(level int) TagPair
+	CodeBlock      func(info string) TagPair
 	Paragraph      TagPair
 	Blockquote     TagPair
 	BulletList     TagPair
@@ -65,20 +66,28 @@ type blockParser struct {
 }
 
 var (
-	// Group 1: blockquote marker, group 2: bullet item punctuation, group 3: ordered
-	// item start index; group 4: ordered item punctuation
-	containerMarkerRegexp = regexp.MustCompile(`^ {0,3}(?:(> ?)|([-+*]) {1,4}|([0-9]{1,9})([.)]) {1,4})`)
-	thematicBreakRegexp   = regexp.MustCompile(`^[ \t]*((?:-[ \t]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})$`)
-	// Group 1: heading opener
+	thematicBreakRegexp = regexp.MustCompile(
+		`^[ \t]*((?:-[ \t]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})$`)
+	// Capture group 1: heading opener
 	atxHeadingRegexp       = regexp.MustCompile(`^ *(#{1,6})(?:[ \t]|$)`)
 	atxHeadingCloserRegexp = regexp.MustCompile(`[ \t]#+[ \t]*$`)
+	// Capture groups:
+	// 1. Indent
+	// 2. Fence punctuations (backquote fence)
+	// 3. Untrimmed info string (backquote fence)
+	// 4. Fence punctuations (tilde fence)
+	// 5. Untrimmed info string (tilde fence)
+	codeFenceRegexp = regexp.MustCompile("(^ {0,3})(?:(`{3,})([^`]*)|(~{3,})(.*))$")
+	// Capture group 1: fence punctuations
+	closingCodeFenceRegexp = regexp.MustCompile("(?:^ {0,3})(`{3,}|~{3,})[ \t]*$")
 )
 
 func (p *blockParser) render() {
 	for p.lines.more() {
 		line := p.lines.next()
 		line, matchedContainers := matchContinuationMarkers(line, p.containers)
-		line, newContainers := parseStartingMarkers(line, matchedContainers != len(p.containers) || len(p.paragraph) == 0)
+		line, newContainers := parseStartingMarkers(line,
+			matchedContainers != len(p.containers) || len(p.paragraph) == 0)
 		if len(newContainers) > 0 {
 			p.popParagraph(matchedContainers)
 			for _, c := range newContainers {
@@ -87,15 +96,15 @@ func (p *blockParser) render() {
 			matchedContainers = len(p.containers)
 		}
 
-		if strings.Trim(line, " \t") == "" {
-			i := matchedContainers
-			for ; i < len(p.containers); i++ {
+	afterContainer:
+		if isBlankLine(line) {
+			for i := matchedContainers; i < len(p.containers); i++ {
 				if p.containers[i].typ == blockquote {
-					break
+					p.popParagraph(i)
+					continue
 				}
 			}
-			p.popParagraph(i)
-			p.popList()
+			p.popParagraph(len(p.containers))
 		} else if thematicBreakRegexp.MatchString(line) {
 			p.popParagraph(matchedContainers)
 			p.popList()
@@ -104,8 +113,6 @@ func (p *blockParser) render() {
 		} else if m := atxHeadingRegexp.FindStringSubmatchIndex(line); m != nil {
 			p.popParagraph(matchedContainers)
 			p.popList()
-			// ATX headings always span one line only, so render it right away
-			// without pushing a node.
 			openerStart, openerEnd := m[2], m[3]
 			opener := line[openerStart:openerEnd]
 			line = strings.TrimRight(line[openerEnd:], " \t")
@@ -113,6 +120,46 @@ func (p *blockParser) render() {
 				line = line[:len(line)-len(closer)]
 			}
 			p.renderLeaf(p.syntax.Heading(len(opener)), strings.Trim(line, " \t"))
+		} else if m := codeFenceRegexp.FindStringSubmatch(line); m != nil {
+			p.popParagraph(matchedContainers)
+			p.popList()
+			indent, opener, info := len(m[1]), m[2], m[3]
+			if opener == "" {
+				opener, info = m[4], m[5]
+			}
+			tags := p.syntax.CodeBlock(strings.Trim(info, " \t"))
+			p.sb.WriteString(tags.Start)
+			for p.lines.more() {
+				line = p.lines.next()
+				line, matchedContainers = matchContinuationMarkers(line, p.containers)
+				if isBlankLine(line) {
+					for i := matchedContainers; i < len(p.containers); i++ {
+						if p.containers[i].typ == blockquote {
+							p.sb.WriteString(tags.End)
+							p.sb.WriteByte('\n')
+							p.popParagraph(i)
+							goto afterContainer
+						}
+					}
+				} else if matchedContainers < len(p.containers) {
+					p.sb.WriteString(tags.End)
+					p.sb.WriteByte('\n')
+					goto afterContainer
+				}
+				if m := closingCodeFenceRegexp.FindStringSubmatch(line); m != nil {
+					closer := m[1]
+					if closer[0] == opener[0] && len(closer) >= len(opener) {
+						break
+					}
+				}
+				for i := indent; i > 0 && line != "" && line[0] == ' '; i-- {
+					line = line[1:]
+				}
+				p.sb.WriteString(p.syntax.Escape(line))
+				p.sb.WriteByte('\n')
+			}
+			p.sb.WriteString(tags.End)
+			p.sb.WriteByte('\n')
 		} else {
 			if len(p.paragraph) == 0 {
 				p.popParagraph(matchedContainers)
@@ -138,13 +185,21 @@ func matchContinuationMarkers(line string, containers []container) (string, int)
 	return line, len(containers)
 }
 
+var containerStartingMarkerRegexp = regexp.MustCompile(
+	// Capture groups:
+	// 1. blockquote marker
+	// 2. bullet item punctuation
+	// 3. ordered item start index
+	// 4. ordered item punctuation
+	`^ {0,3}(?:(> ?)|([-+*]) {1,4}|([0-9]{1,9})([.)]) {1,4})`)
+
 // Parses starting markers of container blocks. Returns the line after removing
 // all starting markers and new containers to create.
 func parseStartingMarkers(line string, newParagraph bool) (string, []container) {
 	var containers []container
 	// Don't parse thematic breaks like "- - - " as three bullets.
 	for !thematicBreakRegexp.MatchString(line) {
-		m := containerMarkerRegexp.FindStringSubmatch(line)
+		m := containerStartingMarkerRegexp.FindStringSubmatch(line)
 		if m == nil {
 			break
 		}
@@ -176,20 +231,24 @@ func parseStartingMarkers(line string, newParagraph bool) (string, []container) 
 	return line, containers
 }
 
+func isBlankLine(line string) bool {
+	return strings.Trim(line, " \t") == ""
+}
+
 func (p *blockParser) appendContainer(c container) {
 	if len(p.containers) > 0 {
 		leaf := p.containers[len(p.containers)-1]
 		if (leaf.typ == bulletList || leaf.typ == orderedList) && leaf.punct != c.punct {
-			p.popLeafContainer()
+			p.popLastContainer()
 		}
 	}
 
-	if c.typ == bulletItem && !p.leafContainerIs(bulletList) {
+	if c.typ == bulletItem && !p.lastContainerIs(bulletList) {
 		p.containers = append(p.containers, container{typ: bulletList, punct: c.punct})
 		p.sb.WriteString(p.syntax.BulletList.Start)
 		p.sb.WriteByte('\n')
 	}
-	if c.typ == orderedItem && !p.leafContainerIs(orderedList) {
+	if c.typ == orderedItem && !p.lastContainerIs(orderedList) {
 		p.containers = append(p.containers, container{typ: orderedList, punct: c.punct})
 		p.sb.WriteString(p.syntax.OrderedList(c.start).Start)
 		p.sb.WriteByte('\n')
@@ -199,11 +258,11 @@ func (p *blockParser) appendContainer(c container) {
 	p.sb.WriteByte('\n')
 }
 
-func (p *blockParser) leafContainerIs(t containerType) bool {
+func (p *blockParser) lastContainerIs(t containerType) bool {
 	return len(p.containers) > 0 && p.containers[len(p.containers)-1].typ == t
 }
 
-func (p *blockParser) popLeafContainer() {
+func (p *blockParser) popLastContainer() {
 	p.sb.WriteString(p.containers[len(p.containers)-1].tagPair(&p.syntax).End)
 	p.sb.WriteByte('\n')
 	p.containers = p.containers[:len(p.containers)-1]
@@ -220,13 +279,13 @@ func (p *blockParser) popParagraph(keepContainers int) {
 		p.paragraph = p.paragraph[:0]
 	}
 	for len(p.containers) > keepContainers {
-		p.popLeafContainer()
+		p.popLastContainer()
 	}
 }
 
 func (p *blockParser) popList() {
-	if p.leafContainerIs(bulletList) || p.leafContainerIs(orderedList) {
-		p.popLeafContainer()
+	if p.lastContainerIs(bulletList) || p.lastContainerIs(orderedList) {
+		p.popLastContainer()
 	}
 }
 
