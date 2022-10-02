@@ -73,43 +73,66 @@ var (
 )
 
 var htmlSyntax = OutputSyntax{
-	ThematicBreak: func(_ string) string { return "<hr />" },
+	ThematicBreak: func(_ string) string { return htmlSelfCloseTag("hr") },
 	Heading: func(level int) TagPair {
-		tag := "h" + strconv.Itoa(level)
-		return TagPair{Start: "<" + tag + ">", End: "</" + tag + ">"}
+		return htmlTagPair("h" + strconv.Itoa(level))
 	},
-	Paragraph:  TagPair{Start: "<p>", End: "</p>"},
-	Blockquote: TagPair{Start: "<blockquote>", End: "</blockquote>"},
-	BulletList: TagPair{Start: "<ul>", End: "</ul>"},
-	BulletItem: TagPair{Start: "<li>", End: "</li>"},
+	Paragraph:  htmlTagPair("p"),
+	Blockquote: htmlTagPair("blockquote"),
+	BulletList: htmlTagPair("ul"),
+	BulletItem: htmlTagPair("li"),
 	OrderedList: func(start int) TagPair {
-		if start == 1 {
-			return TagPair{Start: "<ol>", End: "</ol>"}
+		var attrs []string
+		if start != 1 {
+			attrs = []string{"start", strconv.Itoa(start)}
 		}
-		return TagPair{
-			Start: `<ol start="` + strconv.Itoa(start) + `">`,
-			End:   "</ol>"}
+		return htmlTagPair("ol", attrs...)
 	},
-	OrderedItem:    TagPair{Start: "<li>", End: "</li>"},
-	CodeSpan:       TagPair{Start: "<code>", End: "</code>"},
-	Emphasis:       TagPair{Start: "<em>", End: "</em>"},
-	StrongEmphasis: TagPair{Start: "<strong>", End: "</strong>"},
+	OrderedItem:    htmlTagPair("li"),
+	CodeSpan:       htmlTagPair("code"),
+	Emphasis:       htmlTagPair("em"),
+	StrongEmphasis: htmlTagPair("strong"),
 	Link: func(dest, title string) TagPair {
-		start := ""
-		if title == "" {
-			start = fmt.Sprintf(`<a href="%s">`, escapeDest(dest))
-		} else {
-			start = fmt.Sprintf(`<a href="%s" title="%s">`, escapeDest(dest), escapeHTML(title))
+		attrs := []string{"href", escapeDest(dest)}
+		if title != "" {
+			attrs = append(attrs, "title", escapeHTML(title))
 		}
-		return TagPair{Start: start, End: "</a>"}
+		return htmlTagPair("a", attrs...)
 	},
 	Image: func(dest, alt, title string) string {
-		if title == "" {
-			return fmt.Sprintf(`<img src="%s" alt="%s" />`, escapeDest(dest), escapeHTML(alt))
+		attrs := []string{"src", escapeDest(dest), "alt", escapeHTML(alt)}
+		if title != "" {
+			attrs = append(attrs, "title", escapeHTML(title))
 		}
-		return fmt.Sprintf(`<img src="%s" alt="%s" title="%s" />`, escapeDest(dest), escapeHTML(alt), escapeHTML(title))
+		return htmlSelfCloseTag("img", attrs...)
 	},
 	Escape: escapeHTML,
+}
+
+func htmlSelfCloseTag(name string, attrPairs ...string) string {
+	return "<" + name + concatAttrPairs(attrPairs) + " />"
+}
+
+func htmlTagPair(name string, attrPairs ...string) TagPair {
+	return TagPair{
+		Start: "<" + name + concatAttrPairs(attrPairs) + ">",
+		End:   "</" + name + ">"}
+}
+
+func concatAttrPairs(attrPairs []string) string {
+	var sb strings.Builder
+	for i := 0; i+1 < len(attrPairs); i += 2 {
+		fmt.Fprintf(&sb, ` %s="%s"`, attrPairs[i], attrPairs[i+1])
+	}
+	return sb.String()
+}
+
+func combineHTMLTagPairs(p TagPair, more ...TagPair) TagPair {
+	for _, q := range more {
+		p.Start += q.Start
+		p.End = q.End + p.End
+	}
+	return p
 }
 
 var (
