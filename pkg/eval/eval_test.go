@@ -61,7 +61,7 @@ func TestMultipleEval(t *testing.T) {
 		That("fn f { put old }").Then("fn f { put new }").Then("f").
 			Puts("new"),
 		// Variable deletion. Regression test for #1213.
-		That("var x = foo").Then("del x").Then("put $x").DoesNotCompile(),
+		That("var x = foo").Then("del x").Then("put $x").DoesNotCompile("variable $x not found"),
 	)
 }
 

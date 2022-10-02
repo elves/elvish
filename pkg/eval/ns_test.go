@@ -25,6 +25,6 @@ func TestNs(t *testing.T) {
 
 func TestBuiltinFunctionsReadOnly(t *testing.T) {
 	Test(t,
-		That("set return~ = { }").DoesNotCompile(),
+		That("set return~ = { }").DoesNotCompile("variable $return~ is read-only"),
 	)
 }

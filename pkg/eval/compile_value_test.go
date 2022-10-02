@@ -129,7 +129,7 @@ func TestTilde_ErrorForCurrentUser(t *testing.T) {
 
 func TestWildcard(t *testing.T) {
 	Test(t,
-		That("put ***").DoesNotCompile(),
+		That("put ***").DoesNotCompile("bad wildcard: \"***\""),
 	)
 	// More tests in glob_test.go
 }
@@ -155,8 +155,8 @@ func TestVariableUse(t *testing.T) {
 	Test(t,
 		That("var x = foo", "put $x").Puts("foo"),
 		// Must exist before use
-		That("put $x").DoesNotCompile(),
-		That("put $x[0]").DoesNotCompile(),
+		That("put $x").DoesNotCompile("variable $x not found"),
+		That("put $x[0]").DoesNotCompile("variable $x not found"),
 		// Compounding
 		That("var x = SHELL", "put 'WOW, SUCH '$x', MUCH COOL'\n").
 			Puts("WOW, SUCH SHELL, MUCH COOL"),
@@ -174,7 +174,7 @@ func TestVariableUse(t *testing.T) {
 		// exists.
 		That("put $true").Puts(true),
 		// Names like $:foo are reserved for now.
-		That("var x = val; put $:x").DoesNotCompile(),
+		That("var x = val; put $:x").DoesNotCompile("variable $:x not found"),
 
 		// Pseudo-namespace E: provides read-write access to environment
 		// variables. Colons inside the name are supported.
@@ -238,7 +238,7 @@ func TestClosure(t *testing.T) {
 		// Option default value.
 		That("{|a &k=v| put $a $k } foo").Puts("foo", "v"),
 		// Option must have default value
-		That("{|&k| }").DoesNotCompile(),
+		That("{|&k| }").DoesNotCompile("option must have default value"),
 		// Exception when evaluating option default value.
 		That("{|&a=[][0]| }").Throws(ErrorWithType(errs.OutOfRange{}), "[][0]"),
 		// Option default value must be one value.
@@ -247,15 +247,15 @@ func TestClosure(t *testing.T) {
 			"(put foo bar)"),
 
 		// Argument name must be unqualified.
-		That("{|a:b| }").DoesNotCompile(),
+		That("{|a:b| }").DoesNotCompile("argument name must be unqualified"),
 		// Argument name must not be empty.
-		That("{|''| }").DoesNotCompile(),
-		That("{|@| }").DoesNotCompile(),
+		That("{|''| }").DoesNotCompile("argument name must not be empty"),
+		That("{|@| }").DoesNotCompile("argument name must not be empty"),
 		// Option name must be unqualified.
-		That("{|&a:b=1| }").DoesNotCompile(),
+		That("{|&a:b=1| }").DoesNotCompile("option name must be unqualified"),
 		// Option name must not be empty.
-		That("{|&''=b| }").DoesNotCompile(),
+		That("{|&''=b| }").DoesNotCompile("option name must not be empty"),
 		// Should not have multiple rest arguments.
-		That("{|@a @b| }").DoesNotCompile(),
+		That("{|@a @b| }").DoesNotCompile("only one argument may have @ prefix"),
 	)
 }
