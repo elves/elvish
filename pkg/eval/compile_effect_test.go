@@ -171,7 +171,8 @@ func TestCommand_LegacyTemporaryAssignment(t *testing.T) {
 			Puts("b", "c").PrintsStderrWith("deprecated"),
 		// Using syntax of temporary assignment for non-temporary assignment no
 		// longer compiles
-		That("x=y").DoesNotCompile(),
+		That("x=y").DoesNotCompile(
+			MatchingRegexp{Pattern: "^using the syntax of temporary assignment"}),
 	)
 }
 

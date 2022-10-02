@@ -392,7 +392,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 			}
 			if sigil == "@" {
 				if restArg != -1 {
-					cp.errorpf(arg, "only one argument may have @")
+					cp.errorpf(arg, "only one argument may have @ prefix")
 				}
 				restArg = i
 			}

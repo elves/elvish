@@ -53,7 +53,7 @@ func TestEval(t *testing.T) {
 		// Altering variables in the specified namespace.
 		That("var n = (ns [&x=foo]); eval 'set x = bar' &ns=$n; put $n[x]").Puts("bar"),
 		// Newly created variables do not appear in the local namespace.
-		That("eval 'x = foo'; put $x").DoesNotCompile(),
+		That("eval 'x = foo'; put $x").DoesNotCompile("variable $x not found"),
 		// Newly created variables do not alter the specified namespace, either.
 		That("var n = (ns [&]); eval &ns=$n 'var x = foo'; put $n[x]").
 			Throws(vals.NoSuchKey("x"), "$n[x]"),
