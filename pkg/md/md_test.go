@@ -113,9 +113,10 @@ var htmlSyntax = OutputSyntax{
 }
 
 var (
-	linkRef       = regexp.MustCompile(`(^|\n)\[([^\\\[\]]|\\[\\\[\]])+\]:`)
-	codeBlock     = regexp.MustCompile("(^|\n)>*(```|~~~|    )")
+	linkRef       = regexp.MustCompile(`(^|\n) {0,3}\[([^\\\[\]]|\\[\\\[\]])+\]:`)
+	codeBlock     = regexp.MustCompile("(^|\n)[ >]*(```|~~~|    )")
 	emptyListItem = regexp.MustCompile(`(^|\n)([-+*]|[0-9]{1,9}[.)])(\n|$)`)
+	htmlBlock     = regexp.MustCompile(`(^|\n)(<a |<!--)`)
 )
 
 func TestRender(t *testing.T) {
@@ -140,7 +141,7 @@ func TestRender(t *testing.T) {
 			if emptyListItem.MatchString(tc.Markdown) {
 				t.Skipf("Empty list item not supported")
 			}
-			if strings.HasPrefix(tc.Markdown, "<a ") {
+			if htmlBlock.MatchString(tc.Markdown) {
 				t.Skipf("HTML block not supported")
 			}
 
@@ -161,8 +162,7 @@ func unsupportedSection(section string) bool {
 		"Indented code blocks",
 		"Fenced code blocks",
 		"HTML blocks",
-		"Link reference definitions",
-		"Lists":
+		"Link reference definitions":
 		return true
 	default:
 		return false
@@ -173,6 +173,10 @@ func unsupportedExample(example int) string {
 	switch example {
 	case 59, 300:
 		return "has setext heading"
+	case 304:
+		return "rejection of non-1 starter not implemented yet"
+	case 320, 321, 323:
+		return "tight list not implemented"
 	default:
 		return ""
 	}

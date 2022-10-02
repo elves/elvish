@@ -65,9 +65,9 @@ type blockParser struct {
 }
 
 var (
-	// Group 1: blockquote marker, group 2: bullet list item, group 3: ordered
-	// list marker; group 4: ordered list start index
-	containerMarkerRegexp = regexp.MustCompile(`^ {0,3}(?:(> ?)|([-+*] {1,4})|(([0-9]{1,9})[.)] {1,4}))`)
+	// Group 1: blockquote marker, group 2: bullet item punctuation, group 3: ordered
+	// item start index; group 4: ordered item punctuation
+	containerMarkerRegexp = regexp.MustCompile(`^ {0,3}(?:(> ?)|([-+*]) {1,4}|([0-9]{1,9})([.)]) {1,4})`)
 	thematicBreakRegexp   = regexp.MustCompile(`^[ \t]*((?:-[ \t]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})$`)
 	// Group 1: heading opener
 	atxHeadingRegexp       = regexp.MustCompile(`^ *(#{1,6})(?:[ \t]|$)`)
@@ -129,7 +129,7 @@ func (p *blockParser) render() {
 // containers matched.
 func matchContinuationMarkers(line string, containers []container) (string, int) {
 	for i, container := range containers {
-		markerLen, matched := container.findMarker(line)
+		markerLen, matched := container.findContinuationMarker(line)
 		if !matched {
 			return line, i
 		}
@@ -148,10 +148,10 @@ func parseStartingMarkers(line string) (string, []container) {
 		if m == nil {
 			break
 		}
-		marker, blockquoteMarker, bullet, orderedStart := m[0], m[1], m[2], m[4]
+		marker, bq, bulletPunct, orderedStart, orderedPunct := m[0], m[1], m[2], m[3], m[4]
 		line = line[len(marker):]
 		var c container
-		if blockquoteMarker != "" {
+		if bq != "" {
 			c.typ = blockquote
 		} else {
 			indent := len(marker)
@@ -159,10 +159,12 @@ func parseStartingMarkers(line string) (string, []container) {
 				indent = len(strings.TrimRight(marker, " \t")) + 1
 			}
 			c.indent = strings.Repeat(" ", indent)
-			if bullet != "" {
+			if bulletPunct != "" {
 				c.typ = bulletItem
-			} else { // ordered != ""
+				c.punct = bulletPunct[0]
+			} else {
 				c.typ = orderedItem
+				c.punct = orderedPunct[0]
 				c.start, _ = strconv.Atoi(orderedStart)
 			}
 		}
@@ -172,17 +174,20 @@ func parseStartingMarkers(line string) (string, []container) {
 }
 
 func (p *blockParser) appendContainer(c container) {
-	if (p.leafContainerIs(bulletList) && c.typ != bulletItem) ||
-		(p.leafContainerIs(orderedList) && c.typ != orderedItem) {
-		p.popLeafContainer()
+	if len(p.containers) > 0 {
+		leaf := p.containers[len(p.containers)-1]
+		if (leaf.typ == bulletList || leaf.typ == orderedList) && leaf.punct != c.punct {
+			p.popLeafContainer()
+		}
 	}
+
 	if c.typ == bulletItem && !p.leafContainerIs(bulletList) {
-		p.containers = append(p.containers, container{typ: bulletList})
+		p.containers = append(p.containers, container{typ: bulletList, punct: c.punct})
 		p.sb.WriteString(p.syntax.BulletList.Start)
 		p.sb.WriteByte('\n')
 	}
 	if c.typ == orderedItem && !p.leafContainerIs(orderedList) {
-		p.containers = append(p.containers, container{typ: orderedList})
+		p.containers = append(p.containers, container{typ: orderedList, punct: c.punct})
 		p.sb.WriteString(p.syntax.OrderedList(c.start).Start)
 		p.sb.WriteByte('\n')
 	}
@@ -251,6 +256,7 @@ func (s *lineSplitter) next() string {
 
 type container struct {
 	typ    containerType
+	punct  byte
 	start  int
 	indent string
 }
@@ -267,7 +273,7 @@ const (
 
 var blockquoteMarkerRegexp = regexp.MustCompile(`^ {0,3}> ?`)
 
-func (c container) findMarker(line string) (int, bool) {
+func (c container) findContinuationMarker(line string) (int, bool) {
 	switch c.typ {
 	case blockquote:
 		marker := blockquoteMarkerRegexp.FindString(line)
