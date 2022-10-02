@@ -157,7 +157,6 @@ func TestRender(t *testing.T) {
 func unsupportedSection(section string) bool {
 	switch section {
 	case "Tabs",
-		"Precedence",
 		"Setext headings",
 		"Indented code blocks",
 		"Fenced code blocks",
