@@ -78,7 +78,7 @@ func (p *blockParser) render() {
 	for p.lines.more() {
 		line := p.lines.next()
 		line, matchedContainers := matchContinuationMarkers(line, p.containers)
-		line, newContainers := parseStartingMarkers(line)
+		line, newContainers := parseStartingMarkers(line, matchedContainers != len(p.containers) || len(p.paragraph) == 0)
 		if len(newContainers) > 0 {
 			p.popParagraph(matchedContainers)
 			for _, c := range newContainers {
@@ -140,7 +140,7 @@ func matchContinuationMarkers(line string, containers []container) (string, int)
 
 // Parses starting markers of container blocks. Returns the line after removing
 // all starting markers and new containers to create.
-func parseStartingMarkers(line string) (string, []container) {
+func parseStartingMarkers(line string, newParagraph bool) (string, []container) {
 	var containers []container
 	// Don't parse thematic breaks like "- - - " as three bullets.
 	for !thematicBreakRegexp.MatchString(line) {
@@ -149,13 +149,12 @@ func parseStartingMarkers(line string) (string, []container) {
 			break
 		}
 		marker, bq, bulletPunct, orderedStart, orderedPunct := m[0], m[1], m[2], m[3], m[4]
-		line = line[len(marker):]
 		var c container
 		if bq != "" {
 			c.typ = blockquote
 		} else {
 			indent := len(marker)
-			if strings.Trim(line, " \t") == "" {
+			if strings.Trim(line[len(marker):], " \t") == "" {
 				indent = len(strings.TrimRight(marker, " \t")) + 1
 			}
 			c.indent = strings.Repeat(" ", indent)
@@ -166,8 +165,12 @@ func parseStartingMarkers(line string) (string, []container) {
 				c.typ = orderedItem
 				c.punct = orderedPunct[0]
 				c.start, _ = strconv.Atoi(orderedStart)
+				if c.start != 1 && !newParagraph {
+					break
+				}
 			}
 		}
+		line = line[len(marker):]
 		containers = append(containers, c)
 	}
 	return line, containers

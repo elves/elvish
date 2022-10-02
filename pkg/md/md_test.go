@@ -173,8 +173,6 @@ func unsupportedExample(example int) string {
 	switch example {
 	case 59, 300:
 		return "has setext heading"
-	case 304:
-		return "rejection of non-1 starter not implemented yet"
 	case 320, 321, 323:
 		return "tight list not implemented"
 	default:
