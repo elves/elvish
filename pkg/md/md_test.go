@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	. "src.elv.sh/pkg/md"
 	"src.elv.sh/pkg/must"
 )
@@ -38,7 +39,7 @@ var additionalCases = []testCase{
 </blockquote>
 </blockquote>
 `,
-		Name: "Increasing blockquote level",
+		Name: "Blockquote supplemental/Increasing level",
 	},
 	{
 		Markdown: `>> a
@@ -52,7 +53,7 @@ var additionalCases = []testCase{
 <p>b</p>
 </blockquote>
 `,
-		Name: "Reducing blockquote level",
+		Name: "Blockquote supplemental/Reducing level",
 	},
 }
 
@@ -77,8 +78,19 @@ var htmlSyntax = OutputSyntax{
 		tag := "h" + strconv.Itoa(level)
 		return TagPair{Start: "<" + tag + ">", End: "</" + tag + ">"}
 	},
-	Paragraph:      TagPair{Start: "<p>", End: "</p>"},
-	Blockquote:     TagPair{Start: "<blockquote>", End: "</blockquote>"},
+	Paragraph:  TagPair{Start: "<p>", End: "</p>"},
+	Blockquote: TagPair{Start: "<blockquote>", End: "</blockquote>"},
+	BulletList: TagPair{Start: "<ul>", End: "</ul>"},
+	BulletItem: TagPair{Start: "<li>", End: "</li>"},
+	OrderedList: func(start int) TagPair {
+		if start == 1 {
+			return TagPair{Start: "<ol>", End: "</ol>"}
+		}
+		return TagPair{
+			Start: `<ol start="` + strconv.Itoa(start) + `">`,
+			End:   "</ol>"}
+	},
+	OrderedItem:    TagPair{Start: "<li>", End: "</li>"},
 	CodeSpan:       TagPair{Start: "<code>", End: "</code>"},
 	Emphasis:       TagPair{Start: "<em>", End: "</em>"},
 	StrongEmphasis: TagPair{Start: "<strong>", End: "</strong>"},
@@ -101,9 +113,9 @@ var htmlSyntax = OutputSyntax{
 }
 
 var (
-	linkRef   = regexp.MustCompile(`(^|\n)\[([^\\\[\]]|\\[\\\[\]])+\]:`)
-	listItem  = regexp.MustCompile(`(^|\n)[*-] `)
-	codeBlock = regexp.MustCompile("(^|\n)>*(```|~~~|    )")
+	linkRef       = regexp.MustCompile(`(^|\n)\[([^\\\[\]]|\\[\\\[\]])+\]:`)
+	codeBlock     = regexp.MustCompile("(^|\n)>*(```|~~~|    )")
+	emptyListItem = regexp.MustCompile(`(^|\n)([-+*]|[0-9]{1,9}[.)])(\n|$)`)
 )
 
 func TestRender(t *testing.T) {
@@ -125,16 +137,17 @@ func TestRender(t *testing.T) {
 			if linkRef.MatchString(tc.Markdown) {
 				t.Skipf("Link reference not supported")
 			}
-			if listItem.MatchString(tc.Markdown) {
-				t.Skipf("List item not supported")
+			if emptyListItem.MatchString(tc.Markdown) {
+				t.Skipf("Empty list item not supported")
 			}
 			if strings.HasPrefix(tc.Markdown, "<a ") {
 				t.Skipf("HTML block not supported")
 			}
 
 			got := Render(tc.Markdown, htmlSyntax)
-			if got != tc.HTML {
-				t.Errorf("input:\n%sgot:\n%swant:\n%s", tc.Markdown, got, tc.HTML)
+			want := loosifyLists(tc.HTML)
+			if diff := cmp.Diff(want, got); diff != "" {
+				t.Errorf("input:\n%sdiff (-want +got):\n%s", tc.Markdown, diff)
 			}
 		})
 	}
@@ -149,8 +162,6 @@ func unsupportedSection(section string) bool {
 		"Fenced code blocks",
 		"HTML blocks",
 		"Link reference definitions",
-		"Blank lines",
-		"List items",
 		"Lists":
 		return true
 	default:
@@ -160,9 +171,17 @@ func unsupportedSection(section string) bool {
 
 func unsupportedExample(example int) string {
 	switch example {
-	case 59:
+	case 59, 300:
 		return "has setext heading"
 	default:
 		return ""
 	}
+}
+
+var looseListItem = regexp.MustCompile(`<li>([^<]+)</li>`)
+
+func loosifyLists(html string) string {
+	return strings.ReplaceAll(
+		looseListItem.ReplaceAllString(html, "<li>\n<p>$1</p>\n</li>"),
+		"<li></li>", "<li>\n</li>")
 }

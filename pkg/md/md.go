@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"html"
 	"regexp"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -28,6 +29,10 @@ type OutputSyntax struct {
 	Heading        func(level int) TagPair
 	Paragraph      TagPair
 	Blockquote     TagPair
+	BulletList     TagPair
+	BulletItem     TagPair
+	OrderedList    func(start int) TagPair
+	OrderedItem    TagPair
 	CodeSpan       TagPair
 	Emphasis       TagPair
 	StrongEmphasis TagPair
@@ -60,8 +65,11 @@ type blockParser struct {
 }
 
 var (
-	blockquoteMarkerRegexp = regexp.MustCompile(`^ {0,3}> ?`)
-	thematicBreakRegexp    = regexp.MustCompile(`^[ \t]*((?:-[ \t]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})$`)
+	// Group 1: blockquote marker, group 2: bullet list item, group 3: ordered
+	// list marker; group 4: ordered list start index
+	containerMarkerRegexp = regexp.MustCompile(`^ {0,3}(?:(> ?)|([-+*] {1,4})|(([0-9]{1,9})[.)] {1,4}))`)
+	thematicBreakRegexp   = regexp.MustCompile(`^[ \t]*((?:-[ \t]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})$`)
+	// Group 1: heading opener
 	atxHeadingRegexp       = regexp.MustCompile(`^ *(#{1,6})(?:[ \t]|$)`)
 	atxHeadingCloserRegexp = regexp.MustCompile(`[ \t]#+[ \t]*$`)
 )
@@ -69,33 +77,33 @@ var (
 func (p *blockParser) render() {
 	for p.lines.more() {
 		line := p.lines.next()
-		i := 0
-		for i = 0; i < len(p.containers); i++ {
-			markerLen := p.containers[i].findMarker(line)
-			if markerLen == 0 {
-				break
+		line, matchedContainers := matchContinuationMarkers(line, p.containers)
+		line, newContainers := parseStartingMarkers(line)
+		if len(newContainers) > 0 {
+			p.popParagraph(matchedContainers)
+			for _, c := range newContainers {
+				p.appendContainer(c)
 			}
-			line = line[markerLen:]
-		}
-
-		if m := blockquoteMarkerRegexp.FindString(line); m != "" {
-			p.popParagraph(i)
-			for m != "" {
-				p.appendContainer(container{typ: blockquoteContainer})
-				line = line[len(m):]
-				m = blockquoteMarkerRegexp.FindString(line)
-			}
-			i = len(p.containers)
+			matchedContainers = len(p.containers)
 		}
 
 		if strings.Trim(line, " \t") == "" {
+			i := matchedContainers
+			for ; i < len(p.containers); i++ {
+				if p.containers[i].typ == blockquote {
+					break
+				}
+			}
 			p.popParagraph(i)
+			p.popList()
 		} else if thematicBreakRegexp.MatchString(line) {
-			p.popParagraph(i)
+			p.popParagraph(matchedContainers)
+			p.popList()
 			p.sb.WriteString(p.syntax.ThematicBreak(line))
 			p.sb.WriteByte('\n')
 		} else if m := atxHeadingRegexp.FindStringSubmatchIndex(line); m != nil {
-			p.popParagraph(i)
+			p.popParagraph(matchedContainers)
+			p.popList()
 			// ATX headings always span one line only, so render it right away
 			// without pushing a node.
 			openerStart, openerEnd := m[2], m[3]
@@ -107,7 +115,8 @@ func (p *blockParser) render() {
 			p.renderLeaf(p.syntax.Heading(len(opener)), strings.Trim(line, " \t"))
 		} else {
 			if len(p.paragraph) == 0 {
-				p.popParagraph(i)
+				p.popParagraph(matchedContainers)
+				p.popList()
 			}
 			p.addParagraphLine(line)
 		}
@@ -115,27 +124,102 @@ func (p *blockParser) render() {
 	p.popParagraph(0)
 }
 
+// Matches the continuation markers of existing container nodes. Returns the
+// line after removing all matched continuation markers and the number of
+// containers matched.
+func matchContinuationMarkers(line string, containers []container) (string, int) {
+	for i, container := range containers {
+		markerLen, matched := container.findMarker(line)
+		if !matched {
+			return line, i
+		}
+		line = line[markerLen:]
+	}
+	return line, len(containers)
+}
+
+// Parses starting markers of container blocks. Returns the line after removing
+// all starting markers and new containers to create.
+func parseStartingMarkers(line string) (string, []container) {
+	var containers []container
+	// Don't parse thematic breaks like "- - - " as three bullets.
+	for !thematicBreakRegexp.MatchString(line) {
+		m := containerMarkerRegexp.FindStringSubmatch(line)
+		if m == nil {
+			break
+		}
+		marker, blockquoteMarker, bullet, orderedStart := m[0], m[1], m[2], m[4]
+		line = line[len(marker):]
+		var c container
+		if blockquoteMarker != "" {
+			c.typ = blockquote
+		} else {
+			indent := len(marker)
+			if strings.Trim(line, " \t") == "" {
+				indent = len(strings.TrimRight(marker, " \t")) + 1
+			}
+			c.indent = strings.Repeat(" ", indent)
+			if bullet != "" {
+				c.typ = bulletItem
+			} else { // ordered != ""
+				c.typ = orderedItem
+				c.start, _ = strconv.Atoi(orderedStart)
+			}
+		}
+		containers = append(containers, c)
+	}
+	return line, containers
+}
+
 func (p *blockParser) appendContainer(c container) {
+	if (p.leafContainerIs(bulletList) && c.typ != bulletItem) ||
+		(p.leafContainerIs(orderedList) && c.typ != orderedItem) {
+		p.popLeafContainer()
+	}
+	if c.typ == bulletItem && !p.leafContainerIs(bulletList) {
+		p.containers = append(p.containers, container{typ: bulletList})
+		p.sb.WriteString(p.syntax.BulletList.Start)
+		p.sb.WriteByte('\n')
+	}
+	if c.typ == orderedItem && !p.leafContainerIs(orderedList) {
+		p.containers = append(p.containers, container{typ: orderedList})
+		p.sb.WriteString(p.syntax.OrderedList(c.start).Start)
+		p.sb.WriteByte('\n')
+	}
 	p.containers = append(p.containers, c)
 	p.sb.WriteString(c.tagPair(&p.syntax).Start)
 	p.sb.WriteByte('\n')
+}
+
+func (p *blockParser) leafContainerIs(t containerType) bool {
+	return len(p.containers) > 0 && p.containers[len(p.containers)-1].typ == t
+}
+
+func (p *blockParser) popLeafContainer() {
+	p.sb.WriteString(p.containers[len(p.containers)-1].tagPair(&p.syntax).End)
+	p.sb.WriteByte('\n')
+	p.containers = p.containers[:len(p.containers)-1]
 }
 
 func (p *blockParser) addParagraphLine(line string) {
 	p.paragraph = append(p.paragraph, line)
 }
 
-func (p *blockParser) popParagraph(i int) {
+func (p *blockParser) popParagraph(keepContainers int) {
 	if len(p.paragraph) > 0 {
 		text := strings.Trim(strings.Join(p.paragraph, "\n"), " \t")
 		p.renderLeaf(p.syntax.Paragraph, text)
 		p.paragraph = p.paragraph[:0]
 	}
-	for j := len(p.containers) - 1; j >= i; j-- {
-		p.sb.WriteString(p.containers[i].tagPair(&p.syntax).End)
-		p.sb.WriteByte('\n')
+	for len(p.containers) > keepContainers {
+		p.popLeafContainer()
 	}
-	p.containers = p.containers[:i]
+}
+
+func (p *blockParser) popList() {
+	if p.leafContainerIs(bulletList) || p.leafContainerIs(orderedList) {
+		p.popLeafContainer()
+	}
 }
 
 func (p *blockParser) renderLeaf(tags TagPair, content string) {
@@ -166,27 +250,51 @@ func (s *lineSplitter) next() string {
 }
 
 type container struct {
-	typ containerType
+	typ    containerType
+	start  int
+	indent string
 }
 
 type containerType uint8
 
 const (
-	blockquoteContainer containerType = iota
+	blockquote containerType = iota
+	bulletList
+	bulletItem
+	orderedList
+	orderedItem
 )
 
-func (c container) findMarker(line string) int {
+var blockquoteMarkerRegexp = regexp.MustCompile(`^ {0,3}> ?`)
+
+func (c container) findMarker(line string) (int, bool) {
 	switch c.typ {
-	case blockquoteContainer:
-		return len(blockquoteMarkerRegexp.FindString(line))
+	case blockquote:
+		marker := blockquoteMarkerRegexp.FindString(line)
+		return len(marker), marker != ""
+	case bulletList, orderedList:
+		return 0, true
+	case bulletItem, orderedItem:
+		if strings.HasPrefix(line, c.indent) {
+			return len(c.indent), true
+		}
+		return 0, false
 	}
 	panic("unreachable")
 }
 
 func (c container) tagPair(syntax *OutputSyntax) TagPair {
 	switch c.typ {
-	case blockquoteContainer:
+	case blockquote:
 		return syntax.Blockquote
+	case bulletList:
+		return syntax.BulletList
+	case bulletItem:
+		return syntax.BulletItem
+	case orderedList:
+		return syntax.OrderedList(1)
+	case orderedItem:
+		return syntax.OrderedItem
 	}
 	panic("unreachable")
 }
