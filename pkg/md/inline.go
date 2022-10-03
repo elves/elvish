@@ -8,15 +8,14 @@ import (
 	"unicode/utf8"
 )
 
-func renderInline(text string, syntax OutputSyntax) string {
-	p := inlineParser{text, syntax, 0, makeDelimStack(), buffer{}}
+func renderInline(text string, codec Codec) {
+	p := inlineParser{text, 0, makeDelimStack(), buffer{}}
 	p.render()
-	return p.buf.String()
+	p.buf.writeTo(codec)
 }
 
 type inlineParser struct {
 	text   string
-	syntax OutputSyntax
 	pos    int
 	delims delimStack
 	buf    buffer
@@ -64,17 +63,17 @@ func (p *inlineParser) render() {
 			for p.pos < len(p.text) && !isMeta(p.text[p.pos]) {
 				p.pos++
 			}
-			p.buf.push(piece{text: p.syntax.Escape(p.text[begin:p.pos])})
+			p.buf.push(textPiece(p.text[begin:p.pos]))
 		}
 
 		switch b {
 		case '[':
-			bufIdx := p.buf.push(piece{text: "["})
+			bufIdx := p.buf.push(textPiece("["))
 			p.delims.push(&delim{typ: '[', bufIdx: bufIdx})
 		case '!':
 			if p.pos < len(p.text) && p.text[p.pos] == '[' {
 				p.pos++
-				bufIdx := p.buf.push(piece{text: "!["})
+				bufIdx := p.buf.push(textPiece("!["))
 				p.delims.push(&delim{typ: '!', bufIdx: bufIdx})
 			} else {
 				parseText()
@@ -91,13 +90,13 @@ func (p *inlineParser) render() {
 				if opener != nil {
 					unlink(opener)
 				}
-				p.buf.push(piece{text: "]"})
+				p.buf.push(textPiece("]"))
 				continue
 			}
 			n, dest, title := parseLinkTail(p.text[p.pos:])
 			if n == -1 {
 				unlink(opener)
-				p.buf.push(piece{text: "]"})
+				p.buf.push(textPiece("]"))
 				continue
 			}
 			p.pos += n
@@ -111,20 +110,19 @@ func (p *inlineParser) render() {
 			}
 			unlink(opener)
 			if opener.typ == '[' {
-				tags := p.syntax.Link(dest, title)
-				p.buf.pieces[opener.bufIdx] = piece{appendMarkup: []string{tags.Start}}
-				p.buf.push(piece{appendMarkup: []string{tags.End}})
+				p.buf.pieces[opener.bufIdx] = piece{
+					before: []Op{{Type: OpLinkStart, Dest: dest, Text: title}}}
+				p.buf.push(piece{after: []Op{{Type: OpLinkEnd}}})
 			} else {
 				var altBuilder strings.Builder
 				for _, piece := range p.buf.pieces[opener.bufIdx+1:] {
-					altBuilder.WriteString(piece.text)
-					altBuilder.WriteString(piece.altText)
+					altBuilder.WriteString(plainText(piece))
 				}
 				p.buf.pieces = p.buf.pieces[:opener.bufIdx]
 				alt := altBuilder.String()
 				p.buf.push(piece{
-					altText:      alt,
-					appendMarkup: []string{p.syntax.Image(dest, alt, title)}})
+					alt:  alt,
+					main: Op{Type: OpImage, Dest: dest, Alt: alt, Text: title}})
 			}
 		case '*', '_':
 			// Consume the entire run of * or _.
@@ -145,7 +143,7 @@ func (p *inlineParser) render() {
 				canOpen = leftFlanking && (!rightFlanking || (lPrev > 0 && unicode.IsPunct(prev)))
 				canClose = rightFlanking && (!leftFlanking || (lNext > 0 && unicode.IsPunct(next)))
 			}
-			bufIdx := p.buf.push(piece{text: p.text[begin:p.pos]})
+			bufIdx := p.buf.push(textPiece(p.text[begin:p.pos]))
 			p.delims.push(
 				&delim{typ: b, bufIdx: bufIdx,
 					n: p.pos - begin, canOpen: canOpen, canClose: canClose})
@@ -161,9 +159,10 @@ func (p *inlineParser) render() {
 				continue
 			}
 			p.buf.push(piece{
-				prependMarkup: []string{p.syntax.CodeSpan.Start},
-				text:          p.syntax.Escape(normalizeCodeSpanContent(p.text[p.pos:closer])),
-				appendMarkup:  []string{p.syntax.CodeSpan.End}})
+				before: []Op{{Type: OpCodeSpanStart}},
+				main: Op{Type: OpText,
+					Text: normalizeCodeSpanContent(p.text[p.pos:closer])},
+				after: []Op{{Type: OpCodeSpanEnd}}})
 			p.pos = closer + (p.pos - begin)
 		case '<':
 			if p.pos == len(p.text) {
@@ -175,7 +174,7 @@ func (p *inlineParser) render() {
 				if html == "" {
 					return false
 				}
-				p.buf.push(piece{prependMarkup: []string{html}})
+				p.buf.push(htmlPiece(html))
 				p.pos = begin + len(html)
 				return true
 			}
@@ -185,7 +184,7 @@ func (p *inlineParser) render() {
 					return false
 				}
 				p.pos += i + len(closer)
-				p.buf.push(piece{prependMarkup: []string{p.text[begin:p.pos]}})
+				p.buf.push(htmlPiece(p.text[begin:p.pos]))
 				return true
 			}
 			switch p.text[p.pos] {
@@ -211,7 +210,7 @@ func (p *inlineParser) render() {
 				// Try parsing a processing instruction.
 				closer := strings.Index(p.text[p.pos:], "?>")
 				if closer != -1 {
-					p.buf.push(piece{prependMarkup: []string{p.text[begin : p.pos+closer+2]}})
+					p.buf.push(htmlPiece(p.text[begin : p.pos+closer+2]))
 					p.pos += closer + 2
 					continue
 				}
@@ -241,11 +240,10 @@ func (p *inlineParser) render() {
 						if email {
 							dest = "mailto:" + dest
 						}
-						tags := p.syntax.Link(dest, "")
 						p.buf.push(piece{
-							prependMarkup: []string{tags.Start},
-							text:          p.syntax.Escape(text),
-							appendMarkup:  []string{tags.End},
+							before: []Op{{Type: OpLinkStart, Dest: dest}},
+							main:   Op{Type: OpText, Text: text},
+							after:  []Op{{Type: OpLinkEnd}},
 						})
 						continue
 					}
@@ -255,7 +253,7 @@ func (p *inlineParser) render() {
 		case '&':
 			entity := entityRegexp.FindString(p.text[begin:])
 			if entity != "" {
-				p.buf.push(piece{text: p.syntax.Escape(html.UnescapeString(entity))})
+				p.buf.push(textPiece(html.UnescapeString(entity)))
 				p.pos = begin + len(entity)
 			} else {
 				parseText()
@@ -269,25 +267,26 @@ func (p *inlineParser) render() {
 		case '\n':
 			if len(p.buf.pieces) > 0 {
 				last := &p.buf.pieces[len(p.buf.pieces)-1]
-				if last.prependMarkup == nil && last.appendMarkup == nil {
+				if last.before == nil && last.after == nil && last.main.Type == OpText {
+					text := &last.main.Text
 					if p.pos == len(p.text) {
-						last.text = strings.TrimRight(last.text, " ")
+						*text = strings.TrimRight(*text, " ")
 					} else {
 						hardLineBreak := false
-						if strings.HasSuffix(last.text, "\\") {
+						if strings.HasSuffix(*text, "\\") {
 							hardLineBreak = true
-							last.text = last.text[:len(last.text)-1]
+							*text = (*text)[:len(*text)-1]
 						} else {
-							hardLineBreak = strings.HasSuffix(last.text, "  ")
-							last.text = strings.TrimRight(last.text, " ")
+							hardLineBreak = strings.HasSuffix(*text, "  ")
+							last.main.Text = strings.TrimRight(*text, " ")
 						}
 						if hardLineBreak {
-							p.buf.push(piece{prependMarkup: []string{"<br />"}})
+							p.buf.push(piece{main: Op{Type: OpHardLineBreak}})
 						}
 					}
 				}
 			}
-			p.buf.push(piece{text: "\n"})
+			p.buf.push(textPiece("\n"))
 			for p.pos < len(p.text) && p.text[p.pos] == ' ' {
 				p.pos++
 			}
@@ -316,10 +315,8 @@ func findBacktickRun(s, run string, i int) int {
 	return -1
 }
 
-var lineEndingToSpace = strings.NewReplacer("\r\n", " ", "\r", " ", "\n", " ")
-
 func normalizeCodeSpanContent(s string) string {
-	s = lineEndingToSpace.Replace(s)
+	s = strings.ReplaceAll(s, "\n", " ")
 	if len(s) > 1 && s[0] == ' ' && s[len(s)-1] == ' ' && strings.Trim(s, " ") != "" {
 		return s[1 : len(s)-1]
 	}
@@ -358,25 +355,25 @@ func (p *inlineParser) processEmphasis(bottom *delim) {
 		}
 		openerPiece := &p.buf.pieces[opener.bufIdx]
 		closerPiece := &p.buf.pieces[closer.bufIdx]
-		strong := len(openerPiece.text) >= 2 && len(closerPiece.text) >= 2
+		strong := len(openerPiece.main.Text) >= 2 && len(closerPiece.main.Text) >= 2
 		if strong {
-			openerPiece.text = openerPiece.text[2:]
-			openerPiece.appendMarkup = append(openerPiece.appendMarkup, p.syntax.StrongEmphasis.Start)
-			closerPiece.text = closerPiece.text[2:]
-			closerPiece.prependMarkup = append(closerPiece.prependMarkup, p.syntax.StrongEmphasis.End)
+			openerPiece.main.Text = openerPiece.main.Text[2:]
+			openerPiece.after = append(openerPiece.after, Op{Type: OpStrongEmphasisStart})
+			closerPiece.main.Text = closerPiece.main.Text[2:]
+			closerPiece.before = append(closerPiece.before, Op{Type: OpStrongEmphasisEnd})
 		} else {
-			openerPiece.text = openerPiece.text[1:]
-			openerPiece.appendMarkup = append(openerPiece.appendMarkup, p.syntax.Emphasis.Start)
-			closerPiece.text = closerPiece.text[1:]
-			closerPiece.prependMarkup = append(closerPiece.prependMarkup, p.syntax.Emphasis.End)
+			openerPiece.main.Text = openerPiece.main.Text[1:]
+			openerPiece.after = append(openerPiece.after, Op{Type: OpEmphasisStart})
+			closerPiece.main.Text = closerPiece.main.Text[1:]
+			closerPiece.before = append(closerPiece.before, Op{Type: OpEmphasisEnd})
 		}
 		opener.next = closer
 		closer.prev = opener
-		if openerPiece.text == "" {
+		if openerPiece.main.Text == "" {
 			opener.prev.next = opener.next
 			opener.next.prev = opener.prev
 		}
-		if closerPiece.text == "" {
+		if closerPiece.main.Text == "" {
 			closer.prev.next = closer.next
 			closer.next.prev = closer.prev
 			closer = closer.next
@@ -402,28 +399,44 @@ func (b *buffer) push(p piece) int {
 	return len(b.pieces) - 1
 }
 
-func (b *buffer) String() string {
-	var sb strings.Builder
+func (b *buffer) writeTo(codec Codec) {
 	for _, p := range b.pieces {
-		p.build(&sb)
+		p.writeTo(codec)
 	}
-	return sb.String()
 }
 
 type piece struct {
-	text          string
-	altText       string
-	prependMarkup []string
-	appendMarkup  []string
+	before []Op
+	main   Op
+	after  []Op
+	alt    string
 }
 
-func (p *piece) build(sb *strings.Builder) {
-	for _, s := range p.prependMarkup {
-		sb.WriteString(s)
+func textPiece(text string) piece {
+	return piece{main: Op{Type: OpText, Text: text}}
+}
+
+func htmlPiece(html string) piece {
+	return piece{main: Op{Type: OpRawHTML, Text: html}}
+}
+
+func plainText(p piece) string {
+	switch p.main.Type {
+	case OpText:
+		return p.main.Text
+	case OpImage:
+		return p.alt
 	}
-	sb.WriteString(p.text)
-	for i := len(p.appendMarkup) - 1; i >= 0; i-- {
-		sb.WriteString(p.appendMarkup[i])
+	return ""
+}
+
+func (p *piece) writeTo(codec Codec) {
+	for _, op := range p.before {
+		codec.Do(op)
+	}
+	codec.Do(p.main)
+	for i := len(p.after) - 1; i >= 0; i-- {
+		codec.Do(p.after[i])
 	}
 }
 
@@ -586,7 +599,7 @@ func (p *linkTailParser) skipWhitespaces() {
 
 func isWhitespace(b byte) bool {
 	switch b {
-	case ' ', '\t', '\r', '\n':
+	case ' ', '\t', '\n':
 		return true
 	default:
 		return false

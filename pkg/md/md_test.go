@@ -27,8 +27,9 @@ var specJSON []byte
 
 var testCases []testCase
 
-var additionalCases = []testCase{
+var supplementalCases = []testCase{
 	{
+		Name: "Blockquote supplemental/Increasing level",
 		Markdown: `> a
 >> b
 `,
@@ -39,9 +40,9 @@ var additionalCases = []testCase{
 </blockquote>
 </blockquote>
 `,
-		Name: "Blockquote supplemental/Increasing level",
 	},
 	{
+		Name: "Blockquote supplemental/Reducing level",
 		Markdown: `>> a
 >
 > b
@@ -53,9 +54,9 @@ var additionalCases = []testCase{
 <p>b</p>
 </blockquote>
 `,
-		Name: "Blockquote supplemental/Reducing level",
 	},
 	{
+		Name:     "Code fence supplemental/Empty line in list item",
 		Markdown: "- ```\n  a\n\n  ```\n",
 		HTML: `<ul>
 <li>
@@ -65,11 +66,11 @@ var additionalCases = []testCase{
 </li>
 </ul>
 `,
-		Name: "Code fence supplemental/Empty line in list item",
 	},
 	{
 		Name:     "List items supplemental/Two leading empty lines with spaces",
-		Markdown: "- \n \na", HTML: `<ul>
+		Markdown: "- \n \na",
+		HTML: `<ul>
 <li></li>
 </ul>
 <p>a</p>
@@ -94,89 +95,7 @@ var additionalCases = []testCase{
 
 func init() {
 	must.OK(json.Unmarshal(specJSON, &testCases))
-	testCases = append(testCases, additionalCases...)
-}
-
-var (
-	escapeHTML = strings.NewReplacer(
-		"&", "&amp;", `"`, "&quot;", "<", "&lt;", ">", "&gt;").Replace
-	escapeDest = strings.NewReplacer(
-		`"`, "%22", `\`, "%5C", " ", "%20", "`", "%60",
-		"[", "%5B", "]", "%5D", "<", "%3C", ">", "%3E",
-		"ö", "%C3%B6",
-		"ä", "%C3%A4", " ", "%C2%A0").Replace
-)
-
-var htmlSyntax = OutputSyntax{
-	ThematicBreak: func(_ string) string { return htmlSelfCloseTag("hr") },
-	Heading: func(level int) TagPair {
-		return htmlTagPair("h" + strconv.Itoa(level))
-	},
-	CodeBlock: func(info string) TagPair {
-		var codeAttrs []string
-		if info != "" {
-			language, _, _ := strings.Cut(info, " ")
-			codeAttrs = []string{"class", "language-" + language}
-		}
-		return combineHTMLTagPairs(
-			htmlTagPair("pre"), htmlTagPair("code", codeAttrs...))
-	},
-	Paragraph:  htmlTagPair("p"),
-	Blockquote: htmlTagPair("blockquote"),
-	BulletList: htmlTagPair("ul"),
-	BulletItem: htmlTagPair("li"),
-	OrderedList: func(start int) TagPair {
-		var attrs []string
-		if start != 1 {
-			attrs = []string{"start", strconv.Itoa(start)}
-		}
-		return htmlTagPair("ol", attrs...)
-	},
-	OrderedItem:    htmlTagPair("li"),
-	CodeSpan:       htmlTagPair("code"),
-	Emphasis:       htmlTagPair("em"),
-	StrongEmphasis: htmlTagPair("strong"),
-	Link: func(dest, title string) TagPair {
-		attrs := []string{"href", escapeDest(dest)}
-		if title != "" {
-			attrs = append(attrs, "title", title)
-		}
-		return htmlTagPair("a", attrs...)
-	},
-	Image: func(dest, alt, title string) string {
-		attrs := []string{"src", escapeDest(dest), "alt", alt}
-		if title != "" {
-			attrs = append(attrs, "title", title)
-		}
-		return htmlSelfCloseTag("img", attrs...)
-	},
-	Escape: escapeHTML,
-}
-
-func htmlSelfCloseTag(name string, attrPairs ...string) string {
-	return "<" + name + concatAttrPairs(attrPairs) + " />"
-}
-
-func htmlTagPair(name string, attrPairs ...string) TagPair {
-	return TagPair{
-		Start: "<" + name + concatAttrPairs(attrPairs) + ">",
-		End:   "</" + name + ">"}
-}
-
-func concatAttrPairs(attrPairs []string) string {
-	var sb strings.Builder
-	for i := 0; i+1 < len(attrPairs); i += 2 {
-		fmt.Fprintf(&sb, ` %s="%s"`, attrPairs[i], escapeHTML(attrPairs[i+1]))
-	}
-	return sb.String()
-}
-
-func combineHTMLTagPairs(p TagPair, more ...TagPair) TagPair {
-	for _, q := range more {
-		p.Start += q.Start
-		p.End = q.End + p.End
-	}
-	return p
+	testCases = append(testCases, supplementalCases...)
 }
 
 func TestRender(t *testing.T) {
@@ -205,7 +124,9 @@ func TestRender(t *testing.T) {
 				t.Skip("tight list not supported")
 			}
 
-			got := Render(tc.Markdown, htmlSyntax)
+			var codec htmlCodec
+			Render(tc.Markdown, &codec)
+			got := codec.String()
 			// Try to hide the difference between tight and loose lists by
 			// "loosifying" the output. This only works for tight lists whose
 			// items consist of single lines, so more complex cases are still
@@ -219,6 +140,84 @@ func TestRender(t *testing.T) {
 		})
 	}
 }
+
+var (
+	escapeHTML = strings.NewReplacer(
+		"&", "&amp;", `"`, "&quot;", "<", "&lt;", ">", "&gt;").Replace
+	escapeDest = strings.NewReplacer(
+		`"`, "%22", `\`, "%5C", " ", "%20", "`", "%60",
+		"[", "%5B", "]", "%5D", "<", "%3C", ">", "%3E",
+		"ö", "%C3%B6",
+		"ä", "%C3%A4", " ", "%C2%A0").Replace
+)
+
+type htmlCodec struct {
+	strings.Builder
+}
+
+var tags = []string{
+	OpThematicBreak:  "<hr />\n",
+	OpCodeBlockEnd:   "</code></pre>\n",
+	OpParagraphStart: "<p>", OpParagraphEnd: "</p>\n",
+
+	OpBlockquoteStart: "<blockquote>\n", OpBlockquoteEnd: "</blockquote>\n",
+	OpListItemStart: "<li>\n", OpListItemEnd: "</li>\n",
+	OpBulletListStart: "<ul>\n", OpBulletListEnd: "</ul>\n",
+	OpOrderedListEnd: "</ol>\n",
+
+	OpCodeSpanStart: "<code>", OpCodeSpanEnd: "</code>",
+	OpEmphasisStart: "<em>", OpEmphasisEnd: "</em>",
+	OpStrongEmphasisStart: "<strong>", OpStrongEmphasisEnd: "</strong>",
+	OpLinkEnd:       "</a>",
+	OpHardLineBreak: "<br />",
+}
+
+func (c *htmlCodec) Do(op Op) {
+	switch op.Type {
+	case OpText:
+		c.WriteString(escapeHTML(op.Text))
+	case OpRawHTML:
+		c.WriteString(op.Text)
+	case OpHeadingStart:
+		fmt.Fprintf(c, "<h%d>", op.Number)
+	case OpHeadingEnd:
+		fmt.Fprintf(c, "</h%d>\n", op.Number)
+	case OpCodeBlockStart:
+		var attrs attrBuilder
+		if op.Text != "" {
+			language, _, _ := strings.Cut(op.Text, " ")
+			attrs.set("class", "language-"+language)
+		}
+		fmt.Fprintf(c, "<pre><code%s>", &attrs)
+	case OpOrderedListStart:
+		var attrs attrBuilder
+		if op.Number != 1 {
+			attrs.set("start", strconv.Itoa(op.Number))
+		}
+		fmt.Fprintf(c, "<ol%s>\n", &attrs)
+	case OpLinkStart:
+		var attrs attrBuilder
+		attrs.set("href", escapeDest(op.Dest))
+		if op.Text != "" {
+			attrs.set("title", op.Text)
+		}
+		fmt.Fprintf(c, "<a%s>", &attrs)
+	case OpImage:
+		var attrs attrBuilder
+		attrs.set("src", escapeDest(op.Dest))
+		attrs.set("alt", op.Alt)
+		if op.Text != "" {
+			attrs.set("title", op.Text)
+		}
+		fmt.Fprintf(c, "<img%s />", &attrs)
+	default:
+		c.WriteString(tags[op.Type])
+	}
+}
+
+type attrBuilder struct{ strings.Builder }
+
+func (a *attrBuilder) set(k, v string) { fmt.Fprintf(a, ` %s="%s"`, k, escapeHTML(v)) }
 
 var looseListItem = regexp.MustCompile(`<li>([^<]+)</li>`)
 

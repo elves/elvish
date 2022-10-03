@@ -21,48 +21,77 @@ import (
 	"strings"
 )
 
-// OutputSyntax specifies the output syntax.
-type OutputSyntax struct {
-	ThematicBreak  func(original string) string
-	Heading        func(level int) TagPair
-	CodeBlock      func(info string) TagPair
-	Paragraph      TagPair
-	Blockquote     TagPair
-	BulletList     TagPair
-	BulletItem     TagPair
-	OrderedList    func(start int) TagPair
-	OrderedItem    TagPair
-	CodeSpan       TagPair
-	Emphasis       TagPair
-	StrongEmphasis TagPair
-	Link           func(dest, title string) TagPair
-	Image          func(dest, alt, title string) string
-
-	Escape      func(string) string
-	ConvertHTML func(string) string
+// Codec is used to render output.
+type Codec interface {
+	Do(Op)
 }
 
-// TagPair specifies a pair of "tags" to enclose a construct in the output.
-type TagPair struct {
-	Start, End string
+// Op represents an operation for the Codec.
+type Op struct {
+	Type OpType
+	// For OpOrderedListStart (the start number) or OpHeadingStart/OpHeadingEnd
+	// (as the heading level)
+	Number int
+	// For OpText, OpLine, OpRawHTML, OpCodeBlockStart (as the processed info
+	// string), OpLinkStart, OpImage (as the title in the last two)
+	Text string
+	// For OpLinkStart, OpImage
+	Dest string
+	// ForOpImage
+	Alt string
 }
+
+// OpType enumerates possible types of an Op.
+type OpType uint
+
+// Possible output operations.
+const (
+	// Text elements.
+	OpText OpType = iota
+	OpRawHTML
+
+	// Leaf blocks.
+	OpThematicBreak
+	OpHeadingStart
+	OpHeadingEnd
+	OpCodeBlockStart
+	OpCodeBlockEnd
+	OpParagraphStart
+	OpParagraphEnd
+
+	// Container blocks.
+	OpBlockquoteStart
+	OpBlockquoteEnd
+	OpListItemStart
+	OpListItemEnd
+	OpBulletListStart
+	OpBulletListEnd
+	OpOrderedListStart
+	OpOrderedListEnd
+
+	// Inline elements.
+	OpCodeSpanStart
+	OpCodeSpanEnd
+	OpEmphasisStart
+	OpEmphasisEnd
+	OpStrongEmphasisStart
+	OpStrongEmphasisEnd
+	OpLinkStart
+	OpLinkEnd
+	OpImage
+	OpHardLineBreak
+)
 
 // Render parses markdown and renders it according to the output syntax.
-func Render(text string, syntax OutputSyntax) string {
-	p := blockParser{
-		lines:  lineSplitter{text, 0},
-		syntax: syntax,
-	}
+func Render(text string, codec Codec) {
+	p := blockParser{lines: lineSplitter{text, 0}, codec: codec}
 	p.render()
-	return p.sb.String()
 }
 
 type blockParser struct {
-	lines      lineSplitter
-	syntax     OutputSyntax
-	containers []container
-	paragraph  []string
-	sb         strings.Builder
+	lines lineSplitter
+	codec Codec
+	tree  blockTree
 }
 
 var (
@@ -104,170 +133,81 @@ const indentedCodePrefix = "    "
 func (p *blockParser) render() {
 	for p.lines.more() {
 		line := p.lines.next()
-		line, matchedContainers := matchContinuationMarkers(line, p.containers)
-		newParagraph := matchedContainers != len(p.containers) || len(p.paragraph) == 0
-		line, newContainers := parseStartingMarkers(line, newParagraph)
-		if len(newContainers) > 0 {
-			p.popParagraph(matchedContainers)
-			for _, c := range newContainers {
-				p.appendContainer(c)
-			}
-			matchedContainers = len(p.containers)
-		}
+		line, matchedContainers, newItem := p.tree.processContainerMarkers(line, p.codec)
 
 		if isBlankLine(line) {
-			for i := matchedContainers; i < len(p.containers); i++ {
-				if p.containers[i].typ == blockquote {
-					p.popParagraph(i)
-					p.popList()
-					continue
+			// Blank lines terminate blockquote if the continuation marker is
+			// absent.
+			for i := matchedContainers; i < len(p.tree.containers); i++ {
+				if p.tree.containers[i].typ == blockquote {
+					p.tree.closeBlocks(i, p.codec)
+					break
 				}
 			}
-			if len(newContainers) == 0 && len(p.paragraph) == 0 &&
-				(p.lastContainerIs(bulletItem) || p.lastContainerIs(orderedItem)) {
-				if p.containers[len(p.containers)-1].blankFirst {
-					p.popLastContainer()
+			if newItem && p.lines.more() {
+				// A list item can start with at most one blank line; the second
+				// blank closes it.
+				nextLine := p.lines.next()
+				nextLine, _ = p.tree.matchContinuationMarkers(nextLine)
+				p.lines.backup()
+				if isBlankLine(nextLine) {
+					p.tree.closeBlocks(len(p.tree.containers)-1, p.codec)
 				}
 			}
-			p.popParagraph(len(p.containers))
+			p.tree.closeParagraph(p.codec)
 		} else if thematicBreakRegexp.MatchString(line) {
-			p.popParagraph(matchedContainers)
-			p.popList()
-			p.sb.WriteString(p.syntax.ThematicBreak(line))
-			p.sb.WriteByte('\n')
+			p.tree.closeBlocks(matchedContainers, p.codec)
+			p.codec.Do(Op{Type: OpThematicBreak, Text: line})
 		} else if m := atxHeadingRegexp.FindStringSubmatchIndex(line); m != nil {
-			p.popParagraph(matchedContainers)
-			p.popList()
+			p.tree.closeBlocks(matchedContainers, p.codec)
 			openerStart, openerEnd := m[2], m[3]
 			opener := line[openerStart:openerEnd]
 			line = strings.TrimRight(line[openerEnd:], " \t")
 			if closer := atxHeadingCloserRegexp.FindString(line); closer != "" {
 				line = line[:len(line)-len(closer)]
 			}
-			p.renderLeaf(p.syntax.Heading(len(opener)), strings.Trim(line, " \t"))
+			level := len(opener)
+			p.codec.Do(Op{Type: OpHeadingStart, Number: level})
+			renderInline(strings.Trim(line, " \t"), p.codec)
+			p.codec.Do(Op{Type: OpHeadingEnd, Number: level})
 		} else if m := codeFenceRegexp.FindStringSubmatch(line); m != nil {
-			p.popParagraph(matchedContainers)
-			p.popList()
+			p.tree.closeBlocks(matchedContainers, p.codec)
 			indent, opener, info := len(m[1]), m[2], m[3]
 			if opener == "" {
 				opener, info = m[4], m[5]
 			}
 			p.parseFencedCodeBlock(indent, opener, info)
-		} else if len(p.paragraph) == 0 && strings.HasPrefix(line, indentedCodePrefix) {
-			p.popParagraph(matchedContainers)
-			p.popList()
+		} else if len(p.tree.paragraph) == 0 && strings.HasPrefix(line, indentedCodePrefix) {
+			p.tree.closeBlocks(matchedContainers, p.codec)
 			p.parseIndentedCodeBlock(line)
 		} else if html1Regexp.MatchString(line) {
-			p.popParagraph(matchedContainers)
-			p.popList()
+			p.tree.closeBlocks(matchedContainers, p.codec)
 			p.parseHTMLBlock(line, html1CloserRegexp.MatchString)
 		} else if html2Regexp.MatchString(line) {
-			p.popParagraph(matchedContainers)
-			p.popList()
+			p.tree.closeBlocks(matchedContainers, p.codec)
 			p.parseHTMLBlock(line, html2CloserRegexp.MatchString)
 		} else if html3Regexp.MatchString(line) {
-			p.popParagraph(matchedContainers)
-			p.popList()
+			p.tree.closeBlocks(matchedContainers, p.codec)
 			p.parseHTMLBlock(line, html3CloserRegexp.MatchString)
 		} else if html4Regexp.MatchString(line) {
-			p.popParagraph(matchedContainers)
-			p.popList()
+			p.tree.closeBlocks(matchedContainers, p.codec)
 			p.parseHTMLBlock(line, html4CloserRegexp.MatchString)
 		} else if html5Regexp.MatchString(line) {
-			p.popParagraph(matchedContainers)
-			p.popList()
+			p.tree.closeBlocks(matchedContainers, p.codec)
 			p.parseHTMLBlock(line, html5CloserRegexp.MatchString)
-		} else if html6Regexp.MatchString(line) || (newParagraph && html7Regexp.MatchString(line)) {
-			p.popParagraph(matchedContainers)
-			p.popList()
+		} else if html6Regexp.MatchString(line) || (len(p.tree.paragraph) == 0 && html7Regexp.MatchString(line)) {
+			p.tree.closeBlocks(matchedContainers, p.codec)
 			p.parseBlankLineTerminatedHTMLBlock(line)
 		} else {
-			if len(p.paragraph) == 0 {
-				p.popParagraph(matchedContainers)
-				p.popList()
+			if len(p.tree.paragraph) == 0 {
+				// This is not lazy continuation, so close all unmatched
+				// containers.
+				p.tree.closeBlocks(matchedContainers, p.codec)
 			}
-			p.addParagraphLine(line)
+			p.tree.paragraph = append(p.tree.paragraph, line)
 		}
 	}
-	p.popParagraph(0)
-}
-
-// Matches the continuation markers of existing container nodes. Returns the
-// line after removing all matched continuation markers and the number of
-// containers matched.
-func matchContinuationMarkers(line string, containers []container) (string, int) {
-	for i, container := range containers {
-		markerLen, matched := container.findContinuationMarker(line)
-		if !matched {
-			return line, i
-		}
-		line = line[markerLen:]
-	}
-	return line, len(containers)
-}
-
-var (
-	blockquoteMarkerRegexp = regexp.MustCompile(`^ {0,3}> ?`)
-
-	containerStartingMarkerRegexp = regexp.MustCompile(
-		// Capture groups:
-		// 1. bullet item punctuation
-		// 2. ordered item start index
-		// 3. ordered item punctuation
-		// 4. trailing spaces
-		`^ {0,3}(?:([-+*])|([0-9]{1,9})([.)]))( +)`)
-	itemStartingMarkerBlankLineRegexp = regexp.MustCompile(
-		// Capture groups are the same, with group 4 always empty.
-		`^ {0,3}(?:([-+*])|([0-9]{1,9})([.)]))[ \t]*()$`)
-)
-
-// Parses starting markers of container blocks. Returns the line after removing
-// all starting markers and new containers to create.
-func parseStartingMarkers(line string, newParagraph bool) (string, []container) {
-	var containers []container
-	// Don't parse thematic breaks like "- - - " as three bullets.
-	for !thematicBreakRegexp.MatchString(line) {
-		if bqMarker := blockquoteMarkerRegexp.FindString(line); bqMarker != "" {
-			line = line[len(bqMarker):]
-			containers = append(containers, container{typ: blockquote})
-			continue
-		}
-
-		m := containerStartingMarkerRegexp.FindStringSubmatch(line)
-		blankFirst := false
-		if m == nil && newParagraph {
-			m = itemStartingMarkerBlankLineRegexp.FindStringSubmatch(line)
-			blankFirst = true
-		}
-		if m == nil {
-			break
-		}
-		marker, bulletPunct, orderedStart, orderedPunct, spaces := m[0], m[1], m[2], m[3], m[4]
-		if len(spaces) >= 5 {
-			marker = marker[:len(marker)-len(spaces)+1]
-		}
-
-		indent := len(marker)
-		if strings.Trim(line[len(marker):], " \t") == "" {
-			indent = len(strings.TrimRight(marker, " \t")) + 1
-		}
-		c := container{indent: strings.Repeat(" ", indent), blankFirst: blankFirst}
-		if bulletPunct != "" {
-			c.typ = bulletItem
-			c.punct = bulletPunct[0]
-		} else {
-			c.typ = orderedItem
-			c.punct = orderedPunct[0]
-			c.start, _ = strconv.Atoi(orderedStart)
-			if c.start != 1 && !newParagraph {
-				break
-			}
-		}
-
-		line = line[len(marker):]
-		containers = append(containers, c)
-	}
-	return line, containers
+	p.tree.closeBlocks(0, p.codec)
 }
 
 func isBlankLine(line string) bool {
@@ -275,23 +215,21 @@ func isBlankLine(line string) bool {
 }
 
 func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
-	tags := p.syntax.CodeBlock(processCodeFenceInfo(strings.Trim(info, " \t")))
-	p.sb.WriteString(tags.Start)
+	info = processCodeFenceInfo(strings.Trim(info, " \t"))
+	p.codec.Do(Op{Type: OpCodeBlockStart, Text: info})
 	for p.lines.more() {
 		line := p.lines.next()
-		line, matchedContainers := matchContinuationMarkers(line, p.containers)
+		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
-			for i := matchedContainers; i < len(p.containers); i++ {
-				if p.containers[i].typ == blockquote {
-					p.sb.WriteString(tags.End)
-					p.sb.WriteByte('\n')
-					p.popParagraph(i)
+			for i := matchedContainers; i < len(p.tree.containers); i++ {
+				if p.tree.containers[i].typ == blockquote {
+					do(p.codec, OpCodeBlockEnd)
+					p.tree.closeBlocks(i, p.codec)
 					return
 				}
 			}
-		} else if matchedContainers < len(p.containers) {
-			p.sb.WriteString(tags.End)
-			p.sb.WriteByte('\n')
+		} else if matchedContainers < len(p.tree.containers) {
+			do(p.codec, OpCodeBlockEnd)
 			p.lines.backup()
 			return
 		}
@@ -304,11 +242,9 @@ func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
 		for i := indent; i > 0 && line != "" && line[0] == ' '; i-- {
 			line = line[1:]
 		}
-		p.sb.WriteString(p.syntax.Escape(line))
-		p.sb.WriteByte('\n')
+		doLine(p.codec, line)
 	}
-	p.sb.WriteString(tags.End)
-	p.sb.WriteByte('\n')
+	do(p.codec, OpCodeBlockEnd)
 }
 
 // Code fence info strings are mostly verbatim, but support backslash and
@@ -335,20 +271,17 @@ func processCodeFenceInfo(text string) string {
 }
 
 func (p *blockParser) parseIndentedCodeBlock(line string) {
-	tags := p.syntax.CodeBlock("")
-	p.sb.WriteString(tags.Start)
-	p.sb.WriteString(p.syntax.Escape(strings.TrimPrefix(line, indentedCodePrefix)))
-	p.sb.WriteByte('\n')
+	do(p.codec, OpCodeBlockStart)
+	doLine(p.codec, strings.TrimPrefix(line, indentedCodePrefix))
 	var savedBlankLines []string
 	for p.lines.more() {
 		line := p.lines.next()
-		line, matchedContainers := matchContinuationMarkers(line, p.containers)
+		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
-			for i := matchedContainers; i < len(p.containers); i++ {
-				if p.containers[i].typ == blockquote {
-					p.sb.WriteString(tags.End)
-					p.sb.WriteByte('\n')
-					p.popParagraph(i)
+			for i := matchedContainers; i < len(p.tree.containers); i++ {
+				if p.tree.containers[i].typ == blockquote {
+					do(p.codec, OpCodeBlockEnd)
+					p.tree.closeBlocks(i, p.codec)
 					return
 				}
 			}
@@ -359,44 +292,39 @@ func (p *blockParser) parseIndentedCodeBlock(line string) {
 			}
 			savedBlankLines = append(savedBlankLines, line)
 			continue
-		} else if matchedContainers < len(p.containers) || !strings.HasPrefix(line, indentedCodePrefix) {
+		} else if matchedContainers < len(p.tree.containers) || !strings.HasPrefix(line, indentedCodePrefix) {
 			p.lines.backup()
 			break
 		}
 		for _, blankLine := range savedBlankLines {
-			p.sb.WriteString(blankLine)
-			p.sb.WriteByte('\n')
+			doLine(p.codec, blankLine)
 		}
 		savedBlankLines = savedBlankLines[:0]
-		p.sb.WriteString(p.syntax.Escape(strings.TrimPrefix(line, indentedCodePrefix)))
-		p.sb.WriteByte('\n')
+		doLine(p.codec, strings.TrimPrefix(line, indentedCodePrefix))
 	}
-	p.sb.WriteString(tags.End)
-	p.sb.WriteByte('\n')
+	do(p.codec, OpCodeBlockEnd)
 }
 
 func (p *blockParser) parseHTMLBlock(line string, closer func(string) bool) {
-	p.sb.WriteString(line)
-	p.sb.WriteByte('\n')
+	doRawHTMLLine(p.codec, line)
 	if closer(line) {
 		return
 	}
 	for p.lines.more() {
 		line := p.lines.next()
-		line, matchedContainers := matchContinuationMarkers(line, p.containers)
+		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
-			for i := matchedContainers; i < len(p.containers); i++ {
-				if p.containers[i].typ == blockquote {
-					p.popParagraph(i)
+			for i := matchedContainers; i < len(p.tree.containers); i++ {
+				if p.tree.containers[i].typ == blockquote {
+					p.tree.closeBlocks(i, p.codec)
 					return
 				}
 			}
-		} else if matchedContainers < len(p.containers) {
+		} else if matchedContainers < len(p.tree.containers) {
 			p.lines.backup()
 			return
 		}
-		p.sb.WriteString(line)
-		p.sb.WriteByte('\n')
+		doRawHTMLLine(p.codec, line)
 		if closer(line) {
 			return
 		}
@@ -404,89 +332,274 @@ func (p *blockParser) parseHTMLBlock(line string, closer func(string) bool) {
 }
 
 func (p *blockParser) parseBlankLineTerminatedHTMLBlock(line string) {
-	p.sb.WriteString(line)
-	p.sb.WriteByte('\n')
+	doRawHTMLLine(p.codec, line)
 	for p.lines.more() {
 		line := p.lines.next()
-		line, matchedContainers := matchContinuationMarkers(line, p.containers)
+		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
-			for i := matchedContainers; i < len(p.containers); i++ {
-				if p.containers[i].typ == blockquote {
-					p.popParagraph(i)
+			for i := matchedContainers; i < len(p.tree.containers); i++ {
+				if p.tree.containers[i].typ == blockquote {
+					p.tree.closeBlocks(i, p.codec)
 					return
 				}
 			}
 			return
-		} else if matchedContainers < len(p.containers) {
+		} else if matchedContainers < len(p.tree.containers) {
 			p.lines.backup()
 			return
 		}
-		p.sb.WriteString(line)
-		p.sb.WriteByte('\n')
+		doRawHTMLLine(p.codec, line)
 	}
 }
 
-func (p *blockParser) appendContainer(c container) {
-	if len(p.containers) > 0 {
-		leaf := p.containers[len(p.containers)-1]
-		if (leaf.typ == bulletList || leaf.typ == orderedList) && leaf.punct != c.punct {
-			p.popLastContainer()
+// This struct corresponds to the block tree in
+// https://spec.commonmark.org/0.30/#phase-1-block-structure.
+//
+// The spec describes a two-phased parsing strategy where the entire block tree
+// is built before inline parsing is done. However, since we don't support
+// setext headings and link reference definitions, and treats all lists as
+// loose, the rendering result of closed blocks will never be impacted by future
+// blocks. This enables us to render as we parse, and allows us to only track
+// the path of currently open blocks, which is the same as the rightmost path in
+// the full block tree at any given point in time.
+//
+// The path consists of zero or more container nodes, and an optional paragraph
+// node. The paragraph node exists if and only if it contains at least 1 line;
+// the spec prohibits paragraphs consisting of 0 lines.
+//
+// We don't need to track any other type of leaf blocks, because they all have
+// simple termination conditions, so can be parsed in one iteration of the main
+// parsing loop, as a nested loop that consumes lines until the block
+// terminates.
+//
+// Paragraphs, however, don't have a simple termination condition. Other than
+// the common condition of being terminated as part of the container block,
+// paragraphs are always terminated by *another* type of leaf block. This means
+// that the logic for deciding to continue or interrupt of a paragraph lives
+// within the main parsing loop. This in turn makes it necessary to store the
+// lines of the paragraph across iterations of the main parsing loop, hence part
+// of the parser's state.
+type blockTree struct {
+	containers []container
+	paragraph  []string
+}
+
+// Processes container markers at the start of the line, which consists of
+// continuation markers of existing containers and starting markers of new
+// containers.
+//
+// Returns the line after removing both types of markers, the number of markers
+// matched or parsed, and whether the innermost container is a newly opened list
+// item.
+//
+// The latter should be used to call t.closeContainers
+// unless the remaining content of the line constitutes a blank line or
+// paragraph continuation.
+func (t *blockTree) processContainerMarkers(line string, codec Codec) (string, int, bool) {
+	line, matched := t.matchContinuationMarkers(line)
+	line, newContainers := t.parseStartingMarkers(line,
+		// This argument tells parseStartingMarkers whether we are starting a
+		// new paragraph. This seems straightforward enough: if the paragraph is
+		// empty is the first place, or if we are going to terminate some
+		// containers, we are starting a new paragraph.
+		//
+		// The second part of the condition is more subtle though. If the
+		// remaining content of the line constitutes paragraph continuation, we
+		// are not starting a new paragraph. We are only able to ignore this
+		// case parseStartingMarkers only uses this condition when it actually
+		// parses a starting marker, meaning that the line cannot be paragraph
+		// continuation.
+		len(t.paragraph) == 0 || matched != len(t.containers))
+
+	continueList := false
+	if matched > 0 && t.containers[matched-1].typ.isList() {
+		// If the last matched container is a list (i.e. the first unmatched
+		// container is a list item), keep it if and only if the first
+		// container to add is a list item that can continue the list.
+		continueList = len(newContainers) > 0 && newContainers[0].punct == t.containers[matched-1].punct
+		if !continueList {
+			matched--
 		}
 	}
 
-	if c.typ == bulletItem && !p.lastContainerIs(bulletList) {
-		p.containers = append(p.containers, container{typ: bulletList, punct: c.punct})
-		p.sb.WriteString(p.syntax.BulletList.Start)
-		p.sb.WriteByte('\n')
+	if len(newContainers) == 0 {
+		return line, matched, false
 	}
-	if c.typ == orderedItem && !p.lastContainerIs(orderedList) {
-		p.containers = append(p.containers, container{typ: orderedList, punct: c.punct})
-		p.sb.WriteString(p.syntax.OrderedList(c.start).Start)
-		p.sb.WriteByte('\n')
+
+	t.closeBlocks(matched, codec)
+	for _, c := range newContainers {
+		if c.typ.isItem() {
+			if continueList {
+				continueList = false
+			} else {
+				list := container{typ: c.typ.itemToList(), punct: c.punct, start: c.start}
+				t.containers = append(t.containers, list)
+				codec.Do(Op{Type: containerOpenOp[list.typ], Number: list.start})
+			}
+		}
+		t.containers = append(t.containers, c)
+		do(codec, containerOpenOp[c.typ])
 	}
-	p.containers = append(p.containers, c)
-	p.sb.WriteString(c.tagPair(&p.syntax).Start)
-	p.sb.WriteByte('\n')
+	return line, len(t.containers), newContainers[len(newContainers)-1].typ.isItem()
 }
 
-func (p *blockParser) lastContainerIs(t containerType) bool {
-	return len(p.containers) > 0 && p.containers[len(p.containers)-1].typ == t
-}
-
-func (p *blockParser) popLastContainer() {
-	p.sb.WriteString(p.containers[len(p.containers)-1].tagPair(&p.syntax).End)
-	p.sb.WriteByte('\n')
-	p.containers = p.containers[:len(p.containers)-1]
-}
-
-func (p *blockParser) addParagraphLine(line string) {
-	p.paragraph = append(p.paragraph, line)
-}
-
-func (p *blockParser) popParagraph(keepContainers int) {
-	if len(p.paragraph) > 0 {
-		text := strings.Trim(strings.Join(p.paragraph, "\n"), " \t")
-		p.renderLeaf(p.syntax.Paragraph, text)
-		p.paragraph = p.paragraph[:0]
+// Matches the continuation markers of existing container nodes. Returns the
+// line after removing all matched continuation markers and the number of
+// containers matched.
+func (t *blockTree) matchContinuationMarkers(line string) (string, int) {
+	for i, container := range t.containers {
+		markerLen, matched := container.matchContinuationMarker(line)
+		if !matched {
+			return line, i
+		}
+		line = line[markerLen:]
 	}
-	for len(p.containers) > keepContainers {
-		p.popLastContainer()
+	return line, len(t.containers)
+}
+
+var (
+	blockquoteMarkerRegexp = regexp.MustCompile(`^ {0,3}> ?`)
+
+	itemStartingMarkerRegexp = regexp.MustCompile(
+		// Capture groups:
+		// 1. bullet item punctuation
+		// 2. ordered item start index
+		// 3. ordered item punctuation
+		// 4. trailing spaces
+		`^ {0,3}(?:([-+*])|([0-9]{1,9})([.)]))( +)`)
+	itemStartingMarkerBlankLineRegexp = regexp.MustCompile(
+		// Capture groups are the same, with group 4 always empty.
+		`^ {0,3}(?:([-+*])|([0-9]{1,9})([.)]))[ \t]*()$`)
+)
+
+// Parses starting markers of container blocks. Returns the line after removing
+// all starting markers and new containers to create.
+func (t *blockTree) parseStartingMarkers(line string, newParagraph bool) (string, []container) {
+	var containers []container
+	// Don't parse thematic breaks like "- - - " as three bullets.
+	for !thematicBreakRegexp.MatchString(line) {
+		if bqMarker := blockquoteMarkerRegexp.FindString(line); bqMarker != "" {
+			line = line[len(bqMarker):]
+			containers = append(containers, container{typ: blockquote})
+			continue
+		}
+
+		m := itemStartingMarkerRegexp.FindStringSubmatch(line)
+		if m == nil && newParagraph {
+			m = itemStartingMarkerBlankLineRegexp.FindStringSubmatch(line)
+		}
+		if m == nil {
+			break
+		}
+		marker, bulletPunct, orderedStart, orderedPunct, spaces := m[0], m[1], m[2], m[3], m[4]
+		if len(spaces) >= 5 {
+			marker = marker[:len(marker)-len(spaces)+1]
+		}
+
+		indent := len(marker)
+		if strings.Trim(line[len(marker):], " \t") == "" {
+			indent = len(strings.TrimRight(marker, " \t")) + 1
+		}
+		c := container{indent: strings.Repeat(" ", indent)}
+		if bulletPunct != "" {
+			c.typ = bulletItem
+			c.punct = bulletPunct[0]
+		} else {
+			c.typ = orderedItem
+			c.punct = orderedPunct[0]
+			c.start, _ = strconv.Atoi(orderedStart)
+			if c.start != 1 && !newParagraph {
+				break
+			}
+		}
+
+		line = line[len(marker):]
+		containers = append(containers, c)
+	}
+	return line, containers
+}
+
+func (t *blockTree) closeBlocks(keep int, codec Codec) {
+	t.closeParagraph(codec)
+	for i := len(t.containers) - 1; i >= keep; i-- {
+		do(codec, containerCloseOp[t.containers[i].typ])
+	}
+	t.containers = t.containers[:keep]
+}
+
+func (t *blockTree) closeParagraph(codec Codec) {
+	if len(t.paragraph) == 0 {
+		return
+	}
+	do(codec, OpParagraphStart)
+	renderInline(strings.Trim(strings.Join(t.paragraph, "\n"), " \t"), codec)
+	t.paragraph = t.paragraph[:0]
+	do(codec, OpParagraphEnd)
+}
+
+type container struct {
+	typ    containerType
+	punct  byte
+	start  int
+	indent string
+}
+
+type containerType uint8
+
+const (
+	blockquote containerType = iota
+	bulletList
+	bulletItem
+	orderedList
+	orderedItem
+)
+
+func (t containerType) isList() bool { return t == bulletList || t == orderedList }
+
+func (t containerType) isItem() bool { return t == bulletItem || t == orderedItem }
+
+func (t containerType) itemToList() containerType {
+	if t == bulletItem {
+		return bulletList
+	} else {
+		return orderedList
 	}
 }
 
-func (p *blockParser) popList() {
-	if p.lastContainerIs(bulletList) || p.lastContainerIs(orderedList) {
-		p.popLastContainer()
+var (
+	containerOpenOp = []OpType{
+		blockquote:  OpBlockquoteStart,
+		bulletList:  OpBulletListStart,
+		bulletItem:  OpListItemStart,
+		orderedList: OpOrderedListStart,
+		orderedItem: OpListItemStart,
 	}
+	containerCloseOp = []OpType{
+		blockquote:  OpBlockquoteEnd,
+		bulletList:  OpBulletListEnd,
+		bulletItem:  OpListItemEnd,
+		orderedList: OpOrderedListEnd,
+		orderedItem: OpListItemEnd,
+	}
+)
+
+func (c container) matchContinuationMarker(line string) (int, bool) {
+	switch c.typ {
+	case blockquote:
+		marker := blockquoteMarkerRegexp.FindString(line)
+		return len(marker), marker != ""
+	case bulletList, orderedList:
+		return 0, true
+	case bulletItem, orderedItem:
+		if strings.HasPrefix(line, c.indent) {
+			return len(c.indent), true
+		}
+		return 0, false
+	}
+	panic("unreachable")
 }
 
-func (p *blockParser) renderLeaf(tags TagPair, content string) {
-	p.sb.WriteString(tags.Start)
-	p.sb.WriteString(renderInline(content, p.syntax))
-	p.sb.WriteString(tags.End)
-	p.sb.WriteByte('\n')
-}
-
+// Provides support for consuming a string line by line.
 type lineSplitter struct {
 	text string
 	pos  int
@@ -514,52 +627,16 @@ func (s *lineSplitter) backup() {
 	s.pos = 1 + strings.LastIndexByte(s.text[:s.pos-1], '\n')
 }
 
-type container struct {
-	typ        containerType
-	punct      byte
-	start      int
-	indent     string
-	blankFirst bool
+// Codec shorthands.
+
+func do(c Codec, t OpType) { c.Do(Op{Type: t}) }
+
+func doLine(c Codec, s string) {
+	c.Do(Op{Type: OpText, Text: s})
+	c.Do(Op{Type: OpText, Text: "\n"})
 }
 
-type containerType uint8
-
-const (
-	blockquote containerType = iota
-	bulletList
-	bulletItem
-	orderedList
-	orderedItem
-)
-
-func (c container) findContinuationMarker(line string) (int, bool) {
-	switch c.typ {
-	case blockquote:
-		marker := blockquoteMarkerRegexp.FindString(line)
-		return len(marker), marker != ""
-	case bulletList, orderedList:
-		return 0, true
-	case bulletItem, orderedItem:
-		if strings.HasPrefix(line, c.indent) {
-			return len(c.indent), true
-		}
-		return 0, false
-	}
-	panic("unreachable")
-}
-
-func (c container) tagPair(syntax *OutputSyntax) TagPair {
-	switch c.typ {
-	case blockquote:
-		return syntax.Blockquote
-	case bulletList:
-		return syntax.BulletList
-	case bulletItem:
-		return syntax.BulletItem
-	case orderedList:
-		return syntax.OrderedList(1)
-	case orderedItem:
-		return syntax.OrderedItem
-	}
-	panic("unreachable")
+func doRawHTMLLine(c Codec, s string) {
+	c.Do(Op{Type: OpRawHTML, Text: s})
+	c.Do(Op{Type: OpText, Text: "\n"})
 }
