@@ -262,7 +262,7 @@ func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 		sigil, qname := SplitSigil(n.Value)
 		ref := resolveVarRef(cp, qname, n)
 		if ref == nil {
-			cp.errorpf(n, "variable $%s not found", qname)
+			cp.errorpf(n, "variable $%s not found", parse.Quote(qname))
 		}
 		return &variableOp{n.Range(), sigil != "", qname, ref}
 	case parse.Wildcard:
@@ -313,7 +313,7 @@ type variableOp struct {
 func (op variableOp) exec(fm *Frame) ([]any, Exception) {
 	variable := deref(fm, op.ref)
 	if variable == nil {
-		return nil, fm.errorpf(op, "variable $%s not found", op.qname)
+		return nil, fm.errorpf(op, "variable $%s not found", parse.Quote(op.qname))
 	}
 	value := variable.Get()
 	if op.explode {

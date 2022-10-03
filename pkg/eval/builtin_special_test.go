@@ -91,6 +91,8 @@ func TestVar(t *testing.T) {
 		That("var a[0]").DoesNotCompile(),
 		// Composite expression not allowed
 		That("var a'b'").DoesNotCompile(),
+		// Braced lists must not have any indices when used as a lvalue.
+		That("var {a b}[0] = x y").DoesNotCompile(),
 	)
 }
 
