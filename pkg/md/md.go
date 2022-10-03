@@ -136,6 +136,12 @@ func (p *blockParser) render() {
 					continue
 				}
 			}
+			if len(newContainers) == 0 && len(p.paragraph) == 0 &&
+				(p.lastContainerIs(bulletItem) || p.lastContainerIs(orderedItem)) {
+				if p.containers[len(p.containers)-1].blankFirst {
+					p.popLastContainer()
+				}
+			}
 			p.popParagraph(len(p.containers))
 		} else if thematicBreakRegexp.MatchString(line) {
 			p.popParagraph(matchedContainers)
@@ -209,13 +215,18 @@ func matchContinuationMarkers(line string, containers []container) (string, int)
 	return line, len(containers)
 }
 
-var containerStartingMarkerRegexp = regexp.MustCompile(
-	// Capture groups:
-	// 1. blockquote marker
-	// 2. bullet item punctuation
-	// 3. ordered item start index
-	// 4. ordered item punctuation
-	`^ {0,3}(?:(> ?)|([-+*]) {1,4}|([0-9]{1,9})([.)]) {1,4})`)
+var (
+	containerStartingMarkerRegexp = regexp.MustCompile(
+		// Capture groups:
+		// 1. blockquote marker
+		// 2. bullet item punctuation
+		// 3. ordered item start index
+		// 4. ordered item punctuation
+		`^ {0,3}(?:(> ?)|([-+*]) {1,4}|([0-9]{1,9})([.)]) {1,4})`)
+	itemStartingMarkerBlankLineRegexp = regexp.MustCompile(
+		// Capture groups are the same, with group 1 always empty.
+		`^ {0,3}(?:()([-+*])|([0-9]{1,9})([.)]))[ \t]*$`)
+)
 
 // Parses starting markers of container blocks. Returns the line after removing
 // all starting markers and new containers to create.
@@ -224,6 +235,11 @@ func parseStartingMarkers(line string, newParagraph bool) (string, []container) 
 	// Don't parse thematic breaks like "- - - " as three bullets.
 	for !thematicBreakRegexp.MatchString(line) {
 		m := containerStartingMarkerRegexp.FindStringSubmatch(line)
+		blankFirst := false
+		if m == nil && newParagraph {
+			m = itemStartingMarkerBlankLineRegexp.FindStringSubmatch(line)
+			blankFirst = true
+		}
 		if m == nil {
 			break
 		}
@@ -237,6 +253,7 @@ func parseStartingMarkers(line string, newParagraph bool) (string, []container) 
 				indent = len(strings.TrimRight(marker, " \t")) + 1
 			}
 			c.indent = strings.Repeat(" ", indent)
+			c.blankFirst = blankFirst
 			if bulletPunct != "" {
 				c.typ = bulletItem
 				c.punct = bulletPunct[0]
@@ -436,10 +453,11 @@ func (s *lineSplitter) backup() {
 }
 
 type container struct {
-	typ    containerType
-	punct  byte
-	start  int
-	indent string
+	typ        containerType
+	punct      byte
+	start      int
+	indent     string
+	blankFirst bool
 }
 
 type containerType uint8

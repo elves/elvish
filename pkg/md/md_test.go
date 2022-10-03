@@ -67,6 +67,14 @@ var additionalCases = []testCase{
 `,
 		Name: "Code fence supplemental/Empty line in list item",
 	},
+	{
+		Name:     "List items supplemental/Two leading empty lines with spaces",
+		Markdown: "- \n \na", HTML: `<ul>
+<li></li>
+</ul>
+<p>a</p>
+`,
+	},
 }
 
 func init() {
@@ -159,7 +167,6 @@ func combineHTMLTagPairs(p TagPair, more ...TagPair) TagPair {
 var (
 	linkRef           = regexp.MustCompile(`(^|\n) {0,3}\[([^\\\[\]]|\\[\\\[\]])+\]:`)
 	indentedCodeBlock = regexp.MustCompile("(^|\n)[ >]*(    )")
-	emptyListItem     = regexp.MustCompile(`(^|\n)([-+*]|[0-9]{1,9}[.)])(\n|$)`)
 )
 
 func TestRender(t *testing.T) {
@@ -180,9 +187,6 @@ func TestRender(t *testing.T) {
 			}
 			if linkRef.MatchString(tc.Markdown) {
 				t.Skipf("Link reference not supported")
-			}
-			if emptyListItem.MatchString(tc.Markdown) {
-				t.Skipf("Empty list item not supported")
 			}
 
 			got := Render(tc.Markdown, htmlSyntax)
