@@ -164,11 +164,6 @@ func combineHTMLTagPairs(p TagPair, more ...TagPair) TagPair {
 	return p
 }
 
-var (
-	linkRef           = regexp.MustCompile(`(^|\n) {0,3}\[([^\\\[\]]|\\[\\\[\]])+\]:`)
-	indentedCodeBlock = regexp.MustCompile("(^|\n)[ >]*(    )")
-)
-
 func TestRender(t *testing.T) {
 	for _, tc := range testCases {
 		name := tc.Name
@@ -176,48 +171,44 @@ func TestRender(t *testing.T) {
 			name = fmt.Sprintf("%s/%d", tc.Section, tc.Example)
 		}
 		t.Run(name, func(t *testing.T) {
-			if unsupportedSection(tc.Section) {
-				t.Skipf("Section %q not supported", tc.Section)
+			switch tc.Section {
+			case "Tabs",
+				"Setext headings",
+				"Indented code blocks",
+				"Link reference definitions":
+				t.Skip("section not supported")
 			}
-			if reason := unsupportedExample(tc.Example); reason != "" {
-				t.Skipf("Example %d not supported: %s", tc.Example, reason)
-			}
-			if indentedCodeBlock.MatchString(tc.Markdown) {
-				t.Skipf("Indented code block not supported")
-			}
-			if linkRef.MatchString(tc.Markdown) {
-				t.Skipf("Link reference not supported")
+			switch tc.Example {
+			case 18, 36, 48, 69, 134, 183, 184, 191, 225, 231, 236, 252,
+				// List items
+				253, 254, 257, 264, 270, 271, 272, 273, 274, 278, 286, 287, 288, 289, 290,
+				// Lists
+				309, 313:
+				t.Skip("indented code blocks not supported")
+			case 23, 33, 317,
+				// Link
+				526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 548, 549, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 572, 575, 576,
+				// Image
+				581, 582, 583, 584, 585, 586, 587, 588, 590, 591, 592:
+				t.Skip("link reference definitions not supported")
+			case 59, 141, 300:
+				t.Skip("setext heading not supported")
+			case 294, 296, 307, 318, 319, 320, 321, 323:
+				t.Skip("tight list not supported")
 			}
 
 			got := Render(tc.Markdown, htmlSyntax)
+			// Try to hide the difference between tight and loose lists by
+			// "loosifying" the output. This only works for tight lists whose
+			// items consist of single lines, so more complex cases are still
+			// skipped.
 			want := loosifyLists(tc.HTML)
+			hr := strings.Repeat("═", 40)
 			if diff := cmp.Diff(want, got); diff != "" {
-				t.Errorf("input:\n%sdiff (-want +got):\n%s", tc.Markdown, diff)
+				t.Errorf("input:\n%s\ndiff (-want +got):\n%s",
+					hr+"\n"+tc.Markdown+hr, diff)
 			}
 		})
-	}
-}
-
-func unsupportedSection(section string) bool {
-	switch section {
-	case "Tabs",
-		"Setext headings",
-		"Indented code blocks",
-		"Link reference definitions":
-		return true
-	default:
-		return false
-	}
-}
-
-func unsupportedExample(example int) string {
-	switch example {
-	case 59, 141, 300:
-		return "setext heading not supported"
-	case 318, 320, 321, 323:
-		return "tight list not implemented"
-	default:
-		return ""
 	}
 }
 
