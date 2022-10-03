@@ -99,20 +99,7 @@ var (
 		fmt.Sprintf(`^ {0,3}(?:%s|%s)[ \t]*$`, openTag, closingTag))
 )
 
-const (
-	openTag = `<` +
-		`[a-zA-Z][a-zA-Z0-9-]*` + // tag name
-		(`(?:` +
-			`[ \t\n]+` + // whitespace
-			`[a-zA-Z_:][a-zA-Z0-9_\.:-]*` + // attribute name
-			`(?:[ \t\n]*=[ \t\n]*(?:[^ \t\n"'=<>` + "`" + `]+|'[^']*'|"[^"]*"))?` + // attribute value specification
-			`)*`) + // zero or more attributes
-		`[ \t\n]*` + // whitespace
-		`/?>`
-	closingTag = `</[a-zA-Z][a-zA-Z0-9-]*[ \t\n]*>`
-
-	indentedCodePrefix = "    "
-)
+const indentedCodePrefix = "    "
 
 func (p *blockParser) render() {
 	for p.lines.more() {

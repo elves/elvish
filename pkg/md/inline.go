@@ -1,7 +1,6 @@
 package md
 
 import (
-	"fmt"
 	"html"
 	"regexp"
 	"strings"
@@ -24,21 +23,38 @@ type inlineParser struct {
 }
 
 var (
-	entityRegexp     = regexp.MustCompile(`^&(?:[a-zA-Z0-9]+|#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6});`)
-	openTagRegexp    = regexp.MustCompile(`^` + openTag)
-	closingTagRegexp = regexp.MustCompile(`^` + closingTag)
-	autolinkRegexp   = regexp.MustCompile(`^<` +
+	// https://spec.commonmark.org/0.30/#entity-and-numeric-character-references
+	entityRegexp = regexp.MustCompile(`^&(?:[a-zA-Z0-9]+|#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6});`)
+
+	// https://spec.commonmark.org/0.30/#uri-autolink
+	uriAutolinkRegexp = regexp.MustCompile(`^<` +
 		`[a-zA-Z][a-zA-Z0-9+.-]{1,31}` + // scheme
 		`:[^\x00-\x19 <>]*` +
 		`>`)
-	emailAutolinkRegexp = regexp.MustCompile(fmt.Sprintf(`^<[a-zA-Z0-9.!#$%%&'*+/=?^_%s{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*>`, "`"))
+	// https://spec.commonmark.org/0.30/#email-autolink
+	emailAutolinkRegexp = regexp.MustCompile(
+		`^<[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*>`)
+
+	openTagRegexp    = regexp.MustCompile(`^` + openTag)
+	closingTagRegexp = regexp.MustCompile(`^` + closingTag)
+)
+
+const (
+	// https://spec.commonmark.org/0.30/#open-tag
+	openTag = `<` +
+		`[a-zA-Z][a-zA-Z0-9-]*` + // tag name
+		(`(?:` +
+			`[ \t\n]+` + // whitespace
+			`[a-zA-Z_:][a-zA-Z0-9_\.:-]*` + // attribute name
+			`(?:[ \t\n]*=[ \t\n]*(?:[^ \t\n"'=<>` + "`" + `]+|'[^']*'|"[^"]*"))?` + // attribute value specification
+			`)*`) + // zero or more attributes
+		`[ \t\n]*` + // whitespace
+		`/?>`
+	// https://spec.commonmark.org/0.30/#closing-tag
+	closingTag = `</[a-zA-Z][a-zA-Z0-9-]*[ \t\n]*>`
 )
 
 func (p *inlineParser) render() {
-	if p.syntax.Escape == nil {
-		p.syntax.Escape = func(s string) string { return s }
-	}
-
 	for p.pos < len(p.text) {
 		b := p.text[p.pos]
 		begin := p.pos
@@ -210,7 +226,7 @@ func (p *inlineParser) render() {
 					continue
 				} else {
 					// Try parsing an autolink.
-					autolink := autolinkRegexp.FindString(p.text[begin:])
+					autolink := uriAutolinkRegexp.FindString(p.text[begin:])
 					email := false
 					if autolink == "" {
 						autolink = emailAutolinkRegexp.FindString(p.text[begin:])
@@ -280,6 +296,35 @@ func (p *inlineParser) render() {
 	p.processEmphasis(p.delims.bottom)
 }
 
+func findBacktickRun(s, run string, i int) int {
+	for i < len(s) {
+		j := strings.Index(s[i:], run)
+		if j == -1 {
+			return -1
+		}
+		j += i
+		if j+len(run) == len(s) || s[j+len(run)] != '`' {
+			return j
+		}
+		for j < len(s) && s[j] == '`' {
+			j++
+		}
+		i = j
+	}
+	return -1
+}
+
+var lineEndingToSpace = strings.NewReplacer("\r\n", " ", "\r", " ", "\n", " ")
+
+func normalizeCodeSpanContent(s string) string {
+	s = lineEndingToSpace.Replace(s)
+	if len(s) > 1 && s[0] == ' ' && s[len(s)-1] == ' ' && strings.Trim(s, " ") != "" {
+		return s[1 : len(s)-1]
+	}
+	return s
+}
+
+// https://spec.commonmark.org/0.30/#process-emphasis
 func (p *inlineParser) processEmphasis(bottom *delim) {
 	var openersBottom [2][3][2]*delim
 	for closer := bottom.next; closer != nil; {
@@ -337,8 +382,30 @@ func (p *inlineParser) processEmphasis(bottom *delim) {
 	}
 }
 
+func b2i(b bool) int {
+	if b {
+		return 1
+	} else {
+		return 0
+	}
+}
+
+// Stores output of inline rendering.
 type buffer struct {
 	pieces []piece
+}
+
+func (b *buffer) push(p piece) int {
+	b.pieces = append(b.pieces, p)
+	return len(b.pieces) - 1
+}
+
+func (b *buffer) String() string {
+	var sb strings.Builder
+	for _, p := range b.pieces {
+		p.build(&sb)
+	}
+	return sb.String()
 }
 
 type piece struct {
@@ -358,40 +425,10 @@ func (p *piece) build(sb *strings.Builder) {
 	}
 }
 
-func (b *buffer) push(p piece) int {
-	b.pieces = append(b.pieces, p)
-	return len(b.pieces) - 1
-}
-
-func (b *buffer) String() string {
-	var sb strings.Builder
-	for _, p := range b.pieces {
-		p.build(&sb)
-	}
-	return sb.String()
-}
-
-// A node in the delimiter "stack" (which is actually doubly linked list).
-type delim struct {
-	typ    byte
-	bufIdx int
-	prev   *delim
-	next   *delim
-	// Only used when typ is '['
-	inactive bool
-	// Only used when typ is '_' or '*'.
-	n        int
-	canOpen  bool
-	canClose bool
-}
-
-func unlink(n *delim) {
-	n.next.prev = n.prev
-	n.prev.next = n.next
-}
-
 // A delimiter "stack" (actually a doubly linked list), with sentinels as bottom
 // and top, with the bottom being the head of the list.
+//
+// https://spec.commonmark.org/0.30/#delimiter-stack
 type delimStack struct {
 	bottom, top *delim
 }
@@ -410,12 +447,23 @@ func (s *delimStack) push(n *delim) {
 	s.top.prev = n
 }
 
-func b2i(b bool) int {
-	if b {
-		return 1
-	} else {
-		return 0
-	}
+// A node in the delimiter "stack".
+type delim struct {
+	typ    byte
+	bufIdx int
+	prev   *delim
+	next   *delim
+	// Only used when typ is '['
+	inactive bool
+	// Only used when typ is '_' or '*'.
+	n        int
+	canOpen  bool
+	canClose bool
+}
+
+func unlink(n *delim) {
+	n.next.prev = n.prev
+	n.prev.next = n.next
 }
 
 type linkTailParser struct {
@@ -560,31 +608,3 @@ func isASCIIPunct(b byte) bool { return strings.IndexByte(asciiPuncts, b) >= 0 }
 const metas = "![]*_`\\&<\n"
 
 func isMeta(b byte) bool { return strings.IndexByte(metas, b) >= 0 }
-
-func findBacktickRun(s, run string, i int) int {
-	for i < len(s) {
-		j := strings.Index(s[i:], run)
-		if j == -1 {
-			return -1
-		}
-		j += i
-		if j+len(run) == len(s) || s[j+len(run)] != '`' {
-			return j
-		}
-		for j < len(s) && s[j] == '`' {
-			j++
-		}
-		i = j
-	}
-	return -1
-}
-
-var lineEndingToSpace = strings.NewReplacer("\r\n", " ", "\r", " ", "\n", " ")
-
-func normalizeCodeSpanContent(s string) string {
-	s = lineEndingToSpace.Replace(s)
-	if len(s) > 1 && s[0] == ' ' && s[len(s)-1] == ' ' && strings.Trim(s, " ") != "" {
-		return s[1 : len(s)-1]
-	}
-	return s
-}
