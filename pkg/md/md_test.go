@@ -160,7 +160,6 @@ var (
 	linkRef           = regexp.MustCompile(`(^|\n) {0,3}\[([^\\\[\]]|\\[\\\[\]])+\]:`)
 	indentedCodeBlock = regexp.MustCompile("(^|\n)[ >]*(    )")
 	emptyListItem     = regexp.MustCompile(`(^|\n)([-+*]|[0-9]{1,9}[.)])(\n|$)`)
-	htmlBlock         = regexp.MustCompile(`(^|\n)(<a |<!--)`)
 )
 
 func TestRender(t *testing.T) {
@@ -185,9 +184,6 @@ func TestRender(t *testing.T) {
 			if emptyListItem.MatchString(tc.Markdown) {
 				t.Skipf("Empty list item not supported")
 			}
-			if htmlBlock.MatchString(tc.Markdown) {
-				t.Skipf("HTML block not supported")
-			}
 
 			got := Render(tc.Markdown, htmlSyntax)
 			want := loosifyLists(tc.HTML)
@@ -203,7 +199,6 @@ func unsupportedSection(section string) bool {
 	case "Tabs",
 		"Setext headings",
 		"Indented code blocks",
-		"HTML blocks",
 		"Link reference definitions":
 		return true
 	default:

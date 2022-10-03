@@ -39,7 +39,9 @@ type OutputSyntax struct {
 	StrongEmphasis TagPair
 	Link           func(dest, title string) TagPair
 	Image          func(dest, alt, title string) string
-	Escape         func(string) string
+
+	Escape      func(string) string
+	ConvertHTML func(string) string
 }
 
 // TagPair specifies a pair of "tags" to enclose a construct in the output.
@@ -68,9 +70,11 @@ type blockParser struct {
 var (
 	thematicBreakRegexp = regexp.MustCompile(
 		`^[ \t]*((?:-[ \t]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})$`)
+
 	// Capture group 1: heading opener
 	atxHeadingRegexp       = regexp.MustCompile(`^ *(#{1,6})(?:[ \t]|$)`)
 	atxHeadingCloserRegexp = regexp.MustCompile(`[ \t]#+[ \t]*$`)
+
 	// Capture groups:
 	// 1. Indent
 	// 2. Fence punctuations (backquote fence)
@@ -79,15 +83,43 @@ var (
 	// 5. Untrimmed info string (tilde fence)
 	codeFenceRegexp = regexp.MustCompile("(^ {0,3})(?:(`{3,})([^`]*)|(~{3,})(.*))$")
 	// Capture group 1: fence punctuations
-	closingCodeFenceRegexp = regexp.MustCompile("(?:^ {0,3})(`{3,}|~{3,})[ \t]*$")
+	codeFenceCloserRegexp = regexp.MustCompile("(?:^ {0,3})(`{3,}|~{3,})[ \t]*$")
+
+	html1Regexp       = regexp.MustCompile(`^ {0,3}<(?i:pre|script|style|textarea)`)
+	html1CloserRegexp = regexp.MustCompile(`</(?i:pre|script|style|textarea)`)
+	html2Regexp       = regexp.MustCompile(`^ {0,3}<!--`)
+	html2CloserRegexp = regexp.MustCompile(`-->`)
+	html3Regexp       = regexp.MustCompile(`^ {0,3}<\?`)
+	html3CloserRegexp = regexp.MustCompile(`\?>`)
+	html4Regexp       = regexp.MustCompile(`^ {0,3}<![a-zA-Z]`)
+	html4CloserRegexp = regexp.MustCompile(`>`)
+	html5Regexp       = regexp.MustCompile(`^ {0,3}<!\[CDATA\[`)
+	html5CloserRegexp = regexp.MustCompile(`\]\]>`)
+
+	html6Regexp = regexp.MustCompile(`^ {0,3}</?(?i:address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h1|h2|h3|h4|h5|h6|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|nav|noframes|ol|optgroup|option|p|param|section|source|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul)(?:[ \t>]|$|/>)`)
+	html7Regexp = regexp.MustCompile(
+		fmt.Sprintf(`^ {0,3}(?:%s|%s)[ \t]*$`, openTag, closingTag))
+)
+
+const (
+	openTag = `<` +
+		`[a-zA-Z][a-zA-Z0-9-]*` + // tag name
+		(`(?:` +
+			`[ \t\n]+` + // whitespace
+			`[a-zA-Z_:][a-zA-Z0-9_\.:-]*` + // attribute name
+			`(?:[ \t\n]*=[ \t\n]*(?:[^ \t\n"'=<>` + "`" + `]+|'[^']*'|"[^"]*"))?` + // attribute value specification
+			`)*`) + // zero or more attributes
+		`[ \t\n]*` + // whitespace
+		`/?>`
+	closingTag = `</[a-zA-Z][a-zA-Z0-9-]*[ \t\n]*>`
 )
 
 func (p *blockParser) render() {
 	for p.lines.more() {
 		line := p.lines.next()
 		line, matchedContainers := matchContinuationMarkers(line, p.containers)
-		line, newContainers := parseStartingMarkers(line,
-			matchedContainers != len(p.containers) || len(p.paragraph) == 0)
+		newParagraph := matchedContainers != len(p.containers) || len(p.paragraph) == 0
+		line, newContainers := parseStartingMarkers(line, newParagraph)
 		if len(newContainers) > 0 {
 			p.popParagraph(matchedContainers)
 			for _, c := range newContainers {
@@ -96,11 +128,11 @@ func (p *blockParser) render() {
 			matchedContainers = len(p.containers)
 		}
 
-	afterContainer:
 		if isBlankLine(line) {
 			for i := matchedContainers; i < len(p.containers); i++ {
 				if p.containers[i].typ == blockquote {
 					p.popParagraph(i)
+					p.popList()
 					continue
 				}
 			}
@@ -127,39 +159,31 @@ func (p *blockParser) render() {
 			if opener == "" {
 				opener, info = m[4], m[5]
 			}
-			tags := p.syntax.CodeBlock(strings.Trim(info, " \t"))
-			p.sb.WriteString(tags.Start)
-			for p.lines.more() {
-				line = p.lines.next()
-				line, matchedContainers = matchContinuationMarkers(line, p.containers)
-				if isBlankLine(line) {
-					for i := matchedContainers; i < len(p.containers); i++ {
-						if p.containers[i].typ == blockquote {
-							p.sb.WriteString(tags.End)
-							p.sb.WriteByte('\n')
-							p.popParagraph(i)
-							goto afterContainer
-						}
-					}
-				} else if matchedContainers < len(p.containers) {
-					p.sb.WriteString(tags.End)
-					p.sb.WriteByte('\n')
-					goto afterContainer
-				}
-				if m := closingCodeFenceRegexp.FindStringSubmatch(line); m != nil {
-					closer := m[1]
-					if closer[0] == opener[0] && len(closer) >= len(opener) {
-						break
-					}
-				}
-				for i := indent; i > 0 && line != "" && line[0] == ' '; i-- {
-					line = line[1:]
-				}
-				p.sb.WriteString(p.syntax.Escape(line))
-				p.sb.WriteByte('\n')
-			}
-			p.sb.WriteString(tags.End)
-			p.sb.WriteByte('\n')
+			p.parseFencedCodeBlock(indent, opener, info)
+		} else if html1Regexp.MatchString(line) {
+			p.popParagraph(matchedContainers)
+			p.popList()
+			p.parseHTMLBlock(line, html1CloserRegexp.MatchString)
+		} else if html2Regexp.MatchString(line) {
+			p.popParagraph(matchedContainers)
+			p.popList()
+			p.parseHTMLBlock(line, html2CloserRegexp.MatchString)
+		} else if html3Regexp.MatchString(line) {
+			p.popParagraph(matchedContainers)
+			p.popList()
+			p.parseHTMLBlock(line, html3CloserRegexp.MatchString)
+		} else if html4Regexp.MatchString(line) {
+			p.popParagraph(matchedContainers)
+			p.popList()
+			p.parseHTMLBlock(line, html4CloserRegexp.MatchString)
+		} else if html5Regexp.MatchString(line) {
+			p.popParagraph(matchedContainers)
+			p.popList()
+			p.parseHTMLBlock(line, html5CloserRegexp.MatchString)
+		} else if html6Regexp.MatchString(line) || (newParagraph && html7Regexp.MatchString(line)) {
+			p.popParagraph(matchedContainers)
+			p.popList()
+			p.parseBlankLineTerminatedHTMLBlock(line)
 		} else {
 			if len(p.paragraph) == 0 {
 				p.popParagraph(matchedContainers)
@@ -233,6 +257,94 @@ func parseStartingMarkers(line string, newParagraph bool) (string, []container) 
 
 func isBlankLine(line string) bool {
 	return strings.Trim(line, " \t") == ""
+}
+
+func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
+	tags := p.syntax.CodeBlock(strings.Trim(info, " \t"))
+	p.sb.WriteString(tags.Start)
+	for p.lines.more() {
+		line := p.lines.next()
+		line, matchedContainers := matchContinuationMarkers(line, p.containers)
+		if isBlankLine(line) {
+			for i := matchedContainers; i < len(p.containers); i++ {
+				if p.containers[i].typ == blockquote {
+					p.sb.WriteString(tags.End)
+					p.sb.WriteByte('\n')
+					p.popParagraph(i)
+					return
+				}
+			}
+		} else if matchedContainers < len(p.containers) {
+			p.sb.WriteString(tags.End)
+			p.sb.WriteByte('\n')
+			p.lines.backup()
+			return
+		}
+		if m := codeFenceCloserRegexp.FindStringSubmatch(line); m != nil {
+			closer := m[1]
+			if closer[0] == opener[0] && len(closer) >= len(opener) {
+				break
+			}
+		}
+		for i := indent; i > 0 && line != "" && line[0] == ' '; i-- {
+			line = line[1:]
+		}
+		p.sb.WriteString(p.syntax.Escape(line))
+		p.sb.WriteByte('\n')
+	}
+	p.sb.WriteString(tags.End)
+	p.sb.WriteByte('\n')
+}
+
+func (p *blockParser) parseHTMLBlock(line string, closer func(string) bool) {
+	p.sb.WriteString(line)
+	p.sb.WriteByte('\n')
+	if closer(line) {
+		return
+	}
+	for p.lines.more() {
+		line := p.lines.next()
+		line, matchedContainers := matchContinuationMarkers(line, p.containers)
+		if isBlankLine(line) {
+			for i := matchedContainers; i < len(p.containers); i++ {
+				if p.containers[i].typ == blockquote {
+					p.popParagraph(i)
+					return
+				}
+			}
+		} else if matchedContainers < len(p.containers) {
+			p.lines.backup()
+			return
+		}
+		p.sb.WriteString(line)
+		p.sb.WriteByte('\n')
+		if closer(line) {
+			return
+		}
+	}
+}
+
+func (p *blockParser) parseBlankLineTerminatedHTMLBlock(line string) {
+	p.sb.WriteString(line)
+	p.sb.WriteByte('\n')
+	for p.lines.more() {
+		line := p.lines.next()
+		line, matchedContainers := matchContinuationMarkers(line, p.containers)
+		if isBlankLine(line) {
+			for i := matchedContainers; i < len(p.containers); i++ {
+				if p.containers[i].typ == blockquote {
+					p.popParagraph(i)
+					return
+				}
+			}
+			return
+		} else if matchedContainers < len(p.containers) {
+			p.lines.backup()
+			return
+		}
+		p.sb.WriteString(line)
+		p.sb.WriteByte('\n')
+	}
 }
 
 func (p *blockParser) appendContainer(c container) {
@@ -314,6 +426,13 @@ func (s *lineSplitter) next() string {
 	}
 	s.pos += delta + 1
 	return s.text[begin : s.pos-1]
+}
+
+func (s *lineSplitter) backup() {
+	if s.pos == 0 {
+		return
+	}
+	s.pos = 1 + strings.LastIndexByte(s.text[:s.pos-1], '\n')
 }
 
 type container struct {
@@ -464,18 +583,9 @@ var isASCIIPunct = map[byte]bool{
 }
 
 var (
-	entityRegexp  = regexp.MustCompile(`^&(?:[a-zA-Z0-9]+|#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6});`)
-	openTagRegexp = regexp.MustCompile(fmt.Sprintf(`^<`+
-		`[a-zA-Z][a-zA-Z0-9-]*`+ // tag name
-		(`(?:`+
-			`[ \t\n]+`+ // whitespace
-			`[a-zA-Z_:][a-zA-Z0-9_\.:-]*`+ // attribute name
-			`(?:[ \t\n]*=[ \t\n]*(?:[^ \t\n"'=<>%s]+|'[^']*'|"[^"]*"))?`+ // attribute value specification
-			`)*`)+ // zero or more attributes
-		`[ \t\n]*`+ // whitespace
-		`/?>`,
-		"`"))
-	closingTagRegexp = regexp.MustCompile(`^</[a-zA-Z][a-zA-Z0-9-]*[ \t\n]*>`)
+	entityRegexp     = regexp.MustCompile(`^&(?:[a-zA-Z0-9]+|#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6});`)
+	openTagRegexp    = regexp.MustCompile(`^` + openTag)
+	closingTagRegexp = regexp.MustCompile(`^` + closingTag)
 	autolinkRegexp   = regexp.MustCompile(`^<` +
 		`[a-zA-Z][a-zA-Z0-9+.-]{1,31}` + // scheme
 		`:[^\x00-\x19 <>]*` +
