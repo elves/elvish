@@ -212,8 +212,6 @@ func unsupportedSection(section string) bool {
 
 func unsupportedExample(example int) string {
 	switch example {
-	case 24, 34:
-		return "backslash and entity in code fence info string not supported"
 	case 59, 141, 300:
 		return "setext heading not supported"
 	case 318, 320, 321, 323:

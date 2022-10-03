@@ -277,7 +277,7 @@ func isBlankLine(line string) bool {
 }
 
 func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
-	tags := p.syntax.CodeBlock(strings.Trim(info, " \t"))
+	tags := p.syntax.CodeBlock(processCodeFenceInfo(strings.Trim(info, " \t")))
 	p.sb.WriteString(tags.Start)
 	for p.lines.more() {
 		line := p.lines.next()
@@ -311,6 +311,29 @@ func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
 	}
 	p.sb.WriteString(tags.End)
 	p.sb.WriteByte('\n')
+}
+
+// Code fence info strings are mostly verbatim, but support backslash and
+// entities. This mirrors part of (*inlineParser).render.
+func processCodeFenceInfo(text string) string {
+	pos := 0
+	var sb strings.Builder
+	for pos < len(text) {
+		b := text[pos]
+		if b == '&' {
+			if entity := entityRegexp.FindString(text[pos:]); entity != "" {
+				sb.WriteString(html.UnescapeString(entity))
+				pos += len(entity)
+				continue
+			}
+		} else if b == '\\' && pos+1 < len(text) && isASCIIPunct(text[pos+1]) {
+			b = text[pos+1]
+			pos++
+		}
+		sb.WriteByte(b)
+		pos++
+	}
+	return sb.String()
 }
 
 func (p *blockParser) parseHTMLBlock(line string, closer func(string) bool) {
@@ -591,15 +614,6 @@ type inlineParser struct {
 	buf    buffer
 }
 
-var isASCIIPunct = map[byte]bool{
-	'!': true, '"': true, '#': true, '$': true, '%': true, '&': true,
-	'\'': true, '(': true, ')': true, '*': true, '+': true, ',': true,
-	'-': true, '.': true, '/': true, ':': true, ';': true, '<': true,
-	'=': true, '>': true, '?': true, '@': true, '[': true, '\\': true,
-	']': true, '^': true, '_': true, '`': true, '{': true, '|': true,
-	'}': true, '~': true,
-}
-
 var (
 	entityRegexp     = regexp.MustCompile(`^&(?:[a-zA-Z0-9]+|#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6});`)
 	openTagRegexp    = regexp.MustCompile(`^` + openTag)
@@ -820,7 +834,7 @@ func (p *inlineParser) render() {
 				parseText()
 			}
 		case '\\':
-			if p.pos < len(p.text) && isASCIIPunct[p.text[p.pos]] {
+			if p.pos < len(p.text) && isASCIIPunct(p.text[p.pos]) {
 				begin++
 				p.pos++
 			}
@@ -1044,7 +1058,7 @@ func isWhitespace(b byte) bool {
 }
 
 func (p *linkTailParser) parseBackslash() byte {
-	if p.pos+1 < len(p.text) && isASCIIPunct[p.text[p.pos+1]] {
+	if p.pos+1 < len(p.text) && isASCIIPunct(p.text[p.pos+1]) {
 		b := p.text[p.pos+1]
 		p.pos += 2
 		return b
@@ -1053,22 +1067,17 @@ func (p *linkTailParser) parseBackslash() byte {
 	return '\\'
 }
 
-func isASCIILetter(b byte) bool {
-	return ('a' <= b && b <= 'z') || ('A' <= b && b <= 'Z')
-}
+func isASCIILetter(b byte) bool { return ('a' <= b && b <= 'z') || ('A' <= b && b <= 'Z') }
 
-func isASCIIControl(b byte) bool {
-	return b < 0x20
-}
+func isASCIIControl(b byte) bool { return b < 0x20 }
 
-func isMeta(b byte) bool {
-	switch b {
-	case '!', '[', ']', '*', '_', '`', '\\', '&', '<', '\n':
-		return true
-	default:
-		return false
-	}
-}
+const asciiPuncts = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+
+func isASCIIPunct(b byte) bool { return strings.IndexByte(asciiPuncts, b) >= 0 }
+
+const metas = "![]*_`\\&<\n"
+
+func isMeta(b byte) bool { return strings.IndexByte(metas, b) >= 0 }
 
 func findBacktickRun(s, run string, i int) int {
 	for i < len(s) {
