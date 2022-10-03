@@ -112,6 +112,8 @@ const (
 		`[ \t\n]*` + // whitespace
 		`/?>`
 	closingTag = `</[a-zA-Z][a-zA-Z0-9-]*[ \t\n]*>`
+
+	indentedCodePrefix = "    "
 )
 
 func (p *blockParser) render() {
@@ -166,6 +168,10 @@ func (p *blockParser) render() {
 				opener, info = m[4], m[5]
 			}
 			p.parseFencedCodeBlock(indent, opener, info)
+		} else if len(p.paragraph) == 0 && strings.HasPrefix(line, indentedCodePrefix) {
+			p.popParagraph(matchedContainers)
+			p.popList()
+			p.parseIndentedCodeBlock(line)
 		} else if html1Regexp.MatchString(line) {
 			p.popParagraph(matchedContainers)
 			p.popList()
@@ -216,16 +222,18 @@ func matchContinuationMarkers(line string, containers []container) (string, int)
 }
 
 var (
+	blockquoteMarkerRegexp = regexp.MustCompile(`^ {0,3}> ?`)
+
 	containerStartingMarkerRegexp = regexp.MustCompile(
 		// Capture groups:
-		// 1. blockquote marker
-		// 2. bullet item punctuation
-		// 3. ordered item start index
-		// 4. ordered item punctuation
-		`^ {0,3}(?:(> ?)|([-+*]) {1,4}|([0-9]{1,9})([.)]) {1,4})`)
+		// 1. bullet item punctuation
+		// 2. ordered item start index
+		// 3. ordered item punctuation
+		// 4. trailing spaces
+		`^ {0,3}(?:([-+*])|([0-9]{1,9})([.)]))( +)`)
 	itemStartingMarkerBlankLineRegexp = regexp.MustCompile(
-		// Capture groups are the same, with group 1 always empty.
-		`^ {0,3}(?:()([-+*])|([0-9]{1,9})([.)]))[ \t]*$`)
+		// Capture groups are the same, with group 4 always empty.
+		`^ {0,3}(?:([-+*])|([0-9]{1,9})([.)]))[ \t]*()$`)
 )
 
 // Parses starting markers of container blocks. Returns the line after removing
@@ -234,6 +242,12 @@ func parseStartingMarkers(line string, newParagraph bool) (string, []container) 
 	var containers []container
 	// Don't parse thematic breaks like "- - - " as three bullets.
 	for !thematicBreakRegexp.MatchString(line) {
+		if bqMarker := blockquoteMarkerRegexp.FindString(line); bqMarker != "" {
+			line = line[len(bqMarker):]
+			containers = append(containers, container{typ: blockquote})
+			continue
+		}
+
 		m := containerStartingMarkerRegexp.FindStringSubmatch(line)
 		blankFirst := false
 		if m == nil && newParagraph {
@@ -243,29 +257,28 @@ func parseStartingMarkers(line string, newParagraph bool) (string, []container) 
 		if m == nil {
 			break
 		}
-		marker, bq, bulletPunct, orderedStart, orderedPunct := m[0], m[1], m[2], m[3], m[4]
-		var c container
-		if bq != "" {
-			c.typ = blockquote
+		marker, bulletPunct, orderedStart, orderedPunct, spaces := m[0], m[1], m[2], m[3], m[4]
+		if len(spaces) >= 5 {
+			marker = marker[:len(marker)-len(spaces)+1]
+		}
+
+		indent := len(marker)
+		if strings.Trim(line[len(marker):], " \t") == "" {
+			indent = len(strings.TrimRight(marker, " \t")) + 1
+		}
+		c := container{indent: strings.Repeat(" ", indent), blankFirst: blankFirst}
+		if bulletPunct != "" {
+			c.typ = bulletItem
+			c.punct = bulletPunct[0]
 		} else {
-			indent := len(marker)
-			if strings.Trim(line[len(marker):], " \t") == "" {
-				indent = len(strings.TrimRight(marker, " \t")) + 1
-			}
-			c.indent = strings.Repeat(" ", indent)
-			c.blankFirst = blankFirst
-			if bulletPunct != "" {
-				c.typ = bulletItem
-				c.punct = bulletPunct[0]
-			} else {
-				c.typ = orderedItem
-				c.punct = orderedPunct[0]
-				c.start, _ = strconv.Atoi(orderedStart)
-				if c.start != 1 && !newParagraph {
-					break
-				}
+			c.typ = orderedItem
+			c.punct = orderedPunct[0]
+			c.start, _ = strconv.Atoi(orderedStart)
+			if c.start != 1 && !newParagraph {
+				break
 			}
 		}
+
 		line = line[len(marker):]
 		containers = append(containers, c)
 	}
@@ -334,6 +347,47 @@ func processCodeFenceInfo(text string) string {
 		pos++
 	}
 	return sb.String()
+}
+
+func (p *blockParser) parseIndentedCodeBlock(line string) {
+	tags := p.syntax.CodeBlock("")
+	p.sb.WriteString(tags.Start)
+	p.sb.WriteString(p.syntax.Escape(strings.TrimPrefix(line, indentedCodePrefix)))
+	p.sb.WriteByte('\n')
+	var savedBlankLines []string
+	for p.lines.more() {
+		line := p.lines.next()
+		line, matchedContainers := matchContinuationMarkers(line, p.containers)
+		if isBlankLine(line) {
+			for i := matchedContainers; i < len(p.containers); i++ {
+				if p.containers[i].typ == blockquote {
+					p.sb.WriteString(tags.End)
+					p.sb.WriteByte('\n')
+					p.popParagraph(i)
+					return
+				}
+			}
+			if strings.HasPrefix(line, indentedCodePrefix) {
+				line = strings.TrimPrefix(line, indentedCodePrefix)
+			} else {
+				line = ""
+			}
+			savedBlankLines = append(savedBlankLines, line)
+			continue
+		} else if matchedContainers < len(p.containers) || !strings.HasPrefix(line, indentedCodePrefix) {
+			p.lines.backup()
+			break
+		}
+		for _, blankLine := range savedBlankLines {
+			p.sb.WriteString(blankLine)
+			p.sb.WriteByte('\n')
+		}
+		savedBlankLines = savedBlankLines[:0]
+		p.sb.WriteString(p.syntax.Escape(strings.TrimPrefix(line, indentedCodePrefix)))
+		p.sb.WriteByte('\n')
+	}
+	p.sb.WriteString(tags.End)
+	p.sb.WriteByte('\n')
 }
 
 func (p *blockParser) parseHTMLBlock(line string, closer func(string) bool) {
@@ -492,8 +546,6 @@ const (
 	orderedList
 	orderedItem
 )
-
-var blockquoteMarkerRegexp = regexp.MustCompile(`^ {0,3}> ?`)
 
 func (c container) findContinuationMarker(line string) (int, bool) {
 	switch c.typ {
