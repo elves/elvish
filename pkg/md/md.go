@@ -69,10 +69,10 @@ type blockParser struct {
 
 var (
 	thematicBreakRegexp = regexp.MustCompile(
-		`^[ \t]*((?:-[ \t]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})$`)
+		`^ {0,3}((?:-[ \t]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})$`)
 
 	// Capture group 1: heading opener
-	atxHeadingRegexp       = regexp.MustCompile(`^ *(#{1,6})(?:[ \t]|$)`)
+	atxHeadingRegexp       = regexp.MustCompile(`^ {0,3}(#{1,6})(?:[ \t]|$)`)
 	atxHeadingCloserRegexp = regexp.MustCompile(`[ \t]#+[ \t]*$`)
 
 	// Capture groups:
