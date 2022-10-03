@@ -81,6 +81,8 @@ func TestVar(t *testing.T) {
 				ValidLow: 2, ValidHigh: -1, Actual: 1},
 			"var x y @z = 1"),
 
+		// Variable name must not be empty
+		That("var ''").DoesNotCompile(),
 		// Variable name that must be quoted after $ must be quoted
 		That("var a/b").DoesNotCompile(),
 		// Multiple @ not allowed

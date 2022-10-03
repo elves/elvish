@@ -66,6 +66,9 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvalues
 	}
 	varUse := n.Head.Value
 	sigil, qname := SplitSigil(varUse)
+	if qname == "" {
+		cp.errorpf(n, "variable name must not be empty")
+	}
 
 	var ref *varRef
 	if f&setLValue != 0 {
