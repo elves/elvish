@@ -75,6 +75,21 @@ var additionalCases = []testCase{
 <p>a</p>
 `,
 	},
+	{
+		Name:     "Link supplemental/Backslash and entity in destination",
+		Markdown: `[a](\&gt;)` + "\n",
+		HTML:     `<p><a href="&amp;gt;">a</a></p>` + "\n",
+	},
+	{
+		Name:     "Link supplemental/Backslash and entity in title",
+		Markdown: `[a](b (\&gt;))` + "\n",
+		HTML:     `<p><a href="b" title="&amp;gt;">a</a></p>` + "\n",
+	},
+	{
+		Name:     "Autolink supplemental/Entity",
+		Markdown: `<http://&gt;>` + "\n",
+		HTML:     `<p><a href="http://%3E">http://&gt;</a></p>` + "\n",
+	},
 }
 
 func init() {
@@ -87,7 +102,7 @@ var (
 		"&", "&amp;", `"`, "&quot;", "<", "&lt;", ">", "&gt;").Replace
 	escapeDest = strings.NewReplacer(
 		`"`, "%22", `\`, "%5C", " ", "%20", "`", "%60",
-		"[", "%5B", "]", "%5D",
+		"[", "%5B", "]", "%5D", "<", "%3C", ">", "%3E",
 		"ö", "%C3%B6",
 		"ä", "%C3%A4", " ", "%C2%A0").Replace
 )
@@ -124,14 +139,14 @@ var htmlSyntax = OutputSyntax{
 	Link: func(dest, title string) TagPair {
 		attrs := []string{"href", escapeDest(dest)}
 		if title != "" {
-			attrs = append(attrs, "title", escapeHTML(title))
+			attrs = append(attrs, "title", title)
 		}
 		return htmlTagPair("a", attrs...)
 	},
 	Image: func(dest, alt, title string) string {
-		attrs := []string{"src", escapeDest(dest), "alt", escapeHTML(alt)}
+		attrs := []string{"src", escapeDest(dest), "alt", alt}
 		if title != "" {
-			attrs = append(attrs, "title", escapeHTML(title))
+			attrs = append(attrs, "title", title)
 		}
 		return htmlSelfCloseTag("img", attrs...)
 	},
@@ -151,7 +166,7 @@ func htmlTagPair(name string, attrPairs ...string) TagPair {
 func concatAttrPairs(attrPairs []string) string {
 	var sb strings.Builder
 	for i := 0; i+1 < len(attrPairs); i += 2 {
-		fmt.Fprintf(&sb, ` %s="%s"`, attrPairs[i], attrPairs[i+1])
+		fmt.Fprintf(&sb, ` %s="%s"`, attrPairs[i], escapeHTML(attrPairs[i+1]))
 	}
 	return sb.String()
 }

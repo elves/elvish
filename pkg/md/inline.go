@@ -234,7 +234,9 @@ func (p *inlineParser) render() {
 					}
 					if autolink != "" {
 						p.pos = begin + len(autolink)
-						text := p.syntax.Escape(autolink[1 : len(autolink)-1])
+						// Autolinks support entities but not backslashes, so
+						// html.UnescapeString gives us the desired behavior.
+						text := html.UnescapeString(autolink[1 : len(autolink)-1])
 						dest := text
 						if email {
 							dest = "mailto:" + dest
@@ -242,7 +244,7 @@ func (p *inlineParser) render() {
 						tags := p.syntax.Link(dest, "")
 						p.buf.push(piece{
 							prependMarkup: []string{tags.Start},
-							text:          text,
+							text:          p.syntax.Escape(text),
 							appendMarkup:  []string{tags.End},
 						})
 						continue
@@ -528,6 +530,8 @@ func (p *linkTailParser) parse() (n int, dest, title string) {
 				p.pos++
 			case '\\':
 				destBuilder.WriteByte(p.parseBackslash())
+			case '&':
+				destBuilder.WriteString(p.parseEntity())
 			default:
 				destBuilder.WriteByte(p.text[p.pos])
 				p.pos++
@@ -557,6 +561,8 @@ func (p *linkTailParser) parse() (n int, dest, title string) {
 				return -1, "", ""
 			case '\\':
 				titleBuilder.WriteByte(p.parseBackslash())
+			case '&':
+				titleBuilder.WriteString(p.parseEntity())
 			default:
 				titleBuilder.WriteByte(p.text[p.pos])
 				p.pos++
@@ -569,7 +575,7 @@ func (p *linkTailParser) parse() (n int, dest, title string) {
 	if p.pos == len(p.text) || p.text[p.pos] != ')' {
 		return -1, "", ""
 	}
-	return p.pos + 1, html.UnescapeString(destBuilder.String()), html.UnescapeString(titleBuilder.String())
+	return p.pos + 1, destBuilder.String(), titleBuilder.String()
 }
 
 func (p *linkTailParser) skipWhitespaces() {
@@ -595,6 +601,15 @@ func (p *linkTailParser) parseBackslash() byte {
 	}
 	p.pos++
 	return '\\'
+}
+
+func (p *linkTailParser) parseEntity() string {
+	if entity := entityRegexp.FindString(p.text[p.pos:]); entity != "" {
+		p.pos += len(entity)
+		return html.UnescapeString(entity)
+	}
+	p.pos++
+	return p.text[p.pos-1 : p.pos]
 }
 
 func isASCIILetter(b byte) bool { return ('a' <= b && b <= 'z') || ('A' <= b && b <= 'Z') }
