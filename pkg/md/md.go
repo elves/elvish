@@ -138,11 +138,9 @@ func (p *blockParser) render() {
 		if isBlankLine(line) {
 			// Blank lines terminate blockquote if the continuation marker is
 			// absent.
-			for i := matchedContainers; i < len(p.tree.containers); i++ {
-				if p.tree.containers[i].typ == blockquote {
-					p.tree.closeBlocks(i, p.codec)
-					break
-				}
+			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
+				p.tree.closeBlocks(i, p.codec)
+				continue
 			}
 			if newItem && p.lines.more() {
 				// A list item can start with at most one blank line; the second
@@ -221,17 +219,14 @@ func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
 		line := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
-			for i := matchedContainers; i < len(p.tree.containers); i++ {
-				if p.tree.containers[i].typ == blockquote {
-					do(p.codec, OpCodeBlockEnd)
-					p.tree.closeBlocks(i, p.codec)
-					return
-				}
+			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
+				do(p.codec, OpCodeBlockEnd)
+				p.tree.closeBlocks(i, p.codec)
+				return
 			}
 		} else if matchedContainers < len(p.tree.containers) {
-			do(p.codec, OpCodeBlockEnd)
 			p.lines.backup()
-			return
+			break
 		}
 		if m := codeFenceCloserRegexp.FindStringSubmatch(line); m != nil {
 			closer := m[1]
@@ -278,12 +273,10 @@ func (p *blockParser) parseIndentedCodeBlock(line string) {
 		line := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
-			for i := matchedContainers; i < len(p.tree.containers); i++ {
-				if p.tree.containers[i].typ == blockquote {
-					do(p.codec, OpCodeBlockEnd)
-					p.tree.closeBlocks(i, p.codec)
-					return
-				}
+			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
+				do(p.codec, OpCodeBlockEnd)
+				p.tree.closeBlocks(i, p.codec)
+				return
 			}
 			if strings.HasPrefix(line, indentedCodePrefix) {
 				line = strings.TrimPrefix(line, indentedCodePrefix)
@@ -314,11 +307,9 @@ func (p *blockParser) parseHTMLBlock(line string, closer func(string) bool) {
 		line := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
-			for i := matchedContainers; i < len(p.tree.containers); i++ {
-				if p.tree.containers[i].typ == blockquote {
-					p.tree.closeBlocks(i, p.codec)
-					return
-				}
+			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
+				p.tree.closeBlocks(i, p.codec)
+				return
 			}
 		} else if matchedContainers < len(p.tree.containers) {
 			p.lines.backup()
@@ -337,11 +328,8 @@ func (p *blockParser) parseBlankLineTerminatedHTMLBlock(line string) {
 		line := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
-			for i := matchedContainers; i < len(p.tree.containers); i++ {
-				if p.tree.containers[i].typ == blockquote {
-					p.tree.closeBlocks(i, p.codec)
-					return
-				}
+			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
+				p.tree.closeBlocks(i, p.codec)
 			}
 			return
 		} else if matchedContainers < len(p.tree.containers) {
@@ -455,6 +443,22 @@ func (t *blockTree) matchContinuationMarkers(line string) (string, int) {
 		line = line[markerLen:]
 	}
 	return line, len(t.containers)
+}
+
+// Finds the first blockquote container after skipping matched containers.
+// Returns len(t.containers), false if not found.
+//
+// This is used for handling blank lines. Blank lines do not close list item
+// blocks (except when a blank line follows a list item starting with a blank
+// item), but they do close blockquote blocks if the continuation marker is
+// missing.
+func (t *blockTree) unmatchedBlockquote(matched int) (int, bool) {
+	for i := matched; i < len(t.containers); i++ {
+		if t.containers[i].typ == blockquote {
+			return i, true
+		}
+	}
+	return len(t.containers), false
 }
 
 var (
