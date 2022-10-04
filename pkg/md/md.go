@@ -3,6 +3,8 @@
 // This package implements most of the CommonMark spec, with the following
 // omissions:
 //
+//   - \r and \r\n are not supported as line endings; use \n instead.
+//
 //   - Tabs are not supported for defining block structures; use spaces instead.
 //     Tabs in other context are preserved.
 //
@@ -12,10 +14,10 @@
 //
 //   - Lists are always considered loose.
 //
-// All other features are supported, with CommonMark spec tests passing. The
-// spec tests are taken from the HEAD of the CommonMark spec in
-// https://github.com/commonmark/commonmark-spec, which may differ slightly from
-// the latest released version.
+// All other features are supported, with CommonMark spec tests passing; see
+// test file for which tests are skipped. The spec tests are taken from the HEAD
+// of the CommonMark spec in https://github.com/commonmark/commonmark-spec,
+// which may differ slightly from the latest released version.
 //
 // This package is not used anywhere in Elvish right now. It is intended to be
 // used for rendering the elvdoc of builtin modules inside terminals.
