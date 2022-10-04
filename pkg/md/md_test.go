@@ -30,65 +30,75 @@ var testCases []testCase
 var supplementalCases = []testCase{
 	{
 		Name: "Blockquote supplemental/Increasing level",
-		Markdown: `> a
->> b
-`,
-		HTML: `<blockquote>
-<p>a</p>
-<blockquote>
-<p>b</p>
-</blockquote>
-</blockquote>
-`,
+		Markdown: dedent(`
+			> a
+			>> b
+			`),
+		HTML: dedent(`
+			<blockquote>
+			<p>a</p>
+			<blockquote>
+			<p>b</p>
+			</blockquote>
+			</blockquote>
+			`),
 	},
 	{
 		Name: "Blockquote supplemental/Reducing level",
-		Markdown: `>> a
->
-> b
-`,
-		HTML: `<blockquote>
-<blockquote>
-<p>a</p>
-</blockquote>
-<p>b</p>
-</blockquote>
-`,
+		Markdown: dedent(`
+			>> a
+			>
+			> b
+			`),
+		HTML: dedent(`
+			<blockquote>
+			<blockquote>
+			<p>a</p>
+			</blockquote>
+			<p>b</p>
+			</blockquote>
+			`),
 	},
 	{
 		Name:     "Code fence supplemental/Empty line in list item",
 		Markdown: "- ```\n  a\n\n  ```\n",
-		HTML: `<ul>
-<li>
-<pre><code>a
+		HTML: dedent(`
+			<ul>
+			<li>
+			<pre><code>a
 
-</code></pre>
-</li>
-</ul>
-`,
+			</code></pre>
+			</li>
+			</ul>
+			`),
 	},
 	{
-		Name:     "List items supplemental/Two leading empty lines with spaces",
-		Markdown: "- \n \na",
-		HTML: `<ul>
-<li></li>
-</ul>
-<p>a</p>
-`,
+		Name: "List items supplemental/Two leading empty lines with spaces",
+		Markdown: dedent(`
+			- 
+			  
+			a
+			`),
+		HTML: dedent(`
+			<ul>
+			<li></li>
+			</ul>
+			<p>a</p>
+			`),
 	},
 	{
 		Name:     "Link supplemental/Backslash and entity in destination",
-		Markdown: `[a](\&gt;)` + "\n",
+		Markdown: `[a](\&gt;)`,
 		HTML:     `<p><a href="&amp;gt;">a</a></p>` + "\n",
 	},
 	{
 		Name:     "Link supplemental/Backslash and entity in title",
-		Markdown: `[a](b (\&gt;))` + "\n",
+		Markdown: `[a](b (\&gt;))`,
 		HTML:     `<p><a href="b" title="&amp;gt;">a</a></p>` + "\n",
 	},
 	{
 		Name:     "Autolink supplemental/Entity",
-		Markdown: `<http://&gt;>` + "\n",
+		Markdown: `<http://&gt;>`,
 		HTML:     `<p><a href="http://%3E">http://&gt;</a></p>` + "\n",
 	},
 }
@@ -225,4 +235,17 @@ func loosifyLists(html string) string {
 	return strings.ReplaceAll(
 		looseListItem.ReplaceAllString(html, "<li>\n<p>$1</p>\n</li>"),
 		"<li></li>", "<li>\n</li>")
+}
+
+func dedent(text string) string {
+	lines := strings.Split(strings.TrimPrefix(text, "\n"), "\n")
+	line0 := lines[0]
+	indent := line0[:len(line0)-len(strings.TrimLeft(lines[0], " \t"))]
+	for i, line := range lines {
+		if !strings.HasPrefix(line, indent) && line != "" {
+			panic(fmt.Sprintf("line %d is not empty but doesn't start with %q", i, indent))
+		}
+		lines[i] = strings.TrimPrefix(line, indent)
+	}
+	return strings.Join(lines, "\n")
 }
