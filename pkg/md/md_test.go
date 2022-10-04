@@ -31,7 +31,20 @@ var testCases []testCase
 
 var supplementalCases = []testCase{
 	{
-		Name: "Blockquote supplemental/Increasing level",
+		Name:     "Fenced code blocks supplemental/Empty line in list item",
+		Markdown: "- ```\n  a\n\n  ```\n",
+		HTML: dedent(`
+			<ul>
+			<li>
+			<pre><code>a
+
+			</code></pre>
+			</li>
+			</ul>
+			`),
+	},
+	{
+		Name: "Blockquotes supplemental/Increasing level",
 		Markdown: dedent(`
 			> a
 			>> b
@@ -46,7 +59,7 @@ var supplementalCases = []testCase{
 			`),
 	},
 	{
-		Name: "Blockquote supplemental/Reducing level",
+		Name: "Blockquotes supplemental/Reducing level",
 		Markdown: dedent(`
 			>> a
 			>
@@ -59,19 +72,6 @@ var supplementalCases = []testCase{
 			</blockquote>
 			<p>b</p>
 			</blockquote>
-			`),
-	},
-	{
-		Name:     "Code fence supplemental/Empty line in list item",
-		Markdown: "- ```\n  a\n\n  ```\n",
-		HTML: dedent(`
-			<ul>
-			<li>
-			<pre><code>a
-
-			</code></pre>
-			</li>
-			</ul>
 			`),
 	},
 	{
@@ -89,17 +89,17 @@ var supplementalCases = []testCase{
 			`),
 	},
 	{
-		Name:     "Link supplemental/Backslash and entity in destination",
+		Name:     "Links supplemental/Backslash and entity in destination",
 		Markdown: `[a](\&gt;)`,
 		HTML:     `<p><a href="&amp;gt;">a</a></p>` + "\n",
 	},
 	{
-		Name:     "Link supplemental/Backslash and entity in title",
+		Name:     "Links supplemental/Backslash and entity in title",
 		Markdown: `[a](b (\&gt;))`,
 		HTML:     `<p><a href="b" title="&amp;gt;">a</a></p>` + "\n",
 	},
 	{
-		Name:     "Autolink supplemental/Entity",
+		Name:     "Autolinks supplemental/Entity",
 		Markdown: `<http://&gt;>`,
 		HTML:     `<p><a href="http://%3E">http://&gt;</a></p>` + "\n",
 	},
