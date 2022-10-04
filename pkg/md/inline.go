@@ -67,6 +67,8 @@ func (p *inlineParser) render() {
 		}
 
 		switch b {
+		// The 3 branches below implement the first part of
+		// https://spec.commonmark.org/0.30/#an-algorithm-for-parsing-nested-emphasis-and-links.
 		case '[':
 			bufIdx := p.buf.push(textPiece("["))
 			p.delims.push(&delim{typ: '[', bufIdx: bufIdx})
@@ -78,7 +80,30 @@ func (p *inlineParser) render() {
 			} else {
 				parseText()
 			}
+		case '*', '_':
+			p.consumeRun(b)
+			next, lNext := utf8.DecodeRuneInString(p.text[p.pos:])
+			prev, lPrev := utf8.DecodeLastRuneInString(p.text[:begin])
+			// Left-flanking, right-flanking, can-open and can-close are defined
+			// in https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis
+			leftFlanking := lNext > 0 && !unicode.IsSpace(next) &&
+				(!unicode.IsPunct(next) ||
+					(lPrev == 0 || unicode.IsSpace(prev) || unicode.IsPunct(prev)))
+			rightFlanking := lPrev > 0 && !unicode.IsSpace(prev) &&
+				(!unicode.IsPunct(prev) ||
+					(lNext == 0 || unicode.IsSpace(next) || unicode.IsPunct(next)))
+			canOpen := leftFlanking
+			canClose := rightFlanking
+			if b == '_' {
+				canOpen = leftFlanking && (!rightFlanking || (lPrev > 0 && unicode.IsPunct(prev)))
+				canClose = rightFlanking && (!leftFlanking || (lNext > 0 && unicode.IsPunct(next)))
+			}
+			bufIdx := p.buf.push(textPiece(p.text[begin:p.pos]))
+			p.delims.push(
+				&delim{typ: b, bufIdx: bufIdx,
+					n: p.pos - begin, canOpen: canOpen, canClose: canClose})
 		case ']':
+			// https://spec.commonmark.org/0.30/#look-for-link-or-image.
 			var opener *delim
 			for d := p.delims.top.prev; d != p.delims.bottom; d = d.prev {
 				if d.typ == '[' || d.typ == '!' {
@@ -121,37 +146,11 @@ func (p *inlineParser) render() {
 				p.buf.pieces = p.buf.pieces[:opener.bufIdx]
 				alt := altBuilder.String()
 				p.buf.push(piece{
-					alt:  alt,
 					main: Op{Type: OpImage, Dest: dest, Alt: alt, Text: title}})
 			}
-		case '*', '_':
-			// Consume the entire run of * or _.
-			for p.pos < len(p.text) && p.text[p.pos] == b {
-				p.pos++
-			}
-			next, lNext := utf8.DecodeRuneInString(p.text[p.pos:])
-			prev, lPrev := utf8.DecodeLastRuneInString(p.text[:begin])
-			leftFlanking := lNext > 0 && !unicode.IsSpace(next) &&
-				(!unicode.IsPunct(next) ||
-					(lPrev == 0 || unicode.IsSpace(prev) || unicode.IsPunct(prev)))
-			rightFlanking := lPrev > 0 && !unicode.IsSpace(prev) &&
-				(!unicode.IsPunct(prev) ||
-					(lNext == 0 || unicode.IsSpace(next) || unicode.IsPunct(next)))
-			canOpen := leftFlanking
-			canClose := rightFlanking
-			if b == '_' {
-				canOpen = leftFlanking && (!rightFlanking || (lPrev > 0 && unicode.IsPunct(prev)))
-				canClose = rightFlanking && (!leftFlanking || (lNext > 0 && unicode.IsPunct(next)))
-			}
-			bufIdx := p.buf.push(textPiece(p.text[begin:p.pos]))
-			p.delims.push(
-				&delim{typ: b, bufIdx: bufIdx,
-					n: p.pos - begin, canOpen: canOpen, canClose: canClose})
 		case '`':
-			// Consume the entire run of `.
-			for p.pos < len(p.text) && p.text[p.pos] == '`' {
-				p.pos++
-			}
+			// https://spec.commonmark.org/0.30/#code-spans
+			p.consumeRun('`')
 			closer := findBacktickRun(p.text, p.text[begin:p.pos], p.pos)
 			if closer == -1 {
 				// No matching closer, don't parse as code span.
@@ -165,6 +164,7 @@ func (p *inlineParser) render() {
 				after: []Op{{Type: OpCodeSpanEnd}}})
 			p.pos = closer + (p.pos - begin)
 		case '<':
+			// https://spec.commonmark.org/0.30/#raw-html
 			if p.pos == len(p.text) {
 				parseText()
 				continue
@@ -251,6 +251,7 @@ func (p *inlineParser) render() {
 			}
 			parseText()
 		case '&':
+			// https://spec.commonmark.org/0.30/#entity-and-numeric-character-references
 			entity := entityRegexp.FindString(p.text[begin:])
 			if entity != "" {
 				p.buf.push(textPiece(html.UnescapeString(entity)))
@@ -259,12 +260,15 @@ func (p *inlineParser) render() {
 				parseText()
 			}
 		case '\\':
+			// https://spec.commonmark.org/0.30/#backslash-escapes
 			if p.pos < len(p.text) && isASCIIPunct(p.text[p.pos]) {
 				begin++
 				p.pos++
 			}
 			parseText()
 		case '\n':
+			// https://spec.commonmark.org/0.30/#hard-line-breaks
+			// https://spec.commonmark.org/0.30/#soft-line-breaks
 			if len(p.buf.pieces) > 0 {
 				last := &p.buf.pieces[len(p.buf.pieces)-1]
 				if last.before == nil && last.after == nil && last.main.Type == OpText {
@@ -287,6 +291,8 @@ func (p *inlineParser) render() {
 				}
 			}
 			p.buf.push(textPiece("\n"))
+			// Remove spaces at the beginning of the next line per
+			// https://spec.commonmark.org/0.30/#soft-line-breaks.
 			for p.pos < len(p.text) && p.text[p.pos] == ' ' {
 				p.pos++
 			}
@@ -297,6 +303,14 @@ func (p *inlineParser) render() {
 	p.processEmphasis(p.delims.bottom)
 }
 
+func (p *inlineParser) consumeRun(b byte) {
+	for p.pos < len(p.text) && p.text[p.pos] == b {
+		p.pos++
+	}
+}
+
+// Returns the starting index of the next backtick run identical to the given
+// run, starting from i. Returns -1 if no such run exists.
 func findBacktickRun(s, run string, i int) int {
 	for i < len(s) {
 		j := strings.Index(s[i:], run)
@@ -307,8 +321,8 @@ func findBacktickRun(s, run string, i int) int {
 		if j+len(run) == len(s) || s[j+len(run)] != '`' {
 			return j
 		}
-		for j < len(s) && s[j] == '`' {
-			j++
+		// Too many backticks; skip over the entire run.
+		for j += len(run); j < len(s) && s[j] == '`'; j++ {
 		}
 		i = j
 	}
@@ -405,11 +419,18 @@ func (b *buffer) writeTo(codec Codec) {
 	}
 }
 
+// The algorithm described in
+// https://spec.commonmark.org/0.30/#phase-2-inline-structure involves inserting
+// nodes before and after existing nodes in the output. The most natural choice
+// is a doubly linked list; but for simplicity, we use a slice for output nodes,
+// keep track of nodes that need to be prepended or appended to each node.
+//
+// TODO: Compare the performance of this data structure with doubly linked
+// lists.
 type piece struct {
 	before []Op
 	main   Op
 	after  []Op
-	alt    string
 }
 
 func textPiece(text string) piece {
@@ -425,7 +446,7 @@ func plainText(p piece) string {
 	case OpText:
 		return p.main.Text
 	case OpImage:
-		return p.alt
+		return p.main.Alt
 	}
 	return ""
 }
@@ -486,11 +507,13 @@ type linkTailParser struct {
 	pos  int
 }
 
+// Parses the link "tail", the part after the ] that closes the link text.
 func parseLinkTail(text string) (n int, dest, title string) {
 	p := linkTailParser{text, 0}
 	return p.parse()
 }
 
+// https://spec.commonmark.org/0.30/#links
 func (p *linkTailParser) parse() (n int, dest, title string) {
 	if len(p.text) < 2 || p.text[0] != '(' {
 		return -1, "", ""
@@ -597,14 +620,7 @@ func (p *linkTailParser) skipWhitespaces() {
 	}
 }
 
-func isWhitespace(b byte) bool {
-	switch b {
-	case ' ', '\t', '\n':
-		return true
-	default:
-		return false
-	}
-}
+func isWhitespace(b byte) bool { return b == ' ' || b == '\t' || b == '\n' }
 
 func (p *linkTailParser) parseBackslash() byte {
 	if p.pos+1 < len(p.text) && isASCIIPunct(p.text[p.pos+1]) {

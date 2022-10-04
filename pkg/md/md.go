@@ -1,16 +1,24 @@
 // Package md implements a Markdown renderer.
 //
-// This package is incomplete and not used anywhere in Elvish right now. When it
-// is complete, it will be used for rendering the elvdoc of builtin modules
-// inside terminals.
+// This package implements most of the CommonMark spec, with the following
+// omissions:
 //
-// All inline features of CommonMark have been implemented, with almost all
-// relevant spec tests passing. Block features not used in any elvdoc will
-// probably be omitted.
+//   - Tabs are not supported for defining block structures; use spaces instead.
+//     Tabs in other context are preserved.
 //
-// The implementation targets the HEAD of the CommonMark spec in
-// https://github.com/commonmark/commonmark-spec, which may differ slightly
-// from the latest released version of the spec.
+//   - Setext headings are not supported; use ATX headings instead.
+//
+//   - Reference links are not supported; use inline links instead.
+//
+//   - Lists are always considered loose.
+//
+// All other features are supported, with CommonMark spec tests passing. The
+// spec tests are taken from the HEAD of the CommonMark spec in
+// https://github.com/commonmark/commonmark-spec, which may differ slightly from
+// the latest released version.
+//
+// This package is not used anywhere in Elvish right now. It is intended to be
+// used for rendering the elvdoc of builtin modules inside terminals.
 package md
 
 import (
@@ -462,8 +470,10 @@ func (t *blockTree) unmatchedBlockquote(matched int) (int, bool) {
 }
 
 var (
+	// https://spec.commonmark.org/0.30/#block-quotes
 	blockquoteMarkerRegexp = regexp.MustCompile(`^ {0,3}> ?`)
 
+	// Rule #1 and #2 of https://spec.commonmark.org/0.30/#list-items
 	itemStartingMarkerRegexp = regexp.MustCompile(
 		// Capture groups:
 		// 1. bullet item punctuation
@@ -471,6 +481,8 @@ var (
 		// 3. ordered item punctuation
 		// 4. trailing spaces
 		`^ {0,3}(?:([-+*])|([0-9]{1,9})([.)]))( +)`)
+
+	// Rule #3 of https://spec.commonmark.org/0.30/#list-items
 	itemStartingMarkerBlankLineRegexp = regexp.MustCompile(
 		// Capture groups are the same, with group 4 always empty.
 		`^ {0,3}(?:([-+*])|([0-9]{1,9})([.)]))[ \t]*()$`)
@@ -478,9 +490,13 @@ var (
 
 // Parses starting markers of container blocks. Returns the line after removing
 // all starting markers and new containers to create.
+//
+// Blockquotes are simple to parse. Most of the code deals with list items,
+// described in https://spec.commonmark.org/0.30/#list-items.
 func (t *blockTree) parseStartingMarkers(line string, newParagraph bool) (string, []container) {
 	var containers []container
-	// Don't parse thematic breaks like "- - - " as three bullets.
+	// Exception 2 of rule #1: Don't parse thematic breaks like "- - - " as
+	// three bullets.
 	for !thematicBreakRegexp.MatchString(line) {
 		if bqMarker := blockquoteMarkerRegexp.FindString(line); bqMarker != "" {
 			line = line[len(bqMarker):]
@@ -497,14 +513,17 @@ func (t *blockTree) parseStartingMarkers(line string, newParagraph bool) (string
 		}
 		marker, bulletPunct, orderedStart, orderedPunct, spaces := m[0], m[1], m[2], m[3], m[4]
 		if len(spaces) >= 5 {
+			// Rule #2 applies; only the first space is as part of the marker.
 			marker = marker[:len(marker)-len(spaces)+1]
 		}
 
 		indent := len(marker)
 		if strings.Trim(line[len(marker):], " \t") == "" {
+			// Rule #3 applies: indent is exactly one space, regardless of how
+			// many spaces there actually are, which can be 0.
 			indent = len(strings.TrimRight(marker, " \t")) + 1
 		}
-		c := container{indent: strings.Repeat(" ", indent)}
+		c := container{continuation: strings.Repeat(" ", indent)}
 		if bulletPunct != "" {
 			c.typ = bulletItem
 			c.punct = bulletPunct[0]
@@ -542,10 +561,10 @@ func (t *blockTree) closeParagraph(codec Codec) {
 }
 
 type container struct {
-	typ    containerType
-	punct  byte
-	start  int
-	indent string
+	typ          containerType
+	punct        byte
+	start        int
+	continuation string
 }
 
 type containerType uint8
@@ -595,8 +614,8 @@ func (c container) matchContinuationMarker(line string) (int, bool) {
 	case bulletList, orderedList:
 		return 0, true
 	case bulletItem, orderedItem:
-		if strings.HasPrefix(line, c.indent) {
-			return len(c.indent), true
+		if strings.HasPrefix(line, c.continuation) {
+			return len(c.continuation), true
 		}
 		return 0, false
 	}
