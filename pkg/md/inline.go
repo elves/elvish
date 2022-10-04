@@ -1,7 +1,6 @@
 package md
 
 import (
-	"html"
 	"regexp"
 	"strings"
 	"unicode"
@@ -234,8 +233,8 @@ func (p *inlineParser) render() {
 					if autolink != "" {
 						p.pos = begin + len(autolink)
 						// Autolinks support entities but not backslashes, so
-						// html.UnescapeString gives us the desired behavior.
-						text := html.UnescapeString(autolink[1 : len(autolink)-1])
+						// UnescapeEntities gives us the desired behavior.
+						text := UnescapeEntities(autolink[1 : len(autolink)-1])
 						dest := text
 						if email {
 							dest = "mailto:" + dest
@@ -254,7 +253,7 @@ func (p *inlineParser) render() {
 			// https://spec.commonmark.org/0.30/#entity-and-numeric-character-references
 			entity := entityRegexp.FindString(p.text[begin:])
 			if entity != "" {
-				p.buf.push(textPiece(html.UnescapeString(entity)))
+				p.buf.push(textPiece(UnescapeEntities(entity)))
 				p.pos = begin + len(entity)
 			} else {
 				parseText()
@@ -635,7 +634,7 @@ func (p *linkTailParser) parseBackslash() byte {
 func (p *linkTailParser) parseEntity() string {
 	if entity := entityRegexp.FindString(p.text[p.pos:]); entity != "" {
 		p.pos += len(entity)
-		return html.UnescapeString(entity)
+		return UnescapeEntities(entity)
 	}
 	p.pos++
 	return p.text[p.pos-1 : p.pos]

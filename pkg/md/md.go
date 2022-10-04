@@ -8,6 +8,10 @@
 //   - Tabs are not supported for defining block structures; use spaces instead.
 //     Tabs in other context are preserved.
 //
+//   - Only entities that are necessary for writing valid HTML (&lt; &gt;
+//     &quote; &apos; &amp;) are supported. This aspect can be controlled by
+//     overriding the UnescapeEntities variable.
+//
 //   - Setext headings are not supported; use ATX headings instead.
 //
 //   - Reference links are not supported; use inline links instead.
@@ -25,11 +29,20 @@ package md
 
 import (
 	"fmt"
-	"html"
 	"regexp"
 	"strconv"
 	"strings"
 )
+
+// UnescapeEntities is used to unescape HTML entities and numeric character
+// references.
+//
+// The default value only unescapes the entities that are necessary when writing
+// valid HTML. It can be set to html.UnescapeString for better CommonMark
+// compliance.
+var UnescapeEntities = strings.NewReplacer(
+	"&lt;", "<", "&gt;", ">", "&quote;", `"`, "&apos;", `'`, "&amp;", "&",
+).Replace
 
 // Codec is used to render output.
 type Codec interface {
@@ -261,7 +274,7 @@ func processCodeFenceInfo(text string) string {
 		b := text[pos]
 		if b == '&' {
 			if entity := entityRegexp.FindString(text[pos:]); entity != "" {
-				sb.WriteString(html.UnescapeString(entity))
+				sb.WriteString(UnescapeEntities(entity))
 				pos += len(entity)
 				continue
 			}

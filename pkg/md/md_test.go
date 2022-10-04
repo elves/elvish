@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"html"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	. "src.elv.sh/pkg/md"
 	"src.elv.sh/pkg/must"
+	"src.elv.sh/pkg/testutil"
 )
 
 type testCase struct {
@@ -109,6 +111,7 @@ func init() {
 }
 
 func TestRender(t *testing.T) {
+	testutil.Set(t, &UnescapeEntities, html.UnescapeString)
 	for _, tc := range testCases {
 		name := tc.Name
 		if name == "" {
