@@ -36,6 +36,18 @@ including:
 The source for the documentation is in the
 [website](https://github.com/elves/elvish/tree/master/website) directory.
 
+## License
+
+All source files use the BSD 2-clause license (see [LICENSE](LICENSE)), except
+for the following:
+
+-   Files in [pkg/rpc](pkg/rpc) are derived from the Go source, which uses the
+    BSD 3-clause license. See [pkg/rpc/LICENSE](pkg/rpc/LICENSE).
+
+-   Some files in [pkg/persistent](pkg/persistent) and its subdirectories are
+    partially derived from the Clojure source code, which uses EPL 1.0. See
+    [pkg/persistent/LICENSE](pkg/persistent/LICENSE).
+
 ## Building Elvish
 
 Most users do not need to build Elvish from source. Prebuilt binaries for the
