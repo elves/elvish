@@ -442,7 +442,7 @@ func htmlPiece(html string) piece {
 
 func plainText(p piece) string {
 	switch p.main.Type {
-	case OpText:
+	case OpText, OpRawHTML:
 		return p.main.Text
 	case OpImage:
 		return p.main.Alt
@@ -593,6 +593,8 @@ func (p *linkTailParser) parse() (n int, dest, title string) {
 				p.pos++
 				break title
 			case opener:
+				// Titles started with "(" does not allow unescaped "(":
+				// https://spec.commonmark.org/0.30/#link-title
 				return -1, "", ""
 			case '\\':
 				titleBuilder.WriteByte(p.parseBackslash())

@@ -21,7 +21,7 @@ type testCase struct {
 	HTML     string `json:"html"`
 	Example  int    `json:"example"`
 	Section  string `json:"section"`
-	Name     string
+	Name     string // supplemental cases only
 }
 
 //go:embed spec.json
@@ -29,6 +29,9 @@ var specJSON []byte
 
 var testCases []testCase
 
+// When adding supplemental test cases, check a reference implementation to
+// determine the expected output. https://spec.commonmark.org/dingus (which uses
+// https://github.com/commonmark/commonmark.js) is the most convenient.
 var supplementalCases = []testCase{
 	{
 		Name:     "Fenced code blocks supplemental/Empty line in list item",
@@ -41,6 +44,35 @@ var supplementalCases = []testCase{
 			</code></pre>
 			</li>
 			</ul>
+			`),
+	},
+	{
+		Name: "HTML blocks supplemental/Closed by lack of blockquote marker",
+		Markdown: dedent(`
+			> <pre>
+
+			a
+			`),
+		HTML: dedent(`
+			<blockquote>
+			<pre>
+			</blockquote>
+			<p>a</p>
+			`),
+	},
+	{
+		Name: "HTML blocks supplemental/Closed by insufficient list item indentation",
+		Markdown: dedent(`
+			- <pre>
+			 a
+			`),
+		HTML: dedent(`
+			<ul>
+			<li>
+			<pre>
+			</li>
+			</ul>
+			<p>a</p>
 			`),
 	},
 	{
@@ -99,9 +131,63 @@ var supplementalCases = []testCase{
 		HTML:     `<p><a href="b" title="&amp;gt;">a</a></p>` + "\n",
 	},
 	{
+		Name:     "Links supplemental/Unmatched ( in destination, with title",
+		Markdown: `[a](http://( "b")`,
+		HTML:     "<p>[a](http://( &quot;b&quot;)</p>\n",
+	},
+	{
+		Name:     "Links supplemental/Unescaped ( in title started with (",
+		Markdown: `[a](b (()))`,
+		HTML:     "<p>[a](b (()))</p>\n",
+	},
+	{
+		Name:     "Links supplemental/Literal & in destination",
+		Markdown: `[a](http://b?c&d)`,
+		HTML:     `<p><a href="http://b?c&amp;d">a</a></p>` + "\n",
+	},
+	{
+		Name: "Image supplemental/Omit hard line break tag in alt",
+		Markdown: dedent(`
+			![a\
+			b](c.png)
+			`),
+		HTML: dedent(`
+			<p><img src="c.png" alt="a
+			b" /></p>
+			`),
+	},
+	// This behavior is intentionally under-specified in the spec. The reference
+	// implementations puts the raw HTML in the alt attribute, so we match their
+	// behavior.
+	//
+	// CommonMark.js is inconsistent here and does not escape the < and > in the
+	// alt attribute: https://github.com/commonmark/commonmark.js/issues/264
+	{
+		Name:     "Image supplemental/Keep raw HTML in alt",
+		Markdown: "![a <a></a>](b.png)",
+		HTML:     `<p><img src="b.png" alt="a &lt;a&gt;&lt;/a&gt;" /></p>` + "\n",
+	},
+	// CommonMark.js has a bug and will not generate the expected output:
+	// https://github.com/commonmark/commonmark.js/issues/263
+	{
 		Name:     "Autolinks supplemental/Entity",
 		Markdown: `<http://&gt;>`,
 		HTML:     `<p><a href="http://%3E">http://&gt;</a></p>` + "\n",
+	},
+	{
+		Name:     "Raw HTML supplemental/unclosed <",
+		Markdown: `a<`,
+		HTML:     "<p>a&lt;</p>\n",
+	},
+	{
+		Name:     "Raw HTML supplemental/unclosed <!--",
+		Markdown: `a<!--`,
+		HTML:     "<p>a&lt;!--</p>\n",
+	},
+	{
+		Name:     "Soft line breaks supplemental/trailing spaces in last line",
+		Markdown: "a  \n",
+		HTML:     "<p>a</p>\n",
 	},
 }
 
