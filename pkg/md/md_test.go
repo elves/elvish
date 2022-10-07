@@ -24,7 +24,7 @@ type testCase struct {
 	Name     string // supplemental cases only
 }
 
-//go:embed spec.json
+//go:embed spec/spec.json
 var specJSON []byte
 
 var testCases []testCase

@@ -41,12 +41,19 @@ The source for the documentation is in the
 All source files use the BSD 2-clause license (see [LICENSE](LICENSE)), except
 for the following:
 
--   Files in [pkg/rpc](pkg/rpc) are derived from the Go source, which uses the
-    BSD 3-clause license. See [pkg/rpc/LICENSE](pkg/rpc/LICENSE).
+-   Files in [pkg/rpc](pkg/rpc) are released under the BSD 3-clause license,
+    since they are copied from [Go's source code](https://github.com/golang/go).
+    See [pkg/rpc/LICENSE](pkg/rpc/LICENSE).
 
--   Some files in [pkg/persistent](pkg/persistent) and its subdirectories are
-    partially derived from the Clojure source code, which uses EPL 1.0. See
+-   Files in [pkg/persistent](pkg/persistent) and its subdirectories are
+    released under EPL 1.0, since they are partially derived from
+    [Clojure's source code](https://github.com/clojure/clojure). See
     [pkg/persistent/LICENSE](pkg/persistent/LICENSE).
+
+-   Files in [pkg/md/spec](pkg/md/spec) are released under the Creative Commons
+    CC-BY-SA 4.0 license, since they are derived from
+    [the CommonMark spec](https://github.com/commonmark/commonmark-spec). See
+    [pkg/md/spec/LICENSE](pkg/md/spec/LICENSE).
 
 ## Building Elvish
 
