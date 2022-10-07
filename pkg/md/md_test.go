@@ -240,10 +240,13 @@ func TestRender(t *testing.T) {
 	}
 }
 
+// There are different ways to escape HTML and URLs. The CommonMark spec does
+// not specify any particular way, but the spec tests do assume a certain one.
+// The schemes below are chosen to match the spec tests.
 var (
 	escapeHTML = strings.NewReplacer(
 		"&", "&amp;", `"`, "&quot;", "<", "&lt;", ">", "&gt;").Replace
-	escapeDest = strings.NewReplacer(
+	escapeURL = strings.NewReplacer(
 		`"`, "%22", `\`, "%5C", " ", "%20", "`", "%60",
 		"[", "%5B", "]", "%5D", "<", "%3C", ">", "%3E",
 		"ö", "%C3%B6",
@@ -296,14 +299,14 @@ func (c *htmlCodec) Do(op Op) {
 		fmt.Fprintf(c, "<ol%s>\n", &attrs)
 	case OpLinkStart:
 		var attrs attrBuilder
-		attrs.set("href", escapeDest(op.Dest))
+		attrs.set("href", escapeURL(op.Dest))
 		if op.Text != "" {
 			attrs.set("title", op.Text)
 		}
 		fmt.Fprintf(c, "<a%s>", &attrs)
 	case OpImage:
 		var attrs attrBuilder
-		attrs.set("src", escapeDest(op.Dest))
+		attrs.set("src", escapeURL(op.Dest))
 		attrs.set("alt", op.Alt)
 		if op.Text != "" {
 			attrs.set("title", op.Text)
