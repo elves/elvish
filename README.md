@@ -2,7 +2,7 @@
 
 [![CI status](https://github.com/elves/elvish/workflows/CI/badge.svg)](https://github.com/elves/elvish/actions?query=workflow%3ACI)
 [![FreeBSD & gccgo test status](https://img.shields.io/cirrus/github/elves/elvish?logo=Cirrus%20CI&label=CI2)](https://cirrus-ci.com/github/elves/elvish/master)
-[![Test Coverage](https://img.shields.io/codecov/c/github/elves/elvish/master.svg?logo=Codecov&label=coverage)](https://app.codecov.io/gh/elves/elvish/branch/master)
+[![Test Coverage](https://img.shields.io/codecov/c/github/elves/elvish/master.svg?logo=Codecov&label=coverage)](https://app.codecov.io/gh/elves/elvish/tree/master)
 [![Go Reference](https://pkg.go.dev/badge/src.elv.sh@master.svg)](https://pkg.go.dev/src.elv.sh@master)
 [![Packaging status](https://repology.org/badge/tiny-repos/elvish.svg)](https://repology.org/project/elvish/versions)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/ElvishShell)
@@ -35,6 +35,18 @@ including:
 
 The source for the documentation is in the
 [website](https://github.com/elves/elvish/tree/master/website) directory.
+
+## License
+
+All source files use the BSD 2-clause license (see [LICENSE](LICENSE)), except
+for the following:
+
+-   Files in [pkg/rpc](pkg/rpc) are derived from the Go source, which uses the
+    BSD 3-clause license. See [pkg/rpc/LICENSE](pkg/rpc/LICENSE).
+
+-   Some files in [pkg/persistent](pkg/persistent) and its subdirectories are
+    partially derived from the Clojure source code, which uses EPL 1.0. See
+    [pkg/persistent/LICENSE](pkg/persistent/LICENSE).
 
 ## Building Elvish
 

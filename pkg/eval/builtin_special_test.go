@@ -81,6 +81,8 @@ func TestVar(t *testing.T) {
 				ValidLow: 2, ValidHigh: -1, Actual: 1},
 			"var x y @z = 1"),
 
+		// Variable name must not be empty
+		That("var ''").DoesNotCompile(),
 		// Variable name that must be quoted after $ must be quoted
 		That("var a/b").DoesNotCompile(),
 		// Multiple @ not allowed
@@ -91,6 +93,8 @@ func TestVar(t *testing.T) {
 		That("var a[0]").DoesNotCompile(),
 		// Composite expression not allowed
 		That("var a'b'").DoesNotCompile(),
+		// Braced lists must not have any indices when used as a lvalue.
+		That("var {a b}[0] = x y").DoesNotCompile(),
 	)
 }
 

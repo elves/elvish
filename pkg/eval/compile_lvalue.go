@@ -66,20 +66,23 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvalues
 	}
 	varUse := n.Head.Value
 	sigil, qname := SplitSigil(varUse)
+	if qname == "" {
+		cp.errorpf(n, "variable name must not be empty")
+	}
 
 	var ref *varRef
 	if f&setLValue != 0 {
 		ref = resolveVarRef(cp, qname, n)
 		if ref != nil && len(ref.subNames) == 0 && ref.info.readOnly {
-			cp.errorpf(n, "variable $%s is read-only", qname)
+			cp.errorpf(n, "variable $%s is read-only", parse.Quote(qname))
 		}
 	}
 	if ref == nil {
 		if f&newLValue == 0 {
-			cp.errorpf(n, "cannot find variable $%s", qname)
+			cp.errorpf(n, "cannot find variable $%s", parse.Quote(qname))
 		}
 		if len(n.Indices) > 0 {
-			cp.errorpf(n, "name for new variable must not have indices")
+			cp.errorpf(n, "new variable $%s must not have indices", parse.Quote(qname))
 		}
 		segs := SplitQNameSegs(qname)
 		if len(segs) == 1 {
@@ -88,7 +91,9 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvalues
 			ref = &varRef{localScope,
 				staticVarInfo{name, false, false}, cp.thisScope().add(name), nil}
 		} else {
-			cp.errorpf(n, "cannot create variable $%s; new variables can only be created in the local scope", qname)
+			cp.errorpf(n, "cannot create variable $%s; "+
+				"new variables can only be created in the current scope",
+				parse.Quote(qname))
 		}
 	}
 
