@@ -27,6 +27,8 @@
 // used for rendering the elvdoc of builtin modules inside terminals.
 package md
 
+//go:generate stringer -type=OpType -output=zstring.go
+
 import (
 	"fmt"
 	"regexp"

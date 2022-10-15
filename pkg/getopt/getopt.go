@@ -8,7 +8,7 @@
 // the flag package in the standard library instead.
 package getopt
 
-//go:generate stringer -type=Config,Arity,ContextType -output=string.go
+//go:generate stringer -type=Config,Arity,ContextType -output=zstring.go
 
 import (
 	"fmt"
