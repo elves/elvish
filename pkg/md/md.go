@@ -3,10 +3,11 @@
 // This package implements most of the CommonMark spec, with the following
 // omissions:
 //
-//   - \r and \r\n are not supported as line endings; use \n instead.
+//   - "\r" and "\r\n" are not supported as line endings. This can be easily
+//     worked around by converting them to "\n" first.
 //
 //   - Tabs are not supported for defining block structures; use spaces instead.
-//     Tabs in other context are preserved.
+//     Tabs in other context are supported.
 //
 //   - Only entities that are necessary for writing valid HTML (&lt; &gt;
 //     &quote; &apos; &amp;) are supported. This aspect can be controlled by
