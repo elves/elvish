@@ -38,7 +38,7 @@ var Ns = eval.BuildNsNamed("path").
 
 //elvdoc:var separator
 //
-// OS-specific path separator. Forward slash (`/`) on UNIX and backslash (`\\`)
+// OS-specific path separator. Forward slash (`/`) on UNIX and backslash (`\`)
 // on Windows. This variable is read-only.
 
 //elvdoc:fn abs
