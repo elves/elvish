@@ -184,7 +184,7 @@ Install [codespell](https://github.com/codespell-project/codespell) to check
 spelling:
 
 ```sh
-pip install --user codespell==2.1.0
+pip install --user codespell==2.2.1
 ```
 
 Use `make codespell` to run it.
