@@ -15,31 +15,33 @@ func _() {
 	_ = x[OpHeadingEnd-4]
 	_ = x[OpCodeBlockStart-5]
 	_ = x[OpCodeBlockEnd-6]
-	_ = x[OpParagraphStart-7]
-	_ = x[OpParagraphEnd-8]
-	_ = x[OpBlockquoteStart-9]
-	_ = x[OpBlockquoteEnd-10]
-	_ = x[OpListItemStart-11]
-	_ = x[OpListItemEnd-12]
-	_ = x[OpBulletListStart-13]
-	_ = x[OpBulletListEnd-14]
-	_ = x[OpOrderedListStart-15]
-	_ = x[OpOrderedListEnd-16]
-	_ = x[OpCodeSpanStart-17]
-	_ = x[OpCodeSpanEnd-18]
-	_ = x[OpEmphasisStart-19]
-	_ = x[OpEmphasisEnd-20]
-	_ = x[OpStrongEmphasisStart-21]
-	_ = x[OpStrongEmphasisEnd-22]
-	_ = x[OpLinkStart-23]
-	_ = x[OpLinkEnd-24]
-	_ = x[OpImage-25]
-	_ = x[OpHardLineBreak-26]
+	_ = x[OpHTMLBlockStart-7]
+	_ = x[OpHTMLBlockEnd-8]
+	_ = x[OpParagraphStart-9]
+	_ = x[OpParagraphEnd-10]
+	_ = x[OpBlockquoteStart-11]
+	_ = x[OpBlockquoteEnd-12]
+	_ = x[OpListItemStart-13]
+	_ = x[OpListItemEnd-14]
+	_ = x[OpBulletListStart-15]
+	_ = x[OpBulletListEnd-16]
+	_ = x[OpOrderedListStart-17]
+	_ = x[OpOrderedListEnd-18]
+	_ = x[OpCodeSpanStart-19]
+	_ = x[OpCodeSpanEnd-20]
+	_ = x[OpEmphasisStart-21]
+	_ = x[OpEmphasisEnd-22]
+	_ = x[OpStrongEmphasisStart-23]
+	_ = x[OpStrongEmphasisEnd-24]
+	_ = x[OpLinkStart-25]
+	_ = x[OpLinkEnd-26]
+	_ = x[OpImage-27]
+	_ = x[OpHardLineBreak-28]
 }
 
-const _OpType_name = "OpTextOpRawHTMLOpThematicBreakOpHeadingStartOpHeadingEndOpCodeBlockStartOpCodeBlockEndOpParagraphStartOpParagraphEndOpBlockquoteStartOpBlockquoteEndOpListItemStartOpListItemEndOpBulletListStartOpBulletListEndOpOrderedListStartOpOrderedListEndOpCodeSpanStartOpCodeSpanEndOpEmphasisStartOpEmphasisEndOpStrongEmphasisStartOpStrongEmphasisEndOpLinkStartOpLinkEndOpImageOpHardLineBreak"
+const _OpType_name = "OpTextOpRawHTMLOpThematicBreakOpHeadingStartOpHeadingEndOpCodeBlockStartOpCodeBlockEndOpHTMLBlockStartOpHTMLBlockEndOpParagraphStartOpParagraphEndOpBlockquoteStartOpBlockquoteEndOpListItemStartOpListItemEndOpBulletListStartOpBulletListEndOpOrderedListStartOpOrderedListEndOpCodeSpanStartOpCodeSpanEndOpEmphasisStartOpEmphasisEndOpStrongEmphasisStartOpStrongEmphasisEndOpLinkStartOpLinkEndOpImageOpHardLineBreak"
 
-var _OpType_index = [...]uint16{0, 6, 15, 30, 44, 56, 72, 86, 102, 116, 133, 148, 163, 176, 193, 208, 226, 242, 257, 270, 285, 298, 319, 338, 349, 358, 365, 380}
+var _OpType_index = [...]uint16{0, 6, 15, 30, 44, 56, 72, 86, 102, 116, 132, 146, 163, 178, 193, 206, 223, 238, 256, 272, 287, 300, 315, 328, 349, 368, 379, 388, 395, 410}
 
 func (i OpType) String() string {
 	if i >= OpType(len(_OpType_index)-1) {

@@ -95,6 +95,9 @@ func (c *FmtCodec) Do(op Op) {
 		c.write(delim)
 		c.write("\n")
 		c.code = false
+	case OpHTMLBlockStart:
+		c.ensureNewStanza()
+	case OpHTMLBlockEnd:
 	case OpParagraphStart:
 		c.ensureNewStanza()
 	case OpParagraphEnd:

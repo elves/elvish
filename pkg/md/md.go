@@ -82,6 +82,8 @@ const (
 	OpHeadingEnd
 	OpCodeBlockStart
 	OpCodeBlockEnd
+	OpHTMLBlockStart
+	OpHTMLBlockEnd
 	OpParagraphStart
 	OpParagraphEnd
 
@@ -325,6 +327,9 @@ func (p *blockParser) parseIndentedCodeBlock(line string) {
 }
 
 func (p *blockParser) parseHTMLBlock(line string, closer func(string) bool) {
+	do(p.codec, OpHTMLBlockStart)
+	defer do(p.codec, OpHTMLBlockEnd)
+
 	doRawHTMLLine(p.codec, line)
 	if closer(line) {
 		return
@@ -349,6 +354,9 @@ func (p *blockParser) parseHTMLBlock(line string, closer func(string) bool) {
 }
 
 func (p *blockParser) parseBlankLineTerminatedHTMLBlock(line string) {
+	do(p.codec, OpHTMLBlockStart)
+	defer do(p.codec, OpHTMLBlockEnd)
+
 	doRawHTMLLine(p.codec, line)
 	for p.lines.more() {
 		line := p.lines.next()

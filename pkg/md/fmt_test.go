@@ -20,8 +20,6 @@ func TestFmtPreservesHTMLRender(t *testing.T) {
 			switch tc.Example {
 			case 39, 40:
 				t.Skip("TODO escape sequence")
-			case 167, 280, 281, 282, 283, 284, 315:
-				t.Skip("TODO newline")
 			case 301, 302:
 				t.Skip("TODO change of list markers")
 			case 460, 462:
@@ -37,10 +35,12 @@ func TestFmtPreservesHTMLRender(t *testing.T) {
 func testFmtPreservesHTMLRender(t *testing.T, original string) {
 	formatted := render(original, &md.FmtCodec{})
 	formattedRender := render(formatted, &htmlCodec{})
-	originalRender := loosifyLists(render(original, &htmlCodec{}))
+	originalRender := render(original, &htmlCodec{})
 	if formattedRender != originalRender {
-		t.Errorf("original:\n%s\nformatted:\n%s\nHTML diff (-original +formatted):\n%s",
+		t.Errorf("original:\n%s\nformatted:\n%s\n"+
+			"HTML diff (-original +formatted):\n%sops diff (-original +formatted):\n%s",
 			hr+"\n"+original+hr, hr+"\n"+formatted+hr,
-			cmp.Diff(originalRender, formattedRender))
+			cmp.Diff(originalRender, formattedRender),
+			cmp.Diff(render(original, &md.OpTraceCodec{}), render(formatted, &md.OpTraceCodec{})))
 	}
 }
