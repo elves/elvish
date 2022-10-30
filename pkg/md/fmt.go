@@ -9,6 +9,35 @@ import (
 // FmtCodec is a codec that formats Markdown in a specific style.
 //
 // The only supported configuration option is the text width.
+//
+// The formatted text uses the following style:
+//
+//   - Blocks are always separated by a blank line.
+//
+//   - Thematic breaks always use "***".
+//
+//   - Code blocks always use the fenced syntax; in other words, indented code
+//     blocks are never used.
+//
+//   - Code fences use backquotes (like "```"), except when the info string
+//     contains a backquote, in which case tildes are used (like "~~~").
+//
+//   - Container blocks never omit their markers; in other words, lazy
+//     continuation is never used.
+//
+//   - Bullet lists use "-" as a marker, except when following immediately after
+//     another bullet list that already uses "-", in which case "*" is used.
+//
+//   - Ordered lists use "X." (X being a number) as a marker, except when
+//     following immediately after another ordered list that already uses "X.",
+//     in which case "X)" is used.
+//
+//   - Emphasis uses "*", except when following immediately after another
+//     emphasis that already uses "*", in which case "_" is used.
+//
+//   - Strong emphasis always uses "**".
+//
+//   - Hard line break always uses an explicit "\".
 type FmtCodec struct {
 	pieces []string
 	Width  string
@@ -47,11 +76,20 @@ type FmtCodec struct {
 
 var (
 	escapeText = strings.NewReplacer(
-		// TODO: Don't escape in-word _
-		"[", "\\[", "]", "\\]", "*", "\\*", "_", "\\_", "`", "\\`", "\\", "\\\\",
+		"[", `\[`, "]", `\]`, "*", `\*`, "`", "\\`", `\`, `\\`,
+		"&", "&amp;", "<", "&lt;",
 		// TODO: Don't always escape these
-		"!", "\\!", ".", "\\.", "#", "\\#", "-", "\\-",
-		"&", "&amp;", "<", "&lt;").Replace
+		// Don't escape _ when in-word
+		"_", "\\_",
+		// Only escape when followed by [
+		"!", "\\!",
+		// Only escape after a number at the beginning of line
+		".", "\\.",
+		// Only escape at the beginning of line and followed by space
+		"#", "\\#",
+		// Only escape at the beginning of line and followed by space
+		"-", "\\-",
+	).Replace
 )
 
 var (
@@ -210,12 +248,10 @@ func (c *FmtCodec) Do(op Op) {
 		c.linkTitle = op.Text
 		c.write("[")
 	case OpLinkEnd:
-		// TODO: Escape
 		c.write("]")
 		c.writeLinkTail(c.linkDest, c.linkTitle)
 	case OpImage:
-		// TODO: Escape
-		c.write("![" + op.Alt + "]")
+		c.write("![" + escapeText(op.Alt) + "]")
 		c.writeLinkTail(op.Dest, op.Text)
 	case OpHardLineBreak:
 		c.write("\\")
@@ -235,11 +271,45 @@ func matchLens(pieces []string, pattern *regexp.Regexp) map[int]bool {
 }
 
 func (c *FmtCodec) writeLinkTail(dest, title string) {
-	c.write("(" + escapeText(dest))
+	c.write("(" + escapeLinkDest(dest))
 	if title != "" {
-		c.write(" (" + escapeText(title) + ")")
+		c.write(" " + wrapAndEscapeLinkTitle(title))
 	}
 	c.write(")")
+}
+
+const asciiControlOrSpaceOrParens = "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f ()"
+
+func escapeLinkDest(dest string) string {
+	if strings.ContainsAny(dest, asciiControlOrSpaceOrParens) {
+		return "<" + strings.ReplaceAll(escapeText(dest), ">", "&gt;") + ">"
+	}
+	return escapeText(dest)
+}
+
+var escapeParens = strings.NewReplacer("(", `\(`, ")", `\)`).Replace
+
+func wrapAndEscapeLinkTitle(title string) string {
+	doubleQuotes := strings.Count(title, "\"")
+	if doubleQuotes == 0 {
+		return "\"" + escapeText(title) + "\""
+	}
+	singleQuotes := strings.Count(title, "'")
+	if singleQuotes == 0 {
+		return "'" + escapeText(title) + "'"
+	}
+	parens := strings.Count(title, "(") + strings.Count(title, ")")
+	if parens == 0 {
+		return "(" + escapeText(title) + ")"
+	}
+	switch {
+	case doubleQuotes <= singleQuotes && doubleQuotes <= parens:
+		return `"` + strings.ReplaceAll(escapeText(title), `"`, `\"`) + `"`
+	case singleQuotes <= parens:
+		return "'" + strings.ReplaceAll(escapeText(title), "'", `\'`) + "'"
+	default:
+		return "(" + escapeParens(escapeText(title)) + ")"
+	}
 }
 
 func (c *FmtCodec) write(s string) int {
