@@ -24,8 +24,14 @@ type FmtCodec struct {
 	// the starter and terminator if necessary.
 	codeStart int
 
+	// The index of the piece that starts the last emphasis. Used to alternate
+	// between emphasis markers if one follows immediately after another.
+	emphasisStart int
+	// Stack of emphasis markers.
+	emphasisMarkers stack[rune]
+
 	// Current active container blocks.
-	containers []*fmtContainer
+	containers stack[*fmtContainer]
 	// The value of len(pieces) when the last container block was started. Used
 	// to determine whether a container is empty, in which case an empty line is
 	// needed to preserve the container.
@@ -54,6 +60,10 @@ var (
 )
 
 func (c *FmtCodec) Do(op Op) {
+	if (op.Type == OpText || op.Type == OpRawHTML) && op.Text == "" {
+		return
+	}
+
 	var poppedListPunct rune
 	defer func() {
 		c.poppedListPunct = poppedListPunct
@@ -122,17 +132,17 @@ func (c *FmtCodec) Do(op Op) {
 	case OpBlockquoteStart:
 		c.ensureNewStanza()
 		c.containerStart = len(c.pieces)
-		c.pushContainer(&fmtContainer{typ: fmtBlockquote, marker: "> "})
+		c.containers.push(&fmtContainer{typ: fmtBlockquote, marker: "> "})
 	case OpBlockquoteEnd:
 		if c.containerStart == len(c.pieces) {
 			c.write("\n")
 		}
-		c.popContainer()
+		c.containers.pop()
 	case OpListItemStart:
 		c.ensureNewStanza()
 		c.containerStart = len(c.pieces)
 		// Set marker to start marker
-		if ct := c.peekContainer(); ct.typ == fmtBulletItem {
+		if ct := c.containers.peek(); ct.typ == fmtBulletItem {
 			ct.marker = fmt.Sprintf("%c   ", ct.punct)
 		} else {
 			ct.marker = fmt.Sprintf("%d%c ", ct.number, ct.punct)
@@ -144,20 +154,20 @@ func (c *FmtCodec) Do(op Op) {
 		if c.containerStart == len(c.pieces) {
 			c.write("\n")
 		}
-		c.peekContainer().number++
+		c.containers.peek().number++
 	case OpBulletListStart:
-		c.pushContainer(&fmtContainer{
+		c.containers.push(&fmtContainer{
 			typ:   fmtBulletItem,
 			punct: pickPunct('-', '*', c.poppedListPunct)})
 	case OpBulletListEnd:
-		poppedListPunct = c.popContainer().punct
+		poppedListPunct = c.containers.pop().punct
 	case OpOrderedListStart:
-		c.pushContainer(&fmtContainer{
+		c.containers.push(&fmtContainer{
 			typ:    fmtOrderedItem,
 			punct:  pickPunct('.', ')', c.poppedListPunct),
 			number: op.Number})
 	case OpOrderedListEnd:
-		poppedListPunct = c.popContainer().punct
+		poppedListPunct = c.containers.pop().punct
 	case OpCodeSpanStart:
 		// TODO: Handle when content has `
 		c.codeStart = c.write("`")
@@ -183,9 +193,14 @@ func (c *FmtCodec) Do(op Op) {
 		c.write(delim)
 		c.code = false
 	case OpEmphasisStart:
-		c.write("*")
+		marker := '*'
+		if c.emphasisStart == len(c.pieces)-1 && len(c.emphasisMarkers) > 0 {
+			marker = pickPunct('*', '_', c.emphasisMarkers.peek())
+		}
+		c.emphasisMarkers.push(marker)
+		c.emphasisStart = c.write(string(marker))
 	case OpEmphasisEnd:
-		c.write("*")
+		c.write(string(c.emphasisMarkers.pop()))
 	case OpStrongEmphasisStart:
 		c.write("**")
 	case OpStrongEmphasisEnd:
@@ -259,14 +274,6 @@ func (c *FmtCodec) ensureNewStanza() {
 func (c *FmtCodec) appendPiece(s string) int {
 	c.pieces = append(c.pieces, s)
 	return len(c.pieces) - 1
-}
-
-func (c *FmtCodec) pushContainer(ct *fmtContainer) { c.containers = append(c.containers, ct) }
-func (c *FmtCodec) peekContainer() *fmtContainer   { return c.containers[len(c.containers)-1] }
-func (c *FmtCodec) popContainer() *fmtContainer {
-	ct := c.peekContainer()
-	c.containers = c.containers[:len(c.containers)-1]
-	return ct
 }
 
 type fmtContainer struct {

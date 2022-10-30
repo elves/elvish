@@ -20,8 +20,6 @@ func TestFmtPreservesHTMLRender(t *testing.T) {
 			switch tc.Example {
 			case 39, 40:
 				t.Skip("TODO escape sequence")
-			case 460, 462:
-				t.Skip("TODO mixed double em")
 			case 488, 491, 497, 498, 499, 519:
 				t.Skip("TODO link and image formatting")
 			}
