@@ -14,8 +14,8 @@ func TestFmtPreservesHTMLRender(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testName(), func(t *testing.T) {
 			tc.skipIfNotSupported(t)
-			if tc.Name != "" {
-				t.Skip("TODO supplemental cases")
+			if tc.Name == "HTML blocks supplemental/Closed by insufficient list item indentation" {
+				t.Skip("TODO HTML output has superfluous newline")
 			}
 			switch tc.Example {
 			case 39, 40:
