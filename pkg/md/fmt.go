@@ -13,12 +13,22 @@ type FmtCodec struct {
 	pieces []string
 	Width  string
 
-	code      bool
-	codeStart int
-	tildeCode bool
+	// Number of trailing newlines in the currently written text. Used to
+	// determine how many additional newlines are needed to start a new block.
+	trailingNewlines int
 
-	lastNewlines   int
-	containers     []*fmtContainer
+	// Whether a code block/span span is active. Text in either is not escaped.
+	code bool
+	// The index of the piece that starts the current code block/span. Used to
+	// determine the content of the code block/span, which can be used to fix
+	// the starter and terminator if necessary.
+	codeStart int
+
+	// Current active container blocks.
+	containers []*fmtContainer
+	// The value of len(pieces) when the last container block was started. Used
+	// to determine whether a container is empty, in which case an empty line is
+	// needed to preserve the container.
 	containerStart int
 
 	linkDest  string
@@ -61,13 +71,11 @@ func (c *FmtCodec) Do(op Op) {
 		c.ensureNewStanza()
 		if strings.ContainsRune(op.Text, '`') {
 			c.codeStart = c.write("~~~")
-			c.tildeCode = true
+			if strings.HasPrefix(op.Text, "~") {
+				c.write(" ")
+			}
 		} else {
 			c.codeStart = c.write("```")
-			c.tildeCode = false
-		}
-		if c.tildeCode && strings.HasPrefix(op.Text, "~") {
-			c.write(" ")
 		}
 		c.write(op.Text)
 		c.write("\n")
@@ -75,7 +83,7 @@ func (c *FmtCodec) Do(op Op) {
 	case OpCodeBlockEnd:
 		var delimRune rune
 		var runLens map[int]bool
-		if c.tildeCode {
+		if c.pieces[c.codeStart][0] == '~' {
 			delimRune = '~'
 			runLens = matchLens(c.pieces[c.codeStart+1:], tildeRunRegexp)
 		} else {
@@ -206,7 +214,7 @@ func (c *FmtCodec) writeLinkTail(dest, title string) {
 }
 
 func (c *FmtCodec) write(s string) int {
-	if len(c.pieces) == 0 || c.lastNewlines > 0 {
+	if len(c.pieces) == 0 || c.trailingNewlines > 0 {
 		for _, container := range c.containers {
 			// TODO: Remove trailing spaces on empty lines
 			c.appendPiece(container.useMarker())
@@ -214,11 +222,11 @@ func (c *FmtCodec) write(s string) int {
 	}
 	i := c.appendPiece(s)
 	if s == "\n" {
-		c.lastNewlines++
+		c.trailingNewlines++
 	} else if strings.HasSuffix(s, "\n") {
-		c.lastNewlines = 1
+		c.trailingNewlines = 1
 	} else {
-		c.lastNewlines = 0
+		c.trailingNewlines = 0
 	}
 	return i
 }
@@ -228,9 +236,9 @@ func (c *FmtCodec) ensureNewStanza() {
 	if len(c.pieces) == 0 {
 		return
 	}
-	for c.lastNewlines < 2 {
+	for c.trailingNewlines < 2 {
 		c.write("\n")
-		c.lastNewlines++
+		c.trailingNewlines++
 	}
 }
 
