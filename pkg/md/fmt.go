@@ -1,8 +1,8 @@
 package md
 
 import (
+	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -30,6 +30,10 @@ type FmtCodec struct {
 	// to determine whether a container is empty, in which case an empty line is
 	// needed to preserve the container.
 	containerStart int
+	// The punctuation of the just popped list container, only populated if the
+	// last Op was OpBulletListEnd or OpOrderedListEnd. Used to alternate list
+	// punctuation when a list follows directly after another of the same type.
+	poppedListPunct rune
 
 	linkDest  string
 	linkTitle string
@@ -50,6 +54,11 @@ var (
 )
 
 func (c *FmtCodec) Do(op Op) {
+	var poppedListPunct rune
+	defer func() {
+		c.poppedListPunct = poppedListPunct
+	}()
+
 	switch op.Type {
 	case OpText:
 		if c.code {
@@ -124,9 +133,9 @@ func (c *FmtCodec) Do(op Op) {
 		c.containerStart = len(c.pieces)
 		// Set marker to start marker
 		if ct := c.peekContainer(); ct.typ == fmtBulletItem {
-			ct.marker = "-   "
+			ct.marker = fmt.Sprintf("%c   ", ct.punct)
 		} else {
-			ct.marker = strconv.Itoa(ct.number) + ". "
+			ct.marker = fmt.Sprintf("%d%c ", ct.number, ct.punct)
 			if len(ct.marker) < 4 {
 				ct.marker += strings.Repeat(" ", 4-len(ct.marker))
 			}
@@ -137,13 +146,18 @@ func (c *FmtCodec) Do(op Op) {
 		}
 		c.peekContainer().number++
 	case OpBulletListStart:
-		c.pushContainer(&fmtContainer{typ: fmtBulletItem})
+		c.pushContainer(&fmtContainer{
+			typ:   fmtBulletItem,
+			punct: pickPunct('-', '*', c.poppedListPunct)})
 	case OpBulletListEnd:
-		c.popContainer()
+		poppedListPunct = c.popContainer().punct
 	case OpOrderedListStart:
-		c.pushContainer(&fmtContainer{typ: fmtOrderedItem, number: op.Number})
+		c.pushContainer(&fmtContainer{
+			typ:    fmtOrderedItem,
+			punct:  pickPunct('.', ')', c.poppedListPunct),
+			number: op.Number})
 	case OpOrderedListEnd:
-		c.popContainer()
+		poppedListPunct = c.popContainer().punct
 	case OpCodeSpanStart:
 		// TODO: Handle when content has `
 		c.codeStart = c.write("`")
@@ -249,12 +263,17 @@ func (c *FmtCodec) appendPiece(s string) int {
 
 func (c *FmtCodec) pushContainer(ct *fmtContainer) { c.containers = append(c.containers, ct) }
 func (c *FmtCodec) peekContainer() *fmtContainer   { return c.containers[len(c.containers)-1] }
-func (c *FmtCodec) popContainer()                  { c.containers = c.containers[:len(c.containers)-1] }
+func (c *FmtCodec) popContainer() *fmtContainer {
+	ct := c.peekContainer()
+	c.containers = c.containers[:len(c.containers)-1]
+	return ct
+}
 
 type fmtContainer struct {
 	typ    fmtContainerType
-	marker string // starter or continuation marker
+	punct  rune   // punctuation used to build the marker
 	number int    // only used when typ == fmtOrderedItem
+	marker string // starter or continuation marker
 }
 
 type fmtContainerType uint
@@ -271,4 +290,11 @@ func (ct *fmtContainer) useMarker() string {
 		ct.marker = strings.Repeat(" ", len(m))
 	}
 	return m
+}
+
+func pickPunct(def, alt, banned rune) rune {
+	if def != banned {
+		return def
+	}
+	return alt
 }
