@@ -55,16 +55,19 @@ func TestFmtPreservesHTMLRender(t *testing.T) {
 				t.Skip("TODO HTML output has superfluous newline")
 			}
 			testFmtPreservesHTMLRender(t, tc.Markdown)
+			testFmtIsIdempotent(t, tc.Markdown)
 		})
 	}
 	for _, tc := range fmtCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			testFmtPreservesHTMLRender(t, tc.Markdown)
+			testFmtIsIdempotent(t, tc.Markdown)
 		})
 	}
 }
 
 func testFmtPreservesHTMLRender(t *testing.T, original string) {
+	t.Helper()
 	formatted := render(original, &md.FmtCodec{})
 	formattedRender := render(formatted, &htmlCodec{})
 	originalRender := render(original, &htmlCodec{})
@@ -74,5 +77,17 @@ func testFmtPreservesHTMLRender(t *testing.T, original string) {
 			hr+"\n"+original+hr, hr+"\n"+formatted+hr,
 			cmp.Diff(originalRender, formattedRender),
 			cmp.Diff(render(original, &md.OpTraceCodec{}), render(formatted, &md.OpTraceCodec{})))
+	}
+}
+
+func testFmtIsIdempotent(t *testing.T, original string) {
+	t.Helper()
+	formatted1 := render(original, &md.FmtCodec{})
+	formatted2 := render(formatted1, &md.FmtCodec{})
+	if formatted1 != formatted2 {
+		t.Errorf("original:\n%s\nformatted1:\n%s\nformatted2:\n%s\n"+
+			"diff (-formatted1 +formatted2):\n%s",
+			hr+"\n"+original+hr, hr+"\n"+formatted1+hr, hr+"\n"+formatted2+hr,
+			cmp.Diff(formatted1, formatted2))
 	}
 }
