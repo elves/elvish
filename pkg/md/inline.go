@@ -10,7 +10,7 @@ import (
 // InlineOp represents an inline operation.
 type InlineOp struct {
 	Type InlineOpType
-	// OpText, OpRawHTML: Text content
+	// OpText, OpCodeSpan, OpRawHTML: Text content
 	// OpLinkStart, OpLinkEnd, OpImage: title text
 	Text string
 	// OpLinkStart, OpLinkEnd, OpImage
@@ -25,11 +25,11 @@ type InlineOpType uint
 const (
 	// Text elements.
 	OpText InlineOpType = iota
+	OpCodeSpan
 	OpRawHTML
+	OpNewLine
 
 	// Inline markup elements.
-	OpCodeSpanStart
-	OpCodeSpanEnd
 	OpEmphasisStart
 	OpEmphasisEnd
 	OpStrongEmphasisStart
@@ -191,10 +191,8 @@ func (p *inlineParser) render() {
 				continue
 			}
 			p.buf.push(piece{
-				before: []InlineOp{{Type: OpCodeSpanStart}},
-				main: InlineOp{Type: OpText,
-					Text: normalizeCodeSpanContent(p.text[p.pos:closer])},
-				after: []InlineOp{{Type: OpCodeSpanEnd}}})
+				main: InlineOp{Type: OpCodeSpan,
+					Text: normalizeCodeSpanContent(p.text[p.pos:closer])}})
 			p.pos = closer + (p.pos - begin)
 		case '<':
 			// https://spec.commonmark.org/0.30/#raw-html
@@ -323,7 +321,7 @@ func (p *inlineParser) render() {
 					}
 				}
 			}
-			p.buf.push(textPiece("\n"))
+			p.buf.push(piece{main: InlineOp{Type: OpNewLine}})
 			// Remove spaces at the beginning of the next line per
 			// https://spec.commonmark.org/0.30/#soft-line-breaks.
 			for p.pos < len(p.text) && p.text[p.pos] == ' ' {
@@ -449,7 +447,29 @@ func (b *buffer) push(p piece) int {
 func (b *buffer) ops() []InlineOp {
 	var ops []InlineOp
 	for _, p := range b.pieces {
-		ops = p.appendOpsTo(ops)
+		p.iterate(func(op InlineOp) {
+			if op.Type == OpText || op.Type == OpRawHTML {
+				// Convert any embedded newlines into OpNewLine, and merge
+				// adjacent OpText's or OpRawHTML's.
+				if op.Text == "" {
+					return
+				}
+				lines := strings.Split(op.Text, "\n")
+				if len(ops) > 0 && ops[len(ops)-1].Type == op.Type {
+					ops[len(ops)-1].Text += lines[0]
+				} else if lines[0] != "" {
+					ops = append(ops, InlineOp{Type: op.Type, Text: lines[0]})
+				}
+				for _, line := range lines[1:] {
+					ops = append(ops, InlineOp{Type: OpNewLine})
+					if line != "" {
+						ops = append(ops, InlineOp{Type: op.Type, Text: line})
+					}
+				}
+			} else {
+				ops = append(ops, op)
+			}
+		})
 	}
 	return ops
 }
@@ -478,8 +498,10 @@ func htmlPiece(html string) piece {
 
 func plainText(p piece) string {
 	switch p.main.Type {
-	case OpText, OpRawHTML:
+	case OpText, OpCodeSpan, OpRawHTML:
 		return p.main.Text
+	case OpNewLine:
+		return "\n"
 	case OpImage:
 		return p.main.Alt
 	}
@@ -489,13 +511,14 @@ func plainText(p piece) string {
 func (p *piece) prepend(op InlineOp) { p.before = append(p.before, op) }
 func (p *piece) append(op InlineOp)  { p.after = append(p.after, op) }
 
-func (p *piece) appendOpsTo(ops []InlineOp) []InlineOp {
-	ops = append(ops, p.before...)
-	ops = append(ops, p.main)
-	for i := len(p.after) - 1; i >= 0; i-- {
-		ops = append(ops, p.after[i])
+func (p *piece) iterate(f func(InlineOp)) {
+	for _, op := range p.before {
+		f(op)
 	}
-	return ops
+	f(p.main)
+	for i := len(p.after) - 1; i >= 0; i-- {
+		f(p.after[i])
+	}
 }
 
 // A delimiter "stack" (actually a doubly linked list), with sentinels as bottom

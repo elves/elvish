@@ -100,7 +100,7 @@ func (c *htmlCodec) Do(op Op) {
 }
 
 var inlineTags = []string{
-	OpCodeSpanStart: "<code>", OpCodeSpanEnd: "</code>",
+	OpNewLine:       "\n",
 	OpEmphasisStart: "<em>", OpEmphasisEnd: "</em>",
 	OpStrongEmphasisStart: "<strong>", OpStrongEmphasisEnd: "</strong>",
 	OpLinkEnd:       "</a>",
@@ -111,6 +111,10 @@ func (c *htmlCodec) doInline(op InlineOp) {
 	switch op.Type {
 	case OpText:
 		c.WriteString(escapeHTML(op.Text))
+	case OpCodeSpan:
+		c.WriteString("<code>")
+		c.WriteString(escapeHTML(op.Text))
+		c.WriteString("</code>")
 	case OpRawHTML:
 		c.WriteString(op.Text)
 	case OpLinkStart:

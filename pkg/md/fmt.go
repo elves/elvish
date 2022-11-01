@@ -46,17 +46,7 @@ type FmtCodec struct {
 	// determine how many additional newlines are needed to start a new block.
 	trailingNewlines int
 
-	// Whether a code block/span span is active. Text in either is not escaped.
-	code bool
-	// The index of the piece that starts the current code block/span. Used to
-	// determine the content of the code block/span, which can be used to fix
-	// the starter and terminator if necessary.
-	codeStart int
-
-	// The index of the piece that starts the last emphasis. Used to alternate
-	// between emphasis markers if one follows immediately after another.
-	emphasisStart int
-	// Stack of emphasis markers.
+	// Currently unclosed emphasis markers.
 	emphasisMarkers stack[rune]
 
 	// Current active container blocks.
@@ -71,21 +61,14 @@ type FmtCodec struct {
 	poppedListPunct rune
 }
 
+func (c *FmtCodec) String() string { return strings.Join(c.pieces, "") }
+
 var (
 	escapeText = strings.NewReplacer(
 		"[", `\[`, "]", `\]`, "*", `\*`, "`", "\\`", `\`, `\\`,
 		"&", "&amp;", "<", "&lt;",
-		// TODO: Don't always escape these
-		// Don't escape _ when in-word
+		// TODO: Don't escape _ when in-word
 		"_", "\\_",
-		// Only escape when followed by [
-		"!", "\\!",
-		// Only escape after a number at the beginning of line
-		".", "\\.",
-		// Only escape at the beginning of line and followed by space
-		"#", "\\#",
-		// Only escape at the beginning of line and followed by space
-		"-", "\\-",
 	).Replace
 )
 
@@ -103,43 +86,36 @@ func (c *FmtCodec) Do(op Op) {
 	switch op.Type {
 	case OpThematicBreak:
 		c.ensureNewStanza()
-		c.write("***\n")
+		c.writeln("***")
 	case OpHeading:
 		c.ensureNewStanza()
 		c.write(strings.Repeat("#", op.Number) + " ")
-		for _, inlineOp := range op.Content {
-			c.doInline(inlineOp)
-		}
+		c.doInlineContent(op.Content, true)
+		c.newline()
 	case OpCodeBlock:
 		c.ensureNewStanza()
 		startFence, endFence := codeFences(op.Info, op.Lines)
-		c.write(startFence)
-		c.write("\n")
+		c.writeln(startFence)
 		for _, line := range op.Lines {
-			c.write(line)
-			c.write("\n")
+			c.writeln(line)
 		}
-		c.write(endFence)
-		c.write("\n")
+		c.writeln(endFence)
 	case OpHTMLBlock:
 		c.ensureNewStanza()
 		for _, line := range op.Lines {
-			c.write(line)
-			c.write("\n")
+			c.writeln(line)
 		}
 	case OpParagraph:
 		c.ensureNewStanza()
-		for _, inlineOp := range op.Content {
-			c.doInline(inlineOp)
-		}
-		c.write("\n")
+		c.doInlineContent(op.Content, false)
+		c.newline()
 	case OpBlockquoteStart:
 		c.ensureNewStanza()
 		c.containerStart = len(c.pieces)
 		c.containers.push(&fmtContainer{typ: fmtBlockquote, marker: "> "})
 	case OpBlockquoteEnd:
 		if c.containerStart == len(c.pieces) {
-			c.write("\n")
+			c.newline()
 		}
 		c.containers.pop()
 	case OpListItemStart:
@@ -156,7 +132,7 @@ func (c *FmtCodec) Do(op Op) {
 		}
 	case OpListItemEnd:
 		if c.containerStart == len(c.pieces) {
-			c.write("\n")
+			c.newline()
 		}
 		c.containers.peek().number++
 	case OpBulletListStart:
@@ -198,71 +174,159 @@ func codeFences(info string, lines []string) (string, string) {
 	return fence + info, fence
 }
 
-func (c *FmtCodec) doInline(op InlineOp) {
-	if (op.Type == OpText || op.Type == OpRawHTML) && op.Text == "" {
-		return
-	}
+var (
+	leadingHashesRegexp  = regexp.MustCompile(`^#{1,6}`)
+	trailingHashesRegexp = regexp.MustCompile(`#+$`)
+	leadingNumberRegexp  = regexp.MustCompile(`^([0-9]{1,9})([.)])`)
+)
 
-	switch op.Type {
-	case OpRawHTML:
-		c.write(op.Text)
-	case OpText:
-		if c.code {
+func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
+	for i, op := range ops {
+		switch op.Type {
+		case OpText:
+			text := op.Text
+			endOfLine := i == len(ops)-1 || ops[i+1].Type == OpNewLine
+			if c.startOfLine() && endOfLine && thematicBreakRegexp.MatchString(text) {
+				c.write(`\`)
+				c.write(text)
+				continue
+			}
+			if c.startOfLine() {
+				switch text[0] {
+				case ' ':
+					c.write("&#32;")
+					text = text[1:]
+				case '\t':
+					c.write("&Tab;")
+					text = text[1:]
+				case '-', '+':
+					if !atxHeading {
+						tail := text[1:]
+						if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
+							c.write(`\` + text[:1])
+							text = tail
+						}
+					}
+				case '>':
+					if !atxHeading {
+						c.write(`\>`)
+						text = text[1:]
+					}
+				case '#':
+					if !atxHeading {
+						if hashes := leadingHashesRegexp.FindString(text); hashes != "" {
+							tail := text[len(hashes):]
+							if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
+								c.write(`\` + hashes)
+								text = tail
+							}
+						}
+					}
+				default:
+					if !atxHeading {
+						if m := leadingNumberRegexp.FindStringSubmatch(text); m != nil {
+							tail := text[len(m[0]):]
+							if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
+								number, punct := m[1], m[2]
+								if c.startOfStanza() || strings.TrimLeft(number, "0") == "1" {
+									c.write(number)
+									c.write(`\` + punct)
+									text = tail
+								}
+							}
+						}
+					}
+				}
+			}
+			suffix := ""
+			if endOfLine && text != "" {
+				switch text[len(text)-1] {
+				case ' ':
+					suffix = "&#32;"
+					text = text[:len(text)-1]
+				case '\t':
+					suffix = "&Tab;"
+					text = text[:len(text)-1]
+				case '#':
+					if atxHeading {
+						if hashes := trailingHashesRegexp.FindString(text); hashes != "" {
+							head := text[:len(text)-len(hashes)]
+							if endsWithSpaceOrTab(head) || (head == "" && c.startOfLine()) {
+								text = head
+								suffix = `\` + hashes
+							}
+						}
+					}
+				}
+			} else if strings.HasSuffix(text, "!") && i < len(ops)-1 && ops[i+1].Type == OpLinkStart {
+				text = text[:len(text)-1]
+				suffix = `\!`
+			}
+			c.write(escapeText(text))
+			c.write(suffix)
+		case OpRawHTML:
 			c.write(op.Text)
-		} else {
-			c.write(escapeText(op.Text))
+		case OpNewLine:
+			if i == 0 || ops[i-1].Type == OpNewLine {
+				c.write("&NewLine;")
+			} else {
+				c.newline()
+			}
+		case OpCodeSpan:
+			text := op.Text
+			hasRunWithLen := matchLens([]string{text}, backquoteRunRegexp)
+			l := 1
+			for hasRunWithLen[l] {
+				l++
+			}
+			delim := strings.Repeat("`", l)
+			// Code span text is never empty
+			first := text[0]
+			last := text[len(text)-1]
+			addSpace := first == '`' || last == '`' || (first == ' ' && last == ' ' && strings.Trim(text, " ") != "")
+			c.write(delim)
+			if addSpace {
+				c.write(" ")
+			}
+			c.write(text)
+			if addSpace {
+				c.write(" ")
+			}
+			c.write(delim)
+		case OpEmphasisStart:
+			marker := '*'
+			if i > 0 && ops[i-1].Type == OpEmphasisStart {
+				marker = pickPunct('*', '_', c.emphasisMarkers.peek())
+			}
+			c.emphasisMarkers.push(marker)
+			c.write(string(marker))
+		case OpEmphasisEnd:
+			c.write(string(c.emphasisMarkers.pop()))
+		case OpStrongEmphasisStart:
+			c.write("**")
+		case OpStrongEmphasisEnd:
+			c.write("**")
+		case OpLinkStart:
+			c.write("[")
+		case OpLinkEnd:
+			c.write("]")
+			c.writeLinkTail(op.Dest, op.Text)
+		case OpImage:
+			c.write("![" + escapeText(op.Alt) + "]")
+			c.writeLinkTail(op.Dest, op.Text)
+		case OpHardLineBreak:
+			c.write("\\")
 		}
-	case OpCodeSpanStart:
-		// TODO: Handle when content has `
-		c.codeStart = c.write("`")
-		c.code = true
-	case OpCodeSpanEnd:
-		hasRunWithLen := matchLens(c.pieces[c.codeStart+1:], backquoteRunRegexp)
-		l := 1
-		for hasRunWithLen[l] {
-			l++
-		}
-		delim := strings.Repeat("`", l)
-		if l != 1 {
-			c.pieces[c.codeStart] = delim
-		}
-		first := c.pieces[c.codeStart+1][0]
-		lastPiece := c.pieces[len(c.pieces)-1]
-		last := lastPiece[len(lastPiece)-1]
-		if first == '`' || last == '`' || (first == ' ' && last == ' ' &&
-			!(c.codeStart+1 == len(c.pieces)-1 && len(lastPiece) <= 2)) {
-			c.pieces[c.codeStart] += " "
-			c.write(" ")
-		}
-		c.write(delim)
-		c.code = false
-	case OpEmphasisStart:
-		marker := '*'
-		if c.emphasisStart == len(c.pieces)-1 && len(c.emphasisMarkers) > 0 {
-			marker = pickPunct('*', '_', c.emphasisMarkers.peek())
-		}
-		c.emphasisMarkers.push(marker)
-		c.emphasisStart = c.write(string(marker))
-	case OpEmphasisEnd:
-		c.write(string(c.emphasisMarkers.pop()))
-	case OpStrongEmphasisStart:
-		c.write("**")
-	case OpStrongEmphasisEnd:
-		c.write("**")
-	case OpLinkStart:
-		c.write("[")
-	case OpLinkEnd:
-		c.write("]")
-		c.writeLinkTail(op.Dest, op.Text)
-	case OpImage:
-		c.write("![" + escapeText(op.Alt) + "]")
-		c.writeLinkTail(op.Dest, op.Text)
-	case OpHardLineBreak:
-		c.write("\\")
 	}
 }
 
-func (c *FmtCodec) String() string { return strings.Join(c.pieces, "") }
+func startsWithSpaceOrTab(s string) bool {
+	return s != "" && (s[0] == ' ' || s[0] == '\t')
+}
+
+func endsWithSpaceOrTab(s string) bool {
+	return s != "" && (s[len(s)-1] == ' ' || s[len(s)-1] == '\t')
+}
 
 func matchLens(pieces []string, pattern *regexp.Regexp) map[int]bool {
 	hasRunWithLen := make(map[int]bool)
@@ -316,38 +380,48 @@ func wrapAndEscapeLinkTitle(title string) string {
 	}
 }
 
-func (c *FmtCodec) write(s string) int {
+func (c *FmtCodec) write(s string) {
 	if len(c.pieces) == 0 || c.trailingNewlines > 0 {
 		for _, container := range c.containers {
 			// TODO: Remove trailing spaces on empty lines
 			c.appendPiece(container.useMarker())
 		}
 	}
-	i := c.appendPiece(s)
-	if s == "\n" {
-		c.trailingNewlines++
-	} else if strings.HasSuffix(s, "\n") {
-		c.trailingNewlines = 1
-	} else {
-		c.trailingNewlines = 0
-	}
-	return i
+	c.appendPiece(s)
+	c.trailingNewlines = 0
 }
 
-func (c *FmtCodec) ensureNewStanza() {
-	c.code = false
-	if len(c.pieces) == 0 {
-		return
-	}
-	for c.trailingNewlines < 2 {
-		c.write("\n")
-		c.trailingNewlines++
-	}
+func (c *FmtCodec) newline() {
+	c.write("\n")
+	c.trailingNewlines++
+}
+
+func (c *FmtCodec) writeln(s string) {
+	c.write(s)
+	c.newline()
 }
 
 func (c *FmtCodec) appendPiece(s string) int {
 	c.pieces = append(c.pieces, s)
 	return len(c.pieces) - 1
+}
+
+func (c *FmtCodec) startOfLine() bool {
+	return len(c.pieces) == 0 || c.trailingNewlines >= 1
+}
+
+func (c *FmtCodec) startOfStanza() bool {
+	return len(c.pieces) == 0 || c.trailingNewlines >= 2
+}
+
+func (c *FmtCodec) ensureNewStanza() {
+	if len(c.pieces) == 0 {
+		return
+	}
+	for c.trailingNewlines < 2 {
+		c.newline()
+		c.trailingNewlines++
+	}
 }
 
 type fmtContainer struct {

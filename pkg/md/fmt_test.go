@@ -9,18 +9,56 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
+var fmtCases = []struct {
+	Name     string
+	Markdown string
+}{
+	{
+		Name:     "Tilde fence with info starting with tilde",
+		Markdown: "~~~ ~`\n" + "~~~",
+	},
+	{
+		Name:     "Space at start of line",
+		Markdown: "&#32;foo",
+	},
+	{
+		Name:     "Space at end of line",
+		Markdown: "foo&#32;",
+	},
+	{
+		Name:     "Exclamation mark before link",
+		Markdown: `\![a](b)`,
+	},
+	{
+		Name:     "Link title with both single and double quotes",
+		Markdown: `[a](b ('"))`,
+	},
+	{
+		Name:     "Link title with fewer double quotes than single quotes and parens",
+		Markdown: `[a](b "\"''()")`,
+	},
+	{
+		Name:     "Link title with fewer single quotes than double quotes and parens",
+		Markdown: `[a](b '\'""()')`,
+	},
+	{
+		Name:     "Link title with fewer parens than single and double quotes",
+		Markdown: `[a](b (\(''""))`,
+	},
+}
+
 func TestFmtPreservesHTMLRender(t *testing.T) {
 	testutil.Set(t, &md.UnescapeEntities, html.UnescapeString)
 	for _, tc := range testCases {
 		t.Run(tc.testName(), func(t *testing.T) {
-			tc.skipIfNotSupported(t)
 			if tc.Name == "HTML blocks supplemental/Closed by insufficient list item indentation" {
 				t.Skip("TODO HTML output has superfluous newline")
 			}
-			switch tc.Example {
-			case 39, 40:
-				t.Skip("TODO escape sequence")
-			}
+			testFmtPreservesHTMLRender(t, tc.Markdown)
+		})
+	}
+	for _, tc := range fmtCases {
+		t.Run(tc.Name, func(t *testing.T) {
 			testFmtPreservesHTMLRender(t, tc.Markdown)
 		})
 	}

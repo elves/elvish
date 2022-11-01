@@ -40,11 +40,14 @@ import (
 // UnescapeEntities is used to unescape HTML entities and numeric character
 // references.
 //
-// The default value only unescapes the entities that are necessary when writing
-// valid HTML. It can be set to html.UnescapeString for better CommonMark
-// compliance.
+// The default value only unescapes the entities that are either necessary when
+// writing valid HTML or could be output by FmtCodec. It can be set to
+// html.UnescapeString for better CommonMark compliance.
 var UnescapeEntities = strings.NewReplacer(
+	// Necessary for writing valid HTML
 	"&lt;", "<", "&gt;", ">", "&quote;", `"`, "&apos;", `'`, "&amp;", "&",
+	// Could be output by FmtCodec
+	"&Tab;", "\t", "&NewLine;", "\n", "&#32;", " ",
 ).Replace
 
 // Codec is used to render output.

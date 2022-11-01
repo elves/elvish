@@ -38,9 +38,9 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[OpText-0]
-	_ = x[OpRawHTML-1]
-	_ = x[OpCodeSpanStart-2]
-	_ = x[OpCodeSpanEnd-3]
+	_ = x[OpCodeSpan-1]
+	_ = x[OpRawHTML-2]
+	_ = x[OpNewLine-3]
 	_ = x[OpEmphasisStart-4]
 	_ = x[OpEmphasisEnd-5]
 	_ = x[OpStrongEmphasisStart-6]
@@ -51,9 +51,9 @@ func _() {
 	_ = x[OpHardLineBreak-11]
 }
 
-const _InlineOpType_name = "OpTextOpRawHTMLOpCodeSpanStartOpCodeSpanEndOpEmphasisStartOpEmphasisEndOpStrongEmphasisStartOpStrongEmphasisEndOpLinkStartOpLinkEndOpImageOpHardLineBreak"
+const _InlineOpType_name = "OpTextOpCodeSpanOpRawHTMLOpNewLineOpEmphasisStartOpEmphasisEndOpStrongEmphasisStartOpStrongEmphasisEndOpLinkStartOpLinkEndOpImageOpHardLineBreak"
 
-var _InlineOpType_index = [...]uint8{0, 6, 15, 30, 43, 58, 71, 92, 111, 122, 131, 138, 153}
+var _InlineOpType_index = [...]uint8{0, 6, 16, 25, 34, 49, 62, 83, 102, 113, 122, 129, 144}
 
 func (i InlineOpType) String() string {
 	if i >= InlineOpType(len(_InlineOpType_index)-1) {
