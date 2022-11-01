@@ -69,9 +69,6 @@ type FmtCodec struct {
 	// last Op was OpBulletListEnd or OpOrderedListEnd. Used to alternate list
 	// punctuation when a list follows directly after another of the same type.
 	poppedListPunct rune
-
-	linkDest  string
-	linkTitle string
 }
 
 var (
@@ -98,74 +95,43 @@ var (
 )
 
 func (c *FmtCodec) Do(op Op) {
-	if (op.Type == OpText || op.Type == OpRawHTML) && op.Text == "" {
-		return
-	}
-
 	var poppedListPunct rune
 	defer func() {
 		c.poppedListPunct = poppedListPunct
 	}()
 
 	switch op.Type {
-	case OpText:
-		if c.code {
-			c.write(op.Text)
-		} else {
-			c.write(escapeText(op.Text))
-		}
-	case OpRawHTML:
-		// TODO: Ensure stanza for HTML block
-		c.write(op.Text)
 	case OpThematicBreak:
 		c.ensureNewStanza()
 		c.write("***\n")
-	case OpHeadingStart:
+	case OpHeading:
 		c.ensureNewStanza()
 		c.write(strings.Repeat("#", op.Number) + " ")
-	case OpHeadingEnd:
-	case OpCodeBlockStart:
-		c.ensureNewStanza()
-		if strings.ContainsRune(op.Text, '`') {
-			c.codeStart = c.write("~~~")
-			if strings.HasPrefix(op.Text, "~") {
-				c.write(" ")
-			}
-		} else {
-			c.codeStart = c.write("```")
+		for _, inlineOp := range op.Content {
+			c.doInline(inlineOp)
 		}
-		c.write(op.Text)
+	case OpCodeBlock:
+		c.ensureNewStanza()
+		startFence, endFence := codeFences(op.Info, op.Lines)
+		c.write(startFence)
 		c.write("\n")
-		c.code = true
-	case OpCodeBlockEnd:
-		var delimRune rune
-		var runLens map[int]bool
-		if c.pieces[c.codeStart][0] == '~' {
-			delimRune = '~'
-			runLens = matchLens(c.pieces[c.codeStart+1:], tildeRunRegexp)
-		} else {
-			delimRune = '`'
-			runLens = matchLens(c.pieces[c.codeStart+1:], backquoteRunRegexp)
+		for _, line := range op.Lines {
+			c.write(line)
+			c.write("\n")
 		}
-		l := 3
-		for x := range runLens {
-			if l < x+1 {
-				l = x + 1
-			}
-		}
-		delim := strings.Repeat(string(delimRune), l)
-		if l != 3 {
-			c.pieces[c.codeStart] = delim
-		}
-		c.write(delim)
+		c.write(endFence)
 		c.write("\n")
-		c.code = false
-	case OpHTMLBlockStart:
+	case OpHTMLBlock:
 		c.ensureNewStanza()
-	case OpHTMLBlockEnd:
-	case OpParagraphStart:
+		for _, line := range op.Lines {
+			c.write(line)
+			c.write("\n")
+		}
+	case OpParagraph:
 		c.ensureNewStanza()
-	case OpParagraphEnd:
+		for _, inlineOp := range op.Content {
+			c.doInline(inlineOp)
+		}
 		c.write("\n")
 	case OpBlockquoteStart:
 		c.ensureNewStanza()
@@ -206,6 +172,46 @@ func (c *FmtCodec) Do(op Op) {
 			number: op.Number})
 	case OpOrderedListEnd:
 		poppedListPunct = c.containers.pop().punct
+	}
+}
+
+func codeFences(info string, lines []string) (string, string) {
+	var fenceRune rune
+	var runLens map[int]bool
+	if strings.ContainsRune(info, '`') {
+		fenceRune = '~'
+		runLens = matchLens(lines, tildeRunRegexp)
+	} else {
+		fenceRune = '`'
+		runLens = matchLens(lines, backquoteRunRegexp)
+	}
+	l := 3
+	for x := range runLens {
+		if l < x+1 {
+			l = x + 1
+		}
+	}
+	fence := strings.Repeat(string(fenceRune), l)
+	if fenceRune == '~' && strings.HasPrefix(info, "~") {
+		return fence + " " + info, fence
+	}
+	return fence + info, fence
+}
+
+func (c *FmtCodec) doInline(op InlineOp) {
+	if (op.Type == OpText || op.Type == OpRawHTML) && op.Text == "" {
+		return
+	}
+
+	switch op.Type {
+	case OpRawHTML:
+		c.write(op.Text)
+	case OpText:
+		if c.code {
+			c.write(op.Text)
+		} else {
+			c.write(escapeText(op.Text))
+		}
 	case OpCodeSpanStart:
 		// TODO: Handle when content has `
 		c.codeStart = c.write("`")
@@ -244,12 +250,10 @@ func (c *FmtCodec) Do(op Op) {
 	case OpStrongEmphasisEnd:
 		c.write("**")
 	case OpLinkStart:
-		c.linkDest = op.Dest
-		c.linkTitle = op.Text
 		c.write("[")
 	case OpLinkEnd:
 		c.write("]")
-		c.writeLinkTail(c.linkDest, c.linkTitle)
+		c.writeLinkTail(op.Dest, op.Text)
 	case OpImage:
 		c.write("![" + escapeText(op.Alt) + "]")
 		c.writeLinkTail(op.Dest, op.Text)

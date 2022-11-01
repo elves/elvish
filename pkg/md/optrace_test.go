@@ -16,13 +16,21 @@ func (c *OpTraceCodec) Do(op Op) {
 	if op.Number != 0 {
 		fmt.Fprintf(c, " Number=%d", op.Number)
 	}
-	if op.Text != "" {
-		fmt.Fprintf(c, " Text=%q", op.Text)
+	for _, line := range op.Lines {
+		c.WriteString("\n  ")
+		c.WriteString(line)
 	}
-	if op.Dest != "" {
-		fmt.Fprintf(c, " Dest=%q", op.Dest)
-	}
-	if op.Alt != "" {
-		fmt.Fprintf(c, " Alt=%q", op.Alt)
+	for _, inlineOp := range op.Content {
+		c.WriteString("\n  ")
+		c.WriteString(inlineOp.Type.String())
+		if inlineOp.Text != "" {
+			fmt.Fprintf(c, " Text=%q", inlineOp.Text)
+		}
+		if inlineOp.Dest != "" {
+			fmt.Fprintf(c, " Dest=%q", inlineOp.Dest)
+		}
+		if inlineOp.Alt != "" {
+			fmt.Fprintf(c, " Alt=%q", inlineOp.Alt)
+		}
 	}
 }

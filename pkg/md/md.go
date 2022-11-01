@@ -28,7 +28,7 @@
 // used for rendering the elvdoc of builtin modules inside terminals.
 package md
 
-//go:generate stringer -type=OpType -output=zstring.go
+//go:generate stringer -type=OpType,InlineOpType -output=zstring.go
 
 import (
 	"fmt"
@@ -55,16 +55,15 @@ type Codec interface {
 // Op represents an operation for the Codec.
 type Op struct {
 	Type OpType
-	// For OpOrderedListStart (the start number) or OpHeadingStart/OpHeadingEnd
-	// (as the heading level)
+	// For OpOrderedListStart (the start number) or OpHeading (as the heading
+	// level)
 	Number int
-	// For OpText, OpLine, OpRawHTML, OpCodeBlockStart (as the processed info
-	// string), OpLinkStart, OpImage (as the title in the last two)
-	Text string
-	// For OpLinkStart, OpImage
-	Dest string
-	// ForOpImage
-	Alt string
+	// For OpCodeBlock
+	Info string
+	// For OpCodeBlock and OpHTMLBlock
+	Lines []string
+	// For OpParagraph and OpHeading
+	Content []InlineOp
 }
 
 // OpType enumerates possible types of an Op.
@@ -72,20 +71,12 @@ type OpType uint
 
 // Possible output operations.
 const (
-	// Text elements.
-	OpText OpType = iota
-	OpRawHTML
-
 	// Leaf blocks.
-	OpThematicBreak
-	OpHeadingStart
-	OpHeadingEnd
-	OpCodeBlockStart
-	OpCodeBlockEnd
-	OpHTMLBlockStart
-	OpHTMLBlockEnd
-	OpParagraphStart
-	OpParagraphEnd
+	OpThematicBreak OpType = iota
+	OpHeading
+	OpCodeBlock
+	OpHTMLBlock
+	OpParagraph
 
 	// Container blocks.
 	OpBlockquoteStart
@@ -96,18 +87,6 @@ const (
 	OpBulletListEnd
 	OpOrderedListStart
 	OpOrderedListEnd
-
-	// Inline elements.
-	OpCodeSpanStart
-	OpCodeSpanEnd
-	OpEmphasisStart
-	OpEmphasisEnd
-	OpStrongEmphasisStart
-	OpStrongEmphasisEnd
-	OpLinkStart
-	OpLinkEnd
-	OpImage
-	OpHardLineBreak
 )
 
 // Render parses markdown and renders it according to the output syntax.
@@ -183,7 +162,7 @@ func (p *blockParser) render() {
 			p.tree.closeParagraph(p.codec)
 		} else if thematicBreakRegexp.MatchString(line) {
 			p.tree.closeBlocks(matchedContainers, p.codec)
-			p.codec.Do(Op{Type: OpThematicBreak, Text: line})
+			p.codec.Do(Op{Type: OpThematicBreak})
 		} else if m := atxHeadingRegexp.FindStringSubmatchIndex(line); m != nil {
 			p.tree.closeBlocks(matchedContainers, p.codec)
 			openerStart, openerEnd := m[2], m[3]
@@ -193,9 +172,8 @@ func (p *blockParser) render() {
 				line = line[:len(line)-len(closer)]
 			}
 			level := len(opener)
-			p.codec.Do(Op{Type: OpHeadingStart, Number: level})
-			renderInline(strings.Trim(line, " \t"), p.codec)
-			p.codec.Do(Op{Type: OpHeadingEnd, Number: level})
+			p.codec.Do(Op{Type: OpHeading, Number: level,
+				Content: renderInline(strings.Trim(line, " \t"))})
 		} else if m := codeFenceRegexp.FindStringSubmatch(line); m != nil {
 			p.tree.closeBlocks(matchedContainers, p.codec)
 			indent, opener, info := len(m[1]), m[2], m[3]
@@ -242,13 +220,14 @@ func isBlankLine(line string) bool {
 
 func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
 	info = processCodeFenceInfo(strings.Trim(info, " \t"))
-	p.codec.Do(Op{Type: OpCodeBlockStart, Text: info})
+	var lines []string
+
 	for p.lines.more() {
 		line := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
-				do(p.codec, OpCodeBlockEnd)
+				doCodeBlock(p.codec, info, lines)
 				p.tree.closeBlocks(i, p.codec)
 				return
 			}
@@ -265,9 +244,9 @@ func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
 		for i := indent; i > 0 && line != "" && line[0] == ' '; i-- {
 			line = line[1:]
 		}
-		doLine(p.codec, line)
+		lines = append(lines, line)
 	}
-	do(p.codec, OpCodeBlockEnd)
+	doCodeBlock(p.codec, info, lines)
 }
 
 // Code fence info strings are mostly verbatim, but support backslash and
@@ -294,15 +273,15 @@ func processCodeFenceInfo(text string) string {
 }
 
 func (p *blockParser) parseIndentedCodeBlock(line string) {
-	do(p.codec, OpCodeBlockStart)
-	doLine(p.codec, strings.TrimPrefix(line, indentedCodePrefix))
+	lines := []string{strings.TrimPrefix(line, indentedCodePrefix)}
 	var savedBlankLines []string
+
 	for p.lines.more() {
 		line := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
-				do(p.codec, OpCodeBlockEnd)
+				doCodeBlock(p.codec, "", lines)
 				p.tree.closeBlocks(i, p.codec)
 				return
 			}
@@ -317,21 +296,17 @@ func (p *blockParser) parseIndentedCodeBlock(line string) {
 			p.lines.backup()
 			break
 		}
-		for _, blankLine := range savedBlankLines {
-			doLine(p.codec, blankLine)
-		}
+		lines = append(lines, savedBlankLines...)
 		savedBlankLines = savedBlankLines[:0]
-		doLine(p.codec, strings.TrimPrefix(line, indentedCodePrefix))
+		lines = append(lines, strings.TrimPrefix(line, indentedCodePrefix))
 	}
-	do(p.codec, OpCodeBlockEnd)
+	doCodeBlock(p.codec, "", lines)
 }
 
 func (p *blockParser) parseHTMLBlock(line string, closer func(string) bool) {
-	do(p.codec, OpHTMLBlockStart)
-	defer do(p.codec, OpHTMLBlockEnd)
-
-	doRawHTMLLine(p.codec, line)
+	lines := []string{line}
 	if closer(line) {
+		doHTMLBlock(p.codec, lines)
 		return
 	}
 	for p.lines.more() {
@@ -339,39 +314,48 @@ func (p *blockParser) parseHTMLBlock(line string, closer func(string) bool) {
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
+				doHTMLBlock(p.codec, lines)
 				p.tree.closeBlocks(i, p.codec)
 				return
 			}
 		} else if matchedContainers < len(p.tree.containers) {
 			p.lines.backup()
-			return
+			break
 		}
-		doRawHTMLLine(p.codec, line)
+		lines = append(lines, line)
 		if closer(line) {
-			return
+			break
 		}
 	}
+	doHTMLBlock(p.codec, lines)
 }
 
 func (p *blockParser) parseBlankLineTerminatedHTMLBlock(line string) {
-	do(p.codec, OpHTMLBlockStart)
-	defer do(p.codec, OpHTMLBlockEnd)
-
-	doRawHTMLLine(p.codec, line)
+	lines := []string{line}
 	for p.lines.more() {
 		line := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
+			doHTMLBlock(p.codec, lines)
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
 				p.tree.closeBlocks(i, p.codec)
 			}
 			return
 		} else if matchedContainers < len(p.tree.containers) {
 			p.lines.backup()
-			return
+			break
 		}
-		doRawHTMLLine(p.codec, line)
+		lines = append(lines, line)
 	}
+	doHTMLBlock(p.codec, lines)
+}
+
+func doCodeBlock(codec Codec, info string, lines []string) {
+	codec.Do(Op{Type: OpCodeBlock, Info: info, Lines: lines})
+}
+
+func doHTMLBlock(codec Codec, lines []string) {
+	codec.Do(Op{Type: OpHTMLBlock, Lines: lines})
 }
 
 // This struct corresponds to the block tree in
@@ -460,7 +444,7 @@ func (t *blockTree) processContainerMarkers(line string, codec Codec) (string, i
 			}
 		}
 		t.containers = append(t.containers, c)
-		do(codec, containerOpenOp[c.typ])
+		codec.Do(Op{Type: containerOpenOp[c.typ]})
 	}
 	return line, len(t.containers), newContainers[len(newContainers)-1].typ.isItem()
 }
@@ -571,7 +555,7 @@ func (t *blockTree) parseStartingMarkers(line string, newParagraph bool) (string
 func (t *blockTree) closeBlocks(keep int, codec Codec) {
 	t.closeParagraph(codec)
 	for i := len(t.containers) - 1; i >= keep; i-- {
-		do(codec, containerCloseOp[t.containers[i].typ])
+		codec.Do(Op{Type: containerCloseOp[t.containers[i].typ]})
 	}
 	t.containers = t.containers[:keep]
 }
@@ -580,10 +564,9 @@ func (t *blockTree) closeParagraph(codec Codec) {
 	if len(t.paragraph) == 0 {
 		return
 	}
-	do(codec, OpParagraphStart)
-	renderInline(strings.Trim(strings.Join(t.paragraph, "\n"), " \t"), codec)
+	text := strings.Trim(strings.Join(t.paragraph, "\n"), " \t")
 	t.paragraph = t.paragraph[:0]
-	do(codec, OpParagraphEnd)
+	codec.Do(Op{Type: OpParagraph, Content: renderInline(text)})
 }
 
 type container struct {
@@ -674,18 +657,4 @@ func (s *lineSplitter) backup() {
 		return
 	}
 	s.pos = 1 + strings.LastIndexByte(s.text[:s.pos-1], '\n')
-}
-
-// Codec shorthands.
-
-func do(c Codec, t OpType) { c.Do(Op{Type: t}) }
-
-func doLine(c Codec, s string) {
-	c.Do(Op{Type: OpText, Text: s})
-	c.Do(Op{Type: OpText, Text: "\n"})
-}
-
-func doRawHTMLLine(c Codec, s string) {
-	c.Do(Op{Type: OpRawHTML, Text: s})
-	c.Do(Op{Type: OpText, Text: "\n"})
 }

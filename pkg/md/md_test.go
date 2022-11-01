@@ -49,15 +49,57 @@ type htmlCodec struct {
 }
 
 var tags = []string{
-	OpThematicBreak:  "<hr />\n",
-	OpCodeBlockEnd:   "</code></pre>\n",
-	OpParagraphStart: "<p>", OpParagraphEnd: "</p>\n",
+	OpThematicBreak: "<hr />\n",
 
 	OpBlockquoteStart: "<blockquote>\n", OpBlockquoteEnd: "</blockquote>\n",
 	OpListItemStart: "<li>\n", OpListItemEnd: "</li>\n",
 	OpBulletListStart: "<ul>\n", OpBulletListEnd: "</ul>\n",
 	OpOrderedListEnd: "</ol>\n",
+}
 
+func (c *htmlCodec) Do(op Op) {
+	switch op.Type {
+	case OpHeading:
+		fmt.Fprintf(c, "<h%d>", op.Number)
+		for _, inlineOp := range op.Content {
+			c.doInline(inlineOp)
+		}
+		fmt.Fprintf(c, "</h%d>\n", op.Number)
+	case OpCodeBlock:
+		var attrs attrBuilder
+		if op.Info != "" {
+			language, _, _ := strings.Cut(op.Info, " ")
+			attrs.set("class", "language-"+language)
+		}
+		fmt.Fprintf(c, "<pre><code%s>", &attrs)
+		for _, line := range op.Lines {
+			c.WriteString(escapeHTML(line))
+			c.WriteByte('\n')
+		}
+		c.WriteString("</code></pre>\n")
+	case OpHTMLBlock:
+		for _, line := range op.Lines {
+			c.WriteString(line)
+			c.WriteByte('\n')
+		}
+	case OpParagraph:
+		c.WriteString("<p>")
+		for _, inlineOp := range op.Content {
+			c.doInline(inlineOp)
+		}
+		c.WriteString("</p>\n")
+	case OpOrderedListStart:
+		var attrs attrBuilder
+		if op.Number != 1 {
+			attrs.set("start", strconv.Itoa(op.Number))
+		}
+		fmt.Fprintf(c, "<ol%s>\n", &attrs)
+	default:
+		c.WriteString(tags[op.Type])
+	}
+}
+
+var inlineTags = []string{
 	OpCodeSpanStart: "<code>", OpCodeSpanEnd: "</code>",
 	OpEmphasisStart: "<em>", OpEmphasisEnd: "</em>",
 	OpStrongEmphasisStart: "<strong>", OpStrongEmphasisEnd: "</strong>",
@@ -65,29 +107,12 @@ var tags = []string{
 	OpHardLineBreak: "<br />",
 }
 
-func (c *htmlCodec) Do(op Op) {
+func (c *htmlCodec) doInline(op InlineOp) {
 	switch op.Type {
 	case OpText:
 		c.WriteString(escapeHTML(op.Text))
 	case OpRawHTML:
 		c.WriteString(op.Text)
-	case OpHeadingStart:
-		fmt.Fprintf(c, "<h%d>", op.Number)
-	case OpHeadingEnd:
-		fmt.Fprintf(c, "</h%d>\n", op.Number)
-	case OpCodeBlockStart:
-		var attrs attrBuilder
-		if op.Text != "" {
-			language, _, _ := strings.Cut(op.Text, " ")
-			attrs.set("class", "language-"+language)
-		}
-		fmt.Fprintf(c, "<pre><code%s>", &attrs)
-	case OpOrderedListStart:
-		var attrs attrBuilder
-		if op.Number != 1 {
-			attrs.set("start", strconv.Itoa(op.Number))
-		}
-		fmt.Fprintf(c, "<ol%s>\n", &attrs)
 	case OpLinkStart:
 		var attrs attrBuilder
 		attrs.set("href", escapeURL(op.Dest))
@@ -104,7 +129,7 @@ func (c *htmlCodec) Do(op Op) {
 		}
 		fmt.Fprintf(c, "<img%s />", &attrs)
 	default:
-		c.WriteString(tags[op.Type])
+		c.WriteString(inlineTags[op.Type])
 	}
 }
 

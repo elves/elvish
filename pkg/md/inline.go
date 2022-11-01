@@ -7,10 +7,43 @@ import (
 	"unicode/utf8"
 )
 
-func renderInline(text string, codec Codec) {
+// InlineOp represents an inline operation.
+type InlineOp struct {
+	Type InlineOpType
+	// OpText, OpRawHTML: Text content
+	// OpLinkStart, OpLinkEnd, OpImage: title text
+	Text string
+	// OpLinkStart, OpLinkEnd, OpImage
+	Dest string
+	// ForOpImage
+	Alt string
+}
+
+// InlineOpType enumerates possible types of an InlineOp.
+type InlineOpType uint
+
+const (
+	// Text elements.
+	OpText InlineOpType = iota
+	OpRawHTML
+
+	// Inline markup elements.
+	OpCodeSpanStart
+	OpCodeSpanEnd
+	OpEmphasisStart
+	OpEmphasisEnd
+	OpStrongEmphasisStart
+	OpStrongEmphasisEnd
+	OpLinkStart
+	OpLinkEnd
+	OpImage
+	OpHardLineBreak
+)
+
+func renderInline(text string) []InlineOp {
 	p := inlineParser{text, 0, makeDelimStack(), buffer{}}
 	p.render()
-	p.buf.writeTo(codec)
+	return p.buf.ops()
 }
 
 type inlineParser struct {
@@ -135,8 +168,9 @@ func (p *inlineParser) render() {
 			unlink(opener)
 			if opener.typ == '[' {
 				p.buf.pieces[opener.bufIdx] = piece{
-					before: []Op{{Type: OpLinkStart, Dest: dest, Text: title}}}
-				p.buf.push(piece{after: []Op{{Type: OpLinkEnd}}})
+					before: []InlineOp{{Type: OpLinkStart, Dest: dest, Text: title}}}
+				p.buf.push(piece{
+					after: []InlineOp{{Type: OpLinkEnd, Dest: dest, Text: title}}})
 			} else {
 				var altBuilder strings.Builder
 				for _, piece := range p.buf.pieces[opener.bufIdx+1:] {
@@ -145,7 +179,7 @@ func (p *inlineParser) render() {
 				p.buf.pieces = p.buf.pieces[:opener.bufIdx]
 				alt := altBuilder.String()
 				p.buf.push(piece{
-					main: Op{Type: OpImage, Dest: dest, Alt: alt, Text: title}})
+					main: InlineOp{Type: OpImage, Dest: dest, Alt: alt, Text: title}})
 			}
 		case '`':
 			// https://spec.commonmark.org/0.30/#code-spans
@@ -157,10 +191,10 @@ func (p *inlineParser) render() {
 				continue
 			}
 			p.buf.push(piece{
-				before: []Op{{Type: OpCodeSpanStart}},
-				main: Op{Type: OpText,
+				before: []InlineOp{{Type: OpCodeSpanStart}},
+				main: InlineOp{Type: OpText,
 					Text: normalizeCodeSpanContent(p.text[p.pos:closer])},
-				after: []Op{{Type: OpCodeSpanEnd}}})
+				after: []InlineOp{{Type: OpCodeSpanEnd}}})
 			p.pos = closer + (p.pos - begin)
 		case '<':
 			// https://spec.commonmark.org/0.30/#raw-html
@@ -240,9 +274,9 @@ func (p *inlineParser) render() {
 							dest = "mailto:" + dest
 						}
 						p.buf.push(piece{
-							before: []Op{{Type: OpLinkStart, Dest: dest}},
-							main:   Op{Type: OpText, Text: text},
-							after:  []Op{{Type: OpLinkEnd}},
+							before: []InlineOp{{Type: OpLinkStart, Dest: dest}},
+							main:   InlineOp{Type: OpText, Text: text},
+							after:  []InlineOp{{Type: OpLinkEnd, Dest: dest}},
 						})
 						continue
 					}
@@ -284,7 +318,7 @@ func (p *inlineParser) render() {
 							last.main.Text = strings.TrimRight(*text, " ")
 						}
 						if hardLineBreak {
-							p.buf.push(piece{main: Op{Type: OpHardLineBreak}})
+							p.buf.push(piece{main: InlineOp{Type: OpHardLineBreak}})
 						}
 					}
 				}
@@ -371,14 +405,14 @@ func (p *inlineParser) processEmphasis(bottom *delim) {
 		strong := len(openerPiece.main.Text) >= 2 && len(closerPiece.main.Text) >= 2
 		if strong {
 			openerPiece.main.Text = openerPiece.main.Text[2:]
-			openerPiece.after = append(openerPiece.after, Op{Type: OpStrongEmphasisStart})
+			openerPiece.append(InlineOp{Type: OpStrongEmphasisStart})
 			closerPiece.main.Text = closerPiece.main.Text[2:]
-			closerPiece.before = append(closerPiece.before, Op{Type: OpStrongEmphasisEnd})
+			closerPiece.prepend(InlineOp{Type: OpStrongEmphasisEnd})
 		} else {
 			openerPiece.main.Text = openerPiece.main.Text[1:]
-			openerPiece.after = append(openerPiece.after, Op{Type: OpEmphasisStart})
+			openerPiece.append(InlineOp{Type: OpEmphasisStart})
 			closerPiece.main.Text = closerPiece.main.Text[1:]
-			closerPiece.before = append(closerPiece.before, Op{Type: OpEmphasisEnd})
+			closerPiece.prepend(InlineOp{Type: OpEmphasisEnd})
 		}
 		opener.next = closer
 		closer.prev = opener
@@ -412,10 +446,12 @@ func (b *buffer) push(p piece) int {
 	return len(b.pieces) - 1
 }
 
-func (b *buffer) writeTo(codec Codec) {
+func (b *buffer) ops() []InlineOp {
+	var ops []InlineOp
 	for _, p := range b.pieces {
-		p.writeTo(codec)
+		ops = p.appendOpsTo(ops)
 	}
+	return ops
 }
 
 // The algorithm described in
@@ -427,17 +463,17 @@ func (b *buffer) writeTo(codec Codec) {
 // TODO: Compare the performance of this data structure with doubly linked
 // lists.
 type piece struct {
-	before []Op
-	main   Op
-	after  []Op
+	before []InlineOp
+	main   InlineOp
+	after  []InlineOp
 }
 
 func textPiece(text string) piece {
-	return piece{main: Op{Type: OpText, Text: text}}
+	return piece{main: InlineOp{Type: OpText, Text: text}}
 }
 
 func htmlPiece(html string) piece {
-	return piece{main: Op{Type: OpRawHTML, Text: html}}
+	return piece{main: InlineOp{Type: OpRawHTML, Text: html}}
 }
 
 func plainText(p piece) string {
@@ -450,14 +486,16 @@ func plainText(p piece) string {
 	return ""
 }
 
-func (p *piece) writeTo(codec Codec) {
-	for _, op := range p.before {
-		codec.Do(op)
-	}
-	codec.Do(p.main)
+func (p *piece) prepend(op InlineOp) { p.before = append(p.before, op) }
+func (p *piece) append(op InlineOp)  { p.after = append(p.after, op) }
+
+func (p *piece) appendOpsTo(ops []InlineOp) []InlineOp {
+	ops = append(ops, p.before...)
+	ops = append(ops, p.main)
 	for i := len(p.after) - 1; i >= 0; i-- {
-		codec.Do(p.after[i])
+		ops = append(ops, p.after[i])
 	}
+	return ops
 }
 
 // A delimiter "stack" (actually a doubly linked list), with sentinels as bottom
