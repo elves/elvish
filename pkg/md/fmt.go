@@ -145,6 +145,16 @@ func (c *FmtCodec) Do(op Op) {
 		}
 	case OpListItemEnd:
 		if c.containerStart == len(c.pieces) {
+			// When a list item is empty, we will write a line consisting of
+			// bullet punctuations and spaces only. When there are at least 3
+			// instances of the same punctuation, this line will be become a
+			// thematic break instead. Avoid this by varying the punctuation.
+			for i, ct := range c.containers {
+				if i >= 2 && identicalBulletMarkers(c.containers[i-2:i+1]) {
+					ct.punct = pickPunct('-', '*', ct.punct)
+					ct.marker = fmt.Sprintf("%c   ", ct.punct)
+				}
+			}
 			c.newline()
 		}
 		c.containers.peek().number++
@@ -187,6 +197,15 @@ func codeFences(info string, lines []string) (string, string) {
 	return fence + info, fence
 }
 
+func identicalBulletMarkers(containers []*fmtContainer) bool {
+	for _, ct := range containers {
+		if ct.typ != fmtBulletItem || ct.marker != containers[0].marker {
+			return false
+		}
+	}
+	return true
+}
+
 var (
 	leadingHashesRegexp  = regexp.MustCompile(`^#{1,6}`)
 	trailingHashesRegexp = regexp.MustCompile(`#+$`)
@@ -204,7 +223,7 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 				c.write(text)
 				continue
 			}
-			if c.startOfLine() {
+			if c.startOfLine() || i == 0 {
 				switch text[0] {
 				case ' ':
 					c.write("&#32;")
@@ -247,6 +266,9 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 									text = tail
 								}
 							}
+						} else if strings.HasPrefix(text, "~~~") {
+							c.write(`\~~~`)
+							text = text[3:]
 						}
 					}
 				}
@@ -264,7 +286,7 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 					if atxHeading {
 						if hashes := trailingHashesRegexp.FindString(text); hashes != "" {
 							head := text[:len(text)-len(hashes)]
-							if endsWithSpaceOrTab(head) || (head == "" && c.startOfLine()) {
+							if endsWithSpaceOrTab(head) || (head == "" && i == 0) {
 								text = head
 								suffix = `\` + hashes
 							}

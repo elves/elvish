@@ -119,16 +119,16 @@ func (p *inlineParser) render() {
 			// Left-flanking, right-flanking, can-open and can-close are defined
 			// in https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis
 			leftFlanking := lNext > 0 && !unicode.IsSpace(next) &&
-				(!unicode.IsPunct(next) ||
-					(lPrev == 0 || unicode.IsSpace(prev) || unicode.IsPunct(prev)))
+				(!isUnicodePunct(next) ||
+					(lPrev == 0 || unicode.IsSpace(prev) || isUnicodePunct(prev)))
 			rightFlanking := lPrev > 0 && !unicode.IsSpace(prev) &&
-				(!unicode.IsPunct(prev) ||
-					(lNext == 0 || unicode.IsSpace(next) || unicode.IsPunct(next)))
+				(!isUnicodePunct(prev) ||
+					(lNext == 0 || unicode.IsSpace(next) || isUnicodePunct(next)))
 			canOpen := leftFlanking
 			canClose := rightFlanking
 			if b == '_' {
-				canOpen = leftFlanking && (!rightFlanking || (lPrev > 0 && unicode.IsPunct(prev)))
-				canClose = rightFlanking && (!leftFlanking || (lNext > 0 && unicode.IsPunct(next)))
+				canOpen = leftFlanking && (!rightFlanking || (lPrev > 0 && isUnicodePunct(prev)))
+				canClose = rightFlanking && (!leftFlanking || (lNext > 0 && isUnicodePunct(next)))
 			}
 			bufIdx := p.buf.push(textPiece(p.text[begin:p.pos]))
 			p.delims.push(
@@ -710,6 +710,16 @@ func isASCIIControl(b byte) bool { return b < 0x20 }
 const asciiPuncts = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
 
 func isASCIIPunct(b byte) bool { return strings.IndexByte(asciiPuncts, b) >= 0 }
+
+// The CommonMark spec has its own definition of Unicode punctuation:
+// https://spec.commonmark.org/0.30/#unicode-punctuation-character
+//
+// This definition includes all the ASCII punctuations above, some of which
+// ("$+<=>^`|~" to be exact) are not considered to be punctuations by
+// unicode.IsPunct.
+func isUnicodePunct(r rune) bool {
+	return unicode.IsPunct(r) || r <= 0x7f && isASCIIPunct(byte(r))
+}
 
 const metas = "![]*_`\\&<\n"
 

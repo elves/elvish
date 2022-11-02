@@ -154,6 +154,11 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
+		Name:     "Emphasis and strong emphasis supplemental/Star after letter before punctuation does not start emphasis",
+		Markdown: `a*$*`,
+		HTML:     `<p>a*$*</p>` + "\n",
+	},
+	{
 		Name:     "Links supplemental/Backslash and entity in destination",
 		Markdown: `[a](\&gt;)`,
 		HTML:     `<p><a href="&amp;gt;">a</a></p>` + "\n",

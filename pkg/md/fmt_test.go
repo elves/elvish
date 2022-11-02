@@ -55,6 +55,13 @@ func TestFmtPreservesHTMLRender(t *testing.T) {
 	}
 }
 
+func FuzzFmtPreservesHTMLRender(f *testing.F) {
+	for _, tc := range fmtTestCases {
+		f.Add(tc.Markdown)
+	}
+	f.Fuzz(testFmtPreservesHTMLRender)
+}
+
 func testFmtPreservesHTMLRender(t *testing.T, original string) {
 	t.Helper()
 	formatted := render(original, &md.FmtCodec{})
@@ -76,6 +83,13 @@ func TestFmtIsIdempotent(t *testing.T) {
 			testFmtIsIdempotent(t, tc.Markdown)
 		})
 	}
+}
+
+func FuzzFmtIsIdempotent(f *testing.F) {
+	for _, tc := range fmtTestCases {
+		f.Add(tc.Markdown)
+	}
+	f.Fuzz(testFmtIsIdempotent)
 }
 
 func testFmtIsIdempotent(t *testing.T, original string) {
