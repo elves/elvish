@@ -97,10 +97,23 @@ const (
 	OpOrderedListEnd
 )
 
-// Render parses markdown and renders it according to the output syntax.
+// Render parses markdown and renders it with a Codec.
 func Render(text string, codec Codec) {
 	p := blockParser{lines: lineSplitter{text, 0}, codec: codec}
 	p.render()
+}
+
+// CodecStringer is a Codec that also implements the String method.
+type CodecStringer interface {
+	Codec
+	String() string
+}
+
+// Render parses markdown, renders it with a Codec, and returns the result of
+// the String() method of the Codec.
+func RenderString(text string, codec CodecStringer) string {
+	Render(text, codec)
+	return codec.String()
 }
 
 type blockParser struct {

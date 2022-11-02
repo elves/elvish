@@ -5,10 +5,10 @@ import (
 	"strings"
 )
 
-// OpTraceCodec is a Codec that records all the Op's passed to its Do method.
-type OpTraceCodec struct{ strings.Builder }
+// TraceCodec is a Codec that records all the Op's passed to its Do method.
+type TraceCodec struct{ strings.Builder }
 
-func (c *OpTraceCodec) Do(op Op) {
+func (c *TraceCodec) Do(op Op) {
 	if c.Len() > 0 {
 		c.WriteByte('\n')
 	}

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"src.elv.sh/pkg/md"
+	. "src.elv.sh/pkg/md"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -47,7 +47,7 @@ var supplementalFmtCases = []testCase{
 var fmtTestCases = concat(htmlTestCases, supplementalFmtCases)
 
 func TestFmtPreservesHTMLRender(t *testing.T) {
-	testutil.Set(t, &md.UnescapeEntities, html.UnescapeString)
+	testutil.Set(t, &UnescapeEntities, html.UnescapeString)
 	for _, tc := range fmtTestCases {
 		t.Run(tc.testName(), func(t *testing.T) {
 			testFmtPreservesHTMLRender(t, tc.Markdown)
@@ -64,20 +64,23 @@ func FuzzFmtPreservesHTMLRender(f *testing.F) {
 
 func testFmtPreservesHTMLRender(t *testing.T, original string) {
 	t.Helper()
-	formatted := render(original, &md.FmtCodec{})
-	formattedRender := render(formatted, &htmlCodec{})
-	originalRender := render(original, &htmlCodec{})
+	formatted := RenderString(original, &FmtCodec{})
+	formattedRender := RenderString(formatted, &htmlCodec{})
+	originalRender := RenderString(original, &htmlCodec{})
 	if formattedRender != originalRender {
 		t.Errorf("original:\n%s\nformatted:\n%s\n"+
-			"HTML diff (-original +formatted):\n%sops diff (-original +formatted):\n%s",
+			"markdown diff (-original +formatted):\n%s"+
+			"HTML diff (-original +formatted):\n%s"+
+			"ops diff (-original +formatted):\n%s",
 			hr+"\n"+original+hr, hr+"\n"+formatted+hr,
+			cmp.Diff(original, formatted),
 			cmp.Diff(originalRender, formattedRender),
-			cmp.Diff(render(original, &md.OpTraceCodec{}), render(formatted, &md.OpTraceCodec{})))
+			cmp.Diff(RenderString(original, &TraceCodec{}), RenderString(formatted, &TraceCodec{})))
 	}
 }
 
 func TestFmtIsIdempotent(t *testing.T) {
-	testutil.Set(t, &md.UnescapeEntities, html.UnescapeString)
+	testutil.Set(t, &UnescapeEntities, html.UnescapeString)
 	for _, tc := range fmtTestCases {
 		t.Run(tc.testName(), func(t *testing.T) {
 			testFmtIsIdempotent(t, tc.Markdown)
@@ -94,8 +97,8 @@ func FuzzFmtIsIdempotent(f *testing.F) {
 
 func testFmtIsIdempotent(t *testing.T, original string) {
 	t.Helper()
-	formatted1 := render(original, &md.FmtCodec{})
-	formatted2 := render(formatted1, &md.FmtCodec{})
+	formatted1 := RenderString(original, &FmtCodec{})
+	formatted2 := RenderString(formatted1, &FmtCodec{})
 	if formatted1 != formatted2 {
 		t.Errorf("original:\n%s\nformatted1:\n%s\nformatted2:\n%s\n"+
 			"diff (-formatted1 +formatted2):\n%s",

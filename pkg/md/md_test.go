@@ -17,7 +17,7 @@ func TestRender(t *testing.T) {
 	for _, tc := range htmlTestCases {
 		t.Run(tc.testName(), func(t *testing.T) {
 			tc.skipIfNotSupported(t)
-			got := render(tc.Markdown, &htmlCodec{})
+			got := RenderString(tc.Markdown, &htmlCodec{})
 			// Try to hide the difference between tight and loose lists by
 			// "loosifying" the output. This only works for tight lists whose
 			// items consist of single lines, so more complex cases are still

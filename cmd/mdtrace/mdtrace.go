@@ -14,5 +14,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Print(md.RenderString(string(text), &md.FmtCodec{}))
+	fmt.Print(md.RenderString(string(text), &md.TraceCodec{}))
 }

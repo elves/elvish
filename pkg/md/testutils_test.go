@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"src.elv.sh/pkg/md"
 	"src.elv.sh/pkg/must"
 )
 
@@ -265,14 +264,4 @@ func loosifyLists(html string) string {
 	return strings.ReplaceAll(
 		looseListItem.ReplaceAllString(html, "<li>\n<p>$1</p>\n</li>"),
 		"<li></li>", "<li>\n</li>")
-}
-
-type codecStringer interface {
-	md.Codec
-	String() string
-}
-
-func render(markdown string, codec codecStringer) string {
-	md.Render(markdown, codec)
-	return codec.String()
 }
