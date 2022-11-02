@@ -63,6 +63,11 @@ type Op struct {
 	Number int
 	// For OpCodeBlock
 	Info string
+	// For OpCodeBlock and OpHTMLBlock: whether the block usually requires an
+	// explicit closer (fenced code block, HTML blocks 1 to 5), but that closer
+	// was not seen. This can happen if the block is closed by by the closing of
+	// a container block or EOF.
+	MissingCloser bool
 	// For OpCodeBlock and OpHTMLBlock
 	Lines []string
 	// For OpParagraph and OpHeading
@@ -189,19 +194,19 @@ func (p *blockParser) render() {
 			p.parseIndentedCodeBlock(line)
 		} else if html1Regexp.MatchString(line) {
 			p.tree.closeBlocks(matchedContainers, p.codec)
-			p.parseHTMLBlock(line, html1CloserRegexp.MatchString)
+			p.parseCloserTerminatedHTMLBlock(line, html1CloserRegexp.MatchString)
 		} else if html2Regexp.MatchString(line) {
 			p.tree.closeBlocks(matchedContainers, p.codec)
-			p.parseHTMLBlock(line, html2CloserRegexp.MatchString)
+			p.parseCloserTerminatedHTMLBlock(line, html2CloserRegexp.MatchString)
 		} else if html3Regexp.MatchString(line) {
 			p.tree.closeBlocks(matchedContainers, p.codec)
-			p.parseHTMLBlock(line, html3CloserRegexp.MatchString)
+			p.parseCloserTerminatedHTMLBlock(line, html3CloserRegexp.MatchString)
 		} else if html4Regexp.MatchString(line) {
 			p.tree.closeBlocks(matchedContainers, p.codec)
-			p.parseHTMLBlock(line, html4CloserRegexp.MatchString)
+			p.parseCloserTerminatedHTMLBlock(line, html4CloserRegexp.MatchString)
 		} else if html5Regexp.MatchString(line) {
 			p.tree.closeBlocks(matchedContainers, p.codec)
-			p.parseHTMLBlock(line, html5CloserRegexp.MatchString)
+			p.parseCloserTerminatedHTMLBlock(line, html5CloserRegexp.MatchString)
 		} else if html6Regexp.MatchString(line) || (len(p.tree.paragraph) == 0 && html7Regexp.MatchString(line)) {
 			p.tree.closeBlocks(matchedContainers, p.codec)
 			p.parseBlankLineTerminatedHTMLBlock(line)
@@ -224,24 +229,29 @@ func isBlankLine(line string) bool {
 func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
 	info = processCodeFenceInfo(strings.Trim(info, " \t"))
 	var lines []string
+	doCodeBlock := func(mc bool) {
+		p.codec.Do(Op{Type: OpCodeBlock, Info: info, Lines: lines, MissingCloser: mc})
+	}
 
 	for p.lines.more() {
 		line := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
-				doCodeBlock(p.codec, info, lines)
+				doCodeBlock(true)
 				p.tree.closeBlocks(i, p.codec)
 				return
 			}
 		} else if matchedContainers < len(p.tree.containers) {
 			p.lines.backup()
-			break
+			doCodeBlock(true)
+			return
 		}
 		if m := codeFenceCloserRegexp.FindStringSubmatch(line); m != nil {
 			closer := m[1]
 			if closer[0] == opener[0] && len(closer) >= len(opener) {
-				break
+				doCodeBlock(false)
+				return
 			}
 		}
 		for i := indent; i > 0 && line != "" && line[0] == ' '; i-- {
@@ -249,7 +259,7 @@ func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
 		}
 		lines = append(lines, line)
 	}
-	doCodeBlock(p.codec, info, lines)
+	doCodeBlock(true)
 }
 
 // Code fence info strings are mostly verbatim, but support backslash and
@@ -277,6 +287,7 @@ func processCodeFenceInfo(text string) string {
 
 func (p *blockParser) parseIndentedCodeBlock(line string) {
 	lines := []string{strings.TrimPrefix(line, indentedCodePrefix)}
+	doCodeBlock := func() { p.codec.Do(Op{Type: OpCodeBlock, Lines: lines}) }
 	var savedBlankLines []string
 
 	for p.lines.more() {
@@ -284,7 +295,7 @@ func (p *blockParser) parseIndentedCodeBlock(line string) {
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
-				doCodeBlock(p.codec, "", lines)
+				doCodeBlock()
 				p.tree.closeBlocks(i, p.codec)
 				return
 			}
@@ -303,13 +314,17 @@ func (p *blockParser) parseIndentedCodeBlock(line string) {
 		savedBlankLines = savedBlankLines[:0]
 		lines = append(lines, strings.TrimPrefix(line, indentedCodePrefix))
 	}
-	doCodeBlock(p.codec, "", lines)
+	doCodeBlock()
 }
 
-func (p *blockParser) parseHTMLBlock(line string, closer func(string) bool) {
+func (p *blockParser) parseCloserTerminatedHTMLBlock(line string, closer func(string) bool) {
 	lines := []string{line}
+	doHTMLBlock := func(mc bool) {
+		p.codec.Do(Op{Type: OpHTMLBlock, Lines: lines, MissingCloser: mc})
+	}
+
 	if closer(line) {
-		doHTMLBlock(p.codec, lines)
+		doHTMLBlock(false)
 		return
 	}
 	for p.lines.more() {
@@ -317,29 +332,33 @@ func (p *blockParser) parseHTMLBlock(line string, closer func(string) bool) {
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
-				doHTMLBlock(p.codec, lines)
+				doHTMLBlock(true)
 				p.tree.closeBlocks(i, p.codec)
 				return
 			}
 		} else if matchedContainers < len(p.tree.containers) {
 			p.lines.backup()
-			break
+			doHTMLBlock(true)
+			return
 		}
 		lines = append(lines, line)
 		if closer(line) {
-			break
+			doHTMLBlock(false)
+			return
 		}
 	}
-	doHTMLBlock(p.codec, lines)
+	doHTMLBlock(true)
 }
 
 func (p *blockParser) parseBlankLineTerminatedHTMLBlock(line string) {
 	lines := []string{line}
+	doHTMLBlock := func() { p.codec.Do(Op{Type: OpHTMLBlock, Lines: lines}) }
+
 	for p.lines.more() {
 		line := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
-			doHTMLBlock(p.codec, lines)
+			doHTMLBlock()
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
 				p.tree.closeBlocks(i, p.codec)
 			}
@@ -350,15 +369,7 @@ func (p *blockParser) parseBlankLineTerminatedHTMLBlock(line string) {
 		}
 		lines = append(lines, line)
 	}
-	doHTMLBlock(p.codec, lines)
-}
-
-func doCodeBlock(codec Codec, info string, lines []string) {
-	codec.Do(Op{Type: OpCodeBlock, Info: info, Lines: lines})
-}
-
-func doHTMLBlock(codec Codec, lines []string) {
-	codec.Do(Op{Type: OpHTMLBlock, Lines: lines})
+	doHTMLBlock()
 }
 
 // This struct corresponds to the block tree in

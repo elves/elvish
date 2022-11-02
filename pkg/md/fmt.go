@@ -55,10 +55,13 @@ type FmtCodec struct {
 	// to determine whether a container is empty, in which case an empty line is
 	// needed to preserve the container.
 	containerStart int
+
 	// The punctuation of the just popped list container, only populated if the
 	// last Op was OpBulletListEnd or OpOrderedListEnd. Used to alternate list
 	// punctuation when a list follows directly after another of the same type.
 	poppedListPunct rune
+	// Whether the next blank line should be suppressed.
+	suppressBlankLine bool
 }
 
 func (c *FmtCodec) String() string { return strings.Join(c.pieces, "") }
@@ -84,33 +87,44 @@ func (c *FmtCodec) Do(op Op) {
 	}()
 
 	switch op.Type {
+	case OpThematicBreak, OpHeading, OpCodeBlock, OpHTMLBlock, OpParagraph,
+		OpBlockquoteStart, OpListItemStart:
+		if c.suppressBlankLine {
+			c.suppressBlankLine = false
+		} else {
+			if len(c.pieces) > 0 {
+				c.writeln("")
+			}
+		}
+	}
+	if op.MissingCloser {
+		c.suppressBlankLine = true
+	}
+
+	switch op.Type {
 	case OpThematicBreak:
-		c.ensureNewStanza()
 		c.writeln("***")
 	case OpHeading:
-		c.ensureNewStanza()
 		c.write(strings.Repeat("#", op.Number) + " ")
 		c.doInlineContent(op.Content, true)
 		c.newline()
 	case OpCodeBlock:
-		c.ensureNewStanza()
 		startFence, endFence := codeFences(op.Info, op.Lines)
 		c.writeln(startFence)
 		for _, line := range op.Lines {
 			c.writeln(line)
 		}
-		c.writeln(endFence)
+		if !op.MissingCloser {
+			c.writeln(endFence)
+		}
 	case OpHTMLBlock:
-		c.ensureNewStanza()
 		for _, line := range op.Lines {
 			c.writeln(line)
 		}
 	case OpParagraph:
-		c.ensureNewStanza()
 		c.doInlineContent(op.Content, false)
 		c.newline()
 	case OpBlockquoteStart:
-		c.ensureNewStanza()
 		c.containerStart = len(c.pieces)
 		c.containers.push(&fmtContainer{typ: fmtBlockquote, marker: "> "})
 	case OpBlockquoteEnd:
@@ -119,7 +133,6 @@ func (c *FmtCodec) Do(op Op) {
 		}
 		c.containers.pop()
 	case OpListItemStart:
-		c.ensureNewStanza()
 		c.containerStart = len(c.pieces)
 		// Set marker to start marker
 		if ct := c.containers.peek(); ct.typ == fmtBulletItem {
@@ -381,7 +394,7 @@ func wrapAndEscapeLinkTitle(title string) string {
 }
 
 func (c *FmtCodec) write(s string) {
-	if len(c.pieces) == 0 || c.trailingNewlines > 0 {
+	if len(c.pieces) == 0 || c.pieces[len(c.pieces)-1] == "\n" {
 		for _, container := range c.containers {
 			// TODO: Remove trailing spaces on empty lines
 			c.appendPiece(container.useMarker())
@@ -412,16 +425,6 @@ func (c *FmtCodec) startOfLine() bool {
 
 func (c *FmtCodec) startOfStanza() bool {
 	return len(c.pieces) == 0 || c.trailingNewlines >= 2
-}
-
-func (c *FmtCodec) ensureNewStanza() {
-	if len(c.pieces) == 0 {
-		return
-	}
-	for c.trailingNewlines < 2 {
-		c.newline()
-		c.trailingNewlines++
-	}
 }
 
 type fmtContainer struct {

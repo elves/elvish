@@ -9,10 +9,7 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
-var fmtCases = []struct {
-	Name     string
-	Markdown string
-}{
+var supplementalFmtCases = []testCase{
 	{
 		Name:     "Tilde fence with info starting with tilde",
 		Markdown: "~~~ ~`\n" + "~~~",
@@ -47,21 +44,13 @@ var fmtCases = []struct {
 	},
 }
 
+var fmtTestCases = concat(htmlTestCases, supplementalFmtCases)
+
 func TestFmtPreservesHTMLRender(t *testing.T) {
 	testutil.Set(t, &md.UnescapeEntities, html.UnescapeString)
-	for _, tc := range testCases {
+	for _, tc := range fmtTestCases {
 		t.Run(tc.testName(), func(t *testing.T) {
-			if tc.Name == "HTML blocks supplemental/Closed by insufficient list item indentation" {
-				t.Skip("TODO HTML output has superfluous newline")
-			}
 			testFmtPreservesHTMLRender(t, tc.Markdown)
-			testFmtIsIdempotent(t, tc.Markdown)
-		})
-	}
-	for _, tc := range fmtCases {
-		t.Run(tc.Name, func(t *testing.T) {
-			testFmtPreservesHTMLRender(t, tc.Markdown)
-			testFmtIsIdempotent(t, tc.Markdown)
 		})
 	}
 }
@@ -77,6 +66,15 @@ func testFmtPreservesHTMLRender(t *testing.T, original string) {
 			hr+"\n"+original+hr, hr+"\n"+formatted+hr,
 			cmp.Diff(originalRender, formattedRender),
 			cmp.Diff(render(original, &md.OpTraceCodec{}), render(formatted, &md.OpTraceCodec{})))
+	}
+}
+
+func TestFmtIsIdempotent(t *testing.T) {
+	testutil.Set(t, &md.UnescapeEntities, html.UnescapeString)
+	for _, tc := range fmtTestCases {
+		t.Run(tc.testName(), func(t *testing.T) {
+			testFmtIsIdempotent(t, tc.Markdown)
+		})
 	}
 }
 

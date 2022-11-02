@@ -16,6 +16,12 @@ func (c *OpTraceCodec) Do(op Op) {
 	if op.Number != 0 {
 		fmt.Fprintf(c, " Number=%d", op.Number)
 	}
+	if op.Info != "" {
+		fmt.Fprintf(c, " Info=%q", op.Info)
+	}
+	if op.MissingCloser {
+		fmt.Fprintf(c, " MissingCloser")
+	}
 	for _, line := range op.Lines {
 		c.WriteString("\n  ")
 		c.WriteString(line)

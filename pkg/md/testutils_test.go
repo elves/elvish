@@ -58,12 +58,14 @@ func (tc *testCase) skipIfNotSupported(t *testing.T) {
 //go:embed spec/spec.json
 var specJSON []byte
 
-var testCases []testCase
+var specTestCases = readSpecTestCases(specJSON)
+
+var htmlTestCases = concat(specTestCases, supplementalHTMLTestCases)
 
 // When adding supplemental test cases, check a reference implementation to
 // determine the expected output. https://spec.commonmark.org/dingus (which uses
 // https://github.com/commonmark/commonmark.js) is the most convenient.
-var supplementalCases = []testCase{
+var supplementalHTMLTestCases = []testCase{
 	{
 		Name:     "Fenced code blocks supplemental/Empty line in list item",
 		Markdown: "- ```\n  a\n\n  ```\n",
@@ -222,9 +224,17 @@ var supplementalCases = []testCase{
 	},
 }
 
-func init() {
-	must.OK(json.Unmarshal(specJSON, &testCases))
-	testCases = append(testCases, supplementalCases...)
+func readSpecTestCases(data []byte) []testCase {
+	var cases []testCase
+	must.OK(json.Unmarshal(data, &cases))
+	return cases
+}
+
+func concat[T any](a, b []T) []T {
+	c := make([]T, 0, len(a)+len(b))
+	c = append(c, a...)
+	c = append(c, b...)
+	return c
 }
 
 var (
