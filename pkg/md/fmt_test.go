@@ -65,8 +65,8 @@ func FuzzFmtPreservesHTMLRender(f *testing.F) {
 func testFmtPreservesHTMLRender(t *testing.T, original string) {
 	t.Helper()
 	formatted := RenderString(original, &FmtCodec{})
-	formattedRender := RenderString(formatted, &htmlCodec{})
-	originalRender := RenderString(original, &htmlCodec{})
+	formattedRender := RenderString(formatted, &HTMLCodec{})
+	originalRender := RenderString(original, &HTMLCodec{})
 	if formattedRender != originalRender {
 		t.Errorf("original:\n%s\nformatted:\n%s\n"+
 			"markdown diff (-original +formatted):\n%s"+

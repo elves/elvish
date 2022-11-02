@@ -103,15 +103,15 @@ func Render(text string, codec Codec) {
 	p.render()
 }
 
-// CodecStringer is a Codec that also implements the String method.
-type CodecStringer interface {
+// StringerCodec is a Codec that also implements the String method.
+type StringerCodec interface {
 	Codec
 	String() string
 }
 
 // Render parses markdown, renders it with a Codec, and returns the result of
 // the String() method of the Codec.
-func RenderString(text string, codec CodecStringer) string {
+func RenderString(text string, codec StringerCodec) string {
 	Render(text, codec)
 	return codec.String()
 }
