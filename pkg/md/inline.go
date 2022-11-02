@@ -95,7 +95,21 @@ func (p *inlineParser) render() {
 			for p.pos < len(p.text) && !isMeta(p.text[p.pos]) {
 				p.pos++
 			}
-			p.buf.push(textPiece(p.text[begin:p.pos]))
+			text := p.text[begin:p.pos]
+			hardLineBreak := false
+			if p.pos < len(p.text) && p.text[p.pos] == '\n' {
+				// https://spec.commonmark.org/0.30/#hard-line-break
+				//
+				// The intput to renderInline never ends in a newline, so all
+				// newlines are internal ones, thus subject to the hard line
+				// break rules
+				hardLineBreak = strings.HasSuffix(text, "  ")
+				text = strings.TrimRight(text, " ")
+			}
+			p.buf.push(textPiece(text))
+			if hardLineBreak {
+				p.buf.push(piece{main: InlineOp{Type: OpHardLineBreak}})
+			}
 		}
 
 		switch b {
@@ -292,35 +306,27 @@ func (p *inlineParser) render() {
 			}
 		case '\\':
 			// https://spec.commonmark.org/0.30/#backslash-escapes
-			if p.pos < len(p.text) && isASCIIPunct(p.text[p.pos]) {
-				begin++
-				p.pos++
+			if p.pos < len(p.text) {
+				if p.text[p.pos] == '\n' {
+					// https://spec.commonmark.org/0.30/#hard-line-break
+					//
+					// Do *not* consume the newline; "\\\n" is a hard line break
+					// plus a (soft) line break.
+					p.buf.push(piece{main: InlineOp{Type: OpHardLineBreak}})
+					continue
+				} else if isASCIIPunct(p.text[p.pos]) {
+					// Valid backslash escape: handle this by just discarding
+					// the backslash. The parseText call below will consider the
+					// next byte to be already included in the text content.
+					begin++
+					p.pos++
+				}
 			}
 			parseText()
 		case '\n':
-			// https://spec.commonmark.org/0.30/#hard-line-breaks
-			// https://spec.commonmark.org/0.30/#soft-line-breaks
-			if len(p.buf.pieces) > 0 {
-				last := &p.buf.pieces[len(p.buf.pieces)-1]
-				if last.before == nil && last.after == nil && last.main.Type == OpText {
-					text := &last.main.Text
-					if p.pos == len(p.text) {
-						*text = strings.TrimRight(*text, " ")
-					} else {
-						hardLineBreak := false
-						if strings.HasSuffix(*text, "\\") {
-							hardLineBreak = true
-							*text = (*text)[:len(*text)-1]
-						} else {
-							hardLineBreak = strings.HasSuffix(*text, "  ")
-							last.main.Text = strings.TrimRight(*text, " ")
-						}
-						if hardLineBreak {
-							p.buf.push(piece{main: InlineOp{Type: OpHardLineBreak}})
-						}
-					}
-				}
-			}
+			// Hard line breaks are already inserted using lookahead in
+			// parseText and the case '\\' branch.
+
 			p.buf.push(piece{main: InlineOp{Type: OpNewLine}})
 			// Remove spaces at the beginning of the next line per
 			// https://spec.commonmark.org/0.30/#soft-line-breaks.
