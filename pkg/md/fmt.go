@@ -192,9 +192,9 @@ func codeFences(info string, lines []string) (string, string) {
 	}
 	fence := strings.Repeat(string(fenceRune), l)
 	if fenceRune == '~' && strings.HasPrefix(info, "~") {
-		return fence + " " + info, fence
+		return fence + " " + escapeText(info), fence
 	}
-	return fence + info, fence
+	return fence + escapeText(info), fence
 }
 
 func identicalBulletMarkers(containers []*fmtContainer) bool {
@@ -330,8 +330,15 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 			c.write(delim)
 		case OpEmphasisStart:
 			marker := '*'
-			if i > 0 && ops[i-1].Type == OpEmphasisStart {
-				marker = pickPunct('*', '_', c.emphasisMarkers.peek())
+			if len(c.pieces) > 0 {
+				// Use "_" instead if this follows immediately after another
+				// OpEmphasisStart/End or OpStrongEmphasisStart/End that already
+				// uses "*". In all cases the marker is written as a standalone
+				// piece.
+				last := c.pieces[len(c.pieces)-1]
+				if last == "*" || last == "**" {
+					marker = '_'
+				}
 			}
 			c.emphasisMarkers.push(marker)
 			c.write(string(marker))

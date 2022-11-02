@@ -575,6 +575,11 @@ func (t *blockTree) parseStartingMarkers(line string, newParagraph bool) (string
 
 		line = line[len(marker):]
 		containers = append(containers, c)
+		// After parsing at least one starting marker, the rest of the line is
+		// in a new paragraph. This means that bullet list marker can be
+		// terminated by end of line or tab (instead of space), and ordered list
+		// marker with number != 1 are allowed.
+		newParagraph = true
 	}
 	return line, containers
 }

@@ -21,7 +21,7 @@ type testCase struct {
 
 func (tc *testCase) testName() string {
 	if tc.Name != "" {
-		return tc.Name
+		return fmt.Sprintf("%s/%s", tc.Section, tc.Name)
 	}
 	return fmt.Sprintf("%s/Example %d", tc.Section, tc.Example)
 }
@@ -66,7 +66,8 @@ var htmlTestCases = concat(specTestCases, supplementalHTMLTestCases)
 // https://github.com/commonmark/commonmark.js) is the most convenient.
 var supplementalHTMLTestCases = []testCase{
 	{
-		Name:     "Fenced code blocks supplemental/Empty line in list item",
+		Section:  "Fenced code blocks supplemental",
+		Name:     "Empty line in list item",
 		Markdown: "- ```\n  a\n\n  ```\n",
 		HTML: dedent(`
 			<ul>
@@ -79,7 +80,8 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Name: "HTML blocks supplemental/Closed by lack of blockquote marker",
+		Section: "HTML blocks supplemental",
+		Name:    "Closed by lack of blockquote marker",
 		Markdown: dedent(`
 			> <pre>
 
@@ -93,7 +95,8 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Name: "HTML blocks supplemental/Closed by insufficient list item indentation",
+		Section: "HTML blocks supplemental",
+		Name:    "Closed by insufficient list item indentation",
 		Markdown: dedent(`
 			- <pre>
 			 a
@@ -108,7 +111,8 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Name: "Blockquotes supplemental/Increasing level",
+		Section: "Blockquotes supplemental",
+		Name:    "Increasing level",
 		Markdown: dedent(`
 			> a
 			>> b
@@ -123,7 +127,8 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Name: "Blockquotes supplemental/Reducing level",
+		Section: "Blockquotes supplemental",
+		Name:    "Reducing level",
 		Markdown: dedent(`
 			>> a
 			>
@@ -139,7 +144,8 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Name: "List items supplemental/Two leading empty lines with spaces",
+		Section: "List items supplemental",
+		Name:    "Two leading empty lines with spaces",
 		Markdown: dedent(`
 			- 
 			  
@@ -153,37 +159,80 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Name:     "Emphasis and strong emphasis supplemental/Star after letter before punctuation does not start emphasis",
+		Section: "List supplemental",
+		Name:    "Two-level bullet list with no content interrupting paragraph",
+		Markdown: dedent(`
+			a
+			- -
+			`),
+		HTML: dedent(`
+			<p>a</p>
+			<ul>
+			<li>
+			<ul>
+			<li></li>
+			</ul>
+			</li>
+			</ul>
+			`),
+	},
+	{
+		Section: "List supplemental",
+		Name:    "Ordered list with non-1 start in bullet list interrupting paragraph",
+		Markdown: dedent(`
+			a
+			- 2.
+			`),
+		HTML: dedent(`
+			<p>a</p>
+			<ul>
+			<li>
+			<ol start="2">
+			<li></li>
+			</ol>
+			</li>
+			</ul>
+			`),
+	},
+	{
+		Section:  "Emphasis and strong emphasis supplemental",
+		Name:     "Star after letter before punctuation does not start emphasis",
 		Markdown: `a*$*`,
 		HTML:     `<p>a*$*</p>` + "\n",
 	},
 	{
-		Name:     "Links supplemental/Backslash and entity in destination",
+		Section:  "Links supplemental",
+		Name:     "Backslash and entity in destination",
 		Markdown: `[a](\&gt;)`,
 		HTML:     `<p><a href="&amp;gt;">a</a></p>` + "\n",
 	},
 	{
-		Name:     "Links supplemental/Backslash and entity in title",
+		Section:  "Links supplemental",
+		Name:     "Backslash and entity in title",
 		Markdown: `[a](b (\&gt;))`,
 		HTML:     `<p><a href="b" title="&amp;gt;">a</a></p>` + "\n",
 	},
 	{
-		Name:     "Links supplemental/Unmatched ( in destination, with title",
+		Section:  "Links supplemental",
+		Name:     "Unmatched ( in destination, with title",
 		Markdown: `[a](http://( "b")`,
 		HTML:     "<p>[a](http://( &quot;b&quot;)</p>\n",
 	},
 	{
-		Name:     "Links supplemental/Unescaped ( in title started with (",
+		Section:  "Links supplemental",
+		Name:     "Unescaped ( in title started with (",
 		Markdown: `[a](b (()))`,
 		HTML:     "<p>[a](b (()))</p>\n",
 	},
 	{
-		Name:     "Links supplemental/Literal & in destination",
+		Section:  "Links supplemental",
+		Name:     "Literal & in destination",
 		Markdown: `[a](http://b?c&d)`,
 		HTML:     `<p><a href="http://b?c&amp;d">a</a></p>` + "\n",
 	},
 	{
-		Name: "Image supplemental/Omit hard line break tag in alt",
+		Section: "Image supplemental",
+		Name:    "Omit hard line break tag in alt",
 		Markdown: dedent(`
 			![a\
 			b](c.png)
@@ -200,29 +249,34 @@ var supplementalHTMLTestCases = []testCase{
 	// CommonMark.js is inconsistent here and does not escape the < and > in the
 	// alt attribute: https://github.com/commonmark/commonmark.js/issues/264
 	{
-		Name:     "Image supplemental/Keep raw HTML in alt",
+		Section:  "Image supplemental",
+		Name:     "Keep raw HTML in alt",
 		Markdown: "![a <a></a>](b.png)",
 		HTML:     `<p><img src="b.png" alt="a &lt;a&gt;&lt;/a&gt;" /></p>` + "\n",
 	},
 	// CommonMark.js has a bug and will not generate the expected output:
 	// https://github.com/commonmark/commonmark.js/issues/263
 	{
-		Name:     "Autolinks supplemental/Entity",
+		Section:  "Autolinks supplemental",
+		Name:     "Entity",
 		Markdown: `<http://&gt;>`,
 		HTML:     `<p><a href="http://%3E">http://&gt;</a></p>` + "\n",
 	},
 	{
-		Name:     "Raw HTML supplemental/unclosed <",
+		Section:  "Raw HTML supplemental",
+		Name:     "unclosed <",
 		Markdown: `a<`,
 		HTML:     "<p>a&lt;</p>\n",
 	},
 	{
-		Name:     "Raw HTML supplemental/unclosed <!--",
+		Section:  "Raw HTML supplemental",
+		Name:     "unclosed <!--",
 		Markdown: `a<!--`,
 		HTML:     "<p>a&lt;!--</p>\n",
 	},
 	{
-		Name:     "Soft line breaks supplemental/trailing spaces in last line",
+		Section:  "Soft line breaks supplemental",
+		Name:     "trailing spaces in last line",
 		Markdown: "a  \n",
 		HTML:     "<p>a</p>\n",
 	},
