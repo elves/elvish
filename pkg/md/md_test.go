@@ -10,7 +10,7 @@ import (
 )
 
 func TestRender(t *testing.T) {
-	testutil.Set(t, &UnescapeEntities, html.UnescapeString)
+	testutil.Set(t, &UnescapeHTML, html.UnescapeString)
 	for _, tc := range htmlTestCases {
 		t.Run(tc.testName(), func(t *testing.T) {
 			tc.skipIfNotSupported(t)

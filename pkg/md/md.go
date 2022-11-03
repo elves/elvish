@@ -37,18 +37,44 @@ import (
 	"strings"
 )
 
-// UnescapeEntities is used to unescape HTML entities and numeric character
-// references.
+// UnescapeHTML is used by the parser to unescape HTML entities and numeric
+// character references.
 //
-// The default value only unescapes the entities that are either necessary when
-// writing valid HTML or could be output by FmtCodec. It can be set to
-// html.UnescapeString for better CommonMark compliance.
-var UnescapeEntities = strings.NewReplacer(
+// The default implementation supports numeric character references, plus a
+// minimal set of entities that are necessary for writing valid HTML or can
+// appear in the output of FmtCodec. It can be set to html.UnescapeString for
+// better CommonMark compliance.
+var UnescapeHTML = unescapeHTML
+
+var charRefRegexp = regexp.MustCompile(`&(?:#[0-9]+|#[xX][0-9a-fA-F]+|[0-9a-zA-Z]+);`)
+
+var entities = map[string]rune{
 	// Necessary for writing valid HTML
-	"&lt;", "<", "&gt;", ">", "&quote;", `"`, "&apos;", `'`, "&amp;", "&",
-	// Could be output by FmtCodec
-	"&Tab;", "\t", "&NewLine;", "\n", "&#32;", " ",
-).Replace
+	"lt": '<', "gt": '>', "quote": '"', "apos": '\'', "amp": '&',
+	// Not strictly necessary, but could be output by FmtCodec for slightly
+	// nicer text
+	"Tab": '\t', "NewLine": '\n',
+}
+
+func unescapeHTML(s string) string {
+	return charRefRegexp.ReplaceAllStringFunc(s, func(entity string) string {
+		body := entity[1 : len(entity)-1]
+		if r, ok := entities[body]; ok {
+			return string(r)
+		} else if body[0] == '#' {
+			if body[1] == 'x' || body[1] == 'X' {
+				if num, err := strconv.ParseInt(body[2:], 16, 32); err == nil {
+					return string(rune(num))
+				}
+			} else {
+				if num, err := strconv.ParseInt(body[1:], 10, 32); err == nil {
+					return string(rune(num))
+				}
+			}
+		}
+		return entity
+	})
+}
 
 // Codec is used to render output.
 type Codec interface {
@@ -284,7 +310,7 @@ func processCodeFenceInfo(text string) string {
 		b := text[pos]
 		if b == '&' {
 			if entity := entityRegexp.FindString(text[pos:]); entity != "" {
-				sb.WriteString(UnescapeEntities(entity))
+				sb.WriteString(UnescapeHTML(entity))
 				pos += len(entity)
 				continue
 			}

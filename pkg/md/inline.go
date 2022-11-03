@@ -10,10 +10,10 @@ import (
 // InlineOp represents an inline operation.
 type InlineOp struct {
 	Type InlineOpType
-	// OpText, OpCodeSpan, OpRawHTML: Text content
+	// OpText, OpCodeSpan, OpRawHTML, OpAutolink: Text content
 	// OpLinkStart, OpLinkEnd, OpImage: title text
 	Text string
-	// OpLinkStart, OpLinkEnd, OpImage
+	// OpLinkStart, OpLinkEnd, OpImage, OpAutolink
 	Dest string
 	// ForOpImage
 	Alt string
@@ -23,7 +23,9 @@ type InlineOp struct {
 type InlineOpType uint
 
 const (
-	// Text elements.
+	// Text elements. Embedded newlines in OpText are turned into OpNewLine, but
+	// OpRawHTML can contain embedded newlines. OpCodeSpan never contains
+	// embedded newlines.
 	OpText InlineOpType = iota
 	OpCodeSpan
 	OpRawHTML
@@ -37,6 +39,7 @@ const (
 	OpLinkStart
 	OpLinkEnd
 	OpImage
+	OpAutolink
 	OpHardLineBreak
 )
 
@@ -100,7 +103,7 @@ func (p *inlineParser) render() {
 			if p.pos < len(p.text) && p.text[p.pos] == '\n' {
 				// https://spec.commonmark.org/0.30/#hard-line-break
 				//
-				// The intput to renderInline never ends in a newline, so all
+				// The input to renderInline never ends in a newline, so all
 				// newlines are internal ones, thus subject to the hard line
 				// break rules
 				hardLineBreak = strings.HasSuffix(text, "  ")
@@ -173,6 +176,7 @@ func (p *inlineParser) render() {
 				p.buf.push(piece{
 					after: []InlineOp{{Type: OpLinkEnd, Dest: dest, Text: title}}})
 			} else {
+				// Use the pieces after "![" to build the image alt text.
 				var altBuilder strings.Builder
 				for _, piece := range p.buf.pieces[opener.bufIdx+1:] {
 					altBuilder.WriteString(plainText(piece))
@@ -267,15 +271,13 @@ func (p *inlineParser) render() {
 						p.pos = begin + len(autolink)
 						// Autolinks support entities but not backslashes, so
 						// UnescapeEntities gives us the desired behavior.
-						text := UnescapeEntities(autolink[1 : len(autolink)-1])
+						text := UnescapeHTML(autolink[1 : len(autolink)-1])
 						dest := text
 						if email {
 							dest = "mailto:" + dest
 						}
 						p.buf.push(piece{
-							before: []InlineOp{{Type: OpLinkStart, Dest: dest}},
-							main:   InlineOp{Type: OpText, Text: text},
-							after:  []InlineOp{{Type: OpLinkEnd, Dest: dest}},
+							main: InlineOp{Type: OpAutolink, Text: text, Dest: dest},
 						})
 						continue
 					}
@@ -286,7 +288,7 @@ func (p *inlineParser) render() {
 			// https://spec.commonmark.org/0.30/#entity-and-numeric-character-references
 			entity := entityRegexp.FindString(p.text[begin:])
 			if entity != "" {
-				p.buf.push(textPiece(UnescapeEntities(entity)))
+				p.buf.push(textPiece(UnescapeHTML(entity)))
 				p.pos = begin + len(entity)
 			} else {
 				parseText()
@@ -469,6 +471,8 @@ func (p *inlineParser) processEmphasis(bottom *delim) {
 			closer = closer.next
 		}
 	}
+	bottom.next = p.delims.top
+	p.delims.top.prev = bottom
 }
 
 func b2i(b bool) int {
@@ -493,7 +497,7 @@ func (b *buffer) ops() []InlineOp {
 	var ops []InlineOp
 	for _, p := range b.pieces {
 		p.iterate(func(op InlineOp) {
-			if op.Type == OpText || op.Type == OpRawHTML {
+			if op.Type == OpText {
 				// Convert any embedded newlines into OpNewLine, and merge
 				// adjacent OpText's or OpRawHTML's.
 				if op.Text == "" {
@@ -543,7 +547,7 @@ func htmlPiece(html string) piece {
 
 func plainText(p piece) string {
 	switch p.main.Type {
-	case OpText, OpCodeSpan, OpRawHTML:
+	case OpText, OpCodeSpan, OpRawHTML, OpAutolink:
 		return p.main.Text
 	case OpNewLine:
 		return "\n"
@@ -642,6 +646,8 @@ func (p *linkTailParser) parse() (n int, dest, title string) {
 				return -1, "", ""
 			case '\\':
 				destBuilder.WriteByte(p.parseBackslash())
+			case '&':
+				destBuilder.WriteString(p.parseEntity())
 			default:
 				destBuilder.WriteByte(p.text[p.pos])
 				p.pos++
@@ -742,7 +748,7 @@ func (p *linkTailParser) parseBackslash() byte {
 func (p *linkTailParser) parseEntity() string {
 	if entity := entityRegexp.FindString(p.text[p.pos:]); entity != "" {
 		p.pos += len(entity)
-		return UnescapeEntities(entity)
+		return UnescapeHTML(entity)
 	}
 	p.pos++
 	return p.text[p.pos-1 : p.pos]

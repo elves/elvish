@@ -2,6 +2,7 @@ package md_test
 
 import (
 	"html"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -11,43 +12,76 @@ import (
 
 var supplementalFmtCases = []testCase{
 	{
+		Section:  "Fenced code blocks",
 		Name:     "Tilde fence with info starting with tilde",
 		Markdown: "~~~ ~`\n" + "~~~",
 	},
 	{
-		Name:     "Space at start of line",
-		Markdown: "&#32;foo",
+		Section:  "Emphasis and strong emphasis",
+		Name:     "Space at start of content",
+		Markdown: "*&#32;x*",
 	},
 	{
-		Name:     "Space at end of line",
-		Markdown: "foo&#32;",
+		Section:  "Emphasis and strong emphasis",
+		Name:     "Space at end of content",
+		Markdown: "*x&#32;*",
 	},
 	{
+		Section:  "Emphasis and strong emphasis",
+		Name:     "Emphasis opener after word before punctuation",
+		Markdown: "&#65;*!*",
+	},
+	{
+		Section:  "Emphasis and strong emphasis",
+		Name:     "Emphasis closer after punctuation before word",
+		Markdown: "*!*&#65;",
+	},
+	{
+		Section:  "Emphasis and strong emphasis",
+		Name:     "Space-only content",
+		Markdown: "*&#32;*",
+	},
+	{
+		Section:  "Links",
 		Name:     "Exclamation mark before link",
 		Markdown: `\![a](b)`,
 	},
 	{
+		Section:  "Links",
 		Name:     "Link title with both single and double quotes",
 		Markdown: `[a](b ('"))`,
 	},
 	{
+		Section:  "Links",
 		Name:     "Link title with fewer double quotes than single quotes and parens",
 		Markdown: `[a](b "\"''()")`,
 	},
 	{
+		Section:  "Links",
 		Name:     "Link title with fewer single quotes than double quotes and parens",
 		Markdown: `[a](b '\'""()')`,
 	},
 	{
+		Section:  "Links",
 		Name:     "Link title with fewer parens than single and double quotes",
 		Markdown: `[a](b (\(''""))`,
+	},
+	{
+		Section:  "Soft line breaks",
+		Name:     "Space at start of line",
+		Markdown: "&#32;foo",
+	},
+	{
+		Section:  "Soft line breaks",
+		Name:     "Space at end of line",
+		Markdown: "foo&#32;",
 	},
 }
 
 var fmtTestCases = concat(htmlTestCases, supplementalFmtCases)
 
 func TestFmtPreservesHTMLRender(t *testing.T) {
-	testutil.Set(t, &UnescapeEntities, html.UnescapeString)
+	testutil.Set(t, &UnescapeHTML, html.UnescapeString)
 	for _, tc := range fmtTestCases {
 		t.Run(tc.testName(), func(t *testing.T) {
 			testFmtPreservesHTMLRender(t, tc.Markdown)
@@ -64,11 +98,7 @@ func FuzzFmtPreservesHTMLRender(f *testing.F) {
 
 func testFmtPreservesHTMLRender(t *testing.T, original string) {
 	t.Helper()
-	codec := &FmtCodec{}
-	formatted := RenderString(original, codec)
-	if u := codec.Unsupported(); u != nil {
-		t.Skipf("input is unsupported: %v", u)
-	}
+	formatted := formatAndSkipIfUnsupported(t, original)
 	formattedRender := RenderString(formatted, &HTMLCodec{})
 	originalRender := RenderString(original, &HTMLCodec{})
 	if formattedRender != originalRender {
@@ -84,7 +114,7 @@ func testFmtPreservesHTMLRender(t *testing.T, original string) {
 }
 
 func TestFmtIsIdempotent(t *testing.T) {
-	testutil.Set(t, &UnescapeEntities, html.UnescapeString)
+	testutil.Set(t, &UnescapeHTML, html.UnescapeString)
 	for _, tc := range fmtTestCases {
 		t.Run(tc.testName(), func(t *testing.T) {
 			testFmtIsIdempotent(t, tc.Markdown)
@@ -100,12 +130,7 @@ func FuzzFmtIsIdempotent(f *testing.F) {
 }
 
 func testFmtIsIdempotent(t *testing.T, original string) {
-	t.Helper()
-	codec := &FmtCodec{}
-	formatted1 := RenderString(original, codec)
-	if u := codec.Unsupported(); u != nil {
-		t.Skipf("input is unsupported: %v", u)
-	}
+	formatted1 := formatAndSkipIfUnsupported(t, original)
 	formatted2 := RenderString(formatted1, &FmtCodec{})
 	if formatted1 != formatted2 {
 		t.Errorf("original:\n%s\nformatted1:\n%s\nformatted2:\n%s\n"+
@@ -113,4 +138,17 @@ func testFmtIsIdempotent(t *testing.T, original string) {
 			hr+"\n"+original+hr, hr+"\n"+formatted1+hr, hr+"\n"+formatted2+hr,
 			cmp.Diff(formatted1, formatted2))
 	}
+}
+
+func formatAndSkipIfUnsupported(t *testing.T, original string) string {
+	t.Helper()
+	if strings.Contains(original, "\t") {
+		t.Skipf("input contains tab")
+	}
+	codec := &FmtCodec{}
+	formatted := RenderString(original, codec)
+	if u := codec.Unsupported(); u != nil {
+		t.Skipf("input uses unsupported feature: %v", u)
+	}
+	return formatted
 }

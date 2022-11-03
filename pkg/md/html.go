@@ -108,6 +108,10 @@ func (c *HTMLCodec) doInline(op InlineOp) {
 			attrs.set("title", op.Text)
 		}
 		fmt.Fprintf(c, "<img%s />", &attrs)
+	case OpAutolink:
+		var attrs attrBuilder
+		attrs.set("href", escapeURL(op.Dest))
+		fmt.Fprintf(c, "<a%s>%s</a>", &attrs, escapeHTML(op.Text))
 	default:
 		c.WriteString(inlineTags[op.Type])
 	}

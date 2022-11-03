@@ -3,7 +3,10 @@ package md
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // FmtCodec is a codec that formats Markdown in a specific style.
@@ -14,29 +17,35 @@ import (
 //
 //   - Blocks are always separated by a blank line.
 //
-//   - Thematic breaks always use "***".
+//   - Thematic breaks use "***" where possible, falling back to "---" if using
+//     the former is problematic.
 //
-//   - Code blocks always use the fenced syntax; in other words, indented code
-//     blocks are never used.
+//   - Code blocks are always fenced, never idented.
 //
-//   - Code fences use backquotes (like "```"), except when the info string
-//     contains a backquote, in which case tildes are used (like "~~~").
+//   - Code fences use backquotes (like "```") wherever possible, falling back
+//     to "~~~" if using the former is problematic.
 //
-//   - Container blocks never omit their markers; in other words, lazy
-//     continuation is never used.
+//   - Continuation markers of container blocks ("> " for blockquotes and spaces
+//     for list items) are never omitted; in other words, lazy continuation is
+//     never used.
 //
-//   - Bullet lists use "-" as a marker, except when following immediately after
-//     another bullet list that already uses "-", in which case "*" is used.
+//   - Blockquotes use "> ", never omitting the space.
 //
-//   - Ordered lists use "X." (X being a number) as a marker, except when
-//     following immediately after another ordered list that already uses "X.",
-//     in which case "X)" is used.
+//   - Bullet lists use "-" as markers where possible, falling back to "*" if
+//     using the former is problematic.
+//
+//   - Ordered lists use "X." (X being a number) where possible, falling back to
+//     "X)" if using the former is problematic.
+//
+//   - Bullet lists and ordered lists are indented 4 spaces where possible.
 //
 //   - Emphasis always uses "*".
 //
 //   - Strong emphasis always uses "**".
 //
 //   - Hard line break always uses an explicit "\".
+//
+//   - Internal spaces in paragraphs are coalesced.
 type FmtCodec struct {
 	pieces []string
 	Width  string
@@ -54,8 +63,6 @@ type FmtCodec struct {
 	// last Op was OpBulletListEnd or OpOrderedListEnd. Used to alternate list
 	// punctuation when a list follows directly after another of the same type.
 	poppedListPunct rune
-	// Whether the next new stanza should be suppressed.
-	suppressNewStanza bool
 	// Whether a new stanza was already started.
 	lastOpType OpType
 }
@@ -68,6 +75,11 @@ type FmtUnsupported struct {
 	// Input contains emphasis or strong emphasis that follows immediately after
 	// another emphasis or strong emphasis (not necessarily of the same type).
 	ConsecutiveEmphasisOrStrongEmphasis bool
+	// Input contains newline inside emphasis or strong emphasis.
+	NewlineWithinEmphasisOrStrongEmphasis bool
+	// A code block or HTML block that is expected to have an explicit closer
+	// is not closed properly.
+	CodeBlockOrHTMLBlockHasMissingCloser bool
 }
 
 func (c *FmtCodec) String() string { return strings.Join(c.pieces, "") }
@@ -91,6 +103,9 @@ var (
 		// TODO: Don't escape _ when in-word
 		"_", "\\_",
 	).Replace
+	escapeAutolink = strings.NewReplacer(
+		"&", "&amp;", "<", "&lt;", ">", "&gt;",
+	).Replace
 )
 
 var (
@@ -107,22 +122,26 @@ func (c *FmtCodec) Do(op Op) {
 	switch op.Type {
 	case OpThematicBreak, OpHeading, OpCodeBlock, OpHTMLBlock, OpParagraph,
 		OpBlockquoteStart, OpBulletListStart, OpOrderedListStart:
-		if c.suppressNewStanza {
-			c.suppressNewStanza = false
-		} else {
-			if len(c.pieces) > 0 && c.lastOpType != OpBlockquoteStart && c.lastOpType != OpListItemStart {
-				c.writeLine("")
-			}
+		if len(c.pieces) > 0 && c.lastOpType != OpBlockquoteStart && c.lastOpType != OpListItemStart {
+			c.writeLine("")
 		}
 	}
 	if op.MissingCloser {
-		c.suppressNewStanza = true
+		c.setUnsupported().CodeBlockOrHTMLBlockHasMissingCloser = true
 	}
-	c.lastOpType = op.Type
+	defer func() {
+		c.lastOpType = op.Type
+	}()
 
 	switch op.Type {
 	case OpThematicBreak:
-		c.writeLine("***")
+		if len(c.containers) > 0 && strings.TrimSpace(c.containers[len(c.containers)-1].marker) == "*" {
+			// If the last marker to write is "*", using "***" will swallow the
+			// marker.
+			c.writeLine("---")
+		} else {
+			c.writeLine("***")
+		}
 	case OpHeading:
 		c.startLine()
 		c.write(strings.Repeat("#", op.Number) + " ")
@@ -138,6 +157,27 @@ func (c *FmtCodec) Do(op Op) {
 			c.writeLine(endFence)
 		}
 	case OpHTMLBlock:
+		if c.lastOpType == OpListItemStart && strings.HasPrefix(op.Lines[0], " ") {
+			// HTML blocks can contain 1 to 3 leading spaces. When it appears at
+			// the first line of a list item, following "-   " or "*   ", those
+			// spaces will either get merged into the list marker (in case of 1
+			// leading space) or turn the HTML block into an indented code block
+			// (in case of 2 or 3 leading spaces).
+			//
+			// To fix this, use a blank line as the first line, and start the
+			// HTML block on the second line. The marker needs to be shortened
+			// to contain exactly one trailing space, as is required by rule 3
+			// in https://spec.commonmark.org/0.30/#list-items.
+			//
+			// Note that this only matters for HTML blocks. Indented code blocks
+			// has the same behavior regarding leading spaces, but we always
+			// turn them into fenced code blocks, moving the content to the
+			// second line and avoiding this problem. Other types of blocks
+			// either don't allow leading spaces, or don't preserve them.
+			lastMarker := &c.containers[len(c.containers)-1].marker
+			*lastMarker = strings.TrimRight(*lastMarker, " ") + " "
+			c.writeLine("")
+		}
 		for _, line := range op.Lines {
 			c.writeLine(line)
 		}
@@ -170,8 +210,12 @@ func (c *FmtCodec) Do(op Op) {
 			// bullet punctuations and spaces only. When there are at least 3
 			// instances of the same punctuation, this line will be become a
 			// thematic break instead. Avoid this by varying the punctuation.
-			for i, ct := range c.containers {
-				if i >= 2 && identicalBulletMarkers(c.containers[i-2:i+1]) {
+			//
+			// We use "-" whenever possible. If there are 3 consecutive
+			// identical starter marks, they can only be all "-    ".
+			for i := 2; i < len(c.containers); i++ {
+				ct := c.containers[i]
+				if allDashBullets(c.containers[i-2 : i+1]) {
 					ct.punct = pickPunct('-', '*', ct.punct)
 					ct.marker = fmt.Sprintf("%c   ", ct.punct)
 				}
@@ -218,9 +262,9 @@ func codeFences(info string, lines []string) (string, string) {
 	return fence + escapeText(info), fence
 }
 
-func identicalBulletMarkers(containers []*fmtContainer) bool {
+func allDashBullets(containers []*fmtContainer) bool {
 	for _, ct := range containers {
-		if ct.typ != fmtBulletItem || ct.marker != containers[0].marker {
+		if ct.marker != "-   " {
 			return false
 		}
 	}
@@ -235,20 +279,43 @@ var (
 
 func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 	emphasis := 0
-	prevIsEmphasisEnd := false
 
 	for i, op := range ops {
+		startOfLine := i == 0 || (ops[i-1].Type == OpNewLine && (i-1 == 0 || ops[i-2].Type != OpNewLine))
+		endOfLine := i == len(ops)-1 || ops[i+1].Type == OpNewLine
+		prevIsEmphasisEnd := i > 0 && isEmphasisEnd(ops[i-1])
+
 		switch op.Type {
 		case OpText:
 			text := op.Text
-			startOfLine := i == 0 || (ops[i-1].Type == OpNewLine && (i-1 == 0 || ops[i-2].Type != OpNewLine))
-			endOfLine := i == len(ops)-1 || ops[i+1].Type == OpNewLine
-			if startOfLine && endOfLine && thematicBreakRegexp.MatchString(text) {
-				c.write(`\`)
-				c.write(text)
-				continue
+			if startOfLine && endOfLine && !atxHeading && !startsWithSpaceOrTab(text) {
+				// If a line contains a single OpText, there is a danger for the
+				// text to be parsed as a thematic break.
+				//
+				// The case where the text starts with a space or a tab is
+				// handled elsewhere, so we can assume that the text does not
+				// start with space or tab.
+				line := text
+				if i == 0 {
+					// If we are the very beginning of the paragraph, we also
+					// need to include bullet markers that can be merged with
+					// the text to form a thematic break.
+					//
+					// The condition checking the first byte will also match
+					// markers like "1." if the text starts with "1", but since
+					// that will never match a thematic break, it doesn't
+					// matter. It will also cause the loop to end at newline.
+					for j := len(c.pieces) - 1; j >= 0 && c.pieces[j][0] == text[0]; j-- {
+						line = c.pieces[j] + line
+					}
+				}
+				if thematicBreakRegexp.MatchString(line) {
+					c.write(`\`)
+					c.write(text)
+					continue
+				}
 			}
-			if startOfLine || i == 0 {
+			if startOfLine {
 				switch text[0] {
 				case ' ':
 					c.write("&#32;")
@@ -297,7 +364,26 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 						}
 					}
 				}
+			} else if i > 0 && isEmphasisStart(ops[i-1]) {
+				if r, l := utf8.DecodeRuneInString(text); l > 0 && unicode.IsSpace(r) {
+					// Escape space immediately after emphasis start, since a *
+					// before a space cannot open emphasis.
+					c.write("&#" + strconv.Itoa(int(r)) + ";")
+					text = text[l:]
+				}
+			} else if i > 1 && isEmphasisEnd(ops[i-1]) && ops[i-2].Type == OpText {
+				if r, l := utf8.DecodeLastRuneInString(ops[i-2].Text); l > 0 && unicode.IsSpace(r) || isUnicodePunct(r) {
+					if r, l := utf8.DecodeRuneInString(text); l > 0 && !unicode.IsSpace(r) && !isUnicodePunct(r) {
+						// Escape "other" (word character) immediately after
+						// emphasis end if emphasis content ended with a
+						// punctuation or a space (the space has been escaped
+						// into a punctuation).
+						c.write("&#" + strconv.Itoa(int(r)) + ";")
+						text = text[l:]
+					}
+				}
 			}
+
 			suffix := ""
 			if endOfLine && text != "" {
 				switch text[len(text)-1] {
@@ -321,13 +407,58 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 			} else if strings.HasSuffix(text, "!") && i < len(ops)-1 && ops[i+1].Type == OpLinkStart {
 				text = text[:len(text)-1]
 				suffix = `\!`
+			} else if i < len(ops)-1 && isEmphasisEnd(ops[i+1]) {
+				if r, l := utf8.DecodeLastRuneInString(text); l > 0 && unicode.IsSpace(r) {
+					// Escape space immediately before emphasis end, since a *
+					// after a space cannot close emphasis.
+					text = text[:len(text)-l]
+					suffix = "&#" + strconv.Itoa(int(r)) + ";"
+				}
+			} else if i < len(ops)-2 && isEmphasisStart(ops[i+1]) && ops[i+2].Type == OpText {
+				if r, l := utf8.DecodeRuneInString(ops[i+2].Text); l > 0 && unicode.IsSpace(r) || isUnicodePunct(r) {
+					if r, l := utf8.DecodeLastRuneInString(text); l > 0 && !unicode.IsSpace(r) && !isUnicodePunct(r) {
+						// Escape "other" (word character) immediately before
+						// emphasis start if emphasis content starts with a
+						// punctuation or a space (which will be escaped into a
+						// punctuation).
+						text = text[:len(text)-l]
+						suffix = "&#" + strconv.Itoa(int(r)) + ";"
+					}
+				}
 			}
+
 			c.write(escapeText(text))
 			c.write(suffix)
 		case OpRawHTML:
-			c.write(op.Text)
+			// Inline raw HTML may contain embedded newlines; write them
+			// separately.
+			lines := strings.Split(op.Text, "\n")
+			if startOfLine && i > 0 && strings.HasPrefix(op.Text, "<") {
+				// If the first line appears at the start of the line, it may be
+				// parsable as an HTML block. The only way I have found to
+				// prevent this is to make sure that it starts with at least 4
+				// spaces; in fact, this exact case came up in a fuzz test where
+				// inline raw HTML appears at the start of the second line,
+				// preceded by 4 spaces. This won't be parsed as an indented
+				// code block since the latter can't interrupt a paragraph, but
+				// will prevent an HTML block to be parsed.
+				//
+				// If this piece of inline raw HTML appears at the very start,
+				// it means it can't be parsed as an HTML block, so there is no
+				// need to prevent it.
+				c.write("    ")
+			}
+			c.write(lines[0])
+			for _, line := range lines[1:] {
+				c.finishLine()
+				c.startLine()
+				c.write(line)
+			}
 		case OpNewLine:
-			if i == 0 || ops[i-1].Type == OpNewLine {
+			if emphasis > 0 {
+				c.setUnsupported().NewlineWithinEmphasisOrStrongEmphasis = true
+			}
+			if atxHeading || i == 0 || i == len(ops)-1 || ops[i-1].Type == OpNewLine {
 				c.write("&NewLine;")
 			} else {
 				c.finishLine()
@@ -384,12 +515,24 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 			c.write("]")
 			c.writeLinkTail(op.Dest, op.Text)
 		case OpImage:
-			c.write("![" + escapeText(op.Alt) + "]")
+			c.write("![")
+			c.write(strings.ReplaceAll(escapeText(op.Alt), "\n", "&NewLine;"))
+			c.write("]")
 			c.writeLinkTail(op.Dest, op.Text)
+		case OpAutolink:
+			c.write("<")
+			if op.Dest == "mailto:"+op.Text {
+				// Don't escape email autolinks. This is because the regexp that
+				// matches email autolinks does not allow ";", so escaping them
+				// makes the output no longer an email autolink.
+				c.write(op.Text)
+			} else {
+				c.write(escapeAutolink(op.Text))
+			}
+			c.write(">")
 		case OpHardLineBreak:
 			c.write("\\")
 		}
-		prevIsEmphasisEnd = op.Type == OpEmphasisEnd || op.Type == OpStrongEmphasisEnd
 	}
 }
 
@@ -411,21 +554,21 @@ func matchLens(pieces []string, pattern *regexp.Regexp) map[int]bool {
 	return hasRunWithLen
 }
 
+const asciiControlOrSpaceOrParens = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f ()"
+
 func (c *FmtCodec) writeLinkTail(dest, title string) {
-	c.write("(" + escapeLinkDest(dest))
+	c.write("(")
+	if strings.ContainsAny(dest, asciiControlOrSpaceOrParens) {
+		c.write("<" + strings.ReplaceAll(escapeText(dest), ">", "&gt;") + ">")
+	} else if dest == "" && title != "" {
+		c.write("<>")
+	} else {
+		c.write(escapeText(dest))
+	}
 	if title != "" {
 		c.write(" " + wrapAndEscapeLinkTitle(title))
 	}
 	c.write(")")
-}
-
-const asciiControlOrSpaceOrParens = "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f ()"
-
-func escapeLinkDest(dest string) string {
-	if strings.ContainsAny(dest, asciiControlOrSpaceOrParens) {
-		return "<" + strings.ReplaceAll(escapeText(dest), ">", "&gt;") + ">"
-	}
-	return escapeText(dest)
 }
 
 var escapeParens = strings.NewReplacer("(", `\(`, ")", `\)`).Replace
@@ -502,4 +645,12 @@ func pickPunct(def, alt, banned rune) rune {
 		return def
 	}
 	return alt
+}
+
+func isEmphasisStart(op InlineOp) bool {
+	return op.Type == OpEmphasisStart || op.Type == OpStrongEmphasisStart
+}
+
+func isEmphasisEnd(op InlineOp) bool {
+	return op.Type == OpEmphasisEnd || op.Type == OpStrongEmphasisEnd
 }

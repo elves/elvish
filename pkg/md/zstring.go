@@ -48,12 +48,13 @@ func _() {
 	_ = x[OpLinkStart-8]
 	_ = x[OpLinkEnd-9]
 	_ = x[OpImage-10]
-	_ = x[OpHardLineBreak-11]
+	_ = x[OpAutolink-11]
+	_ = x[OpHardLineBreak-12]
 }
 
-const _InlineOpType_name = "OpTextOpCodeSpanOpRawHTMLOpNewLineOpEmphasisStartOpEmphasisEndOpStrongEmphasisStartOpStrongEmphasisEndOpLinkStartOpLinkEndOpImageOpHardLineBreak"
+const _InlineOpType_name = "OpTextOpCodeSpanOpRawHTMLOpNewLineOpEmphasisStartOpEmphasisEndOpStrongEmphasisStartOpStrongEmphasisEndOpLinkStartOpLinkEndOpImageOpAutolinkOpHardLineBreak"
 
-var _InlineOpType_index = [...]uint8{0, 6, 16, 25, 34, 49, 62, 83, 102, 113, 122, 129, 144}
+var _InlineOpType_index = [...]uint8{0, 6, 16, 25, 34, 49, 62, 83, 102, 113, 122, 129, 139, 154}
 
 func (i InlineOpType) String() string {
 	if i >= InlineOpType(len(_InlineOpType_index)-1) {
