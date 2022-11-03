@@ -43,14 +43,10 @@ type FmtCodec struct {
 
 	unsupported *FmtUnsupported
 
-	// Number of trailing newlines in the currently written text. Used to
-	// determine how many additional newlines are needed to start a new block.
-	trailingNewlines int
-
 	// Current active container blocks.
 	containers stack[*fmtContainer]
 	// The value of len(pieces) when the last container block was started. Used
-	// to determine whether a container is empty, in which case an empty line is
+	// to determine whether a container is empty, in which case a blank line is
 	// needed to preserve the container.
 	containerStart int
 
@@ -58,8 +54,10 @@ type FmtCodec struct {
 	// last Op was OpBulletListEnd or OpOrderedListEnd. Used to alternate list
 	// punctuation when a list follows directly after another of the same type.
 	poppedListPunct rune
-	// Whether the next blank line should be suppressed.
-	suppressBlankLine bool
+	// Whether the next new stanza should be suppressed.
+	suppressNewStanza bool
+	// Whether a new stanza was already started.
+	lastOpType OpType
 }
 
 // FmtUnsupported contains information about use of unsupported features.
@@ -108,48 +106,51 @@ func (c *FmtCodec) Do(op Op) {
 
 	switch op.Type {
 	case OpThematicBreak, OpHeading, OpCodeBlock, OpHTMLBlock, OpParagraph,
-		OpBlockquoteStart, OpListItemStart:
-		if c.suppressBlankLine {
-			c.suppressBlankLine = false
+		OpBlockquoteStart, OpBulletListStart, OpOrderedListStart:
+		if c.suppressNewStanza {
+			c.suppressNewStanza = false
 		} else {
-			if len(c.pieces) > 0 {
-				c.writeln("")
+			if len(c.pieces) > 0 && c.lastOpType != OpBlockquoteStart && c.lastOpType != OpListItemStart {
+				c.writeLine("")
 			}
 		}
 	}
 	if op.MissingCloser {
-		c.suppressBlankLine = true
+		c.suppressNewStanza = true
 	}
+	c.lastOpType = op.Type
 
 	switch op.Type {
 	case OpThematicBreak:
-		c.writeln("***")
+		c.writeLine("***")
 	case OpHeading:
+		c.startLine()
 		c.write(strings.Repeat("#", op.Number) + " ")
 		c.doInlineContent(op.Content, true)
-		c.newline()
+		c.finishLine()
 	case OpCodeBlock:
 		startFence, endFence := codeFences(op.Info, op.Lines)
-		c.writeln(startFence)
+		c.writeLine(startFence)
 		for _, line := range op.Lines {
-			c.writeln(line)
+			c.writeLine(line)
 		}
 		if !op.MissingCloser {
-			c.writeln(endFence)
+			c.writeLine(endFence)
 		}
 	case OpHTMLBlock:
 		for _, line := range op.Lines {
-			c.writeln(line)
+			c.writeLine(line)
 		}
 	case OpParagraph:
+		c.startLine()
 		c.doInlineContent(op.Content, false)
-		c.newline()
+		c.finishLine()
 	case OpBlockquoteStart:
 		c.containerStart = len(c.pieces)
 		c.containers.push(&fmtContainer{typ: fmtBlockquote, marker: "> "})
 	case OpBlockquoteEnd:
 		if c.containerStart == len(c.pieces) {
-			c.newline()
+			c.writeLine("")
 		}
 		c.containers.pop()
 	case OpListItemStart:
@@ -175,7 +176,7 @@ func (c *FmtCodec) Do(op Op) {
 					ct.marker = fmt.Sprintf("%c   ", ct.punct)
 				}
 			}
-			c.newline()
+			c.writeLine("")
 		}
 		c.containers.peek().number++
 	case OpBulletListStart:
@@ -240,13 +241,14 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 		switch op.Type {
 		case OpText:
 			text := op.Text
+			startOfLine := i == 0 || (ops[i-1].Type == OpNewLine && (i-1 == 0 || ops[i-2].Type != OpNewLine))
 			endOfLine := i == len(ops)-1 || ops[i+1].Type == OpNewLine
-			if c.startOfLine() && endOfLine && thematicBreakRegexp.MatchString(text) {
+			if startOfLine && endOfLine && thematicBreakRegexp.MatchString(text) {
 				c.write(`\`)
 				c.write(text)
 				continue
 			}
-			if c.startOfLine() || i == 0 {
+			if startOfLine || i == 0 {
 				switch text[0] {
 				case ' ':
 					c.write("&#32;")
@@ -283,7 +285,7 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 							tail := text[len(m[0]):]
 							if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
 								number, punct := m[1], m[2]
-								if c.startOfStanza() || strings.TrimLeft(number, "0") == "1" {
+								if i == 0 || strings.TrimLeft(number, "0") == "1" {
 									c.write(number)
 									c.write(`\` + punct)
 									text = tail
@@ -328,7 +330,8 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 			if i == 0 || ops[i-1].Type == OpNewLine {
 				c.write("&NewLine;")
 			} else {
-				c.newline()
+				c.finishLine()
+				c.startLine()
 			}
 		case OpCodeSpan:
 			text := op.Text
@@ -450,38 +453,25 @@ func wrapAndEscapeLinkTitle(title string) string {
 	}
 }
 
-func (c *FmtCodec) write(s string) {
-	if len(c.pieces) == 0 || c.pieces[len(c.pieces)-1] == "\n" {
-		for _, container := range c.containers {
-			// TODO: Remove trailing spaces on empty lines
-			c.appendPiece(container.useMarker())
-		}
+func (c *FmtCodec) startLine() {
+	for _, container := range c.containers {
+		// TODO: Remove trailing spaces on empty lines
+		c.write(container.useMarker())
 	}
-	c.appendPiece(s)
-	c.trailingNewlines = 0
 }
 
-func (c *FmtCodec) newline() {
+func (c *FmtCodec) finishLine() {
 	c.write("\n")
-	c.trailingNewlines++
 }
 
-func (c *FmtCodec) writeln(s string) {
+func (c *FmtCodec) writeLine(s string) {
+	c.startLine()
 	c.write(s)
-	c.newline()
+	c.finishLine()
 }
 
-func (c *FmtCodec) appendPiece(s string) int {
+func (c *FmtCodec) write(s string) {
 	c.pieces = append(c.pieces, s)
-	return len(c.pieces) - 1
-}
-
-func (c *FmtCodec) startOfLine() bool {
-	return len(c.pieces) == 0 || c.trailingNewlines >= 1
-}
-
-func (c *FmtCodec) startOfStanza() bool {
-	return len(c.pieces) == 0 || c.trailingNewlines >= 2
 }
 
 type fmtContainer struct {
