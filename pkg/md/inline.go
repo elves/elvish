@@ -426,7 +426,7 @@ func (p *inlineParser) processEmphasis(bottom *delim) {
 			*openerBottom = bottom
 		}
 		var opener *delim
-		for p := closer.prev; p != *openerBottom; p = p.prev {
+		for p := closer.prev; p != *openerBottom && p != bottom; p = p.prev {
 			if p.canOpen && p.typ == closer.typ &&
 				((!p.canClose && !closer.canOpen) ||
 					(p.n+closer.n)%3 != 0 || (p.n%3 == 0 && closer.n%3 == 0)) {
