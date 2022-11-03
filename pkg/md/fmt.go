@@ -32,8 +32,7 @@ import (
 //     following immediately after another ordered list that already uses "X.",
 //     in which case "X)" is used.
 //
-//   - Emphasis uses "*", except when following immediately after another
-//     emphasis that already uses "*", in which case "_" is used.
+//   - Emphasis always uses "*".
 //
 //   - Strong emphasis always uses "**".
 //
@@ -42,12 +41,11 @@ type FmtCodec struct {
 	pieces []string
 	Width  string
 
+	unsupported *FmtUnsupported
+
 	// Number of trailing newlines in the currently written text. Used to
 	// determine how many additional newlines are needed to start a new block.
 	trailingNewlines int
-
-	// Currently unclosed emphasis markers.
-	emphasisMarkers stack[rune]
 
 	// Current active container blocks.
 	containers stack[*fmtContainer]
@@ -64,7 +62,29 @@ type FmtCodec struct {
 	suppressBlankLine bool
 }
 
+// FmtUnsupported contains information about use of unsupported features.
+type FmtUnsupported struct {
+	// Input contains emphasis or strong emphasis nested in another emphasis or
+	// strong emphasis (not necessarily of the same type).
+	NestedEmphasisOrStrongEmphasis bool
+	// Input contains emphasis or strong emphasis that follows immediately after
+	// another emphasis or strong emphasis (not necessarily of the same type).
+	ConsecutiveEmphasisOrStrongEmphasis bool
+}
+
 func (c *FmtCodec) String() string { return strings.Join(c.pieces, "") }
+
+// Unsupported returns information about use of unsupported features that may
+// make the output incorrect. It returns nil if there is no use of unsupported
+// features.
+func (c *FmtCodec) Unsupported() *FmtUnsupported { return c.unsupported }
+
+func (c *FmtCodec) setUnsupported() *FmtUnsupported {
+	if c.unsupported == nil {
+		c.unsupported = &FmtUnsupported{}
+	}
+	return c.unsupported
+}
 
 var (
 	escapeText = strings.NewReplacer(
@@ -213,6 +233,9 @@ var (
 )
 
 func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
+	emphasis := 0
+	prevIsEmphasisEnd := false
+
 	for i, op := range ops {
 		switch op.Type {
 		case OpText:
@@ -329,25 +352,29 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 			}
 			c.write(delim)
 		case OpEmphasisStart:
-			marker := '*'
-			if len(c.pieces) > 0 {
-				// Use "_" instead if this follows immediately after another
-				// OpEmphasisStart/End or OpStrongEmphasisStart/End that already
-				// uses "*". In all cases the marker is written as a standalone
-				// piece.
-				last := c.pieces[len(c.pieces)-1]
-				if last == "*" || last == "**" {
-					marker = '_'
-				}
+			c.write("*")
+			emphasis++
+			if emphasis >= 2 {
+				c.setUnsupported().NestedEmphasisOrStrongEmphasis = true
 			}
-			c.emphasisMarkers.push(marker)
-			c.write(string(marker))
+			if prevIsEmphasisEnd {
+				c.setUnsupported().ConsecutiveEmphasisOrStrongEmphasis = true
+			}
 		case OpEmphasisEnd:
-			c.write(string(c.emphasisMarkers.pop()))
+			c.write("*")
+			emphasis--
 		case OpStrongEmphasisStart:
 			c.write("**")
+			emphasis++
+			if emphasis >= 2 {
+				c.setUnsupported().NestedEmphasisOrStrongEmphasis = true
+			}
+			if prevIsEmphasisEnd {
+				c.setUnsupported().ConsecutiveEmphasisOrStrongEmphasis = true
+			}
 		case OpStrongEmphasisEnd:
 			c.write("**")
+			emphasis--
 		case OpLinkStart:
 			c.write("[")
 		case OpLinkEnd:
@@ -359,6 +386,7 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 		case OpHardLineBreak:
 			c.write("\\")
 		}
+		prevIsEmphasisEnd = op.Type == OpEmphasisEnd || op.Type == OpStrongEmphasisEnd
 	}
 }
 

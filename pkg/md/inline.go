@@ -128,22 +128,9 @@ func (p *inlineParser) render() {
 			}
 		case '*', '_':
 			p.consumeRun(b)
-			next, lNext := utf8.DecodeRuneInString(p.text[p.pos:])
-			prev, lPrev := utf8.DecodeLastRuneInString(p.text[:begin])
-			// Left-flanking, right-flanking, can-open and can-close are defined
-			// in https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis
-			leftFlanking := lNext > 0 && !unicode.IsSpace(next) &&
-				(!isUnicodePunct(next) ||
-					(lPrev == 0 || unicode.IsSpace(prev) || isUnicodePunct(prev)))
-			rightFlanking := lPrev > 0 && !unicode.IsSpace(prev) &&
-				(!isUnicodePunct(prev) ||
-					(lNext == 0 || unicode.IsSpace(next) || isUnicodePunct(next)))
-			canOpen := leftFlanking
-			canClose := rightFlanking
-			if b == '_' {
-				canOpen = leftFlanking && (!rightFlanking || (lPrev > 0 && isUnicodePunct(prev)))
-				canClose = rightFlanking && (!leftFlanking || (lNext > 0 && isUnicodePunct(next)))
-			}
+			canOpen, canClose := canOpenCloseEmphasis(rune(b),
+				emptyToNewline(utf8.DecodeLastRuneInString(p.text[:begin])),
+				emptyToNewline(utf8.DecodeRuneInString(p.text[p.pos:])))
 			bufIdx := p.buf.push(textPiece(p.text[begin:p.pos]))
 			p.delims.push(
 				&delim{typ: b, bufIdx: bufIdx,
@@ -344,6 +331,58 @@ func (p *inlineParser) consumeRun(b byte) {
 	for p.pos < len(p.text) && p.text[p.pos] == b {
 		p.pos++
 	}
+}
+
+// Processes the (rune, int) result of utf8.Decode* so that an empty result is
+// converted to '\n'.
+func emptyToNewline(r rune, l int) rune {
+	if l == 0 {
+		return '\n'
+	}
+	return r
+}
+
+// Returns whether an emphasis punctuation can open or close an emphasis, when
+// following prev and preceding next. Start and end of file should be
+// represented by '\n'.
+//
+// The criteria are described in:
+// https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis
+//
+// The algorithm is a bit complicated. Here is another way to describe the
+// criteria:
+//
+//   - Every rune falls into one of three categories: space, punctuation and
+//     other. "Other" is the category of word runes in "intraword emphasis".
+//
+//   - The following tables describe whether a punctuation can open or close
+//     emphasis:
+//
+//     Can open emphasis:
+//
+//     |            | next space | next punct | next other |
+//     | ---------- | ---------- | ---------- | ---------- |
+//     | prev space |            |   _ or *   |   _ or *   |
+//     | prev punct |            |   _ or *   |   _ or *   |
+//     | prev other |            |            |   only *   |
+//
+//     Can close emphasis:
+//
+//     |            | next space | next punct | next other |
+//     | ---------- | ---------- | ---------- | ---------- |
+//     | prev space |            |            |            |
+//     | prev punct |   _ or *   |   _ or *   |            |
+//     | prev other |   _ or *   |   _ or *   |   only *   |
+func canOpenCloseEmphasis(b, prev, next rune) (bool, bool) {
+	leftFlanking := !unicode.IsSpace(next) &&
+		(!isUnicodePunct(next) || unicode.IsSpace(prev) || isUnicodePunct(prev))
+	rightFlanking := !unicode.IsSpace(prev) &&
+		(!isUnicodePunct(prev) || unicode.IsSpace(next) || isUnicodePunct(next))
+	if b == '*' {
+		return leftFlanking, rightFlanking
+	}
+	return leftFlanking && (!rightFlanking || isUnicodePunct(prev)),
+		rightFlanking && (!leftFlanking || isUnicodePunct(next))
 }
 
 // Returns the starting index of the next backtick run identical to the given

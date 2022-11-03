@@ -64,7 +64,11 @@ func FuzzFmtPreservesHTMLRender(f *testing.F) {
 
 func testFmtPreservesHTMLRender(t *testing.T, original string) {
 	t.Helper()
-	formatted := RenderString(original, &FmtCodec{})
+	codec := &FmtCodec{}
+	formatted := RenderString(original, codec)
+	if u := codec.Unsupported(); u != nil {
+		t.Skipf("input is unsupported: %v", u)
+	}
 	formattedRender := RenderString(formatted, &HTMLCodec{})
 	originalRender := RenderString(original, &HTMLCodec{})
 	if formattedRender != originalRender {
@@ -97,7 +101,11 @@ func FuzzFmtIsIdempotent(f *testing.F) {
 
 func testFmtIsIdempotent(t *testing.T, original string) {
 	t.Helper()
-	formatted1 := RenderString(original, &FmtCodec{})
+	codec := &FmtCodec{}
+	formatted1 := RenderString(original, codec)
+	if u := codec.Unsupported(); u != nil {
+		t.Skipf("input is unsupported: %v", u)
+	}
 	formatted2 := RenderString(formatted1, &FmtCodec{})
 	if formatted1 != formatted2 {
 		t.Errorf("original:\n%s\nformatted1:\n%s\nformatted2:\n%s\n"+
