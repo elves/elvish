@@ -113,33 +113,6 @@ func testFmtPreservesHTMLRender(t *testing.T, original string) {
 	}
 }
 
-func TestFmtIsIdempotent(t *testing.T) {
-	testutil.Set(t, &UnescapeHTML, html.UnescapeString)
-	for _, tc := range fmtTestCases {
-		t.Run(tc.testName(), func(t *testing.T) {
-			testFmtIsIdempotent(t, tc.Markdown)
-		})
-	}
-}
-
-func FuzzFmtIsIdempotent(f *testing.F) {
-	for _, tc := range fmtTestCases {
-		f.Add(tc.Markdown)
-	}
-	f.Fuzz(testFmtIsIdempotent)
-}
-
-func testFmtIsIdempotent(t *testing.T, original string) {
-	formatted1 := formatAndSkipIfUnsupported(t, original)
-	formatted2 := RenderString(formatted1, &FmtCodec{})
-	if formatted1 != formatted2 {
-		t.Errorf("original:\n%s\nformatted1:\n%s\nformatted2:\n%s\n"+
-			"diff (-formatted1 +formatted2):\n%s",
-			hr+"\n"+original+hr, hr+"\n"+formatted1+hr, hr+"\n"+formatted2+hr,
-			cmp.Diff(formatted1, formatted2))
-	}
-}
-
 func formatAndSkipIfUnsupported(t *testing.T, original string) string {
 	t.Helper()
 	if strings.Contains(original, "\t") {
