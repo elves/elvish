@@ -332,6 +332,10 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 					// markers like "1." if the text starts with "1", but since
 					// that will never match a thematic break, it doesn't
 					// matter. It will also cause the loop to end at newline.
+					//
+					// The code here depends on the fact that bullet markers are
+					// written as individual pieces. This is guaranteed by the
+					// startLine method.
 					for j := len(c.pieces) - 1; j >= 0 && c.pieces[j][0] == text[0]; j-- {
 						line = c.pieces[j] + line
 					}
@@ -662,6 +666,9 @@ func wrapAndEscapeLinkTitle(title string) string {
 }
 
 func (c *FmtCodec) startLine() {
+	// Note: the fact that the container markers are written as individual
+	// pieces is depended on by the part of doInlineContent escaping texts that
+	// look like thematic breaks.
 	for _, container := range c.containers {
 		c.write(container.useMarker())
 	}
@@ -672,7 +679,19 @@ func (c *FmtCodec) finishLine() {
 }
 
 func (c *FmtCodec) writeLine(s string) {
-	// TODO: Trim markers of trailing spaces if s is empty
+	if s == "" {
+		// When writing a blank line, trim trailing spaces from the markers.
+		//
+		// This duplicates startLine, but merges the markers for ease of
+		// trimming.
+		var markers strings.Builder
+		for _, container := range c.containers {
+			markers.WriteString(container.useMarker())
+		}
+		c.write(strings.TrimRight(markers.String(), " "))
+		c.finishLine()
+		return
+	}
 	c.startLine()
 	c.write(s)
 	c.finishLine()
