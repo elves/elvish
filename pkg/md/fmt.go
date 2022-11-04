@@ -44,8 +44,6 @@ import (
 //   - Strong emphasis always uses "**".
 //
 //   - Hard line break always uses an explicit "\".
-//
-//   - Internal spaces in paragraphs are coalesced.
 type FmtCodec struct {
 	pieces []string
 	Width  string
@@ -269,162 +267,64 @@ func allDashBullets(containers []*fmtContainer) bool {
 	return true
 }
 
-var (
-	leadingHashesRegexp  = regexp.MustCompile(`^#{1,6}`)
-	trailingHashesRegexp = regexp.MustCompile(`#+$`)
-	leadingNumberRegexp  = regexp.MustCompile(`^([0-9]{1,9})([.)])`)
+// A segment is a unit of intermediate output when formatting inline content.
+type segment struct {
+	typ  segmentType
+	text string
+}
+
+type segmentType uint
+
+const (
+	segText segmentType = iota
+	segHTML
+	segNewLine
+	segHardLineBreak
+	segNoBreakingStart
+	segNoBreakingEnd
 )
 
 func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
+	segs := c.buildSegments(ops)
+	if atxHeading {
+		c.writeSegmentsATXHeading(segs)
+	} else {
+		c.writeSegmentsParagraph(segs)
+	}
+}
+
+func (c *FmtCodec) buildSegments(ops []InlineOp) []segment {
+	var segs []segment
+	write := func(s string) {
+		if s != "" {
+			segs = append(segs, segment{typ: segText, text: s})
+		}
+	}
+
 	emphasis := 0
 
 	for i, op := range ops {
-		startOfLine := i == 0 || (ops[i-1].Type == OpNewLine && (i-1 == 0 || ops[i-2].Type != OpNewLine))
-		endOfLine := i == len(ops)-1 || ops[i+1].Type == OpNewLine
-		prevIsEmphasisEnd := i > 0 && isEmphasisEnd(ops[i-1])
-
 		switch op.Type {
 		case OpText:
 			text := op.Text
-			if startOfLine && endOfLine && !atxHeading && !startsWithSpaceOrTab(text) {
-				// If a line contains a single OpText, there is a danger for the
-				// text to be parsed as a thematic break.
-				//
-				// The case where the text starts with a space or a tab is
-				// handled elsewhere, so we can assume that the text does not
-				// start with space or tab.
-				line := text
-				if i == 0 {
-					// If we are the very beginning of the paragraph, we also
-					// need to include bullet markers that can be merged with
-					// the text to form a thematic break.
-					//
-					// The condition checking the first byte will also match
-					// markers like "1." if the text starts with "1", but since
-					// that will never match a thematic break, it doesn't
-					// matter. It will also cause the loop to end at newline.
-					//
-					// The code here depends on the fact that bullet markers are
-					// written as individual pieces. This is guaranteed by the
-					// startLine method.
-					for j := len(c.pieces) - 1; j >= 0 && c.pieces[j][0] == text[0]; j-- {
-						line = c.pieces[j] + line
-					}
-				}
-				if thematicBreakRegexp.MatchString(line) {
-					switch text[len(text)-1] {
-					case ' ':
-						// If the line ends with a space, it has to be escaped
-						// to be preserved. This has the side effect of making
-						// the line no longer parse as thematic break.
-						c.write(escapeText(text[:len(text)-1]))
-						c.write("&#32;")
-					case '\t':
-						// Same for lines ending with a tab.
-						c.write(escapeText(text[:len(text)-1]))
-						c.write("&Tab;")
-					default:
-						if escaped := escapeText(text); escaped != text {
-							// If the text needs escaping anyway, the escaping
-							// anything extra.
-							c.write(escaped)
-						} else {
-							// Otherwise, escape the first byte, which must be a
-							// punctuation at this point.
-							c.write(`\`)
-							c.write(text[:1])
-							c.write(escapeText(text[1:]))
-						}
-					}
-					continue
-				}
-			}
-			if startOfLine {
-				switch text[0] {
-				case ' ':
-					c.write("&#32;")
-					text = text[1:]
-				case '\t':
-					c.write("&Tab;")
-					text = text[1:]
-				case '-', '+':
-					if !atxHeading {
-						tail := text[1:]
-						if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
-							c.write(`\` + text[:1])
-							text = tail
-						}
-					}
-				case '>':
-					if !atxHeading {
-						c.write(`\>`)
-						text = text[1:]
-					}
-				case '#':
-					if !atxHeading {
-						if hashes := leadingHashesRegexp.FindString(text); hashes != "" {
-							tail := text[len(hashes):]
-							if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
-								c.write(`\` + hashes)
-								text = tail
-							}
-						}
-					}
-				default:
-					if !atxHeading {
-						if m := leadingNumberRegexp.FindStringSubmatch(text); m != nil {
-							tail := text[len(m[0]):]
-							if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
-								number, punct := m[1], m[2]
-								if i == 0 || strings.TrimLeft(number, "0") == "1" {
-									c.write(number)
-									c.write(`\` + punct)
-									text = tail
-								}
-							}
-						} else if strings.HasPrefix(text, "~~~") {
-							c.write(`\~~~`)
-							text = text[3:]
-						}
-					}
-				}
-			} else if i > 0 && isEmphasisStart(ops[i-1]) {
+			if i > 0 && isEmphasisStart(ops[i-1]) {
 				if r, l := utf8.DecodeRuneInString(text); l > 0 && unicode.IsSpace(r) {
 					// Escape space immediately after emphasis start, since a *
 					// before a space cannot open emphasis.
-					c.write("&#" + strconv.Itoa(int(r)) + ";")
+					write("&#" + strconv.Itoa(int(r)) + ";")
 					text = text[l:]
 				}
 			} else if i > 1 && isEmphasisEnd(ops[i-1]) && emphasisOutputEndsWithPunct(ops[i-2]) {
 				if r, l := utf8.DecodeRuneInString(text); isWord(r, l) {
 					// Escape "other" (word character) immediately after
 					// emphasis end if emphasis content ends with a punctuation.
-					c.write("&#" + strconv.Itoa(int(r)) + ";")
+					write("&#" + strconv.Itoa(int(r)) + ";")
 					text = text[l:]
 				}
 			}
 
 			suffix := ""
-			if endOfLine && text != "" {
-				switch text[len(text)-1] {
-				case ' ':
-					suffix = "&#32;"
-					text = text[:len(text)-1]
-				case '\t':
-					suffix = "&Tab;"
-					text = text[:len(text)-1]
-				case '#':
-					if atxHeading {
-						if hashes := trailingHashesRegexp.FindString(text); hashes != "" {
-							head := text[:len(text)-len(hashes)]
-							if endsWithSpaceOrTab(head) || (head == "" && i == 0) {
-								text = head
-								suffix = `\` + hashes
-							}
-						}
-					}
-				}
-			} else if strings.HasSuffix(text, "!") && i < len(ops)-1 && ops[i+1].Type == OpLinkStart {
+			if strings.HasSuffix(text, "!") && i < len(ops)-1 && ops[i+1].Type == OpLinkStart {
 				text = text[:len(text)-1]
 				suffix = `\!`
 			} else if i < len(ops)-1 && isEmphasisEnd(ops[i+1]) {
@@ -444,13 +344,226 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 				}
 			}
 
-			c.write(escapeText(text))
-			c.write(suffix)
+			write(escapeText(text))
+			write(suffix)
 		case OpRawHTML:
+			segs = append(segs, segment{typ: segHTML, text: op.Text})
+		case OpNewLine:
+			if i > 0 && isEmphasisStart(ops[i-1]) || i < len(ops)-1 && isEmphasisEnd(ops[i+1]) {
+				write("&NewLine;")
+			} else {
+				segs = append(segs, segment{typ: segNewLine, text: op.Text})
+			}
+		case OpCodeSpan:
+			text := op.Text
+			hasRunWithLen := matchLens([]string{text}, backquoteRunRegexp)
+			l := 1
+			for hasRunWithLen[l] {
+				l++
+			}
+			delim := strings.Repeat("`", l)
+			// Code span text is never empty
+			first := text[0]
+			last := text[len(text)-1]
+			addSpace := first == '`' || last == '`' || (first == ' ' && last == ' ' && strings.Trim(text, " ") != "")
+
+			segs = append(segs, segment{typ: segNoBreakingStart})
+			write(delim)
+			if addSpace {
+				write(" ")
+			}
+			write(text)
+			if addSpace {
+				write(" ")
+			}
+			write(delim)
+			segs = append(segs, segment{typ: segNoBreakingEnd})
+		case OpEmphasisStart:
+			write("*")
+			emphasis++
+			if emphasis >= 2 {
+				c.setUnsupported().NestedEmphasisOrStrongEmphasis = true
+			}
+			if i > 0 && isEmphasisEnd(ops[i-1]) {
+				c.setUnsupported().ConsecutiveEmphasisOrStrongEmphasis = true
+			}
+		case OpEmphasisEnd:
+			write("*")
+			emphasis--
+		case OpStrongEmphasisStart:
+			write("**")
+			emphasis++
+			if emphasis >= 2 {
+				c.setUnsupported().NestedEmphasisOrStrongEmphasis = true
+			}
+			if i > 0 && isEmphasisEnd(ops[i-1]) {
+				c.setUnsupported().ConsecutiveEmphasisOrStrongEmphasis = true
+			}
+		case OpStrongEmphasisEnd:
+			write("**")
+			emphasis--
+		case OpLinkStart:
+			segs = append(segs, segment{typ: segNoBreakingStart})
+			write("[")
+		case OpLinkEnd:
+			write("]")
+			write(formatLinkTail(op.Dest, op.Text))
+			segs = append(segs, segment{typ: segNoBreakingEnd})
+		case OpImage:
+			segs = append(segs, segment{typ: segNoBreakingStart})
+			write("![")
+			write(escapeNewLines(escapeText(op.Alt)))
+			write("]")
+			write(formatLinkTail(op.Dest, op.Text))
+			segs = append(segs, segment{typ: segNoBreakingEnd})
+		case OpAutolink:
+			write("<")
+			if op.Dest == "mailto:"+op.Text {
+				// Don't escape email autolinks. This is because the regexp that
+				// matches email autolinks does not allow ";", so escaping them
+				// makes the output no longer an email autolink.
+				write(op.Text)
+			} else {
+				write(escapeAutolink(op.Text))
+			}
+			write(">")
+		case OpHardLineBreak:
+			segs = append(segs, segment{typ: segHardLineBreak})
+		}
+	}
+	return segs
+}
+
+var atxHeadingCloserLookalike = regexp.MustCompile(`#+$`)
+
+func (c *FmtCodec) writeSegmentsATXHeading(segs []segment) {
+	for i, seg := range segs {
+		switch seg.typ {
+		case segText:
+			text := seg.text
+			if i == 0 {
+				text = escapeLeadingSpaceTab(text)
+			}
+			if i == len(segs)-1 {
+				text = escapeTrailingSpaceTab(text)
+				if text[len(text)-1] == '#' {
+					if hashes := atxHeadingCloserLookalike.FindString(text); hashes != "" {
+						head := text[:len(text)-len(hashes)]
+						if endsWithSpaceOrTab(head) || (head == "" && i == 0) {
+							text = head + `\` + hashes
+						}
+					}
+				}
+			}
+			c.write(text)
+		case segHTML:
+			// Raw HTML in ATX headings never contain embedded newlines, so just
+			// write it as is.
+			c.write(seg.text)
+		case segNewLine:
+			c.write("&NewLine;")
+		}
+	}
+}
+
+var (
+	// Pattern for text that can be parsed as thematic break, possibly after
+	// prepending the some bullet markers.
+	//
+	// - We don't need to consider leading spaces, since they will already be
+	// ampersand-escaped.
+	//
+	// - We don't need to consider "*", since it is always backslash-escaped.
+	thematicBreakLookalike = regexp.MustCompile(`^((?:-[ \t]*)+|(?:_[ \t]*)+)$`)
+	// Pattern for text that can be parsed as an ATX heading opener, if followed
+	// by space, tab or end of line.
+	atxHeadingOpenerLookalike = regexp.MustCompile(`^#{1,6}`)
+	// Pattern for text that can be parsed as an ordered list opener, if
+	// followed by space, tab or end of line.
+	orderedListOpenerLookalike = regexp.MustCompile(`^([0-9]{1,9})([.)])`)
+)
+
+func (c *FmtCodec) writeSegmentsParagraph(segs []segment) {
+	for i, seg := range segs {
+		startOfLine := i == 0 || (segs[i-1].typ == segNewLine && (i-1 == 0 || segs[i-2].typ != segNewLine))
+		endOfLine := i == len(segs)-1 || segs[i+1].typ == segNewLine
+		switch seg.typ {
+		case segText:
+			text := seg.text
+			if startOfLine {
+				text = escapeLeadingSpaceTab(text)
+			}
+			if endOfLine {
+				text = escapeTrailingSpaceTab(text)
+			}
+			if startOfLine && endOfLine && thematicBreakLookalike.MatchString(text) {
+				// If a line contains a single segment, there is a danger for
+				// the text to be parsed as a thematic break.
+				//
+				// After the escaping above, the text cannot start of end with a
+				// space or tab; the thematicBreakLookalikeRegexp match furthers
+				// guarentees that the text starts with either "-" or "_".
+				line := text
+				if i == 0 && text[0] == '-' {
+					// If we are the very beginning of the paragraph, we also
+					// need to include bullet markers that can be merged with
+					// the text to form a thematic break.
+					//
+					// The code here depends on the fact that bullet markers are
+					// written as individual pieces. This is guaranteed by the
+					// startLine method.
+					for j := len(c.pieces) - 1; j >= 0 && c.pieces[j][0] == text[0]; j-- {
+						line = c.pieces[j] + line
+					}
+				}
+				if thematicBreakRegexp.MatchString(line) {
+					c.write(`\`)
+					c.write(text)
+					continue
+				}
+			}
+			if startOfLine {
+				switch text[0] {
+				case '-', '+':
+					tail := text[1:]
+					if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
+						c.write(`\` + text[:1])
+						text = tail
+					}
+				case '>':
+					c.write(`\>`)
+					text = text[1:]
+				case '#':
+					if hashes := atxHeadingOpenerLookalike.FindString(text); hashes != "" {
+						tail := text[len(hashes):]
+						if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
+							c.write(`\` + hashes)
+							text = tail
+						}
+					}
+				default:
+					if m := orderedListOpenerLookalike.FindStringSubmatch(text); m != nil {
+						tail := text[len(m[0]):]
+						if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
+							number, punct := m[1], m[2]
+							if i == 0 || strings.TrimLeft(number, "0") == "1" {
+								c.write(number)
+								c.write(`\` + punct)
+								text = tail
+							}
+						}
+					} else if strings.HasPrefix(text, "~~~") {
+						c.write(`\~~~`)
+						text = text[3:]
+					}
+				}
+			}
+			c.write(text)
+		case segHTML:
 			// Inline raw HTML may contain embedded newlines; write them
 			// separately.
-			lines := strings.Split(op.Text, "\n")
-			if startOfLine && i > 0 && strings.HasPrefix(op.Text, "<") {
+			lines := strings.Split(seg.text, "\n")
+			if startOfLine && i > 0 && strings.HasPrefix(lines[0], "<") {
 				// If the first line appears at the start of the line, check
 				// whether it can also be parsed as an HTML block interrupting a
 				// paragraph (type 1 to 6). The only way I have found to prevent
@@ -477,83 +590,37 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 				c.startLine()
 				c.write(line)
 			}
-		case OpNewLine:
-			if atxHeading || i == 0 || i == len(ops)-1 || ops[i-1].Type == OpNewLine || isEmphasisStart(ops[i-1]) || isEmphasisEnd(ops[i+1]) {
+		case segNewLine:
+			if i == 0 || i == len(segs)-1 || segs[i-1].typ == segNewLine {
 				c.write("&NewLine;")
 			} else {
 				c.finishLine()
 				c.startLine()
 			}
-		case OpCodeSpan:
-			text := op.Text
-			hasRunWithLen := matchLens([]string{text}, backquoteRunRegexp)
-			l := 1
-			for hasRunWithLen[l] {
-				l++
-			}
-			delim := strings.Repeat("`", l)
-			// Code span text is never empty
-			first := text[0]
-			last := text[len(text)-1]
-			addSpace := first == '`' || last == '`' || (first == ' ' && last == ' ' && strings.Trim(text, " ") != "")
-			c.write(delim)
-			if addSpace {
-				c.write(" ")
-			}
-			c.write(text)
-			if addSpace {
-				c.write(" ")
-			}
-			c.write(delim)
-		case OpEmphasisStart:
-			c.write("*")
-			emphasis++
-			if emphasis >= 2 {
-				c.setUnsupported().NestedEmphasisOrStrongEmphasis = true
-			}
-			if prevIsEmphasisEnd {
-				c.setUnsupported().ConsecutiveEmphasisOrStrongEmphasis = true
-			}
-		case OpEmphasisEnd:
-			c.write("*")
-			emphasis--
-		case OpStrongEmphasisStart:
-			c.write("**")
-			emphasis++
-			if emphasis >= 2 {
-				c.setUnsupported().NestedEmphasisOrStrongEmphasis = true
-			}
-			if prevIsEmphasisEnd {
-				c.setUnsupported().ConsecutiveEmphasisOrStrongEmphasis = true
-			}
-		case OpStrongEmphasisEnd:
-			c.write("**")
-			emphasis--
-		case OpLinkStart:
-			c.write("[")
-		case OpLinkEnd:
-			c.write("]")
-			c.writeLinkTail(op.Dest, op.Text)
-		case OpImage:
-			c.write("![")
-			c.write(escapeNewLines(escapeText(op.Alt)))
-			c.write("]")
-			c.writeLinkTail(op.Dest, op.Text)
-		case OpAutolink:
-			c.write("<")
-			if op.Dest == "mailto:"+op.Text {
-				// Don't escape email autolinks. This is because the regexp that
-				// matches email autolinks does not allow ";", so escaping them
-				// makes the output no longer an email autolink.
-				c.write(op.Text)
-			} else {
-				c.write(escapeAutolink(op.Text))
-			}
-			c.write(">")
-		case OpHardLineBreak:
+		case segHardLineBreak:
 			c.write("\\")
 		}
 	}
+}
+
+func escapeLeadingSpaceTab(s string) string {
+	switch s[0] {
+	case ' ':
+		return "&#32;" + s[1:]
+	case '\t':
+		return "&Tab;" + s[1:]
+	}
+	return s
+}
+
+func escapeTrailingSpaceTab(s string) string {
+	switch s[len(s)-1] {
+	case ' ':
+		return s[:len(s)-1] + "&#32;"
+	case '\t':
+		return s[:len(s)-1] + "&Tab;"
+	}
+	return s
 }
 
 func startsWithSpaceOrTab(s string) bool {
@@ -598,20 +665,22 @@ func matchLens(pieces []string, pattern *regexp.Regexp) map[int]bool {
 
 const asciiControlOrSpaceOrParens = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f ()"
 
-func (c *FmtCodec) writeLinkTail(dest, title string) {
-	c.write("(")
+func formatLinkTail(dest, title string) string {
+	var sb strings.Builder
+	sb.WriteString("(")
 	if strings.ContainsAny(dest, asciiControlOrSpaceOrParens) {
-		c.write("<" + strings.ReplaceAll(escapeText(dest), ">", "&gt;") + ">")
+		sb.WriteString("<" + strings.ReplaceAll(escapeText(dest), ">", "&gt;") + ">")
 	} else if dest == "" && title != "" {
-		c.write("<>")
+		sb.WriteString("<>")
 	} else {
-		c.write(escapeText(dest))
+		sb.WriteString(escapeText(dest))
 	}
 	if title != "" {
-		c.write(" ")
-		c.write(escapeNewLines(wrapAndEscapeLinkTitle(title)))
+		sb.WriteString(" ")
+		sb.WriteString(escapeNewLines(wrapAndEscapeLinkTitle(title)))
 	}
-	c.write(")")
+	sb.WriteString(")")
+	return sb.String()
 }
 
 var escapeParens = strings.NewReplacer("(", `\(`, ")", `\)`).Replace
