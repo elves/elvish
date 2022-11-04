@@ -41,9 +41,10 @@ The source for the documentation is in the
 All source files use the BSD 2-clause license (see [LICENSE](LICENSE)), except
 for the following:
 
--   Files in [pkg/rpc](pkg/rpc) are released under the BSD 3-clause license,
-    since they are copied from [Go's source code](https://github.com/golang/go).
-    See [pkg/rpc/LICENSE](pkg/rpc/LICENSE).
+-   Files in [pkg/diff](pkg/diff) and [pkg/rpc](pkg/rpc) are released under the
+    BSD 3-clause license, since they are copied from
+    [Go's source code](https://github.com/golang/go). See
+    [pkg/diff/LICENSE](pkg/diff/LICENSE) and [pkg/rpc/LICENSE](pkg/rpc/LICENSE).
 
 -   Files in [pkg/persistent](pkg/persistent) and its subdirectories are
     released under EPL 1.0, since they are partially derived from

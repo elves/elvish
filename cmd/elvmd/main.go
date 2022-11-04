@@ -4,35 +4,41 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	"src.elv.sh/pkg/md"
 )
 
-func main() {
-	var (
-		format = flag.Bool("fmt", false, "format Markdown")
-		trace  = flag.Bool("trace", false, "trace internal output by parser")
-	)
-	flag.Parse()
-	if *format && *trace {
-		fmt.Fprintln(os.Stderr, "-fmt and -trace are mutually exclusive")
-		os.Exit(1)
-	}
+var (
+	trace = flag.Bool("trace", false, "write internal parsing results")
+)
 
-	text, err := io.ReadAll(os.Stdin)
-	if err != nil {
-		log.Fatal(err)
+func main() {
+	flag.Parse()
+
+	files := flag.Args()
+	if len(files) == 0 {
+		text, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "read stdin:", err)
+			os.Exit(2)
+		}
+		render(string(text))
+		return
 	}
-	var codec md.StringerCodec
-	switch {
-	case *format:
-		codec = &md.FmtCodec{}
-	case *trace:
-		codec = &md.TraceCodec{}
-	default:
-		codec = &md.HTMLCodec{}
+	for _, file := range files {
+		text, err := os.ReadFile(file)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "read %s: %v\n", file, err)
+			os.Exit(2)
+		}
+		render(string(text))
 	}
-	fmt.Print(md.RenderString(string(text), codec))
+}
+
+func render(markdown string) {
+	fmt.Print(md.RenderString(markdown, &md.HTMLCodec{}))
+	if *trace {
+		fmt.Print(md.RenderString(markdown, &md.TraceCodec{}))
+	}
 }

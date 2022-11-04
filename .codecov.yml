@@ -20,5 +20,6 @@ ignore:
   - "pkg/getopt/zstring.go"
   - "pkg/md/zstring.go"
   - "pkg/parse/zstring.go"
-  # Exclude the copied rpc package.
+  # Exclude the copied diff and rpc packages.
+  - "pkg/diff"
   - "pkg/rpc"

@@ -9,9 +9,6 @@ import (
 type TraceCodec struct{ strings.Builder }
 
 func (c *TraceCodec) Do(op Op) {
-	if c.Len() > 0 {
-		c.WriteByte('\n')
-	}
 	c.WriteString(op.Type.String())
 	if op.Number != 0 {
 		fmt.Fprintf(c, " Number=%d", op.Number)
@@ -22,12 +19,14 @@ func (c *TraceCodec) Do(op Op) {
 	if op.MissingCloser {
 		fmt.Fprintf(c, " MissingCloser")
 	}
+	c.WriteByte('\n')
 	for _, line := range op.Lines {
-		c.WriteString("\n  ")
+		c.WriteString("  ")
 		c.WriteString(line)
+		c.WriteByte('\n')
 	}
 	for _, inlineOp := range op.Content {
-		c.WriteString("\n  ")
+		c.WriteString("  ")
 		c.WriteString(inlineOp.Type.String())
 		if inlineOp.Text != "" {
 			fmt.Fprintf(c, " Text=%q", inlineOp.Text)
@@ -38,5 +37,6 @@ func (c *TraceCodec) Do(op Op) {
 		if inlineOp.Alt != "" {
 			fmt.Fprintf(c, " Alt=%q", inlineOp.Alt)
 		}
+		c.WriteString("\n")
 	}
 }
