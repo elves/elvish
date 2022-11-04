@@ -56,6 +56,8 @@ type inlineParser struct {
 	buf    buffer
 }
 
+const emailLocalPuncts = ".!#$%&'*+/=?^_`{|}~-"
+
 var (
 	// https://spec.commonmark.org/0.30/#entity-and-numeric-character-references
 	entityRegexp = regexp.MustCompile(`^&(?:[a-zA-Z0-9]+|#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6});`)
@@ -67,7 +69,7 @@ var (
 		`>`)
 	// https://spec.commonmark.org/0.30/#email-autolink
 	emailAutolinkRegexp = regexp.MustCompile(
-		`^<[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*>`)
+		`^<[a-zA-Z0-9` + emailLocalPuncts + `]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*>`)
 
 	openTagRegexp    = regexp.MustCompile(`^` + openTag)
 	closingTagRegexp = regexp.MustCompile(`^` + closingTag)
@@ -630,9 +632,12 @@ func (p *linkTailParser) parse() (n int, dest, title string) {
 
 	p.pos = 1
 	p.skipWhitespaces()
+	if p.pos == len(p.text) {
+		return -1, "", ""
+	}
 	// Parse an optional link destination.
 	var destBuilder strings.Builder
-	if p.text[1] == '<' {
+	if p.text[p.pos] == '<' {
 		p.pos++
 		closed := false
 	angleDest:

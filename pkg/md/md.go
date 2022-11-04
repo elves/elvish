@@ -53,7 +53,7 @@ var entities = map[string]rune{
 	"lt": '<', "gt": '>', "quote": '"', "apos": '\'', "amp": '&',
 	// Not strictly necessary, but could be output by FmtCodec for slightly
 	// nicer text
-	"Tab": '\t', "NewLine": '\n',
+	"Tab": '\t', "NewLine": '\n', "nbsp": '\u00A0',
 }
 
 func unescapeHTML(s string) string {

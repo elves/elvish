@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"html"
 	"io"
 	"os"
 
@@ -16,6 +17,7 @@ var (
 )
 
 func main() {
+	md.UnescapeHTML = html.UnescapeString
 	flag.Parse()
 
 	files := flag.Args()

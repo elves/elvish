@@ -104,37 +104,6 @@ var (
 	).Replace
 )
 
-func escapeText(s string) string {
-	if !strings.ContainsAny(s, "[]*_`\\&<>") {
-		return s
-	}
-	var sb strings.Builder
-	for i := 0; i < len(s); i++ {
-		switch s[i] {
-		case '[', ']', '*', '`', '\\':
-			sb.WriteByte('\\')
-			sb.WriteByte(s[i])
-		case '_':
-			if isWord(utf8.DecodeLastRuneInString(s[:i])) && isWord(utf8.DecodeRuneInString(s[i+1:])) {
-				sb.WriteByte('_')
-			} else {
-				sb.WriteString("\\_")
-			}
-		case '&':
-			sb.WriteString("&amp;")
-		case '<':
-			sb.WriteString("&lt;")
-		case '>':
-			// ">" technically does not need escaping in text, but we escape it
-			// anyway for consistency with "<"
-			sb.WriteString("&gt;")
-		default:
-			sb.WriteByte(s[i])
-		}
-	}
-	return sb.String()
-}
-
 var (
 	backquoteRunRegexp = regexp.MustCompile("`+")
 	tildeRunRegexp     = regexp.MustCompile("~+")
@@ -150,6 +119,10 @@ func (c *FmtCodec) Do(op Op) {
 	case OpThematicBreak, OpHeading, OpCodeBlock, OpHTMLBlock, OpParagraph,
 		OpBlockquoteStart, OpBulletListStart, OpOrderedListStart:
 		if len(c.pieces) > 0 && c.lastOpType != OpBlockquoteStart && c.lastOpType != OpListItemStart {
+			c.writeLine("")
+		}
+	case OpListItemStart:
+		if len(c.pieces) > 0 && c.lastOpType != OpBulletListStart && c.lastOpType != OpOrderedListStart {
 			c.writeLine("")
 		}
 	}
@@ -249,7 +222,9 @@ func (c *FmtCodec) Do(op Op) {
 			}
 			c.writeLine("")
 		}
-		c.containers.peek().number++
+		ct := c.containers.peek()
+		ct.marker = ""
+		ct.number++
 	case OpBulletListStart:
 		c.containers.push(&fmtContainer{
 			typ:   fmtBulletItem,
@@ -480,19 +455,25 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 			// separately.
 			lines := strings.Split(op.Text, "\n")
 			if startOfLine && i > 0 && strings.HasPrefix(op.Text, "<") {
-				// If the first line appears at the start of the line, it may be
-				// parsable as an HTML block. The only way I have found to
-				// prevent this is to make sure that it starts with at least 4
-				// spaces; in fact, this exact case came up in a fuzz test where
-				// inline raw HTML appears at the start of the second line,
-				// preceded by 4 spaces. This won't be parsed as an indented
-				// code block since the latter can't interrupt a paragraph, but
-				// will prevent an HTML block to be parsed.
+				// If the first line appears at the start of the line, check
+				// whether it can also be parsed as an HTML block interrupting a
+				// paragraph (type 1 to 6). The only way I have found to prevent
+				// this is to make sure that it starts with at least 4 spaces;
+				// in fact, this exact case came up in a fuzz test where inline
+				// raw HTML appears at the start of the second line, preceded by
+				// 4 spaces. This won't be parsed as an indented code block
+				// since the latter can't interrupt a paragraph, but will
+				// prevent an HTML block to be parsed.
 				//
 				// If this piece of inline raw HTML appears at the very start,
 				// it means it can't be parsed as an HTML block, so there is no
 				// need to prevent it.
-				c.write("    ")
+				for _, r := range []*regexp.Regexp{html1Regexp, html2Regexp, html3Regexp, html4Regexp, html5Regexp, html6Regexp} {
+					if r.MatchString(lines[0]) {
+						c.write("    ")
+						break
+					}
+				}
 			}
 			c.write(lines[0])
 			for _, line := range lines[1:] {
@@ -741,8 +722,57 @@ func isEmphasisEnd(op InlineOp) bool {
 
 func escapeNewLines(s string) string { return strings.ReplaceAll(s, "\n", "&NewLine;") }
 
+func escapeText(s string) string {
+	if !strings.ContainsAny(s, "[]*_`\\&<>\u00A0") {
+		return s
+	}
+	var sb strings.Builder
+	for i, r := range s {
+		switch r {
+		case '[', ']', '*', '`', '\\':
+			sb.WriteByte('\\')
+			sb.WriteRune(r)
+		case '_':
+			if isWord(utf8.DecodeLastRuneInString(s[:i])) && isWord(utf8.DecodeRuneInString(s[i+1:])) {
+				sb.WriteByte('_')
+			} else {
+				sb.WriteString("\\_")
+			}
+		case '&':
+			// Look ahead to next ";" to decide whether the ampersand can start
+			// a character reference and thus needs to be escaped. Since
+			// any inline markup will introduce a metacharacter that is not
+			// allowed within character reference, it is sufficient to check
+			// within the text.
+			if end := strings.IndexByte(s[i:], ';'); end == -1 || !charRefRegexp.MatchString(s[i:i+end+1]) {
+				sb.WriteByte('&')
+			} else {
+				sb.WriteString("&amp;")
+			}
+		case '<':
+			if i < len(s)-1 && !canBeSpecialAfterLt(s[i+1]) {
+				sb.WriteByte('<')
+			} else {
+				sb.WriteString("&lt;")
+			}
+		case '\u00A0':
+			// This is by no means required, but it's nice to make non-breaking
+			// spaces explicit.
+			sb.WriteString("&nbsp;")
+		default:
+			sb.WriteRune(r)
+		}
+	}
+	return sb.String()
+}
+
 // Takes the result of utf8.Decode*, and returns whether the character is
 // non-empty and a "word" character for the purpose of emphasis parsing.
 func isWord(r rune, l int) bool {
 	return l > 0 && !unicode.IsSpace(r) && !isUnicodePunct(r)
+}
+
+func canBeSpecialAfterLt(b byte) bool {
+	return /* Can form raw HTML */ b == '!' || b == '?' || b != '/' || isASCIILetter(b) ||
+		/* Can form email autolink */ '0' <= b && b <= '9' || strings.IndexByte(emailLocalPuncts, b) >= 0
 }
