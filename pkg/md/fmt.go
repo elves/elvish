@@ -97,16 +97,43 @@ func (c *FmtCodec) setUnsupported() *FmtUnsupported {
 }
 
 var (
-	escapeText = strings.NewReplacer(
-		"[", `\[`, "]", `\]`, "*", `\*`, "`", "\\`", `\`, `\\`,
-		"&", "&amp;", "<", "&lt;",
-		// TODO: Don't escape _ when in-word
-		"_", "\\_",
-	).Replace
+	// Unlike escapeHTML, double and single quotes in autolinks do not need
+	// escaping.
 	escapeAutolink = strings.NewReplacer(
 		"&", "&amp;", "<", "&lt;", ">", "&gt;",
 	).Replace
 )
+
+func escapeText(s string) string {
+	if !strings.ContainsAny(s, "[]*_`\\&<>") {
+		return s
+	}
+	var sb strings.Builder
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '[', ']', '*', '`', '\\':
+			sb.WriteByte('\\')
+			sb.WriteByte(s[i])
+		case '_':
+			if isWord(utf8.DecodeLastRuneInString(s[:i])) && isWord(utf8.DecodeRuneInString(s[i+1:])) {
+				sb.WriteByte('_')
+			} else {
+				sb.WriteString("\\_")
+			}
+		case '&':
+			sb.WriteString("&amp;")
+		case '<':
+			sb.WriteString("&lt;")
+		case '>':
+			// ">" technically does not need escaping in text, but we escape it
+			// anyway for consistency with "<"
+			sb.WriteString("&gt;")
+		default:
+			sb.WriteByte(s[i])
+		}
+	}
+	return sb.String()
+}
 
 var (
 	backquoteRunRegexp = regexp.MustCompile("`+")
@@ -310,8 +337,30 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 					}
 				}
 				if thematicBreakRegexp.MatchString(line) {
-					c.write(`\`)
-					c.write(text)
+					switch text[len(text)-1] {
+					case ' ':
+						// If the line ends with a space, it has to be escaped
+						// to be preserved. This has the side effect of making
+						// the line no longer parse as thematic break.
+						c.write(escapeText(text[:len(text)-1]))
+						c.write("&#32;")
+					case '\t':
+						// Same for lines ending with a tab.
+						c.write(escapeText(text[:len(text)-1]))
+						c.write("&Tab;")
+					default:
+						if escaped := escapeText(text); escaped != text {
+							// If the text needs escaping anyway, the escaping
+							// anything extra.
+							c.write(escaped)
+						} else {
+							// Otherwise, escape the first byte, which must be a
+							// punctuation at this point.
+							c.write(`\`)
+							c.write(text[:1])
+							c.write(escapeText(text[1:]))
+						}
+					}
 					continue
 				}
 			}
@@ -371,16 +420,12 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 					c.write("&#" + strconv.Itoa(int(r)) + ";")
 					text = text[l:]
 				}
-			} else if i > 1 && isEmphasisEnd(ops[i-1]) && ops[i-2].Type == OpText {
-				if r, l := utf8.DecodeLastRuneInString(ops[i-2].Text); l > 0 && unicode.IsSpace(r) || isUnicodePunct(r) {
-					if r, l := utf8.DecodeRuneInString(text); l > 0 && !unicode.IsSpace(r) && !isUnicodePunct(r) {
-						// Escape "other" (word character) immediately after
-						// emphasis end if emphasis content ended with a
-						// punctuation or a space (the space has been escaped
-						// into a punctuation).
-						c.write("&#" + strconv.Itoa(int(r)) + ";")
-						text = text[l:]
-					}
+			} else if i > 1 && isEmphasisEnd(ops[i-1]) && emphasisOutputEndsWithPunct(ops[i-2]) {
+				if r, l := utf8.DecodeRuneInString(text); isWord(r, l) {
+					// Escape "other" (word character) immediately after
+					// emphasis end if emphasis content ends with a punctuation.
+					c.write("&#" + strconv.Itoa(int(r)) + ";")
+					text = text[l:]
 				}
 			}
 
@@ -414,16 +459,13 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 					text = text[:len(text)-l]
 					suffix = "&#" + strconv.Itoa(int(r)) + ";"
 				}
-			} else if i < len(ops)-2 && isEmphasisStart(ops[i+1]) && ops[i+2].Type == OpText {
-				if r, l := utf8.DecodeRuneInString(ops[i+2].Text); l > 0 && unicode.IsSpace(r) || isUnicodePunct(r) {
-					if r, l := utf8.DecodeLastRuneInString(text); l > 0 && !unicode.IsSpace(r) && !isUnicodePunct(r) {
-						// Escape "other" (word character) immediately before
-						// emphasis start if emphasis content starts with a
-						// punctuation or a space (which will be escaped into a
-						// punctuation).
-						text = text[:len(text)-l]
-						suffix = "&#" + strconv.Itoa(int(r)) + ";"
-					}
+			} else if i < len(ops)-2 && isEmphasisStart(ops[i+1]) && emphasisOutputStartsWithPunct(ops[i+2]) {
+				if r, l := utf8.DecodeLastRuneInString(text); isWord(r, l) {
+					// Escape "other" (word character) immediately before
+					// emphasis start if the output of the emphasis content will
+					// start with a punctuation.
+					text = text[:len(text)-l]
+					suffix = "&#" + strconv.Itoa(int(r)) + ";"
 				}
 			}
 
@@ -516,7 +558,7 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 			c.writeLinkTail(op.Dest, op.Text)
 		case OpImage:
 			c.write("![")
-			c.write(strings.ReplaceAll(escapeText(op.Alt), "\n", "&NewLine;"))
+			c.write(escapeNewLines(escapeText(op.Alt)))
 			c.write("]")
 			c.writeLinkTail(op.Dest, op.Text)
 		case OpAutolink:
@@ -544,6 +586,28 @@ func endsWithSpaceOrTab(s string) bool {
 	return s != "" && (s[len(s)-1] == ' ' || s[len(s)-1] == '\t')
 }
 
+func emphasisOutputStartsWithPunct(op InlineOp) bool {
+	switch op.Type {
+	case OpText:
+		r, l := utf8.DecodeRuneInString(op.Text)
+		// If the content starts with a space, it will be escaped into "&#32;"
+		return l > 0 && unicode.IsSpace(r) || isUnicodePunct(r)
+	default:
+		return true
+	}
+}
+
+func emphasisOutputEndsWithPunct(op InlineOp) bool {
+	switch op.Type {
+	case OpText:
+		r, l := utf8.DecodeLastRuneInString(op.Text)
+		// If the content starts with a space, it will be escaped into "&#32;"
+		return l > 0 && unicode.IsSpace(r) || isUnicodePunct(r)
+	default:
+		return true
+	}
+}
+
 func matchLens(pieces []string, pattern *regexp.Regexp) map[int]bool {
 	hasRunWithLen := make(map[int]bool)
 	for _, piece := range pieces {
@@ -566,7 +630,8 @@ func (c *FmtCodec) writeLinkTail(dest, title string) {
 		c.write(escapeText(dest))
 	}
 	if title != "" {
-		c.write(" " + wrapAndEscapeLinkTitle(title))
+		c.write(" ")
+		c.write(escapeNewLines(wrapAndEscapeLinkTitle(title)))
 	}
 	c.write(")")
 }
@@ -598,7 +663,6 @@ func wrapAndEscapeLinkTitle(title string) string {
 
 func (c *FmtCodec) startLine() {
 	for _, container := range c.containers {
-		// TODO: Remove trailing spaces on empty lines
 		c.write(container.useMarker())
 	}
 }
@@ -608,6 +672,7 @@ func (c *FmtCodec) finishLine() {
 }
 
 func (c *FmtCodec) writeLine(s string) {
+	// TODO: Trim markers of trailing spaces if s is empty
 	c.startLine()
 	c.write(s)
 	c.finishLine()
@@ -653,4 +718,12 @@ func isEmphasisStart(op InlineOp) bool {
 
 func isEmphasisEnd(op InlineOp) bool {
 	return op.Type == OpEmphasisEnd || op.Type == OpStrongEmphasisEnd
+}
+
+func escapeNewLines(s string) string { return strings.ReplaceAll(s, "\n", "&NewLine;") }
+
+// Takes the result of utf8.Decode*, and returns whether the character is
+// non-empty and a "word" character for the purpose of emphasis parsing.
+func isWord(r rune, l int) bool {
+	return l > 0 && !unicode.IsSpace(r) && !isUnicodePunct(r)
 }

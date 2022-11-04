@@ -4,6 +4,7 @@ import (
 	"html"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/google/go-cmp/cmp"
 	. "src.elv.sh/pkg/md"
@@ -115,6 +116,9 @@ func testFmtPreservesHTMLRender(t *testing.T, original string) {
 
 func formatAndSkipIfUnsupported(t *testing.T, original string) string {
 	t.Helper()
+	if !utf8.ValidString(original) {
+		t.Skipf("input is not valid UTF-8")
+	}
 	if strings.Contains(original, "\t") {
 		t.Skipf("input contains tab")
 	}

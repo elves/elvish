@@ -11,7 +11,10 @@ import (
 // The schemes below are chosen to match the spec tests.
 var (
 	escapeHTML = strings.NewReplacer(
-		"&", "&amp;", `"`, "&quot;", "<", "&lt;", ">", "&gt;").Replace
+		"&", "&amp;", `"`, "&quot;", "<", "&lt;", ">", "&gt;",
+		// No need to escape single quotes since, attributes in the output
+		// always use double quotes.
+	).Replace
 	escapeURL = strings.NewReplacer(
 		`"`, "%22", `\`, "%5C", " ", "%20", "`", "%60",
 		"[", "%5B", "]", "%5D", "<", "%3C", ">", "%3E",
