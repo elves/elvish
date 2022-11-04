@@ -16,9 +16,6 @@ func (c *TraceCodec) Do(op Op) {
 	if op.Info != "" {
 		fmt.Fprintf(c, " Info=%q", op.Info)
 	}
-	if op.MissingCloser {
-		fmt.Fprintf(c, " MissingCloser")
-	}
 	c.WriteByte('\n')
 	for _, line := range op.Lines {
 		c.WriteString("  ")

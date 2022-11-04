@@ -89,11 +89,6 @@ type Op struct {
 	Number int
 	// For OpCodeBlock
 	Info string
-	// For OpCodeBlock and OpHTMLBlock: whether the block usually requires an
-	// explicit closer (fenced code block, HTML blocks 1 to 5), but that closer
-	// was not seen. This can happen if the block is closed by by the closing of
-	// a container block or EOF.
-	MissingCloser bool
 	// For OpCodeBlock and OpHTMLBlock
 	Lines []string
 	// For OpParagraph and OpHeading
@@ -266,10 +261,12 @@ func isBlankLine(line string) bool {
 }
 
 func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
-	info = processCodeFenceInfo(strings.Trim(info, " \t"))
+	// Escaped spaces and tabs (e.g. &Tab;) should also be trimmed, so process
+	// the info string before trimming.
+	info = strings.Trim(processCodeFenceInfo(info), " \t")
 	var lines []string
-	doCodeBlock := func(mc bool) {
-		p.codec.Do(Op{Type: OpCodeBlock, Info: info, Lines: lines, MissingCloser: mc})
+	doCodeBlock := func() {
+		p.codec.Do(Op{Type: OpCodeBlock, Info: info, Lines: lines})
 	}
 
 	for p.lines.more() {
@@ -277,19 +274,19 @@ func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
-				doCodeBlock(true)
+				doCodeBlock()
 				p.tree.closeBlocks(i, p.codec)
 				return
 			}
 		} else if matchedContainers < len(p.tree.containers) {
 			p.lines.backup()
-			doCodeBlock(true)
+			doCodeBlock()
 			return
 		}
 		if m := codeFenceCloserRegexp.FindStringSubmatch(line); m != nil {
 			closer := m[1]
 			if closer[0] == opener[0] && len(closer) >= len(opener) {
-				doCodeBlock(false)
+				doCodeBlock()
 				return
 			}
 		}
@@ -298,7 +295,7 @@ func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
 		}
 		lines = append(lines, line)
 	}
-	doCodeBlock(true)
+	doCodeBlock()
 }
 
 // Code fence info strings are mostly verbatim, but support backslash and
@@ -358,35 +355,40 @@ func (p *blockParser) parseIndentedCodeBlock(line string) {
 
 func (p *blockParser) parseCloserTerminatedHTMLBlock(line string, closer func(string) bool) {
 	lines := []string{line}
-	doHTMLBlock := func(mc bool) {
-		p.codec.Do(Op{Type: OpHTMLBlock, Lines: lines, MissingCloser: mc})
+	doHTMLBlock := func() {
+		p.codec.Do(Op{Type: OpHTMLBlock, Lines: lines})
 	}
 
 	if closer(line) {
-		doHTMLBlock(false)
+		doHTMLBlock()
 		return
 	}
+	var savedBlankLines []string
 	for p.lines.more() {
 		line := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
-				doHTMLBlock(true)
+				doHTMLBlock()
 				p.tree.closeBlocks(i, p.codec)
 				return
 			}
+			savedBlankLines = append(savedBlankLines, line)
+			continue
 		} else if matchedContainers < len(p.tree.containers) {
 			p.lines.backup()
-			doHTMLBlock(true)
+			doHTMLBlock()
 			return
 		}
+		lines = append(lines, savedBlankLines...)
+		savedBlankLines = savedBlankLines[:0]
 		lines = append(lines, line)
 		if closer(line) {
-			doHTMLBlock(false)
+			doHTMLBlock()
 			return
 		}
 	}
-	doHTMLBlock(true)
+	doHTMLBlock()
 }
 
 func (p *blockParser) parseBlankLineTerminatedHTMLBlock(line string) {

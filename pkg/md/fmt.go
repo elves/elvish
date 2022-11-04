@@ -75,11 +75,6 @@ type FmtUnsupported struct {
 	// Input contains emphasis or strong emphasis that follows immediately after
 	// another emphasis or strong emphasis (not necessarily of the same type).
 	ConsecutiveEmphasisOrStrongEmphasis bool
-	// Input contains newline inside emphasis or strong emphasis.
-	NewlineWithinEmphasisOrStrongEmphasis bool
-	// A code block or HTML block that is expected to have an explicit closer
-	// is not closed properly.
-	CodeBlockOrHTMLBlockHasMissingCloser bool
 }
 
 func (c *FmtCodec) String() string { return strings.Join(c.pieces, "") }
@@ -126,9 +121,6 @@ func (c *FmtCodec) Do(op Op) {
 			c.writeLine("")
 		}
 	}
-	if op.MissingCloser {
-		c.setUnsupported().CodeBlockOrHTMLBlockHasMissingCloser = true
-	}
 	defer func() {
 		c.lastOpType = op.Type
 	}()
@@ -153,9 +145,7 @@ func (c *FmtCodec) Do(op Op) {
 		for _, line := range op.Lines {
 			c.writeLine(line)
 		}
-		if !op.MissingCloser {
-			c.writeLine(endFence)
-		}
+		c.writeLine(endFence)
 	case OpHTMLBlock:
 		if c.lastOpType == OpListItemStart && strings.HasPrefix(op.Lines[0], " ") {
 			// HTML blocks can contain 1 to 3 leading spaces. When it appears at
@@ -259,9 +249,15 @@ func codeFences(info string, lines []string) (string, string) {
 	}
 	fence := strings.Repeat(string(fenceRune), l)
 	if fenceRune == '~' && strings.HasPrefix(info, "~") {
-		return fence + " " + escapeText(info), fence
+		return fence + " " + escapeCodeFenceInfo(info), fence
 	}
-	return fence + escapeText(info), fence
+	return fence + escapeCodeFenceInfo(info), fence
+}
+
+func escapeCodeFenceInfo(info string) string {
+	// Info strings of code fences are terminated by newlines, so newlines also
+	// need to be escaped in addition.
+	return strings.ReplaceAll(escapeText(info), "\n", "&NewLine;")
 }
 
 func allDashBullets(containers []*fmtContainer) bool {
@@ -482,10 +478,7 @@ func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 				c.write(line)
 			}
 		case OpNewLine:
-			if emphasis > 0 {
-				c.setUnsupported().NewlineWithinEmphasisOrStrongEmphasis = true
-			}
-			if atxHeading || i == 0 || i == len(ops)-1 || ops[i-1].Type == OpNewLine {
+			if atxHeading || i == 0 || i == len(ops)-1 || ops[i-1].Type == OpNewLine || isEmphasisStart(ops[i-1]) || isEmphasisEnd(ops[i+1]) {
 				c.write("&NewLine;")
 			} else {
 				c.finishLine()
