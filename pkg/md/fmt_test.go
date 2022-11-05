@@ -2,6 +2,7 @@ package md_test
 
 import (
 	"html"
+	"regexp"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -90,6 +91,15 @@ func TestFmtPreservesHTMLRender(t *testing.T) {
 	}
 }
 
+func TestReflowFmtPreservesHTMLRenderModuleWhitespaces(t *testing.T) {
+	testutil.Set(t, &UnescapeHTML, html.UnescapeString)
+	for _, tc := range fmtTestCases {
+		t.Run(tc.testName(), func(t *testing.T) {
+			testReflowFmtPreservesHTMLRenderModuloWhitespaces(t, tc.Markdown, 80)
+		})
+	}
+}
+
 func FuzzFmtPreservesHTMLRender(f *testing.F) {
 	for _, tc := range fmtTestCases {
 		f.Add(tc.Markdown)
@@ -97,11 +107,49 @@ func FuzzFmtPreservesHTMLRender(f *testing.F) {
 	f.Fuzz(testFmtPreservesHTMLRender)
 }
 
+func FuzzReflowFmtPreservesHTMLRenderModuleWhitespaces(f *testing.F) {
+	for _, tc := range fmtTestCases {
+		f.Add(tc.Markdown, 20)
+		f.Add(tc.Markdown, 80)
+	}
+	f.Fuzz(testReflowFmtPreservesHTMLRenderModuloWhitespaces)
+}
+
 func testFmtPreservesHTMLRender(t *testing.T, original string) {
 	t.Helper()
-	formatted := formatAndSkipIfUnsupported(t, original)
-	formattedRender := RenderString(formatted, &HTMLCodec{})
+	testFmtPreservesHTMLRenderModulo(t, original, 0, nil)
+}
+
+var (
+	paragraph         = regexp.MustCompile(`(?s)<p>.*?</p>`)
+	whitespaceRun     = regexp.MustCompile(`[ \t\n]+`)
+	brWithWhitespaces = regexp.MustCompile(`[ \t\n]*<br />[ \t\n]*`)
+)
+
+func testReflowFmtPreservesHTMLRenderModuloWhitespaces(t *testing.T, original string, w int) {
+	t.Helper()
+	testFmtPreservesHTMLRenderModulo(t, original, w, func(html string) string {
+		// Coalesce whitespaces in each paragraph.
+		return paragraph.ReplaceAllStringFunc(html, func(p string) string {
+			body := strings.Trim(p[3:len(p)-4], " \t\n")
+			// Convert each whitespace run to a single space.
+			body = whitespaceRun.ReplaceAllLiteralString(body, " ")
+			// Remove whitespaces around <br />.
+			body = brWithWhitespaces.ReplaceAllLiteralString(body, "<br />")
+			return "<p>" + body + "</p>"
+		})
+	})
+}
+
+func testFmtPreservesHTMLRenderModulo(t *testing.T, original string, w int, processHTML func(string) string) {
+	t.Helper()
+	formatted := formatAndSkipIfUnsupported(t, original, w)
 	originalRender := RenderString(original, &HTMLCodec{})
+	formattedRender := RenderString(formatted, &HTMLCodec{})
+	if processHTML != nil {
+		originalRender = processHTML(originalRender)
+		formattedRender = processHTML(formattedRender)
+	}
 	if formattedRender != originalRender {
 		t.Errorf("original:\n%s\nformatted:\n%s\n"+
 			"markdown diff (-original +formatted):\n%s"+
@@ -114,7 +162,7 @@ func testFmtPreservesHTMLRender(t *testing.T, original string) {
 	}
 }
 
-func formatAndSkipIfUnsupported(t *testing.T, original string) string {
+func formatAndSkipIfUnsupported(t *testing.T, original string, w int) string {
 	t.Helper()
 	if !utf8.ValidString(original) {
 		t.Skipf("input is not valid UTF-8")
@@ -122,7 +170,7 @@ func formatAndSkipIfUnsupported(t *testing.T, original string) string {
 	if strings.Contains(original, "\t") {
 		t.Skipf("input contains tab")
 	}
-	codec := &FmtCodec{}
+	codec := &FmtCodec{Width: w}
 	formatted := RenderString(original, codec)
 	if u := codec.Unsupported(); u != nil {
 		t.Skipf("input uses unsupported feature: %v", u)

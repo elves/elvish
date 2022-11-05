@@ -14,6 +14,7 @@ import (
 var (
 	overwrite = flag.Bool("w", false, "write result to source file (requires -fmt)")
 	showDiff  = flag.Bool("d", false, "show diff")
+	width     = flag.Int("width", 0, "if > 0, reflow content to width")
 )
 
 func main() {
@@ -53,5 +54,5 @@ func main() {
 }
 
 func format(original string) string {
-	return md.RenderString(original, &md.FmtCodec{})
+	return md.RenderString(original, &md.FmtCodec{Width: *width})
 }

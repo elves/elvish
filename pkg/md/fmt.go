@@ -7,6 +7,8 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"src.elv.sh/pkg/wcwidth"
 )
 
 // FmtCodec is a codec that formats Markdown in a specific style.
@@ -45,8 +47,9 @@ import (
 //
 //   - Hard line break always uses an explicit "\".
 type FmtCodec struct {
+	Width int
+
 	pieces []string
-	Width  string
 
 	unsupported *FmtUnsupported
 
@@ -274,17 +277,22 @@ type segmentType uint
 
 const (
 	segText segmentType = iota
+	// Some texts cannot be reflowed because whitespace is significant. This
+	// includes code spans and link tails.
+	segTextNoReflow
 	segHTML
 	segNewLine
 	segHardLineBreak
-	segNoBreakingStart
-	segNoBreakingEnd
+	segLinkOrImageStart
+	segLinkOrImageEnd
 )
 
 func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
 	segs := c.buildSegments(ops)
 	if atxHeading {
 		c.writeSegmentsATXHeading(segs)
+	} else if c.Width > 0 {
+		c.writeSegmentsParagraphReflow(segs, c.Width)
 	} else {
 		c.writeSegmentsParagraph(segs)
 	}
@@ -296,6 +304,9 @@ func (c *FmtCodec) buildSegments(ops []InlineOp) []segment {
 		if s != "" {
 			segs = append(segs, segment{typ: segText, text: s})
 		}
+	}
+	writeNoReflow := func(s string) {
+		segs = append(segs, segment{typ: segTextNoReflow, text: s})
 	}
 
 	emphasis := 0
@@ -364,17 +375,17 @@ func (c *FmtCodec) buildSegments(ops []InlineOp) []segment {
 			last := text[len(text)-1]
 			addSpace := first == '`' || last == '`' || (first == ' ' && last == ' ' && strings.Trim(text, " ") != "")
 
-			segs = append(segs, segment{typ: segNoBreakingStart})
-			write(delim)
+			var sb strings.Builder
+			sb.WriteString(delim)
 			if addSpace {
-				write(" ")
+				sb.WriteByte(' ')
 			}
-			write(text)
+			sb.WriteString(text)
 			if addSpace {
-				write(" ")
+				sb.WriteByte(' ')
 			}
-			write(delim)
-			segs = append(segs, segment{typ: segNoBreakingEnd})
+			sb.WriteString(delim)
+			segs = append(segs, segment{typ: segTextNoReflow, text: sb.String()})
 		case OpEmphasisStart:
 			write("*")
 			emphasis++
@@ -400,19 +411,19 @@ func (c *FmtCodec) buildSegments(ops []InlineOp) []segment {
 			write("**")
 			emphasis--
 		case OpLinkStart:
-			segs = append(segs, segment{typ: segNoBreakingStart})
+			segs = append(segs, segment{typ: segLinkOrImageStart})
 			write("[")
 		case OpLinkEnd:
 			write("]")
-			write(formatLinkTail(op.Dest, op.Text))
-			segs = append(segs, segment{typ: segNoBreakingEnd})
+			writeNoReflow(formatLinkTail(op.Dest, op.Text))
+			segs = append(segs, segment{typ: segLinkOrImageEnd})
 		case OpImage:
-			segs = append(segs, segment{typ: segNoBreakingStart})
+			segs = append(segs, segment{typ: segLinkOrImageStart})
 			write("![")
 			write(escapeNewLines(escapeText(op.Alt)))
 			write("]")
-			write(formatLinkTail(op.Dest, op.Text))
-			segs = append(segs, segment{typ: segNoBreakingEnd})
+			writeNoReflow(formatLinkTail(op.Dest, op.Text))
+			segs = append(segs, segment{typ: segLinkOrImageEnd})
 		case OpAutolink:
 			write("<")
 			if op.Dest == "mailto:"+op.Text {
@@ -453,13 +464,221 @@ func (c *FmtCodec) writeSegmentsATXHeading(segs []segment) {
 				}
 			}
 			c.write(text)
-		case segHTML:
-			// Raw HTML in ATX headings never contain embedded newlines, so just
-			// write it as is.
+		case segHTML, segTextNoReflow:
+			// Raw HTML in ATX headings and code spans never contain embedded
+			// newlines, so just write them as is.
 			c.write(seg.text)
 		case segNewLine:
 			c.write("&NewLine;")
 		}
+	}
+}
+
+func (c *FmtCodec) writeSegmentsParagraph(segs []segment) {
+	for i, seg := range segs {
+		startOfLine := i == 0 || (segs[i-1].typ == segNewLine && (i-1 == 0 || segs[i-2].typ != segNewLine))
+		endOfLine := i == len(segs)-1 || segs[i+1].typ == segNewLine
+		switch seg.typ {
+		case segText:
+			text := seg.text
+			// Escape trailing space or tab first. This way text like "- - - "
+			// alone on a line will already have the trailing space escaped and
+			// can no longer be parsed as a thematic break.
+			if endOfLine {
+				text = escapeTrailingSpaceTab(text)
+			}
+			if startOfLine {
+				text = c.escapeStartOfLine(text, i == 0, endOfLine)
+			}
+			c.write(text)
+		case segHTML:
+			// Inline raw HTML may contain embedded newlines; write them
+			// separately.
+			lines := strings.Split(seg.text, "\n")
+			if startOfLine && i > 0 && canStartHTMLBlock(lines[0], false) {
+				// If the first line appears at the start of the line, check
+				// whether it can also be parsed as an HTML block interrupting a
+				// paragraph (type 1 to 6). The only way I have found to prevent
+				// this is to make sure that it starts with at least 4 spaces;
+				// in fact, this exact case came up in a fuzz test where inline
+				// raw HTML appears at the start of the second line, preceded by
+				// 4 spaces. This won't be parsed as an indented code block
+				// since the latter can't interrupt a paragraph, but will
+				// prevent an HTML block to be parsed.
+				//
+				// If this piece of inline raw HTML appears at the very start,
+				// it means it can't be parsed as an HTML block, so there is no
+				// need to prevent it.
+				c.write("    ")
+			}
+			c.write(lines[0])
+			for _, line := range lines[1:] {
+				c.finishLine()
+				c.startLine()
+				c.write(line)
+			}
+		case segTextNoReflow:
+			c.write(seg.text)
+		case segNewLine:
+			if i == 0 || i == len(segs)-1 || segs[i-1].typ == segNewLine {
+				c.write("&NewLine;")
+			} else {
+				c.finishLine()
+				c.startLine()
+			}
+		case segHardLineBreak:
+			c.write("\\")
+		}
+	}
+}
+
+var (
+	whitespaceRunRegexp = regexp.MustCompile(`[ \t\n]+`)
+)
+
+func (c *FmtCodec) writeSegmentsParagraphReflow(segs []segment, maxWidth int) {
+	// Rearrange the segments into spans with the following properties:
+	//
+	//  - Each span must be written as a whole, with no changes it its internal
+	//    whitespaces.
+	//
+	//  - Adjacent spans must be separated by whitespaces.
+	var spans []string
+	var currentSpan strings.Builder
+	finishCurrentSpan := func() {
+		if currentSpan.Len() > 0 {
+			spans = append(spans, currentSpan.String())
+			currentSpan.Reset()
+		}
+	}
+	linkOrImage := 0
+	for _, seg := range segs {
+		switch seg.typ {
+		case segText:
+			parts := whitespaceRunRegexp.Split(seg.text, -1)
+			if linkOrImage > 0 {
+				// Coalesce spaces between segments
+				if parts[0] == "" && strings.HasSuffix(currentSpan.String(), " ") {
+					parts = parts[1:]
+				}
+				currentSpan.WriteString(strings.Join(parts, " "))
+			} else {
+				for i, part := range parts {
+					if i > 0 {
+						finishCurrentSpan()
+					}
+					currentSpan.WriteString(part)
+				}
+			}
+		case segTextNoReflow:
+			currentSpan.WriteString(seg.text)
+		case segHTML:
+			// Replacing a whitespace run in raw HTML with a single space is not
+			// always correct. For example, the following two are different:
+			//
+			//   <span title="a
+			//   b">foo</span>
+			//
+			//   <span title="a b">foo</span>
+			//
+			// But the few uses of raw inline HTML in Elvish's Markdown are
+			// simple enough (for example just a simple "<kbd>" tag), so we do
+			// the wrong but easy thing here. The result is accepted by the
+			// automated test, whose simplistic whitespace coalescing algorithm
+			// will coalesce whitespaces within raw HTML.
+			//
+			// The correct way to handle this is to preserve newlines inside raw
+			// HTML. But this will make some spans multi-line and complicate the
+			// process to arrange the spans into lines.
+			currentSpan.WriteString(
+				whitespaceRunRegexp.ReplaceAllLiteralString(seg.text, " "))
+		case segNewLine:
+			if linkOrImage > 0 {
+				if !strings.HasSuffix(currentSpan.String(), " ") {
+					currentSpan.WriteString(" ")
+				}
+			} else {
+				finishCurrentSpan()
+			}
+		case segHardLineBreak:
+			if linkOrImage > 0 {
+				// Keep links and images on the same line.
+				currentSpan.WriteString("<br />")
+			} else {
+				// A span ending in "\\\n" is handled specifically below.
+				currentSpan.WriteString("\\\n")
+				finishCurrentSpan()
+			}
+		case segLinkOrImageStart:
+			linkOrImage++
+		case segLinkOrImageEnd:
+			linkOrImage--
+		}
+	}
+	finishCurrentSpan()
+
+	if len(spans) == 0 {
+		// If there are no spans left, write an ampersand-escaped newline to
+		// preserve the paragraph. A run of ampersand-escaped whitespaces seems
+		// to be the only way to create an empty paragraph in Markdown in the
+		// first place.
+		c.write("&NewLine;")
+		return
+	}
+
+	for _, ct := range c.containers {
+		maxWidth -= len(ct.marker)
+	}
+
+	var currentLine strings.Builder
+	currentLineWidth := 0
+	startOfParagraph := true
+	writeCurrentLine := func() {
+		escaped := c.escapeStartOfLine(currentLine.String(), startOfParagraph, true)
+		if canStartHTMLBlock(escaped, startOfParagraph) {
+			if startOfParagraph {
+				escaped = "&NewLine;" + escaped
+			} else {
+				escaped = "    " + escaped
+			}
+		}
+		if !startOfParagraph {
+			c.startLine()
+		}
+		c.write(escaped)
+	}
+	startNewLine := func() {
+		c.finishLine()
+		currentLine.Reset()
+		currentLineWidth = 0
+		startOfParagraph = false
+	}
+	for _, span := range spans {
+		hardLineBreak := strings.HasSuffix(span, "\n")
+		if hardLineBreak {
+			span = span[:len(span)-1]
+		}
+		w := wcwidth.Of(span)
+		if currentLine.Len() == 0 {
+			currentLine.WriteString(span)
+			currentLineWidth = w
+		} else if currentLineWidth+1+w <= maxWidth {
+			currentLine.WriteByte(' ')
+			currentLine.WriteString(span)
+			currentLineWidth += 1 + w
+		} else {
+			writeCurrentLine()
+			startNewLine()
+			currentLine.WriteString(span)
+			currentLineWidth = w
+		}
+		if hardLineBreak {
+			writeCurrentLine()
+			startNewLine()
+		}
+	}
+	if currentLine.Len() > 0 {
+		writeCurrentLine()
 	}
 }
 
@@ -480,124 +699,71 @@ var (
 	orderedListOpenerLookalike = regexp.MustCompile(`^([0-9]{1,9})([.)])`)
 )
 
-func (c *FmtCodec) writeSegmentsParagraph(segs []segment) {
-	for i, seg := range segs {
-		startOfLine := i == 0 || (segs[i-1].typ == segNewLine && (i-1 == 0 || segs[i-2].typ != segNewLine))
-		endOfLine := i == len(segs)-1 || segs[i+1].typ == segNewLine
-		switch seg.typ {
-		case segText:
-			text := seg.text
-			if startOfLine {
-				text = escapeLeadingSpaceTab(text)
+func (c *FmtCodec) escapeStartOfLine(s string, startOfParagraph, endOfLine bool) string {
+	s = escapeLeadingSpaceTab(s)
+	switch s[0] {
+	case '-', '+':
+		tail := s[1:]
+		if startsWithSpaceOrTab(tail) || (tail == "" && startOfParagraph && endOfLine) {
+			return `\` + s
+		}
+	case '>':
+		return `\` + s
+	case '#':
+		if hashes := atxHeadingOpenerLookalike.FindString(s); hashes != "" {
+			tail := s[len(hashes):]
+			if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
+				return `\` + s
 			}
-			if endOfLine {
-				text = escapeTrailingSpaceTab(text)
-			}
-			if startOfLine && endOfLine && thematicBreakLookalike.MatchString(text) {
-				// If a line contains a single segment, there is a danger for
-				// the text to be parsed as a thematic break.
-				//
-				// After the escaping above, the text cannot start of end with a
-				// space or tab; the thematicBreakLookalikeRegexp match furthers
-				// guarentees that the text starts with either "-" or "_".
-				line := text
-				if i == 0 && text[0] == '-' {
-					// If we are the very beginning of the paragraph, we also
-					// need to include bullet markers that can be merged with
-					// the text to form a thematic break.
-					//
-					// The code here depends on the fact that bullet markers are
-					// written as individual pieces. This is guaranteed by the
-					// startLine method.
-					for j := len(c.pieces) - 1; j >= 0 && c.pieces[j][0] == text[0]; j-- {
-						line = c.pieces[j] + line
-					}
-				}
-				if thematicBreakRegexp.MatchString(line) {
-					c.write(`\`)
-					c.write(text)
-					continue
-				}
-			}
-			if startOfLine {
-				switch text[0] {
-				case '-', '+':
-					tail := text[1:]
-					if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
-						c.write(`\` + text[:1])
-						text = tail
-					}
-				case '>':
-					c.write(`\>`)
-					text = text[1:]
-				case '#':
-					if hashes := atxHeadingOpenerLookalike.FindString(text); hashes != "" {
-						tail := text[len(hashes):]
-						if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
-							c.write(`\` + hashes)
-							text = tail
-						}
-					}
-				default:
-					if m := orderedListOpenerLookalike.FindStringSubmatch(text); m != nil {
-						tail := text[len(m[0]):]
-						if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
-							number, punct := m[1], m[2]
-							if i == 0 || strings.TrimLeft(number, "0") == "1" {
-								c.write(number)
-								c.write(`\` + punct)
-								text = tail
-							}
-						}
-					} else if strings.HasPrefix(text, "~~~") {
-						c.write(`\~~~`)
-						text = text[3:]
-					}
-				}
-			}
-			c.write(text)
-		case segHTML:
-			// Inline raw HTML may contain embedded newlines; write them
-			// separately.
-			lines := strings.Split(seg.text, "\n")
-			if startOfLine && i > 0 && strings.HasPrefix(lines[0], "<") {
-				// If the first line appears at the start of the line, check
-				// whether it can also be parsed as an HTML block interrupting a
-				// paragraph (type 1 to 6). The only way I have found to prevent
-				// this is to make sure that it starts with at least 4 spaces;
-				// in fact, this exact case came up in a fuzz test where inline
-				// raw HTML appears at the start of the second line, preceded by
-				// 4 spaces. This won't be parsed as an indented code block
-				// since the latter can't interrupt a paragraph, but will
-				// prevent an HTML block to be parsed.
-				//
-				// If this piece of inline raw HTML appears at the very start,
-				// it means it can't be parsed as an HTML block, so there is no
-				// need to prevent it.
-				for _, r := range []*regexp.Regexp{html1Regexp, html2Regexp, html3Regexp, html4Regexp, html5Regexp, html6Regexp} {
-					if r.MatchString(lines[0]) {
-						c.write("    ")
-						break
-					}
-				}
-			}
-			c.write(lines[0])
-			for _, line := range lines[1:] {
-				c.finishLine()
-				c.startLine()
-				c.write(line)
-			}
-		case segNewLine:
-			if i == 0 || i == len(segs)-1 || segs[i-1].typ == segNewLine {
-				c.write("&NewLine;")
-			} else {
-				c.finishLine()
-				c.startLine()
-			}
-		case segHardLineBreak:
-			c.write("\\")
 		}
 	}
+	if strings.HasPrefix(s, "~~~") {
+		return `\` + s
+	} else if m := orderedListOpenerLookalike.FindStringSubmatch(s); m != nil {
+		tail := s[len(m[0]):]
+		if startsWithSpaceOrTab(tail) || (tail == "" && endOfLine) {
+			number, punct := m[1], m[2]
+			if startOfParagraph || strings.TrimLeft(number, "0") == "1" {
+				return number + `\` + punct + tail
+			}
+		}
+	} else if endOfLine && thematicBreakLookalike.MatchString(s) {
+		// If a line contains a single segment, there is a danger for
+		// the text to be parsed as a thematic break.
+		//
+		// After the escaping above, the text cannot start of end with a
+		// space or tab; the thematicBreakLookalikeRegexp match furthers
+		// guarantees that the text starts with either "-" or "_".
+		line := s
+		if startOfParagraph && s[0] == '-' {
+			// If we are the start of a paragraph, we also need to include
+			// bullet markers that can be merged with the text to form a
+			// thematic break.
+			//
+			// The code here depends on the fact that bullet markers are
+			// written as individual pieces. This is guaranteed by the
+			// startLine method.
+			for j := len(c.pieces) - 1; j >= 0 && c.pieces[j][0] == s[0]; j-- {
+				line = c.pieces[j] + line
+			}
+		}
+		if thematicBreakRegexp.MatchString(line) {
+			return `\` + s
+		}
+	}
+	return s
+}
+
+// Whether an inline raw HTML element can be parsed as the first line of an HTML
+// block.
+func canStartHTMLBlock(s string, startOfParagraph bool) bool {
+	return strings.HasPrefix(s, "<") && (html1Regexp.MatchString(s) ||
+		html2Regexp.MatchString(s) ||
+		html3Regexp.MatchString(s) ||
+		html4Regexp.MatchString(s) ||
+		html5Regexp.MatchString(s) ||
+		html6Regexp.MatchString(s) ||
+		html7Regexp.MatchString(s) && startOfParagraph)
 }
 
 func escapeLeadingSpaceTab(s string) string {
