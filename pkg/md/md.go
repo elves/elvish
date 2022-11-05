@@ -46,7 +46,10 @@ import (
 // better CommonMark compliance.
 var UnescapeHTML = unescapeHTML
 
-var charRefRegexp = regexp.MustCompile(`&(?:#[0-9]+|#[xX][0-9a-fA-F]+|[0-9a-zA-Z]+);`)
+// https://spec.commonmark.org/0.30/#entity-and-numeric-character-references
+const charRefPattern = `&(?:[a-zA-Z0-9]+|#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6});`
+
+var charRefRegexp = regexp.MustCompile(charRefPattern)
 
 var entities = map[string]rune{
 	// Necessary for writing valid HTML
@@ -306,7 +309,7 @@ func processCodeFenceInfo(text string) string {
 	for pos < len(text) {
 		b := text[pos]
 		if b == '&' {
-			if entity := entityRegexp.FindString(text[pos:]); entity != "" {
+			if entity := leadingCharRef(text[pos:]); entity != "" {
 				sb.WriteString(UnescapeHTML(entity))
 				pos += len(entity)
 				continue
@@ -717,4 +720,10 @@ func (s *lineSplitter) backup() {
 		return
 	}
 	s.pos = 1 + strings.LastIndexByte(s.text[:s.pos-1], '\n')
+}
+
+var leftAnchoredCharRefRegexp = regexp.MustCompile(`^` + charRefPattern)
+
+func leadingCharRef(s string) string {
+	return leftAnchoredCharRefRegexp.FindString(s)
 }

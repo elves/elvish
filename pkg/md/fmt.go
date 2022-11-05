@@ -90,14 +90,6 @@ func (c *FmtCodec) setUnsupported() *FmtUnsupported {
 }
 
 var (
-	// Unlike escapeHTML, double and single quotes in autolinks do not need
-	// escaping.
-	escapeAutolink = strings.NewReplacer(
-		"&", "&amp;", "<", "&lt;", ">", "&gt;",
-	).Replace
-)
-
-var (
 	backquoteRunRegexp = regexp.MustCompile("`+")
 	tildeRunRegexp     = regexp.MustCompile("~+")
 )
@@ -668,12 +660,14 @@ func matchLens(pieces []string, pattern *regexp.Regexp) map[int]bool {
 	return hasRunWithLen
 }
 
-const asciiControlOrSpaceOrParens = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f ()"
+const asciiControl = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f"
+
+const forbiddenInRawLinkDest = asciiControl + " ()"
 
 func formatLinkTail(dest, title string) string {
 	var sb strings.Builder
 	sb.WriteString("(")
-	if strings.ContainsAny(dest, asciiControlOrSpaceOrParens) {
+	if strings.ContainsAny(dest, forbiddenInRawLinkDest) {
 		sb.WriteString("<" + strings.ReplaceAll(escapeText(dest), ">", "&gt;") + ">")
 	} else if dest == "" && title != "" {
 		sb.WriteString("<>")
@@ -811,7 +805,7 @@ func escapeText(s string) string {
 			// any inline markup will introduce a metacharacter that is not
 			// allowed within character reference, it is sufficient to check
 			// within the text.
-			if end := strings.IndexByte(s[i:], ';'); end == -1 || !charRefRegexp.MatchString(s[i:i+end+1]) {
+			if leadingCharRef(s[i:]) == "" {
 				sb.WriteByte('&')
 			} else {
 				sb.WriteString("&amp;")
@@ -828,6 +822,36 @@ func escapeText(s string) string {
 			sb.WriteString("&nbsp;")
 		default:
 			sb.WriteRune(r)
+		}
+	}
+	return sb.String()
+}
+
+const forbiddenInAutolink = asciiControl + "& <>"
+
+// The escape of autolinks need to be handled specifically, because they support
+// character references, but don't support backslashes. Moreover, characters
+// forbidden inside autolinks (see uriAutolinkRegexp) should also be escaped.
+func escapeAutolink(s string) string {
+	if !strings.ContainsAny(s, forbiddenInAutolink) {
+		return s
+	}
+	var sb strings.Builder
+	for i := 0; i < len(s); i++ {
+		if s[i] <= 0x20 {
+			sb.WriteString("&#" + strconv.Itoa(int(s[i])) + ";")
+		} else if s[i] == '&' {
+			if leadingCharRef(s[i:]) == "" {
+				sb.WriteByte('&')
+			} else {
+				sb.WriteString("&amp;")
+			}
+		} else if s[i] == '<' {
+			sb.WriteString("&lt;")
+		} else if s[i] == '>' {
+			sb.WriteString("&gt;")
+		} else {
+			sb.WriteByte(s[i])
 		}
 	}
 	return sb.String()

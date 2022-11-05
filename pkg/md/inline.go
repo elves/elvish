@@ -59,9 +59,6 @@ type inlineParser struct {
 const emailLocalPuncts = ".!#$%&'*+/=?^_`{|}~-"
 
 var (
-	// https://spec.commonmark.org/0.30/#entity-and-numeric-character-references
-	entityRegexp = regexp.MustCompile(`^&(?:[a-zA-Z0-9]+|#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6});`)
-
 	// https://spec.commonmark.org/0.30/#uri-autolink
 	uriAutolinkRegexp = regexp.MustCompile(`^<` +
 		`[a-zA-Z][a-zA-Z0-9+.-]{1,31}` + // scheme
@@ -271,8 +268,9 @@ func (p *inlineParser) render() {
 					}
 					if autolink != "" {
 						p.pos = begin + len(autolink)
-						// Autolinks support entities but not backslashes, so
-						// UnescapeEntities gives us the desired behavior.
+						// Autolinks support character references but not
+						// backslashes, so UnescapeHTML gives us the desired
+						// behavior.
 						text := UnescapeHTML(autolink[1 : len(autolink)-1])
 						dest := text
 						if email {
@@ -288,8 +286,7 @@ func (p *inlineParser) render() {
 			parseText()
 		case '&':
 			// https://spec.commonmark.org/0.30/#entity-and-numeric-character-references
-			entity := entityRegexp.FindString(p.text[begin:])
-			if entity != "" {
+			if entity := leadingCharRef(p.text[begin:]); entity != "" {
 				p.buf.push(textPiece(UnescapeHTML(entity)))
 				p.pos = begin + len(entity)
 			} else {
@@ -751,7 +748,7 @@ func (p *linkTailParser) parseBackslash() byte {
 }
 
 func (p *linkTailParser) parseEntity() string {
-	if entity := entityRegexp.FindString(p.text[p.pos:]); entity != "" {
+	if entity := leadingCharRef(p.text[p.pos:]); entity != "" {
 		p.pos += len(entity)
 		return UnescapeHTML(entity)
 	}
