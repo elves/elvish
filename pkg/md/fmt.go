@@ -212,7 +212,12 @@ func (c *FmtCodec) Do(op Op) {
 		}
 		ct := c.containers.peek()
 		ct.marker = ""
-		ct.number++
+		// If the current number is 9 9's, incrementing it will make the number
+		// 10 digits; CommonMark requires the number in the ordered list to be
+		// at most 9 digits. So just stop incrementing at this number.
+		if ct.number < 999999999 {
+			ct.number++
+		}
 	case OpBulletListStart:
 		c.containers.push(&fmtContainer{
 			typ:   fmtBulletItem,

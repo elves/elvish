@@ -1,0 +1,2 @@
+go test fuzz v1
+string("999999990)\n0)\n0)\n0)\n0)\n0)\n0)\n0)\n0)\n0)\n0)")
