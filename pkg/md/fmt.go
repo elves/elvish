@@ -653,7 +653,8 @@ func (c *FmtCodec) writeSegmentsParagraphReflow(segs []segment, maxWidth int) {
 		currentLineWidth = 0
 		startOfParagraph = false
 	}
-	for _, span := range spans {
+	for i, span := range spans {
+		// Only spans ending in a hard line break ends in a newline
 		hardLineBreak := strings.HasSuffix(span, "\n")
 		if hardLineBreak {
 			span = span[:len(span)-1]
@@ -699,6 +700,13 @@ func (c *FmtCodec) writeSegmentsParagraphReflow(segs []segment, maxWidth int) {
 		if hardLineBreak {
 			writeCurrentLine()
 			startNewLine()
+			if i == len(spans)-1 {
+				// \ at the end of a paragraph becomes a literal \ instead of a
+				// hard line break. Fix this with an ampersand-escaped
+				// whitespace, which seems to be the only way to make a
+				// paragraph end with a hard line break in the first place.
+				currentLine.WriteString("&NewLine;")
+			}
 		}
 	}
 	if currentLine.Len() > 0 {
