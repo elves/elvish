@@ -475,7 +475,8 @@ func (c *FmtCodec) writeSegmentsATXHeading(segs []segment) {
 }
 
 func (c *FmtCodec) writeSegmentsParagraph(segs []segment) {
-	for i, seg := range segs {
+	for i := 0; i < len(segs); i++ {
+		seg := segs[i]
 		startOfLine := i == 0 || (segs[i-1].typ == segNewLine && (i-1 == 0 || segs[i-2].typ != segNewLine))
 		endOfLine := i == len(segs)-1 || segs[i+1].typ == segNewLine
 		switch seg.typ {
@@ -495,21 +496,26 @@ func (c *FmtCodec) writeSegmentsParagraph(segs []segment) {
 			// Inline raw HTML may contain embedded newlines; write them
 			// separately.
 			lines := strings.Split(seg.text, "\n")
-			if startOfLine && i > 0 && canStartHTMLBlock(lines[0], false) {
+			if startOfLine && canStartHTMLBlock(lines[0], i == 0) {
 				// If the first line appears at the start of the line, check
-				// whether it can also be parsed as an HTML block interrupting a
-				// paragraph (type 1 to 6). The only way I have found to prevent
-				// this is to make sure that it starts with at least 4 spaces;
-				// in fact, this exact case came up in a fuzz test where inline
-				// raw HTML appears at the start of the second line, preceded by
-				// 4 spaces. This won't be parsed as an indented code block
-				// since the latter can't interrupt a paragraph, but will
-				// prevent an HTML block to be parsed.
-				//
-				// If this piece of inline raw HTML appears at the very start,
-				// it means it can't be parsed as an HTML block, so there is no
-				// need to prevent it.
-				c.write("    ")
+				// whether it can also be parsed as an HTML block instead.
+				if i > 0 {
+					// If the raw HTML appears not at the start of a paragraph,
+					// inserting 4 spaces will prevent an HTML block to be
+					// parsed, and won't make the text parse as an indented code
+					// block, since the latter can't interrupt a paragraph.
+					c.write("    ")
+				} else if len(lines) == 1 && i+1 < len(segs) && segs[i+1].typ == segNewLine {
+					// If raw HTML does appear at the start of a paragraph, the
+					// only way I have found (actually the fuzz test found) for
+					// the raw HTML to not have get parsed as an HTML block is
+					// when the raw HTML is one line and is followed by an
+					// escaped newline.
+					c.write(lines[0])
+					c.write("&NewLine;")
+					i++
+					continue
+				}
 			}
 			c.write(lines[0])
 			for _, line := range lines[1:] {
