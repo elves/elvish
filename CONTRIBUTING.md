@@ -156,23 +156,52 @@ format Go files.
 go install golang.org/x/tools/cmd/goimports@latest
 ```
 
-The Markdown formatter [elvmdfmt](cmd/elvmdfmt) does not need to be installed.
+The Markdown formatter [elvmdfmt](cmd/elvmdfmt) lives inside this repo and does
+not need to be installed.
 
 Once you have installed the tools, use `make style` to format Go and Markdown
 files, or `make checkstyle` to check if all Go and Markdown files are properly
 formatted.
 
-#### Installing elvmdfmt
+#### Formatting on save
 
-The `make style` and `make checkstyle` scripts both use `elvmdfmt` is by running
-`go run src.elv.sh/cmd/elvmdfmt`. Besides not needing to install the tool, this
-also has the advantage of always using the `elvmdfmt` from the repo itself.
+The Go plugins of most popular editors already support formatting Go files
+automatically on save; consult the documentation of the plugin you use.
 
-You can use the same `go run` command to run `elvmdfmt`, but it has a small
-performance penalty. If you need to run it frequently (for example on every
-editor save), you can also install it with `go install`. Beware that this means
-you have to re-install it every time there is a change in the output format of
-`elvmdfmt` (which should be infrequent but possible).
+To format Markdown files automatically on save, configure your editor to run the
+following command when saving Markdown files:
+
+```sh
+go run src.elv.sh/cmd/elvmdfmt -width 80 -w $filename
+```
+
+**Note**: Using `go run` ensures that you are always using the `elvmdfmt`
+implementation in the repo, but it incurs a small performance penalty since the
+Go toolchain does not cache binary files. If this is a problem (for example, if
+your editor runs the command synchronously), you can speed up the command by
+installing `src.elv.sh/cmd/elvmdfmt` and using the installed `elvmdfmt`.
+However, if you do this, you must re-install `elvmdfmt` whenever there is a
+change in its implementation that impacts the output.
+
+You'll also want to configure this command to only run inside the Elvish repo,
+since `elvmdfmt` is tailored to Markdown files in this repo and may not work
+well for other Markdown files.
+
+If you use VS Code, you can install the
+[Run on Save](https://marketplace.visualstudio.com/items?itemName=emeraldwalk.RunOnSave)
+extension and add the following to the workspace (not user) `settings.json`
+file:
+
+```json
+"emeraldwalk.runonsave": {
+    "commands": [
+        {
+            "match": "\\.md$",
+            "cmd": "go run src.elv.sh/cmd/elvmdfmt -width 80 -w ${file}"
+        }
+    ]
+}
+```
 
 ### Linting
 
