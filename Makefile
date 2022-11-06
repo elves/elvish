@@ -31,7 +31,7 @@ cover:
 style:
 	find . -name '*.go' | xargs goimports -w
 	find . -name '*.go' | xargs gofmt -s -w
-	find . -name '*.md' | xargs prettier --write
+	find . -name '*.md' | xargs go run src.elv.sh/cmd/elvmdfmt -w -width 80
 
 # Check if the style of the Go and Markdown files is correct without modifying
 # those files.

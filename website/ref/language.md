@@ -160,7 +160,7 @@ represents Unicode codepoints in hexadecimal):
 
     -   `\^?` represents DEL (U+007F).
 
-    -   `\c` followed by character _X_ is equivalent to `\^` followed by _X_.
+    -   `\c` followed by character *X* is equivalent to `\^` followed by *X*.
 
 An unsupported escape sequence results in a parse error.
 
@@ -226,7 +226,7 @@ string that parses to a number. Examples:
 
 -   In the string `世界`, each codepoint is encoded with three bytes. The first
     codepoint occupies byte 0 through 2, and the second occupies byte 3 through
-    5\. Hence valid indices are 0 and 3:
+    5. Hence valid indices are 0 and 3:
 
     ```elvish-transcript
     ~> put 世界[0]
@@ -729,7 +729,7 @@ Compilation error: variable $nonexistent not found
 ```
 
 Note that Elvish resolves all variables in a code chunk before starting to
-execute any of it; that is why the error message above says _compilation error_.
+execute any of it; that is why the error message above says *compilation error*.
 This can be more clearly observed in the following example:
 
 ```elvish-transcript
@@ -743,7 +743,7 @@ Compilation error: variable $nonexistent not found
 When a function literal refers to a variable in an outer scope, the function
 will keep that variable alive, even if that variable is the local variable of an
 outer function that function has returned. This is called
-[closure semantics](<https://en.wikipedia.org/wiki/Closure_(computer_programming)>),
+[closure semantics](<https://en.wikipedia.org/wiki/Closure\_(computer_programming)>),
 because the function literal "closes" over the environment it is defined in.
 
 In the following example, the `make-adder` function outputs two functions, both
@@ -2413,14 +2413,14 @@ from the module spec by taking the part after the last slash.
 Module specs fall into three categories that are resolved in the following
 order:
 
-1. **Relative**: These are [relative](#relative-imports) to the file containing
-   the `use` command.
+1.  **Relative**: These are [relative](#relative-imports) to the file containing
+    the `use` command.
 
-1. **User defined**: These match a [user defined module](#user-defined-modules)
-   in a [module search directory](command.html#module-search-directories).
+2.  **User defined**: These match a [user defined module](#user-defined-modules)
+    in a [module search directory](command.html#module-search-directories).
 
-1. **Pre-defined**: These match the name of a
-   [pre-defined module](#pre-defined-modules), such as `math` or `str`.
+3.  **Pre-defined**: These match the name of a
+    [pre-defined module](#pre-defined-modules), such as `math` or `str`.
 
 If a module spec doesn't match any of the above a "no such module"
 [exception](#exception) is raised.
@@ -2439,16 +2439,26 @@ Elvish's standard library provides the following pre-defined modules that can be
 imported by the `use` command:
 
 -   [builtin](builtin.html)
+
 -   [edit](edit.html): only available in interactive mode. As a special case it
     does not need importing via `use`, but this may change in the future.
+
 -   [epm](epm.html)
+
 -   [math](math.html)
+
 -   [path](path.html)
+
 -   [platform](platform.html)
+
 -   [re](re.html)
+
 -   [readline-binding](readline-binding.html)
+
 -   [store](store.html)
+
 -   [str](str.html)
+
 -   [unix](unix.html): only available on UNIX-like platforms (see
     [`$platform:is-unix`](platform.html#platform:is-unix))
 

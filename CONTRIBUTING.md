@@ -57,7 +57,7 @@ appropriate section. You can find the document at the root of the repo (called
 ### Reference docs
 
 Reference docs are interspersed in Go sources as comments blocks whose first
-line starts with `//elvdoc` (and are hence called _elvdocs_). They can use
+line starts with `//elvdoc` (and are hence called *elvdocs*). They can use
 [Github Flavored Markdown](https://github.github.com/gfm/).
 
 Elvdocs for functions look like the following:
@@ -150,19 +150,29 @@ Some basic aspects of code hygiene are checked in the CI.
 ### Formatting
 
 Install [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports) to
-format Go files, and [prettier](https://prettier.io/) to format Markdown files.
+format Go files.
 
 ```sh
 go install golang.org/x/tools/cmd/goimports@latest
-npm install --global prettier@2.7.1
 ```
 
-Once you have installed the tools, use `make style` to format Go and Markdown
-files. If you prefer, you can also configure your editor to run these commands
-automatically when saving Go or Markdown sources.
+The Markdown formatter [elvmdfmt](cmd/elvmdfmt) does not need to be installed.
 
-Use `make checkstyle` to check if all Go and Markdown files are properly
+Once you have installed the tools, use `make style` to format Go and Markdown
+files, or `make checkstyle` to check if all Go and Markdown files are properly
 formatted.
+
+#### Installing elvmdfmt
+
+The `make style` and `make checkstyle` scripts both use `elvmdfmt` is by running
+`go run src.elv.sh/cmd/elvmdfmt`. Besides not needing to install the tool, this
+also has the advantage of always using the `elvmdfmt` from the repo itself.
+
+You can use the same `go run` command to run `elvmdfmt`, but it has a small
+performance penalty. If you need to run it frequently (for example on every
+editor save), you can also install it with `go install`. Beware that this means
+you have to re-install it every time there is a change in the output format of
+`elvmdfmt` (which should be infrequent but possible).
 
 ### Linting
 
