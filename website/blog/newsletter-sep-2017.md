@@ -64,8 +64,8 @@ very tuned.
 
 # Conclusions
 
-In the last newsletter, I predicted that we will be featuring _Elvish for Python
-Users_ and _Tetris in Your Shell_ in a future newsletter. It seems we are
+In the last newsletter, I predicted that we will be featuring *Elvish for Python
+Users* and *Tetris in Your Shell* in a future newsletter. It seems we are
 getting close to that pretty steadily.
 
 Have fun with Elvish!

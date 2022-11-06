@@ -9,8 +9,8 @@ This document is an advanced tutorial focusing on how to write idiomatic Elvish
 code, code that is concise and clear, and takes full advantage of Elvish's
 features.
 
-An appropriate adjective for idiomatic Elvish code, like _Pythonic_ for Python
-or _Rubyesque_ for Ruby, is **Elven**. In
+An appropriate adjective for idiomatic Elvish code, like *Pythonic* for Python
+or *Rubyesque* for Ruby, is **Elven**. In
 [Roguelike games](https://en.wikipedia.org/wiki/Roguelike), Elven items are
 known to be high-quality, artful and resilient. So is Elven code.
 
@@ -89,7 +89,7 @@ section documents how to make the most use of pipelines.
 ## Returning Values with Structured Output
 
 Unlike functions in most other programming languages, Elvish commands do not
-have return values. Instead, they can write to _structured output_, which is
+have return values. Instead, they can write to *structured output*, which is
 similar to the traditional byte-based stdout, but preserves all internal
 structures of aribitrary Elvish values. The most fundamental command that does
 this is `put`:
@@ -446,8 +446,8 @@ constructing a list or using rest variables:
 As of writing, Elvish is neither stable nor complete. The builtin libraries
 still have missing pieces, the package manager is in its early days, and things
 like a type system and macros have been proposed and considered, but not yet
-worked on. Deciding best practices for using feature _x_ can be a bit tricky
-when that feature _x_ doesn't yet exist!
+worked on. Deciding best practices for using feature *x* can be a bit tricky
+when that feature *x* doesn't yet exist!
 
 The current version of the document is what the lead developer of Elvish (@xiaq)
 has collected as best practices for writing Elvish code in early 2018, between

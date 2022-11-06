@@ -121,16 +121,10 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: Set up environment
-      run: |
-        echo "NPM_PREFIX=$HOME/npm" >> $GITHUB_ENV
-        echo "PATH=$HOME/npm/bin:$PATH" >> $GITHUB_ENV
-    - name: Set up Node
-      uses: actions/setup-node@v2
-    - name: Set up Node prefix
-      run: npm config set prefix $NPM_PREFIX
-    - name: Set up prettier
-      run: npm install --global prettier@2.7.1
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.19.x
     - name: Check style
       run: ./tools/checkstyle-md.sh
 

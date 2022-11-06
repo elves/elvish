@@ -98,7 +98,7 @@ directory already in `$PATH`.
 
 ### Building a variant
 
-Elvish has several _build variants_ with slightly different feature sets. For
+Elvish has several *build variants* with slightly different feature sets. For
 example, the `withpprof` build variant has
 [profiling support](https://pkg.go.dev/runtime/pprof).
 

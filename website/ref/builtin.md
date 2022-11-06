@@ -97,7 +97,7 @@ in one of two ways:
     ▶ C
     ```
 
-1.  From an argument -- an iterable value:
+2.  From an argument -- an iterable value:
 
     ```elvish-transcript
     ~> count [lorem ipsum] # count number of elements in argument
