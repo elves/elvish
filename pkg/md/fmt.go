@@ -49,14 +49,14 @@ import (
 type FmtCodec struct {
 	Width int
 
-	pieces []string
+	sb strings.Builder
 
 	unsupported *FmtUnsupported
 
 	// Current active container blocks.
 	containers stack[*fmtContainer]
-	// The value of len(pieces) when the last container block was started. Used
-	// to determine whether a container is empty, in which case a blank line is
+	// The value of sb.Len() when the last container block was started. Used to
+	// determine whether a container is empty, in which case a blank line is
 	// needed to preserve the container.
 	containerStart int
 
@@ -78,7 +78,7 @@ type FmtUnsupported struct {
 	ConsecutiveEmphasisOrStrongEmphasis bool
 }
 
-func (c *FmtCodec) String() string { return strings.Join(c.pieces, "") }
+func (c *FmtCodec) String() string { return c.sb.String() }
 
 // Unsupported returns information about use of unsupported features that may
 // make the output incorrect. It returns nil if there is no use of unsupported
@@ -106,11 +106,11 @@ func (c *FmtCodec) Do(op Op) {
 	switch op.Type {
 	case OpThematicBreak, OpHeading, OpCodeBlock, OpHTMLBlock, OpParagraph,
 		OpBlockquoteStart, OpBulletListStart, OpOrderedListStart:
-		if len(c.pieces) > 0 && c.lastOpType != OpBlockquoteStart && c.lastOpType != OpListItemStart {
+		if c.sb.Len() > 0 && c.lastOpType != OpBlockquoteStart && c.lastOpType != OpListItemStart {
 			c.writeLine("")
 		}
 	case OpListItemStart:
-		if len(c.pieces) > 0 && c.lastOpType != OpBulletListStart && c.lastOpType != OpOrderedListStart {
+		if c.sb.Len() > 0 && c.lastOpType != OpBulletListStart && c.lastOpType != OpOrderedListStart {
 			c.writeLine("")
 		}
 	}
@@ -169,15 +169,15 @@ func (c *FmtCodec) Do(op Op) {
 		c.doInlineContent(op.Content, false)
 		c.finishLine()
 	case OpBlockquoteStart:
-		c.containerStart = len(c.pieces)
+		c.containerStart = c.sb.Len()
 		c.containers.push(&fmtContainer{typ: fmtBlockquote, marker: "> "})
 	case OpBlockquoteEnd:
-		if c.containerStart == len(c.pieces) {
+		if c.containerStart == c.sb.Len() {
 			c.writeLine("")
 		}
 		c.containers.pop()
 	case OpListItemStart:
-		c.containerStart = len(c.pieces)
+		c.containerStart = c.sb.Len()
 		// Set marker to start marker
 		if ct := c.containers.peek(); ct.typ == fmtBulletItem {
 			ct.marker = fmt.Sprintf("%c   ", ct.punct)
@@ -188,7 +188,7 @@ func (c *FmtCodec) Do(op Op) {
 			}
 		}
 	case OpListItemEnd:
-		if c.containerStart == len(c.pieces) {
+		if c.containerStart == c.sb.Len() {
 			// When a list item is empty, we will write a line consisting of
 			// bullet punctuations and spaces only. When there are at least 3
 			// instances of the same punctuation, this line will be become a
@@ -719,10 +719,12 @@ var (
 	// prepending the some bullet markers.
 	//
 	// - We don't need to consider leading spaces, since they will already be
-	// ampersand-escaped.
+	//   ampersand-escaped.
 	//
 	// - We don't need to consider "*", since it is always backslash-escaped.
 	thematicBreakLookalike = regexp.MustCompile(`^((?:-[ \t]*)+|(?:_[ \t]*)+)$`)
+	// Pattern for dash bullets at the end of the buffer.
+	trailingDashes = regexp.MustCompile(`(?:- *)*$`)
 	// Pattern for text that can be parsed as an ATX heading opener, if followed
 	// by space, tab or end of line.
 	atxHeadingOpenerLookalike = regexp.MustCompile(`^#{1,6}`)
@@ -772,12 +774,10 @@ func (c *FmtCodec) escapeStartOfLine(s string, startOfParagraph, endOfLine bool)
 			// bullet markers that can be merged with the text to form a
 			// thematic break.
 			//
-			// The code here depends on the fact that bullet markers are
-			// written as individual pieces. This is guaranteed by the
-			// startLine method.
-			for j := len(c.pieces) - 1; j >= 0 && c.pieces[j][0] == s[0]; j-- {
-				line = c.pieces[j] + line
-			}
+			// This can only happen for "-": "*" in the content is already
+			// backslash-escaped at this point, while "_" is not a possible
+			// bullet list marker.
+			line = trailingDashes.FindString(c.sb.String()) + line
 		}
 		if thematicBreakRegexp.MatchString(line) {
 			return `\` + s
@@ -906,9 +906,6 @@ func wrapAndEscapeLinkTitle(title string) string {
 }
 
 func (c *FmtCodec) startLine() {
-	// Note: the fact that the container markers are written as individual
-	// pieces is depended on by the part of doInlineContent escaping texts that
-	// look like thematic breaks.
 	for _, container := range c.containers {
 		c.write(container.useMarker())
 	}
@@ -937,9 +934,7 @@ func (c *FmtCodec) writeLine(s string) {
 	c.finishLine()
 }
 
-func (c *FmtCodec) write(s string) {
-	c.pieces = append(c.pieces, s)
-}
+func (c *FmtCodec) write(s string) { c.sb.WriteString(s) }
 
 type fmtContainer struct {
 	typ    fmtContainerType
