@@ -662,15 +662,39 @@ func (c *FmtCodec) writeSegmentsParagraphReflow(segs []segment, maxWidth int) {
 		if currentLine.Len() == 0 {
 			currentLine.WriteString(span)
 			currentLineWidth = w
-		} else if currentLineWidth+1+w <= maxWidth {
-			currentLine.WriteByte(' ')
-			currentLine.WriteString(span)
-			currentLineWidth += 1 + w
 		} else {
-			writeCurrentLine()
-			startNewLine()
-			currentLine.WriteString(span)
-			currentLineWidth = w
+			// Determine whether the current span fits onto the current line.
+			//
+			// One slightly tricky detail here is that c.escapeStartOfLine may
+			// insert more text, making the line wider. In reflow mode, the line
+			// never starts or ends with whitespaces, so the most we have to
+			// worry about is one backslash.
+			//
+			// As a result, if the line's width is exactly maxWidth after
+			// appending the current span, we need to be extra careful and only
+			// consider the current span to fit if c.escapeStartOfLine won't
+			// introduce an additional backslash.
+			//
+			// The current implementation of this check is rather inefficient,
+			// but since the check is done at most once per line, the
+			// performance might as well be good enough.
+			fits := false
+			if currentLineWidth+1+w < maxWidth {
+				fits = true
+			} else if currentLineWidth+1+w == maxWidth {
+				line := currentLine.String() + " " + span
+				fits = c.escapeStartOfLine(line, startOfParagraph, true) == line
+			}
+			if fits {
+				currentLine.WriteByte(' ')
+				currentLine.WriteString(span)
+				currentLineWidth += 1 + w
+			} else {
+				writeCurrentLine()
+				startNewLine()
+				currentLine.WriteString(span)
+				currentLineWidth = w
+			}
 		}
 		if hardLineBreak {
 			writeCurrentLine()

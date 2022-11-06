@@ -6,9 +6,13 @@ import (
 )
 
 // TraceCodec is a Codec that records all the Op's passed to its Do method.
-type TraceCodec struct{ strings.Builder }
+type TraceCodec struct {
+	ops []Op
+	strings.Builder
+}
 
 func (c *TraceCodec) Do(op Op) {
+	c.ops = append(c.ops, op)
 	c.WriteString(op.Type.String())
 	if op.Number != 0 {
 		fmt.Fprintf(c, " Number=%d", op.Number)
@@ -37,3 +41,5 @@ func (c *TraceCodec) Do(op Op) {
 		c.WriteString("\n")
 	}
 }
+
+func (c *TraceCodec) Ops() []Op { return c.ops }
