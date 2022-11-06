@@ -24,20 +24,17 @@ func main() {
 	files := flag.Args()
 	if len(files) == 0 {
 		text, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "read stdin:", err)
-			os.Exit(2)
-		}
-		fmt.Print(format(string(text)))
+		handleReadError("stdin", err)
+		result, unsupported := format(string(text))
+		fmt.Print(result)
+		handleUnsupported("stdin", unsupported)
 		return
 	}
 	for _, file := range files {
 		text, err := os.ReadFile(file)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "read %s: %v\n", file, err)
-			os.Exit(2)
-		}
-		result := format(string(text))
+		handleReadError(file, err)
+		result, unsupported := format(string(text))
+		handleUnsupported(file, unsupported)
 		if *overwrite {
 			err := os.WriteFile(file, []byte(result), 0644)
 			if err != nil {
@@ -53,6 +50,28 @@ func main() {
 	}
 }
 
-func format(original string) string {
-	return md.RenderString(original, &md.FmtCodec{Width: *width})
+func format(original string) (string, *md.FmtUnsupported) {
+	codec := &md.FmtCodec{Width: *width}
+	formatted := md.RenderString(original, codec)
+	return formatted, codec.Unsupported()
+}
+
+func handleReadError(name string, err error) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "read %s: %v\n", name, err)
+		os.Exit(2)
+	}
+}
+
+func handleUnsupported(name string, u *md.FmtUnsupported) {
+	if u == nil {
+		return
+	}
+	if u.NestedEmphasisOrStrongEmphasis {
+		fmt.Fprintln(os.Stderr, name, "contains nested emphasis or strong emphasis")
+	}
+	if u.ConsecutiveEmphasisOrStrongEmphasis {
+		fmt.Fprintln(os.Stderr, name, "contains consecutive emphasis or strong emphasis")
+	}
+	os.Exit(2)
 }
