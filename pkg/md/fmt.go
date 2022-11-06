@@ -877,7 +877,13 @@ func formatLinkTail(dest, title string) string {
 		// Bare destinations only recognize backslash and character references
 		// as special. The order of function calls is important here to avoid
 		// double-escaping.
-		sb.WriteString(escapeAmpersandBackslash(dest, ""))
+		escapedDest := escapeAmpersandBackslash(dest, "")
+		// Also escape any leading < so that it won't be parsed as an
+		// angle-bracketed destination.
+		if strings.HasPrefix(escapedDest, "<") {
+			escapedDest = `\` + escapedDest
+		}
+		sb.WriteString(escapedDest)
 	}
 	if title != "" {
 		sb.WriteString(" ")
