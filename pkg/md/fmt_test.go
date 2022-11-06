@@ -71,6 +71,11 @@ var supplementalFmtCases = []testCase{
 		Markdown: `[a](b (\(''""))`,
 	},
 	{
+		Section:  "Links",
+		Name:     "Newline in link destination",
+		Markdown: `[a](<&NewLine;>)`,
+	},
+	{
 		Section:  "Soft line breaks",
 		Name:     "Space at start of line",
 		Markdown: "&#32;foo",

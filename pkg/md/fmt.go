@@ -860,17 +860,24 @@ func matchLens(pieces []string, pattern *regexp.Regexp) map[int]bool {
 
 const asciiControl = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f"
 
-const forbiddenInRawLinkDest = asciiControl + " ()"
+const forbiddenInRawLinkDest = asciiControl + " "
 
 func formatLinkTail(dest, title string) string {
 	var sb strings.Builder
 	sb.WriteString("(")
-	if strings.ContainsAny(dest, forbiddenInRawLinkDest) {
-		sb.WriteString("<" + strings.ReplaceAll(escapeText(dest), ">", "&gt;") + ">")
+	if strings.ContainsAny(dest, forbiddenInRawLinkDest) || !balancedParens(dest) {
+		// Angle-bracketed destinations recognize a few characters plus
+		// character references as special and disallow newlines. The order of
+		// function calls is important here to avoid double-escaping.
+		sb.WriteString("<" + strings.ReplaceAll(
+			escapeAmpersandBackslash(dest, "<>"), "\n", "&NewLine;") + ">")
 	} else if dest == "" && title != "" {
 		sb.WriteString("<>")
 	} else {
-		sb.WriteString(escapeText(dest))
+		// Bare destinations only recognize backslash and character references
+		// as special. The order of function calls is important here to avoid
+		// double-escaping.
+		sb.WriteString(escapeAmpersandBackslash(dest, ""))
 	}
 	if title != "" {
 		sb.WriteString(" ")
@@ -880,29 +887,55 @@ func formatLinkTail(dest, title string) string {
 	return sb.String()
 }
 
-var escapeParens = strings.NewReplacer("(", `\(`, ")", `\)`).Replace
+func balancedParens(s string) bool {
+	balance := 0
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '(':
+			balance++
+		case ')':
+			if balance == 0 {
+				return false
+			}
+			balance--
+		}
+	}
+	return balance == 0
+}
 
 func wrapAndEscapeLinkTitle(title string) string {
 	doubleQuotes := strings.Count(title, "\"")
 	if doubleQuotes == 0 {
-		return "\"" + escapeText(title) + "\""
+		return "\"" + escapeAmpersandBackslash(title, "") + "\""
 	}
 	singleQuotes := strings.Count(title, "'")
 	if singleQuotes == 0 {
-		return "'" + escapeText(title) + "'"
+		return "'" + escapeAmpersandBackslash(title, "") + "'"
 	}
 	parens := strings.Count(title, "(") + strings.Count(title, ")")
 	if parens == 0 {
-		return "(" + escapeText(title) + ")"
+		return "(" + escapeAmpersandBackslash(title, "") + ")"
 	}
 	switch {
 	case doubleQuotes <= singleQuotes && doubleQuotes <= parens:
-		return `"` + strings.ReplaceAll(escapeText(title), `"`, `\"`) + `"`
+		return `"` + escapeAmpersandBackslash(title, `"`) + `"`
 	case singleQuotes <= parens:
-		return "'" + strings.ReplaceAll(escapeText(title), "'", `\'`) + "'"
+		return "'" + escapeAmpersandBackslash(title, `'`) + "'"
 	default:
-		return "(" + escapeParens(escapeText(title)) + ")"
+		return "(" + escapeAmpersandBackslash(title, "()") + ")"
 	}
+}
+
+// Backslash-escape ampersands, backslashes and bytes in the specified set.
+func escapeAmpersandBackslash(s, set string) string {
+	var sb strings.Builder
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\\' || strings.IndexByte(set, s[i]) >= 0 || leadingCharRef(s[i:]) != "" {
+			sb.WriteByte('\\')
+		}
+		sb.WriteByte(s[i])
+	}
+	return sb.String()
 }
 
 func (c *FmtCodec) startLine() {
@@ -990,24 +1023,23 @@ func escapeText(s string) string {
 			if isWord(utf8.DecodeLastRuneInString(s[:i])) && isWord(utf8.DecodeRuneInString(s[i+1:])) {
 				sb.WriteByte('_')
 			} else {
-				sb.WriteString("\\_")
+				sb.WriteString(`\_`)
 			}
 		case '&':
-			// Look ahead to next ";" to decide whether the ampersand can start
-			// a character reference and thus needs to be escaped. Since
-			// any inline markup will introduce a metacharacter that is not
-			// allowed within character reference, it is sufficient to check
-			// within the text.
+			// Look ahead decide whether the ampersand can start a character
+			// reference and thus needs to be escaped. Since any inline markup
+			// will introduce a metacharacter that is not allowed within
+			// character reference, it is sufficient to check within the text.
 			if leadingCharRef(s[i:]) == "" {
 				sb.WriteByte('&')
 			} else {
-				sb.WriteString("&amp;")
+				sb.WriteString(`\&`)
 			}
 		case '<':
 			if i < len(s)-1 && !canBeSpecialAfterLt(s[i+1]) {
 				sb.WriteByte('<')
 			} else {
-				sb.WriteString("&lt;")
+				sb.WriteString(`\<`)
 			}
 		case '\u00A0':
 			// This is by no means required, but it's nice to make non-breaking

@@ -743,7 +743,7 @@ Compilation error: variable $nonexistent not found
 When a function literal refers to a variable in an outer scope, the function
 will keep that variable alive, even if that variable is the local variable of an
 outer function that function has returned. This is called
-[closure semantics](<https://en.wikipedia.org/wiki/Closure\_(computer_programming)>),
+[closure semantics](https://en.wikipedia.org/wiki/Closure_(computer_programming)),
 because the function literal "closes" over the environment it is defined in.
 
 In the following example, the `make-adder` function outputs two functions, both

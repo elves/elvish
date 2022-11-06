@@ -56,7 +56,7 @@ Elvish is named after **elven** items in
 high quality. You can think of Elvish as an abbreviation of "elven shell".
 
 The name is not directly related to
-[Tolkien's Elvish languages](<https://en.wikipedia.org/wiki/Elvish_languages\_(Middle-earth)>),
+[Tolkien's Elvish languages](https://en.wikipedia.org/wiki/Elvish_languages_(Middle-earth)),
 but you're welcome to create something related to both Elvishes.
 
 Alternatively, Elvish is a backronym for "Expressive programming Language and

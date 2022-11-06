@@ -649,7 +649,7 @@ func (p *linkTailParser) parse() (n int, dest, title string) {
 			case '\\':
 				destBuilder.WriteByte(p.parseBackslash())
 			case '&':
-				destBuilder.WriteString(p.parseEntity())
+				destBuilder.WriteString(p.parseCharRef())
 			default:
 				destBuilder.WriteByte(p.text[p.pos])
 				p.pos++
@@ -680,7 +680,7 @@ func (p *linkTailParser) parse() (n int, dest, title string) {
 			case '\\':
 				destBuilder.WriteByte(p.parseBackslash())
 			case '&':
-				destBuilder.WriteString(p.parseEntity())
+				destBuilder.WriteString(p.parseCharRef())
 			default:
 				destBuilder.WriteByte(p.text[p.pos])
 				p.pos++
@@ -713,7 +713,7 @@ func (p *linkTailParser) parse() (n int, dest, title string) {
 			case '\\':
 				titleBuilder.WriteByte(p.parseBackslash())
 			case '&':
-				titleBuilder.WriteString(p.parseEntity())
+				titleBuilder.WriteString(p.parseCharRef())
 			default:
 				titleBuilder.WriteByte(p.text[p.pos])
 				p.pos++
@@ -747,7 +747,7 @@ func (p *linkTailParser) parseBackslash() byte {
 	return '\\'
 }
 
-func (p *linkTailParser) parseEntity() string {
+func (p *linkTailParser) parseCharRef() string {
 	if entity := leadingCharRef(p.text[p.pos:]); entity != "" {
 		p.pos += len(entity)
 		return UnescapeHTML(entity)
