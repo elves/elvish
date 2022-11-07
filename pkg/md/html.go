@@ -12,7 +12,7 @@ import (
 var (
 	escapeHTML = strings.NewReplacer(
 		"&", "&amp;", `"`, "&quot;", "<", "&lt;", ">", "&gt;",
-		// No need to escape single quotes since, attributes in the output
+		// No need to escape single quotes, since attributes in the output
 		// always use double quotes.
 	).Replace
 	escapeURL = strings.NewReplacer(
@@ -39,7 +39,15 @@ var tags = []string{
 func (c *HTMLCodec) Do(op Op) {
 	switch op.Type {
 	case OpHeading:
-		fmt.Fprintf(c, "<h%d>", op.Number)
+		var attrs attrBuilder
+		if op.Info != "" {
+			// Only support #id since that's the only thing used in Elvish's
+			// Markdown right now. More can be added if needed.
+			if op.Info[0] == '#' {
+				attrs.set("id", op.Info[1:])
+			}
+		}
+		fmt.Fprintf(c, "<h%d%s>", op.Number, &attrs)
 		for _, inlineOp := range op.Content {
 			c.doInline(inlineOp)
 		}

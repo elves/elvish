@@ -66,7 +66,15 @@ var htmlTestCases = concat(specTestCases, supplementalHTMLTestCases)
 // https://github.com/commonmark/commonmark.js) is the most convenient.
 var supplementalHTMLTestCases = []testCase{
 	{
-		Section:  "Fenced code blocks supplemental",
+		Section:  "ATX headings",
+		Name:     "Attribute extension",
+		Markdown: "# title {#id}",
+		HTML: dedent(`
+			<h1 id="id">title</h1>
+			`),
+	},
+	{
+		Section:  "Fenced code blocks",
 		Name:     "Empty line in list item",
 		Markdown: "- ```\n  a\n\n  ```\n",
 		HTML: dedent(`
@@ -80,7 +88,7 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Section: "HTML blocks supplemental",
+		Section: "HTML blocks",
 		Name:    "Closed by lack of blockquote marker",
 		Markdown: dedent(`
 			> <pre>
@@ -95,7 +103,7 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Section: "HTML blocks supplemental",
+		Section: "HTML blocks",
 		Name:    "Closed by insufficient list item indentation",
 		Markdown: dedent(`
 			- <pre>
@@ -111,7 +119,7 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Section: "Blockquotes supplemental",
+		Section: "Blockquotes",
 		Name:    "Increasing level",
 		Markdown: dedent(`
 			> a
@@ -127,7 +135,7 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Section: "Blockquotes supplemental",
+		Section: "Blockquotes",
 		Name:    "Reducing level",
 		Markdown: dedent(`
 			>> a
@@ -144,7 +152,7 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Section: "List items supplemental",
+		Section: "List items",
 		Name:    "Two leading empty lines with spaces",
 		Markdown: dedent(`
 			- 
@@ -159,7 +167,7 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Section: "List supplemental",
+		Section: "List",
 		Name:    "Two-level bullet list with no content interrupting paragraph",
 		Markdown: dedent(`
 			a
@@ -177,7 +185,7 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Section: "List supplemental",
+		Section: "List",
 		Name:    "Ordered list with non-1 start in bullet list interrupting paragraph",
 		Markdown: dedent(`
 			a
@@ -195,43 +203,43 @@ var supplementalHTMLTestCases = []testCase{
 			`),
 	},
 	{
-		Section:  "Emphasis and strong emphasis supplemental",
+		Section:  "Emphasis and strong emphasis",
 		Name:     "Star after letter before punctuation does not start emphasis",
 		Markdown: `a*$*`,
 		HTML:     `<p>a*$*</p>` + "\n",
 	},
 	{
-		Section:  "Links supplemental",
+		Section:  "Links",
 		Name:     "Backslash and entity in destination",
 		Markdown: `[a](\&gt;)`,
 		HTML:     `<p><a href="&amp;gt;">a</a></p>` + "\n",
 	},
 	{
-		Section:  "Links supplemental",
+		Section:  "Links",
 		Name:     "Backslash and entity in title",
 		Markdown: `[a](b (\&gt;))`,
 		HTML:     `<p><a href="b" title="&amp;gt;">a</a></p>` + "\n",
 	},
 	{
-		Section:  "Links supplemental",
+		Section:  "Links",
 		Name:     "Unmatched ( in destination, with title",
 		Markdown: `[a](http://( "b")`,
 		HTML:     "<p>[a](http://( &quot;b&quot;)</p>\n",
 	},
 	{
-		Section:  "Links supplemental",
+		Section:  "Links",
 		Name:     "Unescaped ( in title started with (",
 		Markdown: `[a](b (()))`,
 		HTML:     "<p>[a](b (()))</p>\n",
 	},
 	{
-		Section:  "Links supplemental",
+		Section:  "Links",
 		Name:     "Literal & in destination",
 		Markdown: `[a](http://b?c&d)`,
 		HTML:     `<p><a href="http://b?c&amp;d">a</a></p>` + "\n",
 	},
 	{
-		Section: "Image supplemental",
+		Section: "Image",
 		Name:    "Omit hard line break tag in alt",
 		Markdown: dedent(`
 			![a\
@@ -249,7 +257,7 @@ var supplementalHTMLTestCases = []testCase{
 	// CommonMark.js is inconsistent here and does not escape the < and > in the
 	// alt attribute: https://github.com/commonmark/commonmark.js/issues/264
 	{
-		Section:  "Image supplemental",
+		Section:  "Image",
 		Name:     "Keep raw HTML in alt",
 		Markdown: "![a <a></a>](b.png)",
 		HTML:     `<p><img src="b.png" alt="a &lt;a&gt;&lt;/a&gt;" /></p>` + "\n",
@@ -257,25 +265,25 @@ var supplementalHTMLTestCases = []testCase{
 	// CommonMark.js has a bug and will not generate the expected output:
 	// https://github.com/commonmark/commonmark.js/issues/263
 	{
-		Section:  "Autolinks supplemental",
+		Section:  "Autolinks",
 		Name:     "Entity",
 		Markdown: `<http://&gt;>`,
 		HTML:     `<p><a href="http://%3E">http://&gt;</a></p>` + "\n",
 	},
 	{
-		Section:  "Raw HTML supplemental",
+		Section:  "Raw HTML",
 		Name:     "unclosed <",
 		Markdown: `a<`,
 		HTML:     "<p>a&lt;</p>\n",
 	},
 	{
-		Section:  "Raw HTML supplemental",
+		Section:  "Raw HTML",
 		Name:     "unclosed <!--",
 		Markdown: `a<!--`,
 		HTML:     "<p>a&lt;!--</p>\n",
 	},
 	{
-		Section:  "Soft line breaks supplemental",
+		Section:  "Soft line breaks",
 		Name:     "trailing spaces in last line",
 		Markdown: "a  \n",
 		HTML:     "<p>a</p>\n",

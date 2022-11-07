@@ -9,7 +9,7 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
-func TestRender(t *testing.T) {
+func TestHTML(t *testing.T) {
 	testutil.Set(t, &UnescapeHTML, html.UnescapeString)
 	for _, tc := range htmlTestCases {
 		t.Run(tc.testName(), func(t *testing.T) {

@@ -90,7 +90,7 @@ type Op struct {
 	// For OpOrderedListStart (the start number) or OpHeading (as the heading
 	// level)
 	Number int
-	// For OpCodeBlock
+	// For OpHeading and OpCodeBlock
 	Info string
 	// For OpCodeBlock and OpHTMLBlock
 	Lines []string
@@ -154,6 +154,13 @@ var (
 	atxHeadingRegexp       = regexp.MustCompile(`^ {0,3}(#{1,6})(?:[ \t]|$)`)
 	atxHeadingCloserRegexp = regexp.MustCompile(`[ \t]#+[ \t]*$`)
 
+	// Support the header_attributes extension
+	// (https://pandoc.org/MANUAL.html#extension-header_attributes). Like
+	// pandoc, attributes appear *after* the optional heading closer.
+	//
+	// Attributes are stored in the info string and interpreted by the Codec.
+	atxHeadingAttributeRegexp = regexp.MustCompile(` {([^}]+)}$`)
+
 	// Capture groups:
 	// 1. Indent
 	// 2. Fence punctuations (backquote fence)
@@ -214,10 +221,16 @@ func (p *blockParser) render() {
 			opener := line[openerStart:openerEnd]
 			line = strings.TrimRight(line[openerEnd:], " \t")
 			if closer := atxHeadingCloserRegexp.FindString(line); closer != "" {
-				line = line[:len(line)-len(closer)]
+				line = strings.TrimRight(line[:len(line)-len(closer)], " \t")
+			}
+			attr := ""
+			if m := atxHeadingAttributeRegexp.FindStringSubmatch(line); m != nil {
+				attr = m[1]
+				line = strings.TrimRight(line[:len(line)-len(m[0])], " \t")
 			}
 			level := len(opener)
-			p.codec.Do(Op{Type: OpHeading, Number: level,
+			p.codec.Do(Op{
+				Type: OpHeading, Number: level, Info: attr,
 				Content: renderInline(strings.Trim(line, " \t"))})
 		} else if m := codeFenceRegexp.FindStringSubmatch(line); m != nil {
 			p.tree.closeBlocks(matchedContainers, p.codec)

@@ -131,6 +131,9 @@ func (c *FmtCodec) Do(op Op) {
 		c.startLine()
 		c.write(strings.Repeat("#", op.Number) + " ")
 		c.doInlineContent(op.Content, true)
+		if op.Info != "" {
+			c.write(" {" + op.Info + "}")
+		}
 		c.finishLine()
 	case OpCodeBlock:
 		startFence, endFence := codeFences(op.Info, op.Lines)
