@@ -54,11 +54,15 @@ build_binaries_task:
     folder: ~/go/pkg/mod
   go_build_cache:
     folder: ~/.cache/go-build
-  setup_script: apk add zip
+  # Git is not required for building the binaries, but we need to include for Go
+  # to include VCS information in the binary.
+  setup_script: apk add zip git
+  # _bin is in .gitignore, so Git won't consider the repo dirty. This will
+  # impact the binary, which encodes VCS information.
   build_binaries_script: |
-    ELVISH_BUILD_VARIANT=official ./tools/buildall.sh . $CIRRUS_WORKING_DIR/elvish-bin HEAD
+    ELVISH_BUILD_VARIANT=official ./tools/buildall.sh . _bin HEAD
   binaries_artifacts:
-    path: elvish-bin/**
+    path: _bin/**
 
 check_binary_checksums_task:
   name: Check binary checksums ($HOST)
@@ -93,7 +97,7 @@ check_binary_checksums_task:
   check_binary_checksums_script: |
     curl -o binaries.zip https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/binaries/binaries.zip
     unzip binaries.zip
-    cd elvish-bin
+    cd _bin
 
     ret=0
     for f in */elvish-HEAD.sha256sum; do
