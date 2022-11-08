@@ -43,6 +43,19 @@ const (
 	OpHardLineBreak
 )
 
+// String returns the text content of the InlineOp
+func (op InlineOp) String() string {
+	switch op.Type {
+	case OpText, OpCodeSpan, OpRawHTML, OpAutolink:
+		return op.Text
+	case OpNewLine:
+		return "\n"
+	case OpImage:
+		return op.Alt
+	}
+	return ""
+}
+
 func renderInline(text string) []InlineOp {
 	p := inlineParser{text, 0, makeDelimStack(), buffer{}}
 	p.render()
@@ -178,7 +191,7 @@ func (p *inlineParser) render() {
 				// Use the pieces after "![" to build the image alt text.
 				var altBuilder strings.Builder
 				for _, piece := range p.buf.pieces[opener.bufIdx+1:] {
-					altBuilder.WriteString(plainText(piece))
+					altBuilder.WriteString(piece.main.String())
 				}
 				p.buf.pieces = p.buf.pieces[:opener.bufIdx]
 				alt := altBuilder.String()
@@ -542,18 +555,6 @@ func textPiece(text string) piece {
 
 func htmlPiece(html string) piece {
 	return piece{main: InlineOp{Type: OpRawHTML, Text: html}}
-}
-
-func plainText(p piece) string {
-	switch p.main.Type {
-	case OpText, OpCodeSpan, OpRawHTML, OpAutolink:
-		return p.main.Text
-	case OpNewLine:
-		return "\n"
-	case OpImage:
-		return p.main.Alt
-	}
-	return ""
 }
 
 func (p *piece) prepend(op InlineOp) { p.before = append(p.before, op) }

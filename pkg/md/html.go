@@ -48,9 +48,7 @@ func (c *HTMLCodec) Do(op Op) {
 			}
 		}
 		fmt.Fprintf(c, "<h%d%s>", op.Number, &attrs)
-		for _, inlineOp := range op.Content {
-			c.doInline(inlineOp)
-		}
+		RenderInlineContentToHTML(&c.Builder, op.Content)
 		fmt.Fprintf(c, "</h%d>\n", op.Number)
 	case OpCodeBlock:
 		var attrs attrBuilder
@@ -71,9 +69,7 @@ func (c *HTMLCodec) Do(op Op) {
 		}
 	case OpParagraph:
 		c.WriteString("<p>")
-		for _, inlineOp := range op.Content {
-			c.doInline(inlineOp)
-		}
+		RenderInlineContentToHTML(&c.Builder, op.Content)
 		c.WriteString("</p>\n")
 	case OpOrderedListStart:
 		var attrs attrBuilder
@@ -94,23 +90,31 @@ var inlineTags = []string{
 	OpHardLineBreak: "<br />",
 }
 
-func (c *HTMLCodec) doInline(op InlineOp) {
+// RenderInlineContentToHTML renders inline content to HTML, writing to a
+// [strings.Builder].
+func RenderInlineContentToHTML(sb *strings.Builder, ops []InlineOp) {
+	for _, op := range ops {
+		doInline(sb, op)
+	}
+}
+
+func doInline(sb *strings.Builder, op InlineOp) {
 	switch op.Type {
 	case OpText:
-		c.WriteString(escapeHTML(op.Text))
+		sb.WriteString(escapeHTML(op.Text))
 	case OpCodeSpan:
-		c.WriteString("<code>")
-		c.WriteString(escapeHTML(op.Text))
-		c.WriteString("</code>")
+		sb.WriteString("<code>")
+		sb.WriteString(escapeHTML(op.Text))
+		sb.WriteString("</code>")
 	case OpRawHTML:
-		c.WriteString(op.Text)
+		sb.WriteString(op.Text)
 	case OpLinkStart:
 		var attrs attrBuilder
 		attrs.set("href", escapeURL(op.Dest))
 		if op.Text != "" {
 			attrs.set("title", op.Text)
 		}
-		fmt.Fprintf(c, "<a%s>", &attrs)
+		fmt.Fprintf(sb, "<a%s>", &attrs)
 	case OpImage:
 		var attrs attrBuilder
 		attrs.set("src", escapeURL(op.Dest))
@@ -118,13 +122,13 @@ func (c *HTMLCodec) doInline(op InlineOp) {
 		if op.Text != "" {
 			attrs.set("title", op.Text)
 		}
-		fmt.Fprintf(c, "<img%s />", &attrs)
+		fmt.Fprintf(sb, "<img%s />", &attrs)
 	case OpAutolink:
 		var attrs attrBuilder
 		attrs.set("href", escapeURL(op.Dest))
-		fmt.Fprintf(c, "<a%s>%s</a>", &attrs, escapeHTML(op.Text))
+		fmt.Fprintf(sb, "<a%s>%s</a>", &attrs, escapeHTML(op.Text))
 	default:
-		c.WriteString(inlineTags[op.Type])
+		sb.WriteString(inlineTags[op.Type])
 	}
 }
 

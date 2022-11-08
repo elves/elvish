@@ -6,8 +6,6 @@ DOCSET_DST_DIR := ./Elvish.docset
 MDS := home.md $(filter-out %/README.md,$(wildcard [^_]*/*.md))
 HTMLS := $(MDS:.md=.html)
 
-MD_TO_HTML_TOOLS = $(addprefix tools/,$(shell grep -o '\w*\.bin' tools/md-to-html))
-
 # Generates the website into $(DST_DIR).
 gen: tools/gensite.bin $(HTMLS)
 	tools/gensite.bin . $(DST_DIR)
@@ -47,5 +45,5 @@ endif
 tools/%.bin: cmd/% $$(wildcard cmd/%/*)
 	go build -o $@ ./$<
 
-%.html: %.md tools/md-to-html $(MD_TO_HTML_TOOLS) $$(shell tools/extra-deps $$@)
-	tools/md-to-html $< $@
+%.html: %.md tools/macros.bin tools/elvdoc.bin tools/highlight.bin tools/md2html.bin $$(shell tools/extra-deps $$@)
+	tools/macros.bin -repo .. -elvdoc tools/elvdoc.bin < $< | tools/highlight.bin | tools/md2html.bin > $@
