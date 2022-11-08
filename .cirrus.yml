@@ -1,13 +1,6 @@
 test_task:
   env:
     ELVISH_TEST_TIME_SCALE: 20
-  go_toolchain_cache:
-    fingerprint_key: go1.18
-    folder: /usr/local/go
-    populate_script: |
-      pkg install -y curl
-      curl -LO https://go.dev/dl/go1.18.freebsd-amd64.tar.gz
-      tar -C /usr/local -xf go1.18.freebsd-amd64.tar.gz
   go_modules_cache:
     fingerprint_script: cat go.sum
     folder: $HOME/go/pkg/mod
@@ -18,17 +11,25 @@ test_task:
     #    image: debian:unstable-slim
     #  setup_script:
     #    - apt-get -y update
-    #    - apt-get -y install ca-certificates gccgo-11
-    #    - ln -sf /usr/bin/go-11 /usr/local/bin/go
+    #    - apt-get -y install ca-certificates gccgo-12 git
+    #    - ln -sf /usr/bin/go-12 /usr/local/bin/go
     #  env:
     #    # gccgo doesn't support race test
     #    TEST_FLAG: ""
     - name: Test on FreeBSD
       freebsd_instance:
-        image_family: freebsd-13-0
+        image_family: freebsd-13-1
       env:
         TEST_FLAG: -race
         PATH: /usr/local/go/bin:$PATH
+        GO_VERSION: 1.19.3
+      go_toolchain_cache:
+        fingerprint_key: $GO_VERSION
+        folder: /usr/local/go
+        populate_script: |
+          pkg install -y curl
+          curl -L -o go.tar.gz https://go.dev/dl/go$GO_VERSION.freebsd-amd64.tar.gz
+          tar -C /usr/local -xf go.tar.gz
       setup_script: pkg install -y git
   go_version_script: go version
   test_script: go test $TEST_FLAG ./...
