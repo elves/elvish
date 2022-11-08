@@ -1,9 +1,12 @@
 test_task:
   env:
     ELVISH_TEST_TIME_SCALE: 20
+    TEST_FLAG: -race
   go_modules_cache:
     fingerprint_script: cat go.sum
-    folder: $HOME/go/pkg/mod
+    folder: ~/go/pkg/mod
+  go_build_cache:
+    folder: ~/.cache/go-build
   matrix:
     # Re-enable gccgo when it supports Go 1.18.
     #- name: Test on gccgo
@@ -16,11 +19,15 @@ test_task:
     #  env:
     #    # gccgo doesn't support race test
     #    TEST_FLAG: ""
+    - name: Test on Linux ARM64
+      arm_container:
+        # The Alpine image has segmentation faults when running test -race, so
+        # use Debian instead.
+        image: golang:1.19.3-bullseye
     - name: Test on FreeBSD
       freebsd_instance:
         image_family: freebsd-13-1
       env:
-        TEST_FLAG: -race
         PATH: /usr/local/go/bin:$PATH
         GO_VERSION: 1.19.3
       go_toolchain_cache:
@@ -33,3 +40,80 @@ test_task:
       setup_script: pkg install -y git
   go_version_script: go version
   test_script: go test $TEST_FLAG ./...
+
+build_binaries_task:
+  name: Build binaries
+  only_if: $CIRRUS_BRANCH == 'master'
+  alias: binaries
+  env:
+    CGO_ENABLED: 0
+  container:
+    image: golang:1.19.3-alpine
+  go_modules_cache:
+    fingerprint_script: cat go.sum
+    folder: ~/go/pkg/mod
+  go_build_cache:
+    folder: ~/.cache/go-build
+  setup_script: apk add zip
+  build_binaries_script: |
+    ELVISH_BUILD_VARIANT=official ./tools/buildall.sh . $CIRRUS_WORKING_DIR/elvish-bin HEAD
+  binaries_artifacts:
+    path: elvish-bin/**
+
+check_binary_checksums_task:
+  name: Check binary checksums ($HOST)
+  only_if: $CIRRUS_BRANCH == 'master'
+  container:
+    image: golang:1.19.3-alpine
+  depends_on: binaries
+  env:
+    GITHUB_TOKEN: ENCRYPTED[42d653b965486640762776cc9c7a98262c2d68d7797c6de801a7764b26a6fd5dbe4952115217f4cc1bed564c336bdf61]
+  matrix:
+    - env:
+        HOST: cdg
+    - env:
+        HOST: hkg
+  setup_script: apk add git curl
+  wait_website_update_script: |
+    ts=$(git show -s --format=%ct HEAD)
+    wait=10
+    while true; do
+      website_ts=$(curl -sS https://$HOST.elv.sh/commit-ts.txt)
+      if test -z "$website_ts"; then
+        echo "website has no commit-ts.txt yet"
+      elif test "$website_ts" -ge "$ts"; then
+        echo "website ($website_ts) >= current ($ts)"
+        exit 0
+      else
+        echo "website ($website_ts) < current ($ts)"
+      fi
+      # TODO: Remove
+      exit 0
+      sleep $wait
+      test $wait -lt 96 && wait=`echo "$wait * 2" | bc`
+    done
+  check_binary_checksums_script: |
+    curl -o binaries.zip https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/binaries/binaries.zip
+    unzip binaries.zip
+    cd elvish-bin
+
+    ret=0
+    for f in */elvish-HEAD.sha256sum; do
+      website_sum=$(curl -sS https://$HOST.dl.elv.sh/$f | awk '{print $1}')
+      ci_sum=$(cat $f | awk '{print $1}')
+      if test "$website_sum" = "$ci_sum"; then
+        echo "$f: website == CI ($ci_sum)"
+      else
+        echo "$f: website ($website_sum) != CI ($ci_sum)"
+        ret=1
+      fi
+    done
+    # TODO: GitHub token
+    if test $ret != 0; then
+      latest_sha=$(curl -sS -H "Authorization: token $GITHUB_TOKEN" -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/elves/elvish/commits/master/)
+      if test $CIRRUS_CHANGE_IN_REPO != "$latest_sha"; then
+        echo "Ignoring the mismatch since there is a newer commit now"
+        ret=0
+      fi
+    fi
+    exit $ret
