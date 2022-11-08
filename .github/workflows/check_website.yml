@@ -96,7 +96,7 @@ jobs:
           fi
         done
         if test $ret != 0; then
-          latest_sha=$(curl -sS -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/elves/elvish/commits/master/)
+          latest_sha=$(curl -sS -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/elves/elvish/commits/master)
           if test ${{ github.sha }} != "$latest_sha"; then
             echo "Ignoring the mismatch since there is a newer commit now"
             ret=0

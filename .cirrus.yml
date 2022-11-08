@@ -107,7 +107,7 @@ check_binary_checksums_task:
       fi
     done
     if test $ret != 0; then
-      latest_sha=$(curl -sS -H "Authorization: token $GITHUB_TOKEN" -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/elves/elvish/commits/master/)
+      latest_sha=$(curl -sS -H "Authorization: token $GITHUB_TOKEN" -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/elves/elvish/commits/master)
       if test "$CIRRUS_CHANGE_IN_REPO" != "$latest_sha"; then
         echo "$CIRRUS_CHANGE_IN_REPO != $latest_sha"
         echo "Ignoring the mismatch since there is a newer commit now"
