@@ -82,13 +82,11 @@ check_binary_checksums_task:
       if test -z "$website_ts"; then
         echo "website has no commit-ts.txt yet"
       elif test "$website_ts" -ge "$ts"; then
-        echo "website ($website_ts) >= current ($ts)"
+        echo "website ($website_ts) >= CI ($ts)"
         exit 0
       else
-        echo "website ($website_ts) < current ($ts)"
+        echo "website ($website_ts) < CI ($ts)"
       fi
-      # TODO: Remove
-      exit 0
       sleep $wait
       test $wait -lt 96 && wait=`echo "$wait * 2" | bc`
     done
@@ -108,10 +106,10 @@ check_binary_checksums_task:
         ret=1
       fi
     done
-    # TODO: GitHub token
     if test $ret != 0; then
       latest_sha=$(curl -sS -H "Authorization: token $GITHUB_TOKEN" -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/elves/elvish/commits/master/)
-      if test $CIRRUS_CHANGE_IN_REPO != "$latest_sha"; then
+      if test "$CIRRUS_CHANGE_IN_REPO" != "$latest_sha"; then
+        echo "$CIRRUS_CHANGE_IN_REPO != $latest_sha"
         echo "Ignoring the mismatch since there is a newer commit now"
         ret=0
       fi
