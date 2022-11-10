@@ -19,7 +19,7 @@ GNU Make is required.
 
 The [`tools`](tools) directory contains scripts too complex to fit in the
 `Makefile`. Among them, [`tools/pre-push`](tools/pre-push) can be used as a Git
-hook, and covers a large subset (but not all) of CI checks.
+hook, and covers all the CI checks that can be run from your local environment.
 
 ## Testing changes
 
