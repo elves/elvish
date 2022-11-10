@@ -70,14 +70,15 @@ check_binary_checksums_task:
   container:
     image: golang:1.19.3-alpine
   depends_on: binaries
-  env:
-    GITHUB_TOKEN: ENCRYPTED[42d653b965486640762776cc9c7a98262c2d68d7797c6de801a7764b26a6fd5dbe4952115217f4cc1bed564c336bdf61]
   matrix:
     - env:
         HOST: cdg
     - env:
         HOST: hkg
   setup_script: apk add git curl
+  # Enable auto cancellation - if there is another push, only the task to
+  # compare the website against the newer commit should continue.
+  auto_cancellation: true
   wait_website_update_script: |
     ts=$(git show -s --format=%ct HEAD)
     wait=10
@@ -110,12 +111,4 @@ check_binary_checksums_task:
         ret=1
       fi
     done
-    if test $ret != 0; then
-      latest_sha=$(curl -sS -H "Authorization: token $GITHUB_TOKEN" -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/elves/elvish/commits/master)
-      if test "$CIRRUS_CHANGE_IN_REPO" != "$latest_sha"; then
-        echo "$CIRRUS_CHANGE_IN_REPO != $latest_sha"
-        echo "Ignoring the mismatch since there is a newer commit now"
-        ret=0
-      fi
-    fi
     exit $ret
