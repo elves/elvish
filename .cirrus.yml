@@ -44,7 +44,7 @@ test_task:
         platform: netbsd
       env:
         GO_PKG: go118
-        PATH: /usr/pkg/$GOPKG/bin:$PATH
+        PATH: /usr/pkg/$GO_PKG/bin:$PATH
       go_pkg_cache:
         fingerprint_key: $GO_PKG
         folder: /usr/pkg/$GO_PKG
