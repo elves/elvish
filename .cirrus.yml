@@ -37,7 +37,6 @@ test_task:
           pkg install -y curl
           curl -L -o go.tar.gz https://go.dev/dl/go$GO_VERSION.freebsd-amd64.tar.gz
           tar -C /usr/local -xf go.tar.gz
-      setup_script: pkg install -y git
   go_version_script: go version
   test_script: go test $TEST_FLAG ./...
 
@@ -63,6 +62,8 @@ build_binaries_task:
     ELVISH_BUILD_VARIANT=official ./tools/buildall.sh . _bin HEAD
   binaries_artifacts:
     path: _bin/**
+  binary_checksums_artifacts:
+    path: _bin/*/elvish-HEAD.sha256sum
 
 check_binary_checksums_task:
   name: Check binary checksums ($HOST)
@@ -96,8 +97,8 @@ check_binary_checksums_task:
       test $wait -lt 96 && wait=`echo "$wait * 2" | bc`
     done
   check_binary_checksums_script: |
-    curl -o binaries.zip https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/binaries/binaries.zip
-    unzip binaries.zip
+    curl -o checksums.zip https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/binaries/binary_checksums.zip
+    unzip checksums.zip
     cd _bin
 
     ret=0
