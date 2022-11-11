@@ -49,6 +49,26 @@ test_task:
         fingerprint_key: $GO_PKG
         folder: /usr/pkg/$GO_PKG
         populate_script: pkgin -y install $GO_PKG
+    - name: Test on OpenBSD
+      compute_engine_instance:
+        image_project: pg-ci-images
+        image: family/pg-ci-openbsd-vanilla
+        platform: openbsd
+      env:
+        PATH: /usr/local/go/bin:$PATH
+      go_pkg_cache:
+        fingerprint_key: 1.19.1p0
+        folder: /usr/local/go
+        # The image provided by pg-ci-images is still 7.1 at the moment, which
+        # only ships Go 1.17. Before
+        # https://github.com/anarazel/pg-vm-images/pull/35 is merged, use this
+        # very hacky method to get Go 1.19.1. This is probably a bad idea and
+        # will trigger a warning due to library version mismatch, but it works
+        # for now.
+        populate_script: |
+          cd /usr/local
+          ftp https://cdn.openbsd.org/pub/OpenBSD/7.2/packages/amd64/go-1.19.1p0.tgz
+          tar xzf go-1.19.1p0.tgz
   go_version_script: go version
   test_script: go test $TEST_FLAG ./...
 
