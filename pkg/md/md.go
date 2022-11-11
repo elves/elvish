@@ -28,29 +28,29 @@
 //     If full support for HTML entities are desirable, this can be done by
 //     overriding the [UnescapeHTML] variable with [html.UnescapeString].
 //
-//     Note that numeric character references like &#9; and &#x20; are fully
-//     supported.
+//     (Numeric character references like &#9; and &#x20; are fully supported.)
 //
-//   - Setext headings are not supported; use ATX headings instead.
+//   - [Setext headings] are not supported; use [ATX headings] instead.
 //
-//   - Reference links are not supported; use inline links instead.
+//   - [Reference links] are not supported; use [inline links] instead.
 //
-//   - Lists are always considered loose.
+//   - Lists are always considered [loose].
 //
 // These omitted features are never used in Elvish's Markdown sources.
 //
 // All implemented features pass their relevant CommonMark spec tests. See
 // [testutils_test.go] for a complete list of which spec tests are skipped.
 //
-// However, note that the spec tests were taken from the HEAD of the CommonMark
-// spec in https://github.com/commonmark/commonmark-spec on 2022-09-26. This is
-// almost the same as CommonMark 0.30 with one difference.
+// Note: the spec tests were taken from the [CommonMark spec Git repo] on
+// 2022-09-26. This version is almost identical to the latest released version,
+// [CommonMark 0.30], with two minor changes in the syntax of [HTML blocks] and
+// [inline HTML comments].
 //
 // # Is this package relevant if I don't contribute to Elvish?
 //
 // You may still find this package interesting for the following reasons:
 //
-//   - The implementation is small.
+//   - The implementation is quite lightweight.
 //
 //     A rough test shows that including the code to render Markdown into HTML
 //     adds about 150KB to the binary size, while including just the parser of
@@ -59,11 +59,22 @@
 //     including though, so your mileage may vary.)
 //
 //   - The formatter implemented by [FmtCodec] is heavily fuzz-tested to ensure
-//     that it does not alter the semantics of the Markdown, as judged by the
-//     HTML output. It can correctly handle a lot of corner cases, such as
-//     not reformatting "* --" to "- --" (the latter becomes a thematic break).
-//     If you are writing a Markdown formatter, this can be interesting even if
-//     you are implementing it in a different language.
+//     that it does not alter the semantics of the Markdown.
+//
+//     Markdown formatting is fraught with tricky edge cases. For example, if a
+//     formatter standardizes all bullet markers to "-", it might reformat "*
+//     --" to "- ---", but the latter will now be parsed as a thematic break.
+//
+//     Thanks to Go's builtin [fuzzing support], the formatter is able to handle
+//     many such corner cases (at least [all the corner cases found by the
+//     fuzzer]; take a look and try them on other formatters!). There are two
+//     areas - namely nested and consecutive emphasis or strong emphasis - that
+//     are just too tricky to get 100% right that the formatter is not
+//     guaranteed to be correct; the fuzz test explicitly skips those cases.
+//
+//     Nonetheless, if you are writing a Markdown formatter and care about
+//     correctness, the corner cases will be interesting, regardless of which
+//     language you are using to implement the formatter.
 //
 // # Why another Markdown implementation?
 //
@@ -123,11 +134,23 @@
 //   - The Markdown formatter is much faster than Prettier, so it's now feasible
 //     to run the formatter every time when saving a Markdown file.
 //
+// [all the corner cases found by the fuzzer]: https://github.com/elves/elvish/tree/master/pkg/md/testdata/fuzz/FuzzFmtPreservesHTMLRender
+// [fuzzing support]: https://go.dev/security/fuzz/
+// [CommonMark 0.30]: https://spec.commonmark.org/0.30/
+// [HTML blocks]: https://github.com/commonmark/commonmark-spec/commit/053924aa51ea56db1899403068540f90b761125a
+// [inline HTML comments]: https://github.com/commonmark/commonmark-spec/commit/d5ddfae696c53f09fd5b6182238de716dddeb40a
+// [loose]: https://spec.commonmark.org/0.30/#loose
+// [Setext headings]: https://spec.commonmark.org/0.30/#setext-headings
+// [ATX headings]: https://spec.commonmark.org/0.30/#atx-headings
 // [testutils_test.go]: https://github.com/elves/elvish/blob/master/pkg/md/testutils_test.go
 // [elvdoc]: https://github.com/elves/elvish/blob/master/CONTRIBUTING.md#reference-docs
 // [Pandoc]: https://pandoc.org
 // [Prettier]: https://prettier.io
 // [CommonMark]: https://spec.commonmark.org
+// [contributing instructions]: https://github.com/elves/elvish/blob/master/CONTRIBUTING.md
+// [inline links]: https://spec.commonmark.org/0.30/#inline-link
+// [Reference links]: https://spec.commonmark.org/0.30/#reference-link
+// [CommonMark spec Git repo]: https://github.com/commonmark/commonmark-spec
 package md
 
 //go:generate stringer -type=OpType,InlineOpType -output=zstring.go
