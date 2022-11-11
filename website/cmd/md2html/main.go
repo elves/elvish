@@ -15,6 +15,9 @@
 //   - toc: Generate a table of content
 //
 //   - number-sections: Generate section numbers for headings
+//
+// For general information about the Markdown implementation used by this
+// command, see [src.elv.sh/pkg/md].
 package main
 
 import (

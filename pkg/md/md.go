@@ -1,7 +1,19 @@
-// Package md implements a Markdown renderer.
+// Package md implements a Markdown parser.
 //
-// This package implements most of the CommonMark spec, with the following
-// omissions:
+// To use this package, call [Render] with one of the [Codec] implementations:
+//
+//   - [HTMLCodec] converts Markdown to HTML. This is used in
+//     [src.elv.sh/website/cmd/md2html], part of Elvish's website toolchain.
+//
+//   - [FmtCodec] formats Markdown. This is used in [src.elv.sh/cmd/elvmdfmt],
+//     used for formatting Markdown files in the Elvish repo.
+//
+// Another Codec for rendering Markdown in the terminal will be added in future.
+//
+// # Which Markdown variant does this package implement?
+//
+// This package implements a large subset of the [CommonMark] spec, with the
+// following omissions:
 //
 //   - "\r" and "\r\n" are not supported as line endings. This can be easily
 //     worked around by converting them to "\n" first.
@@ -9,9 +21,15 @@
 //   - Tabs are not supported for defining block structures; use spaces instead.
 //     Tabs in other context are supported.
 //
-//   - Only entities that are necessary for writing valid HTML (&lt; &gt;
-//     &quote; &apos; &amp;) are supported. This aspect can be controlled by
-//     overriding the UnescapeEntities variable.
+//   - Among HTML entities, only a few are supported: &lt; &gt; &quote; &apos;
+//     &amp;. This is because the full list of HTML entities is very large and
+//     will inflate the binary size.
+//
+//     If full support for HTML entities are desirable, this can be done by
+//     overriding the [UnescapeHTML] variable with [html.UnescapeString].
+//
+//     Note that numeric character references like &#9; and &#x20; are fully
+//     supported.
 //
 //   - Setext headings are not supported; use ATX headings instead.
 //
@@ -19,13 +37,97 @@
 //
 //   - Lists are always considered loose.
 //
-// All other features are supported, with CommonMark spec tests passing; see
-// test file for which tests are skipped. The spec tests are taken from the HEAD
-// of the CommonMark spec in https://github.com/commonmark/commonmark-spec,
-// which may differ slightly from the latest released version.
+// These omitted features are never used in Elvish's Markdown sources.
 //
-// This package is not used anywhere in Elvish right now. It is intended to be
-// used for rendering the elvdoc of builtin modules inside terminals.
+// All implemented features pass their relevant CommonMark spec tests. See
+// [testutils_test.go] for a complete list of which spec tests are skipped.
+//
+// However, note that the spec tests were taken from the HEAD of the CommonMark
+// spec in https://github.com/commonmark/commonmark-spec on 2022-09-26. This is
+// almost the same as CommonMark 0.30 with one difference.
+//
+// # Is this package relevant if I don't contribute to Elvish?
+//
+// You may still find this package interesting for the following reasons:
+//
+//   - The implementation is small.
+//
+//     A rough test shows that including the code to render Markdown into HTML
+//     adds about 150KB to the binary size, while including just the parser of
+//     [github.com/yuin/goldmark] adds more than 1MB to the binary size. (The
+//     binary size increase depends on which packages the binary is already
+//     including though, so your mileage may vary.)
+//
+//   - The formatter implemented by [FmtCodec] is heavily fuzz-tested to ensure
+//     that it does not alter the semantics of the Markdown, as judged by the
+//     HTML output. It can correctly handle a lot of corner cases, such as
+//     not reformatting "* --" to "- --" (the latter becomes a thematic break).
+//     If you are writing a Markdown formatter, this can be interesting even if
+//     you are implementing it in a different language.
+//
+// # Why another Markdown implementation?
+//
+// The Elvish project uses Markdown in the documentation ("[elvdoc]") for the
+// functions and variables defined in builtin modules. These docs are then
+// converted to HTML as part of the website; for example, you can read the docs
+// for builtin functions and variables at https://elv.sh/ref/builtin.html.
+//
+// We used to use [Pandoc] to convert the docs from their Markdown sources to
+// HTML. However, we would also like to expand the elvdoc system in two ways:
+//
+//   - We would like to support elvdocs in user-defined modules, not just
+//     builtin modules.
+//
+//   - We would like to be able to read elvdocs directly from the Elvish
+//     program, without requiring a browser.
+//
+// With these requirements, Elvish itself needs to know how to parse and render
+// Markdown sources, so we need a Go implementation instead. There is a good Go
+// implementation, [github.com/yuin/goldmark], but it is quite large: linking it
+// into Elvish will increase the binary size by more than 1MB.
+//
+// By having a more narrow focus, this package is much smaller than goldmark,
+// and can be easily optimized for Elvish's use cases. That said, the
+// functionalities provided by this package still try to be as general as
+// possible, and can potentially be used by other people interested in a small
+// Markdown implementation.
+//
+// Besides elvdocs, all the other content on the Elvish website (https://elv.sh)
+// is also converted to HTML using Pandoc; additionally, they are formatted with
+// [Prettier]. Now that Elvish has its own Markdown implementation, we can use
+// it not just for rendering elvdocs, but also replace the use of Pandoc and
+// Prettier. These external tools are decent, but using them still came with
+// some frictions:
+//
+//   - Even though both are relatively easy to set up, they can still be a
+//     hindrance to casual contributors.
+//
+//   - Since different versions of the same tool can behave differently,
+//     we explicit specify their versions in both CI configurations and
+//     [contributing instructions]. But this creates another problem: every time
+//     these tools release new versions, we have to manually bump the versions,
+//     and every contributor also needs to manually update them in their
+//     development environments.
+//
+// Replacing external tools with this package removes these frictions.
+//
+// Additionally, this package is very easy to extend and optimize to suit
+// Elvish's needs:
+//
+//   - We used to custom Pandoc using a mix of shell scripts, templates and Lua
+//     scripts. While these customization options of Pandoc are well documented,
+//     they are not something people are likely to be familiar with.
+//
+//     With this implementation, everything is now done with Go code.
+//
+//   - The Markdown formatter is much faster than Prettier, so it's now feasible
+//     to run the formatter every time when saving a Markdown file.
+//
+// [testutils_test.go]: https://github.com/elves/elvish/blob/master/pkg/md/testutils_test.go
+// [elvdoc]: https://github.com/elves/elvish/blob/master/CONTRIBUTING.md#reference-docs
+// [Pandoc]: https://pandoc.org
+// [Prettier]: https://prettier.io
+// [CommonMark]: https://spec.commonmark.org
 package md
 
 //go:generate stringer -type=OpType,InlineOpType -output=zstring.go

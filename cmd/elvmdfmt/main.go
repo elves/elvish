@@ -1,3 +1,12 @@
+// Command elvmdfmt reformats Markdown sources.
+//
+// This command is used to reformat all Markdown files in this repo; see the
+// [contributor's manual] on how to use it.
+//
+// For general information about the Markdown implementation used by this
+// command, see [src.elv.sh/pkg/md].
+//
+// [contributor's manual]: https://github.com/elves/elvish/blob/master/CONTRIBUTING.md#formatting
 package main
 
 import (
