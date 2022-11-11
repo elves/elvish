@@ -57,8 +57,9 @@ appropriate section. You can find the document at the root of the repo (called
 ### Reference docs
 
 Reference docs are interspersed in Go sources as comments blocks whose first
-line starts with `//elvdoc` (and are hence called *elvdocs*). They can use
-[Github Flavored Markdown](https://github.github.com/gfm/).
+line starts with `//elvdoc` (and are hence called *elvdocs*). A
+[large subset](https://pkg.go.dev/src.elv.sh/pkg/md@master) of
+[CommonMark](https://commonmark.org) is supported.
 
 Elvdocs for functions look like the following:
 
