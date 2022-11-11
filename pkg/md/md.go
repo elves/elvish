@@ -10,72 +10,6 @@
 //
 // Another Codec for rendering Markdown in the terminal will be added in future.
 //
-// # Which Markdown variant does this package implement?
-//
-// This package implements a large subset of the [CommonMark] spec, with the
-// following omissions:
-//
-//   - "\r" and "\r\n" are not supported as line endings. This can be easily
-//     worked around by converting them to "\n" first.
-//
-//   - Tabs are not supported for defining block structures; use spaces instead.
-//     Tabs in other context are supported.
-//
-//   - Among HTML entities, only a few are supported: &lt; &gt; &quote; &apos;
-//     &amp;. This is because the full list of HTML entities is very large and
-//     will inflate the binary size.
-//
-//     If full support for HTML entities are desirable, this can be done by
-//     overriding the [UnescapeHTML] variable with [html.UnescapeString].
-//
-//     (Numeric character references like &#9; and &#x20; are fully supported.)
-//
-//   - [Setext headings] are not supported; use [ATX headings] instead.
-//
-//   - [Reference links] are not supported; use [inline links] instead.
-//
-//   - Lists are always considered [loose].
-//
-// These omitted features are never used in Elvish's Markdown sources.
-//
-// All implemented features pass their relevant CommonMark spec tests. See
-// [testutils_test.go] for a complete list of which spec tests are skipped.
-//
-// Note: the spec tests were taken from the [CommonMark spec Git repo] on
-// 2022-09-26. This version is almost identical to the latest released version,
-// [CommonMark 0.30], with two minor changes in the syntax of [HTML blocks] and
-// [inline HTML comments].
-//
-// # Is this package relevant if I don't contribute to Elvish?
-//
-// You may still find this package interesting for the following reasons:
-//
-//   - The implementation is quite lightweight.
-//
-//     A rough test shows that including the code to render Markdown into HTML
-//     adds about 150KB to the binary size, while including just the parser of
-//     [github.com/yuin/goldmark] adds more than 1MB to the binary size. (The
-//     binary size increase depends on which packages the binary is already
-//     including though, so your mileage may vary.)
-//
-//   - The formatter implemented by [FmtCodec] is heavily fuzz-tested to ensure
-//     that it does not alter the semantics of the Markdown.
-//
-//     Markdown formatting is fraught with tricky edge cases. For example, if a
-//     formatter standardizes all bullet markers to "-", it might reformat "*
-//     --" to "- ---", but the latter will now be parsed as a thematic break.
-//
-//     Thanks to Go's builtin [fuzzing support], the formatter is able to handle
-//     many such corner cases (at least [all the corner cases found by the
-//     fuzzer]; take a look and try them on other formatters!). There are two
-//     areas - namely nested and consecutive emphasis or strong emphasis - that
-//     are just too tricky to get 100% right that the formatter is not
-//     guaranteed to be correct; the fuzz test explicitly skips those cases.
-//
-//     Nonetheless, if you are writing a Markdown formatter and care about
-//     correctness, the corner cases will be interesting, regardless of which
-//     language you are using to implement the formatter.
-//
 // # Why another Markdown implementation?
 //
 // The Elvish project uses Markdown in the documentation ("[elvdoc]") for the
@@ -95,7 +29,9 @@
 // With these requirements, Elvish itself needs to know how to parse and render
 // Markdown sources, so we need a Go implementation instead. There is a good Go
 // implementation, [github.com/yuin/goldmark], but it is quite large: linking it
-// into Elvish will increase the binary size by more than 1MB.
+// into Elvish will increase the binary size by more than 1MB. In contrast,
+// including [Render] and [HTMLCodec] in Elvish only increases the binary size
+// by 150KB.
 //
 // By having a more narrow focus, this package is much smaller than goldmark,
 // and can be easily optimized for Elvish's use cases. That said, the
@@ -133,6 +69,73 @@
 //
 //   - The Markdown formatter is much faster than Prettier, so it's now feasible
 //     to run the formatter every time when saving a Markdown file.
+//
+// # Which Markdown variant does this package implement?
+//
+// This package implements a large subset of the [CommonMark] spec, with the
+// following omissions:
+//
+//   - "\r" and "\r\n" are not supported as line endings. This can be easily
+//     worked around by converting them to "\n" first.
+//
+//   - Tabs are not supported for defining block structures; use spaces instead.
+//     Tabs in other context are supported.
+//
+//   - Among HTML entities, only a few are supported: &lt; &gt; &quote; &apos;
+//     &amp;. This is because the full list of HTML entities is very large and
+//     will inflate the binary size.
+//
+//     If full support for HTML entities are desirable, this can be done by
+//     overriding the [UnescapeHTML] variable with [html.UnescapeString].
+//
+//     (Numeric character references like &#9; and &#x20; are fully supported.)
+//
+//   - [Setext headings] are not supported; use [ATX headings] instead.
+//
+//   - [Reference links] are not supported; use [inline links] instead.
+//
+//   - Lists are always considered [loose].
+//
+// These omitted features are never used in Elvish's Markdown sources.
+//
+// All implemented features pass their relevant CommonMark spec tests. See
+// [testutils_test.go] for a complete list of which spec tests are skipped.
+//
+// Note: the spec tests were taken from the [CommonMark spec Git repo] on
+// 2022-09-26. This version is almost identical to the latest released version,
+// [CommonMark 0.30], with two minor changes in the syntax of [HTML blocks] and
+// [inline HTML comments].
+//
+// # Is this package useful outside Elvish?
+//
+// Yes! Well, hopefully. Assuming you don't use the features this package omits,
+// it can be useful in at least the following ways:
+//
+//   - The implementation is quite lightweight, so you can use it instead of a
+//     more full-features Markdown library if small binary size is important.
+//
+//     As shown above, the increase in binary size when using this package in
+//     Elvish is about 150KB, compared to more than 1MB when using
+//     [github.com/yuin/goldmark]. You mileage may vary though, since the binary
+//     size increase depends on which packages the binary is already including.
+//
+//   - The formatter implemented by [FmtCodec] is heavily fuzz-tested to ensure
+//     that it does not alter the semantics of the Markdown.
+//
+//     Markdown formatting is fraught with tricky edge cases. For example, if a
+//     formatter standardizes all bullet markers to "-", it might reformat "*
+//     --" to "- ---", but the latter will now be parsed as a thematic break.
+//
+//     Thanks to Go's builtin [fuzzing support], the formatter is able to handle
+//     many such corner cases (at least [all the corner cases found by the
+//     fuzzer]; take a look and try them on other formatters!). There are two
+//     areas - namely nested and consecutive emphasis or strong emphasis - that
+//     are just too tricky to get 100% right that the formatter is not
+//     guaranteed to be correct; the fuzz test explicitly skips those cases.
+//
+//     Nonetheless, if you are writing a Markdown formatter and care about
+//     correctness, the corner cases will be interesting, regardless of which
+//     language you are using to implement the formatter.
 //
 // [all the corner cases found by the fuzzer]: https://github.com/elves/elvish/tree/master/pkg/md/testdata/fuzz/FuzzFmtPreservesHTMLRender
 // [fuzzing support]: https://go.dev/security/fuzz/
