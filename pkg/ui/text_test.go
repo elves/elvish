@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"reflect"
 	"testing"
 
 	"src.elv.sh/pkg/eval/vals"
@@ -38,6 +39,48 @@ var (
 
 func red(s string) *Segment  { return &Segment{Style{Foreground: Red}, s} }
 func blue(s string) *Segment { return &Segment{Style{Foreground: Blue}, s} }
+
+var normalizeTextTests = []struct {
+	name   string
+	before Text
+	after  Text
+}{
+	{
+		name:   "empty text",
+		before: Text{},
+		after:  nil,
+	},
+	{
+		name:   "text with only empty segments",
+		before: Text{&Segment{}, &Segment{}},
+		after:  nil,
+	},
+	{
+		name:   "consecutive segments with the same style are merged",
+		before: Concat(T("a"), T("b")), after: T("ab"),
+	},
+	{
+		name:   "segments with different styles are kept separate",
+		before: Concat(T("a"), T("b", Bold)),
+		after:  Concat(T("a"), T("b", Bold)),
+	},
+	{
+		name:   "segments with the same style separated by empty segments are merged",
+		before: Concat(T("a", Bold), T(""), T("b", Bold)),
+		after:  T("ab", Bold),
+	},
+}
+
+func TestNormalizeText(t *testing.T) {
+	for _, tc := range normalizeTextTests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := NormalizeText(tc.before)
+			if !reflect.DeepEqual(got, tc.after) {
+				t.Errorf("NormalizeText(%v) -> %v, want %v", tc.before, got, tc.after)
+			}
+		})
+	}
+}
 
 var partitionTests = tt.Table{
 	Args(text0).Rets([]Text{nil}),
