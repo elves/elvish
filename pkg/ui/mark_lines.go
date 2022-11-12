@@ -6,9 +6,9 @@ type RuneStylesheet map[rune]Styling
 // MarkLines provides a way to construct a styled text by separating the content
 // and the styling.
 //
-// # The arguments are groups of either
+// The arguments are groups of either:
 //
-// * A single string, in which case it represents an unstyled line;
+//   - A single string, in which case it represents an unstyled line;
 //
 //   - Three arguments that can be passed to MarkLine, in which case they are passed
 //     to MarkLine and the return value is used as a styled line.
