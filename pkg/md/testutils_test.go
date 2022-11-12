@@ -303,9 +303,9 @@ func concat[T any](a, b []T) []T {
 	return c
 }
 
-var (
-	hr = strings.Repeat("═", 40)
-)
+var hr = strings.Repeat("═", 40)
+
+func hrFence(s string) string { return "\n" + hr + "\n" + s + "\n" + hr }
 
 func dedent(text string) string {
 	lines := strings.Split(strings.TrimPrefix(text, "\n"), "\n")

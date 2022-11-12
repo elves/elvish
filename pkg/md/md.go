@@ -8,7 +8,9 @@
 //   - [FmtCodec] formats Markdown. This is used in [src.elv.sh/cmd/elvmdfmt],
 //     used for formatting Markdown files in the Elvish repo.
 //
-// Another Codec for rendering Markdown in the terminal will be added in future.
+//   - [TTYCodec] renders Markdown in the terminal. This will be used in a help
+//     system that can used directly from Elvish to render documentation of
+//     Elvish modules.
 //
 // # Why another Markdown implementation?
 //

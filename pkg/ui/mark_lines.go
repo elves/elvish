@@ -18,7 +18,7 @@ type RuneStylesheet map[rune]Styling
 // This function is mainly useful for constructing multi-line Text's with
 // alignment across those lines. An example:
 //
-//	var stylesheet = map[rune]string{
+//	var stylesheet = RuneStylesheet{
 //	    '-': Reverse,
 //	    'x': Stylings(Blue, BgGreen),
 //	}

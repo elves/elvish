@@ -69,14 +69,15 @@ type inlineParser struct {
 	buf    buffer
 }
 
-const emailLocalPuncts = ".!#$%&'*+/=?^_`{|}~-"
+const (
+	scheme           = `[a-zA-Z][a-zA-Z0-9+.-]{1,31}`
+	emailLocalPuncts = ".!#$%&'*+/=?^_`{|}~-"
+)
 
 var (
 	// https://spec.commonmark.org/0.30/#uri-autolink
-	uriAutolinkRegexp = regexp.MustCompile(`^<` +
-		`[a-zA-Z][a-zA-Z0-9+.-]{1,31}` + // scheme
-		`:[^\x00-\x19 <>]*` +
-		`>`)
+	uriAutolinkRegexp = regexp.MustCompile(
+		`^<` + scheme + `:[^\x00-\x19 <>]*` + `>`)
 	// https://spec.commonmark.org/0.30/#email-autolink
 	emailAutolinkRegexp = regexp.MustCompile(
 		`^<[a-zA-Z0-9` + emailLocalPuncts + `]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*>`)

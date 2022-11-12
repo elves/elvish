@@ -64,7 +64,7 @@ type FmtCodec struct {
 	// last Op was OpBulletListEnd or OpOrderedListEnd. Used to alternate list
 	// punctuation when a list follows directly after another of the same type.
 	poppedListPunct rune
-	// Whether a new stanza was already started.
+	// Value of op.Type of the last Do call.
 	lastOpType OpType
 }
 
@@ -103,16 +103,8 @@ func (c *FmtCodec) Do(op Op) {
 		c.poppedListPunct = poppedListPunct
 	}()
 
-	switch op.Type {
-	case OpThematicBreak, OpHeading, OpCodeBlock, OpHTMLBlock, OpParagraph,
-		OpBlockquoteStart, OpBulletListStart, OpOrderedListStart:
-		if c.sb.Len() > 0 && c.lastOpType != OpBlockquoteStart && c.lastOpType != OpListItemStart {
-			c.writeLine("")
-		}
-	case OpListItemStart:
-		if c.sb.Len() > 0 && c.lastOpType != OpBulletListStart && c.lastOpType != OpOrderedListStart {
-			c.writeLine("")
-		}
+	if c.sb.Len() > 0 && needNewStanza(op.Type, c.lastOpType) {
+		c.writeLine("")
 	}
 	defer func() {
 		c.lastOpType = op.Type
@@ -130,7 +122,7 @@ func (c *FmtCodec) Do(op Op) {
 	case OpHeading:
 		c.startLine()
 		c.write(strings.Repeat("#", op.Number) + " ")
-		c.doInlineContent(op.Content, true)
+		c.writeSegmentsATXHeading(c.buildSegments(op.Content))
 		if op.Info != "" {
 			c.write(" {" + op.Info + "}")
 		}
@@ -169,7 +161,12 @@ func (c *FmtCodec) Do(op Op) {
 		}
 	case OpParagraph:
 		c.startLine()
-		c.doInlineContent(op.Content, false)
+		segs := c.buildSegments(op.Content)
+		if c.Width > 0 {
+			c.writeSegmentsParagraphReflow(segs, c.Width)
+		} else {
+			c.writeSegmentsParagraph(segs)
+		}
 		c.finishLine()
 	case OpBlockquoteStart:
 		c.containerStart = c.sb.Len()
@@ -232,6 +229,21 @@ func (c *FmtCodec) Do(op Op) {
 	}
 }
 
+func needNewStanza(cur, last OpType) bool {
+	switch cur {
+	case OpThematicBreak, OpHeading, OpCodeBlock, OpHTMLBlock, OpParagraph,
+		OpBlockquoteStart, OpBulletListStart, OpOrderedListStart:
+		// Start of new block that does not coincide with the start of an outer
+		// block.
+		return last != OpBlockquoteStart && last != OpListItemStart
+	case OpListItemStart:
+		// A list item that is not the first in the list. The first item is
+		// already handled when OpBulletListStart or OpOrderedListStart is seen.
+		return last != OpBulletListStart && last != OpOrderedListStart
+	}
+	return false
+}
+
 func codeFences(info string, lines []string) (string, string) {
 	var fenceRune rune
 	var runLens map[int]bool
@@ -289,17 +301,6 @@ const (
 	segLinkOrImageStart
 	segLinkOrImageEnd
 )
-
-func (c *FmtCodec) doInlineContent(ops []InlineOp, atxHeading bool) {
-	segs := c.buildSegments(ops)
-	if atxHeading {
-		c.writeSegmentsATXHeading(segs)
-	} else if c.Width > 0 {
-		c.writeSegmentsParagraphReflow(segs, c.Width)
-	} else {
-		c.writeSegmentsParagraph(segs)
-	}
-}
 
 func (c *FmtCodec) buildSegments(ops []InlineOp) []segment {
 	var segs []segment
@@ -953,36 +954,37 @@ func escapeAmpersandBackslash(s, set string) string {
 	return sb.String()
 }
 
-func (c *FmtCodec) startLine() {
-	for _, container := range c.containers {
-		c.write(container.useMarker())
+func (c *FmtCodec) startLine()         { startLine(c, c.containers) }
+func (c *FmtCodec) writeLine(s string) { writeLine(c, c.containers, s) }
+func (c *FmtCodec) finishLine()        { c.write("\n") }
+func (c *FmtCodec) write(s string)     { c.sb.WriteString(s) }
+
+type writer interface{ write(string) }
+
+func startLine(w writer, containers stack[*fmtContainer]) {
+	for _, container := range containers {
+		w.write(container.useMarker())
 	}
 }
 
-func (c *FmtCodec) finishLine() {
-	c.write("\n")
-}
-
-func (c *FmtCodec) writeLine(s string) {
+func writeLine(w writer, containers stack[*fmtContainer], s string) {
 	if s == "" {
 		// When writing a blank line, trim trailing spaces from the markers.
 		//
 		// This duplicates startLine, but merges the markers for ease of
 		// trimming.
 		var markers strings.Builder
-		for _, container := range c.containers {
+		for _, container := range containers {
 			markers.WriteString(container.useMarker())
 		}
-		c.write(strings.TrimRight(markers.String(), " "))
-		c.finishLine()
+		w.write(strings.TrimRight(markers.String(), " "))
+		w.write("\n")
 		return
 	}
-	c.startLine()
-	c.write(s)
-	c.finishLine()
+	startLine(w, containers)
+	w.write(s)
+	w.write("\n")
 }
-
-func (c *FmtCodec) write(s string) { c.sb.WriteString(s) }
 
 type fmtContainer struct {
 	typ    fmtContainerType
@@ -1002,7 +1004,7 @@ const (
 func (ct *fmtContainer) useMarker() string {
 	m := ct.marker
 	if ct.typ != fmtBlockquote {
-		ct.marker = strings.Repeat(" ", len(m))
+		ct.marker = strings.Repeat(" ", wcwidth.Of(m))
 	}
 	return m
 }
