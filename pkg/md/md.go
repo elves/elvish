@@ -31,7 +31,8 @@
 // sources and render them in the terminal, so we need a Go implementation
 // instead. There is a good Go implementation, [github.com/yuin/goldmark], but
 // it is quite large: linking it into Elvish will increase the binary size by
-// more than 1MB.
+// more than 1MB. (There is another popular Markdown implementation,
+// [github.com/russross/blackfriday/v2], but it doesn't support CommonMark.)
 //
 // By having a more narrow focus, this package is much smaller than goldmark,
 // and can be easily optimized for Elvish's use cases. In contrast to goldmark's
