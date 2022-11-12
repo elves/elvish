@@ -23,38 +23,39 @@
 //   - We would like to support elvdocs in user-defined modules, not just
 //     builtin modules.
 //
-//   - We would like to be able to read elvdocs directly from the Elvish
-//     program, without requiring a browser.
+//   - We would like to allow users to read elvdocs directly from the Elvish
+//     program, in the terminal, without needing a browser or an Internet
+//     connection.
 //
-// With these requirements, Elvish itself needs to know how to parse and render
-// Markdown sources, so we need a Go implementation instead. There is a good Go
-// implementation, [github.com/yuin/goldmark], but it is quite large: linking it
-// into Elvish will increase the binary size by more than 1MB. In contrast,
-// including [Render] and [HTMLCodec] in Elvish only increases the binary size
-// by 150KB.
+// With these requirements, Elvish itself needs to know how to parse Markdown
+// sources and render them in the terminal, so we need a Go implementation
+// instead. There is a good Go implementation, [github.com/yuin/goldmark], but
+// it is quite large: linking it into Elvish will increase the binary size by
+// more than 1MB.
 //
 // By having a more narrow focus, this package is much smaller than goldmark,
-// and can be easily optimized for Elvish's use cases. That said, the
-// functionalities provided by this package still try to be as general as
-// possible, and can potentially be used by other people interested in a small
-// Markdown implementation.
+// and can be easily optimized for Elvish's use cases. In contrast to goldmark's
+// 1MB, including [Render] and [HTMLCodec] in Elvish only increases the binary
+// size by 150KB. That said, the functionalities provided by this package still
+// try to be as general as possible, and can potentially be used by other people
+// interested in a small Markdown implementation.
 //
 // Besides elvdocs, all the other content on the Elvish website (https://elv.sh)
-// is also converted to HTML using Pandoc; additionally, they are formatted with
-// [Prettier]. Now that Elvish has its own Markdown implementation, we can use
-// it not just for rendering elvdocs, but also replace the use of Pandoc and
-// Prettier. These external tools are decent, but using them still came with
-// some frictions:
+// is also converted to HTML using Pandoc. Additionally, all the Markdown files
+// in the repo are formatted with [Prettier]. Now that Elvish has its own
+// Markdown implementation, we can use it not just for rendering elvdocs in the
+// terminal, but also replace the use of Pandoc and Prettier. These external
+// tools are decent, but using them still came with some frictions:
 //
 //   - Even though both are relatively easy to set up, they can still be a
 //     hindrance to casual contributors.
 //
-//   - Since different versions of the same tool can behave differently,
-//     we explicit specify their versions in both CI configurations and
-//     [contributing instructions]. But this creates another problem: every time
-//     these tools release new versions, we have to manually bump the versions,
-//     and every contributor also needs to manually update them in their
-//     development environments.
+//   - Since behavior of these tools can change with version, we explicit
+//     specify their versions in both CI configurations and [contributing
+//     instructions]. But this creates another problem: every time these tools
+//     release new versions, we have to manually bump the versions, and every
+//     contributor also needs to manually update them in their development
+//     environments.
 //
 // Replacing external tools with this package removes these frictions.
 //
