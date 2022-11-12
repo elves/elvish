@@ -7,8 +7,8 @@ import (
 	"io"
 	"unicode"
 
-	"src.elv.sh/cmd/examples/e3bc/bc"
 	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/examples/e3bc/bc"
 	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
