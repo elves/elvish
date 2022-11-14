@@ -224,7 +224,7 @@ func isDir(opts isOpts, path string) bool {
 // ~> touch not-a-dir
 // ~> path:is-regular not-a-dir
 // ▶ true
-// ~> path:is-dir /tmp
+// ~> path:is-regular /tmp
 // ▶ false
 // ```
 //
