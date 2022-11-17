@@ -110,20 +110,21 @@ func Foo() { }
 func foo() { }
 ```
 
-## Generating code
-
-Elvish uses generated code in a few places. As is the usual case with Go
-projects, they are committed into the repo, and if you change the input of a
-generated file you should re-generate it.
-
-Use the standard command, `go generate ./...` to regenerate all files.
-
-Some of the generation rules depend on the `stringer` tool. Install with
-`go install golang.org/x/tools/cmd/stringer@latest`.
-
 ## Code hygiene
 
 Some basic aspects of code hygiene are checked in the CI.
+
+### Generated code
+
+Elvish uses generated code in a few places. As is the usual case for Go projects
+the generated code is committed into the repo. If you change the input of a
+generated file you must re-generate it. The CI environment validates generated
+code is unchanged as does the `tools/pre-push` script you can use as a git hook.
+
+Use the standard command, `go generate ./...`, to regenerate all files.
+
+Note: Some of the generation rules depend on the `stringer` tool. Install with
+`go install golang.org/x/tools/cmd/stringer@latest`.
 
 ### Formatting
 
