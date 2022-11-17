@@ -6,13 +6,15 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/pprof"
 
 	"src.elv.sh/pkg/md"
 )
 
 var (
-	codec = flag.String("codec", "html", "codec to use; one of html, trace, fmt, tty")
-	width = flag.Int("width", 0, "text width; relevant with fmt or tty")
+	cpuprofile = flag.String("cpuprofile", "", "name of file to store CPU profile in")
+	codec      = flag.String("codec", "html", "codec to use; one of html, trace, fmt, tty")
+	width      = flag.Int("width", 0, "text width; relevant with fmt or tty")
 )
 
 func main() {
@@ -23,6 +25,20 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "read stdin:", err)
 		os.Exit(2)
+	}
+	if *cpuprofile != "" {
+		f, err := os.OpenFile(*cpuprofile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+		if err != nil {
+			fmt.Printf("create cpu profile file %q: %v\n", *cpuprofile, err)
+			os.Exit(2)
+		}
+		defer f.Close()
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			fmt.Println("start cpu profile:", err)
+			os.Exit(2)
+		}
+		defer pprof.StopCPUProfile()
 	}
 	fmt.Print(md.RenderString(string(bs), c))
 }
