@@ -14,8 +14,12 @@ if ! git diff HEAD --quiet; then
         echo 'Local changes exist and some are staged; not stashing.'
         echo 'Make a commit, stash all the changes, or unstage all the changes.'
         exit 1
-	fi
+    fi
 fi
+
+# This script is run by the CI environment but is not run by the `make`
+# targets below.
+./tools/check-content.sh
 
 make test checkstyle lint codespell
 make -C website check-rellinks
