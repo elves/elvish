@@ -70,7 +70,7 @@ func mustGlob(p string) []string {
 
 // Makes a reader that concatenates multiple files.
 func multiFile(names []string) (io.Reader, func(), error) {
-	readers := make([]io.Reader, len(names))
+	readers := make([]io.Reader, 2*len(names))
 	closers := make([]io.Closer, len(names))
 	for i, name := range names {
 		file, err := os.Open(name)
@@ -80,7 +80,11 @@ func multiFile(names []string) (io.Reader, func(), error) {
 			}
 			return nil, nil, err
 		}
-		readers[i] = file
+		readers[2*i] = file
+		// Insert an empty line between adjacent files so that the comment block
+		// at the end of one file doesn't get merged with the comment block at
+		// the start of the next file.
+		readers[2*i+1] = strings.NewReader("\n\n")
 		closers[i] = file
 	}
 	return io.MultiReader(readers...), func() {
