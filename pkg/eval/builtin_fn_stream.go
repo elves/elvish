@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 
@@ -25,8 +24,6 @@ func init() {
 		"order": order,
 	})
 }
-
-var ErrKeyAndLessThanOpts = errors.New("options &key and &less-than are mutually exclusive")
 
 //elvdoc:fn all
 //
@@ -346,34 +343,36 @@ func count(fm *Frame, args ...any) (int, error) {
 //elvdoc:fn order
 //
 // ```elvish
-// order &reverse=$false &key=$nil &less-than=$nil $inputs?
+// order &less-than=$nil &key=$nil &reverse=$false $inputs?
 // ```
 //
-// Outputs the [value inputs](#value-inputs) sorted in ascending order (ignoring
-// the behavior of any `&less-than` callable). The sorting process is guaranteed
-// to be [stable](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability).
+// Outputs the [value inputs](#value-inputs) sorted in ascending order. The
+// sorting process is guaranteed to be
+// [stable](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability).
 //
-// The `&reverse` option, if true, reverses the order of output; e.g.,
-// descending rather than ascending.
+// The `&less-than` option, if given, establishes the ordering of the items. Its
+// value should be a function that takes two arguments and outputs a single
+// boolean indicating whether the first argument is less than the second
+// argument. If the function throws an exception, `order` rethrows the exception
+// without outputting any value.
 //
-// The `&key` option, if not `$nil` (the default value), is a function that
-// accepts an item to be sorted (string, list, map, etc.) and outputs a single
-// value (which could be a list or map) that is passed to the default
-// comparison function. If the key function throws an exception, `order`
+// If `&less-than` is `$nil` (the default), a builtin comparator equivalent to
+// `{|a b| == -1 (compare $a $b) }` is used.
+//
+// The `&key` option, if given, is a function that gets called with each item to
+// be sorted. It must output a single value, which is used for comparison in
+// place of the original value. If the function throws an exception, `order`
 // rethrows the exception.
 //
-// The `&less-than` option, if not `$nil` (the default value), establishes the
-// ordering of the items. Its value should be a function that takes two
-// arguments and outputs `$true` if the first argument is less than the second
-// argument. If the function throws an exception, `order` rethrows the exception
-// without outputting any value. If `&less-than` has value `$nil` (the default
-// if not set), it is equivalent to `{|a b| == -1 (compare $a $b) }`.
+// Use of `&key` can usually be rewritten to use `&less-than` instead, but using
+// `&key` is usually faster because the callback is only called once for each
+// element, whereas the `&less-than` callback is called O(n*lg(n)) times on
+// average.
 //
-// You can use `&key` or `&less-than` but not both at the same time. A `&key`
-// function is usually preferable to a `&less-than` function because it is more
-// efficient extract the key for each item just once rather than on each
-// comparison. If both options are `$nil` then the entirety of each item is
-// compared using the equivalent of `{|a b| == -1 (compare $a $b) }`.
+// If `&key` and `&less-than` are both specified, the output of the `&key`
+// callback for each element is passed to the `&less-than` callback.
+//
+// The `&reverse` option, if true, reverses the order of output.
 //
 // Examples:
 //
@@ -395,6 +394,10 @@ func count(fm *Frame, args ...any) (int, error) {
 // ▶ c
 // ▶ b
 // ▶ a
+// ~> put [0 x] [1 a] [2 b] | order &key={|l| put $l[1]}
+// ▶ [1 a]
+// ▶ [2 b]
+// ▶ [0 x]
 // ~> order &less-than={|a b| eq $a x } [l x o r x e x m]
 // ▶ x
 // ▶ x
@@ -407,18 +410,24 @@ func count(fm *Frame, args ...any) (int, error) {
 // ```
 //
 // Beware that strings that look like numbers are treated as strings, not
-// numbers. To sort strings as numbers, use an explicit `&less-than` option:
+// numbers. To sort strings as numbers, use an explicit `&key` or `&less-than`:
 //
 // ```elvish-transcript
 // ~> order [5 1 10]
 // ▶ 1
 // ▶ 10
 // ▶ 5
-// ~> order &less-than={|a b| < $a $b } [5 1 10]
+// ~> order &key=$num~ [5 1 10]
+// ▶ 1
+// ▶ 5
+// ▶ 10
+// ~> order &less-than=$"<~" [5 1 10]
 // ▶ 1
 // ▶ 5
 // ▶ 10
 // ```
+//
+// (The `$"<~"` syntax is a reference to [the `<` function](#num-cmp).)
 //
 // @cf compare
 
@@ -431,33 +440,38 @@ type orderOptions struct {
 func (opt *orderOptions) SetDefaultOptions() {}
 
 func order(fm *Frame, opts orderOptions, inputs Inputs) error {
-	if opts.Key != nil && opts.LessThan != nil {
-		return ErrKeyAndLessThanOpts
+	var values, keys []any
+	inputs(func(v any) { values = append(values, v) })
+	if opts.Key != nil {
+		keys = make([]any, len(values))
+		for i, value := range values {
+			outputs, err := fm.CaptureOutput(func(fm *Frame) error {
+				return opts.Key.Call(fm, []any{value}, NoOpts)
+			})
+			if err != nil {
+				return err
+			} else if len(outputs) != 1 {
+				return errs.ArityMismatch{
+					What:     "number of outputs of the &key callback",
+					ValidLow: 1, ValidHigh: 1, Actual: len(outputs)}
+			}
+			keys[i] = outputs[0]
+		}
 	}
 
-	values, err := collectValues(fm, opts, inputs)
-	if err != nil {
-		return err
+	s := &slice{fm, opts.LessThan, values, keys, nil}
+	if opts.Reverse {
+		sort.Stable(sort.Reverse(s))
+	} else {
+		sort.Stable(s)
 	}
-
-	var sortErr error
-	cmpFn := getCmpFunction(fm, opts, values, &sortErr)
-	sort.SliceStable(values, cmpFn)
-	if sortErr != nil {
-		return sortErr
+	if s.err != nil {
+		return s.err
 	}
 
 	out := fm.ValueOutput()
 	for _, v := range values {
-		var err error
-		if opts.Key == nil {
-			// No `&key` option was used so simply output the original value.
-			err = out.Put(v)
-		} else {
-			// Ignore the key generated by the `&key` function to output the
-			// original value.
-			err = out.Put(v.([2]any)[1])
-		}
+		err := out.Put(v)
 		if err != nil {
 			return err
 		}
@@ -465,108 +479,64 @@ func order(fm *Frame, opts orderOptions, inputs Inputs) error {
 	return nil
 }
 
-func collectValues(fm *Frame, opts orderOptions, inputs Inputs) ([]any, error) {
-	var values []any
-	if opts.Key == nil {
-		inputs(func(v any) { values = append(values, v) })
-	} else {
-		var keyErr error
-		inputs(func(v any) {
-			if keyErr != nil {
-				return
-			}
-			outputs, err := fm.CaptureOutput(func(fm *Frame) error {
-				return opts.Key.Call(fm, []any{v}, NoOpts)
-			})
-			if err != nil {
-				keyErr = err
-			} else if len(outputs) != 1 {
-				keyErr = errors.New("&key function output more than one value")
-			} else {
-				t := [2]any{outputs[0], v}
-				values = append(values, t)
-			}
-		})
-		if keyErr != nil {
-			return values, keyErr
-		}
-	}
-	return values, nil
+type slice struct {
+	fm       *Frame
+	lessThan Callable
+	values   []any
+	keys     []any // nil if no keys
+	err      error
 }
 
-func getCmpFunction(fm *Frame, opts orderOptions, values []any, sortErr *error) func(i, j int) bool {
-	if opts.Key != nil {
-		// Use the default comparison but restricted to the key precomputed by
-		// the `&key` function.
-		return func(i, j int) bool {
-			if *sortErr != nil {
-				return true
-			}
-			ki := values[i].([2]any)[0]
-			kj := values[j].([2]any)[0]
-			o := cmp(ki, kj)
-			if o == uncomparable {
-				*sortErr = ErrUncomparable
-				return true
-			}
-			if opts.Reverse {
-				return o == more
-			}
-			return o == less
-		}
+func (s *slice) Len() int { return len(s.values) }
+
+func (s *slice) Less(i, j int) bool {
+	if s.err != nil {
+		return true
 	}
 
-	if opts.LessThan != nil {
-		// Use the custom function provided by the user to compare the value of
-		// each item.
-		return func(i, j int) bool {
-			if *sortErr != nil {
-				return true
-			}
-			var args []any
-			if opts.Reverse {
-				args = []any{values[j], values[i]}
-			} else {
-				args = []any{values[i], values[j]}
-			}
-			outputs, err := fm.CaptureOutput(func(fm *Frame) error {
-				return opts.LessThan.Call(fm, args, NoOpts)
-			})
-			if err != nil {
-				*sortErr = err
-				return true
-			}
-			if len(outputs) != 1 {
-				*sortErr = errs.BadValue{
-					What:   "output of the &less-than callback",
-					Valid:  "a single boolean",
-					Actual: fmt.Sprintf("%d values", len(outputs))}
-				return true
-			}
-			if b, ok := outputs[0].(bool); ok {
-				return b
-			}
-			*sortErr = errs.BadValue{
-				What:  "output of the &less-than callback",
-				Valid: "boolean", Actual: vals.Kind(outputs[0])}
-			return true
-		}
+	var a, b any
+	if s.keys != nil {
+		a, b = s.keys[i], s.keys[j]
+	} else {
+		a, b = s.values[i], s.values[j]
 	}
 
-	// Use the default comparison of each item. This is the common case when
-	// there is no `&key` or `&less-than` option.
-	return func(i, j int) bool {
-		if *sortErr != nil {
-			return true
-		}
-		o := cmp(values[i], values[j])
+	if s.lessThan == nil {
+		// Use the builtin comparator.
+		o := cmp(a, b)
 		if o == uncomparable {
-			*sortErr = ErrUncomparable
+			s.err = ErrUncomparable
 			return true
-		}
-		if opts.Reverse {
-			return o == more
 		}
 		return o == less
+	}
+
+	// Use the &less-than callback.
+	outputs, err := s.fm.CaptureOutput(func(fm *Frame) error {
+		return s.lessThan.Call(fm, []any{a, b}, NoOpts)
+	})
+	if err != nil {
+		s.err = err
+		return true
+	}
+	if len(outputs) != 1 {
+		s.err = errs.ArityMismatch{
+			What:     "number of outputs of the &less-than callback",
+			ValidLow: 1, ValidHigh: 1, Actual: len(outputs)}
+		return true
+	}
+	if b, ok := outputs[0].(bool); ok {
+		return b
+	}
+	s.err = errs.BadValue{
+		What:  "output of the &less-than callback",
+		Valid: "boolean", Actual: vals.Kind(outputs[0])}
+	return true
+}
+
+func (s *slice) Swap(i, j int) {
+	s.values[i], s.values[j] = s.values[j], s.values[i]
+	if s.keys != nil {
+		s.keys[i], s.keys[j] = s.keys[j], s.keys[i]
 	}
 }

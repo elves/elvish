@@ -68,10 +68,6 @@ func TestCount(t *testing.T) {
 
 func TestOrder(t *testing.T) {
 	Test(t,
-		// Incompatible order options throws an exception.
-		That("order &key={|v| } &less-than={|a b| }").
-			Throws(ErrKeyAndLessThanOpts),
-
 		// Ordering strings
 		That("put foo bar ipsum | order").Puts("bar", "foo", "ipsum"),
 		That("put foo bar bar | order").Puts("bar", "bar", "foo"),
@@ -131,25 +127,29 @@ func TestOrder(t *testing.T) {
 		// &key
 		That("put 10 1 5 2 | order &key={|v| num $v }").
 			Puts("1", "2", "5", "10"),
+		// &key and &reverse
 		That("put 10 1 5 2 | order &reverse &key={|v| num $v }").
 			Puts("10", "5", "2", "1"),
-		That("put 10 1 5 2 | order &key={|v| put 1 }").
-			Puts("10", "1", "5", "2"),
 
 		// &less-than
 		That("put 1 10 2 5 | order &less-than={|a b| < $a $b }").
 			Puts("1", "2", "5", "10"),
-		That("put 10 1 5 2 | order &less-than=$nil").
-			Puts("1", "10", "2", "5"),
-		That("put 10 1 5 2 | order").
-			Puts("1", "10", "2", "5"),
+		// &less-than and &key
+		That("put [a 1] [b 10] [c 2] | order &key={|v| put $v[1]} &less-than=$'<~'").
+			Puts(
+				vals.MakeList("a", "1"),
+				vals.MakeList("c", "2"),
+				vals.MakeList("b", "10")),
+		// &less-than and &reverse
+		That("put 1 10 2 5 | order &reverse &less-than={|a b| < $a $b }").
+			Puts("10", "5", "2", "1"),
 
 		// &less-than writing more than one value
 		That("put 1 10 2 5 | order &less-than={|a b| put $true $false }").
 			Throws(
-				errs.BadValue{
-					What:  "output of the &less-than callback",
-					Valid: "a single boolean", Actual: "2 values"},
+				errs.ArityMismatch{
+					What:     "number of outputs of the &less-than callback",
+					ValidLow: 1, ValidHigh: 1, Actual: 2},
 				"order &less-than={|a b| put $true $false }"),
 
 		// &less-than writing non-boolean value
@@ -166,9 +166,8 @@ func TestOrder(t *testing.T) {
 				FailError{"bad"},
 				"fail bad ", "order &less-than={|a b| fail bad }"),
 
-		// &less-than and &reverse
-		That("put 1 10 2 5 | order &reverse &less-than={|a b| < $a $b }").
-			Puts("10", "5", "2", "1"),
+		// All callback options support $nil for default behavior
+		That("put c b a | order &less-than=$nil &key=$nil").Puts("a", "b", "c"),
 
 		// Sort should be stable - test by pretending that all values but one
 		// are equal, and check that the order among them has not changed.
