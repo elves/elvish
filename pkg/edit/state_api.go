@@ -8,15 +8,6 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 )
 
-//elvdoc:fn insert-at-dot
-//
-// ```elvish
-// edit:insert-at-dot $text
-// ```
-//
-// Inserts the given text at the dot, moving the dot after the newly
-// inserted text.
-
 func insertAtDot(app cli.App, text string) {
 	codeArea, ok := focusedCodeArea(app)
 	if !ok {
@@ -27,14 +18,6 @@ func insertAtDot(app cli.App, text string) {
 	})
 }
 
-//elvdoc:fn replace-input
-//
-// ```elvish
-// edit:replace-input $text
-// ```
-//
-// Equivalent to assigning `$text` to `$edit:current-command`.
-
 func replaceInput(app cli.App, text string) {
 	codeArea, ok := focusedCodeArea(app)
 	if !ok {
@@ -44,19 +27,6 @@ func replaceInput(app cli.App, text string) {
 		s.Buffer = tk.CodeBuffer{Content: text, Dot: len(text)}
 	})
 }
-
-//elvdoc:var -dot
-//
-// Contains the current position of the cursor, as a byte position within
-// `$edit:current-command`.
-
-//elvdoc:var current-command
-//
-// Contains the content of the current input. Setting the variable will
-// cause the cursor to move to the very end, as if `edit-dot = (count
-// $edit:current-command)` has been invoked.
-//
-// This API is subject to change.
 
 func initStateAPI(app cli.App, nb eval.NsBuilder) {
 	// State API always operates on the root CodeArea widget

@@ -19,19 +19,6 @@ import (
 // in the same process group.
 var ErrNotInSameProcessGroup = errors.New("not in the same process group")
 
-//elvdoc:fn exec
-//
-// ```elvish
-// exec $command? $args...
-// ```
-//
-// Replace the Elvish process with an external `$command`, defaulting to
-// `elvish`, passing the given arguments. This decrements `$E:SHLVL` before
-// starting the new process.
-//
-// This command always raises an exception on Windows with the message "not
-// supported on Windows".
-
 // Reference to syscall.Exec. Can be overridden in tests.
 var syscallExec = syscall.Exec
 

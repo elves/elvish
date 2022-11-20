@@ -87,11 +87,6 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	return ed
 }
 
-//elvdoc:var exceptions
-//
-// A list of exceptions thrown from callbacks such as prompts. Useful for
-// examining tracebacks and other metadata.
-
 func initExceptionsAPI(ed *Editor, nb eval.NsBuilder) {
 	nb.AddVar("exceptions", vars.FromPtrWithMutex(&ed.excList, &ed.excMutex))
 }

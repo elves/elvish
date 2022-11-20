@@ -15,50 +15,13 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-//elvdoc:fn binding-table
-//
-// ```elvish
-// edit:binding-table $map
-// ```
-//
-// Converts a normal map into a binding map.
-
-//elvdoc:fn close-mode
-//
-// ```elvish
-// edit:close-mode
-// ```
-//
-// Closes the current active mode.
-
 func closeMode(app cli.App) {
 	app.PopAddon()
 }
 
-//elvdoc:fn end-of-history
-//
-// ```elvish
-// edit:end-of-history
-// ```
-//
-// Adds a notification saying "End of history".
-
 func endOfHistory(app cli.App) {
 	app.Notify(ui.T("End of history"))
 }
-
-//elvdoc:fn redraw
-//
-// ```elvish
-// edit:redraw &full=$false
-// ```
-//
-// Triggers a redraw.
-//
-// The `&full` option controls whether to do a full redraw. By default, all
-// redraws performed by the line editor are incremental redraws, updating only
-// the part of the screen that has changed from the last redraw. A full redraw
-// updates the entire command line.
 
 type redrawOpts struct{ Full bool }
 
@@ -72,31 +35,12 @@ func redraw(app cli.App, opts redrawOpts) {
 	}
 }
 
-//elvdoc:fn clear
-//
-// ```elvish
-// edit:clear
-// ```
-//
-// Clears the screen.
-//
-// This command should be used in place of the external `clear` command to clear
-// the screen.
-
 func clear(app cli.App, tty cli.TTY) {
 	tty.HideCursor()
 	tty.ClearScreen()
 	app.RedrawFull()
 	tty.ShowCursor()
 }
-
-//elvdoc:fn insert-raw
-//
-// ```elvish
-// edit:insert-raw
-// ```
-//
-// Requests the next terminal input to be inserted uninterpreted.
 
 func insertRaw(app cli.App, tty cli.TTY) {
 	codeArea, ok := focusedCodeArea(app)
@@ -122,14 +66,6 @@ func insertRaw(app cli.App, tty cli.TTY) {
 	app.PushAddon(w)
 }
 
-//elvdoc:fn key
-//
-// ```elvish
-// edit:key $string
-// ```
-//
-// Parses a string into a key.
-
 var errMustBeKeyOrString = errors.New("must be key or string")
 
 func toKey(v any) (ui.Key, error) {
@@ -142,21 +78,6 @@ func toKey(v any) (ui.Key, error) {
 		return ui.Key{}, errMustBeKeyOrString
 	}
 }
-
-//elvdoc:fn notify
-//
-// ```elvish
-// edit:notify $message
-// ```
-//
-// Prints a notification message. The argument may be a string or a [styled
-// text](builtin.html#styled).
-//
-// If called while the editor is active, this will print the message above the
-// editor, and redraw the editor.
-//
-// If called while the editor is inactive, the message will be queued, and shown
-// once the editor becomes active.
 
 func notify(app cli.App, x any) error {
 	// TODO: De-duplicate with the implementation of the styled builtin.
@@ -173,34 +94,6 @@ func notify(app cli.App, x any) error {
 	app.Notify(t)
 	return nil
 }
-
-//elvdoc:fn return-line
-//
-// ```elvish
-// edit:return-line
-// ```
-//
-// Causes the Elvish REPL to end the current read iteration and evaluate the
-// code it just read. If called from a key binding, takes effect after the key
-// binding returns.
-
-//elvdoc:fn return-eof
-//
-// ```elvish
-// edit:return-eof
-// ```
-//
-// Causes the Elvish REPL to terminate. If called from a key binding, takes
-// effect after the key binding returns.
-
-//elvdoc:fn smart-enter
-//
-// ```elvish
-// edit:smart-enter
-// ```
-//
-// Inserts a literal newline if the current code is not syntactically complete
-// Elvish code. Accepts the current line otherwise.
 
 func smartEnter(app cli.App) {
 	codeArea, ok := focusedCodeArea(app)
@@ -232,14 +125,6 @@ func isSyntaxComplete(code string) bool {
 	}
 	return true
 }
-
-//elvdoc:fn wordify
-//
-// ```elvish
-// edit:wordify $code
-// ```
-//
-// Breaks Elvish code into words.
 
 func wordify(fm *eval.Frame, code string) error {
 	out := fm.ValueOutput()
