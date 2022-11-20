@@ -1,16 +1,12 @@
 test_task:
   env:
     ELVISH_TEST_TIME_SCALE: 20
-  go_toolchain_cache:
-    fingerprint_key: go1.18
-    folder: /usr/local/go
-    populate_script: |
-      pkg install -y curl
-      curl -LO https://go.dev/dl/go1.18.freebsd-amd64.tar.gz
-      tar -C /usr/local -xf go1.18.freebsd-amd64.tar.gz
+    TEST_FLAG: -race
   go_modules_cache:
     fingerprint_script: cat go.sum
-    folder: $HOME/go/pkg/mod
+    folder: ~/go/pkg/mod
+  go_build_cache:
+    folder: ~/.cache/go-build
   matrix:
     # Re-enable gccgo when it supports Go 1.18.
     #- name: Test on gccgo
@@ -18,17 +14,134 @@ test_task:
     #    image: debian:unstable-slim
     #  setup_script:
     #    - apt-get -y update
-    #    - apt-get -y install ca-certificates gccgo-11
-    #    - ln -sf /usr/bin/go-11 /usr/local/bin/go
+    #    - apt-get -y install ca-certificates gccgo-12 git
+    #    - ln -sf /usr/bin/go-12 /usr/local/bin/go
     #  env:
     #    # gccgo doesn't support race test
     #    TEST_FLAG: ""
+    - name: Test on Linux ARM64
+      arm_container:
+        # The Alpine image has segmentation faults when running test -race, so
+        # use Debian instead.
+        image: golang:1.19.3-bullseye
     - name: Test on FreeBSD
       freebsd_instance:
-        image_family: freebsd-13-0
+        image_family: freebsd-13-1
       env:
-        TEST_FLAG: -race
         PATH: /usr/local/go/bin:$PATH
-      setup_script: pkg install -y git
+        GO_VERSION: 1.19.3
+      go_toolchain_cache:
+        fingerprint_key: $GO_VERSION
+        folder: /usr/local/go
+        populate_script: |
+          pkg install -y curl
+          curl -L -o go.tar.gz https://go.dev/dl/go$GO_VERSION.freebsd-amd64.tar.gz
+          tar -C /usr/local -xf go.tar.gz
+    - name: Test on NetBSD
+      compute_engine_instance:
+        image_project: pg-ci-images
+        image: family/pg-ci-netbsd-vanilla
+        platform: netbsd
+      env:
+        GO_PKG: go118
+        PATH: /usr/pkg/$GO_PKG/bin:$PATH
+      go_pkg_cache:
+        fingerprint_key: $GO_PKG
+        folder: /usr/pkg/$GO_PKG
+        populate_script: pkgin -y install $GO_PKG
+    - name: Test on OpenBSD
+      compute_engine_instance:
+        image_project: pg-ci-images
+        image: family/pg-ci-openbsd-vanilla
+        platform: openbsd
+      env:
+        PATH: /usr/local/go/bin:$PATH
+      go_pkg_cache:
+        fingerprint_key: 1.19.1p0
+        folder: /usr/local/go
+        # The image provided by pg-ci-images is still 7.1 at the moment, which
+        # only ships Go 1.17. Before
+        # https://github.com/anarazel/pg-vm-images/pull/35 is merged, use this
+        # very hacky method to get Go 1.19.1. This is probably a bad idea and
+        # will trigger a warning due to library version mismatch, but it works
+        # for now.
+        populate_script: |
+          cd /usr/local
+          ftp https://cdn.openbsd.org/pub/OpenBSD/7.2/packages/amd64/go-1.19.1p0.tgz
+          tar xzf go-1.19.1p0.tgz
   go_version_script: go version
   test_script: go test $TEST_FLAG ./...
+
+build_binaries_task:
+  name: Build binaries
+  only_if: $CIRRUS_BRANCH == 'master'
+  alias: binaries
+  env:
+    CGO_ENABLED: 0
+  container:
+    image: golang:1.19.3-alpine
+  go_modules_cache:
+    fingerprint_script: cat go.sum
+    folder: ~/go/pkg/mod
+  go_build_cache:
+    folder: ~/.cache/go-build
+  # Git is not required for building the binaries, but we need to include for Go
+  # to include VCS information in the binary.
+  setup_script: apk add zip git
+  # _bin is in .gitignore, so Git won't consider the repo dirty. This will
+  # impact the binary, which encodes VCS information.
+  build_binaries_script: |
+    ELVISH_BUILD_VARIANT=official ./tools/buildall.sh . _bin HEAD
+  binaries_artifacts:
+    path: _bin/**
+  binary_checksums_artifacts:
+    path: _bin/*/elvish-HEAD.sha256sum
+
+check_binary_checksums_task:
+  name: Check binary checksums ($HOST)
+  only_if: $CIRRUS_BRANCH == 'master'
+  container:
+    image: golang:1.19.3-alpine
+  depends_on: binaries
+  matrix:
+    - env:
+        HOST: cdg
+    - env:
+        HOST: hkg
+  setup_script: apk add git curl
+  # Enable auto cancellation - if there is another push, only the task to
+  # compare the website against the newer commit should continue.
+  auto_cancellation: true
+  wait_website_update_script: |
+    ts=$(git show -s --format=%ct HEAD)
+    wait=10
+    while true; do
+      website_ts=$(curl -sS https://$HOST.elv.sh/commit-ts.txt)
+      if test -z "$website_ts"; then
+        echo "website has no commit-ts.txt yet"
+      elif test "$website_ts" -ge "$ts"; then
+        echo "website ($website_ts) >= CI ($ts)"
+        exit 0
+      else
+        echo "website ($website_ts) < CI ($ts)"
+      fi
+      sleep $wait
+      test $wait -lt 96 && wait=`echo "$wait * 2" | bc`
+    done
+  check_binary_checksums_script: |
+    curl -o checksums.zip https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/binaries/binary_checksums.zip
+    unzip checksums.zip
+    cd _bin
+
+    ret=0
+    for f in */elvish-HEAD.sha256sum; do
+      website_sum=$(curl -sS https://$HOST.dl.elv.sh/$f | awk '{print $1}')
+      ci_sum=$(cat $f | awk '{print $1}')
+      if test "$website_sum" = "$ci_sum"; then
+        echo "$f: website == CI ($ci_sum)"
+      else
+        echo "$f: website ($website_sum) != CI ($ci_sum)"
+        ret=1
+      fi
+    done
+    exit $ret

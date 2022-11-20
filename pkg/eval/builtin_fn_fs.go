@@ -23,9 +23,11 @@ func init() {
 // cd $dirname
 // ```
 //
-// Change directory. This affects the entire process; i.e., all threads
-// whether running indirectly (e.g., prompt functions) or started explicitly
-// by commands such as [`peach`](#peach).
+// Changes directory.
+//
+// This affects the entire process, including parallel tasks that are started
+// implicitly (such as prompt functions) or explicitly (such as one started by
+// [`peach`](#peach)).
 //
 // Note that Elvish's `cd` does not support `cd -`.
 //

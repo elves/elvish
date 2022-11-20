@@ -56,7 +56,7 @@
 			}
 		},
 		{
-			"match": "}\\s+(catch|except)\\s+([\\w\\d_:~-]+)",
+			"match": "(?<=})\\s+(catch|except)\\s+([\\w\\d_:~-]+)",
 			"captures": {
 				"1": {
 					"name": "keyword.control.elvish"
@@ -101,7 +101,7 @@
 			}
 		},
 		{
-			"match": "}\\s+(elif|else|catch|except|finally)(?=[\\s)}<>;|&])",
+			"match": "(?<=})\\s+(elif|else|catch|except|finally)(?=[\\s)}<>;|&])",
 			"captures": {
 				"1": {
 					"name": "keyword.control.elvish"

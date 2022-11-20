@@ -29,6 +29,47 @@ func Concat(texts ...Text) Text {
 	return ret
 }
 
+// NormalizeText converts a Text to a normal form:
+//
+//   - If the Text is empty or only contains empty segments, the normal form is
+//     nil.
+//
+//   - Otherwise the normal form contains no empty segments, and no adjacent
+//     segments with the same style.
+//
+// The normal forms can be more easily compared.
+func NormalizeText(t Text) Text {
+	// Find first non-empty segment
+	first := 0
+	for first < len(t) && t[first].Text == "" {
+		first++
+	}
+	if first == len(t) {
+		return nil
+	}
+	var normal Text
+	var segText strings.Builder
+	segText.WriteString(t[first].Text)
+	segStyle := t[first].Style
+	for _, seg := range t[first+1:] {
+		if seg.Text == "" {
+			continue
+		}
+		if seg.Style == segStyle {
+			segText.WriteString(seg.Text)
+		} else {
+			normal = append(normal, &Segment{segStyle, segText.String()})
+			segText.Reset()
+			segText.WriteString(seg.Text)
+			segStyle = seg.Style
+		}
+	}
+	if segText.Len() > 0 {
+		normal = append(normal, &Segment{segStyle, segText.String()})
+	}
+	return normal
+}
+
 // Kind returns "styled-text".
 func (Text) Kind() string { return "ui:text" }
 

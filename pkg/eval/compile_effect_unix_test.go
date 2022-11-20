@@ -56,10 +56,10 @@ func TestCommand_External(t *testing.T) {
 		That("./foo 5</dev/null").Prints("foo\n"),
 
 		// Using pragma to allow or disallow implicit searched commands
-		That("pragma unknown-command = disallow", "hello").DoesNotCompile(),
+		That("pragma unknown-command = disallow", "hello").DoesNotCompile("unknown command disallowed by current pragma"),
 		That("pragma unknown-command = external", "hello").Prints("hello\n"),
 		// Pragma applies to subscope
-		That("pragma unknown-command = disallow", "{ hello }").DoesNotCompile(),
+		That("pragma unknown-command = disallow", "{ hello }").DoesNotCompile("unknown command disallowed by current pragma"),
 		// Explicit uses with e: is always allowed
 		That("pragma unknown-command = disallow", "e:hello").Prints("hello\n"),
 		// Relative external commands are always allowed

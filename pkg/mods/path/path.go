@@ -38,7 +38,7 @@ var Ns = eval.BuildNsNamed("path").
 
 //elvdoc:var separator
 //
-// OS-specific path separator. Forward slash (`/`) on UNIX and backslash (`\\`)
+// OS-specific path separator. Forward slash (`/`) on UNIX and backslash (`\`)
 // on Windows. This variable is read-only.
 
 //elvdoc:fn abs
@@ -224,7 +224,7 @@ func isDir(opts isOpts, path string) bool {
 // ~> touch not-a-dir
 // ~> path:is-regular not-a-dir
 // ▶ true
-// ~> path:is-dir /tmp
+// ~> path:is-regular /tmp
 // ▶ false
 // ```
 //
@@ -316,16 +316,16 @@ func tempDir(opts mktempOpt, args ...string) (string, error) {
 // ~> echo hello > $f
 // ~> cat $f[name]
 // hello
-// ~> var f = (path:temp-file) x-
+// ~> var f = (path:temp-file x-)
 // ~> put $f[name]
 // ▶ /tmp/x-RANDOMSTR
-// ~> var f = (path:temp-file) 'x-*.y'
+// ~> var f = (path:temp-file 'x-*.y')
 // ~> put $f[name]
 // ▶ /tmp/x-RANDOMSTR.y
-// ~> var f = (path:temp-file) &dir=.
+// ~> var f = (path:temp-file &dir=.)
 // ~> put $f[name]
 // ▶ elvish-RANDOMSTR
-// ~> var f = (path:temp-file) &dir=/some/dir
+// ~> var f = (path:temp-file &dir=/some/dir)
 // ~> put $f[name]
 // ▶ /some/dir/elvish-RANDOMSTR
 // ```

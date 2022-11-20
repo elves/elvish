@@ -19,7 +19,7 @@ GNU Make is required.
 
 The [`tools`](tools) directory contains scripts too complex to fit in the
 `Makefile`. Among them, [`tools/pre-push`](tools/pre-push) can be used as a Git
-hook, and covers a large subset (but not all) of CI checks.
+hook, and covers all the CI checks that can be run from your local environment.
 
 ## Testing changes
 
@@ -57,8 +57,9 @@ appropriate section. You can find the document at the root of the repo (called
 ### Reference docs
 
 Reference docs are interspersed in Go sources as comments blocks whose first
-line starts with `//elvdoc` (and are hence called _elvdocs_). They can use
-[Github Flavored Markdown](https://github.github.com/gfm/).
+line starts with `//elvdoc` (and are hence called *elvdocs*). A
+[large subset](https://pkg.go.dev/src.elv.sh/pkg/md@master) of
+[CommonMark](https://commonmark.org) is supported.
 
 Elvdocs for functions look like the following:
 
@@ -150,19 +151,58 @@ Some basic aspects of code hygiene are checked in the CI.
 ### Formatting
 
 Install [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports) to
-format Go files, and [prettier](https://prettier.io/) to format Markdown files.
+format Go files.
 
 ```sh
 go install golang.org/x/tools/cmd/goimports@latest
-npm install --global prettier@2.7.1
 ```
 
-Once you have installed the tools, use `make style` to format Go and Markdown
-files. If you prefer, you can also configure your editor to run these commands
-automatically when saving Go or Markdown sources.
+The Markdown formatter [elvmdfmt](cmd/elvmdfmt) lives inside this repo and does
+not need to be installed.
 
-Use `make checkstyle` to check if all Go and Markdown files are properly
+Once you have installed the tools, use `make style` to format Go and Markdown
+files, or `make checkstyle` to check if all Go and Markdown files are properly
 formatted.
+
+#### Formatting on save
+
+The Go plugins of most popular editors already support formatting Go files
+automatically on save; consult the documentation of the plugin you use.
+
+To format Markdown files automatically on save, configure your editor to run the
+following command when saving Markdown files:
+
+```sh
+go run src.elv.sh/cmd/elvmdfmt -width 80 -w $filename
+```
+
+**Note**: Using `go run` ensures that you are always using the `elvmdfmt`
+implementation in the repo, but it incurs a small performance penalty since the
+Go toolchain does not cache binary files. If this is a problem (for example, if
+your editor runs the command synchronously), you can speed up the command by
+installing `src.elv.sh/cmd/elvmdfmt` and using the installed `elvmdfmt`.
+However, if you do this, you must re-install `elvmdfmt` whenever there is a
+change in its implementation that impacts the output.
+
+You'll also want to configure this command to only run inside the Elvish repo,
+since `elvmdfmt` is tailored to Markdown files in this repo and may not work
+well for other Markdown files.
+
+If you use VS Code, you can install the
+[Run on Save](https://marketplace.visualstudio.com/items?itemName=emeraldwalk.RunOnSave)
+extension and add the following to the workspace (not user) `settings.json`
+file:
+
+```json
+"emeraldwalk.runonsave": {
+    "commands": [
+        {
+            "match": "\\.md$",
+            "cmd": "go run src.elv.sh/cmd/elvmdfmt -width 80 -w ${file}"
+        }
+    ]
+}
+```
 
 ### Linting
 
@@ -184,7 +224,7 @@ Install [codespell](https://github.com/codespell-project/codespell) to check
 spelling:
 
 ```sh
-pip install --user codespell==2.1.0
+pip install --user codespell==2.2.1
 ```
 
 Use `make codespell` to run it.

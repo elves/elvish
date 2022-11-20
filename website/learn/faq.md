@@ -5,8 +5,8 @@
 The author of Elvish found the concept of a shell -- a programmable, interactive
 text interface for an OS -- to be simple yet powerful. However, he also felt
 that the more traditional shells, such as `bash` and `zsh`, didn't take it far
-enough. They all had _some_ programming capabilities, but they were only really
-sufficient for manipulating strings or lists of strings. They also had _some_
+enough. They all had *some* programming capabilities, but they were only really
+sufficient for manipulating strings or lists of strings. They also had *some*
 nice interactive features, such as tab completion, but more advanced UI features
 were either nonexistent, hidden behind obscure configuration options, or
 required external programs with suboptimal integration with the rest of the
@@ -56,7 +56,7 @@ Elvish is named after **elven** items in
 high quality. You can think of Elvish as an abbreviation of "elven shell".
 
 The name is not directly related to
-[Tolkien's Elvish languages](<https://en.wikipedia.org/wiki/Elvish_languages_(Middle-earth)>),
+[Tolkien's Elvish languages](https://en.wikipedia.org/wiki/Elvish_languages_(Middle-earth)),
 but you're welcome to create something related to both Elvishes.
 
 Alternatively, Elvish is a backronym for "Expressive programming Language and

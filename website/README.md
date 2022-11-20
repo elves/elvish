@@ -2,9 +2,9 @@
 
 This directory contains source for Elvish's official website.
 
-The documents are written in GitHub-flavored markdown sprinkled with some HTML
-and custom macros. Most of them can be viewed directly in GitHub; notable
-exceptions are the homepage (`home.md`) and the download page
+The documents are written in [CommonMark](https://commonmark.org) sprinkled with
+some HTML and custom macros. Most of them can be viewed directly in GitHub;
+notable exceptions are the homepage (`home.md`) and the download page
 (`get/prelude.md`).
 
 ## Building
@@ -13,8 +13,6 @@ The website is a collection of static HTML files, built from Markdown files with
 a custom toolchain. You need the following software to build it:
 
 -   Go, with the same version requirement as Elvish itself.
-
--   Pandoc 2.2.1 (other versions in the 2.x series might also work).
 
 -   GNU Make (any "reasonably modern" version should do).
 

@@ -42,12 +42,19 @@ func matchRegexp(p, s string) bool {
 
 type errorMatcher interface{ matchError(error) bool }
 
-// An errorMatcher for any error.
-type anyError struct{}
+// An errorMatcher for compilation errors.
+type compilationError struct {
+	msg string
+}
 
-func (anyError) Error() string { return "any error" }
+func (e compilationError) Error() string {
+	return "compilation error with message: " + e.msg
+}
 
-func (anyError) matchError(e error) bool { return e != nil }
+func (e compilationError) matchError(e2 error) bool {
+	ce := eval.GetCompilationError(e2)
+	return ce != nil && ce.Message == e.msg
+}
 
 // An errorMatcher for exceptions.
 type exc struct {

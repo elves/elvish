@@ -20,11 +20,11 @@ import (
 
 func TestPragma(t *testing.T) {
 	Test(t,
-		That("pragma unknown-command").DoesNotCompile(),
-		That("pragma unknown-command =").DoesNotCompile(),
-		That("pragma unknown-command x").DoesNotCompile(),
-		That("pragma bad-name = some-value").DoesNotCompile(),
-		That("pragma unknown-command = bad").DoesNotCompile(),
+		That("pragma unknown-command").DoesNotCompile("need more arguments"),
+		That("pragma unknown-command =").DoesNotCompile("need more arguments"),
+		That("pragma unknown-command x").DoesNotCompile("must be literal ="),
+		That("pragma bad-name = some-value").DoesNotCompile("unknown pragma bad-name"),
+		That("pragma unknown-command = bad").DoesNotCompile("invalid value for unknown-command: bad"),
 	)
 	// Actual effect of the unknown-command pragma is tested in TestCommand_External
 }
@@ -81,16 +81,20 @@ func TestVar(t *testing.T) {
 				ValidLow: 2, ValidHigh: -1, Actual: 1},
 			"var x y @z = 1"),
 
+		// Variable name must not be empty
+		That("var ''").DoesNotCompile("variable name must not be empty"),
 		// Variable name that must be quoted after $ must be quoted
-		That("var a/b").DoesNotCompile(),
+		That("var a/b").DoesNotCompile("lvalue must be valid literal variable names"),
 		// Multiple @ not allowed
-		That("var x @y @z = a b c d").DoesNotCompile(),
+		That("var x @y @z = a b c d").DoesNotCompile("at most one rest variable is allowed"),
 		// Non-local not allowed
-		That("var ns:a").DoesNotCompile(),
+		That("var ns:a").DoesNotCompile("cannot create variable $ns:a; new variables can only be created in the current scope"),
 		// Index not allowed
-		That("var a[0]").DoesNotCompile(),
+		That("var a[0]").DoesNotCompile("new variable $a must not have indices"),
 		// Composite expression not allowed
-		That("var a'b'").DoesNotCompile(),
+		That("var a'b'").DoesNotCompile("lvalue may not be composite expressions"),
+		// Braced lists must not have any indices when used as a lvalue.
+		That("var {a b}[0] = x y").DoesNotCompile("braced list may not have indices when used as lvalue"),
 	)
 }
 
@@ -101,12 +105,12 @@ func TestSet(t *testing.T) {
 		// An empty RHS is technically legal although rarely useful.
 		That("var x; set @x =", "put $x").Puts(vals.EmptyList),
 		// Variable must already exist
-		That("set x = foo").DoesNotCompile(),
+		That("set x = foo").DoesNotCompile("cannot find variable $x"),
 		// List element assignment
 		That("var li = [foo bar]; set li[0] = 233; put $@li").Puts("233", "bar"),
 		// Variable in list assignment must already be defined. Regression test
 		// for b.elv.sh/889.
-		That("set foobarlorem[0] = a").DoesNotCompile(),
+		That("set y[0] = a").DoesNotCompile("cannot find variable $y"),
 		// Map element assignment
 		That("var di = [&k=v]; set di[k] = lorem; set di[k2] = ipsum",
 			"put $di[k] $di[k2]").Puts("lorem", "ipsum"),
@@ -120,16 +124,16 @@ func TestSet(t *testing.T) {
 				ValidLow: "0", ValidHigh: "0", Actual: "1"}, "li[1][2]"),
 
 		// Assignment to read-only var is a compile-time error.
-		That("set nil = 1").DoesNotCompile(),
-		That("var a b; set a true b = 1 2 3").DoesNotCompile(),
-		That("set @true = 1").DoesNotCompile(),
-		That("var r; set true @r = 1").DoesNotCompile(),
-		That("var r; set @r true = 1").DoesNotCompile(),
+		That("set nil = 1").DoesNotCompile("variable $nil is read-only"),
+		That("var a b; set a true b = 1 2 3").DoesNotCompile("variable $true is read-only"),
+		That("set @true = 1").DoesNotCompile("variable $true is read-only"),
+		That("var r; set true @r = 1").DoesNotCompile("variable $true is read-only"),
+		That("var r; set @r true = 1").DoesNotCompile("variable $true is read-only"),
 
 		// Error conditions already covered by TestVar are not repeated.
 
 		// = is required.
-		That("var x; set x").DoesNotCompile(),
+		That("var x; set x").DoesNotCompile("need = and right-hand-side"),
 
 		// set a non-exist environment
 		That("has-env X; set E:X = x; get-env X; unset-env X").
@@ -153,8 +157,8 @@ func TestTmp(t *testing.T) {
 		That("var x = foo; put $x; { tmp x = bar; put $x }; put $x").
 			Puts("foo", "bar", "foo"),
 
-		That("var x; tmp x = y").DoesNotCompile(),
-		That("{ tmp x = y }").DoesNotCompile(),
+		That("var x; tmp x = y").DoesNotCompile("tmp may only be used inside a function"),
+		That("{ tmp x = y }").DoesNotCompile("cannot find variable $x"),
 
 		That("has-env X; { tmp E:X = y; put $E:X }; has-env X; put $E:X").
 			Puts(false, "y", false, ""),
@@ -202,7 +206,7 @@ func TestDel(t *testing.T) {
 	Test(t,
 		// Deleting variable
 		That("var x = 1; del x").DoesNothing(),
-		That("var x = 1; del x; echo $x").DoesNotCompile(),
+		That("var x = 1; del x; echo $x").DoesNotCompile("variable $x not found"),
 		// Deleting environment variable
 		That("has-env TEST_ENV", "del E:TEST_ENV", "has-env TEST_ENV").Puts(true, false),
 		// Deleting variable whose name contains special characters
@@ -214,21 +218,21 @@ func TestDel(t *testing.T) {
 		// Error cases
 
 		// Deleting nonexistent variable
-		That("del x").DoesNotCompile(),
+		That("del x").DoesNotCompile("no variable $x"),
 		// Deleting element of nonexistent variable
-		That("del x[0]").DoesNotCompile(),
+		That("del x[0]").DoesNotCompile("no variable $x"),
 		// Deleting variable in non-local namespace
-		That("var a: = (ns [&b=$nil])", "del a:b").DoesNotCompile(),
+		That("var a: = (ns [&b=$nil])", "del a:b").DoesNotCompile("only variables in the local scope or E: can be deleted"),
 		// Variable name given with $
-		That("var x = 1; del $x").DoesNotCompile(),
+		That("var x = 1; del $x").DoesNotCompile("arguments to del must omit the dollar sign"),
 		// Variable name not given as a single primary expression
-		That("var ab = 1; del a'b'").DoesNotCompile(),
+		That("var ab = 1; del a'b'").DoesNotCompile("arguments to del must be variable or variable elements"),
 		// Variable name not a string
-		That("del [a]").DoesNotCompile(),
+		That("del [a]").DoesNotCompile("arguments to del must be variable or variable elements"),
 		// Variable name has sigil
-		That("var x = []; del @x").DoesNotCompile(),
+		That("var x = []; del @x").DoesNotCompile("arguments to del must be variable or variable elements"),
 		// Variable name not quoted when it should be
-		That("var 'a/b' = foo; del a/b").DoesNotCompile(),
+		That("var 'a/b' = foo; del a/b").DoesNotCompile("arguments to del must be variable or variable elements"),
 
 		// Index is multiple values
 		That("var x = [&k1=v1 &k2=v2]", "del x[k1 k2]").Throws(
@@ -297,8 +301,8 @@ func TestCoalesce(t *testing.T) {
 func TestSpecialFormThunks(t *testing.T) {
 	// Regression test for b.elv.sh/1456
 	Test(t,
-		That("for x [] {|arg| }").DoesNotCompile(),
-		That("for x [] {|&opt=val| }").DoesNotCompile(),
+		That("for x [] {|arg| }").DoesNotCompile("for body must not have arguments"),
+		That("for x [] {|&opt=val| }").DoesNotCompile("for body must not have options"),
 		// The other special forms use the same utility under the hood and are
 		// not repeated
 	)
@@ -341,13 +345,13 @@ func TestTry(t *testing.T) {
 		That("try { fail tr } except { put bad }").
 			Puts("bad").PrintsStderrWith("deprecated"),
 		// Must have catch or finally
-		That("try { fail tr }").DoesNotCompile(),
+		That("try { fail tr }").DoesNotCompile("try must be followed by a catch block or a finally block"),
 		// Rest variable not allowed
-		That("try { nop } catch @a { }").DoesNotCompile(),
+		That("try { nop } catch @a { }").DoesNotCompile("rest variable not allowed"),
 
 		// A readonly var as a target for the "catch" clause is a compile-time
 		// error.
-		That("try { fail reason } catch nil { }").DoesNotCompile(),
+		That("try { fail reason } catch nil { }").DoesNotCompile("variable $nil is read-only"),
 		That("try { fail reason } catch x { }").DoesNothing(),
 
 		// A quoted var name, that would be invalid as a bareword, should be allowed as the referent
@@ -403,10 +407,10 @@ func TestFor(t *testing.T) {
 		That("for x [a] { fail foo }").Throws(FailError{"foo"}),
 
 		// More than one iterator.
-		That("for {x,y} [] { }").DoesNotCompile(),
+		That("for {x,y} [] { }").DoesNotCompile("must be exactly one lvalue"),
 		// Invalid for loop lvalue. You can't use a var in a namespace other
 		// than the local namespace as the lvalue in a for loop.
-		That("for no-such-namespace:x [a b] { }").DoesNotCompile(),
+		That("for no-such-namespace:x [a b] { }").DoesNotCompile("cannot create variable $no-such-namespace:x; new variables can only be created in the current scope"),
 		// Exception with the variable
 		That("var a: = (ns [&])", "for a:b [] { }").Throws(
 			ErrorWithMessage("no variable $a:b"),
@@ -509,7 +513,7 @@ func TestUse(t *testing.T) {
 		That(`use lorem; put $lorem:name`).Puts("lorem"),
 		// imports are lexically scoped
 		// TODO: Support testing for compilation error
-		That(`{ use lorem }; put $lorem:name`).DoesNotCompile(),
+		That(`{ use lorem }; put $lorem:name`).DoesNotCompile("variable $lorem:name not found"),
 
 		// prefers lib dir that appear earlier
 		That("use shadow").Puts("lib1"),
@@ -556,8 +560,8 @@ func TestUse(t *testing.T) {
 		That("use non-existent").Throws(ErrorWithMessage("no such module: non-existent")),
 
 		// Wrong uses of "use".
-		That("use").DoesNotCompile(),
-		That("use a b c").DoesNotCompile(),
+		That("use").DoesNotCompile("use requires a module name"),
+		That("use a b c").DoesNotCompile("use has superfluous argument(s)"),
 	)
 }
 

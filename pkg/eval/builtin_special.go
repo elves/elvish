@@ -133,7 +133,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 		}
 		head, indices := cn.Indexings[0].Head, cn.Indexings[0].Indices
 		if head.Type == parse.Variable {
-			cp.errorpf(cn, "arguments to del must drop $")
+			cp.errorpf(cn, "arguments to del must omit the dollar sign")
 		} else if !parse.ValidLHSVariable(head, false) {
 			cp.errorpf(cn, delArgMsg)
 		}
@@ -279,7 +279,7 @@ func compileUse(cp *compiler, fn *parse.Form) effectOp {
 	switch len(fn.Args) {
 	case 0:
 		end := fn.Head.Range().To
-		cp.errorpf(diag.PointRanging(end), "lack module name")
+		cp.errorpf(diag.PointRanging(end), "use requires a module name")
 	case 1:
 		spec = stringLiteralOrError(cp, fn.Args[0], "module spec")
 		// Use the last path component as the name; for instance, if path =
@@ -291,7 +291,7 @@ func compileUse(cp *compiler, fn *parse.Form) effectOp {
 		name = stringLiteralOrError(cp, fn.Args[1], "module name")
 	default: // > 2
 		cp.errorpf(diag.MixedRanging(fn.Args[2], fn.Args[len(fn.Args)-1]),
-			"superfluous argument(s)")
+			"use has superfluous argument(s)")
 	}
 
 	return useOp{fn.Range(), cp.thisScope().add(name + NsSuffix), spec}

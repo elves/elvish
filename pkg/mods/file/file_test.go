@@ -68,6 +68,21 @@ func TestFile(t *testing.T) {
 			What:  "size argument to file:truncate",
 			Valid: "integer", Actual: "non-integer",
 		}),
+
+		// TODO: Test with PTY when https://b.elv.sh/1595 is resolved.
+		That("file:is-tty 0").Puts(false),
+		That("file:is-tty (num 0)").Puts(false),
+		That(
+			"var p = (file:pipe)",
+			"file:is-tty $p[r]; file:is-tty $p[w]",
+			"file:close $p[r]; file:close $p[w]").
+			Puts(false, false),
+		That("file:is-tty a").
+			Throws(errs.BadValue{What: "argument to file:is-tty",
+				Valid: "file value or numerical FD", Actual: "a"}),
+		That("file:is-tty []").
+			Throws(errs.BadValue{What: "argument to file:is-tty",
+				Valid: "file value or numerical FD", Actual: "[]"}),
 	)
 
 	fi, err := os.Stat("file100")

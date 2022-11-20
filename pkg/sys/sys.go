@@ -21,6 +21,6 @@ const SIGWINCH = sigWINCH
 func WinSize(file *os.File) (row, col int) { return winSize(file) }
 
 // IsATTY determines whether the given file is a terminal.
-func IsATTY(file *os.File) bool {
-	return isatty.IsTerminal(file.Fd()) || isatty.IsCygwinTerminal(file.Fd())
+func IsATTY(fd uintptr) bool {
+	return isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
 }

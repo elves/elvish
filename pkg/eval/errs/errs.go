@@ -18,10 +18,6 @@ type OutOfRange struct {
 
 // Error implements the error interface.
 func (e OutOfRange) Error() string {
-	if e.ValidHigh < e.ValidLow {
-		return fmt.Sprintf(
-			"out of range: %v has no valid value, but is %v", e.What, e.Actual)
-	}
 	return fmt.Sprintf(
 		"out of range: %s must be from %s to %s, but is %s",
 		e.What, e.ValidLow, e.ValidHigh, e.Actual)

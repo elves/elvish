@@ -332,7 +332,7 @@ Linux
 ```
 
 (If you are running macOS, `uname` will print `Darwin`, the
-[open-source core](<https://en.wikipedia.org/wiki/Darwin_(operating_system)>) of
+[open-source core](https://en.wikipedia.org/wiki/Darwin_(operating_system)) of
 macOS.)
 
 Let's try to integrate this information into our "hello" message. The Elvish

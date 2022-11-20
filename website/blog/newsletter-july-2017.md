@@ -100,8 +100,8 @@ For general questions, you are welcome in
 # Conclusion
 
 This concludes this first issue of the newsletter. Hopefully future issues of
-this newsletter will also feature blog posts from Elvish users like _Elvish for
-Python Users_ and popular Elvish modules like _Tetris in Your Shell_ :)
+this newsletter will also feature blog posts from Elvish users like *Elvish for
+Python Users* and popular Elvish modules like *Tetris in Your Shell* :)
 
 Have Fun with Elvish!
 

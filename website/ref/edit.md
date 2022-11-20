@@ -7,7 +7,7 @@ The `edit:` module is the interface to the Elvish editor.
 Function usages are given in the same format as in the
 [reference for the builtin module](builtin.html).
 
-_This document is incomplete._
+*This document is incomplete.*
 
 # Overview
 
@@ -204,8 +204,8 @@ M  Meta
 S  Shift
 ```
 
-Modifiers, if present, end with either a `-` or `+`; e.g., `S-F1`, `Ctrl-X` or
-`Alt+Enter`. You can stack modifiers; e.g., `C+A-X`.
+Modifiers end with either a `-` or `+`, such as in `S-F1`, `Ctrl-X` or
+`Alt+Enter`. You can stack modifiers, such as in `C+A-X`.
 
 The key name may be a simple character such as `x` or a function key from these
 symbols:
@@ -251,7 +251,7 @@ mode, not the target mode. For instance, if you want to be able to use
 set edit:insert:binding[Alt-l] = { edit:location:start }
 ```
 
-One tricky case is the history mode. You can press <kbd>▲&#xfe0e;</kbd> to start
+One tricky case is the history mode. You can press <kbd>▲︎</kbd> to start
 searching for history, and continue pressing it to search further. However, when
 the first press happens, the editor is in insert mode, while with subsequent
 presses, the editor is in history mode. Hence this binding actually relies on
@@ -407,7 +407,7 @@ of `variable`, `index`, `command`, `redir` or `argument`. If the
 `$edit:completion:matcher['']` is used.
 
 Elvish then calls the matcher with one argument -- the seed, and feeds the
-_text_ of all candidates to the input. The mather must output an identical
+*text* of all candidates to the input. The mather must output an identical
 number of booleans, indicating whether the candidate should be kept.
 
 As an example, the following code configures a prefix matcher for all completion
@@ -467,14 +467,14 @@ set edit:after-command = [{|m| echo 'command took '$m[duration]' seconds' }]
 
 Given the above hooks...
 
-1. Every time you accept a chunk of code (normally by pressing Enter)
-   `just read` is printed.
+1.  Every time you accept a chunk of code (normally by pressing Enter)
+    `just read` is printed.
 
-1. At the very beginning of an Elvish session, or after a chunk of code is
-   handled, `going to read` is printed.
+2.  At the very beginning of an Elvish session, or after a chunk of code is
+    handled, `going to read` is printed.
 
-1. After each non empty chunk of code is accepted and executed the string
-   "command took ... seconds` is output.
+3.  After each non empty chunk of code is accepted and executed the string
+    "command took ... seconds\` is output.
 
 ## Word types
 

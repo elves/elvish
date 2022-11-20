@@ -8,15 +8,72 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/sys"
 )
 
 var Ns = eval.BuildNsNamed("file").
 	AddGoFns(map[string]any{
 		"close":    close,
+		"is-tty":   isTTY,
 		"open":     open,
 		"pipe":     pipe,
 		"truncate": truncate,
 	}).Ns()
+
+//elvdoc:fn is-tty
+//
+// ```elvish
+// file:is-tty $file
+// ```
+//
+// Outputs whether `$file` is a terminal device.
+//
+// The `$file` can be a file object or a number. If it's a number, it's
+// interpreted as a numerical file descriptor.
+//
+// ```elvish-transcript
+// ~> var f = (file:open /dev/tty)
+// ~> file:is-tty $f
+// ▶ $true
+// ~> file:close $f
+// ~> var f = (file:open /dev/null)
+// ~> file:is-tty $f
+// ▶ $false
+// ~> file:close $f
+// ~> var p = (file:pipe)
+// ~> file:is-tty $p[r]
+// ▶ $false
+// ~> file:is-tty $p[w]
+// ▶ $false
+// ~> file:close $p[r]
+// ~> file:close $p[w]
+// ~> file:is-tty 0
+// ▶ $true
+// ~> file:is-tty 1
+// ▶ $true
+// ~> file:is-tty 2
+// ▶ $true
+// ```
+
+func isTTY(fm *eval.Frame, file any) (bool, error) {
+	switch file := file.(type) {
+	case *os.File:
+		return sys.IsATTY(file.Fd()), nil
+	case int:
+		return sys.IsATTY(uintptr(file)), nil
+	case string:
+		var fd int
+		if err := vals.ScanToGo(file, &fd); err != nil {
+			return false, errs.BadValue{What: "argument to file:is-tty",
+				Valid: "file value or numerical FD", Actual: parse.Quote(file)}
+		}
+		return sys.IsATTY(uintptr(fd)), nil
+	default:
+		return false, errs.BadValue{What: "argument to file:is-tty",
+			Valid: "file value or numerical FD", Actual: vals.ToString(file)}
+	}
+}
 
 //elvdoc:fn open
 //

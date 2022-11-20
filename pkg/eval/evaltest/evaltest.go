@@ -122,9 +122,9 @@ func (c Case) Throws(reason error, stacks ...string) Case {
 }
 
 // DoesNotCompile returns an altered Case that requires the source code to fail
-// compilation.
-func (c Case) DoesNotCompile() Case {
-	c.want.CompilationError = anyError{}
+// compilation with a specific error message.
+func (c Case) DoesNotCompile(msg string) Case {
+	c.want.CompilationError = compilationError{msg}
 	return c
 }
 

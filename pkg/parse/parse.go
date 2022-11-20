@@ -8,7 +8,7 @@
 // is embodied in the children of each *Node type.
 package parse
 
-//go:generate stringer -type=PrimaryType,RedirMode,ExprCtx -output=string.go
+//go:generate stringer -type=PrimaryType,RedirMode,ExprCtx -output=zstring.go
 
 import (
 	"bytes"

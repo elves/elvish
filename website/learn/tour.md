@@ -17,7 +17,7 @@ If you are mainly interested in using Elvish interactively, jump directly to
 
 Many basic language features of Elvish are very familiar to traditional shells.
 A notable exception is control structures, covered [below](#control-structures)
-in the _advanced language features_ section.
+in the *advanced language features* section.
 
 ## Comparison with bash
 
@@ -423,7 +423,7 @@ the following command shows details of the `elvish` binary:
 -rwxr-xr-x 1 xiaq users 7813495 Mar  2 21:32 /home/xiaq/go/bin/elvish
 ```
 
-**Note**: the same feature is usually known as _command substitution_ in
+**Note**: the same feature is usually known as *command substitution* in
 traditonal shells.
 
 Unlike traditional shells, Elvish only splits the output on newlines, not any
@@ -1017,7 +1017,7 @@ To execute a dynamic piece of code for side effect, use
 Due to Elvish's scoping rules, files executed using either of the mechanism
 above can't create new variables in the current namespace. For example,
 `eval 'var foo = bar'; echo $foo` won't work. However, the REPL's namespace
-_can_ be manipulated with [`edit:add-var`](../ref/edit.html#edit:add-var).
+*can* be manipulated with [`edit:add-var`](../ref/edit.html#edit:add-var).
 
 ## test
 

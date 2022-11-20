@@ -105,8 +105,8 @@ directories:
     [interactively](#using-elvish-interactively) (so can't be used to check the
     [RC file](#rc-file), for example).
 
--   `-deprecation-level n`: Show warnings for features deprecated as of
-    version 0._n_.
+-   `-deprecation-level n`: Show warnings for features deprecated as of version
+    0.*n*.
 
     In release builds, the default value matches the release version, and this
     flag is mainly useful for hiding newly introduced deprecation warnings. For
@@ -114,7 +114,7 @@ directories:
     `-deprecation-level 41` to hide deprecation warnings introduced in 0.42,
     before you have time to fix those warnings.
 
-    In HEAD builds, the default value matches the _previous_ release version,
+    In HEAD builds, the default value matches the *previous* release version,
     and this flag is mainly useful for previewing upcoming deprecations. For
     example, if you are running a HEAD version between the 0.42.0 release and
     0.43.0 release, you can use `-deprecation-level 43` to preview deprecations
