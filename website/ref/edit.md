@@ -204,8 +204,8 @@ M  Meta
 S  Shift
 ```
 
-Modifiers, if present, end with either a `-` or `+`; e.g., `S-F1`, `Ctrl-X` or
-`Alt+Enter`. You can stack modifiers; e.g., `C+A-X`.
+Modifiers end with either a `-` or `+`, such as in `S-F1`, `Ctrl-X` or
+`Alt+Enter`. You can stack modifiers, such as in `C+A-X`.
 
 The key name may be a simple character such as `x` or a function key from these
 symbols:

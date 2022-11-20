@@ -38,7 +38,7 @@ func scanOptions(rawOpts RawOptions, ptr any) error {
 			return UnknownOption{k}
 		}
 
-		// An option with no value (e.g., `&a-opt`) has `$true` as its default value. However, if
+		// An option with no value (e.g. `&a-opt`) has `$true` as its default value. However, if
 		// the option struct member is a string we want an empty string as the default value.
 		switch b := v.(type) {
 		case bool:

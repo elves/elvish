@@ -1324,8 +1324,8 @@ The first expression in an ordinary command is the command **head**. If the head
 is a single string literal, it is subject to **static resolution**:
 
 -   If a variable with name `head~` (where `head` is the value of the head)
-    exists, the head will evaluate as if it is `$head~`; i.e., a function
-    invocation.
+    exists, the head will evaluate as if it is `$head~` (resulting in a function
+    call).
 
 -   If the head contains at least one slash, it is treated as an external
     command with the value as its path relative to the current directory.

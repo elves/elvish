@@ -195,8 +195,8 @@ func ParseKey(s string) (Key, error) {
 				// since the user has to use the capitalized form when creating a key binding.
 				return Key{}, fmt.Errorf("Ctrl modifier with literal control char: %q", k.Rune)
 			}
-			// Convert literal control char to the equivalent canonical form;
-			// e.g., "\e" to Ctrl-'[' and "\t" to Ctrl-I.
+			// Convert literal control char to the equivalent canonical form,
+			// e.g. "\e" to Ctrl-'[' and "\t" to Ctrl-I.
 			k.Mod |= Ctrl
 			k.Rune += 0x40
 		}
