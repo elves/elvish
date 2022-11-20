@@ -101,45 +101,92 @@ func TestTime(t *testing.T) {
 }
 
 func TestBenchmark(t *testing.T) {
-	var currentSeconds int64 = 1
-	var double bool = false
+	var ticks []int64
 	testutil.Set(t, &TimeNow, func() time.Time {
-		if double {
-			double = false
-			currentSeconds *= 2
-		} else {
-			double = true
+		if len(ticks) == 0 {
+			panic("mock TimeNow called more than len(ticks)")
 		}
-		return time.Unix(currentSeconds, 0)
+		v := ticks[0]
+		ticks = ticks[1:]
+		return time.Unix(v, 0)
 	})
+	setupTicks := func(ts ...int64) func(*Evaler) {
+		return func(_ *Evaler) { ticks = ts }
+	}
 
 	Test(t,
-		That("benchmark &min-time=abc { nop }").Throws(ErrInvalidBenchmarkDuration),
-		That("benchmark &min-time=0x  { nop }").Throws(ErrInvalidBenchmarkDuration),
-		That("benchmark &min-time=-1s { nop }").Throws(ErrInvalidBenchmarkDuration),
-		That("benchmark &min-iters=a  { nop }").Throws(ErrInvalidBenchmarkIter),
-		That("benchmark &min-iters=0  { nop }").Throws(ErrInvalidBenchmarkIter),
-		That("benchmark &min-iters=-1  { nop }").Throws(ErrInvalidBenchmarkIter),
-		That("benchmark { fail body }").Throws(FailError{"body"}).Prints("0s\n"),
-		That("benchmark &on-run={|x| fail on-run } { nop }").
-			WithSetup(func(_ *Evaler) { currentSeconds = 1 }).
-			Throws(FailError{"on-run"}).
-			Prints("0s\n"),
-		That("benchmark &min-time=0 { nop }").
-			WithSetup(func(_ *Evaler) { currentSeconds = 1 }).
-			Prints("1s\n"),
-		That("benchmark &min-iters=1 &min-time=10s "+
-			"&on-end={|x| printf '%.0fs\n' $x } "+
-			"&on-run={|x| printf '%.0fs\n' $x } { nop }").
-			WithSetup(func(_ *Evaler) { currentSeconds = 1 }).
-			Prints("1s\n2s\n4s\n8s\n1s\n"),
-		That("benchmark &min-iters=3 &min-time=0 "+
-			"&on-end={|x| printf '%.0fs\n' $x } "+
-			"&on-run={|x| printf '%.0fs\n' $x } { nop }").
-			WithSetup(func(_ *Evaler) { currentSeconds = 1 }).
-			Prints("1s\n2s\n4s\n1s\n"),
+		// Default output
+		That("benchmark &min-runs=2 &min-time=2s { }").
+			WithSetup(setupTicks(0, 1, 1, 3)).
+			Prints("1.5s ± 500ms (min 1s, max 2s, 2 runs)\n"),
+		// &on-end callback
+		That(
+			"var f = {|m| put $m[avg] $m[stddev] $m[min] $m[max] $m[runs]}",
+			"benchmark &min-runs=2 &min-time=2s &on-end=$f { }").
+			WithSetup(setupTicks(0, 1, 1, 3)).
+			Puts(1.5, 0.5, 1.0, 2.0, 2),
 
-		thatOutputErrorIsBubbled("benchmark { }"),
+		// &min-runs determining number of runs
+		That("benchmark &min-runs=4 &min-time=0s &on-end={|m| put $m[runs]} { }").
+			WithSetup(setupTicks(0, 1, 1, 3, 3, 4, 4, 6)).
+			Puts(4),
+		// &min-time determining number of runs
+		That("benchmark &min-runs=0 &min-time=10s &on-end={|m| put $m[runs]} { }").
+			WithSetup(setupTicks(0, 1, 1, 6, 6, 11)).
+			Puts(3),
+
+		// &on-run-end
+		That("benchmark &min-runs=3 &on-run-end=$put~ &on-end={|m| } { }").
+			WithSetup(setupTicks(0, 1, 1, 3, 3, 4)).
+			Puts(1.0, 2.0, 1.0),
+
+		// $callable throws exception
+		That(
+			"var i = 0",
+			"benchmark { set i = (+ $i 1); if (== $i 3) { fail failure } }").
+			WithSetup(setupTicks(0, 1, 1, 3, 3)).
+			Throws(FailError{"failure"}).
+			Prints("1.5s ± 500ms (min 1s, max 2s, 2 runs)\n"),
+		// $callable throws exception on first run
+		That("benchmark { fail failure }").
+			WithSetup(setupTicks(0)).
+			Throws(FailError{"failure"}).
+			Prints( /* nothing */ ""),
+		That("benchmark &on-end=$put~ { fail failure }").
+			WithSetup(setupTicks(0)).
+			Throws(FailError{"failure"}).
+			Puts( /* nothing */ ),
+
+		// &on-run-end throws exception
+		That("benchmark &on-run-end={|_| fail failure } { }").
+			WithSetup(setupTicks(0, 1)).
+			Throws(FailError{"failure"}).
+			Prints("1s ± 0s (min 1s, max 1s, 1 runs)\n"),
+
+		// &on-run throws exception
+		That("benchmark &min-runs=2 &min-time=0s &on-end={|_| fail failure } { }").
+			WithSetup(setupTicks(0, 1, 1, 3)).
+			Throws(FailError{"failure"}),
+
+		// Option errors
+		That("benchmark &min-runs=-1 { }").
+			Throws(errs.BadValue{What: "min-runs option",
+				Valid: "non-negative integer", Actual: "-1"}),
+		That("benchmark &min-time=abc { }").
+			Throws(errs.BadValue{What: "min-time option",
+				Valid: "duration string", Actual: "abc"}),
+		That("benchmark &min-time=-1s { }").
+			Throws(errs.BadValue{What: "min-time option",
+				Valid: "non-negative duration", Actual: "-1s"}),
+
+		// Test that output error is bubbled. We can't use
+		// testOutputErrorIsBubbled here, since the mock TimeNow requires setup.
+		That("benchmark &min-runs=0 &min-time=0s { } >&-").
+			WithSetup(setupTicks(0, 1)).
+			Throws(os.ErrInvalid),
+		That("benchmark &min-runs=0 &min-time=0s &on-end=$put~ { } >&-").
+			WithSetup(setupTicks(0, 1)).
+			Throws(ErrPortDoesNotSupportValueOutput),
 	)
 }
 
