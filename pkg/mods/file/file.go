@@ -8,13 +8,14 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/sys"
 )
 
 var Ns = eval.BuildNsNamed("file").
 	AddGoFns(map[string]any{
 		"close":    close,
-		"is-tty":   isTty,
+		"is-tty":   isTTY,
 		"open":     open,
 		"pipe":     pipe,
 		"truncate": truncate,
@@ -23,46 +24,54 @@ var Ns = eval.BuildNsNamed("file").
 //elvdoc:fn is-tty
 //
 // ```elvish
-// file:is-tty $file-obj?
+// file:is-tty $file
 // ```
 //
-// Outputs `$true` if `$file-obj` is open on a tty (i.e., a terminal device);
-// otherwise, outputs `$false`. If the `$file-obj` argument is omitted the
-// default output byte stream is tested.
+// Outputs whether `$file` is a terminal device.
+//
+// The `$file` can be a file object or a number. If it's a number, it's
+// interpreted as a numerical file descriptor.
 //
 // ```elvish-transcript
-// ~> file:is-tty
+// ~> var f = (file:open /dev/tty)
+// ~> file:is-tty $f
 // ▶ $true
-// ~> var fh = (file:open /dev/tty)
-// ~> file:is-tty $fh
+// ~> file:close $f
+// ~> var f = (file:open /dev/null)
+// ~> file:is-tty $f
+// ▶ $false
+// ~> file:close $f
+// ~> var p = (file:pipe)
+// ~> file:is-tty $p[r]
+// ▶ $false
+// ~> file:is-tty $p[w]
+// ▶ $false
+// ~> file:close $p[r]
+// ~> file:close $p[w]
+// ~> file:is-tty 0
 // ▶ $true
-// ~> if (file:is-tty) { echo no } else { echo yes }
-// yes
-// ~> var fh = (file:pipe)
-// ~> file:is-tty $fh
-// ▶ $false
-// ~> var fh = (file:open /dev/null)
-// ~> file:is-tty $fh
-// ▶ $false
+// ~> file:is-tty 1
+// ▶ $true
+// ~> file:is-tty 2
+// ▶ $true
 // ```
 
-func isTty(fm *eval.Frame, fileObj ...any) (bool, error) {
-	switch len(fileObj) {
-	case 0:
-		if sys.IsATTY(fm.ByteOutput().File()) {
-			return true, nil
+func isTTY(fm *eval.Frame, file any) (bool, error) {
+	switch file := file.(type) {
+	case *os.File:
+		return sys.IsATTY(file.Fd()), nil
+	case int:
+		return sys.IsATTY(uintptr(file)), nil
+	case string:
+		var fd int
+		if err := vals.ScanToGo(file, &fd); err != nil {
+			return false, errs.BadValue{What: "argument to file:is-tty",
+				Valid: "file value or numerical FD", Actual: parse.Quote(file)}
 		}
-		return false, nil
-	case 1:
-		if f, ok := fileObj[0].(*os.File); ok {
-			if sys.IsATTY(f) {
-				return true, nil
-			}
-		}
-		return false, nil
+		return sys.IsATTY(uintptr(fd)), nil
 	default:
-		return false, errs.ArityMismatch{
-			What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: len(fileObj)}
+		return false, errs.BadValue{What: "argument to file:is-tty",
+			Valid: "file value or numerical FD", Actual: vals.ToString(file)}
 	}
 }
 
