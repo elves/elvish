@@ -102,6 +102,11 @@ func ScanToGo(src any, ptr any) error {
 			return fmt.Errorf("internal bug: need pointer to scan to, got %T", ptr)
 		}
 		dstType := ptrType.Elem()
+		if dstType.String() == "eval.Callable" && ValueOf(src) == ValueOf(nil) {
+			// A Callable option is a special-case that allows assignment from $nil.
+			ptr = nil
+			return nil
+		}
 		if !TypeOf(src).AssignableTo(dstType) {
 			var dstKind string
 			if dstType.Kind() == reflect.Interface {

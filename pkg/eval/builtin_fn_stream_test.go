@@ -68,6 +68,10 @@ func TestCount(t *testing.T) {
 
 func TestOrder(t *testing.T) {
 	Test(t,
+		// Incompatible order options throws an exception.
+		That("order &key={|v| } &less-than={|a b| }").
+			Throws(ErrKeyAndLessThanOpts),
+
 		// Ordering strings
 		That("put foo bar ipsum | order").Puts("bar", "foo", "ipsum"),
 		That("put foo bar bar | order").Puts("bar", "bar", "foo"),
@@ -124,9 +128,21 @@ func TestOrder(t *testing.T) {
 		// &reverse
 		That("put foo bar ipsum | order &reverse").Puts("ipsum", "foo", "bar"),
 
+		// &key
+		That("put 10 1 5 2 | order &key={|v| num $v }").
+			Puts("1", "2", "5", "10"),
+		That("put 10 1 5 2 | order &reverse &key={|v| num $v }").
+			Puts("10", "5", "2", "1"),
+		That("put 10 1 5 2 | order &key={|v| put 1 }").
+			Puts("10", "1", "5", "2"),
+
 		// &less-than
 		That("put 1 10 2 5 | order &less-than={|a b| < $a $b }").
 			Puts("1", "2", "5", "10"),
+		That("put 10 1 5 2 | order &less-than=$nil").
+			Puts("1", "10", "2", "5"),
+		That("put 10 1 5 2 | order").
+			Puts("1", "10", "2", "5"),
 
 		// &less-than writing more than one value
 		That("put 1 10 2 5 | order &less-than={|a b| put $true $false }").
@@ -155,7 +171,7 @@ func TestOrder(t *testing.T) {
 			Puts("10", "5", "2", "1"),
 
 		// Sort should be stable - test by pretending that all values but one
-		// are equal, an check that the order among them has not changed.
+		// are equal, and check that the order among them has not changed.
 		That("put l x o x r x e x m | order &less-than={|a b| eq $a x }").
 			Puts("x", "x", "x", "x", "l", "o", "r", "e", "m"),
 
