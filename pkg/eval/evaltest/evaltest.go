@@ -17,7 +17,6 @@ package evaltest
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -123,16 +122,9 @@ func (c Case) Throws(reason error, stacks ...string) Case {
 }
 
 // DoesNotCompile returns an altered Case that requires the source code to fail
-// compilation with a specific error. It accepts a string or a MatchingRegexp{}.
-func (c Case) DoesNotCompile(ce any) Case {
-	switch v := ce.(type) {
-	case string:
-		c.want.CompilationError = stringError{isRegexp: false, str: v}
-	case MatchingRegexp:
-		c.want.CompilationError = stringError{isRegexp: true, str: v.Pattern}
-	default:
-		panic(fmt.Sprintf("unrecognized DoesNotCompile() arg type: %T", ce))
-	}
+// compilation with a specific error message.
+func (c Case) DoesNotCompile(msg string) Case {
+	c.want.CompilationError = compilationError{msg}
 	return c
 }
 

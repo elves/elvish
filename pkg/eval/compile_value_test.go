@@ -129,7 +129,7 @@ func TestTilde_ErrorForCurrentUser(t *testing.T) {
 
 func TestWildcard(t *testing.T) {
 	Test(t,
-		That("put ***").DoesNotCompile("bad wildcard: \"***\""),
+		That("put ***").DoesNotCompile(`bad wildcard: "***"`),
 	)
 	// More tests in glob_test.go
 }

@@ -42,32 +42,18 @@ func matchRegexp(p, s string) bool {
 
 type errorMatcher interface{ matchError(error) bool }
 
-// An errorMatcher for a string literal or regexp.
-type stringError struct {
-	isRegexp bool
-	str      string
+// An errorMatcher for compilation errors.
+type compilationError struct {
+	msg string
 }
 
-func (se stringError) Error() string {
-	if !se.isRegexp {
-		return "literal: " + se.str
-	}
-	return "regexp: " + se.str
+func (e compilationError) Error() string {
+	return "compilation error with message: " + e.msg
 }
 
-func (se stringError) matchError(e error) bool {
-	ce := eval.GetCompilationError(e)
-	if ce == nil {
-		return false
-	}
-	if !se.isRegexp {
-		return ce.Message == se.str
-	}
-	matched, err := regexp.MatchString(se.str, ce.Message)
-	if err != nil {
-		panic(err)
-	}
-	return matched
+func (e compilationError) matchError(e2 error) bool {
+	ce := eval.GetCompilationError(e2)
+	return ce != nil && ce.Message == e.msg
 }
 
 // An errorMatcher for exceptions.

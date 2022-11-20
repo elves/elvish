@@ -172,7 +172,7 @@ func TestCommand_LegacyTemporaryAssignment(t *testing.T) {
 		// Using syntax of temporary assignment for non-temporary assignment no
 		// longer compiles
 		That("x=y").DoesNotCompile(
-			MatchingRegexp{Pattern: "^using the syntax of temporary assignment"}),
+			`using the syntax of temporary assignment for non-temporary assignment is no longer supported; use "var" or "set" instead`),
 	)
 }
 

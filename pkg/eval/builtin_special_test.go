@@ -224,7 +224,7 @@ func TestDel(t *testing.T) {
 		// Deleting variable in non-local namespace
 		That("var a: = (ns [&b=$nil])", "del a:b").DoesNotCompile("only variables in the local scope or E: can be deleted"),
 		// Variable name given with $
-		That("var x = 1; del $x").DoesNotCompile("arguments to del must omit the dollar-sign"),
+		That("var x = 1; del $x").DoesNotCompile("arguments to del must omit the dollar sign"),
 		// Variable name not given as a single primary expression
 		That("var ab = 1; del a'b'").DoesNotCompile("arguments to del must be variable or variable elements"),
 		// Variable name not a string
