@@ -5,7 +5,10 @@ package eval
 import (
 	"errors"
 	"fmt"
+	"math"
+	"math/big"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 
@@ -36,8 +39,9 @@ func init() {
 		"deprecate": deprecate,
 
 		// Time
-		"sleep": sleep,
-		"time":  timeCmd,
+		"sleep":     sleep,
+		"time":      timeCmd,
+		"benchmark": benchmark,
 
 		"-ifaddrs": _ifaddrs,
 	})
@@ -500,6 +504,8 @@ func sleep(fm *Frame, duration any) error {
 // ~> put $t
 // ▶ (num 0.011030208)
 // ```
+//
+// @cf benchmark
 
 type timeOpt struct{ OnEnd Callable }
 
@@ -525,6 +531,193 @@ func timeCmd(fm *Frame, opts timeOpt, f Callable) error {
 	}
 
 	return err
+}
+
+//elvdoc:fn benchmark
+//
+// ```elvish
+// benchmark &min-runs=5 &min-time=1s &on-end=$nil &on-run-end=$nil $callable
+// ```
+//
+// Runs `$callable` repeatedly, and reports statistics about how long each run
+// takes.
+//
+// If the `&on-end` callback is not given, `benchmark` prints the average,
+// standard deviation, minimum and maximum of the time it took to run
+// `$callback`, and the number of runs. If the `&on-end` callback is given,
+// `benchmark` instead calls it with a map containing these metrics, keyed by
+// `avg`, `stddev`, `min`, `max` and `runs`. Each duration value (i.e. all
+// except `runs`) is given as the number of seconds.
+//
+// The number of runs is controlled by `&min-runs` and `&min-time`. The
+// `$callable` is run at least `&min-runs` times, **and** when the total
+// duration is at least `&min-time`.
+//
+// The `&min-runs` option must be a non-negative integer within the range of the
+// machine word.
+//
+// The `&min-time` option must be a string representing a non-negative duration,
+// specified as a sequence of decimal numbers with a unit suffix (the numbers
+// may have fractional parts), such as "300ms", "1.5h" and "1h45m7s". Valid time
+// units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+//
+// If `&on-run-end` is given, it is called after each call to `$callable`, with
+// the time that call took, given as the number of seconds.
+//
+// If `$callable` throws an exception, `benchmark` terminates and propagates the
+// exception after the `&on-end` callback (or the default printing behavior)
+// finishes. The duration of the call that throws an exception is not passed to
+// `&on-run-end`, nor is it included when calculating the statistics for
+// `&on-end`. If the first call to `$callable` throws an exception and `&on-end`
+// is `$nil`, nothing is printed and any `&on-end` callback is not called.
+//
+// If `&on-run-end` is given and throws an exception, `benchmark` terminates and
+// propagates the exception after the `&on-end` callback (or the default
+// printing behavior) finishes, unless `$callable` has already thrown an
+// exception
+//
+// If `&on-end` throws an exception, the exception is propagated, unless
+// `$callable` or `&on-run-end` has already thrown an exception.
+//
+// Example:
+//
+// ```elvish-transcript
+// ~> benchmark { }
+// 98ns ± 382ns (min 0s, max 210.417µs, 10119226 runs)
+// ~> benchmark &on-end={|m| put $m[avg]} { }
+// ▶ (num 9.8e-08)
+// ~> benchmark &on-run-end={|d| echo $d} { sleep 0.3 }
+// 0.301123625
+// 0.30123775
+// 0.30119075
+// 0.300629166
+// 0.301260333
+// 301.088324ms ± 234.298µs (min 300.629166ms, max 301.260333ms, 5 runs)
+// ```
+//
+// @cf time
+
+type benchmarkOpts struct {
+	OnEnd    Callable
+	OnRunEnd Callable
+	MinRuns  int
+	MinTime  string
+	minTime  time.Duration
+}
+
+func (o *benchmarkOpts) SetDefaultOptions() {
+	o.MinRuns = 5
+	o.minTime = time.Second
+}
+
+func (opts *benchmarkOpts) parse() error {
+	if opts.MinRuns < 0 {
+		return errs.BadValue{What: "min-runs option",
+			Valid: "non-negative integer", Actual: strconv.Itoa(opts.MinRuns)}
+	}
+
+	if opts.MinTime != "" {
+		d, err := time.ParseDuration(opts.MinTime)
+		if err != nil {
+			return errs.BadValue{What: "min-time option",
+				Valid: "duration string", Actual: parse.Quote(opts.MinTime)}
+		}
+		if d < 0 {
+			return errs.BadValue{What: "min-time option",
+				Valid: "non-negative duration", Actual: parse.Quote(opts.MinTime)}
+		}
+		opts.minTime = d
+	}
+
+	return nil
+}
+
+// TimeNow is a reference to [time.Now] that can be overridden in tests.
+var TimeNow = time.Now
+
+func benchmark(fm *Frame, opts benchmarkOpts, f Callable) error {
+	if err := opts.parse(); err != nil {
+		return err
+	}
+
+	// Standard deviation is calculated using https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
+	var (
+		min   = time.Duration(math.MaxInt64)
+		max   = time.Duration(math.MinInt64)
+		runs  int64
+		total time.Duration
+		m2    float64
+		err   error
+	)
+	for {
+		t0 := TimeNow()
+		err = f.Call(fm, NoArgs, NoOpts)
+		if err != nil {
+			break
+		}
+		dt := TimeNow().Sub(t0)
+
+		if min > dt {
+			min = dt
+		}
+		if max < dt {
+			max = dt
+		}
+		var oldDelta float64
+		if runs > 0 {
+			oldDelta = float64(dt) - float64(total)/float64(runs)
+		}
+		runs++
+		total += dt
+		if runs > 0 {
+			newDelta := float64(dt) - float64(total)/float64(runs)
+			m2 += oldDelta * newDelta
+		}
+
+		if opts.OnRunEnd != nil {
+			newFm := fm.Fork("on-run-end callback of benchmark")
+			err = opts.OnRunEnd.Call(newFm, []any{dt.Seconds()}, NoOpts)
+			if err != nil {
+				break
+			}
+		}
+
+		if runs >= int64(opts.MinRuns) && total >= opts.minTime {
+			break
+		}
+	}
+
+	if runs == 0 {
+		return err
+	}
+
+	avg := total / time.Duration(runs)
+	stddev := time.Duration(math.Sqrt(m2 / float64(runs)))
+	if opts.OnEnd == nil {
+		_, errOut := fmt.Fprintf(fm.ByteOutput(),
+			"%v ± %v (min %v, max %v, %d runs)\n", avg, stddev, min, max, runs)
+		if err == nil {
+			err = errOut
+		}
+	} else {
+		stats := vals.MakeMap(
+			"avg", avg.Seconds(), "stddev", stddev.Seconds(),
+			"min", min.Seconds(), "max", max.Seconds(), "runs", int64ToElv(runs))
+		newFm := fm.Fork("on-end callback of benchmark")
+		errOnEnd := opts.OnEnd.Call(newFm, []any{stats}, NoOpts)
+		if err == nil {
+			err = errOnEnd
+		}
+	}
+	return err
+}
+
+func int64ToElv(i int64) any {
+	if i <= int64(math.MaxInt) {
+		return int(i)
+	} else {
+		return big.NewInt(i)
+	}
 }
 
 //elvdoc:fn -ifaddrs
