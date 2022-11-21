@@ -13,20 +13,20 @@ import (
 // A number that exceeds the range of int64
 const z = "100000000000000000000"
 
-func TestFile(t *testing.T) {
-	setup := func(ev *eval.Evaler) {
-		ev.ExtendGlobal(eval.BuildNs().AddNs("file", Ns))
-	}
+func TestOpen(t *testing.T) {
 	testutil.InTempDir(t)
-
-	evaltest.TestWithSetup(t, setup,
+	evaltest.TestWithSetup(t, setupFileModule,
 		That(`
 			echo haha > out3
 			var f = (file:open out3)
 			slurp < $f
 			file:close $f
 		`).Puts("haha\n"),
+	)
+}
 
+func TestPipe(t *testing.T) {
+	evaltest.TestWithSetup(t, setupFileModule,
 		That(`
 			var p = (file:pipe)
 			echo haha > $p
@@ -47,7 +47,12 @@ func TestFile(t *testing.T) {
 		// closed".
 		That(`var p = (file:pipe)`, `echo Legolas > $p`, `file:close $p[r]`,
 			`slurp < $p`).Throws(evaltest.ErrorWithType(&os.PathError{})),
+	)
+}
 
+func TestTruncate(t *testing.T) {
+	testutil.InTempDir(t)
+	evaltest.TestWithSetup(t, setupFileModule,
 		// Side effect checked below
 		That("echo > file100", "file:truncate file100 100").DoesNothing(),
 
@@ -68,8 +73,19 @@ func TestFile(t *testing.T) {
 			What:  "size argument to file:truncate",
 			Valid: "integer", Actual: "non-integer",
 		}),
+	)
 
-		// TODO: Test with PTY when https://b.elv.sh/1595 is resolved.
+	fi, err := os.Stat("file100")
+	if err != nil {
+		t.Errorf("stat file100: %v", err)
+	}
+	if size := fi.Size(); size != 100 {
+		t.Errorf("got file100 size %v, want 100", size)
+	}
+}
+
+func TestIsTTY(t *testing.T) {
+	evaltest.TestWithSetup(t, setupFileModule,
 		That("file:is-tty 0").Puts(false),
 		That("file:is-tty (num 0)").Puts(false),
 		That(
@@ -84,12 +100,27 @@ func TestFile(t *testing.T) {
 			Throws(errs.BadValue{What: "argument to file:is-tty",
 				Valid: "file value or numerical FD", Actual: "[]"}),
 	)
+	if canOpen("/dev/null") {
+		evaltest.TestWithSetup(t, setupFileModule,
+			That("file:is-tty 0 < /dev/null").Puts(false),
+			That("file:is-tty (num 0) < /dev/null").Puts(false),
+		)
+	}
+	if canOpen("/dev/tty") {
+		evaltest.TestWithSetup(t, setupFileModule,
+			That("file:is-tty 0 < /dev/tty").Puts(true),
+			That("file:is-tty (num 0) < /dev/tty").Puts(true),
+		)
+	}
+	// TODO: Test with PTY when https://b.elv.sh/1595 is resolved.
+}
 
-	fi, err := os.Stat("file100")
-	if err != nil {
-		t.Errorf("stat file100: %v", err)
-	}
-	if size := fi.Size(); size != 100 {
-		t.Errorf("got file100 size %v, want 100", size)
-	}
+func canOpen(name string) bool {
+	f, err := os.Open(name)
+	f.Close()
+	return err == nil
+}
+
+func setupFileModule(ev *eval.Evaler) {
+	ev.ExtendGlobal(eval.BuildNs().AddNs("file", Ns))
 }
