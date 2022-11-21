@@ -26,18 +26,23 @@ func isTTY(fm *eval.Frame, file any) (bool, error) {
 	case *os.File:
 		return sys.IsATTY(file.Fd()), nil
 	case int:
-		return sys.IsATTY(uintptr(file)), nil
+		return isTTYPort(fm, file), nil
 	case string:
 		var fd int
 		if err := vals.ScanToGo(file, &fd); err != nil {
 			return false, errs.BadValue{What: "argument to file:is-tty",
 				Valid: "file value or numerical FD", Actual: parse.Quote(file)}
 		}
-		return sys.IsATTY(uintptr(fd)), nil
+		return isTTYPort(fm, fd), nil
 	default:
 		return false, errs.BadValue{What: "argument to file:is-tty",
 			Valid: "file value or numerical FD", Actual: vals.ToString(file)}
 	}
+}
+
+func isTTYPort(fm *eval.Frame, portNum int) bool {
+	p := fm.Port(portNum)
+	return p != nil && sys.IsATTY(p.File.Fd())
 }
 
 func open(name string) (vals.File, error) {

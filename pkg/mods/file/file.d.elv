@@ -7,7 +7,7 @@
 # Outputs whether `$file` is a terminal device.
 #
 # The `$file` can be a file object or a number. If it's a number, it's
-# interpreted as a numerical file descriptor.
+# interpreted as the number of an [IO port](language.html#io-ports).
 #
 # ```elvish-transcript
 # ~> var f = (file:open /dev/tty)
@@ -30,6 +30,10 @@
 # ~> file:is-tty 1
 # ▶ $true
 # ~> file:is-tty 2
+# ▶ $true
+# ~> file:is-tty 0 < /dev/null
+# ▶ $false
+# ~> file:is-tty 0 < /dev/tty
 # ▶ $true
 # ```
 

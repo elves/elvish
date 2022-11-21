@@ -112,6 +112,17 @@ func (fm *Frame) ErrorFile() *os.File {
 	return fm.ports[2].File
 }
 
+// Port returns port i. If the port doesn't exist, it returns nil
+//
+// This is a low-level construct that shouldn't be used for writing output; for
+// that purpose, use [(*Frame).ValueOutput] and [(*Frame).ByteOutput] instead.
+func (fm *Frame) Port(i int) *Port {
+	if i >= len(fm.ports) {
+		return nil
+	}
+	return fm.ports[i]
+}
+
 // IterateInputs calls the passed function for each input element.
 func (fm *Frame) IterateInputs(f func(any)) {
 	var wg sync.WaitGroup

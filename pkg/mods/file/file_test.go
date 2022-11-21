@@ -6,7 +6,7 @@ import (
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
-	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -19,7 +19,7 @@ func TestFile(t *testing.T) {
 	}
 	testutil.InTempDir(t)
 
-	TestWithSetup(t, setup,
+	evaltest.TestWithSetup(t, setup,
 		That(`
 			echo haha > out3
 			var f = (file:open out3)
@@ -40,13 +40,13 @@ func TestFile(t *testing.T) {
 			echo Legolas > $p
 			file:close $p[r]
 			slurp < $p
-		`).Throws(ErrorWithType(&os.PathError{})),
+		`).Throws(evaltest.ErrorWithType(&os.PathError{})),
 
 		// Verify that input redirection from a closed pipe throws an exception. That exception is a
 		// Go stdlib error whose stringified form looks something like "read |0: file already
 		// closed".
 		That(`var p = (file:pipe)`, `echo Legolas > $p`, `file:close $p[r]`,
-			`slurp < $p`).Throws(ErrorWithType(&os.PathError{})),
+			`slurp < $p`).Throws(evaltest.ErrorWithType(&os.PathError{})),
 
 		// Side effect checked below
 		That("echo > file100", "file:truncate file100 100").DoesNothing(),
