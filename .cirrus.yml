@@ -40,7 +40,7 @@ test_task:
     - name: Test on NetBSD
       compute_engine_instance:
         image_project: pg-ci-images
-        image: family/pg-ci-netbsd-vanilla
+        image: family/pg-ci-netbsd-vanilla-9-2
         platform: netbsd
       env:
         GO_PKG: go118
@@ -52,7 +52,7 @@ test_task:
     - name: Test on OpenBSD
       compute_engine_instance:
         image_project: pg-ci-images
-        image: pg-ci-openbsd-vanilla-2022-11-20t21-32-02
+        image: family/pg-ci-openbsd-vanilla-7-2
         platform: openbsd
       env:
         PATH: /usr/local/go/bin:$PATH
