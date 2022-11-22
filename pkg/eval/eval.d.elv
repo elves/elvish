@@ -1,5 +1,3 @@
-#elvdoc:var after-chdir
-#
 # A list of functions to run after changing directory. These functions are always
 # called with directory to change it, which might be a relative path. The
 # following example also shows `$before-chdir`:
@@ -23,26 +21,22 @@
 # [`edit:notify`](edit.html#edit:notify).
 #
 # @cf $before-chdir
+var after-chdir
 
-#elvdoc:var before-chdir
-#
 # A list of functions to run before changing directory. These functions are always
 # called with the new working directory.
 #
 # @cf $after-chdir
+var before-chdir
 
-#elvdoc:var num-bg-jobs
-#
 # Number of background jobs.
+var num-bg-jobs
 
-#elvdoc:var notify-bg-job-success
-#
 # Whether to notify success of background jobs, defaulting to `$true`.
 #
 # Failures of background jobs are always notified.
+var notify-bg-job-success
 
-#elvdoc:var value-out-indicator
-#
 # A string put before value outputs (such as those of `put`). Defaults to
 # `'▶ '`. Example:
 #
@@ -57,3 +51,4 @@
 # ```
 #
 # Note that you almost always want some trailing whitespace for readability.
+var value-out-indicator

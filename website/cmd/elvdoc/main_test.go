@@ -2,11 +2,10 @@ package main
 
 import (
 	"io"
-	"os"
-	"path"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -16,205 +15,97 @@ var extractTests = []struct {
 	ns      string
 	wantDoc string
 }{
-	{name: "Empty source", src: "", wantDoc: ""},
-	{name: "Source without elvdoc", src: "package x\n// not elvdoc", wantDoc: ""},
+	{name: "no doc comment", src: "# not doc comment", wantDoc: ""},
 
 	{
-		name: "Source with elvdoc:fn",
-		src: `package x
+		name: "fn doc comments",
+		src: dedent(`
+			# B.
+			fn b { }
 
-//elvdoc:fn cd
-//
-// Changes directory.
-`,
-		wantDoc: `# Functions
+			# A.
+			fn a { }
+			`),
+		wantDoc: dedent(tildeToBackquote(`
+			# Functions
 
-<a name='//apple_ref/cpp/Function/cd' class='dashAnchor'></a>
+			<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
 
-## cd {#cd}
+			## a {#a}
 
-Changes directory.
-`,
+			~~~elvish
+			a
+			~~~
+
+			A.
+
+			<a name='//apple_ref/cpp/Function/b' class='dashAnchor'></a>
+
+			## b {#b}
+
+			~~~elvish
+			b
+			~~~
+
+			B.
+			`)),
 	},
 
 	{
-		name: "symbol with punctuation and specified ID",
-		src: `package x
+		name: "doc-fn and var-fn",
+		src: dedent(`
+			# A.
+			fn a { }
 
-//elvdoc:fn + {#add}
-//
-// Add.
-`,
-		wantDoc: `# Functions
+			# B.
+			var b
+			`),
+		wantDoc: dedent(tildeToBackquote(`
+			# Variables
 
-<a name='//apple_ref/cpp/Function/%2B' class='dashAnchor'></a>
+			<a name='//apple_ref/cpp/Variable/%24b' class='dashAnchor'></a>
 
-## + {#add}
+			## $b {#b}
 
-Add.
-`,
+			B.
+
+
+			# Functions
+
+			<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
+
+			## a {#a}
+
+			~~~elvish
+			a
+			~~~
+
+			A.
+			`)),
 	},
 
 	{
-		name: "Source with unstable symbols",
-		src: `package x
+		name: "doc:id",
+		src: dedent(`
+			# Add.
+			#doc:id add
+			fn + { }
+			`),
+		wantDoc: dedent(tildeToBackquote(`
+			# Functions
 
-//elvdoc:fn -b
-// -B.
+			<a name='//apple_ref/cpp/Function/%2B' class='dashAnchor'></a>
 
-//elvdoc:fn a
-// A.
+			## + {#add}
 
-//elvdoc:fn b
-// B.
-`,
-		ns: "ns:",
-		wantDoc: `# Functions
+			~~~elvish
+			+
+			~~~
 
-<a name='//apple_ref/cpp/Function/ns%3Aa' class='dashAnchor'></a>
-
-## ns:a {#ns:a}
-A.
-
-<a name='//apple_ref/cpp/Function/ns%3Ab' class='dashAnchor'></a>
-
-## ns:b {#ns:b}
-B.
-
-<a name='//apple_ref/cpp/Function/ns%3A-b' class='dashAnchor'></a>
-
-## ns:-b {#ns:-b}
--B.
-`,
+			Add.
+			`)),
 	},
-	{
-		name: "Source with multiple doc-fn",
-		src: `package x
-
-//elvdoc:fn b
-// B.
-
-//elvdoc:fn a
-// A.
-
-//elvdoc:fn c
-// C.
-`,
-		wantDoc: `# Functions
-
-<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
-
-## a {#a}
-A.
-
-<a name='//apple_ref/cpp/Function/b' class='dashAnchor'></a>
-
-## b {#b}
-B.
-
-<a name='//apple_ref/cpp/Function/c' class='dashAnchor'></a>
-
-## c {#c}
-C.
-`,
-	},
-
-	{
-		name: "Source with both doc-fn and var-fn",
-		src: `package x
-
-//elvdoc:fn a
-// A.
-
-//elvdoc:var b
-// B.
-`,
-		wantDoc: `# Variables
-
-<a name='//apple_ref/cpp/Variable/%24b' class='dashAnchor'></a>
-
-## $b {#b}
-B.
-
-
-# Functions
-
-<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
-
-## a {#a}
-A.
-`,
-	},
-
-	{
-		name: "Elvish source",
-		src: `
-#elvdoc:fn a
-# A.
-
-#elvdoc:var b
-# B.
-`,
-		wantDoc: `# Variables
-
-<a name='//apple_ref/cpp/Variable/%24b' class='dashAnchor'></a>
-
-## $b {#b}
-B.
-
-
-# Functions
-
-<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
-
-## a {#a}
-A.
-`,
-	},
-
-	{
-		name: "Source without trailing newline",
-		src: `package x
-
-//elvdoc:fn a
-// A.`,
-		wantDoc: `# Functions
-
-<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
-
-## a {#a}
-A.
-`,
-	},
-	{
-		name: "Source with both doc-fn and var-fn",
-		src: `package x
-
-//elvdoc:fn a
-// A.
-
-//elvdoc:var b
-// B.
-`,
-		ns: "ns:",
-		wantDoc: `# Variables
-
-<a name='//apple_ref/cpp/Variable/%24ns%3Ab' class='dashAnchor'></a>
-
-## $ns:b {#ns:b}
-B.
-
-
-# Functions
-
-<a name='//apple_ref/cpp/Function/ns%3Aa' class='dashAnchor'></a>
-
-## ns:a {#ns:a}
-A.
-`,
-	}}
-
-var emptyReader = io.MultiReader()
+}
 
 func TestExtract(t *testing.T) {
 	for _, test := range extractTests {
@@ -227,92 +118,90 @@ func TestExtract(t *testing.T) {
 	}
 }
 
+var emptyReader = io.MultiReader()
+
 func TestRun_MultipleFiles(t *testing.T) {
-	setupDir(t)
+	testutil.InTempDir(t)
+	testutil.ApplyDir(testutil.Dir{
+		"a.elv": dedent(`
+			# Function 2 from a.
+			#
+			#     Some indented code.
+			fn f2 { }
+			`),
+		"b.elv": dedent(`
+			# Function 1 from b.
+			fn f1 { }
 
-	w := new(strings.Builder)
-	run([]string{"a.go", "b.go"}, emptyReader, w)
-	compare(t, w.String(), `# Variables
+			# Variable 2 from b.
+			var v2
+			`),
+		"c.elv": dedent(`
+			# Variable 1 from c.
+			var v1
+			`),
+		"not-elv.sh": dedent(`
+			# This won't appear because it is not in a .go file.
+			var wontappear
+			`),
+		// Subdirectories are ignored with -dir.
+		"subpkg": testutil.Dir{
+			"a.elv": dedent(`
+				# Function f from subpkg/a.
+				fn subpkg:f
 
-<a name='//apple_ref/cpp/Variable/%24v2' class='dashAnchor'></a>
+				# Variable v from subpkg/a.
+				var subpkg:v
+				`),
+		},
+	})
 
-## $v2 {#v2}
+	var sb strings.Builder
+	run([]string{"a.elv", "b.elv"}, emptyReader, &sb)
+	compare(t, sb.String(), dedent(tildeToBackquote(`
+		# Variables
 
-Variable 2 from b.
+		<a name='//apple_ref/cpp/Variable/%24v2' class='dashAnchor'></a>
+
+		## $v2 {#v2}
+
+		Variable 2 from b.
 
 
-# Functions
+		# Functions
 
-<a name='//apple_ref/cpp/Function/f1' class='dashAnchor'></a>
+		<a name='//apple_ref/cpp/Function/f1' class='dashAnchor'></a>
 
-## f1 {#f1}
+		## f1 {#f1}
 
-Function 1 from b.
+		~~~elvish
+		f1
+		~~~
 
-<a name='//apple_ref/cpp/Function/f2' class='dashAnchor'></a>
+		Function 1 from b.
 
-## f2 {#f2}
+		<a name='//apple_ref/cpp/Function/f2' class='dashAnchor'></a>
 
-Function 2 from a.
+		## f2 {#f2}
 
-    Some indented code.
-`)
+		~~~elvish
+		f2
+		~~~
+
+		Function 2 from a.
+
+		    Some indented code.
+		`)))
 }
 
 func compare(t *testing.T, got, want string) {
 	t.Helper()
 	if got != want {
-		t.Errorf("\n<<<<< Got\n%s\n=====\n%s\n>>>>> Want", got, want)
+		t.Errorf("diff (-want+got):\n%s", cmp.Diff(want, got))
 	}
 }
 
-// Set up a temporary directory with several .go files and directories
-// containing .go files.
-func setupDir(c testutil.Cleanuper) {
-	testutil.InTempDir(c)
-	writeFile("a.go", `package x
-//elvdoc:fn f2
-//
-// Function 2 from a.
-//
-//     Some indented code.
-`)
-	writeFile("b.go", `package x
-//elvdoc:fn f1
-//
-// Function 1 from b.
-
-//elvdoc:var v2
-//
-// Variable 2 from b.
-`)
-	writeFile("c.go", `package x
-//elvdoc:var v1
-//
-// Variable 1 from c.
-`)
-	writeFile("notgo.gox", `package x
-//elvdoc:var wontappear
-//
-// This won't appear because it is not in a .go file.
-`)
-	// Subdirectories are ignored with -dir.
-	writeFile("subpkg/a.go", `package subpkg
-//elvdoc:fn subpkg:f
-//
-// Function f from subpkg/a.
-
-//elvdoc:var subpkg:v
-//
-// Variable v from subpkg/a.
-`)
-}
-
-func writeFile(name, data string) {
-	dir := path.Dir(name)
-	err := os.MkdirAll(dir, 0700)
-	if err != nil {
-		panic(err)
-	}
-	os.WriteFile(name, []byte(data), 0600)
-}
+var (
+	dedent           = testutil.Dedent
+	tildeToBackquote = strings.NewReplacer("~", "`").Replace
+)

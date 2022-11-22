@@ -1,35 +1,28 @@
-#elvdoc:var prompt
-#
 # See [Prompts](#prompts).
+var prompt
 
-#elvdoc:var -prompt-eagerness
-#
 # See [Prompt Eagerness](#prompt-eagerness).
+#doc:show-unstable
+var -prompt-eagerness
 
-#elvdoc:var prompt-stale-threshold
-#
 # See [Stale Prompt](#stale-prompt).
+var prompt-stale-threshold
 
-#elvdoc:var prompt-stale-transformer.
-#
 # See [Stale Prompt](#stale-prompt).
+var prompt-stale-transformer.
 
-#elvdoc:var rprompt
-#
 # See [Prompts](#prompts).
+var rprompt
 
-#elvdoc:var -rprompt-eagerness
-#
 # See [Prompt Eagerness](#prompt-eagerness).
+#doc:show-unstable
+var -rprompt-eagerness
 
-#elvdoc:var rprompt-stale-threshold
-#
 # See [Stale Prompt](#stale-prompt).
+var rprompt-stale-threshold
 
-#elvdoc:var rprompt-stale-transformer.
-#
 # See [Stale Prompt](#stale-prompt).
+var rprompt-stale-transformer.
 
-#elvdoc:var rprompt-persistent
-#
 # See [RPrompt Persistency](#rprompt-persistency).
+var rprompt-persistent

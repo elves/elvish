@@ -56,67 +56,44 @@ appropriate section. You can find the document at the root of the repo (called
 
 ### Reference docs
 
-Reference docs are interspersed in Go sources as comments blocks whose first
-line starts with `//elvdoc` (and are hence called *elvdocs*). A
+Reference docs are written as "elvdocs", comment blocks before unindented `fn`
+or `var` declarations in Elvish files. A
 [large subset](https://pkg.go.dev/src.elv.sh/pkg/md@master) of
-[CommonMark](https://commonmark.org) is supported.
+[CommonMark](https://commonmark.org) is supported. Examples:
 
-Elvdocs for functions look like the following:
+````elvish
+# Does something.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> foo
+# some output
+# ```
+fn foo {|a b c| }
 
-````go
-//elvdoc:fn name-of-fn
-//
-// ```elvish
-// name-of-fn $arg &opt=default
-// ```
-//
-// Does something.
-//
-// Example:
-//
-// ```elvish-transcript
-// ~> name-of-fn something
-// ▶ some-value-output
-// ```
-
-func nameOfFn() { ... }
+# Some variable.
+var bar
 ````
 
-Generally, elvdocs for functions have the following structure:
+Most of Elvish's builtin modules are implemented in Go, not Elvish. For those
+modules, put dummy declarations in `.d.elv` files (`d` for "declaration"). For
+example, elvdocs for functions implemented in `builtin_fn_num.go` go in
+`builtin_fn_num.d.elv`.
 
--   A line starting with `//elvdoc:fn`, followed by the name of the function.
-    Note that there should be no space after `//`, unlike all the other lines.
+For a comment block to be considered an elvdoc, it has to be continuous, and
+each line should either be just `#` or start with `#` and a space.
 
--   An `elvish` code block describing the signature of the function, following
-    the convention [here](website/ref/builtin.md#usage-notation).
+Style guides for elvdocs for functions:
 
--   Description of the function, which can be one or more paragraphs. The first
-    sentence of the description should start with a verb in 3rd person singular
-    (i.e. ending with a "s"), as if there is an implicit subject "this
-    function".
+-   The first sentence should start with a verb in 3rd person singular (i.e.
+    ending with a "s"), as if there is an implicit subject "this function".
 
--   One or more `elvish-transcript` code blocks showing example usages, which
-    are transcripts of actual REPL input and output. Transcripts must use the
-    default prompt `~>` and default value output indicator `▶`. You can use
-    `elvish -norc` if you have customized either in your
-    [`rc.elv`](https://elv.sh/ref/command.html#rc-file).
-
-Place the comment block before the implementation of the function. If the
-function has no implementation (e.g. it is a simple wrapper of a function from
-the Go standard library), place it before the top-level declaration of the
-namespace.
-
-Similarly, reference docs for variables start with `//elvdoc:var`:
-
-```go
-//elvdoc:var name-of-var
-//
-// Something.
-```
-
-Variables do not have signatures, and are described using a noun phrase.
-Examples are not always needed; if they are, they can be given in the same
-format as examples for functions.
+-   The end of the elvdoc should show or more `elvish-transcript` code blocks
+    showing example usages, which are transcripts of actual REPL input and
+    output. Transcripts must use the default prompt `~>` and default value
+    output indicator `▶`. You can use `elvish -norc` if you have customized
+    either in your [`rc.elv`](https://elv.sh/ref/command.html#rc-file).
 
 ### Comment for unexported Go types and functions
 

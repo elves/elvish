@@ -1,9 +1,3 @@
-#elvdoc:fn quote
-#
-# ```elvish
-# re:quote $string
-# ```
-#
 # Quote `$string` for use in a pattern. Examples:
 #
 # ```elvish-transcript
@@ -12,13 +6,8 @@
 # ~> re:quote '(*)'
 # ▶ '\(\*\)'
 # ```
+fn quote {|string| }
 
-#elvdoc:fn match
-#
-# ```elvish
-# re:match &posix=$false $pattern $source
-# ```
-#
 # Determine whether `$pattern` matches `$source`. The pattern is not anchored.
 # Examples:
 #
@@ -30,13 +19,8 @@
 # ~> re:match '[a-z]' A
 # ▶ $false
 # ```
+fn match {|&posix=$false pattern source| }
 
-#elvdoc:fn find
-#
-# ```elvish
-# re:find &posix=$false &longest=$false &max=-1 $pattern $source
-# ```
-#
 # Find all matches of `$pattern` in `$source`.
 #
 # Each match is represented by a map-like value `$m`; `$m[text]`, `$m[start]` and
@@ -56,13 +40,8 @@
 # ▶ [&text=A1 &start=0 &end=2 &groups=[[&text=A1 &start=0 &end=2] [&text=1 &start=1 &end=2]]]
 # ▶ [&text=B2 &start=3 &end=5 &groups=[[&text=B2 &start=3 &end=5] [&text=2 &start=4 &end=5]]]
 # ```
+fn find {|&posix=$false &longest=$false &max=-1 pattern source| }
 
-#elvdoc:fn replace
-#
-# ```elvish
-# re:replace &posix=$false &longest=$false &literal=$false $pattern $repl $source
-# ```
-#
 # Replace all occurrences of `$pattern` in `$source` with `$repl`.
 #
 # The replacement `$repl` can be any of the following:
@@ -95,13 +74,8 @@
 # ~> re:replace '(ba|z)sh' {|x| put [&bash=BaSh &zsh=ZsH][$x] } 'bash and zsh'
 # ▶ 'BaSh and ZsH'
 # ```
+fn replace {|&posix=$false &longest=$false &literal=$false pattern repl source| }
 
-#elvdoc:fn split
-#
-# ```elvish
-# re:split &posix=$false &longest=$false &max=-1 $pattern $source
-# ```
-#
 # Split `$source`, using `$pattern` as separators. Examples:
 #
 # ```elvish-transcript
@@ -113,3 +87,4 @@
 # ▶ /usr/sbin
 # ▶ /usr/bin:/bin
 # ```
+fn split {|&posix=$false &longest=$false &max=-1 pattern source| }

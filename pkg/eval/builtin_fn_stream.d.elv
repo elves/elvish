@@ -1,9 +1,3 @@
-#elvdoc:fn all
-#
-# ```elvish
-# all $inputs?
-# ```
-#
 # Takes [value inputs](#value-inputs), and outputs those values unchanged.
 #
 # This is an [identity
@@ -82,13 +76,8 @@
 # ```
 #
 # @cf one
+fn all {|inputs?| }
 
-#elvdoc:fn one
-#
-# ```elvish
-# one $inputs?
-# ```
-#
 # Takes exactly one [value input](#value-inputs) and outputs it. If there are
 # more than one value inputs, raises an exception.
 #
@@ -96,13 +85,8 @@
 # choice when you expect that there is exactly one output.
 #
 # @cf all
+fn one {|inputs?| }
 
-#elvdoc:fn take
-#
-# ```elvish
-# take $n $inputs?
-# ```
-#
 # Outputs the first `$n` [value inputs](#value-inputs). If `$n` is larger than
 # the number of value inputs, outputs everything.
 #
@@ -124,13 +108,8 @@
 # Etymology: Haskell.
 #
 # @cf drop
+fn take {|n inputs?| }
 
-#elvdoc:fn drop
-#
-# ```elvish
-# drop $n $inputs?
-# ```
-#
 # Ignores the first `$n` [value inputs](#value-inputs) and outputs the rest.
 # If `$n` is larger than the number of value inputs, outputs nothing.
 #
@@ -154,13 +133,8 @@
 # Etymology: Haskell.
 #
 # @cf take
+fn drop {|n inputs?| }
 
-#elvdoc:fn compact
-#
-# ```elvish
-# compact $inputs?
-# ```
-#
 # Replaces consecutive runs of equal values with a single copy. Similar to the
 # `uniq` command on Unix.
 #
@@ -180,13 +154,8 @@
 # ▶ b
 # ▶ a
 # ```
+fn compact {|inputs?| }
 
-#elvdoc:fn count
-#
-# ```elvish
-# count $input-list?
-# ```
-#
 # Count the number of inputs.
 #
 # Examples:
@@ -201,13 +170,8 @@
 # ~> seq 100 | count
 # ▶ 100
 # ```
+fn count {|input-list?| }
 
-#elvdoc:fn order
-#
-# ```elvish
-# order &less-than=$nil &key=$nil &reverse=$false $inputs?
-# ```
-#
 # Outputs the [value inputs](#value-inputs) sorted in ascending order. The
 # sorting process is guaranteed to be
 # [stable](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability).
@@ -292,3 +256,4 @@
 # (The `$"<~"` syntax is a reference to [the `<` function](#num-cmp).)
 #
 # @cf compare
+fn order {|&less-than=$nil &key=$nil &reverse=$false inputs?| }

@@ -1,11 +1,8 @@
-#elvdoc:var _
-#
 # A blackhole variable.
 #
 # Values assigned to it will be discarded. Referencing it always results in $nil.
+var _
 
-#elvdoc:var args
-#
 # A list containing command-line arguments. Analogous to `argv` in some other
 # languages. Examples:
 #
@@ -21,30 +18,24 @@
 # used to invoke it. For that information, use the `src` command.
 #
 # @cf src
+var args
 
-#elvdoc:var false
-#
 # The boolean false value.
+var false
 
-#elvdoc:var ok
-#
 # The special value used by `?()` to signal absence of exceptions.
+var ok
 
-#elvdoc:var nil
-#
 # A special value useful for representing the lack of values.
+var nil
 
-#elvdoc:var paths
-#
 # A list of search paths, kept in sync with `$E:PATH`. It is easier to use than
 # `$E:PATH`.
+var paths
 
-#elvdoc:var pid
-#
 # The process ID of the current Elvish process.
+var pid
 
-#elvdoc:var pwd
-#
 # The present working directory. Setting this variable has the same effect as
 # `cd`. This variable is most useful in a temporary assignment.
 #
@@ -64,20 +55,17 @@
 # Etymology: the `pwd` command.
 #
 # @cf cd
+var pwd
 
-#elvdoc:var true
-#
 # The boolean true value.
+var true
 
-#elvdoc:var buildinfo
-#
 # A [psuedo-map](./language.html#pseudo-map) that exposes information about the Elvish binary.
 # Running `put $buildinfo | to-json` will produce the same output as `elvish -buildinfo -json`.
 #
 # @cf $version
+var buildinfo
 
-#elvdoc:var version
-#
 # The full version of the Elvish binary as a string. This is the same information reported by
 # `elvish -version` and the value of `$buildinfo[version]`.
 #
@@ -92,3 +80,4 @@
 # elvish version is equal to or newer than the version that introduced `new-var`.
 #
 # @cf $buildinfo
+var version

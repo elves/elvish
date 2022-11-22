@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"html"
@@ -12,6 +11,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"src.elv.sh/pkg/elvdoc"
 )
 
 func main() {
@@ -43,8 +44,6 @@ func extractPaths(paths []string, ns string, out io.Writer) {
 			log.Fatal(err)
 		}
 		if stat.IsDir() {
-			goFiles := mustGlob(filepath.Join(path, "*.go"))
-			files = append(files, goFiles...)
 			elvFiles := mustGlob(filepath.Join(path, "*.elv"))
 			files = append(files, elvFiles...)
 		} else {
@@ -95,82 +94,19 @@ func multiFile(names []string) (io.Reader, func(), error) {
 }
 
 func extract(r io.Reader, ns string, w io.Writer) {
-	bufr := bufio.NewReader(r)
-
-	fnDocs := make(map[string]string)
-	varDocs := make(map[string]string)
-
-	// Reads a block of line comments, i.e. a continuous range of lines that
-	// start with a comment leader (// or #). Returns the content, with the
-	// comment leader and any spaces after it removed. The content always ends
-	// with a newline, even if the last line of the comment is the last line of
-	// the file without a trailing newline.
-	//
-	// Discards the first line after the comment block.
-	readCommentBlock := func() (string, error) {
-		builder := &strings.Builder{}
-		for {
-			line, err := bufr.ReadString('\n')
-			if err == io.EOF && len(line) > 0 {
-				// We pretend that the file always have a trailing newline even
-				// if it does not. The next ReadString will return io.EOF again
-				// with an empty line.
-				line += "\n"
-				err = nil
-			}
-			line, isComment := stripCommentLeader(line)
-			if isComment && err == nil {
-				// Trim any spaces after the comment leader. The line already
-				// has a trailing newline, so no need to write \n.
-				builder.WriteString(strings.TrimPrefix(line, " "))
-			} else {
-				// Discard this line, finalize the builder, and return.
-				return builder.String(), err
-			}
-		}
+	docs, err := elvdoc.Extract(r, ns)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	for {
-		line, err := bufr.ReadString('\n')
-		line, isComment := stripCommentLeader(line)
-
-		const (
-			varDocPrefix = "elvdoc:var "
-			fnDocPrefix  = "elvdoc:fn "
-		)
-
-		if isComment && err == nil {
-			switch {
-			case strings.HasPrefix(line, varDocPrefix):
-				varName := line[len(varDocPrefix) : len(line)-1]
-				varDocs[varName], err = readCommentBlock()
-			case strings.HasPrefix(line, fnDocPrefix):
-				fnName := line[len(fnDocPrefix) : len(line)-1]
-				fnDocs[fnName], err = readCommentBlock()
-			}
-		}
-
-		if err != nil {
-			if err != io.EOF {
-				log.Fatalf("read: %v", err)
-			}
-			break
-		}
-	}
-
-	write := func(heading, entryType, prefix string, m map[string]string) {
+	write := func(heading, entryType, prefix string, entries []elvdoc.Entry) {
 		fmt.Fprintf(w, "# %s\n", heading)
-		names := make([]string, 0, len(m))
-		for k := range m {
-			names = append(names, k)
-		}
-		sort.Slice(names,
-			func(i, j int) bool {
-				return symbolForSort(names[i]) < symbolForSort(names[j])
-			})
-		for _, name := range names {
+		sort.Slice(entries, func(i, j int) bool {
+			return symbolForSort(entries[i].Name) < symbolForSort(entries[j].Name)
+		})
+		for _, entry := range entries {
 			fmt.Fprintln(w)
-			fullName := prefix + name
+			fullName := prefix + entry.Name
 			// Create anchors for Docset. These anchors are used to show a ToC;
 			// the mkdsidx.py script also looks for those anchors to generate
 			// the SQLite index.
@@ -178,49 +114,36 @@ func extract(r io.Reader, ns string, w io.Writer) {
 			// Some builtin commands are documented together. Create an anchor
 			// for each of them.
 			for _, s := range strings.Fields(fullName) {
-				if strings.HasPrefix(s, "{#") {
-					continue
-				}
 				fmt.Fprintf(w,
 					"<a name='//apple_ref/cpp/%s/%s' class='dashAnchor'></a>\n\n",
 					entryType, url.QueryEscape(html.UnescapeString(s)))
 			}
-			if strings.Contains(fullName, "{#") {
-				fmt.Fprintf(w, "## %s\n", fullName)
-			} else {
+			id := entry.ID
+			if id == "" {
 				// pandoc strips punctuations from the ID, turning "mod:name"
 				// into "modname". Explicitly preserve the original full name
 				// by specifying an attribute. We still strip the leading $ for
 				// variables since pandoc will treat "{#$foo}" as part of the
 				// title.
-				id := strings.TrimPrefix(fullName, "$")
-				fmt.Fprintf(w, "## %s {#%s}\n", fullName, id)
+				id = strings.TrimPrefix(fullName, "$")
 			}
+			fmt.Fprintf(w, "## %s {#%s}\n\n", fullName, id)
 			// The body is guaranteed to have a trailing newline, hence Fprint
 			// instead of Fprintln.
-			fmt.Fprint(w, m[name])
+			fmt.Fprint(w, entry.Content)
 		}
 	}
 
-	if len(varDocs) > 0 {
-		write("Variables", "Variable", "$"+ns, varDocs)
+	if len(docs.Vars) > 0 {
+		write("Variables", "Variable", "$"+ns, docs.Vars)
 	}
-	if len(fnDocs) > 0 {
-		if len(varDocs) > 0 {
+	if len(docs.Fns) > 0 {
+		if len(docs.Vars) > 0 {
 			fmt.Fprintln(w)
 			fmt.Fprintln(w)
 		}
-		write("Functions", "Function", ns, fnDocs)
+		write("Functions", "Function", ns, docs.Fns)
 	}
-}
-
-func stripCommentLeader(s string) (string, bool) {
-	if strings.HasPrefix(s, "#") {
-		return s[1:], true
-	} else if strings.HasPrefix(s, "//") {
-		return s[2:], true
-	}
-	return s, false
 }
 
 var sortSymbol = map[string]string{

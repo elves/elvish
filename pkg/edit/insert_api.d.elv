@@ -1,5 +1,3 @@
-#elvdoc:var abbr
-#
 # A map from simple abbreviations to their expansions.
 #
 # An abbreviation is replaced by its expansion when it is typed in full
@@ -21,9 +19,8 @@
 # since the abbreviation `||` was not typed consecutively.
 #
 # @cf $edit:command-abbr $edit:small-word-abbr
+var abbr
 
-#elvdoc:var command-abbr
-#
 # A map from command abbreviations to their expansions.
 #
 # A command abbreviation is replaced by its expansion when seen in the command
@@ -41,9 +38,8 @@
 # ```
 #
 # @cf $edit:abbr $edit:small-word-abbr
+var command-abbr
 
-#elvdoc:var small-word-abbr
-#
 # A map from small-word abbreviations to their expansions.
 #
 # A small-word abbreviation is replaced by its expansion after it is typed in
@@ -112,3 +108,4 @@
 # be expanded, the simple abbreviation has priority.
 #
 # @cf $edit:abbr $edit:command-abbr
+var small-word-abbr

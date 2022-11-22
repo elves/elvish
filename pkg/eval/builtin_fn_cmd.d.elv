@@ -1,9 +1,3 @@
-#elvdoc:fn external
-#
-# ```elvish
-# external $program
-# ```
-#
 # Construct a callable value for the external program `$program`. Example:
 #
 # ```elvish-transcript
@@ -12,13 +6,8 @@
 # ```
 #
 # @cf has-external search-external
+fn external {|program| }
 
-#elvdoc:fn has-external
-#
-# ```elvish
-# has-external $command
-# ```
-#
 # Test whether `$command` names a valid external command. Examples (your output
 # might differ):
 #
@@ -30,13 +19,8 @@
 # ```
 #
 # @cf external search-external
+fn has-external {|command| }
 
-#elvdoc:fn search-external
-#
-# ```elvish
-# search-external $command
-# ```
-#
 # Output the full path of the external `$command`. Throws an exception when not
 # found. Example (your output might vary):
 #
@@ -46,11 +30,7 @@
 # ```
 #
 # @cf external has-external
+fn search-external {|command| }
 
-#elvdoc:fn exit
-#
-# ```elvish
-# exit $status?
-# ```
-#
 # Exit the Elvish process with `$status` (defaulting to 0).
+fn exit {|status?| }

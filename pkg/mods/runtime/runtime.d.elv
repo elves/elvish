@@ -1,12 +1,9 @@
-#elvdoc:var lib-dirs
-#
 # A list containing
 # [module search directories](command.html#module-search-directories).
 #
 # This variable is read-only.
+var lib-dirs
 
-#elvdoc:var rc-path
-#
 # Path to the [RC file](command.html#rc-file), ignoring any possible overrides
 # by command-line flags and available in non-interactive mode.
 #
@@ -16,9 +13,8 @@
 # This variable is read-only.
 #
 # @cf $runtime:effective-rc-path
+var rc-path
 
-#elvdoc:var effective-rc-path
-#
 # Path to the [RC path](command.html#rc-file) that is actually used for this
 # Elvish session:
 #
@@ -34,11 +30,11 @@
 # This variable is read-only.
 #
 # @cf $runtime:rc-path
+var effective-rc-path
 
-#elvdoc:var elvish-path
-#
 # The path to the Elvish binary.
 #
 # If there was an error in determining the path, this variable is `$nil`.
 #
 # This variable is read-only.
+var elvish-path

@@ -1,9 +1,3 @@
-#elvdoc:fn run-parallel
-#
-# ```elvish
-# run-parallel $callable ...
-# ```
-#
 # Run several callables in parallel, and wait for all of them to finish.
 #
 # If one or more callables throw exceptions, the other callables continue running,
@@ -43,13 +37,8 @@
 # use `peach` instead.
 #
 # @cf peach
+fn run-parallel {|@callable| }
 
-#elvdoc:fn each
-#
-# ```elvish
-# each $f $inputs?
-# ```
-#
 # Calls `$f` on each [value input](#value-inputs).
 #
 # An exception raised from [`break`](#break) is caught by `each`, and will
@@ -75,13 +64,8 @@
 # Etymology: Various languages, as `for each`. Happens to have the same name as
 # the iteration construct of
 # [Factor](http://docs.factorcode.org/content/word-each,sequences.html).
+fn each {|f inputs?| }
 
-#elvdoc:fn peach
-#
-# ```elvish
-# peach $f $inputs?
-# ```
-#
 # Calls `$f` for each [value input](#value-inputs), possibly in parallel.
 #
 # Like `each`, an exception raised from [`break`](#break) will cause `peach`
@@ -115,13 +99,8 @@
 # `run-parallel`.
 #
 # @cf each run-parallel
+fn peach {|f inputs?| }
 
-#elvdoc:fn fail
-#
-# ```elvish
-# fail $v
-# ```
-#
 # Throws an exception; `$v` may be any type. If `$v` is already an exception,
 # `fail` rethrows it.
 #
@@ -140,13 +119,8 @@
 #   [tty 8], line 1:
 #     fail ?(f)
 # ```
+fn fail {|v| }
 
-#elvdoc:fn return
-#
-# ```elvish
-# return
-# ```
-#
 # Raises the special "return" exception. When raised inside a named function
 # (defined by the [`fn` keyword](language.html#fn)) it is captured by the
 # function and causes the function to terminate. It is not captured by an
@@ -184,13 +158,8 @@
 # ▶ before
 # ▶ return
 # ```
+fn return { }
 
-#elvdoc:fn break
-#
-# ```elvish
-# break
-# ```
-#
 # Raises the special "break" exception. When raised inside a loop it is
 # captured and causes the loop to terminate.
 #
@@ -210,13 +179,8 @@
 # ▶ a
 # ▶ break
 # ```
+fn break { }
 
-#elvdoc:fn continue
-#
-# ```elvish
-# continue
-# ```
-#
 # Raises the special "continue" exception. When raised inside a loop it is
 # captured and causes the loop to begin its next iteration.
 #
@@ -240,13 +204,8 @@
 # ▶ c
 # ▶ continue
 # ```
+fn continue { }
 
-#elvdoc:fn defer
-#
-# ```elvish
-# defer $fn
-# ```
-#
 # Schedules a function to be called when execution reaches the end of the
 # current closure. The function is called with no arguments or options, and any
 # exception it throws gets propagated.
@@ -261,3 +220,4 @@
 # Exception: defer must be called from within a closure
 # [tty 2], line 1: defer { put foo }
 # ```
+fn defer {|fn| }

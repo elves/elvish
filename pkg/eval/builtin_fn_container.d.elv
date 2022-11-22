@@ -1,9 +1,3 @@
-#elvdoc:fn ns
-#
-# ```elvish
-# ns $map
-# ```
-#
 # Constructs a namespace from `$map`, using the keys as variable names and the
 # values as their values. Examples:
 #
@@ -15,13 +9,8 @@
 # ~> put $n:name
 # ▶ value
 # ```
+fn ns {|map| }
 
-#elvdoc:fn make-map
-#
-# ```elvish
-# make-map $input?
-# ```
-#
 # Outputs a map from the [value inputs](#value-inputs), each of which must be
 # an iterable value with with two elements. The first element of each value
 # is used as the key, and the second element is used as the value.
@@ -40,13 +29,8 @@
 # ~> put aA bB | make-map
 # ▶ [&a=A &b=B]
 # ```
+fn make-map {|input?| }
 
-#elvdoc:fn assoc
-#
-# ```elvish
-# assoc $container $k $v
-# ```
-#
 # Output a slightly modified version of `$container`, such that its value at `$k`
 # is `$v`. Applies to both lists and to maps.
 #
@@ -67,13 +51,8 @@
 # Etymology: [Clojure](https://clojuredocs.org/clojure.core/assoc).
 #
 # @cf dissoc
+fn assoc {|container k v| }
 
-#elvdoc:fn dissoc
-#
-# ```elvish
-# dissoc $map $k
-# ```
-#
 # Output a slightly modified version of `$map`, with the key `$k` removed. If
 # `$map` does not contain `$k` as a key, the same map is returned.
 #
@@ -85,13 +64,8 @@
 # ```
 #
 # @cf assoc
+fn dissoc {|map k| }
 
-#elvdoc:fn has-value
-#
-# ```elvish
-# has-value $container $value
-# ```
-#
 # Determine whether `$value` is a value in `$container`.
 #
 # Examples, maps:
@@ -120,13 +94,8 @@
 # ~> has-value ab c
 # ▶ $false
 # ```
+fn has-value {|container value| }
 
-#elvdoc:fn has-key
-#
-# ```elvish
-# has-key $container $key
-# ```
-#
 # Determine whether `$key` is a key in `$container`. A key could be a map key or
 # an index on a list or string. This includes a range of indexes.
 #
@@ -168,13 +137,8 @@
 # ~> has-key ab 0:3
 # ▶ $false
 # ```
+fn has-key {|container key| }
 
-#elvdoc:fn keys
-#
-# ```elvish
-# keys $map
-# ```
-#
 # Put all keys of `$map` on the structured stdout.
 #
 # Example:
@@ -187,3 +151,4 @@
 # ```
 #
 # Note that there is no guaranteed order for the keys of a map.
+fn keys {|map| }

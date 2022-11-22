@@ -1,9 +1,3 @@
-#elvdoc:fn bool
-#
-# ```elvish
-# bool $value
-# ```
-#
 # Convert a value to boolean. In Elvish, only `$false` and errors are booleanly
 # false. Everything else, including 0, empty strings and empty lists, is booleanly
 # true:
@@ -26,13 +20,8 @@
 # ```
 #
 # @cf not
+fn bool {|value| }
 
-#elvdoc:fn not
-#
-# ```elvish
-# not $value
-# ```
-#
 # Boolean negation. Examples:
 #
 # ```elvish-transcript
@@ -52,13 +41,8 @@
 # only argument, and is thus a normal command.
 #
 # @cf bool
+fn not {|value| }
 
-#elvdoc:fn is
-#
-# ```elvish
-# is $values...
-# ```
-#
 # Determine whether all `$value`s have the same identity. Writes `$true` when
 # given no or one argument.
 #
@@ -78,13 +62,8 @@
 # @cf eq
 #
 # Etymology: [Python](https://docs.python.org/3/reference/expressions.html#is).
+fn is {|@values| }
 
-#elvdoc:fn eq
-#
-# ```elvish
-# eq $values...
-# ```
-#
 # Determines whether all `$value`s are equal. Writes `$true` when
 # given no or one argument.
 #
@@ -108,13 +87,8 @@
 # @cf is not-eq
 #
 # Etymology: [Perl](https://perldoc.perl.org/perlop.html#Equality-Operators).
+fn eq {|@values| }
 
-#elvdoc:fn not-eq
-#
-# ```elvish
-# not-eq $values...
-# ```
-#
 # Determines whether every adjacent pair of `$value`s are not equal. Note that
 # this does not imply that `$value`s are all distinct. Examples:
 #
@@ -128,13 +102,8 @@
 # ```
 #
 # @cf eq
+fn not-eq {|@values| }
 
-#elvdoc:fn compare
-#
-# ```elvish
-# compare $a $b
-# ```
-#
 # Outputs -1 if `$a` < `$b`, 0 if `$a` = `$b`, and 1 if `$a` > `$b`.
 #
 # The following comparison algorithm is used:
@@ -171,3 +140,4 @@
 # numbers.
 #
 # @cf order
+fn compare {|a b| }

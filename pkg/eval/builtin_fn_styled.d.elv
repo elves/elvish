@@ -1,9 +1,3 @@
-#elvdoc:fn styled-segment
-#
-# ```elvish
-# styled-segment $object &fg-color=default &bg-color=default &bold=$false &dim=$false &italic=$false &underlined=$false &blink=$false &inverse=$false
-# ```
-#
 # Constructs a styled segment, a building block for styled texts.
 #
 # - If `$object` is a string, constructs a styled segment with `$object` as the
@@ -37,13 +31,8 @@
 # styled foo(styled bar bold) {|x| styled-segment $x &inverse=$x[bold] }
 # # transforms "foo" + bold "bar" into "foo" + bold and inverse "bar"
 # ```
+fn styled-segment {|object &fg-color=default &bg-color=default &bold=$false &dim=$false &italic=$false &underlined=$false &blink=$false &inverse=$false| }
 
-#elvdoc:fn styled
-#
-# ```elvish
-# styled $object $style-transformer...
-# ```
-#
 # Constructs a **styled text** by applying the supplied transformers to the
 # supplied `$object`, which may be a string, a [styled
 # segment](#styled-segment), or an existing styled text.
@@ -124,3 +113,4 @@
 # # "foo" will be printed as red, but not bold
 # # "bar" will be printed without any style
 # ```
+fn styled {|object @style-transformer| }

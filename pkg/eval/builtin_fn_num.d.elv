@@ -1,22 +1,11 @@
-#elvdoc:fn rand
-#
-# ```elvish
-# rand
-# ```
-#
 # Output a pseudo-random number in the interval [0, 1). Example:
 #
 # ```elvish-transcript
 # ~> rand
 # ▶ 0.17843564133528436
 # ```
+fn rand { }
 
-#elvdoc:fn num
-#
-# ```elvish
-# num $string-or-number
-# ```
-#
 # Constructs a [typed number](./language.html#number).
 #
 # If the argument is a string, this command outputs the typed number the
@@ -43,13 +32,8 @@
 # ```
 #
 # @cf exact-num inexact-num
+fn num {|string-or-number| }
 
-#elvdoc:fn exact-num
-#
-# ```elvish
-# exact-num $string-or-number
-# ```
-#
 # Coerces the argument to an exact number. If the argument is infinity or NaN,
 # an exception is thrown.
 #
@@ -76,13 +60,8 @@
 # ```
 #
 # @cf num inexact-num
+fn exact-num {|string-or-number| }
 
-#elvdoc:fn inexact-num
-#
-# ```elvish
-# inexact-num $string-or-number
-# ```
-#
 # Coerces the argument to an inexact number.
 #
 # If the argument is a string, it is converted to a typed number first. If the
@@ -128,20 +107,14 @@
 # ```
 #
 # @cf num exact-num
+fn inexact-num {|string-or-number| }
 
-#elvdoc:fn float64
-#
-# ```elvish
-# float64 $string-or-number
-# ```
-#
 # Constructs a floating-point number.
 #
 # This command is deprecated; use [`num`](#num) to construct a typed number, or
 # [`inexact-num`](#inexact-num) to construct an inexact number.
+fn float64 {|string-or-number| }
 
-#elvdoc:fn &lt; &lt;= == != &gt; &gt;= {#num-cmp}
-#
 # ```elvish
 # <  $number... # less
 # <= $number... # less or equal
@@ -184,13 +157,9 @@
 # ~> != 5 6 5
 # ▶ $true
 # ```
+#doc:id num-cmp
+#doc:fn < <= == != > >=
 
-#elvdoc:fn + {#add}
-#
-# ```elvish
-# + $num...
-# ```
-#
 # Outputs the sum of all arguments, or 0 when there are no arguments.
 #
 # This command is [exactness-preserving](#exactness-preserving).
@@ -205,13 +174,9 @@
 # ~> + 1/2 0.5
 # ▶ (num 1.0)
 # ```
+#doc:id add
+fn + {|@num| }
 
-#elvdoc:fn - {#sub}
-#
-# ```elvish
-# - $x-num $y-num...
-# ```
-#
 # Outputs the result of subtracting from `$x-num` all the `$y-num`s, working
 # from left to right. When no `$y-num` is given, outputs the negation of
 # `$x-num` instead (in other words, `- $x-num` is equivalent to `- 0 $x-num`).
@@ -234,13 +199,9 @@
 # ~> - 10
 # ▶ (num -10)
 # ```
+#doc:id sub
+fn - {|x-num @y-num| }
 
-#elvdoc:fn * {#mul}
-#
-# ```elvish
-# * $num...
-# ```
-#
 # Outputs the product of all arguments, or 1 when there are no arguments.
 #
 # This command is [exactness-preserving](#exactness-preserving). Additionally,
@@ -257,13 +218,9 @@
 # ~> * 0 0.5
 # ▶ (num 0)
 # ```
+#doc:id mul
+fn * {|@num| }
 
-#elvdoc:fn / {#div}
-#
-# ```elvish
-# / $x-num $y-num...
-# ```
-#
 # Outputs the result of dividing `$x-num` with all the `$y-num`s, working from
 # left to right. When no `$y-num` is given, outputs the reciprocal of `$x-num`
 # instead (in other words, `/ $y-num` is equivalent to `/ 1 $y-num`).
@@ -299,13 +256,9 @@
 # When given no argument, this command is equivalent to `cd /`, due to the
 # implicit cd feature. (The implicit cd feature will probably change to avoid
 # this oddity).
+#doc:id div
+fn / {|x-num @y-num| }
 
-#elvdoc:fn % {#rem}
-#
-# ```elvish
-# % $x $y
-# ```
-#
 # Outputs the remainder after dividing `$x` by `$y`. The result has the same
 # sign as `$x`.
 #
@@ -331,13 +284,9 @@
 # ```
 #
 # This limit may be lifted in the future.
+#doc:id rem
+fn % {|x y| }
 
-#elvdoc:fn randint
-#
-# ```elvish
-# randint $low? $high
-# ```
-#
 # Output a pseudo-random integer N such that `$low <= N < $high`. If not given,
 # `$low` defaults to 0. Examples:
 #
@@ -346,21 +295,12 @@
 # randint 1 7
 # ▶ 6
 # ```
+fn randint {|low? high| }
 
-#elvdoc:fn -randseed
-#
-# ```elvish
-# -randseed $seed
-# ```
-#
 # Sets the seed for the random number generator.
+#doc:show-unstable
+fn -randseed {|seed| }
 
-#elvdoc:fn range
-#
-# ```elvish
-# range &step $start=0 $end
-# ```
-#
 # Outputs numbers, starting from `$start` and ending before `$end`, using
 # `&step` as the increment.
 #
@@ -435,3 +375,4 @@
 #
 # Etymology:
 # [Python](https://docs.python.org/3/library/functions.html#func-range).
+fn range {|&step start=0 end| }

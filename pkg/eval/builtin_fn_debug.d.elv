@@ -1,9 +1,3 @@
-#elvdoc:fn src
-#
-# ```elvish
-# src
-# ```
-#
 # Output a map-like value describing the current source being evaluated. The value
 # contains the following fields:
 #
@@ -37,33 +31,22 @@
 # ~> src-util:show
 # ▶ /home/elf/.elvish/lib/src-fsutil.elv
 # ```
+fn src { }
 
-#elvdoc:fn -gc
-#
-# ```elvish
-# -gc
-# ```
-#
 # Force the Go garbage collector to run.
 #
 # This is only useful for debug purposes.
+#doc:show-unstable
+fn -gc { }
 
-#elvdoc:fn -stack
-#
-# ```elvish
-# -stack
-# ```
-#
 # Print a stack trace.
 #
 # This is only useful for debug purposes.
+#doc:show-unstable
+fn -stack { }
 
-#elvdoc:fn -log
-#
-# ```elvish
-# -log $filename
-# ```
-#
 # Direct internal debug logs to the named file.
 #
 # This is only useful for debug purposes.
+#doc:show-unstable
+fn -log {|filename| }

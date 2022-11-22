@@ -1,5 +1,3 @@
-#elvdoc:fn &lt;s &lt;=s ==s !=s &gt;s &gt;=s {#str-cmp}
-#
 # ```elvish
 # <s  $string... # less
 # <=s $string... # less or equal
@@ -20,13 +18,9 @@
 # ~> >s 8 12
 # ▶ $true
 # ```
+#doc:id str-cmp
+#doc:fn <s <=s ==s !=s >s >=s
 
-#elvdoc:fn wcswidth
-#
-# ```elvish
-# wcswidth $string
-# ```
-#
 # Output the width of `$string` when displayed on the terminal. Examples:
 #
 # ```elvish-transcript
@@ -37,13 +31,8 @@
 # ~> wcswidth 你好，世界
 # ▶ 10
 # ```
+fn wcswidth {|string| }
 
-#elvdoc:fn to-string
-#
-# ```elvish
-# to-string $value...
-# ```
-#
 # Convert arguments to string values.
 #
 # ```elvish-transcript
@@ -52,13 +41,8 @@
 # ▶ '[a]'
 # ▶ '[&k=v]'
 # ```
+fn to-string {|@value| }
 
-#elvdoc:fn base
-#
-# ```elvish
-# base $base $number...
-# ```
-#
 # Outputs a string for each `$number` written in `$base`. The `$base` must be
 # between 2 and 36, inclusive. Examples:
 #
@@ -76,13 +60,8 @@
 # ▶ 10
 # ▶ ff
 # ```
+fn base {|base @number| }
 
-#elvdoc:fn eawk
-#
-# ```elvish
-# eawk $f $inputs?
-# ```
-#
 # For each [value input](#value-inputs), calls `$f` with the input followed by
 # all its fields. A [`break`](./builtin.html#break) command will cause `eawk`
 # to stop processing inputs. A [`continue`](./builtin.html#continue) command
@@ -119,3 +98,4 @@
 # ▶ lorem
 # ▶ 1
 # ```
+fn eawk {|f inputs?| }

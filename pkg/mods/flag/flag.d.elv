@@ -1,9 +1,3 @@
-#elvdoc:fn call
-#
-# ```elvish
-# flag:call $fn $args
-# ```
-#
 # Parses flags from `$args` according to the signature of the
 # `$fn`, using the [Go convention](#go-convention), and calls `$fn`.
 #
@@ -24,13 +18,8 @@
 # ```
 #
 # @cf flag:parse
+fn call {|fn args| }
 
-#elvdoc:fn parse
-#
-# ```elvish
-# flag:parse $args $specs
-# ```
-#
 # Parses flags from `$args` according to the `$specs`, using the [Go
 # convention](#go-convention).
 #
@@ -87,14 +76,8 @@
 # ```
 #
 # @cf flag:call flag:parse-getopt
+fn parse {|args specs| }
 
-#elvdoc:fn parse-getopt
-#
-# ```elvish
-# flag:parse-getopt $args $specs ^
-#   &stop-after-double-dash=$true &stop-before-non-flag=$false &long-only=$false
-# ```
-#
 # Parses flags from `$args` according to the `$specs`, using the [getopt
 # convention](#getopt-convention) (see there for the semantics of the options),
 # and outputs the result.
@@ -156,3 +139,4 @@
 # ```
 #
 # @cf flag:parse edit:complete-getopt
+fn parse-getopt {|args specs &stop-after-double-dash=$true &stop-before-non-flag=$false &long-only=$false| }

@@ -1,9 +1,3 @@
-#elvdoc:fn add-var
-#
-# ```elvish
-# edit:add-var $name $init
-# ```
-#
 # Defines a new variable in the interactive REPL with an initial value. The new variable becomes
 # available during the next REPL cycle.
 #
@@ -87,12 +81,8 @@
 #   edit:add-var unix: $unix:
 # }
 # ```
+fn add-var {|name init| }
 
-#elvdoc:fn add-vars
-#
-# ```elvish
-# edit:add-vars $map
-# ```
-#
 # Takes a map from strings to arbitrary values. Equivalent to calling
 # `edit:add-var` for each key-value pair in the map.
+fn add-vars {|map| }

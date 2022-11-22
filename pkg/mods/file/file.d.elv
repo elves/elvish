@@ -1,9 +1,3 @@
-#elvdoc:fn is-tty
-#
-# ```elvish
-# file:is-tty $file
-# ```
-#
 # Outputs whether `$file` is a terminal device.
 #
 # The `$file` can be a file object or a number. If it's a number, it's
@@ -36,13 +30,8 @@
 # ~> file:is-tty 0 < /dev/tty
 # ▶ $true
 # ```
+fn is-tty {|file| }
 
-#elvdoc:fn open
-#
-# ```elvish
-# file:open $filename
-# ```
-#
 # Opens a file. Currently, `open` only supports opening a file for reading.
 # File must be closed with `close` explicitly. Example:
 #
@@ -59,23 +48,13 @@
 # ```
 #
 # @cf file:close
+fn open {|filename| }
 
-#elvdoc:fn close
-#
-# ```elvish
-# file:close $file
-# ```
-#
 # Closes a file opened with `open`.
 #
 # @cf file:open
+fn close {|file| }
 
-#elvdoc:fn pipe
-#
-# ```elvish
-# file:pipe
-# ```
-#
 # Create a new pipe that can be used in redirections. A pipe contains a read-end and write-end.
 # Each pipe object is a [pseudo-map](language.html#pseudo-map) with fields `r` (the read-end [file
 # object](./language.html#file)) and `w` (the write-end).
@@ -103,13 +82,9 @@
 # ```
 #
 # @cf file:close
+fn pipe { }
 
-#elvdoc:fn truncate
-#
-# ```elvish
-# file:truncate $filename $size
-# ```
-#
 # changes the size of the named file. If the file is a symbolic link, it
 # changes the size of the link's target. The size must be an integer between 0
 # and 2^64-1.
+fn truncate {|filename size| }

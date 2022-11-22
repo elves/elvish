@@ -1,20 +1,12 @@
-#elvdoc:var e
-#
 # Approximate value of
 # [`e`](https://en.wikipedia.org/wiki/E_(mathematical_constant)):
 # 2.718281.... This variable is read-only.
+var e
 
-#elvdoc:var pi
-#
 # Approximate value of [`π`](https://en.wikipedia.org/wiki/Pi): 3.141592.... This
 # variable is read-only.
+var pi
 
-#elvdoc:fn abs
-#
-# ```elvish
-# math:abs $number
-# ```
-#
 # Computes the absolute value `$number`. This function is exactness-preserving.
 # Examples:
 #
@@ -36,13 +28,8 @@
 # ~> math:abs -1.23
 # ▶ (num 1.23)
 # ```
+fn abs {|number| }
 
-#elvdoc:fn acos
-#
-# ```elvish
-# math:acos $number
-# ```
-#
 # Outputs the arccosine of `$number`, in radians (not degrees). Examples:
 #
 # ```elvish-transcript
@@ -51,13 +38,8 @@
 # ~> math:acos 1.00001
 # ▶ (num NaN)
 # ```
+fn acos {|number| }
 
-#elvdoc:fn acosh
-#
-# ```elvish
-# math:acosh $number
-# ```
-#
 # Outputs the inverse hyperbolic cosine of `$number`. Examples:
 #
 # ```elvish-transcript
@@ -66,13 +48,8 @@
 # ~> math:acosh 0
 # ▶ (num NaN)
 # ```
+fn acosh {|number| }
 
-#elvdoc:fn asin
-#
-# ```elvish
-# math:asin $number
-# ```
-#
 # Outputs the arcsine of `$number`, in radians (not degrees). Examples:
 #
 # ```elvish-transcript
@@ -83,13 +60,8 @@
 # ~> math:asin 1.00001
 # ▶ (num NaN)
 # ```
+fn asin {|number| }
 
-#elvdoc:fn asinh
-#
-# ```elvish
-# math:asinh $number
-# ```
-#
 # Outputs the inverse hyperbolic sine of `$number`. Examples:
 #
 # ```elvish-transcript
@@ -98,13 +70,8 @@
 # ~> math:asinh inf
 # ▶ (num +Inf)
 # ```
+fn asinh {|number| }
 
-#elvdoc:fn atan
-#
-# ```elvish
-# math:atan $number
-# ```
-#
 # Outputs the arctangent of `$number`, in radians (not degrees). Examples:
 #
 # ```elvish-transcript
@@ -113,13 +80,8 @@
 # ~> math:atan $math:inf
 # ▶ (num 1.5707963267948966)
 # ```
+fn atan {|number| }
 
-#elvdoc:fn atanh
-#
-# ```elvish
-# math:atanh $number
-# ```
-#
 # Outputs the inverse hyperbolic tangent of `$number`. Examples:
 #
 # ```elvish-transcript
@@ -128,13 +90,8 @@
 # ~> math:atanh 1
 # ▶ (num +Inf)
 # ```
+fn atanh {|number| }
 
-#elvdoc:fn ceil
-#
-# ```elvish
-# math:ceil $number
-# ```
-#
 # Computes the least integer greater than or equal to `$number`. This function
 # is exactness-preserving.
 #
@@ -155,13 +112,8 @@
 # ~> math:floor -1.1
 # ▶ (num -2.0)
 # ```
+fn ceil {|number| }
 
-#elvdoc:fn cos
-#
-# ```elvish
-# math:cos $number
-# ```
-#
 # Computes the cosine of `$number` in units of radians (not degrees).
 # Examples:
 #
@@ -171,26 +123,16 @@
 # ~> math:cos 3.14159265
 # ▶ (num -1)
 # ```
+fn cos {|number| }
 
-#elvdoc:fn cosh
-#
-# ```elvish
-# math:cosh $number
-# ```
-#
 # Computes the hyperbolic cosine of `$number`. Example:
 #
 # ```elvish-transcript
 # ~> math:cosh 0
 # ▶ (num 1)
 # ```
+fn cosh {|number| }
 
-#elvdoc:fn floor
-#
-# ```elvish
-# math:floor $number
-# ```
-#
 # Computes the greatest integer less than or equal to `$number`. This function
 # is exactness-preserving.
 #
@@ -211,13 +153,8 @@
 # ~> math:floor -1.1
 # ▶ (num -2.0)
 # ```
+fn floor {|number| }
 
-#elvdoc:fn is-inf
-#
-# ```elvish
-# math:is-inf &sign=0 $number
-# ```
-#
 # Tests whether the number is infinity. If sign > 0, tests whether `$number`
 # is positive infinity. If sign < 0, tests whether `$number` is negative
 # infinity. If sign == 0, tests whether `$number` is either infinity.
@@ -236,13 +173,8 @@
 # ~> math:is-inf &sign=-1 -inf
 # ▶ $true
 # ```
+fn is-inf {|&sign=0 number| }
 
-#elvdoc:fn is-nan
-#
-# ```elvish
-# math:is-nan $number
-# ```
-#
 # Tests whether the number is a NaN (not-a-number).
 #
 # ```elvish-transcript
@@ -253,13 +185,8 @@
 # ~> math:is-nan (num nan)
 # ▶ $true
 # ```
+fn is-nan {|number| }
 
-#elvdoc:fn log
-#
-# ```elvish
-# math:log $number
-# ```
-#
 # Computes the natural (base *e*) logarithm of `$number`. Examples:
 #
 # ```elvish-transcript
@@ -268,13 +195,8 @@
 # ~> math:log -2.3
 # ▶ (num NaN)
 # ```
+fn log {|number| }
 
-#elvdoc:fn log10
-#
-# ```elvish
-# math:log10 $number
-# ```
-#
 # Computes the base 10 logarithm of `$number`. Examples:
 #
 # ```elvish-transcript
@@ -283,13 +205,8 @@
 # ~> math:log10 -1.7
 # ▶ (num NaN)
 # ```
+fn log10 {|number| }
 
-#elvdoc:fn log2
-#
-# ```elvish
-# math:log2 $number
-# ```
-#
 # Computes the base 2 logarithm of `$number`. Examples:
 #
 # ```elvish-transcript
@@ -298,13 +215,8 @@
 # ~> math:log2 -5.3
 # ▶ (num NaN)
 # ```
+fn log2 {|number| }
 
-#elvdoc:fn max
-#
-# ```elvish
-# math:max $number...
-# ```
-#
 # Outputs the maximum number in the arguments. If there are no arguments,
 # an exception is thrown. If any number is NaN then NaN is output. This
 # function is exactness-preserving.
@@ -319,13 +231,8 @@
 # ~> math:max 1/2 1/3 2/3
 # ▶ (num 2/3)
 # ```
+fn max {|@number| }
 
-#elvdoc:fn min
-#
-# ```elvish
-# math:min $number...
-# ```
-#
 # Outputs the minimum number in the arguments. If there are no arguments
 # an exception is thrown. If any number is NaN then NaN is output. This
 # function is exactness-preserving.
@@ -341,13 +248,8 @@
 # ~> math:min 1/2 1/3 2/3
 # ▶ (num 1/3)
 # ```
+fn min {|@number| }
 
-#elvdoc:fn pow
-#
-# ```elvish
-# math:pow $base $exponent
-# ```
-#
 # Outputs the result of raising `$base` to the power of `$exponent`.
 #
 # This function produces an exact result when `$base` is exact and `$exponent`
@@ -369,13 +271,8 @@
 # ~> math:pow 12 1.1
 # ▶ (num 15.38506624784179)
 # ```
+fn pow {|base exponent| }
 
-#elvdoc:fn round
-#
-# ```elvish
-# math:round $number
-# ```
-#
 # Outputs the nearest integer, rounding half away from zero. This function is
 # exactness-preserving.
 #
@@ -402,13 +299,8 @@
 # ~> math:round 2.5
 # ▶ (num 3.0)
 # ```
+fn round {|number| }
 
-#elvdoc:fn round-to-even
-#
-# ```elvish
-# math:round-to-even $number
-# ```
-#
 # Outputs the nearest integer, rounding ties to even. This function is
 # exactness-preserving.
 #
@@ -433,13 +325,8 @@
 # ~> math:round-to-even 1.5
 # ▶ (num 2.0)
 # ```
+fn round-to-even {|number| }
 
-#elvdoc:fn sin
-#
-# ```elvish
-# math:sin $number
-# ```
-#
 # Computes the sine of `$number` in units of radians (not degrees). Examples:
 #
 # ```elvish-transcript
@@ -448,26 +335,16 @@
 # ~> math:sin 3.14159265
 # ▶ (num 3.5897930298416118e-09)
 # ```
+fn sin {|number| }
 
-#elvdoc:fn sinh
-#
-# ```elvish
-# math:sinh $number
-# ```
-#
 # Computes the hyperbolic sine of `$number`. Example:
 #
 # ```elvish-transcript
 # ~> math:sinh 0
 # ▶ (num 0)
 # ```
+fn sinh {|number| }
 
-#elvdoc:fn sqrt
-#
-# ```elvish
-# math:sqrt $number
-# ```
-#
 # Computes the square-root of `$number`. Examples:
 #
 # ```elvish-transcript
@@ -478,13 +355,8 @@
 # ~> math:sqrt -4
 # ▶ (num NaN)
 # ```
+fn sqrt {|number| }
 
-#elvdoc:fn tan
-#
-# ```elvish
-# math:tan $number
-# ```
-#
 # Computes the tangent of `$number` in units of radians (not degrees). Examples:
 #
 # ```elvish-transcript
@@ -493,26 +365,16 @@
 # ~> math:tan 3.14159265
 # ▶ (num -0.0000000035897930298416118)
 # ```
+fn tan {|number| }
 
-#elvdoc:fn tanh
-#
-# ```elvish
-# math:tanh $number
-# ```
-#
 # Computes the hyperbolic tangent of `$number`. Example:
 #
 # ```elvish-transcript
 # ~> math:tanh 0
 # ▶ (num 0)
 # ```
+fn tanh {|number| }
 
-#elvdoc:fn trunc
-#
-# ```elvish
-# math:trunc $number
-# ```
-#
 # Outputs the integer portion of `$number`. This function is exactness-preserving.
 #
 # The results for the special floating-point values -0.0, +0.0, -Inf, +Inf and
@@ -536,3 +398,4 @@
 # ~> math:trunc -1.7
 # ▶ (num -1.0)
 # ```
+fn trunc {|number| }

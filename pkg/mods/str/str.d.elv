@@ -1,9 +1,3 @@
-#elvdoc:fn compare
-#
-# ```elvish
-# str:compare $a $b
-# ```
-#
 # Compares two strings and output an integer that will be 0 if a == b,
 # -1 if a < b, and +1 if a > b.
 #
@@ -15,13 +9,8 @@
 # ~> str:compare b a
 # ▶ 1
 # ```
+fn compare {|a b| }
 
-#elvdoc:fn contains
-#
-# ```elvish
-# str:contains $str $substr
-# ```
-#
 # Outputs whether `$str` contains `$substr` as a substring.
 #
 # ```elvish-transcript
@@ -30,13 +19,8 @@
 # ~> str:contains abcd bc
 # ▶ $true
 # ```
+fn contains {|str substr| }
 
-#elvdoc:fn contains-any
-#
-# ```elvish
-# str:contains-any $str $chars
-# ```
-#
 # Outputs whether `$str` contains any Unicode code points in `$chars`.
 #
 # ```elvish-transcript
@@ -45,13 +29,8 @@
 # ~> str:contains-any abcd xby
 # ▶ $true
 # ```
+fn contains-any {|str chars| }
 
-#elvdoc:fn count
-#
-# ```elvish
-# str:count $str $substr
-# ```
-#
 # Outputs the number of non-overlapping instances of `$substr` in `$s`.
 # If `$substr` is an empty string, output 1 + the number of Unicode code
 # points in `$s`.
@@ -62,13 +41,8 @@
 # ~> str:count abcdef ''
 # ▶ 7
 # ```
+fn count {|str substr| }
 
-#elvdoc:fn equal-fold
-#
-# ```elvish
-# str:equal-fold $str1 $str2
-# ```
-#
 # Outputs if `$str1` and `$str2`, interpreted as UTF-8 strings, are equal
 # under Unicode case-folding.
 #
@@ -78,13 +52,8 @@
 # ~> str:equal-fold abc ab
 # ▶ $false
 # ```
+fn equal-fold {|str1 str2| }
 
-#elvdoc:fn from-codepoints
-#
-# ```elvish
-# str:from-codepoints $number...
-# ```
-#
 # Outputs a string consisting of the given Unicode codepoints. Example:
 #
 # ```elvish-transcript
@@ -95,13 +64,8 @@
 # ```
 #
 # @cf str:to-codepoints
+fn from-codepoints {|@number| }
 
-#elvdoc:fn from-utf8-bytes
-#
-# ```elvish
-# str:from-utf8-bytes $number...
-# ```
-#
 # Outputs a string consisting of the given Unicode bytes. Example:
 #
 # ```elvish-transcript
@@ -112,13 +76,8 @@
 # ```
 #
 # @cf str:to-utf8-bytes
+fn from-utf8-bytes {|@number| }
 
-#elvdoc:fn has-prefix
-#
-# ```elvish
-# str:has-prefix $str $prefix
-# ```
-#
 # Outputs if `$str` begins with `$prefix`.
 #
 # ```elvish-transcript
@@ -127,13 +86,8 @@
 # ~> str:has-prefix abc bc
 # ▶ $false
 # ```
+fn has-prefix {|str prefix| }
 
-#elvdoc:fn has-suffix
-#
-# ```elvish
-# str:has-suffix $str $suffix
-# ```
-#
 # Outputs if `$str` ends with `$suffix`.
 #
 # ```elvish-transcript
@@ -142,13 +96,8 @@
 # ~> str:has-suffix abc bc
 # ▶ $true
 # ```
+fn has-suffix {|str suffix| }
 
-#elvdoc:fn index
-#
-# ```elvish
-# str:index $str $substr
-# ```
-#
 # Outputs the index of the first instance of `$substr` in `$str`, or -1
 # if `$substr` is not present in `$str`.
 #
@@ -158,13 +107,8 @@
 # ~> str:index abcd xyz
 # ▶ -1
 # ```
+fn index {|str substr| }
 
-#elvdoc:fn index-any
-#
-# ```elvish
-# str:index-any $str $chars
-# ```
-#
 # Outputs the index of the first instance of any Unicode code point
 # from `$chars` in `$str`, or -1 if no Unicode code point from `$chars` is
 # present in `$str`.
@@ -175,13 +119,8 @@
 # ~> str:index-any l33t aeiouy
 # ▶ -1
 # ```
+fn index-any {|str chars| }
 
-#elvdoc:fn join
-#
-# ```elvish
-# str:join $sep $input-list?
-# ```
-#
 # Joins inputs with `$sep`. Examples:
 #
 # ```elvish-transcript
@@ -199,13 +138,8 @@
 # [Python](https://docs.python.org/3.6/library/stdtypes.html#str.join).
 #
 # @cf str:split
+fn join {|sep input-list?| }
 
-#elvdoc:fn last-index
-#
-# ```elvish
-# str:last-index $str $substr
-# ```
-#
 # Outputs the index of the last instance of `$substr` in `$str`,
 # or -1 if `$substr` is not present in `$str`.
 #
@@ -215,26 +149,16 @@
 # ~> str:last-index "elven speak elvish" romulan
 # ▶ -1
 # ```
+fn last-index {|str substr| }
 
-#elvdoc:fn replace
-#
-# ```elvish
-# str:replace &max=-1 $old $repl $source
-# ```
-#
 # Replaces all occurrences of `$old` with `$repl` in `$source`. If `$max` is
 # non-negative, it determines the max number of substitutions.
 #
 # **Note**: This command does not support searching by regular expressions, `$old`
 # is always interpreted as a plain string. Use [re:replace](re.html#re:replace) if
 # you need to search by regex.
+fn replace {|&max=-1 old repl source| }
 
-#elvdoc:fn split
-#
-# ```elvish
-# str:split &max=-1 $sep $string
-# ```
-#
 # Splits `$string` by `$sep`. If `$sep` is an empty string, split it into
 # codepoints.
 #
@@ -261,13 +185,8 @@
 # [Python](https://docs.python.org/3.6/library/stdtypes.html#str.split).
 #
 # @cf str:join
+fn split {|&max=-1 sep string| }
 
-#elvdoc:fn title
-#
-# ```elvish
-# str:title $str
-# ```
-#
 # Outputs `$str` with all Unicode letters that begin words mapped to their
 # Unicode title case.
 #
@@ -275,13 +194,8 @@
 # ~> str:title "her royal highness"
 # ▶ Her Royal Highness
 # ```
+fn title {|str| }
 
-#elvdoc:fn to-codepoints
-#
-# ```elvish
-# str:to-codepoints $string
-# ```
-#
 # Outputs value of each codepoint in `$string`, in hexadecimal. Examples:
 #
 # ```elvish-transcript
@@ -295,13 +209,8 @@
 # The output format is subject to change.
 #
 # @cf str:from-codepoints
+fn to-codepoints {|string| }
 
-#elvdoc:fn to-lower
-#
-# ```elvish
-# str:to-lower $str
-# ```
-#
 # Outputs `$str` with all Unicode letters mapped to their lower-case
 # equivalent.
 #
@@ -309,13 +218,8 @@
 # ~> str:to-lower 'ABC!123'
 # ▶ abc!123
 # ```
+fn to-lower {|str| }
 
-#elvdoc:fn to-utf8-bytes
-#
-# ```elvish
-# str:to-utf8-bytes $string
-# ```
-#
 # Outputs value of each byte in `$string`, in hexadecimal. Examples:
 #
 # ```elvish-transcript
@@ -333,13 +237,8 @@
 # The output format is subject to change.
 #
 # @cf str:from-utf8-bytes
+fn to-utf8-bytes {|string| }
 
-#elvdoc:fn to-title
-#
-# ```elvish
-# str:to-title $str
-# ```
-#
 # Outputs `$str` with all Unicode letters mapped to their Unicode title case.
 #
 # ```elvish-transcript
@@ -348,13 +247,8 @@
 # ~> str:to-title "хлеб"
 # ▶ ХЛЕБ
 # ```
+fn to-title {|str| }
 
-#elvdoc:fn to-upper
-#
-# ```elvish
-# str:to-upper
-# ```
-#
 # Outputs `$str` with all Unicode letters mapped to their upper-case
 # equivalent.
 #
@@ -362,13 +256,8 @@
 # ~> str:to-upper 'abc!123'
 # ▶ ABC!123
 # ```
+fn to-upper { }
 
-#elvdoc:fn trim
-#
-# ```elvish
-# str:trim $str $cutset
-# ```
-#
 # Outputs `$str` with all leading and trailing Unicode code points contained
 # in `$cutset` removed.
 #
@@ -376,13 +265,8 @@
 # ~> str:trim "¡¡¡Hello, Elven!!!" "!¡"
 # ▶ 'Hello, Elven'
 # ```
+fn trim {|str cutset| }
 
-#elvdoc:fn trim-left
-#
-# ```elvish
-# str:trim-left $str $cutset
-# ```
-#
 # Outputs `$str` with all leading Unicode code points contained in `$cutset`
 # removed. To remove a prefix string use [`str:trim-prefix`](#str:trim-prefix).
 #
@@ -390,13 +274,8 @@
 # ~> str:trim-left "¡¡¡Hello, Elven!!!" "!¡"
 # ▶ 'Hello, Elven!!!'
 # ```
+fn trim-left {|str cutset| }
 
-#elvdoc:fn trim-prefix
-#
-# ```elvish
-# str:trim-prefix $str $prefix
-# ```
-#
 # Outputs `$str` minus the leading `$prefix` string. If `$str` doesn't begin
 # with `$prefix`, `$str` is output unchanged.
 #
@@ -406,13 +285,8 @@
 # ~> str:trim-prefix "¡¡¡Hello, Elven!!!" "¡¡¡Hola, "
 # ▶ '¡¡¡Hello, Elven!!!'
 # ```
+fn trim-prefix {|str prefix| }
 
-#elvdoc:fn trim-right
-#
-# ```elvish
-# str:trim-right $str $cutset
-# ```
-#
 # Outputs `$str` with all leading Unicode code points contained in `$cutset`
 # removed. To remove a suffix string use [`str:trim-suffix`](#str:trim-suffix).
 #
@@ -420,13 +294,8 @@
 # ~> str:trim-right "¡¡¡Hello, Elven!!!" "!¡"
 # ▶ '¡¡¡Hello, Elven'
 # ```
+fn trim-right {|str cutset| }
 
-#elvdoc:fn trim-space
-#
-# ```elvish
-# str:trim-space $str
-# ```
-#
 # Outputs `$str` with all leading and trailing white space removed as defined
 # by Unicode.
 #
@@ -434,13 +303,8 @@
 # ~> str:trim-space " \t\n Hello, Elven \n\t\r\n"
 # ▶ 'Hello, Elven'
 # ```
+fn trim-space {|str| }
 
-#elvdoc:fn trim-suffix
-#
-# ```elvish
-# str:trim-suffix $str $suffix
-# ```
-#
 # Outputs `$str` minus the trailing `$suffix` string. If `$str` doesn't end
 # with `$suffix`, `$str` is output unchanged.
 #
@@ -450,3 +314,4 @@
 # ~> str:trim-suffix "¡¡¡Hello, Elven!!!" ", Klingons!!!"
 # ▶ '¡¡¡Hello, Elven!!!'
 # ```
+fn trim-suffix {|str suffix| }

@@ -1,5 +1,3 @@
-#elvdoc:var umask
-#
 # The file mode creation mask. Its value is a string in Elvish octal
 # representation; e.g. 0o027. This makes it possible to use it in any context
 # that expects a `$number`.
@@ -17,3 +15,4 @@
 # **Warning**: Since the umask applies to the entire process, not individual
 # threads, changing it temporarily in this manner is dangerous if you are doing
 # anything in parallel, such as via the [`peach`](builtin.html#peach) command.
+var umask

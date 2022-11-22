@@ -1,9 +1,3 @@
-#elvdoc:fn nop
-#
-# ```elvish
-# nop &any-opt= $value...
-# ```
-#
 # Accepts arbitrary arguments and options and does exactly nothing.
 #
 # Examples:
@@ -16,13 +10,8 @@
 #
 # Etymology: Various languages, in particular NOP in
 # [assembly languages](https://en.wikipedia.org/wiki/NOP).
+fn nop {|&any-opt= @value| }
 
-#elvdoc:fn kind-of
-#
-# ```elvish
-# kind-of $value...
-# ```
-#
 # Output the kinds of `$value`s. Example:
 #
 # ```elvish-transcript
@@ -33,13 +22,8 @@
 # ```
 #
 # The terminology and definition of "kind" is subject to change.
+fn kind-of {|@value| }
 
-#elvdoc:fn constantly
-#
-# ```elvish
-# constantly $value...
-# ```
-#
 # Output a function that takes no arguments and outputs `$value`s when called.
 # Examples:
 #
@@ -66,13 +50,8 @@
 # `uname` will be called.
 #
 # Etymology: [Clojure](https://clojuredocs.org/clojure.core/constantly).
+fn constantly {|@value| }
 
-#elvdoc:fn call
-#
-# ```elvish
-# call $fn $args $opts
-# ```
-#
 # Calls `$fn` with `$args` as the arguments, and `$opts` as the option. Useful
 # for calling a function with dynamic option keys.
 #
@@ -85,13 +64,8 @@
 # ▶ bar
 # ▶ v2
 # ```
+fn call {|fn args opts| }
 
-#elvdoc:fn resolve
-#
-# ```elvish
-# resolve $command
-# ```
-#
 # Output what `$command` resolves to in symbolic form. Command resolution is
 # described in the [language reference](language.html#ordinary-command).
 #
@@ -106,13 +80,8 @@
 # ~> resolve cat
 # ▶ <external cat>
 # ```
+fn resolve {|command| }
 
-#elvdoc:fn eval
-#
-# ```elvish
-# eval $code &ns=$nil &on-end=$nil
-# ```
-#
 # Evaluates `$code`, which should be a string. The evaluation happens in a
 # new, restricted namespace, whose initial set of variables can be specified by
 # the `&ns` option. After evaluation completes, the new namespace is passed to
@@ -177,13 +146,8 @@
 # [eval 2], line 1: echo $b
 # Traceback: [... omitted ...]
 # ```
+fn eval {|code &ns=$nil &on-end=$nil| }
 
-#elvdoc:fn use-mod
-#
-# ```elvish
-# use-mod $use-spec
-# ```
-#
 # Imports a module, and outputs the namespace for the module.
 #
 # Most code should use the [use](language.html#importing-modules-with-use)
@@ -196,13 +160,8 @@
 # ~> put (use-mod ./a)[x]
 # ▶ value
 # ```
+fn use-mod {|use-spec| }
 
-#elvdoc:fn deprecate
-#
-# ```elvish
-# deprecate $msg
-# ```
-#
 # Shows the given deprecation message to stderr. If called from a function
 # or module, also shows the call site of the function or import site of the
 # module. Does nothing if the combination of the call site and the message has
@@ -231,13 +190,8 @@
 # [tty 5], line 1: fn g { f }
 # ~> g # same call site, no more deprecation message
 # ```
+fn deprecate {|msg| }
 
-#elvdoc:fn sleep
-#
-# ```elvish
-# sleep $duration
-# ```
-#
 # Pauses for at least the specified duration. The actual pause duration depends
 # on the system.
 #
@@ -272,13 +226,8 @@
 # Exception: sleep duration must be >= zero
 # [tty 8], line 1: sleep -1
 # ```
+fn sleep {|duration| }
 
-#elvdoc:fn time
-#
-# ```elvish
-# time &on-end=$nil $callable
-# ```
-#
 # Runs the callable, and call `$on-end` with the duration it took, as a
 # number in seconds. If `$on-end` is `$nil` (the default), prints the
 # duration in human-readable form.
@@ -306,13 +255,8 @@
 # ```
 #
 # @cf benchmark
+fn time {|&on-end=$nil callable| }
 
-#elvdoc:fn benchmark
-#
-# ```elvish
-# benchmark &min-runs=5 &min-time=1s &on-end=$nil &on-run-end=$nil $callable
-# ```
-#
 # Runs `$callable` repeatedly, and reports statistics about how long each run
 # takes.
 #
@@ -370,13 +314,10 @@
 # ```
 #
 # @cf time
+fn benchmark {|&min-runs=5 &min-time=1s &on-end=$nil &on-run-end=$nil callable| }
 
-#elvdoc:fn -ifaddrs
-#
-# ```elvish
-# -ifaddrs
-# ```
-#
 # Output all IP addresses of the current host.
 #
 # This should be part of a networking module instead of the builtin module.
+#doc:show-unstable
+fn -ifaddrs { }

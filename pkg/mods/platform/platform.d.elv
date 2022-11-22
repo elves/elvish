@@ -1,35 +1,25 @@
-#elvdoc:var arch
-#
 # The architecture of the platform; e.g. amd64, arm, ppc.
 # This corresponds to Go's
 # [`GOARCH`](https://pkg.go.dev/runtime?tab=doc#pkg-constants) constant.
 # This is read-only.
+var arch
 
-#elvdoc:var os
-#
 # The name of the operating system; e.g. darwin (macOS), linux, etc.
 # This corresponds to Go's
 # [`GOOS`](https://pkg.go.dev/runtime?tab=doc#pkg-constants) constant.
 # This is read-only.
+var os
 
-#elvdoc:var is-unix
-#
 # Whether or not the platform is UNIX-like. This includes Linux, macOS
 # (Darwin), FreeBSD, NetBSD, and OpenBSD. This can be used to decide, for
 # example, if the `unix` module is usable.
 # This is read-only.
+var is-unix
 
-#elvdoc:var is-windows
-#
 # Whether or not the platform is Microsoft Windows.
 # This is read-only.
+var is-windows
 
-#elvdoc:fn hostname
-#
-# ```elvish
-# platform:hostname &strip-domain=$false
-# ```
-#
 # Outputs the hostname of the system. If the option `&strip-domain` is `$true`,
 # strips the part after the first dot.
 #
@@ -44,3 +34,4 @@
 # ~> platform:hostname &strip-domain=$true
 # ▶ lothlorien
 # ```
+fn hostname {|&strip-domain=$false| }

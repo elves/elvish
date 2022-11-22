@@ -1,9 +1,3 @@
-#elvdoc:fn set-env
-#
-# ```elvish
-# set-env $name $value
-# ```
-#
 # Sets an environment variable to the given value. Calling `set-env VAR_NAME
 # value` is similar to `set E:VAR_NAME = value`, but allows the variable name
 # to be dynamic.
@@ -17,13 +11,8 @@
 # ```
 #
 # @cf get-env has-env unset-env
+fn set-env {|name value| }
 
-#elvdoc:fn unset-env
-#
-# ```elvish
-# unset-env $name
-# ```
-#
 # Unset an environment variable. Calling `unset-env VAR_NAME` is similar to
 # `del E:VAR_NAME`, but allows the variable name to be dynamic.
 #
@@ -39,13 +28,8 @@
 # ```
 #
 # @cf has-env get-env set-env
+fn unset-env {|name| }
 
-#elvdoc:fn has-env
-#
-# ```elvish
-# has-env $name
-# ```
-#
 # Test whether an environment variable exists. This command has no equivalent
 # operation using the `E:` namespace (but see https://b.elv.sh/1026).
 #
@@ -59,13 +43,8 @@
 # ```
 #
 # @cf get-env set-env unset-env
+fn has-env {|name| }
 
-#elvdoc:fn get-env
-#
-# ```elvish
-# get-env $name
-# ```
-#
 # Gets the value of an environment variable. Throws an exception if the
 # environment variable does not exist.
 #
@@ -84,3 +63,4 @@
 # ```
 #
 # @cf has-env set-env unset-env
+fn get-env {|name| }

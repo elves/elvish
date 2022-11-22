@@ -1,13 +1,27 @@
-// Package elvdoc implements extraction of elvdoc, in-source documentation of
-// Elvish variables and functions.
+// Package elvdoc extracts doc comments of Elvish variables and functions.
 package elvdoc
 
 import (
 	"bufio"
+	"html"
 	"io"
 	"regexp"
 	"strings"
 )
+
+// Docs records doc comments.
+type Docs struct {
+	Fns  []Entry
+	Vars []Entry
+}
+
+// Entry is a doc comment entry.
+type Entry struct {
+	Name string
+	// ID to use in HTML
+	ID      string
+	Content string
+}
 
 var (
 	// Groups:
@@ -17,43 +31,64 @@ var (
 	// Groups:
 	// 1. Name
 	varRegexp = regexp.MustCompile(`^var +([^ ]+)`)
+	// Groups:
+	// 1. Names
+	fnNoSigRegexp = regexp.MustCompile(`^#doc:fn +(.+)`)
+	// Groups:
+	// 1. Name
+	idRegexp = regexp.MustCompile(`^#doc:id +(.+)`)
 )
 
-// Extract extracts elvdoc from Elvish source.
-func Extract(r io.Reader) (fnDocs, varDocs map[string]string, err error) {
-	fnDocs = make(map[string]string)
-	varDocs = make(map[string]string)
+const showUnstable = "#doc:show-unstable"
 
+// Extract extracts elvdoc from Elvish source.
+func Extract(r io.Reader, prefix string) (Docs, error) {
+	var docs Docs
+	var block docBlock
 	scanner := bufio.NewScanner(r)
-	var commentLines []string
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(line, "# ") {
-			commentLines = append(commentLines, line)
-			continue
-		}
-		if m := fnRegexp.FindStringSubmatch(line); m != nil {
+		if line == "#" {
+			block.lines = append(block.lines, "")
+		} else if strings.HasPrefix(line, "# ") {
+			block.lines = append(block.lines, line[2:])
+		} else if line == showUnstable {
+			block.showUnstable = true
+		} else if m := fnRegexp.FindStringSubmatch(line); m != nil {
 			name, sig := m[1], m[2]
-			var sb strings.Builder
-			writeUsage(&sb, name, sig)
-			if len(commentLines) > 0 {
-				sb.WriteByte('\n')
-				writeCommentContent(&sb, commentLines)
+			content := fnUsage(prefix+name, sig)
+			id := ""
+			showUnstable := false
+			if len(block.lines) > 0 {
+				var blockContent string
+				id, blockContent, showUnstable = block.consume()
+				content += "\n" + blockContent
 			}
-			fnDocs[name] = sb.String()
+			if showUnstable || !unstable(name) {
+				docs.Fns = append(docs.Fns, Entry{name, id, content})
+			}
 		} else if m := varRegexp.FindStringSubmatch(line); m != nil {
 			name := m[1]
-			var sb strings.Builder
-			writeCommentContent(&sb, commentLines)
-			varDocs[name] = sb.String()
+			id, content, showUnstable := block.consume()
+			if showUnstable || !unstable(name) {
+				docs.Vars = append(docs.Vars, Entry{name, id, content})
+			}
+		} else if m := fnNoSigRegexp.FindStringSubmatch(line); m != nil {
+			name := m[1]
+			id, content, _ := block.consume()
+			docs.Fns = append(docs.Fns, Entry{name, id, content})
+		} else if m := idRegexp.FindStringSubmatch(line); m != nil {
+			block.id = m[1]
+		} else {
+			block.consume()
 		}
-		commentLines = commentLines[:0]
 	}
 
-	return fnDocs, varDocs, scanner.Err()
+	return docs, scanner.Err()
 }
 
-func writeUsage(sb *strings.Builder, name, sig string) {
+func fnUsage(name, sig string) string {
+	var sb strings.Builder
 	sb.WriteString("```elvish\n")
 	sb.WriteString(name)
 	for _, field := range strings.Fields(sig) {
@@ -67,17 +102,30 @@ func writeUsage(sb *strings.Builder, name, sig string) {
 		}
 	}
 	sb.WriteString("\n```\n")
+	return html.EscapeString(sb.String())
 }
 
-func writeCommentContent(sb *strings.Builder, lines []string) string {
-	for _, line := range lines {
-		// Every line starts with "# "
-		sb.WriteString(line[2:])
+type docBlock struct {
+	id           string
+	lines        []string
+	showUnstable bool
+}
+
+func (db *docBlock) consume() (id, content string, showUnstable bool) {
+	id = db.id
+	db.id = ""
+
+	var sb strings.Builder
+	for _, line := range db.lines {
+		sb.WriteString(line)
 		sb.WriteByte('\n')
 	}
-	return sb.String()
+	db.lines = db.lines[:0]
+
+	showUnstable = db.showUnstable
+	db.showUnstable = false
+
+	return id, sb.String(), showUnstable
 }
 
-func Format(r io.Reader, w io.Writer) error {
-	return nil
-}
+func unstable(s string) bool { return s != "-" && strings.HasPrefix(s, "-") }

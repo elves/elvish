@@ -24,10 +24,7 @@ var -default-domain-config = [
   ]
 ]
 
-#elvdoc:var managed-dir
-#
 # The path of the `epm`-managed directory.
-
 var managed-dir = (
   if $platform:is-windows {
     put $E:LocalAppData/elvish/lib
@@ -66,14 +63,7 @@ fn dest {|pkg|
   put $managed-dir/$pkg
 }
 
-#elvdoc:fn is-installed
-#
-# ```elvish
-# epm:is-installed $pkg
-# ```
-#
 # Returns a boolean value indicating whether the given package is installed.
-
 fn is-installed {|pkg|
   bool ?(test -e (dest $pkg))
 }
@@ -254,12 +244,6 @@ fn -uninstall-package {|pkg|
 ######################################################################
 # Main user-facing functions
 
-#elvdoc:fn metadata
-#
-# ```elvish
-# epm:metadata $pkg
-# ```
-#
 # Returns a hash containing the metadata for the given package. Metadata for a
 # package includes the following base attributes:
 #
@@ -281,8 +265,6 @@ fn -uninstall-package {|pkg|
 # -   `dependencies`: an array listing dependencies of the current package. Any
 #     packages listed will be installed automatically by `epm:install` if they are
 #     not yet installed.
-
-# Read and parse the package metadata, if it exists
 fn metadata {|pkg|
   # Base metadata attributes
   var res = [
@@ -300,15 +282,7 @@ fn metadata {|pkg|
   put $res
 }
 
-#elvdoc:fn query
-#
-# ```elvish
-# epm:query $pkg
-# ```
-#
 # Pretty print the available metadata of the given package.
-
-# Print out information about a package
 fn query {|pkg|
   var data = (metadata $pkg)
   var special-keys = [name method installed src dst]
@@ -330,16 +304,8 @@ fn query {|pkg|
   }
 }
 
-#elvdoc:fn installed
-#
-# ```elvish
-# epm:installed
-# ```
-#
 # Return an array with all installed packages. `epm:list` can be used as an alias
 # for `epm:installed`.
-
-# List installed packages
 fn installed {
   put $managed-dir/*[nomatch-ok] | each {|dir|
     var dom = (str:replace $managed-dir/ '' $dir)
@@ -358,20 +324,13 @@ fn installed {
 # epm:list is an alias for epm:installed
 fn list { installed }
 
-#elvdoc:fn install
-#
-# ```elvish
-# epm:install &silent-if-installed=$false $pkg...
-# ```
-#
 # Install the named packages. By default, if a package is already installed, a
 # message will be shown. This can be disabled by passing
 # `&silent-if-installed=$true`, so that already-installed packages are silently
 # ignored.
-
-# Install and upgrade are method-specific, so we call the
-# corresponding functions using -package-op
 fn install {|&silent-if-installed=$false @pkgs|
+  # Install and upgrade are method-specific, so we call the
+  # corresponding functions using -package-op
   if (eq $pkgs []) {
     -error "You must specify at least one package."
     return
@@ -402,15 +361,8 @@ fn install {|&silent-if-installed=$false @pkgs|
   }
 }
 
-#elvdoc:fn upgrade
-#
-# ```elvish
-# epm:upgrade $pkg...
-# ```
-#
 # Upgrade named packages. If no package name is given, upgrade all installed
 # packages.
-
 fn upgrade {|@pkgs|
   if (eq $pkgs []) {
     set pkgs = [(installed)]
@@ -425,16 +377,9 @@ fn upgrade {|@pkgs|
   }
 }
 
-#elvdoc:fn uninstall
-#
-# ```elvish
-# epm:uninstall $pkg...
-# ```
-#
 # Uninstall named packages.
-
-# Uninstall is the same for everyone, just remove the directory
 fn uninstall {|@pkgs|
+  # Uninstall is the same for everyone, just remove the directory
   if (eq $pkgs []) {
     -error 'You must specify at least one package.'
     return

@@ -1,8 +1,3 @@
-#elvdoc:fn complete-getopt
-#
-# ```elvish
-# edit:complete-getopt $args $opt-specs $arg-handlers
-# ```
 # Produces completions according to a specification of accepted command-line
 # options (both short and long options are handled), positional handler
 # functions for each command position, and the current arguments in the command
@@ -78,3 +73,4 @@
 # ```
 #
 # @cf flag:parse-getopt
+fn complete-getopt {|args opt-specs arg-handlers| }

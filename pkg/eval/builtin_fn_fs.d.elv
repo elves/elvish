@@ -1,9 +1,3 @@
-#elvdoc:fn cd
-#
-# ```elvish
-# cd $dirname
-# ```
-#
 # Changes directory.
 #
 # This affects the entire process, including parallel tasks that are started
@@ -13,13 +7,8 @@
 # Note that Elvish's `cd` does not support `cd -`.
 #
 # @cf pwd
+fn cd {|dirname| }
 
-#elvdoc:fn tilde-abbr
-#
-# ```elvish
-# tilde-abbr $path
-# ```
-#
 # If `$path` represents a path under the home directory, replace the home
 # directory with `~`. Examples:
 #
@@ -33,3 +22,4 @@
 # ~> tilde-abbr /Users/foo/a/b
 # ▶ '~/a/b'
 # ```
+fn tilde-abbr {|path| }

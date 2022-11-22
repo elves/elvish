@@ -1,9 +1,3 @@
-#elvdoc:fn command-history
-#
-# ```elvish
-# edit:command-history &cmd-only=$false &dedup=$false &newest-first
-# ```
-#
 # Outputs the command history.
 #
 # By default, each entry is represented as a map, with an `id` key key for the
@@ -24,11 +18,7 @@
 # edit:command-history | put [(all)][-1][cmd]
 # edit:command-history &cmd-only &newest-first | take 1
 # ```
+fn command-history {|&cmd-only=$false &dedup=$false &newest-first| }
 
-#elvdoc:fn insert-last-word
-#
-# ```elvish
-# edit:insert-last-word
-# ```
-#
 # Inserts the last word of the last command.
+fn insert-last-word { }

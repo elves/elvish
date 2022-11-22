@@ -1,9 +1,3 @@
-#elvdoc:fn put
-#
-# ```elvish
-# put $value...
-# ```
-#
 # Takes arbitrary arguments and write them to the structured stdout.
 #
 # Examples:
@@ -24,13 +18,8 @@
 # Etymology: Various languages, in particular
 # [C](https://manpages.debian.org/stretch/manpages-dev/puts.3.en.html) and
 # [Ruby](https://ruby-doc.org/core-2.2.2/IO.html#method-i-puts) as `puts`.
+fn put {|@value| }
 
-#elvdoc:fn repeat
-#
-# ```elvish
-# repeat $n $value
-# ```
-#
 # Output `$value` for `$n` times. Example:
 #
 # ```elvish-transcript
@@ -43,13 +32,8 @@
 # ```
 #
 # Etymology: [Clojure](https://clojuredocs.org/clojure.core/repeat).
+fn repeat {|n value| }
 
-#elvdoc:fn read-upto
-#
-# ```elvish
-# read-upto $terminator
-# ```
-#
 # Reads byte input until `$terminator` or end-of-file is encountered. It outputs the part of the
 # input read as a string value. The output contains the trailing `$terminator`, unless `read-upto`
 # terminated at end-of-file.
@@ -68,13 +52,8 @@
 # ~> print "foobar" | read-upto "\n"
 # ▶ foobar
 # ```
+fn read-upto {|terminator| }
 
-#elvdoc:fn read-line
-#
-# ```elvish
-# read-line
-# ```
-#
 # Reads a single line from byte input, and writes the line to the value output,
 # stripping the line ending. A line can end with `"\r\n"`, `"\n"`, or end of
 # file. Examples:
@@ -89,13 +68,8 @@
 # ~> print "line-with-extra-cr\r\r\n" | read-line
 # ▶ "line-with-extra-cr\r"
 # ```
+fn read-line { }
 
-#elvdoc:fn print
-#
-# ```elvish
-# print &sep=' ' $value...
-# ```
-#
 # Like `echo`, just without the newline.
 #
 # @cf echo
@@ -104,13 +78,8 @@
 # [Perl](https://perldoc.perl.org/functions/print.html) and
 # [zsh](http://zsh.sourceforge.net/Doc/Release/Shell-Builtin-Commands.html), whose
 # `print`s do not print a trailing newline.
+fn print {|&sep=' ' @value| }
 
-#elvdoc:fn printf
-#
-# ```elvish
-# printf $template $value...
-# ```
-#
 # Prints values to the byte stream according to a template. If you need to inject the output into
 # the value stream use this pattern: `printf .... | slurp`. That ensures that any newlines in the
 # output of `printf` do not cause its output to be broken into multiple values, thus eliminating
@@ -182,13 +151,8 @@
 #   [double-quoted strings](language.html#double-quoted-string).
 #
 # @cf print echo pprint repr
+fn printf {|template @value| }
 
-#elvdoc:fn echo
-#
-# ```elvish
-# echo &sep=' ' $value...
-# ```
-#
 # Print all arguments, joined by the `sep` option, and followed by a newline.
 #
 # Examples:
@@ -209,13 +173,8 @@
 # @cf print
 #
 # Etymology: Bourne sh.
+fn echo {|&sep=' ' @value| }
 
-#elvdoc:fn pprint
-#
-# ```elvish
-# pprint $value...
-# ```
-#
 # Pretty-print representations of Elvish values. Examples:
 #
 # ```elvish-transcript
@@ -236,13 +195,8 @@
 # The output format is subject to change.
 #
 # @cf repr
+fn pprint {|@value| }
 
-#elvdoc:fn repr
-#
-# ```elvish
-# repr $value...
-# ```
-#
 # Writes representation of `$value`s, separated by space and followed by a
 # newline. Example:
 #
@@ -254,13 +208,8 @@
 # @cf pprint
 #
 # Etymology: [Python](https://docs.python.org/3/library/functions.html#repr).
+fn repr {|@value| }
 
-#elvdoc:fn show
-#
-# ```elvish
-# show $e
-# ```
-#
 # Shows the value to the output, which is assumed to be a VT-100-compatible
 # terminal.
 #
@@ -275,13 +224,8 @@
 # Exception: lorem-ipsum
 # [tty 3], line 1: var e = ?(fail lorem-ipsum)
 # ```
+fn show {|e| }
 
-#elvdoc:fn only-bytes
-#
-# ```elvish
-# only-bytes
-# ```
-#
 # Passes byte input to output, and discards value inputs.
 #
 # Example:
@@ -290,13 +234,8 @@
 # ~> { put value; echo bytes } | only-bytes
 # bytes
 # ```
+fn only-bytes { }
 
-#elvdoc:fn only-values
-#
-# ```elvish
-# only-values
-# ```
-#
 # Passes value input to output, and discards byte inputs.
 #
 # Example:
@@ -305,13 +244,8 @@
 # ~> { put value; echo bytes } | only-values
 # ▶ value
 # ```
+fn only-values { }
 
-#elvdoc:fn slurp
-#
-# ```elvish
-# slurp
-# ```
-#
 # Reads bytes input into a single string, and put this string on structured
 # stdout.
 #
@@ -324,13 +258,8 @@
 #
 # Etymology: Perl, as
 # [`File::Slurp`](http://search.cpan.org/~uri/File-Slurp-9999.19/lib/File/Slurp.pm).
+fn slurp { }
 
-#elvdoc:fn from-lines
-#
-# ```elvish
-# from-lines
-# ```
-#
 # Splits byte input into lines, and writes them to the value output. Value
 # input is ignored.
 #
@@ -343,13 +272,8 @@
 # ```
 #
 # @cf from-terminated read-upto to-lines
+fn from-lines { }
 
-#elvdoc:fn from-json
-#
-# ```elvish
-# from-json
-# ```
-#
 # Takes bytes stdin, parses it as JSON and puts the result on structured stdout.
 # The input can contain multiple JSONs, and whitespace between them are ignored.
 #
@@ -380,13 +304,8 @@
 # ```
 #
 # @cf to-json
+fn from-json { }
 
-#elvdoc:fn from-terminated
-#
-# ```elvish
-# from-terminated $terminator
-# ```
-#
 # Splits byte input into lines at each `$terminator` character, and writes
 # them to the value output. If the byte input ends with `$terminator`, it is
 # dropped. Value input is ignored.
@@ -405,13 +324,8 @@
 # ```
 #
 # @cf from-lines read-upto to-terminated
+fn from-terminated {|terminator| }
 
-#elvdoc:fn to-lines
-#
-# ```elvish
-# to-lines $inputs?
-# ```
-#
 # Writes each [value input](#value-inputs) to a separate line in the byte
 # output. Byte input is ignored.
 #
@@ -428,13 +342,8 @@
 # ```
 #
 # @cf from-lines to-terminated
+fn to-lines {|inputs?| }
 
-#elvdoc:fn to-terminated
-#
-# ```elvish
-# to-terminated $terminator $inputs?
-# ```
-#
 # Writes each [value input](#value-inputs) to the byte output with the
 # specified terminator character. Byte input is ignored. This behavior is
 # useful, for example, when feeding output into a program that accepts NUL
@@ -451,13 +360,8 @@
 # ```
 #
 # @cf from-terminated to-lines
+fn to-terminated {|terminator inputs?| }
 
-#elvdoc:fn to-json
-#
-# ```elvish
-# to-json
-# ```
-#
 # Takes structured stdin, convert it to JSON and puts the result on bytes stdout.
 #
 # ```elvish-transcript
@@ -470,3 +374,4 @@
 # ```
 #
 # @cf from-json
+fn to-json { }

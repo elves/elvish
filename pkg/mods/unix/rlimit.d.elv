@@ -1,5 +1,3 @@
-#elvdoc:var rlimits
-#
 # A map describing resource limits of the current process.
 #
 # Each key is a string corresponds to a resource, and each value is a map with
@@ -67,3 +65,4 @@
 # ~> put $unix:rlimits[nofile]
 # ▶ [&]
 # ```
+var rlimits

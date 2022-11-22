@@ -1,22 +1,13 @@
-#elvdoc:var completion:arg-completer
-#
 # A map containing argument completers.
+var completion:arg-completer
 
-#elvdoc:var completion:binding
-#
 # Keybinding for the completion mode.
+var completion:binding
 
-#elvdoc:var completion:matcher
-#
 # A map mapping from context names to matcher functions. See the
 # [Matcher](#matcher) section.
+var completion:matcher
 
-#elvdoc:fn complete-filename
-#
-# ```elvish
-# edit:complete-filename $args...
-# ```
-#
 # Produces a list of filenames found in the directory of the last argument. All
 # other arguments are ignored. If the last argument does not contain a path
 # (either absolute or relative to the current directory), then the current
@@ -44,13 +35,8 @@
 # ▶ (edit:complex-candidate .elvish/lib &code-suffix=/ &style='01;34')
 # ▶ (edit:complex-candidate .elvish/rc.elv &code-suffix=' ' &style='')
 # ```
+fn complete-filename {|@args| }
 
-#elvdoc:fn complex-candidate
-#
-# ```elvish
-# edit:complex-candidate $stem &display='' &code-suffix=''
-# ```
-#
 # Builds a complex candidate. This is mainly useful in [argument
 # completers](#argument-completer).
 #
@@ -62,13 +48,8 @@
 # when it is accepted. By default, a quoted version of `$stem` is inserted. If
 # `$code-suffix` is non-empty, it is added to that text, and the suffix is not
 # quoted.
+fn complex-candidate {|stem &display='' &code-suffix=''| }
 
-#elvdoc:fn match-prefix
-#
-# ```elvish
-# edit:match-prefix $seed $inputs?
-# ```
-#
 # For each input, outputs whether the input has $seed as a prefix. Uses the
 # result of `to-string` for non-string inputs.
 #
@@ -80,23 +61,13 @@
 #   each {|x| str:has-prefix (to-string $x) $seed } $@input
 # }
 # ```
+fn match-prefix {|seed inputs?| }
 
-#elvdoc:fn match-subseq
-#
-# ```elvish
-# edit:match-subseq $seed $inputs?
-# ```
-#
 # For each input, outputs whether the input has $seed as a
 # [subsequence](https://en.wikipedia.org/wiki/Subsequence). Uses the result of
 # `to-string` for non-string inputs.
+fn match-subseq {|seed inputs?| }
 
-#elvdoc:fn match-substr
-#
-# ```elvish
-# edit:match-substr $seed $inputs?
-# ```
-#
 # For each input, outputs whether the input has $seed as a substring. Uses the
 # result of `to-string` for non-string inputs.
 #
@@ -108,28 +79,14 @@
 #   each {|x| str:has-contains (to-string $x) $seed } $@input
 # }
 # ```
+fn match-substr {|seed inputs?| }
 
-#elvdoc:fn completion:start
-#
-# ```elvish
-# edit:completion:start
-# ```
-#
 # Start the completion mode.
+fn completion:start { }
 
-#elvdoc:fn completion:smart-start
-#
-# ```elvish
-# edit:completion:smart-start
-# ```
-#
 # Starts the completion mode. However, if all the candidates share a non-empty
 # prefix and that prefix starts with the seed, inserts the prefix instead.
+fn completion:smart-start { }
 
-#elvdoc:fn completion:close
-#
-# ```elvish
-# edit:completion:close
-# ```
-#
 # Closes the completion mode UI.
+fn completion:close { }
