@@ -960,8 +960,8 @@ will be called. Otherwise this definition will result in infinite recursion.
 ### Prompt customization
 
 The left and right prompts can be customized by assigning functions to
-[`edit:prompt`](../ref/edit.html#edit:prompt) and
-[`edit:rprompt`](../ref/edit.html#edit:rprompt). The following example defines
+[`edit:prompt`](../ref/edit.html#$edit:prompt) and
+[`edit:rprompt`](../ref/edit.html#$edit:rprompt). The following example defines
 prompts similar to the default, but uses fancy Unicode.
 
 @ttyshot learn/tour/unicode-prompts
@@ -981,7 +981,7 @@ a `E:` prefix):
 set E:PATH = /opts/bin:/bin:/usr/bin
 ```
 
-But it is usually nicer to set the [`$paths`](../ref/builtin.html#paths)
+But it is usually nicer to set the [`$paths`](../ref/builtin.html#$paths)
 instead:
 
 ```elvish

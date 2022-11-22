@@ -82,7 +82,7 @@ fn is-abs {|path| }
 fn eval-symlinks {|path| }
 
 # Joins any number of path elements into a single path, separating them with an
-# [OS specific separator](#path:separator). Empty elements are ignored. The
+# [OS specific separator](#$path:separator). Empty elements are ignored. The
 # result is [cleaned](#path:clean). However, if the argument list is empty or
 # all its elements are empty, Join returns an empty string. On Windows, the
 # result will only be a UNC path if the first non-empty element is a UNC path.

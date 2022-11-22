@@ -104,7 +104,7 @@ var command-abbr
 # set edit:small-word-abbr['ll'] = 'ls -ltr'
 # ```
 #
-# If both a [simple abbreviation](#edit:abbr) and a small-word abbreviation can
+# If both a [simple abbreviation](#$edit:abbr) and a small-word abbreviation can
 # be expanded, the simple abbreviation has priority.
 #
 # @cf $edit:abbr $edit:command-abbr

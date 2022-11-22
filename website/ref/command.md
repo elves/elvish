@@ -59,7 +59,7 @@ If the `-c` flag is given, the first argument is executed as a single
 If the `-c` flag is not given, the first argument is taken as a filename, and
 the content of the file is executed as a single code chunk.
 
-The remaining arguments are put in [`$args`](builtin.html#args).
+The remaining arguments are put in [`$args`](builtin.html#$args).
 
 When running a script, Elvish does not evaluate the [RC file](#rc-file).
 

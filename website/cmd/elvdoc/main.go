@@ -118,16 +118,11 @@ func extract(r io.Reader, ns string, w io.Writer) {
 					"<a name='//apple_ref/cpp/%s/%s' class='dashAnchor'></a>\n\n",
 					entryType, url.QueryEscape(html.UnescapeString(s)))
 			}
-			id := entry.ID
-			if id == "" {
-				// pandoc strips punctuations from the ID, turning "mod:name"
-				// into "modname". Explicitly preserve the original full name
-				// by specifying an attribute. We still strip the leading $ for
-				// variables since pandoc will treat "{#$foo}" as part of the
-				// title.
-				id = strings.TrimPrefix(fullName, "$")
+			attr := ""
+			if entry.ID != "" {
+				attr = " {#" + entry.ID + "}"
 			}
-			fmt.Fprintf(w, "## %s {#%s}\n\n", fullName, id)
+			fmt.Fprintf(w, "## %s%s\n\n", fullName, attr)
 			// The body is guaranteed to have a trailing newline, hence Fprint
 			// instead of Fprintln.
 			fmt.Fprint(w, entry.Content)

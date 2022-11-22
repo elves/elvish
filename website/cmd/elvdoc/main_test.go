@@ -31,7 +31,7 @@ var extractTests = []struct {
 
 			<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
 
-			## a {#a}
+			## a
 
 			~~~elvish
 			a
@@ -41,7 +41,7 @@ var extractTests = []struct {
 
 			<a name='//apple_ref/cpp/Function/b' class='dashAnchor'></a>
 
-			## b {#b}
+			## b
 
 			~~~elvish
 			b
@@ -65,7 +65,7 @@ var extractTests = []struct {
 
 			<a name='//apple_ref/cpp/Variable/%24b' class='dashAnchor'></a>
 
-			## $b {#b}
+			## $b
 
 			B.
 
@@ -74,7 +74,7 @@ var extractTests = []struct {
 
 			<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
 
-			## a {#a}
+			## a
 
 			~~~elvish
 			a
@@ -163,7 +163,7 @@ func TestRun_MultipleFiles(t *testing.T) {
 
 		<a name='//apple_ref/cpp/Variable/%24v2' class='dashAnchor'></a>
 
-		## $v2 {#v2}
+		## $v2
 
 		Variable 2 from b.
 
@@ -172,7 +172,7 @@ func TestRun_MultipleFiles(t *testing.T) {
 
 		<a name='//apple_ref/cpp/Function/f1' class='dashAnchor'></a>
 
-		## f1 {#f1}
+		## f1
 
 		~~~elvish
 		f1
@@ -182,7 +182,7 @@ func TestRun_MultipleFiles(t *testing.T) {
 
 		<a name='//apple_ref/cpp/Function/f2' class='dashAnchor'></a>
 
-		## f2 {#f2}
+		## f2
 
 		~~~elvish
 		f2

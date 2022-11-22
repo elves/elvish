@@ -126,32 +126,39 @@ func (f *filterer) expandCf(rest string) string {
 		} else {
 			buf.WriteString(", ")
 		}
-		fmt.Fprintf(&buf, "[`%s`](%s)", target, cfHref(target))
+		fmt.Fprintf(&buf, "[`%s`](%s)", target, cfHref(target, f.module))
 	}
 	buf.WriteString(".")
 	return buf.String()
 }
 
 // Returns the href for a `@cf` reference.
-func cfHref(target string) string {
-	// Anchors strip the leading $ due to pandoc's limitations; see comment in
-	// website/cmd/elvdoc/main.go.
-	target = strings.TrimPrefix(target, "$")
-
-	i := strings.IndexRune(target, ':')
+func cfHref(symbol, currentModule string) string {
+	i := strings.IndexRune(symbol, ':')
 	if i == -1 {
-		// A link within the same module.
-		return "#" + target
+		// An internal link in the builtin module's doc.
+		return "#" + symbol
 	}
 
-	module, symbol := target[:i], target[i+1:]
-	if module == "builtin" {
-		// A link from outside the builtin page to the builtin page. Use
-		// unqualified name (e.g. #put).
-		return "builtin.html#" + symbol
+	var module, unqualified string
+	if strings.HasPrefix(symbol, "$") {
+		module, unqualified = symbol[1:i], "$"+symbol[i+1:]
+	} else {
+		module, unqualified = symbol[:i], symbol[i+1:]
 	}
-	// A link to a non-builtin page.
-	return module + ".html#" + target
+	switch module {
+	case "builtin":
+		// A link from a non-builtin module's doc to the builtin module. Use
+		// unqualified name (like #put or #$paths, instead of #builtin:put or
+		// #$builtin:paths).
+		return "builtin.html#" + unqualified
+	case currentModule:
+		// An internal link in a non-builtin module's doc.
+		return "#" + unqualified
+	default:
+		// A link to a non-builtin module.
+		return module + ".html#" + symbol
+	}
 }
 
 func (f *filterer) expandDl(rest string) string {

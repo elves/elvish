@@ -439,7 +439,7 @@ keys, without existing keys, or with a different value for a given key.
 
 The pseudo-map mechanism is often used for introspection. For example,
 [exceptions](#exception), [user-defined functions](#function), and
-[`$buildinfo`](./builtin.html#buildinfo) are pseudo-maps.
+[`$buildinfo`](./builtin.html#$buildinfo) are pseudo-maps.
 
 ## Nil
 
@@ -1517,7 +1517,7 @@ initialized with special values:
 -   The value channels for port 1 and 2 are special channels that forward the
     values written to them to their file counterparts. Each value is put on a
     separate line, with a prefix controlled by
-    [`$value-out-indicator`](builtin.html#value-out-indicator). The default
+    [`$value-out-indicator`](builtin.html#$value-out-indicator). The default
     prefix is `▶` followed by a space.
 
 When running an external command, the file object from each port is used to
@@ -2460,7 +2460,7 @@ imported by the `use` command:
 -   [str](str.html)
 
 -   [unix](unix.html): only available on UNIX-like platforms (see
-    [`$platform:is-unix`](platform.html#platform:is-unix))
+    [`$platform:is-unix`](platform.html#$platform:is-unix))
 
 ### User-defined modules
 

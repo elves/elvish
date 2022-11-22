@@ -6,7 +6,7 @@
 #
 # Note that Elvish's `cd` does not support `cd -`.
 #
-# @cf pwd
+# @cf $pwd
 fn cd {|dirname| }
 
 # If `$path` represents a path under the home directory, replace the home
