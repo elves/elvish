@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/BurntSushi/toml v1.0.0
 	github.com/creack/pty v1.1.15
+	github.com/google/go-cmp v0.5.7
 	src.elv.sh v0.17.0
 )
 
