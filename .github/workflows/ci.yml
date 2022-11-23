@@ -30,9 +30,9 @@ jobs:
       if: matrix.os == 'windows'
       run: git config --global core.autocrlf false
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           ~/go/pkg/mod
@@ -42,7 +42,7 @@ jobs:
         key: test/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}/${{ github.sha }}
         restore-keys: test/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}/
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go-version }}
     - name: Test with race detection
@@ -59,7 +59,7 @@ jobs:
       run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
     - name: Save test coverage
       if: matrix.go-version == '1.19.x'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: cover-${{ env.ostype }}
         path: cover
@@ -72,9 +72,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: 1.19.x
     - name: Run benchmarks
@@ -89,13 +89,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Download test coverage
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: cover-${{ matrix.ostype }}
     - name: Upload coverage to codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v3
       with:
         files: ./cover
         flags: ${{ matrix.ostype }}
@@ -105,9 +105,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: 1.19.x
     - name: Set up goimports
@@ -120,9 +120,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: 1.19.x
     - name: Check style
@@ -133,9 +133,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
     - name: Install codespell
       run: pip install codespell==2.2.1
     - name: Run codespell
@@ -146,7 +148,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Run check-content.sh
       run: ./tools/check-content.sh
 
@@ -155,13 +157,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: 1.19.x
     - name: Set up Python
       uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
     - name: Install Python dependency
       run: pip3 install beautifulsoup4
     - name: Check relative links
@@ -172,9 +176,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: 1.19.x
     - name: Set up staticcheck
@@ -189,7 +193,7 @@ jobs:
     container: sourcegraph/lsif-go:latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Generate LSIF data
       run: lsif-go
     - name: Upload LSIF data
