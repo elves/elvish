@@ -83,37 +83,46 @@ func TestStyled_DoesNotModifyArgument(t *testing.T) {
 
 func TestStyledConcat(t *testing.T) {
 	Test(t,
-		// string+segment
-		That("print abc(styled-segment abc &fg-color=red)").Prints("\033[mabc\033[31mabc\033[m"),
-		// segment+string
+		// segment + string
 		That("print (styled-segment abc &fg-color=red)abc").Prints("\033[;31mabc\033[mabc"),
-		// segment+segment
+		// segment + segment
 		That("print (styled-segment abc &bg-color=red)(styled-segment abc &fg-color=red)").Prints("\033[;41mabc\033[;31mabc\033[m"),
-		// segment+text
+		// segment + text
 		That("print (styled-segment abc &underlined=$true)(styled abc bright-cyan)").Prints("\033[;4mabc\033[;96mabc\033[m"),
-		// segment+num
-		That("print (num 99.0)(styled-segment abc &blink)").Prints("\033[m99.0\033[5mabc\033[m"),
-		That("print (num 66)(styled-segment abc &blink)").Prints("\033[m66\033[5mabc\033[m"),
-		That("print (num 3/2)(styled-segment abc &blink)").Prints("\033[m3/2\033[5mabc\033[m"),
-		// num+segment
+		// segment + num
 		That("print (styled-segment abc &blink)(float64 88)").Prints("\033[;5mabc\033[m88.0"),
 		That("print (styled-segment abc &blink)(num 44/3)").Prints("\033[;5mabc\033[m44/3"),
 		That("print (styled-segment abc &blink)(num 42)").Prints("\033[;5mabc\033[m42"),
-		// string+text
-		That("print abc(styled abc blink)").Prints("\033[mabc\033[5mabc\033[m"),
-		// text+string
+		// segment + unsupported
+		That("print (styled-segment abc){ }").Throws(ErrorWithMessage("cannot concatenate ui:text-segment and fn")),
+		// string + segment
+		That("print abc(styled-segment abc &fg-color=red)").Prints("\033[mabc\033[31mabc\033[m"),
+		// num + segment
+		That("print (num 99.0)(styled-segment abc &blink)").Prints("\033[m99.0\033[5mabc\033[m"),
+		That("print (num 66)(styled-segment abc &blink)").Prints("\033[m66\033[5mabc\033[m"),
+		That("print (num 3/2)(styled-segment abc &blink)").Prints("\033[m3/2\033[5mabc\033[m"),
+		// unsupported + segment
+		That("print { }(styled-segment abc)").Throws(ErrorWithMessage("cannot concatenate fn and ui:text-segment")),
+
+		// text + string
 		That("print (styled abc blink)abc").Prints("\033[;5mabc\033[mabc"),
-		// number+text
-		That("print (num 13)(styled abc blink)").Prints("\033[m13\033[5mabc\033[m"),
-		That("print (num 4/3)(styled abc blink)").Prints("\033[m4/3\033[5mabc\033[m"),
-		// text+number
+		// text + number
 		That("print (styled abc blink)(float64 127)").Prints("\033[;5mabc\033[m127.0"),
 		That("print (styled abc blink)(num 13)").Prints("\033[;5mabc\033[m13"),
 		That("print (styled abc blink)(num 3/4)").Prints("\033[;5mabc\033[m3/4"),
-		// text+segment
+		// text + segment
 		That("print (styled abc inverse)(styled-segment abc &bg-color=white)").Prints("\033[;7mabc\033[;47mabc\033[m"),
-		// text+text
+		// text + text
 		That("print (styled abc bold)(styled abc dim)").Prints("\033[;1mabc\033[;2mabc\033[m"),
+		// text + unsupported
+		That("print (styled abc){ }").Throws(ErrorWithMessage("cannot concatenate ui:text and fn")),
+		// string + text
+		That("print abc(styled abc blink)").Prints("\033[mabc\033[5mabc\033[m"),
+		// number + text
+		That("print (num 13)(styled abc blink)").Prints("\033[m13\033[5mabc\033[m"),
+		That("print (num 4/3)(styled abc blink)").Prints("\033[m4/3\033[5mabc\033[m"),
+		// unsupported + text
+		That("print { }(styled abc)").Throws(ErrorWithMessage("cannot concatenate fn and ui:text")),
 	)
 }
 

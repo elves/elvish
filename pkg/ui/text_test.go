@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -23,7 +24,11 @@ func TestTextAsElvishValue(t *testing.T) {
 		Kind("ui:text").
 		Repr("(ui:text text)").
 		AllKeys("0").
-		Index("0", &Segment{Text: "text"})
+		Index("0", &Segment{Text: "text"}).
+		IndexError("a", errors.New("index must be integer"))
+
+	vals.TestValue(t, Concat(T("red", FgRed), T("blue", FgBlue), T("green", FgGreen))).
+		Index("0..2", Concat(T("red", FgRed), T("blue", FgBlue)))
 
 	vals.TestValue(t, T("text", FgRed)).
 		Repr("(ui:text (ui:text-segment text &fg-color=red))")
