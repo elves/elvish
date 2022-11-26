@@ -34,11 +34,6 @@ func init() {
 
 		"deprecate": deprecate,
 
-		// Time
-		"sleep":     sleep,
-		"time":      timeCmd,
-		"benchmark": benchmark,
-
 		"-ifaddrs": _ifaddrs,
 	})
 
