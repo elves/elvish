@@ -197,6 +197,13 @@ var testCases = []struct {
 		want: ast{"Indexing", fs{
 			"Head": "$b", "Indices": []string{"c", "d", "\ne\n"}}},
 	},
+	{
+		name: "indexing expression with empty index",
+		code: "$a[]",
+		node: &Indexing{},
+		want: ast{"Indexing", fs{
+			"Head": "$a", "Indices": []string{""}}},
+	},
 
 	// Primary
 	{

@@ -448,7 +448,7 @@ type Indexing struct {
 func (in *Indexing) parse(ps *parser) {
 	ps.parse(&Primary{ExprCtx: in.ExprCtx}).addAs(&in.Head, in)
 	for parseSep(in, ps, '[') {
-		if !startsArray(ps.peek()) {
+		if !startsArray(ps.peek()) && ps.peek() != ']' {
 			ps.error(errShouldBeArray)
 		}
 
