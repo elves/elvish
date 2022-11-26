@@ -2,11 +2,13 @@
 # navigation mode.
 var navigation:selected-file
 
-# ```elvish
-# edit:navigation:binding
-# ```
-#
 # Keybinding for the navigation mode.
+#
+# Keys bound to
+# [edit:navigation:trigger-filter](#edit:navigation:trigger-filter) (Ctrl-F by
+# default) and
+# [edit:navigation:trigger-shown-hidden](#edit:navigation:trigger-shown-hidden)
+# (Ctrl-H by default) will be shown in the navigation mode UI.
 var navigation:binding
 
 # Start the navigation mode.
