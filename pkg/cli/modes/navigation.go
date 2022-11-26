@@ -45,6 +45,8 @@ type NavigationSpec struct {
 	WidthRatio func() [3]int
 	// Configuration for the filter.
 	Filter FilterSpec
+	// RPrompt of the code area (first row of the widget).
+	CodeAreaRPrompt func() ui.Text
 }
 
 type navigationState struct {
@@ -178,6 +180,7 @@ func NewNavigation(app cli.App, spec NavigationSpec) (Navigation, error) {
 				}
 				return modeLine(" NAVIGATING ", true)
 			},
+			RPrompt:     spec.CodeAreaRPrompt,
 			Highlighter: spec.Filter.Highlighter,
 		}),
 		colView: tk.NewColView(tk.ColViewSpec{

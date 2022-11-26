@@ -2,6 +2,7 @@ package edit
 
 import (
 	"errors"
+	"reflect"
 	"sort"
 
 	"src.elv.sh/pkg/eval"
@@ -104,4 +105,39 @@ func makeBindingMap(raw vals.Map) (bindingsMap, error) {
 	}
 
 	return bindingsMap{converted}, nil
+}
+
+type bindingHelpEntry struct {
+	text   string
+	fnName string
+}
+
+func bindingHelp(m bindingsMap, ns *eval.Ns, entries ...bindingHelpEntry) ui.Text {
+	var t ui.Text
+	for _, entry := range entries {
+		keys := keysBoundToFn(m, ns, entry.fnName)
+		if len(keys) == 0 {
+			continue
+		}
+		if len(t) > 0 {
+			t = ui.Concat(t, ui.T(" "))
+		}
+		for _, k := range keys {
+			t = ui.Concat(t, ui.T(k.String(), ui.Inverse), ui.T(" "))
+		}
+		t = ui.Concat(t, ui.T(entry.text))
+	}
+	return t
+}
+
+func keysBoundToFn(m bindingsMap, ns *eval.Ns, fnName string) []ui.Key {
+	value := ns.IndexString(fnName + eval.FnSuffix).Get()
+	var keys []ui.Key
+	for it := m.Iterator(); it.HasElem(); it.Next() {
+		k, v := it.Elem()
+		if reflect.DeepEqual(v, value) {
+			keys = append(keys, k.(ui.Key))
+		}
+	}
+	return keys
 }
