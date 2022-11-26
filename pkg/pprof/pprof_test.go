@@ -19,16 +19,29 @@ func TestProgram(t *testing.T) {
 	testutil.InTempDir(t)
 
 	Test(t, prog.Composite(&Program{}, noopProgram{}),
-		ThatElvish("-cpuprofile", "cpuprof").DoesNothing(),
+		ThatElvish("-cpuprofile", "cpu").DoesNothing(),
 		ThatElvish("-cpuprofile", "bad/path").
 			WritesStderrContaining("Warning: cannot create CPU profile:"),
+
+		ThatElvish("-allocsprofile", "allocs").DoesNothing(),
+		ThatElvish("-allocsprofile", "bad/path").
+			WritesStderrContaining("Warning: cannot create memory allocation profile:"),
 	)
 
-	// Check for the effect of -cpuprofile. There isn't much to test beyond a
-	// sanity check that the profile file now exists.
-	_, err := os.Stat("cpuprof")
+	// Check for the effects of -cpuprofile and -allocsprofile. There isn't much
+	// that can be checked easily, so we only do a sanity check that the profile
+	// files exist and are non-empty.
+	checkFileIsNonEmpty(t, "cpu")
+	checkFileIsNonEmpty(t, "allocs")
+}
+
+func checkFileIsNonEmpty(t *testing.T, name string) {
+	t.Helper()
+	stat, err := os.Stat(name)
 	if err != nil {
 		t.Errorf("CPU profile file does not exist: %v", err)
+	} else if stat.Size() == 0 {
+		t.Errorf("CPU profile exists but is empty")
 	}
 }
 

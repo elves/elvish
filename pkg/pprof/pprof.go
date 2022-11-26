@@ -11,11 +11,13 @@ import (
 
 // Program adds support for the -cpuprofile flag.
 type Program struct {
-	cpuProfile string
+	cpuProfile    string
+	allocsProfile string
 }
 
 func (p *Program) RegisterFlags(f *prog.FlagSet) {
 	f.StringVar(&p.cpuProfile, "cpuprofile", "", "write CPU profile to file")
+	f.StringVar(&p.allocsProfile, "allocsprofile", "", "write memory allocation profile to file")
 }
 
 func (p *Program) Run(fds [3]*os.File, _ []string) error {
@@ -28,6 +30,18 @@ func (p *Program) Run(fds [3]*os.File, _ []string) error {
 		} else {
 			pprof.StartCPUProfile(f)
 			cleanups = append(cleanups, func([3]*os.File) { pprof.StopCPUProfile() })
+		}
+	}
+	if p.allocsProfile != "" {
+		f, err := os.Create(p.allocsProfile)
+		if err != nil {
+			fmt.Fprintln(fds[2], "Warning: cannot create memory allocation profile:", err)
+			fmt.Fprintln(fds[2], "Continuing without memory allocation profiling.")
+		} else {
+			cleanups = append(cleanups, func([3]*os.File) {
+				pprof.Lookup("allocs").WriteTo(f, 0)
+				f.Close()
+			})
 		}
 	}
 	return prog.NextProgram(cleanups...)
