@@ -20,7 +20,7 @@ func (p *Program) RegisterFlags(fs *prog.FlagSet) {
 
 func (p *Program) Run(fds [3]*os.File, _ []string) error {
 	if !p.run {
-		return prog.ErrNextProgram
+		return prog.NextProgram()
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

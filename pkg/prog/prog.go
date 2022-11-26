@@ -7,7 +7,6 @@ package prog
 // interface.
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -86,9 +85,6 @@ func Run(fds [3]*os.File, args []string, p Program) int {
 	if err == nil {
 		return 0
 	}
-	if err == ErrNextProgram {
-		err = errNoSuitableSubprogram
-	}
 	if msg := err.Error(); msg != "" {
 		fmt.Fprintln(fds[2], msg)
 	}
@@ -116,22 +112,35 @@ func (cp composite) RegisterFlags(f *FlagSet) {
 }
 
 func (cp composite) Run(fds [3]*os.File, args []string) error {
+	var cleanups []func([3]*os.File)
 	for _, p := range cp {
 		err := p.Run(fds, args)
-		if err != ErrNextProgram {
+		if np, ok := err.(nextProgramError); ok {
+			cleanups = append(cleanups, np.cleanups...)
+		} else {
+			for i := len(cleanups) - 1; i >= 0; i-- {
+				cleanups[i](fds)
+			}
 			return err
 		}
 	}
 	// If we have reached here, all subprograms have returned ErrNextProgram
-	return ErrNextProgram
+	return NextProgram(cleanups...)
 }
 
-var errNoSuitableSubprogram = errors.New("internal error: no suitable subprogram")
+// NextProgram returns a special error that may be returned by [Program.Run]
+// that is part of a [Composite] program, indicating that the next program
+// should be tried. It can carry a list of cleanup functions that should be run
+// in reverse order before the [Composite] program finishes.
+func NextProgram(cleanups ...func([3]*os.File)) error { return nextProgramError{cleanups} }
 
-// ErrNextProgram is a special error that may be returned by Program.Run that
-// is part of a Composite program, indicating that the next program should be
-// tried.
-var ErrNextProgram = errors.New("next program")
+type nextProgramError struct{ cleanups []func([3]*os.File) }
+
+// If this error ever gets printed, it has been bubbled to [Run] when all
+// programs have returned this error type.
+func (e nextProgramError) Error() string {
+	return "internal error: no suitable subprogram"
+}
 
 // BadUsage returns a special error that may be returned by Program.Run. It
 // causes the main function to print out a message, the usage information and

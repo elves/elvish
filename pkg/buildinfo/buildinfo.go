@@ -132,7 +132,7 @@ func (p *Program) Run(fds [3]*os.File, _ []string) error {
 			fmt.Fprintln(fds[1], Value.Version)
 		}
 	default:
-		return prog.ErrNextProgram
+		return prog.NextProgram()
 	}
 	return nil
 }

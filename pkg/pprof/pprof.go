@@ -19,6 +19,7 @@ func (p *Program) RegisterFlags(f *prog.FlagSet) {
 }
 
 func (p *Program) Run(fds [3]*os.File, _ []string) error {
+	var cleanups []func([3]*os.File)
 	if p.cpuProfile != "" {
 		f, err := os.Create(p.cpuProfile)
 		if err != nil {
@@ -26,8 +27,14 @@ func (p *Program) Run(fds [3]*os.File, _ []string) error {
 			fmt.Fprintln(fds[2], "Continuing without CPU profiling.")
 		} else {
 			pprof.StartCPUProfile(f)
-			defer pprof.StopCPUProfile()
+			cleanups = append(cleanups, func([3]*os.File) { pprof.StopCPUProfile() })
 		}
 	}
-	return prog.ErrNextProgram
+	return prog.NextProgram(cleanups...)
+}
+
+func (p *Program) Cleanup() {
+	if p.cpuProfile != "" {
+		pprof.StopCPUProfile()
+	}
 }

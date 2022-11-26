@@ -36,7 +36,7 @@ func (p *Program) RegisterFlags(fs *prog.FlagSet) {
 
 func (p *Program) Run(fds [3]*os.File, args []string) error {
 	if !p.run {
-		return prog.ErrNextProgram
+		return prog.NextProgram()
 	}
 	if len(args) > 0 {
 		return prog.BadUsage("arguments are not allowed with -daemon")

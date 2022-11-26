@@ -20,7 +20,7 @@ func TestProgram(t *testing.T) {
 
 	Test(t, prog.Composite(&Program{}, noopProgram{}),
 		ThatElvish("-cpuprofile", "cpuprof").DoesNothing(),
-		ThatElvish("-cpuprofile", "/a/bad/path").
+		ThatElvish("-cpuprofile", "bad/path").
 			WritesStderrContaining("Warning: cannot create CPU profile:"),
 	)
 
