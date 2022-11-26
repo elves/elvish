@@ -6,4 +6,5 @@ var (
 	Getwd     = &getwd
 	OSExit    = &osExit
 	TimeAfter = &timeAfter
+	TimeNow   = &timeNow
 )
