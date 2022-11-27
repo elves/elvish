@@ -225,24 +225,25 @@ func (op *delElemOp) exec(fm *Frame) Exception {
 //
 // fn f { foobar } is a shorthand for set '&'f = { foobar }.
 func compileFn(cp *compiler, fn *parse.Form) effectOp {
-	args := cp.walkArgs(fn)
-	nameNode := args.next()
-	name := stringLiteralOrError(cp, nameNode, "function name")
-	bodyNode := args.nextMustLambda("function body")
-	args.mustEnd()
+	args := getArgs(cp, fn)
+	name := args.get(0, "name").stringLiteral()
+	bodyNode := args.get(1, "function body").lambda()
+	if !args.finish() {
+		return nil
+	}
 
 	// Define the variable before compiling the body, so that the body may refer
 	// to the function itself.
 	index := cp.thisScope().add(name + FnSuffix)
 	op := cp.lambda(bodyNode)
 
-	return fnOp{nameNode.Range(), index, op}
+	return fnOp{fn.Args[0].Range(), index, op}
 }
 
 type fnOp struct {
-	keywordRange diag.Ranging
-	varIndex     int
-	lambdaOp     valuesOp
+	nameRange diag.Ranging
+	varIndex  int
+	lambdaOp  valuesOp
 }
 
 func (op fnOp) exec(fm *Frame) Exception {
@@ -256,7 +257,7 @@ func (op fnOp) exec(fm *Frame) Exception {
 	}
 	c := values[0].(*Closure)
 	c.op = fnWrap{c.op}
-	return fm.errorp(op.keywordRange, fm.local.slots[op.varIndex].Set(c))
+	return fm.errorp(op.nameRange, fm.local.slots[op.varIndex].Set(c))
 }
 
 type fnWrap struct{ effectOp }
@@ -274,24 +275,16 @@ func (op fnWrap) exec(fm *Frame) Exception {
 
 // UseForm = 'use' StringPrimary
 func compileUse(cp *compiler, fn *parse.Form) effectOp {
-	var name, spec string
-
-	switch len(fn.Args) {
-	case 0:
-		end := fn.Head.Range().To
-		cp.errorpf(diag.PointRanging(end), "use requires a module name")
-	case 1:
-		spec = stringLiteralOrError(cp, fn.Args[0], "module spec")
-		// Use the last path component as the name; for instance, if path =
-		// "a/b/c/d", name is "d". If path doesn't have slashes, name = path.
+	args := getArgs(cp, fn)
+	spec := args.get(0, "module spec").stringLiteral()
+	name := ""
+	if args.has(1) {
+		name = args.get(1, "module name").stringLiteral()
+	} else {
 		name = spec[strings.LastIndexByte(spec, '/')+1:]
-	case 2:
-		// TODO(xiaq): Allow using variable as module path
-		spec = stringLiteralOrError(cp, fn.Args[0], "module spec")
-		name = stringLiteralOrError(cp, fn.Args[1], "module name")
-	default: // > 2
-		cp.errorpf(diag.MixedRanging(fn.Args[2], fn.Args[len(fn.Args)-1]),
-			"use has superfluous argument(s)")
+	}
+	if !args.finish() {
+		return nil
 	}
 
 	return useOp{fn.Range(), cp.thisScope().add(name + NsSuffix), spec}
@@ -494,26 +487,31 @@ func (op *coalesceOp) exec(fm *Frame) Exception {
 }
 
 func compileIf(cp *compiler, fn *parse.Form) effectOp {
-	args := cp.walkArgs(fn)
+	args := getArgs(cp, fn)
 	var condNodes []*parse.Compound
 	var bodyNodes []*parse.Primary
-	condLeader := "if"
+	i := 0
+	bodyName := "if body"
 	for {
-		condNodes = append(condNodes, args.next())
-		bodyNodes = append(bodyNodes, args.nextMustThunk(condLeader))
-		if !args.nextIs("elif") {
+		condNodes = append(condNodes, args.get(i, "condition").any())
+		bodyNodes = append(bodyNodes, args.get(i+1, bodyName).thunk())
+		i += 2
+		if !args.hasKeyword(i, "elif") {
 			break
 		}
-		condLeader = "elif"
+		i++
+		bodyName = "elif body"
 	}
-	elseNode := args.nextMustThunkIfAfter("else")
-	args.mustEnd()
+	elseBody := args.optionalKeywordBody(i, "else")
+	if !args.finish() {
+		return nil
+	}
 
 	condOps := cp.compoundOps(condNodes)
 	bodyOps := cp.primaryOps(bodyNodes)
 	var elseOp valuesOp
-	if elseNode != nil {
-		elseOp = cp.primaryOp(elseNode)
+	if elseBody != nil {
+		elseOp = cp.primaryOp(elseBody)
 	}
 
 	return &ifOp{fn.Range(), condOps, bodyOps, elseOp}
@@ -548,11 +546,13 @@ func (op *ifOp) exec(fm *Frame) Exception {
 }
 
 func compileWhile(cp *compiler, fn *parse.Form) effectOp {
-	args := cp.walkArgs(fn)
-	condNode := args.next()
-	bodyNode := args.nextMustThunk("while body")
-	elseNode := args.nextMustThunkIfAfter("else")
-	args.mustEnd()
+	args := getArgs(cp, fn)
+	condNode := args.get(0, "condition").any()
+	bodyNode := args.get(1, "while body").thunk()
+	elseNode := args.optionalKeywordBody(2, "else")
+	if !args.finish() {
+		return nil
+	}
 
 	condOp := cp.compoundOp(condNode)
 	bodyOp := cp.primaryOp(bodyNode)
@@ -603,12 +603,14 @@ func (op *whileOp) exec(fm *Frame) Exception {
 }
 
 func compileFor(cp *compiler, fn *parse.Form) effectOp {
-	args := cp.walkArgs(fn)
-	varNode := args.next()
-	iterNode := args.next()
-	bodyNode := args.nextMustThunk("for body")
-	elseNode := args.nextMustThunkIfAfter("else")
-	args.mustEnd()
+	args := getArgs(cp, fn)
+	varNode := args.get(0, "variable").any()
+	iterNode := args.get(1, "iterable").any()
+	bodyNode := args.get(2, "for body").thunk()
+	elseNode := args.optionalKeywordBody(3, "else")
+	if !args.finish() {
+		return nil
+	}
 
 	lvalue := cp.compileOneLValue(varNode, setLValue|newLValue)
 
@@ -680,28 +682,34 @@ func (op *forOp) exec(fm *Frame) Exception {
 }
 
 func compileTry(cp *compiler, fn *parse.Form) effectOp {
-	logger.Println("compiling try")
-	args := cp.walkArgs(fn)
-	bodyNode := args.nextMustThunk("try body")
-	logger.Printf("body is %q", parse.SourceText(bodyNode))
+	args := getArgs(cp, fn)
+	bodyNode := args.get(0, "try body").thunk()
+	i := 1
 	var catchVarNode *parse.Compound
 	var catchNode *parse.Primary
-	if args.peekIs("except") {
-		cp.deprecate(args.peek(),
+	if args.hasKeyword(i, "except") {
+		cp.deprecate(fn.Args[i],
 			`"except" is deprecated; use "catch" instead`, 18)
 	}
-	if args.nextIs("except") || args.nextIs("catch") {
+	if args.hasKeyword(i, "except") || args.hasKeyword(i, "catch") {
+		i++
 		// Parse an optional lvalue into exceptVarNode.
-		n := args.peek()
+		n := args.get(i, "variable or body").any()
 		if _, ok := cmpd.StringLiteral(n); ok {
 			catchVarNode = n
-			args.next()
+			i++
 		}
-		catchNode = args.nextMustThunk("catch body")
+		catchNode = args.get(i, "catch body").thunk()
+		i++
 	}
-	elseNode := args.nextMustThunkIfAfter("else")
-	finallyNode := args.nextMustThunkIfAfter("finally")
-	args.mustEnd()
+	elseNode := args.optionalKeywordBody(i, "else")
+	if elseNode != nil {
+		i += 2
+	}
+	finallyNode := args.optionalKeywordBody(i, "finally")
+	if !args.finish() {
+		return nil
+	}
 
 	if catchNode == nil && finallyNode == nil {
 		cp.errorpf(fn, "try must be followed by a catch block or a finally block")
@@ -778,16 +786,16 @@ func (op *tryOp) exec(fm *Frame) Exception {
 
 // PragmaForm = 'pragma' 'fallback-resolver' '=' { Compound }
 func compilePragma(cp *compiler, fn *parse.Form) effectOp {
-	args := cp.walkArgs(fn)
-	nameNode := args.next()
-	name := stringLiteralOrError(cp, nameNode, "pragma name")
-	eqNode := args.next()
-	eq := stringLiteralOrError(cp, eqNode, "literal =")
+	args := getArgs(cp, fn)
+	name := args.get(0, "pragma name").stringLiteral()
+	eq := args.get(1, "literal =").stringLiteral()
 	if eq != "=" {
-		cp.errorpf(eqNode, "must be literal =")
+		args.errorpf(fn.Args[1], "must be literal =")
 	}
-	valueNode := args.next()
-	args.mustEnd()
+	valueNode := args.get(2, "pragma value").any()
+	if !args.finish() {
+		return nil
+	}
 
 	switch name {
 	case "unknown-command":
@@ -802,7 +810,7 @@ func compilePragma(cp *compiler, fn *parse.Form) effectOp {
 				"invalid value for unknown-command: %s", parse.Quote(value))
 		}
 	default:
-		cp.errorpf(nameNode, "unknown pragma %s", parse.Quote(name))
+		cp.errorpf(fn.Args[0], "unknown pragma %s", parse.Quote(name))
 	}
 	return nopOp{}
 }

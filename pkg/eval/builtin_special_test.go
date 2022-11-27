@@ -20,8 +20,8 @@ import (
 
 func TestPragma(t *testing.T) {
 	Test(t,
-		That("pragma unknown-command").DoesNotCompile("need more arguments"),
-		That("pragma unknown-command =").DoesNotCompile("need more arguments"),
+		That("pragma unknown-command").DoesNotCompile("need literal ="),
+		That("pragma unknown-command =").DoesNotCompile("need pragma value"),
 		That("pragma unknown-command x").DoesNotCompile("must be literal ="),
 		That("pragma bad-name = some-value").DoesNotCompile("unknown pragma bad-name"),
 		That("pragma unknown-command = bad").DoesNotCompile("invalid value for unknown-command: bad"),
@@ -560,8 +560,8 @@ func TestUse(t *testing.T) {
 		That("use non-existent").Throws(ErrorWithMessage("no such module: non-existent")),
 
 		// Wrong uses of "use".
-		That("use").DoesNotCompile("use requires a module name"),
-		That("use a b c").DoesNotCompile("use has superfluous argument(s)"),
+		That("use").DoesNotCompile("need module spec"),
+		That("use a b c").DoesNotCompile("superfluous arguments"),
 	)
 }
 

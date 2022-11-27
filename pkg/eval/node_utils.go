@@ -16,85 +16,108 @@ func stringLiteralOrError(cp *compiler, n *parse.Compound, what string) string {
 	return s
 }
 
-type errorpfer interface {
-	errorpf(r diag.Ranger, fmt string, args ...any)
+type argsGetter struct {
+	cp *compiler
+	fn *parse.Form
+	ok bool
+	n  int
 }
 
-// argsWalker is used by builtin special forms to implement argument parsing.
-type argsWalker struct {
-	cp   errorpfer
-	form *parse.Form
-	idx  int
+func getArgs(cp *compiler, fn *parse.Form) *argsGetter {
+	return &argsGetter{cp, fn, true, 0}
 }
 
-func (cp *compiler) walkArgs(f *parse.Form) *argsWalker {
-	return &argsWalker{cp, f, 0}
-}
-
-func (aw *argsWalker) more() bool {
-	return aw.idx < len(aw.form.Args)
-}
-
-func (aw *argsWalker) peek() *parse.Compound {
-	if !aw.more() {
-		aw.cp.errorpf(aw.form, "need more arguments")
+func (ag *argsGetter) errorpf(r diag.Ranger, format string, args ...any) {
+	if ag.ok {
+		ag.cp.errorpf(r, format, args...)
+		ag.ok = false
 	}
-	return aw.form.Args[aw.idx]
 }
 
-func (aw *argsWalker) next() *parse.Compound {
-	n := aw.peek()
-	aw.idx++
-	return n
+func (ag *argsGetter) get(i int, what string) *argAsserter {
+	if ag.n < i+1 {
+		ag.n = i + 1
+	}
+	if i >= len(ag.fn.Args) {
+		ag.errorpf(diag.PointRanging(ag.fn.To), "need %s", what)
+		return &argAsserter{ag, what, nil}
+	}
+	return &argAsserter{ag, what, ag.fn.Args[i]}
 }
 
-func (aw *argsWalker) peekIs(text string) bool {
-	return aw.more() && parse.SourceText(aw.form.Args[aw.idx]) == text
-}
+func (ag *argsGetter) has(i int) bool { return i < len(ag.fn.Args) }
 
-// nextIs returns whether the next argument's source matches the given text. It
-// also consumes the argument if it is.
-func (aw *argsWalker) nextIs(text string) bool {
-	if aw.peekIs(text) {
-		aw.idx++
-		return true
+func (ag *argsGetter) hasKeyword(i int, kw string) bool {
+	if i < len(ag.fn.Args) {
+		s, ok := cmpd.StringLiteral(ag.fn.Args[i])
+		return ok && s == kw
 	}
 	return false
 }
 
-// nextMustLambda fetches the next argument, raising an error if it is not a
-// lambda.
-func (aw *argsWalker) nextMustLambda(what string) *parse.Primary {
-	n := aw.next()
-	pn, ok := cmpd.Lambda(n)
-	if !ok {
-		aw.cp.errorpf(n, "%s must be lambda, found %s", what, cmpd.Shape(n))
-	}
-	return pn
-}
-
-// nextMustThunk fetches the next argument, raising an error if it is not a
-// thunk.
-func (aw *argsWalker) nextMustThunk(what string) *parse.Primary {
-	n := aw.nextMustLambda(what)
-	if len(n.Elements) > 0 {
-		aw.cp.errorpf(n, "%s must not have arguments", what)
-	}
-	if len(n.MapPairs) > 0 {
-		aw.cp.errorpf(n, "%s must not have options", what)
-	}
-	return n
-}
-
-func (aw *argsWalker) nextMustThunkIfAfter(leader string) *parse.Primary {
-	if aw.nextIs(leader) {
-		return aw.nextMustLambda(leader + " body")
+func (ag *argsGetter) optionalKeywordBody(i int, kw string) *parse.Primary {
+	if ag.has(i+1) && ag.hasKeyword(i, kw) {
+		return ag.get(i+1, kw+" body").thunk()
 	}
 	return nil
 }
 
-func (aw *argsWalker) mustEnd() {
-	if aw.more() {
-		aw.cp.errorpf(diag.Ranging{From: aw.form.Args[aw.idx].Range().From, To: aw.form.Range().To}, "too many arguments")
+func (ag *argsGetter) finish() bool {
+	if ag.n < len(ag.fn.Args) {
+		ag.errorpf(
+			diag.Ranging{From: ag.fn.Args[ag.n].Range().From, To: ag.fn.To},
+			"superfluous arguments")
 	}
+	return ag.ok
+}
+
+type argAsserter struct {
+	ag   *argsGetter
+	what string
+	node *parse.Compound
+}
+
+func (aa *argAsserter) any() *parse.Compound {
+	return aa.node
+}
+
+func (aa *argAsserter) stringLiteral() string {
+	if aa.node == nil {
+		return ""
+	}
+	s, err := cmpd.StringLiteralOrError(aa.node, aa.what)
+	if err != nil {
+		aa.ag.errorpf(aa.node, "%v", err)
+		return ""
+	}
+	return s
+}
+
+func (aa *argAsserter) lambda() *parse.Primary {
+	if aa.node == nil {
+		return nil
+	}
+	lambda, ok := cmpd.Lambda(aa.node)
+	if !ok {
+		aa.ag.errorpf(aa.node,
+			"%s must be lambda, found %s", aa.what, cmpd.Shape(aa.node))
+		return nil
+	}
+	return lambda
+}
+
+func (aa *argAsserter) thunk() *parse.Primary {
+	lambda := aa.lambda()
+	if lambda == nil {
+		return nil
+	}
+	if len(lambda.Elements) > 0 {
+		aa.ag.errorpf(lambda, "%s must not have arguments", aa.what)
+		return nil
+	}
+	if len(lambda.MapPairs) > 0 {
+		aa.ag.errorpf(lambda, "%s must not have options", aa.what)
+		return nil
+	}
+	return lambda
 }
