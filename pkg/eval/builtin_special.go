@@ -789,7 +789,7 @@ func compilePragma(cp *compiler, fn *parse.Form) effectOp {
 	args := getArgs(cp, fn)
 	name := args.get(0, "pragma name").stringLiteral()
 	eq := args.get(1, "literal =").stringLiteral()
-	if eq != "=" {
+	if args.has(1) && eq != "=" {
 		args.errorpf(fn.Args[1], "must be literal =")
 	}
 	valueNode := args.get(2, "pragma value").any()

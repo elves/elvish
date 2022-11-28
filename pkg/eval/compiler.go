@@ -28,32 +28,27 @@ type compiler struct {
 	deprecations deprecationRegistry
 	// Information about the source.
 	srcMeta parse.Source
+	// Compilation errrors.
+	errors []*diag.Error
 }
 
 type scopePragma struct {
 	unknownCommandIsExternal bool
 }
 
-func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (op nsOp, err error) {
+func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (nsOp, error) {
 	g = g.clone()
 	cp := &compiler{
 		b, []*staticNs{g}, []*staticUpNs{new(staticUpNs)},
 		[]*scopePragma{{unknownCommandIsExternal: true}},
-		w, newDeprecationRegistry(), tree.Source}
-	defer func() {
-		r := recover()
-		if r == nil {
-			return
-		} else if e := GetCompilationError(r); e != nil {
-			// Save the compilation error and stop the panic.
-			err = e
-		} else {
-			// Resume the panic; it is not supposed to be handled here.
-			panic(r)
-		}
-	}()
+		w, newDeprecationRegistry(), tree.Source, nil}
 	chunkOp := cp.chunkOp(tree.Root)
-	return nsOp{chunkOp, g}, nil
+	var err error
+	if len(cp.errors) > 0 {
+		// TODO: Preserve all compilation errors.
+		err = cp.errors[0]
+	}
+	return nsOp{chunkOp, g}, err
 }
 
 type nsOp struct {
@@ -84,8 +79,7 @@ func (op nsOp) prepare(fm *Frame) (*Ns, func() Exception) {
 const compilationErrorType = "compilation error"
 
 func (cp *compiler) errorpf(r diag.Ranger, format string, args ...any) {
-	// The panic is caught by the recover in compile above.
-	panic(&diag.Error{
+	cp.errors = append(cp.errors, &diag.Error{
 		Type:    compilationErrorType,
 		Message: fmt.Sprintf(format, args...),
 		Context: *diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r)})

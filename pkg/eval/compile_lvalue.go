@@ -38,6 +38,7 @@ func (cp *compiler) parseCompoundLValues(ns []*parse.Compound, f lvalueFlag) lva
 	for _, n := range ns {
 		if len(n.Indexings) != 1 {
 			cp.errorpf(n, "lvalue may not be composite expressions")
+			break
 		}
 		more := cp.parseIndexingLValue(n.Indexings[0], f)
 		if more.rest == -1 {
