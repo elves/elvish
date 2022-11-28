@@ -7,7 +7,11 @@ type Ranger interface {
 }
 
 // Ranging represents a range [From, To) within an indexable sequence. Structs
-// can embed Ranging to satisfy the Ranger interface.
+// can embed Ranging to satisfy the [Ranger] interface.
+//
+// Ideally, this type would be called Range. However, doing that means structs
+// embedding this type will have Range as a field instead of a method, thus not
+// implementing the [Ranger] interface.
 type Ranging struct {
 	From int
 	To   int
