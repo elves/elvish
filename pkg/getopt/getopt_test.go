@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/errutil"
 )
 
 var (
@@ -189,7 +189,7 @@ var parseTests = []struct {
 		args: []string{"-b", "-f"},
 		wantOpts: []*Option{
 			{Spec: &OptionSpec{Short: 'b', Arity: OptionalArgument}, Unknown: true}},
-		wantErr: diag.Errors(
+		wantErr: errutil.Multi(
 			errors.New("missing argument for -f"), errors.New("unknown option -b")),
 	},
 }

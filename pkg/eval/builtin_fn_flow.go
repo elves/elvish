@@ -5,7 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/errutil"
 	"src.elv.sh/pkg/eval/vals"
 )
 
@@ -98,7 +98,7 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 					atomic.StoreInt32(&broken, 1)
 				default:
 					errMu.Lock()
-					err = diag.Errors(err, ex)
+					err = errutil.Multi(err, ex)
 					defer errMu.Unlock()
 					atomic.StoreInt32(&broken, 1)
 				}

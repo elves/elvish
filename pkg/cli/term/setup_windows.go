@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"golang.org/x/sys/windows"
-	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/errutil"
 )
 
 const (
@@ -34,11 +34,11 @@ func setup(in, out *os.File) (func() error, error) {
 	errVT := setupVT(out)
 
 	return func() error {
-		return diag.Errors(
+		return errutil.Multi(
 			restoreVT(out),
 			windows.SetConsoleMode(hOut, oldOutMode),
 			windows.SetConsoleMode(hIn, oldInMode))
-	}, diag.Errors(errSetIn, errSetOut, errVT)
+	}, errutil.Multi(errSetIn, errSetOut, errVT)
 }
 
 const outFlagForEval = windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING

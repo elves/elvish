@@ -1,4 +1,4 @@
-package diag
+package errutil
 
 import (
 	"errors"
@@ -15,23 +15,22 @@ var errorsTests = []struct {
 	e          error
 	wantString string
 }{
-	{Errors(), ""},
-	{MultiError{}, "no error"},
-	{Errors(errors.New("some error")), "some error"},
+	{Multi(), ""},
+	{Multi(errors.New("some error")), "some error"},
 	{
-		Errors(err1, err2),
+		Multi(err1, err2),
 		"multiple errors: error 1; error 2",
 	},
 	{
-		Errors(err1, err2, err3),
+		Multi(err1, err2, err3),
 		"multiple errors: error 1; error 2; error 3",
 	},
 	{
-		Errors(err1, Errors(err2, err3)),
+		Multi(err1, Multi(err2, err3)),
 		"multiple errors: error 1; error 2; error 3",
 	},
 	{
-		Errors(Errors(err1, err2), err3),
+		Multi(Multi(err1, err2), err3),
 		"multiple errors: error 1; error 2; error 3",
 	},
 }

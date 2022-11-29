@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"strings"
 
-	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/errutil"
 )
 
 // Config configurates the parsing behavior.
@@ -121,7 +121,7 @@ func Parse(args []string, specs []*OptionSpec, cfg Config) ([]*Option, []string,
 	}
 	for _, opt := range opts {
 		if opt.Unknown {
-			err = diag.Errors(err, fmt.Errorf("unknown option %s", optionPart(opt)))
+			err = errutil.Multi(err, fmt.Errorf("unknown option %s", optionPart(opt)))
 		}
 	}
 	return opts, nonOptArgs, err

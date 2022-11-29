@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/errutil"
 	"src.elv.sh/pkg/eval/vals"
 )
 
@@ -81,7 +81,7 @@ func (envli *envListVar) Set(v any) error {
 	})
 
 	if errElement != nil || errIterate != nil {
-		return diag.Errors(errElement, errIterate)
+		return errutil.Multi(errElement, errIterate)
 	}
 
 	envli.Lock()

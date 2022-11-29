@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"golang.org/x/sys/unix"
-	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/errutil"
 	"src.elv.sh/pkg/sys/eunix"
 )
 
@@ -45,7 +45,7 @@ func setup(in, out *os.File) (func() error, error) {
 	}
 
 	restore := func() error {
-		return diag.Errors(savedTermios.ApplyToFd(fd), restoreVT(out))
+		return errutil.Multi(savedTermios.ApplyToFd(fd), restoreVT(out))
 	}
 
 	return restore, errSetupVT
