@@ -58,6 +58,7 @@ type CodeAreaState struct {
 	Buffer      CodeBuffer
 	Pending     PendingCode
 	HideRPrompt bool
+	HideErrors  bool
 }
 
 // CodeBuffer represents the buffer of the CodeArea widget.

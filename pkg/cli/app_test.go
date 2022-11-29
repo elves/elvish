@@ -198,7 +198,7 @@ func TestReadCode_ShowsHighlightedCode(t *testing.T) {
 	f.TTY.TestBuffer(t, wantBuf)
 }
 
-func TestReadCode_ShowsErrorsFromHighlighter(t *testing.T) {
+func TestReadCode_ShowsErrorsFromHighlighter_ExceptInFinalRedraw(t *testing.T) {
 	f := Setup(withHighlighter(
 		testHighlighter{
 			get: func(code string) (ui.Text, []error) {
@@ -215,6 +215,9 @@ func TestReadCode_ShowsErrorsFromHighlighter(t *testing.T) {
 		Write("ERR 1").Newline().
 		Write("ERR 2").Buffer()
 	f.TTY.TestBuffer(t, wantBuf)
+
+	feedInput(f.TTY, "\n")
+	f.TestTTY(t, "code", "\n", term.DotHere)
 }
 
 func TestReadCode_RedrawsOnLateUpdateFromHighlighter(t *testing.T) {

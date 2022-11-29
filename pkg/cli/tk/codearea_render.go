@@ -21,6 +21,9 @@ func getView(w *codeArea) *view {
 	s := w.CopyState()
 	code, pFrom, pTo := patchPending(s.Buffer, s.Pending)
 	styledCode, errors := w.Highlighter(code.Content)
+	if s.HideErrors {
+		errors = nil
+	}
 	if pFrom < pTo {
 		// Apply stylingForPending to [pFrom, pTo)
 		parts := styledCode.Partition(pFrom, pTo)

@@ -259,13 +259,15 @@ func (a *app) redraw(flag redrawFlag) {
 	isFinalRedraw := flag&finalRedraw != 0
 	if isFinalRedraw {
 		hideRPrompt := !a.RPromptPersistent()
-		if hideRPrompt {
-			a.codeArea.MutateState(func(s *tk.CodeAreaState) { s.HideRPrompt = true })
-		}
+		a.codeArea.MutateState(func(s *tk.CodeAreaState) {
+			s.HideErrors = true
+			s.HideRPrompt = hideRPrompt
+		})
 		bufMain := renderApp([]tk.Widget{a.codeArea /* no addon */}, width, height)
-		if hideRPrompt {
-			a.codeArea.MutateState(func(s *tk.CodeAreaState) { s.HideRPrompt = false })
-		}
+		a.codeArea.MutateState(func(s *tk.CodeAreaState) {
+			s.HideErrors = false
+			s.HideRPrompt = false
+		})
 		// Insert a newline after the buffer and position the cursor there.
 		bufMain.Extend(term.NewBuffer(width), true)
 

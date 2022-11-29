@@ -104,6 +104,19 @@ var codeAreaRenderTests = []renderTest{
 			Newline().Write("static error"),
 	},
 	{
+		Name: "suppressed errors",
+		Given: NewCodeArea(CodeAreaSpec{
+			Prompt: p(ui.T("> ")),
+			Highlighter: func(code string) (ui.Text, []error) {
+				err := errors.New("static error")
+				return ui.T(code), []error{err}
+			},
+			State: CodeAreaState{
+				Buffer: CodeBuffer{Content: "code", Dot: 4}, HideErrors: true}}),
+		Width: 10, Height: 24,
+		Want: bb(10).Write("> code").SetDotHere(),
+	},
+	{
 		Name: "pending code inserting at the dot",
 		Given: NewCodeArea(CodeAreaSpec{State: CodeAreaState{
 			Buffer:  CodeBuffer{Content: "code", Dot: 4},
