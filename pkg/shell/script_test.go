@@ -28,11 +28,11 @@ func TestScript(t *testing.T) {
 		// parse error
 		ThatElvish("-c", "echo [").
 			ExitsWith(2).
-			WritesStderrContaining("parse error"),
+			WritesStderrContaining("Parse error"),
 		// parse error with -compileonly
 		ThatElvish("-compileonly", "-c", "echo [").
 			ExitsWith(2).
-			WritesStderrContaining("parse error"),
+			WritesStderrContaining("Parse error"),
 		// parse error with -compileonly -json
 		ThatElvish("-compileonly", "-json", "-c", "echo [").
 			ExitsWith(2).
@@ -45,11 +45,11 @@ func TestScript(t *testing.T) {
 		// compilation error
 		ThatElvish("-c", "echo $a").
 			ExitsWith(2).
-			WritesStderrContaining("compilation error"),
+			WritesStderrContaining("Compilation error"),
 		// compilation error with -compileonly
 		ThatElvish("-compileonly", "-c", "echo $a").
 			ExitsWith(2).
-			WritesStderrContaining("compilation error"),
+			WritesStderrContaining("Compilation error"),
 		// compilation error with -compileonly -json
 		ThatElvish("-compileonly", "-json", "-c", "echo $a").
 			ExitsWith(2).

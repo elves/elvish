@@ -25,7 +25,8 @@ func TestError(t *testing.T) {
 	culpritLineBegin = "<"
 	culpritLineEnd = ">"
 	wantShow := lines(
-		"some error: \033[31;1mbad list\033[m",
+		// Type is capitalized in return value of Show
+		"Some error: \033[31;1mbad list\033[m",
 		"[test], line 1: echo <[x]>",
 	)
 	if gotShow := err.Show(""); gotShow != wantShow {
