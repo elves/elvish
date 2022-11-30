@@ -134,8 +134,10 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 		head, indices := cn.Indexings[0].Head, cn.Indexings[0].Indices
 		if head.Type == parse.Variable {
 			cp.errorpf(cn, "arguments to del must omit the dollar sign")
+			continue
 		} else if !parse.ValidLHSVariable(head, false) {
 			cp.errorpf(cn, delArgMsg)
+			continue
 		}
 
 		qname := head.Value

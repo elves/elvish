@@ -45,16 +45,24 @@ type errorMatcher interface{ matchError(error) bool }
 
 // An errorMatcher for compilation errors.
 type compilationError struct {
-	msg string
+	msgs []string
 }
 
 func (e compilationError) Error() string {
-	return "compilation error with message: " + e.msg
+	return fmt.Sprintf("compilation errors with messages: %v", e.msgs)
 }
 
 func (e compilationError) matchError(e2 error) bool {
-	ce := eval.GetCompilationError(e2)
-	return ce != nil && ce.Message == e.msg
+	errs := eval.UnpackCompilationErrors(e2)
+	if len(e.msgs) != len(errs) {
+		return false
+	}
+	for i, msg := range e.msgs {
+		if msg != errs[i].Message {
+			return false
+		}
+	}
+	return true
 }
 
 // An errorMatcher for exceptions.

@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"sync"
 
-	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -415,16 +414,16 @@ func fillDefaultDummyPorts(ports []*Port) []*Port {
 // It always tries to compile the code even if there is a parse error; both
 // return values may be non-nil. If w is not nil, deprecation messages are
 // written to it.
-func (ev *Evaler) Check(src parse.Source, w io.Writer) (error, *diag.Error) {
+func (ev *Evaler) Check(src parse.Source, w io.Writer) (parseErr, compileErr error) {
 	tree, parseErr := parse.Parse(src, parse.Config{WarningWriter: w})
 	return parseErr, ev.CheckTree(tree, w)
 }
 
 // CheckTree checks the given parsed source tree for compilation errors. If w is
 // not nil, deprecation messages are written to it.
-func (ev *Evaler) CheckTree(tree parse.Tree, w io.Writer) *diag.Error {
+func (ev *Evaler) CheckTree(tree parse.Tree, w io.Writer) error {
 	_, compileErr := ev.compile(tree, ev.Global(), w)
-	return GetCompilationError(compileErr)
+	return compileErr
 }
 
 // Compiles a parsed tree.

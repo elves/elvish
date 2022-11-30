@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
+	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/testutil"
@@ -37,4 +38,12 @@ func testCompileTimeDeprecation(t *testing.T, code, wantWarning string, level in
 	if !strings.Contains(warning, wantWarning) {
 		t.Errorf("got warning %q, want warning containing %q", warning, wantWarning)
 	}
+}
+
+func TestMultipleCompileationErrors(t *testing.T) {
+	Test(t,
+		That("echo $x; echo $y").DoesNotCompile(
+			"variable $x not found",
+			"variable $y not found"),
+	)
 }

@@ -17,12 +17,14 @@ package evaltest
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/must"
@@ -122,9 +124,9 @@ func (c Case) Throws(reason error, stacks ...string) Case {
 }
 
 // DoesNotCompile returns an altered Case that requires the source code to fail
-// compilation with a specific error message.
-func (c Case) DoesNotCompile(msg string) Case {
-	c.want.CompilationError = compilationError{msg}
+// compilation with the given error messages.
+func (c Case) DoesNotCompile(msgs ...string) Case {
+	c.want.CompilationError = compilationError{msgs}
 	return c
 }
 
@@ -171,8 +173,8 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 				}
 			}
 			if !matchErr(tc.want.CompilationError, r.CompilationError) {
-				t.Errorf("got compilation error %v, want %v",
-					r.CompilationError, tc.want.CompilationError)
+				t.Errorf("got compilation error:\n%v\nwant %v",
+					show(r.CompilationError), tc.want.CompilationError)
 			}
 			if !matchErr(tc.want.Exception, r.Exception) {
 				t.Errorf("unexpected exception")
@@ -202,7 +204,7 @@ func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) result {
 
 		if parse.UnpackErrors(err) != nil {
 			t.Fatalf("Parse(%q) error: %s", text, err)
-		} else if eval.GetCompilationError(err) != nil {
+		} else if eval.UnpackCompilationErrors(err) != nil {
 			// NOTE: If multiple code pieces have compilation errors, only the
 			// last one compilation error is saved.
 			r.CompilationError = err
@@ -281,4 +283,11 @@ func matchErr(want, got error) bool {
 		return matcher.matchError(got)
 	}
 	return reflect.DeepEqual(want, got)
+}
+
+func show(v any) string {
+	if s, ok := v.(diag.Shower); ok {
+		return s.Show("")
+	}
+	return fmt.Sprint(v)
 }

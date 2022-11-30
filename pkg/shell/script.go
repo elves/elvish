@@ -94,16 +94,15 @@ type errorInJSON struct {
 }
 
 // Converts parse and compilation errors into JSON.
-func errorsToJSON(parseErr error, compileErr *diag.Error) []byte {
+func errorsToJSON(parseErr, compileErr error) []byte {
 	var converted []errorInJSON
 	for _, e := range parse.UnpackErrors(parseErr) {
 		converted = append(converted,
 			errorInJSON{e.Context.Name, e.Context.From, e.Context.To, e.Message})
 	}
-	if compileErr != nil {
+	for _, e := range eval.UnpackCompilationErrors(compileErr) {
 		converted = append(converted,
-			errorInJSON{compileErr.Context.Name,
-				compileErr.Context.From, compileErr.Context.To, compileErr.Message})
+			errorInJSON{e.Context.Name, e.Context.From, e.Context.To, e.Message})
 	}
 
 	jsonError, errMarshal := json.Marshal(converted)

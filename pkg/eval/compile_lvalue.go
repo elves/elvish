@@ -53,22 +53,27 @@ func (cp *compiler) parseCompoundLValues(ns []*parse.Compound, f lvalueFlag) lva
 	return g
 }
 
+var dummyLValuesGroup = lvaluesGroup{[]lvalue{{}}, -1}
+
 func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvaluesGroup {
 	if n.Head.Type == parse.Braced {
 		// Braced list of lvalues may not have indices.
 		if len(n.Indices) > 0 {
 			cp.errorpf(n, "braced list may not have indices when used as lvalue")
+			return dummyLValuesGroup
 		}
 		return cp.parseCompoundLValues(n.Head.Braced, f)
 	}
 	// A basic lvalue.
 	if !parse.ValidLHSVariable(n.Head, true) {
 		cp.errorpf(n.Head, "lvalue must be valid literal variable names")
+		return dummyLValuesGroup
 	}
 	varUse := n.Head.Value
 	sigil, qname := SplitSigil(varUse)
 	if qname == "" {
 		cp.errorpf(n, "variable name must not be empty")
+		return dummyLValuesGroup
 	}
 
 	var ref *varRef
@@ -76,14 +81,17 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvalues
 		ref = resolveVarRef(cp, qname, n)
 		if ref != nil && len(ref.subNames) == 0 && ref.info.readOnly {
 			cp.errorpf(n, "variable $%s is read-only", parse.Quote(qname))
+			return dummyLValuesGroup
 		}
 	}
 	if ref == nil {
 		if f&newLValue == 0 {
 			cp.errorpf(n, "cannot find variable $%s", parse.Quote(qname))
+			return dummyLValuesGroup
 		}
 		if len(n.Indices) > 0 {
 			cp.errorpf(n, "new variable $%s must not have indices", parse.Quote(qname))
+			return dummyLValuesGroup
 		}
 		segs := SplitQNameSegs(qname)
 		if len(segs) == 1 {
@@ -95,6 +103,7 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvalues
 			cp.errorpf(n, "cannot create variable $%s; "+
 				"new variables can only be created in the current scope",
 				parse.Quote(qname))
+			return dummyLValuesGroup
 		}
 	}
 

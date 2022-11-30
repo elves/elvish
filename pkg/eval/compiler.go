@@ -28,7 +28,7 @@ type compiler struct {
 	deprecations deprecationRegistry
 	// Information about the source.
 	srcMeta parse.Source
-	// Compilation errrors.
+	// Compilation errors.
 	errors []*diag.Error
 }
 
@@ -43,12 +43,7 @@ func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (nsOp, error) {
 		[]*scopePragma{{unknownCommandIsExternal: true}},
 		w, newDeprecationRegistry(), tree.Source, nil}
 	chunkOp := cp.chunkOp(tree.Root)
-	var err error
-	if len(cp.errors) > 0 {
-		// TODO: Preserve all compilation errors.
-		err = cp.errors[0]
-	}
-	return nsOp{chunkOp, g}, err
+	return nsOp{chunkOp, g}, diag.PackCognateErrors(cp.errors)
 }
 
 type nsOp struct {
@@ -85,11 +80,12 @@ func (cp *compiler) errorpf(r diag.Ranger, format string, args ...any) {
 		Context: *diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r)})
 }
 
-// GetCompilationError returns a *diag.Error if the given value is a compilation
-// error. Otherwise it returns nil.
-func GetCompilationError(e any) *diag.Error {
-	if e, ok := e.(*diag.Error); ok && e.Type == compilationErrorType {
-		return e
+// UnpackCompilationErrors returns the constituent compilation errors if the
+// given error contains one or more compilation errors. Otherwise it returns
+// nil.
+func UnpackCompilationErrors(e error) []*diag.Error {
+	if errs := diag.UnpackCognateErrors(e); len(errs) > 0 && errs[0].Type == compilationErrorType {
+		return errs
 	}
 	return nil
 }
