@@ -14,7 +14,7 @@ func TestError(t *testing.T) {
 	err := &Error{
 		Type:    "some error",
 		Message: "bad list",
-		Context: *parseContext("echo [x]", "[", "]", true),
+		Context: *contextInParen("[test]", "echo (x)"),
 	}
 
 	wantErrorString := "some error: 5-8 in [test]: bad list"
@@ -30,7 +30,7 @@ func TestError(t *testing.T) {
 	wantShow := lines(
 		// Type is capitalized in return value of Show
 		"Some error: \033[31;1mbad list\033[m",
-		"[test], line 1: echo <[x]>",
+		"[test], line 1: echo <(x)>",
 	)
 	if gotShow := err.Show(""); gotShow != wantShow {
 		t.Errorf("Show() -> %q, want %q", gotShow, wantShow)

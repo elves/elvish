@@ -12,12 +12,12 @@ var (
 	err1 = &Error{
 		Type:    "foo error",
 		Message: "bad 1",
-		Context: *parseContext("echo [1]", "[", "]", true),
+		Context: *contextInParen("[test]", "echo (1)"),
 	}
 	err2 = &Error{
 		Type:    "foo error",
 		Message: "bad 2",
-		Context: *parseContext("echo [2]", "[", "]", true),
+		Context: *contextInParen("[test]", "echo (2)"),
 	}
 )
 
@@ -46,9 +46,9 @@ var cognateErrorsTests = []struct {
 		wantShow: lines(
 			"Multiple foo errors in [test]:",
 			"  \x1b[31;1mbad 1\x1b[m",
-			"    line 1: echo \x1b[1;4m[1]\x1b[m",
+			"    line 1: echo \x1b[1;4m(1)\x1b[m",
 			"  \x1b[31;1mbad 2\x1b[m",
-			"    line 1: echo \x1b[1;4m[2]\x1b[m"),
+			"    line 1: echo \x1b[1;4m(2)\x1b[m"),
 	},
 }
 
