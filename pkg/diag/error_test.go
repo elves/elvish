@@ -3,9 +3,14 @@ package diag
 import (
 	"strings"
 	"testing"
+
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestError(t *testing.T) {
+	testutil.Set(t, &culpritLineBegin, "<")
+	testutil.Set(t, &culpritLineEnd, ">")
+
 	err := &Error{
 		Type:    "some error",
 		Message: "bad list",
@@ -22,8 +27,6 @@ func TestError(t *testing.T) {
 		t.Errorf("Range() -> %v, want %v", gotRanging, wantRanging)
 	}
 
-	culpritLineBegin = "<"
-	culpritLineEnd = ">"
 	wantShow := lines(
 		// Type is capitalized in return value of Show
 		"Some error: \033[31;1mbad list\033[m",

@@ -200,7 +200,7 @@ func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) result {
 		err := ev.Eval(parse.Source{Name: "[test]", Code: text},
 			eval.EvalCfg{Ports: ports, Interrupt: eval.ListenInterrupts})
 
-		if parse.GetError(err) != nil {
+		if parse.UnpackErrors(err) != nil {
 			t.Fatalf("Parse(%q) error: %s", text, err)
 		} else if eval.GetCompilationError(err) != nil {
 			// NOTE: If multiple code pieces have compilation errors, only the

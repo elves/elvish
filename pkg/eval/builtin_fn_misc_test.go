@@ -7,7 +7,6 @@ import (
 	"src.elv.sh/pkg/diag"
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/must"
-	"src.elv.sh/pkg/parse"
 
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
@@ -60,7 +59,7 @@ func TestEval(t *testing.T) {
 		// namespace using &on-end.
 		That("eval &on-end={|n| put $n[x] } 'var x = foo'").Puts("foo"),
 		// Parse error.
-		That("eval '['").Throws(ErrorWithType(&parse.Error{})),
+		That("eval '['").Throws(AnyParseError),
 		// Compilation error.
 		That("eval 'put $x'").Throws(ErrorWithType(&diag.Error{})),
 		// Exception.

@@ -165,12 +165,11 @@ const (
 )
 
 func getErrorType(err error) errorType {
-	switch err.(type) {
-	case nil:
+	if err == nil {
 		return noError
-	case *parse.Error:
+	} else if parse.UnpackErrors(err) != nil {
 		return parseError
-	default:
+	} else {
 		return compileError
 	}
 }

@@ -415,9 +415,9 @@ func fillDefaultDummyPorts(ports []*Port) []*Port {
 // It always tries to compile the code even if there is a parse error; both
 // return values may be non-nil. If w is not nil, deprecation messages are
 // written to it.
-func (ev *Evaler) Check(src parse.Source, w io.Writer) (*parse.Error, *diag.Error) {
+func (ev *Evaler) Check(src parse.Source, w io.Writer) (error, *diag.Error) {
 	tree, parseErr := parse.Parse(src, parse.Config{WarningWriter: w})
-	return parse.GetError(parseErr), ev.CheckTree(tree, w)
+	return parseErr, ev.CheckTree(tree, w)
 }
 
 // CheckTree checks the given parsed source tree for compilation errors. If w is

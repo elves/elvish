@@ -31,15 +31,13 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	var errorRegions []region
 
 	tree, errParse := parse.Parse(parse.Source{Name: "[interactive]", Code: code}, parse.Config{})
-	if errParse != nil {
-		for _, err := range errParse.(*parse.Error).Entries {
-			if err.Context.From != len(code) {
-				errors = append(errors, err)
-				errorRegions = append(errorRegions,
-					region{
-						err.Context.From, err.Context.To,
-						semanticRegion, errorRegion})
-			}
+	for _, err := range parse.UnpackErrors(errParse) {
+		if err.Context.From != len(code) {
+			errors = append(errors, err)
+			errorRegions = append(errorRegions,
+				region{
+					err.Context.From, err.Context.To,
+					semanticRegion, errorRegion})
 		}
 	}
 

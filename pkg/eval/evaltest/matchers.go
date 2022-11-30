@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/parse"
 )
 
 // ApproximatelyThreshold defines the threshold for matching float64 values when
@@ -87,6 +88,15 @@ func getStackTexts(tb *eval.StackTrace) []string {
 	}
 	return texts
 }
+
+// AnyParseError is an error that can be passed to the Case.Throws to match any
+// parse error.
+var AnyParseError anyParseError
+
+type anyParseError struct{}
+
+func (anyParseError) Error() string           { return "any parse error" }
+func (anyParseError) matchError(e error) bool { return parse.UnpackErrors(e) != nil }
 
 // ErrorWithType returns an error that can be passed to the Case.Throws to match
 // any error with the same type as the argument.

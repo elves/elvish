@@ -116,11 +116,9 @@ func smartEnter(app cli.App) {
 
 func isSyntaxComplete(code string) bool {
 	_, err := parse.Parse(parse.Source{Name: "[syntax check]", Code: code}, parse.Config{})
-	if err != nil {
-		for _, e := range err.(*parse.Error).Entries {
-			if e.Context.From == len(code) {
-				return false
-			}
+	for _, e := range parse.UnpackErrors(err) {
+		if e.Context.From == len(code) {
+			return false
 		}
 	}
 	return true

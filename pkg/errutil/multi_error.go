@@ -12,7 +12,7 @@ import "strings"
 //     the messages of all non-nil arguments.
 //
 // If the input contains any error returned by Multi, such errors are flattened.
-// The following two calls return the same value
+// The following two calls return the same value:
 //
 //	Multi(Multi(err1, err2), Multi(err3, err4))
 //	Multi(err1, err2, err3, err4)

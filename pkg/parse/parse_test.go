@@ -666,7 +666,7 @@ func TestParse(t *testing.T) {
 					t.Errorf("Parse(%q) returns no error, want error with %q",
 						test.code, test.wantErrMsg)
 				}
-				parseError := err.(*Error).Entries[0]
+				parseError := UnpackErrors(err)[0]
 				r := parseError.Context
 
 				if errPart := test.code[r.From:r.To]; errPart != test.wantErrPart {

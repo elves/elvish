@@ -161,7 +161,7 @@ func diagnostics(uri lsp.DocumentURI, content string) []lsp.Diagnostic {
 		return []lsp.Diagnostic{}
 	}
 
-	entries := err.(*parse.Error).Entries
+	entries := parse.UnpackErrors(err)
 	diags := make([]lsp.Diagnostic, len(entries))
 	for i, err := range entries {
 		diags[i] = lsp.Diagnostic{

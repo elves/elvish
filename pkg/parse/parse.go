@@ -33,8 +33,8 @@ type Config struct {
 	WarningWriter io.Writer
 }
 
-// Parse parses the given source. The returned error always has type *Error
-// if it is not nil.
+// Parse parses the given source. The returned error may contain one or more
+// parse error, which can be unpacked with [UnpackErrors].
 func Parse(src Source, cfg Config) (Tree, error) {
 	tree := Tree{&Chunk{}, src}
 	err := ParseAs(src, tree.Root, cfg)
@@ -42,12 +42,13 @@ func Parse(src Source, cfg Config) (Tree, error) {
 }
 
 // ParseAs parses the given source as a node, depending on the dynamic type of
-// n. If the error is not nil, it always has type *Error.
+// n. The returned error may contain one or more parse error, which can be
+// unpacked with [UnpackErrors].
 func ParseAs(src Source, n Node, cfg Config) error {
 	ps := &parser{srcName: src.Name, src: src.Code, warn: cfg.WarningWriter}
 	ps.parse(n)
 	ps.done()
-	return ps.assembleError()
+	return diag.PackCognateErrors(ps.errors)
 }
 
 // Errors.
