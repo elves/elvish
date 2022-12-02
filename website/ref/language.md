@@ -2509,7 +2509,7 @@ There is experimental support for importing modules written in Go. See the
 
 ### Circular dependencies
 
-Circular dependencies are allowed but has an important restriction. If a module
+Circular dependencies are allowed but have an important restriction. If a module
 `a` contains `use b` and module `b` contains `use a`, the top-level statements
 in module `b` will only be able to access variables that are defined before the
 `use b` in module `a`; other variables will be `$nil`.
