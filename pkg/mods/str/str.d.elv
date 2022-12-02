@@ -287,7 +287,7 @@ fn trim-left {|str cutset| }
 # ```
 fn trim-prefix {|str prefix| }
 
-# Outputs `$str` with all leading Unicode code points contained in `$cutset`
+# Outputs `$str` with all trailing Unicode code points contained in `$cutset`
 # removed. To remove a suffix string use [`str:trim-suffix`](#str:trim-suffix).
 #
 # ```elvish-transcript
