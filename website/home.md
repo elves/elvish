@@ -15,7 +15,7 @@ Windows.
 <div id="demo-window"> <div id="demo-container">
   <div class="demo-wrapper"> <div class="demo">
     <div class="demo-col demo-description">
-      <h2>Powerful Pipelines</h2>
+      <h2>Powerful pipelines</h2>
       <p>
         Text pipelines are intuitive and powerful. However, if your data have
         inherently complex structures, processing them with the pipeline
@@ -33,7 +33,7 @@ Windows.
 
   <div class="demo-wrapper"> <div class="demo">
     <div class="demo-col demo-description">
-      <h2>Intuitive Control Structures</h2>
+      <h2>Intuitive control structures</h2>
       <p>
         If you know programming, you probably already know how
         <code>if</code> looks in C. So why learn another syntax?
@@ -52,11 +52,11 @@ Windows.
 
   <div class="demo-wrapper"> <div class="demo">
     <div class="demo-col demo-description">
-      <h2>Directory History</h2>
+      <h2>Directory history</h2>
       <p>
         Do you type far too many <code>cd</code> commands? Do you struggle to
         remember which <code>deeply/nested/directory</code> your source codes,
-        logs and configuration files are?
+        logs and configuration files are in?
       </p>
       <p>
         Backed by a real database, Elvish remembers all the directories you
@@ -71,7 +71,7 @@ Windows.
 
   <div class="demo-wrapper"> <div class="demo">
     <div class="demo-col demo-description">
-      <h2>Command History</h2>
+      <h2>Command history</h2>
       <p>
         Want to find the magical <code>ffmpeg</code> command that you used to
         transcode a video file two months ago, but it is buried under a
@@ -90,16 +90,16 @@ Windows.
 
   <div class="demo-wrapper"> <div class="demo">
     <div class="demo-col demo-description">
-      <h2>Built-in File Manager</h2>
+      <h2>Built-in file manager</h2>
       <p>
         Want the convenience of a file manager, but can't give up the power of
         a shell?
       </p>
       <p>
-        You no longer have to make a choice. Press
+        You no longer have to choose. Press
         <kbd>Ctrl-N</kbd> to start exploring directories and
         preview files, with the full power of a shell still under your
-        fingertip.
+        fingertips.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
@@ -118,9 +118,9 @@ Windows.
 
 -   [Source code](https://github.com/elves/elvish) on GitHub
 
--   [Try Elvish](https://try.elv.sh) directly from the browser (Beta)
+-   [Try Elvish](https://try.elv.sh) directly from the browser (beta)
 
-# <i class="icon-sitemap"></i> Use this Site
+# <i class="icon-sitemap"></i> Use this site
 
 Start your Elvish journey in this very website!
 
@@ -136,9 +136,9 @@ Start your Elvish journey in this very website!
 
 <div class="column">
 
-# <i class="icon-chat"></i> Join the Community
+# <i class="icon-chat"></i> Join the community
 
-Join any of the following channels -- they are all all bridged together thanks
+Join any of the following channels -- they are all bridged together thanks
 to [Matrix](https://matrix.org)!
 
 -   Telegram: [Elvish user group](https://t.me/+Pv5ZYgTXD-YaKwcP)
@@ -149,7 +149,7 @@ to [Matrix](https://matrix.org)!
 
 -   Matrix: [#users:elv.sh](https://matrix.to/#/#users:elv.sh)
 
-# <i class="icon-link-ext"></i> More Resources
+# <i class="icon-link-ext"></i> More resources
 
 -   [Awesome Elvish](https://github.com/elves/awesome-elvish): Official list of
     unofficial Elvish modules
