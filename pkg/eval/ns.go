@@ -100,7 +100,7 @@ func (ns *Ns) Repr(int) string {
 
 // Index looks up a variable with the given name, and returns its value if it
 // exists. This is only used for introspection from Elvish code; for
-// introspection from Go code, use IndexName.
+// introspection from Go code, use IndexString.
 func (ns *Ns) Index(k any) (any, bool) {
 	if ks, ok := k.(string); ok {
 		variable := ns.IndexString(ks)
@@ -112,7 +112,7 @@ func (ns *Ns) Index(k any) (any, bool) {
 	return nil, false
 }
 
-// IndexName looks up a variable with the given name, and returns its value if
+// IndexString looks up a variable with the given name, and returns its value if
 // it exists, or nil if it does not. This is the type-safe version of Index and
 // is useful for introspection from Go code.
 func (ns *Ns) IndexString(k string) vars.Var {
@@ -180,7 +180,7 @@ func BuildNs() NsBuilder {
 	return BuildNsNamed("")
 }
 
-// BuildNs returns a helper for building an Ns with the given name. The name is
+// BuildNsNamed returns a helper for building an Ns with the given name. The name is
 // only used for the names of Go functions.
 func BuildNsNamed(name string) NsBuilder {
 	prefix := ""
@@ -190,7 +190,7 @@ func BuildNsNamed(name string) NsBuilder {
 	return NsBuilder{prefix, make(map[string]vars.Var)}
 }
 
-// Add adds a variable.
+// AddVar adds a variable.
 func (nb NsBuilder) AddVar(name string, v vars.Var) NsBuilder {
 	nb.m[name] = v
 	return nb
