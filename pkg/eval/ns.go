@@ -47,9 +47,8 @@ type staticVarInfo struct {
 // CombineNs returns an *Ns that contains all the bindings from both ns1 and
 // ns2. Names in ns2 takes precedence over those in ns1.
 func CombineNs(ns1, ns2 *Ns) *Ns {
-	ns := &Ns{
-		append([]vars.Var(nil), ns2.slots...),
-		append([]staticVarInfo(nil), ns2.infos...)}
+	ns := ns2.clone()
+
 	hasName := map[string]bool{}
 	for _, info := range ns.infos {
 		if !info.deleted {
@@ -63,6 +62,12 @@ func CombineNs(ns1, ns2 *Ns) *Ns {
 		}
 	}
 	return ns
+}
+
+func (ns *Ns) clone() *Ns {
+	return &Ns{
+		append([]vars.Var(nil), ns.slots...),
+		append([]staticVarInfo(nil), ns.infos...)}
 }
 
 // Ns returns ns itself.
