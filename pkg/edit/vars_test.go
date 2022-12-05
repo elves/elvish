@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"errors"
 	"testing"
 
 	"src.elv.sh/pkg/eval"
@@ -22,6 +23,25 @@ func TestAddVar(t *testing.T) {
 				Valid: "unqualified variable name", Actual: "a:b"}),
 		// Bad type
 		That("add-var a~ ''").Throws(ErrorWithType(vals.WrongType{})),
+	)
+}
+
+func TestDelVar(t *testing.T) {
+	TestWithSetup(t, func(ev *eval.Evaler) {
+		ev.ExtendGlobal(eval.BuildNs().AddGoFns(map[string]any{
+			"add-var": addVar,
+			"del-var": delVar,
+		}))
+	},
+		That("del-var foo").Throws(errors.New("no variable $foo")),
+		That("add-var foo bar").Then("del-var foo").Then("put $foo").DoesNotCompile("variable $foo not found"),
+		That("add-var foo bar").Then("del-var foo").Then("del-var foo").Throws(errors.New("no variable $foo")),
+
+		// Qualified name
+		That("del-var a:b").Throws(
+			errs.BadValue{
+				What:  "name argument to edit:del-var",
+				Valid: "unqualified variable name", Actual: "a:b"}),
 	)
 }
 
