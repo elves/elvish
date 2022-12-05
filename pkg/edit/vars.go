@@ -15,6 +15,7 @@ func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
 		"add-var":  addVar,
 		"add-vars": addVars,
 		"del-var":  delVar,
+		"del-vars": delVars,
 	})
 }
 
@@ -72,6 +73,32 @@ func addVars(fm *eval.Frame, m vals.Map) error {
 		nb.AddVar(name, variable)
 	}
 	fm.Evaler.ExtendGlobal(nb)
+	return nil
+}
+
+func delVars(fm *eval.Frame, m vals.List) error {
+	for it := m.Iterator(); it.HasElem(); it.Next() {
+		n := it.Elem()
+		name, ok := n.(string)
+		if !ok {
+			return errs.BadValue{
+				What:  "name of argument to edit:del-vars",
+				Valid: "string", Actual: vals.Kind(n)}
+		}
+		if !isUnqualified(name) {
+			return errs.BadValue{
+				What:  "name of argument to edit:del-vars",
+				Valid: "unqualified variable name", Actual: name}
+		}
+
+		variable := fm.Evaler.Global().IndexString(name)
+		if variable == nil {
+			return errors.New("no variable $" + name)
+		}
+
+		fm.Evaler.DeleteGlobal(name)
+	}
+
 	return nil
 }
 
