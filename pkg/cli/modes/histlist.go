@@ -26,6 +26,8 @@ type HistlistSpec struct {
 	Dedup func() bool
 	// Configuration for the filter.
 	Filter FilterSpec
+	// RPrompt of the code area (first row of the widget).
+	CodeAreaRPrompt func() ui.Text
 }
 
 // NewHistlist creates a new histlist mode.
@@ -60,6 +62,7 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 				}
 				return modeLine(content, true)
 			},
+			RPrompt:     spec.CodeAreaRPrompt,
 			Highlighter: spec.Filter.Highlighter,
 		},
 		ListBox: tk.ListBoxSpec{

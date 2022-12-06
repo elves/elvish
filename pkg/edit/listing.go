@@ -12,6 +12,7 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/store/storedefs"
+	"src.elv.sh/pkg/ui"
 )
 
 func initListings(ed *Editor, ev *eval.Evaler, st storedefs.Store, histStore histutil.Store, nb eval.NsBuilder) {
@@ -53,27 +54,32 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 	bindingVar := newBindingVar(emptyBindingsMap)
 	bindings := newMapBindings(ed, ev, bindingVar, commonBindingVar)
 	dedup := newBoolVar(true)
-	nb.AddNs("histlist",
-		eval.BuildNsNamed("edit:histlist").
-			AddVar("binding", bindingVar).
-			AddGoFns(map[string]any{
-				"start": func() {
-					w, err := modes.NewHistlist(ed.app, modes.HistlistSpec{
-						Bindings: bindings,
-						AllCmds:  histStore.AllCmds,
-						Dedup: func() bool {
-							return dedup.Get().(bool)
-						},
-						Filter: filterSpec,
-					})
-					startMode(ed.app, w, err)
-				},
-				"toggle-dedup": func() {
-					dedup.Set(!dedup.Get().(bool))
-					listingRefilter(ed.app)
-					ed.app.Redraw()
-				},
-			}))
+	var ns *eval.Ns
+	ns = eval.BuildNsNamed("edit:histlist").
+		AddVar("binding", bindingVar).
+		AddGoFns(map[string]any{
+			"start": func() {
+				w, err := modes.NewHistlist(ed.app, modes.HistlistSpec{
+					Bindings: bindings,
+					AllCmds:  histStore.AllCmds,
+					Dedup: func() bool {
+						return dedup.Get().(bool)
+					},
+					Filter: filterSpec,
+					CodeAreaRPrompt: func() ui.Text {
+						return bindingHelp(bindingVar.Get().(bindingsMap), ns,
+							bindingHelpEntry{"dedup", "toggle-dedup"})
+					},
+				})
+				startMode(ed.app, w, err)
+			},
+			"toggle-dedup": func() {
+				dedup.Set(!dedup.Get().(bool))
+				listingRefilter(ed.app)
+				ed.app.Redraw()
+			},
+		}).Ns()
+	nb.AddNs("histlist", ns)
 }
 
 func initLastcmd(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonBindingVar vars.PtrVar, nb eval.NsBuilder) {

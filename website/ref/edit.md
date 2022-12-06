@@ -227,8 +227,8 @@ You cannot write `Shift-m` as a synonym for `M`.
 
 ### Listing Modes
 
-The modes `histlist`, `loc` and `lastcmd` are all **listing modes**: They all
-show a list, and you can filter items and accept items.
+The modes `histlist`, `location` and `lastcmd` are all **listing modes**: They
+all show a list, and you can filter items and accept items.
 
 Because they are very similar, you may want to change their bindings at the same
 time. This is made possible by the `$edit:listing:binding` binding table
