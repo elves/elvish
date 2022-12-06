@@ -56,7 +56,7 @@ Windows.
       <p>
         Do you type far too many <code>cd</code> commands? Do you struggle to
         remember which <code>deeply/nested/directory</code> your source codes,
-        logs and configuration files are?
+        logs and configuration files are in?
       </p>
       <p>
         Backed by a real database, Elvish remembers all the directories you
@@ -96,10 +96,10 @@ Windows.
         a shell?
       </p>
       <p>
-        You no longer have to make a choice. Press
+        You no longer have to choose. Press
         <kbd>Ctrl-N</kbd> to start exploring directories and
         preview files, with the full power of a shell still under your
-        fingertip.
+        fingertips.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
@@ -118,7 +118,7 @@ Windows.
 
 -   [Source code](https://github.com/elves/elvish) on GitHub
 
--   [Try Elvish](https://try.elv.sh) directly from the browser (Beta)
+-   [Try Elvish](https://try.elv.sh) directly from the browser (beta)
 
 # <i class="icon-sitemap"></i> Use this Site
 
@@ -138,8 +138,8 @@ Start your Elvish journey in this very website!
 
 # <i class="icon-chat"></i> Join the Community
 
-Join any of the following channels -- they are all all bridged together thanks
-to [Matrix](https://matrix.org)!
+Join any of the following channels -- they are all bridged together thanks to
+[Matrix](https://matrix.org)!
 
 -   Telegram: [Elvish user group](https://t.me/+Pv5ZYgTXD-YaKwcP)
 
