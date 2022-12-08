@@ -30,7 +30,7 @@ func TestHighlighter(t *testing.T) {
 	f.TestTTY(t,
 		"~> put $truex", Styles,
 		"   vvv ??????", term.DotHere, "\n",
-		"compilation error: 4-10 in [interactive]: variable $truex not found",
+		"compilation error: [interactive]:1:5: variable $truex not found",
 	)
 }
 

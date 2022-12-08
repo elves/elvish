@@ -137,8 +137,7 @@ func (cp *compiler) deprecate(r diag.Ranger, msg string, minLevel int) {
 	if prog.DeprecationLevel >= minLevel && cp.deprecations.register(dep) {
 		err := diag.Error{
 			Type: "deprecation", Message: msg,
-			Context: diag.Context{
-				Name: cp.srcMeta.Name, Source: cp.srcMeta.Code, Ranging: r.Range()}}
+			Context: *diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r.Range())}
 		fmt.Fprintln(cp.warn, err.Show(""))
 	}
 }

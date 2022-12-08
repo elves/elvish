@@ -15,9 +15,8 @@ type Error struct {
 
 // Error returns a plain text representation of the error.
 func (e *Error) Error() string {
-	// TODO: Include line and column numbers instead of byte indices.
-	return fmt.Sprintf("%s: %d-%d in %s: %s",
-		e.Type, e.Context.From, e.Context.To, e.Context.Name, e.Message)
+	return fmt.Sprintf("%s: %s:%s: %s",
+		e.Type, e.Context.Name, e.Context.culprit.describeStart(), e.Message)
 }
 
 // Range returns the range of the error.
@@ -25,8 +24,14 @@ func (e *Error) Range() Ranging {
 	return e.Context.Range()
 }
 
+var (
+	messageStart = "\033[31;1m"
+	messageEnd   = "\033[m"
+)
+
 // Show shows the error.
 func (e *Error) Show(indent string) string {
-	header := fmt.Sprintf("%s: \033[31;1m%s\033[m\n", strutil.Title(e.Type), e.Message)
-	return header + e.Context.ShowCompact(indent+"  ")
+	return fmt.Sprintf("%s: %s%s%s\n%s%s",
+		strutil.Title(e.Type), messageStart, e.Message, messageEnd,
+		indent+"  ", e.Context.ShowCompact(indent+"  "))
 }

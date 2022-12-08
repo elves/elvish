@@ -22,51 +22,33 @@ var (
 )
 
 var cognateErrorsTests = []struct {
-	name      string
-	errs      []*Error
-	wantError string
-	wantShow  string
+	name    string
+	errs    []*Error
+	wantErr error
 }{
 	{
-		name:      "no error",
-		errs:      nil,
-		wantError: "",
-		wantShow:  "",
+		name:    "no error",
+		errs:    nil,
+		wantErr: nil,
 	},
 	{
-		name:      "one error",
-		errs:      []*Error{err1},
-		wantError: err1.Error(),
-		wantShow:  err1.Show(""),
+		name:    "one error",
+		errs:    []*Error{err1},
+		wantErr: err1,
 	},
 	{
-		name:      "multiple errors",
-		errs:      []*Error{err1, err2},
-		wantError: "multiple foo errors in [test]: 5-8: bad 1; 5-8: bad 2",
-		wantShow: lines(
-			"Multiple foo errors in [test]:",
-			"  \x1b[31;1mbad 1\x1b[m",
-			"    line 1: echo \x1b[1;4m(1)\x1b[m",
-			"  \x1b[31;1mbad 2\x1b[m",
-			"    line 1: echo \x1b[1;4m(2)\x1b[m"),
+		name:    "multiple errors",
+		errs:    []*Error{err1, err2},
+		wantErr: cognateErrors{err1, err2},
 	},
 }
 
-func TestCognateErrors(t *testing.T) {
+func TestPackAndUnpackCognateErrors(t *testing.T) {
 	for _, tc := range cognateErrorsTests {
 		t.Run(tc.name, func(t *testing.T) {
 			err := PackCognateErrors(tc.errs)
-			if err == nil {
-				if tc.wantError != "" || tc.wantShow != "" {
-					t.Errorf("Want non-nil error, got nil")
-				}
-			} else {
-				if got := err.Error(); got != tc.wantError {
-					t.Errorf("Error() (-want +got):\n%s", cmp.Diff(tc.wantError, got))
-				}
-				if got := err.(Shower).Show(""); got != tc.wantShow {
-					t.Errorf("Show() (-want +got):\n%s", cmp.Diff(tc.wantShow, got))
-				}
+			if !reflect.DeepEqual(err, tc.wantErr) {
+				t.Errorf("got packed error %#v, want %#v", err, tc.wantErr)
 			}
 			unpacked := UnpackCognateErrors(err)
 			if !reflect.DeepEqual(unpacked, tc.errs) {
@@ -80,5 +62,26 @@ func TestUnpackCognateErrors_CalledWithOtherErrorType(t *testing.T) {
 	unpacked := UnpackCognateErrors(errors.New("foo"))
 	if unpacked != nil {
 		t.Errorf("want nil, got %v", unpacked)
+	}
+}
+
+func TestCognateErrors(t *testing.T) {
+	setCulpritMarkers(t, "<", ">")
+	setMessageMarkers(t, "{", "}")
+	err := PackCognateErrors([]*Error{err1, err2})
+	wantError := "multiple foo errors in [test]: 1:6: bad 1; 1:6: bad 2"
+	if s := err.Error(); s != wantError {
+		t.Errorf(".Error() returns unexpected result (-want +got):\n%s",
+			cmp.Diff(wantError, s))
+	}
+	wantShow := dedent(`
+			Multiple foo errors in [test]:
+			  {bad 1}
+			    1:6: echo <(1)>
+			  {bad 2}
+			    1:6: echo <(2)>`)
+	if show := err.(Shower).Show(""); show != wantShow {
+		t.Errorf(".Show(\"\") returns unexpected result (-want +got):\n%s",
+			cmp.Diff(wantShow, show))
 	}
 }

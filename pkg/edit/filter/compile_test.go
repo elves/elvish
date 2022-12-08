@@ -58,7 +58,7 @@ func TestCompile(t *testing.T) {
 			Filter("[re '[']").
 			DoesNotCompile("error parsing regexp: missing closing ]: `[`"),
 		That("invalid syntax results in parse error").
-			Filter("[and").DoesNotParse("parse error: 4-4 in [filter]: should be ']'"),
+			Filter("[and").DoesNotParse("parse error: [filter]:1:5: should be ']'"),
 
 		// Unsupported for now, but may be in future
 		That("options are not supported yet").

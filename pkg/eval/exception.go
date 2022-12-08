@@ -91,7 +91,7 @@ func (exc *exception) Show(indent string) string {
 			buf.WriteString(indent + "Traceback:")
 			for tb := exc.stackTrace; tb != nil; tb = tb.Next {
 				buf.WriteString("\n" + indent + "  ")
-				buf.WriteString(tb.Head.Show(indent + "    "))
+				buf.WriteString(tb.Head.Show(indent + "  "))
 			}
 		}
 	}

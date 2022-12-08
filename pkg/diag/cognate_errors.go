@@ -51,8 +51,7 @@ func (err cognateErrors) Error() string {
 		if i > 0 {
 			sb.WriteString("; ")
 		}
-		// TODO: Include line and column numbers instead of byte indices.
-		fmt.Fprintf(&sb, "%d-%d: %s", e.Context.From, e.Context.To, e.Message)
+		fmt.Fprintf(&sb, "%s: %s", e.Context.culprit.describeStart(), e.Message)
 	}
 	return sb.String()
 }
@@ -62,12 +61,12 @@ func (err cognateErrors) Show(indent string) string {
 	fmt.Fprintf(&sb, "Multiple %ss in %s:", err[0].Type, err[0].Context.Name)
 	for _, e := range err {
 		sb.WriteString("\n" + indent + "  ")
-		fmt.Fprintf(&sb, "\033[31;1m%s\033[m", e.Message)
+		sb.WriteString(messageStart + e.Message + messageEnd)
 		sb.WriteString("\n" + indent + "    ")
 		// This duplicates part of [Context.ShowCompact].
-		desc := e.Context.lineRange() + " "
+		desc := e.Context.culprit.describeStart() + ": "
 		descIndent := strings.Repeat(" ", wcwidth.Of(desc))
-		sb.WriteString(desc + e.Context.relevantSource(indent+"  "+descIndent))
+		sb.WriteString(desc + e.Context.culprit.Show(indent+"  "+descIndent))
 	}
 	return sb.String()
 }
