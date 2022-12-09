@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/ui"
 )
@@ -30,24 +31,23 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	var errors []error
 	var errorRegions []region
 
-	tree, errParse := parse.Parse(parse.Source{Name: "[interactive]", Code: code}, parse.Config{})
-	for _, err := range parse.UnpackErrors(errParse) {
-		if err.Context.From != len(code) {
+	addDiagError := func(err *diag.Error) {
+		if err.Context.From < len(code) {
 			errors = append(errors, err)
-			errorRegions = append(errorRegions,
-				region{
-					err.Context.From, err.Context.To,
-					semanticRegion, errorRegion})
+			errorRegions = append(errorRegions, region{
+				err.Context.From, err.Context.To, semanticRegion, errorRegion})
 		}
 	}
 
+	tree, errParse := parse.Parse(parse.Source{Name: "[interactive]", Code: code}, parse.Config{})
+	for _, err := range parse.UnpackErrors(errParse) {
+		addDiagError(err)
+	}
+
 	if cfg.Check != nil {
-		err := cfg.Check(tree)
-		if r, ok := err.(diag.Ranger); ok && r.Range().From != len(code) {
-			errors = append(errors, err)
-			errorRegions = append(errorRegions,
-				region{
-					r.Range().From, r.Range().To, semanticRegion, errorRegion})
+		errCheck := cfg.Check(tree)
+		for _, err := range eval.UnpackCompilationErrors(errCheck) {
+			addDiagError(err)
 		}
 	}
 

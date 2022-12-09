@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/tt"
@@ -65,7 +66,13 @@ func TestHighlighter_ParseErrors(t *testing.T) {
 			ui.MarkLines(
 				"ls ]", styles,
 				"vv ?"),
-			matchErrors(parseErrorMatcher{3, 4})),
+			matchErrors(diagErrorMatcher{3, 4})),
+		// Multiple parse errors
+		Args("ls $? ]").Rets(
+			ui.MarkLines(
+				"ls $? ]", styles,
+				"vv $? ?"),
+			matchErrors(diagErrorMatcher{4, 5}, diagErrorMatcher{6, 7})),
 		// Errors at the end are ignored
 		Args("ls $").Rets(any, noErrors),
 		Args("ls [").Rets(any, noErrors),
@@ -73,25 +80,25 @@ func TestHighlighter_ParseErrors(t *testing.T) {
 }
 
 func TestHighlighter_CheckErrors(t *testing.T) {
-	var checkError error
 	// Make a highlighter whose Check callback returns checkError.
 	hl := NewHighlighter(Config{
-		Check: func(parse.Tree) error { return checkError }})
-	getWithCheckError := func(code string, err error) (ui.Text, []error) {
-		checkError = err
-		return hl.Get(code)
-	}
+		Check: func(t parse.Tree) error { return eval.NewEvaler().CheckTree(t, nil) }})
 
-	tt.Test(t, tt.Fn("getWithCheckError", getWithCheckError), tt.Table{
+	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
 		// Check error is highlighted and returned
-		Args("code 1", fakeCheckError{5, 6}).Rets(
+		Args("ls $a").Rets(
 			ui.MarkLines(
-				"code 1", styles,
-				"vvvv ?"),
-			[]error{fakeCheckError{5, 6}}),
+				"ls $a", styles,
+				"vv ??"),
+			matchErrors(diagErrorMatcher{3, 5})),
+		// Multiple check errors
+		Args("ls $a $b").Rets(
+			ui.MarkLines(
+				"ls $a $b", styles,
+				"vv ?? ??"),
+			matchErrors(diagErrorMatcher{3, 5}, diagErrorMatcher{6, 8})),
 		// Check errors at the end are ignored
-		Args("code 2", fakeCheckError{6, 6}).
-			Rets(any, noErrors),
+		Args("set _").Rets(any, noErrors),
 	})
 }
 
@@ -233,15 +240,9 @@ func (m errorsMatcher) Match(v tt.RetValue) bool {
 
 func matchErrors(m ...tt.Matcher) errorsMatcher { return errorsMatcher{m} }
 
-type parseErrorMatcher struct{ begin, end int }
+type diagErrorMatcher struct{ begin, end int }
 
-func (m parseErrorMatcher) Match(v tt.RetValue) bool {
+func (m diagErrorMatcher) Match(v tt.RetValue) bool {
 	err := v.(*diag.Error)
 	return m.begin == err.Context.From && m.end == err.Context.To
 }
-
-// Fake check error, used in tests for check callback.
-type fakeCheckError struct{ from, to int }
-
-func (e fakeCheckError) Range() diag.Ranging { return diag.Ranging{From: e.from, To: e.to} }
-func (fakeCheckError) Error() string         { return "fake check error" }
