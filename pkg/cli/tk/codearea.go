@@ -28,10 +28,10 @@ type CodeArea interface {
 type CodeAreaSpec struct {
 	// Key bindings.
 	Bindings Bindings
-	// A function that highlights the given code and returns any errors it has
-	// found when highlighting. If this function is not given, the Widget does
-	// not highlight the code nor show any errors.
-	Highlighter func(code string) (ui.Text, []error)
+	// A function that highlights the given code and returns any tips it has
+	// found, such as errors and autofixes. If this function is not given, the
+	// Widget does not highlight the code nor show any tips.
+	Highlighter func(code string) (ui.Text, []ui.Text)
 	// Prompt callback.
 	Prompt func() ui.Text
 	// Right-prompt callback.
@@ -58,7 +58,7 @@ type CodeAreaState struct {
 	Buffer      CodeBuffer
 	Pending     PendingCode
 	HideRPrompt bool
-	HideErrors  bool
+	HideTips    bool
 }
 
 // CodeBuffer represents the buffer of the CodeArea widget.
@@ -118,7 +118,7 @@ func NewCodeArea(spec CodeAreaSpec) CodeArea {
 		spec.Bindings = DummyBindings{}
 	}
 	if spec.Highlighter == nil {
-		spec.Highlighter = func(s string) (ui.Text, []error) { return ui.T(s), nil }
+		spec.Highlighter = func(s string) (ui.Text, []ui.Text) { return ui.T(s), nil }
 	}
 	if spec.Prompt == nil {
 		spec.Prompt = func() ui.Text { return nil }

@@ -9,7 +9,7 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-func Highlight(q string) (ui.Text, []error) {
+func Highlight(q string) (ui.Text, []ui.Text) {
 	n, _ := parseFilter(q)
 	w := walker{}
 	w.walk(n)

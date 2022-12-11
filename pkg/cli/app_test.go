@@ -187,7 +187,7 @@ func TestReadCode_LetsCodeAreaHandleEvents(t *testing.T) {
 func TestReadCode_ShowsHighlightedCode(t *testing.T) {
 	f := Setup(withHighlighter(
 		testHighlighter{
-			get: func(code string) (ui.Text, []error) {
+			get: func(code string) (ui.Text, []ui.Text) {
 				return ui.T(code, ui.FgRed), nil
 			},
 		}))
@@ -201,9 +201,9 @@ func TestReadCode_ShowsHighlightedCode(t *testing.T) {
 func TestReadCode_ShowsErrorsFromHighlighter_ExceptInFinalRedraw(t *testing.T) {
 	f := Setup(withHighlighter(
 		testHighlighter{
-			get: func(code string) (ui.Text, []error) {
-				errors := []error{errors.New("ERR 1"), errors.New("ERR 2")}
-				return ui.T(code), errors
+			get: func(code string) (ui.Text, []ui.Text) {
+				tips := []ui.Text{ui.T("ERR 1"), ui.T("ERR 2")}
+				return ui.T(code), tips
 			},
 		}))
 	defer f.Stop()
@@ -223,7 +223,7 @@ func TestReadCode_ShowsErrorsFromHighlighter_ExceptInFinalRedraw(t *testing.T) {
 func TestReadCode_RedrawsOnLateUpdateFromHighlighter(t *testing.T) {
 	var styling ui.Styling
 	hl := testHighlighter{
-		get: func(code string) (ui.Text, []error) {
+		get: func(code string) (ui.Text, []ui.Text) {
 			return ui.T(code, styling), nil
 		},
 		lateUpdates: make(chan struct{}),
@@ -584,11 +584,11 @@ func feedInput(ttyCtrl TTYCtrl, input string) {
 
 // A Highlighter implementation useful for testing.
 type testHighlighter struct {
-	get         func(code string) (ui.Text, []error)
+	get         func(code string) (ui.Text, []ui.Text)
 	lateUpdates chan struct{}
 }
 
-func (hl testHighlighter) Get(code string) (ui.Text, []error) {
+func (hl testHighlighter) Get(code string) (ui.Text, []ui.Text) {
 	return hl.get(code)
 }
 

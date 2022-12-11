@@ -12,7 +12,7 @@ type FilterSpec struct {
 	// predicate performs substring match.
 	Maker func(string) func(string) bool
 	// Highlighter for the filter. If nil, the filter will not be highlighted.
-	Highlighter func(string) (ui.Text, []error)
+	Highlighter func(string) (ui.Text, []ui.Text)
 }
 
 func (f FilterSpec) makePredicate(p string) func(string) bool {

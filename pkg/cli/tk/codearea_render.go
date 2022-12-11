@@ -12,7 +12,7 @@ type view struct {
 	rprompt ui.Text
 	code    ui.Text
 	dot     int
-	errors  []error
+	tips    []ui.Text
 }
 
 var stylingForPending = ui.Underlined
@@ -21,7 +21,7 @@ func getView(w *codeArea) *view {
 	s := w.CopyState()
 	code, pFrom, pTo := patchPending(s.Buffer, s.Pending)
 	styledCode, errors := w.Highlighter(code.Content)
-	if s.HideErrors {
+	if s.HideTips {
 		errors = nil
 	}
 	if pFrom < pTo {
@@ -90,11 +90,9 @@ func renderView(v *view, buf *term.BufferBuilder) {
 		}
 	}
 
-	if len(v.errors) > 0 {
-		for _, err := range v.errors {
-			buf.Newline()
-			buf.Write(err.Error())
-		}
+	for _, tip := range v.tips {
+		buf.Newline()
+		buf.WriteStyled(tip)
 	}
 }
 

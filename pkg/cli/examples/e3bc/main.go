@@ -21,7 +21,7 @@ import (
 // TODO: Highlight more syntax of bc.
 type highlighter struct{}
 
-func (highlighter) Get(code string) (ui.Text, []error) {
+func (highlighter) Get(code string) (ui.Text, []ui.Text) {
 	t := ui.Text{}
 	for _, r := range code {
 		var style ui.Styling

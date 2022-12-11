@@ -19,19 +19,19 @@ type state struct {
 	sync.Mutex
 	code       string
 	styledCode ui.Text
-	errors     []error
+	tips       []ui.Text
 }
 
 func NewHighlighter(cfg Config) *Highlighter {
 	return &Highlighter{cfg, state{}, make(chan struct{}, latesBufferSize)}
 }
 
-// Get returns the highlighted code and static errors found in the code.
-func (hl *Highlighter) Get(code string) (ui.Text, []error) {
+// Get returns the highlighted code and static errors found in the code as tips.
+func (hl *Highlighter) Get(code string) (ui.Text, []ui.Text) {
 	hl.state.Lock()
 	defer hl.state.Unlock()
 	if code == hl.state.code {
-		return hl.state.styledCode, hl.state.errors
+		return hl.state.styledCode, hl.state.tips
 	}
 
 	lateCb := func(styledCode ui.Text) {
@@ -49,11 +49,18 @@ func (hl *Highlighter) Get(code string) (ui.Text, []error) {
 	}
 
 	styledCode, errors := highlight(code, hl.cfg, lateCb)
+	var tips []ui.Text
+	if len(errors) > 0 {
+		tips = make([]ui.Text, len(errors))
+		for i, err := range errors {
+			tips[i] = ui.T(err.Error())
+		}
+	}
 
 	hl.state.code = code
 	hl.state.styledCode = styledCode
-	hl.state.errors = errors
-	return styledCode, errors
+	hl.state.tips = tips
+	return styledCode, tips
 }
 
 // LateUpdates returns a channel for notifying late updates.

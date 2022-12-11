@@ -137,7 +137,7 @@ func TestHistlist_CustomFilter(t *testing.T) {
 					return re != nil && re.MatchString(s)
 				}
 			},
-			Highlighter: func(p string) (ui.Text, []error) {
+			Highlighter: func(p string) (ui.Text, []ui.Text) {
 				return ui.T(p, ui.Inverse), nil
 			},
 		},

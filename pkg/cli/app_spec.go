@@ -32,8 +32,8 @@ type AppSpec struct {
 // Highlighter represents a code highlighter whose result can be delivered
 // asynchronously.
 type Highlighter interface {
-	// Get returns the highlighted code and any static errors.
-	Get(code string) (ui.Text, []error)
+	// Get returns the highlighted code and any tips.
+	Get(code string) (ui.Text, []ui.Text)
 	// LateUpdates returns a channel for delivering late updates.
 	LateUpdates() <-chan struct{}
 }
@@ -41,7 +41,7 @@ type Highlighter interface {
 // A Highlighter implementation that always returns plain text.
 type dummyHighlighter struct{}
 
-func (dummyHighlighter) Get(code string) (ui.Text, []error) {
+func (dummyHighlighter) Get(code string) (ui.Text, []ui.Text) {
 	return ui.T(code), nil
 }
 

@@ -2,10 +2,10 @@ package highlight
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
-	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/testutil"
@@ -14,7 +14,7 @@ import (
 )
 
 var any = anyMatcher{}
-var noErrors []error
+var noTips []ui.Text
 
 var styles = ui.RuneStylesheet{
 	'?':  ui.Stylings(ui.FgBrightWhite, ui.BgRed),
@@ -36,24 +36,24 @@ func TestHighlighter_HighlightRegions(t *testing.T) {
 				"ls", styles,
 				"vv",
 			),
-			noErrors),
+			noTips),
 		Args(" ls\n").Rets(
 			ui.MarkLines(
 				" ls\n", styles,
 				" vv"),
-			noErrors),
+			noTips),
 		Args("ls $x 'y'").Rets(
 			ui.MarkLines(
 				"ls $x 'y'", styles,
 				"vv $$ '''"),
-			noErrors),
+			noTips),
 		// Non-bareword commands do not go through command highlighting.
 		Args("'ls'").Rets(ui.T("'ls'", ui.FgYellow)),
 		Args("a$x").Rets(
 			ui.MarkLines(
 				"a$x", styles,
 				" $$"),
-			noErrors,
+			noTips,
 		),
 	})
 }
@@ -66,16 +66,16 @@ func TestHighlighter_ParseErrors(t *testing.T) {
 			ui.MarkLines(
 				"ls ]", styles,
 				"vv ?"),
-			matchErrors(diagErrorMatcher{3, 4})),
+			matchTexts("1:4")),
 		// Multiple parse errors
 		Args("ls $? ]").Rets(
 			ui.MarkLines(
 				"ls $? ]", styles,
 				"vv $? ?"),
-			matchErrors(diagErrorMatcher{4, 5}, diagErrorMatcher{6, 7})),
+			matchTexts("1:5", "1:7")),
 		// Errors at the end are ignored
-		Args("ls $").Rets(any, noErrors),
-		Args("ls [").Rets(any, noErrors),
+		Args("ls $").Rets(any, noTips),
+		Args("ls [").Rets(any, noTips),
 	})
 }
 
@@ -90,15 +90,15 @@ func TestHighlighter_CheckErrors(t *testing.T) {
 			ui.MarkLines(
 				"ls $a", styles,
 				"vv ??"),
-			matchErrors(diagErrorMatcher{3, 5})),
+			matchTexts("1:4")),
 		// Multiple check errors
 		Args("ls $a $b").Rets(
 			ui.MarkLines(
 				"ls $a $b", styles,
 				"vv ?? ??"),
-			matchErrors(diagErrorMatcher{3, 5}, diagErrorMatcher{6, 8})),
+			matchTexts("1:4", "1:7")),
 		// Check errors at the end are ignored
-		Args("set _").Rets(any, noErrors),
+		Args("set _").Rets(any, noTips),
 	})
 }
 
@@ -223,26 +223,19 @@ type anyMatcher struct{}
 
 func (anyMatcher) Match(tt.RetValue) bool { return true }
 
-type errorsMatcher struct{ matchers []tt.Matcher }
+type textsMatcher struct{ substrings []string }
 
-func (m errorsMatcher) Match(v tt.RetValue) bool {
-	errs := v.([]error)
-	if len(errs) != len(m.matchers) {
+func matchTexts(s ...string) textsMatcher { return textsMatcher{s} }
+
+func (m textsMatcher) Match(v tt.RetValue) bool {
+	texts := v.([]ui.Text)
+	if len(texts) != len(m.substrings) {
 		return false
 	}
-	for i, matcher := range m.matchers {
-		if !matcher.Match(errs[i]) {
+	for i, text := range texts {
+		if !strings.Contains(text.String(), m.substrings[i]) {
 			return false
 		}
 	}
 	return true
-}
-
-func matchErrors(m ...tt.Matcher) errorsMatcher { return errorsMatcher{m} }
-
-type diagErrorMatcher struct{ begin, end int }
-
-func (m diagErrorMatcher) Match(v tt.RetValue) bool {
-	err := v.(*diag.Error)
-	return m.begin == err.Context.From && m.end == err.Context.To
 }

@@ -1,7 +1,6 @@
 package tk
 
 import (
-	"errors"
 	"reflect"
 	"testing"
 
@@ -83,7 +82,7 @@ var codeAreaRenderTests = []renderTest{
 	{
 		Name: "highlighted code",
 		Given: NewCodeArea(CodeAreaSpec{
-			Highlighter: func(code string) (ui.Text, []error) {
+			Highlighter: func(code string) (ui.Text, []ui.Text) {
 				return ui.T(code, ui.Bold), nil
 			},
 			State: CodeAreaState{Buffer: CodeBuffer{Content: "code", Dot: 4}}}),
@@ -91,12 +90,11 @@ var codeAreaRenderTests = []renderTest{
 		Want: bb(10).WriteStringSGR("code", "1").SetDotHere(),
 	},
 	{
-		Name: "static errors in code",
+		Name: "tips",
 		Given: NewCodeArea(CodeAreaSpec{
 			Prompt: p(ui.T("> ")),
-			Highlighter: func(code string) (ui.Text, []error) {
-				err := errors.New("static error")
-				return ui.T(code), []error{err}
+			Highlighter: func(code string) (ui.Text, []ui.Text) {
+				return ui.T(code), []ui.Text{ui.T("static error")}
 			},
 			State: CodeAreaState{Buffer: CodeBuffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
@@ -104,15 +102,14 @@ var codeAreaRenderTests = []renderTest{
 			Newline().Write("static error"),
 	},
 	{
-		Name: "suppressed errors",
+		Name: "hiding tips",
 		Given: NewCodeArea(CodeAreaSpec{
 			Prompt: p(ui.T("> ")),
-			Highlighter: func(code string) (ui.Text, []error) {
-				err := errors.New("static error")
-				return ui.T(code), []error{err}
+			Highlighter: func(code string) (ui.Text, []ui.Text) {
+				return ui.T(code), []ui.Text{ui.T("static error")}
 			},
 			State: CodeAreaState{
-				Buffer: CodeBuffer{Content: "code", Dot: 4}, HideErrors: true}}),
+				Buffer: CodeBuffer{Content: "code", Dot: 4}, HideTips: true}}),
 		Width: 10, Height: 24,
 		Want: bb(10).Write("> code").SetDotHere(),
 	},
