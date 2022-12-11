@@ -321,7 +321,7 @@ func (ev *Evaler) Eval(src parse.Source, cfg EvalCfg) error {
 		ev.mu.Unlock()
 	}
 
-	op, err := compile(b.static(), cfg.Global.static(), tree, errFile)
+	op, _, err := compile(b.static(), cfg.Global.static(), nil, tree, errFile)
 	if err != nil {
 		if defaultGlobal {
 			ev.mu.Unlock()
@@ -410,23 +410,21 @@ func fillDefaultDummyPorts(ports []*Port) []*Port {
 	return ports
 }
 
-// Check checks the given source code for any parse error and compilation error.
-// It always tries to compile the code even if there is a parse error; both
-// return values may be non-nil. If w is not nil, deprecation messages are
-// written to it.
-func (ev *Evaler) Check(src parse.Source, w io.Writer) (parseErr, compileErr error) {
+// Check checks the given source code for any parse error, autofixes, and
+// compilation error. It always tries to compile the code even if there is a
+// parse error. If w is not nil, deprecation messages are written to it.
+func (ev *Evaler) Check(src parse.Source, w io.Writer) (error, []string, error) {
 	tree, parseErr := parse.Parse(src, parse.Config{WarningWriter: w})
-	return parseErr, ev.CheckTree(tree, w)
+	autofixes, compileErr := ev.CheckTree(tree, w)
+	return parseErr, autofixes, compileErr
 }
 
-// CheckTree checks the given parsed source tree for compilation errors. If w is
-// not nil, deprecation messages are written to it.
-func (ev *Evaler) CheckTree(tree parse.Tree, w io.Writer) error {
-	_, compileErr := ev.compile(tree, ev.Global(), w)
-	return compileErr
-}
-
-// Compiles a parsed tree.
-func (ev *Evaler) compile(tree parse.Tree, g *Ns, w io.Writer) (nsOp, error) {
-	return compile(ev.Builtin().static(), g.static(), tree, w)
+// CheckTree checks the given parsed source tree for autofixes and compilation
+// errors. If w is not nil, deprecation messages are written to it.
+func (ev *Evaler) CheckTree(tree parse.Tree, w io.Writer) ([]string, error) {
+	ev.mu.RLock()
+	b, g, m := ev.builtin, ev.global, ev.modules
+	ev.mu.RUnlock()
+	_, autofixes, compileErr := compile(b.static(), g.static(), mapKeys(m), tree, w)
+	return autofixes, compileErr
 }

@@ -3,6 +3,7 @@ package eval
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval/vars"
@@ -21,6 +22,8 @@ type compiler struct {
 	captures []*staticUpNs
 	// Pragmas tied to scopes.
 	pragmas []*scopePragma
+	// Names of internal modules.
+	modules []string
 	// Destination of warning messages. This is currently only used for
 	// deprecation messages.
 	warn io.Writer
@@ -30,20 +33,23 @@ type compiler struct {
 	srcMeta parse.Source
 	// Compilation errors.
 	errors []*diag.Error
+	// Suggested code to fix potential issues found during compilation.
+	autofixes []string
 }
 
 type scopePragma struct {
 	unknownCommandIsExternal bool
 }
 
-func compile(b, g *staticNs, tree parse.Tree, w io.Writer) (nsOp, error) {
+func compile(b, g *staticNs, modules []string, tree parse.Tree, w io.Writer) (nsOp, []string, error) {
 	g = g.clone()
 	cp := &compiler{
 		b, []*staticNs{g}, []*staticUpNs{new(staticUpNs)},
 		[]*scopePragma{{unknownCommandIsExternal: true}},
-		w, newDeprecationRegistry(), tree.Source, nil}
+		modules,
+		w, newDeprecationRegistry(), tree.Source, nil, nil}
 	chunkOp := cp.chunkOp(tree.Root)
-	return nsOp{chunkOp, g}, diag.PackCognateErrors(cp.errors)
+	return nsOp{chunkOp, g}, cp.autofixes, diag.PackCognateErrors(cp.errors)
 }
 
 type nsOp struct {
@@ -139,5 +145,17 @@ func (cp *compiler) deprecate(r diag.Ranger, msg string, minLevel int) {
 			Type: "deprecation", Message: msg,
 			Context: *diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r.Range())}
 		fmt.Fprintln(cp.warn, err.Show(""))
+	}
+}
+
+// Given a variable that doesn't resolve, add any applicable autofixes.
+func (cp *compiler) autofixUnresolvedVar(qname string) {
+	if len(cp.modules) == 0 {
+		return
+	}
+	first, _ := SplitQName(qname)
+	mod := strings.TrimSuffix(first, ":")
+	if mod != first && sliceContains(cp.modules, mod) {
+		cp.autofixes = append(cp.autofixes, "use "+mod)
 	}
 }

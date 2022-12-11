@@ -86,6 +86,7 @@ func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvalues
 	}
 	if ref == nil {
 		if f&newLValue == 0 {
+			cp.autofixUnresolvedVar(qname)
 			cp.errorpf(n, "cannot find variable $%s", parse.Quote(qname))
 			return dummyLValuesGroup
 		}

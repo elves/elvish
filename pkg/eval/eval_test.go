@@ -149,7 +149,7 @@ func TestCheck(t *testing.T) {
 	ev := NewEvaler()
 	for _, test := range checkTests {
 		t.Run(test.name, func(t *testing.T) {
-			parseErr, compileErr := ev.Check(parse.Source{Name: "[test]", Code: test.code}, nil)
+			parseErr, _, compileErr := ev.Check(parse.Source{Name: "[test]", Code: test.code}, nil)
 			if (parseErr != nil) != test.wantParseErr {
 				t.Errorf("got parse error %v, when wantParseErr = %v",
 					parseErr, test.wantParseErr)

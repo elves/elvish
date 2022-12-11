@@ -262,6 +262,7 @@ func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 		sigil, qname := SplitSigil(n.Value)
 		ref := resolveVarRef(cp, qname, n)
 		if ref == nil {
+			cp.autofixUnresolvedVar(qname)
 			cp.errorpf(n, "variable $%s not found", parse.Quote(qname))
 		}
 		return &variableOp{n.Range(), sigil != "", qname, ref}

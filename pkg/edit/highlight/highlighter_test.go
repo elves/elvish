@@ -82,7 +82,10 @@ func TestHighlighter_ParseErrors(t *testing.T) {
 func TestHighlighter_CheckErrors(t *testing.T) {
 	// Make a highlighter whose Check callback returns checkError.
 	hl := NewHighlighter(Config{
-		Check: func(t parse.Tree) error { return eval.NewEvaler().CheckTree(t, nil) }})
+		Check: func(t parse.Tree) error {
+			_, err := eval.NewEvaler().CheckTree(t, nil)
+			return err
+		}})
 
 	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
 		// Check error is highlighted and returned

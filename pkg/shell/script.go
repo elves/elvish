@@ -47,7 +47,7 @@ func script(ev *eval.Evaler, fds [3]*os.File, args []string, cfg *scriptCfg) int
 
 	src := parse.Source{Name: name, Code: code, IsFile: true}
 	if cfg.CompileOnly {
-		parseErr, compileErr := ev.Check(src, fds[2])
+		parseErr, _, compileErr := ev.Check(src, fds[2])
 		if cfg.JSON {
 			fmt.Fprintf(fds[1], "%s\n", errorsToJSON(parseErr, compileErr))
 		} else {

@@ -30,7 +30,7 @@ func BenchmarkEval(b *testing.B) {
 			if err != nil {
 				panic(err)
 			}
-			op, err := ev.compile(tree, ev.Global(), nil)
+			op, _, err := compile(ev.builtin.static(), ev.global.static(), nil, tree, nil)
 			if err != nil {
 				panic(err)
 			}
