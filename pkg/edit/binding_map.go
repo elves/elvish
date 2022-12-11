@@ -115,7 +115,8 @@ type bindingHelpEntry struct {
 func bindingHelp(m bindingsMap, ns *eval.Ns, entries ...bindingHelpEntry) ui.Text {
 	var t ui.Text
 	for _, entry := range entries {
-		keys := keysBoundToFn(m, ns, entry.fnName)
+		value := ns.IndexString(entry.fnName + eval.FnSuffix).Get()
+		keys := keysBoundTo(m, value)
 		if len(keys) == 0 {
 			continue
 		}
@@ -130,8 +131,7 @@ func bindingHelp(m bindingsMap, ns *eval.Ns, entries ...bindingHelpEntry) ui.Tex
 	return t
 }
 
-func keysBoundToFn(m bindingsMap, ns *eval.Ns, fnName string) []ui.Key {
-	value := ns.IndexString(fnName + eval.FnSuffix).Get()
+func keysBoundTo(m bindingsMap, value any) []ui.Key {
 	var keys []ui.Key
 	for it := m.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()

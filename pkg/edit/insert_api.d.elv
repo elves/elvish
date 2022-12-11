@@ -109,3 +109,17 @@ var command-abbr
 #
 # @cf $edit:abbr $edit:command-abbr
 var small-word-abbr
+
+# Toggles the value of [$edit:insert:quote-paste].
+fn toggle-quote-paste { }
+
+# Binding map for the insert mode.
+# 
+# The key bound to [`edit:apply-autofix`](#edit:apply-autofix) will be shown
+# when an [autofix](#autofix) is available.
+var insert:binding
+
+# A boolean used to control whether text pasted using
+# [bracketed paste](https://en.wikipedia.org/wiki/Bracketed-paste)
+# in the terminal should be quoted as a string. Defaults to `$false`.
+var insert:quote-paste

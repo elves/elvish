@@ -12,8 +12,9 @@ import (
 
 // Config keeps configuration for highlighting code.
 type Config struct {
-	Check      func(n parse.Tree) error
-	HasCommand func(name string) bool
+	Check         func(n parse.Tree) (string, error)
+	HasCommand    func(name string) bool
+	AutofixPrefix func() ui.Text
 }
 
 // Information collected about a command region, used for asynchronous
@@ -27,13 +28,13 @@ type cmdRegion struct {
 var maxBlockForLate = 10 * time.Millisecond
 
 // Highlights a piece of Elvish code.
-func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error) {
-	var errors []error
+func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []ui.Text) {
+	var tips []ui.Text
 	var errorRegions []region
 
 	addDiagError := func(err *diag.Error) {
 		if err.Context.From < len(code) {
-			errors = append(errors, err)
+			tips = append(tips, ui.T(err.Error()))
 			errorRegions = append(errorRegions, region{
 				err.Context.From, err.Context.To, semanticRegion, errorRegion})
 		}
@@ -45,9 +46,16 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 	}
 
 	if cfg.Check != nil {
-		errCheck := cfg.Check(tree)
+		autofix, errCheck := cfg.Check(tree)
 		for _, err := range eval.UnpackCompilationErrors(errCheck) {
 			addDiagError(err)
+		}
+		if autofix != "" {
+			var prefix ui.Text
+			if cfg.AutofixPrefix != nil {
+				prefix = cfg.AutofixPrefix()
+			}
+			tips = append(tips, ui.Concat(prefix, ui.T("autofix: "+autofix)))
 		}
 	}
 
@@ -113,13 +121,13 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []error)
 		// late result to lateCb in another goroutine.
 		select {
 		case late := <-lateCh:
-			return late, errors
+			return late, tips
 		case <-time.After(maxBlockForLate):
 			go func() {
 				lateCb(<-lateCh)
 			}()
-			return text, errors
+			return text, tips
 		}
 	}
-	return text, errors
+	return text, tips
 }

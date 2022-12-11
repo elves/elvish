@@ -79,13 +79,16 @@ func TestHighlighter_ParseErrors(t *testing.T) {
 	})
 }
 
-func TestHighlighter_CheckErrors(t *testing.T) {
-	// Make a highlighter whose Check callback returns checkError.
+func TestHighlighter_AutofixesAndCheckErrors(t *testing.T) {
+	ev := eval.NewEvaler()
+	ev.AddModule("mod1", &eval.Ns{})
 	hl := NewHighlighter(Config{
-		Check: func(t parse.Tree) error {
-			_, err := eval.NewEvaler().CheckTree(t, nil)
-			return err
-		}})
+		Check: func(t parse.Tree) (string, error) {
+			autofixes, err := ev.CheckTree(t, nil)
+			return strings.Join(autofixes, "; "), err
+		},
+		AutofixPrefix: func() ui.Text { return ui.T("prefix: ") },
+	})
 
 	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
 		// Check error is highlighted and returned
@@ -102,6 +105,16 @@ func TestHighlighter_CheckErrors(t *testing.T) {
 			matchTexts("1:4", "1:7")),
 		// Check errors at the end are ignored
 		Args("set _").Rets(any, noTips),
+
+		// Autofix
+		Args("nop $mod1:").Rets(
+			ui.MarkLines(
+				"nop $mod1:", styles,
+				"vvv ??????"),
+			matchTexts(
+				"1:5",                       // error
+				"prefix: autofix: use mod1", // autofix
+			)),
 	})
 }
 

@@ -24,9 +24,11 @@ set edit:global-binding[Ctrl-G] = $edit:close-mode~
     $b Alt-f  $edit:move-dot-right-word~
     # TODO Alt-l Alt-r Alt-u
 
-    # Ctrl-N and Ctrl-L occupied by readline binding, $b to Alt- instead.
+    # Some functionalities bound to Ctrl-$key are occupied by readline binding,
+    # use Alt-$key instead.
     $b Alt-n $edit:navigation:start~
     $b Alt-l $edit:location:start~
+    $b Alt-a $edit:apply-autofix~
 
     $b Ctrl-t $edit:transpose-rune~
     $b Alt-t $edit:transpose-word~

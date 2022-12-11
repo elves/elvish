@@ -46,6 +46,8 @@ set insert:binding = (binding-table [
 
   &Alt-Enter={ insert-at-dot "\n" }
 
+  &Ctrl-A= $apply-autofix~
+
   &Enter=   $smart-enter~
   &Ctrl-D=  $return-eof~
 ])

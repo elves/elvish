@@ -510,3 +510,12 @@ To see the difference between these definitions, consider the following string:
     words.
 
 -   It contains two alnum words, `abc` and `xyz`.
+
+## Autofix
+
+The editor can identify **autofix** commands to fix some errors in the code.
+
+For example, if you try to use a command from [the `str:` module](str.html)
+without importing it, the editor will offer `use str` as an autofix command:
+
+@ttyshot ref/edit/autofix

@@ -9,10 +9,9 @@ import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/eval/vars"
-	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/tt"
+	"src.elv.sh/pkg/ui"
 )
 
 // High-level sanity test.
@@ -20,12 +19,14 @@ import (
 func TestHighlighter(t *testing.T) {
 	f := setup(t)
 
+	// Highlighting
 	feedInput(f.TTYCtrl, "put $true")
 	f.TestTTY(t,
 		"~> put $true", Styles,
 		"   vvv $$$$$", term.DotHere,
 	)
 
+	// Check errors
 	feedInput(f.TTYCtrl, "x")
 	f.TestTTY(t,
 		"~> put $truex", Styles,
@@ -34,31 +35,27 @@ func TestHighlighter(t *testing.T) {
 	)
 }
 
+func TestHighlighter_Autofix(t *testing.T) {
+	f := setup(t)
+	f.Evaler.AddModule("mod1", &eval.Ns{})
+
+	feedInput(f.TTYCtrl, "put $mod1:")
+	f.TestTTY(t,
+		"~> put $mod1:", Styles,
+		"   vvv ??????", term.DotHere, "\n",
+		"compilation error: [interactive]:1:5: variable $mod1: not found\n",
+		"Ctrl-A autofix: use mod1", Styles,
+		"++++++                  ",
+	)
+
+	f.TTYCtrl.Inject(term.K('A', ui.Ctrl))
+	f.TestTTY(t,
+		"~> put $mod1:", Styles,
+		"   vvv $$$$$$", term.DotHere,
+	)
+}
+
 // Fine-grained tests against the highlighter.
-
-func TestCheck(t *testing.T) {
-	ev := eval.NewEvaler()
-	ev.ExtendGlobal(eval.BuildNs().AddVar("good", vars.FromInit(0)))
-
-	tt.Test(t, tt.Fn("check", check), tt.Table{
-		Args(ev, mustParse("")).Rets(noError),
-		Args(ev, mustParse("echo $good")).Rets(noError),
-		// TODO: Check the range of the returned error
-		Args(ev, mustParse("echo $bad")).Rets(anyError),
-	})
-}
-
-type anyErrorMatcher struct{}
-
-func (anyErrorMatcher) Match(ret tt.RetValue) bool {
-	err, _ := ret.(error)
-	return err != nil
-}
-
-var (
-	noError  = error(nil)
-	anyError anyErrorMatcher
-)
 
 const colonInFilenameOk = runtime.GOOS != "windows"
 
@@ -128,14 +125,6 @@ func TestMakeHasCommand(t *testing.T) {
 		Args(ev, "bad").Rets(false),
 		Args(ev, "a:").Rets(false),
 	})
-}
-
-func mustParse(src string) parse.Tree {
-	tree, err := parse.Parse(parse.SourceForTest(src), parse.Config{})
-	if err != nil {
-		panic(err)
-	}
-	return tree
 }
 
 func mustMkdirAll(path string) {

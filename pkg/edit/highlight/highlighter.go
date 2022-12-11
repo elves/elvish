@@ -11,59 +11,58 @@ const latesBufferSize = 128
 // Highlighter is a code highlighter that can deliver results asynchronously.
 type Highlighter struct {
 	cfg   Config
-	state state
 	lates chan struct{}
+
+	cacheMutex sync.Mutex
+	cache      cache
 }
 
-type state struct {
-	sync.Mutex
+type cache struct {
 	code       string
 	styledCode ui.Text
 	tips       []ui.Text
 }
 
 func NewHighlighter(cfg Config) *Highlighter {
-	return &Highlighter{cfg, state{}, make(chan struct{}, latesBufferSize)}
+	return &Highlighter{cfg: cfg, lates: make(chan struct{}, latesBufferSize)}
 }
 
 // Get returns the highlighted code and static errors found in the code as tips.
 func (hl *Highlighter) Get(code string) (ui.Text, []ui.Text) {
-	hl.state.Lock()
-	defer hl.state.Unlock()
-	if code == hl.state.code {
-		return hl.state.styledCode, hl.state.tips
+	hl.cacheMutex.Lock()
+	defer hl.cacheMutex.Unlock()
+	if code == hl.cache.code {
+		return hl.cache.styledCode, hl.cache.tips
 	}
 
 	lateCb := func(styledCode ui.Text) {
-		hl.state.Lock()
-		if hl.state.code != code {
+		hl.cacheMutex.Lock()
+		if hl.cache.code != code {
 			// Late result was delivered after code has changed. Unlock and
 			// return.
-			hl.state.Unlock()
+			hl.cacheMutex.Unlock()
 			return
 		}
-		hl.state.styledCode = styledCode
+		hl.cache.styledCode = styledCode
 		// The channel send below might block, so unlock the state first.
-		hl.state.Unlock()
+		hl.cacheMutex.Unlock()
 		hl.lates <- struct{}{}
 	}
 
-	styledCode, errors := highlight(code, hl.cfg, lateCb)
-	var tips []ui.Text
-	if len(errors) > 0 {
-		tips = make([]ui.Text, len(errors))
-		for i, err := range errors {
-			tips[i] = ui.T(err.Error())
-		}
-	}
+	styledCode, tips := highlight(code, hl.cfg, lateCb)
 
-	hl.state.code = code
-	hl.state.styledCode = styledCode
-	hl.state.tips = tips
+	hl.cache = cache{code, styledCode, tips}
 	return styledCode, tips
 }
 
 // LateUpdates returns a channel for notifying late updates.
 func (hl *Highlighter) LateUpdates() <-chan struct{} {
 	return hl.lates
+}
+
+// InvalidateCache invalidates the cached highlighting result.
+func (hl *Highlighter) InvalidateCache() {
+	hl.cacheMutex.Lock()
+	defer hl.cacheMutex.Unlock()
+	hl.cache = cache{}
 }

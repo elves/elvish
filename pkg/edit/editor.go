@@ -9,6 +9,7 @@ import (
 	_ "embed"
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/eval"
@@ -26,6 +27,8 @@ type Editor struct {
 
 	excMutex sync.RWMutex
 	excList  vals.List
+
+	autofix atomic.Value
 
 	// Maybe move this to another type that represents the REPL cycle as a whole, not just the
 	// read/edit portion represented by the Editor type.
@@ -47,6 +50,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	// Declare the Editor with a nil App first; some initialization functions
 	// require a notifier as an argument, but does not use it immediately.
 	ed := &Editor{excList: vals.EmptyList}
+	ed.autofix.Store("")
 	nb := eval.BuildNsNamed("edit")
 	appSpec := cli.AppSpec{TTY: tty}
 
@@ -55,12 +59,12 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 		_ = err // TODO(xiaq): Report the error.
 	}
 
-	initHighlighter(&appSpec, ev)
 	initMaxHeight(&appSpec, nb)
 	initReadlineHooks(&appSpec, ev, nb)
 	initAddCmdFilters(&appSpec, ev, nb, hs)
 	initGlobalBindings(&appSpec, ed, ev, nb)
-	initInsertAPI(&appSpec, ed, ev, nb)
+	insertBindingVar := initInsertAPI(&appSpec, ed, ev, nb)
+	initHighlighter(&appSpec, ed, ev, nb, insertBindingVar)
 	initPrompts(&appSpec, ed, ev, nb)
 	ed.app = cli.NewApp(appSpec)
 
