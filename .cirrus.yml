@@ -70,7 +70,7 @@ build_binaries_task:
   env:
     CGO_ENABLED: 0
   container:
-    image: golang:1.19.3-alpine
+    image: golang:1.19.4-alpine
   go_modules_cache:
     fingerprint_script: cat go.sum
     folder: ~/go/pkg/mod
@@ -92,7 +92,7 @@ check_binary_checksums_task:
   name: Check binary checksums ($HOST)
   only_if: $CIRRUS_BRANCH == 'master'
   container:
-    image: golang:1.19.3-alpine
+    image: alpine:latest
   depends_on: binaries
   matrix:
     - env:
