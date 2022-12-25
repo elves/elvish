@@ -8,24 +8,13 @@ import (
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/edit/highlight"
 	"src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/ui"
 )
 
-func initHighlighter(appSpec *cli.AppSpec, ed *Editor, ev *eval.Evaler, nb eval.NsBuilder, bindingVar vars.Var) {
-	var hl *highlight.Highlighter
-	applyAutofix := eval.NewGoFn("edit:apply-autofix", func() {
-		code := ed.autofix.Load().(string)
-		// TODO: Check errors.
-		//
-		// For now, the autofix snippets are simple enough that we know they'll
-		// always succeed.
-		ev.Eval(parse.Source{Name: "[autofix]", Code: code}, eval.EvalCfg{})
-		hl.InvalidateCache()
-	})
-	hl = highlight.NewHighlighter(highlight.Config{
+func initHighlighter(appSpec *cli.AppSpec, ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
+	hl := highlight.NewHighlighter(highlight.Config{
 		Check: func(t parse.Tree) (string, error) {
 			autofixes, err := ev.CheckTree(t, nil)
 			autofix := strings.Join(autofixes, "; ")
@@ -34,17 +23,20 @@ func initHighlighter(appSpec *cli.AppSpec, ed *Editor, ev *eval.Evaler, nb eval.
 		},
 		HasCommand: func(cmd string) bool { return hasCommand(ev, cmd) },
 		AutofixTip: func(autofix string) ui.Text {
-			keys := keysBoundTo(bindingVar.Get().(bindingsMap), applyAutofix)
-			var t ui.Text
-			for _, k := range keys {
-				t = ui.Concat(t, ui.T(k.String(), ui.Inverse), ui.T(" "))
-			}
-			t = ui.Concat(t, ui.T("autofix: "+autofix))
-			return t
+			return bindingHelp(ed.ns, "insert:binding",
+				bindingHelpEntry{"autofix: " + autofix, "apply-autofix"})
 		},
 	})
 	appSpec.Highlighter = hl
-	nb.AddFn("apply-autofix", applyAutofix)
+	nb.AddGoFn("apply-autofix", func() {
+		code := ed.autofix.Load().(string)
+		// TODO: Check errors.
+		//
+		// For now, the autofix snippets are simple enough that we know they'll
+		// always succeed.
+		ev.Eval(parse.Source{Name: "[autofix]", Code: code}, eval.EvalCfg{})
+		hl.InvalidateCache()
+	})
 }
 
 func hasCommand(ev *eval.Evaler, cmd string) bool {

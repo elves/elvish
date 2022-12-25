@@ -85,8 +85,7 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	app := ed.app
 	// TODO: Rename to $edit:navigation:selected-file after deprecation
 	nb.AddVar("selected-file", selectedFileVar)
-	var ns *eval.Ns
-	ns = eval.BuildNsNamed("edit:navigation").
+	ns := eval.BuildNsNamed("edit:navigation").
 		AddVars(map[string]vars.Var{
 			"binding":     bindingVar,
 			"width-ratio": widthRatioVar,
@@ -101,9 +100,9 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 					},
 					Filter: filterSpec,
 					CodeAreaRPrompt: func() ui.Text {
-						return bindingHelp(bindingVar.Get().(bindingsMap), ns,
-							bindingHelpEntry{"hidden", "trigger-shown-hidden"},
-							bindingHelpEntry{"filter", "trigger-filter"})
+						return bindingHelp(ed.ns, "navigation:binding",
+							bindingHelpEntry{"hidden", "navigation:trigger-shown-hidden"},
+							bindingHelpEntry{"filter", "navigation:trigger-filter"})
 					},
 				})
 				if err != nil {

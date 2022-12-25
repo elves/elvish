@@ -7,7 +7,7 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 )
 
-func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.NsBuilder) vars.Var {
+func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.NsBuilder) {
 	simpleAbbr := vals.EmptyMap
 	simpleAbbrVar := vars.FromPtr(&simpleAbbr)
 	appSpec.SimpleAbbreviations = makeMapIterator(simpleAbbrVar)
@@ -37,8 +37,6 @@ func initInsertAPI(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb eval.N
 	nb.AddNs("insert", eval.BuildNs().
 		AddVar("binding", bindingVar).
 		AddVar("quote-paste", quotePaste))
-
-	return bindingVar
 }
 
 func makeMapIterator(mv vars.PtrVar) func(func(a, b string)) {

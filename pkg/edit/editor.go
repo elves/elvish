@@ -63,8 +63,8 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	initReadlineHooks(&appSpec, ev, nb)
 	initAddCmdFilters(&appSpec, ev, nb, hs)
 	initGlobalBindings(&appSpec, ed, ev, nb)
-	insertBindingVar := initInsertAPI(&appSpec, ed, ev, nb)
-	initHighlighter(&appSpec, ed, ev, nb, insertBindingVar)
+	initInsertAPI(&appSpec, ed, ev, nb)
+	initHighlighter(&appSpec, ed, ev, nb)
 	initPrompts(&appSpec, ed, ev, nb)
 	ed.app = cli.NewApp(appSpec)
 

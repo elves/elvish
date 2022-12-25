@@ -112,10 +112,16 @@ type bindingHelpEntry struct {
 	fnName string
 }
 
-func bindingHelp(m bindingsMap, ns *eval.Ns, entries ...bindingHelpEntry) ui.Text {
+// Given a binding map and a list of interesting functions, returns a text
+// showing the keys that are bound to those functions.
+//
+// This uses Elvish qnames for both the binding map and the functions because
+// the place that calls bindingHelp may not have direct access to them.
+func bindingHelp(ns *eval.Ns, binding string, entries ...bindingHelpEntry) ui.Text {
+	m := getVar(ns, binding).(bindingsMap)
 	var t ui.Text
 	for _, entry := range entries {
-		value := ns.IndexString(entry.fnName + eval.FnSuffix).Get()
+		value := getVar(ns, entry.fnName+eval.FnSuffix)
 		keys := keysBoundTo(m, value)
 		if len(keys) == 0 {
 			continue
@@ -129,6 +135,14 @@ func bindingHelp(m bindingsMap, ns *eval.Ns, entries ...bindingHelpEntry) ui.Tex
 		t = ui.Concat(t, ui.T(entry.text))
 	}
 	return t
+}
+
+func getVar(ns *eval.Ns, qname string) any {
+	segs := eval.SplitQNameSegs(qname)
+	for _, seg := range segs[:len(segs)-1] {
+		ns = ns.IndexString(seg).Get().(*eval.Ns)
+	}
+	return ns.IndexString(segs[len(segs)-1]).Get()
 }
 
 func keysBoundTo(m bindingsMap, value any) []ui.Key {
