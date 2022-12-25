@@ -87,7 +87,7 @@ func TestHighlighter_AutofixesAndCheckErrors(t *testing.T) {
 			autofixes, err := ev.CheckTree(t, nil)
 			return strings.Join(autofixes, "; "), err
 		},
-		AutofixPrefix: func() ui.Text { return ui.T("prefix: ") },
+		AutofixTip: func(s string) ui.Text { return ui.T("autofix: " + s) },
 	})
 
 	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
@@ -112,8 +112,8 @@ func TestHighlighter_AutofixesAndCheckErrors(t *testing.T) {
 				"nop $mod1:", styles,
 				"vvv ??????"),
 			matchTexts(
-				"1:5",                       // error
-				"prefix: autofix: use mod1", // autofix
+				"1:5",               // error
+				"autofix: use mod1", // autofix
 			)),
 	})
 }

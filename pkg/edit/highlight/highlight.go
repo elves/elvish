@@ -12,9 +12,9 @@ import (
 
 // Config keeps configuration for highlighting code.
 type Config struct {
-	Check         func(n parse.Tree) (string, error)
-	HasCommand    func(name string) bool
-	AutofixPrefix func() ui.Text
+	Check      func(n parse.Tree) (string, error)
+	HasCommand func(name string) bool
+	AutofixTip func(autofix string) ui.Text
 }
 
 // Information collected about a command region, used for asynchronous
@@ -50,12 +50,8 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []ui.Tex
 		for _, err := range eval.UnpackCompilationErrors(errCheck) {
 			addDiagError(err)
 		}
-		if autofix != "" {
-			var prefix ui.Text
-			if cfg.AutofixPrefix != nil {
-				prefix = cfg.AutofixPrefix()
-			}
-			tips = append(tips, ui.Concat(prefix, ui.T("autofix: "+autofix)))
+		if autofix != "" && cfg.AutofixTip != nil {
+			tips = append(tips, cfg.AutofixTip(autofix))
 		}
 	}
 

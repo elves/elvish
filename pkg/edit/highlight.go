@@ -33,12 +33,13 @@ func initHighlighter(appSpec *cli.AppSpec, ed *Editor, ev *eval.Evaler, nb eval.
 			return autofix, err
 		},
 		HasCommand: func(cmd string) bool { return hasCommand(ev, cmd) },
-		AutofixPrefix: func() ui.Text {
+		AutofixTip: func(autofix string) ui.Text {
 			keys := keysBoundTo(bindingVar.Get().(bindingsMap), applyAutofix)
 			var t ui.Text
 			for _, k := range keys {
 				t = ui.Concat(t, ui.T(k.String(), ui.Inverse), ui.T(" "))
 			}
+			t = ui.Concat(t, ui.T("autofix: "+autofix))
 			return t
 		},
 	})
