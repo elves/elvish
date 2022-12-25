@@ -174,6 +174,8 @@ func TestSmartEnter_AcceptsCodeWhenWholeBufferIsComplete(t *testing.T) {
 	}
 }
 
+// TODO: Test that smart-enter applies autofix.
+
 func TestWordify(t *testing.T) {
 	TestWithSetup(t, setupWordify,
 		That("wordify 'ls str [list]'").Puts("ls", "str", "[list]"),

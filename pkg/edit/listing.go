@@ -66,8 +66,8 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 					},
 					Filter: filterSpec,
 					CodeAreaRPrompt: func() ui.Text {
-						return bindingHelp(ed.ns, "histlist:binding",
-							bindingHelpEntry{"dedup", "histlist:toggle-dedup"})
+						return bindingTips(ed.ns, "histlist:binding",
+							bindingTip("dedup", "histlist:toggle-dedup"))
 					},
 				})
 				startMode(ed.app, w, err)

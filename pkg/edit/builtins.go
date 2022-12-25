@@ -95,23 +95,29 @@ func notify(app cli.App, x any) error {
 	return nil
 }
 
-func smartEnter(app cli.App) {
-	codeArea, ok := focusedCodeArea(app)
+func smartEnter(ed *Editor) {
+	codeArea, ok := focusedCodeArea(ed.app)
 	if !ok {
 		return
 	}
-	commit := false
+	insertedNewline := false
 	codeArea.MutateState(func(s *tk.CodeAreaState) {
 		buf := &s.Buffer
-		if isSyntaxComplete(buf.Content) {
-			commit = true
-		} else {
+		if !isSyntaxComplete(buf.Content) {
 			buf.InsertAtDot("\n")
+			insertedNewline = true
 		}
 	})
-	if commit {
-		app.CommitCode()
+	if insertedNewline {
+		return
 	}
+	// TODO: Check whether the code area is actually the main code area. This
+	// isn't a problem for now because smart-enter is only bound to Enter in
+	// $edit:insert:binding, which is used by the main code area.
+	//
+	// TODO: This is prone to race condition if the code area was just mutated.
+	ed.applyAutofix()
+	ed.app.CommitCode()
 }
 
 func isSyntaxComplete(code string) bool {
@@ -142,17 +148,17 @@ func initTTYBuiltins(app cli.App, tty cli.TTY, nb eval.NsBuilder) {
 	})
 }
 
-func initMiscBuiltins(app cli.App, nb eval.NsBuilder) {
+func initMiscBuiltins(ed *Editor, nb eval.NsBuilder) {
 	nb.AddGoFns(map[string]any{
 		"binding-table":  makeBindingMap,
-		"close-mode":     func() { closeMode(app) },
-		"end-of-history": func() { endOfHistory(app) },
+		"close-mode":     func() { closeMode(ed.app) },
+		"end-of-history": func() { endOfHistory(ed.app) },
 		"key":            toKey,
-		"notify":         func(x any) error { return notify(app, x) },
-		"redraw":         func(opts redrawOpts) { redraw(app, opts) },
-		"return-line":    app.CommitCode,
-		"return-eof":     app.CommitEOF,
-		"smart-enter":    func() { smartEnter(app) },
+		"notify":         func(x any) error { return notify(ed.app, x) },
+		"redraw":         func(opts redrawOpts) { redraw(ed.app, opts) },
+		"return-line":    ed.app.CommitCode,
+		"return-eof":     ed.app.CommitEOF,
+		"smart-enter":    func() { smartEnter(ed) },
 		"wordify":        wordify,
 	})
 }

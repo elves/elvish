@@ -84,8 +84,10 @@ fn match-substr {|seed inputs?| }
 # Start the completion mode.
 fn completion:start { }
 
-# Starts the completion mode. However, if all the candidates share a non-empty
-# prefix and that prefix starts with the seed, inserts the prefix instead.
+# Starts the completion mode after accepting any pending autofix.
+#
+# If all the candidates share a non-empty prefix and that prefix starts with the
+# seed, inserts the prefix instead.
 fn completion:smart-start { }
 
 # Closes the completion mode UI.

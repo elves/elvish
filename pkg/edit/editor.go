@@ -29,6 +29,10 @@ type Editor struct {
 	excList  vals.List
 
 	autofix atomic.Value
+	// This is an ugly hack to let the implementation of edit:smart-enter and
+	// edit:completion:smart-start to apply the autofix easily. This field is
+	// set in initHighlighter.
+	applyAutofix func()
 
 	// Maybe move this to another type that represents the REPL cycle as a whole, not just the
 	// read/edit portion represented by the Editor type.
@@ -81,7 +85,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	initRepl(ed, ev, nb)
 	initBufferBuiltins(ed.app, nb)
 	initTTYBuiltins(ed.app, tty, nb)
-	initMiscBuiltins(ed.app, nb)
+	initMiscBuiltins(ed, nb)
 	initStateAPI(ed.app, nb)
 	initStoreAPI(ed.app, nb, hs)
 

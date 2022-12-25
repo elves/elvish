@@ -519,3 +519,8 @@ For example, if you try to use a command from [the `str:` module](str.html)
 without importing it, the editor will offer `use str` as an autofix command:
 
 @ttyshot ref/edit/autofix
+
+Autofixes are applied automatically by
+[`edit:completion:smart-start`](#edit:completion:smart-start) (the default
+binding for <kbd>Tab</kbd>) and [`edit:smart-enter`](#edit:smart-enter) (the
+default binding for <kbd>Enter</kbd>).

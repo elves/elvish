@@ -50,6 +50,30 @@ func TestCompletionAddon_CompletesLongestCommonPrefix(t *testing.T) {
 	)
 }
 
+func TestCompletionAddon_AppliesAutofix(t *testing.T) {
+	f := setup(t)
+	fooNs := eval.BuildNs().AddGoFn("a", func() {}).AddGoFn("b", func() {}).Ns()
+	f.Evaler.AddModule("foo", fooNs)
+
+	feedInput(f.TTYCtrl, "foo:")
+	f.TestTTY(t,
+		"~> foo:", Styles,
+		"   !!!!", term.DotHere, "\n",
+		"Ctrl-A autofix: use foo Tab Enter autofix first", Styles,
+		"++++++                  +++ +++++",
+	)
+
+	feedInput(f.TTYCtrl, "\t")
+	f.TestTTY(t,
+		"~> foo:a\n", Styles,
+		"   VVVVV",
+		" COMPLETING command  ", Styles,
+		"******************** ", term.DotHere, "\n",
+		"foo:a  foo:b", Styles,
+		"+++++       ",
+	)
+}
+
 func TestCompleteFilename(t *testing.T) {
 	f := setup(t)
 

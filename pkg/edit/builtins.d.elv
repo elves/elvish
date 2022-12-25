@@ -46,8 +46,10 @@ fn return-line { }
 # effect after the key binding returns.
 fn return-eof { }
 
-# Inserts a literal newline if the current code is not syntactically complete
-# Elvish code. Accepts the current line otherwise.
+# If the current code is syntactically incomplete (like `echo [`), inserts a
+# literal newline.
+#
+# Otherwise, applies any pending autofixes and accepts the current line.
 fn smart-enter { }
 
 # Breaks Elvish code into words.

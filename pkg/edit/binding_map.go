@@ -2,7 +2,6 @@ package edit
 
 import (
 	"errors"
-	"reflect"
 	"sort"
 
 	"src.elv.sh/pkg/eval"
@@ -107,22 +106,29 @@ func makeBindingMap(raw vals.Map) (bindingsMap, error) {
 	return bindingsMap{converted}, nil
 }
 
-type bindingHelpEntry struct {
-	text   string
-	fnName string
+type bindingTipEntry struct {
+	text    string
+	fnNames []string
 }
 
-// Given a binding map and a list of interesting functions, returns a text
-// showing the keys that are bound to those functions.
+func bindingTip(text string, fnNames ...string) bindingTipEntry {
+	return bindingTipEntry{text, fnNames}
+}
+
+// Given a binding map and a list of function groups, returns a text describing
+// the keys that are bound to any function in each group.
 //
 // This uses Elvish qnames for both the binding map and the functions because
-// the place that calls bindingHelp may not have direct access to them.
-func bindingHelp(ns *eval.Ns, binding string, entries ...bindingHelpEntry) ui.Text {
+// the place that calls bindingTips may not have direct access to them.
+func bindingTips(ns *eval.Ns, binding string, entries ...bindingTipEntry) ui.Text {
 	m := getVar(ns, binding).(bindingsMap)
 	var t ui.Text
 	for _, entry := range entries {
-		value := getVar(ns, entry.fnName+eval.FnSuffix)
-		keys := keysBoundTo(m, value)
+		values := make([]any, len(entry.fnNames))
+		for i, fnName := range entry.fnNames {
+			values[i] = getVar(ns, fnName+eval.FnSuffix)
+		}
+		keys := keysBoundTo(m, values)
 		if len(keys) == 0 {
 			continue
 		}
@@ -145,12 +151,15 @@ func getVar(ns *eval.Ns, qname string) any {
 	return ns.IndexString(segs[len(segs)-1]).Get()
 }
 
-func keysBoundTo(m bindingsMap, value any) []ui.Key {
+func keysBoundTo(m bindingsMap, values []any) []ui.Key {
 	var keys []ui.Key
 	for it := m.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
-		if reflect.DeepEqual(v, value) {
-			keys = append(keys, k.(ui.Key))
+		for _, value := range values {
+			if v == value {
+				keys = append(keys, k.(ui.Key))
+				continue
+			}
 		}
 	}
 	return keys

@@ -23,20 +23,25 @@ func initHighlighter(appSpec *cli.AppSpec, ed *Editor, ev *eval.Evaler, nb eval.
 		},
 		HasCommand: func(cmd string) bool { return hasCommand(ev, cmd) },
 		AutofixTip: func(autofix string) ui.Text {
-			return bindingHelp(ed.ns, "insert:binding",
-				bindingHelpEntry{"autofix: " + autofix, "apply-autofix"})
+			return bindingTips(ed.ns, "insert:binding",
+				bindingTip("autofix: "+autofix, "apply-autofix"),
+				bindingTip("autofix first", "smart-enter", "completion:smart-start"))
 		},
 	})
 	appSpec.Highlighter = hl
-	nb.AddGoFn("apply-autofix", func() {
+	ed.applyAutofix = func() {
 		code := ed.autofix.Load().(string)
+		if code == "" {
+			return
+		}
 		// TODO: Check errors.
 		//
 		// For now, the autofix snippets are simple enough that we know they'll
 		// always succeed.
 		ev.Eval(parse.Source{Name: "[autofix]", Code: code}, eval.EvalCfg{})
 		hl.InvalidateCache()
-	})
+	}
+	nb.AddGoFn("apply-autofix", ed.applyAutofix)
 }
 
 func hasCommand(ev *eval.Evaler, cmd string) bool {

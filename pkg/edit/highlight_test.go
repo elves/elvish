@@ -44,8 +44,8 @@ func TestHighlighter_Autofix(t *testing.T) {
 		"~> put $mod1:", Styles,
 		"   vvv ??????", term.DotHere, "\n",
 		"compilation error: [interactive]:1:5: variable $mod1: not found\n",
-		"Ctrl-A autofix: use mod1", Styles,
-		"++++++                  ",
+		"Ctrl-A autofix: use mod1 Tab Enter autofix first", Styles,
+		"++++++                   +++ +++++",
 	)
 
 	f.TTYCtrl.Inject(term.K('A', ui.Ctrl))

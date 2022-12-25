@@ -59,7 +59,7 @@ func TestBindingHelp_NoBinding(t *testing.T) {
 		Ns()
 
 	// A bindings map with no relevant binding
-	if got := bindingHelp(ns, "binding", bindingHelpEntry{"do a", "a"}); len(got) > 0 {
+	if got := bindingTips(ns, "binding", bindingTip("do a", "a")); len(got) > 0 {
 		t.Errorf("got %v, want empty text", got)
 	}
 }

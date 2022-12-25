@@ -100,9 +100,9 @@ func initNavigation(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 					},
 					Filter: filterSpec,
 					CodeAreaRPrompt: func() ui.Text {
-						return bindingHelp(ed.ns, "navigation:binding",
-							bindingHelpEntry{"hidden", "navigation:trigger-shown-hidden"},
-							bindingHelpEntry{"filter", "navigation:trigger-filter"})
+						return bindingTips(ed.ns, "navigation:binding",
+							bindingTip("hidden", "navigation:trigger-shown-hidden"),
+							bindingTip("filter", "navigation:trigger-filter"))
 					},
 				})
 				if err != nil {

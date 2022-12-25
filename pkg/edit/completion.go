@@ -9,7 +9,6 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/edit/complete"
@@ -50,16 +49,19 @@ func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) (c
 	}, nil
 }
 
-func completionStart(app cli.App, bindings tk.Bindings, ev *eval.Evaler, cfg complete.Config, smart bool) {
-	codeArea, ok := focusedCodeArea(app)
+func completionStart(ed *Editor, bindings tk.Bindings, ev *eval.Evaler, cfg complete.Config, smart bool) {
+	codeArea, ok := focusedCodeArea(ed.app)
 	if !ok {
 		return
+	}
+	if smart {
+		ed.applyAutofix()
 	}
 	buf := codeArea.CopyState().Buffer
 	result, err := complete.Complete(
 		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot}, ev, cfg)
 	if err != nil {
-		app.Notify(modes.ErrorText(err))
+		ed.app.Notify(modes.ErrorText(err))
 		return
 	}
 	if smart {
@@ -91,15 +93,15 @@ func completionStart(app cli.App, bindings tk.Bindings, ev *eval.Evaler, cfg com
 			}
 		}
 	}
-	w, err := modes.NewCompletion(app, modes.CompletionSpec{
+	w, err := modes.NewCompletion(ed.app, modes.CompletionSpec{
 		Name: result.Name, Replace: result.Replace, Items: result.Items,
 		Filter: filterSpec, Bindings: bindings,
 	})
 	if w != nil {
-		app.PushAddon(w)
+		ed.app.PushAddon(w)
 	}
 	if err != nil {
-		app.Notify(modes.ErrorText(err))
+		ed.app.Notify(modes.ErrorText(err))
 	}
 }
 
@@ -138,8 +140,8 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 			}).
 			AddGoFns(map[string]any{
 				"accept":      func() { listingAccept(app) },
-				"smart-start": func() { completionStart(app, bindings, ev, cfg(), true) },
-				"start":       func() { completionStart(app, bindings, ev, cfg(), false) },
+				"smart-start": func() { completionStart(ed, bindings, ev, cfg(), true) },
+				"start":       func() { completionStart(ed, bindings, ev, cfg(), false) },
 				"up":          func() { listingUp(app) },
 				"down":        func() { listingDown(app) },
 				"up-cycle":    func() { listingUpCycle(app) },
