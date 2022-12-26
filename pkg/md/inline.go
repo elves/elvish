@@ -69,38 +69,6 @@ type inlineParser struct {
 	buf    buffer
 }
 
-const (
-	scheme           = `[a-zA-Z][a-zA-Z0-9+.-]{1,31}`
-	emailLocalPuncts = ".!#$%&'*+/=?^_`{|}~-"
-)
-
-var (
-	// https://spec.commonmark.org/0.30/#uri-autolink
-	uriAutolinkRegexp = regexp.MustCompile(
-		`^<` + scheme + `:[^\x00-\x19 <>]*` + `>`)
-	// https://spec.commonmark.org/0.30/#email-autolink
-	emailAutolinkRegexp = regexp.MustCompile(
-		`^<[a-zA-Z0-9` + emailLocalPuncts + `]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*>`)
-
-	openTagRegexp    = regexp.MustCompile(`^` + openTag)
-	closingTagRegexp = regexp.MustCompile(`^` + closingTag)
-)
-
-const (
-	// https://spec.commonmark.org/0.30/#open-tag
-	openTag = `<` +
-		`[a-zA-Z][a-zA-Z0-9-]*` + // tag name
-		(`(?:` +
-			`[ \t\n]+` + // whitespace
-			`[a-zA-Z_:][a-zA-Z0-9_\.:-]*` + // attribute name
-			`(?:[ \t\n]*=[ \t\n]*(?:[^ \t\n"'=<>` + "`" + `]+|'[^']*'|"[^"]*"))?` + // attribute value specification
-			`)*`) + // zero or more attributes
-		`[ \t\n]*` + // whitespace
-		`/?>`
-	// https://spec.commonmark.org/0.30/#closing-tag
-	closingTag = `</[a-zA-Z][a-zA-Z0-9-]*[ \t\n]*>`
-)
-
 func (p *inlineParser) render() {
 	for p.pos < len(p.text) {
 		b := p.text[p.pos]

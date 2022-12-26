@@ -167,6 +167,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // UnescapeHTML is used by the parser to unescape HTML entities and numeric
@@ -253,8 +254,13 @@ const (
 	OpOrderedListEnd
 )
 
+var initRegexpsOnce sync.Once
+
 // Render parses markdown and renders it with a Codec.
 func Render(text string, codec Codec) {
+	// Compiled regular expressions live on the heap. Compiling them lazily
+	// saves memory if this function is never called.
+	initRegexpsOnce.Do(initRegexps)
 	p := blockParser{lines: lineSplitter{text, 0}, codec: codec}
 	p.render()
 }
@@ -278,12 +284,57 @@ type blockParser struct {
 	tree  blockTree
 }
 
-var (
+// Block regexps.
+var thematicBreakRegexp,
+	atxHeadingRegexp,
+	atxHeadingCloserRegexp,
+	atxHeadingAttributeRegexp,
+	codeFenceRegexp,
+	codeFenceCloserRegexp,
+	html1Regexp,
+	html1CloserRegexp,
+	html2Regexp,
+	html2CloserRegexp,
+	html3Regexp,
+	html3CloserRegexp,
+	html4Regexp,
+	html4CloserRegexp,
+	html5Regexp,
+	html5CloserRegexp,
+	html6Regexp,
+	html7Regexp *regexp.Regexp
+
+// Inline regexps.
+var uriAutolinkRegexp,
+	emailAutolinkRegexp,
+	openTagRegexp,
+	closingTagRegexp *regexp.Regexp
+
+// Building blocks for regexps.
+const (
+	scheme           = `[a-zA-Z][a-zA-Z0-9+.-]{1,31}`
+	emailLocalPuncts = ".!#$%&'*+/=?^_`{|}~-"
+
+	// https://spec.commonmark.org/0.30/#open-tag
+	openTag = `<` +
+		`[a-zA-Z][a-zA-Z0-9-]*` + // tag name
+		(`(?:` +
+			`[ \t\n]+` + // whitespace
+			`[a-zA-Z_:][a-zA-Z0-9_\.:-]*` + // attribute name
+			`(?:[ \t\n]*=[ \t\n]*(?:[^ \t\n"'=<>` + "`" + `]+|'[^']*'|"[^"]*"))?` + // attribute value specification
+			`)*`) + // zero or more attributes
+		`[ \t\n]*` + // whitespace
+		`/?>`
+	// https://spec.commonmark.org/0.30/#closing-tag
+	closingTag = `</[a-zA-Z][a-zA-Z0-9-]*[ \t\n]*>`
+)
+
+func initRegexps() {
 	thematicBreakRegexp = regexp.MustCompile(
 		`^ {0,3}((?:-[ \t]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})$`)
 
 	// Capture group 1: heading opener
-	atxHeadingRegexp       = regexp.MustCompile(`^ {0,3}(#{1,6})(?:[ \t]|$)`)
+	atxHeadingRegexp = regexp.MustCompile(`^ {0,3}(#{1,6})(?:[ \t]|$)`)
 	atxHeadingCloserRegexp = regexp.MustCompile(`[ \t]#+[ \t]*$`)
 
 	// Support the header_attributes extension
@@ -303,21 +354,31 @@ var (
 	// Capture group 1: fence punctuations
 	codeFenceCloserRegexp = regexp.MustCompile("(?:^ {0,3})(`{3,}|~{3,})[ \t]*$")
 
-	html1Regexp       = regexp.MustCompile(`^ {0,3}<(?i:pre|script|style|textarea)`)
+	html1Regexp = regexp.MustCompile(`^ {0,3}<(?i:pre|script|style|textarea)`)
 	html1CloserRegexp = regexp.MustCompile(`</(?i:pre|script|style|textarea)`)
-	html2Regexp       = regexp.MustCompile(`^ {0,3}<!--`)
+	html2Regexp = regexp.MustCompile(`^ {0,3}<!--`)
 	html2CloserRegexp = regexp.MustCompile(`-->`)
-	html3Regexp       = regexp.MustCompile(`^ {0,3}<\?`)
+	html3Regexp = regexp.MustCompile(`^ {0,3}<\?`)
 	html3CloserRegexp = regexp.MustCompile(`\?>`)
-	html4Regexp       = regexp.MustCompile(`^ {0,3}<![a-zA-Z]`)
+	html4Regexp = regexp.MustCompile(`^ {0,3}<![a-zA-Z]`)
 	html4CloserRegexp = regexp.MustCompile(`>`)
-	html5Regexp       = regexp.MustCompile(`^ {0,3}<!\[CDATA\[`)
+	html5Regexp = regexp.MustCompile(`^ {0,3}<!\[CDATA\[`)
 	html5CloserRegexp = regexp.MustCompile(`\]\]>`)
 
 	html6Regexp = regexp.MustCompile(`^ {0,3}</?(?i:address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h1|h2|h3|h4|h5|h6|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|nav|noframes|ol|optgroup|option|p|param|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul)(?:[ \t>]|$|/>)`)
 	html7Regexp = regexp.MustCompile(
 		fmt.Sprintf(`^ {0,3}(?:%s|%s)[ \t]*$`, openTag, closingTag))
-)
+
+	// https://spec.commonmark.org/0.30/#uri-autolink
+	uriAutolinkRegexp = regexp.MustCompile(
+		`^<` + scheme + `:[^\x00-\x19 <>]*` + `>`)
+	// https://spec.commonmark.org/0.30/#email-autolink
+	emailAutolinkRegexp = regexp.MustCompile(
+		`^<[a-zA-Z0-9` + emailLocalPuncts + `]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*>`)
+
+	openTagRegexp = regexp.MustCompile(`^` + openTag)
+	closingTagRegexp = regexp.MustCompile(`^` + closingTag)
+}
 
 const indentedCodePrefix = "    "
 
