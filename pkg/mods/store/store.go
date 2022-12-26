@@ -1,6 +1,8 @@
 package store
 
 import (
+	_ "embed"
+
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/store/storedefs"
 )
@@ -21,3 +23,8 @@ func Ns(s storedefs.Store) *eval.Ns {
 			"dirs":    func() ([]storedefs.Dir, error) { return s.Dirs(storedefs.NoBlacklist) },
 		}).Ns()
 }
+
+// DElvCode contains the content of the .d.elv file for this module.
+//
+//go:embed *.d.elv
+var DElvCode string

@@ -1,7 +1,6 @@
 package sys
 
 import (
-	"fmt"
 	"os"
 	"syscall"
 
@@ -15,7 +14,6 @@ func winSize(file *os.File) (row, col int) {
 	var info windows.ConsoleScreenBufferInfo
 	err := windows.GetConsoleScreenBufferInfo(windows.Handle(file.Fd()), &info)
 	if err != nil {
-		fmt.Printf("error in winSize: %v", err)
 		return -1, -1
 	}
 	window := info.Window

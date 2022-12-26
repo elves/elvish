@@ -2,6 +2,7 @@
 package runtime
 
 import (
+	_ "embed"
 	"os"
 
 	"src.elv.sh/pkg/eval"
@@ -29,6 +30,11 @@ func Ns(ev *eval.Evaler) *eval.Ns {
 			"effective-rc-path": vars.NewReadOnly(nonEmptyOrNil(ev.EffectiveRcPath)),
 		}).Ns()
 }
+
+// DElvCode contains the content of the .d.elv file for this module.
+//
+//go:embed *.d.elv
+var DElvCode string
 
 func nonEmptyOrNil(s string) any {
 	if s == "" {

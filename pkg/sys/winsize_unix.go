@@ -7,7 +7,6 @@
 package sys
 
 import (
-	"fmt"
 	"os"
 
 	"golang.org/x/sys/unix"
@@ -19,7 +18,6 @@ func winSize(file *os.File) (row, col int) {
 	fd := int(file.Fd())
 	ws, err := unix.IoctlGetWinsize(fd, unix.TIOCGWINSZ)
 	if err != nil {
-		fmt.Printf("error in winSize: %v", err)
 		return -1, -1
 	}
 

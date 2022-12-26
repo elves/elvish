@@ -1,6 +1,7 @@
 package flag
 
 import (
+	_ "embed"
 	"errors"
 	"flag"
 	"io"
@@ -20,6 +21,11 @@ var Ns = eval.BuildNsNamed("flag").
 		"parse":        parse,
 		"parse-getopt": parseGetopt,
 	}).Ns()
+
+// DElvCode contains the content of the .d.elv file for this module.
+//
+//go:embed *.d.elv
+var DElvCode string
 
 func call(fm *eval.Frame, fn *eval.Closure, argsVal vals.List) error {
 	var args []string

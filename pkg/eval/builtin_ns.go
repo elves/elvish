@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"embed"
 	"strconv"
 	"syscall"
 
@@ -24,3 +25,8 @@ var builtinNs = BuildNsNamed("").AddVars(map[string]vars.Var{
 func addBuiltinFns(fns map[string]any) {
 	builtinNs.AddGoFns(fns)
 }
+
+// BuiltinDElvFiles embeds all the .d.elv files for the builtin module.
+//
+//go:embed *.d.elv
+var BuiltinDElvFiles embed.FS

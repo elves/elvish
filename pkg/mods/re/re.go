@@ -2,6 +2,7 @@
 package re
 
 import (
+	_ "embed"
 	"regexp"
 
 	"src.elv.sh/pkg/eval"
@@ -18,6 +19,11 @@ var Ns = eval.BuildNsNamed("re").
 		"replace": replace,
 		"split":   split,
 	}).Ns()
+
+// DElvCode contains the content of the .d.elv file for this module.
+//
+//go:embed *.d.elv
+var DElvCode string
 
 type matchOpts struct{ Posix bool }
 

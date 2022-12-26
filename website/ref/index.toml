@@ -21,6 +21,10 @@ name = "builtin"
 title = "Builtin Functions and Variables"
 
 [[articles]]
+name = "doc"
+title = "doc: Documentation of Elvish modules"
+
+[[articles]]
 name = "edit"
 title = "edit: API for the Interactive Editor"
 

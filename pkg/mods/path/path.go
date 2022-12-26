@@ -2,6 +2,7 @@
 package path
 
 import (
+	_ "embed"
 	"os"
 	"path/filepath"
 
@@ -30,6 +31,11 @@ var Ns = eval.BuildNsNamed("path").
 		"temp-dir":      tempDir,
 		"temp-file":     tempFile,
 	}).Ns()
+
+// DElvCode contains the content of the .d.elv file for this module.
+//
+//go:embed *.d.elv
+var DElvCode string
 
 type isOpts struct{ FollowSymlink bool }
 

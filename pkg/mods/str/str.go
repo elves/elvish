@@ -4,6 +4,7 @@ package str
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"strconv"
 	"strings"
@@ -53,6 +54,11 @@ var Ns = eval.BuildNsNamed("str").
 		"trim-prefix": strings.TrimPrefix,
 		"trim-suffix": strings.TrimSuffix,
 	}).Ns()
+
+// DElvCode contains the content of the .d.elv file for this module.
+//
+//go:embed *.d.elv
+var DElvCode string
 
 func fromCodepoints(nums ...int) (string, error) {
 	var b bytes.Buffer
