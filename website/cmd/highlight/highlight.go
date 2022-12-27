@@ -57,7 +57,7 @@ func collectFenced(indent string) string {
 		if buf.Len() > 0 {
 			buf.WriteRune('\n')
 		}
-		buf.WriteString(html.UnescapeString(unindented))
+		buf.WriteString(unindented)
 	}
 	return buf.String()
 }

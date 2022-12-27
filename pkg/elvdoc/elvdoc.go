@@ -3,7 +3,6 @@ package elvdoc
 
 import (
 	"bufio"
-	"html"
 	"io"
 	"regexp"
 	"strings"
@@ -102,7 +101,7 @@ func fnUsage(name, sig string) string {
 		}
 	}
 	sb.WriteString("\n```\n")
-	return html.EscapeString(sb.String())
+	return sb.String()
 }
 
 type docBlock struct {

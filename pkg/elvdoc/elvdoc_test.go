@@ -61,7 +61,7 @@ var extractTests = []struct {
 				Name: "add",
 				Content: dedent(tildeToBackquote(`
 						~~~elvish
-						add $a $b &amp;k=v
+						add $a $b &k=v
 						~~~
 						`)),
 			},
