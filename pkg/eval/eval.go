@@ -174,13 +174,13 @@ func (ev *Evaler) ExtendGlobal(ns Nser) {
 	ev.global = CombineNs(ev.global, ns.Ns())
 }
 
-// DeleteGlobal deletes a binding from the global namespace.
-func (ev *Evaler) DeleteGlobal(name string) {
+// DeleteFromGlobal deletes names from the global namespace.
+func (ev *Evaler) DeleteFromGlobal(names map[string]struct{}) {
 	ev.mu.Lock()
 	defer ev.mu.Unlock()
 	g := ev.global.clone()
 	for i := range g.infos {
-		if g.infos[i].name == name {
+		if _, ok := names[g.infos[i].name]; ok {
 			g.infos[i].deleted = true
 		}
 	}

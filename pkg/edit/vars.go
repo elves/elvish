@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"errors"
 	"strings"
 
 	"src.elv.sh/pkg/eval"
@@ -40,13 +39,7 @@ func delVar(fm *eval.Frame, name string) error {
 			What:  "name argument to edit:del-var",
 			Valid: "unqualified variable name", Actual: name}
 	}
-
-	variable := fm.Evaler.Global().IndexString(name)
-	if variable == nil {
-		return errors.New("no variable $" + name)
-	}
-
-	fm.Evaler.DeleteGlobal(name)
+	fm.Evaler.DeleteFromGlobal(map[string]struct{}{name: {}})
 	return nil
 }
 
@@ -77,28 +70,23 @@ func addVars(fm *eval.Frame, m vals.Map) error {
 }
 
 func delVars(fm *eval.Frame, m vals.List) error {
+	names := make(map[string]struct{}, m.Len())
 	for it := m.Iterator(); it.HasElem(); it.Next() {
 		n := it.Elem()
 		name, ok := n.(string)
 		if !ok {
 			return errs.BadValue{
-				What:  "name of argument to edit:del-vars",
+				What:  "element of argument to edit:del-vars",
 				Valid: "string", Actual: vals.Kind(n)}
 		}
 		if !isUnqualified(name) {
 			return errs.BadValue{
-				What:  "name of argument to edit:del-vars",
+				What:  "element of argument to edit:del-vars",
 				Valid: "unqualified variable name", Actual: name}
 		}
-
-		variable := fm.Evaler.Global().IndexString(name)
-		if variable == nil {
-			return errors.New("no variable $" + name)
-		}
-
-		fm.Evaler.DeleteGlobal(name)
+		names[name] = struct{}{}
 	}
-
+	fm.Evaler.DeleteFromGlobal(names)
 	return nil
 }
 

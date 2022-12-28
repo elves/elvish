@@ -84,5 +84,18 @@
 fn add-var {|name init| }
 
 # Takes a map from strings to arbitrary values. Equivalent to calling
-# `edit:add-var` for each key-value pair in the map.
+# `edit:add-var` for each key-value pair in the map, but guarantees that all the
+# names will be added at the same time.
 fn add-vars {|map| }
+
+# Deletes a variable from the interactive REPL if it exists.
+#
+# Equivalent to running `del $name` at a REPL prompt, but `$name` can be
+# dynamic, and it is not an error to delete a non-existing variable.
+fn del-var {|name| }
+
+# Deletes variables from the interactive REPL.
+#
+# Equivalent to calling `edit:del-var` for each element of the list, but
+# guarantees that all the variables will be deleted at the same time.
+fn del-vars {|list| }

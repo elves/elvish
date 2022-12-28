@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"errors"
 	"testing"
 
 	"src.elv.sh/pkg/eval"
@@ -28,14 +27,12 @@ func TestAddVar(t *testing.T) {
 
 func TestDelVar(t *testing.T) {
 	TestWithSetup(t, func(ev *eval.Evaler) {
-		ev.ExtendGlobal(eval.BuildNs().AddGoFns(map[string]any{
-			"add-var": addVar,
-			"del-var": delVar,
-		}))
+		ev.ExtendGlobal(eval.BuildNs().AddGoFn("del-var", delVar))
 	},
-		That("del-var foo").Throws(errors.New("no variable $foo")),
-		That("add-var foo bar").Then("del-var foo").Then("put $foo").DoesNotCompile("variable $foo not found"),
-		That("add-var foo bar").Then("del-var foo").Then("del-var foo").Throws(errors.New("no variable $foo")),
+		That("var foo = bar").Then("del-var foo").Then("put $foo").
+			DoesNotCompile("variable $foo not found"),
+		// Deleting a non-existent variable is not an error
+		That("del-var foo").DoesNothing(),
 
 		// Qualified name
 		That("del-var a:b").Throws(
@@ -70,22 +67,24 @@ func TestAddVars(t *testing.T) {
 
 func TestDelVars(t *testing.T) {
 	TestWithSetup(t, func(ev *eval.Evaler) {
-		ev.ExtendGlobal(eval.BuildNs().AddGoFn("add-vars", addVars))
 		ev.ExtendGlobal(eval.BuildNs().AddGoFn("del-vars", delVars))
 	},
-		That("add-vars [&foo=bar]").Then("del-vars [foo]").Then("put $foo").DoesNotCompile("variable $foo not found"),
-		That("add-vars [&a=A &b=B &c=C]").Then("del-vars [a b]").Then("put $c").Puts("C").Then("del-vars [c]").Then("put $c").DoesNotCompile("variable $c not found"),
+		That("var a b c").Then("del-vars [a b]").Then("put $a").
+			DoesNotCompile("variable $a not found"),
+		That("var a b c").Then("del-vars [a b]").Then("put $b").
+			DoesNotCompile("variable $b not found"),
+		That("var a b c").Then("del-vars [a b]").Then("put $c").Puts(nil),
 
 		// Non-string key
 		That("del-vars [[]]").Throws(
 			errs.BadValue{
-				What:  "name of argument to edit:del-vars",
+				What:  "element of argument to edit:del-vars",
 				Valid: "string", Actual: "list"}),
 
 		// Qualified name
 		That("del-vars [a:b]").Throws(
 			errs.BadValue{
-				What:  "name of argument to edit:del-vars",
+				What:  "element of argument to edit:del-vars",
 				Valid: "unqualified variable name", Actual: "a:b"}),
 	)
 }
