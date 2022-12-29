@@ -17,7 +17,7 @@ if ! git diff HEAD --quiet; then
     fi
 fi
 
-make test checkstyle lint codespell check-disallowed check-gen
+make test all-checks
 make -C website check-rellinks
 # A quick cross compilation test. Not exhaustive, but will catch most issues.
 if test `go env GOOS` = windows; then

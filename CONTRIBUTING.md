@@ -11,22 +11,77 @@ On the other hand, if you find it easier to express your thoughts directly in
 code, it is also completely fine to directly send a pull request, as long as you
 don't mind the risk of the PR being rejected due to lack of prior discussion.
 
-## Using development scripts
+## Development workflows
 
-The [`Makefile`](Makefile) contains targets encapsulating some common workflows.
-They are not necessary for developing Elvish, but can save you a few keystrokes.
-GNU Make is required.
+The [`Makefile`](Makefile) encapsulates common development workflows:
 
-The [`tools`](tools) directory contains scripts too complex to fit in the
-`Makefile`. Among them, [`tools/pre-push`](tools/pre-push) can be used as a Git
-hook, and covers all the CI checks that can be run from your local environment.
-All the checks below are covered by this script.
+-   Use `make fmt` to [format files](#formatting-files).
+
+-   Use `make test` to [run tests](#testing-changes).
+
+-   Use `make all-checks` or `make most-checks` to
+    [run checks](#running-checks).
+
+You can use the [`tools/pre-push`](tools/pre-push) script as a Git hook, which
+runs all the tests and checks (`make test all-checks`), among other things.
+
+The same tests and checks are also run by Elvish's CI environments, so running
+them locally before pushing minimizes the chance of CI errors. (The CI
+environments run the tests on multiple platforms, so CI errors can still happen
+if you break some tests for a different platform.)
+
+## Formatting files
+
+Use `make fmt` to format Go and Markdown files in the repo.
+
+### Formatting Go files on save
+
+The Go plugins of most popular editors already support formatting Go files
+automatically on save; consult the documentation of the plugin you use.
+
+### Formatting Markdown files on save
+
+The Markdown formatter is [`cmd/elvmdfmt`](cmd/elvmdfmt), which lives inside
+this repo. Run it like this:
+
+```sh
+go run src.elv.sh/cmd/elvmdfmt -width 80 -w $filename
+```
+
+To format Markdown files automatically on save, configure your editor to run the
+command above when saving Markdown files. You'll also want to configure this
+command to only run inside the Elvish repo, since `elvmdfmt` is tailored to
+Markdown files in this repo and may not work well for other Markdown files.
+
+If you use VS Code, install the
+[Run on Save](https://marketplace.visualstudio.com/items?itemName=emeraldwalk.RunOnSave)
+extension and add the following to the workspace (**not** user) `settings.json`
+file:
+
+```json
+"emeraldwalk.runonsave": {
+    "commands": [
+        {
+            "match": "\\.md$",
+            "cmd": "go run src.elv.sh/cmd/elvmdfmt -width 80 -w ${file}"
+        }
+    ]
+}
+```
+
+**Note**: Using `go run` ensures that you are always using the `elvmdfmt`
+implementation in the repo, but it incurs a small performance penalty since the
+Go toolchain does not cache binary files and has to rebuild it every time. If
+this is a problem (for example, if your editor runs the command synchronously),
+you can speed up the command by installing `src.elv.sh/cmd/elvmdfmt` and using
+the installed `elvmdfmt`. However, if you do this, you must re-install
+`elvmdfmt` whenever there is a change in its implementation that impacts the
+output.
 
 ## Testing changes
 
 Write comprehensive unit tests for your code, and make sure that existing tests
-are passing. Tests are run on CI automatically for PRs; you can also run
-`make test` in the repo root yourself.
+are passing. Run tests with `make test`.
 
 Respect established patterns of how unit tests are written. Some packages
 unfortunately have competing patterns, which usually reflects a still-evolving
@@ -122,92 +177,22 @@ Use the standard command, `go generate ./...` to regenerate all files.
 Some of the generation rules depend on the `stringer` tool. Install with
 `go install golang.org/x/tools/cmd/stringer@latest`.
 
-You can use `make check-gen` to check that generated files are up to date.
+## Running checks
 
-## Code hygiene
+There are some checks on the source code that can be run with `make all-checks`
+or `make most-checks`. The difference is that `all-checks` includes a check
+([`tools/check-gen.sh`](tools/check-gen.sh)) that requires the Git repo to have
+a clean working tree, so may not be convenient to use when you are working on
+the source code. The `most-checks` target excludes that, so can be always be
+used.
 
-Some basic aspects of code hygiene are checked in the CI.
-
-### Formatting
-
-Install [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports) to
-format Go files.
+The checks depend on some external programs, which can be installed as follows:
 
 ```sh
 go install golang.org/x/tools/cmd/goimports@latest
-```
-
-The Markdown formatter [elvmdfmt](cmd/elvmdfmt) lives inside this repo and does
-not need to be installed.
-
-Once you have installed the tools, use `make style` to format Go and Markdown
-files, or `make checkstyle` to check if all Go and Markdown files are properly
-formatted.
-
-#### Formatting on save
-
-The Go plugins of most popular editors already support formatting Go files
-automatically on save; consult the documentation of the plugin you use.
-
-To format Markdown files automatically on save, configure your editor to run the
-following command when saving Markdown files:
-
-```sh
-go run src.elv.sh/cmd/elvmdfmt -width 80 -w $filename
-```
-
-**Note**: Using `go run` ensures that you are always using the `elvmdfmt`
-implementation in the repo, but it incurs a small performance penalty since the
-Go toolchain does not cache binary files. If this is a problem (for example, if
-your editor runs the command synchronously), you can speed up the command by
-installing `src.elv.sh/cmd/elvmdfmt` and using the installed `elvmdfmt`.
-However, if you do this, you must re-install `elvmdfmt` whenever there is a
-change in its implementation that impacts the output.
-
-You'll also want to configure this command to only run inside the Elvish repo,
-since `elvmdfmt` is tailored to Markdown files in this repo and may not work
-well for other Markdown files.
-
-If you use VS Code, you can install the
-[Run on Save](https://marketplace.visualstudio.com/items?itemName=emeraldwalk.RunOnSave)
-extension and add the following to the workspace (not user) `settings.json`
-file:
-
-```json
-"emeraldwalk.runonsave": {
-    "commands": [
-        {
-            "match": "\\.md$",
-            "cmd": "go run src.elv.sh/cmd/elvmdfmt -width 80 -w ${file}"
-        }
-    ]
-}
-```
-
-### Linting
-
-Install [staticcheck](https://staticcheck.io):
-
-```sh
 go install honnef.co/go/tools/cmd/staticcheck@v0.3.2
-```
-
-The other linter Elvish uses is the standard `go vet` command. Elvish doesn't
-use golint since it is
-[deprecated and frozen](https://github.com/golang/go/issues/38968).
-
-Use `make lint` to run `staticcheck` and `go vet`.
-
-### Spell checking
-
-Install [codespell](https://github.com/codespell-project/codespell) to check
-spelling:
-
-```sh
 pip install --user codespell==2.2.1
 ```
-
-Use `make codespell` to run it.
 
 ## Licensing
 
