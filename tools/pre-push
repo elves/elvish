@@ -17,11 +17,7 @@ if ! git diff HEAD --quiet; then
     fi
 fi
 
-# This script is run by the CI environment but is not run by the `make`
-# targets below.
-./tools/check-content.sh
-
-make test checkstyle lint codespell
+make test checkstyle lint codespell check-disallowed check-gen
 make -C website check-rellinks
 # A quick cross compilation test. Not exhaustive, but will catch most issues.
 if test `go env GOOS` = windows; then

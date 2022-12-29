@@ -143,20 +143,23 @@ jobs:
     - name: Run codespell
       run: codespell
 
-  check-content:
-    name: Check content
+  check-disallowed:
+    name: Check disallowed code
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: 1.19.x
-    - name: Install go-stringer
-      run: go install golang.org/x/tools/cmd/stringer@latest
-    - name: Run check-content.sh
-      run: ./tools/check-content.sh
+    - name: Run check-disallowed.sh
+      run: ./tools/check-disallowed.sh
+
+  check-gen:
+    name: Check generated code
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Run check-gen.sh
+      run: ./tools/check-gen.sh
 
   check-rellinks:
     name: Check relative links
