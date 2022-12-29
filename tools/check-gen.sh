@@ -18,7 +18,7 @@ if test "$(git_unstaged)" != ""; then
     exit 1
 fi
 
-go generate ./...
+go generate ./... || exit 1
 x=$(git_unstaged)
 
 if test "$x" != ""; then
