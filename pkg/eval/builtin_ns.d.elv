@@ -43,9 +43,10 @@ var pid
 #
 # ```elvish
 # ## Updates all git repositories
+# use path
 # for x [*/] {
 #   tmp pwd = $x
-#   if ?(test -d .git) {
+#   if (path:is-dir .git) {
 #     git pull
 #   }
 # }
