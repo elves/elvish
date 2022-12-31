@@ -1,6 +1,7 @@
 package md_test
 
 import (
+	"fmt"
 	"html"
 	"strings"
 	"testing"
@@ -34,5 +35,25 @@ func TestHTML(t *testing.T) {
 					hr+"\n"+tc.Markdown+hr, diff)
 			}
 		})
+	}
+}
+
+func TestHTML_CodeBlockContent(t *testing.T) {
+	f := func(sb *strings.Builder, language string, lines []string) {
+		fmt.Fprintf(sb, "... %s code (%d lines) ...", language, len(lines))
+	}
+	c := HTMLCodec{WriteCodeBlock: f}
+	markdown := dedent(`
+		~~~elvish foo bar
+		echo
+		echo
+		~~~
+		`)
+	want := dedent(`
+		<pre><code class="language-elvish">... elvish code (2 lines) ...</code></pre>
+		`)
+	got := RenderString(markdown, &c)
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("diff (-want +got):\n%s", diff)
 	}
 }
