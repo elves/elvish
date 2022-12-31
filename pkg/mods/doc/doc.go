@@ -70,7 +70,7 @@ func source(fqname string) (string, error) {
 	} else if first == "builtin:" {
 		first = ""
 	}
-	docs, ok := getDocs()[first]
+	docs, ok := Docs()[first]
 	if !ok {
 		return "", fmt.Errorf("no doc for %s", parse.Quote(fqname))
 	}
@@ -111,7 +111,9 @@ var (
 	docs     map[string]elvdoc.Docs
 )
 
-func getDocs() map[string]elvdoc.Docs {
+// Docs returns a map from namespace prefixes (like "doc:", or "" for the
+// builtin module) to extracted elvdocs.
+func Docs() map[string]elvdoc.Docs {
 	docsOnce.Do(func() {
 		docs = make(map[string]elvdoc.Docs, len(modToCode))
 		for mod, code := range modToCode {
@@ -125,9 +127,15 @@ func read(s string) io.Reader { return strings.NewReader(s) }
 
 func readAll(fs embed.FS) io.Reader {
 	entries, _ := fs.ReadDir(".")
-	readers := make([]io.Reader, len(entries))
+	readers := make([]io.Reader, 2*len(entries)-1)
 	for i, entry := range entries {
-		readers[i], _ = fs.Open(entry.Name())
+		readers[2*i], _ = fs.Open(entry.Name())
+		if i < len(entries)-1 {
+			// Insert an empty line between adjacent files so that the comment
+			// block at the end of one file doesn't get merged with the comment
+			// block at the start of the next file.
+			readers[2*i+1] = strings.NewReader("\n\n")
+		}
 	}
 	return io.MultiReader(readers...)
 }
