@@ -1,6 +1,6 @@
 <!-- toc -->
 
-@module edit pkg/edit
+@module edit
 
 The `edit:` module is the interface to the Elvish editor.
 

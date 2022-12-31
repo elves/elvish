@@ -1,6 +1,6 @@
 <!-- toc -->
 
-@module builtin pkg/eval
+@module builtin
 
 # Introduction
 

@@ -1,104 +1,33 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"html"
 	"io"
-	"log"
 	"net/url"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
 	"src.elv.sh/pkg/elvdoc"
+	"src.elv.sh/pkg/mods/doc"
 )
 
 func main() {
-	run(os.Args[1:], os.Stdin, os.Stdout)
+	if len(os.Args) != 2 {
+		fmt.Fprintln(os.Stderr, "Usage: elvdoc $module")
+		os.Exit(1)
+	}
+	module := os.Args[1]
+	ns := module + ":"
+	if module == "builtin" {
+		ns = ""
+	}
+
+	write(os.Stdout, ns, doc.Docs()[ns])
 }
 
-func run(args []string, in io.Reader, out io.Writer) {
-	flags := flag.NewFlagSet("", flag.ExitOnError)
-	var ns = flags.String("ns", "", "namespace prefix")
-
-	err := flags.Parse(args)
-	if err != nil {
-		log.Fatal(err)
-	}
-	args = flags.Args()
-
-	if len(args) > 0 {
-		extractPaths(args, *ns, out)
-	} else {
-		extract(in, *ns, out)
-	}
-}
-
-func extractPaths(paths []string, ns string, out io.Writer) {
-	var files []string
-	for _, path := range paths {
-		stat, err := os.Stat(path)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if stat.IsDir() {
-			elvFiles := mustGlob(filepath.Join(path, "*.elv"))
-			files = append(files, elvFiles...)
-		} else {
-			files = append(files, path)
-		}
-	}
-
-	reader, cleanup, err := multiFile(files)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer cleanup()
-	extract(reader, ns, out)
-}
-
-func mustGlob(p string) []string {
-	files, err := filepath.Glob(p)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return files
-}
-
-// Makes a reader that concatenates multiple files.
-func multiFile(names []string) (io.Reader, func(), error) {
-	readers := make([]io.Reader, 2*len(names))
-	closers := make([]io.Closer, len(names))
-	for i, name := range names {
-		file, err := os.Open(name)
-		if err != nil {
-			for j := 0; j < i; j++ {
-				closers[j].Close()
-			}
-			return nil, nil, err
-		}
-		readers[2*i] = file
-		// Insert an empty line between adjacent files so that the comment block
-		// at the end of one file doesn't get merged with the comment block at
-		// the start of the next file.
-		readers[2*i+1] = strings.NewReader("\n\n")
-		closers[i] = file
-	}
-	return io.MultiReader(readers...), func() {
-		for _, closer := range closers {
-			closer.Close()
-		}
-	}, nil
-}
-
-func extract(r io.Reader, ns string, w io.Writer) {
-	docs, err := elvdoc.Extract(r, ns)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func write(w io.Writer, ns string, docs elvdoc.Docs) {
 	write := func(heading, entryType, prefix string, entries []elvdoc.Entry) {
 		fmt.Fprintf(w, "# %s\n", heading)
 		sort.Slice(entries, func(i, j int) bool {

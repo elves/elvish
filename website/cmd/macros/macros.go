@@ -11,12 +11,10 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 )
 
 var (
-	repoPath   = flag.String("repo", "", "root of repo")
 	elvdocPath = flag.String("elvdoc", "", "Path to the elvdoc binary")
 )
 
@@ -31,7 +29,7 @@ func filter(in io.Reader, out io.Writer) {
 }
 
 type filterer struct {
-	module, path string
+	module string
 }
 
 var macros = map[string]func(*filterer, string) string{
@@ -55,39 +53,23 @@ func (f *filterer) filter(in io.Reader, out io.Writer) {
 		fmt.Fprintln(out, line)
 	}
 	if f.module != "" {
-		callElvdoc(out, f.module, f.path)
+		callElvdoc(out, f.module)
 	}
 }
 
 func (f *filterer) expandModule(rest string) string {
-	if *repoPath == "" || *elvdocPath == "" {
-		log.Println("-repo and -elvdoc are required to expand @module ", rest)
+	if *elvdocPath == "" {
+		log.Println("-elvdoc is required to expand @module ", rest)
 		return ""
 	}
-	fields := strings.Fields(rest)
-	switch len(fields) {
-	case 1:
-		f.module = fields[0]
-		f.path = "pkg/mods/" + strings.ReplaceAll(f.module, "-", "")
-	case 2:
-		f.module = fields[0]
-		f.path = fields[1]
-	default:
-		log.Println("bad macro: @module ", rest)
-	}
+	f.module = rest
 	// Module doc will be added at end of file
 	return fmt.Sprintf(
 		"<a name='//apple_ref/cpp/Module/%s' class='dashAnchor'></a>", f.module)
 }
 
-func callElvdoc(out io.Writer, module, path string) {
-	fullPath := filepath.Join(*repoPath, path)
-	ns := module + ":"
-	if module == "builtin" {
-		ns = ""
-	}
-
-	cmd := exec.Command(*elvdocPath, "-ns", ns, fullPath)
+func callElvdoc(out io.Writer, module string) {
+	cmd := exec.Command(*elvdocPath, module)
 	r, w := io.Pipe()
 	cmd.Stdout = w
 	cmd.Stderr = os.Stderr

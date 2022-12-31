@@ -46,4 +46,4 @@ tools/%.bin: cmd/% $$(wildcard cmd/%/*)
 	go build -o $@ ./$<
 
 %.html: %.md tools/macros.bin tools/elvdoc.bin tools/md2html.bin $$(shell tools/extra-deps $$@)
-	tools/macros.bin -repo .. -elvdoc tools/elvdoc.bin < $< | tools/md2html.bin > $@
+	tools/macros.bin -elvdoc tools/elvdoc.bin < $< | tools/md2html.bin > $@

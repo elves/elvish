@@ -1,15 +1,20 @@
 package main
 
 import (
-	"io"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"src.elv.sh/pkg/elvdoc"
 	"src.elv.sh/pkg/testutil"
 )
 
-var extractTests = []struct {
+var (
+	dedent           = testutil.Dedent
+	tildeToBackquote = strings.NewReplacer("~", "`").Replace
+)
+
+var writeTests = []struct {
 	name    string
 	src     string
 	ns      string
@@ -107,101 +112,15 @@ var extractTests = []struct {
 	},
 }
 
-func TestExtract(t *testing.T) {
-	for _, test := range extractTests {
+func TestWrite(t *testing.T) {
+	for _, test := range writeTests {
 		t.Run(test.name, func(t *testing.T) {
-			r := strings.NewReader(test.src)
+			docs, _ := elvdoc.Extract(strings.NewReader(test.src), test.ns)
 			w := new(strings.Builder)
-			extract(r, test.ns, w)
-			compare(t, w.String(), test.wantDoc)
+			write(w, test.ns, docs)
+			if diff := cmp.Diff(test.wantDoc, w.String()); diff != "" {
+				t.Errorf("diff (-want+got):\n%s", diff)
+			}
 		})
 	}
 }
-
-var emptyReader = io.MultiReader()
-
-func TestRun_MultipleFiles(t *testing.T) {
-	testutil.InTempDir(t)
-	testutil.ApplyDir(testutil.Dir{
-		"a.elv": dedent(`
-			# Function 2 from a.
-			#
-			#     Some indented code.
-			fn f2 { }
-			`),
-		"b.elv": dedent(`
-			# Function 1 from b.
-			fn f1 { }
-
-			# Variable 2 from b.
-			var v2
-			`),
-		"c.elv": dedent(`
-			# Variable 1 from c.
-			var v1
-			`),
-		"not-elv.sh": dedent(`
-			# This won't appear because it is not in a .go file.
-			var wontappear
-			`),
-		// Subdirectories are ignored with -dir.
-		"subpkg": testutil.Dir{
-			"a.elv": dedent(`
-				# Function f from subpkg/a.
-				fn subpkg:f
-
-				# Variable v from subpkg/a.
-				var subpkg:v
-				`),
-		},
-	})
-
-	var sb strings.Builder
-	run([]string{"a.elv", "b.elv"}, emptyReader, &sb)
-	compare(t, sb.String(), dedent(tildeToBackquote(`
-		# Variables
-
-		<a name='//apple_ref/cpp/Variable/%24v2' class='dashAnchor'></a>
-
-		## $v2
-
-		Variable 2 from b.
-
-
-		# Functions
-
-		<a name='//apple_ref/cpp/Function/f1' class='dashAnchor'></a>
-
-		## f1
-
-		~~~elvish
-		f1
-		~~~
-
-		Function 1 from b.
-
-		<a name='//apple_ref/cpp/Function/f2' class='dashAnchor'></a>
-
-		## f2
-
-		~~~elvish
-		f2
-		~~~
-
-		Function 2 from a.
-
-		    Some indented code.
-		`)))
-}
-
-func compare(t *testing.T, got, want string) {
-	t.Helper()
-	if got != want {
-		t.Errorf("diff (-want+got):\n%s", cmp.Diff(want, got))
-	}
-}
-
-var (
-	dedent           = testutil.Dedent
-	tildeToBackquote = strings.NewReplacer("~", "`").Replace
-)

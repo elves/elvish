@@ -5,10 +5,10 @@
 # Must be run from the website directory.
 
 cat ${1%.html}.md |
-  awk '/^@module/{ if (NF == 3) { print $3 } else { print "pkg/mods/" $2 } }' |
+  awk '$1 == "@module" { if ($2 == "builtin") { print "pkg/eval" } else if ($2 == "edit") { print "pkg/edit" } else { print "pkg/mods/" $2 } }' |
   sed 's/-//g' |
   while read dir; do
-    echo ../$dir ../$dir/*
+    echo ../$dir ../$dir/*.elv
   done
 
 cat ${1%.html}.md |
