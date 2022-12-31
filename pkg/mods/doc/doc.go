@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"src.elv.sh/pkg/edit"
 	"src.elv.sh/pkg/elvdoc"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/md"
@@ -92,6 +93,7 @@ func source(fqname string) (string, error) {
 var modToCode = map[string]io.Reader{
 	"":                 readAll(eval.BuiltinDElvFiles),
 	"doc:":             read(DElvCode),
+	"edit:":            readAll(edit.DElvFiles),
 	"epm:":             read(epm.Code),
 	"file:":            read(file.DElvCode),
 	"flag:":            read(flag.DElvCode),
