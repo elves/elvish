@@ -16,6 +16,11 @@
 // The comment block for optional features should appear before the main text,
 // and can contain multiple features (like <!-- toc number-sections -->).
 //
+// It also adds the following Elvish-specific features:
+//
+//   - Syntax highlighting of code blocks with language elvish, elvish-bad and
+//     elvish-transcript
+//
 // For general information about the Markdown implementation used by this
 // command, see [src.elv.sh/pkg/md].
 package main
@@ -34,6 +39,7 @@ func main() {
 		log.Fatal(err)
 	}
 	codec := &htmlCodec{}
+	codec.WriteCodeBlock = highlightCodeContent
 	md.Render(string(markdown), md.SmartPunctsCodec{Inner: codec})
 	os.Stdout.WriteString(codec.String())
 }
