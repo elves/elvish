@@ -2,6 +2,7 @@ package md_test
 
 import (
 	"html"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -9,8 +10,16 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
+// The spec contains some tests where non-ASCII characters get escaped in URLs.
+var escapeURLAttr = strings.NewReplacer(
+	`"`, "%22", `\`, "%5C", " ", "%20", "`", "%60",
+	"[", "%5B", "]", "%5D", "<", "%3C", ">", "%3E",
+	"ö", "%C3%B6",
+	"ä", "%C3%A4", " ", "%C2%A0").Replace
+
 func TestHTML(t *testing.T) {
 	testutil.Set(t, &UnescapeHTML, html.UnescapeString)
+	testutil.Set(t, EscapeURL, escapeURLAttr)
 	for _, tc := range htmlTestCases {
 		t.Run(tc.testName(), func(t *testing.T) {
 			tc.skipIfNotSupported(t)

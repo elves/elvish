@@ -6,20 +6,22 @@ import (
 	"strings"
 )
 
-// There are different ways to escape HTML and URLs. The CommonMark spec does
-// not specify any particular way, but the spec tests do assume a certain one.
-// The schemes below are chosen to match the spec tests.
 var (
 	escapeHTML = strings.NewReplacer(
 		"&", "&amp;", `"`, "&quot;", "<", "&lt;", ">", "&gt;",
 		// No need to escape single quotes, since attributes in the output
 		// always use double quotes.
 	).Replace
+	// Modern browsers will happily accept almost anything in a URL attribute,
+	// except for the quote used by the attribute and space. But we try to be
+	// conservative and escape some characters, mostly following
+	// https://url.spec.whatwg.org/#url-code-points.
+	//
+	// We don't bother escaping control characters as they are unlikely to
+	// appear in Markdown text.
 	escapeURL = strings.NewReplacer(
 		`"`, "%22", `\`, "%5C", " ", "%20", "`", "%60",
-		"[", "%5B", "]", "%5D", "<", "%3C", ">", "%3E",
-		"ö", "%C3%B6",
-		"ä", "%C3%A4", " ", "%C2%A0").Replace
+		"[", "%5B", "]", "%5D", "<", "%3C", ">", "%3E").Replace
 )
 
 // HTMLCodec converts markdown to HTML.
