@@ -10,12 +10,9 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
-)
 
-var (
-	elvdocPath = flag.String("elvdoc", "", "Path to the elvdoc binary")
+	"src.elv.sh/pkg/mods/doc"
 )
 
 func main() {
@@ -53,38 +50,23 @@ func (f *filterer) filter(in io.Reader, out io.Writer) {
 		fmt.Fprintln(out, line)
 	}
 	if f.module != "" {
-		callElvdoc(out, f.module)
+		ns := f.module + ":"
+		if f.module == "builtin" {
+			ns = ""
+		}
+		docs := doc.Docs()[ns]
+
+		var buf bytes.Buffer
+		writeElvdocSections(&buf, ns, docs)
+		filter(&buf, out)
 	}
 }
 
 func (f *filterer) expandModule(rest string) string {
-	if *elvdocPath == "" {
-		log.Println("-elvdoc is required to expand @module ", rest)
-		return ""
-	}
 	f.module = rest
 	// Module doc will be added at end of file
 	return fmt.Sprintf(
 		"<a name='//apple_ref/cpp/Module/%s' class='dashAnchor'></a>", f.module)
-}
-
-func callElvdoc(out io.Writer, module string) {
-	cmd := exec.Command(*elvdocPath, module)
-	r, w := io.Pipe()
-	cmd.Stdout = w
-	cmd.Stderr = os.Stderr
-	filterDone := make(chan struct{})
-	go func() {
-		filter(r, out)
-		close(filterDone)
-	}()
-	err := cmd.Run()
-	w.Close()
-	<-filterDone
-	r.Close()
-	if err != nil {
-		log.Fatalln(err)
-	}
 }
 
 func (f *filterer) expandTtyshot(name string) string {

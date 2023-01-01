@@ -112,12 +112,12 @@ var writeTests = []struct {
 	},
 }
 
-func TestWrite(t *testing.T) {
+func TestWriteElvdocSections(t *testing.T) {
 	for _, test := range writeTests {
 		t.Run(test.name, func(t *testing.T) {
 			docs, _ := elvdoc.Extract(strings.NewReader(test.src), test.ns)
 			w := new(strings.Builder)
-			write(w, test.ns, docs)
+			writeElvdocSections(w, test.ns, docs)
 			if diff := cmp.Diff(test.wantDoc, w.String()); diff != "" {
 				t.Errorf("diff (-want+got):\n%s", diff)
 			}

@@ -5,30 +5,14 @@ import (
 	"html"
 	"io"
 	"net/url"
-	"os"
 	"sort"
 	"strings"
 
 	"src.elv.sh/pkg/elvdoc"
-	"src.elv.sh/pkg/mods/doc"
 )
 
-func main() {
-	if len(os.Args) != 2 {
-		fmt.Fprintln(os.Stderr, "Usage: elvdoc $module")
-		os.Exit(1)
-	}
-	module := os.Args[1]
-	ns := module + ":"
-	if module == "builtin" {
-		ns = ""
-	}
-
-	write(os.Stdout, ns, doc.Docs()[ns])
-}
-
-func write(w io.Writer, ns string, docs elvdoc.Docs) {
-	write := func(heading, entryType, prefix string, entries []elvdoc.Entry) {
+func writeElvdocSections(w io.Writer, ns string, docs elvdoc.Docs) {
+	writeSection := func(heading, entryType, prefix string, entries []elvdoc.Entry) {
 		fmt.Fprintf(w, "# %s\n", heading)
 		sort.Slice(entries, func(i, j int) bool {
 			return symbolForSort(entries[i].Name) < symbolForSort(entries[j].Name)
@@ -59,14 +43,14 @@ func write(w io.Writer, ns string, docs elvdoc.Docs) {
 	}
 
 	if len(docs.Vars) > 0 {
-		write("Variables", "Variable", "$"+ns, docs.Vars)
+		writeSection("Variables", "Variable", "$"+ns, docs.Vars)
 	}
 	if len(docs.Fns) > 0 {
 		if len(docs.Vars) > 0 {
 			fmt.Fprintln(w)
 			fmt.Fprintln(w)
 		}
-		write("Functions", "Function", ns, docs.Fns)
+		writeSection("Functions", "Function", ns, docs.Fns)
 	}
 }
 
