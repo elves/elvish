@@ -42,8 +42,8 @@ endif
 
 .SECONDEXPANSION:
 
-tools/%.bin: cmd/% $$(wildcard cmd/%/*)
+tools/%.bin: cmd/% $$(wildcard cmd/%/*) go.mod ../go.mod $$(shell tools/cmd-deps ./cmd/%)
 	go build -o $@ ./$<
 
-%.html: %.md tools/md2html.bin $$(shell tools/extra-deps $$@)
+%.html: %.md tools/md2html.bin $$(shell tools/md-deps $$@)
 	tools/md2html.bin < $< > $@

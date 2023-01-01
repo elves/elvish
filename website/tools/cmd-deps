@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Outputs the dependencies of a command.
+#
+# Must be run from the website directory.
+
+go list -f '{{ join .Deps "\n" }}' $1 |
+  sed -n '/^src\.elv\.sh/{
+            s/^src\.elv\.sh/../
+            p
+          }' |
+  while read dir; do
+    echo $dir $dir/*
+  done

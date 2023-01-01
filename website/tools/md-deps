@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Outputs the extra dependencies of a Markdown file.
+#
+# Must be run from the website directory.
+
+cat ${1%.html}.md |
+  awk '$1 == "@ttyshot" { print $2 ".ttyshot.html" }'
