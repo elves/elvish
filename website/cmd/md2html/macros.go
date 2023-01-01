@@ -5,7 +5,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -14,11 +13,6 @@ import (
 
 	"src.elv.sh/pkg/mods/doc"
 )
-
-func main() {
-	flag.Parse()
-	filter(os.Stdin, os.Stdout)
-}
 
 func filter(in io.Reader, out io.Writer) {
 	f := filterer{}

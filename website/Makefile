@@ -45,5 +45,5 @@ endif
 tools/%.bin: cmd/% $$(wildcard cmd/%/*)
 	go build -o $@ ./$<
 
-%.html: %.md tools/macros.bin tools/md2html.bin $$(shell tools/extra-deps $$@)
-	tools/macros.bin < $< | tools/md2html.bin > $@
+%.html: %.md tools/md2html.bin $$(shell tools/extra-deps $$@)
+	tools/md2html.bin < $< > $@
