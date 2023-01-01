@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/parse"
 )
 
 // Segment is a string that has some style applied to it.
@@ -35,8 +36,8 @@ func (s *Segment) Repr(int) string {
 		}
 	}
 
-	addIfNotEqual("fg-color", s.Foreground, nil)
-	addIfNotEqual("bg-color", s.Background, nil)
+	addIfNotEqual("fg-color", s.Fg, nil)
+	addIfNotEqual("bg-color", s.Bg, nil)
 	addIfNotEqual("bold", s.Bold, false)
 	addIfNotEqual("dim", s.Dim, false)
 	addIfNotEqual("italic", s.Italic, false)
@@ -45,10 +46,10 @@ func (s *Segment) Repr(int) string {
 	addIfNotEqual("inverse", s.Inverse, false)
 
 	if buf.Len() == 0 {
-		return s.Text
+		return parse.Quote(s.Text)
 	}
 
-	return fmt.Sprintf("(ui:text-segment %s %s)", s.Text, strings.TrimSpace(buf.String()))
+	return fmt.Sprintf("(ui:text-segment %s %s)", parse.Quote(s.Text), strings.TrimSpace(buf.String()))
 }
 
 // IterateKeys feeds the function with all valid attributes of styled-segment.
@@ -62,15 +63,15 @@ func (s *Segment) Index(k any) (v any, ok bool) {
 	case "text":
 		v = s.Text
 	case "fg-color":
-		if s.Foreground == nil {
+		if s.Fg == nil {
 			return "default", true
 		}
-		return s.Foreground.String(), true
+		return s.Fg.String(), true
 	case "bg-color":
-		if s.Background == nil {
+		if s.Bg == nil {
 			return "default", true
 		}
-		return s.Background.String(), true
+		return s.Bg.String(), true
 	case "bold":
 		v = s.Bold
 	case "dim":

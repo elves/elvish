@@ -2,7 +2,6 @@ package ui
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 
 	"src.elv.sh/pkg/eval/vals"
@@ -13,9 +12,25 @@ func TestT(t *testing.T) {
 	tt.Test(t, tt.Fn("T", T), tt.Table{
 		Args("test").Rets(Text{&Segment{Text: "test"}}),
 		Args("test red", FgRed).Rets(Text{&Segment{
-			Text: "test red", Style: Style{Foreground: Red}}}),
+			Text: "test red", Style: Style{Fg: Red}}}),
 		Args("test red", FgRed, Bold).Rets(Text{&Segment{
-			Text: "test red", Style: Style{Foreground: Red, Bold: true}}}),
+			Text: "test red", Style: Style{Fg: Red, Bold: true}}}),
+	})
+}
+
+func TestConcat(t *testing.T) {
+	tt.Test(t, tt.Fn("Concat", Concat), tt.Table{
+		Args().Rets(Text(nil)),
+		Args(T("red", FgRed), T("blue", FgBlue), T("green", FgGreen)).
+			Rets(Text{red("red"), blue("blue"), green("green")}),
+		// Merging adjacent segments with the same style
+		Args(T("red", FgRed), T("red", FgRed)).Rets(T("redred", FgRed)),
+		// Concatenating texts with multiple segments
+		Args(Concat(T("red", FgRed), T("blue", FgBlue)),
+			Concat(T("blue", FgBlue), T("green", FgGreen))).
+			Rets(Text{red("red"), blue("blueblue"), green("green")}),
+		// Concatenating empty texts
+		Args(T(""), T("red", FgRed), T("")).Rets(T("red", FgRed)),
 	})
 }
 
@@ -41,51 +56,6 @@ var (
 	text1 = Text{red("lorem")}
 	text2 = Text{red("lorem"), blue("foobar")}
 )
-
-func red(s string) *Segment  { return &Segment{Style{Foreground: Red}, s} }
-func blue(s string) *Segment { return &Segment{Style{Foreground: Blue}, s} }
-
-var normalizeTextTests = []struct {
-	name   string
-	before Text
-	after  Text
-}{
-	{
-		name:   "empty text",
-		before: Text{},
-		after:  nil,
-	},
-	{
-		name:   "text with only empty segments",
-		before: Text{&Segment{}, &Segment{}},
-		after:  nil,
-	},
-	{
-		name:   "consecutive segments with the same style are merged",
-		before: Concat(T("a"), T("b")), after: T("ab"),
-	},
-	{
-		name:   "segments with different styles are kept separate",
-		before: Concat(T("a"), T("b", Bold)),
-		after:  Concat(T("a"), T("b", Bold)),
-	},
-	{
-		name:   "segments with the same style separated by empty segments are merged",
-		before: Concat(T("a", Bold), T(""), T("b", Bold)),
-		after:  T("ab", Bold),
-	},
-}
-
-func TestNormalizeText(t *testing.T) {
-	for _, tc := range normalizeTextTests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := NormalizeText(tc.before)
-			if !reflect.DeepEqual(got, tc.after) {
-				t.Errorf("NormalizeText(%v) -> %v, want %v", tc.before, got, tc.after)
-			}
-		})
-	}
-}
 
 var partitionTests = tt.Table{
 	Args(text0).Rets([]Text{nil}),
@@ -166,6 +136,11 @@ func TestSplitByRune(t *testing.T) {
 				{blue("s")},
 				{blue("um"), red("dolar")},
 			}),
+		Args(Text{red("lorem\n")}, '\n').Rets(
+			[]Text{
+				{red("lorem")},
+				nil,
+			}),
 	})
 }
 
@@ -195,3 +170,7 @@ func testTextVTString(t *testing.T, tests []textVTStringTest) {
 		}
 	}
 }
+
+func red(s string) *Segment   { return &Segment{Style{Fg: Red}, s} }
+func blue(s string) *Segment  { return &Segment{Style{Fg: Blue}, s} }
+func green(s string) *Segment { return &Segment{Style{Fg: Green}, s} }

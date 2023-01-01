@@ -12,62 +12,33 @@ import (
 )
 
 // Text contains of a list of styled Segments.
+//
+// When only functions in this package are used to manipulate Text instances,
+// they will always satisfy the following properties:
+//
+//   - If the Text is empty, it is nil (not a non-nil slice of size 0).
+//
+//   - No [Segment] in it has an empty Text field.
+//
+//   - No two adjacent [Segment] instances have the same [Style].
 type Text []*Segment
 
 // T constructs a new Text with the given content and the given Styling's
 // applied.
 func T(s string, ts ...Styling) Text {
+	if s == "" {
+		return nil
+	}
 	return StyleText(Text{&Segment{Text: s}}, ts...)
 }
 
 // Concat concatenates multiple Text's into one.
 func Concat(texts ...Text) Text {
-	var ret Text
+	var tb TextBuilder
 	for _, text := range texts {
-		ret = append(ret, text...)
+		tb.WriteText(text)
 	}
-	return ret
-}
-
-// NormalizeText converts a Text to a normal form:
-//
-//   - If the Text is empty or only contains empty segments, the normal form is
-//     nil.
-//
-//   - Otherwise the normal form contains no empty segments, and no adjacent
-//     segments with the same style.
-//
-// The normal forms can be more easily compared.
-func NormalizeText(t Text) Text {
-	// Find first non-empty segment
-	first := 0
-	for first < len(t) && t[first].Text == "" {
-		first++
-	}
-	if first == len(t) {
-		return nil
-	}
-	var normal Text
-	var segText strings.Builder
-	segText.WriteString(t[first].Text)
-	segStyle := t[first].Style
-	for _, seg := range t[first+1:] {
-		if seg.Text == "" {
-			continue
-		}
-		if seg.Style == segStyle {
-			segText.WriteString(seg.Text)
-		} else {
-			normal = append(normal, &Segment{segStyle, segText.String()})
-			segText.Reset()
-			segText.WriteString(seg.Text)
-			segStyle = seg.Style
-		}
-	}
-	if segText.Len() > 0 {
-		normal = append(normal, &Segment{segStyle, segText.String()})
-	}
-	return normal
+	return tb.Text()
 }
 
 // Kind returns "styled-text".
@@ -78,9 +49,10 @@ func (Text) Kind() string { return "ui:text" }
 func (t Text) Repr(indent int) string {
 	buf := new(bytes.Buffer)
 	for _, s := range t {
+		buf.WriteByte(' ')
 		buf.WriteString(s.Repr(indent + 1))
 	}
-	return fmt.Sprintf("(ui:text %s)", buf.String())
+	return fmt.Sprintf("(ui:text%s)", buf.String())
 }
 
 // IterateKeys feeds the function with all valid indices of the styled-text.
@@ -186,35 +158,37 @@ func (t Text) CountLines() int {
 
 // SplitByRune splits a Text by the given rune.
 func (t Text) SplitByRune(r rune) []Text {
+	if len(t) == 0 {
+		return nil
+	}
 	// Call SplitByRune for each constituent Segment, and "paste" the pairs of
 	// subsegments across the segment border. For instance, if Text has 3
 	// Segments a, b, c that results in a1, a2, a3, b1, b2, c1, then a3 and b1
 	// as well as b2 and c1 are pasted together, and the return value is [a1],
-	// [a2], [a3, b1], [b2, c1]. Pasting can happen coalesce: for instance, if
+	// [a2], [a3, b1], [b2, c1]. Pasting can coalesce: for instance, if
 	// Text has 3 Segments a, b, c that results in a1, a2, b1, c1, the return
 	// value will be [a1], [a2, b1, c1].
 	var result []Text
-	var paste Text
+	var paste TextBuilder
 	for _, seg := range t {
 		subSegs := seg.SplitByRune(r)
+		// Paste the first segment.
+		paste.WriteText(TextFromSegment(subSegs[0]))
 		if len(subSegs) == 1 {
-			// Only one subsegment. Just paste.
-			paste = append(paste, subSegs[0])
+			// Only one subsegment. Keep the paste active.
 			continue
 		}
-		// Paste the previous trailing segments with the first subsegment, and
-		// add it as a Text.
-		result = append(result, append(paste, subSegs[0]))
+		// Add the paste and reset it.
+		result = append(result, paste.Text())
+		paste.Reset()
 		// For the subsegments in the middle, just add then as is.
 		for i := 1; i < len(subSegs)-1; i++ {
-			result = append(result, Text{subSegs[i]})
+			result = append(result, TextFromSegment(subSegs[i]))
 		}
 		// The last segment becomes the new paste.
-		paste = Text{subSegs[len(subSegs)-1]}
+		paste.WriteText(TextFromSegment(subSegs[len(subSegs)-1]))
 	}
-	if len(paste) > 0 {
-		result = append(result, paste)
-	}
+	result = append(result, paste.Text())
 	return result
 }
 
@@ -270,4 +244,13 @@ func (t Text) VTString() string {
 		sb.WriteString("\033[m")
 	}
 	return sb.String()
+}
+
+// TextFromSegment returns a [Text] with just seg if seg.Text is non-empty.
+// Otherwise it returns nil.
+func TextFromSegment(seg *Segment) Text {
+	if seg.Text == "" {
+		return nil
+	}
+	return Text{seg}
 }

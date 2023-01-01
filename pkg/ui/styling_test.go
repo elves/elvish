@@ -11,21 +11,21 @@ func TestStyleText(t *testing.T) {
 	tt.Test(t, tt.Fn("StyleText", StyleText), tt.Table{
 		// Foreground color
 		Args(T("foo"), FgRed).
-			Rets(Text{&Segment{Style{Foreground: Red}, "foo"}}),
+			Rets(Text{&Segment{Style{Fg: Red}, "foo"}}),
 		// Override existing foreground
-		Args(Text{&Segment{Style{Foreground: Green}, "foo"}}, FgRed).
-			Rets(Text{&Segment{Style{Foreground: Red}, "foo"}}),
+		Args(Text{&Segment{Style{Fg: Green}, "foo"}}, FgRed).
+			Rets(Text{&Segment{Style{Fg: Red}, "foo"}}),
 		// Multiple segments
 		Args(Text{
 			&Segment{Style{}, "foo"},
-			&Segment{Style{Foreground: Green}, "bar"}}, FgRed).
+			&Segment{Style{Fg: Green}, "bar"}}, FgRed).
 			Rets(Text{
-				&Segment{Style{Foreground: Red}, "foo"},
-				&Segment{Style{Foreground: Red}, "bar"},
+				&Segment{Style{Fg: Red}, "foo"},
+				&Segment{Style{Fg: Red}, "bar"},
 			}),
 		// Background color
 		Args(T("foo"), BgRed).
-			Rets(Text{&Segment{Style{Background: Red}, "foo"}}),
+			Rets(Text{&Segment{Style{Bg: Red}, "foo"}}),
 		// Bold, false -> true
 		Args(T("foo"), Bold).
 			Rets(Text{&Segment{Style{Bold: true}, "foo"}}),

@@ -22,7 +22,7 @@ func TestTextSegmentAsElvishValue(t *testing.T) {
 		Index("blink", false).
 		Index("inverse", false)
 
-	vals.TestValue(t, &Segment{Style{Foreground: Red, Background: Blue}, "foo"}).
+	vals.TestValue(t, &Segment{Style{Fg: Red, Bg: Blue}, "foo"}).
 		Repr("(ui:text-segment foo &fg-color=red &bg-color=blue)").
 		Index("fg-color", "red").
 		Index("bg-color", "blue")

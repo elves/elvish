@@ -291,11 +291,11 @@ func sgrTextToHTML(ttyshot string) string {
 				// CSS classes to indicate that the foreground/background should
 				// take the inverse of the default color.
 				style.Inverse = false
-				style.Foreground, style.Background = style.Background, style.Foreground
-				if style.Foreground == nil {
+				style.Fg, style.Bg = style.Bg, style.Fg
+				if style.Fg == nil {
 					classes = append(classes, "sgr-7fg")
 				}
-				if style.Background == nil {
+				if style.Bg == nil {
 					classes = append(classes, "sgr-7bg")
 				}
 			}

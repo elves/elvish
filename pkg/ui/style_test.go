@@ -29,8 +29,8 @@ type mergeFromOptionsTest struct {
 
 var mergeFromOptionsTests = []mergeFromOptionsTest{
 	// Parsing of each possible key.
-	kv("fg-color", "red", Style{Foreground: Red}),
-	kv("bg-color", "red", Style{Background: Red}),
+	kv("fg-color", "red", Style{Fg: Red}),
+	kv("bg-color", "red", Style{Bg: Red}),
 	kv("bold", true, Style{Bold: true}),
 	kv("dim", true, Style{Dim: true}),
 	kv("italic", true, Style{Italic: true}),
@@ -43,7 +43,7 @@ var mergeFromOptionsTests = []mergeFromOptionsTest{
 		options: map[string]any{
 			"bold": false, "fg-color": "red",
 		},
-		wantStyle: Style{Dim: true, Foreground: Red},
+		wantStyle: Style{Dim: true, Fg: Red},
 	},
 	// Bad key.
 	{

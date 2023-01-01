@@ -117,8 +117,8 @@ type boolOff struct{ f boolField }
 type boolToggle struct{ f boolField }
 
 func (reset) transform(s *Style)           { *s = Style{} }
-func (t setForeground) transform(s *Style) { s.Foreground = t.c }
-func (t setBackground) transform(s *Style) { s.Background = t.c }
+func (t setForeground) transform(s *Style) { s.Fg = t.c }
+func (t setBackground) transform(s *Style) { s.Bg = t.c }
 func (t boolOn) transform(s *Style)        { *t.f.get(s) = true }
 func (t boolOff) transform(s *Style)       { *t.f.get(s) = false }
 func (t boolToggle) transform(s *Style)    { p := t.f.get(s); *p = !*p }

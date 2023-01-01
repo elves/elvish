@@ -28,7 +28,7 @@ type RuneStylesheet map[rune]Styling
 //	    "lorem    ipsum    dolar",
 //	)
 func MarkLines(args ...any) Text {
-	var text Text
+	var tb TextBuilder
 	for i := 0; i < len(args); i++ {
 		line, ok := args[i].(string)
 		if !ok {
@@ -38,32 +38,32 @@ func MarkLines(args ...any) Text {
 		if i+2 < len(args) {
 			if stylesheet, ok := args[i+1].(RuneStylesheet); ok {
 				if style, ok := args[i+2].(string); ok {
-					text = Concat(text, MarkText(line, stylesheet, style))
+					tb.WriteText(MarkText(line, stylesheet, style))
 					i += 2
 					continue
 				}
 			}
 		}
-		text = Concat(text, T(line))
+		tb.WriteText(T(line))
 	}
-	return text
+	return tb.Text()
 }
 
 // MarkText applies styles to all the runes in the line, using the runes in
 // the style string. The stylesheet argument specifies which style each rune
 // represents.
 func MarkText(line string, stylesheet RuneStylesheet, style string) Text {
-	var text Text
+	var tb TextBuilder
 	styleRuns := toRuns(style)
 	for _, styleRun := range styleRuns {
 		i := bytesForFirstNRunes(line, styleRun.n)
-		text = Concat(text, T(line[:i], stylesheet[styleRun.r]))
+		tb.WriteText(T(line[:i], stylesheet[styleRun.r]))
 		line = line[i:]
 	}
 	if len(line) > 0 {
-		text = Concat(text, T(line))
+		tb.WriteText(T(line))
 	}
-	return text
+	return tb.Text()
 }
 
 type run struct {

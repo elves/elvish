@@ -247,7 +247,7 @@ func (c croppedLines) Render(width, height int) *term.Buffer {
 		extendStyle := c.extendStyle && len(line) > 0
 
 		left := leftSpacing.Clone()
-		if extendStyle {
+		if extendStyle && len(left) > 0 {
 			left[0].Style = line[0].Style
 		}
 		acc := ui.Concat(left, line.TrimWcwidth(width-2*c.padding))

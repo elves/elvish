@@ -284,7 +284,7 @@ func TestTTYCodec(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			codec := TTYCodec{Width: tc.width}
 			Render(tc.markdown, &codec)
-			got := ui.NormalizeText(codec.Text())
+			got := codec.Text()
 			if !reflect.DeepEqual(got, tc.ttyRender) {
 				t.Errorf("markdown: %s\ngot: %s\nwant:%s",
 					hrFence(tc.markdown),
@@ -307,5 +307,5 @@ func markLines(args ...any) ui.Text {
 			i++
 		}
 	}
-	return ui.NormalizeText(ui.MarkLines(args...))
+	return ui.MarkLines(args...)
 }

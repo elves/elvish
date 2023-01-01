@@ -69,7 +69,7 @@ import (
 type TTYCodec struct {
 	Width int
 
-	buf ui.Text
+	buf ui.TextBuilder
 
 	// Current active container blocks. The punct field is not used; the
 	// TTYCodec uses fixed punctuations for each type.
@@ -79,17 +79,17 @@ type TTYCodec struct {
 }
 
 // Text returns the rendering result as a [ui.Text].
-func (c *TTYCodec) Text() ui.Text { return c.buf }
+func (c *TTYCodec) Text() ui.Text { return c.buf.Text() }
 
 // String returns the rendering result as a string with ANSI escape sequences.
-func (c *TTYCodec) String() string { return c.buf.String() }
+func (c *TTYCodec) String() string { return c.buf.Text().String() }
 
 // Do processes an Op.
 func (c *TTYCodec) Do(op Op) {
 	defer func() {
 		c.lastOpType = op.Type
 	}()
-	if len(c.buf) > 0 && op.Type != OpHTMLBlock && needNewStanza(op.Type, c.lastOpType) {
+	if !c.buf.Empty() && op.Type != OpHTMLBlock && needNewStanza(op.Type, c.lastOpType) {
 		c.writeLine("")
 	}
 
@@ -279,4 +279,4 @@ func (c *TTYCodec) startLine()            { startLine(c, c.containers) }
 func (c *TTYCodec) writeLine(s string)    { writeLine(c, c.containers, s) }
 func (c *TTYCodec) finishLine()           { c.write("\n") }
 func (c *TTYCodec) write(s string)        { c.writeStyled(ui.T(s)) }
-func (c *TTYCodec) writeStyled(t ui.Text) { c.buf = append(c.buf, t...) }
+func (c *TTYCodec) writeStyled(t ui.Text) { c.buf.WriteText(t) }

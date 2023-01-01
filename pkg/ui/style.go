@@ -7,8 +7,8 @@ import (
 
 // Style specifies how something (mostly a string) shall be displayed.
 type Style struct {
-	Foreground Color
-	Background Color
+	Fg         Color
+	Bg         Color
 	Bold       bool
 	Dim        bool
 	Italic     bool
@@ -32,11 +32,11 @@ func (s Style) SGRValues() []string {
 	addIf(s.Underlined, "4")
 	addIf(s.Blink, "5")
 	addIf(s.Inverse, "7")
-	if s.Foreground != nil {
-		sgr = append(sgr, s.Foreground.fgSGR())
+	if s.Fg != nil {
+		sgr = append(sgr, s.Fg.fgSGR())
 	}
-	if s.Background != nil {
-		sgr = append(sgr, s.Background.bgSGR())
+	if s.Bg != nil {
+		sgr = append(sgr, s.Bg.bgSGR())
 	}
 	return sgr
 }
@@ -76,9 +76,9 @@ func (s *Style) MergeFromOptions(options map[string]any) error {
 
 		switch k {
 		case "fg-color":
-			need = assignColor(v, &s.Foreground)
+			need = assignColor(v, &s.Fg)
 		case "bg-color":
-			need = assignColor(v, &s.Background)
+			need = assignColor(v, &s.Bg)
 		case "bold":
 			need = assignBool(v, &s.Bold)
 		case "dim":
