@@ -50,7 +50,7 @@ fn make-map {|input?| }
 #
 # Etymology: [Clojure](https://clojuredocs.org/clojure.core/assoc).
 #
-# @cf dissoc
+# See also [`dissoc`]().
 fn assoc {|container k v| }
 
 # Output a slightly modified version of `$map`, with the key `$k` removed. If
@@ -63,7 +63,7 @@ fn assoc {|container k v| }
 # ▶ [&lorem=ipsum &foo=bar]
 # ```
 #
-# @cf assoc
+# See also [`assoc`]().
 fn dissoc {|map k| }
 
 # Determine whether `$value` is a value in `$container`.

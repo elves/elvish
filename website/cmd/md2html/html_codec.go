@@ -12,6 +12,7 @@ import (
 // A wrapper of [md.HTMLCodec] implementing generic additional features.
 type htmlCodec struct {
 	md.HTMLCodec
+	preprocessInline func([]md.InlineOp)
 	// Extensions
 	numberSections, toc bool
 	// Components of the current section number. Populated if numberSections or
@@ -34,6 +35,7 @@ var (
 )
 
 func (c *htmlCodec) Do(op md.Op) {
+	c.preprocessInline(op.Content)
 	switch op.Type {
 	case md.OpHeading:
 		id := ""

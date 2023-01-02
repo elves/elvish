@@ -84,8 +84,8 @@ in one of two ways:
     ```
 
     If the previous command outputs bytes, one line becomes one string input, as
-    if there is an implicit [`from-lines`](#from-lines) (this behavior is
-    subject to change):
+    if there is an implicit [`from-lines`]() (this behavior is subject to
+    change):
 
     ```elvish-transcript
     ~> print "a\nb\nc\n" | count # count number of lines

@@ -47,12 +47,12 @@ fn is-tty {|file| }
 # ~> close $f
 # ```
 #
-# @cf file:close
+# See also [`file:close`]().
 fn open {|filename| }
 
 # Closes a file opened with `open`.
 #
-# @cf file:open
+# See also [`file:open`]().
 fn close {|file| }
 
 # Create a new pipe that can be used in redirections. A pipe contains a read-end and write-end.
@@ -81,7 +81,7 @@ fn close {|file| }
 # ~> file:close $p[r] # close the read-end
 # ```
 #
-# @cf file:close
+# See also [`file:close`]().
 fn pipe { }
 
 # changes the size of the named file. If the file is a symbolic link, it

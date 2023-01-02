@@ -337,8 +337,8 @@ candidates:
     edit:complex-candidate &code-suffix='' &display=$stem' ('$description')'  $stem
     ```
 
-    See [`edit:complex-candidate`](#edit:complex-candidate) for the full
-    description of the arguments is accepts.
+    See [`edit:complex-candidate`]() for the full description of the arguments
+    is accepts.
 
 After receiving your candidates, Elvish will match your candidates against what
 the user has typed. Hence, normally you don't need to (and shouldn't) do any
@@ -521,6 +521,5 @@ without importing it, the editor will offer `use str` as an autofix command:
 @ttyshot ref/edit/autofix
 
 As seen above, autofixes are also applied automatically by
-[`edit:completion:smart-start`](#edit:completion:smart-start) (the default
-binding for <kbd>Tab</kbd>) and [`edit:smart-enter`](#edit:smart-enter) (the
-default binding for <kbd>Enter</kbd>).
+[`edit:completion:smart-start`]() (the default binding for <kbd>Tab</kbd>) and
+[`edit:smart-enter`]() (the default binding for <kbd>Enter</kbd>).

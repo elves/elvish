@@ -12,12 +12,12 @@
 # * `error`: An [exception](../ref/language.html#exception) object if the command terminated with
 # an exception, else [`$nil`](../ref/language.html#nil).
 #
-# @cf $edit:command-duration
+# See also [`$edit:command-duration`]().
 var after-command
 
 # Duration, in seconds, of the most recent interactive command. This can be useful in your prompt
 # to provide feedback on how long a command took to run. The initial value of this variable is the
 # time to evaluate your [`rc.elv`](command.html#rc-file) before printing the first prompt.
 #
-# @cf $edit:after-command
+# See also [`$edit:after-command`]().
 var command-duration

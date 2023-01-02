@@ -72,5 +72,5 @@
 # ▶ second2
 # ```
 #
-# @cf flag:parse-getopt
+# See also [`flag:parse-getopt`]().
 fn complete-getopt {|args opt-specs arg-handlers| }

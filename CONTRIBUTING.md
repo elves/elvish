@@ -151,6 +151,12 @@ Style guides for elvdocs for functions:
     output indicator `▶`. You can use `elvish -norc` if you have customized
     either in your [`rc.elv`](https://elv.sh/ref/command.html#rc-file).
 
+It is quite common for elvdocs to link to other elvdocs, and Elvish's website
+toolchain provides special support for that. If a link has a single code span
+and an empty target, it gets rewritten to a link to an elvdoc section. For
+example, ``[`put`]()`` will get rewritten to ``[`put`](builtin.html#put)``, or
+just ``[`put`](#put)`` within the documentation for the builtin module.
+
 ### Comment for unexported Go types and functions
 
 In the doc comment for exported types and functions, it's customary to use the

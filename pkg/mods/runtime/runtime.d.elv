@@ -12,7 +12,7 @@ var lib-dirs
 #
 # This variable is read-only.
 #
-# @cf $runtime:effective-rc-path
+# See also [`$runtime:effective-rc-path`]().
 var rc-path
 
 # Path to the [RC path](command.html#rc-file) that is actually used for this
@@ -29,7 +29,7 @@ var rc-path
 #
 # This variable is read-only.
 #
-# @cf $runtime:rc-path
+# See also [`$runtime:rc-path`]().
 var effective-rc-path
 
 # The path to the Elvish binary.

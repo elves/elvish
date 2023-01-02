@@ -3,8 +3,8 @@
 #
 # The `$fn` must be a user-defined function (i.e. not a builtin
 # function or external command). Each option corresponds to a flag; see
-# [`flag:parse`](#flag:parse) for how the default value affects the behavior of
-# flags. After parsing, the non-flag arguments are used as function arguments.
+# [`flag:parse`]() for how the default value affects the behavior of flags.
+# After parsing, the non-flag arguments are used as function arguments.
 #
 # Example:
 #
@@ -17,7 +17,7 @@
 # ▶ a.c
 # ```
 #
-# @cf flag:parse
+# See also [`flag:parse`]().
 fn call {|fn args| }
 
 # Parses flags from `$args` according to the `$specs`, using the [Go
@@ -75,7 +75,7 @@ fn call {|fn args| }
 # ▶ []
 # ```
 #
-# @cf flag:call flag:parse-getopt
+# See also [`flag:call`]() and [`flag:parse-getopt`]().
 fn parse {|args specs| }
 
 # Parses flags from `$args` according to the `$specs`, using the [getopt
@@ -138,5 +138,5 @@ fn parse {|args specs| }
 # ▶ []
 # ```
 #
-# @cf flag:parse edit:complete-getopt
+# See also [`flag:parse`]() and [`edit:complete-getopt`]().
 fn parse-getopt {|args specs &stop-after-double-dash=$true &stop-before-non-flag=$false &long-only=$false| }

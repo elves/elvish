@@ -17,7 +17,7 @@ var _
 # As demonstrated above, this variable does not contain the name of the script
 # used to invoke it. For that information, use the `src` command.
 #
-# @cf src
+# See also [`src`]().
 var args
 
 # The boolean false value.
@@ -54,7 +54,7 @@ var pid
 #
 # Etymology: the `pwd` command.
 #
-# @cf cd
+# See also [`cd`]().
 var pwd
 
 # The boolean true value.
@@ -63,7 +63,7 @@ var true
 # A [psuedo-map](language.html#pseudo-map) that exposes information about the Elvish binary.
 # Running `put $buildinfo | to-json` will produce the same output as `elvish -buildinfo -json`.
 #
-# @cf $version
+# See also [`$version`]().
 var buildinfo
 
 # The full version of the Elvish binary as a string. This is the same information reported by
@@ -79,5 +79,5 @@ var buildinfo
 # to test if variable `new-var` is available rather than comparing against `$version` to see if the
 # elvish version is equal to or newer than the version that introduced `new-var`.
 #
-# @cf $buildinfo
+# See also [`$buildinfo`]().
 var version

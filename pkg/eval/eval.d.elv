@@ -20,13 +20,13 @@
 # are writing a plugin that works with the interactive mode, it's better to use
 # [`edit:notify`](edit.html#edit:notify).
 #
-# @cf $before-chdir
+# See also [`$before-chdir`]().
 var after-chdir
 
 # A list of functions to run before changing directory. These functions are always
 # called with the new working directory.
 #
-# @cf $after-chdir
+# See also [`$after-chdir`]().
 var before-chdir
 
 # Number of background jobs.

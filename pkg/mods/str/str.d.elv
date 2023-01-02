@@ -63,7 +63,7 @@ fn equal-fold {|str1 str2| }
 # ▶ 你好
 # ```
 #
-# @cf str:to-codepoints
+# See also [`str:to-codepoints`]().
 fn from-codepoints {|@number| }
 
 # Outputs a string consisting of the given Unicode bytes. Example:
@@ -75,7 +75,7 @@ fn from-codepoints {|@number| }
 # ▶ 你好
 # ```
 #
-# @cf str:to-utf8-bytes
+# See also [`str:to-utf8-bytes`]().
 fn from-utf8-bytes {|@number| }
 
 # Outputs if `$str` begins with `$prefix`.
@@ -137,7 +137,7 @@ fn index-any {|str chars| }
 # Etymology: Various languages,
 # [Python](https://docs.python.org/3.6/library/stdtypes.html#str.join).
 #
-# @cf str:split
+# See also [`str:split`]().
 fn join {|sep input-list?| }
 
 # Outputs the index of the last instance of `$substr` in `$str`,
@@ -184,7 +184,7 @@ fn replace {|&max=-1 old repl source| }
 # Etymology: Various languages, in particular
 # [Python](https://docs.python.org/3.6/library/stdtypes.html#str.split).
 #
-# @cf str:join
+# See also [`str:join`]().
 fn split {|&max=-1 sep string| }
 
 # Outputs `$str` with all Unicode letters that begin words mapped to their
@@ -208,7 +208,7 @@ fn title {|str| }
 #
 # The output format is subject to change.
 #
-# @cf str:from-codepoints
+# See also [`str:from-codepoints`]().
 fn to-codepoints {|string| }
 
 # Outputs `$str` with all Unicode letters mapped to their lower-case
@@ -236,7 +236,7 @@ fn to-lower {|str| }
 #
 # The output format is subject to change.
 #
-# @cf str:from-utf8-bytes
+# See also [`str:from-utf8-bytes`]().
 fn to-utf8-bytes {|string| }
 
 # Outputs `$str` with all Unicode letters mapped to their Unicode title case.
@@ -268,7 +268,7 @@ fn to-upper { }
 fn trim {|str cutset| }
 
 # Outputs `$str` with all leading Unicode code points contained in `$cutset`
-# removed. To remove a prefix string use [`str:trim-prefix`](#str:trim-prefix).
+# removed. To remove a prefix string use [`str:trim-prefix`]().
 #
 # ```elvish-transcript
 # ~> str:trim-left "¡¡¡Hello, Elven!!!" "!¡"
@@ -288,7 +288,7 @@ fn trim-left {|str cutset| }
 fn trim-prefix {|str prefix| }
 
 # Outputs `$str` with all trailing Unicode code points contained in `$cutset`
-# removed. To remove a suffix string use [`str:trim-suffix`](#str:trim-suffix).
+# removed. To remove a suffix string use [`str:trim-suffix`]().
 #
 # ```elvish-transcript
 # ~> str:trim-right "¡¡¡Hello, Elven!!!" "!¡"

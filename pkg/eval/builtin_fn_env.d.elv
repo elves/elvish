@@ -10,7 +10,7 @@
 # ▶ foobar
 # ```
 #
-# @cf get-env has-env unset-env
+# See also [`get-env`](), [`has-env`](), and [`unset-env`]().
 fn set-env {|name value| }
 
 # Unset an environment variable. Calling `unset-env VAR_NAME` is similar to
@@ -27,7 +27,7 @@ fn set-env {|name value| }
 # ▶ ''
 # ```
 #
-# @cf has-env get-env set-env
+# See also [`has-env`](), [`get-env`](), and [`set-env`]().
 fn unset-env {|name| }
 
 # Test whether an environment variable exists. This command has no equivalent
@@ -42,7 +42,7 @@ fn unset-env {|name| }
 # ▶ $false
 # ```
 #
-# @cf get-env set-env unset-env
+# See also [`get-env`](), [`set-env`](), and [`unset-env`]().
 fn has-env {|name| }
 
 # Gets the value of an environment variable. Throws an exception if the
@@ -62,5 +62,5 @@ fn has-env {|name| }
 # [tty], line 1: get-env NO_SUCH_ENV
 # ```
 #
-# @cf has-env set-env unset-env
+# See also [`has-env`](), [`set-env`](), and [`unset-env`]().
 fn get-env {|name| }

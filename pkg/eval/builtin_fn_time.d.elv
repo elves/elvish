@@ -3,7 +3,7 @@
 #
 # This only affects the current Elvish context. It does not affect any other
 # contexts that might be executing in parallel as a consequence of a command
-# such as [`peach`](#peach).
+# such as [`peach`]().
 #
 # A duration can be a simple [number](language.html#number) (with optional
 # fractional value) without an explicit unit suffix, with an implicit unit of
@@ -60,7 +60,7 @@ fn sleep {|duration| }
 # ▶ (num 0.011030208)
 # ```
 #
-# @cf benchmark
+# See also [`benchmark`]().
 fn time {|&on-end=$nil callable| }
 
 # Runs `$callable` repeatedly, and reports statistics about how long each run
@@ -119,5 +119,5 @@ fn time {|&on-end=$nil callable| }
 # 301.088324ms ± 234.298µs (min 300.629166ms, max 301.260333ms, 5 runs)
 # ```
 #
-# @cf time
+# See also [`time`]().
 fn benchmark {|&min-runs=5 &min-time=1s &on-end=$nil &on-run-end=$nil callable| }

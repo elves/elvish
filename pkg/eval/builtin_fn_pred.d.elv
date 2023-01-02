@@ -19,7 +19,7 @@
 # ▶ $true
 # ```
 #
-# @cf not
+# See also [`not`]().
 fn bool {|value| }
 
 # Boolean negation. Examples:
@@ -40,7 +40,7 @@ fn bool {|value| }
 # always evaluate all their arguments. The `not` command always evaluates its
 # only argument, and is thus a normal command.
 #
-# @cf bool
+# See also [`bool`]().
 fn not {|value| }
 
 # Determine whether all `$value`s have the same identity. Writes `$true` when
@@ -59,7 +59,7 @@ fn not {|value| }
 # ▶ $false
 # ```
 #
-# @cf eq
+# See also [`eq`]().
 #
 # Etymology: [Python](https://docs.python.org/3/reference/expressions.html#is).
 fn is {|@values| }
@@ -84,7 +84,7 @@ fn is {|@values| }
 # ▶ $false
 # ```
 #
-# @cf is not-eq
+# See also [`is`]() and [`not-eq`]().
 #
 # Etymology: [Perl](https://perldoc.perl.org/perlop.html#Equality-Operators).
 fn eq {|@values| }
@@ -101,7 +101,7 @@ fn eq {|@values| }
 # ▶ $false
 # ```
 #
-# @cf eq
+# See also [`eq`]().
 fn not-eq {|@values| }
 
 # Outputs -1 if `$a` < `$b`, 0 if `$a` = `$b`, and 1 if `$a` > `$b`.
@@ -139,5 +139,5 @@ fn not-eq {|@values| }
 # Beware that strings that look like numbers are treated as strings, not
 # numbers.
 #
-# @cf order
+# See also [`order`]().
 fn compare {|a b| }

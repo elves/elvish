@@ -18,7 +18,7 @@
 # the cursor left, and typing another `|` does **not** expand to `| less`,
 # since the abbreviation `||` was not typed consecutively.
 #
-# @cf $edit:command-abbr $edit:small-word-abbr
+# See also [`$edit:command-abbr`]() and [`$edit:small-word-abbr`]().
 var abbr
 
 # A map from command abbreviations to their expansions.
@@ -37,7 +37,7 @@ var abbr
 # set edit:command-abbr['gc'] = 'git commit'
 # ```
 #
-# @cf $edit:abbr $edit:small-word-abbr
+# See also [`$edit:abbr`]() and [`$edit:small-word-abbr`]().
 var command-abbr
 
 # A map from small-word abbreviations to their expansions.
@@ -107,16 +107,16 @@ var command-abbr
 # If both a [simple abbreviation](#$edit:abbr) and a small-word abbreviation can
 # be expanded, the simple abbreviation has priority.
 #
-# @cf $edit:abbr $edit:command-abbr
+# See also [`$edit:abbr`]() [`$edit:command-abbr`]().
 var small-word-abbr
 
 # Toggles the value of [$edit:insert:quote-paste].
 fn toggle-quote-paste { }
 
 # Binding map for the insert mode.
-# 
-# The key bound to [`edit:apply-autofix`](#edit:apply-autofix) will be shown
-# when an [autofix](#autofix) is available.
+#
+# The key bound to [`edit:apply-autofix`]() will be shown when an
+# [autofix](#autofix) is available.
 var insert:binding
 
 # A boolean used to control whether text pasted using

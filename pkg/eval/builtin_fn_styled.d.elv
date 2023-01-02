@@ -20,9 +20,9 @@
 # ▶ $true
 # ```
 #
-# Prefer the high-level [`styled`](#styled) command to build and transform
-# styled texts. Styled segments are a low-level construct, and you only have to
-# deal with it when building custom style transformers.
+# Prefer the high-level [`styled`]() command to build and transform styled
+# texts. Styled segments are a low-level construct, and you only have to deal
+# with it when building custom style transformers.
 #
 # In the following example, a custom transformer sets the `inverse` property
 # for every bold segment:

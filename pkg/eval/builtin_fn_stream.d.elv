@@ -67,7 +67,7 @@
 # ```
 #
 # When given byte inputs, the `all` command currently functions like
-# [`from-lines`](#from-lines), although this behavior is subject to change:
+# [`from-lines`](), although this behavior is subject to change:
 #
 # ```elvish-transcript
 # ~> print "foo\nbar\n" | all
@@ -75,16 +75,16 @@
 # ▶ bar
 # ```
 #
-# @cf one
+# See also [`one`]().
 fn all {|inputs?| }
 
 # Takes exactly one [value input](#value-inputs) and outputs it. If there are
 # more than one value inputs, raises an exception.
 #
-# This function can be used in a similar way to [`all`](#all), but is a better
+# This function can be used in a similar way to [`all`](), but is a better
 # choice when you expect that there is exactly one output.
 #
-# @cf all
+# See also [`all`]().
 fn one {|inputs?| }
 
 # Outputs the first `$n` [value inputs](#value-inputs). If `$n` is larger than
@@ -107,7 +107,7 @@ fn one {|inputs?| }
 #
 # Etymology: Haskell.
 #
-# @cf drop
+# See also [`drop`]().
 fn take {|n inputs?| }
 
 # Ignores the first `$n` [value inputs](#value-inputs) and outputs the rest.
@@ -132,7 +132,7 @@ fn take {|n inputs?| }
 #
 # Etymology: Haskell.
 #
-# @cf take
+# See also [`take`]().
 fn drop {|n inputs?| }
 
 # Replaces consecutive runs of equal values with a single copy. Similar to the
@@ -255,5 +255,5 @@ fn count {|input-list?| }
 #
 # (The `$"<~"` syntax is a reference to [the `<` function](#num-cmp).)
 #
-# @cf compare
+# See also [`compare`]().
 fn order {|&less-than=$nil &key=$nil &reverse=$false inputs?| }

@@ -72,7 +72,7 @@ fn read-line { }
 
 # Like `echo`, just without the newline.
 #
-# @cf echo
+# See also [`echo`]().
 #
 # Etymology: Various languages, in particular
 # [Perl](https://perldoc.perl.org/functions/print.html) and
@@ -85,7 +85,7 @@ fn print {|&sep=' ' @value| }
 # output of `printf` do not cause its output to be broken into multiple values, thus eliminating
 # the newlines, which will occur if you do `put (printf ....)`.
 #
-# Like [`print`](#print), this command does not add an implicit newline; include an explicit `"\n"`
+# Like [`print`](), this command does not add an implicit newline; include an explicit `"\n"`
 # in the formatting template instead. For example, `printf "%.1f\n" (/ 10.0 3)`.
 #
 # See Go's [`fmt`](https://golang.org/pkg/fmt/#hdr-Printing) package for
@@ -150,7 +150,7 @@ fn print {|&sep=' ' @value| }
 # - This command does not interpret escape sequences such as `\n`; just use
 #   [double-quoted strings](language.html#double-quoted-string).
 #
-# @cf print echo pprint repr
+# See also [`print`](), [`echo`](), [`pprint`](), and [`repr`]().
 fn printf {|template @value| }
 
 # Print all arguments, joined by the `sep` option, and followed by a newline.
@@ -170,7 +170,7 @@ fn printf {|template @value| }
 # `echo -n` just prints `-n`. Use double-quoted strings to print special
 # characters, and `print` to suppress the trailing newline.
 #
-# @cf print
+# See also [`print`]().
 #
 # Etymology: Bourne sh.
 fn echo {|&sep=' ' @value| }
@@ -194,7 +194,7 @@ fn echo {|&sep=' ' @value| }
 #
 # The output format is subject to change.
 #
-# @cf repr
+# See also [`repr`]().
 fn pprint {|@value| }
 
 # Writes representation of `$value`s, separated by space and followed by a
@@ -205,7 +205,7 @@ fn pprint {|@value| }
 # [foo 'lorem ipsum'] "aha\n"
 # ```
 #
-# @cf pprint
+# See also [`pprint`]().
 #
 # Etymology: [Python](https://docs.python.org/3/library/functions.html#repr).
 fn repr {|@value| }
@@ -271,7 +271,7 @@ fn slurp { }
 # ▶ a
 # ```
 #
-# @cf from-terminated read-upto to-lines
+# See also [`from-terminated`](), [`read-upto`](), and [`to-lines`]().
 fn from-lines { }
 
 # Takes bytes stdin, parses it as JSON and puts the result on structured stdout.
@@ -303,7 +303,7 @@ fn from-lines { }
 # ▶ [&k=v]
 # ```
 #
-# @cf to-json
+# See also [`to-json`]().
 fn from-json { }
 
 # Splits byte input into lines at each `$terminator` character, and writes
@@ -323,7 +323,7 @@ fn from-json { }
 # ▶ b
 # ```
 #
-# @cf from-lines read-upto to-terminated
+# See also [`from-lines`](), [`read-upto`](), and [`to-terminated`]().
 fn from-terminated {|terminator| }
 
 # Writes each [value input](#value-inputs) to a separate line in the byte
@@ -341,7 +341,7 @@ fn from-terminated {|terminator| }
 # a
 # ```
 #
-# @cf from-lines to-terminated
+# See also [`from-lines`]() and [`to-terminated`]().
 fn to-lines {|inputs?| }
 
 # Writes each [value input](#value-inputs) to the byte output with the
@@ -359,7 +359,7 @@ fn to-lines {|inputs?| }
 # ▶ "a\x00b\x00"
 # ```
 #
-# @cf from-terminated to-lines
+# See also [`from-terminated`]() and [`to-lines`]().
 fn to-terminated {|terminator inputs?| }
 
 # Takes structured stdin, convert it to JSON and puts the result on bytes stdout.
@@ -373,5 +373,5 @@ fn to-terminated {|terminator inputs?| }
 # {"lorem":"ipsum"}
 # ```
 #
-# @cf from-json
+# See also [`from-json`]().
 fn to-json { }

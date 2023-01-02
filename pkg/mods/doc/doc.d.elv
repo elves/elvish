@@ -28,7 +28,7 @@ fn show {|symbol &width=0| }
 
 # Outputs the Markdown source of the documentation for `$symbol` as a string
 # value. The `$symbol` arguments follows the same format as
-# [`doc:show`](#doc:show).
+# [`doc:show`]().
 #
 # Examples:
 #

@@ -18,9 +18,8 @@
 # with the same semantics as above. Any other key is ignored.
 #
 # The `&binding` option, if specified, should be a binding map to use in the
-# custom listing mode. Bindings from
-# [`$edit:listing:binding`](#$edit:listing:binding) are also used, after this
-# map if it is specified.
+# custom listing mode. Bindings from [`$edit:listing:binding`]() are also used,
+# after this map if it is specified.
 #
 # The `&caption` option changes the caption of the mode. If empty, the caption
 # defaults to `' LISTING '`.

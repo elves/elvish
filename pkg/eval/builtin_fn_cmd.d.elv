@@ -5,7 +5,7 @@
 # ~> $x ls # opens the manpage for ls
 # ```
 #
-# @cf has-external search-external
+# See also [`has-external`]() and [`search-external`]().
 fn external {|program| }
 
 # Test whether `$command` names a valid external command. Examples (your output
@@ -18,7 +18,7 @@ fn external {|program| }
 # ▶ $false
 # ```
 #
-# @cf external search-external
+# See also [`external`]() and [`search-external`]().
 fn has-external {|command| }
 
 # Output the full path of the external `$command`. Throws an exception when not
@@ -29,7 +29,7 @@ fn has-external {|command| }
 # ▶ /bin/cat
 # ```
 #
-# @cf external has-external
+# See also [`external`]() and [`has-external`]().
 fn search-external {|command| }
 
 # Replace the Elvish process with an external `$command`, defaulting to

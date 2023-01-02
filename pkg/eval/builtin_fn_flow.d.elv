@@ -36,16 +36,16 @@
 # parallel. If you need homogeneous parallel processing of possibly unbound data,
 # use `peach` instead.
 #
-# @cf peach
+# See also [`peach`]().
 fn run-parallel {|@callable| }
 
 # Calls `$f` on each [value input](#value-inputs).
 #
-# An exception raised from [`break`](#break) is caught by `each`, and will
-# cause it to terminate early.
+# An exception raised from [`break`]() is caught by `each`, and will cause it to
+# terminate early.
 #
-# An exception raised from [`continue`](#continue) is swallowed and can be used
-# to terminate a single iteration early.
+# An exception raised from [`continue`]() is swallowed and can be used to
+# terminate a single iteration early.
 #
 # Examples:
 #
@@ -59,7 +59,7 @@ fn run-parallel {|@callable| }
 # ▶ ips
 # ```
 #
-# @cf peach
+# See also [`peach`]().
 #
 # Etymology: Various languages, as `for each`. Happens to have the same name as
 # the iteration construct of
@@ -68,12 +68,12 @@ fn each {|f inputs?| }
 
 # Calls `$f` for each [value input](#value-inputs), possibly in parallel.
 #
-# Like `each`, an exception raised from [`break`](#break) will cause `peach`
-# to terminate early. However due to the parallel nature of `peach`, the exact
-# time of termination is non-deterministic, and termination is not guaranteed.
+# Like `each`, an exception raised from [`break`]() will cause `peach` to
+# terminate early. However due to the parallel nature of `peach`, the exact time
+# of termination is non-deterministic, and termination is not guaranteed.
 #
-# An exception raised from [`continue`](#continue) is swallowed and can be used
-# to terminate a single iteration early.
+# An exception raised from [`continue`]() is swallowed and can be used to
+# terminate a single iteration early.
 #
 # Example (your output will differ):
 #
@@ -98,7 +98,7 @@ fn each {|f inputs?| }
 # you need to do a fixed number of heterogeneous things in parallel, use
 # `run-parallel`.
 #
-# @cf each run-parallel
+# See also [`each`]() and [`run-parallel`]().
 fn peach {|f inputs?| }
 
 # Throws an exception; `$v` may be any type. If `$v` is already an exception,

@@ -31,7 +31,7 @@ fn rand { }
 # ▶ (num 10)
 # ```
 #
-# @cf exact-num inexact-num
+# See also [`exact-num`]() and [`inexact-num`]().
 fn num {|string-or-number| }
 
 # Coerces the argument to an exact number. If the argument is infinity or NaN,
@@ -59,7 +59,7 @@ fn num {|string-or-number| }
 # ▶ (num 3602879701896397/36028797018963968)
 # ```
 #
-# @cf num inexact-num
+# See also [`num`]() and [`inexact-num`]().
 fn exact-num {|string-or-number| }
 
 # Coerces the argument to an inexact number.
@@ -106,13 +106,13 @@ fn exact-num {|string-or-number| }
 # ▶ (num 0.0)
 # ```
 #
-# @cf num exact-num
+# See also [`num`]() and [`exact-num`]().
 fn inexact-num {|string-or-number| }
 
 # Constructs a floating-point number.
 #
-# This command is deprecated; use [`num`](#num) to construct a typed number, or
-# [`inexact-num`](#inexact-num) to construct an inexact number.
+# This command is deprecated; use [`num`]() to construct a typed number, or
+# [`inexact-num`]() to construct an inexact number.
 fn float64 {|string-or-number| }
 
 # ```elvish
