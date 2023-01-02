@@ -56,7 +56,19 @@ func show(fm *eval.Frame, opts showOptions, fqname string) error {
 			width = 80
 		}
 	}
-	codec := &md.TTYCodec{Width: width, HighlightCodeBlock: HighlightCodeBlock}
+	codec := &md.TTYCodec{
+		Width:              width,
+		HighlightCodeBlock: HighlightCodeBlock,
+		ConvertRelativeLink: func(dest string) string {
+			// TTYCodec does not show destinations of relative links by default.
+			// Special-case links to language.html as they are quite common in
+			// elvdocs.
+			if strings.HasPrefix(dest, "language.html") {
+				return "https://elv.sh/ref/" + dest
+			}
+			return ""
+		},
+	}
 	_, err = fm.ByteOutput().WriteString(md.RenderString(doc, codec))
 	return err
 }

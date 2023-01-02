@@ -18,6 +18,7 @@ var ttyTests = []struct {
 	markdown  string
 	width     int
 	highlight func(info, code string) ui.Text
+	rellink   func(dest string) string
 	ttyRender ui.Text
 }{
 	// Blocks
@@ -264,6 +265,24 @@ var ttyTests = []struct {
 		ttyRender: ui.T("foo\nbar\n"),
 	},
 
+	// ConvertRelativeLink
+	{
+		name:     "rellink conversion",
+		markdown: "See [a](a.html).",
+		rellink:  func(dest string) string { return "https://example.com/" + dest },
+		ttyRender: markLines(
+			"See a (https://example.com/a.html).", stylesheet,
+			"    _                              "),
+	},
+	{
+		name:     "rellink conversion return empty string",
+		markdown: "See [a](a.html).",
+		rellink:  func(dest string) string { return "" },
+		ttyRender: markLines(
+			"See a.", stylesheet,
+			"    _ "),
+	},
+
 	// Reflow
 	{
 		name:     "reflow text",
@@ -322,7 +341,11 @@ var ttyTests = []struct {
 func TestTTYCodec(t *testing.T) {
 	for _, tc := range ttyTests {
 		t.Run(tc.name, func(t *testing.T) {
-			codec := TTYCodec{Width: tc.width, HighlightCodeBlock: tc.highlight}
+			codec := TTYCodec{
+				Width:               tc.width,
+				HighlightCodeBlock:  tc.highlight,
+				ConvertRelativeLink: tc.rellink,
+			}
 			Render(tc.markdown, &codec)
 			got := codec.Text()
 			if !reflect.DeepEqual(got, tc.ttyRender) {

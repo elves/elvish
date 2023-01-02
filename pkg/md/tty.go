@@ -21,8 +21,8 @@ import (
 //   - Headings are rendered like "# Heading" in bold, with the same number of
 //     hashes as in Markdown
 //
-//   - Code blocks are indented two spaces, with syntax highlighting if the
-//     language is elvish or elvish-transcript.
+//   - Code blocks are indented two spaces. The HighlightCodeBlock callback can
+//     be supplied to highlight the content of the code block.
 //
 //   - HTML blocks are ignored.
 //
@@ -48,8 +48,10 @@ import (
 //     absolute (starts with scheme:), the destination is rendered like "
 //     (https://example.com)" after the text content.
 //
-//     Relative links like "language.html#exactness" assumes HTML output, so
-//     the destination is not useful when reading in a terminal.
+//     Relative link destinations are not shown by default, since they are
+//     usually not useful in a terminal. If the ConvertRelativeLink callback is
+//     non-nil, it is called for each relative links and non-empty return values
+//     are shown.
 //
 //     The link description is ignored for now since Elvish's Markdown sources
 //     never use them.
@@ -70,6 +72,8 @@ type TTYCodec struct {
 	Width int
 	// If non-nil, will be called to highlight the content of code blocks.
 	HighlightCodeBlock func(info, code string) ui.Text
+	// If non-nil, will be called for each relative link destination.
+	ConvertRelativeLink func(dest string) string
 
 	buf ui.TextBuilder
 
@@ -230,7 +234,12 @@ func (c *TTYCodec) doInlineContent(ops []InlineOp, heading bool) {
 		}()
 	}
 	writeLinkDest := func(dest string) {
-		if absoluteDest.MatchString(dest) {
+		show := absoluteDest.MatchString(dest)
+		if !show && c.ConvertRelativeLink != nil {
+			dest = c.ConvertRelativeLink(dest)
+			show = dest != ""
+		}
+		if show {
 			write(" (")
 			write(dest)
 			write(")")

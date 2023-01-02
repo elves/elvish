@@ -27,6 +27,10 @@ func TestShow(t *testing.T) {
 
 		That("doc:show break").Prints(render(breakDoc, 80)),
 		That("doc:show builtin:break").Prints(render(breakDoc, 80)),
+		// Test that relative links to language.html are converted to absolute
+		// links to https://elv.sh/ref/language.html, but other relative links
+		// are not.
+		That("doc:show num").Prints(render(numEffectiveDoc, 80)),
 
 		That("doc:show foo:bad").Throws(ErrorWithMessage("no doc for foo:bad")),
 		That("doc:show bad:foo").Throws(ErrorWithMessage("no doc for bad:foo")),
@@ -69,6 +73,10 @@ var (
 	builtinModuleCode = Dedent(`
 		# Terminates a loop.
 		fn break { }
+
+		# Constructs a [typed number](language.html#number). Another
+		# [link](#foo).
+		fn num {|x| }
 		`)
 	breakDoc = tildeToBackquote(Dedent(`
 		~~~elvish
@@ -77,6 +85,14 @@ var (
 
 		Terminates a loop.
 		`))
+	numEffectiveDoc = Dedent(`
+		~~~elvish
+		num $x
+		~~~
+
+		Constructs a [typed number](https://elv.sh/ref/language.html#number).
+		Another [link](#foo).
+		`)
 )
 
 func setupDoc(ev *eval.Evaler) {

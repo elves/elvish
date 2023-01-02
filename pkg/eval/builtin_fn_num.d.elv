@@ -6,7 +6,7 @@
 # ```
 fn rand { }
 
-# Constructs a [typed number](./language.html#number).
+# Constructs a [typed number](language.html#number).
 #
 # If the argument is a string, this command outputs the typed number the
 # argument represents, or raises an exception if the argument is not a valid
