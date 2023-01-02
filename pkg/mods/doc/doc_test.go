@@ -1,6 +1,7 @@
 package doc_test
 
 import (
+	"io"
 	"strings"
 	"testing"
 
@@ -17,6 +18,15 @@ var (
 
 	Dedent = testutil.Dedent
 )
+
+func init() {
+	// The map doc.ModToCode points to is read once during lazy initialization,
+	// so there is no way to undo the change.
+	*doc.ModToCode = map[string]io.Reader{
+		"foo:": strings.NewReader(fooModuleCode),
+		"":     strings.NewReader(builtinModuleCode),
+	}
+}
 
 func TestShow(t *testing.T) {
 	evaltest.TestWithSetup(t, setupDoc,
@@ -42,6 +52,16 @@ func TestSource(t *testing.T) {
 		That("doc:source '$foo:variable'").Puts(fooVariableDoc),
 		// The implementation of doc:source is used by doc:show internally, so
 		// we only test a simple case here.
+	)
+}
+
+func TestSymbols(t *testing.T) {
+	evaltest.TestWithSetup(t, setupDoc,
+		That("doc:-symbols").Puts(
+			// All symbols, sorted
+			"$foo:variable", "break", "foo:function", "num"),
+
+		That("doc:-symbols >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
 	)
 }
 
@@ -106,8 +126,6 @@ var (
 
 func setupDoc(ev *eval.Evaler) {
 	ev.ExtendGlobal(eval.BuildNs().AddNs("doc", doc.Ns))
-	doc.ModToCode["foo:"] = strings.NewReader(fooModuleCode)
-	doc.ModToCode[""] = strings.NewReader(builtinModuleCode)
 }
 
 func render(s string, w int) string {

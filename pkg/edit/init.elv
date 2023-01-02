@@ -8,6 +8,12 @@ set after-command = [
   }
 ]
 
+set completion:arg-completer = [
+  &sudo=       $complete-sudo~
+  &doc:show=   {|@a| use doc; doc:-symbols }
+  &doc:source= {|@a| use doc; doc:-symbols }
+]
+
 set global-binding = (binding-table [
   &Ctrl-'['= $close-mode~
   &Alt-x=    $minibuf:start~

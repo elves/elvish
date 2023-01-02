@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 	"sync"
 
@@ -30,8 +31,9 @@ import (
 
 var Ns = eval.BuildNsNamed("doc").
 	AddGoFns(map[string]any{
-		"show":   show,
-		"source": source,
+		"show":     show,
+		"source":   source,
+		"-symbols": symbols,
 	}).
 	Ns()
 
@@ -108,6 +110,26 @@ func source(fqname string) (string, error) {
 	}
 
 	return "", fmt.Errorf("no doc for %s", parse.Quote(fqname))
+}
+
+func symbols(fm *eval.Frame) error {
+	var names []string
+	for ns, docs := range Docs() {
+		for _, fn := range docs.Fns {
+			names = append(names, ns+fn.Name)
+		}
+		for _, v := range docs.Vars {
+			names = append(names, "$"+ns+v.Name)
+		}
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		err := fm.ValueOutput().Put(name)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 var modToCode = map[string]io.Reader{
