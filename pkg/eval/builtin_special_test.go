@@ -358,6 +358,10 @@ func TestTry(t *testing.T) {
 		// in a `try...except...` block.
 		That("try { fail hard } catch 'x=' { put 'x= ='(to-string $'x=') }").
 			Puts("x= =[&reason=[&content=hard &type=fail]]"),
+
+		// Regression test: "try { } catch" is a syntax error, but it should not
+		// panic.
+		That("try { } catch").DoesNotCompile("need variable or body"),
 	)
 }
 
