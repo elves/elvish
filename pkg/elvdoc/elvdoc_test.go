@@ -68,6 +68,22 @@ var extractTests = []struct {
 		},
 	},
 	{
+		name: "option with space",
+		text: dedent(`
+			fn add {|a b &k=' '| }
+			`),
+		wantFns: []Entry{
+			{
+				Name: "add",
+				Content: dedent(tildeToBackquote(`
+						~~~elvish
+						add $a $b &k=' '
+						~~~
+						`)),
+			},
+		},
+	},
+	{
 		name: "fn with rest argument",
 		text: dedent(`
 			fn add {|a b @more| }

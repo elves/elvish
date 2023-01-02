@@ -6,6 +6,8 @@ import (
 	"io"
 	"regexp"
 	"strings"
+
+	"src.elv.sh/pkg/parse"
 )
 
 // Docs records doc comments.
@@ -90,7 +92,7 @@ func fnUsage(name, sig string) string {
 	var sb strings.Builder
 	sb.WriteString("```elvish\n")
 	sb.WriteString(name)
-	for _, field := range strings.Fields(sig) {
+	for _, field := range sigFields(sig) {
 		sb.WriteByte(' ')
 		if strings.HasPrefix(field, "&") {
 			sb.WriteString(field)
@@ -102,6 +104,23 @@ func fnUsage(name, sig string) string {
 	}
 	sb.WriteString("\n```\n")
 	return sb.String()
+}
+
+func sigFields(sig string) []string {
+	pn := &parse.Primary{}
+	// TODO: Handle error
+	parse.ParseAs(parse.Source{Code: "{|" + sig + "|}"}, pn, parse.Config{})
+	var fields []string
+	for _, n := range parse.Children(pn) {
+		if _, isSep := n.(*parse.Sep); isSep {
+			continue
+		}
+		s := strings.TrimSpace(parse.SourceText(n))
+		if s != "" {
+			fields = append(fields, s)
+		}
+	}
+	return fields
 }
 
 type docBlock struct {
