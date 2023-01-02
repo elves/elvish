@@ -30,7 +30,7 @@ func TestShow(t *testing.T) {
 		// Test that relative links to language.html are converted to absolute
 		// links to https://elv.sh/ref/language.html, but other relative links
 		// are not.
-		That("doc:show num").Prints(render(numEffectiveDoc, 80)),
+		That("doc:show num").Prints(render(numDoc, 80)),
 
 		That("doc:show foo:bad").Throws(ErrorWithMessage("no doc for foo:bad")),
 		That("doc:show bad:foo").Throws(ErrorWithMessage("no doc for bad:foo")),
@@ -39,7 +39,7 @@ func TestShow(t *testing.T) {
 
 func TestSource(t *testing.T) {
 	evaltest.TestWithSetup(t, setupDoc,
-		That("doc:source foo:function").Puts(fooFunctionDoc),
+		That("doc:source '$foo:variable'").Puts(fooVariableDoc),
 		// The implementation of doc:source is used by doc:show internally, so
 		// we only test a simple case here.
 	)
@@ -57,7 +57,14 @@ var (
 		# labore et dolore magna aliqua.
 		fn function {|x| }
 		`)
-	fooFunctionDoc = tildeToBackquote(Dedent(`
+	fooVariableDoc = Dedent(`
+		A variable.
+		`)
+	// Function docs are used for checking the output of doc:show, so contains
+	// the post-processed "Usage:" prefix.
+	fooFunctionDoc = Dedent(`
+		Usage:
+
 		~~~elvish
 		foo:function $x
 		~~~
@@ -65,9 +72,6 @@ var (
 		A function with long documentation. Lorem ipsum dolor sit amet,
 		consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
 		labore et dolore magna aliqua.
-		`))
-	fooVariableDoc = Dedent(`
-		A variable.
 		`)
 
 	builtinModuleCode = Dedent(`
@@ -79,13 +83,18 @@ var (
 		fn num {|x| }
 		`)
 	breakDoc = tildeToBackquote(Dedent(`
+		Usage:
+
 		~~~elvish
 		break
 		~~~
 
 		Terminates a loop.
 		`))
-	numEffectiveDoc = Dedent(`
+	// The relative link to language.html is converted to an absolute link.
+	numDoc = Dedent(`
+		Usage:
+
 		~~~elvish
 		num $x
 		~~~

@@ -69,6 +69,13 @@ func show(fm *eval.Frame, opts showOptions, fqname string) error {
 			return ""
 		},
 	}
+	if !strings.HasPrefix(fqname, "$") {
+		// Function docs start with a code block that shows how to use the
+		// function. Since the code block is indented 2 spaces by TTYCodec, it
+		// looks a little bit weird as the first line of the output. Make the
+		// output look slightly nicer by prepending a line.
+		doc = "Usage:\n\n" + doc
+	}
 	_, err = fm.ByteOutput().WriteString(md.RenderString(doc, codec))
 	return err
 }
