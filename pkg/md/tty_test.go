@@ -1,6 +1,7 @@
 package md_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -16,6 +17,7 @@ var ttyTests = []struct {
 	name      string
 	markdown  string
 	width     int
+	highlight func(info, code string) ui.Text
 	ttyRender ui.Text
 }{
 	// Blocks
@@ -157,6 +159,44 @@ var ttyTests = []struct {
 			`)),
 	},
 
+	// Highlight code block
+	{
+		name: "highlight",
+		markdown: dedent(`
+			Some code:
+
+			~~~foo bar
+			code content
+			~~~
+			`),
+		highlight: func(info, code string) ui.Text {
+			return ui.T(fmt.Sprintf("(%s) %q\n", info, code))
+		},
+		ttyRender: ui.T(dedent(`
+			Some code:
+
+			  (foo bar) "code content\n"
+			`)),
+	},
+	{
+		name: "highlight missing trailing newline",
+		markdown: dedent(`
+			Some code:
+
+			~~~foo bar
+			code content
+			~~~
+			`),
+		highlight: func(info, code string) ui.Text {
+			return ui.T(fmt.Sprintf("(%s) %q", info, code))
+		},
+		ttyRender: ui.T(dedent(`
+			Some code:
+
+			  (foo bar) "code content\n"
+			`)),
+	},
+
 	// Inline
 	{
 		name:      "text",
@@ -282,7 +322,7 @@ var ttyTests = []struct {
 func TestTTYCodec(t *testing.T) {
 	for _, tc := range ttyTests {
 		t.Run(tc.name, func(t *testing.T) {
-			codec := TTYCodec{Width: tc.width}
+			codec := TTYCodec{Width: tc.width, HighlightCodeBlock: tc.highlight}
 			Render(tc.markdown, &codec)
 			got := codec.Text()
 			if !reflect.DeepEqual(got, tc.ttyRender) {

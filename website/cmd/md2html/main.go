@@ -25,7 +25,7 @@
 //   - Generate section numbers for headings (optional, turn on with <--
 //     number-sections -->)
 //
-//   - Syntax highlighting of code blocks with language elvish, elvish-bad and
+//   - Syntax highlighting of code blocks with language elvish or
 //     elvish-transcript
 //
 // The comment block for optional features should appear before the main text,
@@ -47,7 +47,7 @@ func main() {
 	filter(os.Stdin, &expanded)
 
 	codec := &htmlCodec{}
-	codec.WriteCodeBlock = highlightCodeContent
+	codec.ConvertCodeBlock = convertCodeBlock
 	md.Render(expanded.String(), md.SmartPunctsCodec{Inner: codec})
 	os.Stdout.WriteString(codec.String())
 }

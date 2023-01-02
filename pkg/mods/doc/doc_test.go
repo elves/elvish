@@ -85,4 +85,6 @@ func setupDoc(ev *eval.Evaler) {
 	doc.ModToCode[""] = strings.NewReader(builtinModuleCode)
 }
 
-func render(s string, w int) string { return md.RenderString(s, &md.TTYCodec{Width: w}) }
+func render(s string, w int) string {
+	return md.RenderString(s, &md.TTYCodec{Width: w, HighlightCodeBlock: doc.HighlightCodeBlock})
+}

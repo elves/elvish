@@ -27,8 +27,9 @@ var (
 // HTMLCodec converts markdown to HTML.
 type HTMLCodec struct {
 	strings.Builder
-	// If non-nil, will be called to write the content of code blocks.
-	WriteCodeBlock func(sb *strings.Builder, language string, lines []string)
+	// If non-nil, will be called for each code block. The return value is
+	// inserted into the HTML output and should be properly escaped.
+	ConvertCodeBlock func(info, code string) string
 }
 
 var tags = []string{
@@ -62,8 +63,8 @@ func (c *HTMLCodec) Do(op Op) {
 			attrs.set("class", "language-"+language)
 		}
 		fmt.Fprintf(c, "<pre><code%s>", &attrs)
-		if c.WriteCodeBlock != nil {
-			c.WriteCodeBlock(&c.Builder, language, op.Lines)
+		if c.ConvertCodeBlock != nil {
+			c.WriteString(c.ConvertCodeBlock(op.Info, strings.Join(op.Lines, "\n")+"\n"))
 		} else {
 			for _, line := range op.Lines {
 				c.WriteString(escapeHTML(line))

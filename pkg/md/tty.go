@@ -68,6 +68,8 @@ import (
 // the slight complexity of handling styles.
 type TTYCodec struct {
 	Width int
+	// If non-nil, will be called to highlight the content of code blocks.
+	HighlightCodeBlock func(info, code string) ui.Text
 
 	buf ui.TextBuilder
 
@@ -102,9 +104,24 @@ func (c *TTYCodec) Do(op Op) {
 		c.doInlineContent(op.Content, true)
 		c.finishLine()
 	case OpCodeBlock:
-		// TODO: Highlight
-		for _, line := range op.Lines {
-			c.writeLine("  " + line)
+		if c.HighlightCodeBlock != nil {
+			t := c.HighlightCodeBlock(op.Info, strings.Join(op.Lines, "\n")+"\n")
+			lines := t.SplitByRune('\n')
+			for i, line := range lines {
+				if i == len(lines)-1 && len(line) == 0 {
+					// If t ends in a newline, the newline terminates the
+					// element before it; don't write an empty line for it.
+					break
+				}
+				c.startLine()
+				c.write("  ")
+				c.writeStyled(line)
+				c.finishLine()
+			}
+		} else {
+			for _, line := range op.Lines {
+				c.writeLine("  " + line)
+			}
 		}
 	case OpHTMLBlock:
 		// Do nothing

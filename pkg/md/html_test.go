@@ -38,11 +38,11 @@ func TestHTML(t *testing.T) {
 	}
 }
 
-func TestHTML_CodeBlockContent(t *testing.T) {
-	f := func(sb *strings.Builder, language string, lines []string) {
-		fmt.Fprintf(sb, "... %s code (%d lines) ...", language, len(lines))
+func TestHTML_ConvertCodeBlock(t *testing.T) {
+	f := func(info, code string) string {
+		return fmt.Sprintf("%s (%q)", info, code)
 	}
-	c := HTMLCodec{WriteCodeBlock: f}
+	c := HTMLCodec{ConvertCodeBlock: f}
 	markdown := dedent(`
 		~~~elvish foo bar
 		echo
@@ -50,7 +50,7 @@ func TestHTML_CodeBlockContent(t *testing.T) {
 		~~~
 		`)
 	want := dedent(`
-		<pre><code class="language-elvish">... elvish code (2 lines) ...</code></pre>
+		<pre><code class="language-elvish">elvish foo bar ("echo\necho\n")</code></pre>
 		`)
 	got := RenderString(markdown, &c)
 	if diff := cmp.Diff(want, got); diff != "" {

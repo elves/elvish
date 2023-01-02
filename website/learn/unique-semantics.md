@@ -321,7 +321,7 @@ without executing any of it. For instance, in Elvish unclosed parenthesis is an
 error during the parsing phase. The following code, when executed as a chunk,
 does nothing other than printing the parse error:
 
-```elvish-bad
+```elvish
 echo before
 echo (
 ```

@@ -56,7 +56,8 @@ func show(fm *eval.Frame, opts showOptions, fqname string) error {
 			width = 80
 		}
 	}
-	_, err = fm.ByteOutput().WriteString(md.RenderString(doc, &md.TTYCodec{Width: width}))
+	codec := &md.TTYCodec{Width: width, HighlightCodeBlock: HighlightCodeBlock}
+	_, err = fm.ByteOutput().WriteString(md.RenderString(doc, codec))
 	return err
 }
 
