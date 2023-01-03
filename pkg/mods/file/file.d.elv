@@ -44,7 +44,7 @@ fn is-tty {|file| }
 # ~> cat < $f
 # This is
 # a file.
-# ~> close $f
+# ~> file:close $f
 # ```
 #
 # See also [`file:close`]().
