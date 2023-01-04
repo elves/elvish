@@ -31,6 +31,23 @@ fn ns {|map| }
 # ```
 fn make-map {|input?| }
 
+# Outputs a list created from adding values in `$more` to the end of `$list`.
+#
+# The output is the same as `[$@list $more...]`, but the time complexity is
+# guaranteed to be O(m), where m is the number of values in `$more`.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> conj [] a
+# ▶ [a]
+# ~> conj [a b] c d
+# ▶ [a b c d]
+# ```
+#
+# Etymology: [Clojure](https://clojuredocs.org/clojure.core/conj).
+fn conj {|list @more| }
+
 # Output a slightly modified version of `$container`, such that its value at `$k`
 # is `$v`. Applies to both lists and to maps.
 #

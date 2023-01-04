@@ -17,6 +17,7 @@ func init() {
 
 		"make-map": makeMap,
 
+		"conj":   conj,
 		"assoc":  assoc,
 		"dissoc": dissoc,
 
@@ -72,6 +73,13 @@ func makeMap(input Inputs) (vals.Map, error) {
 		m = m.Assoc(elems[0], elems[1])
 	})
 	return m, errMakeMap
+}
+
+func conj(li vals.List, more ...any) vals.List {
+	for _, val := range more {
+		li = li.Conj(val)
+	}
+	return li
 }
 
 func assoc(a, k, v any) (any, error) {

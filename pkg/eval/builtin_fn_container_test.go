@@ -41,6 +41,15 @@ func TestMakeMap(t *testing.T) {
 	)
 }
 
+func TestConj(t *testing.T) {
+	Test(t,
+		That("conj [] a").Puts(vals.MakeList("a")),
+		That("conj [a b]").Puts(vals.MakeList("a", "b")),
+		That("conj [a b] c").Puts(vals.MakeList("a", "b", "c")),
+		That("conj [a b] c d").Puts(vals.MakeList("a", "b", "c", "d")),
+	)
+}
+
 func TestAssoc(t *testing.T) {
 	Test(t,
 		That(`put (assoc [0] 0 zero)[0]`).Puts("zero"),
