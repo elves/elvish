@@ -52,7 +52,7 @@ func setup(in, out *os.File) (func() error, error) {
 }
 
 func setupForEval(in, out *os.File) func() {
-	// There is nothing to set up on UNIX, but we try to sanitize the terminal
+	// There is nothing to set up on Unix, but we try to sanitize the terminal
 	// when evaluation finishes.
 	return func() { sanitize(in, out) }
 }

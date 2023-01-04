@@ -17,7 +17,7 @@ import (
 func TestUmask(t *testing.T) {
 	testutil.Umask(t, 0o22)
 
-	evaltest.TestWithSetup(t, useUNIX,
+	evaltest.TestWithSetup(t, useUnix,
 		// Start with a known umask value. Note that we can't rely on the umask
 		// set at the start of the test because the internally cached umask
 		// value is only set during init and won't pick up the value in the

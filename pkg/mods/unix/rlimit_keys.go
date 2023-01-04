@@ -17,7 +17,7 @@ var rlimitKeys = map[int]string{
 	unix.RLIMIT_FSIZE:  "fsize",
 	unix.RLIMIT_NOFILE: "nofile",
 	unix.RLIMIT_STACK:  "stack",
-	// The following are not defined by POSIX, but supported by every UNIX OS
+	// The following are not defined by POSIX, but supported by every Unix OS
 	// Elvish supports (Linux, macOS, Free/Net/OpenBSD). See:
 	//
 	// - https://man7.org/linux/man-pages/man2/setrlimit.2.html

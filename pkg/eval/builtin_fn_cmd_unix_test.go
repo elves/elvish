@@ -18,11 +18,11 @@ func TestHasExternal(t *testing.T) {
 
 func TestSearchExternal(t *testing.T) {
 	Test(t,
-		// Even on UNIX systems we can't assume that commands like `sh` or
+		// Even on Unix systems we can't assume that commands like `sh` or
 		// `test` are in a specific directory. Those commands might be in /bin
 		// or /usr/bin. However, on all systems we currently support it will
 		// be in /bin and, possibly, /usr/bin. So ensure we limit the search
-		// to the one universal UNIX directory for basic commands.
+		// to the one universal Unix directory for basic commands.
 		That("{ tmp E:PATH = /bin;  search-external sh }").Puts("/bin/sh"),
 		// We should check for a specific error if the external command cannot
 		// be found. However, the current implementation of `search-external`

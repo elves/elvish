@@ -48,7 +48,7 @@ func TestActivate_RemovesHangingSocketAndSpawnsNewServer(t *testing.T) {
 		activated++
 		return nil
 	})
-	makeHangingUNIXSocket(t, "sock")
+	makeHangingUnixSocket(t, "sock")
 
 	_, err := Activate(io.Discard,
 		&daemondefs.SpawnConfig{DbPath: "db", SockPath: "sock", RunDir: "."})
@@ -103,7 +103,7 @@ func scaleDuration(t *testing.T, d *time.Duration) {
 	testutil.Set(t, d, testutil.Scaled(*d))
 }
 
-func makeHangingUNIXSocket(t *testing.T, path string) {
+func makeHangingUnixSocket(t *testing.T, path string) {
 	t.Helper()
 
 	l, err := net.Listen("unix", path)

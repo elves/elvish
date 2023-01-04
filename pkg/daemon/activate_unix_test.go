@@ -44,7 +44,7 @@ func TestActivate_FailsIfUnableToRemoveHangingSocket(t *testing.T) {
 		return nil
 	})
 	must.MkdirAll("d")
-	makeHangingUNIXSocket(t, "d/sock")
+	makeHangingUnixSocket(t, "d/sock")
 	// Remove write permission so that removing d/sock will fail
 	os.Chmod("d", 0600)
 	defer os.Chmod("d", 0700)

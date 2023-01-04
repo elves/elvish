@@ -6,11 +6,11 @@ var dev-null
 # Windows).
 var dev-tty
 
-# OS-specific path list separator. Colon (`:`) on UNIX and semicolon (`;`) on
+# OS-specific path list separator. Colon (`:`) on Unix and semicolon (`;`) on
 # Windows. This variable is read-only.
 var list-separator
 
-# OS-specific path separator. Forward slash (`/`) on UNIX and backslash (`\`)
+# OS-specific path separator. Forward slash (`/`) on Unix and backslash (`\`)
 # on Windows. This variable is read-only.
 var separator
 
@@ -64,7 +64,7 @@ fn dir {|path| }
 fn ext {|path| }
 
 # Outputs `$true` if the path is an absolute path. Note that platforms like Windows have different
-# rules than UNIX like platforms for what constitutes an absolute path. See the [Go
+# rules than Unix like platforms for what constitutes an absolute path. See the [Go
 # documentation](https://pkg.go.dev/path/filepath#IsAbs) for more details.
 #
 # ```elvish-transcript
@@ -124,7 +124,7 @@ fn is-dir {|&follow-symlink=$false path| }
 # regular file. Setting option `&follow-symlink` to true will cause the last element of the path,
 # if it is a symlink, to be resolved before doing the test.
 #
-# **Note:** This isn't named `is-file` because a UNIX file may be a "bag of bytes" or may be a
+# **Note:** This isn't named `is-file` because a Unix file may be a "bag of bytes" or may be a
 # named pipe, device special file (e.g. `/dev/tty`), etc.
 #
 # ```elvish-transcript

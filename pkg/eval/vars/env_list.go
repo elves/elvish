@@ -21,7 +21,7 @@ var (
 // Errors
 var (
 	ErrPathMustBeString          = errors.New("path must be string")
-	ErrPathContainsForbiddenChar = errors.New("path cannot contain NUL byte, colon on UNIX or semicolon on Windows")
+	ErrPathContainsForbiddenChar = errors.New("path cannot contain NUL byte, colon on Unix or semicolon on Windows")
 )
 
 // NewEnvListVar returns a variable whose value is a list synchronized with an

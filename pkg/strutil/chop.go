@@ -5,7 +5,7 @@ package strutil
 func ChopLineEnding(s string) string {
 	if len(s) >= 2 && s[len(s)-2:] == "\r\n" { // Windows line ending
 		return s[:len(s)-2]
-	} else if len(s) >= 1 && s[len(s)-1] == '\n' { // UNIX line ending
+	} else if len(s) >= 1 && s[len(s)-1] == '\n' { // Unix line ending
 		return s[:len(s)-1]
 	}
 	return s

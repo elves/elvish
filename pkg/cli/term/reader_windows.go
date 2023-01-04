@@ -194,7 +194,7 @@ func convertRune(keyCode uint16, mod ui.Mod) rune {
 		return rune(keyCode)
 	}
 	if 'A' <= keyCode && keyCode <= 'Z' {
-		// If Ctrl is involved, emulate UNIX's convention and use upper case;
+		// If Ctrl is involved, emulate Unix's convention and use upper case;
 		// otherwise use lower case.
 		//
 		// TODO(xiaq): This is quite Unix-centric. Maybe we should make the

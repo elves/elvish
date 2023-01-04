@@ -92,7 +92,7 @@ func TestPipeline_BgJob(t *testing.T) {
 }
 
 func TestPipeline_ReaderGone(t *testing.T) {
-	// See UNIX-only tests in compile_effect_unix_test.go.
+	// See Unix-only tests in compile_effect_unix_test.go.
 	Test(t,
 		// Internal commands writing to byte output raises ReaderGone when the
 		// reader is exited, which is then suppressed.

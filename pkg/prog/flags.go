@@ -18,7 +18,7 @@ func (fs *FlagSet) DaemonPaths() *DaemonPaths {
 		fs.StringVar(&dp.DB, "db", "",
 			"[internal flag] Path to the database file")
 		fs.StringVar(&dp.Sock, "sock", "",
-			"[internal flag] Path to the daemon's UNIX socket")
+			"[internal flag] Path to the daemon's Unix socket")
 		fs.daemonPaths = &dp
 	}
 	return fs.daemonPaths

@@ -57,7 +57,7 @@
 #
 # Another use case is to add a module or function to the REPL namespace
 # conditionally. For example, to only import [the `unix` module](unix.html)
-# when actually running on UNIX, a straightforward solution is to do the
+# when actually running on Unix, a straightforward solution is to do the
 # following in `rc.elv`:
 #
 # ```elvish

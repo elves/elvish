@@ -6,8 +6,8 @@ import (
 	"errors"
 )
 
-var errNotSupportedOnNonUNIX = errors.New("not supported on non-UNIX OS")
+var errNotSupportedOnNonUnix = errors.New("not supported on non-Unix OS")
 
 func createNamedPipe(fname string) error {
-	return errNotSupportedOnNonUNIX
+	return errNotSupportedOnNonUnix
 }

@@ -17,7 +17,7 @@ func DontSearch(exe string) bool {
 
 // IsExecutable returns whether the FileInfo refers to an executable file.
 //
-// This is determined by permission bits on UNIX, and by file name on Windows.
+// This is determined by permission bits on Unix, and by file name on Windows.
 func IsExecutable(stat os.FileInfo) bool {
 	return isExecutable(stat)
 }

@@ -12,6 +12,6 @@ var (
 	ErrorWithMessage = evaltest.ErrorWithMessage
 )
 
-func useUNIX(ev *eval.Evaler) {
+func useUnix(ev *eval.Evaler) {
 	ev.ExtendGlobal(eval.BuildNs().AddNs("unix", Ns))
 }

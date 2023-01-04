@@ -41,7 +41,7 @@ func TestRlimits(t *testing.T) {
 	})
 
 	setup := func(ev *eval.Evaler) {
-		useUNIX(ev)
+		useUnix(ev)
 		ev.ExtendGlobal(eval.BuildNs().
 			AddVar("cpu-cur", vars.FromPtr(&cpuCur)).
 			AddVar("cpu-max", vars.FromPtr(&cpuMax)))

@@ -10,7 +10,7 @@ var arch
 # This is read-only.
 var os
 
-# Whether or not the platform is UNIX-like. This includes Linux, macOS
+# Whether or not the platform is Unix-like. This includes Linux, macOS
 # (Darwin), FreeBSD, NetBSD, and OpenBSD. This can be used to decide, for
 # example, if the `unix` module is usable.
 # This is read-only.

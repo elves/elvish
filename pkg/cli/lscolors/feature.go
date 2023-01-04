@@ -36,7 +36,7 @@ const (
 	featureRegular
 )
 
-// Some platforms, such as Windows, have simulated UNIX style permission masks.
+// Some platforms, such as Windows, have simulated Unix style permission masks.
 // On Windows the only two permission masks are 0o666 (RW) and 0o444 (RO).
 const worldWritable = 0o002
 
