@@ -14,6 +14,8 @@ import (
 // Ns is the namespace for the re: module.
 var Ns = eval.BuildNsNamed("path").
 	AddVars(map[string]vars.Var{
+		"dev-null":       vars.NewReadOnly(os.DevNull),
+		"dev-tty":        vars.NewReadOnly(devTty),
 		"list-separator": vars.NewReadOnly(string(filepath.ListSeparator)),
 		"separator":      vars.NewReadOnly(string(filepath.Separator)),
 	}).

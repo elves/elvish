@@ -1,3 +1,11 @@
+# OS-specific path to the "null" device (`/dev/null` on Unix and `NUL` on
+# Windows).
+var dev-null
+
+# OS-specific path to the terminal device (`/dev/tty` on Unix and `CON` on
+# Windows).
+var dev-tty
+
 # OS-specific path list separator. Colon (`:`) on UNIX and semicolon (`;`) on
 # Windows. This variable is read-only.
 var list-separator
