@@ -20,6 +20,13 @@ func TestPut(t *testing.T) {
 	)
 }
 
+func TestRepeat(t *testing.T) {
+	Test(t,
+		That(`repeat 4 foo`).Puts("foo", "foo", "foo", "foo"),
+		thatOutputErrorIsBubbled("repeat 1 foo"),
+	)
+}
+
 func TestReadUpto(t *testing.T) {
 	Test(t,
 		That("print abcd | read-upto c").Puts("abc"),
