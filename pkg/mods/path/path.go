@@ -11,7 +11,7 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 )
 
-// Ns is the namespace for the re: module.
+// Ns is the namespace for the path: module.
 var Ns = eval.BuildNsNamed("path").
 	AddVars(map[string]vars.Var{
 		"dev-null":       vars.NewReadOnly(os.DevNull),
