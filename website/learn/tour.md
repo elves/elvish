@@ -86,7 +86,7 @@ correspondence between Elvish and bash syntax:
     <td colspan="2"><code>echo ~/foo</code></td>
   </tr>
   <tr>
-    <td rowspan="3"><a href="#setting-variables">Setting variables</a></td>
+    <td rowspan="4"><a href="#setting-variables">Setting variables</a></td>
     <td><code>var foo = bar</code></td>
     <td><code>foo=bar</code></td>
   </tr>
@@ -95,7 +95,21 @@ correspondence between Elvish and bash syntax:
     <td><code>foo=bar</code></td>
   </tr>
   <tr>
-    <td colspan="2"><code>foo=bar cmd</code></td>
+    <td><code>set-env foo bar</code></td>
+    <td><code>export foo=bar</code></td>
+  </tr>
+  <tr>
+    <td><code>set E:foo=bar</code></td>
+    <td><code>export foo=bar</code></td>
+  </tr>
+  <tr>
+    <td rowspan="2"><a href="#temporary-environment-variables">Temporary environment variables</a></td>   
+    <td><code>{ tmp E:foo=bar; cmd }</code></td>
+    <td><code>foo=bar cmd</code></td>
+  </tr>
+  <tr>
+    <td><code>env foo=bar cmd</code></td>
+    <td><code>foo=bar cmd</code></td>
   </tr>
   <tr>
     <td rowspan="2"><a href="#using-variables">Using variables</a></td>
@@ -330,22 +344,28 @@ The spaces around `=` are mandatory.
 Unlike traditional shells, variables must be declared before they can be set;
 setting an undeclared variable results in an error.
 
-Like traditional shells, Elvish supports setting a variable temporarily for the
-duration of a command, by prefixing the command with `foo=bar`. For example:
+Elvish manages environment variables using a series of builtin commands: 
+`set-env`, `unset-env`, `has-env` and `get-env`. You can also use `set` with 
+the special environment variable namespace `E:`.
+
+Read the language reference on [the `var` command](../ref/language.html#var), [the `set` command](../ref/language.html#set), 
+the [environment variable namespace `E:`](../ref/language.html#special-namespaces) and the [`set-env`](../ref/builtin.html#set-env), 
+[`unset-env`](../ref/builtin.html#unset-env), [`has-env`](../ref/builtin.html#has-env) and [`get-env`](../ref/builtin.html#get-env) 
+builtin commands to learn more.
+
+## Temporary environment variables
+
+Elvish supports setting an environment variable temporarily for the duration of a command, 
+through the use of the `tmp` command and the `E:` namespace within an anonymous function:
 
 ```elvish-transcript
-~> var foo = original
-~> fn f { echo $foo }
-~> foo=temporary f
-temporary
-~> echo $foo
-original
+~> { tmp E:foo=bar; command }
 ```
 
-Read the language reference on [the `var` command](../ref/language.html#var),
-[the `set` command](../ref/language.html#set) and
-[temporary assignments](../ref/language.html#temporary-assignment) to learn
-more.
+You can also use the external command `env`. 
+
+Read the language reference on [temporary assignments](../ref/language.html#temporary-assignment), [the `tmp` command](../ref/language.html#tmp) and the 
+[`E:` namespace](../ref/language.html#special-namespaces) to learn more.
 
 ## Using variables
 
