@@ -20,8 +20,7 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder)
 			AddGoFns(map[string]any{
 				"start": func() { notifyError(app, histwalkStart(app, hs, bindings)) },
 				"up":    func() { notifyError(app, histwalkDo(app, modes.Histwalk.Prev)) },
-
-				"down": func() { notifyError(app, histwalkDo(app, modes.Histwalk.Next)) },
+				"down":  func() { notifyError(app, histwalkDo(app, modes.Histwalk.Next)) },
 				"down-or-quit": func() {
 					err := histwalkDo(app, modes.Histwalk.Next)
 					if err == histutil.ErrEndOfHistory {
@@ -30,7 +29,7 @@ func initHistWalk(ed *Editor, ev *eval.Evaler, hs *histStore, nb eval.NsBuilder)
 						notifyError(app, err)
 					}
 				},
-
+				"accept":       func() { notifyError(app, histwalkDo(app, modes.Histwalk.Accept)) },
 				"fast-forward": hs.FastForward,
 			}))
 }
@@ -42,7 +41,8 @@ func histwalkStart(app cli.App, hs *histStore, bindings tk.Bindings) error {
 	}
 	buf := codeArea.CopyState().Buffer
 	w, err := modes.NewHistwalk(app, modes.HistwalkSpec{
-		Bindings: bindings, Store: hs, Prefix: buf.Content[:buf.Dot]})
+		Bindings: bindings, Store: hs, Prefix: buf.Content[:buf.Dot],
+	})
 	if w != nil {
 		app.PushAddon(w)
 	}

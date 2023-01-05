@@ -21,3 +21,6 @@ fn history:down-or-quit { }
 # Import command history entries that happened after the current session
 # started.
 fn history:fast-forward { }
+
+# Update buffer with current entry.
+fn history:accept { }
