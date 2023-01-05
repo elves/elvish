@@ -348,15 +348,19 @@ Elvish manages environment variables using a series of builtin commands:
 `set-env`, `unset-env`, `has-env` and `get-env`. You can also use `set` with 
 the special environment variable namespace `E:`.
 
-Read the language reference on [the `var` command](../ref/language.html#var), [the `set` command](../ref/language.html#set), 
-the [environment variable namespace `E:`](../ref/language.html#special-namespaces) and the [`set-env`](../ref/builtin.html#set-env), 
-[`unset-env`](../ref/builtin.html#unset-env), [`has-env`](../ref/builtin.html#has-env) and [`get-env`](../ref/builtin.html#get-env) 
-builtin commands to learn more.
+Read the language reference on [the `var` command](../ref/language.html#var),
+ [the `set` command](../ref/language.html#set), the [environment variable
+namespace `E:`](../ref/language.html#special-namespaces) and the 
+[`set-env`](../ref/builtin.html#set-env),
+[`unset-env`](../ref/builtin.html#unset-env),
+[`has-env`](../ref/builtin.html#has-env) and
+[`get-env`](../ref/builtin.html#get-env) builtin commands to learn more.
 
 ## Temporary environment variables
 
-Elvish supports setting an environment variable temporarily for the duration of a command, 
-through the use of the `tmp` command and the `E:` namespace within an anonymous function:
+Elvish supports setting an environment variable temporarily for the duration of
+ a command, through the use of the `tmp` command and the `E:` namespace within
+an anonymous function:
 
 ```elvish-transcript
 ~> { tmp E:foo=bar; command }
@@ -364,8 +368,10 @@ through the use of the `tmp` command and the `E:` namespace within an anonymous 
 
 You can also use the external command `env`. 
 
-Read the language reference on [temporary assignments](../ref/language.html#temporary-assignment), [the `tmp` command](../ref/language.html#tmp) and the 
-[`E:` namespace](../ref/language.html#special-namespaces) to learn more.
+Read the language reference on [temporary
+assignments](../ref/language.html#temporary-assignment), [the `tmp`
+command](../ref/language.html#tmp) and the [`E:`
+namespace](../ref/language.html#special-namespaces) to learn more.
 
 ## Using variables
 
