@@ -30,6 +30,18 @@ func TestHistWalk_Down_EndOfHistory(t *testing.T) {
 func TestHistWalk_Accept(t *testing.T) {
 	f := startHistwalkTest(t)
 
+	evals(f.Evaler, `edit:history:accept`)
+	f.TTYCtrl.Inject(term.K('[', ui.Ctrl))
+
+	f.TestTTY(t,
+		"~> echo a", Styles,
+		"   vvvv  ", term.DotHere,
+	)
+}
+
+func TestHistWalk_Accept_Close(t *testing.T) {
+	f := startHistwalkTest(t)
+
 	f.TTYCtrl.Inject(term.K(ui.Right))
 	f.TestTTY(t,
 		"~> echo a", Styles,

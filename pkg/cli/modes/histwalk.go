@@ -17,6 +17,8 @@ type Histwalk interface {
 	Prev() error
 	// Walk to the next entry in history.
 	Next() error
+	// Update buffer with current entry.
+	Accept() error
 }
 
 // HistwalkSpec specifies the configuration for the histwalk mode.
@@ -119,4 +121,16 @@ func (w *histwalk) updatePending() {
 			Content: cmd.Text[len(w.Prefix):],
 		}
 	})
+}
+
+func (w *histwalk) Accept() error {
+	cmd, _ := w.cursor.Get()
+	txt := cmd.Text[len(w.Prefix):]
+	w.attachedTo.MutateState(func(s *tk.CodeAreaState) {
+		s.Buffer = tk.CodeBuffer{
+			Content: txt,
+			Dot:     len(txt),
+		}
+	})
+	return nil
 }
