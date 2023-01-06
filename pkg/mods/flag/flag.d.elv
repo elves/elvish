@@ -11,7 +11,7 @@
 # ```elvish-transcript
 # ~> use flag
 # ~> fn f {|&verbose=$false &port=(num 8000) name| put $verbose $port $name }
-# ~> flag:call $f [-verbose -port 80 a.c]
+# ~> flag:call $f~ [-verbose -port 80 a.c]
 # ▶ $true
 # ▶ (num 80)
 # ▶ a.c
