@@ -10,8 +10,9 @@
 # must be within the range [0 ... 0o777], otherwise the assignment will throw
 # an exception.
 #
-# You can do a temporary assignment to affect a single command; e.g. `umask=077
-# touch a_file`. After the command completes the old umask will be restored.
+# You can do a temporary assignment to affect a single command; e.g.
+# `{ tmp umask = 077; touch a_file }`. After the command completes
+# the old umask will be restored.
 # **Warning**: Since the umask applies to the entire process, not individual
 # threads, changing it temporarily in this manner is dangerous if you are doing
 # anything in parallel, such as via the [`peach`](builtin.html#peach) command.
