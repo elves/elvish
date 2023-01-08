@@ -39,8 +39,8 @@ Nonetheless, the builtin module is also available as a
 ## Usage Notation
 
 The usage of a builtin command is described by giving an example usage, using
-variables as arguments. For instance, The `repeat` command takes two arguments
-and are described as:
+variables as arguments. For instance, the `repeat` command takes two arguments
+and is described as:
 
 ```elvish
 repeat $n $v
@@ -60,13 +60,13 @@ put $values...
 ```
 
 Options are given along with their default values. For instance, the `echo`
-command takes an `sep` option and arbitrary arguments:
+command takes a `sep` option and arbitrary arguments:
 
 ```elvish
 echo &sep=' ' $value...
 ```
 
-(When you calling functions, options are always optional.)
+(When you call functions, options are always optional.)
 
 ## Commands taking value inputs {#value-inputs}
 
