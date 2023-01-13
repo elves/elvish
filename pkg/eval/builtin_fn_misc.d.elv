@@ -173,13 +173,6 @@ fn use-mod {|use-spec| }
 # ~> fn f { deprecate msg }
 # ~> f
 # deprecation: msg
-# [tty 19], line 1: f
-# ~> exec
-# ~> deprecate msg
-# deprecation: msg
-# ~> fn f { deprecate msg }
-# ~> f
-# deprecation: msg
 # [tty 3], line 1: f
 # ~> f # a different call site; shows deprecate message
 # deprecation: msg
