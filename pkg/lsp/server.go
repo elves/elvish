@@ -45,21 +45,21 @@ func handler(s *server) jsonrpc2.Handler {
 	})
 }
 
-type method func(context.Context, jsonrpc2.JSONRPC2, json.RawMessage) (any, error)
+type method func(context.Context, json.RawMessage) (any, error)
 
-func convertMethod[T any](f func(context.Context, jsonrpc2.JSONRPC2, T) (any, error)) method {
-	return func(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (any, error) {
+func convertMethod[T any](f func(context.Context, T) (any, error)) method {
+	return func(ctx context.Context, rawParams json.RawMessage) (any, error) {
 		var params T
 		if json.Unmarshal(rawParams, &params) != nil {
 			return nil, errInvalidParams
 		}
-		return f(ctx, conn, params)
+		return f(ctx, params)
 	}
 }
 
-func noop(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMessage) (any, error) {
-	return nil, nil
-}
+func noop(_ context.Context, _ json.RawMessage) (any, error) { return nil, nil }
+
+type connKey struct{}
 
 func routingHandler(methods map[string]method) jsonrpc2.Handler {
 	return jsonrpc2.HandlerWithError(func(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (any, error) {
@@ -67,13 +67,15 @@ func routingHandler(methods map[string]method) jsonrpc2.Handler {
 		if !ok {
 			return nil, errMethodNotFound
 		}
-		return fn(ctx, conn, *req.Params)
+		return fn(context.WithValue(ctx, connKey{}, conn), *req.Params)
 	})
 }
 
+func conn(ctx context.Context) *jsonrpc2.Conn { return ctx.Value(connKey{}).(*jsonrpc2.Conn) }
+
 // Handler implementations. These are all called synchronously.
 
-func (s *server) initialize(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMessage) (any, error) {
+func (s *server) initialize(_ context.Context, _ json.RawMessage) (any, error) {
 	return &lsp.InitializeResult{
 		Capabilities: lsp.ServerCapabilities{
 			TextDocumentSync: &lsp.TextDocumentSyncOptionsOrKind{
@@ -87,27 +89,27 @@ func (s *server) initialize(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMe
 	}, nil
 }
 
-func (s *server) didOpen(ctx context.Context, conn jsonrpc2.JSONRPC2, params lsp.DidOpenTextDocumentParams) (any, error) {
+func (s *server) didOpen(ctx context.Context, params lsp.DidOpenTextDocumentParams) (any, error) {
 	uri, content := params.TextDocument.URI, params.TextDocument.Text
 	s.content[uri] = content
-	go publishDiagnostics(ctx, conn, uri, content)
+	go publishDiagnostics(ctx, uri, content)
 	return nil, nil
 }
 
-func (s *server) didChange(ctx context.Context, conn jsonrpc2.JSONRPC2, params lsp.DidChangeTextDocumentParams) (any, error) {
+func (s *server) didChange(ctx context.Context, params lsp.DidChangeTextDocumentParams) (any, error) {
 	// ContentChanges includes full text since the server is only advertised to
 	// support that; see the initialize method.
 	uri, content := params.TextDocument.URI, params.ContentChanges[0].Text
 	s.content[uri] = content
-	go publishDiagnostics(ctx, conn, uri, content)
+	go publishDiagnostics(ctx, uri, content)
 	return nil, nil
 }
 
-func (s *server) hover(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (any, error) {
+func (s *server) hover(_ context.Context, rawParams json.RawMessage) (any, error) {
 	return lsp.Hover{}, nil
 }
 
-func (s *server) completion(ctx context.Context, conn jsonrpc2.JSONRPC2, params lsp.CompletionParams) (any, error) {
+func (s *server) completion(_ context.Context, params lsp.CompletionParams) (any, error) {
 	content := s.content[params.TextDocument.URI]
 	result, err := complete.Complete(
 		complete.CodeBuffer{
@@ -145,8 +147,8 @@ func (s *server) completion(ctx context.Context, conn jsonrpc2.JSONRPC2, params 
 	return lspItems, nil
 }
 
-func publishDiagnostics(ctx context.Context, conn jsonrpc2.JSONRPC2, uri lsp.DocumentURI, content string) {
-	conn.Notify(ctx, "textDocument/publishDiagnostics",
+func publishDiagnostics(ctx context.Context, uri lsp.DocumentURI, content string) {
+	conn(ctx).Notify(ctx, "textDocument/publishDiagnostics",
 		lsp.PublishDiagnosticsParams{URI: uri, Diagnostics: diagnostics(uri, content)})
 }
 
