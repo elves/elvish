@@ -47,6 +47,17 @@ func TestShow(t *testing.T) {
 	)
 }
 
+func TestFind(t *testing.T) {
+	evaltest.TestWithSetup(t, setupDoc,
+		That("doc:find ipsum").Prints(highlightBraced(Dedent(`
+			foo:function:
+			  … Lorem {ipsum} dolor sit amet. …
+			$foo:variable:
+			  … Lorem {ipsum}.
+			`))),
+	)
+}
+
 func TestSource(t *testing.T) {
 	evaltest.TestWithSetup(t, setupDoc,
 		That("doc:source '$foo:variable'").Puts(fooVariableDoc),
@@ -69,16 +80,16 @@ var tildeToBackquote = strings.NewReplacer("~", "`").Replace
 
 var (
 	fooModuleCode = Dedent(`
-		# A variable.
+		# A variable. Lorem ipsum.
 		var variable
 
-		# A function with long documentation. Lorem ipsum dolor sit amet,
-		# consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
+		# A function with long documentation. Lorem ipsum dolor sit amet.
+		# Consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut
 		# labore et dolore magna aliqua.
 		fn function {|x| }
 		`)
 	fooVariableDoc = Dedent(`
-		A variable.
+		A variable. Lorem ipsum.
 		`)
 	// Function docs are used for checking the output of doc:show, so contains
 	// the post-processed "Usage:" prefix.
@@ -89,8 +100,8 @@ var (
 		foo:function $x
 		~~~
 
-		A function with long documentation. Lorem ipsum dolor sit amet,
-		consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
+		A function with long documentation. Lorem ipsum dolor sit amet.
+		Consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut
 		labore et dolore magna aliqua.
 		`)
 

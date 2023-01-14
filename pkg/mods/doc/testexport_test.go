@@ -1,3 +1,6 @@
 package doc
 
-var ModToCode = &modToCode
+var (
+	ModToCode = &modToCode
+	Match     = match
+)

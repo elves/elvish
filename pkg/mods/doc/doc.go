@@ -32,6 +32,7 @@ import (
 var Ns = eval.BuildNsNamed("doc").
 	AddGoFns(map[string]any{
 		"show":     show,
+		"find":     find,
 		"source":   source,
 		"-symbols": symbols,
 	}).
@@ -80,6 +81,26 @@ func show(fm *eval.Frame, opts showOptions, fqname string) error {
 	}
 	_, err = fm.ByteOutput().WriteString(md.RenderString(doc, codec))
 	return err
+}
+
+func find(fm *eval.Frame, qs ...string) {
+	for ns, docs := range Docs() {
+		findIn := func(name, markdown string) {
+			if bs, ok := match(markdown, qs); ok {
+				out := fm.ByteOutput()
+				fmt.Fprintf(out, "%s:\n", name)
+				for _, b := range bs {
+					fmt.Fprintf(out, "  %s\n", b.Show())
+				}
+			}
+		}
+		for _, entry := range docs.Fns {
+			findIn(ns+entry.Name, entry.Content)
+		}
+		for _, entry := range docs.Vars {
+			findIn("$"+ns+entry.Name, entry.Content)
+		}
+	}
 }
 
 func source(fqname string) (string, error) {

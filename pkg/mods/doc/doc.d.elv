@@ -26,6 +26,34 @@
 # ```
 fn show {|symbol &width=0| }
 
+# Finds symbols whose documentation contains all strings in `$queries`.
+#
+# The search is done on a version of the documentation with no markup and soft
+# line breaks converted to spaces. For example, if the Markdown source of a
+# symbol contains `foo *bar* [link](dest.html)`, with possible soft line breaks
+# in between, it will be matched by a query of `foo bar link`.
+#
+# The output shows each symbol that matches, followed by an excerpt of their
+# documentation with the matched queries highlighted.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> doc:find namespace
+# ns:
+#   Constructs a namespace from $map, using the keys as variable names and the values as their values. …
+# has-env:
+#   … This command has no equivalent operation using the E: namespace (but see https://b.elv.sh/1026).
+# eval:
+#   … The evaluation happens in a new, restricted namespace, whose initial set of variables can be specified by the &ns option. …
+# [ … more output omitted … ]
+# ~> doc:find namespace REPL
+# edit:add-var:
+#   Defines a new variable in the interactive REPL with an initial value. …
+#   This is most useful for modules to modify the REPL namespace. …
+# ```
+fn find {|@queries| }
+
 # Outputs the Markdown source of the documentation for `$symbol` as a string
 # value. The `$symbol` arguments follows the same format as
 # [`doc:show`]().
