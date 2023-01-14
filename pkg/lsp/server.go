@@ -31,10 +31,10 @@ func newServer() *server {
 func handler(s *server) jsonrpc2.Handler {
 	return routingHandler(map[string]method{
 		"initialize":              s.initialize,
-		"textDocument/didOpen":    s.didOpen,
-		"textDocument/didChange":  s.didChange,
+		"textDocument/didOpen":    convertMethod(s.didOpen),
+		"textDocument/didChange":  convertMethod(s.didChange),
 		"textDocument/hover":      s.hover,
-		"textDocument/completion": s.completion,
+		"textDocument/completion": convertMethod(s.completion),
 
 		"textDocument/didClose": noop,
 		// Required by spec.
@@ -46,6 +46,16 @@ func handler(s *server) jsonrpc2.Handler {
 }
 
 type method func(context.Context, jsonrpc2.JSONRPC2, json.RawMessage) (any, error)
+
+func convertMethod[T any](f func(context.Context, jsonrpc2.JSONRPC2, T) (any, error)) method {
+	return func(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (any, error) {
+		var params T
+		if json.Unmarshal(rawParams, &params) != nil {
+			return nil, errInvalidParams
+		}
+		return f(ctx, conn, params)
+	}
+}
 
 func noop(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMessage) (any, error) {
 	return nil, nil
@@ -77,24 +87,14 @@ func (s *server) initialize(_ context.Context, _ jsonrpc2.JSONRPC2, _ json.RawMe
 	}, nil
 }
 
-func (s *server) didOpen(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (any, error) {
-	var params lsp.DidOpenTextDocumentParams
-	if json.Unmarshal(rawParams, &params) != nil {
-		return nil, errInvalidParams
-	}
-
+func (s *server) didOpen(ctx context.Context, conn jsonrpc2.JSONRPC2, params lsp.DidOpenTextDocumentParams) (any, error) {
 	uri, content := params.TextDocument.URI, params.TextDocument.Text
 	s.content[uri] = content
 	go publishDiagnostics(ctx, conn, uri, content)
 	return nil, nil
 }
 
-func (s *server) didChange(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (any, error) {
-	var params lsp.DidChangeTextDocumentParams
-	if json.Unmarshal(rawParams, &params) != nil {
-		return nil, errInvalidParams
-	}
-
+func (s *server) didChange(ctx context.Context, conn jsonrpc2.JSONRPC2, params lsp.DidChangeTextDocumentParams) (any, error) {
 	// ContentChanges includes full text since the server is only advertised to
 	// support that; see the initialize method.
 	uri, content := params.TextDocument.URI, params.ContentChanges[0].Text
@@ -107,12 +107,7 @@ func (s *server) hover(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams js
 	return lsp.Hover{}, nil
 }
 
-func (s *server) completion(ctx context.Context, conn jsonrpc2.JSONRPC2, rawParams json.RawMessage) (any, error) {
-	var params lsp.CompletionParams
-	if json.Unmarshal(rawParams, &params) != nil {
-		return nil, errInvalidParams
-	}
-
+func (s *server) completion(ctx context.Context, conn jsonrpc2.JSONRPC2, params lsp.CompletionParams) (any, error) {
 	content := s.content[params.TextDocument.URI]
 	result, err := complete.Complete(
 		complete.CodeBuffer{
