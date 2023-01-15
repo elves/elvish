@@ -160,7 +160,8 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 					cmp.Diff(tc.want.ValueOut, r.ValueOut, tt.CommonCmpOpt))
 			}
 			if !bytes.Equal(tc.want.BytesOut, r.BytesOut) {
-				t.Errorf("got bytes out %q, want %q", r.BytesOut, tc.want.BytesOut)
+				t.Errorf("got bytes out (-want +got):\n%s",
+					cmp.Diff(string(r.BytesOut), string(tc.want.BytesOut)))
 			}
 			if tc.want.StderrOut == nil {
 				if len(r.StderrOut) > 0 {
