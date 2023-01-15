@@ -21,6 +21,20 @@
     ],
     "main": "./dist/extension.js",
     "contributes": {
+        "commands": [
+            {
+                "command": "elvish.eval",
+                "title": "Run elvish inline"
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "elvish.eval",
+                    "when": "resourceExtname == .elv"
+                }
+            ]
+        },
         "languages": [
             {
                 "id": "elvish",
