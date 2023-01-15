@@ -9,6 +9,7 @@ import (
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/edit/complete"
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/parse"
 )
 
@@ -42,6 +43,8 @@ func handler(s *server) jsonrpc2.Handler {
 		// Called by clients even when server doesn't advertise support:
 		// https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeWatchedFiles
 		"workspace/didChangeWatchedFiles": noop,
+
+		"elvish/eval": convertMethod(s.eval),
 	})
 }
 
@@ -145,6 +148,43 @@ func (s *server) completion(_ context.Context, params lsp.CompletionParams) (any
 		}
 	}
 	return lspItems, nil
+}
+
+// evalParams and evalResults are modelled after nREPL
+// (https://nrepl.org/nrepl/1.0/design/overview.html).
+
+type evalParams struct {
+	Code string `json:"code"`
+}
+
+type evalResults struct {
+	Out   string   `json:"out"`
+	Err   string   `json:"err"`
+	Value []string `json:"value"`
+}
+
+func (s *server) eval(_ context.Context, params evalParams) (any, error) {
+	port1, collect1, err := eval.CapturePort()
+	if err != nil {
+		return nil, err
+	}
+	port2, collect2, err := eval.CapturePort()
+	if err != nil {
+		return nil, err
+	}
+	ports := []*eval.Port{eval.DummyInputPort, port1, port2}
+
+	err = s.evaler.Eval(parse.Source{Name: "[lsp]", Code: params.Code}, eval.EvalCfg{Ports: ports})
+	// TODO: Send error too
+	_ = err
+
+	values, stdout := collect1()
+	valueStrings := make([]string, len(values))
+	for i, value := range values {
+		valueStrings[i] = vals.ToString(value)
+	}
+	_, stderr := collect2()
+	return evalResults{string(stdout), string(stderr), valueStrings}, nil
 }
 
 func publishDiagnostics(ctx context.Context, uri lsp.DocumentURI, content string) {
