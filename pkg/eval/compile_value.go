@@ -362,7 +362,7 @@ type outputCaptureOp struct {
 }
 
 func (op outputCaptureOp) exec(fm *Frame) ([]any, Exception) {
-	outPort, collect, err := CapturePort()
+	outPort, collect, err := ValueCapturePort()
 	if err != nil {
 		return nil, fm.errorp(op, err)
 	}

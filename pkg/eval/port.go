@@ -139,10 +139,39 @@ func PipePort(vCb func(<-chan any), bCb func(*os.File)) (*Port, func(), error) {
 	return port, done, nil
 }
 
-// CapturePort returns an output *Port whose value and byte components are
-// both connected to an internal pipe that saves the output. It also returns a
+// CapturePort returns an output [*Port] whose value and byte components are
+// saved separately. It also returns a function to call to obtain the captured
+// output.
+func CapturePort() (*Port, func() ([]any, []byte), error) {
+	var values []any
+	var bytes []byte
+	port, done, err := PipePort(
+		func(ch <-chan any) {
+			for v := range ch {
+				values = append(values, v)
+			}
+		},
+		func(r *os.File) {
+			var err error
+			bytes, err = io.ReadAll(r)
+			if err != nil && err != io.EOF {
+				logger.Println("error on reading:", err)
+			}
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	return port, func() ([]any, []byte) {
+		done()
+		return values, bytes
+	}, nil
+}
+
+// ValueCapturePort returns an output [*Port] whose value and byte components
+// are saved, with bytes saved one string value per line. It also returns a
 // function to call to obtain the captured output.
-func CapturePort() (*Port, func() []any, error) {
+func ValueCapturePort() (*Port, func() []any, error) {
 	vs := []any{}
 	var m sync.Mutex
 	port, done, err := PipePort(
@@ -180,7 +209,7 @@ func CapturePort() (*Port, func() []any, error) {
 	}, nil
 }
 
-// StringCapturePort is like CapturePort, but processes value outputs by
+// StringCapturePort is like [ValueCapturePort], but converts value outputs by
 // stringifying them and prepending an output marker.
 func StringCapturePort() (*Port, func() []string, error) {
 	var lines []string

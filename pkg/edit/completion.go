@@ -310,7 +310,7 @@ func adaptMatcherMap(nt notifier, ev *eval.Evaler, m vals.Map) complete.Filterer
 		}()
 
 		// TODO: Supply the Chan component of port 2.
-		port1, collect, err := eval.CapturePort()
+		port1, collect, err := eval.ValueCapturePort()
 		if err != nil {
 			nt.notifyf("cannot create pipe to run completion matcher: %v", err)
 			return nil

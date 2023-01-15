@@ -191,7 +191,7 @@ func (fm *Frame) forkWithOutput(name string, p *Port) *Frame {
 
 // CaptureOutput captures the output of a given callback that operates on a Frame.
 func (fm *Frame) CaptureOutput(f func(*Frame) error) ([]any, error) {
-	outPort, collect, err := CapturePort()
+	outPort, collect, err := ValueCapturePort()
 	if err != nil {
 		return nil, err
 	}

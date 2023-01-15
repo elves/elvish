@@ -108,7 +108,7 @@ func callFilters(ev *eval.Evaler, name string, filters vals.List, args ...any) b
 			continue
 		}
 
-		port1, collect, err := eval.CapturePort()
+		port1, collect, err := eval.ValueCapturePort()
 		if err != nil {
 			diag.Complainf(os.Stderr, "cannot create pipe to run filter")
 			return true

@@ -18,7 +18,6 @@ package evaltest
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -195,8 +194,8 @@ func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) result {
 	var r result
 
-	port1, collect1 := capturePort()
-	port2, collect2 := capturePort()
+	port1, collect1 := must.OK2(eval.CapturePort())
+	port2, collect2 := must.OK2(eval.CapturePort())
 	ports := []*eval.Port{eval.DummyInputPort, port1, port2}
 
 	for _, text := range texts {
@@ -219,29 +218,6 @@ func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) result {
 	r.ValueOut, r.BytesOut = collect1()
 	_, r.StderrOut = collect2()
 	return r
-}
-
-// Like eval.CapturePort, but captures values and bytes separately. Also panics
-// if it cannot create a pipe.
-func capturePort() (*eval.Port, func() ([]any, []byte)) {
-	var values []any
-	var bytes []byte
-	port, done, err := eval.PipePort(
-		func(ch <-chan any) {
-			for v := range ch {
-				values = append(values, v)
-			}
-		},
-		func(r *os.File) {
-			bytes = must.ReadAllAndClose(r)
-		})
-	if err != nil {
-		panic(err)
-	}
-	return port, func() ([]any, []byte) {
-		done()
-		return values, bytes
-	}
 }
 
 func matchOut(want, got []any) bool {
