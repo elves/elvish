@@ -31,7 +31,7 @@ archive:
     <th>arm64</th>
   </tr>
   <tr>
-    <td>HEAD (<a href="https://github.com/elves/elvish/blob/master/0.19.0-release-notes.md">Draft Release Note</a>)</td>
+    <td>HEAD (<a href="https://github.com/elves/elvish/blob/master/0.19.0-release-notes.md">Draft Release Notes</a>)</td>
     <td>
       @dl Linux linux-amd64/elvish-HEAD.tar.gz
       @dl macOS darwin-amd64/elvish-HEAD.tar.gz
@@ -51,7 +51,7 @@ archive:
   </tr>
   <tr>
     <td>
-      0.18.0 (<a href="../blog/0.18.0-release-notes.html">Release Note</a>)
+      0.18.0 (<a href="../blog/0.18.0-release-notes.html">Release Notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.18.0.tar.gz
