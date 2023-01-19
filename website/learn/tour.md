@@ -777,7 +777,7 @@ Exceptions can be caught using the `try` command:
 ```elvish-transcript
 ~> try {
      false
-   } except e {
+   } catch e {
      echo 'got an exception'
    }
 got an exception
