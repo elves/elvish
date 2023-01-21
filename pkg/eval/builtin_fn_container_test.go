@@ -71,11 +71,11 @@ func TestHasKey(t *testing.T) {
 		That(`has-key [&k=v] bad`).Puts(false),
 		That(`has-key [lorem ipsum] 0`).Puts(true),
 		That(`has-key [lorem ipsum] 0..`).Puts(true),
-		That(`has-key [lorem ipsum] ..1`).Puts(true),
+		That(`has-key [lorem ipsum] ..2`).Puts(true),
 		That(`has-key [lorem ipsum] 2`).Puts(false),
-		That(`has-key [lorem ipsum dolor sit] 0..3`).Puts(true),
-		That(`has-key [lorem ipsum dolor sit] 1..2`).Puts(true),
-		That(`has-key [lorem ipsum dolor sit] 1..4`).Puts(false),
+		That(`has-key [lorem ipsum dolor sit] 0..4`).Puts(true),
+		That(`has-key [lorem ipsum dolor sit] 1..3`).Puts(true),
+		That(`has-key [lorem ipsum dolor sit] 1..5`).Puts(false),
 	)
 }
 
