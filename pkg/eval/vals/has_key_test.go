@@ -24,7 +24,11 @@ func TestHasKey(t *testing.T) {
 		// Fallback to Len
 		Args(MakeList("lorem", "ipsum"), "0").Rets(true),
 		Args(MakeList("lorem", "ipsum"), "0..").Rets(true),
+		Args(MakeList("lorem", "ipsum"), "..1").Rets(true),
 		Args(MakeList("lorem", "ipsum"), "2").Rets(false),
+		Args(MakeList("lorem", "ipsum", "dolor", "sit"), "0..3").Rets(true),
+		Args(MakeList("lorem", "ipsum", "dolor", "sit"), "1..2").Rets(true),
+		Args(MakeList("lorem", "ipsum", "dolor", "sit"), "1..4").Rets(false),
 
 		// Non-container
 		Args(1, "0").Rets(false),
