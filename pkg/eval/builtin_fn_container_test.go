@@ -67,11 +67,15 @@ func TestDissoc(t *testing.T) {
 
 func TestHasKey(t *testing.T) {
 	Test(t,
-		That(`has-key [foo bar] 0`).Puts(true),
-		That(`has-key [foo bar] 0..1`).Puts(true),
-		That(`has-key [foo bar] 0..20`).Puts(false),
-		That(`has-key [&lorem=ipsum &foo=bar] lorem`).Puts(true),
-		That(`has-key [&lorem=ipsum &foo=bar] loremwsq`).Puts(false),
+		That(`has-key [&k=v] k`).Puts(true),
+		That(`has-key [&k=v bad`).Puts(false),
+		That(`has-key [lorem ipsum] 0`).Puts(true),
+		That(`has-key [lorem ipsum] 0..`).Puts(true),
+		That(`has-key [lorem ipsum] ..1`).Puts(true),
+		That(`has-key [lorem ipsum] 2`).Puts(false),
+		That(`has-key [lorem ipsum dolor sit] 0..3`).Puts(true),
+		That(`has-key [lorem ipsum dolor sit] 1..2`).Puts(true),
+		That(`has-key [lorem ipsum dolor sit] 1..4`).Puts(false),
 	)
 }
 
