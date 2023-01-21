@@ -29,7 +29,7 @@ func TestHasKey(t *testing.T) {
 		Args(MakeList("lorem", "ipsum"), "..=2").Rets(false),
 		Args(MakeList("lorem", "ipsum"), "2").Rets(false),
 		Args(MakeList("lorem", "ipsum", "dolor", "sit"), "0..4").Rets(true),
-		Args(MakeList("lorem", "ipsum", "dolor", "sit"), "0..=4").Rets(true),
+		Args(MakeList("lorem", "ipsum", "dolor", "sit"), "0..=4").Rets(false),
 		Args(MakeList("lorem", "ipsum", "dolor", "sit"), "1..3").Rets(true),
 		Args(MakeList("lorem", "ipsum", "dolor", "sit"), "1..5").Rets(false),
 		Args(MakeList("lorem", "ipsum", "dolor", "sit"), "-2..=-1").Rets(true),
