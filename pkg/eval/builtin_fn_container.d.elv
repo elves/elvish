@@ -134,9 +134,9 @@ fn has-value {|container value| }
 # ▶ $true
 # ~> has-key [v1 v2] 2
 # ▶ $false
-# ~> has-key [v1 v2] 0:2
+# ~> has-key [v1 v2] 0..2
 # ▶ $true
-# ~> has-key [v1 v2] 0:3
+# ~> has-key [v1 v2] 0..3
 # ▶ $false
 # ```
 #
