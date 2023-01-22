@@ -109,7 +109,7 @@ fn peach {|f inputs?| }
 # Exception: bad
 # [tty 9], line 1: fail bad
 # ~> put ?(fail bad)
-# ▶ ?(fail bad)
+# ▶ [&reason=[&content=bad &type=fail]]
 # ~> fn f { fail bad }
 # ~> fail ?(f)
 # Exception: bad
