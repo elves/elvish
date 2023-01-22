@@ -26,6 +26,9 @@ func init() {
 		">s":  func(a, b string) bool { return a > b },
 		">=s": func(a, b string) bool { return a >= b },
 
+		"to-nums": toNums,
+		"from-nums": fromNums,
+
 		"to-string": toString,
 
 		"base": base,
@@ -36,6 +39,65 @@ func init() {
 		"eawk": eawk,
 	})
 }
+
+func toNums(fm *Frame, args ...any) error {
+	in := fm.InputFile()
+	out := fm.ValueOutput()
+	for true {
+		c := make([]byte, 1)
+		n, err := in.Read(c)
+		if(n != 1 || err != nil) {
+			break
+		}
+		err = out.Put(int(c[0]))
+		if(err != nil) {
+			return err
+		}
+	}
+	return nil
+}
+
+func numToByte(v any) (byte, error) {
+	switch v := v.(type) {
+	case int:
+		if(v > 255) {
+			return 0, errors.New("must be less than 255");
+		}
+		return byte(v), nil
+	case float64:
+		if(v > 255) {
+			return 0, errors.New("must be less than 255");
+		}
+		return byte(v), nil
+	default:
+		return 0, errors.New("must be number")
+	}
+}
+
+func fromNums(fm *Frame, args ...any) error {
+
+	in := fm.InputChan()
+	out := fm.ByteOutput()
+	for true {
+		v, ok := <- in;
+		if(!ok) {
+			break
+		}
+		t, err := numToByte(v)
+		if(err != nil) {
+			return err
+		}
+		c := make([]byte, 1)
+		c[0] = t
+		n, err := out.Write(c)
+
+		if(err != nil || n != 1) {
+			return err
+		}
+	}
+	return nil
+}
+
 
 func toString(fm *Frame, args ...any) error {
 	out := fm.ValueOutput()

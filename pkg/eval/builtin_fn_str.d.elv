@@ -33,6 +33,12 @@
 # ```
 fn wcswidth {|string| }
 
+# Convert bytes from the byte input to nums
+fn to-nums {}
+
+# Convert nums from the value input to bytes
+fn from-nums {}
+
 # Convert arguments to string values.
 #
 # ```elvish-transcript
