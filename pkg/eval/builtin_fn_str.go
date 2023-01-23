@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"io"
 
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/wcwidth"
@@ -46,7 +47,10 @@ func toNums(fm *Frame, args ...any) error {
 	for true {
 		c := []byte{0}
 		n, err := in.Read(c)
-		if(n != 1 || err != nil) {
+		if(n != 1) {
+			if(err != nil && err != io.EOF) {
+				return err
+			}
 			break
 		}
 		err = out.Put(int(c[0]))
@@ -75,7 +79,6 @@ func numToByte(v any) (byte, error) {
 }
 
 func fromNums(fm *Frame, args ...any) error {
-
 	in := fm.InputChan()
 	out := fm.ByteOutput()
 	for true {
@@ -89,9 +92,9 @@ func fromNums(fm *Frame, args ...any) error {
 		}
 		c := []byte{0}
 		c[0] = t
-		n, err := out.Write(c)
+		_, err = out.Write(c)
 
-		if(err != nil || n != 1) {
+		if(err != nil) {
 			return err
 		}
 	}
