@@ -44,7 +44,7 @@ func toNums(fm *Frame, args ...any) error {
 	in := fm.InputFile()
 	out := fm.ValueOutput()
 	for true {
-		c := make([]byte, 1)
+		c := []byte{0}
 		n, err := in.Read(c)
 		if(n != 1 || err != nil) {
 			break
@@ -87,7 +87,7 @@ func fromNums(fm *Frame, args ...any) error {
 		if(err != nil) {
 			return err
 		}
-		c := make([]byte, 1)
+		c := []byte{0}
 		c[0] = t
 		n, err := out.Write(c)
 
