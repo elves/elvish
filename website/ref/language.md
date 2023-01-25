@@ -2184,8 +2184,8 @@ The following pragmas are available:
 
     ```elvish
     pragma unknown-command = disallow
-    var ls = $e:ls~
-    var cat = $e:cat~
+    var ls~ = $e:ls~
+    var cat~ = $e:cat~
     # ls and cat can be used directly;
     # other external commands must be prefixed with e:
     ```
