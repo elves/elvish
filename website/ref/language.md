@@ -1091,6 +1091,21 @@ of all the constituent expressions. Examples:
 ▶ '$v is value'
 ```
 
+Among the types provided by the language, numbers are implicitly converted to
+strings in a compound expression, but other types require explicit conversions:
+
+```elvish-transcript
+~> var n = (num 10)
+~> var l = [a b c]
+~> echo 'Number: '$n
+Number: 10
+~> echo 'List: '$l
+Exception: cannot concatenate string and list
+[tty 18]:1:6: echo 'List: '$l
+~> echo 'List: '(repr $l)
+List: [a b c]
+```
+
 When one or more of the constituent expressions evaluate to multiple values, the
 result is all possible combinations:
 
