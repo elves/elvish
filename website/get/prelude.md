@@ -31,7 +31,7 @@ archive:
     <th>arm64</th>
   </tr>
   <tr>
-    <td>HEAD (<a href="https://github.com/elves/elvish/blob/master/0.19.0-release-notes.md">Draft Release Notes</a>)</td>
+    <td>HEAD (<a href="https://github.com/elves/elvish/blob/master/0.19.0-release-notes.md">draft release notes</a>)</td>
     <td>
       @dl Linux linux-amd64/elvish-HEAD.tar.gz
       @dl macOS darwin-amd64/elvish-HEAD.tar.gz
@@ -51,7 +51,7 @@ archive:
   </tr>
   <tr>
     <td>
-      0.18.0 (<a href="../blog/0.18.0-release-notes.html">Release Notes</a>)
+      0.18.0 (<a href="../blog/0.18.0-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.18.0.tar.gz
@@ -341,7 +341,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.17.0 (<a href="../blog/0.17.0-release-notes.html">Release Note</a>)
+      0.17.0 (<a href="../blog/0.17.0-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.17.0.tar.gz
@@ -362,7 +362,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.16.3 (<a href="../blog/0.16.0-release-notes.html">Release Note</a>)
+      0.16.3 (<a href="../blog/0.16.0-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.16.3.tar.gz
@@ -383,7 +383,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.16.2 (<a href="../blog/0.16.0-release-notes.html">Release Note</a>)
+      0.16.2 (<a href="../blog/0.16.0-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.16.2.tar.gz
@@ -404,7 +404,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.16.1 (<a href="../blog/0.16.0-release-notes.html">Release Note</a>)
+      0.16.1 (<a href="../blog/0.16.0-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.16.1.tar.gz
@@ -425,7 +425,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.16.0 (<a href="../blog/0.16.0-release-notes.html">Release Note</a>)
+      0.16.0 (<a href="../blog/0.16.0-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.16.0.tar.gz
@@ -446,7 +446,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.15.0 (<a href="../blog/0.15.0-release-notes.html">Release Note</a>)
+      0.15.0 (<a href="../blog/0.15.0-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.15.0.tar.gz
@@ -466,7 +466,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.14.1 (<a href="../blog/0.14.1-release-notes.html">Release Note</a>)
+      0.14.1 (<a href="../blog/0.14.1-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.14.1.tar.gz
@@ -486,7 +486,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.14.0 (<a href="/blog/0.14.0-release-notes.html">Release Note</a>)
+      0.14.0 (<a href="/blog/0.14.0-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.14.0.tar.gz
@@ -506,7 +506,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.13.1 (<a href="/blog/0.13.1-release-notes.html">Release Note</a>)
+      0.13.1 (<a href="/blog/0.13.1-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.13.1.tar.gz
@@ -526,7 +526,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.13 (<a href="/blog/0.13-release-notes.html">Release Note</a>)
+      0.13 (<a href="/blog/0.13-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.13.tar.gz
@@ -543,7 +543,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.12 (<a href="/blog/0.12-release-notes.html">Release Note</a>)
+      0.12 (<a href="/blog/0.12-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.12.tar.gz
@@ -560,7 +560,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.11 (<a href="/blog/0.11-release-notes.html">Release Note</a>)
+      0.11 (<a href="/blog/0.11-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.11.tar.gz
@@ -581,7 +581,7 @@ for historical interest.
     </td>
   </tr>
   <tr>
-    <td>0.10 (<a href="/blog/0.10-release-notes.html">Release Note</a>)</td>
+    <td>0.10 (<a href="/blog/0.10-release-notes.html">release notes</a>)</td>
     <td>
       @dl Linux linux-amd64/elvish-v0.10.tar.gz
       @dl macOS darwin-amd64/elvish-v0.10.tar.gz
@@ -599,7 +599,7 @@ for historical interest.
     </td>
   </tr>
   <tr>
-    <td>0.9 (<a href="/blog/0.9-release-notes.html">Release Note</a>)</td>
+    <td>0.9 (<a href="/blog/0.9-release-notes.html">release notes</a>)</td>
     <td>
       @dl Linux linux-amd64/elvish-v0.9.tar.gz
       @dl macOS darwin-amd64/elvish-v0.9.tar.gz
@@ -608,7 +608,7 @@ for historical interest.
     <td>N/A</td>
   </tr>
   <tr>
-    <td>0.8 (<a href="https://github.com/elves/elvish/releases/tag/v0.8">Release Note</a>)</td>
+    <td>0.8 (<a href="https://github.com/elves/elvish/releases/tag/v0.8">release notes</a>)</td>
     <td>
       @dl Linux linux-amd64/elvish-v0.8.tar.gz
       @dl macOS darwin-amd64/elvish-v0.8.tar.gz
@@ -617,7 +617,7 @@ for historical interest.
     <td>N/A</td>
   </tr>
   <tr>
-    <td>0.7 (<a href="https://github.com/elves/elvish/releases/tag/v0.7">Release Note</a>)</td>
+    <td>0.7 (<a href="https://github.com/elves/elvish/releases/tag/v0.7">release notes</a>)</td>
     <td>
       @dl Linux linux-amd64/elvish-v0.7.tar.gz
       @dl macOS darwin-amd64/elvish-v0.7.tar.gz
@@ -626,7 +626,7 @@ for historical interest.
     <td>N/A</td>
   </tr>
   <tr>
-    <td>0.6 (<a href="https://github.com/elves/elvish/releases/tag/v0.6">Release Note</a>)</td>
+    <td>0.6 (<a href="https://github.com/elves/elvish/releases/tag/v0.6">release notes</a>)</td>
     <td>
       @dl Linux linux-amd64/elvish-v0.6.tar.gz
       @dl macOS darwin-amd64/elvish-v0.6.tar.gz
@@ -635,7 +635,7 @@ for historical interest.
     <td>N/A</td>
   </tr>
   <tr>
-    <td>0.5 (<a href="https://github.com/elves/elvish/releases/tag/v0.5">Release Note</a>)</td>
+    <td>0.5 (<a href="https://github.com/elves/elvish/releases/tag/v0.5">release notes</a>)</td>
     <td>
       @dl Linux linux-amd64/elvish-v0.5.tar.gz
       @dl macOS darwin-amd64/elvish-v0.5.tar.gz
