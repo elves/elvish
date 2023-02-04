@@ -86,7 +86,10 @@ correspondence between Elvish and bash syntax:
     <td colspan="2"><code>echo ~/foo</code></td>
   </tr>
   <tr>
-    <td rowspan="4"><a href="#setting-variables">Setting variables</a></td>
+    <td rowspan="4"><a href="#variables">Variables</a></td>
+    <td colspan="2"><code>echo $foo</code></td>
+  </tr>
+  <tr>
     <td><code>var foo = bar</code></td>
     <td><code>foo=bar</code></td>
   </tr>
@@ -95,29 +98,24 @@ correspondence between Elvish and bash syntax:
     <td><code>foo=bar</code></td>
   </tr>
   <tr>
-    <td><code>set-env foo bar</code></td>
-    <td><code>export foo=bar</code></td>
+    <td><code>{ tmp foo = bar; some-command }</code></td>
+    <td><code>foo=bar some-command</code></td>
   </tr>
   <tr>
-    <td><code>set E:foo=bar</code></td>
-    <td><code>export foo=bar</code></td>
-  </tr>
-  <tr>
-    <td rowspan="2"><a href="#temporary-environment-variables">Temporary environment variables</a></td>   
-    <td><code>{ tmp E:foo=bar; cmd }</code></td>
-    <td><code>foo=bar cmd</code></td>
-  </tr>
-  <tr>
-    <td><code>env foo=bar cmd</code></td>
-    <td><code>foo=bar cmd</code></td>
-  </tr>
-  <tr>
-    <td rowspan="2"><a href="#using-variables">Using variables</a></td>
-    <td colspan="2"><code>echo $foo</code></td>
-  </tr>
-  <tr>
+    <td rowspan="4"><a href="#environment-variables">Environment variables</a></td>
     <td><code>echo $E:HOME</code></td>
     <td><code>echo $HOME</code></td>
+  </tr>
+  <tr>
+    <td><code>set E:foo = bar</code></td>
+    <td><code>export foo=bar</code></td>
+  </tr>
+  <tr>
+    <td><code>{ tmp E:foo = bar; some-command }</code></td>
+    <td><code>export foo; foo=bar some-command</code></td>
+  </tr>
+  <tr>
+    <td colspan="2"><code>env foo=bar some-command</code></td>
   </tr>
   <tr>
     <td><a href="#redirections">Redirections</a></td>
@@ -326,9 +324,33 @@ directory of the current user is `/home/me`, and the home directory of `elf` is
 Read the language reference on
 [tilde expansion](../ref/language.html#tilde-expansion) to learn more.
 
-## Setting variables
+## Variables
 
-Variables are declared with the `var` command, and set with the `set` command:
+Like traditional shells, using the value of a variable requires the `$` prefix.
+
+```elvish-transcript
+~> var foo = bar
+~> echo $foo
+bar
+```
+
+Elvish does not perform `$IFS` splitting on variables, so `$foo` always
+evaluates to one value, even if it contains whitespaces and newlines:
+
+```elvish-transcript
+~> var foo = 'a b c d'
+~> touch $foo # Creates one file
+```
+
+You never need to write `"$foo"` in Elvish. In fact,
+[double-quoted strings](#double-quoted-strings) do not support interpolation in
+Elvish, so `echo "$foo"` will just print out `$foo`).
+
+Also unlike traditional shells, variables must be declared before being used; if
+the `foo` variable wasn't declared with `var` first, `echo $foo` results in an
+error.
+
+After declaring a variable, change its value with `set`:
 
 ```elvish-transcript
 ~> var foo = bar
@@ -339,71 +361,67 @@ bar
 quux
 ```
 
-The spaces around `=` are mandatory.
+The spaces around `=` in both `var` and `set` are mandatory.
 
-Unlike traditional shells, variables must be declared before they can be set;
-setting an undeclared variable results in an error.
-
-Elvish manages environment variables using a series of builtin commands: 
-`set-env`, `unset-env`, `has-env` and `get-env`. You can also use `set` with 
-the special environment variable namespace `E:`.
-
-Read the language reference on [the `var` command](../ref/language.html#var),
- [the `set` command](../ref/language.html#set), the [environment variable
-namespace `E:`](../ref/language.html#special-namespaces) and the 
-[`set-env`](../ref/builtin.html#set-env),
-[`unset-env`](../ref/builtin.html#unset-env),
-[`has-env`](../ref/builtin.html#has-env) and
-[`get-env`](../ref/builtin.html#get-env) builtin commands to learn more.
-
-## Temporary environment variables
-
-Elvish supports setting an environment variable temporarily for the duration of
- a command, through the use of the `tmp` command and the `E:` namespace within
-an anonymous function:
-
-```elvish-transcript
-~> { tmp E:foo=bar; command }
-```
-
-You can also use the external command `env`. 
-
-Read the language reference on [temporary
-assignments](../ref/language.html#temporary-assignment), [the `tmp`
-command](../ref/language.html#tmp) and the [`E:`
-namespace](../ref/language.html#special-namespaces) to learn more.
-
-## Using variables
-
-Like traditional shells, using the value of a variable requires the `$` prefix.
+Within a [lambda](#lambdas), you can use `tmp` to set the value for the duration
+of the lambda:
 
 ```elvish-transcript
 ~> var foo = bar
+~> { tmp foo = new; echo $foo }
+new
 ~> echo $foo
 bar
 ```
 
-Unlike traditional shells, variables must be declared before being used; if the
-`foo` variable wasn't declared with `var` first, `echo $foo` results in an
-error.
+Read the language reference on [variables](../ref/language.html#variable),
+[variable use](../ref/language.html#variable-use),
+[the `var` command](../ref/language.html#var),
+[the `set` command](../ref/language.html#set) and
+[the `tmp` command](../ref/language.html#tmp) to learn more.
 
-Elvish does not perform `$IFS` splitting on variables, so `$foo` always
-evaluates to one value, even if it contains whitespaces and newlines. You never
-need to write `echo "$foo"` again. (And in fact,
-[double-quoted strings](../ref/language.html#double-quoted-string) do not
-support interpolation).
+## Environment variables
 
-Also unlike traditional shells, environment variables in Elvish live in a
-separate `E:` namespace:
+Unlike traditional shells, environment variables in Elvish live in a separate
+`E:` namespace:
 
 ```elvish-transcript
 ~> echo $E:HOME
 /home/elf
+~> set E:PATH = /bin:/sbin
 ```
 
-Read the language reference on [variables](../ref/language.html#variable),
-[variable use](../ref/language.html#variable-use) and
-[special namespaces](../ref/language.html#special-namespaces) to learn more.
+There is no concept of "exporting" in Elvish: variables in the `E:` namespace
+are always "exported", and variables outside the namespace never are.
+
+Accessing unset environment variables results in an empty string:
+
+```elvish-transcript
+~> echo $E:nonexistent
+
+```
+
+Elvish also provides a series of builtin commands (`set-env`, `unset-env`,
+`has-env` and `get-env`) that allows you to distinguish unset environment
+variables and those set to an empty string.
+
+To set an environment variable temporarily, you can use the `tmp` command like
+you would with a non-environment variable, but it is more concise to use the
+external command `env`.
+
+```elvish-transcript
+~> { tmp E:foo = bar; bash -c 'echo $foo' }
+bar
+~> env foo=bar bash -c 'echo $foo'
+bar
+```
+
+Read the language reference on the
+[`E:` namespace](../ref/language.html#special-namespaces), the
+[`set-env`](../ref/builtin.html#set-env),
+[`unset-env`](../ref/builtin.html#unset-env),
+[`has-env`](../ref/builtin.html#has-env) and
+[`get-env`](../ref/builtin.html#get-env) builtin commands to learn more.
 
 ## Redirections
 
@@ -818,9 +836,10 @@ Read the language reference on
 The names of variables and functions can have **namespaces** prepended to their
 names. Namespaces always end with `:`.
 
-The [using variables](#using-variables) section has already shown the `E:`
-namespace. Other namespaces can be added by importing modules with `use`. For
-example, [the `str:` module](../ref/str.html) provides string utilities:
+The [environment variables](#environment-variables) section has already shown
+the `E:` namespace. Other namespaces can be added by importing modules with
+`use`. For example, [the `str:` module](../ref/str.html) provides string
+utilities:
 
 ```elvish-transcript
 ~> use str
