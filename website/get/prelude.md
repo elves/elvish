@@ -308,6 +308,22 @@ cd /usr/ports/shells/elvish
 make install
 ```
 
+## NetBSD / pkgsrc
+
+Elvish is [available in pkgsrc](https://pkgsrc.se/shells/elvish). To install
+from a binary package, run the following command:
+
+```elvish
+pkgin install elvish
+```
+
+To build the elvish package from source instead:
+
+```elvish
+cd /usr/pkgsrc/shells/elvish
+make package-install
+```
+
 ## OpenBSD
 
 Elvish is available in the official OpenBSD package repository. This will
