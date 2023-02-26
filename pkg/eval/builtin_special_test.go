@@ -341,9 +341,6 @@ func TestTry(t *testing.T) {
 		That("try { fail tr } catch { fail ex } finally { fail final }").
 			Throws(ErrorWithMessage("final")),
 
-		// except is a deprecated synonym for catch
-		That("try { fail tr } except { put bad }").
-			Puts("bad").PrintsStderrWith("deprecated"),
 		// Must have catch or finally
 		That("try { fail tr }").DoesNotCompile("try must be followed by a catch block or a finally block"),
 		// Rest variable not allowed
@@ -355,7 +352,7 @@ func TestTry(t *testing.T) {
 		That("try { fail reason } catch x { }").DoesNothing(),
 
 		// A quoted var name, that would be invalid as a bareword, should be allowed as the referent
-		// in a `try...except...` block.
+		// in a `try...catch...` block.
 		That("try { fail hard } catch 'x=' { put 'x= ='(to-string $'x=') }").
 			Puts("x= =[&reason=[&content=hard &type=fail] &stack-trace=<...>]"),
 
@@ -363,11 +360,6 @@ func TestTry(t *testing.T) {
 		// panic.
 		That("try { } catch").DoesNotCompile("need variable or body"),
 	)
-}
-
-func TestTry_ExceptIsDeprecated(t *testing.T) {
-	testCompileTimeDeprecation(t, "try { } except { }",
-		`"except" is deprecated; use "catch" instead`, 18)
 }
 
 func TestWhile(t *testing.T) {

@@ -689,11 +689,7 @@ func compileTry(cp *compiler, fn *parse.Form) effectOp {
 	i := 1
 	var catchVarNode *parse.Compound
 	var catchNode *parse.Primary
-	if args.hasKeyword(i, "except") {
-		cp.deprecate(fn.Args[i],
-			`"except" is deprecated; use "catch" instead`, 18)
-	}
-	if args.hasKeyword(i, "except") || args.hasKeyword(i, "catch") {
+	if args.hasKeyword(i, "catch") {
 		i++
 		// Parse an optional lvalue into exceptVarNode.
 		n := args.get(i, "variable or body").any()
