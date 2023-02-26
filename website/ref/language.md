@@ -527,6 +527,13 @@ Examples:
 ▶ [&cmd-name=false &exit-status=1 &pid=953421 &type=external-cmd/exited]
 ```
 
+Exceptions also carry stack traces. They are currently opaque values with no
+meaningful access methods yet, and will appear as `&stack-trace=<...>` when
+printing an exception value.
+
+When comparing whether two exceptions have the same cause, you should compare
+their reason fields (like `eq $e1[reason] $e2[reason]`).
+
 ## File
 
 There is no literal syntax for the file type. This type is returned by commands

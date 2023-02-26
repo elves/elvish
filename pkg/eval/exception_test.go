@@ -33,10 +33,10 @@ func TestException(t *testing.T) {
 		Hash(hash.Pointer(unsafe.Pointer(reflect.ValueOf(exc).Pointer()))).
 		Equal(exc).
 		NotEqual(makeException(errors.New("error"))).
-		AllKeys("reason").
+		AllKeys("reason", "stack-trace").
 		Index("reason", err).
 		IndexError("stack", vals.NoSuchKey("stack")).
-		Repr("[&reason=[&content=error &type=fail]]")
+		Repr("[&reason=[&content=error &type=fail] &stack-trace=<...>]")
 
 	vals.TestValue(t, OK).
 		Kind("exception").

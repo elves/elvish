@@ -120,7 +120,7 @@ func (exc *exception) Repr(indent int) string {
 	if exc.reason == nil {
 		return "$ok"
 	}
-	return "[&reason=" + vals.Repr(exc.reason, indent+1) + "]"
+	return "[&reason=" + vals.Repr(exc.reason, indent+1) + " &stack-trace=<...>]"
 }
 
 // Equal compares by address.
@@ -142,8 +142,9 @@ func (exc *exception) Fields() vals.StructMap { return excFields{exc} }
 
 type excFields struct{ e *exception }
 
-func (excFields) IsStructMap()    {}
-func (f excFields) Reason() error { return f.e.reason }
+func (excFields) IsStructMap()              {}
+func (f excFields) Reason() error           { return f.e.reason }
+func (f excFields) StackTrace() *StackTrace { return f.e.stackTrace }
 
 // PipelineError represents the errors of pipelines, in which multiple commands
 // may error.
