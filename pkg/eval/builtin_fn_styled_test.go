@@ -90,7 +90,6 @@ func TestStyledConcat(t *testing.T) {
 		// segment + text
 		That("print (styled-segment abc &underlined=$true)(styled abc bright-cyan)").Prints("\033[;4mabc\033[;96mabc\033[m"),
 		// segment + num
-		That("print (styled-segment abc &blink)(float64 88)").Prints("\033[;5mabc\033[m88.0"),
 		That("print (styled-segment abc &blink)(num 44/3)").Prints("\033[;5mabc\033[m44/3"),
 		That("print (styled-segment abc &blink)(num 42)").Prints("\033[;5mabc\033[m42"),
 		// segment + unsupported
@@ -107,7 +106,6 @@ func TestStyledConcat(t *testing.T) {
 		// text + string
 		That("print (styled abc blink)abc").Prints("\033[;5mabc\033[mabc"),
 		// text + number
-		That("print (styled abc blink)(float64 127)").Prints("\033[;5mabc\033[m127.0"),
 		That("print (styled abc blink)(num 13)").Prints("\033[;5mabc\033[m13"),
 		That("print (styled abc blink)(num 3/4)").Prints("\033[;5mabc\033[m3/4"),
 		// text + segment

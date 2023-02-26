@@ -59,8 +59,7 @@ func TestInexactNum(t *testing.T) {
 
 func TestFloat64(t *testing.T) {
 	Test(t,
-		That("float64 1").Puts(1.0),
-		That("float64 (num 1)").Puts(1.0),
+		That("float64 1").Puts(1.0).PrintsStderrWith("deprecated"),
 	)
 }
 

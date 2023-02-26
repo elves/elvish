@@ -85,7 +85,7 @@ func TestStr(t *testing.T) {
 
 		That(`str:join : [/usr /bin /tmp]`).Puts("/usr:/bin:/tmp"),
 		That(`str:join : ['' a '']`).Puts(":a:"),
-		That(`str:join : [(float64 1) 2]`).Throws(
+		That(`str:join : [(num 1) 2]`).Throws(
 			errs.BadValue{What: "input to str:join", Valid: "string", Actual: "number"}),
 
 		That(`str:last-index abc`).Throws(ErrorWithType(errs.ArityMismatch{})),

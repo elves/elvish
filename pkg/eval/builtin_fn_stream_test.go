@@ -99,8 +99,8 @@ func TestOrder(t *testing.T) {
 		That("put [b] [a] | order").Puts(vals.MakeList("a"), vals.MakeList("b")),
 		That("put [a] [b] [a] | order").
 			Puts(vals.MakeList("a"), vals.MakeList("a"), vals.MakeList("b")),
-		That("put [(float64 10)] [(float64 2)] | order").
-			Puts(vals.MakeList(2.0), vals.MakeList(10.0)),
+		That("put [(num 10)] [(num 2)] | order").
+			Puts(vals.MakeList(2), vals.MakeList(10)),
 		That("put [a b] [b b] [a c] | order").
 			Puts(
 				vals.MakeList("a", "b"),
@@ -118,7 +118,7 @@ func TestOrder(t *testing.T) {
 			Throws(ErrUncomparable, "order"),
 		That("put [a] a | order").
 			Throws(ErrUncomparable, "order"),
-		That("put [a] [(float64 1)] | order").
+		That("put [a] [(num 1)] | order").
 			Throws(ErrUncomparable, "order"),
 
 		// &reverse
