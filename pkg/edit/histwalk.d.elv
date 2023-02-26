@@ -22,5 +22,6 @@ fn history:down-or-quit { }
 # started.
 fn history:fast-forward { }
 
-# Update buffer with current entry.
+# Replaces the content of the buffer with the current history mode entry, and
+# closes history mode.
 fn history:accept { }

@@ -17,7 +17,7 @@ type Histwalk interface {
 	Prev() error
 	// Walk to the next entry in history.
 	Next() error
-	// Update buffer with current entry.
+	// Update buffer with current entry. Always returns a nil error.
 	Accept() error
 }
 
@@ -124,13 +124,7 @@ func (w *histwalk) updatePending() {
 }
 
 func (w *histwalk) Accept() error {
-	cmd, _ := w.cursor.Get()
-	txt := cmd.Text[len(w.Prefix):]
-	w.attachedTo.MutateState(func(s *tk.CodeAreaState) {
-		s.Buffer = tk.CodeBuffer{
-			Content: txt,
-			Dot:     len(txt),
-		}
-	})
+	w.attachedTo.MutateState((*tk.CodeAreaState).ApplyPending)
+	w.app.PopAddon()
 	return nil
 }
