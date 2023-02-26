@@ -196,7 +196,7 @@ The checks depend on some external programs, which can be installed as follows:
 
 ```sh
 go install golang.org/x/tools/cmd/goimports@latest
-go install honnef.co/go/tools/cmd/staticcheck@v0.3.2
+go install honnef.co/go/tools/cmd/staticcheck@v0.4.2
 pip install --user codespell==2.2.1
 ```
 

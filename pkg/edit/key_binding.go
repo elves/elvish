@@ -11,7 +11,6 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
-	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -57,8 +56,6 @@ func indexLayeredBindings(k ui.Key, maps ...bindingsMap) eval.Callable {
 	}
 	return nil
 }
-
-var bindingSource = parse.Source{Name: "[editor binding]"}
 
 func callWithNotifyPorts(nt notifier, ev *eval.Evaler, f eval.Callable, args ...any) {
 	notifyPort, cleanup := makeNotifyPort(nt)

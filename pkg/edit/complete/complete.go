@@ -11,8 +11,6 @@ import (
 	"src.elv.sh/pkg/parse"
 )
 
-type item = modes.CompletionItem
-
 // An error returned by Complete as well as the completers if there is no
 // applicable completion.
 var errNoCompletion = errors.New("no completion")
