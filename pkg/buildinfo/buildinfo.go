@@ -46,12 +46,13 @@ func (Type) IsStructMap() {}
 
 // Value contains all the build information.
 var Value = Type{
-	Version:   devVersionWithVariant(VersionBase, VCSOverride, BuildVariant),
+	// On a release branch, change to addVariant(VersionBase, BuildVariant) and
+	// remove unneeded code.
+	Version:   addVariant(devVersion(VersionBase, VCSOverride), BuildVariant),
 	GoVersion: runtime.Version(),
 }
 
-func devVersionWithVariant(next, vcsOverride, variant string) string {
-	version := devVersion(next, vcsOverride)
+func addVariant(version, variant string) string {
 	if variant != "" {
 		version += "+" + variant
 	}

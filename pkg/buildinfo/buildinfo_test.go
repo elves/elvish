@@ -27,12 +27,11 @@ func TestProgram(t *testing.T) {
 	)
 }
 
-var devVersionWithVariantTests = []struct {
+var devVersionTests = []struct {
 	name        string
 	next        string
 	vcsOverride string
 	buildInfo   *debug.BuildInfo
-	variant     string
 	want        string
 }{
 	{
@@ -88,26 +87,34 @@ var devVersionWithVariantTests = []struct {
 		vcsOverride: "20220401235958-123456789012",
 		want:        "0.42.0-dev.0.20220401235958-123456789012",
 	},
-	{
-		name:    "variant",
-		next:    "0.42.0",
-		variant: "distro",
-		want:    "0.42.0-dev.unknown+distro",
-	},
 }
 
-func TestDevVersionWithVariant(t *testing.T) {
-	for _, test := range devVersionWithVariantTests {
+func TestDevVersion(t *testing.T) {
+	for _, test := range devVersionTests {
 		t.Run(test.name, func(t *testing.T) {
 			testutil.Set(t, &readBuildInfo,
 				func() (*debug.BuildInfo, bool) {
 					return test.buildInfo, test.buildInfo != nil
 				})
-			got := devVersionWithVariant(test.next, test.vcsOverride, test.variant)
+			got := devVersion(test.next, test.vcsOverride)
 			if got != test.want {
 				t.Errorf("got %q, want %q", got, test.want)
 			}
 		})
+	}
+}
+
+func TestAddVariant(t *testing.T) {
+	got := addVariant("0.42.0", "")
+	want := "0.42.0"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+
+	got = addVariant("0.42.0", "distro")
+	want = "0.42.0+distro"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }
 
