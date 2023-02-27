@@ -4,6 +4,9 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"sync/atomic"
 	"syscall"
 
@@ -86,6 +89,18 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 	path, err := exec.LookPath(e.Name)
 	if err != nil {
 		return err
+	}
+
+	if runtime.GOOS == "windows" && !filepath.IsAbs(path) {
+		// For some reason, Windows's CreateProcess API doesn't like forward
+		// slashes in relative paths: ".\foo.bat" works but "./foo.bat" results
+		// in an error message that "'.' is not recognized as an internal or
+		// external command, operable program or batch file."
+		//
+		// There seems to be no good reason for this behavior, so we work around
+		// it by replacing forward slashes with backslashes. PowerShell seems to
+		// be something similar to support "./foo.bat".
+		path = strings.ReplaceAll(path, "/", "\\")
 	}
 
 	args[0] = path
