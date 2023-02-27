@@ -2,11 +2,6 @@ test_task:
   env:
     ELVISH_TEST_TIME_SCALE: 20
     TEST_FLAG: -race
-  go_modules_cache:
-    fingerprint_script: cat go.sum
-    folder: ~/go/pkg/mod
-  go_build_cache:
-    folder: ~/.cache/go-build
   matrix:
     # Re-enable gccgo when it supports Go 1.18.
     #- name: Test on gccgo
