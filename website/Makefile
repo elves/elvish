@@ -28,7 +28,7 @@ clean:
 	rm -rf tools/*.bin $(HTMLS) $(DST_DIR) $(DOCSET_TMP_DIR) $(DOCSET_DST_DIR)
 
 ifdef TTYSHOT
-%.ttyshot.html: %.ttyshot tools/ttyshot.bin
+%.ttyshot.html: %.elvts tools/ttyshot.bin
 	tools/ttyshot.bin $(if $(findstring verbose,$(TTYSHOT)),-v,) -o $@ $<
 else
 %.ttyshot.html:

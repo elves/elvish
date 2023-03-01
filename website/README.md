@@ -71,8 +71,8 @@ heuristic.
 Some of the pages include "ttyshots" that show the content of Elvish sessions.
 They are HTML files with terminal attributes converted to CSS classes, generated
 from corresponding instruction files. By convention, the instruction files have
-names ending in `.ttyshot`, and the generated HTML files have names ending in
-`.ttyshot.html`.
+names ending in `.elvts` (because they are syntactically Elvish transcripts),
+and the generated HTML files have names ending in `.ttyshot.html`.
 
 The generation process depends on [`tmux`](https://github.com/tmux/tmux) and a
 built `elvish` in `PATH`. Windows is not supported.

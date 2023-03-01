@@ -3,7 +3,7 @@
 	"name": "Elvish transcript",
 	"scopeName": "source.elvish-transcript",
 	"fileTypes": [
-		"ttyshot"
+		"elvts"
 	],
 	"patterns": [
 		{
