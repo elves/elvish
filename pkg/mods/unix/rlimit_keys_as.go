@@ -1,4 +1,4 @@
-//go:build !openbsd && !darwin && !windows && !plan9 && !js
+//go:build linux || freebsd || netbsd
 
 package unix
 

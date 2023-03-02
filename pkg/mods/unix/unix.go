@@ -1,4 +1,4 @@
-//go:build !windows && !plan9 && !js
+//go:build unix
 
 // Package unix exports an Elvish namespace that contains variables and
 // functions that deal with features unique to Unix-like operating systems. On

@@ -1,4 +1,4 @@
-//go:build !windows && !plan9
+//go:build unix
 
 // Copyright 2015 go-termios Author. All Rights Reserved.
 // https://github.com/go-termios/termios

@@ -1,4 +1,4 @@
-//go:build !windows && !js && !plan9
+//go:build unix
 
 package path
 

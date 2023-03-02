@@ -1,4 +1,4 @@
-//go:build !windows && !plan9
+//go:build unix
 
 package fsutil
 

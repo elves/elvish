@@ -1,4 +1,4 @@
-//go:build !windows && !plan9 && !js
+//go:build unix
 
 // Command ttyshot generates a ttyshot HTML image from a ttyshot specification.
 //

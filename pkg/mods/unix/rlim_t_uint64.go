@@ -1,4 +1,4 @@
-//go:build !freebsd && !windows && !plan9 && !js
+//go:build unix && !freebsd
 
 package unix
 
