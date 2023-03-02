@@ -18,13 +18,13 @@ test_task:
       arm_container:
         # The Alpine image has segmentation faults when running test -race, so
         # use Debian instead.
-        image: golang:1.19.3-bullseye
+        image: golang:1.20-bullseye
     - name: Test on FreeBSD
       freebsd_instance:
-        image_family: freebsd-13-1
+        image_family: freebsd-13-2
       env:
         PATH: /usr/local/go/bin:$PATH
-        GO_VERSION: 1.19.3
+        GO_VERSION: 1.20.1
       go_toolchain_cache:
         fingerprint_key: $GO_VERSION
         folder: /usr/local/go
@@ -38,12 +38,15 @@ test_task:
         image: family/pg-ci-netbsd-vanilla-9-3
         platform: netbsd
       env:
-        GO_PKG: go118
+        GO_PKG: go119
         PATH: /usr/pkg/$GO_PKG/bin:$PATH
       go_pkg_cache:
         fingerprint_key: $GO_PKG
         folder: /usr/pkg/$GO_PKG
-        populate_script: pkgin -y install $GO_PKG
+        populate_script: |
+          sed -i '$s/9\.0/9.0_2022Q3/' /usr/pkg/etc/pkgin/repositories.conf
+          pkgin -y update
+          pkgin -y install $GO_PKG
     - name: Test on OpenBSD
       compute_engine_instance:
         image_project: pg-ci-images
@@ -65,7 +68,9 @@ build_binaries_task:
   env:
     CGO_ENABLED: 0
   container:
-    image: golang:1.19.4-alpine
+    # Keep the Go version part in sync with
+    # https://github.com/elves/up/blob/master/Dockerfile
+    image: golang:1.20.1-alpine
   go_modules_cache:
     fingerprint_script: cat go.sum
     folder: ~/go/pkg/mod
