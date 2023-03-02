@@ -7,26 +7,41 @@
 #
 # The following resources are supported, some only present on certain OSes:
 #
-# | Key          | Resource           | Unit    | OS                 |
-# | ------------ | ------------------ | ------- | ------------------ |
-# | `core`       | Core file          | bytes   | all                |
-# | `cpu`        | CPU time           | seconds | all                |
-# | `data`       | Data segment       | bytes   | all                |
-# | `fsize`      | File size          | bytes   | all                |
-# | `memlock`    | Locked memory      | bytes   | all                |
-# | `nofile`     | File descriptors   | number  | all                |
-# | `nproc`      | Processes          | number  | all                |
-# | `rss`        | Resident set size  | bytes   | all                |
-# | `stack`      | Stack segment      | bytes   | all                |
-# | `as`         | Address space      | bytes   | Linux, Free/NetBSD |
-# | `nthr`       | Threads            | number  | NetBSD             |
-# | `sbsize`     | Socket buffers     | bytes   | NetBSD             |
-# | `locks`      | File locks         | number  | Linux              |
-# | `msgqueue`   | Message queues     | bytes   | Linux              |
-# | `nice`       | 20 - nice value    |         | Linux              |
-# | `rtprio`     | Real-time priority |         | Linux              |
-# | `rttime`     | Real-time CPU time | seconds | Linux              |
-# | `sigpending` | Signals queued     | number  | Linux              |
+# * `core`: size of a core file, in bytes.
+#
+# * `cpu`: CPU time, in seconds.
+#
+# * `data`: size of the data segment, in bytes
+#
+# * `fsize`: size of a file created by the process, in bytes.
+#
+# * `memlock`: size of locked memory, in bytes.
+#
+# * `nofile`: number of file descriptors.
+#
+# * `nproc`: number of processes for the user.
+#
+# * `rss`: resident set size, in bytes.
+#
+# * `stack`: size of the stack segment, in bytes.
+#
+# * `as`: size of the address space, in bytes. Available on Linux, FreeBSD and NetBSD.
+#
+# * `nthr`: number of threads for the user. NetNSD only.
+#
+# * `sbsize`: size of socket buffers, in bytes. NetBSD only.
+#
+# * `locks`: number of file locks. Linux only.
+#
+# * `msgqueue`: size of message queues, in bytes. Linux only.
+#
+# * `nice`: ceiling of 20 - nice value. Linux only.
+#
+# * `rtprio`: real time priority. Linux only.
+#
+# * `rttime`: real-time CPU time, in seconds. Linux only.
+#
+# * `sigpending`: number of signals queued. Linux only.
 #
 # For the exact semantics of each resource, see the man page of `getrlimit`:
 # [Linux](https://man7.org/linux/man-pages/man2/setrlimit.2.html),
