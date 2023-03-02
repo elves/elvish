@@ -35,7 +35,7 @@ test_task:
     - name: Test on NetBSD
       compute_engine_instance:
         image_project: pg-ci-images
-        image: family/pg-ci-netbsd-vanilla-9-2
+        image: family/pg-ci-netbsd-vanilla-9-3
         platform: netbsd
       env:
         GO_PKG: go118
