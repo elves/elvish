@@ -226,7 +226,12 @@ func (a *app) handle(e event) {
 		target := a.ActiveWidget()
 		handled := target.Handle(e)
 		if !handled {
-			a.GlobalBindings.Handle(target, e)
+			handled = a.GlobalBindings.Handle(target, e)
+		}
+		if !handled {
+			if k, ok := e.(term.KeyEvent); ok {
+				a.Notify(ui.T("Unbound key: " + ui.Key(k).String()))
+			}
 		}
 		if !a.loop.HasReturned() {
 			a.triggerPrompts(false)

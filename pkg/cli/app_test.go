@@ -431,7 +431,7 @@ type testAddon struct {
 
 func (a testAddon) Focus() bool { return a.focus }
 
-// Misc features.
+// Event handling.
 
 func TestReadCode_UsesGlobalBindingsWithCodeAreaTarget(t *testing.T) {
 	testGlobalBindings(t, nil)
@@ -477,6 +477,17 @@ func TestReadCode_DoesNotUseGlobalBindingsIfHandledByWidget(t *testing.T) {
 	// Still handled by code area instead of global binding
 	f.TestTTY(t, "a", term.DotHere)
 }
+
+func TestReadCode_NotifiesAboutUnboundKey(t *testing.T) {
+	f := Setup()
+	defer f.Stop()
+
+	f.TTY.Inject(term.K(ui.F1))
+
+	f.TestTTYNotes(t, "Unbound key: F1")
+}
+
+// Misc features.
 
 func TestReadCode_TrimsBufferToMaxHeight(t *testing.T) {
 	f := Setup(func(spec *AppSpec, tty TTYCtrl) {
