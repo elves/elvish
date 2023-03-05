@@ -16,7 +16,7 @@ import (
 
 // VersionBase identifies the version of Elvish. On the development branches, it
 // identifies the next release.
-const VersionBase = "0.19.0"
+const VersionBase = "0.19.2"
 
 // BuildVariant may be set during compilation to identify a particular
 // build variant, such as a build by a specific distribution, with modified
