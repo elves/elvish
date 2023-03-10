@@ -132,6 +132,8 @@ func emitRegionsInForm(n *parse.Form, f func(parse.Node, regionKind, string)) {
 	switch head {
 	case "var", "set", "tmp":
 		emitRegionsInAssign(n, f)
+	case "del":
+		emitRegionsInDel(n, f)
 	case "if":
 		emitRegionsInIf(n, f)
 	case "for":
@@ -151,6 +153,12 @@ func emitRegionsInAssign(n *parse.Form, f func(parse.Node, regionKind, string)) 
 			f(arg, semanticRegion, keywordRegion)
 			break
 		}
+		emitVariableRegion(arg, f)
+	}
+}
+
+func emitRegionsInDel(n *parse.Form, f func(parse.Node, regionKind, string)) {
+	for _, arg := range n.Args {
 		emitVariableRegion(arg, f)
 	}
 }
