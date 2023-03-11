@@ -17,6 +17,25 @@
 # ▶ a.c
 # ```
 #
+# This function is most useful when creating an Elvish script that accepts
+# command-line arguments. For example, if a script `a.elv` contains the
+# following code:
+#
+# ```elvish
+# use flag
+# fn main { |&verbose=$false &port=(num 8000) name|
+#   ...
+# }
+# flag:call $main~ $args
+# ```
+#
+# The script can be used as follows:
+#
+# ```elvish-transcript
+# ~> elvish a.elv -verbose -port 80 foo
+# ...
+# ```
+#
 # See also [`flag:parse`]().
 fn call {|fn args| }
 
