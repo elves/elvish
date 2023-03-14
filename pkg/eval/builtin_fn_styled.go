@@ -50,12 +50,9 @@ func styled(fm *Frame, input any, stylings ...any) (ui.Text, error) {
 
 	switch input := input.(type) {
 	case string:
-		text = ui.Text{&ui.Segment{
-			Text:  input,
-			Style: ui.Style{},
-		}}
+		text = ui.T(input)
 	case *ui.Segment:
-		text = ui.Text{input.Clone()}
+		text = ui.TextFromSegment(input)
 	case ui.Text:
 		text = input.Clone()
 	default:
