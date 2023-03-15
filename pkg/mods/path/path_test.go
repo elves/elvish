@@ -139,6 +139,26 @@ func TestPath_Symlink(t *testing.T) {
 	)
 }
 
+func TestPathMkdir(t *testing.T) {
+	testutil.InTempDir(t)
+
+	TestWithSetup(t, importModules,
+		That("path:mkdir").DoesNothing(),
+		That("path:mkdir d; put **").Puts("d"),
+		That("path:mkdir d/e/f").Throws(ErrorWithType(&os.PathError{})),
+		That("path:mkdir &make-missing d/e/f; put **").Puts("d/e/f", "d/e", "d"),
+		That("path:mkdir &perm=0o1777 x").Throws(ErrorWithType(errs.OutOfRange{})),
+		That("path:mkdir &perm=0o755 x; put **").Puts("d/e/f", "d/e", "d", "x"),
+		// Note: We do not verify the permissions of the created directories.
+		// This is for several reasons. First, it is arguably not necessary
+		// since the `path:mkdir` implementation relies on the Go `os` package
+		// and we should be able to assume that it does the right thing. Also,
+		// verifying the permissions is extremely difficult and not portable.
+		// Both because it doesn't apply to Windows and given the current Elvish
+		// builtins doing so is difficult even on Unix platforms.
+	)
+}
+
 func importModules(ev *eval.Evaler) {
 	ev.ExtendGlobal(eval.BuildNs().AddNs("path", Ns).AddNs("file", file.Ns))
 }

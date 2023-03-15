@@ -3,9 +3,12 @@ package path
 
 import (
 	_ "embed"
+	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
+	"src.elv.sh/pkg/errutil"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vars"
@@ -30,6 +33,7 @@ var Ns = eval.BuildNsNamed("path").
 		"is-dir":        isDir,
 		"is-regular":    isRegular,
 		"join":          filepath.Join,
+		"mkdir":         mkdir,
 		"temp-dir":      tempDir,
 		"temp-file":     tempFile,
 	}).Ns()
@@ -97,4 +101,37 @@ func tempFile(opts mktempOpt, args ...string) (*os.File, error) {
 	}
 
 	return os.CreateTemp(opts.Dir, pattern)
+}
+
+type mkdirOpts struct {
+	MakeMissing bool
+	Perm        int
+}
+
+func (opts *mkdirOpts) SetDefaultOptions() { opts.Perm = 0o777 }
+
+// mkdir creates a directory for each filesystem path.
+func mkdir(opts mkdirOpts, paths ...string) error {
+	perm := uint(opts.Perm)
+	fileModePerm := fs.FileMode(perm)
+	if (fileModePerm & fs.ModePerm) != fileModePerm {
+		return errs.OutOfRange{
+			What:      "path:mkdir &perm",
+			ValidLow:  "0o000",
+			ValidHigh: "0o777",
+			Actual:    fmt.Sprintf("0o%o", perm),
+		}
+	}
+
+	var returnErr error
+	for _, path := range paths {
+		var err error
+		if opts.MakeMissing {
+			err = os.MkdirAll(path, fileModePerm)
+		} else {
+			err = os.Mkdir(path, fileModePerm)
+		}
+		returnErr = errutil.Multi(returnErr, err)
+	}
+	return returnErr
 }

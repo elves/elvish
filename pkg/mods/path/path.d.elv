@@ -197,3 +197,37 @@ fn temp-dir {|&dir='' pattern?| }
 # ▶ /some/dir/elvish-RANDOMSTR
 # ```
 fn temp-file {|&dir='' pattern?| }
+
+# Create one or more directories.
+#
+# If passed zero path names it does nothing; otherwise, it iterates over the
+# list of path names and attempts to create a directory for each one.
+#
+# Like the traditional Unix `mkdir` command an error processing a path name
+# does not immediately terminate processing the list of path names. This
+# command attempts to create directories for the remaining path names. This
+# can result in a "multiple error" exception that documents each path that
+# could not be created.
+#
+# If the `&make-missing` option is set to true a path name whose intermediate
+# directories are missing will cause those directories to be created;
+# otherwise, any missing intermediate directories will result in an error.
+#
+# The `&perm` option causes each directory (including intermediate
+# directories) to be created with the specified permissions as modified by the
+# current [`$unix:umask`](unix.html#$unix:umask). On non-Unix platforms this
+# option does nothing.
+#
+# ```elvish-transcript
+# ~> path:mkdir a/b
+# Exception: mkdir a/b: no such file or directory
+# ~> path:mkdir &make-missing a/b
+# ~> put a/*
+# ▶ a/b
+# ~> ls -ld a/b
+# drwxr-x--- 2 krader staff 64 Mar 29 18:34 a/b/
+# ~> path:mkdir &perm=0o500 a/c
+# ~> ls -ld a/c
+# dr-x------ 2 krader staff 64 Mar 29 18:37 a/c/
+# ```
+fn mkdir {|&make-missing=$false &perm=0o777 path...| }
