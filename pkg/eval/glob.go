@@ -247,7 +247,7 @@ func doGlob(gp globPattern, abort <-chan struct{}) ([]any, error) {
 			return true
 		}
 
-		if gp.TypeCb == nil || gp.TypeCb(pathInfo.Info.Mode()) {
+		if gp.TypeCb == nil || (pathInfo.Info != nil && gp.TypeCb(pathInfo.Info.Mode())) {
 			vs = append(vs, pathInfo.Path)
 		}
 		return true

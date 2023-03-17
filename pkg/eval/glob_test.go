@@ -1,10 +1,13 @@
 package eval_test
 
 import (
+	"io/fs"
+	"os"
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
 	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/glob"
 	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/testutil"
 )
@@ -111,5 +114,37 @@ func TestGlob_BadOperation(t *testing.T) {
 			Throws(ErrorWithMessage("cannot concatenate glob-pattern and fn")),
 		That("put { }*").
 			Throws(ErrorWithMessage("cannot concatenate fn and glob-pattern")),
+	)
+}
+
+// mockOSLstat injects permission failures into the glob expansion.
+func mockOSLstat(path string) (fs.FileInfo, error) {
+	if path == "a" || path == ".a" || path == ".d/.a" {
+		return nil, fs.ErrPermission
+	}
+	return os.Lstat(path)
+}
+
+// This test verifies a corner case of the glob logic when os.Lstat() returns
+// fs.ErrPermission. This only occurs under highly unusual situations such as on
+// macOS SIP (System Integrity Protection) refusing to expose information about
+// a path name. If the user has not qualified the glob the path name should be
+// included in the expansion; otherwise, since we can't determine the
+// characteristics of the path name, it should be excluded. In both cases the
+// permission error should not stop enumerating other names in the glob
+// expansion. This is an amalgam of the other glob expansion tests above.
+func TestGlob_PermissionDenied(t *testing.T) {
+	testutil.InTempDir(t)
+	must.MkdirAll("d", ".d")
+	must.CreateEmpty("a", ".a", "b", "d/a", "d/.a", ".d/a", ".d/.a")
+	testutil.Set(t, &glob.OSLstat, mockOSLstat)
+	Test(t,
+		That("put *").Puts("a", "b", "d"),
+		That("put *[match-hidden]").Puts(".a", ".d", "a", "b", "d"),
+		That("put *[but:b]").Puts("a", "d"),
+		That("put *[type:dir]").Puts("d"),
+		That("put **[type:dir]").Puts("d"),
+		That("put **[match-hidden][type:regular]").Puts(".d/a", "d/.a", "d/a", "b"),
+		That("put **[type:regular]").Puts("d/a", "b"),
 	)
 }

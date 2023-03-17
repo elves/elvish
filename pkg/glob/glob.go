@@ -2,10 +2,14 @@
 package glob
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"runtime"
 	"unicode/utf8"
 )
+
+var OSLstat = os.Lstat // to allow mutation by unit tests
 
 // TODO: On Windows, preserve the original path separator (/ or \) specified in
 // the glob pattern.
@@ -61,9 +65,21 @@ func isDrive(s string) bool {
 	return len(s) == 2 && s[1] == ':' && isLetter(s[0])
 }
 
+// fatalGlobError returns true if the error should cause further glob processing
+// to stop.
+//
+// There are systems that can return EPERM from an os.Lstat() call. Such as on
+// macOS when its System Integrity Protection (SIP) denies access to details
+// about the path. We do not want to stop enumerating paths when that occurs.
+func fatalGlobError(err error) bool {
+	return err != nil && !errors.Is(err, fs.ErrPermission)
+}
+
 // glob finds all filenames matching the given Segments in the given dir, and
-// calls the callback on all of them. If the callback returns false, globbing is
-// interrupted, and glob returns false. Otherwise it returns true.
+// calls the callback on all of them. The callback needs to handle a nil
+// PathInfo. If a fatal error such as the callback returning false (indicating
+// globbing was interrupted) or a function such as os.Lstat returns an
+// unexpected error this returns false; otherwise it returns true.
 func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 	// Consume non-wildcard path elements simply by following the path. This may
 	// seem like an optimization, but is actually required for "." and ".." to
@@ -78,19 +94,21 @@ func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 		// (e.g. in "link-to-dir/*") despite the use of Lstat, since a trailing
 		// slash always causes symbolic links to be resolved
 		// (https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_13).
-		if info, err := os.Lstat(dir); err != nil || !info.IsDir() {
+		if info, err := OSLstat(dir); fatalGlobError(err) || !info.IsDir() {
 			return true
 		}
 	}
 
 	if len(segs) == 0 {
-		if info, err := os.Lstat(dir); err == nil {
+		if info, err := OSLstat(dir); !fatalGlobError(err) {
+			// We expect the callback to handle a nil `info` value.
 			return cb(PathInfo{dir, info})
 		}
 		return true
 	} else if len(segs) == 1 && IsLiteral(segs[0]) {
 		path := dir + segs[0].(Literal).Data
-		if info, err := os.Lstat(path); err == nil {
+		if info, err := OSLstat(path); !fatalGlobError(err) {
+			// We expect the callback to handle a nil `info` value.
 			return cb(PathInfo{path, info})
 		}
 		return true
@@ -167,10 +185,11 @@ func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 		name := info.Name()
 		if matchElement(segs, name) {
 			dirname := dir + name
-			info, err := os.Lstat(dirname)
-			if err != nil {
+			info, err := OSLstat(dirname)
+			if fatalGlobError(err) {
 				return true
 			}
+			// We expect the callback to handle a nil `info` value.
 			if !cb(PathInfo{dirname, info}) {
 				return false
 			}
