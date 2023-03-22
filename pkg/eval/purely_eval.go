@@ -45,7 +45,7 @@ func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto int) (strin
 			i = len(head)
 		}
 		uname := head[:i]
-		home, err := getHome(uname)
+		home, err := FsutilGetHome(uname)
 		if err != nil {
 			return "", false
 		}

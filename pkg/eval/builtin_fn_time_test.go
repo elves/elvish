@@ -12,7 +12,7 @@ import (
 )
 
 func TestSleep(t *testing.T) {
-	testutil.Set(t, TimeAfter,
+	testutil.Set(t, &TimeAfter,
 		func(fm *Frame, d time.Duration) <-chan time.Time {
 			fm.ValueOutput().Put(d)
 			return time.After(0)
@@ -65,7 +65,7 @@ func TestTime(t *testing.T) {
 
 func TestBenchmark(t *testing.T) {
 	var ticks []int64
-	testutil.Set(t, TimeNow, func() time.Time {
+	testutil.Set(t, &TimeNow, func() time.Time {
 		if len(ticks) == 0 {
 			panic("mock TimeNow called more than len(ticks)")
 		}

@@ -20,13 +20,10 @@ func init() {
 	})
 }
 
-var (
-	// Reference to [time.After] that can be mutated for testing. Takes an
-	// additional Frame argument to allow inspection of the value of d in tests.
-	timeAfter = func(fm *Frame, d time.Duration) <-chan time.Time { return time.After(d) }
-	// Reference to [time.Now] that can be overridden in tests.
-	timeNow = time.Now
-)
+var TimeNow = time.Now // to allow mutation by unit tests
+// Reference to time.After that can be mutated for testing. Takes an additional
+// Frame argument to allow inspection of the value of `d` in unit tests.
+var TimeAfter = func(fm *Frame, d time.Duration) <-chan time.Time { return time.After(d) }
 
 func sleep(fm *Frame, duration any) error {
 	var f float64
@@ -54,7 +51,7 @@ func sleep(fm *Frame, duration any) error {
 	select {
 	case <-fm.Interrupts():
 		return ErrInterrupted
-	case <-timeAfter(fm, d):
+	case <-TimeAfter(fm, d):
 		return nil
 	}
 }
@@ -135,12 +132,12 @@ func benchmark(fm *Frame, opts benchmarkOpts, f Callable) error {
 		err   error
 	)
 	for {
-		t0 := timeNow()
+		t0 := TimeNow()
 		err = f.Call(fm, NoArgs, NoOpts)
 		if err != nil {
 			break
 		}
-		dt := timeNow().Sub(t0)
+		dt := TimeNow().Sub(t0)
 
 		if min > dt {
 			min = dt

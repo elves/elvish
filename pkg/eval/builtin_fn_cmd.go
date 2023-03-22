@@ -38,8 +38,7 @@ func searchExternal(cmd string) (string, error) {
 	return exec.LookPath(cmd)
 }
 
-// Can be overridden in tests.
-var osExit = os.Exit
+var OSExit = os.Exit // to allow mutation by unit tests
 
 func exit(fm *Frame, codes ...int) error {
 	code := 0
@@ -52,6 +51,6 @@ func exit(fm *Frame, codes ...int) error {
 	}
 
 	fm.Evaler.PreExit()
-	osExit(code)
+	OSExit(code)
 	return nil
 }

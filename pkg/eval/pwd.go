@@ -18,13 +18,12 @@ type pwdVar struct {
 
 var _ vars.Var = pwdVar{}
 
-// Can be mutated in tests.
-var getwd func() (string, error) = os.Getwd
+var OSGetwd = os.Getwd // to allow mutation by unit tests
 
 // Get returns the current working directory. It returns "/unknown/pwd" when
 // it cannot be determined.
 func (pwdVar) Get() any {
-	pwd, err := getwd()
+	pwd, err := OSGetwd()
 	if err != nil {
 		// This should really use the path separator appropriate for the
 		// platform but in practice this hardcoded string works fine. Both

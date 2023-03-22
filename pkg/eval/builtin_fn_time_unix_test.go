@@ -15,7 +15,7 @@ import (
 )
 
 func TestSleep_Interrupt(t *testing.T) {
-	testutil.Set(t, TimeAfter,
+	testutil.Set(t, &TimeAfter,
 		func(fm *Frame, d time.Duration) <-chan time.Time {
 			go unix.Kill(os.Getpid(), unix.SIGINT)
 			return time.After(d)

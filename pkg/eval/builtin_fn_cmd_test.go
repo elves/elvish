@@ -12,7 +12,7 @@ import (
 
 func TestExit(t *testing.T) {
 	var exitCodes []int
-	testutil.Set(t, OSExit, func(i int) { exitCodes = append(exitCodes, i) })
+	testutil.Set(t, &OSExit, func(i int) { exitCodes = append(exitCodes, i) })
 
 	Test(t,
 		That("exit").DoesNothing(),
@@ -29,7 +29,7 @@ func TestExit(t *testing.T) {
 }
 
 func TestExit_RunsPreExit(t *testing.T) {
-	testutil.Set(t, OSExit, func(int) {})
+	testutil.Set(t, &OSExit, func(int) {})
 
 	calls := 0
 	setup := func(ev *Evaler) {

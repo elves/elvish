@@ -43,7 +43,7 @@ func TestCd(t *testing.T) {
 
 func TestCd_GetHomeError(t *testing.T) {
 	err := errors.New("fake error")
-	testutil.Set(t, GetHome, func(name string) (string, error) { return "", err })
+	testutil.Set(t, &FsutilGetHome, func(name string) (string, error) { return "", err })
 
 	Test(t, That("cd").Throws(err, "cd"))
 }

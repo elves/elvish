@@ -85,7 +85,7 @@ func TestTilde(t *testing.T) {
 
 	otherHome := testutil.TempDir(t)
 	testutil.ApplyDirIn(testutil.Dir{"other1": "", "other2": ""}, otherHome)
-	testutil.Set(t, GetHome, func(name string) (string, error) {
+	testutil.Set(t, &FsutilGetHome, func(name string) (string, error) {
 		switch name {
 		case "":
 			return fsutil.GetHome("")
@@ -118,7 +118,7 @@ func TestTilde(t *testing.T) {
 
 func TestTilde_ErrorForCurrentUser(t *testing.T) {
 	err := errors.New("fake error")
-	testutil.Set(t, GetHome, func(name string) (string, error) { return "", err })
+	testutil.Set(t, &FsutilGetHome, func(name string) (string, error) { return "", err })
 
 	Test(t,
 		That("put ~").Throws(err, "~"),
