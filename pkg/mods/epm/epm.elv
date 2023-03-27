@@ -1,3 +1,8 @@
+# Uncomment this line to make it easy to identify dependencies on external
+# commands:
+#
+# pragma unknown-command = disallow
+use path
 use re
 use str
 use platform
@@ -65,7 +70,7 @@ fn dest {|pkg|
 
 # Returns a boolean value indicating whether the given package is installed.
 fn is-installed {|pkg|
-  bool ?(test -e (dest $pkg))
+  path:is-dir (dest $pkg)
 }
 
 fn -package-domain {|pkg|
@@ -80,11 +85,6 @@ fn -package-without-domain {|pkg|
 fn -merge {|a b|
   keys $b | each {|k| set a[$k] = $b[$k] }
   put $a
-}
-
-# Uppercase first letter of a string
-fn -first-upper {|s|
-  put (echo $s[0] | tr '[:lower:]' '[:upper:]')$s[(count $s[0]):]
 }
 
 # Expand tilde at the beginning of a string to the home dir
@@ -182,9 +182,9 @@ fn -write-domain-config {|dom|
 fn -domain-config {|dom|
   var cfgfile = (-domain-config-file $dom)
   var cfg = $false
-  if ?(test -f $cfgfile) {
+  if (path:is-regular $cfgfile) {
     # If the config file exists, read it...
-    set cfg = (cat $cfgfile | from-json)
+    set cfg = (from-json < $cfgfile)
     -debug "Read domain config for "$dom": "(to-string $cfg)
   } else {
     # ...otherwise check if we have a default config for the domain, and save it
@@ -276,8 +276,8 @@ fn metadata {|pkg|
   ]
   # Merge with package-specified attributes, if any
   var file = (-package-metadata-file $pkg)
-  if (and (is-installed $pkg) ?(test -f $file)) {
-    set res = (-merge (cat $file | from-json) $res)
+  if (and (is-installed $pkg) (path:is-regular $file)) {
+    set res = (-merge (from-json < $file) $res)
   }
   put $res
 }
@@ -285,7 +285,6 @@ fn metadata {|pkg|
 # Pretty print the available metadata of the given package.
 fn query {|pkg|
   var data = (metadata $pkg)
-  var special-keys = [name method installed src dst]
   echo (styled "Package "$data[name] cyan)
   if $data[installed] {
     echo (styled "Installed at "$data[dst] green)
@@ -293,14 +292,17 @@ fn query {|pkg|
     echo (styled "Not installed" red)
   }
   echo (styled "Source:" blue) $data[method] $data[src]
+
+  var special-keys = [name method installed src dst]
   keys $data | each {|key|
-    if (not (has-value $special-keys $key)) {
-      var val = $data[$key]
-      if (eq (kind-of $val) list) {
-        set val = (str:join ", " $val)
-      }
-      echo (styled (-first-upper $key)":" blue) $val
+    if (has-value $special-keys $key) {
+      continue
     }
+    var val = $data[$key]
+    if (eq (kind-of $val) list) {
+      set val = (str:join ", " $val)
+    }
+    echo (styled (str:title $key)":" blue) $val
   }
 }
 
