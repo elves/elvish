@@ -47,6 +47,20 @@ type showOptions struct{ Width int }
 
 func (opts *showOptions) SetDefaultOptions() {}
 
+func MarkdownShowMaybe(name string, width int) (string, error) {
+	doc, err := source(name)
+	if err != nil {
+		doc, err = source("builtin:" + name)
+		if err != nil {
+			return "", err
+		}
+	}
+	codec := &md.FmtCodec{
+		Width: width,
+	}
+	return md.RenderString(fmt.Sprintf("# %s\n\n%s", name, doc), codec), nil
+}
+
 func show(fm *eval.Frame, opts showOptions, fqname string) error {
 	doc, err := source(fqname)
 	if err != nil {
