@@ -1313,7 +1313,7 @@ expression is evaluated as follows:
 
 1.  The variable use `$li` evaluates to the list `[foo bar]`.
 
-2.  The indexing expression `$li[0]` evaluates to two strings `foo` and `bar`.
+2.  The indexing expression `$li[0 1]` evaluates to two strings `foo` and `bar`.
 
 3.  Compounding the expression, the result is `~/foo/*` and `~/bar/*`.
 
