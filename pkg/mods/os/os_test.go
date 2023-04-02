@@ -2,11 +2,13 @@ package os_test
 
 import (
 	"io/fs"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/evaltest"
-	"src.elv.sh/pkg/mods/os"
+	os_mod "src.elv.sh/pkg/mods/os"
 	"src.elv.sh/pkg/mods/path"
 	"src.elv.sh/pkg/mods/unix"
 	"src.elv.sh/pkg/testutil"
@@ -20,10 +22,35 @@ var (
 	StringMatchingRegexp = evaltest.StringMatching
 )
 
+var testDir = testutil.Dir{
+	"d": testutil.Dir{
+		"f": "",
+	},
+}
+
+var symlinks = []struct {
+	path   string
+	target string
+}{
+	{"d/s-f", "f"},
+	{"s-d", "d"},
+	{"s-d-f", "d/f"},
+	{"s-bad", "bad"},
+}
+
 func TestOS(t *testing.T) {
-	testutil.InTempDir(t)
+	tmpdir := testutil.InTempDir(t)
+	testutil.ApplyDir(testDir)
+	for _, link := range symlinks {
+		err := os.Symlink(link.target, link.path)
+		if err != nil {
+			// Creating symlinks requires a special permission on Windows. If
+			// the user doesn't have that permission, just skip the whole test.
+			t.Skip(err)
+		}
+	}
 	setup := func(ev *eval.Evaler) {
-		ev.ExtendGlobal(eval.BuildNs().AddNs("os", os.Ns))
+		ev.ExtendGlobal(eval.BuildNs().AddNs("os", os_mod.Ns))
 		ev.ExtendGlobal(eval.BuildNs().AddNs("path", path.Ns))
 		ev.ExtendGlobal(eval.BuildNs().AddNs("unix", unix.Ns))
 	}
@@ -47,7 +74,7 @@ func TestOS(t *testing.T) {
 			Throws(ErrorWithType(&fs.PathError{})),
 		That(`try { os:remove d5 } catch e { os:-is-not-exist $e }`).
 			Puts(true),
-		That(`os:remove ""`).Throws(os.ErrEmptyPath),
+		That(`os:remove ""`).Throws(os_mod.ErrEmptyPath),
 
 		// remove-all
 		That(`os:mkdir d6; echo > d6/file; os:remove-all d6; os:exists d6`).
@@ -55,7 +82,23 @@ func TestOS(t *testing.T) {
 		That(`os:mkdir d7; echo > d7/file; os:remove-all $pwd/d7; os:exists d7`).
 			Puts(false),
 		That(`os:remove-all d8`).DoesNothing(),
-		That(`os:remove-all ""`).Throws(os.ErrEmptyPath),
+		That(`os:remove-all ""`).Throws(os_mod.ErrEmptyPath),
+
+		// stat
+		That("put (os:stat d)[path]").Puts("d"),
+		That("put (os:stat d/f)[path]").Puts("d/f"),
+		That("put (os:stat d/f)[abs-path]").Puts(filepath.Join(tmpdir, "d", "f")),
+		That("put (os:stat d/f)[size]").Puts(0),
+
+		// stat symlinks
+		That("put (os:stat s-d)[is-dir]").Puts(false),
+		That("put (os:stat s-d)[is-regular]").Puts(false),
+		That("put (os:stat &follow-symlink s-d)[is-dir]").Puts(true),
+		That("put (os:stat s-d-f)[is-dir]").Puts(false),
+		That("put (os:stat s-d-f)[is-regular]").Puts(false),
+		That("put (os:stat &follow-symlink s-d-f)[is-regular]").Puts(true),
+		That("put (os:stat s-d-f)[is-symlink]").Puts(true),
+		That("put (os:stat &follow-symlink s-d-f)[is-symlink]").Puts(false),
 	)
 
 	if unix.ExposeUnixNs {

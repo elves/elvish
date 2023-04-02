@@ -2,10 +2,14 @@ package vals
 
 import (
 	"os"
+	"time"
 
 	"src.elv.sh/pkg/persistent/hashmap"
 	"src.elv.sh/pkg/persistent/vector"
 )
+
+// Time is an alias for time.Time.
+type Time = time.Time
 
 // File is an alias for *os.File.
 type File = *os.File

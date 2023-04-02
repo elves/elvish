@@ -56,6 +56,8 @@ func Repr(v any, indent int) string {
 		return "(num " + v.String() + ")"
 	case float64:
 		return "(num " + formatFloat64(v) + ")"
+	case Time:
+		return fmt.Sprintf("<time{%s}>", v.String())
 	case File:
 		return fmt.Sprintf("<file{%s %d}>", parse.Quote(v.Name()), v.Fd())
 	case List:

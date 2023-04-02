@@ -116,7 +116,7 @@ fn join {|@path-component| }
 # ▶ true
 # ```
 #
-# See also [`path:is-regular`]().
+# See also [`path:is-regular`](), [`os:stat`]().
 fn is-dir {|&follow-symlink=$false path| }
 
 # Outputs `$true` if the path resolves to a regular file. If the final element of the path is a
@@ -135,7 +135,7 @@ fn is-dir {|&follow-symlink=$false path| }
 # ▶ false
 # ```
 #
-# See also [`path:is-dir`]().
+# See also [`path:is-dir`](), [`os:stat`]().
 fn is-regular {|&follow-symlink=$false path| }
 
 # Creates a new directory and outputs its name.
