@@ -3,13 +3,44 @@ package path
 
 import (
 	_ "embed"
+	"math/big"
 	"os"
 	"path/filepath"
+	"time"
 
+	"src.elv.sh/pkg/errutil"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vars"
 )
+
+// fileInfo exposes metadata from the os.Stat/os.Lstat functions.
+type fileInfo struct {
+	// These fields are populated on every platform.
+	Path         string
+	AbsPath      string
+	IsDir        bool
+	Size         *big.Int
+	Mode         *big.Int
+	SymbolicMode string
+	MTime        time.Time
+	// These fields are only populated on some platforms.
+	ATime      time.Time
+	BTime      time.Time
+	CTime      time.Time
+	Owner      string
+	Group      string
+	Uid        *big.Int
+	Gid        *big.Int
+	NumLinks   *big.Int
+	Inode      *big.Int
+	Device     *big.Int
+	RawDevice  *big.Int
+	BlockSize  *big.Int
+	BlockCount *big.Int
+}
+
+func (fileInfo) IsStructMap() {}
 
 // Ns is the namespace for the path: module.
 var Ns = eval.BuildNsNamed("path").
@@ -30,6 +61,7 @@ var Ns = eval.BuildNsNamed("path").
 		"is-dir":        isDir,
 		"is-regular":    isRegular,
 		"join":          filepath.Join,
+		"stat":          stat,
 		"temp-dir":      tempDir,
 		"temp-file":     tempFile,
 	}).Ns()
@@ -97,4 +129,29 @@ func tempFile(opts mktempOpt, args ...string) (*os.File, error) {
 	}
 
 	return os.CreateTemp(opts.Dir, pattern)
+}
+
+type statOpts struct{ FollowSymlink bool }
+
+func (opts *statOpts) SetDefaultOptions() {}
+
+// stat outputs a psuedo-map containing metadata about each path.
+func stat(fm *eval.Frame, opts statOpts, paths ...string) error {
+	var returnErr error
+	out := fm.ValueOutput()
+	for _, path := range paths {
+		var err error
+		var info os.FileInfo
+		if opts.FollowSymlink {
+			info, err = os.Stat(path)
+		} else {
+			info, err = os.Lstat(path)
+		}
+		if err != nil {
+			returnErr = errutil.Multi(returnErr, err)
+		} else {
+			out.Put(pathMetadata(path, info))
+		}
+	}
+	return returnErr
 }

@@ -197,3 +197,107 @@ fn temp-dir {|&dir='' pattern?| }
 # ▶ /some/dir/elvish-RANDOMSTR
 # ```
 fn temp-file {|&dir='' pattern?| }
+
+# Output a pseudo-map containing metadata about one or more paths.
+#
+# If passed zero path names it does nothing; otherwise, it iterates over the
+# list of path names and attempts to determine the characteristics of each
+# path. It outputs a [psuedo-map](language.html#pseudo-map) that exposes the
+# metadata about each path.
+#
+# Like the traditional Unix `stat` command an error processing a path name
+# does not immediately terminate processing the list of path names. This
+# command attempts to stat the remaining path names. This can result in a
+# "multiple error" exception that documents each path that could not stat'd
+# while still outputting information about some paths.
+#
+# If the `&follow-symlink` option is false and the path refers to a symbolic
+# link then metadata about the symlink is output. If `&follow-symlink` is
+# true then the metadata about the target of the symlink is output.
+#
+# The following keys are available in the pseudo-map. Whether the key has a
+# meaningful value depends on the platform.
+#
+# - `path`: The original path passed to the command. Available on all
+# platforms.
+#
+# - `abs-path`: The absolute path of the `path` value. Available on all
+# platforms.
+#
+# - `is-dir`: True if the path refers to a directory; otherwise, false.
+# Available on all platforms.
+#
+# - `size`: The size of the file in bytes. Available on all platforms.
+#
+# - `mode`: A numeric value describing the permissions and other attributes
+# of the file when interpreted as a bit pattern. The meaning of this value
+# depends on the platform. Available on all platforms.
+#
+# - `symbolic-mode`: A string representation of the `mode` value. Available on
+# all platforms.
+#
+# - `m-time`: The modification time of the file. Available on all platforms.
+#
+# - `a-time`: The access time of the file. Available on Unix and Windows.
+#
+# - `b-time`: The birth (i.e., creation) time of the file. Available on
+# Darwin (macOS) and Windows.
+#
+# - `c-time`: The status change time of the file. Status changes include
+# events such as changing the owner or permissions of the file. Available on
+# Unix.
+#
+# - `owner`: The user name for the `uid` that owns the file. Available on Unix.
+#
+# - `group`: The group name for the `gid` that owns the file. Available on Unix.
+#
+# - `uid`: The user ID that owns the file. Available on Unix.
+#
+# - `gid`: The group ID that owns the file. Available on Unix.
+#
+# - `num-links`: The number of hard links to the file. Available on Unix.
+#
+# - `inode`: The inode number of the file. Available on Unix.
+#
+# - `device`: The device ID of the filesystem containing file. Available on Unix.
+#
+# - `raw-device`: The raw device ID if the file is a device node (rather than
+# a directory, regular file, or symlink). Available on Unix.
+#
+# - `block-count`: The size of the file in blocks of `block-size`. Available on Unix.
+#
+# - `block-size`: The block size for I/O. Available on Unix.
+#
+# Example:
+#
+# ```elvish-transcript
+# ~> pwd
+# /tmp
+# ~> nop > f
+# ~> ls -l f
+# -rw-r----- 1 krader staff 0 Apr  1 19:53 f
+# ~> pprint (path:stat f)
+# [
+#  &path= f
+#  &abs-path=     /tmp/f
+#  &is-dir=       $false
+#  &size= (num 0)
+#  &mode= (num 416)
+#  &symbolic-mode=        -rw-r-----
+#  &m-time=       <unknown 2023-04-04 13:48:33.672098599 -0700 PDT>
+#  &a-time=       <unknown 2023-04-04 13:48:33.672098599 -0700 PDT>
+#  &b-time=       <unknown 2023-04-04 13:48:33.672098599 -0700 PDT>
+#  &c-time=       <unknown 2023-04-04 13:48:33.672098599 -0700 PDT>
+#  &owner=        krader
+#  &group=        staff
+#  &uid=  (num 501)
+#  &gid=  (num 20)
+#  &num-links=    (num 1)
+#  &inode=        (num 55886574)
+#  &device=       (num 16777229)
+#  &raw-device=   (num 0)
+#  &block-size=   (num 4096)
+#  &block-count=  (num 0)
+# ]
+# ```
+fn stat {|&follow-symlink=$false path...| }

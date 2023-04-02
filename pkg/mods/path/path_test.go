@@ -61,6 +61,13 @@ func TestPath(t *testing.T) {
 		That("path:is-regular d/f").Puts(true),
 		That("path:is-regular bad").Puts(false),
 
+		That("put (path:stat d)[is-dir]").Puts(true),
+		That("put (path:stat d)[path]").Puts("d"),
+		That("put (path:stat d/f)[is-dir]").Puts(false),
+		That("put (path:stat d/f)[path]").Puts("d/f"),
+		That("put (path:stat d/f)[abs-path]").Puts(filepath.Join(tmpdir, "d", "f")),
+		That("put (path:stat d/f)[size]").Puts(0),
+
 		// Verify the commands for creating temporary filesystem objects work correctly.
 		That("var x = (path:temp-dir)", "rmdir $x", "put $x").Puts(
 			MatchingRegexp{Pattern: anyDir + `elvish-.*$`}),
@@ -136,6 +143,11 @@ func TestPath_Symlink(t *testing.T) {
 		That("path:is-regular s-bad &follow-symlink").Puts(false),
 		That("path:is-regular bad").Puts(false),
 		That("path:is-regular bad &follow-symlink").Puts(false),
+
+		That("put (path:stat s-d)[is-dir]").Puts(false),
+		That("put (path:stat &follow-symlink s-d)[is-dir]").Puts(true),
+		That("put (path:stat s-d-f)[is-dir]").Puts(false),
+		That("put (path:stat &follow-symlink s-d-f)[is-dir]").Puts(false),
 	)
 }
 
