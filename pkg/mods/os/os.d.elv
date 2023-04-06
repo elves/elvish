@@ -18,6 +18,45 @@ fn -is-exist {|exc| }
 # does not exist.
 fn -is-not-exist {|exc| }
 
+# Change the mode of `$path`.
+#
+# The `$mode` argument must be an integer. It is used as the absolute mode
+# value to assign to `$path`. If `$mode` is a string rather than a
+# [`num`](language.html#number) it can have a radix prefix (e.g., `0o` to
+# indicate the following digits are octal). If there is not an explicit radix
+# prefix octal is assumed. If that implicit radix conversion fails then the
+# value is assumed to be radix 10. This is different from nearly all other
+# Elvish string to number conversions which assume a string without an
+# explicit radix are decimal.
+#
+# On Unix systems the permission bits (0o777, representing the owner, group,
+# and other permission groups), SetUid (0o4000), SetGid (0o2000), and Sticky
+# (0o1000) bits are valid. The permission bits are:
+#
+# - 0o400 Allow reads by the owner.
+# - 0o200 Allow writes by the owner.
+# - 0o100 Allow execution by the owner if a file, else search if a directory.
+# - 0o040 Allow reads by group members.
+# - 0o020 Allow writes by group members.
+# - 0o010 Allow execution by group members if a file, else search if a directory.
+# - 0o004 Allow reads by others.
+# - 0o002 Allow writes by others.
+# - 0o001 Allow execution by others if a file, else search if a directory.
+#
+# On Windows only the user write bit (0o200) is valid (the other bits are
+# ignored). If that bit is set the file mode allows writing; otherwise, the
+# file is read-only.
+#
+# ```elvish-transcript
+# ~> echo > f
+# ~> ls -l f
+# -rw-r----- 1 user group 1 Mar 29 20:28 f
+# ~> os:chmod 0o2123 f
+# ~> ls -l f # Note the `S` for the SetGid mode
+# ---x-wS-wx 1 user group 1 Mar 29 20:28 f*
+# ```
+fn chmod {|mode path| }
+
 # Creates a new directory with the specified name and permission (before umask).
 fn mkdir {|&perm=0o755 path| }
 

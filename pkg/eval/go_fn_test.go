@@ -1,7 +1,6 @@
 package eval_test
 
 import (
-	"errors"
 	"math/big"
 	"reflect"
 	"testing"
@@ -18,9 +17,6 @@ type someOptions struct {
 }
 
 func (o *someOptions) SetDefaultOptions() { o.Bar = "default" }
-
-//lint:ignore ST1012 test code
-var anError = errors.New("an error")
 
 type namedSlice []string
 
@@ -141,8 +137,8 @@ func TestGoFn_RawOptions(t *testing.T) {
 			WithSetup(f(func() namedSlice { return namedSlice{"foo", "bar"} })),
 
 		// Error return value
-		That("f").Throws(anError).
-			WithSetup(f(func() (string, error) { return "x", anError })),
+		That("f").Throws(errs.Generic).
+			WithSetup(f(func() (string, error) { return "x", errs.Generic })),
 		That("f").DoesNothing().
 			WithSetup(f(func() error { return nil })),
 	)

@@ -20,6 +20,14 @@ func TestFSModifications(t *testing.T) {
 		testutil.InTempDir(t)
 		useOS(ev)
 	},
+		//chmod
+		That("os:chmod").Throws(
+			errs.ArityMismatch{What: "arguments", ValidLow: 2, ValidHigh: 2, Actual: 0}),
+		That("os:chmod x y").Throws(ErrorWithType(errs.OutOfRange{})),
+		That("os:chmod 0o10777 x").Throws(ErrorWithType(errs.OutOfRange{})),
+		That("os:chmod (inexact-num 0o777) x").Throws(ErrorWithType(errs.OutOfRange{})),
+		// See the os_*_test.go files for os:chmod platform specific tests.
+
 		// mkdir
 		That(`os:mkdir d; os:is-dir d`).Puts(true),
 		That(`os:mkdir d; try { os:mkdir d } catch e { os:-is-exist $e }`).

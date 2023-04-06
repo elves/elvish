@@ -2,11 +2,18 @@
 package errs
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
 	"src.elv.sh/pkg/parse"
 )
+
+// Generic is an error whose specific value does not matter. Use it anywhere you
+// might use `errors.New("")`; i.e., when the specific message does not matter.
+//
+//lint:ignore ST1012 test code
+var Generic = errors.New("generic error")
 
 // OutOfRange encodes an error where a value is out of its valid range.
 type OutOfRange struct {
