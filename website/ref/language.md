@@ -1285,6 +1285,11 @@ Note the following caveats:
 -   Likewise, you always need to use `**` to match slashes, even if the matcher
     includes `/`. For example `*[set:abc/]` is the same as `*[set:abc]`.
 
+Files that the Elvish runtime doesn't have appropriate access to are omitted
+silently. For example, if the runtime doesn't have appropriate access to either
+the `d` directory or the `d/y.cc` file, the result of `*/y.cc` may omit
+`d/y.cc`.
+
 ## Order of evaluation
 
 An expression can use a combination of indexing, tilde expansion, wildcard and

@@ -63,7 +63,8 @@ func isDrive(s string) bool {
 
 // glob finds all filenames matching the given Segments in the given dir, and
 // calls the callback on all of them. If the callback returns false, globbing is
-// interrupted, and glob returns false. Otherwise it returns true.
+// interrupted, and glob returns false. Otherwise it returns true. Files that
+// can't be lstat'ed and directories that can't be read are ignored silently.
 func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 	// Consume non-wildcard path elements simply by following the path. This may
 	// seem like an optimization, but is actually required for "." and ".." to
@@ -98,7 +99,7 @@ func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 
 	infos, err := readDir(dir)
 	if err != nil {
-		// TODO(xiaq): Silently drop the error.
+		// Ignore directories that can't be read.
 		return true
 	}
 
@@ -166,12 +167,17 @@ func glob(segs []Segment, dir string, cb func(PathInfo) bool) bool {
 	for _, info := range infos {
 		name := info.Name()
 		if matchElement(segs, name) {
-			dirname := dir + name
-			info, err := os.Lstat(dirname)
+			fullname := dir + name
+			info, err := os.Lstat(fullname)
 			if err != nil {
-				return true
+				// Either the file was removed between ReadDir and Lstat, or the
+				// OS has some special rule that prevents it from being lstat'ed
+				// (see b.elv.sh/1674 for a known case on macOS; SELinux and
+				// FreeBSD's MAC might be able to do the same). In either case,
+				// ignore the file.
+				continue
 			}
-			if !cb(PathInfo{dirname, info}) {
+			if !cb(PathInfo{fullname, info}) {
 				return false
 			}
 		}

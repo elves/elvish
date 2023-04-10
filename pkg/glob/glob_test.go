@@ -60,6 +60,8 @@ var globCases = []globCase{
 	{"xxxx/*", []string{}},
 	{"a/*/", []string{}},
 
+	// TODO: Add more tests for situations where Lstat fails.
+
 	// TODO Test cases against dotfiles.
 }
 
