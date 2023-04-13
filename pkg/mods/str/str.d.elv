@@ -54,6 +54,21 @@ fn count {|str substr| }
 # ```
 fn equal-fold {|str1 str2| }
 
+
+# Splits `$str` around each instance of one or more consecutive white space
+# characters.
+#
+# ```elvish-transcript
+# ~> str:split "lorem ipsum   dolor"
+# ▶ lorem
+# ▶ ipsum
+# ▶ dolor
+# ~> str:split "   "
+# ```
+#
+# See also [`str:split`]().
+fn fields {|str| }
+
 # Outputs a string consisting of the given Unicode codepoints. Example:
 #
 # ```elvish-transcript
@@ -184,7 +199,7 @@ fn replace {|&max=-1 old repl source| }
 # Etymology: Various languages, in particular
 # [Python](https://docs.python.org/3.6/library/stdtypes.html#str.split).
 #
-# See also [`str:join`]().
+# See also [`str:join`]() and [`str:fields`]().
 fn split {|&max=-1 sep string| }
 
 # Outputs `$str` with all Unicode letters that begin words mapped to their

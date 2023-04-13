@@ -35,6 +35,10 @@ func TestStr(t *testing.T) {
 		That(`str:equal-fold abc ABC`).Puts(true),
 		That(`str:equal-fold abc A`).Puts(false),
 
+		That(`str:fields "abc ABC"`).Puts("abc", "ABC"),
+		That(`str:fields "abc    ABC"`).Puts("abc", "ABC"),
+		That(`str:fields "  "`).Puts(),
+
 		That(`str:from-codepoints 0x61`).Puts("a"),
 		That(`str:from-codepoints 0x4f60 0x597d`).Puts("你好"),
 		That(`str:from-codepoints -0x1`).Throws(errs.OutOfRange{
