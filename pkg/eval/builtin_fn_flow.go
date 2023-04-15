@@ -1,11 +1,17 @@
 package eval
 
 import (
+	"context"
 	"errors"
+	"fmt"
+	"math"
 	"sync"
 	"sync/atomic"
 
+	"golang.org/x/sync/semaphore"
+
 	"src.elv.sh/pkg/errutil"
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 )
 
@@ -73,16 +79,36 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 	return err
 }
 
-func peach(fm *Frame, f Callable, inputs Inputs) error {
+type peachOpt struct{ NumWorkers int }
+
+func (o *peachOpt) SetDefaultOptions() { o.NumWorkers = -1 }
+
+func peach(fm *Frame, opts peachOpt, f Callable, inputs Inputs) error {
 	var wg sync.WaitGroup
 	var broken int32
 	var errMu sync.Mutex
 	var err error
 
+	var workerSema *semaphore.Weighted
+	switch {
+	case opts.NumWorkers == -1:
+		workerSema = semaphore.NewWeighted(math.MaxInt64)
+	case opts.NumWorkers > 0:
+		workerSema = semaphore.NewWeighted(int64(opts.NumWorkers))
+	default:
+		return errs.BadValue{
+			What:   "peach &num-workers",
+			Valid:  "-1 or > 0",
+			Actual: fmt.Sprintf("%d", opts.NumWorkers),
+		}
+	}
+	ctx := context.TODO() // workerSema needs a context so use a dummy context today
+
 	inputs(func(v any) {
 		if atomic.LoadInt32(&broken) != 0 {
 			return
 		}
+		workerSema.Acquire(ctx, 1)
 		wg.Add(1)
 		go func() {
 			newFm := fm.Fork("closure of peach")
@@ -104,6 +130,7 @@ func peach(fm *Frame, f Callable, inputs Inputs) error {
 				}
 			}
 			wg.Done()
+			workerSema.Release(1)
 		}()
 	})
 	wg.Wait()
