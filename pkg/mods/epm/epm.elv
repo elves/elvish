@@ -1,11 +1,14 @@
-# Uncomment this line to make it easy to identify dependencies on external
-# commands:
-#
-# pragma unknown-command = disallow
 use path
 use re
 use str
 use platform
+
+pragma unknown-command = disallow
+var dirname~ = $e:dirname~
+var mkdir~ = $e:mkdir~
+var rm~ = $e:rm~
+var git~ = $e:git~
+var rsync~ = $e:rsync~
 
 # Verbosity configuration
 var debug-mode = $false
