@@ -45,6 +45,10 @@ name = "math"
 title = "math: Math Utilities"
 
 [[articles]]
+name = "os"
+title = "os: Operating System Utilities"
+
+[[articles]]
 name = "path"
 title = "path: Filesystem Path Utilities"
 

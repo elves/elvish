@@ -17,6 +17,7 @@ import (
 	"src.elv.sh/pkg/mods/file"
 	"src.elv.sh/pkg/mods/flag"
 	"src.elv.sh/pkg/mods/math"
+	"src.elv.sh/pkg/mods/os"
 	"src.elv.sh/pkg/mods/path"
 	"src.elv.sh/pkg/mods/platform"
 	"src.elv.sh/pkg/mods/re"
@@ -161,6 +162,7 @@ var modToCode = map[string]io.Reader{
 	"file:":            read(file.DElvCode),
 	"flag:":            read(flag.DElvCode),
 	"math:":            read(math.DElvCode),
+	"os:":              read(os.DElvCode),
 	"path:":            read(path.DElvCode),
 	"platform:":        read(platform.DElvCode),
 	"re:":              read(re.DElvCode),
