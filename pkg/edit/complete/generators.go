@@ -11,6 +11,7 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/parse/np"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -39,7 +40,7 @@ func GenerateForSudo(args []string, ev *eval.Evaler, cfg Config) ([]RawItem, err
 
 // Internal generators, used from completers.
 
-func generateArgs(args []string, ev *eval.Evaler, np nodePath, cfg Config) ([]RawItem, error) {
+func generateArgs(args []string, ev *eval.Evaler, p np.Path, cfg Config) ([]RawItem, error) {
 	switch args[0] {
 	case "set", "tmp":
 		for _, arg := range args[1:] {
@@ -51,7 +52,7 @@ func generateArgs(args []string, ev *eval.Evaler, np nodePath, cfg Config) ([]Ra
 		sigil, qname := eval.SplitSigil(seed)
 		ns, _ := eval.SplitIncompleteQNameNs(qname)
 		var items []RawItem
-		eachVariableInNs(ev, np, ns, func(varname string) {
+		eachVariableInNs(ev, p, ns, func(varname string) {
 			items = append(items, noQuoteItem(sigil+parse.QuoteVariableName(ns+varname)))
 		})
 		return items, nil
@@ -71,7 +72,7 @@ func generateExternalCommands(seed string, ev *eval.Evaler) ([]RawItem, error) {
 	return items, nil
 }
 
-func generateCommands(seed string, ev *eval.Evaler, np nodePath) ([]RawItem, error) {
+func generateCommands(seed string, ev *eval.Evaler, p np.Path) ([]RawItem, error) {
 	if fsutil.DontSearch(seed) {
 		// Completing a local external command name.
 		return generateFileNames(seed, true)
@@ -99,7 +100,7 @@ func generateCommands(seed string, ev *eval.Evaler, np nodePath) ([]RawItem, err
 	ns, _ := eval.SplitIncompleteQNameNs(qname)
 	if sigil == "" {
 		// Generate functions, namespaces, and variable assignments.
-		eachVariableInNs(ev, np, ns, func(varname string) {
+		eachVariableInNs(ev, p, ns, func(varname string) {
 			switch {
 			case strings.HasSuffix(varname, eval.FnSuffix):
 				addPlainItem(

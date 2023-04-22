@@ -7,18 +7,19 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/parse/cmpd"
+	"src.elv.sh/pkg/parse/np"
 )
 
 var environ = os.Environ
 
 // Calls f for each variable name in namespace ns that can be found at the point
 // of np.
-func eachVariableInNs(ev *eval.Evaler, np nodePath, ns string, f func(s string)) {
+func eachVariableInNs(ev *eval.Evaler, p np.Path, ns string, f func(s string)) {
 	switch ns {
 	case "", ":":
 		ev.Global().IterateKeysString(f)
 		ev.Builtin().IterateKeysString(f)
-		eachDefinedVariable(np[len(np)-1], np[0].Range().From, f)
+		eachDefinedVariable(p[len(p)-1], p[0].Range().From, f)
 	case "e:":
 		eachExternal(func(cmd string) {
 			f(cmd + eval.FnSuffix)

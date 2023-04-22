@@ -9,6 +9,7 @@ import (
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/parse/np"
 )
 
 // An error returned by Complete as well as the completers if there is no
@@ -64,7 +65,7 @@ func Complete(code CodeBuffer, ev *eval.Evaler, cfg Config) (*Result, error) {
 
 	// Ignore the error; the function always returns a valid *ChunkNode.
 	tree, _ := parse.Parse(parse.Source{Name: "[interactive]", Code: code.Content}, parse.Config{})
-	path := findNodePath(tree.Root, code.Dot)
+	path := np.Find(tree.Root, code.Dot)
 	if len(path) == 0 {
 		// This can happen when there is a parse error.
 		return nil, errNoCompletion
