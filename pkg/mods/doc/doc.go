@@ -33,7 +33,7 @@ var Ns = eval.BuildNsNamed("doc").
 	AddGoFns(map[string]any{
 		"show":     show,
 		"find":     find,
-		"source":   source,
+		"source":   Source,
 		"-symbols": symbols,
 	}).
 	Ns()
@@ -47,22 +47,8 @@ type showOptions struct{ Width int }
 
 func (opts *showOptions) SetDefaultOptions() {}
 
-func MarkdownShowMaybe(name string, width int) (string, error) {
-	doc, err := source(name)
-	if err != nil {
-		doc, err = source("builtin:" + name)
-		if err != nil {
-			return "", err
-		}
-	}
-	codec := &md.FmtCodec{
-		Width: width,
-	}
-	return md.RenderString(fmt.Sprintf("# %s\n\n%s", name, doc), codec), nil
-}
-
 func show(fm *eval.Frame, opts showOptions, fqname string) error {
-	doc, err := source(fqname)
+	doc, err := Source(fqname)
 	if err != nil {
 		return err
 	}
@@ -117,7 +103,8 @@ func find(fm *eval.Frame, qs ...string) {
 	}
 }
 
-func source(fqname string) (string, error) {
+// Source returns the doc source for a symbol.
+func Source(fqname string) (string, error) {
 	isVar := strings.HasPrefix(fqname, "$")
 	if isVar {
 		fqname = fqname[1:]

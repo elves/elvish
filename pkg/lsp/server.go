@@ -115,6 +115,17 @@ func (s *server) didChange(ctx context.Context, params lsp.DidChangeTextDocument
 	return nil, nil
 }
 
+// TODO: Use a more up-to-date Go package for LSP data types, and avoid defining
+// these ourselves.
+type hover struct {
+	Contents markupContent `json:"contents"`
+}
+
+type markupContent struct {
+	Kind  string `json:"kind"`
+	Value string `json:"value"`
+}
+
 func (s *server) hover(_ context.Context, params lsp.TextDocumentPositionParams) (any, error) {
 	uri := params.TextDocument.URI
 	content, ok := s.content[uri]
@@ -134,18 +145,15 @@ func (s *server) hover(_ context.Context, params lsp.TextDocumentPositionParams)
 	}
 	pos := lspPositionToIdx(content, params.Position)
 
-	need_doc_for, err := parseutil.LeafTextAtPos(s.parseTree[uri].Root, pos)
+	symbol, err := parseutil.LeafTextAtPos(s.parseTree[uri].Root, pos)
 	if err != nil {
-		return lsp.Hover{}, nil
+		return nil, nil
 	}
-	doc, err := doc.MarkdownShowMaybe(need_doc_for, 80)
+	doc, err := doc.Source(symbol)
 	if err != nil {
-		return lsp.Hover{}, nil
+		return nil, nil
 	}
-	return lsp.Hover{
-		Contents: []lsp.MarkedString{{Value: doc, Language: "markdown"}},
-		Range:    nil,
-	}, nil
+	return hover{Contents: markupContent{Kind: "markdown", Value: doc}}, nil
 }
 
 func (s *server) completion(_ context.Context, params lsp.CompletionParams) (any, error) {
