@@ -111,7 +111,7 @@ var hoverTests = []struct {
 		name: "variable doc",
 		//     012345
 		text: "echo $paths",
-		pos:  lsp.Position{Line: 0, Character: 6},
+		pos:  lsp.Position{Line: 0, Character: 5},
 
 		wantHover: hoverWith(must.OK1(doc.Source("$paths"))),
 	},
@@ -126,7 +126,7 @@ var hoverTests = []struct {
 		name: "command at non-command position",
 		//     012345678
 		text: "echo echo",
-		pos:  lsp.Position{Line: 0, Character: 6},
+		pos:  lsp.Position{Line: 0, Character: 5},
 
 		wantHover: lsp.Hover{},
 	},

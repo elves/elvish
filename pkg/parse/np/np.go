@@ -10,15 +10,21 @@ import (
 // Path is a path from a leaf in a parse tree to the root.
 type Path []parse.Node
 
-// Find finds the path of nodes from the leaf at position p to the root. If p is
-// the boundary between two nodes (equal to left.To and right.From), the left
-// node is preferred.
-func Find(root parse.Node, p int) Path {
+// Find finds the path of nodes from the leaf at position p to the root.
+func Find(root parse.Node, p int) Path { return find(root, p, false) }
+
+// FindLeft finds the path of nodes from the leaf at position p to the root. If
+// p points to the start of one node (p == x.From), FindLeft finds the node to
+// the left instead (y s.t. p == y.To).
+func FindLeft(root parse.Node, p int) Path { return find(root, p, true) }
+
+func find(root parse.Node, p int, preferLeft bool) Path {
 	n := root
 descend:
 	for len(parse.Children(n)) > 0 {
 		for _, ch := range parse.Children(n) {
-			if rg := ch.Range(); rg.From <= p && p <= rg.To {
+			r := ch.Range()
+			if r.From <= p && p < r.To || preferLeft && p == r.To {
 				n = ch
 				continue descend
 			}
