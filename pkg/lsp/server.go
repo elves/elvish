@@ -11,7 +11,7 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/mods/doc"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/parse/parseutil"
+	"src.elv.sh/pkg/parse/np"
 )
 
 var (
@@ -145,15 +145,27 @@ func (s *server) hover(_ context.Context, params lsp.TextDocumentPositionParams)
 	}
 	pos := lspPositionToIdx(content, params.Position)
 
-	symbol, err := parseutil.LeafTextAtPos(s.parseTree[uri].Root, pos)
-	if err != nil {
-		return nil, nil
+	p := np.Find(s.parseTree[uri].Root, pos)
+	// Try variable doc
+	var primary *parse.Primary
+	if p.Match(np.Store(&primary)) && primary.Type == parse.Variable {
+		// TODO: Take shadowing into consideration.
+		markdown, err := doc.Source("$" + primary.Value)
+		if err == nil {
+			return hover{Contents: markupContent{Kind: "markdown", Value: markdown}}, nil
+		}
 	}
-	doc, err := doc.Source(symbol)
-	if err != nil {
-		return nil, nil
+	// Try command doc
+	var expr np.SimpleExprData
+	var form *parse.Form
+	if p.Match(np.SimpleExpr(&expr, nil), np.Store(&form)) && form.Head == expr.Compound {
+		// TODO: Take shadowing into consideration.
+		markdown, err := doc.Source(expr.Value)
+		if err == nil {
+			return hover{Contents: markupContent{Kind: "markdown", Value: markdown}}, nil
+		}
 	}
-	return hover{Contents: markupContent{Kind: "markdown", Value: doc}}, nil
+	return nil, nil
 }
 
 func (s *server) completion(_ context.Context, params lsp.CompletionParams) (any, error) {
