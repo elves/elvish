@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	lsp "github.com/sourcegraph/go-lsp"
 	"github.com/sourcegraph/jsonrpc2"
+	lsp "pkg.nimblebun.works/go-lsp"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/edit/complete"
 	"src.elv.sh/pkg/eval"
@@ -89,14 +89,12 @@ func conn(ctx context.Context) *jsonrpc2.Conn { return ctx.Value(connKey{}).(*js
 func (s *server) initialize(_ context.Context, _ json.RawMessage) (any, error) {
 	return &lsp.InitializeResult{
 		Capabilities: lsp.ServerCapabilities{
-			TextDocumentSync: &lsp.TextDocumentSyncOptionsOrKind{
-				Options: &lsp.TextDocumentSyncOptions{
-					OpenClose: true,
-					Change:    lsp.TDSKFull,
-				},
+			TextDocumentSync: &lsp.TextDocumentSyncOptions{
+				OpenClose: true,
+				Change:    lsp.TDSyncKindFull,
 			},
 			CompletionProvider: &lsp.CompletionOptions{},
-			HoverProvider:      true,
+			HoverProvider:      &lsp.HoverOptions{},
 		},
 	}, nil
 }
@@ -115,17 +113,6 @@ func (s *server) didChange(ctx context.Context, params lsp.DidChangeTextDocument
 	return nil, nil
 }
 
-// TODO: Use a more up-to-date Go package for LSP data types, and avoid defining
-// these ourselves.
-type hover struct {
-	Contents markupContent `json:"contents"`
-}
-
-type markupContent struct {
-	Kind  string `json:"kind"`
-	Value string `json:"value"`
-}
-
 func (s *server) hover(_ context.Context, params lsp.TextDocumentPositionParams) (any, error) {
 	document, ok := s.documents[params.TextDocument.URI]
 	if !ok {
@@ -140,7 +127,7 @@ func (s *server) hover(_ context.Context, params lsp.TextDocumentPositionParams)
 		// TODO: Take shadowing into consideration.
 		markdown, err := doc.Source("$" + primary.Value)
 		if err == nil {
-			return hover{Contents: markupContent{Kind: "markdown", Value: markdown}}, nil
+			return lsp.Hover{Contents: lsp.MarkupContent{Kind: lsp.MKMarkdown, Value: markdown}}, nil
 		}
 	}
 	// Try command doc
@@ -150,7 +137,7 @@ func (s *server) hover(_ context.Context, params lsp.TextDocumentPositionParams)
 		// TODO: Take shadowing into consideration.
 		markdown, err := doc.Source(expr.Value)
 		if err == nil {
-			return hover{Contents: markupContent{Kind: "markdown", Value: markdown}}, nil
+			return lsp.Hover{Contents: lsp.MarkupContent{Kind: lsp.MKMarkdown, Value: markdown}}, nil
 		}
 	}
 	return nil, nil
@@ -208,7 +195,7 @@ func (s *server) updateDocument(conn *jsonrpc2.Conn, uri lsp.DocumentURI, code s
 		for i, err := range entries {
 			diags[i] = lsp.Diagnostic{
 				Range:    lspRangeFromRange(code, err),
-				Severity: lsp.Error,
+				Severity: lsp.DSError,
 				Source:   "parse",
 				Message:  err.Message,
 			}

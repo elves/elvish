@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	lsp "github.com/sourcegraph/go-lsp"
 	"github.com/sourcegraph/jsonrpc2"
+	lsp "pkg.nimblebun.works/go-lsp"
 	"src.elv.sh/pkg/mods/doc"
 	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/prog"
@@ -33,7 +33,7 @@ var diagTests = []struct {
 			Range: lsp.Range{
 				Start: lsp.Position{Line: 0, Character: 1},
 				End:   lsp.Position{Line: 0, Character: 2}},
-			Severity: lsp.Error, Source: "parse", Message: "should be variable name",
+			Severity: lsp.DSError, Source: "parse", Message: "should be variable name",
 		},
 	}},
 	{"multi line with NL", "\n$!", []lsp.Diagnostic{
@@ -41,7 +41,7 @@ var diagTests = []struct {
 			Range: lsp.Range{
 				Start: lsp.Position{Line: 1, Character: 1},
 				End:   lsp.Position{Line: 1, Character: 2}},
-			Severity: lsp.Error, Source: "parse", Message: "should be variable name",
+			Severity: lsp.DSError, Source: "parse", Message: "should be variable name",
 		},
 	}},
 	{"multi line with CR", "\r$!", []lsp.Diagnostic{
@@ -49,7 +49,7 @@ var diagTests = []struct {
 			Range: lsp.Range{
 				Start: lsp.Position{Line: 1, Character: 1},
 				End:   lsp.Position{Line: 1, Character: 2}},
-			Severity: lsp.Error, Source: "parse", Message: "should be variable name",
+			Severity: lsp.DSError, Source: "parse", Message: "should be variable name",
 		},
 	}},
 	{"multi line with CRNL", "\r\n$!", []lsp.Diagnostic{
@@ -57,7 +57,7 @@ var diagTests = []struct {
 			Range: lsp.Range{
 				Start: lsp.Position{Line: 1, Character: 1},
 				End:   lsp.Position{Line: 1, Character: 2}},
-			Severity: lsp.Error, Source: "parse", Message: "should be variable name",
+			Severity: lsp.DSError, Source: "parse", Message: "should be variable name",
 		},
 	}},
 	{"text with code point beyond FFFF", "\U00010000 $!", []lsp.Diagnostic{
@@ -65,7 +65,7 @@ var diagTests = []struct {
 			Range: lsp.Range{
 				Start: lsp.Position{Line: 0, Character: 4},
 				End:   lsp.Position{Line: 0, Character: 5}},
-			Severity: lsp.Error, Source: "parse", Message: "should be variable name",
+			Severity: lsp.DSError, Source: "parse", Message: "should be variable name",
 		},
 	}},
 }
@@ -98,7 +98,7 @@ var hoverTests = []struct {
 	text string
 	pos  lsp.Position
 
-	wantHover hover
+	wantHover lsp.Hover
 }{
 	{
 		name: "command doc",
@@ -120,7 +120,7 @@ var hoverTests = []struct {
 		text: "some-external",
 		pos:  lsp.Position{Line: 0, Character: 0},
 
-		wantHover: hover{},
+		wantHover: lsp.Hover{},
 	},
 	{
 		name: "command at non-command position",
@@ -128,12 +128,12 @@ var hoverTests = []struct {
 		text: "echo echo",
 		pos:  lsp.Position{Line: 0, Character: 6},
 
-		wantHover: hover{},
+		wantHover: lsp.Hover{},
 	},
 }
 
-func hoverWith(markdown string) hover {
-	return hover{Contents: markupContent{Kind: "markdown", Value: markdown}}
+func hoverWith(markdown string) lsp.Hover {
+	return lsp.Hover{Contents: lsp.MarkupContent{Kind: lsp.MKMarkdown, Value: markdown}}
 }
 
 func TestHover(t *testing.T) {
@@ -146,7 +146,7 @@ func TestHover(t *testing.T) {
 				TextDocument: lsp.TextDocumentIdentifier{URI: testURI},
 				Position:     test.pos,
 			}
-			var response hover
+			var response lsp.Hover
 			err := f.conn.Call(bgCtx, "textDocument/hover", request, &response)
 			if err != nil {
 				t.Errorf("got error %v", err)
@@ -203,7 +203,7 @@ var jsonrpcErrorTests = []struct {
 	params  any
 	wantErr error
 }{
-	{"unkown method", "unknown/method", struct{}{}, errMethodNotFound},
+	{"unknown method", "unknown/method", struct{}{}, errMethodNotFound},
 	{"invalid request type", "textDocument/didOpen", []int{}, errInvalidParams},
 	{"unknown document to hover", "textDocument/hover",
 		lsp.TextDocumentPositionParams{
