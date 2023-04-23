@@ -109,7 +109,7 @@ func TestOrder(t *testing.T) {
 			Puts(vals.EmptyList, vals.MakeList("a"),
 				vals.MakeList("a", 1), vals.MakeList("a", 2)),
 
-		// Attempting to order uncomparable values
+		// Ordering uncomparable values.
 		That("put (num 1) 1 | order").
 			Throws(ErrUncomparable, "order"),
 		That("put 1 (num 1) | order").
@@ -120,6 +120,22 @@ func TestOrder(t *testing.T) {
 			Throws(ErrUncomparable, "order"),
 		That("put [a] [(num 1)] | order").
 			Throws(ErrUncomparable, "order"),
+
+		// Ordering otherwise uncomparable values while also taking into account
+		// the ordering of those value types.
+		That("put (num 1) 1 | order &types").
+			Puts(1, "1"),
+		That("put 1 (num 1) | order &types").
+			Puts(1, "1"),
+		That("put 1 (num 1) b | order &types").
+			Puts(1, "1", "b"),
+		That("put [a] a | order &types").
+			Puts("a", vals.MakeList("a")),
+		// Lists are equal if they have equal elements. In this case one list
+		// has a string and the other a number. Number types are less than
+		// string types so the second list should be ordered before the first.
+		That("put [a] [(num 1)] | order &types").
+			Puts(vals.MakeList(1), vals.MakeList("a")),
 
 		// &reverse
 		That("put foo bar ipsum | order &reverse").Puts("ipsum", "foo", "bar"),

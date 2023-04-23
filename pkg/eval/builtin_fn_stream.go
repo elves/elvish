@@ -137,6 +137,7 @@ func count(fm *Frame, args ...any) (int, error) {
 }
 
 type orderOptions struct {
+	Types    bool
 	Reverse  bool
 	Key      Callable
 	LessThan Callable
@@ -164,7 +165,7 @@ func order(fm *Frame, opts orderOptions, inputs Inputs) error {
 		}
 	}
 
-	s := &slice{fm, opts.LessThan, values, keys, nil}
+	s := &slice{fm, opts.Types, opts.LessThan, values, keys, nil}
 	if opts.Reverse {
 		sort.Stable(sort.Reverse(s))
 	} else {
@@ -186,6 +187,7 @@ func order(fm *Frame, opts orderOptions, inputs Inputs) error {
 
 type slice struct {
 	fm       *Frame
+	types    bool
 	lessThan Callable
 	values   []any
 	keys     []any // nil if no keys
@@ -208,12 +210,17 @@ func (s *slice) Less(i, j int) bool {
 
 	if s.lessThan == nil {
 		// Use the builtin comparator.
-		o := cmp(a, b)
-		if o == uncomparable {
-			s.err = ErrUncomparable
-			return true
+		o := vals.Cmp(a, b)
+		if o == vals.CmpUncomparable {
+			if !s.types {
+				// The user did not explicitly ask that otherwise uncomparable
+				// types be ordered by their type so report an error.
+				s.err = ErrUncomparable
+				return true
+			}
+			o = vals.CmpTypes(a, b)
 		}
-		return o == less
+		return o == vals.CmpLess
 	}
 
 	// Use the &less-than callback.

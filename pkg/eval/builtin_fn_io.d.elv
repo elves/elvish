@@ -192,6 +192,9 @@ fn echo {|&sep=' ' @value| }
 # ]
 # ```
 #
+# Maps (both mutable and [pseudo](language.html#pseudo-map)) are output with
+# their keys sorted in the same order as `keys $map | order &types`.
+#
 # The output format is subject to change.
 #
 # See also [`repr`]().
@@ -204,6 +207,9 @@ fn pprint {|@value| }
 # ~> repr [foo 'lorem ipsum'] "aha\n"
 # [foo 'lorem ipsum'] "aha\n"
 # ```
+#
+# Maps (both mutable and [pseudo](language.html#pseudo-map)) are output with
+# their keys sorted in the same order as `keys $map | order &types`.
 #
 # See also [`pprint`]().
 #

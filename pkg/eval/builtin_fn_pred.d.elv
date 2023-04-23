@@ -119,9 +119,14 @@ fn not-eq {|@values| }
 # - Lists are compared lexicographically by elements, if the elements at the
 #   same positions are comparable.
 #
-# If the ordering between two elements is not defined by the conditions above,
-# i.e. if the value of `$a` or `$b` is not covered by any of the cases above or
-# if they belong to different cases, a "bad value" exception is thrown.
+# If `&types` is `$false` (the default), and the ordering between two elements
+# is not defined by the conditions above, i.e. if the value of `$a` or `$b` is
+# not covered by any of the cases above or if they belong to different cases,
+# a "bad value" exception is thrown.
+#
+# If `&types` is `$true` and the values are not comparable then the type of
+# each value is compared. The value types have the following relationship:
+# bool < num < string < list < map.
 #
 # Examples:
 #
@@ -134,10 +139,20 @@ fn not-eq {|@values| }
 # ▶ (num 0)
 # ~> compare (num 10) (num 1)
 # ▶ (num 1)
+# ~> compare (num 1) $true
+# Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+# ~> compare &types (num 1) $true
+# ▶ (num 1)
+# ~> compare (num 1) string
+# Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+# ~> compare &types (num 1) string
+# ▶ (num -1)
 # ```
 #
 # Beware that strings that look like numbers are treated as strings, not
-# numbers.
+# numbers. Also, unlike the other comparison commands (e.g., [`==`](#num-cmp)
+# and [`<`](#num-cmp)) this command requires exactly two values. If not given
+# two values an "arity mismatch" exception is thrown.
 #
 # See also [`order`]().
-fn compare {|a b| }
+fn compare {|&types=$false a b| }

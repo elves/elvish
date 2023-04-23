@@ -176,19 +176,22 @@ fn count {|input-list?| }
 # sorting process is guaranteed to be
 # [stable](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability).
 #
-# The `&less-than` option, if given, establishes the ordering of the items. Its
-# value should be a function that takes two arguments and outputs a single
+# The `&less-than` option, if given, establishes the ordering of the items.
+# Its value should be a function that takes two arguments and outputs a single
 # boolean indicating whether the first argument is less than the second
-# argument. If the function throws an exception, `order` rethrows the exception
-# without outputting any value.
+# argument. If the function throws an exception, `order` rethrows the
+# exception without outputting any value. If `&less-than` is not `$nil` then
+# the `&types` option is ignored.
 #
 # If `&less-than` is `$nil` (the default), a builtin comparator equivalent to
-# `{|a b| == -1 (compare $a $b) }` is used.
+# `{|a b| == -1 (compare $a $b) }` is used. If `&types` is `$true` and the
+# values are not comparable then the type of each value is compared. The value
+# types have the following relationship: bool < num < string < list < map.
 #
-# The `&key` option, if given, is a function that gets called with each item to
-# be sorted. It must output a single value, which is used for comparison in
-# place of the original value. If the function throws an exception, `order`
-# rethrows the exception.
+# The `&key` option, if not `$nil`, is a function that gets called with each
+# item to be sorted. It must output a single value, which is used for
+# comparison in place of the original value. If the function throws an
+# exception, `order` rethrows the exception.
 #
 # Use of `&key` can usually be rewritten to use `&less-than` instead, but using
 # `&key` is usually faster because the callback is only called once for each
@@ -235,6 +238,21 @@ fn count {|input-list?| }
 # ▶ m
 # ```
 #
+# Ordering uncomparable types:
+#
+# ```elvish-transcript
+# ~> order [1 (num 1) $true [b] $false [&k1=v1] [a]]
+# Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+# ~> order &types [1 (num 1) $true [b] $false [&k1=v1] [a]]
+# ▶ $false
+# ▶ $true
+# ▶ (num 1)
+# ▶ 1
+# ▶ [a]
+# ▶ [b]
+# ▶ [&k1=v1]
+# ```
+#
 # Beware that strings that look like numbers are treated as strings, not
 # numbers. To sort strings as numbers, use an explicit `&key` or `&less-than`:
 #
@@ -256,4 +274,4 @@ fn count {|input-list?| }
 # (The `$"<~"` syntax is a reference to [the `<` function](#num-cmp).)
 #
 # See also [`compare`]().
-fn order {|&less-than=$nil &key=$nil &reverse=$false inputs?| }
+fn order {|&types=$false &less-than=$nil &key=$nil &reverse=$false inputs?| }

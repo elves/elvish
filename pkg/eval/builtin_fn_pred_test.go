@@ -3,7 +3,7 @@ package eval_test
 import (
 	"testing"
 
-	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval"
 	. "src.elv.sh/pkg/eval/evaltest"
 )
 
@@ -92,8 +92,22 @@ func TestCompare(t *testing.T) {
 		That("compare [x, y] [x, y]").Puts(0),
 
 		// Uncomparable values.
-		That("compare 1 (num 1)").Throws(ErrUncomparable),
-		That("compare x [x]").Throws(ErrUncomparable),
-		That("compare a [&a=x]").Throws(ErrUncomparable),
+		That("compare 1 (num 1)").Throws(eval.ErrUncomparable),
+		That("compare x [x]").Throws(eval.ErrUncomparable),
+		That("compare a [&a=x]").Throws(eval.ErrUncomparable),
+
+		// This validates that comparing otherwise uncomparable types imposes an
+		// ordering on those types. This is obviously not exhaustive but helps
+		// ensure such comparisons have reasonable behavior consistent with the
+		// behavior of the `order` command or the implicent ordering of map keys
+		// by `pprint` and `repr`.
+		That("compare &types 1 (num 1)").Puts(1),
+		That("compare &types (num 1) 1").Puts(-1),
+		That("compare &types x [x]").Puts(-1),
+		That("compare &types [x] x").Puts(1),
+		That("compare &types [x] [x]").Puts(0),
+		That("compare &types a [&a=x]").Puts(-1),
+		That("compare &types [&a=x] a").Puts(1),
+		That("compare &types [&a=x] (num 1)").Puts(1),
 	)
 }
