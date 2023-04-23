@@ -9,6 +9,8 @@ import (
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/mods/re"
+	"src.elv.sh/pkg/strutil"
 )
 
 func TestPut(t *testing.T) {
@@ -67,8 +69,61 @@ func TestEcho(t *testing.T) {
 }
 
 func TestPprint(t *testing.T) {
-	Test(t,
-		That(`pprint [foo bar]`).Prints("[\n foo\n bar\n]\n"),
+	setup := func(ev *eval.Evaler) {
+		ev.ExtendGlobal(eval.BuildNs().AddNs("re", re.Ns))
+	}
+
+	TestWithSetup(t, setup,
+		// Verify a simple list is pretty printed as expected.
+		That(`pprint [foo bar]`).Prints(strutil.Dedent(`
+			[
+			 foo
+			 bar
+			]
+		`)),
+		// Verify regular map keys are sorted.
+		That(`
+			var map = [&(num 4)=4 &(num 0)=0 &(num 2)=2 &def=z &abc=y
+				&$false=false &(num 1)=1 &$true=true &xyz=x]
+			pprint $map
+		`).Prints(strutil.Dedent(`
+			[
+			 &abc=	y
+			 &def=	z
+			 &xyz=	x
+			 &$false=	false
+			 &$true=	true
+			 &(num 0)=	0
+			 &(num 1)=	1
+			 &(num 2)=	2
+			 &(num 4)=	4
+			]
+		`)),
+		// Verify pseudo map keys are sorted. We use the pseudo map returned by
+		// `re:find` because it is moderately complex and prior to the change
+		// that sorts map keys produces output that is not sorted.
+		That(`
+			var map = (re:find '(.)+' abc)
+			pprint $map
+		`).Prints(strutil.Dedent(`
+			[
+			 &end=	(num 3)
+			 &groups=	[
+			   [
+			    &end=	(num 3)
+			    &start=	(num 0)
+			    &text=	abc
+			   ]
+			   [
+			    &end=	(num 3)
+			    &start=	(num 2)
+			    &text=	c
+			   ]
+			  ]
+			 &start=	(num 0)
+			 &text=	abc
+			]
+		`)),
 		thatOutputErrorIsBubbled("pprint foo"),
 	)
 }
