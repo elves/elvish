@@ -208,12 +208,12 @@ func (s *slice) Less(i, j int) bool {
 
 	if s.lessThan == nil {
 		// Use the builtin comparator.
-		o := cmp(a, b)
-		if o == uncomparable {
+		o := vals.Cmp(a, b)
+		if o == vals.Uncomparable {
 			s.err = ErrUncomparable
 			return true
 		}
-		return o == less
+		return o == vals.CmpLess
 	}
 
 	// Use the &less-than callback.

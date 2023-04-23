@@ -9,6 +9,7 @@ import (
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/strutil"
 )
 
 func TestPut(t *testing.T) {
@@ -68,7 +69,29 @@ func TestEcho(t *testing.T) {
 
 func TestPprint(t *testing.T) {
 	Test(t,
-		That(`pprint [foo bar]`).Prints("[\n foo\n bar\n]\n"),
+		That(`pprint [foo bar]`).Prints(strutil.Dedent(`
+			[
+			 foo
+			 bar
+			]
+		`)),
+		That(`
+			var map = [&(num 4)=4 &(num 0)=0 &(num 2)=2 &def=z &abc=y
+				&$false=false &(num 1)=1 &$true=true &xyz=x]
+			pprint $map
+		`).Prints(strutil.Dedent(`
+			[
+			 &abc=	y
+			 &def=	z
+			 &xyz=	x
+			 &$false=	false
+			 &$true=	true
+			 &(num 0)=	0
+			 &(num 1)=	1
+			 &(num 2)=	2
+			 &(num 4)=	4
+			]
+		`)),
 		thatOutputErrorIsBubbled("pprint foo"),
 	)
 }

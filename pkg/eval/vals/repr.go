@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/big"
 	"reflect"
+	"sort"
 	"strconv"
 
 	"src.elv.sh/pkg/parse"
@@ -60,18 +61,9 @@ func Repr(v any, indent int) string {
 	case File:
 		return fmt.Sprintf("<file{%s %d}>", parse.Quote(v.Name()), v.Fd())
 	case List:
-		b := NewListReprBuilder(indent)
-		for it := v.Iterator(); it.HasElem(); it.Next() {
-			b.WriteElem(Repr(it.Elem(), indent+1))
-		}
-		return b.String()
+		return reprList(v, indent)
 	case Map:
-		builder := NewMapReprBuilder(indent)
-		for it := v.Iterator(); it.HasElem(); it.Next() {
-			k, v := it.Elem()
-			builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
-		}
-		return builder.String()
+		return reprMap(v, indent)
 	case StructMap:
 		return reprStructMap(v, indent)
 	case PseudoStructMap:
@@ -79,6 +71,32 @@ func Repr(v any, indent int) string {
 	default:
 		return fmt.Sprintf("<unknown %v>", v)
 	}
+}
+
+func reprList(v List, indent int) string {
+	b := NewListReprBuilder(indent)
+	for it := v.Iterator(); it.HasElem(); it.Next() {
+		b.WriteElem(Repr(it.Elem(), indent+1))
+	}
+	return b.String()
+}
+
+func reprMap(v Map, indent int) string {
+	builder := NewMapReprBuilder(indent)
+	var keys CmpSlice
+	for it := v.Iterator(); it.HasElem(); it.Next() {
+		k, _ := it.Elem()
+		keys = append(keys, k)
+	}
+	sort.Sort(keys)
+	for _, key := range keys {
+		val, ok := v.Index(key)
+		if !ok { // this is a "can't happen" situation but we are paranoid
+			panic(fmt.Sprintf("hashmap.Index() failed for key: %v", key))
+		}
+		builder.WritePair(Repr(key, indent+1), indent+2, Repr(val, indent+2))
+	}
+	return builder.String()
 }
 
 func reprStructMap(v StructMap, indent int) string {
