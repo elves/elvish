@@ -1,4 +1,4 @@
-~> curl -sL api.github.com/repos/elves/elvish/issues |
-     all (from-json) |
-     each {|x| echo (exact-num $x[number]): $x[title] } |
-     head -n 10
+~> range 1100 1111 |
+   each {|x| curl -sL xkcd.com/$x/info.0.json } |
+   from-json |
+   each {|x| printf "%g: %s\n" $x[num] $x[title] }
