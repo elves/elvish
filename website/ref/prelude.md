@@ -1,4 +1,3 @@
-The latest version of documents in this section are also available as a
-[docset](https://elv.sh/ref/docset/Elvish.tgz). You can also
-[subscribe](dash-feed://https%3A%2F%2Felv.sh%2Fref%2Fdocset%2FElvish.xml) to the
-feed.
+Reference documents also available as a docset. Download the
+[latest build](https://elv.sh/ref/docset/Elvish.tgz) or subscribe to the
+[feed](dash-feed://https%3A%2F%2Felv.sh%2Fref%2Fdocset%2FElvish.xml).

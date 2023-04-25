@@ -163,7 +163,7 @@
 
 {{ define "article-content" }}
   <div id="content">
-    <article class="article">
+    <article>
       {{ if not .IsHomepage }}
         <div class="article-title">
           <div class="timestamp"> {{ .Timestamp }} </div>
@@ -183,13 +183,13 @@
   {{ $category := .Category }}
   <div id="content" class="category">
     {{ if .Prelude }}
-      <article class="category-prelude article">
+      <article>
         {{ .Prelude }}
       </article>
     {{ end }}
     {{ range $group := .Groups }}
       {{ if $group.Intro }}
-        <div class="group-intro">{{ $group.Intro }}</div>
+        <p>{{ $group.Intro }}</p>
       {{ end }}
       <ul class="article-list">
         {{ range $article := $group.Articles }}
@@ -202,7 +202,6 @@
             <span class="article-timestamp">
               {{ $article.Timestamp }}
             </span>
-            <div class="clear"></div>
           </li>
         {{ end }}
       </ul>
