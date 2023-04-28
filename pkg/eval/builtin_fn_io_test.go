@@ -88,15 +88,15 @@ func TestPprint(t *testing.T) {
 			pprint $map
 		`).Prints(strutil.Dedent(`
 			[
-			 &abc=	y
-			 &def=	z
-			 &xyz=	x
-			 &$false=	false
-			 &$true=	true
-			 &(num 0)=	0
-			 &(num 1)=	1
-			 &(num 2)=	2
-			 &(num 4)=	4
+			 &abc=    y
+			 &def=    z
+			 &xyz=    x
+			 &$false= false
+			 &$true=  true
+			 &(num 0)=0
+			 &(num 1)=1
+			 &(num 2)=2
+			 &(num 4)=4
 			]
 		`)),
 		// Verify pseudo map keys are sorted. We use the pseudo map returned by
@@ -107,21 +107,21 @@ func TestPprint(t *testing.T) {
 			pprint $map
 		`).Prints(strutil.Dedent(`
 			[
-			 &end=	(num 3)
-			 &groups=	[
+			 &end=   (num 3)
+			 &groups=[
 			   [
-			    &end=	(num 3)
-			    &start=	(num 0)
-			    &text=	abc
+			    &end=  (num 3)
+			    &start=(num 0)
+			    &text= abc
 			   ]
 			   [
-			    &end=	(num 3)
-			    &start=	(num 2)
-			    &text=	c
+			    &end=  (num 3)
+			    &start=(num 2)
+			    &text= c
 			   ]
 			  ]
-			 &start=	(num 0)
-			 &text=	abc
+			 &start= (num 0)
+			 &text=  abc
 			]
 		`)),
 		thatOutputErrorIsBubbled("pprint foo"),

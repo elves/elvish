@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/mattn/go-runewidth"
+
 	"src.elv.sh/pkg/parse"
 )
 
@@ -84,14 +86,18 @@ func reprList(v List, indent int) string {
 func reprMap(v Map, indent int) string {
 	builder := NewMapReprBuilder(indent)
 	var kv CmpKVSlice
+	maxKeyWidth := 0
 	for it := v.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		kv = append(kv, [2]any{k, v})
+		if n := runewidth.StringWidth(Repr(k, 0)); n > maxKeyWidth {
+			maxKeyWidth = n
+		}
 	}
 	sort.Sort(kv)
 	for _, kv := range kv {
 		k, v := kv[0], kv[1]
-		builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
+		builder.WritePair(maxKeyWidth, Repr(k, indent+1), indent+2, Repr(v, indent+2))
 	}
 	return builder.String()
 }
@@ -100,16 +106,20 @@ func reprStructMap(v StructMap, indent int) string {
 	var kv CmpKVSlice
 	vValue := reflect.ValueOf(v)
 	vType := vValue.Type()
+	maxKeyWidth := 0
 	it := iterateStructMap(vType)
 	for it.Next() {
 		k, v := it.Get(vValue)
 		kv = append(kv, [2]any{k, v})
+		if n := runewidth.StringWidth(Repr(k, 0)); n > maxKeyWidth {
+			maxKeyWidth = n
+		}
 	}
 	sort.Sort(kv)
 	builder := NewMapReprBuilder(indent)
 	for _, kv := range kv {
 		k, v := kv[0], kv[1]
-		builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
+		builder.WritePair(maxKeyWidth, Repr(k, indent+1), indent+2, Repr(v, indent+2))
 	}
 	return builder.String()
 }
