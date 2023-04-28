@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/mattn/go-runewidth"
+
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/persistent/hashmap"
 )
@@ -18,10 +20,10 @@ type Reprer interface {
 	// for a list), or a string enclosed in "<>" containing the kind and
 	// identity of the Value(like `<fn 0xdeadcafe>`).
 	//
-	// If indent is at least 0, it should be pretty-printed with the current
-	// indentation level of indent; the indent of the first line has already
-	// been written and shall not be written in Repr. The returned string
-	// should never contain a trailing newline.
+	// If indent is not negative the value should be pretty-printed with the
+	// current indentation level of indent; the indent of the first line has
+	// already been written and shall not be written in Repr. The returned
+	// string should never contain a trailing newline.
 	Repr(indent int) string
 }
 
@@ -82,11 +84,15 @@ func Repr(v any, indent int) string {
 
 func reprMap(it hashmap.Iterator, n, indent int) string {
 	builder := NewMapReprBuilder(indent)
+	maxKeyWidth := 0
 	// Collect all the key-value pairs.
 	pairs := make([][2]any, 0, n)
 	for ; it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		pairs = append(pairs, [2]any{k, v})
+		if n := runewidth.StringWidth(Repr(k, 0)); n > maxKeyWidth {
+			maxKeyWidth = n
+		}
 	}
 	// Sort the pairs. See the godoc of CmpTotal for the sorting algorithm.
 	sort.Slice(pairs, func(i, j int) bool {
@@ -95,7 +101,7 @@ func reprMap(it hashmap.Iterator, n, indent int) string {
 	// Print the pairs.
 	for _, pair := range pairs {
 		k, v := pair[0], pair[1]
-		builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
+		builder.WritePair(maxKeyWidth, Repr(k, indent+1), indent+2, Repr(v, indent+2))
 	}
 	return builder.String()
 }

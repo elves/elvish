@@ -9,6 +9,8 @@ import (
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/mods/re"
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestPut(t *testing.T) {
@@ -78,8 +80,73 @@ func TestEcho(t *testing.T) {
 }
 
 func TestPprint(t *testing.T) {
-	Test(t,
-		That(`pprint [foo bar]`).Prints("[\n foo\n bar\n]\n"),
+	setup := func(t *testing.T, ev *eval.Evaler) {
+		ev.ExtendGlobal(eval.BuildNs().AddNs("re", re.Ns))
+	}
+
+	TestWithSetup(t, setup,
+		// Verify a simple list is pretty printed as expected.
+		That(`pprint [foo bar [lorem ipsum]]`).Prints(testutil.Dedent(`
+			[
+			  foo
+			  bar
+			  [
+			    lorem
+			    ipsum
+			  ]
+			]
+		`)),
+		// Verify regular maps are sorted and correctly formatted.
+		That(`
+			var map = [&(num 0.5)=0.5 &(num 0)=0 &(num 21/17)=21/17 &(num 2)=2 &(num 1)=1]
+			pprint $map
+		`).Prints(testutil.Dedent(`
+			[
+			  &(num 0)=    0
+			  &(num 0.5)=  0.5
+			  &(num 1)=    1
+			  &(num 21/17)=21/17
+			  &(num 2)=    2
+			]
+		`)),
+		That(`
+			var map = [&arglebargle=$true &def=z &xyz=x &abc=(num -1)]
+			pprint $map
+		`).Prints(testutil.Dedent(`
+			[
+			  &abc=        (num -1)
+			  &arglebargle=$true
+			  &def=        z
+			  &xyz=        x
+			]
+		`)),
+		// Verify struct maps are sorted and correctly formatted. Technically
+		// this is redundant since regular maps and struct maps are now
+		// integrated, but defense in depth is a good practice. This also
+		// verifies the formatting of nested maps; which the above, simpler
+		// tests, do not.
+		That(`
+			var map = (re:find '(.)+' abc)
+			pprint $map
+		`).Prints(testutil.Dedent(`
+			[
+			  &end=   (num 3)
+			  &groups=[
+			      [
+			        &end=  (num 3)
+			        &start=(num 0)
+			        &text= abc
+			      ]
+			      [
+			        &end=  (num 3)
+			        &start=(num 2)
+			        &text= c
+			      ]
+			    ]
+			  &start= (num 0)
+			  &text=  abc
+			]
+		`)),
 		thatOutputErrorIsBubbled("pprint foo"),
 	)
 }

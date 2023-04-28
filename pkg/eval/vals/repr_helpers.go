@@ -2,7 +2,10 @@ package vals
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
+
+	"github.com/mattn/go-runewidth"
 )
 
 // ListReprBuilder helps to build Repr of list-like Values.
@@ -22,8 +25,9 @@ func (b *ListReprBuilder) WriteElem(v string) {
 		b.buf.WriteByte('[')
 	}
 	if b.indent >= 0 {
-		// Pretty-printing: Add a newline and indent+1 spaces.
-		b.buf.WriteString("\n" + strings.Repeat(" ", b.indent+1))
+		// Pretty-printing: Add a newline and indent the list values.
+		b.buf.WriteByte('\n')
+		b.buf.WriteString(strings.Repeat(" ", 2*(b.indent+1)))
 	} else if b.buf.Len() > 1 {
 		b.buf.WriteByte(' ')
 	}
@@ -37,7 +41,8 @@ func (b *ListReprBuilder) String() string {
 		return "[]"
 	}
 	if b.indent >= 0 {
-		b.buf.WriteString("\n" + strings.Repeat(" ", b.indent))
+		b.buf.WriteByte('\n')
+		b.buf.WriteString(strings.Repeat(" ", 2*b.indent))
 	}
 	b.buf.WriteByte(']')
 	return b.buf.String()
@@ -55,10 +60,13 @@ func NewMapReprBuilder(indent int) *MapReprBuilder {
 	return &MapReprBuilder{ListReprBuilder{indent: indent}}
 }
 
-// WritePair writes a new pair.
-func (b *MapReprBuilder) WritePair(k string, indent int, v string) {
+// WritePair writes a new key:value pair. The caller should calculate the
+// maximum displayable width of any key in the set of keys and pass that value
+// to this method in order to ensure the values are vertically aligned.
+func (b *MapReprBuilder) WritePair(maxKeyWidth int, k string, indent int, v string) {
 	if indent > 0 {
-		b.inner.WriteElem("&" + k + "=\t" + v)
+		padding := 1 + maxKeyWidth - runewidth.StringWidth(k)
+		b.inner.WriteElem("&" + k + fmt.Sprintf("%-*s", padding, "=") + v)
 	} else {
 		b.inner.WriteElem("&" + k + "=" + v)
 	}

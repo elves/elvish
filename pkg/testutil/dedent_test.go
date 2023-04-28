@@ -29,6 +29,13 @@ var dedentTests = []struct {
 			`,
 		out: "a\n b\nc\n",
 	},
+	{
+		name: "no consistent leading whitespace removes as much as possible",
+		in: `
+				a
+			b`,
+		out: "\ta\nb",
+	},
 }
 
 func TestDedent(t *testing.T) {
@@ -37,16 +44,5 @@ func TestDedent(t *testing.T) {
 		if got != tc.out {
 			t.Errorf("Dedent(%q) -> %q, want %q", tc.in, got, tc.out)
 		}
-	}
-}
-
-func TestDedentPanicsOnBadInput(t *testing.T) {
-	x := Recover(func() {
-		Dedent(`
-			a
-		b`)
-	})
-	if x == nil {
-		t.Errorf("Dedent did not panic")
 	}
 }

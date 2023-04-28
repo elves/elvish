@@ -4,9 +4,10 @@ import (
 	"errors"
 	"sort"
 
+	"github.com/mattn/go-runewidth"
+
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -24,17 +25,21 @@ var emptyBindingsMap = bindingsMap{vals.EmptyMap}
 // ordinary map keyed by strings.
 func (bt bindingsMap) Repr(indent int) string {
 	var keys ui.Keys
+	maxKeyWidth := 0
 	for it := bt.Map.Iterator(); it.HasElem(); it.Next() {
 		k, _ := it.Elem()
-		keys = append(keys, k.(ui.Key))
+		key := k.(ui.Key)
+		keys = append(keys, key)
+		if n := runewidth.StringWidth(vals.Repr(key.String(), 0)); n > maxKeyWidth {
+			maxKeyWidth = n
+		}
 	}
 	sort.Sort(keys)
-
 	builder := vals.NewMapReprBuilder(indent)
-
 	for _, k := range keys {
 		v, _ := bt.Map.Index(k)
-		builder.WritePair(parse.Quote(k.String()), indent+2, vals.Repr(v, indent+2))
+		builder.WritePair(maxKeyWidth, vals.Repr(k.String(), indent+1), indent+2,
+			vals.Repr(v, indent+2))
 	}
 
 	return builder.String()
