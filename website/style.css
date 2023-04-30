@@ -29,7 +29,7 @@ a {
 /**
  * Top-level elements.
  *
- * There are two main elements: #navbar and #content. Both have a maximum
+ * There are two main elements: #navbar and .content. Both have a maximum
  * width, and is centered when the viewport is wider than that.
  *
  * #navbar is wrapped by #navbar-container, a black stripe that always span
@@ -43,22 +43,22 @@ a {
     padding: 7px 0;
 }
 
-#content, #navbar {
+.content, #navbar {
     max-width: 800px;
     margin: 0 auto;
     padding: 0 16px;
 }
 
 /*
-832px = max-width + left and right padding of #content.
+832px = max-width + left and right padding of .content.
 
-After this screen width, #content will no longer get wider, but we allow
+After this screen width, .content will no longer get wider, but we allow
 .extra-wide elements to continue to get wider up to 900px, using negative
 left and right margins.
 */
 @media screen and (min-width: 832px) {
     .extra-wide  {
-        /* 32px is left and right padding of #content. */
+        /* 32px is left and right padding of .content. */
         width: calc(min(100vw - 32px, 900px));
         /* upper bound is calculated by substituting 100vw = 900px + 32px */
         margin-inline: calc(max((832px - 100vw) / 2, -50px));
@@ -131,8 +131,8 @@ left and right margins.
     border-bottom: darkred solid 2px;
 }
 
-/* Override #content h1 */
-#content .article-title h1 {
+/* Override .content h1 */
+.content .article-title h1 {
     font-size: 1.4em;
     margin: 0;
     padding: 0;
@@ -147,26 +147,26 @@ left and right margins.
     padding-top: 32px;
 }
 
-#content p, #content ul, #content pre {
+.content p, .content ul, .content pre {
     margin-bottom: 0.7em;
 }
 
-#content li {
+.content li {
     margin: 0.5em 0;
 }
 
 /* Block code. */
-#content pre {
+.content pre {
     padding: 1em;
     overflow: auto;
 }
 
 /* Inline code. */
-#content p code {
+.content p code {
     padding: 0.1em 0;
 }
 
-#content p code::before, #content p code::after {
+.content p code::before, .content p code::after {
     letter-spacing: -0.2em;
     content: "\00a0";
 }
@@ -175,43 +175,43 @@ code, pre {
     font-family: "Fira Mono", Menlo, "Roboto Mono", Consolas, monospace;
 }
 
-#content code, #content pre {
+.content code, .content pre {
     background-color: #f0f0f0;
     border-radius: 3px;
 }
 
 /* This doesn't have p, so that it also applies to ttyshots. */
-#content code {
+.content code {
     font-size: 85%;
 }
 
 /* We only use h1 to h3. */
 
-#content h1, #content h2, #content h3 {
+.content h1, .content h2, .content h3 {
     line-height: 1.25;
 }
 
-#content h1, #content h2, #content h3 {
+.content h1, .content h2, .content h3 {
     margin-top: 24px;
     margin-bottom: 20px;
     font-weight: bold;
 }
 
-#content h1 {
+.content h1 {
     font-size: 1.3em;
 }
 
-#content h1 {
+.content h1 {
     border-left: darkred solid 0.3em;
     padding-left: 0.3em;
     margin-left: -0.6em;
 }
 
-#content h2 {
+.content h2 {
     font-size: 1.2em;
 }
 
-#content ul, #content ol {
+.content ul, .content ol {
     margin-left: 1.5em;
 }
 
@@ -262,7 +262,7 @@ code, pre {
     }
 }
 
-/* Override value from #content ul, which is too big for the ToC */
+/* Override value from .content ul, which is too big for the ToC */
 #toc ul {
     margin-left: 1em;
 }
@@ -287,7 +287,7 @@ first <li> element to match.
  * Category content.
  **/
 
-#content.category {
+.content.category {
     padding-top: 32px;
 }
 
@@ -477,7 +477,7 @@ pre.ttyshot, pre.ttyshot code {
     background-color: #333;
 }
 
-.dark #content code, .dark #content pre {
+.dark .content code, .dark .content pre {
     background-color: #181818;
 }
 

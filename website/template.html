@@ -162,7 +162,7 @@
 </html>
 
 {{ define "article-content" }}
-  <div id="content">
+  <div class="content">
     <article>
       {{ if not .IsHomepage }}
         <div class="article-title">
@@ -181,7 +181,7 @@
 
 {{ define "category-content" }}
   {{ $category := .Category }}
-  <div id="content" class="category">
+  <div class="content category">
     {{ if .Prelude }}
       <article>
         {{ .Prelude }}

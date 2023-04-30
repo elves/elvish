@@ -128,7 +128,7 @@ ul#demo-switcher > li > a:hover {
 
 /* Overriding default styles */
 
-#content h1 {
+.content h1 {
   border: none;
 }
 
