@@ -23,7 +23,7 @@ are supported:
 Now find your platform in the table, and download the corresponding binary
 archive:
 
-<table>
+<table class="extra-wide">
   <tr>
     <th>Version</th>
     <th>amd64</th>
@@ -348,7 +348,7 @@ nix-env -i elvish
 The following old versions are no longer supported. They are only listed here
 for historical interest.
 
-<table>
+<table class="extra-wide">
   <tr>
     <th>Version</th>
     <th>amd64</th>

@@ -3,9 +3,9 @@
      echo $x.pdf
    }
 ~> try {
-     fail 'bad error'
+     fail 'something bad happened'
    } catch e {
-     echo error $e
+     echo (styled 'error:' red) $e[reason][content]
    } else {
      echo ok
    }

@@ -22,7 +22,7 @@ import (
 
 const (
 	terminalRows = 100
-	terminalCols = 58
+	terminalCols = 52
 )
 
 const (

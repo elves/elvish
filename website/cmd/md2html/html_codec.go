@@ -149,32 +149,28 @@ func processHTMLID(s string) string {
 }
 
 const tocBefore = `
-<div id="pandoc-toc-wrapper">
-  <p>Table of Content: <span id="pandoc-toc-toggle-wrapper"></span></p>
-  <div id="pandoc-toc">
+<div id="toc-wrapper">
+  <div id="toc-header"><span id="toc-status"></span> Table of content</div>
+  <div id="toc">
 `
 
 const tocAfter = `
   </div>
   <script>
   (function() {
-    var shown = true,
-        tocToggleWrapper = document.getElementById('pandoc-toc-toggle-wrapper'),
-        tocList = document.getElementById('pandoc-toc');
-    var tocToggle = document.createElement('a');
-    tocToggle.innerText = "[Hide]";
-    tocToggle.href = "";
-    tocToggleWrapper.appendChild(tocToggle);
-    tocToggle.onclick = function(ev) {
-      shown = !shown;
-      if (shown) {
-        tocToggle.innerText = "[Hide]";
-        tocList.className = "";
+    var open = true,
+	    tocHeader = document.getElementById('toc-header'),
+	    tocStatus = document.getElementById('toc-status'),
+        tocList = document.getElementById('toc');
+    tocHeader.onclick = function() {
+      open = !open;
+      if (open) {
+		tocStatus.className = '';
+        tocList.className = '';
       } else {
-        tocToggle.innerText = "[Show]";
-        tocList.className = "no-display";
+		tocStatus.className = 'closed';
+        tocList.className = 'no-display';
       }
-      ev.preventDefault();
     };
   })();
   </script>

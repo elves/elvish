@@ -10,7 +10,7 @@ html {
 body {
     font-family: "Source Serif", Georgia, serif;
     font-size: 17px;
-    line-height: 1.4em;
+    line-height: 1.4;
 }
 
 body.has-js .no-js, body.no-js .has-js {
@@ -29,7 +29,7 @@ a {
 /**
  * Top-level elements.
  *
- * There are two main elements: #navbar and #content. Both have a maximum
+ * There are two main elements: #navbar and .content. Both have a maximum
  * width, and is centered when the viewport is wider than that.
  *
  * #navbar is wrapped by #navbar-container, a black stripe that always span
@@ -40,13 +40,29 @@ a {
     width: 100%;
     color: white;
     background-color: #1a1a1a;
-    padding: 12px 0;
+    padding: 7px 0;
 }
 
-#content, #navbar {
-    max-width: 1024px;
+.content, #navbar {
+    max-width: 800px;
     margin: 0 auto;
-    padding: 0 4%;
+    padding: 0 16px;
+}
+
+/*
+832px = max-width + left and right padding of .content.
+
+After this screen width, .content will no longer get wider, but we allow
+.extra-wide elements to continue to get wider up to 900px, using negative
+left and right margins.
+*/
+@media screen and (min-width: 832px) {
+    .extra-wide  {
+        /* 32px is left and right padding of .content. */
+        width: calc(min(100vw - 32px, 900px));
+        /* upper bound is calculated by substituting 100vw = 900px + 32px */
+        margin-inline: calc(max((832px - 100vw) / 2, -50px));
+    }
 }
 
 /**
@@ -59,13 +75,12 @@ a {
 #site-title, #nav-list {
     display: inline-block;
     /* Add spacing between lines when the navbar cannot fit in one line. */
-    line-height: 1.4em;
+    line-height: 1.4;
 }
 
 #site-title {
     font-size: 1.2em;
-    margin-right: 0.6em;
-    /* Move the title upward 1px so that it looks more aligned with the
+    /* Move the title downward 1px so that it looks more aligned with the
      * category list. */
     position: relative;
     top: 1px;
@@ -75,17 +90,23 @@ a {
     color: #5b5;
 }
 
+#nav-list {
+    margin-left: 0.8em;
+}
+
 .nav-item {
     list-style: none;
     display: inline-block;
+    margin-left: 0.2em;
 }
 
 .nav-link {
     color: white;
+    border-radius: 3px;
 }
 
 .nav-link > code {
-    padding: 0px 0.5em;
+    padding: 0px 0.4em;
 }
 
 .nav-link:hover {
@@ -95,10 +116,6 @@ a {
 .nav-link.current {
     color: black;
     background-color: white;
-}
-
-.nav-item + .nav-item::before {
-    content: "|";
 }
 
 /**
@@ -111,12 +128,12 @@ a {
 
 .article-title {
     padding: 16px 0;
-    border-bottom: solid 1px #667;
+    border-bottom: darkred solid 2px;
 }
 
-/* Extra level needed to be more specific than .article h1 */
-.article .article-title h1 {
-    font-size: 1.5em;
+/* Override .content h1 */
+.content .article-title h1 {
+    font-size: 1.4em;
     margin: 0;
     padding: 0;
     border: none;
@@ -130,30 +147,26 @@ a {
     padding-top: 32px;
 }
 
-.article p, .article ul, .article pre {
-    margin-bottom: 16px;
+.content p, .content ul, .content pre {
+    margin-bottom: 0.7em;
 }
 
-.article li {
+.content li {
     margin: 0.5em 0;
 }
 
-.article li > p {
-    margin: 1em 0;
-}
-
 /* Block code. */
-.article pre {
+.content pre {
     padding: 1em;
     overflow: auto;
 }
 
 /* Inline code. */
-.article p code {
+.content p code {
     padding: 0.1em 0;
 }
 
-.article p code::before, .article p code::after {
+.content p code::before, .content p code::after {
     letter-spacing: -0.2em;
     content: "\00a0";
 }
@@ -162,116 +175,129 @@ code, pre {
     font-family: "Fira Mono", Menlo, "Roboto Mono", Consolas, monospace;
 }
 
-.article code, .article pre {
+.content code, .content pre {
     background-color: #f0f0f0;
     border-radius: 3px;
 }
 
 /* This doesn't have p, so that it also applies to ttyshots. */
-.article code {
+.content code {
     font-size: 85%;
 }
 
 /* We only use h1 to h3. */
 
-.article h1, .article h2, .article h3 {
+.content h1, .content h2, .content h3 {
     line-height: 1.25;
 }
 
-.article h1, .article h2, .article h3 {
+.content h1, .content h2, .content h3 {
     margin-top: 24px;
     margin-bottom: 20px;
     font-weight: bold;
 }
 
-.article h1 {
+.content h1 {
     font-size: 1.3em;
-    padding-bottom: 0.4em;
-    border-bottom: 1px solid #aaa;
 }
 
-.article h2 {
+.content h1 {
+    border-left: darkred solid 0.3em;
+    padding-left: 0.3em;
+    margin-left: -0.6em;
+}
+
+.content h2 {
     font-size: 1.2em;
 }
 
-.article h3 {
-    font-style: italic;
-}
-
-.article ul, .article ol {
-    margin-left: 1em;
+.content ul, .content ol {
+    margin-left: 1.5em;
 }
 
 /**
  * Table of content.
  */
 
-#pandoc-toc-wrapper {
+#toc-wrapper {
     background-color: #f0f0f0;
-    padding: 1em;
-    margin: 0 16px 16px 0;
+    margin: 0 0 16px 0;
     border-radius: 6px;
     line-height: 1;
 }
 
-/* The first <h1> clears the TOC */
-.article-content h1 {
-    clear: both;
+#toc-header {
+    padding: 1em 1em 0.6em 1em;
+    border-bottom: solid white 2px;
+    cursor: pointer;
 }
 
-#pandoc-toc {
+#toc-status {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-right: 2px;
+    border: 6px solid transparent;
+    position: relative;
+}
+
+#toc-status:not(.closed) {
+    border-top: 6px solid black;
+    top: 3px;
+}
+
+#toc-status.closed {
+    border-left: 6px solid black;
+    left: 3px;
+}
+
+#toc {
     margin-left: -0.6em;
+    padding: 1em;
 }
 
-@media (min-width: 600px) and (max-width: 899px) {
-    #pandoc-toc {
+@media screen and (min-width: 600px) {
+    #toc {
         column-count: 2;
     }
 }
 
-@media (min-width: 900px) {
-    #pandoc-toc {
-        column-count: 3;
-    }
+/* Override value from .content ul, which is too big for the ToC */
+#toc ul {
+    margin-left: 1em;
 }
 
-#pandoc-toc li {
+#toc li {
     list-style: none;
     /* Keep first-level ToC within one column */
     break-inside: avoid;
+}
+
+/*
+When the ToC can have two columns, the first item of the second column will not
+the intended top margin (this is how columns work in CSS). Work around this by
+adding some extra top padding in #toc, and removing the top margin of the very
+first <li> element to match.
+*/
+#toc > ul:first-child > li:first-child {
+    margin-top: 0;
 }
 
 /**
  * Category content.
  **/
 
-#content.category {
-    padding-top: 16px;
-}
-
-.category-prelude, .group-intro, .article-list {
-    margin-top: 16px;
-}
-
-.article-list > li {
-    list-style: square inside;
-    padding: 3px;
+.content.category {
+    padding-top: 32px;
 }
 
 .article-list > li:hover {
-    background-color: #c0c0c0;
-}
-
-.article-link, .article-link:visited {
-    color: black;
-    display: inline;
-    line-height: 1.4em;
-    border-bottom: 1px solid black;
+    background-color: #d0d0d0;
 }
 
 .article-timestamp {
     float: right;
-    display: inline-block;
+    display: block;
     margin-left: 1em;
 }
 
@@ -317,11 +343,6 @@ kbd {
     margin: 1px;
     font-size: 85%;
     font-family: "Lucida Grande", Arial, sans-serif;
-}
-
-/** Section numbers generated by pandoc */
-.header-section-number:after, .toc-section-number:after {
-    content: ".";
 }
 
 /**
@@ -456,11 +477,11 @@ pre.ttyshot, pre.ttyshot code {
     background-color: #333;
 }
 
-.dark .article code, .dark .article pre {
+.dark .content code, .dark .content pre {
     background-color: #181818;
 }
 
-.dark #pandoc-toc-wrapper {
+.dark #toc-wrapper {
     background-color: #181818;
 }
 

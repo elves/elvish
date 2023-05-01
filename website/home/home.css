@@ -128,14 +128,8 @@ ul#demo-switcher > li > a:hover {
 
 /* Overriding default styles */
 
-.article h1 {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.article li > p {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
+.content h1 {
+  border: none;
 }
 
 /**

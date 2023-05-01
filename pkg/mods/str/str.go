@@ -23,7 +23,8 @@ var Ns = eval.BuildNsNamed("str").
 		"contains-any": strings.ContainsAny,
 		"count":        strings.Count,
 		"equal-fold":   strings.EqualFold,
-		// TODO: Fields, FieldsFunc
+		// TODO: FieldsFunc
+		"fields":          strings.Fields,
 		"from-codepoints": fromCodepoints,
 		"from-utf8-bytes": fromUtf8Bytes,
 		"has-prefix":      strings.HasPrefix,
