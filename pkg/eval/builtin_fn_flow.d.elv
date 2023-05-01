@@ -75,6 +75,12 @@ fn each {|f inputs?| }
 # An exception raised from [`continue`]() is swallowed and can be used to
 # terminate a single iteration early.
 #
+# The `&num-workers` option controls how many functions are run in parallel.
+# It defaults to -1. A value of -1 means an infinite number of workers run in
+# parallel. A value greater than zero limits the number of parallel workers to
+# that value. Any other value is an error. Note that `peach &num-workers=1` is
+# equivalent to `each`.
+#
 # Example (your output will differ):
 #
 # ```elvish-transcript
@@ -99,7 +105,7 @@ fn each {|f inputs?| }
 # `run-parallel`.
 #
 # See also [`each`]() and [`run-parallel`]().
-fn peach {|f inputs?| }
+fn peach {|&num-workers f inputs?| }
 
 # Throws an exception; `$v` may be any type. If `$v` is already an exception,
 # `fail` rethrows it.
