@@ -12,10 +12,12 @@ import (
 // variable does not exist or contains an invalid value, the scale defaults to
 // 1.
 func Scaled(d time.Duration) time.Duration {
-	return time.Duration(float64(d) * getTestTimeScale())
+	return time.Duration(float64(d) * TestTimeScale())
 }
 
-func getTestTimeScale() float64 {
+// TestTimeScale parses $E:ELVISH_TEST_TIME_SCALE, defaulting to 1 it it's not
+// set or can't be parsed as a float64.
+func TestTimeScale() float64 {
 	env := os.Getenv(env.ELVISH_TEST_TIME_SCALE)
 	if env == "" {
 		return 1

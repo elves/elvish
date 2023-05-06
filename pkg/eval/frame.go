@@ -25,6 +25,8 @@ type Frame struct {
 	local, up *Ns
 	defers    *[]func(*Frame) Exception
 
+	// TODO: Expose interrupt signals as a context.Context instead. This is
+	// necessary for working with blocking Go APIs that take Contexts.
 	intCh <-chan struct{}
 	ports []*Port
 

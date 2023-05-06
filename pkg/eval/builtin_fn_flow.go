@@ -3,8 +3,8 @@ package eval
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math"
+	"math/big"
 	"sync"
 	"sync/atomic"
 
@@ -79,9 +79,9 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 	return err
 }
 
-type peachOpt struct{ NumWorkers int }
+type peachOpt struct{ NumWorkers vals.Num }
 
-func (o *peachOpt) SetDefaultOptions() { o.NumWorkers = -1 }
+func (o *peachOpt) SetDefaultOptions() { o.NumWorkers = math.Inf(1) }
 
 func peach(fm *Frame, opts peachOpt, f Callable, inputs Inputs) error {
 	var wg sync.WaitGroup
@@ -90,25 +90,25 @@ func peach(fm *Frame, opts peachOpt, f Callable, inputs Inputs) error {
 	var err error
 
 	var workerSema *semaphore.Weighted
-	switch {
-	case opts.NumWorkers == -1:
-		workerSema = semaphore.NewWeighted(math.MaxInt64)
-	case opts.NumWorkers > 0:
-		workerSema = semaphore.NewWeighted(int64(opts.NumWorkers))
-	default:
-		return errs.BadValue{
-			What:   "peach &num-workers",
-			Valid:  "-1 or > 0",
-			Actual: fmt.Sprintf("%d", opts.NumWorkers),
-		}
+	numWorkers, limited, err := parseNumWorkers(opts.NumWorkers)
+	if err != nil {
+		return err
 	}
-	ctx := context.TODO() // workerSema needs a context so use a dummy context today
+	if limited {
+		workerSema = semaphore.NewWeighted(int64(numWorkers))
+	}
+
+	// The context is used to interrupt workerSema.Acquire, but interrupt
+	// signals are currently exposed as a channel instead.
+	ctx := context.TODO()
 
 	inputs(func(v any) {
 		if atomic.LoadInt32(&broken) != 0 {
 			return
 		}
-		workerSema.Acquire(ctx, 1)
+		if workerSema != nil {
+			workerSema.Acquire(ctx, 1)
+		}
 		wg.Add(1)
 		go func() {
 			newFm := fm.Fork("closure of peach")
@@ -130,11 +130,34 @@ func peach(fm *Frame, opts peachOpt, f Callable, inputs Inputs) error {
 				}
 			}
 			wg.Done()
-			workerSema.Release(1)
+			if workerSema != nil {
+				workerSema.Release(1)
+			}
 		}()
 	})
 	wg.Wait()
 	return err
+}
+
+func parseNumWorkers(n vals.Num) (int, bool, error) {
+	switch n := n.(type) {
+	case int:
+		if n >= 1 {
+			return n, true, nil
+		}
+	case *big.Int:
+		// A limit larger than MaxInt is equivalent to no limit.
+		return 0, false, nil
+	case float64:
+		if math.IsInf(n, 1) {
+			return 0, false, nil
+		}
+	}
+	return 0, false, errs.BadValue{
+		What:   "peach &num-workers",
+		Valid:  "exact positive integer or +inf",
+		Actual: vals.ToString(n),
+	}
 }
 
 // FailError is an error returned by the "fail" command.

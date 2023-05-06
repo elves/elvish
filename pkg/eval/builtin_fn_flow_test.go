@@ -1,10 +1,11 @@
 package eval_test
 
 import (
-	"runtime"
+	"fmt"
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/testutil"
 
 	"src.elv.sh/pkg/eval/errs"
 	. "src.elv.sh/pkg/eval/evaltest"
@@ -36,21 +37,10 @@ func TestEach(t *testing.T) {
 }
 
 func TestPeach(t *testing.T) {
-	// Testing the `peach` builtin is a challenge since, by definition, the order of execution is
-	// undefined. Start by validating its options have reasonable values.
+	testTimeScale := fmt.Sprint(testutil.TestTimeScale())
+	// Testing the `peach` builtin is a challenge since, by definition, the
+	// order of execution is undefined.
 	Test(t,
-		// Invalid options are handled.
-		That(`peach &num-workers=0 {|x| * 2 $x }`).Throws(errs.BadValue{
-			What:   "peach &num-workers",
-			Valid:  "-1 or > 0",
-			Actual: "0",
-		}),
-		That(`peach &num-workers=-2 {|x| * 2 $x }`).Throws(errs.BadValue{
-			What:   "peach &num-workers",
-			Valid:  "-1 or > 0",
-			Actual: "-2",
-		}),
-
 		// Verify the output has the expected values when sorted.
 		That(`range 5 | peach {|x| * 2 $x } | order`).Puts(0, 2, 4, 6, 8),
 
@@ -88,48 +78,49 @@ func TestPeach(t *testing.T) {
 				peach {|x| if (== 50 $x) { break } else { put $x } } |
 				< (+ (all)) (+ (range 1 101))
 		`).Puts(true),
-	)
 
-	// On non-Windows systems we can expect to have `date '+%s'`. This allows us
-	// to verify that limiting the number of workers works as well as the
-	// parallelism `peach` is meant to provide. Whole second granularity makes
-	// this a reliable enough test even in CI environments where the system may
-	// have unexpected scheduling latencies.
-	//
-	// Despite the above these tests require a hack. It reflects the fact that
-	// sometimes, due to unexpected scheduling latencies, the elapsed time will
-	// be one second longer than expected. TBD is how to make the tests more
-	// robust without such hacks. Not to mention reducing the sleep durations so
-	// these tests complete more quickly.
-	//
-	// TODO: Eliminate the dependency on an external `date` command when
-	// https://github.com/elves/elvish/issues/1030 is resolved. Thus allowing
-	// these tests to also be run on Windows.
-	if runtime.GOOS != "windows" {
-		Test(t,
-			That(`
-				var start = (e:date '+%s')
-				range 5 | peach &num-workers=-1 {|_|
-					sleep 1
-					var e = (- (e:date '+%s') $start)
-					if (== $e 2) { set e = (num 1) }
-					put $e
-				}
-			`).Puts(1, 1, 1, 1, 1),
-		)
-		Test(t,
-			That(`
-				var start = (e:date '+%s')
-				range 5 | peach &num-workers=3 {|x|
-					sleep 1
-					var e = (- (e:date '+%s') $start)
-					if (and (< $x 3) (== $e 2)) { set e = (num 1) }
-					if (and (> $x 2) (== $e 3)) { set e = (num 2) }
-					put $e
-				}
-			`).Puts(1, 1, 1, 2, 2),
-		)
-	}
+		// Test the parallelism of peach by observing its run time relative to
+		// the run time of the function. Since the exact run time is subject to
+		// scheduling differences, benchmark it multiple times and use the
+		// fastest run time.
+
+		// Unlimited workers: when scheduling allows, no two function runs are
+		// serial. Best run time is between t and 2t, regardless of input size.
+		That(`
+				var t = (* 0.001 `+testTimeScale+`)
+				var best-run = (benchmark &min-runs=5 &min-time=0 {
+					range 6 | peach {|_| sleep $t }
+				} &on-end={|metrics| put $metrics[min] })
+				< $t $best-run (* 2 $t)`).
+			Puts(true),
+		// 2 workers:
+		//
+		// - When scheduling allows, at least two function runs are parallel.
+		//
+		// - No more than two functions are parallel.
+		//
+		// Best run time is between (ceil(n/2) * t) and n*t, where n is the
+		// input size.
+		That(`
+				var t = (* 0.001 `+testTimeScale+`)
+				var best-run = (benchmark &min-runs=5 &min-time=0 {
+					range 6 | peach &num-workers=2 {|_| sleep $t }
+				} &on-end={|metrics| put $metrics[min] })
+				< (* 3 $t) $best-run (* 6 $t)`).
+			Puts(true),
+
+		// Invalid options are handled.
+		That(`peach &num-workers=0 {|x| * 2 $x }`).Throws(errs.BadValue{
+			What:   "peach &num-workers",
+			Valid:  "exact positive integer or +inf",
+			Actual: "0",
+		}),
+		That(`peach &num-workers=-2 {|x| * 2 $x }`).Throws(errs.BadValue{
+			What:   "peach &num-workers",
+			Valid:  "exact positive integer or +inf",
+			Actual: "-2",
+		}),
+	)
 }
 
 func TestFail(t *testing.T) {
