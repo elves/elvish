@@ -3,6 +3,7 @@
 package eval
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -280,14 +281,13 @@ func (ev *Evaler) Chdir(path string) error {
 
 // EvalCfg keeps configuration for the (*Evaler).Eval method.
 type EvalCfg struct {
+	// Context that can be used to cancel the evaluation.
+	Interrupts context.Context
 	// Ports to use in evaluation. The first 3 elements, if not specified
 	// (either being nil or Ports containing fewer than 3 elements),
 	// will be filled with DummyInputPort, DummyOutputPort and
 	// DummyOutputPort respectively.
 	Ports []*Port
-	// Callback to get a channel of interrupt signals and a function to call
-	// when the channel is no longer needed.
-	Interrupt func() (<-chan struct{}, func())
 	// Whether the Eval method should try to put the Elvish in the foreground
 	// after the code is executed.
 	PutInFg bool
@@ -386,19 +386,15 @@ func (ev *Evaler) Call(f Callable, callCfg CallCfg, evalCfg EvalCfg) error {
 }
 
 func (ev *Evaler) prepareFrame(src parse.Source, cfg EvalCfg) (*Frame, func()) {
-	var intCh <-chan struct{}
-	var intChCleanup func()
-	if cfg.Interrupt != nil {
-		intCh, intChCleanup = cfg.Interrupt()
+	intCtx := cfg.Interrupts
+	if intCtx == nil {
+		intCtx = context.Background()
 	}
 
 	ports := fillDefaultDummyPorts(cfg.Ports)
 
-	fm := &Frame{ev, src, cfg.Global, new(Ns), nil, intCh, ports, nil, false}
+	fm := &Frame{ev, src, cfg.Global, new(Ns), nil, intCtx, ports, nil, false}
 	return fm, func() {
-		if intChCleanup != nil {
-			intChCleanup()
-		}
 		if cfg.PutInFg {
 			err := putSelfInFg()
 			if err != nil {

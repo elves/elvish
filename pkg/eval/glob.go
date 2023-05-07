@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -228,7 +229,7 @@ func stringToSegments(s string) []glob.Segment {
 	return segs
 }
 
-func doGlob(gp globPattern, abort <-chan struct{}) ([]any, error) {
+func doGlob(ctx context.Context, gp globPattern) ([]any, error) {
 	but := make(map[string]struct{})
 	for _, s := range gp.Buts {
 		but[s] = struct{}{}
@@ -237,7 +238,7 @@ func doGlob(gp globPattern, abort <-chan struct{}) ([]any, error) {
 	vs := make([]any, 0)
 	if !gp.Glob(func(pathInfo glob.PathInfo) bool {
 		select {
-		case <-abort:
+		case <-ctx.Done():
 			logger.Println("glob aborted")
 			return false
 		default:
@@ -252,7 +253,7 @@ func doGlob(gp globPattern, abort <-chan struct{}) ([]any, error) {
 		}
 		return true
 	}) {
-		return nil, ErrInterrupted
+		return nil, context.Cause(ctx)
 	}
 	if len(vs) == 0 && !gp.Flags.Has(noMatchOK) {
 		return nil, ErrWildcardNoMatch

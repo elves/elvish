@@ -25,11 +25,11 @@ func instantStart(app cli.App, ev *eval.Evaler, bindings tk.Bindings) {
 		if err != nil {
 			return nil, err
 		}
+		ctx, done := eval.ListenInterrupts()
 		err = ev.Eval(
 			parse.Source{Name: "[instant]", Code: code},
-			eval.EvalCfg{
-				Ports:     []*eval.Port{nil, outPort},
-				Interrupt: eval.ListenInterrupts})
+			eval.EvalCfg{Ports: []*eval.Port{nil, outPort}, Interrupts: ctx})
+		done()
 		return collect(), err
 	}
 	w, err := modes.NewInstant(app,

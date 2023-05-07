@@ -2,6 +2,7 @@ package eval
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -25,9 +26,16 @@ type Frame struct {
 	local, up *Ns
 	defers    *[]func(*Frame) Exception
 
-	// TODO: Expose interrupt signals as a context.Context instead. This is
-	// necessary for working with blocking Go APIs that take Contexts.
-	intCh <-chan struct{}
+	// The godoc of the context package states:
+	//
+	// > Do not store Contexts inside a struct type; instead, pass a Context
+	// > explicitly to each function that needs it.
+	//
+	// However, that advice is considered by many to be overly aggressive
+	// (https://github.com/golang/go/issues/22602). The Frame struct doesn't fit
+	// the "parameter struct" definition in that discussion, but it is itself is
+	// a "context struct". Storing a Context inside it seems fine.
+	ctx   context.Context
 	ports []*Port
 
 	traceback *StackTrace
@@ -58,7 +66,7 @@ func (fm *Frame) PrepareEval(src parse.Source, r diag.Ranger, ns *Ns) (*Ns, func
 		traceback = fm.addTraceback(r)
 	}
 	newFm := &Frame{
-		fm.Evaler, src, local, new(Ns), nil, fm.intCh, fm.ports, traceback, fm.background}
+		fm.Evaler, src, local, new(Ns), nil, fm.ctx, fm.ports, traceback, fm.background}
 	op, _, err := compile(fm.Evaler.Builtin().static(), local.static(), nil, tree, fm.ErrorFile())
 	if err != nil {
 		return nil, nil, err
@@ -179,7 +187,7 @@ func (fm *Frame) Fork(name string) *Frame {
 	return &Frame{
 		fm.Evaler, fm.srcMeta,
 		fm.local, fm.up, fm.defers,
-		fm.intCh, newPorts,
+		fm.ctx, newPorts,
 		fm.traceback, fm.background,
 	}
 }

@@ -199,8 +199,10 @@ func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) result {
 	ports := []*eval.Port{eval.DummyInputPort, port1, port2}
 
 	for _, text := range texts {
+		ctx, done := eval.ListenInterrupts()
 		err := ev.Eval(parse.Source{Name: "[test]", Code: text},
-			eval.EvalCfg{Ports: ports, Interrupt: eval.ListenInterrupts})
+			eval.EvalCfg{Ports: ports, Interrupts: ctx})
+		done()
 
 		if parse.UnpackErrors(err) != nil {
 			t.Fatalf("Parse(%q) error: %s", text, err)

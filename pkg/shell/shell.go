@@ -166,8 +166,10 @@ func evalInTTY(fds [3]*os.File, ev *eval.Evaler, ed editor, src parse.Source) er
 	defer cleanup()
 	restore := term.SetupForEval(fds[0], fds[1])
 	defer restore()
+	ctx, done := eval.ListenInterrupts()
 	err := ev.Eval(src, eval.EvalCfg{
-		Ports: ports, Interrupt: eval.ListenInterrupts, PutInFg: true})
+		Ports: ports, Interrupts: ctx, PutInFg: true})
+	done()
 	if ed != nil {
 		ed.RunAfterCommandHooks(src, time.Since(start).Seconds(), err)
 	}

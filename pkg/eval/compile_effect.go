@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"sync"
@@ -37,8 +38,8 @@ func (op chunkOp) exec(fm *Frame) Exception {
 	// Check for interrupts after the chunk.
 	// We also check for interrupts before each pipeline, so there is no
 	// need to check it before the chunk or after each pipeline.
-	if fm.IsInterrupted() {
-		return fm.errorp(op, ErrInterrupted)
+	if err := fm.CancelCause(); err != nil {
+		return fm.errorp(op, err)
 	}
 	return nil
 }
@@ -67,13 +68,13 @@ type pipelineOp struct {
 const pipelineChanBufferSize = 32
 
 func (op *pipelineOp) exec(fm *Frame) Exception {
-	if fm.IsInterrupted() {
-		return fm.errorp(op, ErrInterrupted)
+	if err := fm.CancelCause(); err != nil {
+		return fm.errorp(op, err)
 	}
 
 	if op.bg {
 		fm = fm.Fork("background job" + op.source)
-		fm.intCh = nil
+		fm.ctx = context.Background()
 		fm.background = true
 		fm.Evaler.addNumBgJobs(1)
 	}

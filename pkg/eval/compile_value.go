@@ -109,7 +109,7 @@ func (op compoundOp) exec(fm *Frame) ([]any, Exception) {
 		newvs := make([]any, 0, len(vs))
 		for _, v := range vs {
 			if gp, ok := v.(globPattern); ok {
-				results, err := doGlob(gp, fm.Interrupts())
+				results, err := doGlob(fm.Context(), gp)
 				if err != nil {
 					return nil, fm.errorp(op, err)
 				}

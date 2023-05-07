@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"math/big"
@@ -52,8 +53,8 @@ func sleep(fm *Frame, duration any) error {
 	}
 
 	select {
-	case <-fm.Interrupts():
-		return ErrInterrupted
+	case <-fm.Context().Done():
+		return context.Cause(fm.Context())
 	case <-timeAfter(fm, d):
 		return nil
 	}

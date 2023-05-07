@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"context"
 	"errors"
 	"math"
 	"math/big"
@@ -98,9 +97,7 @@ func peach(fm *Frame, opts peachOpt, f Callable, inputs Inputs) error {
 		workerSema = semaphore.NewWeighted(int64(numWorkers))
 	}
 
-	// The context is used to interrupt workerSema.Acquire, but interrupt
-	// signals are currently exposed as a channel instead.
-	ctx := context.TODO()
+	ctx := fm.Context()
 
 	inputs(func(v any) {
 		if atomic.LoadInt32(&broken) != 0 {

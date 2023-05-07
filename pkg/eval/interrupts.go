@@ -1,64 +1,55 @@
 package eval
 
 import (
+	"context"
 	"errors"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
-// Interrupts returns a channel that is closed when an interrupt signal comes.
-func (fm *Frame) Interrupts() <-chan struct{} {
-	return fm.intCh
+// Context returns a Context associated with the Frame.
+func (fm *Frame) Context() context.Context {
+	return fm.ctx
+}
+
+// CancelCause checks whether the Context of the Frame has been canceled, and if
+// so, returns a non-nil error.
+func (fm *Frame) CancelCause() error {
+	select {
+	case <-fm.ctx.Done():
+		return context.Cause(fm.ctx)
+	default:
+		return nil
+	}
 }
 
 // ErrInterrupted is thrown when the execution is interrupted by a signal.
 var ErrInterrupted = errors.New("interrupted")
 
-// IsInterrupted reports whether there has been an interrupt.
-func (fm *Frame) IsInterrupted() bool {
-	select {
-	case <-fm.Interrupts():
-		return true
-	default:
-		return false
-	}
-}
+// Used to "cancel" a finished evaluation. It is a bug if this actually cancels
+// anything.
+var errEvalFinished = errors.New("internal bug, eval should have finished")
 
-// ListenInterrupts returns a channel that is closed when SIGINT or SIGQUIT
-// has been received by the process. It also returns a function that should be
-// called when the channel is no longer needed.
-func ListenInterrupts() (<-chan struct{}, func()) {
+// ListenInterrupts returns a Context that is canceled when SIGINT or SIGQUIT
+// has been received by the process. It also returns a function to cancel the
+// Context, which should be called when it is no longer needed.
+func ListenInterrupts() (context.Context, func()) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGQUIT)
 	// Channel to return, closed after receiving the first SIGINT or SIGQUIT.
-	intCh := make(chan struct{})
-
-	// Closed in the cleanup function to request the relaying goroutine to stop.
-	stop := make(chan struct{})
-	// Closed in the relaying goroutine to signal that it has stopped.
-	stopped := make(chan struct{})
+	ctx, cancel := context.WithCancelCause(context.Background())
 
 	go func() {
-		closed := false
-	loop:
-		for {
-			select {
-			case <-sigCh:
-				if !closed {
-					close(intCh)
-					closed = true
-				}
-			case <-stop:
-				break loop
-			}
+		select {
+		case <-sigCh:
+			cancel(ErrInterrupted)
+		case <-ctx.Done():
 		}
 		signal.Stop(sigCh)
-		close(stopped)
 	}()
 
-	return intCh, func() {
-		close(stop)
-		<-stopped
+	return ctx, func() {
+		cancel(errEvalFinished)
 	}
 }
