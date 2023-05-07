@@ -38,8 +38,8 @@ func (op chunkOp) exec(fm *Frame) Exception {
 	// Check for interrupts after the chunk.
 	// We also check for interrupts before each pipeline, so there is no
 	// need to check it before the chunk or after each pipeline.
-	if err := fm.CancelCause(); err != nil {
-		return fm.errorp(op, err)
+	if fm.Canceled() {
+		return fm.errorp(op, ErrInterrupted)
 	}
 	return nil
 }
@@ -68,8 +68,8 @@ type pipelineOp struct {
 const pipelineChanBufferSize = 32
 
 func (op *pipelineOp) exec(fm *Frame) Exception {
-	if err := fm.CancelCause(); err != nil {
-		return fm.errorp(op, err)
+	if fm.Canceled() {
+		return fm.errorp(op, ErrInterrupted)
 	}
 
 	if op.bg {

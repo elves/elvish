@@ -253,7 +253,7 @@ func doGlob(ctx context.Context, gp globPattern) ([]any, error) {
 		}
 		return true
 	}) {
-		return nil, context.Cause(ctx)
+		return nil, ErrInterrupted
 	}
 	if len(vs) == 0 && !gp.Flags.Has(noMatchOK) {
 		return nil, ErrWildcardNoMatch

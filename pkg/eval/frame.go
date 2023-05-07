@@ -180,14 +180,13 @@ func (fm *Frame) Context() context.Context {
 	return fm.ctx
 }
 
-// CancelCause checks whether the Context of the Frame has been canceled, and if
-// so, returns a non-nil error.
-func (fm *Frame) CancelCause() error {
+// Canceled reports whether the Context of the Frame has been canceled.
+func (fm *Frame) Canceled() bool {
 	select {
 	case <-fm.ctx.Done():
-		return context.Cause(fm.ctx)
+		return true
 	default:
-		return nil
+		return false
 	}
 }
 
