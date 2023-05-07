@@ -175,6 +175,22 @@ func linesToChan(r io.Reader, ch chan<- any) {
 	}
 }
 
+// Context returns a Context associated with the Frame.
+func (fm *Frame) Context() context.Context {
+	return fm.ctx
+}
+
+// CancelCause checks whether the Context of the Frame has been canceled, and if
+// so, returns a non-nil error.
+func (fm *Frame) CancelCause() error {
+	select {
+	case <-fm.ctx.Done():
+		return context.Cause(fm.ctx)
+	default:
+		return nil
+	}
+}
+
 // Fork returns a modified copy of fm. The ports are forked, and the name is
 // changed to the given value. Other fields are copied shallowly.
 func (fm *Frame) Fork(name string) *Frame {
