@@ -13,10 +13,11 @@ import (
 )
 
 var (
-	ErrorWithType    = evaltest.ErrorWithType
-	ErrorWithMessage = evaltest.ErrorWithMessage
-	TestWithSetup    = evaltest.TestWithSetup
-	That             = evaltest.That
+	ErrorWithType        = evaltest.ErrorWithType
+	ErrorWithMessage     = evaltest.ErrorWithMessage
+	TestWithSetup        = evaltest.TestWithSetup
+	That                 = evaltest.That
+	StringMatchingRegexp = evaltest.StringMatching
 )
 
 func TestOS(t *testing.T) {
@@ -71,5 +72,3 @@ func TestOS(t *testing.T) {
 		)
 	}
 }
-
-func StringMatchingRegexp(p string) any { return evaltest.MatchingRegexp{Pattern: p} }

@@ -324,7 +324,7 @@ func TestRange(t *testing.T) {
 		That("range 1.2").Puts(0.0, 1.0),
 		That("range &step=0.5 1 3").Puts(1.0, 1.5, 2.0, 2.5),
 		// Float64 count down.
-		That("range 1.2 -1.2").Puts(1.2, Approximately{F: 0.2}, Approximately{F: -0.8}),
+		That("range 1.2 -1.2").Puts(1.2, Approximately(0.2), Approximately(-0.8)),
 		That("range &step=-0.5 3 1").Puts(3.0, 2.5, 2.0, 1.5),
 		// Near maxDenseIntInFloat.
 		That("range "+args(maxDenseIntInFloat-2, "+inf")).

@@ -242,13 +242,13 @@ func match(got, want any) bool {
 		switch want := want.(type) {
 		case float64:
 			return matchFloat64(got, want, 0)
-		case Approximately:
-			return matchFloat64(got, want.F, ApproximatelyThreshold)
+		case approximately:
+			return matchFloat64(got, want.value, ApproximatelyThreshold)
 		}
 	case string:
 		switch want := want.(type) {
-		case MatchingRegexp:
-			return matchRegexp(want.Pattern, got)
+		case stringMatching:
+			return want.pattern.MatchString(got)
 		}
 	}
 	return vals.Equal(got, want)

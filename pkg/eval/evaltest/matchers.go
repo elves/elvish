@@ -14,9 +14,11 @@ import (
 // using Approximately.
 const ApproximatelyThreshold = 1e-15
 
-// Approximately can be passed to Case.Puts to match a float64 within the
-// threshold defined by ApproximatelyThreshold.
-type Approximately struct{ F float64 }
+// Approximately returns a value that can be passed to Case.Puts to match a
+// float64 within the threshold defined by ApproximatelyThreshold.
+func Approximately(f float64) any { return approximately{f} }
+
+type approximately struct{ value float64 }
 
 func matchFloat64(a, b, threshold float64) bool {
 	if math.IsNaN(a) && math.IsNaN(b) {
@@ -29,17 +31,14 @@ func matchFloat64(a, b, threshold float64) bool {
 	return math.Abs(a-b) <= threshold
 }
 
-// MatchingRegexp can be passed to Case.Puts to match a any string that matches
-// a regexp pattern. If the pattern is not a valid regexp, the test will panic.
-type MatchingRegexp struct{ Pattern string }
-
-func matchRegexp(p, s string) bool {
-	matched, err := regexp.MatchString(p, s)
-	if err != nil {
-		panic(err)
-	}
-	return matched
+// StringMatching returns a value that can be passed to Case.Puts to match any
+// string matching a regexp pattern. If the pattern is not a valid regexp, the
+// function panics.
+func StringMatching(p string) any {
+	return stringMatching{regexp.MustCompile(p)}
 }
+
+type stringMatching struct{ pattern *regexp.Regexp }
 
 type errorMatcher interface{ matchError(error) bool }
 

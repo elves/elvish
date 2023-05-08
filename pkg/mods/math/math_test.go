@@ -204,11 +204,11 @@ func TestMath(t *testing.T) {
 		//    math.Tan(math.Pi) == math.Tan(math.Pi)
 		// are true. The ops that should return a zero value do not actually
 		// do so. Which illustrates why an approximate match is needed.
-		That("math:cos 1").Puts(Approximately{F: 0.5403023058681397174}),
-		That("math:sin 1").Puts(Approximately{F: 0.8414709848078965066}),
-		That("math:sin $math:pi").Puts(Approximately{F: 0.0}),
-		That("math:tan 1").Puts(Approximately{F: 1.5574077246549023}),
-		That("math:tan $math:pi").Puts(Approximately{F: 0.0}),
+		That("math:cos 1").Puts(Approximately(0.5403023058681397174)),
+		That("math:sin 1").Puts(Approximately(0.8414709848078965066)),
+		That("math:sin $math:pi").Puts(Approximately(0.0)),
+		That("math:tan 1").Puts(Approximately(1.5574077246549023)),
+		That("math:tan $math:pi").Puts(Approximately(0.0)),
 
 		That("math:sqrt 0").Puts(0.0),
 		That("math:sqrt 4").Puts(2.0),

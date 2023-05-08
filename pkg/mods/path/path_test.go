@@ -63,13 +63,13 @@ func TestPath(t *testing.T) {
 
 		// Verify the commands for creating temporary filesystem objects work correctly.
 		That("var x = (path:temp-dir)", "rmdir $x", "put $x").Puts(
-			MatchingRegexp{Pattern: anyDir + `elvish-.*$`}),
+			StringMatching(anyDir+`elvish-.*$`)),
 		That("var x = (path:temp-dir 'x-*.y')", "rmdir $x", "put $x").Puts(
-			MatchingRegexp{Pattern: anyDir + `x-.*\.y$`}),
+			StringMatching(anyDir+`x-.*\.y$`)),
 		That("var x = (path:temp-dir &dir=. 'x-*.y')", "rmdir $x", "put $x").Puts(
-			MatchingRegexp{Pattern: `^(\.[/\\])?x-.*\.y$`}),
+			StringMatching(`^(\.[/\\])?x-.*\.y$`)),
 		That("var x = (path:temp-dir &dir=.)", "rmdir $x", "put $x").Puts(
-			MatchingRegexp{Pattern: `^(\.[/\\])?elvish-.*$`}),
+			StringMatching(`^(\.[/\\])?elvish-.*$`)),
 		That("path:temp-dir a b").Throws(
 			errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: 2},
 			"path:temp-dir a b"),
@@ -77,13 +77,13 @@ func TestPath(t *testing.T) {
 		That("var f = (path:temp-file)", "file:close $f", "put $f[fd]", "rm $f[name]").
 			Puts(-1),
 		That("var f = (path:temp-file)", "put $f[name]", "file:close $f", "rm $f[name]").
-			Puts(MatchingRegexp{Pattern: anyDir + `elvish-.*$`}),
+			Puts(StringMatching(anyDir+`elvish-.*$`)),
 		That("var f = (path:temp-file 'x-*.y')", "put $f[name]", "file:close $f", "rm $f[name]").
-			Puts(MatchingRegexp{Pattern: anyDir + `x-.*\.y$`}),
+			Puts(StringMatching(anyDir+`x-.*\.y$`)),
 		That("var f = (path:temp-file &dir=. 'x-*.y')", "put $f[name]", "file:close $f", "rm $f[name]").
-			Puts(MatchingRegexp{Pattern: `^(\.[/\\])?x-.*\.y$`}),
+			Puts(StringMatching(`^(\.[/\\])?x-.*\.y$`)),
 		That("var f = (path:temp-file &dir=.)", "put $f[name]", "file:close $f", "rm $f[name]").
-			Puts(MatchingRegexp{Pattern: `^(\.[/\\])?elvish-.*$`}),
+			Puts(StringMatching(`^(\.[/\\])?elvish-.*$`)),
 		That("path:temp-file a b").Throws(
 			errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: 2},
 			"path:temp-file a b"),
