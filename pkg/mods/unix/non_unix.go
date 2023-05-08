@@ -1,8 +1,5 @@
-//go:build windows || plan9 || js
+//go:build !unix
 
-// Package unix exports an Elvish namespace that contains variables and
-// functions that deal with features unique to Unix-like operating systems. On
-// non-Unix operating systems it exports an empty namespace.
 package unix
 
 import (
@@ -14,5 +11,5 @@ import (
 const ExposeUnixNs = false
 
 // Ns is an Elvish namespace that contains variables and functions that deal
-// with features unique to Unix-like operating systems. On
+// with features unique to Unix-like operating systems.
 var Ns = &eval.Ns{}

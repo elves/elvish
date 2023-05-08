@@ -16,7 +16,7 @@ import (
 const ExposeUnixNs = true
 
 // Ns is an Elvish namespace that contains variables and functions that deal
-// with features unique to Unix-like operating systems. On
+// with features unique to Unix-like operating systems.
 var Ns = eval.BuildNs().
 	AddVars(map[string]vars.Var{
 		"umask":   UmaskVariable{},
