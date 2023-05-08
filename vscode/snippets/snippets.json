@@ -1,0 +1,72 @@
+{
+    "lambda": {
+        "prefix": "lambda",
+        "description": "home",
+        "body": "{|${1:arguments}| ${2:body}}"
+    },
+    "var builtin": {
+        "prefix": "var",
+        "description": "\"var\" invocation",
+        "body": "var ${1:name} = ${2:value}"
+    },
+    "if builtin": {
+        "prefix": "if",
+        "description": "\"if\" invocation",
+        "body": [
+            "if (${1:condition}) {",
+            "\t${2:body}",
+            "}"
+        ]
+    },
+    "if else builtin": {
+        "prefix": "if-else",
+        "description": "\"if\" invocation",
+        "body": [
+            "if (${1:condition}) {",
+            "\t${2:body}",
+            "} else {",
+            "\t${3:body}",
+            "}"
+        ]
+    },
+    "while builtin": {
+        "prefix": "while",
+        "description": "\"while\" invocation",
+        "body": [
+            "while (${1:condition}) {",
+            "\t${2:body}",
+            "}"
+        ]
+    },
+    "while else builtin": {
+        "prefix": "while-else",
+        "description": "\"while\" invocation",
+        "body": [
+            "while (${1:condition}) {",
+            "\t${2:body}",
+            "} else {",
+            "\t${3:body}",
+            "}"
+        ]
+    },
+    "for builtin": {
+        "prefix": "for",
+        "description": "\"for\" invocation",
+        "body": [
+            "for ${1:variable} ${2:container} {",
+            "\t${3:body}",
+            "}"
+        ]
+    },
+    "for else builtin": {
+        "prefix": "for-else",
+        "description": "\"for\" invocation",
+        "body": [
+            "for ${1:variable} ${2:container} {",
+            "\t${3:body}",
+            "} else {",
+            "\t${4:body}",
+            "}"
+        ]
+    }
+}

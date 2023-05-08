@@ -89,7 +89,13 @@
                     "description": "Trace communication between VS Code and the Elvish language server. Trace messages are shown in the Elvish Language Server output channel."
                 }
             }
-        }
+        },
+        "snippets": [
+            {
+                "language": "elvish",
+                "path": "./snippets/snippets.json"
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run build",
