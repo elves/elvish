@@ -235,6 +235,9 @@ func matchOut(want, got []any) bool {
 }
 
 func match(got, want any) bool {
+	if want == Anything {
+		return true
+	}
 	switch got := got.(type) {
 	case float64:
 		// Special-case float64 to correctly handle NaN and support

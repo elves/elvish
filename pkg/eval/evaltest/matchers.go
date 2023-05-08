@@ -10,6 +10,13 @@ import (
 	"src.elv.sh/pkg/parse"
 )
 
+// Anything is a value that can be passed to [Case.Puts] to match any value. It
+// is useful when the value contains information that is useful when the test
+// fails.
+var Anything = anything{}
+
+type anything struct{}
+
 // ApproximatelyThreshold defines the threshold for matching float64 values when
 // using Approximately.
 const ApproximatelyThreshold = 1e-15

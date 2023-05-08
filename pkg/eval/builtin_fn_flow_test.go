@@ -91,8 +91,9 @@ func TestPeach(t *testing.T) {
 				var best-run = (benchmark &min-runs=5 &min-time=0 {
 					range 6 | peach {|_| sleep $t }
 				} &on-end={|metrics| put $metrics[min] })
+				put $best-run
 				< $t $best-run (* 2 $t)`).
-			Puts(true),
+			Puts(Anything, true),
 		// 2 workers:
 		//
 		// - When scheduling allows, at least two function runs are parallel.
@@ -106,8 +107,9 @@ func TestPeach(t *testing.T) {
 				var best-run = (benchmark &min-runs=5 &min-time=0 {
 					range 6 | peach &num-workers=2 {|_| sleep $t }
 				} &on-end={|metrics| put $metrics[min] })
+				put $best-run
 				< (* 3 $t) $best-run (* 6 $t)`).
-			Puts(true),
+			Puts(Anything, true),
 
 		// Invalid options are handled.
 		That(`peach &num-workers=0 {|x| * 2 $x }`).Throws(errs.BadValue{
