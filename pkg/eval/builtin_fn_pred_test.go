@@ -91,6 +91,18 @@ func TestCompare(t *testing.T) {
 		That("compare [a, a] [a, b]").Puts(-1),
 		That("compare [x, y] [x, y]").Puts(0),
 
+		// Comparing nil.
+		That("compare $nil $nil").Puts(0),
+
+		// Comparing exceptions.
+		That("compare ?(fail x) ?(fail y)").Puts(0),
+
+		// Comparing functions.
+		That("compare {|| put x} {|| put y}").Puts(0),
+
+		// Comparing styled text.
+		That("compare (styled x blue) (styled y green)").Puts(0),
+
 		// Uncomparable values.
 		That("compare 1 (num 1)").Throws(ErrUncomparable),
 		That("compare x [x]").Throws(ErrUncomparable),

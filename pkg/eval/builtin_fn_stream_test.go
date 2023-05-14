@@ -109,6 +109,15 @@ func TestOrder(t *testing.T) {
 			Puts(vals.EmptyList, vals.MakeList("a"),
 				vals.MakeList("a", 1), vals.MakeList("a", 2)),
 
+		// Attempting to order types we don't have explicit support for should
+		// treat the values as equal if the types are the same. Thus the order
+		// of the values should be unchanged since `order` performs a stable
+		// sort.
+		That("put $nil $nil | order").
+			Puts(nil, nil),
+		That("put ?(fail y) ?(fail z) ?(fail x) | order | each {|e| put $e[reason] }").
+			Puts(FailError{"y"}, FailError{"z"}, FailError{"x"}),
+
 		// Attempting to order uncomparable values
 		That("put (num 1) 1 | order").
 			Throws(ErrUncomparable, "order"),
