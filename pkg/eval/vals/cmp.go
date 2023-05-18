@@ -19,9 +19,26 @@ const (
 )
 
 // Cmp compares two Elvish values and returns the ordering relationship between
-// them.
+// them. Cmp(a, b) returns CmpEqual iff Equal(a, b) returns true.
 func Cmp(a, b any) Ordering {
+	// Keep the branches in the same order as [Equal].
 	switch a := a.(type) {
+	case nil:
+		if b == nil {
+			return CmpEqual
+		}
+	case bool:
+		if b, ok := b.(bool); ok {
+			switch {
+			case a == b:
+				return CmpEqual
+			//lint:ignore S1002 using booleans as values, not conditions
+			case a == false: // b == true is implicit
+				return CmpLess
+			default: // a == true && b == false
+				return CmpMore
+			}
+		}
 	case int, *big.Int, *big.Rat, float64:
 		switch b.(type) {
 		case int, *big.Int, *big.Rat, float64:
@@ -71,17 +88,9 @@ func Cmp(a, b any) Ordering {
 				return CmpMore
 			}
 		}
-	case bool:
-		if b, ok := b.(bool); ok {
-			switch {
-			case a == b:
-				return CmpEqual
-			//lint:ignore S1002 using booleans as values, not conditions
-			case a == false: // b == true is implicit
-				return CmpLess
-			default: // a == true && b == false
-				return CmpMore
-			}
+	default:
+		if Equal(a, b) {
+			return CmpEqual
 		}
 	}
 	return CmpUncomparable

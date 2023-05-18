@@ -24,8 +24,6 @@ func Equal(x, y any) bool {
 		return x == y
 	case int:
 		return x == y
-	case float64:
-		return x == y
 	case *big.Int:
 		if y, ok := y.(*big.Int); ok {
 			return x.Cmp(y) == 0
@@ -36,18 +34,22 @@ func Equal(x, y any) bool {
 			return x.Cmp(y) == 0
 		}
 		return false
+	case float64:
+		return x == y
 	case string:
 		return x == y
+	case List:
+		if yy, ok := y.(List); ok {
+			return equalList(x, yy)
+		}
+		return false
+	// Types above are also handled in [Cmp]; keep the branches in the same
+	// order.
 	case Equaler:
 		return x.Equal(y)
 	case File:
 		if yy, ok := y.(File); ok {
 			return x.Fd() == yy.Fd()
-		}
-		return false
-	case List:
-		if yy, ok := y.(List); ok {
-			return equalList(x, yy)
 		}
 		return false
 	case Map:
