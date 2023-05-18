@@ -91,9 +91,26 @@ func TestCompare(t *testing.T) {
 		That("compare [a, a] [a, b]").Puts(-1),
 		That("compare [x, y] [x, y]").Puts(0),
 
-		// Uncomparable values.
+		// Different types are uncomparable without &total.
 		That("compare 1 (num 1)").Throws(ErrUncomparable),
 		That("compare x [x]").Throws(ErrUncomparable),
 		That("compare a [&a=x]").Throws(ErrUncomparable),
+
+		// Uncomparable types.
+		That("compare { nop 1 } { nop 2}").Throws(ErrUncomparable),
+		That("compare [&foo=bar] [&a=b]").Throws(ErrUncomparable),
+
+		// Total ordering - different underlying number types are considered the
+		// same type.
+		That("compare &total (num 1) (num 3/2)").Puts(-1),
+		That("compare &total (num 3/2) (num 2)").Puts(-1),
+
+		// Total ordering - different types.
+		That("== (compare &total foo (num 2)) (compare &total bar (num 10))").Puts(true),
+		That("+ (compare &total foo (num 2)) (compare &total (num 2) foo)").Puts(0),
+
+		// Total ordering - same uncomparable type.
+		That("compare &total { nop 1 } { nop 2 }").Puts(0),
+		That("compare &total [&foo=bar] [&a=b]").Puts(0),
 	)
 }

@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 
@@ -139,12 +140,20 @@ func count(fm *Frame, args ...any) (int, error) {
 type orderOptions struct {
 	Reverse  bool
 	Key      Callable
+	Total    bool
 	LessThan Callable
 }
 
 func (opt *orderOptions) SetDefaultOptions() {}
 
+// ErrBothTotalAndLessThan is returned by order when both the &total and
+// &less-than options are specified.
+var ErrBothTotalAndLessThan = errors.New("both &total and &less-than specified")
+
 func order(fm *Frame, opts orderOptions, inputs Inputs) error {
+	if opts.Total && opts.LessThan != nil {
+		return ErrBothTotalAndLessThan
+	}
 	var values, keys []any
 	inputs(func(v any) { values = append(values, v) })
 	if opts.Key != nil {
@@ -164,7 +173,7 @@ func order(fm *Frame, opts orderOptions, inputs Inputs) error {
 		}
 	}
 
-	s := &slice{fm, opts.LessThan, values, keys, nil}
+	s := &slice{fm, opts.Total, opts.LessThan, values, keys, nil}
 	if opts.Reverse {
 		sort.Stable(sort.Reverse(s))
 	} else {
@@ -186,6 +195,7 @@ func order(fm *Frame, opts orderOptions, inputs Inputs) error {
 
 type slice struct {
 	fm       *Frame
+	total    bool
 	lessThan Callable
 	values   []any
 	keys     []any // nil if no keys
@@ -207,7 +217,10 @@ func (s *slice) Less(i, j int) bool {
 	}
 
 	if s.lessThan == nil {
-		// Use the builtin comparator.
+		// Use a builtin comparator depending on s.mixed.
+		if s.total {
+			return vals.CmpTotal(a, b) == vals.CmpLess
+		}
 		o := vals.Cmp(a, b)
 		if o == vals.CmpUncomparable {
 			s.err = ErrUncomparable

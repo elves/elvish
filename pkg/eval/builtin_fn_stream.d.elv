@@ -172,33 +172,46 @@ fn compact {|inputs?| }
 # ```
 fn count {|input-list?| }
 
-# Outputs the [value inputs](#value-inputs) sorted in ascending order. The
-# sorting process is guaranteed to be
+# Outputs the [value inputs](#value-inputs) after sorting. The sorting process
+# is
 # [stable](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability).
 #
-# The `&less-than` option, if given, establishes the ordering of the items. Its
-# value should be a function that takes two arguments and outputs a single
-# boolean indicating whether the first argument is less than the second
-# argument. If the function throws an exception, `order` rethrows the exception
-# without outputting any value.
+# By default, `order` sorts the values in ascending order, using the same
+# comparator as [`compare`](), which only supports values of the same ordered
+# type. Its options modify this behavior:
 #
-# If `&less-than` is `$nil` (the default), a builtin comparator equivalent to
-# `{|a b| == -1 (compare $a $b) }` is used.
+# -   The `&less-than` option, if given, overrides the comparator. Its
+#     value should be a function that takes two arguments `$a` and `$b` and
+#     outputs a boolean indicating whether `$a` is less than `$b`. If the
+#     function throws an exception, `order` rethrows the exception without
+#     outputting any value.
 #
-# The `&key` option, if given, is a function that gets called with each item to
-# be sorted. It must output a single value, which is used for comparison in
-# place of the original value. If the function throws an exception, `order`
-# rethrows the exception.
+#     The default behavior of `order` is equivalent to `order &less-than={|a b|
+#     == -1 (compare $a $b)}`.
 #
-# Use of `&key` can usually be rewritten to use `&less-than` instead, but using
-# `&key` is usually faster because the callback is only called once for each
-# element, whereas the `&less-than` callback is called O(n*lg(n)) times on
-# average.
+# -   The `&total` option, if true, overrides the comparator to be same as
+#     `compare &total=$true`, which allows sorting values of mixed types and
+#     unordered types. The result groups values by their types. Groups of
+#     ordered types are sorted internally, and groups of unordered types retain
+#     their original relative order.
 #
-# If `&key` and `&less-than` are both specified, the output of the `&key`
-# callback for each element is passed to the `&less-than` callback.
+#     Specifying `&total=$true` is equivalent to specifying `&less-than={|a b|
+#     == -1 (compare &total=$true $a $b)}`. It is an error to both specify
+#     `&total=$true` and a non-nil `&less-than` callback.
 #
-# The `&reverse` option, if true, reverses the order of output.
+# -   The `&key` option, if given, is a function that gets called with each
+#     input value. It must output a single value, which is used for comparison
+#     in place of the original value. The comparator used can be affected by
+#     `$less-than` or `&total`.
+#
+#     If the function throws an exception, `order` rethrows the exception.
+#
+#     Use of `&key` can usually be rewritten to use `&less-than` instead, but
+#     using `&key` can be faster. The `&key` callback is only called once for
+#     each element, whereas the `&less-than` callback is called O(n*lg(n)) times
+#     on average.
+#
+# -   The `&reverse` option, if true, reverses the order of output.
 #
 # Examples:
 #
@@ -220,6 +233,16 @@ fn count {|input-list?| }
 # ▶ c
 # ▶ b
 # ▶ a
+# ~> order [a (num 2) c (num 0) b (num 1)]
+# Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+# [tty 3]:1:1: order [a (num 2) c (num 0) b (num 1)]
+# ~> order &total [a (num 2) c (num 0) b (num 1)]
+# ▶ (num 0)
+# ▶ (num 1)
+# ▶ (num 2)
+# ▶ a
+# ▶ b
+# ▶ c
 # ~> put [0 x] [1 a] [2 b] | order &key={|l| put $l[1]}
 # ▶ [1 a]
 # ▶ [2 b]
@@ -256,4 +279,4 @@ fn count {|input-list?| }
 # (The `$"<~"` syntax is a reference to [the `<` function](#num-cmp).)
 #
 # See also [`compare`]().
-fn order {|&less-than=$nil &key=$nil &reverse=$false inputs?| }
+fn order {|&less-than=$nil &mixed-types=$false &key=$nil &reverse=$false inputs?| }

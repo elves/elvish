@@ -3,9 +3,8 @@ package vals
 import (
 	"math"
 	"math/big"
+	"unsafe"
 )
-
-// Basic predicate commands.
 
 // Ordering relationship between two Elvish values.
 type Ordering uint8
@@ -21,6 +20,10 @@ const (
 // Cmp compares two Elvish values and returns the ordering relationship between
 // them. Cmp(a, b) returns CmpEqual iff Equal(a, b) returns true.
 func Cmp(a, b any) Ordering {
+	return cmpInner(a, b, Cmp)
+}
+
+func cmpInner(a, b any, recurse func(a, b any) Ordering) Ordering {
 	// Keep the branches in the same order as [Equal].
 	switch a := a.(type) {
 	case nil:
@@ -45,11 +48,11 @@ func Cmp(a, b any) Ordering {
 			a, b := UnifyNums2(a, b, 0)
 			switch a := a.(type) {
 			case int:
-				return compareInt(a, b.(int))
+				return compareBuiltin(a, b.(int))
 			case *big.Int:
-				return compareInt(a.Cmp(b.(*big.Int)), 0)
+				return compareBuiltin(a.Cmp(b.(*big.Int)), 0)
 			case *big.Rat:
-				return compareInt(a.Cmp(b.(*big.Rat)), 0)
+				return compareBuiltin(a.Cmp(b.(*big.Rat)), 0)
 			case float64:
 				return compareFloat(a, b.(float64))
 			default:
@@ -72,7 +75,7 @@ func Cmp(a, b any) Ordering {
 			aIt := a.Iterator()
 			bIt := b.Iterator()
 			for aIt.HasElem() && bIt.HasElem() {
-				o := Cmp(aIt.Elem(), bIt.Elem())
+				o := recurse(aIt.Elem(), bIt.Elem())
 				if o != CmpEqual {
 					return o
 				}
@@ -96,7 +99,7 @@ func Cmp(a, b any) Ordering {
 	return CmpUncomparable
 }
 
-func compareInt(a, b int) Ordering {
+func compareBuiltin[T interface{ int | uintptr | string }](a, b T) Ordering {
 	if a < b {
 		return CmpLess
 	} else if a > b {
@@ -124,3 +127,42 @@ func compareFloat(a, b float64) Ordering {
 		return CmpEqual
 	}
 }
+
+// CmpTotal is similar to [Cmp], but uses an artificial total ordering to avoid
+// returning [CmpUncomparable]:
+//
+//   - If a and b have different types, it compares their types instead. The
+//     ordering of types is guaranteed to be consistent during one Elvish
+//     session, but is otherwise undefined.
+//
+//   - If a and b have the same type but are considered uncomparable by [Cmp],
+//     it returns [CmpEqual] instead of [CmpUncomparable].
+//
+// All the underlying Go types of Elvish's number type are considered the same
+// type.
+//
+// This function is mainly useful for sorting Elvish values that are not
+// considered comparable by [Cmp]. Using this function as a comparator groups
+// values by their types and sorts types that are comparable.
+func CmpTotal(a, b any) Ordering {
+	if o := compareBuiltin(typeOf(a), typeOf(b)); o != CmpEqual {
+		return o
+	}
+	if o := cmpInner(a, b, CmpTotal); o != CmpUncomparable {
+		return o
+	}
+	return CmpEqual
+}
+
+var typeOfInt uintptr
+
+func typeOf(x any) uintptr {
+	switch x.(type) {
+	case *big.Int, *big.Rat, float64:
+		return typeOfInt
+	}
+	// The first word of an empty interface is a pointer to the type descriptor.
+	return *(*uintptr)(unsafe.Pointer(&x))
+}
+
+func init() { typeOfInt = typeOf(0) }

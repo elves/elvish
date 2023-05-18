@@ -131,6 +131,17 @@ func TestOrder(t *testing.T) {
 		That("put 10 1 5 2 | order &reverse &key={|v| num $v }").
 			Puts("10", "5", "2", "1"),
 
+		// TODO: Test that the result is 3 groups of values without assuming
+		// the order of the groups.
+		/*
+			That("put (num 3/2) (num 1) c (num 2) [&foo=bar] a [&a=b] | order &total").
+				Puts(
+					1, big.NewRat(3, 2), 2,
+					"a", "c",
+					vals.MakeMap("foo", "bar"), vals.MakeMap("a", "b"),
+				),
+		*/
+
 		// &less-than
 		That("put 1 10 2 5 | order &less-than={|a b| < $a $b }").
 			Puts("1", "2", "5", "10"),
@@ -173,6 +184,10 @@ func TestOrder(t *testing.T) {
 		// are equal, and check that the order among them has not changed.
 		That("put l x o x r x e x m | order &less-than={|a b| eq $a x }").
 			Puts("x", "x", "x", "x", "l", "o", "r", "e", "m"),
+
+		// &total and &less-than are mutually exclusive
+		That("put x | order &total &less-than={|a b| put $true }").
+			Throws(ErrBothTotalAndLessThan),
 
 		thatOutputErrorIsBubbled("order [foo]"),
 	)

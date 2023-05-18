@@ -55,8 +55,20 @@ var ErrUncomparable = errs.BadValue{
 	What:  `inputs to "compare" or "order"`,
 	Valid: "comparable values", Actual: "uncomparable values"}
 
-func compare(fm *Frame, a, b any) (int, error) {
-	switch vals.Cmp(a, b) {
+type compareOptions struct {
+	Total bool
+}
+
+func (opts *compareOptions) SetDefaultOptions() {}
+
+func compare(opts compareOptions, a, b any) (int, error) {
+	var o vals.Ordering
+	if opts.Total {
+		o = vals.CmpTotal(a, b)
+	} else {
+		o = vals.Cmp(a, b)
+	}
+	switch o {
 	case vals.CmpLess:
 		return -1, nil
 	case vals.CmpEqual:
