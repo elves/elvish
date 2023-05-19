@@ -109,8 +109,11 @@ func hasValue(container, value any) (bool, error) {
 	default:
 		var found bool
 		err := vals.Iterate(container, func(v any) bool {
-			found = (v == value)
-			return !found
+			if vals.Equal(v, value) {
+				found = true
+				return false
+			}
+			return true
 		})
 		return found, err
 	}

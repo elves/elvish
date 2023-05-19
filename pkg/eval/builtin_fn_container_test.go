@@ -89,6 +89,7 @@ func TestHasValue(t *testing.T) {
 		That(`has-value [&lorem=ipsum &foo=bar] bar`).Puts(true),
 		That(`has-value [foo bar] bar`).Puts(true),
 		That(`has-value [foo bar] badehose`).Puts(false),
+		That(`has-value [[foo] [bar]] [foo]`).Puts(true),
 		That(`has-value "foo" o`).Puts(true),
 		That(`has-value "foo" d`).Puts(false),
 	)
