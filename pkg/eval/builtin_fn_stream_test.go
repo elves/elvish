@@ -131,16 +131,17 @@ func TestOrder(t *testing.T) {
 		That("put 10 1 5 2 | order &reverse &key={|v| num $v }").
 			Puts("10", "5", "2", "1"),
 
-		// TODO: Test that the result is 3 groups of values without assuming
-		// the order of the groups.
-		/*
-			That("put (num 3/2) (num 1) c (num 2) [&foo=bar] a [&a=b] | order &total").
-				Puts(
-					1, big.NewRat(3, 2), 2,
-					"a", "c",
-					vals.MakeMap("foo", "bar"), vals.MakeMap("a", "b"),
-				),
-		*/
+		// &total orders the values into groups of different types, and sorts
+		// the groups themselves. Test that without assuming the relative order
+		// between numbers and strings.
+		That(
+			"put (num 3/2) (num 1) c (num 2) a | order &total | var li = [(all)]",
+			"put $li",
+			"has-value [[a c (num 1) (num 3/2) (num 2)] [(num 1) (num 3/2) (num 2) a c]] $li").
+			Puts(Anything, true),
+		// &total keeps the order of unordered values as is.
+		That("put [&foo=bar] [&a=b] [&x=y] | order &total").
+			Puts(vals.MakeMap("foo", "bar"), vals.MakeMap("a", "b"), vals.MakeMap("x", "y")),
 
 		// &less-than
 		That("put 1 10 2 5 | order &less-than={|a b| < $a $b }").
