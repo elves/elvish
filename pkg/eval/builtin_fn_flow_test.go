@@ -87,7 +87,7 @@ func TestPeach(t *testing.T) {
 		// Unlimited workers: when scheduling allows, no two function runs are
 		// serial. Best run time is between t and 2t, regardless of input size.
 		That(`
-				var t = (* 0.002 `+testTimeScale+`)
+				var t = (* 0.005 `+testTimeScale+`)
 				var best-run = (benchmark &min-runs=5 &min-time=0 {
 					range 6 | peach {|_| sleep $t }
 				} &on-end={|metrics| put $metrics[min] })
@@ -103,7 +103,7 @@ func TestPeach(t *testing.T) {
 		// Best run time is between (ceil(n/2) * t) and n*t, where n is the
 		// input size.
 		That(`
-				var t = (* 0.002 `+testTimeScale+`)
+				var t = (* 0.005 `+testTimeScale+`)
 				var best-run = (benchmark &min-runs=5 &min-time=0 {
 					range 6 | peach &num-workers=2 {|_| sleep $t }
 				} &on-end={|metrics| put $metrics[min] })
