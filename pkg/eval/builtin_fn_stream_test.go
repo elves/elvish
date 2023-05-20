@@ -131,18 +131,17 @@ func TestOrder(t *testing.T) {
 		That("put 10 1 5 2 | order &reverse &key={|v| num $v }").
 			Puts("10", "5", "2", "1"),
 
-		// &total orders the values into groups of different types, and sorts
-		// the groups themselves. Test that without assuming the relative order
-		// between numbers and strings.
-		That(
-			"put (num 3/2) (num 1) c (num 2) a | order &total | var li = [(all)]",
-			"put $li",
-			"has-value [[a c (num 1) (num 3/2) (num 2)] [(num 1) (num 3/2) (num 2) a c]] $li").
-			Puts(Anything, true),
-		// &total keeps the order of unordered values as is.
+		// &total orders the values into groups of different types, and orders
+		// the items in the groups or keeps the original order if the items do
+		// not  have a defined ordering (such as for maps).
+		That(`put (num 3/2) $nil [x y] [&c=d] (num 1) [a b] $true z [&a=b] (num 2) ^
+			$false y | order &total`).
+			Puts(nil, false, true, 1, big.NewRat(3, 2), 2, "y", "z",
+				vals.MakeList("a", "b"), vals.MakeList("x", "y"),
+				vals.MakeMap("c", "d"), vals.MakeMap("a", "b")),
+		// &total keeps the order of unordered values (as is true for maps) as is.
 		That("put [&foo=bar] [&a=b] [&x=y] | order &total").
 			Puts(vals.MakeMap("foo", "bar"), vals.MakeMap("a", "b"), vals.MakeMap("x", "y")),
-
 		// &less-than
 		That("put 1 10 2 5 | order &less-than={|a b| < $a $b }").
 			Puts("1", "2", "5", "10"),

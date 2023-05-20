@@ -3,7 +3,8 @@ package vals
 import (
 	"math"
 	"math/big"
-	"unsafe"
+	"reflect"
+	"sync"
 )
 
 // Ordering relationship between two Elvish values.
@@ -61,14 +62,7 @@ func cmpInner(a, b any, recurse func(a, b any) Ordering) Ordering {
 		}
 	case string:
 		if b, ok := b.(string); ok {
-			switch {
-			case a == b:
-				return CmpEqual
-			case a < b:
-				return CmpLess
-			default: // a > b
-				return CmpMore
-			}
+			return compareBuiltin(a, b)
 		}
 	case List:
 		if b, ok := b.(List); ok {
@@ -99,13 +93,15 @@ func cmpInner(a, b any, recurse func(a, b any) Ordering) Ordering {
 	return CmpUncomparable
 }
 
-func compareBuiltin[T interface{ int | uintptr | string }](a, b T) Ordering {
-	if a < b {
+func compareBuiltin[T interface{ int | string }](a, b T) Ordering {
+	switch {
+	case a < b:
 		return CmpLess
-	} else if a > b {
+	case a > b:
 		return CmpMore
+	default:
+		return CmpEqual
 	}
-	return CmpEqual
 }
 
 func compareFloat(a, b float64) Ordering {
@@ -154,15 +150,84 @@ func CmpTotal(a, b any) Ordering {
 	return CmpEqual
 }
 
-var typeOfInt uintptr
+const (
+	// Define an order among the types most likely to appear in lists and maps.
+	typeOfNil = iota
+	typeOfBool
+	typeOfNum
+	typeOfString
+	typeOfList
+	typeOfMap
+	// Order the types less likely to appear in lists and maps so we have a
+	// consistent ordering of the known types.
+	typeOfGlob
+	typeOfPipe
+	typeOfFn
+	typeOfExc
+	typeOfNs
+	typeOfUiText
+	typeOfUiTextSegment
+	typeOfEditKey
+	typeOfSentinal // insert any new types before this line
+)
 
-func typeOf(x any) uintptr {
-	switch x.(type) {
-	case *big.Int, *big.Rat, float64:
-		return typeOfInt
+var maxType int = typeOfSentinal - 1
+var unknownTypes = map[string]int{}
+var utMutex sync.Mutex
+
+// typeOf returns an integer that defines an ordering between different Elvish
+// value types.
+func typeOf(x any) int {
+	switch x := x.(type) {
+	case Kinder:
+		switch x.Kind() {
+		case "exception":
+			return typeOfExc
+		case "fn":
+			return typeOfFn
+		case "glob-pattern":
+			return typeOfGlob
+		case "ns":
+			return typeOfNs
+		case "pipe":
+			return typeOfPipe
+		case "edit:key":
+			return typeOfEditKey
+		case "ui:text":
+			return typeOfUiText
+		case "ui:text-segment":
+			return typeOfUiTextSegment
+		}
+	case nil:
+		return typeOfNil
+	case bool:
+		return typeOfBool
+	case int, *big.Int, *big.Rat, float64:
+		return typeOfNum
+	case string:
+		return typeOfString
+	case List:
+		return typeOfList
+	case Map, PseudoStructMap, StructMap:
+		return typeOfMap
 	}
-	// The first word of an empty interface is a pointer to the type descriptor.
-	return *(*uintptr)(unsafe.Pointer(&x))
-}
 
-func init() { typeOfInt = typeOf(0) }
+	// We don't recognize the value type. Assign it the next ordering value so
+	// it appears after the known types and any unknown type we've already seen.
+	// Ideally this code will never be executed. It exists to ensure that if the
+	// code above doesn't handle a type we still get predictable behavior when
+	// ordering heterogeneous values.
+	//
+	// TODO: Figure out how to discover when this code is executed so the logic
+	// above can be augmented to explicitly handle the type.
+	utMutex.Lock()
+	defer utMutex.Unlock()
+	t := reflect.TypeOf(x)
+	tName := t.Name()
+	if i, ok := unknownTypes[tName]; ok {
+		return i
+	}
+	maxType += 1
+	unknownTypes[tName] = maxType
+	return maxType
+}
