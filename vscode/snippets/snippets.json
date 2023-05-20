@@ -1,66 +1,74 @@
 {
-    "lambda": {
+    "lambda (single line)": {
         "prefix": "lambda",
-        "description": "home",
         "body": "{|${1:arguments}| ${2:body}}"
     },
-    "var builtin": {
+    "lambda (multi line)": {
+        "prefix": "lambda",
+        "body": [
+            "{|${1:arguments}|",
+            "\t${2:body}",
+            "}"
+        ]
+    },
+    "var command": {
         "prefix": "var",
-        "description": "\"var\" invocation",
-        "body": "var ${1:name} = ${2:value}"
+        "body": "var ${1:names} = ${2:values}"
     },
-    "if builtin": {
+    "set command": {
+        "prefix": "set",
+        "body": "set ${1:names} = ${2:values}"
+    },
+    "tmp command": {
+        "prefix": "tmp",
+        "body": "tmp ${1:names} = ${2:values}"
+    },
+    "if command": {
         "prefix": "if",
-        "description": "\"if\" invocation",
         "body": [
-            "if (${1:condition}) {",
+            "if ${1:condition} {",
             "\t${2:body}",
             "}"
         ]
     },
-    "if else builtin": {
+    "if command with else": {
         "prefix": "if-else",
-        "description": "\"if\" invocation",
         "body": [
-            "if (${1:condition}) {",
+            "if ${1:condition} {",
             "\t${2:body}",
             "} else {",
             "\t${3:body}",
             "}"
         ]
     },
-    "while builtin": {
+    "while command": {
         "prefix": "while",
-        "description": "\"while\" invocation",
         "body": [
-            "while (${1:condition}) {",
+            "while ${1:condition} {",
             "\t${2:body}",
             "}"
         ]
     },
-    "while else builtin": {
+    "while command with else": {
         "prefix": "while-else",
-        "description": "\"while\" invocation",
         "body": [
-            "while (${1:condition}) {",
+            "while ${1:condition} {",
             "\t${2:body}",
             "} else {",
             "\t${3:body}",
             "}"
         ]
     },
-    "for builtin": {
+    "for command": {
         "prefix": "for",
-        "description": "\"for\" invocation",
         "body": [
             "for ${1:variable} ${2:container} {",
             "\t${3:body}",
             "}"
         ]
     },
-    "for else builtin": {
+    "for command with else": {
         "prefix": "for-else",
-        "description": "\"for\" invocation",
         "body": [
             "for ${1:variable} ${2:container} {",
             "\t${3:body}",
@@ -68,5 +76,37 @@
             "\t${4:body}",
             "}"
         ]
+    },
+    "try command with catch": {
+        "prefix": "try-catch",
+        "body": [
+            "try {",
+            "\t${1:body}",
+            "} catch ${2:name} {",
+            "\t${3:body}",
+            "}"
+        ]
+    },
+    "try command with finally": {
+        "prefix": "try-finally",
+        "body": [
+            "try {",
+            "\t${1:body}",
+            "} finally {",
+            "\t${2:body}",
+            "}"
+        ]
+    },
+    "fn command": {
+        "prefix": "fn",
+        "body": [
+            "fn ${1:name} {|${1:arguments}|",
+            "\t${2:body}",
+            "}"
+        ]
+    },
+    "pragma command": {
+        "prefix": "pragma",
+        "body": "pragma ${1:name} = ${2:value}"
     }
 }
