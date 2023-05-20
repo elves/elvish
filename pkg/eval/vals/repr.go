@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/big"
 	"reflect"
+	"sort"
 	"strconv"
 
 	"src.elv.sh/pkg/parse"
@@ -67,8 +68,19 @@ func Repr(v any, indent int) string {
 		return b.String()
 	case Map:
 		builder := NewMapReprBuilder(indent)
+		// Collect all the key-value pairs.
+		pairs := make([][2]any, 0, v.Len())
 		for it := v.Iterator(); it.HasElem(); it.Next() {
 			k, v := it.Elem()
+			pairs = append(pairs, [2]any{k, v})
+		}
+		// Sort the pairs. See the godoc of CmpTotal for the sorting algorithm.
+		sort.Slice(pairs, func(i, j int) bool {
+			return CmpTotal(pairs[i][0], pairs[j][0]) == CmpLess
+		})
+		// Print the pairs.
+		for _, pair := range pairs {
+			k, v := pair[0], pair[1]
 			builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
 		}
 		return builder.String()

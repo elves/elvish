@@ -38,8 +38,28 @@ func TestReprPlain(t *testing.T) {
 
 		Args(EmptyMap).Rets("[&]"),
 		Args(MakeMap("foo", "bar")).Rets("[&foo=bar]"),
+		// Keys of the same type are sorted.
+		Args(MakeMap("b", "second", "a", "first", "c", "third")).
+			Rets("[&a=first &b=second &c=third]"),
+		Args(MakeMap(2, "second", 1, "first", 3, "third")).
+			Rets("[&(num 1)=first &(num 2)=second &(num 3)=third]"),
+		// Keys of mixed types tested in a different test.
 
 		Args(reprer{}).Rets("<reprer>"),
 		Args(nonReprer{}).Rets("<unknown {}>"),
 	})
+}
+
+func TestReprPlain_MapWithKeysOfMixedTypes(t *testing.T) {
+	m := MakeMap(
+		"b", "second", "a", "first", "c", "third",
+		2, "second", 1, "first", 3, "third")
+	strPart := "&a=first &b=second &c=third"
+	numPart := "&(num 1)=first &(num 2)=second &(num 3)=third"
+	want1 := "[" + strPart + " " + numPart + "]"
+	want2 := "[" + numPart + " " + strPart + "]"
+	got := ReprPlain(m)
+	if got != want1 && got != want2 {
+		t.Errorf("got %q, want %q or %q", got, want1, want2)
+	}
 }
