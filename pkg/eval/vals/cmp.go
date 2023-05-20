@@ -18,7 +18,8 @@ const (
 )
 
 // Cmp compares two Elvish values and returns the ordering relationship between
-// them. Cmp(a, b) returns CmpEqual iff Equal(a, b) returns true.
+// them. Cmp(a, b) returns CmpEqual iff Equal(a, b) is true or both a and b are
+// NaNs.
 func Cmp(a, b any) Ordering {
 	return cmpInner(a, b, Cmp)
 }
