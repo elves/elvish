@@ -20,6 +20,9 @@ type Kinder interface {
 // and document the rationale for the choice in the doc string for `func
 // (ExternalCmd) Kind()` as well as user facing documentation. It's not
 // obvious why this returns "fn" rather than "external" for that case.
+//
+// See also vals.typeOf(). If this changes there is a good chance vals.typeOf()
+// will also need to change.
 func Kind(v any) string {
 	switch v := v.(type) {
 	case nil:

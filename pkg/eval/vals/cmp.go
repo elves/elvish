@@ -3,7 +3,7 @@ package vals
 import (
 	"math"
 	"math/big"
-	"unsafe"
+	"reflect"
 )
 
 // Ordering relationship between two Elvish values.
@@ -62,14 +62,7 @@ func cmpInner(a, b any, recurse func(a, b any) Ordering) Ordering {
 		}
 	case string:
 		if b, ok := b.(string); ok {
-			switch {
-			case a == b:
-				return CmpEqual
-			case a < b:
-				return CmpLess
-			default: // a > b
-				return CmpMore
-			}
+			return compareBuiltin(a, b)
 		}
 	case List:
 		if b, ok := b.(List); ok {
@@ -100,13 +93,15 @@ func cmpInner(a, b any, recurse func(a, b any) Ordering) Ordering {
 	return CmpUncomparable
 }
 
-func compareBuiltin[T interface{ int | uintptr | string }](a, b T) Ordering {
-	if a < b {
+func compareBuiltin[T interface{ int | string }](a, b T) Ordering {
+	switch {
+	case a < b:
 		return CmpLess
-	} else if a > b {
+	case a > b:
 		return CmpMore
+	default:
+		return CmpEqual
 	}
-	return CmpEqual
 }
 
 func compareFloat(a, b float64) Ordering {
@@ -155,15 +150,37 @@ func CmpTotal(a, b any) Ordering {
 	return CmpEqual
 }
 
-var typeOfInt uintptr
-
-func typeOf(x any) uintptr {
-	switch x.(type) {
-	case *big.Int, *big.Rat, float64:
-		return typeOfInt
+// typeOf returns a string unique to each type which can be used to order the
+// types in a predictable, easy to describe, manner. We could use vals.Kind()
+// since that would also provide a predictable, consistent, ordering but this
+// gives us more control over the ordering than using the raw type names.
+//
+// See also vals.Kind(). If this changes there is a good chance vals.Kind() will
+// also need to change.
+func typeOf(x any) string {
+	switch x := x.(type) {
+	case nil:
+		return "a"
+	case bool:
+		return "b"
+	case int, *big.Int, *big.Rat, float64:
+		return "c"
+	case string:
+		return "d"
+	case List:
+		return "e"
+	case Map, StructMap:
+		return "f"
+	case File:
+		return "g"
+	case Kinder:
+		// Handle Elvish types which are typically pseudo maps that we want to
+		// classify as a distinct type; e.g., exceptions.
+		return "y" + x.Kind()
+	default:
+		// This should rarely be executed. It exists to handle Go types we might
+		// expose that are not mapped to a fundamental Elvish type. We want
+		// these to appear after the Elvish types above.
+		return "z" + reflect.TypeOf(x).String()
 	}
-	// The first word of an empty interface is a pointer to the type descriptor.
-	return *(*uintptr)(unsafe.Pointer(&x))
 }
-
-func init() { typeOfInt = typeOf(0) }

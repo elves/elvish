@@ -121,7 +121,8 @@ fn not-eq {|@values| }
 #     equivalent to comparing by codepoints.
 #
 #     Beware that strings that look like numbers are compared as strings, not
-#     numbers.
+#     numbers. For example, `compare 2 10` is not the same as `compare (num 2)
+#     (num 10)`. The former outputs 1, the latter -1.
 #
 # -   Lists: Compared lexicographically by elements, with elements compared
 #     recursively.
@@ -141,13 +142,14 @@ fn not-eq {|@values| }
 #
 #     -   If they don't, `compare` compares their types and outputs -1 or 1.
 #
-#         The ordering between Elvish types is unspecified, but it is guaranteed
-#         to be consistent during the same Elvish session. For example, if
-#         `compare &total $a $b` outputs -1 when `$a` is a number and `$b` is a
-#         string, it will always output -1 for such pairs.
+#     The ordering between Elvish types is partially specified and guaranteed
+#     to be consistent across all platforms. The partial order is nil < bool <
+#     num < string < list < map < file. Other types, such as exceptions, are
+#     guaranteed to appear after those types in a consistent order on all
+#     platforms, but is otherwise unspecified.
 #
-#     This artificial total order is mainly useful when sorting values of mixed
-#     types.
+#     This artificial total order is mainly useful when sorting values of
+#     mixed types.
 #
 # Examples:
 #
