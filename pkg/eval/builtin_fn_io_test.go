@@ -136,10 +136,14 @@ func TestFromTerminated(t *testing.T) {
 func TestFromJson(t *testing.T) {
 	Test(t,
 		That(`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`).
-			Puts(vals.MakeMap("k", "v", "a", vals.MakeList(1.0, 2.0)),
+			Puts(vals.MakeMap("k", "v", "a", vals.MakeList(1, 2)),
 				"foo"),
 		That(`echo '[null, "foo"]' | from-json`).Puts(
 			vals.MakeList(nil, "foo")),
+		// Numbers that don't fit in int use big.Int
+		That(`echo `+z+` | from-json`).Puts(bigInt(z)),
+		// Numbers with fractional parts are float64
+		That(`echo 1.0 | from-json`).Puts(1.0),
 		That(`echo 'invalid' | from-json`).Throws(ErrorWithType(&json.SyntaxError{})),
 		thatOutputErrorIsBubbled(`echo '[]' | from-json`),
 	)

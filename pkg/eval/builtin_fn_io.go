@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"strconv"
 	"strings"
 
@@ -336,6 +337,8 @@ func fromJSON(fm *Frame) error {
 	out := fm.ValueOutput()
 
 	dec := json.NewDecoder(in)
+	// See comments below about using json.Number.
+	dec.UseNumber()
 	for {
 		var v any
 		err := dec.Decode(&v)
@@ -361,6 +364,17 @@ func fromJSONInterface(v any) (any, error) {
 	switch v := v.(type) {
 	case nil, bool, string:
 		return v, nil
+	case json.Number:
+		// The JSON syntax doesn't restrict the precision of numbers. Since
+		// we called json.Decoder.UseNumber, it preserves the full number
+		// literal, and we can try parsing it as a big int.
+		if z, ok := new(big.Int).SetString(v.String(), 0); ok {
+			// Also normalize to int if the value fits.
+			return vals.NormalizeBigInt(z), nil
+		}
+		// Parse as float64 instead. This can error if the number is not an
+		// integer and exceeds the range of float64.
+		return strconv.ParseFloat(v.String(), 64)
 	case float64:
 		return v, nil
 	case []any:

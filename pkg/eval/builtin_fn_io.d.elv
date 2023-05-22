@@ -277,10 +277,14 @@ fn from-lines { }
 # Takes bytes stdin, parses it as JSON and puts the result on structured stdout.
 # The input can contain multiple JSONs, and whitespace between them are ignored.
 #
-# Note that JSON's only number type corresponds to Elvish's floating-point
-# number type, and is always considered [inexact](language.html#exactness).
-# It may be necessary to coerce JSON numbers to exact numbers using
-# [exact-num](#exact-num).
+# Numbers in JSON are parsed as follows:
+#
+# -   Numbers without fractional parts are parsed as exact integers, and
+#     arbitrary precision is supported.
+#
+# -   Numbers with fractional parts (even if it's `.0`) are parsed as
+#     [inexact](language.html#exactness) floating-point numbers, and the parsing
+#     may fail if the number can't be represented.
 #
 # Examples:
 #
@@ -301,6 +305,8 @@ fn from-lines { }
 # {"k": "v"}' | from-json
 # ▶ a
 # ▶ [&k=v]
+# ~> echo '[42, 100000000000000000000, 42.0, 42.2]' | from-json
+# ▶ [(num 42) (num 100000000000000000000) (num 42.0) (num 42.2)]
 # ```
 #
 # See also [`to-json`]().
