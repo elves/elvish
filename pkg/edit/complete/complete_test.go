@@ -181,9 +181,17 @@ func TestComplete(t *testing.T) {
 					ci("local-ns1:lorem"),
 				},
 			}),
+		// Completing an argument after "=" use the default generator (in this
+		// case filenames).
 		Args(cb("set a = "), ev, cfg).Rets(
 			&Result{
 				Name: "argument", Replace: r(8, 8),
+				Items: allFileNameItems,
+			}),
+		// But completing the "=" itself offers no candidates.
+		Args(cb("set a ="), ev, cfg).Rets(
+			&Result{
+				Name: "argument", Replace: r(6, 7),
 				Items: nil,
 			}),
 		// "tmp" has the same completer.

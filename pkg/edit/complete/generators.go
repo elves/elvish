@@ -43,9 +43,16 @@ func GenerateForSudo(args []string, ev *eval.Evaler, cfg Config) ([]RawItem, err
 func generateArgs(args []string, ev *eval.Evaler, p np.Path, cfg Config) ([]RawItem, error) {
 	switch args[0] {
 	case "set", "tmp":
-		for _, arg := range args[1:] {
-			if arg == "=" {
-				return nil, nil
+		for i := 1; i < len(args); i++ {
+			if args[i] == "=" {
+				if i == len(args)-1 {
+					// Completing the "=" itself; don't offer any candidates.
+					return nil, nil
+				} else {
+					// Completing an argument after "="; fall back to the
+					// default arg generator.
+					return cfg.ArgGenerator(args)
+				}
 			}
 		}
 		seed := args[len(args)-1]
@@ -58,8 +65,7 @@ func generateArgs(args []string, ev *eval.Evaler, p np.Path, cfg Config) ([]RawI
 		return items, nil
 	}
 
-	items, err := cfg.ArgGenerator(args)
-	return items, err
+	return cfg.ArgGenerator(args)
 }
 
 func generateExternalCommands(seed string, ev *eval.Evaler) ([]RawItem, error) {
