@@ -13,8 +13,10 @@ var (
 	override      = map[rune]int{}
 )
 
-// Taken from http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c (public domain)
-var combining = [][2]rune{
+// Data in combiningRanges and the implementation of OfRune is based on
+// http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c, which is in the public domain.
+
+var combiningRanges = [][2]rune{
 	{0x0300, 0x036F}, {0x0483, 0x0486}, {0x0488, 0x0489},
 	{0x0591, 0x05BD}, {0x05BF, 0x05BF}, {0x05C1, 0x05C2},
 	{0x05C4, 0x05C5}, {0x05C7, 0x05C7}, {0x0600, 0x0603},
@@ -65,10 +67,10 @@ var combining = [][2]rune{
 	{0xE0100, 0xE01EF},
 }
 
-func isCombining(r rune) bool {
-	n := len(combining)
-	i := sort.Search(n, func(i int) bool { return r <= combining[i][1] })
-	return i < n && r >= combining[i][0]
+func inRange(r rune, ranges [][2]rune) bool {
+	n := len(ranges)
+	i := sort.Search(n, func(i int) bool { return r <= ranges[i][1] })
+	return i < n && r >= ranges[i][0]
 }
 
 // OfRune returns the column width of a rune.
@@ -78,7 +80,7 @@ func OfRune(r rune) int {
 	}
 	if r == 0 ||
 		r < 32 || (0x7f <= r && r < 0xa0) || // Control character
-		isCombining(r) {
+		inRange(r, combiningRanges) {
 		return 0
 	}
 
