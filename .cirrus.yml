@@ -1,6 +1,6 @@
 test_task:
   env:
-    ELVISH_TEST_TIME_SCALE: 20
+    ELVISH_TEST_TIME_SCALE: "20"
     TEST_FLAG: -race
   matrix:
     # Re-enable gccgo when it supports Go 1.18.
@@ -66,7 +66,7 @@ build_binaries_task:
   only_if: $CIRRUS_BRANCH == 'master'
   alias: binaries
   env:
-    CGO_ENABLED: 0
+    CGO_ENABLED: "0"
   container:
     # Keep the Go version part in sync with
     # https://github.com/elves/up/blob/master/Dockerfile
@@ -102,7 +102,7 @@ check_binary_checksums_task:
   setup_script: apk add git curl
   # Enable auto cancellation - if there is another push, only the task to
   # compare the website against the newer commit should continue.
-  auto_cancellation: true
+  auto_cancellation: "true"
   wait_website_update_script: |
     ts=$(git show -s --format=%ct HEAD)
     wait=10
