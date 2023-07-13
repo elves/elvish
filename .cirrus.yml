@@ -24,7 +24,7 @@ test_task:
         image_family: freebsd-13-2
       env:
         PATH: /usr/local/go/bin:$PATH
-        GO_VERSION: 1.20.2
+        GO_VERSION: 1.20.6
       go_toolchain_cache:
         fingerprint_key: $GO_VERSION
         folder: /usr/local/go
