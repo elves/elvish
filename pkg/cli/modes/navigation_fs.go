@@ -107,8 +107,8 @@ func (f file) IsDirDeep() bool {
 const previewBytes = 64 * 1024
 
 var (
-	errDevice     = errors.New("no preview for device file")
 	errNamedPipe  = errors.New("no preview for named pipe")
+	errDevice     = errors.New("no preview for device file")
 	errSocket     = errors.New("no preview for socket file")
 	errCharDevice = errors.New("no preview for char device")
 	errNonUTF8    = errors.New("no preview for non-utf8 file")
@@ -118,13 +118,27 @@ var specialFileModes = []struct {
 	mode os.FileMode
 	err  error
 }{
-	{os.ModeDevice, errDevice},
 	{os.ModeNamedPipe, errNamedPipe},
+	{os.ModeDevice, errDevice},
 	{os.ModeSocket, errSocket},
 	{os.ModeCharDevice, errCharDevice},
 }
 
 func (f file) Read() ([]NavigationFile, []byte, error) {
+	// On Unix, opening a named pipe for reading is blocking when there are no
+	// writers, so we need to do this check at the very beginning of this
+	// function.
+	//
+	// TODO: There is still a chance that the file has changed between when
+	// f.mode is populated and the os.Open call below, in which case the os.Open
+	// call can still block. This can be fixed by opening the file in async mode
+	// and setting a timeout on the reads. Reading the file asynchronously is
+	// also desirable behavior more generally for the navigation mode to remain
+	// usable on slower filesystems.
+	if f.mode&os.ModeNamedPipe != 0 {
+		return nil, nil, errNamedPipe
+	}
+
 	ff, err := os.Open(f.path)
 	if err != nil {
 		return nil, nil, err
@@ -134,6 +148,12 @@ func (f file) Read() ([]NavigationFile, []byte, error) {
 	info, err := ff.Stat()
 	if err != nil {
 		return nil, nil, err
+	}
+
+	for _, special := range specialFileModes {
+		if info.Mode()&special.mode != 0 {
+			return nil, nil, special.err
+		}
 	}
 
 	if info.IsDir() {
@@ -151,12 +171,6 @@ func (f file) Read() ([]NavigationFile, []byte, error) {
 			}
 		}
 		return files, nil, err
-	}
-
-	for _, special := range specialFileModes {
-		if info.Mode()&special.mode != 0 {
-			return nil, nil, special.err
-		}
 	}
 
 	var buf [previewBytes]byte
