@@ -38,24 +38,24 @@ test_task:
         image: family/pg-ci-netbsd-vanilla-9-3
         platform: netbsd
       env:
-        GO_PKG: go119
+        GO_PKG: go120
         PATH: /usr/pkg/$GO_PKG/bin:$PATH
       go_pkg_cache:
         fingerprint_key: $GO_PKG
         folder: /usr/pkg/$GO_PKG
         populate_script: |
-          sed -i '$s/9\.0/9.0_2022Q3/' /usr/pkg/etc/pkgin/repositories.conf
+          sed -i '$s/9\.0/9.3/' /usr/pkg/etc/pkgin/repositories.conf
           pkgin -y update
           pkgin -y install $GO_PKG
     - name: Test on OpenBSD
       compute_engine_instance:
         image_project: pg-ci-images
-        image: family/pg-ci-openbsd-vanilla-7-2
+        image: family/pg-ci-openbsd-vanilla-7-3
         platform: openbsd
       env:
         PATH: /usr/local/go/bin:$PATH
       go_pkg_cache:
-        fingerprint_key: 1.19.1p0
+        fingerprint_key: 1.20.1
         folder: /usr/local/go
         populate_script: pkg_add go
   go_version_script: go version
