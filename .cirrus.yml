@@ -50,7 +50,7 @@ test_task:
     - name: Test on OpenBSD
       compute_engine_instance:
         image_project: pg-ci-images
-        image: family/pg-ci-openbsd-vanilla-7-3
+        image: family/pg-ci-openbsd-vanilla-7-2
         platform: openbsd
       env:
         PATH: /usr/local/go/bin:$PATH
