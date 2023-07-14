@@ -7,30 +7,41 @@ import (
 	"src.elv.sh/pkg/strutil"
 )
 
-// StructMap may be implemented by a struct to mark the struct as a "struct
-// map", which causes Elvish to treat it like a read-only map. Each exported,
-// named field and getter method (a method taking no argument and returning one
-// value) becomes a field of the map, with the name mapped to dash-case.
+// StructMap may be implemented by a struct to make it accessible to Elvish code
+// as a map. Each exported, named field and getter method (a method taking no
+// argument and returning one value) becomes a field of the map, with the name
+// mapped to dash-case.
 //
-// The following operations are derived for structmaps: Kind, Repr, Hash, Len,
-// Index, HasKey and IterateKeys.
+// Struct maps are indistinguishable from normal maps for Elvish code. The
+// operations Kind, Repr, Hash, Equal, Len, Index, HasKey and IterateKeys handle
+// struct maps consistently with maps; the Assoc and Dissoc operations convert
+// struct maps to maps.
 //
 // Example:
 //
 //	type someStruct struct {
+//	    // Provides the "foo-bar" field
 //	    FooBar int
 //	    lorem  string
 //	}
 //
+//	// Marks someStruct as a struct map
 //	func (someStruct) IsStructMap() { }
 //
+//	// Provides the "ipsum" field
 //	func (s SomeStruct) Ipsum() string { return s.lorem }
 //
+//	// Not a getter method; doesn't provide any field
 //	func (s SomeStruct) OtherMethod(int) { }
-//
-// An instance of someStruct behaves like a read-only map with 3 fields:
-// foo-bar, lorem and ipsum.
 type StructMap interface{ IsStructMap() }
+
+func promoteToMap(v StructMap) Map {
+	m := EmptyMap
+	for it := iterateStructMap(v); it.HasElem(); it.Next() {
+		m = m.Assoc(it.Elem())
+	}
+	return m
+}
 
 // PseudoStructMap may be implemented by a type to derive the Repr, Index,
 // HasKey and IterateKeys operations from the struct map returned by the Fields
@@ -87,32 +98,42 @@ func makeStructMapInfo(t reflect.Type) structMapInfo {
 }
 
 type structMapIterator struct {
-	info structMapInfo
-	i    int
+	m     reflect.Value
+	info  structMapInfo
+	index int
 }
 
-func iterateStructMap(t reflect.Type) *structMapIterator {
-	return &structMapIterator{getStructMapInfo(t), -1}
+func iterateStructMap(m StructMap) *structMapIterator {
+	it := &structMapIterator{reflect.ValueOf(m), getStructMapInfo(reflect.TypeOf(m)), 0}
+	it.fixIndex()
+	return it
 }
 
-func (it *structMapIterator) Next() bool {
-	fields := it.info.fieldNames
-	if it.i >= len(fields) {
-		return false
+func (it *structMapIterator) fixIndex() {
+	fieldNames := it.info.fieldNames
+	for it.index < len(fieldNames) && fieldNames[it.index] == "" {
+		it.index++
 	}
-
-	it.i++
-	for it.i < len(fields) && fields[it.i] == "" {
-		it.i++
-	}
-	return it.i < len(fields)
 }
 
-func (it *structMapIterator) Get(v reflect.Value) (string, any) {
-	name := it.info.fieldNames[it.i]
-	if it.i < it.info.plainFields {
-		return name, v.Field(it.i).Interface()
+func (it *structMapIterator) Elem() (any, any) {
+	return it.elem()
+}
+
+func (it *structMapIterator) elem() (string, any) {
+	name := it.info.fieldNames[it.index]
+	if it.index < it.info.plainFields {
+		return name, it.m.Field(it.index).Interface()
 	}
-	method := v.Method(it.i - it.info.plainFields)
+	method := it.m.Method(it.index - it.info.plainFields)
 	return name, method.Call(nil)[0].Interface()
+}
+
+func (it *structMapIterator) HasElem() bool {
+	return it.index < len(it.info.fieldNames)
+}
+
+func (it *structMapIterator) Next() {
+	it.index++
+	it.fixIndex()
 }

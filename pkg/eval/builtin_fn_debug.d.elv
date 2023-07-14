@@ -1,5 +1,6 @@
-# Output a map-like value describing the current source being evaluated. The value
-# contains the following fields:
+# Output a map describing the current source, which is the source file or
+# interactive command that contains the call to `src`. The value contains the
+# following fields:
 #
 # -   `name`, a unique name of the current source. If the source originates from a
 #     file, it is the full path of the file.
@@ -11,25 +12,13 @@
 # Examples:
 #
 # ```elvish-transcript
-# ~> put (src)[name code is-file]
-# ▶ '[tty]'
-# ▶ 'put (src)[name code is-file]'
-# ▶ $false
-# ~> echo 'put (src)[name code is-file]' > show-src.elv
+# ~> src
+# ▶ [&code=src &is-file=$false &name='[tty 1]']
 # ~> elvish show-src.elv
-# ▶ /home/elf/show-src.elv
-# ▶ "put (src)[name code is-file]\n"
-# ▶ $true
-# ```
-#
-# Note: this builtin always returns information of the source of the function
-# calling `src`. Consider the following example:
-#
-# ```elvish-transcript
-# ~> echo 'fn show { put (src)[name] }' > ~/.elvish/lib/src-fsutil.elv
-# ~> use src-util
-# ~> src-util:show
-# ▶ /home/elf/.elvish/lib/src-fsutil.elv
+# ▶ [&code="src\n" &is-file=$true &name=/home/elf/show-src.elv]
+# ~> echo src > .config/elvish/lib/show-src.elv
+# ~> use show-src
+# ▶ [&code="src\n" &is-file=$true &name=/home/elf/.config/elvish/lib/show-src.elv]
 # ```
 fn src { }
 

@@ -9,8 +9,8 @@ import (
 
 func TestSourceAsStructMap(t *testing.T) {
 	vals.TestValue(t, parse.Source{Name: "[tty]", Code: "echo"}).
-		Kind("structmap").
-		Repr("[&name='[tty]' &code=<...> &is-file=$false]").
+		Kind("map").
+		Repr("[&code=echo &is-file=$false &name='[tty]']").
 		AllKeys("name", "code", "is-file")
 
 	vals.TestValue(t, parse.Source{Name: "/etc/rc.elv", Code: "echo", IsFile: true}).

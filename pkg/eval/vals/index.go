@@ -3,7 +3,6 @@ package vals
 import (
 	"errors"
 	"os"
-	"reflect"
 )
 
 // Indexer wraps the Index method.
@@ -40,6 +39,12 @@ func (err noSuchKeyError) Error() string {
 // satisfying the ErrIndexer or Indexer interface (the Map type satisfies
 // Indexer). For other types, it returns a nil value and a non-nil error.
 func Index(a, k any) (any, error) {
+	convertResult := func(v any, ok bool) (any, error) {
+		if !ok {
+			return nil, NoSuchKey(k)
+		}
+		return v, nil
+	}
 	switch a := a.(type) {
 	case string:
 		return indexString(a, k)
@@ -48,17 +53,13 @@ func Index(a, k any) (any, error) {
 	case ErrIndexer:
 		return a.Index(k)
 	case Indexer:
-		v, ok := a.Index(k)
-		if !ok {
-			return nil, NoSuchKey(k)
-		}
-		return v, nil
+		return convertResult(a.Index(k))
 	case List:
 		return indexList(a, k)
 	case StructMap:
-		return indexStructMap(a, k)
+		return convertResult(indexStructMap(a, k))
 	case PseudoStructMap:
-		return indexStructMap(a.Fields(), k)
+		return convertResult(indexStructMap(a.Fields(), k))
 	default:
 		return nil, errNotIndexable
 	}
@@ -74,18 +75,16 @@ func indexFile(f *os.File, k any) (any, error) {
 	return nil, NoSuchKey(k)
 }
 
-func indexStructMap(a StructMap, k any) (any, error) {
+func indexStructMap(a StructMap, k any) (any, bool) {
 	fieldName, ok := k.(string)
 	if !ok || fieldName == "" {
-		return nil, NoSuchKey(k)
+		return nil, false
 	}
-	aValue := reflect.ValueOf(a)
-	it := iterateStructMap(reflect.TypeOf(a))
-	for it.Next() {
-		k, v := it.Get(aValue)
+	for it := iterateStructMap(a); it.HasElem(); it.Next() {
+		k, v := it.elem()
 		if k == fieldName {
-			return FromGo(v), nil
+			return FromGo(v), true
 		}
 	}
-	return nil, NoSuchKey(fieldName)
+	return nil, false
 }

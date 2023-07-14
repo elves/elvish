@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"reflect"
 	"sort"
 	"strconv"
 
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/persistent/hashmap"
 )
 
 // Reprer wraps the Repr method.
@@ -56,8 +56,6 @@ func Repr(v any, indent int) string {
 		return "(num " + v.String() + ")"
 	case float64:
 		return "(num " + formatFloat64(v) + ")"
-	case Reprer:
-		return v.Repr(indent)
 	case File:
 		return fmt.Sprintf("<file{%s %d}>", parse.Quote(v.Name()), v.Fd())
 	case List:
@@ -67,39 +65,34 @@ func Repr(v any, indent int) string {
 		}
 		return b.String()
 	case Map:
-		builder := NewMapReprBuilder(indent)
-		// Collect all the key-value pairs.
-		pairs := make([][2]any, 0, v.Len())
-		for it := v.Iterator(); it.HasElem(); it.Next() {
-			k, v := it.Elem()
-			pairs = append(pairs, [2]any{k, v})
-		}
-		// Sort the pairs. See the godoc of CmpTotal for the sorting algorithm.
-		sort.Slice(pairs, func(i, j int) bool {
-			return CmpTotal(pairs[i][0], pairs[j][0]) == CmpLess
-		})
-		// Print the pairs.
-		for _, pair := range pairs {
-			k, v := pair[0], pair[1]
-			builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
-		}
-		return builder.String()
+		return reprMap(v.Iterator(), v.Len(), indent)
 	case StructMap:
-		return reprStructMap(v, indent)
+		return reprMap(iterateStructMap(v), lenStructMap(v), indent)
+	case Reprer:
+		return v.Repr(indent)
 	case PseudoStructMap:
-		return reprStructMap(v.Fields(), indent)
+		m := v.Fields()
+		return reprMap(iterateStructMap(m), lenStructMap(m), indent)
 	default:
 		return fmt.Sprintf("<unknown %v>", v)
 	}
 }
 
-func reprStructMap(v StructMap, indent int) string {
-	vValue := reflect.ValueOf(v)
-	vType := vValue.Type()
+func reprMap(it hashmap.Iterator, n, indent int) string {
 	builder := NewMapReprBuilder(indent)
-	it := iterateStructMap(vType)
-	for it.Next() {
-		k, v := it.Get(vValue)
+	// Collect all the key-value pairs.
+	pairs := make([][2]any, 0, n)
+	for ; it.HasElem(); it.Next() {
+		k, v := it.Elem()
+		pairs = append(pairs, [2]any{k, v})
+	}
+	// Sort the pairs. See the godoc of CmpTotal for the sorting algorithm.
+	sort.Slice(pairs, func(i, j int) bool {
+		return CmpTotal(pairs[i][0], pairs[j][0]) == CmpLess
+	})
+	// Print the pairs.
+	for _, pair := range pairs {
+		k, v := pair[0], pair[1]
 		builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
 	}
 	return builder.String()

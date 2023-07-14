@@ -36,10 +36,8 @@ func Kind(v any) string {
 		return "file"
 	case List:
 		return "list"
-	case Map:
+	case Map, StructMap:
 		return "map"
-	case StructMap:
-		return "structmap"
 	default:
 		return fmt.Sprintf("!!%T", v)
 	}

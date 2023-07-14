@@ -7,77 +7,48 @@ import (
 )
 
 type testStructMap struct {
-	Name        string
-	ScoreNumber float64
+	Name  string
+	Score float64
 }
 
 func (testStructMap) IsStructMap() {}
 
-// Structurally identical to testStructMap.
+func (m testStructMap) ScorePlusTen() float64 { return m.Score + 10 }
+
+// Equivalent to testStructMap for Elvish.
 type testStructMap2 struct {
-	Name        string
-	ScoreNumber float64
+	Name         string
+	Score        float64
+	ScorePlusTen float64
 }
 
 func (testStructMap2) IsStructMap() {}
 
-type testStructMap3 struct {
-	Name  string
-	score float64
-}
-
-func (testStructMap3) IsStructMap() {}
-
-func (m testStructMap3) Score() float64 {
-	return m.score + 10
-}
-
 func TestStructMap(t *testing.T) {
-	TestValue(t, testStructMap{}).
-		Kind("structmap").
+	TestValue(t, testStructMap{"ls", 1.0}).
+		Kind("map").
 		Bool(true).
-		Hash(hash.DJB(Hash(""), Hash(0.0))).
-		Repr(`[&name='' &score-number=(num 0.0)]`).
-		Len(2).
-		Equal(testStructMap{}).
-		NotEqual("a", MakeMap(), testStructMap{"a", 1.0}).
-		// StructMap's are nominally typed. This may change in future.
-		NotEqual(testStructMap2{}).
-		HasKey("name", "score-number").
+		Hash(
+			hash.DJB(Hash("name"), Hash("ls"))+
+				hash.DJB(Hash("score"), Hash(1.0))+
+				hash.DJB(Hash("score-plus-ten"), Hash(11.0))).
+		Repr(`[&name=ls &score=(num 1.0) &score-plus-ten=(num 11.0)]`).
+		Len(3).
+		Equal(
+			// Struct maps behave like maps, so they are equal to normal maps
+			// and other struct maps with the same entries.
+			MakeMap("name", "ls", "score", 1.0, "score-plus-ten", 11.0),
+			testStructMap{"ls", 1.0},
+			testStructMap2{"ls", 1.0, 11.0}).
+		NotEqual("a", MakeMap(), testStructMap{"ls", 2.0}, testStructMap{"l", 1.0}).
+		HasKey("name", "score", "score-plus-ten").
 		HasNoKey("bad", 1.0).
 		IndexError("bad", NoSuchKey("bad")).
 		IndexError(1.0, NoSuchKey(1.0)).
-		AllKeys("name", "score-number").
-		Index("name", "").
-		Index("score-number", 0.0)
-
-	TestValue(t, testStructMap{"a", 1.0}).
-		Kind("structmap").
-		Bool(true).
-		Hash(hash.DJB(Hash("a"), Hash(1.0))).
-		Repr(`[&name=a &score-number=(num 1.0)]`).
-		Len(2).
-		Equal(testStructMap{"a", 1.0}).
-		NotEqual(
-			"a", MakeMap("name", "", "score-number", 1.0),
-			testStructMap{}, testStructMap{"a", 2.0}, testStructMap{"b", 1.0}).
-		// Keys are tested above, thus omitted here.
-		Index("name", "a").
-		Index("score-number", 1.0)
-
-	TestValue(t, testStructMap3{"a", 1.0}).
-		Kind("structmap").
-		Bool(true).
-		Hash(hash.DJB(Hash("a"), Hash(11.0))).
-		Repr(`[&name=a &score=(num 11.0)]`).
-		Len(2).
-		Equal(testStructMap3{"a", 1.0}).
-		NotEqual(
-			"a", MakeMap("name", "", "score-number", 1.0),
-			testStructMap{}, testStructMap{"a", 11.0}).
-		// Keys are tested above, thus omitted here.
-		Index("name", "a").
-		Index("score", 11.0)
+		AllKeys("name", "score", "score-plus-ten").
+		Index("name", "ls").
+		Index("score", 1.0).
+		Index("score-plus-ten", 11.0)
 }
 
 type pseudoStructMap struct{}
@@ -88,12 +59,19 @@ func (pseudoStructMap) Fields() StructMap {
 
 func TestPseudoStructMap(t *testing.T) {
 	TestValue(t, pseudoStructMap{}).
-		Repr("[&name=pseudo &score-number=(num 100.0)]").
-		HasKey("name", "score-number").
+		Repr("[&name=pseudo &score=(num 100.0) &score-plus-ten=(num 110.0)]").
+		HasKey("name", "score", "score-plus-ten").
+		NotEqual(
+			// Pseudo struct maps are nominally typed, so they are not equal to
+			// maps or struct maps with the same entries.
+			MakeMap("name", "", "score", 1.0, "score-plus-ten", 11.0),
+			testStructMap{"ls", 1.0},
+		).
 		HasNoKey("bad", 1.0).
 		IndexError("bad", NoSuchKey("bad")).
 		IndexError(1.0, NoSuchKey(1.0)).
-		AllKeys("name", "score-number").
+		AllKeys("name", "score", "score-plus-ten").
 		Index("name", "pseudo").
-		Index("score-number", 100.0)
+		Index("score", 100.0).
+		Index("score-plus-ten", 110.0)
 }

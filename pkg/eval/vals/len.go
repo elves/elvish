@@ -25,7 +25,11 @@ func Len(v any) int {
 	case Lener:
 		return v.Len()
 	case StructMap:
-		return getStructMapInfo(reflect.TypeOf(v)).filledFields
+		return lenStructMap(v)
 	}
 	return -1
+}
+
+func lenStructMap(m StructMap) int {
+	return getStructMapInfo(reflect.TypeOf(m)).filledFields
 }

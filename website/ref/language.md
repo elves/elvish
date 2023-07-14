@@ -438,8 +438,8 @@ of an existing pseudo-map: it is not possible to create a pseudo-map with new
 keys, without existing keys, or with a different value for a given key.
 
 The pseudo-map mechanism is often used for introspection. For example,
-[exceptions](#exception), [user-defined functions](#function), and
-[`$buildinfo`](./builtin.html#$buildinfo) are pseudo-maps.
+[exceptions](#exception) and [user-defined functions](#function) are both
+pseudo-maps.
 
 ## Nil
 
@@ -463,9 +463,9 @@ There is no literal syntax for exceptions. See the discussion of
 [exception and flow commands](#exception-and-flow-commands) for more information
 about this data type.
 
-An exception is a [pseudo-map](#pseudo-map) with a `reason` field, which is in
-turn a pseudo-map. The reason pseudo-map has a `type` field identifying how the
-exception was raised, and further fields depending on the type:
+An exception is a [pseudo-map](#pseudo-map) with a `reason` field. The `reason`
+field is a map in many cases, with a `type` field identifying how the exception
+was raised, and further fields depending on the type:
 
 -   If the `type` field is `fail`, the exception was raised by the
     [fail](builtin.html#fail) command.
@@ -515,6 +515,9 @@ exception was raised, and further fields depending on the type:
         a string.
 
     -   The `trap-cause` field contains the number indicating the trap cause.
+
+This list is not exhaustive, though. There are many error conditions that result
+in an opaque `reason` value that doesn't support introspection yet.
 
 Examples:
 

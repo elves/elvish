@@ -18,11 +18,13 @@ func (a customAssocer) Assoc(k, v any) (any, error) {
 
 func TestAssoc(t *testing.T) {
 	tt.Test(t, tt.Fn("Assoc", Assoc), tt.Table{
+		// String
 		Args("0123", "0", "foo").Rets("foo123", nil),
 		Args("0123", "1..3", "bar").Rets("0bar3", nil),
 		Args("0123", "1..3", 12).Rets(nil, errReplacementMustBeString),
 		Args("0123", "x", "y").Rets(nil, errIndexMustBeInteger),
 
+		// List
 		Args(MakeList("0", "1", "2", "3"), "0", "foo").Rets(
 			eq(MakeList("foo", "1", "2", "3")), nil),
 		Args(MakeList("0", "1", "2", "3"), 0, "foo").Rets(
@@ -34,10 +36,15 @@ func TestAssoc(t *testing.T) {
 		Args(MakeList("0", "1", "2", "3"), "1..3", MakeList("foo")).Rets(
 			nil, errAssocWithSlice),
 
+		// Map
 		Args(MakeMap("k", "v", "k2", "v2"), "k", "newv").Rets(
 			eq(MakeMap("k", "newv", "k2", "v2")), nil),
 		Args(MakeMap("k", "v"), "k2", "v2").Rets(
 			eq(MakeMap("k", "v", "k2", "v2")), nil),
+
+		// Struct map
+		Args(testStructMap{"ls", 1.0}, "score-plus-ten", "x").Rets(
+			eq(MakeMap("name", "ls", "score", 1.0, "score-plus-ten", "x")), nil),
 
 		Args(customAssocer{}, "x", "y").Rets("custom result", errCustomAssoc),
 

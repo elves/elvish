@@ -60,8 +60,9 @@ var pwd
 # The boolean true value.
 var true
 
-# A [psuedo-map](language.html#pseudo-map) that exposes information about the Elvish binary.
-# Running `put $buildinfo | to-json` will produce the same output as `elvish -buildinfo -json`.
+# A map that exposes information about the Elvish binary. Running `put
+# $buildinfo | to-json` will produce the same output as `elvish -buildinfo
+# -json`.
 #
 # See also [`$version`]().
 var buildinfo

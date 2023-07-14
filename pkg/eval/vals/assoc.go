@@ -29,6 +29,8 @@ func Assoc(a, k, v any) (any, error) {
 		return assocList(a, k, v)
 	case Map:
 		return a.Assoc(k, v), nil
+	case StructMap:
+		return promoteToMap(a).Assoc(k, v), nil
 	case Assocer:
 		return a.Assoc(k, v)
 	}
