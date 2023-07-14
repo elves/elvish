@@ -50,11 +50,20 @@ func Hash(v any) uint32 {
 		}
 		return h
 	case Map:
-		h := hash.DJBInit
+		// The iteration order of maps only depends on the hash of the keys. It
+		// is almost deterministic, with only one exception: when two keys have
+		// the same hash, they get produced in insertion order. As a result, it
+		// is possible for two maps that should be considered equal to produce
+		// entries in different orders.
+		//
+		// So instead of using hash.DJBCombine, combine the hash result from
+		// each key-value pair by summing, so that the order doesn't matter.
+		//
+		// TODO: This may not have very good hashing properties.
+		var h uint32
 		for it := v.Iterator(); it.HasElem(); it.Next() {
 			k, v := it.Elem()
-			h = hash.DJBCombine(h, Hash(k))
-			h = hash.DJBCombine(h, Hash(v))
+			h += hash.DJB(Hash(k), Hash(v))
 		}
 		return h
 	case StructMap:
