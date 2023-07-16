@@ -8,5 +8,8 @@ import (
 )
 
 func isMultiHardlink(info os.FileInfo) bool {
+	if info.IsDir() {
+		return false
+	}
 	return info.Sys().(*syscall.Stat_t).Nlink > 1
 }
