@@ -136,8 +136,11 @@ func (gp globPattern) Index(k any) (any, error) {
 func (gp globPattern) Concat(v any) (any, error) {
 	switch rhs := v.(type) {
 	case string:
-		gp.append(stringToSegments(rhs)...)
-		return gp, nil
+		var segs []glob.Segment
+		segs = append(segs, gp.Segments...)
+		segs = append(segs, stringToSegments(rhs)...)
+		return globPattern{Pattern: glob.Pattern{Segments: segs}, Flags: gp.Flags,
+			Buts: gp.Buts, TypeCb: gp.TypeCb}, nil
 	case globPattern:
 		// We know rhs contains exactly one segment.
 		gp.append(rhs.Segments[0])

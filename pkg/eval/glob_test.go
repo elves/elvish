@@ -22,6 +22,15 @@ func TestGlob_Simple(t *testing.T) {
 	)
 }
 
+func TestGlob_BraceConcat(t *testing.T) {
+	testutil.InTempDir(t)
+	must.CreateEmpty("xy.u", "xy.v", "xy.w", "xz.w")
+
+	Test(t,
+		That("put x*.{u v w}").Puts("xy.u", "xy.v", "xy.w", "xz.w"),
+	)
+}
+
 func TestGlob_Recursive(t *testing.T) {
 	testutil.InTempDir(t)
 	must.MkdirAll("1/2/3")
