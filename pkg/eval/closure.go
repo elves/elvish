@@ -30,7 +30,10 @@ type Closure struct {
 	captured    *Ns
 }
 
-var _ Callable = &Closure{}
+var (
+	_ Callable       = &Closure{}
+	_ vals.PseudoMap = &Closure{}
+)
 
 // Kind returns "fn".
 func (*Closure) Kind() string {
@@ -45,11 +48,6 @@ func (c *Closure) Equal(rhs any) bool {
 // Hash returns the hash of the address of the closure.
 func (c *Closure) Hash() uint32 {
 	return hash.Pointer(unsafe.Pointer(c))
-}
-
-// Repr returns an opaque representation "<closure 0x23333333>".
-func (c *Closure) Repr(int) string {
-	return fmt.Sprintf("<closure %p>", c)
 }
 
 // Call calls a closure.

@@ -353,8 +353,7 @@ func TestTry(t *testing.T) {
 
 		// A quoted var name, that would be invalid as a bareword, should be allowed as the referent
 		// in a `try...catch...` block.
-		That("try { fail hard } catch 'x=' { put 'x= ='(to-string $'x=') }").
-			Puts("x= =[&reason=[&content=hard &type=fail] &stack-trace=<...>]"),
+		That("try { fail hard } catch 'x=' { put $'x='[reason][type] }").Puts("fail"),
 
 		// Regression test: "try { } catch" is a syntax error, but it should not
 		// panic.

@@ -51,15 +51,14 @@ func TestStructMap(t *testing.T) {
 		Index("score-plus-ten", 11.0)
 }
 
-type pseudoStructMap struct{}
+type testPseudoMap struct{}
 
-func (pseudoStructMap) Fields() StructMap {
-	return testStructMap{"pseudo", 100}
-}
+func (testPseudoMap) Kind() string      { return "test-pseudo-map" }
+func (testPseudoMap) Fields() StructMap { return testStructMap{"pseudo", 100} }
 
-func TestPseudoStructMap(t *testing.T) {
-	TestValue(t, pseudoStructMap{}).
-		Repr("[&name=pseudo &score=(num 100.0) &score-plus-ten=(num 110.0)]").
+func TestPseudoMap(t *testing.T) {
+	TestValue(t, testPseudoMap{}).
+		Repr("[^test-pseudo-map &name=pseudo &score=(num 100.0) &score-plus-ten=(num 110.0)]").
 		HasKey("name", "score", "score-plus-ten").
 		NotEqual(
 			// Pseudo struct maps are nominally typed, so they are not equal to

@@ -527,9 +527,9 @@ func (op *redirOp) exec(fm *Frame) Exception {
 		var f *os.File
 		switch op.mode {
 		case parse.Read:
-			f = src.ReadEnd
+			f = src.R
 		case parse.Write:
-			f = src.WriteEnd
+			f = src.W
 		default:
 			return fm.errorpf(op, "can only use < or > with pipes")
 		}

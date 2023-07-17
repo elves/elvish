@@ -61,7 +61,7 @@ func close(f vals.File) error {
 
 func pipe() (vals.Pipe, error) {
 	r, w, err := os.Pipe()
-	return vals.NewPipe(r, w), err
+	return vals.Pipe{R: r, W: w}, err
 }
 
 func truncate(name string, rawSize vals.Num) error {

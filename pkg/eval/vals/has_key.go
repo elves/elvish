@@ -26,7 +26,7 @@ func HasKey(container, key any) bool {
 		return hashmap.HasKey(container, key)
 	case StructMap:
 		return hasKeyStructMap(container, key)
-	case PseudoStructMap:
+	case PseudoMap:
 		return hasKeyStructMap(container.Fields(), key)
 	default:
 		var found bool

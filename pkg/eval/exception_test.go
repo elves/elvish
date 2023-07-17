@@ -36,7 +36,7 @@ func TestException(t *testing.T) {
 		AllKeys("reason", "stack-trace").
 		Index("reason", err).
 		IndexError("stack", vals.NoSuchKey("stack")).
-		Repr("[&reason=[&content=error &type=fail] &stack-trace=<...>]")
+		Repr("[^exception &reason=[^fail-error &content=error &type=fail] &stack-trace=<...>]")
 
 	vals.TestValue(t, OK).
 		Kind("exception").

@@ -160,8 +160,13 @@ func parseNumWorkers(n vals.Num) (int, bool, error) {
 // FailError is an error returned by the "fail" command.
 type FailError struct{ Content any }
 
+var _ vals.PseudoMap = FailError{}
+
 // Error returns the string representation of the cause.
 func (e FailError) Error() string { return vals.ToString(e.Content) }
+
+// Kind returns "fail-error".
+func (FailError) Kind() string { return "fail-error" }
 
 // Fields returns a structmap for accessing fields from Elvish.
 func (e FailError) Fields() vals.StructMap { return failFields{e} }

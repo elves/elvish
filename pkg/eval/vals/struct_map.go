@@ -43,10 +43,9 @@ func promoteToMap(v StructMap) Map {
 	return m
 }
 
-// PseudoStructMap may be implemented by a type to derive the Repr, Index,
-// HasKey and IterateKeys operations from the struct map returned by the Fields
-// method.
-type PseudoStructMap interface{ Fields() StructMap }
+// PseudoMap may be implemented by a type to support map-like introspection. The
+// Repr, Index, HasKey and IterateKeys operations handle pseudo maps.
+type PseudoMap interface{ Fields() StructMap }
 
 // Keeps cached information about a structMap.
 type structMapInfo struct {

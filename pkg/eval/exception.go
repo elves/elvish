@@ -37,6 +37,8 @@ type exception struct {
 	stackTrace *StackTrace
 }
 
+var _ vals.PseudoMap = &exception{}
+
 // StackTrace represents a stack trace as a linked list of diag.Context. The
 // head is the innermost stack.
 //
@@ -120,7 +122,7 @@ func (exc *exception) Repr(indent int) string {
 	if exc.reason == nil {
 		return "$ok"
 	}
-	return "[&reason=" + vals.Repr(exc.reason, indent+1) + " &stack-trace=<...>]"
+	return "[^exception &reason=" + vals.Repr(exc.reason, indent+1) + " &stack-trace=<...>]"
 }
 
 // Equal compares by address.
@@ -151,6 +153,8 @@ func (f excFields) StackTrace() *StackTrace { return f.e.stackTrace }
 type PipelineError struct {
 	Errors []Exception
 }
+
+var _ vals.PseudoMap = PipelineError{}
 
 // Error returns a plain text representation of the pipeline error.
 func (pe PipelineError) Error() string {
@@ -201,6 +205,7 @@ func MakePipelineError(excs []Exception) error {
 	}
 }
 
+func (pe PipelineError) Kind() string           { return "pipeline-error" }
 func (pe PipelineError) Fields() vals.StructMap { return peFields{pe} }
 
 type peFields struct{ pe PipelineError }
@@ -219,6 +224,8 @@ func (f peFields) Exceptions() vals.List {
 
 // Flow is a special type of error used for control flows.
 type Flow uint
+
+var _ vals.PseudoMap = Flow(0)
 
 // Control flows.
 const (
@@ -243,6 +250,7 @@ func (f Flow) Show(string) string {
 	return "\033[33;1m" + f.Error() + "\033[m"
 }
 
+func (f Flow) Kind() string           { return "flow-error" }
 func (f Flow) Fields() vals.StructMap { return flowFields{f} }
 
 type flowFields struct{ f Flow }
@@ -258,6 +266,8 @@ type ExternalCmdExit struct {
 	CmdName string
 	Pid     int
 }
+
+var _ vals.PseudoMap = ExternalCmdExit{}
 
 // NewExternalCmdExit constructs an error for representing a non-zero exit from
 // an external command.
@@ -290,6 +300,10 @@ func (exit ExternalCmdExit) Error() string {
 	default:
 		return fmt.Sprint(quotedName, " has unknown WaitStatus ", ws)
 	}
+}
+
+func (exit ExternalCmdExit) Kind() string {
+	return "external-cmd-error"
 }
 
 func (exit ExternalCmdExit) Fields() vals.StructMap {

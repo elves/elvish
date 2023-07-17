@@ -30,14 +30,14 @@ func Kind(v any) string {
 		return "string"
 	case int, *big.Int, *big.Rat, float64:
 		return "number"
-	case Kinder:
-		return v.Kind()
 	case File:
 		return "file"
 	case List:
 		return "list"
 	case Map, StructMap:
 		return "map"
+	case Kinder:
+		return v.Kind()
 	default:
 		return fmt.Sprintf("!!%T", v)
 	}

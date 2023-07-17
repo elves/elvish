@@ -70,9 +70,11 @@ func Repr(v any, indent int) string {
 		return reprMap(iterateStructMap(v), lenStructMap(v), indent)
 	case Reprer:
 		return v.Repr(indent)
-	case PseudoStructMap:
+	case PseudoMap:
 		m := v.Fields()
-		return reprMap(iterateStructMap(m), lenStructMap(m), indent)
+		s := reprMap(iterateStructMap(m), lenStructMap(m), indent)
+		// Add a tag immediately after [.
+		return "[^" + Kind(v) + " " + s[1:]
 	default:
 		return fmt.Sprintf("<unknown %v>", v)
 	}

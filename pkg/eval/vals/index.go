@@ -58,7 +58,7 @@ func Index(a, k any) (any, error) {
 		return indexList(a, k)
 	case StructMap:
 		return convertResult(indexStructMap(a, k))
-	case PseudoStructMap:
+	case PseudoMap:
 		return convertResult(indexStructMap(a.Fields(), k))
 	default:
 		return nil, errNotIndexable

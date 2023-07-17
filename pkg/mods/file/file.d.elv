@@ -55,16 +55,17 @@ fn open {|filename| }
 # See also [`file:open`]().
 fn close {|file| }
 
-# Create a new pipe that can be used in redirections. A pipe contains a read-end and write-end.
-# Each pipe object is a [pseudo-map](language.html#pseudo-map) with fields `r` (the read-end [file
-# object](language.html#file)) and `w` (the write-end).
+# Create a new pipe that can be used in redirections. Outputs a map with two
+# fields: `r` contains the read-end of the pipe, and `w` contains the write-end.
+# Both are [file object](language.html#file))
 #
 # When redirecting command input from a pipe with `<`, the read-end is used. When redirecting
 # command output to a pipe with `>`, the write-end is used. Redirecting both input and output with
 # `<>` to a pipe is not supported.
 #
-# Pipes have an OS-dependent buffer, so writing to a pipe without an active reader
-# does not necessarily block. Pipes **must** be explicitly closed with `file:close`.
+# Pipes have an OS-dependent buffer, so writing to a pipe without an active
+# reader does not necessarily block. Both ends of the pipes must be explicitly
+# closed with `file:close`.
 #
 # Putting values into pipes will cause those values to be discarded.
 #

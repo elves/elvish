@@ -425,21 +425,18 @@ not have to follow whitespaces; `[&a=lorem&b=ipsum]` is equivalent to
 
 ## Pseudo-map
 
-A pseudo-map is not a single concrete data type. It refers to concrete types
-that behave like maps with some restrictions.
+A pseudo-map is not a single concrete data type. It refers to values that can be
+[indexed](#indexing) like maps, but do not support the full range of map
+operations.
 
-A pseudo-map has a fixed set of keys whose values can be accessed by
-[indexing](#indexing) like you would for a regular [map](#map). Similarly, you
-can use commands like [`keys`](./builtin.html#keys) and
-[`has-key`](./builtin.html#keys) on such objects.
+Pseudo-maps are usually values with special semantics in the Elvish runtime. The
+key-value pairs provide useful data about the value, but do not constitute the
+entirety of the value. Some examples of pseudo-maps are [exceptions](#exception)
+and [user-defined functions](#function).
 
-Unlike a normal map, it is currently not possible to create a modified version
-of an existing pseudo-map: it is not possible to create a pseudo-map with new
-keys, without existing keys, or with a different value for a given key.
-
-The pseudo-map mechanism is often used for introspection. For example,
-[exceptions](#exception) and [user-defined functions](#function) are both
-pseudo-maps.
+Pseudo-maps are printed like maps, but with a `^tag` immediately after the `[`,
+like `[^tag &key=value]`. This notation is a placeholder and is not valid syntax
+for constructing pseudo-map values.
 
 ## Nil
 
@@ -463,9 +460,9 @@ There is no literal syntax for exceptions. See the discussion of
 [exception and flow commands](#exception-and-flow-commands) for more information
 about this data type.
 
-An exception is a [pseudo-map](#pseudo-map) with a `reason` field. The `reason`
-field is a map in many cases, with a `type` field identifying how the exception
-was raised, and further fields depending on the type:
+An exception is a [pseudo-map](#pseudo-map) with a `reason` field, which in turn
+is also a pseudo-map in many cases, with a `type` field identifying how the
+exception was raised, and further fields depending on the type:
 
 -   If the `type` field is `fail`, the exception was raised by the
     [fail](builtin.html#fail) command.

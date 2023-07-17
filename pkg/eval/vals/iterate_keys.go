@@ -35,7 +35,7 @@ func IterateKeys(v any, f func(any) bool) error {
 		}
 	case StructMap:
 		iterateKeysStructMap(v, f)
-	case PseudoStructMap:
+	case PseudoMap:
 		iterateKeysStructMap(v.Fields(), f)
 	default:
 		return cannotIterateKeysOf{Kind(v)}
