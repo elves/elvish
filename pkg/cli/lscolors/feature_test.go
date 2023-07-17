@@ -47,6 +47,10 @@ func TestDetermineFeature(t *testing.T) {
 	test("regular file", "a", featureRegular, opt{setupErr: err})
 	test("regular file mh=true", "a", featureRegular, opt{setupErr: err, mh: true})
 
+	// Regression test for b.elv.sh/1710.
+	err = os.Mkdir("d-mh", 0700)
+	test("directory with mh=true", "d-mh", featureDirectory, opt{setupErr: err, mh: true})
+
 	err = os.Symlink("a", "l")
 	test("symlink", "l", featureSymlink, opt{setupErr: err})
 
