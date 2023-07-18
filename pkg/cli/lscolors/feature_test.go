@@ -47,10 +47,6 @@ func TestDetermineFeature(t *testing.T) {
 	test("regular file", "a", featureRegular, opt{setupErr: err})
 	test("regular file mh=true", "a", featureRegular, opt{setupErr: err, mh: true})
 
-	// Regression test for b.elv.sh/1710.
-	err = os.Mkdir("d-mh", 0700)
-	test("directory with mh=true", "d-mh", featureDirectory, opt{setupErr: err, mh: true})
-
 	err = os.Symlink("a", "l")
 	test("symlink", "l", featureSymlink, opt{setupErr: err})
 
@@ -87,6 +83,9 @@ func TestDetermineFeature(t *testing.T) {
 
 	err = mkdirMode("d", 0700)
 	test("normal dir", "d", featureDirectory, opt{setupErr: err})
+	// Regression test for b.elv.sh/1710.
+	test("directory with mh=true", "d", featureDirectory, opt{setupErr: err, mh: true})
+
 	err = mkdirMode("d-wws", 0777|os.ModeSticky)
 	test("world-writable sticky dir", "d-wws", featureWorldWritableStickyDirectory, opt{setupErr: err})
 	err = mkdirMode("d-ww", 0777)
