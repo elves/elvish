@@ -246,8 +246,19 @@ func TestCommand_Redir(t *testing.T) {
 		That("echo > []").Throws(
 			errs.BadValue{
 				What:  "redirection source",
-				Valid: "string, file or pipe", Actual: "list"},
+				Valid: "string, file or map", Actual: "list"},
 			"[]"),
+		// Invalid map for redirection.
+		That("echo < [&]").Throws(
+			errs.BadValue{
+				What:  "map for input redirection",
+				Valid: "map with file in the 'r' field", Actual: "[&]"},
+			"[&]"),
+		That("echo > [&]").Throws(
+			errs.BadValue{
+				What:  "map for output redirection",
+				Valid: "map with file in the 'w' field", Actual: "[&]"},
+			"[&]"),
 
 		// Exception when evaluating source or destination.
 		That("echo > (fail foo)").Throws(FailError{"foo"}, "fail foo"),

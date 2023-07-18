@@ -1556,40 +1556,55 @@ IO ports can be modified with [redirections](#redirection) or by
 
 ## Redirection
 
-<!-- TODO: Describe the syntax and behavior more formally. -->
+A **redirection** modifies the IO ports a command operate with. It consists of
+three parts:
 
-A **redirection** modifies the IO ports a command operate with. There are
-several variants.
-
-A **file redirection** opens a file and associates it with an IO port. The
-syntax consists of an optional destination IO port (like `2`), a redirection
-operator (like `>`) and a filename (like `error.log`):
-
--   The **destination IO port** determines which IO port to modify. It can be
-    given either as the number of the IO port, or one of `stdin`, `stdout` and
+-   The **destination port** determines which IO port to modify. It can be given
+    either as the number of the IO port, or one of `stdin`, `stdout` and
     `stderr`, which are equivalent to 0, 1 and 2 respectively.
 
-    The destination IO port can be omitted, in which case it is inferred from
-    the redirection operator.
+    The destination can be omitted, in which case it is inferred from the
+    operator.
 
-    When the destination IO port is given, it must precede the redirection
-    operator directly, without whitespaces in between; if there are whitespaces,
-    otherwise Elvish will parse it as an argument instead.
+    When the destination is given, it must precede the operator directly,
+    without whitespaces in between. If there are whitespaces, Elvish will parse
+    it as an argument instead.
 
--   The **redirection operator** determines the mode to open the file, and the
-    destination IO port if it is not explicitly specified.
+-   The **operator** determines the mode to open files (if the source is a
+    filename), and the destination if it is not explicitly specified.
 
--   The **filename** names the file to open.
+    Possible redirection operators and their default destination ports are:
 
-Possible redirection operators and their default FDs are:
+    -   `<` for reading. The default IO port is 0 (stdin).
 
--   `<` for reading. The default IO port is 0 (stdin).
+    -   `>` for writing. The default IO port is 1 (stdout).
 
--   `>` for writing. The default IO port is 1 (stdout).
+    -   `>>` for appending. The default IO port is 1 (stdout).
 
--   `>>` for appending. The default IO port is 1 (stdout).
+    -   `<>` for reading and writing. The default IO port is 1 (stdout).
 
--   `<>` for reading and writing. The default IO port is 1 (stdout).
+-   The **source** can be one of the following:
+
+    -   A filename, in which case Elvish will open the named file to use for the
+        destination port, using a suitable mode determined by the operator.
+
+    -   A file object, in which case it is used for the destination port.
+
+    -   A map, which works with one of two operators:
+
+        -   If the operator is `<`, the map must contain a file object in the
+            `r` field, and that file is used as the redirection source.
+
+        -   If the operator is `>`, the map must contain a file object in the
+            `w` field, and that file is used as the redirection source.
+
+        -   Other operators can't be used with maps.
+
+    -   The special syntax `&src` (where `src` is a number, or any of `stdin`,
+        `stdout` and `stderr`) means duplicating the `src` port to the
+        destination port.
+
+    -   The special syntax `&-` means closing the destination port.
 
 Examples:
 
@@ -1609,8 +1624,20 @@ Traceback:
 Try '/bin/ls --help' for more information.
 ```
 
-IO ports modified by file redirections do not support value channels. To be more
-exact:
+Examples for duplicating and closing ports:
+
+```elvish-transcript
+~> date >&-
+date: stdout: Bad file descriptor
+Exception: date exited with 1
+[tty 3], line 1: date >&-
+~> put foo >&-
+Exception: port does not support value output
+[tty 37], line 1: put foo >&-
+```
+
+IO ports modified by file redirections do not currently support value channels.
+To be more exact:
 
 -   A file redirection using `<` sets the value channel to one that never
     produces any values.
@@ -1629,22 +1656,6 @@ Exception: port has no value output
 ~> # previous command produced nothing
 ```
 
-Redirections can also be used for closing or duplicating IO ports. Instead of
-writing a filename, use `&fd` (where `fd` is a number, or any of `stdin`,
-`stdout` and `stderr`) for duplicating, or `&-` for closing. In this case, the
-redirection operator only determines the default destination FD (and is totally
-irrevelant if a destination IO port is specified). Examples:
-
-```elvish-transcript
-~> date >&-
-date: stdout: Bad file descriptor
-Exception: date exited with 1
-[tty 3], line 1: date >&-
-~> put foo >&-
-Exception: port does not support value output
-[tty 37], line 1: put foo >&-
-```
-
 If you have multiple related redirections, they are applied in the order they
 appear. For instance:
 
@@ -1656,8 +1667,8 @@ out
 err
 ```
 
-Redirections may appear anywhere in the command, except at the beginning, (this
-may be restricted in future). It's usually good style to write redirections at
+Redirections may appear anywhere in the command, except at the beginning; this
+may be restricted in future. It's usually good style to write redirections at
 the end of command forms.
 
 # Special commands

@@ -523,21 +523,37 @@ func (op *redirOp) exec(fm *Frame) Exception {
 		fm.ports[dst] = fileRedirPort(op.mode, f, true)
 	case vals.File:
 		fm.ports[dst] = fileRedirPort(op.mode, src, false)
-	case vals.Pipe:
-		var f *os.File
+	case vals.Map, vals.StructMap:
+		var srcFile *os.File
 		switch op.mode {
 		case parse.Read:
-			f = src.R
+			v, err := vals.Index(src, "r")
+			f, ok := v.(*os.File)
+			if err != nil || !ok {
+				return fm.errorp(op.srcOp, errs.BadValue{
+					What:   "map for input redirection",
+					Valid:  "map with file in the 'r' field",
+					Actual: vals.ReprPlain(src)})
+			}
+			srcFile = f
 		case parse.Write:
-			f = src.W
+			v, err := vals.Index(src, "w")
+			f, ok := v.(*os.File)
+			if err != nil || !ok {
+				return fm.errorp(op.srcOp, errs.BadValue{
+					What:   "map for output redirection",
+					Valid:  "map with file in the 'w' field",
+					Actual: vals.ReprPlain(src)})
+			}
+			srcFile = f
 		default:
-			return fm.errorpf(op, "can only use < or > with pipes")
+			return fm.errorpf(op, "can only use < or > with maps")
 		}
-		fm.ports[dst] = fileRedirPort(op.mode, f, false)
+		fm.ports[dst] = fileRedirPort(op.mode, srcFile, false)
 	default:
 		return fm.errorp(op.srcOp, errs.BadValue{
 			What:  "redirection source",
-			Valid: "string, file or pipe", Actual: vals.Kind(src)})
+			Valid: "string, file or map", Actual: vals.Kind(src)})
 	}
 	return nil
 }
