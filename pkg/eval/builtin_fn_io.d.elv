@@ -34,6 +34,19 @@ fn put {|@value| }
 # Etymology: [Clojure](https://clojuredocs.org/clojure.core/repeat).
 fn repeat {|n value| }
 
+# Reads `$n` bytes, or until end-of-file, and outputs the bytes as a string
+# value. The result may not be a valid UTF-8 string.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> echo "a,b" | read-bytes 2
+# ▶ 'a,'
+# ~> echo "a,b" | read-bytes 10
+# ▶ "a,b\n"
+# ```
+fn read-bytes {|n| }
+
 # Reads byte input until `$terminator` or end-of-file is encountered. It outputs the part of the
 # input read as a string value. The output contains the trailing `$terminator`, unless `read-upto`
 # terminated at end-of-file.

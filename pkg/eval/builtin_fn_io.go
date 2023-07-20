@@ -25,8 +25,9 @@ func init() {
 		"repeat": repeat,
 
 		// Bytes input
-		"read-upto": readUpto,
-		"read-line": readLine,
+		"read-bytes": readBytes,
+		"read-upto":  readUpto,
+		"read-line":  readLine,
 
 		// Bytes output
 		"print":  print,
@@ -78,6 +79,22 @@ func repeat(fm *Frame, n int, v any) error {
 		}
 	}
 	return nil
+}
+
+func readBytes(fm *Frame, max int) (string, error) {
+	in := fm.InputFile()
+	buf := make([]byte, max)
+	read := 0
+	for read < max {
+		n, err := in.Read(buf[read:])
+		read += n
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return "", err
+		}
+	}
+	return string(buf[:read]), nil
 }
 
 func readUpto(fm *Frame, terminator string) (string, error) {

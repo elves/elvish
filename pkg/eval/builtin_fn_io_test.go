@@ -27,6 +27,17 @@ func TestRepeat(t *testing.T) {
 	)
 }
 
+func TestReadBytes(t *testing.T) {
+	Test(t,
+		That("print abcd | read-bytes 1").Puts("a"),
+		// read-bytes does not consume more than needed
+		That("print abcd | { read-bytes 1; slurp }").Puts("a", "bcd"),
+		// read-bytes reads up to EOF
+		That("print abcd | read-bytes 10").Puts("abcd"),
+		thatOutputErrorIsBubbled("print abcd | read-bytes 1"),
+	)
+}
+
 func TestReadUpto(t *testing.T) {
 	Test(t,
 		That("print abcd | read-upto c").Puts("abc"),
