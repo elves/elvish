@@ -2,6 +2,9 @@ package file
 
 import (
 	_ "embed"
+	"errors"
+	"fmt"
+	"io/fs"
 	"math/big"
 	"os"
 	"strconv"
@@ -15,11 +18,12 @@ import (
 
 var Ns = eval.BuildNsNamed("file").
 	AddGoFns(map[string]any{
-		"close":    close,
-		"is-tty":   isTTY,
-		"open":     open,
-		"pipe":     pipe,
-		"truncate": truncate,
+		"close":       close,
+		"is-tty":      isTTY,
+		"open":        open,
+		"open-output": openOutput,
+		"pipe":        pipe,
+		"truncate":    truncate,
 	}).Ns()
 
 // DElvCode contains the content of the .d.elv file for this module.
@@ -53,6 +57,57 @@ func isTTYPort(fm *eval.Frame, portNum int) bool {
 
 func open(name string) (vals.File, error) {
 	return os.Open(name)
+}
+
+type openOutputOpts struct {
+	IfNotExists string
+	IfExists    string
+	CreatePerm  int
+}
+
+func (opts *openOutputOpts) SetDefaultOptions() {
+	opts.IfNotExists = "create"
+	opts.IfExists = "truncate"
+	opts.CreatePerm = 0o644
+}
+
+var errIfNotExistsAndIfExistsBothError = errors.New("both &if-not-exists and &if-exists are error")
+
+func openOutput(opts openOutputOpts, name string) (vals.File, error) {
+	perm := opts.CreatePerm
+	if perm < 0 || perm > 0o777 {
+		return nil, errs.OutOfRange{What: "create-perm option",
+			ValidLow: "0", ValidHigh: "0o777", Actual: fmt.Sprintf("%O", perm)}
+	}
+
+	mode := os.O_WRONLY
+	switch opts.IfNotExists {
+	case "create":
+		mode |= os.O_CREATE
+	case "error":
+		// Do nothing: not creating is the default.
+	default:
+		return nil, errs.BadValue{What: "if-not-exists option",
+			Valid: "create or error", Actual: parse.Quote(opts.IfNotExists)}
+	}
+	switch opts.IfExists {
+	case "truncate":
+		mode |= os.O_TRUNC
+	case "append":
+		mode |= os.O_APPEND
+	case "update":
+		// Do nothing: updating in place is the default.
+	case "error":
+		if mode&os.O_CREATE == 0 {
+			return nil, errIfNotExistsAndIfExistsBothError
+		}
+		mode |= os.O_EXCL
+	default:
+		return nil, errs.BadValue{What: "if-exists option",
+			Valid: "truncate, append, update or error", Actual: parse.Quote(opts.IfExists)}
+	}
+
+	return os.OpenFile(name, mode, fs.FileMode(perm))
 }
 
 func close(f vals.File) error {

@@ -32,8 +32,10 @@
 # ```
 fn is-tty {|file| }
 
-# Opens a file. Currently, `open` only supports opening a file for reading.
-# File must be closed with `close` explicitly. Example:
+# Opens a file for input. The file must be closed with [`file:close`]() when no
+# longer needed.
+#
+# Example:
 #
 # ```elvish-transcript
 # ~> cat a.txt
@@ -47,8 +49,36 @@ fn is-tty {|file| }
 # ~> file:close $f
 # ```
 #
-# See also [`file:close`]().
+# See also [`file:open-output`]() and [`file:close`]().
 fn open {|filename| }
+
+# Opens a file for output. The file must be closed with [`file:close`]() when no
+# longer needed.
+#
+# The `&if-not-exists` option can be either `create` or `error`.
+#
+# The `&if-exists` option can be either `truncate` (removing all data), `append`
+# (appending to the end), `update` (updating in place) or `error`. The `error`
+# value may only be used with `&if-not-exists=create`.
+#
+# The `&create-perm` option specifies what permission to create the file with if
+# the file doesn't exist and `&if-not-exists=create`. It must be an integer
+# within [0, 0o777]. On Unix, the actual file permission is subject to filtering
+# by [`$unix:umask`]().
+#
+# Example:
+#
+# ```elvish-transcript
+# ~> use file
+# ~> var f = (file:open-output new)
+# ~> echo content > $f
+# ~> file:close $f
+# ~> cat new
+# content
+# ```
+#
+# See also [`file:open`]() and [`file:close`]().
+fn open-output {|filename &if-not-exists=create &if-exists=truncate &create-perm=(num 0o644)| }
 
 # Closes a file opened with `open`.
 #

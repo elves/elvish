@@ -25,6 +25,90 @@ func TestOpen(t *testing.T) {
 	)
 }
 
+func TestOpenOutput(t *testing.T) {
+	// Run every subtest in a dedicated temporary directory so that they are not
+	// affected by files created by previous subtest.
+	setup := func(t *testing.T, ev *eval.Evaler) {
+		testutil.InTempDir(t)
+		setupFileModule(ev)
+	}
+	evaltest.TestWithFullSetup(t, setup,
+		// &if-not-exists=create
+		That(`
+			var f = (file:open-output new &if-not-exists=create)
+			file:close $f
+			slurp < new
+		`).Puts(""),
+		// &if-not-exists=error
+		That(`
+			var f = (file:open-output new &if-not-exists=error)
+		`).Throws(evaltest.ErrorWithType(&os.PathError{})),
+		// Default is &if-not-exists=create
+		That(`
+			var f = (file:open-output new)
+			file:close $f
+			slurp < new
+		`).Puts(""),
+		// Invalid &if-not-exists
+		That(`
+			var f = (file:open-output new &if-not-exists=bad)
+		`).Throws(errs.BadValue{What: "if-not-exists option",
+			Valid: "create or error", Actual: "bad"}),
+
+		// &if-exists=truncate
+		That(`
+			print old-content > old
+			var f = (file:open-output old &if-exists=truncate)
+			print new > $f
+			file:close $f
+			slurp < old
+		`).Puts("new"),
+		// &if-exists=append
+		That(`
+			print old-content > old
+			var f = (file:open-output old &if-exists=append)
+			print new > $f
+			file:close $f
+			slurp < old
+		`).Puts("old-contentnew"),
+		// &if-exists=update
+		That(`
+			print old-content > old
+			var f = (file:open-output old &if-exists=update)
+			print new > $f
+			file:close $f
+			slurp < old
+		`).Puts("new-content"),
+		// &if-exists=error
+		That(`
+			print old-content > old
+			var f = (file:open-output old &if-exists=error)
+		`).Throws(evaltest.ErrorWithType(&os.PathError{})),
+		// Default is &if-exists=truncate
+		That(`
+			print old-content > old
+			var f = (file:open-output old)
+			print new > $f
+			file:close $f
+			slurp < old
+		`).Puts("new"),
+		// Invalid &if-exists
+		That(`
+			var f = (file:open-output old &if-exists=bad)
+		`).Throws(errs.BadValue{What: "if-exists option",
+			Valid: "truncate, append, update or error", Actual: "bad"}),
+		// &if-exists=error with &if-not-exists=error is an error
+		That(`
+			var f = (file:open-output old &if-not-exists=error &if-exists=error)
+		`).Throws(evaltest.ErrorWithMessage("both &if-not-exists and &if-exists are error")),
+
+		// Invalid &create-perm
+		That(`file:open-output new &create-perm=0o1000`).
+			Throws(errs.OutOfRange{What: "create-perm option",
+				ValidLow: "0", ValidHigh: "0o777", Actual: "0o1000"}),
+	)
+}
+
 func TestPipe(t *testing.T) {
 	evaltest.TestWithSetup(t, setupFileModule,
 		That(`
