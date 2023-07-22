@@ -61,7 +61,7 @@ func TestPipeline_BgJob(t *testing.T) {
 		}
 	}
 
-	TestWithSetup(t, setup,
+	TestWithEvalerSetup(t, setup,
 		That(
 			"set notify-bg-job-success = $false",
 			"var p = (file:pipe)",
@@ -187,7 +187,7 @@ func TestCommand_Redir(t *testing.T) {
 	}
 	testutil.InTempDir(t)
 
-	TestWithSetup(t, setup,
+	TestWithEvalerSetup(t, setup,
 		// Output and input redirection.
 		That("echo 233 > out1", " slurp < out1").Puts("233\n"),
 		// Append.

@@ -15,7 +15,7 @@ func TestStr(t *testing.T) {
 	setup := func(ev *eval.Evaler) {
 		ev.ExtendGlobal(eval.BuildNs().AddNs("str", Ns))
 	}
-	TestWithSetup(t, setup,
+	TestWithEvalerSetup(t, setup,
 		That(`str:compare abc`).Throws(ErrorWithType(errs.ArityMismatch{})),
 		That(`str:compare abc abc`).Puts(0),
 		That(`str:compare abc def`).Puts(-1),

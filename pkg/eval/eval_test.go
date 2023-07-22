@@ -33,7 +33,7 @@ func TestNumBgJobs(t *testing.T) {
 func TestArgs(t *testing.T) {
 	Test(t,
 		That("put $args").Puts(vals.EmptyList))
-	TestWithSetup(t,
+	TestWithEvalerSetup(t,
 		func(ev *Evaler) { ev.Args = vals.MakeList("foo", "bar") },
 		That("put $args").Puts(vals.MakeList("foo", "bar")))
 }
@@ -42,7 +42,7 @@ func TestEvalTimeDeprecate(t *testing.T) {
 	testutil.Set(t, &prog.DeprecationLevel, 42)
 	testutil.InTempDir(t)
 
-	TestWithSetup(t, func(ev *Evaler) {
+	TestWithEvalerSetup(t, func(ev *Evaler) {
 		ev.ExtendGlobal(BuildNs().AddGoFn("dep", func(fm *Frame) {
 			fm.Deprecate("deprecated", nil, 42)
 		}))

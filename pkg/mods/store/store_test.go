@@ -21,7 +21,7 @@ func TestStore(t *testing.T) {
 	setup := func(ev *eval.Evaler) {
 		ev.ExtendGlobal(eval.BuildNs().AddNs("store", ns))
 	}
-	TestWithSetup(t, setup,
+	TestWithEvalerSetup(t, setup,
 		// Add commands
 		That("store:next-cmd-seq").Puts(1),
 		That("store:add-cmd foo").Puts(1),

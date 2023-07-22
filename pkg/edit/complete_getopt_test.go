@@ -25,7 +25,7 @@ func setupCompleteGetopt(ev *eval.Evaler) {
 }
 
 func TestCompleteGetopt(t *testing.T) {
-	TestWithSetup(t, setupCompleteGetopt,
+	TestWithEvalerSetup(t, setupCompleteGetopt,
 		// Complete argument
 		That("complete ''").Puts("first1", "first2"),
 		That("complete '' >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
@@ -69,7 +69,7 @@ func TestCompleteGetopt(t *testing.T) {
 }
 
 func TestCompleteGetopt_TypeCheck(t *testing.T) {
-	TestWithSetup(t, setupCompleteGetopt,
+	TestWithEvalerSetup(t, setupCompleteGetopt,
 		That("complete-getopt [foo []] [] []").
 			Throws(ErrorWithMessage("arg should be string, got list")),
 

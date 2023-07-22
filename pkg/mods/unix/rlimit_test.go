@@ -47,7 +47,7 @@ func TestRlimits(t *testing.T) {
 			AddVar("cpu-max", vars.FromPtr(&cpuMax)))
 	}
 
-	evaltest.TestWithSetup(t, setup,
+	evaltest.TestWithEvalerSetup(t, setup,
 		That("put $unix:rlimits[cpu]").Puts(vals.EmptyMap),
 		That("put $unix:rlimits[nofile]").Puts(vals.MakeMap("cur", 30, "max", 40)),
 		That("has-key $unix:rlimits stack").Puts(false),

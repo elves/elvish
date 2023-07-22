@@ -14,7 +14,7 @@ func TestRe(t *testing.T) {
 	setup := func(ev *eval.Evaler) {
 		ev.ExtendGlobal(eval.BuildNs().AddNs("re", Ns))
 	}
-	TestWithSetup(t, setup,
+	TestWithEvalerSetup(t, setup,
 		That("re:match . xyz").Puts(true),
 		That("re:match . ''").Puts(false),
 		That("re:match '[a-z]' A").Puts(false),

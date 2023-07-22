@@ -11,7 +11,7 @@ import (
 
 func TestBindingMap(t *testing.T) {
 	// TODO
-	TestWithSetup(t, func(ev *eval.Evaler) {
+	TestWithEvalerSetup(t, func(ev *eval.Evaler) {
 		ev.ExtendBuiltin(eval.BuildNs().AddGoFn("binding-map", makeBindingMap))
 	},
 		// Checking key and value when constructing

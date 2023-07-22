@@ -129,25 +129,25 @@ func (c Case) DoesNotCompile(msgs ...string) Case {
 	return c
 }
 
-// Test is a shorthand for [TestWithFullSetup] when no setup is needed.
+// Test is a shorthand for [TestWithSetup] when no setup is needed.
 func Test(t *testing.T, tests ...Case) {
 	t.Helper()
-	TestWithFullSetup(t, func(*testing.T, *eval.Evaler) {}, tests...)
+	TestWithSetup(t, func(*testing.T, *eval.Evaler) {}, tests...)
 }
 
-// TestWithSetup is a shorthand for [TestWithFullSetup] when the setup only
+// TestWithEvalerSetup is a shorthand for [TestWithSetup] when the setup only
 // needs to manipulate [eval.Evaler].
-func TestWithSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
+func TestWithEvalerSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 	t.Helper()
-	TestWithFullSetup(t, func(_ *testing.T, ev *eval.Evaler) { setup(ev) }, tests...)
+	TestWithSetup(t, func(_ *testing.T, ev *eval.Evaler) { setup(ev) }, tests...)
 }
 
-// TestWithFullSetup runs test cases.
+// TestWithSetup runs test cases.
 //
 // Each test case is run as a subtest with a newly created Evaler. The setup
 // function is called with the [testing.T] and the [eval.Evaler] for the subset
 // before code evaluation.
-func TestWithFullSetup(t *testing.T, setup func(*testing.T, *eval.Evaler), tests ...Case) {
+func TestWithSetup(t *testing.T, setup func(*testing.T, *eval.Evaler), tests ...Case) {
 	t.Helper()
 	for _, tc := range tests {
 		t.Run(strings.Join(tc.codes, "\n"), func(t *testing.T) {

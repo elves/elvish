@@ -10,7 +10,7 @@ import (
 )
 
 func TestCall(t *testing.T) {
-	TestWithSetup(t, setup,
+	TestWithEvalerSetup(t, setup,
 		That("flag:call {|&bool=$false| put $bool } [-bool]").Puts(true),
 		That("flag:call {|&str=''| put $str } [-str foo]").Puts("foo"),
 		That("flag:call {|&opt=$false arg| put $opt $arg } [-opt foo]").
@@ -27,7 +27,7 @@ func TestCall(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	TestWithSetup(t, setup,
+	TestWithEvalerSetup(t, setup,
 		// Different types of flags
 		That("flag:parse [-bool] [[bool $false bool]]").
 			Puts(vals.MakeMap("bool", true), vals.EmptyList),
@@ -62,7 +62,7 @@ func TestParseGetopt(t *testing.T) {
 	vFlag := vals.MakeMap(
 		"spec", vals.MakeMap("short", "v"), "long", false, "arg", "")
 
-	TestWithSetup(t, setup,
+	TestWithEvalerSetup(t, setup,
 		// Basic test
 		That("flag:parse-getopt [-v foo] [[&short=v]]").
 			Puts(vals.MakeList(vFlag), vals.MakeList("foo")),

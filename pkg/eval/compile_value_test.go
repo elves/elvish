@@ -195,7 +195,7 @@ func TestVariableUse(t *testing.T) {
 }
 
 func TestVariableUse_NonExistentVariableInModule(t *testing.T) {
-	TestWithSetup(t, func(ev *Evaler) { ev.AddModule("mod", &Ns{}) },
+	TestWithEvalerSetup(t, func(ev *Evaler) { ev.AddModule("mod", &Ns{}) },
 		// Variables in other modules are checked at runtime.
 		That("use mod; put $mod:bad").Throws(
 			ErrorWithMessage("variable $mod:bad not found"), "$mod:bad"),

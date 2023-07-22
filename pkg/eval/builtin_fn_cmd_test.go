@@ -36,7 +36,7 @@ func TestExit_RunsPreExit(t *testing.T) {
 		ev.PreExitHooks = append(ev.PreExitHooks, func() { calls++ })
 	}
 
-	TestWithSetup(t, setup,
+	TestWithEvalerSetup(t, setup,
 		That("exit").DoesNothing())
 
 	if calls != 1 {

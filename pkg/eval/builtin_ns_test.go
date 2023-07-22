@@ -9,7 +9,7 @@ import (
 )
 
 func TestExplicitBuiltinModule(t *testing.T) {
-	TestWithSetup(t, func(ev *Evaler) { ev.Args = vals.MakeList("a", "b") },
+	TestWithEvalerSetup(t, func(ev *Evaler) { ev.Args = vals.MakeList("a", "b") },
 		That("all $args").Puts("a", "b"),
 		// Regression test for #1414
 		That("use builtin; all $builtin:args").Puts("a", "b"),

@@ -15,7 +15,7 @@ func TestPlatform(t *testing.T) {
 		return "mach1.domain.tld", nil
 	})
 
-	TestWithSetup(t, setup,
+	TestWithEvalerSetup(t, setup,
 		That(`put $platform:arch`).Puts(runtime.GOARCH),
 		That(`put $platform:os`).Puts(runtime.GOOS),
 		That(`put $platform:is-windows`).Puts(runtime.GOOS == "windows"),
@@ -35,7 +35,7 @@ func TestPlatform_HostNameError(t *testing.T) {
 	testutil.Set(t, &osHostname, func() (string, error) {
 		return "", errNoHostname
 	})
-	TestWithSetup(t, setup,
+	TestWithEvalerSetup(t, setup,
 		That(`platform:hostname`).Throws(errNoHostname),
 	)
 }

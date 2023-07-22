@@ -32,7 +32,7 @@ func TestPath(t *testing.T) {
 		panic("unable to convert a/b/c.png to an absolute path")
 	}
 
-	TestWithSetup(t, importModules,
+	TestWithEvalerSetup(t, importModules,
 		// This block of tests is not meant to be comprehensive. Their primary purpose is to simply
 		// ensure the Elvish command is correctly mapped to the relevant Go function. We assume the
 		// Go function behaves correctly.
@@ -113,7 +113,7 @@ func TestPath_Symlink(t *testing.T) {
 		}
 	}
 
-	TestWithSetup(t, importModules,
+	TestWithEvalerSetup(t, importModules,
 		That("path:eval-symlinks d/f").Puts(filepath.Join("d", "f")),
 		That("path:eval-symlinks d/s-f").Puts(filepath.Join("d", "f")),
 		That("path:eval-symlinks s-d/f").Puts(filepath.Join("d", "f")),

@@ -92,7 +92,7 @@ func TestResolve(t *testing.T) {
 	libdir := testutil.InTempDir(t)
 	must.WriteFile("mod.elv", "fn func { }")
 
-	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
+	TestWithEvalerSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
 		That("resolve for").Puts("special"),
 		That("resolve put").Puts("$put~"),
 		That("fn f { }; resolve f").Puts("$f~"),

@@ -15,7 +15,7 @@ import (
 var (
 	ErrorWithType        = evaltest.ErrorWithType
 	ErrorWithMessage     = evaltest.ErrorWithMessage
-	TestWithSetup        = evaltest.TestWithSetup
+	TestWithSetup        = evaltest.TestWithEvalerSetup
 	That                 = evaltest.That
 	StringMatchingRegexp = evaltest.StringMatching
 )

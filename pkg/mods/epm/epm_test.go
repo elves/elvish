@@ -10,7 +10,7 @@ import (
 func TestEPM(t *testing.T) {
 	// A smoke test to ensure that the epm module has no errors.
 
-	TestWithSetup(t, mods.AddTo,
+	TestWithEvalerSetup(t, mods.AddTo,
 		That("use epm").DoesNothing(),
 	)
 }

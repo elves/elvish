@@ -90,7 +90,7 @@ func TestCompleteFilename(t *testing.T) {
 }
 
 func TestComplexCandidate(t *testing.T) {
-	TestWithSetup(t, func(ev *eval.Evaler) {
+	TestWithEvalerSetup(t, func(ev *eval.Evaler) {
 		ev.ExtendGlobal(eval.BuildNs().AddGoFn("cc", complexCandidate))
 	},
 		That("cc a/b").Puts(complexItem{Stem: "a/b"}),

@@ -142,7 +142,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestSet_ErrorInSetMethod(t *testing.T) {
-	TestWithSetup(t, func(ev *Evaler) { addBadVar(ev, 0) },
+	TestWithEvalerSetup(t, func(ev *Evaler) { addBadVar(ev, 0) },
 		That("set bad = foo").Throws(errBadVar, "bad"),
 		That("var a; set bad @a = foo").Throws(errBadVar, "bad"),
 		That("var a; set a @bad = foo").Throws(errBadVar, "@bad"),
@@ -168,13 +168,13 @@ func TestTmp(t *testing.T) {
 }
 
 func TestTmp_ErrorSetting(t *testing.T) {
-	TestWithSetup(t, func(ev *Evaler) { addBadVar(ev, 0) },
+	TestWithEvalerSetup(t, func(ev *Evaler) { addBadVar(ev, 0) },
 		That("{ tmp bad = foo }").Throws(errBadVar, "bad", "{ tmp bad = foo }"),
 	)
 }
 
 func TestTmp_ErrorRestoring(t *testing.T) {
-	TestWithSetup(t, func(ev *Evaler) { addBadVar(ev, 1) },
+	TestWithEvalerSetup(t, func(ev *Evaler) { addBadVar(ev, 1) },
 		That("{ tmp bad = foo; put after }").
 			Puts("after").
 			Throws(ErrorWithMessage("restore variable: bad var"),
@@ -470,7 +470,7 @@ func TestUse_SupportsCircularDependency(t *testing.T) {
 		"b.elv": "var pre = bpre; use a; put $a:pre $a:post; var post = bpost",
 	})
 
-	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
+	TestWithEvalerSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
 		That(`use a`).Puts(
 			// When b.elv is imported from a.elv, $a:pre is set but $a:post is
 			// not
@@ -504,7 +504,7 @@ func TestUse(t *testing.T) {
 		},
 	})
 
-	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir1, libdir2} },
+	TestWithEvalerSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir1, libdir2} },
 		That(`use lorem; put $lorem:name`).Puts("lorem"),
 		// imports are lexically scoped
 		// TODO: Support testing for compilation error
@@ -566,7 +566,7 @@ func TestUse_WarnsAboutDeprecatedFeatures(t *testing.T) {
 	libdir := testutil.InTempDir(t)
 	must.WriteFile("dep.elv", "a=b nop $a")
 
-	TestWithSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
+	TestWithEvalerSetup(t, func(ev *Evaler) { ev.LibDirs = []string{libdir} },
 		// Importing module triggers check for deprecated features
 		That("use dep").PrintsStderrWith("is deprecated"),
 	)

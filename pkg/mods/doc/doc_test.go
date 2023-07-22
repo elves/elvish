@@ -29,7 +29,7 @@ func init() {
 }
 
 func TestShow(t *testing.T) {
-	evaltest.TestWithSetup(t, setupDoc,
+	evaltest.TestWithEvalerSetup(t, setupDoc,
 		That("doc:show foo:function").Prints(render(fooFunctionDoc, 80)),
 		That("doc:show &width=30 foo:function").Prints(render(fooFunctionDoc, 30)),
 		// TODO: Test in pty
@@ -48,7 +48,7 @@ func TestShow(t *testing.T) {
 }
 
 func TestFind(t *testing.T) {
-	evaltest.TestWithSetup(t, setupDoc,
+	evaltest.TestWithEvalerSetup(t, setupDoc,
 		That("doc:find ipsum").Prints(highlightBraced(Dedent(`
 			foo:function:
 			  … Lorem {ipsum} dolor sit amet. …
@@ -59,7 +59,7 @@ func TestFind(t *testing.T) {
 }
 
 func TestSource(t *testing.T) {
-	evaltest.TestWithSetup(t, setupDoc,
+	evaltest.TestWithEvalerSetup(t, setupDoc,
 		That("doc:source '$foo:variable'").Puts(fooVariableDoc),
 		// The implementation of doc:source is used by doc:show internally, so
 		// we only test a simple case here.
@@ -67,7 +67,7 @@ func TestSource(t *testing.T) {
 }
 
 func TestSymbols(t *testing.T) {
-	evaltest.TestWithSetup(t, setupDoc,
+	evaltest.TestWithEvalerSetup(t, setupDoc,
 		That("doc:-symbols").Puts(
 			// All symbols, sorted
 			"$foo:variable", "break", "foo:function", "num"),

@@ -15,7 +15,7 @@ const z = "100000000000000000000"
 
 func TestOpen(t *testing.T) {
 	testutil.InTempDir(t)
-	evaltest.TestWithSetup(t, setupFileModule,
+	evaltest.TestWithEvalerSetup(t, setupFileModule,
 		That(`
 			echo haha > out3
 			var f = (file:open out3)
@@ -32,7 +32,7 @@ func TestOpenOutput(t *testing.T) {
 		testutil.InTempDir(t)
 		setupFileModule(ev)
 	}
-	evaltest.TestWithFullSetup(t, setup,
+	evaltest.TestWithSetup(t, setup,
 		// &if-not-exists=create
 		That(`
 			var f = (file:open-output new &if-not-exists=create)
@@ -110,7 +110,7 @@ func TestOpenOutput(t *testing.T) {
 }
 
 func TestPipe(t *testing.T) {
-	evaltest.TestWithSetup(t, setupFileModule,
+	evaltest.TestWithEvalerSetup(t, setupFileModule,
 		That(`
 			var p = (file:pipe)
 			echo haha > $p
@@ -136,7 +136,7 @@ func TestPipe(t *testing.T) {
 
 func TestTruncate(t *testing.T) {
 	testutil.InTempDir(t)
-	evaltest.TestWithSetup(t, setupFileModule,
+	evaltest.TestWithEvalerSetup(t, setupFileModule,
 		// Side effect checked below
 		That("echo > file100", "file:truncate file100 100").DoesNothing(),
 
@@ -169,7 +169,7 @@ func TestTruncate(t *testing.T) {
 }
 
 func TestIsTTY(t *testing.T) {
-	evaltest.TestWithSetup(t, setupFileModule,
+	evaltest.TestWithEvalerSetup(t, setupFileModule,
 		That("file:is-tty 0").Puts(false),
 		That("file:is-tty (num 0)").Puts(false),
 		That(
@@ -185,13 +185,13 @@ func TestIsTTY(t *testing.T) {
 				Valid: "file value or numerical FD", Actual: "[]"}),
 	)
 	if canOpen("/dev/null") {
-		evaltest.TestWithSetup(t, setupFileModule,
+		evaltest.TestWithEvalerSetup(t, setupFileModule,
 			That("file:is-tty 0 < /dev/null").Puts(false),
 			That("file:is-tty (num 0) < /dev/null").Puts(false),
 		)
 	}
 	if canOpen("/dev/tty") {
-		evaltest.TestWithSetup(t, setupFileModule,
+		evaltest.TestWithEvalerSetup(t, setupFileModule,
 			That("file:is-tty 0 < /dev/tty").Puts(true),
 			That("file:is-tty (num 0) < /dev/tty").Puts(true),
 		)

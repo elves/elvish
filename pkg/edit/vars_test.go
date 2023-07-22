@@ -10,7 +10,7 @@ import (
 )
 
 func TestAddVar(t *testing.T) {
-	TestWithSetup(t, func(ev *eval.Evaler) {
+	TestWithEvalerSetup(t, func(ev *eval.Evaler) {
 		ev.ExtendGlobal(eval.BuildNs().AddGoFn("add-var", addVar))
 	},
 		That("add-var foo bar").Then("put $foo").Puts("bar"),
@@ -26,7 +26,7 @@ func TestAddVar(t *testing.T) {
 }
 
 func TestDelVar(t *testing.T) {
-	TestWithSetup(t, func(ev *eval.Evaler) {
+	TestWithEvalerSetup(t, func(ev *eval.Evaler) {
 		ev.ExtendGlobal(eval.BuildNs().AddGoFn("del-var", delVar))
 	},
 		That("var foo = bar").Then("del-var foo").Then("put $foo").
@@ -43,7 +43,7 @@ func TestDelVar(t *testing.T) {
 }
 
 func TestAddVars(t *testing.T) {
-	TestWithSetup(t, func(ev *eval.Evaler) {
+	TestWithEvalerSetup(t, func(ev *eval.Evaler) {
 		ev.ExtendGlobal(eval.BuildNs().AddGoFn("add-vars", addVars))
 	},
 		That("add-vars [&foo=bar]").Then("put $foo").Puts("bar"),
@@ -66,7 +66,7 @@ func TestAddVars(t *testing.T) {
 }
 
 func TestDelVars(t *testing.T) {
-	TestWithSetup(t, func(ev *eval.Evaler) {
+	TestWithEvalerSetup(t, func(ev *eval.Evaler) {
 		ev.ExtendGlobal(eval.BuildNs().AddGoFn("del-vars", delVars))
 	},
 		That("var a b c").Then("del-vars [a b]").Then("put $a").

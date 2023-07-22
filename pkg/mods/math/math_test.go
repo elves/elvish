@@ -25,7 +25,7 @@ func TestMath(t *testing.T) {
 	setup := func(ev *eval.Evaler) {
 		ev.ExtendGlobal(eval.BuildNs().AddNs("math", Ns))
 	}
-	TestWithSetup(t, setup,
+	TestWithEvalerSetup(t, setup,
 		That("math:abs 2").Puts(2),
 		That("math:abs -2").Puts(2),
 		That("math:abs "+minIntString).Puts(bigInt(minIntString[1:])),
