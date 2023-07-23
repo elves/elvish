@@ -4,10 +4,11 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
+	"math"
 	"math/big"
 	"os"
-	"strconv"
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
@@ -23,6 +24,8 @@ var Ns = eval.BuildNsNamed("file").
 		"open":        open,
 		"open-output": openOutput,
 		"pipe":        pipe,
+		"seek":        seek,
+		"tell":        tell,
 		"truncate":    truncate,
 	}).Ns()
 
@@ -123,34 +126,78 @@ func pipe() (vals.Pipe, error) {
 	return vals.Pipe{R: r, W: w}, err
 }
 
-func truncate(name string, rawSize vals.Num) error {
-	var size int64
-	switch rawSize := rawSize.(type) {
-	case int:
-		size = int64(rawSize)
-	case *big.Int:
-		if rawSize.IsInt64() {
-			size = rawSize.Int64()
-		} else {
-			return truncateSizeOutOfRange(rawSize.String())
-		}
-	default:
-		return errs.BadValue{
-			What:  "size argument to file:truncate",
-			Valid: "integer", Actual: "non-integer",
-		}
+type seekOpts struct {
+	Whence string
+}
+
+func (opts *seekOpts) SetDefaultOptions() { opts.Whence = "start" }
+
+func seek(opts seekOpts, f vals.File, rawOffset vals.Num) error {
+	offset, err := toInt64(rawOffset, "offset", math.MinInt64, "-2^64")
+	if err != nil {
+		return err
 	}
-	if size < 0 {
-		return truncateSizeOutOfRange(strconv.FormatInt(size, 10))
+	var whence int
+	switch opts.Whence {
+	case "start":
+		whence = io.SeekStart
+	case "current":
+		whence = io.SeekCurrent
+	case "end":
+		whence = io.SeekEnd
+	default:
+		return errs.BadValue{What: "whence",
+			Valid: "start, current or end", Actual: parse.Quote(opts.Whence)}
+	}
+	_, err = f.Seek(offset, whence)
+	return err
+}
+
+func tell(f vals.File) (vals.Num, error) {
+	offset, err := f.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return nil, err
+	}
+	return fromInt64(offset), nil
+}
+
+func truncate(name string, rawSize vals.Num) error {
+	size, err := toInt64(rawSize, "size", 0, "0")
+	if err != nil {
+		return err
 	}
 	return os.Truncate(name, size)
 }
 
-func truncateSizeOutOfRange(size string) error {
-	return errs.OutOfRange{
-		What:      "size argument to file:truncate",
-		ValidLow:  "0",
-		ValidHigh: "2^64-1",
-		Actual:    size,
+func fromInt64(i64 int64) vals.Num {
+	if i := int(i64); int64(i) == i64 {
+		return i
 	}
+	return big.NewInt(i64)
+}
+
+func toInt64(n vals.Num, what string, validLow int64, validLowString string) (int64, error) {
+	outOfRange := func() error {
+		return errs.OutOfRange{What: what,
+			ValidLow: validLowString, ValidHigh: "2^64-1", Actual: vals.ToString(n)}
+	}
+	var i int64
+	switch n := n.(type) {
+	case int:
+		i = int64(n)
+	case *big.Int:
+		if n.IsInt64() {
+			i = n.Int64()
+		} else {
+			return 0, outOfRange()
+		}
+	default:
+		return 0, errs.BadValue{What: what,
+			Valid: "exact integer", Actual: vals.ToString(n),
+		}
+	}
+	if i < validLow {
+		return 0, outOfRange()
+	}
+	return i, nil
 }

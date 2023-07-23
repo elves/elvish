@@ -145,6 +145,58 @@ func TestPipe(t *testing.T) {
 	)
 }
 
+func TestSeek(t *testing.T) {
+	setup := func(t *testing.T, ev *eval.Evaler) {
+		testutil.InTempDir(t)
+		setupFileModule(ev)
+	}
+	read1SeekRead1 := func(seekCmd string) string {
+		return `
+			print 0123456789 > file
+			var f = (file:open file)
+			read-bytes 1 < $f | nop (all)
+			` + seekCmd + `
+			read-bytes 1 < $f
+			file:close $f
+			`
+	}
+	evaltest.TestWithSetup(t, setup,
+		// Default is &whence=start
+		That(read1SeekRead1("file:seek $f 1")).Puts("1"),
+		// Different &whence
+		That(read1SeekRead1("file:seek $f 1 &whence=start")).Puts("1"),
+		That(read1SeekRead1("file:seek $f 1 &whence=current")).Puts("2"),
+		That(read1SeekRead1("file:seek $f -1 &whence=end")).Puts("9"),
+		// TODO: These tests have to close the file before calling file:seek to
+		// avoid leaking file descriptors. This shouldn't be necessary.
+
+		// Invalid &whence
+		That(read1SeekRead1("file:close $f; file:seek $f -1 &whence=bad")).
+			Throws(errs.BadValue{What: "whence",
+				Valid: "start, current or end", Actual: "bad"}),
+		// Invalid offsets.
+		That(read1SeekRead1("file:close $f; file:seek $f "+z)).
+			Throws(errs.OutOfRange{What: "offset",
+				ValidLow: "-2^64", ValidHigh: "2^64-1", Actual: z}),
+		That(read1SeekRead1("file:close $f; file:seek $f 1.5")).
+			Throws(errs.BadValue{What: "offset",
+				Valid: "exact integer", Actual: "1.5"}),
+	)
+}
+
+func TestTell(t *testing.T) {
+	testutil.InTempDir(t)
+	evaltest.TestWithEvalerSetup(t, setupFileModule,
+		That(`
+			print 0123456789 > file
+			var f = (file:open file)
+			read-bytes 4 < $f
+			file:tell $f
+			file:close $f
+		`).Puts("0123", 4),
+	)
+}
+
 func TestTruncate(t *testing.T) {
 	testutil.InTempDir(t)
 	evaltest.TestWithEvalerSetup(t, setupFileModule,
@@ -155,18 +207,18 @@ func TestTruncate(t *testing.T) {
 		// but does in a *big.Int, but this could consume too much disk
 
 		That("file:truncate bad -1").Throws(errs.OutOfRange{
-			What:     "size argument to file:truncate",
+			What:     "size",
 			ValidLow: "0", ValidHigh: "2^64-1", Actual: "-1",
 		}),
 
 		That("file:truncate bad "+z).Throws(errs.OutOfRange{
-			What:     "size argument to file:truncate",
+			What:     "size",
 			ValidLow: "0", ValidHigh: "2^64-1", Actual: z,
 		}),
 
 		That("file:truncate bad 1.5").Throws(errs.BadValue{
-			What:  "size argument to file:truncate",
-			Valid: "integer", Actual: "non-integer",
+			What:  "size",
+			Valid: "exact integer", Actual: "1.5",
 		}),
 	)
 
