@@ -55,6 +55,8 @@ fn open {|filename| }
 # Opens a file for output. The file must be closed with [`file:close`]() when no
 # longer needed.
 #
+# If `&also-input` is true, the file may also be used for input.
+#
 # The `&if-not-exists` option can be either `create` or `error`.
 #
 # The `&if-exists` option can be either `truncate` (removing all data), `append`
@@ -78,7 +80,7 @@ fn open {|filename| }
 # ```
 #
 # See also [`file:open`]() and [`file:close`]().
-fn open-output {|filename &if-not-exists=create &if-exists=truncate &create-perm=(num 0o644)| }
+fn open-output {|filename &also-input=$false &if-not-exists=create &if-exists=truncate &create-perm=(num 0o644)| }
 
 # Closes a file opened with `open`.
 #

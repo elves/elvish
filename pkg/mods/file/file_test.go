@@ -33,6 +33,17 @@ func TestOpenOutput(t *testing.T) {
 		setupFileModule(ev)
 	}
 	evaltest.TestWithSetup(t, setup,
+		// &also-input=$true
+		That(`
+			print foo > file
+			var f = (file:open-output &also-input &if-exists=update file)
+			read-bytes 1 < $f
+			print X > $f
+			slurp < $f
+			file:close $f
+			slurp < file
+		`).Puts("f", "o", "fXo"),
+
 		// &if-not-exists=create
 		That(`
 			var f = (file:open-output new &if-not-exists=create)

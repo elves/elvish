@@ -60,6 +60,7 @@ func open(name string) (vals.File, error) {
 }
 
 type openOutputOpts struct {
+	AlsoInput   bool
 	IfNotExists string
 	IfExists    string
 	CreatePerm  int
@@ -81,6 +82,9 @@ func openOutput(opts openOutputOpts, name string) (vals.File, error) {
 	}
 
 	mode := os.O_WRONLY
+	if opts.AlsoInput {
+		mode = os.O_RDWR
+	}
 	switch opts.IfNotExists {
 	case "create":
 		mode |= os.O_CREATE
