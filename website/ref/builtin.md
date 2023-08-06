@@ -187,6 +187,3 @@ They are either only useful for debug purposes, or have known issues in the
 interface or implementation, and in the worst case will make Elvish crash.
 (Before 1.0, all features are subject to change, but those ones are sure to be
 changed.)
-
-Those functions and variables are documented near the end of the respective
-sections. Their known problem is also discussed.
