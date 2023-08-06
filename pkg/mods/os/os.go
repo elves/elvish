@@ -8,19 +8,31 @@ import (
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/vars"
 )
 
 // Ns is the Elvish namespace for this module.
 var Ns = eval.BuildNsNamed("os").
+	AddVars(map[string]vars.Var{
+		"dev-null": vars.NewReadOnly(os.DevNull),
+		"dev-tty":  vars.NewReadOnly(DevTTY),
+	}).
 	AddGoFns(map[string]any{
-		// Thin wrappers of functions in the Go package.
 		"-is-exist":     isExist,
 		"-is-not-exist": isNotExist,
-		"mkdir":         mkdir,
-		"remove":        remove,
-		"remove-all":    removeAll,
-		// Higher-level utilities.
-		"exists": exists,
+
+		"mkdir":      mkdir,
+		"remove":     remove,
+		"remove-all": removeAll,
+
+		"eval-symlinks": filepath.EvalSymlinks,
+
+		"exists":     exists,
+		"is-dir":     IsDir,
+		"is-regular": IsRegular,
+
+		"temp-dir":  TempDir,
+		"temp-file": TempFile,
 	}).Ns()
 
 // DElvCode contains the content of the .d.elv file for this module.
@@ -75,16 +87,69 @@ func removeAll(path string) error {
 	return os.RemoveAll(path)
 }
 
-type existsOpts struct{ FollowSymlink bool }
+type statPredOpts struct{ FollowSymlink bool }
 
-func (opts *existsOpts) SetDefaultOptions() {}
+func (opts *statPredOpts) SetDefaultOptions() {}
 
-func exists(opts existsOpts, path string) bool {
-	var err error
-	if opts.FollowSymlink {
-		_, err = os.Stat(path)
-	} else {
-		_, err = os.Lstat(path)
-	}
+func exists(opts statPredOpts, path string) bool {
+	_, err := stat(path, opts.FollowSymlink)
 	return err == nil
+}
+
+// IsDir is exported so that the implementation may be shared by the path:
+// module.
+func IsDir(opts statPredOpts, path string) bool {
+	fi, err := stat(path, opts.FollowSymlink)
+	return err == nil && fi.Mode().IsDir()
+}
+
+// IsRegular is exported so that the implementation may be shared by the path:
+// module.
+func IsRegular(opts statPredOpts, path string) bool {
+	fi, err := stat(path, opts.FollowSymlink)
+	return err == nil && fi.Mode().IsRegular()
+}
+
+func stat(path string, followSymlink bool) (os.FileInfo, error) {
+	if followSymlink {
+		return os.Stat(path)
+	} else {
+		return os.Lstat(path)
+	}
+}
+
+type mktempOpt struct{ Dir string }
+
+func (o *mktempOpt) SetDefaultOptions() {}
+
+// TempDir is exported so that the implementation may be shared by the path:
+// module.
+func TempDir(opts mktempOpt, args ...string) (string, error) {
+	pattern, err := optionalTempPattern(args)
+	if err != nil {
+		return "", err
+	}
+	return os.MkdirTemp(opts.Dir, pattern)
+}
+
+// TempFile is exported so that the implementation may be shared by the path:
+// module.
+func TempFile(opts mktempOpt, args ...string) (*os.File, error) {
+	pattern, err := optionalTempPattern(args)
+	if err != nil {
+		return nil, err
+	}
+	return os.CreateTemp(opts.Dir, pattern)
+}
+
+func optionalTempPattern(args []string) (string, error) {
+	switch len(args) {
+	case 0:
+		return "elvish-*", nil
+	case 1:
+		return args[0], nil
+	default:
+		return "", errs.ArityMismatch{What: "arguments",
+			ValidLow: 0, ValidHigh: 1, Actual: len(args)}
+	}
 }

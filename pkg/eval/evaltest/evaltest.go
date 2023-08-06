@@ -200,6 +200,21 @@ func TestWithSetup(t *testing.T, setup func(*testing.T, *eval.Evaler), tests ...
 	}
 }
 
+// Use returns a function simulates "use" on an Evaler. Arguments must come in
+// (string, eval.Nser) pairs.
+func Use(args ...any) func(*eval.Evaler) {
+	if len(args)%2 != 0 {
+		panic("odd number of arguments")
+	}
+	ns := eval.BuildNs()
+	for i := 0; i < len(args); i += 2 {
+		ns.AddNs(args[i].(string), args[i+1].(eval.Nser))
+	}
+	return func(ev *eval.Evaler) {
+		ev.ExtendGlobal(ns)
+	}
+}
+
 func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) result {
 	var r result
 

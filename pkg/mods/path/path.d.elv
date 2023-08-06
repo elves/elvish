@@ -1,9 +1,9 @@
-# OS-specific path to the "null" device (`/dev/null` on Unix and `NUL` on
-# Windows).
+# Compatibility alias for [`$os:dev-null`](). This variable will be formally
+# deprecated and removed in future.
 var dev-null
 
-# OS-specific path to the terminal device (`/dev/tty` on Unix and `CON` on
-# Windows).
+# Compatibility alias for [`$os:dev-tty`](). This variable will be formally
+# deprecated and removed in future.
 var dev-tty
 
 # OS-specific path list separator. Colon (`:`) on Unix and semicolon (`;`) on
@@ -75,18 +75,8 @@ fn ext {|path| }
 # ```
 fn is-abs {|path| }
 
-# Outputs `$path` after resolving any symbolic links. If `$path` is relative the result will be
-# relative to the current directory, unless one of the components is an absolute symbolic link.
-# This function calls `path:clean` on the result before outputting it. This is analogous to the
-# external `realpath` or `readlink` command found on many systems. See the [Go
-# documentation](https://pkg.go.dev/path/filepath#EvalSymlinks) for more details.
-#
-# ```elvish-transcript
-# ~> mkdir bin
-# ~> ln -s bin sbin
-# ~> path:eval-symlinks ./sbin/a_command
-# ▶ bin/a_command
-# ```
+# Compatibility alias for [`os:eval-symlinks`](). This function will be formally
+# deprecated and removed in future.
 fn eval-symlinks {|path| }
 
 # Joins any number of path elements into a single path, separating them with an
@@ -103,97 +93,18 @@ fn eval-symlinks {|path| }
 # ```
 fn join {|@path-component| }
 
-# Outputs `$true` if the path resolves to a directory. If the final element of the path is a
-# symlink, even if it points to a directory, it still outputs `$false` since a symlink is not a
-# directory. Setting option `&follow-symlink` to true will cause the last element of the path, if
-# it is a symlink, to be resolved before doing the test.
-#
-# ```elvish-transcript
-# ~> touch not-a-dir
-# ~> path:is-dir not-a-dir
-# ▶ false
-# ~> path:is-dir /tmp
-# ▶ true
-# ```
-#
-# See also [`path:is-regular`]().
+# Compatibility alias for [`os:is-dir`](). This function will be formally
+# deprecated and removed in future.
 fn is-dir {|&follow-symlink=$false path| }
 
-# Outputs `$true` if the path resolves to a regular file. If the final element of the path is a
-# symlink, even if it points to a regular file, it still outputs `$false` since a symlink is not a
-# regular file. Setting option `&follow-symlink` to true will cause the last element of the path,
-# if it is a symlink, to be resolved before doing the test.
-#
-# **Note:** This isn't named `is-file` because a Unix file may be a "bag of bytes" or may be a
-# named pipe, device special file (e.g. `/dev/tty`), etc.
-#
-# ```elvish-transcript
-# ~> touch not-a-dir
-# ~> path:is-regular not-a-dir
-# ▶ true
-# ~> path:is-regular /tmp
-# ▶ false
-# ```
-#
-# See also [`path:is-dir`]().
+# Compatibility alias for [`os:is-regular`](). This function will be formally
+# deprecated and removed in future.
 fn is-regular {|&follow-symlink=$false path| }
 
-# Creates a new directory and outputs its name.
-#
-# The &dir option determines where the directory will be created; if it is an
-# empty string (the default), a system-dependent directory suitable for storing
-# temporary files will be used. The `$pattern` argument determines the name of
-# the directory, where the last star will be replaced by a random string; it
-# defaults to `elvish-*`.
-#
-# It is the caller's responsibility to remove the directory if it is intended
-# to be temporary.
-#
-# ```elvish-transcript
-# ~> path:temp-dir
-# ▶ /tmp/elvish-RANDOMSTR
-# ~> path:temp-dir x-
-# ▶ /tmp/x-RANDOMSTR
-# ~> path:temp-dir 'x-*.y'
-# ▶ /tmp/x-RANDOMSTR.y
-# ~> path:temp-dir &dir=.
-# ▶ elvish-RANDOMSTR
-# ~> path:temp-dir &dir=/some/dir
-# ▶ /some/dir/elvish-RANDOMSTR
-# ```
+# Compatibility alias for [`os:temp-dir`](). This function will be formally
+# deprecated and removed in future.
 fn temp-dir {|&dir='' pattern?| }
 
-# Creates a new file and outputs a [file](language.html#file) object opened
-# for reading and writing.
-#
-# The &dir option determines where the file will be created; if it is an
-# empty string (the default), a system-dependent directory suitable for storing
-# temporary files will be used. The `$pattern` argument determines the name of
-# the file, where the last star will be replaced by a random string; it
-# defaults to `elvish-*`.
-#
-# It is the caller's responsibility to close the file with
-# [`file:close`](file.html#file:close). The caller should also remove the file
-# if it is intended to be temporary (with `rm $f[name]`).
-#
-# ```elvish-transcript
-# ~> var f = (path:temp-file)
-# ~> put $f[name]
-# ▶ /tmp/elvish-RANDOMSTR
-# ~> echo hello > $f
-# ~> cat $f[name]
-# hello
-# ~> var f = (path:temp-file x-)
-# ~> put $f[name]
-# ▶ /tmp/x-RANDOMSTR
-# ~> var f = (path:temp-file 'x-*.y')
-# ~> put $f[name]
-# ▶ /tmp/x-RANDOMSTR.y
-# ~> var f = (path:temp-file &dir=.)
-# ~> put $f[name]
-# ▶ elvish-RANDOMSTR
-# ~> var f = (path:temp-file &dir=/some/dir)
-# ~> put $f[name]
-# ▶ /some/dir/elvish-RANDOMSTR
-# ```
+# Compatibility alias for [`os:temp-file`](). This function will be formally
+# deprecated and removed in future.
 fn temp-file {|&dir='' pattern?| }

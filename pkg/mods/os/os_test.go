@@ -2,73 +2,181 @@ package os_test
 
 import (
 	"io/fs"
+	"os"
+	"path/filepath"
+	"regexp"
 	"testing"
 
 	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/evaltest"
-	"src.elv.sh/pkg/mods/os"
-	"src.elv.sh/pkg/mods/path"
-	"src.elv.sh/pkg/mods/unix"
+	"src.elv.sh/pkg/mods/file"
+	osmod "src.elv.sh/pkg/mods/os"
 	"src.elv.sh/pkg/testutil"
 )
 
 var (
-	ErrorWithType        = evaltest.ErrorWithType
-	ErrorWithMessage     = evaltest.ErrorWithMessage
-	TestWithSetup        = evaltest.TestWithEvalerSetup
-	That                 = evaltest.That
-	StringMatchingRegexp = evaltest.StringMatching
+	Test                = evaltest.Test
+	TestWithEvalerSetup = evaltest.TestWithEvalerSetup
+	TestWithSetup       = evaltest.TestWithSetup
+	Use                 = evaltest.Use
+	That                = evaltest.That
+	StringMatching      = evaltest.StringMatching
+	ErrorWithType       = evaltest.ErrorWithType
+	ErrorWithMessage    = evaltest.ErrorWithMessage
 )
 
-func TestOS(t *testing.T) {
-	testutil.InTempDir(t)
-	setup := func(ev *eval.Evaler) {
-		ev.ExtendGlobal(eval.BuildNs().AddNs("os", os.Ns))
-		ev.ExtendGlobal(eval.BuildNs().AddNs("path", path.Ns))
-		ev.ExtendGlobal(eval.BuildNs().AddNs("unix", unix.Ns))
-	}
-	// TODO: Run every test case in a new temp directory so that we don't have
-	// to keep track of which filenames have been used in previous test cases.
-	TestWithSetup(t, setup,
-		// -is-exist and -is-not-exist are tested in test cases of other
-		// commands
+var useOS = Use("os", osmod.Ns)
 
+func TestFSModifications(t *testing.T) {
+	// Also tests -is-exists and -is-not-exists
+	TestWithSetup(t, func(t *testing.T, ev *eval.Evaler) {
+		testutil.InTempDir(t)
+		useOS(ev)
+	},
 		// mkdir
-		That(`os:mkdir d1; path:is-dir d1`).Puts(true),
-		That(`os:mkdir d2; try { os:mkdir d2 } catch e { os:-is-exist $e }`).
+		That(`os:mkdir d; os:is-dir d`).Puts(true),
+		That(`os:mkdir d; try { os:mkdir d } catch e { os:-is-exist $e }`).
 			Puts(true),
 
 		// remove
-		That(`echo > f1; os:exists f1; os:remove f1; os:exists f1`).
+		That(`echo > f; os:exists f; os:remove f; os:exists f`).
 			Puts(true, false),
-		That(`os:mkdir d3; os:exists d3; os:remove d3; os:exists d3`).
+		That(`os:mkdir d; os:exists d; os:remove d; os:exists d`).
 			Puts(true, false),
-		That(`os:mkdir d4; echo > d4/file; os:remove d4`).
+		That(`os:mkdir d; echo > d/file; os:remove d`).
 			Throws(ErrorWithType(&fs.PathError{})),
-		That(`try { os:remove d5 } catch e { os:-is-not-exist $e }`).
+		That(`try { os:remove d } catch e { os:-is-not-exist $e }`).
 			Puts(true),
-		That(`os:remove ""`).Throws(os.ErrEmptyPath),
+		That(`os:remove ""`).Throws(osmod.ErrEmptyPath),
 
 		// remove-all
-		That(`os:mkdir d6; echo > d6/file; os:remove-all d6; os:exists d6`).
+		That(`os:mkdir d; echo > d/file; os:remove-all d; os:exists d`).
 			Puts(false),
-		That(`os:mkdir d7; echo > d7/file; os:remove-all $pwd/d7; os:exists d7`).
+		That(`os:mkdir d; echo > d/file; os:remove-all $pwd/d; os:exists d`).
 			Puts(false),
-		That(`os:remove-all d8`).DoesNothing(),
-		That(`os:remove-all ""`).Throws(os.ErrEmptyPath),
+		That(`os:remove-all d`).DoesNothing(),
+		That(`os:remove-all ""`).Throws(osmod.ErrEmptyPath),
 	)
+}
 
-	if unix.ExposeUnixNs {
-		testutil.Umask(t, 0)
+var testDir = testutil.Dir{
+	"d": testutil.Dir{
+		"f": "",
+	},
+}
 
-		TestWithSetup(t, setup,
-			// TODO: Remove the need for ls when there is os:lstat.
-			That(`os:mkdir &perm=0o400 d400; ls -ld d400 | slurp`).
-				Puts(StringMatchingRegexp(`dr--.*`)),
+func TestFilePredicates(t *testing.T) {
+	tmpdir := testutil.InTempDir(t)
+	testutil.ApplyDir(testDir)
 
-			// TODO: Remove the need for ln when there is os:symlink.
-			That(`ln -s bad l; os:exists l; os:exists &follow-symlink=$true l`).
-				Puts(true, false),
-		)
+	TestWithEvalerSetup(t, useOS,
+		That("os:exists "+tmpdir).Puts(true),
+		That("os:exists d").Puts(true),
+		That("os:exists d/f").Puts(true),
+		That("os:exists bad").Puts(false),
+
+		That("os:is-dir "+tmpdir).Puts(true),
+		That("os:is-dir d").Puts(true),
+		That("os:is-dir d/f").Puts(false),
+		That("os:is-dir bad").Puts(false),
+
+		That("os:is-regular "+tmpdir).Puts(false),
+		That("os:is-regular d").Puts(false),
+		That("os:is-regular d/f").Puts(true),
+		That("os:is-regular bad").Puts(false),
+	)
+}
+
+var symlinks = []struct {
+	path   string
+	target string
+}{
+	{"d/s-f", "f"},
+	{"s-d", "d"},
+	{"s-d-f", "d/f"},
+	{"s-bad", "bad"},
+}
+
+func TestFilePredicates_Symlinks(t *testing.T) {
+	testutil.InTempDir(t)
+	testutil.ApplyDir(testDir)
+	for _, link := range symlinks {
+		err := os.Symlink(link.target, link.path)
+		if err != nil {
+			// Creating symlinks requires a special permission on Windows. If
+			// the user doesn't have that permission, just skip the whole test.
+			t.Skip(err)
+		}
 	}
+
+	TestWithEvalerSetup(t, Use("os", osmod.Ns),
+		That("os:eval-symlinks d/f").Puts(filepath.Join("d", "f")),
+		That("os:eval-symlinks d/s-f").Puts(filepath.Join("d", "f")),
+		That("os:eval-symlinks s-d/f").Puts(filepath.Join("d", "f")),
+		That("os:eval-symlinks s-bad").Throws(ErrorWithType(&os.PathError{})),
+
+		That("os:exists s-d").Puts(true),
+		That("os:exists s-d &follow-symlink").Puts(true),
+		That("os:exists s-d-f").Puts(true),
+		That("os:exists s-d-f &follow-symlink").Puts(true),
+		That("os:exists s-bad").Puts(true),
+		That("os:exists s-bad &follow-symlink").Puts(false),
+		That("os:exists bad").Puts(false),
+		That("os:exists bad &follow-symlink").Puts(false),
+
+		That("os:is-dir s-d").Puts(false),
+		That("os:is-dir s-d &follow-symlink").Puts(true),
+		That("os:is-dir s-d-f").Puts(false),
+		That("os:is-dir s-d-f &follow-symlink").Puts(false),
+		That("os:is-dir s-bad").Puts(false),
+		That("os:is-dir s-bad &follow-symlink").Puts(false),
+		That("os:is-dir bad").Puts(false),
+		That("os:is-dir bad &follow-symlink").Puts(false),
+
+		That("os:is-regular s-d").Puts(false),
+		That("os:is-regular s-d &follow-symlink").Puts(false),
+		That("os:is-regular s-d-f").Puts(false),
+		That("os:is-regular s-d-f &follow-symlink").Puts(true),
+		That("os:is-regular s-bad").Puts(false),
+		That("os:is-regular s-bad &follow-symlink").Puts(false),
+		That("os:is-regular bad").Puts(false),
+		That("os:is-regular bad &follow-symlink").Puts(false),
+	)
+}
+
+// A regular expression fragment to match the directory part of an absolute
+// path. QuoteMeta is needed since on Windows filepath.Separator is '\\'.
+var anyDir = "^.*" + regexp.QuoteMeta(string(filepath.Separator))
+
+func TestTempDirFile(t *testing.T) {
+	testutil.InTempDir(t)
+
+	TestWithEvalerSetup(t, Use("os", osmod.Ns, "file", file.Ns),
+		That("var x = (os:temp-dir)", "rmdir $x", "put $x").Puts(
+			StringMatching(anyDir+`elvish-.*$`)),
+		That("var x = (os:temp-dir 'x-*.y')", "rmdir $x", "put $x").Puts(
+			StringMatching(anyDir+`x-.*\.y$`)),
+		That("var x = (os:temp-dir &dir=. 'x-*.y')", "rmdir $x", "put $x").Puts(
+			StringMatching(`^(\.[/\\])?x-.*\.y$`)),
+		That("var x = (os:temp-dir &dir=.)", "rmdir $x", "put $x").Puts(
+			StringMatching(`^(\.[/\\])?elvish-.*$`)),
+		That("os:temp-dir a b").Throws(
+			errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: 2},
+			"os:temp-dir a b"),
+
+		That("var f = (os:temp-file)", "file:close $f", "put $f[fd]", "rm $f[name]").
+			Puts(-1),
+		That("var f = (os:temp-file)", "put $f[name]", "file:close $f", "rm $f[name]").
+			Puts(StringMatching(anyDir+`elvish-.*$`)),
+		That("var f = (os:temp-file 'x-*.y')", "put $f[name]", "file:close $f", "rm $f[name]").
+			Puts(StringMatching(anyDir+`x-.*\.y$`)),
+		That("var f = (os:temp-file &dir=. 'x-*.y')", "put $f[name]", "file:close $f", "rm $f[name]").
+			Puts(StringMatching(`^(\.[/\\])?x-.*\.y$`)),
+		That("var f = (os:temp-file &dir=.)", "put $f[name]", "file:close $f", "rm $f[name]").
+			Puts(StringMatching(`^(\.[/\\])?elvish-.*$`)),
+		That("os:temp-file a b").Throws(
+			errs.ArityMismatch{What: "arguments", ValidLow: 0, ValidHigh: 1, Actual: 2},
+			"os:temp-file a b"),
+	)
 }
