@@ -158,7 +158,7 @@ func tell(f vals.File) (vals.Num, error) {
 	if err != nil {
 		return nil, err
 	}
-	return fromInt64(offset), nil
+	return vals.Int64ToNum(offset), nil
 }
 
 func truncate(name string, rawSize vals.Num) error {
@@ -167,13 +167,6 @@ func truncate(name string, rawSize vals.Num) error {
 		return err
 	}
 	return os.Truncate(name, size)
-}
-
-func fromInt64(i64 int64) vals.Num {
-	if i := int(i64); int64(i) == i64 {
-		return i
-	}
-	return big.NewInt(i64)
 }
 
 func toInt64(n vals.Num, what string, validLow int64, validLowString string) (int64, error) {

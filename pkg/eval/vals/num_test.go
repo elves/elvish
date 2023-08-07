@@ -92,6 +92,32 @@ func TestInvalidNumType(t *testing.T) {
 	})
 }
 
+func TestInt64ToNum(t *testing.T) {
+	n := Int64ToNum(1)
+	if _, isInt := n.(int); !isInt {
+		t.Errorf("got %T, want int", n)
+	}
+
+	if math.MaxInt != math.MaxInt64 {
+		n = Int64ToNum(math.MaxInt64)
+		if _, isBigInt := n.(*big.Int); !isBigInt {
+			t.Errorf("got %T, want *big.Int", n)
+		}
+	}
+}
+
+func TestUint64ToNum(t *testing.T) {
+	n := Uint64ToNum(1)
+	if _, isInt := n.(int); !isInt {
+		t.Errorf("got %T, want int", n)
+	}
+
+	n = Uint64ToNum(math.MaxUint64)
+	if _, isBigInt := n.(*big.Int); !isBigInt {
+		t.Errorf("got %T, want *big.Int", n)
+	}
+}
+
 func bigInt(s string) *big.Int {
 	z, ok := new(big.Int).SetString(s, 0)
 	if !ok {

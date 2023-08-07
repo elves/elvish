@@ -251,3 +251,21 @@ func getInt(z *big.Int) (int, bool) {
 	}
 	return -1, false
 }
+
+// Int64ToNum converts an int64 to a Num with a suitable underlying
+// representation.
+func Int64ToNum(i64 int64) Num {
+	if i := int(i64); int64(i) == i64 {
+		return i
+	}
+	return big.NewInt(i64)
+}
+
+// Uint64ToNum converts a uint64 to a Num with a suitable underlying
+// representation.
+func Uint64ToNum(u64 uint64) Num {
+	if i := int(u64); i >= 0 && uint64(i) == u64 {
+		return i
+	}
+	return new(big.Int).SetUint64(u64)
+}
