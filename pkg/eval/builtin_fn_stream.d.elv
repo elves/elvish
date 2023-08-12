@@ -279,4 +279,4 @@ fn count {|input-list?| }
 # (The `$"<~"` syntax is a reference to [the `<` function](#num-cmp).)
 #
 # See also [`compare`]().
-fn order {|&less-than=$nil &mixed-types=$false &key=$nil &reverse=$false inputs?| }
+fn order {|&less-than=$nil &total=$false &key=$nil &reverse=$false inputs?| }

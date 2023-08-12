@@ -137,17 +137,20 @@ fn not-eq {|@values| }
 #     order](https://en.wikipedia.org/wiki/Total_order) derived from the
 #     following rules:
 #
-#     -   If `$a` and `$b` have the same type, `compare` outputs the number 0.
+#     -   If they have the same type, use the rules above for comparing
+#     homogeneous types.
 #
-#     -   If they don't, `compare` compares their types and outputs -1 or 1.
+#     -   If they don't have the same type, compare their types and output -1
+#     or 1.
 #
 #         The ordering between Elvish types is unspecified, but it is guaranteed
 #         to be consistent during the same Elvish session. For example, if
 #         `compare &total $a $b` outputs -1 when `$a` is a number and `$b` is a
 #         string, it will always output -1 for such pairs.
 #
-#     This artificial total order is mainly useful when sorting values of mixed
-#     types.
+#     This artificial total order is useful when sorting values of mixed
+#     types. For example, implicitly when `pprint` handles composite values
+#     (e.g., lists and maps) containing mixed types.
 #
 # Examples:
 #
