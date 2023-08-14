@@ -2,50 +2,11 @@ package evaltest
 
 import (
 	"fmt"
-	"math"
 	"reflect"
-	"regexp"
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 )
-
-// Anything is a value that can be passed to [Case.Puts] to match any value. It
-// is useful when the value contains information that is useful when the test
-// fails.
-var Anything = anything{}
-
-type anything struct{}
-
-// ApproximatelyThreshold defines the threshold for matching float64 values when
-// using Approximately.
-const ApproximatelyThreshold = 1e-15
-
-// Approximately returns a value that can be passed to Case.Puts to match a
-// float64 within the threshold defined by ApproximatelyThreshold.
-func Approximately(f float64) any { return approximately{f} }
-
-type approximately struct{ value float64 }
-
-func matchFloat64(a, b, threshold float64) bool {
-	if math.IsNaN(a) && math.IsNaN(b) {
-		return true
-	}
-	if math.IsInf(a, 0) && math.IsInf(b, 0) &&
-		math.Signbit(a) == math.Signbit(b) {
-		return true
-	}
-	return math.Abs(a-b) <= threshold
-}
-
-// StringMatching returns a value that can be passed to Case.Puts to match any
-// string matching a regexp pattern. If the pattern is not a valid regexp, the
-// function panics.
-func StringMatching(p string) any {
-	return stringMatching{regexp.MustCompile(p)}
-}
-
-type stringMatching struct{ pattern *regexp.Regexp }
 
 type errorMatcher interface{ matchError(error) bool }
 

@@ -259,23 +259,13 @@ func matchOut(want, got []any) bool {
 }
 
 func match(got, want any) bool {
-	if want == Anything {
-		return true
+	if matcher, ok := want.(ValueMatcher); ok {
+		return matcher.matchValue(got)
 	}
-	switch got := got.(type) {
-	case float64:
-		// Special-case float64 to correctly handle NaN and support
-		// approximate comparison.
-		switch want := want.(type) {
-		case float64:
+	// Special-case float64 to handle NaNs and infinities.
+	if got, ok := got.(float64); ok {
+		if want, ok := want.(float64); ok {
 			return matchFloat64(got, want, 0)
-		case approximately:
-			return matchFloat64(got, want.value, ApproximatelyThreshold)
-		}
-	case string:
-		switch want := want.(type) {
-		case stringMatching:
-			return want.pattern.MatchString(got)
 		}
 	}
 	return vals.Equal(got, want)
