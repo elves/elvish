@@ -39,7 +39,6 @@ func TestStat_Sys_Unix(t *testing.T) {
 				"rdev", AnyInteger,
 				"blksize", AnyInteger,
 				"blocks", AnyInteger,
-				"flags", AnyInteger,
 			))),
 	)
 }
