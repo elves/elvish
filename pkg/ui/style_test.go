@@ -2,6 +2,8 @@ package ui
 
 import (
 	"testing"
+
+	"src.elv.sh/pkg/testutil"
 )
 
 func TestStyleSGR(t *testing.T) {
@@ -17,6 +19,15 @@ func TestStyleSGR(t *testing.T) {
 		{T("foo", FgRed), "\033[;31mfoo\033[m"},
 		{T("foo", BgRed), "\033[;41mfoo\033[m"},
 		{T("foo", Bold, FgRed, BgBlue), "\033[;1;31;44mfoo\033[m"},
+	})
+}
+
+func TestStyleSGR_NoColor(t *testing.T) {
+	testutil.Set(t, &NoColor, true)
+	testTextVTString(t, []textVTStringTest{
+		{T("foo", FgRed), "\033[mfoo"},
+		{T("foo", BgRed), "\033[mfoo"},
+		{T("foo", FgRed, BgBlue), "\033[mfoo"},
 	})
 }
 

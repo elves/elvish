@@ -62,7 +62,8 @@ func (p *Program) Run(fds [3]*os.File, args []string) error {
 	cleanup2 := initSignal(fds)
 	defer cleanup2()
 
-	ui.NoColor = os.Getenv("NO_COLOR") != ""
+	// https://no-color.org
+	ui.NoColor = os.Getenv(env.NO_COLOR) != ""
 	interactive := len(args) == 0
 	ev := p.makeEvaler(fds[2], interactive)
 	defer ev.PreExit()

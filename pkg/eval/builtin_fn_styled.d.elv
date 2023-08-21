@@ -77,6 +77,11 @@ fn styled-segment {|object &fg-color=default &bg-color=default &bold=$false &dim
 # [ANSI SGR code](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_.28Select_Graphic_Rendition.29_parameters)
 # is built to render the style.
 #
+# If the [`NO_COLOR`](https://no-color.org) environment variable is set and
+# non-empty when Elvish starts, color output is suppressed. Modifications to
+# `NO_COLOR` within Elvish (including from `rc.elv`) do not affect the current
+# process, but will affect child Elvish processes.
+#
 # Examples:
 #
 # ```elvish

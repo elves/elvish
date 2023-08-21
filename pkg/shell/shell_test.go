@@ -79,6 +79,28 @@ func TestShell_LibPath_Legacy(t *testing.T) {
 // Most high-level tests against Program are specific to either script mode or
 // interactive mode, and are found in script_test.go and interact_test.go.
 
+var noColorTests = []struct {
+	name       string
+	value      string
+	unset      bool
+	wantRedFoo string
+}{
+	{name: "unset", unset: true, wantRedFoo: "\033[;31mfoo\033[m"},
+	{name: "empty", value: "", wantRedFoo: "\033[;31mfoo\033[m"},
+	{name: "non-empty", value: "yes", wantRedFoo: "\033[mfoo"},
+}
+
+func TestShell_NO_COLOR(t *testing.T) {
+	for _, test := range noColorTests {
+		t.Run(test.name, func(t *testing.T) {
+			setOrUnsetenv(t, env.NO_COLOR, test.unset, test.value)
+			Test(t, &Program{},
+				ThatElvish("-c", "print (styled foo red)").
+					WritesStdout(test.wantRedFoo))
+		})
+	}
+}
+
 var incSHLVLTests = []struct {
 	name    string
 	old     string
@@ -104,12 +126,7 @@ var incSHLVLTests = []struct {
 func TestShell_SHLVL(t *testing.T) {
 	for _, test := range incSHLVLTests {
 		t.Run(test.name, func(t *testing.T) {
-			if test.unset {
-				testutil.Unsetenv(t, env.SHLVL)
-			} else {
-				testutil.Setenv(t, env.SHLVL, test.old)
-			}
-
+			setOrUnsetenv(t, env.SHLVL, test.unset, test.old)
 			Test(t, &Program{},
 				ThatElvish("-c", "print $E:SHLVL").WritesStdout(test.wantNew))
 
@@ -125,6 +142,14 @@ func TestShell_SHLVL(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func setOrUnsetenv(t *testing.T, name string, unset bool, set string) {
+	if unset {
+		testutil.Unsetenv(t, name)
+	} else {
+		testutil.Setenv(t, name, set)
 	}
 }
 

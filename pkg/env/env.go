@@ -6,6 +6,7 @@ package env
 const (
 	HOME      = "HOME"
 	LS_COLORS = "LS_COLORS"
+	NO_COLOR  = "NO_COLOR"
 	PATH      = "PATH"
 	PWD       = "PWD"
 	SHLVL     = "SHLVL"

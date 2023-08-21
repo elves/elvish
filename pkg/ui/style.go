@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+// NoColor can be set to true to suppress foreground and background colors when
+// writing text to the terminal.
 var NoColor bool = false
 
 // Style specifies how something (mostly a string) shall be displayed.
