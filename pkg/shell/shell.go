@@ -19,6 +19,7 @@ import (
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/sys"
+	"src.elv.sh/pkg/ui"
 )
 
 var logger = logutil.GetLogger("[shell] ")
@@ -61,6 +62,7 @@ func (p *Program) Run(fds [3]*os.File, args []string) error {
 	cleanup2 := initSignal(fds)
 	defer cleanup2()
 
+	ui.NoColor = os.Getenv("NO_COLOR") != ""
 	interactive := len(args) == 0
 	ev := p.makeEvaler(fds[2], interactive)
 	defer ev.PreExit()

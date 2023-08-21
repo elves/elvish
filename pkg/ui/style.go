@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+var NoColor bool = false
+
 // Style specifies how something (mostly a string) shall be displayed.
 type Style struct {
 	Fg         Color
@@ -32,10 +34,10 @@ func (s Style) SGRValues() []string {
 	addIf(s.Underlined, "4")
 	addIf(s.Blink, "5")
 	addIf(s.Inverse, "7")
-	if s.Fg != nil {
+	if s.Fg != nil && !NoColor {
 		sgr = append(sgr, s.Fg.fgSGR())
 	}
-	if s.Bg != nil {
+	if s.Bg != nil && !NoColor {
 		sgr = append(sgr, s.Bg.bgSGR())
 	}
 	return sgr
