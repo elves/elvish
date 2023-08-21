@@ -8,6 +8,7 @@ import (
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 )
 
@@ -27,6 +28,7 @@ var Ns = eval.BuildNsNamed("os").
 
 		"eval-symlinks": filepath.EvalSymlinks,
 
+		"stat":       stat,
 		"exists":     exists,
 		"is-dir":     IsDir,
 		"is-regular": IsRegular,
@@ -87,30 +89,38 @@ func removeAll(path string) error {
 	return os.RemoveAll(path)
 }
 
-type statPredOpts struct{ FollowSymlink bool }
+type statOpts struct{ FollowSymlink bool }
 
-func (opts *statPredOpts) SetDefaultOptions() {}
+func (opts *statOpts) SetDefaultOptions() {}
 
-func exists(opts statPredOpts, path string) bool {
-	_, err := stat(path, opts.FollowSymlink)
+func stat(opts statOpts, path string) (vals.Map, error) {
+	fi, err := statOrLstat(path, opts.FollowSymlink)
+	if err != nil {
+		return nil, err
+	}
+	return statMap(fi), nil
+}
+
+func exists(opts statOpts, path string) bool {
+	_, err := statOrLstat(path, opts.FollowSymlink)
 	return err == nil
 }
 
 // IsDir is exported so that the implementation may be shared by the path:
 // module.
-func IsDir(opts statPredOpts, path string) bool {
-	fi, err := stat(path, opts.FollowSymlink)
+func IsDir(opts statOpts, path string) bool {
+	fi, err := statOrLstat(path, opts.FollowSymlink)
 	return err == nil && fi.Mode().IsDir()
 }
 
 // IsRegular is exported so that the implementation may be shared by the path:
 // module.
-func IsRegular(opts statPredOpts, path string) bool {
-	fi, err := stat(path, opts.FollowSymlink)
+func IsRegular(opts statOpts, path string) bool {
+	fi, err := statOrLstat(path, opts.FollowSymlink)
 	return err == nil && fi.Mode().IsRegular()
 }
 
-func stat(path string, followSymlink bool) (os.FileInfo, error) {
+func statOrLstat(path string, followSymlink bool) (os.FileInfo, error) {
 	if followSymlink {
 		return os.Stat(path)
 	} else {

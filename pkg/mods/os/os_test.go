@@ -9,24 +9,10 @@ import (
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
-	"src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/mods/file"
 	osmod "src.elv.sh/pkg/mods/os"
 	"src.elv.sh/pkg/testutil"
 )
-
-var (
-	Test                = evaltest.Test
-	TestWithEvalerSetup = evaltest.TestWithEvalerSetup
-	TestWithSetup       = evaltest.TestWithSetup
-	Use                 = evaltest.Use
-	That                = evaltest.That
-	StringMatching      = evaltest.StringMatching
-	ErrorWithType       = evaltest.ErrorWithType
-	ErrorWithMessage    = evaltest.ErrorWithMessage
-)
-
-var useOS = Use("os", osmod.Ns)
 
 func TestFSModifications(t *testing.T) {
 	// Also tests -is-exists and -is-not-exists
@@ -60,15 +46,15 @@ func TestFSModifications(t *testing.T) {
 	)
 }
 
-var testDir = testutil.Dir{
-	"d": testutil.Dir{
+var testDir = Dir{
+	"d": Dir{
 		"f": "",
 	},
 }
 
 func TestFilePredicates(t *testing.T) {
-	tmpdir := testutil.InTempDir(t)
-	testutil.ApplyDir(testDir)
+	tmpdir := InTempDir(t)
+	ApplyDir(testDir)
 
 	TestWithEvalerSetup(t, useOS,
 		That("os:exists "+tmpdir).Puts(true),
@@ -99,8 +85,8 @@ var symlinks = []struct {
 }
 
 func TestFilePredicates_Symlinks(t *testing.T) {
-	testutil.InTempDir(t)
-	testutil.ApplyDir(testDir)
+	InTempDir(t)
+	ApplyDir(testDir)
 	for _, link := range symlinks {
 		err := os.Symlink(link.target, link.path)
 		if err != nil {
@@ -150,7 +136,7 @@ func TestFilePredicates_Symlinks(t *testing.T) {
 var anyDir = "^.*" + regexp.QuoteMeta(string(filepath.Separator))
 
 func TestTempDirFile(t *testing.T) {
-	testutil.InTempDir(t)
+	InTempDir(t)
 
 	TestWithEvalerSetup(t, Use("os", osmod.Ns, "file", file.Ns),
 		That("var x = (os:temp-dir)", "rmdir $x", "put $x").Puts(

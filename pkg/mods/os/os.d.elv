@@ -49,6 +49,55 @@ fn remove-all {|path| }
 # ```
 fn eval-symlinks {|path| }
 
+# Describes the file at `path` by writing a map with the following fields:
+#
+# - `name`: The base name of the file.
+#
+# - `size`: Length in bytes for regular files; system-dependent for others.
+#
+# - `type`: One of `regular`, `dir`, `symlink`, `named-pipe`, `socket`,
+#   `device`, `char-device` and `irregular`.
+#
+# - `perm`: Permission bits of the file following Unix's convention.
+#
+#   See [numeric notation of Unix
+#   permission](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation)
+#   for a description of the convention, but note that Elvish prints this number
+#   in decimal; use [`printf`](builtin.html#printf) with `%o` to print it as an octal number.
+#
+# - `special-modes`: A list containing one or more of `setuid`, `setgid` and
+#   `sticky` to indicate the presence of any special mode.
+#
+# - `sys`: System-dependent information:
+#
+#   - On Unix, a map that corresponds 1:1 to the `stat_t` struct, except that
+#     timestamp fields are not exposed yet.
+#
+#   - On Windows, a map that currently contains just one field,
+#     `file-attributes`, which is a list describing which [file attribute
+#     fields](https://learn.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants)
+#     are set. For example, if `FILE_ATTRIBUTE_READONLY` is set, the list
+#     contains `readonly`.
+#
+# See [`follow-symlink`](#follow-symlink) for an explanation of the option.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> echo content > regular
+# ~> os:stat regular
+# ▶ [&name=regular &perm=(num 420) &size=(num 8) &special-modes=[] &sys=[&...] &type=regular]
+# ~> mkdir dir
+# ~> os:stat dir
+# ▶ [&name=dir &perm=(num 493) &size=(num 96) &special-modes=[] &sys=[&...] &type=dir]
+# ~> ln -s dir symlink
+# ~> os:stat symlink
+# ▶ [&name=symlink &perm=(num 493) &size=(num 3) &special-modes=[] &sys=[&...] &type=symlink]
+# ~> os:stat &follow-symlink symlink
+# ▶ [&name=symlink &perm=(num 493) &size=(num 96) &special-modes=[] &sys=[&...] &type=dir]
+# ```
+fn stat {|&follow-symlink=$false path| }
+
 # Reports whether a file is known to exist at `path`.
 #
 # See [`follow-symlink`](#follow-symlink) for an explanation of the option.
