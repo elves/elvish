@@ -194,10 +194,12 @@ used.
 
 The checks depend on some external programs, which can be installed as follows:
 
+<!-- Keep the versions of staticcheck and codespell in sync with .github/workflows/ci.yml -->
+
 ```sh
 go install golang.org/x/tools/cmd/goimports@latest
-go install honnef.co/go/tools/cmd/staticcheck@v0.4.2
-pip install --user codespell==2.2.1
+go install honnef.co/go/tools/cmd/staticcheck@v0.4.5
+pip install --user codespell==2.2.5
 ```
 
 ## Licensing
