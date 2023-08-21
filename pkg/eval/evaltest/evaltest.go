@@ -28,7 +28,6 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/tt"
 )
 
 // Case is a test case that can be used in Test.
@@ -165,7 +164,7 @@ func TestWithSetup(t *testing.T, setup func(*testing.T, *eval.Evaler), tests ...
 			}
 			if !matchOut(tc.want.ValueOut, r.ValueOut) {
 				t.Errorf("got value out (-want +got):\n%s",
-					cmp.Diff(tc.want.ValueOut, r.ValueOut, tt.CommonCmpOpt))
+					cmp.Diff(reprValues(tc.want.ValueOut), reprValues(r.ValueOut)))
 			}
 			if !bytes.Equal(tc.want.BytesOut, r.BytesOut) {
 				t.Errorf("got bytes out (-want +got):\n%s",
@@ -198,6 +197,14 @@ func TestWithSetup(t *testing.T, setup func(*testing.T, *eval.Evaler), tests ...
 			}
 		})
 	}
+}
+
+func reprValues(xs []any) []string {
+	rs := make([]string, len(xs))
+	for i, x := range xs {
+		rs[i] = vals.Repr(x, 0)
+	}
+	return rs
 }
 
 // Use returns a function simulates "use" on an Evaler. Arguments must come in
