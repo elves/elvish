@@ -22,8 +22,6 @@ func statSysMap(sys any) vals.Map {
 		// TODO: atim, mtim, ctim
 		"blksize", stNum(st.Blksize),
 		"blocks", stNum(st.Blocks),
-		// Not POSIX, but supported by all of Linux, {Free,Net,Open}BSD and Darwin.
-		"flags", stNum(st.Flags),
 	)
 	for name, f := range extraStatFields {
 		m = m.Assoc(name, stNum(f(st)))
