@@ -107,47 +107,47 @@ fn not-eq {|@values| }
 # Outputs the number -1 if `$a` is smaller than `$b`, 0 if `$a` is equal to
 # `$b`, and 1 if `$a` is greater than `$b`.
 #
-# If `$a` and `$b` have the same type and that type is listed below, they are
-# compared accordingly:
+# The following algorithm is used:
 #
-# -   Booleans: `$false` is smaller than `$true`.
+# 1.  If `$a` and `$b` have the same type and that type is listed below, they are
+#     compared accordingly:
 #
-# -   Typed numbers: Compared numerically, consistent with the [number
-#     comparison commands](#num-cmp), except that `NaN` values are considered
-#     equal to each other and smaller than all other numbers.
+#      -   Booleans: `$false` is smaller than `$true`.
 #
-# -   Strings: Compared lexicographically by bytes, consistent with the
-#     [string comparison commands](#str-cmp). For UTF-8 encoded strings, this is
-#     equivalent to comparing by codepoints.
+#      -   Typed numbers: Compared numerically, consistent with the [number
+#          comparison commands](#num-cmp), except that `NaN` values are
+#          considered equal to each other and smaller than all other numbers.
 #
-#     Beware that strings that look like numbers are compared as strings, not
-#     numbers.
+#      -   Strings: Compared lexicographically by bytes, consistent with the
+#          [string comparison commands](#str-cmp). For UTF-8 encoded strings,
+#          this is equivalent to comparing by codepoints.
 #
-# -   Lists: Compared lexicographically by elements, with elements compared
-#     recursively.
+#          Beware that strings that look like numbers are compared as strings,
+#          not numbers.
 #
-# Otherwise, if `eq $a $b` is true, `compare $a $b` outputs the number 0.
+#      -   Lists: Compared lexicographically by elements, with elements compared
+#          recursively.
 #
-# For other cases, the behavior depends on the `&total` option:
+# 2.  If `eq $a $b` is true, `compare $a $b` outputs the number 0.
 #
-# -   If it is `$false` (the default), `compare` throws an exception complaning
-#     that the two values can't be compared.
+# 3.  Otherwise the behavior depends on the `&total` option:
 #
-# -   If it is `$true`, `compare` uses an artificial [total
-#     order](https://en.wikipedia.org/wiki/Total_order) derived from the
-#     following rules:
+#     -   If it is `$false` (the default), `compare` throws an exception
+#         complaning that the two values can't be compared.
 #
-#     -   If `$a` and `$b` have the same type, `compare` outputs the number 0.
+#     -   If it is `$true`, `compare` compares the _types_ of `$a` and `$b`: if
+#         they have the same type, it outputs 0; if they have different types,
+#         it outputs -1 and 1 depending on which type comes first in an internal
+#         ordering of all types.
 #
-#     -   If they don't, `compare` compares their types and outputs -1 or 1.
+#         The internal ordering of all types is unspecified, but it is
+#         guaranteed to be consistent during the same Elvish session. For
+#         example, if `compare &total $a $b` outputs -1 when `$a` is a number
+#         and `$b` is a string, it will always output -1 for such pairs.
 #
-#         The ordering between Elvish types is unspecified, but it is guaranteed
-#         to be consistent during the same Elvish session. For example, if
-#         `compare &total $a $b` outputs -1 when `$a` is a number and `$b` is a
-#         string, it will always output -1 for such pairs.
-#
-#     This artificial total order is mainly useful when sorting values of mixed
-#     types.
+#         This creates an artificial [total
+#         order](https://en.wikipedia.org/wiki/Total_order), which is mainly
+#         useful for sorting values of mixed types.
 #
 # Examples:
 #
