@@ -155,15 +155,20 @@ func CmpTotal(a, b any) Ordering {
 	return CmpEqual
 }
 
-var typeOfInt uintptr
+var typeOfInt, typeOfMap uintptr
 
 func typeOf(x any) uintptr {
 	switch x.(type) {
 	case *big.Int, *big.Rat, float64:
 		return typeOfInt
+	case StructMap:
+		return typeOfMap
 	}
 	// The first word of an empty interface is a pointer to the type descriptor.
 	return *(*uintptr)(unsafe.Pointer(&x))
 }
 
-func init() { typeOfInt = typeOf(0) }
+func init() {
+	typeOfInt = typeOf(0)
+	typeOfMap = typeOf(EmptyMap)
+}
