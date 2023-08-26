@@ -62,14 +62,7 @@ func cmpInner(a, b any, recurse func(a, b any) Ordering) Ordering {
 		}
 	case string:
 		if b, ok := b.(string); ok {
-			switch {
-			case a == b:
-				return CmpEqual
-			case a < b:
-				return CmpLess
-			default: // a > b
-				return CmpMore
-			}
+			return compareBuiltin(a, b)
 		}
 	case List:
 		if b, ok := b.(List); ok {
