@@ -67,11 +67,29 @@ func base(fm *Frame, b int, nums ...int) error {
 	return nil
 }
 
-var eawkWordSep = regexp.MustCompile("[ \t]+")
+type eawkOpt struct {
+	Sep   string
+	Posix bool
+}
 
-func eawk(fm *Frame, f Callable, inputs Inputs) error {
+func (o *eawkOpt) SetDefaultOptions() {
+	o.Posix = false
+	o.Sep = "[ \t]+"
+}
+
+func eawk(fm *Frame, opts eawkOpt, f Callable, inputs Inputs) error {
 	broken := false
+	var eawkWordSep *regexp.Regexp
 	var err error
+	if opts.Posix {
+		eawkWordSep, err = regexp.CompilePOSIX(opts.Sep)
+	} else {
+		eawkWordSep, err = regexp.Compile(opts.Sep)
+	}
+	if err != nil {
+		return err
+	}
+
 	inputs(func(v any) {
 		if broken {
 			return
