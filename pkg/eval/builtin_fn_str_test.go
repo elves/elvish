@@ -87,7 +87,7 @@ func TestEawk(t *testing.T) {
 				}
 			}
 		`).Puts("a", "c", "e"),
-		// Parsing docker image ps output with custom separator:
+		// Parsing docker image ls output with custom separator:
 		That(`
 	to-lines [
 		'REPOSITORY                TAG          IMAGE ID      CREATED         SIZE'
