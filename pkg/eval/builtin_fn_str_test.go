@@ -87,5 +87,17 @@ func TestEawk(t *testing.T) {
 				}
 			}
 		`).Puts("a", "c", "e"),
+		// Parsing docker image ps output with custom separator:
+		That(`
+	to-lines [
+		'REPOSITORY                TAG          IMAGE ID      CREATED         SIZE'
+		'<none>                    <none>       265c2d25a944  16 minutes ago  67.5 MB'
+		'<none>                    <none>       26408a88b236  16 minutes ago  389 MB'
+		'localhost/elvish_eawk     latest       0570db4e3eaa  32 hours ago    67.5 MB'
+		'localhost/elvish          latest       59b1eec93ab7  33 hours ago    67.5 MB'
+		'docker.io/library/golang  latest       015e6b7f599b  46 hours ago    838 MB'
+		'docker.io/library/golang  1.20-alpine  93db368a0a9e  3 days ago      266 MB'
+	] | eawk &sep=" [ ]+" {|0 1 2 3 4 5| put $5 }
+		`).Puts("SIZE", "67.5 MB", "389 MB", "67.5 MB", "67.5 MB", "838 MB", "266 MB"),
 	)
 }
