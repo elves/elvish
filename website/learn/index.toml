@@ -16,6 +16,12 @@ note = "if you have experience with other shells or programming languages"
 extraCSS = ["tour.css"]
 group = 0
 
+[[articles]]
+name = "useful-customizations"
+title = "Useful Customizations"
+note = "for your interactive Elvish configuration"
+group = 0
+
 [[groups]]
 intro = "Advanced topics:"
 
