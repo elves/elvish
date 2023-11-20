@@ -91,7 +91,7 @@ section documents how to make the most use of pipelines.
 Unlike functions in most other programming languages, Elvish commands do not
 have return values. Instead, they can write to *structured output*, which is
 similar to the traditional byte-based stdout, but preserves all internal
-structures of aribitrary Elvish values. The most fundamental command that does
+structures of arbitrary Elvish values. The most fundamental command that does
 this is `put`:
 
 ```elvish-transcript
