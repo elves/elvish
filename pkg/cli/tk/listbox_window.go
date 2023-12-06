@@ -112,7 +112,9 @@ func getHorizontalWindow(state ListBoxState, padding, width, height int) (int, i
 	}
 	// Reduce the amount of available height by one because the last row will be
 	// reserved for the scrollbar.
-	height--
+	if height--; height < 1 {
+		return 0, 0
+	}
 	selected, lastFirst := state.Selected, state.First
 	// Start with the column containing the selected item, move left until
 	// either the width is exhausted, or lastFirst has been reached.
