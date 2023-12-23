@@ -49,6 +49,7 @@ set insert:binding = (binding-table [
   &Ctrl-N= $navigation:start~
   &Tab=    $completion:smart-start~
   &Up=     $history:start~
+  &Down=   $end-of-history~
 
   &Alt-Enter={ insert-at-dot "\n" }
 
