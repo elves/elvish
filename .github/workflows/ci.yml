@@ -119,8 +119,8 @@ jobs:
         go install golang.org/x/tools/cmd/stringer@latest
         go install golang.org/x/tools/cmd/goimports@latest
         # Keep the versions of staticcheck and codespell in sync with CONTRIBUTING.md
-        go install honnef.co/go/tools/cmd/staticcheck@v0.4.5
-        pip install --user codespell==2.2.5
+        go install honnef.co/go/tools/cmd/staticcheck@v0.4.6
+        pip install --user codespell==2.2.6
     - name: Run checks
       run: make all-checks
 
