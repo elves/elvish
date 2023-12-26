@@ -29,7 +29,7 @@ func TestPath(t *testing.T) {
 
 	TestWithEvalerSetup(t, Use("path", Ns, "file", file.Ns),
 		//  All the functions in path: are either simple wrappers of Go
-		//  functions or compatibility alises of their os: counterparts.
+		//  functions or compatibility aliases of their os: counterparts.
 		//
 		// As a result, the tests are just simple "smoke tests" to ensure that
 		// they exist and map to the correct function.
@@ -45,7 +45,7 @@ func TestPath(t *testing.T) {
 		That("path:is-abs a/b/s").Puts(false),
 		That("path:is-abs "+absPath).Puts(true),
 		That("path:join a b c").Puts(filepath.Join("a", "b", "c")),
-		// Compatibility alises.
+		// Compatibility aliases.
 		That("path:eval-symlinks d").Puts("d"),
 		That("path:is-dir d").Puts(true),
 		That("path:is-regular d/f").Puts(true),

@@ -24,7 +24,7 @@ type ListingSpec struct {
 	// the index of the Item to select. Required.
 	GetItems func(query string) (items []ListingItem, selected int)
 	// A function to call when the user has accepted the selected item. If the
-	// return value is true, the listing will not be closed after accpeting.
+	// return value is true, the listing will not be closed after accepting.
 	// If unspecified, the Accept function default to a function that does
 	// nothing other than returning false.
 	Accept func(string)

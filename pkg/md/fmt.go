@@ -22,7 +22,7 @@ import (
 //   - Thematic breaks use "***" where possible, falling back to "---" if using
 //     the former is problematic.
 //
-//   - Code blocks are always fenced, never idented.
+//   - Code blocks are always fenced, never indented.
 //
 //   - Code fences use backquotes (like "```") wherever possible, falling back
 //     to "~~~" if using the former is problematic.
