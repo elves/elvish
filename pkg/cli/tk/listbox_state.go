@@ -10,8 +10,13 @@ import (
 type ListBoxState struct {
 	Items    Items
 	Selected int
-	First    int
-	Height   int
+	// The first element to show. Used when rendering and adjusted accordingly
+	// when the terminal size changes or the user has scrolled.
+	First int
+	// Height of the listbox, excluding horizontal scrollbar when using the
+	// horizontal layout. Stored in the state for commands to move the cursor by
+	// page (for vertical layout) or column (for horizontal layout).
+	ContentHeight int
 }
 
 // Items is an interface for accessing multiple items.

@@ -137,7 +137,7 @@ func TestListBox_Render_Vertical_MutatesState(t *testing.T) {
 	if first := state.First; first != 3 {
 		t.Errorf("State.First = %d, want 3", first)
 	}
-	if height := state.Height; height != 3 {
+	if height := state.ContentHeight; height != 3 {
 		t.Errorf("State.Height = %d, want 3", height)
 	}
 }
@@ -231,6 +231,15 @@ var listBoxRenderHorizontalTests = []renderTest{
 			Newline().
 			Write("          ", ui.Inverse, ui.FgMagenta),
 	},
+	{
+		Name: "not showing scrollbar with height = 1",
+		Given: NewListBox(ListBoxSpec{
+			Horizontal: true,
+			State:      ListBoxState{Items: TestItems{NItems: 4}, Selected: 0}}),
+		Width: 10, Height: 1,
+		Want: bb(10).
+			Write("item 0", ui.Inverse).Write("  it"),
+	},
 }
 
 func TestListBox_Render_Horizontal(t *testing.T) {
@@ -249,7 +258,7 @@ func TestListBox_Render_Horizontal_MutatesState(t *testing.T) {
 	if first := state.First; first != 3 {
 		t.Errorf("State.First = %d, want 3", first)
 	}
-	if height := state.Height; height != 3 {
+	if height := state.ContentHeight; height != 3 {
 		t.Errorf("State.Height = %d, want 3", height)
 	}
 }
@@ -401,7 +410,7 @@ func TestListBox_Select_ChangeState(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			w := NewListBox(ListBoxSpec{
 				State: ListBoxState{
-					Items: TestItems{NItems: 10}, Height: 3,
+					Items: TestItems{NItems: 10}, ContentHeight: 3,
 					Selected: test.before}})
 			w.Select(test.f)
 			if selected := w.CopyState().Selected; selected != test.after {

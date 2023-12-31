@@ -95,9 +95,9 @@ func getVerticalWindow(state ListBoxState, height int) (first, crop int) {
 	return 0, 0
 }
 
-// Determines the window to show in horizontal. Returns the first item to show
-// and the amount of height required.
-func getHorizontalWindow(state ListBoxState, padding, width, height int) (int, int) {
+// Determines the window to show in horizontal. Returns the first item to show,
+// the height of each column, and whether a scrollbar may be shown.
+func getHorizontalWindow(state ListBoxState, padding, width, height int) (int, int, bool) {
 	items := state.Items
 	n := items.Len()
 	// Lower bound of number of items that can fit in a row.
@@ -108,11 +108,20 @@ func getHorizontalWindow(state ListBoxState, padding, width, height int) (int, i
 	}
 	if height*perRow >= n {
 		// All items can fit.
-		return 0, (n + perRow - 1) / perRow
+		return 0, (n + perRow - 1) / perRow, false
 	}
-	// Reduce the amount of available height by one because the last row will be
-	// reserved for the scrollbar.
-	height--
+	// At this point, assume that we'll have to use the entire available height
+	// and show a scrollbar, unless height is 1, in which case we'd rather use the
+	// one line to show some actual content and give up the scrollbar.
+	//
+	// This is rather pessimistic, but until an efficient
+	// algorithm that generates a more optimal layout emerges we'll use this
+	// simple one.
+	scrollbar := false
+	if height > 1 {
+		scrollbar = true
+		height--
+	}
 	selected, lastFirst := state.Selected, state.First
 	// Start with the column containing the selected item, move left until
 	// either the width is exhausted, or lastFirst has been reached.
@@ -124,7 +133,7 @@ func getHorizontalWindow(state ListBoxState, padding, width, height int) (int, i
 			break
 		}
 	}
-	return first, height
+	return first, height, scrollbar
 }
 
 func maxWidth(items Items, padding, low, high int) int {

@@ -35,7 +35,7 @@ type ListBoxSpec struct {
 	OnSelect func(it Items, i int)
 	// A function called on the accept event.
 	OnAccept func(it Items, i int)
-	// Whether the listbox should be rendered in a horizontal  Note that
+	// Whether the listbox should be rendered in a horizontal layout. Note that
 	// in the horizontal layout, items must have only one line.
 	Horizontal bool
 	// The minimal amount of space to reserve for left and right sides of each
@@ -46,7 +46,7 @@ type ListBoxSpec struct {
 	// styled the same as the last segment of the item.
 	ExtendStyle bool
 
-	// State. When used in New, this field specifies the initial state.
+	// State. When used in [NewListBox], this field specifies the initial state.
 	State ListBoxState
 }
 
@@ -91,7 +91,10 @@ func (w *listBox) MaxHeight(width, height int) int {
 		return 0
 	}
 	if w.Horizontal {
-		_, h := getHorizontalWindow(s, w.Padding, width, height)
+		_, h, scrollbar := getHorizontalWindow(s, w.Padding, width, height)
+		if scrollbar {
+			return h + 1
+		}
 		return h
 	}
 	h := 0
@@ -108,14 +111,13 @@ const listBoxColGap = 2
 
 func (w *listBox) renderHorizontal(width, height int) *term.Buffer {
 	var state ListBoxState
+	var colHeight int
 	w.mutate(func(s *ListBoxState) {
 		if s.Items == nil || s.Items.Len() == 0 {
 			s.First = 0
 		} else {
-			s.First, s.Height = getHorizontalWindow(*s, w.Padding, width, height)
-			// Override height to the height required; we don't need the
-			// original height later.
-			height = s.Height
+			s.First, s.ContentHeight, _ = getHorizontalWindow(*s, w.Padding, width, height)
+			colHeight = s.ContentHeight
 		}
 		state = *s
 	})
@@ -131,11 +133,11 @@ func (w *listBox) renderHorizontal(width, height int) *term.Buffer {
 	remainedWidth := width
 	hasCropped := false
 	last := first
-	for i := first; i < n; i += height {
+	for i := first; i < n; i += colHeight {
 		selectedRow := -1
 		// Render the column starting from i.
-		col := make([]ui.Text, 0, height)
-		for j := i; j < i+height && j < n; j++ {
+		col := make([]ui.Text, 0, colHeight)
+		for j := i; j < i+colHeight && j < n; j++ {
 			last = j
 			item := items.Show(j)
 			if j == selected {
@@ -144,7 +146,7 @@ func (w *listBox) renderHorizontal(width, height int) *term.Buffer {
 			col = append(col, item)
 		}
 
-		colWidth := maxWidth(items, w.Padding, i, i+height)
+		colWidth := maxWidth(items, w.Padding, i, i+colHeight)
 		if colWidth > remainedWidth {
 			colWidth = remainedWidth
 			hasCropped = true
@@ -153,7 +155,7 @@ func (w *listBox) renderHorizontal(width, height int) *term.Buffer {
 		colBuf := croppedLines{
 			lines: col, padding: w.Padding,
 			selectFrom: selectedRow, selectTo: selectedRow + 1,
-			extendStyle: w.ExtendStyle}.Render(colWidth, height)
+			extendStyle: w.ExtendStyle}.Render(colWidth, colHeight)
 		buf.ExtendRight(colBuf)
 
 		remainedWidth -= colWidth
@@ -165,7 +167,7 @@ func (w *listBox) renderHorizontal(width, height int) *term.Buffer {
 	}
 	// We may not have used all the width required; force buffer width.
 	buf.Width = width
-	if first != 0 || last != n-1 || hasCropped {
+	if colHeight < height && (first != 0 || last != n-1 || hasCropped) {
 		scrollbar := HScrollbar{Total: n, Low: first, High: last + 1}
 		buf.Extend(scrollbar.Render(width, 1), false)
 	}
@@ -181,7 +183,7 @@ func (w *listBox) renderVertical(width, height int) *term.Buffer {
 		} else {
 			s.First, firstCrop = getVerticalWindow(*s, height)
 		}
-		s.Height = height
+		s.ContentHeight = height
 		state = *s
 	})
 
@@ -314,37 +316,39 @@ func (w *listBox) Select(f func(ListBoxState) int) {
 
 // Prev moves the selection to the previous item, or does nothing if the
 // first item is currently selected. It is a suitable as an argument to
-// Widget.Select.
+// [ListBox.Select].
 func Prev(s ListBoxState) int {
 	return fixIndex(s.Selected-1, s.Items.Len())
 }
 
 // PrevPage moves the selection to the item one page before. It is only
-// meaningful in vertical layout and suitable as an argument to Widget.Select.
+// meaningful in vertical layout and suitable as an argument to
+// [ListBox.Select].
 //
 // TODO(xiaq): This does not correctly with multi-line items.
 func PrevPage(s ListBoxState) int {
-	return fixIndex(s.Selected-s.Height, s.Items.Len())
+	return fixIndex(s.Selected-s.ContentHeight, s.Items.Len())
 }
 
 // Next moves the selection to the previous item, or does nothing if the
 // last item is currently selected. It is a suitable as an argument to
-// Widget.Select.
+// [ListBox.Select].
 func Next(s ListBoxState) int {
 	return fixIndex(s.Selected+1, s.Items.Len())
 }
 
 // NextPage moves the selection to the item one page after. It is only
-// meaningful in vertical layout and suitable as an argument to Widget.Select.
+// meaningful in vertical layout and suitable as an argument to
+// [ListBox.Select].
 //
 // TODO(xiaq): This does not correctly with multi-line items.
 func NextPage(s ListBoxState) int {
-	return fixIndex(s.Selected+s.Height, s.Items.Len())
+	return fixIndex(s.Selected+s.ContentHeight, s.Items.Len())
 }
 
 // PrevWrap moves the selection to the previous item, or to the last item if
 // the first item is currently selected. It is a suitable as an argument to
-// Widget.Select.
+// [ListBox.Select].
 func PrevWrap(s ListBoxState) int {
 	selected, n := s.Selected, s.Items.Len()
 	switch {
@@ -359,7 +363,7 @@ func PrevWrap(s ListBoxState) int {
 
 // NextWrap moves the selection to the previous item, or to the first item
 // if the last item is currently selected. It is a suitable as an argument to
-// Widget.Select.
+// [ListBox.Select].
 func NextWrap(s ListBoxState) int {
 	selected, n := s.Selected, s.Items.Len()
 	switch {
@@ -373,15 +377,15 @@ func NextWrap(s ListBoxState) int {
 }
 
 // Left moves the selection to the item to the left. It is only meaningful in
-// horizontal layout and suitable as an argument to Widget.Select.
+// horizontal layout and suitable as an argument to [ListBox.Select].
 func Left(s ListBoxState) int {
-	return horizontal(s.Selected, s.Items.Len(), -s.Height)
+	return horizontal(s.Selected, s.Items.Len(), -s.ContentHeight)
 }
 
 // Right moves the selection to the item to the right. It is only meaningful in
-// horizontal layout and suitable as an argument to Widget.Select.
+// horizontal layout and suitable as an argument to [ListBox.Select].
 func Right(s ListBoxState) int {
-	return horizontal(s.Selected, s.Items.Len(), s.Height)
+	return horizontal(s.Selected, s.Items.Len(), s.ContentHeight)
 }
 
 func horizontal(selected, n, d int) int {
