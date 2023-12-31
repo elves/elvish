@@ -357,7 +357,7 @@ func distributeHeight(widgets []tk.Widget, width, height int) ([]int, int) {
 	//
 	// 1. If maxHeights[u] > maxHeights[v], heights[u] >= heights[v];
 	//
-	// 2. While achieving goal 1, have as many widgets u s.t. heights[u] ==
+	// 2. While achieving goal 1, have as many widgets s.t. heights[u] ==
 	//    maxHeights[u].
 	//
 	// This is done by allocating the height among the widgets following an
@@ -369,6 +369,8 @@ func distributeHeight(widgets []tk.Widget, width, height int) ([]int, int) {
 	// - If not, allocate the remaining budget evenly - rounding down at each
 	//   step, so the widgets with smaller maxHeights gets smaller heights.
 
+	// TODO: Add a test for this.
+
 	indices := make([]int, n)
 	for i := range indices {
 		indices[i] = i
@@ -379,7 +381,7 @@ func distributeHeight(widgets []tk.Widget, width, height int) ([]int, int) {
 
 	remain := height
 	for rank, idx := range indices {
-		if remain >= maxHeights[idx] {
+		if remain >= maxHeights[idx]*(n-rank) {
 			heights[idx] = maxHeights[idx]
 		} else {
 			heights[idx] = remain / (n - rank)
