@@ -126,7 +126,7 @@ fn print {|&sep=' ' @value| }
 #
 # - The verbs `%e`, `%E`, `%f`, `%F`, `%g` and `%G` first convert the
 #   corresponding argument to a floating-point number using
-#   [float64](#float64), and then use their Go counterparts to format the
+#   [`inexact-num`](), and then use their Go counterparts to format the
 #   number.
 #
 # The special verb `%%` prints a literal `%` and consumes no argument.
