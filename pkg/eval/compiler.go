@@ -125,10 +125,10 @@ func (cp *compiler) popScope() {
 
 func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 	msg := ""
-	minLevel := 19
+	minLevel := 20
 	switch name {
-	case "float64~":
-		msg = `the "float64" command is deprecated; use "num" or "inexact-num" instead`
+	case "eawk~":
+		msg = `the "eawk" command is deprecated; use "re:awk" instead`
 	default:
 		return
 	}

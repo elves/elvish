@@ -88,3 +88,56 @@ fn replace {|&posix=$false &longest=$false &literal=$false pattern repl source| 
 # ▶ /usr/bin:/bin
 # ```
 fn split {|&posix=$false &longest=$false &max=-1 pattern source| }
+
+# For each [value input](builtin.html#value-inputs), calls `$f` with the input
+# followed by all its fields.
+#
+# The `&sep` option is a regular expression for the field separator. For the
+# `&sep-posix` and `&sep-longest` options, see the
+# [introduction](#introduction); the `sep-` prefix is added for clarity.
+#
+# Calling [`break`]() in `$f` exits both `$f` and `re:awk`, and can be used to
+# stop processing inputs early. Calling [`continue`]() exits `$f` but not
+# `re:awk`, and can be used to stop `$f` early but continue processing inputs.
+#
+# This command allows you to write code resembling
+# [AWK](https://en.wikipedia.org/wiki/AWK) scripts, using an anonymous function
+# instead of a string containing AWK code. A simple example:
+#
+# ```elvish-transcript
+# ~> echo " lorem ipsum\n1 2" | awk '{ print $1 }'
+# lorem
+# 1
+# ~> echo " lorem ipsum\n1 2" | re:awk {|line a b| put $a }
+# ▶ lorem
+# ▶ 1
+# ```
+#
+# **Note**: Since Elvish allows variable names consisting solely of digits, you
+# can do something like this to emulate AWK even more closely:
+#
+# ```elvish-transcript
+# ~> echo " lorem ipsum\n1 2" | re:awk {|0 1 2| put $1 }
+# ▶ lorem
+# ▶ 1
+# ```
+#
+# If the number of fields differ between lines, use a rest argument:
+#
+# ```elvish-transcript
+# ~> echo "a b\nc d e" | re:awk {|@a| echo (- (count $a) 1)' fields' }
+# 2 fields
+# 3 fields
+# ```
+#
+# This command is roughly equivalent to the following Elvish function:
+#
+# ```elvish
+# fn my-awk {|&sep='[ \t]+' &sep-posix=$false &sep-longest=$false f @rest|
+#   each {|line|
+#     var @fields = (re:split $sep &posix=$sep-posix &longest=$sep-longest (str:trim $line " \t"))
+#     $f $line $@fields
+#   } $@rest
+# }
+# ```
+fn awk {|&sep='[ \t]+' &sep-posix=$false &sep-longest=$false f inputs?| }

@@ -18,6 +18,7 @@ var Ns = eval.BuildNsNamed("re").
 		"find":    find,
 		"replace": replace,
 		"split":   split,
+		"awk":     eval.Eawk,
 	}).Ns()
 
 // DElvCode contains the content of the .d.elv file for this module.

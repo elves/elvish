@@ -14,7 +14,7 @@ import (
 )
 
 func TestDeprecatedBuiltin(t *testing.T) {
-	testCompileTimeDeprecation(t, "float64", `the "float64" command is deprecated`, 19)
+	testCompileTimeDeprecation(t, "eawk", `the "eawk" command is deprecated`, 20)
 
 	// Deprecations of other builtins are implemented in the same way, so we
 	// don't test them repeatedly
