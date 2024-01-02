@@ -62,40 +62,5 @@ fn to-string {|@value| }
 # ```
 fn base {|base @number| }
 
-# For each [value input](#value-inputs), calls `$f` with the input followed by
-# all its fields. A [`break`](./builtin.html#break) command will cause `eawk`
-# to stop processing inputs. A [`continue`](./builtin.html#continue) command
-# will exit $f, but is ignored by `eawk`.
-#
-# It should behave the same as the following functions:
-#
-# ```elvish
-# fn eawk {|f @rest|
-#   each {|line|
-#     var @fields = (re:split '[ \t]+' (str:trim $line " \t"))
-#     $f $line $@fields
-#   } $@rest
-# }
-# ```
-#
-# This command allows you to write code very similar to `awk` scripts using
-# anonymous functions. Example:
-#
-# ```elvish-transcript
-# ~> echo " lorem ipsum\n1 2" | awk '{ print $1 }'
-# lorem
-# 1
-# ~> echo " lorem ipsum\n1 2" | eawk {|line a b| put $a }
-# ▶ lorem
-# ▶ 1
-# ```
-#
-# **Note**: Since Elvish allows variable names consisting solely of digits, you
-# can also do the following:
-#
-# ```elvish-transcript
-# ~> echo " lorem ipsum\n1 2" | eawk {|0 1 2| put $1 }
-# ▶ lorem
-# ▶ 1
-# ```
-fn eawk {|f inputs?| }
+# Deprecated alias for [`re:awk`](). Will be removed in 0.21.0.
+fn eawk {|&sep='[ \t]+' &sep-posix=$false &sep-longest=$false f inputs?| }

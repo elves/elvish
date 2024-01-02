@@ -12,9 +12,6 @@ import (
 
 // String operations.
 
-// ErrInputOfEawkMustBeString is thrown when eawk gets a non-string input.
-var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
-
 // TODO(xiaq): Document -override-wcswidth.
 
 func init() {
@@ -33,7 +30,7 @@ func init() {
 		"wcswidth":          wcwidth.Of,
 		"-override-wcwidth": wcwidth.Override,
 
-		"eawk": eawk,
+		"eawk": Eawk,
 	})
 }
 
@@ -67,29 +64,31 @@ func base(fm *Frame, b int, nums ...int) error {
 	return nil
 }
 
+// ErrInputOfEawkMustBeString is thrown when eawk gets a non-string input.
+//
+// TODO: Change the message to say re:awk when eawk is removed.
+var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
+
 type eawkOpt struct {
-	Sep   string
-	Posix bool
+	Sep        string
+	SepPosix   bool
+	SepLongest bool
 }
 
 func (o *eawkOpt) SetDefaultOptions() {
-	o.Posix = false
 	o.Sep = "[ \t]+"
 }
 
-func eawk(fm *Frame, opts eawkOpt, f Callable, inputs Inputs) error {
-	broken := false
-	var eawkWordSep *regexp.Regexp
-	var err error
-	if opts.Posix {
-		eawkWordSep, err = regexp.CompilePOSIX(opts.Sep)
-	} else {
-		eawkWordSep, err = regexp.Compile(opts.Sep)
-	}
+// Eawk implements the re:awk command and the deprecated eawk command. It is
+// put in this package and exported since this package can't depend on
+// src.elv.sh/pkg/mods/re.
+func Eawk(fm *Frame, opts eawkOpt, f Callable, inputs Inputs) error {
+	wordSep, err := makePattern(opts.Sep, opts.SepPosix, opts.SepLongest)
 	if err != nil {
 		return err
 	}
 
+	broken := false
 	inputs(func(v any) {
 		if broken {
 			return
@@ -101,7 +100,7 @@ func eawk(fm *Frame, opts eawkOpt, f Callable, inputs Inputs) error {
 			return
 		}
 		args := []any{line}
-		for _, field := range eawkWordSep.Split(strings.Trim(line, " \t"), -1) {
+		for _, field := range wordSep.Split(strings.Trim(line, " \t"), -1) {
 			args = append(args, field)
 		}
 
@@ -123,4 +122,22 @@ func eawk(fm *Frame, opts eawkOpt, f Callable, inputs Inputs) error {
 		}
 	})
 	return err
+}
+
+func makePattern(p string, posix, longest bool) (*regexp.Regexp, error) {
+	pattern, err := compilePattern(p, posix)
+	if err != nil {
+		return nil, err
+	}
+	if longest {
+		pattern.Longest()
+	}
+	return pattern, nil
+}
+
+func compilePattern(pattern string, posix bool) (*regexp.Regexp, error) {
+	if posix {
+		return regexp.CompilePOSIX(pattern)
+	}
+	return regexp.Compile(pattern)
 }
