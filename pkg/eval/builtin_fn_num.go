@@ -70,10 +70,6 @@ func inexactNum(f float64) float64 {
 	return f
 }
 
-func toFloat64(f float64) float64 {
-	return f
-}
-
 func lt(nums ...vals.Num) bool {
 	return chainCompare(nums,
 		func(a, b int) bool { return a < b },
