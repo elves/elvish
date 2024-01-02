@@ -109,12 +109,6 @@ fn exact-num {|string-or-number| }
 # See also [`num`]() and [`exact-num`]().
 fn inexact-num {|string-or-number| }
 
-# Constructs a floating-point number.
-#
-# This command is deprecated; use [`num`]() to construct a typed number, or
-# [`inexact-num`]() to construct an inexact number.
-fn float64 {|string-or-number| }
-
 # ```elvish
 # <  $number... # less
 # <= $number... # less or equal
