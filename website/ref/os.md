@@ -30,5 +30,5 @@ As an example, when `l` is a symbolic link to a directory:
 -   `os:is-dir &follow-symlink=$false l` outputs `$false`, since the symbolic
     link file itself is not a directory.
 
--   `os:is-dir &follow-symlink=$true l` outputs `$true`, since the symlink points
-    to a directory.
+-   `os:is-dir &follow-symlink=$true l` outputs `$true`, since the symlink
+    points to a directory.
