@@ -135,6 +135,33 @@ fn is-dir {|&follow-symlink=$false path| }
 # See also [`os:is-dir`]().
 fn is-regular {|&follow-symlink=$false path| }
 
+# Changes the mode of the file at `$path` to have permission bits set to `$perm`
+# and special modes set to `$special-modes`.
+#
+# The permission bits follow the [numeric notation of Unix
+# permission](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation),
+# but note Elvish requires a `0o` prefix for octal numbers (unprefixed numbers
+# like `444` are interpreted as decimal instead). On Windows, only the `0o200`
+# bit (owner writable) is used; clearing it makes the file read-only. All other
+# bits are ignored.
+#
+# The special modes should be specified as a list, with elements being one of
+# `setuid`, `setgid` or `sticky`.
+#
+# If the file is a symbolic link, this command always on the link's target.
+#
+# Example:
+#
+# ```elvish-transcript
+# ~> touch file
+# ~> printf "%o %v\n" (os:stat file)[perm special-modes]
+# 644 []
+# ~> os:chmod &special-modes=[sticky] 0o600 file
+# ~> printf "%o %v\n" (os:stat file)[perm special-modes]
+# 600 [sticky]
+# ```
+fn chmod {|&special-modes=[] perm path| }
+
 # Creates a new directory and outputs its name.
 #
 # The &dir option determines where the directory will be created; if it is an

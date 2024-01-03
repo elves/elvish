@@ -3,8 +3,10 @@ package os
 
 import (
 	_ "embed"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
@@ -25,6 +27,7 @@ var Ns = eval.BuildNsNamed("os").
 		"mkdir":      mkdir,
 		"remove":     remove,
 		"remove-all": removeAll,
+		"chmod":      chmod,
 
 		"eval-symlinks": filepath.EvalSymlinks,
 
@@ -87,6 +90,28 @@ func removeAll(path string) error {
 		path = absPath
 	}
 	return os.RemoveAll(path)
+}
+
+type chmodOpts struct {
+	SpecialModes any
+}
+
+func (*chmodOpts) SetDefaultOptions() {}
+
+func chmod(opts chmodOpts, perm int, path string) error {
+	if perm < 0 || perm > 0x777 {
+		return errs.OutOfRange{What: "permission bits",
+			ValidLow: "0", ValidHigh: "0o777", Actual: strconv.Itoa(perm)}
+	}
+	mode := fs.FileMode(perm)
+	if opts.SpecialModes != nil {
+		special, err := specialModesFromIterable(opts.SpecialModes)
+		if err != nil {
+			return err
+		}
+		mode |= special
+	}
+	return os.Chmod(path, mode)
 }
 
 type statOpts struct{ FollowSymlink bool }

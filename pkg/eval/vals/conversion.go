@@ -16,9 +16,10 @@ import (
 // Conversion between "Go values" (those expected by native Go functions) and
 // "Elvish values" (those participating in the Elvish runtime).
 //
-// Among the conversion functions, ScanToGo and FromGo implement the implicit
-// conversion used when calling native Go functions from Elvish. The API is
-// asymmetric; this has to do with two characteristics of Elvish's type system:
+// Among the conversion functions, [ScanToGo] and [FromGo] implement the
+// implicit conversion used when calling native Go functions from Elvish. The
+// API is asymmetric; this has to do with two characteristics of Elvish's type
+// system:
 //
 // - Elvish doesn't have a dedicated rune type and uses strings to represent
 //   them.
@@ -31,7 +32,8 @@ import (
 // the destination type is, and the process may fail. Thus ScanToGo takes the
 // pointer to the destination as an argument, and returns an error.
 //
-// The rest of the conversion functions need to explicitly invoked.
+// The rest of the conversion functions are exported for use in more
+// sophisticated binding code, and need to explicitly invoked.
 
 // WrongType is returned by ScanToGo if the source value doesn't have a
 // compatible type.

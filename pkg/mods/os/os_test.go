@@ -9,6 +9,7 @@ import (
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
+	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/mods/file"
 	osmod "src.elv.sh/pkg/mods/os"
 	"src.elv.sh/pkg/testutil"
@@ -43,6 +44,22 @@ func TestFSModifications(t *testing.T) {
 			Puts(false),
 		That(`os:remove-all d`).DoesNothing(),
 		That(`os:remove-all ""`).Throws(osmod.ErrEmptyPath),
+
+		// chmod
+		That(`os:mkdir d; os:chmod 0o400 d; put (os:stat d)[perm]`).Puts(0o400),
+		That(`os:mkdir d; os:chmod &special-modes=[setuid setgid sticky] 0o400 d; put (os:stat d)[special-modes]`).
+			Puts(vals.MakeList("setuid", "setgid", "sticky")),
+		// chmod errors
+		That(`os:chmod -1 d`).
+			Throws(errs.OutOfRange{What: "permission bits",
+				ValidLow: "0", ValidHigh: "0o777", Actual: "-1"}),
+		// TODO: This error should be more informative and point out that it is
+		// the special modes that should be iterable
+		That(`os:chmod &special-modes=(num 0) 0 d`).
+			Throws(ErrorWithMessage("cannot iterate number")),
+		That(`os:chmod &special-modes=[bad] 0 d`).
+			Throws(errs.BadValue{What: "special mode",
+				Valid: "setuid, setgid or sticky", Actual: "bad"}),
 	)
 }
 

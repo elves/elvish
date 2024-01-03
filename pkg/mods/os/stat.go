@@ -18,17 +18,6 @@ var typeNames = map[fs.FileMode]string{
 	fs.ModeIrregular:                  "irregular",
 }
 
-var specialModeNames = [...]struct {
-	bit  fs.FileMode
-	name string
-}{
-	// fs.ModeAppend, fs.ModeExclusive and fs.ModeTemporary are only used on
-	// Plan 9, which Elvish doesn't support (yet).
-	{fs.ModeSetuid, "setuid"},
-	{fs.ModeSetgid, "setgid"},
-	{fs.ModeSticky, "sticky"},
-}
-
 // Implementation of the stat function itself is in os.go.
 
 func statMap(fi fs.FileInfo) vals.Map {
@@ -39,19 +28,12 @@ func statMap(fi fs.FileInfo) vals.Map {
 		// information.
 		typeName = fmt.Sprintf("unknown %d", mode.Type())
 	}
-	// TODO: Make this a set when Elvish has a set type.
-	specialModes := vals.EmptyList
-	for _, special := range specialModeNames {
-		if mode&special.bit != 0 {
-			specialModes = specialModes.Conj(special.name)
-		}
-	}
 	return vals.MakeMap(
 		"name", fi.Name(),
 		"size", vals.Int64ToNum(fi.Size()),
 		"type", typeName,
-		"perm", int(fi.Mode()&fs.ModePerm),
-		"special-modes", specialModes,
+		"perm", int(mode&fs.ModePerm),
+		"special-modes", specialModesToList(mode),
 		"sys", statSysMap(fi.Sys()))
 	// TODO: ModTime
 }
