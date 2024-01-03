@@ -93,7 +93,7 @@ differences:
 For example, the following instructions runs `cd /tmp`, and sends Ctrl-N to
 trigger navigation mode at the next prompt:
 
-```
+```elvish-transcript
 ~> cd /tmp
 ~> #send-keys C-N
 ```
