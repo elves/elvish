@@ -5,8 +5,21 @@ package os_test
 import (
 	"testing"
 
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/testutil"
 )
+
+func TestChmod(t *testing.T) {
+	TestWithSetup(t, func(t *testing.T, ev *eval.Evaler) {
+		testutil.InTempDir(t)
+		useOS(ev)
+	},
+		That(`os:mkdir d; os:chmod 0o400 d; put (os:stat d)[perm]`).Puts(0o400),
+		That(`os:mkdir d; os:chmod &special-modes=[setuid setgid sticky] 0o400 d; put (os:stat d)[special-modes]`).
+			Puts(vals.MakeList("setuid", "setgid", "sticky")),
+	)
+}
 
 func TestMkdirPerm(t *testing.T) {
 	testutil.Umask(t, 0)

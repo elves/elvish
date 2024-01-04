@@ -9,7 +9,6 @@ import (
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
-	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/mods/file"
 	osmod "src.elv.sh/pkg/mods/os"
 	"src.elv.sh/pkg/testutil"
@@ -45,10 +44,11 @@ func TestFSModifications(t *testing.T) {
 		That(`os:remove-all d`).DoesNothing(),
 		That(`os:remove-all ""`).Throws(osmod.ErrEmptyPath),
 
-		// chmod
-		That(`os:mkdir d; os:chmod 0o400 d; put (os:stat d)[perm]`).Puts(0o400),
-		That(`os:mkdir d; os:chmod &special-modes=[setuid setgid sticky] 0o400 d; put (os:stat d)[special-modes]`).
-			Puts(vals.MakeList("setuid", "setgid", "sticky")),
+		// The success cases for chmod are in os_unix_test.go, since they depend
+		// on the exact value of the perm bits and special modes.
+		//
+		// TODO: Add tests for Windows after Elvish supports bitwise operations.
+
 		// chmod errors
 		That(`os:chmod -1 d`).
 			Throws(errs.OutOfRange{What: "permission bits",
