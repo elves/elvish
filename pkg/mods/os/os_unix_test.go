@@ -27,8 +27,8 @@ func TestMkdirPerm(t *testing.T) {
 
 	TestWithEvalerSetup(t, useOS,
 		// TODO: Remove the need for ls when there is os:stat.
-		That(`os:mkdir &perm=0o400 d400; ls -ld d400 | slurp`).
-			Puts(StringMatching(`dr--.*`)),
+		That(`os:mkdir &perm=0o400 d400; put (os:stat d400)[perm]`).
+			Puts(0o400),
 	)
 }
 
