@@ -101,7 +101,8 @@ var inlineTags = []string{
 }
 
 // RenderInlineContentToHTML renders inline content to HTML, writing to a
-// [strings.Builder].
+// [strings.Builder]. This is useful for implementing an alternative
+// HTML-outputting [Codec].
 func RenderInlineContentToHTML(sb *strings.Builder, ops []InlineOp) {
 	for _, op := range ops {
 		doInline(sb, op)

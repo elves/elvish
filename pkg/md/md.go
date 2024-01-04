@@ -43,11 +43,11 @@
 // try to be as general as possible, and can potentially be used by other people
 // interested in a small Markdown implementation.
 //
-// Besides elvdocs, all the other content on the Elvish website (https://elv.sh)
-// is also converted to HTML using Pandoc. Additionally, all the Markdown files
-// in the repo are formatted with [Prettier]. Now that Elvish has its own
-// Markdown implementation, we can use it not just for rendering elvdocs in the
-// terminal, but also replace the use of Pandoc and Prettier. These external
+// Besides elvdocs, Pandoc was also used to convert all the other content on the
+// Elvish website (https://elv.sh) to HTML. Additionally, [Prettier] used to be
+// used to format all the Markdown files in the repo. Now that Elvish has its
+// own Markdown implementation, we can use it not just for rendering elvdocs in
+// the terminal, but also replace the use of Pandoc and Prettier. These external
 // tools are decent, but using them still came with some frictions:
 //
 //   - Even though both are relatively easy to set up, they can still be a
@@ -107,8 +107,9 @@
 //
 // Note: the spec tests were taken from the [CommonMark spec Git repo] on
 // 2022-09-26. This version is almost identical to the latest released version,
-// [CommonMark 0.30], with two minor changes in the syntax of [HTML blocks] and
-// [inline HTML comments].
+// [CommonMark 0.30] (released 2021-06-09), with two minor changes in the syntax
+// of [HTML blocks] and [inline HTML comments]. Once CommonMark 0.31 is
+// released, the spec tests will be updated to follow that instead.
 //
 // # Is this package useful outside Elvish?
 //
@@ -256,7 +257,7 @@ const (
 
 var initRegexpsOnce sync.Once
 
-// Render parses markdown and renders it with a Codec.
+// Render parses markdown and renders it with a [Codec].
 func Render(text string, codec Codec) {
 	// Compiled regular expressions live on the heap. Compiling them lazily
 	// saves memory if this function is never called.
@@ -265,14 +266,14 @@ func Render(text string, codec Codec) {
 	p.render()
 }
 
-// StringerCodec is a Codec that also implements the String method.
+// StringerCodec is a [Codec] that also implements the String method.
 type StringerCodec interface {
 	Codec
 	String() string
 }
 
-// Render parses markdown, renders it with a Codec, and returns the result of
-// the String() method of the Codec.
+// Render calls Render(text, codec) and returns codec.String(). This can be a
+// bit more convenient to use than [Render].
 func RenderString(text string, codec StringerCodec) string {
 	Render(text, codec)
 	return codec.String()
