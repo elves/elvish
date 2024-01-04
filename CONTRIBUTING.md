@@ -2,10 +2,11 @@
 
 ## Human communication
 
-The project lead is @xiaq, who is reachable in the user group most of the time.
-
-If you intend to make user-visible changes to Elvish's behavior, it is good idea
-to talk to him first; this will make it easier to review your changes.
+The only person with direct commit access is the project's founder @xiaq. If you
+intend to make user-visible changes to Elvish's behavior (as opposed to fixing
+typos and obvious bugs), it is good idea to talk to him first; this will make it
+easier to review your changes. He should be reachable in the user group most of
+the time.
 
 On the other hand, if you find it easier to express your thoughts directly in
 code, it is also completely fine to directly send a pull request, as long as you
