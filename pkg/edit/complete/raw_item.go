@@ -33,6 +33,7 @@ type ComplexItem struct {
 	Stem       string  // Used in the code and the menu.
 	CodeSuffix string  // Appended to the code.
 	Display    ui.Text // How the item is displayed. If empty, defaults to ui.T(Stem).
+	Tag        string  // TODO
 }
 
 func (c ComplexItem) String() string { return c.Stem }
@@ -46,5 +47,6 @@ func (c ComplexItem) Cook(q parse.PrimaryType) modes.CompletionItem {
 	return modes.CompletionItem{
 		ToInsert: quoted + c.CodeSuffix,
 		ToShow:   display,
+		Tag:      c.Tag,
 	}
 }
