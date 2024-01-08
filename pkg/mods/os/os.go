@@ -2,7 +2,6 @@
 package os
 
 import (
-	_ "embed"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -39,11 +38,6 @@ var Ns = eval.BuildNsNamed("os").
 		"temp-dir":  TempDir,
 		"temp-file": TempFile,
 	}).Ns()
-
-// DElvCode contains the content of the .d.elv file for this module.
-//
-//go:embed *.d.elv
-var DElvCode string
 
 // Wraps [os.IsNotExist] to operate on Exception values.
 func isExist(e eval.Exception) bool {

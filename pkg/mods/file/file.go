@@ -1,7 +1,6 @@
 package file
 
 import (
-	_ "embed"
 	"errors"
 	"fmt"
 	"io"
@@ -28,11 +27,6 @@ var Ns = eval.BuildNsNamed("file").
 		"tell":        tell,
 		"truncate":    truncate,
 	}).Ns()
-
-// DElvCode contains the content of the .d.elv file for this module.
-//
-//go:embed *.d.elv
-var DElvCode string
 
 func isTTY(fm *eval.Frame, file any) (bool, error) {
 	switch file := file.(type) {

@@ -1,6 +1,6 @@
 package doc
 
 var (
-	ModToCode = &modToCode
-	Match     = match
+	ElvFiles = &elvFiles
+	Match    = match
 )

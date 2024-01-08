@@ -4,6 +4,7 @@ package elvdoc
 import (
 	"bufio"
 	"io"
+	"io/fs"
 	"regexp"
 	"strings"
 
@@ -24,6 +25,57 @@ type Entry struct {
 	Content string
 }
 
+// ExtractFS extracts elvdocs of all modules found under fsys. Modules
+// correspond to files as follows (this is the layout of src.elv.sh/pkg):
+//
+//   - builtin: eval/*.elv
+//   - edit: edit/*.elv
+//   - $mod: mods/$mod/*.elv
+//
+// It returns a map from the symbol prefix of a module ("" for builtin, "$mod:"
+// for any other $mod) to the [Docs] extracted from the module's files.
+func ExtractFS(fsys fs.FS) (map[string]Docs, error) {
+	prefixToSubdir := map[string]string{
+		"":      "eval",
+		"edit:": "edit",
+	}
+	modDirs, err := fs.ReadDir(fsys, "mods")
+	if err == nil {
+		for _, modDir := range modDirs {
+			if modDir.IsDir() {
+				name := modDir.Name()
+				prefixToSubdir[name+":"] = "mods/" + name
+			}
+		}
+	}
+
+	prefixToDocs := map[string]Docs{}
+	for prefix, subDir := range prefixToSubdir {
+		filenames, err := fs.Glob(fsys, subDir+"/*.elv")
+		if err != nil {
+			return nil, err
+		}
+		// Prepare to concatenate subDir/*.elv into one [io.Reader] to pass to
+		// [Extract].
+		var readers []io.Reader
+		for _, filename := range filenames {
+			file, err := fsys.Open(filename)
+			if err != nil {
+				return nil, err
+			}
+			// Insert an empty line between adjacent files so that the comment
+			// block at the end of one file doesn't get merged with the comment
+			// block at the start of the next file.
+			readers = append(readers, file, strings.NewReader("\n\n"))
+		}
+		prefixToDocs[prefix], err = Extract(io.MultiReader(readers...), prefix)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return prefixToDocs, nil
+}
+
 var (
 	// Groups:
 	// 1. Name
@@ -42,8 +94,8 @@ var (
 
 const showUnstable = "#doc:show-unstable"
 
-// Extract extracts elvdoc from Elvish source.
-func Extract(r io.Reader, prefix string) (Docs, error) {
+// Extract extracts the elvdoc of one module from an Elvish source.
+func Extract(r io.Reader, symbolPrefix string) (Docs, error) {
 	var docs Docs
 	var block docBlock
 	scanner := bufio.NewScanner(r)
@@ -57,7 +109,7 @@ func Extract(r io.Reader, prefix string) (Docs, error) {
 			block.showUnstable = true
 		} else if m := fnRegexp.FindStringSubmatch(line); m != nil {
 			name, sig := m[1], m[2]
-			content := fnUsage(prefix+name, sig)
+			content := fnUsage(symbolPrefix+name, sig)
 			id := ""
 			showUnstable := false
 			if len(block.lines) > 0 {

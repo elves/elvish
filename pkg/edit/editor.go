@@ -6,7 +6,7 @@
 package edit
 
 import (
-	"embed"
+	_ "embed"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -38,11 +38,6 @@ type Editor struct {
 	// read/edit portion represented by the Editor type.
 	AfterCommand []func(src parse.Source, duration float64, err error)
 }
-
-// DElvFiles embeds all the .d.elv files for this module.
-//
-//go:embed *.d.elv
-var DElvFiles embed.FS
 
 // An interface that wraps notifyf and notifyError. It is only implemented by
 // the *Editor type; functions may take a notifier instead of *Editor argument

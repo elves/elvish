@@ -1,8 +1,8 @@
 package doc_test
 
 import (
-	"io"
-	"strings"
+	"embed"
+	"io/fs"
 	"testing"
 
 	"src.elv.sh/pkg/eval"
@@ -19,13 +19,21 @@ var (
 	Dedent = testutil.Dedent
 )
 
+var (
+	//go:embed fakepkg
+	fakepkg embed.FS
+	//go:embed fakepkg/mods/foo/variable.md
+	fooVariableDoc string
+	//go:embed fakepkg/mods/foo/function.md
+	fooFunctionDoc string
+	//go:embed fakepkg/eval/break.md
+	breakDoc string
+	//go:embed fakepkg/eval/num.md
+	numDoc string
+)
+
 func init() {
-	// The map doc.ModToCode points to is read once during lazy initialization,
-	// so there is no way to undo the change.
-	*doc.ModToCode = map[string]io.Reader{
-		"foo:": strings.NewReader(fooModuleCode),
-		"":     strings.NewReader(builtinModuleCode),
-	}
+	*doc.ElvFiles, _ = fs.Sub(fakepkg, "fakepkg")
 }
 
 func TestShow(t *testing.T) {
@@ -75,65 +83,6 @@ func TestSymbols(t *testing.T) {
 		That("doc:-symbols >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
 	)
 }
-
-var tildeToBackquote = strings.NewReplacer("~", "`").Replace
-
-var (
-	fooModuleCode = Dedent(`
-		# A variable. Lorem ipsum.
-		var variable
-
-		# A function with long documentation. Lorem ipsum dolor sit amet.
-		# Consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut
-		# labore et dolore magna aliqua.
-		fn function {|x| }
-		`)
-	fooVariableDoc = Dedent(`
-		A variable. Lorem ipsum.
-		`)
-	// Function docs are used for checking the output of doc:show, so contains
-	// the post-processed "Usage:" prefix.
-	fooFunctionDoc = Dedent(`
-		Usage:
-
-		~~~elvish
-		foo:function $x
-		~~~
-
-		A function with long documentation. Lorem ipsum dolor sit amet.
-		Consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut
-		labore et dolore magna aliqua.
-		`)
-
-	builtinModuleCode = Dedent(`
-		# Terminates a loop.
-		fn break { }
-
-		# Constructs a [typed number](language.html#number). Another
-		# [link](#foo).
-		fn num {|x| }
-		`)
-	breakDoc = tildeToBackquote(Dedent(`
-		Usage:
-
-		~~~elvish
-		break
-		~~~
-
-		Terminates a loop.
-		`))
-	// The relative link to language.html is converted to an absolute link.
-	numDoc = Dedent(`
-		Usage:
-
-		~~~elvish
-		num $x
-		~~~
-
-		Constructs a [typed number](https://elv.sh/ref/language.html#number).
-		Another [link](#foo).
-		`)
-)
 
 func setupDoc(ev *eval.Evaler) {
 	ev.ExtendGlobal(eval.BuildNs().AddNs("doc", doc.Ns))

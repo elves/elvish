@@ -3,7 +3,6 @@
 package platform
 
 import (
-	_ "embed"
 	"os"
 	"runtime"
 	"strings"
@@ -40,8 +39,3 @@ var Ns = eval.BuildNsNamed("platform").
 	AddGoFns(map[string]any{
 		"hostname": hostname,
 	}).Ns()
-
-// DElvCode contains the content of the .d.elv file for this module.
-//
-//go:embed *.d.elv
-var DElvCode string

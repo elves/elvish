@@ -2,30 +2,16 @@
 package doc
 
 import (
-	"embed"
 	"fmt"
-	"io"
+	"io/fs"
 	"sort"
 	"strings"
 	"sync"
 
-	"src.elv.sh/pkg/edit"
+	"src.elv.sh/pkg"
 	"src.elv.sh/pkg/elvdoc"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/md"
-	"src.elv.sh/pkg/mods/epm"
-	"src.elv.sh/pkg/mods/file"
-	"src.elv.sh/pkg/mods/flag"
-	"src.elv.sh/pkg/mods/math"
-	"src.elv.sh/pkg/mods/os"
-	"src.elv.sh/pkg/mods/path"
-	"src.elv.sh/pkg/mods/platform"
-	"src.elv.sh/pkg/mods/re"
-	"src.elv.sh/pkg/mods/readlinebinding"
-	"src.elv.sh/pkg/mods/runtime"
-	"src.elv.sh/pkg/mods/store"
-	"src.elv.sh/pkg/mods/str"
-	"src.elv.sh/pkg/mods/unix"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/sys"
 )
@@ -38,11 +24,6 @@ var Ns = eval.BuildNsNamed("doc").
 		"-symbols": symbols,
 	}).
 	Ns()
-
-// DElvCode contains the content of the .d.elv file for this module.
-//
-//go:embed *.d.elv
-var DElvCode string
 
 type showOptions struct{ Width int }
 
@@ -155,55 +136,19 @@ func symbols(fm *eval.Frame) error {
 	return nil
 }
 
-var modToCode = map[string]io.Reader{
-	"":                 readAll(eval.BuiltinDElvFiles),
-	"doc:":             read(DElvCode),
-	"edit:":            readAll(edit.DElvFiles),
-	"epm:":             read(epm.Code),
-	"file:":            read(file.DElvCode),
-	"flag:":            read(flag.DElvCode),
-	"math:":            read(math.DElvCode),
-	"os:":              read(os.DElvCode),
-	"path:":            read(path.DElvCode),
-	"platform:":        read(platform.DElvCode),
-	"re:":              read(re.DElvCode),
-	"readlinebinding:": read(readlinebinding.Code),
-	"runtime:":         read(runtime.DElvCode),
-	"store:":           read(store.DElvCode),
-	"str:":             read(str.DElvCode),
-	"unix:":            readAll(unix.DElvFiles),
-}
-
 var (
 	docsOnce sync.Once
 	docs     map[string]elvdoc.Docs
+	// May be overridden in tests.
+	elvFiles fs.FS = pkg.ElvFiles
 )
 
 // Docs returns a map from namespace prefixes (like "doc:", or "" for the
 // builtin module) to extracted elvdocs.
 func Docs() map[string]elvdoc.Docs {
 	docsOnce.Do(func() {
-		docs = make(map[string]elvdoc.Docs, len(modToCode))
-		for mod, code := range modToCode {
-			docs[mod], _ = elvdoc.Extract(code, mod)
-		}
+		// We don't expect any errors from reading an [embed.FS].
+		docs, _ = elvdoc.ExtractFS(elvFiles)
 	})
 	return docs
-}
-
-func read(s string) io.Reader { return strings.NewReader(s) }
-
-func readAll(fs embed.FS) io.Reader {
-	entries, _ := fs.ReadDir(".")
-	readers := make([]io.Reader, 2*len(entries)-1)
-	for i, entry := range entries {
-		readers[2*i], _ = fs.Open(entry.Name())
-		if i < len(entries)-1 {
-			// Insert an empty line between adjacent files so that the comment
-			// block at the end of one file doesn't get merged with the comment
-			// block at the start of the next file.
-			readers[2*i+1] = strings.NewReader("\n\n")
-		}
-	}
-	return io.MultiReader(readers...)
 }

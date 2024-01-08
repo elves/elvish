@@ -3,7 +3,6 @@
 package math
 
 import (
-	_ "embed"
 	"math"
 	"math/big"
 
@@ -48,11 +47,6 @@ var Ns = eval.BuildNsNamed("math").
 		"tanh":          math.Tanh,
 		"trunc":         trunc,
 	}).Ns()
-
-// DElvCode contains the content of the .d.elv file for this module.
-//
-//go:embed *.d.elv
-var DElvCode string
 
 const (
 	maxInt = int(^uint(0) >> 1)
