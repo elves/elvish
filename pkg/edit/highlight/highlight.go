@@ -5,14 +5,13 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/diag"
-	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/ui"
 )
 
 // Config keeps configuration for highlighting code.
 type Config struct {
-	Check      func(n parse.Tree) (string, error)
+	Check      func(n parse.Tree) (string, []*diag.Error)
 	HasCommand func(name string) bool
 	AutofixTip func(autofix string) ui.Text
 }
@@ -46,8 +45,8 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []ui.Tex
 	}
 
 	if cfg.Check != nil {
-		autofix, errCheck := cfg.Check(tree)
-		for _, err := range eval.UnpackCompilationErrors(errCheck) {
+		autofix, diagErrors := cfg.Check(tree)
+		for _, err := range diagErrors {
 			addDiagError(err)
 		}
 		if autofix != "" && cfg.AutofixTip != nil {

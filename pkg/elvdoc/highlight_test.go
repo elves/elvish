@@ -1,13 +1,15 @@
-package doc_test
+package elvdoc_test
 
 import (
 	"reflect"
 	"testing"
 
-	"src.elv.sh/pkg/mods/doc"
+	"src.elv.sh/pkg/elvdoc"
+	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/ui"
 )
 
+var Dedent = testutil.Dedent
 var stylesheet = ui.RuneStylesheet{
 	'v': ui.FgGreen, '$': ui.FgMagenta,
 }
@@ -68,7 +70,7 @@ var highlightCodeBlockTests = []struct {
 func TestHighlightCodeBlock(t *testing.T) {
 	for _, tc := range highlightCodeBlockTests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := doc.HighlightCodeBlock(tc.info, tc.code)
+			got := elvdoc.HighlightCodeBlock(tc.info, tc.code)
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("got %s, want %s", got, tc.want)
 			}

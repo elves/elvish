@@ -5,12 +5,12 @@ import (
 	"html"
 	"strings"
 
-	"src.elv.sh/pkg/mods/doc"
+	"src.elv.sh/pkg/elvdoc"
 	"src.elv.sh/pkg/ui"
 )
 
 func convertCodeBlock(info, code string) string {
-	return textToHTML(doc.HighlightCodeBlock(info, code))
+	return textToHTML(elvdoc.HighlightCodeBlock(info, code))
 }
 
 func textToHTML(t ui.Text) string {

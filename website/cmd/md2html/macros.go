@@ -9,8 +9,13 @@ import (
 	"os"
 	"strings"
 
-	"src.elv.sh/pkg/mods/doc"
+	"src.elv.sh/pkg/elvdoc"
 )
+
+// Unlike Elvish's builtin documentation which embeds all the relevant .elv
+// files into the binary itself, we read the filesystem at runtime. This allows
+// us to read the new .elv file without rebuilding this program.
+var pkgFS = os.DirFS("../pkg")
 
 func filter(in io.Reader, out io.Writer) {
 	f := filterer{}
@@ -41,14 +46,16 @@ func (f *filterer) filter(in io.Reader, out io.Writer) {
 		fmt.Fprintln(out, line)
 	}
 	if f.module != "" {
-		ns := f.module + ":"
-		if f.module == "builtin" {
-			ns = ""
+		symbolPrefix := ""
+		if f.module != "builtin" {
+			symbolPrefix = f.module + ":"
 		}
-		docs := doc.Docs()[ns]
-
+		docs, err := elvdoc.ExtractFromFS(pkgFS, symbolPrefix)
+		if err != nil {
+			log.Fatal(err)
+		}
 		var buf bytes.Buffer
-		writeElvdocSections(&buf, ns, docs)
+		writeElvdocSections(&buf, symbolPrefix, docs)
 		filter(&buf, out)
 	}
 }

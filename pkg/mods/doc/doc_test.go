@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"testing"
 
+	"src.elv.sh/pkg/elvdoc"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/md"
@@ -89,5 +90,5 @@ func setupDoc(ev *eval.Evaler) {
 }
 
 func render(s string, w int) string {
-	return md.RenderString(s, &md.TTYCodec{Width: w, HighlightCodeBlock: doc.HighlightCodeBlock})
+	return md.RenderString(s, &md.TTYCodec{Width: w, HighlightCodeBlock: elvdoc.HighlightCodeBlock})
 }

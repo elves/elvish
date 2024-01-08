@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/edit/highlight"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/fsutil"
@@ -15,11 +16,11 @@ import (
 
 func initHighlighter(appSpec *cli.AppSpec, ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	hl := highlight.NewHighlighter(highlight.Config{
-		Check: func(t parse.Tree) (string, error) {
+		Check: func(t parse.Tree) (string, []*diag.Error) {
 			autofixes, err := ev.CheckTree(t, nil)
 			autofix := strings.Join(autofixes, "; ")
 			ed.autofix.Store(autofix)
-			return autofix, err
+			return autofix, eval.UnpackCompilationErrors(err)
 		},
 		HasCommand: func(cmd string) bool { return hasCommand(ev, cmd) },
 		AutofixTip: func(autofix string) ui.Text {

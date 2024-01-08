@@ -43,7 +43,7 @@ func show(fm *eval.Frame, opts showOptions, fqname string) error {
 	}
 	codec := &md.TTYCodec{
 		Width:              width,
-		HighlightCodeBlock: HighlightCodeBlock,
+		HighlightCodeBlock: elvdoc.HighlightCodeBlock,
 		ConvertRelativeLink: func(dest string) string {
 			// TTYCodec does not show destinations of relative links by default.
 			// Special-case links to language.html as they are quite common in
@@ -66,7 +66,7 @@ func show(fm *eval.Frame, opts showOptions, fqname string) error {
 }
 
 func find(fm *eval.Frame, qs ...string) {
-	for ns, docs := range Docs() {
+	for ns, docs := range docs() {
 		findIn := func(name, markdown string) {
 			if bs, ok := match(markdown, qs); ok {
 				out := fm.ByteOutput()
@@ -97,7 +97,7 @@ func Source(fqname string) (string, error) {
 	} else if first == "builtin:" {
 		first = ""
 	}
-	docs, ok := Docs()[first]
+	docs, ok := docs()[first]
 	if !ok {
 		return "", fmt.Errorf("no doc for %s", parse.Quote(fqname))
 	}
@@ -118,7 +118,7 @@ func Source(fqname string) (string, error) {
 
 func symbols(fm *eval.Frame) error {
 	var names []string
-	for ns, docs := range Docs() {
+	for ns, docs := range docs() {
 		for _, fn := range docs.Fns {
 			names = append(names, ns+fn.Name)
 		}
@@ -138,17 +138,19 @@ func symbols(fm *eval.Frame) error {
 
 var (
 	docsOnce sync.Once
-	docs     map[string]elvdoc.Docs
+	docsMap  map[string]elvdoc.Docs
 	// May be overridden in tests.
 	elvFiles fs.FS = pkg.ElvFiles
 )
 
-// Docs returns a map from namespace prefixes (like "doc:", or "" for the
-// builtin module) to extracted elvdocs.
-func Docs() map[string]elvdoc.Docs {
+// Returns a map from namespace prefixes (like "doc:", or "" for the builtin
+// module) to extracted elvdocs.
+//
+// TODO: Simplify this using [sync.OnceValue] once Elvish requires Go 1.21.
+func docs() map[string]elvdoc.Docs {
 	docsOnce.Do(func() {
 		// We don't expect any errors from reading an [embed.FS].
-		docs, _ = elvdoc.ExtractAllFromFS(elvFiles)
+		docsMap, _ = elvdoc.ExtractAllFromFS(elvFiles)
 	})
-	return docs
+	return docsMap
 }

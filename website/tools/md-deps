@@ -6,3 +6,17 @@
 
 cat ${1%.html}.md |
   awk '$1 == "@ttyshot" { print $2 ".ttyshot.html" }'
+
+cat ${1%.html}.md |
+  awk '$1 == "@module" {
+         if ($2 == "builtin") {
+           print "eval"
+         } else if ($2 == "edit") {
+           print "eval"
+         } else {
+           print "mods/" $2
+         }
+       }' |
+  while read dir; do
+    echo ../pkg/$dir ../pkg/$dir/*.elv
+  done

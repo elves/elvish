@@ -5,11 +5,16 @@
 //
 // It first applies a pre-processing step that expands the following macros:
 //
-//   - @module inserts elvdocs for a given module
+//   - @module declares the file to be the reference doc for a module.
 //
-//   - @ttyshot inserts a ttyshot
+//     This has two effects: it declares a docset anchor immediately, and causes
+//     the inserts elvdocs for the module at the end of the current to be
+//     inserted at the end of the file. It should appear at the beginning of the
+//     reference doc for a module.
 //
-//   - @dl expands to a binary download link
+//   - @ttyshot inserts a ttyshot.
+//
+//   - @dl expands to a binary download link.
 //
 // The processed Markdown source is then converted to HTML using a codec based
 // on [md.HTMLCodec], with the following additional features:
@@ -21,7 +26,7 @@
 //   - Table of content (optional, turn on with <!-- toc -->)
 //
 //   - Implicit links to elvdoc targets when link destination is empty and link
-//     text is code span - for example, [`put`]() has destination
+//     text is a single code span - for example, [`put`]() has destination
 //     builtin.html#put (or just #put within doc for the builtin module itself)
 //
 //   - Section numbers for headings (optional, turn on with <-- number-sections

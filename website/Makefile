@@ -40,6 +40,8 @@ endif
 # Don't remove intermediate targets
 .SECONDARY:
 
+# Rules below have dynamic prerequisite lists, which requires GNU Make's
+# .SECONDEXPANSION.
 .SECONDEXPANSION:
 
 tools/%.bin: cmd/% $$(wildcard cmd/%/*) go.mod ../go.mod $$(shell tools/cmd-deps ./cmd/%)
