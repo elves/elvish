@@ -168,7 +168,7 @@ func TestWithSetup(t *testing.T, setup func(*testing.T, *eval.Evaler), tests ...
 			}
 			if !bytes.Equal(tc.want.BytesOut, r.BytesOut) {
 				t.Errorf("got bytes out (-want +got):\n%s",
-					cmp.Diff(string(r.BytesOut), string(tc.want.BytesOut)))
+					cmp.Diff(string(tc.want.BytesOut), string(r.BytesOut)))
 			}
 			if tc.want.StderrOut == nil {
 				if len(r.StderrOut) > 0 {
