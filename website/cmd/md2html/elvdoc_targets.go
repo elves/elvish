@@ -6,6 +6,7 @@ import (
 	"src.elv.sh/pkg/md"
 )
 
+// Adds the implicit destination for [`foo`]().
 func addImplicitElvdocTargets(module string, ops []md.InlineOp) {
 	for i := range ops {
 		if i+2 < len(ops) &&
@@ -18,30 +19,23 @@ func addImplicitElvdocTargets(module string, ops []md.InlineOp) {
 	}
 }
 
+// foo -> builtin.html#foo
+// $foo -> builtin.html#$foo
+// mod:foo -> mod.html#mod:foo
+// $mod:foo -> mod.html#$mod:foo
 func elvdocTarget(symbol, currentModule string) string {
+	var module string
 	i := strings.IndexRune(symbol, ':')
 	if i == -1 {
-		// An internal link in the builtin module's doc.
-		return "#" + symbol
+		module = "builtin"
+	} else if strings.HasPrefix(symbol, "$") {
+		module = symbol[1:i]
+	} else {
+		module = symbol[:i]
 	}
 
-	var module, unqualified string
-	if strings.HasPrefix(symbol, "$") {
-		module, unqualified = symbol[1:i], "$"+symbol[i+1:]
-	} else {
-		module, unqualified = symbol[:i], symbol[i+1:]
-	}
-	switch module {
-	case "builtin":
-		// A link from a non-builtin module's doc to the builtin module. Use
-		// unqualified name (like #put or #$paths, instead of #builtin:put or
-		// #$builtin:paths).
-		return "builtin.html#" + unqualified
-	case currentModule:
-		// An internal link in a non-builtin module's doc.
+	if module == currentModule {
 		return "#" + symbol
-	default:
-		// A link to a non-builtin module.
-		return module + ".html#" + symbol
 	}
+	return module + ".html#" + symbol
 }

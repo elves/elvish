@@ -1,4 +1,3 @@
-// The highlight program highlights Elvish code fences in Markdown.
 package main
 
 import (

@@ -62,7 +62,7 @@ var sortSymbol = map[string]string{
 }
 
 func symbolForSort(s string) string {
-	// Hack to sort + - * / in that order.
+	// Hack to sort + - * / in that order, and before everything else.
 	if t, ok := sortSymbol[strings.Fields(s)[0]]; ok {
 		return t
 	}

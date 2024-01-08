@@ -4,7 +4,7 @@
 # argument containing the following keys:
 #
 # * `src`: Information about the source that was executed, same as what
-#   [`src`](builtin.html#src) would output inside the code.
+#   [`src`]() would output inside the code.
 #
 # * `duration`: A [floating-point number](https://elv.sh/ref/language.html#number) representing the
 # command execution duration in seconds.

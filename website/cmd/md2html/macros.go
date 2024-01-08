@@ -1,5 +1,3 @@
-// The macros program implements an ad-hoc preprocessor for Markdown files, used
-// in Elvish's website.
 package main
 
 import (

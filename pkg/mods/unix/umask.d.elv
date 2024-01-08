@@ -21,5 +21,5 @@
 # You can do a temporary assignment to affect a single command, like
 # `{ tmp umask = 077; touch a_file }`, but beware that since umask applies to
 # the whole process, any code that runs in parallel (such as via
-# [`peach`](builtin.html#peach)) can also get affected.
+# [`peach`]()) can also get affected.
 var umask

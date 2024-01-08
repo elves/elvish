@@ -25,55 +25,69 @@ type Entry struct {
 	Content string
 }
 
-// ExtractFS extracts elvdocs of all modules found under fsys. Modules
-// correspond to files as follows (this is the layout of src.elv.sh/pkg):
+// ExtractFS extracts elvdocs of all modules found under fsys, and returns a map
+// from the symbol prefix of a module ("" for builtin, "$mod:" for any other $mod).
 //
-//   - builtin: eval/*.elv
-//   - edit: edit/*.elv
-//   - $mod: mods/$mod/*.elv
-//
-// It returns a map from the symbol prefix of a module ("" for builtin, "$mod:"
-// for any other $mod) to the [Docs] extracted from the module's files.
-func ExtractFS(fsys fs.FS) (map[string]Docs, error) {
-	prefixToSubdir := map[string]string{
-		"":      "eval",
-		"edit:": "edit",
-	}
-	modDirs, err := fs.ReadDir(fsys, "mods")
-	if err == nil {
-		for _, modDir := range modDirs {
-			if modDir.IsDir() {
-				name := modDir.Name()
-				prefixToSubdir[name+":"] = "mods/" + name
-			}
+// See [ExtractFromFS] for how modules correspond to files.
+func ExtractAllFromFS(fsys fs.FS) (map[string]Docs, error) {
+	prefixes := []string{"", "edit:"}
+	modDirs, _ := fs.ReadDir(fsys, "mods")
+	for _, modDir := range modDirs {
+		if modDir.IsDir() {
+			prefixes = append(prefixes, modDir.Name()+":")
 		}
 	}
 
 	prefixToDocs := map[string]Docs{}
-	for prefix, subDir := range prefixToSubdir {
-		filenames, err := fs.Glob(fsys, subDir+"/*.elv")
-		if err != nil {
-			return nil, err
-		}
-		// Prepare to concatenate subDir/*.elv into one [io.Reader] to pass to
-		// [Extract].
-		var readers []io.Reader
-		for _, filename := range filenames {
-			file, err := fsys.Open(filename)
-			if err != nil {
-				return nil, err
-			}
-			// Insert an empty line between adjacent files so that the comment
-			// block at the end of one file doesn't get merged with the comment
-			// block at the start of the next file.
-			readers = append(readers, file, strings.NewReader("\n\n"))
-		}
-		prefixToDocs[prefix], err = Extract(io.MultiReader(readers...), prefix)
+	for _, prefix := range prefixes {
+		var err error
+		prefixToDocs[prefix], err = ExtractFromFS(fsys, prefix)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return prefixToDocs, nil
+}
+
+// ExtractFromFS extracts elvdoc of a module from fsys. The symbolPrefix is used
+// to look up which files to read:
+//
+//   - "": eval/*.elv (the builtin module)
+//   - "edit:": edit/*.elv
+//   - "$mod:": mods/$symbolPrefix/*.elv
+//
+// If symbolPrefix is not empty and doesn't end in ":", this function panics.
+func ExtractFromFS(fsys fs.FS, symbolPrefix string) (Docs, error) {
+	var subdir string
+	switch symbolPrefix {
+	case "":
+		subdir = "eval"
+	case "edit:":
+		subdir = "edit"
+	default:
+		if !strings.HasSuffix(symbolPrefix, ":") {
+			panic("symbolPrefix must be empty or ends in :")
+		}
+		subdir = "mods/" + symbolPrefix[:len(symbolPrefix)-1]
+	}
+	filenames, err := fs.Glob(fsys, subdir+"/*.elv")
+	if err != nil {
+		return Docs{}, err
+	}
+	// Prepare to concatenate subDir/*.elv into one [io.Reader] to pass to
+	// [Extract].
+	var readers []io.Reader
+	for _, filename := range filenames {
+		file, err := fsys.Open(filename)
+		if err != nil {
+			return Docs{}, err
+		}
+		// Insert an empty line between adjacent files so that the comment
+		// block at the end of one file doesn't get merged with the comment
+		// block at the start of the next file.
+		readers = append(readers, file, strings.NewReader("\n\n"))
+	}
+	return Extract(io.MultiReader(readers...), symbolPrefix)
 }
 
 var (

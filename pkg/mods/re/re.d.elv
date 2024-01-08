@@ -96,10 +96,9 @@ fn split {|&posix=$false &longest=$false &max=-1 pattern source| }
 # `&sep-posix` and `&sep-longest` options, see the
 # [introduction](#introduction); the `sep-` prefix is added for clarity.
 #
-# Calling [`break`](builtin.html#break) in `$f` exits both `$f` and `re:awk`,
-# and can be used to stop processing inputs early. Calling
-# [`continue`](builtin.html#continue) exits `$f` but not `re:awk`, and can be
-# used to stop `$f` early but continue processing inputs.
+# Calling [`break`]() in `$f` exits both `$f` and `re:awk`, and can be used to
+# stop processing inputs early. Calling [`continue`]() exits `$f` but not
+# `re:awk`, and can be used to stop `$f` early but continue processing inputs.
 #
 # This command allows you to write code resembling
 # [AWK](https://en.wikipedia.org/wiki/AWK) scripts, using an anonymous function

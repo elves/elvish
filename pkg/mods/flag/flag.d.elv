@@ -66,7 +66,7 @@ fn call {|fn args| }
 # -   If it is a string, no conversion is done.
 #
 # -   If it is a [typed number](language.html#number), the flag value is
-#     converted using [`num`](builtin.html#num).
+#     converted using [`num`]().
 #
 # -   If it is a list, the flag value is split at `,` (equivalent to `{|s| put
 #     [(str:split , $s)] }`).

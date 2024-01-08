@@ -63,7 +63,7 @@ fn eval-symlinks {|path| }
 #   See [numeric notation of Unix
 #   permission](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation)
 #   for a description of the convention, but note that Elvish prints this number
-#   in decimal; use [`printf`](builtin.html#printf) with `%o` to print it as an octal number.
+#   in decimal; use [`printf`]() with `%o` to print it as an octal number.
 #
 # - `special-modes`: A list containing one or more of `setuid`, `setgid` and
 #   `sticky` to indicate the presence of any special mode.

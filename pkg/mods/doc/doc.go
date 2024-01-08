@@ -148,7 +148,7 @@ var (
 func Docs() map[string]elvdoc.Docs {
 	docsOnce.Do(func() {
 		// We don't expect any errors from reading an [embed.FS].
-		docs, _ = elvdoc.ExtractFS(elvFiles)
+		docs, _ = elvdoc.ExtractAllFromFS(elvFiles)
 	})
 	return docs
 }
