@@ -61,7 +61,7 @@ func NewCompletion(app cli.App, cfg CompletionSpec) (Completion, error) {
 	sort.Strings(cfg.tags)
 	switch len(cfg.tags) {
 	case 1:
-		if strings.TrimSpace(cfg.tags[0]) == "" {
+		if len(itemsByTag) > 1 || strings.TrimSpace(cfg.tags[0]) == "" {
 			cfg.tags = []string{cfg.Name}
 		}
 	default:
