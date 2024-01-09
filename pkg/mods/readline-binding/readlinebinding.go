@@ -1,4 +1,4 @@
-package readlinebinding
+package readline_binding
 
 import _ "embed"
 

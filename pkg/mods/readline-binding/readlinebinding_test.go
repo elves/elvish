@@ -1,4 +1,4 @@
-package readlinebinding_test
+package readline_binding_test
 
 import (
 	"os"

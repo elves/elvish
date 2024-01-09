@@ -12,7 +12,7 @@ import (
 	"src.elv.sh/pkg/mods/path"
 	"src.elv.sh/pkg/mods/platform"
 	"src.elv.sh/pkg/mods/re"
-	"src.elv.sh/pkg/mods/readlinebinding"
+	readline_binding "src.elv.sh/pkg/mods/readline-binding"
 	"src.elv.sh/pkg/mods/runtime"
 	"src.elv.sh/pkg/mods/str"
 	"src.elv.sh/pkg/mods/unix"
@@ -37,5 +37,5 @@ func AddTo(ev *eval.Evaler) {
 		ev.AddModule("unix", unix.Ns)
 	}
 	ev.BundledModules["epm"] = epm.Code
-	ev.BundledModules["readline-binding"] = readlinebinding.Code
+	ev.BundledModules["readline-binding"] = readline_binding.Code
 }
