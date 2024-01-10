@@ -82,7 +82,7 @@ build_binaries_task:
   container:
     # Keep the Go version part in sync with
     # https://github.com/elves/up/blob/master/Dockerfile
-    image: golang:1.20.6-alpine
+    image: golang:1.21.6-alpine
   go_modules_cache:
     fingerprint_script: cat go.sum
     folder: ~/go/pkg/mod
