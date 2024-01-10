@@ -101,16 +101,16 @@ fn atanh {|number| }
 # Examples:
 #
 # ```elvish-transcript
-# ~> math:floor 1
+# ~> math:ceil 1
 # ▶ (num 1)
-# ~> math:floor 3/2
-# ▶ (num 1)
-# ~> math:floor -3/2
-# ▶ (num -2)
-# ~> math:floor 1.1
-# ▶ (num 1.0)
-# ~> math:floor -1.1
-# ▶ (num -2.0)
+# ~> math:ceil 3/2
+# ▶ (num 2)
+# ~> math:ceil -3/2
+# ▶ (num -1)
+# ~> math:ceil 1.1
+# ▶ (num 2.0)
+# ~> math:ceil -1.1
+# ▶ (num -1.0)
 # ```
 fn ceil {|number| }
 
