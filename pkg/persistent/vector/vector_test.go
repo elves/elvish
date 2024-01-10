@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"strconv"
 	"testing"
-	"time"
 )
 
 // Nx is the minimum number of elements for the internal tree of the vector to
@@ -16,10 +15,6 @@ const (
 	N3 = nodeSize*nodeSize + tailMaxLen + 1          // 1057
 	N4 = nodeSize*nodeSize*nodeSize + tailMaxLen + 1 // 32801
 )
-
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-}
 
 func TestVector(t *testing.T) {
 	run := func(n int) {

@@ -3,7 +3,7 @@ test_task:
     ELVISH_TEST_TIME_SCALE: "20"
     TEST_FLAG: -race
   matrix:
-    # Re-enable gccgo when it supports Go 1.18.
+    # Re-enable gccgo when it has caught up.
     #- name: Test on gccgo
     #  container:
     #    image: debian:unstable-slim
@@ -18,13 +18,16 @@ test_task:
       arm_container:
         # The Alpine image has segmentation faults when running test -race, so
         # use Debian instead.
-        image: golang:1.20-bullseye
+        image: golang:1.21-bookworm
+    # To upgrade FreeBSD environment:
+    #   - Bump image_family to latest: https://www.freebsd.org/releases/
+    #   - Bump GO_VERSION to latest: https://go.dev/dl/
     - name: Test on FreeBSD
       freebsd_instance:
-        image_family: freebsd-13-2
+        image_family: freebsd-14-0
       env:
         PATH: /usr/local/go/bin:$PATH
-        GO_VERSION: 1.20.6
+        GO_VERSION: 1.21.6
       go_toolchain_cache:
         fingerprint_key: $GO_VERSION
         folder: /usr/local/go
@@ -32,25 +35,34 @@ test_task:
           pkg install -y curl
           curl -L -o go.tar.gz https://go.dev/dl/go$GO_VERSION.freebsd-amd64.tar.gz
           tar -C /usr/local -xf go.tar.gz
+    # To upgrade NetBSD environment:
+    #   - Find the "VERSION:" variable for the NetBSD image:
+    #     https://github.com/anarazel/pg-vm-images/blob/main/.cirrus.yml
+    #   - Find the latest go1* binary package available for that version:
+    #     http://cdn.netbsd.org/pub/pkgsrc/current/pkgsrc/index-all.html
     - name: Test on NetBSD
       compute_engine_instance:
         image_project: pg-ci-images
         image: family/pg-ci-netbsd-vanilla-9-3
         platform: netbsd
       env:
-        GO_PKG: go120
+        GO_PKG: go121
         PATH: /usr/pkg/$GO_PKG/bin:$PATH
       go_pkg_cache:
         fingerprint_key: $GO_PKG
         folder: /usr/pkg/$GO_PKG
         populate_script: |
-          sed -i '$s/9\.0/9.3/' /usr/pkg/etc/pkgin/repositories.conf
           pkgin -y update
           pkgin -y install $GO_PKG
+    # To upgrade OpenBSD environment:
+    #   - Find the "VERSION:" variable for the FreeBSD image:
+    #     https://github.com/anarazel/pg-vm-images/blob/main/.cirrus.yml
+    #   - Find the go-1.* package in (edit the version in the URL):
+    #     https://cdn.openbsd.org/pub/OpenBSD/7.3/packages/amd64/
     - name: Test on OpenBSD
       compute_engine_instance:
         image_project: pg-ci-images
-        image: family/pg-ci-openbsd-vanilla-7-2
+        image: family/pg-ci-openbsd-vanilla-7-3
         platform: openbsd
       env:
         PATH: /usr/local/go/bin:$PATH

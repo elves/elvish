@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
-	"time"
 
 	"src.elv.sh/pkg/persistent/hash"
 )
@@ -71,10 +70,6 @@ type refEntry struct {
 
 func hex(i uint64) string {
 	return "0x" + strconv.FormatUint(i, 16)
-}
-
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 var randomStrings []string

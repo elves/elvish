@@ -243,7 +243,7 @@ func TestRandint(t *testing.T) {
 }
 
 func TestRandSeed(t *testing.T) {
-	// Reseed to make other RNG-dependent tests non-deterministic
+	//lint:ignore SA1019 Reseed to make other RNG-dependent tests non-deterministic
 	defer rand.Seed(time.Now().UTC().UnixNano())
 
 	Test(t,

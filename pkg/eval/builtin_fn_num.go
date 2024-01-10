@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"math/rand"
 	"strconv"
-	"time"
 
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
@@ -45,8 +44,6 @@ func init() {
 		"range": rangeFn,
 	})
 
-	// For rand and randint.
-	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 func num(n vals.Num) vals.Num {
@@ -332,6 +329,7 @@ func randint(args ...int) (int, error) {
 	return low + rand.Intn(high-low), nil
 }
 
+//lint:ignore SA1019 useful for getting deterministic behavior in Elvish code.
 func randseed(x int) { rand.Seed(int64(x)) }
 
 type rangeOpts struct{ Step vals.Num }
