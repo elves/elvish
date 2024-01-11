@@ -28,8 +28,8 @@ def main(args):
             entry_type, symbol = name.split('/')[-2:]
             symbol = urllib.parse.unquote(symbol)
             print(
-                'INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES '
-                ' ("%s", "%s", "%s#%s");' % (symbol, entry_type, filename, name))
+                "INSERT OR IGNORE INTO searchIndex(name, type, path) VALUES "
+                " ('%s', '%s', '%s#%s');" % (symbol, entry_type, filename, name))
 
 if __name__ == '__main__':
     main(sys.argv)
