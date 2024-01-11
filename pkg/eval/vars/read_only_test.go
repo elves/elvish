@@ -20,9 +20,9 @@ func TestNewReadOnly(t *testing.T) {
 }
 
 func TestIsReadOnly(t *testing.T) {
-	tt.Test(t, tt.Fn("IsReadOnly", IsReadOnly), tt.Table{
+	tt.Test(t, IsReadOnly,
 		Args(NewReadOnly("foo")).Rets(true),
 		Args(FromGet(func() any { return "foo" })).Rets(true),
 		Args(FromInit("foo")).Rets(false),
-	})
+	)
 }

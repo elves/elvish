@@ -12,7 +12,7 @@ var Args = tt.Args
 func TestGetRegions(t *testing.T) {
 	lsCommand := region{0, 2, semanticRegion, commandRegion}
 
-	tt.Test(t, tt.Fn("getRegionsFromString", getRegionsFromString), tt.Table{
+	tt.Test(t, getRegionsFromString,
 		Args("").Rets([]region(nil)),
 		Args("ls").Rets([]region{
 			lsCommand,
@@ -217,7 +217,7 @@ func TestGetRegions(t *testing.T) {
 			{16, 17, lexicalRegion, "{"},
 			{18, 19, lexicalRegion, "}"},
 		}),
-	})
+	)
 }
 
 func getRegionsFromString(code string) []region {

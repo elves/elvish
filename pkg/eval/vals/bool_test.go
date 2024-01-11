@@ -13,7 +13,7 @@ func (b customBooler) Bool() bool { return b.b }
 type customNonBooler struct{}
 
 func TestBool(t *testing.T) {
-	tt.Test(t, tt.Fn("Bool", Bool), tt.Table{
+	tt.Test(t, Bool,
 		Args(nil).Rets(false),
 
 		Args(true).Rets(true),
@@ -23,5 +23,5 @@ func TestBool(t *testing.T) {
 		Args(customBooler{false}).Rets(false),
 
 		Args(customNonBooler{}).Rets(true),
-	})
+	)
 }

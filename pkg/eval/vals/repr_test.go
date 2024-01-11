@@ -16,7 +16,7 @@ func (reprer) Repr(int) string { return "<reprer>" }
 type nonReprer struct{}
 
 func TestReprPlain(t *testing.T) {
-	tt.Test(t, tt.Fn("ReprPlain", ReprPlain), tt.Table{
+	tt.Test(t, ReprPlain,
 		Args(nil).Rets("$nil"),
 
 		Args(false).Rets("$false"),
@@ -25,7 +25,7 @@ func TestReprPlain(t *testing.T) {
 		Args("foo").Rets("foo"),
 
 		Args(1).Rets("(num 1)"),
-		Args(bigInt(z)).Rets("(num " + z + ")"),
+		Args(bigInt(z)).Rets("(num "+z+")"),
 		Args(big.NewRat(1, 2)).Rets("(num 1/2)"),
 		Args(1.0).Rets("(num 1.0)"),
 		Args(1e10).Rets("(num 10000000000.0)"),
@@ -47,7 +47,7 @@ func TestReprPlain(t *testing.T) {
 
 		Args(reprer{}).Rets("<reprer>"),
 		Args(nonReprer{}).Rets("<unknown {}>"),
-	})
+	)
 }
 
 func TestReprPlain_MapWithKeysOfMixedTypes(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 
 var n = mustParse("ls $x[0]$y[1];echo done >/redir-dest")
 
-var pprintASTTests = tt.Table{
+var pprintASTTests = []*tt.Case{
 	Args(n).Rets(
 		`Chunk
   Pipeline/Form
@@ -30,14 +30,15 @@ var pprintASTTests = tt.Table{
 }
 
 func TestPPrintAST(t *testing.T) {
-	tt.Test(t, tt.Fn("PPrintAST (to string)", func(n Node) string {
+	pprintAST := func(n Node) string {
 		var b strings.Builder
 		pprintAST(n, &b)
 		return b.String()
-	}), pprintASTTests)
+	}
+	tt.Test(t, tt.Fn(pprintAST).Named("pprintAST"), pprintASTTests...)
 }
 
-var pprintParseTreeTests = tt.Table{
+var pprintParseTreeTests = []*tt.Case{
 	Args(n).Rets(
 		`Chunk "ls $x[0]$y...redir-dest" 0-36
   Pipeline/Form "ls $x[0]$y[1]" 0-13
@@ -67,11 +68,12 @@ var pprintParseTreeTests = tt.Table{
 }
 
 func TestPPrintParseTree(t *testing.T) {
-	tt.Test(t, tt.Fn("PPrintParseTree (to string)", func(n Node) string {
+	pprintParseTree := func(n Node) string {
 		var b strings.Builder
 		pprintParseTree(n, &b)
 		return b.String()
-	}), pprintParseTreeTests)
+	}
+	tt.Test(t, tt.Fn(pprintParseTree).Named("pprintParseTree"), pprintParseTreeTests...)
 }
 
 func mustParse(src string) Node {

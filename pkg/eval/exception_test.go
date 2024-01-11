@@ -18,10 +18,10 @@ import (
 
 func TestReason(t *testing.T) {
 	err := errors.New("ordinary error")
-	tt.Test(t, tt.Fn("Reason", Reason), tt.Table{
+	tt.Test(t, Reason,
 		Args(err).Rets(err),
 		Args(makeException(err)).Rets(err),
-	})
+	)
 }
 
 func TestException(t *testing.T) {
@@ -85,7 +85,7 @@ func TestPipelineError_Fields(t *testing.T) {
 }
 
 func TestErrorMethods(t *testing.T) {
-	tt.Test(t, tt.Fn("Error", error.Error), tt.Table{
+	tt.Test(t, error.Error,
 		Args(makeException(errors.New("err"))).Rets("err"),
 
 		Args(MakePipelineError([]Exception{
@@ -96,5 +96,5 @@ func TestErrorMethods(t *testing.T) {
 		Args(Break).Rets("break"),
 		Args(Continue).Rets("continue"),
 		Args(Flow(1000)).Rets("!(BAD FLOW: 1000)"),
-	})
+	)
 }

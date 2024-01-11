@@ -7,7 +7,7 @@ import (
 )
 
 func TestChopLineEnding(t *testing.T) {
-	tt.Test(t, tt.Fn("ChopLineEnding", ChopLineEnding), tt.Table{
+	tt.Test(t, ChopLineEnding,
 		Args("").Rets(""),
 		Args("text").Rets("text"),
 		Args("text\n").Rets("text"),
@@ -16,15 +16,15 @@ func TestChopLineEnding(t *testing.T) {
 		Args("text\n\n").Rets("text\n"),
 		// Preserve internal line endings
 		Args("text\ntext 2\n").Rets("text\ntext 2"),
-	})
+	)
 }
 
 func TestChopTerminator(t *testing.T) {
-	tt.Test(t, tt.Fn("ChopTerminator", ChopTerminator), tt.Table{
+	tt.Test(t, ChopTerminator,
 		Args("", byte('\x00')).Rets(""),
 		Args("foo", byte('\x00')).Rets("foo"),
 		Args("foo\x00", byte('\x00')).Rets("foo"),
 		Args("foo\x00\x00", byte('\x00')).Rets("foo\x00"),
 		Args("foo\x00bar\x00", byte('\x00')).Rets("foo\x00bar"),
-	})
+	)
 }

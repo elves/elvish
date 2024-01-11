@@ -24,7 +24,7 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 		return ptr.Elem().Interface(), err
 	}
 
-	tt.Test(t, tt.Fn("ScanToGo", scanToGo), tt.Table{
+	tt.Test(t, tt.Fn(scanToGo).Named("scanToGo"),
 		// int
 		Args("12", 0).Rets(12),
 		Args("0x12", 0).Rets(0x12),
@@ -53,7 +53,7 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 		Args(someType{"foo"}, someType{}).Rets(someType{"foo"}),
 		Args(nil, nil).Rets(nil),
 		Args("x", someType{}).Rets(tt.Any, WrongType{"!!vals.someType", "string"}),
-	})
+	)
 }
 
 func TestScanToGo_NumDst(t *testing.T) {
@@ -63,7 +63,7 @@ func TestScanToGo_NumDst(t *testing.T) {
 		return n, err
 	}
 
-	tt.Test(t, tt.Fn("ScanToGo", scanToGo), tt.Table{
+	tt.Test(t, tt.Fn(scanToGo).Named("scanToGo"),
 		// Strings are automatically converted
 		Args("12").Rets(12),
 		Args(z).Rets(bigInt(z)),
@@ -77,7 +77,7 @@ func TestScanToGo_NumDst(t *testing.T) {
 
 		Args("bad").Rets(tt.Any, cannotParseAs{"number", "bad"}),
 		Args(EmptyList).Rets(tt.Any, errMustBeNumber),
-	})
+	)
 }
 
 func TestScanToGo_InterfaceDst(t *testing.T) {
@@ -87,11 +87,11 @@ func TestScanToGo_InterfaceDst(t *testing.T) {
 		return l, err
 	}
 
-	tt.Test(t, tt.Fn("ScanToGo", scanToGo), tt.Table{
+	tt.Test(t, tt.Fn(scanToGo).Named("scanToGo"),
 		Args(EmptyList).Rets(EmptyList),
 
 		Args("foo").Rets(tt.Any, WrongType{"!!vector.Vector", "string"}),
-	})
+	)
 }
 
 func TestScanToGo_CallableDstAdmitsNil(t *testing.T) {
@@ -105,9 +105,9 @@ func TestScanToGo_CallableDstAdmitsNil(t *testing.T) {
 		return c, err
 	}
 
-	tt.Test(t, tt.Fn("ScanToGo", scanToGo), tt.Table{
+	tt.Test(t, tt.Fn(scanToGo).Named("scanToGo"),
 		Args(nil).Rets(mockCallable(nil)),
-	})
+	)
 }
 
 func TestScanToGo_ErrorsWithNonPointerDst(t *testing.T) {
@@ -126,12 +126,12 @@ func TestScanListToGo(t *testing.T) {
 		return ptr.Elem().Interface(), err
 	}
 
-	tt.Test(t, tt.Fn("ScanListToGo", scanListToGo), tt.Table{
+	tt.Test(t, tt.Fn(scanListToGo).Named("scanListToGo"),
 		Args(MakeList("1", "2"), []int{}).Rets([]int{1, 2}),
 		Args(MakeList("1", "2"), []string{}).Rets([]string{"1", "2"}),
 
 		Args(MakeList("1", "a"), []int{}).Rets([]int{}, cannotParseAs{"integer", "a"}),
-	})
+	)
 }
 
 func TestScanListElementsToGo(t *testing.T) {
@@ -159,7 +159,7 @@ func TestScanListElementsToGo(t *testing.T) {
 		return vals, err
 	}
 
-	tt.Test(t, tt.Fn("ScanListElementsToGo", scanListElementsToGo), tt.Table{
+	tt.Test(t, tt.Fn(scanListElementsToGo).Named("scanListElementsToGo"),
 		Args(MakeList("1", "2"), 0, 0).Rets([]any{1, 2}),
 		Args(MakeList("1", "2"), "", "").Rets([]any{"1", "2"}),
 		Args(MakeList("1", "2"), 0, Optional(0)).Rets([]any{1, 2}),
@@ -173,7 +173,7 @@ func TestScanListElementsToGo(t *testing.T) {
 		Args(MakeList("1"), 0, 0, Optional(0)).Rets([]any{0, 0, 0},
 			errs.ArityMismatch{What: "list elements",
 				ValidLow: 2, ValidHigh: 3, Actual: 1}),
-	})
+	)
 }
 
 type aStruct struct {
@@ -193,7 +193,7 @@ func TestScanMapToGo(t *testing.T) {
 		return ptr.Elem().Interface(), err
 	}
 
-	tt.Test(t, tt.Fn("ScanListToGo", scanMapToGo), tt.Table{
+	tt.Test(t, tt.Fn(scanMapToGo).Named("scanMapToGo"),
 		Args(MakeMap("foo", "1"), aStruct{}).Rets(aStruct{Foo: 1}),
 		// More fields is OK
 		Args(MakeMap("foo", "1", "bar", "x"), aStruct{}).Rets(aStruct{Foo: 1}),
@@ -205,17 +205,17 @@ func TestScanMapToGo(t *testing.T) {
 		// Conversion error
 		Args(MakeMap("foo", "a"), aStruct{}).
 			Rets(aStruct{}, cannotParseAs{"integer", "a"}),
-	})
+	)
 }
 
 func TestFromGo(t *testing.T) {
-	tt.Test(t, tt.Fn("FromGo", FromGo), tt.Table{
+	tt.Test(t, FromGo,
 		// BigInt -> int, when in range
 		Args(bigInt(z)).Rets(bigInt(z)),
 		Args(big.NewInt(100)).Rets(100),
 		// BigRat -> BigInt or int, when denominator is 1
-		Args(bigRat(z1 + "/" + z)).Rets(bigRat(z1 + "/" + z)),
-		Args(bigRat(z + "/1")).Rets(bigInt(z)),
+		Args(bigRat(z1+"/"+z)).Rets(bigRat(z1+"/"+z)),
+		Args(bigRat(z+"/1")).Rets(bigInt(z)),
 		Args(bigRat("2/1")).Rets(2),
 		// rune -> string
 		Args('x').Rets("x"),
@@ -223,5 +223,5 @@ func TestFromGo(t *testing.T) {
 		// Other types don't undergo any conversion
 		Args(nil).Rets(nil),
 		Args(someType{"foo"}).Rets(someType{"foo"}),
-	})
+	)
 }

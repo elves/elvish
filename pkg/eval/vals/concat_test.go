@@ -34,7 +34,7 @@ func (rconcatter) RConcat(lhs any) (any, error) {
 }
 
 func TestConcat(t *testing.T) {
-	tt.Test(t, tt.Fn("Concat", Concat), tt.Table{
+	tt.Test(t, Concat,
 		Args("foo", "bar").Rets("foobar", nil),
 		// string+number
 		Args("foo", 2).Rets("foo2", nil),
@@ -57,5 +57,5 @@ func TestConcat(t *testing.T) {
 
 		// LHS does not implement Concatter but RHS implements RConcatter
 		Args(12, rconcatter{}).Rets("rconcatter", nil),
-	})
+	)
 }

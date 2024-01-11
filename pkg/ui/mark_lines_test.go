@@ -13,7 +13,7 @@ func TestMarkLines(t *testing.T) {
 		'-': Inverse,
 		'x': Stylings(FgBlue, BgGreen),
 	}
-	tt.Test(t, tt.Fn("MarkLines", MarkLines), tt.Table{
+	tt.Test(t, MarkLines,
 		Args("foo  bar foobar").Rets(T("foo  bar foobar")),
 		Args(
 			"foo  bar foobar", stylesheet,
@@ -52,5 +52,5 @@ func TestMarkLines(t *testing.T) {
 				T("\n"),
 				T("plain3")),
 		),
-	})
+	)
 }

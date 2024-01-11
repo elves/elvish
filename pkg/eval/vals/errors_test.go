@@ -7,8 +7,8 @@ import (
 )
 
 func TestErrors(t *testing.T) {
-	tt.Test(t, tt.Fn("error.Error", error.Error), tt.Table{
+	tt.Test(t, error.Error,
 		Args(cannotIterate{"num"}).Rets("cannot iterate num"),
 		Args(cannotIterateKeysOf{"num"}).Rets("cannot iterate keys of num"),
-	})
+	)
 }

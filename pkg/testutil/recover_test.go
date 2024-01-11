@@ -9,10 +9,10 @@ import (
 var Args = tt.Args
 
 func TestRecover(t *testing.T) {
-	tt.Test(t, tt.Fn("Recover", Recover), tt.Table{
+	tt.Test(t, Recover,
 		Args(func() {}).Rets(nil),
 		Args(func() {
 			panic("unreachable")
 		}).Rets("unreachable"),
-	})
+	)
 }

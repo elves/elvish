@@ -15,7 +15,7 @@ func (c customEqualer) Equal(any) bool { return c.ret }
 type customStruct struct{ a, b string }
 
 func TestEqual(t *testing.T) {
-	tt.Test(t, tt.Fn("Equal", Equal), tt.Table{
+	tt.Test(t, Equal,
 		Args(nil, nil).Rets(true),
 		Args(nil, "").Rets(false),
 
@@ -57,5 +57,5 @@ func TestEqual(t *testing.T) {
 		Args(customEqualer{false}, 2).Rets(false),
 
 		Args(&customStruct{"a", "b"}, &customStruct{"a", "b"}).Rets(true),
-	})
+	)
 }

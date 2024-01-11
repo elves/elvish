@@ -106,7 +106,7 @@ func TestComplete(t *testing.T) {
 		return allCommandItems[i].ToInsert < allCommandItems[j].ToInsert
 	})
 
-	tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
+	tt.Test(t, Complete,
 		// Candidates are deduplicated.
 		Args(cb("ls "), ev, dupCfg).Rets(
 			&Result{
@@ -369,7 +369,7 @@ func TestComplete(t *testing.T) {
 		Args(cb("nop ["), ev, cfg).Rets((*Result)(nil), errNoCompletion),
 		// No completion after parse error.
 		Args(cb("nop `"), ev, cfg).Rets((*Result)(nil), errNoCompletion),
-	})
+	)
 
 	// Completions of filename involving symlinks and local commands.
 
@@ -377,7 +377,7 @@ func TestComplete(t *testing.T) {
 		// Symlinks require admin permissions on Windows, so we won't test them
 
 		// Completing local commands after forward slash
-		tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
+		tt.Test(t, Complete,
 			// Complete local external commands.
 			Args(cb("./"), ev, cfg).Rets(
 				&Result{
@@ -386,10 +386,10 @@ func TestComplete(t *testing.T) {
 						fci("./a.exe", " "), fci(`./d\`, "")},
 				},
 				nil),
-		})
+		)
 
 		// Completing local commands after backslash
-		tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
+		tt.Test(t, Complete,
 			// Complete local external commands.
 			Args(cb(`.\`), ev, cfg).Rets(
 				&Result{
@@ -398,7 +398,7 @@ func TestComplete(t *testing.T) {
 						fci(`.\a.exe`, " "), fci(`.\d\`, "")},
 				},
 				nil),
-		})
+		)
 	} else {
 		err := os.Symlink("d", "d2")
 		if err != nil {
@@ -407,7 +407,7 @@ func TestComplete(t *testing.T) {
 		allLocalCommandItems := []modes.CompletionItem{
 			fci("./a.exe", " "), fci("./d/", ""), fci("./d2/", ""),
 		}
-		tt.Test(t, tt.Fn("Complete", Complete), tt.Table{
+		tt.Test(t, Complete,
 			// Filename completion treats symlink to directories as directories.
 			//       01234
 			Args(cb("p > d"), ev, cfg).Rets(
@@ -429,7 +429,7 @@ func TestComplete(t *testing.T) {
 					Name: "argument", Replace: r(5, 7),
 					Items: allLocalCommandItems},
 				nil),
-		})
+		)
 	}
 }
 

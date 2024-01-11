@@ -24,7 +24,7 @@ func TestHash(t *testing.T) {
 	z.Add(z, big.NewInt(9))
 	// z = 5 << wordSize + 9
 
-	tt.Test(t, tt.Fn("Hash", Hash), tt.Table{
+	tt.Test(t, Hash,
 		Args(false).Rets(uint32(0)),
 		Args(true).Rets(uint32(1)),
 		Args(1).Rets(uint32(1)),
@@ -38,7 +38,7 @@ func TestHash(t *testing.T) {
 			Rets(hash.DJB(Hash("foo"), Hash("bar"))),
 		Args(hasher{}).Rets(uint32(42)),
 		Args(nonHasher{}).Rets(uint32(0)),
-	})
+	)
 }
 
 func TestHash_EqualMapsWithDifferentInternal(t *testing.T) {

@@ -16,7 +16,7 @@ var (
 )
 
 func TestIndex(t *testing.T) {
-	tt.Test(t, tt.Fn("Index", Index), tt.Table{
+	tt.Test(t, Index,
 		// String indices
 		Args("abc", "0").Rets("a", nil),
 		Args("abc", 0).Rets("a", nil),
@@ -122,7 +122,7 @@ func TestIndex(t *testing.T) {
 
 		// Not indexable
 		Args(1, "foo").Rets(nil, errNotIndexable),
-	})
+	)
 }
 
 func TestIndex_File(t *testing.T) {
@@ -132,9 +132,9 @@ func TestIndex_File(t *testing.T) {
 		t.Skip("create file:", err)
 	}
 
-	tt.Test(t, tt.Fn("Index", Index), tt.Table{
+	tt.Test(t, Index,
 		Args(f, "fd").Rets(int(f.Fd()), nil),
 		Args(f, "name").Rets(f.Name(), nil),
 		Args(f, "x").Rets(nil, NoSuchKey("x")),
-	})
+	)
 }

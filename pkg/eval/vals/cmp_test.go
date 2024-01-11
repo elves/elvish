@@ -20,8 +20,8 @@ func TestCmpTotal_StructMap(t *testing.T) {
 	x := testStructMap{}
 	y := testStructMap2{}
 	z := EmptyMap
-	tt.Test(t, tt.Fn("CmpTotal", CmpTotal), tt.Table{
+	tt.Test(t, CmpTotal,
 		tt.Args(x, y).Rets(CmpEqual),
 		tt.Args(x, z).Rets(CmpEqual),
-	})
+	)
 }

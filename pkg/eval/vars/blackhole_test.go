@@ -21,8 +21,8 @@ func TestBlackhole(t *testing.T) {
 }
 
 func TestIsBlackhole(t *testing.T) {
-	tt.Test(t, tt.Fn("IsBlackhole", IsBlackhole), tt.Table{
+	tt.Test(t, IsBlackhole,
 		Args(NewBlackhole()).Rets(true),
 		Args(FromInit("")).Rets(false),
-	})
+	)
 }

@@ -14,23 +14,24 @@ import (
 var Args = tt.Args
 
 func TestModeLine(t *testing.T) {
-	testModeLine(t, tt.Fn("Line", modeLine))
+	testModeLine(t, modeLine)
 }
 
 func TestModePrompt(t *testing.T) {
-	testModeLine(t, tt.Fn("Prompt",
-		func(s string, b bool) ui.Text { return modePrompt(s, b)() }))
+	prompt := func(s string, b bool) ui.Text { return modePrompt(s, b)() }
+	testModeLine(t, tt.Fn(prompt).Named("prompt"))
+
 }
 
-func testModeLine(t *testing.T, fn *tt.FnToTest) {
-	tt.Test(t, fn, tt.Table{
+func testModeLine(t *testing.T, fn any) {
+	tt.Test(t, fn,
 		Args("TEST", false).Rets(
 			ui.T("TEST", ui.Bold, ui.FgWhite, ui.BgMagenta)),
 		Args("TEST", true).Rets(
 			ui.Concat(
 				ui.T("TEST", ui.Bold, ui.FgWhite, ui.BgMagenta),
 				ui.T(" "))),
-	})
+	)
 }
 
 // Common test utilities.

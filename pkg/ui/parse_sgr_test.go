@@ -7,7 +7,7 @@ import (
 )
 
 func TestParseSGREscapedText(t *testing.T) {
-	tt.Test(t, tt.Fn("ParseSGREscapedText", ParseSGREscapedText), tt.Table{
+	tt.Test(t, ParseSGREscapedText,
 		Args("").Rets(Text(nil)),
 		Args("text").Rets(T("text")),
 		Args("\033[1mbold").Rets(T("bold", Bold)),
@@ -20,11 +20,11 @@ func TestParseSGREscapedText(t *testing.T) {
 		// Control characters not part of CSI escape sequences are left
 		// untouched.
 		Args("t\x01ext").Rets(T("t\x01ext")),
-	})
+	)
 }
 
 func TestStyleFromSGR(t *testing.T) {
-	tt.Test(t, tt.Fn("StyleFromSGR", StyleFromSGR), tt.Table{
+	tt.Test(t, StyleFromSGR,
 		Args("1").Rets(Style{Bold: true}),
 		// Invalid codes are ignored
 		Args("1;invalid;10000").Rets(Style{Bold: true}),
@@ -40,5 +40,5 @@ func TestStyleFromSGR(t *testing.T) {
 		Args("38;2;1;2;3;48;2;10;20;30").
 			Rets(Style{
 				Fg: TrueColor(1, 2, 3), Bg: TrueColor(10, 20, 30)}),
-	})
+	)
 }

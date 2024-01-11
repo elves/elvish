@@ -7,8 +7,8 @@ import (
 )
 
 func TestLen(t *testing.T) {
-	tt.Test(t, tt.Fn("Len", Len), tt.Table{
+	tt.Test(t, Len,
 		Args("foobar").Rets(6),
 		Args(10).Rets(-1),
-	})
+	)
 }

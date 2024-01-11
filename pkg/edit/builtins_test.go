@@ -334,27 +334,28 @@ func TestBuiltins_FocusedWidgetNotCodeArea(t *testing.T) {
 // Tests for pure movers.
 
 func TestMoveDotLeftRight(t *testing.T) {
-	tt.Test(t, tt.Fn("moveDotLeft", moveDotLeft), tt.Table{
+	tt.Test(t, moveDotLeft,
 		Args("foo", 0).Rets(0),
 		Args("bar", 3).Rets(2),
 		Args("精灵", 0).Rets(0),
 		Args("精灵", 3).Rets(0),
 		Args("精灵", 6).Rets(3),
-	})
-	tt.Test(t, tt.Fn("moveDotRight", moveDotRight), tt.Table{
+	)
+
+	tt.Test(t, moveDotRight,
 		Args("foo", 0).Rets(1),
 		Args("bar", 3).Rets(3),
 		Args("精灵", 0).Rets(3),
 		Args("精灵", 3).Rets(6),
 		Args("精灵", 6).Rets(6),
-	})
+	)
 }
 
 func TestMoveDotSOLEOL(t *testing.T) {
 	buffer := "abc\ndef"
 	// Index:
 	//         012 34567
-	tt.Test(t, tt.Fn("moveDotSOL", moveDotSOL), tt.Table{
+	tt.Test(t, moveDotSOL,
 		Args(buffer, 0).Rets(0),
 		Args(buffer, 1).Rets(0),
 		Args(buffer, 2).Rets(0),
@@ -363,8 +364,8 @@ func TestMoveDotSOLEOL(t *testing.T) {
 		Args(buffer, 5).Rets(4),
 		Args(buffer, 6).Rets(4),
 		Args(buffer, 7).Rets(4),
-	})
-	tt.Test(t, tt.Fn("moveDotEOL", moveDotEOL), tt.Table{
+	)
+	tt.Test(t, moveDotEOL,
 		Args(buffer, 0).Rets(3),
 		Args(buffer, 1).Rets(3),
 		Args(buffer, 2).Rets(3),
@@ -373,7 +374,7 @@ func TestMoveDotSOLEOL(t *testing.T) {
 		Args(buffer, 5).Rets(7),
 		Args(buffer, 6).Rets(7),
 		Args(buffer, 7).Rets(7),
-	})
+	)
 }
 
 func TestMoveDotUpDown(t *testing.T) {
@@ -382,7 +383,7 @@ func TestMoveDotUpDown(t *testing.T) {
 	//         012 34 7 0  34567
 	// + 10 *  0        1
 
-	tt.Test(t, tt.Fn("moveDotUp", moveDotUp), tt.Table{
+	tt.Test(t, moveDotUp,
 		Args(buffer, 0).Rets(0),  // a -> a
 		Args(buffer, 1).Rets(1),  // b -> b
 		Args(buffer, 2).Rets(2),  // c -> c
@@ -395,9 +396,9 @@ func TestMoveDotUpDown(t *testing.T) {
 		Args(buffer, 15).Rets(4), // e -> 精 (jump left half width)
 		Args(buffer, 16).Rets(7), // f -> 灵
 		Args(buffer, 17).Rets(7), // EOL3 -> 灵 (jump left half width)
-	})
+	)
 
-	tt.Test(t, tt.Fn("moveDotDown", moveDotDown), tt.Table{
+	tt.Test(t, moveDotDown,
 		Args(buffer, 0).Rets(4),   // a -> 精
 		Args(buffer, 1).Rets(4),   // b -> 精 (jump left half width)
 		Args(buffer, 2).Rets(7),   // c -> 灵
@@ -410,7 +411,7 @@ func TestMoveDotUpDown(t *testing.T) {
 		Args(buffer, 15).Rets(15), // e -> e
 		Args(buffer, 16).Rets(16), // f -> f
 		Args(buffer, 17).Rets(17), // EOL3 -> EOL3
-	})
+	)
 }
 
 // Word movement tests.
@@ -437,7 +438,7 @@ var wordMoveTestBuffer = "cd ~/downloads; rm -rf 2018aug07-pics/*;"
 
 var (
 	// word boundaries: 0 3 16 19 23
-	moveDotLeftWordTests = tt.Table{
+	moveDotLeftWordTests = []*tt.Case{
 		Args(wordMoveTestBuffer, 0).Rets(0),
 		Args(wordMoveTestBuffer, 1).Rets(0),
 		Args(wordMoveTestBuffer, 2).Rets(0),
@@ -448,7 +449,7 @@ var (
 		Args(wordMoveTestBuffer, 23).Rets(19),
 		Args(wordMoveTestBuffer, 40).Rets(23),
 	}
-	moveDotRightWordTests = tt.Table{
+	moveDotRightWordTests = []*tt.Case{
 		Args(wordMoveTestBuffer, 0).Rets(3),
 		Args(wordMoveTestBuffer, 1).Rets(3),
 		Args(wordMoveTestBuffer, 2).Rets(3),
@@ -459,7 +460,7 @@ var (
 	}
 
 	// small-word boundaries: 0 3 5 14 16 19 20 23 32 33 37
-	moveDotLeftSmallWordTests = tt.Table{
+	moveDotLeftSmallWordTests = []*tt.Case{
 		Args(wordMoveTestBuffer, 0).Rets(0),
 		Args(wordMoveTestBuffer, 1).Rets(0),
 		Args(wordMoveTestBuffer, 2).Rets(0),
@@ -476,7 +477,7 @@ var (
 		Args(wordMoveTestBuffer, 37).Rets(33),
 		Args(wordMoveTestBuffer, 40).Rets(37),
 	}
-	moveDotRightSmallWordTests = tt.Table{
+	moveDotRightSmallWordTests = []*tt.Case{
 		Args(wordMoveTestBuffer, 0).Rets(3),
 		Args(wordMoveTestBuffer, 1).Rets(3),
 		Args(wordMoveTestBuffer, 2).Rets(3),
@@ -493,7 +494,7 @@ var (
 	}
 
 	// alnum-word boundaries: 0 5 16 20 23 33
-	moveDotLeftAlnumWordTests = tt.Table{
+	moveDotLeftAlnumWordTests = []*tt.Case{
 		Args(wordMoveTestBuffer, 0).Rets(0),
 		Args(wordMoveTestBuffer, 1).Rets(0),
 		Args(wordMoveTestBuffer, 2).Rets(0),
@@ -507,7 +508,7 @@ var (
 		Args(wordMoveTestBuffer, 33).Rets(23),
 		Args(wordMoveTestBuffer, 40).Rets(33),
 	}
-	moveDotRightAlnumWordTests = tt.Table{
+	moveDotRightAlnumWordTests = []*tt.Case{
 		Args(wordMoveTestBuffer, 0).Rets(5),
 		Args(wordMoveTestBuffer, 1).Rets(5),
 		Args(wordMoveTestBuffer, 2).Rets(5),
@@ -522,28 +523,16 @@ var (
 )
 
 func TestMoveDotWord(t *testing.T) {
-	tt.Test(t, tt.Fn("moveDotLeftWord", moveDotLeftWord), moveDotLeftWordTests)
-	tt.Test(t, tt.Fn("moveDotRightWord", moveDotRightWord), moveDotRightWordTests)
+	tt.Test(t, moveDotLeftWord, moveDotLeftWordTests...)
+	tt.Test(t, moveDotRightWord, moveDotRightWordTests...)
 }
 
 func TestMoveDotSmallWord(t *testing.T) {
-	tt.Test(t,
-		tt.Fn("moveDotLeftSmallWord", moveDotLeftSmallWord),
-		moveDotLeftSmallWordTests,
-	)
-	tt.Test(t,
-		tt.Fn("moveDotRightSmallWord", moveDotRightSmallWord),
-		moveDotRightSmallWordTests,
-	)
+	tt.Test(t, moveDotLeftSmallWord, moveDotLeftSmallWordTests...)
+	tt.Test(t, moveDotRightSmallWord, moveDotRightSmallWordTests...)
 }
 
 func TestMoveDotAlnumWord(t *testing.T) {
-	tt.Test(t,
-		tt.Fn("moveDotLeftAlnumWord", moveDotLeftAlnumWord),
-		moveDotLeftAlnumWordTests,
-	)
-	tt.Test(t,
-		tt.Fn("moveDotRightAlnumWord", moveDotRightAlnumWord),
-		moveDotRightAlnumWordTests,
-	)
+	tt.Test(t, moveDotLeftAlnumWord, moveDotLeftAlnumWordTests...)
+	tt.Test(t, moveDotRightAlnumWord, moveDotRightAlnumWordTests...)
 }

@@ -506,7 +506,7 @@ func TestCodeAreaState_ApplyPending(t *testing.T) {
 		s.ApplyPending()
 		return s
 	}
-	tt.Test(t, tt.Fn("applyPending", applyPending), tt.Table{
+	tt.Test(t, applyPending,
 		Args(CodeAreaState{Buffer: CodeBuffer{}, Pending: PendingCode{0, 0, "ls"}}).
 			Rets(CodeAreaState{Buffer: CodeBuffer{Content: "ls", Dot: 2}, Pending: PendingCode{}}),
 		Args(CodeAreaState{Buffer: CodeBuffer{"x", 1}, Pending: PendingCode{0, 0, "ls"}}).
@@ -517,5 +517,5 @@ func TestCodeAreaState_ApplyPending(t *testing.T) {
 		// HideRPrompt is kept intact.
 		Args(CodeAreaState{Buffer: CodeBuffer{"x", 1}, HideRPrompt: true}).
 			Rets(CodeAreaState{Buffer: CodeBuffer{Content: "x", Dot: 1}, HideRPrompt: true}),
-	})
+	)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetVerticalWindow(t *testing.T) {
-	tt.Test(t, tt.Fn("getVerticalWindow", getVerticalWindow), tt.Table{
+	tt.Test(t, getVerticalWindow,
 		// selected = 0: always show a widow starting from 0, regardless of
 		// the value of oldFirst
 		Args(ListBoxState{Items: TestItems{NItems: 10}, Selected: 0, First: 0}, 6).Rets(0, 0),
@@ -35,11 +35,11 @@ func TestGetVerticalWindow(t *testing.T) {
 		// There is just enough distance to fit the selected item. Only show the
 		// selected item.
 		Args(ListBoxState{Items: TestItems{NItems: 10}, Selected: 2, First: 0}, 1).Rets(2, 0),
-	})
+	)
 }
 
 func TestGetHorizontalWindow(t *testing.T) {
-	tt.Test(t, tt.Fn("getHorizontalWindow", getHorizontalWindow), tt.Table{
+	tt.Test(t, getHorizontalWindow,
 		// All items fit in a single column. Item width is 6 ("item 0").
 		Args(ListBoxState{Items: TestItems{NItems: 10}, Selected: 4, First: 0}, 0, 6, 10).Rets(0, 10),
 		// All items fit in multiple columns. Item width is 2 ("x0").
@@ -77,5 +77,5 @@ func TestGetHorizontalWindow(t *testing.T) {
 		Args(ListBoxState{Items: TestItems{Prefix: "x", NItems: 20}, Selected: 10, First: 10}, 0, 8, 6).Rets(10, 5),
 		// First = 12. Ditto.
 		Args(ListBoxState{Items: TestItems{Prefix: "x", NItems: 20}, Selected: 10, First: 12}, 0, 8, 6).Rets(10, 5),
-	})
+	)
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func TestStyleText(t *testing.T) {
-	tt.Test(t, tt.Fn("StyleText", StyleText), tt.Table{
+	tt.Test(t, StyleText,
 		// Foreground color
 		Args(T("foo"), FgRed).
 			Rets(Text{&Segment{Style{Fg: Red}, "foo"}}),
@@ -61,7 +61,7 @@ func TestStyleText(t *testing.T) {
 		Args(T("foo"), Inverse).
 			Rets(Text{&Segment{Style{Inverse: true}, "foo"}}),
 		// TODO: Test nil styling.
-	})
+	)
 }
 
 var parseStylingTests = []struct {

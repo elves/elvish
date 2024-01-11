@@ -49,10 +49,10 @@ func TestClosureAsValue(t *testing.T) {
 }
 
 func TestUnsupportedOptionsError(t *testing.T) {
-	tt.Test(t, tt.Fn("Error", error.Error), tt.Table{
-		tt.Args(eval.UnsupportedOptionsError{[]string{"sole-opt"}}).Rets(
-			"unsupported option: sole-opt"),
-		tt.Args(eval.UnsupportedOptionsError{[]string{"opt-foo", "opt-bar"}}).Rets(
-			"unsupported options: opt-foo, opt-bar"),
-	})
+	tt.Test(t, error.Error,
+		tt.Args(eval.UnsupportedOptionsError{[]string{"sole-opt"}}).
+			Rets("unsupported option: sole-opt"),
+		tt.Args(eval.UnsupportedOptionsError{[]string{"opt-foo", "opt-bar"}}).
+			Rets("unsupported options: opt-foo, opt-bar"),
+	)
 }

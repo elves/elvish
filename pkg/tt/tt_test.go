@@ -6,16 +6,6 @@ import (
 	"testing"
 )
 
-// testT implements the T interface and is used to verify the Test function's
-// interaction with T.
-type testT []string
-
-func (t *testT) Helper() {}
-
-func (t *testT) Errorf(format string, args ...any) {
-	*t = append(*t, fmt.Sprintf(format, args...))
-}
-
 // Simple functions to test.
 
 func add(x, y int) int {
@@ -26,54 +16,86 @@ func addsub(x int, y int) (int, int) {
 	return x + y, x - y
 }
 
-func TestTTPass(t *testing.T) {
-	var testT testT
-	Test(&testT, Fn("addsub", addsub), Table{
-		Args(1, 10).Rets(11, -9),
-	})
-	if len(testT) > 0 {
-		t.Errorf("Test errors when test should pass")
+func TestTest(t *testing.T) {
+	Test(t, test,
+		It("reports no errors for passing tests").
+			Args(add, Args(1, 1).Rets(2)).
+			Rets([]testResult{{"", nil}}),
+		It("supports multiple tests").
+			Args(add, Args(1, 1).Rets(2), Args(1, 2).Rets(3)),
+		It("supports for multiple return values").
+			Args(addsub, Args(1, 2).Rets(3, -1)).
+			Rets([]testResult{{"", nil}}),
+		It("supports named tests").
+			Args(add, It("can add 1 and 1").Args(1, 1).Rets(2)).
+			Rets([]testResult{{"can add 1 and 1", nil}}),
+
+		It("reports error for failed test").
+			Args(Fn(add).Named("add"), Args(2, 2).Rets(5)).
+			Rets(testResultsMatcher{
+				{"", []string{"add(2, 2) returns (-want +got):\n"}},
+			}),
+		It("respects custom argument format strings when reporting errors").
+			Args(Fn(add).Named("add").ArgsFmt("x = %d, y = %d"), Args(1, 2).Rets(5)).
+			Rets(testResultsMatcher{
+				{"", []string{"add(x = 1, y = 2) returns (-want +got):\n"}},
+			}),
+	)
+}
+
+// An alternative to the exported [Test] that uses a mock test runner that
+// collects results from all the subtests.
+func test(fn any, tests ...*Case) []testResult {
+	var tr mockTestRunner
+	testInner[*mockSubtestRunner](&tr, fn, tests...)
+	return tr
+}
+
+// Mock implementations of testRunner and subtestRunner.
+
+type testResult struct {
+	Name   string
+	Errors []string
+}
+
+type mockTestRunner []testResult
+
+func (tr *mockTestRunner) Helper() {}
+
+func (tr *mockTestRunner) Run(name string, f func(*mockSubtestRunner)) bool {
+	sr := mockSubtestRunner{name, nil}
+	f(&sr)
+	*tr = append(*tr, testResult(sr))
+	return len(sr.Errors) == 0
+}
+
+type mockSubtestRunner testResult
+
+func (sr *mockSubtestRunner) Errorf(format string, args ...any) {
+	sr.Errors = append(sr.Errors, fmt.Sprintf(format, args...))
+}
+
+// Matches []testResult, but doesn't check the exact content of the error
+// messages, only that they start with a corresponding prefix.
+type testResultsMatcher []testResult
+
+func (m testResultsMatcher) Match(ret RetValue) bool {
+	results, ok := ret.([]testResult)
+	if !ok {
+		return false
 	}
-}
-
-func TestTTFailDefaultFmtOneReturn(t *testing.T) {
-	var testT testT
-	Test(&testT,
-		Fn("add", add),
-		Table{Args(1, 10).Rets(12)},
-	)
-	assertOneError(t, testT, "add(1, 10) returns (-want +got):\n")
-}
-
-func TestTTFailDefaultFmtMultiReturn(t *testing.T) {
-	var testT testT
-	Test(&testT,
-		Fn("addsub", addsub),
-		Table{Args(1, 10).Rets(11, -90)},
-	)
-	assertOneError(t, testT, "addsub(1, 10) returns (-want +got):\n")
-}
-
-func TestTTFailCustomFmt(t *testing.T) {
-	var testT testT
-	Test(&testT,
-		Fn("addsub", addsub).ArgsFmt("x = %d, y = %d").RetsFmt("(a = %d, b = %d)"),
-		Table{Args(1, 10).Rets(11, -90)},
-	)
-	assertOneError(t, testT,
-		"addsub(x = 1, y = 10) returns (-want +got):\n")
-}
-
-func assertOneError(t *testing.T, testT testT, wantPrefix string) {
-	t.Helper()
-	switch len(testT) {
-	case 0:
-		t.Errorf("Test didn't error when it should")
-	case 1:
-		if !strings.HasPrefix(testT[0], wantPrefix) {
-			t.Errorf("Test wrote message:\ngot:  %q\nwant: %q...", testT[0], wantPrefix)
+	if len(results) != len(m) {
+		return false
+	}
+	for i, result := range results {
+		if result.Name != m[i].Name || len(result.Errors) != len(m[i].Errors) {
+			return false
 		}
-	default:
-		t.Errorf("Test wrote too many error messages")
+		for i, s := range result.Errors {
+			if !strings.HasPrefix(s, m[i].Errors[i]) {
+				return false
+			}
+		}
 	}
+	return true
 }

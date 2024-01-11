@@ -90,7 +90,7 @@ func TestMakeHasCommand(t *testing.T) {
 	mustMkdirAll("a/b/c")
 	mustMkExecutable("a/b/c/executable")
 
-	tt.Test(t, tt.Fn("hasCommand", hasCommand), tt.Table{
+	tt.Test(t, hasCommand,
 		// Builtin special form
 		Args(ev, "if").Rets(true),
 
@@ -124,7 +124,7 @@ func TestMakeHasCommand(t *testing.T) {
 		// Non-existent
 		Args(ev, "bad").Rets(false),
 		Args(ev, "a:").Rets(false),
-	})
+	)
 }
 
 func mustMkdirAll(path string) {

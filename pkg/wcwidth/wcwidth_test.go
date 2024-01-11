@@ -9,7 +9,7 @@ import (
 var Args = tt.Args
 
 func TestOf(t *testing.T) {
-	tt.Test(t, tt.Fn("Of", Of), tt.Table{
+	tt.Test(t, Of,
 		Args("\u0301").Rets(0), // Combining acute accent
 		Args("a").Rets(1),
 		Args("Ω").Rets(1),
@@ -18,7 +18,7 @@ func TestOf(t *testing.T) {
 
 		Args("abc").Rets(3),
 		Args("你好").Rets(4),
-	})
+	)
 }
 
 func TestOverride(t *testing.T) {
@@ -50,7 +50,7 @@ func TestConcurrentOverride(t *testing.T) {
 }
 
 func TestTrim(t *testing.T) {
-	tt.Test(t, tt.Fn("Trim", Trim), tt.Table{
+	tt.Test(t, Trim,
 		Args("abc", 1).Rets("a"),
 		Args("abc", 2).Rets("ab"),
 		Args("abc", 3).Rets("abc"),
@@ -61,11 +61,11 @@ func TestTrim(t *testing.T) {
 		Args("你好", 3).Rets("你"),
 		Args("你好", 4).Rets("你好"),
 		Args("你好", 5).Rets("你好"),
-	})
+	)
 }
 
 func TestForce(t *testing.T) {
-	tt.Test(t, tt.Fn("Force", Force), tt.Table{
+	tt.Test(t, Force,
 		// Trimming
 		Args("abc", 2).Rets("ab"),
 		Args("你好", 2).Rets("你"),
@@ -74,11 +74,11 @@ func TestForce(t *testing.T) {
 		Args("你好", 5).Rets("你好 "),
 		// Trimming and Padding
 		Args("你好", 3).Rets("你 "),
-	})
+	)
 }
 
 func TestTrimEachLine(t *testing.T) {
-	tt.Test(t, tt.Fn("TrimEachLine", TrimEachLine), tt.Table{
+	tt.Test(t, TrimEachLine,
 		Args("abcdefg\n你好", 3).Rets("abc\n你"),
-	})
+	)
 }

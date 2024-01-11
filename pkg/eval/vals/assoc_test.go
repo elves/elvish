@@ -17,7 +17,7 @@ func (a customAssocer) Assoc(k, v any) (any, error) {
 }
 
 func TestAssoc(t *testing.T) {
-	tt.Test(t, tt.Fn("Assoc", Assoc), tt.Table{
+	tt.Test(t, Assoc,
 		// String
 		Args("0123", "0", "foo").Rets("foo123", nil),
 		Args("0123", "1..3", "bar").Rets("0bar3", nil),
@@ -49,5 +49,5 @@ func TestAssoc(t *testing.T) {
 		Args(customAssocer{}, "x", "y").Rets("custom result", errCustomAssoc),
 
 		Args(struct{}{}, "x", "y").Rets(nil, errAssocUnsupported),
-	})
+	)
 }

@@ -9,17 +9,17 @@ import (
 )
 
 func TestT(t *testing.T) {
-	tt.Test(t, tt.Fn("T", T), tt.Table{
+	tt.Test(t, T,
 		Args("test").Rets(Text{&Segment{Text: "test"}}),
 		Args("test red", FgRed).Rets(Text{&Segment{
 			Text: "test red", Style: Style{Fg: Red}}}),
 		Args("test red", FgRed, Bold).Rets(Text{&Segment{
 			Text: "test red", Style: Style{Fg: Red, Bold: true}}}),
-	})
+	)
 }
 
 func TestConcat(t *testing.T) {
-	tt.Test(t, tt.Fn("Concat", Concat), tt.Table{
+	tt.Test(t, Concat,
 		Args().Rets(Text(nil)),
 		Args(T("red", FgRed), T("blue", FgBlue), T("green", FgGreen)).
 			Rets(Text{red("red"), blue("blue"), green("green")}),
@@ -31,7 +31,7 @@ func TestConcat(t *testing.T) {
 			Rets(Text{red("red"), blue("blueblue"), green("green")}),
 		// Concatenating empty texts
 		Args(T(""), T("red", FgRed), T("")).Rets(T("red", FgRed)),
-	})
+	)
 }
 
 func TestTextAsElvishValue(t *testing.T) {
@@ -57,7 +57,7 @@ var (
 	text2 = Text{red("lorem"), blue("foobar")}
 )
 
-var partitionTests = tt.Table{
+var partitionTests = []*tt.Case{
 	Args(text0).Rets([]Text{nil}),
 	Args(text1).Rets([]Text{text1}),
 	Args(text1, 0).Rets([]Text{nil, text1}),
@@ -85,30 +85,30 @@ var partitionTests = tt.Table{
 }
 
 func TestPartition(t *testing.T) {
-	tt.Test(t, tt.Fn("Text.Partition", Text.Partition), partitionTests)
+	tt.Test(t, tt.Fn(Text.Partition).Named("Text.Partition"), partitionTests...)
 }
 
 func TestCountRune(t *testing.T) {
 	text := Text{red("lorem"), blue("ipsum")}
-	tt.Test(t, tt.Fn("Text.CountRune", Text.CountRune), tt.Table{
+	tt.Test(t, tt.Fn(Text.CountRune).Named("Text.CountRune"),
 		Args(text, 'l').Rets(1),
 		Args(text, 'i').Rets(1),
 		Args(text, 'm').Rets(2),
 		Args(text, '\n').Rets(0),
-	})
+	)
 }
 
 func TestCountLines(t *testing.T) {
-	tt.Test(t, tt.Fn("Text.CountLines", Text.CountLines), tt.Table{
+	tt.Test(t, tt.Fn(Text.CountLines).Named("Text.CountLines"),
 		Args(Text{red("lorem")}).Rets(1),
 		Args(Text{red("lorem"), blue("ipsum")}).Rets(1),
 		Args(Text{red("lor\nem"), blue("ipsum")}).Rets(2),
 		Args(Text{red("lor\nem"), blue("ip\nsum")}).Rets(3),
-	})
+	)
 }
 
 func TestSplitByRune(t *testing.T) {
-	tt.Test(t, tt.Fn("Text.SplitByRune", Text.SplitByRune), tt.Table{
+	tt.Test(t, tt.Fn(Text.SplitByRune).Named("Text.SplitByRune"),
 		Args(Text{}, '\n').Rets([]Text(nil)),
 		Args(Text{red("lorem")}, '\n').Rets([]Text{{red("lorem")}}),
 		Args(Text{red("lorem"), blue("ipsum"), red("dolar")}, '\n').Rets(
@@ -141,11 +141,11 @@ func TestSplitByRune(t *testing.T) {
 				{red("lorem")},
 				nil,
 			}),
-	})
+	)
 }
 
 func TestTrimWcwidth(t *testing.T) {
-	tt.Test(t, tt.Fn("Text.TrimWcwidth", Text.TrimWcwidth), tt.Table{
+	tt.Test(t, tt.Fn(Text.TrimWcwidth).Named("Text.TrimWcwidth"),
 		Args(Text{}, 1).Rets(Text(nil)),
 		Args(Text{red("lorem")}, 3).Rets(Text{red("lor")}),
 		Args(Text{red("lorem"), blue("ipsum")}, 6).Rets(
@@ -153,7 +153,7 @@ func TestTrimWcwidth(t *testing.T) {
 		Args(Text{red("你好")}, 3).Rets(Text{red("你")}),
 		Args(Text{red("你好"), blue("精灵语"), red("x")}, 7).Rets(
 			Text{red("你好"), blue("精")}),
-	})
+	)
 }
 
 type textVTStringTest struct {

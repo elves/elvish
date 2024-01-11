@@ -7,7 +7,7 @@ import (
 )
 
 func TestQuote(t *testing.T) {
-	tt.Test(t, tt.Fn("Quote", Quote).ArgsFmt("(%q)"), tt.Table{
+	tt.Test(t, tt.Fn(Quote).ArgsFmt("(%q)"),
 		// Empty string is single-quoted.
 		Args("").Rets(`''`),
 
@@ -43,11 +43,11 @@ func TestQuote(t *testing.T) {
 
 		// Double quote strings containing invalid UTF-8 sequences with \x.
 		Args("bad\xffUTF-8").Rets(`"bad\xffUTF-8"`),
-	})
+	)
 }
 
 func TestQuoteAs(t *testing.T) {
-	tt.Test(t, tt.Fn("QuoteAs", QuoteAs).ArgsFmt("(%q, %s)"), tt.Table{
+	tt.Test(t, tt.Fn(QuoteAs).ArgsFmt("(%q, %s)"),
 		// DoubleQuote is always respected.
 		Args("", DoubleQuoted).Rets(`""`, DoubleQuoted),
 		Args("a", DoubleQuoted).Rets(`"a"`, DoubleQuoted),
@@ -58,16 +58,16 @@ func TestQuoteAs(t *testing.T) {
 		Args("\n", SingleQuoted).Rets(`"\n"`, DoubleQuoted),
 
 		// Bareword tested above in TestQuote.
-	})
+	)
 }
 
 func TestQuoteVariableName(t *testing.T) {
-	tt.Test(t, tt.Fn("QuoteVariableName", QuoteVariableName).ArgsFmt("(%q)"), tt.Table{
+	tt.Test(t, tt.Fn(QuoteVariableName).ArgsFmt("(%q)"),
 		Args("").Rets("''"),
 		Args("foo").Rets("foo"),
 		Args("a/b").Rets("'a/b'"),
 		Args("\x1b").Rets(`"\e"`),
 		Args("bad\xffUTF-8").Rets(`"bad\xffUTF-8"`),
 		Args("$\n").Rets(`"$\n"`),
-	})
+	)
 }

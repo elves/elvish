@@ -11,7 +11,7 @@ type hasKeyer struct{ key any }
 func (h hasKeyer) HasKey(k any) bool { return k == h.key }
 
 func TestHasKey(t *testing.T) {
-	tt.Test(t, tt.Fn("HasKey", HasKey), tt.Table{
+	tt.Test(t, HasKey,
 		// Map
 		Args(MakeMap("k", "v"), "k").Rets(true),
 		Args(MakeMap("k", "v"), "bad").Rets(false),
@@ -36,5 +36,5 @@ func TestHasKey(t *testing.T) {
 
 		// Non-container
 		Args(1, "0").Rets(false),
-	})
+	)
 }

@@ -11,7 +11,7 @@ import (
 type xtype int
 
 func TestKind(t *testing.T) {
-	tt.Test(t, tt.Fn("Kind", Kind), tt.Table{
+	tt.Test(t, Kind,
 		Args(nil).Rets("nil"),
 		Args(true).Rets("bool"),
 		Args("").Rets("string"),
@@ -24,5 +24,5 @@ func TestKind(t *testing.T) {
 		Args(EmptyMap).Rets("map"),
 		Args(xtype(0)).Rets("!!vals.xtype"),
 		Args(os.Stdin).Rets("file"),
-	})
+	)
 }

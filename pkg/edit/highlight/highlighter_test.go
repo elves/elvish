@@ -31,7 +31,7 @@ func TestHighlighter_HighlightRegions(t *testing.T) {
 		HasCommand: func(name string) bool { return name == "ls" },
 	})
 
-	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
+	tt.Test(t, tt.Fn(hl.Get).Named("hl.Get"),
 		Args("ls").Rets(
 			ui.MarkLines(
 				"ls", styles,
@@ -56,12 +56,12 @@ func TestHighlighter_HighlightRegions(t *testing.T) {
 				" $$"),
 			noTips,
 		),
-	})
+	)
 }
 
 func TestHighlighter_ParseErrors(t *testing.T) {
 	hl := NewHighlighter(Config{})
-	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
+	tt.Test(t, tt.Fn(hl.Get).Named("hl.Get"),
 		// Parse error is highlighted and returned
 		Args("ls ]").Rets(
 			ui.MarkLines(
@@ -77,7 +77,7 @@ func TestHighlighter_ParseErrors(t *testing.T) {
 		// Errors at the end are ignored
 		Args("ls $").Rets(any, noTips),
 		Args("ls [").Rets(any, noTips),
-	})
+	)
 }
 
 func TestHighlighter_AutofixesAndCheckErrors(t *testing.T) {
@@ -91,7 +91,7 @@ func TestHighlighter_AutofixesAndCheckErrors(t *testing.T) {
 		AutofixTip: func(s string) ui.Text { return ui.T("autofix: " + s) },
 	})
 
-	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
+	tt.Test(t, tt.Fn(hl.Get).Named("hl.Get"),
 		// Check error is highlighted and returned
 		Args("ls $a").Rets(
 			ui.MarkLines(
@@ -116,7 +116,7 @@ func TestHighlighter_AutofixesAndCheckErrors(t *testing.T) {
 				"1:5",               // error
 				"autofix: use mod1", // autofix
 			)),
-	})
+	)
 }
 
 type c struct {
