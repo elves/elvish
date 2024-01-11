@@ -52,10 +52,10 @@ jobs:
         go test -race ./...
         cd website; go test -race ./...
     - name: Generate test coverage
-      if: !matrix.old-go
+      if: ${{ !matrix.old-go }}
       run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
     - name: Save test coverage
-      if: !matrix.old-go
+      if: ${{ !matrix.old-go }}
       uses: actions/upload-artifact@v3
       with:
         name: cover-${{ matrix.os == 'ubuntu' && 'linux' || matrix.os }}
