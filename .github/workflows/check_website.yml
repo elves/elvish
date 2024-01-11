@@ -47,8 +47,8 @@ jobs:
         path: |
           ~/go/pkg/mod
           ~/.cache/go-build
-        key: buildall/${{ matrix.os }}/1.20.x/${{ hashFiles('go.sum') }}/${{ github.sha }}
-        restore-keys: buildall/${{ matrix.os }}/1.20.x/${{ hashFiles('go.sum') }}
+        key: buildall/${{ hashFiles('go.sum') }}/${{ github.sha }}
+        restore-keys: buildall/${{ hashFiles('go.sum') }}
     - name: Set up Go
       uses: actions/setup-go@v3
       with:

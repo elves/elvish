@@ -16,10 +16,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu, macos, windows]
+        old-go: [false]
         go-version: [1.21.x]
         include:
           # Test old supported Go version
           - os: ubuntu
+            old-go: [true]
             go-version: 1.20.x
     env:
       ELVISH_TEST_TIME_SCALE: 20
@@ -49,19 +51,14 @@ jobs:
       run: |
         go test -race ./...
         cd website; go test -race ./...
-    - name: Set ostype to ${{ matrix.os }}
-      run: echo ostype=${{ matrix.os }} >> $GITHUB_ENV
-    - name: Set ostype to linux
-      if: matrix.os == 'ubuntu'
-      run: echo ostype=linux >> $GITHUB_ENV
     - name: Generate test coverage
-      if: matrix.go-version == '1.21.x'
+      if: !matrix.old-go
       run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
     - name: Save test coverage
-      if: matrix.go-version == '1.21.x'
+      if: !matrix.old-go
       uses: actions/upload-artifact@v3
       with:
-        name: cover-${{ env.ostype }}
+        name: cover-${{ matrix.os == 'ubuntu' && 'linux' || matrix.os }}
         path: cover
 
   # The purpose of running benchmarks in GitHub Actions is primarily to ensure
