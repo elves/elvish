@@ -12,7 +12,7 @@ import (
 func TestConvertEvent(t *testing.T) {
 	r1, r2 := utf16.EncodeRune('😀')
 
-	tt.Test(t, tt.Fn("convertEvent", convertEvent), tt.Table{
+	tt.Test(t, convertEvent,
 		// Only convert KeyEvent
 		Args(&ewindows.MouseEvent{}).Rets(nil),
 		// Only convert KeyDown events
@@ -40,7 +40,7 @@ func TestConvertEvent(t *testing.T) {
 
 		// Unrecognized functional key
 		Args(funcKeyEvent(0, 0)).Rets(nil),
-	})
+	)
 }
 
 func charKeyEvent(r uint16, mod uint32) *ewindows.KeyEvent {
