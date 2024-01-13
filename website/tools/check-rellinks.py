@@ -47,6 +47,13 @@ def main(args):
                 path = filename
             else:
                 if os.path.splitext(path)[1] == '':
+                    # Tell people who inadvertently append a trailing slash to
+                    # a URL not meant to refer to a index.html file they have
+                    # made a mistake.
+                    # See https://github.com/elves/elvish/issues/1749.
+                    if path.endswith(".html/"):
+                        print(f'WARNING: A trailing slash implies you are referring to {path}index.html.')
+                        print(f'WARNING: This is not what you want and the trailing slash should be removed.')
                     path += '/index.html'
                 if path.startswith('/'):
                     path = path.lstrip('/')
