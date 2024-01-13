@@ -42,7 +42,7 @@ All source files use the BSD 2-clause license (see [LICENSE](LICENSE)), except
 for the following:
 
 -   Files in [pkg/diff](pkg/diff) and [pkg/rpc](pkg/rpc) are released under the
-    BSD 3-clause license, since they are copied from
+    BSD 3-clause license, since they are derived from
     [Go's source code](https://github.com/golang/go). See
     [pkg/diff/LICENSE](pkg/diff/LICENSE) and [pkg/rpc/LICENSE](pkg/rpc/LICENSE).
 

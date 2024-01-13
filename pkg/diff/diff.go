@@ -43,18 +43,24 @@ type pair struct{ x, y int }
 // Second, the name is frequently interpreted as meaning that you have
 // to wait longer (to be patient) for the diff, meaning that it is a slower algorithm,
 // when in fact the algorithm is faster than the standard one.
-func Diff(oldName string, old []byte, newName string, new []byte) []byte {
-	if bytes.Equal(old, new) {
+func Diff(oldName, old, newName, new string) []byte {
+	if old == new {
 		return nil
 	}
-	x := lines(old)
-	y := lines(new)
-
 	// Print diff header.
 	var out bytes.Buffer
 	fmt.Fprintf(&out, "diff %s %s\n", oldName, newName)
 	fmt.Fprintf(&out, "--- %s\n", oldName)
 	fmt.Fprintf(&out, "+++ %s\n", newName)
+	out.Write(DiffNoHeader(old, new))
+	return out.Bytes()
+}
+
+func DiffNoHeader(old, new string) []byte {
+	x := lines(old)
+	y := lines(new)
+
+	var out bytes.Buffer
 
 	// Loop over matches to consider,
 	// expanding each match to include surrounding lines,
@@ -166,8 +172,8 @@ func Diff(oldName string, old []byte, newName string, new []byte) []byte {
 // lines returns the lines in the file x, including newlines.
 // If the file does not end in a newline, one is supplied
 // along with a warning about the missing newline.
-func lines(x []byte) []string {
-	l := strings.SplitAfter(string(x), "\n")
+func lines(x string) []string {
+	l := strings.SplitAfter(x, "\n")
 	if l[len(l)-1] == "" {
 		l = l[:len(l)-1]
 	} else {

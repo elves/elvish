@@ -40,9 +40,10 @@ func main() {
 		return
 	}
 	for _, file := range files {
-		text, err := os.ReadFile(file)
+		textBytes, err := os.ReadFile(file)
 		handleReadError(file, err)
-		result, unsupported := format(string(text))
+		text := string(textBytes)
+		result, unsupported := format(text)
 		handleUnsupported(file, unsupported)
 		if *overwrite {
 			err := os.WriteFile(file, []byte(result), 0644)
@@ -54,7 +55,7 @@ func main() {
 			fmt.Print(result)
 		}
 		if *showDiff {
-			os.Stdout.Write(diff.Diff(file+".orig", text, file, []byte(result)))
+			os.Stdout.Write(diff.Diff(file+".orig", text, file, result))
 		}
 	}
 }
