@@ -11,12 +11,16 @@ import (
 )
 
 func TestChmod(t *testing.T) {
+	// Note: On FreeBSD the /tmp directory is usually mounted with the "suiddir"
+	// option. This causes new directories, such as created by this unit test,
+	// to inherit the /tmp group owner. If the account running this unit test is
+	// not a member of that group (typically "wheel") you'll get test failures.
 	TestWithSetup(t, func(t *testing.T, ev *eval.Evaler) {
 		testutil.InTempDir(t)
 		useOS(ev)
 	},
-		That(`os:mkdir d; os:chmod 0o400 d; put (os:stat d)[perm]`).Puts(0o400),
-		That(`os:mkdir d; os:chmod &special-modes=[setuid setgid sticky] 0o400 d; put (os:stat d)[special-modes]`).
+		That(`os:mkdir d1; os:chmod 0o400 d1; put (os:stat d1)[perm]`).Puts(0o400),
+		That(`os:mkdir d2; os:chmod &special-modes=[setuid setgid sticky] 0o400 d2; put (os:stat d2)[special-modes]`).
 			Puts(vals.MakeList("setuid", "setgid", "sticky")),
 	)
 }
