@@ -1,3 +1,4 @@
+use os
 use path
 use re
 use str
@@ -6,7 +7,6 @@ use platform
 pragma unknown-command = disallow
 var dirname~ = $e:dirname~
 var mkdir~ = $e:mkdir~
-var rm~ = $e:rm~
 var git~ = $e:git~
 var rsync~ = $e:rsync~
 
@@ -241,7 +241,7 @@ fn -uninstall-package {|pkg|
   }
   var dest = (dest $pkg)
   -info "Removing package "$pkg
-  rm -rf $dest
+  os:remove-all $dest
 }
 
 ######################################################################
