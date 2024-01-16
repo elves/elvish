@@ -48,7 +48,7 @@ func ParseAs(src Source, n Node, cfg Config) error {
 	ps := &parser{srcName: src.Name, src: src.Code, warn: cfg.WarningWriter}
 	ps.parse(n)
 	ps.done()
-	return diag.PackCognateErrors(ps.errors)
+	return diag.PackErrors(ps.errors)
 }
 
 // Errors.

@@ -31,7 +31,7 @@ func TestHighlighter(t *testing.T) {
 	f.TestTTY(t,
 		"~> put $truex", Styles,
 		"   vvv ??????", term.DotHere, "\n",
-		"compilation error: [interactive]:1:5: variable $truex not found",
+		"compilation error: [interactive]:1:5-10: variable $truex not found",
 	)
 }
 
@@ -43,7 +43,7 @@ func TestHighlighter_Autofix(t *testing.T) {
 	f.TestTTY(t,
 		"~> put $mod1:", Styles,
 		"   vvv ??????", term.DotHere, "\n",
-		"compilation error: [interactive]:1:5: variable $mod1: not found\n",
+		"compilation error: [interactive]:1:5-10: variable $mod1: not found\n",
 		"Ctrl-A autofix: use mod1 Tab Enter autofix first", Styles,
 		"++++++                   +++ +++++",
 	)

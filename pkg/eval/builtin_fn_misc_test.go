@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"src.elv.sh/pkg/diag"
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/must"
 
@@ -61,7 +60,7 @@ func TestEval(t *testing.T) {
 		// Parse error.
 		That("eval '['").Throws(AnyParseError),
 		// Compilation error.
-		That("eval 'put $x'").Throws(ErrorWithType(&diag.Error{})),
+		That("eval 'put $x'").Throws(ErrorWithType(&CompilationError{})),
 		// Exception.
 		That("eval 'fail x'").Throws(FailError{"x"}),
 	)

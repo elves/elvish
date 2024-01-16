@@ -3,67 +3,114 @@ package diag
 import (
 	"fmt"
 	"strings"
-
-	"src.elv.sh/pkg/wcwidth"
 )
 
-// Context is a range of text in a source code. It is typically used for
-// errors that can be associated with a part of the source code, like parse
-// errors and a traceback entry.
+// Context stores information derived from a range in some text. It is used for
+// errors that point to a part of the source code, including parse errors,
+// compilation errors and a single traceback entry in an exception.
 //
 // Context values should only be constructed using [NewContext].
 type Context struct {
-	Name   string
-	Source string
+	Name string
 	Ranging
-
-	culprit culprit
+	// 1-based line and column numbers of the start position.
+	StartLine, StartCol int
+	// 1-based line and column numbers of the end position, inclusive. Note that
+	// if the range is zero-width, EndCol will be StartCol - 1.
+	EndLine, EndCol int
+	// The relevant text, text before its the first line and the text after its
+	// last line.
+	Body, Head, Tail string
 }
 
 // NewContext creates a new Context.
 func NewContext(name, source string, r Ranger) *Context {
 	rg := r.Range()
-	return &Context{name, source, rg, makeCulprit(source, rg)}
+	d := getContextDetails(source, rg)
+	return &Context{name, rg,
+		d.startLine, d.startCol, d.endLine, d.endCol, d.body, d.head, d.tail}
 }
 
-// Show shows a SourceContext.
+// Show shows the context.
+//
+// If the body has only one line, it returns one line like:
+//
+//	foo.elv:12:7-11: lorem ipsum
+//
+// If the body has multiple lines, it shows the body in an indented block:
+//
+//	foo.elv:12:1-13:5
+//	  lorem
+//	  ipsum
+//
+// The body is underlined.
 func (c *Context) Show(indent string) string {
-	return fmt.Sprintf("%s:%s:\n%s%s",
-		c.Name, c.culprit.describeStart(), indent+"  ", c.culprit.Show(indent+"  "))
+	rangeDesc := c.describeRange()
+	if c.StartLine == c.EndLine {
+		// Body has only one line, show it on the same line:
+		//
+		return fmt.Sprintf("%s: %s",
+			rangeDesc, showContextText(indent, c.Head, c.Body, c.Tail))
+	}
+	indent += "  "
+	return fmt.Sprintf("%s:\n%s%s",
+		rangeDesc, indent, showContextText(indent, c.Head, c.Body, c.Tail))
 }
 
-// ShowCompact shows a Context, with no line break between the culprit range
-// description and relevant source excerpt.
-func (c *Context) ShowCompact(indent string) string {
-	desc := fmt.Sprintf("%s:%s: ", c.Name, c.culprit.describeStart())
-	// Extra indent so that following lines line up with the first line.
-	descIndent := strings.Repeat(" ", wcwidth.Of(desc))
-	return desc + c.culprit.Show(indent+descIndent)
+func (c *Context) describeRange() string {
+	if c.StartLine == c.EndLine {
+		if c.EndCol < c.StartCol {
+			// Since EndCol is inclusive, zero-width ranges result in EndCol =
+			// StartCol - 1.
+			return fmt.Sprintf("%s:%d:%d", c.Name, c.StartLine, c.StartCol)
+		}
+		return fmt.Sprintf("%s:%d:%d-%d",
+			c.Name, c.StartLine, c.StartCol, c.EndCol)
+	}
+	return fmt.Sprintf("%s:%d:%d-%d:%d",
+		c.Name, c.StartLine, c.StartCol, c.EndLine, c.EndCol)
+}
+
+// Variables controlling the style of the culprit. Can be overridden in tests.
+var (
+	contextBodyStart = "\033[1;4m"
+	contextBodyEnd   = "\033[m"
+)
+
+func showContextText(indent, head, body, tail string) string {
+	var sb strings.Builder
+	sb.WriteString(head)
+
+	for i, line := range strings.Split(body, "\n") {
+		if i > 0 {
+			sb.WriteByte('\n')
+			sb.WriteString(indent)
+		}
+		sb.WriteString(contextBodyStart)
+		sb.WriteString(line)
+		sb.WriteString(contextBodyEnd)
+	}
+
+	sb.WriteString(tail)
+	return sb.String()
 }
 
 // Information about the lines that contain the culprit.
-type culprit struct {
-	// The actual culprit text.
-	Body string
-	// Text before Body on its first line.
-	Head string
-	// Text after Body on its last line.
-	Tail string
-	// 1-based line and column numbers of the start position.
-	StartLine, StartCol int
+type contextDetails struct {
+	startLine, startCol int
+	endLine, endCol     int
+	body, head, tail    string
 }
 
-func makeCulprit(source string, r Ranging) culprit {
+func getContextDetails(source string, r Ranging) contextDetails {
 	before := source[:r.From]
 	body := source[r.From:r.To]
 	after := source[r.To:]
 
 	head := lastLine(before)
-	fromLine := strings.Count(before, "\n") + 1
-	fromCol := 1 + wcwidth.Of(head)
 
-	// If the culprit ends with a newline, stripe it, and tail is empty.
-	// Otherwise, tail is nonempty.
+	// If the body ends with a newline, stripe it, and leave the tail empty.
+	// Otherwise, don't process the body and calculate the tail.
 	var tail string
 	if strings.HasSuffix(body, "\n") {
 		body = body[:len(body)-1]
@@ -71,41 +118,17 @@ func makeCulprit(source string, r Ranging) culprit {
 		tail = firstLine(after)
 	}
 
-	return culprit{body, head, tail, fromLine, fromCol}
-}
-
-// Variables controlling the style of the culprit.
-var (
-	culpritStart       = "\033[1;4m"
-	culpritEnd         = "\033[m"
-	culpritPlaceHolder = "^"
-)
-
-func (cl *culprit) describeStart() string {
-	return fmt.Sprintf("%d:%d", cl.StartLine, cl.StartCol)
-}
-
-func (cl *culprit) Show(indent string) string {
-	var sb strings.Builder
-	sb.WriteString(cl.Head)
-
-	body := cl.Body
-	if body == "" {
-		body = culpritPlaceHolder
+	startLine := strings.Count(before, "\n") + 1
+	startCol := 1 + len(head)
+	endLine := startLine + strings.Count(body, "\n")
+	var endCol int
+	if startLine == endLine {
+		endCol = startCol + len(body) - 1
+	} else {
+		endCol = len(lastLine(body))
 	}
 
-	for i, line := range strings.Split(body, "\n") {
-		if i > 0 {
-			sb.WriteByte('\n')
-			sb.WriteString(indent)
-		}
-		sb.WriteString(culpritStart)
-		sb.WriteString(line)
-		sb.WriteString(culpritEnd)
-	}
-
-	sb.WriteString(cl.Tail)
-	return sb.String()
+	return contextDetails{startLine, startCol, endLine, endCol, body, head, tail}
 }
 
 func firstLine(s string) string {

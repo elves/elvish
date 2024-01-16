@@ -58,7 +58,7 @@ func getStackTexts(tb *eval.StackTrace) []string {
 	texts := []string{}
 	for tb != nil {
 		ctx := tb.Head
-		texts = append(texts, ctx.Source[ctx.From:ctx.To])
+		texts = append(texts, ctx.Body)
 		tb = tb.Next
 	}
 	return texts

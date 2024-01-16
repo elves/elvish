@@ -16,11 +16,18 @@ import (
 
 func initHighlighter(appSpec *cli.AppSpec, ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	hl := highlight.NewHighlighter(highlight.Config{
-		Check: func(t parse.Tree) (string, []*diag.Error) {
+		Check: func(t parse.Tree) (string, []diag.RangeError) {
 			autofixes, err := ev.CheckTree(t, nil)
 			autofix := strings.Join(autofixes, "; ")
 			ed.autofix.Store(autofix)
-			return autofix, eval.UnpackCompilationErrors(err)
+
+			compErrors := eval.UnpackCompilationErrors(err)
+			rangeErrors := make([]diag.RangeError, len(compErrors))
+			for i, compErr := range compErrors {
+				rangeErrors[i] = compErr
+			}
+
+			return autofix, rangeErrors
 		},
 		HasCommand: func(cmd string) bool { return hasCommand(ev, cmd) },
 		AutofixTip: func(autofix string) ui.Text {

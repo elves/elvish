@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"src.elv.sh/pkg/diag"
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
@@ -540,7 +539,7 @@ func TestUse(t *testing.T) {
 
 		// Variables defined in the default global scope is invisible from
 		// modules
-		That("var x = foo; use put-x").Throws(ErrorWithType(&diag.Error{})),
+		That("var x = foo; use put-x").Throws(ErrorWithType(&CompilationError{})),
 
 		// Using an unknown module spec fails.
 		That("use unknown").Throws(ErrorWithType(NoSuchModule{})),

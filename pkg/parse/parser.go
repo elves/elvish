@@ -20,9 +20,17 @@ type parser struct {
 	src     string
 	pos     int
 	overEOF int
-	errors  []*diag.Error
+	errors  []*Error
 	warn    io.Writer
 }
+
+// Error is a parse error.
+type Error = diag.Error[ErrorTag]
+
+// ErrorTag parameterizes [diag.Error] to define [Error].
+type ErrorTag struct{}
+
+func (ErrorTag) ErrorTag() string { return "parse error" }
 
 func (ps *parser) parse(n Node) parsed {
 	begin := ps.pos
@@ -36,7 +44,7 @@ func (ps *parser) parse(n Node) parsed {
 type parserState struct {
 	pos     int
 	overEOF int
-	errors  []*diag.Error
+	errors  []*Error
 }
 
 func (ps *parser) save() parserState {
@@ -104,11 +112,9 @@ func (ps *parser) backup() {
 	ps.pos -= s
 }
 
-const errorType = "parse error"
-
 func (ps *parser) errorp(r diag.Ranger, e error) {
-	err := &diag.Error{
-		Type: errorType, Message: e.Error(),
+	err := &Error{
+		Message: e.Error(),
 		Context: *diag.NewContext(ps.srcName, ps.src, r)}
 	ps.errors = append(ps.errors, err)
 }
@@ -123,8 +129,8 @@ func (ps *parser) error(e error) {
 
 // UnpackErrors returns the constituent parse errors if the given error contains
 // one or more parse errors. Otherwise it returns nil.
-func UnpackErrors(e error) []*diag.Error {
-	if errs := diag.UnpackCognateErrors(e); len(errs) > 0 && errs[0].Type == errorType {
+func UnpackErrors(e error) []*Error {
+	if errs := diag.UnpackErrors[ErrorTag](e); len(errs) > 0 {
 		return errs
 	}
 	return nil

@@ -10,8 +10,7 @@ var sourceRangeTests = []struct {
 	Context *Context
 	Indent  string
 
-	WantShow        string
-	WantShowCompact string
+	WantShow string
 }{
 	{
 		Name:    "single-line culprit",
@@ -19,9 +18,7 @@ var sourceRangeTests = []struct {
 		Indent:  "_",
 
 		WantShow: dedent(`
-			[test]:1:6:
-			_  echo <(bad)>`),
-		WantShowCompact: "[test]:1:6: echo <(bad)>",
+			[test]:1:6-10: echo <(bad)>`),
 	},
 	{
 		Name:    "multi-line culprit",
@@ -29,12 +26,9 @@ var sourceRangeTests = []struct {
 		Indent:  "_",
 
 		WantShow: dedent(`
-			[test]:1:6:
+			[test]:1:6-2:4:
 			_  echo <(bad>
 			_  <bad)>`),
-		WantShowCompact: dedent(`
-			[test]:1:6: echo <(bad>
-			_            <bad)>`),
 	},
 	{
 		Name:    "trailing newline in culprit is removed",
@@ -42,18 +36,14 @@ var sourceRangeTests = []struct {
 		Indent:  "_",
 
 		WantShow: dedent(`
-			[test]:1:6:
-			_  echo <bad>`),
-		WantShowCompact: "[test]:1:6: echo <bad>",
+			[test]:1:6-8: echo <bad>`),
 	},
 	{
 		Name:    "empty culprit",
 		Context: NewContext("[test]", "echo x", Ranging{5, 5}),
 
 		WantShow: dedent(`
-			[test]:1:6:
-			  echo <^>x`),
-		WantShowCompact: "[test]:1:6: echo <^>x",
+			[test]:1:6: echo <>x`),
 	},
 }
 
@@ -64,11 +54,6 @@ func TestContext(t *testing.T) {
 			gotShow := test.Context.Show(test.Indent)
 			if gotShow != test.WantShow {
 				t.Errorf("Show() -> %q, want %q", gotShow, test.WantShow)
-			}
-			gotShowCompact := test.Context.ShowCompact(test.Indent)
-			if gotShowCompact != test.WantShowCompact {
-				t.Errorf("ShowCompact() -> %q, want %q",
-					gotShowCompact, test.WantShowCompact)
 			}
 		})
 	}

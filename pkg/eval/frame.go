@@ -274,7 +274,7 @@ func (fm *Frame) Deprecate(msg string, ctx *diag.Context, minLevel int) {
 		ctx = fm.traceback.Head
 	}
 	if fm.Evaler.registerDeprecation(deprecation{ctx.Name, ctx.Ranging, msg}) {
-		err := diag.Error{Type: "deprecation", Message: msg, Context: *ctx}
+		err := diag.Error[deprecationTag]{Message: msg, Context: *ctx}
 		fm.ErrorFile().WriteString(err.Show("") + "\n")
 	}
 }

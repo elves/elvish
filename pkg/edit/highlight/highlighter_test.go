@@ -84,9 +84,14 @@ func TestHighlighter_AutofixesAndCheckErrors(t *testing.T) {
 	ev := eval.NewEvaler()
 	ev.AddModule("mod1", &eval.Ns{})
 	hl := NewHighlighter(Config{
-		Check: func(t parse.Tree) (string, []*diag.Error) {
+		Check: func(t parse.Tree) (string, []diag.RangeError) {
 			autofixes, err := ev.CheckTree(t, nil)
-			return strings.Join(autofixes, "; "), eval.UnpackCompilationErrors(err)
+			compErrors := eval.UnpackCompilationErrors(err)
+			rangeErrors := make([]diag.RangeError, len(compErrors))
+			for i, compErr := range compErrors {
+				rangeErrors[i] = compErr
+			}
+			return strings.Join(autofixes, "; "), rangeErrors
 		},
 		AutofixTip: func(s string) ui.Text { return ui.T("autofix: " + s) },
 	})

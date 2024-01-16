@@ -32,7 +32,7 @@ type compiler struct {
 	// Information about the source.
 	srcMeta parse.Source
 	// Compilation errors.
-	errors []*diag.Error
+	errors []*CompilationError
 	// Suggested code to fix potential issues found during compilation.
 	autofixes []string
 }
@@ -49,7 +49,7 @@ func compile(b, g *staticNs, modules []string, tree parse.Tree, w io.Writer) (ns
 		modules,
 		w, newDeprecationRegistry(), tree.Source, nil, nil}
 	chunkOp := cp.chunkOp(tree.Root)
-	return nsOp{chunkOp, g}, cp.autofixes, diag.PackCognateErrors(cp.errors)
+	return nsOp{chunkOp, g}, cp.autofixes, diag.PackErrors(cp.errors)
 }
 
 type nsOp struct {
@@ -77,11 +77,15 @@ func (op nsOp) prepare(fm *Frame) (*Ns, func() Exception) {
 	return fm.local, func() Exception { return op.inner.exec(fm) }
 }
 
-const compilationErrorType = "compilation error"
+type CompilationError = diag.Error[CompilationErrorTag]
+
+// CompilationErrorTag parameterizes [diag.Error] to define [CompilationError].
+type CompilationErrorTag struct{}
+
+func (CompilationErrorTag) ErrorTag() string { return "compilation error" }
 
 func (cp *compiler) errorpf(r diag.Ranger, format string, args ...any) {
-	cp.errors = append(cp.errors, &diag.Error{
-		Type:    compilationErrorType,
+	cp.errors = append(cp.errors, &CompilationError{
 		Message: fmt.Sprintf(format, args...),
 		Context: *diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r)})
 }
@@ -89,8 +93,8 @@ func (cp *compiler) errorpf(r diag.Ranger, format string, args ...any) {
 // UnpackCompilationErrors returns the constituent compilation errors if the
 // given error contains one or more compilation errors. Otherwise it returns
 // nil.
-func UnpackCompilationErrors(e error) []*diag.Error {
-	if errs := diag.UnpackCognateErrors(e); len(errs) > 0 && errs[0].Type == compilationErrorType {
+func UnpackCompilationErrors(e error) []*CompilationError {
+	if errs := diag.UnpackErrors[CompilationErrorTag](e); len(errs) > 0 {
 		return errs
 	}
 	return nil
@@ -135,14 +139,18 @@ func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 	cp.deprecate(r, msg, minLevel)
 }
 
+type deprecationTag struct{}
+
+func (deprecationTag) ErrorTag() string { return "deprecation" }
+
 func (cp *compiler) deprecate(r diag.Ranger, msg string, minLevel int) {
 	if cp.warn == nil || r == nil {
 		return
 	}
 	dep := deprecation{cp.srcMeta.Name, r.Range(), msg}
 	if prog.DeprecationLevel >= minLevel && cp.deprecations.register(dep) {
-		err := diag.Error{
-			Type: "deprecation", Message: msg,
+		err := diag.Error[deprecationTag]{
+			Message: msg,
 			Context: *diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r.Range())}
 		fmt.Fprintln(cp.warn, err.Show(""))
 	}

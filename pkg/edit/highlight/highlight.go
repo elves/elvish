@@ -11,7 +11,7 @@ import (
 
 // Config keeps configuration for highlighting code.
 type Config struct {
-	Check      func(n parse.Tree) (string, []*diag.Error)
+	Check      func(n parse.Tree) (string, []diag.RangeError)
 	HasCommand func(name string) bool
 	AutofixTip func(autofix string) ui.Text
 }
@@ -31,11 +31,12 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []ui.Tex
 	var tips []ui.Text
 	var errorRegions []region
 
-	addDiagError := func(err *diag.Error) {
-		if err.Context.From < len(code) {
+	addDiagError := func(err diag.RangeError) {
+		r := err.Range()
+		if r.From < len(code) {
 			tips = append(tips, ui.T(err.Error()))
 			errorRegions = append(errorRegions, region{
-				err.Context.From, err.Context.To, semanticRegion, errorRegion})
+				r.From, r.To, semanticRegion, errorRegion})
 		}
 	}
 
