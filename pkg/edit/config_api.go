@@ -78,9 +78,7 @@ func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...any) {
 		name := fmt.Sprintf("%s[%d]", name, i)
 		fn, ok := it.Elem().(eval.Callable)
 		if !ok {
-			// TODO(xiaq): This is not testable as it depends on stderr.
-			// Make it testable.
-			diag.Complainf(os.Stderr, "%s not function", name)
+			complain("%s not function", name)
 			continue
 		}
 
@@ -102,15 +100,13 @@ func callFilters(ev *eval.Evaler, name string, filters vals.List, args ...any) b
 		name := fmt.Sprintf("%s[%d]", name, i)
 		fn, ok := it.Elem().(eval.Callable)
 		if !ok {
-			// TODO(xiaq): This is not testable as it depends on stderr.
-			// Make it testable.
-			diag.Complainf(os.Stderr, "%s not function", name)
+			complain("%s not function", name)
 			continue
 		}
 
 		port1, collect, err := eval.ValueCapturePort()
 		if err != nil {
-			diag.Complainf(os.Stderr, "cannot create pipe to run filter")
+			complain("cannot create pipe to run filter")
 			return true
 		}
 		err = ev.Call(fn, eval.CallCfg{Args: args, From: name},
@@ -119,16 +115,16 @@ func callFilters(ev *eval.Evaler, name string, filters vals.List, args ...any) b
 		out := collect()
 
 		if err != nil {
-			diag.Complainf(os.Stderr, "%s return error", name)
+			complain("%s return error", name)
 			continue
 		}
 		if len(out) != 1 {
-			diag.Complainf(os.Stderr, "filter %s should only return $true or $false", name)
+			complain("filter %s should only return $true or $false", name)
 			continue
 		}
 		p, ok := out[0].(bool)
 		if !ok {
-			diag.Complainf(os.Stderr, "filter %s should return bool", name)
+			complain("filter %s should return bool", name)
 			continue
 		}
 		if !p {
@@ -136,6 +132,11 @@ func callFilters(ev *eval.Evaler, name string, filters vals.List, args ...any) b
 		}
 	}
 	return true
+}
+
+// TODO: This is not testable as it depends on stderr. Make it testable.
+func complain(format string, args ...any) {
+	diag.ShowError(os.Stderr, fmt.Errorf(format, args...))
 }
 
 func newIntVar(i int) vars.PtrVar             { return vars.FromPtr(&i) }

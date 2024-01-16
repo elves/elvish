@@ -32,12 +32,3 @@ func TestShowError(t *testing.T) {
 		})
 	}
 }
-
-func TestComplainf(t *testing.T) {
-	var sb strings.Builder
-	Complainf(&sb, "error: %v", "detail")
-	want := "\033[31;1merror: detail\033[m\n"
-	if sb.String() != want {
-		t.Errorf("want %q, got %q", want, sb.String())
-	}
-}
