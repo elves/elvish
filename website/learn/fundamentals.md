@@ -51,7 +51,13 @@ switches, which usually do not contain spaces or special characters.
 
 ## Editing the command line
 
-TODO
+TODO: This requires a lot more detail.
+
+A starting point is to run `pprint $edit:insert:binding` to show the bindings
+for the normal insert mode. There are many more modes with their own bindings.
+See the [`edit`](../ref/edit.html) module documentation for more details. See
+also the [`readline-binding`](../ref/readline-binding.html) module that provides
+key bindings similar to the default bindings provided by Bash.
 
 ## Builtin and external commands
 
