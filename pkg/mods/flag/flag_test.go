@@ -21,6 +21,10 @@ func TestCall(t *testing.T) {
 		// Bad argument list
 		That("flag:call { } [(num 0)]").
 			Throws(ErrorWithMessage("wrong type: need string, got number")),
+		// Validate invalid default flag value raises an exception.
+		That("flag:call {|&f=$nil| } [-f 1]").
+			Throws(errs.BadValue{What: "flag default value",
+				Valid: "boolean, number, string or list", Actual: "$nil"}),
 		// More flag parsing logic is covered in TestParse
 	)
 

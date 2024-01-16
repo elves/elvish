@@ -30,7 +30,9 @@ func call(fm *eval.Frame, fn *eval.Closure, argsVal vals.List) error {
 	fs := newFlagSet("")
 	for i, name := range fn.OptNames {
 		value := fn.OptDefaults[i]
-		addFlag(fs, name, value, "")
+		if err := addFlag(fs, name, value, ""); err != nil {
+			return err
+		}
 	}
 	err = fs.Parse(args)
 	if err != nil {
