@@ -71,6 +71,11 @@ func (exc *exception) StackTrace() *StackTrace { return exc.stackTrace }
 // Error returns the message of the cause of the exception.
 func (exc *exception) Error() string { return exc.reason.Error() }
 
+var (
+	exceptionCauseStartMarker = "\033[31;1m"
+	exceptionCauseEndMarker   = "\033[m"
+)
+
 // Show shows the exception.
 func (exc *exception) Show(indent string) string {
 	buf := new(bytes.Buffer)
@@ -81,20 +86,14 @@ func (exc *exception) Show(indent string) string {
 	} else if exc.reason == nil {
 		causeDescription = "ok"
 	} else {
-		causeDescription = "\033[31;1m" + exc.reason.Error() + "\033[m"
+		causeDescription = exceptionCauseStartMarker + exc.reason.Error() + exceptionCauseEndMarker
 	}
 	fmt.Fprintf(buf, "Exception: %s", causeDescription)
 
 	if exc.stackTrace != nil {
-		buf.WriteString("\n")
-		if exc.stackTrace.Next == nil {
-			buf.WriteString(exc.stackTrace.Head.Show(indent))
-		} else {
-			buf.WriteString(indent + "Traceback:")
-			for tb := exc.stackTrace; tb != nil; tb = tb.Next {
-				buf.WriteString("\n" + indent + "  ")
-				buf.WriteString(tb.Head.Show(indent + "  "))
-			}
+		for tb := exc.stackTrace; tb != nil; tb = tb.Next {
+			buf.WriteString("\n" + indent + "  ")
+			buf.WriteString(tb.Head.Show(indent + "  "))
 		}
 	}
 

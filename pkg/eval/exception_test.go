@@ -9,6 +9,7 @@ import (
 
 	"src.elv.sh/pkg/diag"
 	. "src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/testutil"
 
 	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
@@ -42,6 +43,45 @@ func TestException(t *testing.T) {
 		Kind("exception").
 		Bool(true).
 		Repr("$ok")
+}
+
+func TestException_Show(t *testing.T) {
+	for _, p := range []*string{
+		ExceptionCauseStartMarker, ExceptionCauseEndMarker,
+		&diag.ContextBodyStartMarker, &diag.ContextBodyEndMarker} {
+
+		testutil.Set(t, p, "")
+	}
+
+	tt.Test(t, Exception.Show,
+		It("supports exceptions with one traceback frame").
+			Args(makeException(
+				errors.New("internal error"),
+				diag.NewContext("a.elv", "echo bad", diag.Ranging{From: 5, To: 8})), "").
+			Rets(Dedent(`
+				Exception: internal error
+				  a.elv:1:6-8: echo bad`)),
+
+		It("supports exceptions with multiple traceback frames").
+			Args(makeException(
+				errors.New("internal error"),
+				diag.NewContext("a.elv", "echo bad", diag.Ranging{From: 5, To: 8}),
+				diag.NewContext("b.elv", "use foo", diag.Ranging{From: 0, To: 7})), "").
+			Rets(Dedent(`
+				Exception: internal error
+				  a.elv:1:6-8: echo bad
+				  b.elv:1:1-7: use foo`)),
+
+		It("supports traceback frames with multi-line body text").
+			Args(makeException(
+				errors.New("internal error"),
+				diag.NewContext("a.elv", "echo ba\nd", diag.Ranging{From: 5, To: 9})), "").
+			Rets(Dedent(`
+				Exception: internal error
+				  a.elv:1:6-2:1:
+				    echo ba
+				    d`)),
+	)
 }
 
 func makeException(cause error, entries ...*diag.Context) Exception {

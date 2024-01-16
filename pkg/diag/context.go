@@ -71,10 +71,11 @@ func (c *Context) describeRange() string {
 		c.Name, c.StartLine, c.StartCol, c.EndLine, c.EndCol)
 }
 
-// Variables controlling the style of the culprit. Can be overridden in tests.
+// Variables controlling the style used in [*Context.Show]. Can be overridden in
+// tests.
 var (
-	contextBodyStart = "\033[1;4m"
-	contextBodyEnd   = "\033[m"
+	ContextBodyStartMarker = "\033[1;4m"
+	ContextBodyEndMarker   = "\033[m"
 )
 
 func showContextText(indent, head, body, tail string) string {
@@ -86,9 +87,9 @@ func showContextText(indent, head, body, tail string) string {
 			sb.WriteByte('\n')
 			sb.WriteString(indent)
 		}
-		sb.WriteString(contextBodyStart)
+		sb.WriteString(ContextBodyStartMarker)
 		sb.WriteString(line)
-		sb.WriteString(contextBodyEnd)
+		sb.WriteString(ContextBodyEndMarker)
 	}
 
 	sb.WriteString(tail)

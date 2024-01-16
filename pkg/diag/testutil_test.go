@@ -8,9 +8,9 @@ import (
 
 var dedent = testutil.Dedent
 
-func setCulpritMarkers(t *testing.T, start, end string) {
-	testutil.Set(t, &contextBodyStart, start)
-	testutil.Set(t, &contextBodyEnd, end)
+func setContextBodyMarkers(t *testing.T, start, end string) {
+	testutil.Set(t, &ContextBodyStartMarker, start)
+	testutil.Set(t, &ContextBodyEndMarker, end)
 }
 
 func setMessageMarkers(t *testing.T, start, end string) {

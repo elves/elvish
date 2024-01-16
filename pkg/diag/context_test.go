@@ -48,7 +48,7 @@ var sourceRangeTests = []struct {
 }
 
 func TestContext(t *testing.T) {
-	setCulpritMarkers(t, "<", ">")
+	setContextBodyMarkers(t, "<", ">")
 	for _, test := range sourceRangeTests {
 		t.Run(test.Name, func(t *testing.T) {
 			gotShow := test.Context.Show(test.Indent)

@@ -13,7 +13,7 @@ type fooErrorTag struct{}
 func (fooErrorTag) ErrorTag() string { return "foo error" }
 
 func TestError(t *testing.T) {
-	setCulpritMarkers(t, "<", ">")
+	setContextBodyMarkers(t, "<", ">")
 	setMessageMarkers(t, "{", "}")
 
 	err := &Error[fooErrorTag]{
@@ -96,7 +96,7 @@ func TestUnpackErrors_CalledWithOtherErrorType(t *testing.T) {
 }
 
 func TestMultiError_ErrorAndShow(t *testing.T) {
-	setCulpritMarkers(t, "<", ">")
+	setContextBodyMarkers(t, "<", ">")
 	setMessageMarkers(t, "{", "}")
 	err := PackErrors([]*Error[fooErrorTag]{err1, err2})
 	wantError := "multiple foo errors: a.elv:1:6-8: bad 1; b.elv:1:6-2:2: bad 2"
