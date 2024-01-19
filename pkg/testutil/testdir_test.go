@@ -1,9 +1,17 @@
 package testutil
 
 import (
+	"fmt"
+	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
+
+	"github.com/google/go-cmp/cmp"
+	"src.elv.sh/pkg/must"
+	"src.elv.sh/pkg/tt"
 )
 
 func TestTempDir_DirIsValid(t *testing.T) {
@@ -101,6 +109,110 @@ func TestApplyDir_AllowsExistingDirectories(t *testing.T) {
 	ApplyDir(Dir{"d": Dir{"a": "content"}})
 
 	testFileContent(t, "d/a", "content")
+}
+
+var It = tt.It
+
+func TestDirAsFS(t *testing.T) {
+	dir := Dir{
+		"d": Dir{
+			"x": "this is file d/x",
+			"y": "this is file d/y",
+		},
+		"a": "this is file a",
+		"b": File{Perm: 0o777, Content: "this is file b"},
+	}
+
+	// fs.WalkDir exercises a large subset of the fs.FS API.
+	entries := make(map[string]string)
+	fs.WalkDir(dir, ".", func(path string, d fs.DirEntry, err error) error {
+		must.OK(err)
+		entries[path] = formatFileInfo(must.OK1(d.Info()))
+		return nil
+	})
+	wantEntries := map[string]string{
+		".":   "drwxr-xr-x 0 1970-01-01 00:00:00 ./",
+		"a":   "-rw-r--r-- 14 1970-01-01 00:00:00 a",
+		"b":   "-rwxrwxrwx 14 1970-01-01 00:00:00 b",
+		"d":   "drwxr-xr-x 0 1970-01-01 00:00:00 d/",
+		"d/x": "-rw-r--r-- 16 1970-01-01 00:00:00 x",
+		"d/y": "-rw-r--r-- 16 1970-01-01 00:00:00 y",
+	}
+	if diff := cmp.Diff(wantEntries, entries); diff != "" {
+		t.Errorf("DirEntry map from walking the FS: (-want +got):\n%s", diff)
+	}
+
+	// Direct file access is not exercised by fs.WalkDir (other than to "."), so
+	// test those too.
+	readFile := func(name string) (string, error) {
+		bs, err := fs.ReadFile(dir, name)
+		return string(bs), err
+	}
+	tt.Test(t, tt.Fn(readFile).Named("readFile"),
+		It("supports accessing file in root").
+			Args("a").
+			Rets("this is file a", error(nil)),
+		It("supports accessing file backed by a File struct").
+			Args("b").
+			Rets("this is file b", error(nil)),
+		It("supports accessing file in subdirectory").
+			Args("d/x").
+			Rets("this is file d/x", error(nil)),
+		It("errors if file doesn't exist").
+			Args("d/bad").
+			Rets("", &fs.PathError{Op: "open", Path: "d/bad", Err: fs.ErrNotExist}),
+		It("errors if a directory component of the path doesn't exist").
+			Args("badd/x").
+			Rets("", &fs.PathError{Op: "open", Path: "badd/x", Err: fs.ErrNotExist}),
+		It("errors if a directory component of the path is a file").
+			Args("a/x").
+			Rets("", &fs.PathError{Op: "open", Path: "a/x", Err: fs.ErrNotExist}),
+		It("can open but not read a directory").
+			Args("d").
+			Rets("", &fs.PathError{Op: "read", Path: "d", Err: errIsDir}),
+		It("errors if path is invalid").
+			Args("/d").
+			Rets("", &fs.PathError{Op: "open", Path: "/d", Err: fs.ErrInvalid}),
+	)
+
+	// fs.WalkDir calls ReadDir with -1. Also exercise the code for reading
+	// piece by piece.
+	file := must.OK1(dir.Open(".")).(fs.ReadDirFile)
+	rootEntries := make(map[string]string)
+	for {
+		es, err := file.ReadDir(1)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			panic(err)
+		}
+		rootEntries[es[0].Name()] = formatFileInfo(must.OK1(es[0].Info()))
+	}
+	wantRootEntries := map[string]string{
+		"a": "-rw-r--r-- 14 1970-01-01 00:00:00 a",
+		"b": "-rwxrwxrwx 14 1970-01-01 00:00:00 b",
+		"d": "drwxr-xr-x 0 1970-01-01 00:00:00 d/",
+	}
+	if diff := cmp.Diff(wantRootEntries, rootEntries); diff != "" {
+		t.Errorf("DirEntry map from reading the root piece by piece: (-want +got):\n%s", diff)
+	}
+
+	// Cover the Sys method of the two FileInfo implementations.
+	must.OK1(must.OK1(dir.Open("d")).Stat()).Sys()
+	must.OK1(must.OK1(dir.Open("a")).Stat()).Sys()
+}
+
+// Reimplements fs.FormatFileInfo, introduced in Go 1.21. Remove once we require
+// Go 1.21 to build.
+func formatFileInfo(info fs.FileInfo) string {
+	var nameSuffix string
+	if info.IsDir() {
+		nameSuffix = "/"
+	}
+	return fmt.Sprintf("%v %d %s %s%s",
+		info.Mode(), info.Size(),
+		info.ModTime().Format(time.DateTime), info.Name(), nameSuffix)
 }
 
 func getWd() string {
