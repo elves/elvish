@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -111,7 +112,7 @@ func NewLocation(app cli.App, cfg LocationSpec) (Location, error) {
 			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
-			w.ListBox().Reset(l.filter(cfg.Filter.makePredicate(p)), 0)
+			w.ListBox().Reset(l.filter(p, cfg.Filter.makePredicate(p)), 0)
 		},
 	})
 	return w, nil
@@ -154,8 +155,16 @@ type locationList struct {
 	dirs []storedefs.Dir
 }
 
-func (l locationList) filter(p func(string) bool) locationList {
+func (l locationList) filter(path string, p func(string) bool) locationList {
 	var filteredDirs []storedefs.Dir
+	// The `path` argument is the raw filter string. If it is a valid directory
+	// it is pinned to the top of the resulting filtered location history with a
+	// score that marks it as a special-case. This allows a user to quickly
+	// select a literal directory such as /tmp using location mode rather than
+	// the `cd` command.
+	if fi, err := os.Stat(path); err == nil && fi.Mode().IsDir() {
+		filteredDirs = append(filteredDirs, storedefs.Dir{Path: path, Score: -1})
+	}
 	for _, dir := range l.dirs {
 		if p(fsutil.TildeAbbr(dir.Path)) {
 			filteredDirs = append(filteredDirs, dir)

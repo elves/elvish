@@ -246,10 +246,6 @@ fn * {|@num| }
 # ~> / 2 0.0
 # ▶ (num +Inf)
 # ```
-#
-# When given no argument, this command is equivalent to `cd /`, due to the
-# implicit cd feature. (The implicit cd feature will probably change to avoid
-# this oddity).
 #doc:id div
 fn / {|x-num @y-num| }
 
