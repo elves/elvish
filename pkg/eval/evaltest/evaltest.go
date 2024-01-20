@@ -131,14 +131,14 @@ func (c Case) DoesNotCompile(msgs ...string) Case {
 // Test is a shorthand for [TestWithSetup] when no setup is needed.
 func Test(t *testing.T, tests ...Case) {
 	t.Helper()
-	TestWithSetup(t, func(*testing.T, *eval.Evaler) {}, tests...)
+	testWithSetup(t, func(*testing.T, *eval.Evaler) {}, tests...)
 }
 
 // TestWithEvalerSetup is a shorthand for [TestWithSetup] when the setup only
 // needs to manipulate [eval.Evaler].
 func TestWithEvalerSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) {
 	t.Helper()
-	TestWithSetup(t, func(_ *testing.T, ev *eval.Evaler) { setup(ev) }, tests...)
+	testWithSetup(t, func(_ *testing.T, ev *eval.Evaler) { setup(ev) }, tests...)
 }
 
 // TestWithSetup runs test cases.
@@ -148,6 +148,15 @@ func TestWithEvalerSetup(t *testing.T, setup func(*eval.Evaler), tests ...Case) 
 // before code evaluation.
 func TestWithSetup(t *testing.T, setup func(*testing.T, *eval.Evaler), tests ...Case) {
 	t.Helper()
+	testWithSetup(t, setup, tests...)
+}
+
+func testWithSetup(t *testing.T, setup func(*testing.T, *eval.Evaler), tests ...Case) {
+	t.Helper()
+
+	ew := newElvtsWriter()
+	defer ew.Close()
+
 	for _, tc := range tests {
 		t.Run(strings.Join(tc.codes, "\n"), func(t *testing.T) {
 			t.Helper()
@@ -158,6 +167,7 @@ func TestWithSetup(t *testing.T, setup func(*testing.T, *eval.Evaler), tests ...
 			}
 
 			r := evalAndCollect(t, ev, tc.codes)
+			ew.writeCase(tc, r)
 
 			if tc.verify != nil {
 				tc.verify(t)
@@ -231,7 +241,7 @@ func evalAndCollect(t *testing.T, ev *eval.Evaler, texts []string) result {
 
 	for _, text := range texts {
 		ctx, done := eval.ListenInterrupts()
-		err := ev.Eval(parse.Source{Name: "[test]", Code: text},
+		err := ev.Eval(parse.Source{Name: "[tty]", Code: text},
 			eval.EvalCfg{Ports: ports, Interrupts: ctx})
 		done()
 
