@@ -1,0 +1,13 @@
+# A sample file for elvish transcript files. #
+
+// The line above should be highlighted as a heading, and this line should be
+// highlighted as a comment.
+
+// H2s are also supported:
+
+## This is an H2 ##
+
+// The code after the prompt should be highlighted as Elvish code.
+~> if $true { echo ok }
+ok
+// The output should be unhighlighted.

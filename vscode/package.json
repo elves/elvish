@@ -2,7 +2,7 @@
     "name": "elvish",
     "displayName": "Elvish",
     "description": "Elvish language support for Visual Studio Code",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "publisher": "elves",
     "license": "BSD-2-Clause",
     "icon": "icon.png",
@@ -40,7 +40,8 @@
                 ],
                 "extensions": [
                     ".elvts"
-                ]
+                ],
+                "configuration": "./transcript-language-configuration.json"
             },
             {
                 "id": "elvish-in-markdown",
