@@ -17,6 +17,7 @@ package tt
 
 import (
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
@@ -28,6 +29,7 @@ import (
 // Case represents a test case. It has setter methods that augment and return
 // itself, so they can be chained like It(...).Args(...).Rets(...).
 type Case struct {
+	fileAndLine  string
 	desc         string
 	args         []any
 	retsMatchers [][]any
@@ -35,14 +37,19 @@ type Case struct {
 
 // It returns a Case with the given text description.
 func It(desc string) *Case {
-	return &Case{desc: desc}
+	return &Case{fileAndLine: fileAndLine(2), desc: desc}
 }
 
 // Args is equivalent to It("").args(...). It is useful when the test case is
 // trivial and doesn't need a description; for more complex or interesting test
 // cases, use [It] instead.
 func Args(args ...any) *Case {
-	return &Case{args: args}
+	return &Case{fileAndLine: fileAndLine(2), args: args}
+}
+
+func fileAndLine(skip int) string {
+	_, filename, line, _ := runtime.Caller(skip)
+	return fmt.Sprintf("%s:%d", filepath.Base(filename), line)
 }
 
 // Args modifies the Case to pass the given arguments. It returns the receiver.
@@ -150,7 +157,8 @@ func testInner[T subtestRunner](t testRunner[T], fn any, tests ...*Case) {
 					} else {
 						diff = cmp.Diff(retsMatcher, rets, cmpopt)
 					}
-					t.Errorf("%s(%s) returns (-want +got):\n%s", fnd.name, args, diff)
+					t.Errorf("%s: %s(%s) returns (-want +got):\n%s",
+						test.fileAndLine, fnd.name, args, diff)
 				}
 			}
 		})

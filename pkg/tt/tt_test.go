@@ -76,7 +76,7 @@ func (sr *mockSubtestRunner) Errorf(format string, args ...any) {
 }
 
 // Matches []testResult, but doesn't check the exact content of the error
-// messages, only that they start with a corresponding prefix.
+// messages, only that they contain a substring.
 type testResultsMatcher []testResult
 
 func (m testResultsMatcher) Match(ret RetValue) bool {
@@ -92,7 +92,7 @@ func (m testResultsMatcher) Match(ret RetValue) bool {
 			return false
 		}
 		for i, s := range result.Errors {
-			if !strings.HasPrefix(s, m[i].Errors[i]) {
+			if !strings.Contains(s, m[i].Errors[i]) {
 				return false
 			}
 		}
