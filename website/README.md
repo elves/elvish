@@ -26,16 +26,17 @@ like `./get` will cause the browser to open the corresponding directory, instead
 of the `index.html` file under it, and we use JavaScript to patch such URLs
 dynamically.
 
-### Building the docset
+### Additional workflows
 
-Building the docset requires the following additional dependencies:
+-   Run `make check-rellinks` to ensure that relative links between pages are
+    valid.
 
--   Python 3 with Beautiful Soup 4 (install with `pip install bs4`).
+-   Run `make Elvish.docset` to build a docset containing all the reference
+    docs. [Docset](https://kapeli.com/docsets) is a format for packaging
+    documentation for offline consumption.
 
--   SQLite3 CLI.
-
-To build the docset, run `make docset`. The generated docset is in
-`Elvish.docset`.
+Both workflows use a Python script under the hood, and require Python 3 and
+Beautiful Soup 4 (install with `pip install --user bs4`).
 
 ## Transcripts
 

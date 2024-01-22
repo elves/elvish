@@ -8,7 +8,6 @@
 # External dependencies:
 # 
 # - python3
-# - sqlite3
 
 if test $# != 2; then
   echo "Usage: mkdocset.elv $website $docset"
@@ -25,4 +24,4 @@ cp $bindir/../favicons/favicon-32x32.png $docset/icon@2x.png
 cp $bindir/docset-data/Info.plist $docset/Contents
 cp $website/ref/*.html $docset/Contents/Resources/Documents
 rm $docset/Contents/Resources/Documents/index.html
-python3 $bindir/mkdsidx.py $website/ref | sqlite3 $docset/Contents/Resources/docSet.dsidx
+python3 $bindir/mkdsidx.py $website/ref $docset/Contents/Resources/docSet.dsidx
