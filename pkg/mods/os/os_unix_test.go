@@ -3,16 +3,24 @@
 package os_test
 
 import (
+	"os"
+	"runtime"
 	"testing"
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/testutil"
 )
 
 func TestChmod(t *testing.T) {
 	TestWithSetup(t, func(t *testing.T, ev *eval.Evaler) {
-		testutil.InTempDir(t)
+		tmpdir := testutil.InTempDir(t)
+		if runtime.GOOS == "freebsd" {
+			// Work around a quirk of FreeBSD's mkdir
+			// (https://github.com/golang/go/issues/19596).
+			must.OK(os.Chown(tmpdir, os.Getuid(), os.Getgid()))
+		}
 		useOS(ev)
 	},
 		That(`os:mkdir d; os:chmod 0o400 d; put (os:stat d)[perm]`).Puts(0o400),
