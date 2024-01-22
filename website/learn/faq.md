@@ -25,7 +25,7 @@ wiki offers a quick overview.
 # Can I use Elvish as my shell?
 
 Yes. Many people already use Elvish as their daily drivers. Follow the
-instructions in the [Get Elvish](../get) page to install Elvish and use it as
+instructions in the [Get Elvish](../get/) page to install Elvish and use it as
 your default shell.
 
 # Why is Elvish incompatible with bash?

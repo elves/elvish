@@ -544,7 +544,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.14.0 (<a href="/blog/0.14.0-release-notes.html">release notes</a>)
+      0.14.0 (<a href=../blog/0.14.0-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.14.0.tar.gz
@@ -564,7 +564,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.13.1 (<a href="/blog/0.13.1-release-notes.html">release notes</a>)
+      0.13.1 (<a href=../blog/0.13.1-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.13.1.tar.gz
@@ -584,7 +584,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.13 (<a href="/blog/0.13-release-notes.html">release notes</a>)
+      0.13 (<a href=../blog/0.13-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.13.tar.gz
@@ -601,7 +601,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.12 (<a href="/blog/0.12-release-notes.html">release notes</a>)
+      0.12 (<a href=../blog/0.12-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.12.tar.gz
@@ -618,7 +618,7 @@ for historical interest.
   </tr>
   <tr>
     <td>
-      0.11 (<a href="/blog/0.11-release-notes.html">release notes</a>)
+      0.11 (<a href=../blog/0.11-release-notes.html">release notes</a>)
     </td>
     <td>
       @dl Linux linux-amd64/elvish-v0.11.tar.gz
@@ -639,7 +639,7 @@ for historical interest.
     </td>
   </tr>
   <tr>
-    <td>0.10 (<a href="/blog/0.10-release-notes.html">release notes</a>)</td>
+    <td>0.10 (<a href=../blog/0.10-release-notes.html">release notes</a>)</td>
     <td>
       @dl Linux linux-amd64/elvish-v0.10.tar.gz
       @dl macOS darwin-amd64/elvish-v0.10.tar.gz
@@ -657,7 +657,7 @@ for historical interest.
     </td>
   </tr>
   <tr>
-    <td>0.9 (<a href="/blog/0.9-release-notes.html">release notes</a>)</td>
+    <td>0.9 (<a href=../blog/0.9-release-notes.html">release notes</a>)</td>
     <td>
       @dl Linux linux-amd64/elvish-v0.9.tar.gz
       @dl macOS darwin-amd64/elvish-v0.9.tar.gz
