@@ -50,6 +50,7 @@ def main(args):
                 continue
             def report_that_link(does_what):
                 print(f'{srcfile}:{link.line_no}:{link.col_no}: {link.href} {does_what}')
+                nonlocal has_broken
                 has_broken = True
             # Check that the path part has slashes in the expected places.
             # Slashes are significant for resolving relative links; relative
