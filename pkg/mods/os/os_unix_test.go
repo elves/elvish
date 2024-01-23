@@ -4,7 +4,6 @@ package os_test
 
 import (
 	"os"
-	"runtime"
 	"testing"
 
 	"src.elv.sh/pkg/eval"
@@ -16,11 +15,16 @@ import (
 func TestChmod(t *testing.T) {
 	TestWithSetup(t, func(t *testing.T, ev *eval.Evaler) {
 		tmpdir := testutil.InTempDir(t)
-		if runtime.GOOS == "freebsd" {
-			// Work around a quirk of FreeBSD's mkdir
-			// (https://github.com/golang/go/issues/19596).
-			must.OK(os.Chown(tmpdir, os.Getuid(), os.Getgid()))
-		}
+		// On BSDs and macOS, the temporary directory is created with the group
+		// of its parent, rather than the process's EGID (this is also how mkdir
+		// works on BSDs in general). If the user running the test is not the
+		// member of that group, this will prevent us from adding setgid on its
+		// children. Work around this by forcing the temporary directory to use
+		// the process's GID as its group. This is a no-op on Linux.
+		//
+		// More explanation and a similar fix in Go's test:
+		// https://github.com/golang/go/issues/19596.
+		must.OK(os.Chown(tmpdir, os.Getuid(), os.Getgid()))
 		useOS(ev)
 	},
 		That(`os:mkdir d; os:chmod 0o400 d; put (os:stat d)[perm]`).Puts(0o400),
