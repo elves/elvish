@@ -25,6 +25,7 @@ import (
 type complexCandidateOpts struct {
 	CodeSuffix string
 	Display    any
+	Tag        string
 }
 
 func (*complexCandidateOpts) SetDefaultOptions() {}
@@ -46,6 +47,7 @@ func complexCandidate(fm *eval.Frame, opts complexCandidateOpts, stem string) (c
 		Stem:       stem,
 		CodeSuffix: opts.CodeSuffix,
 		Display:    display,
+		Tag:        opts.Tag,
 	}, nil
 }
 
@@ -162,6 +164,8 @@ func (c complexItem) Index(k any) (any, bool) {
 		return c.CodeSuffix, true
 	case "display":
 		return c.Display, true
+	case "tag":
+		return c.Tag, true
 	}
 	return nil, false
 }
@@ -188,8 +192,8 @@ func (c complexItem) Hash() uint32 {
 
 func (c complexItem) Repr(indent int) string {
 	// TODO(xiaq): Pretty-print when indent >= 0
-	return fmt.Sprintf("(edit:complex-candidate %s &code-suffix=%s &display=%s)",
-		parse.Quote(c.Stem), parse.Quote(c.CodeSuffix), vals.Repr(c.Display, indent+1))
+	return fmt.Sprintf("(edit:complex-candidate %s &code-suffix=%s &display=%s &tag=%s)",
+		parse.Quote(c.Stem), parse.Quote(c.CodeSuffix), vals.Repr(c.Display, indent+1), parse.Quote(c.Tag))
 }
 
 type wrappedArgGenerator func(*eval.Frame, ...string) error

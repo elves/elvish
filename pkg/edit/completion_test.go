@@ -96,9 +96,9 @@ func TestComplexCandidate(t *testing.T) {
 		That("cc a/b").Puts(complexItem{Stem: "a/b"}),
 		That("cc a/b &code-suffix=' '").Puts(complexItem{Stem: "a/b", CodeSuffix: " "}),
 		That("cc a/b &code-suffix=' ' &display=A/B").Puts(
-			complexItem{"a/b", " ", ui.T("A/B")}),
+			complexItem{"a/b", " ", ui.T("A/B"), ""}),
 		That("cc a/b &code-suffix=' ' &display=(styled A/B red)").Puts(
-			complexItem{"a/b", " ", ui.T("A/B", ui.FgRed)}),
+			complexItem{"a/b", " ", ui.T("A/B", ui.FgRed), ""}),
 		That("cc a/b &code-suffix=' ' &display=[]").Throws(
 			errs.BadValue{What: "&display", Valid: "string or styled", Actual: "[]"}),
 
