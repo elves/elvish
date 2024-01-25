@@ -39,6 +39,10 @@ func TestBase(t *testing.T) {
 		That(`base 16 42 233`).Puts("2a", "e9"),
 		That(`base 1 1`).Throws(ErrBadBase),
 		That(`base 37 10`).Throws(ErrBadBase),
+		That(`base 16 18446744073709551607`).Puts("fffffffffffffff7"),
+		That(`base 10 "0xfffffffffffffff7"`).Puts("18446744073709551607"),
+		That(`base (num 16) (num 256)`).Puts("100"),
+		That(`base 8 (num 1/8)`).Throws(ErrInvalidInput),
 		thatOutputErrorIsBubbled("base 2 1"),
 	)
 }
