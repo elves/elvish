@@ -2,8 +2,8 @@ package eval
 
 import (
 	"errors"
+	"math/big"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"src.elv.sh/pkg/eval/vals"
@@ -49,14 +49,27 @@ func toString(fm *Frame, args ...any) error {
 // greater than 36.
 var ErrBadBase = errors.New("bad base")
 
-func base(fm *Frame, b int, nums ...int) error {
+// ErrInvalidInput is thrown by the "base" builtin if the input num is invalid
+var ErrInvalidInput = errors.New("invalid input")
+
+func base(fm *Frame, b int, nums ...vals.Num) error {
 	if b < 2 || b > 36 {
 		return ErrBadBase
 	}
 
 	out := fm.ValueOutput()
 	for _, num := range nums {
-		err := out.Put(strconv.FormatInt(int64(num), b))
+		bigInt := new(big.Int)
+		switch num := num.(type) {
+		case int:
+			bigInt.SetInt64(int64(num))
+		case *big.Int:
+			bigInt.Set(num)
+		default:
+			return ErrInvalidInput
+		}
+
+		err := out.Put(bigInt.Text(b))
 		if err != nil {
 			return err
 		}
