@@ -6,7 +6,6 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/eval/vars"
 )
 
 func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
@@ -29,7 +28,7 @@ func addVar(fm *eval.Frame, name string, val any) error {
 	if err != nil {
 		return err
 	}
-	fm.Evaler.ExtendGlobal(eval.BuildNs().AddVar(name, vars.FromInit(val)))
+	fm.Evaler.ExtendGlobal(eval.BuildNs().AddVar(name, variable))
 	return nil
 }
 
