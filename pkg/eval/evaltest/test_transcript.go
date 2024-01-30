@@ -1,3 +1,4 @@
+// Package evaltest supports testing the Elvish interpreter and libraries.
 package evaltest
 
 import (
@@ -230,3 +231,11 @@ func stripSGR(bs []byte) []byte      { return sgrPattern.ReplaceAllLiteral(bs, n
 func stripSGRString(s string) string { return sgrPattern.ReplaceAllLiteralString(s, "") }
 
 func normalizeLineEnding(bs []byte) []byte { return bytes.ReplaceAll(bs, []byte("\r\n"), []byte("\n")) }
+
+// Use returns a function that simulates "use" on an Evaler and can be used as a
+// setup function for [TestTranscriptsInFS].
+func Use(name string, ns eval.Nser) func(*eval.Evaler) {
+	return func(ev *eval.Evaler) {
+		ev.ExtendGlobal(eval.BuildNs().AddNs(name, ns))
+	}
+}
