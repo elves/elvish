@@ -7,8 +7,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"src.elv.sh/pkg/mods/doc"
+	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/ui"
 )
+
+var Dedent = testutil.Dedent
 
 var matchAndShowTests = []struct {
 	name     string

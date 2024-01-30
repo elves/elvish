@@ -1,0 +1,134 @@
+//complete-getopt-in-global
+
+///////////////////
+# complete-getopt #
+///////////////////
+
+~> fn complete {|@args|
+     var opt-specs = [ [&short=a &long=all &desc="Show all"]
+                       [&short=n &long=name &desc="Set name"
+                        &arg-required=$true &arg-desc='new-name'
+                        &completer= {|_| put name1 name2 }] ]
+     var arg-handlers = [ {|_| put first1 first2 }
+                          {|_| put second1 second2 } ... ]
+     complete-getopt $args $opt-specs $arg-handlers
+   }
+// complete argument
+~> complete ''
+▶ first1
+▶ first2
+~> complete '' >&-
+Exception: port does not support value output
+  [tty]:6:29-46:   var arg-handlers = [ {|_| put first1 first2 }
+  [tty]:8:3-48:   complete-getopt $args $opt-specs $arg-handlers
+  [tty]:1:1-15: complete '' >&-
+// complete option
+~> complete -
+▶ (edit:complex-candidate -a &code-suffix='' &display=(ui:text '-a (Show all)'))
+▶ (edit:complex-candidate --all &code-suffix='' &display=(ui:text '--all (Show all)'))
+▶ (edit:complex-candidate -n &code-suffix='' &display=(ui:text '-n new-name (Set name)'))
+▶ (edit:complex-candidate --name &code-suffix='' &display=(ui:text '--name new-name (Set name)'))
+~> complete - >&-
+Exception: port does not support value output
+  [tty]:8:3-48:   complete-getopt $args $opt-specs $arg-handlers
+  [tty]:1:1-14: complete - >&-
+// complete long option
+~> complete --
+▶ (edit:complex-candidate --all &code-suffix='' &display=(ui:text '--all (Show all)'))
+▶ (edit:complex-candidate --name &code-suffix='' &display=(ui:text '--name new-name (Set name)'))
+~> complete --a
+▶ (edit:complex-candidate --all &code-suffix='' &display=(ui:text '--all (Show all)'))
+~> complete -- >&-
+Exception: port does not support value output
+  [tty]:8:3-48:   complete-getopt $args $opt-specs $arg-handlers
+  [tty]:1:1-15: complete -- >&-
+// complete argument of short option
+~> complete -n ''
+▶ name1
+▶ name2
+~> complete -n '' >&-
+Exception: port does not support value output
+  [tty]:5:39-54:                      &completer= {|_| put name1 name2 }] ]
+  [tty]:8:3-48:   complete-getopt $args $opt-specs $arg-handlers
+  [tty]:1:1-18: complete -n '' >&-
+// complete argument of long option
+~> complete --name ''
+▶ name1
+▶ name2
+~> complete --name '' >&-
+Exception: port does not support value output
+  [tty]:5:39-54:                      &completer= {|_| put name1 name2 }] ]
+  [tty]:8:3-48:   complete-getopt $args $opt-specs $arg-handlers
+  [tty]:1:1-22: complete --name '' >&-
+// complete (normal) argument after option that doesn't take an argument
+~> complete -a ''
+▶ first1
+▶ first2
+~> complete -a '' >&-
+Exception: port does not support value output
+  [tty]:6:29-46:   var arg-handlers = [ {|_| put first1 first2 }
+  [tty]:8:3-48:   complete-getopt $args $opt-specs $arg-handlers
+  [tty]:1:1-18: complete -a '' >&-
+// complete second argument
+~> complete arg1 ''
+▶ second1
+▶ second2
+~> complete arg1 '' >&-
+Exception: port does not support value output
+  [tty]:7:29-48:                        {|_| put second1 second2 } ... ]
+  [tty]:8:3-48:   complete-getopt $args $opt-specs $arg-handlers
+  [tty]:1:1-20: complete arg1 '' >&-
+// complete variadic argument
+~> complete arg1 arg2 ''
+▶ second1
+▶ second2
+~> complete arg1 arg2 '' >&-
+Exception: port does not support value output
+  [tty]:7:29-48:                        {|_| put second1 second2 } ... ]
+  [tty]:8:3-48:   complete-getopt $args $opt-specs $arg-handlers
+  [tty]:1:1-25: complete arg1 arg2 '' >&-
+
+# typechecks #
+
+~> complete-getopt [foo []] [] []
+Exception: arg should be string, got list
+  [tty]:1:1-30: complete-getopt [foo []] [] []
+~> complete-getopt [] [foo] []
+Exception: opt should be map, got string
+  [tty]:1:1-27: complete-getopt [] [foo] []
+~> complete-getopt [] [[&short=[]]] []
+Exception: short should be string, got list
+  [tty]:1:1-35: complete-getopt [] [[&short=[]]] []
+~> complete-getopt [] [[&short=foo]] []
+Exception: short should be exactly one rune, got foo
+  [tty]:1:1-36: complete-getopt [] [[&short=foo]] []
+~> complete-getopt [] [[&long=[]]] []
+Exception: long should be string, got list
+  [tty]:1:1-34: complete-getopt [] [[&long=[]]] []
+~> complete-getopt [] [[&]] []
+Exception: opt should have at least one of short and long forms
+  [tty]:1:1-27: complete-getopt [] [[&]] []
+~> complete-getopt [] [[&short=a &arg-required=foo]] []
+Exception: arg-required should be bool, got string
+  [tty]:1:1-52: complete-getopt [] [[&short=a &arg-required=foo]] []
+~> complete-getopt [] [[&short=a &arg-optional=foo]] []
+Exception: arg-optional should be bool, got string
+  [tty]:1:1-52: complete-getopt [] [[&short=a &arg-optional=foo]] []
+~> complete-getopt [] [[&short=a &arg-required=$true &arg-optional=$true]] []
+Exception: opt cannot have both arg-required and arg-optional
+  [tty]:1:1-74: complete-getopt [] [[&short=a &arg-required=$true &arg-optional=$true]] []
+~> complete-getopt [] [[&short=a &desc=[]]] []
+Exception: desc should be string, got list
+  [tty]:1:1-43: complete-getopt [] [[&short=a &desc=[]]] []
+~> complete-getopt [] [[&short=a &arg-desc=[]]] []
+Exception: arg-desc should be string, got list
+  [tty]:1:1-47: complete-getopt [] [[&short=a &arg-desc=[]]] []
+~> complete-getopt [] [[&short=a &completer=[]]] []
+Exception: completer should be fn, got list
+  [tty]:1:1-48: complete-getopt [] [[&short=a &completer=[]]] []
+~> complete-getopt [] [] [foo]
+Exception: string except for ... not allowed as argument handler, got foo
+  [tty]:1:1-27: complete-getopt [] [] [foo]
+~> complete-getopt [] [] [[]]
+Exception: argument handler should be fn, got list
+  [tty]:1:1-26: complete-getopt [] [] [[]]

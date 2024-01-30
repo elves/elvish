@@ -1,0 +1,178 @@
+/////////
+# sleep #
+/////////
+
+//mock-time-after
+
+## number with no unit ##
+~> sleep 0
+slept for 0s
+~> sleep 1
+slept for 1s
+~> sleep 0.1
+slept for 100ms
+~> sleep (num 0)
+slept for 0s
+~> sleep (num 42)
+slept for 42s
+~> sleep (num 1.7)
+slept for 1.7s
+
+## number with unit ##
+~> sleep 1.3s
+slept for 1.3s
+~> sleep 0.1ms
+slept for 100µs
+~> sleep 3h5m7s
+slept for 3h5m7s
+
+## valid durations ##
+~> sleep 1x
+Exception: invalid sleep duration
+  [tty]:1:1-8: sleep 1x
+~> sleep -7
+Exception: sleep duration must be >= zero
+  [tty]:1:1-8: sleep -7
+~> sleep -3h
+Exception: sleep duration must be >= zero
+  [tty]:1:1-9: sleep -3h
+~> sleep 1/2
+slept for 500ms
+~> sleep (num -7)
+Exception: sleep duration must be >= zero
+  [tty]:1:1-14: sleep (num -7)
+~> sleep [1]
+Exception: invalid sleep duration
+  [tty]:1:1-9: sleep [1]
+
+## can be interrupted ##
+//inject-time-after-with-sigint-or-skip
+~> sleep 1s
+Exception: interrupted
+  [tty]:1:1-8: sleep 1s
+
+////////
+# time #
+////////
+
+// Since runtime duration is non-deterministic, we only have some sanity checks
+// here.
+
+~> time { echo foo } | var out time = (all)
+   put $out
+▶ foo
+
+## &on-end ##
+~> var duration = ''
+   time &on-end={|x| set duration = $x } { echo foo } | var out = (all)
+   put $out
+   kind-of $duration
+▶ foo
+▶ number
+
+## propagating exception ##
+~> time { fail body } | nop (all)
+Exception: body
+  [tty]:1:8-17: time { fail body } | nop (all)
+  [tty]:1:1-19: time { fail body } | nop (all)
+
+## propagating exception from &on-end ##
+~> time &on-end={|_| fail on-end } { }
+Exception: on-end
+  [tty]:1:19-30: time &on-end={|_| fail on-end } { }
+  [tty]:1:1-35: time &on-end={|_| fail on-end } { }
+
+## exception from body takes precedence ##
+~> time &on-end={|_| fail on-end } { fail body }
+Exception: body
+  [tty]:1:35-44: time &on-end={|_| fail on-end } { fail body }
+  [tty]:1:1-45: time &on-end={|_| fail on-end } { fail body }
+
+## bubbling output error ##
+~> time { } >&-
+Exception: invalid argument
+  [tty]:1:1-12: time { } >&-
+
+/////////////
+# benchmark #
+/////////////
+
+// These steps depend on the implementation detail that benchmark calls time.Now
+// once before a run and once after a run.
+
+## default output ##
+//mock-benchmark-run-durations 1 2
+~> benchmark &min-runs=2 &min-time=2s { }
+1.5s ± 500ms (min 1s, max 2s, 2 runs)
+
+## &on-end ##
+//mock-benchmark-run-durations 1 2
+~> benchmark &min-runs=2 &min-time=2s &on-end=$put~ { }
+▶ [&avg=(num 1.5) &max=(num 2.0) &min=(num 1.0) &runs=(num 2) &stddev=(num 0.5)]
+
+## &min-runs determining number of runs ##
+//mock-benchmark-run-durations 1 2 1 2
+~> benchmark &min-runs=4 &min-time=0s &on-end={|m| put $m[runs]} { }
+▶ (num 4)
+
+## &min-time determining number of runs ##
+//mock-benchmark-run-durations 1 5 5
+~> benchmark &min-runs=0 &min-time=10s &on-end={|m| put $m[runs]} { }
+▶ (num 3)
+
+## &on-run-end ##
+//mock-benchmark-run-durations 1 2 1
+~> benchmark &min-runs=3 &on-run-end=$put~ &on-end={|m| } { }
+▶ (num 1.0)
+▶ (num 2.0)
+▶ (num 1.0)
+
+## body throws exception ##
+//mock-benchmark-run-durations 1 2 1
+~> var i = 0
+   benchmark { set i = (+ $i 1); if (== $i 3) { fail failure } }
+1.5s ± 500ms (min 1s, max 2s, 2 runs)
+Exception: failure
+  [tty]:2:46-58: benchmark { set i = (+ $i 1); if (== $i 3) { fail failure } }
+  [tty]:2:1-61: benchmark { set i = (+ $i 1); if (== $i 3) { fail failure } }
+
+## body throws exception on first run ##
+~> benchmark { fail failure }
+Exception: failure
+  [tty]:1:13-25: benchmark { fail failure }
+  [tty]:1:1-26: benchmark { fail failure }
+~> benchmark &on-end=$put~ { fail failure }
+Exception: failure
+  [tty]:1:27-39: benchmark &on-end=$put~ { fail failure }
+  [tty]:1:1-40: benchmark &on-end=$put~ { fail failure }
+
+## &on-run-end throws exception ##
+//mock-benchmark-run-durations 1
+~> benchmark &on-run-end={|_| fail failure } { }
+1s ± 0s (min 1s, max 1s, 1 runs)
+Exception: failure
+  [tty]:1:28-40: benchmark &on-run-end={|_| fail failure } { }
+  [tty]:1:1-45: benchmark &on-run-end={|_| fail failure } { }
+
+## &on-end throws exception ##
+~> benchmark &min-runs=2 &min-time=0s &on-end={|_| fail failure } { }
+Exception: failure
+  [tty]:1:49-61: benchmark &min-runs=2 &min-time=0s &on-end={|_| fail failure } { }
+  [tty]:1:1-66: benchmark &min-runs=2 &min-time=0s &on-end={|_| fail failure } { }
+
+## option errors ##
+~> benchmark &min-runs=-1 { }
+Exception: bad value: min-runs option must be non-negative integer, but is -1
+  [tty]:1:1-26: benchmark &min-runs=-1 { }
+~> benchmark &min-time=abc { }
+Exception: bad value: min-time option must be duration string, but is abc
+  [tty]:1:1-27: benchmark &min-time=abc { }
+~> benchmark &min-time=-1s { }
+Exception: bad value: min-time option must be non-negative duration, but is -1s
+  [tty]:1:1-27: benchmark &min-time=-1s { }
+
+## bubbling output error ##
+//mock-benchmark-run-durations 1
+~> benchmark &min-runs=0 &min-time=0s { } >&-
+Exception: invalid argument
+  [tty]:1:1-42: benchmark &min-runs=0 &min-time=0s { } >&-

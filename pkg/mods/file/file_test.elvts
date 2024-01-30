@@ -1,0 +1,262 @@
+//use-file
+//in-temp-dir
+
+/////////////
+# file:open #
+/////////////
+
+~> echo haha > out3
+   var f = (file:open out3)
+   slurp < $f
+   file:close $f
+▶ "haha\n"
+
+////////////////////
+# file:open-output #
+////////////////////
+
+## &also-input ##
+~> print foo > file
+   var f = (file:open-output &also-input &if-exists=update file)
+   read-bytes 1 < $f
+   print X > $f
+   slurp < $f
+   file:close $f
+   slurp < file
+▶ f
+▶ o
+▶ fXo
+
+## &if-not-exists=create ##
+~> var f = (file:open-output new &if-not-exists=create)
+   file:close $f
+   slurp < new
+▶ ''
+
+## &if-not-exists=error ##
+//only-on !windows
+// Windows has a different error message.
+//
+// TODO: Consider normalizing all builtin functions that can return
+// *fs.PathError so that the error is consistent across platforms.
+~> var f = (file:open-output new &if-not-exists=error)
+Exception: open new: no such file or directory
+  [tty]:1:10-50: var f = (file:open-output new &if-not-exists=error)
+
+## &if-not-exists=error on Windows ##
+//only-on windows
+~> var f = (file:open-output new &if-not-exists=error)
+Exception: open new: The system cannot find the file specified.
+  [tty]:1:10-50: var f = (file:open-output new &if-not-exists=error)
+
+## default is &if-not-exists=create ##
+~> var f = (file:open-output new)
+   file:close $f
+   slurp < new
+▶ ''
+
+## invalid &if-not-exists ##
+~> var f = (file:open-output new &if-not-exists=bad)
+Exception: bad value: if-not-exists option must be create or error, but is bad
+  [tty]:1:10-48: var f = (file:open-output new &if-not-exists=bad)
+
+## &if-exists=truncate ##
+~> print old-content > old
+   var f = (file:open-output old &if-exists=truncate)
+   print new > $f
+   file:close $f
+   slurp < old
+▶ new
+
+## &if-exists=append ##
+~> print old-content > old
+   var f = (file:open-output old &if-exists=append)
+   print new > $f
+   file:close $f
+   slurp < old
+▶ old-contentnew
+
+## &if-exists=update ##
+~> print old-content > old
+   var f = (file:open-output old &if-exists=update)
+   print new > $f
+   file:close $f
+   slurp < old
+▶ new-content
+
+## &if-exists=error ##
+//only-on !windows
+// Windows has a different error message.
+~> print old-content > old
+   var f = (file:open-output old &if-exists=error)
+Exception: open old: file exists
+  [tty]:2:10-46: var f = (file:open-output old &if-exists=error)
+
+## &if-exists=error on Windows ##
+//only-on windows
+// Windows has a different error message.
+~> print old-content > old
+   var f = (file:open-output old &if-exists=error)
+Exception: open old: The file exists.
+  [tty]:2:10-46: var f = (file:open-output old &if-exists=error)
+
+## default is &if-exists=truncate ##
+~> print old-content > old
+   var f = (file:open-output old)
+   print new > $f
+   file:close $f
+   slurp < old
+▶ new
+
+## invalid &if-exists ##
+~> var f = (file:open-output old &if-exists=bad)
+Exception: bad value: if-exists option must be truncate, append, update or error, but is bad
+  [tty]:1:10-44: var f = (file:open-output old &if-exists=bad)
+
+## &if-exists=error with &if-not-exists=error is an error ##
+~> var f = (file:open-output old &if-not-exists=error &if-exists=error)
+Exception: both &if-not-exists and &if-exists are error
+  [tty]:1:10-67: var f = (file:open-output old &if-not-exists=error &if-exists=error)
+
+## invalid &create-perm ##
+~> file:open-output new &create-perm=0o1000
+Exception: out of range: create-perm option must be from 0 to 0o777, but is 0o1000
+  [tty]:1:1-40: file:open-output new &create-perm=0o1000
+
+// TODO: Add test for valid &create-perm
+
+/////////////
+# file:pipe #
+/////////////
+
+~> var p = (file:pipe)
+   echo haha > $p
+   file:close $p[w]
+   slurp < $p
+   file:close $p[r]
+▶ "haha\n"
+
+## reading from closed pipe ##
+~> var p = (file:pipe)
+   echo foo > $p
+   file:close $p[r]
+   slurp < $p
+Exception: read |0: file already closed
+  [tty]:4:1-10: slurp < $p
+
+/////////////
+# file:seek #
+/////////////
+
+~> fn test-seek {|offset opts|
+     print 0123456789 > file
+     var f = (file:open file)
+     defer { file:close $f }
+     read-bytes 1 < $f | nop (all)
+     # Using call allows us to test calling file:seek with no &whence
+     call $file:seek~ [$f $offset] $opts
+     read-bytes 1 < $f
+   }
+~> test-seek 1 [&] # default is &when=start
+▶ 1
+~> test-seek 1 [&whence=start]
+▶ 1
+~> test-seek 1 [&whence=current]
+▶ 2
+~> test-seek -1 [&whence=end]
+▶ 9
+~> test-seek 1 [&whence=bad]
+Exception: bad value: whence must be start, current or end, but is bad
+  [tty]:7:3-37:   call $file:seek~ [$f $offset] $opts
+  [tty]:1:1-25: test-seek 1 [&whence=bad]
+~> test-seek 100000000000000000000 [&]
+Exception: out of range: offset must be from -2^64 to 2^64-1, but is 100000000000000000000
+  [tty]:7:3-37:   call $file:seek~ [$f $offset] $opts
+  [tty]:1:1-35: test-seek 100000000000000000000 [&]
+~> test-seek 1.5 [&]
+Exception: bad value: offset must be exact integer, but is 1.5
+  [tty]:7:3-37:   call $file:seek~ [$f $offset] $opts
+  [tty]:1:1-17: test-seek 1.5 [&]
+
+
+/////////////
+# file:tell #
+/////////////
+
+~> print 0123456789 > file
+   var f = (file:open file)
+   read-bytes 4 < $f
+   file:tell $f
+   file:close $f
+▶ 0123
+▶ (num 4)
+
+
+/////////////////
+# file:truncate #
+/////////////////
+
+## good case ##
+
+//use-os
+~> echo > file100
+   file:truncate file100 100
+   put (os:stat file100)[size]
+▶ (num 100)
+
+// Should also test the case where the argument doesn't fit in an int but does
+// fit in a int64; but this only happens on 32-bit platforms, and testing it can
+// consume too much disk.
+
+## bad cases ##
+~> file:truncate bad -1
+Exception: out of range: size must be from 0 to 2^64-1, but is -1
+  [tty]:1:1-20: file:truncate bad -1
+~> file:truncate bad 100000000000000000000
+Exception: out of range: size must be from 0 to 2^64-1, but is 100000000000000000000
+  [tty]:1:1-39: file:truncate bad 100000000000000000000
+~> file:truncate bad 1.5
+Exception: bad value: size must be exact integer, but is 1.5
+  [tty]:1:1-21: file:truncate bad 1.5
+
+
+///////////////
+# file:is-tty #
+///////////////
+
+## number argument ##
+~> file:is-tty 0
+▶ $false
+~> file:is-tty (num 0)
+▶ $false
+
+## file argument ##
+~> var p = (file:pipe)
+   file:is-tty $p[r]; file:is-tty $p[w]
+   file:close $p[r]; file:close $p[w]
+▶ $false
+▶ $false
+
+## bad arguments ##
+~> file:is-tty a
+Exception: bad value: argument to file:is-tty must be file value or numerical FD, but is a
+  [tty]:1:1-13: file:is-tty a
+~> file:is-tty []
+Exception: bad value: argument to file:is-tty must be file value or numerical FD, but is []
+  [tty]:1:1-14: file:is-tty []
+
+## /dev/null ##
+//skip-unless-can-open /dev/null
+~> file:is-tty 0 < /dev/null
+▶ $false
+~> file:is-tty (num 0) < /dev/null
+▶ $false
+
+## /dev/tty ##
+//skip-unless-can-open /dev/tty
+~> file:is-tty 0 < /dev/tty
+▶ $true
+~> file:is-tty (num 0) < /dev/tty
+▶ $true
+
+// TODO: Test with PTY when https://b.elv.sh/1595 is resolved.

@@ -1,0 +1,92 @@
+//use-path
+
+// All the functions in path: are either simple wrappers of Go functions or
+// compatibility aliases of their os: counterparts.
+//
+// As a result, the tests are just simple "smoke tests" to ensure that they
+// exist and map to the correct function.
+
+/////////////
+# functions #
+/////////////
+
+//use-str
+~> var abs = (path:abs a/b/c.png)
+   path:is-abs $abs
+   str:has-suffix $abs (path:join a b c.png)
+▶ $true
+▶ $true
+~> path:base a/b/d.png
+▶ d.png
+~> path:clean ././x
+▶ x
+~> path:ext a/b/e.png
+▶ .png
+~> path:ext a/b/s
+▶ ''
+~> path:is-abs a/b/s
+▶ $false
+
+/////////////////
+# Unix-specific #
+/////////////////
+
+//only-on unix
+~> put $path:dev-null
+▶ /dev/null
+~> put $path:dev-tty
+▶ /dev/tty
+~> put $path:list-separator
+▶ :
+~> put $path:separator
+▶ /
+~> path:join a b c
+▶ a/b/c
+~> path:clean a/b/.././c
+▶ a/c
+~> path:dir a/b/d.png
+▶ a/b
+
+////////////////////
+# Windows-specific #
+////////////////////
+
+//only-on windows
+~> put $path:dev-null
+▶ NUL
+~> put $path:dev-tty
+▶ CON
+~> put $path:list-separator
+▶ ';'
+~> put $path:separator
+▶ \
+~> path:join a b c
+▶ a\b\c
+~> path:clean a/b/.././c
+▶ a\c
+~> path:dir a/b/d.png
+▶ a\b
+
+/////////////////////////
+# compatibility aliases #
+/////////////////////////
+
+//use-file
+//use-re
+//use-os
+//in-temp-dir-with-d-f
+~> path:eval-symlinks d
+▶ d
+~> path:is-dir d
+▶ $true
+~> path:is-regular d/f
+▶ $true
+~> var x = (path:temp-dir)
+   re:match '^.*'(re:quote $path:separator)'elvish-.*$' $x
+   os:remove $x
+▶ $true
+~> var f = (path:temp-file)
+   re:match '^.*'(re:quote $path:separator)'elvish-.*$' $f[name]
+   file:close $f
+   os:remove $f[name]
+▶ $true

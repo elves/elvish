@@ -1,0 +1,148 @@
+//////
+# ns #
+//////
+
+// Accessing like a map
+~> put (ns [&name=value])[name]
+▶ value
+// Accessing using :
+~> var n: = (ns [&name=value])
+   put $n:name
+▶ value
+
+## bad key in argument ##
+~> ns [&[]=[]]
+Exception: bad value: key of argument of "ns" must be string, but is list
+  [tty]:1:1-11: ns [&[]=[]]
+
+////////////
+# make-map #
+////////////
+
+~> make-map []
+▶ [&]
+~> make-map [[k v]]
+▶ [&k=v]
+~> make-map [[k1 v1] [k2 v2]]
+▶ [&k1=v1 &k2=v2]
+// Later key override previous one
+~> make-map [[k v] [k v2]]
+▶ [&k=v2]
+// String of length 2 also works
+~> make-map [kv]
+▶ [&k=v]
+
+## bad argument ##
+~> make-map [{ } [k v]]
+Exception: bad value: input to make-map must be iterable, but is fn
+  [tty]:1:1-20: make-map [{ } [k v]]
+~> make-map [[k v] [k]]
+Exception: bad value: input to make-map must be iterable with 2 elements, but is list with 1 elements
+  [tty]:1:1-20: make-map [[k v] [k]]
+
+////////
+# conj #
+////////
+~> conj [] a
+▶ [a]
+~> conj [a b]
+▶ [a b]
+~> conj [a b] c
+▶ [a b c]
+~> conj [a b] c d
+▶ [a b c d]
+
+/////////
+# assoc #
+/////////
+
+~> assoc [old] 0 new
+▶ [new]
+~> assoc [&] k v
+▶ [&k=v]
+~> assoc [&k=old] k new
+▶ [&k=new]
+
+//////////
+# dissoc #
+//////////
+
+~> dissoc [&k=v] k
+▶ [&]
+
+## bad argument ##
+~> dissoc foo 0
+Exception: cannot dissoc
+  [tty]:1:1-12: dissoc foo 0
+
+///////////
+# has-key #
+///////////
+
+~> has-key [&k=v] k
+▶ $true
+~> has-key [&k=v] bad
+▶ $false
+~> has-key [lorem ipsum] 0
+▶ $true
+~> has-key [lorem ipsum] 2
+▶ $false
+
+## list slices ##
+~> has-key [lorem ipsum] 0..
+▶ $true
+~> has-key [lorem ipsum] 0..=
+▶ $true
+~> has-key [lorem ipsum] ..2
+▶ $true
+~> has-key [lorem ipsum] ..=2
+▶ $false
+~> has-key [lorem ipsum dolor sit] 0..4
+▶ $true
+~> has-key [lorem ipsum dolor sit] 0..=4
+▶ $false
+~> has-key [lorem ipsum dolor sit] 1..3
+▶ $true
+~> has-key [lorem ipsum dolor sit] 1..5
+▶ $false
+~> has-key [lorem ipsum dolor sit] -2..=-1
+▶ $true
+
+/////////////
+# has-value #
+/////////////
+~> has-value [&lorem=ipsum &foo=bar] lorem
+▶ $false
+~> has-value [&lorem=ipsum &foo=bar] bar
+▶ $true
+~> has-value [foo bar] bar
+▶ $true
+~> has-value [foo bar] badehose
+▶ $false
+~> has-value [[foo] [bar]] [foo]
+▶ $true
+~> has-value "foo" o
+▶ $true
+~> has-value "foo" d
+▶ $false
+
+////////
+# keys #
+////////
+
+~> keys [&]
+~> keys [&a=foo]
+▶ a
+~> keys [&a=foo &b=bar] | order
+▶ a
+▶ b
+
+## bad argument ##
+~> keys (num 1)
+Exception: cannot iterate keys of number
+  [tty]:1:1-12: keys (num 1)
+
+## propagates output error ##
+~> keys [&a=foo] >&-
+Exception: port does not support value output
+  [tty]:1:1-17: keys [&a=foo] >&-

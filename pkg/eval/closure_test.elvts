@@ -1,0 +1,51 @@
+///////////
+# closure #
+///////////
+
+## value operations ##
+~> kind-of { }
+▶ fn
+~> eq { } { }
+▶ $false
+~> var x = { }; put [&$x= foo][$x]
+▶ foo
+
+## arity check ##
+~> {|x| } a b
+Exception: arity mismatch: arguments must be 1 value, but is 2 values
+  [tty]:1:1-10: {|x| } a b
+~> {|x y| } a
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-10: {|x y| } a
+~> {|x y @rest| } a
+Exception: arity mismatch: arguments must be 2 or more values, but is 1 value
+  [tty]:1:1-16: {|x y @rest| } a
+
+## unsupported option ##
+~> {|&valid=1| } &bad=1
+Exception: unsupported option: bad
+  [tty]:1:1-20: {|&valid=1| } &bad=1
+~> {|&valid1=1 &valid2=2| } &bad1=1 &bad2=2
+Exception: unsupported options: bad1, bad2
+  [tty]:1:1-40: {|&valid1=1 &valid2=2| } &bad1=1 &bad2=2
+
+## introspection ##
+~> put {|a b| }[arg-names]
+▶ [a b]
+~> put {|@r| }[rest-arg]
+▶ 0
+~> put {|&opt=def| }[opt-names]
+▶ [opt]
+~> put {|&opt=def| }[opt-defaults]
+▶ [def]
+~> put { body }[body]
+▶ 'body '
+~> put {|x @y| body }[def]
+▶ '{|x @y| body }'
+~> put { body }[src][code]
+▶ 'put { body }[src][code]'
+
+## body of fn-defined function ##
+// Regression test for https://b.elv.sh/1126.
+~> fn f { body }; put $f~[body]
+▶ 'body '

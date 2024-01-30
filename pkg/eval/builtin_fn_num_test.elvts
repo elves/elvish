@@ -1,0 +1,560 @@
+// When testing numbers with different underlying types, the order is usually
+//
+// 1. int
+// 2. *big.Int (100000000000000000000 is often used)
+// 3. *big.Rat
+// 4. float64
+
+///////
+# num #
+///////
+
+~> num 1
+▶ (num 1)
+~> num 100000000000000000000
+▶ (num 100000000000000000000)
+~> num 1/2
+▶ (num 1/2)
+~> num 0.1
+▶ (num 0.1)
+~> num (num 1)
+▶ (num 1)
+
+/////////////
+# exact-num #
+/////////////
+
+~> exact-num 1
+▶ (num 1)
+~> exact-num 0.125
+▶ (num 1/8)
+~> exact-num inf
+Exception: bad value: argument here must be finite float, but is +Inf
+  [tty]:1:1-13: exact-num inf
+
+///////////////
+# inexact-num #
+///////////////
+
+~> inexact-num 1
+▶ (num 1.0)
+~> inexact-num 1.0
+▶ (num 1.0)
+~> inexact-num (num 1)
+▶ (num 1.0)
+~> inexact-num (num 1.0)
+▶ (num 1.0)
+
+//////////////
+# Comparison #
+//////////////
+
+## < ##
+
+// int
+~> < 1 2 3
+▶ $true
+~> < 1 3 2
+▶ $false
+// *big.Int
+~> < 100000000000000000001 100000000000000000002 100000000000000000003
+▶ $true
+~> < 100000000000000000001 100000000000000000003 100000000000000000002
+▶ $false
+// *big.Rat
+~> < 1/4 1/3 1/2
+▶ $true
+~> < 1/4 1/2 1/3
+▶ $false
+// float64
+~> < 1.0 2.0 3.0
+▶ $true
+~> < 1.0 3.0 2.0
+▶ $false
+
+## mixed types ##
+// Only test with <; the other commands share the same code path for handling
+// mixed types.
+
+// mixing int and *big.Int
+~> < 1 100000000000000000001
+▶ $true
+// mixing int, *big.Int and *big.Rat
+~> < 1/2 1 100000000000000000001
+▶ $true
+~> < 1/2 100000000000000000001 1
+▶ $false
+// mixing int, *big.Rat and float64
+~> < 1.0 3/2 2
+▶ $true
+~> < 1.0 2 3/2
+▶ $false
+
+## <= ##
+
+// int
+~> <= 1 1 2
+▶ $true
+~> <= 1 2 1
+▶ $false
+// *big.Int
+~> <= 100000000000000000001 100000000000000000001 100000000000000000002
+▶ $true
+~> <= 100000000000000000001 100000000000000000002 100000000000000000001
+▶ $false
+// *big.Rat
+~> <= 1/3 1/3 1/2
+▶ $true
+~> <= 1/3 1/2 1/1
+▶ $true
+// float64
+~> <= 1.0 1.0 2.0
+▶ $true
+~> <= 1.0 2.0 1.0
+▶ $false
+
+## == ##
+
+// int
+~> == 1 1 1
+▶ $true
+~> == 1 2 1
+▶ $false
+// *big.Int
+~> == 100000000000000000001 100000000000000000001 100000000000000000001
+▶ $true
+~> == 100000000000000000001 100000000000000000002 100000000000000000001
+▶ $false
+// *big.Rat
+~> == 1/2 1/2 1/2
+▶ $true
+~> == 1/2 1/3 1/2
+▶ $false
+// float64
+~> == 1.0 1.0 1.0
+▶ $true
+~> == 1.0 2.0 1.0
+▶ $false
+
+## != ##
+
+// int
+~> != 1 2 1
+▶ $true
+~> != 1 1 2
+▶ $false
+// *big.Int
+~> != 100000000000000000001 100000000000000000002 100000000000000000001
+▶ $true
+~> != 100000000000000000001 100000000000000000001 100000000000000000002
+▶ $false
+// *big.Rat
+~> != 1/2 1/3 1/2
+▶ $true
+~> != 1/2 1/2 1/3
+▶ $false
+// float64
+~> != 1.0 2.0 1.0
+▶ $true
+~> != 1.0 1.0 2.0
+▶ $false
+
+## > ##
+
+// int
+~> > 3 2 1
+▶ $true
+~> > 3 1 2
+▶ $false
+// *big.Int
+~> > 100000000000000000003 100000000000000000002 100000000000000000001
+▶ $true
+~> > 100000000000000000003 100000000000000000001 100000000000000000002
+▶ $false
+// *big.Rat
+~> > 1/2 1/3 1/4
+▶ $true
+~> > 1/2 1/4 1/3
+▶ $false
+// float64
+~> > 3.0 2.0 1.0
+▶ $true
+~> > 3.0 1.0 2.0
+▶ $false
+
+## >= ##
+
+// int
+~> >= 3 3 2
+▶ $true
+~> >= 3 2 3
+▶ $false
+// *big.Int
+~> >= 100000000000000000003 100000000000000000003 100000000000000000002
+▶ $true
+~> >= 100000000000000000003 100000000000000000002 100000000000000000003
+▶ $false
+// *big.Rat
+~> >= 1/2 1/2 1/3
+▶ $true
+~> >= 1/2 1/3 1/2
+▶ $false
+// float64
+~> >= 3.0 3.0 2.0
+▶ $true
+~> >= 3.0 2.0 3.0
+▶ $false
+
+////////////////////
+# basic arithmetic #
+////////////////////
+
+## + ##
+
+// no argument
+~> +
+▶ (num 0)
+// int
+~> + 233100 233
+▶ (num 233333)
+// *big.Int
+~> + 100000000000000000000 100000000000000000001
+▶ (num 200000000000000000001)
+// *big.Rat
+~> + 1/2 1/3 1/4
+▶ (num 13/12)
+// float64
+~> + 0.5 0.25 1.0
+▶ (num 1.75)
+
+## mixing types ##
+
+// Only test with +; the other commands share the same code path for handling
+// mixed types.
+
+// int and *big.Int
+~> + 1 2 100000000000000000000
+▶ (num 100000000000000000003)
+// int, *big,Int and *big.Rat
+~> + 1/2 1/2 1 100000000000000000000
+▶ (num 100000000000000000002)
+// int, *big.Rat and float64
+~> + 0.5 1/4 1
+▶ (num 1.75)
+
+## - ##
+
+// no argument is unsupported
+~> -
+Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
+  [tty]:1:1-1: -
+// one argument is negation
+~> - 233
+▶ (num -233)
+~> - 100000000000000000000
+▶ (num -100000000000000000000)
+~> - 1/2
+▶ (num -1/2)
+~> - 1.0
+▶ (num -1.0)
+// int
+~> - 20 10 2
+▶ (num 8)
+// *big.Int
+~> - 200000000000000000003 100000000000000000001
+▶ (num 100000000000000000002)
+// *big.Rat
+~> - 1/2 1/3
+▶ (num 1/6)
+// float64
+~> - 2.0 1.0 0.5
+▶ (num 0.5)
+
+## * ##
+
+// no argument
+~> *
+▶ (num 1)
+// int
+~> * 2 7 4
+▶ (num 56)
+// *big.Int
+~> * 2 100000000000000000001
+▶ (num 200000000000000000002)
+// *big.Rat
+~> * 1/2 1/3
+▶ (num 1/6)
+// float64
+~> * 2.0 0.5 1.75
+▶ (num 1.75)
+// 0 * non-infinity
+~> * 0 1/2 1.0
+▶ (num 0)
+// 0 * infinity
+~> * 0 +Inf
+▶ (num NaN)
+
+## / ##
+
+// one argument - inversion
+~> / 2
+▶ (num 1/2)
+~> / 100000000000000000000
+▶ (num 1/100000000000000000000)
+~> / 2.0
+▶ (num 0.5)
+// int
+~> / 233333 353
+▶ (num 661)
+~> / 3 4 2
+▶ (num 3/8)
+// *big.Int
+~> / 200000000000000000000 100000000000000000000
+▶ (num 2)
+~> / 200000000000000000000 2
+▶ (num 100000000000000000000)
+~> / 100000000000000000001 100000000000000000000
+▶ (num 100000000000000000001/100000000000000000000)
+// float64
+~> / 1.0 2.0 4.0
+▶ (num 0.125)
+~> / 0 1/2 0.1
+▶ (num 0)
+// anything / 0
+~> / 0 0
+Exception: bad value: divisor must be number other than exact 0, but is exact 0
+  [tty]:1:1-5: / 0 0
+~> / 1 0
+Exception: bad value: divisor must be number other than exact 0, but is exact 0
+  [tty]:1:1-5: / 1 0
+~> / 1.0 0
+Exception: bad value: divisor must be number other than exact 0, but is exact 0
+  [tty]:1:1-7: / 1.0 0
+
+## % ##
+~> % 23 7
+▶ (num 2)
+~> % 1 0
+Exception: bad value: divisor must be number other than exact 0, but is exact 0
+  [tty]:1:1-5: % 1 0
+
+///////////
+# randint #
+///////////
+
+~> randint 1 2
+▶ (num 1)
+~> randint 1
+▶ (num 0)
+~> var i = (randint 10 100)
+   and (<= 10 $i) (< $i 100)
+▶ $true
+~> var i = (randint 10); and (<= 0 $i) (< $i 10)
+▶ $true
+
+## argument checking ##
+
+~> randint 2 1
+Exception: bad value: high value must be larger than 2, but is 1
+  [tty]:1:1-11: randint 2 1
+~> randint
+Exception: arity mismatch: arguments must be 1 to 2 values, but is 0 values
+  [tty]:1:1-7: randint
+~> randint 1 2 3
+Exception: arity mismatch: arguments must be 1 to 2 values, but is 3 values
+  [tty]:1:1-13: randint 1 2 3
+
+/////////////
+# -randseed #
+/////////////
+
+//reseed-afterwards
+
+// -randseed makes randint deterministic ##
+~> fn f { -randseed 0; randint 10 }
+   eq (f) (f)
+▶ $true
+
+/////////
+# range #
+/////////
+
+## argument arity check ##
+~> range
+Exception: arity mismatch: arguments must be 1 to 2 values, but is 0 values
+  [tty]:1:1-5: range
+~> range 0 1 2
+Exception: arity mismatch: arguments must be 1 to 2 values, but is 3 values
+  [tty]:1:1-11: range 0 1 2
+
+## int ##
+// counting up
+~> range 3
+▶ (num 0)
+▶ (num 1)
+▶ (num 2)
+~> range 1 3
+▶ (num 1)
+▶ (num 2)
+// counting down
+~> range -1 10 &step=3
+▶ (num -1)
+▶ (num 2)
+▶ (num 5)
+▶ (num 8)
+~> range 3 -3
+▶ (num 3)
+▶ (num 2)
+▶ (num 1)
+▶ (num 0)
+▶ (num -1)
+▶ (num -2)
+// invalid step
+~> range &step=-1 1
+Exception: bad value: step must be positive, but is -1
+  [tty]:1:1-16: range &step=-1 1
+~> range &step=1 1 0
+Exception: bad value: step must be negative, but is 1
+  [tty]:1:1-17: range &step=1 1 0
+// bubbling output error
+~> range 2 >&-
+Exception: port does not support value output
+  [tty]:1:1-11: range 2 >&-
+
+## near max/min of int ##
+// Values near the max/min of int need to be handled carefully to avoid
+// overflow. Instead of assuming int is 64-bit or 32-bit, test interesting
+// values for both cases.
+
+// 2^63-3 to 2^63-1
+~> range 9223372036854775805 9223372036854775807
+▶ (num 9223372036854775805)
+▶ (num 9223372036854775806)
+~> range 9223372036854775807 9223372036854775805
+▶ (num 9223372036854775807)
+▶ (num 9223372036854775806)
+// -2^63 to -2^63+2
+~> range -9223372036854775808 -9223372036854775806
+▶ (num -9223372036854775808)
+▶ (num -9223372036854775807)
+~> range -9223372036854775806 -9223372036854775808
+▶ (num -9223372036854775806)
+▶ (num -9223372036854775807)
+// 2^31-3 to 2^31-1
+~> range 2147483645 2147483647
+▶ (num 2147483645)
+▶ (num 2147483646)
+~> range 2147483647 2147483645
+▶ (num 2147483647)
+▶ (num 2147483646)
+// -2^31 to -2^31+2
+~> range -2147483648 -2147483646
+▶ (num -2147483648)
+▶ (num -2147483647)
+~> range -2147483646 -2147483648
+▶ (num -2147483646)
+▶ (num -2147483647)
+
+## *big.Int ##
+// counting up
+~> range 100000000000000000000 100000000000000000003
+▶ (num 100000000000000000000)
+▶ (num 100000000000000000001)
+▶ (num 100000000000000000002)
+~> range 100000000000000000000 100000000000000000003 &step=2
+▶ (num 100000000000000000000)
+▶ (num 100000000000000000002)
+// counting down
+~> range 100000000000000000003 100000000000000000000
+▶ (num 100000000000000000003)
+▶ (num 100000000000000000002)
+▶ (num 100000000000000000001)
+~> range 100000000000000000003 100000000000000000000 &step=-2
+▶ (num 100000000000000000003)
+▶ (num 100000000000000000001)
+// invalid step
+~> range &step=-100000000000000000000 10
+Exception: bad value: step must be positive, but is -100000000000000000000
+  [tty]:1:1-37: range &step=-100000000000000000000 10
+~> range &step=100000000000000000000 10 0
+Exception: bad value: step must be negative, but is 100000000000000000000
+  [tty]:1:1-38: range &step=100000000000000000000 10 0
+// bubbling output error
+~> range 100000000000000000000 100000000000000000001 >&-
+Exception: port does not support value output
+  [tty]:1:1-53: range 100000000000000000000 100000000000000000001 >&-
+
+## *big.Rat ##
+// counting up
+~> range 23/10
+▶ (num 0)
+▶ (num 1)
+▶ (num 2)
+~> range 1/10 23/10
+▶ (num 1/10)
+▶ (num 11/10)
+▶ (num 21/10)
+~> range 1/10 9/10 &step=3/10
+▶ (num 1/10)
+▶ (num 2/5)
+▶ (num 7/10)
+// counting down
+~> range 23/10 1/10
+▶ (num 23/10)
+▶ (num 13/10)
+▶ (num 3/10)
+~> range 9/10 0/10 &step=-3/10
+▶ (num 9/10)
+▶ (num 3/5)
+▶ (num 3/10)
+// invalid step
+~> range &step=-1/2 10
+Exception: bad value: step must be positive, but is -1/2
+  [tty]:1:1-19: range &step=-1/2 10
+~> range &step=1/2 10 0
+Exception: bad value: step must be negative, but is 1/2
+  [tty]:1:1-20: range &step=1/2 10 0
+// bubbling output error
+~> range 1/2 3/2 >&-
+Exception: port does not support value output
+  [tty]:1:1-17: range 1/2 3/2 >&-
+
+## float64 ##
+// counting up
+~> range 1.2
+▶ (num 0.0)
+▶ (num 1.0)
+~> range &step=0.5 1 3
+▶ (num 1.0)
+▶ (num 1.5)
+▶ (num 2.0)
+▶ (num 2.5)
+// counting down
+~> range 1.2 -1.2
+▶ (num 1.2)
+▶ (num 0.19999999999999996)
+▶ (num -0.8)
+~> range &step=-0.5 3 1
+▶ (num 3.0)
+▶ (num 2.5)
+▶ (num 2.0)
+▶ (num 1.5)
+// Nearing the maximum float64 value where x+1 = x.
+~> range 9007199254740990.0 +inf
+▶ (num 9.00719925474099e+15)
+▶ (num 9007199254740991.0)
+▶ (num 9007199254740992.0)
+~> range 9007199254740992.0 9007199254740990.0
+▶ (num 9007199254740992.0)
+▶ (num 9007199254740991.0)
+// invalid step
+~> range &step=-0.5 10
+Exception: bad value: step must be positive, but is -0.5
+  [tty]:1:1-19: range &step=-0.5 10
+~> range &step=0.5 10 0
+Exception: bad value: step must be negative, but is 0.5
+  [tty]:1:1-20: range &step=0.5 10 0
+// bubbling output error
+~> range 1.2 >&-
+Exception: port does not support value output
+  [tty]:1:1-13: range 1.2 >&-

@@ -1,0 +1,4 @@
+//prepare-deps
+
+// A smoke test to ensure that the readline-binding module has no errors.
+~> use readline-binding

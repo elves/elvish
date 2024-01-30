@@ -3,7 +3,6 @@ package eval_test
 import (
 	"errors"
 	"reflect"
-	"runtime"
 	"testing"
 	"unsafe"
 
@@ -11,7 +10,6 @@ import (
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/testutil"
 
-	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/persistent/hash"
 	"src.elv.sh/pkg/tt"
@@ -95,33 +93,6 @@ func makeStackTrace(entries ...*diag.Context) *StackTrace {
 		s = &StackTrace{Head: entries[i], Next: s}
 	}
 	return s
-}
-
-func TestFlow_Fields(t *testing.T) {
-	Test(t,
-		That("put ?(return)[reason][type name]").Puts("flow", "return"),
-	)
-}
-
-func TestExternalCmdExit_Fields(t *testing.T) {
-	badCmd := "false"
-	if runtime.GOOS == "windows" {
-		badCmd = "cmd /c exit 1"
-	}
-	Test(t,
-		That("put ?("+badCmd+")[reason][type exit-status]").
-			Puts("external-cmd/exited", "1"),
-		// TODO: Test killed and stopped commands
-	)
-}
-
-func TestPipelineError_Fields(t *testing.T) {
-	Test(t,
-		That("put ?(fail 1 | fail 2)[reason][type]").Puts("pipeline"),
-		That("count ?(fail 1 | fail 2)[reason][exceptions]").Puts(2),
-		That("put ?(fail 1 | fail 2)[reason][exceptions][0][reason][type]").
-			Puts("fail"),
-	)
 }
 
 func TestErrorMethods(t *testing.T) {

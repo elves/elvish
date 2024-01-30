@@ -1,0 +1,104 @@
+//use-doc-with-fakepkg
+
+////////////
+# doc:show #
+////////////
+
+## function ##
+~> doc:show foo:function
+Usage:
+
+  foo:function $x
+
+A function with long documentation. Lorem ipsum dolor sit amet. Consectetur
+adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna
+aliqua.
+
+## variable ##
+~> doc:show '$foo:variable'
+A variable. Lorem ipsum.
+
+## &width ##
+~> doc:show &width=30 foo:function
+Usage:
+
+  foo:function $x
+
+A function with long
+documentation. Lorem ipsum
+dolor sit amet. Consectetur
+adipiscing elit. Sed do
+eiusmod tempor incididunt ut
+labore et dolore magna aliqua.
+
+## implicit builtin ##
+~> doc:show break
+Usage:
+
+  break
+
+Terminates a loop.
+
+## explicit builtin ##
+~> doc:show builtin:break
+Usage:
+
+  break
+
+Terminates a loop.
+
+## relative links ##
+// Relative links to language.html are converted to absolute links to
+// https://elv.sh/ref/language.html, but other relative links are not.
+~> doc:show num
+Usage:
+
+  num $x
+
+Constructs a typed number (https://elv.sh/ref/language.html#number). Another
+link.
+
+## existing module, non-existing symbol ##
+~> doc:show foo:bad
+Exception: no doc for foo:bad
+  [tty]:1:1-16: doc:show foo:bad
+
+## non-existing module ##
+~> doc:show bad:foo
+Exception: no doc for bad:foo
+  [tty]:1:1-16: doc:show bad:foo
+
+////////////
+# doc:find #
+////////////
+
+~> doc:find ipsum
+foo:function:
+  … Lorem ipsum dolor sit amet. …
+$foo:variable:
+  … Lorem ipsum.
+
+//////////////
+# doc:source #
+//////////////
+
+// The implementation of doc:source is used by doc:show internally and exercised
+// in its tests, so we only test a simple case here.
+~> doc:source '$foo:variable'
+▶ "A variable. Lorem ipsum.\n"
+
+////////////////
+# doc:-symbols #
+////////////////
+
+~> doc:-symbols
+// Note: symbols are sorted
+▶ '$foo:variable'
+▶ break
+▶ foo:function
+▶ num
+
+## output error ##
+~> doc:-symbols >&-
+Exception: port does not support value output
+  [tty]:1:1-16: doc:-symbols >&-

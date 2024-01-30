@@ -133,6 +133,7 @@ func NewEvaler() *Evaler {
 
 func adaptChdirHook(name string, ev *Evaler, pfns *vals.List) func(string) {
 	return func(path string) {
+		// TODO: Chdir hooks should run with the ports of the current *Frame.
 		ports, cleanup := PortsFromStdFiles(ev.ValuePrefix())
 		defer cleanup()
 		callCfg := CallCfg{Args: []any{path}, From: "[hook " + name + "]"}

@@ -1,0 +1,4 @@
+//prepare-deps
+
+// A smoke test to ensure that the epm module has no errors.
+~> use epm

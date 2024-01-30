@@ -1,0 +1,65 @@
+//use-unix
+//mock-rlimit
+
+///////////
+# reading #
+///////////
+
+~> put $unix:rlimits[cpu]
+▶ [&]
+~> put $unix:rlimits[nofile]
+▶ [&cur=(num 30) &max=(num 40)]
+~> has-key $unix:rlimits stack
+▶ $false
+
+///////////
+# setting #
+///////////
+
+~> set unix:rlimits[cpu] = [&cur=3 &max=8]
+   put $cpu-cur $cpu-max
+▶ (num 3)
+▶ (num 8)
+~> set unix:rlimits[cpu] = [&cur=4]
+   put $cpu-cur $cpu-max
+▶ (num 4)
+▶ (num -1)
+~> set unix:rlimits[cpu] = [&]
+   put $cpu-cur $cpu-max
+▶ (num -1)
+▶ (num -1)
+~> set unix:rlimits[nofile] = [&]
+Exception: setrlimit nofile: fake setrlimit error
+  [tty]:1:5-24: set unix:rlimits[nofile] = [&]
+
+//////////////
+# bad values #
+//////////////
+
+## bad rlimits value ##
+~> set unix:rlimits = x
+Exception: bad value: $unix:rlimits must be map, but is string
+  [tty]:1:5-16: set unix:rlimits = x
+~> set unix:rlimits = [&[]=[&]]
+Exception: bad value: key of $unix:rlimits must be string, but is list
+  [tty]:1:5-16: set unix:rlimits = [&[]=[&]]
+~> set unix:rlimits = [&bad-resource=[&]]
+Exception: bad value: key of $unix:rlimits must be valid resource key, but is bad-resource
+  [tty]:1:5-16: set unix:rlimits = [&bad-resource=[&]]
+~> set unix:rlimits = [&]
+Exception: bad value: $unix:rlimits must be map containing all resource keys, but is [&]
+  [tty]:1:5-16: set unix:rlimits = [&]
+
+## bad map value ##
+~> set unix:rlimits[cpu] = x
+Exception: bad value: rlimit value must be map, but is string
+  [tty]:1:5-21: set unix:rlimits[cpu] = x
+~> set unix:rlimits[cpu] = [&bad]
+Exception: bad value: key of rlimit value must be cur or max, but is bad
+  [tty]:1:5-21: set unix:rlimits[cpu] = [&bad]
+~> set unix:rlimits[cpu] = [&cur=[]]
+Exception: bad value: cur in rlimit value must be number between 0 and 18446744073709551615, but is []
+  [tty]:1:5-21: set unix:rlimits[cpu] = [&cur=[]]
+~> set unix:rlimits[cpu] = [&cur=1 &max=[]]
+Exception: bad value: max in rlimit value must be number between 0 and 18446744073709551615, but is []
+  [tty]:1:5-21: set unix:rlimits[cpu] = [&cur=1 &max=[]]

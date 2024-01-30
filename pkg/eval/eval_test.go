@@ -1,69 +1,14 @@
 package eval_test
 
 import (
-	"strconv"
 	"sync"
-	"syscall"
 	"testing"
 
 	. "src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/prog"
 
-	. "src.elv.sh/pkg/eval/evaltest"
-	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/testutil"
 )
-
-func TestPid(t *testing.T) {
-	pid := strconv.Itoa(syscall.Getpid())
-	Test(t, That("put $pid").Puts(pid))
-}
-
-func TestNumBgJobs(t *testing.T) {
-	Test(t,
-		That("put $num-bg-jobs").Puts("0"),
-		// TODO(xiaq): Test cases where $num-bg-jobs > 0. This cannot be done
-		// with { put $num-bg-jobs }& because the output channel may have
-		// already been closed when the closure is run.
-	)
-}
-
-func TestArgs(t *testing.T) {
-	Test(t,
-		That("put $args").Puts(vals.EmptyList))
-	TestWithEvalerSetup(t,
-		func(ev *Evaler) { ev.Args = vals.MakeList("foo", "bar") },
-		That("put $args").Puts(vals.MakeList("foo", "bar")))
-}
-
-func TestEvalTimeDeprecate(t *testing.T) {
-	testutil.Set(t, &prog.DeprecationLevel, 42)
-	testutil.InTempDir(t)
-
-	TestWithEvalerSetup(t, func(ev *Evaler) {
-		ev.ExtendGlobal(BuildNs().AddGoFn("dep", func(fm *Frame) {
-			fm.Deprecate("deprecated", nil, 42)
-		}))
-	},
-		That("dep").PrintsStderrWith("deprecated"),
-		// Deprecation message from the same location is only shown once.
-		That("fn f { dep }", "f 2> tmp.txt; f").DoesNothing(),
-	)
-}
-
-func TestMultipleEval(t *testing.T) {
-	Test(t,
-		That("var x = hello").Then("put $x").Puts("hello"),
-
-		// Shadowing with fn. Regression test for #1213.
-		That("fn f { put old }").Then("fn f { put new }").Then("f").
-			Puts("new"),
-		// Variable deletion. Regression test for #1213.
-		That("var x = foo").Then("del x").Then("put $x").DoesNotCompile("variable $x not found"),
-	)
-}
 
 func TestEval_AlternativeGlobal(t *testing.T) {
 	ev := NewEvaler()

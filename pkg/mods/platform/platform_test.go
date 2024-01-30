@@ -1,45 +1,26 @@
 package platform
 
 import (
+	"embed"
 	"errors"
-	"runtime"
 	"testing"
 
-	"src.elv.sh/pkg/eval"
-	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/testutil"
 )
 
-func TestPlatform(t *testing.T) {
-	testutil.Set(t, &osHostname, func() (string, error) {
-		return "mach1.domain.tld", nil
-	})
+//go:embed *.elvts
+var transcripts embed.FS
 
-	TestWithEvalerSetup(t, setup,
-		That(`put $platform:arch`).Puts(runtime.GOARCH),
-		That(`put $platform:os`).Puts(runtime.GOOS),
-		That(`put $platform:is-windows`).Puts(runtime.GOOS == "windows"),
-		That(`put $platform:is-unix`).Puts(
-			// Convert to bool type explicitly, to workaround gccgo bug.
-			// https://github.com/golang/go/issues/40152
-			// TODO(zhsj): remove workaround after gcc 11 is the default in CI.
-			bool(runtime.GOOS != "windows" && runtime.GOOS != "plan9" && runtime.GOOS != "js")),
-		That(`platform:hostname`).Puts("mach1.domain.tld"),
-		That(`platform:hostname &strip-domain`).Puts("mach1"),
+func TestTranscripts(t *testing.T) {
+	evaltest.TestTranscriptsInFS(t, transcripts,
+		"use-platform", evaltest.Use("platform", Ns),
+		"mock-hostname", func(t *testing.T, hostname string) {
+			testutil.Set(t, &osHostname, func() (string, error) { return hostname, nil })
+		},
+		"mock-hostname-error", func(t *testing.T, msg string) {
+			err := errors.New(msg)
+			testutil.Set(t, &osHostname, func() (string, error) { return "", err })
+		},
 	)
-}
-
-func TestPlatform_HostNameError(t *testing.T) {
-	errNoHostname := errors.New("hostname cannot be determined")
-
-	testutil.Set(t, &osHostname, func() (string, error) {
-		return "", errNoHostname
-	})
-	TestWithEvalerSetup(t, setup,
-		That(`platform:hostname`).Throws(errNoHostname),
-	)
-}
-
-func setup(ev *eval.Evaler) {
-	ev.ExtendGlobal(eval.BuildNs().AddNs("platform", Ns))
 }

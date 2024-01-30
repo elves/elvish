@@ -1,0 +1,77 @@
+//use-platform
+
+//////////////////
+# $platform:arch #
+//////////////////
+
+## arm64 ##
+//only-on arm64
+~> put $platform:arch
+▶ arm64
+
+## amd64 ##
+//only-on amd64
+~> put $platform:arch
+▶ amd64
+
+////////////////////////////
+# $platform:os and friends #
+////////////////////////////
+
+## linux ##
+//only-on linux
+~> put $platform:os
+▶ linux
+
+## darwin ##
+//only-on darwin
+~> put $platform:os
+▶ darwin
+
+## freebsd ##
+//only-on freebsd
+~> put $platform:os
+▶ freebsd
+
+## openbsd ##
+//only-on openbsd
+~> put $platform:os
+▶ openbsd
+
+## netbsd ##
+//only-on netbsd
+~> put $platform:os
+▶ netbsd
+
+## unix ##
+//only-on unix
+~> put $platform:is-windows
+▶ $false
+~> put $platform:is-unix
+▶ $true
+
+## windows ##
+//only-on windows
+~> put $platform:os
+▶ windows
+~> put $platform:is-windows
+▶ $true
+~> put $platform:is-unix
+▶ $false
+
+/////////////////////
+# platform:hostname #
+/////////////////////
+
+## good hostname ##
+//mock-hostname mach1.domain.tld
+~> platform:hostname
+▶ mach1.domain.tld
+~> platform:hostname &strip-domain
+▶ mach1
+
+## bad hostname ##
+//mock-hostname-error hostname cannot be determined
+~> platform:hostname
+Exception: hostname cannot be determined
+  [tty]:1:1-17: platform:hostname

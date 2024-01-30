@@ -1,0 +1,190 @@
+////////////////
+# run-parallel #
+////////////////
+
+~> run-parallel { put lorem } { put ipsum } | order
+▶ ipsum
+▶ lorem
+~> run-parallel { } { fail foo }
+Exception: foo
+  [tty]:1:20-28: run-parallel { } { fail foo }
+  [tty]:1:1-29: run-parallel { } { fail foo }
+
+////////
+# each #
+////////
+
+~> put 1 233 | each $put~
+▶ 1
+▶ 233
+~> echo "1\n233" | each $put~
+▶ 1
+▶ 233
+~> echo "1\r\n233" | each $put~
+▶ 1
+▶ 233
+~> each $put~ [1 233]
+▶ 1
+▶ 233
+~> range 10 | each {|x| if (== $x 4) { break }; put $x }
+▶ (num 0)
+▶ (num 1)
+▶ (num 2)
+▶ (num 3)
+~> range 10 | each {|x| if (== $x 4) { continue }; put $x }
+▶ (num 0)
+▶ (num 1)
+▶ (num 2)
+▶ (num 3)
+▶ (num 5)
+▶ (num 6)
+▶ (num 7)
+▶ (num 8)
+▶ (num 9)
+~> range 10 | each {|x| if (== $x 4) { fail haha }; put $x }
+▶ (num 0)
+▶ (num 1)
+▶ (num 2)
+▶ (num 3)
+Exception: haha
+  [tty]:1:37-46: range 10 | each {|x| if (== $x 4) { fail haha }; put $x }
+  [tty]:1:12-57: range 10 | each {|x| if (== $x 4) { fail haha }; put $x }
+
+// TODO: Test that "each" does not close the stdin.
+
+/////////
+# peach #
+/////////
+
+~> range 5 | peach {|x| * 2 $x } | order
+▶ (num 0)
+▶ (num 2)
+▶ (num 4)
+▶ (num 6)
+▶ (num 8)
+// continue
+~> range 5 | peach {|x| if (== $x 2) { continue }; * 2 $x } | order
+▶ (num 0)
+▶ (num 2)
+▶ (num 6)
+▶ (num 8)
+
+## processing order is non-deterministic ##
+// Test that inputs are not necessarily processed in order.
+// 
+// Most of the time this effect can be observed without the need of any jitter,
+// but if the system only has one CPU core to execute goroutines (which can
+// happen even when GOMAXPROCS > 1), the scheduling of goroutines can become
+// deterministic. The random jitter fixes that by forcing goroutines to yield
+// the thread and allow other goroutines to execute.
+~> var @in = (range 100)
+   while $true {
+     var @out = (all $in | peach {|x| sleep (* (rand) 0.01); put $x })
+     if (not-eq $in $out) {
+       put $true
+       break
+     }
+   }
+▶ $true
+
+## exception propagation ##
+~> peach {|x| fail $x } [a]
+Exception: a
+  [tty]:1:12-19: peach {|x| fail $x } [a]
+  [tty]:1:1-24: peach {|x| fail $x } [a]
+
+## break ##
+// It is technically possible for break to only take effect after the whole
+// sequence has been consumed, but that doesn't seem to ever happen in practice.
+~> range 1 101 |
+     peach {|x| if (== 50 $x) { break } else { put $x } } |
+     < (+ (all)) (+ (range 1 101))
+▶ $true
+
+## parallelism ##
+
+//test-time-scale-in-global
+
+// Test the parallelism of peach by observing its run time relative to the run
+// time of the function. Since the exact run time is subject to scheduling
+// differences, benchmark it multiple times and use the fastest run time.
+
+// Unlimited workers: when scheduling allows, no two function runs are serial,
+// so the best run time should be between t and 2t, regardless of input size.
+~> var t = (* 0.005 $test-time-scale)
+   var best-run = (benchmark &min-runs=5 &min-time=0 {
+       range 6 | peach {|_| sleep $t }
+   } &on-end={|metrics| put $metrics[min] })
+   < $t $best-run (* 2 $t)
+▶ $true
+// 2 workers: when scheduling allows, at least two function runs are parallel.
+// On the other hand, No more than two functions are parallel. Best run time
+// should be between (ceil(n/2) * t) and n*t, where n is the input size.
+~> var t = (* 0.005 $test-time-scale)
+   var best-run = (benchmark &min-runs=5 &min-time=0 {
+       range 6 | peach &num-workers=2 {|_| sleep $t }
+   } &on-end={|metrics| put $metrics[min] })
+   < (* 3 $t) $best-run (* 6 $t)
+▶ $true
+
+## invalid &num-workers ##
+~> peach &num-workers=0 {|x| * 2 $x }
+Exception: bad value: peach &num-workers must be exact positive integer or +inf, but is 0
+  [tty]:1:1-34: peach &num-workers=0 {|x| * 2 $x }
+~> peach &num-workers=-2 {|x| * 2 $x }
+Exception: bad value: peach &num-workers must be exact positive integer or +inf, but is -2
+  [tty]:1:1-35: peach &num-workers=-2 {|x| * 2 $x }
+
+////////
+# fail #
+////////
+
+~> fail haha
+Exception: haha
+  [tty]:1:1-9: fail haha
+~> fn f { fail haha }
+   fail ?(f)
+Exception: haha
+  [tty]:1:8-17: fn f { fail haha }
+  [tty]:2:8-8: fail ?(f)
+~> fail []
+Exception: []
+  [tty]:1:1-7: fail []
+~> put ?(fail 1)[reason][type]
+▶ fail
+~> put ?(fail 1)[reason][content]
+▶ 1
+
+//////////
+# return #
+//////////
+
+~> return
+Exception: return
+  [tty]:1:1-6: return
+
+// Use of return inside fn is tested alongside fn in builtin_special_test.elvts.
+
+/////////
+# defer #
+/////////
+
+~> { defer { put a }; put b }
+▶ b
+▶ a
+~> { defer { put a }; fail bad }
+▶ a
+Exception: bad
+  [tty]:1:20-28: { defer { put a }; fail bad }
+  [tty]:1:1-29: { defer { put a }; fail bad }
+~> defer { }
+Exception: defer must be called from within a closure
+  [tty]:1:1-9: defer { }
+~> { defer { fail foo } }
+Exception: foo
+  [tty]:1:11-19: { defer { fail foo } }
+  [tty]:1:1-22: { defer { fail foo } }
+~> { defer {|x| } }
+Exception: arity mismatch: arguments must be 1 value, but is 0 values
+  [tty]:1:3-15: { defer {|x| } }
+  [tty]:1:1-16: { defer {|x| } }

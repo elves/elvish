@@ -5,8 +5,6 @@ import (
 
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/eval/errs"
-	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/ui"
@@ -87,32 +85,6 @@ func TestCompleteFilename(t *testing.T) {
 			complexItem{Stem: "./d/b", CodeSuffix: " ", Display: ui.T("./d/b")}))
 
 	testThatOutputErrorIsBubbled(t, f, "edit:complete-filename ls ''")
-}
-
-func TestComplexCandidate(t *testing.T) {
-	TestWithEvalerSetup(t, func(ev *eval.Evaler) {
-		ev.ExtendGlobal(eval.BuildNs().AddGoFn("cc", complexCandidate))
-	},
-		That("cc a/b").Puts(complexItem{Stem: "a/b"}),
-		That("cc a/b &code-suffix=' '").Puts(complexItem{Stem: "a/b", CodeSuffix: " "}),
-		That("cc a/b &code-suffix=' ' &display=A/B").Puts(
-			complexItem{"a/b", " ", ui.T("A/B")}),
-		That("cc a/b &code-suffix=' ' &display=(styled A/B red)").Puts(
-			complexItem{"a/b", " ", ui.T("A/B", ui.FgRed)}),
-		That("cc a/b &code-suffix=' ' &display=[]").Throws(
-			errs.BadValue{What: "&display", Valid: "string or styled", Actual: "[]"}),
-
-		That("kind-of (cc stem)").Puts("map"),
-		That("keys (cc stem)").Puts("stem", "code-suffix", "display"),
-		That("repr (cc a/b &code-suffix=' ' &display=A/B)").Prints(
-			"(edit:complex-candidate a/b &code-suffix=' ' &display=(ui:text A/B))\n"),
-		That("eq (cc stem) (cc stem)").Puts(true),
-		That("eq (cc stem &code-suffix=' ') (cc stem)").Puts(false),
-		That("eq (cc stem &display=STEM) (cc stem)").Puts(false),
-		That("put [&(cc stem)=value][(cc stem)]").Puts("value"),
-		That("put (cc a/b &code-suffix=' ' &display=A/B)[stem code-suffix display]").
-			Puts("a/b", " ", ui.T("A/B")),
-	)
 }
 
 func TestComplexCandidate_InEditModule(t *testing.T) {

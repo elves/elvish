@@ -1,0 +1,346 @@
+//use-str
+
+///////////////
+# str:compare #
+///////////////
+
+~> str:compare abc abc
+▶ (num 0)
+~> str:compare abc def
+▶ (num -1)
+~> str:compare def abc
+▶ (num 1)
+~> str:compare abc
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-15: str:compare abc
+
+////////////////
+# str:contains #
+////////////////
+
+~> str:contains abcd x
+▶ $false
+~> str:contains abcd bc
+▶ $true
+~> str:contains abcd cde
+▶ $false
+~> str:contains abc
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-16: str:contains abc
+
+////////////////////
+# str:contains-any #
+////////////////////
+
+~> str:contains-any abcd x
+▶ $false
+~> str:contains-any abcd xcy
+▶ $true
+~> str:contains-any abc
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-20: str:contains-any abc
+
+//////////////////
+# str:equal-fold #
+//////////////////
+
+~> str:equal-fold ABC abc
+▶ $true
+~> str:equal-fold abc ABC
+▶ $true
+~> str:equal-fold abc A
+▶ $false
+~> str:equal-fold abc
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-18: str:equal-fold abc
+
+//////////////
+# str:fields #
+//////////////
+
+~> str:fields "abc ABC"
+▶ abc
+▶ ABC
+~> str:fields "abc    ABC"
+▶ abc
+▶ ABC
+~> str:fields "  "
+
+///////////////////////
+# str:from-codepoints #
+///////////////////////
+
+~> str:from-codepoints 0x61
+▶ a
+~> str:from-codepoints 0x4f60 0x597d
+▶ 你好
+~> str:from-codepoints -0x1
+Exception: out of range: codepoint must be from 0 to 1114111, but is -0x1
+  [tty]:1:1-24: str:from-codepoints -0x1
+~> str:from-codepoints 0x110000
+Exception: out of range: codepoint must be from 0 to 1114111, but is 0x110000
+  [tty]:1:1-28: str:from-codepoints 0x110000
+~> str:from-codepoints 0xd800
+Exception: bad value: argument to str:from-codepoints must be valid Unicode codepoint, but is 0xd800
+  [tty]:1:1-26: str:from-codepoints 0xd800
+
+///////////////////////
+# str:from-utf8-bytes #
+///////////////////////
+
+~> str:from-utf8-bytes 0x61
+▶ a
+~> str:from-utf8-bytes 0xe4 0xbd 0xa0 0xe5 0xa5 0xbd
+▶ 你好
+~> str:from-utf8-bytes -1
+Exception: out of range: byte must be from 0 to 255, but is -1
+  [tty]:1:1-22: str:from-utf8-bytes -1
+~> str:from-utf8-bytes 256
+Exception: out of range: byte must be from 0 to 255, but is 256
+  [tty]:1:1-23: str:from-utf8-bytes 256
+~> str:from-utf8-bytes 0xff 0x3 0xaa
+Exception: bad value: arguments to str:from-utf8-bytes must be valid UTF-8 sequence, but is [255 3 170]
+  [tty]:1:1-33: str:from-utf8-bytes 0xff 0x3 0xaa
+
+//////////////////
+# str:has-prefix #
+//////////////////
+
+~> str:has-prefix abcd ab
+▶ $true
+~> str:has-prefix abcd cd
+▶ $false
+~> str:has-prefix abc
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-18: str:has-prefix abc
+
+//////////////////
+# str:has-suffix #
+//////////////////
+
+~> str:has-suffix abcd ab
+▶ $false
+~> str:has-suffix abcd cd
+▶ $true
+~> str:has-suffix abc
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-18: str:has-suffix abc
+
+/////////////
+# str:index #
+/////////////
+
+~> str:index abcd cd
+▶ (num 2)
+~> str:index abcd de
+▶ (num -1)
+~> str:index abc
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-13: str:index abc
+
+/////////////////
+# str:index-any #
+/////////////////
+
+~> str:index-any "chicken" "aeiouy"
+▶ (num 2)
+~> str:index-any l33t aeiouy
+▶ (num -1)
+~> str:index-any abc
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-17: str:index-any abc
+
+////////////
+# str:join #
+////////////
+
+~> str:join : [/usr /bin /tmp]
+▶ /usr:/bin:/tmp
+~> str:join : ['' a '']
+▶ :a:
+~> str:join : [(num 1) 2]
+Exception: bad value: input to str:join must be string, but is number
+  [tty]:1:1-22: str:join : [(num 1) 2]
+
+//////////////////
+# str:last-index #
+//////////////////
+
+~> str:last-index "elven speak elvish" "elv"
+▶ (num 12)
+~> str:last-index "elven speak elvish" "romulan"
+▶ (num -1)
+~> str:last-index abc
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-18: str:last-index abc
+
+///////////////
+# str:replace #
+///////////////
+
+~> str:replace : / ":usr:bin:tmp"
+▶ /usr/bin/tmp
+~> str:replace &max=2 : / :usr:bin:tmp
+▶ /usr/bin:tmp
+
+/////////////
+# str:split #
+/////////////
+
+~> str:split : /usr:/bin:/tmp
+▶ /usr
+▶ /bin
+▶ /tmp
+~> str:split : /usr:/bin:/tmp &max=2
+▶ /usr
+▶ /bin:/tmp
+
+## propagates output errors ##
+~> str:split : a:b >&-
+Exception: port does not support value output
+  [tty]:1:1-19: str:split : a:b >&-
+
+/////////////////////
+# str:to-codepoints #
+/////////////////////
+~> str:to-codepoints a
+▶ 0x61
+~> str:to-codepoints 你好
+▶ 0x4f60
+▶ 0x597d
+~> str:to-codepoints 你好 | str:from-codepoints (all)
+▶ 你好
+~> str:to-codepoints a >&-
+Exception: port does not support value output
+  [tty]:1:1-23: str:to-codepoints a >&-
+
+/////////////////////
+# str:to-utf8-bytes #
+/////////////////////
+~> str:to-utf8-bytes a
+▶ 0x61
+~> str:to-utf8-bytes 你好
+▶ 0xe4
+▶ 0xbd
+▶ 0xa0
+▶ 0xe5
+▶ 0xa5
+▶ 0xbd
+~> str:to-utf8-bytes 你好 | str:from-utf8-bytes (all)
+▶ 你好
+
+## propagates output errors ##
+~> str:to-utf8-bytes a >&-
+Exception: port does not support value output
+  [tty]:1:1-23: str:to-utf8-bytes a >&-
+
+/////////////
+# str:title #
+/////////////
+
+~> str:title abc
+▶ Abc
+~> str:title "abc def"
+▶ 'Abc Def'
+
+////////////////
+# str:to-lower #
+////////////////
+
+~> str:to-lower abc
+▶ abc
+~> str:to-lower ABC
+▶ abc
+~> str:to-lower ABC def
+Exception: arity mismatch: arguments must be 1 value, but is 2 values
+  [tty]:1:1-20: str:to-lower ABC def
+~> str:to-lower abc def
+Exception: arity mismatch: arguments must be 1 value, but is 2 values
+  [tty]:1:1-20: str:to-lower abc def
+
+////////////////
+# str:to-title #
+////////////////
+
+~> str:to-title "her royal highness"
+▶ 'HER ROYAL HIGHNESS'
+~> str:to-title "хлеб"
+▶ ХЛЕБ
+
+////////////////
+# str:to-upper #
+////////////////
+
+~> str:to-upper abc
+▶ ABC
+~> str:to-upper ABC
+▶ ABC
+~> str:to-upper ABC def
+Exception: arity mismatch: arguments must be 1 value, but is 2 values
+  [tty]:1:1-20: str:to-upper ABC def
+
+////////////
+# str:trim #
+////////////
+
+~> str:trim "¡¡¡Hello, Elven!!!" "!¡"
+▶ 'Hello, Elven'
+~> str:trim def
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-12: str:trim def
+
+/////////////////
+# str:trim-left #
+/////////////////
+
+~> str:trim-left "¡¡¡Hello, Elven!!!" "!¡"
+▶ 'Hello, Elven!!!'
+~> str:trim-left def
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-17: str:trim-left def
+
+///////////////////
+# str:trim-prefix #
+///////////////////
+
+~> str:trim-prefix "¡¡¡Hello, Elven!!!" "¡¡¡Hello, "
+▶ Elven!!!
+~> str:trim-prefix "¡¡¡Hello, Elven!!!" "¡¡¡Hola, "
+▶ '¡¡¡Hello, Elven!!!'
+~> str:trim-prefix def
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-19: str:trim-prefix def
+
+//////////////////
+# str:trim-right #
+//////////////////
+
+~> str:trim-right "¡¡¡Hello, Elven!!!" "!¡"
+▶ '¡¡¡Hello, Elven'
+~> str:trim-right def
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-18: str:trim-right def
+
+//////////////////
+# str:trim-space #
+//////////////////
+
+~> str:trim-space " \t\n Hello, Elven \n\t\r\n"
+▶ 'Hello, Elven'
+~> str:trim-space " \t\n Hello  Elven \n\t\r\n"
+▶ 'Hello  Elven'
+~> str:trim-space " \t\n Hello  Elven \n\t\r\n" argle
+Exception: arity mismatch: arguments must be 1 value, but is 2 values
+  [tty]:1:1-50: str:trim-space " \t\n Hello  Elven \n\t\r\n" argle
+
+///////////////////
+# str:trim-suffix #
+///////////////////
+
+~> str:trim-suffix "¡¡¡Hello, Elven!!!" ", Elven!!!"
+▶ ¡¡¡Hello
+~> str:trim-suffix "¡¡¡Hello, Elven!!!" ", Klingons!!!"
+▶ '¡¡¡Hello, Elven!!!'
+~> str:trim-suffix "¡¡¡Hello, Elven!!!"
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-39: str:trim-suffix "¡¡¡Hello, Elven!!!"

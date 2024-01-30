@@ -1,0 +1,195 @@
+// The transcript testing framework strips SGR sequences from stdout and stderr,
+// so we need to use to-string when testing them.
+
+//////////////////
+# styled-segment #
+//////////////////
+
+## converting a string to a segment ##
+~> to-string (styled-segment abc)
+▶ "\e[mabc"
+
+## styling a string ##
+~> to-string (styled-segment abc &fg-color=red)
+▶ "\e[;31mabc\e[m"
+
+## overriding the style of an existing segment ##
+~> to-string (styled-segment (styled-segment abc &fg-color=red) &fg-color=magenta)
+▶ "\e[;35mabc\e[m"
+
+## bad usage ##
+~> styled-segment []
+Exception: argument to styled-segment must be a string or a styled segment
+  [tty]:1:1-17: styled-segment []
+~> styled-segment text &foo=bar
+Exception: unrecognized option 'foo'
+  [tty]:1:1-28: styled-segment text &foo=bar
+
+## introspection ##
+~> put (styled-segment abc &italic=$true &fg-color=red)[bold]
+▶ $false
+~> put (styled-segment abc &italic=$true &fg-color=red)[italic]
+▶ $true
+~> put (styled-segment abc &italic=$true &fg-color=red)[fg-color]
+▶ red
+
+//////////
+# styled #
+//////////
+
+## converting and transforming strings ##
+~> to-string (styled abc)
+▶ "\e[mabc"
+~> to-string (styled abc bold)
+▶ "\e[;1mabc\e[m"
+
+## converting and transforming styled segments ##
+~> to-string (styled (styled-segment abc &fg-color=red))
+▶ "\e[;31mabc\e[m"
+~> to-string (styled (styled-segment abc &fg-color=red) bold)
+▶ "\e[;1;31mabc\e[m"
+
+## transforming another styled text ##
+~> to-string (styled (styled abc red) bold)
+▶ "\e[;1;31mabc\e[m"
+
+## function as transformer ##
+~> to-string (styled abc {|s| put $s })
+▶ "\e[mabc"
+~> to-string (styled abc {|s| styled-segment $s &bold=$true &italic=$false })
+▶ "\e[;1mabc\e[m"
+
+## mixed string and function transformers ##
+~> to-string (styled abc italic {|s| styled-segment $s &bold=$true })
+▶ "\e[;1;3mabc\e[m"
+
+## error from function transformer ##
+~> styled abc {|_| fail bad }
+Exception: bad
+  [tty]:1:17-25: styled abc {|_| fail bad }
+  [tty]:1:1-26: styled abc {|_| fail bad }
+~> styled abc {|_| put a b }
+Exception: styling function must return a single segment; got 2 values
+  [tty]:1:1-25: styled abc {|_| put a b }
+~> styled abc {|_| put [] }
+Exception: styling function must return a segment; got list
+  [tty]:1:1-24: styled abc {|_| put [] }
+
+## bad usage ##
+~> styled abc hopefully-never-exists
+Exception: hopefully-never-exists is not a valid style transformer
+  [tty]:1:1-33: styled abc hopefully-never-exists
+~> styled []
+Exception: expected string, styled segment or styled text; got list
+  [tty]:1:1-9: styled []
+~> styled abc []
+Exception: need string or callable; got list
+  [tty]:1:1-13: styled abc []
+
+## doesn't modify the argument ##
+
+~> var x = (styled text)
+   var y = (styled $x red)
+   put $x[0][fg-color]
+▶ default
+~> var x = (styled-segment text)
+   var y = (styled $x red)
+   put $x[fg-color]
+▶ default
+
+## introspection ##
+
+~> put (styled abc red)[0][bold]
+▶ $false
+~> put (styled abc red)[0][bg-color]
+▶ default
+
+/////////////////////////////
+# concatenating styled text #
+/////////////////////////////
+
+## segment + string ##
+~> to-string (styled-segment abc &fg-color=red)abc
+▶ "\e[;31mabc\e[mabc"
+
+## segment + segment ##
+~> to-string (styled-segment abc &bg-color=red)(styled-segment abc &fg-color=red)
+▶ "\e[;41mabc\e[;31mabc\e[m"
+
+## segment + text ##
+~> to-string (styled-segment abc &underlined=$true)(styled abc bright-cyan)
+▶ "\e[;4mabc\e[;96mabc\e[m"
+
+## segment + num ##
+~> to-string (styled-segment abc &blink)(num 44/3)
+▶ "\e[;5mabc\e[m44/3"
+~> to-string (styled-segment abc &blink)(num 42)
+▶ "\e[;5mabc\e[m42"
+
+## segment + unsupported ##
+~> to-string (styled-segment abc){ }
+Exception: cannot concatenate ui:text-segment and fn
+  [tty]:1:11-33: to-string (styled-segment abc){ }
+
+## string + segment ##
+~> to-string abc(styled-segment abc &fg-color=red)
+▶ "\e[mabc\e[31mabc\e[m"
+
+## num + segment ##
+~> to-string (num 99.0)(styled-segment abc &blink)
+▶ "\e[m99.0\e[5mabc\e[m"
+~> to-string (num 66)(styled-segment abc &blink)
+▶ "\e[m66\e[5mabc\e[m"
+~> to-string (num 3/2)(styled-segment abc &blink)
+▶ "\e[m3/2\e[5mabc\e[m"
+
+## unsupported + segment ##
+~> to-string { }(styled-segment abc)
+Exception: cannot concatenate fn and ui:text-segment
+  [tty]:1:11-33: to-string { }(styled-segment abc)
+
+## text + string ##
+~> to-string (styled abc blink)abc
+▶ "\e[;5mabc\e[mabc"
+
+## text + number ##
+~> to-string (styled abc blink)(num 13)
+▶ "\e[;5mabc\e[m13"
+~> to-string (styled abc blink)(num 3/4)
+▶ "\e[;5mabc\e[m3/4"
+
+## text + segment ##
+~> to-string (styled abc inverse)(styled-segment abc &bg-color=white)
+▶ "\e[;7mabc\e[;47mabc\e[m"
+
+## text + text ##
+~> to-string (styled abc bold)(styled abc dim)
+▶ "\e[;1mabc\e[;2mabc\e[m"
+
+## text + unsupported ##
+~> to-string (styled abc){ }
+Exception: cannot concatenate ui:text and fn
+  [tty]:1:11-25: to-string (styled abc){ }
+
+## string + text ##
+~> to-string abc(styled abc blink)
+▶ "\e[mabc\e[5mabc\e[m"
+
+## number + text ##
+~> to-string (num 13)(styled abc blink)
+▶ "\e[m13\e[5mabc\e[m"
+~> to-string (num 4/3)(styled abc blink)
+▶ "\e[m4/3\e[5mabc\e[m"
+
+## unsupported + text ##
+~> to-string { }(styled abc)
+Exception: cannot concatenate fn and ui:text
+  [tty]:1:11-25: to-string { }(styled abc)
+
+## introspecting concatenated text ##
+~> var t = (styled-segment abc &underlined=$true)(styled abc bright-cyan)
+   put $t[1][fg-color]
+▶ bright-cyan
+~> var t = (styled-segment abc &underlined=$true)(styled abc bright-cyan)
+   put $t[1][underlined]
+▶ $false

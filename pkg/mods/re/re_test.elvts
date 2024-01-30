@@ -1,0 +1,127 @@
+//use-re
+
+////////////
+# re:match #
+////////////
+
+~> re:match . xyz
+▶ $true
+~> re:match . ''
+▶ $false
+~> re:match '[a-z]' A
+▶ $false
+
+## invalid pattern ##
+~> re:match '(' x
+Exception: error parsing regexp: missing closing ): `(`
+  [tty]:1:1-14: re:match '(' x
+
+///////////
+# re:find #
+///////////
+
+~> re:find . ab
+▶ [&end=(num 1) &groups=[[&end=(num 1) &start=(num 0) &text=a]] &start=(num 0) &text=a]
+▶ [&end=(num 2) &groups=[[&end=(num 2) &start=(num 1) &text=b]] &start=(num 1) &text=b]
+~> re:find '[A-Z]([0-9])' 'A1 B2'
+▶ [&end=(num 2) &groups=[[&end=(num 2) &start=(num 0) &text=A1] [&end=(num 2) &start=(num 1) &text=1]] &start=(num 0) &text=A1]
+▶ [&end=(num 5) &groups=[[&end=(num 5) &start=(num 3) &text=B2] [&end=(num 5) &start=(num 4) &text=2]] &start=(num 3) &text=B2]
+
+## access to fields in the match StructMap ##
+~> put (re:find . a)[text start end groups]
+▶ a
+▶ (num 0)
+▶ (num 1)
+▶ [[&end=(num 1) &start=(num 0) &text=a]]
+
+## invalid pattern ##
+~> re:find '(' x
+Exception: error parsing regexp: missing closing ): `(`
+  [tty]:1:1-13: re:find '(' x
+
+## without any flag, finds ax ##
+~> put (re:find 'a(x|xy)' AaxyZ)[text]
+▶ ax
+
+## with &longest, finds axy ##
+~> put (re:find &longest 'a(x|xy)' AaxyZ)[text]
+▶ axy
+
+## basic verification of &posix behavior. ##
+~> put (re:find &posix 'a(x|xy)+' AaxyxxxyZ)[text]
+▶ axyxxxy
+
+## bubbles output error ##
+~> re:find . ab >&-
+Exception: port does not support value output
+  [tty]:1:1-16: re:find . ab >&-
+
+//////////////
+# re:replace #
+//////////////
+
+~> re:replace '(ba|z)sh' '${1}SH' 'bash and zsh'
+▶ 'baSH and zSH'
+~> re:replace &literal '(ba|z)sh' '$sh' 'bash and zsh'
+▶ '$sh and $sh'
+~> re:replace '(ba|z)sh' {|x| put [&bash=BaSh &zsh=ZsH][$x] } 'bash and zsh'
+▶ 'BaSh and ZsH'
+
+## invalid pattern ##
+~> re:replace '(' x bash
+Exception: error parsing regexp: missing closing ): `(`
+  [tty]:1:1-21: re:replace '(' x bash
+~> re:replace &posix '[[:argle:]]' x bash
+Exception: error parsing regexp: invalid character class range: `[:argle:]`
+  [tty]:1:1-38: re:replace &posix '[[:argle:]]' x bash
+
+## replacement function outputs more than one value ##
+~> re:replace x {|x| put a b } xx
+Exception: arity mismatch: replacement function output must be 1 value, but is 2 values
+  [tty]:1:1-30: re:replace x {|x| put a b } xx
+
+## replacement function outputs non-string value ##
+~> re:replace x {|x| put [] } xx
+Exception: bad value: replacement function output must be string, but is list
+  [tty]:1:1-29: re:replace x {|x| put [] } xx
+
+## replacement is not string or function ##
+~> re:replace x [] xx
+Exception: bad value: replacement must be string or function, but is list
+  [tty]:1:1-18: re:replace x [] xx
+
+## replacement is function when &literal is set ##
+~> re:replace &literal x {|_| put y } xx
+Exception: bad value: literal replacement must be string, but is fn
+  [tty]:1:1-37: re:replace &literal x {|_| put y } xx
+
+////////////
+# re:split #
+////////////
+
+~> re:split : /usr/sbin:/usr/bin:/bin
+▶ /usr/sbin
+▶ /usr/bin
+▶ /bin
+~> re:split &max=2 : /usr/sbin:/usr/bin:/bin
+▶ /usr/sbin
+▶ /usr/bin:/bin
+
+## invalid pattern ##
+~> re:split '(' x
+Exception: error parsing regexp: missing closing ): `(`
+  [tty]:1:1-14: re:split '(' x
+
+## bubbles output error ##
+~> re:split . ab >&-
+Exception: port does not support value output
+  [tty]:1:1-17: re:split . ab >&-
+
+////////////
+# re:quote #
+////////////
+
+~> re:quote a.txt
+▶ a\.txt
+~> re:quote '(*)'
+▶ '\(\*\)'

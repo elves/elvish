@@ -1,0 +1,381 @@
+////////////
+# compound #
+////////////
+
+~> put {fi,elvi}sh{1.0,1.1}
+▶ fish1.0
+▶ fish1.1
+▶ elvish1.0
+▶ elvish1.1
+
+## empty compound evaluates to '' ##
+~> put {}
+▶ ''
+~> put [&k=][k]
+▶ ''
+
+## exception from any component is propagated ##
+~> put a{[][1]}
+Exception: out of range: index must be from 0 to -1, but is 1
+  [tty]:1:7-11: put a{[][1]}
+
+## error in concatenating the values throws an exception ##
+~> put []a
+Exception: cannot concatenate list and string
+  [tty]:1:5-7: put []a
+
+## error when applying tilde throws an exception ##
+~> put ~[]
+Exception: tilde doesn't work on value of type list
+  [tty]:1:5-7: put ~[]
+
+////////////
+# indexing #
+////////////
+
+~> put [a b c][2]
+▶ c
+~> put [][0]
+Exception: out of range: index must be from 0 to -1, but is 0
+  [tty]:1:5-9: put [][0]
+~> put [&key=value][key]
+▶ value
+~> put [&key=value][bad]
+Exception: no such key: bad
+  [tty]:1:5-21: put [&key=value][bad]
+~> put (fail x)[a]
+Exception: x
+  [tty]:1:6-11: put (fail x)[a]
+~> put [foo][(fail x)]
+Exception: x
+  [tty]:1:12-17: put [foo][(fail x)]
+
+////////////////
+# list literal #
+////////////////
+
+~> put [a b c]
+▶ [a b c]
+~> put []
+▶ []
+
+## exception from element expression is propagated ##
+~> put [ [][0] ]
+Exception: out of range: index must be from 0 to -1, but is 0
+  [tty]:1:7-11: put [ [][0] ]
+
+///////////////
+# map literal #
+///////////////
+
+~> put [&key=value]
+▶ [&key=value]
+~> put [&]
+▶ [&]
+// Keys and values may evaluate to multiple values as long as their numbers
+// match.
+~> put [&{a b}={foo bar}]
+▶ [&a=foo &b=bar]
+
+## exception from key or value is propagated ##
+~> put [ &[][0]=a ]
+Exception: out of range: index must be from 0 to -1, but is 0
+  [tty]:1:8-12: put [ &[][0]=a ]
+~> put [ &a=[][0] ]
+Exception: out of range: index must be from 0 to -1, but is 0
+  [tty]:1:10-14: put [ &a=[][0] ]
+
+## error if number of keys and values in a single pair does not match ##
+~> put [&{a b}={foo bar lorem}]
+Exception: 2 keys but 3 values
+  [tty]:1:6-27: put [&{a b}={foo bar lorem}]
+
+//////////////////
+# string literal #
+//////////////////
+
+~> put 'such \"''literal'
+▶ 'such \"''literal'
+~> put "much \n\033[31;1m$cool\033[m"
+▶ "much \n\e[31;1m$cool\e[m"
+
+/////////
+# tilde #
+/////////
+
+//with-temp-home
+
+~> eq ~ $E:HOME
+▶ $true
+~> eq ~/src $E:HOME/src
+▶ $true
+// Trailing slash is retained
+~> eq ~/src/ $E:HOME/src/
+▶ $true
+
+## tilde and wildcard ##
+~> echo > ~/file1
+   echo > ~/file2
+~> eq [~/*] [~/file1 ~/file2]
+▶ $true
+
+## ~other doesn't add superfluous trailing slash ##
+// Regression test for b.elv.sh/1246
+//mock-one-other-home
+~> eq ~other $other-home
+▶ $true
+
+## ~other and glob ##
+// Regression test for b.elv.sh/793
+//mock-one-other-home
+~> echo > $other-home/file1
+   echo > $other-home/file2
+~> eq [~other/*] [$other-home/file1 $other-home/file2]
+▶ $true
+
+## unknown user ##
+//mock-no-other-home
+~> put ~bad/*
+Exception: don't know home of bad
+  [tty]:1:5-10: put ~bad/*
+
+## ~* is an error ##
+// TODO: This should be a compilation error
+~> put ~*
+Exception: cannot determine user name from glob pattern
+  [tty]:1:5-6: put ~*
+
+## error in GetHome ##
+//mock-get-home-error fake error
+~> put ~
+Exception: fake error
+  [tty]:1:5-5: put ~
+~> put ~/foo
+Exception: fake error
+  [tty]:1:5-9: put ~/foo
+~> put ~/*
+Exception: fake error
+  [tty]:1:5-7: put ~/*
+
+////////////
+# wildcard #
+////////////
+
+~> put ***
+Compilation error: bad wildcard: "***"
+  [tty]:1:5-7: put ***
+
+// More tests in glob_test.elvts
+
+//////////////////
+# output capture #
+//////////////////
+
+~> put (put lorem ipsum)
+▶ lorem
+▶ ipsum
+~> put (print "lorem\nipsum")
+▶ lorem
+▶ ipsum
+// \r\n is also supported as a line separator
+~> print "lorem\r\nipsum\r\n" | all
+▶ lorem
+▶ ipsum
+
+/////////////////////
+# exception capture #
+/////////////////////
+
+## Exception capture ##
+~> bool ?(nop)
+▶ $true
+~> bool ?(e:false)
+▶ $false
+
+////////////////
+# variable use #
+////////////////
+
+## basic usage ##
+~> var x = foo
+   put $x
+▶ foo
+
+## must exist before use ##
+~> put $x
+Compilation error: variable $x not found
+  [tty]:1:5-6: put $x
+~> put $x[0]
+Compilation error: variable $x not found
+  [tty]:1:5-6: put $x[0]
+
+## variable use in compound expr ##
+~> var x = world
+   put 'Hello, '$x'!'
+▶ 'Hello, world!'
+
+## exploding with $@ ##
+~> var x = [elvish rules]
+   put $@x
+▶ elvish
+▶ rules
+
+## unqualified name resolves to local name before upvalue ##
+~> var x = outer; { var x = inner; put $x }
+▶ inner
+
+## unqualified name resolves to upvalue if no local name exists ##
+~> var x = outer; { put $x }
+▶ outer
+
+## unqualified name resolves to builtin if no local name or upvalue exists ##
+~> put $true
+▶ $true
+
+## names like $:foo are reserved for now. ##
+~> var x = val; put $:x
+Compilation error: variable $:x not found
+  [tty]:1:18-20: var x = val; put $:x
+
+## pseudo-namespace E: for environment variables ##
+//unset-env x
+~> set-env x value
+   put $E:x
+▶ value
+~> set E:x = new-value
+   get-env x
+▶ new-value
+
+## colons after E: are part of the variable name ##
+//unset-env a:b
+~> set-env a:b value
+   put $E:a:b
+▶ value
+~> set E:a:b = new-value
+   get-env a:b
+▶ new-value
+
+## pseudo-namespace e: for external commands ##
+// Resolution always succeeds regardless of whether the command exists
+~> put $e:true~
+▶ <external true>
+// Colons are always considered part of the name
+~> put $e:a:b~
+▶ <external a:b>
+
+## namespace access ##
+~> var ns: = (ns [&a= val])
+   put $ns:a
+▶ val
+
+## multi-level namespace access ##
+~> var ns: = (ns [&a:= (ns [&b= val])])
+   put $ns:a:b
+▶ val
+
+## module name access is checked at runtime ##
+//use-os
+~> put $os:non-existent-variable
+Exception: variable $os:non-existent-variable not found
+  [tty]:1:5-29: put $os:non-existent-variable
+
+///////////
+# closure #
+///////////
+
+~> {|| }
+~> {|x| put $x} foo
+▶ foo
+
+## assigning to captured variable ##
+~> var x = lorem; {|| put $x; set x = ipsum }; put $x
+▶ lorem
+▶ ipsum
+
+## Assigning to element of captured variable ##
+~> var x = [a]; { set x[0] = b }; put $x[0]
+▶ b
+
+## shadowing ##
+~> var x = ipsum; { var x = lorem; put $x }; put $x
+▶ lorem
+▶ ipsum
+
+## shadowing by argument ##
+~> var x = ipsum; {|x| put $x; set x = BAD } lorem; put $x
+▶ lorem
+▶ ipsum
+
+## closure semantics ##
+~> fn f {
+     var x = (num 0)
+     put { set x = (+ $x 1) } { put $x }
+   }
+~> var inc1 put1 = (f); $put1; $inc1; $put1
+▶ (num 0)
+▶ (num 1)
+~> var inc2 put2 = (f); $put2; $inc2; $put2
+▶ (num 0)
+▶ (num 1)
+
+## rest argument. ##
+~> {|x @xs| put $x $xs } a b c
+▶ a
+▶ [b c]
+~> {|a @b c| put $a $b $c } a b c d
+▶ a
+▶ [b c]
+▶ d
+
+## options ##
+~> {|a &k=v| put $a $k } foo &k=bar
+▶ foo
+▶ bar
+
+## option default value ##
+~> {|a &k=v| put $a $k } foo
+▶ foo
+▶ v
+
+## option must have default value ##
+~> {|&k| }
+Compilation error: option must have default value
+  [tty]:1:4-4: {|&k| }
+
+## exception when evaluating option default value ##
+~> {|&a=[][0]| }
+Exception: out of range: index must be from 0 to -1, but is 0
+  [tty]:1:6-10: {|&a=[][0]| }
+
+## option default value must be one value ##
+~> {|&a=(put foo bar)| }
+Exception: arity mismatch: option default value must be 1 value, but is 2 values
+  [tty]:1:6-18: {|&a=(put foo bar)| }
+
+## argument name must be unqualified ##
+~> {|a:b| }
+Compilation error: argument name must be unqualified
+  [tty]:1:3-5: {|a:b| }
+
+## argument name must not be empty ##
+~> {|''| }
+Compilation error: argument name must not be empty
+  [tty]:1:3-4: {|''| }
+~> {|@| }
+Compilation error: argument name must not be empty
+  [tty]:1:3-3: {|@| }
+
+## option name must be unqualified ##
+~> {|&a:b=1| }
+Compilation error: option name must be unqualified
+  [tty]:1:4-6: {|&a:b=1| }
+
+## option name must not be empty ##
+~> {|&''=b| }
+Compilation error: option name must not be empty
+  [tty]:1:4-5: {|&''=b| }
+
+## should not have multiple rest arguments ##
+~> {|@a @b| }
+Compilation error: only one argument may have @ prefix
+  [tty]:1:6-7: {|@a @b| }

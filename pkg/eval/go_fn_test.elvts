@@ -1,0 +1,104 @@
+//go-fns-mod-in-global
+
+///////////
+# nullary #
+///////////
+
+~> go-fns:nullary
+
+////////////
+# argument #
+////////////
+
+~> go-fns:takes-two-strings lorem ipsum
+a = "lorem", b = "ipsum"
+~> go-fns:takes-variadic-strings lorem ipsum
+args = ["lorem" "ipsum"]
+~> go-fns:takes-string-and-variadic-strings lorem ipsum
+first = "lorem", more = ["ipsum"]
+~> go-fns:takes-int-float64 314 1.25
+i = 314, f = 1.25
+
+## wrong number of arguments ##
+~> go-fns:nullary foo
+Exception: arity mismatch: arguments must be 0 values, but is 1 value
+  [tty]:1:1-18: go-fns:nullary foo
+~> go-fns:takes-two-strings foo
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-28: go-fns:takes-two-strings foo
+~> go-fns:takes-string-and-variadic-strings
+Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
+  [tty]:1:1-40: go-fns:takes-string-and-variadic-strings
+
+## wrong argument type ##
+~> go-fns:takes-two-strings foo []
+Exception: wrong type for arg #1: wrong type: need string, got list
+  [tty]:1:1-31: go-fns:takes-two-strings foo []
+~> go-fns:takes-int-float64 foo 1.2
+Exception: wrong type for arg #0: cannot parse as integer: foo
+  [tty]:1:1-32: go-fns:takes-int-float64 foo 1.2
+
+//////////
+# inputs #
+//////////
+
+~> go-fns:takes-input [foo bar]
+input: foo
+input: bar
+~> put foo bar | go-fns:takes-input
+input: foo
+input: bar
+
+///////////
+# options #
+///////////
+
+## parsed options ##
+~> go-fns:takes-options &foo=lorem
+opts = eval_test.someOptions{Foo:"lorem", Bar:"default"}
+~> go-fns:takes-options &foo=lorem &bar=ipsum
+opts = eval_test.someOptions{Foo:"lorem", Bar:"ipsum"}
+
+## RawOptions ##
+~> go-fns:takes-raw-options &foo=ipsum
+opts = eval.RawOptions{"foo":"ipsum"}
+~> go-fns:takes-raw-options &foo=ipsum &bar=ipsum
+opts = eval.RawOptions{"bar":"ipsum", "foo":"ipsum"}
+
+## errors ##
+~> go-fns:nullary &foo=lorem
+Exception: function does not accept any options
+  [tty]:1:1-25: go-fns:nullary &foo=lorem
+// Regression tests for b.elv.sh/958.
+~> go-fns:takes-options &bad=value
+Exception: unknown option: bad
+  [tty]:1:1-31: go-fns:takes-options &bad=value
+
+/////////////////
+# return values #
+/////////////////
+
+~> go-fns:returns-string
+▶ 'a string'
+~> go-fns:returns-int
+▶ (num 233)
+~> go-fns:returns-small-big-int
+▶ (num 233)
+~> go-fns:returns-slice
+▶ foo
+▶ bar
+~> go-fns:returns-array
+▶ foo
+▶ bar
+// Named type with underlying slice type is not treated as slices
+~> go-fns:returns-named-slice-type
+▶ <unknown [foo bar]>
+
+////////////////
+# error return #
+////////////////
+
+~> go-fns:returns-non-nil-error
+Exception: bad
+  [tty]:1:1-28: go-fns:returns-non-nil-error
+~> go-fns:returns-nil-error

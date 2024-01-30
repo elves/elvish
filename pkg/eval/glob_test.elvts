@@ -1,0 +1,167 @@
+////////////
+# globbing #
+////////////
+
+//in-temp-dir
+
+## simple patterns ##
+//use-os
+~> put z z2 | each $os:mkdir~
+   put bar foo ipsum lorem | each {|x| echo > $x}
+~> put *
+▶ bar
+▶ foo
+▶ ipsum
+▶ lorem
+▶ z
+▶ z2
+~> put z*
+▶ z
+▶ z2
+~> put ?
+▶ z
+~> put ????m
+▶ ipsum
+▶ lorem
+
+## glob applies after brace ##
+~> put xy.u xy.v xy.w xz.w | each {|x| echo > $x}
+~> put x*.{u v w}
+▶ xy.u
+▶ xy.v
+▶ xy.w
+▶ xz.w
+
+## recursive patterns ##
+//use-os
+~> put 1 1/2 1/2/3 | each $os:mkdir~
+~> put a.go 1/a.go 1/2/3/a.go | each {|x| echo > $x}
+~> put **
+▶ 1/2/3/a.go
+▶ 1/2/3
+▶ 1/2
+▶ 1/a.go
+▶ 1
+▶ a.go
+~> put **.go
+▶ 1/2/3/a.go
+▶ 1/a.go
+▶ a.go
+~> put 1**.go
+▶ 1/2/3/a.go
+▶ 1/a.go
+
+## no match ##
+~> put a/b/nonexistent*
+Exception: wildcard has no match
+  [tty]:1:5-20: put a/b/nonexistent*
+~> put a/b/nonexistent*[nomatch-ok]
+
+## hidden files ##
+//use-os
+~> put d .d | each $os:mkdir~
+~> put a .a d/a d/.a .d/a .d/.a | each {|x| echo > $x}
+~> put *
+▶ a
+▶ d
+~> put *[match-hidden]
+▶ .a
+▶ .d
+▶ a
+▶ d
+~> put *[match-hidden]/*
+▶ .d/a
+▶ d/a
+~> put */*[match-hidden]
+▶ d/.a
+▶ d/a
+~> put *[match-hidden]/*[match-hidden]
+▶ .d/.a
+▶ .d/a
+▶ d/.a
+▶ d/a
+
+## rune matchers ##
+~> put a1 a2 b1 c1 ipsum lorem | each {|x| echo > $x}
+~> put *[letter]
+▶ ipsum
+▶ lorem
+~> put ?[set:ab]*
+▶ a1
+▶ a2
+▶ b1
+~> put ?[range:a-c]*
+▶ a1
+▶ a2
+▶ b1
+▶ c1
+~> put ?[range:a~c]*
+▶ a1
+▶ a2
+▶ b1
+~> put *[range:a-z]
+▶ ipsum
+▶ lorem
+~> put *[range:a-zz]
+Exception: bad range modifier: a-zz
+  [tty]:1:5-17: put *[range:a-zz]
+~> put *[range:foo]
+Exception: bad range modifier: foo
+  [tty]:1:5-16: put *[range:foo]
+
+## but ##
+~> put bar foo ipsum lorem | each {|x| echo > $x}
+~> put *[but:ipsum]
+▶ bar
+▶ foo
+▶ lorem
+// Nonexistent files can also be excluded
+~> put *[but:foobar][but:ipsum]
+▶ bar
+▶ foo
+▶ lorem
+
+## type ##
+//use-os
+~> put d1 d2 .d b b/c | each $os:mkdir~
+   put bar foo ipsum lorem d1/f1 d2/fm | each {|x| echo > $x}
+~> put **[type:dir]
+▶ b/c
+▶ b
+▶ d1
+▶ d2
+~> put **[type:regular]m
+▶ d2/fm
+▶ ipsum
+▶ lorem
+~> put **[type:regular]f*
+▶ d1/f1
+▶ d2/fm
+▶ foo
+~> put **f*[type:regular]
+▶ d1/f1
+▶ d2/fm
+▶ foo
+~> put *[type:dir][type:regular]
+Exception: only one type modifier allowed
+  [tty]:1:5-29: put *[type:dir][type:regular]
+~> put **[type:dir]f*[type:regular]
+Exception: only one type modifier allowed
+  [tty]:1:5-32: put **[type:dir]f*[type:regular]
+~> put **[type:unknown]
+Exception: unknown type modifier
+  [tty]:1:5-20: put **[type:unknown]
+
+## bad operations ##
+~> put *[[]]
+Exception: modifier must be string
+  [tty]:1:5-9: put *[[]]
+~> put *[bad-mod]
+Exception: unknown modifier bad-mod
+  [tty]:1:5-14: put *[bad-mod]
+~> put *{ }
+Exception: cannot concatenate glob-pattern and fn
+  [tty]:1:5-8: put *{ }
+~> put { }*
+Exception: cannot concatenate fn and glob-pattern
+  [tty]:1:5-8: put { }*

@@ -1,0 +1,301 @@
+///////
+# all #
+///////
+
+~> put foo bar | all
+▶ foo
+▶ bar
+~> echo foobar | all
+▶ foobar
+~> all [foo bar]
+▶ foo
+▶ bar
+// bubbling output errors
+~> all [foo bar] >&-
+Exception: port does not support value output
+  [tty]:1:1-17: all [foo bar] >&-
+
+///////
+# one #
+///////
+~> put foo | one
+▶ foo
+~> put | one
+Exception: arity mismatch: values must be 1 value, but is 0 values
+  [tty]:1:7-9: put | one
+~> put foo bar | one
+Exception: arity mismatch: values must be 1 value, but is 2 values
+  [tty]:1:15-17: put foo bar | one
+~> one [foo]
+▶ foo
+~> one []
+Exception: arity mismatch: values must be 1 value, but is 0 values
+  [tty]:1:1-6: one []
+~> one [foo bar]
+Exception: arity mismatch: values must be 1 value, but is 2 values
+  [tty]:1:1-13: one [foo bar]
+// bubbling output errors
+~> one [foo] >&-
+Exception: port does not support value output
+  [tty]:1:1-13: one [foo] >&-
+
+////////
+# take #
+////////
+
+~> range 100 | take 2
+▶ (num 0)
+▶ (num 1)
+// bubbling output errors
+~> take 1 [foo bar] >&-
+Exception: port does not support value output
+  [tty]:1:1-20: take 1 [foo bar] >&-
+
+////////
+# drop #
+////////
+
+~> range 100 | drop 98
+▶ (num 98)
+▶ (num 99)
+// bubbling output errors
+~> drop 1 [foo bar lorem] >&-
+Exception: port does not support value output
+  [tty]:1:1-26: drop 1 [foo bar lorem] >&-
+
+///////////
+# compact #
+///////////
+
+~> put a a b b c | compact
+▶ a
+▶ b
+▶ c
+~> put a b a | compact
+▶ a
+▶ b
+▶ a
+// bubbling output errors
+~> compact [a a] >&-
+Exception: port does not support value output
+  [tty]:1:1-17: compact [a a] >&-
+
+/////////
+# count #
+/////////
+
+~> range 100 | count
+▶ (num 100)
+~> count [(range 100)]
+▶ (num 100)
+~> count 123
+▶ (num 3)
+~> count 1 2 3
+Exception: arity mismatch: arguments must be 0 to 1 values, but is 3 values
+  [tty]:1:1-11: count 1 2 3
+~> count $true
+Exception: cannot get length of a bool
+  [tty]:1:1-11: count $true
+
+/////////
+# order #
+/////////
+
+## strings ##
+~> put foo bar ipsum | order
+▶ bar
+▶ foo
+▶ ipsum
+~> put foo bar bar | order
+▶ bar
+▶ bar
+▶ foo
+~> put 10 1 5 2 | order
+▶ 1
+▶ 10
+▶ 2
+▶ 5
+
+## booleans ##
+~> put $true $false $true | order
+▶ $false
+▶ $true
+▶ $true
+~> put $false $true $false | order
+▶ $false
+▶ $false
+▶ $true
+
+## typed numbers ##
+// int
+~> put 10 1 1 | each $num~ | order
+▶ (num 1)
+▶ (num 1)
+▶ (num 10)
+~> put 10 1 5 2 -1 | each $num~ | order
+▶ (num -1)
+▶ (num 1)
+▶ (num 2)
+▶ (num 5)
+▶ (num 10)
+// int and *big.Int
+~> put 1 100000000000000000000 2 100000000000000000000 | each $num~ | order
+▶ (num 1)
+▶ (num 2)
+▶ (num 100000000000000000000)
+▶ (num 100000000000000000000)
+// int and *big.Rat
+~> put 1 2 3/2 3/2 | each $num~ | order
+▶ (num 1)
+▶ (num 3/2)
+▶ (num 3/2)
+▶ (num 2)
+// int and float64
+~> put 1 1.5 2 1.5 | each $num~ | order
+▶ (num 1)
+▶ (num 1.5)
+▶ (num 1.5)
+▶ (num 2)
+// NaN's are considered smaller than other numbers for ordering
+~> put NaN -1 NaN | each $num~ | order
+▶ (num NaN)
+▶ (num NaN)
+▶ (num -1)
+
+## lists ##
+~> put [b] [a] | order
+▶ [a]
+▶ [b]
+~> put [a] [b] [a] | order
+▶ [a]
+▶ [a]
+▶ [b]
+~> put [(num 10)] [(num 2)] | order
+▶ [(num 2)]
+▶ [(num 10)]
+~> put [a b] [b b] [a c] | order
+▶ [a b]
+▶ [a c]
+▶ [b b]
+~> put [a] [] [a (num 2)] [a (num 1)] | order
+▶ []
+▶ [a]
+▶ [a (num 1)]
+▶ [a (num 2)]
+
+## &reverse ##
+~> put foo bar ipsum | order &reverse
+▶ ipsum
+▶ foo
+▶ bar
+
+## &key ##
+~> put 10 1 5 2 | order &key={|v| num $v }
+▶ 1
+▶ 2
+▶ 5
+▶ 10
+
+## &key and &reverse ##
+~> put 10 1 5 2 | order &reverse &key={|v| num $v }
+▶ 10
+▶ 5
+▶ 2
+▶ 1
+
+## different types without &total ##
+~> put (num 1) 1 | order
+Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+  [tty]:1:17-21: put (num 1) 1 | order
+~> put 1 (num 1) | order
+Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+  [tty]:1:17-21: put 1 (num 1) | order
+~> put 1 (num 1) b | order
+Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+  [tty]:1:19-23: put 1 (num 1) b | order
+~> put [a] a | order
+Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+  [tty]:1:13-17: put [a] a | order
+~> put [a] [(num 1)] | order
+Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+  [tty]:1:21-25: put [a] [(num 1)] | order
+
+## different types with &total ##
+// &total orders the values into groups of different types, and sorts
+// the groups themselves. Test that without assuming the relative order
+// between numbers and strings.
+~> put (num 3/2) (num 1) c (num 2) a | order &total | var li = [(all)]
+   or (eq $li [a c (num 1) (num 3/2) (num 2)]) ^
+      (eq $li [(num 1) (num 3/2) (num 2) a c])
+▶ $true
+// &total keeps the order of unordered values as is.
+~> put [&foo=bar] [&a=b] [&x=y] | order &total
+▶ [&foo=bar]
+▶ [&a=b]
+▶ [&x=y]
+
+## &less-than ##
+~> put 1 10 2 5 | order &less-than={|a b| < $a $b }
+▶ 1
+▶ 2
+▶ 5
+▶ 10
+
+## &less-than and &key ##
+~> put [a 1] [b 10] [c 2] | order &key={|v| put $v[1]} &less-than=$'<~'
+▶ [a 1]
+▶ [c 2]
+▶ [b 10]
+
+## &less-than and &reverse ##
+~> put 1 10 2 5 | order &reverse &less-than={|a b| < $a $b }
+▶ 10
+▶ 5
+▶ 2
+▶ 1
+
+## &less-than writing more than one value ##
+~> put 1 10 2 5 | order &less-than={|a b| put $true $false }
+Exception: arity mismatch: number of outputs of the &less-than callback must be 1 value, but is 2 values
+  [tty]:1:16-57: put 1 10 2 5 | order &less-than={|a b| put $true $false }
+
+## &less-than writing non-boolean value ##
+~> put 1 10 2 5 | order &less-than={|a b| put x }
+Exception: bad value: output of the &less-than callback must be boolean, but is string
+  [tty]:1:16-46: put 1 10 2 5 | order &less-than={|a b| put x }
+
+## &less-than throwing an exception ##
+~> put 1 10 2 5 | order &less-than={|a b| fail bad }
+Exception: bad
+  [tty]:1:40-48: put 1 10 2 5 | order &less-than={|a b| fail bad }
+  [tty]:1:16-49: put 1 10 2 5 | order &less-than={|a b| fail bad }
+
+## all callback options support $nil for default behavior ##
+~> put c b a | order &less-than=$nil &key=$nil
+▶ a
+▶ b
+▶ c
+
+## sort is stable ##
+// Test stability by pretending that all values but one are equal, and check
+// that the order among them has not changed.
+~> put l x o x r x e x m | order &less-than={|a b| eq $a x }
+▶ x
+▶ x
+▶ x
+▶ x
+▶ l
+▶ o
+▶ r
+▶ e
+▶ m
+
+## &total and &less-than are mutually exclusive ##
+~> put x | order &total &less-than={|a b| put $true }
+Exception: both &total and &less-than specified
+  [tty]:1:9-50: put x | order &total &less-than={|a b| put $true }
+
+## bubbling output errors ##
+~> order [foo] >&-
+Exception: port does not support value output
+  [tty]:1:1-15: order [foo] >&-

@@ -1,16 +1,16 @@
 package epm_test
 
 import (
+	"embed"
 	"testing"
 
-	. "src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/mods"
 )
 
-func TestEPM(t *testing.T) {
-	// A smoke test to ensure that the epm module has no errors.
+//go:embed *.elvts
+var transcripts embed.FS
 
-	TestWithEvalerSetup(t, mods.AddTo,
-		That("use epm").DoesNothing(),
-	)
+func TestTranscripts(t *testing.T) {
+	evaltest.TestTranscriptsInFS(t, transcripts, "prepare-deps", mods.AddTo)
 }

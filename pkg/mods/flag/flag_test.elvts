@@ -1,0 +1,159 @@
+//use-flag
+
+/////////////
+# flag:call #
+/////////////
+
+~> flag:call {|&bool=$false| put $bool } [-bool]
+▶ $true
+~> flag:call {|&str=''| put $str } [-str foo]
+▶ foo
+~> flag:call {|&opt=$false arg| put $opt $arg } [-opt foo]
+▶ $true
+▶ foo
+
+## unsupported default flag value ##
+~> flag:call {|&f=$nil| } [-f 1]
+Exception: bad value: flag default value must be boolean, number, string or list, but is $nil
+  [tty]:1:1-29: flag:call {|&f=$nil| } [-f 1]
+
+## flag parsing error ##
+~> flag:call { } [-bad '']
+Exception: flag provided but not defined: -bad
+  [tty]:1:1-23: flag:call { } [-bad '']
+
+## bad argument list ##
+~> flag:call { } [(num 0)]
+Exception: wrong type: need string, got number
+  [tty]:1:1-23: flag:call { } [(num 0)]
+
+// More flag parsing logic is covered in TestParse
+
+///////////////
+# flag::parse #
+///////////////
+
+## different types of flags ##
+~> flag:parse [-bool] [[bool $false bool]]
+▶ [&bool=$true]
+▶ []
+~> flag:parse [-str lorem] [[str '' string]]
+▶ [&str=lorem]
+▶ []
+~> flag:parse [-num 100] [[num (num 0) number]]
+▶ [&num=(num 100)]
+▶ []
+~> flag:parse [-list a,b] [[list [] list]]
+▶ [&list=[a b]]
+▶ []
+
+## multiple flags, and non-flag arguments ##
+~> flag:parse [-v -n foo bar] [[v $false verbose] [n '' name]]
+▶ [&n=foo &v=$true]
+▶ [bar]
+
+## flag parsing error ##
+~> flag:parse [-bad ''] []
+Exception: flag provided but not defined: -bad
+  [tty]:1:1-23: flag:parse [-bad ''] []
+
+## unsupported type for default value ##
+~> flag:parse [-map ''] [[map [&] map]]
+Exception: bad value: flag default value must be boolean, number, string or list, but is [&]
+  [tty]:1:1-36: flag:parse [-map ''] [[map [&] map]]
+
+// TODO: Improve these errors to point out where the wrong type occurs
+
+## bad argument list ##
+~> flag:parse [(num 0)] []
+Exception: wrong type: need string, got number
+  [tty]:1:1-23: flag:parse [(num 0)] []
+
+## bad spec list ##
+~> flag:parse [] [(num 0)]
+Exception: wrong type: need !!vector.Vector, got number
+  [tty]:1:1-23: flag:parse [] [(num 0)]
+
+/////////////////////
+# flag:parse-getopt #
+/////////////////////
+
+## basic test ##
+~> flag:parse-getopt [-v foo] [[&short=v]]
+▶ [[&arg='' &long=$false &spec=[&short=v]]]
+▶ [foo]
+
+## extra info in spec ##
+~> flag:parse-getopt [-v foo] [[&short=v &extra=info]]
+▶ [[&arg='' &long=$false &spec=[&extra=info &short=v]]]
+▶ [foo]
+
+## spec with &arg-required ##
+~> flag:parse-getopt [-p 80 foo] [[&short=p &arg-required]]
+▶ [[&arg=80 &long=$false &spec=[&arg-required=$true &short=p]]]
+▶ [foo]
+
+## spec with &arg-optional, with argument ##
+~> flag:parse-getopt [-i.bak foo] [[&short=i &arg-optional]]
+▶ [[&arg=.bak &long=$false &spec=[&arg-optional=$true &short=i]]]
+▶ [foo]
+
+## spec with &arg-optional, without argument ##
+~> flag:parse-getopt [-i foo] [[&short=i &arg-optional]]
+▶ [[&arg='' &long=$false &spec=[&arg-optional=$true &short=i]]]
+▶ [foo]
+
+## &stop-after-double-dash on (default) ##
+~> flag:parse-getopt [-- -v] [[&short=v]]
+▶ []
+▶ [-v]
+
+## &stop-after-double-dash off ##
+~> flag:parse-getopt [-- -v] [[&short=v]] &stop-after-double-dash=$false
+▶ [[&arg='' &long=$false &spec=[&short=v]]]
+▶ [--]
+
+## &stop-before-non-flag off (default) ##
+~> flag:parse-getopt [foo -v] [[&short=v]]
+▶ [[&arg='' &long=$false &spec=[&short=v]]]
+▶ [foo]
+
+## &stop-before-non-flag on ##
+~> flag:parse-getopt [foo -v] [[&short=v]] &stop-before-non-flag
+▶ []
+▶ [foo -v]
+
+## &long-only off (default) ##
+~> flag:parse-getopt [-verbose] [[&long=verbose]]
+Exception: unknown option -v
+  [tty]:1:1-46: flag:parse-getopt [-verbose] [[&long=verbose]]
+
+## &long-only on ##
+~> flag:parse-getopt [-verbose] [[&long=verbose]] &long-only
+▶ [[&arg='' &long=$true &spec=[&long=verbose]]]
+▶ []
+
+## neither of &short and &long ##
+~> flag:parse-getopt [] [[&]]
+Exception: at least one of &short and &long must be non-empty
+  [tty]:1:1-26: flag:parse-getopt [] [[&]]
+
+## both &arg-required and &arg-optional ##
+~> flag:parse-getopt [] [[&short=x &arg-optional &arg-required]]
+Exception: at most one of &arg-required and &arg-optional may be true
+  [tty]:1:1-61: flag:parse-getopt [] [[&short=x &arg-optional &arg-required]]
+
+## flag parsing error ##
+~> flag:parse-getopt [-x] []
+Exception: unknown option -x
+  [tty]:1:1-25: flag:parse-getopt [-x] []
+
+## bad argument list ##
+~> flag:parse-getopt [(num 0)] []
+Exception: wrong type: need string, got number
+  [tty]:1:1-30: flag:parse-getopt [(num 0)] []
+
+## bad spec list ##
+~> flag:parse-getopt [] [(num 0)]
+Exception: wrong type: need !!hashmap.Map, got number
+  [tty]:1:1-30: flag:parse-getopt [] [(num 0)]

@@ -1,0 +1,896 @@
+//////////
+# pragma #
+//////////
+
+~> pragma unknown-command
+Compilation error: need literal =
+  [tty]:1:23: pragma unknown-command
+~> pragma unknown-command =
+Compilation error: need pragma value
+  [tty]:1:25: pragma unknown-command =
+~> pragma unknown-command x
+Compilation error: must be literal =
+  [tty]:1:24-24: pragma unknown-command x
+~> pragma bad-name = some-value
+Compilation error: unknown pragma bad-name
+  [tty]:1:8-15: pragma bad-name = some-value
+~> pragma unknown-command = bad
+Compilation error: invalid value for unknown-command: bad
+  [tty]:1:26-28: pragma unknown-command = bad
+
+// Actual effect of the unknown-command pragma is tested along with external
+// command resolution in compile_effect_test.elvts.
+
+///////
+# var #
+///////
+
+// Interaction between assignment and variable scoping is tested as part of
+// closure behavior in compile_value_test.elvts.
+
+## declaring without assigning ##
+~> var x
+   put $x
+▶ $nil
+## Quoted variable name ##
+~> var 'a/b'
+   put $'a/b'
+▶ $nil
+## declaring one variable whose name ends in ":" ##
+~> var a:
+## declaring a variable whose name ends in "~" initializes it to the builtin nop ##
+~> var cmd~
+   cmd &ignored-opt ignored-arg
+   is $cmd~ $nop~
+▶ $true
+## declaring multiple variables ##
+~> var x y
+   put $x $y
+▶ $nil
+▶ $nil
+## declaring one variable with initial value ##
+~> var x = foo
+   put $x
+▶ foo
+## declaring multiple variables with initial values ##
+~> var x y = foo bar
+   put $x $y
+▶ foo
+▶ bar
+## rest variable ##
+~> var x @y z = a b c d
+   put $x $y $z
+▶ a
+▶ [b c]
+▶ d
+## rest variable with empty RHS ##
+~> var @x =
+   put $x
+▶ []
+## shadowing ##
+~> var x = old
+   fn f { put $x }
+   var x = new
+   put $x
+   f
+▶ new
+▶ old
+
+## concurrent creation and access ##
+// Ensure that there is no race with "go test -race"
+~> var x = 1
+   put $x | var y = (all)
+
+## assignment errors when the RHS errors ##
+~> var x = [][1]
+Exception: out of range: index must be from 0 to -1, but is 1
+  [tty]:1:9-13: var x = [][1]
+
+## arity mismatch ##
+~> var x = 1 2
+Exception: arity mismatch: assignment right-hand-side must be 1 value, but is 2 values
+  [tty]:1:1-11: var x = 1 2
+~> var x y = 1
+Exception: arity mismatch: assignment right-hand-side must be 2 values, but is 1 value
+  [tty]:1:1-11: var x y = 1
+~> var x y @z = 1
+Exception: arity mismatch: assignment right-hand-side must be 2 or more values, but is 1 value
+  [tty]:1:1-14: var x y @z = 1
+
+## variable name must not be empty ##
+~> var ''
+Compilation error: variable name must not be empty
+  [tty]:1:5-6: var ''
+
+## variable name that must be quoted after $ must be quoted ##
+~> var a/b
+Compilation error: lvalue must be valid literal variable names
+  [tty]:1:5-7: var a/b
+
+## multiple @ not allowed ##
+~> var x @y @z = a b c d
+Compilation error: at most one rest variable is allowed
+  [tty]:1:10-11: var x @y @z = a b c d
+
+## non-local not allowed ##
+~> var ns:a
+Compilation error: cannot create variable $ns:a; new variables can only be created in the current scope
+  [tty]:1:5-8: var ns:a
+
+## index not allowed ##
+~> var a[0]
+Compilation error: new variable $a must not have indices
+  [tty]:1:5-8: var a[0]
+
+## composite expression not allowed ##
+~> var a'b'
+Compilation error: lvalue may not be composite expressions
+  [tty]:1:5-8: var a'b'
+
+## braced lists must not have any indices when used as a lvalue ##
+~> var {a b}[0] = x y
+Compilation error: braced list may not have indices when used as lvalue
+  [tty]:1:5-12: var {a b}[0] = x y
+
+///////
+# set #
+///////
+
+## setting one variable ##
+~> var x
+   set x = foo
+   put $x
+▶ foo
+
+## empty RHS is allowed ##
+~> var x
+   set @x =
+   put $x
+▶ []
+
+## variable must already exist ##
+~> set x = foo
+Compilation error: cannot find variable $x
+  [tty]:1:5-5: set x = foo
+
+## list element assignment ##
+~> var li = [foo bar]; set li[0] = 233; put $@li
+▶ 233
+▶ bar
+
+## variable in list assignment must already be defined ##
+// Regression test for b.elv.sh/889
+~> set y[0] = a
+Compilation error: cannot find variable $y
+  [tty]:1:5-8: set y[0] = a
+
+## map element assignment ##
+~> var di = [&k=v]
+   set di[k] = lorem
+   set di[k2] = ipsum
+   put $di[k] $di[k2]
+▶ lorem
+▶ ipsum
+
+## nested map element assignment ##
+~> var d = [&a=[&b=v]]
+   put $d[a][b]
+   set d[a][b] = u
+   put $d[a][b]
+▶ v
+▶ u
+
+## setting a non-exist environment variable ##
+//unset-env X
+~> has-env X
+   set E:X = x
+   get-env X
+▶ $false
+▶ x
+
+## map element assignment errors ##
+~> var li = [foo]; set li[(fail foo)] = bar
+Exception: foo
+  [tty]:1:25-32: var li = [foo]; set li[(fail foo)] = bar
+~> var li = [foo]; set li[0 1] = foo bar
+Exception: multi indexing not implemented
+  [tty]:1:21-27: var li = [foo]; set li[0 1] = foo bar
+~> var li = [[]]; set li[1][2] = bar
+Exception: out of range: index must be from 0 to 0, but is 1
+  [tty]:1:20-27: var li = [[]]; set li[1][2] = bar
+
+## assignment to read-only var is a compile-time error ##
+~> set nil = 1
+Compilation error: variable $nil is read-only
+  [tty]:1:5-7: set nil = 1
+~> var a b
+   set a true b = 1 2 3
+Compilation error: variable $true is read-only
+  [tty]:2:7-10: set a true b = 1 2 3
+~> set @true = 1
+Compilation error: variable $true is read-only
+  [tty]:1:5-9: set @true = 1
+~> var r
+   set true @r = 1
+Compilation error: variable $true is read-only
+  [tty]:2:5-8: set true @r = 1
+~> var r
+   set @r true = 1
+Compilation error: variable $true is read-only
+  [tty]:2:8-11: set @r true = 1
+
+// Error conditions already covered by tests for var above are not repeated.
+
+## = is required ##
+~> var x; set x
+Compilation error: need = and right-hand-side
+  [tty]:1:13: var x; set x
+
+//////////////////////
+# error from Var.Set #
+//////////////////////
+
+//add-bad-var bad 0
+
+~> set bad = foo
+Exception: bad var
+  [tty]:1:5-7: set bad = foo
+~> var a; set bad @a = foo
+Exception: bad var
+  [tty]:1:12-14: var a; set bad @a = foo
+~> var a; set a @bad = foo
+Exception: bad var
+  [tty]:1:14-17: var a; set a @bad = foo
+~> var a; set @a bad = foo
+Exception: bad var
+  [tty]:1:15-17: var a; set @a bad = foo
+
+///////
+# tmp #
+///////
+
+~> var x = foo
+   put $x
+   { tmp x = bar; put $x }
+   put $x
+▶ foo
+▶ bar
+▶ foo
+
+## use outside function ##
+~> var x; tmp x = y
+Compilation error: tmp may only be used inside a function
+  [tty]:1:8-16: var x; tmp x = y
+
+## non-existent variable ##
+~> { tmp x = y }
+Compilation error: cannot find variable $x
+  [tty]:1:7-7: { tmp x = y }
+
+## used on unset environment variable ##
+//unset-env X
+~> has-env X
+   { tmp E:X = y; put $E:X }
+   has-env X
+   put $E:X
+▶ $false
+▶ y
+▶ $false
+▶ ''
+
+## used on set environment variable ##
+//unset-env X
+~> set-env X x
+   { tmp E:X = y; put $E:X }
+   get-env X
+   put $E:X
+▶ y
+▶ x
+▶ x
+
+## error setting ##
+//add-bad-var bad 0
+~> { tmp bad = foo }
+Exception: bad var
+  [tty]:1:7-9: { tmp bad = foo }
+  [tty]:1:1-17: { tmp bad = foo }
+
+# error restoring #
+//add-bad-var bad 1
+~> { tmp bad = foo; put after }
+▶ after
+Exception: restore variable: bad var
+  [tty]:1:7-9: { tmp bad = foo; put after }
+  [tty]:1:1-28: { tmp bad = foo; put after }
+
+///////
+# del #
+///////
+
+~> var x = 1
+   del x
+
+## variable can't be used after deleted ##
+~> var x = 1
+   del x
+   echo $x
+Compilation error: variable $x not found
+  [tty]:3:6-7: echo $x
+
+## deleting environment variable ##
+//set-env TEST_ENV test_value
+~> has-env TEST_ENV
+   del E:TEST_ENV
+   has-env TEST_ENV
+▶ $true
+▶ $false
+
+## deleting variable whose name contains special characters ##
+~> var 'a/b' = foo
+   del 'a/b'
+
+## deleting element ##
+~> var x = [&k=v &k2=v2]
+   del x[k2]
+   keys $x
+▶ k
+~> var x = [[&k=v &k2=v2]];
+   del x[0][k2]
+   keys $x[0]
+▶ k
+
+## deleting nonexistent variable ##
+~> del x
+Compilation error: no variable $x
+  [tty]:1:5-5: del x
+
+## deleting element of nonexistent variable ##
+~> del x[0]
+Compilation error: no variable $x
+  [tty]:1:5-8: del x[0]
+
+## deleting non-local variable ##
+~> var a: = (ns [&b=$nil])
+   del a:b
+Compilation error: only variables in the local scope or E: can be deleted
+  [tty]:2:5-7: del a:b
+
+## variable name given with $ ##
+~> var x = 1
+   del $x
+Compilation error: arguments to del must omit the dollar sign
+  [tty]:2:5-6: del $x
+
+## variable name not given as a single primary expression ##
+~> var ab = 1
+   del a'b'
+Compilation error: arguments to del must be variable or variable elements
+  [tty]:2:5-8: del a'b'
+
+## variable name not a string ##
+~> del [a]
+Compilation error: arguments to del must be variable or variable elements
+  [tty]:1:5-7: del [a]
+
+## variable name has sigil ##
+~> var x = []; del @x
+Compilation error: arguments to del must be variable or variable elements
+  [tty]:1:17-18: var x = []; del @x
+
+## variable name not quoted when it should be ##
+~> var 'a/b' = foo
+   del a/b
+Compilation error: arguments to del must be variable or variable elements
+  [tty]:2:5-7: del a/b
+
+## index is multiple values ##
+~> var x = [&k1=v1 &k2=v2]
+   del x[k1 k2]
+Exception: index must evaluate to a single value in argument to del
+  [tty]:2:7-11: del x[k1 k2]
+
+## index expression throws ##
+~> var x = [&k]
+   del x[(fail x)]
+Exception: x
+  [tty]:2:8-13: del x[(fail x)]
+
+## value does not support element removal ##
+~> var x = (num 1)
+   del x[k]
+Exception: value does not support element removal
+  [tty]:2:5-7: del x[k]
+// TODO: Fix the stack trace so that it points to "x[k]" instead of "x[k"
+
+## intermediate element does not exist ##
+~> var x = [&]
+   del x[k][0]
+Exception: no such key: k
+  [tty]:2:5-5: del x[k][0]
+
+///////
+# and #
+///////
+
+~> and $true $false
+▶ $false
+~> and a b
+▶ b
+~> and $false b
+▶ $false
+~> and $true b
+▶ b
+
+## short circuit ##
+~> var x = a
+   and $false (x = b)
+   put $x
+▶ $false
+▶ a
+
+## exception propagation ##
+~> and a (fail x)
+Exception: x
+  [tty]:1:8-13: and a (fail x)
+
+## output error is bubbled ##
+~> and a >&-
+Exception: port does not support value output
+  [tty]:1:1-9: and a >&-
+
+//////
+# or #
+//////
+
+~> or $true $false
+▶ $true
+~> or a b
+▶ a
+~> or $false b
+▶ b
+~> or $true b
+▶ $true
+
+## short circuit ##
+~> var x = a; or $true (x = b); put $x
+▶ $true
+▶ a
+
+## exception ##
+~> or $false (fail x)
+Exception: x
+  [tty]:1:12-17: or $false (fail x)
+
+## output error is bubbled ##
+~> or a >&-
+Exception: port does not support value output
+  [tty]:1:1-8: or a >&-
+
+////////////
+# coalesce #
+////////////
+
+~> coalesce a b
+▶ a
+~> coalesce $nil b
+▶ b
+~> coalesce $nil $nil
+▶ $nil
+~> coalesce
+▶ $nil
+
+## short circuit ##
+~> coalesce a (fail foo)
+▶ a
+
+## exception propagation ##
+~> coalesce $nil (fail foo)
+Exception: foo
+  [tty]:1:16-23: coalesce $nil (fail foo)
+
+## output error is bubbled ##
+~> coalesce a >&-
+Exception: port does not support value output
+  [tty]:1:1-14: coalesce a >&-
+
+////////////////////////////////
+# special forms require thunks #
+////////////////////////////////
+
+// Regression test for b.elv.sh/1456.
+//
+// This only tests "for"; the other special forms use the same utility under the
+// hood and are not repeated.
+
+~> for x [] {|arg| }
+Compilation error: for body must not have arguments
+  [tty]:1:10-17: for x [] {|arg| }
+~> for x [] {|&opt=val| }
+Compilation error: for body must not have options
+  [tty]:1:10-22: for x [] {|&opt=val| }
+
+//////
+# if #
+//////
+
+~> if true { put then }
+▶ then
+~> if $false { put then } else { put else }
+▶ else
+~> if $false { put 1 } elif $false { put 2 } else { put 3 }
+▶ 3
+~> if $false { put 2 } elif true { put 2 } else { put 3 }
+▶ 2
+
+## exception in condition expression ##
+~> if (fail x) { }
+Exception: x
+  [tty]:1:5-10: if (fail x) { }
+
+///////
+# try #
+///////
+
+~> try { nop } catch { put bad } else { put good }
+▶ good
+~> try { fail tr } catch - { put bad } else { put good }
+▶ bad
+~> try { fail tr } finally { put final }
+▶ final
+Exception: tr
+  [tty]:1:7-14: try { fail tr } finally { put final }
+~> try { fail tr } catch { fail ex } finally { put final }
+▶ final
+Exception: ex
+  [tty]:1:25-32: try { fail tr } catch { fail ex } finally { put final }
+~> try { fail tr } catch { put ex } finally { fail final }
+▶ ex
+Exception: final
+  [tty]:1:44-54: try { fail tr } catch { put ex } finally { fail final }
+~> try { fail tr } catch { fail ex } finally { fail final }
+Exception: final
+  [tty]:1:45-55: try { fail tr } catch { fail ex } finally { fail final }
+
+## must have catch or finally ##
+~> try { fail tr }
+Compilation error: try must be followed by a catch block or a finally block
+  [tty]:1:1-15: try { fail tr }
+
+## rest variable not allowed ##
+~> try { nop } catch @a { }
+Compilation error: rest variable not allowed
+  [tty]:1:19-20: try { nop } catch @a { }
+
+## readonly var as a target for the "catch" clause ##
+~> try { fail reason } catch nil { }
+Compilation error: variable $nil is read-only
+  [tty]:1:27-29: try { fail reason } catch nil { }
+
+## quoted var name ##
+~> try { fail hard } catch 'x=' { put $'x='[reason][type] }
+▶ fail
+
+## regression test: "try { } catch" is a syntax error, but it should not panic ##
+~> try { } catch
+Compilation error: need variable or body
+  [tty]:1:14: try { } catch
+
+/////////
+# while #
+/////////
+
+~> var x = (num 0)
+   while (< $x 4) { put $x; set x = (+ $x 1) }
+▶ (num 0)
+▶ (num 1)
+▶ (num 2)
+▶ (num 3)
+
+## break ##
+~> var x = (num 0)
+   while (< $x 4) { put $x; break }
+▶ (num 0)
+
+## continue ##
+~> var x = (num 0)
+   while (< $x 4) { put $x; set x = (+ $x 1); continue; put bad }
+▶ (num 0)
+▶ (num 1)
+▶ (num 2)
+▶ (num 3)
+
+## exception in body ##
+~> var x = 0; while (< $x 4) { fail haha }
+Exception: haha
+  [tty]:1:29-38: var x = 0; while (< $x 4) { fail haha }
+
+## exception in condition ##
+~> while (fail x) { }
+Exception: x
+  [tty]:1:8-13: while (fail x) { }
+
+## else branch - not taken ##
+~> var x = 0; while (< $x 4) { put $x; set x = (+ $x 1) } else { put bad }
+▶ 0
+▶ (num 1)
+▶ (num 2)
+▶ (num 3)
+
+## else branch - taken ##
+~> while $false { put bad } else { put good }
+▶ good
+
+///////
+# for #
+///////
+
+~> for x [tempora mores] { put 'O '$x }
+▶ 'O tempora'
+▶ 'O mores'
+
+## break ##
+~> for x [a] { break } else { put $x }
+
+## else ##
+~> for x [a] { put $x } else { put $x }
+▶ a
+
+## continue ##
+~> for x [a b] { put $x; continue; put $x; }
+▶ a
+▶ b
+
+## else ##
+~> for x [] { } else { put else }
+▶ else
+~> for x [a] { } else { put else }
+
+## propagating exception ##
+~> for x [a] { fail foo }
+Exception: foo
+  [tty]:1:13-21: for x [a] { fail foo }
+
+## more than one iterator ##
+~> for {x,y} [] { }
+Compilation error: must be exactly one lvalue
+  [tty]:1:5-9: for {x,y} [] { }
+
+## can't create new variable non-local variable ##
+~> for no-such-namespace:x [a b] { }
+Compilation error: cannot create variable $no-such-namespace:x; new variables can only be created in the current scope
+  [tty]:1:5-23: for no-such-namespace:x [a b] { }
+
+## can't use non-existent variable ##
+~> var a: = (ns [&])
+   for a:b [] { }
+Exception: no variable $a:b
+  [tty]:2:5-7: for a:b [] { }
+
+## exception when evaluating iterable ##
+~> for x [][0] { }
+Exception: out of range: index must be from 0 to -1, but is 0
+  [tty]:1:7-11: for x [][0] { }
+
+## more than one iterable ##
+~> for x (put a b) { }
+Exception: arity mismatch: value being iterated must be 1 value, but is 2 values
+  [tty]:1:7-15: for x (put a b) { }
+
+## non-iterable value ##
+~> for x (num 0) { }
+Exception: cannot iterate number
+  [tty]:1:1-17: for x (num 0) { }
+
+//////
+# fn #
+//////
+
+~> fn f {|x| put x=$x'.' }; f lorem; f ipsum
+▶ 'x=lorem.'
+▶ 'x=ipsum.'
+
+## recursive functions with fn ##
+// Regression test for b.elv.sh/1206.
+~> fn f {|n| if (== $n 0) { num 1 } else { * $n (f (- $n 1)) } }; f 3
+▶ (num 6)
+
+## swallowing exception thrown by return ##
+~> fn f { put a; return; put b }; f
+▶ a
+
+## error when evaluating the lambda ##
+~> fn f {|&opt=(fail x)| }
+Exception: x
+  [tty]:1:14-19: fn f {|&opt=(fail x)| }
+
+///////
+# use #
+///////
+
+## basic usage ##
+//tmp-lib-dir
+~> echo 'var name = ipsum' > $lib/lorem.elv
+~> use lorem
+   put $lorem:name
+▶ ipsum
+
+## imports are lexically scoped ##
+//tmp-lib-dir
+~> echo 'var name = ipsum' > $lib/lorem.elv
+~> { use lorem }
+   put $lorem:name
+Compilation error: variable $lorem:name not found
+  [tty]:2:5-15: put $lorem:name
+
+## prefers lib dir that appear earlier ##
+//two-tmp-lib-dirs
+~> echo 'echo lib1/shadow' > $lib1/shadow.elv
+~> echo 'echo lib2/shadow' > $lib2/shadow.elv
+~> use shadow
+lib1/shadow
+
+## use of imported variable is captured in upvalue ##
+//tmp-lib-dir
+~> echo 'var name = ipsum' > $lib/lorem.elv
+~> use lorem
+   { put $lorem:name }
+▶ ipsum
+
+## use of imported function is also captured in upvalue ##
+//tmp-lib-dir
+~> echo 'var name = ipsum; fn put-name { put $name }' > $lib/lorem.elv
+~> { use lorem; { lorem:put-name } }
+▶ ipsum
+
+## use of module in subdirectory ##
+//tmp-lib-dir
+//use-os
+// TODO: Use os:mkdir-all when it's available.
+~> os:mkdir $lib/a
+   os:mkdir $lib/a/b
+   echo 'var name = a/b/c' > $lib/a/b/c.elv
+~> use a/b/c
+   put $c:name
+▶ a/b/c
+
+## module is cached after first use ##
+//tmp-lib-dir
+~> echo 'put has-init' > $lib/has-init.elv
+~> use has-init
+▶ has-init
+~> use has-init
+// Init code is not run again
+
+## renaming module ##
+//tmp-lib-dir
+//use-os
+// TODO: Use os:mkdir-all when it's available.
+~> os:mkdir $lib/a
+   os:mkdir $lib/a/b
+   echo 'var name = a/b/c' > $lib/a/b/c.elv
+~> use a/b/c mod
+   put $mod:name
+▶ a/b/c
+
+## modules can be used multiple times with different aliases ##
+//tmp-lib-dir
+~> echo 'var name = ipsum' > $lib/lorem.elv
+~> use lorem
+   use lorem lorem2
+   put $lorem:name $lorem2:name
+▶ ipsum
+▶ ipsum
+
+## variable referencing a module can be shadowed ##
+//tmp-lib-dir
+//use-os
+// TODO: Use os:mkdir-all when it's available.
+~> os:mkdir $lib/a
+   os:mkdir $lib/a/b
+   echo 'var name = c' > $lib/c.elv
+   echo 'var name = a/b/c' > $lib/a/b/c.elv
+~> use c
+   put $c:name
+   use a/b/c
+   put $c:name
+▶ c
+▶ a/b/c
+
+## relative uses ##
+//tmp-lib-dir
+//use-os
+~> os:mkdir $lib/a
+   os:mkdir $lib/a/b
+   echo 'var name = ipsum' > $lib/lorem.elv
+   echo 'var name = a/b/c' > $lib/a/b/c.elv
+   echo 'use ./c; var c = $c:name; use ../../lorem; var lorem = $lorem:name' > $lib/a/b/x.elv
+~> use a/b/x; put $x:c $x:lorem
+▶ a/b/c
+▶ ipsum
+
+## relative uses from the REPL ##
+// Relative uses from the REPL is relative to the working directory.
+//in-temp-dir
+~> echo 'var name = ipsum' > lorem.elv
+~> use ./lorem
+   put $lorem:name
+▶ ipsum
+
+## variables in the REPL scope is invisible from modules ##
+//tmp-lib-dir
+~> echo 'put $x' > $lib/put-x.elv
+// We have to do this since the exception stack trace contains $lib, which is a
+// temporary directory that changes across runs.
+//
+// TODO: Print the whole error message (but without the filename) when
+// exceptions support that level of introspection.
+~> try {
+     use put-x
+   } catch e {
+     echo has exception
+   }
+has exception
+
+## invalid UTF-8 in module file ##
+//tmp-lib-dir
+~> echo "\xff" > $lib/invalid-utf8.elv
+// We have to do this since the exception stack trace contains $lib, which is a
+// temporary directory that changes across runs.
+//
+// TODO: Print the whole error message (but without the filename) when
+// exceptions support that level of introspection.
+~> try {
+     use invalid-utf8
+   } catch e {
+     echo has exception
+   }
+has exception
+
+## unknown module spec ##
+~> use unknown
+Exception: no such module: unknown
+  [tty]:1:1-11: use unknown
+~> use ./unknown
+Exception: no such module: ./unknown
+  [tty]:1:1-13: use ./unknown
+~> use ../unknown
+Exception: no such module: ../unknown
+  [tty]:1:1-14: use ../unknown
+
+## wrong number of arguments ##
+~> use
+Compilation error: need module spec
+  [tty]:1:4: use
+~> use a b c
+Compilation error: superfluous arguments
+  [tty]:1:9-9: use a b c
+
+## circular dependency ##
+//tmp-lib-dir
+~> echo 'var pre = apre; use b; put $b:pre $b:post; var post = apost' > $lib/a.elv
+   echo "var pre = bpre; use a; put $a:pre $a:post; var post = bpost" > $lib/b.elv
+~> use a
+▶ apre
+▶ $nil
+▶ bpre
+▶ bpost
+
+## importing module triggers check for deprecated features ##
+// Regression test for b.elv.sh/1072
+//tmp-lib-dir
+~> echo 'a=b nop $a' > $lib/dep.elv
+// Only show the first line to avoid showing the file path, which contains $lib
+// and changes across runs.
+~> use dep 2>&1 | take 1 | to-lines
+Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
+
+## module may mutate REPL namespace ##
+// Regression test for b.elv.sh/1225
+//tmp-lib-dir
+//add-var-in-builtin
+~> echo 'var foo = bar; add-var foo $foo' > $lib/a.elv
+~> use a
+~> keys $a:
+▶ foo
+~> put $foo
+▶ bar

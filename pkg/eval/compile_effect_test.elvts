@@ -1,0 +1,465 @@
+/////////
+# chunk #
+/////////
+
+## empty chunk ##
+~> 
+
+## outputs of pipelines in a chunk are concatenated ##
+~> put x; put y; put z
+▶ x
+▶ y
+▶ z
+
+## a failed pipeline cause the whole chunk to fail ##
+~> put a; fail bad; put b
+▶ a
+Exception: bad
+  [tty]:1:8-15: put a; fail bad; put b
+
+////////////
+# pipeline #
+////////////
+
+## pure byte pipeline on Unix ##
+//only-on unix
+~> echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e
+A1bert
+Ber1in
+
+## pure byte pipeline on Windows ##
+//only-on windows
+~> echo "Albert\nAllan\nAlbraham\nBerlin" | findstr e
+Albert
+Berlin
+
+## pure value pipeline ##
+~> put 233 42 19 | each {|x|+ $x 10}
+▶ (num 243)
+▶ (num 52)
+▶ (num 29)
+
+## pipeline draining ##
+~> range 100 | put x
+▶ x
+
+// TODO: Add a useful hybrid pipeline sample
+
+## reader gone ##
+// Internal commands writing to byte output raises ReaderGone when the reader has
+// exited, which is then suppressed by the pipeline.
+~> while $true { echo y } | nop
+~> var reached = $false
+   { while $true { echo y }; reached = $true } | nop
+   put $reached
+▶ $false
+// Similar for value output.
+~> while $true { put y } | nop
+~> var reached = $false
+   { while $true { put y }; reached = $true } | nop
+   put $reached
+▶ $false
+
+## reader gone from SIGPIPE ##
+//only-on unix
+// External commands terminated by SIGPIPE due to reader exiting early raise
+// ReaderGone, which is then suppressed by the pipeline.
+~> yes | true
+~> var reached = $false
+   { yes; reached = $true } | true
+   put $reached
+▶ $false
+
+///////////////////////
+# background pipeline #
+///////////////////////
+
+//use-file
+
+## basic behavior ##
+~> set notify-bg-job-success = $false
+   var p = (file:pipe)
+   { print foo > $p; file:close $p[w] }&
+   slurp < $p; file:close $p[r]
+▶ foo
+
+## notification ##
+//recv-bg-job-notification-in-global
+~> set notify-bg-job-success = $true
+   var p = (file:pipe)
+   fn f { file:close $p[w] }
+   f &
+   slurp < $p; file:close $p[r]
+   recv-bg-job-notification
+▶ ''
+▶ 'job f & finished'
+
+## notification with exception ##
+//recv-bg-job-notification-in-global
+~> set notify-bg-job-success = $true
+   var p = (file:pipe)
+   fn f { file:close $p[w]; fail foo }
+   f &
+   slurp < $p; file:close $p[r]
+   recv-bg-job-notification
+▶ ''
+▶ 'job f & finished, errors = foo'
+
+///////////
+# command #
+///////////
+
+~> put foo
+▶ foo
+
+## error conditions ##
+// head is not a single value
+~> {put put} foo
+Exception: arity mismatch: command must be 1 value, but is 2 values
+  [tty]:1:1-9: {put put} foo
+// head is not callable or string containing slash
+~> [] foo
+Exception: bad value: command must be callable or string containing slash, but is []
+  [tty]:1:1-2: [] foo
+// argument throws
+~> put [][1]
+Exception: out of range: index must be from 0 to -1, but is 1
+  [tty]:1:5-9: put [][1]
+// option key is not string
+~> put &[]=[]
+Exception: bad value: option key must be string, but is list
+  [tty]:1:1-10: put &[]=[]
+// option evaluation throws
+~> put &x=[][1]
+Exception: out of range: index must be from 0 to -1, but is 1
+  [tty]:1:8-12: put &x=[][1]
+
+## regression test for b.elv.sh/1204 ##
+// Ensure that the arguments of special forms are not accidentally compiled
+// twice.
+~> nop (and (use builtin))
+   nop $builtin:echo~
+
+/////////////////////////////
+# external command as value #
+/////////////////////////////
+~> kind-of (external true)
+▶ fn
+~> repr (external true)
+<external true>
+~> put [&(external true)=$true][(external true)]
+▶ $true
+
+////////////////////////////////
+# external commands invocation #
+////////////////////////////////
+
+## common behavior ##
+// Doesn't support options
+~> (external foo) &option
+Exception: external commands don't accept elvish options
+  [tty]:1:1-22: (external foo) &option
+
+## external command from PATH ##
+//in-temp-dir
+//use-os
+//unset-env PATH
+~> os:mkdir bin
+   to-lines ['#!/bin/sh' 'echo hello'] > bin/say-hello
+   os:chmod 0o700 bin/say-hello
+   to-lines ['@echo hello'] > bin/say-hello.bat
+   set paths = [$pwd/bin]
+~> say-hello
+hello
+// Explicit e:
+~> e:say-hello
+hello
+// Dynamic string does not work for finding external commands from PATH
+~> var x = say-hello
+   $x
+Exception: bad value: command must be callable or string containing slash, but is say-hello
+  [tty]:2:1-2: $x
+// Command searching is affected by the unknown-command pragma
+~> { pragma unknown-command = disallow; say-hello }
+Compilation error: unknown command disallowed by current pragma
+  [tty]:1:38-46: { pragma unknown-command = disallow; say-hello }
+~> { pragma unknown-command = disallow; { say-hello } }
+Compilation error: unknown command disallowed by current pragma
+  [tty]:1:40-48: { pragma unknown-command = disallow; { say-hello } }
+~> { pragma unknown-command = external; say-hello }
+hello
+// But explicit e: is always allowed
+~> { pragma unknown-command = disallow; e:say-hello }
+hello
+
+## external command relative to working directory ##
+//in-temp-dir
+//use-os
+~> fn make-echo-script {|name msg|
+     to-lines ['#!/bin/sh' 'echo '$msg] > $name
+     os:chmod 0o700 $name
+     to-lines ['@echo '$msg] > $name.bat
+   }
+   make-echo-script say-hello hello
+   os:mkdir lorem
+   make-echo-script lorem/ipsum 'lorem ipsum'
+~> ./say-hello
+hello
+~> ./lorem/ipsum
+lorem ipsum
+~> lorem/ipsum
+lorem ipsum
+// Explicit e:
+~> e:./say-hello
+hello
+~> e:./lorem/ipsum
+lorem ipsum
+~> e:lorem/ipsum
+lorem ipsum
+// Dynamic string
+~> var x = ./say-hello
+   $x
+hello
+~> var x = ./lorem/ipsum
+   $x
+lorem ipsum
+~> var x = lorem/ipsum
+   $x
+lorem ipsum
+// Relative external commands are not affected by the unknown-command pragma
+~> { pragma unknown-command = disallow; ./say-hello }
+hello
+~> { pragma unknown-command = disallow; lorem/ipsum }
+lorem ipsum
+~> { pragma unknown-command = disallow; var x = ./say-hello; $x }
+hello
+
+## non-existent command on Unix ##
+//only-on unix
+//unset-env PATH
+~> set paths = []
+~> nonexistent-command
+Exception: exec: "nonexistent-command": executable file not found in $PATH
+  [tty]:1:1-19: nonexistent-command
+
+## non-existent command on Windows ##
+//only-on windows
+//unset-env PATH
+~> set paths = []
+~> nonexistent-command
+Exception: exec: "nonexistent-command": executable file not found in %PATH%
+  [tty]:1:1-19: nonexistent-command
+
+//////////////////////////////////////
+# legacy temporary assignment syntax #
+//////////////////////////////////////
+
+~> var a b = alice bob; {a,@b}=(put amy ben) put $a $@b; put $a $b
+▶ amy
+▶ ben
+▶ alice
+▶ bob
+Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
+  [tty]:1:22-41: var a b = alice bob; {a,@b}=(put amy ben) put $a $@b; put $a $b
+
+## temporary assignment of list element ##
+~> var l = [a]; l[0]=x put $l[0]; put $l[0]
+▶ x
+▶ a
+Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
+  [tty]:1:14-19: var l = [a]; l[0]=x put $l[0]; put $l[0]
+
+## temporary assignment of map element ##
+~> var m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]
+▶ v2
+▶ v
+Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
+  [tty]:1:17-23: var m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]
+
+## temporary assignment before special form ##
+~> li=[foo bar] for x $li { put $x }
+▶ foo
+▶ bar
+Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
+  [tty]:1:1-12: li=[foo bar] for x $li { put $x }
+
+## multiple LHSs in temporary assignments. ##
+~> {a b}={foo bar} put $a $b
+▶ foo
+▶ bar
+Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
+  [tty]:1:1-15: {a b}={foo bar} put $a $b
+
+## rest variable ##
+~> @a=(put a b) put $@a
+▶ a
+▶ b
+Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
+  [tty]:1:1-12: @a=(put a b) put $@a
+
+## non-rest and rest variable ##
+~> {a,@b}=(put a b c) put $@b
+▶ b
+▶ c
+Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
+  [tty]:1:1-18: {a,@b}=(put a b c) put $@b
+
+## using syntax of temporary assignment for non-temporary assignment no longer compiles ##
+~> x=y
+Compilation error: using the syntax of temporary assignment for non-temporary assignment is no longer supported; use "var" or "set" instead
+  [tty]:1:1-3: x=y
+
+///////////////
+# redirection #
+///////////////
+
+//in-temp-dir
+
+## output and input redirection ##
+~> echo 233 > out1
+   slurp < out1
+▶ "233\n"
+
+## append ##
+~> echo 1 > out; echo 2 >> out; slurp < out
+▶ "1\n2\n"
+
+## read and write ##
+// TODO: Add a meaningful use case that actually uses both read and write.
+~> echo 233 <> out1
+   slurp < out1
+▶ "233\n"
+
+## redirections from special form ##
+~> for x [lorem ipsum] { echo $x } > out2
+   slurp < out2
+▶ "lorem\nipsum\n"
+
+## using numeric FDs as source and destination ##
+~> { echo foobar >&2 } 2> out3
+   slurp < out3
+▶ "foobar\n"
+
+## using named FDs as source and destination ##
+~> echo 233 stdout> out1
+   slurp stdin< out1
+▶ "233\n"
+
+## using named FDs (stderr) as source and destination ##
+~> { echo foobar >&stderr } stderr> out4
+   slurp < out4
+▶ "foobar\n"
+
+## using a new FD as source throws an exception ##
+~> echo foo >&4
+Exception: invalid fd: 4
+  [tty]:1:10-12: echo foo >&4
+
+## using a new FD as destination is OK, and makes it available ##
+~> { echo foo >&4 } 4>out5
+   slurp < out5
+▶ "foo\n"
+
+## using a new FD for external command is OK ##
+// Regression test against b.elv.sh/788.
+//only-on unix
+// TODO: Enable for Windows too.
+~> /bin/sh -c 'echo ok' 5</dev/null
+ok
+
+## redirections from file objects ##
+//use-file
+~> echo haha > out3
+   var f = (file:open out3)
+   slurp <$f
+   file:close $f
+▶ "haha\n"
+
+## redirections from pipe objects ##
+//use-file
+~> var p = (file:pipe)
+   echo haha > $p
+   file:close $p[w]
+   slurp < $p
+   file:close $p[r]
+▶ "haha\n"
+
+## regression test for b.elv.sh/1010 ##
+// Don't hang when iterating over input from a file.
+~> echo abc > bytes
+   each $echo~ < bytes
+abc
+~> echo def > bytes
+   only-values < bytes | count
+▶ (num 0)
+
+## writing value output to file throws an exception ##
+~> put foo >a
+Exception: port does not support value output
+  [tty]:1:1-10: put foo >a
+
+## writing value output to closed port throws an exception ##
+~> put foo >&-
+Exception: port does not support value output
+  [tty]:1:1-11: put foo >&-
+
+## invalid redirection destination ##
+~> echo []> test
+Exception: bad value: redirection destination must be fd name or number, but is []
+  [tty]:1:6-7: echo []> test
+
+## invalid fd redirection source ##
+~> echo >&test
+Exception: bad value: redirection source must be fd name or number or '-', but is test
+  [tty]:1:8-11: echo >&test
+
+## invalid redirection source ##
+~> echo > []
+Exception: bad value: redirection source must be string, file or map, but is list
+  [tty]:1:8-9: echo > []
+
+## invalid map for redirection ##
+~> echo < [&]
+Exception: bad value: map for input redirection must be map with file in the 'r' field, but is [&]
+  [tty]:1:8-10: echo < [&]
+~> echo > [&]
+Exception: bad value: map for output redirection must be map with file in the 'w' field, but is [&]
+  [tty]:1:8-10: echo > [&]
+
+## exception when evaluating source or destination ##
+~> echo > (fail foo)
+Exception: foo
+  [tty]:1:9-16: echo > (fail foo)
+~> echo (fail foo)> file
+Exception: foo
+  [tty]:1:7-14: echo (fail foo)> file
+
+////////////////
+# stack traces #
+////////////////
+
+// Stack traces of increasing depths.
+~> fail oops
+Exception: oops
+  [tty]:1:1-9: fail oops
+~> fn f { fail oops }
+   f
+Exception: oops
+  [tty]:1:8-17: fn f { fail oops }
+  [tty]:2:1-1: f
+~> fn f { fail oops }
+   fn g { f }
+   g
+Exception: oops
+  [tty]:1:8-17: fn f { fail oops }
+  [tty]:2:8-9: fn g { f }
+  [tty]:3:1-1: g
+// Error thrown before execution.
+~> fn f { }
+   f a
+Exception: arity mismatch: arguments must be 0 values, but is 1 value
+  [tty]:2:1-3: f a
+// Error from builtin.
+~> count 1 2 3
+Exception: arity mismatch: arguments must be 0 to 1 values, but is 3 values
+  [tty]:1:1-11: count 1 2 3

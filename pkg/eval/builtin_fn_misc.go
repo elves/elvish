@@ -133,9 +133,10 @@ func eval(fm *Frame, opts evalOpts, code string) error {
 var (
 	evalCount      int
 	evalCountMutex sync.Mutex
+	nextEvalCount  = nextEvalCountImpl
 )
 
-func nextEvalCount() int {
+func nextEvalCountImpl() int {
 	evalCountMutex.Lock()
 	defer evalCountMutex.Unlock()
 	evalCount++

@@ -1,0 +1,162 @@
+/////////////////////
+# string comparison #
+/////////////////////
+
+~> <s a b
+▶ $true
+~> <s 2 10
+▶ $false
+~> <=s a a
+▶ $true
+~> <=s a b
+▶ $true
+~> <=s b a
+▶ $false
+~> ==s haha haha
+▶ $true
+~> ==s 10 10.0
+▶ $false
+~> !=s haha haha
+▶ $false
+~> !=s 10 10.1
+▶ $true
+~> >s a b
+▶ $false
+~> >s 2 10
+▶ $true
+~> >=s a a
+▶ $true
+~> >=s a b
+▶ $false
+~> >=s b a
+▶ $true
+
+/////////////
+# to-string #
+/////////////
+
+~> to-string str (num 1) $true
+▶ str
+▶ 1
+▶ '$true'
+// bubbling output errors
+~> to-string str >&-
+Exception: port does not support value output
+  [tty]:1:1-17: to-string str >&-
+
+////////
+# base #
+////////
+
+~> base 2 1 3 4 16 255
+▶ 1
+▶ 11
+▶ 100
+▶ 10000
+▶ 11111111
+~> base 16 42 233
+▶ 2a
+▶ e9
+// *big.Int
+~> base 16 100000000000000000000
+▶ 56bc75e2d63100000
+~> base 10 0x56bc75e2d63100000
+▶ 100000000000000000000
+// typed number as arguments
+~> base (num 16) (num 256)
+▶ 100
+// bubbling output error
+~> base 8 1/8
+Exception: invalid input
+  [tty]:1:1-10: base 8 1/8
+~> base 1 1
+Exception: bad base
+  [tty]:1:1-8: base 1 1
+~> base 37 10
+Exception: bad base
+  [tty]:1:1-10: base 37 10
+~> base 2 1 >&-
+Exception: port does not support value output
+  [tty]:1:1-12: base 2 1 >&-
+
+////////////
+# wcswidth #
+////////////
+
+~> wcswidth 你好
+▶ (num 4)
+~> -override-wcwidth x 10; wcswidth 1x2x; -override-wcwidth x 1
+▶ (num 22)
+
+////////
+# eawk #
+////////
+
+~> echo "  ax  by cz  \n11\t22 33" | eawk {|@a| put $a[-1] }
+▶ cz
+▶ 33
+
+## bad input type ##
+~> num 42 | eawk {|@a| fail "this should not run" }
+Exception: input of eawk must be string
+  [tty]:1:10-48: num 42 | eawk {|@a| fail "this should not run" }
+
+## propagating exception ##
+~> to-lines [1 2 3 4] | eawk {|@a|
+       if (==s 3 $a[1]) {
+           fail "stop eawk"
+       }
+       put $a[1]
+   }
+▶ 1
+▶ 2
+Exception: stop eawk
+  [tty]:3:9-24:         fail "stop eawk"
+  [tty]:1:22-6:1:
+    to-lines [1 2 3 4] | eawk {|@a|
+        if (==s 3 $a[1]) {
+            fail "stop eawk"
+        }
+        put $a[1]
+    }
+
+## break ##
+~> to-lines [" a" "b\tc " "d" "e"] | eawk {|@a|
+       if (==s d $a[1]) {
+           break
+       } else {
+           put $a[-1]
+       }
+   }
+▶ a
+▶ c
+
+## continue ##
+~> to-lines [" a" "b\tc " "d" "e"] | eawk {|@a|
+       if (==s d $a[1]) {
+           continue
+       } else {
+           put $a[-1]
+       }
+   }
+▶ a
+▶ c
+▶ e
+
+## parsing docker image ls output with custom separator ##
+~> to-lines [
+       'REPOSITORY                TAG          IMAGE ID      CREATED         SIZE'
+       '<none>                    <none>       265c2d25a944  16 minutes ago  67.5 MB'
+       '<none>                    <none>       26408a88b236  16 minutes ago  389 MB'
+       'localhost/elvish_eawk     latest       0570db4e3eaa  32 hours ago    67.5 MB'
+       'localhost/elvish          latest       59b1eec93ab7  33 hours ago    67.5 MB'
+       'docker.io/library/golang  latest       015e6b7f599b  46 hours ago    838 MB'
+       'docker.io/library/golang  1.20-alpine  93db368a0a9e  3 days ago      266 MB'
+   ] | eawk &sep=" [ ]+" {|0 1 2 3 4 5| put $5 }
+▶ SIZE
+▶ '67.5 MB'
+▶ '389 MB'
+▶ '67.5 MB'
+▶ '67.5 MB'
+▶ '838 MB'
+▶ '266 MB'

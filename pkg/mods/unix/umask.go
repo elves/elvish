@@ -5,6 +5,7 @@ package unix
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"strconv"
 	"sync"
 
@@ -96,9 +97,14 @@ func parseUmask(v any) (int, error) {
 				What: "umask", Valid: validUmaskMsg, Actual: vals.ToString(v)}
 		}
 		umask = int(intPart)
+	case *big.Int:
+		return -1, errs.OutOfRange{
+			What: "umask", ValidLow: "0", ValidHigh: "0o777",
+			Actual: vals.ToString(v)}
+	case *big.Rat:
+		return -1, errs.BadValue{
+			What: "umask", Valid: validUmaskMsg, Actual: vals.ToString(v)}
 	default:
-		// We don't bother supporting big.Int or bit.Rat because no valid umask
-		// value would be represented by those types.
 		return -1, errs.BadValue{
 			What: "umask", Valid: validUmaskMsg, Actual: vals.Kind(v)}
 	}

@@ -1,0 +1,170 @@
+////////
+# bool #
+////////
+
+~> bool $true
+▶ $true
+~> bool a
+▶ $true
+~> bool [a]
+▶ $true
+// "empty" values are also true in Elvish
+~> bool []
+▶ $true
+~> bool [&]
+▶ $true
+~> bool (num 0)
+▶ $true
+~> bool ""
+▶ $true
+// only errors, $nil and $false are false
+~> bool ?(fail x)
+▶ $false
+~> bool $nil
+▶ $false
+~> bool $false
+▶ $false
+
+///////
+# not #
+///////
+
+~> not $false
+▶ $true
+~> not $nil
+▶ $true
+~> not ?(fail x)
+▶ $true
+~> not $true
+▶ $false
+~> not a
+▶ $false
+
+//////
+# is #
+//////
+
+// The semantics of "is" is not well-defined, so these results might change in
+// future.
+~> is 1 1
+▶ $true
+~> is a b
+▶ $false
+~> is [] []
+▶ $true
+~> is [1] [1]
+▶ $false
+
+//////
+# eq #
+//////
+
+~> eq 1 1
+▶ $true
+~> eq a b
+▶ $false
+~> eq [] []
+▶ $true
+~> eq [1] [1]
+▶ $true
+~> eq 1 1 2
+▶ $false
+
+//////////
+# not-eq #
+//////////
+
+~> not-eq a b
+▶ $true
+~> not-eq a a
+▶ $false
+// not-eq is true as long as each adjacent pair is not equal.
+~> not-eq 1 2 1
+▶ $true
+
+///////////
+# compare #
+///////////
+
+## strings ##
+~> compare a b
+▶ (num -1)
+~> compare b a
+▶ (num 1)
+~> compare x x
+▶ (num 0)
+
+## numbers ##
+~> compare (num 1) (num 2)
+▶ (num -1)
+~> compare (num 2) (num 1)
+▶ (num 1)
+~> compare (num 3) (num 3)
+▶ (num 0)
+~> compare (num 1/4) (num 1/2)
+▶ (num -1)
+~> compare (num 1/3) (num 0.2)
+▶ (num 1)
+~> compare (num 3.0) (num 3)
+▶ (num 0)
+~> compare (num nan) (num 3)
+▶ (num -1)
+~> compare (num 3) (num nan)
+▶ (num 1)
+~> compare (num nan) (num nan)
+▶ (num 0)
+
+## booleans ##
+~> compare $true $false
+▶ (num 1)
+~> compare $false $true
+▶ (num -1)
+~> compare $false $false
+▶ (num 0)
+~> compare $true $true
+▶ (num 0)
+
+## lists ##
+~> compare [a, b] [a, a]
+▶ (num 1)
+~> compare [a, a] [a, b]
+▶ (num -1)
+~> compare [x, y] [x, y]
+▶ (num 0)
+
+## different types are uncomparable without &total. ##
+~> compare 1 (num 1)
+Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+  [tty]:1:1-17: compare 1 (num 1)
+~> compare x [x]
+Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+  [tty]:1:1-13: compare x [x]
+~> compare a [&a=x]
+Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+  [tty]:1:1-16: compare a [&a=x]
+
+## uncomparable types ##
+~> compare { nop 1 } { nop 2}
+Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+  [tty]:1:1-26: compare { nop 1 } { nop 2}
+~> compare [&foo=bar] [&a=b]
+Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+  [tty]:1:1-25: compare [&foo=bar] [&a=b]
+
+## total ordering for the same comparable type ##
+~> compare &total (num 1) (num 3/2)
+▶ (num -1)
+~> compare &total (num 3/2) (num 2)
+▶ (num -1)
+
+## total ordering for the same uncomparable type ##
+~> compare &total { nop 1 } { nop 2 }
+▶ (num 0)
+~> compare &total [&foo=bar] [&a=b]
+▶ (num 0)
+
+## total ordering for different types ##
+~> == (compare &total foo (num 2)) (compare &total bar (num 10))
+▶ $true
+~> + (compare &total foo (num 2)) (compare &total (num 2) foo)
+▶ (num 0)

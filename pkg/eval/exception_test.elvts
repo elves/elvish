@@ -1,0 +1,35 @@
+//////////////////////
+# Flow introspection #
+//////////////////////
+~> put ?(return)[reason][type name]
+▶ flow
+▶ return
+
+/////////////////////////////////
+# ExternalCmdExit introspection #
+/////////////////////////////////
+
+## Unix ##
+//only-on unix
+~> put ?(false)[reason][type exit-status]
+▶ external-cmd/exited
+▶ 1
+
+## Windows ##
+//only-on windows
+~> put ?(cmd /c exit 1)[reason][type exit-status]
+▶ external-cmd/exited
+▶ 1
+
+// TODO: Test killed and stopped commands
+
+///////////////////////////////
+# PipelineError introspection #
+///////////////////////////////
+
+~> put ?(fail 1 | fail 2)[reason][type]
+▶ pipeline
+~> count ?(fail 1 | fail 2)[reason][exceptions]
+▶ (num 2)
+~> put ?(fail 1 | fail 2)[reason][exceptions][0][reason][type]
+▶ fail

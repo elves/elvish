@@ -1,0 +1,349 @@
+///////
+# put #
+///////
+
+~> put foo bar
+▶ foo
+▶ bar
+~> put $nil
+▶ $nil
+// bubbling output error
+~> put foo >&-
+Exception: port does not support value output
+  [tty]:1:1-11: put foo >&-
+
+//////////
+# repeat #
+//////////
+
+~> repeat 4 foo
+▶ foo
+▶ foo
+▶ foo
+▶ foo
+// bubbling output error
+~> repeat 1 foo >&-
+Exception: port does not support value output
+  [tty]:1:1-16: repeat 1 foo >&-
+
+//////////////
+# read-bytes #
+//////////////
+
+~> print abcd | read-bytes 1
+▶ a
+// read-bytes does not consume more than needed ##
+~> print abcd | { read-bytes 1; slurp }
+▶ a
+▶ bcd
+// reads up to EOF ##
+~> print abcd | read-bytes 10
+▶ abcd
+// bubbling output error
+~> print abcd | read-bytes 1 >&-
+Exception: port does not support value output
+  [tty]:1:14-29: print abcd | read-bytes 1 >&-
+
+/////////////
+# read-upto #
+/////////////
+
+~> print abcd | read-upto c
+▶ abc
+// read-upto does not consume more than needed ##
+~> print abcd | { read-upto c; slurp }
+▶ abc
+▶ d
+// read-upto reads up to EOF ##
+~> print abcd | read-upto z
+▶ abcd
+// bad terminator
+~> print abcd | read-upto cd
+Exception: bad value: terminator must be a single ASCII character, but is cd
+  [tty]:1:14-25: print abcd | read-upto cd
+// bubbling output error
+~> print abcd | read-upto c >&-
+Exception: port does not support value output
+  [tty]:1:14-28: print abcd | read-upto c >&-
+
+/////////////
+# read-line #
+/////////////
+
+~> print eof-ending | read-line
+▶ eof-ending
+~> print "lf-ending\n" | read-line
+▶ lf-ending
+~> print "crlf-ending\r\n" | read-line
+▶ crlf-ending
+~> print "extra-cr\r\r\n" | read-line
+▶ "extra-cr\r"
+// bubbling output error
+~> print eof-ending | read-line >&-
+Exception: port does not support value output
+  [tty]:1:20-32: print eof-ending | read-line >&-
+
+/////////
+# print #
+/////////
+
+~> print [foo bar] ; print "\n"
+[foo bar]
+~> print foo bar &sep=, ; print "\n"
+foo,bar
+// bubbling output error
+~> print foo >&-
+Exception: invalid argument
+  [tty]:1:1-13: print foo >&-
+
+////////
+# echo #
+////////
+
+~> echo [foo bar]
+[foo bar]
+// bubbling output error
+~> echo foo >&-
+Exception: invalid argument
+  [tty]:1:1-12: echo foo >&-
+
+//////////
+# pprint #
+//////////
+
+~> pprint [foo bar]
+[
+ foo
+ bar
+]
+// bubbling output error
+~> pprint foo >&-
+Exception: invalid argument
+  [tty]:1:1-14: pprint foo >&-
+
+////////
+# repr #
+////////
+
+~> repr foo bar ['foo bar']
+foo bar ['foo bar']
+// bubbling output error
+~> repr foo >&-
+Exception: invalid argument
+  [tty]:1:1-12: repr foo >&-
+
+////////
+# show #
+////////
+
+~> var exc = ?(fail foo)
+   echo 'Showing exception:'
+   show $exc
+Showing exception:
+Exception: foo
+  [tty]:1:13-20: var exc = ?(fail foo)
+// bubbling output error
+~> repr ?(fail foo) >&-
+Exception: invalid argument
+  [tty]:1:1-20: repr ?(fail foo) >&-
+
+//////////////
+# only-bytes #
+//////////////
+
+~> { echo bytes; put values } | only-bytes
+bytes
+// bubbling output error
+~> { print bytes; put values } | only-bytes >&-
+Exception: invalid argument
+  [tty]:1:31-44: { print bytes; put values } | only-bytes >&-
+
+///////////////
+# only-values #
+///////////////
+
+~> { echo bytes; put values } | only-values
+▶ values
+// bubbling output error
+~> { print bytes; put values } | only-values >&-
+Exception: port does not support value output
+  [tty]:1:31-45: { print bytes; put values } | only-values >&-
+
+/////////
+# slurp #
+/////////
+~> print "a\nb" | slurp
+▶ "a\nb"
+// bubbling output error
+~> print "a\nb" | slurp >&-
+Exception: port does not support value output
+  [tty]:1:16-24: print "a\nb" | slurp >&-
+
+//////////////
+# from-lines #
+//////////////
+
+~> print "a\nb" | from-lines
+▶ a
+▶ b
+~> print "a\nb\n" | from-lines
+▶ a
+▶ b
+// bubbling output error
+~> print "a\nb\n" | from-lines >&-
+Exception: port does not support value output
+  [tty]:1:18-31: print "a\nb\n" | from-lines >&-
+
+////////////
+# to-lines #
+////////////
+
+~> put "l\norem" ipsum | to-lines
+l
+orem
+ipsum
+// bubbling output error
+~> to-lines [foo] >&-
+Exception: invalid argument
+  [tty]:1:1-18: to-lines [foo] >&-
+
+///////////////////
+# from-terminated #
+///////////////////
+
+~> print "a\nb\x00\x00c\x00d" | from-terminated "\x00"
+▶ "a\nb"
+▶ ''
+▶ c
+▶ d
+~> print "a\x00b\x00" | from-terminated "\x00"
+▶ a
+▶ b
+~> print aXbXcXXd | from-terminated "X"
+▶ a
+▶ b
+▶ c
+▶ ''
+▶ d
+// bad argument
+~> from-terminated "xyz"
+Exception: bad value: terminator must be a single ASCII character, but is xyz
+  [tty]:1:1-21: from-terminated "xyz"
+// bubbling output error
+~> print aXbX | from-terminated X >&-
+Exception: port does not support value output
+  [tty]:1:14-34: print aXbX | from-terminated X >&-
+
+/////////////////
+# to-terminated #
+/////////////////
+
+~> put "l\norem" ipsum | to-terminated "\x00" | slurp
+▶ "l\norem\x00ipsum\x00"
+~> to-terminated "X" [a b c] ; print "\n"
+aXbXcX
+~> to-terminated "XYZ" [a b c]
+Exception: bad value: terminator must be a single ASCII character, but is XYZ
+  [tty]:1:1-27: to-terminated "XYZ" [a b c]
+// bubbling output error
+~> to-terminated "X" [a b c] >&-
+Exception: invalid argument
+  [tty]:1:1-29: to-terminated "X" [a b c] >&-
+
+/////////////
+# from-json #
+/////////////
+
+~> echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json
+▶ [&a=[(num 1) (num 2)] &k=v]
+▶ foo
+~> echo '[null, "foo"]' | from-json
+▶ [$nil foo]
+// Numbers greater than 2^63 are supported
+~> echo 100000000000000000000 | from-json
+▶ (num 100000000000000000000)
+// Numbers with fractional parts become float64
+~> echo 1.0 | from-json
+▶ (num 1.0)
+~> echo 'invalid' | from-json
+Exception: invalid character 'i' looking for beginning of value
+  [tty]:1:18-26: echo 'invalid' | from-json
+// bubbling output error
+~> echo '[]' | from-json >&-
+Exception: port does not support value output
+  [tty]:1:13-25: echo '[]' | from-json >&-
+
+///////////
+# to-json #
+///////////
+
+~> put [&k=v &a=[1 2]] foo | to-json
+{"a":["1","2"],"k":"v"}
+"foo"
+~> put [$nil foo] | to-json
+[null,"foo"]
+// bubbling output error
+~> to-json [foo] >&-
+Exception: invalid argument
+  [tty]:1:1-17: to-json [foo] >&-
+
+//////////
+# printf #
+//////////
+
+~> printf "abcd\n"
+abcd
+~> printf "%s\n%s\n" abc xyz
+abc
+xyz
+// %q uses repr
+~> printf "%q\n" "abc xyz"
+'abc xyz'
+~> printf "%q\n" ['a b']
+['a b']
+// %v uses to-string
+~> printf "%v\n" abc
+abc
+// %#v is the same as %q
+~> printf "%#v\n" "abc xyz"
+'abc xyz'
+// width and precision
+~> printf "%5.3s\n" 3.1415
+  3.1
+~> printf "%5.3s\n" (num 3.1415)
+  3.1
+// %t converts to bool
+~> printf "%t\n" $true
+true
+~> printf "%t\n" $nil
+false
+// %d and %b convert to integer
+~> printf "%3d\n" (num 5)
+  5
+~> printf "%3d\n" 5
+  5
+~> printf "%08b\n" (num 5)
+00000101
+~> printf "%08b\n" 5
+00000101
+// %f converts to float64
+~> printf "%.1f\n" 3.1415
+3.1
+~> printf "%.1f\n" (num 3.1415)
+3.1
+// does not interpret escape sequences
+~> printf '%s\n%s\n' abc xyz ; print "\n"
+abc\nxyz\n
+// float verb with argument that can't be converted to float
+~> printf "%f\n" 1.3x
+%!f(cannot parse as number: 1.3x)
+// integer verb with argument that can't be converted to integer
+~> printf "%d\n" 3.5
+%!d(cannot parse as integer: 3.5)
+// unsupported verb
+~> printf "%A\n" foo
+%!A(unsupported formatting verb)
+// bubbling output error
+~> printf foo >&-
+Exception: invalid argument
+  [tty]:1:1-14: printf foo >&-

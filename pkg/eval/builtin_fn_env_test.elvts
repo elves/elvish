@@ -1,0 +1,37 @@
+///////////
+# get-env #
+///////////
+
+## outputs value of existing env variable ##
+//set-env var test-val
+~> get-env var
+▶ test-val
+~> put $E:var
+▶ test-val
+
+## throws if env variable doesn't exist ##
+//unset-env var
+~> get-env var
+Exception: non-existent environment variable
+  [tty]:1:1-11: get-env var
+
+///////////
+# has-env #
+///////////
+
+## exists ##
+//set-env var test-val
+~> has-env var
+▶ $true
+
+## doesn't exist ##
+//unset-env var
+~> has-env var
+▶ $false
+
+///////////
+# set-env #
+///////////
+~> set-env var test-val
+~> echo $E:var
+test-val

@@ -1,53 +1,12 @@
 package eval_test
 
 import (
-	"bytes"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	. "src.elv.sh/pkg/eval"
-	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/prog"
-	"src.elv.sh/pkg/testutil"
 )
-
-func TestDeprecatedBuiltin(t *testing.T) {
-	testCompileTimeDeprecation(t, "eawk", `the "eawk" command is deprecated`, 20)
-
-	// Deprecations of other builtins are implemented in the same way, so we
-	// don't test them repeatedly
-}
-
-func testCompileTimeDeprecation(t *testing.T, code, wantWarning string, level int) {
-	t.Helper()
-	testutil.Set(t, &prog.DeprecationLevel, level)
-
-	ev := NewEvaler()
-	errOutput := new(bytes.Buffer)
-
-	parseErr, _, compileErr := ev.Check(parse.Source{Name: "[test]", Code: code}, errOutput)
-	if parseErr != nil {
-		t.Errorf("got parse err %v", parseErr)
-	}
-	if compileErr != nil {
-		t.Errorf("got compile err %v", compileErr)
-	}
-
-	warning := errOutput.String()
-	if !strings.Contains(warning, wantWarning) {
-		t.Errorf("got warning %q, want warning containing %q", warning, wantWarning)
-	}
-}
-
-func TestMultipleCompileationErrors(t *testing.T) {
-	Test(t,
-		That("echo $x; echo $y").DoesNotCompile(
-			"variable $x not found",
-			"variable $y not found"),
-	)
-}
 
 var autofixTests = []struct {
 	Name string

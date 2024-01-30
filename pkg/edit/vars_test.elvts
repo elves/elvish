@@ -1,0 +1,96 @@
+///////////
+# add-var #
+///////////
+
+//add-var-in-global
+
+~> add-var foo bar
+~> put $foo
+▶ bar
+
+## name must be unqualified ##
+~> add-var a:b ''
+Exception: bad value: name argument to edit:add-var must be unqualified variable name, but is a:b
+  [tty]:1:1-14: add-var a:b ''
+
+## bad type ##
+~> add-var a~ ''
+Exception: wrong type: need !!eval.Callable, got string
+  [tty]:1:1-13: add-var a~ ''
+
+///////////
+# del-var #
+///////////
+
+//del-var-in-global
+
+~> var foo = bar
+~> del-var foo
+~> put $foo
+Compilation error: variable $foo not found
+  [tty]:1:5-8: put $foo
+
+## deleting a non-existent variable is not an error ##
+~> del-var foo
+
+## name must be unqualified ##
+~> del-var a:b
+Exception: bad value: name argument to edit:del-var must be unqualified variable name, but is a:b
+  [tty]:1:1-11: del-var a:b
+
+////////////
+# add-vars #
+////////////
+
+//add-vars-in-global
+
+~> add-vars [&foo=bar]
+~> put $foo
+▶ bar
+~> add-vars [&a=A &b=B]
+~> put $a $b
+▶ A
+▶ B
+
+## key must be string ##
+~> add-vars [&[]='']
+Exception: bad value: key of argument to edit:add-vars must be string, but is list
+  [tty]:1:1-17: add-vars [&[]='']
+
+## name must be unqualified ##
+~> add-vars [&a:b='']
+Exception: bad value: key of argument to edit:add-vars must be unqualified variable name, but is a:b
+  [tty]:1:1-18: add-vars [&a:b='']
+
+## bad type ##
+~> add-vars [&a~='']
+Exception: wrong type: need !!eval.Callable, got string
+  [tty]:1:1-17: add-vars [&a~='']
+
+///////////
+# del-var #
+///////////
+
+//del-vars-in-global
+
+## ? ##
+~> var a b c
+~> del-vars [a b]
+~> put $a
+Compilation error: variable $a not found
+  [tty]:1:5-6: put $a
+~> put $b
+Compilation error: variable $b not found
+  [tty]:1:5-6: put $b
+~> put $c
+▶ $nil
+
+## key must be string ##
+~> del-vars [[]]
+Exception: bad value: element of argument to edit:del-vars must be string, but is list
+  [tty]:1:1-13: del-vars [[]]
+
+## name must be unqualified ##
+~> del-vars [a:b]
+Exception: bad value: element of argument to edit:del-vars must be unqualified variable name, but is a:b
+  [tty]:1:1-14: del-vars [a:b]

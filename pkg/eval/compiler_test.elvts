@@ -1,0 +1,25 @@
+////////////////////////////
+# compile-time deprecation #
+////////////////////////////
+
+//with-deprecation-level 20
+// This test will need to be frequently updated as deprecated commands get
+// removed.
+//
+// Deprecations of other builtins are implemented in the same way, so we
+// don't test them repeatedly
+
+~> put | eawk { }
+Deprecation: the "eawk" command is deprecated; use "re:awk" instead
+  [tty]:1:7-10: put | eawk { }
+
+///////////////////////////////
+# multiple compilation errors #
+///////////////////////////////
+
+~> echo $x; echo $y
+Multiple compilation errors:
+  variable $x not found
+    [tty]:1:6-7: echo $x; echo $y
+  variable $y not found
+    [tty]:1:15-16: echo $x; echo $y

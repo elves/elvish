@@ -1,0 +1,38 @@
+//////////////
+# tilde-abbr #
+//////////////
+
+//with-temp-home
+~> tilde-abbr ~/foobar
+▶ '~/foobar'
+
+//////
+# cd #
+//////
+
+//with-temp-home
+//in-temp-dir
+
+## explicit argument ##
+//use-os
+//use-path
+~> os:mkdir ~/d1
+~> cd ~/d1
+   eq $pwd (path:join ~ d1)
+▶ $true
+
+## changes to home with no argument ##
+~> cd
+~> eq $pwd ~
+▶ $true
+
+## arity check ##
+~> cd dir1 dir2
+Exception: arity mismatch: arguments must be 0 to 1 values, but is 2 values
+  [tty]:1:1-12: cd dir1 dir2
+
+## GetHome error ##
+//mock-get-home-error can't get home
+~> cd
+Exception: can't get home
+  [tty]:1:1-2: cd

@@ -1,0 +1,39 @@
+////////
+# exit #
+////////
+
+## default code is 0 ##
+//check-exit-code-afterwards 0
+~> exit
+
+## explicit code ##
+//check-exit-code-afterwards 1
+~> exit 1
+
+## runs pre-exit hooks ##
+//check-pre-exit-hook-afterwards
+~> exit
+
+## wrong arity ##
+~> exit 1 2
+Exception: arity mismatch: arguments must be 0 to 1 values, but is 2 values
+  [tty]:1:1-8: exit 1 2
+
+/////////////////////
+# external commands #
+/////////////////////
+
+//only-on unix
+//set-env PATH /bin
+
+~> has-external sh
+▶ $true
+~> search-external sh
+▶ /bin/sh
+~> (external sh) -c 'echo external-sh'
+external-sh
+~> has-external random-invalid-command
+▶ $false
+~> search-external random-invalid-command
+Exception: exec: "random-invalid-command": executable file not found in $PATH
+  [tty]:1:1-38: search-external random-invalid-command

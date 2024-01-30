@@ -1,0 +1,40 @@
+//complex-candidate-in-global
+
+/////////////////////
+# complex-candidate #
+/////////////////////
+
+## construction ##
+~> complex-candidate a/b
+▶ (edit:complex-candidate a/b &code-suffix='' &display=(ui:text))
+~> complex-candidate a/b &code-suffix=' '
+▶ (edit:complex-candidate a/b &code-suffix=' ' &display=(ui:text))
+~> complex-candidate a/b &code-suffix=' ' &display=A/B
+▶ (edit:complex-candidate a/b &code-suffix=' ' &display=(ui:text A/B))
+~> complex-candidate a/b &code-suffix=' ' &display=(styled A/B red)
+▶ (edit:complex-candidate a/b &code-suffix=' ' &display=(ui:text (ui:text-segment A/B &fg-color=red)))
+~> complex-candidate a/b &code-suffix=' ' &display=[]
+Exception: bad value: &display must be string or styled, but is []
+  [tty]:1:1-50: complex-candidate a/b &code-suffix=' ' &display=[]
+
+## value operations ##
+~> kind-of (complex-candidate stem)
+▶ map
+~> keys (complex-candidate stem)
+▶ stem
+▶ code-suffix
+▶ display
+~> repr (complex-candidate a/b &code-suffix=' ' &display=A/B)
+(edit:complex-candidate a/b &code-suffix=' ' &display=(ui:text A/B))
+~> eq (complex-candidate stem) (complex-candidate stem)
+▶ $true
+~> eq (complex-candidate stem &code-suffix=' ') (complex-candidate stem)
+▶ $false
+~> eq (complex-candidate stem &display=STEM) (complex-candidate stem)
+▶ $false
+~> put [&(complex-candidate stem)=value][(complex-candidate stem)]
+▶ value
+~> put (complex-candidate a/b &code-suffix=' ' &display=A/B)[stem code-suffix display]
+▶ a/b
+▶ ' '
+▶ (ui:text A/B)

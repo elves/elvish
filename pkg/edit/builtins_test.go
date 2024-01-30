@@ -8,8 +8,6 @@ import (
 	"src.elv.sh/pkg/cli/modes"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/cli/tk"
-	"src.elv.sh/pkg/eval"
-	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/tt"
 	"src.elv.sh/pkg/ui"
 )
@@ -175,17 +173,6 @@ func TestSmartEnter_AcceptsCodeWhenWholeBufferIsComplete(t *testing.T) {
 }
 
 // TODO: Test that smart-enter applies autofix.
-
-func TestWordify(t *testing.T) {
-	TestWithEvalerSetup(t, setupWordify,
-		That("wordify 'ls str [list]'").Puts("ls", "str", "[list]"),
-		That("wordify foo >&-").Throws(eval.ErrPortDoesNotSupportValueOutput),
-	)
-}
-
-func setupWordify(ev *eval.Evaler) {
-	ev.ExtendBuiltin(eval.BuildNs().AddGoFn("wordify", wordify))
-}
 
 var bufferBuiltinsTests = []struct {
 	name      string

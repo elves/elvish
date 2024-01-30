@@ -1,47 +1,35 @@
 package runtime
 
 import (
+	"embed"
 	"errors"
-	"os"
 	"testing"
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/evaltest"
-	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/testutil"
 )
 
-var That = evaltest.That
+//go:embed *.elvts
+var transcripts embed.FS
 
-func TestRuntime(t *testing.T) {
-	setup := func(ev *eval.Evaler) {
-		ev.LibDirs = []string{"/lib/1", "/lib/2"}
-		ev.RcPath = "/path/to/rc.elv"
-		ev.EffectiveRcPath = "/path/to/effective/rc.elv"
+func TestTranscripts(t *testing.T) {
+	evaltest.TestTranscriptsInFS(t, transcripts,
+		"use-runtime-good-paths", func(t *testing.T, ev *eval.Evaler) {
+			testutil.Set(t, &osExecutable,
+				func() (string, error) { return "/path/to/elvish", nil })
+			ev.LibDirs = []string{"/lib/1", "/lib/2"}
+			ev.RcPath = "/path/to/rc.elv"
+			ev.EffectiveRcPath = "/path/to/effective/rc.elv"
 
-		ev.ExtendGlobal(eval.BuildNs().AddNs("runtime", Ns(ev)))
-	}
+			ev.ExtendGlobal(eval.BuildNs().AddNs("runtime", Ns(ev)))
+		},
+		"use-runtime-bad-paths", func(t *testing.T, ev *eval.Evaler) {
+			testutil.Set(t, &osExecutable,
+				func() (string, error) { return "bad", errors.New("bad") })
+			// Leaving all the path fields in ev unset
 
-	elvishPath, _ := os.Executable()
-
-	evaltest.TestWithEvalerSetup(t, setup,
-		That("put $runtime:lib-dirs").Puts(vals.MakeList("/lib/1", "/lib/2")),
-		That("put $runtime:rc-path").Puts("/path/to/rc.elv"),
-		That("put $runtime:effective-rc-path").Puts("/path/to/effective/rc.elv"),
-		That(`put $runtime:elvish-path`).Puts(elvishPath),
-	)
-}
-
-func TestRuntime_NilPath(t *testing.T) {
-	testutil.Set(t, &osExecutable,
-		func() (string, error) { return "bad", errors.New("bad") })
-
-	setup := func(ev *eval.Evaler) {
-		ev.ExtendGlobal(eval.BuildNs().AddNs("runtime", Ns(ev)))
-	}
-	evaltest.TestWithEvalerSetup(t, setup,
-		That("put $runtime:elvish-path").Puts(nil),
-		That("put $runtime:rc-path").Puts(nil),
-		That("put $runtime:effective-rc-path").Puts(nil),
+			ev.ExtendGlobal(eval.BuildNs().AddNs("runtime", Ns(ev)))
+		},
 	)
 }

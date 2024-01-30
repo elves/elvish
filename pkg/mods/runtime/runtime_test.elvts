@@ -1,0 +1,25 @@
+# runtime module with good paths #
+
+//use-runtime-good-paths
+
+~> put $runtime:lib-dirs
+▶ [/lib/1 /lib/2]
+~> put $runtime:rc-path
+▶ /path/to/rc.elv
+~> put $runtime:effective-rc-path
+▶ /path/to/effective/rc.elv
+~> put $runtime:elvish-path
+▶ /path/to/elvish
+
+# runtime module with bad paths #
+
+//use-runtime-bad-paths
+
+~> put $runtime:lib-dirs
+▶ []
+~> put $runtime:elvish-path
+▶ $nil
+~> put $runtime:rc-path
+▶ $nil
+~> put $runtime:effective-rc-path
+▶ $nil

@@ -19,16 +19,19 @@ var Ns = eval.BuildNsNamed("path").
 		"separator":      vars.NewReadOnly(string(filepath.Separator)),
 	}).
 	AddGoFns(map[string]any{
-		"abs":           filepath.Abs,
-		"base":          filepath.Base,
-		"clean":         filepath.Clean,
-		"dir":           filepath.Dir,
-		"ext":           filepath.Ext,
+		"abs":    filepath.Abs,
+		"base":   filepath.Base,
+		"clean":  filepath.Clean,
+		"dir":    filepath.Dir,
+		"ext":    filepath.Ext,
+		"is-abs": filepath.IsAbs,
+		"join":   filepath.Join,
+
+		// Compatibility aliases; these have moved to os: but are kept here
+		// until we can properly emit deprecation messages.
 		"eval-symlinks": filepath.EvalSymlinks,
-		"is-abs":        filepath.IsAbs,
 		"is-dir":        osmod.IsDir,
 		"is-regular":    osmod.IsRegular,
-		"join":          filepath.Join,
 		"temp-dir":      osmod.TempDir,
 		"temp-file":     osmod.TempFile,
 	}).Ns()

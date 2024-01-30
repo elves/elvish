@@ -1,0 +1,383 @@
+//use-os
+//in-temp-dir
+
+////////////
+# os:mkdir #
+////////////
+
+~> os:mkdir d
+   os:is-dir d
+▶ $true
+
+## error when directory already exists ##
+~> os:mkdir d
+   try { os:mkdir d } catch e { os:-is-exist $e }
+▶ $true
+
+## &perm ##
+//only-on !windows
+// TODO: Re-enable this after os:mkdir respects &perm on Windows.
+~> os:mkdir &perm=0o555 d555
+   printf "%O\n" (os:stat d555)[perm]
+0o555
+
+## &perm on Unix ##
+//only-on unix
+// Windows only supports 0o555 and 0o777; test other values on Unix only.
+~> os:mkdir &perm=0o400 d400
+   printf "%O\n" (os:stat d400)[perm]
+0o400
+
+/////////////
+# os:remove #
+/////////////
+
+~> echo > f; os:exists f
+   os:remove f; os:exists f
+▶ $true
+▶ $false
+~> os:mkdir d; os:exists d
+   os:remove d; os:exists d
+▶ $true
+▶ $false
+
+## can't remove non-empty directory (Unix) ##
+//only-on unix
+~> os:mkdir d; echo > d/file
+   os:remove d
+Exception: remove d: directory not empty
+  [tty]:2:1-11: os:remove d
+
+## can't remove non-empty directory (Windows) ##
+//only-on windows
+// Windows has a different error message.
+~> os:mkdir d; echo > d/file
+   os:remove d
+Exception: remove d: The directory is not empty.
+  [tty]:2:1-11: os:remove d
+
+## can't remove non-existent file ##
+~> try { os:remove d } catch e { os:-is-not-exist $e }
+▶ $true
+
+## doesn't take empty string ##
+~> os:remove ""
+Exception: bad value: path must be non-empty string, but is empty string
+  [tty]:1:1-12: os:remove ""
+
+/////////////////
+# os:remove-all #
+/////////////////
+
+## relative path ##
+~> os:mkdir d; echo > d/file
+   os:remove-all d; os:exists d
+▶ $false
+
+## absolute path ##
+~> os:mkdir d; echo > d/file
+   os:remove-all $pwd/d; os:exists d
+▶ $false
+
+## removing non-existent file is not an error ##
+~> os:remove-all d
+
+## doesn't take empty string ##
+~> os:remove-all ""
+Exception: bad value: path must be non-empty string, but is empty string
+  [tty]:1:1-16: os:remove-all ""
+
+////////////
+# os:chmod #
+////////////
+
+~> os:mkdir d
+~> os:chmod 0o555 d
+   printf "%O\n" (os:stat d)[perm]
+0o555
+~> os:chmod 0o777 d
+   printf "%O\n" (os:stat d)[perm]
+0o777
+
+## Unix ##
+//only-on unix
+// Windows only supports 0o555 (for read-only files) and 0o777 (for non-readonly
+// files) in the perm bits, and no special modes. Test more perm bits and
+// special modes on Unix only.
+~> os:mkdir d
+~> os:chmod &special-modes=[setuid setgid sticky] 0o400 d
+   put (printf "%O" (os:stat d)[perm])
+   put (os:stat d)[special-modes]
+▶ 0o400
+▶ [setuid setgid sticky]
+
+## invalid arguments ##
+~> os:chmod -1 d
+Exception: out of range: permission bits must be from 0 to 0o777, but is -1
+  [tty]:1:1-13: os:chmod -1 d
+// TODO: This error should be more informative and point out that it is the
+// special modes that should be iterable
+~> os:chmod &special-modes=(num 0) 0 d
+Exception: cannot iterate number
+  [tty]:1:1-35: os:chmod &special-modes=(num 0) 0 d
+~> os:chmod &special-modes=[bad] 0 d
+Exception: bad value: special mode must be setuid, setgid or sticky, but is bad
+  [tty]:1:1-33: os:chmod &special-modes=[bad] 0 d
+
+///////////
+# os:stat #
+///////////
+
+// Test basic fields common to all platforms. The perm and special-modes fields
+// and already tested alongside os:chmod, so we don't repeat those.
+~> os:mkdir dir
+~> print 123456 > file
+~> put (os:stat file)[name type size]
+▶ file
+▶ regular
+▶ (num 6)
+// size exists for directories on all platforms, but the value is
+// platform-depedent.
+~> put (os:stat dir)[name type]
+▶ dir
+▶ dir
+
+## can't stat non-existent file (Unix) ##
+//only-on unix
+~> os:stat non-existent
+Exception: lstat non-existent: no such file or directory
+  [tty]:1:1-20: os:stat non-existent
+
+## can't stat non-existent file (Windows) ##
+//only-on windows
+// Windows has a different error message.
+~> os:stat non-existent
+Exception: CreateFile non-existent: The system cannot find the file specified.
+  [tty]:1:1-20: os:stat non-existent
+
+## symlink ##
+//create-regular-and-symlink-or-skip
+~> put (os:stat symlink)[type]
+▶ symlink
+~> put (os:stat &follow-symlink symlink)[type]
+▶ regular
+
+## fifo ##
+//mkfifo-or-skip fifo
+~> put (os:stat fifo)[type]
+▶ named-pipe
+
+## sock on Unix ##
+//mksock-or-skip sock
+//only-on unix
+~> put (os:stat sock)[type]
+▶ socket
+
+## sock on Windows ##
+//mksock-or-skip sock
+//only-on windows
+// Windows does support Unix sockets now, but the type is not reflected in what
+// we get from os.Stat.
+~> put (os:stat sock)[type]
+▶ irregular
+
+## device ##
+//only-on unix
+~> put (os:stat /dev/null)[type]
+▶ char-device
+
+## sys on Unix ##
+//only-on unix
+~> echo > file
+   var sys = (os:stat file)[sys]
+   put $sys[nlink]
+   and (each {|f| has-key $sys $f} [dev ino uid gid rdev blksize blocks])
+▶ (num 1)
+▶ $true
+
+## sys on Windows ##
+//only-on windows
+//create-windows-special-files-or-skip
+~> has-value (os:stat directory)[sys][file-attributes] directory
+▶ $true
+~> has-value (os:stat readonly)[sys][file-attributes] readonly
+▶ $true
+~> has-value (os:stat hidden)[sys][file-attributes] hidden
+▶ $true
+
+//////////////////////////////////////////
+# os:exists, os:is-dir and os:is-regular #
+//////////////////////////////////////////
+
+~> os:mkdir d
+~> echo > d/f
+~> os:exists $pwd
+▶ $true
+~> os:is-dir $pwd
+▶ $true
+~> os:is-regular $pwd
+▶ $false
+~> os:exists d
+▶ $true
+~> os:is-dir d
+▶ $true
+~> os:is-regular d
+▶ $false
+~> os:exists d/f
+▶ $true
+~> os:is-dir d/f
+▶ $false
+~> os:is-regular d/f
+▶ $true
+~> os:exists bad
+▶ $false
+~> os:is-dir bad
+▶ $false
+~> os:is-regular bad
+▶ $false
+
+/////////////////////////
+# symbolic link-related #
+/////////////////////////
+
+//apply-test-dir-with-symlinks-or-skip
+//use-path
+// These tests can run on Windows, where the output of os:eval-symlinks will use
+// \ as the path separator, so we can't rely on the exact output.
+// Not symlink
+~> eq (os:eval-symlinks d/f) (path:join d f)
+▶ $true
+// Leaf is symlink
+~> eq (os:eval-symlinks d/s-f) (path:join d f)
+▶ $true
+// Non-leaf is symlink
+~> eq (os:eval-symlinks s-d/f) (path:join d f)
+▶ $true
+~> os:exists s-d
+▶ $true
+~> os:exists s-d &follow-symlink
+▶ $true
+~> os:exists s-d-f
+▶ $true
+~> os:exists s-d-f &follow-symlink
+▶ $true
+~> os:exists s-bad
+▶ $true
+~> os:exists s-bad &follow-symlink
+▶ $false
+~> os:exists bad
+▶ $false
+~> os:exists bad &follow-symlink
+▶ $false
+~> os:is-dir s-d
+▶ $false
+~> os:is-dir s-d &follow-symlink
+▶ $true
+~> os:is-dir s-d-f
+▶ $false
+~> os:is-dir s-d-f &follow-symlink
+▶ $false
+~> os:is-dir s-bad
+▶ $false
+~> os:is-dir s-bad &follow-symlink
+▶ $false
+~> os:is-dir bad
+▶ $false
+~> os:is-dir bad &follow-symlink
+▶ $false
+~> os:is-regular s-d
+▶ $false
+~> os:is-regular s-d &follow-symlink
+▶ $false
+~> os:is-regular s-d-f
+▶ $false
+~> os:is-regular s-d-f &follow-symlink
+▶ $true
+~> os:is-regular s-bad
+▶ $false
+~> os:is-regular s-bad &follow-symlink
+▶ $false
+~> os:is-regular bad
+▶ $false
+~> os:is-regular bad &follow-symlink
+▶ $false
+
+## os:eval-symlinks given non-existent file (Unix) ##
+//only-on unix
+~> os:eval-symlinks s-bad
+Exception: lstat bad: no such file or directory
+  [tty]:1:1-22: os:eval-symlinks s-bad
+
+## os:eval-symlinks given non-existent file (Windows) ##
+// Windows has a different error message.
+//only-on windows
+~> os:eval-symlinks s-bad
+Exception: CreateFile bad: The system cannot find the file specified.
+  [tty]:1:1-22: os:eval-symlinks s-bad
+
+///////////////
+# os:temp-dir #
+///////////////
+
+//use-re
+// default name template is elvish-*
+~> var x = (os:temp-dir)
+   os:remove $x
+   re:match '[/\\]elvish-.*$' $x
+▶ $true
+// explicit name template
+~> var x = (os:temp-dir 'x-*.y')
+   os:remove $x
+   re:match '[/\\]x-.*\.y$' $x
+▶ $true
+
+## create in pwd ##
+//in-temp-dir
+~> var x = (os:temp-dir &dir=.)
+   os:remove $x
+   re:match '^(\.[/\\])?elvish-.*$' $x
+▶ $true
+~> var x = (os:temp-dir &dir=. 'x-*.y')
+   os:remove $x
+   re:match '^(\.[/\\])?x-.*\.y$' $x
+▶ $true
+
+## arity check ##
+~> os:temp-dir a b
+Exception: arity mismatch: arguments must be 0 to 1 values, but is 2 values
+  [tty]:1:1-15: os:temp-dir a b
+
+////////////////
+# os:temp-file #
+////////////////
+
+//use-re
+//use-file
+~> var f = (os:temp-file)
+   re:match '[/\\]elvish-.*$' $f[name]
+   file:close $f
+   os:remove $f[name]
+▶ $true
+~> var f = (os:temp-file 'x-*.y')
+   re:match '[/\\]x-.*\.y$' $f[name]
+   file:close $f
+   os:remove $f[name]
+▶ $true
+
+## create in pwd ##
+//in-temp-dir
+~> var f = (os:temp-file &dir=.)
+   re:match '^(\.[/\\])?elvish-.*$' $f[name]
+   file:close $f
+   os:remove $f[name]
+▶ $true
+~> var f = (os:temp-file &dir=. 'x-*.y')
+   re:match '^(\.[/\\])?x-.*\.y$' $f[name]
+   file:close $f
+   os:remove $f[name]
+▶ $true
+
+## arity check ##
+~> os:temp-file a b
+Exception: arity mismatch: arguments must be 0 to 1 values, but is 2 values
+  [tty]:1:1-16: os:temp-file a b

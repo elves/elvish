@@ -1,0 +1,172 @@
+///////////
+# kind-of #
+///////////
+
+
+~> kind-of a []
+▶ string
+▶ list
+// bubbling output error
+~> kind-of a >&-
+Exception: port does not support value output
+  [tty]:1:1-13: kind-of a >&-
+
+//////////////
+# constantly #
+//////////////
+~> var f = (constantly foo)
+   $f
+▶ foo
+~> $f
+▶ foo
+// bubbling output error
+~> (constantly foo) >&-
+Exception: port does not support value output
+  [tty]:1:1-20: (constantly foo) >&-
+
+////////
+# call #
+////////
+
+~> call {|arg &opt=v| put $arg $opt } [foo] [&opt=bar]
+▶ foo
+▶ bar
+~> call { } [foo] [&[]=bar]
+Exception: bad value: option key must be string, but is list
+  [tty]:1:1-24: call { } [foo] [&[]=bar]
+
+////////
+# eval #
+////////
+
+~> eval 'put x'
+▶ x
+
+## using variable from the local scope ##
+~> var x = foo
+   eval 'put $x'
+▶ foo
+
+## setting a variable in the local scope ##
+~> var x = foo
+   eval 'set x = bar'
+   put $x
+▶ bar
+
+## using variable from the upvalue scope ##
+~> var x = foo
+   { nop $x; eval 'put $x' }
+▶ foo
+
+## using &ns to specify a namespace ##
+~> var n = (ns [&x=foo])
+   eval 'put $x' &ns=$n
+▶ foo
+
+## altering variables in the specified namespace ##
+~> var n = (ns [&x=foo])
+   eval 'set x = bar' &ns=$n
+   put $n[x]
+▶ bar
+
+## newly created variables do not appear in the local namespace ##
+~> eval 'x = foo'
+   put $x
+Compilation error: variable $x not found
+  [tty]:2:5-6: put $x
+
+## newly created variables do not alter the specified namespace either ##
+~> var n = (ns [&])
+   eval &ns=$n 'var x = foo'
+   put $n[x]
+Exception: no such key: x
+  [tty]:3:5-9: put $n[x]
+
+## newly created variable can be accessed in the final namespace using &on-end ##
+~> eval &on-end={|n| put $n[x] } 'var x = foo'
+▶ foo
+
+## parse error ##
+//force-eval-source-count 100
+~> eval '['
+Exception: Parse error: should be ']'
+  [eval 100]:1:2: [
+  [tty]:1:1-8: eval '['
+
+## compilation error ##
+//force-eval-source-count 100
+~> eval 'put $x'
+Exception: Compilation error: variable $x not found
+  [eval 100]:1:5-6: put $x
+  [tty]:1:1-13: eval 'put $x'
+
+## exception ##
+//force-eval-source-count 100
+~> eval 'fail x'
+Exception: x
+  [eval 100]:1:1-6: fail x
+  [tty]:1:1-13: eval 'fail x'
+
+/////////////
+# deprecate #
+/////////////
+
+~> deprecate msg
+Deprecation: msg
+  [tty]:1:1-13: deprecate msg
+
+## different call sites trigger multiple deprecation messages ##
+~> fn f { deprecate msg }
+~> f
+Deprecation: msg
+  [tty]:1:1-1: f
+// Normally, just calling f from the next prompt will result in a different call
+// site because the source will have a different name like "[tty 3]" vs "[tty
+// 2]". But since in tests we always use "[tty]" for the source name, we need to
+// make the call appear on a different position to force it to be recognized as
+// a different call site.
+~> nop; f
+Deprecation: msg
+  [tty]:1:6-6: nop; f
+
+## the same call site only triggers the message once ##
+~> fn f { deprecate msg}
+   fn g { f }
+~> g
+Deprecation: msg
+  [tty]:2:8-9: fn g { f }
+// See comment above about call site. In this case, the (immediate) call site of
+// f is from g, so even if the call site of g differs, the call site of f is the
+// same.
+~> nop; g
+
+///////////
+# use-mod #
+///////////
+
+//tmp-lib-dir
+~> echo 'var x = value' > $lib/mod.elv
+~> put (use-mod mod)[x]
+▶ value
+
+///////////
+# resolve #
+///////////
+
+~> resolve for
+▶ special
+~> resolve put
+▶ '$put~'
+~> fn f { }
+   resolve f
+▶ '$f~'
+// Unknown commands resolve to an external even if it doesn't exist.
+~> resolve cat
+▶ '(external cat)'
+
+## module function ##
+//tmp-lib-dir
+~> echo 'fn func { }' > $lib/mod.elv
+~> use mod
+~> resolve mod:func
+▶ '$mod:func~'

@@ -1,0 +1,465 @@
+//use-math
+
+////////////
+# math:abs #
+////////////
+
+~> math:abs 2
+▶ (num 2)
+~> math:abs -2
+▶ (num 2)
+~> math:abs -2147483648 # -2^31
+▶ (num 2147483648)
+~> math:abs -9223372036854775808 # -2^63
+▶ (num 9223372036854775808)
+~> math:abs 100000000000000000000
+▶ (num 100000000000000000000)
+~> math:abs -100000000000000000000
+▶ (num 100000000000000000000)
+~> math:abs -1/2
+▶ (num 1/2)
+~> math:abs 1/2
+▶ (num 1/2)
+~> math:abs 2.1
+▶ (num 2.1)
+~> math:abs -2.1
+▶ (num 2.1)
+
+/////////////
+# math:ceil #
+/////////////
+
+~> math:ceil 2
+▶ (num 2)
+~> math:ceil 100000000000000000000
+▶ (num 100000000000000000000)
+~> math:ceil 3/2
+▶ (num 2)
+~> math:ceil -3/2
+▶ (num -1)
+~> math:ceil 2.1
+▶ (num 3.0)
+~> math:ceil -2.1
+▶ (num -2.0)
+
+//////////////
+# math:floor #
+//////////////
+
+~> math:floor 2
+▶ (num 2)
+~> math:floor 100000000000000000000
+▶ (num 100000000000000000000)
+~> math:floor 3/2
+▶ (num 1)
+~> math:floor -3/2
+▶ (num -2)
+~> math:floor 2.1
+▶ (num 2.0)
+~> math:floor -2.1
+▶ (num -3.0)
+
+//////////////
+# math:round #
+//////////////
+
+~> math:round 2
+▶ (num 2)
+~> math:round 100000000000000000000
+▶ (num 100000000000000000000)
+~> math:round 1/3
+▶ (num 0)
+~> math:round 1/2
+▶ (num 1)
+~> math:round 2/3
+▶ (num 1)
+~> math:round -1/3
+▶ (num 0)
+~> math:round -1/2
+▶ (num -1)
+~> math:round -2/3
+▶ (num -1)
+~> math:round 2.1
+▶ (num 2.0)
+~> math:round 2.5
+▶ (num 3.0)
+
+//////////////////////
+# math:round-to-even #
+//////////////////////
+
+~> math:round-to-even 2
+▶ (num 2)
+~> math:round-to-even 100000000000000000000
+▶ (num 100000000000000000000)
+~> math:round-to-even 1/3
+▶ (num 0)
+~> math:round-to-even 2/3
+▶ (num 1)
+~> math:round-to-even -1/3
+▶ (num 0)
+~> math:round-to-even -2/3
+▶ (num -1)
+~> math:round-to-even 2.5
+▶ (num 2.0)
+~> math:round-to-even -2.5
+▶ (num -2.0)
+~> math:round-to-even 1/2
+▶ (num 0)
+~> math:round-to-even 3/2
+▶ (num 2)
+~> math:round-to-even 5/2
+▶ (num 2)
+~> math:round-to-even 7/2
+▶ (num 4)
+~> math:round-to-even -1/2
+▶ (num 0)
+~> math:round-to-even -3/2
+▶ (num -2)
+~> math:round-to-even -5/2
+▶ (num -2)
+~> math:round-to-even -7/2
+▶ (num -4)
+
+//////////////
+# math:trunc #
+//////////////
+
+~> math:trunc 2
+▶ (num 2)
+~> math:trunc 100000000000000000000
+▶ (num 100000000000000000000)
+~> math:trunc 3/2
+▶ (num 1)
+~> math:trunc -3/2
+▶ (num -1)
+~> math:trunc 2.1
+▶ (num 2.0)
+~> math:trunc -2.1
+▶ (num -2.0)
+~> math:trunc (num Inf)
+▶ (num +Inf)
+~> math:trunc (num NaN)
+▶ (num NaN)
+
+
+///////////////
+# math:is-inf #
+///////////////
+~> math:is-inf 1.3
+▶ $false
+~> math:is-inf &sign=0 inf
+▶ $true
+~> math:is-inf &sign=1 inf
+▶ $true
+~> math:is-inf &sign=-1 -inf
+▶ $true
+~> math:is-inf &sign=1 -inf
+▶ $false
+~> math:is-inf -inf
+▶ $true
+~> math:is-inf nan
+▶ $false
+~> math:is-inf 1
+▶ $false
+~> math:is-inf 100000000000000000000
+▶ $false
+~> math:is-inf 1/2
+▶ $false
+
+///////////////
+# math:is-nan #
+///////////////
+~> math:is-nan 1.3
+▶ $false
+~> math:is-nan inf
+▶ $false
+~> math:is-nan nan
+▶ $true
+~> math:is-nan 1
+▶ $false
+~> math:is-nan 100000000000000000000
+▶ $false
+~> math:is-nan 1/2
+▶ $false
+
+////////////
+# math:max #
+////////////
+~> math:max
+Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
+  [tty]:1:1-8: math:max
+~> math:max 42
+▶ (num 42)
+~> math:max -3 3 10 -4
+▶ (num 10)
+~> math:max 2 10 100000000000000000000
+▶ (num 100000000000000000000)
+~> math:max 100000000000000000001 100000000000000000002 100000000000000000000
+▶ (num 100000000000000000002)
+~> math:max 1/2 1/3 2/3
+▶ (num 2/3)
+~> math:max 1.0 2.0
+▶ (num 2.0)
+~> math:max 3 NaN 5
+▶ (num NaN)
+
+////////////
+# math:min #
+////////////
+~> math:min
+Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
+  [tty]:1:1-8: math:min
+~> math:min 42
+▶ (num 42)
+~> math:min -3 3 10 -4
+▶ (num -4)
+~> math:min 2 10 100000000000000000000
+▶ (num 2)
+~> math:min 100000000000000000001 100000000000000000002 100000000000000000000
+▶ (num 100000000000000000000)
+~> math:min 1/2 1/3 2/3
+▶ (num 1/3)
+~> math:min 1.0 2.0
+▶ (num 1.0)
+~> math:min 3 NaN 5
+▶ (num NaN)
+
+////////////
+# math:pow #
+////////////
+
+## base is int, exp is int ##
+~> math:pow 2 0
+▶ (num 1)
+~> math:pow 2 1
+▶ (num 2)
+~> math:pow 2 -1
+▶ (num 1/2)
+~> math:pow 2 3
+▶ (num 8)
+~> math:pow 2 -3
+▶ (num 1/8)
+
+## base is *big.Rat, exp is int ##
+~> math:pow 2/3 0
+▶ (num 1)
+~> math:pow 2/3 1
+▶ (num 2/3)
+~> math:pow 2/3 -1
+▶ (num 3/2)
+~> math:pow 2/3 3
+▶ (num 8/27)
+~> math:pow 2/3 -3
+▶ (num 27/8)
+
+## exp is *big.Rat ##
+~> math:pow 4 1/2
+▶ (num 2.0)
+
+## exp is float64 ##
+~> math:pow 2 2.0
+▶ (num 4.0)
+~> math:pow 1/2 2.0
+▶ (num 0.25)
+
+## base is float64 ##
+~> math:pow 2.0 2
+▶ (num 4.0)
+
+////////////
+# $math:pi #
+////////////
+
+~> put $math:pi
+▶ (num 3.141592653589793)
+
+///////////
+# $math:e #
+///////////
+
+~> put $math:e
+▶ (num 2.718281828459045)
+
+////////////
+# math:log #
+////////////
+
+~> math:log $math:e
+▶ (num 1.0)
+~> math:log 1
+▶ (num 0.0)
+~> math:log 0
+▶ (num -Inf)
+~> math:log -1
+▶ (num NaN)
+
+//////////////
+# math:log10 #
+//////////////
+~> math:log10 10.0
+▶ (num 1.0)
+~> math:log10 100.0
+▶ (num 2.0)
+~> math:log10 1
+▶ (num 0.0)
+~> math:log10 0
+▶ (num -Inf)
+~> math:log10 -1
+▶ (num NaN)
+
+/////////////
+# math:log2 #
+/////////////
+
+~> math:log2 8
+▶ (num 3.0)
+~> math:log2 1024.0
+▶ (num 10.0)
+~> math:log2 1
+▶ (num 0.0)
+~> math:log2 0
+▶ (num -Inf)
+~> math:log2 -1
+▶ (num NaN)
+
+////////////
+# math:cos #
+////////////
+
+~> math:cos 0
+▶ (num 1.0)
+~> math:cos 1
+▶ (num 0.5403023058681398)
+~> math:cos $math:pi
+▶ (num -1.0)
+
+/////////////
+# math:cosh #
+/////////////
+
+~> math:cosh 0
+▶ (num 1.0)
+~> math:cosh inf
+▶ (num +Inf)
+~> math:cosh nan
+▶ (num NaN)
+
+////////////
+# math:sin #
+////////////
+
+~> math:sin 0
+▶ (num 0.0)
+~> math:sin 1
+▶ (num 0.8414709848078965)
+~> math:sin $math:pi
+▶ (num 1.2246467991473515e-16)
+
+/////////////
+# math:sinh #
+/////////////
+
+~> math:sinh 0
+▶ (num 0.0)
+~> math:sinh inf
+▶ (num +Inf)
+~> math:sinh nan
+▶ (num NaN)
+
+////////////
+# math:tan #
+////////////
+
+~> math:tan 0
+▶ (num 0.0)
+~> math:tan 1
+▶ (num 1.557407724654902)
+~> math:tan $math:pi
+▶ (num -0.00000000000000012246467991473515)
+
+/////////////
+# math:tanh #
+/////////////
+
+~> math:tanh 0
+▶ (num 0.0)
+~> math:tanh inf
+▶ (num 1.0)
+~> math:tanh nan
+▶ (num NaN)
+
+/////////////
+# math:sqrt #
+/////////////
+
+~> math:sqrt 0
+▶ (num 0.0)
+~> math:sqrt 4
+▶ (num 2.0)
+~> math:sqrt -4
+▶ (num NaN)
+
+/////////////
+# math:acos #
+/////////////
+
+~> math:acos 0
+▶ (num 1.5707963267948966)
+~> math:acos 1
+▶ (num 0.0)
+~> math:acos 1.00001
+▶ (num NaN)
+
+/////////////
+# math:asin #
+/////////////
+
+~> math:asin 0
+▶ (num 0.0)
+~> math:asin 1
+▶ (num 1.5707963267948966)
+~> math:asin 1.00001
+▶ (num NaN)
+
+/////////////
+# math:atan #
+/////////////
+
+~> math:atan 0
+▶ (num 0.0)
+~> math:atan 1
+▶ (num 0.7853981633974483)
+~> math:atan inf
+▶ (num 1.5707963267948966)
+
+//////////////
+# math:acosh #
+//////////////
+
+~> math:acosh 0
+▶ (num NaN)
+~> math:acosh 1
+▶ (num 0.0)
+~> math:acosh nan
+▶ (num NaN)
+
+//////////////
+# math:asinh #
+//////////////
+
+~> math:asinh 0
+▶ (num 0.0)
+~> math:asinh 1
+▶ (num 0.881373587019543)
+~> math:asinh inf
+▶ (num +Inf)
+
+//////////////
+# math:atanh #
+//////////////
+
+~> math:atanh 0
+▶ (num 0.0)
+~> math:atanh 1
+▶ (num +Inf)

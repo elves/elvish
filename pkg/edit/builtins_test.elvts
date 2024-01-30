@@ -1,0 +1,14 @@
+//wordify-in-global
+
+///////////
+# wordify #
+///////////
+
+~> wordify 'ls str [list]'
+▶ ls
+▶ str
+▶ '[list]'
+// propagates output errors
+~> wordify foo >&-
+Exception: port does not support value output
+  [tty]:1:1-15: wordify foo >&-

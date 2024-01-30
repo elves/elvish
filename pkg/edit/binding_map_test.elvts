@@ -1,0 +1,51 @@
+//binding-map-in-global
+
+///////////////
+# binding-map #
+///////////////
+
+## checking key and value when constructing ##
+~> binding-map [&[]={ }]
+Exception: must be key or string
+  [tty]:1:1-21: binding-map [&[]={ }]
+~> binding-map [&foo={ }]
+Exception: bad key: foo
+  [tty]:1:1-22: binding-map [&foo={ }]
+~> binding-map [&a=string]
+Exception: value should be function
+  [tty]:1:1-23: binding-map [&a=string]
+
+## repr ##
+// prints like an ordinary map
+~> repr (binding-map [&])
+[&]
+// keys are always sorted
+~> repr (binding-map [&a=$nop~ &b=$nop~ &c=$nop~])
+[&a=<builtin nop> &b=<builtin nop> &c=<builtin nop>]
+
+## indexing ##
+~> eq $nop~ (binding-map [&a=$nop~])[a]
+▶ $true
+// checking key
+~> put (binding-map [&a=$nop~])[foo]
+Exception: bad key: foo
+  [tty]:1:5-33: put (binding-map [&a=$nop~])[foo]
+
+## assoc ##
+~> count (assoc (binding-map [&a=$nop~]) b $nop~)
+▶ (num 2)
+// checking key
+~> (assoc (binding-map [&a=$nop~]) foo $nop~)
+Exception: bad key: foo
+  [tty]:1:2-41: (assoc (binding-map [&a=$nop~]) foo $nop~)
+// checking value
+~> (assoc (binding-map [&a=$nop~]) b foo)
+Exception: value should be function
+  [tty]:1:2-37: (assoc (binding-map [&a=$nop~]) b foo)
+
+## dissoc ##
+~> count (dissoc (binding-map [&a=$nop~]) a)
+▶ (num 0)
+// allows bad key - no op
+~> count (dissoc (binding-map [&a=$nop~]) foo)
+▶ (num 1)

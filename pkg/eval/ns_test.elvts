@@ -1,0 +1,35 @@
+//////
+# ns #
+//////
+
+~> kind-of (ns [&])
+▶ ns
+
+## equality ##
+// an Ns is only equal to itself ##
+~> var ns = (ns [&])
+   eq $ns $ns
+▶ $true
+~> eq (ns [&]) (ns [&])
+▶ $false
+~> eq (ns [&]) [&]
+▶ $false
+
+## access ##
+~> var ns: = (ns [&a=b &x=y])
+   put $ns:a
+▶ b
+~> var ns: = (ns [&a=b &x=y])
+   put $ns:[a]
+▶ b
+
+## keys ##
+~> keys (ns [&a=b &x=y]) | order
+▶ a
+▶ x
+
+## has-key ##
+~> has-key (ns [&a=b &x=y]) a
+▶ $true
+~> has-key (ns [&a=b &x=y]) b
+▶ $false

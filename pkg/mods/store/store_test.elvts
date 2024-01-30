@@ -1,0 +1,45 @@
+//use-store-brand-new
+
+# command store #
+// add
+~> store:next-cmd-seq
+▶ (num 1)
+~> store:add-cmd foo
+▶ (num 1)
+~> store:add-cmd bar
+▶ (num 2)
+~> store:add-cmd baz
+▶ (num 3)
+~> store:next-cmd-seq
+▶ (num 4)
+// query
+~> store:cmd 1
+▶ foo
+~> store:cmds 1 4
+▶ [&seq=(num 1) &text=foo]
+▶ [&seq=(num 2) &text=bar]
+▶ [&seq=(num 3) &text=baz]
+~> store:cmds 2 3
+▶ [&seq=(num 2) &text=bar]
+~> store:next-cmd 1 f
+▶ [&seq=(num 1) &text=foo]
+~> store:prev-cmd 3 b
+▶ [&seq=(num 2) &text=bar]
+// delete
+~> store:del-cmd 2
+~> store:cmds 1 4
+▶ [&seq=(num 1) &text=foo]
+▶ [&seq=(num 3) &text=baz]
+
+# directory store #
+// add
+~> store:add-dir /foo
+~> store:add-dir /bar
+// query
+~> store:dirs
+▶ [&path=/bar &score=(num 10.0)]
+▶ [&path=/foo &score=(num 9.86)]
+// delete
+~> store:del-dir /foo
+~> store:dirs
+▶ [&path=/bar &score=(num 10.0)]

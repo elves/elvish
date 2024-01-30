@@ -1,0 +1,83 @@
+///////////////////////////////////////////////////////
+# builtin module may be used implicitly or explicitly #
+///////////////////////////////////////////////////////
+
+~> put $true
+▶ $true
+// regression test for b.elv.sh/1414
+~> use builtin
+   put $builtin:true
+▶ $true
+
+///////////////////////////////////
+# builtin functions are read-only #
+///////////////////////////////////
+
+~> set return~ = { }
+Compilation error: variable $return~ is read-only
+  [tty]:1:5-11: set return~ = { }
+
+//////////
+# $paths #
+//////////
+
+//unset-env PATH
+
+## $E:PATH to $paths ##
+//use-path
+~> set E:PATH = /bin1$path:list-separator/bin2
+~> put $paths
+▶ [/bin1 /bin2]
+
+## $paths to $E:PATH ##
+//use-path
+~> set paths = [/bin1 /bin2]
+~> eq $E:PATH /bin1$path:list-separator/bin2
+▶ $true
+
+## invalid values ##
+~> set paths = [$true]
+Exception: path must be string
+  [tty]:1:5-9: set paths = [$true]
+~> set paths = ["/invalid:;path"]
+Exception: path cannot contain NUL byte, colon on Unix or semicolon on Windows
+  [tty]:1:5-9: set paths = ["/invalid:;path"]
+~> set paths = ["/invalid\000path"]
+Exception: path cannot contain NUL byte, colon on Unix or semicolon on Windows
+  [tty]:1:5-9: set paths = ["/invalid\000path"]
+
+////////
+# $pwd #
+////////
+
+//in-temp-dir
+//use-os
+//use-path
+// Test both reading and writing $pwd.
+~> var start = $pwd
+   os:mkdir d
+   set pwd = d
+   eq $pwd (path:join $start d)
+▶ $true
+
+## bad assignment ##
+~> set pwd = (num 1)
+Exception: path must be string
+  [tty]:1:5-7: set pwd = (num 1)
+
+## concrete value (Unix) ##
+//only-on unix
+~> cd /
+   put $pwd
+▶ /
+
+## concrete value (Windows) ##
+//only-on windows
+~> cd C:\
+   put $pwd
+▶ C:\
+
+## getwd error ##
+//mock-getwd-error can't get working directory
+~> put $pwd
+▶ /unknown/pwd

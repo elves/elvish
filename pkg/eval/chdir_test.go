@@ -6,9 +6,7 @@ import (
 
 	"src.elv.sh/pkg/env"
 	. "src.elv.sh/pkg/eval"
-	. "src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/must"
-	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -41,23 +39,6 @@ func TestChdir(t *testing.T) {
 		t.Errorf("Chdir called before-hook with %q, want %q",
 			argDirInAfter, dst)
 	}
-}
-
-func TestChdirElvishHooks(t *testing.T) {
-	dst := testutil.TempDir(t)
-
-	back := saveWd()
-	defer back()
-
-	Test(t,
-		That(`
-			var dir-in-before dir-in-after = '' ''
-			set @before-chdir = {|dst| set dir-in-before = $dst }
-			set @after-chdir  = {|dst| set dir-in-after  = $dst }
-			cd `+parse.Quote(dst)+`
-			put $dir-in-before $dir-in-after
-			`).Puts(dst, dst),
-	)
 }
 
 func TestChdirError(t *testing.T) {

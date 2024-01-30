@@ -1,0 +1,84 @@
+//use-unix
+
+///////////
+# parsing #
+///////////
+
+## implicit octal ##
+~> set unix:umask = 23
+   put $unix:umask
+▶ 0o023
+
+## explicit base prefixes ##
+~> set unix:umask = 0o75
+   put $unix:umask
+▶ 0o075
+~> set unix:umask = 0x43
+   put $unix:umask
+▶ 0o103
+~> set unix:umask = 0b001010100; put $unix:umask
+▶ 0o124
+
+## typed number ##
+~> set unix:umask = (num 0o123)
+   put $unix:umask
+▶ 0o123
+// inexact integers are also supported
+~> set unix:umask = (num 9.0)
+   put $unix:umask
+▶ 0o011
+
+///////////////////////////////
+# effect on external commands #
+///////////////////////////////
+
+// The output of umask is unspecified in POSIX, but all Unix flavors Elvish
+// supports write a 0 followed by an octal number. There is one inconsistency
+// though: OpenBSD does not zero-pad the number (other than the leading 0), so a
+// umask of 0o012 will appear as 012 on OpenBSD but 0012 on other platforms.
+// Avoid this by using a umask that is 3 octal digits long.
+~> set unix:umask = 0123; sh -c umask
+0123
+
+///////////////////
+# temp assignment #
+///////////////////
+
+~> set unix:umask = 022
+   { tmp unix:umask = 011; put $unix:umask }
+   put $unix:umask
+▶ 0o011
+▶ 0o022
+
+//////////////////
+## parse errors ##
+//////////////////
+
+## not integer ##
+~> set unix:umask = (num 123.4)
+Exception: bad value: umask must be integer in the range [0..0o777], but is 123.4
+  [tty]:1:5-14: set unix:umask = (num 123.4)
+~> set unix:umask = (num 1/2)
+Exception: bad value: umask must be integer in the range [0..0o777], but is 1/2
+  [tty]:1:5-14: set unix:umask = (num 1/2)
+
+## not number ##
+~> set unix:umask = 022z
+Exception: bad value: umask must be integer in the range [0..0o777], but is 022z
+  [tty]:1:5-14: set unix:umask = 022z
+
+## invalid type ##
+~> set unix:umask = [1]
+Exception: bad value: umask must be integer in the range [0..0o777], but is list
+  [tty]:1:5-14: set unix:umask = [1]
+
+## out of range ##
+~> set unix:umask = 0o1000
+Exception: out of range: umask must be from 0 to 0o777, but is 0o1000
+  [tty]:1:5-14: set unix:umask = 0o1000
+~> set unix:umask = -1
+Exception: out of range: umask must be from 0 to 0o777, but is -0o1
+  [tty]:1:5-14: set unix:umask = -1
+~> set unix:umask = (num 100000000000000000000)
+Exception: out of range: umask must be from 0 to 0o777, but is 100000000000000000000
+  [tty]:1:5-14: set unix:umask = (num 100000000000000000000)
