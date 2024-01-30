@@ -2,10 +2,14 @@ package eval
 
 import (
 	"errors"
+	"fmt"
+	"math"
 	"math/big"
 	"regexp"
+	"strconv"
 	"strings"
 
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/wcwidth"
 )
@@ -45,31 +49,39 @@ func toString(fm *Frame, args ...any) error {
 	return nil
 }
 
-// ErrBadBase is thrown by the "base" builtin if the base is smaller than 2 or
-// greater than 36.
-var ErrBadBase = errors.New("bad base")
-
-// ErrInvalidInput is thrown by the "base" builtin if the input num is invalid
-var ErrInvalidInput = errors.New("invalid input")
-
 func base(fm *Frame, b int, nums ...vals.Num) error {
 	if b < 2 || b > 36 {
-		return ErrBadBase
+		return errs.OutOfRange{What: "base",
+			ValidLow: "2", ValidHigh: "36", Actual: strconv.Itoa(b)}
+	}
+	// Don't output anything yet in case some arguments are invalid.
+	results := make([]string, len(nums))
+	for i, num := range nums {
+		switch num := num.(type) {
+		case int:
+			results[i] = strconv.FormatInt(int64(num), b)
+		case *big.Int:
+			results[i] = num.Text(b)
+		case float64:
+			if i64 := int64(num); float64(i64) == num {
+				results[i] = strconv.FormatInt(i64, b)
+			} else if num == math.Trunc(num) {
+				var z big.Int
+				z.SetString(fmt.Sprintf("%.0f", num), 10)
+				results[i] = z.Text(b)
+			} else {
+				return errs.BadValue{What: "number",
+					Valid: "integer", Actual: vals.ReprPlain(num)}
+			}
+		default:
+			return errs.BadValue{What: "number",
+				Valid: "integer", Actual: vals.ReprPlain(num)}
+		}
 	}
 
 	out := fm.ValueOutput()
-	for _, num := range nums {
-		bigInt := new(big.Int)
-		switch num := num.(type) {
-		case int:
-			bigInt.SetInt64(int64(num))
-		case *big.Int:
-			bigInt.Set(num)
-		default:
-			return ErrInvalidInput
-		}
-
-		err := out.Put(bigInt.Text(b))
+	for _, s := range results {
+		err := out.Put(s)
 		if err != nil {
 			return err
 		}

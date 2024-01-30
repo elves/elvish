@@ -62,19 +62,29 @@ Exception: port does not support value output
 ▶ 56bc75e2d63100000
 ~> base 10 0x56bc75e2d63100000
 ▶ 100000000000000000000
+// float64 storing an integer
+~> base 16 256.0
+▶ 100
+// float64 storing an integer that doesn't fit in int64
+~> base 16 100000000000000000000.0
+▶ 56bc75e2d63100000
 // typed number as arguments
 ~> base (num 16) (num 256)
 ▶ 100
-// bubbling output error
+// bad arguments
+~> base 16 1.2
+Exception: bad value: number must be integer, but is (num 1.2)
+  [tty]:1:1-11: base 16 1.2
 ~> base 8 1/8
-Exception: invalid input
+Exception: bad value: number must be integer, but is (num 1/8)
   [tty]:1:1-10: base 8 1/8
 ~> base 1 1
-Exception: bad base
+Exception: out of range: base must be from 2 to 36, but is 1
   [tty]:1:1-8: base 1 1
 ~> base 37 10
-Exception: bad base
+Exception: out of range: base must be from 2 to 36, but is 37
   [tty]:1:1-10: base 37 10
+// bubbling output error
 ~> base 2 1 >&-
 Exception: port does not support value output
   [tty]:1:1-12: base 2 1 >&-
