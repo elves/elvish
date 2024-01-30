@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"runtime"
 	"strings"
 
 	"src.elv.sh/pkg/env"
@@ -17,7 +18,11 @@ func GetHome(uname string) (string, error) {
 		// variable.
 		home := os.Getenv(env.HOME)
 		if home != "" {
-			return strings.TrimRight(home, pathSep), nil
+			if runtime.GOOS == "windows" {
+				return strings.TrimRight(home, "/\\"), nil
+			} else {
+				return strings.TrimRight(home, "/"), nil
+			}
 		}
 	}
 
