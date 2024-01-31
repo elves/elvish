@@ -16,6 +16,7 @@
 
 ## &perm ##
 //only-on !windows
+//umask 0
 // TODO: Re-enable this after os:mkdir respects &perm on Windows.
 ~> os:mkdir &perm=0o555 d555
    printf "%O\n" (os:stat d555)[perm]
@@ -23,6 +24,7 @@
 
 ## &perm on Unix ##
 //only-on unix
+//umask 0
 // Windows only supports 0o555 and 0o777; test other values on Unix only.
 ~> os:mkdir &perm=0o400 d400
    printf "%O\n" (os:stat d400)[perm]

@@ -4,6 +4,7 @@ import (
 	"embed"
 	"net"
 	"os"
+	"strconv"
 	"testing"
 
 	"src.elv.sh/pkg/eval/evaltest"
@@ -11,6 +12,7 @@ import (
 	osmod "src.elv.sh/pkg/mods/os"
 	"src.elv.sh/pkg/mods/path"
 	"src.elv.sh/pkg/mods/re"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -23,6 +25,9 @@ func TestTranscripts(t *testing.T) {
 		"use-file", evaltest.Use("file", file.Ns),
 		"use-re", evaltest.Use("re", re.Ns),
 		"use-path", evaltest.Use("path", path.Ns),
+		"umask", func(t *testing.T, arg string) {
+			testutil.Umask(t, must.OK1(strconv.Atoi(arg)))
+		},
 		"mkfifo-or-skip", mkFifoOrSkip,
 		"mksock-or-skip", func(t *testing.T, s string) {
 			listener, err := net.Listen("unix", "./sock")
