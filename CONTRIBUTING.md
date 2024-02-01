@@ -101,6 +101,71 @@ Set the `ELVISH_TEST_TIME_SCALE` environment variable to a number greater than 1
 to scale up the time thresholds used in tests. The CI environments use
 `ELVISH_TEST_TIME_SCALE = 10`.
 
+### Mocking dependencies
+
+Whenever possible, test the real thing.
+
+However, there are situations where it's infeasible to test the real thing, like
+syscall errors that can't be reliably triggered, or tests that rely on exact
+timing. In those cases, introduce a variable that stores the actual dependency
+(manual dependency injection):
+
+```go
+// f.go
+package pkg
+
+import "os"
+
+var osSleep = os.Sleep
+
+func F() {
+    // Use osSleep instead of os.Sleep
+}
+```
+
+And then use `testutil.Set` to override it for the duration of a test:
+
+```go
+// f_test.go
+package pkg
+
+import "testing"
+
+func TestF(t *testing.T) {
+    testutil.Set(&osSleep, func(d Duration) {
+        // Fake implementation
+    })
+    // Now test F
+}
+```
+
+If the test is in an external test package, the dependency variable will have to
+be exported. Instead of exporting it directly in the implementation file, export
+a pointer to it in a internal test file:
+
+```go
+// testexport_test.go
+package pkg // Note: internal
+
+var OSSleep = &os.Sleep
+
+// f_test.go
+package pkg_test // Note: external
+
+import (
+    "pkg"
+    "testing"
+)
+
+func TestF(t *testing.T) {
+    // Note: No more & since pkg.OSSleep is already a pointer
+    testutil.Set(pkg.OSSleep, func(d Duration) {
+        // Fake implementation
+    })
+    // Now test F
+}
+```
+
 ## Documenting changes
 
 Always document user-visible changes.
