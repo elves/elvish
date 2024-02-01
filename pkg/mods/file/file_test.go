@@ -1,4 +1,4 @@
-package file
+package file_test
 
 import (
 	"embed"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/mods/file"
 	osmod "src.elv.sh/pkg/mods/os"
 )
 
@@ -14,7 +15,7 @@ var transcripts embed.FS
 
 func TestTranscripts(t *testing.T) {
 	evaltest.TestTranscriptsInFS(t, transcripts,
-		"use-file", evaltest.Use("file", Ns),
+		"use-file", evaltest.Use("file", file.Ns),
 		"use-os", evaltest.Use("os", osmod.Ns),
 		"skip-unless-can-open", func(t *testing.T, name string) {
 			if !canOpen(name) {

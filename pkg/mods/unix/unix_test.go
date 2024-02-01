@@ -1,6 +1,6 @@
 //go:build unix
 
-package unix
+package unix_test
 
 import (
 	"embed"
@@ -11,6 +11,7 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vars"
+	unixmod "src.elv.sh/pkg/mods/unix"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -21,13 +22,13 @@ func TestTranscripts(t *testing.T) {
 	// Intention is to restore umask after test finishes
 	testutil.Umask(t, 0)
 	evaltest.TestTranscriptsInFS(t, transcripts,
-		"use-unix", evaltest.Use("unix", Ns),
+		"use-unix", evaltest.Use("unix", unixmod.Ns),
 		"mock-rlimit", mockRlimit,
 	)
 }
 
 func mockRlimit(t *testing.T, ev *eval.Evaler) {
-	testutil.Set(t, &getRlimit, func(res int, lim *unix.Rlimit) error {
+	testutil.Set(t, unixmod.GetRlimit, func(res int, lim *unix.Rlimit) error {
 		switch res {
 		case unix.RLIMIT_CPU:
 			*lim = unix.Rlimit{Cur: unix.RLIM_INFINITY, Max: unix.RLIM_INFINITY}
@@ -40,7 +41,7 @@ func mockRlimit(t *testing.T, ev *eval.Evaler) {
 	})
 
 	var cpuCur, cpuMax int
-	testutil.Set(t, &setRlimit, func(res int, lim *unix.Rlimit) error {
+	testutil.Set(t, unixmod.SetRlimit, func(res int, lim *unix.Rlimit) error {
 		switch res {
 		case unix.RLIMIT_CPU:
 			cpuCur = rlimTToInt(lim.Cur)
@@ -56,7 +57,7 @@ func mockRlimit(t *testing.T, ev *eval.Evaler) {
 		AddVar("cpu-max", vars.FromPtr(&cpuMax)))
 }
 
-func rlimTToInt(r rlimT) int {
+func rlimTToInt(r unixmod.RlimT) int {
 	if r == unix.RLIM_INFINITY {
 		return -1
 	}
