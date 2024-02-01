@@ -74,7 +74,7 @@ Berlin
 # background pipeline #
 ///////////////////////
 
-//use-file
+//eval use file
 
 ## basic behavior ##
 ~> set notify-bg-job-success = $false
@@ -162,9 +162,9 @@ Exception: external commands don't accept elvish options
 
 ## external command from PATH ##
 //in-temp-dir
-//use-os
 //unset-env PATH
-~> os:mkdir bin
+~> use os
+   os:mkdir bin
    to-lines ['#!/bin/sh' 'echo hello'] > bin/say-hello
    os:chmod 0o700 bin/say-hello
    to-lines ['@echo hello'] > bin/say-hello.bat
@@ -194,8 +194,8 @@ hello
 
 ## external command relative to working directory ##
 //in-temp-dir
-//use-os
-~> fn make-echo-script {|name msg|
+~> use os
+   fn make-echo-script {|name msg|
      to-lines ['#!/bin/sh' 'echo '$msg] > $name
      os:chmod 0o700 $name
      to-lines ['@echo '$msg] > $name.bat
@@ -368,16 +368,16 @@ Exception: invalid fd: 4
 ok
 
 ## redirections from file objects ##
-//use-file
-~> echo haha > out3
+~> use file
+   echo haha > out3
    var f = (file:open out3)
    slurp <$f
    file:close $f
 ▶ "haha\n"
 
 ## redirections from pipe objects ##
-//use-file
-~> var p = (file:pipe)
+~> use file
+   var p = (file:pipe)
    echo haha > $p
    file:close $p[w]
    slurp < $p

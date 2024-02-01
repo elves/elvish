@@ -20,6 +20,5 @@ func TestTranscripts(t *testing.T) {
 	// be reverted, so we just do it here instead of properly inside a setup
 	// function.
 	*doc.ElvFiles, _ = fs.Sub(fakepkg, "fakepkg")
-	evaltest.TestTranscriptsInFS(t, transcripts,
-		"use-doc-with-fakepkg", evaltest.Use("doc", doc.Ns))
+	evaltest.TestTranscriptsInFS(t, transcripts)
 }

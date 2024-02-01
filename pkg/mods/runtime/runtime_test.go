@@ -16,6 +16,9 @@ var transcripts embed.FS
 
 func TestTranscripts(t *testing.T) {
 	evaltest.TestTranscriptsInFS(t, transcripts,
+		// We can't rely on the default runtime module installed by evaltest
+		// because the runtime modules reads Evaler fields during
+		// initialization.
 		"use-runtime-good-paths", func(t *testing.T, ev *eval.Evaler) {
 			testutil.Set(t, runtime.OSExecutable,
 				func() (string, error) { return "/path/to/elvish", nil })

@@ -1,4 +1,4 @@
-//use-file
+//eval use file
 //in-temp-dir
 
 /////////////
@@ -198,8 +198,8 @@ Exception: bad value: offset must be exact integer, but is 1.5
 
 ## good case ##
 
-//use-os
-~> echo > file100
+~> use os
+   echo > file100
    file:truncate file100 100
    put (os:stat file100)[size]
 ▶ (num 100)

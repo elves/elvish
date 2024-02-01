@@ -1,4 +1,4 @@
-//use-path
+//eval use path
 
 // All the functions in path: are either simple wrappers of Go functions or
 // compatibility aliases of their os: counterparts.
@@ -10,8 +10,8 @@
 # functions #
 /////////////
 
-//use-str
-~> var abs = (path:abs a/b/c.png)
+~> use str
+   var abs = (path:abs a/b/c.png)
    path:is-abs $abs
    str:has-suffix $abs (path:join a b c.png)
 ▶ $true
@@ -71,10 +71,10 @@
 # compatibility aliases #
 /////////////////////////
 
-//use-file
-//use-re
-//use-os
 //in-temp-dir-with-d-f
+~> use file
+   use re
+   use os
 ~> path:eval-symlinks d
 ▶ d
 ~> path:is-dir d

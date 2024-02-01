@@ -15,7 +15,6 @@ var transcripts embed.FS
 
 func TestTranscripts(t *testing.T) {
 	evaltest.TestTranscriptsInFS(t, transcripts,
-		"use-platform", evaltest.Use("platform", platform.Ns),
 		"mock-hostname", func(t *testing.T, hostname string) {
 			testutil.Set(t, platform.OSHostname, func() (string, error) { return hostname, nil })
 		},

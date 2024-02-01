@@ -274,7 +274,7 @@ Compilation error: variable $:x not found
 ▶ val
 
 ## module name access is checked at runtime ##
-//use-os
+~> use os
 ~> put $os:non-existent-variable
 Exception: variable $os:non-existent-variable not found
   [tty]:1:5-29: put $os:non-existent-variable

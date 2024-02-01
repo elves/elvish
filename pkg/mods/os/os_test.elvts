@@ -1,4 +1,4 @@
-//use-os
+//eval use os
 //in-temp-dir
 
 ////////////
@@ -243,9 +243,9 @@ Exception: CreateFile non-existent: The system cannot find the file specified.
 /////////////////////////
 
 //apply-test-dir-with-symlinks-or-skip
-//use-path
 // These tests can run on Windows, where the output of os:eval-symlinks will use
 // \ as the path separator, so we can't rely on the exact output.
+~> use path
 // Not symlink
 ~> eq (os:eval-symlinks d/f) (path:join d f)
 ▶ $true
@@ -321,7 +321,8 @@ Exception: CreateFile bad: The system cannot find the file specified.
 # os:temp-dir #
 ///////////////
 
-//use-re
+//eval use re
+
 // default name template is elvish-*
 ~> var x = (os:temp-dir)
    os:remove $x
@@ -353,8 +354,9 @@ Exception: arity mismatch: arguments must be 0 to 1 values, but is 2 values
 # os:temp-file #
 ////////////////
 
-//use-re
-//use-file
+//eval use re
+//eval use file
+
 ~> var f = (os:temp-file)
    re:match '[/\\]elvish-.*$' $f[name]
    file:close $f

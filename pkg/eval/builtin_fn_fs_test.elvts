@@ -14,9 +14,9 @@
 //in-temp-dir
 
 ## explicit argument ##
-//use-os
-//use-path
-~> os:mkdir ~/d1
+~> use os
+   use path
+   os:mkdir ~/d1
 ~> cd ~/d1
    eq $pwd (path:join ~ d1)
 ▶ $true

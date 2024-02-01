@@ -22,7 +22,6 @@ func TestTranscripts(t *testing.T) {
 	// Intention is to restore umask after test finishes
 	testutil.Umask(t, 0)
 	evaltest.TestTranscriptsInFS(t, transcripts,
-		"use-unix", evaltest.Use("unix", unixmod.Ns),
 		"mock-rlimit", mockRlimit,
 	)
 }

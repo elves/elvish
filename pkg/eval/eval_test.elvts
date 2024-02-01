@@ -3,9 +3,9 @@
 //////////////////////////////////
 
 //in-temp-dir
-//use-os
 
-~> os:mkdir d
+~> use os
+   os:mkdir d
    var before-dst after-dst
    set @before-chdir = {|dst| set before-dst = $dst }
    set @after-chdir  = {|dst| set after-dst  = $dst }

@@ -5,8 +5,8 @@
 //in-temp-dir
 
 ## simple patterns ##
-//use-os
-~> put z z2 | each $os:mkdir~
+~> use os
+   put z z2 | each $os:mkdir~
    put bar foo ipsum lorem | each {|x| echo > $x}
 ~> put *
 ▶ bar
@@ -33,9 +33,9 @@
 ▶ xz.w
 
 ## recursive patterns ##
-//use-os
-~> put 1 1/2 1/2/3 | each $os:mkdir~
-~> put a.go 1/a.go 1/2/3/a.go | each {|x| echo > $x}
+~> use os
+   put 1 1/2 1/2/3 | each $os:mkdir~
+   put a.go 1/a.go 1/2/3/a.go | each {|x| echo > $x}
 ~> put **
 ▶ 1/2/3/a.go
 ▶ 1/2/3
@@ -58,9 +58,9 @@ Exception: wildcard has no match
 ~> put a/b/nonexistent*[nomatch-ok]
 
 ## hidden files ##
-//use-os
-~> put d .d | each $os:mkdir~
-~> put a .a d/a d/.a .d/a .d/.a | each {|x| echo > $x}
+~> use os
+   put d .d | each $os:mkdir~
+   put a .a d/a d/.a .d/a .d/.a | each {|x| echo > $x}
 ~> put *
 ▶ a
 ▶ d
@@ -122,8 +122,8 @@ Exception: bad range modifier: foo
 ▶ lorem
 
 ## type ##
-//use-os
-~> put d1 d2 .d b b/c | each $os:mkdir~
+~> use os
+   put d1 d2 .d b b/c | each $os:mkdir~
    put bar foo ipsum lorem d1/f1 d2/fm | each {|x| echo > $x}
 ~> put **[type:dir]
 ▶ b/c

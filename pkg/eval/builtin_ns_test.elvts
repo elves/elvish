@@ -24,13 +24,13 @@ Compilation error: variable $return~ is read-only
 //unset-env PATH
 
 ## $E:PATH to $paths ##
-//use-path
+~> use path
 ~> set E:PATH = /bin1$path:list-separator/bin2
 ~> put $paths
 ▶ [/bin1 /bin2]
 
 ## $paths to $E:PATH ##
-//use-path
+~> use path
 ~> set paths = [/bin1 /bin2]
 ~> eq $E:PATH /bin1$path:list-separator/bin2
 ▶ $true
@@ -51,8 +51,8 @@ Exception: path cannot contain NUL byte, colon on Unix or semicolon on Windows
 ////////
 
 //in-temp-dir
-//use-os
-//use-path
+~> use os
+   use path
 // Test both reading and writing $pwd.
 ~> var start = $pwd
    os:mkdir d

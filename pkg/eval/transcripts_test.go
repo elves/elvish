@@ -15,9 +15,6 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/fsutil"
-	"src.elv.sh/pkg/mods/file"
-	osmod "src.elv.sh/pkg/mods/os"
-	pathmod "src.elv.sh/pkg/mods/path"
 	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/testutil"
@@ -37,9 +34,6 @@ func TestTranscripts(t *testing.T) {
 			ev.ExtendGlobal(eval.BuildNs().
 				AddGoFn("recv-bg-job-notification", func() any { return <-noteCh }))
 		},
-		"use-file", evaltest.Use("file", file.Ns),
-		"use-os", evaltest.Use("os", osmod.Ns),
-		"use-path", evaltest.Use("path", pathmod.Ns),
 		"with-temp-home", func(t *testing.T) { testutil.TempHome(t) },
 		"reseed-afterwards", func(t *testing.T) {
 			t.Cleanup(func() {
@@ -170,7 +164,9 @@ func TestTranscripts(t *testing.T) {
 				}
 			})
 		},
-		"go-fns-mod-in-global", evaltest.Use("go-fns", goFnsMod),
+		"go-fns-mod-in-global", func(ev *eval.Evaler) {
+			ev.ExtendGlobal(eval.BuildNs().AddNs("go-fns", goFnsMod))
+		},
 	)
 }
 

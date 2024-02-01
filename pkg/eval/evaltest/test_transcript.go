@@ -15,6 +15,7 @@ import (
 	"src.elv.sh/pkg/diff"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/mods"
 	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/testutil"
@@ -98,6 +99,7 @@ func testTranscripts(t *testing.T, sessions []transcript.Session, setupPairs []a
 	for _, session := range sessions {
 		t.Run(session.Name, func(t *testing.T) {
 			ev := eval.NewEvaler()
+			mods.AddTo(ev)
 			for _, directive := range session.Directives {
 				name, arg, _ := strings.Cut(directive, " ")
 				if f, ok := setupMap[name]; ok {
@@ -231,11 +233,3 @@ func stripSGR(bs []byte) []byte      { return sgrPattern.ReplaceAllLiteral(bs, n
 func stripSGRString(s string) string { return sgrPattern.ReplaceAllLiteralString(s, "") }
 
 func normalizeLineEnding(bs []byte) []byte { return bytes.ReplaceAll(bs, []byte("\r\n"), []byte("\n")) }
-
-// Use returns a function that simulates "use" on an Evaler and can be used as a
-// setup function for [TestTranscriptsInFS].
-func Use(name string, ns eval.Nser) func(*eval.Evaler) {
-	return func(ev *eval.Evaler) {
-		ev.ExtendGlobal(eval.BuildNs().AddNs(name, ns))
-	}
-}

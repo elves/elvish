@@ -20,8 +20,8 @@ import (
 
 // AddTo adds all standard library modules to the Evaler.
 //
-// All the public properties of the Evaler should be set before this function is
-// called.
+// Some modules (the runtime module for now) may rely on properties set on the
+// Evaler, so any mutations afterwards may not be properly reflected.
 func AddTo(ev *eval.Evaler) {
 	ev.AddModule("runtime", runtime.Ns(ev))
 	ev.AddModule("math", math.Ns)

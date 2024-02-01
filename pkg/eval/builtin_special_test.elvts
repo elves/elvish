@@ -744,9 +744,9 @@ lib1/shadow
 
 ## use of module in subdirectory ##
 //tmp-lib-dir
-//use-os
 // TODO: Use os:mkdir-all when it's available.
-~> os:mkdir $lib/a
+~> use os
+   os:mkdir $lib/a
    os:mkdir $lib/a/b
    echo 'var name = a/b/c' > $lib/a/b/c.elv
 ~> use a/b/c
@@ -763,9 +763,9 @@ lib1/shadow
 
 ## renaming module ##
 //tmp-lib-dir
-//use-os
 // TODO: Use os:mkdir-all when it's available.
-~> os:mkdir $lib/a
+~> use os
+   os:mkdir $lib/a
    os:mkdir $lib/a/b
    echo 'var name = a/b/c' > $lib/a/b/c.elv
 ~> use a/b/c mod
@@ -783,9 +783,9 @@ lib1/shadow
 
 ## variable referencing a module can be shadowed ##
 //tmp-lib-dir
-//use-os
 // TODO: Use os:mkdir-all when it's available.
-~> os:mkdir $lib/a
+~> use os
+   os:mkdir $lib/a
    os:mkdir $lib/a/b
    echo 'var name = c' > $lib/c.elv
    echo 'var name = a/b/c' > $lib/a/b/c.elv
@@ -798,8 +798,8 @@ lib1/shadow
 
 ## relative uses ##
 //tmp-lib-dir
-//use-os
-~> os:mkdir $lib/a
+~> use os
+   os:mkdir $lib/a
    os:mkdir $lib/a/b
    echo 'var name = ipsum' > $lib/lorem.elv
    echo 'var name = a/b/c' > $lib/a/b/c.elv
