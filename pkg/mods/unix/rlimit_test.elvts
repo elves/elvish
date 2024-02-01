@@ -57,9 +57,22 @@ Exception: bad value: rlimit value must be map, but is string
 ~> set unix:rlimits[cpu] = [&bad]
 Exception: bad value: key of rlimit value must be cur or max, but is bad
   [tty]:1:5-21: set unix:rlimits[cpu] = [&bad]
+
+## limit out of range (non-FreeBSD) ##
+//only-on !freebsd
 ~> set unix:rlimits[cpu] = [&cur=[]]
 Exception: bad value: cur in rlimit value must be number between 0 and 18446744073709551615, but is []
   [tty]:1:5-21: set unix:rlimits[cpu] = [&cur=[]]
 ~> set unix:rlimits[cpu] = [&cur=1 &max=[]]
 Exception: bad value: max in rlimit value must be number between 0 and 18446744073709551615, but is []
+  [tty]:1:5-21: set unix:rlimits[cpu] = [&cur=1 &max=[]]
+
+## limit out of range (FreeBSD) ##
+//only-on freebsd
+// FreeBSD uses int64 for the limit values, so the error message is different.
+~> set unix:rlimits[cpu] = [&cur=[]]
+Exception: bad value: cur in rlimit value must be number between 0 and 9223372036854775807, but is []
+  [tty]:1:5-21: set unix:rlimits[cpu] = [&cur=[]]
+~> set unix:rlimits[cpu] = [&cur=1 &max=[]]
+Exception: bad value: max in rlimit value must be number between 0 and 9223372036854775807, but is []
   [tty]:1:5-21: set unix:rlimits[cpu] = [&cur=1 &max=[]]
