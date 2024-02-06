@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -18,6 +19,7 @@ import (
 	"src.elv.sh/pkg/mods"
 	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/transcript"
 )
@@ -67,6 +69,8 @@ import (
 //     The full build constraint syntax is supported, but only literal GOARCH
 //     and GOOS values and "unix" are recognized as tags; other tags are always
 //     false.
+//
+//   - deprecation-level $x: Run with deprecation level set to $x.
 //
 // Since directives in a higher level propagated to all its descendants, this
 // mechanism can be used to specify setup functions that apply to an entire
@@ -161,6 +165,9 @@ func buildSetupMaps(setupPairs []any) (map[string]func(*testing.T, *eval.Evaler)
 			}) {
 				t.Skipf("constraint not satisfied: %s", arg)
 			}
+		},
+		"deprecation-level": func(t *testing.T, _ *eval.Evaler, arg string) {
+			testutil.Set(t, &prog.DeprecationLevel, must.OK1(strconv.Atoi(arg)))
 		},
 	}
 	for i := 0; i < len(setupPairs); i += 2 {

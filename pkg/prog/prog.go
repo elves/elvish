@@ -18,7 +18,7 @@ import (
 // DeprecationLevel is a global flag that controls which deprecations to show.
 // If its value is X, Elvish shows deprecations that should be shown for version
 // 0.X.
-var DeprecationLevel = 19
+var DeprecationLevel = 20
 
 // Program represents a subprogram.
 type Program interface {

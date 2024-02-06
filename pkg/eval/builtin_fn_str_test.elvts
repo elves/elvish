@@ -102,6 +102,8 @@ Exception: port does not support value output
 # eawk #
 ////////
 
+//with-deprecation-level 19
+
 ~> echo "  ax  by cz  \n11\t22 33" | eawk {|@a| put $a[-1] }
 ▶ cz
 ▶ 33
