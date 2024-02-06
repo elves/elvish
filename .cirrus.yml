@@ -99,8 +99,9 @@ build_binaries_task:
   go_build_cache:
     folder: ~/.cache/go-build
   # Git is not required for building the binaries, but we need to include for Go
-  # to include VCS information in the binary.
-  setup_script: apk add zip git
+  # to include VCS information in the binary. Also install coreutils to get a
+  # touch command that supports specifying the timezone.
+  setup_script: apk add zip git coreutils
   # _bin is in .gitignore, so Git won't consider the repo dirty. This will
   # impact the binary, which encodes VCS information.
   build_binaries_script: |
