@@ -27,6 +27,8 @@ const VersionBase = "0.20.0"
 //
 // It is only needed if the automatic population of version information
 // implemented in devVersion fails.
+//
+// This variable is ignored on release branches.
 var VCSOverride string
 
 // BuildVariant may be set during compilation to identify a particular
@@ -46,8 +48,7 @@ func (Type) IsStructMap() {}
 
 // Value contains all the build information.
 var Value = Type{
-	// On a release branch, change to addVariant(VersionBase, BuildVariant) and
-	// remove unneeded code.
+	// On a release branch, change to addVariant(VersionBase, BuildVariant).
 	Version:   addVariant(devVersion(VersionBase, VCSOverride), BuildVariant),
 	GoVersion: runtime.Version(),
 }
