@@ -102,14 +102,15 @@ check_binary_checksums_task:
     ts=$(git show -s --format=%ct HEAD)
     wait=10
     while true; do
-      website_ts=$(curl -sSf https://$HOST.elv.sh/commit-ts.txt)
-      if test -z "$website_ts"; then
-        echo "website has no commit-ts.txt yet"
-      elif test "$website_ts" -ge "$ts"; then
-        echo "website ($website_ts) >= CI ($ts)"
-        exit 0
+      if website_ts=$(curl -sSf https://$HOST.elv.sh/commit-ts.txt); then
+        if test "$website_ts" -ge "$ts"; then
+          echo "website ($website_ts) >= CI ($ts)"
+          exit 0
+        else
+          echo "website ($website_ts) < CI ($ts)"
+        fi
       else
-        echo "website ($website_ts) < CI ($ts)"
+        echo "website has no commit-ts.txt yet"
       fi
       sleep $wait
       test $wait -lt 96 && wait=`echo "$wait * 2" | bc`
