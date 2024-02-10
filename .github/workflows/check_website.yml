@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Download binary checksums
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: bin-checksums
         path: elvish-bin
