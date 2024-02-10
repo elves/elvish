@@ -22,7 +22,7 @@ jobs:
         ts=$(git show -s --format=%ct HEAD)
         wait=10
         while true; do
-          website_ts=$(curl -sS https://${{ matrix.host }}.elv.sh/commit-ts.txt)
+          website_ts=$(curl -sSf https://${{ matrix.host }}.elv.sh/commit-ts.txt)
           if test -z "$website_ts"; then
             echo "website has no commit-ts.txt yet"
           elif test "$website_ts" -ge "$ts"; then
