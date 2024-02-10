@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/env"
-	"src.elv.sh/pkg/must"
 	. "src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
 )
@@ -62,17 +61,6 @@ func TestShell_LibPath_XDGPaths(t *testing.T) {
 		ThatElvish("-c", "use b").WritesStdout("b from xdg-data-home\n"),
 		ThatElvish("-c", "use c").WritesStdout("c from xdg-data-dir-1\n"),
 		ThatElvish("-c", "use d").WritesStdout("d from xdg-data-dir-2\n"),
-	)
-}
-
-func TestShell_LibPath_Legacy(t *testing.T) {
-	home := setupCleanHomePaths(t)
-	must.WriteFile(filepath.Join(home, ".elvish", "lib", "a.elv"), "echo mod a")
-
-	Test(t, &Program{},
-		ThatElvish("-c", "use a").
-			WritesStdout("mod a\n").
-			WritesStderrContaining(legacyLibPathWarning),
 	)
 }
 

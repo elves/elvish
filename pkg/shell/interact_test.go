@@ -39,18 +39,6 @@ func TestInteract_Eval(t *testing.T) {
 	)
 }
 
-func TestInteract_RCPath_Legacy(t *testing.T) {
-	home := setupCleanHomePaths(t)
-	must.WriteFile(
-		filepath.Join(home, ".elvish", "rc.elv"), "echo hello legacy rc.elv")
-
-	Test(t, &Program{},
-		thatElvishInteract().
-			WritesStdout("hello legacy rc.elv\n").
-			WritesStderrContaining(legacyRcPathWarning),
-	)
-}
-
 func TestInteract_RCPath_XDG_CONFIG_HOME(t *testing.T) {
 	setupCleanHomePaths(t)
 	xdgConfigHome := testutil.Setenv(t, env.XDG_CONFIG_HOME, testutil.TempDir(t))
@@ -89,18 +77,6 @@ func TestInteract_ErrorInActivateDaemon(t *testing.T) {
 	Test(t, &Program{ActivateDaemon: activate},
 		thatElvishInteract().
 			WritesStderrContaining("Cannot connect to daemon: fake error"),
-	)
-}
-
-func TestInteract_DBPath_Legacy(t *testing.T) {
-	sockPath := startDaemon(t)
-	home := setupCleanHomePaths(t)
-	legacyDBPath := filepath.Join(home, ".elvish", "db")
-	must.WriteFile(legacyDBPath, "")
-
-	Test(t, &Program{ActivateDaemon: fakeActivate(sockPath)},
-		thatElvishInteract().
-			WritesStderrContaining("db requested: "+legacyDBPath),
 	)
 }
 

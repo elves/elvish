@@ -78,7 +78,7 @@ func (p *Program) Run(fds [3]*os.File, args []string) error {
 	var spawnCfg *daemondefs.SpawnConfig
 	if p.ActivateDaemon != nil {
 		var err error
-		spawnCfg, err = daemonPaths(p.daemonPaths, fds[2])
+		spawnCfg, err = daemonPaths(p.daemonPaths)
 		if err != nil {
 			fmt.Fprintln(fds[2], "Warning:", err)
 			fmt.Fprintln(fds[2], "Storage daemon may not function.")
@@ -100,7 +100,7 @@ func (p *Program) makeEvaler(stderr io.Writer, interactive bool) *eval.Evaler {
 	ev := eval.NewEvaler()
 
 	var errRc error
-	ev.RcPath, errRc = rcPath(stderr)
+	ev.RcPath, errRc = rcPath()
 	switch {
 	case !interactive || p.noRC:
 		// Leave ev.ActualRcPath empty
@@ -120,7 +120,7 @@ func (p *Program) makeEvaler(stderr io.Writer, interactive bool) *eval.Evaler {
 		}
 	}
 
-	libs, err := libPaths(stderr)
+	libs, err := libPaths()
 	if err != nil {
 		fmt.Fprintln(stderr, "Warning: resolving lib paths:", err)
 	} else {

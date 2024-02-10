@@ -24,7 +24,7 @@ Before the REPL starts, Elvish will execute the **RC file**. Its path is
 determined as follows:
 
 1.  If the legacy `~/.elvish/rc.elv` exists, it is used (this will be ignored
-    starting from 0.20.0).
+    starting from 0.21.0).
 
 2.  If the `XDG_CONFIG_HOME` environment variable is defined and non-empty,
     `$XDG_CONFIG_HOME/elvish/rc.elv` is used.
@@ -40,7 +40,7 @@ Elvish in interactive mode uses a database file to keep command and directory
 history. Its path is determined as follows:
 
 1.  If the legacy `~/.elvish/db` exists, it is used (this will be ignored
-    starting from 0.20.0).
+    starting from 0.21.0).
 
 2.  If the `XDG_STATE_HOME` environment variable is defined and non-empty,
     `$XDG_STATE_HOME/elvish/db.bolt` is used.
@@ -88,7 +88,7 @@ directories:
     searched on non-Windows OSes. On Windows, no directories are searched.
 
 4.  If the legacy `~/.elvish/lib` directory exists, it is also searched (this
-    will be ignored starting from 0.20.0).
+    will be ignored starting from 0.21.0).
 
 # Command-line flags
 
