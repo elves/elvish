@@ -12,7 +12,7 @@ import (
 	"src.elv.sh/pkg/prog"
 )
 
-const legacyRcPathWarning = `Warning: ~/.elvish/rc.elv will be ignored from Elvish 0.20.0. Move it to its new location, as documented in https://elv.sh/ref/command.html#rc-file.`
+const legacyRcPathWarning = `Warning: ~/.elvish/rc.elv will be ignored from Elvish 0.21.0. Move it to its new location, as documented in https://elv.sh/ref/command.html#rc-file.`
 
 func rcPath(w io.Writer) (string, error) {
 	if legacyRC, exists := legacyDataPath("rc.elv", false); exists {
@@ -27,7 +27,7 @@ func rcPath(w io.Writer) (string, error) {
 	}
 }
 
-const legacyLibPathWarning = `Warning: ~/.elvish/lib will be ignored from Elvish 0.20.0. Move libraries to one of the new module search directories, as documented in https://elv.sh/ref/command.html#module-search-directories.`
+const legacyLibPathWarning = `Warning: ~/.elvish/lib will be ignored from Elvish 0.21.0. Move libraries to one of the new module search directories, as documented in https://elv.sh/ref/command.html#module-search-directories.`
 
 func libPaths(w io.Writer) ([]string, error) {
 	var paths []string
@@ -93,7 +93,7 @@ func daemonPaths(p *prog.DaemonPaths, w io.Writer) (*daemondefs.SpawnConfig, err
 	return &daemondefs.SpawnConfig{DbPath: db, SockPath: sock, RunDir: runDir}, nil
 }
 
-const legacyDbPathWarning = `Warning: ~/.elvish/db will be ignored from Elvish 0.20.0. Kill the daemon with "use daemon; kill $daemon:pid", and move the db to its new location, as documented in https://elv.sh/ref/command.html#database-file. The daemon will respawn when you launch another Elvish instance.`
+const legacyDbPathWarning = `Warning: ~/.elvish/db will be ignored from Elvish 0.21.0. Kill the daemon with "use daemon; kill $daemon:pid", and move the db to its new location, as documented in https://elv.sh/ref/command.html#database-file. The daemon will respawn when you launch another Elvish instance.`
 
 func dbPath(w io.Writer) (string, error) {
 	if legacyDB, exists := legacyDataPath("db", false); exists {
