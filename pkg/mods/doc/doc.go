@@ -136,21 +136,13 @@ func symbols(fm *eval.Frame) error {
 	return nil
 }
 
-var (
-	docsOnce sync.Once
-	docsMap  map[string]elvdoc.Docs
-	// May be overridden in tests.
-	elvFiles fs.FS = pkg.ElvFiles
-)
+// May be overridden in tests.
+var elvFiles fs.FS = pkg.ElvFiles
 
 // Returns a map from namespace prefixes (like "doc:", or "" for the builtin
 // module) to extracted elvdocs.
-//
-// TODO: Simplify this using [sync.OnceValue] once Elvish requires Go 1.21.
-func docs() map[string]elvdoc.Docs {
-	docsOnce.Do(func() {
-		// We don't expect any errors from reading an [embed.FS].
-		docsMap, _ = elvdoc.ExtractAllFromFS(elvFiles)
-	})
+var docs = sync.OnceValue(func() map[string]elvdoc.Docs {
+	// We don't expect any errors from reading an [embed.FS].
+	docsMap, _ := elvdoc.ExtractAllFromFS(elvFiles)
 	return docsMap
-}
+})

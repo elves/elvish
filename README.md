@@ -71,7 +71,7 @@ To build Elvish from source, you need
 -   A supported OS: Linux, {Free,Net,Open}BSD, macOS, or Windows 10. Windows 10
     support is experimental.
 
--   Go >= 1.20.
+-   Go >= 1.21.0.
 
 To build Elvish from source, run one of the following commands:
 

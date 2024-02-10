@@ -1,13 +1,11 @@
 package testutil
 
 import (
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"src.elv.sh/pkg/must"
@@ -127,7 +125,7 @@ func TestDirAsFS(t *testing.T) {
 	entries := make(map[string]string)
 	fs.WalkDir(dir, ".", func(path string, d fs.DirEntry, err error) error {
 		must.OK(err)
-		entries[path] = formatFileInfo(must.OK1(d.Info()))
+		entries[path] = fs.FormatFileInfo(must.OK1(d.Info()))
 		return nil
 	})
 	wantEntries := map[string]string{
@@ -187,7 +185,7 @@ func TestDirAsFS(t *testing.T) {
 			}
 			panic(err)
 		}
-		rootEntries[es[0].Name()] = formatFileInfo(must.OK1(es[0].Info()))
+		rootEntries[es[0].Name()] = fs.FormatFileInfo(must.OK1(es[0].Info()))
 	}
 	wantRootEntries := map[string]string{
 		"a": "-rw-r--r-- 14 1970-01-01 00:00:00 a",
@@ -201,18 +199,6 @@ func TestDirAsFS(t *testing.T) {
 	// Cover the Sys method of the two FileInfo implementations.
 	must.OK1(must.OK1(dir.Open("d")).Stat()).Sys()
 	must.OK1(must.OK1(dir.Open("a")).Stat()).Sys()
-}
-
-// Reimplements fs.FormatFileInfo, introduced in Go 1.21. Remove once we require
-// Go 1.21 to build.
-func formatFileInfo(info fs.FileInfo) string {
-	var nameSuffix string
-	if info.IsDir() {
-		nameSuffix = "/"
-	}
-	return fmt.Sprintf("%v %d %s %s%s",
-		info.Mode(), info.Size(),
-		info.ModTime().Format(time.DateTime), info.Name(), nameSuffix)
 }
 
 func getWd() string {

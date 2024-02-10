@@ -11,4 +11,4 @@ require (
 	pkg.nimblebun.works/go-lsp v1.1.0
 )
 
-go 1.20
+go 1.21
