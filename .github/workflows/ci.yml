@@ -12,19 +12,20 @@ defaults:
 jobs:
 
   test:
-    # Provide an explict name to omit the "new-go" parameter, which is
-    # derived from go-version
+    # The default name will include the "go-version-is" parameter, whcih is
+    # derived from go-version and redundant, so we supply an explicit templated
+    # name.
     name: Run tests (${{ matrix.os }}, ${{ matrix.go-version }})
     strategy:
       matrix:
         os: [ubuntu, macos, windows]
-        go-version: [1.21.x]
-        new-go: [true]
+        go-version: [1.22.x]
+        go-version-is: [new]
         include:
           # Test old supported Go version
           - os: ubuntu
-            go-version: 1.20.x
-            new-go: [false]
+            go-version: 1.21.x
+            go-version-is: [old]
     env:
       ELVISH_TEST_TIME_SCALE: 20
     runs-on: ${{ matrix.os }}-latest
@@ -34,19 +35,9 @@ jobs:
       if: matrix.os == 'windows'
       run: git config --global core.autocrlf false
     - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Set up cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-          ~/Library/Caches/go-build
-          ~/AppData/Local/go-build
-        key: test/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}/${{ github.sha }}
-        restore-keys: test/${{ matrix.os }}/${{ matrix.go-version }}/${{ hashFiles('go.sum') }}/
+      uses: actions/checkout@v4
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
     - name: Test with race detection
@@ -54,11 +45,11 @@ jobs:
         go test -race ./...
         cd website; go test -race ./...
     - name: Generate test coverage
-      if: matrix.new-go
+      if: matrix.go-version-is == 'new'
       run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
     - name: Save test coverage
-      if: matrix.new-go
-      uses: actions/upload-artifact@v3
+      if: matrix.go-version-is == 'new'
+      uses: actions/upload-artifact@v4
       with:
         name: cover-${{ matrix.os == 'ubuntu' && 'linux' || matrix.os }}
         path: cover
@@ -71,11 +62,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5
       with:
-        go-version: 1.21.x
+        go-version: 1.22.x
     - name: Run benchmarks
       run: go test -bench=. -run='^$' ./...
 
@@ -88,9 +79,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Download test coverage
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: cover-${{ matrix.ostype }}
     - name: Upload coverage to codecov
@@ -104,13 +95,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5
       with:
-        go-version: 1.21.x
+        go-version: 1.22.x
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
     - name: Install tools
@@ -128,13 +119,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5
       with:
-        go-version: 1.21.x
+        go-version: 1.22.x
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
     - name: Install Python dependency
@@ -149,7 +140,7 @@ jobs:
     container: sourcegraph/lsif-go:latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Generate LSIF data
       run: lsif-go
     - name: Upload LSIF data

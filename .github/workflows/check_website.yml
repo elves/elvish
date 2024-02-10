@@ -15,7 +15,7 @@ jobs:
         host: [cdg, hkg]
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Compare timestamp
       timeout-minutes: 30
       run: |
@@ -40,31 +40,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Set up cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-        key: buildall/${{ hashFiles('go.sum') }}/${{ github.sha }}
-        restore-keys: buildall/${{ hashFiles('go.sum') }}
+      uses: actions/checkout@v4
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5
       with:
         # Keep this in sync with
         # https://github.com/elves/up/blob/master/Dockerfile
-        go-version: 1.21.6
+        go-version: 1.22.0
     - name: Build binaries
       run: ELVISH_BUILD_VARIANT=official ./tools/buildall.sh . ~/elvish-bin HEAD
     - name: Upload binaries
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: bin
         path: ~/elvish-bin/**/*
         retention-days: 7
     - name: Upload binary checksums
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: bin-checksums
         path: ~/elvish-bin/**/elvish-HEAD.sha256sum

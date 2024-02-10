@@ -1,40 +1,26 @@
-test_task:
+test_arm_task:
   env:
     ELVISH_TEST_TIME_SCALE: "20"
     TEST_FLAG: -race
+  name: Test on Linux ARM64
+  arm_container:
+    # The Alpine image has segmentation faults when running test -race, so
+    # use Debian instead.
+    image: golang:1.22-bookworm
+  go_version_script: go version
+  test_script: go test $TEST_FLAG ./...
+
+test_bsd_task:
+  env:
+    ELVISH_TEST_TIME_SCALE: "20"
+    TEST_FLAG: -race
+    GO_VERSION: "1.22.0"
+    PATH: /usr/local/go/bin:$PATH
   matrix:
-    # Re-enable gccgo when it has caught up.
-    #- name: Test on gccgo
-    #  container:
-    #    image: debian:unstable-slim
-    #  setup_script:
-    #    - apt-get -y update
-    #    - apt-get -y install ca-certificates gccgo-12 git
-    #    - ln -sf /usr/bin/go-12 /usr/local/bin/go
-    #  env:
-    #    # gccgo doesn't support race test
-    #    TEST_FLAG: ""
-    - name: Test on Linux ARM64
-      arm_container:
-        # The Alpine image has segmentation faults when running test -race, so
-        # use Debian instead.
-        image: golang:1.21-bookworm
-    # To upgrade FreeBSD environment:
-    #   - Bump image_family to latest: https://www.freebsd.org/releases/
-    #   - Bump GO_VERSION to latest: https://go.dev/dl/
     - name: Test on FreeBSD
       freebsd_instance:
+        # Find latest version on https://www.freebsd.org/releases/
         image_family: freebsd-14-0
-      env:
-        PATH: /usr/local/go/bin:$PATH
-        GO_VERSION: 1.21.6
-      go_toolchain_cache:
-        fingerprint_key: $GO_VERSION
-        folder: /usr/local/go
-        populate_script: |
-          pkg install -y curl
-          curl -L -o go.tar.gz https://go.dev/dl/go$GO_VERSION.freebsd-amd64.tar.gz
-          tar -C /usr/local -xf go.tar.gz
       setup_script:
         # go test -race is not compatible with ASLR, which has been enabled by
         # default since FreeBSD 13
@@ -45,41 +31,27 @@ test_task:
         # to run the tests and still reports tests as passing:
         # https://github.com/golang/go/issues/65425
         sysctl kern.elf64.aslr.enable=0
-    # To upgrade NetBSD environment:
-    #   - Find the "VERSION:" variable for the NetBSD image:
-    #     https://github.com/anarazel/pg-vm-images/blob/main/.cirrus.yml
-    #   - Find the latest go1* binary package available for that version:
-    #     http://cdn.netbsd.org/pub/pkgsrc/current/pkgsrc/index-all.html
     - name: Test on NetBSD
       compute_engine_instance:
         image_project: pg-ci-images
+        # Find latest version in the "VERSION:" variable for the NetBSD image in
+        # https://github.com/anarazel/pg-vm-images/blob/main/.cirrus.yml
         image: family/pg-ci-netbsd-vanilla-9-3
         platform: netbsd
-      env:
-        GO_PKG: go121
-        PATH: /usr/pkg/$GO_PKG/bin:$PATH
-      go_pkg_cache:
-        fingerprint_key: $GO_PKG
-        folder: /usr/pkg/$GO_PKG
-        populate_script: |
-          pkgin -y update
-          pkgin -y install $GO_PKG
-    # To upgrade OpenBSD environment:
-    #   - Find the "VERSION:" variable for the FreeBSD image:
-    #     https://github.com/anarazel/pg-vm-images/blob/main/.cirrus.yml
-    #   - Find the go-1.* package in (edit the version in the URL):
-    #     https://cdn.openbsd.org/pub/OpenBSD/7.3/packages/amd64/
     - name: Test on OpenBSD
       compute_engine_instance:
         image_project: pg-ci-images
+        # Find latest version in the "VERSION:" variable for the OpenBSD image in
+        # https://github.com/anarazel/pg-vm-images/blob/main/.cirrus.yml
         image: family/pg-ci-openbsd-vanilla-7-3
         platform: openbsd
-      env:
-        PATH: /usr/local/go/bin:$PATH
-      go_pkg_cache:
-        fingerprint_key: 1.20.1
-        folder: /usr/local/go
-        populate_script: pkg_add go
+  go_toolchain_cache:
+    fingerprint_key: $CIRRUS_OS-$GO_VERSION
+    folder: /usr/local/go
+    populate_script: |
+      curl -L -o go.tar.gz https://go.dev/dl/go$GO_VERSION.$CIRRUS_OS-amd64.tar.gz
+      mkdir -p /usr/local
+      tar -C /usr/local -xzf go.tar.gz
   go_version_script: go version
   test_script: go test $TEST_FLAG ./...
 
@@ -92,7 +64,7 @@ build_binaries_task:
   container:
     # Keep the Go version part in sync with
     # https://github.com/elves/up/blob/master/Dockerfile
-    image: golang:1.21.6-alpine
+    image: golang:1.22.0-alpine
   go_modules_cache:
     fingerprint_script: cat go.sum
     folder: ~/go/pkg/mod
