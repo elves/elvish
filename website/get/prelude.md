@@ -214,9 +214,9 @@ to launch Elvish:
   </tr>
 </table>
 
-It is **not** recommended to change your login shell to Elvish. Some programs
-assume that user's login shell is a traditional POSIX-like shell, and may have
-issues when you change your login shell to Elvish.
+You can also use Elvish as your login shell. However, beware that some programs
+assume that the user's login shell is a traditional POSIX-like shell, and may
+have issues when you change your login shell to Elvish.
 
 # Installing from a package manager
 
