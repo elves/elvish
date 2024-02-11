@@ -98,7 +98,7 @@ buildone() {
         # two steps.
         tar cf $BIN.tar $BIN
         touch -d 2022-01-01T00:00:00Z $BIN.tar
-        gzip -k $BIN.tar
+        gzip -f $BIN.tar
     fi
     # Update the modification time again to reflect the actual modification
     # time. (Technically this makes the file appear slightly newer han it really
