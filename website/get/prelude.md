@@ -51,23 +51,23 @@ archive:
   </tr>
   <tr>
     <td>
-      0.19.2 (<a href="../blog/0.19.1-release-notes.html">release notes</a>)
+      0.20.0 (<a href="../blog/0.20.0-release-notes.html">release notes</a>)
     </td>
     <td>
-      @dl Linux linux-amd64/elvish-v0.19.2.tar.gz
-      @dl macOS darwin-amd64/elvish-v0.19.2.tar.gz
-      @dl FreeBSD freebsd-amd64/elvish-v0.19.2.tar.gz
-      @dl NetBSD netbsd-amd64/elvish-v0.19.2.tar.gz
-      @dl OpenBSD openbsd-amd64/elvish-v0.19.2.tar.gz
-      @dl Windows windows-amd64/elvish-v0.19.2.zip
+      @dl Linux linux-amd64/elvish-v0.20.0.tar.gz
+      @dl macOS darwin-amd64/elvish-v0.20.0.tar.gz
+      @dl FreeBSD freebsd-amd64/elvish-v0.20.0.tar.gz
+      @dl NetBSD netbsd-amd64/elvish-v0.20.0.tar.gz
+      @dl OpenBSD openbsd-amd64/elvish-v0.20.0.tar.gz
+      @dl Windows windows-amd64/elvish-v0.20.0.zip
     </td>
     <td>
-      @dl Linux linux-386/elvish-v0.19.2.tar.gz
-      @dl Windows windows-386/elvish-v0.19.2.zip
+      @dl Linux linux-386/elvish-v0.20.0.tar.gz
+      @dl Windows windows-386/elvish-v0.20.0.zip
     </td>
     <td>
-      @dl Linux linux-arm64/elvish-v0.19.2.tar.gz
-      @dl macOS darwin-arm64/elvish-v0.19.2.tar.gz
+      @dl Linux linux-arm64/elvish-v0.20.0.tar.gz
+      @dl macOS darwin-arm64/elvish-v0.20.0.tar.gz
     </td>
   </tr>
 </table>
@@ -80,8 +80,8 @@ After downloading the binary archive, following these steps to install it:
 
 ```elvish
 cd ~/Downloads # or wherever the binary archive was downloaded to
-tar xvf elvish-HEAD.tar.gz # or elvish-v0.15.0.tar.gz for release version
-chmod +x elvish-HEAD # or elvish-v0.15.0 for release version
+tar xvf elvish-HEAD.tar.gz # or elvish-v0.20.0.tar.gz for release version
+chmod +x elvish-HEAD # or elvish-v0.20.0 for release version
 sudo cp elvish-HEAD /usr/local/bin/elvish # or anywhere else on PATH
 ```
 
@@ -354,6 +354,27 @@ for historical interest.
     <th>amd64</th>
     <th>386</th>
     <th>arm64</th>
+  </tr>
+  <tr>
+    <td>
+      0.19.2 (<a href="../blog/0.19.1-release-notes.html">release notes</a>)
+    </td>
+    <td>
+      @dl Linux linux-amd64/elvish-v0.19.2.tar.gz
+      @dl macOS darwin-amd64/elvish-v0.19.2.tar.gz
+      @dl FreeBSD freebsd-amd64/elvish-v0.19.2.tar.gz
+      @dl NetBSD netbsd-amd64/elvish-v0.19.2.tar.gz
+      @dl OpenBSD openbsd-amd64/elvish-v0.19.2.tar.gz
+      @dl Windows windows-amd64/elvish-v0.19.2.zip
+    </td>
+    <td>
+      @dl Linux linux-386/elvish-v0.19.2.tar.gz
+      @dl Windows windows-386/elvish-v0.19.2.zip
+    </td>
+    <td>
+      @dl Linux linux-arm64/elvish-v0.19.2.tar.gz
+      @dl macOS darwin-arm64/elvish-v0.19.2.tar.gz
+    </td>
   </tr>
   <tr>
     <td>
