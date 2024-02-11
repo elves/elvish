@@ -86,18 +86,24 @@ buildone() {
 
     (
     cd $BIN_DIR
+    # Archive files store the modification timestamp of files. Change it to a
+    # fixed point in time to make the archive files reproducible.
+    touch -d 2000-01-01T00:00:00Z $BIN
     if test $GOOS = windows; then
-        # Zip files store the modification timestamp of files. Change it to a
-        # fixed point in time so that the zip files are reproducible.
-        touch -d 2000-01-01T00:00:00Z $BIN
         zip -q $ARCHIVE $BIN
-        # Update the modification time again to reflect the actual modification
-        # time (this operation technically makes the file appear slightly newer
-        # than it really is, but it's close enough).
-        touch $BIN
     else
-        tar cfz $ARCHIVE $BIN
+        # If we create a .tar.gz file directly with the tar command, the
+        # resulting archive will contain the timestamp of the .tar file,
+        # rendering the result unreproducible. As a result, we need to do it in
+        # two steps.
+        tar cf $BIN.tar $BIN
+        touch -d 2022-01-01T00:00:00Z $BIN.tar
+        gzip -k $BIN.tar
     fi
+    # Update the modification time again to reflect the actual modification
+    # time. (Technically this makes the file appear slightly newer han it really
+    # is, but it's close enough).
+    touch $BIN
 
     echo "Done"
 
