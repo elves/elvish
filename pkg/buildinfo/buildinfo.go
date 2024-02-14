@@ -19,7 +19,7 @@ import (
 
 // VersionBase identifies the version of Elvish. On the development branches, it
 // identifies the next release.
-const VersionBase = "0.20.0"
+const VersionBase = "0.20.1"
 
 // VCSOverride may be set during compilation to "time-commit" (e.g.
 // "20220320172241-5dc8c02a32cf") for identifying the version of development
