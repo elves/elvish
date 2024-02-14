@@ -271,15 +271,18 @@ Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
 # $math:pi #
 ////////////
 
-~> put $math:pi
-▶ (num 3.141592653589793)
+// The exact values of some floating-point numbers can vary slightly by
+// architecture (in particular s370x), so test them at a lower precision. Use
+// %.4f as a convention.
+~> printf "%.4f\n" $math:pi
+3.1416
 
 ///////////
 # $math:e #
 ///////////
 
-~> put $math:e
-▶ (num 2.718281828459045)
+~> printf "%.4f\n" $math:e
+2.7183
 
 ////////////
 # math:log #
@@ -329,8 +332,8 @@ Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
 
 ~> math:cos 0
 ▶ (num 1.0)
-~> math:cos 1
-▶ (num 0.5403023058681398)
+~> math:cos 1 | printf "%.4f\n" (one)
+0.5403
 ~> math:cos $math:pi
 ▶ (num -1.0)
 
@@ -351,10 +354,10 @@ Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
 
 ~> math:sin 0
 ▶ (num 0.0)
-~> math:sin 1
-▶ (num 0.8414709848078965)
-~> math:sin $math:pi
-▶ (num 1.2246467991473515e-16)
+~> math:sin 1 | printf "%.4f\n" (one)
+0.8415
+~> math:sin $math:pi | printf "%.4f\n" (one)
+0.0000
 
 /////////////
 # math:sinh #
@@ -373,10 +376,10 @@ Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
 
 ~> math:tan 0
 ▶ (num 0.0)
-~> math:tan 1
-▶ (num 1.557407724654902)
-~> math:tan $math:pi
-▶ (num -0.00000000000000012246467991473515)
+~> math:tan 1 | printf "%.4f\n" (one)
+1.5574
+~> math:tan $math:pi | printf "%.4f\n" (one)
+-0.0000
 
 /////////////
 # math:tanh #
@@ -404,8 +407,8 @@ Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
 # math:acos #
 /////////////
 
-~> math:acos 0
-▶ (num 1.5707963267948966)
+~> math:acos 0 | printf "%.4f\n" (one)
+1.5708
 ~> math:acos 1
 ▶ (num 0.0)
 ~> math:acos 1.00001
@@ -417,8 +420,8 @@ Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
 
 ~> math:asin 0
 ▶ (num 0.0)
-~> math:asin 1
-▶ (num 1.5707963267948966)
+~> math:asin 1 | printf "%.4f\n" (one)
+1.5708
 ~> math:asin 1.00001
 ▶ (num NaN)
 
@@ -428,10 +431,10 @@ Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
 
 ~> math:atan 0
 ▶ (num 0.0)
-~> math:atan 1
-▶ (num 0.7853981633974483)
-~> math:atan inf
-▶ (num 1.5707963267948966)
+~> math:atan 1 | printf "%.4f\n" (one)
+0.7854
+~> math:atan inf | printf "%.4f\n" (one)
+1.5708
 
 //////////////
 # math:acosh #
@@ -450,8 +453,8 @@ Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
 
 ~> math:asinh 0
 ▶ (num 0.0)
-~> math:asinh 1
-▶ (num 0.881373587019543)
+~> math:asinh 1 | printf "%.4f\n" (one)
+0.8814
 ~> math:asinh inf
 ▶ (num +Inf)
 
