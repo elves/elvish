@@ -31,7 +31,7 @@ archive:
     <th>arm64</th>
   </tr>
   <tr>
-    <td>HEAD (<a href="https://github.com/elves/elvish/blob/master/0.20.0-release-notes.md">draft release notes</a>)</td>
+    <td>HEAD (<a href="https://github.com/elves/elvish/blob/master/0.21.0-release-notes.md">draft release notes</a>)</td>
     <td>
       @dl Linux linux-amd64/elvish-HEAD.tar.gz
       @dl macOS darwin-amd64/elvish-HEAD.tar.gz
@@ -51,23 +51,23 @@ archive:
   </tr>
   <tr>
     <td>
-      0.20.0 (<a href="../blog/0.20.0-release-notes.html">release notes</a>)
+      0.20.1 (<a href="../blog/0.20.1-release-notes.html">release notes</a>)
     </td>
     <td>
-      @dl Linux linux-amd64/elvish-v0.20.0.tar.gz
-      @dl macOS darwin-amd64/elvish-v0.20.0.tar.gz
-      @dl FreeBSD freebsd-amd64/elvish-v0.20.0.tar.gz
-      @dl NetBSD netbsd-amd64/elvish-v0.20.0.tar.gz
-      @dl OpenBSD openbsd-amd64/elvish-v0.20.0.tar.gz
-      @dl Windows windows-amd64/elvish-v0.20.0.zip
+      @dl Linux linux-amd64/elvish-v0.20.1.tar.gz
+      @dl macOS darwin-amd64/elvish-v0.20.1.tar.gz
+      @dl FreeBSD freebsd-amd64/elvish-v0.20.1.tar.gz
+      @dl NetBSD netbsd-amd64/elvish-v0.20.1.tar.gz
+      @dl OpenBSD openbsd-amd64/elvish-v0.20.1.tar.gz
+      @dl Windows windows-amd64/elvish-v0.20.1.zip
     </td>
     <td>
-      @dl Linux linux-386/elvish-v0.20.0.tar.gz
-      @dl Windows windows-386/elvish-v0.20.0.zip
+      @dl Linux linux-386/elvish-v0.20.1.tar.gz
+      @dl Windows windows-386/elvish-v0.20.1.zip
     </td>
     <td>
-      @dl Linux linux-arm64/elvish-v0.20.0.tar.gz
-      @dl macOS darwin-arm64/elvish-v0.20.0.tar.gz
+      @dl Linux linux-arm64/elvish-v0.20.1.tar.gz
+      @dl macOS darwin-arm64/elvish-v0.20.1.tar.gz
     </td>
   </tr>
 </table>
@@ -354,6 +354,27 @@ for historical interest.
     <th>amd64</th>
     <th>386</th>
     <th>arm64</th>
+  </tr>
+  <tr>
+    <td>
+      0.20.0 (<a href="../blog/0.20.0-release-notes.html">release notes</a>)
+    </td>
+    <td>
+      @dl Linux linux-amd64/elvish-v0.20.0.tar.gz
+      @dl macOS darwin-amd64/elvish-v0.20.0.tar.gz
+      @dl FreeBSD freebsd-amd64/elvish-v0.20.0.tar.gz
+      @dl NetBSD netbsd-amd64/elvish-v0.20.0.tar.gz
+      @dl OpenBSD openbsd-amd64/elvish-v0.20.0.tar.gz
+      @dl Windows windows-amd64/elvish-v0.20.0.zip
+    </td>
+    <td>
+      @dl Linux linux-386/elvish-v0.20.0.tar.gz
+      @dl Windows windows-386/elvish-v0.20.0.zip
+    </td>
+    <td>
+      @dl Linux linux-arm64/elvish-v0.20.0.tar.gz
+      @dl macOS darwin-arm64/elvish-v0.20.0.tar.gz
+    </td>
   </tr>
   <tr>
     <td>
