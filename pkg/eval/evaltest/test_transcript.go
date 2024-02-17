@@ -91,33 +91,26 @@ import (
 //	~> echo foo
 //	foo
 func TestTranscriptsInFS(t *testing.T, fsys fs.FS, setupPairs ...any) {
-	sessions, err := transcript.ParseFromFS(fsys)
+	nodes, err := transcript.ParseFromFS(fsys)
 	if err != nil {
 		t.Fatalf("parse transcript sessions: %v", err)
 	}
-	testTranscripts(t, sessions, setupPairs)
+	testTranscripts(t, buildSetupDirectives(setupPairs), nodes, nil)
 }
 
-func testTranscripts(t *testing.T, sessions []transcript.Session, setupPairs []any) {
-	setupMap, argSetupMap := buildSetupMaps(setupPairs)
-	for _, session := range sessions {
-		t.Run(session.Name, func(t *testing.T) {
+func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node, commonDirectives []string) {
+	for _, node := range nodes {
+		t.Run(node.Name, func(t *testing.T) {
 			ev := eval.NewEvaler()
 			mods.AddTo(ev)
-			for _, directive := range session.Directives {
-				name, arg, _ := strings.Cut(directive, " ")
-				if f, ok := setupMap[name]; ok {
-					if arg != "" {
-						t.Fatalf("setup function %s doesn't support arguments", name)
-					}
-					f(t, ev)
-				} else if f, ok := argSetupMap[name]; ok {
-					f(t, ev, arg)
-				} else {
-					t.Fatalf("unknown setup function: %s", name)
-				}
+			// TODO: Use slices.Concat when Elvish requires Go 1.22
+			directives := make([]string, 0, len(commonDirectives)+len(node.Directives))
+			directives = append(directives, commonDirectives...)
+			directives = append(directives, node.Directives...)
+			for _, directive := range directives {
+				sd.apply(t, ev, directive)
 			}
-			for _, interaction := range session.Interactions {
+			for _, interaction := range node.Interactions {
 				want := interaction.Output
 				got := evalAndCollectOutput(t, ev, interaction.Code)
 				if want != got {
@@ -125,11 +118,17 @@ func testTranscripts(t *testing.T, sessions []transcript.Session, setupPairs []a
 						interaction.PromptAndCode(), diff.DiffNoHeader(want, got))
 				}
 			}
+			testTranscripts(t, sd, node.Children, directives)
 		})
 	}
 }
 
-func buildSetupMaps(setupPairs []any) (map[string]func(*testing.T, *eval.Evaler), map[string]func(*testing.T, *eval.Evaler, string)) {
+type setupDirectives struct {
+	setupMap    map[string]func(*testing.T, *eval.Evaler)
+	argSetupMap map[string]func(*testing.T, *eval.Evaler, string)
+}
+
+func buildSetupDirectives(setupPairs []any) *setupDirectives {
 	if len(setupPairs)%2 != 0 {
 		panic(fmt.Sprintf("variadic arguments must come in pairs, got %d", len(setupPairs)))
 	}
@@ -196,7 +195,21 @@ func buildSetupMaps(setupPairs []any) (map[string]func(*testing.T, *eval.Evaler)
 			panic(fmt.Sprintf("unsupported setup function type: %T", f))
 		}
 	}
-	return setupMap, argSetupMap
+	return &setupDirectives{setupMap, argSetupMap}
+}
+
+func (sd *setupDirectives) apply(t *testing.T, ev *eval.Evaler, directive string) {
+	name, arg, _ := strings.Cut(directive, " ")
+	if f, ok := sd.setupMap[name]; ok {
+		if arg != "" {
+			t.Fatalf("setup function %q doesn't support arguments", name)
+		}
+		f(t, ev)
+	} else if f, ok := sd.argSetupMap[name]; ok {
+		f(t, ev, arg)
+	} else {
+		t.Fatalf("unknown setup function %q in directive %q", name, directive)
+	}
 }
 
 var valuePrefix = "▶ "

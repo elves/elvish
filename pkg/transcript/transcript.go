@@ -133,17 +133,20 @@ import (
 	"src.elv.sh/pkg/md"
 )
 
-// Session represents a REPL session.
-type Session struct {
+// Node is the result of parsing transcripts. It can represent an .elvts file, a
+// elvish-transcript block within the elvdoc of an .elv file, or an section
+// within them started by a header.
+type Node struct {
 	Name         string
 	Directives   []string
 	Interactions []Interaction
+	Children     []*Node
 }
 
 // ParseFromFS scans fsys recursively for .elv and .elvts files, and
 // extract transcript sessions from them.
-func ParseFromFS(fsys fs.FS) ([]Session, error) {
-	var sessions []Session
+func ParseFromFS(fsys fs.FS) ([]*Node, error) {
+	var nodes []*Node
 	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -151,12 +154,11 @@ func ParseFromFS(fsys fs.FS) ([]Session, error) {
 		if d.IsDir() {
 			return nil
 		}
-		var parseSessions func(namePrefix string, file io.Reader) ([]Session, error)
+		var isElv bool
 		switch filepath.Ext(path) {
 		case ".elv":
-			parseSessions = parseElvdocInElv
+			isElv = true
 		case ".elvts":
-			parseSessions = parseElvts
 		default:
 			return nil
 		}
@@ -164,51 +166,74 @@ func ParseFromFS(fsys fs.FS) ([]Session, error) {
 		if err != nil {
 			return err
 		}
-		moreSessions, err := parseSessions(path, file)
-		if err != nil {
-			return err
+		if isElv {
+			moreNodes, err := parseNodesFromElvdoc(path, file)
+			if err != nil {
+				return err
+			}
+			nodes = append(nodes, moreNodes...)
+		} else {
+			lines, err := readAllLines(file)
+			if err != nil {
+				return fmt.Errorf("read %s: %w", path, err)
+			}
+			node, err := parseNode(path, fileLines{path, lines, 1})
+			if err != nil {
+				return err
+			}
+			nodes = append(nodes, node)
 		}
-		sessions = append(sessions, moreSessions...)
 		return nil
 	})
-	return sessions, err
+	return nodes, err
+}
+
+func readAllLines(r io.Reader) ([]string, error) {
+	scanner := bufio.NewScanner(r)
+	var lines []string
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines, scanner.Err()
 }
 
 // Scans the elvdoc in an Elvish source file for elvish-transcript blocks and
-// parses each one similar to an .elvts file.
-func parseElvdocInElv(namePrefix string, r io.Reader) ([]Session, error) {
+// parses each one similar to an .elvts file. Each block becomes a [Node] on its
+// own, named like "foo.elv/symbol/code-fence-info" or "foo.elv/symbol" (if
+// fence info is empty).
+func parseNodesFromElvdoc(filename string, r io.Reader) ([]*Node, error) {
 	docs, err := elvdoc.Extract(r, "")
 	if err != nil {
-		return nil, fmt.Errorf("parsing %s for elvdoc: %w", namePrefix, err)
+		return nil, fmt.Errorf("parse %s for elvdoc: %w", filename, err)
 	}
-	var sessions []Session
+	var nodes []*Node
 	parseEntries := func(entries []elvdoc.Entry, prefix string) error {
 		for _, entry := range entries {
-			codec := transcriptExtractor{namePrefix: prefix + entry.Name}
+			codec := transcriptExtractor{namePrefix: filename + "/" + prefix + entry.Name}
 			md.Render(entry.Content, &codec)
 			if codec.err != nil {
 				return codec.err
 			}
-			sessions = append(sessions, codec.sessions...)
+			nodes = append(nodes, codec.nodes...)
 		}
 		return nil
 	}
-	err = parseEntries(docs.Fns, namePrefix+"/")
+	err = parseEntries(docs.Fns, "")
 	if err != nil {
 		return nil, err
 	}
-	err = parseEntries(docs.Vars, namePrefix+"/$")
+	err = parseEntries(docs.Vars, "$")
 	if err != nil {
 		return nil, err
 	}
-	return sessions, nil
+	return nodes, nil
 }
 
 // A [md.Codec] implementation that extracts elvish-transcript code blocks as
 // sessions.
 type transcriptExtractor struct {
 	namePrefix string // $filename/$symbol
-	sessions   []Session
+	nodes      []*Node
 	err        error
 }
 
@@ -223,38 +248,16 @@ func (e *transcriptExtractor) Do(op md.Op) {
 			if len(fields) > 1 {
 				name += "/" + strings.Join(fields[1:], " ")
 			}
-			// Ideally we'd like to pass the line number where this code block
-			// starts, so that parseSessionsInBlock can report the accurate line
-			// number within the overall file (currently it will report
-			// something like a.elv/x:12). To do that, we'll need to change
-			// pkg/md to keep track of the line number and pass it to the Codec
-			// first.
-			sessions, err := parseInner(fileLines{name, op.Lines, 1})
+			// TODO: Use the real filename, instead of the name of the code
+			// block, in fileLines.
+			node, err := parseNode(name, fileLines{name, op.Lines, 1})
 			if err != nil {
 				e.err = err
 				return
 			}
-			e.sessions = append(e.sessions, sessions...)
+			e.nodes = append(e.nodes, node)
 		}
 	}
-}
-
-// Parses an .elvts file.
-func parseElvts(name string, r io.Reader) ([]Session, error) {
-	lines, err := readAllLines(r)
-	if err != nil {
-		return nil, err
-	}
-	return parseInner(fileLines{name, lines, 1})
-}
-
-func readAllLines(r io.Reader) ([]string, error) {
-	scanner := bufio.NewScanner(r)
-	var lines []string
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	return lines, scanner.Err()
 }
 
 // Represents a range of lines from a file.
@@ -268,74 +271,60 @@ func (fl *fileLines) describeLine(i int) string {
 	return fmt.Sprintf("%s:%d", fl.filename, i+fl.startLineno)
 }
 
-type section struct {
-	heading    string
-	directives []string
+func (fl *fileLines) slice(i, j int) fileLines {
+	return fileLines{fl.filename, fl.lines[i:j], fl.startLineno}
 }
 
-func parseInner(fl fileLines) ([]Session, error) {
-	var sessions []Session
-	sectionStack := []section{{fl.filename, nil}}
-	var testLines []string
-	var testLinesStartLineno int
-	consumeTestLines := func() error {
-		name := joinHeading(sectionStack)
-		session, err := parseSession(name, fileLines{fl.filename, testLines, testLinesStartLineno})
-		testLines = nil
+// Parses a single node. This could be an .elvts file, or part of an .elv file.
+func parseNode(name string, fl fileLines) (*Node, error) {
+	// Path from root to current node. Index corresponds to level, so
+	// nodeStack[0] is the root,  nodeStack[1] is the currently active h1, and
+	// so on.
+	nodeStack := []*Node{{Name: name}}
+
+	for i := 0; i < len(fl.lines); {
+		if title, level, ok := parseHeading(fl.lines[i]); ok {
+			// Consume a heading line. This branch will always be entered with
+			// the possible exception of the first iteration, because the
+			// condition is the terminating condition of the loop below to find
+			// which lines to parse as a Session.
+			if level > len(nodeStack) {
+				return nil, fmt.Errorf("%s: h%d before h%d", fl.describeLine(i), level, level-1)
+			}
+			i++
+			node := &Node{Name: title}
+			parent := nodeStack[level-1]
+			parent.Children = append(parent.Children, node)
+			// Pop until parent is at the top, then push node
+			nodeStack = append(nodeStack[:level], node)
+		}
+		// Consume all lines to the next heading, and parse it as a Session to
+		// attach to the current node.
+		var j int
+		for j = i + 1; j < len(fl.lines); j++ {
+			if _, _, isHeading := parseHeading(fl.lines[j]); isHeading {
+				break
+			}
+		}
+		err := parseSession(nodeStack[len(nodeStack)-1], fl.slice(i, j))
+		i = j
 		if err != nil {
-			return err
-		}
-		sectionStack[len(sectionStack)-1].directives = session.Directives
-		if len(session.Interactions) > 0 {
-			sessions = append(sessions, Session{
-				name, joinDirectives(sectionStack), session.Interactions})
-		}
-		return nil
-	}
-	for i, line := range fl.lines {
-		if strings.HasPrefix(line, "# ") && strings.HasSuffix(line, " #") {
-			err := consumeTestLines()
-			if err != nil {
-				return nil, err
-			}
-			sectionStack = append(sectionStack[:1], section{heading: line[2 : len(line)-2]})
-		} else if strings.HasPrefix(line, "## ") && strings.HasSuffix(line, " ##") {
-			err := consumeTestLines()
-			if err != nil {
-				return nil, err
-			}
-			if len(sectionStack) < 2 {
-				return nil, fmt.Errorf("%s: h2 before any h1", fl.describeLine(i))
-			}
-			sectionStack = append(sectionStack[:2], section{heading: line[3 : len(line)-3]})
-		} else {
-			if len(testLines) == 0 {
-				testLinesStartLineno = i + fl.startLineno
-			}
-			testLines = append(testLines, line)
+			return nil, err
 		}
 	}
-	err := consumeTestLines()
-	if err != nil {
-		return nil, err
-	}
-	return sessions, nil
+	return nodeStack[0], nil
 }
 
-func joinHeading(s []section) string {
-	headings := make([]string, len(s))
-	for i, section := range s {
-		headings[i] = section.heading
+func parseHeading(line string) (title string, level int, ok bool) {
+	if strings.HasPrefix(line, "# ") && strings.HasSuffix(line, " #") {
+		return line[2 : len(line)-2], 1, true
+	} else if strings.HasPrefix(line, "## ") && strings.HasSuffix(line, " ##") {
+		return line[3 : len(line)-3], 2, true
+	} else if strings.HasPrefix(line, "### ") && strings.HasSuffix(line, " ###") {
+		return line[4 : len(line)-4], 3, true
+	} else {
+		return "", 0, false
 	}
-	return strings.Join(headings, "/")
-}
-
-func joinDirectives(s []section) []string {
-	var ds []string
-	for _, section := range s {
-		ds = append(ds, section.directives...)
-	}
-	return ds
 }
 
 // Interaction represents a single REPL interaction - user input followed by the
@@ -371,7 +360,8 @@ var (
 	errDirectiveOnlyAllowedAtStartOfSession = errors.New("directive only allowed at start of a session")
 )
 
-func parseSession(name string, fl fileLines) (Session, error) {
+// Parses a session into n. Mutates n.Directives and n.Interactions on success.
+func parseSession(n *Node, fl fileLines) error {
 	lines := fl.lines
 	// Process leading empty lines, comment lines and directive lines.
 	var directives []string
@@ -386,7 +376,7 @@ func parseSession(name string, fl fileLines) (Session, error) {
 		}
 	}
 	if start < len(lines) && !PromptPattern.MatchString(lines[start]) {
-		return Session{}, fmt.Errorf("%s: %w", fl.describeLine(start), errFirstLineDoesntHavePrompt)
+		return fmt.Errorf("%s: %w", fl.describeLine(start), errFirstLineDoesntHavePrompt)
 	}
 	// Remove trailing empty lines and comment lines.
 	for len(lines) > 0 && (lines[len(lines)-1] == "" || isComment(lines[len(lines)-1])) {
@@ -409,7 +399,7 @@ func parseSession(name string, fl fileLines) (Session, error) {
 		var output []string
 		for i < len(lines) && !PromptPattern.MatchString(lines[i]) {
 			if _, ok := parseDirective(lines[i]); ok {
-				return Session{}, fmt.Errorf("%s: %w",
+				return fmt.Errorf("%s: %w",
 					fl.describeLine(i), errDirectiveOnlyAllowedAtStartOfSession)
 			} else if isComment(lines[i]) {
 			} else {
@@ -424,7 +414,9 @@ func parseSession(name string, fl fileLines) (Session, error) {
 			strings.Join(code, "\n"),
 			joinLines(output)})
 	}
-	return Session{name, directives, interactions}, nil
+	n.Directives = directives
+	n.Interactions = interactions
+	return nil
 }
 
 var slashOnlyCommentPattern = regexp.MustCompile(`^///*$`)

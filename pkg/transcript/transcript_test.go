@@ -39,7 +39,7 @@ func TestParseSessionsInFS(t *testing.T) {
 				},
 				"ignored.go": "package a",
 			}).
-			Rets([]Session{
+			Rets([]*Node{
 				{Name: "d1/foo.elv/x", Interactions: []Interaction{{Prompt: "~> ", Code: "echo foo", Output: "foo\n"}}},
 				{Name: "d2/bar.elvts", Interactions: []Interaction{{Prompt: "~> ", Code: "echo bar", Output: "bar\n"}}},
 			}),
@@ -65,7 +65,7 @@ func TestParseSessionsInFS(t *testing.T) {
 				# ~~~
 				var v
 				`)).
-			Rets([]Session{
+			Rets([]*Node{
 				{Name: "a.elv/f", Interactions: []Interaction{{"~> ", "f 1", "1\n"}}},
 				{Name: "a.elv/f", Interactions: []Interaction{{"~> ", "f 2", "2\n"}}},
 				{Name: "a.elv/$v", Interactions: []Interaction{{"~> ", "echo $v", "foo\n"}}},
@@ -79,7 +79,7 @@ func TestParseSessionsInFS(t *testing.T) {
 				# ~~~
 				fn x {|| }
 				`)).
-			Rets(oneSession("a.elv/x/title",
+			Rets(oneNode("a.elv/x/title",
 				Interaction{Prompt: "~> ", Code: "echo foo", Output: "foo\n"})),
 
 		It("processes each code block in .elv files like a .elvts file").
@@ -96,10 +96,20 @@ func TestParseSessionsInFS(t *testing.T) {
 				# ~> nop h2
 				fn x { }
 				`)).
-			Rets([]Session{
-				{Name: "a.elv/x", Interactions: []Interaction{{Prompt: "~> ", Code: "nop top"}}},
-				{Name: "a.elv/x/h1", Interactions: []Interaction{{Prompt: "~> ", Code: "nop h1"}}},
-				{Name: "a.elv/x/h1/h2", Interactions: []Interaction{{Prompt: "~> ", Code: "nop h2"}}},
+			Rets([]*Node{
+				{
+					Name:         "a.elv/x",
+					Interactions: []Interaction{{Prompt: "~> ", Code: "nop top"}},
+					Children: []*Node{
+						{
+							Name:         "h1",
+							Interactions: []Interaction{{Prompt: "~> ", Code: "nop h1"}},
+							Children: []*Node{
+								{Name: "h2", Interactions: []Interaction{{Prompt: "~> ", Code: "nop h2"}}},
+							},
+						},
+					},
+				},
 			}, error(nil)),
 
 		// Session splitting
@@ -114,10 +124,17 @@ func TestParseSessionsInFS(t *testing.T) {
 
 
 				`)).
-			Rets(oneSession("a.elvts/h1",
-				Interaction{Prompt: "~> ", Code: "echo foo", Output: "foo\n"})),
+			Rets([]*Node{
+				{
+					Name: "a.elvts",
+					Children: []*Node{{
+						Name:         "h1",
+						Interactions: []Interaction{{Prompt: "~> ", Code: "echo foo", Output: "foo\n"}},
+					}},
+				},
+			}),
 
-		It("use headings for session name in .elvts files").
+		It("organizes nodes into a tree").
 			Args(oneFile("a.elvts", `
 				~> nop top level
 				
@@ -133,12 +150,25 @@ func TestParseSessionsInFS(t *testing.T) {
 				# section 2 #
 				~> nop in section 2
 				`)).
-			Rets([]Session{
-				{Name: "a.elvts", Interactions: []Interaction{{"~> ", "nop top level", ""}}},
-				{Name: "a.elvts/section 1", Interactions: []Interaction{{"~> ", "nop in section 1", ""}}},
-				{Name: "a.elvts/section 1/subsection 1.1", Interactions: []Interaction{{"~> ", "nop in subsection 1.1", ""}}},
-				{Name: "a.elvts/section 1/subsection 1.2", Interactions: []Interaction{{"~> ", "nop in subsection 1.2", ""}}},
-				{Name: "a.elvts/section 2", Interactions: []Interaction{{"~> ", "nop in section 2", ""}}},
+			Rets([]*Node{
+				{
+					Name:         "a.elvts",
+					Interactions: []Interaction{{"~> ", "nop top level", ""}},
+					Children: []*Node{
+						{
+							Name:         "section 1",
+							Interactions: []Interaction{{"~> ", "nop in section 1", ""}},
+							Children: []*Node{
+								{Name: "subsection 1.1", Interactions: []Interaction{{"~> ", "nop in subsection 1.1", ""}}},
+								{Name: "subsection 1.2", Interactions: []Interaction{{"~> ", "nop in subsection 1.2", ""}}},
+							},
+						},
+						{
+							Name:         "section 2",
+							Interactions: []Interaction{{"~> ", "nop in section 2", ""}},
+						},
+					},
+				},
 			}, error(nil)),
 
 		It("ignores comment lines in .elvts files").
@@ -153,13 +183,14 @@ func TestParseSessionsInFS(t *testing.T) {
 				// some comments after output; note that the preceding empty
 				// lines is also stripped
 				`)).
-			Rets(oneSession("a.elvts",
+			Rets(oneNode("a.elvts",
 				Interaction{Prompt: "~> ", Code: "echo foo; echo bar", Output: "foo\nbar\n"})),
-		It("errors with h2 appears before any h1 in .elvts files").
+
+		It("errors if h2 appears before any h1 in .elvts files").
 			Args(oneFile("a.elvts", `
 				## h2 ##
 				`)).
-			Rets([]Session(nil), errorWithMsg{"a.elvts:1: h2 before any h1"}),
+			Rets([]*Node(nil), errorWithMsg{"a.elvts:1: h2 before h1"}),
 
 		// How a single session is parsed into (REPL) cycles. Most of the code
 		// path is shared between .elv and .elvts files, so most of the cases
@@ -172,7 +203,7 @@ func TestParseSessionsInFS(t *testing.T) {
 				foo
 				bar
 				`)).
-			Rets(oneSession("a.elvts",
+			Rets(oneNode("a.elvts",
 				Interaction{Prompt: "~> ", Code: "echo foo\necho bar", Output: "foo\nbar\n"})),
 
 		It("supports multiple cycles").
@@ -186,7 +217,7 @@ func TestParseSessionsInFS(t *testing.T) {
 				lorem
 				ipsum
 				`)).
-			Rets(oneSession("a.elvts",
+			Rets(oneNode("a.elvts",
 				Interaction{Prompt: "~> ", Code: "echo foo\necho bar", Output: "foo\nbar\n"},
 				Interaction{Prompt: "~> ", Code: "echo lorem\necho ipsum", Output: "lorem\nipsum\n"})),
 
@@ -195,7 +226,7 @@ func TestParseSessionsInFS(t *testing.T) {
 				~> nop
 				~> nop
 				`)).
-			Rets(oneSession("a.elvts",
+			Rets(oneNode("a.elvts",
 				Interaction{Prompt: "~> ", Code: "nop", Output: ""},
 				Interaction{Prompt: "~> ", Code: "nop", Output: ""})),
 
@@ -206,7 +237,7 @@ func TestParseSessionsInFS(t *testing.T) {
 				/opt/bar> echo bar
 				bar
 				`)).
-			Rets(oneSession("a.elvts",
+			Rets(oneNode("a.elvts",
 				Interaction{Prompt: "~/foo> ", Code: "echo foo", Output: "foo\n"},
 				Interaction{Prompt: "/opt/bar> ", Code: "echo bar", Output: "bar\n"})),
 
@@ -220,59 +251,10 @@ func TestParseSessionsInFS(t *testing.T) {
 
 				~> nop
 				`)).
-			Rets([]Session{{
+			Rets([]*Node{{
 				Name:         "a.elvts",
 				Directives:   []string{"directive 1", "directive 2"},
 				Interactions: []Interaction{{Prompt: "~> ", Code: "nop"}}}}),
-
-		It("propagates directives to descendents").
-			Args(oneFile("a.elvts", `
-				//directive top
-				~> nop top
-
-				# 1 #
-				//directive 1
-				~> nop 1
-
-				## 1.1 ##
-				//directive 1.1
-				~> nop 1.1
-
-				## 1.2 ##
-				//directive 1.2
-				~> nop 1.2
-
-				# 2 #
-				//directive 2
-				~> nop 2
-				`)).
-			Rets([]Session{
-				{
-					Name:         "a.elvts",
-					Directives:   []string{"directive top"},
-					Interactions: []Interaction{{Prompt: "~> ", Code: "nop top"}},
-				},
-				{
-					Name:         "a.elvts/1",
-					Directives:   []string{"directive top", "directive 1"},
-					Interactions: []Interaction{{Prompt: "~> ", Code: "nop 1"}},
-				},
-				{
-					Name:         "a.elvts/1/1.1",
-					Directives:   []string{"directive top", "directive 1", "directive 1.1"},
-					Interactions: []Interaction{{Prompt: "~> ", Code: "nop 1.1"}},
-				},
-				{
-					Name:         "a.elvts/1/1.2",
-					Directives:   []string{"directive top", "directive 1", "directive 1.2"},
-					Interactions: []Interaction{{Prompt: "~> ", Code: "nop 1.2"}},
-				},
-				{
-					Name:         "a.elvts/2",
-					Directives:   []string{"directive top", "directive 2"},
-					Interactions: []Interaction{{Prompt: "~> ", Code: "nop 2"}},
-				},
-			}),
 
 		It("errors when a session in a .elvts file doesn't start with a prompt").
 			Args(oneFile("a.elvts", `
@@ -281,7 +263,7 @@ func TestParseSessionsInFS(t *testing.T) {
 				~> echo foo
 				foo
 				`)).
-			Rets([]Session(nil), errorWithMsg{"a.elvts:2: first non-comment line of a session doesn't have prompt"}),
+			Rets([]*Node(nil), errorWithMsg{"a.elvts:2: first non-comment line of a session doesn't have prompt"}),
 
 		It("errors when a session in a fn elvdoc in a .elv file doesn't start with a prompt").
 			Args(oneFile("a.elv", `
@@ -290,7 +272,7 @@ func TestParseSessionsInFS(t *testing.T) {
 				# ~~~
 				fn x { }
 				`)).
-			Rets([]Session(nil), errorWithMsg{"a.elv/x:1: first non-comment line of a session doesn't have prompt"}),
+			Rets([]*Node(nil), errorWithMsg{"a.elv/x:1: first non-comment line of a session doesn't have prompt"}),
 
 		It("errors when a session in a var elvdoc in a .elv file doesn't start with a prompt").
 			Args(oneFile("a.elv", `
@@ -299,14 +281,14 @@ func TestParseSessionsInFS(t *testing.T) {
 				# ~~~
 				var x
 				`)).
-			Rets([]Session(nil), errorWithMsg{"a.elv/$x:1: first non-comment line of a session doesn't have prompt"}),
+			Rets([]*Node(nil), errorWithMsg{"a.elv/$x:1: first non-comment line of a session doesn't have prompt"}),
 	)
 }
 
 func oneFile(name, content string) Dir { return Dir{name: Dedent(content)} }
 
-func oneSession(name string, interactions ...Interaction) ([]Session, error) {
-	return []Session{{Name: name, Interactions: interactions}}, nil
+func oneNode(name string, interactions ...Interaction) ([]*Node, error) {
+	return []*Node{{Name: name, Interactions: interactions}}, nil
 }
 
 type errorWithMsg struct{ msg string }
