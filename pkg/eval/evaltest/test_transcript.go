@@ -91,7 +91,7 @@ import (
 //	~> echo foo
 //	foo
 func TestTranscriptsInFS(t *testing.T, fsys fs.FS, setupPairs ...any) {
-	sessions, err := transcript.ParseSessionsInFS(fsys)
+	sessions, err := transcript.ParseFromFS(fsys)
 	if err != nil {
 		t.Fatalf("parse transcript sessions: %v", err)
 	}

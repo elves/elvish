@@ -16,7 +16,7 @@ var (
 )
 
 func TestParseSessionsInFS(t *testing.T) {
-	tt.Test(t, ParseSessionsInFS,
+	tt.Test(t, ParseFromFS,
 		// How sessions are discovered, in both .elv and .elvts files.
 
 		It("scans .elv and .elvts files recursively, ignoring other files").
