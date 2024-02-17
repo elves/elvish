@@ -131,6 +131,7 @@ import (
 
 	"src.elv.sh/pkg/elvdoc"
 	"src.elv.sh/pkg/md"
+	"src.elv.sh/pkg/strutil"
 )
 
 // Node is the result of parsing transcripts. It can represent an .elvts file, a
@@ -412,7 +413,7 @@ func parseSession(n *Node, fl fileLines) error {
 			// Code doesn't include the trailing newline, so a simple
 			// strings.Join is appropriate.
 			strings.Join(code, "\n"),
-			joinLines(output)})
+			strutil.JoinLines(output)})
 	}
 	n.Directives = directives
 	n.Interactions = interactions
@@ -430,12 +431,4 @@ func parseDirective(line string) (string, bool) {
 		return line[2:], true
 	}
 	return "", false
-}
-
-// Equivalent to appending each line with a "\n" and joining all of them.
-func joinLines(lines []string) string {
-	if len(lines) == 0 {
-		return ""
-	}
-	return strings.Join(lines, "\n") + "\n"
 }

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/strutil"
 )
 
 // Docs records doc comments.
@@ -196,20 +197,9 @@ type docBlock struct {
 }
 
 func (db *docBlock) consume() (id, content string, showUnstable bool) {
-	id = db.id
-	db.id = ""
-
-	var sb strings.Builder
-	for _, line := range db.lines {
-		sb.WriteString(line)
-		sb.WriteByte('\n')
-	}
-	db.lines = db.lines[:0]
-
-	showUnstable = db.showUnstable
-	db.showUnstable = false
-
-	return id, sb.String(), showUnstable
+	id, content, showUnstable = db.id, strutil.JoinLines(db.lines), db.showUnstable
+	*db = docBlock{"", db.lines[:0], false}
+	return
 }
 
 func unstable(s string) bool { return s != "-" && strings.HasPrefix(s, "-") }
