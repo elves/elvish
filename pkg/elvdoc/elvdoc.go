@@ -24,6 +24,7 @@ type Entry struct {
 	Name    string
 	HTMLID  string // ID to use in HTML. If empty, just use Name.
 	Content string
+	LineNo  int // 1-based line number for the first line of Content. 0 if Content is empty.
 	Fn      *Fn // nil for variables or functions declared with doc:fn.
 }
 
@@ -132,41 +133,77 @@ var (
 
 const showUnstable = "#doc:show-unstable"
 
+// Keeps the state of the current elvdoc block.
+//
+// An elvdoc block contains a number of consecutive comment lines, followed
+// optionally by directive lines (#doc:id or #doc:show-unstable), and ends
+// with a fn/var/#doc:fn line.
+type blockState struct {
+	lines         []string
+	startLineNo   int
+	seenDirective bool
+	id            string
+	showUnstable  bool
+}
+
+// Uses the state to set relevant fields in the Entry, and resets the state.
+func (b *blockState) finish(e *Entry) {
+	e.HTMLID = b.id
+	e.Content = strutil.JoinLines(b.lines)
+	e.LineNo = b.startLineNo
+	*b = blockState{}
+}
+
 // Extract extracts the elvdoc of one module from an Elvish source.
 func Extract(r io.Reader, symbolPrefix string) (Docs, error) {
 	var docs Docs
-	var block docBlock
+	var block blockState
 	scanner := bufio.NewScanner(r)
+	lineNo := 0
 	for scanner.Scan() {
 		line := scanner.Text()
-		if line == "#" {
-			block.lines = append(block.lines, "")
-		} else if strings.HasPrefix(line, "# ") {
-			block.lines = append(block.lines, line[2:])
+		lineNo++
+		if line == "#" || strings.HasPrefix(line, "# ") {
+			if block.seenDirective {
+				return Docs{}, fmt.Errorf("line %d: comment may not follow #doc: directive", lineNo)
+			}
+			if len(block.lines) == 0 {
+				block.startLineNo = lineNo
+			}
+			if line == "#" {
+				block.lines = append(block.lines, "")
+			} else {
+				block.lines = append(block.lines, line[2:])
+			}
 		} else if line == showUnstable {
 			block.showUnstable = true
+			block.seenDirective = true
+		} else if m := idRegexp.FindStringSubmatch(line); m != nil {
+			block.id = m[1]
+			block.seenDirective = true
 		} else if m := fnRegexp.FindStringSubmatch(line); m != nil {
 			name, sig := m[1], m[2]
 			qname := symbolPrefix + name
 			usage := fnUsage(qname, sig)
-			id, content, showUnstable := block.consume()
-			if showUnstable || !unstable(name) {
-				docs.Fns = append(docs.Fns, Entry{qname, id, content, &Fn{sig, usage}})
+			if block.showUnstable || !unstable(name) {
+				entry := Entry{Name: qname, Fn: &Fn{sig, usage}}
+				block.finish(&entry)
+				docs.Fns = append(docs.Fns, entry)
 			}
 		} else if m := varRegexp.FindStringSubmatch(line); m != nil {
 			name := m[1]
-			id, content, showUnstable := block.consume()
-			if showUnstable || !unstable(name) {
-				docs.Vars = append(docs.Vars, Entry{"$" + symbolPrefix + name, id, content, nil})
+			if block.showUnstable || !unstable(name) {
+				entry := Entry{Name: "$" + symbolPrefix + name}
+				block.finish(&entry)
+				docs.Vars = append(docs.Vars, entry)
 			}
 		} else if m := fnNoSigRegexp.FindStringSubmatch(line); m != nil {
 			name := m[1]
-			id, content, _ := block.consume()
-			docs.Fns = append(docs.Fns, Entry{symbolPrefix + name, id, content, nil})
-		} else if m := idRegexp.FindStringSubmatch(line); m != nil {
-			block.id = m[1]
+			entry := Entry{Name: symbolPrefix + name}
+			block.finish(&entry)
+			docs.Fns = append(docs.Fns, entry)
 		} else {
-			block.consume()
+			block = blockState{}
 		}
 	}
 
@@ -204,18 +241,6 @@ func sigFields(sig string) []string {
 		}
 	}
 	return fields
-}
-
-type docBlock struct {
-	id           string
-	lines        []string
-	showUnstable bool
-}
-
-func (db *docBlock) consume() (id, content string, showUnstable bool) {
-	id, content, showUnstable = db.id, strutil.JoinLines(db.lines), db.showUnstable
-	*db = docBlock{"", db.lines[:0], false}
-	return
 }
 
 func unstable(s string) bool { return s != "-" && strings.HasPrefix(s, "-") }

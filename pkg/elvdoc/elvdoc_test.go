@@ -28,6 +28,7 @@ var extractTests = []struct {
 			{
 				Name:    "add",
 				Content: "Adds numbers.\n",
+				LineNo:  1,
 				Fn:      &Fn{Signature: "a b", Usage: "add $a $b"},
 			},
 		},
@@ -91,6 +92,7 @@ var extractTests = []struct {
 			{
 				Name:    "$foo",
 				Content: "Foo.\n",
+				LineNo:  1,
 			},
 		},
 	},
@@ -128,6 +130,7 @@ var extractTests = []struct {
 			{
 				Name:    "special",
 				Content: "Special function section.\n",
+				LineNo:  1,
 			},
 		},
 	},
@@ -144,6 +147,7 @@ var extractTests = []struct {
 				Name:    "+",
 				HTMLID:  "add",
 				Content: "Adds numbers.\n",
+				LineNo:  1,
 				Fn:      &Fn{Signature: "a b", Usage: "+ $a $b"},
 			},
 		},
@@ -168,6 +172,7 @@ var extractTests = []struct {
 			{
 				Name:    "-foo",
 				Content: "Unstable.\n",
+				LineNo:  1,
 				Fn:      &Fn{Usage: "-foo"},
 			},
 		},
@@ -217,8 +222,33 @@ var extractTests = []struct {
 
 						Supports two numbers.
 						`),
-				Fn: &Fn{Signature: "a b", Usage: "add $a $b"},
+				LineNo: 1,
+				Fn:     &Fn{Signature: "a b", Usage: "add $a $b"},
 			},
+		},
+	},
+
+	{
+		name: "line number tracking",
+		text: dedent(`
+			# Foo
+			# function
+			fn foo { }
+
+			# Bar
+			# function
+			fn bar { }
+
+			# Lorem
+			# variable
+			var lorem
+			`),
+		wantFns: []Entry{
+			{Name: "foo", Content: "Foo\nfunction\n", LineNo: 1, Fn: &Fn{Usage: "foo"}},
+			{Name: "bar", Content: "Bar\nfunction\n", LineNo: 5, Fn: &Fn{Usage: "bar"}},
+		},
+		wantVars: []Entry{
+			{Name: "$lorem", Content: "Lorem\nvariable\n", LineNo: 9},
 		},
 	},
 }
