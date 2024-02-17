@@ -208,9 +208,9 @@ func parseNodesFromElvdoc(filename string, r io.Reader) ([]*Node, error) {
 		return nil, fmt.Errorf("parse %s for elvdoc: %w", filename, err)
 	}
 	var nodes []*Node
-	parseEntries := func(entries []elvdoc.Entry, prefix string) error {
+	parseEntries := func(entries []elvdoc.Entry) error {
 		for _, entry := range entries {
-			codec := transcriptExtractor{namePrefix: filename + "/" + prefix + entry.Name}
+			codec := transcriptExtractor{namePrefix: filename + "/" + entry.Name}
 			md.Render(entry.Content, &codec)
 			if codec.err != nil {
 				return codec.err
@@ -219,11 +219,11 @@ func parseNodesFromElvdoc(filename string, r io.Reader) ([]*Node, error) {
 		}
 		return nil
 	}
-	err = parseEntries(docs.Fns, "")
+	err = parseEntries(docs.Fns)
 	if err != nil {
 		return nil, err
 	}
-	err = parseEntries(docs.Vars, "$")
+	err = parseEntries(docs.Vars)
 	if err != nil {
 		return nil, err
 	}

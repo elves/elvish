@@ -66,7 +66,7 @@ func show(fm *eval.Frame, opts showOptions, fqname string) error {
 }
 
 func find(fm *eval.Frame, qs ...string) {
-	for ns, docs := range docs() {
+	for _, docs := range docs() {
 		findIn := func(name, markdown string) {
 			if bs, ok := match(markdown, qs); ok {
 				out := fm.ByteOutput()
@@ -77,29 +77,41 @@ func find(fm *eval.Frame, qs ...string) {
 			}
 		}
 		for _, entry := range docs.Fns {
-			findIn(ns+entry.Name, entry.Content)
+			findIn(entry.Name, entry.FullContent())
 		}
 		for _, entry := range docs.Vars {
-			findIn("$"+ns+entry.Name, entry.Content)
+			findIn(entry.Name, entry.FullContent())
 		}
 	}
 }
 
 // Source returns the doc source for a symbol.
-func Source(fqname string) (string, error) {
-	isVar := strings.HasPrefix(fqname, "$")
-	if isVar {
-		fqname = fqname[1:]
+func Source(qname string) (string, error) {
+	isVar := strings.HasPrefix(qname, "$")
+	var ns string
+	if strings.ContainsRune(qname, ':') {
+		if isVar {
+			first, rest := eval.SplitQName(qname[1:])
+			if first == "builtin:" {
+				// Normalize $builtin:foo -> $foo, and leave ns as ""
+				qname = "$" + rest
+			} else {
+				ns = first
+			}
+		} else {
+			first, rest := eval.SplitQName(qname)
+			if first == "builtin:" {
+				// Normalize builtin:foo -> foo, and leave ns as ""
+				qname = rest
+			} else {
+				ns = first
+			}
+		}
 	}
-	first, rest := eval.SplitQName(fqname)
-	if rest == "" {
-		first, rest = "", first
-	} else if first == "builtin:" {
-		first = ""
-	}
-	docs, ok := docs()[first]
+
+	docs, ok := docs()[ns]
 	if !ok {
-		return "", fmt.Errorf("no doc for %s", parse.Quote(fqname))
+		return "", fmt.Errorf("no doc for %s", parse.Quote(qname))
 	}
 	var entries []elvdoc.Entry
 	if isVar {
@@ -108,22 +120,22 @@ func Source(fqname string) (string, error) {
 		entries = docs.Fns
 	}
 	for _, entry := range entries {
-		if entry.Name == rest {
-			return entry.Content, nil
+		if entry.Name == qname {
+			return entry.FullContent(), nil
 		}
 	}
 
-	return "", fmt.Errorf("no doc for %s", parse.Quote(fqname))
+	return "", fmt.Errorf("no doc for %s", parse.Quote(qname))
 }
 
 func symbols(fm *eval.Frame) error {
 	var names []string
-	for ns, docs := range docs() {
+	for _, docs := range docs() {
 		for _, fn := range docs.Fns {
-			names = append(names, ns+fn.Name)
+			names = append(names, fn.Name)
 		}
 		for _, v := range docs.Vars {
-			names = append(names, "$"+ns+v.Name)
+			names = append(names, v.Name)
 		}
 	}
 	sort.Strings(names)

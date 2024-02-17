@@ -3,6 +3,7 @@ package elvdoc
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"io/fs"
 	"regexp"
@@ -18,12 +19,29 @@ type Docs struct {
 	Vars []Entry
 }
 
-// Entry is a doc comment entry.
+// Entry stores the elvdoc for a particular symbol.
 type Entry struct {
-	Name string
-	// ID to use in HTML
-	ID      string
+	Name    string
+	HTMLID  string // ID to use in HTML. If empty, just use Name.
 	Content string
+	Fn      *Fn // nil for variables or functions declared with doc:fn.
+}
+
+// Returns e.Content, prepended with function usage if applicable.
+func (e Entry) FullContent() string {
+	if e.Fn == nil {
+		return e.Content
+	}
+	return fmt.Sprintf("```elvish\n%s\n```\n\n%s", e.Fn.Usage, e.Content)
+}
+
+// Fn stores fn-specific information.
+type Fn struct {
+	// The signature without surrounding pipes, like "a @b".
+	Signature string
+	// Usage information converted from the original declaration. The function
+	// name is qualified, like "ns:f $a $b...".
+	Usage string
 }
 
 // ExtractFS extracts elvdocs of all modules found under fsys, and returns a map
@@ -95,6 +113,11 @@ var (
 	// Groups:
 	// 1. Name
 	// 2. Signature (part inside ||)
+	//
+	// TODO: Handle more complex cases:
+	//
+	//  - Quoted |
+	//  - Multi-line signature
 	fnRegexp = regexp.MustCompile(`^fn +([^ ]+) +\{(?:\|([^|]*)\|)?`)
 	// Groups:
 	// 1. Name
@@ -124,27 +147,22 @@ func Extract(r io.Reader, symbolPrefix string) (Docs, error) {
 			block.showUnstable = true
 		} else if m := fnRegexp.FindStringSubmatch(line); m != nil {
 			name, sig := m[1], m[2]
-			content := fnUsage(symbolPrefix+name, sig)
-			id := ""
-			showUnstable := false
-			if len(block.lines) > 0 {
-				var blockContent string
-				id, blockContent, showUnstable = block.consume()
-				content += "\n" + blockContent
-			}
+			qname := symbolPrefix + name
+			usage := fnUsage(qname, sig)
+			id, content, showUnstable := block.consume()
 			if showUnstable || !unstable(name) {
-				docs.Fns = append(docs.Fns, Entry{name, id, content})
+				docs.Fns = append(docs.Fns, Entry{qname, id, content, &Fn{sig, usage}})
 			}
 		} else if m := varRegexp.FindStringSubmatch(line); m != nil {
 			name := m[1]
 			id, content, showUnstable := block.consume()
 			if showUnstable || !unstable(name) {
-				docs.Vars = append(docs.Vars, Entry{name, id, content})
+				docs.Vars = append(docs.Vars, Entry{"$" + symbolPrefix + name, id, content, nil})
 			}
 		} else if m := fnNoSigRegexp.FindStringSubmatch(line); m != nil {
 			name := m[1]
 			id, content, _ := block.consume()
-			docs.Fns = append(docs.Fns, Entry{name, id, content})
+			docs.Fns = append(docs.Fns, Entry{symbolPrefix + name, id, content, nil})
 		} else if m := idRegexp.FindStringSubmatch(line); m != nil {
 			block.id = m[1]
 		} else {
@@ -157,7 +175,6 @@ func Extract(r io.Reader, symbolPrefix string) (Docs, error) {
 
 func fnUsage(name, sig string) string {
 	var sb strings.Builder
-	sb.WriteString("```elvish\n")
 	sb.WriteString(name)
 	for _, field := range sigFields(sig) {
 		sb.WriteByte(' ')
@@ -169,7 +186,6 @@ func fnUsage(name, sig string) string {
 			sb.WriteString("$" + field)
 		}
 	}
-	sb.WriteString("\n```\n")
 	return sb.String()
 }
 

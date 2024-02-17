@@ -8,6 +8,8 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
+var dedent = testutil.Dedent
+
 var extractTests = []struct {
 	name   string
 	text   string
@@ -24,14 +26,9 @@ var extractTests = []struct {
 			`),
 		wantFns: []Entry{
 			{
-				Name: "add",
-				Content: dedent(tildeToBackquote(`
-						~~~elvish
-						add $a $b
-						~~~
-
-						Adds numbers.
-						`)),
+				Name:    "add",
+				Content: "Adds numbers.\n",
+				Fn:      &Fn{Signature: "a b", Usage: "add $a $b"},
 			},
 		},
 	},
@@ -43,11 +40,7 @@ var extractTests = []struct {
 		wantFns: []Entry{
 			{
 				Name: "add",
-				Content: dedent(tildeToBackquote(`
-						~~~elvish
-						add $a $b
-						~~~
-						`)),
+				Fn:   &Fn{Signature: "a b", Usage: "add $a $b"},
 			},
 		},
 	},
@@ -59,11 +52,7 @@ var extractTests = []struct {
 		wantFns: []Entry{
 			{
 				Name: "add",
-				Content: dedent(tildeToBackquote(`
-						~~~elvish
-						add $a $b &k=v
-						~~~
-						`)),
+				Fn:   &Fn{Signature: "a b &k=v", Usage: "add $a $b &k=v"},
 			},
 		},
 	},
@@ -75,11 +64,7 @@ var extractTests = []struct {
 		wantFns: []Entry{
 			{
 				Name: "add",
-				Content: dedent(tildeToBackquote(`
-						~~~elvish
-						add $a $b &k=' '
-						~~~
-						`)),
+				Fn:   &Fn{Signature: "a b &k=' '", Usage: "add $a $b &k=' '"},
 			},
 		},
 	},
@@ -91,11 +76,7 @@ var extractTests = []struct {
 		wantFns: []Entry{
 			{
 				Name: "add",
-				Content: dedent(tildeToBackquote(`
-						~~~elvish
-						add $a $b $more...
-						~~~
-						`)),
+				Fn:   &Fn{Signature: "a b @more", Usage: "add $a $b $more..."},
 			},
 		},
 	},
@@ -108,7 +89,7 @@ var extractTests = []struct {
 			`),
 		wantVars: []Entry{
 			{
-				Name:    "foo",
+				Name:    "$foo",
 				Content: "Foo.\n",
 			},
 		},
@@ -120,10 +101,21 @@ var extractTests = []struct {
 			`),
 		wantVars: []Entry{
 			{
-				Name:    "foo",
+				Name:    "$foo",
 				Content: "",
 			},
 		},
+	},
+
+	{
+		name: "prefix impacts both fn and var",
+		text: dedent(`
+			var v
+			fn f { }
+			`),
+		prefix:   "foo:",
+		wantVars: []Entry{{Name: "$foo:v"}},
+		wantFns:  []Entry{{Name: "foo:f", Fn: &Fn{Usage: "foo:f"}}},
 	},
 
 	{
@@ -149,15 +141,10 @@ var extractTests = []struct {
 			`),
 		wantFns: []Entry{
 			{
-				Name: "+",
-				ID:   "add",
-				Content: dedent(tildeToBackquote(`
-						~~~elvish
-						+ $a $b
-						~~~
-
-						Adds numbers.
-						`)),
+				Name:    "+",
+				HTMLID:  "add",
+				Content: "Adds numbers.\n",
+				Fn:      &Fn{Signature: "a b", Usage: "+ $a $b"},
 			},
 		},
 	},
@@ -179,14 +166,9 @@ var extractTests = []struct {
 			`),
 		wantFns: []Entry{
 			{
-				Name: "-foo",
-				Content: dedent(tildeToBackquote(`
-						~~~elvish
-						-foo
-						~~~
-
-						Unstable.
-						`)),
+				Name:    "-foo",
+				Content: "Unstable.\n",
+				Fn:      &Fn{Usage: "-foo"},
 			},
 		},
 	},
@@ -201,11 +183,7 @@ var extractTests = []struct {
 		wantFns: []Entry{
 			{
 				Name: "add",
-				Content: dedent(tildeToBackquote(`
-						~~~elvish
-						add $a $b
-						~~~
-						`)),
+				Fn:   &Fn{Signature: "a b", Usage: "add $a $b"},
 			},
 		},
 	},
@@ -219,11 +197,7 @@ var extractTests = []struct {
 		wantFns: []Entry{
 			{
 				Name: "add",
-				Content: dedent(tildeToBackquote(`
-						~~~elvish
-						add $a $b
-						~~~
-						`)),
+				Fn:   &Fn{Signature: "a b", Usage: "add $a $b"},
 			},
 		},
 	},
@@ -238,15 +212,12 @@ var extractTests = []struct {
 		wantFns: []Entry{
 			{
 				Name: "add",
-				Content: dedent(tildeToBackquote(`
-						~~~elvish
-						add $a $b
-						~~~
-
+				Content: dedent(`
 						Adds numbers.
 
 						Supports two numbers.
-						`)),
+						`),
+				Fn: &Fn{Signature: "a b", Usage: "add $a $b"},
 			},
 		},
 	},
@@ -268,8 +239,3 @@ func TestExtract(t *testing.T) {
 		})
 	}
 }
-
-var (
-	dedent           = testutil.Dedent
-	tildeToBackquote = strings.NewReplacer("~", "`").Replace
-)
