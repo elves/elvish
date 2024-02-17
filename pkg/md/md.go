@@ -221,6 +221,11 @@ type Codec interface {
 // Op represents an operation for the Codec.
 type Op struct {
 	Type OpType
+	// 1-based line number. If the Op spans multiple lines, this identifies the
+	// first line. For the *End types, this identifies the first line that
+	// causes the block to be terminated, which can be the first line of another
+	// block.
+	LineNo int
 	// For OpOrderedListStart (the start number) or OpHeading (as the heading
 	// level)
 	Number int
@@ -262,7 +267,7 @@ func Render(text string, codec Codec) {
 	// Compiled regular expressions live on the heap. Compiling them lazily
 	// saves memory if this function is never called.
 	initRegexpsOnce.Do(initRegexps)
-	p := blockParser{lines: lineSplitter{text, 0}, codec: codec}
+	p := blockParser{lines: lineSplitter{text, 0, 0}, codec: codec}
 	p.render()
 }
 
@@ -385,32 +390,32 @@ const indentedCodePrefix = "    "
 
 func (p *blockParser) render() {
 	for p.lines.more() {
-		line := p.lines.next()
-		line, matchedContainers, newItem := p.tree.processContainerMarkers(line, p.codec)
+		line, lineNo := p.lines.next()
+		line, matchedContainers, newItem := p.tree.processContainerMarkers(line, lineNo, p.codec)
 
 		if isBlankLine(line) {
 			// Blank lines terminate blockquote if the continuation marker is
 			// absent.
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
-				p.tree.closeBlocks(i, p.codec)
+				p.tree.closeBlocks(i, lineNo, p.codec)
 				continue
 			}
 			if newItem && p.lines.more() {
 				// A list item can start with at most one blank line; the second
 				// blank closes it.
-				nextLine := p.lines.next()
+				nextLine, _ := p.lines.next()
 				nextLine, _ = p.tree.matchContinuationMarkers(nextLine)
 				p.lines.backup()
 				if isBlankLine(nextLine) {
-					p.tree.closeBlocks(len(p.tree.containers)-1, p.codec)
+					p.tree.closeBlocks(len(p.tree.containers)-1, lineNo, p.codec)
 				}
 			}
-			p.tree.closeParagraph(p.codec)
+			p.tree.closeParagraph(lineNo, p.codec)
 		} else if thematicBreakRegexp.MatchString(line) {
-			p.tree.closeBlocks(matchedContainers, p.codec)
-			p.codec.Do(Op{Type: OpThematicBreak})
+			p.tree.closeBlocks(matchedContainers, lineNo, p.codec)
+			p.codec.Do(Op{Type: OpThematicBreak, LineNo: lineNo})
 		} else if m := atxHeadingRegexp.FindStringSubmatchIndex(line); m != nil {
-			p.tree.closeBlocks(matchedContainers, p.codec)
+			p.tree.closeBlocks(matchedContainers, lineNo, p.codec)
 			openerStart, openerEnd := m[2], m[3]
 			opener := line[openerStart:openerEnd]
 			line = strings.TrimRight(line[openerEnd:], " \t")
@@ -424,46 +429,46 @@ func (p *blockParser) render() {
 			}
 			level := len(opener)
 			p.codec.Do(Op{
-				Type: OpHeading, Number: level, Info: attr,
+				Type: OpHeading, LineNo: lineNo, Number: level, Info: attr,
 				Content: renderInline(strings.Trim(line, " \t"))})
 		} else if m := codeFenceRegexp.FindStringSubmatch(line); m != nil {
-			p.tree.closeBlocks(matchedContainers, p.codec)
+			p.tree.closeBlocks(matchedContainers, lineNo, p.codec)
 			indent, opener, info := len(m[1]), m[2], m[3]
 			if opener == "" {
 				opener, info = m[4], m[5]
 			}
 			p.parseFencedCodeBlock(indent, opener, info)
 		} else if len(p.tree.paragraph) == 0 && strings.HasPrefix(line, indentedCodePrefix) {
-			p.tree.closeBlocks(matchedContainers, p.codec)
+			p.tree.closeBlocks(matchedContainers, lineNo, p.codec)
 			p.parseIndentedCodeBlock(line)
 		} else if html1Regexp.MatchString(line) {
-			p.tree.closeBlocks(matchedContainers, p.codec)
+			p.tree.closeBlocks(matchedContainers, lineNo, p.codec)
 			p.parseCloserTerminatedHTMLBlock(line, html1CloserRegexp.MatchString)
 		} else if html2Regexp.MatchString(line) {
-			p.tree.closeBlocks(matchedContainers, p.codec)
+			p.tree.closeBlocks(matchedContainers, lineNo, p.codec)
 			p.parseCloserTerminatedHTMLBlock(line, html2CloserRegexp.MatchString)
 		} else if html3Regexp.MatchString(line) {
-			p.tree.closeBlocks(matchedContainers, p.codec)
+			p.tree.closeBlocks(matchedContainers, lineNo, p.codec)
 			p.parseCloserTerminatedHTMLBlock(line, html3CloserRegexp.MatchString)
 		} else if html4Regexp.MatchString(line) {
-			p.tree.closeBlocks(matchedContainers, p.codec)
+			p.tree.closeBlocks(matchedContainers, lineNo, p.codec)
 			p.parseCloserTerminatedHTMLBlock(line, html4CloserRegexp.MatchString)
 		} else if html5Regexp.MatchString(line) {
-			p.tree.closeBlocks(matchedContainers, p.codec)
+			p.tree.closeBlocks(matchedContainers, lineNo, p.codec)
 			p.parseCloserTerminatedHTMLBlock(line, html5CloserRegexp.MatchString)
 		} else if html6Regexp.MatchString(line) || (len(p.tree.paragraph) == 0 && html7Regexp.MatchString(line)) {
-			p.tree.closeBlocks(matchedContainers, p.codec)
+			p.tree.closeBlocks(matchedContainers, lineNo, p.codec)
 			p.parseBlankLineTerminatedHTMLBlock(line)
 		} else {
 			if len(p.tree.paragraph) == 0 {
 				// This is not lazy continuation, so close all unmatched
 				// containers.
-				p.tree.closeBlocks(matchedContainers, p.codec)
+				p.tree.closeBlocks(matchedContainers, lineNo, p.codec)
 			}
 			p.tree.paragraph = append(p.tree.paragraph, line)
 		}
 	}
-	p.tree.closeBlocks(0, p.codec)
+	p.tree.closeBlocks(0, p.lines.lastLineNo+1, p.codec)
 }
 
 func isBlankLine(line string) bool {
@@ -475,17 +480,18 @@ func (p *blockParser) parseFencedCodeBlock(indent int, opener, info string) {
 	// the info string before trimming.
 	info = strings.Trim(processCodeFenceInfo(info), " \t")
 	var lines []string
+	startLineNo := p.lines.lastLineNo
 	doCodeBlock := func() {
-		p.codec.Do(Op{Type: OpCodeBlock, Info: info, Lines: lines})
+		p.codec.Do(Op{Type: OpCodeBlock, LineNo: startLineNo, Info: info, Lines: lines})
 	}
 
 	for p.lines.more() {
-		line := p.lines.next()
+		line, lineNo := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
 				doCodeBlock()
-				p.tree.closeBlocks(i, p.codec)
+				p.tree.closeBlocks(i, lineNo, p.codec)
 				return
 			}
 		} else if matchedContainers < len(p.tree.containers) {
@@ -533,16 +539,17 @@ func processCodeFenceInfo(text string) string {
 
 func (p *blockParser) parseIndentedCodeBlock(line string) {
 	lines := []string{strings.TrimPrefix(line, indentedCodePrefix)}
-	doCodeBlock := func() { p.codec.Do(Op{Type: OpCodeBlock, Lines: lines}) }
+	startLineNo := p.lines.lastLineNo
+	doCodeBlock := func() { p.codec.Do(Op{Type: OpCodeBlock, LineNo: startLineNo, Lines: lines}) }
 	var savedBlankLines []string
 
 	for p.lines.more() {
-		line := p.lines.next()
+		line, lineNo := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
 				doCodeBlock()
-				p.tree.closeBlocks(i, p.codec)
+				p.tree.closeBlocks(i, lineNo, p.codec)
 				return
 			}
 			if strings.HasPrefix(line, indentedCodePrefix) {
@@ -565,8 +572,9 @@ func (p *blockParser) parseIndentedCodeBlock(line string) {
 
 func (p *blockParser) parseCloserTerminatedHTMLBlock(line string, closer func(string) bool) {
 	lines := []string{line}
+	startLineNo := p.lines.lastLineNo
 	doHTMLBlock := func() {
-		p.codec.Do(Op{Type: OpHTMLBlock, Lines: lines})
+		p.codec.Do(Op{Type: OpHTMLBlock, LineNo: startLineNo, Lines: lines})
 	}
 
 	if closer(line) {
@@ -575,12 +583,12 @@ func (p *blockParser) parseCloserTerminatedHTMLBlock(line string, closer func(st
 	}
 	var savedBlankLines []string
 	for p.lines.more() {
-		line := p.lines.next()
+		line, lineNo := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
 				doHTMLBlock()
-				p.tree.closeBlocks(i, p.codec)
+				p.tree.closeBlocks(i, lineNo, p.codec)
 				return
 			}
 			savedBlankLines = append(savedBlankLines, line)
@@ -603,15 +611,16 @@ func (p *blockParser) parseCloserTerminatedHTMLBlock(line string, closer func(st
 
 func (p *blockParser) parseBlankLineTerminatedHTMLBlock(line string) {
 	lines := []string{line}
-	doHTMLBlock := func() { p.codec.Do(Op{Type: OpHTMLBlock, Lines: lines}) }
+	startLineNo := p.lines.lastLineNo
+	doHTMLBlock := func() { p.codec.Do(Op{Type: OpHTMLBlock, LineNo: startLineNo, Lines: lines}) }
 
 	for p.lines.more() {
-		line := p.lines.next()
+		line, lineNo := p.lines.next()
 		line, matchedContainers := p.tree.matchContinuationMarkers(line)
 		if isBlankLine(line) {
 			doHTMLBlock()
 			if i, unmatched := p.tree.unmatchedBlockquote(matchedContainers); unmatched {
-				p.tree.closeBlocks(i, p.codec)
+				p.tree.closeBlocks(i, lineNo, p.codec)
 			}
 			return
 		} else if matchedContainers < len(p.tree.containers) {
@@ -666,7 +675,7 @@ type blockTree struct {
 // The latter should be used to call t.closeContainers
 // unless the remaining content of the line constitutes a blank line or
 // paragraph continuation.
-func (t *blockTree) processContainerMarkers(line string, codec Codec) (string, int, bool) {
+func (t *blockTree) processContainerMarkers(line string, lineNo int, codec Codec) (string, int, bool) {
 	line, matched := t.matchContinuationMarkers(line)
 	line, newContainers := t.parseStartingMarkers(line,
 		// This argument tells parseStartingMarkers whether we are starting a
@@ -697,7 +706,7 @@ func (t *blockTree) processContainerMarkers(line string, codec Codec) (string, i
 		return line, matched, false
 	}
 
-	t.closeBlocks(matched, codec)
+	t.closeBlocks(matched, lineNo, codec)
 	for _, c := range newContainers {
 		if c.typ.isItem() {
 			if continueList {
@@ -705,11 +714,11 @@ func (t *blockTree) processContainerMarkers(line string, codec Codec) (string, i
 			} else {
 				list := container{typ: c.typ.itemToList(), punct: c.punct, start: c.start}
 				t.containers = append(t.containers, list)
-				codec.Do(Op{Type: containerOpenOp[list.typ], Number: list.start})
+				codec.Do(Op{Type: containerOpenOp[list.typ], LineNo: lineNo, Number: list.start})
 			}
 		}
 		t.containers = append(t.containers, c)
-		codec.Do(Op{Type: containerOpenOp[c.typ]})
+		codec.Do(Op{Type: containerOpenOp[c.typ], LineNo: lineNo})
 	}
 	return line, len(t.containers), newContainers[len(newContainers)-1].typ.isItem()
 }
@@ -822,21 +831,23 @@ func (t *blockTree) parseStartingMarkers(line string, newParagraph bool) (string
 	return line, containers
 }
 
-func (t *blockTree) closeBlocks(keep int, codec Codec) {
-	t.closeParagraph(codec)
+func (t *blockTree) closeBlocks(keep, lineNo int, codec Codec) {
+	t.closeParagraph(lineNo, codec)
 	for i := len(t.containers) - 1; i >= keep; i-- {
-		codec.Do(Op{Type: containerCloseOp[t.containers[i].typ]})
+		codec.Do(Op{Type: containerCloseOp[t.containers[i].typ], LineNo: lineNo})
 	}
 	t.containers = t.containers[:keep]
 }
 
-func (t *blockTree) closeParagraph(codec Codec) {
+// lineNo identifies the first line not part of the paragraph.
+func (t *blockTree) closeParagraph(lineNo int, codec Codec) {
 	if len(t.paragraph) == 0 {
 		return
 	}
+	startLineNo := lineNo - len(t.paragraph)
 	text := strings.Trim(strings.Join(t.paragraph, "\n"), " \t")
 	t.paragraph = t.paragraph[:0]
-	codec.Do(Op{Type: OpParagraph, Content: renderInline(text)})
+	codec.Do(Op{Type: OpParagraph, LineNo: startLineNo, Content: renderInline(text)})
 }
 
 type container struct {
@@ -905,21 +916,25 @@ func (c container) matchContinuationMarker(line string) (int, bool) {
 type lineSplitter struct {
 	text string
 	pos  int
+	// Line number of the last line returned by next.
+	lastLineNo int
 }
 
 func (s *lineSplitter) more() bool {
 	return s.pos < len(s.text)
 }
 
-func (s *lineSplitter) next() string {
+func (s *lineSplitter) next() (string, int) {
 	begin := s.pos
 	delta := strings.IndexByte(s.text[begin:], '\n')
 	if delta == -1 {
 		s.pos = len(s.text)
-		return s.text[begin:]
+		s.lastLineNo++
+		return s.text[begin:], s.lastLineNo
 	}
 	s.pos += delta + 1
-	return s.text[begin : s.pos-1]
+	s.lastLineNo++
+	return s.text[begin : s.pos-1], s.lastLineNo
 }
 
 func (s *lineSplitter) backup() {
@@ -927,6 +942,7 @@ func (s *lineSplitter) backup() {
 		return
 	}
 	s.pos = 1 + strings.LastIndexByte(s.text[:s.pos-1], '\n')
+	s.lastLineNo--
 }
 
 var leftAnchoredCharRefRegexp = regexp.MustCompile(`^` + charRefPattern)
