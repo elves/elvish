@@ -272,7 +272,7 @@ func TestParseSessionsInFS(t *testing.T) {
 				# ~~~
 				fn x { }
 				`)).
-			Rets([]*Node(nil), errorWithMsg{"a.elv/x:1: first non-comment line of a session doesn't have prompt"}),
+			Rets([]*Node(nil), errorWithMsg{"a.elv:2: first non-comment line of a session doesn't have prompt"}),
 
 		It("errors when a session in a var elvdoc in a .elv file doesn't start with a prompt").
 			Args(oneFile("a.elv", `
@@ -281,7 +281,7 @@ func TestParseSessionsInFS(t *testing.T) {
 				# ~~~
 				var x
 				`)).
-			Rets([]*Node(nil), errorWithMsg{"a.elv/$x:1: first non-comment line of a session doesn't have prompt"}),
+			Rets([]*Node(nil), errorWithMsg{"a.elv:2: first non-comment line of a session doesn't have prompt"}),
 	)
 }
 

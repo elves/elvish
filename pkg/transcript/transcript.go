@@ -210,7 +210,7 @@ func parseNodesFromElvdoc(filename string, r io.Reader) ([]*Node, error) {
 	var nodes []*Node
 	parseEntries := func(entries []elvdoc.Entry) error {
 		for _, entry := range entries {
-			codec := transcriptExtractor{namePrefix: filename + "/" + entry.Name}
+			codec := transcriptExtractor{filename, entry.Name, entry.LineNo - 1, nil, nil}
 			md.Render(entry.Content, &codec)
 			if codec.err != nil {
 				return codec.err
@@ -230,12 +230,15 @@ func parseNodesFromElvdoc(filename string, r io.Reader) ([]*Node, error) {
 	return nodes, nil
 }
 
-// A [md.Codec] implementation that extracts elvish-transcript code blocks as
-// sessions.
+// A [md.Codec] implementation that extracts elvish-transcript code blocks from
+// an elvdoc block as sessions.
 type transcriptExtractor struct {
-	namePrefix string // $filename/$symbol
-	nodes      []*Node
-	err        error
+	filename     string
+	symbol       string
+	lineNoOffset int
+
+	nodes []*Node
+	err   error
 }
 
 func (e *transcriptExtractor) Do(op md.Op) {
@@ -245,13 +248,14 @@ func (e *transcriptExtractor) Do(op md.Op) {
 	if op.Type == md.OpCodeBlock {
 		fields := strings.Fields(op.Info)
 		if len(fields) > 0 && fields[0] == "elvish-transcript" {
-			name := e.namePrefix
+			name := e.filename + "/" + e.symbol
 			if len(fields) > 1 {
 				name += "/" + strings.Join(fields[1:], " ")
 			}
-			// TODO: Use the real filename, instead of the name of the code
-			// block, in fileLines.
-			node, err := parseNode(name, fileLines{name, op.Lines, 1})
+			// The first line of the code block is the fence line, add 1 to get
+			// the first line of the actual content.
+			lineNo := e.lineNoOffset + op.LineNo + 1
+			node, err := parseNode(name, fileLines{e.filename, op.Lines, lineNo})
 			if err != nil {
 				e.err = err
 				return
