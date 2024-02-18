@@ -14,7 +14,7 @@ func Quote(s string) string {
 	return s
 }
 
-// QuoteVariableName is like Quote, but quotes s if it contains any character
+// QuoteVariableName is like [Quote], but quotes s if it contains any character
 // that may not appear unquoted in variable names.
 func QuoteVariableName(s string) string {
 	if s == "" {
@@ -40,10 +40,21 @@ func QuoteVariableName(s string) string {
 	return quoteSingle(s)
 }
 
+// QuoteCommandName is like [Quote], but uses the slightly laxer rule for what
+// can appear in a command name unquoted, like <.
+func QuoteCommandName(s string) string {
+	q, _ := quoteAs(s, Bareword, CmdExpr)
+	return q
+}
+
 // QuoteAs returns a representation of s in Elvish syntax, preferring the syntax
 // specified by q, which must be one of Bareword, SingleQuoted, or DoubleQuoted.
 // It returns the quoted string and the actual quoting.
 func QuoteAs(s string, q PrimaryType) (string, PrimaryType) {
+	return quoteAs(s, q, strictExpr)
+}
+
+func quoteAs(s string, q PrimaryType, ctx ExprCtx) (string, PrimaryType) {
 	if q == DoubleQuoted {
 		// Everything can be quoted using double quotes, return directly.
 		return quoteDouble(s), DoubleQuoted
@@ -60,7 +71,7 @@ func QuoteAs(s string, q PrimaryType) (string, PrimaryType) {
 			// double quote.
 			return quoteDouble(s), DoubleQuoted
 		}
-		if !allowedInBareword(r, strictExpr) {
+		if !allowedInBareword(r, ctx) {
 			bare = false
 		}
 	}

@@ -71,3 +71,11 @@ func TestQuoteVariableName(t *testing.T) {
 		Args("$\n").Rets(`"$\n"`),
 	)
 }
+
+func TestQuoteCommandName(t *testing.T) {
+	tt.Test(t, tt.Fn(QuoteCommandName).ArgsFmt("(%q)"),
+		Args("<").Rets("<"),
+		Args("foo").Rets("foo"),
+		Args("$").Rets(`'$'`),
+	)
+}
