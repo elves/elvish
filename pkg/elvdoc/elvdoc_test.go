@@ -24,62 +24,64 @@ var extractTests = []struct {
 			# Adds numbers.
 			fn add {|a b| }
 			`),
-		wantFns: []Entry{
-			{
-				Name:    "add",
-				Content: "Adds numbers.\n",
-				LineNo:  1,
-				Fn:      &Fn{Signature: "a b", Usage: "add $a $b"},
-			},
-		},
+		wantFns: []Entry{{
+			Name:    "add",
+			Content: "Adds numbers.\n",
+			LineNo:  1,
+			Fn:      &Fn{Signature: "a b", Usage: "add $a $b"},
+		}},
 	},
 	{
 		name: "fn with no doc comment",
 		text: dedent(`
 			fn add {|a b| }
 			`),
-		wantFns: []Entry{
-			{
-				Name: "add",
-				Fn:   &Fn{Signature: "a b", Usage: "add $a $b"},
-			},
-		},
+		wantFns: []Entry{{
+			Name: "add",
+			Fn:   &Fn{Signature: "a b", Usage: "add $a $b"},
+		}},
 	},
 	{
-		name: "fn with options",
+		name: "fn with options in signature",
 		text: dedent(`
 			fn add {|a b &k=v| }
 			`),
-		wantFns: []Entry{
-			{
-				Name: "add",
-				Fn:   &Fn{Signature: "a b &k=v", Usage: "add $a $b &k=v"},
-			},
-		},
+		wantFns: []Entry{{
+			Name: "add",
+			Fn:   &Fn{Signature: "a b &k=v", Usage: "add $a $b &k=v"},
+		}},
 	},
 	{
-		name: "option with space",
-		text: dedent(`
-			fn add {|a b &k=' '| }
-			`),
-		wantFns: []Entry{
-			{
-				Name: "add",
-				Fn:   &Fn{Signature: "a b &k=' '", Usage: "add $a $b &k=' '"},
-			},
-		},
+		name: "fn with single-quoted name",
+		text: `fn 'all''s well' { }`,
+		wantFns: []Entry{{
+			Name: "all's well",
+			Fn:   &Fn{Usage: "'all''s well'"},
+		}},
 	},
 	{
-		name: "fn with rest argument",
-		text: dedent(`
-			fn add {|a b @more| }
-			`),
-		wantFns: []Entry{
-			{
-				Name: "add",
-				Fn:   &Fn{Signature: "a b @more", Usage: "add $a $b $more..."},
-			},
-		},
+		name: "fn with double-quoted name",
+		text: `fn "\\\"" { }`,
+		wantFns: []Entry{{
+			Name: `\"`,
+			Fn:   &Fn{Usage: `'\"'`},
+		}},
+	},
+	{
+		name: "fn with quoted string in option value",
+		text: `fn add {|&a='| ' &b="\" "| }`,
+		wantFns: []Entry{{
+			Name: "add",
+			Fn:   &Fn{Signature: `&a='| ' &b="\" "`, Usage: `add &a='| ' &b="\" "`},
+		}},
+	},
+	{
+		name: "fn with rest argument in signature",
+		text: `fn add {|a b @more| }`,
+		wantFns: []Entry{{
+			Name: "add",
+			Fn:   &Fn{Signature: "a b @more", Usage: "add $a $b $more..."},
+		}},
 	},
 
 	{
@@ -88,25 +90,21 @@ var extractTests = []struct {
 			# Foo.
 			var foo
 			`),
-		wantVars: []Entry{
-			{
-				Name:    "$foo",
-				Content: "Foo.\n",
-				LineNo:  1,
-			},
-		},
+		wantVars: []Entry{{
+			Name:    "$foo",
+			Content: "Foo.\n",
+			LineNo:  1,
+		}},
 	},
 	{
 		name: "var with no doc comment",
 		text: dedent(`
 			var foo
 			`),
-		wantVars: []Entry{
-			{
-				Name:    "$foo",
-				Content: "",
-			},
-		},
+		wantVars: []Entry{{
+			Name:    "$foo",
+			Content: "",
+		}},
 	},
 
 	{
@@ -126,13 +124,11 @@ var extractTests = []struct {
 			# Special function section.
 			#doc:fn special
 			`),
-		wantFns: []Entry{
-			{
-				Name:    "special",
-				Content: "Special function section.\n",
-				LineNo:  1,
-			},
-		},
+		wantFns: []Entry{{
+			Name:    "special",
+			Content: "Special function section.\n",
+			LineNo:  1,
+		}},
 	},
 
 	{
@@ -142,15 +138,13 @@ var extractTests = []struct {
 			#doc:id add
 			fn + {|a b| }
 			`),
-		wantFns: []Entry{
-			{
-				Name:    "+",
-				HTMLID:  "add",
-				Content: "Adds numbers.\n",
-				LineNo:  1,
-				Fn:      &Fn{Signature: "a b", Usage: "+ $a $b"},
-			},
-		},
+		wantFns: []Entry{{
+			Name:    "+",
+			HTMLID:  "add",
+			Content: "Adds numbers.\n",
+			LineNo:  1,
+			Fn:      &Fn{Signature: "a b", Usage: "+ $a $b"},
+		}},
 	},
 
 	{
@@ -168,14 +162,12 @@ var extractTests = []struct {
 			#doc:show-unstable
 			fn -foo { }
 			`),
-		wantFns: []Entry{
-			{
-				Name:    "-foo",
-				Content: "Unstable.\n",
-				LineNo:  1,
-				Fn:      &Fn{Usage: "-foo"},
-			},
-		},
+		wantFns: []Entry{{
+			Name:    "-foo",
+			Content: "Unstable.\n",
+			LineNo:  1,
+			Fn:      &Fn{Usage: "-foo"},
+		}},
 	},
 
 	{
@@ -185,12 +177,10 @@ var extractTests = []struct {
 
 			fn add {|a b| }
 			`),
-		wantFns: []Entry{
-			{
-				Name: "add",
-				Fn:   &Fn{Signature: "a b", Usage: "add $a $b"},
-			},
-		},
+		wantFns: []Entry{{
+			Name: "add",
+			Fn:   &Fn{Signature: "a b", Usage: "add $a $b"},
+		}},
 	},
 	{
 		name: "hash with no space breaks comment block",
@@ -199,12 +189,10 @@ var extractTests = []struct {
 			#foo
 			fn add {|a b| }
 			`),
-		wantFns: []Entry{
-			{
-				Name: "add",
-				Fn:   &Fn{Signature: "a b", Usage: "add $a $b"},
-			},
-		},
+		wantFns: []Entry{{
+			Name: "add",
+			Fn:   &Fn{Signature: "a b", Usage: "add $a $b"},
+		}},
 	},
 	{
 		name: "empty comment line does not break comment block",
@@ -214,18 +202,16 @@ var extractTests = []struct {
 			# Supports two numbers.
 			fn add {|a b| }
 			`),
-		wantFns: []Entry{
-			{
-				Name: "add",
-				Content: dedent(`
+		wantFns: []Entry{{
+			Name: "add",
+			Content: dedent(`
 						Adds numbers.
 
 						Supports two numbers.
 						`),
-				LineNo: 1,
-				Fn:     &Fn{Signature: "a b", Usage: "add $a $b"},
-			},
-		},
+			LineNo: 1,
+			Fn:     &Fn{Signature: "a b", Usage: "add $a $b"},
+		}},
 	},
 
 	{

@@ -110,19 +110,28 @@ func ExtractFromFS(fsys fs.FS, symbolPrefix string) (Docs, error) {
 	return Extract(io.MultiReader(readers...), symbolPrefix)
 }
 
+const (
+	singleQuoted = `'(?:[^']|'')*'`
+	doubleQuoted = `"(?:[^\\"]|\\.)*"`
+	// Bareword, single-quoted and double-quoted. The bareword pattern covers
+	// more than what's allowed in Elvish syntax, but that's OK as the context
+	// we'll use it in requires a string literal.
+	stringLiteralGroup = `([^ '"]+|` + singleQuoted + `|` + doubleQuoted + `)`
+	// Any run of non-pipe non-quote runes, or quoted strings. Again this covers
+	// a superset of what's allowed, but that's OK.
+	signatureGroup = `((?:[^|'"]|` + singleQuoted + `|` + doubleQuoted + `)*)`
+)
+
 var (
 	// Groups:
 	// 1. Name
 	// 2. Signature (part inside ||)
 	//
-	// TODO: Handle more complex cases:
-	//
-	//  - Quoted |
-	//  - Multi-line signature
-	fnRegexp = regexp.MustCompile(`^fn +([^ ]+) +\{(?:\|([^|]*)\|)?`)
+	// TODO: Support multi-line function signatures.
+	fnRegexp = regexp.MustCompile(`^fn +` + stringLiteralGroup + ` +\{(?: *\|` + signatureGroup + `\|)?`)
 	// Groups:
 	// 1. Name
-	varRegexp = regexp.MustCompile(`^var +([^ ]+)`)
+	varRegexp = regexp.MustCompile(`^var +` + stringLiteralGroup)
 	// Groups:
 	// 1. Names
 	fnNoSigRegexp = regexp.MustCompile(`^#doc:fn +(.+)`)
@@ -182,7 +191,7 @@ func Extract(r io.Reader, symbolPrefix string) (Docs, error) {
 			block.id = m[1]
 			block.seenDirective = true
 		} else if m := fnRegexp.FindStringSubmatch(line); m != nil {
-			name, sig := m[1], m[2]
+			name, sig := unquote(m[1]), m[2]
 			qname := symbolPrefix + name
 			usage := fnUsage(qname, sig)
 			if block.showUnstable || !unstable(name) {
@@ -191,7 +200,7 @@ func Extract(r io.Reader, symbolPrefix string) (Docs, error) {
 				docs.Fns = append(docs.Fns, entry)
 			}
 		} else if m := varRegexp.FindStringSubmatch(line); m != nil {
-			name := m[1]
+			name := unquote(m[1])
 			if block.showUnstable || !unstable(name) {
 				entry := Entry{Name: "$" + symbolPrefix + name}
 				block.finish(&entry)
@@ -210,9 +219,16 @@ func Extract(r io.Reader, symbolPrefix string) (Docs, error) {
 	return docs, scanner.Err()
 }
 
+func unquote(s string) string {
+	pn := &parse.Primary{}
+	// TODO: Handle error
+	parse.ParseAs(parse.Source{Code: s}, pn, parse.Config{})
+	return pn.Value
+}
+
 func fnUsage(name, sig string) string {
 	var sb strings.Builder
-	sb.WriteString(name)
+	sb.WriteString(parse.QuoteCommandName(name))
 	for _, field := range sigFields(sig) {
 		sb.WriteByte(' ')
 		if strings.HasPrefix(field, "&") {
