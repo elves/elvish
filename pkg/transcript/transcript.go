@@ -58,22 +58,6 @@
 // only appear at the beginning of a session, possibly after other directives,
 // comments or empty lines.
 //
-// Directives propagate to "lower-level" sessions. This mechanism is best shown
-// with an example:
-//
-//	//top
-//
-//	# h1 #
-//	//h1
-//
-//	## h2 ##
-//	//h2
-//
-//	~> echo foo
-//	foo
-//
-// In the "echo foo" session, all of "top", "h1" and "h2" directives are active.
-//
 // # Sessions in .elv files
 //
 // An .elv file may contain elvdocs for their variables or functions, which in

@@ -72,10 +72,7 @@ import (
 //
 //   - deprecation-level $x: Run with deprecation level set to $x.
 //
-// Since directives in a higher level propagated to all its descendants, this
-// mechanism can be used to specify setup functions that apply to an entire
-// .elvts file (or an entire elvish-transcript code block in a .elv file) or an
-// entire section:
+// Setup functions propagate to descendants. An example:
 //
 //	//global-setup
 //
