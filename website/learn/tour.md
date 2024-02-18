@@ -1068,11 +1068,11 @@ above can't create new variables in the current namespace. For example,
 
 To test files, use commands in the [path](../ref/path.html) module.
 
-To compare numbers, use
-[number comparison commands](../ref/builtin.html#num-cmp).
+To compare numbers, use number comparison commands like
+[`<`](../ref/builtin.html#num-lt).
 
-To compare strings, use
-[string comparison commands](../ref/builtin.html#str-cmp).
+To compare strings, use string comparison commands like
+[`<s`](../ref/builtin.html#str-lt).
 
 To perform boolean operations, use
 [`and`](../ref/language.html#and-or-coalesce),

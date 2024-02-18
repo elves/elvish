@@ -133,9 +133,6 @@ var (
 	// 1. Name
 	varRegexp = regexp.MustCompile(`^var +` + stringLiteralGroup)
 	// Groups:
-	// 1. Names
-	fnNoSigRegexp = regexp.MustCompile(`^#doc:fn +(.+)`)
-	// Groups:
 	// 1. Name
 	idRegexp = regexp.MustCompile(`^#doc:id +(.+)`)
 )
@@ -206,11 +203,6 @@ func Extract(r io.Reader, symbolPrefix string) (Docs, error) {
 				block.finish(&entry)
 				docs.Vars = append(docs.Vars, entry)
 			}
-		} else if m := fnNoSigRegexp.FindStringSubmatch(line); m != nil {
-			name := m[1]
-			entry := Entry{Name: symbolPrefix + name}
-			block.finish(&entry)
-			docs.Fns = append(docs.Fns, entry)
 		} else {
 			block = blockState{}
 		}

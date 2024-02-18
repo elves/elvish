@@ -1,25 +1,38 @@
-# ```elvish
-# <s  $string... # less
-# <=s $string... # less or equal
-# ==s $string... # equal
-# !=s $string... # not equal
-# >s  $string... # greater
-# >=s $string... # greater or equal
-# ```
+# Outputs whether `$string`s in the given order are strictly increasing. Outputs
+# `$true` when given fewer than two strings.
 #
-# String comparisons. They behave similarly to their number counterparts when
-# given multiple arguments. Examples:
+#doc:id str-lt
+fn '<s' {|@string| }
+
+# Outputs whether `$string`s in the given order are strictly non-decreasing.
+# Outputs `$true` when given fewer than two strings.
 #
-# ```elvish-transcript
-# ~> >s lorem ipsum
-# ▶ $true
-# ~> ==s 1 1.0
-# ▶ $false
-# ~> >s 8 12
-# ▶ $true
-# ```
-#doc:id str-cmp
-#doc:fn <s <=s ==s !=s >s >=s
+#doc:id str-le
+fn '<=s' {|@string| }
+
+# Outputs whether `$string`s are all the same string. Outputs `$true` when given
+# fewer than two strings.
+#
+#doc:id str-eq
+fn '==s' {|@string| }
+
+# Outputs whether `$a` and `$b` are not the same string. Equivalent to `not (==s
+# $a $b)`.
+#
+#doc:id str-ne
+fn '!=s' {|a b| }
+
+# Outputs whether `$string`s in the given order are strictly decreasing. Outputs
+# `$true` when given fewer than two strings.
+#
+#doc:id str-gt
+fn '>s' {|@string| }
+
+# Outputs whether `$string`s in the given order are strictly non-increasing.
+# Outputs `$true` when given fewer than two strings.
+#
+#doc:id str-ge
+fn '>=s' {|@string| }
 
 # Output the width of `$string` when displayed on the terminal. Examples:
 #

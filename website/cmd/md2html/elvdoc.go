@@ -53,19 +53,9 @@ func writeElvdocSections(w io.Writer, ns string, docs elvdoc.Docs) {
 	}
 }
 
-var sortSymbol = map[string]string{
-	"+": " a",
-	"-": " b",
-	"*": " c",
-	"/": " d",
-}
-
 func symbolForSort(s string) string {
-	// Hack to sort + - * / in that order, and before everything else.
-	if t, ok := sortSymbol[strings.Fields(s)[0]]; ok {
-		return t
-	}
-	// If there is a leading dash, move it to the end.
+	// Hack to sort unstable symbols close to their stable counterparts: for
+	// example, let "-gc" appear between "gb" and "gd", but after "gc".
 	if strings.HasPrefix(s, "-") {
 		return s[1:] + "-"
 	}

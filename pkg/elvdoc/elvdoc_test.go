@@ -119,19 +119,6 @@ var extractTests = []struct {
 	},
 
 	{
-		name: "doc:fn instruction",
-		text: dedent(`
-			# Special function section.
-			#doc:fn special
-			`),
-		wantFns: []Entry{{
-			Name:    "special",
-			Content: "Special function section.\n",
-			LineNo:  1,
-		}},
-	},
-
-	{
 		name: "doc:id instruction",
 		text: dedent(`
 			# Adds numbers.

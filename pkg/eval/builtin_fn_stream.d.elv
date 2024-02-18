@@ -276,7 +276,7 @@ fn count {|input-list?| }
 # ▶ 10
 # ```
 #
-# (The `$"<~"` syntax is a reference to [the `<` function](#num-cmp).)
+# (The `$"<~"` syntax is a reference to [the `<` function](#num-lt).)
 #
 # See also [`compare`]().
 fn order {|&less-than=$nil &total=$false &key=$nil &reverse=$false inputs?| }

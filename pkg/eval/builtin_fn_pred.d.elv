@@ -114,13 +114,13 @@ fn not-eq {|@values| }
 #
 #      -   Booleans: `$false` is smaller than `$true`.
 #
-#      -   Typed numbers: Compared numerically, consistent with the [number
-#          comparison commands](#num-cmp), except that `NaN` values are
-#          considered equal to each other and smaller than all other numbers.
+#      -   Typed numbers: Compared numerically, consistent with [`<`](#num-lt)
+#          and [`<=`](#num-le), except that `NaN` values are considered equal to
+#          each other and smaller than all other numbers.
 #
-#      -   Strings: Compared lexicographically by bytes, consistent with the
-#          [string comparison commands](#str-cmp). For UTF-8 encoded strings,
-#          this is equivalent to comparing by codepoints.
+#      -   Strings: Compared lexicographically by bytes, consistent with
+#          [`<s`](#str-lt) and [`<=s`](#str-le). For UTF-8 encoded strings, this
+#          is equivalent to comparing by codepoints.
 #
 #          Beware that strings that look like numbers are compared as strings,
 #          not numbers.

@@ -109,50 +109,104 @@ fn exact-num {|string-or-number| }
 # See also [`num`]() and [`exact-num`]().
 fn inexact-num {|string-or-number| }
 
-# ```elvish
-# <  $number... # less
-# <= $number... # less or equal
-# == $number... # equal
-# != $number... # not equal
-# >  $number... # greater
-# >= $number... # greater or equal
-# ```
-#
-# Number comparisons. All of them accept an arbitrary number of arguments:
-#
-# 1.  When given fewer than two arguments, all output `$true`.
-#
-# 2.  When given two arguments, output whether the two arguments satisfy the named
-# relationship.
-#
-# 3.  When given more than two arguments, output whether every adjacent pair of
-# numbers satisfy the named relationship.
+# Outputs whether `$number`s in the given order are numerically strictly
+# increasing. Outputs `$true` when given fewer than two numbers.
 #
 # Examples:
 #
 # ```elvish-transcript
-# ~> == 3 3.0
+# ~> < 1 2
 # ▶ $true
-# ~> < 3 4
-# ▶ $true
-# ~> < 3 4 10
-# ▶ $true
-# ~> < 6 9 1
+# ~> < 2 1
 # ▶ $false
+# ~> < 1 2 3
+# ▶ $true
 # ```
 #
-# As a consequence of rule 3, the `!=` command outputs `$true` as long as any
-# _adjacent_ pair of numbers are not equal, even if some numbers that are not
-# adjacent are equal:
+#doc:id num-lt
+fn '<' {|@number| }
+
+# Outputs whether `$number`s in the given order are numerically non-decreaing.
+# Outputs `$true` when given fewer than two numbers.
+#
+# Examples:
 #
 # ```elvish-transcript
-# ~> != 5 5 4
+# ~> <= 1 1
+# ▶ $true
+# ~> <= 2 1
 # ▶ $false
-# ~> != 5 6 5
+# ~> <= 1 1 2
 # ▶ $true
 # ```
-#doc:id num-cmp
-#doc:fn < <= == != > >=
+#doc:id num-le
+fn '<=' {|@number| }
+
+# Outputs whether `$number`s are all numerically equal. Outputs `$true` when
+# given fewer than two numbers.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> == 1 1
+# ▶ $true
+# ~> == 1 (num 1)
+# ▶ $true
+# ~> == 1 (num 1) 1
+# ▶ $true
+# ~> == 1 (num 1) 1.0
+# ▶ $true
+# ~> == 1 2
+# ▶ $false
+# ```
+#doc:id num-eq
+fn '==' {|@number| }
+
+# Determines whether `$a` and `$b` are numerically inequal. Equivalent to `not
+# (== $a $b)`.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> != 1 2
+# ▶ $true
+# ~> != 1 1
+# ▶ $false
+# ```
+#doc:id num-ne
+fn '!=' {|a b| }
+
+# Determines whether `$number`s in the given order are numerically strictly
+# decreasing. Outputs `$true` when given fewer than two numbers.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> > 2 1
+# ▶ $true
+# ~> > 1 2
+# ▶ $false
+# ~> > 3 2 1
+# ▶ $true
+# ```
+#doc:id num-gt
+fn '>' {|@number| }
+
+# Outputs whether `$number`s in the given order are numerically non-increasing.
+# Outputs `$true` when given fewer than two numbers.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> >= 1 1
+# ▶ $true
+# ~> >= 1 2
+# ▶ $false
+# ~> >= 2 1 1
+# ▶ $true
+# ```
+#doc:id num-ge
+fn '>=' {|@number| }
 
 # Outputs the sum of all arguments, or 0 when there are no arguments.
 #

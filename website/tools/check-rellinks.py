@@ -103,7 +103,7 @@ def main(args):
                 continue
             fragment = link.parsed_href.fragment
             if fragment != '' and fragment not in targets[dstfile]:
-                report_that_link('links to non-existing target {fragment} in {dstfile}')
+                report_that_link(f'links to non-existing target {fragment} in {dstfile}')
     if has_broken:
         sys.exit(1)
 
