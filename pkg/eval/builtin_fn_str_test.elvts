@@ -6,23 +6,27 @@
 ▶ $true
 ~> <s 2 10
 ▶ $false
+~> <s a b c
+▶ $true
 ~> <=s a a
 ▶ $true
 ~> <=s a b
 ▶ $true
 ~> <=s b a
 ▶ $false
+~> <=s a a b
+▶ $true
 ~> ==s haha haha
 ▶ $true
 ~> ==s 10 10.0
 ▶ $false
-~> !=s haha haha
-▶ $false
-~> !=s 10 10.1
+~> ==s a a a
 ▶ $true
 ~> >s a b
 ▶ $false
 ~> >s 2 10
+▶ $true
+~> >s c b a
 ▶ $true
 ~> >=s a a
 ▶ $true
@@ -30,6 +34,16 @@
 ▶ $false
 ~> >=s b a
 ▶ $true
+~> >=s b a a
+▶ $true
+~> !=s haha haha
+▶ $false
+~> !=s 10 10.1
+▶ $true
+// !=s only accepts two arguments
+~> !=s a b a
+Exception: arity mismatch: arguments must be 2 values, but is 3 values
+  [tty]:1:1-9: !=s a b a
 
 /////////////
 # to-string #

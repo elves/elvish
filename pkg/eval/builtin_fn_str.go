@@ -20,12 +20,12 @@ import (
 
 func init() {
 	addBuiltinFns(map[string]any{
-		"<s":  func(a, b string) bool { return a < b },
-		"<=s": func(a, b string) bool { return a <= b },
-		"==s": func(a, b string) bool { return a == b },
+		"<s":  chainStringComparer(func(a, b string) bool { return a < b }),
+		"<=s": chainStringComparer(func(a, b string) bool { return a <= b }),
+		"==s": chainStringComparer(func(a, b string) bool { return a == b }),
+		">s":  chainStringComparer(func(a, b string) bool { return a > b }),
+		">=s": chainStringComparer(func(a, b string) bool { return a >= b }),
 		"!=s": func(a, b string) bool { return a != b },
-		">s":  func(a, b string) bool { return a > b },
-		">=s": func(a, b string) bool { return a >= b },
 
 		"to-string": toString,
 
@@ -36,6 +36,17 @@ func init() {
 
 		"eawk": Eawk,
 	})
+}
+
+func chainStringComparer(p func(a, b string) bool) func(...string) bool {
+	return func(s ...string) bool {
+		for i := 0; i < len(s)-1; i++ {
+			if !p(s[i], s[i+1]) {
+				return false
+			}
+		}
+		return true
+	}
 }
 
 func toString(fm *Frame, args ...any) error {
