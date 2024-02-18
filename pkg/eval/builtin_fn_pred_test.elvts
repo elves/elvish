@@ -78,9 +78,16 @@
 ▶ $true
 ~> not-eq a a
 ▶ $false
-// not-eq is true as long as each adjacent pair is not equal.
+// not-eq only accepts two arguments
+~> not-eq
+Exception: arity mismatch: arguments must be 2 values, but is 0 values
+  [tty]:1:1-6: not-eq
+~> not-eq 1
+Exception: arity mismatch: arguments must be 2 values, but is 1 value
+  [tty]:1:1-8: not-eq 1
 ~> not-eq 1 2 1
-▶ $true
+Exception: arity mismatch: arguments must be 2 values, but is 3 values
+  [tty]:1:1-12: not-eq 1 2 1
 
 ///////////
 # compare #

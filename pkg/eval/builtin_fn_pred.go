@@ -40,13 +40,8 @@ func eq(args ...any) bool {
 	return true
 }
 
-func notEq(args ...any) bool {
-	for i := 0; i+1 < len(args); i++ {
-		if vals.Equal(args[i], args[i+1]) {
-			return false
-		}
-	}
-	return true
+func notEq(a, b any) bool {
+	return !vals.Equal(a, b)
 }
 
 // ErrUncomparable is raised by the compare and order commands when inputs contain

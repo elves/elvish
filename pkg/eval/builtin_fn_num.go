@@ -68,7 +68,7 @@ func inexactNum(f float64) float64 {
 }
 
 func lt(nums ...vals.Num) bool {
-	return chainCompare(nums,
+	return chainCompareNums(nums,
 		func(a, b int) bool { return a < b },
 		func(a, b *big.Int) bool { return a.Cmp(b) < 0 },
 		func(a, b *big.Rat) bool { return a.Cmp(b) < 0 },
@@ -77,7 +77,7 @@ func lt(nums ...vals.Num) bool {
 }
 
 func le(nums ...vals.Num) bool {
-	return chainCompare(nums,
+	return chainCompareNums(nums,
 		func(a, b int) bool { return a <= b },
 		func(a, b *big.Int) bool { return a.Cmp(b) <= 0 },
 		func(a, b *big.Rat) bool { return a.Cmp(b) <= 0 },
@@ -85,15 +85,15 @@ func le(nums ...vals.Num) bool {
 }
 
 func eqNum(nums ...vals.Num) bool {
-	return chainCompare(nums,
+	return chainCompareNums(nums,
 		func(a, b int) bool { return a == b },
 		func(a, b *big.Int) bool { return a.Cmp(b) == 0 },
 		func(a, b *big.Rat) bool { return a.Cmp(b) == 0 },
 		func(a, b float64) bool { return a == b })
 }
 
-func ne(nums ...vals.Num) bool {
-	return chainCompare(nums,
+func ne(a, b vals.Num) bool {
+	return unifyNums2And(a, b,
 		func(a, b int) bool { return a != b },
 		func(a, b *big.Int) bool { return a.Cmp(b) != 0 },
 		func(a, b *big.Rat) bool { return a.Cmp(b) != 0 },
@@ -101,7 +101,7 @@ func ne(nums ...vals.Num) bool {
 }
 
 func gt(nums ...vals.Num) bool {
-	return chainCompare(nums,
+	return chainCompareNums(nums,
 		func(a, b int) bool { return a > b },
 		func(a, b *big.Int) bool { return a.Cmp(b) > 0 },
 		func(a, b *big.Rat) bool { return a.Cmp(b) > 0 },
@@ -109,35 +109,43 @@ func gt(nums ...vals.Num) bool {
 }
 
 func ge(nums ...vals.Num) bool {
-	return chainCompare(nums,
+	return chainCompareNums(nums,
 		func(a, b int) bool { return a >= b },
 		func(a, b *big.Int) bool { return a.Cmp(b) >= 0 },
 		func(a, b *big.Rat) bool { return a.Cmp(b) >= 0 },
 		func(a, b float64) bool { return a >= b })
 }
 
-func chainCompare(nums []vals.Num,
-	p1 func(a, b int) bool, p2 func(a, b *big.Int) bool,
-	p3 func(a, b *big.Rat) bool, p4 func(a, b float64) bool) bool {
+func chainCompareNums(nums []vals.Num,
+	pInt func(a, b int) bool, pBigInt func(a, b *big.Int) bool,
+	pBigRat func(a, b *big.Rat) bool, pFloat64 func(a, b float64) bool) bool {
 
 	for i := 0; i < len(nums)-1; i++ {
-		var r bool
-		a, b := vals.UnifyNums2(nums[i], nums[i+1], 0)
-		switch a := a.(type) {
-		case int:
-			r = p1(a, b.(int))
-		case *big.Int:
-			r = p2(a, b.(*big.Int))
-		case *big.Rat:
-			r = p3(a, b.(*big.Rat))
-		case float64:
-			r = p4(a, b.(float64))
-		}
+		r := unifyNums2And(nums[i], nums[i+1], pInt, pBigInt, pBigRat, pFloat64)
 		if !r {
 			return false
 		}
 	}
 	return true
+}
+
+func unifyNums2And[T any](a, b vals.Num,
+	fInt func(a, b int) T, fBigInt func(a, b *big.Int) T,
+	fBigRat func(a, b *big.Rat) T, fFloat64 func(a, b float64) T) T {
+
+	a, b = vals.UnifyNums2(a, b, 0)
+	switch a := a.(type) {
+	case int:
+		return fInt(a, b.(int))
+	case *big.Int:
+		return fBigInt(a, b.(*big.Int))
+	case *big.Rat:
+		return fBigRat(a, b.(*big.Rat))
+	case float64:
+		return fFloat64(a, b.(float64))
+	default:
+		panic("unreachable")
+	}
 }
 
 func add(rawNums ...vals.Num) vals.Num {
