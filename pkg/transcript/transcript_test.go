@@ -40,8 +40,8 @@ func TestParseSessionsInFS(t *testing.T) {
 				"ignored.go": "package a",
 			}).
 			Rets([]*Node{
-				{Name: "d1/foo.elv/x", Interactions: []Interaction{{Prompt: "~> ", Code: "echo foo", Output: "foo\n"}}},
-				{Name: "d2/bar.elvts", Interactions: []Interaction{{Prompt: "~> ", Code: "echo bar", Output: "bar\n"}}},
+				{"d1/foo.elv/x", nil, []Interaction{{"~> ", "echo foo", 2, 3, "foo\n", 3, 4}}, nil, 2, 4},
+				{"d2/bar.elvts", nil, []Interaction{{"~> ", "echo bar", 1, 2, "bar\n", 2, 3}}, nil, 1, 3},
 			}),
 
 		// .elv file-specific handling
@@ -66,9 +66,9 @@ func TestParseSessionsInFS(t *testing.T) {
 				var v
 				`)).
 			Rets([]*Node{
-				{Name: "a.elv/f", Interactions: []Interaction{{"~> ", "f 1", "1\n"}}},
-				{Name: "a.elv/f", Interactions: []Interaction{{"~> ", "f 2", "2\n"}}},
-				{Name: "a.elv/$v", Interactions: []Interaction{{"~> ", "echo $v", "foo\n"}}},
+				{"a.elv/f", nil, []Interaction{{"~> ", "f 1", 2, 3, "1\n", 3, 4}}, nil, 2, 4},
+				{"a.elv/f", nil, []Interaction{{"~> ", "f 2", 7, 8, "2\n", 8, 9}}, nil, 7, 9},
+				{"a.elv/$v", nil, []Interaction{{"~> ", "echo $v", 13, 14, "foo\n", 14, 15}}, nil, 13, 15},
 			}, error(nil)),
 
 		It("uses fields after elvish-transcript in session name in .elv files").
@@ -79,8 +79,9 @@ func TestParseSessionsInFS(t *testing.T) {
 				# ~~~
 				fn x {|| }
 				`)).
-			Rets(oneNode("a.elv/x/title",
-				Interaction{Prompt: "~> ", Code: "echo foo", Output: "foo\n"})),
+			Rets([]*Node{
+				{"a.elv/x/title", nil, []Interaction{{"~> ", "echo foo", 2, 3, "foo\n", 3, 4}}, nil, 2, 4},
+			}),
 
 		It("processes each code block in .elv files like a .elvts file").
 			Args(oneFile("a.elv", `
@@ -96,21 +97,21 @@ func TestParseSessionsInFS(t *testing.T) {
 				# ~> nop h2
 				fn x { }
 				`)).
-			Rets([]*Node{
-				{
-					Name:         "a.elv/x",
-					Interactions: []Interaction{{Prompt: "~> ", Code: "nop top"}},
-					Children: []*Node{
-						{
-							Name:         "h1",
-							Interactions: []Interaction{{Prompt: "~> ", Code: "nop h1"}},
-							Children: []*Node{
-								{Name: "h2", Interactions: []Interaction{{Prompt: "~> ", Code: "nop h2"}}},
-							},
-						},
-					},
-				},
-			}, error(nil)),
+			Rets([]*Node{{
+				"a.elv/x", nil,
+				[]Interaction{{"~> ", "nop top", 3, 4, "", 4, 4}},
+				[]*Node{{
+					"h1", nil,
+					[]Interaction{{"~> ", "nop h1", 7, 8, "", 8, 8}},
+					[]*Node{{
+						"h2", nil,
+						[]Interaction{{"~> ", "nop h2", 10, 11, "", 11, 11}}, nil,
+						9, 11,
+					}},
+					5, 11,
+				}},
+				2, 11,
+			}}, error(nil)),
 
 		// Session splitting
 
@@ -124,15 +125,15 @@ func TestParseSessionsInFS(t *testing.T) {
 
 
 				`)).
-			Rets([]*Node{
-				{
-					Name: "a.elvts",
-					Children: []*Node{{
-						Name:         "h1",
-						Interactions: []Interaction{{Prompt: "~> ", Code: "echo foo", Output: "foo\n"}},
-					}},
-				},
-			}),
+			Rets([]*Node{{
+				"a.elvts", nil, nil,
+				[]*Node{{
+					"h1", nil,
+					[]Interaction{{"~> ", "echo foo", 4, 5, "foo\n", 5, 6}}, nil,
+					1, 8,
+				}},
+				1, 8,
+			}}),
 
 		It("organizes nodes into a tree").
 			Args(oneFile("a.elvts", `
@@ -150,26 +151,27 @@ func TestParseSessionsInFS(t *testing.T) {
 				# section 2 #
 				~> nop in section 2
 				`)).
-			Rets([]*Node{
-				{
-					Name:         "a.elvts",
-					Interactions: []Interaction{{"~> ", "nop top level", ""}},
-					Children: []*Node{
-						{
-							Name:         "section 1",
-							Interactions: []Interaction{{"~> ", "nop in section 1", ""}},
-							Children: []*Node{
-								{Name: "subsection 1.1", Interactions: []Interaction{{"~> ", "nop in subsection 1.1", ""}}},
-								{Name: "subsection 1.2", Interactions: []Interaction{{"~> ", "nop in subsection 1.2", ""}}},
-							},
+			Rets([]*Node{{
+				"a.elvts", nil,
+				[]Interaction{{"~> ", "nop top level", 1, 2, "", 2, 2}},
+				[]*Node{
+					{
+						"section 1", nil,
+						[]Interaction{{"~> ", "nop in section 1", 4, 5, "", 5, 5}},
+						[]*Node{
+							{"subsection 1.1", nil, []Interaction{{"~> ", "nop in subsection 1.1", 7, 8, "", 8, 8}}, nil, 6, 9},
+							{"subsection 1.2", nil, []Interaction{{"~> ", "nop in subsection 1.2", 10, 11, "", 11, 11}}, nil, 9, 12},
 						},
-						{
-							Name:         "section 2",
-							Interactions: []Interaction{{"~> ", "nop in section 2", ""}},
-						},
+						3, 12,
+					},
+					{
+						"section 2", nil,
+						[]Interaction{{"~> ", "nop in section 2", 13, 14, "", 14, 14}}, nil,
+						12, 14,
 					},
 				},
-			}, error(nil)),
+				1, 14,
+			}}, error(nil)),
 
 		It("ignores comment lines in .elvts files").
 			Args(oneFile("a.elvts", `
@@ -183,8 +185,11 @@ func TestParseSessionsInFS(t *testing.T) {
 				// some comments after output; note that the preceding empty
 				// lines is also stripped
 				`)).
-			Rets(oneNode("a.elvts",
-				Interaction{Prompt: "~> ", Code: "echo foo; echo bar", Output: "foo\nbar\n"})),
+			Rets([]*Node{{
+				"a.elvts", nil,
+				[]Interaction{{"~> ", "echo foo; echo bar", 2, 3, "foo\nbar\n", 4, 7}}, nil,
+				1, 10,
+			}}),
 
 		It("errors if h2 appears before any h1 in .elvts files").
 			Args(oneFile("a.elvts", `
@@ -203,8 +208,13 @@ func TestParseSessionsInFS(t *testing.T) {
 				foo
 				bar
 				`)).
-			Rets(oneNode("a.elvts",
-				Interaction{Prompt: "~> ", Code: "echo foo\necho bar", Output: "foo\nbar\n"})),
+			Rets([]*Node{{
+				"a.elvts",
+				nil,
+				[]Interaction{{"~> ", "echo foo\necho bar", 1, 3, "foo\nbar\n", 3, 5}},
+				nil,
+				1, 5,
+			}}),
 
 		It("supports multiple cycles").
 			Args(oneFile("a.elvts", `
@@ -217,18 +227,28 @@ func TestParseSessionsInFS(t *testing.T) {
 				lorem
 				ipsum
 				`)).
-			Rets(oneNode("a.elvts",
-				Interaction{Prompt: "~> ", Code: "echo foo\necho bar", Output: "foo\nbar\n"},
-				Interaction{Prompt: "~> ", Code: "echo lorem\necho ipsum", Output: "lorem\nipsum\n"})),
+			Rets([]*Node{{
+				"a.elvts", nil,
+				[]Interaction{
+					{"~> ", "echo foo\necho bar", 1, 3, "foo\nbar\n", 3, 5},
+					{"~> ", "echo lorem\necho ipsum", 5, 7, "lorem\nipsum\n", 7, 9},
+				}, nil,
+				1, 9,
+			}}),
 
 		It("supports cycles with empty output").
 			Args(oneFile("a.elvts", `
 				~> nop
 				~> nop
 				`)).
-			Rets(oneNode("a.elvts",
-				Interaction{Prompt: "~> ", Code: "nop", Output: ""},
-				Interaction{Prompt: "~> ", Code: "nop", Output: ""})),
+			Rets([]*Node{{
+				"a.elvts", nil,
+				[]Interaction{
+					{"~> ", "nop", 1, 2, "", 2, 2},
+					{"~> ", "nop", 2, 3, "", 3, 3},
+				}, nil,
+				1, 3,
+			}}),
 
 		It("supports more complex prompts").
 			Args(oneFile("a.elvts", `
@@ -237,9 +257,14 @@ func TestParseSessionsInFS(t *testing.T) {
 				/opt/bar> echo bar
 				bar
 				`)).
-			Rets(oneNode("a.elvts",
-				Interaction{Prompt: "~/foo> ", Code: "echo foo", Output: "foo\n"},
-				Interaction{Prompt: "/opt/bar> ", Code: "echo bar", Output: "bar\n"})),
+			Rets([]*Node{{
+				"a.elvts", nil,
+				[]Interaction{
+					{"~/foo> ", "echo foo", 1, 2, "foo\n", 2, 3},
+					{"/opt/bar> ", "echo bar", 3, 4, "bar\n", 4, 5},
+				}, nil,
+				1, 5,
+			}}),
 
 		It("supports directives").
 			Args(oneFile("a.elvts", `
@@ -252,9 +277,11 @@ func TestParseSessionsInFS(t *testing.T) {
 				~> nop
 				`)).
 			Rets([]*Node{{
-				Name:         "a.elvts",
-				Directives:   []string{"directive 1", "directive 2"},
-				Interactions: []Interaction{{Prompt: "~> ", Code: "nop"}}}}),
+				"a.elvts",
+				[]string{"directive 1", "directive 2"},
+				[]Interaction{{"~> ", "nop", 7, 8, "", 8, 8}}, nil,
+				1, 8,
+			}}),
 
 		It("errors when a session in a .elvts file doesn't start with a prompt").
 			Args(oneFile("a.elvts", `
@@ -286,10 +313,6 @@ func TestParseSessionsInFS(t *testing.T) {
 }
 
 func oneFile(name, content string) Dir { return Dir{name: Dedent(content)} }
-
-func oneNode(name string, interactions ...Interaction) ([]*Node, error) {
-	return []*Node{{Name: name, Interactions: interactions}}, nil
-}
 
 type errorWithMsg struct{ msg string }
 

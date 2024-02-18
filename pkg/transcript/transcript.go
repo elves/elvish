@@ -142,6 +142,8 @@ type Node struct {
 	Directives   []string
 	Interactions []Interaction
 	Children     []*Node
+	// [LineFrom, LineTo)
+	LineFrom, LineTo int
 }
 
 // ParseFromFS scans fsys recursively for .elv and .elvts files, and
@@ -269,15 +271,17 @@ func (e *transcriptExtractor) Do(op md.Op) {
 type fileLines struct {
 	filename    string
 	lines       []string
-	startLineno int // line number of lines[0]
+	startLineNo int // line number of lines[0]
 }
 
 func (fl *fileLines) describeLine(i int) string {
-	return fmt.Sprintf("%s:%d", fl.filename, i+fl.startLineno)
+	return fmt.Sprintf("%s:%d", fl.filename, fl.lineNo(i))
 }
 
+func (fl *fileLines) lineNo(i int) int { return i + fl.startLineNo }
+
 func (fl *fileLines) slice(i, j int) fileLines {
-	return fileLines{fl.filename, fl.lines[i:j], fl.startLineno}
+	return fileLines{fl.filename, fl.lines[i:j], fl.lineNo(i)}
 }
 
 // Parses a single node. This could be an .elvts file, or part of an .elv file.
@@ -285,7 +289,7 @@ func parseNode(name string, fl fileLines) (*Node, error) {
 	// Path from root to current node. Index corresponds to level, so
 	// nodeStack[0] is the root,  nodeStack[1] is the currently active h1, and
 	// so on.
-	nodeStack := []*Node{{Name: name}}
+	nodeStack := []*Node{{Name: name, LineFrom: fl.lineNo(0)}}
 
 	for i := 0; i < len(fl.lines); {
 		if title, level, ok := parseHeading(fl.lines[i]); ok {
@@ -296,12 +300,18 @@ func parseNode(name string, fl fileLines) (*Node, error) {
 			if level > len(nodeStack) {
 				return nil, fmt.Errorf("%s: h%d before h%d", fl.describeLine(i), level, level-1)
 			}
-			i++
-			node := &Node{Name: title}
+			node := &Node{Name: title, LineFrom: fl.lineNo(i)}
 			parent := nodeStack[level-1]
 			parent.Children = append(parent.Children, node)
-			// Pop until parent is at the top, then push node
+			// Terminate all nodes that are at the new node's level or a deeper
+			// level.
+			for _, n := range nodeStack[level:] {
+				n.LineTo = fl.lineNo(i)
+			}
+			// Remove terminated nodes and push new node.
 			nodeStack = append(nodeStack[:level], node)
+			// We're done with this line.
+			i++
 		}
 		// Consume all lines to the next heading, and parse it as a Session to
 		// attach to the current node.
@@ -316,6 +326,10 @@ func parseNode(name string, fl fileLines) (*Node, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+	// Nodes that are still active now terminate at the EOF.
+	for _, n := range nodeStack {
+		n.LineTo = fl.lineNo(len(fl.lines))
 	}
 	return nodeStack[0], nil
 }
@@ -337,7 +351,13 @@ func parseHeading(line string) (title string, level int, ok bool) {
 type Interaction struct {
 	Prompt string
 	Code   string
+	// [CodeLineFrom, CodeLineTo) identifies the range of code lines.
+	CodeLineFrom, CodeLineTo int
+
 	Output string
+	// [OutputLineFrom, OutputlineTo) identifies the range of output lines,
+	// excluding any leading and trailing comment lines.
+	OutputLineFrom, OutputLineTo int
 }
 
 // PromptAndCode returns prompt and code concatenated, with spaces prepended to
@@ -390,6 +410,7 @@ func parseSession(n *Node, fl fileLines) error {
 	// Parse interactions.
 	var interactions []Interaction
 	for i := start; i < len(lines); {
+		codeLineFrom := fl.lineNo(i)
 		// Consume the first code line.
 		prompt := PromptPattern.FindString(lines[i])
 		code := []string{lines[i][len(prompt):]}
@@ -400,15 +421,25 @@ func parseSession(n *Node, fl fileLines) error {
 			code = append(code, lines[i][len(continuation):])
 			i++
 		}
-		// Consume output lines, ignoring comment lines.
+		codeLineTo := fl.lineNo(i)
+
+		// Ignore comment lines between code and output.
+		for i < len(lines) && isComment(lines[i]) {
+			i++
+		}
+		// Consume output lines, ignoring internal and trailing comment lines.
 		var output []string
+		outputLineFrom := fl.lineNo(i)
+		outputLineTo := fl.lineNo(i)
 		for i < len(lines) && !PromptPattern.MatchString(lines[i]) {
 			if _, ok := parseDirective(lines[i]); ok {
 				return fmt.Errorf("%s: %w",
 					fl.describeLine(i), errDirectiveOnlyAllowedAtStartOfSession)
 			} else if isComment(lines[i]) {
+				// Do nothing
 			} else {
 				output = append(output, lines[i])
+				outputLineTo = fl.lineNo(i + 1)
 			}
 			i++
 		}
@@ -416,8 +447,8 @@ func parseSession(n *Node, fl fileLines) error {
 			prompt,
 			// Code doesn't include the trailing newline, so a simple
 			// strings.Join is appropriate.
-			strings.Join(code, "\n"),
-			strutil.JoinLines(output)})
+			strings.Join(code, "\n"), codeLineFrom, codeLineTo,
+			strutil.JoinLines(output), outputLineFrom, outputLineTo})
 	}
 	n.Directives = directives
 	n.Interactions = interactions
