@@ -3,9 +3,11 @@ package evaltest
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"go/build/constraint"
 	"io/fs"
+	"os"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -41,6 +43,8 @@ import (
 //	func TestTranscripts(t *testing.T) {
 //		evaltest.TestTranscriptsInFS(t, transcripts)
 //	}
+//
+// # Setup functions
 //
 // The function accepts variadic arguments in (name, f) pairs, where name must
 // not contain any spaces. Each pair defines a setup function that may be
@@ -87,16 +91,86 @@ import (
 //
 //	~> echo foo
 //	foo
+//
+// # ELVISH_TRANSCRIPT_RUN
+//
+// The environment variable ELVISH_TRANSCRIPT_RUN may be set to a string
+// $filename:$lineno. If the location falls within the code lines of an
+// interaction, the following happens:
+//
+//  1. Only the session that the interaction belongs to is run, and only up to
+//     the located interaction.
+//
+//  2. If the actual output doesn't match what's in the file, the test fails,
+//     and writes out a machine readable instruction to update the file to match
+//     the actual output.
+//
+// As an example, consider the following fragment of foo_test.elvts (with line
+// numbers):
+//
+//	12 ~> echo foo
+//	13    echo bar
+//	14 lorem
+//	15 ipsum
+//
+// Running
+//
+//	env ELVISH_TRANSCRIPT_RUN=foo_test.elvts:12 go test -run TestTranscripts
+//
+// will end up with a test failure, with a message like the following (the line
+// range is left-closed, right-open):
+//
+//	UPDATE {"fromLine": 14, "toLine": 16, "content": "foo\nbar\n"}
+//
+// This mechanism enables editor plugins that can fill or update the output of
+// transcript tests without requiring user to leave the editor.
+//
+// This currently only works for .elvts files.
 func TestTranscriptsInFS(t *testing.T, fsys fs.FS, setupPairs ...any) {
 	nodes, err := transcript.ParseFromFS(fsys)
 	if err != nil {
 		t.Fatalf("parse transcript sessions: %v", err)
 	}
-	testTranscripts(t, buildSetupDirectives(setupPairs), nodes, nil)
+	runLine := -1
+	if run := os.Getenv("ELVISH_TRANSCRIPT_RUN"); run != "" {
+		filename, lineNo, ok := parseFileNameAndLineNo(run)
+		if !ok {
+			t.Fatalf("can't parse ELVISH_TRANSCRIPT_RUN: %q", run)
+		}
+		var node *transcript.Node
+		for _, n := range nodes {
+			if n.Name == filename {
+				node = n
+				break
+			}
+		}
+		if node == nil {
+			t.Fatalf("can't find file %q", filename)
+		}
+		nodes = []*transcript.Node{node}
+		runLine = lineNo
+	}
+	testTranscripts(t, buildSetupDirectives(setupPairs), nodes, nil, runLine)
 }
 
-func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node, commonDirectives []string) {
+func parseFileNameAndLineNo(s string) (string, int, bool) {
+	i := strings.LastIndexByte(s, ':')
+	if i == -1 {
+		return "", 0, false
+	}
+	filename, lineNoString := s[:i], s[i+1:]
+	lineNo, err := strconv.Atoi(lineNoString)
+	if err != nil {
+		return "", 0, false
+	}
+	return filename, lineNo, true
+}
+
+func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node, commonDirectives []string, runLine int) {
 	for _, node := range nodes {
+		if runLine != -1 && !(node.LineFrom <= runLine && runLine < node.LineTo) {
+			continue
+		}
 		t.Run(node.Name, func(t *testing.T) {
 			ev := eval.NewEvaler()
 			mods.AddTo(ev)
@@ -108,14 +182,26 @@ func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node
 				sd.apply(t, ev, directive)
 			}
 			for _, interaction := range node.Interactions {
+				if runLine != -1 && interaction.CodeLineFrom > runLine {
+					break
+				}
 				want := interaction.Output
 				got := evalAndCollectOutput(t, ev, interaction.Code)
 				if want != got {
-					t.Errorf("\n%s\n-want +got:\n%s",
-						interaction.PromptAndCode(), diff.DiffNoHeader(want, got))
+					if runLine == -1 {
+						t.Errorf("\n%s\n-want +got:\n%s",
+							interaction.PromptAndCode(), diff.DiffNoHeader(want, got))
+					} else if interaction.CodeLineFrom <= runLine && runLine < interaction.CodeLineTo {
+						correction := struct {
+							FromLine int    `json:"fromLine"`
+							ToLine   int    `json:"toLine"`
+							Content  string `json:"content"`
+						}{interaction.OutputLineFrom, interaction.OutputLineTo, got}
+						t.Errorf("UPDATE %s", must.OK1(json.Marshal(correction)))
+					}
 				}
 			}
-			testTranscripts(t, sd, node.Children, directives)
+			testTranscripts(t, sd, node.Children, directives, runLine)
 		})
 	}
 }
