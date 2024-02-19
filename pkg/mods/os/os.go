@@ -23,18 +23,24 @@ var Ns = eval.BuildNsNamed("os").
 		"-is-exist":     isExist,
 		"-is-not-exist": isNotExist,
 
+		// File CRUD.
 		"mkdir":      mkdir,
+		"mkdir-all":  mkdirAll,
+		"symlink":    os.Symlink,
 		"remove":     remove,
 		"remove-all": removeAll,
+		"rename":     os.Rename,
 		"chmod":      chmod,
 
-		"eval-symlinks": filepath.EvalSymlinks,
-
+		// File query.
 		"stat":       stat,
 		"exists":     exists,
 		"is-dir":     IsDir,
 		"is-regular": IsRegular,
 
+		"eval-symlinks": filepath.EvalSymlinks,
+
+		// Temp file/dir.
 		"temp-dir":  TempDir,
 		"temp-file": TempFile,
 	}).Ns()
@@ -55,6 +61,10 @@ func (opts *mkdirOpts) SetDefaultOptions() { opts.Perm = 0755 }
 
 func mkdir(opts mkdirOpts, path string) error {
 	return os.Mkdir(path, os.FileMode(opts.Perm))
+}
+
+func mkdirAll(opts mkdirOpts, path string) error {
+	return os.MkdirAll(path, os.FileMode(opts.Perm))
 }
 
 // ErrEmptyPath is thrown by remove and remove-all when given an empty path.

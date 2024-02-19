@@ -19,6 +19,18 @@ fn -is-not-exist {|exc| }
 # Creates a new directory with the specified name and permission (before umask).
 fn mkdir {|&perm=0o755 path| }
 
+# Creates a new directory at the named path along with any necessary parents.
+# The permission bits is used for all new directories to create. If the named
+# path is already a directory, does nothing.
+fn mkdir-all {|&perm=0o755 path| }
+
+# Creates `$newname` as a symbolic link to `$oldname`.
+#
+# It is not an error if `$oldname` doesn't exist. However, on Windows, doing
+# this will create `$newname` as a file symlink, so if `$oldname` is later
+# created as a directory it will not work.
+fn symlink {|oldname newname| }
+
 # Removes the file or empty directory at `path`.
 #
 # If the path does not exist, this command throws an exception that can be
@@ -32,6 +44,14 @@ fn remove {|path| }
 # If the path does not exist, this command returns silently without throwing an
 # exception.
 fn remove-all {|path| }
+
+# Renames file at `$oldpath` to `$newpath`. If `$newpath` already exists and is
+# a file, it will get replaced.
+#
+# OS-specific restrictions may apply when `$oldpath` and `$newpath` are in
+# different directories. On non-Unix platforms, this is not an atomic operation
+# even within the same directory.
+fn rename {|oldpath newpath| }
 
 # Outputs `$path` after resolving any symbolic links. If `$path` is relative the result will be
 # relative to the current directory, unless one of the components is an absolute symbolic link.

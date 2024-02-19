@@ -28,39 +28,16 @@ func TestTranscripts(t *testing.T) {
 			}
 			t.Cleanup(func() { listener.Close() })
 		},
-		"create-windows-special-files-or-skip", createWindowsSpecialFileOrSkip,
-		"create-regular-and-symlink-or-skip", func(t *testing.T) {
-			testutil.ApplyDir(testutil.Dir{"regular": ""})
-			err := os.Symlink("regular", "symlink")
+		"only-if-can-create-symlink", func(t *testing.T) {
+			testutil.ApplyDir(testutil.Dir{"test-file": ""})
+			err := os.Symlink("test-file", "test-symlink")
 			if err != nil {
 				// On Windows we may or may not be able to create a symlink.
 				t.Skipf("symlink: %v", err)
 			}
+			must.OK(os.Remove("test-file"))
+			must.OK(os.Remove("test-symlink"))
 		},
-		"apply-test-dir-with-symlinks-or-skip", func(t *testing.T) {
-			testutil.ApplyDir(testutil.Dir{
-				"d": testutil.Dir{
-					"f": "",
-				},
-			})
-			var symlinks = []struct {
-				path   string
-				target string
-			}{
-				{"d/s-f", "f"},
-				{"s-d", "d"},
-				{"s-d-f", "d/f"},
-				{"s-bad", "bad"},
-			}
-
-			for _, link := range symlinks {
-				err := os.Symlink(link.target, link.path)
-				if err != nil {
-					// Creating symlinks requires a special permission on Windows. If
-					// the user doesn't have that permission, just skip the whole test.
-					t.Skip(err)
-				}
-			}
-		},
+		"create-windows-special-files-or-skip", createWindowsSpecialFileOrSkip,
 	)
 }

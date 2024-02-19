@@ -30,6 +30,42 @@
    printf "%O\n" (os:stat d400)[perm]
 0o400
 
+////////////////
+# os:mkdir-all #
+////////////////
+
+~> os:mkdir-all a/b
+   os:is-dir a
+   os:is-dir a/b
+▶ $true
+▶ $true
+
+## no error if the directory already exists ##
+~> os:mkdir-all a/b
+~> os:mkdir-all a/b
+
+## &perm ##
+//only-on !windows
+//umask 0
+~> os:mkdir-all &perm=0o700 a/b
+   printf "%O\n" (os:stat a)[perm]
+   printf "%O\n" (os:stat a/b)[perm]
+0o700
+0o700
+
+//////////////
+# os:symlink #
+//////////////
+
+//only-if-can-create-symlink
+
+~> echo foo > regular
+~> os:symlink regular symlink
+~> slurp < symlink
+▶ "foo\n"
+~> os:eval-symlinks symlink
+▶ regular
+
 /////////////
 # os:remove #
 /////////////
@@ -88,6 +124,21 @@ Exception: bad value: path must be non-empty string, but is empty string
 ~> os:remove-all ""
 Exception: bad value: path must be non-empty string, but is empty string
   [tty]:1:1-16: os:remove-all ""
+
+/////////////
+# os:rename #
+/////////////
+
+~> echo > old
+   os:exists old
+   os:exists new
+▶ $true
+▶ $false
+~> os:rename old new
+   os:exists old
+   os:exists new
+▶ $false
+▶ $true
 
 ////////////
 # os:chmod #
@@ -158,7 +209,9 @@ Exception: CreateFile non-existent: The system cannot find the file specified.
   [tty]:1:1-20: os:stat non-existent
 
 ## symlink ##
-//create-regular-and-symlink-or-skip
+//only-if-can-create-symlink
+~> echo > regular
+   os:symlink regular symlink
 ~> put (os:stat symlink)[type]
 ▶ symlink
 ~> put (os:stat &follow-symlink symlink)[type]
@@ -242,7 +295,15 @@ Exception: CreateFile non-existent: The system cannot find the file specified.
 # symbolic link-related #
 /////////////////////////
 
-//apply-test-dir-with-symlinks-or-skip
+//only-if-can-create-symlink
+// Set up symlinks to test. Each file is named as "s-" plus path relative to the
+// test directory root, with / changed to -.
+~> os:mkdir d
+   echo > d/f
+   os:symlink f d/s-f   # target is in same directory
+   os:symlink d s-d     # target is directory
+   os:symlink d/f s-d-f # target is in subdirectory
+   os:symlink bad s-bad # target doesn't exist
 // These tests can run on Windows, where the output of os:eval-symlinks will use
 // \ as the path separator, so we can't rely on the exact output.
 ~> use path
@@ -306,6 +367,7 @@ Exception: CreateFile non-existent: The system cannot find the file specified.
 
 ## os:eval-symlinks given non-existent file (Unix) ##
 //only-on unix
+~> os:symlink bad s-bad
 ~> os:eval-symlinks s-bad
 Exception: lstat bad: no such file or directory
   [tty]:1:1-22: os:eval-symlinks s-bad
@@ -313,6 +375,8 @@ Exception: lstat bad: no such file or directory
 ## os:eval-symlinks given non-existent file (Windows) ##
 // Windows has a different error message.
 //only-on windows
+//only-if-can-create-symlink
+~> os:symlink bad s-bad
 ~> os:eval-symlinks s-bad
 Exception: CreateFile bad: The system cannot find the file specified.
   [tty]:1:1-22: os:eval-symlinks s-bad
