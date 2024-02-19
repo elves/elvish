@@ -2,7 +2,7 @@
     "name": "elvish",
     "displayName": "Elvish",
     "description": "Elvish language support for Visual Studio Code",
-    "version": "0.2.4",
+    "version": "0.3.0",
     "publisher": "elves",
     "license": "BSD-2-Clause",
     "icon": "icon.png",
@@ -97,16 +97,46 @@
                 "language": "elvish",
                 "path": "./snippets/snippets.json"
             }
+        ],
+        "commands": [
+            {
+                "command": "elvish.updateTranscriptOutputForCodeAtCursor",
+                "title": "Elvish: update transcript output for code at cursor"
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "elvish.updateTranscriptOutputForCodeAtCursor",
+                    "when": "editorLangId == elvish-transcript"
+                }
+            ]
+        },
+        "keybindings": [
+            {
+                "command": "elvish.updateTranscriptOutputForCodeAtCursor",
+                "key": "alt+enter",
+                "when": "editorTextFocus && editorLangId == elvish-transcript"
+            }
         ]
     },
     "scripts": {
-        "vscode:prepublish": "npm run build",
-        "build": "esbuild ./extension.js --bundle --outfile=./dist/extension.js --external:vscode --format=cjs --platform=node --minify --sourcemap"
+        "vscode:prepublish": "npm run check && npm run build",
+        "check": "tsc -p . --noEmit",
+        "build": "esbuild ./src/extension.ts --bundle --outfile=./dist/extension.js --external:vscode --format=cjs --platform=node --minify --sourcemap",
+        "watch": "npm run build -- --watch"
     },
     "dependencies": {
-        "vscode-languageclient": "^8.1.0"
+        "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
-        "esbuild": "^0.18.12"
+        "@types/node": "^20.11.19",
+        "@types/vscode": "^1.65.0",
+        "@typescript-eslint/eslint-plugin": "^7.0.1",
+        "@typescript-eslint/parser": "^7.0.1",
+        "esbuild": "^0.20.1",
+        "eslint": "^8.56.0",
+        "typescript": "^5.3.3",
+        "typescript-formatter": "^7.2.2"
     }
 }
