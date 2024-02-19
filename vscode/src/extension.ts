@@ -5,7 +5,7 @@ import { LanguageClient } from 'vscode-languageclient/node';
 
 let client: LanguageClient | undefined;
 
-function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext) {
     client = new LanguageClient(
         "elvish",
         "Elvish Language Server",
@@ -19,10 +19,8 @@ function activate(context: vscode.ExtensionContext) {
         updateTranscriptOutputForCodeAtCursor));
 }
 
-function deactivate() {
-    if (client) {
-        return client.stop();
-    }
+export function deactivate() {
+    return client?.stop();
 }
 
 interface UpdateInstruction {
@@ -37,14 +35,20 @@ async function updateTranscriptOutputForCodeAtCursor() {
         return;
     }
     const {dir, base} = path.parse(editor.document.uri.fsPath);
+    // VS Code's line number is 0-based, but the ELVISH_TRANSCRIPT_RUN protocol
+    // uses 1-based line numbers. This is also used in the UI, where the user
+    // expects 1-based line numbers.
     const lineno = editor.selection.active.line + 1;
 
     await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
         title: `Running ${base}:${lineno}...`
     }, async (progress, token) => {
+        // Transcript tests uses what's on the disk, so we have to save the
+        // document first.
         await editor.document.save();
 
+        // See godoc of pkg/eval/evaltest for the protocol.
         const {error, stdout} = await exec(
             "go test -run TestTranscripts",
             {
@@ -75,6 +79,7 @@ async function updateTranscriptOutputForCodeAtCursor() {
     });
 }
 
+// Wraps child_process.exec to return a promise.
 function exec(cmd: string, options: child_process.ExecOptions):
         Promise<{error: child_process.ExecException|null, stdout: string, stderr: string}> {
     return new Promise((resolve) => {
@@ -83,8 +88,3 @@ function exec(cmd: string, options: child_process.ExecOptions):
         });
     });
 }
-
-module.exports = {
-    activate,
-    deactivate,
-};
