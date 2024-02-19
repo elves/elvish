@@ -90,6 +90,26 @@ idea of how to best test the code. Worse, parts of the codebase are poorly
 tested, or even untestable. In either case, discuss with the project lead on the
 best way forward.
 
+### Transcript tests
+
+Most tests against Elvish modules are written in `.elvts` files, which mimic
+transcripts of Elvish REPL sessions. See
+https://pkg.go.dev/src.elv.sh@master/pkg/transcript for the format of transcript
+files, and https://pkg.go.dev/src.elv.sh@master/pkg/eval/evaltest for details
+specific to using them as tests.
+
+If you use VS Code, the official Elvish extension allows you to simply press
+Alt-Enter to update the output of transcripts (specifically, the output for the
+code block the cursor is in). This means that you can author transcript tests
+entirely within the editor, instead of manually writing out the expected output
+or copy-pasting outputs from an actual REPL.
+
+**Note**: The functionality of the VS Code plugin is based on a very simple
+protocol and can be easily implemented for other editors. The protocol is
+documented in the godoc for the `evaltest` package (see link below), and you can
+also take a look `vscode/src/extension.ts` for the client implementation in the
+VS Code extension.
+
 ### ELVISH_TEST_TIME_SCALE
 
 Some unit tests depend on time thresholds. The default values of these time
