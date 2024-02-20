@@ -17,18 +17,45 @@ import (
 	"src.elv.sh/pkg/prog"
 )
 
-// VersionBase identifies the version of Elvish. On the development branches, it
-// identifies the next release.
+// VersionBase identifies the version of Elvish.
+//
+//   - On release branches, it identifies the exact version of the commit, and
+//     is consistent with the Git tag. For example, at tag v0.233.0, this will
+//     be "0.233.0".
+//
+//   - On development branches, it identifies the first version of the next
+//     release branch. For example, after releases for 0.233.x has been branched
+//     but before 0.234.x is branched, this will be "0.244.0". The full version
+//     string will be augmented with VCS information (see [VCSOverride]).
+//
+// In both cases, the full version is also augmented with the [BuildVariant].
 const VersionBase = "0.21.0"
 
-// VCSOverride may be set during compilation to "time-commit" (e.g.
+// VCSOverride may be set during compilation to "$time-$commit" (e.g.
 // "20220320172241-5dc8c02a32cf") for identifying the version of development
-// builds.
+// builds. It has no effect on release branches.
 //
-// It is only needed if the automatic population of version information
-// implemented in devVersion fails.
+// When a development commit is built from a Git repository, Elvish will use the
+// information from Git to generate a version string like (following the format
+// of [Go module pseudo-versions]):
 //
-// This variable is ignored on release branches.
+//	0.244.0-dev.0.20220320172241-5dc8c02a32cf
+//
+// where 20220320172241 is the commit time (in YYYYMMDDHHMMSS) and 5dc8c02a32cf
+// is the first 12 digits of the commit hash.
+//
+// If this information is not available during build time - for example if the
+// build uses an archive of the commit rather than a Git checkout - the version
+// string will instead look like:
+//
+//	0.244.0-dev.unknown
+//
+// In that case, this variable can be overridden to to supply the $time-$commit
+// information like this:
+//
+//	go build -ldflags '-X src.elv.sh/pkg/buildinfo.VCSOverride=20220320172241-5dc8c02a32cf' ./cmd/elvish
+//
+// [Go module pseudo-versions]: https://go.dev/ref/mod#pseudo-versions
 var VCSOverride string
 
 // BuildVariant may be set during compilation to identify a particular
@@ -36,6 +63,15 @@ var VCSOverride string
 // dependencies, or with a non-standard toolchain.
 //
 // If non-empty, it is appended to the version string, along with a "+" prefix.
+//
+// Example:
+//
+//	go build -ldflags '-X src.elv.sh/pkg/buildinfo.BuildVariant=deb1' ./cmd/elvish
+//
+// The value "official" is used by official binaries linked from
+// https://elv.sh/get. Do not use it unless you can ensure that your build is
+// bit-to-bit identical with the official binaries and you are committing to
+// maintaining that property.
 var BuildVariant string
 
 // Type contains all the build information fields.
