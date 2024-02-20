@@ -1,5 +1,5 @@
-//eval use os
-//in-temp-dir
+//each:eval use os
+//each:in-temp-dir
 
 ////////////
 # os:mkdir #
@@ -375,7 +375,6 @@ Exception: lstat bad: no such file or directory
 ## os:eval-symlinks given non-existent file (Windows) ##
 // Windows has a different error message.
 //only-on windows
-//only-if-can-create-symlink
 ~> os:symlink bad s-bad
 ~> os:eval-symlinks s-bad
 Exception: CreateFile bad: The system cannot find the file specified.
@@ -385,7 +384,7 @@ Exception: CreateFile bad: The system cannot find the file specified.
 # os:temp-dir #
 ///////////////
 
-//eval use re
+//each:eval use re
 
 // default name template is elvish-*
 ~> var x = (os:temp-dir)
@@ -418,8 +417,8 @@ Exception: arity mismatch: arguments must be 0 to 1 values, but is 2 values
 # os:temp-file #
 ////////////////
 
-//eval use re
-//eval use file
+//each:eval use re
+//each:eval use file
 
 ~> var f = (os:temp-file)
    re:match '[/\\]elvish-.*$' $f[name]

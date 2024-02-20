@@ -2,7 +2,7 @@
 # add-var #
 ///////////
 
-//add-var-in-global
+//each:add-var-in-global
 
 ~> add-var foo bar
 ~> put $foo
@@ -22,7 +22,7 @@ Exception: wrong type: need !!eval.Callable, got string
 # del-var #
 ///////////
 
-//del-var-in-global
+//each:del-var-in-global
 
 ~> var foo = bar
 ~> del-var foo
@@ -42,7 +42,7 @@ Exception: bad value: name argument to edit:del-var must be unqualified variable
 # add-vars #
 ////////////
 
-//add-vars-in-global
+//each:add-vars-in-global
 
 ~> add-vars [&foo=bar]
 ~> put $foo
@@ -71,7 +71,7 @@ Exception: wrong type: need !!eval.Callable, got string
 # del-var #
 ///////////
 
-//del-vars-in-global
+//each:del-vars-in-global
 
 ## ? ##
 ~> var a b c

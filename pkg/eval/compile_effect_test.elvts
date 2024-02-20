@@ -74,7 +74,7 @@ Berlin
 # background pipeline #
 ///////////////////////
 
-//eval use file
+//each:eval use file
 
 ## basic behavior ##
 ~> set notify-bg-job-success = $false
@@ -313,7 +313,7 @@ Compilation error: using the syntax of temporary assignment for non-temporary as
 # redirection #
 ///////////////
 
-//in-temp-dir
+//each:in-temp-dir
 
 ## output and input redirection ##
 ~> echo 233 > out1

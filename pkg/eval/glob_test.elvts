@@ -2,7 +2,7 @@
 # globbing #
 ////////////
 
-//in-temp-dir
+//each:in-temp-dir
 
 ## simple patterns ##
 ~> use os

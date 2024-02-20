@@ -1,4 +1,4 @@
-//eval use path
+//each:eval use path
 
 // All the functions in path: are either simple wrappers of Go functions or
 // compatibility aliases of their os: counterparts.

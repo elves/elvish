@@ -1,5 +1,5 @@
-//eval use file
-//in-temp-dir
+//each:eval use file
+//each:in-temp-dir
 
 /////////////
 # file:open #

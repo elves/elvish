@@ -10,8 +10,8 @@
 # cd #
 //////
 
-//with-temp-home
-//in-temp-dir
+//each:with-temp-home
+//each:in-temp-dir
 
 ## explicit argument ##
 ~> use os

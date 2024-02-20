@@ -21,7 +21,7 @@ Compilation error: variable $return~ is read-only
 # $paths #
 //////////
 
-//unset-env PATH
+//each:unset-env PATH
 
 ## $E:PATH to $paths ##
 ~> use path
@@ -50,7 +50,8 @@ Exception: path cannot contain NUL byte, colon on Unix or semicolon on Windows
 # $pwd #
 ////////
 
-//in-temp-dir
+//each:in-temp-dir
+
 ~> use os
    use path
 // Test both reading and writing $pwd.

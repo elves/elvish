@@ -103,7 +103,7 @@ Exception: 2 keys but 3 values
 # tilde #
 /////////
 
-//with-temp-home
+//each:with-temp-home
 
 ~> eq ~ $E:HOME
 ▶ $true

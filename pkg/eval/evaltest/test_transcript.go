@@ -76,18 +76,22 @@ import (
 //
 //   - deprecation-level $x: Run with deprecation level set to $x.
 //
-// Setup functions propagate to descendants. An example:
+// These setup functions can then be used in transcripts as directives. By
+// default, they only apply to the current session; adding a "each:" prefix
+// makes them apply to descendant sessions too.
 //
 //	//global-setup
+//	//each:global-setup-2
 //
 //	# h1 #
 //	//h1-setup
+//	//each:h1-setup2
 //
 //	## h2 ##
 //	//h2-setup
 //
-//	// All of top-setup, h1-setup and h2-setup are run for this session, in that
-//	// order.
+//	// All of globa-setup2, h1-setup2 and h2-setup are run for this session, in
+//	// that
 //
 //	~> echo foo
 //	foo
@@ -166,7 +170,7 @@ func parseFileNameAndLineNo(s string) (string, int, bool) {
 	return filename, lineNo, true
 }
 
-func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node, commonDirectives []string, runLine int) {
+func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node, setups []setupFunc, runLine int) {
 	for _, node := range nodes {
 		if runLine != -1 && !(node.LineFrom <= runLine && runLine < node.LineTo) {
 			continue
@@ -174,12 +178,19 @@ func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node
 		t.Run(node.Name, func(t *testing.T) {
 			ev := eval.NewEvaler()
 			mods.AddTo(ev)
-			// TODO: Use slices.Concat when Elvish requires Go 1.22
-			directives := make([]string, 0, len(commonDirectives)+len(node.Directives))
-			directives = append(directives, commonDirectives...)
-			directives = append(directives, node.Directives...)
-			for _, directive := range directives {
-				sd.apply(t, ev, directive)
+			for _, setup := range setups {
+				setup(t, ev)
+			}
+			var eachSetups []setupFunc
+			for _, directive := range node.Directives {
+				setup, each, err := sd.compile(directive)
+				if err != nil {
+					t.Fatal(err)
+				}
+				setup(t, ev)
+				if each {
+					eachSetups = append(eachSetups, setup)
+				}
 			}
 			for _, interaction := range node.Interactions {
 				if runLine != -1 && interaction.CodeLineFrom > runLine {
@@ -201,24 +212,35 @@ func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node
 					}
 				}
 			}
-			testTranscripts(t, sd, node.Children, directives, runLine)
+			if len(node.Children) > 0 {
+				// TODO: Use slices.Concat when Elvish requires Go 1.22
+				allSetups := make([]setupFunc, 0, len(setups)+len(eachSetups))
+				allSetups = append(allSetups, setups...)
+				allSetups = append(allSetups, eachSetups...)
+				testTranscripts(t, sd, node.Children, allSetups, runLine)
+			}
 		})
 	}
 }
 
+type (
+	setupFunc    func(*testing.T, *eval.Evaler)
+	argSetupFunc func(*testing.T, *eval.Evaler, string)
+)
+
 type setupDirectives struct {
-	setupMap    map[string]func(*testing.T, *eval.Evaler)
-	argSetupMap map[string]func(*testing.T, *eval.Evaler, string)
+	setupMap    map[string]setupFunc
+	argSetupMap map[string]argSetupFunc
 }
 
 func buildSetupDirectives(setupPairs []any) *setupDirectives {
 	if len(setupPairs)%2 != 0 {
 		panic(fmt.Sprintf("variadic arguments must come in pairs, got %d", len(setupPairs)))
 	}
-	setupMap := map[string]func(*testing.T, *eval.Evaler){
+	setupMap := map[string]setupFunc{
 		"in-temp-dir": func(t *testing.T, ev *eval.Evaler) { testutil.InTempDir(t) },
 	}
-	argSetupMap := map[string]func(*testing.T, *eval.Evaler, string){
+	argSetupMap := map[string]argSetupFunc{
 		"set-env": func(t *testing.T, ev *eval.Evaler, arg string) {
 			name, value, _ := strings.Cut(arg, " ")
 			testutil.Setenv(t, name, value)
@@ -281,17 +303,24 @@ func buildSetupDirectives(setupPairs []any) *setupDirectives {
 	return &setupDirectives{setupMap, argSetupMap}
 }
 
-func (sd *setupDirectives) apply(t *testing.T, ev *eval.Evaler, directive string) {
-	name, arg, _ := strings.Cut(directive, " ")
+func (sd *setupDirectives) compile(directive string) (f setupFunc, each bool, err error) {
+	cutDirective := directive
+	if s, ok := strings.CutPrefix(directive, "each:"); ok {
+		cutDirective = s
+		each = true
+	}
+	name, arg, _ := strings.Cut(cutDirective, " ")
 	if f, ok := sd.setupMap[name]; ok {
 		if arg != "" {
-			t.Fatalf("setup function %q doesn't support arguments", name)
+			return nil, false, fmt.Errorf("setup function %q doesn't support arguments", name)
 		}
-		f(t, ev)
+		return f, each, nil
 	} else if f, ok := sd.argSetupMap[name]; ok {
-		f(t, ev, arg)
+		return func(t *testing.T, ev *eval.Evaler) {
+			f(t, ev, arg)
+		}, each, nil
 	} else {
-		t.Fatalf("unknown setup function %q in directive %q", name, directive)
+		return nil, false, fmt.Errorf("unknown setup function %q in directive %q", name, directive)
 	}
 }
 

@@ -1,5 +1,5 @@
-//eval use unix
-//mock-rlimit
+//each:eval use unix
+//each:mock-rlimit
 
 ///////////
 # reading #
