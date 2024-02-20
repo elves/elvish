@@ -1,7 +1,57 @@
 // Package buildinfo contains build information.
 //
-// Some of the exported fields may be set during compilation by passing -ldflags
-// "-X src.elv.sh/pkg/buildinfo.Var=value" to "go build".
+// Exported string variables may be set during compilation using a linker flag
+// like this:
+//
+//	go build -ldflags '-X src.elv.sh/pkg/buildinfo.NAME=VALUE' ./cmd/elvish
+//
+// This mechanism can be used by packagers to enhance Elvish's version
+// information. The variables that can be set are documented below.
+//
+// # BuildVariant
+//
+// [BuildVariant], if non-empty, gets appended to the version string along with
+// a "+" prefix. It should be set to a value identifying the build environment.
+//
+// Typically, this should be the name of the software distribution that is
+// packaging Elvish, possibly plus the revision of the package. Example for
+// revision 1 of a Debian package:
+//
+//	go build -ldflags '-X src.elv.sh/pkg/buildinfo.BuildVariant=deb1' ./cmd/elvish
+//
+// Supposing that [VersionBase] is "0.233.0", this causes "elvish -version" to
+// print out "0.233.0+deb1".
+//
+// The value "official" is reserved for official binaries linked from
+// https://elv.sh/get. Do not use it unless you can ensure that your build is
+// bit-to-bit identical with the official binaries and you are committing to
+// maintaining that property.
+//
+// # VCSOverride
+//
+// On development commits, Elvish uses the information from Git to generate a
+// version string like (following the format of [Go module pseudo-versions]):
+//
+//	0.234.0-dev.0.20220320172241-5dc8c02a32cf
+//
+// where 20220320172241 is the commit time (in YYYYMMDDHHMMSS) and 5dc8c02a32cf
+// is the first 12 digits of the commit hash.
+//
+// If this information is not available when Elvish was built - for example, if
+// the build works from an archive of the commit rather than a Git checkout -
+// the version string will instead look like this:
+//
+//	0.234.0-dev.unknown
+//
+// In that case, [VCSOverride] can be set to to supply the $time-$commit
+// information:
+//
+//	go build -ldflags '-X src.elv.sh/pkg/buildinfo.VCSOverride=20220320172241-5dc8c02a32cf' ./cmd/elvish
+//
+// Setting this variable is only necessary when building development commits and
+// the VCS information is not available.
+//
+// [Go module pseudo-versions]: https://go.dev/ref/mod#pseudo-versions
 package buildinfo
 
 import (
@@ -31,47 +81,13 @@ import (
 // In both cases, the full version is also augmented with the [BuildVariant].
 const VersionBase = "0.21.0"
 
-// VCSOverride may be set during compilation to "$time-$commit" (e.g.
-// "20220320172241-5dc8c02a32cf") for identifying the version of development
-// builds. It has no effect on release branches.
-//
-// When a development commit is built from a Git repository, Elvish will use the
-// information from Git to generate a version string like (following the format
-// of [Go module pseudo-versions]):
-//
-//	0.244.0-dev.0.20220320172241-5dc8c02a32cf
-//
-// where 20220320172241 is the commit time (in YYYYMMDDHHMMSS) and 5dc8c02a32cf
-// is the first 12 digits of the commit hash.
-//
-// If this information is not available during build time - for example if the
-// build uses an archive of the commit rather than a Git checkout - the version
-// string will instead look like:
-//
-//	0.244.0-dev.unknown
-//
-// In that case, this variable can be overridden to to supply the $time-$commit
-// information like this:
-//
-//	go build -ldflags '-X src.elv.sh/pkg/buildinfo.VCSOverride=20220320172241-5dc8c02a32cf' ./cmd/elvish
-//
-// [Go module pseudo-versions]: https://go.dev/ref/mod#pseudo-versions
+// VCSOverride may be set to identify the commit of development builds when that
+// information is not available during build time. It has no effect on release
+// branches. See the package godoc for more details.
 var VCSOverride string
 
-// BuildVariant may be set during compilation to identify a particular
-// build variant, such as a build by a specific distribution, with modified
-// dependencies, or with a non-standard toolchain.
-//
-// If non-empty, it is appended to the version string, along with a "+" prefix.
-//
-// Example:
-//
-//	go build -ldflags '-X src.elv.sh/pkg/buildinfo.BuildVariant=deb1' ./cmd/elvish
-//
-// The value "official" is used by official binaries linked from
-// https://elv.sh/get. Do not use it unless you can ensure that your build is
-// bit-to-bit identical with the official binaries and you are committing to
-// maintaining that property.
+// BuildVariant may be set to identify the build environment. See the package
+// godoc for more details.
 var BuildVariant string
 
 // Type contains all the build information fields.

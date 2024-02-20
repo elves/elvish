@@ -5,27 +5,15 @@ Go application.
 
 ## Enhancing version information
 
-There are two variables that may be set during compilation using linker flags to
-enhance Elvish's version information (they don't affect any other aspect of
-Elvish's behavior):
+You can set some variables in the `src.elv.sh/pkg/buildinfo` package using
+linker flags to enhance the Elvish's version information. See the
+[package's API doc](https://pkg.go.dev/src.elv.sh@master/pkg/buildinfo) for
+details.
 
--   `src.elv.sh/pkg/buildinfo.BuildVariant` can be set to identify the
-    distribution you're building for. You are recommended to set this variable.
+They don't affect any other aspect of Elvish's behavior, so it's infeasible to
+pass those linker flags, it's fine to leave them as is.
 
--   `src.elv.sh/pkg/buildinfo.VCSOverride` can be set to supply VCS metadata for
-    development builds. This is only needed in the rare occasion where:
-
-    -   You are packaging development builds
-
-    -   Go's mechanism to store VCS metadata doesn't work for your build
-        environment
-
-See [godoc](https://pkg.go.dev/src.elv.sh@master/pkg/buildinfo#pkg-variables)
-for detailed information on the semantics of these two variables and how to set
-them.
-
-**Note**: The guidance here applies to the current development version and
-release versions starting from 0.19.0. The details for earlier versions are
-different. If your build script has `-ldflags '-X $symbol=$value'` where
-`$symbol` is not documented here, those flags no longer do anything and should
-be removed.
+**Note**: The names and usage of these variables have changed several time in
+Elvish's history. If your build script has `-ldflags '-X $symbol=$value'` where
+`$symbol` is not documented in the linked API doc, those flags no longer do
+anything and should be removed.
