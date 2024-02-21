@@ -77,6 +77,8 @@ set command:binding = (binding-table [
 set listing:binding = (binding-table [
   &Up=        $listing:up~
   &Down=      $listing:down~
+  &PageUp=    $listing:page-up~
+  &PageDown=  $listing:page-down~
   &Tab=       $listing:down-cycle~
   &Shift-Tab= $listing:up-cycle~
 ])
