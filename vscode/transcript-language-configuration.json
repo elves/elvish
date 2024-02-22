@@ -1,5 +1,7 @@
 {
     "comments": {
         "lineComment": "//"
-    }
+    },
+    // See comment in language-configuration.json.
+    "wordPattern": "[\\w\\d_:~-]+",
 }

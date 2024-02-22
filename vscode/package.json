@@ -2,7 +2,7 @@
     "name": "elvish",
     "displayName": "Elvish",
     "description": "Elvish language support for Visual Studio Code",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "publisher": "elves",
     "license": "BSD-2-Clause",
     "icon": "icon.png",
@@ -30,6 +30,7 @@
                 "extensions": [
                     ".elv"
                 ],
+                "firstLine": "^#!/.*\\belvish\\b$",
                 "configuration": "./language-configuration.json"
             },
             {

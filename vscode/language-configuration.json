@@ -2,6 +2,10 @@
     "comments": {
         "lineComment": "#",
     },
+    // Barewords and variables have different patterns. This is the pattern for
+    // variables because it's more important for VS Code to recognize variable
+    // names properly.
+    "wordPattern": "[\\w\\d_:~-]+",
     "brackets": [
         ["{", "}"],
         ["[", "]"],
