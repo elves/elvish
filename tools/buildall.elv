@@ -10,17 +10,17 @@ use platform
 use str
 
 var platforms = [
-  [&arch=amd64 &os=linux &pie=$true]
+  [&arch=amd64 &os=linux]
   [&arch=amd64 &os=darwin]
   [&arch=amd64 &os=freebsd]
   [&arch=amd64 &os=openbsd]
   [&arch=amd64 &os=netbsd]
-  [&arch=amd64 &os=windows &pie=$true]
+  [&arch=amd64 &os=windows]
 
   [&arch=386 &os=linux]
-  [&arch=386 &os=windows &pie=$true]
+  [&arch=386 &os=windows]
 
-  [&arch=arm64 &os=linux &pie=$true]
+  [&arch=arm64 &os=linux]
   [&arch=arm64 &os=darwin]
 ]
 
@@ -58,13 +58,11 @@ fn main {|go-pkg dst-dir &name=elvish &variant=''|
     print 'Building for '$os'-'$arch'... '
 
     tmp E:GOOS E:GOARCH = $os $arch
-    var pie = (and (has-key $platform pie) $platform[pie])
 
     try {
       go build ^
         -trimpath ^
         -ldflags '-X src.elv.sh/pkg/buildinfo.BuildVariant='$variant ^
-        (if $pie { put -buildmode=pie }) ^
         -o $bin-dir/$bin-name ^
         $go-pkg
     } catch e {
