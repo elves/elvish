@@ -77,11 +77,11 @@ build_binaries_task:
   # _bin is in .gitignore, so Git won't consider the repo dirty. This will
   # impact the binary, which encodes VCS information.
   build_binaries_script: |
-    ELVISH_BUILD_VARIANT=official ./tools/buildall.sh . _bin HEAD
+    go run ./cmd/elvish ./tools/buildall.elv -name elvish-HEAD -variant official . _bin/
   binaries_artifacts:
     path: _bin/**
   binary_checksums_artifacts:
-    path: _bin/*/elvish-HEAD.sha256sum
+    path: _bin/*/elvish-HEAD.sha256sum _bin/*/elvish-HEAD.exe.sha256sum
 
 check_binary_checksums_task:
   name: Check binary checksums ($HOST)
@@ -121,7 +121,7 @@ check_binary_checksums_task:
     cd _bin
 
     ret=0
-    for f in */elvish-HEAD.sha256sum; do
+    for f in */elvish-HEAD.sha256sum */elvish-HEAD.exe.sha256sum; do
       website_sum=$(curl -sS https://$HOST.dl.elv.sh/$f | awk '{print $1}')
       ci_sum=$(cat $f | awk '{print $1}')
       if test "$website_sum" = "$ci_sum"; then
