@@ -49,7 +49,7 @@ jobs:
         # https://github.com/elves/up/blob/master/Dockerfile
         go-version: 1.22.0
     - name: Build binaries
-      run: go run ./cmd/elvish ./tools/buildall.elv -name elvish-HEAD -variant official . ~/elvish-bin/
+      run: go run ./cmd/elvish ./tools/buildall.elv -name elvish-HEAD -variant official ./cmd/elvish ~/elvish-bin/
     - name: Upload binaries
       uses: actions/upload-artifact@v4
       with:
@@ -60,7 +60,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: bin-checksums
-        path: ~/elvish-bin/**/elvish-HEAD.sha256sum
+        path: ~/elvish-bin/*/*.sha256sum
 
   check_binary_checksums:
     name: Check binary checksums
@@ -79,7 +79,7 @@ jobs:
       working-directory: elvish-bin
       run: |
         ret=0
-        for f in */elvish-HEAD.sha256sum */elvish-HEAD.exe.sha256sum; do
+        for f in */*.sha256sum; do
           website_sum=$(curl -sS https://${{ matrix.host }}.dl.elv.sh/$f | awk '{print $1}')
           github_sum=$(cat $f | awk '{print $1}')
           if test "$website_sum" = "$github_sum"; then
