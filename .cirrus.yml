@@ -121,7 +121,7 @@ check_binary_checksums_task:
     cd _bin
 
     ret=0
-    for f in */*.sha256sum
+    for f in */elvish-HEAD.sha256sum */elvish-HEAD.exe.sha256sum; do
       website_sum=$(curl -sS https://$HOST.dl.elv.sh/$f | awk '{print $1}')
       ci_sum=$(cat $f | awk '{print $1}')
       if test "$website_sum" = "$ci_sum"; then

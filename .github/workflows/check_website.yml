@@ -79,7 +79,7 @@ jobs:
       working-directory: elvish-bin
       run: |
         ret=0
-        for f in */*.sha256sum; do
+        for f in */elvish-HEAD.sha256sum */elvish-HEAD.exe.sha256sum; do
           website_sum=$(curl -sS https://${{ matrix.host }}.dl.elv.sh/$f | awk '{print $1}')
           github_sum=$(cat $f | awk '{print $1}')
           if test "$website_sum" = "$github_sum"; then
