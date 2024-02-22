@@ -6,6 +6,13 @@
 # [`flag:parse`]() for how the default value affects the behavior of flags.
 # After parsing, the non-flag arguments are used as function arguments.
 #
+# The `&on-parse-error` function can be supplied to control the behavior when
+# `$args` contains invalid flags or when the number of arguments after parsing
+# flags doesn't match what `$fn` expects. The function gets an argument that
+# describes the error condition; the argument should be treated as an opaque
+# value for now, but will expose more useful fields in future. If
+# `&on-parse-error` is not supplied, such errors are raised as exceptions.
+#
 # Example:
 #
 # ```elvish-transcript
@@ -15,6 +22,10 @@
 # ▶ $true
 # ▶ (num 80)
 # ▶ a.c
+# ~> flag:call $f~ [-unknown-flag] &on-parse-error={|_| echo 'bad usage' }
+# bad usage
+# ~> flag:call $f~ [-verbose a b c] &on-parse-error={|_| echo 'bad usage' }
+# bad usage
 # ```
 #
 # This function is most useful when creating an Elvish script that accepts
@@ -26,8 +37,16 @@
 # fn main { |&verbose=$false &port=(num 8000) name|
 #   ...
 # }
-# flag:call $main~ $args
+# flag:call $main~ $args &on-parse-error={|_|
+#   echo 'Usage: '(src)[name]' [-verbose] [-port PORT-NUM] name'
+#   exit 1
+# }
 # ```
+#
+# **Note**: This example shows how `&on-parse-error` can be used to print out a
+# usage text, but it needs to duplicate the names of the options and arguments
+# accepted by `main`. This is a known limitation and will hopefully be addressed
+# with a different API in future.
 #
 # The script can be used as follows:
 #
@@ -37,7 +56,7 @@
 # ```
 #
 # See also [`flag:parse`]().
-fn call {|fn args| }
+fn call {|fn args &on-parse-error=$nil| }
 
 # Parses flags from `$args` according to the `$specs`, using the [Go
 # convention](#go-convention).

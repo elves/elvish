@@ -22,7 +22,16 @@ Exception: bad value: flag default value must be boolean, number, string or list
 Exception: flag provided but not defined: -bad
   [tty]:1:1-23: flag:call { } [-bad '']
 
-## bad argument list ##
+## bad flag with &on-parse-error ##
+// err is opaque, but stringifying it gives us something semi-useful for now
+~> flag:call { } [-bad ''] &on-parse-error={|err| echo 'Bad usage' }
+Bad usage
+
+## wrong number of arguments with &on-parse-error ##
+~> flag:call {|&str='' a b| } [-str foo x] &on-parse-error={|err| echo 'Bad usage' }
+Bad usage
+
+## bad argument type ##
 ~> flag:call { } [(num 0)]
 Exception: wrong type: need string, got number
   [tty]:1:1-23: flag:call { } [(num 0)]

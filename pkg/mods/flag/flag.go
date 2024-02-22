@@ -21,7 +21,22 @@ var Ns = eval.BuildNsNamed("flag").
 		"parse-getopt": parseGetopt,
 	}).Ns()
 
-func call(fm *eval.Frame, fn *eval.Closure, argsVal vals.List) error {
+type callOpts struct {
+	OnParseError eval.Callable
+}
+
+func (*callOpts) SetDefaultOptions() {}
+
+// TODO: The &on-parse-error option makes it possible for the user to supply a
+// custom usage text, but they'll have to essentially duplicate the flag names
+// and argument names, partially defeating the point of the "call" function.
+//
+// Moreover, there isn't a suitable place for descriptions of options in the
+// lambda signature syntax; as a result, all flags have an empty description and
+// we can't rely on the default help text available via
+// [(*flag.FlagSet).PrintDefaults].
+
+func call(fm *eval.Frame, opts callOpts, fn *eval.Closure, argsVal vals.List) error {
 	var args []string
 	err := vals.ScanListToGo(argsVal, &args)
 	if err != nil {
@@ -37,16 +52,26 @@ func call(fm *eval.Frame, fn *eval.Closure, argsVal vals.List) error {
 	}
 	err = fs.Parse(args)
 	if err != nil {
+		if opts.OnParseError != nil {
+			return opts.OnParseError.Call(fm.Fork("parse:call &on-parse-error"), []any{err}, eval.NoOpts)
+		}
 		return err
 	}
 	m := make(map[string]any)
 	fs.VisitAll(func(f *flag.Flag) {
 		m[f.Name] = f.Value.(flag.Getter).Get()
 	})
-	return fn.Call(fm.Fork("parse:call"), callArgs(fs.Args()), m)
+	err = fn.Call(fm.Fork("parse:call"), convertStringArgs(fs.Args()), m)
+	if opts.OnParseError != nil {
+		switch err.(type) {
+		case errs.ArityMismatch:
+			return opts.OnParseError.Call(fm.Fork("parse:call &on-parse-error"), []any{err}, eval.NoOpts)
+		}
+	}
+	return err
 }
 
-func callArgs(ss []string) []any {
+func convertStringArgs(ss []string) []any {
 	vs := make([]any, len(ss))
 	for i, s := range ss {
 		vs[i] = s
