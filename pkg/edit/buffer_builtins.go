@@ -51,8 +51,8 @@ var bufferBuiltinsData = map[string]func(*tk.CodeBuffer){
 	"kill-word-right":       makeKill(moveDotRightWord),
 	"kill-small-word-left":  makeKill(moveDotLeftSmallWord),
 	"kill-small-word-right": makeKill(moveDotRightSmallWord),
-	"kill-left-alnum-word":  makeKill(moveDotLeftAlnumWord),
-	"kill-right-alnum-word": makeKill(moveDotRightAlnumWord),
+	"kill-alnum-word-left":  makeKill(moveDotLeftAlnumWord),
+	"kill-alnum-word-right": makeKill(moveDotRightAlnumWord),
 	"kill-line-left":        makeKill(moveDotSOL),
 	"kill-line-right":       makeKill(moveDotEOL),
 
