@@ -120,6 +120,31 @@ func TestLocation_FullWorkflow(t *testing.T) {
 	}
 }
 
+// Test filtering that includes a literal path to a directory that exists.
+func TestLocation_LiteralDir(t *testing.T) {
+	home := testutil.InTempHome(t)
+	f := Setup()
+	defer f.Stop()
+
+	dirs := []storedefs.Dir{
+		{Path: home, Score: 100},
+		{Path: fixPath("/tmp/foo/bar/lorem/ipsum"), Score: 50},
+	}
+	startLocation(f.App, LocationSpec{Store: locationStore{
+		storedDirs: dirs,
+		chdir:      func(dir string) error { return nil },
+	}})
+
+	wantBuf := locationBuf(
+		fixPath("/"),
+		" -1 "+fixPath("/"),
+		" 50 "+fixPath("/tmp/foo/bar/lorem/ipsum"))
+	for _, c := range fixPath("/") {
+		f.TTY.Inject(term.K(c))
+	}
+	f.TTY.TestBuffer(t, wantBuf)
+}
+
 func TestLocation_Hidden(t *testing.T) {
 	f := Setup()
 	defer f.Stop()

@@ -11,7 +11,9 @@ import (
 // DontSearch determines whether the path to an external command should be
 // taken literally and not searched.
 func DontSearch(exe string) bool {
-	return exe == ".." || strings.ContainsRune(exe, filepath.Separator) ||
+	return exe == "." ||
+		exe == ".." ||
+		strings.ContainsRune(exe, filepath.Separator) ||
 		strings.ContainsRune(exe, '/')
 }
 

@@ -943,7 +943,7 @@ pressing <kbd>▲</kbd>. For example, to walk through commands starting with
 
 @ttyshot learn/tour/history-walk-prefix
 
-### History listing
+### History mode
 
 Press <kbd>Ctrl-R</kbd> to list the full command history:
 
@@ -960,12 +960,14 @@ last command. Press <kbd>Alt-,</kbd> to trigger it:
 
 @ttyshot learn/tour/lastcmd
 
-## Directory history
+## Location mode
 
 Elvish remembers which directories you have visited. Press <kbd>Ctrl-L</kbd> to
 list visited directories. Use <kbd>▲</kbd> and <kbd>▼</kbd> to navigate the
 list, <kbd>Enter</kbd> to change to that directory, or <kbd>Escape</kbd> to
-cancel.
+cancel. If you filter the results using a path that matches an existing
+directory it will appear at the top of the directories in your history with a
+special score of -1 even if that directory is not in your visited history.
 
 @ttyshot learn/tour/location
 

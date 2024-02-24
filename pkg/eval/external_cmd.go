@@ -12,7 +12,6 @@ import (
 
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/persistent/hash"
 )
@@ -23,8 +22,6 @@ var (
 	//
 	// TODO: Catch this kind of errors at compilation time.
 	ErrExternalCmdOpts = errors.New("external commands don't accept elvish options")
-	// ErrImplicitCdNoArg is thrown when an implicit cd form is passed arguments.
-	ErrImplicitCdNoArg = errors.New("implicit cd accepts no arguments")
 )
 
 // externalCmd is an external command.
@@ -60,16 +57,6 @@ func (e externalCmd) Repr(int) string {
 func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 	if len(opts) > 0 {
 		return ErrExternalCmdOpts
-	}
-	if fsutil.DontSearch(e.Name) {
-		stat, err := os.Stat(e.Name)
-		if err == nil && stat.IsDir() {
-			// implicit cd
-			if len(argVals) > 0 {
-				return ErrImplicitCdNoArg
-			}
-			return fm.Evaler.Chdir(e.Name)
-		}
 	}
 
 	files := make([]*os.File, len(fm.ports))

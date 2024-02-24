@@ -258,12 +258,8 @@ func mul(rawNums ...vals.Num) vals.Num {
 	}
 }
 
+// Implement numerical division.
 func slash(fm *Frame, args ...vals.Num) error {
-	if len(args) == 0 {
-		// cd /
-		return fm.Evaler.Chdir("/")
-	}
-	// Division
 	result, err := div(args...)
 	if err != nil {
 		return err
