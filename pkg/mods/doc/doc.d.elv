@@ -9,8 +9,13 @@
 # the explicit `builtin:` namespace (like `builtin:put`).
 #
 # The `&width` option specifies the width to wrap the output to. If it is 0 (the
-# default) or negative, `show` queries the width of the terminal and use it as
-# the width, falling back to 80 if the query fails.
+# default) or negative, `show` queries the terminal width of the standard output
+# and use it as the width, falling back to 80 if the query fails (for example
+# when the standard output is not a terminal).
+#
+# This command is roughly equivalent to `md:show &width=$width (doc:show
+# $symbol)`, but has some extra processing of relative links to point them to
+# the Elvish website.
 #
 # Examples:
 #
@@ -24,6 +29,8 @@
 # ~> doc:show doc:show
 # [ omitted ]
 # ```
+#
+# See also [`md:show`]().
 fn show {|symbol &width=0| }
 
 # Finds symbols whose documentation contains all strings in `$queries`.

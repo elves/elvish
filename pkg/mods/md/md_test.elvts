@@ -1,0 +1,24 @@
+//each:eval use md
+
+///////////
+# md:show #
+///////////
+
+// Transcript tests are not run with a real terminal connected to the output, so
+// the width will fall back to 80.
+~> md:show 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+incididunt ut labore et dolore magna aliqua.
+~> md:show "#h1 heading\n- List\n- Item"
+#h1 heading
+
+• List
+
+• Item
+
+## explicit &width ##
+~> md:show &width=40 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+Lorem ipsum dolor sit amet, consectetur
+adipiscing elit. Sed do eiusmod tempor
+incididunt ut labore et dolore magna
+aliqua.
