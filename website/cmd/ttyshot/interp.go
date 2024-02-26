@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -21,13 +22,15 @@ import (
 )
 
 const (
-	terminalRows = 100
-	terminalCols = 52
-)
-
-const (
 	cutMarker    = "[CUT]"
 	promptMarker = "[PROMPT]"
+)
+
+// "tmux capture-pane" can save superfluous trailing spaces, so when removing
+// these patterns we need to account for that.
+var (
+	cutPattern    = regexp.MustCompile(regexp.QuoteMeta(cutMarker) + " *\n")
+	promptPattern = regexp.MustCompile(regexp.QuoteMeta(promptMarker) + " *\n")
 )
 
 //go:embed rc.elv
@@ -84,14 +87,14 @@ func setupHome() (string, error) {
 	return homePath, err
 }
 
-func createTtyshot(homePath string, script []op, saveRaw string) ([]byte, error) {
+func createTtyshot(homePath string, script *script, saveRaw string) ([]byte, error) {
 	ctrl, tty, err := pty.Open()
 	if err != nil {
 		return nil, err
 	}
 	defer ctrl.Close()
 	defer tty.Close()
-	winsize := pty.Winsize{Rows: terminalRows, Cols: terminalCols}
+	winsize := pty.Winsize{Rows: script.rows, Cols: script.cols}
 	pty.Setsize(ctrl, &winsize)
 
 	rawPath := filepath.Join(homePath, ".tmp", "ttyshot.raw")
@@ -107,7 +110,7 @@ func createTtyshot(homePath string, script []op, saveRaw string) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-	finalEmptyPrompt := executeScript(script, ctrl, homePath)
+	finalEmptyPrompt := executeScript(script.ops, ctrl, homePath)
 	log.Println("executed script, waiting for tmux to exit")
 
 	// Drain outputs from the terminal. This is needed so that tmux can exit
@@ -126,11 +129,11 @@ func createTtyshot(homePath string, script []op, saveRaw string) ([]byte, error)
 
 	ttyshot := string(rawBytes)
 	// Remove all content before the last cutMarker.
-	segments := strings.Split(ttyshot, cutMarker+"\n")
+	segments := cutPattern.Split(ttyshot, -1)
 	ttyshot = segments[len(segments)-1]
 
 	// Strip all the prompt markers and the final empty prompt.
-	segments = strings.Split(ttyshot, promptMarker+"\n")
+	segments = promptPattern.Split(ttyshot, -1)
 	if finalEmptyPrompt {
 		segments = segments[:len(segments)-1]
 	}
@@ -194,8 +197,18 @@ func executeScript(script []op, ctrl *os.File, homePath string) (finalEmptyPromp
 		}
 
 		log.Println("executing", op)
-		if op.codeLines != nil {
-			for i, line := range op.codeLines {
+		if op.isTmux {
+			tmuxSock := filepath.Join(homePath, ".tmp", "tmux.sock")
+			tmuxCmd := exec.Command("tmux",
+				append([]string{"-S", tmuxSock}, strings.Fields(op.code)...)...)
+			tmuxCmd.Env = []string{}
+			err := tmuxCmd.Run()
+			if err != nil {
+				// TODO: Handle the error properly
+				panic(err)
+			}
+		} else {
+			for i, line := range strings.Split(op.code, "\n") {
 				if i > 0 {
 					// Use Alt-Enter to avoid committing the code
 					ctrl.WriteString("\033\r")
@@ -203,20 +216,10 @@ func executeScript(script []op, ctrl *os.File, homePath string) (finalEmptyPromp
 				ctrl.WriteString(line)
 			}
 			ctrl.WriteString("\r")
-		} else {
-			tmuxSock := filepath.Join(homePath, ".tmp", "tmux.sock")
-			tmuxCmd := exec.Command("tmux",
-				append([]string{"-S", tmuxSock}, op.tmuxCommand...)...)
-			tmuxCmd.Env = []string{}
-			err := tmuxCmd.Run()
-			if err != nil {
-				// TODO: Handle the error properly
-				panic(err)
-			}
 		}
 	}
 
-	if len(script) > 0 && script[len(script)-1].codeLines != nil {
+	if len(script) > 0 && !script[len(script)-1].isTmux {
 		log.Println("waiting for final empty prompt")
 		finalEmptyPrompt = true
 		err := waitForPrompt(ctrl)
@@ -270,6 +273,8 @@ func waitForOutput(f *os.File, expected string, matcher func([]byte) bool) error
 	return fmt.Errorf("timed out waiting for %s in tmux output; output so far: %q", expected, buf)
 }
 
+// We use this instead of html.EscapeString, since the latter also escapes ' and
+// " unnecessarily.
 var htmlEscaper = strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;")
 
 func sgrTextToHTML(ttyshot string) string {

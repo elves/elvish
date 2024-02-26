@@ -2,120 +2,127 @@
  * Global styling.
  **/
 
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --code-font: "Fira Mono", Menlo, "Roboto Mono", Consolas, monospace;
+  --sans-font: Helvetica, Arial, sans-serif;
+  --link-color-on-white: #0645ad;
+  --link-color-on-black: #accbff;
+}
+
 html {
-    /* Prevent font scaling in landscape while allowing user zoom */
-    -webkit-text-size-adjust: 100%;
+  /* Prevent font scaling in landscape while allowing user zoom */
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-    font-family: "Source Serif", Georgia, serif;
-    font-size: 17px;
-    line-height: 1.4;
+  font-family: "Source Serif", Georgia, serif;
+  font-size: 17px;
+  line-height: 1.4;
 }
 
 body.has-js .no-js, body.no-js .has-js {
-    display: none !important;
+  display: none !important;
 }
 
-img {
-    max-width: 100%;
-}
-
-a {
-    text-decoration: none;
-    color: #0645ad;
+.dark {
+  color: #eee;
+  background: black;
 }
 
 /**
- * Top-level elements.
+ * Top-level layout.
  *
- * There are two main elements: #navbar and .content. Both have a maximum
+ * There are two main elements: #navbar and #main. Both have a maximum
  * width, and is centered when the viewport is wider than that.
- *
- * #navbar is wrapped by #navbar-container, a black stripe that always span
- * the entire viewport.
  **/
 
+/* #navbar is wrapped by #navbar-container, a black stripe that always span
+   the entire viewport. */
 #navbar-container {
-    width: 100%;
-    color: white;
-    background-color: #1a1a1a;
-    padding: 7px 0;
+  width: 100%;
+  color: white;
+  background-color: #1a1a1a;
+  padding: 7px 0;
 }
 
-.content, #navbar {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0 16px;
+#navbar, #main {
+  /* Keep the content at 800px. */
+  max-width: 832px;
+  margin: auto;
+  padding: 0 16px;
 }
 
-/*
-832px = max-width + left and right padding of .content.
+/* 832px = max-width + left and right padding of #main.
 
-After this screen width, .content will no longer get wider, but we allow
-.extra-wide elements to continue to get wider up to 900px, using negative
-left and right margins.
+   After this screen width, #main will no longer get wider, but we allow
+   .extra-wide elements to continue to get wider up to 900px, using negative
+   left and right margins.
 */
 @media screen and (min-width: 832px) {
-    .extra-wide  {
-        /* 32px is left and right padding of .content. */
-        width: calc(min(100vw - 32px, 900px));
-        /* upper bound is calculated by substituting 100vw = 900px + 32px */
-        margin-inline: calc(max((832px - 100vw) / 2, -50px));
-    }
+  .extra-wide  {
+    /* 32px is left and right padding of #main. */
+    width: calc(min(100vw - 32px, 900px));
+    /* upper bound is calculated by substituting 100vw = 900px + 32px */
+    margin-inline: calc(max((832px - 100vw) / 2, -50px));
+  }
 }
 
 /**
  * Elements in the navbar.
  *
  * The navbar is made up of two elements, #site-title and ul#nav-list. The
- * latter contains li.nav-item which contains an a.nav-link.
+ * latter contains <li>s, each of which contains an <a>.
  */
 
 #site-title, #nav-list {
-    display: inline-block;
-    /* Add spacing between lines when the navbar cannot fit in one line. */
-    line-height: 1.4;
+  display: inline-block;
+  /* Add spacing between lines when the navbar cannot fit in one line. */
+  line-height: 1.4;
 }
 
 #site-title {
-    font-size: 1.2em;
-    /* Move the title downward 1px so that it looks more aligned with the
-     * category list. */
-    position: relative;
-    top: 1px;
+  /* Move the title downward 1px so that it looks more aligned with the
+   * category list. */
+  position: relative;
+  top: 1px;
+  font-size: 1.2em;
+  font-family: var(--code-font);
 }
 
-#site-title a {
-    color: #5b5;
+#site-title {
+  color: #5b5;
 }
 
 #nav-list {
-    margin-left: 0.8em;
+  /* Override the margins for <ul> set below for content. */
+  margin: 0 0 0 0.8em;
 }
 
-.nav-item {
-    list-style: none;
-    display: inline-block;
-    margin-left: 0.2em;
+#nav-list li {
+  list-style: none;
+  display: inline-block;
+  /* Override the margins for <li> set below for content. */
+  margin: 0 0 0 0.2em;
 }
 
-.nav-link {
-    color: white;
-    border-radius: 3px;
+#nav-list li a {
+  color: white;
+  border-radius: 3px;
+  padding: 1px 0.4em;
+  font-family: var(--code-font);
 }
 
-.nav-link > code {
-    padding: 0px 0.4em;
+#nav-list li a:hover {
+  background-color: #444;
 }
 
-.nav-link:hover {
-    background-color: #444;
-}
-
-.nav-link.current {
-    color: black;
-    background-color: white;
+#nav-list li a.current {
+  color: black;
+  background-color: white;
 }
 
 /**
@@ -123,96 +130,21 @@ left and right margins.
  **/
 
 .timestamp {
-    margin-bottom: 0.6em;
+  margin-bottom: 0.6em;
 }
 
 .article-title {
-    padding: 16px 0;
-    border-bottom: darkred solid 2px;
+  padding: 16px 0;
+  border-bottom: darkred solid 2px;
 }
 
-/* Override .content h1 */
-.content .article-title h1 {
-    font-size: 1.4em;
-    margin: 0;
-    padding: 0;
-    border: none;
-}
-
-/**
- * Article content.
- **/
-
-.article-content {
-    padding-top: 32px;
-}
-
-.content p, .content ul, .content pre {
-    margin-bottom: 0.7em;
-}
-
-.content li {
-    margin: 0.5em 0;
-}
-
-/* Block code. */
-.content pre {
-    padding: 1em;
-    overflow: auto;
-}
-
-/* Inline code. */
-.content p code {
-    padding: 0.1em 0;
-}
-
-.content p code::before, .content p code::after {
-    letter-spacing: -0.2em;
-    content: "\00a0";
-}
-
-code, pre {
-    font-family: "Fira Mono", Menlo, "Roboto Mono", Consolas, monospace;
-}
-
-.content code, .content pre {
-    background-color: #f0f0f0;
-    border-radius: 3px;
-}
-
-/* This doesn't have p, so that it also applies to ttyshots. */
-.content code {
-    font-size: 85%;
-}
-
-/* We only use h1 to h3. */
-
-.content h1, .content h2, .content h3 {
-    line-height: 1.25;
-}
-
-.content h1, .content h2, .content h3 {
-    margin-top: 24px;
-    margin-bottom: 20px;
-    font-weight: bold;
-}
-
-.content h1 {
-    font-size: 1.3em;
-}
-
-.content h1 {
-    border-left: darkred solid 0.3em;
-    padding-left: 0.3em;
-    margin-left: -0.6em;
-}
-
-.content h2 {
-    font-size: 1.2em;
-}
-
-.content ul, .content ol {
-    margin-left: 1.5em;
+/* Unfortunately we use <h1> for both the article title and the first-level
+   section title, and the default h1 rule is for the latter. Override it. */
+.article-title h1 {
+  font-size: 1.4em;
+  margin: 0;
+  padding: 0;
+  border: none;
 }
 
 /**
@@ -220,85 +152,325 @@ code, pre {
  */
 
 #toc-wrapper {
-    background-color: #f0f0f0;
-    margin: 0 0 16px 0;
-    border-radius: 6px;
-    line-height: 1;
+  background-color: #f0f0f0;
+  margin: 0 0 16px 0;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.dark #toc-wrapper {
+  background-color: #181818;
 }
 
 #toc-header {
-    padding: 1em 1em 0.6em 1em;
-    border-bottom: solid white 2px;
-    cursor: pointer;
+  padding: 1em 1em 0.6em 1em;
+  border-bottom: solid white 2px;
+  cursor: pointer;
 }
 
 #toc-status {
-    display: inline-block;
-    width: 0;
-    height: 0;
-    margin-right: 2px;
-    border: 6px solid transparent;
-    position: relative;
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-right: 2px;
+  border: 6px solid transparent;
+  position: relative;
 }
 
+/* Draw triangles in #toc-status using CSS. */
+
 #toc-status:not(.closed) {
-    border-top: 6px solid black;
-    top: 3px;
+  border-top: 6px solid black;
+  top: 3px;
 }
 
 #toc-status.closed {
-    border-left: 6px solid black;
-    left: 3px;
+  border-left: 6px solid black;
+  left: 3px;
 }
 
 #toc {
-    margin-left: -0.6em;
-    padding: 1em;
+  margin-left: -0.6em;
+  padding: 1em;
 }
 
 @media screen and (min-width: 600px) {
-    #toc {
-        column-count: 2;
-    }
+  #toc {
+    column-count: 2;
+  }
 }
 
-/* Override value from .content ul, which is too big for the ToC */
 #toc ul {
-    margin-left: 1em;
+  /* The value set for <ul> in content is a bit too big for ToC */
+  margin-left: 1em;
 }
 
 #toc li {
-    list-style: none;
-    /* Keep first-level ToC within one column */
-    break-inside: avoid;
+  list-style: none;
+  /* Keep first-level ToC within one column */
+  break-inside: avoid;
 }
 
-/*
-When the ToC can have two columns, the first item of the second column will not
-the intended top margin (this is how columns work in CSS). Work around this by
-adding some extra top padding in #toc, and removing the top margin of the very
-first <li> element to match.
-*/
+/* When the ToC has two columns, the first item of the second column will not
+   the intended top margin (this is how columns work in CSS). Work around this
+   by adding some extra top padding in #toc, and removing the top margin of the
+   very first <li> element to match. */
 #toc > ul:first-child > li:first-child {
-    margin-top: 0;
+  margin-top: 0;
+}
+
+/**
+ * Article content.
+ *
+ * Note: in the layout the table of content is part of div.article-content
+ * (because it's generated as part of the Markdown).
+ **/
+
+.article-content {
+  padding-top: 32px;
+}
+
+/* We only use h1 to h3, so don't bother styling h4+. */
+h1, h2, h3 {
+  line-height: 1.25;
+  margin-top: 24px;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+h1 {
+  font-size: 1.3em;
+  /* Create a vertical bar 0.3em wide and 0.3em away to the left, and move the
+     text back to the original position. */
+  border-left: darkred solid 0.3em;
+  padding-left: 0.3em;
+  margin-left: -0.6em;
+}
+
+h2 {
+  font-size: 1.2em;
+}
+
+p, ul, ol, pre {
+  /* Hardcode a pixel value since <pre> has a smaller font size. */
+  margin-bottom: 12px;
+}
+
+ul, ol {
+  margin-left: 1.5em;
+}
+
+li {
+  margin: 0.5em 0;
+}
+
+kbd {
+  display: inline-block;
+  border: 1px solid black;
+  border-radius: 3px;
+  padding: 0 3px;
+  margin: 1px;
+  font-size: 85%;
+  font-family: "Lucida Grande", Arial, sans-serif;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+td, th {
+  border: 1px solid #aaa;
+  text-align: left;
+  padding: 0.4em;
+}
+
+.dark td, .dark th {
+  border-color: #444;
+}
+
+/** Links. */
+
+a {
+  text-decoration: none;
+  color: #0645ad;
+}
+
+.dark a {
+  color: var(--link-color-on-black);
+}
+
+a.anchor::before {
+  font-family: "fa-elv-sh";
+  content: '\e800'; /* icon-link */
+  font-size: 0.9em;
+  font-weight: normal;
+  padding-left: 0.3em;
+}
+
+a.anchor {
+  opacity: 0; /* Hide by default */
+  color: inherit;
+}
+
+*:hover > a.anchor {
+  opacity: 1;
+}
+
+a[target="_blank"]::after {
+  font-family: "fa-elv-sh";
+  content: "\f08e"; /* icon-link-ext */
+  /* Set the icon some distance away. */
+  padding-left: 0.3em;
+  /* Make the icon slightly smaller and align it to the bottom.
+
+     For normal links we should be able to use "vertical-align: bottom", but
+     that doesn't work when the <a> is a flexbox (action buttons on the
+     homepage). */
+  font-size: 0.8em;
+  padding-top: 0.2em;
+}
+
+/**
+ * Code - inline code, block code and ttyshots.
+ */
+
+pre, code {
+  font-family: var(--code-font);
+  font-size: 0.85rem;
+  border-radius: 3px;
+}
+
+p code {
+  padding: 0.1em 0.5em;
+  background-color: #f0f0f0;
+}
+
+pre {
+  padding: 6px 10px;
+  border: 1px solid #bbbbbb;
+  background-color: white;
+}
+
+.dark code, .dark pre {
+  background-color: #181818;
+}
+
+/* Scroll just the <code>, not the <header>. */
+pre code {
+  display: block;
+  overflow-x: auto;
+}
+
+pre.language-ttyshot, pre.language-ttyshot code {
+  /* Ttyshots often have right-justified elements (right prompt, vertical
+     scrollbar), so make it as wide as its content. */
+  width: fit-content;
+  max-width: 100%;
+}
+
+pre.language-ttyshot code {
+  /* Set the line height to be exactly equal to the height of the line box, so
+     that vertical bars in ttyshots don't have gaps.
+
+     According to MDN, the best practice is to use a dimensionless value
+     relative to the "font size", but unfortunately different browsers disagree
+     on exact which font dimension to use as the "font size". Since we fix the
+     font anyway, we can hardcode a pixel value.
+
+     16px is the maximal value that works for Chrome - 17px is fine for Safari
+     and Firefox but leads to gaps in Chrome. 18px leads to gaps on all three.
+  */
+  line-height: 16px;
+  /* Unfortunately hardcoding line-height is still not sufficient, because
+     browsers also disagree on the height the font actually needs.
+
+     If the browser decides that the font needs more than 16px (which is the
+     case on Firefox 123), fixing line-height to 16px causes the content to
+     overflow vertically, causing a vertical scrollbar to be shown, which in
+     turn causes a horizontal scrollbar to be shown (because the vertical
+     scrollbar takes up some horizontal space, so the content now also overflows
+     horizontally). This works around that. */
+  overflow-y: hidden;
+}
+
+pre header {
+  font-family: var(--sans-font);
+  /* Cancel the top, left and right paddings of the <pre> and create a bit of
+     space between the header and the code. */
+  margin: -6px -10px 3px;
+  /* Replicate side paddings of the <pre>, and add appropriate top and bottom
+     paddings. */
+  padding: 4px 10px 3px;
+  background-color: #ddd;
+  color: black;
+}
+
+/* Set the fallback icon for the header and some common properties. */
+pre header::before {
+  content: "\f0f6"; /* icon-doc-text */
+  font-family: "fa-elv-sh";
+  padding-right: 6px;
+  speak: never;
+}
+
+pre header a {
+  color: var(--link-color-on-white);
+}
+
+.dark pre header a {
+  /* Overwrite color of ".dark a". */
+  color: var(--link-color-on-white);
+}
+
+/* md2html generates a <p> inside the <header>. */
+pre header p {
+  display: inline;
+}
+
+pre.language-elvish header {
+  background-color: #ddeedd;
+  color: black;
+}
+
+pre.language-elvish header::before {
+  content: "\f1c9"; /* icon-file-code */
+}
+
+pre[class^="language-"][class$="-transcript"] header, pre.language-ttyshot header {
+  background-color: #1a1a1a;
+  color: white;
+}
+
+pre[class^="language-"][class$="-transcript"] header a, pre.language-ttyshot header a {
+  color: var(--link-color-on-black);
+}
+
+pre[class^="language-"][class$="-transcript"] header::before, pre.language-ttyshot header::before {
+  content: "\f120"; /* icon-terminal */
 }
 
 /**
  * Category content.
  **/
 
-.content.category {
-    padding-top: 32px;
+#main.category {
+  padding-top: 32px;
 }
 
 .article-list > li:hover {
-    background-color: #d0d0d0;
+  background-color: #d0d0d0;
+}
+
+.dark .article-list > li:hover {
+  background-color: #333;
 }
 
 .article-timestamp {
-    float: right;
-    display: block;
-    margin-left: 1em;
+  float: right;
+  display: block;
+  margin-left: 1em;
 }
 
 /**
@@ -306,88 +478,33 @@ first <li> element to match.
  **/
 
 .clear {
-    clear: both;
+  clear: both;
 }
 
 .no-display {
-    display: none !important;
+  display: none !important;
 }
 
-/**
- * Miscellous elements.
- **/
-
-hr {
-    clear: both;
-    border-color: #aaa;
-    text-align: center;
-}
-
-hr:after {
-    content: "❧";
-    text-shadow: 0px 0px 2px #667;
-    display: inline-block;
-    position: relative;
-    top: -0.5em;
-    padding: 0 0.25em;
-    font-size: 1.1em;
-    color: black;
-    background-color: white;
-}
-
-kbd {
-    display: inline-block;
-    border: 1px solid black;
-    border-radius: 3px;
-    padding: 0 3px;
-    margin: 1px;
-    font-size: 85%;
-    font-family: "Lucida Grande", Arial, sans-serif;
-}
-
-/**
- * TTY shots.
- */
-
-pre.ttyshot {
-    font-size: 12pt;
-    line-height: 1 !important;
-    border: 1px solid black;
-    display: inline-block;
-    margin-bottom: 0 !important;
-}
-
-pre.ttyshot, pre.ttyshot code {
-    background-color: white;
-}
-
-@media screen and (max-width: 600px) {
-    pre.ttyshot {
-        font-size: 2.6vw;
-    }
-}
-
-/* SGR classes used in ttyshots. */
+/* SGR classes used in highlighted code blocks and ttyshots. */
 .sgr-1 {
-    /*
-     * Bold text is wider than regular text in most fonts, and can break
-     * vertical alignment in ttyshots. Emulate bold font with text-shadow.
-     */
-    text-shadow: 0.05em 0 0;
+  /*
+   * Bold text is wider than regular text in most fonts, and can break
+   * vertical alignment in ttyshots. Emulate bold font with text-shadow.
+   */
+  text-shadow: 0.05em 0 0;
 }
 .sgr-4 {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 /*
  * SGR 7 (inverse) has some special handling by the ttyshot program; see
  * comments there.
  */
-.sgr-7fg {
-    color: white;
-}
-.sgr-7bg {
-    background-color: black;
-}
+.sgr-7fg { color: white; }
+.sgr-7bg { background-color: black; }
+
+.dark .sgr-7fg { color: black; }
+.dark .sgr-7bg { background-color: #eee; }
 
 /* black */
 .sgr-30 { color: black; }
@@ -439,82 +556,3 @@ pre.ttyshot, pre.ttyshot code {
 .sgr-97 { color: white; }
 .sgr-107 { background-color: white; }
 
-/** Header anchors. */
-.anchor {
-    opacity: 0;
-    font-size: 90%;
-    color: inherit;
-    padding-left: 0.15em;
-}
-
-*:hover > .anchor {
-    opacity: 1;
-}
-
-/**
- * Dark theme.
- */
-
-.dark {
-    color: #eee;
-    background: black;
-}
-
-.dark a {
-    color: #6da2fa;
-}
-
-.dark a:visited {
-    color: #7e72ff;
-}
-
-.dark .article-link, .dark .article-link:visited {
-    color: #eee;
-    border-color: white;
-}
-
-.dark .article-list > li:hover {
-    background-color: #333;
-}
-
-.dark .content code, .dark .content pre {
-    background-color: #181818;
-}
-
-.dark #toc-wrapper {
-    background-color: #181818;
-}
-
-.dark hr {
-    border-color: #eee;
-}
-
-.dark hr:after {
-    color: #eee;
-    background-color: black;
-}
-
-.dark pre.ttyshot, .dark pre.ttyshot code {
-    background: black;
-}
-.dark .sgr-7fg {
-    color: black;
-}
-.dark .sgr-7bg {
-    background-color: #eee;
-}
-
-table {
-    border-collapse: collapse;
-    width: 100%;
-    margin-bottom: 16px;
-}
-td, th {
-    border: 1px solid #aaa;
-    text-align: left;
-    padding: 0.4em;
-}
-
-.dark td, .dark th {
-    border-color: #444;
-}

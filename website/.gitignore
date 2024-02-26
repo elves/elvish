@@ -1,6 +1,6 @@
 *.html
 !/template.html
-!*.ttyshot.html
+!*_ttyshot.html
 *.raw
 /tools/*.bin
 /_*

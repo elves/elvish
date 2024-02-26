@@ -1,0 +1,3 @@
+//cols 69
+~> var project = ~/project
+~> #send-keys rm Space -rf Space $projetc/bin

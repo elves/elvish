@@ -28,10 +28,10 @@ clean:
 	rm -rf tools/*.bin $(HTMLS) $(DST_DIR) $(DOCSET_TMP_DIR) $(DOCSET_DST_DIR)
 
 ifdef TTYSHOT
-%.ttyshot.html: %.elvts tools/ttyshot.bin
+%-ttyshot.html: %-ttyshot.elvts tools/ttyshot.bin
 	tools/ttyshot.bin $(if $(findstring verbose,$(TTYSHOT)),-v,) -o $@ $<
 else
-%.ttyshot.html:
+%-ttyshot.html:
 	@: ttyshot generation disabled by default
 endif
 

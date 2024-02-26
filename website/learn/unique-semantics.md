@@ -1,7 +1,5 @@
 <!-- toc -->
 
-<div class="clear"></div>
-
 The semantics of Elvish is unique in many aspects when compared to other shells.
 This can be surprising if you are used to other shells, and it is a result of
 the design choice of making Elvish a full-fledged programming language.

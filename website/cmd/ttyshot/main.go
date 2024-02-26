@@ -46,7 +46,7 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
-	spec, err := parseSpec(string(content))
+	script, err := parseScript(specPath, content)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func run(args []string) error {
 		}
 	}()
 
-	out, err := createTtyshot(homePath, spec, *saveRawFlag)
+	out, err := createTtyshot(homePath, script, *saveRawFlag)
 	if err != nil {
 		return err
 	}

@@ -1,153 +1,134 @@
-#demo-window {
-  background-color: #f0ede2;
-  margin-bottom: 16px;
+:root {
+  --ttyshot-width: 450px;
+}
+
+/* Cancel the global width restriction. Content on the homepage still respect
+   the 800px width, but they may have different background colors that span the
+   entire width. */
+#main {
+  max-width: none;
+  padding: 0;
+}
+
+/* Intro layout. */
+.intro {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  /* Replicate the width restriction of #main. */
+  max-width: 832px;
+  /* Replicate the padding of #main, and add some padding-bottom. */
+  padding: 0 16px 28px;
+}
+
+.intro .intro-content {
+  padding-bottom: 8px;
+}
+
+.intro .action {
+  display: flex;
+  column-gap: 16px;
+}
+
+.intro .action a {
+  width: fit-content;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid;
   border-radius: 5px;
-  overflow: hidden;
-}
-
-.animated-transition {
-  transition: all 300ms cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-
-/* Slide view. */
-
-#demo-container {
-  transform: translateX(0);
-  width: 500%;
-}
-
-.demo-wrapper {
-  width: 20%;
-  float: left;
-}
-
-/* Expanded view. */
-
-#demo-container.expanded, body.no-js #demo-container {
-  width: 100%;
-}
-
-#demo-container.expanded .demo-wrapper, body.no-js #demo-container .demo-wrapper {
-  width: 100%;
-}
-
-/* Styles for the demos. */
-
-.demo:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-.demo {
-  padding: 16px;
-}
-
-.demo-col {
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  float: left;
-}
-
-.demo-ttyshot {
-  text-align: center;
-}
-
-.demo-ttyshot .ttyshot {
-  text-align: left;
-}
-
-.demo-description {
-  padding: 16px 16px 0;
-}
-
-.demo-ttyshot {
-  padding-top: 16px;
-}
-
-@media screen and (min-width: 1024px) {
-  .demo-ttyshot {
-    width: 60%;
-  }
-  .demo-description {
-    width: 40%;
-  }
-  .animated-transition {
-    transition-duration: 400ms;
-  }
-}
-
-.demo-description h2 {
-  margin-top: 0;
-}
-
-.demo-col p {
-  margin-top: 16px;
-  margin-bottom: 0;
-}
-
-ul#demo-switcher {
-  display: inline;
-  margin: 0;
-}
-
-ul#demo-switcher > li {
-  list-style: none;
-  display: inline-block;
-}
-
-ul#demo-switcher > li > a {
+  font-family: var(--sans-font);
   color: black;
-  padding: 4px 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-ul#demo-switcher > li > a.current, ul#demo-switcher > li > a.current:hover {
+.dark .intro .action a {
   color: white;
-  background-color: black;
 }
 
-ul#demo-switcher > li > a:hover {
-  background-color: #ccc;
-  cursor: pointer;
+.intro .action a.primary {
+  border-color: green;
+  background-color: green;
+  color: white;
+  box-shadow: 0 0.125rem 0.3125rem 0 rgba(0, 0, 0, 0.2);
 }
 
-/* Styles for the body layout. */
+/* Section layout. */
+section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+  /* Sections usually end with a block that already has some margin-bottom, so
+     only add a small amount. */
+  padding-bottom: 8px;
+}
 
-@media screen and (min-width: 800px) {
-  #columns {
-    display: flex;
+section:nth-child(even) {
+  background-color: #f0f0f0;
+}
+
+.dark section:nth-child(even) {
+  background-color: #252525;
+}
+
+/* Replicate the width restriction of #main on the children of <section>.
+   The <section> itself may need to have a gray background, so must be full
+   width. */
+section > header, section > .content {
+  /* We want to left-justify the text in <header>, so we need to set an explicit
+     width. Using "max-width: 832px" causes the text to be centered. */
+  width: min(832px, 100%);
+  padding: 0 16px;
+}
+
+section > header, .column > header {
+  font-family: var(--sans-font);
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+.content {
+  /* When the screen is wide enough, .showcase.content has pairs of <p> and
+     <pre> side by side. To simplify the markup, instead of grouping each pair
+     in a container, we rely on flex wrapping to achieve the desired layout.
+     
+     .columns.content has pairs of .column side by side when the screen is wide
+     enough. */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.showcase.content > p {
+  /* The extra 20px becomes the gap between <p> and <pre> due to
+     "justify-content: space-between". */
+  width: calc(800px - var(--ttyshot-width) - 20px);
+}
+
+.showcase.content > pre {
+  /* Ttyshots need to have a fixed width, so give all <pre>s the same width
+     according to ttyshots. */
+  width: var(--ttyshot-width);
+}
+
+.column {
+  width: 400px;
+}
+
+/* The side-by-side arrangement of <p> and <pre> pairs in each .showcase.content
+   assume a total width of 800px. When the content is no longer that wide,
+   arrange them vertically instead. */
+@media screen and (max-width: 831px) {
+  /* Make the width of <p> 100% and flex-flow will take care of the layout
+     change. Also make non-ttyshot blocks 100% to look a bit nicer. */
+  .showcase.content > p, .showcase.content > pre:not(.language-ttyshot), .columns.content > .column {
+    width: 100%;
   }
-  .column {
-    flex: 1;
+
+  /* This is somewhat hacky. Ideally we should also give it a gray background. */
+  .column:nth-child(even) {
+    padding-top: 8px;
   }
-  .column:first-child {
-    margin-right: 24px;
-  }
-}
-
-/* Overriding default styles */
-
-.content h1 {
-  border: none;
-}
-
-/**
- * Dark theme.
- */
-.dark #demo-window {
-    background-color: #101818;
-}
-
-.dark ul#demo-switcher > li > a {
-    color: #eee;
-}
-
-.dark ul#demo-switcher > li > a.current, .dark ul#demo-switcher > li > a.current:hover {
-  color: black;
-  background-color: #eee;
-}
-
-.dark ul#demo-switcher > li > a:hover {
-  background-color: #444;
 }

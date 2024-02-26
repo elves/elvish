@@ -1,0 +1,4 @@
+~>  cd elvish
+   set edit:max-height = 10
+   echo '[CUT]'
+~> #send-keys C-N

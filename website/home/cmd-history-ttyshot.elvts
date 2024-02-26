@@ -1,0 +1,7 @@
+~>  use store
+   store:add-cmd 'cd ~/videos'
+   store:add-cmd 'ffmpeg -i input.mp4 -c:v libx264 -c:a aac output.mp4'
+   store:add-cmd 'ffmpeg -i input.mp4 -vf "transpose=1,scale=640:360,split [a][b];[a] palettegen [p];[b][p] paletteuse" -loop 0 output.gif'
+   edit:history:fast-forward
+~> echo '[CUT]'
+~> #send-keys C-R ff

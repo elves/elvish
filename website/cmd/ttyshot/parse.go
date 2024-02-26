@@ -3,48 +3,71 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
+
+	"src.elv.sh/pkg/transcript"
 )
 
-type op struct {
-	codeLines   []string
-	tmuxCommand []string
+const (
+	defaultRows = 100
+	defaultCols = 52
+)
+
+type script struct {
+	rows uint16
+	cols uint16
+	ops  []op
 }
 
-var (
-	ps1Pattern  = regexp.MustCompile(`^[~/][^ ]*> `)
-	tmuxPattern = regexp.MustCompile(`^#[a-z]`)
-)
+type op struct {
+	code   string
+	isTmux bool
+}
 
-func parseSpec(content string) ([]op, error) {
-	lines := strings.Split(content, "\n")
+var tmuxPattern = regexp.MustCompile(`^#[a-z]`)
 
-	var ops []op
-	for i := 0; i < len(lines); i++ {
-		line := lines[i]
-		if line == "" {
-			continue
+func parseScript(name string, content []byte) (*script, error) {
+	n, err := transcript.Parse(name, bytes.NewReader(content))
+	if err != nil {
+		return nil, err
+	}
+	if len(n.Children) > 0 {
+		return nil, fmt.Errorf("%s:%d: subsections not supported in ttyshot specs", name, n.Children[0].LineFrom)
+	}
+	s := script{rows: defaultRows, cols: defaultCols}
+	for _, directive := range n.Directives {
+		name, rest, _ := strings.Cut(directive, " ")
+		switch name {
+		case "rows":
+			rows, err := strconv.ParseUint(rest, 0, 16)
+			if err != nil {
+				return nil, fmt.Errorf("parse rows %q: %w", rest, err)
+			}
+			s.rows = uint16(rows)
+		case "cols":
+			cols, err := strconv.ParseUint(rest, 0, 16)
+			if err != nil {
+				return nil, fmt.Errorf("parse cols %q: %w", rest, err)
+			}
+			s.cols = uint16(cols)
+		default:
+			return nil, fmt.Errorf("unknown directive %q in directive line %q", name, directive)
 		}
-		ps1 := ps1Pattern.FindString(line)
-		if ps1 == "" {
-			return nil, fmt.Errorf("invalid line %v", i+1)
+	}
+	for _, interaction := range n.Interactions {
+		if interaction.Output != "" {
+			return nil, fmt.Errorf("%s:%d: output not supported in ttyshot specs", name, interaction.OutputLineFrom)
 		}
-		content := line[len(ps1):]
-		if tmuxPattern.MatchString(content) {
-			ops = append(ops, op{tmuxCommand: strings.Fields(content[1:])})
-			continue
+		if tmuxPattern.MatchString(interaction.Code) {
+			s.ops = append(s.ops, op{code: interaction.Code[1:], isTmux: true})
+		} else {
+			s.ops = append(s.ops, op{code: interaction.Code})
 		}
-
-		codeLines := []string{content}
-		ps2 := strings.Repeat(" ", len(ps1))
-		for i++; i < len(lines) && strings.HasPrefix(lines[i], ps2); i++ {
-			codeLines = append(codeLines, lines[i][len(ps2):])
-		}
-		i--
-		ops = append(ops, op{codeLines: codeLines})
 	}
 
-	return ops, nil
+	return &s, nil
 }

@@ -3,10 +3,14 @@ package main
 import (
 	"fmt"
 	"html"
+	"os"
 	"regexp"
 	"strings"
 
+	"src.elv.sh/pkg/elvdoc"
 	"src.elv.sh/pkg/md"
+	"src.elv.sh/pkg/strutil"
+	"src.elv.sh/pkg/ui"
 )
 
 // A wrapper of [md.HTMLCodec] implementing generic additional features.
@@ -102,7 +106,7 @@ func (c *htmlCodec) Do(op md.Op) {
 
 		// Add self link
 		fmt.Fprintf(c,
-			`<a href="#%s" class="anchor icon-link" aria-hidden="true"></a>`, idHTML)
+			`<a href="#%s" class="anchor" aria-hidden="true"></a>`, idHTML)
 
 		fmt.Fprintf(c, "</h%d>\n", op.Number)
 	case md.OpHTMLBlock:
@@ -118,6 +122,44 @@ func (c *htmlCodec) Do(op md.Op) {
 			}
 		}
 		c.HTMLCodec.Do(op)
+	case md.OpCodeBlock:
+		isTtyshot := false
+		if op.Info != "" {
+			language, header, hasHeader := strings.Cut(op.Info, " ")
+			isTtyshot = language == "ttyshot"
+			// The CommonMark spec only specifies the class on the inner <code>,
+			// but we also add it to the <pre> for easier matching in CSS.
+			attr := fmt.Sprintf(`class="language-%s"`, html.EscapeString(language))
+			fmt.Fprintf(c, `<pre %s>`, attr)
+			if hasHeader {
+				c.WriteString(renderCodeBlockHeader(header))
+			}
+			fmt.Fprintf(c, `<code %s>`, attr)
+		} else {
+			c.WriteString("<pre><code>")
+		}
+		if isTtyshot {
+			report := func(format string, args ...any) {
+				fmt.Fprintf(c, format, args...)
+				fmt.Fprintf(os.Stderr, "\033[1;31mError:\033[m "+format, args...)
+			}
+			if len(op.Lines) != 1 {
+				report("ttyshot should have exactly one line, is %d lines", len(op.Lines))
+			} else {
+				filename := op.Lines[0]
+				content, err := os.ReadFile(filename + "-ttyshot.html")
+				if err != nil {
+					report("can't read ttyshot %q: %v", filename, err)
+				} else {
+					// ttyshot content is valid HTML
+					c.Write(content)
+				}
+			}
+		} else {
+			c.WriteString(textToHTML(
+				elvdoc.HighlightCodeBlock(op.Info, strutil.JoinLines(op.Lines))))
+		}
+		c.WriteString("</code></pre>\n")
 	default:
 		c.HTMLCodec.Do(op)
 	}
@@ -204,4 +246,40 @@ func writeSection(sb *strings.Builder, s section) {
 		sb.WriteString("</ul>\n")
 	}
 	sb.WriteString("</li>\n")
+}
+
+func renderCodeBlockHeader(header string) string {
+	// TODO: This should ideally use another htmlCodec, but it's a bit of a
+	// hassle to set it up properly. Headers don't make use of any of the
+	// additional features implemented by htmlCodec for now.
+	//
+	// TODO: Using a full codec will result in an undesirable additional layer
+	// of <p> inside the <header>. This is currently worked around in CSS by
+	// setting "display: inline-block" on the element.
+	return "<header>" + md.RenderString(header, &md.HTMLCodec{}) + "</header>"
+}
+
+func textToHTML(t ui.Text) string {
+	var sb strings.Builder
+	for _, seg := range t {
+		var classes []string
+		for _, sgrCode := range seg.Style.SGRValues() {
+			classes = append(classes, "sgr-"+sgrCode)
+		}
+		jointClass := strings.Join(classes, " ")
+		if len(jointClass) > 0 {
+			fmt.Fprintf(&sb, `<span class="%s">`, jointClass)
+		}
+		for _, r := range seg.Text {
+			if r == '\n' {
+				sb.WriteByte('\n')
+			} else {
+				sb.WriteString(html.EscapeString(string(r)))
+			}
+		}
+		if len(jointClass) > 0 {
+			sb.WriteString("</span>")
+		}
+	}
+	return sb.String()
 }

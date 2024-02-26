@@ -16,6 +16,12 @@ note = "if you have experience with other shells or programming languages"
 extraCSS = ["tour.css"]
 group = 0
 
+[[articles]]
+name = "scripting-case-studies"
+title = "Scripting Case Studies"
+note = "explainers for all the scripting examples on the homepage"
+group = 0
+
 [[groups]]
 intro = "Advanced topics:"
 

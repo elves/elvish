@@ -19,7 +19,9 @@ same time. Each mode has its own UI and keybindings. For instance, the default
 (triggered by <kbd>Tab</kbd> by default) shows you all candidates for
 completion, and you can use arrow keys to navigate those candidates.
 
-@ttyshot ref/edit/completion-mode
+```ttyshot
+ref/edit/completion-mode
+```
 
 Each mode has its own submodule under `edit:`. For instance, builtin functions
 and configuration variables for the completion mode can be found in the
@@ -518,7 +520,9 @@ The editor can identify **autofix** commands to fix some errors in the code.
 For example, if you try to use a command from [the `str:` module](str.html)
 without importing it, the editor will offer `use str` as an autofix command:
 
-@ttyshot ref/edit/autofix
+```ttyshot
+ref/edit/autofix
+```
 
 As seen above, autofixes are also applied automatically by
 [`edit:completion:smart-start`]() (the default binding for <kbd>Tab</kbd>) and

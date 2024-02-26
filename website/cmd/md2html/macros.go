@@ -27,9 +27,8 @@ type filterer struct {
 }
 
 var macros = map[string]func(*filterer, string) string{
-	"@module ":  (*filterer).expandModule,
-	"@ttyshot ": (*filterer).expandTtyshot,
-	"@dl ":      (*filterer).expandDl,
+	"@module ": (*filterer).expandModule,
+	"@dl ":     (*filterer).expandDl,
 }
 
 func (f *filterer) filter(in io.Reader, out io.Writer) {
@@ -65,15 +64,6 @@ func (f *filterer) expandModule(rest string) string {
 	// Module doc will be added at end of file
 	return fmt.Sprintf(
 		"<a name='//apple_ref/cpp/Module/%s' class='dashAnchor'></a>", f.module)
-}
-
-func (f *filterer) expandTtyshot(name string) string {
-	content, err := os.ReadFile(name + ".ttyshot.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-	return fmt.Sprintf(`<pre class="ttyshot"><code>%s</code></pre>`,
-		bytes.Replace(content, []byte("\n"), []byte("<br>"), -1))
 }
 
 func (f *filterer) expandDl(rest string) string {

@@ -160,11 +160,7 @@ func ParseFromFS(fsys fs.FS) ([]*Node, error) {
 			}
 			nodes = append(nodes, moreNodes...)
 		} else {
-			lines, err := readAllLines(file)
-			if err != nil {
-				return fmt.Errorf("read %s: %w", path, err)
-			}
-			node, err := parseNode(path, fileLines{path, lines, 1})
+			node, err := Parse(path, file)
 			if err != nil {
 				return err
 			}
@@ -249,6 +245,15 @@ func (e *transcriptExtractor) Do(op md.Op) {
 			e.nodes = append(e.nodes, node)
 		}
 	}
+}
+
+// Parse parses the transcript sessions from an .elvts file.
+func Parse(path string, r io.Reader) (*Node, error) {
+	lines, err := readAllLines(r)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", path, err)
+	}
+	return parseNode(path, fileLines{path, lines, 1})
 }
 
 // Represents a range of lines from a file.

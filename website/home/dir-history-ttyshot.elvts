@@ -1,0 +1,6 @@
+~>  use store
+   store:add-dir /opt/java
+   store:add-dir ~/java/com/acme/project
+   store:add-dir ~/java/com/acme/project/utilities
+   echo '[CUT]'
+~> #send-keys C-L j

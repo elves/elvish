@@ -267,10 +267,36 @@ func codeFences(info string, lines []string) (string, string) {
 	return fence + escapeCodeFenceInfo(info), fence
 }
 
-func escapeCodeFenceInfo(info string) string {
-	// Info strings of code fences are terminated by newlines, so newlines also
-	// need to be escaped in addition.
-	return strings.ReplaceAll(escapeText(info), "\n", "&NewLine;")
+func escapeCodeFenceInfo(s string) string {
+	// We could just use escapNewLines(escapeText(info)) here and be correct.
+	// However, some of Elvish website's Markdown files embeds Markdown inside
+	// the info string, and we'd like to leave them as is as much as possible,
+	// so be more conservative in what we escape.
+	//
+	// The info string is mostly verbatim, with only support for backslashes and
+	// entities, so we only need to escape \ and &. Additionally, the info
+	// string can't contain newlines, so escape that too.
+	if !strings.ContainsAny(s, "\\\n&") {
+		return s
+	}
+	var sb strings.Builder
+	for i, r := range s {
+		switch r {
+		case '\\':
+			sb.WriteString(`\\`)
+		case '\n':
+			sb.WriteString("&NewLine;")
+		case '&':
+			if leadingCharRef(s[i:]) == "" {
+				sb.WriteByte('&')
+			} else {
+				sb.WriteString(`\&`)
+			}
+		default:
+			sb.WriteRune(r)
+		}
+	}
+	return sb.String()
 }
 
 func allDashBullets(containers []*fmtContainer) bool {

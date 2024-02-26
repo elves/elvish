@@ -5,7 +5,7 @@
 # Must be run from the website directory.
 
 cat ${1%.html}.md |
-  awk '$1 == "@ttyshot" { print $2 ".ttyshot.html" }'
+  awk '$1 == "```ttyshot" { getline; print $1 "-ttyshot.html" }'
 
 cat ${1%.html}.md |
   awk '$1 == "@module" {

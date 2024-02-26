@@ -12,8 +12,6 @@
 //     inserted at the end of the file. It should appear at the beginning of the
 //     reference doc for a module.
 //
-//   - @ttyshot inserts a ttyshot.
-//
 //   - @dl expands to a binary download link.
 //
 // The processed Markdown source is then converted to HTML using a codec based
@@ -34,6 +32,12 @@
 //
 //   - Syntax highlighting of code blocks with language elvish or
 //     elvish-transcript
+//
+//   - Headers for code blocks when a code fence has additional text after the
+//     language tag (like foo.elv in "```elvish foo.elv")
+//
+//   - The "ttyshot" language tag in a fence code block causes the content to
+//     be treated as a reference to a ttyshot and expanded.
 //
 // The comment block for optional features should appear before the main text,
 // and can contain multiple features (like <!-- toc number-sections -->).
@@ -74,7 +78,6 @@ func main() {
 	codec.preprocessInline = func(ops []md.InlineOp) {
 		addImplicitElvdocTargets(f.module, ops)
 	}
-	codec.ConvertCodeBlock = convertCodeBlock
 	md.Render(expanded.String(), md.SmartPunctsCodec{Inner: codec})
 	os.Stdout.WriteString(codec.String())
 }
