@@ -48,11 +48,11 @@ fn main {|go-pkg dst-dir &name=elvish &variant=''|
     var bin-dir = $dst-dir/$os'-'$arch
     os:mkdir-all $bin-dir
 
-    var bin-name archive-name = (
+    var bin-name-in-archive bin-name archive-name = (
       if (eq $os windows) {
-        put $name{.exe .zip}
+        put elvish.exe $name{.exe .zip}
       } else {
-        put $name{'' .tar.gz}
+        put elvish $name{'' .tar.gz}
       })
 
     print 'Building for '$os'-'$arch'... '
@@ -63,7 +63,7 @@ fn main {|go-pkg dst-dir &name=elvish &variant=''|
       go build ^
         -trimpath ^
         -ldflags '-X src.elv.sh/pkg/buildinfo.BuildVariant='$variant ^
-        -o $bin-dir/$bin-name ^
+        -o $bin-dir/$bin-name-in-archive ^
         $go-pkg
     } catch e {
       echo 'Failed'
@@ -74,18 +74,19 @@ fn main {|go-pkg dst-dir &name=elvish &variant=''|
     tmp pwd = $bin-dir
     # Archive files store the modification timestamp of files. Change it to a
     # fixed point in time to make the archive files reproducible.
-    touch -d 2000-01-01T00:00:00Z $bin-name
+    touch -d 2000-01-01T00:00:00Z $bin-name-in-archive
     if (eq $os windows) {
-      zip -q $archive-name $bin-name
+      zip -q $archive-name $bin-name-in-archive
     } else {
       # If we create a .tar.gz file directly with the tar command, the
       # resulting archive will contain the timestamp of the .tar file,
       # rendering the result unreproducible. As a result, we need to do it in
       # two steps.
-      tar cf $bin-name.tar $bin-name
+      tar cf $bin-name.tar $bin-name-in-archive
       touch -d 2022-01-01T00:00:00Z $bin-name.tar
       gzip -f $bin-name.tar
     }
+    mv $bin-name-in-archive $bin-name
     # Update the modification time again to reflect the actual modification
     # time. (Technically this makes the file appear slightly newer han it really
     # is, but it's close enough).
