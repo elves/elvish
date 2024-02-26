@@ -341,6 +341,16 @@ Exception: bad value: divisor must be number other than exact 0, but is exact 0
 Exception: bad value: divisor must be number other than exact 0, but is exact 0
   [tty]:1:1-7: / 1.0 0
 
+## implicit cd with / ##
+//only-on unix
+//in-temp-dir
+//with-deprecation-level 21
+~> /
+Deprecation: implicit cd is deprecated; use cd or location mode instead
+  [tty]:1:1-1: /
+~> put $pwd
+▶ /
+
 ## % ##
 ~> % 23 7
 ▶ (num 2)

@@ -250,6 +250,22 @@ Exception: exec: "nonexistent-command": executable file not found in $PATH
 Exception: exec: "nonexistent-command": executable file not found in %PATH%
   [tty]:1:1-19: nonexistent-command
 
+///////////////
+# implicit cd #
+///////////////
+
+//in-temp-dir
+//with-deprecation-level 21
+~> use os
+   use path
+   os:mkdir new-dir
+   var old-pwd = $pwd
+~> ./new-dir
+Deprecation: implicit cd is deprecated; use cd or location mode instead
+  [tty]:1:1-9: ./new-dir
+~> eq $pwd (path:join $old-pwd new-dir)
+▶ $true
+
 //////////////////////////////////////
 # legacy temporary assignment syntax #
 //////////////////////////////////////

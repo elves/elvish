@@ -11,6 +11,7 @@ import (
 // DontSearch determines whether the path to an external command should be
 // taken literally and not searched.
 func DontSearch(exe string) bool {
+	// TODO: Remove ".." after implicit cd is removed.
 	return exe == ".." || strings.ContainsRune(exe, filepath.Separator) ||
 		strings.ContainsRune(exe, '/')
 }

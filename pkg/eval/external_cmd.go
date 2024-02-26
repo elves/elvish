@@ -68,6 +68,7 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 			if len(argVals) > 0 {
 				return ErrImplicitCdNoArg
 			}
+			fm.Deprecate("implicit cd is deprecated; use cd or location mode instead", fm.traceback.Head, 21)
 			return fm.Evaler.Chdir(e.Name)
 		}
 	}

@@ -302,8 +302,7 @@ fn * {|@num| }
 # ```
 #
 # When given no argument, this command is equivalent to `cd /`, due to the
-# implicit cd feature. (The implicit cd feature will probably change to avoid
-# this oddity).
+# implicit cd feature. (The implicit cd feature is deprecated since 0.21.0).
 #doc:id div
 fn / {|x-num @y-num| }
 

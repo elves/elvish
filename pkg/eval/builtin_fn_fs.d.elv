@@ -6,6 +6,9 @@
 #
 # Note that Elvish's `cd` does not support `cd -`.
 #
+# In interactive shells, [location mode](../learn/tour.html#directory-history)
+# provides an alternative to quickly change to past directories.
+#
 # See also [`$pwd`]().
 fn cd {|dirname| }
 
