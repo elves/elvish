@@ -309,6 +309,10 @@ a {
   color: #0645ad;
 }
 
+#main a:not(.button):hover {
+  text-decoration: underline;
+}
+
 .dark a {
   color: var(--link-color-on-black);
 }
