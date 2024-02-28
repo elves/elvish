@@ -11,6 +11,9 @@
   --sans-font: Helvetica, Arial, sans-serif;
   --link-color-on-white: #0645ad;
   --link-color-on-black: #accbff;
+  /* Colors from 2014 Material Design color palettes
+     (https://m2.material.io/design/color/the-color-system) */
+  --blue-800: #1565C0;
 }
 
 html {
@@ -288,6 +291,15 @@ td, th {
 
 .dark td, .dark th {
   border-color: #444;
+}
+
+td.notice {
+  text-align: center;
+  background-color: #ddd;
+}
+
+.dark td.notice {
+  background-color: #333;
 }
 
 /** Links. */

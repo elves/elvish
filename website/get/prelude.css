@@ -1,8 +1,99 @@
-.notice {
-    text-align: center;
-    background-color: #ddd;
+form {
+  margin: -32px 0 16px;
+  padding: 32px 16px 16px;
+  background-color: #f0f0f0;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
 }
 
-.dark .notice {
-    background-color: #333;
+input[type="radio"] {
+  position: fixed;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.control {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.control > header {
+  flex: 0 0 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: black;
+  color: white;
+  border: 1px solid black;
+  border-right: none;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.widgets {
+  display: flex;
+  /* Constrain the background of children to within the rounded corner. The
+     content should never actually overflow. */
+  overflow: hidden;
+  flex-wrap: wrap;
+  border: 1px solid black;
+  border-left: none;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.option {
+  padding: 6px 8px;
+  background-color: white;
+  cursor: pointer;
+  /* When the options need multiple rows, grow to fill each row and center the
+     text. */
+  flex: 1 0 auto;
+  text-align: center;
+}
+
+.option:has(> input:disabled) {
+  cursor: not-allowed;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    white, white 8px,
+    #d0d0d0 8px, #d0d0d0 16px
+  );
+}
+
+.option:hover {
+  background: #f0f0f0;
+}
+
+.option:has(> input:checked) {
+  background: var(--blue-800);
+  color: white;
+}
+
+details {
+  padding: 4px 6px;
+  margin: 0 -6px;
+  background: #dadada;
+  border-radius: 6px;
+}
+
+details > summary {
+  cursor: pointer;
+}
+
+.advanced {
+  padding-top: 8px;
+}
+
+.advanced .control input[type="text"] {
+  font-size: 0.8em;
+  font-family: var(--code-font);
+  padding: 2px 4px;
+  width: 228px;
+  margin: 6px;
+}
+
+.small-print {
+  font-size: 0.85em;
+  padding-left: 12px;
 }

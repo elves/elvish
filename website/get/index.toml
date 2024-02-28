@@ -1,2 +1,16 @@
 prelude = "prelude"
 extraCSS = ["prelude.css"]
+extraJS = ["prelude.js"]
+autoIndex = true
+
+[[articles]]
+name = "default-shell"
+title = "Using Elvish as your default shell"
+
+[[articles]]
+name = "package-manager"
+title = "Installing Elvish with a package manager"
+
+[[articles]]
+name = "all-binaries"
+title = "All binaries available for download"
