@@ -1,3 +1,4 @@
+<div class="has-js">
 <form>
 
   <div class="control">
@@ -127,3 +128,13 @@ Alternative, click the link above to download the archive and unpack it in
 directory in `PATH`.
 
 More topics about installing Elvish:
+
+</div>
+<div class="no-js">
+
+Enable JavaScript to generate an installation script for your platform.
+
+Alternatively, find your binary for your platform in the
+[all binaries](all-binaries.html) page and unpack it manually.
+
+</div>
