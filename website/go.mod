@@ -9,6 +9,6 @@ require (
 	src.elv.sh v0.19.2
 )
 
-require golang.org/x/sys v0.16.0 // indirect
+require golang.org/x/sys v0.17.0 // indirect
 
 replace src.elv.sh => ../
