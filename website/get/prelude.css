@@ -6,6 +6,10 @@ form {
   border-bottom-right-radius: 10px;
 }
 
+.dark form {
+  background-color: #222;
+}
+
 input[type="radio"] {
   position: fixed;
   opacity: 0;
@@ -44,6 +48,7 @@ input[type="radio"] {
 
 .option {
   padding: 6px 8px;
+  color: black;
   background-color: white;
   cursor: pointer;
   /* When the options need multiple rows, grow to fill each row and center the
@@ -77,6 +82,10 @@ details {
   border-radius: 6px;
 }
 
+.dark details {
+  background: #333;
+}
+
 details > summary {
   cursor: pointer;
 }
@@ -91,6 +100,12 @@ details > summary {
   padding: 2px 4px;
   width: 228px;
   margin: 6px;
+}
+
+/* Needed for the <code> around "sudo" and "doas" options in dark mode. */
+.advanced code {
+  color: unset;
+  background-color: unset;
 }
 
 .small-print {
