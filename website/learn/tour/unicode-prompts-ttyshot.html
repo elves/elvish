@@ -1,0 +1,7 @@
+~&gt; <span class="sgr-32">set</span> <span class="sgr-35">edit:rprompt</span> <span class="sgr-33">=</span> <span class="sgr-1">(</span><span class="sgr-32">constantly</span> ^
+     <span class="sgr-1">(</span><span class="sgr-32">styled</span> <span class="sgr-1">(</span><span class="sgr-32">whoami</span><span class="sgr-1">)</span>✸<span class="sgr-1">(</span><span class="sgr-32">hostname</span><span class="sgr-1">)</span> inverse<span class="sgr-1">))</span>
+~&gt; <span class="sgr-32">set</span> <span class="sgr-35">edit:prompt</span> <span class="sgr-33">=</span> <span class="sgr-1">{</span>
+     <span class="sgr-32">tilde-abbr</span> <span class="sgr-35">$pwd</span>
+     <span class="sgr-32">styled</span> <span class="sgr-33">'❱ '</span> bright-red
+   <span class="sgr-1">}</span>
+~<span class="sgr-91">❱ </span><span class="sgr-36"># Fancy unicode prompts!</span>     <span class="sgr-7fg sgr-7bg">elf✸host.example.com</span>

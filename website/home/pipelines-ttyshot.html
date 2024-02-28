@@ -1,0 +1,15 @@
+~&gt; <span class="sgr-32">range</span> 1100 1111 <span class="sgr-32">|</span>
+   <span class="sgr-32">each</span> <span class="sgr-1">{</span><span class="sgr-32">|</span>x<span class="sgr-32">|</span> <span class="sgr-32">curl</span> -sL xkcd.com/<span class="sgr-35">$x</span>/info.0.json <span class="sgr-1">}</span> <span class="sgr-32">|</span>
+   <span class="sgr-32">from-json</span> <span class="sgr-32">|</span>
+   <span class="sgr-32">each</span> <span class="sgr-1">{</span><span class="sgr-32">|</span>x<span class="sgr-32">|</span> <span class="sgr-32">printf</span> <span class="sgr-33">"%g: %s\n"</span> <span class="sgr-35">$x</span><span class="sgr-1">[</span>num<span class="sgr-1">]</span> <span class="sgr-35">$x</span><span class="sgr-1">[</span>title<span class="sgr-1">]</span> <span class="sgr-1">}</span>
+1100: Vows
+1101: Sketchiness
+1102: Fastest-Growing
+1103: Nine
+1104: Feathers
+1105: License Plate
+1106: ADD
+1107: Sports Cheat Sheet
+1108: Cautionary Ghost
+1109: Refrigerator
+1110: Click and Drag
