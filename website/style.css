@@ -473,12 +473,14 @@ pre[class^="language-"][class$="-transcript"] header::before, pre.language-ttysh
 
 .article-list {
   margin-left: 0;
-  list-style: inside;
+  list-style: none;
 }
 
 .article-list li {
   padding: 6px 8px;
   margin: 0;
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .article-list li:nth-child(odd) {
@@ -489,18 +491,9 @@ pre[class^="language-"][class$="-transcript"] header::before, pre.language-ttysh
   background: #222;
 }
 
-.article-list li .li-content {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 16px;
-}
-
-.article-list li .li-content header {
-  flex: 1 0 auto;
-}
-
-.article-list li .li-content time {
-  flex: 0 0 auto;
+.article-list li time {
+  margin-left: auto;
+  padding-left: 16px;
 }
 
 /**
