@@ -50,9 +50,9 @@
 
   <div class="small-print">
 
-(If your OS/CPU combination is missing or grayed out, you may still be able to
+If your OS/CPU combination is missing or grayed out, you may still be able to
 build Elvish <a href="https://github.com/elves/elvish" target="_blank">from
-source</a>.)
+source</a>.
 
   </div>
 

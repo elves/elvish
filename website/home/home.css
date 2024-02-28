@@ -18,7 +18,7 @@
   /* Replicate the width restriction of #main. */
   max-width: 832px;
   /* Replicate the padding of #main, and add some padding-bottom. */
-  padding: 0 16px 28px;
+  padding: 0 16px 32px;
 }
 
 .intro .intro-content {
@@ -62,7 +62,7 @@ section {
   padding-top: 20px;
   /* Sections usually end with a block that already has some margin-bottom, so
      only add a small amount. */
-  padding-bottom: 8px;
+  padding-bottom: 12px;
 }
 
 section:nth-child(even) {

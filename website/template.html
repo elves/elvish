@@ -187,14 +187,18 @@
       <ul class="article-list">
         {{ range $article := $group.Articles }}
           <li>
-            <a href="{{ rootURL }}/{{ $category }}/{{ $article.Name }}.html"
-               class="article-link">{{ $article.Title }}</a>
-            {{ if $article.Note }}
-              &mdash; {{ $article.Note }}
-            {{ end }}
-            <span class="article-timestamp">
-              {{ $article.Timestamp }}
-            </span>
+            <div class="li-content">
+              <header>
+                <a href="{{ rootURL }}/{{ $category }}/{{ $article.Name }}.html"
+                   class="article-link">{{ $article.Title }}</a>
+                {{ if $article.Note }}
+                  &mdash; {{ $article.Note }}
+                {{ end }}
+              </header>
+              <time>
+                {{ $article.Timestamp }}
+              </time>
+            </div>
           </li>
         {{ end }}
       </ul>

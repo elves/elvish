@@ -1,6 +1,6 @@
 form {
   margin: -32px 0 16px;
-  padding: 32px 16px 16px;
+  padding: 20px 16px 16px;
   background-color: #f0f0f0;
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
@@ -111,4 +111,13 @@ details > summary {
 .small-print {
   font-size: 0.85em;
   padding-left: 12px;
+  /* The standard margin-bottom of block elements, needed due to the rule on
+     .small-print p below. */
+  margin-bottom: 12px;
+}
+
+.small-print p {
+  /* If the small-print text has multiple paragraphs, make them vertically more
+     compact. */
+  margin-bottom: 6px;
 }

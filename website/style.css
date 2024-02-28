@@ -236,8 +236,8 @@ body.has-js .no-js, body.no-js .has-js {
 /* We only use h1 to h3, so don't bother styling h4+. */
 h1, h2, h3 {
   line-height: 1.25;
-  margin-top: 24px;
-  margin-bottom: 20px;
+  margin-top: 32px;
+  margin-bottom: 12px;
   font-weight: bold;
 }
 
@@ -471,18 +471,36 @@ pre[class^="language-"][class$="-transcript"] header::before, pre.language-ttysh
   padding-top: 32px;
 }
 
-.article-list > li:hover {
-  background-color: #d0d0d0;
+.article-list {
+  margin-left: 0;
+  list-style: inside;
 }
 
-.dark .article-list > li:hover {
-  background-color: #333;
+.article-list li {
+  padding: 6px 8px;
+  margin: 0;
 }
 
-.article-timestamp {
-  float: right;
-  display: block;
-  margin-left: 1em;
+.article-list li:nth-child(odd) {
+  background: #e8e8e8;
+}
+
+.dark .article-list li:nth-child(odd) {
+  background: #222;
+}
+
+.article-list li .li-content {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 16px;
+}
+
+.article-list li .li-content header {
+  flex: 1 0 auto;
+}
+
+.article-list li .li-content time {
+  flex: 0 0 auto;
 }
 
 /**
