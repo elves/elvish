@@ -1,18 +1,23 @@
 <!-- toc number-sections -->
 
+This page explains the scripting examples on the [homepage](../), illustrating
+the advantages of Elvish scripting, especially when compared to traditional
+shells.
+
 # jpg-to-png.elv
 
 This example on the homepage uses
 [GraphicsMagick](http://www.graphicsmagick.org) to convert all the `.jpg` files
-into `.png` files in the current directory (if you have
-[ImageMagick](https://imagemagick.org) installed instead, just replace `gm` with
-`magick`):
+into `.png` files in the current directory:
 
 ```elvish jpg-to-png.elv
 for x [*.jpg] {
   gm convert $x (str:trim-suffix $x .jpg).png
 }
 ```
+
+(If you have [ImageMagick](https://imagemagick.org) installed instead, just
+replace `gm` with `magick`.)
 
 It's equivalent to the following script in traditional shells:
 
@@ -111,7 +116,10 @@ wait $job_a $job_b
 However, you will have to manage the lifecycle of the background jobs
 explicitly, whereas the
 [structured](https://en.wikipedia.org/wiki/Structured_concurrency) nature of
-`peach` makes that unnecessary.
+`peach` makes that unnecessary. Alternatively, you can use external commands
+such as [GNU Parallel](https://www.gnu.org/software/parallel/) to achieve
+parallel execution, but this requires you to learn another tool and structure
+your script in a particular way.
 
 Like in most programming languages, data structures in Elvish can be arbitrarily
 nested. This allows you to express more complex workflows in a natural way:
