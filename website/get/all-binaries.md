@@ -1,3 +1,11 @@
+This page collects links to all prebuilt Elvish binaries. The URLs follow the
+same pattern of `https://dl.elv.sh/{os}-{arch}/elvish-{version}.{ext}`, where
+`{ext}` is `.zip` for Windows and `.tar.gz` for all other OSes.
+
+These binaries are also available on the
+<a href="https://mirrors.tuna.tsinghua.edu.cn/elvish/" target="_blank">TUNA
+mirror site</a>.
+
 # Current versions
 
 <table class="extra-wide">

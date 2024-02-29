@@ -109,9 +109,26 @@ features</a> and is stable enough for interactive use.
         </div>
       </div>
       <div class="small-print">
-        Use “don’t use” if you are running as
+        Choose “don’t use” if you are running as
         <code>root</code> or installing to a directory you can write to.
         No effect on Windows.
+      </div>
+      <div class="control">
+        <header>Mirror</header>
+        <div class="widgets">
+          <label class="option">
+            <input type="radio" name="mirror" value="official" checked/>
+            official
+          </label>
+          <label class="option">
+            <input type="radio" name="mirror" value="tuna"/>
+            TUNA
+          </label>
+        </div>
+      </div>
+      <div class="small-print">
+        The <a href="https://mirrors.tuna.tsinghua.edu.cn" target="_blank">TUNA mirror site</a>
+        is hosted in Tsinghua University, Beijing, China.
       </div>
     </div>
   </details>

@@ -31,19 +31,26 @@ function main() {
   if (version) {
     select('version', version);
   }
-  // Populate sudo and dir from localStorage, and open the <details> if they
-  // have non-default values.
-  const sudo = tryGetLocalStorage('sudo');
+  // Populate dir, sudo and mirror from localStorage, and open the <details> if
+  // they have non-default values.
+  var openDetails = false;
   const dir = tryGetLocalStorage('dir');
-  if (sudo !== 'sudo') {
-    select('sudo', sudo);
-  }
   if (dir) {
     document.querySelector('input[name="dir"]').value = dir;
     onChange('dir', dir);
+    openDetails = true;
   }
-  // Note: assume "sudo" is the default.
-  if ((sudo && (sudo !== 'sudo')) || dir) {
+  const sudo = tryGetLocalStorage('sudo');
+  if (sudo && sudo !== 'sudo') {
+    select('sudo', sudo);
+    openDetails = true;
+  }
+  const mirror = tryGetLocalStorage('mirror');
+  if (mirror && mirror !== 'official') {
+    select('mirror', mirror);
+    openDetails = true;
+  }
+  if (openDetails) {
     document.querySelector('details').open = true;
   }
 }
@@ -85,11 +92,12 @@ function onChange(name, value) {
   $script.innerHTML = genScriptHTML(
     f.get('os'), f.get('arch'), f.get('version'),
     f.get('dir') || document.querySelector('input[name="dir"]').placeholder,
-    f.get('sudo'));
+    f.get('sudo'), f.get('mirror'));
 }
 
-function genScriptHTML(os, arch, version, dir, sudo) {
-  const urlBase = `https://dl.elv.sh/${os}-${arch}/elvish-${version}`;
+function genScriptHTML(os, arch, version, dir, sudo, mirror) {
+  const host = mirror === 'tuna' ? 'mirrors.tuna.tsinghua.edu.cn/elvish' : 'dl.elv.sh';
+  const urlBase = `https://${host}/${os}-${arch}/elvish-${version}`;
   if (os === 'windows') {
     const url = link(urlBase + '.zip');
     const renameCmd = version === 'HEAD' ? '' : `Move-Item -Force elvish-${version}.exe elvish.exe\n`;
