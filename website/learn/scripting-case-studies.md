@@ -4,6 +4,10 @@ This page explains the scripting examples on the [homepage](../), illustrating
 the advantages of Elvish scripting, especially when compared to traditional
 shells.
 
+For more examples of Elvish features compared to traditional shells, see the
+[quick tour](tour.html). For a complete description of the Elvish language, see
+the [language reference](../ref/language.html).
+
 # jpg-to-png.elv
 
 This example on the homepage uses
