@@ -91,7 +91,11 @@ type Evaler struct {
 // NewEvaler creates a new Evaler.
 func NewEvaler() *Evaler {
 	builtin := builtinNs.Ns()
-	beforeChdirElvish, afterChdirElvish := vals.EmptyList, vals.EmptyList
+
+	newListVar := func(l vals.List) vars.PtrVar { return vars.FromPtr(&l) }
+	preExitHookElvish := newListVar(vals.EmptyList)
+	beforeChdirElvish := newListVar(vals.EmptyList)
+	afterChdirElvish := newListVar(vals.EmptyList)
 
 	ev := &Evaler{
 		global:  new(Ns),
@@ -108,15 +112,21 @@ func NewEvaler() *Evaler {
 		Args:               vals.EmptyList,
 	}
 
-	ev.BeforeChdir = []func(string){
-		adaptChdirHook("before-chdir", ev, &beforeChdirElvish)}
-	ev.AfterChdir = []func(string){
-		adaptChdirHook("after-chdir", ev, &afterChdirElvish)}
+	ev.PreExitHooks = []func(){func() {
+		CallHook(ev, nil, "pre-exit", preExitHookElvish.Get().(vals.List))
+	}}
+	ev.BeforeChdir = []func(string){func(path string) {
+		CallHook(ev, nil, "before-chdir", beforeChdirElvish.Get().(vals.List), path)
+	}}
+	ev.AfterChdir = []func(string){func(path string) {
+		CallHook(ev, nil, "after-chdir", afterChdirElvish.Get().(vals.List), path)
+	}}
 
 	ev.ExtendBuiltin(BuildNs().
 		AddVar("pwd", NewPwdVar(ev)).
-		AddVar("before-chdir", vars.FromPtr(&beforeChdirElvish)).
-		AddVar("after-chdir", vars.FromPtr(&afterChdirElvish)).
+		AddVar("pre-exit", preExitHookElvish).
+		AddVar("before-chdir", beforeChdirElvish).
+		AddVar("after-chdir", afterChdirElvish).
 		AddVar("value-out-indicator",
 			vars.FromPtrWithMutex(&ev.valuePrefix, &ev.mu)).
 		AddVar("notify-bg-job-success",
@@ -129,28 +139,6 @@ func NewEvaler() *Evaler {
 	ev.modules["builtin"] = ev.builtin
 
 	return ev
-}
-
-func adaptChdirHook(name string, ev *Evaler, pfns *vals.List) func(string) {
-	return func(path string) {
-		// TODO: Chdir hooks should run with the ports of the current *Frame.
-		ports, cleanup := PortsFromStdFiles(ev.ValuePrefix())
-		defer cleanup()
-		callCfg := CallCfg{Args: []any{path}, From: "[hook " + name + "]"}
-		evalCfg := EvalCfg{Ports: ports[:]}
-		for it := (*pfns).Iterator(); it.HasElem(); it.Next() {
-			fn, ok := it.Elem().(Callable)
-			if !ok {
-				fmt.Fprintln(os.Stderr, name, "hook must be callable")
-				continue
-			}
-			err := ev.Call(fn, callCfg, evalCfg)
-			if err != nil {
-				// TODO: Stack trace
-				fmt.Fprintln(os.Stderr, err)
-			}
-		}
-	}
 }
 
 // PreExit runs all pre-exit hooks.
