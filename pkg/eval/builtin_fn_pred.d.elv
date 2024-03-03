@@ -1,6 +1,6 @@
-# Convert a value to boolean. In Elvish, only `$false` and errors are booleanly
-# false. Everything else, including 0, empty strings and empty lists, is booleanly
-# true:
+# Convert a value to boolean. In Elvish, only `$false`, `$nil`, and errors are
+# booleanly false. Everything else, including 0, empty strings and empty lists,
+# is booleanly true:
 #
 # ```elvish-transcript
 # ~> bool $true
