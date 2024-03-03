@@ -21,6 +21,6 @@ func initRepl(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	ed.AfterCommand = append(ed.AfterCommand,
 		func(src parse.Source, duration float64, err error) {
 			m := vals.MakeMap("src", src, "duration", duration, "error", err)
-			callHooks(ev, "$<edit>:after-command", afterCommandHook.Get().(vals.List), m)
+			eval.CallHook(ev, nil, "$<edit>:after-command", afterCommandHook.Get().(vals.List), m)
 		})
 }

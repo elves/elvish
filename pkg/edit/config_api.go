@@ -29,7 +29,7 @@ func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder
 	hook := newListVar(vals.EmptyList)
 	nb.AddVar("before-readline", hook)
 	appSpec.BeforeReadline = append(appSpec.BeforeReadline, func() {
-		callHooks(ev, "$<edit>:before-readline", hook.Get().(vals.List))
+		eval.CallHook(ev, nil, "$<edit>:before-readline", hook.Get().(vals.List))
 	})
 }
 
@@ -37,7 +37,7 @@ func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, nb eval.NsBuilder)
 	hook := newListVar(vals.EmptyList)
 	nb.AddVar("after-readline", hook)
 	appSpec.AfterReadline = append(appSpec.AfterReadline, func(code string) {
-		callHooks(ev, "$<edit>:after-readline", hook.Get().(vals.List), code)
+		eval.CallHook(ev, nil, "$<edit>:after-readline", hook.Get().(vals.List), code)
 	})
 }
 
@@ -61,32 +61,6 @@ func initGlobalBindings(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, nb e
 	bindingVar := newBindingVar(emptyBindingsMap)
 	appSpec.GlobalBindings = newMapBindings(nt, ev, bindingVar)
 	nb.AddVar("global-binding", bindingVar)
-}
-
-func callHooks(ev *eval.Evaler, name string, hook vals.List, args ...any) {
-	if hook.Len() == 0 {
-		return
-	}
-
-	ports, cleanup := eval.PortsFromStdFiles(ev.ValuePrefix())
-	evalCfg := eval.EvalCfg{Ports: ports[:]}
-	defer cleanup()
-
-	i := -1
-	for it := hook.Iterator(); it.HasElem(); it.Next() {
-		i++
-		name := fmt.Sprintf("%s[%d]", name, i)
-		fn, ok := it.Elem().(eval.Callable)
-		if !ok {
-			complain("%s not function", name)
-			continue
-		}
-
-		err := ev.Call(fn, eval.CallCfg{Args: args, From: name}, evalCfg)
-		if err != nil {
-			diag.ShowError(os.Stderr, err)
-		}
-	}
 }
 
 func callFilters(ev *eval.Evaler, name string, filters vals.List, args ...any) bool {
