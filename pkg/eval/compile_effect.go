@@ -106,7 +106,7 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 			ch := make(chan any, pipelineChanBufferSize)
 			sendStop := make(chan struct{})
 			sendError := new(error)
-			readerGone := new(int32)
+			readerGone := new(atomic.Bool)
 			newFm.ports[1] = &Port{
 				File: writer, Chan: ch,
 				closeFile: true, closeChan: true,
@@ -126,7 +126,7 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 				input := newFm.ports[0]
 				*input.sendError = errs.ReaderGone{}
 				close(input.sendStop)
-				atomic.StoreInt32(input.readerGone, 1)
+				input.readerGone.Store(true)
 			}
 			newFm.Close()
 			wg.Done()

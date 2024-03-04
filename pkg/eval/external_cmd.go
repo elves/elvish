@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync/atomic"
 	"syscall"
 
 	"src.elv.sh/pkg/eval/errs"
@@ -123,7 +122,7 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 	ws := state.Sys().(syscall.WaitStatus)
 	if ws.Signaled() && isSIGPIPE(ws.Signal()) {
 		readerGone := fm.ports[1].readerGone
-		if readerGone != nil && atomic.LoadInt32(readerGone) == 1 {
+		if readerGone != nil && readerGone.Load() {
 			return errs.ReaderGone{}
 		}
 	}

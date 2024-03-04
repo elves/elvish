@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"sync/atomic"
 
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
@@ -20,19 +21,18 @@ type Port struct {
 	closeFile bool
 	closeChan bool
 
-	// The following two fields are populated as an additional control
-	// mechanism for output ports. When no more value should be send on Chan,
-	// chanSendError is populated and chanSendStop is closed. This is used for
-	// both detection of reader termination (see readerGone below) and closed
-	// ports.
+	// The following two fields are populated as an additional control mechanism
+	// for output ports. When no more value should be send on Chan, sendError is
+	// populated and sendStop is closed. This is used for both detection of
+	// reader termination (see readerGone below) and closed ports.
 	sendStop  chan struct{}
 	sendError *error
 
 	// Only populated in output ports writing to another command in a pipeline.
-	// When the reading end of the pipe exits, it stores 1 in readerGone. This
-	// is used to check if an external command killed by SIGPIPE is caused by
-	// the termination of the reader of the pipe.
-	readerGone *int32
+	// When the reading end of the pipe exits, it stores true in readerGone.
+	// This is used to check if an external command killed by SIGPIPE is caused
+	// by the termination of the reader of the pipe.
+	readerGone *atomic.Bool
 }
 
 // ErrPortDoesNotSupportValueOutput is thrown when writing to a port that does
