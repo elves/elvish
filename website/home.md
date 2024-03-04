@@ -132,6 +132,8 @@ Join any of the following channels -- they are all bridged together thanks to
 
 -   Telegram: [Elvish user group](https://t.me/+Pv5ZYgTXD-YaKwcP)
 
+-   Discord: [Elvish Shell](https://discord.gg/jrmuzRBU8D)
+
 -   IRC: [#elvish](https://web.libera.chat/#elvish) on Libera Chat
 
 -   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
