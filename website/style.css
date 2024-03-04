@@ -14,6 +14,12 @@
   /* Colors from 2014 Material Design color palettes
      (https://m2.material.io/design/color/the-color-system) */
   --blue-800: #1565C0;
+  /* Codepoints for Font Awesome icons */
+  --icon-link: '\e800';
+  --icon-link-ext: "\f08e";
+  --icon-doc-text: "\f0f6";
+  --icon-file-code: "\f1c9";
+  --icon-terminal: "\f120";
 }
 
 html {
@@ -319,7 +325,7 @@ a {
 
 a.anchor::before {
   font-family: "fa-elv-sh";
-  content: '\e800'; /* icon-link */
+  content: var(--icon-link);
   font-size: 0.9em;
   font-weight: normal;
   padding-left: 0.3em;
@@ -336,7 +342,7 @@ a.anchor {
 
 a[target="_blank"]::after {
   font-family: "fa-elv-sh";
-  content: "\f08e"; /* icon-link-ext */
+  content: var(--icon-link-ext);
   /* Set the icon some distance away. */
   padding-left: 0.3em;
   /* Make the icon slightly smaller and align it to the bottom.
@@ -425,7 +431,7 @@ pre header {
 
 /* Set the fallback icon for the header and some common properties. */
 pre header::before {
-  content: "\f0f6"; /* icon-doc-text */
+  content: var(--icon-doc-text);
   font-family: "fa-elv-sh";
   padding-right: 6px;
   speak: never;
@@ -451,7 +457,7 @@ pre.language-elvish header {
 }
 
 pre.language-elvish header::before {
-  content: "\f1c9"; /* icon-file-code */
+  content: var(--icon-file-code);
 }
 
 pre[class^="language-"][class$="-transcript"] header, pre.language-ttyshot header {
@@ -464,7 +470,7 @@ pre[class^="language-"][class$="-transcript"] header a, pre.language-ttyshot hea
 }
 
 pre[class^="language-"][class$="-transcript"] header::before, pre.language-ttyshot header::before {
-  content: "\f120"; /* icon-terminal */
+  content: var(--icon-terminal);
 }
 
 /**
@@ -488,6 +494,14 @@ pre[class^="language-"][class$="-transcript"] header::before, pre.language-ttysh
   flex-wrap: wrap;
 }
 
+.article-list li:nth-child(even) {
+  background: #f6f6f6;
+}
+
+.dark .article-list li:nth-child(even) {
+  background: #181818;
+}
+
 .article-list li:nth-child(odd) {
   background: #e8e8e8;
 }
@@ -499,10 +513,20 @@ pre[class^="language-"][class$="-transcript"] header::before, pre.language-ttysh
 .article-list li header::before {
   /* Using a flexbox for the <li> loses the bullet. Recreate it and position it
      within the left-padding . */
-  content: "●";
+  background-color: black;
+  border-radius: 4px;
+  content: " ";
+  width: 8px;
+  height: 8px;
   position: absolute;
-  margin-left: -18px;
+  margin-left: -17px;
+  margin-top: 7px;
   speak: never;
+}
+
+.article-list:nth-of-type(even) li header::before {
+  /* Use square bullets for every other article list. */
+  border-radius: 0px;
 }
 
 .article-list li time {
