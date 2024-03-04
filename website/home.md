@@ -134,11 +134,11 @@ Join any of the following channels -- they are all bridged together thanks to
 
 -   Discord: [Elvish Shell](https://discord.gg/jrmuzRBU8D)
 
+-   Matrix: [#users:elv.sh](https://matrix.to/#/#users:elv.sh)
+
 -   IRC: [#elvish](https://web.libera.chat/#elvish) on Libera Chat
 
 -   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
-
--   Matrix: [#users:elv.sh](https://matrix.to/#/#users:elv.sh)
 
 </div>
 <div class="column">

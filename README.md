@@ -14,10 +14,12 @@ Despite its pre-1.0 status, it is already suitable for most daily interactive
 use.
 
 User groups (all connected thanks to [Matrix](https://matrix.org)):
-[![Gitter](https://img.shields.io/badge/gitter-elves/elvish-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish)
-[![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg)](https://telegram.me/elvish)
-[![#elvish on libera.chat](https://img.shields.io/badge/libera.chat-%23elvish-blue.svg)](https://web.libera.chat/#elvish)
-[![#users:elv.sh](https://img.shields.io/badge/matrix-%23users:elv.sh-blue.svg)](https://matrix.to/#/#users:elv.sh)
+
+[![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg?logo=telegram)](https://telegram.me/elvish)
+[![Discord server](https://img.shields.io/badge/discord-Elvish-blue.svg?logo=discord)](https://discord.gg/jrmuzRBU8D)
+[![#users:elv.sh](https://img.shields.io/badge/matrix-%23users:elv.sh-blue.svg?logo=matrix)](https://matrix.to/#/#users:elv.sh)
+[![#elvish on libera.chat](https://img.shields.io/badge/libera.chat-%23elvish-blue.svg?logo=liberadotchat)](https://web.libera.chat/#elvish)
+[![Gitter](https://img.shields.io/badge/gitter-elves%2Felvish-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish)
 
 ## Documentation
 
