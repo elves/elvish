@@ -7,11 +7,11 @@
 [![Packaging status](https://repology.org/badge/tiny-repos/elvish.svg)](https://repology.org/project/elvish/versions)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/ElvishShell)
 
-Elvish is an expressive programming language and a versatile interactive shell,
-combined into one seamless package. It runs on Linux, BSDs, macOS and Windows.
+Elvish is a powerful scripting language and a versatile interactive shell. It
+runs on Linux, macOS, BSDs and Windows.
 
-Despite its pre-1.0 status, it is already suitable for most daily interactive
-use.
+Elvish is pre-1.0. This means that the features set will change between
+versions, but it's quite stable for both scripting and interactive use.
 
 User groups (all connected thanks to [Matrix](https://matrix.org)):
 
