@@ -481,7 +481,8 @@ pre[class^="language-"][class$="-transcript"] header::before, pre.language-ttysh
 }
 
 .article-list li {
-  padding: 6px 8px;
+  /* A large left padding for the bullet list .*/
+  padding: 6px 8px 6px 30px;
   margin: 0;
   display: flex;
   flex-wrap: wrap;
@@ -493,6 +494,15 @@ pre[class^="language-"][class$="-transcript"] header::before, pre.language-ttysh
 
 .dark .article-list li:nth-child(odd) {
   background: #222;
+}
+
+.article-list li header::before {
+  /* Using a flexbox for the <li> loses the bullet. Recreate it and position it
+     within the left-padding . */
+  content: "●";
+  position: absolute;
+  margin-left: -18px;
+  speak: never;
 }
 
 .article-list li time {
