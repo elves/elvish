@@ -3,67 +3,67 @@ autoIndex = true
 
 [[articles]]
 name = "0.20.1-release-notes"
-title = "Elvish 0.20.1 Release Notes"
+title = "Elvish 0.20.1 release notes"
 timestamp = "2024-02-14"
 
 [[articles]]
 name = "0.20.0-release-notes"
-title = "Elvish 0.20.0 Release Notes"
+title = "Elvish 0.20.0 release notes"
 timestamp = "2024-02-11"
 
 [[articles]]
 name = "0.19.1-release-notes"
-title = "Elvish 0.19.1 Release Notes"
+title = "Elvish 0.19.1 release notes"
 timestamp = "2023-03-05"
 
 [[articles]]
 name = "0.18.0-release-notes"
-title = "Elvish 0.18.0 Release Notes"
+title = "Elvish 0.18.0 release notes"
 timestamp = "2022-03-20"
 
 [[articles]]
 name = "0.17.0-release-notes"
-title = "Elvish 0.17.0 Release Notes"
+title = "Elvish 0.17.0 release notes"
 timestamp = "2021-12-10"
 
 [[articles]]
 name = "0.16.0-release-notes"
-title = "Elvish 0.16.0 Release Notes"
+title = "Elvish 0.16.0 release notes"
 timestamp = "2021-08-21"
 
 [[articles]]
 name = "0.15.0-release-notes"
-title = "Elvish 0.15.0 Release Notes"
+title = "Elvish 0.15.0 release notes"
 timestamp = "2021-01-30"
 
 [[articles]]
 name = "0.14.1-release-notes"
-title = "Elvish 0.14.1 Release Notes"
+title = "Elvish 0.14.1 release notes"
 timestamp = "2020-08-16"
 
 [[articles]]
 name = "0.14.0-release-notes"
-title = "Elvish 0.14.0 Release Notes"
+title = "Elvish 0.14.0 release notes"
 timestamp = "2020-07-05"
 
 [[articles]]
 name = "0.13.1-release-notes"
-title = "Elvish 0.13.1 Release Notes"
+title = "Elvish 0.13.1 release notes"
 timestamp = "2020-03-21"
 
 [[articles]]
 name = "0.13-release-notes"
-title = "Elvish 0.13 Release Notes"
+title = "Elvish 0.13 release notes"
 timestamp = "2020-01-01"
 
 [[articles]]
 name = "0.12-release-notes"
-title = "Elvish 0.12 Release Notes"
+title = "Elvish 0.12 release notes"
 timestamp = "2018-08-01"
 
 [[articles]]
 name = "0.11-release-notes"
-title = "Elvish 0.11 Release Notes"
+title = "Elvish 0.11 release notes"
 timestamp = "2018-01-17"
 
 [[articles]]
@@ -73,7 +73,7 @@ timestamp = "2017-09-17"
 
 [[articles]]
 name = "0.10-release-notes"
-title = "Elvish 0.10 Release Notes"
+title = "Elvish 0.10 release notes"
 timestamp = "2017-09-17"
 
 [[articles]]
@@ -83,10 +83,10 @@ timestamp = "2017-07-10"
 
 [[articles]]
 name = "0.9-release-notes"
-title = "Elvish 0.9 Release Notes"
+title = "Elvish 0.9 release notes"
 timestamp = "2017-07-03"
 
 [[articles]]
 name = "live"
-title = "The Elvish Website is Officially Live!"
+title = "The Elvish website is officially live!"
 timestamp = "2017-07-03"

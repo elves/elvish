@@ -3,12 +3,12 @@ prelude = "prelude"
 
 [[articles]]
 name = "language"
-title = "Language Specification"
+title = "Language specification"
 group = -1
 
 [[articles]]
 name = "command"
-title = "The Elvish Command"
+title = "The Elvish command"
 group = -1
 
 [[groups]]
@@ -18,7 +18,7 @@ Modules in the Elvish standard library:
 
 [[articles]]
 name = "builtin"
-title = "Builtin Functions and Variables"
+title = "Builtin functions and variables"
 
 [[articles]]
 name = "doc"
@@ -26,7 +26,7 @@ title = "doc: Documentation of Elvish modules"
 
 [[articles]]
 name = "edit"
-title = "edit: API for the Interactive Editor"
+title = "edit: API for the interactive editor"
 
 [[articles]]
 name = "epm"
@@ -38,15 +38,15 @@ title = "flag: Command-line flag parsing"
 
 [[articles]]
 name = "file"
-title = "file: File Utilities"
+title = "file: File utilities"
 
 [[articles]]
 name = "math"
-title = "math: Math Utilities"
+title = "math: Math utilities"
 
 [[articles]]
 name = "md"
-title = "md: Markdown Utilities"
+title = "md: Markdown utilities"
 
 [[articles]]
 name = "os"
@@ -54,31 +54,31 @@ title = "os: Operating system functionality"
 
 [[articles]]
 name = "path"
-title = "path: Filesystem Path Utilities"
+title = "path: Filesystem path utilities"
 
 [[articles]]
 name = "platform"
-title = "platform: Information About the Platform"
+title = "platform: Information about the platform"
 
 [[articles]]
 name = "re"
-title = "re: Regular Expression Utilities"
+title = "re: Regular expression utilities"
 
 [[articles]]
 name = "readline-binding"
-title = "readline-binding: Readline-like Key Bindings"
+title = "readline-binding: Readline-like key bindings"
 
 [[articles]]
 name = "runtime"
-title = "runtime: Information About the Elvish Runtime"
+title = "runtime: Information about the Elvish runtime"
 
 [[articles]]
 name = "store"
-title = "store: API for the Elvish Persistent Data Store"
+title = "store: API for the Elvish persistent data store"
 
 [[articles]]
 name = "str"
-title = "str: String Manipulation"
+title = "str: String manipulation"
 
 [[articles]]
 name = "unix"
