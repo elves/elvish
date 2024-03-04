@@ -102,14 +102,9 @@
 //
 // These omitted features are never used in Elvish's Markdown sources.
 //
-// All implemented features pass their relevant CommonMark spec tests. See
-// [testutils_test.go] for a complete list of which spec tests are skipped.
-//
-// Note: the spec tests were taken from the [CommonMark spec Git repo] on
-// 2022-09-26. This version is almost identical to the latest released version,
-// [CommonMark 0.30] (released 2021-06-09), with two minor changes in the syntax
-// of [HTML blocks] and [inline HTML comments]. Once CommonMark 0.31 is
-// released, the spec tests will be updated to follow that instead.
+// All implemented features pass their relevant CommonMark spec tests, currently
+// targeting [CommonMark 0.31.2]. See [testutils_test.go] for a complete list of
+// which spec tests are skipped.
 //
 // # Is this package useful outside Elvish?
 //
@@ -144,21 +139,18 @@
 //
 // [all the corner cases found by the fuzzer]: https://github.com/elves/elvish/tree/master/pkg/md/testdata/fuzz/FuzzFmtPreservesHTMLRender
 // [fuzzing support]: https://go.dev/security/fuzz/
-// [CommonMark 0.30]: https://spec.commonmark.org/0.30/
-// [HTML blocks]: https://github.com/commonmark/commonmark-spec/commit/053924aa51ea56db1899403068540f90b761125a
-// [inline HTML comments]: https://github.com/commonmark/commonmark-spec/commit/d5ddfae696c53f09fd5b6182238de716dddeb40a
-// [loose]: https://spec.commonmark.org/0.30/#loose
-// [Setext headings]: https://spec.commonmark.org/0.30/#setext-headings
-// [ATX headings]: https://spec.commonmark.org/0.30/#atx-headings
+// [loose]: https://spec.commonmark.org/0.31.2/#loose
+// [Setext headings]: https://spec.commonmark.org/0.31.2/#setext-headings
+// [ATX headings]: https://spec.commonmark.org/0.31.2/#atx-headings
 // [testutils_test.go]: https://github.com/elves/elvish/blob/master/pkg/md/testutils_test.go
 // [elvdoc]: https://github.com/elves/elvish/blob/master/CONTRIBUTING.md#reference-docs
 // [Pandoc]: https://pandoc.org
 // [Prettier]: https://prettier.io
 // [CommonMark]: https://spec.commonmark.org
 // [contributing instructions]: https://github.com/elves/elvish/blob/master/CONTRIBUTING.md
-// [inline links]: https://spec.commonmark.org/0.30/#inline-link
-// [Reference links]: https://spec.commonmark.org/0.30/#reference-link
-// [CommonMark spec Git repo]: https://github.com/commonmark/commonmark-spec
+// [inline links]: https://spec.commonmark.org/0.31.2/#inline-link
+// [Reference links]: https://spec.commonmark.org/0.31.2/#reference-link
+// [CommonMark 0.31.2]: https://spec.commonmark.org/0.31.2/
 package md
 
 //go:generate stringer -type=OpType,InlineOpType -output=zstring.go
@@ -180,7 +172,7 @@ import (
 // better CommonMark compliance.
 var UnescapeHTML = unescapeHTML
 
-// https://spec.commonmark.org/0.30/#entity-and-numeric-character-references
+// https://spec.commonmark.org/0.31.2/#entity-and-numeric-character-references
 const charRefPattern = `&(?:[a-zA-Z0-9]+|#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6});`
 
 var charRefRegexp = regexp.MustCompile(charRefPattern)
@@ -321,7 +313,7 @@ const (
 	scheme           = `[a-zA-Z][a-zA-Z0-9+.-]{1,31}`
 	emailLocalPuncts = ".!#$%&'*+/=?^_`{|}~-"
 
-	// https://spec.commonmark.org/0.30/#open-tag
+	// https://spec.commonmark.org/0.31.2/#open-tag
 	openTag = `<` +
 		`[a-zA-Z][a-zA-Z0-9-]*` + // tag name
 		(`(?:` +
@@ -331,7 +323,7 @@ const (
 			`)*`) + // zero or more attributes
 		`[ \t\n]*` + // whitespace
 		`/?>`
-	// https://spec.commonmark.org/0.30/#closing-tag
+	// https://spec.commonmark.org/0.31.2/#closing-tag
 	closingTag = `</[a-zA-Z][a-zA-Z0-9-]*[ \t\n]*>`
 )
 
@@ -360,6 +352,8 @@ func initRegexps() {
 	// Capture group 1: fence punctuations
 	codeFenceCloserRegexp = regexp.MustCompile("(?:^ {0,3})(`{3,}|~{3,})[ \t]*$")
 
+	// These corresponds to the bullet list in
+	// https://spec.commonmark.org/0.31.2/#html-blocks.
 	html1Regexp = regexp.MustCompile(`^ {0,3}<(?i:pre|script|style|textarea)`)
 	html1CloserRegexp = regexp.MustCompile(`</(?i:pre|script|style|textarea)`)
 	html2Regexp = regexp.MustCompile(`^ {0,3}<!--`)
@@ -371,14 +365,14 @@ func initRegexps() {
 	html5Regexp = regexp.MustCompile(`^ {0,3}<!\[CDATA\[`)
 	html5CloserRegexp = regexp.MustCompile(`\]\]>`)
 
-	html6Regexp = regexp.MustCompile(`^ {0,3}</?(?i:address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h1|h2|h3|h4|h5|h6|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|nav|noframes|ol|optgroup|option|p|param|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul)(?:[ \t>]|$|/>)`)
+	html6Regexp = regexp.MustCompile(`^ {0,3}</?(?i:address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h1|h2|h3|h4|h5|h6|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul)(?:[ \t>]|$|/>)`)
 	html7Regexp = regexp.MustCompile(
 		fmt.Sprintf(`^ {0,3}(?:%s|%s)[ \t]*$`, openTag, closingTag))
 
-	// https://spec.commonmark.org/0.30/#uri-autolink
+	// https://spec.commonmark.org/0.31.2/#uri-autolink
 	uriAutolinkRegexp = regexp.MustCompile(
 		`^<` + scheme + `:[^\x00-\x19 <>]*` + `>`)
-	// https://spec.commonmark.org/0.30/#email-autolink
+	// https://spec.commonmark.org/0.31.2/#email-autolink
 	emailAutolinkRegexp = regexp.MustCompile(
 		`^<[a-zA-Z0-9` + emailLocalPuncts + `]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*>`)
 
@@ -633,7 +627,7 @@ func (p *blockParser) parseBlankLineTerminatedHTMLBlock(line string) {
 }
 
 // This struct corresponds to the block tree in
-// https://spec.commonmark.org/0.30/#phase-1-block-structure.
+// https://spec.commonmark.org/0.31.2/#phase-1-block-structure.
 //
 // The spec describes a two-phased parsing strategy where the entire block tree
 // is built before inline parsing is done. However, since we don't support
@@ -754,10 +748,10 @@ func (t *blockTree) unmatchedBlockquote(matched int) (int, bool) {
 }
 
 var (
-	// https://spec.commonmark.org/0.30/#block-quotes
+	// https://spec.commonmark.org/0.31.2/#block-quotes
 	blockquoteMarkerRegexp = regexp.MustCompile(`^ {0,3}> ?`)
 
-	// Rule #1 and #2 of https://spec.commonmark.org/0.30/#list-items
+	// Rule #1 and #2 of https://spec.commonmark.org/0.31.2/#list-items
 	itemStartingMarkerRegexp = regexp.MustCompile(
 		// Capture groups:
 		// 1. bullet item punctuation
@@ -766,7 +760,7 @@ var (
 		// 4. trailing spaces
 		`^ {0,3}(?:([-+*])|([0-9]{1,9})([.)]))( +)`)
 
-	// Rule #3 of https://spec.commonmark.org/0.30/#list-items
+	// Rule #3 of https://spec.commonmark.org/0.31.2/#list-items
 	itemStartingMarkerBlankLineRegexp = regexp.MustCompile(
 		// Capture groups are the same, with group 4 always empty.
 		`^ {0,3}(?:([-+*])|([0-9]{1,9})([.)]))[ \t]*()$`)
@@ -776,7 +770,7 @@ var (
 // all starting markers and new containers to create.
 //
 // Blockquotes are simple to parse. Most of the code deals with list items,
-// described in https://spec.commonmark.org/0.30/#list-items.
+// described in https://spec.commonmark.org/0.31.2/#list-items.
 func (t *blockTree) parseStartingMarkers(line string, newParagraph bool) (string, []container) {
 	var containers []container
 	// Exception 2 of rule #1: Don't parse thematic breaks like "- - - " as

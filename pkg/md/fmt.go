@@ -145,7 +145,7 @@ func (c *FmtCodec) Do(op Op) {
 			// To fix this, use a blank line as the first line, and start the
 			// HTML block on the second line. The marker needs to be shortened
 			// to contain exactly one trailing space, as is required by rule 3
-			// in https://spec.commonmark.org/0.30/#list-items.
+			// in https://spec.commonmark.org/0.31.2/#list-items.
 			//
 			// Note that this only matters for HTML blocks. Indented code blocks
 			// has the same behavior regarding leading spaces, but we always

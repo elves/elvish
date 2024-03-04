@@ -82,7 +82,7 @@ func (p *inlineParser) render() {
 			text := p.text[begin:p.pos]
 			hardLineBreak := false
 			if p.pos < len(p.text) && p.text[p.pos] == '\n' {
-				// https://spec.commonmark.org/0.30/#hard-line-break
+				// https://spec.commonmark.org/0.31.2/#hard-line-break
 				//
 				// The input to renderInline never ends in a newline, so all
 				// newlines are internal ones, thus subject to the hard line
@@ -98,7 +98,7 @@ func (p *inlineParser) render() {
 
 		switch b {
 		// The 3 branches below implement the first part of
-		// https://spec.commonmark.org/0.30/#an-algorithm-for-parsing-nested-emphasis-and-links.
+		// https://spec.commonmark.org/0.31.2/#an-algorithm-for-parsing-nested-emphasis-and-links.
 		case '[':
 			bufIdx := p.buf.push(textPiece("["))
 			p.delims.push(&delim{typ: '[', bufIdx: bufIdx})
@@ -120,7 +120,7 @@ func (p *inlineParser) render() {
 				&delim{typ: b, bufIdx: bufIdx,
 					n: p.pos - begin, canOpen: canOpen, canClose: canClose})
 		case ']':
-			// https://spec.commonmark.org/0.30/#look-for-link-or-image.
+			// https://spec.commonmark.org/0.31.2/#look-for-link-or-image.
 			var opener *delim
 			for d := p.delims.top.prev; d != p.delims.bottom; d = d.prev {
 				if d.typ == '[' || d.typ == '!' {
@@ -168,7 +168,7 @@ func (p *inlineParser) render() {
 					main: InlineOp{Type: OpImage, Dest: dest, Alt: alt, Text: title}})
 			}
 		case '`':
-			// https://spec.commonmark.org/0.30/#code-spans
+			// https://spec.commonmark.org/0.31.2/#code-spans
 			p.consumeRun('`')
 			closer := findBacktickRun(p.text, p.text[begin:p.pos], p.pos)
 			if closer == -1 {
@@ -181,7 +181,7 @@ func (p *inlineParser) render() {
 					Text: normalizeCodeSpanContent(p.text[p.pos:closer])}})
 			p.pos = closer + (p.pos - begin)
 		case '<':
-			// https://spec.commonmark.org/0.30/#raw-html
+			// https://spec.commonmark.org/0.31.2/#raw-html
 			if p.pos == len(p.text) {
 				parseText()
 				continue
@@ -267,7 +267,7 @@ func (p *inlineParser) render() {
 			}
 			parseText()
 		case '&':
-			// https://spec.commonmark.org/0.30/#entity-and-numeric-character-references
+			// https://spec.commonmark.org/0.31.2/#entity-and-numeric-character-references
 			if entity := leadingCharRef(p.text[begin:]); entity != "" {
 				p.buf.push(textPiece(UnescapeHTML(entity)))
 				p.pos = begin + len(entity)
@@ -275,10 +275,10 @@ func (p *inlineParser) render() {
 				parseText()
 			}
 		case '\\':
-			// https://spec.commonmark.org/0.30/#backslash-escapes
+			// https://spec.commonmark.org/0.31.2/#backslash-escapes
 			if p.pos < len(p.text) {
 				if p.text[p.pos] == '\n' {
-					// https://spec.commonmark.org/0.30/#hard-line-break
+					// https://spec.commonmark.org/0.31.2/#hard-line-break
 					//
 					// Do *not* consume the newline; "\\\n" is a hard line break
 					// plus a (soft) line break.
@@ -299,7 +299,7 @@ func (p *inlineParser) render() {
 
 			p.buf.push(piece{main: InlineOp{Type: OpNewLine}})
 			// Remove spaces at the beginning of the next line per
-			// https://spec.commonmark.org/0.30/#soft-line-breaks.
+			// https://spec.commonmark.org/0.31.2/#soft-line-breaks.
 			for p.pos < len(p.text) && p.text[p.pos] == ' ' {
 				p.pos++
 			}
@@ -330,7 +330,7 @@ func emptyToNewline(r rune, l int) rune {
 // represented by '\n'.
 //
 // The criteria are described in:
-// https://spec.commonmark.org/0.30/#emphasis-and-strong-emphasis
+// https://spec.commonmark.org/0.31.2/#emphasis-and-strong-emphasis
 //
 // The algorithm is a bit complicated. Here is another way to describe the
 // criteria:
@@ -396,7 +396,7 @@ func normalizeCodeSpanContent(s string) string {
 	return s
 }
 
-// https://spec.commonmark.org/0.30/#process-emphasis
+// https://spec.commonmark.org/0.31.2/#process-emphasis
 func (p *inlineParser) processEmphasis(bottom *delim) {
 	var openersBottom [2][3][2]*delim
 	for closer := bottom.next; closer != nil; {
@@ -505,7 +505,7 @@ func (b *buffer) ops() []InlineOp {
 }
 
 // The algorithm described in
-// https://spec.commonmark.org/0.30/#phase-2-inline-structure involves inserting
+// https://spec.commonmark.org/0.31.2/#phase-2-inline-structure involves inserting
 // nodes before and after existing nodes in the output. The most natural choice
 // is a doubly linked list; but for simplicity, we use a slice for output nodes,
 // keep track of nodes that need to be prepended or appended to each node.
@@ -542,7 +542,7 @@ func (p *piece) iterate(f func(InlineOp)) {
 // A delimiter "stack" (actually a doubly linked list), with sentinels as bottom
 // and top, with the bottom being the head of the list.
 //
-// https://spec.commonmark.org/0.30/#delimiter-stack
+// https://spec.commonmark.org/0.31.2/#delimiter-stack
 type delimStack struct {
 	bottom, top *delim
 }
@@ -591,7 +591,7 @@ func parseLinkTail(text string) (n int, dest, title string) {
 	return p.parse()
 }
 
-// https://spec.commonmark.org/0.30/#links
+// https://spec.commonmark.org/0.31.2/#links
 func (p *linkTailParser) parse() (n int, dest, title string) {
 	if len(p.text) < 2 || p.text[0] != '(' {
 		return -1, "", ""
@@ -678,7 +678,7 @@ func (p *linkTailParser) parse() (n int, dest, title string) {
 				break title
 			case opener:
 				// Titles started with "(" does not allow unescaped "(":
-				// https://spec.commonmark.org/0.30/#link-title
+				// https://spec.commonmark.org/0.31.2/#link-title
 				return -1, "", ""
 			case '\\':
 				titleBuilder.WriteByte(p.parseBackslash())
@@ -734,14 +734,10 @@ const asciiPuncts = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
 
 func isASCIIPunct(b byte) bool { return strings.IndexByte(asciiPuncts, b) >= 0 }
 
-// The CommonMark spec has its own definition of Unicode punctuation:
-// https://spec.commonmark.org/0.30/#unicode-punctuation-character
-//
-// This definition includes all the ASCII punctuations above, some of which
-// ("$+<=>^`|~" to be exact) are not considered to be punctuations by
-// unicode.IsPunct.
+// The CommonMark spec's definition of Unicode punctuation includes both P and S
+// categories: https://spec.commonmark.org/0.31.2/#unicode-punctuation-character
 func isUnicodePunct(r rune) bool {
-	return unicode.IsPunct(r) || r <= 0x7f && isASCIIPunct(byte(r))
+	return unicode.IsPunct(r) || unicode.IsSymbol(r)
 }
 
 const metas = "![]*_`\\&<\n"
