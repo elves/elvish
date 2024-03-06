@@ -315,7 +315,7 @@ a {
   color: #0645ad;
 }
 
-#main a:not(.button):hover {
+#main a:not(.button):not(.anchor):hover {
   text-decoration: underline;
 }
 
@@ -522,6 +522,10 @@ pre[class^="language-"][class$="-transcript"] header::before, pre.language-ttysh
   margin-left: -17px;
   margin-top: 7px;
   speak: never;
+}
+
+.dark .article-list li header::before {
+  background-color: white;
 }
 
 .article-list:nth-of-type(even) li header::before {
