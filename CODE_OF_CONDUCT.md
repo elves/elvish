@@ -1,9 +1,17 @@
 The Elvish community follows the
 [Go community code of conduct](https://go.dev/conduct).
 
-Since we don't have a team of stewards or a committee of representatives (yet),
-if you encounter an issue, please contact xiaq via Telegram, Matrix or Discord
-DM or email (xiaqqaix@gmail.com).
+The short version:
+
+-   Treat everyone with respect and kindness.
+
+-   Be thoughtful in how you communicate.
+
+-   Don't be destructive or inflammatory.
+
+-   If you encounter an issue, please contact xiaq via Telegram, Matrix or
+    Discord DM or email (xiaqqaix@gmail.com). (We don't have a team of stewards
+    or a committee of representatives (yet).)
 
 Consistent with the Go community code of conduct, the following specific points
 apply:
