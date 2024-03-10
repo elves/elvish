@@ -1,0 +1,31 @@
+name: Feature Request
+description: File a feature request
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a feature request. Here are some tips:
+
+        - Please only use issues for feature requests for Elvish. If you need help with using Elvish, the user group (linked from the repo README) is a more suitable place.
+        - Please search existing issues to see if the same or similar report has been filed before.
+  - type: textarea
+    id: content
+    attributes:
+      label: What new feature should Elvish have?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Output of "elvish -version"
+      description: |
+        The feature may have already been added. Whenever possible, please use the latest development build to see if it has the feature you need. You can still file an issue if you are running an old version and it's too hard to install a new version.
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      options:
+        - label: I agree to follow Elvish's [Code of Conduct](https://src.elv.sh/CODE_OF_CONDUCT.md).
+          required: true

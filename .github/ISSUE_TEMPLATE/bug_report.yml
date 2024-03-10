@@ -1,0 +1,31 @@
+name: Bug Report
+description: File a bug report
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Here are some tips:
+
+        - Please only use this form for bugs in Elvish. If you need help with using Elvish, the user group (linked from the repo README) is a more suitable place.
+        - Please search existing issues to see if the same or similar report has been filed before.
+  - type: textarea
+    id: content
+    attributes:
+      label: What happened, and what did you expect to happen?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Output of "elvish -version"
+      description: |
+        The bug may have already been fixed. Whenever possible, please use either the latest release or the latest development build to see the bug still exists. You can still file an issue if you are running an old version and it's too hard to install a new version.
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      options:
+        - label: I agree to follow Elvish's [Code of Conduct](https://src.elv.sh/CODE_OF_CONDUCT.md).
+          required: true
