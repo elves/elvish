@@ -1,26 +1,62 @@
 autoIndex = true
 
 [[groups]]
-intro = "Start with:"
-
-[[articles]]
-name = "fundamentals"
-title = "Fundamentals"
-note = "if you are new to shells and programming"
-group = 0
+intro = "Start here if you have experience with other shells:"
 
 [[articles]]
 name = "tour"
 title = "Quick tour"
-note = "if you have experience with other shells or programming languages"
+note = "familiarize yourself with the language and interactive features"
 extraCSS = ["tour.css"]
 group = 0
 
 [[articles]]
 name = "scripting-case-studies"
 title = "Scripting case studies"
-note = "explainers for all the scripting examples on the homepage"
+note = 'short real-world Elvish scripts <span class="new">(New!)</span>'
 group = 0
+
+[[groups]]
+intro = """
+<em>Beginner's Guide to Elvish</em> <span class="new">(New!)</span> is for you
+if you haven’t used shells a lot or want to brush up on the basics:
+"""
+
+[[articles]]
+name = "first-commands"
+title = "Your first Elvish commands"
+group = 1
+
+[[articles]]
+name = "arguments-and-outputs"
+title = "Arguments and outputs"
+group = 1
+
+[[articles]]
+name = "variables-and-loops"
+title = "Variables and loops"
+group = 1
+
+[[articles]]
+name = "pipelines-and-io"
+title = "Pipelines and IO"
+group = 1
+
+[[articles]]
+name = "value-types"
+title = "Value types"
+group = 1
+
+[[articles]]
+name = "organizing-and-reusing-code"
+title = "Organizing and reusing code"
+group = 1
+
+#[[articles]]
+#name = "fundamentals"
+#title = "Fundamentals"
+#note = "if you are new to shells and programming"
+#group = 1
 
 [[groups]]
 intro = "Advanced topics:"
@@ -28,12 +64,12 @@ intro = "Advanced topics:"
 [[articles]]
 name = "unique-semantics"
 title = "Unique semantics"
-group = 1
+group = 2
 
 [[articles]]
 name = "effective-elvish"
 title = "Effective Elvish"
-group = 1
+group = 2
 
 [[groups]]
 intro = "Design and history:"
@@ -41,4 +77,4 @@ intro = "Design and history:"
 [[articles]]
 name = "faq"
 title = "FAQ"
-group = 2
+group = 3

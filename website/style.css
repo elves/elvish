@@ -538,6 +538,14 @@ pre[class^="language-"][class$="-transcript"] header::before, pre.language-ttysh
   padding-left: 16px;
 }
 
+/* Used on learn/ */
+.new {
+  font-size: 0.8em;
+  font-weight: bold;
+  vertical-align: top;
+  color: red;
+}
+
 /**
  * Layout utilities.
  **/

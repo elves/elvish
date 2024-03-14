@@ -1,0 +1,5 @@
+//rows 8
+~>  store:add-cmd 'randint 1 7'
+   edit:history:fast-forward
+   echo '[CUT]'
+~> #send-keys C-R git

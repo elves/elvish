@@ -1,0 +1,5 @@
+//rows 8
+~>  use store
+   store:add-dir ~/tmp
+   echo '[CUT]'
+~> #send-keys C-L elv

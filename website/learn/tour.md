@@ -907,7 +907,7 @@ learn/tour/completion
 Basic operations should be quite intuitive:
 
 -   To navigate the candidate list, use arrow keys <kbd>▲</kbd> <kbd>▼</kbd>
-    <kbd>◀</kbd> <kbd>▶</kbd> or <kbd>Tab</kbd> and <kbd>Shift-Tab</kbd>.
+    <kbd>◀︎</kbd> <kbd>▶︎</kbd> or <kbd>Tab</kbd> and <kbd>Shift-Tab</kbd>.
 
 -   To accept the selected candidate, press <kbd>Enter</kbd>.
 
