@@ -17,8 +17,8 @@ This article is part of the *Beginner's Guide to Elvish* series:
 # Using variables
 
 In [Your first Elvish commands](first-commands.html), we saw
-[an example](./running-commands.html#a-concrete-example) of how to use a series
-of commands to download Elvish. Let's focus on the initial two commands, which
+[an example](first-commands.html#a-concrete-example) of how to use a series of
+commands to download Elvish. Let's focus on the initial two commands, which
 download the archive and show the SHA256 checksum respectively:
 
 ```elvish-transcript Terminal - elvish
