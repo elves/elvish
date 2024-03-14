@@ -21,8 +21,8 @@ in the *advanced language features* section.
 
 ## Comparison with bash
 
-If you are familiar with bash, the following table shows some (rough)
-correspondence between Elvish and bash syntax:
+The following table shows some (rough) correspondence between Elvish and bash
+syntax:
 
 <table>
   <tr>
@@ -175,7 +175,7 @@ hello\world$
 
 Like [Plan 9 rc](http://doc.cat-v.org/plan_9/4th_edition/papers/rc), or zsh with
 the `RC_QUOTES` option turned on, the single quote itself can be written by
-doubling it
+doubling it:
 
 ```elvish-transcript
 ~> echo 'it''s good'
@@ -189,7 +189,7 @@ more.
 ## Double-quoted strings
 
 Like many non-shell programming languages and `$''` in bash, double-quoted
-strings support C-like escape sequences (e.g. `\n` for newline):
+strings support C-like escape sequences, like `\n` for newline:
 
 ```elvish-transcript
 ~> echo "foo\nbar"
@@ -287,18 +287,21 @@ Elvish also supports `**`, which matches multiple path components:
 d1/a.go d2/b.go d3/d4/c.go lorem.go
 ```
 
-Character classes are a bit more verbose in Elvish. First, a character set is
-written like `[set:ch]`, instead of just `[ch]`. Second, they don't appear on
-their own, but as a suffix to `?`. For example, to match files ending in either
-`.c` or `.h`, use:
+Character classes are a bit more verbose in Elvish:
+
+-   They don't appear on their own, but as a suffix to `?`;
+
+-   A character set is written like `[set:ch]`, instead of just `[ch]`.
+
+For example, to match files ending in either `.c` or `.h`, use:
 
 ```elvish-transcript
 ~> echo *.?[set:ch]
 foo.c foo.h
 ```
 
-A character set suffix can also be applied to `*`. For example, to match files
-who extension only contains `c` and `h`:
+The suffix syntax means that they can also be applied to `*`. For example, to
+match files who extension only contains `c` and `h`:
 
 ```elvish-transcript
 ~> echo *.*[set:ch]
