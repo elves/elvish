@@ -25,6 +25,7 @@ var Ns = eval.BuildNsNamed("math").
 		"asin":          math.Asin,
 		"asinh":         math.Asinh,
 		"atan":          math.Atan,
+		"atan2":         math.Atan2,
 		"atanh":         math.Atanh,
 		"ceil":          ceil,
 		"cos":           math.Cos,

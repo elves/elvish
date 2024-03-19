@@ -437,6 +437,18 @@ Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
 1.5708
 
 //////////////
+# math:atan2 #
+//////////////
+
+~> math:atan2 0 0
+▶ (num 0.0)
+~> math:atan2 1 1
+▶ (num 0.7853981633974483)
+~> math:atan2 -1 -1
+▶ (num -2.356194490192345)
+
+
+//////////////
 # math:acosh #
 //////////////
 

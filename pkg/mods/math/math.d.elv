@@ -82,6 +82,19 @@ fn asinh {|number| }
 # ```
 fn atan {|number| }
 
+# Outputs the arc tangent of *y*/*x* in radians, using the signs of the two to
+# determine the quadrant of the return value. Examples:
+#
+# ```elvish-transcript
+# ~> math:atan2 0 0
+# ▶ (num 0.0)
+# ~> math:atan2 1 1
+# ▶ (num 0.7853981633974483)
+# ~> math:atan2 -1 -1
+# ▶ (num -2.356194490192345)
+# ```
+fn atan2 {|y x| }
+
 # Outputs the inverse hyperbolic tangent of `$number`. Examples:
 #
 # ```elvish-transcript
