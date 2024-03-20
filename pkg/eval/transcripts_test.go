@@ -167,6 +167,13 @@ func TestTranscripts(t *testing.T) {
 		"go-fns-mod-in-global", func(ev *eval.Evaler) {
 			ev.ExtendGlobal(eval.BuildNs().AddNs("go-fns", goFnsMod))
 		},
+		"call-hook-in-global", func(ev *eval.Evaler) {
+			callHook := func(fm *eval.Frame, name string, hook vals.List, args ...any) {
+				evalCfg := &eval.EvalCfg{Ports: []*eval.Port{fm.Port(0), fm.Port(1), fm.Port(2)}}
+				eval.CallHook(fm.Evaler, evalCfg, name, hook, args...)
+			}
+			ev.ExtendGlobal(eval.BuildNs().AddGoFn("call-hook", callHook))
+		},
 	)
 }
 

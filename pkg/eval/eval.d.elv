@@ -29,6 +29,9 @@ var after-chdir
 # See also [`$after-chdir`]().
 var before-chdir
 
+# A list of functions to run before Elvish exits.
+var before-exit
+
 # Number of background jobs.
 var num-bg-jobs
 

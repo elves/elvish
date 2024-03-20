@@ -1,0 +1,18 @@
+//each:call-hook-in-global
+
+~> call-hook test-hook [{ echo hook1 } { echo hook2 }]
+hook1
+hook2
+// Arguments
+~> call-hook test-hook [{|x| echo hook$x }] foo
+hookfoo
+// Invalid hook list
+~> call-hook test-hook [not-a-fn]
+hook test-hook[0] must be callable
+// Exception thrown from hook prints the exception to port 2, rather than being
+// propagated
+~> call-hook test-hook [{ fail bad }]
+   echo after call-hook >&2
+Exception: bad
+  [tty]:1:24-32: call-hook test-hook [{ fail bad }]
+after call-hook

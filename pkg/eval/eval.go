@@ -93,7 +93,7 @@ func NewEvaler() *Evaler {
 	builtin := builtinNs.Ns()
 
 	newListVar := func(l vals.List) vars.PtrVar { return vars.FromPtr(&l) }
-	preExitHookElvish := newListVar(vals.EmptyList)
+	beforeExitHookElvish := newListVar(vals.EmptyList)
 	beforeChdirElvish := newListVar(vals.EmptyList)
 	afterChdirElvish := newListVar(vals.EmptyList)
 
@@ -113,7 +113,7 @@ func NewEvaler() *Evaler {
 	}
 
 	ev.PreExitHooks = []func(){func() {
-		CallHook(ev, nil, "pre-exit", preExitHookElvish.Get().(vals.List))
+		CallHook(ev, nil, "before-exit", beforeExitHookElvish.Get().(vals.List))
 	}}
 	ev.BeforeChdir = []func(string){func(path string) {
 		CallHook(ev, nil, "before-chdir", beforeChdirElvish.Get().(vals.List), path)
@@ -124,7 +124,7 @@ func NewEvaler() *Evaler {
 
 	ev.ExtendBuiltin(BuildNs().
 		AddVar("pwd", NewPwdVar(ev)).
-		AddVar("pre-exit", preExitHookElvish).
+		AddVar("before-exit", beforeExitHookElvish).
 		AddVar("before-chdir", beforeChdirElvish).
 		AddVar("after-chdir", afterChdirElvish).
 		AddVar("value-out-indicator",
