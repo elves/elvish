@@ -197,7 +197,7 @@ func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node
 					break
 				}
 				want := interaction.Output
-				got := evalAndCollectOutput(t, ev, interaction.Code)
+				got := evalAndCollectOutput(ev, interaction.Code)
 				if want != got {
 					if runLine == -1 {
 						t.Errorf("\n%s\n-want +got:\n%s",
@@ -326,7 +326,7 @@ func (sd *setupDirectives) compile(directive string) (f setupFunc, each bool, er
 
 var valuePrefix = "▶ "
 
-func evalAndCollectOutput(t *testing.T, ev *eval.Evaler, code string) string {
+func evalAndCollectOutput(ev *eval.Evaler, code string) string {
 	port1, collect1 := must.OK2(eval.CapturePort())
 	port2, collect2 := must.OK2(eval.CapturePort())
 	ports := []*eval.Port{eval.DummyInputPort, port1, port2}

@@ -8,7 +8,7 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 )
 
-func initVarsAPI(ed *Editor, nb eval.NsBuilder) {
+func initVarsAPI(nb eval.NsBuilder) {
 	nb.AddGoFns(map[string]any{
 		"add-var":  addVar,
 		"add-vars": addVars,

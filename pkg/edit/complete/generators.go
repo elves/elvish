@@ -32,7 +32,7 @@ func GenerateForSudo(args []string, ev *eval.Evaler, cfg Config) ([]RawItem, err
 		return nil, errNoCompletion
 	case len(args) == 2:
 		// Complete external commands.
-		return generateExternalCommands(args[1], ev)
+		return generateExternalCommands(args[1])
 	default:
 		return cfg.ArgGenerator(args[1:])
 	}
@@ -68,7 +68,7 @@ func generateArgs(args []string, ev *eval.Evaler, p np.Path, cfg Config) ([]RawI
 	return cfg.ArgGenerator(args)
 }
 
-func generateExternalCommands(seed string, ev *eval.Evaler) ([]RawItem, error) {
+func generateExternalCommands(seed string) ([]RawItem, error) {
 	if fsutil.DontSearch(seed) {
 		// Completing a local external command name.
 		return generateFileNames(seed, true)

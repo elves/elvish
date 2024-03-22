@@ -73,7 +73,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ed.app = cli.NewApp(appSpec)
 
 	initExceptionsAPI(ed, nb)
-	initVarsAPI(ed, nb)
+	initVarsAPI(nb)
 	initCommandAPI(ed, ev, nb)
 	initListings(ed, ev, st, hs, nb)
 	initNavigation(ed, ev, nb)
