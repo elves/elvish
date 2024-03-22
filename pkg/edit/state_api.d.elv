@@ -5,9 +5,9 @@ fn insert-at-dot {|text| }
 # Equivalent to assigning `$text` to `$edit:current-command`.
 fn replace-input {|text| }
 
+#doc:show-unstable
 # Contains the current position of the cursor, as a byte position within
 # `$edit:current-command`.
-#doc:show-unstable
 var -dot
 
 # Contains the content of the current input. Setting the variable will

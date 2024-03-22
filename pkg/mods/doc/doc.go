@@ -3,7 +3,6 @@ package doc
 
 import (
 	"fmt"
-	"io/fs"
 	"sort"
 	"strings"
 	"sync"
@@ -66,7 +65,7 @@ func show(fm *eval.Frame, opts showOptions, fqname string) error {
 }
 
 func find(fm *eval.Frame, qs ...string) {
-	for _, docs := range docs() {
+	for _, docs := range docsMap() {
 		findIn := func(name, markdown string) {
 			if bs, ok := match(markdown, qs); ok {
 				out := fm.ByteOutput()
@@ -109,7 +108,7 @@ func Source(qname string) (string, error) {
 		}
 	}
 
-	docs, ok := docs()[ns]
+	docs, ok := docsMap()[ns]
 	if !ok {
 		return "", fmt.Errorf("no doc for %s", parse.Quote(qname))
 	}
@@ -130,7 +129,7 @@ func Source(qname string) (string, error) {
 
 func symbols(fm *eval.Frame) error {
 	var names []string
-	for _, docs := range docs() {
+	for _, docs := range docsMap() {
 		for _, fn := range docs.Fns {
 			names = append(names, fn.Name)
 		}
@@ -148,13 +147,17 @@ func symbols(fm *eval.Frame) error {
 	return nil
 }
 
-// May be overridden in tests.
-var elvFiles fs.FS = pkg.ElvFiles
+// Can be overridden in tests.
+var docsMapWithError = sync.OnceValues(func() (map[string]elvdoc.Docs, error) {
+	return elvdoc.ExtractAllFromFS(pkg.ElvFiles)
+})
 
 // Returns a map from namespace prefixes (like "doc:", or "" for the builtin
 // module) to extracted elvdocs.
-var docs = sync.OnceValue(func() map[string]elvdoc.Docs {
-	// We don't expect any errors from reading an [embed.FS].
-	docsMap, _ := elvdoc.ExtractAllFromFS(elvFiles)
-	return docsMap
-})
+func docsMap() map[string]elvdoc.Docs {
+	// docsMapWithError depends on an embedded FS and returns the same values
+	// every time. The error is checked in a test, so we don't have to check it
+	// during runtime.
+	m, _ := docsMapWithError()
+	return m
+}

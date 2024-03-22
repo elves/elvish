@@ -1,8 +1,8 @@
 # See [Prompts](#prompts).
 var prompt
 
-# See [Prompt Eagerness](#prompt-eagerness).
 #doc:show-unstable
+# See [Prompt Eagerness](#prompt-eagerness).
 var -prompt-eagerness
 
 # See [Stale Prompt](#stale-prompt).
@@ -14,8 +14,8 @@ var prompt-stale-transformer.
 # See [Prompts](#prompts).
 var rprompt
 
-# See [Prompt Eagerness](#prompt-eagerness).
 #doc:show-unstable
+# See [Prompt Eagerness](#prompt-eagerness).
 var -rprompt-eagerness
 
 # See [Stale Prompt](#stale-prompt).

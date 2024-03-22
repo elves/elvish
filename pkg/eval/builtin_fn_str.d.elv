@@ -1,37 +1,31 @@
+#doc:id str-lt
 # Outputs whether `$string`s in the given order are strictly increasing. Outputs
 # `$true` when given fewer than two strings.
-#
-#doc:id str-lt
 fn '<s' {|@string| }
 
+#doc:id str-le
 # Outputs whether `$string`s in the given order are strictly non-decreasing.
 # Outputs `$true` when given fewer than two strings.
-#
-#doc:id str-le
 fn '<=s' {|@string| }
 
+#doc:id str-eq
 # Outputs whether `$string`s are all the same string. Outputs `$true` when given
 # fewer than two strings.
-#
-#doc:id str-eq
 fn '==s' {|@string| }
 
+#doc:id str-ne
 # Outputs whether `$a` and `$b` are not the same string. Equivalent to `not (==s
 # $a $b)`.
-#
-#doc:id str-ne
 fn '!=s' {|a b| }
 
+#doc:id str-gt
 # Outputs whether `$string`s in the given order are strictly decreasing. Outputs
 # `$true` when given fewer than two strings.
-#
-#doc:id str-gt
 fn '>s' {|@string| }
 
+#doc:id str-ge
 # Outputs whether `$string`s in the given order are strictly non-increasing.
 # Outputs `$true` when given fewer than two strings.
-#
-#doc:id str-ge
 fn '>=s' {|@string| }
 
 # Output the width of `$string` when displayed on the terminal. Examples:

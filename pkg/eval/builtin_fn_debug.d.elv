@@ -22,20 +22,20 @@
 # ```
 fn src { }
 
+#doc:show-unstable
 # Force the Go garbage collector to run.
 #
 # This is only useful for debug purposes.
-#doc:show-unstable
 fn -gc { }
 
+#doc:show-unstable
 # Print a stack trace.
 #
 # This is only useful for debug purposes.
-#doc:show-unstable
 fn -stack { }
 
+#doc:show-unstable
 # Direct internal debug logs to the named file.
 #
 # This is only useful for debug purposes.
-#doc:show-unstable
 fn -log {|filename| }

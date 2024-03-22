@@ -1,4 +1,6 @@
 // Package elvdoc extracts doc comments of Elvish variables and functions.
+//
+// Elvdocs are comment blocks above "var" and "fn" declarations.
 package elvdoc
 
 import (
@@ -21,11 +23,12 @@ type Docs struct {
 
 // Entry stores the elvdoc for a particular symbol.
 type Entry struct {
-	Name    string
-	HTMLID  string // ID to use in HTML. If empty, just use Name.
-	Content string
-	LineNo  int // 1-based line number for the first line of Content. 0 if Content is empty.
-	Fn      *Fn // nil for variables or functions declared with doc:fn.
+	Name       string
+	HTMLID     string // ID to use in HTML. If empty, just use Name.
+	Directives []string
+	Content    string
+	LineNo     int // 1-based line number for the first line of Content. 0 if Content is empty.
+	Fn         *Fn // Function-specific information, nil for variables.
 }
 
 // Returns e.Content, prepended with function usage if applicable.
@@ -63,7 +66,7 @@ func ExtractAllFromFS(fsys fs.FS) (map[string]Docs, error) {
 		var err error
 		prefixToDocs[prefix], err = ExtractFromFS(fsys, prefix)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("extracting for prefix %q: %w", prefix, err)
 		}
 	}
 	return prefixToDocs, nil
@@ -74,7 +77,7 @@ func ExtractAllFromFS(fsys fs.FS) (map[string]Docs, error) {
 //
 //   - "": eval/*.elv (the builtin module)
 //   - "edit:": edit/*.elv
-//   - "$mod:": mods/$symbolPrefix/*.elv
+//   - "$mod:": mods/$mod/*.elv
 //
 // If symbolPrefix is not empty and doesn't end in ":", this function panics.
 func ExtractFromFS(fsys fs.FS, symbolPrefix string) (Docs, error) {
@@ -145,17 +148,18 @@ const showUnstable = "#doc:show-unstable"
 // optionally by directive lines (#doc:id or #doc:show-unstable), and ends
 // with a fn/var/#doc:fn line.
 type blockState struct {
-	lines         []string
-	startLineNo   int
-	seenDirective bool
-	id            string
-	showUnstable  bool
+	directives   []string
+	content      []string
+	startLineNo  int
+	id           string
+	showUnstable bool
 }
 
 // Uses the state to set relevant fields in the Entry, and resets the state.
 func (b *blockState) finish(e *Entry) {
 	e.HTMLID = b.id
-	e.Content = strutil.JoinLines(b.lines)
+	e.Directives = b.directives
+	e.Content = strutil.JoinLines(b.content)
 	e.LineNo = b.startLineNo
 	*b = blockState{}
 }
@@ -170,23 +174,25 @@ func Extract(r io.Reader, symbolPrefix string) (Docs, error) {
 		line := scanner.Text()
 		lineNo++
 		if line == "#" || strings.HasPrefix(line, "# ") {
-			if block.seenDirective {
-				return Docs{}, fmt.Errorf("line %d: comment may not follow #doc: directive", lineNo)
-			}
-			if len(block.lines) == 0 {
+			if len(block.content) == 0 {
 				block.startLineNo = lineNo
 			}
 			if line == "#" {
-				block.lines = append(block.lines, "")
+				block.content = append(block.content, "")
 			} else {
-				block.lines = append(block.lines, line[2:])
+				block.content = append(block.content, line[2:])
 			}
-		} else if line == showUnstable {
-			block.showUnstable = true
-			block.seenDirective = true
-		} else if m := idRegexp.FindStringSubmatch(line); m != nil {
-			block.id = m[1]
-			block.seenDirective = true
+		} else if strings.HasPrefix(line, "#") {
+			if len(block.content) > 0 {
+				return Docs{}, fmt.Errorf("line %d: directive must appear at top of elvdoc block", lineNo)
+			}
+			if line == showUnstable {
+				block.showUnstable = true
+			} else if m := idRegexp.FindStringSubmatch(line); m != nil {
+				block.id = m[1]
+			} else {
+				block.directives = append(block.directives, line[1:])
+			}
 		} else if m := fnRegexp.FindStringSubmatch(line); m != nil {
 			name, sig := unquote(m[1]), m[2]
 			qname := symbolPrefix + name

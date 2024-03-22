@@ -6,14 +6,14 @@ var dev-null
 # Windows.
 var dev-tty
 
+#doc:show-unstable
 # Reports whether an exception is caused by the fact that a file or directory
 # already exists.
-#doc:show-unstable
 fn -is-exist {|exc| }
 
+#doc:show-unstable
 # Reports whether an exception is caused by the fact that a file or directory
 # does not exist.
-#doc:show-unstable
 fn -is-not-exist {|exc| }
 
 # Creates a new directory with the specified name and permission (before umask).

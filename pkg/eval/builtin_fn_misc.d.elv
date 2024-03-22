@@ -185,8 +185,8 @@ fn use-mod {|use-spec| }
 # ```
 fn deprecate {|msg| }
 
+#doc:show-unstable
 # Output all IP addresses of the current host.
 #
 # This should be part of a networking module instead of the builtin module.
-#doc:show-unstable
 fn -ifaddrs { }

@@ -1,6 +1,6 @@
 package doc
 
 var (
-	ElvFiles = &elvFiles
-	Match    = match
+	DocsMapWithError = &docsMapWithError
+	Match            = match
 )

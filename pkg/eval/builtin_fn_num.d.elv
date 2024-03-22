@@ -109,6 +109,7 @@ fn exact-num {|string-or-number| }
 # See also [`num`]() and [`exact-num`]().
 fn inexact-num {|string-or-number| }
 
+#doc:id num-lt
 # Outputs whether `$number`s in the given order are numerically strictly
 # increasing. Outputs `$true` when given fewer than two numbers.
 #
@@ -123,9 +124,9 @@ fn inexact-num {|string-or-number| }
 # ▶ $true
 # ```
 #
-#doc:id num-lt
 fn '<' {|@number| }
 
+#doc:id num-le
 # Outputs whether `$number`s in the given order are numerically non-decreaing.
 # Outputs `$true` when given fewer than two numbers.
 #
@@ -139,9 +140,9 @@ fn '<' {|@number| }
 # ~> <= 1 1 2
 # ▶ $true
 # ```
-#doc:id num-le
 fn '<=' {|@number| }
 
+#doc:id num-eq
 # Outputs whether `$number`s are all numerically equal. Outputs `$true` when
 # given fewer than two numbers.
 #
@@ -159,9 +160,9 @@ fn '<=' {|@number| }
 # ~> == 1 2
 # ▶ $false
 # ```
-#doc:id num-eq
 fn '==' {|@number| }
 
+#doc:id num-ne
 # Determines whether `$a` and `$b` are numerically inequal. Equivalent to `not
 # (== $a $b)`.
 #
@@ -173,9 +174,9 @@ fn '==' {|@number| }
 # ~> != 1 1
 # ▶ $false
 # ```
-#doc:id num-ne
 fn '!=' {|a b| }
 
+#doc:id num-gt
 # Determines whether `$number`s in the given order are numerically strictly
 # decreasing. Outputs `$true` when given fewer than two numbers.
 #
@@ -189,9 +190,9 @@ fn '!=' {|a b| }
 # ~> > 3 2 1
 # ▶ $true
 # ```
-#doc:id num-gt
 fn '>' {|@number| }
 
+#doc:id num-ge
 # Outputs whether `$number`s in the given order are numerically non-increasing.
 # Outputs `$true` when given fewer than two numbers.
 #
@@ -205,9 +206,9 @@ fn '>' {|@number| }
 # ~> >= 2 1 1
 # ▶ $true
 # ```
-#doc:id num-ge
 fn '>=' {|@number| }
 
+#doc:id add
 # Outputs the sum of all arguments, or 0 when there are no arguments.
 #
 # This command is [exactness-preserving](#exactness-preserving).
@@ -222,9 +223,9 @@ fn '>=' {|@number| }
 # ~> + 1/2 0.5
 # ▶ (num 1.0)
 # ```
-#doc:id add
 fn + {|@num| }
 
+#doc:id sub
 # Outputs the result of subtracting from `$x-num` all the `$y-num`s, working
 # from left to right. When no `$y-num` is given, outputs the negation of
 # `$x-num` instead (in other words, `- $x-num` is equivalent to `- 0 $x-num`).
@@ -247,9 +248,9 @@ fn + {|@num| }
 # ~> - 10
 # ▶ (num -10)
 # ```
-#doc:id sub
 fn - {|x-num @y-num| }
 
+#doc:id mul
 # Outputs the product of all arguments, or 1 when there are no arguments.
 #
 # This command is [exactness-preserving](#exactness-preserving). Additionally,
@@ -266,9 +267,9 @@ fn - {|x-num @y-num| }
 # ~> * 0 0.5
 # ▶ (num 0)
 # ```
-#doc:id mul
 fn * {|@num| }
 
+#doc:id div
 # Outputs the result of dividing `$x-num` with all the `$y-num`s, working from
 # left to right. When no `$y-num` is given, outputs the reciprocal of `$x-num`
 # instead (in other words, `/ $y-num` is equivalent to `/ 1 $y-num`).
@@ -303,9 +304,9 @@ fn * {|@num| }
 #
 # When given no argument, this command is equivalent to `cd /`, due to the
 # implicit cd feature. (The implicit cd feature is deprecated since 0.21.0).
-#doc:id div
 fn / {|x-num @y-num| }
 
+#doc:id rem
 # Outputs the remainder after dividing `$x` by `$y`. The result has the same
 # sign as `$x`.
 #
@@ -331,7 +332,6 @@ fn / {|x-num @y-num| }
 # ```
 #
 # This limit may be lifted in the future.
-#doc:id rem
 fn % {|x y| }
 
 # Output a pseudo-random integer N such that `$low <= N < $high`. If not given,
@@ -344,8 +344,8 @@ fn % {|x y| }
 # ```
 fn randint {|low? high| }
 
-# Sets the seed for the random number generator.
 #doc:show-unstable
+# Sets the seed for the random number generator.
 fn -randseed {|seed| }
 
 # Outputs numbers, starting from `$start` and ending before `$end`, using

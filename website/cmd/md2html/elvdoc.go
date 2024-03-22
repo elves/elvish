@@ -12,7 +12,7 @@ import (
 )
 
 func writeElvdocSections(w io.Writer, ns string, docs elvdoc.Docs) {
-	writeSection := func(heading, entryType, prefix string, entries []elvdoc.Entry) {
+	writeSection := func(heading, entryType string, entries []elvdoc.Entry) {
 		fmt.Fprintf(w, "# %s\n", heading)
 		sort.Slice(entries, func(i, j int) bool {
 			return symbolForSort(entries[i].Name) < symbolForSort(entries[j].Name)
@@ -42,14 +42,14 @@ func writeElvdocSections(w io.Writer, ns string, docs elvdoc.Docs) {
 	}
 
 	if len(docs.Vars) > 0 {
-		writeSection("Variables", "Variable", "$"+ns, docs.Vars)
+		writeSection("Variables", "Variable", docs.Vars)
 	}
 	if len(docs.Fns) > 0 {
 		if len(docs.Vars) > 0 {
 			fmt.Fprintln(w)
 			fmt.Fprintln(w)
 		}
-		writeSection("Functions", "Function", ns, docs.Fns)
+		writeSection("Functions", "Function", docs.Fns)
 	}
 }
 

@@ -92,8 +92,8 @@ var writeTests = []struct {
 	{
 		name: "doc:id",
 		src: dedent(`
-			# Add.
 			#doc:id add
+			# Add.
 			fn + { }
 			`),
 		wantDoc: dedent(tildeToBackquote(`

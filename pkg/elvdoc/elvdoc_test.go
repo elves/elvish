@@ -119,18 +119,33 @@ var extractTests = []struct {
 	},
 
 	{
-		name: "doc:id instruction",
+		name: "doc:id directive",
 		text: dedent(`
-			# Adds numbers.
 			#doc:id add
+			# Adds numbers.
 			fn + {|a b| }
 			`),
 		wantFns: []Entry{{
 			Name:    "+",
 			HTMLID:  "add",
 			Content: "Adds numbers.\n",
-			LineNo:  1,
+			LineNo:  2,
 			Fn:      &Fn{Signature: "a b", Usage: "+ $a $b"},
+		}},
+	},
+	{
+		name: "other directives",
+		text: dedent(`
+			#foo
+			# Adds numbers.
+			fn add {|a b| }
+			`),
+		wantFns: []Entry{{
+			Name:       "add",
+			Directives: []string{"foo"},
+			Content:    "Adds numbers.\n",
+			LineNo:     2,
+			Fn:         &Fn{Signature: "a b", Usage: "add $a $b"},
 		}},
 	},
 
@@ -145,14 +160,14 @@ var extractTests = []struct {
 	{
 		name: "unstable symbol with doc:show-unstable",
 		text: dedent(`
-			# Unstable.
 			#doc:show-unstable
+			# Unstable.
 			fn -foo { }
 			`),
 		wantFns: []Entry{{
 			Name:    "-foo",
 			Content: "Unstable.\n",
-			LineNo:  1,
+			LineNo:  2,
 			Fn:      &Fn{Usage: "-foo"},
 		}},
 	},
@@ -162,18 +177,6 @@ var extractTests = []struct {
 		text: dedent(`
 			# Adds numbers.
 
-			fn add {|a b| }
-			`),
-		wantFns: []Entry{{
-			Name: "add",
-			Fn:   &Fn{Signature: "a b", Usage: "add $a $b"},
-		}},
-	},
-	{
-		name: "hash with no space breaks comment block",
-		text: dedent(`
-			# Adds numbers.
-			#foo
 			fn add {|a b| }
 			`),
 		wantFns: []Entry{{
