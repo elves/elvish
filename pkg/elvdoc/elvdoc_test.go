@@ -15,6 +15,7 @@ var extractTests = []struct {
 	text   string
 	prefix string
 
+	wantFile *FileEntry
 	wantFns  []Entry
 	wantVars []Entry
 }{
@@ -135,6 +136,41 @@ var extractTests = []struct {
 	},
 
 	{
+		name: "file-level comment block with no other block",
+		text: dedent(`
+			#foo
+			# This is a module.
+
+			# Foo.
+			var foo
+			`),
+		wantFile: &FileEntry{[]string{"foo"}, "This is a module.\n", 2},
+		wantVars: []Entry{{
+			Name: "$foo", Content: "Foo.\n", LineNo: 4,
+		}},
+	},
+	{
+		name: "file-level comment block with no other block",
+		text: dedent(`
+			#foo
+			# This is a module.
+			`),
+		wantFile: &FileEntry{[]string{"foo"}, "This is a module.\n", 2},
+	},
+	{
+		name: "no file-level comment",
+		text: dedent(`
+			use a
+
+			# Foo
+			var foo
+			`),
+		wantVars: []Entry{{
+			Name: "$foo", Content: "Foo\n", LineNo: 3,
+		}},
+	},
+
+	{
 		name: "unstable symbol",
 		text: dedent(`
 			# Unstable.
@@ -164,6 +200,7 @@ var extractTests = []struct {
 
 			fn add {|a b| }
 			`),
+		wantFile: &FileEntry{Content: "Adds numbers.\n", LineNo: 1},
 		wantFns: []Entry{{
 			Name: "add",
 			Fn:   &Fn{Signature: "a b", Usage: "add $a $b"},
@@ -220,6 +257,9 @@ func TestExtract(t *testing.T) {
 			docs, err := Extract(strings.NewReader(tc.text), tc.prefix)
 			if err != nil {
 				t.Errorf("error: %v", err)
+			}
+			if diff := cmp.Diff(tc.wantFile, docs.File); diff != "" {
+				t.Errorf("unexpected File:\n%s", diff)
 			}
 			if diff := cmp.Diff(tc.wantFns, docs.Fns); diff != "" {
 				t.Errorf("unexpected Fns:\n%s", diff)

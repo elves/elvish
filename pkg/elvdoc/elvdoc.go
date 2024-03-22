@@ -1,13 +1,15 @@
 // Package elvdoc extracts doc comments of Elvish variables and functions.
 //
-// Elvdocs are comment blocks above "var" and "fn" declarations. A comment block
-// consists of:
+// An elvdoc is a continuous sequence of comment lines that consist of:
 //
 //  1. An optional sequence of "directive" lines, which start with "#" followed
 //     immediately by a non-space character.
 //
 //  2. Any number of content lines, which are either a lone "#", or starts with
 //     "# ".
+//
+// Elvdocs can appear before "var" or "fn" declarations, or at the top of the
+// module.
 //
 // There is one directive recognized by this package, "#doc:show-unstable".
 // Normally, symbols starting with "-" are ignored by this package, but adding
@@ -33,8 +35,16 @@ import (
 
 // Docs records doc comments.
 type Docs struct {
+	File *FileEntry
 	Fns  []Entry
 	Vars []Entry
+}
+
+// FileEntry stores the file-level elvdoc.
+type FileEntry struct {
+	Directives []string
+	Content    string
+	LineNo     int
 }
 
 // Entry stores the elvdoc for a particular symbol.
@@ -167,11 +177,10 @@ type blockState struct {
 }
 
 // Uses the state to set relevant fields in the Entry, and resets the state.
-func (b *blockState) finish(e *Entry) {
-	e.Directives = b.directives
-	e.Content = strutil.JoinLines(b.content)
-	e.LineNo = b.startLineNo
+func (b *blockState) finish() (directives []string, content string, lineNo int, showUnstable bool) {
+	directives, content, lineNo, showUnstable = b.directives, strutil.JoinLines(b.content), b.startLineNo, b.showUnstable
 	*b = blockState{}
+	return
 }
 
 // Extract extracts the elvdoc of one module from an Elvish source.
@@ -180,6 +189,16 @@ func Extract(r io.Reader, symbolPrefix string) (Docs, error) {
 	var block blockState
 	scanner := bufio.NewScanner(r)
 	lineNo := 0
+	maybeSetFileEntry := func() {
+		// This is a somewhat simplistic criteria for "top of the file", but
+		// it's good enough for now.
+		if len(docs.Vars) == 0 && len(docs.Fns) == 0 {
+			if len(block.directives) > 0 || len(block.content) > 0 {
+				directives, content, lineNo, _ := block.finish()
+				docs.File = &FileEntry{directives, content, lineNo}
+			}
+		}
+	}
 	for scanner.Scan() {
 		line := scanner.Text()
 		lineNo++
@@ -205,22 +224,24 @@ func Extract(r io.Reader, symbolPrefix string) (Docs, error) {
 			name, sig := unquote(m[1]), m[2]
 			qname := symbolPrefix + name
 			usage := fnUsage(qname, sig)
-			if block.showUnstable || !unstable(name) {
-				entry := Entry{Name: qname, Fn: &Fn{sig, usage}}
-				block.finish(&entry)
-				docs.Fns = append(docs.Fns, entry)
+			directives, content, lineNo, showUnstable := block.finish()
+			if showUnstable || !unstable(name) {
+				docs.Fns = append(docs.Fns,
+					Entry{qname, directives, content, lineNo, &Fn{sig, usage}})
 			}
 		} else if m := varRegexp.FindStringSubmatch(line); m != nil {
 			name := unquote(m[1])
-			if block.showUnstable || !unstable(name) {
-				entry := Entry{Name: "$" + symbolPrefix + name}
-				block.finish(&entry)
-				docs.Vars = append(docs.Vars, entry)
+			directives, content, lineNo, showUnstable := block.finish()
+			if showUnstable || !unstable(name) {
+				docs.Vars = append(docs.Vars,
+					Entry{"$" + symbolPrefix + name, directives, content, lineNo, nil})
 			}
 		} else {
+			maybeSetFileEntry()
 			block = blockState{}
 		}
 	}
+	maybeSetFileEntry()
 
 	return docs, scanner.Err()
 }
