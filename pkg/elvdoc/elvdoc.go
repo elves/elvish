@@ -1,6 +1,22 @@
 // Package elvdoc extracts doc comments of Elvish variables and functions.
 //
-// Elvdocs are comment blocks above "var" and "fn" declarations.
+// Elvdocs are comment blocks above "var" and "fn" declarations. A comment block
+// consists of:
+//
+//  1. An optional sequence of "directive" lines, which start with "#" followed
+//     immediately by a non-space character.
+//
+//  2. Any number of content lines, which are either a lone "#", or starts with
+//     "# ".
+//
+// There is one directive recognized by this package, "#doc:show-unstable".
+// Normally, symbols starting with "-" are ignored by this package, but adding
+// this directive suppresses that behavior. All other directives are left
+// unprocessed and returned.
+//
+// This package doesn't require the content lines to follow any syntax, but
+// other packages like pkg/mods/doc and the website generator assume them to be
+// Markdown.
 package elvdoc
 
 import (
@@ -24,7 +40,6 @@ type Docs struct {
 // Entry stores the elvdoc for a particular symbol.
 type Entry struct {
 	Name       string
-	HTMLID     string // ID to use in HTML. If empty, just use Name.
 	Directives []string
 	Content    string
 	LineNo     int // 1-based line number for the first line of Content. 0 if Content is empty.
@@ -135,9 +150,6 @@ var (
 	// Groups:
 	// 1. Name
 	varRegexp = regexp.MustCompile(`^var +` + stringLiteralGroup)
-	// Groups:
-	// 1. Name
-	idRegexp = regexp.MustCompile(`^#doc:id +(.+)`)
 )
 
 const showUnstable = "#doc:show-unstable"
@@ -145,19 +157,17 @@ const showUnstable = "#doc:show-unstable"
 // Keeps the state of the current elvdoc block.
 //
 // An elvdoc block contains a number of consecutive comment lines, followed
-// optionally by directive lines (#doc:id or #doc:show-unstable), and ends
+// optionally by directive lines (#doc:html-id or #doc:show-unstable), and ends
 // with a fn/var/#doc:fn line.
 type blockState struct {
 	directives   []string
 	content      []string
 	startLineNo  int
-	id           string
 	showUnstable bool
 }
 
 // Uses the state to set relevant fields in the Entry, and resets the state.
 func (b *blockState) finish(e *Entry) {
-	e.HTMLID = b.id
 	e.Directives = b.directives
 	e.Content = strutil.JoinLines(b.content)
 	e.LineNo = b.startLineNo
@@ -188,8 +198,6 @@ func Extract(r io.Reader, symbolPrefix string) (Docs, error) {
 			}
 			if line == showUnstable {
 				block.showUnstable = true
-			} else if m := idRegexp.FindStringSubmatch(line); m != nil {
-				block.id = m[1]
 			} else {
 				block.directives = append(block.directives, line[1:])
 			}

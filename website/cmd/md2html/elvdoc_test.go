@@ -90,9 +90,9 @@ var writeTests = []struct {
 	},
 
 	{
-		name: "doc:id",
+		name: "doc:html-id",
 		src: dedent(`
-			#doc:id add
+			#doc:html-id add
 			# Add.
 			fn + { }
 			`),
@@ -117,7 +117,7 @@ func TestWriteElvdocSections(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			docs, _ := elvdoc.Extract(strings.NewReader(test.src), test.ns)
 			w := new(strings.Builder)
-			writeElvdocSections(w, test.ns, docs)
+			writeElvdocSections(w, docs)
 			if diff := cmp.Diff(test.wantDoc, w.String()); diff != "" {
 				t.Errorf("diff (-want+got):\n%s", diff)
 			}

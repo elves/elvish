@@ -119,22 +119,7 @@ var extractTests = []struct {
 	},
 
 	{
-		name: "doc:id directive",
-		text: dedent(`
-			#doc:id add
-			# Adds numbers.
-			fn + {|a b| }
-			`),
-		wantFns: []Entry{{
-			Name:    "+",
-			HTMLID:  "add",
-			Content: "Adds numbers.\n",
-			LineNo:  2,
-			Fn:      &Fn{Signature: "a b", Usage: "+ $a $b"},
-		}},
-	},
-	{
-		name: "other directives",
+		name: "directive",
 		text: dedent(`
 			#foo
 			# Adds numbers.

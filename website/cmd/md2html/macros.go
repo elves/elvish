@@ -54,7 +54,7 @@ func (f *filterer) filter(in io.Reader, out io.Writer) {
 			log.Fatal(err)
 		}
 		var buf bytes.Buffer
-		writeElvdocSections(&buf, symbolPrefix, docs)
+		writeElvdocSections(&buf, docs)
 		filter(&buf, out)
 	}
 }

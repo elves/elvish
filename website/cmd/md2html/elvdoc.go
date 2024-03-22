@@ -11,7 +11,7 @@ import (
 	"src.elv.sh/pkg/elvdoc"
 )
 
-func writeElvdocSections(w io.Writer, ns string, docs elvdoc.Docs) {
+func writeElvdocSections(w io.Writer, docs elvdoc.Docs) {
 	writeSection := func(heading, entryType string, entries []elvdoc.Entry) {
 		fmt.Fprintf(w, "# %s\n", heading)
 		sort.Slice(entries, func(i, j int) bool {
@@ -31,8 +31,10 @@ func writeElvdocSections(w io.Writer, ns string, docs elvdoc.Docs) {
 					entryType, url.QueryEscape(html.UnescapeString(s)))
 			}
 			attr := ""
-			if entry.HTMLID != "" {
-				attr = " {#" + entry.HTMLID + "}"
+			for _, directive := range entry.Directives {
+				if htmlID, ok := strings.CutPrefix(directive, "doc:html-id "); ok {
+					attr = " {#" + strings.TrimSpace(htmlID) + "}"
+				}
 			}
 			fmt.Fprintf(w, "## %s%s\n\n", entry.Name, attr)
 			// The body is guaranteed to have a trailing newline, hence Fprint

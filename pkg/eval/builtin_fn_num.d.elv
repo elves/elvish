@@ -109,7 +109,7 @@ fn exact-num {|string-or-number| }
 # See also [`num`]() and [`exact-num`]().
 fn inexact-num {|string-or-number| }
 
-#doc:id num-lt
+#doc:html-id num-lt
 # Outputs whether `$number`s in the given order are numerically strictly
 # increasing. Outputs `$true` when given fewer than two numbers.
 #
@@ -126,7 +126,7 @@ fn inexact-num {|string-or-number| }
 #
 fn '<' {|@number| }
 
-#doc:id num-le
+#doc:html-id num-le
 # Outputs whether `$number`s in the given order are numerically non-decreaing.
 # Outputs `$true` when given fewer than two numbers.
 #
@@ -142,7 +142,7 @@ fn '<' {|@number| }
 # ```
 fn '<=' {|@number| }
 
-#doc:id num-eq
+#doc:html-id num-eq
 # Outputs whether `$number`s are all numerically equal. Outputs `$true` when
 # given fewer than two numbers.
 #
@@ -162,7 +162,7 @@ fn '<=' {|@number| }
 # ```
 fn '==' {|@number| }
 
-#doc:id num-ne
+#doc:html-id num-ne
 # Determines whether `$a` and `$b` are numerically inequal. Equivalent to `not
 # (== $a $b)`.
 #
@@ -176,7 +176,7 @@ fn '==' {|@number| }
 # ```
 fn '!=' {|a b| }
 
-#doc:id num-gt
+#doc:html-id num-gt
 # Determines whether `$number`s in the given order are numerically strictly
 # decreasing. Outputs `$true` when given fewer than two numbers.
 #
@@ -192,7 +192,7 @@ fn '!=' {|a b| }
 # ```
 fn '>' {|@number| }
 
-#doc:id num-ge
+#doc:html-id num-ge
 # Outputs whether `$number`s in the given order are numerically non-increasing.
 # Outputs `$true` when given fewer than two numbers.
 #
@@ -208,7 +208,7 @@ fn '>' {|@number| }
 # ```
 fn '>=' {|@number| }
 
-#doc:id add
+#doc:html-id add
 # Outputs the sum of all arguments, or 0 when there are no arguments.
 #
 # This command is [exactness-preserving](#exactness-preserving).
@@ -225,7 +225,7 @@ fn '>=' {|@number| }
 # ```
 fn + {|@num| }
 
-#doc:id sub
+#doc:html-id sub
 # Outputs the result of subtracting from `$x-num` all the `$y-num`s, working
 # from left to right. When no `$y-num` is given, outputs the negation of
 # `$x-num` instead (in other words, `- $x-num` is equivalent to `- 0 $x-num`).
@@ -250,7 +250,7 @@ fn + {|@num| }
 # ```
 fn - {|x-num @y-num| }
 
-#doc:id mul
+#doc:html-id mul
 # Outputs the product of all arguments, or 1 when there are no arguments.
 #
 # This command is [exactness-preserving](#exactness-preserving). Additionally,
@@ -269,7 +269,7 @@ fn - {|x-num @y-num| }
 # ```
 fn * {|@num| }
 
-#doc:id div
+#doc:html-id div
 # Outputs the result of dividing `$x-num` with all the `$y-num`s, working from
 # left to right. When no `$y-num` is given, outputs the reciprocal of `$x-num`
 # instead (in other words, `/ $y-num` is equivalent to `/ 1 $y-num`).
@@ -306,7 +306,7 @@ fn * {|@num| }
 # implicit cd feature. (The implicit cd feature is deprecated since 0.21.0).
 fn / {|x-num @y-num| }
 
-#doc:id rem
+#doc:html-id rem
 # Outputs the remainder after dividing `$x` by `$y`. The result has the same
 # sign as `$x`.
 #

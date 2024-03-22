@@ -1,29 +1,29 @@
-#doc:id str-lt
+#doc:html-id str-lt
 # Outputs whether `$string`s in the given order are strictly increasing. Outputs
 # `$true` when given fewer than two strings.
 fn '<s' {|@string| }
 
-#doc:id str-le
+#doc:html-id str-le
 # Outputs whether `$string`s in the given order are strictly non-decreasing.
 # Outputs `$true` when given fewer than two strings.
 fn '<=s' {|@string| }
 
-#doc:id str-eq
+#doc:html-id str-eq
 # Outputs whether `$string`s are all the same string. Outputs `$true` when given
 # fewer than two strings.
 fn '==s' {|@string| }
 
-#doc:id str-ne
+#doc:html-id str-ne
 # Outputs whether `$a` and `$b` are not the same string. Equivalent to `not (==s
 # $a $b)`.
 fn '!=s' {|a b| }
 
-#doc:id str-gt
+#doc:html-id str-gt
 # Outputs whether `$string`s in the given order are strictly decreasing. Outputs
 # `$true` when given fewer than two strings.
 fn '>s' {|@string| }
 
-#doc:id str-ge
+#doc:html-id str-ge
 # Outputs whether `$string`s in the given order are strictly non-increasing.
 # Outputs `$true` when given fewer than two strings.
 fn '>=s' {|@string| }
