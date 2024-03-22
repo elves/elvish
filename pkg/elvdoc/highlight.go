@@ -13,7 +13,8 @@ import (
 var highlighter = highlight.NewHighlighter(highlight.Config{})
 
 // HighlightCodeBlock highlights a code block from Markdown. It handles thea
-// elvish and elvish-transcript languages.
+// elvish and elvish-transcript languages. It also removes comment and directive
+// lines from elvish-transcript code blocks.
 func HighlightCodeBlock(info, code string) ui.Text {
 	language, _, _ := strings.Cut(info, " ")
 	switch language {
@@ -30,6 +31,7 @@ func HighlightCodeBlock(info, code string) ui.Text {
 // Pattern for the prefix of the first line of Elvish code in a transcript.
 var ps1Pattern = regexp.MustCompile(`^[~/][^ ]*> `)
 
+// TODO: Ideally this should use the parser in [src.elv.sh/pkg/transcript],
 func highlightTranscript(code string) ui.Text {
 	var tb ui.TextBuilder
 	lines := strings.Split(code, "\n")
@@ -46,6 +48,9 @@ func highlightTranscript(code string) ui.Text {
 			highlighted, _ := highlighter.Get(strings.Join(elvishLines, "\n"))
 			tb.WriteText(ui.T(ps1))
 			tb.WriteText(highlighted)
+		} else if strings.HasPrefix(line, "//") {
+			// Suppress comment/directive line.
+			continue
 		} else {
 			// Write an output line.
 			tb.WriteText(ui.T(line))

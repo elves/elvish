@@ -60,6 +60,21 @@ var highlightCodeBlockTests = []struct {
 		),
 	},
 	{
+		name: "elvish-transcript suppress comment/directive",
+		info: "elvish-transcript extra info",
+		code: Dedent(`
+			//dir
+			// A comment
+			~> echo $pwd
+			/home/elf
+			`),
+		want: ui.MarkLines(
+			"~> echo $pwd\n", stylesheet,
+			"   vvvv $$$$",
+			"/home/elf\n",
+		),
+	},
+	{
 		name: "other languages",
 		info: "bash",
 		code: "echo $pwd",
