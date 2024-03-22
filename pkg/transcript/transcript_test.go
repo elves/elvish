@@ -44,7 +44,7 @@ func TestParseSessionsInFS(t *testing.T) {
 					"d1/foo.elv", nil, nil,
 					[]*Node{{
 						"x", nil, nil,
-						[]*Node{{"unnamed", nil, []Interaction{{"~> ", "echo foo", 2, 3, "foo\n", 3, 4}}, nil, 2, 4}},
+						[]*Node{{"", nil, []Interaction{{"~> ", "echo foo", 2, 3, "foo\n", 3, 4}}, nil, 2, 4}},
 						1, 5}},
 					1, 5,
 				},
@@ -76,11 +76,11 @@ func TestParseSessionsInFS(t *testing.T) {
 				{"a.elv", nil, nil,
 					[]*Node{
 						{"f", nil, nil, []*Node{
-							{"unnamed", nil, []Interaction{{"~> ", "f 1", 2, 3, "1\n", 3, 4}}, nil, 2, 4},
-							{"unnamed", nil, []Interaction{{"~> ", "f 2", 7, 8, "2\n", 8, 9}}, nil, 7, 9},
+							{"", nil, []Interaction{{"~> ", "f 1", 2, 3, "1\n", 3, 4}}, nil, 2, 4},
+							{"", nil, []Interaction{{"~> ", "f 2", 7, 8, "2\n", 8, 9}}, nil, 7, 9},
 						}, 1, 10},
 						{"$v", nil, nil, []*Node{
-							{"unnamed", nil, []Interaction{{"~> ", "echo $v", 13, 14, "foo\n", 14, 15}}, nil, 13, 15},
+							{"", nil, []Interaction{{"~> ", "echo $v", 13, 14, "foo\n", 14, 15}}, nil, 13, 15},
 						}, 12, 16},
 					},
 					1, 16},
@@ -140,7 +140,7 @@ func TestParseSessionsInFS(t *testing.T) {
 			Rets([]*Node{{
 				"a.elv", nil, nil, []*Node{{
 					"x", nil, nil, []*Node{{
-						"unnamed", nil,
+						"", nil,
 						[]Interaction{{"~> ", "nop top", 3, 4, "", 4, 4}},
 						[]*Node{{
 							"h1", nil,

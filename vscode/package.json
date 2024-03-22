@@ -2,7 +2,7 @@
     "name": "elvish",
     "displayName": "Elvish",
     "description": "Elvish language support for Visual Studio Code",
-    "version": "0.3.2",
+    "version": "0.3.3",
     "publisher": "elves",
     "license": "BSD-2-Clause",
     "icon": "icon.png",
@@ -109,7 +109,7 @@
             "commandPalette": [
                 {
                     "command": "elvish.updateTranscriptOutputForCodeAtCursor",
-                    "when": "editorLangId == elvish-transcript"
+                    "when": "editorLangId =~ /^elvish(-transcript)?$/"
                 }
             ]
         },
@@ -117,7 +117,7 @@
             {
                 "command": "elvish.updateTranscriptOutputForCodeAtCursor",
                 "key": "alt+enter",
-                "when": "editorTextFocus && editorLangId == elvish-transcript"
+                "when": "editorTextFocus && editorLangId =~ /^elvish(-transcript)?$/"
             }
         ]
     },

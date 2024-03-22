@@ -135,11 +135,11 @@ func TestTranscriptsInFS(t *testing.T, fsys fs.FS, setupPairs ...any) {
 	if err != nil {
 		t.Fatalf("parse transcript sessions: %v", err)
 	}
-	runLine := -1
-	if run := os.Getenv("ELVISH_TRANSCRIPT_RUN"); run != "" {
-		filename, lineNo, ok := parseFileNameAndLineNo(run)
+	var run *runCfg
+	if runEnv := os.Getenv("ELVISH_TRANSCRIPT_RUN"); runEnv != "" {
+		filename, lineNo, ok := parseFileNameAndLineNo(runEnv)
 		if !ok {
-			t.Fatalf("can't parse ELVISH_TRANSCRIPT_RUN: %q", run)
+			t.Fatalf("can't parse ELVISH_TRANSCRIPT_RUN: %q", runEnv)
 		}
 		var node *transcript.Node
 		for _, n := range nodes {
@@ -152,9 +152,18 @@ func TestTranscriptsInFS(t *testing.T, fsys fs.FS, setupPairs ...any) {
 			t.Fatalf("can't find file %q", filename)
 		}
 		nodes = []*transcript.Node{node}
-		runLine = lineNo
+		outputPrefix := ""
+		if strings.HasSuffix(filename, ".elv") {
+			outputPrefix = "# "
+		}
+		run = &runCfg{lineNo, outputPrefix}
 	}
-	testTranscripts(t, buildSetupDirectives(setupPairs), nodes, nil, runLine)
+	testTranscripts(t, buildSetupDirectives(setupPairs), nodes, nil, run)
+}
+
+type runCfg struct {
+	line         int
+	outputPrefix string
 }
 
 func parseFileNameAndLineNo(s string) (string, int, bool) {
@@ -170,9 +179,11 @@ func parseFileNameAndLineNo(s string) (string, int, bool) {
 	return filename, lineNo, true
 }
 
-func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node, setups []setupFunc, runLine int) {
+var solPattern = regexp.MustCompile("(?m:^)")
+
+func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node, setups []setupFunc, run *runCfg) {
 	for _, node := range nodes {
-		if runLine != -1 && !(node.LineFrom <= runLine && runLine < node.LineTo) {
+		if run != nil && !(node.LineFrom <= run.line && run.line < node.LineTo) {
 			continue
 		}
 		t.Run(node.Name, func(t *testing.T) {
@@ -193,21 +204,27 @@ func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node
 				}
 			}
 			for _, interaction := range node.Interactions {
-				if runLine != -1 && interaction.CodeLineFrom > runLine {
+				if run != nil && interaction.CodeLineFrom > run.line {
 					break
 				}
 				want := interaction.Output
 				got := evalAndCollectOutput(ev, interaction.Code)
 				if want != got {
-					if runLine == -1 {
+					if run == nil {
 						t.Errorf("\n%s\n-want +got:\n%s",
 							interaction.PromptAndCode(), diff.DiffNoHeader(want, got))
-					} else if interaction.CodeLineFrom <= runLine && runLine < interaction.CodeLineTo {
+					} else if interaction.CodeLineFrom <= run.line && run.line < interaction.CodeLineTo {
+						content := got
+						if run.outputPrefix != "" {
+							// Insert output prefix at each SOL, except for the
+							// SOL after the trailing newline.
+							content = solPattern.ReplaceAllLiteralString(strings.TrimSuffix(content, "\n"), run.outputPrefix) + "\n"
+						}
 						correction := struct {
 							FromLine int    `json:"fromLine"`
 							ToLine   int    `json:"toLine"`
 							Content  string `json:"content"`
-						}{interaction.OutputLineFrom, interaction.OutputLineTo, got}
+						}{interaction.OutputLineFrom, interaction.OutputLineTo, content}
 						t.Errorf("UPDATE %s", must.OK1(json.Marshal(correction)))
 					}
 				}
@@ -217,7 +234,7 @@ func testTranscripts(t *testing.T, sd *setupDirectives, nodes []*transcript.Node
 				allSetups := make([]setupFunc, 0, len(setups)+len(eachSetups))
 				allSetups = append(allSetups, setups...)
 				allSetups = append(allSetups, eachSetups...)
-				testTranscripts(t, sd, node.Children, allSetups, runLine)
+				testTranscripts(t, sd, node.Children, allSetups, run)
 			}
 		})
 	}
