@@ -206,6 +206,16 @@ func TestComplete(t *testing.T) {
 					ci("local-var1"), ci("local-var2"),
 				},
 			}),
+		// "del" has a similar completer.
+		Args(cb("del "), ev, cfg).Rets(
+			&Result{
+				Name: "argument", Replace: r(4, 4),
+				Items: []modes.CompletionItem{
+					ci("local-fn1~"), ci("local-fn2~"),
+					ci("local-ns1:"), ci("local-ns2:"),
+					ci("local-var1"), ci("local-var2"),
+				},
+			}),
 
 		// Complete commands at an empty buffer, generating special forms,
 		// externals, functions, namespaces and variable assignments.

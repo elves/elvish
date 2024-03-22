@@ -63,6 +63,16 @@ func generateArgs(args []string, ev *eval.Evaler, p np.Path, cfg Config) ([]RawI
 			items = append(items, noQuoteItem(sigil+parse.QuoteVariableName(ns+varname)))
 		})
 		return items, nil
+	case "del":
+		// This partially duplicates eachVariableInNs with ns = "", but we don't
+		// offer builtin variables.
+		var items []RawItem
+		addItem := func(varname string) {
+			items = append(items, noQuoteItem(parse.QuoteVariableName(varname)))
+		}
+		ev.Global().IterateKeysString(addItem)
+		eachDefinedVariable(p[len(p)-1], p[0].Range().From, addItem)
+		return items, nil
 	}
 
 	return cfg.ArgGenerator(args)
