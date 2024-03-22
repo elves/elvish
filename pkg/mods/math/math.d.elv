@@ -1,3 +1,6 @@
+#//each:eval use math
+#//only-on amd64 || arm64
+
 # Approximate value of
 # [`e`](https://en.wikipedia.org/wiki/E_(mathematical_constant)):
 # 2.718281.... This variable is read-only.
@@ -34,7 +37,7 @@ fn abs {|number| }
 #
 # ```elvish-transcript
 # ~> math:acos 1
-# ▶ (num 1)
+# ▶ (num 0.0)
 # ~> math:acos 1.00001
 # ▶ (num NaN)
 # ```
@@ -44,7 +47,7 @@ fn acos {|number| }
 #
 # ```elvish-transcript
 # ~> math:acosh 1
-# ▶ (num 0)
+# ▶ (num 0.0)
 # ~> math:acosh 0
 # ▶ (num NaN)
 # ```
@@ -54,7 +57,7 @@ fn acosh {|number| }
 #
 # ```elvish-transcript
 # ~> math:asin 0
-# ▶ (num 0)
+# ▶ (num 0.0)
 # ~> math:asin 1
 # ▶ (num 1.5707963267948966)
 # ~> math:asin 1.00001
@@ -66,7 +69,7 @@ fn asin {|number| }
 #
 # ```elvish-transcript
 # ~> math:asinh 0
-# ▶ (num 0)
+# ▶ (num 0.0)
 # ~> math:asinh inf
 # ▶ (num +Inf)
 # ```
@@ -76,8 +79,8 @@ fn asinh {|number| }
 #
 # ```elvish-transcript
 # ~> math:atan 0
-# ▶ (num 0)
-# ~> math:atan $math:inf
+# ▶ (num 0.0)
+# ~> math:atan +inf
 # ▶ (num 1.5707963267948966)
 # ```
 fn atan {|number| }
@@ -99,7 +102,7 @@ fn atan2 {|y x| }
 #
 # ```elvish-transcript
 # ~> math:atanh 0
-# ▶ (num 0)
+# ▶ (num 0.0)
 # ~> math:atanh 1
 # ▶ (num +Inf)
 # ```
@@ -132,9 +135,9 @@ fn ceil {|number| }
 #
 # ```elvish-transcript
 # ~> math:cos 0
-# ▶ (num 1)
+# ▶ (num 1.0)
 # ~> math:cos 3.14159265
-# ▶ (num -1)
+# ▶ (num -1.0)
 # ```
 fn cos {|number| }
 
@@ -142,7 +145,7 @@ fn cos {|number| }
 #
 # ```elvish-transcript
 # ~> math:cosh 0
-# ▶ (num 1)
+# ▶ (num 1.0)
 # ```
 fn cosh {|number| }
 
@@ -204,7 +207,7 @@ fn is-nan {|number| }
 #
 # ```elvish-transcript
 # ~> math:log 1.0
-# ▶ (num 1)
+# ▶ (num 0.0)
 # ~> math:log -2.3
 # ▶ (num NaN)
 # ```
@@ -214,7 +217,7 @@ fn log {|number| }
 #
 # ```elvish-transcript
 # ~> math:log10 100.0
-# ▶ (num 2)
+# ▶ (num 2.0)
 # ~> math:log10 -1.7
 # ▶ (num NaN)
 # ```
@@ -224,7 +227,7 @@ fn log10 {|number| }
 #
 # ```elvish-transcript
 # ~> math:log2 8
-# ▶ (num 3)
+# ▶ (num 3.0)
 # ~> math:log2 -5.3
 # ▶ (num NaN)
 # ```
@@ -255,7 +258,7 @@ fn max {|@number| }
 # ```elvish-transcript
 # ~> math:min
 # Exception: arity mismatch: arguments must be 1 or more values, but is 0 values
-# [tty 17], line 1: math:min
+#   [tty]:1:1-8: math:min
 # ~> math:min 3 5 2
 # ▶ (num 2)
 # ~> math:min 1/2 1/3 2/3
@@ -344,7 +347,7 @@ fn round-to-even {|number| }
 #
 # ```elvish-transcript
 # ~> math:sin 0
-# ▶ (num 0)
+# ▶ (num 0.0)
 # ~> math:sin 3.14159265
 # ▶ (num 3.5897930298416118e-09)
 # ```
@@ -354,7 +357,7 @@ fn sin {|number| }
 #
 # ```elvish-transcript
 # ~> math:sinh 0
-# ▶ (num 0)
+# ▶ (num 0.0)
 # ```
 fn sinh {|number| }
 
@@ -362,9 +365,9 @@ fn sinh {|number| }
 #
 # ```elvish-transcript
 # ~> math:sqrt 0
-# ▶ (num 0)
+# ▶ (num 0.0)
 # ~> math:sqrt 4
-# ▶ (num 2)
+# ▶ (num 2.0)
 # ~> math:sqrt -4
 # ▶ (num NaN)
 # ```
@@ -374,7 +377,7 @@ fn sqrt {|number| }
 #
 # ```elvish-transcript
 # ~> math:tan 0
-# ▶ (num 0)
+# ▶ (num 0.0)
 # ~> math:tan 3.14159265
 # ▶ (num -0.0000000035897930298416118)
 # ```
@@ -384,7 +387,7 @@ fn tan {|number| }
 #
 # ```elvish-transcript
 # ~> math:tanh 0
-# ▶ (num 0)
+# ▶ (num 0.0)
 # ```
 fn tanh {|number| }
 
