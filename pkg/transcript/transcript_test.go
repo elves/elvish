@@ -40,7 +40,14 @@ func TestParseSessionsInFS(t *testing.T) {
 				"ignored.go": "package a",
 			}).
 			Rets([]*Node{
-				{"d1/foo.elv/x", nil, []Interaction{{"~> ", "echo foo", 2, 3, "foo\n", 3, 4}}, nil, 2, 4},
+				{
+					"d1/foo.elv", nil, nil,
+					[]*Node{{
+						"x", nil, nil,
+						[]*Node{{"unnamed", nil, []Interaction{{"~> ", "echo foo", 2, 3, "foo\n", 3, 4}}, nil, 2, 4}},
+						1, 5}},
+					1, 5,
+				},
 				{"d2/bar.elvts", nil, []Interaction{{"~> ", "echo bar", 1, 2, "bar\n", 2, 3}}, nil, 1, 3},
 			}),
 
@@ -66,9 +73,17 @@ func TestParseSessionsInFS(t *testing.T) {
 				var v
 				`)).
 			Rets([]*Node{
-				{"a.elv/f", nil, []Interaction{{"~> ", "f 1", 2, 3, "1\n", 3, 4}}, nil, 2, 4},
-				{"a.elv/f", nil, []Interaction{{"~> ", "f 2", 7, 8, "2\n", 8, 9}}, nil, 7, 9},
-				{"a.elv/$v", nil, []Interaction{{"~> ", "echo $v", 13, 14, "foo\n", 14, 15}}, nil, 13, 15},
+				{"a.elv", nil, nil,
+					[]*Node{
+						{"f", nil, nil, []*Node{
+							{"unnamed", nil, []Interaction{{"~> ", "f 1", 2, 3, "1\n", 3, 4}}, nil, 2, 4},
+							{"unnamed", nil, []Interaction{{"~> ", "f 2", 7, 8, "2\n", 8, 9}}, nil, 7, 9},
+						}, 1, 10},
+						{"$v", nil, nil, []*Node{
+							{"unnamed", nil, []Interaction{{"~> ", "echo $v", 13, 14, "foo\n", 14, 15}}, nil, 13, 15},
+						}, 12, 16},
+					},
+					1, 16},
 			}, error(nil)),
 
 		It("uses fields after elvish-transcript in session name in .elv files").
@@ -80,7 +95,32 @@ func TestParseSessionsInFS(t *testing.T) {
 				fn x {|| }
 				`)).
 			Rets([]*Node{
-				{"a.elv/x/title", nil, []Interaction{{"~> ", "echo foo", 2, 3, "foo\n", 3, 4}}, nil, 2, 4},
+				{"a.elv", nil, nil, []*Node{
+					{"x", nil, nil, []*Node{
+						{"title", nil, []Interaction{{"~> ", "echo foo", 2, 3, "foo\n", 3, 4}}, nil, 2, 4},
+					}, 1, 5},
+				}, 1, 5},
+			}),
+
+		It("supports file-level and symbol-level directives").
+			Args(oneFile("a.elv", `
+				#//file1
+				#//file2
+
+				#//symbol1
+				#//symbol2
+				# ~~~elvish-transcript title
+				# ~> echo foo
+				# foo
+				# ~~~
+				fn x {|| }
+				`)).
+			Rets([]*Node{
+				{"a.elv", []string{"file1", "file2"}, nil, []*Node{
+					{"x", []string{"symbol1", "symbol2"}, nil, []*Node{
+						{"title", nil, []Interaction{{"~> ", "echo foo", 7, 8, "foo\n", 8, 9}}, nil, 7, 9},
+					}, 6, 10},
+				}, 1, 10},
 			}),
 
 		It("processes each code block in .elv files like a .elvts file").
@@ -98,19 +138,25 @@ func TestParseSessionsInFS(t *testing.T) {
 				fn x { }
 				`)).
 			Rets([]*Node{{
-				"a.elv/x", nil,
-				[]Interaction{{"~> ", "nop top", 3, 4, "", 4, 4}},
-				[]*Node{{
-					"h1", nil,
-					[]Interaction{{"~> ", "nop h1", 7, 8, "", 8, 8}},
-					[]*Node{{
-						"h2", nil,
-						[]Interaction{{"~> ", "nop h2", 10, 11, "", 11, 11}}, nil,
-						9, 11,
+				"a.elv", nil, nil, []*Node{{
+					"x", nil, nil, []*Node{{
+						"unnamed", nil,
+						[]Interaction{{"~> ", "nop top", 3, 4, "", 4, 4}},
+						[]*Node{{
+							"h1", nil,
+							[]Interaction{{"~> ", "nop h1", 7, 8, "", 8, 8}},
+							[]*Node{{
+								"h2", nil,
+								[]Interaction{{"~> ", "nop h2", 10, 11, "", 11, 11}}, nil,
+								9, 11,
+							}},
+							5, 11,
+						}},
+						2, 11,
 					}},
-					5, 11,
+					1, 11,
 				}},
-				2, 11,
+				1, 11,
 			}}, error(nil)),
 
 		// Session splitting

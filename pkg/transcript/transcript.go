@@ -19,7 +19,8 @@
 // # Headings and sessions
 //
 // Two levels of headings are supported: "# h1 #" and "## h2 ##". They split a
-// transcript into multiple sessions and are used to name them.
+// transcript into a tree of multiple sessions, and the titles become their
+// names.
 //
 // For example, suppose that a.elvts contains the following content:
 //
@@ -41,8 +42,13 @@
 //	~> bar 2
 //	something is 2 done
 //
-// This file contains three sessions: a.elvts, a.elvts/foo, a.elvts/bar/1 and
-// a.elvts/bar/2.
+// This file contains the following tree:
+//
+//	a.elvts
+//		foo
+//		bar
+//			1
+//			2
 //
 // Leading and trailing empty lines are stripped from a session, but internal
 // empty lines are kept intact. This also applies to transcripts with no
@@ -63,13 +69,18 @@
 // An .elv file may contain elvdocs for their variables or functions, which in
 // turn may contain examples given as elvish-transcript code blocks.
 //
-// Each of those code block is considered a transcript, named $filename/$symbol.
-// If there are additional words after the "elvish-transcript" in the opening
-// fence, they are appended to name of the transcript, becoming
-// $filename/$symbol/$name.
+// Each of those code block is considered a transcript, named
+// $filename/$symbol/$name, where $name is the additional words after the
+// "elvish-transcript" in the opening fence, defaulting to an empty string.
+//
+// File-level directives and symbol-level directives starting with "#//" are
+// supported.
 //
 // As an example, suppose a.elv contains the following content:
 //
+//	#//dir1
+//
+//	#//dir2
 //	# Does something.
 //	#
 //	# Example:
@@ -97,7 +108,14 @@
 //	# ```
 //	fn bar {|x| }
 //
-// This creates three sessions: a.elv/foo, a.elv/bar/1 and a.elv/bar/2.
+// This creates the following tree:
+//
+//	a.elv
+//		foo
+//			unnamed
+//		bar
+//			1
+//			2
 //
 // These transcripts can also contain headings, which split them into further
 // smaller sessions.
@@ -141,10 +159,10 @@ func ParseFromFS(fsys fs.FS) ([]*Node, error) {
 		if d.IsDir() {
 			return nil
 		}
-		var isElv bool
+		parseNode := Parse
 		switch filepath.Ext(path) {
 		case ".elv":
-			isElv = true
+			parseNode = parseElv
 		case ".elvts":
 		default:
 			return nil
@@ -153,19 +171,11 @@ func ParseFromFS(fsys fs.FS) ([]*Node, error) {
 		if err != nil {
 			return err
 		}
-		if isElv {
-			moreNodes, err := parseNodesFromElvdoc(path, file)
-			if err != nil {
-				return err
-			}
-			nodes = append(nodes, moreNodes...)
-		} else {
-			node, err := Parse(path, file)
-			if err != nil {
-				return err
-			}
-			nodes = append(nodes, node)
+		node, err := parseNode(path, file)
+		if err != nil {
+			return err
 		}
+		nodes = append(nodes, node)
 		return nil
 	})
 	return nodes, err
@@ -184,20 +194,38 @@ func readAllLines(r io.Reader) ([]string, error) {
 // parses each one similar to an .elvts file. Each block becomes a [Node] on its
 // own, named like "foo.elv/symbol/code-fence-info" or "foo.elv/symbol" (if
 // fence info is empty).
-func parseNodesFromElvdoc(filename string, r io.Reader) ([]*Node, error) {
+func parseElv(filename string, r io.Reader) (*Node, error) {
 	docs, err := elvdoc.Extract(r, "")
 	if err != nil {
 		return nil, fmt.Errorf("parse %s for elvdoc: %w", filename, err)
 	}
-	var nodes []*Node
+	fileNode := &Node{
+		Name:     filename,
+		LineFrom: 1,
+		// LineTo will be updated as children get added
+	}
+	if docs.File != nil {
+		fileNode.Directives = testDirectivesFromElvdoc(docs.File.Directives)
+	}
+
 	parseEntries := func(entries []elvdoc.Entry) error {
 		for _, entry := range entries {
-			codec := transcriptExtractor{filename, entry.Name, entry.LineNo - 1, nil, nil}
+			codec := transcriptExtractor{filename, entry.LineNo - 1, nil, nil}
 			md.Render(entry.Content, &codec)
 			if codec.err != nil {
 				return codec.err
 			}
-			nodes = append(nodes, codec.nodes...)
+			symbolNode := &Node{
+				Name:       entry.Name,
+				Directives: testDirectivesFromElvdoc(entry.Directives),
+				Children:   codec.nodes,
+				LineFrom:   entry.LineNo,
+				LineTo:     entry.LineNo + strings.Count(entry.Content, "\n"),
+			}
+			fileNode.Children = append(fileNode.Children, symbolNode)
+			if fileNode.LineTo < symbolNode.LineTo {
+				fileNode.LineTo = symbolNode.LineTo
+			}
 		}
 		return nil
 	}
@@ -209,14 +237,23 @@ func parseNodesFromElvdoc(filename string, r io.Reader) ([]*Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	return nodes, nil
+	return fileNode, nil
+}
+
+func testDirectivesFromElvdoc(directives []string) []string {
+	var testDirectives []string
+	for _, directive := range directives {
+		if testDirective, ok := strings.CutPrefix(directive, "//"); ok {
+			testDirectives = append(testDirectives, testDirective)
+		}
+	}
+	return testDirectives
 }
 
 // A [md.Codec] implementation that extracts elvish-transcript code blocks from
 // an elvdoc block as sessions.
 type transcriptExtractor struct {
 	filename     string
-	symbol       string
 	lineNoOffset int
 
 	nodes []*Node
@@ -228,12 +265,7 @@ func (e *transcriptExtractor) Do(op md.Op) {
 		return
 	}
 	if op.Type == md.OpCodeBlock {
-		fields := strings.Fields(op.Info)
-		if len(fields) > 0 && fields[0] == "elvish-transcript" {
-			name := e.filename + "/" + e.symbol
-			if len(fields) > 1 {
-				name += "/" + strings.Join(fields[1:], " ")
-			}
+		if lang, name, _ := strings.Cut(op.Info, " "); lang == "elvish-transcript" {
 			// The first line of the code block is the fence line, add 1 to get
 			// the first line of the actual content.
 			lineNo := e.lineNoOffset + op.LineNo + 1
