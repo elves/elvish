@@ -1,3 +1,5 @@
+#//each:eval use re
+
 # Quote `$string` for use in a pattern. Examples:
 #
 # ```elvish-transcript
@@ -34,11 +36,11 @@ fn match {|&posix=$false pattern source| }
 #
 # ```elvish-transcript
 # ~> re:find . ab
-# ▶ [&text=a &start=0 &end=1 &groups=[[&text=a &start=0 &end=1]]]
-# ▶ [&text=b &start=1 &end=2 &groups=[[&text=b &start=1 &end=2]]]
+# ▶ [&end=(num 1) &groups=[[&end=(num 1) &start=(num 0) &text=a]] &start=(num 0) &text=a]
+# ▶ [&end=(num 2) &groups=[[&end=(num 2) &start=(num 1) &text=b]] &start=(num 1) &text=b]
 # ~> re:find '[A-Z]([0-9])' 'A1 B2'
-# ▶ [&text=A1 &start=0 &end=2 &groups=[[&text=A1 &start=0 &end=2] [&text=1 &start=1 &end=2]]]
-# ▶ [&text=B2 &start=3 &end=5 &groups=[[&text=B2 &start=3 &end=5] [&text=2 &start=4 &end=5]]]
+# ▶ [&end=(num 2) &groups=[[&end=(num 2) &start=(num 0) &text=A1] [&end=(num 2) &start=(num 1) &text=1]] &start=(num 0) &text=A1]
+# ▶ [&end=(num 5) &groups=[[&end=(num 5) &start=(num 3) &text=B2] [&end=(num 5) &start=(num 4) &text=2]] &start=(num 3) &text=B2]
 # ```
 fn find {|&posix=$false &longest=$false &max=-1 pattern source| }
 

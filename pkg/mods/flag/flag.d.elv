@@ -1,3 +1,5 @@
+#//each:eval use flag
+
 # Parses flags from `$args` according to the signature of the
 # `$fn`, using the [Go convention](#go-convention), and calls `$fn`.
 #
@@ -51,6 +53,7 @@
 # The script can be used as follows:
 #
 # ```elvish-transcript
+# //skip
 # ~> elvish a.elv -verbose -port 80 foo
 # ...
 # ```
@@ -103,13 +106,13 @@ fn call {|fn args &on-parse-error=$nil| }
 #      [v $false 'Verbose']
 #      [times (num 1) 'How many times']
 #    ]
-# ▶ [&v=$true &times=(num 10)]
+# ▶ [&times=(num 10) &v=$true]
 # ▶ [foo]
 # ~> flag:parse [] [
 #      [v $false 'Verbose']
 #      [times (num 1) 'How many times']
 #    ]
-# ▶ [&v=$false &times=(num 1)]
+# ▶ [&times=(num 1) &v=$false]
 # ▶ []
 # ```
 #
@@ -165,14 +168,13 @@ fn parse {|args specs| }
 #      [&short=p &long=port &arg-required]
 #    ]
 # ~> flag:parse-getopt [-v -p 80 foo] $specs
-# ▶ [[&spec=[&short=v &long=verbose] &long=$false &arg='']
-#    [&spec=[&arg-required=$true &short=p &long=port] &long=$false &arg=80]]
+# ▶ [[&arg='' &long=$false &spec=[&long=verbose &short=v]] [&arg=80 &long=$false &spec=[&arg-required=$true &long=port &short=p]]]
 # ▶ [foo]
 # ~> flag:parse-getopt [--verbose] $specs
-# ▶ [[&spec=[&short=v &long=verbose] &long=$true &arg='']]
+# ▶ [[&arg='' &long=$true &spec=[&long=verbose &short=v]]]
 # ▶ []
 # ~> flag:parse-getopt [-v] [[&short=v &extra-info=foo]] # extra key in spec
-# ▶ [[&spec=[&extra-info=foo &short=v] &long=$false &arg='']]
+# ▶ [[&arg='' &long=$false &spec=[&extra-info=foo &short=v]]]
 # ▶ []
 # ```
 #

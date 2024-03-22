@@ -31,6 +31,9 @@
 //
 // The following setup functions are predefined:
 //
+//   - skip: Skip this test. Useful in examples in .d.elv files that shouldn't
+//     be run as tests.
+//
 //   - in-temp-dir: Run inside a temporary directory.
 //
 //   - set-env $name $value: Run with the environment variable $name set to
@@ -256,6 +259,7 @@ func buildSetupDirectives(setupPairs []any) *setupDirectives {
 	}
 	setupMap := map[string]setupFunc{
 		"in-temp-dir": func(t *testing.T, ev *eval.Evaler) { testutil.InTempDir(t) },
+		"skip":        func(t *testing.T, _ *eval.Evaler) { t.SkipNow() },
 	}
 	argSetupMap := map[string]argSetupFunc{
 		"set-env": func(t *testing.T, ev *eval.Evaler, arg string) {

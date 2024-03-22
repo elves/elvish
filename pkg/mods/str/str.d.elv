@@ -1,13 +1,15 @@
+#//each:eval use str
+
 # Compares two strings and output an integer that will be 0 if a == b,
 # -1 if a < b, and +1 if a > b.
 #
 # ```elvish-transcript
 # ~> str:compare a a
-# ▶ 0
+# ▶ (num 0)
 # ~> str:compare a b
-# ▶ -1
+# ▶ (num -1)
 # ~> str:compare b a
-# ▶ 1
+# ▶ (num 1)
 # ```
 fn compare {|a b| }
 
@@ -37,9 +39,9 @@ fn contains-any {|str chars| }
 #
 # ```elvish-transcript
 # ~> str:count abcdefabcdef bc
-# ▶ 2
+# ▶ (num 2)
 # ~> str:count abcdef ''
-# ▶ 7
+# ▶ (num 7)
 # ```
 fn count {|str substr| }
 
@@ -59,11 +61,11 @@ fn equal-fold {|str1 str2| }
 # characters.
 #
 # ```elvish-transcript
-# ~> str:split "lorem ipsum   dolor"
+# ~> str:fields "lorem ipsum   dolor"
 # ▶ lorem
 # ▶ ipsum
 # ▶ dolor
-# ~> str:split "   "
+# ~> str:fields "   "
 # ```
 #
 # See also [`str:split`]().
@@ -118,9 +120,9 @@ fn has-suffix {|str suffix| }
 #
 # ```elvish-transcript
 # ~> str:index abcd cd
-# ▶ 2
+# ▶ (num 2)
 # ~> str:index abcd xyz
-# ▶ -1
+# ▶ (num -1)
 # ```
 fn index {|str substr| }
 
@@ -130,9 +132,9 @@ fn index {|str substr| }
 #
 # ```elvish-transcript
 # ~> str:index-any "chicken" "aeiouy"
-# ▶ 2
+# ▶ (num 2)
 # ~> str:index-any l33t aeiouy
-# ▶ -1
+# ▶ (num -1)
 # ```
 fn index-any {|str chars| }
 
@@ -140,9 +142,9 @@ fn index-any {|str chars| }
 #
 # ```elvish-transcript
 # ~> put lorem ipsum | str:join ,
-# ▶ lorem,ipsum
+# ▶ 'lorem,ipsum'
 # ~> str:join , [lorem ipsum]
-# ▶ lorem,ipsum
+# ▶ 'lorem,ipsum'
 # ~> str:join '' [lorem ipsum]
 # ▶ loremipsum
 # ~> str:join '...' [lorem ipsum]
@@ -160,9 +162,9 @@ fn join {|sep input-list?| }
 #
 # ```elvish-transcript
 # ~> str:last-index "elven speak elvish" elv
-# ▶ 12
+# ▶ (num 12)
 # ~> str:last-index "elven speak elvish" romulan
-# ▶ -1
+# ▶ (num -1)
 # ```
 fn last-index {|str substr| }
 
@@ -207,7 +209,7 @@ fn split {|&max=-1 sep string| }
 #
 # ```elvish-transcript
 # ~> str:title "her royal highness"
-# ▶ Her Royal Highness
+# ▶ 'Her Royal Highness'
 # ```
 fn title {|str| }
 
@@ -258,7 +260,7 @@ fn to-utf8-bytes {|string| }
 #
 # ```elvish-transcript
 # ~> str:to-title "her royal highness"
-# ▶ HER ROYAL HIGHNESS
+# ▶ 'HER ROYAL HIGHNESS'
 # ~> str:to-title "хлеб"
 # ▶ ХЛЕБ
 # ```

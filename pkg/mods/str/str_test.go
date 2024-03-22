@@ -7,7 +7,7 @@ import (
 	"src.elv.sh/pkg/eval/evaltest"
 )
 
-//go:embed *.elvts
+//go:embed *.elvts *.elv
 var transcripts embed.FS
 
 func TestTranscripts(t *testing.T) {
