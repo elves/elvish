@@ -1,36 +1,7 @@
 // Package evaltest supports testing the Elvish interpreter and libraries.
-package evaltest
-
-import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"go/build/constraint"
-	"io/fs"
-	"os"
-	"regexp"
-	"runtime"
-	"strconv"
-	"strings"
-	"testing"
-
-	"src.elv.sh/pkg/diag"
-	"src.elv.sh/pkg/diff"
-	"src.elv.sh/pkg/eval"
-	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/mods"
-	"src.elv.sh/pkg/must"
-	"src.elv.sh/pkg/parse"
-	"src.elv.sh/pkg/prog"
-	"src.elv.sh/pkg/testutil"
-	"src.elv.sh/pkg/transcript"
-)
-
-// TestTranscriptsInFS extracts all Elvish transcript sessions from .elv and
-// .elvts files in fsys, and runs each of them as a test. See
-// [src.elv.sh/pkg/transcript] for how transcript sessions are discovered.
 //
-// Typical use of this function looks like this:
+// The entrypoint of this package is [TestTranscriptsInFS]. Typical usage looks
+// like this:
 //
 //	import (
 //		"embed"
@@ -44,11 +15,13 @@ import (
 //		evaltest.TestTranscriptsInFS(t, transcripts)
 //	}
 //
+// See [src.elv.sh/pkg/transcript] for how transcript sessions are discovered.
+//
 // # Setup functions
 //
-// The function accepts variadic arguments in (name, f) pairs, where name must
-// not contain any spaces. Each pair defines a setup function that may be
-// referred to in the transcripts with the directive "//name".
+// [TestTranscriptsInFS] accepts variadic arguments in (name, f) pairs, where
+// name must not contain any spaces. Each pair defines a setup function that may
+// be referred to in the transcripts with the directive "//name".
 //
 // The setup function f may take a *testing.T, *eval.Evaler and a string
 // argument. All of them are optional but must appear in that order. If it takes
@@ -128,8 +101,35 @@ import (
 //
 // This mechanism enables editor plugins that can fill or update the output of
 // transcript tests without requiring user to leave the editor.
-//
-// This currently only works for .elvts files.
+package evaltest
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"go/build/constraint"
+	"io/fs"
+	"os"
+	"regexp"
+	"runtime"
+	"strconv"
+	"strings"
+	"testing"
+
+	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/diff"
+	"src.elv.sh/pkg/eval"
+	"src.elv.sh/pkg/eval/vals"
+	"src.elv.sh/pkg/mods"
+	"src.elv.sh/pkg/must"
+	"src.elv.sh/pkg/parse"
+	"src.elv.sh/pkg/prog"
+	"src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/transcript"
+)
+
+// TestTranscriptsInFS extracts all Elvish transcript sessions from .elv and
+// .elvts files in fsys, and runs each of them as a test.
 func TestTranscriptsInFS(t *testing.T, fsys fs.FS, setupPairs ...any) {
 	nodes, err := transcript.ParseFromFS(fsys)
 	if err != nil {
