@@ -38,16 +38,17 @@ fn kind-of {|@value| }
 # it is most useful when the argument is **not** a literal value, e.g.
 #
 # ```elvish-transcript
-# ~> var f = (constantly (uname))
+# //eval fn whoami { echo elf }
+# ~> var f = (constantly (whoami))
 # ~> $f
-# ▶ Darwin
+# ▶ elf
 # ~> $f
-# ▶ Darwin
+# ▶ elf
 # ```
 #
-# The above code only calls `uname` once when defining `$f`. In contrast, if
-# `$f` is defined as `var f = { put (uname) }`, every time you invoke `$f`,
-# `uname` will be called.
+# The above code only calls `whoami` once when defining `$f`. In contrast, if
+# `$f` is defined as `var f = { put (whoami) }`, every time you invoke `$f`,
+# `whoami` will be called.
 #
 # Etymology: [Clojure](https://clojuredocs.org/clojure.core/constantly).
 fn constantly {|@value| }
