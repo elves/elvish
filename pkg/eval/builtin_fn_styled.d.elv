@@ -119,3 +119,17 @@ fn styled-segment {|object &fg-color=default &bg-color=default &bold=$false &dim
 # # "bar" will be printed without any style
 # ```
 fn styled {|object @style-transformer| }
+
+# Renders "styledown" markup into a styled text. For the styledown markup
+# format, see <https://pkg.go.dev/src.elv.sh/pkg/ui/styledown>.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> render-styledown '
+#    foo bar
+#    *** ###
+#    '[1..]
+# ▶ [^styled (styled-segment foo &bold) ' ' (styled-segment bar &inverse) "\n"]
+# ```
+fn render-styledown {|s| }

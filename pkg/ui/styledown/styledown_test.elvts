@@ -1,0 +1,151 @@
+~> render-styledown '
+   foobar
+   ***###
+   lorem
+   _____
+   '[1..]
+▶ [^styled (styled-segment foo &bold) (styled-segment bar &inverse) "\n" (styled-segment lorem &underlined) "\n"]
+
+
+///////////////////////////
+# double-width characters #
+///////////////////////////
+
+~> render-styledown '
+   好 foo
+   ** ###
+   '[1..]
+▶ [^styled (styled-segment 好 &bold) ' ' (styled-segment foo &inverse) "\n"]
+~> render-styledown '
+   好 foo
+   *# ###
+   '[1..]
+Exception: line 2: inconsistent style "*#" for multi-width character "好"
+  [tty]:1:1-4:6:
+    render-styledown '
+    好 foo
+    *# ###
+    '[1..]
+
+////////////////////////
+# configuration stanza #
+////////////////////////
+
+~> render-styledown '
+   foo bar
+   rrr ggg
+   
+   r fg-red
+   g bg-green
+   '[1..]
+▶ [^styled (styled-segment foo &fg-color=red) ' ' (styled-segment bar &bg-color=green) "\n"]
+~> render-styledown '
+   foo
+   ***
+   
+   no-eol'[1..]
+▶ [^styled (styled-segment foo &bold)]
+
+////////////////////////////////
+# Trailing newline is optional #
+////////////////////////////////
+
+~> render-styledown '
+   foobar
+   ***###'[1..]
+▶ [^styled (styled-segment foo &bold) (styled-segment bar &inverse) "\n"]
+~> render-styledown '
+   foobar
+   ***###
+   
+   no-eol'[1..]
+▶ [^styled (styled-segment foo &bold) (styled-segment bar &inverse)]
+
+//////////
+# errors #
+//////////
+
+// Unknown style
+~> render-styledown '
+   foo
+   xxx
+   '[1..]
+Exception: line 2: unknown style "x"
+  [tty]:1:1-4:6:
+    render-styledown '
+    foo
+    xxx
+    '[1..]
+// Empty line between stanzas is required
+~> render-styledown '
+   foo
+   ***
+   no-eol
+   '[1..]
+Exception: line 3: content and configuration stanzas must be separated by a newline
+  [tty]:1:1-5:6:
+    render-styledown '
+    foo
+    ***
+    no-eol
+    '[1..]
+// Unknown option
+~> render-styledown '
+   foo
+   ***
+   
+   unknown-option
+   '[1..]
+Exception: line 4: invalid configuration line
+  [tty]:1:1-6:6:
+    render-styledown '
+    foo
+    ***
+    
+    unknown-option
+    '[1..]
+// Style character is not a single character
+~> render-styledown '
+   foo
+   ***
+   
+   xx fg-red
+   '[1..]
+Exception: line 4: style character "xx" not a single character
+  [tty]:1:1-6:6:
+    render-styledown '
+    foo
+    ***
+    
+    xx fg-red
+    '[1..]
+// Style character is not single-width
+~> render-styledown '
+   foo
+   ***
+   
+   好 fg-red
+   '[1..]
+Exception: line 4: style character "好" not single-width
+  [tty]:1:1-6:6:
+    render-styledown '
+    foo
+    ***
+    
+    好 fg-red
+    '[1..]
+// Bad styling string
+~> render-styledown '
+   foo
+   ***
+   
+   x bad
+   '[1..]
+Exception: line 4: invalid styling string "bad"
+  [tty]:1:1-6:6:
+    render-styledown '
+    foo
+    ***
+    
+    x bad
+    '[1..]

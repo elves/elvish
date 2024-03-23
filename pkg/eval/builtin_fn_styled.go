@@ -7,14 +7,16 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/ui"
+	"src.elv.sh/pkg/ui/styledown"
 )
 
 var errStyledSegmentArgType = errors.New("argument to styled-segment must be a string or a styled segment")
 
 func init() {
 	addBuiltinFns(map[string]any{
-		"styled-segment": styledSegment,
-		"styled":         styled,
+		"styled-segment":   styledSegment,
+		"styled":           styled,
+		"render-styledown": styledown.Render,
 	})
 }
 
