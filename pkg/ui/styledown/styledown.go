@@ -21,9 +21,8 @@
 //   - _ for underline
 //   - # for reverse video
 //
-// This package can be used as a Go library or via Elvish's builtin
-// [`render-styledown`](https://elv.sh/ref/builtin.html#render-styledown)
-// command.
+// This package can be used as a Go library or via Elvish's render-styledown
+// command (https://elv.sh/ref/builtin.html#render-styledown).
 //
 // # Double-width characters
 //
