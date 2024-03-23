@@ -53,7 +53,7 @@
 # The script can be used as follows:
 #
 # ```elvish-transcript
-# //skip
+# //skip-test
 # ~> elvish a.elv -verbose -port 80 foo
 # ...
 # ```

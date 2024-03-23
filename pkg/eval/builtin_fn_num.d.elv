@@ -1,4 +1,4 @@
-#//skip
+#//skip-test
 # Output a pseudo-random number in the interval [0, 1). Example:
 #
 # ```elvish-transcript
@@ -337,7 +337,7 @@ fn / {|x-num @y-num| }
 # This limit may be lifted in the future.
 fn % {|x y| }
 
-#//skip
+#//skip-test
 # Output a pseudo-random integer N such that `$low <= N < $high`. If not given,
 # `$low` defaults to 0. Examples:
 #

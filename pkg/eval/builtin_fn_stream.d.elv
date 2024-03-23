@@ -251,7 +251,7 @@ fn count {|input-list?| }
 # Ordering heterogeneous values:
 #
 # ```elvish-transcript
-# //skip
+# //skip-test
 # ~> order [a (num 2) c (num 0) b (num 1)]
 # Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
 #   [tty]:1:1-37: order [a (num 2) c (num 0) b (num 1)]

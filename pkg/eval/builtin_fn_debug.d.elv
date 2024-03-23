@@ -1,4 +1,4 @@
-#//skip
+#//skip-test
 
 # Output a map describing the current source, which is the source file or
 # interactive command that contains the call to `src`. The value contains the

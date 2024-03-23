@@ -156,7 +156,7 @@ fn has-value {|container value| }
 # ```
 fn has-key {|container key| }
 
-#//skip
+#//skip-test
 # Put all keys of `$map` on the structured stdout.
 #
 # Example:

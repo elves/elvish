@@ -1,4 +1,4 @@
-#//skip
+#//skip-test
 
 # Construct a callable value for the external program `$program`. Example:
 #

@@ -84,7 +84,7 @@ fn each {|f inputs?| }
 # Example (your output will differ):
 #
 # ```elvish-transcript
-# //skip
+# //skip-test
 # ~> range 1 10 | peach {|x| + $x 10 }
 # ▶ (num 12)
 # ▶ (num 13)

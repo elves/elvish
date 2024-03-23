@@ -162,7 +162,7 @@ fn not-eq {|a b| }
 # Examples comparing values of different types:
 #
 # ```elvish-transcript
-# //skip
+# //skip-test
 # ~> compare a (num 10)
 # Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
 #   [tty]:1:1-18: compare a (num 10)

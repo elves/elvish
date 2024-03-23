@@ -1,4 +1,4 @@
-#//skip
+#//skip-test
 
 # Changes directory.
 #

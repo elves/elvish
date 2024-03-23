@@ -137,7 +137,7 @@ fn resolve {|command| }
 # semantics](language.html#closure-semantics)) and thus accessible to `eval`:
 #
 # ```elvish-transcript
-# //skip
+# //skip-test
 # // Skipping since the error contains the context-sensitive "[eval 2]"
 # ~> var a b
 # ~> fn f {|code| nop $a; eval $code }
