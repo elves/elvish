@@ -1,3 +1,5 @@
+#//skip
+
 # Changes directory.
 #
 # This affects the entire process, including parallel tasks that are started

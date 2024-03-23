@@ -89,20 +89,17 @@ fn is {|@values| }
 # Etymology: [Perl](https://perldoc.perl.org/perlop.html#Equality-Operators).
 fn eq {|@values| }
 
-# Determines whether every adjacent pair of `$value`s are not equal. Note that
-# this does not imply that `$value`s are all distinct. Examples:
+# Determines whether `$a` and `$b` are not equal. Equivalent to `not (eq $a $b)`.
 #
 # ```elvish-transcript
-# ~> not-eq 1 2 3
+# ~> not-eq 1 2
 # ▶ $true
-# ~> not-eq 1 2 1
-# ▶ $true
-# ~> not-eq 1 1 2
+# ~> not-eq 1 1
 # ▶ $false
 # ```
 #
 # See also [`eq`]().
-fn not-eq {|@values| }
+fn not-eq {|a b| }
 
 # Outputs the number -1 if `$a` is smaller than `$b`, 0 if `$a` is equal to
 # `$b`, and 1 if `$a` is greater than `$b`.
@@ -149,24 +146,30 @@ fn not-eq {|@values| }
 #         order](https://en.wikipedia.org/wiki/Total_order), which is mainly
 #         useful for sorting values of mixed types.
 #
-# Examples:
+# Examples comparing values of the same type:
 #
 # ```elvish-transcript
 # ~> compare a b
-# ▶ (num 1)
-# ~> compare b a
 # ▶ (num -1)
+# ~> compare b a
+# ▶ (num 1)
 # ~> compare x x
 # ▶ (num 0)
 # ~> compare (num 10) (num 1)
 # ▶ (num 1)
+# ```
+#
+# Examples comparing values of different types:
+#
+# ```elvish-transcript
+# //skip
 # ~> compare a (num 10)
 # Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
-# [tty 3]:1:1: compare a (num 10)
+#   [tty]:1:1-18: compare a (num 10)
 # ~> compare &total a (num 10)
-# ▶ (num 1)
-# ~> compare &total (num 10) a
 # ▶ (num -1)
+# ~> compare &total (num 10) a
+# ▶ (num 1)
 # ```
 #
 # See also [`order`]().

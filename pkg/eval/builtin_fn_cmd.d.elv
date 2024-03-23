@@ -1,3 +1,5 @@
+#//skip
+
 # Construct a callable value for the external program `$program`. Example:
 #
 # ```elvish-transcript

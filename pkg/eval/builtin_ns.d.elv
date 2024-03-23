@@ -3,6 +3,7 @@
 # Values assigned to it will be discarded. Referencing it always results in $nil.
 var _
 
+#//skip
 # A list containing command-line arguments. Analogous to `argv` in some other
 # languages. Examples:
 #

@@ -73,12 +73,12 @@ fn call {|fn args opts| }
 #
 # ```elvish-transcript
 # ~> resolve echo
-# ▶ <builtin echo>
+# ▶ '$echo~'
 # ~> fn f { }
 # ~> resolve f
-# ▶ <closure 0xc4201c24d0>
+# ▶ '$f~'
 # ~> resolve cat
-# ▶ <external cat>
+# ▶ '(external cat)'
 # ```
 fn resolve {|command| }
 
@@ -124,8 +124,8 @@ fn resolve {|command| }
 # ```elvish-transcript
 # ~> eval 'var z = lorem'
 # ~> put $z
-# compilation error: variable $z not found
-# [ttz 2], line 1: put $z
+# Compilation error: variable $z not found
+#   [tty]:1:5-6: put $z
 # ~> var saved-ns = $nil
 # ~> eval &on-end={|ns| set saved-ns = $ns } 'var z = lorem'
 # ~> put $saved-ns[z]
@@ -137,17 +137,21 @@ fn resolve {|command| }
 # semantics](language.html#closure-semantics)) and thus accessible to `eval`:
 #
 # ```elvish-transcript
+# //skip
+# // Skipping since the error contains the context-sensitive "[eval 2]"
 # ~> var a b
 # ~> fn f {|code| nop $a; eval $code }
 # ~> f 'echo $a'
 # $nil
 # ~> f 'echo $b'
-# Exception: compilation error: variable $b not found
-# [eval 2], line 1: echo $b
-# Traceback: [... omitted ...]
+# Exception: Compilation error: variable $b not found
+#   [eval 2]:1:6-7: echo $b
+#   [tty]:1:22-32: fn f {|code| nop $a; eval $code }
+#   [tty]:1:1-11: f 'echo $b'
 # ```
 fn eval {|code &ns=$nil &on-end=$nil| }
 
+#//in-temp-dir
 # Imports a module, and outputs the namespace for the module.
 #
 # Most code should use the [use](language.html#importing-modules-with-use)
@@ -169,18 +173,19 @@ fn use-mod {|use-spec| }
 #
 # ```elvish-transcript
 # ~> deprecate msg
-# deprecation: msg
+# Deprecation: msg
+#   [tty]:1:1-13: deprecate msg
 # ~> fn f { deprecate msg }
 # ~> f
-# deprecation: msg
-# [tty 3], line 1: f
+# Deprecation: msg
+#   [tty]:1:1-1: f
 # ~> f # a different call site; shows deprecate message
-# deprecation: msg
-# [tty 4], line 1: f
+# Deprecation: msg
+#   [tty]:1:1-50: f # a different call site; shows deprecate message
 # ~> fn g { f }
 # ~> g
-# deprecation: msg
-# [tty 5], line 1: fn g { f }
+# Deprecation: msg
+#   [tty]:1:8-9: fn g { f }
 # ~> g # same call site, no more deprecation message
 # ```
 fn deprecate {|msg| }

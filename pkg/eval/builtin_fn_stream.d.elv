@@ -94,8 +94,8 @@ fn one {|inputs?| }
 #
 # ```elvish-transcript
 # ~> range 2 | take 10
-# ▶ 0
-# ▶ 1
+# ▶ (num 0)
+# ▶ (num 1)
 # ~> take 3 [a b c d e]
 # ▶ a
 # ▶ b
@@ -162,13 +162,13 @@ fn compact {|inputs?| }
 #
 # ```elvish-transcript
 # ~> count lorem # count bytes in a string
-# ▶ 5
+# ▶ (num 5)
 # ~> count [lorem ipsum]
-# ▶ 2
+# ▶ (num 2)
 # ~> range 100 | count
-# ▶ 100
+# ▶ (num 100)
 # ~> seq 100 | count
-# ▶ 100
+# ▶ (num 100)
 # ```
 fn count {|input-list?| }
 
@@ -233,16 +233,6 @@ fn count {|input-list?| }
 # ▶ c
 # ▶ b
 # ▶ a
-# ~> order [a (num 2) c (num 0) b (num 1)]
-# Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
-# [tty 3]:1:1: order [a (num 2) c (num 0) b (num 1)]
-# ~> order &total [a (num 2) c (num 0) b (num 1)]
-# ▶ (num 0)
-# ▶ (num 1)
-# ▶ (num 2)
-# ▶ a
-# ▶ b
-# ▶ c
 # ~> put [0 x] [1 a] [2 b] | order &key={|l| put $l[1]}
 # ▶ [1 a]
 # ▶ [2 b]
@@ -256,6 +246,22 @@ fn count {|input-list?| }
 # ▶ r
 # ▶ e
 # ▶ m
+# ```
+#
+# Ordering heterogeneous values:
+#
+# ```elvish-transcript
+# //skip
+# ~> order [a (num 2) c (num 0) b (num 1)]
+# Exception: bad value: inputs to "compare" or "order" must be comparable values, but is uncomparable values
+#   [tty]:1:1-37: order [a (num 2) c (num 0) b (num 1)]
+# ~> order &total [a (num 2) c (num 0) b (num 1)]
+# ▶ (num 0)
+# ▶ (num 1)
+# ▶ (num 2)
+# ▶ a
+# ▶ b
+# ▶ c
 # ```
 #
 # Beware that strings that look like numbers are treated as strings, not

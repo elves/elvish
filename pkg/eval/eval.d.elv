@@ -1,3 +1,4 @@
+#//skip
 # A list of functions to run after changing directory. These functions are always
 # called with directory to change it, which might be a relative path. The
 # following example also shows `$before-chdir`:
@@ -40,6 +41,8 @@ var num-bg-jobs
 # Failures of background jobs are always notified.
 var notify-bg-job-success
 
+#//skip
+#// The test framework hardcodes value out indicators.
 # A string put before value outputs (such as those of `put`). Defaults to
 # `'▶ '`. Example:
 #

@@ -5,11 +5,11 @@
 # ```elvish-transcript
 # ~> put a
 # ▶ a
-# ~> put lorem ipsum [a b] { ls }
+# ~> put lorem ipsum [a b] [&k=v]
 # ▶ lorem
 # ▶ ipsum
 # ▶ [a b]
-# ▶ <closure 0xc4202607e0>
+# ▶ [&k=v]
 # ```
 #
 # **Note**: It is almost never necessary to use `put (...)` - just write the
@@ -93,51 +93,64 @@ fn read-line { }
 # `print`s do not print a trailing newline.
 fn print {|&sep=' ' @value| }
 
-# Prints values to the byte stream according to a template. If you need to inject the output into
-# the value stream use this pattern: `printf .... | slurp`. That ensures that any newlines in the
-# output of `printf` do not cause its output to be broken into multiple values, thus eliminating
-# the newlines, which will occur if you do `put (printf ....)`.
+# Prints values to the byte stream according to a template.
 #
-# Like [`print`](), this command does not add an implicit newline; include an explicit `"\n"`
-# in the formatting template instead. For example, `printf "%.1f\n" (/ 10.0 3)`.
+# The template may contain "formatting verbs", sequences that start with `%`.
+# Each verb corresponds to an argument, and specifies how that argument will be
+# converted and formatted:
 #
-# See Go's [`fmt`](https://golang.org/pkg/fmt/#hdr-Printing) package for
-# details about the formatting verbs and the various flags that modify the
-# default behavior, such as padding and justification.
+# - `%s`, `%q` and `%v` convert the argument to a string:
 #
-# Unlike Go, each formatting verb has a single associated internal type, and
-# accepts any argument that can reasonably be converted to that type:
+#     - `%s`: use [to-string](#to-string)
+#     - `%q`: use [repr](#repr)
+#     - `%v`: equivalent to `%s`
+#     - `%#v`: equivalent to `%q`.
 #
-# - The verbs `%s`, `%q` and `%v` convert the corresponding argument to a
-#   string in different ways:
+# - `%t` converts the argument to a boolean using [bool](#bool), and prints it
+#   as either `true` or `false`.
 #
-#     - `%s` uses [to-string](#to-string) to convert a value to string.
+# - `%b`, `%c`, `%d`, `%o`, `%O`, `%x`, `%X` and `%U` convert the argument to an
+#   integer, and then print it as follows:
 #
-#     - `%q` uses [repr](#repr) to convert a value to string.
+#   - `%b`: base 2
+#   - `%c`: the character represented by the Unicode codepoint
+#   - `%d`: base 10
+#   - `%o`: base 8
+#   - `%O`: base 8, with `0o` prefix
+#   - `%x`: base 16, with lower-case letters for a-f
+#   - `%X`: base 16, with upper-case letters for A-F
+#   - `%U`: Unicode format like U+1234; same as `U+%04X`
 #
-#     - `%v` is equivalent to `%s`, and `%#v` is equivalent to `%q`.
+# - `%e`, `%E`, `%f`, `%F`, `%g` and `%G` convert the argument to a
+#   floating-point number using [`inexact-num`](), and print it as follows:
 #
-# - The verb `%t` first convert the corresponding argument to a boolean using
-#   [bool](#bool), and then uses its Go counterpart to format the boolean.
+#   - `%e`: scientific notation like -1.234456e+78
+#   - `%E`: scientific notation like -1.234456E+78
+#   - `%f`: decimal point but no exponent, like 123.456
+#   - `%F`: same as `%f`
+#   - `%g`: `%e` for large exponents, `%f` otherwise
+#   - `%G`: `%E` for large exponents, `%F` otherwise
 #
-# - The verbs `%b`, `%c`, `%d`, `%o`, `%O`, `%x`, `%X` and `%U` first convert
-#   the corresponding argument to an integer using an internal algorithm, and
-#   use their Go counterparts to format the integer.
+# - `%%` prints a literal `%` and consumes no argument.
 #
-# - The verbs `%e`, `%E`, `%f`, `%F`, `%g` and `%G` first convert the
-#   corresponding argument to a floating-point number using
-#   [`inexact-num`](), and then use their Go counterparts to format the
-#   number.
+# Unsupported verbs not documented don't cause exceptions, but the output will
+# contain content like `%!Z(unsupported formatting verb)`.
 #
-# The special verb `%%` prints a literal `%` and consumes no argument.
+# Flags may be added between `%` and the verb to modify behavior like precision
+# and padding. See Go's [`fmt`](https://golang.org/pkg/fmt/#hdr-Printing)
+# package for details.
 #
-# Verbs not documented above are not supported.
+# This command does not add a trailing newline. Include it explicitly in the
+# template, like `printf "Hello %s\n" world`.
 #
 # Examples:
 #
 # ```elvish-transcript
-# ~> printf "%10s %.2f\n" Pi $math:pi
-#         Pi 3.14
+# ~> use math
+# ~> printf ": %10s %.3f\n" Pi $math:pi
+#    printf ": %10s %.3f\n" E $math:e
+# :         Pi 3.142
+# :          E 2.718
 # ~> printf "%-10s %.2f %s\n" Pi $math:pi $math:pi
 # Pi         3.14 3.141592653589793
 # ~> printf "%d\n" 0b11100111
@@ -147,6 +160,10 @@ fn print {|&sep=' ' @value| }
 # ~> printf "list is: %q\n" [foo bar 'foo bar']
 # list is: [foo bar 'foo bar']
 # ```
+#
+# Since `printf` writes to the byte stream, capturing its output will generate
+# one value per line. To capture it into one string value, use it together with
+# [`slurp`](), as in `var s = (printf ... | slurp)`.
 #
 # **Note**: Compared to the [POSIX `printf`
 # command](https://pubs.opengroup.org/onlinepubs/007908799/xcu/printf.html)
@@ -193,15 +210,13 @@ fn echo {|&sep=' ' @value| }
 # ```elvish-transcript
 # ~> pprint [foo bar]
 # [
-# foo
-# bar
+#  foo
+#  bar
 # ]
 # ~> pprint [&k1=v1 &k2=v2]
 # [
-# &k2=
-# v2
-# &k1=
-# v1
+#  &k1=	v1
+#  &k2=	v2
 # ]
 # ```
 #
@@ -235,7 +250,7 @@ fn repr {|@value| }
 # ~> var e = ?(fail lorem-ipsum)
 # ~> show $e
 # Exception: lorem-ipsum
-# [tty 3], line 1: var e = ?(fail lorem-ipsum)
+#   [tty]:1:11-26: var e = ?(fail lorem-ipsum)
 # ```
 fn show {|e| }
 
@@ -292,8 +307,8 @@ fn from-lines { }
 #
 # Numbers in JSON are parsed as follows:
 #
-# -   Numbers without fractional parts are parsed as exact integers, and
-#     arbitrary precision is supported.
+# -   Numbers without fractional parts are parsed as exact integers, with
+#     support for arbitrary precision.
 #
 # -   Numbers with fractional parts (even if it's `.0`) are parsed as
 #     [inexact](language.html#exactness) floating-point numbers, and the parsing
@@ -309,13 +324,13 @@ fn from-lines { }
 # ~> echo '{"lorem": "ipsum"}' | from-json
 # ▶ [&lorem=ipsum]
 # ~> # multiple JSONs running together
-# echo '"a""b"["x"]' | from-json
+#    echo '"a""b"["x"]' | from-json
 # ▶ a
 # ▶ b
 # ▶ [x]
 # ~> # multiple JSONs separated by newlines
-# echo '"a"
-# {"k": "v"}' | from-json
+#    echo '"a"
+#    {"k": "v"}' | from-json
 # ▶ a
 # ▶ [&k=v]
 # ~> echo '[42, 100000000000000000000, 42.0, 42.2]' | from-json
@@ -345,8 +360,7 @@ fn from-json { }
 # See also [`from-lines`](), [`read-upto`](), and [`to-terminated`]().
 fn from-terminated {|terminator| }
 
-# Writes each [value input](#value-inputs) to a separate line in the byte
-# output. Byte input is ignored.
+# Writes each input to a separate line in the byte output.
 #
 # ```elvish-transcript
 # ~> put a b | to-lines
@@ -355,21 +369,16 @@ fn from-terminated {|terminator| }
 # ~> to-lines [a b]
 # a
 # b
-# ~> { put a; echo b } | to-lines
-# b
-# a
 # ```
 #
 # See also [`from-lines`]() and [`to-terminated`]().
 fn to-lines {|inputs?| }
 
-# Writes each [value input](#value-inputs) to the byte output with the
-# specified terminator character. Byte input is ignored. This behavior is
-# useful, for example, when feeding output into a program that accepts NUL
-# terminated lines to avoid ambiguities if the values contains newline
-# characters.
+# Writes each input to the byte output with the specified terminator character.
 #
 # The `$terminator` must be a single ASCII character such as `"\x00"` (NUL).
+# Using NUL is useful for feeding output to programs that expect NUL-terminated
+# strings, such as `grep -z` or `xargs -0`.
 #
 # ```elvish-transcript
 # ~> put a b | to-terminated "\x00" | slurp

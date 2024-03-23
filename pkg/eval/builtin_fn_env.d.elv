@@ -5,6 +5,7 @@
 # Example:
 #
 # ```elvish-transcript
+# //unset-env X
 # ~> set-env X foobar
 # ~> put $E:X
 # ▶ foobar
@@ -19,6 +20,7 @@ fn set-env {|name value| }
 # Example:
 #
 # ```elvish-transcript
+# //unset-env X
 # ~> set E:X = foo
 # ~> unset-env X
 # ~> has-env X
@@ -36,6 +38,8 @@ fn unset-env {|name| }
 # Examples:
 #
 # ```elvish-transcript
+# //set-env PATH /bin
+# //unset-env NO_SUCH_ENV
 # ~> has-env PATH
 # ▶ $true
 # ~> has-env NO_SUCH_ENV
@@ -55,11 +59,13 @@ fn has-env {|name| }
 # Examples:
 #
 # ```elvish-transcript
+# //set-env LANG zh_CN.UTF-8
+# //unset-env NO_SUCH_ENV
 # ~> get-env LANG
 # ▶ zh_CN.UTF-8
 # ~> get-env NO_SUCH_ENV
 # Exception: non-existent environment variable
-# [tty], line 1: get-env NO_SUCH_ENV
+#   [tty]:1:1-19: get-env NO_SUCH_ENV
 # ```
 #
 # See also [`has-env`](), [`set-env`](), and [`unset-env`]().

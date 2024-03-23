@@ -32,11 +32,11 @@ fn '>=s' {|@string| }
 #
 # ```elvish-transcript
 # ~> wcswidth a
-# ▶ 1
+# ▶ (num 1)
 # ~> wcswidth lorem
-# ▶ 5
+# ▶ (num 5)
 # ~> wcswidth 你好，世界
-# ▶ 10
+# ▶ (num 10)
 # ```
 fn wcswidth {|string| }
 

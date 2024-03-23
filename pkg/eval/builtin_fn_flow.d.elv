@@ -10,6 +10,7 @@
 # different commands in order to independently capture the output of each byte stream:
 #
 # ```elvish-transcript
+# ~> use file
 # ~> fn capture {|f|
 #      var pout = (file:pipe)
 #      var perr = (file:pipe)
@@ -51,10 +52,10 @@ fn run-parallel {|@callable| }
 #
 # ```elvish-transcript
 # ~> range 5 8 | each {|x| * $x $x }
-# ▶ 25
-# ▶ 36
-# ▶ 49
-# ~> each {|x| put $x[:3] } [lorem ipsum]
+# ▶ (num 25)
+# ▶ (num 36)
+# ▶ (num 49)
+# ~> each {|x| put $x[..3] } [lorem ipsum]
 # ▶ lor
 # ▶ ips
 # ```
@@ -83,6 +84,7 @@ fn each {|f inputs?| }
 # Example (your output will differ):
 #
 # ```elvish-transcript
+# //skip
 # ~> range 1 10 | peach {|x| + $x 10 }
 # ▶ (num 12)
 # ▶ (num 13)
@@ -112,17 +114,14 @@ fn peach {|&num-workers=(num +inf) f inputs?| }
 # ```elvish-transcript
 # ~> fail bad
 # Exception: bad
-# [tty 9], line 1: fail bad
+#   [tty]:1:1-8: fail bad
 # ~> put ?(fail bad)
-# ▶ [&reason=[&content=bad &type=fail]]
+# ▶ [^exception &reason=[^fail-error &content=bad &type=fail] &stack-trace=<...>]
 # ~> fn f { fail bad }
 # ~> fail ?(f)
 # Exception: bad
-# Traceback:
-#   [tty 7], line 1:
-#     fn f { fail bad }
-#   [tty 8], line 1:
-#     fail ?(f)
+#   [tty]:1:8-16: fn f { fail bad }
+#   [tty]:1:8-8: fail ?(f)
 # ```
 fn fail {|v| }
 
@@ -223,6 +222,6 @@ fn continue { }
 # ▶ foo
 # ~> defer { put foo }
 # Exception: defer must be called from within a closure
-# [tty 2], line 1: defer { put foo }
+#   [tty]:1:1-17: defer { put foo }
 # ```
 fn defer {|fn| }

@@ -1,3 +1,4 @@
+#//skip
 # Output a pseudo-random number in the interval [0, 1). Example:
 #
 # ```elvish-transcript
@@ -297,7 +298,7 @@ fn * {|@num| }
 # ▶ (num 0)
 # ~> / 2 0
 # Exception: bad value: divisor must be number other than exact 0, but is exact 0
-# [tty 6], line 1: / 2 0
+#   [tty]:1:1-5: / 2 0
 # ~> / 2 0.0
 # ▶ (num +Inf)
 # ```
@@ -327,13 +328,16 @@ fn / {|x-num @y-num| }
 # an exception otherwise:
 #
 # ```elvish-transcript
+# ~> use math
 # ~> % (math:pow 2 63) 3
 # Exception: wrong type for arg #0: must be integer
+#   [tty]:1:1-19: % (math:pow 2 63) 3
 # ```
 #
 # This limit may be lifted in the future.
 fn % {|x y| }
 
+#//skip
 # Output a pseudo-random integer N such that `$low <= N < $high`. If not given,
 # `$low` defaults to 0. Examples:
 #
@@ -385,6 +389,7 @@ fn -randseed {|seed| }
 # ▶ (num 3)
 # ▶ (num 1)
 # ▶ (num -1)
+# ~> use math
 # ~> range (- (math:pow 2 53) 1) +inf
 # ▶ (num 9007199254740991.0)
 # ▶ (num 9007199254740992.0)

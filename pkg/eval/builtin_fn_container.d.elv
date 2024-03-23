@@ -62,7 +62,7 @@ fn conj {|list @more| }
 # ~> assoc [&k=v] k v2
 # ▶ [&k=v2]
 # ~> assoc [&k=v] k2 v2
-# ▶ [&k2=v2 &k=v]
+# ▶ [&k=v &k2=v2]
 # ```
 #
 # Etymology: [Clojure](https://clojuredocs.org/clojure.core/assoc).
@@ -77,7 +77,7 @@ fn assoc {|container k v| }
 # ~> dissoc [&foo=bar &lorem=ipsum] foo
 # ▶ [&lorem=ipsum]
 # ~> dissoc [&foo=bar &lorem=ipsum] k
-# ▶ [&lorem=ipsum &foo=bar]
+# ▶ [&foo=bar &lorem=ipsum]
 # ```
 #
 # See also [`assoc`]().
@@ -149,13 +149,14 @@ fn has-value {|container value| }
 # ▶ $true
 # ~> has-key ab 2
 # ▶ $false
-# ~> has-key ab 0:2
+# ~> has-key ab 0..2
 # ▶ $true
-# ~> has-key ab 0:3
+# ~> has-key ab 0..3
 # ▶ $false
 # ```
 fn has-key {|container key| }
 
+#//skip
 # Put all keys of `$map` on the structured stdout.
 #
 # Example:

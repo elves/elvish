@@ -1,3 +1,5 @@
+#//skip
+
 # Pauses for at least the specified duration. The actual pause duration depends
 # on the system.
 #

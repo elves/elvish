@@ -20,7 +20,7 @@ import (
 	"src.elv.sh/pkg/testutil"
 )
 
-//go:embed *.elvts
+//go:embed *.elvts *.elv
 var transcripts embed.FS
 
 func TestTranscripts(t *testing.T) {
