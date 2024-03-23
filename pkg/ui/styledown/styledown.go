@@ -21,6 +21,10 @@
 //   - _ for underline
 //   - # for reverse video
 //
+// This package can be used as a Go library or via Elvish's builtin
+// [`render-styledown`](https://elv.sh/ref/builtin.html#render-styledown)
+// command.
+//
 // # Double-width characters
 //
 // Characters in text and style lines are matched up using their visual
@@ -52,6 +56,14 @@
 // currently just one:
 //
 //   - no-eol: suppress the newline after the last line
+//
+// # Rationale
+//
+// Styledown is suitable for authoring a large chunk of styled text when the
+// exact width and alignment of text need to be preserved.
+//
+// For example, it can be used to manually create and edit terminal mockups. In
+// future it will be used in Elvish's tests for its terminal UI.
 package styledown
 
 import (

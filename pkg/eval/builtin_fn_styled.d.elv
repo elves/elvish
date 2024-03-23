@@ -118,6 +118,8 @@ fn styled-segment {|object &fg-color=default &bg-color=default &bold=$false &dim
 # # "foo" will be printed as red, but not bold
 # # "bar" will be printed without any style
 # ```
+#
+# See also [`render-styledown`].
 fn styled {|object @style-transformer| }
 
 # Renders "styledown" markup into a styled text. For the styledown markup
@@ -132,4 +134,9 @@ fn styled {|object @style-transformer| }
 #    '[1..]
 # ▶ [^styled (styled-segment foo &bold) ' ' (styled-segment bar &inverse) "\n"]
 # ```
+#
+# To print the rendered text in the terminal directly, pass it to [`print`](),
+# like `render-styledown ... | print (one)`.
+#
+# See also [`styled`].
 fn render-styledown {|s| }
