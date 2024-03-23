@@ -37,7 +37,7 @@ func TestConcat(t *testing.T) {
 func TestTextAsElvishValue(t *testing.T) {
 	vals.TestValue(t, T("text")).
 		Kind("ui:text").
-		Repr("(ui:text text)").
+		Repr("[^styled text]").
 		AllKeys("0").
 		Index("0", &Segment{Text: "text"}).
 		IndexError("a", errors.New("index must be integer"))
@@ -46,9 +46,9 @@ func TestTextAsElvishValue(t *testing.T) {
 		Index("0..2", Concat(T("red", FgRed), T("blue", FgBlue)))
 
 	vals.TestValue(t, T("text", FgRed)).
-		Repr("(ui:text (ui:text-segment text &fg-color=red))")
+		Repr("[^styled (styled-segment text &fg-color=red)]")
 	vals.TestValue(t, T("text", Bold)).
-		Repr("(ui:text (ui:text-segment text &bold=$true))")
+		Repr("[^styled (styled-segment text &bold)]")
 }
 
 var (

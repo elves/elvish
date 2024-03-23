@@ -6,13 +6,13 @@
 
 ## construction ##
 ~> complex-candidate a/b
-▶ (edit:complex-candidate a/b &code-suffix='' &display=(ui:text))
+▶ (edit:complex-candidate a/b &code-suffix='' &display=[^styled])
 ~> complex-candidate a/b &code-suffix=' '
-▶ (edit:complex-candidate a/b &code-suffix=' ' &display=(ui:text))
+▶ (edit:complex-candidate a/b &code-suffix=' ' &display=[^styled])
 ~> complex-candidate a/b &code-suffix=' ' &display=A/B
-▶ (edit:complex-candidate a/b &code-suffix=' ' &display=(ui:text A/B))
+▶ (edit:complex-candidate a/b &code-suffix=' ' &display=[^styled A/B])
 ~> complex-candidate a/b &code-suffix=' ' &display=(styled A/B red)
-▶ (edit:complex-candidate a/b &code-suffix=' ' &display=(ui:text (ui:text-segment A/B &fg-color=red)))
+▶ (edit:complex-candidate a/b &code-suffix=' ' &display=[^styled (styled-segment A/B &fg-color=red)])
 ~> complex-candidate a/b &code-suffix=' ' &display=[]
 Exception: bad value: &display must be string or styled, but is []
   [tty]:1:1-50: complex-candidate a/b &code-suffix=' ' &display=[]
@@ -25,7 +25,7 @@ Exception: bad value: &display must be string or styled, but is []
 ▶ code-suffix
 ▶ display
 ~> repr (complex-candidate a/b &code-suffix=' ' &display=A/B)
-(edit:complex-candidate a/b &code-suffix=' ' &display=(ui:text A/B))
+(edit:complex-candidate a/b &code-suffix=' ' &display=[^styled A/B])
 ~> eq (complex-candidate stem) (complex-candidate stem)
 ▶ $true
 ~> eq (complex-candidate stem &code-suffix=' ') (complex-candidate stem)
@@ -37,4 +37,4 @@ Exception: bad value: &display must be string or styled, but is []
 ~> put (complex-candidate a/b &code-suffix=' ' &display=A/B)[stem code-suffix display]
 ▶ a/b
 ▶ ' '
-▶ (ui:text A/B)
+▶ [^styled A/B]

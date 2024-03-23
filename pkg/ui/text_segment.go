@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"bytes"
 	"fmt"
 	"math/big"
 	"strings"
@@ -23,33 +22,32 @@ func (*Segment) Kind() string { return "ui:text-segment" }
 // construct an identical Segment. Unset or default attributes are skipped. If
 // the Segment represents an unstyled string only this string is returned.
 func (s *Segment) Repr(int) string {
-	buf := new(bytes.Buffer)
-	addIfNotEqual := func(key string, val, cmp any) {
-		if val != cmp {
-			var valString string
-			if c, ok := val.(Color); ok {
-				valString = c.String()
-			} else {
-				valString = vals.Repr(val, 0)
-			}
-			fmt.Fprintf(buf, "&%s=%s ", key, valString)
+	var sb strings.Builder
+	addColor := func(key string, c Color) {
+		if c != nil {
+			fmt.Fprintf(&sb, " &%s=%s", key, c.String())
+		}
+	}
+	addBool := func(key string, b bool) {
+		if b {
+			fmt.Fprintf(&sb, " &%s", key)
 		}
 	}
 
-	addIfNotEqual("fg-color", s.Fg, nil)
-	addIfNotEqual("bg-color", s.Bg, nil)
-	addIfNotEqual("bold", s.Bold, false)
-	addIfNotEqual("dim", s.Dim, false)
-	addIfNotEqual("italic", s.Italic, false)
-	addIfNotEqual("underlined", s.Underlined, false)
-	addIfNotEqual("blink", s.Blink, false)
-	addIfNotEqual("inverse", s.Inverse, false)
+	addColor("fg-color", s.Fg)
+	addColor("bg-color", s.Bg)
+	addBool("bold", s.Bold)
+	addBool("dim", s.Dim)
+	addBool("italic", s.Italic)
+	addBool("underlined", s.Underlined)
+	addBool("blink", s.Blink)
+	addBool("inverse", s.Inverse)
 
-	if buf.Len() == 0 {
+	if sb.Len() == 0 {
 		return parse.Quote(s.Text)
 	}
 
-	return fmt.Sprintf("(ui:text-segment %s %s)", parse.Quote(s.Text), strings.TrimSpace(buf.String()))
+	return fmt.Sprintf("(styled-segment %s%s)", parse.Quote(s.Text), sb.String())
 }
 
 // IterateKeys feeds the function with all valid attributes of styled-segment.

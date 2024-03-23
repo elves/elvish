@@ -52,7 +52,7 @@ func (t Text) Repr(indent int) string {
 		buf.WriteByte(' ')
 		buf.WriteString(s.Repr(indent + 1))
 	}
-	return fmt.Sprintf("(ui:text%s)", buf.String())
+	return fmt.Sprintf("[^styled%s]", buf.String())
 }
 
 // IterateKeys feeds the function with all valid indices of the styled-text.

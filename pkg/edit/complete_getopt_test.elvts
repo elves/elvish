@@ -24,20 +24,20 @@ Exception: port does not support value output
   [tty]:1:1-15: complete '' >&-
 // complete option
 ~> complete -
-▶ (edit:complex-candidate -a &code-suffix='' &display=(ui:text '-a (Show all)'))
-▶ (edit:complex-candidate --all &code-suffix='' &display=(ui:text '--all (Show all)'))
-▶ (edit:complex-candidate -n &code-suffix='' &display=(ui:text '-n new-name (Set name)'))
-▶ (edit:complex-candidate --name &code-suffix='' &display=(ui:text '--name new-name (Set name)'))
+▶ (edit:complex-candidate -a &code-suffix='' &display=[^styled '-a (Show all)'])
+▶ (edit:complex-candidate --all &code-suffix='' &display=[^styled '--all (Show all)'])
+▶ (edit:complex-candidate -n &code-suffix='' &display=[^styled '-n new-name (Set name)'])
+▶ (edit:complex-candidate --name &code-suffix='' &display=[^styled '--name new-name (Set name)'])
 ~> complete - >&-
 Exception: port does not support value output
   [tty]:8:3-48:   complete-getopt $args $opt-specs $arg-handlers
   [tty]:1:1-14: complete - >&-
 // complete long option
 ~> complete --
-▶ (edit:complex-candidate --all &code-suffix='' &display=(ui:text '--all (Show all)'))
-▶ (edit:complex-candidate --name &code-suffix='' &display=(ui:text '--name new-name (Set name)'))
+▶ (edit:complex-candidate --all &code-suffix='' &display=[^styled '--all (Show all)'])
+▶ (edit:complex-candidate --name &code-suffix='' &display=[^styled '--name new-name (Set name)'])
 ~> complete --a
-▶ (edit:complex-candidate --all &code-suffix='' &display=(ui:text '--all (Show all)'))
+▶ (edit:complex-candidate --all &code-suffix='' &display=[^styled '--all (Show all)'])
 ~> complete -- >&-
 Exception: port does not support value output
   [tty]:8:3-48:   complete-getopt $args $opt-specs $arg-handlers
