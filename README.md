@@ -15,7 +15,7 @@ versions, but it's quite stable for both scripting and interactive use.
 
 User groups (all connected thanks to [Matrix](https://matrix.org)):
 
-[![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg?logo=telegram&logoColor=white)](https://telegram.me/elvish)
+[![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg?logo=telegram&logoColor=white)](https://t.me/+Pv5ZYgTXD-YaKwcP)
 [![Discord server](https://img.shields.io/badge/discord-Elvish-blue.svg?logo=discord&logoColor=white)](https://discord.gg/jrmuzRBU8D)
 [![#users:elv.sh](https://img.shields.io/badge/matrix-%23users:elv.sh-blue.svg?logo=matrix)](https://matrix.to/#/#users:elv.sh)
 [![#elvish on libera.chat](https://img.shields.io/badge/libera.chat-%23elvish-blue.svg?logo=liberadotchat&logoColor=white)](https://web.libera.chat/#elvish)
