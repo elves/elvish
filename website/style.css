@@ -37,7 +37,14 @@ body.has-js .no-js, body.no-js .has-js {
   display: none !important;
 }
 
-.dark {
+/* Firefox allows the user to specify colors in the UA stylesheet, so set them
+   explicitly. */
+body {
+  color: black;
+  background: white;
+}
+
+body.dark {
   color: #eee;
   background: black;
 }
