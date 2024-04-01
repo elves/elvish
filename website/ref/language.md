@@ -2108,15 +2108,6 @@ This control structure behaves as follows:
     ▶ [^fail-error &content=bad &type=fail]
     ```
 
-    **Note**: `else` requires a `catch` to be present. The following code is
-    invalid:
-
-    ```elvish-transcript
-    ~> try { nop } else { echo well }
-    Compilation error: try with an else block requires a catch block
-      [tty 1]:1:1-30: try { nop } else { echo well }
-    ```
-
 4.  If `finally-block` is present, it is executed. Examples:
 
     ```elvish-transcript
