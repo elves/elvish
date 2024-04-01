@@ -72,8 +72,10 @@ constructs:
 
 The following characters are parsed as metacharacters under certain conditions:
 
--   `~`: introduces [tilde expansion](#tilde-expansion) if appearing at the
-    beginning of a compound expression
+-   `~`: if appearing at the beginning of a compound expression, it introduces
+    [tilde expansion](#tilde-expansion); if appearing at the end of a variable,
+    it refers to a function with the same name (see
+    [variable suffix](#variable-suffix))
 
 -   `=`: terminates [map keys](#map), option keys, or the variable name in
     [temporary assignments](#temporary-assignment)
