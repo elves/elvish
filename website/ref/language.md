@@ -1011,7 +1011,7 @@ if ?(test -d ./a) {
 combine output capture and exception capture:
 
 ```elvish
-var output = (var error = ?(commands-that-may-fail))
+var output = (var error = ?(put foo; fail bad))
 ```
 
 ## Braced list
