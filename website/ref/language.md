@@ -2088,7 +2088,8 @@ the iteration value has no elements).
 ## Exception control: `try` {#try}
 
 (If you just want to capture the exception, you can use the more concise
-exception capture construct `?()` instead.)
+[exception capture construct](https://elv.sh/ref/language.html#exception-capture)
+`?()` instead.)
 
 Syntax:
 
