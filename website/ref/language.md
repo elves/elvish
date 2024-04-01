@@ -2102,8 +2102,17 @@ This control structure behaves as follows:
     Example:
 
     ```elvish-transcript
-    ~> try { nop } else { echo well }
+    ~> try { nop } catch { echo bad } else { echo well }
     well
+    ```
+
+    **Note**: `else` requires a `catch` or `finally` to be present. The
+    following code is invalid:
+
+    ```elvish-transcript
+    ~> try { nop } else { echo well }
+    Compilation error: try must be followed by a catch block or a finally block
+      [tty 1]:1:1-30: try { nop } else { echo well }
     ```
 
 4.  If `finally-block` is present, it is executed. Examples:
