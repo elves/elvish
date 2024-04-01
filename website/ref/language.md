@@ -75,8 +75,15 @@ The following characters are parsed as metacharacters under certain conditions:
 -   `~`: introduces [tilde expansion](#tilde-expansion) if appearing at the
     beginning of a compound expression
 
+    **Note**: Not technically a metacharacter in this context, `~` is also used
+    as a [variable suffix](#variable-suffix) to indicate variables for commands.
+
 -   `=`: terminates [map keys](#map), option keys, or the variable name in
     [temporary assignments](#temporary-assignment)
+
+**Note**: `:` is not technically a metacharacter, but is used in
+[qualified variable names](#qualified-name) and works as a
+[variable suffix](#variable-suffix) for namespaces.
 
 ## Single-quoted string
 
@@ -697,13 +704,18 @@ other shells.
 There are two characters that have special meanings and extra type constraints
 when used as the suffix of a variable name:
 
--   If a variable name ends with `~`, it can only take callable values, which
-    are functions and external commands. Such variables are consulted when
-    resolving [ordinary commands](#ordinary-command). The default value is the
+-   If a variable name ends with `~`, it can only take *callable* values, which
+    are functions and external commands. The default value is equivalent to the
     builtin [`nop`](builtin.html#nop) command.
 
+    Such variables are consulted when resolving
+    [ordinary commands](#ordinary-command) (for example, `foo` calls `$foo~`;
+    see there for details).
+
 -   If a variable name ends with `:`, it can only take namespaces as values.
-    They are used for accessing namespaced variables.
+
+    Such variables are consulted when evaluating variables with
+    [qualified names](#qualified-name).
 
 ## Scoping rule
 
@@ -744,6 +756,21 @@ This can be more clearly observed in the following example:
 Compilation error: variable $nonexistent not found
 [tty], line 1: echo pre-error; echo $nonexistent
 ```
+
+## Qualified name
+
+If a variable name contains a non-final `:`, it is called a **qualified name**
+and points to a variable in a namespace. (A final `:` is considered a
+[variable suffix](#variable-suffix) and such variables hold the namespaces
+themselves.)
+
+A qualified name is split after each non-final `:`, with the `:` attached to the
+component to the left. The first component is resolved like a normal variable,
+and subsequent components function like [indexing](#indexing). For example,
+`$a:b:c` is equivalent to `$a:[b:][c]`.
+
+**Note**: In future, namespace access may be subject to more static checking
+compared to indexing access.
 
 ## Closure semantics
 
@@ -1350,9 +1377,14 @@ arguments and options.
 The first expression in an ordinary command is the command **head**. If the head
 is a single string literal, it is subject to **static resolution**:
 
--   If a variable with name `head~` (where `head` is the value of the head)
-    exists, the head will evaluate as if it is `$head~` (resulting in a function
-    call).
+-   If the variable `$head~` (where `head` is the value of the head) exists, it
+    resolves to that variable.
+
+    **Note**: Builtin commands and functions defined with [`fn`](#fn) are in
+    fact variables ending with `~`. For example, the [`put`](builtin.html#put)
+    command is stored in the `$put~` variable, and this mechanism allows you to
+    call it as just `put`. Conversely, defining a variable like
+    `var foo~ = { ... }` enables you to call it as either `$foo~` or `foo`.
 
 -   If the head contains at least one slash, it is treated as an external
     command with the value as its path relative to the current directory.
@@ -1367,15 +1399,6 @@ is a single string literal, it is subject to **static resolution**:
     -   If the `unknown-command` pragma is set to `disallow`, such command heads
         trigger a compilation error.
 
-If the head is not a single string literal, it is evaluated as a normal
-expression. The expression must evaluate to one value, and the value must be one
-of the following:
-
--   A callable value: a function or external command.
-
--   A string containing at least one slash, in which case it is treated like an
-    external command with the string value as its path.
-
 Examples of commands using static resolution:
 
 ```elvish-transcript
@@ -1387,6 +1410,15 @@ Examples of commands using static resolution:
 ~> whoami # resolves to external command whoami
 elf
 ```
+
+If the head is not a single string literal, it is evaluated as a normal
+expression. The expression must evaluate to one value, and the value must be one
+of the following:
+
+-   A callable value: a function or external command.
+
+-   A string containing at least one slash, in which case it is treated like an
+    external command with the string value as its path.
 
 Examples of commands using a dynamic callable head:
 
