@@ -2133,9 +2133,8 @@ This control structure behaves as follows:
 
 At least one of `catch` and `finally` must be present since a lone `try { ... }`
 does not do anything on its own and is almost certainly a mistake. To swallow
-exceptions an explicit `catch` clause must be given.
-This means that `try { ... } else { ... }` constructs are also not allowed.
-Example:
+exceptions an explicit `catch` clause must be given. This means that
+`try { ... } else { ... }` constructs are also not allowed. Example:
 
 ```elvish-transcript
 ~> try { nop } else { echo well }
