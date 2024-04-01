@@ -551,6 +551,11 @@ Exception: final
 Exception: final
   [tty]:1:45-55: try { fail tr } catch { fail ex } finally { fail final }
 
+## must have catch to use else ##
+~> try { fail tr } else { echo else }
+Compilation error: try with an else block requires a catch block
+  [tty]:1:1-34: try { fail tr } else { echo else }
+
 ## must have catch or finally ##
 ~> try { fail tr }
 Compilation error: try must be followed by a catch block or a finally block

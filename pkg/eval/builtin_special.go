@@ -709,7 +709,9 @@ func compileTry(cp *compiler, fn *parse.Form) effectOp {
 		return nil
 	}
 
-	if catchNode == nil && finallyNode == nil {
+	if elseNode != nil && catchNode == nil {
+		cp.errorpf(fn, "try with an else block requires a catch block")
+	} else if catchNode == nil && finallyNode == nil {
 		cp.errorpf(fn, "try must be followed by a catch block or a finally block")
 	}
 

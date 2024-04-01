@@ -2106,12 +2106,12 @@ This control structure behaves as follows:
     well
     ```
 
-    **Note**: `else` requires a `catch` or `finally` to be present. The
-    following code is invalid:
+    **Note**: `else` requires a `catch` to be present. The following code is
+    invalid:
 
     ```elvish-transcript
     ~> try { nop } else { echo well }
-    Compilation error: try must be followed by a catch block or a finally block
+    Compilation error: try with an else block requires a catch block
       [tty 1]:1:1-30: try { nop } else { echo well }
     ```
 
@@ -2129,12 +2129,12 @@ This control structure behaves as follows:
     final
     ```
 
-5.  If the exception was not caught (i.e. `catch` is not present), it is
+5.  If the exception was not caught (that is, `catch` is not present), it is
     rethrown.
 
-At least one of `catch` and `finally` must be present since a lone `try { ... }`
-does not do anything on its own and is almost certainly a mistake. To swallow
-exceptions an explicit `catch` clause must be given.
+At least one of `catch` and `finally` must be present: a lone `try { ... }` does
+not do anything on its own, and is almost certainly a mistake. To swallow
+exceptions, an explicit `catch` clause must be given.
 
 Exceptions thrown in blocks other than `try-block` are not caught. If an
 exception was thrown and either `catch-block` or `finally-block` throws another
