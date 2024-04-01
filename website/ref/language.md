@@ -2112,8 +2112,8 @@ This control structure behaves as follows:
     and stored in `exception-var`, and `catch-block` is then executed. Example:
 
     ```elvish-transcript
-    ~> try { fail bad } catch e { put $e }
-    ▶ ?(fail bad)
+    ~> try { fail bad } catch e { put $e[reason] }
+    ▶ [^fail-error &content=bad &type=fail]
     ```
 
     If `catch` is not present, exceptions thrown from `try` are not caught: for
@@ -2131,14 +2131,16 @@ This control structure behaves as follows:
     thrown.
 
 3.  If no exception occurs and `else` is present, `else-block` is executed.
-    Example:
+    Examples:
 
     ```elvish-transcript
-    ~> try { nop } catch { echo bad } else { echo well }
-    well
+    ~> try { fail bad } catch e { echo $e[reason] } else { echo good }
+    [^fail-error &content=bad &type=fail]
+    ~> try { nop } catch e { echo $e[reason] } else { echo good }
+    good
     ```
 
-    **Note**: `else` requires a `catch` to be present. The following code is
+    Using `else` requires a `catch` to be present. The following code is
     invalid:
 
     ```elvish-transcript
@@ -2167,6 +2169,17 @@ This control structure behaves as follows:
 At least one of `catch` and `finally` must be present: a lone `try { ... }` does
 not do anything on its own, and is almost certainly a mistake. To swallow
 exceptions, an explicit `catch` clause must be given.
+
+More examples with all possible clauses present:
+
+```elvish-transcript
+~> try { nop } catch e { put $e[reason] } else { put good } finally { put final }
+▶ good
+▶ final
+~> try { fail bad } catch e { put $e[reason] } else { put good } finally { put final }
+▶ [^fail-error &content=bad &type=fail]
+▶ final
+```
 
 Exceptions thrown in blocks other than `try-block` are not caught. If an
 exception was thrown and either `catch-block` or `finally-block` throws another
