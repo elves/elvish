@@ -86,7 +86,7 @@ from common mathematical notations (sometimes known as
 ```
 
 These commands come with Elvish and are thus called **builtin commands**. The
-refenrece page for the [builtin module](../ref/builtin.html) contains all the
+reference page for the [builtin module](../ref/builtin.html) contains all the
 builtin commands you can use directly.
 
 ## Commands in modules

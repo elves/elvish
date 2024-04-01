@@ -122,7 +122,7 @@ water's sound
 You can read more about
 [single-quoted strings](../ref/language.html#single-quoted-string) and
 [double-quoted strings](../ref/language.html#double-quoted-string) in the
-language refenrece page.
+language reference page.
 
 # Working with command outputs
 
