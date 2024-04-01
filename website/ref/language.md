@@ -2074,7 +2074,7 @@ try {
 
 This control structure behaves as follows:
 
-1.  The `try-block` is always executed first. A
+1.  The `try-block` is always executed first.
 
 2.  If `catch` is present, any exception that occurs in `try-block` is caught
     and stored in `exception-var`, and `catch-block` is then executed. Example:
