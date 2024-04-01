@@ -2074,14 +2074,14 @@ try {
 
 This control structure behaves as follows:
 
-1.  The `try-block` is always executed first.
+1.  The `try-block` is always executed first. A
 
 2.  If `catch` is present, any exception that occurs in `try-block` is caught
     and stored in `exception-var`, and `catch-block` is then executed. Example:
 
     ```elvish-transcript
-    ~> try { fail bad } catch e { put $e }
-    ▶ ?(fail bad)
+    ~> try { fail bad } catch e { put $e[reason] }
+    ▶ [^fail-error &content=bad &type=fail]
     ```
 
     If `catch` is not present, exceptions thrown from `try` are not caught: for
@@ -2099,20 +2099,13 @@ This control structure behaves as follows:
     thrown.
 
 3.  If no exception occurs and `else` is present, `else-block` is executed.
-    Example:
+    Examples:
 
     ```elvish-transcript
-    ~> try { nop } catch { echo bad } else { echo well }
-    well
-    ```
-
-    **Note**: `else` requires a `catch` or `finally` to be present. The
-    following code is invalid:
-
-    ```elvish-transcript
-    ~> try { nop } else { echo well }
-    Compilation error: try must be followed by a catch block or a finally block
-      [tty 1]:1:1-30: try { nop } else { echo well }
+    ~> try { nop } catch e { put $e[reason] } else { put good }
+    ▶ good
+    ~> try { fail bad } catch e { put $e[reason] } else { put good }
+    ▶ [^fail-error &content=bad &type=fail]
     ```
 
 4.  If `finally-block` is present, it is executed. Examples:
@@ -2127,6 +2120,12 @@ This control structure behaves as follows:
     ~> try { echo good } finally { echo final }
     good
     final
+    ~> try { nop } catch e { put $e[reason] } else { put good } finally { put final }
+    ▶ good
+    ▶ final
+    ~> try { fail bad } catch e { put $e[reason] } else { put good } finally { put final }
+    ▶ [^fail-error &content=bad &type=fail]
+    ▶ final
     ```
 
 5.  If the exception was not caught (i.e. `catch` is not present), it is
@@ -2135,6 +2134,14 @@ This control structure behaves as follows:
 At least one of `catch` and `finally` must be present since a lone `try { ... }`
 does not do anything on its own and is almost certainly a mistake. To swallow
 exceptions an explicit `catch` clause must be given.
+This means that `try { ... } else { ... }` constructs are also not allowed.
+Example:
+
+```elvish-transcript
+~> try { nop } else { echo well }
+Compilation error: try must be followed by a catch block or a finally block
+  [tty 1]:1:1-30: try { nop } else { echo well }
+```
 
 Exceptions thrown in blocks other than `try-block` are not caught. If an
 exception was thrown and either `catch-block` or `finally-block` throws another
