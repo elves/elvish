@@ -2134,9 +2134,12 @@ This control structure behaves as follows:
 At least one of `catch` and `finally` must be present since a lone `try { ... }`
 does not do anything on its own and is almost certainly a mistake. To swallow
 exceptions an explicit `catch` clause must be given. This means that
-`try { ... } else { ... }` constructs are also not allowed. Example:
+`try { ... } else { ... }` constructs are also not allowed. Examples:
 
 ```elvish-transcript
+~> try { nop }
+Compilation error: try must be followed by a catch block or a finally block
+  [tty 33]:1:1-11: try { nop }
 ~> try { nop } else { echo well }
 Compilation error: try must be followed by a catch block or a finally block
   [tty 1]:1:1-30: try { nop } else { echo well }
