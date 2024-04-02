@@ -2088,8 +2088,7 @@ the iteration value has no elements).
 ## Exception control: `try` {#try}
 
 (If you just want to capture the exception, you can use the more concise
-[exception capture construct](#exception-capture)
-`?()` instead.)
+[exception capture construct](#exception-capture) `?()` instead.)
 
 Syntax:
 
