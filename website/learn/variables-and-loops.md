@@ -293,8 +293,8 @@ separator, outputting one value for each split results:
 ```
 
 We can use these multiple values in the same way we used the multiple values
-generated `*.jpg`. For example, we can put them in a list and use that in a a
-for loop:
+generated `*.jpg`. For example, we can put them in a list and use that in a for
+loop:
 
 ```elvish-transcript Terminal - elvish
 ~> for who [(str:split , friends,Romans,countrymen)] {
