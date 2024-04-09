@@ -10,7 +10,8 @@ modules.
 # Using Elvish interactively
 
 Invoking Elvish with no argument runs it in **interactive mode** (unless there
-are flags that suppress this behavior).
+are flags that suppress this behavior). (To use Elvish as your default shell,
+see [this page](../get/default-shell.html)).
 
 In this mode, Elvish runs a REPL
 ([read-eval-print loop](https://en.wikipedia.org/wiki/Read–eval–print_loop))
