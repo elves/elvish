@@ -312,12 +312,31 @@ func div(rawNums ...vals.Num) (vals.Num, error) {
 	}
 }
 
-func rem(a, b int) (int, error) {
-	// TODO: Support other number types
+func rem(a, b vals.Num) (vals.Num, error) {
+	if err := checkExactIntArg(a); err != nil {
+		return 0, err
+	}
+	if err := checkExactIntArg(b); err != nil {
+		return 0, err
+	}
 	if b == 0 {
 		return 0, ErrDivideByZero
 	}
-	return a % b, nil
+	if a, ok := a.(int); ok {
+		if b, ok := b.(int); ok {
+			return a % b, nil
+		}
+	}
+	return new(big.Int).Rem(vals.PromoteToBigInt(a), vals.PromoteToBigInt(b)), nil
+}
+
+func checkExactIntArg(a vals.Num) error {
+	switch a.(type) {
+	case int, *big.Int:
+		return nil
+	default:
+		return errs.BadValue{What: "argument", Valid: "exact integer", Actual: vals.ReprPlain(a)}
+	}
 }
 
 func randint(args ...int) (int, error) {

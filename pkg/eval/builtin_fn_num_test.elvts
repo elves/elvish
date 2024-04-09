@@ -357,6 +357,16 @@ Deprecation: implicit cd is deprecated; use cd or location mode instead
 ~> % 1 0
 Exception: bad value: divisor must be number other than exact 0, but is exact 0
   [tty]:1:1-5: % 1 0
+// big int support
+~> % 10000000000000000000 3
+▶ (num 1)
+// floating point is not supported, even if integer
+~> % 10.0 3
+Exception: bad value: argument must be exact integer, but is (num 10.0)
+  [tty]:1:1-8: % 10.0 3
+~> % 10 3.0
+Exception: bad value: argument must be exact integer, but is (num 3.0)
+  [tty]:1:1-8: % 10 3.0
 
 ///////////
 # randint #

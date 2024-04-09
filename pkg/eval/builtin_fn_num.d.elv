@@ -309,7 +309,7 @@ fn / {|x-num @y-num| }
 
 #doc:html-id rem
 # Outputs the remainder after dividing `$x` by `$y`. The result has the same
-# sign as `$x`.
+# sign as `$x`. Both arguments must be exact integers.
 #
 # Examples:
 #
@@ -320,18 +320,11 @@ fn / {|x-num @y-num| }
 # ▶ (num -1)
 # ~> % 10 -3
 # ▶ (num 1)
-# ```
-#
-# Note that `%` requires both arguments to be within the range of signed
-# integers the size of a [machine
-# word](https://en.wikipedia.org/wiki/Word_(computer_architecture)), and throws
-# an exception otherwise:
-#
-# ```elvish-transcript
-# ~> use math
-# ~> % (math:pow 2 63) 3
-# Exception: wrong type for arg #0: must be integer
-#   [tty]:1:1-19: % (math:pow 2 63) 3
+# ~> % 10000000000000000000 3
+# ▶ (num 1)
+# ~> % 10.0 3
+# Exception: bad value: argument must be exact integer, but is (num 10.0)
+#   [tty]:1:1-8: % 10.0 3
 # ```
 #
 # This limit may be lifted in the future.
