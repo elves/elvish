@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"math/rand"
 	"strconv"
+	"sync"
+	"time"
 
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
@@ -37,7 +39,7 @@ func init() {
 		"%": rem,
 
 		// Random
-		"rand":      rand.Float64,
+		"rand":      randFn,
 		"randint":   randint,
 		"-randseed": randseed,
 
@@ -339,26 +341,84 @@ func checkExactIntArg(a vals.Num) error {
 	}
 }
 
-func randint(args ...int) (int, error) {
-	var low, high int
-	switch len(args) {
-	case 1:
-		low, high = 0, args[0]
-	case 2:
-		low, high = args[0], args[1]
-	default:
+func randFn() float64 { return withRand((*rand.Rand).Float64) }
+
+func randint(args ...vals.Num) (vals.Num, error) {
+	if len(args) == 0 || len(args) > 2 {
 		return -1, errs.ArityMismatch{What: "arguments",
 			ValidLow: 1, ValidHigh: 2, Actual: len(args)}
 	}
-	if high <= low {
-		return 0, errs.BadValue{What: "high value",
-			Valid: fmt.Sprint("larger than ", low), Actual: strconv.Itoa(high)}
+	allInt := true
+	for _, arg := range args {
+		if err := checkExactIntArg(arg); err != nil {
+			return nil, err
+		}
+		if _, ok := arg.(*big.Int); ok {
+			allInt = false
+		}
 	}
-	return low + rand.Intn(high-low), nil
+	if allInt {
+		var low, high int
+		if len(args) == 1 {
+			low, high = 0, args[0].(int)
+		} else {
+			low, high = args[0].(int), args[1].(int)
+		}
+		if high <= low {
+			return 0, errs.BadValue{What: "high value",
+				Valid: fmt.Sprint("larger than ", low), Actual: strconv.Itoa(high)}
+		}
+		x := withRand(func(r *rand.Rand) int { return r.Intn(high - low) })
+		return low + x, nil
+	}
+	var low, high *big.Int
+	if len(args) == 1 {
+		low, high = big.NewInt(0), args[0].(*big.Int)
+	} else {
+		low, high = args[0].(*big.Int), args[1].(*big.Int)
+	}
+	if high.Cmp(low) <= 0 {
+		return 0, errs.BadValue{What: "high value",
+			Valid: fmt.Sprint("larger than ", low), Actual: high.String()}
+	}
+	if low.Sign() == 0 {
+		return withRand(func(r *rand.Rand) *big.Int {
+			return new(big.Int).Rand(r, high)
+		}), nil
+	} else {
+		diff := new(big.Int).Sub(high, low)
+		z := withRand(func(r *rand.Rand) *big.Int {
+			return new(big.Int).Rand(r, diff)
+		})
+		z.Add(z, low)
+		return z, nil
+	}
 }
 
-//lint:ignore SA1019 useful for getting deterministic behavior in Elvish code.
-func randseed(x int) { rand.Seed(int64(x)) }
+func randseed(x int) {
+	withRandNullary(func(r *rand.Rand) { r.Seed(int64(x)) })
+}
+
+var (
+	randMutex    sync.Mutex
+	randInstance *rand.Rand
+)
+
+func withRand[T any](f func(*rand.Rand) T) T {
+	randMutex.Lock()
+	defer randMutex.Unlock()
+	if randInstance == nil {
+		randInstance = rand.New(rand.NewSource(time.Now().UnixNano()))
+	}
+	return f(randInstance)
+}
+
+func withRandNullary(f func(*rand.Rand)) {
+	withRand(func(r *rand.Rand) struct{} {
+		f(r)
+		return struct{}{}
+	})
+}
 
 type rangeOpts struct{ Step vals.Num }
 

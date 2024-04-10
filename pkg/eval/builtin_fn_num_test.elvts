@@ -379,7 +379,17 @@ Exception: bad value: argument must be exact integer, but is (num 3.0)
 ~> var i = (randint 10 100)
    and (<= 10 $i) (< $i 100)
 ▶ $true
-~> var i = (randint 10); and (<= 0 $i) (< $i 10)
+~> var i = (randint 10)
+   and (<= 0 $i) (< $i 10)
+▶ $true
+// big int is OK
+~> var z = (num 10000000000000000000)
+~> < (randint $z) $z
+▶ $true
+~> var low = $z
+   var high = (+ $low 10)
+   var i = (randint $low $high)
+   and (<= $low $i) (< $i $high)
 ▶ $true
 
 ## argument checking ##
@@ -387,12 +397,19 @@ Exception: bad value: argument must be exact integer, but is (num 3.0)
 ~> randint 2 1
 Exception: bad value: high value must be larger than 2, but is 1
   [tty]:1:1-11: randint 2 1
+~> var z = (num 10000000000000000000)
+   randint (+ $z 10) $z
+Exception: bad value: high value must be larger than 10000000000000000010, but is 10000000000000000000
+  [tty]:2:1-20: randint (+ $z 10) $z
 ~> randint
 Exception: arity mismatch: arguments must be 1 to 2 values, but is 0 values
   [tty]:1:1-7: randint
 ~> randint 1 2 3
 Exception: arity mismatch: arguments must be 1 to 2 values, but is 3 values
   [tty]:1:1-13: randint 1 2 3
+~> randint 1.0
+Exception: bad value: argument must be exact integer, but is (num 1.0)
+  [tty]:1:1-11: randint 1.0
 
 /////////////
 # -randseed #
@@ -402,6 +419,15 @@ Exception: arity mismatch: arguments must be 1 to 2 values, but is 3 values
 
 // -randseed makes randint deterministic ##
 ~> fn f { -randseed 0; randint 10 }
+   eq (f) (f)
+▶ $true
+// big int uses a different code path internally, so verify that generating big
+// int is also deterministic.
+~> fn f { -randseed 0; randint 10000000000000000000 }
+   eq (f) (f)
+▶ $true
+// rand is also deterministic
+~> fn f { -randseed 0; rand }
    eq (f) (f)
 ▶ $true
 
