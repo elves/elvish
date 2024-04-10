@@ -1,12 +1,16 @@
 package edit
 
 import (
+	"errors"
+
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/tk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 )
+
+var errDotOutOfBoundary = errors.New("dot out of command boundary")
 
 func insertAtDot(app cli.App, text string) {
 	codeArea, ok := focusedCodeArea(app)
@@ -42,6 +46,10 @@ func initStateAPI(app cli.App, nb eval.NsBuilder) {
 		err := vals.ScanToGo(v, &dot)
 		if err != nil {
 			return err
+		}
+		state := codeArea.CopyState()
+		if dot < 0 || dot > len(state.Buffer.Content) {
+			return errDotOutOfBoundary
 		}
 		codeArea.MutateState(func(s *tk.CodeAreaState) {
 			s.Buffer.Dot = dot
