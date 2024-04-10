@@ -16,9 +16,9 @@ This article is part of the *Beginner's Guide to Elvish* series:
 
 # Maps
 
-We have learned how you can use `curl` to request a URL and `to-json` to convert
-JSON-encoded bytes to Elvish values. Combining these two features allows us to
-import data from online JSON APIs: for example, let's use the API from
+We have learned how you can use `curl` to request a URL and `from-json` to
+convert JSON-encoded bytes to Elvish values. Combining these two features allows
+us to import data from online JSON APIs: for example, let's use the API from
 <https://myip.com> to query our IP address and country:
 
 ```elvish-transcript Terminal - elvish
