@@ -318,7 +318,7 @@ func BenchmarkSequentialConjNative1(b *testing.B) { nativeSequentialAdd(b.N, N1)
 func BenchmarkSequentialConjNative2(b *testing.B) { nativeSequentialAdd(b.N, N2) }
 func BenchmarkSequentialConjNative3(b *testing.B) { nativeSequentialAdd(b.N, N3) }
 
-// nativeSequntialAdd starts with an empty native map and adds elements 0...n-1
+// nativeSequentialAdd starts with an empty native map and adds elements 0...n-1
 // to the map, using the same value as the key, repeating for N times.
 func nativeSequentialAdd(N int, n uint32) {
 	for r := 0; r < N; r++ {
@@ -348,7 +348,7 @@ func BenchmarkRandomStringsConjNative1(b *testing.B) { nativeRandomStringsAdd(b,
 func BenchmarkRandomStringsConjNative2(b *testing.B) { nativeRandomStringsAdd(b, N2) }
 func BenchmarkRandomStringsConjNative3(b *testing.B) { nativeRandomStringsAdd(b, N3) }
 
-// nativeSequntialAdd starts with an empty native map and adds n random strings
+// nativeRandomStringsAdd starts with an empty native map and adds n random strings
 // to the map, using the same value as the key, repeating for b.N times.
 func nativeRandomStringsAdd(b *testing.B, n int) {
 	ss := getRandomStrings(b)
