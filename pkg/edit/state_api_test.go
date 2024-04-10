@@ -33,6 +33,13 @@ func TestDot(t *testing.T) {
 	testCodeBuffer(t, f.Editor, tk.CodeBuffer{Content: "code", Dot: 0})
 }
 
+func TestDotOutOfBoundary(t *testing.T) {
+	f := setup(t)
+
+	f.SetCodeBuffer(tk.CodeBuffer{Content: "", Dot: 0})
+	testThatOutputErrorIsBubbled(t, f, `set edit:-dot = 10`)
+}
+
 func TestCurrentCommand(t *testing.T) {
 	f := setup(t)
 
