@@ -54,7 +54,7 @@ var bufferBuilderWritesTests = []struct {
 			Line{Cell{" ", ""}, Cell{" ", ""}}}}},
 }
 
-// TestBufferWrites tests BufferBuilder.Writes by calling Writes on a
+// TestBufferBuilderWrites tests BufferBuilder.Writes by calling Writes on a
 // BufferBuilder and see if the built Buffer matches what is expected.
 func TestBufferBuilderWrites(t *testing.T) {
 	for _, test := range bufferBuilderWritesTests {

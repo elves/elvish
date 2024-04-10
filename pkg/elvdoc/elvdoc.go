@@ -73,7 +73,7 @@ type Fn struct {
 	Usage string
 }
 
-// ExtractFS extracts elvdocs of all modules found under fsys, and returns a map
+// ExtractAllFromFS extracts elvdocs of all modules found under fsys, and returns a map
 // from the symbol prefix of a module ("" for builtin, "$mod:" for any other $mod).
 //
 // See [ExtractFromFS] for how modules correspond to files.
