@@ -40,9 +40,14 @@ var IsBuiltinSpecial = map[string]bool{}
 
 // NoSuchModule encodes an error where a module spec cannot be resolved.
 type NoSuchModule struct{ spec string }
+// ModuleLoadError encapsulates an error message a failed module load operation.
+type ModuleLoadError struct{ spec string; errormsg string }
 
 // Error implements the error interface.
 func (err NoSuchModule) Error() string { return "no such module: " + err.spec }
+func (err ModuleLoadError) Error() string {
+	return "when trying to load module: \"" + err.spec + "\" this error occurred: " + err.errormsg
+}
 
 func init() {
 	// Needed to avoid initialization loop
@@ -373,7 +378,7 @@ func useFromFile(fm *Frame, spec, path string, r diag.Ranger) (*Ns, error) {
 
 	plug, err := pluginOpen(path + ".so")
 	if err != nil {
-		return nil, NoSuchModule{spec}
+		return nil, ModuleLoadError{spec, err.Error()}
 	}
 	sym, err := plug.Lookup("Ns")
 	if err != nil {
@@ -381,7 +386,7 @@ func useFromFile(fm *Frame, spec, path string, r diag.Ranger) (*Ns, error) {
 	}
 	ns, ok := sym.(**Ns)
 	if !ok {
-		return nil, NoSuchModule{spec}
+		return nil, ModuleLoadError{spec, "Could not find a \"Ns\" symbol in module file."}
 	}
 	fm.Evaler.modules[path] = *ns
 	return *ns, nil
