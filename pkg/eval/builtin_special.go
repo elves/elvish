@@ -40,8 +40,12 @@ var IsBuiltinSpecial = map[string]bool{}
 
 // NoSuchModule encodes an error where a module spec cannot be resolved.
 type NoSuchModule struct{ spec string }
+
 // ModuleLoadError encapsulates an error message a failed module load operation.
-type ModuleLoadError struct{ spec string; errormsg string }
+type ModuleLoadError struct {
+	spec     string
+	errormsg string
+}
 
 // Error implements the error interface.
 func (err NoSuchModule) Error() string { return "no such module: " + err.spec }
