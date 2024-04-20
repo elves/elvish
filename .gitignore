@@ -24,4 +24,5 @@ _testmain.go
 # Project specific
 cover
 /_bin/
+/_wasmdemo/
 /elvish

@@ -43,4 +43,9 @@ most-checks:
 all-checks: most-checks
 	./tools/check-gen.sh
 
-.PHONY: default get fmt test cover most-checks all-checks
+wasmdemo:
+	mkdir -p _wasmdemo
+	GOOS=js GOARCH=wasm go build -o _wasmdemo/main.wasm ./cmd/wasmdemo
+	cp "$$(go env GOROOT)"/misc/wasm/wasm_exec.js cmd/wasmdemo/index.html _wasmdemo/
+
+.PHONY: default get fmt test cover most-checks all-checks wasmdemo

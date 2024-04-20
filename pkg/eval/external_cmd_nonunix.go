@@ -1,8 +1,10 @@
+//go:build !unix
+
 package eval
 
 import "syscall"
 
 func isSIGPIPE(s syscall.Signal) bool {
-	// Windows doesn't have SIGPIPE.
+	// Windows and WASM don't have SIGPIPE.
 	return false
 }
