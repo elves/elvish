@@ -29,7 +29,7 @@ func (p *Program) Run(fds [3]*os.File, _ []string) error {
 			fmt.Fprintln(fds[2], "Continuing without CPU profiling.")
 		} else {
 			pprof.StartCPUProfile(f)
-			cleanups = append(cleanups, func([3]*os.File) { 
+			cleanups = append(cleanups, func([3]*os.File) {
 				pprof.StopCPUProfile()
 				f.Close()
 			})
