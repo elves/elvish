@@ -37,7 +37,8 @@ func TestDotOutOfBoundary(t *testing.T) {
 	f := setup(t)
 
 	f.SetCodeBuffer(tk.CodeBuffer{Content: "", Dot: 0})
-	testThatOutputErrorIsBubbled(t, f, `set edit:-dot = 10`)
+	evals(f.Evaler, "var err = ?(set edit:-dot = 10)[reason]")
+	testGlobal(t, f.Evaler, "err", errDotOutOfBoundary)
 }
 
 func TestCurrentCommand(t *testing.T) {

@@ -47,14 +47,14 @@ func initStateAPI(app cli.App, nb eval.NsBuilder) {
 		if err != nil {
 			return err
 		}
-		state := codeArea.CopyState()
-		if dot < 0 || dot > len(state.Buffer.Content) {
-			return errDotOutOfBoundary
-		}
 		codeArea.MutateState(func(s *tk.CodeAreaState) {
-			s.Buffer.Dot = dot
+			if dot < 0 || dot > len(s.Buffer.Content) {
+				err = errDotOutOfBoundary
+			} else {
+				s.Buffer.Dot = dot
+			}
 		})
-		return nil
+		return err
 	}
 	getDot := func() any {
 		return vals.FromGo(codeArea.CopyState().Buffer.Dot)
