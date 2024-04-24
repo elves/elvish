@@ -40,6 +40,18 @@ and by [Ubuntu](http://packages.ubuntu.com/elvish) since 17.10:
 apt install elvish
 ```
 
+# Fedora
+
+![Fedora 40 package](https://repology.org/badge/version-for-repo/fedora_40/elvish.svg)
+![Fedora Rawhide package](https://repology.org/badge/version-for-repo/fedora_rawhide/elvish.svg)
+
+Elvish is packaged for [Fedora](https://packages.fedoraproject.org/pkgs/elvish).
+To install it with `dnf`:
+
+```elvish
+dnf install elvish
+```
+
 # macOS
 
 Elvish is packaged by both [Homebrew](https://brew.sh) and
