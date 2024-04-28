@@ -142,7 +142,21 @@ if (not (has-value [(cat /etc/shells)] $runtime:elvish-path)) {
 chsh -s $runtime:elvish-path
 ```
 
-However, beware that some programs assume that the user's login shell is a
-traditional POSIX-like shell, and may have issues when you change your login
-shell to Elvish. You can change your login shell back to the system default with
-`chsh -s ''`.
+You can change your login shell back to the system default with `chsh -s ''`.
+
+## Dealing with incompatible programs
+
+Some programs assume that the user's login shell is a traditional POSIX-like
+shell, so they won't work correctly if your login shell is Elvish. The following
+programs are known to have issues:
+
+-   GDB (see [#1795](https://b.elv.sh/1795))
+
+Such programs usually rely on the `$SHELL` environment variable to query the
+login shell, so you can override it to a POSIX shell, like the following:
+
+```elvish
+fn gdb {|@a|
+  env SHELL=/bin/sh gdb $@
+}
+```
