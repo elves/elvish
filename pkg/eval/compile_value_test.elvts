@@ -365,6 +365,11 @@ Compilation error: argument name must not be empty
 Compilation error: argument name must not be empty
   [tty]:1:3-3: {|@| }
 
+## argument name must not be duplicated ##
+~> {|a a| }
+Compilation error: duplicate argument name 'a'
+  [tty]:1:5-5: {|a a| }
+
 ## option name must be unqualified ##
 ~> {|&a:b=1| }
 Compilation error: option name must be unqualified
