@@ -2007,10 +2007,11 @@ The condition part is an expression, not a command like in other shells.
 Example:
 
 ```elvish
+use str
 fn tell-language {|fname|
-    if (has-suffix $fname .go) {
+    if (str:has-suffix $fname .go) {
         echo $fname" is a Go file!"
-    } elif (has-suffix $fname .c) {
+    } elif (str:has-suffix $fname .c) {
         echo $fname" is a C file!"
     } else {
         echo $fname" is a mysterious file!"
