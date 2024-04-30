@@ -157,6 +157,6 @@ login shell, so you can override it to a POSIX shell, like the following:
 
 ```elvish
 fn gdb {|@a|
-  env SHELL=/bin/sh gdb $@
+  env SHELL=/bin/sh gdb $@a
 }
 ```
