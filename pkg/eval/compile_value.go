@@ -377,12 +377,11 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 		restArg       int = -1
 		optNames      []string
 		optDefaultOps []valuesOp
-		seenNames     map[string]bool
 	)
 	if len(n.Elements) > 0 {
 		// Argument list.
 		argNames = make([]string, len(n.Elements))
-		seenNames = make(map[string]bool)
+		seenName := make(map[string]bool)
 		for i, arg := range n.Elements {
 			ref := stringLiteralOrError(cp, arg, "argument name")
 			sigil, qname := SplitSigil(ref)
@@ -399,10 +398,10 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 				}
 				restArg = i
 			}
-			if seenNames[name] {
+			if seenName[name] {
 				cp.errorpf(arg, "duplicate argument name '%s'", name)
 			} else {
-				seenNames[name] = true
+				seenName[name] = true
 			}
 			argNames[i] = name
 		}
