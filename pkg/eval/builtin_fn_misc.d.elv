@@ -93,7 +93,8 @@ fn resolve {|command| }
 # the variables may be mutated by `$code`.
 #
 # If the `&ns` option is `$nil` (the default), a temporary namespace built by
-# amalgamating the local and upvalue scopes of the caller is used.
+# amalgamating the local and [upvalue scopes](language.html#upvalues) of the
+# caller is used.
 #
 # If `$code` fails to parse or compile, the parse error or compilation error is
 # raised as an exception.

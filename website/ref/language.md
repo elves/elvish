@@ -807,7 +807,9 @@ referring to a local variable `$n`. Closure semantics means that:
 ▶ 1
 ```
 
-Variables that get "captured" in closures are called **upvalues**;. When
+### Upvalues
+
+Variables that get "captured" in closures are called **upvalues**. When
 capturing upvalues, Elvish only captures the variables that are used. In the
 following example, `$m` is not an upvalue of `$g` because it is not used:
 
@@ -816,7 +818,8 @@ following example, `$m` is not an upvalue of `$g` because it is not used:
 ~> var g = (f)
 ```
 
-**Note**: This effect has impacts on the [`eval`](builtin.html#eval) command.
+**Note**: The effect of this behavior is usually not noticeable, but has impacts
+on the [`eval`](builtin.html#eval) command.
 
 # Expressions
 
