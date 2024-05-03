@@ -4,6 +4,7 @@ import (
 	"embed"
 	"testing"
 
+	"src.elv.sh/pkg/edit/complete"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/evaltest"
 )
@@ -21,6 +22,8 @@ func TestTranscripts(t *testing.T) {
 		"binding-map-in-global", fnInGlobal("binding-map", makeBindingMap),
 		"wordify-in-global", fnInGlobal("wordify", wordify),
 		"complete-getopt-in-global", fnInGlobal("complete-getopt", completeGetopt),
+		"complete-filename-in-global", fnInGlobal("complete-filename",
+			wrapArgGenerator(complete.GenerateFileNames)),
 		"complex-candidate-in-global", fnInGlobal("complex-candidate", complexCandidate),
 		"add-var-in-global", fnInGlobal("add-var", addVar),
 		"add-vars-in-global", fnInGlobal("add-vars", addVars),

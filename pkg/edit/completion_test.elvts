@@ -1,8 +1,15 @@
-//each:complex-candidate-in-global
+/////////////////////
+# complete-filename #
+/////////////////////
+//complete-filename-in-global
+// Don't crash with no argument. Regression test for b.elv.sh/1799.
+~> complete-filename
 
 /////////////////////
 # complex-candidate #
 /////////////////////
+
+//each:complex-candidate-in-global
 
 ## construction ##
 ~> complex-candidate a/b

@@ -22,6 +22,9 @@ var eachExternal = fsutil.EachExternal
 // GenerateFileNames returns filename candidates that are suitable for completing
 // the last argument. It can be used in Config.ArgGenerator.
 func GenerateFileNames(args []string) ([]RawItem, error) {
+	if len(args) == 0 {
+		return nil, nil
+	}
 	return generateFileNames(args[len(args)-1], false)
 }
 
