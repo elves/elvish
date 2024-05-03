@@ -26,6 +26,7 @@ func setup(in, out *os.File) (func() error, error) {
 	term.SetICanon(false)
 	term.SetIExten(false)
 	term.SetEcho(false)
+	term.SetIXON(false)
 	term.SetVMin(1)
 	term.SetVTime(0)
 
