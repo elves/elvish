@@ -369,6 +369,8 @@ Compilation error: argument name must not be empty
 ~> {|a a| }
 Compilation error: duplicate argument name 'a'
   [tty]:1:5-5: {|a a| }
+// but multiple _s are OK
+~> nop {|_ a _| }
 
 ## option name must be unqualified ##
 ~> {|&a:b=1| }
