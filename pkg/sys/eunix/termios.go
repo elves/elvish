@@ -63,6 +63,11 @@ func (term *Termios) SetICRNL(v bool) {
 	setFlag(&term.Iflag, unix.ICRNL, v)
 }
 
+// SetICRNL sets the IXON iflag bit
+func (term *Termios) SetIXON(v bool) {
+	setFlag(&term.Iflag, unix.IXON, v)
+}
+
 func setFlag(flag *termiosFlag, mask termiosFlag, v bool) {
 	if v {
 		*flag |= mask
