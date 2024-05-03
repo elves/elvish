@@ -398,10 +398,12 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 				}
 				restArg = i
 			}
-			if seenName[name] {
-				cp.errorpf(arg, "duplicate argument name '%s'", name)
-			} else {
-				seenName[name] = true
+			if name != "_" {
+				if seenName[name] {
+					cp.errorpf(arg, "duplicate argument name '%s'", name)
+				} else {
+					seenName[name] = true
+				}
 			}
 			argNames[i] = name
 		}
