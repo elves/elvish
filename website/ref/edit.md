@@ -194,10 +194,30 @@ Bound functions have their inputs redirected to /dev/null.
 
 ### Format of Keys
 
-Key modifiers and names are case sensitive. This includes single character key
-names such as `x` and `Y` as well as function key names such as `Enter`.
+A key consists of a **key name**, preceded by zero or more **key modifiers**.
+Both are case-sensitive.
 
-Key names have zero or more modifiers from the following symbols:
+The key name may be either:
+
+-   A simple character, such as `x`.
+
+    Most of the time you should use the lower-case form of letters, except for
+    Ctrl- bindings, which usually require the upper-case form (so `Alt-x` but
+    `Ctrl-X`). This quirk may go away in future.
+
+-   A function key from these symbols:
+
+    ```
+    F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11  F12
+    Up  Down  Right  Left
+    Home  Insert  Delete  End  PageUp  PageDown
+    Tab  Enter  Backspace
+    ```
+
+    Among these, `Tab` and `Enter` are equivalent to their ASCII counterparts
+    `"\t"` and `"\n"`.
+
+Key modifiers are one of the following:
 
 ```
 A  Alt
@@ -206,26 +226,30 @@ M  Meta
 S  Shift
 ```
 
-Modifiers end with either a `-` or `+`, such as in `S-F1`, `Ctrl-X` or
-`Alt+Enter`. You can stack modifiers, such as in `C+A-X`.
+Modifiers end with either a `-` or `+`, and can be stacked. Examples:
 
-The key name may be a simple character such as `x` or a function key from these
-symbols:
+-   `S-F1`
 
-```
-F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11  F12
-Up  Down  Right  Left
-Home  Insert  Delete  End  PageUp  PageDown
-Tab  Enter  Backspace
-```
+-   `Ctrl-X` or
 
-**Note:** `Tab` is an alias for `"\t"` (aka `Ctrl-I`), `Enter` for `"\n"` (aka
-`Ctrl-J`), and `Backspace` for `"\x7F"` (aka `Ctrl-?`).
+-   `Alt+Enter`
+
+-   `C+A-X`.
 
 **Note:** The `Shift` modifier is only applicable to function keys such as `F1`.
 You cannot write `Shift-m` as a synonym for `M`.
 
-**TODO:** Document the behavior of the `Shift` modifier.
+You may not actually be able to use the full range of possible keys for several
+reasons:
+
+-   Some `Ctrl-[letter]` keys have special functions, like `Ctrl-C`, `Ctrl-Z`,
+    `Ctrl-S` and `Ctrl-Z`.
+
+-   Some `Ctrl-[letter]` keys are equivalent to single keypresses, like `Ctrl-J`
+    (equivalent to `Enter`) and `Ctrl-I` (equivalent to `Tab`).
+
+-   Keys involving multiple modifiers may not be supported by the terminal
+    emulator, especially when the base key is a function key.
 
 ### Listing Modes
 
