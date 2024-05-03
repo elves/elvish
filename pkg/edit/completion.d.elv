@@ -89,6 +89,3 @@ fn completion:start { }
 # If all the candidates share a non-empty prefix and that prefix starts with the
 # seed, inserts the prefix instead.
 fn completion:smart-start { }
-
-# Closes the completion mode UI.
-fn completion:close { }
