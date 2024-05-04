@@ -33,7 +33,8 @@ var Ns = eval.BuildNsNamed("str").
 		// TODO: IndexFunc
 		"join":       join,
 		"last-index": strings.LastIndex,
-		// TODO: LastIndexFunc, Map, Repeat
+		// TODO: LastIndexFunc, Map
+		"repeat":  repeat,
 		"replace": replace,
 		"split":   split,
 		// TODO: SplitAfter
@@ -125,6 +126,16 @@ func join(sep string, inputs eval.Inputs) (string, error) {
 		}
 	})
 	return buf.String(), errJoin
+}
+
+func repeat(s string, n int) (string, error) {
+	if n < 0 {
+		return "", errs.BadValue{What: "n", Valid: "non-negative number", Actual: vals.ToString(n)}
+	}
+	if len(s)*n < 0 {
+		return "", errs.BadValue{What: "n", Valid: "small enough not to overflow result", Actual: vals.ToString(n)}
+	}
+	return strings.Repeat(s, n), nil
 }
 
 type maxOpt struct{ Max int }

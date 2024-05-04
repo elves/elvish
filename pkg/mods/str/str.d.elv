@@ -168,6 +168,17 @@ fn join {|sep input-list?| }
 # ```
 fn last-index {|str substr| }
 
+#doc:added-in 0.21
+# Outputs a string consisting of `$n` copies of `$s`.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> str:repeat a 10
+# ▶ aaaaaaaaaa
+# ```
+fn repeat {|s n| }
+
 # Replaces all occurrences of `$old` with `$repl` in `$source`. If `$max` is
 # non-negative, it determines the max number of substitutions.
 #

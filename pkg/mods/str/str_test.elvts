@@ -174,6 +174,30 @@ Exception: bad value: input to str:join must be string, but is number
 Exception: arity mismatch: arguments must be 2 values, but is 1 value
   [tty]:1:1-18: str:last-index abc
 
+//////////////
+# str:repeat #
+//////////////
+
+~> str:repeat a 10
+▶ aaaaaaaaaa
+~> str:repeat a -1
+Exception: bad value: n must be non-negative number, but is -1
+  [tty]:1:1-15: str:repeat a -1
+
+## overflow (32-bit) ##
+//only-on 32bit
+~> use math
+~> str:repeat ab (- (math:pow 2 31) 1)
+Exception: bad value: n must be small enough not to overflow result, but is 2147483647
+  [tty]:1:1-35: str:repeat ab (- (math:pow 2 31) 1)
+
+## overflow (64-bit) ##
+//only-on 64bit
+~> use math
+~> str:repeat ab (- (math:pow 2 63) 1)
+Exception: bad value: n must be small enough not to overflow result, but is 9223372036854775807
+  [tty]:1:1-35: str:repeat ab (- (math:pow 2 63) 1)
+
 ///////////////
 # str:replace #
 ///////////////
