@@ -100,6 +100,10 @@
 //
 //   - Lists are always considered [loose].
 //
+// The package also supports the following extensions:
+//
+//   - ATX headers may be followed by [Pandoc header attributes] {...}.
+//
 // These omitted features are never used in Elvish's Markdown sources.
 //
 // All implemented features pass their relevant CommonMark spec tests, currently
@@ -137,6 +141,7 @@
 //     correctness, the corner cases will be interesting, regardless of which
 //     language you are using to implement the formatter.
 //
+// [Pandoc header attributes]: https://pandoc.org/MANUAL.html#extension-header_attributes
 // [all the corner cases found by the fuzzer]: https://github.com/elves/elvish/tree/master/pkg/md/testdata/fuzz/FuzzFmtPreservesHTMLRender
 // [fuzzing support]: https://go.dev/security/fuzz/
 // [loose]: https://spec.commonmark.org/0.31.2/#loose
@@ -221,7 +226,8 @@ type Op struct {
 	// For OpOrderedListStart (the start number) or OpHeading (as the heading
 	// level)
 	Number int
-	// For OpHeading and OpCodeBlock
+	// For OpHeading (attributes inside { }) and OpCodeBlock (text after opening
+	// fence)
 	Info string
 	// For OpCodeBlock and OpHTMLBlock
 	Lines []string
