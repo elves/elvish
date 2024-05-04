@@ -46,9 +46,9 @@
 //   - only-on $cond: Evaluate $cond like a //go:build constraint and only
 //     run the test if the constraint is satisfied.
 //
-//     The full build constraint syntax is supported, but only literal GOARCH
-//     and GOOS values and "unix" are recognized as tags; other tags are always
-//     false.
+//     The syntax is the same as //go:build constraints, but the set of
+//     supported tags is different and consists of: GOARCH and GOOS values,
+//     "unix", "32bit" and "64bit".
 //
 //   - deprecation-level $x: Run with deprecation level set to $x.
 //
@@ -112,6 +112,7 @@ import (
 	"fmt"
 	"go/build/constraint"
 	"io/fs"
+	"math"
 	"os"
 	"regexp"
 	"runtime"
@@ -280,13 +281,19 @@ func buildSetupDirectives(setupPairs []any) *setupDirectives {
 		"only-on": func(t *testing.T, _ *eval.Evaler, arg string) {
 			expr, err := constraint.Parse("//go:build " + arg)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("parse constraint %q: %v", arg, err)
 			}
 			if !expr.Eval(func(tag string) bool {
-				if tag == "unix" {
+				switch tag {
+				case "unix":
 					return isUNIX
+				case "32bit":
+					return math.MaxInt == math.MaxInt32
+				case "64bit":
+					return math.MaxInt == math.MaxInt64
+				default:
+					return tag == runtime.GOOS || tag == runtime.GOARCH
 				}
-				return tag == runtime.GOOS || tag == runtime.GOARCH
 			}) {
 				t.Skipf("constraint not satisfied: %s", arg)
 			}
