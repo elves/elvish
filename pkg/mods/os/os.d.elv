@@ -19,11 +19,13 @@ fn -is-not-exist {|exc| }
 # Creates a new directory with the specified name and permission (before umask).
 fn mkdir {|&perm=0o755 path| }
 
+#doc:added-in 0.21
 # Creates a new directory at the named path along with any necessary parents.
 # The permission bits is used for all new directories to create. If the named
 # path is already a directory, does nothing.
 fn mkdir-all {|&perm=0o755 path| }
 
+#doc:added-in 0.21
 # Creates `$newname` as a symbolic link to `$oldname`.
 #
 # It is not an error if `$oldname` doesn't exist. However, on Windows, doing
@@ -45,6 +47,7 @@ fn remove {|path| }
 # exception.
 fn remove-all {|path| }
 
+#doc:added-in 0.21
 # Renames file at `$oldpath` to `$newpath`. If `$newpath` already exists and is
 # a file, it will get replaced.
 #

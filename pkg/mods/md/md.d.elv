@@ -1,5 +1,6 @@
 #//each:eval use md
 
+#doc:added-in 0.21
 # Renders `$markdown` in the terminal.
 #
 # The `&width` option specifies the width to wrap the output to. If it is 0 (the
