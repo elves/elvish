@@ -17,6 +17,10 @@ if ! git diff HEAD --quiet; then
     fi
 fi
 
+# go.work is needed for gopls to function correctly when working on Go code
+# inside website/ from VS Code (and possibly other development environments),
+# but it changes the behavior of "go test", so force disable it.
+export GOWORK=off
 make test all-checks
 make -C website check-rellinks
 # A quick cross compilation test. Not exhaustive, but will catch most issues.
