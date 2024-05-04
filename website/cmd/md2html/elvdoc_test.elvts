@@ -1,0 +1,114 @@
+//each:elvdoc-to-md-in-global
+
+//////////////////
+# no doc comment #
+//////////////////
+~> elvdoc-to-md '# not doc comment'
+
+//////////
+# fn doc #
+//////////
+
+~> elvdoc-to-md '
+   # B.
+   fn b { }
+   
+   # A.
+   fn a { }
+   '
+# Functions
+
+<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
+
+## a
+
+```elvish
+a
+```
+
+A.
+
+<a name='//apple_ref/cpp/Function/b' class='dashAnchor'></a>
+
+## b
+
+```elvish
+b
+```
+
+B.
+
+
+//////////////////////
+# fn doc and var doc #
+//////////////////////
+
+~> elvdoc-to-md '
+   # A.
+   fn a { }
+   
+   # B.
+   var b
+   '
+# Variables
+
+<a name='//apple_ref/cpp/Variable/%24b' class='dashAnchor'></a>
+
+## $b
+
+B.
+
+
+# Functions
+
+<a name='//apple_ref/cpp/Function/a' class='dashAnchor'></a>
+
+## a
+
+```elvish
+a
+```
+
+A.
+
+///////////////
+# doc:html-id #
+///////////////
+
+~> elvdoc-to-md '
+   #doc:html-id add
+   # Add.
+   fn + { }
+   '
+# Functions
+
+<a name='//apple_ref/cpp/Function/%2B' class='dashAnchor'></a>
+
+## + {#add}
+
+```elvish
++
+```
+
+Add.
+
+////////////////
+# doc:added-in #
+////////////////
+
+~> elvdoc-to-md '
+   #doc:added-in 0.42
+   # Add.
+   fn + { }
+   '
+# Functions
+
+<a name='//apple_ref/cpp/Function/%2B' class='dashAnchor'></a>
+
+## + {added-in=0.42}
+
+```elvish
++
+```
+
+Add.

@@ -5,6 +5,7 @@ import (
 	"html"
 	"io"
 	"net/url"
+	"os"
 	"sort"
 	"strings"
 
@@ -30,15 +31,28 @@ func writeElvdocSections(w io.Writer, docs elvdoc.Docs) {
 					"<a name='//apple_ref/cpp/%s/%s' class='dashAnchor'></a>\n\n",
 					entryType, url.QueryEscape(html.UnescapeString(s)))
 			}
-			attr := ""
+			// Convert directives into header attributes
+			// (https://pandoc.org/MANUAL.html#extension-header_attributes),
+			// which will get interpreted by [htmlCodec.Do].
+			var attrs []string
 			for _, directive := range entry.Directives {
 				if htmlID, ok := strings.CutPrefix(directive, "doc:html-id "); ok {
-					attr = " {#" + strings.TrimSpace(htmlID) + "}"
+					attrs = append(attrs, "#"+strings.TrimSpace(htmlID))
+				} else if addedIn, ok := strings.CutPrefix(directive, "doc:added-in "); ok {
+					attrs = append(attrs, "added-in="+addedIn)
+				} else if strings.HasPrefix(directive, "doc:") {
+					fmt.Fprintf(os.Stderr, "\033[31mWarning: unknown directive: %s\033[m\n", directive)
 				}
 			}
-			fmt.Fprintf(w, "## %s%s\n\n", entry.Name, attr)
-			// The body is guaranteed to have a trailing newline, hence Fprint
-			// instead of Fprintln.
+			attrString := ""
+			if len(attrs) > 0 {
+				attrString = " {" + strings.Join(attrs, " ") + "}"
+			}
+
+			// Print the header.
+			fmt.Fprintf(w, "## %s%s\n\n", entry.Name, attrString)
+			// Print the body - it's is guaranteed to have a trailing newline,
+			// hence Fprint instead of Fprintln.
 			fmt.Fprint(w, entry.FullContent())
 		}
 	}

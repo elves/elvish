@@ -252,6 +252,7 @@ h1, h2, h3 {
   margin-top: 32px;
   margin-bottom: 12px;
   font-weight: bold;
+  display: flex;
 }
 
 h1 {
@@ -265,6 +266,13 @@ h1 {
 
 h2 {
   font-size: 1.2em;
+}
+
+.api-comment {
+  margin-left: auto;
+  padding-left: 16px;
+  font-weight: normal;
+  font-size: 1rem;
 }
 
 p, ul, ol, pre {

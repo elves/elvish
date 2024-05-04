@@ -42,12 +42,16 @@ func (c *htmlCodec) Do(op md.Op) {
 	c.preprocessInline(op.Content)
 	switch op.Type {
 	case md.OpHeading:
-		id := ""
-		// Only support #id since that's the only thing used in Elvish's
-		// Markdown right now. More can be added if needed.
-		if info := op.Info; info != "" && op.Info[0] == '#' {
-			id = op.Info[1:]
-		} else {
+		var id, addedIn string
+		// These attributes are written by [writeElvdocSections].
+		for _, attr := range strings.Fields(op.Info) {
+			if value, ok := strings.CutPrefix(attr, "#"); ok {
+				id = value
+			} else if value, ok := strings.CutPrefix(attr, "added-in="); ok {
+				addedIn = value
+			}
+		}
+		if id == "" {
 			// Generate an ID using the inline text content converted to lower
 			// case.
 			id = strings.ToLower(plainTextOfInlineContent(op.Content))
@@ -107,6 +111,10 @@ func (c *htmlCodec) Do(op md.Op) {
 		// Add self link
 		fmt.Fprintf(c,
 			`<a href="#%s" class="anchor" aria-hidden="true"></a>`, idHTML)
+
+		if addedIn != "" {
+			fmt.Fprintf(c, `<span class="api-comment">added in %s</span>`, addedIn)
+		}
 
 		fmt.Fprintf(c, "</h%d>\n", op.Number)
 	case md.OpHTMLBlock:
