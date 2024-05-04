@@ -122,6 +122,7 @@ fn styled-segment {|object &fg-color=default &bg-color=default &bold=$false &dim
 # See also [`render-styledown`]().
 fn styled {|object @style-transformer| }
 
+#doc:added-in 0.21
 # Renders "styledown" markup into a styled text. For the styledown markup
 # format, see <https://pkg.go.dev/src.elv.sh@master/pkg/ui/styledown>.
 #
