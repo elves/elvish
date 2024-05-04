@@ -253,6 +253,7 @@ h1, h2, h3 {
   margin-bottom: 12px;
   font-weight: bold;
   display: flex;
+  align-items: end;
 }
 
 h1 {
