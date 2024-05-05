@@ -164,17 +164,25 @@ You can change your login shell back to the system default with `chsh -s ''`.
 
 ## Dealing with incompatible programs
 
-Some programs assume that the user's login shell is a traditional POSIX-like
-shell, so they won't work correctly if your login shell is Elvish. The following
-programs are known to have issues:
+Some programs invoke the user's login shell assuming that it is a traditional
+POSIX-like shell, so they may not work correctly if your login shell is Elvish.
+The following programs have been reported to have issues:
 
 -   GDB (see [#1795](https://b.elv.sh/1795))
 
+-   The vscode-neovim extension (see [#1804](https://b.elv.sh/1804))
+
 Such programs usually rely on the `$SHELL` environment variable to query the
-login shell, so you can override it to a POSIX shell, like the following:
+login shell. For CLI applications, you can create an alias in your `rc.elv` that
+forces it to a POSIX shell, like the following:
 
 ```elvish
 fn gdb {|@a|
   env SHELL=/bin/sh gdb $@a
 }
 ```
+
+There is no universal way to override environment variables for GUI
+applications; it depends on the GUI environment and possibly the application
+itself. It may be easier to switch the login shell back to the system default
+and configure your terminal to launch Elvish by default instead.
