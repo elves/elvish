@@ -129,6 +129,24 @@ This only launches Elvish if it's available, so it's safe to have in a
   </tr>
 </table>
 
+## VS Code
+
+Open the command palette and run "Open User Settings (JSON)". Add the following
+to the JSON file:
+
+```json
+    "terminal.integrated.defaultProfile.linux": "elvish",
+    "terminal.integrated.profiles.linux": {
+        "elvish": {
+            "path": "elvish"
+        },
+    }
+```
+
+Change `linux` to `osx` or `windows`, depending on your operating system. See
+[VS Code's documentation](https://code.visualstudio.com/docs/terminal/profiles)
+for more details.
+
 # Changing your login shell
 
 On Unix systems, you can also use Elvish as your login shell. Run the following
