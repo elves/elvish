@@ -2,8 +2,7 @@
 
 # Configuring the terminal to run Elvish
 
-The recommended way to use Elvish as your default shell is to configure your
-terminal to launch Elvish as the default command for new sessions.
+This is the recommended way to use Elvish as your default shell.
 
 ## macOS terminals
 
@@ -15,23 +14,22 @@ terminal to launch Elvish as the default command for new sessions.
   <tr>
     <td>Terminal.app</td>
     <td>
-      Open <kbd>Terminal &gt; Preferences</kbd>.
-      Ensure you are on the <kbd>Profiles</kbd> tab, which
-      should be the default tab. In the right-hand panel, select the
-      <kbd>Shell</kbd> tab. Tick
-      <kbd>Run command</kbd>, put the path to Elvish in the
-      textbox, and untick <kbd>Run inside shell</kbd>.
+      <ol>
+        <li>Open <kbd>Terminal &gt; Preferences</kbd>.
+        <li>Ensure you are on the <kbd>Profiles</kbd> tab (which should be the default tab).
+        <li>In the right-hand panel, select the <kbd>Shell</kbd> tab.
+        <li>Tick <kbd>Run command</kbd>, put the path to Elvish in the textbox next to it, and untick <kbd>Run inside shell</kbd>.
+      </ol>
     </td>
   </tr>
   <tr>
     <td>iTerm2</td>
     <td>
-      Open <kbd>iTerm &gt; Preferences</kbd>. Select the
-      <kbd>Profiles</kbd> tab. In the right-hand panel under
-      <kbd>Command</kbd>, change the dropdown from
-      <kbd>Login Shell</kbd> to
-      <kbd>Custom Shell</kbd>, and put the path to Elvish in the
-      textbox.
+      <ol>
+        <li>Open <kbd>iTerm &gt; Preferences</kbd>.
+        <li>Select the <kbd>Profiles</kbd> tab.
+        <li>In the right-hand panel, change the dropdown under <strong>Command</strong> from <kbd>Login Shell</kbd> to either <kbd>Custom Shell</kbd> or <kbd>Command</kbd>, and put the path to Elvish in the textbox next to it.
+      </ol>
     </td>
   </tr>
 </table>
@@ -46,32 +44,41 @@ terminal to launch Elvish as the default command for new sessions.
   <tr>
     <td>GNOME Terminal</td>
     <td>
-      Open <kbd>Edit &gt; Preferences</kbd>. In the right-hand
-      panel, select the <kbd>Command</kbd> tab, tick
-      <kbd>Run a custom command instead of my shell</kbd>,
-      and set <kbd>Custom command</kbd> to the path to Elvish.
+      <ol>
+        <li>Open <kbd>Edit &gt; Preferences</kbd>.
+        <li>In the right-hand panel, select the <kbd>Command</kbd> tab.
+        <li>Tick <kbd>Run a custom command instead of my shell</kbd>, and set <kbd>Custom command</kbd> to the path to Elvish.
+      </ol>
     </td>
   </tr>
   <tr>
     <td>Konsole</td>
     <td>
-      Open <kbd>Settings &gt; Edit Current Profile</kbd>.
-      Set <kbd>Command</kbd> to the path to Elvish.
+      <ol>
+        <li>Open <kbd>Settings &gt; Edit Current Profile</kbd>.
+        <li>Set <kbd>Command</kbd> to the path to Elvish.
+      </ol>
     </td>
   </tr>
   <tr>
     <td>XFCE Terminal</td>
     <td>
-      Open <kbd>Edit &gt; Preferences</kbd>. Check
-      <kbd>Run a custom command instead of my shell</kbd>,
-      and set <kbd>Custom command</kbd> to the path to Elvish.
+      <ol>
+        <li>Open <kbd>Edit &gt; Preferences</kbd>.
+        <li>Tick <kbd>Run a custom command instead of my shell</kbd>, and set <kbd>Custom command</kbd> to the path to Elvish.
+      </ol>
     </td>
   </tr>
-  <tr class="table-section">
-    <td colspan="2" class="notice">
-      The following terminals only support a command-line flag for changing
-      the shell
-    </td>
+</table>
+
+The following terminals only support a command-line flag to change the shell.
+Depending on your DE, you can either create a wrapper script or
+[modify the desktop file](https://wiki.archlinux.org/title/desktop_entries#Modify_desktop_files):
+
+<table>
+  <tr>
+    <th>Terminal</th>
+    <th>Instructions</th>
   </tr>
   <tr>
     <td>LXTerminal</td>
@@ -108,31 +115,31 @@ This only launches Elvish if it's available, so it's safe to have in a
   <tr>
     <td>Windows Terminal</td>
     <td>
-      Press <kbd>Ctrl</kbd>+<kbd>,</kbd> to
-      open <i>Settings</i>. Go to <kbd>Add a new profile &gt; New
-      empty profile</kbd>. Fill in the 'Name' and enter path to Elvish in
-      the 'Command line' textbox. Go to <kbd>Startup</kbd>
-      option and select Elvish as the 'Default profile'. Hit
-      <kbd>Save</kbd>.
+      <ol>
+        <li>Press <kbd>Ctrl</kbd>+<kbd>,</kbd> to open <strong>Settings</strong>.
+        <li>Select <kbd>Add a new profile</kbd> from the left sidebar, and click <kbd>New empty profile</kbd>.
+        <li>Set <kbd>Name</kbd> to “Elvish” and <kbd>Command line</kbd> to the path to Elvish.
+        <li>Select <kbd>Startup</kbd> from the left sidebar, and set <kbd>Default profile</kbd> to Elvish.
+        <li>Hit <kbd>Save</kbd>.
+      </ol>
     </td>
   </tr>
   <tr>
     <td>ConEmu</td>
     <td>
-      Press <kbd>Win</kbd>+<kbd>Alt</kbd>+
-      <kbd>T</kbd> to open the <i>Startup Tasks</i> dialog.
-      Click on <kbd>±</kbd> button to create a new task,
-      give it Elvish alias, enter the path to Elvish in the 'Commands'
-      textbox and tick the 'Default task for new console' checkbox.
-      Click on <kbd>Save settings</kbd> to finish.
+      <ol>
+        <li>Press <kbd>Win</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd> to open <strong>Startup Tasks</strong>.
+        <li>Click <kbd>±</kbd> below the list of existing tasks.
+        <li>Set the name to “Elvish”, enter the path to Elvish in the textbox below <strong>Commands</strong>, and tick <kbd>Default task for new console</kbd>.
+        <li>Click <kbd>Save settings</kbd>.
+      </ol>
     </td>
   </tr>
 </table>
 
 ## VS Code
 
-Open the command palette and run "Open User Settings (JSON)". Add the following
-to the JSON file:
+Open the command palette and run "Open User Settings (JSON)". Add the following:
 
 ```json
     "terminal.integrated.defaultProfile.linux": "elvish",
@@ -143,7 +150,7 @@ to the JSON file:
     }
 ```
 
-Change `linux` to `osx` or `windows`, depending on your operating system. See
+Change `linux` to `osx` or `windows` depending on your operating system. See
 [VS Code's documentation](https://code.visualstudio.com/docs/terminal/profiles)
 for more details.
 
@@ -185,4 +192,4 @@ fn gdb {|@a|
 There is no universal way to override environment variables for GUI
 applications; it depends on the GUI environment and possibly the application
 itself. It may be easier to switch the login shell back to the system default
-and configure your terminal to launch Elvish by default instead.
+and configure your terminal to launch Elvish.

@@ -311,6 +311,23 @@ td, th {
   padding: 0.4em;
 }
 
+/* Make <ol>s inside table cells a bit more compact. This style is currently only
+   used for the list of instructions in get/default-shell.html, and likely needs
+   to be revised when more complex layouts arise (which may be never).
+
+   Safari seems to have a bug with certain (but not all) non-zero margin-top and
+   margin-bottom values inside table cells: the cell containing the <ol> will be
+   taller than other cells in the same row, causing their bottom border to
+   misalign. So we set them to 0 to be safe. It's probably some floating-point
+   error propagation issue. */
+td ol li {
+  margin-top: 0;
+  margin-bottom: 0.15em;
+}
+td ol li:last-child, td ol {
+  margin-bottom: 0;
+}
+
 .dark td, .dark th {
   border-color: #444;
 }
