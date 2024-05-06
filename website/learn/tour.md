@@ -337,6 +337,8 @@ Like traditional shells, using the value of a variable requires the `$` prefix.
 bar
 ```
 
+### Field splitting
+
 Elvish does not perform `$IFS` splitting on variables, so `$foo` always
 evaluates to one value, even if it contains whitespaces and newlines:
 
@@ -348,6 +350,20 @@ evaluates to one value, even if it contains whitespaces and newlines:
 You never need to write `"$foo"` in Elvish. In fact,
 [double-quoted strings](#double-quoted-strings) do not support interpolation in
 Elvish, so `echo "$foo"` will just print out `$foo`).
+
+If you do need to split fields, you can either do this explicitly with
+[`str:fields`](../ref/str.html#str:fields), or store a list of strings and
+["explode"](../ref/language.html#variable-use) it with `$@`:
+
+```elvish-transcript
+~> var args-as-string = 'a b c d'
+~> use str
+~> touch (str:fields $args-as-string) # creates four files
+~> var args-as-list = [a b c d]
+~> touch $@args-as-list # also creates four files
+```
+
+### Declaring and setting variables
 
 Also unlike traditional shells, variables must be declared before being used; if
 the `foo` variable wasn't declared with `var` first, `echo $foo` results in an
