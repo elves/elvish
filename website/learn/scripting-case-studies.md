@@ -56,7 +56,7 @@ Let's see how the Elvish version compares to the traditional shell version:
 
 -   Perhaps subjectively, Elvish's syntax is more readable: instead of keywords
     like `in`, `do` and `done`, Elvish's [`for`](../ref/language.html#for)
-    command doesn't have `in`, and uses familiar punctuation to delimite
+    command doesn't have `in`, and uses familiar punctuation to delimit
     different parts of the command: the list of elements with `[` and `]`, and
     the loop body with `{` and `}`.
 
