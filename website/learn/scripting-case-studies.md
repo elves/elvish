@@ -48,16 +48,21 @@ Let's see how the Elvish version compares to the traditional shell version:
     [`doc:show`](../ref/doc.html#doc:show), or by hovering over it in VS Code
     (support for more editors will come).
 
--   The [`for`](../ref/language.html#for) command also doesn't need the `in`
-    keyword, and takes a proper [list](../ref/language.html#list) as the second
-    argument.
+-   When there is no file that matches `*.jpg`, bash will assign `$x` to the
+    pattern `*.jpg` itself, which is most likely not what you want.
 
--   Elvish uses curly braces instead of keywords to delimit code blocks, which
-    is easy to distinguish from command names, and - somewhat subjectively -
-    more readable.
+    Elvish will throw an exception by default, and you can optionally tell
+    Elvish to expand to zero elements with `*[nomatch-ok].jpg`.
 
-Even though this example doesn't go into the advanced capabilities of Elvish,
-these small differences make the Elvish version easier to develop and maintain.
+-   Perhaps subjectively, Elvish's syntax is more readable: instead of keywords
+    like `in`, `do` and `done`, Elvish's [`for`](../ref/language.html#for)
+    command doesn't have `in`, and uses familiar punctuation to delimite
+    different parts of the command: the list of elements with `[` and `]`, and
+    the loop body with `{` and `}`.
+
+This example doesn't go into the advanced capabilities of Elvish, so differences
+are small and may seem superficial. However, these small details can quickly add
+up, and in general it's much easier to develop and maintain scripts in Elvish.
 
 # update-servers-in-parallel.elv
 
