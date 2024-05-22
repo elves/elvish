@@ -1,0 +1,27 @@
+schema = 3
+
+[mod]
+  [mod."github.com/creack/pty"]
+    version = "v1.1.21"
+    hash = "sha256-pjGw6wQlrVhN65XaIxZueNJqnXThGu00u24rKOLzxS0="
+  [mod."github.com/google/go-cmp"]
+    version = "v0.6.0"
+    hash = "sha256-qgra5jze4iPGP0JSTVeY5qV5AvEnEu39LYAuUCIkMtg="
+  [mod."github.com/mattn/go-isatty"]
+    version = "v0.0.20"
+    hash = "sha256-qhw9hWtU5wnyFyuMbKx+7RB8ckQaFQ8D+8GKPkN3HHQ="
+  [mod."github.com/sourcegraph/jsonrpc2"]
+    version = "v0.2.0"
+    hash = "sha256-UPJQN/TSg9CjRj0239EV9dbZTwe7grOCf8lFWMkqo8U="
+  [mod."go.etcd.io/bbolt"]
+    version = "v1.3.9"
+    hash = "sha256-98cKiMZcxl11laO3IiRHnhSgh7mEjl0iKlPxsSPdbww="
+  [mod."golang.org/x/sync"]
+    version = "v0.6.0"
+    hash = "sha256-LLims/wjDZtIqlYCVHREewcUOX4hwRwplEuZKPOJ/HI="
+  [mod."golang.org/x/sys"]
+    version = "v0.17.0"
+    hash = "sha256-e0qnE+SitE02IzvnJKI4Uzpq9EOZY+zvE8Wf5b2e6Kg="
+  [mod."pkg.nimblebun.works/go-lsp"]
+    version = "v1.1.0"
+    hash = "sha256-mJS7tsR4bPOIcHpvIsdKHQvZxpgFRm3hBSMVBMFcDZI="
