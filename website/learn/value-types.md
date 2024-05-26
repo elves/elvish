@@ -266,7 +266,7 @@ Yes it's true
 The `if` command is a
 [**conditional**](https://en.wikipedia.org/wiki/Conditional_(computer_programming))
 command, one of the most basic
-[**control flows**](https://en.wikipedia.org/wiki/Control_flow). For loops,
+[**control flows**](https://en.wikipedia.org/wiki/Control_flow). `for` loops,
 which we have seen earlier, are another type of control flow.
 
 Extending our previous example of converting JPG files to AVIF, let's add an
