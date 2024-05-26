@@ -71,7 +71,7 @@ fn styled-segment {|object &fg-color=default &bg-color=default &bold=$false &dim
 # - A color name prefixed by `bg-` to set the background color.
 #
 # - A function that receives a styled segment as the only argument and outputs
-#   a single styled segment. This function will be applied to all the segments.
+#   a single styled segment: this function will be applied to all the segments.
 #
 # When a styled text is converted to a string the corresponding
 # [ANSI SGR code](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_.28Select_Graphic_Rendition.29_parameters)
