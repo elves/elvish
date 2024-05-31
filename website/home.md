@@ -14,6 +14,7 @@
   <a href="get/" class="primary button">Download</a>
   <a href="learn/" class="button">Learn</a>
   <a href="https://github.com/elves/elvish" class="button" target="_blank">GitHub</a>
+  <a href="sponsor/" class="sponsor button">Sponsor</a>
 </div>
 </div>
 

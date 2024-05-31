@@ -14,12 +14,8 @@
   /* Colors from 2014 Material Design color palettes
      (https://m2.material.io/design/color/the-color-system) */
   --blue-800: #1565C0;
-  /* Codepoints for Font Awesome icons */
-  --icon-link: '\e800';
-  --icon-link-ext: "\f08e";
-  --icon-doc-text: "\f0f6";
-  --icon-file-code: "\f1c9";
-  --icon-terminal: "\f120";
+  --deep-orange-500: #FF5722;
+  --deep-orange-700: #E64A19;
 }
 
 html {
@@ -139,6 +135,21 @@ body.dark {
 #nav-list li a.current {
   color: black;
   background-color: white;
+}
+
+/* The sponsor nav item is styled somewhat specially, and shares a lot with the
+   sponsor button on the homepage. */
+.sponsor::before, .sponsor::before {
+  font-family: "fa-elv-sh";
+  content: var(--icon-heart);
+  font-size: 0.9em;
+  font-weight: normal;
+  margin-top: -0.1em;
+  color: var(--deep-orange-500);
+}
+
+.button.sponsor::before {
+  padding-right: 0.3em;
 }
 
 /**

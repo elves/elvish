@@ -85,7 +85,7 @@
           <li>
             <a href="{{ rootURL }}/{{ $info.Name }}/"
                class="{{ if eq $curcat $info.Name}}current{{ end }}">
-              {{ $info.Name }}
+              {{ or $info.NavHTML $info.Name }}
             </a>
           </li>
         {{ end }}

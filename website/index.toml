@@ -24,3 +24,8 @@ title = "Elvish Reference"
 [[categories]]
 name = "blog"
 title = "Elvish Blog"
+
+[[categories]]
+name = "sponsor"
+title = "Sponsoring Elvish's Development"
+navHTML = "<span class='sponsor'></span>"

@@ -28,6 +28,8 @@
 .intro .action {
   display: flex;
   column-gap: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .intro .action a {
