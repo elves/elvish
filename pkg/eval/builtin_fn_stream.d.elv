@@ -156,21 +156,24 @@ fn drop {|n inputs?| }
 # ```
 fn compact {|inputs?| }
 
-# Count the number of inputs.
+# Count the number of elements in a container (also known as its _length_), or
+# the number of inputs when when argument is given.
 #
 # Examples:
 #
 # ```elvish-transcript
-# ~> count lorem # count bytes in a string
-# ▶ (num 5)
 # ~> count [lorem ipsum]
 # ▶ (num 2)
-# ~> range 100 | count
+# ~> count [&foo=bar &lorem=ipsum] # count pairs in a map
+# ▶ (num 2)
+# ~> count lorem # count bytes in a string
+# ▶ (num 5)
+# ~> range 100 | count # count inputs
 # ▶ (num 100)
 # ~> seq 100 | count
 # ▶ (num 100)
 # ```
-fn count {|input-list?| }
+fn count {|inputs?| }
 
 # Outputs the [value inputs](#value-inputs) after sorting. The sorting process
 # is
