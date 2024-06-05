@@ -1,7 +1,12 @@
 Elvish is free software under a
 [permissive BSD license](https://github.com/elves/elvish/blob/master/LICENSE).
 
-Please sponsor the main developer, xiaq, on one of the following platforms:
+However, developing free software is not free. Elvish is a project exploring the
+boundary of what shells can do, and developing it takes considerable time,
+energy and creativity.
+
+To make the project more sustainable, please sponsor Elvish's creator and main
+developer, `xiaq`:
 
 <div class="action">
   <a href="https://github.com/sponsors/xiaq" class="button github" target="_blank">GitHub Sponsors</a>
