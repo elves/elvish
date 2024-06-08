@@ -98,15 +98,16 @@ The installation directory is probably not in your OS's default `$PATH`. You
 should either either add it to `$PATH`, or manually copy the Elvish binary to a
 directory already in `$PATH`.
 
-### Building a variant
+### Building an alternative entrypoint
 
-Elvish has several *build variants* with slightly different feature sets. For
-example, the `withpprof` build variant has
-[profiling support](https://pkg.go.dev/runtime/pprof).
+In additional to `src.elv.sh/cmd/elvish` (which corresponds to the
+[`cmd/elvish`](./cmd/elvish) directory in the repo), there are a few alternative
+entrypoints, all named liked `cmd/*/elvish`, with slightly different feature
+sets. (From the perspective of Go, these are just different `main` packages.)
 
-These build variants are just alternative main packages. For example, to build
-the `withpprof` variant, run the following command (change the part after `@` to
-get different versions):
+For example, install the `cmd/withpprof/elvish` entrypoint to get
+[profiling support](https://pkg.go.dev/runtime/pprof) (change the part after `@`
+to get different versions):
 
 ```sh
 go install src.elv.sh/cmd/withpprof/elvish@master
