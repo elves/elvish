@@ -1,10 +1,62 @@
-// Package prog provides the entry point to Elvish. Its subpackages correspond
-// to subprograms of Elvish.
-package prog
+/*
+Package prog supports building testable, composable programs.
 
-// This package sets up the basic environment and calls the appropriate
-// "subprogram", one of the daemon, the terminal interface, or the web
-// interface.
+The main abstraction of this package is the [Program] interface, which can be
+combined using [Composite] and run with [Run].
+
+# Testability
+
+The easy way to write a Go program is as follows:
+
+  - Write code in the main function of the main package.
+  - Access process-level context via globals defined in the [os] package,
+    like [os.Args], [os.Stdin], [os.Stdout] and [os.Stderr].
+  - Call [os.Exit] if the program should exit with a non-zero status.
+  - Declare flags as global variables, with functions like [flag.String].
+
+Programs written this way are hard to test, since they rely on process-level
+states that are hard or impossible to emulate in tests.
+
+With this package, the way to write a Go program is becomes a matter of
+creating a type that implements the [Program] interface:
+
+  - Write the "main" function in the Run method.
+  - Context is available as arguments.
+  - Return an error constructed from [Exit] to exit with a non-zero status.
+  - Declare flags as fields of the type, and register them in the
+    RegisterFlags method.
+
+The [Program] can be run using the [Run] function, which takes care of
+parsing flags, calling the Run method, and converting the error return value
+into an exit code. Since the [Run] function itself takes the standard files
+and command-line arguments as its function arguments, these can be emulated
+easily in tests.
+
+# Composability
+
+Another advantage of this approach is composability. Elvish contains multiple
+independent subprograms. The default subprogram is the shell; but if you run
+Elvish with "elvish -buildinfo" or "elvish -daemon", they will invoke the
+buildinfo or daemon subprogram instead of the shell.
+
+Subprograms can also do something in addition to, rather than in place of,
+other subprograms. One example is profiling support, which declares its own
+flags like -cpuprofile and runs some extra code before and after other
+subprograms to start and stop profiling.
+
+Using this package, all the different subprograms can be implemented
+separately and then composed into one using [Composite].
+
+Other than keeping the codebase cleaner, this also enables an easy way to
+provide alternative main packages that include or exclude a certain
+subprogram. For example, profiling support requires importing a lot of
+additional packages from the standard library, which increases the binary
+size. As a result, the profiling subprogram is not included in the default
+main package [src.elv.sh/cmd/elvish], but it is included in the alternative
+main package [src.elv.sh/cmd/withpprof/elvish]. Binaries built from the
+former main package is meaningfully smaller than the latter.
+*/
+package prog
 
 import (
 	"flag"
@@ -34,8 +86,15 @@ func usage(out io.Writer, fs *flag.FlagSet) {
 	fs.PrintDefaults()
 }
 
-// Run parses command-line flags and runs the first applicable subprogram. It
-// returns the exit status of the program.
+// Run parses command-line flags and runs the [Program], returning the exit
+// status.
+//
+// It is supposed to be used from main functions like this:
+//
+//	func main() {
+//		program := ...
+//		os.Exit(prog.Run([3]*os.File{os.Stdin, os.Stdout, os.Stderr}, os.Args, program))
+//	}
 func Run(fds [3]*os.File, args []string, p Program) int {
 	fs := flag.NewFlagSet("elvish", flag.ContinueOnError)
 	// Error and usage will be printed explicitly.
@@ -97,8 +156,9 @@ func Run(fds [3]*os.File, args []string, p Program) int {
 	return 2
 }
 
-// Composite returns a Program that tries each of the given programs,
-// terminating at the first one that doesn't return NotSuitable().
+// Composite returns a [Program] that tries each of the given subprograms,
+// terminating after running the first one that doesn't return an error created
+// with [NextProgram].
 func Composite(programs ...Program) Program {
 	return composite(programs)
 }
@@ -128,10 +188,10 @@ func (cp composite) Run(fds [3]*os.File, args []string) error {
 	return NextProgram(cleanups...)
 }
 
-// NextProgram returns a special error that may be returned by [Program.Run]
-// that is part of a [Composite] program, indicating that the next program
-// should be tried. It can carry a list of cleanup functions that should be run
-// in reverse order before the [Composite] program finishes.
+// NextProgram returns a special error that may be returned by the Run method of
+// a [Program] that is part of a [Composite] program, indicating that the next
+// program should be tried. It can carry a list of cleanup functions that should
+// be run in reverse order before the composite program finishes.
 func NextProgram(cleanups ...func([3]*os.File)) error { return nextProgramError{cleanups} }
 
 type nextProgramError struct{ cleanups []func([3]*os.File) }
@@ -142,18 +202,18 @@ func (e nextProgramError) Error() string {
 	return "internal error: no suitable subprogram"
 }
 
-// BadUsage returns a special error that may be returned by Program.Run. It
-// causes the main function to print out a message, the usage information and
-// exit with 2.
+// BadUsage returns a special error that may be returned by a [Program]'s Run
+// method. It causes the main function to print out a message, the usage
+// information and exit with 2.
 func BadUsage(msg string) error { return badUsageError{msg} }
 
 type badUsageError struct{ msg string }
 
 func (e badUsageError) Error() string { return e.msg }
 
-// Exit returns a special error that may be returned by Program.Run. It causes
-// the main function to exit with the given code without printing any error
-// messages. Exit(0) returns nil.
+// Exit returns a special error that may be returned by a [Program]'s Run
+// method. It causes the main function to exit with the given code without
+// printing any error messages. Exit(0) returns nil.
 func Exit(exit int) error {
 	if exit == 0 {
 		return nil
