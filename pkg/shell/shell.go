@@ -24,7 +24,23 @@ import (
 
 var logger = logutil.GetLogger("[shell] ")
 
-// Program is the shell subprogram.
+// Program is the shell subprogram. It has two slightly different modes of
+// operation:
+//
+//   - When the command line argument contains a filename or "-c some-code", the
+//     shell is non-interactive. In this mode, it just evaluates the given file or
+//     code.
+//
+//   - Otherwise, the shell is interactive, and launches a terminal [REPL]. This
+//     mode also initializes the storage backend, which in turn activates the
+//     storage daemon.
+//
+//     To enable building a daemon-less version, the subprogram doesn't depend
+//     on pkg/daemon, and the caller should supply pkg/daemon.Activate in the
+//     ActivateDaemon field to enable functionalities. If it is nil, daemon
+//     functionalities are disabled.
+//
+// [REPL]: https://en.wikipedia.org/wiki/Read–eval–print_loop
 type Program struct {
 	ActivateDaemon daemondefs.ActivateFunc
 
