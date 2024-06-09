@@ -1,4 +1,4 @@
-# Packager's Manual
+# Packaging Elvish
 
 The main package of Elvish is `cmd/elvish`, and you can build it like any other
 Go application.
