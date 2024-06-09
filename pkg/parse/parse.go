@@ -1,11 +1,19 @@
-// Package parse implements the elvish parser.
-//
-// The parser builds a hybrid of AST (abstract syntax tree) and parse tree
-// (a.k.a. concrete syntax tree). The AST part only includes parts that are
-// semantically significant -- i.e. skipping whitespaces and symbols that do not
-// alter the semantics, and is embodied in the fields of each *Node type. The
-// parse tree part corresponds to all the text in the original source text, and
-// is embodied in the children of each *Node type.
+/*
+Package parse implements parsing of Elvish code.
+
+The entrypoint of this package is [Parse] and the more low-level [ParseAs].
+
+This package defines many types that implement the [Node] interface, [Chunk]
+being the root node. Each node can be thought of as a AST/parse tree hybrid:
+
+  - To access the semantically relevant information of a node (as an AST),
+    use its exported fields.
+
+  - To access all its children (as a parse tree), call [Children].
+
+Internally, this package uses a handwritten recursive-descent parser. There's
+no separate tokenization phase; the parser consumes the source text directly.
+*/
 package parse
 
 //go:generate stringer -type=PrimaryType,RedirMode,ExprCtx -output=zstring.go
