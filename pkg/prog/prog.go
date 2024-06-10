@@ -55,6 +55,18 @@ size. As a result, the profiling subprogram is not included in the default
 main package [src.elv.sh/cmd/elvish], but it is included in the alternative
 main package [src.elv.sh/cmd/withpprof/elvish]. Binaries built from the
 former main package is meaningfully smaller than the latter.
+
+# Elvish-specific flag handling
+
+As general as the [Program] abstraction is, this package has a bit of
+Elvish-specific flag handling code:
+
+-	[Run] handles some global flags not specific to any subprogram, like -log.
+
+-	[FlagSet] handles some flags shared by multiple subprograms, like -json.
+
+It's possible to split such code in this package, but doing so seems to require
+a bit too much indirection to justify for the Elvish codebase.
 */
 package prog
 
@@ -73,6 +85,9 @@ import (
 var DeprecationLevel = 20
 
 // Program represents a subprogram.
+//
+// This is the main abstraction provided by this package. See the package-level
+// godoc for details.
 type Program interface {
 	RegisterFlags(fs *FlagSet)
 	// Run runs the subprogram.
@@ -87,7 +102,7 @@ func usage(out io.Writer, fs *flag.FlagSet) {
 }
 
 // Run parses command-line flags and runs the [Program], returning the exit
-// status.
+// status. It also handles global flags that are not specific to any subprogram.
 //
 // It is supposed to be used from main functions like this:
 //
@@ -156,9 +171,9 @@ func Run(fds [3]*os.File, args []string, p Program) int {
 	return 2
 }
 
-// Composite returns a [Program] that tries each of the given subprograms,
-// terminating after running the first one that doesn't return an error created
-// with [NextProgram].
+// Composite returns a [Program] made up from subprograms. It starts from the
+// first, continuing to the next as long as the subprogram returns an error
+// created with [NextProgram].
 func Composite(programs ...Program) Program {
 	return composite(programs)
 }
