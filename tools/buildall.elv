@@ -96,15 +96,14 @@ fn main {|go-pkg dst-dir &name=elvish &variant='' &keep-bin=$false|
       gzip -f $bin-name.tar
     }
     sha256sum-if-available $archive-name
-    if $keep-bin {
-      mv $bin-name-in-archive $bin-name
-      # Update the modification time again to reflect the actual modification
-      # time. (Technically this makes the file appear slightly newer han it really
-      # is, but it's close enough).
-      touch $bin-name
-      sha256sum-if-available $bin-name
-    } else {
-      rm $bin-name-in-archive
+    mv $bin-name-in-archive $bin-name
+    # Update the modification time again to reflect the actual modification
+    # time. (Technically this makes the file appear slightly newer han it really
+    # is, but it's close enough).
+    touch $bin-name
+    sha256sum-if-available $bin-name
+    if (not $keep-bin) {
+      rm $bin-name
     }
     echo 'Done'
   }
