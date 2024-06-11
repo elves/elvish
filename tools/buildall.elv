@@ -26,11 +26,18 @@ var platforms = [
   [&arch=riscv64 &os=linux]
 ]
 
-var usage = ^
-'buildall.elv [-name name] [-variant variant] go-pkg dst-dir
+fn sha256sum-if-available {|name|
+  if (has-external sha256sum) {
+    sha256sum $name > $name.sha256sum
+  }
+}
 
-Builds $go-pkg, outputting $dst-dir/$GOOS-$GOARCH/$name and an archive for a
-predefined list of supported GOOS/GOARCH combinations.
+var usage = ^
+'buildall.elv [-name name] [-variant variant] [-keep-bin] go-pkg dst-dir
+
+Builds $go-pkg, writing a binary $dst-dir/$GOOS-$GOARCH/$name and an archive for
+a predefined list of supported GOOS/GOARCH combinations. The binary is removed
+after the archive is created, unless -keep-bin is specified.
 
 For GOOS=windows, the binary name has an .exe suffix, and the archive is a
 .zip file. For all other GOOS, the archive is a .tar.gz file.
@@ -42,7 +49,7 @@ The value of $variant will be used to override
 src.elv.sh/pkg/buildinfo.BuildVariant.
 '
 
-fn main {|go-pkg dst-dir &name=elvish &variant=''|
+fn main {|go-pkg dst-dir &name=elvish &variant='' &keep-bin=$false|
   tmp E:CGO_ENABLED = 0
   for platform $platforms {
     var arch os = $platform[arch] $platform[os]
@@ -88,18 +95,18 @@ fn main {|go-pkg dst-dir &name=elvish &variant=''|
       touch -d 2022-01-01T00:00:00Z $bin-name.tar
       gzip -f $bin-name.tar
     }
-    mv $bin-name-in-archive $bin-name
-    # Update the modification time again to reflect the actual modification
-    # time. (Technically this makes the file appear slightly newer han it really
-    # is, but it's close enough).
-    touch $bin-name
-    echo 'Done'
-
-    if (has-external sha256sum) {
-      for file [$bin-name $archive-name] {
-        sha256sum $file > $file.sha256sum
-      }
+    sha256sum-if-available $archive-name
+    if $keep-bin {
+      mv $bin-name-in-archive $bin-name
+      # Update the modification time again to reflect the actual modification
+      # time. (Technically this makes the file appear slightly newer han it really
+      # is, but it's close enough).
+      touch $bin-name
+      sha256sum-if-available $bin-name
+    } else {
+      rm $bin-name-in-archive
     }
+    echo 'Done'
   }
 }
 
