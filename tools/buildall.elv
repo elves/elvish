@@ -22,6 +22,8 @@ var platforms = [
 
   [&arch=arm64 &os=linux]
   [&arch=arm64 &os=darwin]
+
+  [&arch=riscv64 &os=linux]
 ]
 
 var usage = ^
