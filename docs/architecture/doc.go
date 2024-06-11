@@ -3,7 +3,7 @@
 
 This file documents how Elvish's codebase is structured on a high level. You
 can read it either in a code editor, or in a godoc viewer such as
-https://pkg.go.dev/src.elv.sh@master/docs.
+https://pkg.go.dev/src.elv.sh@master/docs/architecture.
 
 Elvish is a Go project. If you are not familiar with how Go code is
 organized, start with [how to write Go code].

@@ -9,12 +9,15 @@ This directory contains developer documentation:
 
 -   🔑 [Security policy](security.md)
 
+-   🧩 [Using Elvish as a library](elvish-as-library.md)
+
 If you'd like to contribute to Elvish:
 
--   🏢 [Architecture overview](architecture.go)
+-   🏢
+    [Architecture overview](https://pkg.go.dev/src.elv.sh@master/docs/architecture)
 
-    This document is written as a godoc comment block. You can also read it on
-    https://pkg.go.dev/src.elv.sh@master/docs.
+    This document is written as a godoc comment. You can also read the Go source
+    [architecture/doc.go](architecture/doc.go).
 
 -   👋 [Process for contributing to Elvish](contributing.md)
 
