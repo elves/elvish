@@ -179,7 +179,7 @@ func (cp *compiler) formOp(n *parse.Form) effectOp {
 		}
 		assignmentOps = cp.assignmentOps(n.Assignments)
 		for _, a := range n.Assignments {
-			lvalues := cp.parseIndexingLValue(a.Left, setLValue|newLValue)
+			lvalues := cp.compileIndexingLValue(a.Left, setLValue|newLValue)
 			tempLValues = append(tempLValues, lvalues.lvalues...)
 		}
 		logger.Println("temporary assignment of", len(n.Assignments), "pairs")
@@ -403,7 +403,7 @@ func allTrue(vs []any) bool {
 }
 
 func (cp *compiler) assignmentOp(n *parse.Assignment) effectOp {
-	lhs := cp.parseIndexingLValue(n.Left, setLValue|newLValue)
+	lhs := cp.compileIndexingLValue(n.Left, setLValue|newLValue)
 	rhs := cp.compoundOp(n.Right)
 	return &assignOp{n.Range(), lhs, rhs, false}
 }

@@ -1860,7 +1860,7 @@ mutation applied, and assigns it to the variable. Example:
 ▶ [foo bar]
 ```
 
-## Temporarily assigning variables or elements: `tmp` {#tmp}
+## Assign temporarily: `tmp` {#tmp}
 
 The `tmp` command has the same syntax as [`set`](#set), and also requires all
 variables to already exist (use the [`var`](#var) special command to declare new
@@ -1882,6 +1882,42 @@ bar
 ~> f
 foo
 ```
+
+## Run with temporary assignment: `with` {#with}
+
+(Added in the 0.21 release series.)
+
+The `with` command has a similar syntax to [`set`](#set), but takes an
+additional lambda. It performs assignments, runs the lambda, and restores the
+variables to their original values. Example:
+
+```elvish-transcript
+~> var x = old
+~> with x = new { echo $x }
+new
+~> echo $x
+old
+```
+
+The `with` command also supports an alternative syntax where all assignment
+arguments are enclosed inside `[` and `]`. There can be multiple of them:
+
+```elvish-transcript
+~> var x y = old-x old-y
+~> with [x = new-x] [y = new-y] { echo $x $y }
+new-x new-y
+```
+
+The same temporary assignment logic can usually be expressed with both `tmp` and
+`with`. For examples, the following are equivalent:
+
+```elvish-transcript
+~> var x = old
+~> { tmp x = new; echo $x }
+~> with x = new { echo $x }
+```
+
+Whether to use `tmp` or `with` is often a matter of style.
 
 ## Deleting variables or elements: `del` {#del}
 

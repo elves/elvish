@@ -324,6 +324,80 @@ Exception: restore variable: bad var
   [tty]:1:7-9: { tmp bad = foo; put after }
   [tty]:1:1-28: { tmp bad = foo; put after }
 
+////////
+# with #
+////////
+
+~> var x = old
+   with x = new { put $x }
+   put $x
+▶ new
+▶ old
+
+## multiple assignments enclosed in lists ##
+~> var x y = old-x old-y
+   with [x = new-x] [y = new-y] { put $x $y }
+   put $x $y
+▶ new-x
+▶ new-y
+▶ old-x
+▶ old-y
+
+## variables are restored if body throws exception ##
+~> var x = old
+   with [x = new] { fail foo }
+Exception: foo
+  [tty]:2:18-26: with [x = new] { fail foo }
+~> put $x
+▶ old
+
+## exception setting variable restores previously set variables ##
+//add-bad-var bad 0
+~> var x = old
+   with [x = new] [bad = new] { }
+Exception: bad var
+  [tty]:2:17-19: with [x = new] [bad = new] { }
+~> put $x
+▶ old
+
+## exception restoring variable is propagated and doesn't affect restoring other variables ##
+//add-bad-var bad 1
+~> var x = old
+   with [x = new] [bad = new] { }
+Exception: restore variable: bad var
+  [tty]:2:17-19: with [x = new] [bad = new] { }
+~> put $x
+▶ old
+
+## two few arguments ##
+~> with
+Compilation error: with requires at least two arguments
+  [tty]:1:1-4: with
+~> with { }
+Compilation error: with requires at least two arguments
+  [tty]:1:1-8: with { }
+
+## last argument not lambda ##
+~> var x
+   with x = val foobar
+Compilation error: last argument must be a lambda
+  [tty]:2:14-19: with x = val foobar
+
+## compound expressions ##
+~> with a'x' = foo { }
+Compilation error: argument must not be compound expressions
+  [tty]:1:6-9: with a'x' = foo { }
+~> var x
+   with [x = a] a'y' { }
+Compilation error: argument must not be compound expressions
+  [tty]:2:14-17: with [x = a] a'y' { }
+
+## list followed by non-list ##
+~> var x
+   with [x = a] y { }
+Compilation error: argument must be a list
+  [tty]:2:14-14: with [x = a] y { }
+
 ///////
 # del #
 ///////

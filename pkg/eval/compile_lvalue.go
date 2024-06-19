@@ -33,14 +33,14 @@ const (
 	newLValue
 )
 
-func (cp *compiler) parseCompoundLValues(ns []*parse.Compound, f lvalueFlag) lvaluesGroup {
+func (cp *compiler) compileCompoundLValues(ns []*parse.Compound, f lvalueFlag) lvaluesGroup {
 	g := lvaluesGroup{nil, -1}
 	for _, n := range ns {
 		if len(n.Indexings) != 1 {
 			cp.errorpf(n, "lvalue may not be composite expressions")
 			break
 		}
-		more := cp.parseIndexingLValue(n.Indexings[0], f)
+		more := cp.compileIndexingLValue(n.Indexings[0], f)
 		if more.rest == -1 {
 			g.lvalues = append(g.lvalues, more.lvalues...)
 		} else if g.rest != -1 {
@@ -55,14 +55,14 @@ func (cp *compiler) parseCompoundLValues(ns []*parse.Compound, f lvalueFlag) lva
 
 var dummyLValuesGroup = lvaluesGroup{[]lvalue{{}}, -1}
 
-func (cp *compiler) parseIndexingLValue(n *parse.Indexing, f lvalueFlag) lvaluesGroup {
+func (cp *compiler) compileIndexingLValue(n *parse.Indexing, f lvalueFlag) lvaluesGroup {
 	if n.Head.Type == parse.Braced {
 		// Braced list of lvalues may not have indices.
 		if len(n.Indices) > 0 {
 			cp.errorpf(n, "braced list may not have indices when used as lvalue")
 			return dummyLValuesGroup
 		}
-		return cp.parseCompoundLValues(n.Head.Braced, f)
+		return cp.compileCompoundLValues(n.Head.Braced, f)
 	}
 	// A basic lvalue.
 	if !parse.ValidLHSVariable(n.Head, true) {
@@ -130,57 +130,61 @@ type assignOp struct {
 }
 
 func (op *assignOp) exec(fm *Frame) Exception {
+	var rc restoreCollector
+	if op.temp {
+		rc = fm.addDefer
+	}
+	return doAssign(fm, op, op.lhs, op.rhs, rc)
+}
+
+func doAssign(fm *Frame, r diag.Ranger, lhs lvaluesGroup, rhs valuesOp, rc restoreCollector) Exception {
 	// Evaluate LHS.
-	variables := make([]vars.Var, len(op.lhs.lvalues))
-	for i, lvalue := range op.lhs.lvalues {
+	variables := make([]vars.Var, len(lhs.lvalues))
+	for i, lvalue := range lhs.lvalues {
 		variable, err := derefLValue(fm, lvalue)
 		if err != nil {
-			return fm.errorp(op.lhs.lvalues[i], err)
+			return fm.errorp(lhs.lvalues[i], err)
 		}
 		variables[i] = variable
 	}
 
 	// Evaluate RHS.
-	values, exc := op.rhs.exec(fm)
+	values, exc := rhs.exec(fm)
 	if exc != nil {
 		return exc
 	}
 
 	// Now perform assignment.
-	set := setPerm
-	if op.temp {
-		set = setTemp
-	}
-	if rest := op.lhs.rest; rest == -1 {
+	if rest := lhs.rest; rest == -1 {
 		if len(variables) != len(values) {
-			return fm.errorp(op, errs.ArityMismatch{What: "assignment right-hand-side",
+			return fm.errorp(r, errs.ArityMismatch{What: "assignment right-hand-side",
 				ValidLow: len(variables), ValidHigh: len(variables), Actual: len(values)})
 		}
 		for i, variable := range variables {
-			exc := set(fm, op.lhs.lvalues[i], variable, values[i])
+			exc := set(fm, lhs.lvalues[i], variable, values[i], rc)
 			if exc != nil {
 				return exc
 			}
 		}
 	} else {
 		if len(values) < len(variables)-1 {
-			return fm.errorp(op, errs.ArityMismatch{What: "assignment right-hand-side",
+			return fm.errorp(r, errs.ArityMismatch{What: "assignment right-hand-side",
 				ValidLow: len(variables) - 1, ValidHigh: -1, Actual: len(values)})
 		}
 		for i := 0; i < rest; i++ {
-			exc := set(fm, op.lhs.lvalues[i], variables[i], values[i])
+			exc := set(fm, lhs.lvalues[i], variables[i], values[i], rc)
 			if exc != nil {
 				return exc
 			}
 		}
 		restOff := len(values) - len(variables)
-		exc := set(fm, op.lhs.lvalues[rest],
-			variables[rest], vals.MakeList(values[rest:rest+restOff+1]...))
+		exc := set(fm, lhs.lvalues[rest],
+			variables[rest], vals.MakeList(values[rest:rest+restOff+1]...), rc)
 		if exc != nil {
 			return exc
 		}
 		for i := rest + 1; i < len(variables); i++ {
-			exc := set(fm, op.lhs.lvalues[i], variables[i], values[i+restOff])
+			exc := set(fm, lhs.lvalues[i], variables[i], values[i+restOff], rc)
 			if exc != nil {
 				return exc
 			}
@@ -189,50 +193,51 @@ func (op *assignOp) exec(fm *Frame) Exception {
 	return nil
 }
 
-func setPerm(fm *Frame, r diag.Ranger, variable vars.Var, value any) Exception {
+type restoreCollector func(func(*Frame) Exception)
+
+// Sets the variable to the value.
+//
+// If rc is non-empty, calls it with a function that restores the original value
+// after setting the variable.
+func set(fm *Frame, r diag.Ranger, variable vars.Var, value any, rc restoreCollector) Exception {
+	var restore func(*Frame) Exception
+	if rc != nil {
+		restore = save(r, variable)
+	}
 	err := variable.Set(value)
 	if err != nil {
 		return fm.errorp(r, err)
+	}
+	if rc != nil {
+		rc(restore)
 	}
 	return nil
 }
 
-func setTemp(fm *Frame, r diag.Ranger, variable vars.Var, value any) Exception {
-	saveVar := variable
+// Returns a function that restores a variable to its current value.
+func save(r diag.Ranger, variable vars.Var) func(*Frame) Exception {
 	if head := vars.HeadOfElement(variable); head != nil {
-		saveVar = head
+		// Needed for temporary assignments to elements (https://b.elv.sh/1515).
+		variable = head
 	}
-	saved := saveVar.Get()
 	// Handle "unsettable" variables (currently just environment variables)
 	// correctly.
-	needUnset := false
-	unsettable, ok := saveVar.(vars.UnsettableVar)
-	if ok {
-		needUnset = !unsettable.IsSet()
-	}
-
-	err := variable.Set(value)
-	if err != nil {
-		return fm.errorp(r, err)
-	}
-
-	if needUnset {
-		fm.addDefer(func(fm *Frame) Exception {
+	if unsettable, ok := variable.(vars.UnsettableVar); ok && !unsettable.IsSet() {
+		return func(fm *Frame) Exception {
 			if err := unsettable.Unset(); err != nil {
 				return fm.errorpf(r, "unset variable: %w", err)
 			}
 			return nil
-		})
-	} else {
-		fm.addDefer(func(fm *Frame) Exception {
-			err := saveVar.Set(saved)
-			if err != nil {
-				return fm.errorpf(r, "restore variable: %w", err)
-			}
-			return nil
-		})
+		}
 	}
-	return nil
+	saved := variable.Get()
+	return func(fm *Frame) Exception {
+		err := variable.Set(saved)
+		if err != nil {
+			return fm.errorpf(r, "restore variable: %w", err)
+		}
+		return nil
+	}
 }
 
 // NoSuchVariable returns an error representing that a variable can't be found.
