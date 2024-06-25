@@ -23,7 +23,7 @@
 // name must not contain any spaces. Each pair defines a setup function that may
 // be referred to in the transcripts with the directive "//name".
 //
-// The setup function f may take a *testing.T, *eval.Evaler and a string
+// The setup function f may take a [*testing.T], [*eval.Evaler] and a string
 // argument. All of them are optional but must appear in that order. If it takes
 // a string argument, the directive can be followed by an argument after a space
 // ("//name argument"), and that argument is passed to f. The argument itself
@@ -104,6 +104,15 @@
 //
 // This mechanism enables editor plugins that can fill or update the output of
 // transcript tests without requiring user to leave the editor.
+//
+// # Deterministic output order
+//
+// When Elvish code writes to both the value output and byte output, or to both
+// stdout and stderr, there's no guarantee which one appears first in the
+// terminal.
+//
+// To make testing easier, this package guarantees a deterministic order in such
+// cases.
 package evaltest
 
 import (
