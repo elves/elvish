@@ -1,0 +1,95 @@
+//each:elvish-in-global
+
+////////////
+# Run file #
+////////////
+//in-temp-dir
+~> echo 'echo hello' > hello.elv
+~> elvish hello.elv
+hello
+
+## Invalid UTF-8 ##
+//in-temp-dir
+~> echo "\xff" > invalid-utf8.elv
+~> elvish invalid-utf8.elv &check-stderr-contains='cannot read script'
+[stderr contains "cannot read script"] true
+[exit] 2
+
+## Non-existing file ##
+//in-temp-dir
+~> elvish non-existing.elv &check-stderr-contains='cannot read script'
+[stderr contains "cannot read script"] true
+[exit] 2
+
+////////////////////
+# Run code with -c #
+////////////////////
+~> elvish -c 'echo hello'
+hello
+
+// TODO: -c should also reject source with invalid UTF-8
+
+// For simplicity, the remaining tests use -c wherever to avoid the need to set
+// up temporary files.
+
+///////////////
+# Parse error #
+///////////////
+
+~> elvish -c 'echo ['
+[stderr] Parse error: should be ']'
+[stderr]   code from -c:1:7: echo [
+[exit] 2
+
+## Parse errors are shown with -compileonly ##
+~> elvish -compileonly -c 'echo ['
+[stderr] Parse error: should be ']'
+[stderr]   code from -c:1:7: echo [
+[exit] 2
+
+## Parse errors with -compileonly and -json ##
+~> elvish -compileonly -json -c 'echo ['
+[{"fileName":"code from -c","start":6,"end":6,"message":"should be ']'"}]
+[exit] 2
+
+## Multiple parse errors with -compileonly and -json ##
+~> elvish -compileonly -json -c 'echo [{'
+[{"fileName":"code from -c","start":7,"end":7,"message":"should be ',' or '}'"},{"fileName":"code from -c","start":7,"end":7,"message":"should be ']'"}]
+[exit] 2
+
+/////////////////////
+# Compilation error #
+/////////////////////
+
+~> elvish -c "echo $a"
+[stderr] Compilation error: variable $a not found
+[stderr]   code from -c:1:6-7: echo $a
+[exit] 2
+
+## With -compileonly ##
+~> elvish -compileonly -c "echo $a"
+[stderr] Compilation error: variable $a not found
+[stderr]   code from -c:1:6-7: echo $a
+[exit] 2
+
+## With -compileonly and -json ##
+~> elvish -compileonly -json -c "echo $a"
+[{"fileName":"code from -c","start":5,"end":7,"message":"variable $a not found"}]
+[exit] 2
+
+## Both parse error and compilation error With -compileonly and -json ##
+~> elvish -compileonly -json -c "echo [$a"
+[{"fileName":"code from -c","start":8,"end":8,"message":"should be ']'"},{"fileName":"code from -c","start":6,"end":8,"message":"variable $a not found"}]
+[exit] 2
+
+/////////////
+# Exception #
+/////////////
+
+~> elvish -c 'fail failure'
+[stderr] Exception: failure
+[stderr]   code from -c:1:1-12: fail failure
+[exit] 2
+
+## Doesn't get triggered with -compileonly ##
+~> elvish -compileonly -c 'fail failure'
