@@ -9,21 +9,10 @@ import (
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/daemon/internal/api"
 	"src.elv.sh/pkg/must"
-	. "src.elv.sh/pkg/prog/progtest"
+	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/store/storetest"
 	"src.elv.sh/pkg/testutil"
 )
-
-func TestProgram_TerminatesIfCannotListen(t *testing.T) {
-	setup(t)
-	must.CreateEmpty("sock")
-
-	Test(t, &Program{},
-		ThatElvish("-daemon", "-sock", "sock", "-db", "db").
-			ExitsWith(2).
-			WritesStdoutContaining("failed to listen on sock"),
-	)
-}
 
 func TestProgram_ServesClientRequests(t *testing.T) {
 	setup(t)
@@ -81,18 +70,6 @@ func TestProgram_QuitsOnSignalChannelWithClients(t *testing.T) {
 	}
 }
 
-func TestProgram_BadCLI(t *testing.T) {
-	Test(t, &Program{},
-		ThatElvish().
-			ExitsWith(2).
-			WritesStderr("internal error: no suitable subprogram\n"),
-
-		ThatElvish("-daemon", "x").
-			ExitsWith(2).
-			WritesStderrContaining("arguments are not allowed with -daemon"),
-	)
-}
-
 func setup(t *testing.T) {
 	testutil.Umask(t, 0)
 	testutil.InTempDir(t)
@@ -116,10 +93,13 @@ func startServerOpts(t *testing.T, args []string, opts ServeOpts) server {
 	t.Helper()
 	readyCh := make(chan struct{})
 	opts.Ready = readyCh
-	doneCh := make(chan serverResult)
+	doneCh := make(chan struct{})
+	devNull := must.OK1(os.OpenFile(os.DevNull, os.O_RDWR, 0))
 	go func() {
-		exit, stdout, stderr := Run(&Program{serveOpts: opts}, args...)
-		doneCh <- serverResult{exit, stdout, stderr}
+		prog.Run(
+			[3]*os.File{devNull, devNull, devNull},
+			args,
+			&Program{serveOpts: opts})
 		close(doneCh)
 	}()
 	select {
@@ -128,28 +108,26 @@ func startServerOpts(t *testing.T, args []string, opts ServeOpts) server {
 		t.Fatal("timed out waiting for daemon to start")
 	}
 	s := server{t, doneCh}
-	t.Cleanup(func() { s.WaitQuit() })
+	t.Cleanup(func() {
+		s.WaitQuit()
+		devNull.Close()
+	})
 	return s
 }
 
 type server struct {
 	t  *testing.T
-	ch <-chan serverResult
+	ch <-chan struct{}
 }
 
-type serverResult struct {
-	exit           int
-	stdout, stderr string
-}
-
-func (s server) WaitQuit() (serverResult, bool) {
+func (s server) WaitQuit() bool {
 	s.t.Helper()
 	select {
-	case r := <-s.ch:
-		return r, true
+	case <-s.ch:
+		return true
 	case <-time.After(testutil.Scaled(2 * time.Second)):
 		s.t.Error("timed out waiting for daemon to quit")
-		return serverResult{}, false
+		return false
 	}
 }
 
@@ -158,7 +136,7 @@ func cli(sock, db string) []string {
 }
 
 func startClient(t *testing.T, sock string) daemondefs.Client {
-	cl := NewClient("sock")
+	cl := NewClient(sock)
 	if _, err := cl.Version(); err != nil {
 		t.Errorf("failed to start client: %v", err)
 	}

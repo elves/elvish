@@ -1,0 +1,22 @@
+//each:elvish-in-global
+
+////////////////////
+# error conditions #
+////////////////////
+
+## no -daemon flag ##
+~> elvish
+[stderr] internal error: no suitable subprogram
+[exit] 2
+
+## superfluous arguments ##
+~> elvish -daemon x &check-stderr-contains='arguments are not allowed with -daemon'
+[stderr contains "arguments are not allowed with -daemon"] true
+[exit] 2
+
+## can't listen to socket ##
+//in-temp-dir
+~> print > sock
+~> elvish -daemon -sock sock -db db &check-stdout-contains='failed to listen on sock'
+[stdout contains "failed to listen on sock"] true
+[exit] 2

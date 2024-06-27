@@ -1,16 +1,6 @@
-// Package progtest provides a framework for testing subprograms.
-//
-// The entry point for the framework is the Test function, which accepts a
-// *testing.T, the Program implementation under test, and any number of test
-// cases.
-//
-// Test cases are constructed using the ThatElvish function, followed by method
-// calls that add additional information to it.
-//
-// Example:
-//
-//	Test(t, someProgram,
-//	     ThatElvish("-c", "echo hello").WritesStdout("hello\n"))
+// Package progtest contains utilities for wrapping [prog.Program] instances
+// into Elvish functions, so that they can be tested using the
+// [src.elv.sh/pkg/eval/evaltest] framework.
 package progtest
 
 import (
@@ -18,167 +8,92 @@ import (
 	"io"
 	"os"
 	"strings"
-	"testing"
 
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/prog"
 )
 
-// Case is a test case that can be used in Test.
-type Case struct {
-	args  []string
-	stdin string
-	want  result
-}
-
-type result struct {
-	exitCode int
-	stdout   output
-	stderr   output
-}
-
-type output struct {
-	content string
-	partial bool
-}
-
-func (o output) String() string {
-	if o.partial {
-		return fmt.Sprintf("text containing %q", o.content)
-	}
-	return fmt.Sprintf("%q", o.content)
-}
-
-// ThatElvish returns a new Case with the specified CLI arguments.
-//
-// The new Case expects the program run to exit with 0, and write nothing to
-// stdout or stderr.
-//
-// When combined with subsequent method calls, a test case reads like English.
-// For example, a test for the fact that "elvish -c hello" writes "hello\n" to
-// stdout reads:
-//
-//	ThatElvish("-c", "hello").WritesStdout("hello\n")
-func ThatElvish(args ...string) Case {
-	return Case{args: append([]string{"elvish"}, args...)}
-}
-
-// WithStdin returns an altered Case that provides the given input to stdin of
-// the program.
-func (c Case) WithStdin(s string) Case {
-	c.stdin = s
-	return c
-}
-
-// DoesNothing returns c itself. It is useful to mark tests that otherwise don't
-// have any expectations, for example:
-//
-//	ThatElvish("-c", "nop").DoesNothing()
-func (c Case) DoesNothing() Case {
-	return c
-}
-
-// ExitsWith returns an altered Case that requires the program run to return
-// with the given exit code.
-func (c Case) ExitsWith(code int) Case {
-	c.want.exitCode = code
-	return c
-}
-
-// WritesStdout returns an altered Case that requires the program run to write
-// exactly the given text to stdout.
-func (c Case) WritesStdout(s string) Case {
-	c.want.stdout = output{content: s}
-	return c
-}
-
-// WritesStdoutContaining returns an altered Case that requires the program run
-// to write output to stdout that contains the given text as a substring.
-func (c Case) WritesStdoutContaining(s string) Case {
-	c.want.stdout = output{content: s, partial: true}
-	return c
-}
-
-// WritesStderr returns an altered Case that requires the program run to write
-// exactly the given text to stderr.
-func (c Case) WritesStderr(s string) Case {
-	c.want.stderr = output{content: s}
-	return c
-}
-
-// WritesStderrContaining returns an altered Case that requires the program run
-// to write output to stderr that contains the given text as a substring.
-func (c Case) WritesStderrContaining(s string) Case {
-	c.want.stderr = output{content: s, partial: true}
-	return c
-}
-
-// Test runs test cases against a given program.
-func Test(t *testing.T, p prog.Program, cases ...Case) {
-	t.Helper()
-	for _, c := range cases {
-		t.Run(strings.Join(c.args, " "), func(t *testing.T) {
-			t.Helper()
-			r := run(p, c.args, c.stdin)
-			if r.exitCode != c.want.exitCode {
-				t.Errorf("got exit code %v, want %v", r.exitCode, c.want.exitCode)
-			}
-			if !matchOutput(r.stdout, c.want.stdout) {
-				t.Errorf("got stdout %v, want %v", r.stdout, c.want.stdout)
-			}
-			if !matchOutput(r.stderr, c.want.stderr) {
-				t.Errorf("got stderr %v, want %v", r.stderr, c.want.stderr)
-			}
-		})
+// ElvishInGlobal returns a setup function suitable for the evaltest framework,
+// which creates a function called "elvish" in the global scope that invokes the
+// given program.
+func ElvishInGlobal(p prog.Program) func(ev *eval.Evaler) {
+	return func(ev *eval.Evaler) {
+		ev.ExtendGlobal(eval.BuildNs().AddGoFn("elvish", ProgramAsGoFn(p)))
 	}
 }
 
-// Run runs a Program with the given arguments. It returns the Program's exit
-// code and output to stdout and stderr.
-func Run(p prog.Program, args ...string) (exit int, stdout, stderr string) {
-	r := run(p, args, "")
-	return r.exitCode, r.stdout.content, r.stderr.content
+type programOpts struct {
+	CheckStdoutContains string
+	CheckStderrContains string
 }
 
-func run(p prog.Program, args []string, stdin string) result {
-	r0, w0 := must.Pipe()
-	// TODO: This assumes that stdin fits in the pipe buffer. Don't assume that.
-	_, err := w0.WriteString(stdin)
-	if err != nil {
-		panic(err)
-	}
-	w0.Close()
-	defer r0.Close()
+func (programOpts) SetDefaultOptions() {}
 
-	w1, get1 := capturedOutput()
-	w2, get2 := capturedOutput()
+// ProgramAsGoFn converts a [prog.Program] to a Go-implemented Elvish function.
+//
+// Stdin of the program is connected to the stdin of the function.
+//
+// Stdout of the program is usually written unchanged to the stdout of the
+// function, except when:
+//
+//   - If the output has no trailing newline, " (no EOL)\n" is appended.
+//   - If &check-stdout-contains is supplied, stdout is suppressed. Instead, a
+//     tag "[stdout contains foo]" is shown, followed by "true" or "false".
+//
+// Stderr of the program is written to the stderr of the function with a
+// [stderr] prefix, with similar treatment for missing trailing EOL and
+// &check-stderr-contains.
+//
+// If the program exits with a non-zero return value, a line "[exit] $i" is
+// written to stderr.
+func ProgramAsGoFn(p prog.Program) any {
+	return func(fm *eval.Frame, opts programOpts, args ...string) {
+		r1, w1 := must.OK2(os.Pipe())
+		r2, w2 := must.OK2(os.Pipe())
+		args = append([]string{"elvish"}, args...)
+		exit := prog.Run([3]*os.File{fm.InputFile(), w1, w2}, args, p)
+		w1.Close()
+		w2.Close()
 
-	exitCode := prog.Run([3]*os.File{r0, w1, w2}, args, p)
-	return result{exitCode, output{content: get1()}, output{content: get2()}}
-}
-
-func matchOutput(got, want output) bool {
-	if want.partial {
-		return strings.Contains(got.content, want.content)
-	}
-	return got.content == want.content
-}
-
-func capturedOutput() (*os.File, func() string) {
-	r, w := must.Pipe()
-	output := make(chan string, 1)
-	go func() {
-		b, err := io.ReadAll(r)
-		if err != nil {
-			panic(err)
+		outFile := fm.ByteOutput()
+		stdout := string(must.OK1(io.ReadAll(r1)))
+		if s := opts.CheckStdoutContains; s != "" {
+			fmt.Fprintf(outFile,
+				"[stdout contains %q] %t\n", s, strings.Contains(stdout, s))
+		} else {
+			outFile.WriteString(lines("", stdout))
 		}
-		r.Close()
-		output <- string(b)
-	}()
-	return w, func() string {
-		// Close the write side so captureOutput goroutine sees EOF and
-		// terminates allowing us to capture and cache the output.
-		w.Close()
-		return <-output
+
+		errFile := fm.ErrorFile()
+		stderr := string(must.OK1(io.ReadAll(r2)))
+		if s := opts.CheckStderrContains; s != "" {
+			fmt.Fprintf(errFile,
+				"[stderr contains %q] %t\n", s, strings.Contains(stderr, s))
+		} else {
+			errFile.WriteString(lines("[stderr] ", stderr))
+		}
+
+		if exit != 0 {
+			fmt.Fprintf(errFile, "[exit] %d\n", exit)
+		}
 	}
+}
+
+// Splits data into lines, adding prefix to each line and appending " (no EOL)"
+// if data doesn't end in a newline.
+func lines(prefix, data string) string {
+	var sb strings.Builder
+	for len(data) > 0 {
+		sb.WriteString(prefix)
+		i := strings.IndexByte(data, '\n')
+		if i == -1 {
+			sb.WriteString(data + " (no EOL)\n")
+			break
+		} else {
+			sb.WriteString(data[:i+1])
+			data = data[i+1:]
+		}
+	}
+	return sb.String()
 }

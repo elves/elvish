@@ -1,0 +1,9 @@
+//each:elvish-in-global
+
+///////////////////////////////////
+# return NextProgram without -lsp #
+///////////////////////////////////
+
+~> elvish
+[stderr] internal error: no suitable subprogram
+[exit] 2
