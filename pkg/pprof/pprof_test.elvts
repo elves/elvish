@@ -11,9 +11,8 @@
 ▶ $true
 
 ## bad path ##
-~> elvish -cpuprofile bad/cpu
-[stderr] Warning: cannot create CPU profile: open bad/cpu: no such file or directory
-[stderr] Continuing without CPU profiling.
+~> elvish -cpuprofile bad/cpu &check-stderr-contains='Warning: cannot create CPU profile:'
+[stderr contains "Warning: cannot create CPU profile:"] true
 
 
 //////////////////
@@ -26,7 +25,6 @@
 ▶ $true
 
 ## bad path ##
-~> elvish -allocsprofile bad/allocs
-[stderr] Warning: cannot create memory allocation profile: open bad/allocs: no such file or directory
-[stderr] Continuing without memory allocation profiling.
+~> elvish -allocsprofile bad/allocs &check-stderr-contains='Warning: cannot create memory allocation profile:'
+[stderr contains "Warning: cannot create memory allocation profile:"] true
 

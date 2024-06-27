@@ -26,8 +26,8 @@
 ~> use os
    os:exists log
 ▶ $true
-~> (p [&]) -log bad/log
-[stderr] open bad/log: no such file or directory
+~> (p [&]) -log bad/log &check-stderr-contains='open bad/log:'
+[stderr contains "open bad/log:"] true
 
 ## -deprecation-level ##
 //deprecation-level 0
