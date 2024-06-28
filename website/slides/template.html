@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>$title</title>
+  <style>
+    $common-css
+
+    h1 { font-size: 2em; margin: 1em 0; }
+    li { margin: 0.2em 0 0.2em 1em; }
+    p { margin: 0.2em 0; }
+
+    :root {
+      font-size: min(4vh, 2.5vw);
+    }
+    html, body {
+      height: 100%;
+    }
+    body {
+      line-height: 1.2;
+    }
+
+    /* Fallback style with no JS */
+    #progress {
+      display: none;
+    }
+    #raw-content {
+      padding: 0.5rem 2rem 0;
+    }
+
+    /* Style with JS */
+    .has-js #raw-content, .has-js section {
+      display: none;
+    }
+    .has-js #progress {
+      display: block;
+      position: absolute;
+      bottom: 0.5rem;
+      width: 100%;
+      text-align: center;
+      font-size: 0.5rem;
+      color: gray;
+    }
+    .has-js section.current {
+      display: block;
+      padding: 0.5rem 2rem 0;
+    }
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('has-js');
+      const slides = createSlides();
+      let current = 0;
+      switchToHash();
+      document.body.addEventListener('keydown', (event) => {
+        if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
+          return;
+        }
+        if (['ArrowLeft', 'ArrowUp', 'k', 'h'].includes(event.key)) {
+          switchToPrev();
+          event.preventDefault();
+        } else if (['ArrowRight', 'ArrowDown', 'j', 'l', ' '].includes(event.key)) {
+          switchToNext();
+          event.preventDefault();
+        }
+      });
+      document.body.addEventListener('click', (event) => {
+        const width = event.target.getBoundingClientRect().width;
+        if (event.clientX < width / 3) {
+          switchToPrev();
+        } else {
+          switchToNext();
+        }
+      }, true);
+
+      function createSlides() {
+        // Use <hr> tags to split the raw content into slides (which are
+        // <section> elements), and use the first element that has an id as the
+        // slide's id.
+        const slides = [];
+        let slide = {element: document.createElement('section'), id: undefined};
+        for (const child of [...document.getElementById('raw-content').childNodes]) {
+          if (child.tagName === 'HR') {
+            // If there's no element with an id, use the index as a fallback.
+            slide.id ||= String(slides.length)
+            slides.push(slide);
+            slide = {element: document.createElement('section'), id: undefined};
+            continue;
+          }
+          slide.element.appendChild(child);
+          if (!slide.id && child.id) {
+            slide.id = child.id
+          }
+        }
+        if (slide.element.childNodes.length > 0) {
+          slide.id ||= String(slides.length);
+          slides.push(slide)
+        }
+
+        for (const slide of slides) {
+          document.body.appendChild(slide.element);
+        }
+        return slides;
+      }
+
+      function switchToHash() {
+        const id = decodeURIComponent(document.location.hash.substring(1));
+        const i = slides.findIndex((slide) => slide.id === id);
+        if (i !== -1) {
+          switchTo(i);
+        } else {
+          switchTo(0);
+        }
+      }
+
+      function switchToPrev() { switchTo(Math.max(0, current - 1)); }
+      function switchToNext() { switchTo(Math.min(slides.length - 1, current + 1)); }
+
+      function switchTo(i) {
+        slides[current].element.className = '';
+        slides[i].element.className = 'current';
+        current = i;
+        if (i === 0) {
+          // Remove hash entirely
+          history.pushState(null, null, ' ');
+        } else {
+          document.location.hash = slides[i].id;
+        }
+        document.getElementById('progress').innerText = (i + 1) + ' / ' + slides.length;
+      }
+    });
+  </script>
+</head>
+<body>
+  <div id="progress">? / ?</div>
+  <div id="raw-content">
+    $content
+  </div>
+</body>
+</html>
