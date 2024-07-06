@@ -12,7 +12,7 @@
 # [assembly languages](https://en.wikipedia.org/wiki/NOP).
 fn nop {|&any-opt= @value| }
 
-# Output the kinds of `$value`s. Example:
+# Output the kinds of `$value`s (also known as the _type_). Example:
 #
 # ```elvish-transcript
 # ~> kind-of lorem [] [&]
