@@ -292,7 +292,7 @@ fn order {|&less-than=$nil &total=$false &key=$nil &reverse=$false inputs?| }
 
 #doc:added-in 0.21
 # Calls `$predicate` for each input, outputting those where `$predicate` outputs
-# `$true`.
+# `$true`. Similar to `filter` in some other languages.
 #
 # The `$predicate` must output a single boolean value.
 #
