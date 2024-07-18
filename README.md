@@ -40,6 +40,10 @@ includes [how to install Elvish](https://elv.sh/get/),
 
 Development docs are in [./docs](./docs).
 
+[![Awesome Elvish](https://img.shields.io/badge/Awesome_Elvish-orange?style=for-the-badge)](https://github.com/elves/awesome-elvish)
+
+Awesome Elvish packages and tools that support Elvish.
+
 ## License
 
 All source files use the BSD 2-clause license (see [LICENSE](LICENSE)), except
