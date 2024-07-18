@@ -289,3 +289,22 @@ fn count {|inputs?| }
 #
 # See also [`compare`]().
 fn order {|&less-than=$nil &total=$false &key=$nil &reverse=$false inputs?| }
+
+#doc:added-in 0.21
+# Calls `$predicate` for each input, outputting those where `$predicate` outputs
+# `$true`.
+#
+# The `$predicate` must output a single boolean value.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> use str
+# ~> put foo bar foobar | keep-if {|s| str:has-prefix $s f }
+# ▶ foo
+# ▶ foobar
+# ~> keep-if {|s| == 3 (count $s) } [foo bar foobar]
+# ▶ foo
+# ▶ bar
+# ```
+fn keep-if {|predicate inputs?| }
