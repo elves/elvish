@@ -64,10 +64,6 @@ var (
 	errMustBeInteger      = errors.New("must be integer")
 )
 
-// CallableType should be set from the eval package to the type of
-// eval.Callable. It is not initialized here to avoid creating an import cycle.
-var CallableType reflect.Type
-
 // ScanToGo converts an Elvish value, and stores it in the destination of ptr,
 // which must be a pointer.
 //
@@ -108,11 +104,14 @@ func ScanToGo(src any, ptr any) error {
 			return fmt.Errorf("internal bug: need pointer to scan to, got %T", ptr)
 		}
 		dstType := ptrType.Elem()
-		if dstType == CallableType && ValueOf(src) == ValueOf(nil) {
-			// Allow using the nil value of an empty interface (which is the
-			// value of Elvish's $nil) as a Callable.
-			ValueOf(ptr).Elem().Set(reflect.Zero(dstType))
-			return nil
+		// Allow using any(nil) as T(nil) for any T whose zero value is spelt
+		// nil.
+		if src == nil {
+			switch dstType.Kind() {
+			case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+				ValueOf(ptr).Elem().SetZero()
+				return nil
+			}
 		}
 		if !TypeOf(src).AssignableTo(dstType) {
 			var dstKind string

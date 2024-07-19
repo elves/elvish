@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"src.elv.sh/pkg/eval/errs"
-	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/tt"
 )
 
@@ -98,7 +97,6 @@ func TestScanToGo_CallableDstAdmitsNil(t *testing.T) {
 	type mockCallable interface {
 		Call()
 	}
-	testutil.Set(t, &CallableType, reflect.TypeOf((*mockCallable)(nil)).Elem())
 	scanToGo := func(src any) (any, error) {
 		var c mockCallable
 		err := ScanToGo(src, &c)
