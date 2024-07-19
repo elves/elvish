@@ -232,7 +232,7 @@ func (er noSuchVariableError) Error() string { return "no variable $" + er.name 
 func derefLValue(fm *Frame, lv lvalue) (vars.Var, error) {
 	variable := deref(fm, lv.ref)
 	if variable == nil {
-		return nil, NoSuchVariable(fm.srcMeta.Code[lv.From:lv.To])
+		return nil, NoSuchVariable(fm.src.Code[lv.From:lv.To])
 	}
 	if len(lv.indexOps) == 0 {
 		return variable, nil

@@ -21,7 +21,7 @@ import (
 type Frame struct {
 	Evaler *Evaler
 
-	srcMeta parse.Source
+	src parse.Source
 
 	local, up *Ns
 	defers    *[]func(*Frame) Exception
@@ -200,7 +200,7 @@ func (fm *Frame) Fork(name string) *Frame {
 		}
 	}
 	return &Frame{
-		fm.Evaler, fm.srcMeta,
+		fm.Evaler, fm.src,
 		fm.local, fm.up, fm.defers,
 		fm.ctx, newPorts,
 		fm.traceback, fm.background,
@@ -237,7 +237,7 @@ func (fm *Frame) PipeOutput(f func(*Frame) error, vCb func(<-chan any), bCb func
 
 func (fm *Frame) addTraceback(r diag.Ranger) *StackTrace {
 	return &StackTrace{
-		Head: diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r.Range()),
+		Head: diag.NewContext(fm.src.Name, fm.src.Code, r.Range()),
 		Next: fm.traceback,
 	}
 }
@@ -252,9 +252,9 @@ func (fm *Frame) errorp(r diag.Ranger, e error) Exception {
 	default:
 		if _, ok := e.(errs.SetReadOnlyVar); ok {
 			r := r.Range()
-			e = errs.SetReadOnlyVar{VarName: fm.srcMeta.Code[r.From:r.To]}
+			e = errs.SetReadOnlyVar{VarName: fm.src.Code[r.From:r.To]}
 		}
-		ctx := diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r)
+		ctx := diag.NewContext(fm.src.Name, fm.src.Code, r)
 		return &exception{e, &StackTrace{Head: ctx, Next: fm.traceback}}
 	}
 }

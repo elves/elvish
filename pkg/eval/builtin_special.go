@@ -330,8 +330,8 @@ func use(fm *Frame, spec string, r diag.Ranger) (*Ns, error) {
 	// translate a module spec to an appropriate path for the platform.
 	if strings.HasPrefix(spec, "./") || strings.HasPrefix(spec, "../") {
 		var dir string
-		if fm.srcMeta.IsFile {
-			dir = filepath.Dir(fm.srcMeta.Name)
+		if fm.src.IsFile {
+			dir = filepath.Dir(fm.src.Name)
 		} else {
 			var err error
 			dir, err = os.Getwd()

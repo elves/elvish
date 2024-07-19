@@ -30,7 +30,7 @@ type compiler struct {
 	// Deprecation registry.
 	deprecations deprecationRegistry
 	// Information about the source.
-	srcMeta parse.Source
+	src parse.Source
 	// Compilation errors.
 	errors []*CompilationError
 	// Suggested code to fix potential issues found during compilation.
@@ -87,7 +87,7 @@ func (CompilationErrorTag) ErrorTag() string { return "compilation error" }
 func (cp *compiler) errorpf(r diag.Ranger, format string, args ...any) {
 	cp.errors = append(cp.errors, &CompilationError{
 		Message: fmt.Sprintf(format, args...),
-		Context: *diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r)})
+		Context: *diag.NewContext(cp.src.Name, cp.src.Code, r)})
 }
 
 // UnpackCompilationErrors returns the constituent compilation errors if the
@@ -147,11 +147,11 @@ func (cp *compiler) deprecate(r diag.Ranger, msg string, minLevel int) {
 	if cp.warn == nil || r == nil {
 		return
 	}
-	dep := deprecation{cp.srcMeta.Name, r.Range(), msg}
+	dep := deprecation{cp.src.Name, r.Range(), msg}
 	if prog.DeprecationLevel >= minLevel && cp.deprecations.register(dep) {
 		err := diag.Error[deprecationTag]{
 			Message: msg,
-			Context: *diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r.Range())}
+			Context: *diag.NewContext(cp.src.Name, cp.src.Code, r.Range())}
 		fmt.Fprintln(cp.warn, err.Show(""))
 	}
 }

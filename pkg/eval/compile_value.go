@@ -441,7 +441,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 	newLocal := local.infos[scopeSizeInit:]
 	cp.popScope()
 
-	return &lambdaOp{n.Range(), argNames, restArg, optNames, optDefaultOps, newLocal, capture, chunkOp, cp.srcMeta}
+	return &lambdaOp{n.Range(), argNames, restArg, optNames, optDefaultOps, newLocal, capture, chunkOp, cp.src}
 }
 
 type lambdaOp struct {
