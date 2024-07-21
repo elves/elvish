@@ -381,6 +381,8 @@ It only supports completing the `install` and `remove` command and package names
 after that:
 
 ```elvish
+use re
+
 var all-packages = [(apt-cache search '' | re:awk {|0 1 @rest| put $1 })]
 
 set edit:completion:arg-completer[apt] = {|@args|
@@ -398,6 +400,8 @@ Here is another slightly more complex example for the `git` command. It supports
 completing some common subcommands and then branch names after that:
 
 ```elvish
+use re
+
 fn all-git-branches {
     # Note: this assumes a recent version of git that supports the format
     # string used.
