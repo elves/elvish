@@ -123,6 +123,7 @@ func initCompletion(ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
 	}
 	nb.AddGoFns(map[string]any{
 		"complete-filename": wrapArgGenerator(complete.GenerateFileNames),
+		"complete-dirname":  wrapArgGenerator(complete.GenerateDirNames),
 		"complete-getopt":   completeGetopt,
 		"complete-sudo":     wrapArgGenerator(generateForSudo),
 		"complex-candidate": complexCandidate,

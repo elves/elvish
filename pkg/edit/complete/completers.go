@@ -123,7 +123,7 @@ func completeRedir(p np.Path, ev *eval.Evaler, cfg Config) (*context, []RawItem,
 	if p.Match(np.Sep, np.Redir) {
 		// Empty redirection target.
 		ctx := &context{"redir", "", parse.Bareword, range0(p[0].Range().To)}
-		items, err := generateFileNames("", false)
+		items, err := generateFileNames("", nil)
 		return ctx, items, err
 	}
 
@@ -131,7 +131,7 @@ func completeRedir(p np.Path, ev *eval.Evaler, cfg Config) (*context, []RawItem,
 	if p.Match(np.SimpleExpr(&expr, ev), np.Redir) {
 		// Non-empty redirection target.
 		ctx := &context{"redir", expr.Value, expr.PrimarType, expr.Compound.Range()}
-		items, err := generateFileNames(expr.Value, false)
+		items, err := generateFileNames(expr.Value, nil)
 		return ctx, items, err
 	}
 

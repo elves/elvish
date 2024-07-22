@@ -51,6 +51,11 @@ var completion:matcher
 # ```
 fn complete-filename {|@args| }
 
+#doc:added-in 0.21
+#
+# Like [`edit:complete-filename`](), but only generates directories.
+fn complete-dirname {|@args| }
+
 # Builds a complex candidate. This is mainly useful in [argument
 # completers](#argument-completer).
 #

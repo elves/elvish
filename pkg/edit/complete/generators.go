@@ -2,6 +2,7 @@ package complete
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,7 +26,16 @@ func GenerateFileNames(args []string) ([]RawItem, error) {
 	if len(args) == 0 {
 		return nil, nil
 	}
-	return generateFileNames(args[len(args)-1], false)
+	return generateFileNames(args[len(args)-1], nil)
+}
+
+// GenerateFileNames returns directory name candidates that are suitable for
+// completing the last argument. It can be used in Config.ArgGenerator.
+func GenerateDirNames(args []string) ([]RawItem, error) {
+	if len(args) == 0 {
+		return nil, nil
+	}
+	return generateFileNames(args[len(args)-1], fs.FileInfo.IsDir)
 }
 
 // GenerateForSudo generates candidates for sudo.
@@ -84,7 +94,7 @@ func generateArgs(args []string, ev *eval.Evaler, p np.Path, cfg Config) ([]RawI
 func generateExternalCommands(seed string) ([]RawItem, error) {
 	if fsutil.DontSearch(seed) {
 		// Completing a local external command name.
-		return generateFileNames(seed, true)
+		return generateFileNames(seed, executableOrDir)
 	}
 	var items []RawItem
 	eachExternal(func(s string) { items = append(items, PlainItem(s)) })
@@ -94,7 +104,7 @@ func generateExternalCommands(seed string) ([]RawItem, error) {
 func generateCommands(seed string, ev *eval.Evaler, p np.Path) ([]RawItem, error) {
 	if fsutil.DontSearch(seed) {
 		// Completing a local external command name.
-		return generateFileNames(seed, true)
+		return generateFileNames(seed, executableOrDir)
 	}
 
 	var cands []RawItem
@@ -133,7 +143,7 @@ func generateCommands(seed string, ev *eval.Evaler, p np.Path) ([]RawItem, error
 	return cands, nil
 }
 
-func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
+func generateFileNames(seed string, statPred func(fs.FileInfo) bool) ([]RawItem, error) {
 	var items []RawItem
 
 	dir, fileprefix := filepath.Split(seed)
@@ -161,9 +171,8 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 		if dotfile(fileprefix) != dotfile(name) {
 			continue
 		}
-		// Only accept searchable directories and executable files if
-		// executableOnly is true.
-		if onlyExecutable && !fsutil.IsExecutable(stat) && !stat.IsDir() {
+		// Apply statPred if given.
+		if statPred != nil && !statPred(stat) {
 			continue
 		}
 
@@ -192,6 +201,10 @@ func generateFileNames(seed string, onlyExecutable bool) ([]RawItem, error) {
 	}
 
 	return items, nil
+}
+
+func executableOrDir(stat fs.FileInfo) bool {
+	return fsutil.IsExecutable(stat) || stat.IsDir()
 }
 
 func generateIndices(v any) []RawItem {

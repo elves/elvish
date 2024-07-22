@@ -9,6 +9,7 @@ set after-command = [
 ]
 
 set completion:arg-completer = [
+  &cd=         $complete-dirname~
   &sudo=       $complete-sudo~
   &doc:show=   {|@a| use doc; doc:-symbols }
   &doc:source= {|@a| use doc; doc:-symbols }
