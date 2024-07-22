@@ -52,6 +52,17 @@ Catch errors before code executes.
 compilation error: variable $projetc not found
 ```
 
+Command failures abort execution by default. No more silent failures, no more
+`&&` everywhere.
+
+```elvish-transcript Terminal: elvish [(explainer)](learn/scripting-case-studies.html#command-failures)
+~> gm convert a.jpg a.png; rm a.jpg
+gm convert: Failed to convert a.jpg
+Exception: gm exited with 1
+  [tty 1]:1:1-22: gm convert a.jpg a.png; rm a.jpg
+# "rm a.jpg" is NOT executed
+```
+
 </div>
 </section>
 <section>

@@ -224,3 +224,40 @@ to execute any code from the script.
 Elvish's early error checking can help you prevent a lot of bugs from simple
 typos. There are more places Elvish checks for errors, and more checks are being
 added.
+
+# Command failures
+
+The following terminal interaction shows Elvish's behavior when a command fails:
+
+```elvish-transcript Terminal: elvish
+~> gm convert a.jpg a.png; rm a.jpg
+gm convert: Failed to convert a.jpg
+Exception: gm exited with 1
+  [tty 1]:1:1-22: gm convert a.jpg a.png; rm a.jpg
+# "rm a.jpg" is NOT executed
+```
+
+Like traditional shells, you can connect multiple commands together with either
+`;` (as in this example) or newlines, and Elvish will run them one after
+another.
+
+However, unlike traditional shells, if any command fails with a non-zero exit
+code, Elvish defaults to aborting execution. As the output indicates, this is
+part of a general mechanism of exceptions, which can be
+[caught](../ref/language.html#try) and
+[inspected](../ref/language.html#exception). (If you're familiar with the
+`set -e` mechanism in traditional shells, Elvish's behavior is similar, but
+without its [many](https://david.rothlis.net/shell-set-e/)
+[flaws](http://mywiki.wooledge.org/BashFAQ/105).)
+
+This early abortion behavior is a much safer default for scripting. In
+particular, it's almost certainly what you want for CI/CD scripts. For example,
+consider the following script:
+
+```elvish
+./run-tests
+./run-linters
+```
+
+If `./run-tests` fails, Elvish will abort the entire script, but a traditional
+shell will happily proceed and only fail if `./run-linters` fails.
