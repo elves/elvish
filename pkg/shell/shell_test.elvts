@@ -1,5 +1,12 @@
 //each:elvish-in-global
 
+///////////////
+# no-op flags #
+///////////////
+
+~> elvish -i -l -c 'echo hello'
+hello
+
 /////////////////////
 # XDG library paths #
 /////////////////////

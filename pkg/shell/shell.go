@@ -53,10 +53,12 @@ type Program struct {
 }
 
 func (p *Program) RegisterFlags(fs *prog.FlagSet) {
-	// Support -i so that programs that expect shells to support it (like
-	// "script") don't error when they invoke Elvish.
+	// script(1) (and possibly other programs) assume shells support -i
 	fs.Bool("i", false,
-		"A no-op flag, introduced for POSIX compatibility")
+		"A no-op flag, introduced for compatibility")
+	// termux (and possibly other programs) assume shells support -l
+	fs.Bool("l", false,
+		"A no-op flag, introduced for compatibility")
 	fs.BoolVar(&p.codeInArg, "c", false,
 		"Treat the first argument as code to execute")
 	fs.BoolVar(&p.compileOnly, "compileonly", false,
