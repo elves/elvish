@@ -130,6 +130,7 @@ type assignOp struct {
 }
 
 func (op *assignOp) exec(fm *Frame) Exception {
+	// Evaluate LHS.
 	variables := make([]vars.Var, len(op.lhs.lvalues))
 	for i, lvalue := range op.lhs.lvalues {
 		variable, err := derefLValue(fm, lvalue)
@@ -139,19 +140,24 @@ func (op *assignOp) exec(fm *Frame) Exception {
 		variables[i] = variable
 	}
 
+	// Evaluate RHS.
 	values, exc := op.rhs.exec(fm)
 	if exc != nil {
 		return exc
 	}
 
-	rest, temp := op.lhs.rest, op.temp
-	if rest == -1 {
+	// Now perform assignment.
+	set := setPerm
+	if op.temp {
+		set = setTemp
+	}
+	if rest := op.lhs.rest; rest == -1 {
 		if len(variables) != len(values) {
 			return fm.errorp(op, errs.ArityMismatch{What: "assignment right-hand-side",
 				ValidLow: len(variables), ValidHigh: len(variables), Actual: len(values)})
 		}
 		for i, variable := range variables {
-			exc := set(fm, op.lhs.lvalues[i], temp, variable, values[i])
+			exc := set(fm, op.lhs.lvalues[i], variable, values[i])
 			if exc != nil {
 				return exc
 			}
@@ -162,19 +168,19 @@ func (op *assignOp) exec(fm *Frame) Exception {
 				ValidLow: len(variables) - 1, ValidHigh: -1, Actual: len(values)})
 		}
 		for i := 0; i < rest; i++ {
-			exc := set(fm, op.lhs.lvalues[i], temp, variables[i], values[i])
+			exc := set(fm, op.lhs.lvalues[i], variables[i], values[i])
 			if exc != nil {
 				return exc
 			}
 		}
 		restOff := len(values) - len(variables)
-		exc := set(fm, op.lhs.lvalues[rest], temp,
+		exc := set(fm, op.lhs.lvalues[rest],
 			variables[rest], vals.MakeList(values[rest:rest+restOff+1]...))
 		if exc != nil {
 			return exc
 		}
 		for i := rest + 1; i < len(variables); i++ {
-			exc := set(fm, op.lhs.lvalues[i], temp, variables[i], values[i+restOff])
+			exc := set(fm, op.lhs.lvalues[i], variables[i], values[i+restOff])
 			if exc != nil {
 				return exc
 			}
@@ -183,39 +189,48 @@ func (op *assignOp) exec(fm *Frame) Exception {
 	return nil
 }
 
-func set(fm *Frame, r diag.Ranger, temp bool, variable vars.Var, value any) Exception {
-	if temp {
-		saved := variable.Get()
+func setPerm(fm *Frame, r diag.Ranger, variable vars.Var, value any) Exception {
+	err := variable.Set(value)
+	if err != nil {
+		return fm.errorp(r, err)
+	}
+	return nil
+}
 
-		needUnset := false
-		unsettable, ok := variable.(vars.UnsettableVar)
-		if ok {
-			needUnset = !unsettable.IsSet()
-		}
+func setTemp(fm *Frame, r diag.Ranger, variable vars.Var, value any) Exception {
+	saveVar := variable
+	if head := vars.HeadOfElement(variable); head != nil {
+		saveVar = head
+	}
+	saved := saveVar.Get()
+	// Handle "unsettable" variables (currently just environment variables)
+	// correctly.
+	needUnset := false
+	unsettable, ok := saveVar.(vars.UnsettableVar)
+	if ok {
+		needUnset = !unsettable.IsSet()
+	}
 
-		err := variable.Set(value)
-		if err != nil {
-			return fm.errorp(r, err)
-		}
+	err := variable.Set(value)
+	if err != nil {
+		return fm.errorp(r, err)
+	}
+
+	if needUnset {
 		fm.addDefer(func(fm *Frame) Exception {
-			if needUnset {
-				if err := unsettable.Unset(); err != nil {
-					return fm.errorpf(r, "unset variable: %w", err)
-				}
-				return nil
+			if err := unsettable.Unset(); err != nil {
+				return fm.errorpf(r, "unset variable: %w", err)
 			}
-
-			err := variable.Set(saved)
+			return nil
+		})
+	} else {
+		fm.addDefer(func(fm *Frame) Exception {
+			err := saveVar.Set(saved)
 			if err != nil {
 				return fm.errorpf(r, "restore variable: %w", err)
 			}
 			return nil
 		})
-		return nil
-	}
-	err := variable.Set(value)
-	if err != nil {
-		return fm.errorp(r, err)
 	}
 	return nil
 }

@@ -288,6 +288,27 @@ Compilation error: cannot find variable $x
 ▶ x
 ▶ x
 
+## use on existing map key (https://b.elv.sh/1515) ##
+~> var m = [&k=old]
+~> { tmp m[k] = new; put $m }
+▶ [&k=new]
+~> put $m
+▶ [&k=old]
+
+## use on non-existing map key (https://b.elv.sh/1515) ##
+~> var m = [&]
+~> { tmp m[k] = new; put $m }
+▶ [&k=new]
+~> put $m
+▶ [&]
+
+## use on list element (https://b.elv.sh/1515) ##
+~> var a = [old]
+~> { tmp a[0] = new; put $a }
+▶ [new]
+~> put $a
+▶ [old]
+
 ## error setting ##
 //add-bad-var bad 0
 ~> { tmp bad = foo }
