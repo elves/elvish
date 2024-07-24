@@ -408,6 +408,11 @@ pre, code {
   border-radius: 3px;
 }
 
+h1 code, h2 code, h3 code {
+  font-size: 0.8em;
+  padding: 0.1em 0.2em;
+}
+
 p code {
   padding: 0.1em 0.5em;
   background-color: #f0f0f0;
