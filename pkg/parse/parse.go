@@ -199,38 +199,6 @@ func startsForm(r rune) bool {
 	return IsInlineWhitespace(r) || startsCompound(r, CmdExpr)
 }
 
-func ValidLHSVariable(p *Primary, allowSigil bool) bool {
-	switch p.Type {
-	case Braced:
-		// TODO(xiaq): check further inside braced expression
-		return true
-	case SingleQuoted, DoubleQuoted:
-		// Quoted variable names may contain anything
-		return true
-	case Bareword:
-		// Bareword variable names may only contain runes that are valid in raw
-		// variable names
-		return validBarewordVariableName(p.Value, allowSigil)
-	default:
-		return false
-	}
-}
-
-func validBarewordVariableName(name string, allowSigil bool) bool {
-	if name == "" {
-		return false
-	}
-	if allowSigil && name[0] == '@' {
-		name = name[1:]
-	}
-	for _, r := range name {
-		if !allowedInVariableName(r) {
-			return false
-		}
-	}
-	return true
-}
-
 // Redir = { Compound } { '<'|'>'|'<>'|'>>' } { Space } ( '&'? Compound )
 type Redir struct {
 	node
@@ -673,6 +641,39 @@ func (pn *Primary) variable(ps *parser) {
 		for allowedInVariableName(ps.peek()) {
 			ps.next()
 		}
+	}
+}
+
+// Keep this consistent with the (*Primary).variable above.
+
+// ValidLHSVariable returns whether a [Primary] node containing a variable name
+// being used as the LHS of an assignment form without the $ prefix is valid.
+func ValidLHSVariable(p *Primary, allowSigil bool) bool {
+	switch p.Type {
+	case SingleQuoted, DoubleQuoted:
+		// Quoted variable names may contain anything
+		return true
+	case Bareword:
+		// Bareword LHS variable are only allowed if they are also valid after a
+		// $, even if they are valid barewords. For example, a variable named
+		// a/b must be quoted after $ (as $'a/b'), so for consistency, we also
+		// require it to be quoted after set (like set 'a/b' = foo) even if a/b
+		// is a valid bareword.
+		name := p.Value
+		if name == "" {
+			return false
+		}
+		if allowSigil && name[0] == '@' {
+			name = name[1:]
+		}
+		for _, r := range name {
+			if !allowedInVariableName(r) {
+				return false
+			}
+		}
+		return true
+	default:
+		return false
 	}
 }
 

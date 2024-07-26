@@ -127,11 +127,6 @@ Compilation error: new variable $a must not have indices
 Compilation error: lvalue may not be composite expressions
   [tty]:1:5-8: var a'b'
 
-## braced lists must not have any indices when used as a lvalue ##
-~> var {a b}[0] = x y
-Compilation error: braced list may not have indices when used as lvalue
-  [tty]:1:5-12: var {a b}[0] = x y
-
 ///////
 # set #
 ///////
@@ -749,11 +744,6 @@ Exception: x
 ~> for x [a] { fail foo }
 Exception: foo
   [tty]:1:13-21: for x [a] { fail foo }
-
-## more than one iterator ##
-~> for {x,y} [] { }
-Compilation error: must be exactly one lvalue
-  [tty]:1:5-9: for {x,y} [] { }
 
 ## can't create new variable non-local variable ##
 ~> for no-such-namespace:x [a b] { }

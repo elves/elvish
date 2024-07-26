@@ -56,15 +56,6 @@ func (cp *compiler) compileCompoundLValues(ns []*parse.Compound, f lvalueFlag) l
 var dummyLValuesGroup = lvaluesGroup{[]lvalue{{}}, -1}
 
 func (cp *compiler) compileIndexingLValue(n *parse.Indexing, f lvalueFlag) lvaluesGroup {
-	if n.Head.Type == parse.Braced {
-		// Braced list of lvalues may not have indices.
-		if len(n.Indices) > 0 {
-			cp.errorpf(n, "braced list may not have indices when used as lvalue")
-			return dummyLValuesGroup
-		}
-		return cp.compileCompoundLValues(n.Head.Braced, f)
-	}
-	// A basic lvalue.
 	if !parse.ValidLHSVariable(n.Head, true) {
 		cp.errorpf(n.Head, "lvalue must be valid literal variable names")
 		return dummyLValuesGroup
