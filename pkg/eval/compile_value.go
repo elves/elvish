@@ -366,7 +366,7 @@ func (op outputCaptureOp) exec(fm *Frame) ([]any, Exception) {
 	if err != nil {
 		return nil, fm.errorp(op, err)
 	}
-	exc := op.subop.exec(fm.forkWithOutput("[output capture]", outPort))
+	exc := op.subop.exec(fm.forkWithOutput(outPort))
 	return collect(), exc
 }
 

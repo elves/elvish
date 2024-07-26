@@ -53,7 +53,7 @@ func call(fm *eval.Frame, opts callOpts, fn *eval.Closure, argsVal vals.List) er
 	err = fs.Parse(args)
 	if err != nil {
 		if opts.OnParseError != nil {
-			return opts.OnParseError.Call(fm.Fork("parse:call &on-parse-error"), []any{err}, eval.NoOpts)
+			return opts.OnParseError.Call(fm.Fork(), []any{err}, eval.NoOpts)
 		}
 		return err
 	}
@@ -61,11 +61,11 @@ func call(fm *eval.Frame, opts callOpts, fn *eval.Closure, argsVal vals.List) er
 	fs.VisitAll(func(f *flag.Flag) {
 		m[f.Name] = f.Value.(flag.Getter).Get()
 	})
-	err = fn.Call(fm.Fork("parse:call"), convertStringArgs(fs.Args()), m)
+	err = fn.Call(fm.Fork(), convertStringArgs(fs.Args()), m)
 	if opts.OnParseError != nil {
 		switch err.(type) {
 		case errs.ArityMismatch:
-			return opts.OnParseError.Call(fm.Fork("parse:call &on-parse-error"), []any{err}, eval.NoOpts)
+			return opts.OnParseError.Call(fm.Fork(), []any{err}, eval.NoOpts)
 		}
 	}
 	return err

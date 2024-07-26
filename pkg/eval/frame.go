@@ -192,7 +192,7 @@ func (fm *Frame) Canceled() bool {
 
 // Fork returns a modified copy of fm. The ports are forked, and the name is
 // changed to the given value. Other fields are copied shallowly.
-func (fm *Frame) Fork(name string) *Frame {
+func (fm *Frame) Fork() *Frame {
 	newPorts := make([]*Port, len(fm.ports))
 	for i, p := range fm.ports {
 		if p != nil {
@@ -208,8 +208,8 @@ func (fm *Frame) Fork(name string) *Frame {
 }
 
 // A shorthand for forking a frame and setting the output port.
-func (fm *Frame) forkWithOutput(name string, p *Port) *Frame {
-	newFm := fm.Fork(name)
+func (fm *Frame) forkWithOutput(p *Port) *Frame {
+	newFm := fm.Fork()
 	newFm.ports[1] = p
 	return newFm
 }
@@ -220,7 +220,7 @@ func (fm *Frame) CaptureOutput(f func(*Frame) error) ([]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = f(fm.forkWithOutput("[output capture]", outPort))
+	err = f(fm.forkWithOutput(outPort))
 	return collect(), err
 }
 
@@ -230,7 +230,7 @@ func (fm *Frame) PipeOutput(f func(*Frame) error, vCb func(<-chan any), bCb func
 	if err != nil {
 		return err
 	}
-	err = f(fm.forkWithOutput("[output pipe]", outPort))
+	err = f(fm.forkWithOutput(outPort))
 	done()
 	return err
 }

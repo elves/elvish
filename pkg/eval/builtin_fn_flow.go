@@ -45,7 +45,7 @@ func runParallel(fm *Frame, functions ...Callable) error {
 				*pexc = err.(Exception)
 			}
 			wg.Done()
-		}(fm.Fork("[run-parallel function]"), function, &exceptions[i])
+		}(fm.Fork(), function, &exceptions[i])
 	}
 
 	wg.Wait()
@@ -59,7 +59,7 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 		if broken {
 			return
 		}
-		newFm := fm.Fork("closure of each")
+		newFm := fm.Fork()
 		ex := f.Call(newFm, []any{v}, NoOpts)
 		newFm.Close()
 
@@ -108,7 +108,7 @@ func peach(fm *Frame, opts peachOpt, f Callable, inputs Inputs) error {
 		}
 		wg.Add(1)
 		go func() {
-			newFm := fm.Fork("closure of peach")
+			newFm := fm.Fork()
 			newFm.ports[0] = DummyInputPort
 			ex := f.Call(newFm, []any{v}, NoOpts)
 			newFm.Close()

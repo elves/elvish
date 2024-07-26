@@ -140,7 +140,7 @@ func Eawk(fm *Frame, opts eawkOpt, f Callable, inputs Inputs) error {
 			args = append(args, field)
 		}
 
-		newFm := fm.Fork("fn of eawk")
+		newFm := fm.Fork()
 		// TODO: Close port 0 of newFm.
 		ex := f.Call(newFm, args, NoOpts)
 		newFm.Close()

@@ -185,7 +185,7 @@ func (op *withOp) exec(fm *Frame) (opExc Exception) {
 		}
 	}
 	body := execLambdaOp(fm, op.bodyOp)
-	return fm.errorp(op, body.Call(fm.Fork("with body"), NoArgs, NoOpts))
+	return fm.errorp(op, body.Call(fm.Fork(), NoArgs, NoOpts))
 }
 
 // Finds LHS and RHS, compiling the RHS. Syntax:
@@ -631,16 +631,16 @@ func (op *ifOp) exec(fm *Frame) Exception {
 	}
 	elseFn := execLambdaOp(fm, op.elseOp)
 	for i, condOp := range op.condOps {
-		condValues, exc := condOp.exec(fm.Fork("if cond"))
+		condValues, exc := condOp.exec(fm.Fork())
 		if exc != nil {
 			return exc
 		}
 		if allTrue(condValues) {
-			return fm.errorp(op, bodies[i].Call(fm.Fork("if body"), NoArgs, NoOpts))
+			return fm.errorp(op, bodies[i].Call(fm.Fork(), NoArgs, NoOpts))
 		}
 	}
 	if op.elseOp != nil {
-		return fm.errorp(op, elseFn.Call(fm.Fork("if else"), NoArgs, NoOpts))
+		return fm.errorp(op, elseFn.Call(fm.Fork(), NoArgs, NoOpts))
 	}
 	return nil
 }
@@ -675,7 +675,7 @@ func (op *whileOp) exec(fm *Frame) Exception {
 
 	iterated := false
 	for {
-		condValues, exc := op.condOp.exec(fm.Fork("while cond"))
+		condValues, exc := op.condOp.exec(fm.Fork())
 		if exc != nil {
 			return exc
 		}
@@ -683,7 +683,7 @@ func (op *whileOp) exec(fm *Frame) Exception {
 			break
 		}
 		iterated = true
-		err := body.Call(fm.Fork("while"), NoArgs, NoOpts)
+		err := body.Call(fm.Fork(), NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(Exception)
 			if exc.Reason() == Continue {
@@ -697,7 +697,7 @@ func (op *whileOp) exec(fm *Frame) Exception {
 	}
 
 	if op.elseOp != nil && !iterated {
-		return fm.errorp(op, elseBody.Call(fm.Fork("while else"), NoArgs, NoOpts))
+		return fm.errorp(op, elseBody.Call(fm.Fork(), NoArgs, NoOpts))
 	}
 	return nil
 }
@@ -754,7 +754,7 @@ func (op *forOp) exec(fm *Frame) Exception {
 			errElement = err
 			return false
 		}
-		err = body.Call(fm.Fork("for"), NoArgs, NoOpts)
+		err = body.Call(fm.Fork(), NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(Exception)
 			if exc.Reason() == Continue {
@@ -776,7 +776,7 @@ func (op *forOp) exec(fm *Frame) Exception {
 	}
 
 	if !iterated && elseBody != nil {
-		return fm.errorp(op, elseBody.Call(fm.Fork("for else"), NoArgs, NoOpts))
+		return fm.errorp(op, elseBody.Call(fm.Fork(), NoArgs, NoOpts))
 	}
 	return nil
 }
@@ -855,7 +855,7 @@ func (op *tryOp) exec(fm *Frame) Exception {
 	elseFn := execLambdaOp(fm, op.elseOp)
 	finally := execLambdaOp(fm, op.finallyOp)
 
-	err := body.Call(fm.Fork("try body"), NoArgs, NoOpts)
+	err := body.Call(fm.Fork(), NoArgs, NoOpts)
 	if err != nil {
 		if catch != nil {
 			if exceptVar != nil {
@@ -864,15 +864,15 @@ func (op *tryOp) exec(fm *Frame) Exception {
 					return fm.errorp(op.catchVar, err)
 				}
 			}
-			err = catch.Call(fm.Fork("try catch"), NoArgs, NoOpts)
+			err = catch.Call(fm.Fork(), NoArgs, NoOpts)
 		}
 	} else {
 		if elseFn != nil {
-			err = elseFn.Call(fm.Fork("try else"), NoArgs, NoOpts)
+			err = elseFn.Call(fm.Fork(), NoArgs, NoOpts)
 		}
 	}
 	if finally != nil {
-		errFinally := finally.Call(fm.Fork("try finally"), NoArgs, NoOpts)
+		errFinally := finally.Call(fm.Fork(), NoArgs, NoOpts)
 		if errFinally != nil {
 			// TODO: If err is not nil, this discards err. Use something similar
 			// to pipeline exception to expose both.

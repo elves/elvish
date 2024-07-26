@@ -70,7 +70,7 @@ func timeCmd(fm *Frame, opts timeOpt, f Callable) error {
 
 	dt := t1.Sub(t0)
 	if opts.OnEnd != nil {
-		newFm := fm.Fork("on-end callback of time")
+		newFm := fm.Fork()
 		errCb := opts.OnEnd.Call(newFm, []any{dt.Seconds()}, NoOpts)
 		if err == nil {
 			err = errCb
@@ -160,7 +160,7 @@ func benchmark(fm *Frame, opts benchmarkOpts, f Callable) error {
 		}
 
 		if opts.OnRunEnd != nil {
-			newFm := fm.Fork("on-run-end callback of benchmark")
+			newFm := fm.Fork()
 			err = opts.OnRunEnd.Call(newFm, []any{dt.Seconds()}, NoOpts)
 			if err != nil {
 				break
@@ -188,7 +188,7 @@ func benchmark(fm *Frame, opts benchmarkOpts, f Callable) error {
 		stats := vals.MakeMap(
 			"avg", avg.Seconds(), "stddev", stddev.Seconds(),
 			"min", min.Seconds(), "max", max.Seconds(), "runs", int64ToElv(runs))
-		newFm := fm.Fork("on-end callback of benchmark")
+		newFm := fm.Fork()
 		errOnEnd := opts.OnEnd.Call(newFm, []any{stats}, NoOpts)
 		if err == nil {
 			err = errOnEnd
