@@ -73,21 +73,6 @@ var testCases = []struct {
 			"Args": []string{"x", "y"}}},
 	},
 	{
-		name: "assignment form",
-		code: "k=v k[a][b]=v {a,b[1]}=(ha)",
-		node: &Form{},
-		want: ast{"Form", fs{
-			"Assignments": []string{"k=v", "k[a][b]=v", "{a,b[1]}=(ha)"}}},
-	},
-	{
-		name: "temporary assignment",
-		code: "k=v k[a][b]=v a",
-		node: &Form{},
-		want: ast{"Form", fs{
-			"Assignments": []string{"k=v", "k[a][b]=v"},
-			"Head":        "a"}},
-	},
-	{
 		name: "redirection",
 		code: "a >b",
 		node: &Form{},

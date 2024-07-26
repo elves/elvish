@@ -52,14 +52,6 @@ func TestGetRegions(t *testing.T) {
 			{2, 12, lexicalRegion, commentRegion}, // # comment
 		}),
 
-		// LHS of temporary assignments.
-		Args("x=foo ls").Rets([]region{
-			{0, 1, semanticRegion, variableRegion}, // x
-			{1, 2, lexicalRegion, "="},
-			{2, 5, lexicalRegion, barewordRegion}, // foo
-			{6, 8, semanticRegion, commandRegion}, // ls
-		}),
-
 		// The "var" special command
 		Args("var x = foo").Rets([]region{
 			{0, 3, semanticRegion, commandRegion},  // var

@@ -10,7 +10,6 @@ import (
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/parse/cmpd"
@@ -166,29 +165,10 @@ func isReaderGone(exc Exception) bool {
 }
 
 func (cp *compiler) formOp(n *parse.Form) effectOp {
-	var tempLValues []lvalue
-	var assignmentOps []effectOp
-	if len(n.Assignments) > 0 {
-		if n.Head == nil {
-			cp.errorpf(n, `using the syntax of temporary assignment for non-temporary assignment is no longer supported; use "var" or "set" instead`)
-			return nopOp{}
-		} else {
-			as := n.Assignments
-			cp.deprecate(diag.MixedRanging(as[0], as[len(as)-1]),
-				`the legacy temporary assignment syntax is deprecated; use "tmp" instead`, 18)
-		}
-		assignmentOps = cp.assignmentOps(n.Assignments)
-		for _, a := range n.Assignments {
-			lvalues := cp.compileIndexingLValue(a.Left, setLValue|newLValue)
-			tempLValues = append(tempLValues, lvalues.lvalues...)
-		}
-		logger.Println("temporary assignment of", len(n.Assignments), "pairs")
-	}
-
 	redirOps := cp.redirOps(n.Redirs)
 	body := cp.formBody(n)
 
-	return &formOp{n.Range(), tempLValues, assignmentOps, redirOps, body}
+	return &formOp{n.Range(), redirOps, body}
 }
 
 func (cp *compiler) formBody(n *parse.Form) formBody {
@@ -240,10 +220,8 @@ func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
 
 type formOp struct {
 	diag.Ranging
-	tempLValues   []lvalue
-	tempAssignOps []effectOp
-	redirOps      []effectOp
-	body          formBody
+	redirOps []effectOp
+	body     formBody
 }
 
 type formBody struct {
@@ -262,57 +240,6 @@ type ordinaryCmd struct {
 func (op *formOp) exec(fm *Frame) (errRet Exception) {
 	// fm here is always a sub-frame created in compiler.pipeline, so it can
 	// be safely modified.
-
-	// Temporary assignment.
-	if len(op.tempLValues) > 0 {
-		// There is a temporary assignment.
-		// Save variables.
-		var saveVars []vars.Var
-		var saveVals []any
-		for _, lv := range op.tempLValues {
-			variable, err := derefLValue(fm, lv)
-			if err != nil {
-				return fm.errorp(op, err)
-			}
-			saveVars = append(saveVars, variable)
-		}
-		for i, v := range saveVars {
-			// TODO(xiaq): If the variable to save is a elemVariable, save
-			// the outermost variable instead.
-			if u := vars.HeadOfElement(v); u != nil {
-				v = u
-				saveVars[i] = v
-			}
-			val := v.Get()
-			saveVals = append(saveVals, val)
-			logger.Printf("saved %s = %s", v, val)
-		}
-		// Do assignment.
-		for _, subop := range op.tempAssignOps {
-			exc := subop.exec(fm)
-			if exc != nil {
-				return exc
-			}
-		}
-		// Defer variable restoration. Will be executed even if an error
-		// occurs when evaling other part of the form.
-		defer func() {
-			for i, v := range saveVars {
-				val := saveVals[i]
-				if val == nil {
-					// TODO(xiaq): Old value is nonexistent. We should delete
-					// the variable. However, since the compiler now doesn't
-					// delete it, we don't delete it in the evaler either.
-					val = ""
-				}
-				err := v.Set(val)
-				if err != nil {
-					errRet = fm.errorp(op, err)
-				}
-				logger.Printf("restored %s = %s", v, val)
-			}
-		}()
-	}
 
 	// Redirections.
 	for _, redirOp := range op.redirOps {
@@ -400,20 +327,6 @@ func allTrue(vs []any) bool {
 		}
 	}
 	return true
-}
-
-func (cp *compiler) assignmentOp(n *parse.Assignment) effectOp {
-	lhs := cp.compileIndexingLValue(n.Left, setLValue|newLValue)
-	rhs := cp.compoundOp(n.Right)
-	return &assignOp{n.Range(), lhs, rhs, false}
-}
-
-func (cp *compiler) assignmentOps(ns []*parse.Assignment) []effectOp {
-	ops := make([]effectOp, len(ns))
-	for i, n := range ns {
-		ops[i] = cp.assignmentOp(n)
-	}
-	return ops
 }
 
 const defaultFileRedirPerm = 0644

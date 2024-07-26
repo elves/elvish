@@ -78,8 +78,7 @@ The following characters are parsed as metacharacters under certain conditions:
     **Note**: Not technically a metacharacter in this context, `~` is also used
     as a [variable suffix](#variable-suffix) to indicate variables for commands.
 
--   `=`: terminates [map keys](#map), option keys, or the variable name in
-    [temporary assignments](#temporary-assignment)
+-   `=`: terminates [map keys](#map) and command option keys.
 
 **Note**: `:` is not technically a metacharacter, but is used in
 [qualified variable names](#qualified-name) and works as a
@@ -1493,63 +1492,6 @@ future.
 A **special command** form has the same syntax with an ordinary command, but how
 it is executed depends on the command head. See
 [special commands](#special-commands).
-
-## Temporary assignment
-
-**Note**: Starting from 0.18.0, this syntax will be deprecated in favor of the
-[`tmp`](#tmp) special command.
-
-You can prepend any command form with **temporary assignments**, which gives
-variables temporarily values during the execution of that command.
-
-In the following example, `$x` and `$y` are temporarily assigned 100 and 200:
-
-```elvish-transcript
-~> var x y = 1 2
-~> x=100 y=200 + $x $y
-▶ 300
-~> echo $x $y
-1 2
-```
-
-In contrary to normal assignments, there should be no whitespaces around the
-equal sign `=`. To have multiple variables in the left-hand side, use braces:
-
-```elvish-transcript
-~> var x y = 1 2
-~> fn f { put 100 200 }
-~> {x,y}=(f) + $x $y
-▶ 300
-```
-
-If you use a previously undefined variable in a temporary assignment, its value
-will become the empty string after the command finishes.
-
-Since `var` and `set` are also commands, they can also be prepended with
-temporary assignments:
-
-```elvish-transcript
-~> var x = 1
-~> x=100 var y = (+ 133 $x)
-~> put $x $y
-▶ 1
-▶ 233
-```
-
-Temporary assignments must all appear at the beginning of the command form. As
-soon as something that is not a temporary assignments is parsed, Elvish no
-longer parses temporary assignments. For instance, in `x=1 echo x=1`, the second
-`x=1` is not a temporary assignment, but a bareword.
-
-**Note**: Elvish's behavior differs from bash (or zsh) in one important place.
-In bash, temporary assignments to variables do not affect their direct
-appearance in the command:
-
-```sh-transcript
-bash-4.4$ x=1
-bash-4.4$ x=100 echo $x
-1
-```
 
 ## IO ports
 

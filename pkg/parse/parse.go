@@ -20,10 +20,8 @@ package parse
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"math"
-	"strings"
 	"unicode"
 
 	"src.elv.sh/pkg/diag"
@@ -79,7 +77,6 @@ var (
 	errShouldBeBraceSepOrRBracket = newError("", "','", "'}'")
 	errShouldBeRParen             = newError("", "')'")
 	errShouldBeCompound           = newError("", "compound")
-	errShouldBeEqual              = newError("", "'='")
 	errShouldBePipe               = newError("", "'|'")
 	errBothElementsAndPairs       = newError("cannot contain both list elements and map pairs")
 	errShouldBeNewline            = newError("", "newline")
@@ -155,43 +152,18 @@ func startsPipeline(r rune) bool {
 	return startsForm(r)
 }
 
-// Form = { Space } { { Assignment } { Space } }
-//
-//	{ Compound } { Space } { ( Compound | MapPair | Redir ) { Space } }
+// Form = { Compound-CmdExpr } { Space } { ( Compound | MapPair | Redir ) { Space } }
 type Form struct {
 	node
-	Assignments []*Assignment
-	Head        *Compound
-	Args        []*Compound
-	Opts        []*MapPair
-	Redirs      []*Redir
+	Head   *Compound
+	Args   []*Compound
+	Opts   []*MapPair
+	Redirs []*Redir
 }
 
 func (fn *Form) parse(ps *parser) {
+	ps.parse(&Compound{ExprCtx: CmdExpr}).addAs(&fn.Head, fn)
 	parseSpaces(fn, ps)
-	for startsCompound(ps.peek(), CmdExpr) {
-		initial := ps.save()
-		cmdNode := &Compound{ExprCtx: CmdExpr}
-		parsedCmd := ps.parse(cmdNode)
-
-		if !parsableAsAssignment(cmdNode) {
-			parsedCmd.addAs(&fn.Head, fn)
-			parseSpaces(fn, ps)
-			break
-		}
-		ps.restore(initial)
-		ps.parse(&Assignment{}).addTo(&fn.Assignments, fn)
-		parseSpaces(fn, ps)
-	}
-
-	if fn.Head == nil {
-		if len(fn.Assignments) > 0 {
-			// Assignment-only form.
-			return
-		}
-		// Bad form.
-		ps.error(fmt.Errorf("bad rune at form head: %q", ps.peek()))
-	}
 
 	for {
 		r := ps.peek()
@@ -223,51 +195,8 @@ func (fn *Form) parse(ps *parser) {
 	}
 }
 
-func parsableAsAssignment(cn *Compound) bool {
-	if len(cn.Indexings) == 0 {
-		return false
-	}
-	switch cn.Indexings[0].Head.Type {
-	case Braced, SingleQuoted, DoubleQuoted:
-		return len(cn.Indexings) >= 2 &&
-			strings.HasPrefix(SourceText(cn.Indexings[1]), "=")
-	case Bareword:
-		name := cn.Indexings[0].Head.Value
-		eq := strings.IndexByte(name, '=')
-		if eq >= 0 {
-			return validBarewordVariableName(name[:eq], true)
-		} else {
-			return validBarewordVariableName(name, true) &&
-				len(cn.Indexings) >= 2 &&
-				strings.HasPrefix(SourceText(cn.Indexings[1]), "=")
-		}
-	default:
-		return false
-	}
-}
-
 func startsForm(r rune) bool {
 	return IsInlineWhitespace(r) || startsCompound(r, CmdExpr)
-}
-
-// Assignment = Indexing '=' Compound
-type Assignment struct {
-	node
-	Left  *Indexing
-	Right *Compound
-}
-
-func (an *Assignment) parse(ps *parser) {
-	ps.parse(&Indexing{ExprCtx: LHSExpr}).addAs(&an.Left, an)
-	head := an.Left.Head
-	if !ValidLHSVariable(head, true) {
-		ps.errorp(head, errShouldBeVariableName)
-	}
-
-	if !parseSep(an, ps, '=') {
-		ps.error(errShouldBeEqual)
-	}
-	ps.parse(&Compound{}).addAs(&an.Right, an)
 }
 
 func ValidLHSVariable(p *Primary, allowSigil bool) bool {

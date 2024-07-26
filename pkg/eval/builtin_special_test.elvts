@@ -978,11 +978,12 @@ Compilation error: superfluous arguments
 ## importing module triggers check for deprecated features ##
 // Regression test for b.elv.sh/1072
 //tmp-lib-dir
-~> echo 'a=b nop $a' > $lib/dep.elv
+//with-deprecation-level 21
+~> echo '..' > $lib/dep.elv
 // Only show the first line to avoid showing the file path, which contains $lib
 // and changes across runs.
 ~> use dep 2>&1 | take 1 | to-lines
-Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
+Deprecation: implicit cd is deprecated; use cd or location mode instead
 
 ## module may mutate REPL namespace ##
 // Regression test for b.elv.sh/1225
