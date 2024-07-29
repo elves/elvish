@@ -7,9 +7,14 @@
   <style>
     $common-css
 
-    h1 { font-size: 2em; margin: 1em 0; }
+    h1 { font-size: 1.6em; margin: 1em 0; }
+    section:first-of-type h1:first-of-type, /* Presentation title */
+    h1:only-child /* Section title */ {
+      margin-top: 20vh; font-size: 2em; font-style: italic;
+    }
     li { margin: 0.2em 0 0.2em 1em; }
     p { margin: 0.2em 0; }
+    code { font-size: 0.86em; }
 
     :root {
       font-size: min(4vh, 2.5vw);
@@ -19,6 +24,14 @@
     }
     body {
       line-height: 1.2;
+    }
+
+    .two-columns {
+      display: flex;
+      flex-direction: row;
+    }
+    .two-columns > .column {
+      width: 50%;
     }
 
     /* Fallback style with no JS */
@@ -82,20 +95,24 @@
         let slide = {element: document.createElement('section'), id: undefined};
         for (const child of [...document.getElementById('raw-content').childNodes]) {
           if (child.tagName === 'HR') {
-            // If there's no element with an id, use the index as a fallback.
-            slide.id ||= String(slides.length)
+            // Conclude the current slide, and create a new one.
+            //
+            // If there's no element with an id in the current slide, use the
+            // index as a fallback.
+            slide.id ||= String(slides.length);
             slides.push(slide);
             slide = {element: document.createElement('section'), id: undefined};
             continue;
           }
           slide.element.appendChild(child);
           if (!slide.id && child.id) {
+            // Use the ID of the first element inside a slide as its ID.
             slide.id = child.id
           }
         }
         if (slide.element.childNodes.length > 0) {
           slide.id ||= String(slides.length);
-          slides.push(slide)
+          slides.push(slide);
         }
 
         for (const slide of slides) {
@@ -105,12 +122,19 @@
       }
 
       function switchToHash() {
-        const id = decodeURIComponent(document.location.hash.substring(1));
+        let num, id;
+        try {
+          [num, id] =
+            decodeURIComponent(document.location.hash.substring(1)).split('-', 2);
+        } catch {
+          switchTo(0);
+          return;
+        }
         const i = slides.findIndex((slide) => slide.id === id);
         if (i !== -1) {
           switchTo(i);
         } else {
-          switchTo(0);
+          switchTo(Number(num) || 0);
         }
       }
 
@@ -122,10 +146,10 @@
         slides[i].element.className = 'current';
         current = i;
         if (i === 0) {
-          // Remove hash entirely
+          // No hash for the presentation title page
           history.pushState(null, null, ' ');
         } else {
-          document.location.hash = slides[i].id;
+          document.location.hash = i + '-' + slides[i].id.replace('%', '%23').replace('#', '%25');
         }
         document.getElementById('progress').innerText = (i + 1) + ' / ' + slides.length;
       }
