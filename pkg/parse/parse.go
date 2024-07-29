@@ -52,7 +52,7 @@ func Parse(src Source, cfg Config) (Tree, error) {
 // unpacked with [UnpackErrors].
 func ParseAs(src Source, n Node, cfg Config) error {
 	ps := &parser{srcName: src.Name, src: src.Code, warn: cfg.WarningWriter}
-	ps.parse(n)
+	parse(ps, n)
 	ps.done()
 	return diag.PackErrors(ps.errors)
 }
@@ -91,7 +91,7 @@ type Chunk struct {
 func (bn *Chunk) parse(ps *parser) {
 	bn.parseSeps(ps)
 	for startsPipeline(ps.peek()) {
-		ps.parse(&Pipeline{}).addTo(&bn.Pipelines, bn)
+		parse(ps, &Pipeline{}).addTo(&bn.Pipelines, bn)
 		if bn.parseSeps(ps) == 0 {
 			break
 		}
@@ -130,14 +130,14 @@ type Pipeline struct {
 }
 
 func (pn *Pipeline) parse(ps *parser) {
-	ps.parse(&Form{}).addTo(&pn.Forms, pn)
+	parse(ps, &Form{}).addTo(&pn.Forms, pn)
 	for parseSep(pn, ps, '|') {
 		parseSpacesAndNewlines(pn, ps)
 		if !startsForm(ps.peek()) {
 			ps.error(errShouldBeForm)
 			return
 		}
-		ps.parse(&Form{}).addTo(&pn.Forms, pn)
+		parse(ps, &Form{}).addTo(&pn.Forms, pn)
 	}
 	parseSpaces(pn, ps)
 	if ps.peek() == '&' {
@@ -162,7 +162,7 @@ type Form struct {
 }
 
 func (fn *Form) parse(ps *parser) {
-	ps.parse(&Compound{ExprCtx: CmdExpr}).addAs(&fn.Head, fn)
+	parse(ps, &Compound{ExprCtx: CmdExpr}).addAs(&fn.Head, fn)
 	parseSpaces(fn, ps)
 
 	for {
@@ -176,18 +176,19 @@ func (fn *Form) parse(ps *parser) {
 				// background indicator
 				return
 			}
-			ps.parse(&MapPair{}).addTo(&fn.Opts, fn)
+			parse(ps, &MapPair{}).addTo(&fn.Opts, fn)
 		case startsCompound(r, NormalExpr):
 			cn := &Compound{}
-			ps.parse(cn)
+			parse(ps, cn)
 			if isRedirSign(ps.peek()) {
 				// Redir
-				ps.parse(&Redir{Left: cn}).addTo(&fn.Redirs, fn)
+				parse(ps, &Redir{Left: cn}).addTo(&fn.Redirs, fn)
 			} else {
-				parsed{cn}.addTo(&fn.Args, fn)
+				fn.Args = append(fn.Args, cn)
+				addChild(fn, cn)
 			}
 		case isRedirSign(r):
-			ps.parse(&Redir{}).addTo(&fn.Redirs, fn)
+			parse(ps, &Redir{}).addTo(&fn.Redirs, fn)
 		default:
 			return
 		}
@@ -237,7 +238,7 @@ func (rn *Redir) parse(ps *parser) {
 	if parseSep(rn, ps, '&') {
 		rn.RightIsFd = true
 	}
-	ps.parse(&Compound{}).addAs(&rn.Right, rn)
+	parse(ps, &Compound{}).addAs(&rn.Right, rn)
 	if len(rn.Right.Indexings) == 0 {
 		if rn.RightIsFd {
 			ps.error(errShouldBeFD)
@@ -278,9 +279,9 @@ func (qn *Filter) parse(ps *parser) {
 		r := ps.peek()
 		switch {
 		case r == '&':
-			ps.parse(&MapPair{}).addTo(&qn.Opts, qn)
+			parse(ps, &MapPair{}).addTo(&qn.Opts, qn)
 		case startsCompound(r, NormalExpr):
-			ps.parse(&Compound{}).addTo(&qn.Args, qn)
+			parse(ps, &Compound{}).addTo(&qn.Args, qn)
 		default:
 			return
 		}
@@ -320,7 +321,7 @@ const (
 func (cn *Compound) parse(ps *parser) {
 	cn.tilde(ps)
 	for startsIndexing(ps.peek(), cn.ExprCtx) {
-		ps.parse(&Indexing{ExprCtx: cn.ExprCtx}).addTo(&cn.Indexings, cn)
+		parse(ps, &Indexing{ExprCtx: cn.ExprCtx}).addTo(&cn.Indexings, cn)
 	}
 }
 
@@ -334,8 +335,10 @@ func (cn *Compound) tilde(ps *parser) {
 			sourceText: "~", parent: nil, children: nil}
 		pn := &Primary{node: base, Type: Tilde, Value: "~"}
 		in := &Indexing{node: base}
-		parsed{pn}.addAs(&in.Head, in)
-		parsed{in}.addTo(&cn.Indexings, cn)
+		in.Head = pn
+		addChild(in, pn)
+		cn.Indexings = append(cn.Indexings, in)
+		addChild(cn, in)
 	}
 }
 
@@ -352,13 +355,13 @@ type Indexing struct {
 }
 
 func (in *Indexing) parse(ps *parser) {
-	ps.parse(&Primary{ExprCtx: in.ExprCtx}).addAs(&in.Head, in)
+	parse(ps, &Primary{ExprCtx: in.ExprCtx}).addAs(&in.Head, in)
 	for parseSep(in, ps, '[') {
 		if !startsArray(ps.peek()) && ps.peek() != ']' {
 			ps.error(errShouldBeArray)
 		}
 
-		ps.parse(&Array{}).addTo(&in.Indices, in)
+		parse(ps, &Array{}).addTo(&in.Indices, in)
 
 		if !parseSep(in, ps, ']') {
 			ps.error(errShouldBeRBracket)
@@ -386,7 +389,7 @@ func (sn *Array) parse(ps *parser) {
 
 	parseSep()
 	for startsCompound(ps.peek(), NormalExpr) {
-		ps.parse(&Compound{}).addTo(&sn.Compounds, sn)
+		parse(ps, &Compound{}).addTo(&sn.Compounds, sn)
 		parseSep()
 	}
 }
@@ -712,7 +715,7 @@ func (pn *Primary) exitusCapture(ps *parser) {
 
 	pn.Type = ExceptionCapture
 
-	ps.parse(&Chunk{}).addAs(&pn.Chunk, pn)
+	parse(ps, &Chunk{}).addAs(&pn.Chunk, pn)
 
 	if !parseSep(pn, ps, ')') {
 		ps.error(errShouldBeRParen)
@@ -723,7 +726,7 @@ func (pn *Primary) outputCapture(ps *parser) {
 	pn.Type = OutputCapture
 	parseSep(pn, ps, '(')
 
-	ps.parse(&Chunk{}).addAs(&pn.Chunk, pn)
+	parse(ps, &Chunk{}).addAs(&pn.Chunk, pn)
 
 	if !parseSep(pn, ps, ')') {
 		ps.error(errShouldBeRParen)
@@ -754,9 +757,9 @@ items:
 				break items
 			}
 			ps.backup()
-			ps.parse(&MapPair{}).addTo(&pn.MapPairs, pn)
+			parse(ps, &MapPair{}).addTo(&pn.MapPairs, pn)
 		case startsCompound(r, NormalExpr):
-			ps.parse(&Compound{}).addTo(&pn.Elements, pn)
+			parse(ps, &Compound{}).addTo(&pn.Elements, pn)
 		default:
 			break items
 		}
@@ -788,9 +791,9 @@ func (pn *Primary) lambda(ps *parser) {
 			r := ps.peek()
 			switch {
 			case r == '&':
-				ps.parse(&MapPair{}).addTo(&pn.MapPairs, pn)
+				parse(ps, &MapPair{}).addTo(&pn.MapPairs, pn)
 			case startsCompound(r, NormalExpr):
-				ps.parse(&Compound{}).addTo(&pn.Elements, pn)
+				parse(ps, &Compound{}).addTo(&pn.Elements, pn)
 			default:
 				break items
 			}
@@ -800,7 +803,7 @@ func (pn *Primary) lambda(ps *parser) {
 			ps.error(errShouldBePipe)
 		}
 	}
-	ps.parse(&Chunk{}).addAs(&pn.Chunk, pn)
+	parse(ps, &Chunk{}).addAs(&pn.Chunk, pn)
 	if !parseSep(pn, ps, '}') {
 		ps.error(errShouldBeRBrace)
 	}
@@ -820,7 +823,7 @@ func (pn *Primary) lbrace(ps *parser) {
 
 	// TODO(xiaq): The compound can be empty, which allows us to parse {,foo}.
 	// Allowing compounds to be empty can be fragile in other cases.
-	ps.parse(&Compound{ExprCtx: BracedElemExpr}).addTo(&pn.Braced, pn)
+	parse(ps, &Compound{ExprCtx: BracedElemExpr}).addTo(&pn.Braced, pn)
 
 	for isBracedSep(ps.peek()) {
 		parseSpacesAndNewlines(pn, ps)
@@ -828,7 +831,7 @@ func (pn *Primary) lbrace(ps *parser) {
 		parseSep(pn, ps, ',')
 		parseSpacesAndNewlines(pn, ps)
 
-		ps.parse(&Compound{ExprCtx: BracedElemExpr}).addTo(&pn.Braced, pn)
+		parse(ps, &Compound{ExprCtx: BracedElemExpr}).addTo(&pn.Braced, pn)
 	}
 	if !parseSep(pn, ps, '}') {
 		ps.error(errShouldBeBraceSepOrRBracket)
@@ -883,7 +886,7 @@ type MapPair struct {
 func (mpn *MapPair) parse(ps *parser) {
 	parseSep(mpn, ps, '&')
 
-	ps.parse(&Compound{ExprCtx: LHSExpr}).addAs(&mpn.Key, mpn)
+	parse(ps, &Compound{ExprCtx: LHSExpr}).addAs(&mpn.Key, mpn)
 	if len(mpn.Key.Indexings) == 0 {
 		ps.error(errShouldBeCompound)
 	}
@@ -891,7 +894,7 @@ func (mpn *MapPair) parse(ps *parser) {
 	if parseSep(mpn, ps, '=') {
 		parseSpacesAndNewlines(mpn, ps)
 		// Parse value part. It can be empty.
-		ps.parse(&Compound{}).addAs(&mpn.Value, mpn)
+		parse(ps, &Compound{}).addAs(&mpn.Value, mpn)
 	}
 }
 
@@ -996,9 +999,4 @@ func IsInlineWhitespace(r rune) bool {
 // inline whitespace characters and newline (Unicode 0xa).
 func IsWhitespace(r rune) bool {
 	return IsInlineWhitespace(r) || r == '\r' || r == '\n'
-}
-
-func addChild(p Node, ch Node) {
-	p.n().addChild(ch)
-	ch.n().parent = p
 }

@@ -678,3 +678,11 @@ func TestParse_ReturnsTreeContainingSourceFromArgument(t *testing.T) {
 		t.Errorf("tree.Source = %v, want %v", tree.Source, src)
 	}
 }
+
+func BenchmarkParse(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		for _, test := range testCases {
+			_ = ParseAs(SourceForTest(test.code), test.node, Config{})
+		}
+	}
+}

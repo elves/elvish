@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 	"unicode/utf8"
 
@@ -32,29 +31,32 @@ type ErrorTag struct{}
 
 func (ErrorTag) ErrorTag() string { return "parse error" }
 
-func (ps *parser) parse(n Node) parsed {
+func parse[N Node](ps *parser, n N) parsed[N] {
 	begin := ps.pos
 	n.n().From = begin
 	n.parse(ps)
 	n.n().To = ps.pos
 	n.n().sourceText = ps.src[begin:ps.pos]
-	return parsed{n}
+	return parsed[N]{n}
 }
 
-type parsed struct {
-	n Node
+type parsed[N Node] struct {
+	n N
 }
 
-func (p parsed) addAs(ptr any, parent Node) {
-	dst := reflect.ValueOf(ptr).Elem()
-	dst.Set(reflect.ValueOf(p.n)) // *ptr = p.n
+func (p parsed[N]) addAs(ptr *N, parent Node) {
+	*ptr = p.n
 	addChild(parent, p.n)
 }
 
-func (p parsed) addTo(ptr any, parent Node) {
-	dst := reflect.ValueOf(ptr).Elem()
-	dst.Set(reflect.Append(dst, reflect.ValueOf(p.n))) // *ptr = append(*ptr, n)
+func (p parsed[N]) addTo(ptr *[]N, parent Node) {
+	*ptr = append(*ptr, p.n)
 	addChild(parent, p.n)
+}
+
+func addChild(p Node, ch Node) {
+	p.n().addChild(ch)
+	ch.n().parent = p
 }
 
 // Tells the parser that parsing is done.
