@@ -7,6 +7,8 @@
   <style>
     $common-css
 
+    * { box-sizing: border-box; }
+
     h1 { font-size: 1.6em; margin: 1em 0; }
     section:first-of-type h1:first-of-type, /* Presentation title */
     h1:only-child /* Section title */ {
@@ -15,9 +17,19 @@
     li { margin: 0.2em 0 0.2em 1em; }
     p { margin: 0.2em 0; }
     code { font-size: 0.86em; }
+    kbd {
+      display: inline-block;
+      border: 1px solid black;
+      border-radius: 3px;
+      padding: 0 3px;
+      margin: 1px;
+      font-size: 85%;
+      font-family: "Lucida Grande", Arial, sans-serif;
+    }
+    img { max-width: 100%; }
 
     :root {
-      font-size: min(4vh, 2.5vw);
+      font-size: min(3.6vh, 2vw);
     }
     html, body {
       height: 100%;
@@ -29,13 +41,14 @@
     .two-columns {
       display: flex;
       flex-direction: row;
+      justify-content: space-between;
     }
     .two-columns > .column {
-      width: 50%;
+      width: 49%;
     }
 
     /* Fallback style with no JS */
-    #progress {
+    footer {
       display: none;
     }
     #raw-content {
@@ -46,18 +59,20 @@
     .has-js #raw-content, .has-js section {
       display: none;
     }
-    .has-js #progress {
+    .has-js footer {
       display: block;
       position: absolute;
       bottom: 0.5rem;
-      width: 100%;
-      text-align: center;
+      left: 50%;
+      transform: translate(-50%, 0);
       font-size: 0.5rem;
       color: gray;
     }
     .has-js section.current {
       display: block;
       padding: 0.5rem 2rem 0;
+      height: 95%;
+      overflow-y: scroll;
     }
   </style>
   <script>
@@ -79,13 +94,16 @@
         }
       });
       document.body.addEventListener('click', (event) => {
+        if (!['BODY', 'SECTION'].includes(event.target.tagName)) {
+          return;
+        }
         const width = event.target.getBoundingClientRect().width;
-        if (event.clientX < width / 3) {
+        if (event.clientX < width / 2) {
           switchToPrev();
         } else {
           switchToNext();
         }
-      }, true);
+      });
 
       function createSlides() {
         // Use <hr> tags to split the raw content into slides (which are
@@ -151,13 +169,13 @@
         } else {
           document.location.hash = i + '-' + slides[i].id.replace('%', '%23').replace('#', '%25');
         }
-        document.getElementById('progress').innerText = (i + 1) + ' / ' + slides.length;
+        document.querySelector('footer').innerText = (i + 1) + ' / ' + slides.length;
       }
     });
   </script>
 </head>
 <body>
-  <div id="progress">? / ?</div>
+  <footer>? / ?</footer>
   <div id="raw-content">
     $content
   </div>
