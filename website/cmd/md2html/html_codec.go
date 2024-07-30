@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"src.elv.sh/pkg/elvdoc"
 	"src.elv.sh/pkg/md"
 	"src.elv.sh/pkg/strutil"
 	"src.elv.sh/pkg/ui"
@@ -165,7 +164,7 @@ func (c *htmlCodec) Do(op md.Op) {
 			}
 		} else {
 			c.WriteString(textToHTML(
-				elvdoc.HighlightCodeBlock(op.Info, strutil.JoinLines(op.Lines))))
+				highlightCodeBlock(op.Info, strutil.JoinLines(op.Lines))))
 		}
 		c.WriteString("</code></pre>\n")
 	default:
