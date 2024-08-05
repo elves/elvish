@@ -87,7 +87,11 @@ func (CompilationErrorTag) ErrorTag() string { return "compilation error" }
 func (cp *compiler) errorpf(r diag.Ranger, format string, args ...any) {
 	cp.errors = append(cp.errors, &CompilationError{
 		Message: fmt.Sprintf(format, args...),
-		Context: *diag.NewContext(cp.src.Name, cp.src.Code, r)})
+		Context: *diag.NewContext(cp.src.Name, cp.src.Code, r),
+		// TODO: This criteria is too strict and only captures a small subset of
+		// partial compilation errors.
+		Partial: r.Range().From == len(cp.src.Code),
+	})
 }
 
 // UnpackCompilationErrors returns the constituent compilation errors if the

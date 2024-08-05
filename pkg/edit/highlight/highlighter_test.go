@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/testutil"
@@ -84,14 +83,9 @@ func TestHighlighter_AutofixesAndCheckErrors(t *testing.T) {
 	ev := eval.NewEvaler()
 	ev.AddModule("mod1", &eval.Ns{})
 	hl := NewHighlighter(Config{
-		Check: func(t parse.Tree) (string, []diag.RangeError) {
+		Check: func(t parse.Tree) (string, []*eval.CompilationError) {
 			autofixes, err := ev.CheckTree(t, nil)
-			compErrors := eval.UnpackCompilationErrors(err)
-			rangeErrors := make([]diag.RangeError, len(compErrors))
-			for i, compErr := range compErrors {
-				rangeErrors[i] = compErr
-			}
-			return strings.Join(autofixes, "; "), rangeErrors
+			return strings.Join(autofixes, "; "), eval.UnpackCompilationErrors(err)
 		},
 		AutofixTip: func(s string) ui.Text { return ui.T("autofix: " + s) },
 	})

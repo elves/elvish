@@ -13,7 +13,7 @@ import (
 
 // parser maintains some mutable states of parsing.
 //
-// NOTE: The str member is assumed to be valid UF-8.
+// NOTE: The src member is assumed to be valid UF-8.
 type parser struct {
 	srcName string
 	src     string
@@ -103,7 +103,9 @@ func (ps *parser) backup() {
 func (ps *parser) errorp(r diag.Ranger, e error) {
 	err := &Error{
 		Message: e.Error(),
-		Context: *diag.NewContext(ps.srcName, ps.src, r)}
+		Context: *diag.NewContext(ps.srcName, ps.src, r),
+		Partial: r.Range().From == len(ps.src),
+	}
 	ps.errors = append(ps.errors, err)
 }
 

@@ -11,6 +11,10 @@ import (
 type Error[T ErrorTag] struct {
 	Message string
 	Context Context
+	// Indicates whether the error may be caused by partial input. More
+	// formally, this field should be true iff there exists a string x such that
+	// appending it to the input eliminates the error.
+	Partial bool
 }
 
 // ErrorTag is used to parameterize [Error] into different concrete types. The

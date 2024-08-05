@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/diag"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/ui"
 )
 
 // Config keeps configuration for highlighting code.
 type Config struct {
-	Check      func(n parse.Tree) (string, []diag.RangeError)
+	Check      func(n parse.Tree) (string, []*eval.CompilationError)
 	HasCommand func(name string) bool
 	AutofixTip func(autofix string) ui.Text
 }
@@ -31,24 +32,24 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []ui.Tex
 	var tips []ui.Text
 	var errorRegions []region
 
-	addDiagError := func(err diag.RangeError) {
-		r := err.Range()
-		if r.From < len(code) {
-			tips = append(tips, ui.T(err.Error()))
-			errorRegions = append(errorRegions, region{
-				r.From, r.To, semanticRegion, errorRegion})
+	addDiagError := func(err error, r diag.Ranging, partial bool) {
+		if partial {
+			return
 		}
+		tips = append(tips, ui.T(err.Error()))
+		errorRegions = append(errorRegions, region{
+			r.From, r.To, semanticRegion, errorRegion})
 	}
 
 	tree, errParse := parse.Parse(parse.Source{Name: "[interactive]", Code: code}, parse.Config{})
 	for _, err := range parse.UnpackErrors(errParse) {
-		addDiagError(err)
+		addDiagError(err, err.Range(), err.Partial)
 	}
 
 	if cfg.Check != nil {
 		autofix, diagErrors := cfg.Check(tree)
 		for _, err := range diagErrors {
-			addDiagError(err)
+			addDiagError(err, err.Range(), err.Partial)
 		}
 		if autofix != "" && cfg.AutofixTip != nil {
 			tips = append(tips, cfg.AutofixTip(autofix))
