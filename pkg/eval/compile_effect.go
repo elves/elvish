@@ -197,7 +197,7 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 			if cp.currentPragma().unknownCommandIsExternal || fsutil.DontSearch(head) {
 				headOp = literalValues(n.Head, NewExternalCmd(head))
 			} else {
-				cp.errorpf(n.Head, "unknown command disallowed by current pragma")
+				cp.errorpfPartial(n.Head, "unknown command disallowed by current pragma")
 			}
 		}
 	} else {

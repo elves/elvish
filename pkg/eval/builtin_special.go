@@ -114,13 +114,14 @@ func compileTmp(cp *compiler, fn *parse.Form) effectOp {
 
 func compileWith(cp *compiler, fn *parse.Form) effectOp {
 	if len(fn.Args) < 2 {
-		cp.errorpf(fn, "with requires at least two arguments")
+		cp.errorpfPartial(fn, "with requires at least two arguments")
 		return nopOp{}
 	}
 	lastArg := fn.Args[len(fn.Args)-1]
 	bodyNode, ok := cmpd.Lambda(lastArg)
 	if !ok {
-		cp.errorpf(lastArg, "last argument must be a lambda")
+		// It's possible that we just haven't seen the last argument yet.
+		cp.errorpfPartial(diag.PointRanging(fn.To), "last argument must be a lambda")
 		return nopOp{}
 	}
 
@@ -194,7 +195,7 @@ func (op *withOp) exec(fm *Frame) (opExc Exception) {
 func compileLHSRHS(cp *compiler, args []*parse.Compound, end int, lf lvalueFlag) (lvaluesGroup, valuesOp) {
 	lhs, rhs := compileLHSOptionalRHS(cp, args, end, lf)
 	if rhs == nil {
-		cp.errorpf(diag.PointRanging(end), "need = and right-hand-side")
+		cp.errorpfPartial(diag.PointRanging(end), "need = and right-hand-side")
 	}
 	return lhs, rhs
 }
@@ -240,7 +241,7 @@ func compileDel(cp *compiler, fn *parse.Form) effectOp {
 		var f effectOp
 		ref := resolveVarRef(cp, qname, nil)
 		if ref == nil {
-			cp.errorpf(cn, "no variable $%s", head.Value)
+			cp.errorpfPartial(cn, "no variable $%s", head.Value)
 			continue
 		}
 		if len(indices) == 0 {
@@ -810,7 +811,7 @@ func compileTry(cp *compiler, fn *parse.Form) effectOp {
 	if elseNode != nil && catchNode == nil {
 		cp.errorpf(fn, "try with an else block requires a catch block")
 	} else if catchNode == nil && finallyNode == nil {
-		cp.errorpf(fn, "try must be followed by a catch block or a finally block")
+		cp.errorpfPartial(fn, "try must be followed by a catch block or a finally block")
 	}
 
 	var catchVar lvalue
@@ -904,11 +905,11 @@ func compilePragma(cp *compiler, fn *parse.Form) effectOp {
 		case "external":
 			cp.currentPragma().unknownCommandIsExternal = true
 		default:
-			cp.errorpf(valueNode,
+			cp.errorpfPartial(valueNode,
 				"invalid value for unknown-command: %s", parse.Quote(value))
 		}
 	default:
-		cp.errorpf(fn.Args[0], "unknown pragma %s", parse.Quote(name))
+		cp.errorpfPartial(fn.Args[0], "unknown pragma %s", parse.Quote(name))
 	}
 	return nopOp{}
 }

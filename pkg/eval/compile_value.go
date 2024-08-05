@@ -263,7 +263,11 @@ func (cp *compiler) primaryOp(n *parse.Primary) valuesOp {
 		ref := resolveVarRef(cp, qname, n)
 		if ref == nil {
 			cp.autofixUnresolvedVar(qname)
-			cp.errorpf(n, "variable $%s not found", parse.Quote(qname))
+			// The variable name might be a prefix of a valid variable name.
+			// Ideally, we'd want to match the variable name to all possible
+			// names to check if that's actually the case, but it's a bit
+			// expensive and let's call this good enough for now.
+			cp.errorpfPartial(n, "variable $%s not found", parse.Quote(qname))
 		}
 		return &variableOp{n.Range(), sigil != "", qname, ref}
 	case parse.Wildcard:
@@ -390,7 +394,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 				cp.errorpf(arg, "argument name must be unqualified")
 			}
 			if name == "" {
-				cp.errorpf(arg, "argument name must not be empty")
+				cp.errorpfPartial(arg, "argument name must not be empty")
 			}
 			if sigil == "@" {
 				if restArg != -1 {
@@ -400,7 +404,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 			}
 			if name != "_" {
 				if seenName[name] {
-					cp.errorpf(arg, "duplicate argument name '%s'", name)
+					cp.errorpfPartial(arg, "duplicate argument name '%s'", name)
 				} else {
 					seenName[name] = true
 				}
@@ -418,11 +422,11 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 				cp.errorpf(opt.Key, "option name must be unqualified")
 			}
 			if name == "" {
-				cp.errorpf(opt.Key, "option name must not be empty")
+				cp.errorpfPartial(opt.Key, "option name must not be empty")
 			}
 			optNames[i] = name
 			if opt.Value == nil {
-				cp.errorpf(opt.Key, "option must have default value")
+				cp.errorpfPartial(opt.Key, "option must have default value")
 			} else {
 				optDefaultOps[i] = cp.compoundOp(opt.Value)
 			}

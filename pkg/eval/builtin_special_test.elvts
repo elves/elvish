@@ -376,7 +376,7 @@ Compilation error: with requires at least two arguments
 ~> var x
    with x = val foobar
 Compilation error: last argument must be a lambda
-  [tty]:2:14-19: with x = val foobar
+  [tty]:2:20: with x = val foobar
 
 ## compound expressions ##
 ~> with a'x' = foo { }

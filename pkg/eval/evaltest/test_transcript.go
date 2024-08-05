@@ -148,6 +148,11 @@ func TestTranscriptsInFS(t *testing.T, fsys fs.FS, setupPairs ...any) {
 	if err != nil {
 		t.Fatalf("parse transcript sessions: %v", err)
 	}
+	TestTranscriptNodes(t, nodes, setupPairs...)
+}
+
+// TestTranscriptsInFS runs parsed Elvish transcript nodes as tests.
+func TestTranscriptNodes(t *testing.T, nodes []*transcript.Node, setupPairs ...any) {
 	var run *runCfg
 	if runEnv := os.Getenv("ELVISH_TRANSCRIPT_RUN"); runEnv != "" {
 		filename, lineNo, ok := parseFileNameAndLineNo(runEnv)

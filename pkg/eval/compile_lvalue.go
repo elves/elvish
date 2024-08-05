@@ -63,7 +63,7 @@ func (cp *compiler) compileIndexingLValue(n *parse.Indexing, f lvalueFlag) lvalu
 	varUse := n.Head.Value
 	sigil, qname := SplitSigil(varUse)
 	if qname == "" {
-		cp.errorpf(n, "variable name must not be empty")
+		cp.errorpfPartial(n, "variable name must not be empty")
 		return dummyLValuesGroup
 	}
 
@@ -78,7 +78,7 @@ func (cp *compiler) compileIndexingLValue(n *parse.Indexing, f lvalueFlag) lvalu
 	if ref == nil {
 		if f&newLValue == 0 {
 			cp.autofixUnresolvedVar(qname)
-			cp.errorpf(n, "cannot find variable $%s", parse.Quote(qname))
+			cp.errorpfPartial(n, "cannot find variable $%s", parse.Quote(qname))
 			return dummyLValuesGroup
 		}
 		if len(n.Indices) > 0 {

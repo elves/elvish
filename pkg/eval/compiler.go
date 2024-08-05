@@ -84,13 +84,24 @@ type CompilationErrorTag struct{}
 
 func (CompilationErrorTag) ErrorTag() string { return "compilation error" }
 
+// Reports a compilation error.
 func (cp *compiler) errorpf(r diag.Ranger, format string, args ...any) {
+	cp.errorpfInner(r, fmt.Sprintf(format, args...), false)
+}
+
+// Reports a compilation error, and mark it as partial iff the end of r happens
+// to coincide with the end of the source code.
+func (cp *compiler) errorpfPartial(r diag.Ranger, format string, args ...any) {
+	cp.errorpfInner(r, fmt.Sprintf(format, args...), r.Range().To == len(cp.src.Code))
+}
+
+func (cp *compiler) errorpfInner(r diag.Ranger, msg string, partial bool) {
 	cp.errors = append(cp.errors, &CompilationError{
-		Message: fmt.Sprintf(format, args...),
+		Message: msg,
 		Context: *diag.NewContext(cp.src.Name, cp.src.Code, r),
 		// TODO: This criteria is too strict and only captures a small subset of
 		// partial compilation errors.
-		Partial: r.Range().From == len(cp.src.Code),
+		Partial: partial,
 	})
 }
 

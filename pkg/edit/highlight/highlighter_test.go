@@ -92,16 +92,16 @@ func TestHighlighter_AutofixesAndCheckErrors(t *testing.T) {
 
 	tt.Test(t, tt.Fn(hl.Get).Named("hl.Get"),
 		// Check error is highlighted and returned
-		Args("ls $a").Rets(
+		Args("ls $a ").Rets(
 			ui.MarkLines(
-				"ls $a", styles,
-				"vv ??"),
+				"ls $a ", styles,
+				"vv ?? "),
 			matchTexts("1:4")),
 		// Multiple check errors
-		Args("ls $a $b").Rets(
+		Args("ls $a $b ").Rets(
 			ui.MarkLines(
-				"ls $a $b", styles,
-				"vv ?? ??"),
+				"ls $a $b ", styles,
+				"vv ?? ?? "),
 			matchTexts("1:4", "1:7")),
 		// Check errors at the end are ignored
 		Args("set _").Rets(any, noTips),
@@ -110,9 +110,8 @@ func TestHighlighter_AutofixesAndCheckErrors(t *testing.T) {
 		Args("nop $mod1:").Rets(
 			ui.MarkLines(
 				"nop $mod1:", styles,
-				"vvv ??????"),
+				"vvv $$$$$$"),
 			matchTexts(
-				"1:5",               // error
 				"autofix: use mod1", // autofix
 			)),
 	)
