@@ -1699,7 +1699,7 @@ function as a rest variable.
 
 When declaring a variable that already exists, the existing variable is
 shadowed. The shadowed variable may still be accessed indirectly if it is
-referenced by a function. Example:
+previously referenced by a function. Example:
 
 ```elvish-transcript
 ~> var x = old
@@ -1709,6 +1709,16 @@ referenced by a function. Example:
 ▶ new
 ~> f
 ▶ old
+```
+
+If the right-hand-side of the `var` command references the variable being
+shadowed, it sees the old variable:
+
+```elvish-transcript
+~> var x = foo
+~> var x = [$x] # $x in RHS refers to old $x
+~> put $x
+▶ [foo]
 ```
 
 ## Assigning variables or elements: `set` {#set}

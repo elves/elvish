@@ -206,13 +206,15 @@ func compileLHSRHS(cp *compiler, args []*parse.Compound, end int, lf lvalueFlag)
 func compileLHSOptionalRHS(cp *compiler, args []*parse.Compound, end int, lf lvalueFlag) (lvaluesGroup, valuesOp) {
 	for i, cn := range args {
 		if parse.SourceText(cn) == "=" {
-			lhs := cp.compileCompoundLValues(args[:i], lf)
+			var rhs valuesOp
 			if i == len(args)-1 {
-				return lhs, nopValuesOp{diag.PointRanging(end)}
+				rhs = nopValuesOp{diag.PointRanging(end)}
+			} else {
+				rhs = seqValuesOp{
+					diag.MixedRanging(args[i+1], args[len(args)-1]),
+					cp.compoundOps(args[i+1:])}
 			}
-			return lhs, seqValuesOp{
-				diag.MixedRanging(args[i+1], args[len(args)-1]),
-				cp.compoundOps(args[i+1:])}
+			return cp.compileCompoundLValues(args[:i], lf), rhs
 		}
 	}
 	return cp.compileCompoundLValues(args, lf), nil

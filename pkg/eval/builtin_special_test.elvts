@@ -76,6 +76,12 @@ Compilation error: invalid value for unknown-command: bad
 ▶ new
 ▶ old
 
+## RHS sees old variable when shadowing (https://b.elv.sh/1829) ##
+~> var x = foo
+~> var x = [$x]
+~> put $x
+▶ [foo]
+
 ## concurrent creation and access ##
 // Ensure that there is no race with "go test -race"
 ~> var x = 1
