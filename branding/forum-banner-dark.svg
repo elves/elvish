@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1960"
+   height="512"
+   viewBox="0 0 518.58329 135.46667"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
+   sodipodi:docname="forum-banner-dark.svg"
+   inkscape:export-filename="forum-banner-dark.png"
+   inkscape:export-xdpi="22.5"
+   inkscape:export-ydpi="22.5"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.23394392"
+     inkscape:cx="1079.3185"
+     inkscape:cy="472.33542"
+     inkscape:window-width="1280"
+     inkscape:window-height="739"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:export-bgcolor="#ffffff00" />
+  <defs
+     id="defs1">
+    <inkscape:path-effect
+       effect="fill_between_many"
+       method="originald"
+       linkedpaths="#path1,0,1"
+       id="path-effect1"
+       is_visible="true"
+       lpeversion="0"
+       join="true"
+       close="true"
+       autoreverse="true" />
+  </defs>
+  <g
+     inkscape:label="图层 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(7.7262525e-7,4.0079305e-5)">
+    <path
+       inkscape:original-d="M 0,0"
+       inkscape:path-effect="#path-effect1"
+       d="M 67.733335,2.1460583 A 65.587235,65.587273 0 0 0 2.1460963,67.733335 V 133.32061 H 67.733335 A 65.587235,65.587273 0 0 0 133.32057,67.733335 65.587235,65.587273 0 0 0 67.733335,2.1460583 Z"
+       id="path3" />
+    <path
+       id="path1"
+       style="fill:#000000;fill-opacity:1;stroke:#cfd8dc;stroke-width:4.1556;stroke-dasharray:none;stroke-opacity:1"
+       d="M 67.733333,4.2333333 A 63.499996,63.499996 0 0 0 4.2333333,67.733333 V 131.23333 H 67.733333 A 63.499996,63.499996 0 0 0 131.23333,67.733333 63.499996,63.499996 0 0 0 67.733333,4.2333333 Z"
+       transform="matrix(1.0328699,0,0,1.0328705,-2.2263862,-2.2264268)" />
+    <circle
+       style="fill:#ffffff;fill-opacity:1;stroke-width:0.336002"
+       id="path2"
+       cx="30.487032"
+       cy="37.428173"
+       r="9" />
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:119.944px;font-family:'Bitstream Vera Sans Mono';-inkscape-font-specification:'Bitstream Vera Sans Mono Bold';fill:#55bb55;fill-opacity:1;stroke-width:0.264583"
+       x="34.156078"
+       y="110.19351"
+       id="text1"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         style="font-style:normal;font-variant:normal;font-weight:900;font-stretch:normal;font-size:119.944px;font-family:Vollkorn;-inkscape-font-specification:'Vollkorn Heavy';fill:#55bb55;fill-opacity:1;stroke-width:0.264583"
+         x="34.156078"
+         y="110.19351">λ</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-weight:900;font-size:98.7778px;font-family:Vollkorn;-inkscape-font-specification:'Vollkorn Heavy';fill:#55bb55;fill-opacity:1;stroke:#cfd8dc;stroke-width:4.233;stroke-dasharray:none"
+       x="152.0105"
+       y="116.25068"
+       id="text2"><tspan
+         sodipodi:role="line"
+         id="tspan2"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:98.7778px;font-family:Merriweather;-inkscape-font-specification:'Merriweather Bold';fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:4.233;stroke-dasharray:none"
+         x="152.0105"
+         y="116.25068">bbs.elv</tspan></text>
+  </g>
+</svg>
