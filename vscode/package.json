@@ -2,7 +2,7 @@
     "name": "elvish",
     "displayName": "Elvish",
     "description": "Elvish language support for Visual Studio Code",
-    "version": "0.3.4",
+    "version": "0.3.5",
     "publisher": "elves",
     "license": "BSD-2-Clause",
     "icon": "icon.png",
@@ -131,13 +131,13 @@
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
-        "@types/node": "^20.11.19",
+        "@types/node": "^22.2.0",
         "@types/vscode": "^1.65.0",
-        "@typescript-eslint/eslint-plugin": "^7.0.1",
-        "@typescript-eslint/parser": "^7.0.1",
-        "esbuild": "^0.20.1",
-        "eslint": "^8.56.0",
-        "typescript": "^5.3.3",
+        "@typescript-eslint/eslint-plugin": "^8.0.1",
+        "@typescript-eslint/parser": "^8.0.1",
+        "esbuild": "^0.23.0",
+        "eslint": "^9.8.0",
+        "typescript": "^5.5.4",
         "typescript-formatter": "^7.2.2"
     }
 }
