@@ -6,7 +6,7 @@ body:
       value: |
         Thanks for taking the time to file a feature request. Here are some tips:
 
-        - Please only use issues for feature requests for Elvish. If you need help with using Elvish, the user group (linked from the repo README) is a more suitable place.
+        - Please only use issues for feature requests for Elvish. If you need help with using Elvish, the forum or chatroom (linked from the repo README) is a more suitable place.
         - Please search existing issues to see if the same or similar report has been filed before.
   - type: textarea
     id: content

@@ -5,7 +5,9 @@
 [![Test Coverage](https://img.shields.io/codecov/c/github/elves/elvish/master.svg?logo=Codecov&label=coverage)](https://app.codecov.io/gh/elves/elvish/tree/master)
 [![Go Reference](https://pkg.go.dev/badge/src.elv.sh@master.svg)](https://pkg.go.dev/src.elv.sh@master)
 [![Packaging status](https://repology.org/badge/tiny-repos/elvish.svg)](https://repology.org/project/elvish/versions)
-[![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/ElvishShell)
+
+[![Forum](https://img.shields.io/badge/forum-bbs.elv.sh-5b5.svg?logo=discourse)](https://bbs.elv.sh)
+[![Twitter](https://img.shields.io/badge/twitter-@ElvishShell-blue.svg?logo=x)](https://twitter.com/ElvishShell)
 
 [![Telegram Group](https://img.shields.io/badge/telegram-Elvish-blue.svg?logo=telegram&logoColor=white)](https://t.me/+Pv5ZYgTXD-YaKwcP)
 [![Discord server](https://img.shields.io/badge/discord-Elvish-blue.svg?logo=discord&logoColor=white)](https://discord.gg/jrmuzRBU8D)
@@ -13,8 +15,7 @@
 [![#elvish on libera.chat](https://img.shields.io/badge/libera.chat-%23elvish-blue.svg?logo=liberadotchat&logoColor=white)](https://web.libera.chat/#elvish)
 [![Gitter](https://img.shields.io/badge/gitter-elves%2Felvish-blue.svg?logo=gitter)](https://gitter.im/elves/elvish)
 
-(All chat rooms are all bridged together thanks to
-[Matrix](https://matrix.org).)
+(Chat rooms are all bridged together thanks to [Matrix](https://matrix.org).)
 
 Elvish is:
 
