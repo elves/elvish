@@ -139,7 +139,7 @@ body.dark {
 
 /* The sponsor nav item is styled somewhat specially, and shares a lot with the
    sponsor button on the homepage. */
-.sponsor::before, .sponsor::before {
+.sponsor::before {
   font-family: "fa-elv-sh";
   content: var(--icon-heart);
   font-size: 0.9em;
