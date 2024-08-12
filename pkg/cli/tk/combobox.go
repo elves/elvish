@@ -47,7 +47,12 @@ func NewComboBox(spec ComboBoxSpec) ComboBox {
 
 // Render renders the codearea and the listbox below it.
 func (w *comboBox) Render(width, height int) *term.Buffer {
-	buf := w.codeArea.Render(width, height)
+	// TODO: Test the behavior of Render when height is very small
+	// (https://b.elv.sh/1820)
+	if height == 1 {
+		return w.listBox.Render(width, height)
+	}
+	buf := w.codeArea.Render(width, height-1)
 	bufListBox := w.listBox.Render(width, height-len(buf.Lines))
 	buf.Extend(bufListBox, false)
 	return buf
