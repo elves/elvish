@@ -35,6 +35,10 @@ type ListBoxSpec struct {
 	OnSelect func(it Items, i int)
 	// A function called on the accept event.
 	OnAccept func(it Items, i int)
+	// A function called when selecting before the beginning of the items.
+	OnUnderFlow func(ListBox)
+	// A function called when selecting after the ending of the items.
+	OnOverFlow func(ListBox)
 	// Whether the listbox should be rendered in a horizontal layout. Note that
 	// in the horizontal layout, items must have only one line.
 	Horizontal bool
@@ -64,6 +68,12 @@ func NewListBox(spec ListBoxSpec) ListBox {
 	}
 	if spec.OnAccept == nil {
 		spec.OnAccept = func(Items, int) {}
+	}
+	if spec.OnUnderFlow == nil {
+		spec.OnUnderFlow = func(ListBox) {}
+	}
+	if spec.OnOverFlow == nil {
+		spec.OnOverFlow = func(ListBox) {}
 	}
 	if spec.OnSelect == nil {
 		spec.OnSelect = func(Items, int) {}
@@ -283,6 +293,12 @@ func (w *listBox) Handle(event term.Event) bool {
 		return true
 	case term.K(ui.Enter):
 		w.Accept()
+		return true
+	case term.K(ui.Up, ui.Alt):
+		w.OnUnderFlow(w)
+		return true
+	case term.K(ui.Down, ui.Alt):
+		w.OnOverFlow(w)
 		return true
 	}
 	return false
