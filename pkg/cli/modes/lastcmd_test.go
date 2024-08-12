@@ -31,23 +31,6 @@ func TestNewLastcmd_FocusedWidgetNotCodeArea(t *testing.T) {
 	})
 }
 
-func TestNewLastcmd_StoreError(t *testing.T) {
-	f := Setup()
-	defer f.Stop()
-
-	db := histutil.NewFaultyInMemoryDB()
-	store, err := histutil.NewDBStore(db)
-	if err != nil {
-		panic(err)
-	}
-	db.SetOneOffError(errMock)
-
-	_, err = NewLastcmd(f.App, LastcmdSpec{Store: store})
-	if err.Error() != "db error: mock error" {
-		t.Error("expect db error")
-	}
-}
-
 func TestLastcmd(t *testing.T) {
 	f := Setup()
 	defer f.Stop()
@@ -114,4 +97,46 @@ func TestLastcmd(t *testing.T) {
 func startLastcmd(app cli.App, spec LastcmdSpec) {
 	w, err := NewLastcmd(app, spec)
 	startMode(app, w, err)
+}
+
+func TestLastcmdOverFlow(t *testing.T) {
+	f := Setup()
+	defer f.Stop()
+
+	st := histutil.NewMemStore("foo", "bar")
+	startLastcmd(f.App, LastcmdSpec{
+		Store: st,
+	})
+
+	// Test UI.
+	f.TestTTY(t,
+		"\n", // empty code area
+		" LASTCMD  ", Styles,
+		"********* ", term.DotHere, "\n",
+		"    bar                                           \n", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+		"  0 bar",
+	)
+
+	// Test underflow.
+	f.TTY.Inject(term.K(ui.Up, ui.Alt))
+	f.TestTTY(t,
+		"\n", // empty code area
+		" LASTCMD  ", Styles,
+		"********* ", term.DotHere, "\n",
+		"    foo                                           \n", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+		"  0 foo",
+	)
+
+	// Test overflow.
+	f.TTY.Inject(term.K(ui.Down, ui.Alt))
+	f.TestTTY(t,
+		"\n", // empty code area
+		" LASTCMD  ", Styles,
+		"********* ", term.DotHere, "\n",
+		"    bar                                           \n", Styles,
+		"++++++++++++++++++++++++++++++++++++++++++++++++++",
+		"  0 bar",
+	)
 }

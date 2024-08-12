@@ -45,20 +45,26 @@ func NewLastcmd(app cli.App, cfg LastcmdSpec) (Lastcmd, error) {
 	}
 	c := cfg.Store.Cursor("")
 	c.Prev()
-	cmd, err := c.Get()
-	if err != nil {
-		return nil, fmt.Errorf("db error: %v", err)
-	}
-	wordifier := cfg.Wordifier
-	if wordifier == nil {
-		wordifier = strings.Fields
-	}
-	cmdText := cmd.Text
-	words := wordifier(cmdText)
-	entries := make([]lastcmdEntry, len(words)+1)
-	entries[0] = lastcmdEntry{content: cmdText}
-	for i, word := range words {
-		entries[i+1] = lastcmdEntry{strconv.Itoa(i), strconv.Itoa(i - len(words)), word}
+
+	get_items := func(c histutil.Cursor) []lastcmdEntry {
+		cmd, err := c.Get()
+		if err != nil {
+			return []lastcmdEntry{}
+		}
+
+		wordifier := cfg.Wordifier
+		if wordifier == nil {
+			wordifier = strings.Fields
+		}
+		cmdText := cmd.Text
+		words := wordifier(cmdText)
+		entries := make([]lastcmdEntry, len(words)+1)
+		entries[0] = lastcmdEntry{content: cmdText}
+		for i, word := range words {
+			entries[i+1] = lastcmdEntry{strconv.Itoa(i), strconv.Itoa(i - len(words)), word}
+		}
+
+		return entries
 	}
 
 	accept := func(text string) {
@@ -74,9 +80,17 @@ func NewLastcmd(app cli.App, cfg LastcmdSpec) (Lastcmd, error) {
 			OnAccept: func(it tk.Items, i int) {
 				accept(it.(lastcmdItems).entries[i].content)
 			},
+			OnUnderFlow: func(lb tk.ListBox) {
+				c.Prev()
+				lb.Reset(filterLastcmdItems(get_items(c), ""), 0)
+			},
+			OnOverFlow: func(lb tk.ListBox) {
+				c.Next()
+				lb.Reset(filterLastcmdItems(get_items(c), ""), 0)
+			},
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
-			items := filterLastcmdItems(entries, p)
+			items := filterLastcmdItems(get_items(c), p)
 			if len(items.entries) == 1 {
 				accept(items.entries[0].content)
 			} else {
