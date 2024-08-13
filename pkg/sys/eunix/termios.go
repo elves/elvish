@@ -58,12 +58,12 @@ func (term *Termios) SetEcho(v bool) {
 	setFlag(&term.Lflag, unix.ECHO, v)
 }
 
-// SetICRNL sets the CRNL iflag bit
+// SetICRNL sets the CRNL iflag bit.
 func (term *Termios) SetICRNL(v bool) {
 	setFlag(&term.Iflag, unix.ICRNL, v)
 }
 
-// SetICRNL sets the IXON iflag bit
+// SetIXON sets the IXON iflag bit.
 func (term *Termios) SetIXON(v bool) {
 	setFlag(&term.Iflag, unix.IXON, v)
 }
