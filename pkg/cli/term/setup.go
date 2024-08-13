@@ -8,15 +8,22 @@ import (
 	"src.elv.sh/pkg/wcwidth"
 )
 
-// Setup sets up the terminal so that it is suitable for the Reader and
-// Writer to use. It returns a function that can be used to restore the
-// original terminal config.
-func Setup(in, out *os.File) (func() error, error) {
-	return setup(in, out)
+// SetupForTUIOnce sets up the terminal once for a whole interactive session. It
+// returns a function that can be used to restore the original terminal config.
+func SetupForTUIOnce(in, out *os.File) func() {
+	return setupForTUIOnce(in, out)
 }
 
-// SetupForEval sets up the terminal for evaluating Elvish code. It returns a
-// function to call after the evaluation finishes.
+// SetupForTUI sets up the terminal so that it is suitable for the TUI
+// application (as implemented by pkg/cli). It returns a function that can be
+// used to restore the original terminal config.
+func SetupForTUI(in, out *os.File) (func() error, error) {
+	return setupForTUI(in, out)
+}
+
+// SetupForEval sets up the terminal for evaluating Elvish code, whether or not
+// we are in an interactive session. It returns a function to call after the
+// evaluation finishes.
 func SetupForEval(in, out *os.File) func() {
 	return setupForEval(in, out)
 }

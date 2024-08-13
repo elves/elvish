@@ -61,7 +61,7 @@ func NewTTY(in, out *os.File) TTY {
 }
 
 func (t *aTTY) Setup() (func(), error) {
-	restore, err := term.Setup(t.in, t.out)
+	restore, err := term.SetupForTUI(t.in, t.out)
 	return func() {
 		err := restore()
 		if err != nil {
