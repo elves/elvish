@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/cli"
+	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/edit"
@@ -71,6 +72,8 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(fds[0].Fd()) {
+		restoreTTY := term.SetupForTUIOnce(fds[0], fds[1])
+		defer restoreTTY()
 		newed := edit.NewEditor(cli.NewTTY(fds[0], fds[2]), ev, daemonClient)
 		ev.ExtendBuiltin(eval.BuildNs().AddNs("edit", newed))
 		ev.BgJobNotify = func(s string) { newed.Notify(ui.T(s)) }

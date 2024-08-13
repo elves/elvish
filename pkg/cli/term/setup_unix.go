@@ -11,7 +11,28 @@ import (
 	"src.elv.sh/pkg/sys/eunix"
 )
 
-func setup(in, out *os.File) (func() error, error) {
+func setupForTUIOnce(in, _ *os.File) func() {
+	fd := int(in.Fd())
+	term, err := eunix.TermiosForFd(fd)
+	if err != nil {
+		return func() {}
+	}
+	savedTermios := term.Copy()
+
+	// Turning off IXON frees up Ctrl-Q and Ctrl-S for keybindings, but it's not
+	// actually necessary for Elvish to function.
+	//
+	// We do this in SetupForTUIOnce rather than SetupForTUI so that the user
+	// can still use "stty ixon" to turn it on if they wish.
+	//
+	// Other "nice to have" terminal setups should go here as well.
+	term.SetIXON(false)
+	term.ApplyToFd(fd)
+
+	return func() { savedTermios.ApplyToFd(fd) }
+}
+
+func setupForTUI(in, out *os.File) (func() error, error) {
 	// On Unix, use input file for changing termios. All fds pointing to the
 	// same terminal are equivalent.
 
@@ -26,7 +47,6 @@ func setup(in, out *os.File) (func() error, error) {
 	term.SetICanon(false)
 	term.SetIExten(false)
 	term.SetEcho(false)
-	term.SetIXON(false)
 	term.SetVMin(1)
 	term.SetVTime(0)
 
