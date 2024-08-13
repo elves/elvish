@@ -255,7 +255,7 @@ Exception: exec: "nonexistent-command": executable file not found in %PATH%
 ///////////////
 
 //in-temp-dir
-//with-deprecation-level 21
+//deprecation-level 21
 ~> use os
    use path
    os:mkdir new-dir

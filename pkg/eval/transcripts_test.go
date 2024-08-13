@@ -16,7 +16,6 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/must"
-	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/transcript"
 )
@@ -107,9 +106,6 @@ func TestTranscripts(t *testing.T) {
 		"force-eval-source-count", func(t *testing.T, arg string) {
 			c := must.OK1(strconv.Atoi(arg))
 			testutil.Set(t, eval.NextEvalCount, func() int { return c })
-		},
-		"with-deprecation-level", func(t *testing.T, arg string) {
-			testutil.Set(t, &prog.DeprecationLevel, must.OK1(strconv.Atoi(arg)))
 		},
 		"mock-time-after", func(t *testing.T) {
 			testutil.Set(t, eval.TimeAfter,

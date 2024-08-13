@@ -974,7 +974,7 @@ Compilation error: superfluous arguments
 ## importing module triggers check for deprecated features ##
 // Regression test for b.elv.sh/1072
 //tmp-lib-dir
-//with-deprecation-level 21
+//deprecation-level 21
 ~> echo '..' > $lib/dep.elv
 // Only show the first line to avoid showing the file path, which contains $lib
 // and changes across runs.

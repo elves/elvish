@@ -2,7 +2,7 @@
 # compile-time deprecation #
 ////////////////////////////
 
-//with-deprecation-level 21
+//deprecation-level 21
 //in-temp-dir
 // This test will need to be frequently updated as deprecated commands get
 // removed.
