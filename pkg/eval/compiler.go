@@ -144,10 +144,14 @@ func (cp *compiler) popScope() {
 
 func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 	msg := ""
-	minLevel := 20
+	minLevel := 22
 	switch name {
-	case "eawk~":
-		msg = `the "eawk" command is deprecated; use "re:awk" instead`
+	// We don't have any deprecated builtins targeted for 0.22 yet, but keep
+	// this code here so that the code doesn't get stale. This function is only
+	// called for symbols that actually resolve to builtins, so having a fake
+	// one here is harmless.
+	case "foo~":
+		msg = `the "foo" command is deprecated; use "bar" instead`
 	default:
 		return
 	}
