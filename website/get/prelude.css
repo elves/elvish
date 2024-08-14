@@ -1,13 +1,31 @@
-form {
-  margin: -32px 0 16px;
-  padding: 20px 16px 16px;
-  background-color: #f0f0f0;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
+/* Cancel the global width restriction so that we can give the div.form-wrapper
+   a full-width gray background. We then re-apply that width to elements.
+
+   This is quite tedious - an alternative solution is to force the width of
+   div.form-wrapper to 100vw, but it suffers from the superfluous scrollbar
+   problem (https://github.com/w3c/csswg-drafts/issues/6026). */
+#main {
+  max-width: none;
+  padding: 0;
 }
 
-.dark form {
+/* Give the form a full-width gray background. */
+.form-wrapper {
+  width: 100%;
+  margin: -32px 0 16px;
+  padding: 24px 0;
+  background-color: #f0f0f0;
+}
+
+.dark .form-wrapper {
   background-color: #222;
+}
+
+/* Re-establish the width restriction. */
+form, .content, .article-list {
+  margin: auto;
+  max-width: 832px;
+  padding: 0 16px;
 }
 
 input[type="radio"] {

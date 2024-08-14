@@ -1,4 +1,5 @@
 <div class="has-js">
+<div class="form-wrapper">
 <form>
 
   <div class="control">
@@ -134,6 +135,8 @@ features</a> and is stable enough for interactive use.
   </details>
 
 </form>
+</div>
+<div class="content">
 
 Run the following in <span id="where">a terminal</span> to install Elvish
 (<a href="#" onclick="copyScript(event)">copy to clipboard</a>):
@@ -147,11 +150,14 @@ directory in `PATH`.
 More topics about installing Elvish:
 
 </div>
+</div>
 <div class="no-js">
+<div class="content">
 
 Enable JavaScript to generate an installation script for your platform.
 
 Alternatively, find your binary for your platform in the
 [all binaries](all-binaries.html) page and unpack it manually.
 
+</div>
 </div>
