@@ -58,8 +58,8 @@
 <!-- dev -->
 <g id="node5" class="node">
 <title>dev</title>
-<ellipse fill="none" stroke="#000000" cx="29.265" cy="-38" rx="29.0318" ry="29.0318"/>
-<text text-anchor="middle" x="29.265" y="-33.8" font-family="Times,serif" font-size="14.00" fill="#000000">User</text>
+<ellipse fill="none" stroke="#000000" cx="29.265" cy="-38" rx="27.2467" ry="27.2467"/>
+<text text-anchor="middle" x="29.265" y="-33.8" font-family="Times,serif" font-size="14.00" fill="#000000">Dev</text>
 </g>
 <!-- github -->
 <g id="node7" class="node">
@@ -70,20 +70,20 @@
 <!-- dev&#45;&gt;github -->
 <g id="edge4" class="edge">
 <title>dev-&gt;github</title>
-<path fill="none" stroke="#000000" d="M58.7932,-38.9785C74.3989,-39.4957 93.7633,-40.1374 110.6272,-40.6962"/>
-<polygon fill="#000000" stroke="#000000" points="110.6379,-44.1984 120.7484,-41.0316 110.8698,-37.2022 110.6379,-44.1984"/>
+<path fill="none" stroke="#000000" d="M56.6552,-38.9077C72.5872,-39.4356 92.9399,-40.1101 110.5696,-40.6943"/>
+<polygon fill="#000000" stroke="#000000" points="110.4705,-44.1928 120.581,-41.026 110.7024,-37.1967 110.4705,-44.1928"/>
 <text text-anchor="middle" x="89.7522" y="-45.2" font-family="Times,serif" font-size="14.00" fill="#000000">push</text>
 </g>
 <!-- user -->
 <g id="node6" class="node">
 <title>user</title>
-<ellipse fill="none" stroke="#000000" cx="29.265" cy="-112" rx="27.2467" ry="27.2467"/>
-<text text-anchor="middle" x="29.265" y="-107.8" font-family="Times,serif" font-size="14.00" fill="#000000">Dev</text>
+<ellipse fill="none" stroke="#000000" cx="29.265" cy="-112" rx="29.0318" ry="29.0318"/>
+<text text-anchor="middle" x="29.265" y="-107.8" font-family="Times,serif" font-size="14.00" fill="#000000">User</text>
 </g>
 <!-- user&#45;&gt;caddy -->
 <g id="edge6" class="edge">
 <title>user-&gt;caddy</title>
-<path fill="none" stroke="#000000" d="M56.5905,-112C81.0556,-112 117.909,-112 149.9717,-112 149.9717,-112 149.9717,-112 375.7375,-112 386.0944,-112 397.052,-110.0273 407.0774,-107.3879"/>
+<path fill="none" stroke="#000000" d="M58.5344,-112C82.9793,-112 118.7472,-112 149.9717,-112 149.9717,-112 149.9717,-112 375.7375,-112 386.0944,-112 397.052,-110.0273 407.0774,-107.3879"/>
 <polygon fill="#000000" stroke="#000000" points="408.1132,-110.7318 416.7354,-104.5748 406.1555,-104.0111 408.1132,-110.7318"/>
 <text text-anchor="middle" x="302.2638" y="-116.2" font-family="Times,serif" font-size="14.00" fill="#000000">https://elv.sh</text>
 </g>
