@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', main);
 
 const binaryAvailable = new Set([
-  'linux-amd64', 'linux-386', 'linux-arm64',
+  'linux-amd64', 'linux-386', 'linux-arm64', 'linux-riscv64',
   'darwin-amd64', 'darwin-arm64',
   'freebsd-amd64',
   'netbsd-amd64',
@@ -100,7 +100,6 @@ function genScriptHTML(os, arch, version, dir, sudo, mirror) {
   const urlBase = `https://${host}/${os}-${arch}/elvish-${version}`;
   if (os === 'windows') {
     const url = link(urlBase + '.zip');
-    const renameCmd = version === 'HEAD' ? '' : `Move-Item -Force elvish-${version}.exe elvish.exe\n`;
     return `& {
 md "${dir}" -force > $null
 $UserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
@@ -111,23 +110,12 @@ if (!(($UserPath -split ';') -contains "${dir}")) {
 cd "${dir}"
 Invoke-RestMethod -Uri '${url}' -OutFile elvish.zip
 Expand-Archive -Force elvish.zip -DestinationPath .
-${renameCmd}rm elvish.zip
+rm elvish.zip
 }`;
   } else {
     const url = link(urlBase + '.tar.gz');
     const sudoPrefix = sudo == 'dont' ? '' : sudo + ' ';
-    if (version === 'HEAD') {
-      // The filename inside HEAD archives are just called "elvish", so we can
-      // just let curl write to stdout and extract it.
-      return highlightSh(`curl -so - ${url} | ${sudoPrefix}tar -xzvC ${dir}`);
-    } else {
-      return highlightSh(`{
-curl -o elvish-${version}.tar.gz ${url}
-tar -xzvf elvish-${version}.tar.gz
-${sudoPrefix}cp elvish-${version} ${dir}/elvish
-rm elvish-${version}.tar.gz elvish-${version}
-}`);
-    }
+    return highlightSh(`curl -so - ${url} | ${sudoPrefix}tar -xzvC ${dir}`);
   }
 }
 
@@ -193,6 +181,8 @@ function detectOs(p) {
 
 // Detects GOARCH from navigator.platform and the high entropy data (if
 // available).
+//
+// TODO: Add detection code for RISC-V.
 function detectArch(p, data) {
   if (data) {
     const arch = {
