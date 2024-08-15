@@ -171,6 +171,8 @@ More resources
 
 -   [@ElvishShell](https://twitter.com/elvishshell) on Twitter
 
+-   [Elvish TV](https://www.youtube.com/@ElvishShell) on YouTube
+
 </div>
 </div>
 </section>
