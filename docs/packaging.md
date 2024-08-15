@@ -17,3 +17,10 @@ pass those linker flags, it's fine to leave them as is.
 Elvish's history. If your build script has `-ldflags '-X $symbol=$value'` where
 `$symbol` is not documented in the linked API doc, those flags no longer do
 anything and should be removed.
+
+## Running tests
+
+Some Elvish tests unfortunately rely on time thresholds. If you run tests as
+part of the packaging process, you may want to set the
+[`ELVISH_TEST_TIME_SCALE`](./testing.md#elvish_test_time_scale) environment
+variable to a large value like 10.
