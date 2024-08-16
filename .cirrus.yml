@@ -6,7 +6,7 @@ test_arm_task:
   arm_container:
     # The Alpine image has segmentation faults when running test -race, so
     # use Debian instead.
-    image: golang:1.22-bookworm
+    image: golang:1.23-bookworm
   go_version_script: go version
   test_script: go test $TEST_FLAG ./...
 
@@ -14,7 +14,7 @@ test_bsd_task:
   env:
     ELVISH_TEST_TIME_SCALE: "20"
     TEST_FLAG: -race
-    GO_VERSION: "1.22.0"
+    GO_VERSION: "1.23.0"
     PATH: /usr/local/go/bin:$PATH
   matrix:
     - name: Test on FreeBSD
@@ -31,19 +31,17 @@ test_bsd_task:
         # to run the tests and still reports tests as passing:
         # https://github.com/golang/go/issues/65425
         sysctl kern.elf64.aslr.enable=0
+    # NetBSD and FreeBSD images are from
+    # https://github.com/anarazel/pg-vm-images
     - name: Test on NetBSD
       compute_engine_instance:
         image_project: pg-ci-images
-        # Find latest version in the "VERSION:" variable for the NetBSD image in
-        # https://github.com/anarazel/pg-vm-images/blob/main/.cirrus.yml
-        image: family/pg-ci-netbsd-vanilla-9-3
+        image: family/pg-ci-netbsd-vanilla
         platform: netbsd
     - name: Test on OpenBSD
       compute_engine_instance:
         image_project: pg-ci-images
-        # Find latest version in the "VERSION:" variable for the OpenBSD image in
-        # https://github.com/anarazel/pg-vm-images/blob/main/.cirrus.yml
-        image: family/pg-ci-openbsd-vanilla-7-3
+        image: family/pg-ci-openbsd-vanilla
         platform: openbsd
   go_toolchain_cache:
     fingerprint_key: $CIRRUS_OS-$GO_VERSION
@@ -64,7 +62,7 @@ build_binaries_task:
   container:
     # Keep the Go version part in sync with
     # https://github.com/elves/up/blob/master/Dockerfile
-    image: golang:1.22.0-alpine
+    image: golang:1.23.0-alpine
   go_modules_cache:
     fingerprint_script: cat go.sum
     folder: ~/go/pkg/mod
