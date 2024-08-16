@@ -43,6 +43,8 @@ test_bsd_task:
         image_project: pg-ci-images
         image: family/pg-ci-openbsd-vanilla
         platform: openbsd
+      env:
+        TEST_FLAG:
   go_toolchain_cache:
     fingerprint_key: $CIRRUS_OS-$GO_VERSION
     folder: /usr/local/go
