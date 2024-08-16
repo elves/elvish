@@ -120,7 +120,7 @@ func NewGoFn(name string, impl any) Callable {
 		b.rawOptions = true
 		i++
 	}
-	if i < implType.NumIn() && reflect.PtrTo(implType.In(i)).Implements(optionsPtrType) {
+	if i < implType.NumIn() && reflect.PointerTo(implType.In(i)).Implements(optionsPtrType) {
 		if b.rawOptions {
 			panic("Function declares both RawOptions and Options parameters")
 		}

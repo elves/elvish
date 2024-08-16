@@ -134,9 +134,9 @@ jobs:
       run: |
         go install golang.org/x/tools/cmd/stringer@latest
         go install golang.org/x/tools/cmd/goimports@latest
-        # Keep the versions of staticcheck and codespell in sync with CONTRIBUTING.md
-        go install honnef.co/go/tools/cmd/staticcheck@v0.4.6
-        pip install --user codespell==2.2.6
+        # Keep the versions of staticcheck and codespell in sync with docs/workflows.md
+        go install honnef.co/go/tools/cmd/staticcheck@v0.5.1
+        pip install --user codespell==2.3.0
     - name: Run checks
       run: make all-checks
 

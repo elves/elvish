@@ -17,7 +17,7 @@ import (
 	"src.elv.sh/pkg/errutil"
 )
 
-// Config configurates the parsing behavior.
+// Config configures the parsing behavior.
 type Config uint
 
 const (
