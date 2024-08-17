@@ -25,3 +25,4 @@ _testmain.go
 cover
 /_*
 /elvish
+/branding/*.png
