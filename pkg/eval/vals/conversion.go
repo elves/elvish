@@ -13,28 +13,6 @@ import (
 	"src.elv.sh/pkg/strutil"
 )
 
-// Conversion between "Go values" (those expected by native Go functions) and
-// "Elvish values" (those participating in the Elvish runtime).
-//
-// Among the conversion functions, [ScanToGo] and [FromGo] implement the
-// implicit conversion used when calling native Go functions from Elvish. The
-// API is asymmetric; this has to do with two characteristics of Elvish's type
-// system:
-//
-// - Elvish doesn't have a dedicated rune type and uses strings to represent
-//   them.
-//
-// - Elvish permits using strings that look like numbers in place of numbers.
-//
-// As a result, while FromGo can always convert a "Go value" to an "Elvish
-// value" unambiguously, ScanToGo can't do that in the opposite direction.
-// For example, "1" may be converted into "1", '1' or 1, depending on what
-// the destination type is, and the process may fail. Thus ScanToGo takes the
-// pointer to the destination as an argument, and returns an error.
-//
-// The rest of the conversion functions are exported for use in more
-// sophisticated binding code, and need to explicitly invoked.
-
 // WrongType is returned by ScanToGo if the source value doesn't have a
 // compatible type.
 type WrongType struct {
@@ -64,22 +42,46 @@ var (
 	errMustBeInteger      = errors.New("must be integer")
 )
 
-// ScanToGo converts an Elvish value, and stores it in the destination of ptr,
-// which must be a pointer.
+// ScanToGo converts an Elvish value to a Go value, and stores it in *ptr.
 //
 //   - If ptr has type *int, *float64, *Num or *rune, it performs a suitable
 //     conversion, and returns an error if the conversion fails.
 //
 //   - In other cases, it tries to perform "*ptr = src" via reflection and
 //     returns an error if the assignment can't be done.
+//
+// Strictly speaking, an Elvish value is always a Go values, and any Go value
+// can potentially participate in Elvish. The distinction between "Go value" and
+// "Elvish value" is a matter of how they are used:
+//
+//   - Go values are those returned by idiomatic Go functions, expected as
+//     arguments, or in general more convenient to manipulate in
+//     non-Elvish-specific Go code.
+//
+//   - Elvish values are those fully supported by the Elvish runtime, defined to
+//     a large extent by standard operations such as [Index] in this package.
+//
+// The API of ScanToGo and the related [FromGo] is asymmetric. This is because
+// the Elvish value system makes fewer distinctions:
+//
+//   - Elvish doesn't have a dedicated rune type and uses strings to represent
+//     them.
+//
+//   - Elvish doesn't distinguish maps and field maps, but they have different
+//     underlying Go types.
+//
+//   - Moreover, exact numbers in Elvish are normalized to the smallest type
+//     that can represent it.
+//
+// As a result, while [FromGo] can always convert a Go value to an Elvish value
+// unambiguously and successfully, ScanToGo can't do that in the opposite
+// direction. For example, "1" may be converted into "1" or '1', depending on
+// what the destination type is, and the process may fail. Thus ScanToGo takes
+// the pointer to the destination as an argument, and returns an error.
 func ScanToGo(src any, ptr any) error {
 	switch ptr := ptr.(type) {
 	case *int:
-		i, err := elvToInt(src)
-		if err == nil {
-			*ptr = i
-		}
-		return err
+		return convAndStore(elvToInt, src, ptr)
 	case *float64:
 		n, err := elvToNum(src)
 		if err == nil {
@@ -87,45 +89,20 @@ func ScanToGo(src any, ptr any) error {
 		}
 		return err
 	case *Num:
-		n, err := elvToNum(src)
-		if err == nil {
-			*ptr = n
-		}
-		return err
+		return convAndStore(elvToNum, src, ptr)
 	case *rune:
-		r, err := elvToRune(src)
-		if err == nil {
-			*ptr = r
-		}
-		return err
+		return convAndStore(elvToRune, src, ptr)
 	default:
-		// Do a generic `*ptr = src` via reflection
-		ptrType := TypeOf(ptr)
-		if ptrType.Kind() != reflect.Ptr {
-			return fmt.Errorf("internal bug: need pointer to scan to, got %T", ptr)
-		}
-		dstType := ptrType.Elem()
-		// Allow using any(nil) as T(nil) for any T whose zero value is spelt
-		// nil.
-		if src == nil {
-			switch dstType.Kind() {
-			case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
-				ValueOf(ptr).Elem().SetZero()
-				return nil
-			}
-		}
-		if !TypeOf(src).AssignableTo(dstType) {
-			var dstKind string
-			if dstType.Kind() == reflect.Interface {
-				dstKind = "!!" + dstType.String()
-			} else {
-				dstKind = Kind(reflect.Zero(dstType).Interface())
-			}
-			return WrongType{dstKind, Kind(src)}
-		}
-		ValueOf(ptr).Elem().Set(ValueOf(src))
-		return nil
+		return assignPtr(src, ptr)
 	}
+}
+
+func convAndStore[T any](conv func(any) (T, error), src any, ptr *T) error {
+	v, err := conv(src)
+	if err == nil {
+		*ptr = v
+	}
+	return err
 }
 
 func elvToInt(arg any) (int, error) {
@@ -172,6 +149,35 @@ func elvToRune(arg any) (rune, error) {
 		return -1, errMustHaveSingleRune
 	}
 	return r, nil
+}
+
+// Does "*ptr = src" via reflection.
+func assignPtr(src, ptr any) error {
+	ptrType := TypeOf(ptr)
+	if ptrType.Kind() != reflect.Ptr {
+		return fmt.Errorf("internal bug: need pointer to scan to, got %T", ptr)
+	}
+	dstType := ptrType.Elem()
+	// Allow using any(nil) as T(nil) for any T whose zero value is spelt
+	// nil.
+	if src == nil {
+		switch dstType.Kind() {
+		case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+			ValueOf(ptr).Elem().SetZero()
+			return nil
+		}
+	}
+	if !TypeOf(src).AssignableTo(dstType) {
+		var dstKind string
+		if dstType.Kind() == reflect.Interface {
+			dstKind = "!!" + dstType.String()
+		} else {
+			dstKind = Kind(reflect.Zero(dstType).Interface())
+		}
+		return WrongType{dstKind, Kind(src)}
+	}
+	ValueOf(ptr).Elem().Set(ValueOf(src))
+	return nil
 }
 
 // ScanListToGo converts a List to a slice, using ScanToGo to convert each
@@ -295,6 +301,8 @@ func makeStructFieldsInfo(t reflect.Type) structFieldsInfo {
 //
 // Exact numbers are normalized to the smallest types that can hold them, and
 // runes are converted to strings. Values of other types are returned unchanged.
+//
+// See the related [ScanToGo] for the concepts of "Go value" and "Elvish value".
 func FromGo(a any) any {
 	switch a := a.(type) {
 	case *big.Int:
