@@ -13,6 +13,3 @@ type Source struct {
 func SourceForTest(code string) Source {
 	return Source{Name: "[test]", Code: code}
 }
-
-// IsStructMap marks that Source is a structmap.
-func (src Source) IsStructMap() {}

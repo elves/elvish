@@ -96,8 +96,6 @@ type Type struct {
 	GoVersion string `json:"goversion"`
 }
 
-func (Type) IsStructMap() {}
-
 // Value contains all the build information.
 var Value = Type{
 	// On a release branch, change to addVariant(VersionBase, BuildVariant).

@@ -3,6 +3,7 @@ package vals
 import (
 	"math"
 	"math/big"
+	"reflect"
 
 	"src.elv.sh/pkg/persistent/hash"
 	"src.elv.sh/pkg/persistent/hashmap"
@@ -53,8 +54,12 @@ func Hash(v any) uint32 {
 		return hashMap(v.Iterator())
 	case StructMap:
 		return hashMap(iterateStructMap(v))
+	default:
+		if keys := getFieldMapKeys(v); keys != nil {
+			return hashFieldMap(v, keys)
+		}
+		return 0
 	}
-	return 0
 }
 
 func hashMap(it hashmap.Iterator) uint32 {
@@ -72,6 +77,15 @@ func hashMap(it hashmap.Iterator) uint32 {
 	for ; it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		h += hash.DJB(Hash(k), Hash(v))
+	}
+	return h
+}
+
+func hashFieldMap(v any, keys fieldMapKeys) uint32 {
+	value := reflect.ValueOf(v)
+	var h uint32
+	for i, key := range keys {
+		h += hash.DJB(Hash(key), Hash(value.Field(i).Interface()))
 	}
 	return h
 }

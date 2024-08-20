@@ -67,10 +67,11 @@ var (
 // ScanToGo converts an Elvish value, and stores it in the destination of ptr,
 // which must be a pointer.
 //
-// If ptr has type *int, *float64, *Num or *rune, it performs a suitable
-// conversion, and returns an error if the conversion fails. In other cases,
-// this function just tries to perform "*ptr = src" via reflection and returns
-// an error if the assignment can't be done.
+//   - If ptr has type *int, *float64, *Num or *rune, it performs a suitable
+//     conversion, and returns an error if the conversion fails.
+//
+//   - In other cases, it tries to perform "*ptr = src" via reflection and
+//     returns an error if the assignment can't be done.
 func ScanToGo(src any, ptr any) error {
 	switch ptr := ptr.(type) {
 	case *int:

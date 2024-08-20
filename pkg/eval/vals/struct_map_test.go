@@ -79,15 +79,21 @@ func TestPseudoMap(t *testing.T) {
 // implementations.
 
 type structmap struct {
-	Foo   string
-	Bar   string
-	Lorem string
+	Foo    string
+	Bar    string
+	FooBar int
 }
 
 func (structmap) IsStructMap() {}
 
+type fieldMap structmap
+
 func BenchmarkStructMap_Index(b *testing.B) {
 	benchmarkStructMap_Index(b, structmap{})
+}
+
+func BenchmarkStructMap_Index_FieldMap(b *testing.B) {
+	benchmarkStructMap_Index(b, fieldMap{})
 }
 
 type structmapIndexer structmap
@@ -100,8 +106,8 @@ func (s structmapIndexer) Index(k any) (any, bool) {
 		return s.Foo, true
 	case "bar":
 		return s.Bar, true
-	case "lorem":
-		return s.Lorem, true
+	case "foo-bar":
+		return s.FooBar, true
 	}
 	return nil, false
 }
@@ -121,6 +127,10 @@ func benchmarkStructMap_Index(b *testing.B, value any) {
 
 func BenchmarkStructMap_HasKey(b *testing.B) {
 	benchmarkStructMap_HasKey(b, structmap{})
+}
+
+func BenchmarkStructMap_HasKey_FieldMap(b *testing.B) {
+	benchmarkStructMap_HasKey(b, fieldMap{})
 }
 
 type structmapHasKeyer structmap
@@ -148,6 +158,10 @@ func BenchmarkStructMap_IterateKeys(b *testing.B) {
 	benchmarkStructMap_IterateKeys(b, structmap{})
 }
 
+func BenchmarkStructMap_IterateKeys_FieldMap(b *testing.B) {
+	benchmarkStructMap_IterateKeys(b, fieldMap{})
+}
+
 type structmapKeysIterator structmap
 
 var _ KeysIterator = structmapKeysIterator{}
@@ -172,6 +186,10 @@ func benchmarkStructMap_IterateKeys(b *testing.B, value any) {
 
 func BenchmarkStructMap_Len(b *testing.B) {
 	benchmarkStructMap_Len(b, structmap{})
+}
+
+func BenchmarkStructMap_Len_FieldMap(b *testing.B) {
+	benchmarkStructMap_Len(b, fieldMap{})
 }
 
 type structmapLener structmap

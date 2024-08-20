@@ -16,6 +16,8 @@ func TestDissoc(t *testing.T) {
 			Rets(eq(MakeMap("k2", "v2"))),
 		Args(testStructMap{"ls", 1.0}, "score-plus-ten").
 			Rets(eq(MakeMap("name", "ls", "score", 1.0))),
+		Args(fieldMap{"lorem", "ipsum", 23}, "foo-bar").
+			Rets(eq(MakeMap("foo", "lorem", "bar", "ipsum"))),
 		Args(dissocer{}, "x").Rets("custom ret"),
 		Args("", "x").Rets(nil),
 	)

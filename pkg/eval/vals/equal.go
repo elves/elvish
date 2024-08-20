@@ -60,6 +60,10 @@ func Equal(x, y any) bool {
 			return equalMap(x, y, Map.Iterator, Map.Index)
 		case StructMap:
 			return equalMap(x, y, Map.Iterator, indexStructMap)
+		default:
+			if xKeys := getFieldMapKeys(y); xKeys != nil {
+				return equalFieldMapAndMap(y, xKeys, x)
+			}
 		}
 		return false
 	case StructMap:
@@ -71,6 +75,16 @@ func Equal(x, y any) bool {
 		}
 		return false
 	default:
+		if xKeys := getFieldMapKeys(x); xKeys != nil {
+			switch y := y.(type) {
+			case Map:
+				return equalFieldMapAndMap(x, xKeys, y)
+			default:
+				if yKeys := getFieldMapKeys(y); yKeys != nil {
+					return equalFieldMapAndFieldMap(x, xKeys, y, yKeys)
+				}
+			}
+		}
 		return reflect.DeepEqual(x, y)
 	}
 }
@@ -99,6 +113,34 @@ func equalMap[X, Y any, I hashmap.Iterator](x X, y Y, xit func(X) I, yidx func(Y
 		k, vx := it.Elem()
 		vy, ok := yidx(y, k)
 		if !ok || !Equal(vx, vy) {
+			return false
+		}
+	}
+	return true
+}
+
+func equalFieldMapAndMap(x any, xKeys fieldMapKeys, y Map) bool {
+	if len(xKeys) != y.Len() {
+		return false
+	}
+	xValue := reflect.ValueOf(x)
+	for i, key := range xKeys {
+		yValue, ok := y.Index(key)
+		if !ok || !Equal(xValue.Field(i).Interface(), yValue) {
+			return false
+		}
+	}
+	return true
+}
+
+func equalFieldMapAndFieldMap(x any, xKeys fieldMapKeys, y any, yKeys fieldMapKeys) bool {
+	if len(xKeys) != len(yKeys) {
+		return false
+	}
+	xValue := reflect.ValueOf(x)
+	for i, key := range xKeys {
+		yValue, ok := indexFieldMap(y, key, yKeys)
+		if !ok || !Equal(xValue.Field(i).Interface(), yValue) {
 			return false
 		}
 	}

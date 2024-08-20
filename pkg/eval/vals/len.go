@@ -26,8 +26,12 @@ func Len(v any) int {
 		return v.Len()
 	case StructMap:
 		return lenStructMap(v)
+	default:
+		if keys := getFieldMapKeys(v); keys != nil {
+			return len(keys)
+		}
+		return -1
 	}
-	return -1
 }
 
 func lenStructMap(m StructMap) int {

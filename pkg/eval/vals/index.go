@@ -3,6 +3,7 @@ package vals
 import (
 	"errors"
 	"os"
+	"reflect"
 )
 
 // Indexer wraps the Index method.
@@ -61,7 +62,11 @@ func Index(a, k any) (any, error) {
 	case PseudoMap:
 		return convertResult(indexStructMap(a.Fields(), k))
 	default:
-		return nil, errNotIndexable
+		if keys := getFieldMapKeys(a); keys != nil {
+			return convertResult(indexFieldMap(a, k, keys))
+		} else {
+			return nil, errNotIndexable
+		}
 	}
 }
 
@@ -84,6 +89,19 @@ func indexStructMap(a StructMap, k any) (any, bool) {
 		k, v := it.elem()
 		if k == fieldName {
 			return FromGo(v), true
+		}
+	}
+	return nil, false
+}
+
+func indexFieldMap(m, k any, keys fieldMapKeys) (any, bool) {
+	kstring, ok := k.(string)
+	if !ok {
+		return nil, false
+	}
+	for i, key := range keys {
+		if kstring == key {
+			return reflect.ValueOf(m).Field(i).Interface(), true
 		}
 	}
 	return nil, false

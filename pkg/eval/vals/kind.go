@@ -39,6 +39,9 @@ func Kind(v any) string {
 	case Kinder:
 		return v.Kind()
 	default:
+		if IsFieldMap(v) {
+			return "map"
+		}
 		return fmt.Sprintf("!!%T", v)
 	}
 }

@@ -34,12 +34,8 @@ type Dir struct {
 	Score float64
 }
 
-func (Dir) IsStructMap() {}
-
 // Cmd is an entry in the command history.
 type Cmd struct {
 	Text string
 	Seq  int
 }
-
-func (Cmd) IsStructMap() {}

@@ -11,12 +11,8 @@ type matchStruct struct {
 	Groups vals.List
 }
 
-func (matchStruct) IsStructMap() {}
-
 type submatchStruct struct {
 	Text  string
 	Start int
 	End   int
 }
-
-func (submatchStruct) IsStructMap() {}

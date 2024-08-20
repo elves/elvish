@@ -9,8 +9,8 @@ import (
 	"src.elv.sh/pkg/tt"
 )
 
-type someType struct {
-	Foo string
+type unknownType struct {
+	foo string
 }
 
 func TestScanToGo_ConcreteTypeDst(t *testing.T) {
@@ -29,7 +29,7 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 		Args("0x12", 0).Rets(0x12),
 		Args(12.0, 0).Rets(0, errMustBeInteger),
 		Args(0.5, 0).Rets(0, errMustBeInteger),
-		Args(someType{}, 0).Rets(tt.Any, errMustBeInteger),
+		Args(unknownType{}, 0).Rets(tt.Any, errMustBeInteger),
 		Args("x", 0).Rets(tt.Any, cannotParseAs{"integer", "x"}),
 
 		// float64
@@ -38,20 +38,20 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 		Args(1.2, 0.0).Rets(1.2),
 		Args("23", 0.0).Rets(23.0),
 		Args("0x23", 0.0).Rets(float64(0x23)),
-		Args(someType{}, 0.0).Rets(tt.Any, errMustBeNumber),
+		Args(unknownType{}, 0.0).Rets(tt.Any, errMustBeNumber),
 		Args("x", 0.0).Rets(tt.Any, cannotParseAs{"number", "x"}),
 
 		// rune
 		Args("x", ' ').Rets('x'),
-		Args(someType{}, ' ').Rets(tt.Any, errMustBeString),
+		Args(unknownType{}, ' ').Rets(tt.Any, errMustBeString),
 		Args("\xc3\x28", ' ').Rets(tt.Any, errMustBeValidUTF8), // Invalid UTF8
 		Args("ab", ' ').Rets(tt.Any, errMustHaveSingleRune),
 
 		// Other types don't undergo any conversion, as long as the types match
 		Args("foo", "").Rets("foo"),
-		Args(someType{"foo"}, someType{}).Rets(someType{"foo"}),
+		Args(unknownType{"foo"}, unknownType{}).Rets(unknownType{"foo"}),
 		Args(nil, nil).Rets(nil),
-		Args("x", someType{}).Rets(tt.Any, WrongType{"!!vals.someType", "string"}),
+		Args("x", unknownType{}).Rets(tt.Any, WrongType{"!!vals.unknownType", "string"}),
 	)
 }
 
@@ -220,6 +220,6 @@ func TestFromGo(t *testing.T) {
 
 		// Other types don't undergo any conversion
 		Args(nil).Rets(nil),
-		Args(someType{"foo"}).Rets(someType{"foo"}),
+		Args(unknownType{"foo"}).Rets(unknownType{"foo"}),
 	)
 }

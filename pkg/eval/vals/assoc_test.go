@@ -46,6 +46,10 @@ func TestAssoc(t *testing.T) {
 		Args(testStructMap{"ls", 1.0}, "score-plus-ten", "x").Rets(
 			eq(MakeMap("name", "ls", "score", 1.0, "score-plus-ten", "x")), nil),
 
+		// Field map
+		Args(fieldMap{"lorem", "ipsum", 23}, "foo-bar", "x").Rets(
+			eq(MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", "x")), nil),
+
 		Args(customAssocer{}, "x", "y").Rets("custom result", errCustomAssoc),
 
 		Args(struct{}{}, "x", "y").Rets(nil, errAssocUnsupported),

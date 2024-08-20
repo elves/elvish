@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"reflect"
 	"sort"
 	"strconv"
 
@@ -76,6 +77,9 @@ func Repr(v any, indent int) string {
 		// Add a tag immediately after [.
 		return "[^" + Kind(v) + " " + s[1:]
 	default:
+		if keys := getFieldMapKeys(v); keys != nil {
+			return reprFieldMap(v, keys, indent)
+		}
 		return fmt.Sprintf("<unknown %v>", v)
 	}
 }
@@ -96,6 +100,30 @@ func reprMap(it hashmap.Iterator, n, indent int) string {
 	for _, pair := range pairs {
 		k, v := pair[0], pair[1]
 		builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
+	}
+	return builder.String()
+}
+
+type fieldMapPair struct {
+	key   string
+	value any
+}
+
+func reprFieldMap(v any, keys fieldMapKeys, indent int) string {
+	builder := NewMapReprBuilder(indent)
+	// Collect all the key-value pairs.
+	value := reflect.ValueOf(v)
+	pairs := make([]fieldMapPair, len(keys))
+	for i, key := range keys {
+		pairs[i] = fieldMapPair{key, value.Field(i).Interface()}
+	}
+	// Sort the pairs.
+	sort.Slice(pairs, func(i, j int) bool {
+		return pairs[i].key < pairs[j].key
+	})
+	// Print the pairs.
+	for _, pair := range pairs {
+		builder.WritePair(Repr(pair.key, indent+1), indent+2, Repr(pair.value, indent+2))
 	}
 	return builder.String()
 }

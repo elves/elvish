@@ -436,7 +436,16 @@ func (op *redirOp) exec(fm *Frame) Exception {
 		fm.ports[dst] = fileRedirPort(op.mode, f, true)
 	case vals.File:
 		fm.ports[dst] = fileRedirPort(op.mode, src, false)
-	case vals.Map, vals.StructMap:
+	default:
+		switch src.(type) {
+		case vals.Map, vals.StructMap: // ok
+		default:
+			if !vals.IsFieldMap(src) {
+				return fm.errorp(op.srcOp, errs.BadValue{
+					What:  "redirection source",
+					Valid: "string, file or map", Actual: vals.Kind(src)})
+			}
+		}
 		var srcFile *os.File
 		switch op.mode {
 		case parse.Read:
@@ -463,10 +472,6 @@ func (op *redirOp) exec(fm *Frame) Exception {
 			return fm.errorpf(op, "can only use < or > with maps")
 		}
 		fm.ports[dst] = fileRedirPort(op.mode, srcFile, false)
-	default:
-		return fm.errorp(op.srcOp, errs.BadValue{
-			What:  "redirection source",
-			Valid: "string, file or map", Actual: vals.Kind(src)})
 	}
 	return nil
 }

@@ -29,23 +29,11 @@ func HasKey(container, key any) bool {
 	case PseudoMap:
 		return hasKeyStructMap(container.Fields(), key)
 	default:
-		var found bool
-		err := IterateKeys(container, func(k any) bool {
-			if key == k {
-				found = true
-			}
-			return !found
-		})
-		if err == nil {
-			return found
+		if keys := getFieldMapKeys(container); keys != nil {
+			return hasKeyFieldMap(key, keys)
+		} else {
+			return hasKeyViaIterateKeys(container, key)
 		}
-		if len := Len(container); len >= 0 {
-			// TODO(xiaq): Not all types that implement Lener have numerical
-			// indices
-			_, err := ConvertListIndex(key, len)
-			return err == nil
-		}
-		return false
 	}
 }
 
@@ -58,6 +46,39 @@ func hasKeyStructMap(m StructMap, k any) bool {
 		if fieldName == kstring {
 			return true
 		}
+	}
+	return false
+}
+
+func hasKeyFieldMap(k any, keys fieldMapKeys) bool {
+	kstring, ok := k.(string)
+	if !ok || kstring == "" {
+		return false
+	}
+	for _, fieldName := range keys {
+		if kstring == fieldName {
+			return true
+		}
+	}
+	return false
+}
+
+func hasKeyViaIterateKeys(container, key any) bool {
+	var found bool
+	err := IterateKeys(container, func(k any) bool {
+		if key == k {
+			found = true
+		}
+		return !found
+	})
+	if err == nil {
+		return found
+	}
+	if len := Len(container); len >= 0 {
+		// TODO(xiaq): Not all types that implement Lener have numerical
+		// indices
+		_, err := ConvertListIndex(key, len)
+		return err == nil
 	}
 	return false
 }
