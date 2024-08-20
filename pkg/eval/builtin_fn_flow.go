@@ -168,12 +168,10 @@ func (e FailError) Error() string { return vals.ToString(e.Content) }
 // Kind returns "fail-error".
 func (FailError) Kind() string { return "fail-error" }
 
-// Fields returns a structmap for accessing fields from Elvish.
-func (e FailError) Fields() vals.StructMap { return failFields{e} }
+// Fields returns a [vals.MethodMap] for accessing fields from Elvish.
+func (e FailError) Fields() vals.MethodMap { return failFields{e} }
 
 type failFields struct{ e FailError }
-
-func (failFields) IsStructMap() {}
 
 func (f failFields) Type() string { return "fail" }
 func (f failFields) Content() any { return f.e.Content }

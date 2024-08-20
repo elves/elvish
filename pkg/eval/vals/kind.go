@@ -12,7 +12,7 @@ type Kinder interface {
 
 // Kind returns the "kind" of the value, a concept similar to type but not yet
 // very well defined. It is implemented for the builtin nil, bool and string,
-// the File, List, Map types, StructMap types, and types satisfying the Kinder
+// the File, List, Map types, field map types, and types satisfying the Kinder
 // interface. For other types, it returns the Go type name of the argument
 // preceded by "!!".
 //
@@ -34,7 +34,7 @@ func Kind(v any) string {
 		return "file"
 	case List:
 		return "list"
-	case Map, StructMap:
+	case Map:
 		return "map"
 	case Kinder:
 		return v.Kind()

@@ -27,7 +27,7 @@ Exception: error parsing regexp: missing closing ): `(`
 ▶ [&end=(num 2) &groups=[[&end=(num 2) &start=(num 0) &text=A1] [&end=(num 2) &start=(num 1) &text=1]] &start=(num 0) &text=A1]
 ▶ [&end=(num 5) &groups=[[&end=(num 5) &start=(num 3) &text=B2] [&end=(num 5) &start=(num 4) &text=2]] &start=(num 3) &text=B2]
 
-## access to fields in the match StructMap ##
+## access to fields in the match field map ##
 ~> put (re:find . a)[text start end groups]
 ▶ a
 ▶ (num 0)

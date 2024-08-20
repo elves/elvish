@@ -7,7 +7,7 @@ import (
 	"src.elv.sh/pkg/parse"
 )
 
-func TestSourceAsStructMap(t *testing.T) {
+func TestSourceAsMap(t *testing.T) {
 	vals.TestValue(t, parse.Source{Name: "[tty]", Code: "echo"}).
 		Kind("map").
 		Repr("[&code=echo &is-file=$false &name='[tty]']").

@@ -42,10 +42,6 @@ func TestAssoc(t *testing.T) {
 		Args(MakeMap("k", "v"), "k2", "v2").Rets(
 			eq(MakeMap("k", "v", "k2", "v2")), nil),
 
-		// Struct map
-		Args(testStructMap{"ls", 1.0}, "score-plus-ten", "x").Rets(
-			eq(MakeMap("name", "ls", "score", 1.0, "score-plus-ten", "x")), nil),
-
 		// Field map
 		Args(fieldMap{"lorem", "ipsum", 23}, "foo-bar", "x").Rets(
 			eq(MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", "x")), nil),

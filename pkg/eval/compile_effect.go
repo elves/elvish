@@ -437,14 +437,10 @@ func (op *redirOp) exec(fm *Frame) Exception {
 	case vals.File:
 		fm.ports[dst] = fileRedirPort(op.mode, src, false)
 	default:
-		switch src.(type) {
-		case vals.Map, vals.StructMap: // ok
-		default:
-			if !vals.IsFieldMap(src) {
-				return fm.errorp(op.srcOp, errs.BadValue{
-					What:  "redirection source",
-					Valid: "string, file or map", Actual: vals.Kind(src)})
-			}
+		if _, isMap := src.(vals.Map); !isMap && !vals.IsFieldMap(src) {
+			return fm.errorp(op.srcOp, errs.BadValue{
+				What:  "redirection source",
+				Valid: "string, file or map", Actual: vals.Kind(src)})
 		}
 		var srcFile *os.File
 		switch op.mode {

@@ -15,8 +15,6 @@ func Dissoc(a, k any) any {
 	switch a := a.(type) {
 	case Map:
 		return a.Dissoc(k)
-	case StructMap:
-		return promoteToMap(a).Dissoc(k)
 	case Dissocer:
 		return a.Dissoc(k)
 	default:

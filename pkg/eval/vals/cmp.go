@@ -154,7 +154,8 @@ func typeOf(x any) uintptr {
 	switch x.(type) {
 	case *big.Int, *big.Rat, float64:
 		return typeOfInt
-	case StructMap:
+	}
+	if IsFieldMap(x) {
 		return typeOfMap
 	}
 	// The first word of an empty interface is a pointer to the type descriptor.

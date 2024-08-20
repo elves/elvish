@@ -174,11 +174,9 @@ func (er UnsupportedOptionsError) Error() string {
 	return fmt.Sprintf("unsupported options: %s", strings.Join(er.Options, ", "))
 }
 
-func (c *Closure) Fields() vals.StructMap { return closureFields{c} }
+func (c *Closure) Fields() vals.MethodMap { return closureFields{c} }
 
 type closureFields struct{ c *Closure }
-
-func (closureFields) IsStructMap() {}
 
 func (cf closureFields) ArgNames() vals.List { return vals.MakeListSlice(cf.c.ArgNames) }
 func (cf closureFields) RestArg() string     { return strconv.Itoa(cf.c.RestArg) }
