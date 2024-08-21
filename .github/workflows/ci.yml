@@ -158,16 +158,3 @@ jobs:
       run: pip3 install beautifulsoup4
     - name: Check relative links
       run: make -C website check-rellinks
-
-  lsif:
-    name: Upload SourceGraph LSIF
-    if: github.repository == 'elves/elvish' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    container: sourcegraph/lsif-go:latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: Generate LSIF data
-      run: lsif-go
-    - name: Upload LSIF data
-      run: src lsif upload -github-token=${{ secrets.GITHUB_TOKEN }} -ignore-upload-failure
