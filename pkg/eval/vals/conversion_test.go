@@ -92,7 +92,7 @@ func scanToFieldMapOpts(src any, opt ScanOpt) (fieldMap, error) {
 	return dst, err
 }
 
-func TestScanToGo_DstIsFieldMap(t *testing.T) {
+func TestScanToGo_MapToFieldMap(t *testing.T) {
 	tt.Test(t, tt.Fn(scanToFieldMapOpts),
 		// ScanOpt(0)
 		Args(MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", 23), ScanOpt(0)).
@@ -155,6 +155,15 @@ func TestScanToGo_DstIsFieldMap(t *testing.T) {
 		// Mismatched type is not OK
 		Args(MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", "bad"), AllowMissingMapKey|AllowExtraMapKey).
 			Rets(fieldMap{}, cannotParseAs{"integer", "bad"}),
+	)
+}
+
+func TestScanToGo_FieldMapToFieldMap(t *testing.T) {
+	tt.Test(t, tt.Fn(scanToFieldMapOpts),
+		Args(fieldMap{Foo: "lorem", Bar: "ipsum", FooBar: 23}, ScanOpt(0)).
+			Rets(fieldMap{Foo: "lorem", Bar: "ipsum", FooBar: 23}, nil),
+		Args(fieldMap2{Foo: "lorem", Bar: "ipsum", FooBar: 23}, ScanOpt(0)).
+			Rets(fieldMap{Foo: "lorem", Bar: "ipsum", FooBar: 23}, nil),
 	)
 }
 

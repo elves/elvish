@@ -119,7 +119,7 @@ func ScanToGoOpts(src, ptr any, opt ScanOpt) error {
 		return convAndStore(elvToRune, src, ptr)
 	default:
 		if keys := getFieldMapKeysT(reflect.TypeOf(ptr).Elem()); keys != nil {
-			if src, ok := src.(Map); ok || IsFieldMap(src) {
+			if _, ok := src.(Map); ok || IsFieldMap(src) {
 				// TODO: If src and *ptr are the same type, perform a simple
 				// assignment instead.
 				return scanFieldMapFromMap(src, ptr, keys, opt)
