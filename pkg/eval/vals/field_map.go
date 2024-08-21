@@ -35,7 +35,7 @@ type FieldMapKeys []string
 // GetFieldMapKeys returns the FieldMapKeys for v if it's a field map, or nil if
 // it's not.
 func GetFieldMapKeys(v any) FieldMapKeys {
-	return getFieldMapKeysT(reflect.TypeOf(v))
+	return getFieldMapKeysT(TypeOf(v))
 }
 
 func getFieldMapKeysT(t reflect.Type) FieldMapKeys {
