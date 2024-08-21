@@ -118,14 +118,35 @@ func ScanToGoOpts(src, ptr any, opt ScanOpt) error {
 	case *rune:
 		return convAndStore(elvToRune, src, ptr)
 	default:
+		dstType := reflect.TypeOf(ptr).Elem()
+		// Attempt a simple assignment (*ptr = src) via reflection.
+		if TypeOf(src).AssignableTo(dstType) {
+			ValueOf(ptr).Elem().Set(ValueOf(src))
+			return nil
+		}
+		// Allow using any(nil) (which the value of Elvish's $nil) as T(nil) for
+		// any T whose zero value is spelt nil.
+		if src == nil {
+			switch dstType.Kind() {
+			case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+				ValueOf(ptr).Elem().SetZero()
+				return nil
+			}
+		}
+		// Try to scan a field map.
 		if keys := getFieldMapKeysT(reflect.TypeOf(ptr).Elem()); keys != nil {
 			if _, ok := src.(Map); ok || IsFieldMap(src) {
-				// TODO: If src and *ptr are the same type, perform a simple
-				// assignment instead.
 				return scanFieldMapFromMap(src, ptr, keys, opt)
 			}
 		}
-		return assignPtr(src, ptr)
+		// Return a suitable error.
+		var dstKind string
+		if dstType.Kind() == reflect.Interface {
+			dstKind = "!!" + dstType.String()
+		} else {
+			dstKind = Kind(reflect.Zero(dstType).Interface())
+		}
+		return WrongType{dstKind, Kind(src)}
 	}
 }
 
@@ -226,31 +247,6 @@ func scanFieldMapFromMap(src any, ptr any, dstKeys FieldMapKeys, opt ScanOpt) er
 	if opt&AllowExtraMapKey == 0 && usedSrcKeys < Len(src) {
 		return makeErr("constrained to")
 	}
-	return nil
-}
-
-// Does "*ptr = src" via reflection.
-func assignPtr(src, ptr any) error {
-	dstType := reflect.TypeOf(ptr).Elem()
-	// Allow using any(nil) as T(nil) for any T whose zero value is spelt
-	// nil.
-	if src == nil {
-		switch dstType.Kind() {
-		case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
-			ValueOf(ptr).Elem().SetZero()
-			return nil
-		}
-	}
-	if !TypeOf(src).AssignableTo(dstType) {
-		var dstKind string
-		if dstType.Kind() == reflect.Interface {
-			dstKind = "!!" + dstType.String()
-		} else {
-			dstKind = Kind(reflect.Zero(dstType).Interface())
-		}
-		return WrongType{dstKind, Kind(src)}
-	}
-	ValueOf(ptr).Elem().Set(ValueOf(src))
 	return nil
 }
 

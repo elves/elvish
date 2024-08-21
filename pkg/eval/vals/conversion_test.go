@@ -281,3 +281,26 @@ func TestFromGo(t *testing.T) {
 		Args(unknownType{"foo"}).Rets(unknownType{"foo"}),
 	)
 }
+
+func BenchmarkScanToGo_ScanIntToInt(b *testing.B) {
+	benchmarkScanToGo[int](b, 1)
+}
+
+func BenchmarkScanToGo_ScanStringToInt(b *testing.B) {
+	benchmarkScanToGo[int](b, "1")
+}
+
+func BenchmarkScanToGo_ScanFieldMapToFieldMap(b *testing.B) {
+	benchmarkScanToGo[fieldMap](b, fieldMap{})
+}
+
+func BenchmarkScanToGo_ScanMapToFieldMap(b *testing.B) {
+	benchmarkScanToGo[fieldMap](b, MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", 23))
+}
+
+func benchmarkScanToGo[D any](b *testing.B, src any) {
+	for range b.N {
+		var dst D
+		ScanToGo(src, &dst)
+	}
+}
