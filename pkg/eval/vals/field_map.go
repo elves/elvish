@@ -14,10 +14,10 @@ import (
 // keys are dash-case versions of the field names, and the values are the field
 // value.
 func IsFieldMap(v any) bool {
-	return getFieldMapKeys(v) != nil
+	return GetFieldMapKeys(v) != nil
 }
 
-func promoteFieldMapToMap(v any, keys fieldMapKeys) Map {
+func promoteFieldMapToMap(v any, keys FieldMapKeys) Map {
 	m := EmptyMap
 	value := reflect.ValueOf(v)
 	for i, key := range keys {
@@ -28,22 +28,29 @@ func promoteFieldMapToMap(v any, keys fieldMapKeys) Map {
 
 var fieldMapKeysCache sync.Map
 
-type fieldMapKeys []string
+// FieldMapKeys contains the map keys corresponding to each field in a field
+// map. A nil value means that a type is not a field map.
+type FieldMapKeys []string
 
-func getFieldMapKeys(v any) fieldMapKeys {
-	t := reflect.TypeOf(v)
+// GetFieldMapKeys returns the FieldMapKeys for v if it's a field map, or nil if
+// it's not.
+func GetFieldMapKeys(v any) FieldMapKeys {
+	return getFieldMapKeysT(reflect.TypeOf(v))
+}
+
+func getFieldMapKeysT(t reflect.Type) FieldMapKeys {
 	if t.Kind() != reflect.Struct {
 		return nil
 	}
 	if keys, ok := fieldMapKeysCache.Load(t); ok {
-		return keys.(fieldMapKeys)
+		return keys.(FieldMapKeys)
 	}
 	keys := makeFieldMapKeys(t)
 	fieldMapKeysCache.Store(t, keys)
 	return keys
 }
 
-func makeFieldMapKeys(t reflect.Type) fieldMapKeys {
+func makeFieldMapKeys(t reflect.Type) FieldMapKeys {
 	n := t.NumField()
 	if n == 0 {
 		return nil

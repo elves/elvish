@@ -25,7 +25,7 @@ func HasKey(container, key any) bool {
 	case PseudoMap:
 		return hasKeyFieldOrMethodMap(key, getMethodMapKeys(container.Fields()))
 	default:
-		if keys := getFieldMapKeys(container); keys != nil {
+		if keys := GetFieldMapKeys(container); keys != nil {
 			return hasKeyFieldOrMethodMap(key, keys)
 		} else {
 			return hasKeyViaIterateKeys(container, key)

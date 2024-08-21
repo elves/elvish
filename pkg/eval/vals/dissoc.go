@@ -18,7 +18,7 @@ func Dissoc(a, k any) any {
 	case Dissocer:
 		return a.Dissoc(k)
 	default:
-		if keys := getFieldMapKeys(a); keys != nil {
+		if keys := GetFieldMapKeys(a); keys != nil {
 			return promoteFieldMapToMap(a, keys).Dissoc(k)
 		}
 		return nil

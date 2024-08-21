@@ -32,7 +32,7 @@ func IterateKeys(v any, f func(any) bool) error {
 	case PseudoMap:
 		iterateKeysFieldOrMethodMap(getMethodMapKeys(v.Fields()), f)
 	default:
-		if keys := getFieldMapKeys(v); keys != nil {
+		if keys := GetFieldMapKeys(v); keys != nil {
 			iterateKeysFieldOrMethodMap(keys, f)
 		} else {
 			return cannotIterateKeysOf{Kind(v)}

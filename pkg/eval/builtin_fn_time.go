@@ -90,38 +90,38 @@ type benchmarkOpts struct {
 	OnRunEnd Callable
 	MinRuns  int
 	MinTime  string
-	minTime  time.Duration
 }
 
 func (o *benchmarkOpts) SetDefaultOptions() {
 	o.MinRuns = 5
-	o.minTime = time.Second
 }
 
-func (opts *benchmarkOpts) parse() error {
+func (opts *benchmarkOpts) parse() (time.Duration, error) {
 	if opts.MinRuns < 0 {
-		return errs.BadValue{What: "min-runs option",
+		return 0, errs.BadValue{What: "min-runs option",
 			Valid: "non-negative integer", Actual: strconv.Itoa(opts.MinRuns)}
 	}
 
 	if opts.MinTime != "" {
 		d, err := time.ParseDuration(opts.MinTime)
 		if err != nil {
-			return errs.BadValue{What: "min-time option",
+			return 0, errs.BadValue{What: "min-time option",
 				Valid: "duration string", Actual: parse.Quote(opts.MinTime)}
 		}
 		if d < 0 {
-			return errs.BadValue{What: "min-time option",
+			return 0, errs.BadValue{What: "min-time option",
 				Valid: "non-negative duration", Actual: parse.Quote(opts.MinTime)}
 		}
-		opts.minTime = d
+		return d, nil
 	}
 
-	return nil
+	// Use 1s as the default minTime.
+	return time.Second, nil
 }
 
 func benchmark(fm *Frame, opts benchmarkOpts, f Callable) error {
-	if err := opts.parse(); err != nil {
+	minTime, err := opts.parse()
+	if err != nil {
 		return err
 	}
 
@@ -132,7 +132,6 @@ func benchmark(fm *Frame, opts benchmarkOpts, f Callable) error {
 		runs  int64
 		total time.Duration
 		m2    float64
-		err   error
 	)
 	for {
 		t0 := timeNow()
@@ -167,7 +166,7 @@ func benchmark(fm *Frame, opts benchmarkOpts, f Callable) error {
 			}
 		}
 
-		if runs >= int64(opts.MinRuns) && total >= opts.minTime {
+		if runs >= int64(opts.MinRuns) && total >= minTime {
 			break
 		}
 	}

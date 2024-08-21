@@ -59,18 +59,18 @@ func Equal(x, y any) bool {
 		case Map:
 			return equalMap(x, y, Map.Iterator, Map.Index)
 		default:
-			if xKeys := getFieldMapKeys(y); xKeys != nil {
+			if xKeys := GetFieldMapKeys(y); xKeys != nil {
 				return equalFieldMapAndMap(y, xKeys, x)
 			}
 		}
 		return false
 	default:
-		if xKeys := getFieldMapKeys(x); xKeys != nil {
+		if xKeys := GetFieldMapKeys(x); xKeys != nil {
 			switch y := y.(type) {
 			case Map:
 				return equalFieldMapAndMap(x, xKeys, y)
 			default:
-				if yKeys := getFieldMapKeys(y); yKeys != nil {
+				if yKeys := GetFieldMapKeys(y); yKeys != nil {
 					return equalFieldMapAndFieldMap(x, xKeys, y, yKeys)
 				}
 			}
@@ -109,7 +109,7 @@ func equalMap[X, Y any, I hashmap.Iterator](x X, y Y, xit func(X) I, yidx func(Y
 	return true
 }
 
-func equalFieldMapAndMap(x any, xKeys fieldMapKeys, y Map) bool {
+func equalFieldMapAndMap(x any, xKeys FieldMapKeys, y Map) bool {
 	if len(xKeys) != y.Len() {
 		return false
 	}
@@ -123,7 +123,7 @@ func equalFieldMapAndMap(x any, xKeys fieldMapKeys, y Map) bool {
 	return true
 }
 
-func equalFieldMapAndFieldMap(x any, xKeys fieldMapKeys, y any, yKeys fieldMapKeys) bool {
+func equalFieldMapAndFieldMap(x any, xKeys FieldMapKeys, y any, yKeys FieldMapKeys) bool {
 	if len(xKeys) != len(yKeys) {
 		return false
 	}

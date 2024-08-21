@@ -32,7 +32,7 @@ func Assoc(a, k, v any) (any, error) {
 	case Assocer:
 		return a.Assoc(k, v)
 	default:
-		if keys := getFieldMapKeys(a); keys != nil {
+		if keys := GetFieldMapKeys(a); keys != nil {
 			return promoteFieldMapToMap(a, keys).Assoc(k, v), nil
 		}
 	}

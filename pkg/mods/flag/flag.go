@@ -221,7 +221,7 @@ func parseGetopt(opts parseGetoptOptions, argsVal vals.List, specsVal vals.List)
 	originalSpecMap := make(map[*getopt.OptionSpec]vals.Map)
 	for i, specMap := range specMaps {
 		var s specStruct
-		vals.ScanMapToGo(specMap, &s)
+		vals.ScanToGoOpts(specMap, &s, vals.AllowMissingMapKey|vals.AllowExtraMapKey)
 		spec, err := s.OptionSpec()
 		if err != nil {
 			return nil, nil, err

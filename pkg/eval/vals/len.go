@@ -23,7 +23,7 @@ func Len(v any) int {
 	case Lener:
 		return v.Len()
 	default:
-		if keys := getFieldMapKeys(v); keys != nil {
+		if keys := GetFieldMapKeys(v); keys != nil {
 			return len(keys)
 		}
 		return -1

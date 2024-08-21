@@ -53,7 +53,7 @@ func Hash(v any) uint32 {
 	case Map:
 		return hashMap(v.Iterator())
 	default:
-		if keys := getFieldMapKeys(v); keys != nil {
+		if keys := GetFieldMapKeys(v); keys != nil {
 			return hashFieldMap(v, keys)
 		}
 		return 0
@@ -79,7 +79,7 @@ func hashMap(it hashmap.Iterator) uint32 {
 	return h
 }
 
-func hashFieldMap(v any, keys fieldMapKeys) uint32 {
+func hashFieldMap(v any, keys FieldMapKeys) uint32 {
 	value := reflect.ValueOf(v)
 	var h uint32
 	for i, key := range keys {

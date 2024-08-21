@@ -60,7 +60,7 @@ func Index(a, k any) (any, error) {
 	case PseudoMap:
 		return convertResult(indexMethodMap(a.Fields(), k))
 	default:
-		if keys := getFieldMapKeys(a); keys != nil {
+		if keys := GetFieldMapKeys(a); keys != nil {
 			return convertResult(indexFieldMap(a, k, keys))
 		} else {
 			return nil, errNotIndexable
@@ -91,7 +91,7 @@ func indexMethodMap(m MethodMap, k any) (any, bool) {
 	return nil, false
 }
 
-func indexFieldMap(m, k any, keys fieldMapKeys) (any, bool) {
+func indexFieldMap(m, k any, keys FieldMapKeys) (any, bool) {
 	kstring, ok := k.(string)
 	if !ok {
 		return nil, false
