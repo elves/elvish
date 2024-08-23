@@ -1668,6 +1668,34 @@ If `or` were a normal command, the code above is still syntactically correct.
 However, Elvish would then evaluate all its arguments, with the side effect of
 outputting `x`, `y` and `z`, before calling `or`.
 
+**Note**: Since special commands are parsed like normal commands, they end at
+newlines; this is especially important for control flow commands. For example,
+the following two styles of writing an `if` are valid:
+
+```elvish
+# No newline at all
+if (...) { ... } else { ... }
+
+# Newline appears within lambdas, which don't end the outer command
+if (...) {
+  ...
+} else {
+  ...
+}
+```
+
+However, the following style is **not** valid:
+
+```elvish
+# The if command ends at the newline
+if (...) { ... }
+# And this is treated as a separate command
+else { ... }
+```
+
+The `else` keyword is technically just an argument of the `if` command, not a
+standalone command. This is different from POSIX shell's syntax.
+
 ## Declaring variables: `var` {#var}
 
 The `var` special command declares local variables. It takes any number of
