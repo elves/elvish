@@ -85,6 +85,11 @@ fn main {|go-pkg dst-dir &name=elvish &variant='' &keep-bin=$false|
     # fixed point in time to make the archive files reproducible.
     touch -d 2000-01-01T00:00:00Z $bin-name-in-archive
     if (eq $os windows) {
+      # If the zip file already exists, the zip command below will add the
+      # binary to the existing file. This is not the behavior we want, so always
+      # remove the zip file first. Passing -f makes the command succeed even if
+      # the file doesn't exist.
+      rm -f $archive-name
       zip -q $archive-name $bin-name-in-archive
     } else {
       # If we create a .tar.gz file directly with the tar command, the
