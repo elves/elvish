@@ -50,7 +50,7 @@ func (w *comboBox) Render(width, height int) *term.Buffer {
 	// TODO: Test the behavior of Render when height is very small
 	// (https://b.elv.sh/1820)
 	if height == 1 {
-		return w.listBox.Render(width, height)
+		return w.codeArea.Render(width, height)
 	}
 	buf := w.codeArea.Render(width, height-1)
 	bufListBox := w.listBox.Render(width, height-len(buf.Lines))
