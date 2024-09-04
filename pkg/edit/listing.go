@@ -54,8 +54,10 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 	bindingVar := newBindingVar(emptyBindingsMap)
 	bindings := newMapBindings(ed, ev, bindingVar, commonBindingVar)
 	dedup := newBoolVar(true)
+	reverse := newBoolVar(false)
 	ns := eval.BuildNsNamed("edit:histlist").
 		AddVar("binding", bindingVar).
+		AddVar("reverse", reverse).
 		AddGoFns(map[string]any{
 			"start": func() {
 				w, err := modes.NewHistlist(ed.app, modes.HistlistSpec{
@@ -63,6 +65,9 @@ func initHistlist(ed *Editor, ev *eval.Evaler, histStore histutil.Store, commonB
 					AllCmds:  histStore.AllCmds,
 					Dedup: func() bool {
 						return dedup.Get().(bool)
+					},
+					Reverse: func() bool {
+						return reverse.Get().(bool)
 					},
 					Filter: filterSpec,
 					CodeAreaRPrompt: func() ui.Text {

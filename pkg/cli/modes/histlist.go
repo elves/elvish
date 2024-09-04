@@ -24,6 +24,9 @@ type HistlistSpec struct {
 	// Dedup is called to determine whether deduplication should be done.
 	// Defaults to true if unset.
 	Dedup func() bool
+	// Reverse is called to determine whether the commands should be listed most recent to less recent.
+	// Default to false if unset.
+	Reverse func() bool
 	// Configuration for the filter.
 	Filter FilterSpec
 	// RPrompt of the code area (first row of the widget).
@@ -42,6 +45,10 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 	if spec.Dedup == nil {
 		spec.Dedup = func() bool { return true }
 	}
+	reverse := false
+	if spec.Reverse != nil {
+		reverse = spec.Reverse()
+	}
 
 	cmds, err := spec.AllCmds()
 	if err != nil {
@@ -51,7 +58,7 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 	for i, cmd := range cmds {
 		last[cmd.Text] = i
 	}
-	cmdItems := histlistItems{cmds, last}
+	cmdItems := histlistItems{cmds, last, reverse}
 
 	w := tk.NewComboBox(tk.ComboBoxSpec{
 		CodeArea: tk.CodeAreaSpec{
@@ -68,7 +75,11 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 		ListBox: tk.ListBoxSpec{
 			Bindings: spec.Bindings,
 			OnAccept: func(it tk.Items, i int) {
-				text := it.(histlistItems).entries[i].Text
+				entries := it.(histlistItems).entries
+				if reverse {
+					i = len(entries) - i - 1
+				}
+				text := entries[i].Text
 				codeArea.MutateState(func(s *tk.CodeAreaState) {
 					buf := &s.Buffer
 					if buf.Content == "" {
@@ -82,7 +93,11 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 		},
 		OnFilter: func(w tk.ComboBox, p string) {
 			it := cmdItems.filter(spec.Filter.makePredicate(p), spec.Dedup())
-			w.ListBox().Reset(it, it.Len()-1)
+			selected := it.Len() - 1
+			if reverse {
+				selected = 0
+			}
+			w.ListBox().Reset(it, selected)
 		},
 	})
 	return w, nil
@@ -91,6 +106,7 @@ func NewHistlist(app cli.App, spec HistlistSpec) (Histlist, error) {
 type histlistItems struct {
 	entries []storedefs.Cmd
 	last    map[string]int
+	reverse bool
 }
 
 func (it histlistItems) filter(p func(string) bool, dedup bool) histlistItems {
@@ -104,10 +120,13 @@ func (it histlistItems) filter(p func(string) bool, dedup bool) histlistItems {
 			filtered = append(filtered, entry)
 		}
 	}
-	return histlistItems{filtered, nil}
+	return histlistItems{filtered, nil, it.reverse}
 }
 
 func (it histlistItems) Show(i int) ui.Text {
+	if it.reverse {
+		i = len(it.entries) - i - 1
+	}
 	entry := it.entries[i]
 	// TODO: The alignment of the index works up to 10000 entries.
 	return ui.T(fmt.Sprintf("%4d %s", entry.Seq, entry.Text))
