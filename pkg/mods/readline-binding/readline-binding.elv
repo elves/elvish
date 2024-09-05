@@ -20,7 +20,8 @@ set edit:global-binding[Ctrl-G] = $edit:close-mode~
     $b Ctrl-P $edit:history:start~
     # TODO: ^S ^T ^X family ^Y ^_
     $b Alt-b  $edit:move-dot-left-word~
-    # TODO Alt-c Alt-d
+    # TODO Alt-c
+    $b Alt-d  $edit:kill-word-right~
     $b Alt-f  $edit:move-dot-right-word~
     # TODO Alt-l Alt-r Alt-u
 
