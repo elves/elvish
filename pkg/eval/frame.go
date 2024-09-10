@@ -22,11 +22,6 @@ import (
 type Frame struct {
 	Evaler *Evaler
 
-	src parse.Source
-
-	local, up *Ns
-	defers    *[]func(*Frame) Exception
-
 	// The godoc of the context package states:
 	//
 	// > Do not store Contexts inside a struct type; instead, pass a Context
@@ -36,12 +31,16 @@ type Frame struct {
 	// (https://github.com/golang/go/issues/22602). The Frame struct doesn't fit
 	// the "parameter struct" definition in that discussion, but it is itself is
 	// a "context struct". Storing a Context inside it seems fine.
-	ctx   context.Context
-	ports []*Port
-
-	traceback *StackTrace
-
+	ctx        context.Context
+	ports      []*Port
+	traceback  *StackTrace
 	background bool
+
+	// The following fields are only relevant when running Elvish code (as
+	// opposed to a builtin function or external command).
+	src       parse.Source
+	local, up *Ns
+	defers    *[]func(*Frame) Exception
 }
 
 // PrepareEval prepares a piece of code for evaluation in a copy of the current
@@ -67,7 +66,7 @@ func (fm *Frame) PrepareEval(src parse.Source, r diag.Ranger, ns *Ns) (*Ns, func
 		traceback = fm.addTraceback(r)
 	}
 	newFm := &Frame{
-		fm.Evaler, src, local, new(Ns), nil, fm.ctx, fm.ports, traceback, fm.background}
+		fm.Evaler, fm.ctx, fm.ports, traceback, fm.background, src, local, new(Ns), nil}
 	op, _, err := compile(fm.Evaler.Builtin().static(), local.static(), nil, tree, fm.ErrorFile())
 	if err != nil {
 		return nil, nil, err

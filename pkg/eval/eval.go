@@ -382,7 +382,7 @@ func (ev *Evaler) prepareFrame(src parse.Source, cfg EvalCfg) (*Frame, func()) {
 
 	ports := fillDefaultDummyPorts(cfg.Ports)
 
-	fm := &Frame{ev, src, cfg.Global, new(Ns), nil, intCtx, ports, nil, false}
+	fm := &Frame{ev, intCtx, ports, nil, false, src, cfg.Global, new(Ns), nil}
 	return fm, func() {
 		if cfg.PutInFg {
 			err := putSelfInFg()
