@@ -61,7 +61,6 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 		}
 		newFm := fm.Fork()
 		ex := f.Call(newFm, []any{v}, NoOpts)
-		newFm.Close()
 
 		if ex != nil {
 			switch Reason(ex) {
@@ -111,7 +110,6 @@ func peach(fm *Frame, opts peachOpt, f Callable, inputs Inputs) error {
 			newFm := fm.Fork()
 			newFm.ports[0] = DummyInputPort
 			ex := f.Call(newFm, []any{v}, NoOpts)
-			newFm.Close()
 
 			if ex != nil {
 				switch Reason(ex) {

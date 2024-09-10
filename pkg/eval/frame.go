@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"sync"
 
 	"src.elv.sh/pkg/diag"
@@ -85,15 +86,6 @@ func (fm *Frame) Eval(src parse.Source, r diag.Ranger, ns *Ns) (*Ns, error) {
 		return nil, err
 	}
 	return newLocal, exec()
-}
-
-// Close releases resources allocated for this frame. It always returns a nil
-// error. It may be called only once.
-func (fm *Frame) Close() error {
-	for _, port := range fm.ports {
-		port.close()
-	}
-	return nil
 }
 
 // InputChan returns a channel from which input can be read.
@@ -190,21 +182,11 @@ func (fm *Frame) Canceled() bool {
 	}
 }
 
-// Fork returns a modified copy of fm. The ports are forked, and the name is
-// changed to the given value. Other fields are copied shallowly.
+// Fork returns a copy of fm, with the ports cloned.
 func (fm *Frame) Fork() *Frame {
-	newPorts := make([]*Port, len(fm.ports))
-	for i, p := range fm.ports {
-		if p != nil {
-			newPorts[i] = p.fork()
-		}
-	}
-	return &Frame{
-		fm.Evaler, fm.src,
-		fm.local, fm.up, fm.defers,
-		fm.ctx, newPorts,
-		fm.traceback, fm.background,
-	}
+	newFm := *fm
+	newFm.ports = slices.Clone(fm.ports)
+	return &newFm
 }
 
 // A shorthand for forking a frame and setting the output port.

@@ -395,7 +395,7 @@ func (ev *Evaler) prepareFrame(src parse.Source, cfg EvalCfg) (*Frame, func()) {
 }
 
 func fillDefaultDummyPorts(ports []*Port) []*Port {
-	growPorts(&ports, 3)
+	growAccess(&ports, 2)
 	if ports[0] == nil {
 		ports[0] = DummyInputPort
 	}

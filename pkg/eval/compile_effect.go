@@ -66,6 +66,22 @@ func (cp *compiler) pipelineOp(n *parse.Pipeline) *pipelineOp {
 
 const pipelineChanBufferSize = 32
 
+// Keeps track of whether the File and Port parts of a port are owned by a form
+// and should be closed when the form finishes execution.
+type formOwnedPort struct {
+	File bool
+	Chan bool
+}
+
+func (fop formOwnedPort) close(p *Port) {
+	if fop.File {
+		p.File.Close()
+	}
+	if fop.Chan {
+		close(p.Chan)
+	}
+}
+
 func (op *pipelineOp) exec(fm *Frame) Exception {
 	if fm.Canceled() {
 		return fm.errorp(op, ErrInterrupted)
@@ -89,10 +105,12 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 	// For each form, create a dedicated evalCtx and run asynchronously
 	for i, form := range op.forms {
 		newFm := fm.Fork()
+		var fops []formOwnedPort
 		inputIsPipe := i > 0
 		outputIsPipe := i < nforms-1
 		if inputIsPipe {
 			newFm.ports[0] = nextIn
+			growAccess(&fops, 0).File = true
 		}
 		if outputIsPipe {
 			// Each internal port pair consists of a (byte) pipe pair and a
@@ -108,16 +126,15 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 			readerGone := new(atomic.Bool)
 			newFm.ports[1] = &Port{
 				File: writer, Chan: ch,
-				closeFile: true, closeChan: true,
 				sendStop: sendStop, sendError: sendError, readerGone: readerGone}
+			*growAccess(&fops, 1) = formOwnedPort{File: true, Chan: true}
 			nextIn = &Port{
 				File: reader, Chan: ch,
-				closeFile: true, closeChan: false,
 				// Store in input port for ease of retrieval later
 				sendStop: sendStop, sendError: sendError, readerGone: readerGone}
 		}
-		f := func(form *formOp, pexc *Exception) {
-			exc := form.exec(newFm)
+		f := func(form *formOp, fops []formOwnedPort, pexc *Exception) {
+			exc := form.exec(newFm, &fops)
 			if exc != nil && !(outputIsPipe && isReaderGone(exc)) {
 				*pexc = exc
 			}
@@ -127,13 +144,15 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 				close(input.sendStop)
 				input.readerGone.Store(true)
 			}
-			newFm.Close()
+			for i, fop := range fops {
+				fop.close(newFm.ports[i])
+			}
 			wg.Done()
 		}
 		if i == nforms-1 && !op.bg {
-			f(form, &excs[i])
+			f(form, fops, &excs[i])
 		} else {
-			go f(form, &excs[i])
+			go f(form, fops, &excs[i])
 		}
 	}
 
@@ -236,13 +255,13 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 	return formBody{ordinaryCmd: ordinaryCmd{headOp, argOps, optsOp}}
 }
 
-func (op *formOp) exec(fm *Frame) (errRet Exception) {
+func (op *formOp) exec(fm *Frame, fops *[]formOwnedPort) (errRet Exception) {
 	// fm here is always a sub-frame created in compiler.pipeline, so it can
 	// be safely modified.
 
 	// Redirections.
 	for _, redirOp := range op.redirs {
-		exc := redirOp.exec(fm)
+		exc := redirOp.exec(fm, fops)
 		if exc != nil {
 			return exc
 		}
@@ -377,7 +396,7 @@ type InvalidFD struct{ FD int }
 
 func (err InvalidFD) Error() string { return fmt.Sprintf("invalid fd: %d", err.FD) }
 
-func (op *redirOp) exec(fm *Frame) Exception {
+func (op *redirOp) exec(fm *Frame, fops *[]formOwnedPort) Exception {
 	var dst int
 	if op.dstOp == nil {
 		// No explicit FD destination specified; use default destinations
@@ -398,8 +417,12 @@ func (op *redirOp) exec(fm *Frame) Exception {
 		}
 	}
 
-	growPorts(&fm.ports, dst+1)
-	fm.ports[dst].close()
+	dstPort := growAccess(&fm.ports, dst)
+	dstFop := growAccess(fops, dst)
+	if *dstPort != nil {
+		dstFop.close(*dstPort)
+		*dstFop = formOwnedPort{File: false, Chan: false}
+	}
 
 	if op.srcIsFd {
 		src, err := evalForFd(fm, op.srcOp, true, "redirection source")
@@ -409,13 +432,13 @@ func (op *redirOp) exec(fm *Frame) Exception {
 		switch {
 		case src == -1:
 			// close
-			fm.ports[dst] = &Port{
+			*dstPort = &Port{
 				// Ensure that writing to value output throws an exception
 				sendStop: closedSendStop, sendError: &ErrPortDoesNotSupportValueOutput}
 		case src >= len(fm.ports) || fm.ports[src] == nil:
 			return fm.errorp(op, InvalidFD{FD: src})
 		default:
-			fm.ports[dst] = fm.ports[src].fork()
+			*dstPort = fm.ports[src]
 		}
 		return nil
 	}
@@ -429,9 +452,10 @@ func (op *redirOp) exec(fm *Frame) Exception {
 		if err != nil {
 			return fm.errorpf(op, "failed to open file %s: %s", vals.ReprPlain(src), err)
 		}
-		fm.ports[dst] = fileRedirPort(op.mode, f, true)
+		*dstPort = fileRedirPort(op.mode, f)
+		dstFop.File = true
 	case vals.File:
-		fm.ports[dst] = fileRedirPort(op.mode, src, false)
+		*dstPort = fileRedirPort(op.mode, src)
 	default:
 		if _, isMap := src.(vals.Map); !isMap && !vals.IsFieldMap(src) {
 			return fm.errorp(op.srcOp, errs.BadValue{
@@ -463,7 +487,7 @@ func (op *redirOp) exec(fm *Frame) Exception {
 		default:
 			return fm.errorpf(op, "can only use < or > with maps")
 		}
-		fm.ports[dst] = fileRedirPort(op.mode, srcFile, false)
+		*dstPort = fileRedirPort(op.mode, srcFile)
 	}
 	return nil
 }
@@ -471,29 +495,19 @@ func (op *redirOp) exec(fm *Frame) Exception {
 // Creates a port that only have a file component, populating the
 // channel-related fields with suitable values depending on the redirection
 // mode.
-func fileRedirPort(mode parse.RedirMode, f *os.File, closeFile bool) *Port {
+func fileRedirPort(mode parse.RedirMode, f *os.File) *Port {
 	if mode == parse.Read {
 		return &Port{
-			File: f, closeFile: closeFile,
+			File: f,
 			// ClosedChan produces no values when reading.
 			Chan: ClosedChan,
 		}
 	}
 	return &Port{
-		File: f, closeFile: closeFile,
+		File: f,
 		// Throws errValueOutputIsClosed when writing.
 		Chan: nil, sendStop: closedSendStop, sendError: &ErrPortDoesNotSupportValueOutput,
 	}
-}
-
-// Makes the size of *ports at least n, adding nil's if necessary.
-func growPorts(ports *[]*Port, n int) {
-	if len(*ports) >= n {
-		return
-	}
-	oldPorts := *ports
-	*ports = make([]*Port, n)
-	copy(*ports, oldPorts)
 }
 
 func evalForFd(fm *Frame, op valuesOp, closeOK bool, what string) (int, error) {
@@ -538,3 +552,13 @@ func (op seqOp) exec(fm *Frame) Exception {
 type nopOp struct{}
 
 func (nopOp) exec(fm *Frame) Exception { return nil }
+
+// Accesses s[i], growing the slice with zero values if necessary.
+func growAccess[T any](s *[]T, i int) *T {
+	if i >= len(*s) {
+		old := *s
+		*s = make([]T, i+1)
+		copy(*s, old)
+	}
+	return &(*s)[i]
+}

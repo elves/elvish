@@ -16,10 +16,8 @@ import (
 
 // Port conveys data stream. It always consists of a byte band and a channel band.
 type Port struct {
-	File      *os.File
-	Chan      chan any
-	closeFile bool
-	closeChan bool
+	File *os.File
+	Chan chan any
 
 	// The following two fields are populated as an additional control mechanism
 	// for output ports. When no more value should be send on Chan, sendError is
@@ -44,24 +42,6 @@ var ErrPortDoesNotSupportValueOutput = errors.New("port does not support value o
 var closedSendStop = make(chan struct{})
 
 func init() { close(closedSendStop) }
-
-// Returns a copy of the Port with the Close* flags unset.
-func (p *Port) fork() *Port {
-	return &Port{p.File, p.Chan, false, false, p.sendStop, p.sendError, p.readerGone}
-}
-
-// Closes a Port.
-func (p *Port) close() {
-	if p == nil {
-		return
-	}
-	if p.closeFile {
-		p.File.Close()
-	}
-	if p.closeChan {
-		close(p.Chan)
-	}
-}
 
 var (
 	// ClosedChan is a closed channel, suitable as a placeholder input channel.
@@ -131,9 +111,10 @@ func PipePort(vCb func(<-chan any), bCb func(*os.File)) (*Port, func(), error) {
 		bCb(r)
 	}()
 
-	port := &Port{Chan: ch, closeChan: true, File: w, closeFile: true}
+	port := &Port{File: w, Chan: ch}
 	done := func() {
-		port.close()
+		w.Close()
+		close(ch)
 		wg.Wait()
 	}
 	return port, done, nil

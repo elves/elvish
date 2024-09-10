@@ -188,7 +188,6 @@ func awk(fm *eval.Frame, opts awkOpt, f eval.Callable, inputs eval.Inputs) error
 		newFm := fm.Fork()
 		// TODO: Close port 0 of newFm.
 		ex := f.Call(newFm, args, eval.NoOpts)
-		newFm.Close()
 
 		if ex != nil {
 			switch eval.Reason(ex) {
