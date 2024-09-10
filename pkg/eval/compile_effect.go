@@ -18,17 +18,17 @@ import (
 // An operation with some side effects.
 type effectOp interface{ exec(*Frame) Exception }
 
+type chunkOp struct {
+	diag.Ranging
+	pipelines []*pipelineOp
+}
+
 func (cp *compiler) chunkOp(n *parse.Chunk) *chunkOp {
 	return &chunkOp{n.Range(), cp.pipelineOps(n.Pipelines)}
 }
 
-type chunkOp struct {
-	diag.Ranging
-	subops []*pipelineOp
-}
-
 func (op *chunkOp) exec(fm *Frame) Exception {
-	for _, subop := range op.subops {
+	for _, subop := range op.pipelines {
 		exc := subop.exec(fm)
 		if exc != nil {
 			return exc
@@ -43,10 +43,11 @@ func (op *chunkOp) exec(fm *Frame) Exception {
 	return nil
 }
 
-func (cp *compiler) pipelineOp(n *parse.Pipeline) *pipelineOp {
-	formOps := cp.formOps(n.Forms)
-
-	return &pipelineOp{n.Range(), n.Background, parse.SourceText(n), formOps}
+type pipelineOp struct {
+	diag.Ranging
+	bg     bool
+	source string
+	forms  []*formOp
 }
 
 func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []*pipelineOp {
@@ -57,11 +58,10 @@ func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []*pipelineOp {
 	return ops
 }
 
-type pipelineOp struct {
-	diag.Ranging
-	bg     bool
-	source string
-	subops []*formOp
+func (cp *compiler) pipelineOp(n *parse.Pipeline) *pipelineOp {
+	formOps := cp.formOps(n.Forms)
+
+	return &pipelineOp{n.Range(), n.Background, parse.SourceText(n), formOps}
 }
 
 const pipelineChanBufferSize = 32
@@ -78,7 +78,7 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 		fm.Evaler.addNumBgJobs(1)
 	}
 
-	nforms := len(op.subops)
+	nforms := len(op.forms)
 
 	var wg sync.WaitGroup
 	wg.Add(nforms)
@@ -87,7 +87,7 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 	var nextIn *Port
 
 	// For each form, create a dedicated evalCtx and run asynchronously
-	for i, form := range op.subops {
+	for i, form := range op.forms {
 		newFm := fm.Fork()
 		inputIsPipe := i > 0
 		outputIsPipe := i < nforms-1
@@ -164,11 +164,37 @@ func isReaderGone(exc Exception) bool {
 	return ok
 }
 
+type formOp struct {
+	diag.Ranging
+	redirs []*redirOp
+	body   formBody
+}
+
+func (cp *compiler) formOps(ns []*parse.Form) []*formOp {
+	ops := make([]*formOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.formOp(n)
+	}
+	return ops
+}
+
 func (cp *compiler) formOp(n *parse.Form) *formOp {
 	redirOps := cp.redirOps(n.Redirs)
 	body := cp.formBody(n)
 
 	return &formOp{n.Range(), redirOps, body}
+}
+
+type formBody struct {
+	// Exactly one field will be populated.
+	specialOp   effectOp
+	ordinaryCmd ordinaryCmd
+}
+
+type ordinaryCmd struct {
+	headOp valuesOp
+	argOps []valuesOp
+	optsOp *mapPairsOp
 }
 
 func (cp *compiler) formBody(n *parse.Form) formBody {
@@ -210,38 +236,12 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 	return formBody{ordinaryCmd: ordinaryCmd{headOp, argOps, optsOp}}
 }
 
-func (cp *compiler) formOps(ns []*parse.Form) []*formOp {
-	ops := make([]*formOp, len(ns))
-	for i, n := range ns {
-		ops[i] = cp.formOp(n)
-	}
-	return ops
-}
-
-type formOp struct {
-	diag.Ranging
-	redirOps []*redirOp
-	body     formBody
-}
-
-type formBody struct {
-	// Exactly one field will be populated.
-	specialOp   effectOp
-	ordinaryCmd ordinaryCmd
-}
-
-type ordinaryCmd struct {
-	headOp valuesOp
-	argOps []valuesOp
-	optsOp *mapPairsOp
-}
-
 func (op *formOp) exec(fm *Frame) (errRet Exception) {
 	// fm here is always a sub-frame created in compiler.pipeline, so it can
 	// be safely modified.
 
 	// Redirections.
-	for _, redirOp := range op.redirOps {
+	for _, redirOp := range op.redirs {
 		exc := redirOp.exec(fm)
 		if exc != nil {
 			return exc
@@ -325,6 +325,23 @@ func allTrue(vs []any) bool {
 	return true
 }
 
+type redirOp struct {
+	diag.Ranging
+	dstOp   valuesOp
+	srcOp   valuesOp
+	srcIsFd bool
+	mode    parse.RedirMode
+	flag    int
+}
+
+func (cp *compiler) redirOps(ns []*parse.Redir) []*redirOp {
+	ops := make([]*redirOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.redirOp(n)
+	}
+	return ops
+}
+
 const defaultFileRedirPerm = 0644
 
 // redir compiles a Redir into a op.
@@ -341,14 +358,6 @@ func (cp *compiler) redirOp(n *parse.Redir) *redirOp {
 	return &redirOp{n.Range(), dstOp, cp.compoundOp(n.Right), n.RightIsFd, n.Mode, flag}
 }
 
-func (cp *compiler) redirOps(ns []*parse.Redir) []*redirOp {
-	ops := make([]*redirOp, len(ns))
-	for i, n := range ns {
-		ops[i] = cp.redirOp(n)
-	}
-	return ops
-}
-
 func makeFlag(m parse.RedirMode) int {
 	switch m {
 	case parse.Read:
@@ -362,15 +371,6 @@ func makeFlag(m parse.RedirMode) int {
 	default:
 		return -1
 	}
-}
-
-type redirOp struct {
-	diag.Ranging
-	dstOp   valuesOp
-	srcOp   valuesOp
-	srcIsFd bool
-	mode    parse.RedirMode
-	flag    int
 }
 
 type InvalidFD struct{ FD int }
