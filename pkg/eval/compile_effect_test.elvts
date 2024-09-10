@@ -350,6 +350,28 @@ abc
    only-values < bytes | count
 ▶ (num 0)
 
+## redirection takes precedence over pipes ##
+~> echo foo > out | slurp
+▶ ''
+~> slurp < out
+▶ "foo\n"
+
+## redirection overrides previous redirection on the same FD ##
+~> echo foo > old > new
+~> slurp < old
+▶ ''
+~> slurp < new
+▶ "foo\n"
+
+## redirections are evaluated from left to right ##
+~> echo foo 2>stderr >&2
+~> slurp < stderr
+▶ "foo\n"
+~> echo foo >&2 2>stderr
+foo
+~> slurp < stderr
+▶ ''
+
 ## writing value output to file throws an exception ##
 ~> put foo >a
 Exception: port does not support value output
