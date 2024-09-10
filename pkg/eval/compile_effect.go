@@ -18,16 +18,16 @@ import (
 // An operation with some side effects.
 type effectOp interface{ exec(*Frame) Exception }
 
-func (cp *compiler) chunkOp(n *parse.Chunk) effectOp {
-	return chunkOp{n.Range(), cp.pipelineOps(n.Pipelines)}
+func (cp *compiler) chunkOp(n *parse.Chunk) *chunkOp {
+	return &chunkOp{n.Range(), cp.pipelineOps(n.Pipelines)}
 }
 
 type chunkOp struct {
 	diag.Ranging
-	subops []effectOp
+	subops []*pipelineOp
 }
 
-func (op chunkOp) exec(fm *Frame) Exception {
+func (op *chunkOp) exec(fm *Frame) Exception {
 	for _, subop := range op.subops {
 		exc := subop.exec(fm)
 		if exc != nil {
@@ -43,14 +43,14 @@ func (op chunkOp) exec(fm *Frame) Exception {
 	return nil
 }
 
-func (cp *compiler) pipelineOp(n *parse.Pipeline) effectOp {
+func (cp *compiler) pipelineOp(n *parse.Pipeline) *pipelineOp {
 	formOps := cp.formOps(n.Forms)
 
 	return &pipelineOp{n.Range(), n.Background, parse.SourceText(n), formOps}
 }
 
-func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []effectOp {
-	ops := make([]effectOp, len(ns))
+func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []*pipelineOp {
+	ops := make([]*pipelineOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.pipelineOp(n)
 	}
@@ -61,7 +61,7 @@ type pipelineOp struct {
 	diag.Ranging
 	bg     bool
 	source string
-	subops []effectOp
+	subops []*formOp
 }
 
 const pipelineChanBufferSize = 32
@@ -87,7 +87,7 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 	var nextIn *Port
 
 	// For each form, create a dedicated evalCtx and run asynchronously
-	for i, formOp := range op.subops {
+	for i, form := range op.subops {
 		newFm := fm.Fork()
 		inputIsPipe := i > 0
 		outputIsPipe := i < nforms-1
@@ -116,8 +116,8 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 				// Store in input port for ease of retrieval later
 				sendStop: sendStop, sendError: sendError, readerGone: readerGone}
 		}
-		f := func(formOp effectOp, pexc *Exception) {
-			exc := formOp.exec(newFm)
+		f := func(form *formOp, pexc *Exception) {
+			exc := form.exec(newFm)
 			if exc != nil && !(outputIsPipe && isReaderGone(exc)) {
 				*pexc = exc
 			}
@@ -131,9 +131,9 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 			wg.Done()
 		}
 		if i == nforms-1 && !op.bg {
-			f(formOp, &excs[i])
+			f(form, &excs[i])
 		} else {
-			go f(formOp, &excs[i])
+			go f(form, &excs[i])
 		}
 	}
 
@@ -164,7 +164,7 @@ func isReaderGone(exc Exception) bool {
 	return ok
 }
 
-func (cp *compiler) formOp(n *parse.Form) effectOp {
+func (cp *compiler) formOp(n *parse.Form) *formOp {
 	redirOps := cp.redirOps(n.Redirs)
 	body := cp.formBody(n)
 
@@ -210,8 +210,8 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 	return formBody{ordinaryCmd: ordinaryCmd{headOp, argOps, optsOp}}
 }
 
-func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
-	ops := make([]effectOp, len(ns))
+func (cp *compiler) formOps(ns []*parse.Form) []*formOp {
+	ops := make([]*formOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.formOp(n)
 	}
@@ -220,14 +220,13 @@ func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
 
 type formOp struct {
 	diag.Ranging
-	redirOps []effectOp
+	redirOps []*redirOp
 	body     formBody
 }
 
 type formBody struct {
 	// Exactly one field will be populated.
 	specialOp   effectOp
-	assignOp    effectOp
 	ordinaryCmd ordinaryCmd
 }
 
@@ -251,9 +250,6 @@ func (op *formOp) exec(fm *Frame) (errRet Exception) {
 
 	if op.body.specialOp != nil {
 		return op.body.specialOp.exec(fm)
-	}
-	if op.body.assignOp != nil {
-		return op.body.assignOp.exec(fm)
 	}
 
 	// Ordinary command: evaluate head, arguments and options.
@@ -332,7 +328,7 @@ func allTrue(vs []any) bool {
 const defaultFileRedirPerm = 0644
 
 // redir compiles a Redir into a op.
-func (cp *compiler) redirOp(n *parse.Redir) effectOp {
+func (cp *compiler) redirOp(n *parse.Redir) *redirOp {
 	var dstOp valuesOp
 	if n.Left != nil {
 		dstOp = cp.compoundOp(n.Left)
@@ -345,8 +341,8 @@ func (cp *compiler) redirOp(n *parse.Redir) effectOp {
 	return &redirOp{n.Range(), dstOp, cp.compoundOp(n.Right), n.RightIsFd, n.Mode, flag}
 }
 
-func (cp *compiler) redirOps(ns []*parse.Redir) []effectOp {
-	ops := make([]effectOp, len(ns))
+func (cp *compiler) redirOps(ns []*parse.Redir) []*redirOp {
+	ops := make([]*redirOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.redirOp(n)
 	}
