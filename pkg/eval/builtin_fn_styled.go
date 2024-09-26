@@ -14,9 +14,10 @@ var errStyledSegmentArgType = errors.New("argument to styled-segment must be a s
 
 func init() {
 	addBuiltinFns(map[string]any{
-		"styled-segment":   styledSegment,
-		"styled":           styled,
-		"render-styledown": styledown.Render,
+		"styled-segment":     styledSegment,
+		"styled":             styled,
+		"render-styledown":   styledown.Render,
+		"derender-styledown": derenderStyledown,
 	})
 }
 
@@ -93,4 +94,12 @@ func styled(fm *Frame, input any, stylings ...any) (ui.Text, error) {
 	}
 
 	return text, nil
+}
+
+type derenderStyledownOpts struct{ StyleDefs string }
+
+func (*derenderStyledownOpts) SetDefaultOptions() {}
+
+func derenderStyledown(opts derenderStyledownOpts, t ui.Text) (string, error) {
+	return styledown.Derender(t, opts.StyleDefs)
 }

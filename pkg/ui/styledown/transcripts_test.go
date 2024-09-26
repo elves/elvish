@@ -11,5 +11,7 @@ import (
 var transcripts embed.FS
 
 func TestTranscripts(t *testing.T) {
+	// Both Render and Derender are available as Elvish builtins, so no
+	// additional setup is needed.
 	evaltest.TestTranscriptsInFS(t, transcripts)
 }

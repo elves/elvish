@@ -11,15 +11,15 @@
 //
 // represents two lines:
 //
-//  1. "foo" in bold plus "bar" in reverse video
+//  1. "foo" in bold, followed immediately by "bar" in reverse video
 //  2. "lorem" in underline
 //
-// The following style characters are built-in:
+// Note the following:
 //
-//   - space for no style
-//   - * for bold
-//   - _ for underline
-//   - # for reverse video
+//   - Style characters like "*" are defined in [BuiltinStyleChars].
+//   - A trailing newline after the last line is assumed.
+//
+// Both aspects can be altered by the configuration stanza (see below).
 //
 // This package can be used as a Go library or via Elvish's render-styledown
 // command (https://elv.sh/ref/builtin.html#render-styledown).
@@ -37,9 +37,11 @@
 //
 // # Configuration stanza
 //
-// An optional configuration stanza can follow the text and style lines (the
-// content stanza), separated by a single newline. It can define additional
-// style characters like this:
+// The alternating text and style lines constitute the "content stanza". It can
+// be followed by an optional configuration stanza, separated by a single
+// newline.
+//
+// The configuration stanza can define additional style characters like this:
 //
 //	foobar
 //	rrrGGG
@@ -58,11 +60,25 @@
 //
 // # Rationale
 //
-// Styledown is suitable for authoring a large chunk of styled text when the
-// exact width and alignment of text need to be preserved.
+// Styledown is suitable for authoring large chunks of styled text. Its main
+// advantage is that it preserves the alignment of text. Compare the following
+// Styledown code:
 //
-// For example, it can be used to manually create and edit terminal mockups. In
-// future it will be used in Elvish's tests for its terminal UI.
+//	foo:    100
+//	###
+//	foobar: 200
+//	###___
+//
+// With the following hypothetical HTML-like format:
+//
+//	<i>foo</i>:    100
+//	<i>foo</i><u>bar</u>: 200
+//
+// The Styledown example makes it clear that "100" and "200" are aligned. This
+// property makes Styledown particularly suited for terminal mockups.
+//
+// Styldown is also used in Elvish's tests that need to represent styled text in
+// a visual pure-text format.
 package styledown
 
 import (
@@ -84,8 +100,7 @@ func Render(s string) (ui.Text, error) {
 	contentLines := i
 	if i < len(lines) {
 		if lines[i] != "" {
-			return nil, fmt.Errorf(
-				"line %d: content and configuration stanzas must be separated by a newline", 1+i)
+			return nil, fmt.Errorf("line %d: text line must be matched by a style line", i+1)
 		}
 		i++
 	}
@@ -103,6 +118,9 @@ func Render(s string) (ui.Text, error) {
 		for len(text) > 0 {
 			r := text[0]
 			w := wcwidth.OfRune(r)
+			if w == 0 {
+				return nil, fmt.Errorf("line %d: zero-width character is not allowed", i+1)
+			}
 			if !same(style[:w]) {
 				return nil, fmt.Errorf(
 					"line %d: inconsistent style %q for multi-width character %q",
@@ -128,14 +146,18 @@ type options struct {
 	noEOL bool
 }
 
+// BuiltinStyleChars defines the styling characters that are recognized by
+// default.
+var BuiltinStyleChars = map[rune]ui.Styling{
+	' ': ui.Reset,
+	'*': ui.Bold,
+	'_': ui.Underlined,
+	'#': ui.Inverse,
+}
+
 func parseConfig(lines []string, firstLineNo int) (options, map[rune]ui.Styling, error) {
 	var opts options
-	stylesheet := map[rune]ui.Styling{
-		' ': ui.Reset,
-		'*': ui.Bold,
-		'_': ui.Underlined,
-		'#': ui.Inverse,
-	}
+	stylesheet := map[rune]ui.Styling{}
 	for i, line := range lines {
 		if line == "" {
 			continue
@@ -145,32 +167,129 @@ func parseConfig(lines []string, firstLineNo int) (options, map[rune]ui.Styling,
 			continue
 		}
 		// Parse a style character definition.
-		fields := strings.Fields(line)
-		if len(fields) < 2 {
-			return options{}, nil, fmt.Errorf(
-				"line %d: invalid configuration line", i+firstLineNo)
+		r, styling, err := parseStyleCharDef(line)
+		if err != nil {
+			return options{}, nil, fmt.Errorf("line %d: %w", i+firstLineNo, err)
 		}
-
-		r, _ := utf8.DecodeRuneInString(fields[0])
-		if string(r) != fields[0] {
+		if _, defined := stylesheet[r]; defined {
 			return options{}, nil, fmt.Errorf(
-				"line %d: style character %q not a single character", i+firstLineNo, fields[0])
-		}
-		if wcwidth.OfRune(r) != 1 {
-			return options{}, nil, fmt.Errorf(
-				"line %d: style character %q not single-width", i+firstLineNo, fields[0])
-		}
-
-		stylingString := strings.Join(fields[1:], " ")
-		styling := ui.ParseStyling(stylingString)
-		if styling == nil {
-			return options{}, nil, fmt.Errorf(
-				"line %d: invalid styling string %q", i+firstLineNo, stylingString)
+				"line %d: duplicate style definition for %q", i+firstLineNo, r)
 		}
 		stylesheet[r] = styling
 	}
+	for r, st := range BuiltinStyleChars {
+		if _, defined := stylesheet[r]; !defined {
+			stylesheet[r] = st
+		}
+	}
 	return opts, stylesheet, nil
 }
+
+func parseStyleCharDef(line string) (rune, ui.Styling, error) {
+	fields := strings.Fields(line)
+	if len(fields) < 2 {
+		return 0, nil, fmt.Errorf("invalid configuration line")
+	}
+
+	r, _ := utf8.DecodeRuneInString(fields[0])
+	if string(r) != fields[0] {
+		return 0, nil, fmt.Errorf("style character %q not a single character", fields[0])
+	}
+	if wcwidth.OfRune(r) != 1 {
+		return 0, nil, fmt.Errorf("style character %q not single-width", fields[0])
+	}
+
+	stylingString := strings.Join(fields[1:], " ")
+	styling := ui.ParseStyling(stylingString)
+	if styling == nil {
+		return 0, nil, fmt.Errorf("invalid styling string %q", stylingString)
+	}
+	return r, styling, nil
+}
+
+// Derender converts a Text to Styledown markup.
+//
+// The styleDefs string is used to supply style characters in addition to
+// [BuiltinStyleChars]; it uses the same syntax as configuration lines in
+// Styledown. Only those that are actually used will appear in the markup's
+// configuration stanza, sorted by first use.
+//
+// This function returns an error if any of the following is true:
+//
+//   - styleDefs is invalid
+//   - styleDefs contains two characters for the same style
+//   - t contains segments with a style not covered by the map merged from
+//     [BuiltinStyleChars] and styleDefs
+func Derender(t ui.Text, styleDefs string) (string, error) {
+	// Reverse map from Style to run.
+	charForStyle := map[ui.Style]rune{}
+	// Stores original style char definition lines. Also used later to track
+	// whether a char definition has been written, by setting written values to
+	// "".
+	charDef := map[rune]string{}
+	for i, line := range strings.Split(styleDefs, "\n") {
+		if line == "" {
+			continue
+		}
+		r, styling, err := parseStyleCharDef(line)
+		if err != nil {
+			return "", fmt.Errorf("styleDefs line %d: %w", i+1, err)
+		}
+		style := style(styling)
+		if r2, ok := charForStyle[style]; ok {
+			return "", fmt.Errorf("styleDefs line %d: %q defines the same style as %q", i+1, r, r2)
+		}
+		if _, defined := charDef[r]; defined {
+			return "", fmt.Errorf("styleDefs line %d: %q is already defined", i+1, r)
+		}
+		charForStyle[style] = r
+		charDef[r] = line
+	}
+	// Add builtin styles. We do this after parsing the supplied definitions
+	// because they may override builtin styles, and we only want to add builtin
+	// styles that were not overridden.
+	for r, styling := range BuiltinStyleChars {
+		if _, defined := charDef[r]; !defined {
+			charForStyle[style(styling)] = r
+		}
+	}
+
+	lines := t.SplitByRune('\n')
+
+	var configStanza strings.Builder
+	if len(lines) > 0 && len(lines[len(lines)-1]) == 0 {
+		// We have a trailing newline. Chop off the last element.
+		lines = lines[:len(lines)-1]
+	} else {
+		configStanza.WriteString("no-eol\n")
+	}
+
+	var sb strings.Builder
+	for i, line := range lines {
+		var contentLine, styleLine strings.Builder
+		for _, seg := range line {
+			if r, ok := charForStyle[seg.Style]; ok {
+				contentLine.WriteString(seg.Text)
+				styleLine.WriteString(strings.Repeat(string(r), wcwidth.Of(seg.Text)))
+				if charDef[r] != "" {
+					configStanza.WriteString(charDef[r] + "\n")
+					charDef[r] = ""
+				}
+			} else {
+				return "", fmt.Errorf("line %d: style for segment %q has no char defined", i+1, seg.Text)
+			}
+		}
+		sb.WriteString(contentLine.String() + "\n")
+		sb.WriteString(styleLine.String() + "\n")
+	}
+
+	if configStanza.Len() > 0 {
+		sb.WriteString("\n" + configStanza.String())
+	}
+	return sb.String(), nil
+}
+
+func style(s ui.Styling) ui.Style { return ui.ApplyStyling(ui.Style{}, s) }
 
 func same[T comparable](s []T) bool {
 	for i := 0; i+1 < len(s); i++ {
