@@ -57,7 +57,7 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []ui.Tex
 	}
 
 	var text ui.Text
-	regions := getRegionsInner(tree.Root)
+	regions := getRegions(tree.Root)
 	regions = append(regions, errorRegions...)
 	regions = fixRegions(regions)
 	lastEnd := 0

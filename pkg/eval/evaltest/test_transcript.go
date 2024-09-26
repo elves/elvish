@@ -407,3 +407,11 @@ func stripSGR(bs []byte) []byte      { return sgrPattern.ReplaceAllLiteral(bs, n
 func stripSGRString(s string) string { return sgrPattern.ReplaceAllLiteralString(s, "") }
 
 func normalizeLineEnding(bs []byte) []byte { return bytes.ReplaceAll(bs, []byte("\r\n"), []byte("\n")) }
+
+// GoFnInGlobal returns a setup function that puts a Go function in the global
+// namespace of the Evaler.
+func GoFnInGlobal(name string, impl any) func(*eval.Evaler) {
+	return func(ev *eval.Evaler) {
+		ev.ExtendBuiltin(eval.BuildNs().AddGoFn(name, impl))
+	}
+}

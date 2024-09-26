@@ -23,6 +23,8 @@ var styles = ui.RuneStylesheet{
 	'v':  ui.FgGreen,
 }
 
+var Args = tt.Args
+
 func TestHighlighter_HighlightRegions(t *testing.T) {
 	// Force commands to be delivered synchronously.
 	testutil.Set(t, &maxBlockForLate, testutil.Scaled(100*time.Millisecond))

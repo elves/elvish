@@ -62,12 +62,6 @@ const (
 )
 
 func getRegions(n parse.Node) []region {
-	regions := getRegionsInner(n)
-	regions = fixRegions(regions)
-	return regions
-}
-
-func getRegionsInner(n parse.Node) []region {
 	var regions []region
 	emitRegions(n, func(n parse.Node, kind regionKind, typ string) {
 		regions = append(regions, region{n.Range().From, n.Range().To, kind, typ})
