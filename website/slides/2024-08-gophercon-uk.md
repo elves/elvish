@@ -6,6 +6,10 @@ Qi Xiao (xiaq)
 
 2024-08-15 @ GopherCon UK
 
+<!-- Content of this talk is based on 2024-08-rc-implementation.md. The scope of
+these two talks are the same; in fact, the RC talk was an RC-exclusive preview
+of this GopherCon UK talk. -->
+
 ***
 
 # Agenda

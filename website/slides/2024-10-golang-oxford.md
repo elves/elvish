@@ -1,13 +1,14 @@
-# How to test your programming language by inventing a DSL and a VS Code plugin
+# Implementing and testing a shell and programming language in Go
 
 Qi Xiao (xiaq)
 
-2024-09-18 @ London Gophers
+2024-10-02 @ Golang Oxford
 
-<!-- Content of this talk is based on 2024-08-gophercon-uk.md, but this talk
-focuses on testing, so the implementation section is removed. The testing
-section is lightly revised, and the intro and conclusion sections more heavily
-so. -->
+<!-- This talk is similar in scope to 2024-08-gophercon-uk.md, but using the
+revised content from 2024-09-london-gophers.md as the starting point,
+re-integrating and revising parts of the implementation section. Notably, the
+parsing and compilation parts are dropped entirely, and we only focus on the
+shell-specific and Go-specific areas. -->
 
 ***
 
@@ -15,9 +16,9 @@ so. -->
 
 -   About myself
 
--   About the programming language we're testing
+-   The programming language and shell this talk is about
 
-    -   Elvish - a programming language, but also a modern shell
+    -   Elvish <https://elv.sh>
 
 -   Like bash / zsh / ..., but more modern
 
@@ -77,6 +78,176 @@ so. -->
     ```elvish
     set edit:prompt = { print (whoami)@(tilde-abbr $pwd)'$ ' }
     ```
+
+***
+
+# Implementing the Elvish interpreter
+
+***
+
+# Parsing and "compiling"
+
+-   Source code
+
+    ```elvish
+    echo $pid | wc
+    ```
+
+<div class="two-columns">
+<div class="column">
+
+-   Syntax tree:
+
+    ![AST](./2024-08-rc-implementation/syntax-tree.svg)
+
+    <!--
+    digraph AST {
+        node [shape = rectangle];
+        edge [arrowhead = none];
+        "Form echo" [label = "Form"];
+        "Form wc" [label = "Form"];
+        "Expr echo" [label = "Expr\nType=Bareword\nValue=\"echo\""];
+        "Expr $pid" [label = "Expr\nType=Variable\nValue=\"pid\""];
+        "Expr wc" [label = "Expr\nType=Bareword\nValue=\"wc\""];
+
+        "Pipeline" -> "Form echo" [label = "Form"];
+        "Form echo" -> "Expr echo" [label = "Head"];
+        "Form echo" -> "Expr $pid" [label = "Arg"];
+        "Pipeline" -> "Form wc" [label = "Form"];
+        "Form wc" -> "Expr wc" [label = "Head"];
+    }
+    -->
+
+</div>
+<div class="column">
+
+-   Op tree:
+
+    ![Op tree](./2024-08-rc-implementation/op-tree.svg)
+
+    <!--
+    digraph optree {
+        node [shape = rectangle];
+        edge [arrowhead = none];
+        "Pipeline" [label = "pipelineOp"];
+        "Form echo" [label = "formOp"];
+        "Form wc" [label = "formOp"];
+        "Expr echo" [label = <<b>variableOp</b><br/>Scope=<b>Builtin</b><br/>Name=<b>"echo~"</b>>];
+        "Expr $pid" [label = <variableOp<br/>Scope=<b>Builtin</b><br/>Name="pid">];
+        "Expr wc" [label = <<b>literalOp</b><br/>Value=<b>ExternalCmd{"wc"}</b>>];
+
+        "Pipeline" -> "Form echo" [label = "Form"];
+        "Form echo" -> "Expr echo" [label = "Head"];
+        "Form echo" -> "Expr $pid" [label = "Arg"];
+        "Pipeline" -> "Form wc" [label = "Form"];
+        "Form wc" -> "Expr wc" [label = "Head"];
+    }
+    -->
+
+</div>
+</div>
+
+***
+
+# Execution
+
+-   The `exec` method is where the real action happens
+
+    ```go
+    type pipelineOp struct { formOps []formOp }
+    func (op *pipelineOp) exec() { /* ... */ }
+
+    type formOp struct { /* ... */ }
+    func (op *formOp) exec() { /* ... */ }
+    ```
+
+-   ```elvish
+    echo $pid | wc
+    ```
+
+    How do we connect the output of `echo` to the input of `wc`?
+
+-   You exist in the context of all in which you live
+
+    ```go
+    type Context struct {
+        stdinFile *os.File; stdinChan <-chan any
+        stdoutFile *os.File; stdoutChan chan<- any
+    }
+
+    func (op *pipelineOp) exec(*Context) { /* ... */ }
+    func (op *formOp) exec(*Context) { /* ... */ }
+    ```
+
+***
+
+# Executing a pipeline
+
+```go
+type pipelineOp struct { forms []formOp }
+
+func (op *pipelineOp) exec(ctx *Context) {
+    form1, form2 := forms[0], forms[1] // Assume 2 forms
+    r, w, _ := os.Pipe()               // Byte pipeline
+    ch := make(chan any, 1024)         // Channel pipeline
+    ctx1 := ctx.cloneWithStdout(w, ch) // Context for form 1
+    ctx2 := ctx.cloneWithStdin(r, ch)  // Context for form 2
+    var wg sync.WaitGroup              // Now execute them in parallel!
+    wg.Add(2)
+    go func() { form1.exec(ctx1); wg.Done() }()
+    go func() { form2.exec(ctx2); wg.Done() }()
+    wg.Wait()
+}
+```
+
+-   [Real code](https://github.com/elves/elvish/blob/d8e2284e61665cb540fd30536c3007c4ee8ea48a/pkg/eval/compile_effect.go#L69)
+
+***
+
+# Go is great for writing a shell
+
+-   Pipeline semantics
+
+    -   Text pipelines: [`os.Pipe`](https://pkg.go.dev/os#Pipe)
+
+    -   Value pipelines: channels
+
+    -   Concurrent execution: Goroutines and
+        [`sync.WaitGroup`](https://pkg.go.dev/sync)
+
+-   Running external commands:
+    [`os.StartProcess`](https://pkg.go.dev/os#StartProcess)
+
+***
+
+# Go is great for writing an interpreted language
+
+-   Rich standard library
+
+    -   Big numbers ([`big.Int`](https://pkg.go.dev/math/big#Int) and
+        [`big.Rat`](https://pkg.go.dev/math/big#Rat)):
+
+        ```elvish-transcript
+        ~> * (range 1 41) # 40!
+        ▶ (num 815915283247897734345611269596115894272000000000)
+        ~> + 1/10 2/10
+        ▶ (num 3/10)
+        ```
+
+    -   [`math`](https://pkg.go.dev/math),
+        [`strings`](https://pkg.go.dev/strings) (`str:` in Elvish),
+        [`regexp`](https://pkg.go.dev/regexp) (`re:` in Elvish):
+
+        ```elvish-transcript
+        ~> math:log10 100
+        ▶ (num 2.0)
+        ~> str:has-prefix foobar foo
+        ▶ $true
+        ~> re:match '^foo' foobar
+        ▶ $true
+        ```
+
+-   Garbage collection comes for free!
 
 ***
 
