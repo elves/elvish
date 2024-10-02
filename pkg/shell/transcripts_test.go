@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vars"
+	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/shell"
 	"src.elv.sh/pkg/testutil"
@@ -38,6 +40,11 @@ func TestTranscripts(t *testing.T) {
 		"kill-wait-in-global", addGlobal("kill-wait",
 			testutil.Scaled(10*time.Millisecond).String()),
 		"sigchld-name-in-global", addGlobal("sigchld-name", sigCHLDName),
+		"secure-run-dir-in-global", evaltest.GoFnInGlobal("secure-run-dir", shell.SecureRunDir),
+		"uid-in-global", addGlobal("uid", os.Getuid()),
+		"umask", func(t *testing.T, arg string) {
+			testutil.Umask(t, must.OK1(strconv.Atoi(arg)))
+		},
 		"in-temp-home", func(t *testing.T) { testutil.InTempHome(t) },
 	)
 }

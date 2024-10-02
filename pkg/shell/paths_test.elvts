@@ -1,0 +1,60 @@
+/////////////////////////
+# run directory on Unix #
+/////////////////////////
+
+//only-on unix
+//each:in-temp-dir
+//each:secure-run-dir-in-global
+//each:unset-env XDG_RUNTIME_DIR
+//each:unset-env TMPDIR
+
+## uses XDG_RUNTIME_DIR if it's non-empty, tmpdir otherwise ##
+//uid-in-global
+~> use os
+   os:mkdir-all &perm=0o700 tmpdir/elvish-$uid
+   set E:TMPDIR = $pwd/tmpdir
+~> eq (secure-run-dir) $E:TMPDIR/elvish-$uid
+▶ $true
+~> set E:XDG_RUNTIME_DIR = ''
+   eq (secure-run-dir) $E:TMPDIR/elvish-$uid
+▶ $true
+~> set E:XDG_RUNTIME_DIR = $pwd/xdg_runtime_dir
+   os:mkdir-all &perm=0o700 xdg_runtime_dir/elvish
+   eq (secure-run-dir) $E:XDG_RUNTIME_DIR/elvish
+▶ $true
+
+// Tests below all use XDG_RUNTIME_DIR for simplicity.
+
+## creates run directory if it doesn't exist yet ##
+~> use os
+   set E:XDG_RUNTIME_DIR = $pwd/xdg_runtime_dir
+   os:mkdir &perm=0o700 xdg_runtime_dir
+~> eq (secure-run-dir) $E:XDG_RUNTIME_DIR/elvish
+▶ $true
+~> put (os:stat (secure-run-dir))[type]
+▶ dir
+
+## errors if run directory exists but has wrong permission ##
+//umask 0
+~> use os
+   os:mkdir-all &perm=0o777 xdg_runtime_dir/elvish
+   set E:XDG_RUNTIME_DIR = $pwd/xdg_runtime_dir
+~> use re
+   try { secure-run-dir } catch e {
+     re:match 'existing run directory .* is not secure' (to-string $e[reason])
+   }
+▶ $true
+
+## errors if unable to create run directory ##
+~> use os
+   os:mkdir-all &perm=0o000 xdg_runtime_dir
+   set E:XDG_RUNTIME_DIR = $pwd/xdg_runtime_dir
+~> use re
+   try { secure-run-dir } catch e {
+     re:match 'create new run directory: ' (to-string $e[reason])
+   }
+▶ $true
+
+// TODO: Test the remaining error conditions in secureRunDir. I'm not aware of a
+// way to make a real OS trigger those conditions, so testing them probably
+// requires faking os.MkdirAll.
