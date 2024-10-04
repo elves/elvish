@@ -46,6 +46,11 @@ func TestTranscripts(t *testing.T) {
 			testutil.Umask(t, must.OK1(strconv.Atoi(arg)))
 		},
 		"in-temp-home", func(t *testing.T) { testutil.InTempHome(t) },
+		"skip-if-root", func(t *testing.T) {
+			if os.Getuid() == 0 {
+				t.SkipNow()
+			}
+		},
 	)
 }
 

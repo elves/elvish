@@ -46,6 +46,10 @@
 ▶ $true
 
 ## errors if unable to create run directory ##
+// We rely on the permission bits of the parent directory to prevent creation of
+// the run direction, but this doesn't work for root (who ignores the permission
+// bits entirely).
+//skip-if-root
 ~> use os
    os:mkdir-all &perm=0o000 xdg_runtime_dir
    set E:XDG_RUNTIME_DIR = $pwd/xdg_runtime_dir
