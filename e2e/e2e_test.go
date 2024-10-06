@@ -15,7 +15,9 @@ import (
 var transcripts embed.FS
 
 const buildScript = `
-go build (if (not-eq $E:GOCOVERDIR '') { put -cover }) -o $workdir/elvish src.elv.sh/cmd/elvish
+# Using "-o $workdir/" instead of "-o $workdir/elvish" gets us the correct file
+# extension on Windows
+go build (if (not-eq $E:GOCOVERDIR '') { put -cover }) -o $workdir/ src.elv.sh/cmd/elvish
 `
 
 func TestTranscripts(t *testing.T) {
