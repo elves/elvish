@@ -25,10 +25,18 @@ test:
 # Generate a basic test coverage report, and open it in the browser. The report
 # is an approximation of https://app.codecov.io/gh/elves/elvish/.
 cover:
-	go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
-	./tools/prune-cover.sh .codecov.yml cover
-	go tool cover -html=cover
-	go tool cover -func=cover | tail -1 | awk '{ print "Overall coverage:", $$NF }'
+	mkdir -p _cover/unit _cover/e2e
+	# Generate coverage from unit tests. We could generate text profiles
+	# directly with -coverprofile, but there's no support for merging multiple
+	# text profiles. So we generate binary profiles instead.
+	go test -coverpkg=./pkg/... ./pkg/... -test.gocoverdir $$PWD/_cover/unit
+	# Generate coverage from E2E tests, using -count to skip the cache.
+	env GOCOVERDIR=$$PWD/_cover/e2e go test -count 1 ./e2e
+	# Merge and convert binary profiles to a single text profile.
+	go tool covdata textfmt -i _cover/unit,_cover/e2e -o _cover/merged.txt
+	./tools/prune-cover.sh .codecov.yml < _cover/merged.txt > _cover/pruned.txt
+	go tool cover -html _cover/pruned.txt
+	go tool cover -func _cover/pruned.txt | tail -1 | awk '{ print "Overall coverage:", $$NF }'
 
 # All the checks except check-gen.sh, which is not always convenient to run as
 # it requires a clean working tree.
