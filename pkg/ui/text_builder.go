@@ -2,8 +2,8 @@ package ui
 
 import "strings"
 
-// Methods of [TextBuilder] are fully exercised by other functions Concat, so
-// there are no dedicated tests for it.
+// Methods of [TextBuilder] are fully exercised by other functions like Concat,
+// so there are no dedicated tests for it.
 
 // TextBuilder can be used to efficiently build a [Text]. The zero value is
 // ready to use. Do not copy a non-zero TextBuilder.

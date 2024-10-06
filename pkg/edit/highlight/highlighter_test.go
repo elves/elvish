@@ -13,7 +13,7 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-var any = anyMatcher{}
+var anything = anyMatcher{}
 var noTips []ui.Text
 
 var styles = ui.RuneStylesheet{
@@ -26,8 +26,6 @@ var styles = ui.RuneStylesheet{
 var Args = tt.Args
 
 func TestHighlighter_HighlightRegions(t *testing.T) {
-	// Force commands to be delivered synchronously.
-	testutil.Set(t, &maxBlockForLate, testutil.Scaled(100*time.Millisecond))
 	hl := NewHighlighter(Config{
 		HasCommand: func(name string) bool { return name == "ls" },
 	})
@@ -76,8 +74,8 @@ func TestHighlighter_ParseErrors(t *testing.T) {
 				"vv $? ?"),
 			matchTexts("1:5", "1:7")),
 		// Errors at the end are ignored
-		Args("ls $").Rets(any, noTips),
-		Args("ls [").Rets(any, noTips),
+		Args("ls $").Rets(anything, noTips),
+		Args("ls [").Rets(anything, noTips),
 	)
 }
 
@@ -106,7 +104,7 @@ func TestHighlighter_AutofixesAndCheckErrors(t *testing.T) {
 				"vv ?? ?? "),
 			matchTexts("1:4", "1:7")),
 		// Check errors at the end are ignored
-		Args("set _").Rets(any, noTips),
+		Args("set _").Rets(anything, noTips),
 
 		// Autofix
 		Args("nop $mod1:").Rets(
@@ -149,15 +147,16 @@ func testThat(t *testing.T, hl *Highlighter, c c) {
 }
 
 func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
-	// When the HasCommand callback takes longer than maxBlockForLate, late
+	// When the HasCommand callback takes longer than HasCommandMaxBlock, late
 	// results are delivered asynchronously.
-	testutil.Set(t, &maxBlockForLate, testutil.Scaled(time.Millisecond))
 	hl := NewHighlighter(Config{
 		// HasCommand is slow and only recognizes "ls".
 		HasCommand: func(cmd string) bool {
 			time.Sleep(testutil.Scaled(10 * time.Millisecond))
 			return cmd == "ls"
-		}})
+		},
+		HasCommandMaxBlock: constantly(time.Duration(0)),
+	})
 
 	testThat(t, hl, c{
 		given:       "ls",
@@ -172,16 +171,26 @@ func TestHighlighter_HasCommand_LateResult_Async(t *testing.T) {
 }
 
 func TestHighlighter_HasCommand_LateResult_Sync(t *testing.T) {
-	// When the HasCommand callback takes shorter than maxBlockForLate, late
-	// results are delivered asynchronously.
-	testutil.Set(t, &maxBlockForLate, testutil.Scaled(100*time.Millisecond))
+	// When the HasCommand callback takes shorter than HasCommandMaxBlock, late
+	// results are delivered synchronously.
 	hl := NewHighlighter(Config{
-		// HasCommand is fast and only recognizes "ls".
-		HasCommand: func(cmd string) bool {
-			time.Sleep(testutil.Scaled(time.Millisecond))
-			return cmd == "ls"
-		}})
+		HasCommand:         func(cmd string) bool { return cmd == "ls" },
+		HasCommandMaxBlock: constantly(testutil.Scaled(100 * time.Millisecond)),
+	})
 
+	testThat(t, hl, c{
+		given:       "ls",
+		wantInitial: ui.T("ls", ui.FgGreen),
+	})
+	testThat(t, hl, c{
+		given:       "echo",
+		wantInitial: ui.T("echo", ui.FgRed),
+	})
+
+	// Missing HasCommandMaxBlock means block definitely.
+	hl = NewHighlighter(Config{
+		HasCommand: func(cmd string) bool { return cmd == "ls" },
+	})
 	testThat(t, hl, c{
 		given:       "ls",
 		wantInitial: ui.T("ls", ui.FgGreen),
@@ -198,9 +207,6 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	// first and then "ls". The late result for "l" is delivered after that of
 	// "ls" and is dropped.
 
-	// Make sure that the HasCommand callback takes longer than maxBlockForLate.
-	testutil.Set(t, &maxBlockForLate, testutil.Scaled(time.Millisecond))
-
 	hlSecond := make(chan struct{})
 	hl := NewHighlighter(Config{
 		HasCommand: func(cmd string) bool {
@@ -214,7 +220,9 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 			time.Sleep(testutil.Scaled(10 * time.Millisecond))
 			close(hlSecond)
 			return cmd == "ls"
-		}})
+		},
+		HasCommandMaxBlock: constantly(time.Duration(0)),
+	})
 
 	hl.Get("l")
 
@@ -256,3 +264,5 @@ func (m textsMatcher) Match(v tt.RetValue) bool {
 	}
 	return true
 }
+
+func constantly[T any](v T) func() T { return func() T { return v } }

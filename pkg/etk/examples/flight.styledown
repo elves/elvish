@@ -1,0 +1,88 @@
+1. Type: one-way
+                
+
+
+> type:     one-way return
+G ****      #######       
+  outbound: 
+            
+  inbound:
+  --------
+  [ Book ]
+  --------
+
+
+1. Type: return
+               
+
+
+> type:     one-way return
+G ****              ######
+  outbound: 
+            
+  inbound:
+          
+  [ Book ]
+  --------
+
+
+2. Outbound
+           
+
+
+  type:     one-way return
+            #######       
+> outbound: 2024-01-01 
+G ********            #
+  inbound:
+          
+  [ Book ]
+  --------
+
+
+3. Inbound
+          
+
+
+  type:     one-way return
+            #######       
+  outbound: 2024-01-01
+                      
+> inbound:  2024-01-30 
+G *******             #
+  [ Book ]
+          
+
+
+3. Inbound invalid
+                  
+
+
+  type:     one-way return
+            #######       
+  outbound: 2024-01-01
+                      
+> inbound:  2023-01-30 
+G *******   rrrrrrrrrr#
+  [ Book ]
+  --------
+
+
+4. Book
+       
+
+
+  type:     one-way return
+            #######       
+  outbound: 2024-01-01
+                      
+  inbound:  2024-01-30
+                      
+> [ Book ]
+G ********
+
+
+
+G bold fg-green
+r fg-red
+- dim

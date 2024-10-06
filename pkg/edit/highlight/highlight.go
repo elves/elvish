@@ -12,9 +12,10 @@ import (
 
 // Config keeps configuration for highlighting code.
 type Config struct {
-	Check      func(n parse.Tree) (string, []*eval.CompilationError)
-	HasCommand func(name string) bool
-	AutofixTip func(autofix string) ui.Text
+	Check              func(n parse.Tree) (string, []*eval.CompilationError)
+	HasCommand         func(name string) bool
+	HasCommandMaxBlock func() time.Duration
+	AutofixTip         func(autofix string) ui.Text
 }
 
 // Information collected about a command region, used for asynchronous
@@ -23,9 +24,6 @@ type cmdRegion struct {
 	seg int
 	cmd string
 }
-
-// Maximum wait time to block for late results. Can be changed for test cases.
-var maxBlockForLate = 10 * time.Millisecond
 
 // Highlights a piece of Elvish code.
 func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []ui.Text) {
@@ -113,17 +111,22 @@ func highlight(code string, cfg Config, lateCb func(ui.Text)) (ui.Text, []ui.Tex
 			}
 			lateCh <- newText
 		}()
-		// Block a short while for the late text to arrive, in order to reduce
-		// flickering. Otherwise, return the text already computed, and pass the
-		// late result to lateCb in another goroutine.
-		select {
-		case late := <-lateCh:
-			return late, tips
-		case <-time.After(maxBlockForLate):
-			go func() {
-				lateCb(<-lateCh)
-			}()
-			return text, tips
+		if cfg.HasCommandMaxBlock != nil {
+			// Block a short while for the late text to arrive, in order to
+			// reduce flickering. Otherwise, return the text already computed,
+			// and pass the late result to lateCb in another goroutine.
+			select {
+			case late := <-lateCh:
+				return late, tips
+			case <-time.After(cfg.HasCommandMaxBlock()):
+				go func() {
+					lateCb(<-lateCh)
+				}()
+				return text, tips
+			}
+		} else {
+			// If cfg.HasCommandMaxBlock is not populated, block indefinitely.
+			return <-lateCh, tips
 		}
 	}
 	return text, tips

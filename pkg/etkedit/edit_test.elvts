@@ -1,0 +1,115 @@
+//each:edit-fixture
+
+///////////////////////
+# syntax highlighting #
+///////////////////////
+
+## fast artificial HasCommand (default) ##
+~> send 'echo $path'
+   render
+┌────────────────────────────────────────┐
+│etkedit> echo $path                     │
+│         GGGG MMMMM ̅̂                    │
+└────────────────────────────────────────┘
+
+## fast artificial HasCommand, command unknown ##
+~> send 'bad-cmd'
+   render
+┌────────────────────────────────────────┐
+│etkedit> bad-cmd                        │
+│         RRRRRRR ̅̂                       │
+└────────────────────────────────────────┘
+
+## slow artificial HasCommand ##
+// Emulates the case where the filesystem is too slow for HasCommand to return
+// fast enough.
+//slow-blocked-has-command
+~> send 'echo $paths'
+   render
+┌────────────────────────────────────────┐
+│etkedit> echo $paths                    │
+│              MMMMMM ̅̂                   │
+└────────────────────────────────────────┘
+~> unblock-has-command
+   wait-refresh
+   render
+┌────────────────────────────────────────┐
+│etkedit> echo $paths                    │
+│         GGGG MMMMMM ̅̂                   │
+└────────────────────────────────────────┘
+
+## real HasCommand with external command (Unix) ##
+//real-fast-has-command
+//only-on unix
+//unset-env PATH
+//in-temp-dir
+~> use os
+   set @paths = $pwd
+   echo > valid-command
+   os:chmod 0o700 valid-command
+~> send 'valid-command'
+   render
+┌────────────────────────────────────────┐
+│etkedit> valid-command                  │
+│         GGGGGGGGGGGGG ̅̂                 │
+└────────────────────────────────────────┘
+~> send x
+   render
+┌────────────────────────────────────────┐
+│etkedit> valid-commandx                 │
+│         RRRRRRRRRRRRRR ̅̂                │
+└────────────────────────────────────────┘
+
+//////////////
+# prompt API #
+//////////////
+// Breaks on Windows for some reason.
+//only-on unix
+
+~> set edit:prompt = { styled '>>> ' bold }
+   refresh
+   render
+┌────────────────────────────────────────┐
+│>>>                                     │
+│**** ̅̂                                   │
+└────────────────────────────────────────┘
+
+## outputting a string is fine ##
+~> set edit:prompt = { print '>>> ' }
+   refresh
+   render
+┌────────────────────────────────────────┐
+│>>>                                     │
+│     ̅̂                                   │
+└────────────────────────────────────────┘
+
+////////////////////
+# abbreviation API #
+////////////////////
+
+## $edit:abbr ##
+~> set edit:abbr[X] = foo
+   send 'echo X'
+   render
+┌────────────────────────────────────────┐
+│etkedit> echo foo                       │
+│         GGGG     ̅̂                      │
+└────────────────────────────────────────┘
+
+## $edit:command-abbr ##
+~> set edit:command-abbr[X] = echo
+   send 'X X'
+   render
+┌────────────────────────────────────────┐
+│etkedit> echo X                         │
+│         GGGG   ̅̂                        │
+└────────────────────────────────────────┘
+
+## $edit:small-word-abbr ##
+~> set edit:small-word-abbr[X] = echo
+   send 'echo xX X '
+   render
+┌────────────────────────────────────────┐
+│etkedit> echo xX echo                   │
+│         GGGG          ̅̂                 │
+└────────────────────────────────────────┘

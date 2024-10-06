@@ -36,7 +36,7 @@ func TestConcat(t *testing.T) {
 
 func TestTextAsElvishValue(t *testing.T) {
 	vals.TestValue(t, T("text")).
-		Kind("ui:text").
+		Kind("styled").
 		Repr("[^styled text]").
 		AllKeys("0").
 		Index("0", &Segment{Text: "text"}).

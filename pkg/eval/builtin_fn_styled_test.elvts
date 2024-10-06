@@ -80,7 +80,7 @@ Exception: styling function must return a segment; got list
 Exception: hopefully-never-exists is not a valid style transformer
   [tty]:1:1-33: styled abc hopefully-never-exists
 ~> styled []
-Exception: expected string, styled segment or styled text; got list
+Exception: wrong type for arg #0: bad value: value must be string, styled segment or styled text, but is list
   [tty]:1:1-9: styled []
 ~> styled abc []
 Exception: need string or callable; got list

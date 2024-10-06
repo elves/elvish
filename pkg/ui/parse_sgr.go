@@ -61,6 +61,8 @@ func (st *sgrTokenizer) Token() (Styling, string) {
 
 // ParseSGREscapedText parses SGR-escaped text into a Text. It also removes
 // non-SGR CSI sequences sequences in the text.
+//
+// BUG: The return value may not be normalized.
 func ParseSGREscapedText(s string) Text {
 	var text Text
 	var style Style

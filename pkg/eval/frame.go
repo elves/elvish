@@ -43,6 +43,8 @@ type Frame struct {
 	defers    *[]func(*Frame) Exception
 }
 
+func (fm *Frame) TraceBack() *StackTrace { return fm.traceback }
+
 // PrepareEval prepares a piece of code for evaluation in a copy of the current
 // Frame. If r is not nil, it is added to the traceback of the evaluation
 // context. If ns is not nil, it is used in place of the current local namespace

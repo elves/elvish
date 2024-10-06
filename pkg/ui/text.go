@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/wcwidth"
 )
@@ -14,9 +15,9 @@ import (
 // Text contains of a list of styled Segments.
 //
 // When only functions in this package are used to manipulate Text instances,
-// they will always satisfy the following properties:
+// they are said to be "normalized" and satisfy the following properties:
 //
-//   - If the Text is empty, it is nil (not a non-nil slice of size 0).
+//   - If the Text is empty, it is nil (instead of a non-nil empty slice).
 //
 //   - No [Segment] in it has an empty Text field.
 //
@@ -41,8 +42,8 @@ func Concat(texts ...Text) Text {
 	return tb.Text()
 }
 
-// Kind returns "styled-text".
-func (Text) Kind() string { return "ui:text" }
+// Kind returns "styled".
+func (Text) Kind() string { return "styled" }
 
 // Repr returns the representation of the current Text. It is just a wrapper
 // around the containing Segments.
@@ -173,7 +174,7 @@ func (t Text) SplitByRune(r rune) []Text {
 	for _, seg := range t {
 		subSegs := seg.SplitByRune(r)
 		// Paste the first segment.
-		paste.WriteText(TextFromSegment(subSegs[0]))
+		paste.WriteText(textFromSegment(subSegs[0]))
 		if len(subSegs) == 1 {
 			// Only one subsegment. Keep the paste active.
 			continue
@@ -183,10 +184,10 @@ func (t Text) SplitByRune(r rune) []Text {
 		paste.Reset()
 		// For the subsegments in the middle, just add then as is.
 		for i := 1; i < len(subSegs)-1; i++ {
-			result = append(result, TextFromSegment(subSegs[i]))
+			result = append(result, textFromSegment(subSegs[i]))
 		}
 		// The last segment becomes the new paste.
-		paste.WriteText(TextFromSegment(subSegs[len(subSegs)-1]))
+		paste.WriteText(textFromSegment(subSegs[len(subSegs)-1]))
 	}
 	result = append(result, paste.Text())
 	return result
@@ -246,11 +247,27 @@ func (t Text) VTString() string {
 	return sb.String()
 }
 
-// TextFromSegment returns a [Text] with just seg if seg.Text is non-empty.
-// Otherwise it returns nil.
-func TextFromSegment(seg *Segment) Text {
+// Returns a normalized [Text] from a [*Segment].
+func textFromSegment(seg *Segment) Text {
 	if seg.Text == "" {
 		return nil
 	}
 	return Text{seg}
+}
+
+func (pt *Text) Scan(v any, _ vals.ScanOpt) error {
+	switch v := v.(type) {
+	case string:
+		*pt = T(v)
+		return nil
+	case *Segment:
+		*pt = textFromSegment(v)
+		return nil
+	case Text:
+		*pt = v
+		return nil
+	default:
+		return errs.BadValue{What: "value",
+			Valid: "string, styled segment or styled text", Actual: vals.Kind(v)}
+	}
 }

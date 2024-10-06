@@ -8,9 +8,10 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-// With an empty highlight.Config, this highlighter does not check for
-// compilation errors or non-existent commands.
-var highlighter = highlight.NewHighlighter(highlight.Config{})
+// Assume all commands are valid.
+var highlighter = highlight.NewHighlighter(highlight.Config{
+	HasCommand: func(string) bool { return true },
+})
 
 // HighlightCodeBlock highlights a code block from Markdown. It handles thea
 // elvish and elvish-transcript languages. It also removes comment and directive

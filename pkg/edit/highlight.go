@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/edit/highlight"
@@ -21,7 +22,8 @@ func initHighlighter(appSpec *cli.AppSpec, ed *Editor, ev *eval.Evaler, nb eval.
 			ed.autofix.Store(autofix)
 			return autofix, eval.UnpackCompilationErrors(err)
 		},
-		HasCommand: func(cmd string) bool { return hasCommand(ev, cmd) },
+		HasCommand:         func(cmd string) bool { return hasCommand(ev, cmd) },
+		HasCommandMaxBlock: func() time.Duration { return 10 * time.Millisecond },
 		AutofixTip: func(autofix string) ui.Text {
 			return bindingTips(ed.ns, "insert:binding",
 				bindingTip("autofix: "+autofix, "apply-autofix"),

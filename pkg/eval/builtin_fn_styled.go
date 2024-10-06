@@ -48,20 +48,7 @@ func styledSegment(options RawOptions, input any) (*ui.Segment, error) {
 	}, nil
 }
 
-func styled(fm *Frame, input any, stylings ...any) (ui.Text, error) {
-	var text ui.Text
-
-	switch input := input.(type) {
-	case string:
-		text = ui.T(input)
-	case *ui.Segment:
-		text = ui.TextFromSegment(input)
-	case ui.Text:
-		text = input.Clone()
-	default:
-		return nil, fmt.Errorf("expected string, styled segment or styled text; got %s", vals.Kind(input))
-	}
-
+func styled(fm *Frame, text ui.Text, stylings ...any) (ui.Text, error) {
 	for _, styling := range stylings {
 		switch styling := styling.(type) {
 		case string:
