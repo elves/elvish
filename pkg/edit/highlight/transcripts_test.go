@@ -12,7 +12,6 @@ import (
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/must"
-	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/ui"
 	"src.elv.sh/pkg/ui/styledown"
 )
@@ -21,25 +20,22 @@ import (
 var transcripts embed.FS
 
 func TestTranscripts(t *testing.T) {
-	var validCommands []string
 	evaltest.TestTranscriptsInFS(t, transcripts,
-		"with-max-block-for-late", func(t *testing.T, s string) {
-			testutil.Set(t, highlight.MaxBlockForLate,
-				testutil.Scaled(must.OK1(time.ParseDuration(s))))
+		"highlight-in-global", func(ev *eval.Evaler, arg string) {
+			fields := strings.Fields(arg)
+			maxBlock, validCommands := fields[0], fields[1:]
+			evaltest.GoFnInGlobal("highlight", func(fm *eval.Frame, s string) {
+				hl := highlight.NewHighlighter(highlight.Config{
+					HasCommand:         func(name string) bool { return slices.Contains(validCommands, name) },
+					HasCommandMaxBlock: func() time.Duration { return must.OK1(time.ParseDuration(maxBlock)) },
+				})
+				text, tips := hl.Get(s)
+				fmt.Fprint(fm.ByteOutput(), toStyledown(text))
+				for i, tip := range tips {
+					fmt.Fprintf(fm.ByteOutput(), "= tip %d:\n%s", i, toStyledown(tip))
+				}
+			})(ev)
 		},
-		"with-known-commands", func(arg string) {
-			validCommands = strings.Fields(arg)
-		},
-		"highlight-in-global", evaltest.GoFnInGlobal("highlight", func(fm *eval.Frame, s string) {
-			hl := highlight.NewHighlighter(highlight.Config{
-				HasCommand: func(name string) bool { return slices.Contains(validCommands, name) },
-			})
-			text, tips := hl.Get(s)
-			fmt.Fprint(fm.ByteOutput(), toStyledown(text))
-			for i, tip := range tips {
-				fmt.Fprintf(fm.ByteOutput(), "= tip %d:\n%s", i, toStyledown(tip))
-			}
-		}),
 	)
 }
 

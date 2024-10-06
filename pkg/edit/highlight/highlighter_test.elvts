@@ -1,6 +1,4 @@
-//each:highlight-in-global
-//each:with-known-commands echo var set tmp del if for try
-//each:with-max-block-for-late 100ms
+//each:highlight-in-global 100ms echo var set tmp del if for try
 
 ///////////////////////////////
 # Simple lexical highlighting #

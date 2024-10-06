@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/wcwidth"
 )
@@ -253,4 +254,21 @@ func TextFromSegment(seg *Segment) Text {
 		return nil
 	}
 	return Text{seg}
+}
+
+func (pt *Text) Scan(v any, _ vals.ScanOpt) error {
+	switch v := v.(type) {
+	case string:
+		*pt = T(v)
+		return nil
+	case *Segment:
+		*pt = TextFromSegment(v)
+		return nil
+	case Text:
+		*pt = v
+		return nil
+	default:
+		return errs.BadValue{What: "value",
+			Valid: "string, styled segment or styled text", Actual: vals.Kind(v)}
+	}
 }

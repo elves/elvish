@@ -1,0 +1,6 @@
+# converting Elvish list to Go slice #
+//scan-string-slice-in-global
+~> scan-string-slice [foo bar]
+scanned: []string{"foo", "bar"}
+~> scan-string-slice foo
+scanned: []string{"f", "o", "o"}

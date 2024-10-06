@@ -50,6 +50,7 @@ type Program struct {
 	rc          string
 	json        *bool
 	daemonPaths *prog.DaemonPaths
+	etkedit     bool
 }
 
 func (p *Program) RegisterFlags(fs *prog.FlagSet) {
@@ -67,6 +68,7 @@ func (p *Program) RegisterFlags(fs *prog.FlagSet) {
 		"Don't read the RC file when running interactively")
 	fs.StringVar(&p.rc, "rc", "",
 		"Path to the RC file when running interactively")
+	fs.BoolVar(&p.etkedit, "etkedit", false, "use new etk-based editor")
 
 	p.json = fs.JSON()
 	if p.ActivateDaemon != nil {
@@ -105,7 +107,10 @@ func (p *Program) Run(fds [3]*os.File, args []string) error {
 
 	interact(ev, fds, &interactCfg{
 		RC:             ev.EffectiveRcPath,
-		ActivateDaemon: p.ActivateDaemon, SpawnConfig: spawnCfg})
+		ActivateDaemon: p.ActivateDaemon,
+		SpawnConfig:    spawnCfg,
+		EtkEdit:        p.etkedit,
+	})
 	return nil
 }
 

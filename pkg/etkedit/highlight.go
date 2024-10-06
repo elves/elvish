@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/edit/highlight"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/fsutil"
@@ -14,39 +13,36 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-func initHighlighter(appSpec *cli.AppSpec, ed *Editor, ev *eval.Evaler, nb eval.NsBuilder) {
-	hl := highlight.NewHighlighter(highlight.Config{
+// Declared as global variables to be swapped out in tests.
+var (
+	hasCommand         = hasCommandImpl
+	hasCommandMaxBlock = func() time.Duration { return 10 * time.Millisecond }
+)
+
+func getHighlighter(ev *eval.Evaler) *highlight.Highlighter {
+	return highlight.NewHighlighter(highlight.Config{
 		Check: func(t parse.Tree) (string, []*eval.CompilationError) {
 			autofixes, err := ev.CheckTree(t, nil)
 			autofix := strings.Join(autofixes, "; ")
-			ed.autofix.Store(autofix)
 			return autofix, eval.UnpackCompilationErrors(err)
 		},
 		HasCommand:         func(cmd string) bool { return hasCommand(ev, cmd) },
-		HasCommandMaxBlock: func() time.Duration { return 10 * time.Millisecond },
+		HasCommandMaxBlock: func() time.Duration { return hasCommandMaxBlock() },
 		AutofixTip: func(autofix string) ui.Text {
-			return bindingTips(ed.ns, "insert:binding",
-				bindingTip("autofix: "+autofix, "apply-autofix"),
-				bindingTip("autofix first", "smart-enter", "completion:smart-start"))
+			return ui.T("")
+			/*
+				return bindingTips(ed.ns, "insert:binding",
+					bindingTip("autofix: "+autofix, "apply-autofix"),
+				    bindingTip("autofix first", "smart-enter",
+				    "completion:smart-start"))
+			*/
 		},
 	})
-	appSpec.Highlighter = hl
-	ed.applyAutofix = func() {
-		code := ed.autofix.Load().(string)
-		if code == "" {
-			return
-		}
-		// TODO: Check errors.
-		//
-		// For now, the autofix snippets are simple enough that we know they'll
-		// always succeed.
-		ev.Eval(parse.Source{Name: "[autofix]", Code: code}, eval.EvalCfg{})
-		hl.InvalidateCache()
-	}
-	nb.AddGoFn("apply-autofix", ed.applyAutofix)
 }
 
-func hasCommand(ev *eval.Evaler, cmd string) bool {
+// TODO: Below is duplicate with pkg/edit/highlight.go
+
+func hasCommandImpl(ev *eval.Evaler, cmd string) bool {
 	if eval.IsBuiltinSpecial[cmd] {
 		return true
 	}

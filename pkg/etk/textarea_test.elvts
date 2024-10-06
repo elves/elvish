@@ -1,0 +1,520 @@
+//each:text-area-fixture
+
+/////////////
+# rendering #
+/////////////
+
+## prompt ##
+~> setup [&prompt=(styled '~> ' bold)]
+   render
+┌────────────────────────────────────────┐
+│~>                                      │
+│*** ̅̂                                    │
+└────────────────────────────────────────┘
+
+## rprompt ##
+~> setup [&rprompt=(styled "RP" inverse)]
+   render
+┌────────────────────────────────────────┐
+│                                      RP│
+│ ̅̂                                     ##│
+└────────────────────────────────────────┘
+
+## buffer, dot at beginning ##
+~> setup [&buffer=[&content=code &dot=0]]
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│ ̅̂                                       │
+└────────────────────────────────────────┘
+
+## buffer, dot in the middle ##
+~> setup [&buffer=[&content=code &dot=2]]
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│   ̅̂                                     │
+└────────────────────────────────────────┘
+
+## buffer, dot at the end ##
+~> setup [&buffer=[&content=code &dot=4]]
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│     ̅̂                                   │
+└────────────────────────────────────────┘
+
+## prompt, buffer and rprompt ##
+~> setup [&prompt=(styled '~> ') &rprompt=(styled 'RP')
+          &buffer=[&content=code &dot=4]]
+   render
+┌────────────────────────────────────────┐
+│~> code                               RP│
+│        ̅̂                                │
+└────────────────────────────────────────┘
+
+## rprompt hidden due to lack of space ##
+~> use str
+~> setup [&rprompt=(styled 'I am a long rprompt' inverse)]
+   render
+┌────────────────────────────────────────┐
+│                     I am a long rprompt│
+│ ̅̂                    ###################│
+└────────────────────────────────────────┘
+~> send (str:repeat x 30)
+   render
+┌────────────────────────────────────────┐
+│xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx          │
+│                               ̅̂         │
+└────────────────────────────────────────┘
+
+## code highlighting ##
+~> setup [&buffer=[&content=code &dot=4]
+          &highlighter={|code| styled $code bold; put $nil}]
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│**** ̅̂                                   │
+└────────────────────────────────────────┘
+
+## tips from highlighter ##
+~> setup [&buffer=[&content=code &dot=4]
+          &highlighter={|code| styled $code; put [(styled 'a tip' green)]}]
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│     ̅̂                                   │
+│a tip                                   │
+│GGGGG                                   │
+└────────────────────────────────────────┘
+
+## pending text at dot ##
+~> setup [&buffer=[&content=code &dot=4] &pending=[&from=4 &to=4 &content=XY]]
+   render
+┌────────────────────────────────────────┐
+│codeXY                                  │
+│    _̅̂_                                  │
+└────────────────────────────────────────┘
+
+## pending text replacing text starting from the dot ##
+~> setup [&buffer=[&content=code &dot=2] &pending=[&from=2 &to=4 &content=XY]]
+   render
+┌────────────────────────────────────────┐
+│coXY                                    │
+│  _̅̂_                                    │
+└────────────────────────────────────────┘
+
+## pending text to the left of the dot ##
+~> setup [&buffer=[&content=code &dot=4] &pending=[&from=1 &to=3 &content=XY]]
+   render
+┌────────────────────────────────────────┐
+│cXYe                                    │
+│ __  ̅̂                                   │
+└────────────────────────────────────────┘
+
+## pending text to the left of the dot ##
+~> setup [&buffer=[&content=code &dot=1] &pending=[&from=2 &to=3 &content=XY]]
+   render
+┌────────────────────────────────────────┐
+│coXYe                                   │
+│  ̅̂__                                    │
+└────────────────────────────────────────┘
+
+## ignore invalid pending text - from after to ##
+~> setup [&buffer=[&content=code &dot=4] &pending=[&from=2 &to=1 &content=XY]]
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│     ̅̂                                   │
+└────────────────────────────────────────┘
+
+## ignore invalid pending text - out of range ##
+~> setup [&buffer=[&content=code &dot=4] &pending=[&from=5 &to=6 &content=XY]]
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│     ̅̂                                   │
+└────────────────────────────────────────┘
+
+## when height is not enough, start from dot line, expand upwards and then downwards ##
+~> setup [&buffer=[&content="a\nb\nc\nd" &dot=3]]
+~> render &height=1
+┌────────────────────────────────────────┐
+│b                                       │
+│  ̅̂                                      │
+└────────────────────────────────────────┘
+~> render &height=2
+┌────────────────────────────────────────┐
+│a                                       │
+│                                        │
+│b                                       │
+│  ̅̂                                      │
+└────────────────────────────────────────┘
+~> render &height=3
+┌────────────────────────────────────────┐
+│a                                       │
+│                                        │
+│b                                       │
+│  ̅̂                                      │
+│c                                       │
+│                                        │
+└────────────────────────────────────────┘
+
+////////////////////////
+# basic event handling #
+////////////////////////
+
+## simple inserts ##
+~> send 'code'
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│     ̅̂                                   │
+└────────────────────────────────────────┘
+~> send [Backspace]
+   render
+┌────────────────────────────────────────┐
+│cod                                     │
+│    ̅̂                                    │
+└────────────────────────────────────────┘
+
+## uncode inserts ##
+~> send 你好
+   render
+┌────────────────────────────────────────┐
+│你好                                    │
+│     ̅̂                                   │
+└────────────────────────────────────────┘
+
+## backspace at end of buffer ##
+~> send code
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│     ̅̂                                   │
+└────────────────────────────────────────┘
+~> send [Backspace]
+   render
+┌────────────────────────────────────────┐
+│cod                                     │
+│    ̅̂                                    │
+└────────────────────────────────────────┘
+
+## backspace at middle of buffer ##
+~> setup [&buffer=[&content=code &dot=2]]
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│   ̅̂                                     │
+└────────────────────────────────────────┘
+~> send [Backspace]
+   render
+┌────────────────────────────────────────┐
+│cde                                     │
+│  ̅̂                                      │
+└────────────────────────────────────────┘
+
+## backspace at beginning of buffer ##
+~> setup [&buffer=[&content=code &dot=0]]
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│ ̅̂                                       │
+└────────────────────────────────────────┘
+~> send [Backspace]
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│ ̅̂                                       │
+└────────────────────────────────────────┘
+
+## backspace deletes multi-byte codepoint ##
+~> send 你好
+   render
+┌────────────────────────────────────────┐
+│你好                                    │
+│     ̅̂                                   │
+└────────────────────────────────────────┘
+~> send [Backspace]
+   render
+┌────────────────────────────────────────┐
+│你                                      │
+│   ̅̂                                     │
+└────────────────────────────────────────┘
+
+## Ctrl-H is equivalent to Backspace ##
+// Regression test for https://b.elv.sh/1178
+~> send code
+   render
+┌────────────────────────────────────────┐
+│code                                    │
+│     ̅̂                                   │
+└────────────────────────────────────────┘
+~> send [Ctrl-H]
+   render
+┌────────────────────────────────────────┐
+│cod                                     │
+│    ̅̂                                    │
+└────────────────────────────────────────┘
+
+///////////////////
+# bracketed paste #
+///////////////////
+
+~> send [start-paste a b]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│ ̅̂                                       │
+└────────────────────────────────────────┘
+~> send [end-paste]
+   render
+┌────────────────────────────────────────┐
+│ab                                      │
+│   ̅̂                                     │
+└────────────────────────────────────────┘
+
+## quoted ##
+~> setup [&quote-paste=$true]
+   send [start-paste] "it's" [end-paste]
+   render
+┌────────────────────────────────────────┐
+│'it''s'                                 │
+│        ̅̂                                │
+└────────────────────────────────────────┘
+
+## function keys are discarded ##
+~> send [start-paste a F1 b end-paste]
+   render
+┌────────────────────────────────────────┐
+│ab                                      │
+│   ̅̂                                     │
+└────────────────────────────────────────┘
+
+## keybinding doesn't apply to bracketed pastes ##
+// TODO
+
+////////////////
+# abbreviation #
+////////////////
+//each:abbr-table-in-global
+
+## simple abbreviation ##
+~> setup [&abbr=(abbr-table [&dn=/dev/null])]
+   send 'echo > d'
+   render
+┌────────────────────────────────────────┐
+│echo > d                                │
+│         ̅̂                               │
+└────────────────────────────────────────┘
+~> send n
+   render
+┌────────────────────────────────────────┐
+│echo > /dev/null                        │
+│                 ̅̂                       │
+└────────────────────────────────────────┘
+
+## simple abbreviation prefers longest match ##
+~> setup [&abbr=(abbr-table [&n=null &dn=/dev/null])]
+   send 'echo > dn'
+   render
+┌────────────────────────────────────────┐
+│echo > /dev/null                        │
+│                 ̅̂                       │
+└────────────────────────────────────────┘
+
+## simple abbreviation requires uninterrupted streak ##
+~> setup [&abbr=(abbr-table [&dnl=/dev/null])]
+   send 'echo > dn' [Backspace] 'nl'
+   render
+┌────────────────────────────────────────┐
+│echo > dnl                              │
+│           ̅̂                             │
+└────────────────────────────────────────┘
+
+## simple abbreviation doesn't care about word boundaries ##
+~> setup [&abbr=(abbr-table [&dn=/dev/null])]
+   send 'echo > xdn'
+   render
+┌────────────────────────────────────────┐
+│echo > x/dev/null                       │
+│                  ̅̂                      │
+└────────────────────────────────────────┘
+
+## simple abbreviation expands anywhere ##
+~> setup [&abbr=(abbr-table [&dn=/dev/null])
+          &buffer=[&content=xy &dot=0]]
+   send dn
+   render
+┌────────────────────────────────────────┐
+│/dev/nullxy                             │
+│          ̅̂                              │
+└────────────────────────────────────────┘
+
+## small word abbreviation, triggered by space ##
+~> setup [&small-word-abbr=(abbr-table [&dn=/dev/null])]
+   send 'echo > dn'
+   render
+┌────────────────────────────────────────┐
+│echo > dn                               │
+│          ̅̂                              │
+└────────────────────────────────────────┘
+~> send ' '
+   render
+┌────────────────────────────────────────┐
+│echo > /dev/null                        │
+│                  ̅̂                      │
+└────────────────────────────────────────┘
+
+## small word abbreviation, triggered by punctuation ##
+~> setup [&small-word-abbr=(abbr-table [&dn=/dev/null])]
+   send 'echo > dn;'
+   render
+┌────────────────────────────────────────┐
+│echo > /dev/null;                       │
+│                  ̅̂                      │
+└────────────────────────────────────────┘
+
+## small word abbreviation requires full word match ##
+~> setup [&small-word-abbr=(abbr-table [&dn=/dev/null])]
+   send 'echo > xdn '
+   render
+┌────────────────────────────────────────┐
+│echo > xdn                              │
+│            ̅̂                            │
+└────────────────────────────────────────┘
+~> setup [&small-word-abbr=(abbr-table [&dn=/dev/null])]
+   send 'echo > dnx'
+   render
+┌────────────────────────────────────────┐
+│echo > dnx                              │
+│           ̅̂                             │
+└────────────────────────────────────────┘
+
+
+## small word abbreviation requires uninterrupted streak ##
+~> setup [&small-word-abbr=(abbr-table [&dnl=/dev/null])]
+   send 'echo > dn' [Backspace] 'nl '
+   render
+┌────────────────────────────────────────┐
+│echo > dnl                              │
+│            ̅̂                            │
+└────────────────────────────────────────┘
+
+## small word abbreviation only expands at end of buffer ##
+~> setup [&small-word-abbr=(abbr-table [&dn=/dev/null])
+          &buffer=[&content=code &dot=0]]
+   send 'dn '
+   render
+┌────────────────────────────────────────┐
+│dn code                                 │
+│    ̅̂                                    │
+└────────────────────────────────────────┘
+
+## small word abbreviation prefers the longest ##
+~> setup [&small-word-abbr=(abbr-table [&'|x'='| more' &'||x'='| less'])]
+   send 'echo ||x '
+   render
+┌────────────────────────────────────────┐
+│echo | less                             │
+│             ̅̂                           │
+└────────────────────────────────────────┘
+
+## command abbreviation, start of buffer ##
+~> setup [&command-abbr=(abbr-table [&eh=echo])]
+   send 'eh '
+   render
+┌────────────────────────────────────────┐
+│echo                                    │
+│      ̅̂                                  │
+└────────────────────────────────────────┘
+
+## command abbreviation, after pipe ##
+~> setup [&command-abbr=(abbr-table [&eh=echo])]
+   send 'x | eh '
+   render
+┌────────────────────────────────────────┐
+│x | echo                                │
+│          ̅̂                              │
+└────────────────────────────────────────┘
+
+## command abbreviation, after newline ##
+~> setup [&command-abbr=(abbr-table [&eh=echo])
+          &buffer=[&content="x\n" &dot=2]]
+   send 'eh '
+   render
+┌────────────────────────────────────────┐
+│x                                       │
+│                                        │
+│echo                                    │
+│      ̅̂                                  │
+└────────────────────────────────────────┘
+
+## command abbreviation requires command position ##
+~> setup [&command-abbr=(abbr-table [&eh=echo])]
+   send 'x eh '
+   render
+┌────────────────────────────────────────┐
+│x eh                                    │
+│      ̅̂                                  │
+└────────────────────────────────────────┘
+
+## command abbreviation doesn't require uninterrupted streak ##
+~> setup [&command-abbr=(abbr-table [&eco=echo])]
+   send 'ec' [Backspace] 'co '
+   render
+┌────────────────────────────────────────┐
+│echo                                    │
+│      ̅̂                                  │
+└────────────────────────────────────────┘
+
+## command abbreviation only expands at end of buffer ##
+~> setup [&command-abbr=(abbr-table [&eh=echo])
+          &buffer=[&content=code &dot=0]]
+   send 'eh '
+   render
+┌────────────────────────────────────────┐
+│eh code                                 │
+│    ̅̂                                    │
+└────────────────────────────────────────┘
+
+## external mutation interrupts streak ##
+// TODO
+
+//////////////////////////
+# general event handling #
+//////////////////////////
+
+## unhandled key event ##
+~> send &show-reaction [F1]
+Unused
+
+## unhandled other event ##
+~> send &show-reaction [mouse-dummy]
+Unused
+
+## keybinding ##
+// TODO
+
+## submission ##
+~> send code
+~> send &show-reaction [Enter]
+Finish
+
+# demo #
+//text-area-demo-fixture
+~> send [e c o]; render
+┌────────────────────────────────────────┐
+│eco                                     │
+│RRR ̅̂                                    │
+└────────────────────────────────────────┘
+~> send [Left]; render
+┌────────────────────────────────────────┐
+│eco                                     │
+│RRR̅̂                                     │
+└────────────────────────────────────────┘
+~> send [h]; render
+┌────────────────────────────────────────┐
+│echo                                    │
+│GGGG̅̂                                    │
+└────────────────────────────────────────┘

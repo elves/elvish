@@ -15,6 +15,7 @@ import (
 	"src.elv.sh/pkg/daemon/daemondefs"
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/edit"
+	etkedit "src.elv.sh/pkg/etkedit"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/mods/daemon"
 	"src.elv.sh/pkg/mods/store"
@@ -34,6 +35,7 @@ type interactCfg struct {
 
 	ActivateDaemon daemondefs.ActivateFunc
 	SpawnConfig    *daemondefs.SpawnConfig
+	EtkEdit        bool
 }
 
 // Interface satisfied by the line editor. Used for swapping out the editor with
@@ -74,10 +76,16 @@ func interact(ev *eval.Evaler, fds [3]*os.File, cfg *interactCfg) {
 	if sys.IsATTY(fds[0].Fd()) {
 		restoreTTY := term.SetupForTUIOnce(fds[0], fds[1])
 		defer restoreTTY()
-		newed := edit.NewEditor(cli.NewTTY(fds[0], fds[2]), ev, daemonClient)
-		ev.ExtendBuiltin(eval.BuildNs().AddNs("edit", newed))
-		ev.BgJobNotify = func(s string) { newed.Notify(ui.T(s)) }
-		ed = newed
+		if cfg.EtkEdit {
+			etked := etkedit.NewEditor(ev)
+			ev.ExtendBuiltin(eval.BuildNs().AddNs("edit", etked))
+			ed = etkEditorAdapter{etked, cli.NewTTY(fds[0], fds[2])}
+		} else {
+			newed := edit.NewEditor(cli.NewTTY(fds[0], fds[2]), ev, daemonClient)
+			ev.ExtendBuiltin(eval.BuildNs().AddNs("edit", newed))
+			ev.BgJobNotify = func(s string) { newed.Notify(ui.T(s)) }
+			ed = newed
+		}
 	} else {
 		ed = newMinEditor(fds[0], fds[2])
 	}
@@ -181,4 +189,16 @@ func (ed *minEditor) ReadCode() (string, error) {
 	fmt.Fprintf(ed.out, "%s> ", wd)
 	line, err := ed.in.ReadString('\n')
 	return strutil.ChopLineEnding(line), err
+}
+
+type etkEditorAdapter struct {
+	ed  *etkedit.Editor
+	tty cli.TTY
+}
+
+func (a etkEditorAdapter) ReadCode() (string, error) {
+	return a.ed.ReadCode(a.tty)
+}
+
+func (a etkEditorAdapter) RunAfterCommandHooks(src parse.Source, duration float64, err error) {
 }

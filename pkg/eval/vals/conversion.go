@@ -41,6 +41,10 @@ var (
 	errMustBeInteger      = errors.New("must be integer")
 )
 
+// Scanner may be implemented by a pointer to provide custom behavior of
+// [ScanToGo].
+type Scanner interface{ Scan(any, ScanOpt) error }
+
 // ScanToGo converts an Elvish value to a Go value, and stores it in *ptr. It
 // panics if ptr is not a pointer.
 //
@@ -53,6 +57,13 @@ var (
 //
 //     The set of keys in src must match the set of keys in M exactly. This
 //     behavior can be changed by using [ScanToGoOpts] instead.
+//
+//   - If ptr is a pointer to a slice (*[]T) and src can be iterated, it
+//     converts each individual element recursively, failing if the number of
+//     elements doesn't match or scanning of any element fails.
+//
+//   - If ptr implements [Scanner], it uses the ScanFromElvish method to perform
+//     the conversion.
 //
 //   - In other cases, it tries to perform "*ptr = src" via reflection and
 //     returns an error if the assignment can't be done.
@@ -117,6 +128,8 @@ func ScanToGoOpts(src, ptr any, opt ScanOpt) error {
 		return convAndStore(elvToNum, src, ptr)
 	case *rune:
 		return convAndStore(elvToRune, src, ptr)
+	case Scanner:
+		return ptr.Scan(src, opt)
 	default:
 		dstType := reflect.TypeOf(ptr).Elem()
 		// Attempt a simple assignment (*ptr = src) via reflection.
@@ -134,12 +147,37 @@ func ScanToGoOpts(src, ptr any, opt ScanOpt) error {
 			}
 		}
 		// Try to scan a field map.
-		if keys := getFieldMapKeysT(reflect.TypeOf(ptr).Elem()); keys != nil {
+		if keys := getFieldMapKeysT(dstType); keys != nil {
 			if _, ok := src.(Map); ok || IsFieldMap(src) {
 				return scanFieldMapFromMap(src, ptr, keys, opt)
 			}
 		}
-		// Return a suitable error.
+		// Try to scan a slice.
+		if dstType.Kind() == reflect.Slice && CanIterate(src) {
+			elemType := dstType.Elem()
+			dstLen := Len(src)
+			if dstLen < 0 {
+				dstLen = 0
+			}
+			dst := reflect.MakeSlice(dstType, 0, dstLen)
+			var err error
+			Iterate(src, func(srcElem any) bool {
+				elemPtr := reflect.New(elemType)
+				err = ScanToGoOpts(srcElem, elemPtr.Interface(), opt)
+				if err != nil {
+					// TODO: Wrap err with more context information
+					return false
+				}
+				dst = reflect.Append(dst, reflect.Indirect(elemPtr))
+				return true
+			})
+			if err != nil {
+				return err
+			}
+			ValueOf(ptr).Elem().Set(dst)
+			return nil
+		}
+		// All attempts failed. Return a suitable error.
 		var dstKind string
 		if dstType.Kind() == reflect.Interface {
 			dstKind = "!!" + dstType.String()

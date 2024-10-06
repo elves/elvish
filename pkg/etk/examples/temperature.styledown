@@ -1,0 +1,38 @@
+Fig 1.1. Single-row layout, focusing on celsius
+_______________________________________________
+
+
+> 20      Celsius =   68      Fahrenheit
+M __*____ MMMMMMM     _______           
+
+
+Fig 1.2. Single-row layout, focusing on fahrenheit
+__________________________________________________
+
+
+  20      Celsius = > 68      Fahrenheit
+  _______           M __*____ MMMMMMMMMM
+
+
+Fig 2.1. Two-row layout
+_______________________
+
+
+> Celsius:    20     
+M MMMMMMM     __*____
+  Fahrenheit: 68     
+              _______
+
+
+Fig 2.2. Two-row layout, invalid input
+______________________________________
+
+
+> Celsius:    bad    
+M MMMMMMM     rrr*___
+  Fahrenheit: 68     
+              _______
+
+M fg-magenta bold
+* inverse underlined
+r fg-red underlined

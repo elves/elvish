@@ -88,6 +88,7 @@ func NewEditor(tty cli.TTY, ev *eval.Evaler, st storedefs.Store) *Editor {
 	initMiscBuiltins(ed, nb)
 	initStateAPI(ed.app, nb)
 	initStoreAPI(ed.app, nb, hs)
+	initCustomWidgetAPI(ed.app, nb)
 
 	ed.ns = nb.Ns()
 	initElvishState(ev, ed.ns)

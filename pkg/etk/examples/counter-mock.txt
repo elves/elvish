@@ -1,0 +1,59 @@
+Fig 1.1. With ASCII keybinding hint
+___________________________________
+
+
+0 
+ #
+ Enter / Space : Count
+####### #######       
+
+
+Fig 1.2. With Unicode keybinding hint
+_____________________________________
+
+
+0 
+ #
+ ⏎ / ␣ : Count
+### ###       
+
+
+Fig 2.1. With button on same row
+________________________________
+
+
+  0 > [ Count ]
+    M mmmmmmmmm
+
+
+Fig 2.2. With button on separate row
+____________________________________
+
+
+  0
+   
+> [ Count ]
+M mmmmmmmmm
+
+
+Fig 2.3. With button on same row, no focus indicator
+____________________________________________________
+
+
+0 [ Count ]
+  mmmmmmmmm
+
+
+Fig 2.2. With button on separate row, no focus indicator
+________________________________________________________
+
+
+0
+ 
+[ Count ]
+mmmmmmmmm
+
+M fg-magenta bold
+m fg-magenta inverse
+_ underlined
+y fg-yellow inverse

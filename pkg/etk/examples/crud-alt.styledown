@@ -1,0 +1,84 @@
+Fig 1.
+      
+
+
+▶ Filter prefix:
+M MMMMMMMMMMMMMM
+▷ │ Emil, Hans        ▷ Name:
+    ##########          xxxxx
+  │ Mustermann, Max   ▷ Surname:
+                                
+  │ Tisch, Roman
+                
+▷ [Create] ▷ [Update] ▷ [Delete]
+                                
+
+
+Fig 2.
+      
+
+
+▷ Filter prefix:
+                
+▶ │ Emil, Hans        ▷ Name:
+M M ##########               
+  │ Mustermann, Max   ▷ Surname:
+  M                             
+  │ Tisch, Roman
+  M             
+▷ [Create] ▷ [Update] ▷ [Delete]
+                                
+
+
+Fig 3.
+      
+
+
+  Filter prefix:           
+                 __________
+  │ Emil, Hans        > Name:             
+    ##########        M MMMMM    _________
+  │ Mustermann, Max     Surname:          
+                                 _________
+  │ Tisch, Roman
+                
+  [Create]   [Update]   [Delete]
+                                
+
+
+Fig 4.
+      
+
+
+  Filter prefix:           
+                 __________
+  │ Emil, Hans          Name:             
+    ##########                   _________
+  │ Mustermann, Max     Surname:          
+                                 _________
+  │ Tisch, Roman
+                
+> [Create]   [Update]   [Delete]
+M MMMMMMMM                      
+
+
+Fig 5.
+      
+
+
+  Filter prefix:           
+                 __________
+  │ Emil, Hans          Name:             
+    ##########                   _________
+  │ Mustermann, Max     Surname:          
+                                 _________
+  │ Tisch, Roman
+                
+  [Create] > [Update]   [Delete]
+           M MMMMMMMM           
+
+
+
+M bold fg-magenta
+_ underlined
+x dim

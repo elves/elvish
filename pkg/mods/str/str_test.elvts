@@ -368,3 +368,7 @@ Exception: arity mismatch: arguments must be 1 value, but is 2 values
 ~> str:trim-suffix "¡¡¡Hello, Elven!!!"
 Exception: arity mismatch: arguments must be 2 values, but is 1 value
   [tty]:1:1-39: str:trim-suffix "¡¡¡Hello, Elven!!!"
+
+# demo #
+~> str:join , [a b]
+▶ 'a,b'

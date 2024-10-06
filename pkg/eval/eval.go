@@ -374,6 +374,18 @@ func (ev *Evaler) Call(f Callable, callCfg CallCfg, evalCfg EvalCfg) error {
 	return f.Call(fm, callCfg.Args, callCfg.Opts)
 }
 
+// TODO: This was added to make etk work. The entire Evaler/Frame/Callable API
+// needs reviewing.
+func (ev *Evaler) CallFrame(from string) *Frame {
+	var evalCfg EvalCfg
+	evalCfg.fillDefaults()
+	if evalCfg.Global == nil {
+		evalCfg.Global = ev.Global()
+	}
+	fm, _ := ev.prepareFrame(parse.Source{Name: from}, evalCfg)
+	return fm
+}
+
 func (ev *Evaler) prepareFrame(src parse.Source, cfg EvalCfg) (*Frame, func()) {
 	intCtx := cfg.Interrupts
 	if intCtx == nil {
