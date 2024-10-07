@@ -16,12 +16,30 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-var showState = flag.Bool("show-state", false, "show the state of the widget")
+var (
+	showState = flag.Bool("show-state", false, "show app state")
+	maxHeight = flag.Int("max-height", 0, "max height of the app")
+	justify   = flag.String("justify", "none", "how to justify app vertically")
+)
 
 func main() {
 	flag.Parse()
 	if len(flag.Args()) != 1 {
 		fmt.Fprintln(os.Stderr, "need example name")
+		os.Exit(1)
+	}
+	j := etk.NoJustify
+	switch *justify {
+	case "none":
+		j = etk.NoJustify
+	case "top":
+		j = etk.JustifyTop
+	case "center":
+		j = etk.JustifyCenter
+	case "bottom":
+		j = etk.JustifyBottom
+	default:
+		fmt.Fprintln(os.Stderr, "unknown justify:", *justify)
 		os.Exit(1)
 	}
 	example := flag.Args()[0]
@@ -68,7 +86,11 @@ func main() {
 	if *showState {
 		f = etk.WithInit(ShowState, "inner-comp", f)
 	}
-	etk.Run(cli.NewTTY(os.Stdin, os.Stdout), eval.NewEvaler().CallFrame("etk"), f)
+	etk.Run(f, etk.RunCfg{
+		TTY:       cli.NewTTY(os.Stdin, os.Stdout),
+		Frame:     eval.NewEvaler().CallFrame("etk"),
+		MaxHeight: *maxHeight, Justify: j,
+	})
 }
 
 func QuitWithEsc(f etk.Comp) etk.Comp {

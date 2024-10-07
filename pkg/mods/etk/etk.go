@@ -58,7 +58,8 @@ var Ns = eval.BuildNsNamed("etk").
 				return err
 			}
 			// TODO: Maybe should use subframe of fm?
-			_, err = etk.Run(cli.NewTTY(fm.InputFile(), fm.Port(1).File), fm, comp)
+			_, err = etk.Run(comp, etk.RunCfg{
+				TTY: cli.NewTTY(fm.InputFile(), fm.Port(1).File), Frame: fm})
 			return err
 		},
 	}).

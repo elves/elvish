@@ -9,7 +9,24 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 )
 
-func Run(tty cli.TTY, fm *eval.Frame, f Comp) (vals.Map, error) {
+type RunCfg struct {
+	TTY       cli.TTY
+	Frame     *eval.Frame
+	MaxHeight int
+	Justify   Justify
+}
+
+type Justify uint8
+
+const (
+	NoJustify Justify = iota
+	JustifyTop
+	JustifyCenter
+	JustifyBottom
+)
+
+func Run(f Comp, cfg RunCfg) (vals.Map, error) {
+	tty, fm := cfg.TTY, cfg.Frame
 	restore, err := tty.Setup()
 	if err != nil {
 		return nil, err
@@ -38,7 +55,10 @@ func Run(tty cli.TTY, fm *eval.Frame, f Comp) (vals.Map, error) {
 	for {
 		// Render.
 		h, w := tty.Size()
-		buf := sc.Render(w, h)
+		if cfg.MaxHeight > 0 {
+			h = min(h, cfg.MaxHeight)
+		}
+		buf := justify(sc.Render(w, h), h, cfg.Justify)
 		msgBuf := sc.RenderAndPopMsgs(w)
 		tty.UpdateBuffer(msgBuf, buf, false /*true*/)
 
@@ -63,6 +83,39 @@ func Run(tty cli.TTY, fm *eval.Frame, f Comp) (vals.Map, error) {
 			sc.Refresh()
 		}
 	}
+}
+
+func justify(buf *term.Buffer, h int, j Justify) *term.Buffer {
+	w := buf.Width
+	padding := h - len(buf.Lines)
+	if padding == 0 {
+		return buf
+	}
+	switch j {
+	case JustifyTop:
+		buf.Extend(makeEmptyLines(w, padding), false)
+	case JustifyCenter:
+		topPadding := padding / 2
+		if topPadding > 0 {
+			buf0 := makeEmptyLines(w, topPadding)
+			buf0.Extend(buf, true)
+			buf = buf0
+		}
+		buf.Extend(makeEmptyLines(w, padding-topPadding), false)
+	case JustifyBottom:
+		buf0 := makeEmptyLines(w, padding)
+		buf0.Extend(buf, true)
+		buf = buf0
+	}
+	return buf
+}
+
+func makeEmptyLines(w, h int) *term.Buffer {
+	buf := term.NewBufferBuilder(w)
+	for i := 1; i < h; i++ {
+		buf.Newline()
+	}
+	return buf.Buffer()
 }
 
 func Stateful(fm *eval.Frame, f Comp) *StatefulComp {

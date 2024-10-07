@@ -20,6 +20,7 @@ type Editor struct {
 
 	mutex sync.RWMutex
 
+	maxHeight                              int
 	prompt, rprompt                        promptCfg
 	simpleAbbr, commandAbbr, smallWordAbbr vals.Map
 	insertBinding                          bindingsMap
@@ -49,6 +50,8 @@ func (ed *Editor) Ns() *eval.Ns {
 			"key":           toKey,
 		}).
 		AddVars(map[string]vars.Var{
+			"max-height": makeEditVar(ed, &ed.maxHeight),
+
 			"prompt":                   makeEditVar(ed, &ed.prompt.Fn),
 			"-prompt-eagerness":        makeEditVar(ed, &ed.prompt.Eagerness),
 			"prompt-stale-threshold":   makeEditVar(ed, &ed.prompt.StaleThreshold),
@@ -115,7 +118,9 @@ func (ed *Editor) Comp() etk.Comp {
 
 func (ed *Editor) ReadCode(tty cli.TTY) (string, error) {
 	tty.ResetBuffer() // TODO: This was easy to miss
-	m, err := etk.Run(tty, ed.ev.CallFrame("edit"), ed.Comp())
+	m, err := etk.Run(ed.Comp(), etk.RunCfg{
+		TTY: tty, Frame: ed.ev.CallFrame("edit"), MaxHeight: ed.maxHeight,
+	})
 	if err != nil {
 		return "", err
 	}
