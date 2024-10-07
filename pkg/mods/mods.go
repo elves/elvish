@@ -2,10 +2,10 @@
 package mods
 
 import (
-	"src.elv.sh/pkg/etk"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/mods/doc"
 	"src.elv.sh/pkg/mods/epm"
+	"src.elv.sh/pkg/mods/etk"
 	"src.elv.sh/pkg/mods/file"
 	"src.elv.sh/pkg/mods/flag"
 	"src.elv.sh/pkg/mods/math"

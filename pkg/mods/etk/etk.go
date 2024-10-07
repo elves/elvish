@@ -5,6 +5,8 @@ import (
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -18,17 +20,17 @@ func (*textViewOpts) SetDefaultOptions() {}
 
 var Ns = eval.BuildNsNamed("etk").
 	AddVars(map[string]vars.Var{
-		// Reaction values
-		"unused":     vars.NewReadOnly(Unused),
-		"consumed":   vars.NewReadOnly(Consumed),
-		"finish":     vars.NewReadOnly(Finish),
-		"finish-eof": vars.NewReadOnly(FinishEOF),
+		// etk.Reaction values
+		"unused":     vars.NewReadOnly(etk.Unused),
+		"consumed":   vars.NewReadOnly(etk.Consumed),
+		"finish":     vars.NewReadOnly(etk.Finish),
+		"finish-eof": vars.NewReadOnly(etk.FinishEOF),
 		// Builtin widgets
-		"textarea": vars.NewReadOnly(TextArea),
+		"textarea": vars.NewReadOnly(comps.TextArea),
 	}).
 	AddGoFns(map[string]any{
-		"-text-view": func(opts textViewOpts, v any) View {
-			return TextView(opts.DotBefore, ui.T(vals.ToString(v)))
+		"-text-view": func(opts textViewOpts, v any) etk.View {
+			return etk.TextView(opts.DotBefore, ui.T(vals.ToString(v)))
 		},
 		"-key-event": func(s string) (term.Event, error) {
 			k, err := ui.ParseKey(s)
@@ -37,7 +39,7 @@ var Ns = eval.BuildNsNamed("etk").
 			}
 			return term.KeyEvent(k), nil
 		},
-		"with-init": func(fm *eval.Frame, compAny any, inits vals.Map) (Comp, error) {
+		"with-init": func(fm *eval.Frame, compAny any, inits vals.Map) (etk.Comp, error) {
 			// TODO: Integrate the parsing into vals.ScanToGo
 			comp, err := scanComp(fm, compAny)
 			if err != nil {
@@ -47,7 +49,7 @@ var Ns = eval.BuildNsNamed("etk").
 			if err != nil {
 				return nil, err
 			}
-			return WithInit(comp, initArgs...), nil
+			return etk.WithInit(comp, initArgs...), nil
 		},
 		"run": func(fm *eval.Frame, compAny any) error {
 			// TODO: Integrate the parsing into vals.ScanToGo
@@ -56,15 +58,15 @@ var Ns = eval.BuildNsNamed("etk").
 				return err
 			}
 			// TODO: Maybe should use subframe of fm?
-			_, err = Run(cli.NewTTY(fm.InputFile(), fm.Port(1).File), fm, comp)
+			_, err = etk.Run(cli.NewTTY(fm.InputFile(), fm.Port(1).File), fm, comp)
 			return err
 		},
 	}).
 	Ns()
 
-func scanComp(fm *eval.Frame, v any) (Comp, error) {
+func scanComp(fm *eval.Frame, v any) (etk.Comp, error) {
 	switch v := v.(type) {
-	case Comp:
+	case etk.Comp:
 		return v, nil
 	case eval.Callable:
 		return scanCompFromFn(fm, v), nil
@@ -76,27 +78,27 @@ func scanComp(fm *eval.Frame, v any) (Comp, error) {
 }
 
 type compOut struct {
-	View  View
+	View  etk.View
 	React eval.Callable
 }
 
 type viewReact struct {
-	View  View
-	React React
+	View  etk.View
+	React etk.React
 }
 
 type vboxOpts struct{ Focus int }
 
 func (*vboxOpts) SetDefaultOptions() {}
 
-func scanCompFromFn(fm *eval.Frame, fn eval.Callable) Comp {
-	return func(c Context) (View, React) {
+func scanCompFromFn(fm *eval.Frame, fn eval.Callable) etk.Comp {
+	return func(c etk.Context) (etk.View, etk.React) {
 		subcomps := map[string]viewReact{}
 		var elvishCtx = eval.BuildNs().AddVars(map[string]vars.Var{
-			"state": stateSubTreeVar(c),
+			"state": etk.StateSubTreeVar(c),
 		}).AddGoFns(map[string]any{
 			"state": func(name string, _eq string, init any) {
-				State(c, name, init)
+				etk.State(c, name, init)
 			},
 			"subcomp": func(name string, _eq string, compAny any) error {
 				// TODO: Is use of fm correct here?
@@ -108,14 +110,14 @@ func scanCompFromFn(fm *eval.Frame, fn eval.Callable) Comp {
 				subcomps[name] = viewReact{v, r}
 				return nil
 			},
-			"vbox": func(opts vboxOpts, compNames ...string) View {
-				views := make([]View, len(compNames))
+			"vbox": func(opts vboxOpts, compNames ...string) etk.View {
+				views := make([]etk.View, len(compNames))
 				for i, compName := range compNames {
 					views[i] = subcomps[compName].View
 				}
-				return VBoxView(opts.Focus, views...)
+				return etk.VBoxView(opts.Focus, views...)
 			},
-			"pass": func(compName string, ev term.Event) Reaction {
+			"pass": func(compName string, ev term.Event) etk.Reaction {
 				// TODO: Error if comp doesn't exist
 				return subcomps[compName].React(ev)
 			},
@@ -140,23 +142,8 @@ func scanCompFromFn(fm *eval.Frame, fn eval.Callable) Comp {
 			return errElement(fmt.Errorf("output should be map with view and react"))
 		}
 		// TODO: Handle scan error
-		return out.View, must.OK1(ScanToGo[React](out.React, fm))
+		return out.View, must.OK1(etk.ScanToGo[etk.React](out.React, fm))
 	}
-}
-
-type stateSubTreeVar Context
-
-func (v stateSubTreeVar) Get() any {
-	return getPath(v.g.state, v.path)
-}
-
-func (v stateSubTreeVar) Set(val any) error {
-	valMap, ok := val.(vals.Map)
-	if !ok {
-		return fmt.Errorf("must be map")
-	}
-	v.g.state = assocPath(v.g.state, v.path, valMap)
-	return nil
 }
 
 func convertInits(m vals.Map) ([]any, error) {
@@ -172,7 +159,7 @@ func convertInits(m vals.Map) ([]any, error) {
 	return args, nil
 }
 
-func errElement(err error) (View, React) {
-	return TextView(1, ui.T(err.Error(), ui.FgRed)),
-		func(term.Event) Reaction { return Unused }
+func errElement(err error) (etk.View, etk.React) {
+	return etk.TextView(1, ui.T(err.Error(), ui.FgRed)),
+		func(term.Event) etk.Reaction { return etk.Unused }
 }

@@ -1,7 +1,8 @@
-package etk
+package comps
 
 import (
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/etk"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -20,10 +21,10 @@ func StringItems(items ...string) ListItems { return stringItems(items) }
 func (si stringItems) Show(i int) ui.Text   { return ui.T(si[i]) }
 func (si stringItems) Len() int             { return len(si) }
 
-func ListBox(c Context) (View, React) {
-	itemsVar := State(c, "items", ListItems(nil))
-	selectedVar := State(c, "selected", 0)
-	horizontalVar := State(c, "horizontal", false)
+func ListBox(c etk.Context) (etk.View, etk.React) {
+	itemsVar := etk.State(c, "items", ListItems(nil))
+	selectedVar := etk.State(c, "selected", 0)
+	horizontalVar := etk.State(c, "horizontal", false)
 
 	selected := selectedVar.Get()
 	focus := 0
@@ -46,8 +47,8 @@ func ListBox(c Context) (View, React) {
 		}
 	}
 
-	return TextView(focus, spans...),
-		c.WithBinding(func(e term.Event) Reaction {
+	return etk.TextView(focus, spans...),
+		c.WithBinding(func(e term.Event) etk.Reaction {
 			selected := selectedVar.Get()
 			items := itemsVar.Get()
 			if horizontalVar.Get() {
@@ -55,12 +56,12 @@ func ListBox(c Context) (View, React) {
 				case term.K(ui.Left):
 					if selected > 0 {
 						selectedVar.Set(selected - 1)
-						return Consumed
+						return etk.Consumed
 					}
 				case term.K(ui.Right):
 					if selected < items.Len()-1 {
 						selectedVar.Set(selected + 1)
-						return Consumed
+						return etk.Consumed
 					}
 				}
 			} else {
@@ -68,15 +69,15 @@ func ListBox(c Context) (View, React) {
 				case term.K(ui.Up):
 					if selected > 0 {
 						selectedVar.Set(selected - 1)
-						return Consumed
+						return etk.Consumed
 					}
 				case term.K(ui.Down):
 					if selected < items.Len()-1 {
 						selectedVar.Set(selected + 1)
-						return Consumed
+						return etk.Consumed
 					}
 				}
 			}
-			return Unused
+			return etk.Unused
 		})
 }

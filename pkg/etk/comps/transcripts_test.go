@@ -1,4 +1,4 @@
-package etk_test
+package comps_test
 
 import (
 	"embed"
@@ -8,6 +8,7 @@ import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/edit/highlight"
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/etk/etktest"
 	"src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
@@ -24,15 +25,15 @@ func TestTranscripts(t *testing.T) {
 	})
 
 	evaltest.TestTranscriptsInFS(t, transcripts,
-		"text-area-fixture", etktest.MakeFixture(etk.TextArea),
+		"text-area-fixture", etktest.MakeFixture(comps.TextArea),
 		"text-area-demo-fixture", etktest.MakeFixture(
-			etk.WithInit(etk.TextArea,
+			etk.WithInit(comps.TextArea,
 				"binding", func(ev term.Event, c etk.Context, r etk.React) etk.Reaction {
 					reaction := r(ev)
 					if reaction != etk.Unused {
 						return reaction
 					}
-					bufferVar := etk.BindState(c, "buffer", etk.TextBuffer{})
+					bufferVar := etk.BindState(c, "buffer", comps.TextBuffer{})
 					switch ev {
 					case term.K(ui.Left):
 						bufferVar.Swap(makeMove(moveDotLeft))
@@ -63,8 +64,8 @@ func TestTranscripts(t *testing.T) {
 
 // For demo
 
-func makeMove(m func(string, int) int) func(etk.TextBuffer) etk.TextBuffer {
-	return func(buf etk.TextBuffer) etk.TextBuffer {
+func makeMove(m func(string, int) int) func(comps.TextBuffer) comps.TextBuffer {
+	return func(buf comps.TextBuffer) comps.TextBuffer {
 		buf.Dot = m(buf.Content, buf.Dot)
 		return buf
 	}

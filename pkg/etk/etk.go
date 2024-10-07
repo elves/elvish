@@ -54,6 +54,7 @@
 package etk
 
 import (
+	"fmt"
 	"reflect"
 	"slices"
 	"strings"
@@ -335,7 +336,24 @@ func (sv StateVar[T]) setAny(v any) {
 func (sv StateVar[T]) get() any  { return getPath(*sv.state, sv.path) }
 func (sv StateVar[T]) set(v any) { *sv.state = assocPath(*sv.state, sv.path, v) }
 
-func getPath(m vals.Map, path []string) any {
+type StateSubTreeVar Context
+
+func (v StateSubTreeVar) Get() any {
+	return getPath(v.g.state, v.path)
+}
+
+func (v StateSubTreeVar) Set(val any) error {
+	valMap, ok := val.(vals.Map)
+	if !ok {
+		return fmt.Errorf("must be map")
+	}
+	v.g.state = assocPath(v.g.state, v.path, valMap)
+	return nil
+}
+
+// TODO: Move the following to vals?
+
+func getPath[T any](m vals.Map, path []T) any {
 	if len(path) == 0 {
 		return m
 	}
@@ -351,7 +369,7 @@ func getPath(m vals.Map, path []string) any {
 	return v
 }
 
-func assocPath(m vals.Map, path []string, newVal any) vals.Map {
+func assocPath[T any](m vals.Map, path []T, newVal any) vals.Map {
 	if len(path) == 0 {
 		return newVal.(vals.Map)
 	}

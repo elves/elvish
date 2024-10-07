@@ -1,4 +1,4 @@
-package etk
+package comps
 
 import (
 	"strings"
@@ -6,19 +6,20 @@ import (
 	"unicode/utf8"
 
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/etk"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/ui"
 )
 
-func TextArea(c Context) (View, React) {
-	quotePasteVar := State(c, "quote-paste", false)
+func TextArea(c etk.Context) (etk.View, etk.React) {
+	quotePasteVar := etk.State(c, "quote-paste", false)
 
-	pastingVar := State(c, "pasting", false)
-	pasteBufferVar := State(c, "paste-buffer", &strings.Builder{})
+	pastingVar := etk.State(c, "pasting", false)
+	pasteBufferVar := etk.State(c, "paste-buffer", &strings.Builder{})
 	innerView, innerReact := textAreaWithAbbr(c)
-	bufferVar := BindState(c, "buffer", TextBuffer{})
+	bufferVar := etk.BindState(c, "buffer", TextBuffer{})
 
-	return innerView, c.WithBinding(func(event term.Event) Reaction {
+	return innerView, c.WithBinding(func(event term.Event) etk.Reaction {
 		switch event := event.(type) {
 		case term.PasteSetting:
 			startPaste := bool(event)
@@ -36,7 +37,7 @@ func TextArea(c Context) (View, React) {
 				}
 				bufferVar.Swap(insertAtDot(text))
 			}
-			return Consumed
+			return etk.Consumed
 		case term.KeyEvent:
 			key := ui.Key(event)
 			if pastingVar.Get() {
@@ -46,26 +47,26 @@ func TextArea(c Context) (View, React) {
 				} else {
 					pasteBufferVar.Get().WriteRune(key.Rune)
 				}
-				return Consumed
+				return etk.Consumed
 			}
 		}
 		return innerReact(event)
 	})
 }
 
-func textAreaWithAbbr(c Context) (View, React) {
-	abbrVar := State(c, "abbr", func(func(a, f string)) {})
-	cmdAbbrVar := State(c, "command-abbr", func(func(a, f string)) {})
-	smallWordAbbr := State(c, "small-word-abbr", func(func(a, f string)) {})
+func textAreaWithAbbr(c etk.Context) (etk.View, etk.React) {
+	abbrVar := etk.State(c, "abbr", func(func(a, f string)) {})
+	cmdAbbrVar := etk.State(c, "command-abbr", func(func(a, f string)) {})
+	smallWordAbbr := etk.State(c, "small-word-abbr", func(func(a, f string)) {})
 
-	streakVar := State(c, "streak", "")
+	streakVar := etk.State(c, "streak", "")
 	innerView, innerReact := textAreaCore(c)
-	bufferVar := BindState(c, "buffer", TextBuffer{})
-	return innerView, func(event term.Event) Reaction {
+	bufferVar := etk.BindState(c, "buffer", TextBuffer{})
+	return innerView, func(event term.Event) etk.Reaction {
 		if keyEvent, ok := event.(term.KeyEvent); ok {
 			bufferBefore := bufferVar.Get()
 			reaction := innerReact(event)
-			if reaction != Consumed {
+			if reaction != etk.Consumed {
 				return reaction
 			}
 			buffer := bufferVar.Get()
@@ -74,23 +75,23 @@ func textAreaWithAbbr(c Context) (View, React) {
 				if newBuffer, ok := expandSimpleAbbr(abbrVar.Get(), buffer, streak); ok {
 					bufferVar.Set(newBuffer)
 					streakVar.Set("")
-					return Consumed
+					return etk.Consumed
 				}
 				if newBuffer, ok := expandCmdAbbr(cmdAbbrVar.Get(), buffer, streak); ok {
 					bufferVar.Set(newBuffer)
 					streakVar.Set("")
-					return Consumed
+					return etk.Consumed
 				}
 				if newBuffer, ok := expandSmallWordAbbr(smallWordAbbr.Get(), buffer, streak, keyEvent.Rune, categorizeSmallWord); ok {
 					bufferVar.Set(newBuffer)
 					streakVar.Set("")
-					return Consumed
+					return etk.Consumed
 				}
 				streakVar.Set(streak)
 			} else {
 				streakVar.Set("")
 			}
-			return Consumed
+			return etk.Consumed
 		} else {
 			return innerReact(event)
 		}
@@ -111,12 +112,12 @@ func isLiteralInsert(event term.KeyEvent, before, after TextBuffer) (string, boo
 	}
 }
 
-func textAreaCore(c Context) (View, React) {
-	promptVar := State(c, "prompt", ui.T(""))
-	rpromptVar := State(c, "rprompt", ui.T(""))
-	bufferVar := State(c, "buffer", TextBuffer{})
-	pendingVar := State(c, "pending", PendingText{})
-	highlighterVar := State(c, "highlighter",
+func textAreaCore(c etk.Context) (etk.View, etk.React) {
+	promptVar := etk.State(c, "prompt", ui.T(""))
+	rpromptVar := etk.State(c, "rprompt", ui.T(""))
+	bufferVar := etk.State(c, "buffer", TextBuffer{})
+	pendingVar := etk.State(c, "pending", PendingText{})
+	highlighterVar := etk.State(c, "highlighter",
 		func(code string) (ui.Text, []ui.Text) { return ui.T(code), nil })
 
 	buffer := bufferVar.Get()
@@ -133,7 +134,7 @@ func textAreaCore(c Context) (View, React) {
 		promptVar.Get(), rpromptVar.Get(),
 		styledCode, bufferVar.Get().Dot, tips,
 	}
-	return view, func(event term.Event) Reaction {
+	return view, func(event term.Event) etk.Reaction {
 		if event, ok := event.(term.KeyEvent); ok {
 			key := ui.Key(event)
 			// Implement the absolute essential functionalities here. Others
@@ -141,17 +142,17 @@ func textAreaCore(c Context) (View, React) {
 			switch key {
 			case ui.K(ui.Backspace), ui.K('H', ui.Ctrl):
 				bufferVar.Swap(backspace)
-				return Consumed
+				return etk.Consumed
 			case ui.K(ui.Enter):
-				return Finish
+				return etk.Finish
 			default:
 				if key == ui.K(ui.Enter, ui.Alt) || (!isFuncKey(key) && unicode.IsGraphic(key.Rune)) {
 					bufferVar.Swap(insertAtDot(string(key.Rune)))
-					return Consumed
+					return etk.Consumed
 				}
 			}
 		}
-		return Unused
+		return etk.Unused
 	}
 }
 

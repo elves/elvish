@@ -1,4 +1,4 @@
-package etk
+package comps
 
 import (
 	"src.elv.sh/pkg/cli/term"

@@ -5,11 +5,12 @@ import (
 
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/strutil"
 	"src.elv.sh/pkg/ui"
 )
 
-var TextArea = etk.WithInit(etk.TextArea,
+var TextArea = etk.WithInit(comps.TextArea,
 	"prompt", ui.T("~> "),
 	"abbr", func(y func(a, f string)) { y("foo", "lorem") },
 	"binding",
@@ -18,7 +19,7 @@ var TextArea = etk.WithInit(etk.TextArea,
 		if reaction != etk.Unused {
 			return reaction
 		}
-		bufferVar := etk.BindState(c, "buffer", etk.TextBuffer{})
+		bufferVar := etk.BindState(c, "buffer", comps.TextBuffer{})
 		switch ev {
 		case term.K(ui.Left):
 			bufferVar.Swap(makeMove(moveDotLeft))
@@ -34,8 +35,8 @@ var TextArea = etk.WithInit(etk.TextArea,
 		return etk.Consumed
 	})
 
-func makeMove(m func(string, int) int) func(etk.TextBuffer) etk.TextBuffer {
-	return func(buf etk.TextBuffer) etk.TextBuffer {
+func makeMove(m func(string, int) int) func(comps.TextBuffer) comps.TextBuffer {
+	return func(buf comps.TextBuffer) comps.TextBuffer {
 		buf.Dot = m(buf.Content, buf.Dot)
 		return buf
 	}

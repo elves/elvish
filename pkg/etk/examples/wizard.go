@@ -3,6 +3,7 @@ package main
 import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -24,7 +25,7 @@ var tasks = Tasks{
 }
 
 func Wizard(c etk.Context) (etk.View, etk.React) {
-	listView, listReact := c.Subcomp("list", etk.WithInit(etk.ListBox, "items", tasks))
+	listView, listReact := c.Subcomp("list", etk.WithInit(comps.ListBox, "items", tasks))
 	selectedVar := etk.BindState(c, "list/selected", 0)
 	selected := selectedVar.Get()
 	description := etk.TextView(0, ui.T(tasks[selected].Description))

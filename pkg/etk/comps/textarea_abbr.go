@@ -1,4 +1,4 @@
-package etk
+package comps
 
 import (
 	"regexp"

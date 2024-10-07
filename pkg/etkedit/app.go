@@ -6,6 +6,7 @@ import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/edit/highlight"
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/etk/comps"
 )
 
 type Addons struct {
@@ -36,7 +37,7 @@ func App(c etk.Context) (etk.View, etk.React) {
 		}()
 	}
 	codeView, codeReact := c.Subcomp("code",
-		etk.WithInit(etk.TextArea, "highlighter", hlVar.Get().Get))
+		etk.WithInit(comps.TextArea, "highlighter", hlVar.Get().Get))
 
 	addonsVar := etk.State(c, "addons", Addons{})
 	addons := addonsVar.Get().Addons

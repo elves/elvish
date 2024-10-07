@@ -7,6 +7,7 @@ import (
 
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -34,7 +35,7 @@ func HierNav(c etk.Context) (etk.View, etk.React) {
 	case map[string]any:
 		// TODO: Don't recalculate?
 		items := makeHierItems(value)
-		currentView, currentReact = c.Subcomp(pathToName(path), etk.WithInit(etk.ListBox, "items", items))
+		currentView, currentReact = c.Subcomp(pathToName(path), etk.WithInit(comps.ListBox, "items", items))
 		selectedVar := etk.BindState(c, pathToName(path)+"/selected", 0)
 		previewPath := slices.Concat(path, []string{items[selectedVar.Get()].key})
 		preview = hierNavPanel(c, data, previewPath)
@@ -71,7 +72,7 @@ func hierNavPanel(b etk.Context, data map[string]any, path []string) etk.View {
 	switch value := access(data, path).(type) {
 	case map[string]any:
 		items := makeHierItems(value)
-		view, _ := b.Subcomp(pathToName(path), etk.WithInit(etk.ListBox, "items", items))
+		view, _ := b.Subcomp(pathToName(path), etk.WithInit(comps.ListBox, "items", items))
 		return view
 	case string:
 		return etk.TextView(0, ui.T(value))

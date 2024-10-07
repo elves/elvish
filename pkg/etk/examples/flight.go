@@ -3,17 +3,18 @@ package main
 import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/ui"
 )
 
 func Flight(c etk.Context) (etk.View, etk.React) {
 	typeView, typeReact := c.Subcomp("type",
-		etk.WithInit(etk.ListBox,
-			"items", etk.StringItems("one-way", "return"),
+		etk.WithInit(comps.ListBox,
+			"items", comps.StringItems("one-way", "return"),
 			"horizontal", true))
-	outboundView, outboundReact := c.Subcomp("outbound", etk.TextArea)
+	outboundView, outboundReact := c.Subcomp("outbound", comps.TextArea)
 	// TODO: Disable inbound for one-way
-	inboundView, inboundReact := c.Subcomp("inbound", etk.TextArea)
+	inboundView, inboundReact := c.Subcomp("inbound", comps.TextArea)
 	bookView, bookReact := c.Subcomp("book", etk.WithInit(Button, "label", "Book"))
 	return Form(c,
 		FormComp{"Type:     ", typeView, typeReact, false},

@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/ui"
 )
 
 func Timer(c etk.Context) (etk.View, etk.React) {
 	startTimeVar := etk.State(c, "start-time", time.Now())
-	durationView, durationReact := c.Subcomp("duration", etk.TextArea)
-	durationBufferVar := etk.BindState(c, "duration/buffer", etk.TextBuffer{})
+	durationView, durationReact := c.Subcomp("duration", comps.TextArea)
+	durationBufferVar := etk.BindState(c, "duration/buffer", comps.TextBuffer{})
 	resetView, resetReact := c.Subcomp("reset",
 		etk.WithInit(Button, "label", "Reset", "submit", func() {
 			startTimeVar.Set(time.Now())

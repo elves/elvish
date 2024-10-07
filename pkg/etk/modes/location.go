@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/store/storedefs"
 	"src.elv.sh/pkg/ui"
@@ -82,13 +83,13 @@ func NewLocation(cfg LocationCfg) (etk.Comp, error) {
 
 	l := locationList{dirs}
 
-	return etk.WithInit(etk.ComboBox,
-		"gen-list", func(p string) (etk.ListItems, int) {
+	return etk.WithInit(comps.ComboBox,
+		"gen-list", func(p string) (comps.ListItems, int) {
 			return l.filter(cfg.Filter.makePredicate(p)), 0
 		},
 		"filter/prompt", modeLine(" LOCATION ", true),
 		"filter/highlight", cfg.Filter.Highlighter,
-		"list/submit", func(it etk.ListItems, i int) {
+		"list/submit", func(it comps.ListItems, i int) {
 			path := it.(locationList).dirs[i].Path
 			if strings.HasPrefix(path, wsKind) {
 				path = wsRoot + path[len(wsKind):]

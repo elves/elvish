@@ -7,6 +7,7 @@ import (
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
@@ -76,7 +77,7 @@ func (ed *Editor) Comp() etk.Comp {
 				if reaction == etk.Unused {
 					switch ev {
 					case term.K('x', ui.Alt):
-						PushAddon(c, etk.WithInit(etk.TextArea, "prompt", ui.T("minibuf> ")))
+						PushAddon(c, etk.WithInit(comps.TextArea, "prompt", ui.T("minibuf> ")))
 					default:
 						if k, ok := ev.(term.KeyEvent); ok {
 							c.AddMsg(ui.T(fmt.Sprintf("Unbound: %s", ui.Key(k))))
@@ -100,7 +101,7 @@ func (ed *Editor) Comp() etk.Comp {
 			ed.mutex.RLock()
 			defer ed.mutex.RUnlock()
 
-			bufferContent := etk.BindState(c, "code/buffer", etk.TextBuffer{}).Get().Content
+			bufferContent := etk.BindState(c, "code/buffer", comps.TextBuffer{}).Get().Content
 			callPrompt(c, "code/prompt", ed.prompt, bufferContent)
 			callPrompt(c, "code/rprompt", ed.rprompt, bufferContent)
 			// These live in the WithBefore rather than WithInit, because we
@@ -121,7 +122,7 @@ func (ed *Editor) ReadCode(tty cli.TTY) (string, error) {
 	// TODO: Multi-level indexing should be easier
 	codeArea, _ := m.Index("code")
 	buf, _ := codeArea.(vals.Map).Index("buffer")
-	return buf.(etk.TextBuffer).Content, nil
+	return buf.(comps.TextBuffer).Content, nil
 }
 
 // Creates an editVar. This has to be a function because methods can't be

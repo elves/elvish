@@ -4,22 +4,23 @@ import (
 	"slices"
 
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/ui"
 )
 
 func CRUD(c etk.Context) (etk.View, etk.React) {
-	prefixView, prefixReact := c.Subcomp("prefix", etk.TextArea)
+	prefixView, prefixReact := c.Subcomp("prefix", comps.TextArea)
 
 	personsVar := etk.State(c, "list/items", persons{
 		{"Hans", "Emil"}, {"Max", "Mustermann"}, {"Roman", "Tisch"}})
 	selectedVar := etk.BindState(c, "list/selected", 0)
-	listView, listReact := c.Subcomp("list", etk.ListBox)
+	listView, listReact := c.Subcomp("list", comps.ListBox)
 
-	nameView, nameReact := c.Subcomp("name", etk.TextArea)
-	nameContent := etk.BindState(c, "name/buffer", etk.TextBuffer{}).Get().Content
+	nameView, nameReact := c.Subcomp("name", comps.TextArea)
+	nameContent := etk.BindState(c, "name/buffer", comps.TextBuffer{}).Get().Content
 
-	surnameView, surnameReact := c.Subcomp("surname", etk.TextArea)
-	surnameContent := etk.BindState(c, "surname/buffer", etk.TextBuffer{}).Get().Content
+	surnameView, surnameReact := c.Subcomp("surname", comps.TextArea)
+	surnameContent := etk.BindState(c, "surname/buffer", comps.TextBuffer{}).Get().Content
 
 	createFn := func() {
 		personsVar.Swap(func(p persons) persons {
