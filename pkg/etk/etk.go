@@ -54,12 +54,11 @@
 package etk
 
 import (
-	"io"
 	"reflect"
 	"slices"
 	"strings"
+	"sync"
 
-	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
@@ -110,11 +109,43 @@ const (
 )
 
 type globalContext struct {
-	state     vals.Map
+	// Used in StateVar, needed for converting Elvish functions to Go functions.
+	fm *eval.Frame
+	// Global states.
+	state vals.Map
+	msgs  []ui.Text
+	// Access to global states is guarded by two mutexes:
+	//
+	// - Each individual state mutation is guarded by stateMutex automatically
+	//   (implemented by StateVar).
+	//
+	// - Each "batch" of access is additionally guarded by batchMutex. A "batch"
+	//   is a refresh, an event handling process, or an implicitly initiated
+	//   batch. Use of batch mutex relies on co-operation.
+	stateMutex sync.RWMutex
+	batchMutex sync.Mutex
+	// A channel for components to request a refresh, typically as a result of
+	// some external asynchronous event. Must be a buffered channel.
 	refreshCh chan struct{}
-	finishCh  chan struct{}
-	fm        *eval.Frame
-	msgs      []ui.Text
+	// A channel that is closed when the event loop finishes. Goroutines spawned
+	// by components should listen on this channel and terminate when it closes.
+	finishCh chan struct{}
+}
+
+func makeGlobalContext(fm *eval.Frame) *globalContext {
+	return &globalContext{
+		state: vals.EmptyMap, fm: fm,
+		refreshCh: make(chan struct{}, 1),
+		finishCh:  make(chan struct{}),
+	}
+}
+
+func (g *globalContext) PopMsgs() []ui.Text {
+	g.stateMutex.Lock()
+	defer g.stateMutex.Unlock()
+	msgs := g.msgs
+	g.msgs = nil
+	return msgs
 }
 
 // Context provides access to the state tree at the current level and all
@@ -126,13 +157,20 @@ type Context struct {
 
 func (c Context) Frame() *eval.Frame { return c.g.fm }
 
+func (c Context) BatchMutex() *sync.Mutex { return &c.g.batchMutex }
+
 func (c Context) descPath(path ...string) []string {
 	return slices.Concat(c.path, path)
 }
 
-func (c Context) Notify(msg ui.Text) {
-	// TODO: concurrency-safety
+func (c Context) AddMsg(msg ui.Text) {
+	c.g.stateMutex.Lock()
+	defer c.g.stateMutex.Unlock()
 	c.g.msgs = append(c.g.msgs, msg)
+}
+
+func (c Context) PopMsgs() []ui.Text {
+	return c.g.PopMsgs()
 }
 
 func (c Context) Refresh() {
@@ -185,18 +223,18 @@ func (c Context) WithBinding(f React) React {
 }
 
 func (c Context) Get(key string) any {
-	return getPath(c.g.state, c.descPath(strings.Split(key, "/")...))
+	return BindState(c, key, any(nil)).getAny()
 }
 
 func (c Context) Set(key string, value any) {
-	c.g.state = assocPath(c.g.state, c.descPath(strings.Split(key, "/")...), value)
+	BindState(c, key, any(nil)).setAny(value)
 }
 
-// State returns a state variable with the given name at the current level,
+// State returns a state variable with the given path from the current level,
 // initializing it to a given value if it doesn't exist yet.
-func State[T any](c Context, name string, initial T) StateVar[T] {
-	sv := BindState[T](c, name, initial)
-	if sv.getRaw() == nil {
+func State[T any](c Context, key string, initial T) StateVar[T] {
+	sv := BindState[T](c, key, initial)
+	if sv.getAny() == nil {
 		sv.Set(initial)
 	}
 	return sv
@@ -208,14 +246,15 @@ func State[T any](c Context, name string, initial T) StateVar[T] {
 // This should only be used if the variable is initialized elsewhere, most
 // typically for accessing the state of a subcomponent after the subcomponent
 // has been called.
-func BindState[T any](c Context, name string, fallback T) StateVar[T] {
-	path := c.descPath(strings.Split(name, "/")...)
-	return StateVar[T]{&c.g.state, c.g.fm, path, fallback}
+func BindState[T any](c Context, key string, fallback T) StateVar[T] {
+	path := c.descPath(strings.Split(key, "/")...)
+	return StateVar[T]{&c.g.state, &c.g.stateMutex, c.g.fm, path, fallback}
 }
 
 // StateVar provides access to a state variable, a node in the state tree.
 type StateVar[T any] struct {
 	state    *vals.Map
+	mutex    *sync.RWMutex
 	fm       *eval.Frame
 	path     []string
 	fallback T
@@ -224,13 +263,29 @@ type StateVar[T any] struct {
 // TODO: Make access concurrency-correct with a pair of mutexes and an epoch
 
 func (sv StateVar[T]) Get() T {
-	raw := sv.getRaw()
+	raw := sv.getAny()
 	val, err := ScanToGo[T](raw, sv.fm)
 	if err == nil {
 		return val
 	}
 	// TODO: Report the error somewhere?
 	return sv.fallback
+}
+
+func (sv StateVar[T]) Set(t T) {
+	sv.setAny(t)
+}
+
+func (sv StateVar[T]) Swap(f func(T) T) {
+	sv.mutex.Lock()
+	defer sv.mutex.Unlock()
+
+	raw := sv.get()
+	val, err := ScanToGo[T](raw, sv.fm)
+	if err != nil {
+		val = sv.fallback
+	}
+	sv.set(f(val))
 }
 
 // A variant of vals.ScanToGo, with additional support for adapting an Elvish
@@ -265,10 +320,20 @@ func ScanToGo[T any](val any, fm *eval.Frame) (T, error) {
 	return zero[T](), err
 }
 
-func (sv StateVar[T]) getRaw() any { return getPath(*sv.state, sv.path) }
+func (sv StateVar[T]) getAny() any {
+	sv.mutex.RLock()
+	defer sv.mutex.RUnlock()
+	return sv.get()
+}
 
-func (sv StateVar[T]) Set(t T)          { *sv.state = assocPath(*sv.state, sv.path, t) }
-func (sv StateVar[T]) Swap(f func(T) T) { sv.Set(f(sv.Get())) }
+func (sv StateVar[T]) setAny(v any) {
+	sv.mutex.Lock()
+	defer sv.mutex.Unlock()
+	sv.set(v)
+}
+
+func (sv StateVar[T]) get() any  { return getPath(*sv.state, sv.path) }
+func (sv StateVar[T]) set(v any) { *sv.state = assocPath(*sv.state, sv.path, v) }
 
 func getPath(m vals.Map, path []string) any {
 	if len(path) == 0 {
@@ -299,60 +364,4 @@ func assocPath(m vals.Map, path []string, newVal any) vals.Map {
 		v = vals.EmptyMap
 	}
 	return m.Assoc(path[0], assocPath(v.(vals.Map), path[1:], newVal))
-}
-
-func Run(tty cli.TTY, fm *eval.Frame, f Comp) (vals.Map, error) {
-	restore, err := tty.Setup()
-	if err != nil {
-		return nil, err
-	}
-	defer restore()
-
-	// Start reading events.
-	eventCh := make(chan term.Event)
-	go func() {
-		for {
-			event, err := tty.ReadEvent()
-			if err != nil {
-				if err == term.ErrStopped {
-					return
-				}
-				// TODO: Report error in notification
-			}
-			eventCh <- event
-		}
-	}()
-	defer tty.CloseReader()
-
-	sc := Stateful(fm, f)
-	defer sc.Finish()
-
-	for {
-		// Render.
-		h, w := tty.Size()
-		buf := sc.Render(w, h)
-		msgBuf := sc.RenderAndPopMsgs(w)
-		tty.UpdateBuffer(msgBuf, buf, false /*true*/)
-
-		select {
-		case event := <-eventCh:
-			reaction := sc.Handle(event)
-			if reaction == Finish || reaction == FinishEOF {
-				h, w := tty.Size()
-				buf := sc.Render(w, h)
-				msgBuf := sc.RenderAndPopMsgs(w)
-				// Render the final view with a trailing newline. This operation
-				// is quite subtle with the term.Buffer API.
-				buf.Extend(term.NewBufferBuilder(w).Buffer(), true)
-				tty.UpdateBuffer(msgBuf, buf, false)
-				if reaction == FinishEOF {
-					return sc.g.state, io.EOF
-				} else {
-					return sc.g.state, nil
-				}
-			}
-		case <-sc.g.refreshCh:
-			sc.Refresh()
-		}
-	}
 }

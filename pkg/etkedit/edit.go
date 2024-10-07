@@ -79,7 +79,7 @@ func (ed *Editor) Comp() etk.Comp {
 						PushAddon(c, etk.WithInit(etk.TextArea, "prompt", ui.T("minibuf> ")))
 					default:
 						if k, ok := ev.(term.KeyEvent); ok {
-							c.Notify(ui.T(fmt.Sprintf("Unbound: %s", ui.Key(k))))
+							c.AddMsg(ui.T(fmt.Sprintf("Unbound: %s", ui.Key(k))))
 						}
 					}
 				}

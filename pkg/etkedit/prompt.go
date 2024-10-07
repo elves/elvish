@@ -31,7 +31,7 @@ var promptMaxBlock = 10 * time.Millisecond
 
 // Call p.Fn and use the result to set key in c.
 //
-//   - If p.Fn returns within [promptMaxBlock], blocks untils it returns and
+//   - If p.Fn returns within [promptMaxBlock], blocks until it returns and
 //     sets key synchronously.
 //   - If p.Fn takes longer than [promptMaxBlock] but shorter than
 //     [p.StaleThreshold], returns after [promptMaxBlock], and sets key

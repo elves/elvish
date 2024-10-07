@@ -106,6 +106,7 @@ func makeBindingMap(raw vals.Map) (bindingsMap, error) {
 	return bindingsMap{converted}, nil
 }
 
+/*
 type bindingTipEntry struct {
 	text    string
 	fnNames []string
@@ -164,6 +165,7 @@ func keysBoundTo(m bindingsMap, values []any) []ui.Key {
 	}
 	return keys
 }
+*/
 
 var errMustBeKeyOrString = errors.New("must be key or string")
 
