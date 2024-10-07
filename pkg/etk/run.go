@@ -44,7 +44,7 @@ func Run(tty cli.TTY, fm *eval.Frame, f Comp) (vals.Map, error) {
 
 		select {
 		case event := <-eventCh:
-			reaction := sc.Handle(event)
+			reaction := sc.React(event)
 			if reaction == Finish || reaction == FinishEOF {
 				h, w := tty.Size()
 				buf := sc.Render(w, h)
@@ -83,7 +83,7 @@ func (sc *StatefulComp) Render(width, height int) *term.Buffer {
 	return sc.view.Render(width, height)
 }
 
-func (sc *StatefulComp) Handle(event term.Event) Reaction {
+func (sc *StatefulComp) React(event term.Event) Reaction {
 	reaction := sc.callReact(event)
 	sc.Refresh()
 	return reaction

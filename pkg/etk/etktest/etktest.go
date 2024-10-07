@@ -68,7 +68,7 @@ func Setup(t *testing.T, ev *eval.Evaler, f etk.Comp) {
 			}
 			for _, ev := range events {
 				sc.RefreshIfRequested()
-				reaction := sc.Handle(ev)
+				reaction := sc.React(ev)
 				if opts.ShowReaction {
 					fmt.Fprintln(fm.ByteOutput(), reaction)
 				}
