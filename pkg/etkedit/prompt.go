@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"src.elv.sh/pkg/etk"
+	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -40,29 +41,25 @@ var promptMaxBlock = 10 * time.Millisecond
 //     [promptMaxBlock], transforms the previous prompt value using
 //     [p.StaleTransformer] after [p.StaleThreshold], and sets key asynchronously
 //     when [p.Fn] returns.
-func callPrompt(c etk.Context, key string, p promptCfg, buf string) {
-	var keyChanged bool
-	etk.BindState(c, key+"-key", promptKey{}).Swap(
-		func(oldKey promptKey) promptKey {
-			key := promptKey{Fn: fmt.Sprintf("%p", p.Fn), Eagerness: p.Eagerness}
-			if p.Eagerness >= 5 {
-				var err error
-				key.Wd, err = os.Getwd()
-				if err != nil {
-					key.Wd = "error"
-				}
-			}
-			if p.Eagerness >= 10 {
-				key.Buffer = buf
-			}
-			keyChanged = oldKey != key
-			return key
-		})
-	if !keyChanged {
+func callPrompt(c etk.Context, path string, p promptCfg, bufVar etk.StateVar[comps.TextBuffer]) {
+	key := promptKey{Fn: fmt.Sprintf("%p", p.Fn), Eagerness: p.Eagerness}
+	if p.Eagerness >= 5 {
+		var err error
+		key.Wd, err = os.Getwd()
+		if err != nil {
+			key.Wd = "error"
+		}
+	}
+	if p.Eagerness >= 10 {
+		key.Buffer = bufVar.Get().Content
+	}
+	keyVar := etk.BindState(c, path+"-key", promptKey{})
+	if keyVar.Get() == key {
 		return
 	}
+	keyVar.Set(key)
 
-	promptVar := etk.BindState(c, key, ui.Text(nil))
+	promptVar := etk.BindState(c, path, ui.Text(nil))
 
 	promptCh, ready := withTimeout(promptMaxBlock, p.Fn)
 	if ready {
@@ -73,19 +70,28 @@ func callPrompt(c etk.Context, key string, p promptCfg, buf string) {
 		staleThreshold := time.Duration(p.StaleThreshold * float64(time.Second))
 		select {
 		case prompt := <-promptCh:
-			// TODO: Check epoch
-			promptVar.Set(prompt)
-			c.Refresh()
-		case <-time.After(staleThreshold - promptMaxBlock):
-			// TODO: Check epoch
-			promptVar.Swap(func(t ui.Text) ui.Text {
-				return p.StaleTransformer(t)
+			if keyVar.Get() != key {
+				return
+			}
+			c.UpdateAsync(func() {
+				promptVar.Set(prompt)
 			})
-			c.Refresh()
+		case <-time.After(staleThreshold - promptMaxBlock):
+			if keyVar.Get() != key {
+				return
+			}
+			c.UpdateAsync(func() {
+				promptVar.Swap(func(t ui.Text) ui.Text {
+					return p.StaleTransformer(t)
+				})
+			})
 			prompt := <-promptCh
-			// TODO: Check epoch
-			promptVar.Set(prompt)
-			c.Refresh()
+			if keyVar.Get() != key {
+				return
+			}
+			c.UpdateAsync(func() {
+				promptVar.Set(prompt)
+			})
 		}
 	}()
 }

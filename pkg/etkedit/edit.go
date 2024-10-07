@@ -101,9 +101,9 @@ func (ed *Editor) Comp() etk.Comp {
 			ed.mutex.RLock()
 			defer ed.mutex.RUnlock()
 
-			bufferContent := etk.BindState(c, "code/buffer", comps.TextBuffer{}).Get().Content
-			callPrompt(c, "code/prompt", ed.prompt, bufferContent)
-			callPrompt(c, "code/rprompt", ed.rprompt, bufferContent)
+			bufferVar := etk.BindState(c, "code/buffer", comps.TextBuffer{})
+			callPrompt(c, "code/prompt", ed.prompt, bufferVar)
+			callPrompt(c, "code/rprompt", ed.rprompt, bufferVar)
 			// These live in the WithBefore rather than WithInit, because we
 			// want mutations to the edit binding variables (made via keybinding
 			// or minibuf) to be reflected in the same event loop.

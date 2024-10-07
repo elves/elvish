@@ -158,7 +158,14 @@ type Context struct {
 
 func (c Context) Frame() *eval.Frame { return c.g.fm }
 
-func (c Context) BatchMutex() *sync.Mutex { return &c.g.batchMutex }
+func (c Context) UpdateAsync(f func()) {
+	func() {
+		c.g.batchMutex.Lock()
+		defer c.g.batchMutex.Unlock()
+		f()
+	}()
+	c.Refresh()
+}
 
 func (c Context) descPath(path ...string) []string {
 	return slices.Concat(c.path, path)

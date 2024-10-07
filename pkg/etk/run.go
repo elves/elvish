@@ -84,15 +84,13 @@ func (sc *StatefulComp) Render(width, height int) *term.Buffer {
 }
 
 func (sc *StatefulComp) React(event term.Event) Reaction {
-	reaction := sc.callReact(event)
+	reaction := func() Reaction {
+		sc.g.batchMutex.Lock()
+		defer sc.g.batchMutex.Unlock()
+		return sc.react(event)
+	}()
 	sc.Refresh()
 	return reaction
-}
-
-func (sc *StatefulComp) callReact(event term.Event) Reaction {
-	sc.g.batchMutex.Lock()
-	defer sc.g.batchMutex.Unlock()
-	return sc.react(event)
 }
 
 func (sc *StatefulComp) Refresh() {
