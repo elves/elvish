@@ -63,6 +63,8 @@
 //////////////
 # prompt API #
 //////////////
+// Breaks on Windows for some reason.
+//only-on unix
 
 ~> set edit:prompt = { styled '>>> ' bold }
    refresh
