@@ -5,6 +5,7 @@ import (
 
 	"src.elv.sh/pkg/etk"
 	"src.elv.sh/pkg/etk/comps"
+	"src.elv.sh/pkg/eval/vals"
 )
 
 var errEditorNotActive = errors.New("editor is not active")
@@ -32,6 +33,45 @@ func (ed *Editor) codeBufferBuiltins() map[string]any {
 		})
 	}
 	return m
+}
+
+type bufferVar[T any] struct {
+	ed  *Editor
+	get func(comps.TextBuffer) T
+	set func(comps.TextBuffer, T) comps.TextBuffer
+}
+
+func (bv bufferVar[T]) Get() any {
+	bufferVar, ok := getBufferVar(bv.ed)
+	if !ok {
+		var zero T
+		return zero
+	}
+	return bv.get(bufferVar.Get())
+}
+
+func (bv bufferVar[T]) Set(anyVal any) error {
+	bufferVar, ok := getBufferVar(bv.ed)
+	if !ok {
+		return errEditorNotActive
+	}
+	var val T
+	err := vals.ScanToGo(anyVal, &val)
+	if err != nil {
+		return err
+	}
+	bufferVar.Swap(func(buf comps.TextBuffer) comps.TextBuffer {
+		return bv.set(buf, val)
+	})
+	return nil
+}
+
+func getBufferVar(ed *Editor) (etk.StateVar[comps.TextBuffer], bool) {
+	ctxPtr := getField(ed, &ed.etkCtx)
+	if ctxPtr == nil {
+		return etk.StateVar[comps.TextBuffer]{}, false
+	}
+	return etk.BindState(*ctxPtr, "code/buffer", comps.TextBuffer{}), true
 }
 
 /*

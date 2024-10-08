@@ -95,7 +95,22 @@ func (ed *Editor) Ns() *eval.Ns {
 			"command-abbr":    makeEditVar(ed, &ed.commandAbbr),
 			"small-word-abbr": makeEditVar(ed, &ed.smallWordAbbr),
 
-			"command-duration": vars.FromInit(1.0),
+			"command-duration": vars.FromInit(0.0),
+
+			"-dot": bufferVar[int]{
+				ed,
+				func(buf comps.TextBuffer) int { return buf.Dot },
+				func(buf comps.TextBuffer, dot int) comps.TextBuffer {
+					return comps.TextBuffer{Content: buf.Content, Dot: dot}
+				},
+			},
+			"current-command": bufferVar[string]{
+				ed,
+				func(buf comps.TextBuffer) string { return buf.Content },
+				func(_ comps.TextBuffer, content string) comps.TextBuffer {
+					return comps.TextBuffer{Content: content, Dot: len(content)}
+				},
+			},
 		}).
 		AddNs("insert", eval.BuildNsNamed("edit:insert").
 			AddVar("binding", makeEditVar(ed, &ed.insertBinding))).
