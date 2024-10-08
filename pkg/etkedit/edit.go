@@ -12,6 +12,7 @@ import (
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/fsutil"
+	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -20,10 +21,20 @@ type Editor struct {
 
 	mutex sync.RWMutex
 
-	maxHeight                              int
-	prompt, rprompt                        promptCfg
-	simpleAbbr, commandAbbr, smallWordAbbr vals.Map
-	insertBinding                          bindingsMap
+	afterCommand   vals.List
+	beforeReadline vals.List
+	afterReadline  vals.List
+
+	maxHeight int
+
+	prompt  promptCfg
+	rprompt promptCfg
+
+	simpleAbbr    vals.Map
+	commandAbbr   vals.Map
+	smallWordAbbr vals.Map
+
+	insertBinding bindingsMap
 }
 
 var (
@@ -35,10 +46,21 @@ var (
 
 func NewEditor(ev *eval.Evaler) *Editor {
 	return &Editor{
-		ev:         ev,
-		prompt:     makeDefaultPromptCfg(func() ui.Text { return defaultPromptFn() }),
-		rprompt:    makeDefaultPromptCfg(func() ui.Text { return defaultRPromptFn() }),
-		simpleAbbr: vals.EmptyMap, commandAbbr: vals.EmptyMap, smallWordAbbr: vals.EmptyMap,
+		ev: ev,
+
+		afterCommand:   vals.EmptyList,
+		beforeReadline: vals.EmptyList,
+		afterReadline:  vals.EmptyList,
+
+		maxHeight: 0,
+
+		prompt:  makeDefaultPromptCfg(func() ui.Text { return defaultPromptFn() }),
+		rprompt: makeDefaultPromptCfg(func() ui.Text { return defaultRPromptFn() }),
+
+		simpleAbbr:    vals.EmptyMap,
+		commandAbbr:   vals.EmptyMap,
+		smallWordAbbr: vals.EmptyMap,
+
 		insertBinding: emptyBindingsMap,
 	}
 }
@@ -50,6 +72,10 @@ func (ed *Editor) Ns() *eval.Ns {
 			"key":           toKey,
 		}).
 		AddVars(map[string]vars.Var{
+			"after-command":   makeEditVar(ed, &ed.afterCommand),
+			"before-readline": makeEditVar(ed, &ed.beforeReadline),
+			"after-readline":  makeEditVar(ed, &ed.afterReadline),
+
 			"max-height": makeEditVar(ed, &ed.maxHeight),
 
 			"prompt":                   makeEditVar(ed, &ed.prompt.Fn),
@@ -65,6 +91,8 @@ func (ed *Editor) Ns() *eval.Ns {
 			"abbr":            makeEditVar(ed, &ed.simpleAbbr),
 			"command-abbr":    makeEditVar(ed, &ed.commandAbbr),
 			"small-word-abbr": makeEditVar(ed, &ed.smallWordAbbr),
+
+			"command-duration": vars.FromInit(1.0),
 		}).
 		AddNs("insert", eval.BuildNsNamed("edit:insert").
 			AddVar("binding", makeEditVar(ed, &ed.insertBinding))).
@@ -117,6 +145,7 @@ func (ed *Editor) Comp() etk.Comp {
 }
 
 func (ed *Editor) ReadCode(tty cli.TTY) (string, error) {
+	ed.callHook("$edit:before-readline", &ed.beforeReadline)
 	tty.ResetBuffer() // TODO: This was easy to miss
 	m, err := etk.Run(ed.Comp(), etk.RunCfg{
 		TTY: tty, Frame: ed.ev.CallFrame("edit"), MaxHeight: ed.maxHeight,
@@ -127,7 +156,25 @@ func (ed *Editor) ReadCode(tty cli.TTY) (string, error) {
 	// TODO: Multi-level indexing should be easier
 	codeArea, _ := m.Index("code")
 	buf, _ := codeArea.(vals.Map).Index("buffer")
-	return buf.(comps.TextBuffer).Content, nil
+	code := buf.(comps.TextBuffer).Content
+	ed.callHook("$edit:after-readline", &ed.afterReadline, code)
+	return code, nil
+}
+
+func (ed *Editor) RunAfterCommandHooks(src parse.Source, duration float64, err error) {
+	ed.callHook("$edit:after-command", &ed.afterCommand,
+		vals.MakeMap("src", src, "duration", duration, "error", err))
+}
+
+func (ed *Editor) callHook(name string, hookPtr *vals.List, args ...any) {
+	// TODO: Don't use eval.CallHook.
+	eval.CallHook(ed.ev, nil, name, getField(ed, hookPtr), args...)
+}
+
+func getField[T any](ed *Editor, fieldPtr *T) T {
+	ed.mutex.RLock()
+	defer ed.mutex.RUnlock()
+	return *fieldPtr
 }
 
 // Creates an editVar. This has to be a function because methods can't be
