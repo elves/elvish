@@ -14,6 +14,7 @@ type RunCfg struct {
 	Frame     *eval.Frame
 	MaxHeight int
 	Justify   Justify
+	ContextFn func(Context)
 }
 
 type Justify uint8
@@ -51,6 +52,10 @@ func Run(f Comp, cfg RunCfg) (vals.Map, error) {
 
 	sc := Stateful(fm, f)
 	defer sc.Finish()
+
+	if cfg.ContextFn != nil {
+		cfg.ContextFn(Context{sc.g, nil})
+	}
 
 	for {
 		// Render.

@@ -21,6 +21,8 @@ type Editor struct {
 
 	mutex sync.RWMutex
 
+	etkCtx *etk.Context
+
 	afterCommand   vals.List
 	beforeReadline vals.List
 	afterReadline  vals.List
@@ -71,6 +73,7 @@ func (ed *Editor) Ns() *eval.Ns {
 			"binding-table": makeBindingMap,
 			"key":           toKey,
 		}).
+		AddGoFns(ed.codeBufferBuiltins()).
 		AddVars(map[string]vars.Var{
 			"after-command":   makeEditVar(ed, &ed.afterCommand),
 			"before-readline": makeEditVar(ed, &ed.beforeReadline),
@@ -122,7 +125,19 @@ func (ed *Editor) Comp() etk.Comp {
 				if reaction == etk.Unused {
 					switch ev {
 					case term.K('D', ui.Ctrl):
+						// TODO: Move this to binding map too
 						return etk.FinishEOF
+					default:
+						if keyEvent, ok := ev.(term.KeyEvent); ok {
+							key := ui.Key(keyEvent)
+							bm := getField(ed, &ed.insertBinding)
+							if bm.HasKey(key) {
+								fn := bm.GetKey(key)
+								// TODO: Not sure if correct way to call
+								ed.ev.Call(fn, eval.CallCfg{}, eval.EvalCfg{})
+								return etk.Consumed
+							}
+						}
 					}
 				}
 				return reaction
@@ -149,7 +164,11 @@ func (ed *Editor) ReadCode(tty cli.TTY) (string, error) {
 	tty.ResetBuffer() // TODO: This was easy to miss
 	m, err := etk.Run(ed.Comp(), etk.RunCfg{
 		TTY: tty, Frame: ed.ev.CallFrame("edit"), MaxHeight: ed.maxHeight,
+		ContextFn: func(c etk.Context) {
+			setField(ed, &ed.etkCtx, &c)
+		},
 	})
+	setField(ed, &ed.etkCtx, nil)
 	if err != nil {
 		return "", err
 	}
@@ -175,6 +194,12 @@ func getField[T any](ed *Editor, fieldPtr *T) T {
 	ed.mutex.RLock()
 	defer ed.mutex.RUnlock()
 	return *fieldPtr
+}
+
+func setField[T any](ed *Editor, fieldPtr *T, value T) {
+	ed.mutex.Lock()
+	defer ed.mutex.Unlock()
+	*fieldPtr = value
 }
 
 // Creates an editVar. This has to be a function because methods can't be
