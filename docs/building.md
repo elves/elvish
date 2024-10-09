@@ -58,7 +58,7 @@ go install ./cmd/elvish
 There is no need to specify a version like `@master`; when inside a source tree,
 `go install` will always use the whatever source code is present.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more notes for contributors.
+See [contributing.md](contributing.md) for more notes for contributors.
 
 ## Building with experimental plugin support
 
