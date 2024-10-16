@@ -144,12 +144,12 @@ func (w *writer) UpdateBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 		// No need to update current line
 		if !fullRefresh && i < len(w.curBuf.Lines) {
 			var eq bool
-			if eq, j = CompareCells(line, w.curBuf.Lines[i]); eq {
+			if eq, j = compareCells(line, w.curBuf.Lines[i]); eq {
 				continue
 			}
 		}
 		// Move to the first differing column if necessary.
-		firstCol := CellsWidth(line[:j])
+		firstCol := cellsWidth(line[:j])
 		if firstCol != 0 {
 			fmt.Fprintf(bytesBuf, "\033[%dC", firstCol)
 		}
@@ -169,7 +169,7 @@ func (w *writer) UpdateBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 		bytesBuf.WriteString("\n\033[J\033[A")
 	}
 	switchStyle("")
-	cursor := buf.Cursor()
+	cursor := endPos(buf)
 	bytesBuf.Write(deltaPos(cursor, buf.Dot))
 
 	// Show cursor.

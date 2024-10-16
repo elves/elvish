@@ -75,7 +75,7 @@ func (w *textView) Render(width, height int) *term.Buffer {
 	if needScrollbar {
 		scrollbar := VScrollbar{
 			Total: len(lines), Low: first, High: first + height}
-		buf.ExtendRight(scrollbar.Render(1, height))
+		buf.ExtendRight(scrollbar.Render(1, height), false)
 	}
 	return buf
 }

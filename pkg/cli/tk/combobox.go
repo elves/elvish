@@ -60,7 +60,7 @@ func (w *comboBox) Render(width, height int) *term.Buffer {
 	}
 	buf := w.codeArea.Render(width, height-1)
 	bufListBox := w.listBox.Render(width, height-len(buf.Lines))
-	buf.Extend(bufListBox, false)
+	buf.ExtendDown(bufListBox, false)
 	return buf
 }
 

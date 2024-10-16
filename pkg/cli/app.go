@@ -273,8 +273,9 @@ func (a *app) redraw(flag redrawFlag) {
 			s.HideTips = false
 			s.HideRPrompt = false
 		})
-		// Insert a newline after the buffer and position the cursor there.
-		bufMain.Extend(term.NewBuffer(width), true)
+		// Insert a newline after the buffer and position the cursor there. Do
+		// this with a Buffer that has one empty line.
+		bufMain.ExtendDown(&term.Buffer{Lines: [][]term.Cell{nil}}, true)
 
 		a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 		a.TTY.ResetBuffer()
@@ -312,7 +313,7 @@ func renderApp(widgets []tk.Widget, width, height int) *term.Buffer {
 		if buf == nil {
 			buf = buf2
 		} else {
-			buf.Extend(buf2, i == focus)
+			buf.ExtendDown(buf2, i == focus)
 		}
 	}
 	return buf

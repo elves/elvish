@@ -129,7 +129,7 @@ func (w *listBox) renderHorizontal(width, height int) *term.Buffer {
 	items, selected, first := state.Items, state.Selected, state.First
 	n := items.Len()
 
-	buf := term.NewBuffer(0)
+	buf := &term.Buffer{}
 	remainedWidth := width
 	hasCropped := false
 	last := first
@@ -156,7 +156,7 @@ func (w *listBox) renderHorizontal(width, height int) *term.Buffer {
 			lines: col, padding: w.Padding,
 			selectFrom: selectedRow, selectTo: selectedRow + 1,
 			extendStyle: w.ExtendStyle}.Render(colWidth, colHeight)
-		buf.ExtendRight(colBuf)
+		buf.ExtendRight(colBuf, false)
 
 		remainedWidth -= colWidth
 		if remainedWidth <= listBoxColGap {
@@ -169,7 +169,7 @@ func (w *listBox) renderHorizontal(width, height int) *term.Buffer {
 	buf.Width = width
 	if colHeight < height && (first != 0 || last != n-1 || hasCropped) {
 		scrollbar := HScrollbar{Total: n, Low: first, High: last + 1}
-		buf.Extend(scrollbar.Render(width, 1), false)
+		buf.ExtendDown(scrollbar.Render(width, 1), false)
 	}
 	return buf
 }

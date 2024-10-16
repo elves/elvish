@@ -50,7 +50,7 @@ func (w *instant) render(width, height int) *term.Buffer {
 	buf := bb.Buffer()
 	if len(buf.Lines) < height {
 		bufTextView := w.textView.Render(width, height-len(buf.Lines))
-		buf.Extend(bufTextView, false)
+		buf.ExtendDown(bufTextView, false)
 	}
 	return buf
 }

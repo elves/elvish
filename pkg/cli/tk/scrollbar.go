@@ -14,7 +14,7 @@ type VScrollbarContainer struct {
 
 func (v VScrollbarContainer) Render(width, height int) *term.Buffer {
 	buf := v.Content.Render(width-1, height)
-	buf.ExtendRight(v.Scrollbar.Render(1, height))
+	buf.ExtendRight(v.Scrollbar.Render(1, height), false)
 	return buf
 }
 
