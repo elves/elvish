@@ -86,12 +86,6 @@ func (f *Fixture) TestTTY(t *testing.T, args ...any) {
 	f.TTY.TestBuffer(t, f.MakeBuffer(args...))
 }
 
-// TestTTYNotes is equivalent to f.TTY.TestNotesBuffer(f.MakeBuffer(args...)).
-func (f *Fixture) TestTTYNotes(t *testing.T, args ...any) {
-	t.Helper()
-	f.TTY.TestNotesBuffer(t, f.MakeBuffer(args...))
-}
-
 // StartReadCode starts the readCode function asynchronously, and returns two
 // channels that deliver its return values. The two channels are closed after
 // return values are delivered, so that subsequent reads will return zero values

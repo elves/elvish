@@ -10,6 +10,7 @@ import (
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/ui"
 )
 
 const (
@@ -31,9 +32,13 @@ type fakeTTY struct {
 	// Mutex for synchronizing writing and closing eventCh.
 	eventChMutex sync.Mutex
 	// Channel for publishing updates of the main buffer and notes buffer.
-	bufCh, notesBufCh chan *term.Buffer
+	bufCh chan *term.Buffer
+	// Channel for publishing updates of the message text.
+	msgCh chan ui.Text
 	// Records history of the main buffer and notes buffer.
-	bufs, notesBufs []*term.Buffer
+	bufs []*term.Buffer
+	// Records history of the message text.
+	msgs []ui.Text
 	// Mutexes for guarding bufs and notesBufs.
 	bufMutex sync.RWMutex
 	// Channel that NotifySignals returns. Can be used to inject signals.
@@ -59,11 +64,11 @@ const (
 // size of the terminal is FakeTTYHeight and FakeTTYWidth.
 func NewFakeTTY() (cli.TTY, TTYCtrl) {
 	tty := &fakeTTY{
-		eventCh:    make(chan term.Event, fakeTTYEvents),
-		sigCh:      make(chan os.Signal, fakeTTYSignals),
-		bufCh:      make(chan *term.Buffer, fakeTTYBufferUpdates),
-		notesBufCh: make(chan *term.Buffer, fakeTTYBufferUpdates),
-		height:     FakeTTYHeight, width: FakeTTYWidth,
+		eventCh: make(chan term.Event, fakeTTYEvents),
+		sigCh:   make(chan os.Signal, fakeTTYSignals),
+		bufCh:   make(chan *term.Buffer, fakeTTYBufferUpdates),
+		msgCh:   make(chan ui.Text, fakeTTYBufferUpdates),
+		height:  FakeTTYHeight, width: FakeTTYWidth,
 	}
 	return tty, TTYCtrl{tty}
 }
@@ -118,10 +123,10 @@ func (t *fakeTTY) ResetBuffer() {
 
 // UpdateBuffer records a new pair of buffers, i.e. sending them to their
 // respective channels and appending them to their respective slices.
-func (t *fakeTTY) UpdateBuffer(bufNotes, buf *term.Buffer, _ bool) error {
+func (t *fakeTTY) UpdateBuffer(msg ui.Text, buf *term.Buffer, _ bool) error {
 	t.bufMutex.Lock()
 	defer t.bufMutex.Unlock()
-	t.recordNotesBuf(bufNotes)
+	t.recordMsg(msg)
 	t.recordBuf(buf)
 	return nil
 }
@@ -145,9 +150,9 @@ func (t *fakeTTY) recordBuf(buf *term.Buffer) {
 	t.bufCh <- buf
 }
 
-func (t *fakeTTY) recordNotesBuf(buf *term.Buffer) {
-	t.notesBufs = append(t.notesBufs, buf)
-	t.notesBufCh <- buf
+func (t *fakeTTY) recordMsg(msg ui.Text) {
+	t.msgs = append(t.msgs, msg)
+	t.msgCh <- msg
 }
 
 // TTYCtrl is an interface for controlling a fake terminal.
@@ -238,21 +243,21 @@ func (t TTYCtrl) TestBuffer(tt *testing.T, b *term.Buffer) {
 	}
 }
 
-// TestNotesBuffer verifies that a notes buffer will appear within 100ms, and
-// aborts the test if it doesn't.
-func (t TTYCtrl) TestNotesBuffer(tt *testing.T, b *term.Buffer) {
+// TestNotesBuffer verifies that a message will appear within 100ms, and aborts
+// the test if it doesn't.
+func (t TTYCtrl) TestMsg(tt *testing.T, m ui.Text) {
 	tt.Helper()
-	ok := testBuffer(b, t.notesBufCh)
+	ok := testBuffer(m, t.msgCh)
 	if !ok {
-		tt.Logf("wanted notes buffer not shown:\n%s", b.TTYString())
+		tt.Logf("wanted notes buffer not shown:\n%s", m.VTString())
 
 		t.bufMutex.RLock()
 		defer t.bufMutex.RUnlock()
-		bufs := t.NotesBufferHistory()
-		tt.Logf("There has been %d notes buffers. None-nil ones are:", len(bufs))
+		bufs := t.MsgHistory()
+		tt.Logf("There has been %d messages. Non-nil ones are:", len(bufs))
 		for i, buf := range bufs {
 			if buf != nil {
-				tt.Logf("#%d:\n%s", i, buf.TTYString())
+				tt.Logf("#%d:\n%s", i, buf.VTString())
 			}
 		}
 		tt.FailNow()
@@ -277,23 +282,23 @@ func (t TTYCtrl) LastBuffer() *term.Buffer {
 }
 
 // NotesBufferHistory returns a slice of all notes buffers that have appeared.
-func (t TTYCtrl) NotesBufferHistory() []*term.Buffer {
+func (t TTYCtrl) MsgHistory() []ui.Text {
 	t.bufMutex.RLock()
 	defer t.bufMutex.RUnlock()
-	return t.notesBufs
+	return t.msgs
 }
 
-func (t TTYCtrl) LastNotesBuffer() *term.Buffer {
+func (t TTYCtrl) LastMsg() ui.Text {
 	t.bufMutex.RLock()
 	defer t.bufMutex.RUnlock()
-	if len(t.notesBufs) == 0 {
+	if len(t.msgs) == 0 {
 		return nil
 	}
-	return t.notesBufs[len(t.notesBufs)-1]
+	return t.msgs[len(t.msgs)-1]
 }
 
-// Tests that an buffer appears on the channel within 100ms.
-func testBuffer(want *term.Buffer, ch <-chan *term.Buffer) bool {
+// Tests that a value appears on the channel within 100ms (scaled).
+func testBuffer[T any](want T, ch <-chan T) bool {
 	timeout := time.After(testutil.Scaled(100 * time.Millisecond))
 	for {
 		select {

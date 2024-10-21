@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+
+	"src.elv.sh/pkg/ui"
 )
 
 var logWriterDetail = false
@@ -15,7 +17,7 @@ type Writer interface {
 	// ResetBuffer resets the current buffer.
 	ResetBuffer()
 	// UpdateBuffer updates the terminal display to reflect current buffer.
-	UpdateBuffer(bufNoti, buf *Buffer, fullRefresh bool) error
+	UpdateBuffer(msg ui.Text, buf *Buffer, fullRefresh bool) error
 	// ClearScreen clears the terminal screen and places the cursor at the top
 	// left corner.
 	ClearScreen()
@@ -69,33 +71,44 @@ const (
 )
 
 // UpdateBuffer updates the terminal display to reflect current buffer.
-func (w *writer) UpdateBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
-	if buf.Width != w.curBuf.Width && w.curBuf.Lines != nil {
-		// Width change, force full refresh
-		w.curBuf.Lines = nil
+func (w *writer) UpdateBuffer(msg ui.Text, buf *Buffer, fullRefresh bool) error {
+	if (buf.Width != w.curBuf.Width && w.curBuf.Lines != nil) || msg != nil {
+		// If the width has changed or we have any message to write, we can't do
+		// delta rendering meaningfully, so force a full refresh.
 		fullRefresh = true
 	}
 
-	bytesBuf := new(bytes.Buffer)
+	// Store all the output write in a buffer, so that we only write to the
+	// terminal once.
+	output := new(bytes.Buffer)
 
-	bytesBuf.WriteString(hideCursor)
+	// Hide cursor at the beginning to minimize flickering.
+	output.WriteString(hideCursor)
 
-	// Rewind cursor
+	// Rewind cursor.
 	if pLine := w.curBuf.Dot.Line; pLine > 0 {
-		fmt.Fprintf(bytesBuf, "\033[%dA", pLine)
+		fmt.Fprintf(output, "\033[%dA", pLine)
 	}
-	bytesBuf.WriteString("\r")
+	output.WriteString("\r")
 
 	if fullRefresh {
-		// Erase from here. We may be in the top right corner of the screen; if
-		// we simply do an erase here, tmux will save the current screen in the
-		// scrollback buffer (presumably as a heuristics to detect full-screen
-		// applications), but that is not something we want. So we write a space
-		// first, and then erase, before rewinding back.
+		// Erase from here. We may be in the top left corner of the screen; if
+		// we simply do an erase here, tmux (and possibly other terminal
+		// emulators) will save the current screen in the scrollback buffer,
+		// presumably as a heuristic to detect full-screen applications, but
+		// that is not something we want.
+		//
+		// To defeat tmux's heuristic, we write a space, erase, and then rewind.
 		//
 		// Source code for tmux behavior:
 		// https://github.com/tmux/tmux/blob/5f5f029e3b3a782dc616778739b2801b00b17c0e/screen-write.c#L1139
-		bytesBuf.WriteString(" \033[J\r")
+		output.WriteString(" \033[J\r")
+	}
+
+	if msg != nil {
+		// Write the message with the terminal's line wrapping enabled, for
+		// easier copy-pasting by the user.
+		output.WriteString("\033[?7h" + msg.VTString() + "\n\033[?7l")
 	}
 
 	// style of last written cell.
@@ -103,7 +116,7 @@ func (w *writer) UpdateBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 
 	switchStyle := func(newstyle string) {
 		if newstyle != style {
-			fmt.Fprintf(bytesBuf, "\033[0;%sm", newstyle)
+			fmt.Fprintf(output, "\033[0;%sm", newstyle)
 			style = newstyle
 		}
 	}
@@ -111,24 +124,7 @@ func (w *writer) UpdateBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 	writeCells := func(cs []Cell) {
 		for _, c := range cs {
 			switchStyle(c.Style)
-			bytesBuf.WriteString(c.Text)
-		}
-	}
-
-	if bufNoti != nil {
-		if logWriterDetail {
-			logger.Printf("going to write %d lines of notifications", len(bufNoti.Lines))
-		}
-
-		// Write notifications
-		for _, line := range bufNoti.Lines {
-			writeCells(line)
-			switchStyle("")
-			bytesBuf.WriteString("\033[K\n")
-		}
-		// TODO(xiaq): This is hacky; try to improve it.
-		if len(w.curBuf.Lines) > 0 {
-			w.curBuf.Lines = w.curBuf.Lines[1:]
+			output.WriteString(c.Text)
 		}
 	}
 
@@ -138,48 +134,59 @@ func (w *writer) UpdateBuffer(bufNoti, buf *Buffer, fullRefresh bool) error {
 
 	for i, line := range buf.Lines {
 		if i > 0 {
-			bytesBuf.WriteString("\n")
+			// Move cursor down one line and to the leftmost column. Shorter
+			// than "\033[B\r".
+			output.WriteString("\n")
 		}
-		var j int // First column where buf and oldBuf differ
-		// No need to update current line
-		if !fullRefresh && i < len(w.curBuf.Lines) {
-			var eq bool
-			if eq, j = compareCells(line, w.curBuf.Lines[i]); eq {
-				continue
-			}
+		if fullRefresh || i >= len(w.curBuf.Lines) {
+			// When doing a full refresh or writing new lines, we have an empty
+			// canvas to work with, so just write the current line.
+			writeCells(line)
+			continue
 		}
-		// Move to the first differing column if necessary.
-		firstCol := cellsWidth(line[:j])
-		if firstCol != 0 {
-			fmt.Fprintf(bytesBuf, "\033[%dC", firstCol)
+		// Delta update below.
+		eq, j := compareCells(line, w.curBuf.Lines[i])
+		if eq {
+			// This line hasn't changed
+			continue
 		}
-		// Erase the rest of the line if necessary.
-		if !fullRefresh && i < len(w.curBuf.Lines) && j < len(w.curBuf.Lines[i]) {
+		// This line has changed, and j is the first differing cell. Move to its
+		// corresponding column.
+		if firstCol := cellsWidth(line[:j]); firstCol != 0 {
+			fmt.Fprintf(output, "\033[%dC", firstCol)
+		}
+		// Erase the rest of the line; this is not necessary if the old version
+		// of the line is a prefix of the current version of the line.
+		if j < len(w.curBuf.Lines[i]) {
 			switchStyle("")
-			bytesBuf.WriteString("\033[K")
+			output.WriteString("\033[K")
 		}
+		// Now write the new content.
 		writeCells(line[j:])
 	}
-	if len(w.curBuf.Lines) > len(buf.Lines) && !fullRefresh {
+	if !fullRefresh && len(w.curBuf.Lines) > len(buf.Lines) {
 		// If the old buffer is higher, erase old content.
+		//
 		// Note that we cannot simply write \033[J, because if the cursor is
 		// just over the last column -- which is precisely the case if we have a
-		// rprompt, \033[J will also erase the last column.
+		// rprompt, \033[J will also erase the last column. Since the old buffer
+		// is higher, we know that the \n we write won't create a bogus new
+		// line.
 		switchStyle("")
-		bytesBuf.WriteString("\n\033[J\033[A")
+		output.WriteString("\n\033[J\033[A")
 	}
 	switchStyle("")
 	cursor := endPos(buf)
-	bytesBuf.Write(deltaPos(cursor, buf.Dot))
+	output.Write(deltaPos(cursor, buf.Dot))
 
 	// Show cursor.
-	bytesBuf.WriteString(showCursor)
+	output.WriteString(showCursor)
 
 	if logWriterDetail {
-		logger.Printf("going to write %q", bytesBuf.String())
+		logger.Printf("going to write %q", output.String())
 	}
 
-	_, err := w.file.Write(bytesBuf.Bytes())
+	_, err := w.file.Write(output.Bytes())
 	if err != nil {
 		return err
 	}

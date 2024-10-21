@@ -80,9 +80,7 @@ func TestHistWalk_NoWalker(t *testing.T) {
 	defer f.Stop()
 
 	startHistwalk(f.App, HistwalkSpec{})
-	f.TestTTYNotes(t,
-		"error: no history store", Styles,
-		"!!!!!!")
+	f.TTY.TestMsg(t, ui.Concat(ui.T("error:", ui.FgRed), ui.T(" no history store")))
 }
 
 func TestHistWalk_NoMatch(t *testing.T) {
@@ -99,9 +97,7 @@ func TestHistWalk_NoMatch(t *testing.T) {
 	cfg := HistwalkSpec{Store: store, Prefix: "ls"}
 	startHistwalk(f.App, cfg)
 	// Test that an error message has been written to the notes buffer.
-	f.TestTTYNotes(t,
-		"error: end of history", Styles,
-		"!!!!!!")
+	f.TTY.TestMsg(t, ui.Concat(ui.T("error:", ui.FgRed), ui.T(" end of history")))
 	// Test that buffer has not changed - histwalk addon is not active.
 	f.TTY.TestBuffer(t, buf0)
 }

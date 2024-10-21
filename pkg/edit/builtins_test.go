@@ -67,7 +67,7 @@ func TestEndOfHistory(t *testing.T) {
 	f := setup(t)
 
 	evals(f.Evaler, `edit:end-of-history`)
-	f.TestTTYNotes(t, "End of history")
+	f.TTYCtrl.TestMsg(t, ui.T("End of history"))
 }
 
 func TestKey(t *testing.T) {
@@ -111,12 +111,10 @@ func TestClear(t *testing.T) {
 func TestNotify(t *testing.T) {
 	f := setup(t)
 	evals(f.Evaler, "edit:notify string")
-	f.TestTTYNotes(t, "string")
+	f.TTYCtrl.TestMsg(t, ui.T("string"))
 
 	evals(f.Evaler, "edit:notify (styled styled red)")
-	f.TestTTYNotes(t,
-		"styled", Styles,
-		"!!!!!!")
+	f.TTYCtrl.TestMsg(t, ui.T("styled", ui.FgRed))
 
 	evals(f.Evaler, "var err = ?(edit:notify [])")
 	if _, hasErr := getGlobal(f.Evaler, "err").(error); !hasErr {
@@ -311,9 +309,8 @@ func TestBuiltins_FocusedWidgetNotCodeArea(t *testing.T) {
 			f.Editor.app.PushAddon(tk.Label{})
 
 			evals(f.Evaler, code)
-			f.TestTTYNotes(t,
-				"error: "+modes.ErrFocusedWidgetNotCodeArea.Error(), Styles,
-				"!!!!!!")
+			f.TTYCtrl.TestMsg(t,
+				ui.Concat(ui.T("error:", ui.FgRed), ui.T(" "+modes.ErrFocusedWidgetNotCodeArea.Error())))
 		})
 	}
 }

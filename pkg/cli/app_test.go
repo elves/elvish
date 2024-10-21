@@ -484,7 +484,7 @@ func TestReadCode_NotifiesAboutUnboundKey(t *testing.T) {
 
 	f.TTY.Inject(term.K(ui.F1))
 
-	f.TestTTYNotes(t, "Unbound key: F1")
+	f.TTY.TestMsg(t, ui.T("Unbound key: F1"))
 }
 
 // Misc features.
@@ -531,9 +531,8 @@ func TestReadCode_ShowNotes(t *testing.T) {
 	f.App.Notify(ui.T("note 2"))
 	unblock <- struct{}{}
 
-	// Test that the note is rendered onto the notes buffer.
-	wantNotesBuf := bb().Write("note").Newline().Write("note 2").Buffer()
-	f.TTY.TestNotesBuffer(t, wantNotesBuf)
+	// Test that the message is rendered.
+	f.TTY.TestMsg(t, ui.T("note\nnote 2"))
 
 	// Test that notes are flushed after being rendered.
 	if n := len(f.App.CopyState().Notes); n > 0 {

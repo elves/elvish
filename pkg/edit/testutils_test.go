@@ -98,11 +98,6 @@ func (f *fixture) TestTTY(t *testing.T, args ...any) {
 	f.TTYCtrl.TestBuffer(t, f.MakeBuffer(args...))
 }
 
-func (f *fixture) TestTTYNotes(t *testing.T, args ...any) {
-	t.Helper()
-	f.TTYCtrl.TestNotesBuffer(t, f.MakeBuffer(args...))
-}
-
 func (f *fixture) SetCodeBuffer(b tk.CodeBuffer) {
 	codeArea(f.Editor.app).MutateState(func(s *tk.CodeAreaState) {
 		s.Buffer = b

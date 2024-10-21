@@ -3,6 +3,8 @@ package term
 import (
 	"strings"
 	"testing"
+
+	"src.elv.sh/pkg/ui"
 )
 
 func TestWriter(t *testing.T) {
@@ -17,8 +19,8 @@ func TestWriter(t *testing.T) {
 
 	w := NewWriter(sb)
 	w.UpdateBuffer(
-		NewBufferBuilder(10).Write("note 1").Buffer(),
+		ui.T("note 1"),
 		NewBufferBuilder(10).Write("line 1").SetDotHere().Buffer(),
 		false)
-	testOutput(hideCursor + "\rnote 1\033[K\n" + "line 1\r\033[6C" + showCursor)
+	testOutput(hideCursor + "\r \033[J\r\033[?7h\033[mnote 1\n\033[?7lline 1\r\033[6C" + showCursor)
 }

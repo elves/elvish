@@ -38,15 +38,15 @@ func TestPrompt_NotifiesInvalidValueOutput(t *testing.T) {
 	f := setup(t, rc(`set edit:prompt = { put good [bad] good2 }`))
 
 	f.TestTTY(t, "goodgood2", term.DotHere)
-	f.TestTTYNotes(t, "invalid output type from prompt: list")
+	f.TTYCtrl.TestMsg(t, ui.T("invalid output type from prompt: list"))
 }
 
 func TestPrompt_NotifiesException(t *testing.T) {
 	f := setup(t, rc(`set edit:prompt = { fail ERROR }`))
 
-	f.TestTTYNotes(t,
-		"[prompt error] ERROR\n",
-		`see stack trace with "show $edit:exceptions[0]"`)
+	f.TTYCtrl.TestMsg(t, ui.T(
+		"[prompt error] ERROR\n"+
+			`see stack trace with "show $edit:exceptions[0]"`))
 	evals(f.Evaler, `var excs = (count $edit:exceptions)`)
 	testGlobal(t, f.Evaler, "excs", 1)
 }
@@ -105,9 +105,9 @@ func TestPromptStaleTransform_Exception(t *testing.T) {
 		`set edit:prompt-stale-threshold = `+scaledMsAsSec(50),
 		`set edit:prompt-stale-transform = {|_| fail ERROR }`))
 
-	f.TestTTYNotes(t,
-		"[prompt stale transform error] ERROR\n",
-		`see stack trace with "show $edit:exceptions[0]"`)
+	f.TTYCtrl.TestMsg(t, ui.T(
+		"[prompt stale transform error] ERROR\n"+
+			`see stack trace with "show $edit:exceptions[0]"`))
 	evals(f.Evaler, `var excs = (count $edit:exceptions)`)
 	testGlobal(t, f.Evaler, "excs", 1)
 }
