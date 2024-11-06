@@ -80,11 +80,11 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 		}
 	}
 
-	args := make([]string, len(argVals)+2)
+	args := make([]string, len(argVals)+1)
 	for i, a := range argVals {
 		// TODO: Maybe we should enforce string arguments instead of coercing
 		// all args to strings.
-		args[i+2] = vals.ToString(a)
+		args[i+1] = vals.ToString(a)
 	}
 
 	path, err := which(e.Name)
@@ -104,7 +104,7 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 		path = strings.ReplaceAll(path, "/", "\\")
 	}
 
-	args[1] = path
+	args[0] = path
 
 	if filepath.Ext(path) == ".ps1" {
 		powershell, err := exec.LookPath("powershell.exe")
@@ -112,9 +112,7 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 			return err
 		}
 
-		args[0] = powershell
-	} else {
-		args = args[1:]
+		args = append([]string{powershell, "-noprofile", "-ex", "unrestricted", "-file"}, args...)
 	}
 
 	sys := makeSysProcAttr(fm.background)
