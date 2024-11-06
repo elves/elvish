@@ -9,6 +9,7 @@ import (
 	"strings"
 	"syscall"
 
+	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/fsutil"
@@ -79,14 +80,14 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 		}
 	}
 
-	args := make([]string, len(argVals)+1)
+	args := make([]string, len(argVals)+2)
 	for i, a := range argVals {
 		// TODO: Maybe we should enforce string arguments instead of coercing
 		// all args to strings.
-		args[i+1] = vals.ToString(a)
+		args[i+2] = vals.ToString(a)
 	}
 
-	path, err := exec.LookPath(e.Name)
+	path, err := which(e.Name)
 	if err != nil {
 		return err
 	}
@@ -103,10 +104,21 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 		path = strings.ReplaceAll(path, "/", "\\")
 	}
 
-	args[0] = path
+	args[1] = path
+
+	if filepath.Ext(path) == ".ps1" {
+		powershell, err := exec.LookPath("powershell.exe")
+		if err != nil {
+			return err
+		}
+
+		args[0] = powershell
+	} else {
+		args = args[1:]
+	}
 
 	sys := makeSysProcAttr(fm.background)
-	proc, err := os.StartProcess(path, args, &os.ProcAttr{Files: files, Sys: sys})
+	proc, err := os.StartProcess(args[0], args, &os.ProcAttr{Files: files, Sys: sys})
 	if err != nil {
 		return err
 	}
@@ -127,4 +139,46 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 		}
 	}
 	return NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid)
+}
+
+func which(name string) (string, error) {
+	path, err := exec.LookPath(name)
+	if runtime.GOOS != "windows" {
+		return path, err
+	}
+
+	ext := filepath.Ext(path)
+	if ext == ".com" || ext == ".exe" || ext == ".ps1" {
+		return path, err
+	}
+
+	exts := pathext()
+	if !exts[filepath.Ext(name)] {
+		ps1, err := exec.LookPath(name + ".ps1")
+		if err == nil {
+			return ps1, nil
+		}
+	}
+
+	return path, err
+}
+
+func pathext() map[string]bool {
+	pathext := strings.ToLower(os.Getenv(env.PATHEXT))
+	if pathext == "" {
+		return map[string]bool{
+			".com": true,
+			".exe": true,
+			".ps1": true,
+			".cmd": true,
+			".bat": true,
+		}
+	}
+
+	exts := map[string]bool{}
+	for _, ext := range strings.Split(pathext, ";") {
+		exts[ext] = true
+	}
+
+	return exts
 }
