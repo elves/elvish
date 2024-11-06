@@ -150,8 +150,7 @@ func which(name string) (string, error) {
 		return path, err
 	}
 
-	exts := pathext()
-	if !exts[filepath.Ext(name)] {
+	if !isKnownPathExt(filepath.Ext(name)) {
 		ps1, err := exec.LookPath(name + ".ps1")
 		if err == nil {
 			return ps1, nil
@@ -161,22 +160,34 @@ func which(name string) (string, error) {
 	return path, err
 }
 
-func pathext() map[string]bool {
+func isKnownPathExt(ext string) bool {
+	if ext == "" {
+		return false
+	}
+
 	pathext := strings.ToLower(os.Getenv(env.PATHEXT))
+
 	if pathext == "" {
-		return map[string]bool{
+		defaults := map[string]bool{
 			".com": true,
 			".exe": true,
 			".ps1": true,
 			".cmd": true,
 			".bat": true,
 		}
+
+		return defaults[ext]
 	}
 
-	exts := map[string]bool{}
-	for _, ext := range strings.Split(pathext, ";") {
-		exts[ext] = true
+	for _, value := range strings.Split(pathext, ";") {
+		if value[0] != '.' {
+			value = "." + value
+		}
+
+		if value == ext {
+			return true
+		}
 	}
 
-	return exts
+	return false
 }
