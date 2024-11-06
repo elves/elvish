@@ -180,6 +180,10 @@ func isKnownPathExt(ext string) bool {
 	}
 
 	for _, value := range strings.Split(pathext, ";") {
+		if value == "" {
+			continue
+		}
+
 		if value[0] != '.' {
 			value = "." + value
 		}
