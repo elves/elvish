@@ -26,6 +26,14 @@ your favorite AUR helper:
 yay -S elvish-git
 ```
 
+# ChromeOS
+
+Elvish is packaged by [Chromebrew](https://chromebrew.github.io/).
+
+```elvish
+crew install elvish
+```
+
 # Debian / Ubuntu
 
 ![Debian 13 package](https://repology.org/badge/version-for-repo/debian_13/elvish.svg)
