@@ -30,6 +30,8 @@ yay -S elvish-git
 
 Elvish is packaged by [Chromebrew](https://chromebrew.github.io/).
 
+![Chromebrew package](https://repology.org/badge/version-for-repo/crewbrew/elvish.svg)
+
 ```elvish
 crew install elvish
 ```
