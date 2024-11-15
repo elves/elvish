@@ -165,3 +165,21 @@ Exception: cannot concatenate glob-pattern and fn
 ~> put { }*
 Exception: cannot concatenate fn and glob-pattern
   [tty]:1:5-8: put { }*
+
+## Simple modifiers test ##
+~> touch a b c D E F 1 2 3
+~> put *[letter]
+▶ D
+▶ E
+▶ F
+▶ a
+▶ b
+▶ c
+~> put *[lower]
+▶ a
+▶ b
+▶ c
+~> put *[digit]
+▶ 1
+▶ 2
+▶ 3
