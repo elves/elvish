@@ -375,7 +375,15 @@ func randint(args ...vals.Num) (vals.Num, error) {
 	if len(args) == 1 {
 		low, high = big.NewInt(0), args[0].(*big.Int)
 	} else {
-		low, high = args[0].(*big.Int), args[1].(*big.Int)
+		var casted_args [2]*big.Int
+		for i, arg := range args {
+			if casted_arg, ok := arg.(*big.Int); ok {
+				casted_args[i] = casted_arg
+			} else {
+				casted_args[i] = big.NewInt(int64(arg.(int)))
+			}
+		}
+		low, high = casted_args[0], casted_args[1]
 	}
 	if high.Cmp(low) <= 0 {
 		return 0, errs.BadValue{What: "high value",
