@@ -28,9 +28,9 @@ yay -S elvish-git
 
 # ChromeOS
 
-Elvish is packaged by [Chromebrew](https://chromebrew.github.io/).
-
 ![Chromebrew package](https://repology.org/badge/version-for-repo/chromebrew/elvish.svg)
+
+Elvish is packaged by [Chromebrew](https://chromebrew.github.io/).
 
 ```elvish
 crew install elvish
