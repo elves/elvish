@@ -614,3 +614,22 @@ Exception: bad value: step must be negative, but is 0.5
 ~> range 1.2 >&-
 Exception: port does not support value output
   [tty]:1:1-13: range 1.2 >&-
+
+## randint big arguments mixed ##
+~> var bound = 100000000000000000000000000
+   var x = (randint $bound)
+   and (<= 0 $x) (< $x $bound)
+▶ $true
+~> var bound = 100000000000000000000000000
+   var x = (randint 0 $bound)
+   and (<= 0 $x) (< $x $bound)
+▶ $true
+~> var bound = 100000000000000000000000000
+   var x = (randint -$bound $bound)
+   and (<= -$bound $x) (< $x $bound)
+▶ $true
+~> var bound = 100000000000000000000000000
+   var x = (randint -$bound 0)
+   and (<= -$bound $x) (< $x 0)
+▶ $true
+
