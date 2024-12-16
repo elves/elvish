@@ -37,6 +37,12 @@ func (*callOpts) SetDefaultOptions() {}
 // [(*flag.FlagSet).PrintDefaults].
 
 func call(fm *eval.Frame, opts callOpts, fn *eval.Closure, argsVal vals.List) error {
+	if fn == nil {
+		return errs.BadValue{What: "function to call", Valid: "function", Actual: "$nil"}
+	}
+	if argsVal == nil {
+		return errs.BadValue{What: "arguments", Valid: "list", Actual: "$nil"}
+	}
 	var args []string
 	err := vals.ScanListToGo(argsVal, &args)
 	if err != nil {
@@ -80,6 +86,12 @@ func convertStringArgs(ss []string) []any {
 }
 
 func parse(argsVal vals.List, specsVal vals.List) (vals.Map, vals.List, error) {
+	if argsVal == nil {
+		return nil, nil, errs.BadValue{What: "arguments", Valid: "list", Actual: "$nil"}
+	}
+	if specsVal == nil {
+		return nil, nil, errs.BadValue{What: "specs", Valid: "list", Actual: "$nil"}
+	}
 	var args []string
 	err := vals.ScanListToGo(argsVal, &args)
 	if err != nil {

@@ -36,7 +36,15 @@ Bad usage
 Exception: wrong type: need string, got number
   [tty]:1:1-23: flag:call { } [(num 0)]
 
-// More flag parsing logic is covered in TestParse
+## $nil argument ##
+~> flag:call $nil []
+Exception: bad value: function to call must be function, but is $nil
+  [tty]:1:1-17: flag:call $nil []
+~> flag:call { } $nil
+Exception: bad value: arguments must be list, but is $nil
+  [tty]:1:1-18: flag:call { } $nil
+
+// More flag parsing logic is covered in the test against flag:parse below
 
 ///////////////
 # flag::parse #
@@ -82,6 +90,15 @@ Exception: wrong type: need string, got number
 ~> flag:parse [] [(num 0)]
 Exception: wrong type: need !!vector.Vector, got number
   [tty]:1:1-23: flag:parse [] [(num 0)]
+
+## $nil argument ##
+~> flag:parse $nil []
+Exception: bad value: arguments must be list, but is $nil
+  [tty]:1:1-18: flag:parse $nil []
+~> flag:parse [] $nil
+Exception: bad value: specs must be list, but is $nil
+  [tty]:1:1-18: flag:parse [] $nil
+
 
 /////////////////////
 # flag:parse-getopt #
