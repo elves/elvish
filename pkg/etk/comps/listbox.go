@@ -4,6 +4,7 @@ import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/etk"
 	"src.elv.sh/pkg/ui"
+	"src.elv.sh/pkg/wcwidth"
 )
 
 // ListItems is an interface for accessing multiple items.
@@ -14,6 +15,13 @@ type ListItems interface {
 	Get(i int) any
 	// Show renders the item at the given zero-based index.
 	Show(i int) ui.Text
+}
+
+// StyleLiner is an optional interface that [ListItems] can implement.
+type StyleLiner interface {
+	// StyleLine returns a "line styling" for item i, which gets applied to
+	// whole lines occupied by the item, including empty spaces.
+	StyleLine(i int) ui.Styling
 }
 
 type stringItems []string
@@ -30,12 +38,15 @@ func ListBox(c etk.Context) (etk.View, etk.React) {
 	selectedVar := etk.State(c, "selected", 0)
 	// Layout configuration variables.
 	multiColumnVar := etk.State(c, "multi-column", false)
+	leftPaddingVar := etk.State(c, "left-padding", 0)
+	rightPaddingVar := etk.State(c, "right-padding", 0)
 	// Internal UI state (see also comment in listBoxView).
 	firstVar := etk.State(c, "-first", 0)
 	contentHeightVar := etk.State(c, "-content-height", 0)
 
 	view := &listBoxView{
-		itemsVar.Get(), selectedVar.Get(), multiColumnVar.Get(),
+		itemsVar.Get(), selectedVar.Get(),
+		multiColumnVar.Get(), leftPaddingVar.Get(), rightPaddingVar.Get(),
 		firstVar, contentHeightVar}
 	return view,
 		c.Binding(func(e term.Event) etk.Reaction {
@@ -80,9 +91,11 @@ func ListBox(c etk.Context) (etk.View, etk.React) {
 }
 
 type listBoxView struct {
-	items       ListItems
-	selected    int
-	multiColumn bool
+	items        ListItems
+	selected     int
+	multiColumn  bool
+	leftPadding  int
+	rightPadding int
 	// The first element that was shown last time.
 	//
 	// Used to provide some continuity in the UI when the terminal size has
@@ -110,44 +123,39 @@ func (v *listBoxView) Render(width, height int) *term.Buffer {
 	}
 }
 
-func (w *listBoxView) renderSingleColumn(width, height int) *term.Buffer {
-	first, firstCrop := getVerticalWindow(w.items, w.selected, w.first.Get(), height)
-	w.first.Set(first)
+func (v *listBoxView) renderSingleColumn(width, height int) *term.Buffer {
+	first, firstCrop := getVerticalWindow(v.items, v.selected, v.first.Get(), height)
+	v.first.Set(first)
 
-	v := etk.TextView{Wrap: etk.NoWrap}
-	lines := 0
-	n := w.items.Len()
+	lv := linesView{
+		LeftPadding: v.leftPadding, RightPadding: v.rightPadding}
+	n := v.items.Len()
 	var i int
-	for i = first; i < n && lines < height; i++ {
-		if i > first {
-			v.Spans = append(v.Spans, ui.T("\n"))
+	for i = first; i < n && len(lv.Lines) < height; i++ {
+		text := v.items.Show(i)
+		lineStyling := ui.Nop
+		if styleLiner, ok := v.items.(StyleLiner); ok {
+			lineStyling = styleLiner.StyleLine(i)
+		}
+		if i == v.selected {
+			lv.DotAtLine = len(lv.Lines)
+			lineStyling = ui.Stylings(lineStyling, ui.Inverse)
 		}
 
-		text := w.items.Show(i)
-		if i == w.selected {
-			v.DotBefore = len(v.Spans)
-			text = ui.StyleText(text, ui.Inverse)
-		}
-
+		lines := text.SplitByRune('\n')
 		if i == first {
-			keptLines := text.SplitByRune('\n')[firstCrop:]
-			for i, line := range keptLines {
-				if i > 0 {
-					v.Spans = append(v.Spans, ui.T("\n"))
-				}
-				v.Spans = append(v.Spans, line)
-			}
-			lines += len(keptLines)
-		} else {
-			v.Spans = append(v.Spans, text)
-			lines += text.CountLines()
+			lines = lines[firstCrop:]
+		}
+		for _, line := range lines {
+			lv.Lines = append(lv.Lines, line)
+			lv.LineStylings = append(lv.LineStylings, lineStyling)
 		}
 	}
-	if first == 0 && i == n && firstCrop == 0 && lines < height {
-		return v.Render(width, height)
+	if first == 0 && i == n && firstCrop == 0 && len(lv.Lines) < height {
+		return lv.Render(width, height)
 	}
 	box := etk.Box("content* scrollbar=",
-		v, etk.ScrollBarView{Total: n, Low: first, High: i})
+		&lv, etk.ScrollBarView{Total: n, Low: first, High: i})
 	return box.Render(width, height)
 }
 
@@ -167,19 +175,25 @@ func (w *listBoxView) renderMultiColumn(width, height int) *term.Buffer {
 	hasCropped := false
 	last := first
 	for i := first; i < n; i += colHeight {
-		col := etk.TextView{Wrap: etk.NoWrap}
+		col := linesView{
+			LeftPadding: w.leftPadding, RightPadding: w.rightPadding}
+
 		// Render the column starting from i.
 		for j := i; j < i+colHeight && j < n; j++ {
 			last = j
-			if j > i {
-				col.Spans = append(col.Spans, ui.T("\n"))
-			}
 			text := items.Show(j)
-			if j == selected {
-				text = ui.StyleText(text, ui.Inverse)
-				col.DotBefore = len(col.Spans)
+			lineStyling := ui.Nop
+			if styleLiner, ok := w.items.(StyleLiner); ok {
+				lineStyling = styleLiner.StyleLine(i)
 			}
-			col.Spans = append(col.Spans, text)
+			if j == selected {
+				col.DotAtLine = len(col.Lines)
+				lineStyling = ui.Stylings(lineStyling, ui.Inverse)
+			}
+
+			// TODO: Complain about multi-line items more loudly.
+			col.Lines = append(col.Lines, text.SplitByRune('\n')[0])
+			col.LineStylings = append(col.LineStylings, lineStyling)
 		}
 
 		colWidth := maxWidth(items, padding, i, i+colHeight)
@@ -207,4 +221,65 @@ func (w *listBoxView) renderMultiColumn(width, height int) *term.Buffer {
 		buf.ExtendDown(scrollbar.Render(width, 1), false)
 	}
 	return buf
+}
+
+// A specialized line-oriented View for ListBox.
+//
+// Ideally we would like to use etk.TextView. However, etk.TextView has a
+// text-oriented API. ListBox needs support for line padding and line styling,
+// which are quite awkward to add to TextView. This type has a line-oriented
+// API and makes these two features easier to implement.
+//
+// The downside of this implementation is that linesView doesn't support
+// wrapping; each line is cropped.
+//
+// The user of linesView is responsible for ensuring that:
+//
+//   - len(v.Lines) < height
+//   - len(v.Lines) == len(v.LineStylings)
+type linesView struct {
+	LeftPadding  int
+	RightPadding int
+	Lines        []ui.Text
+	LineStylings []ui.Styling
+	DotAtLine    int
+}
+
+func (v *linesView) Render(width, height int) *term.Buffer {
+	buf := term.Buffer{Width: width, Dot: term.Pos{Line: v.DotAtLine, Col: 0}}
+	leftPadding, rightPadding := v.LeftPadding, v.RightPadding
+	if leftPadding+rightPadding >= width {
+		leftPadding, rightPadding = 0, 0
+	}
+	for i, line := range v.Lines {
+		lineStyling := v.LineStylings[i]
+		paddingCell := term.Cell{
+			Text: " ", Style: ui.ApplyStyling(ui.Style{}, lineStyling).SGR()}
+
+		var bufLine []term.Cell
+		for range leftPadding {
+			bufLine = append(bufLine, paddingCell)
+		}
+		col := leftPadding
+
+	renderLineContent:
+		for _, seg := range line {
+			segSGR := ui.ApplyStyling(seg.Style, lineStyling).SGR()
+			for _, r := range seg.Text {
+				cell := etk.PrintCell(r, segSGR)
+				cellWidth := wcwidth.Of(cell.Text)
+				if col+cellWidth+rightPadding > width {
+					break renderLineContent
+				}
+				bufLine = append(bufLine, cell)
+				col += cellWidth
+			}
+		}
+
+		for range width - col {
+			bufLine = append(bufLine, paddingCell)
+		}
+		buf.Lines = append(buf.Lines, bufLine)
+	}
+	return &buf
 }

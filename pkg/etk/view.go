@@ -88,15 +88,7 @@ func (v TextView) Render(width, height int) *term.Buffer {
 					newLine()
 					continue
 				}
-				cell := term.Cell{Text: string(r), Style: styleSGR}
-				if r < 0x20 || r == 0x7f {
-					cell.Text = "^" + string(r^0x40)
-					if cell.Style != "" {
-						cell.Style += ";7"
-					} else {
-						cell.Style = "7"
-					}
-				}
+				cell := PrintCell(r, styleSGR)
 				col += wcwidth.Of(cell.Text)
 				if col > width {
 					if v.Wrap == NoWrap {
@@ -122,6 +114,22 @@ func (v TextView) Render(width, height int) *term.Buffer {
 		buf.Lines = buf.Lines[:height]
 	}
 	return &buf
+}
+
+// PrintCell "prints" ASCII control characters by replacing them with their
+// caret notation and adding reverse video. It doesn't handle other unprintable
+// characters.
+func PrintCell(r rune, sgr string) term.Cell {
+	if r < 0x20 || r == 0x7f {
+		text := "^" + string(r^0x40)
+		if sgr != "" {
+			sgr += ";7"
+		} else {
+			sgr = "7"
+		}
+		return term.Cell{Text: text, Style: sgr}
+	}
+	return term.Cell{Text: string(r), Style: sgr}
 }
 
 type BoxView struct {
@@ -151,20 +159,13 @@ type BoxChild struct {
 
 // a* 2 [b=] 1 c*
 
-// Expressing focus with another argument
-//
-// a* 2 b= 1 c*
-
 // Calling box
 //
 // Box("a* [b=] c*", aView, bView, cView)
 //
-// Box("a* [b=] c*", "a", aView, "b", bView, "c", cView, "focus", "a")
-// Box("a* [b=] c*", "a", aView, "b", bView, "c", cView, "focus", 0)
-//
 // Box(`a*
 //      [b=]
-//      c*`, "a", aView, "b", bView, "c", cView)
+//      c*`, aView, bView, cView)
 
 func Box(layout string, views ...View) BoxView {
 	return BoxFocus(layout, 0, views...)

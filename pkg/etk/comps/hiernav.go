@@ -45,7 +45,7 @@ func HierNav(c etk.Context) (etk.View, etk.React) {
 		}
 	}
 
-	return etk.Box("parent* [current*] preview*", parent, currentView, preview),
+	return etk.Box("parent* 1 [current*] 1 preview*", parent, currentView, preview),
 		func(e term.Event) etk.Reaction {
 			switch e {
 			case term.K(ui.Left):
@@ -85,7 +85,9 @@ func hierNavPanel(c etk.Context, h Hier, path []string, toSelect string) (etk.Vi
 			}
 		}
 		return c.Subcomp(name,
-			etk.WithInit(ListBox, "items", items, "selected", selected))
+			etk.WithInit(ListBox,
+				"items", items, "selected", selected,
+				"left-padding", 1, "right-padding", 1))
 	} else {
 		buffer := TextBuffer{Content: s}
 		return c.Subcomp(name, etk.WithInit(TextArea, "buffer", buffer))

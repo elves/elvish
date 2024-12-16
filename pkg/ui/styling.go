@@ -39,6 +39,7 @@ func Stylings(ts ...Styling) Styling { return jointStyling(ts) }
 
 // Common stylings.
 var (
+	Nop   Styling = nop{}
 	Reset Styling = reset{}
 
 	FgDefault Styling = setForeground{nil}
@@ -109,6 +110,7 @@ func Fg(c Color) Styling { return setForeground{c} }
 // Bg returns a Styling that sets the background color.
 func Bg(c Color) Styling { return setBackground{c} }
 
+type nop struct{}
 type reset struct{}
 type setForeground struct{ c Color }
 type setBackground struct{ c Color }
@@ -116,6 +118,7 @@ type boolOn struct{ f boolField }
 type boolOff struct{ f boolField }
 type boolToggle struct{ f boolField }
 
+func (nop) transform(*Style)               {}
 func (reset) transform(s *Style)           { *s = Style{} }
 func (t setForeground) transform(s *Style) { s.Fg = t.c }
 func (t setBackground) transform(s *Style) { s.Bg = t.c }

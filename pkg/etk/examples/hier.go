@@ -140,9 +140,13 @@ func (hi fsHierItems) Len() int { return len(hi) }
 func (hi fsHierItems) Get(i int) any { return hi[i].name }
 
 func (hi fsHierItems) Show(i int) ui.Text {
+	return ui.T(hi[i].name)
+}
+
+func (hi fsHierItems) StyleLine(i int) ui.Styling {
 	if hi[i].isDir {
-		return ui.T(hi[i].name, ui.FgGreen, ui.Bold)
+		return ui.Stylings(ui.FgGreen, ui.Bold)
 	} else {
-		return ui.T(hi[i].name)
+		return ui.Nop
 	}
 }
