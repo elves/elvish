@@ -131,8 +131,17 @@ jobs:
 
   checks:
     name: Run checks
-    runs-on: ubuntu-latest
+    # Most checks do not rely on the OS, but some (like check-gen) do. To ensure
+    # maximal coverage, we run all of the checks on the three main OSes.
+    strategy:
+      matrix:
+        os: [ubuntu, macos, windows]
+    runs-on: ${{ matrix.os }}-latest
     steps:
+    # autocrlf is problematic for check-fmt-go.
+    - name: Turn off autocrlf
+      if: matrix.os == 'windows'
+      run: git config --global core.autocrlf false
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Set up Go
@@ -149,7 +158,7 @@ jobs:
         go install golang.org/x/tools/cmd/goimports@latest
         # Keep the versions of staticcheck and codespell in sync with docs/workflows.md
         go install honnef.co/go/tools/cmd/staticcheck@v0.5.1
-        pip install --user codespell==2.3.0
+        pip install codespell==2.3.0
     - name: Run checks
       run: make all-checks
 
