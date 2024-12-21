@@ -31,7 +31,7 @@ func TestEnvVariable(t *testing.T) {
 		t.Errorf("envVariable.Set to a non-string value didn't return an error")
 	}
 
-	os.Setenv(name, "bar")
+	testutil.Setenv(t, name, "bar")
 	if v.Get() != "bar" {
 		t.Errorf("EnvVariable.Get doesn't return value set elsewhere")
 	}
