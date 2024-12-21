@@ -1,7 +1,6 @@
 package testutil
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -27,12 +26,9 @@ var scaledMsTests = []struct {
 }
 
 func TestScaled(t *testing.T) {
-	envSave := os.Getenv(env.ELVISH_TEST_TIME_SCALE)
-	defer os.Setenv(env.ELVISH_TEST_TIME_SCALE, envSave)
-
 	for _, test := range scaledMsTests {
 		t.Run(test.name, func(t *testing.T) {
-			os.Setenv(env.ELVISH_TEST_TIME_SCALE, test.env)
+			Setenv(t, env.ELVISH_TEST_TIME_SCALE, test.env)
 			got := Scaled(test.d)
 			if got != test.want {
 				t.Errorf("got %v, want %v", got, test.want)
