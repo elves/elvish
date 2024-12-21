@@ -69,7 +69,7 @@ Qi Xiao (xiaq)
     ```
 
 -   ```elvish
-    # update-servers-in-parellel.elv
+    # update-servers-in-parallel.elv
     var hosts = [[&name=a &cmd='apt update']
                  [&name=b &cmd='pacman -Syu']]
     # peach = "parallel each"

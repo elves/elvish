@@ -487,7 +487,7 @@ the following command shows details of the `elvish` binary:
 ```
 
 **Note**: the same feature is usually known as *command substitution* in
-traditonal shells.
+traditional shells.
 
 Unlike traditional shells, Elvish only splits the output on newlines, not any
 other whitespace characters.

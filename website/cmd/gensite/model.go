@@ -25,7 +25,7 @@ type siteConf struct {
 	BaseCSS    []string
 }
 
-// categoryMeta represents the metadata of a cateogory, found in the global
+// categoryMeta represents the metadata of a category, found in the global
 // site configuration.
 type categoryMeta struct {
 	Name    string
