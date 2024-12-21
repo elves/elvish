@@ -2,10 +2,10 @@ package glob
 
 import (
 	"os"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"sort"
-	"strings"
 	"testing"
 
 	"src.elv.sh/pkg/testutil"
@@ -75,7 +75,7 @@ func TestGlob_Absolute(t *testing.T) {
 
 func testGlob(t *testing.T, abs bool) {
 	dir := testutil.InTempDir(t)
-	dir = strings.ReplaceAll(dir, string(os.PathSeparator), "/")
+	dir = filepath.ToSlash(dir)
 
 	for _, dir := range append(mkdirs, mkdirDots...) {
 		err := os.Mkdir(dir, 0755)
