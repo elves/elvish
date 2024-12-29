@@ -185,7 +185,7 @@ fn -write-domain-config {|dom|
 fn -domain-config {|dom|
   var cfgfile = (-domain-config-file $dom)
   var cfg = $false
-  if (path:is-regular $cfgfile) {
+  if (path:is-regular &follow-symlink=$true $cfgfile) {
     # If the config file exists, read it...
     set cfg = (from-json < $cfgfile)
     -debug "Read domain config for "$dom": "(to-string $cfg)
