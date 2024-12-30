@@ -42,6 +42,7 @@ set insert:binding = (binding-table [
   &Ctrl-K=    $kill-line-right~
 
   &Ctrl-V= $insert-raw~
+  &Ctrl-Alt-V= $-insert-key-name~
 
   &Alt-,=  $lastcmd:start~
   &Alt-.=  $insert-last-word~

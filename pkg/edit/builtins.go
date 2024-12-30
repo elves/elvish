@@ -66,6 +66,29 @@ func insertRaw(app cli.App, tty cli.TTY) {
 	app.PushAddon(w)
 }
 
+func insertKeyName(app cli.App) {
+	codeArea, ok := focusedCodeArea(app)
+	if !ok {
+		return
+	}
+	w := modes.NewStub(modes.StubSpec{
+		Bindings: tk.FuncBindings(func(w tk.Widget, event term.Event) bool {
+			switch event := event.(type) {
+			case term.KeyEvent:
+				codeArea.MutateState(func(s *tk.CodeAreaState) {
+					s.Buffer.InsertAtDot(ui.Key(event).String())
+				})
+				app.PopAddon()
+				return true
+			default:
+				return false
+			}
+		}),
+		Name: " KEY NAME ",
+	})
+	app.PushAddon(w)
+}
+
 var errMustBeKeyOrString = errors.New("must be key or string")
 
 func toKey(v any) (ui.Key, error) {
@@ -143,8 +166,9 @@ func wordify(fm *eval.Frame, code string) error {
 
 func initTTYBuiltins(app cli.App, tty cli.TTY, nb eval.NsBuilder) {
 	nb.AddGoFns(map[string]any{
-		"insert-raw": func() { insertRaw(app, tty) },
-		"clear":      func() { clear(app, tty) },
+		"insert-raw":       func() { insertRaw(app, tty) },
+		"-insert-key-name": func() { insertKeyName(app) },
+		"clear":            func() { clear(app, tty) },
 	})
 }
 
