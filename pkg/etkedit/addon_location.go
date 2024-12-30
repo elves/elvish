@@ -23,7 +23,7 @@ func startLocation(ed *Editor, c etk.Context) {
 			return locationItems{dirs}, 0
 		},
 		"binding", etkBindingFromBindingMap(ed, &ed.locationBinding),
-	), true)
+	), 1)
 }
 
 type locationItems struct {

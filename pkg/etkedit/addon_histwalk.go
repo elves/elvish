@@ -30,7 +30,7 @@ func startHistwalk(ed *Editor, c etk.Context) {
 			// TODO: Handle up/down
 			return r
 		}),
-		true,
+		1,
 		func() { pendingVar.Set(comps.PendingText{}) },
 	)
 }

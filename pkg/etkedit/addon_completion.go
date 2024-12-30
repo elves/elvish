@@ -69,7 +69,7 @@ func startCompletion(ed *Editor, c etk.Context) {
 			}
 			return r
 		}),
-		true,
+		1,
 		func() { pendingVar.Set(comps.PendingText{}) },
 	)
 }

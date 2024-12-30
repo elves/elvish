@@ -45,7 +45,7 @@ func HierNav(c etk.Context) (etk.View, etk.React) {
 		}
 	}
 
-	return etk.Box("parent* 1 [current*] 1 preview*", parent, currentView, preview),
+	return etk.Box("parent*1 1 [current*3] 1 preview*4", parent, currentView, preview),
 		func(e term.Event) etk.Reaction {
 			switch e {
 			case term.K(ui.Left):

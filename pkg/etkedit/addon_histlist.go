@@ -35,7 +35,7 @@ func startHistlist(ed *Editor, c etk.Context) {
 			// TODO: Implement insertion of selected item
 			return r
 		},
-	), true)
+	), 1)
 }
 
 type histlistItems struct {

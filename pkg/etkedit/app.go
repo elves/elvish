@@ -18,7 +18,7 @@ type addons struct {
 
 type addon struct {
 	Comp    etk.Comp
-	Flex    bool
+	Flex    int
 	Dismiss func()
 	ID      int
 }
@@ -77,11 +77,11 @@ func app(c etk.Context) (etk.View, etk.React) {
 		}
 }
 
-func pushAddon(c etk.Context, f etk.Comp, flex bool) {
+func pushAddon(c etk.Context, f etk.Comp, flex int) {
 	pushAddonWithDismiss(c, f, flex, nil)
 }
 
-func pushAddonWithDismiss(c etk.Context, f etk.Comp, flex bool, dismiss func()) {
+func pushAddonWithDismiss(c etk.Context, f etk.Comp, flex int, dismiss func()) {
 	addonsVar := etk.BindState(c, "addons", addons{})
 	addonsVar.Swap(func(a addons) addons {
 		// TODO: Is the use of append correct here??

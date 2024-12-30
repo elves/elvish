@@ -140,32 +140,34 @@ type BoxView struct {
 
 type BoxChild struct {
 	View View
-	Flex bool
+	Flex int // 0 for non-flex child, > 0 for flex weight
 }
 
 // Child verbs
 //  - "=" for non-flex child
-//  - "*" for flex child
+//  - "*" for flex child, may be followed by weight (default is 1)
 //
 // Example:
 //
-// a* b= c*
-
-// Expressing focus
+// a* b= c*2
 //
-// a* [b=] c*
-
-// Expressing gap
-
-// a* 2 [b=] 1 c*
-
+// Names don't matter
+//
+// Expressing focus:
+//
+// a* [b=] c*2
+//
+// Expressing gap:
+//
+// a* 2 [b=] 1 c*2
+//
 // Calling box
 //
-// Box("a* [b=] c*", aView, bView, cView)
+// Box("a* [b=] c*2", aView, bView, cView)
 //
 // Box(`a*
 //      [b=]
-//      c*`, aView, bView, cView)
+//      c*2`, aView, bView, cView)
 
 func Box(layout string, views ...View) BoxView {
 	return BoxFocus(layout, 0, views...)
@@ -199,9 +201,17 @@ func BoxFocus(layout string, focus int, views ...View) BoxView {
 			verb = verb[1 : len(verb)-1]
 			focus = len(children)
 		}
-		var flex bool
-		if strings.HasSuffix(verb, "*") {
-			flex = true
+		var flexWeight int
+		if _, weight, ok := strings.Cut(verb, "*"); ok {
+			if weight == "" {
+				flexWeight = 1
+			} else {
+				var err error
+				flexWeight, err = strconv.Atoi(weight)
+				if err != nil {
+					panic(fmt.Sprintf("bad weight: %s", weight))
+				}
+			}
 		} else if strings.HasSuffix(verb, "=") {
 		} else if n, err := strconv.Atoi(verb); err == nil {
 			var view View
@@ -210,12 +220,12 @@ func BoxFocus(layout string, focus int, views ...View) BoxView {
 			} else {
 				view = VerticalGapView{n}
 			}
-			children = append(children, BoxChild{view, false})
+			children = append(children, BoxChild{view, 0})
 			continue
 		} else {
 			panic(fmt.Sprintf("invalid verb (must be number or end in * or =): %q", verb))
 		}
-		children = append(children, BoxChild{views[j], flex})
+		children = append(children, BoxChild{views[j], flexWeight})
 		j++
 	}
 	if j != len(views) {
@@ -225,19 +235,20 @@ func BoxFocus(layout string, focus int, views ...View) BoxView {
 }
 
 func (v BoxView) Render(width, height int) *term.Buffer {
-	var render func(View, bool) *term.Buffer
-	var flexChildren int
+	var render func(View, int) *term.Buffer
+	var flexWeightSum int
 	if v.Horizontal {
 		budget := width
-		render = func(v View, flex bool) *term.Buffer {
+		render = func(v View, flexWeight int) *term.Buffer {
 			width := budget
-			if flex {
-				width = budget / flexChildren
+			if flexWeight > 0 {
+				width = budget * flexWeight / flexWeightSum
+				flexWeightSum -= flexWeight
 			}
 			buf := v.Render(width, height)
 			// TODO: Maybe term.Buffer should keep track of the actual width
 			// itself
-			if !flex {
+			if flexWeight == 0 {
 				actualWidth := 0
 				for _, line := range buf.Lines {
 					actualWidth = max(actualWidth, cellsWidth(line))
@@ -249,10 +260,11 @@ func (v BoxView) Render(width, height int) *term.Buffer {
 		}
 	} else {
 		budget := height
-		render = func(v View, flex bool) *term.Buffer {
+		render = func(v View, flexWeight int) *term.Buffer {
 			height := budget
-			if flex {
-				height = budget / flexChildren
+			if flexWeight > 0 {
+				height = budget * flexWeight / flexWeightSum
+				flexWeightSum -= flexWeight
 			}
 			buf := v.Render(width, height)
 			budget -= len(buf.Lines)
@@ -263,17 +275,17 @@ func (v BoxView) Render(width, height int) *term.Buffer {
 	childBufs := make([]*term.Buffer, len(v.Children))
 	// Render non-flex children first.
 	for i, child := range v.Children {
-		if child.Flex {
-			flexChildren++
+		if child.Flex > 0 {
+			flexWeightSum += child.Flex
 		} else {
-			childBufs[i] = render(child.View, false)
+			childBufs[i] = render(child.View, 0)
 		}
 	}
-	// Render flex children first.
+	// Render flex children now.
 	for i, child := range v.Children {
-		if child.Flex {
-			childBufs[i] = render(child.View, true)
-			flexChildren--
+		if child.Flex > 0 {
+			childBufs[i] = render(child.View, child.Flex)
+			flexWeightSum--
 		}
 	}
 

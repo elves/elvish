@@ -26,7 +26,7 @@ func startLastcmd(ed *Editor, c etk.Context) {
 			return items, 0
 		},
 		"binding", etkBindingFromBindingMap(ed, &ed.lastcmdBinding),
-	), true)
+	), 1)
 }
 
 type lastcmdItems struct {

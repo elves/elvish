@@ -24,7 +24,7 @@ func startMinibuf(c etk.Context) {
 				c.AddMsg(modes.ErrorText(err))
 			}
 		},
-	), true)
+	), 1)
 }
 
 // TODO: Is this the correct abstraction??
