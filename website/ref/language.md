@@ -652,7 +652,8 @@ user-defined function, it has the following fields:
 -   `$f[rest-arg]` is the index of the rest argument. If there is no rest
     argument, it is `-1`.
 
--   `$f[opt-names]` is a list containing the names of the options.
+-   `$f[opt-names]` is a list containing the names of the options, in the order
+    they are defined in the source code.
 
 -   `$f[opt-defaults]` is a list containing the default values of the options,
     in the same order as `$f[opt-names]`.
