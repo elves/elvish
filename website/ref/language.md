@@ -907,10 +907,24 @@ the variable:
 ▶ bar
 ```
 
+Exploding a string results in substrings, each containing an individual
+codepoints (equivalent to calling [`str:split`](str.html#str:split) with an
+empty separator):
+
+```elvish-transcript
+~> var s = 'Hi 世界'
+~> put $@s
+▶ H
+▶ i
+▶ ' '
+▶ 世
+▶ 界
+```
+
 **Note**: Since variable uses have higher precedence than [indexing](#indexing),
 this does not work for exploding a list that is an element of another list. For
 doing that, and exploding the result of other expressions (such as an output
-capture), use the builtin [all](builtin.html#all) command.)
+capture), use the builtin [all](builtin.html#all) command.
 
 ## Output capture
 
