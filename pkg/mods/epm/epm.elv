@@ -5,8 +5,6 @@ use str
 use platform
 
 pragma unknown-command = disallow
-var dirname~ = $e:dirname~
-var mkdir~ = $e:mkdir~
 var git~ = $e:git~
 var rsync~ = $e:rsync~
 
@@ -116,7 +114,7 @@ set -method-handler = [
     &install= {|pkg dom-cfg|
       var dest = (dest $pkg)
       -info "Installing "$pkg
-      mkdir -p $dest
+      os:mkdir-all $dest
       git clone ($-method-handler[git][src] $pkg $dom-cfg) $dest
     }
 
@@ -170,7 +168,7 @@ fn -package-metadata-file {|pkg|
 
 fn -write-domain-config {|dom|
   var cfgfile = (-domain-config-file $dom)
-  mkdir -p (dirname $cfgfile)
+  os:mkdir-all $managed-dir/$dom
   if (has-key $-default-domain-config $dom) {
     put $-default-domain-config[$dom] | to-json > $cfgfile
   } else {
