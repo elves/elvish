@@ -17,7 +17,9 @@
         "Programming Languages",
         "Snippets"
     ],
-    "activationEvents": [],
+    "activationEvents": [
+        "onLanguage:styledown"
+    ],
     "main": "./dist/extension.js",
     "contributes": {
         "languages": [
@@ -48,6 +50,15 @@
                 "id": "elvish-in-markdown",
                 "aliases": [
                     "Elvish in Markdown"
+                ]
+            },
+            {
+                "id": "styledown",
+                "aliases": [
+                    "Styledown"
+                ],
+                "extensions": [
+                    ".styledown"
                 ]
             }
         ],

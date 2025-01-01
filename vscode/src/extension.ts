@@ -3,6 +3,9 @@ import * as child_process from 'child_process';
 import * as vscode from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
 
+import { activateStyledown } from './styledown';
+import { activateLogging } from './logging';
+
 let client: LanguageClient | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
@@ -17,6 +20,9 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand(
         'elvish.updateTranscriptOutputForCodeAtCursor',
         updateTranscriptOutputForCodeAtCursor));
+
+    activateStyledown(context);
+    activateLogging(context);
 }
 
 export function deactivate() {
