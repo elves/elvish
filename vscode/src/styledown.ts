@@ -29,6 +29,8 @@ export function activateStyledown(context: vscode.ExtensionContext) {
             updateDecorations();
         }
     }, null, context.subscriptions);
+
+    return () => { };
 }
 
 function updateDecorations() {
