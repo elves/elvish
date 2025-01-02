@@ -50,6 +50,10 @@ export function activateStyledown(context: vscode.ExtensionContext) {
         vscode.languages.registerFoldingRangeProvider(
             { language: 'styledown' }, { provideFoldingRanges }));
 
+    context.subscriptions.push(
+        vscode.languages.registerCodeLensProvider(
+            { language: 'styledown' }, { provideCodeLenses }));
+
     return () => {
         for (const t of decorationTypeForStyling.values()) {
             t.dispose();
@@ -110,6 +114,13 @@ function provideFoldingRanges(document: vscode.TextDocument, context: vscode.Fol
         ranges.push(new vscode.FoldingRange(i, i + 1));
     }
     return ranges;
+}
+
+function provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.CodeLens[] {
+    const range = new vscode.Range(0, 0, 0, 0);
+    return [
+        new vscode.CodeLens(range, { title: 'Fold All', command: 'editor.foldAll' }),
+        new vscode.CodeLens(range, { title: 'Unfold All', command: 'editor.unfoldAll' })];
 }
 
 function countContentLines(document: vscode.TextDocument): number {
