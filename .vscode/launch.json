@@ -11,7 +11,8 @@
 			"preLaunchTask": "npm: build - vscode",
 			"outFiles": [
 				"${workspaceFolder}/vscode/dist/*.js"
-			]
+			],
+			"sourceMaps": true
 		}
 	]
 }
