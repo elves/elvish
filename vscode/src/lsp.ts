@@ -1,3 +1,5 @@
+/** Hooks up LSP for Elvish sources. */
+
 import * as vscode from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node';
 

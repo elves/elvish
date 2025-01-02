@@ -1,3 +1,5 @@
+/** Implements a command to update command output in Elvish transcripts. */
+
 import * as path from 'path';
 import * as child_process from 'child_process';
 import * as vscode from 'vscode';

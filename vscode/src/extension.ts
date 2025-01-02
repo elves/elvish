@@ -1,7 +1,9 @@
+/** Entrypoint of the extension. */
+
 import * as vscode from 'vscode';
 
 import { activateStyledown } from './styledown';
-import { activateLogging } from './logging';
+import { activateLogging } from './utils/logging';
 import { activateLsp } from './lsp';
 import { activateTranscript } from './transcript';
 
