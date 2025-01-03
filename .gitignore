@@ -21,6 +21,8 @@ _testmain.go
 
 *.exe
 
+# Nix
+/result
 # Project specific
 cover
 /_*
