@@ -13,7 +13,7 @@ func isExecutable(stat os.FileInfo) bool {
 }
 
 // Determines determines a file name extension is considered executable.
-// It honors PATHEXT but defaults to extensions ".com", ".exe", ".bat", ".cmd"
+// It honors PATHEXT but defaults to extensions ".com", ".exe", ".ps1", ".bat", ".cmd"
 // if that env var isn't set.
 func isExecutableExt(ext string) bool {
 	validExts := make(map[string]bool)
@@ -29,7 +29,12 @@ func isExecutableExt(ext string) bool {
 		}
 	} else {
 		validExts = map[string]bool{
-			".com": true, ".exe": true, ".bat": true, ".cmd": true}
+			".com": true,
+			".exe": true,
+			".ps1": true,
+			".bat": true,
+			".cmd": true,
+		}
 	}
 
 	return validExts[strings.ToLower(ext)]

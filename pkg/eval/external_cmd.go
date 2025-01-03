@@ -9,6 +9,7 @@ import (
 	"strings"
 	"syscall"
 
+	"src.elv.sh/pkg/env"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/fsutil"
@@ -86,7 +87,7 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 		args[i+1] = vals.ToString(a)
 	}
 
-	path, err := exec.LookPath(e.Name)
+	path, err := which(e.Name)
 	if err != nil {
 		return err
 	}
@@ -105,8 +106,17 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 
 	args[0] = path
 
+	if filepath.Ext(path) == ".ps1" {
+		powershell, err := exec.LookPath("powershell.exe")
+		if err != nil {
+			return err
+		}
+
+		args = append([]string{powershell, "-noprofile", "-ex", "unrestricted", "-file"}, args...)
+	}
+
 	sys := makeSysProcAttr(fm.background)
-	proc, err := os.StartProcess(path, args, &os.ProcAttr{Files: files, Sys: sys})
+	proc, err := os.StartProcess(args[0], args, &os.ProcAttr{Files: files, Sys: sys})
 	if err != nil {
 		return err
 	}
@@ -127,4 +137,61 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 		}
 	}
 	return NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid)
+}
+
+func which(name string) (string, error) {
+	path, err := exec.LookPath(name)
+	if runtime.GOOS != "windows" {
+		return path, err
+	}
+
+	ext := filepath.Ext(path)
+	if ext == ".com" || ext == ".exe" || ext == ".ps1" {
+		return path, err
+	}
+
+	if !isKnownPathExt(filepath.Ext(name)) {
+		ps1, err := exec.LookPath(name + ".ps1")
+		if err == nil {
+			return ps1, nil
+		}
+	}
+
+	return path, err
+}
+
+func isKnownPathExt(ext string) bool {
+	if ext == "" {
+		return false
+	}
+
+	pathext := strings.ToLower(os.Getenv(env.PATHEXT))
+
+	if pathext == "" {
+		defaults := map[string]bool{
+			".com": true,
+			".exe": true,
+			".ps1": true,
+			".cmd": true,
+			".bat": true,
+		}
+
+		return defaults[ext]
+	}
+
+	for _, value := range strings.Split(pathext, ";") {
+		if value == "" {
+			continue
+		}
+
+		if value[0] != '.' {
+			value = "." + value
+		}
+
+		if value == ext {
+			return true
+		}
+	}
+
+	return false
 }
