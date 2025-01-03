@@ -8,6 +8,8 @@ export function activateTranscript(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand(
         'elvish.updateTranscriptOutputForCodeAtCursor',
         updateTranscriptOutputForCodeAtCursor));
+    context.subscriptions.push(vscode.commands.registerCommand(
+        'elvish.openTranscriptPromptBelow', openTranscriptPromptBelow));
     return () => { };
 }
 
@@ -75,4 +77,48 @@ function exec(cmd: string, options: child_process.ExecOptions):
             resolve({ error, stdout, stderr });
         });
     });
+}
+
+const headingPattern = /^(#{1,3}) .* \1$/;
+const promptPattern = /^[~/][^ ]*> /;
+
+async function openTranscriptPromptBelow() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        return;
+    }
+    const document = editor.document;
+
+    const cursorLine = editor.selection.active.line;
+    // Find the current prompt.
+    let prompt = '~> ';
+    let i;
+    for (i = cursorLine; i >= 0; i--) {
+        const line = document.lineAt(i).text;
+        const match = line.match(promptPattern);
+        if (match) {
+            prompt = match[0];
+            break;
+        }
+        if (line.match(headingPattern)) {
+            break;
+        }
+    }
+
+    // Find the correct line to insert.
+    for (i = cursorLine + 1; i < document.lineCount; i++) {
+        const line = document.lineAt(i).text;
+        if (line.match(headingPattern) || line.match(promptPattern)) {
+            break;
+        }
+    }
+    for (; i > cursorLine && document.lineAt(i - 1).text === ''; i--) {
+    }
+
+    // Now insert and move the cursor.
+    editor.edit((editBuilder) => {
+        editBuilder.insert(new vscode.Position(i, 0), prompt + "\n");
+    });
+    const newCursorPos = new vscode.Position(i, prompt.length);
+    editor.selection = new vscode.Selection(newCursorPos, newCursorPos);
 }
