@@ -27,10 +27,10 @@ func TestHighlighter(t *testing.T) {
 	)
 
 	// Check errors
-	feedInput(f.TTYCtrl, "x")
+	feedInput(f.TTYCtrl, "x ")
 	f.TestTTY(t,
-		"~> put $truex", Styles,
-		"   vvv ??????", term.DotHere, "\n",
+		"~> put $truex ", Styles,
+		"   vvv ?????? ", term.DotHere, "\n",
 		"compilation error: [interactive]:1:5-10: variable $truex not found",
 	)
 }
@@ -42,8 +42,7 @@ func TestHighlighter_Autofix(t *testing.T) {
 	feedInput(f.TTYCtrl, "put $mod1:")
 	f.TestTTY(t,
 		"~> put $mod1:", Styles,
-		"   vvv ??????", term.DotHere, "\n",
-		"compilation error: [interactive]:1:5-10: variable $mod1: not found\n",
+		"   vvv $$$$$$", term.DotHere, "\n",
 		"Ctrl-A autofix: use mod1 Tab Enter autofix first", Styles,
 		"++++++                   +++ +++++",
 	)

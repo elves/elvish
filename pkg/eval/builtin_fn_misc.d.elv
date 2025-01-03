@@ -21,7 +21,8 @@ fn nop {|&any-opt= @value| }
 # ▶ map
 # ```
 #
-# The terminology and definition of "kind" is subject to change.
+# The concept of "kind" can be thought of as an approximation of type, but it's
+# not very well-defined. It's subject to change.
 fn kind-of {|@value| }
 
 # Output a function that takes no arguments and outputs `$value`s when called.

@@ -1,0 +1,135 @@
+//each:elvish-in-global
+
+///////////////
+# no-op flags #
+///////////////
+
+~> elvish -i -l -c 'echo hello'
+hello
+
+/////////////////////
+# XDG library paths #
+/////////////////////
+
+//in-temp-dir
+//unset-env XDG_CONFIG_HOME
+//unset-env XDG_DATA_HOME
+//unset-env XDG_DATA_DIRS
+~> use os
+   use str
+   use path
+~> fn make-lib {|root mods|
+     os:mkdir-all $root/elvish/lib
+     for mod $mods {
+       echo 'echo '$mod' from '$root > $root/elvish/lib/$mod.elv
+     }
+   }
+// Setting up XDG library paths, from highest priority to lowest
+~> make-lib xdg-config-home [a]
+   set E:XDG_CONFIG_HOME = $pwd/xdg-config-home
+~> make-lib xdg-data-home [a b]
+   set E:XDG_DATA_HOME = $pwd/xdg-data-home
+~> make-lib xdg-data-dir-1 [a b c]
+   make-lib xdg-data-dir-2 [a b c d]
+   set E:XDG_DATA_DIRS = (str:join $path:list-separator [$pwd/xdg-data-dir-{1 2}])
+~> elvish -c 'use a'
+a from xdg-config-home
+~> elvish -c 'use b'
+b from xdg-data-home
+~> elvish -c 'use c'
+c from xdg-data-dir-1
+~> elvish -c 'use d'
+d from xdg-data-dir-2
+
+////////////////////////
+# Support for NO_COLOR #
+////////////////////////
+//each:unset-env NO_COLOR
+
+## unset: color works ##
+~> elvish -c 'to-string (styled foo red)'
+▶ "\e[;31mfoo\e[m"
+
+## empty: color works ##
+~> set E:NO_COLOR = ''
+~> elvish -c 'to-string (styled foo red)'
+▶ "\e[;31mfoo\e[m"
+
+## non-empty: color suppressed ##
+~> set E:NO_COLOR = yes
+~> elvish -c 'to-string (styled foo red)'
+▶ "\e[mfoo"
+~> set E:NO_COLOR = 1
+~> elvish -c 'to-string (styled foo red)'
+▶ "\e[mfoo"
+// https://no-color.org specifies that *any* non-empty value suppresses color,
+// regardless of the value.
+~> set E:NO_COLOR = no
+~> elvish -c 'to-string (styled foo red)'
+▶ "\e[mfoo"
+
+/////////
+# SHLVL #
+/////////
+//each:unset-env SHLVL
+
+## non-negative value gets incremented ##
+~> set E:SHLVL = 0
+~> elvish -c 'echo $E:SHLVL'
+1
+~> echo $E:SHLVL
+0
+~> set E:SHLVL = 10
+~> elvish -c 'echo $E:SHLVL'
+11
+~> echo $E:SHLVL
+10
+
+## unset is treated like 0 ##
+~> elvish -c 'echo $E:SHLVL'
+1
+~> has-env SHLVL
+▶ $false
+
+## invalid value is treated like 0 ##
+~> set E:SHLVL = invalid
+~> elvish -c 'echo $E:SHLVL'
+1
+~> echo $E:SHLVL
+invalid
+
+## negative value gets incremented ##
+// Other shells don't agree on what to do when SHLVL is negative:
+//
+// ~> env SHLVL=-100 bash -c 'echo $SHLVL'
+// 0
+// ~> env SHLVL=-100 zsh -c 'echo $SHLVL'
+// -99
+// ~> env SHLVL=-100 fish -c 'echo $SHLVL'
+// 1
+//
+// Elvish follows Zsh here.
+~> set E:SHLVL = -100
+~> elvish -c 'echo $E:SHLVL'
+-99
+~> echo $E:SHLVL
+-100
+
+///////////////////////////
+# signal handling on Unix #
+///////////////////////////
+//only-on unix
+
+## dump stack trace on USR1 ##
+//kill-wait-in-global
+~> elvish -c 'kill -USR1 $pid; sleep '$kill-wait &check-stderr-contains='src.elv.sh/pkg/shell'
+[stderr contains "src.elv.sh/pkg/shell"] true
+
+## ignore but log CHLD ##
+//in-temp-dir
+//kill-wait-in-global
+//sigchld-name-in-global
+~> elvish -log log -c 'kill -CHLD $pid; sleep '$kill-wait
+~> use str
+~> str:contains (slurp < log) 'signal '$sigchld-name
+▶ $true

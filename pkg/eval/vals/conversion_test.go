@@ -10,27 +10,34 @@ import (
 	"src.elv.sh/pkg/tt"
 )
 
-type someType struct {
-	Foo string
+type unknownType struct {
+	foo string
+}
+
+// An easier to test wrapper around ScanToGo. Takes an initial value rather than
+// a pointer, and returns the scanned result back.
+func scanToGoWithInit(src any, dstInit any) (any, error) {
+	ptr := reflect.New(TypeOf(dstInit))
+	err := ScanToGo(src, ptr.Interface())
+	return ptr.Elem().Interface(), err
+}
+
+// Another easier to test wrapper around ScanToGo. Takes a type parameter rather
+// than a pointer, and returns the scanned result back.
+func scanToGoOfType[T any](src any) (T, error) {
+	var dst T
+	err := ScanToGo(src, &dst)
+	return dst, err
 }
 
 func TestScanToGo_ConcreteTypeDst(t *testing.T) {
-	// A wrapper around ScanToGo, to make it easier to test. Instead of
-	// supplying a pointer to the destination, an initial value to the
-	// destination is supplied and the result is returned.
-	scanToGo := func(src any, dstInit any) (any, error) {
-		ptr := reflect.New(TypeOf(dstInit))
-		err := ScanToGo(src, ptr.Interface())
-		return ptr.Elem().Interface(), err
-	}
-
-	tt.Test(t, tt.Fn(scanToGo).Named("scanToGo"),
+	tt.Test(t, tt.Fn(scanToGoWithInit),
 		// int
 		Args("12", 0).Rets(12),
 		Args("0x12", 0).Rets(0x12),
 		Args(12.0, 0).Rets(0, errMustBeInteger),
 		Args(0.5, 0).Rets(0, errMustBeInteger),
-		Args(someType{}, 0).Rets(tt.Any, errMustBeInteger),
+		Args(unknownType{}, 0).Rets(tt.Any, errMustBeInteger),
 		Args("x", 0).Rets(tt.Any, cannotParseAs{"integer", "x"}),
 
 		// float64
@@ -39,31 +46,25 @@ func TestScanToGo_ConcreteTypeDst(t *testing.T) {
 		Args(1.2, 0.0).Rets(1.2),
 		Args("23", 0.0).Rets(23.0),
 		Args("0x23", 0.0).Rets(float64(0x23)),
-		Args(someType{}, 0.0).Rets(tt.Any, errMustBeNumber),
+		Args(unknownType{}, 0.0).Rets(tt.Any, errMustBeNumber),
 		Args("x", 0.0).Rets(tt.Any, cannotParseAs{"number", "x"}),
 
 		// rune
 		Args("x", ' ').Rets('x'),
-		Args(someType{}, ' ').Rets(tt.Any, errMustBeString),
+		Args(unknownType{}, ' ').Rets(tt.Any, errMustBeString),
 		Args("\xc3\x28", ' ').Rets(tt.Any, errMustBeValidUTF8), // Invalid UTF8
 		Args("ab", ' ').Rets(tt.Any, errMustHaveSingleRune),
 
 		// Other types don't undergo any conversion, as long as the types match
 		Args("foo", "").Rets("foo"),
-		Args(someType{"foo"}, someType{}).Rets(someType{"foo"}),
+		Args(unknownType{"foo"}, unknownType{}).Rets(unknownType{"foo"}),
 		Args(nil, nil).Rets(nil),
-		Args("x", someType{}).Rets(tt.Any, WrongType{"!!vals.someType", "string"}),
+		Args("x", unknownType{}).Rets(tt.Any, WrongType{"!!vals.unknownType", "string"}),
 	)
 }
 
 func TestScanToGo_NumDst(t *testing.T) {
-	scanToGo := func(src any) (Num, error) {
-		var n Num
-		err := ScanToGo(src, &n)
-		return n, err
-	}
-
-	tt.Test(t, tt.Fn(scanToGo).Named("scanToGo"),
+	tt.Test(t, tt.Fn(scanToGoOfType[Num]),
 		// Strings are automatically converted
 		Args("12").Rets(12),
 		Args(z).Rets(bigInt(z)),
@@ -77,6 +78,92 @@ func TestScanToGo_NumDst(t *testing.T) {
 
 		Args("bad").Rets(tt.Any, cannotParseAs{"number", "bad"}),
 		Args(EmptyList).Rets(tt.Any, errMustBeNumber),
+	)
+}
+
+func scanToFieldMapOpts(src any, opt ScanOpt) (fieldMap, error) {
+	var dst fieldMap
+	err := ScanToGoOpts(src, &dst, opt)
+	if err != nil {
+		// ScanToGoOpt may have set some fields and return an error. To simplify
+		// tests, always return an empty fieldMap in this case.
+		return fieldMap{}, err
+	}
+	return dst, err
+}
+
+func TestScanToGo_MapToFieldMap(t *testing.T) {
+	tt.Test(t, tt.Fn(scanToFieldMapOpts),
+		// ScanOpt(0)
+		Args(MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", 23), ScanOpt(0)).
+			Rets(fieldMap{Foo: "lorem", Bar: "ipsum", FooBar: 23}, nil),
+		// Missing key is not OK
+		Args(MakeMap("foo", "lorem", "bar", "ipsum"), ScanOpt(0)).
+			Rets(fieldMap{},
+				errs.BadValue{What: "value",
+					Valid:  "map with keys being exactly [foo bar foo-bar]",
+					Actual: "[&bar=ipsum &foo=lorem]"}),
+		// Extra key is not OK
+		Args(MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", 23, "more", "x"), ScanOpt(0)).
+			Rets(fieldMap{},
+				errs.BadValue{What: "value",
+					Valid:  "map with keys being exactly [foo bar foo-bar]",
+					Actual: "[&bar=ipsum &foo=lorem &foo-bar=(num 23) &more=x]"}),
+		// Mismatched type is not OK
+		Args(MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", "bad"), ScanOpt(0)).
+			Rets(fieldMap{}, cannotParseAs{"integer", "bad"}),
+
+		// AllowMissingMapKey
+		Args(MakeMap("foo", "lorem"), AllowMissingMapKey).
+			Rets(fieldMap{Foo: "lorem"}),
+		// Extra key is not OK - len(map) > len(fieldMap)
+		Args(MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", 23, "more", "x"), AllowMissingMapKey).
+			Rets(fieldMap{},
+				errs.BadValue{What: "value",
+					Valid:  "map with keys constrained to [foo bar foo-bar]",
+					Actual: "[&bar=ipsum &foo=lorem &foo-bar=(num 23) &more=x]"}),
+		// Extra key is not OK - len(map) < len(fieldMap)
+		Args(MakeMap("foo", "lorem", "more", "x"), AllowMissingMapKey).
+			Rets(fieldMap{},
+				errs.BadValue{What: "value",
+					Valid:  "map with keys constrained to [foo bar foo-bar]",
+					Actual: "[&foo=lorem &more=x]"}),
+		// Mismatched type is not OK
+		Args(MakeMap("foo-bar", "bad"), AllowMissingMapKey).
+			Rets(fieldMap{}, cannotParseAs{"integer", "bad"}),
+
+		// AllowExtraMapKey
+		Args(MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", 23, "extra", ""), AllowExtraMapKey).
+			Rets(fieldMap{Foo: "lorem", Bar: "ipsum", FooBar: 23}),
+		// Missing key is not OK - len(map) < len(fieldMap)
+		Args(MakeMap("foo", "lorem", "bar", "ipsum"), AllowExtraMapKey).
+			Rets(fieldMap{},
+				errs.BadValue{What: "value",
+					Valid:  "map with keys containing at least [foo bar foo-bar]",
+					Actual: "[&bar=ipsum &foo=lorem]"}),
+		// Missing key is not OK - len(map) > len(fieldMap)
+		Args(MakeMap("foo", "lorem", "bar", "ipsum", "more1", "1", "more2", "2"), AllowExtraMapKey).
+			Rets(fieldMap{},
+				errs.BadValue{What: "value",
+					Valid:  "map with keys containing at least [foo bar foo-bar]",
+					Actual: "[&bar=ipsum &foo=lorem &more1=1 &more2=2]"}),
+		// Mismatched type is not OK
+		Args(MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", "bad"), AllowExtraMapKey).
+			Rets(fieldMap{}, cannotParseAs{"integer", "bad"}),
+
+		// AllowMissingMapKey | AllowExtraMapKey
+		// Mismatched type is not OK
+		Args(MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", "bad"), AllowMissingMapKey|AllowExtraMapKey).
+			Rets(fieldMap{}, cannotParseAs{"integer", "bad"}),
+	)
+}
+
+func TestScanToGo_FieldMapToFieldMap(t *testing.T) {
+	tt.Test(t, tt.Fn(scanToFieldMapOpts),
+		Args(fieldMap{Foo: "lorem", Bar: "ipsum", FooBar: 23}, ScanOpt(0)).
+			Rets(fieldMap{Foo: "lorem", Bar: "ipsum", FooBar: 23}, nil),
+		Args(fieldMap2{Foo: "lorem", Bar: "ipsum", FooBar: 23}, ScanOpt(0)).
+			Rets(fieldMap{Foo: "lorem", Bar: "ipsum", FooBar: 23}, nil),
 	)
 }
 
@@ -98,7 +185,6 @@ func TestScanToGo_CallableDstAdmitsNil(t *testing.T) {
 	type mockCallable interface {
 		Call()
 	}
-	testutil.Set(t, &CallableType, reflect.TypeOf((*mockCallable)(nil)).Elem())
 	scanToGo := func(src any) (any, error) {
 		var c mockCallable
 		err := ScanToGo(src, &c)
@@ -110,10 +196,12 @@ func TestScanToGo_CallableDstAdmitsNil(t *testing.T) {
 	)
 }
 
-func TestScanToGo_ErrorsWithNonPointerDst(t *testing.T) {
-	err := ScanToGo("", 1)
-	if err == nil {
-		t.Errorf("did not return error")
+func TestScanToGo_PanicsWithNonPointerDst(t *testing.T) {
+	x := testutil.Recover(func() {
+		ScanToGo("", 1)
+	})
+	if x == nil {
+		t.Errorf("did not panic")
 	}
 }
 
@@ -176,38 +264,6 @@ func TestScanListElementsToGo(t *testing.T) {
 	)
 }
 
-type aStruct struct {
-	Foo int
-	bar any
-}
-
-// Equal is required by cmp.Diff, since aStruct contains unexported fields.
-func (a aStruct) Equal(b aStruct) bool { return a == b }
-
-func TestScanMapToGo(t *testing.T) {
-	// A wrapper around ScanMapToGo, to make it easier to test.
-	scanMapToGo := func(src Map, dstInit any) (any, error) {
-		ptr := reflect.New(TypeOf(dstInit))
-		ptr.Elem().Set(reflect.ValueOf(dstInit))
-		err := ScanMapToGo(src, ptr.Interface())
-		return ptr.Elem().Interface(), err
-	}
-
-	tt.Test(t, tt.Fn(scanMapToGo).Named("scanMapToGo"),
-		Args(MakeMap("foo", "1"), aStruct{}).Rets(aStruct{Foo: 1}),
-		// More fields is OK
-		Args(MakeMap("foo", "1", "bar", "x"), aStruct{}).Rets(aStruct{Foo: 1}),
-		// Fewer fields is OK
-		Args(MakeMap(), aStruct{}).Rets(aStruct{}),
-		// Unexported fields are ignored
-		Args(MakeMap("bar", 20), aStruct{bar: 10}).Rets(aStruct{bar: 10}),
-
-		// Conversion error
-		Args(MakeMap("foo", "a"), aStruct{}).
-			Rets(aStruct{}, cannotParseAs{"integer", "a"}),
-	)
-}
-
 func TestFromGo(t *testing.T) {
 	tt.Test(t, FromGo,
 		// BigInt -> int, when in range
@@ -222,6 +278,29 @@ func TestFromGo(t *testing.T) {
 
 		// Other types don't undergo any conversion
 		Args(nil).Rets(nil),
-		Args(someType{"foo"}).Rets(someType{"foo"}),
+		Args(unknownType{"foo"}).Rets(unknownType{"foo"}),
 	)
+}
+
+func BenchmarkScanToGo_ScanIntToInt(b *testing.B) {
+	benchmarkScanToGo[int](b, 1)
+}
+
+func BenchmarkScanToGo_ScanStringToInt(b *testing.B) {
+	benchmarkScanToGo[int](b, "1")
+}
+
+func BenchmarkScanToGo_ScanFieldMapToFieldMap(b *testing.B) {
+	benchmarkScanToGo[fieldMap](b, fieldMap{})
+}
+
+func BenchmarkScanToGo_ScanMapToFieldMap(b *testing.B) {
+	benchmarkScanToGo[fieldMap](b, MakeMap("foo", "lorem", "bar", "ipsum", "foo-bar", 23))
+}
+
+func benchmarkScanToGo[D any](b *testing.B, src any) {
+	for range b.N {
+		var dst D
+		ScanToGo(src, &dst)
+	}
 }

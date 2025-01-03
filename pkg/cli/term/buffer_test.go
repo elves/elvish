@@ -15,7 +15,7 @@ var cellsWidthTests = []struct {
 
 func TestCellsWidth(t *testing.T) {
 	for _, test := range cellsWidthTests {
-		if width := CellsWidth(test.cells); width != test.wantWidth {
+		if width := cellsWidth(test.cells); width != test.wantWidth {
 			t.Errorf("cellsWidth(%v) = %v, want %v",
 				test.cells, width, test.wantWidth)
 		}
@@ -61,7 +61,7 @@ var compareCellsTests = []struct {
 
 func TestCompareCells(t *testing.T) {
 	for _, test := range compareCellsTests {
-		equal, index := CompareCells(test.cells1, test.cells2)
+		equal, index := compareCells(test.cells1, test.cells2)
 		if equal != test.wantEqual || index != test.wantIndex {
 			t.Errorf("compareCells(%v, %v) = (%v, %v), want (%v, %v)",
 				test.cells1, test.cells2,
@@ -75,44 +75,19 @@ var bufferCursorTests = []struct {
 	want Pos
 }{
 	{
-		&Buffer{Width: 10, Lines: Lines{Line{}}},
+		&Buffer{Width: 10, Lines: [][]Cell{{}}},
 		Pos{0, 0},
 	},
 	{
-		&Buffer{Width: 10, Lines: Lines{Line{Cell{"a", ""}}, Line{Cell{"好", ""}}}},
+		&Buffer{Width: 10, Lines: [][]Cell{{{"a", ""}}, {{"好", ""}}}},
 		Pos{1, 2},
 	},
 }
 
-func TestBufferCursor(t *testing.T) {
+func TestEndPos(t *testing.T) {
 	for _, test := range bufferCursorTests {
-		if p := test.buf.Cursor(); p != test.want {
+		if p := endPos(test.buf); p != test.want {
 			t.Errorf("(%v).cursor() = %v, want %v", test.buf, p, test.want)
-		}
-	}
-}
-
-var buffersHeighTests = []struct {
-	buffers []*Buffer
-	want    int
-}{
-	{nil, 0},
-	{[]*Buffer{NewBuffer(10)}, 1},
-	{
-		[]*Buffer{
-			{Width: 10, Lines: Lines{Line{}, Line{}}},
-			{Width: 10, Lines: Lines{Line{}}},
-			{Width: 10, Lines: Lines{Line{}, Line{}}},
-		},
-		5,
-	},
-}
-
-func TestBuffersHeight(t *testing.T) {
-	for _, test := range buffersHeighTests {
-		if h := BuffersHeight(test.buffers...); h != test.want {
-			t.Errorf("buffersHeight(%v...) = %v, want %v",
-				test.buffers, h, test.want)
 		}
 	}
 }
@@ -124,43 +99,43 @@ var bufferTrimToLinesTests = []struct {
 	want *Buffer
 }{
 	{
-		&Buffer{Width: 10, Lines: Lines{
-			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}, Line{Cell{"c", ""}}, Line{Cell{"d", ""}},
+		&Buffer{Width: 10, Lines: [][]Cell{
+			{{"a", ""}}, {{"b", ""}}, {{"c", ""}}, {{"d", ""}},
 		}},
 		0, 2,
-		&Buffer{Width: 10, Lines: Lines{
-			Line{Cell{"a", ""}}, Line{Cell{"b", ""}},
+		&Buffer{Width: 10, Lines: [][]Cell{
+			{{"a", ""}}, {{"b", ""}},
 		}},
 	},
 	// Negative low is treated as 0.
 
 	{
-		&Buffer{Width: 10, Lines: Lines{
-			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}, Line{Cell{"c", ""}}, Line{Cell{"d", ""}},
+		&Buffer{Width: 10, Lines: [][]Cell{
+			{{"a", ""}}, {{"b", ""}}, {{"c", ""}}, {{"d", ""}},
 		}},
 		-1, 2,
-		&Buffer{Width: 10, Lines: Lines{
-			Line{Cell{"a", ""}}, Line{Cell{"b", ""}},
+		&Buffer{Width: 10, Lines: [][]Cell{
+			{{"a", ""}}, {{"b", ""}},
 		}},
 	},
 	// With dot.
 	{
-		&Buffer{Width: 10, Lines: Lines{
-			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}, Line{Cell{"c", ""}}, Line{Cell{"d", ""}},
+		&Buffer{Width: 10, Lines: [][]Cell{
+			{{"a", ""}}, {{"b", ""}}, {{"c", ""}}, {{"d", ""}},
 		}, Dot: Pos{1, 1}},
 		1, 3,
-		&Buffer{Width: 10, Lines: Lines{
-			Line{Cell{"b", ""}}, Line{Cell{"c", ""}},
+		&Buffer{Width: 10, Lines: [][]Cell{
+			{{"b", ""}}, {{"c", ""}},
 		}, Dot: Pos{0, 1}},
 	},
 	// With dot that is going to be trimmed away.
 	{
-		&Buffer{Width: 10, Lines: Lines{
-			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}, Line{Cell{"c", ""}}, Line{Cell{"d", ""}},
+		&Buffer{Width: 10, Lines: [][]Cell{
+			{{"a", ""}}, {{"b", ""}}, {{"c", ""}}, {{"d", ""}},
 		}, Dot: Pos{0, 1}},
 		1, 3,
-		&Buffer{Width: 10, Lines: Lines{
-			Line{Cell{"b", ""}}, Line{Cell{"c", ""}},
+		&Buffer{Width: 10, Lines: [][]Cell{
+			{{"b", ""}}, {{"c", ""}},
 		}, Dot: Pos{0, 1}},
 	},
 }
@@ -176,103 +151,117 @@ func TestBufferTrimToLines(t *testing.T) {
 	}
 }
 
-var bufferExtendTests = []struct {
+var bufferExtendDownTests = []struct {
 	buf     *Buffer
 	buf2    *Buffer
 	moveDot bool
 	want    *Buffer
 }{
 	{
-		&Buffer{Width: 10, Lines: Lines{
-			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}}},
-		&Buffer{Width: 11, Lines: Lines{
-			Line{Cell{"c", ""}}, Line{Cell{"d", ""}}}},
+		&Buffer{Width: 10, Lines: [][]Cell{
+			{{"a", ""}}, {{"b", ""}}}},
+		&Buffer{Width: 11, Lines: [][]Cell{
+			{{"c", ""}}, {{"d", ""}}}},
 		false,
-		&Buffer{Width: 10, Lines: Lines{
-			Line{Cell{"a", ""}}, Line{Cell{"b", ""}},
-			Line{Cell{"c", ""}}, Line{Cell{"d", ""}}}},
+		&Buffer{Width: 11, Lines: [][]Cell{
+			{{"a", ""}}, {{"b", ""}},
+			{{"c", ""}}, {{"d", ""}}}},
 	},
 	// Moving dot.
 	{
-		&Buffer{Width: 10, Lines: Lines{
-			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}}},
+		&Buffer{Width: 10, Lines: [][]Cell{
+			{{"a", ""}}, {{"b", ""}}}},
 		&Buffer{
 			Width: 11,
-			Lines: Lines{Line{Cell{"c", ""}}, Line{Cell{"d", ""}}},
+			Lines: [][]Cell{{{"c", ""}}, {{"d", ""}}},
 			Dot:   Pos{1, 1},
 		},
 		true,
 		&Buffer{
-			Width: 10,
-			Lines: Lines{
-				Line{Cell{"a", ""}}, Line{Cell{"b", ""}},
-				Line{Cell{"c", ""}}, Line{Cell{"d", ""}}},
+			Width: 11,
+			Lines: [][]Cell{
+				{{"a", ""}}, {{"b", ""}},
+				{{"c", ""}}, {{"d", ""}}},
 			Dot: Pos{3, 1},
 		},
 	},
 }
 
-func TestBufferExtend(t *testing.T) {
-	for _, test := range bufferExtendTests {
+func TestBufferExtendDown(t *testing.T) {
+	for _, test := range bufferExtendDownTests {
 		buf := cloneBuffer(test.buf)
-		buf.Extend(test.buf2, test.moveDot)
+		buf.ExtendDown(test.buf2, test.moveDot)
 		if !reflect.DeepEqual(buf, test.want) {
-			t.Errorf("buf.extend(%v, %v) makes it %v, want %v",
+			t.Errorf("buf.ExtendDown(%v, %v) makes it %v, want %v",
 				test.buf2, test.moveDot, buf, test.want)
 		}
 	}
 }
 
 var bufferExtendRightTests = []struct {
-	buf  *Buffer
-	buf2 *Buffer
-	want *Buffer
+	buf     *Buffer
+	buf2    *Buffer
+	moveDot bool
+	want    *Buffer
 }{
 	// No padding, equal height.
 	{
-		&Buffer{Width: 1, Lines: Lines{Line{Cell{"a", ""}}, Line{Cell{"b", ""}}}},
-		&Buffer{Width: 1, Lines: Lines{Line{Cell{"c", ""}}, Line{Cell{"d", ""}}}},
-		&Buffer{Width: 2, Lines: Lines{
-			Line{Cell{"a", ""}, Cell{"c", ""}},
-			Line{Cell{"b", ""}, Cell{"d", ""}}}},
+		&Buffer{Width: 1, Lines: [][]Cell{{{"a", ""}}, {{"b", ""}}}},
+		&Buffer{Width: 1, Lines: [][]Cell{{{"c", ""}}, {{"d", ""}}}},
+		false,
+		&Buffer{Width: 2, Lines: [][]Cell{
+			{{"a", ""}, {"c", ""}},
+			{{"b", ""}, {"d", ""}}}},
 	},
 	// With padding, equal height.
 	{
-		&Buffer{Width: 2, Lines: Lines{Line{Cell{"a", ""}}, Line{Cell{"b", ""}}}},
-		&Buffer{Width: 1, Lines: Lines{Line{Cell{"c", ""}}, Line{Cell{"d", ""}}}},
-		&Buffer{Width: 3, Lines: Lines{
-			Line{Cell{"a", ""}, Cell{" ", ""}, Cell{"c", ""}},
-			Line{Cell{"b", ""}, Cell{" ", ""}, Cell{"d", ""}}}},
+		&Buffer{Width: 2, Lines: [][]Cell{{{"a", ""}}, {{"b", ""}}}},
+		&Buffer{Width: 1, Lines: [][]Cell{{{"c", ""}}, {{"d", ""}}}},
+		false,
+		&Buffer{Width: 3, Lines: [][]Cell{
+			{{"a", ""}, {" ", ""}, {"c", ""}},
+			{{"b", ""}, {" ", ""}, {"d", ""}}}},
 	},
 	// buf is higher.
 	{
-		&Buffer{Width: 1, Lines: Lines{
-			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}, Line{Cell{"x", ""}}}},
-		&Buffer{Width: 1, Lines: Lines{
-			Line{Cell{"c", ""}}, Line{Cell{"d", ""}},
+		&Buffer{Width: 1, Lines: [][]Cell{
+			{{"a", ""}}, {{"b", ""}}, {{"x", ""}}}},
+		&Buffer{Width: 1, Lines: [][]Cell{
+			{{"c", ""}}, {{"d", ""}},
 		}},
-		&Buffer{Width: 2, Lines: Lines{
-			Line{Cell{"a", ""}, Cell{"c", ""}},
-			Line{Cell{"b", ""}, Cell{"d", ""}},
-			Line{Cell{"x", ""}}}},
+		false,
+		&Buffer{Width: 2, Lines: [][]Cell{
+			{{"a", ""}, {"c", ""}},
+			{{"b", ""}, {"d", ""}},
+			{{"x", ""}}}},
 	},
 	// buf2 is higher.
 	{
-		&Buffer{Width: 1, Lines: Lines{Line{Cell{"a", ""}}, Line{Cell{"b", ""}}}},
-		&Buffer{Width: 1, Lines: Lines{
-			Line{Cell{"c", ""}}, Line{Cell{"d", ""}}, Line{Cell{"e", ""}},
+		&Buffer{Width: 1, Lines: [][]Cell{{{"a", ""}}, {{"b", ""}}}},
+		&Buffer{Width: 1, Lines: [][]Cell{
+			{{"c", ""}}, {{"d", ""}}, {{"e", ""}},
 		}},
-		&Buffer{Width: 2, Lines: Lines{
-			Line{Cell{"a", ""}, Cell{"c", ""}},
-			Line{Cell{"b", ""}, Cell{"d", ""}},
-			Line{Cell{" ", ""}, Cell{"e", ""}}}},
+		false,
+		&Buffer{Width: 2, Lines: [][]Cell{
+			{{"a", ""}, {"c", ""}},
+			{{"b", ""}, {"d", ""}},
+			{{" ", ""}, {"e", ""}}}},
+	},
+	// Moving the dot.
+	{
+		&Buffer{Width: 1, Lines: [][]Cell{{{"a", ""}}, {{"b", ""}}}},
+		&Buffer{Width: 1, Lines: [][]Cell{{{"c", ""}}, {{"d", ""}}}},
+		true,
+		&Buffer{Width: 2, Dot: Pos{0, 1}, Lines: [][]Cell{
+			{{"a", ""}, {"c", ""}},
+			{{"b", ""}, {"d", ""}}}},
 	},
 }
 
 func TestBufferExtendRight(t *testing.T) {
 	for _, test := range bufferExtendRightTests {
 		buf := cloneBuffer(test.buf)
-		buf.ExtendRight(test.buf2)
+		buf.ExtendRight(test.buf2, test.moveDot)
 		if !reflect.DeepEqual(buf, test.want) {
 			t.Errorf("buf.extendRight(%v) makes it %v, want %v",
 				test.buf2, buf, test.want)
@@ -337,11 +326,11 @@ func cloneBuffer(b *Buffer) *Buffer {
 	return &Buffer{b.Width, cloneLines(b.Lines), b.Dot}
 }
 
-func cloneLines(lines Lines) Lines {
-	newLines := make(Lines, len(lines))
+func cloneLines(lines [][]Cell) [][]Cell {
+	newLines := make([][]Cell, len(lines))
 	for i, line := range lines {
 		if line != nil {
-			newLines[i] = make(Line, len(line))
+			newLines[i] = make([]Cell, len(line))
 			copy(newLines[i], line)
 		}
 	}

@@ -9,6 +9,7 @@ set after-command = [
 ]
 
 set completion:arg-completer = [
+  &cd=         $complete-dirname~
   &sudo=       $complete-sudo~
   &doc:show=   {|@a| use doc; doc:-symbols }
   &doc:source= {|@a| use doc; doc:-symbols }
@@ -41,6 +42,7 @@ set insert:binding = (binding-table [
   &Ctrl-K=    $kill-line-right~
 
   &Ctrl-V= $insert-raw~
+  &Ctrl-Alt-V= $-insert-key-name~
 
   &Alt-,=  $lastcmd:start~
   &Alt-.=  $insert-last-word~

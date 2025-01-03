@@ -1,0 +1,96 @@
+//each:highlight-in-global
+//each:with-known-commands echo var set tmp del if for try
+//each:with-max-block-for-late 100ms
+
+///////////////////////////////
+# Simple lexical highlighting #
+///////////////////////////////
+
+~> highlight 'echo bareword ''single-quoted'' "double-quoted"'
+echo bareword 'single-quoted' "double-quoted"
+GGGG          YYYYYYYYYYYYYYY YYYYYYYYYYYYYYY
+
+no-eol
+G fg-green
+Y fg-yellow
+~> highlight 'echo $pid ~user/wild*card'
+echo $pid ~user/wild*card
+GGGG MMMM                
+
+no-eol
+G fg-green
+M fg-magenta
+~> highlight 'echo # comment'
+echo # comment
+GGGGCCCCCCCCCC
+
+no-eol
+G fg-green
+C fg-cyan
+
+////////////////////////////////////////////
+# Lexical highlighting of special commands #
+////////////////////////////////////////////
+
+~> highlight 'var x = foo'
+var x = foo
+GGG M Y    
+
+no-eol
+G fg-green
+M fg-magenta
+Y fg-yellow
+~> highlight 'set x = foo'
+set x = foo
+GGG M Y    
+
+no-eol
+G fg-green
+M fg-magenta
+Y fg-yellow
+~> highlight 'tmp x = foo'
+tmp x = foo
+GGG M Y    
+
+no-eol
+G fg-green
+M fg-magenta
+Y fg-yellow
+~> highlight 'del x y'
+del x y
+GGG M M
+
+no-eol
+G fg-green
+M fg-magenta
+~> highlight 'if x { } elif y { } else { }'
+if x { } elif y { } else { }
+GG   * * YYYY   * *      * *
+
+no-eol
+G fg-green
+Y fg-yellow
+~> highlight 'for x [] { } else { }'
+for x [] { } else { }
+GGG M ** * * YYYY * *
+
+no-eol
+G fg-green
+M fg-magenta
+Y fg-yellow
+~> highlight 'try { } except e { } else { } finally { }'
+try { } except e { } else { } finally { }
+GGG * * YYYYYY M * * YYYY * * YYYYYYY * *
+
+no-eol
+G fg-green
+Y fg-yellow
+M fg-magenta
+// Regression test for b.elv.sh/1358.
+~> highlight 'try { } except { }'
+try { } except { }
+GGG * * YYYYYY * *
+
+no-eol
+G fg-green
+Y fg-yellow

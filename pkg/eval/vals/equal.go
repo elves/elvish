@@ -15,7 +15,7 @@ type Equaler interface {
 }
 
 // Equal returns whether two values are equal. It is implemented for the builtin
-// types bool and string, the File, List, Map types, StructMap types, and types
+// types bool and string, the File, List, Map types, field map types, and types
 // satisfying the Equaler interface. For other types, it uses reflect.DeepEqual
 // to compare the two values.
 func Equal(x, y any) bool {
@@ -58,19 +58,23 @@ func Equal(x, y any) bool {
 		switch y := y.(type) {
 		case Map:
 			return equalMap(x, y, Map.Iterator, Map.Index)
-		case StructMap:
-			return equalMap(x, y, Map.Iterator, indexStructMap)
-		}
-		return false
-	case StructMap:
-		switch y := y.(type) {
-		case Map:
-			return equalMap(x, y, iterateStructMap, Map.Index)
-		case StructMap:
-			return equalMap(x, y, iterateStructMap, indexStructMap)
+		default:
+			if xKeys := GetFieldMapKeys(y); xKeys != nil {
+				return equalFieldMapAndMap(y, xKeys, x)
+			}
 		}
 		return false
 	default:
+		if xKeys := GetFieldMapKeys(x); xKeys != nil {
+			switch y := y.(type) {
+			case Map:
+				return equalFieldMapAndMap(x, xKeys, y)
+			default:
+				if yKeys := GetFieldMapKeys(y); yKeys != nil {
+					return equalFieldMapAndFieldMap(x, xKeys, y, yKeys)
+				}
+			}
+		}
 		return reflect.DeepEqual(x, y)
 	}
 }
@@ -99,6 +103,34 @@ func equalMap[X, Y any, I hashmap.Iterator](x X, y Y, xit func(X) I, yidx func(Y
 		k, vx := it.Elem()
 		vy, ok := yidx(y, k)
 		if !ok || !Equal(vx, vy) {
+			return false
+		}
+	}
+	return true
+}
+
+func equalFieldMapAndMap(x any, xKeys FieldMapKeys, y Map) bool {
+	if len(xKeys) != y.Len() {
+		return false
+	}
+	xValue := reflect.ValueOf(x)
+	for i, key := range xKeys {
+		yValue, ok := y.Index(key)
+		if !ok || !Equal(xValue.Field(i).Interface(), yValue) {
+			return false
+		}
+	}
+	return true
+}
+
+func equalFieldMapAndFieldMap(x any, xKeys FieldMapKeys, y any, yKeys FieldMapKeys) bool {
+	if len(xKeys) != len(yKeys) {
+		return false
+	}
+	xValue := reflect.ValueOf(x)
+	for i, key := range xKeys {
+		yValue, ok := indexFieldMap(y, key, yKeys)
+		if !ok || !Equal(xValue.Field(i).Interface(), yValue) {
 			return false
 		}
 	}

@@ -1,0 +1,93 @@
+//unset-env XDG_CONFIG_HOME
+//unset-env XDG_DATA_HOME
+//each:in-temp-home
+//each:elvish-in-global
+//each:eval use os
+
+/////////////////
+# Evaluate code #
+/////////////////
+
+~> echo 'echo hello' | elvish 2>$os:dev-null
+hello
+
+///////////////////
+# Print exception #
+///////////////////
+
+~> echo 'fail error' | elvish &check-stderr-contains='fail error'
+[stderr contains "fail error"] true
+
+////////////////////
+# Evaluate rc file #
+////////////////////
+
+~> echo 'echo hello from rc.elv' > rc.elv
+~> echo | elvish -rc rc.elv 2>$os:dev-null
+hello from rc.elv
+
+## rc file doesn't compile ##
+~> echo 'echo $a' > rc.elv
+~> echo | elvish -rc rc.elv &check-stderr-contains='variable $a not found'
+[stderr contains "variable $a not found"] true
+
+## rc file throws exception ##
+~> echo 'fail bad' > rc.elv
+~> echo | elvish -rc rc.elv &check-stderr-contains='fail bad'
+[stderr contains "fail bad"] true
+
+## rc file not existing is OK ##
+~> echo | elvish -rc nonexistent.elv 2>$os:dev-null
+
+////////////////
+# Find RC file #
+////////////////
+
+## ~/.config/elvish on Unix ##
+//only-on unix
+~> os:mkdir-all .config/elvish
+~> echo 'echo hello home config' > .config/elvish/rc.elv
+~> echo | elvish 2>$os:dev-null
+hello home config
+
+## XDG_CONFIG_HOME on all platforms ##
+~> os:mkdir-all xdg_config_home/elvish
+~> echo 'echo hello XDG_CONFIG_HOME' > xdg_config_home/elvish/rc.elv
+~> set E:XDG_CONFIG_HOME = ~/xdg_config_home
+~> echo | elvish 2>$os:dev-null
+hello XDG_CONFIG_HOME
+
+///////////////////
+# Daemon behavior #
+///////////////////
+//each:elvish-with-activate-daemon-in-global
+//each:in-temp-home
+//each:unset-env XDG_STATE_HOME
+
+## establish connection ##
+~> == $pid (echo 'use daemon; echo $daemon:pid' | elvish 2>$os:dev-null)
+▶ $true
+
+## does not store empty command in history ##
+~> echo "\nuse store; store:next-cmd-seq" | elvish 2>$os:dev-null
+▶ (num 1)
+
+## stores DB under ~/.local/state/elvish by default on Unix ##
+//only-on unix
+~> echo "" | elvish 2>$os:dev-null
+~> os:exists ~/.local/state/elvish/db.bolt
+▶ $true
+
+## respects XDG_STATE_HOME for DB path ##
+//in-temp-dir
+~> use os
+   os:mkdir xdg-state-home
+   set E:XDG_STATE_HOME = $pwd/xdg-state-home
+~> echo "" | elvish 2>$os:dev-null
+~> os:exists xdg-state-home/elvish/db.bolt
+▶ $true
+
+## connection failure ##
+//elvish-with-bad-activate-daemon-in-global
+~> echo | elvish &check-stderr-contains='Cannot connect to daemon: fake error'
+[stderr contains "Cannot connect to daemon: fake error"] true

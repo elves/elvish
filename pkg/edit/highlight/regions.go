@@ -62,12 +62,6 @@ const (
 )
 
 func getRegions(n parse.Node) []region {
-	regions := getRegionsInner(n)
-	regions = fixRegions(regions)
-	return regions
-}
-
-func getRegionsInner(n parse.Node) []region {
 	var regions []region
 	emitRegions(n, func(n parse.Node, kind regionKind, typ string) {
 		regions = append(regions, region{n.Range().From, n.Range().To, kind, typ})
@@ -115,15 +109,6 @@ func emitRegions(n parse.Node, f func(parse.Node, regionKind, string)) {
 }
 
 func emitRegionsInForm(n *parse.Form, f func(parse.Node, regionKind, string)) {
-	// Left hands of temporary assignments.
-	for _, an := range n.Assignments {
-		if an.Left != nil && an.Left.Head != nil {
-			f(an.Left.Head, semanticRegion, variableRegion)
-		}
-	}
-	if n.Head == nil {
-		return
-	}
 	// Special forms.
 	// TODO: This only highlights bareword special commands, however currently
 	// quoted special commands are also possible (e.g `"if" $true { }` is

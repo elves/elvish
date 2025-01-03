@@ -12,19 +12,19 @@ defaults:
 jobs:
 
   test:
-    # The default name will include the "go-version-is" parameter, whcih is
-    # derived from go-version and redundant, so we supply an explicit templated
-    # name.
+    # The default name will include the "go-version-is" parameter below, which
+    # is derived from go-version and redundant, so we supply an explicit
+    # templated name.
     name: Run tests (${{ matrix.os }}, ${{ matrix.go-version }})
     strategy:
       matrix:
         os: [ubuntu, macos, windows]
-        go-version: [1.22.x]
+        go-version: [1.23.x]
         go-version-is: [new]
         include:
           # Test old supported Go version
           - os: ubuntu
-            go-version: 1.21.x
+            go-version: 1.22.x
             go-version-is: [old]
     env:
       ELVISH_TEST_TIME_SCALE: 20
@@ -44,15 +44,47 @@ jobs:
       run: |
         go test -race ./...
         cd website; go test -race ./...
-    - name: Generate test coverage
+    - name: Generate unit test coverage
       if: matrix.go-version-is == 'new'
-      run: go test -coverprofile=cover -coverpkg=./pkg/... ./pkg/...
+      run: go test -coverprofile=cover-unit.txt -coverpkg=./pkg/... ./pkg/...
+    - name: Generate E2E test coverage
+      if: matrix.go-version-is == 'new'
+      run: |
+        mkdir cover-e2e
+        GOCOVERDIR=$PWD/cover-e2e go test -count 1 ./e2e
+        go tool covdata textfmt -i cover-e2e -o cover-e2e.txt
     - name: Save test coverage
       if: matrix.go-version-is == 'new'
       uses: actions/upload-artifact@v4
       with:
         name: cover-${{ matrix.os == 'ubuntu' && 'linux' || matrix.os }}
-        path: cover
+        path: cover-*.txt
+
+  emulated_tests:
+    name: Run tests (emulated ${{ matrix.go-arch }})
+    strategy:
+      matrix:
+        go-arch: [riscv64, s390x]
+    env:
+      ELVISH_TEST_TIME_SCALE: 20
+      GOARCH: ${{ matrix.go-arch }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up emulator
+      run: |
+        sudo apt update
+        sudo apt install binfmt-support qemu-user-static
+        update-binfmts --display
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: 1.23.x
+    - name: Test with emulator
+      run: |
+        go test ./...
+        cd website; go test ./...
 
   # The purpose of running benchmarks in GitHub Actions is primarily to ensure
   # that the benchmark code runs and doesn't crash. GitHub Action runners don't
@@ -66,7 +98,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: 1.22.x
+        go-version: 1.23.x
     - name: Run benchmarks
       run: go test -bench=. -run='^$' ./...
 
@@ -84,22 +116,38 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: cover-${{ matrix.ostype }}
-    - name: Upload coverage to codecov
-      uses: codecov/codecov-action@v3
+    - name: Upload unit test coverage to codecov
+      uses: codecov/codecov-action@v4
       with:
-        files: ./cover
-        flags: ${{ matrix.ostype }}
+        files: ./cover-unit.txt
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: ${{ matrix.ostype }},unit
+    - name: Upload E2E test coverage to codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./cover-e2e.txt
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: ${{ matrix.ostype }},e2e
 
   checks:
     name: Run checks
-    runs-on: ubuntu-latest
+    # Most checks do not rely on the OS, but some (like check-gen) do. To ensure
+    # maximal coverage, we run all of the checks on the three main OSes.
+    strategy:
+      matrix:
+        os: [ubuntu, macos, windows]
+    runs-on: ${{ matrix.os }}-latest
     steps:
+    # autocrlf is problematic for check-fmt-go.
+    - name: Turn off autocrlf
+      if: matrix.os == 'windows'
+      run: git config --global core.autocrlf false
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: 1.22.x
+        go-version: 1.23.x
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -108,9 +156,9 @@ jobs:
       run: |
         go install golang.org/x/tools/cmd/stringer@latest
         go install golang.org/x/tools/cmd/goimports@latest
-        # Keep the versions of staticcheck and codespell in sync with CONTRIBUTING.md
-        go install honnef.co/go/tools/cmd/staticcheck@v0.4.6
-        pip install --user codespell==2.2.6
+        # Keep the versions of staticcheck and codespell in sync with docs/workflows.md
+        go install honnef.co/go/tools/cmd/staticcheck@v0.5.1
+        pip install codespell==2.3.0
     - name: Run checks
       run: make all-checks
 
@@ -123,7 +171,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: 1.22.x
+        go-version: 1.23.x
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -132,16 +180,3 @@ jobs:
       run: pip3 install beautifulsoup4
     - name: Check relative links
       run: make -C website check-rellinks
-
-  lsif:
-    name: Upload SourceGraph LSIF
-    if: github.repository == 'elves/elvish' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    container: sourcegraph/lsif-go:latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: Generate LSIF data
-      run: lsif-go
-    - name: Upload LSIF data
-      run: src lsif upload -github-token=${{ secrets.GITHUB_TOKEN }} -ignore-upload-failure

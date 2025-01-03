@@ -2,6 +2,7 @@ package eval
 
 import (
 	"reflect"
+	"slices"
 
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/parse"
@@ -22,26 +23,39 @@ func (e UnknownOption) Error() string {
 // details.
 type RawOptions map[string]any
 
-// Takes a raw option map and a pointer to a struct, and populate the struct
-// with options. A field named FieldName corresponds to the option named
-// field-name. Options that don't have corresponding fields in the struct causes
-// an error.
+// Takes a raw option map and a pointer to a field-map struct, populates the
+// struct with options.
 //
-// Similar to vals.ScanMapToGo, but requires rawOpts to contain a subset of keys
-// supported by the struct.
+// Similar to vals.ScanToGoOpts(rawOpts, ptr, vals.AllowMissingMapKey), except
+// that rawOpts is a Go map rather than an Elvish map.
 func scanOptions(rawOpts RawOptions, ptr any) error {
-	_, keyIdx := vals.StructFieldsInfo(reflect.TypeOf(ptr).Elem())
-	structValue := reflect.ValueOf(ptr).Elem()
-	for k, v := range rawOpts {
-		fieldIdx, ok := keyIdx[k]
-		if !ok {
-			return UnknownOption{k}
+	dstValue := reflect.ValueOf(ptr).Elem()
+	keys := vals.GetFieldMapKeys(dstValue.Interface())
+	findUnknownOption := func() error {
+		for key := range rawOpts {
+			if !slices.Contains(keys, key) {
+				return UnknownOption{key}
+			}
 		}
-
-		err := vals.ScanToGo(v, structValue.Field(fieldIdx).Addr().Interface())
+		panic("unreachable")
+	}
+	if len(rawOpts) > len(keys) {
+		return findUnknownOption()
+	}
+	usedOpts := 0
+	for i, key := range keys {
+		value, ok := rawOpts[key]
+		if !ok {
+			continue
+		}
+		err := vals.ScanToGo(value, dstValue.Field(i).Addr().Interface())
 		if err != nil {
 			return err
 		}
+		usedOpts++
+	}
+	if len(rawOpts) > usedOpts {
+		return findUnknownOption()
 	}
 	return nil
 }

@@ -1,11 +1,5 @@
 package eval
 
-import (
-	"reflect"
-
-	"src.elv.sh/pkg/eval/vals"
-)
-
 // Callable wraps the Call method.
 type Callable interface {
 	// Call calls the receiver in a Frame with arguments and options.
@@ -18,7 +12,3 @@ var (
 	// NoOpts is an empty option map. It can be used as an argument to Call.
 	NoOpts = map[string]any{}
 )
-
-func init() {
-	vals.CallableType = reflect.TypeOf((*Callable)(nil)).Elem()
-}

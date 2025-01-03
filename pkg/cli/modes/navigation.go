@@ -98,7 +98,7 @@ func (w *navigation) Handle(event term.Event) bool {
 func (w *navigation) Render(width, height int) *term.Buffer {
 	buf := w.codeArea.Render(width, height)
 	bufColView := w.colView.Render(width, height-len(buf.Lines))
-	buf.Extend(bufColView, false)
+	buf.ExtendDown(bufColView, false)
 	return buf
 }
 

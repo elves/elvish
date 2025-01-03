@@ -233,9 +233,9 @@ example, the `str:split` splits a string around a separator, and outputs the
 results as string values:
 
 ```elvish-transcript Terminal - elvish
-~> str:split , friends,Romands,countrymen
+~> str:split , friends,Romans,countrymen
 ▶ friends
-▶ Romands
+▶ Romans
 ▶ countrymen
 ```
 
@@ -245,8 +245,8 @@ inserting a separator between each adjacent pairs. We can connect the output of
 `str:split` with the input of `str:join` like this:
 
 ```elvish-transcript Terminal - elvish
-~> str:split , friends,Romands,countrymen | str:join ' '
-▶ 'friends Romands countrymen'
+~> str:split , friends,Romans,countrymen | str:join ' '
+▶ 'friends Romans countrymen'
 ```
 
 ## Working with both bytes and values

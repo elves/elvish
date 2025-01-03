@@ -78,8 +78,7 @@ The following characters are parsed as metacharacters under certain conditions:
     **Note**: Not technically a metacharacter in this context, `~` is also used
     as a [variable suffix](#variable-suffix) to indicate variables for commands.
 
--   `=`: terminates [map keys](#map), option keys, or the variable name in
-    [temporary assignments](#temporary-assignment)
+-   `=`: terminates [map keys](#map) and command option keys.
 
 **Note**: `:` is not technically a metacharacter, but is used in
 [qualified variable names](#qualified-name) and works as a
@@ -653,7 +652,8 @@ user-defined function, it has the following fields:
 -   `$f[rest-arg]` is the index of the rest argument. If there is no rest
     argument, it is `-1`.
 
--   `$f[opt-names]` is a list containing the names of the options.
+-   `$f[opt-names]` is a list containing the names of the options, in the order
+    they are defined in the source code.
 
 -   `$f[opt-defaults]` is a list containing the default values of the options,
     in the same order as `$f[opt-names]`.
@@ -907,10 +907,24 @@ the variable:
 ▶ bar
 ```
 
+Exploding a string results in substrings, each containing an individual
+codepoints (equivalent to calling [`str:split`](str.html#str:split) with an
+empty separator):
+
+```elvish-transcript
+~> var s = 'Hi 世界'
+~> put $@s
+▶ H
+▶ i
+▶ ' '
+▶ 世
+▶ 界
+```
+
 **Note**: Since variable uses have higher precedence than [indexing](#indexing),
 this does not work for exploding a list that is an element of another list. For
 doing that, and exploding the result of other expressions (such as an output
-capture), use the builtin [all](builtin.html#all) command.)
+capture), use the builtin [all](builtin.html#all) command.
 
 ## Output capture
 
@@ -1494,63 +1508,6 @@ A **special command** form has the same syntax with an ordinary command, but how
 it is executed depends on the command head. See
 [special commands](#special-commands).
 
-## Temporary assignment
-
-**Note**: Starting from 0.18.0, this syntax will be deprecated in favor of the
-[`tmp`](#tmp) special command.
-
-You can prepend any command form with **temporary assignments**, which gives
-variables temporarily values during the execution of that command.
-
-In the following example, `$x` and `$y` are temporarily assigned 100 and 200:
-
-```elvish-transcript
-~> var x y = 1 2
-~> x=100 y=200 + $x $y
-▶ 300
-~> echo $x $y
-1 2
-```
-
-In contrary to normal assignments, there should be no whitespaces around the
-equal sign `=`. To have multiple variables in the left-hand side, use braces:
-
-```elvish-transcript
-~> var x y = 1 2
-~> fn f { put 100 200 }
-~> {x,y}=(f) + $x $y
-▶ 300
-```
-
-If you use a previously undefined variable in a temporary assignment, its value
-will become the empty string after the command finishes.
-
-Since `var` and `set` are also commands, they can also be prepended with
-temporary assignments:
-
-```elvish-transcript
-~> var x = 1
-~> x=100 var y = (+ 133 $x)
-~> put $x $y
-▶ 1
-▶ 233
-```
-
-Temporary assignments must all appear at the beginning of the command form. As
-soon as something that is not a temporary assignments is parsed, Elvish no
-longer parses temporary assignments. For instance, in `x=1 echo x=1`, the second
-`x=1` is not a temporary assignment, but a bareword.
-
-**Note**: Elvish's behavior differs from bash (or zsh) in one important place.
-In bash, temporary assignments to variables do not affect their direct
-appearance in the command:
-
-```sh-transcript
-bash-4.4$ x=1
-bash-4.4$ x=100 echo $x
-1
-```
-
 ## IO ports
 
 A command have access to a number of **IO ports**. Each IO port is identified by
@@ -1726,6 +1683,34 @@ If `or` were a normal command, the code above is still syntactically correct.
 However, Elvish would then evaluate all its arguments, with the side effect of
 outputting `x`, `y` and `z`, before calling `or`.
 
+**Note**: Since special commands are parsed like normal commands, they end at
+newlines; this is especially important for control flow commands. For example,
+the following two styles of writing an `if` are valid:
+
+```elvish
+# No newline at all
+if (...) { ... } else { ... }
+
+# Newline appears within lambdas, which don't end the outer command
+if (...) {
+  ...
+} else {
+  ...
+}
+```
+
+However, the following style is **not** valid:
+
+```elvish
+# The if command ends at the newline
+if (...) { ... }
+# And this is treated as a separate command
+else { ... }
+```
+
+The `else` keyword is technically just an argument of the `if` command, not a
+standalone command. This is different from POSIX shell's syntax.
+
 ## Declaring variables: `var` {#var}
 
 The `var` special command declares local variables. It takes any number of
@@ -1757,7 +1742,7 @@ function as a rest variable.
 
 When declaring a variable that already exists, the existing variable is
 shadowed. The shadowed variable may still be accessed indirectly if it is
-referenced by a function. Example:
+previously referenced by a function. Example:
 
 ```elvish-transcript
 ~> var x = old
@@ -1767,6 +1752,16 @@ referenced by a function. Example:
 ▶ new
 ~> f
 ▶ old
+```
+
+If the right-hand-side of the `var` command references the variable being
+shadowed, it sees the old variable:
+
+```elvish-transcript
+~> var x = foo
+~> var x = [$x] # $x in RHS refers to old $x
+~> put $x
+▶ [foo]
 ```
 
 ## Assigning variables or elements: `set` {#set}
@@ -1860,7 +1855,7 @@ mutation applied, and assigns it to the variable. Example:
 ▶ [foo bar]
 ```
 
-## Temporarily assigning variables or elements: `tmp` {#tmp}
+## Assign temporarily: `tmp` {#tmp}
 
 The `tmp` command has the same syntax as [`set`](#set), and also requires all
 variables to already exist (use the [`var`](#var) special command to declare new
@@ -1882,6 +1877,42 @@ bar
 ~> f
 foo
 ```
+
+## Run with temporary assignment: `with` {#with}
+
+(Added in the 0.21 release series.)
+
+The `with` command has a similar syntax to [`set`](#set), but takes an
+additional lambda. It performs assignments, runs the lambda, and restores the
+variables to their original values. Example:
+
+```elvish-transcript
+~> var x = old
+~> with x = new { echo $x }
+new
+~> echo $x
+old
+```
+
+The `with` command also supports an alternative syntax where all assignment
+arguments are enclosed inside `[` and `]`. There can be multiple of them:
+
+```elvish-transcript
+~> var x y = old-x old-y
+~> with [x = new-x] [y = new-y] { echo $x $y }
+new-x new-y
+```
+
+The same temporary assignment logic can usually be expressed with both `tmp` and
+`with`. For examples, the following are equivalent:
+
+```elvish-transcript
+~> var x = old
+~> { tmp x = new; echo $x }
+~> with x = new { echo $x }
+```
+
+Whether to use `tmp` or `with` is often a matter of style.
 
 ## Deleting variables or elements: `del` {#del}
 

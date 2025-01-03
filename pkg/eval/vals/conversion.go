@@ -6,34 +6,11 @@ import (
 	"math/big"
 	"reflect"
 	"strconv"
-	"sync"
+	"strings"
 	"unicode/utf8"
 
 	"src.elv.sh/pkg/eval/errs"
-	"src.elv.sh/pkg/strutil"
 )
-
-// Conversion between "Go values" (those expected by native Go functions) and
-// "Elvish values" (those participating in the Elvish runtime).
-//
-// Among the conversion functions, [ScanToGo] and [FromGo] implement the
-// implicit conversion used when calling native Go functions from Elvish. The
-// API is asymmetric; this has to do with two characteristics of Elvish's type
-// system:
-//
-// - Elvish doesn't have a dedicated rune type and uses strings to represent
-//   them.
-//
-// - Elvish permits using strings that look like numbers in place of numbers.
-//
-// As a result, while FromGo can always convert a "Go value" to an "Elvish
-// value" unambiguously, ScanToGo can't do that in the opposite direction.
-// For example, "1" may be converted into "1", '1' or 1, depending on what
-// the destination type is, and the process may fail. Thus ScanToGo takes the
-// pointer to the destination as an argument, and returns an error.
-//
-// The rest of the conversion functions are exported for use in more
-// sophisticated binding code, and need to explicitly invoked.
 
 // WrongType is returned by ScanToGo if the source value doesn't have a
 // compatible type.
@@ -64,25 +41,72 @@ var (
 	errMustBeInteger      = errors.New("must be integer")
 )
 
-// CallableType should be set from the eval package to the type of
-// eval.Callable. It is not initialized here to avoid creating an import cycle.
-var CallableType reflect.Type
-
-// ScanToGo converts an Elvish value, and stores it in the destination of ptr,
-// which must be a pointer.
+// ScanToGo converts an Elvish value to a Go value, and stores it in *ptr. It
+// panics if ptr is not a pointer.
 //
-// If ptr has type *int, *float64, *Num or *rune, it performs a suitable
-// conversion, and returns an error if the conversion fails. In other cases,
-// this function just tries to perform "*ptr = src" via reflection and returns
-// an error if the assignment can't be done.
-func ScanToGo(src any, ptr any) error {
+//   - If ptr has type *int, *float64, *Num or *rune, it performs a suitable
+//     conversion, and returns an error if the conversion fails.
+//
+//   - If ptr is a pointer to a field map (*M) and src is a map or another field
+//     map, it converts each individual field recursively, failing if the
+//     scanning of any field fails.
+//
+//     The set of keys in src must match the set of keys in M exactly. This
+//     behavior can be changed by using [ScanToGoOpts] instead.
+//
+//   - In other cases, it tries to perform "*ptr = src" via reflection and
+//     returns an error if the assignment can't be done.
+//
+// Strictly speaking, an Elvish value is always a Go values, and any Go value
+// can potentially participate in Elvish. The distinction between "Go value" and
+// "Elvish value" is a matter of how they are used:
+//
+//   - Go values are those returned by idiomatic Go functions, expected as
+//     arguments, or in general more convenient to manipulate in
+//     non-Elvish-specific Go code.
+//
+//   - Elvish values are those fully supported by the Elvish runtime, defined to
+//     a large extent by standard operations such as [Index] in this package.
+//
+// The API of ScanToGo and the related [FromGo] is asymmetric. This is because
+// the Elvish value system makes fewer distinctions:
+//
+//   - Elvish doesn't have a dedicated rune type and uses strings to represent
+//     them.
+//
+//   - Elvish doesn't distinguish maps and field maps, but they have different
+//     underlying Go types.
+//
+//   - Moreover, exact numbers in Elvish are normalized to the smallest type
+//     that can represent it.
+//
+// As a result, while [FromGo] can always convert a Go value to an Elvish value
+// unambiguously and successfully, ScanToGo can't do that in the opposite
+// direction. For example, "1" may be converted into "1" or '1', depending on
+// what the destination type is, and the process may fail. Thus ScanToGo takes
+// the pointer to the destination as an argument, and returns an error.
+func ScanToGo(src, ptr any) error {
+	return ScanToGoOpts(src, ptr, 0)
+}
+
+// Options for [ScanToGoOpts].
+type ScanOpt uint32
+
+const (
+	// When scanning a map into a field map, allow the map to not have some keys
+	// of the field map.
+	AllowMissingMapKey ScanOpt = 1 << iota
+	// When scanning a map into a field map, allow the map to have keys that are
+	// not in the field map.
+	AllowExtraMapKey
+)
+
+// ScanToGoOpts is like [ScanToGo], but allows customization the behavior with
+// the flag argument.
+func ScanToGoOpts(src, ptr any, opt ScanOpt) error {
 	switch ptr := ptr.(type) {
 	case *int:
-		i, err := elvToInt(src)
-		if err == nil {
-			*ptr = i
-		}
-		return err
+		return convAndStore(elvToInt, src, ptr)
 	case *float64:
 		n, err := elvToNum(src)
 		if err == nil {
@@ -90,42 +114,48 @@ func ScanToGo(src any, ptr any) error {
 		}
 		return err
 	case *Num:
-		n, err := elvToNum(src)
-		if err == nil {
-			*ptr = n
-		}
-		return err
+		return convAndStore(elvToNum, src, ptr)
 	case *rune:
-		r, err := elvToRune(src)
-		if err == nil {
-			*ptr = r
-		}
-		return err
+		return convAndStore(elvToRune, src, ptr)
 	default:
-		// Do a generic `*ptr = src` via reflection
-		ptrType := TypeOf(ptr)
-		if ptrType.Kind() != reflect.Ptr {
-			return fmt.Errorf("internal bug: need pointer to scan to, got %T", ptr)
-		}
-		dstType := ptrType.Elem()
-		if dstType == CallableType && ValueOf(src) == ValueOf(nil) {
-			// Allow using the nil value of an empty interface (which is the
-			// value of Elvish's $nil) as a Callable.
-			ValueOf(ptr).Elem().Set(reflect.Zero(dstType))
+		dstType := reflect.TypeOf(ptr).Elem()
+		// Attempt a simple assignment (*ptr = src) via reflection.
+		if TypeOf(src).AssignableTo(dstType) {
+			ValueOf(ptr).Elem().Set(ValueOf(src))
 			return nil
 		}
-		if !TypeOf(src).AssignableTo(dstType) {
-			var dstKind string
-			if dstType.Kind() == reflect.Interface {
-				dstKind = "!!" + dstType.String()
-			} else {
-				dstKind = Kind(reflect.Zero(dstType).Interface())
+		// Allow using any(nil) (which the value of Elvish's $nil) as T(nil) for
+		// any T whose zero value is spelt nil.
+		if src == nil {
+			switch dstType.Kind() {
+			case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+				ValueOf(ptr).Elem().SetZero()
+				return nil
 			}
-			return WrongType{dstKind, Kind(src)}
 		}
-		ValueOf(ptr).Elem().Set(ValueOf(src))
-		return nil
+		// Try to scan a field map.
+		if keys := getFieldMapKeysT(reflect.TypeOf(ptr).Elem()); keys != nil {
+			if _, ok := src.(Map); ok || IsFieldMap(src) {
+				return scanFieldMapFromMap(src, ptr, keys, opt)
+			}
+		}
+		// Return a suitable error.
+		var dstKind string
+		if dstType.Kind() == reflect.Interface {
+			dstKind = "!!" + dstType.String()
+		} else {
+			dstKind = Kind(reflect.Zero(dstType).Interface())
+		}
+		return WrongType{dstKind, Kind(src)}
 	}
+}
+
+func convAndStore[T any](conv func(any) (T, error), src any, ptr *T) error {
+	v, err := conv(src)
+	if err == nil {
+		*ptr = v
+	}
+	return err
 }
 
 func elvToInt(arg any) (int, error) {
@@ -172,6 +202,52 @@ func elvToRune(arg any) (rune, error) {
 		return -1, errMustHaveSingleRune
 	}
 	return r, nil
+}
+
+func scanFieldMapFromMap(src any, ptr any, dstKeys FieldMapKeys, opt ScanOpt) error {
+	makeErr := func(keysDescription string) error {
+		return errs.BadValue{
+			// TODO: Add path information in error messages.
+			What:   "value",
+			Valid:  fmt.Sprintf("map with keys %s [%s]", keysDescription, strings.Join(dstKeys, " ")),
+			Actual: ReprPlain(src),
+		}
+	}
+
+	switch opt & (AllowMissingMapKey | AllowExtraMapKey) {
+	case 0:
+		if Len(src) != len(dstKeys) {
+			return makeErr("being exactly")
+		}
+	case AllowMissingMapKey:
+		if Len(src) > len(dstKeys) {
+			return makeErr("constrained to")
+		}
+	case AllowExtraMapKey:
+		if Len(src) < len(dstKeys) {
+			return makeErr("containing at least")
+		}
+	}
+	dst := reflect.ValueOf(ptr).Elem()
+	usedSrcKeys := 0
+	for i, key := range dstKeys {
+		srcValue, err := Index(src, key)
+		if err != nil {
+			if opt&AllowMissingMapKey == 0 {
+				return makeErr("containing at least")
+			}
+			continue
+		}
+		err = ScanToGoOpts(srcValue, dst.Field(i).Addr().Interface(), opt)
+		if err != nil {
+			return err
+		}
+		usedSrcKeys++
+	}
+	if opt&AllowExtraMapKey == 0 && usedSrcKeys < Len(src) {
+		return makeErr("constrained to")
+	}
+	return nil
 }
 
 // ScanListToGo converts a List to a slice, using ScanToGo to convert each
@@ -229,72 +305,12 @@ func ScanListElementsToGo(src List, ptrs ...any) error {
 	return nil
 }
 
-// ScanMapToGo scans map elements into ptr, which must be a pointer to a struct.
-// Struct field names are converted to map keys with CamelToDashed.
-//
-// The map may contains keys that don't correspond to struct fields, and it
-// doesn't have to contain all keys that correspond to struct fields.
-func ScanMapToGo(src Map, ptr any) error {
-	// Iterate over the struct keys instead of the map: since extra keys are
-	// allowed, the map may be very big, while the size of the struct is bound.
-	keys, _ := StructFieldsInfo(reflect.TypeOf(ptr).Elem())
-	structValue := reflect.ValueOf(ptr).Elem()
-	for i, key := range keys {
-		if key == "" {
-			continue
-		}
-		val, ok := src.Index(key)
-		if !ok {
-			continue
-		}
-		err := ScanToGo(val, structValue.Field(i).Addr().Interface())
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// StructFieldsInfo takes a type for a struct, and returns a slice for each
-// field name, converted with CamelToDashed, and a reverse index. Unexported
-// fields result in an empty string in the slice, and is omitted from the
-// reverse index.
-func StructFieldsInfo(t reflect.Type) ([]string, map[string]int) {
-	if info, ok := structFieldsInfoCache.Load(t); ok {
-		info := info.(structFieldsInfo)
-		return info.keys, info.keyIdx
-	}
-	info := makeStructFieldsInfo(t)
-	structFieldsInfoCache.Store(t, info)
-	return info.keys, info.keyIdx
-}
-
-var structFieldsInfoCache sync.Map
-
-type structFieldsInfo struct {
-	keys   []string
-	keyIdx map[string]int
-}
-
-func makeStructFieldsInfo(t reflect.Type) structFieldsInfo {
-	keys := make([]string, t.NumField())
-	keyIdx := make(map[string]int)
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		if field.PkgPath != "" {
-			continue
-		}
-		key := strutil.CamelToDashed(field.Name)
-		keyIdx[key] = i
-		keys[i] = key
-	}
-	return structFieldsInfo{keys, keyIdx}
-}
-
 // FromGo converts a Go value to an Elvish value.
 //
 // Exact numbers are normalized to the smallest types that can hold them, and
 // runes are converted to strings. Values of other types are returned unchanged.
+//
+// See the related [ScanToGo] for the concepts of "Go value" and "Elvish value".
 func FromGo(a any) any {
 	switch a := a.(type) {
 	case *big.Int:

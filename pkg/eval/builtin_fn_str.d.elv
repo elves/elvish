@@ -68,6 +68,3 @@ fn to-string {|@value| }
 # ▶ ff
 # ```
 fn base {|base @number| }
-
-# Deprecated alias for [`re:awk`](). Will be removed in 0.21.0.
-fn eawk {|&sep='[ \t]+' &sep-posix=$false &sep-longest=$false f inputs?| }

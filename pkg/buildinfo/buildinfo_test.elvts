@@ -1,0 +1,26 @@
+//each:elvish-in-global
+
+////////////////////
+# program behavior #
+////////////////////
+
+// Tests in this section are necessarily tautological, since we can't hardcode
+// the actual versions in the tests. Instead, all we do is verifying that the
+// output from the flags are consistent with the information in $buildinfo.
+
+## -version ##
+~> elvish -version | eq (one) $buildinfo[version]
+▶ $true
+~> elvish -version -json | eq (one) (to-json [$buildinfo[version]])
+▶ $true
+
+## -buildinfo ##
+~> elvish -buildinfo | eq (slurp) "Version: "$buildinfo[version]"\nGo version: "$buildinfo[go-version]"\n"
+▶ $true
+~> elvish -buildinfo -json | eq (one) (to-json [$buildinfo])
+▶ $true
+
+## exits with NextProgram if neither flag is given ##
+~> elvish
+[stderr] internal error: no suitable subprogram
+[exit] 2

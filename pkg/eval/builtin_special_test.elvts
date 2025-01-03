@@ -76,6 +76,12 @@ Compilation error: invalid value for unknown-command: bad
 ▶ new
 ▶ old
 
+## RHS sees old variable when shadowing (https://b.elv.sh/1829) ##
+~> var x = foo
+~> var x = [$x]
+~> put $x
+▶ [foo]
+
 ## concurrent creation and access ##
 // Ensure that there is no race with "go test -race"
 ~> var x = 1
@@ -126,11 +132,6 @@ Compilation error: new variable $a must not have indices
 ~> var a'b'
 Compilation error: lvalue may not be composite expressions
   [tty]:1:5-8: var a'b'
-
-## braced lists must not have any indices when used as a lvalue ##
-~> var {a b}[0] = x y
-Compilation error: braced list may not have indices when used as lvalue
-  [tty]:1:5-12: var {a b}[0] = x y
 
 ///////
 # set #
@@ -288,6 +289,27 @@ Compilation error: cannot find variable $x
 ▶ x
 ▶ x
 
+## use on existing map key (https://b.elv.sh/1515) ##
+~> var m = [&k=old]
+~> { tmp m[k] = new; put $m }
+▶ [&k=new]
+~> put $m
+▶ [&k=old]
+
+## use on non-existing map key (https://b.elv.sh/1515) ##
+~> var m = [&]
+~> { tmp m[k] = new; put $m }
+▶ [&k=new]
+~> put $m
+▶ [&]
+
+## use on list element (https://b.elv.sh/1515) ##
+~> var a = [old]
+~> { tmp a[0] = new; put $a }
+▶ [new]
+~> put $a
+▶ [old]
+
 ## error setting ##
 //add-bad-var bad 0
 ~> { tmp bad = foo }
@@ -302,6 +324,80 @@ Exception: bad var
 Exception: restore variable: bad var
   [tty]:1:7-9: { tmp bad = foo; put after }
   [tty]:1:1-28: { tmp bad = foo; put after }
+
+////////
+# with #
+////////
+
+~> var x = old
+   with x = new { put $x }
+   put $x
+▶ new
+▶ old
+
+## multiple assignments enclosed in lists ##
+~> var x y = old-x old-y
+   with [x = new-x] [y = new-y] { put $x $y }
+   put $x $y
+▶ new-x
+▶ new-y
+▶ old-x
+▶ old-y
+
+## variables are restored if body throws exception ##
+~> var x = old
+   with [x = new] { fail foo }
+Exception: foo
+  [tty]:2:18-26: with [x = new] { fail foo }
+~> put $x
+▶ old
+
+## exception setting variable restores previously set variables ##
+//add-bad-var bad 0
+~> var x = old
+   with [x = new] [bad = new] { }
+Exception: bad var
+  [tty]:2:17-19: with [x = new] [bad = new] { }
+~> put $x
+▶ old
+
+## exception restoring variable is propagated and doesn't affect restoring other variables ##
+//add-bad-var bad 1
+~> var x = old
+   with [x = new] [bad = new] { }
+Exception: restore variable: bad var
+  [tty]:2:17-19: with [x = new] [bad = new] { }
+~> put $x
+▶ old
+
+## two few arguments ##
+~> with
+Compilation error: with requires at least two arguments
+  [tty]:1:1-4: with
+~> with { }
+Compilation error: with requires at least two arguments
+  [tty]:1:1-8: with { }
+
+## last argument not lambda ##
+~> var x
+   with x = val foobar
+Compilation error: last argument must be a lambda
+  [tty]:2:20: with x = val foobar
+
+## compound expressions ##
+~> with a'x' = foo { }
+Compilation error: argument must not be compound expressions
+  [tty]:1:6-9: with a'x' = foo { }
+~> var x
+   with [x = a] a'y' { }
+Compilation error: argument must not be compound expressions
+  [tty]:2:14-17: with [x = a] a'y' { }
+
+## list followed by non-list ##
+~> var x
+   with [x = a] y { }
+Compilation error: argument must be a list
+  [tty]:2:14-14: with [x = a] y { }
 
 ///////
 # del #
@@ -655,11 +751,6 @@ Exception: x
 Exception: foo
   [tty]:1:13-21: for x [a] { fail foo }
 
-## more than one iterator ##
-~> for {x,y} [] { }
-Compilation error: must be exactly one lvalue
-  [tty]:1:5-9: for {x,y} [] { }
-
 ## can't create new variable non-local variable ##
 ~> for no-such-namespace:x [a b] { }
 Compilation error: cannot create variable $no-such-namespace:x; new variables can only be created in the current scope
@@ -883,11 +974,12 @@ Compilation error: superfluous arguments
 ## importing module triggers check for deprecated features ##
 // Regression test for b.elv.sh/1072
 //tmp-lib-dir
-~> echo 'a=b nop $a' > $lib/dep.elv
+//deprecation-level 21
+~> echo '..' > $lib/dep.elv
 // Only show the first line to avoid showing the file path, which contains $lib
 // and changes across runs.
 ~> use dep 2>&1 | take 1 | to-lines
-Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
+Deprecation: implicit cd is deprecated; use cd or location mode instead
 
 ## module may mutate REPL namespace ##
 // Regression test for b.elv.sh/1225

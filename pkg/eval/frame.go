@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"sync"
 
 	"src.elv.sh/pkg/diag"
@@ -21,11 +22,6 @@ import (
 type Frame struct {
 	Evaler *Evaler
 
-	srcMeta parse.Source
-
-	local, up *Ns
-	defers    *[]func(*Frame) Exception
-
 	// The godoc of the context package states:
 	//
 	// > Do not store Contexts inside a struct type; instead, pass a Context
@@ -35,12 +31,16 @@ type Frame struct {
 	// (https://github.com/golang/go/issues/22602). The Frame struct doesn't fit
 	// the "parameter struct" definition in that discussion, but it is itself is
 	// a "context struct". Storing a Context inside it seems fine.
-	ctx   context.Context
-	ports []*Port
-
-	traceback *StackTrace
-
+	ctx        context.Context
+	ports      []*Port
+	traceback  *StackTrace
 	background bool
+
+	// The following fields are only relevant when running Elvish code (as
+	// opposed to a builtin function or external command).
+	src       parse.Source
+	local, up *Ns
+	defers    *[]func(*Frame) Exception
 }
 
 // PrepareEval prepares a piece of code for evaluation in a copy of the current
@@ -66,7 +66,7 @@ func (fm *Frame) PrepareEval(src parse.Source, r diag.Ranger, ns *Ns) (*Ns, func
 		traceback = fm.addTraceback(r)
 	}
 	newFm := &Frame{
-		fm.Evaler, src, local, new(Ns), nil, fm.ctx, fm.ports, traceback, fm.background}
+		fm.Evaler, fm.ctx, fm.ports, traceback, fm.background, src, local, new(Ns), nil}
 	op, _, err := compile(fm.Evaler.Builtin().static(), local.static(), nil, tree, fm.ErrorFile())
 	if err != nil {
 		return nil, nil, err
@@ -85,15 +85,6 @@ func (fm *Frame) Eval(src parse.Source, r diag.Ranger, ns *Ns) (*Ns, error) {
 		return nil, err
 	}
 	return newLocal, exec()
-}
-
-// Close releases resources allocated for this frame. It always returns a nil
-// error. It may be called only once.
-func (fm *Frame) Close() error {
-	for _, port := range fm.ports {
-		port.close()
-	}
-	return nil
 }
 
 // InputChan returns a channel from which input can be read.
@@ -190,26 +181,16 @@ func (fm *Frame) Canceled() bool {
 	}
 }
 
-// Fork returns a modified copy of fm. The ports are forked, and the name is
-// changed to the given value. Other fields are copied shallowly.
-func (fm *Frame) Fork(name string) *Frame {
-	newPorts := make([]*Port, len(fm.ports))
-	for i, p := range fm.ports {
-		if p != nil {
-			newPorts[i] = p.fork()
-		}
-	}
-	return &Frame{
-		fm.Evaler, fm.srcMeta,
-		fm.local, fm.up, fm.defers,
-		fm.ctx, newPorts,
-		fm.traceback, fm.background,
-	}
+// Fork returns a copy of fm, with the ports cloned.
+func (fm *Frame) Fork() *Frame {
+	newFm := *fm
+	newFm.ports = slices.Clone(fm.ports)
+	return &newFm
 }
 
 // A shorthand for forking a frame and setting the output port.
-func (fm *Frame) forkWithOutput(name string, p *Port) *Frame {
-	newFm := fm.Fork(name)
+func (fm *Frame) forkWithOutput(p *Port) *Frame {
+	newFm := fm.Fork()
 	newFm.ports[1] = p
 	return newFm
 }
@@ -220,7 +201,7 @@ func (fm *Frame) CaptureOutput(f func(*Frame) error) ([]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = f(fm.forkWithOutput("[output capture]", outPort))
+	err = f(fm.forkWithOutput(outPort))
 	return collect(), err
 }
 
@@ -230,14 +211,14 @@ func (fm *Frame) PipeOutput(f func(*Frame) error, vCb func(<-chan any), bCb func
 	if err != nil {
 		return err
 	}
-	err = f(fm.forkWithOutput("[output pipe]", outPort))
+	err = f(fm.forkWithOutput(outPort))
 	done()
 	return err
 }
 
 func (fm *Frame) addTraceback(r diag.Ranger) *StackTrace {
 	return &StackTrace{
-		Head: diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r.Range()),
+		Head: diag.NewContext(fm.src.Name, fm.src.Code, r.Range()),
 		Next: fm.traceback,
 	}
 }
@@ -252,9 +233,9 @@ func (fm *Frame) errorp(r diag.Ranger, e error) Exception {
 	default:
 		if _, ok := e.(errs.SetReadOnlyVar); ok {
 			r := r.Range()
-			e = errs.SetReadOnlyVar{VarName: fm.srcMeta.Code[r.From:r.To]}
+			e = errs.SetReadOnlyVar{VarName: fm.src.Code[r.From:r.To]}
 		}
-		ctx := diag.NewContext(fm.srcMeta.Name, fm.srcMeta.Code, r)
+		ctx := diag.NewContext(fm.src.Name, fm.src.Code, r)
 		return &exception{e, &StackTrace{Head: ctx, Next: fm.traceback}}
 	}
 }

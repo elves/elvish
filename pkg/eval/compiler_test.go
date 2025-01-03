@@ -2,8 +2,10 @@ package eval_test
 
 import (
 	"testing"
+	"unicode/utf8"
 
 	"github.com/google/go-cmp/cmp"
+	"src.elv.sh/pkg/diag"
 	. "src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/parse"
 )
@@ -62,5 +64,40 @@ func TestAutofix(t *testing.T) {
 				t.Errorf("autofixes (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+// TODO: Turn this into a fuzz test.
+func TestPartialCompilationError(t *testing.T) {
+	for _, code := range transcriptCodes {
+		testPartialError(t, code, func(src parse.Source) []*CompilationError {
+			_, _, err := NewEvaler().Check(src, nil)
+			return UnpackCompilationErrors(err)
+		})
+	}
+}
+
+// TODO: Deduplicate this against a similar helper in pkg/parse/fuzz_test.go
+func testPartialError[T diag.ErrorTag](t *testing.T, full string, fn func(src parse.Source) []*diag.Error[T]) {
+	if !utf8.ValidString(full) {
+		t.Skip("not valid UTF-8")
+	}
+	errs := fn(parse.Source{Name: "fuzz.elv", Code: full})
+	if len(errs) > 0 {
+		t.Skip("code itself has error")
+	}
+	// If code has no error, then every prefix of it (as long as it's valid
+	// UTF-8) should have either no errors or only partial errors.
+	for i := range full {
+		if i == 0 {
+			continue
+		}
+		prefix := full[:i]
+		errs := fn(parse.Source{Name: "fuzz.elv", Code: prefix})
+		for _, err := range errs {
+			if !err.Partial {
+				t.Errorf("\n%s\n===========\nnon-partial error: %v\nfull code:\n===========\n%s\n", prefix, err, full)
+			}
+		}
 	}
 }

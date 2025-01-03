@@ -1,0 +1,103 @@
+//each:program-makers-in-global
+//each:eval fn p {|opt| program-to-fn (call $make-program~ [] $opt) }
+//each:eval fn cp {|@opts| program-to-fn (composite (each {|opt| call $make-program~ [] $opt} $opts)) }
+
+/////////////////
+# flag handling #
+/////////////////
+
+## bad flags writes error and usage to stderr ##
+~> (p [&]) -bad-flag &check-stderr-contains="flag provided but not defined: -bad-flag\nUsage:"
+[stderr contains "flag provided but not defined: -bad-flag\nUsage:"] true
+[exit] 2
+// -h is a bad flag too
+~> (p [&]) -h &check-stderr-contains="flag provided but not defined: -h\nUsage:"
+[stderr contains "flag provided but not defined: -h\nUsage:"] true
+[exit] 2
+
+## -help writes usage to stdout ##
+// -help writes usage to stdout instead of stderr
+~> (p [&]) -help &check-stdout-contains='Usage: elvish [flags] [script] [args]'
+[stdout contains "Usage: elvish [flags] [script] [args]"] true
+
+## -log ##
+//in-temp-dir
+~> (p [&]) -log log
+~> use os
+   os:exists log
+▶ $true
+~> (p [&]) -log bad/log &check-stderr-contains='open bad/log:'
+[stderr contains "open bad/log:"] true
+
+## -deprecation-level ##
+//deprecation-level 0
+//show-deprecation-level-in-global
+~> (p [&]) -deprecation-level 42
+~> show-deprecation-level
+▶ (num 42)
+
+## custom flag ##
+~> (p [&custom-flag]) -flag foo
+-flag foo
+
+## shared flags ##
+~> (p [&shared-flags]) -sock sock -db db -json
+-sock sock -db db -json true
+
+## multiple subprograms with shared flags ##
+~> (cp [&shared-flags &return-err=(next-program)] [&shared-flags]) -sock sock -db db -json
+-sock sock -db db -json true
+
+//////////////////////
+# composite programs #
+//////////////////////
+
+## runs first subprogram that doesn't return NextProgram ##
+~> (cp [&write-stdout="program 1\n"] [&write-stdout="program 2\n"])
+program 1
+
+## NextProgram error skips a program ##
+~> (cp [&return-err=(next-program)] [&write-stdout="program 2\n"])
+program 2
+
+## all subprograms return NextProgram prints internal error ##
+~> (cp [&return-err=(next-program)] [&return-err=(next-program)])
+[stderr] internal error: no suitable subprogram
+[exit] 2
+
+## runs cleanup if any subsequent program is run ##
+~> (cp [&return-err=(next-program "program 1 cleanup\n")] ^
+       [&return-err=(next-program "program 2 cleanup\n")] ^
+       [&write-stdout="program 3\n"])
+program 3
+program 2 cleanup
+program 1 cleanup
+
+## runs cleanup if any subsequent program returns non-NextProgram error ##
+~> (cp [&return-err=(next-program "program 1 cleanup\n")] ^
+       [&return-err="program 2 error"])
+program 1 cleanup
+[stderr] program 2 error
+[exit] 2
+
+## doesn't run cleanup if all programs return NextProgram error ##
+~> (cp [&return-err=(next-program "program 1 cleanup\n")] ^
+       [&return-err=(next-program)])
+[stderr] internal error: no suitable subprogram
+[exit] 2
+
+//////////////////
+# special errors #
+//////////////////
+
+## BadUsage ##
+~> (p [&return-err=(bad-usage 'lorem ipsum')]) &check-stderr-contains="lorem ipsum\nUsage:"
+[stderr contains "lorem ipsum\nUsage:"] true
+[exit] 2
+
+## Exit ##
+~> (p [&return-err=(exit-error 3)])
+[exit] 3
+
+## Exit with 0 ##
+~> (p [&return-err=(exit-error 0)])

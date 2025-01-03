@@ -28,6 +28,8 @@
 .intro .action {
   display: flex;
   column-gap: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .intro .action a {
@@ -52,6 +54,16 @@
   background-color: green;
   color: white;
   box-shadow: 0 0.125rem 0.3125rem 0 rgba(0, 0, 0, 0.2);
+}
+
+.button.community::before {
+  font-family: "fa-elv-sh";
+  content: var(--icon-chat);
+  font-size: 0.9em;
+  font-weight: normal;
+  margin-top: -0.1em;
+  padding-right: 0.3em;
+  /* color: var(--deep-orange-500); */
 }
 
 /* Section layout. */

@@ -39,16 +39,16 @@ func TestIterateKeys_Map_Break(t *testing.T) {
 	}
 }
 
-func TestIterateKeys_StructMap_Break(t *testing.T) {
+func TestIterateKeys_FieldMap_Break(t *testing.T) {
 	var gotKey any
-	IterateKeys(testStructMap{}, func(k any) bool {
+	IterateKeys(fieldMap{}, func(k any) bool {
 		if gotKey != nil {
 			t.Errorf("callback called again after returning false")
 		}
 		gotKey = k
 		return false
 	})
-	if gotKey != "name" {
+	if gotKey != "foo" {
 		t.Errorf("got key %v, want name", gotKey)
 	}
 }

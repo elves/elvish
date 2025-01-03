@@ -1,4 +1,5 @@
 <div class="has-js">
+<div class="form-wrapper">
 <form>
 
   <div class="control">
@@ -46,14 +47,18 @@
         <input type="radio" name="arch" value="386"/>
         Intel 32-bit
       </label>
+      <label class="option">
+        <input type="radio" name="arch" value="riscv64"/>
+        RISC-V
+      </label>
     </div>
   </div>
 
   <div class="small-print">
 
 If your OS/CPU combination is missing or grayed out, you may still be able to
-build Elvish <a href="https://github.com/elves/elvish" target="_blank">from
-source</a>.
+<a href="https://github.com/elves/elvish/blob/master/docs/building.md" target="_blank">build
+Elvish from source</a>.
 
   </div>
 
@@ -61,8 +66,8 @@ source</a>.
     <header>Version</header>
     <div class="widgets">
       <label class="option">
-        <input type="radio" name="version" value="v0.20.1" checked/>
-        0.20.1
+        <input type="radio" name="version" value="v0.21.0" checked/>
+        0.21.0
       </label>
       <label class="option">
         <input type="radio" name="version" value="HEAD"/>
@@ -73,11 +78,11 @@ source</a>.
 
   <div class="small-print">
 
-0.20.1 is the [latest release](../blog/0.20.1-release-notes.html). Suitable if
+0.21.0 is the [latest release](../blog/0.21.0-release-notes.html). Suitable if
 you prefer to only update occasionally or need a stable scripting environment.
 
 HEAD is the latest development build. It has the
-<a href="https://github.com/elves/elvish/blob/master/0.21.0-release-notes.md" target="_blank">freshest
+<a href="https://github.com/elves/elvish/blob/master/0.22.0-release-notes.md" target="_blank">freshest
 features</a> and is stable enough for interactive use.
 
   </div>
@@ -134,6 +139,8 @@ features</a> and is stable enough for interactive use.
   </details>
 
 </form>
+</div>
+<div class="content">
 
 Run the following in <span id="where">a terminal</span> to install Elvish
 (<a href="#" onclick="copyScript(event)">copy to clipboard</a>):
@@ -147,11 +154,14 @@ directory in `PATH`.
 More topics about installing Elvish:
 
 </div>
+</div>
 <div class="no-js">
+<div class="content">
 
 Enable JavaScript to generate an installation script for your platform.
 
 Alternatively, find your binary for your platform in the
 [all binaries](all-binaries.html) page and unpack it manually.
 
+</div>
 </div>

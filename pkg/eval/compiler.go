@@ -30,7 +30,7 @@ type compiler struct {
 	// Deprecation registry.
 	deprecations deprecationRegistry
 	// Information about the source.
-	srcMeta parse.Source
+	src parse.Source
 	// Compilation errors.
 	errors []*CompilationError
 	// Suggested code to fix potential issues found during compilation.
@@ -84,10 +84,25 @@ type CompilationErrorTag struct{}
 
 func (CompilationErrorTag) ErrorTag() string { return "compilation error" }
 
+// Reports a compilation error.
 func (cp *compiler) errorpf(r diag.Ranger, format string, args ...any) {
+	cp.errorpfInner(r, fmt.Sprintf(format, args...), false)
+}
+
+// Reports a compilation error, and mark it as partial iff the end of r happens
+// to coincide with the end of the source code.
+func (cp *compiler) errorpfPartial(r diag.Ranger, format string, args ...any) {
+	cp.errorpfInner(r, fmt.Sprintf(format, args...), r.Range().To == len(cp.src.Code))
+}
+
+func (cp *compiler) errorpfInner(r diag.Ranger, msg string, partial bool) {
 	cp.errors = append(cp.errors, &CompilationError{
-		Message: fmt.Sprintf(format, args...),
-		Context: *diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r)})
+		Message: msg,
+		Context: *diag.NewContext(cp.src.Name, cp.src.Code, r),
+		// TODO: This criteria is too strict and only captures a small subset of
+		// partial compilation errors.
+		Partial: partial,
+	})
 }
 
 // UnpackCompilationErrors returns the constituent compilation errors if the
@@ -129,10 +144,14 @@ func (cp *compiler) popScope() {
 
 func (cp *compiler) checkDeprecatedBuiltin(name string, r diag.Ranger) {
 	msg := ""
-	minLevel := 20
+	minLevel := 22
 	switch name {
-	case "eawk~":
-		msg = `the "eawk" command is deprecated; use "re:awk" instead`
+	// We don't have any deprecated builtins targeted for 0.22 yet, but keep
+	// this code here so that the code doesn't get stale. This function is only
+	// called for symbols that actually resolve to builtins, so having a fake
+	// one here is harmless.
+	case "foo~":
+		msg = `the "foo" command is deprecated; use "bar" instead`
 	default:
 		return
 	}
@@ -147,11 +166,11 @@ func (cp *compiler) deprecate(r diag.Ranger, msg string, minLevel int) {
 	if cp.warn == nil || r == nil {
 		return
 	}
-	dep := deprecation{cp.srcMeta.Name, r.Range(), msg}
+	dep := deprecation{cp.src.Name, r.Range(), msg}
 	if prog.DeprecationLevel >= minLevel && cp.deprecations.register(dep) {
 		err := diag.Error[deprecationTag]{
 			Message: msg,
-			Context: *diag.NewContext(cp.srcMeta.Name, cp.srcMeta.Code, r.Range())}
+			Context: *diag.NewContext(cp.src.Name, cp.src.Code, r.Range())}
 		fmt.Fprintln(cp.warn, err.Show(""))
 	}
 }

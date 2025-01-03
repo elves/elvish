@@ -34,7 +34,7 @@ func TestFixture(t *testing.T) {
 	f.TestTTY(t, "test", term.DotHere)
 
 	f.App.Notify(ui.T("something"))
-	f.TestTTYNotes(t, "something")
+	f.TTY.TestMsg(t, ui.T("something"))
 
 	f.App.CommitCode()
 	if code, err := f.Wait(); code != "test" || err != nil {

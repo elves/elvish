@@ -1,0 +1,12 @@
+//////////////
+# run script #
+//////////////
+
+# with -c #
+~> ./elvish -c 'echo hello from -c'
+hello from -c
+
+# with file #
+~> echo 'echo hello from file' > script.elv
+   ./elvish script.elv
+hello from file

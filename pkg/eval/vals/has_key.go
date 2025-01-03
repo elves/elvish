@@ -1,8 +1,6 @@
 package vals
 
 import (
-	"reflect"
-
 	"src.elv.sh/pkg/persistent/hashmap"
 )
 
@@ -14,7 +12,7 @@ type HasKeyer interface {
 }
 
 // HasKey returns whether a container has a key. It is implemented for the Map
-// type, StructMap types, and types satisfying the HasKeyer interface. It falls
+// type, field map types, and types satisfying the HasKeyer interface. It falls
 // back to iterating keys using IterateKeys, and if that fails, it falls back to
 // calling Len and checking if key is a valid numeric or slice index. Otherwise
 // it returns false.
@@ -24,40 +22,46 @@ func HasKey(container, key any) bool {
 		return container.HasKey(key)
 	case Map:
 		return hashmap.HasKey(container, key)
-	case StructMap:
-		return hasKeyStructMap(container, key)
 	case PseudoMap:
-		return hasKeyStructMap(container.Fields(), key)
+		return hasKeyFieldOrMethodMap(key, getMethodMapKeys(container.Fields()))
 	default:
-		var found bool
-		err := IterateKeys(container, func(k any) bool {
-			if key == k {
-				found = true
-			}
-			return !found
-		})
-		if err == nil {
-			return found
+		if keys := GetFieldMapKeys(container); keys != nil {
+			return hasKeyFieldOrMethodMap(key, keys)
+		} else {
+			return hasKeyViaIterateKeys(container, key)
 		}
-		if len := Len(container); len >= 0 {
-			// TODO(xiaq): Not all types that implement Lener have numerical
-			// indices
-			_, err := ConvertListIndex(key, len)
-			return err == nil
-		}
-		return false
 	}
 }
 
-func hasKeyStructMap(m StructMap, k any) bool {
+func hasKeyFieldOrMethodMap(k any, keys []string) bool {
 	kstring, ok := k.(string)
 	if !ok || kstring == "" {
 		return false
 	}
-	for _, fieldName := range getStructMapInfo(reflect.TypeOf(m)).fieldNames {
-		if fieldName == kstring {
+	for _, fieldName := range keys {
+		if kstring == fieldName {
 			return true
 		}
+	}
+	return false
+}
+
+func hasKeyViaIterateKeys(container, key any) bool {
+	var found bool
+	err := IterateKeys(container, func(k any) bool {
+		if key == k {
+			found = true
+		}
+		return !found
+	})
+	if err == nil {
+		return found
+	}
+	if len := Len(container); len >= 0 {
+		// TODO(xiaq): Not all types that implement Lener have numerical
+		// indices
+		_, err := ConvertListIndex(key, len)
+		return err == nil
 	}
 	return false
 }

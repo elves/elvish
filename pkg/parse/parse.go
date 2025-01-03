@@ -1,21 +1,27 @@
-// Package parse implements the elvish parser.
-//
-// The parser builds a hybrid of AST (abstract syntax tree) and parse tree
-// (a.k.a. concrete syntax tree). The AST part only includes parts that are
-// semantically significant -- i.e. skipping whitespaces and symbols that do not
-// alter the semantics, and is embodied in the fields of each *Node type. The
-// parse tree part corresponds to all the text in the original source text, and
-// is embodied in the children of each *Node type.
+/*
+Package parse implements parsing of Elvish code.
+
+The entrypoint of this package is [Parse] and the more low-level [ParseAs].
+
+This package defines many types that implement the [Node] interface, [Chunk]
+being the root node. Each node can be thought of as a AST/parse tree hybrid:
+
+  - To access the semantically relevant information of a node (as an AST),
+    use its exported fields.
+
+  - To access all its children (as a parse tree), call [Children].
+
+Internally, this package uses a handwritten recursive-descent parser. There's
+no separate tokenization phase; the parser consumes the source text directly.
+*/
 package parse
 
 //go:generate stringer -type=PrimaryType,RedirMode,ExprCtx -output=zstring.go
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"math"
-	"strings"
 	"unicode"
 
 	"src.elv.sh/pkg/diag"
@@ -46,7 +52,7 @@ func Parse(src Source, cfg Config) (Tree, error) {
 // unpacked with [UnpackErrors].
 func ParseAs(src Source, n Node, cfg Config) error {
 	ps := &parser{srcName: src.Name, src: src.Code, warn: cfg.WarningWriter}
-	ps.parse(n)
+	parse(ps, n)
 	ps.done()
 	return diag.PackErrors(ps.errors)
 }
@@ -71,7 +77,6 @@ var (
 	errShouldBeBraceSepOrRBracket = newError("", "','", "'}'")
 	errShouldBeRParen             = newError("", "')'")
 	errShouldBeCompound           = newError("", "compound")
-	errShouldBeEqual              = newError("", "'='")
 	errShouldBePipe               = newError("", "'|'")
 	errBothElementsAndPairs       = newError("cannot contain both list elements and map pairs")
 	errShouldBeNewline            = newError("", "newline")
@@ -86,7 +91,7 @@ type Chunk struct {
 func (bn *Chunk) parse(ps *parser) {
 	bn.parseSeps(ps)
 	for startsPipeline(ps.peek()) {
-		ps.parse(&Pipeline{}).addTo(&bn.Pipelines, bn)
+		parse(ps, &Pipeline{}).addTo(&bn.Pipelines, bn)
 		if bn.parseSeps(ps) == 0 {
 			break
 		}
@@ -125,14 +130,14 @@ type Pipeline struct {
 }
 
 func (pn *Pipeline) parse(ps *parser) {
-	ps.parse(&Form{}).addTo(&pn.Forms, pn)
+	parse(ps, &Form{}).addTo(&pn.Forms, pn)
 	for parseSep(pn, ps, '|') {
 		parseSpacesAndNewlines(pn, ps)
 		if !startsForm(ps.peek()) {
 			ps.error(errShouldBeForm)
 			return
 		}
-		ps.parse(&Form{}).addTo(&pn.Forms, pn)
+		parse(ps, &Form{}).addTo(&pn.Forms, pn)
 	}
 	parseSpaces(pn, ps)
 	if ps.peek() == '&' {
@@ -147,43 +152,18 @@ func startsPipeline(r rune) bool {
 	return startsForm(r)
 }
 
-// Form = { Space } { { Assignment } { Space } }
-//
-//	{ Compound } { Space } { ( Compound | MapPair | Redir ) { Space } }
+// Form = { Compound-CmdExpr } { Space } { ( Compound | MapPair | Redir ) { Space } }
 type Form struct {
 	node
-	Assignments []*Assignment
-	Head        *Compound
-	Args        []*Compound
-	Opts        []*MapPair
-	Redirs      []*Redir
+	Head   *Compound
+	Args   []*Compound
+	Opts   []*MapPair
+	Redirs []*Redir
 }
 
 func (fn *Form) parse(ps *parser) {
+	parse(ps, &Compound{ExprCtx: CmdExpr}).addAs(&fn.Head, fn)
 	parseSpaces(fn, ps)
-	for startsCompound(ps.peek(), CmdExpr) {
-		initial := ps.save()
-		cmdNode := &Compound{ExprCtx: CmdExpr}
-		parsedCmd := ps.parse(cmdNode)
-
-		if !parsableAsAssignment(cmdNode) {
-			parsedCmd.addAs(&fn.Head, fn)
-			parseSpaces(fn, ps)
-			break
-		}
-		ps.restore(initial)
-		ps.parse(&Assignment{}).addTo(&fn.Assignments, fn)
-		parseSpaces(fn, ps)
-	}
-
-	if fn.Head == nil {
-		if len(fn.Assignments) > 0 {
-			// Assignment-only form.
-			return
-		}
-		// Bad form.
-		ps.error(fmt.Errorf("bad rune at form head: %q", ps.peek()))
-	}
 
 	for {
 		r := ps.peek()
@@ -196,18 +176,19 @@ func (fn *Form) parse(ps *parser) {
 				// background indicator
 				return
 			}
-			ps.parse(&MapPair{}).addTo(&fn.Opts, fn)
+			parse(ps, &MapPair{}).addTo(&fn.Opts, fn)
 		case startsCompound(r, NormalExpr):
 			cn := &Compound{}
-			ps.parse(cn)
+			parse(ps, cn)
 			if isRedirSign(ps.peek()) {
 				// Redir
-				ps.parse(&Redir{Left: cn}).addTo(&fn.Redirs, fn)
+				parse(ps, &Redir{Left: cn}).addTo(&fn.Redirs, fn)
 			} else {
-				parsed{cn}.addTo(&fn.Args, fn)
+				fn.Args = append(fn.Args, cn)
+				addChild(fn, cn)
 			}
 		case isRedirSign(r):
-			ps.parse(&Redir{}).addTo(&fn.Redirs, fn)
+			parse(ps, &Redir{}).addTo(&fn.Redirs, fn)
 		default:
 			return
 		}
@@ -215,83 +196,8 @@ func (fn *Form) parse(ps *parser) {
 	}
 }
 
-func parsableAsAssignment(cn *Compound) bool {
-	if len(cn.Indexings) == 0 {
-		return false
-	}
-	switch cn.Indexings[0].Head.Type {
-	case Braced, SingleQuoted, DoubleQuoted:
-		return len(cn.Indexings) >= 2 &&
-			strings.HasPrefix(SourceText(cn.Indexings[1]), "=")
-	case Bareword:
-		name := cn.Indexings[0].Head.Value
-		eq := strings.IndexByte(name, '=')
-		if eq >= 0 {
-			return validBarewordVariableName(name[:eq], true)
-		} else {
-			return validBarewordVariableName(name, true) &&
-				len(cn.Indexings) >= 2 &&
-				strings.HasPrefix(SourceText(cn.Indexings[1]), "=")
-		}
-	default:
-		return false
-	}
-}
-
 func startsForm(r rune) bool {
 	return IsInlineWhitespace(r) || startsCompound(r, CmdExpr)
-}
-
-// Assignment = Indexing '=' Compound
-type Assignment struct {
-	node
-	Left  *Indexing
-	Right *Compound
-}
-
-func (an *Assignment) parse(ps *parser) {
-	ps.parse(&Indexing{ExprCtx: LHSExpr}).addAs(&an.Left, an)
-	head := an.Left.Head
-	if !ValidLHSVariable(head, true) {
-		ps.errorp(head, errShouldBeVariableName)
-	}
-
-	if !parseSep(an, ps, '=') {
-		ps.error(errShouldBeEqual)
-	}
-	ps.parse(&Compound{}).addAs(&an.Right, an)
-}
-
-func ValidLHSVariable(p *Primary, allowSigil bool) bool {
-	switch p.Type {
-	case Braced:
-		// TODO(xiaq): check further inside braced expression
-		return true
-	case SingleQuoted, DoubleQuoted:
-		// Quoted variable names may contain anything
-		return true
-	case Bareword:
-		// Bareword variable names may only contain runes that are valid in raw
-		// variable names
-		return validBarewordVariableName(p.Value, allowSigil)
-	default:
-		return false
-	}
-}
-
-func validBarewordVariableName(name string, allowSigil bool) bool {
-	if name == "" {
-		return false
-	}
-	if allowSigil && name[0] == '@' {
-		name = name[1:]
-	}
-	for _, r := range name {
-		if !allowedInVariableName(r) {
-			return false
-		}
-	}
-	return true
 }
 
 // Redir = { Compound } { '<'|'>'|'<>'|'>>' } { Space } ( '&'? Compound )
@@ -332,7 +238,7 @@ func (rn *Redir) parse(ps *parser) {
 	if parseSep(rn, ps, '&') {
 		rn.RightIsFd = true
 	}
-	ps.parse(&Compound{}).addAs(&rn.Right, rn)
+	parse(ps, &Compound{}).addAs(&rn.Right, rn)
 	if len(rn.Right.Indexings) == 0 {
 		if rn.RightIsFd {
 			ps.error(errShouldBeFD)
@@ -373,9 +279,9 @@ func (qn *Filter) parse(ps *parser) {
 		r := ps.peek()
 		switch {
 		case r == '&':
-			ps.parse(&MapPair{}).addTo(&qn.Opts, qn)
+			parse(ps, &MapPair{}).addTo(&qn.Opts, qn)
 		case startsCompound(r, NormalExpr):
-			ps.parse(&Compound{}).addTo(&qn.Args, qn)
+			parse(ps, &Compound{}).addTo(&qn.Args, qn)
 		default:
 			return
 		}
@@ -415,7 +321,7 @@ const (
 func (cn *Compound) parse(ps *parser) {
 	cn.tilde(ps)
 	for startsIndexing(ps.peek(), cn.ExprCtx) {
-		ps.parse(&Indexing{ExprCtx: cn.ExprCtx}).addTo(&cn.Indexings, cn)
+		parse(ps, &Indexing{ExprCtx: cn.ExprCtx}).addTo(&cn.Indexings, cn)
 	}
 }
 
@@ -429,8 +335,10 @@ func (cn *Compound) tilde(ps *parser) {
 			sourceText: "~", parent: nil, children: nil}
 		pn := &Primary{node: base, Type: Tilde, Value: "~"}
 		in := &Indexing{node: base}
-		parsed{pn}.addAs(&in.Head, in)
-		parsed{in}.addTo(&cn.Indexings, cn)
+		in.Head = pn
+		addChild(in, pn)
+		cn.Indexings = append(cn.Indexings, in)
+		addChild(cn, in)
 	}
 }
 
@@ -447,13 +355,13 @@ type Indexing struct {
 }
 
 func (in *Indexing) parse(ps *parser) {
-	ps.parse(&Primary{ExprCtx: in.ExprCtx}).addAs(&in.Head, in)
+	parse(ps, &Primary{ExprCtx: in.ExprCtx}).addAs(&in.Head, in)
 	for parseSep(in, ps, '[') {
 		if !startsArray(ps.peek()) && ps.peek() != ']' {
 			ps.error(errShouldBeArray)
 		}
 
-		ps.parse(&Array{}).addTo(&in.Indices, in)
+		parse(ps, &Array{}).addTo(&in.Indices, in)
 
 		if !parseSep(in, ps, ']') {
 			ps.error(errShouldBeRBracket)
@@ -481,7 +389,7 @@ func (sn *Array) parse(ps *parser) {
 
 	parseSep()
 	for startsCompound(ps.peek(), NormalExpr) {
-		ps.parse(&Compound{}).addTo(&sn.Compounds, sn)
+		parse(ps, &Compound{}).addTo(&sn.Compounds, sn)
 		parseSep()
 	}
 }
@@ -739,6 +647,39 @@ func (pn *Primary) variable(ps *parser) {
 	}
 }
 
+// Keep this consistent with the (*Primary).variable above.
+
+// ValidLHSVariable returns whether a [Primary] node containing a variable name
+// being used as the LHS of an assignment form without the $ prefix is valid.
+func ValidLHSVariable(p *Primary, allowSigil bool) bool {
+	switch p.Type {
+	case SingleQuoted, DoubleQuoted:
+		// Quoted variable names may contain anything
+		return true
+	case Bareword:
+		// Bareword LHS variable are only allowed if they are also valid after a
+		// $, even if they are valid barewords. For example, a variable named
+		// a/b must be quoted after $ (as $'a/b'), so for consistency, we also
+		// require it to be quoted after set (like set 'a/b' = foo) even if a/b
+		// is a valid bareword.
+		name := p.Value
+		if name == "" {
+			return false
+		}
+		if allowSigil && name[0] == '@' {
+			name = name[1:]
+		}
+		for _, r := range name {
+			if !allowedInVariableName(r) {
+				return false
+			}
+		}
+		return true
+	default:
+		return false
+	}
+}
+
 // The following are allowed in variable names:
 // * Anything beyond ASCII that is printable
 // * Letters and numbers
@@ -774,7 +715,7 @@ func (pn *Primary) exitusCapture(ps *parser) {
 
 	pn.Type = ExceptionCapture
 
-	ps.parse(&Chunk{}).addAs(&pn.Chunk, pn)
+	parse(ps, &Chunk{}).addAs(&pn.Chunk, pn)
 
 	if !parseSep(pn, ps, ')') {
 		ps.error(errShouldBeRParen)
@@ -785,7 +726,7 @@ func (pn *Primary) outputCapture(ps *parser) {
 	pn.Type = OutputCapture
 	parseSep(pn, ps, '(')
 
-	ps.parse(&Chunk{}).addAs(&pn.Chunk, pn)
+	parse(ps, &Chunk{}).addAs(&pn.Chunk, pn)
 
 	if !parseSep(pn, ps, ')') {
 		ps.error(errShouldBeRParen)
@@ -816,9 +757,9 @@ items:
 				break items
 			}
 			ps.backup()
-			ps.parse(&MapPair{}).addTo(&pn.MapPairs, pn)
+			parse(ps, &MapPair{}).addTo(&pn.MapPairs, pn)
 		case startsCompound(r, NormalExpr):
-			ps.parse(&Compound{}).addTo(&pn.Elements, pn)
+			parse(ps, &Compound{}).addTo(&pn.Elements, pn)
 		default:
 			break items
 		}
@@ -850,9 +791,9 @@ func (pn *Primary) lambda(ps *parser) {
 			r := ps.peek()
 			switch {
 			case r == '&':
-				ps.parse(&MapPair{}).addTo(&pn.MapPairs, pn)
+				parse(ps, &MapPair{}).addTo(&pn.MapPairs, pn)
 			case startsCompound(r, NormalExpr):
-				ps.parse(&Compound{}).addTo(&pn.Elements, pn)
+				parse(ps, &Compound{}).addTo(&pn.Elements, pn)
 			default:
 				break items
 			}
@@ -862,7 +803,7 @@ func (pn *Primary) lambda(ps *parser) {
 			ps.error(errShouldBePipe)
 		}
 	}
-	ps.parse(&Chunk{}).addAs(&pn.Chunk, pn)
+	parse(ps, &Chunk{}).addAs(&pn.Chunk, pn)
 	if !parseSep(pn, ps, '}') {
 		ps.error(errShouldBeRBrace)
 	}
@@ -882,7 +823,7 @@ func (pn *Primary) lbrace(ps *parser) {
 
 	// TODO(xiaq): The compound can be empty, which allows us to parse {,foo}.
 	// Allowing compounds to be empty can be fragile in other cases.
-	ps.parse(&Compound{ExprCtx: BracedElemExpr}).addTo(&pn.Braced, pn)
+	parse(ps, &Compound{ExprCtx: BracedElemExpr}).addTo(&pn.Braced, pn)
 
 	for isBracedSep(ps.peek()) {
 		parseSpacesAndNewlines(pn, ps)
@@ -890,7 +831,7 @@ func (pn *Primary) lbrace(ps *parser) {
 		parseSep(pn, ps, ',')
 		parseSpacesAndNewlines(pn, ps)
 
-		ps.parse(&Compound{ExprCtx: BracedElemExpr}).addTo(&pn.Braced, pn)
+		parse(ps, &Compound{ExprCtx: BracedElemExpr}).addTo(&pn.Braced, pn)
 	}
 	if !parseSep(pn, ps, '}') {
 		ps.error(errShouldBeBraceSepOrRBracket)
@@ -945,7 +886,7 @@ type MapPair struct {
 func (mpn *MapPair) parse(ps *parser) {
 	parseSep(mpn, ps, '&')
 
-	ps.parse(&Compound{ExprCtx: LHSExpr}).addAs(&mpn.Key, mpn)
+	parse(ps, &Compound{ExprCtx: LHSExpr}).addAs(&mpn.Key, mpn)
 	if len(mpn.Key.Indexings) == 0 {
 		ps.error(errShouldBeCompound)
 	}
@@ -953,7 +894,7 @@ func (mpn *MapPair) parse(ps *parser) {
 	if parseSep(mpn, ps, '=') {
 		parseSpacesAndNewlines(mpn, ps)
 		// Parse value part. It can be empty.
-		ps.parse(&Compound{}).addAs(&mpn.Value, mpn)
+		parse(ps, &Compound{}).addAs(&mpn.Value, mpn)
 	}
 }
 
@@ -1058,9 +999,4 @@ func IsInlineWhitespace(r rune) bool {
 // inline whitespace characters and newline (Unicode 0xa).
 func IsWhitespace(r rune) bool {
 	return IsInlineWhitespace(r) || r == '\r' || r == '\n'
-}
-
-func addChild(p Node, ch Node) {
-	p.n().addChild(ch)
-	ch.n().parent = p
 }

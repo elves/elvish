@@ -53,7 +53,7 @@ var runeMatchers = map[string]func(rune) bool{
 	"digit":   unicode.IsDigit,
 	"graphic": unicode.IsGraphic,
 	"letter":  unicode.IsLetter,
-	"lower":   unicode.IsDigit,
+	"lower":   unicode.IsLower,
 	"mark":    unicode.IsMark,
 	"number":  unicode.IsNumber,
 	"print":   unicode.IsPrint,

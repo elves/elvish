@@ -34,10 +34,10 @@ Exception: unsupported options: bad1, bad2
 ▶ [a b]
 ~> put {|@r| }[rest-arg]
 ▶ 0
-~> put {|&opt=def| }[opt-names]
-▶ [opt]
-~> put {|&opt=def| }[opt-defaults]
-▶ [def]
+~> put {|&opt=def &opt2=def2 &opt0=def0| }[opt-names]
+▶ [opt opt2 opt0]
+~> put {|&opt=def &opt2=def2 &opt0=def0| }[opt-defaults]
+▶ [def def2 def0]
 ~> put { body }[body]
 ▶ 'body '
 ~> put {|x @y| body }[def]

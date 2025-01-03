@@ -19,7 +19,7 @@ var (
 
 // Assoc takes a container, a key and value, and returns a modified version of
 // the container, in which the key associated with the value. It is implemented
-// for the builtin type string, List and Map types, StructMap types, and types
+// for the builtin type string, List and Map types, field map types, and types
 // satisfying the Assocer interface. For other types, it returns an error.
 func Assoc(a, k, v any) (any, error) {
 	switch a := a.(type) {
@@ -29,10 +29,12 @@ func Assoc(a, k, v any) (any, error) {
 		return assocList(a, k, v)
 	case Map:
 		return a.Assoc(k, v), nil
-	case StructMap:
-		return promoteToMap(a).Assoc(k, v), nil
 	case Assocer:
 		return a.Assoc(k, v)
+	default:
+		if keys := GetFieldMapKeys(a); keys != nil {
+			return promoteFieldMapToMap(a, keys).Assoc(k, v), nil
+		}
 	}
 	return nil, errAssocUnsupported
 }

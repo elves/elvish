@@ -23,7 +23,7 @@ type Closure struct {
 	RestArg     int
 	OptNames    []string
 	OptDefaults []any
-	SrcMeta     parse.Source
+	Src         parse.Source
 	DefRange    diag.Ranging
 	op          effectOp
 	newLocal    []staticVarInfo
@@ -135,7 +135,7 @@ func (c *Closure) Call(fm *Frame, args []any, opts map[string]any) error {
 	}
 
 	fm.local = local
-	fm.srcMeta = c.SrcMeta
+	fm.src = c.Src
 	fm.defers = new([]func(*Frame) Exception)
 	exc := c.op.exec(fm)
 	excDefer := fm.runDefers()
@@ -174,16 +174,14 @@ func (er UnsupportedOptionsError) Error() string {
 	return fmt.Sprintf("unsupported options: %s", strings.Join(er.Options, ", "))
 }
 
-func (c *Closure) Fields() vals.StructMap { return closureFields{c} }
+func (c *Closure) Fields() vals.MethodMap { return closureFields{c} }
 
 type closureFields struct{ c *Closure }
-
-func (closureFields) IsStructMap() {}
 
 func (cf closureFields) ArgNames() vals.List { return vals.MakeListSlice(cf.c.ArgNames) }
 func (cf closureFields) RestArg() string     { return strconv.Itoa(cf.c.RestArg) }
 func (cf closureFields) OptNames() vals.List { return vals.MakeListSlice(cf.c.OptNames) }
-func (cf closureFields) Src() parse.Source   { return cf.c.SrcMeta }
+func (cf closureFields) Src() parse.Source   { return cf.c.Src }
 
 func (cf closureFields) OptDefaults() vals.List {
 	return vals.MakeList(cf.c.OptDefaults...)
@@ -191,9 +189,9 @@ func (cf closureFields) OptDefaults() vals.List {
 
 func (cf closureFields) Body() string {
 	r := cf.c.op.(diag.Ranger).Range()
-	return cf.c.SrcMeta.Code[r.From:r.To]
+	return cf.c.Src.Code[r.From:r.To]
 }
 
 func (cf closureFields) Def() string {
-	return cf.c.SrcMeta.Code[cf.c.DefRange.From:cf.c.DefRange.To]
+	return cf.c.Src.Code[cf.c.DefRange.From:cf.c.DefRange.To]
 }

@@ -23,6 +23,9 @@ func init() {
 		"count": count,
 
 		"order": order,
+
+		// Iterations
+		"keep-if": keepIf,
 	})
 }
 
@@ -257,4 +260,33 @@ func (s *slice) Swap(i, j int) {
 	if s.keys != nil {
 		s.keys[i], s.keys[j] = s.keys[j], s.keys[i]
 	}
+}
+
+func keepIf(fm *Frame, f Callable, inputs Inputs) error {
+	var err error
+	inputs(func(v any) {
+		if err != nil {
+			return
+		}
+		outputs, errF := fm.CaptureOutput(func(fm *Frame) error {
+			return f.Call(fm, []any{v}, NoOpts)
+		})
+		if errF != nil {
+			err = errF
+		} else if len(outputs) != 1 {
+			err = errs.ArityMismatch{
+				What:     "number of callback outputs",
+				ValidLow: 1, ValidHigh: 1, Actual: len(outputs),
+			}
+		} else {
+			b, ok := outputs[0].(bool)
+			if !ok {
+				err = errs.BadValue{What: "callback output",
+					Valid: "bool", Actual: vals.ReprPlain(outputs[0])}
+			} else if b {
+				err = fm.ValueOutput().Put(v)
+			}
+		}
+	})
+	return err
 }

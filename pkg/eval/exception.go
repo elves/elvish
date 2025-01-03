@@ -139,11 +139,10 @@ func (exc *exception) Bool() bool {
 	return exc.reason == nil
 }
 
-func (exc *exception) Fields() vals.StructMap { return excFields{exc} }
+func (exc *exception) Fields() vals.MethodMap { return excFields{exc} }
 
 type excFields struct{ e *exception }
 
-func (excFields) IsStructMap()              {}
 func (f excFields) Reason() error           { return f.e.reason }
 func (f excFields) StackTrace() *StackTrace { return f.e.stackTrace }
 
@@ -205,11 +204,9 @@ func MakePipelineError(excs []Exception) error {
 }
 
 func (pe PipelineError) Kind() string           { return "pipeline-error" }
-func (pe PipelineError) Fields() vals.StructMap { return peFields{pe} }
+func (pe PipelineError) Fields() vals.MethodMap { return peFields{pe} }
 
 type peFields struct{ pe PipelineError }
-
-func (peFields) IsStructMap() {}
 
 func (f peFields) Type() string { return "pipeline" }
 
@@ -250,11 +247,9 @@ func (f Flow) Show(string) string {
 }
 
 func (f Flow) Kind() string           { return "flow-error" }
-func (f Flow) Fields() vals.StructMap { return flowFields{f} }
+func (f Flow) Fields() vals.MethodMap { return flowFields{f} }
 
 type flowFields struct{ f Flow }
-
-func (flowFields) IsStructMap() {}
 
 func (f flowFields) Type() string { return "flow" }
 func (f flowFields) Name() string { return f.f.Error() }
@@ -305,7 +300,7 @@ func (exit ExternalCmdExit) Kind() string {
 	return "external-cmd-error"
 }
 
-func (exit ExternalCmdExit) Fields() vals.StructMap {
+func (exit ExternalCmdExit) Fields() vals.MethodMap {
 	ws := exit.WaitStatus
 	f := exitFieldsCommon{exit}
 	switch {
@@ -322,7 +317,6 @@ func (exit ExternalCmdExit) Fields() vals.StructMap {
 
 type exitFieldsCommon struct{ e ExternalCmdExit }
 
-func (exitFieldsCommon) IsStructMap()      {}
 func (f exitFieldsCommon) CmdName() string { return f.e.CmdName }
 func (f exitFieldsCommon) Pid() string     { return strconv.Itoa(f.e.Pid) }
 

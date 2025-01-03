@@ -29,7 +29,6 @@
   <link rel="icon" type="image/png" sizes="32x32" href="{{ rootURL }}/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="{{ rootURL }}/favicon-16x16.png">
   <link rel="manifest" href="{{ rootURL }}/site.webmanifest">
-  <link rel="mask-icon" href="{{ rootURL }}/safari-pinned-tab.svg" color="#55bb55">
   <meta name="msapplication-TileColor" content="#da532c">
   <meta name="theme-color" content="#ffffff">
 
@@ -85,7 +84,7 @@
           <li>
             <a href="{{ rootURL }}/{{ $info.Name }}/"
                class="{{ if eq $curcat $info.Name}}current{{ end }}">
-              {{ $info.Name }}
+              {{ or $info.NavHTML $info.Name }}
             </a>
           </li>
         {{ end }}

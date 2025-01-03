@@ -2,7 +2,7 @@
     "name": "elvish",
     "displayName": "Elvish",
     "description": "Elvish language support for Visual Studio Code",
-    "version": "0.3.3",
+    "version": "0.4.2",
     "publisher": "elves",
     "license": "BSD-2-Clause",
     "icon": "icon.png",
@@ -17,7 +17,9 @@
         "Programming Languages",
         "Snippets"
     ],
-    "activationEvents": [],
+    "activationEvents": [
+        "onLanguage:styledown"
+    ],
     "main": "./dist/extension.js",
     "contributes": {
         "languages": [
@@ -48,6 +50,15 @@
                 "id": "elvish-in-markdown",
                 "aliases": [
                     "Elvish in Markdown"
+                ]
+            },
+            {
+                "id": "styledown",
+                "aliases": [
+                    "Styledown"
+                ],
+                "extensions": [
+                    ".styledown"
                 ]
             }
         ],
@@ -96,7 +107,7 @@
         "snippets": [
             {
                 "language": "elvish",
-                "path": "./snippets/snippets.json"
+                "path": "./snippets/elvish.json"
             }
         ],
         "commands": [
@@ -115,9 +126,33 @@
         },
         "keybindings": [
             {
-                "command": "elvish.updateTranscriptOutputForCodeAtCursor",
                 "key": "alt+enter",
+                "command": "elvish.updateTranscriptOutputForCodeAtCursor",
                 "when": "editorTextFocus && editorLangId =~ /^elvish(-transcript)?$/"
+            },
+            {
+                "key": "alt+o",
+                "command": "elvish.openTranscriptPromptBelow",
+                "when": "editorTextFocus && editorLangId == elvish-transcript"
+            },
+            {
+                "key": "alt+o",
+                "command": "vim.remap",
+                "args": {
+                    "commands": [
+                        {"command": "elvish.openTranscriptPromptBelow", "args": []}
+                    ],
+                    "after": ["i"]
+                },
+                "when": "editorTextFocus && editorLangId == elvish-transcript && vim.active && vim.mode == 'Normal'"
+            },
+            {
+                "key": "alt-k",
+                "command": "editor.action.insertSnippet",
+                "args": {
+                    "snippet": "send ${1:events}\n   render"
+                },
+                "when": "editorTextFocus && editorLangId == elvish-transcript"
             }
         ]
     },
@@ -131,13 +166,13 @@
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
-        "@types/node": "^20.11.19",
+        "@types/node": "^22.2.0",
         "@types/vscode": "^1.65.0",
-        "@typescript-eslint/eslint-plugin": "^7.0.1",
-        "@typescript-eslint/parser": "^7.0.1",
-        "esbuild": "^0.20.1",
-        "eslint": "^8.56.0",
-        "typescript": "^5.3.3",
+        "@typescript-eslint/eslint-plugin": "^8.0.1",
+        "@typescript-eslint/parser": "^8.0.1",
+        "esbuild": "^0.23.0",
+        "eslint": "^9.8.0",
+        "typescript": "^5.5.4",
         "typescript-formatter": "^7.2.2"
     }
 }

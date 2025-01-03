@@ -1,6 +1,7 @@
 package main
 
 import (
+	"html/template"
 	"log"
 	"os"
 	"path/filepath"
@@ -27,8 +28,9 @@ type siteConf struct {
 // categoryMeta represents the metadata of a cateogory, found in the global
 // site configuration.
 type categoryMeta struct {
-	Name  string
-	Title string
+	Name    string
+	Title   string
+	NavHTML template.HTML
 }
 
 // categoryConf represents the configuration of a category. Note that the

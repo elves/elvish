@@ -88,7 +88,7 @@ func call(fm *Frame, fn Callable, argsVal vals.List, optsVal vals.Map) error {
 		}
 		opts[ks] = v
 	}
-	return fn.Call(fm.Fork("-call"), args, opts)
+	return fn.Call(fm.Fork(), args, opts)
 }
 
 func resolve(fm *Frame, head string) string {
@@ -120,7 +120,7 @@ func eval(fm *Frame, opts evalOpts, code string) error {
 	// nil as the second argument.
 	newNs, exc := fm.Eval(src, nil, ns)
 	if opts.OnEnd != nil {
-		newFm := fm.Fork("on-end callback of eval")
+		newFm := fm.Fork()
 		errCb := opts.OnEnd.Call(newFm, []any{newNs}, NoOpts)
 		if exc == nil {
 			return errCb

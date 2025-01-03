@@ -79,7 +79,7 @@ import (
 //     string will be augmented with VCS information (see [VCSOverride]).
 //
 // In both cases, the full version is also augmented with the [BuildVariant].
-const VersionBase = "0.21.0"
+const VersionBase = "0.22.0"
 
 // VCSOverride may be set to identify the commit of development builds when that
 // information is not available during build time. It has no effect on release
@@ -95,8 +95,6 @@ type Type struct {
 	Version   string `json:"version"`
 	GoVersion string `json:"goversion"`
 }
-
-func (Type) IsStructMap() {}
 
 // Value contains all the build information.
 var Value = Type{

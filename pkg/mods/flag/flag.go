@@ -37,6 +37,12 @@ func (*callOpts) SetDefaultOptions() {}
 // [(*flag.FlagSet).PrintDefaults].
 
 func call(fm *eval.Frame, opts callOpts, fn *eval.Closure, argsVal vals.List) error {
+	if fn == nil {
+		return errs.BadValue{What: "function to call", Valid: "function", Actual: "$nil"}
+	}
+	if argsVal == nil {
+		return errs.BadValue{What: "arguments", Valid: "list", Actual: "$nil"}
+	}
 	var args []string
 	err := vals.ScanListToGo(argsVal, &args)
 	if err != nil {
@@ -53,7 +59,7 @@ func call(fm *eval.Frame, opts callOpts, fn *eval.Closure, argsVal vals.List) er
 	err = fs.Parse(args)
 	if err != nil {
 		if opts.OnParseError != nil {
-			return opts.OnParseError.Call(fm.Fork("parse:call &on-parse-error"), []any{err}, eval.NoOpts)
+			return opts.OnParseError.Call(fm.Fork(), []any{err}, eval.NoOpts)
 		}
 		return err
 	}
@@ -61,11 +67,11 @@ func call(fm *eval.Frame, opts callOpts, fn *eval.Closure, argsVal vals.List) er
 	fs.VisitAll(func(f *flag.Flag) {
 		m[f.Name] = f.Value.(flag.Getter).Get()
 	})
-	err = fn.Call(fm.Fork("parse:call"), convertStringArgs(fs.Args()), m)
+	err = fn.Call(fm.Fork(), convertStringArgs(fs.Args()), m)
 	if opts.OnParseError != nil {
 		switch err.(type) {
 		case errs.ArityMismatch:
-			return opts.OnParseError.Call(fm.Fork("parse:call &on-parse-error"), []any{err}, eval.NoOpts)
+			return opts.OnParseError.Call(fm.Fork(), []any{err}, eval.NoOpts)
 		}
 	}
 	return err
@@ -80,6 +86,12 @@ func convertStringArgs(ss []string) []any {
 }
 
 func parse(argsVal vals.List, specsVal vals.List) (vals.Map, vals.List, error) {
+	if argsVal == nil {
+		return nil, nil, errs.BadValue{What: "arguments", Valid: "list", Actual: "$nil"}
+	}
+	if specsVal == nil {
+		return nil, nil, errs.BadValue{What: "specs", Valid: "list", Actual: "$nil"}
+	}
 	var args []string
 	err := vals.ScanListToGo(argsVal, &args)
 	if err != nil {
@@ -221,7 +233,7 @@ func parseGetopt(opts parseGetoptOptions, argsVal vals.List, specsVal vals.List)
 	originalSpecMap := make(map[*getopt.OptionSpec]vals.Map)
 	for i, specMap := range specMaps {
 		var s specStruct
-		vals.ScanMapToGo(specMap, &s)
+		vals.ScanToGoOpts(specMap, &s, vals.AllowMissingMapKey|vals.AllowExtraMapKey)
 		spec, err := s.OptionSpec()
 		if err != nil {
 			return nil, nil, err

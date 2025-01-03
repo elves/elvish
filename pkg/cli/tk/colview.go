@@ -105,7 +105,7 @@ func (w *colView) Render(width, height int) *term.Buffer {
 			buf.Width += colViewColGap
 		}
 		bufCol := col.Render(widths[i], height)
-		buf.ExtendRight(bufCol)
+		buf.ExtendRight(bufCol, false)
 	}
 	return &buf
 }

@@ -255,7 +255,7 @@ Exception: exec: "nonexistent-command": executable file not found in %PATH%
 ///////////////
 
 //in-temp-dir
-//with-deprecation-level 21
+//deprecation-level 21
 ~> use os
    use path
    os:mkdir new-dir
@@ -265,65 +265,6 @@ Deprecation: implicit cd is deprecated; use cd or location mode instead
   [tty]:1:1-9: ./new-dir
 ~> eq $pwd (path:join $old-pwd new-dir)
 ▶ $true
-
-//////////////////////////////////////
-# legacy temporary assignment syntax #
-//////////////////////////////////////
-
-~> var a b = alice bob; {a,@b}=(put amy ben) put $a $@b; put $a $b
-▶ amy
-▶ ben
-▶ alice
-▶ bob
-Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
-  [tty]:1:22-41: var a b = alice bob; {a,@b}=(put amy ben) put $a $@b; put $a $b
-
-## temporary assignment of list element ##
-~> var l = [a]; l[0]=x put $l[0]; put $l[0]
-▶ x
-▶ a
-Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
-  [tty]:1:14-19: var l = [a]; l[0]=x put $l[0]; put $l[0]
-
-## temporary assignment of map element ##
-~> var m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]
-▶ v2
-▶ v
-Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
-  [tty]:1:17-23: var m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]
-
-## temporary assignment before special form ##
-~> li=[foo bar] for x $li { put $x }
-▶ foo
-▶ bar
-Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
-  [tty]:1:1-12: li=[foo bar] for x $li { put $x }
-
-## multiple LHSs in temporary assignments. ##
-~> {a b}={foo bar} put $a $b
-▶ foo
-▶ bar
-Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
-  [tty]:1:1-15: {a b}={foo bar} put $a $b
-
-## rest variable ##
-~> @a=(put a b) put $@a
-▶ a
-▶ b
-Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
-  [tty]:1:1-12: @a=(put a b) put $@a
-
-## non-rest and rest variable ##
-~> {a,@b}=(put a b c) put $@b
-▶ b
-▶ c
-Deprecation: the legacy temporary assignment syntax is deprecated; use "tmp" instead
-  [tty]:1:1-18: {a,@b}=(put a b c) put $@b
-
-## using syntax of temporary assignment for non-temporary assignment no longer compiles ##
-~> x=y
-Compilation error: using the syntax of temporary assignment for non-temporary assignment is no longer supported; use "var" or "set" instead
-  [tty]:1:1-3: x=y
 
 ///////////////
 # redirection #
@@ -408,6 +349,28 @@ abc
 ~> echo def > bytes
    only-values < bytes | count
 ▶ (num 0)
+
+## redirection takes precedence over pipes ##
+~> echo foo > out | slurp
+▶ ''
+~> slurp < out
+▶ "foo\n"
+
+## redirection overrides previous redirection on the same FD ##
+~> echo foo > old > new
+~> slurp < old
+▶ ''
+~> slurp < new
+▶ "foo\n"
+
+## redirections are evaluated from left to right ##
+~> echo foo 2>stderr >&2
+~> slurp < stderr
+▶ "foo\n"
+~> echo foo >&2 2>stderr
+foo
+~> slurp < stderr
+▶ ''
 
 ## writing value output to file throws an exception ##
 ~> put foo >a

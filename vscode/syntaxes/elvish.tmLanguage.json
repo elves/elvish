@@ -31,10 +31,10 @@
 
 		{
 			"name": "variable.other.elvish",
-			"match": "\\$[\\w\\d_:~-]+"
+			"match": "\\$[\\w\\d_:~-]*"
 		},
 		{
-			"match": "(?<=\\G|^|\\{ |\\{\t|\\(|\\||\\;)\\s*(var|set|tmp|del)((\\s+[\\w\\d_:~-]+)+)",
+			"match": "(?<=\\G|^|\\{ |\\{\t|\\(|\\||\\;)\\s*(var|set|tmp|with|del)((\\s+[\\w\\d_:~-]+)+)",
 			"captures": {
 				"1": {
 					"name": "keyword.other.elvish"
@@ -56,7 +56,7 @@
 			}
 		},
 		{
-			"match": "(?<=})\\s+(catch|except)\\s+([\\w\\d_:~-]+)",
+			"match": "(?<=})\\s+(catch)\\s+([\\w\\d_:~-]+)",
 			"captures": {
 				"1": {
 					"name": "keyword.control.elvish"
@@ -85,7 +85,7 @@
 			}
 		},
 		{
-			"match": "(?<=\\G|^|\\{ |\\{\t|\\(|\\||\\;)\\s*(use|var|set|tmp|del|pragma|fn)(?=[\\s)}<>;|&])",
+			"match": "(?<=\\G|^|\\{ |\\{\t|\\(|\\||\\;)\\s*(use|var|set|tmp|with|del|pragma|fn)(?=[\\s)}<>;|&])",
 			"captures": {
 				"1": {
 					"name": "keyword.other.elvish"
@@ -101,7 +101,7 @@
 			}
 		},
 		{
-			"match": "(?<=})\\s+(elif|else|catch|except|finally)(?=[\\s)}<>;|&])",
+			"match": "(?<=})\\s+(elif|else|catch|finally)(?=[\\s)}<>;|&])",
 			"captures": {
 				"1": {
 					"name": "keyword.control.elvish"

@@ -24,7 +24,23 @@ import (
 
 var logger = logutil.GetLogger("[shell] ")
 
-// Program is the shell subprogram.
+// Program is the shell subprogram. It has two slightly different modes of
+// operation:
+//
+//   - When the command line argument contains a filename or "-c some-code", the
+//     shell is non-interactive. In this mode, it just evaluates the given file or
+//     code.
+//
+//   - Otherwise, the shell is interactive, and launches a terminal [REPL]. This
+//     mode also initializes the storage backend, which in turn activates the
+//     storage daemon.
+//
+//     To enable building a daemon-less version, the subprogram doesn't depend
+//     on pkg/daemon, and the caller should supply pkg/daemon.Activate in the
+//     ActivateDaemon field to enable functionalities. If it is nil, daemon
+//     functionalities are disabled.
+//
+// [REPL]: https://en.wikipedia.org/wiki/Read–eval–print_loop
 type Program struct {
 	ActivateDaemon daemondefs.ActivateFunc
 
@@ -37,10 +53,12 @@ type Program struct {
 }
 
 func (p *Program) RegisterFlags(fs *prog.FlagSet) {
-	// Support -i so that programs that expect shells to support it (like
-	// "script") don't error when they invoke Elvish.
+	// script(1) (and possibly other programs) assume shells support -i
 	fs.Bool("i", false,
-		"A no-op flag, introduced for POSIX compatibility")
+		"A no-op flag, introduced for compatibility")
+	// termux (and possibly other programs) assume shells support -l
+	fs.Bool("l", false,
+		"A no-op flag, introduced for compatibility")
 	fs.BoolVar(&p.codeInArg, "c", false,
 		"Treat the first argument as code to execute")
 	fs.BoolVar(&p.compileOnly, "compileonly", false,

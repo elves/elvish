@@ -1,0 +1,30 @@
+//each:elvish-in-global
+//each:in-temp-dir
+
+///////////////
+# -cpuprofile #
+///////////////
+
+~> elvish -cpuprofile cpu
+~> use os
+   > (os:stat cpu)[size] 0
+▶ $true
+
+## bad path ##
+~> elvish -cpuprofile bad/cpu &check-stderr-contains='Warning: cannot create CPU profile:'
+[stderr contains "Warning: cannot create CPU profile:"] true
+
+
+//////////////////
+# -allocsprofile #
+//////////////////
+
+~> elvish -allocsprofile allocs
+~> use os
+   > (os:stat allocs)[size] 0
+▶ $true
+
+## bad path ##
+~> elvish -allocsprofile bad/allocs &check-stderr-contains='Warning: cannot create memory allocation profile:'
+[stderr contains "Warning: cannot create memory allocation profile:"] true
+

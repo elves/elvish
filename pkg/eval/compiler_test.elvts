@@ -2,16 +2,19 @@
 # compile-time deprecation #
 ////////////////////////////
 
-//with-deprecation-level 20
+//deprecation-level 21
+//in-temp-dir
 // This test will need to be frequently updated as deprecated commands get
 // removed.
 //
 // Deprecations of other builtins are implemented in the same way, so we
 // don't test them repeatedly
 
-~> put | eawk { }
-Deprecation: the "eawk" command is deprecated; use "re:awk" instead
-  [tty]:1:7-10: put | eawk { }
+~> use os
+   os:mkdir foo
+~> ./foo
+Deprecation: implicit cd is deprecated; use cd or location mode instead
+  [tty]:1:1-5: ./foo
 
 ///////////////////////////////
 # multiple compilation errors #

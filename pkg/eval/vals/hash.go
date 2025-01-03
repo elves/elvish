@@ -3,6 +3,7 @@ package vals
 import (
 	"math"
 	"math/big"
+	"reflect"
 
 	"src.elv.sh/pkg/persistent/hash"
 	"src.elv.sh/pkg/persistent/hashmap"
@@ -15,7 +16,7 @@ type Hasher interface {
 }
 
 // Hash returns the 32-bit hash of a value. It is implemented for the builtin
-// types bool and string, the File, List, Map types, StructMap types, and types
+// types bool and string, the File, List, Map types, field map types, and types
 // satisfying the Hasher interface. For other values, it returns 0 (which is OK
 // in terms of correctness).
 func Hash(v any) uint32 {
@@ -51,10 +52,12 @@ func Hash(v any) uint32 {
 		return h
 	case Map:
 		return hashMap(v.Iterator())
-	case StructMap:
-		return hashMap(iterateStructMap(v))
+	default:
+		if keys := GetFieldMapKeys(v); keys != nil {
+			return hashFieldMap(v, keys)
+		}
+		return 0
 	}
-	return 0
 }
 
 func hashMap(it hashmap.Iterator) uint32 {
@@ -72,6 +75,15 @@ func hashMap(it hashmap.Iterator) uint32 {
 	for ; it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		h += hash.DJB(Hash(k), Hash(v))
+	}
+	return h
+}
+
+func hashFieldMap(v any, keys FieldMapKeys) uint32 {
+	value := reflect.ValueOf(v)
+	var h uint32
+	for i, key := range keys {
+		h += hash.DJB(Hash(key), Hash(value.Field(i).Interface()))
 	}
 	return h
 }

@@ -49,9 +49,3 @@ func (p *Program) Run(fds [3]*os.File, _ []string) error {
 	}
 	return prog.NextProgram(cleanups...)
 }
-
-func (p *Program) Cleanup() {
-	if p.cpuProfile != "" {
-		pprof.StopCPUProfile()
-	}
-}

@@ -1,0 +1,70 @@
+/* SGR classes used in highlighted code blocks and ttyshots. */
+.sgr-1 {
+  /*
+   * Bold text is wider than regular text in most fonts, and can break
+   * vertical alignment in ttyshots. Emulate bold font with text-shadow.
+   */
+  text-shadow: 0.05em 0 0;
+}
+.sgr-4 {
+  text-decoration: underline;
+}
+/*
+ * SGR 7 (inverse) has some special handling by the ttyshot program; see
+ * comments there.
+ */
+.sgr-7fg { color: white; }
+.sgr-7bg { background-color: black; }
+
+.dark .sgr-7fg { color: black; }
+.dark .sgr-7bg { background-color: #eee; }
+
+/* black */
+.sgr-30 { color: black; }
+.sgr-40 { background-color: black; }
+/* red */
+.sgr-31 { color: maroon; }
+.sgr-41 { background-color: maroon; }
+/* green */
+.sgr-32 { color: green; }
+.sgr-42 { background-color: green; }
+/* yellow */
+.sgr-33 { color: goldenrod; }
+.sgr-43 { background-color: goldrenrod; }
+/* blue */
+.sgr-34 { color: navy; }
+.sgr-44 { background-color: navy; }
+/* magenta */
+.sgr-35 { color: darkorchid; }
+.sgr-45 { background-color: darkorchid; }
+/* cyan */
+.sgr-36 { color: darkcyan; }
+.sgr-46 { background-color: darkcyan; }
+/* white */
+.sgr-37 { color: lightgrey; }
+.sgr-47 { background-color: lightgrey; }
+
+/* bright black */
+.sgr-90 { color: grey; }
+.sgr-100 { background-color: grey; }
+/* bright red */
+.sgr-91 { color: red; }
+.sgr-101 { background-color: red; }
+/* bright green */
+.sgr-92 { color: lime; }
+.sgr-102 { background-color: lime; }
+/* light yellow */
+.sgr-93 { color: yellow; }
+.sgr-103 { background-color: yellow; }
+/* light blue */
+.sgr-94 { color: blue; }
+.sgr-104 { background-color: blue; }
+/* bright magenta */
+.sgr-95 { color: fuchsia; }
+.sgr-105 { background-color: fuchsia; }
+/* bright cyan */
+.sgr-96 { color: aqua; }
+.sgr-106 { background-color: aqua; }
+/* bright white */
+.sgr-97 { color: white; }
+.sgr-107 { background-color: white; }

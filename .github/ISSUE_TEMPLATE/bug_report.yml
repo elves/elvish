@@ -6,7 +6,7 @@ body:
       value: |
         Thanks for taking the time to file a bug report. Here are some tips:
 
-        - Please only use this form for bugs in Elvish. If you need help with using Elvish, the user group (linked from the repo README) is a more suitable place.
+        - Please only use this form for bugs in Elvish. If you need help with using Elvish, the forum or chatroom (linked from the repo README) are more suitable places.
         - Please search existing issues to see if the same or similar report has been filed before.
   - type: textarea
     id: content

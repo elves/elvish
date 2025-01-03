@@ -299,3 +299,32 @@ Exception: both &total and &less-than specified
 ~> order [foo] >&-
 Exception: port does not support value output
   [tty]:1:1-15: order [foo] >&-
+
+
+///////////
+# keep-if #
+///////////
+
+~> use str
+~> put foo bar foobar | keep-if {|s| str:has-prefix $s f}
+▶ foo
+▶ foobar
+
+## wrong number of outputs ##
+~> put foo bar foobar | keep-if {|_| }
+Exception: arity mismatch: number of callback outputs must be 1 value, but is 0 values
+  [tty]:1:22-35: put foo bar foobar | keep-if {|_| }
+~> put foo bar foobar | keep-if {|_| put $true $false }
+Exception: arity mismatch: number of callback outputs must be 1 value, but is 2 values
+  [tty]:1:22-52: put foo bar foobar | keep-if {|_| put $true $false }
+
+## wrong type of output ##
+~> put foo bar foobar | keep-if {|_| put foo }
+Exception: bad value: callback output must be bool, but is foo
+  [tty]:1:22-43: put foo bar foobar | keep-if {|_| put foo }
+
+## callback throws exception ##
+~> put foo bar foobar | keep-if {|_| fail bad}
+Exception: bad
+  [tty]:1:35-42: put foo bar foobar | keep-if {|_| fail bad}
+  [tty]:1:22-43: put foo bar foobar | keep-if {|_| fail bad}

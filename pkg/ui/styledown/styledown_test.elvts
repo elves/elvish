@@ -1,3 +1,6 @@
+//////////
+# render #
+//////////
 ~> render-styledown '
    foobar
    ***###
@@ -7,10 +10,7 @@
 ▶ [^styled (styled-segment foo &bold) (styled-segment bar &inverse) "\n" (styled-segment lorem &underlined) "\n"]
 
 
-///////////////////////////
-# double-width characters #
-///////////////////////////
-
+## double-width characters ##
 ~> render-styledown '
    好 foo
    ** ###
@@ -27,10 +27,7 @@ Exception: line 2: inconsistent style "*#" for multi-width character "好"
     *# ###
     '[1..]
 
-////////////////////////
-# configuration stanza #
-////////////////////////
-
+## configuration stanza ##
 ~> render-styledown '
    foo bar
    rrr ggg
@@ -46,10 +43,7 @@ Exception: line 2: inconsistent style "*#" for multi-width character "好"
    no-eol'[1..]
 ▶ [^styled (styled-segment foo &bold)]
 
-////////////////////////////////
-# Trailing newline is optional #
-////////////////////////////////
-
+## trailing newline is optional ##
 ~> render-styledown '
    foobar
    ***###'[1..]
@@ -61,10 +55,7 @@ Exception: line 2: inconsistent style "*#" for multi-width character "好"
    no-eol'[1..]
 ▶ [^styled (styled-segment foo &bold) (styled-segment bar &inverse)]
 
-//////////
-# errors #
-//////////
-
+## errors ##
 // Unknown style
 ~> render-styledown '
    foo
@@ -82,7 +73,7 @@ Exception: line 2: unknown style "x"
    ***
    no-eol
    '[1..]
-Exception: line 3: content and configuration stanzas must be separated by a newline
+Exception: line 3: text line must be matched by a style line
   [tty]:1:1-5:6:
     render-styledown '
     foo
@@ -134,7 +125,24 @@ Exception: line 4: style character "好" not single-width
     
     好 fg-red
     '[1..]
+// Duplicate style definition
+~> render-styledown '
+   foo
+   xxx
+   
+   x fg-red
+   x fg-green
+   '[1..]
 // Bad styling string
+Exception: line 5: duplicate style definition for 'x'
+  [tty]:1:1-7:6:
+    render-styledown '
+    foo
+    xxx
+    
+    x fg-red
+    x fg-green
+    '[1..]
 ~> render-styledown '
    foo
    ***
@@ -149,3 +157,63 @@ Exception: line 4: invalid styling string "bad"
     
     x bad
     '[1..]
+// Zero-width character
+~> render-styledown "\x01\n\n"
+Exception: line 1: zero-width character is not allowed
+  [tty]:1:1-27: render-styledown "\x01\n\n"
+
+////////////
+# derender #
+////////////
+//each:eval fn derender {|s &style-defs=''| derender-styledown $s &style-defs=$style-defs | print (all)}
+~> derender (styled "foo" bold)(styled "bar\n" inverse)
+foobar
+***###
+
+## style definitions ##
+~> derender (styled "foo\n" red) &style-defs='R red'
+foo
+RRR
+
+R red
+~> derender (styled "foo\n" green)(styled "bar\n" red)(styled "foobar\n" green) &style-defs="R red\nG green"
+// bad line
+foo
+GGG
+bar
+RRR
+foobar
+GGGGGG
+
+G green
+R red
+~> derender (styled "foo\n" red) &style-defs='R'
+Exception: styleDefs line 1: invalid configuration line
+  [setup]:1:33-78: fn derender {|s &style-defs=''| derender-styledown $s &style-defs=$style-defs | print (all)}
+  [tty]:1:1-45: derender (styled "foo\n" red) &style-defs='R'
+// two characters define the same style
+~> derender (styled "foo\n" red) &style-defs="R red\nr red"
+Exception: styleDefs line 2: 'r' defines the same style as 'R'
+  [setup]:1:33-78: fn derender {|s &style-defs=''| derender-styledown $s &style-defs=$style-defs | print (all)}
+  [tty]:1:1-56: derender (styled "foo\n" red) &style-defs="R red\nr red"
+// one character defines multiple styles
+~> derender (styled "foo\n" red) &style-defs="R red\nR green"
+Exception: styleDefs line 2: 'R' is already defined
+  [setup]:1:33-78: fn derender {|s &style-defs=''| derender-styledown $s &style-defs=$style-defs | print (all)}
+  [tty]:1:1-58: derender (styled "foo\n" red) &style-defs="R red\nR green"
+
+## no EOL ##
+~> derender (styled foo)
+foo
+   
+
+no-eol
+~> derender (styled '')
+
+no-eol
+
+## unknown style ##
+~> derender (styled "foo\n" red)
+Exception: line 1: style for segment "foo" has no char defined
+  [setup]:1:33-78: fn derender {|s &style-defs=''| derender-styledown $s &style-defs=$style-defs | print (all)}
+  [tty]:1:1-29: derender (styled "foo\n" red)

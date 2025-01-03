@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"reflect"
 	"sort"
 	"strconv"
 
@@ -34,7 +35,7 @@ func ReprPlain(v any) string {
 // (but not necessarily) an Elvish expression that evaluates to the argument.
 // The representation is pretty-printed, using indent as the initial level of
 // indentation. It is implemented for the builtin types nil, bool and string,
-// the File, List and Map types, StructMap types, and types satisfying the
+// the File, List and Map types, field map types, and types satisfying the
 // Reprer interface. For other types, it uses fmt.Sprint with the format
 // "<unknown %v>".
 func Repr(v any, indent int) string {
@@ -66,16 +67,21 @@ func Repr(v any, indent int) string {
 		return b.String()
 	case Map:
 		return reprMap(v.Iterator(), v.Len(), indent)
-	case StructMap:
-		return reprMap(iterateStructMap(v), lenStructMap(v), indent)
 	case Reprer:
 		return v.Repr(indent)
 	case PseudoMap:
-		m := v.Fields()
-		s := reprMap(iterateStructMap(m), lenStructMap(m), indent)
+		f := v.Fields()
+		fValue := reflect.ValueOf(v.Fields())
+		s := reprFieldOrMethodMap(FieldMapKeys(getMethodMapKeys(f)),
+			func(i int) any { return fValue.Method(i).Call(nil)[0].Interface() }, indent)
 		// Add a tag immediately after [.
 		return "[^" + Kind(v) + " " + s[1:]
 	default:
+		if keys := GetFieldMapKeys(v); keys != nil {
+			value := reflect.ValueOf(v)
+			return reprFieldOrMethodMap(keys,
+				func(i int) any { return value.Field(i).Interface() }, indent)
+		}
 		return fmt.Sprintf("<unknown %v>", v)
 	}
 }
@@ -96,6 +102,29 @@ func reprMap(it hashmap.Iterator, n, indent int) string {
 	for _, pair := range pairs {
 		k, v := pair[0], pair[1]
 		builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
+	}
+	return builder.String()
+}
+
+type fieldMapPair struct {
+	key   string
+	value any
+}
+
+func reprFieldOrMethodMap(keys FieldMapKeys, value func(i int) any, indent int) string {
+	builder := NewMapReprBuilder(indent)
+	// Collect all the key-value pairs.
+	pairs := make([]fieldMapPair, len(keys))
+	for i, key := range keys {
+		pairs[i] = fieldMapPair{key, value(i)}
+	}
+	// Sort the pairs.
+	sort.Slice(pairs, func(i, j int) bool {
+		return pairs[i].key < pairs[j].key
+	})
+	// Print the pairs.
+	for _, pair := range pairs {
+		builder.WritePair(Repr(pair.key, indent+1), indent+2, Repr(pair.value, indent+2))
 	}
 	return builder.String()
 }

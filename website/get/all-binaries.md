@@ -14,6 +14,7 @@ mirror site</a>.
     <th>amd64</th>
     <th>386</th>
     <th>arm64</th>
+    <th>riscv64</th>
   </tr>
   <tr>
     <td>HEAD (<a href="https://github.com/elves/elvish/blob/master/0.21.0-release-notes.md">draft release notes</a>)</td>
@@ -33,6 +34,47 @@ mirror site</a>.
       @dl Linux linux-arm64/elvish-HEAD.tar.gz
       @dl macOS darwin-arm64/elvish-HEAD.tar.gz
     </td>
+    <td>
+      @dl Linux linux-riscv64/elvish-HEAD.tar.gz
+    </td>
+  </tr>
+  <tr>
+    <td>
+      0.21.0 (<a href="../blog/0.21.0-release-notes.html">release notes</a>)
+    </td>
+    <td>
+      @dl Linux linux-amd64/elvish-v0.21.0.tar.gz
+      @dl macOS darwin-amd64/elvish-v0.21.0.tar.gz
+      @dl FreeBSD freebsd-amd64/elvish-v0.21.0.tar.gz
+      @dl NetBSD netbsd-amd64/elvish-v0.21.0.tar.gz
+      @dl OpenBSD openbsd-amd64/elvish-v0.21.0.tar.gz
+      @dl Windows windows-amd64/elvish-v0.21.0.zip
+    </td>
+    <td>
+      @dl Linux linux-386/elvish-v0.21.0.tar.gz
+      @dl Windows windows-386/elvish-v0.21.0.zip
+    </td>
+    <td>
+      @dl Linux linux-arm64/elvish-v0.21.0.tar.gz
+      @dl macOS darwin-arm64/elvish-v0.21.0.tar.gz
+    </td>
+    <td>
+      @dl Linux linux-riscv64/elvish-v0.21.0.tar.gz
+    </td>
+  </tr>
+</table>
+
+# Old versions
+
+The following old versions are no longer supported. They are only listed here
+for historical interest.
+
+<table class="extra-wide">
+  <tr>
+    <th>Version</th>
+    <th>amd64</th>
+    <th>386</th>
+    <th>arm64</th>
   </tr>
   <tr>
     <td>
@@ -54,20 +96,6 @@ mirror site</a>.
       @dl Linux linux-arm64/elvish-v0.20.1.tar.gz
       @dl macOS darwin-arm64/elvish-v0.20.1.tar.gz
     </td>
-  </tr>
-</table>
-
-# Old versions
-
-The following old versions are no longer supported. They are only listed here
-for historical interest.
-
-<table class="extra-wide">
-  <tr>
-    <th>Version</th>
-    <th>amd64</th>
-    <th>386</th>
-    <th>arm64</th>
   </tr>
   <tr>
     <td>

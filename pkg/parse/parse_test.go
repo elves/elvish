@@ -73,21 +73,6 @@ var testCases = []struct {
 			"Args": []string{"x", "y"}}},
 	},
 	{
-		name: "assignment form",
-		code: "k=v k[a][b]=v {a,b[1]}=(ha)",
-		node: &Form{},
-		want: ast{"Form", fs{
-			"Assignments": []string{"k=v", "k[a][b]=v", "{a,b[1]}=(ha)"}}},
-	},
-	{
-		name: "temporary assignment",
-		code: "k=v k[a][b]=v a",
-		node: &Form{},
-		want: ast{"Form", fs{
-			"Assignments": []string{"k=v", "k[a][b]=v"},
-			"Head":        "a"}},
-	},
-	{
 		name: "redirection",
 		code: "a >b",
 		node: &Form{},
@@ -691,5 +676,13 @@ func TestParse_ReturnsTreeContainingSourceFromArgument(t *testing.T) {
 	tree, _ := Parse(src, Config{})
 	if tree.Source != src {
 		t.Errorf("tree.Source = %v, want %v", tree.Source, src)
+	}
+}
+
+func BenchmarkParse(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		for _, test := range testCases {
+			_ = ParseAs(SourceForTest(test.code), test.node, Config{})
+		}
 	}
 }

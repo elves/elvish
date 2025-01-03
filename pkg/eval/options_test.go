@@ -11,7 +11,6 @@ var Args = tt.Args
 
 type opts struct {
 	Foo string
-	bar int
 }
 
 // Equal is required by cmp.Diff, since opts contains unexported fields.
@@ -29,7 +28,7 @@ func TestScanOptions(t *testing.T) {
 	tt.Test(t, tt.Fn(wrapper).Named("scanOptions"),
 		Args(RawOptions{"foo": "lorem ipsum"}, opts{}).
 			Rets(opts{Foo: "lorem ipsum"}, nil),
-		Args(RawOptions{"bar": 20}, opts{bar: 10}).
-			Rets(opts{bar: 10}, UnknownOption{"bar"}),
+		Args(RawOptions{"bar": 20}, opts{}).
+			Rets(opts{}, UnknownOption{"bar"}),
 	)
 }

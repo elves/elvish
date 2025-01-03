@@ -45,7 +45,7 @@ func runParallel(fm *Frame, functions ...Callable) error {
 				*pexc = err.(Exception)
 			}
 			wg.Done()
-		}(fm.Fork("[run-parallel function]"), function, &exceptions[i])
+		}(fm.Fork(), function, &exceptions[i])
 	}
 
 	wg.Wait()
@@ -59,9 +59,8 @@ func each(fm *Frame, f Callable, inputs Inputs) error {
 		if broken {
 			return
 		}
-		newFm := fm.Fork("closure of each")
+		newFm := fm.Fork()
 		ex := f.Call(newFm, []any{v}, NoOpts)
-		newFm.Close()
 
 		if ex != nil {
 			switch Reason(ex) {
@@ -108,10 +107,9 @@ func peach(fm *Frame, opts peachOpt, f Callable, inputs Inputs) error {
 		}
 		wg.Add(1)
 		go func() {
-			newFm := fm.Fork("closure of peach")
+			newFm := fm.Fork()
 			newFm.ports[0] = DummyInputPort
 			ex := f.Call(newFm, []any{v}, NoOpts)
-			newFm.Close()
 
 			if ex != nil {
 				switch Reason(ex) {
@@ -168,12 +166,10 @@ func (e FailError) Error() string { return vals.ToString(e.Content) }
 // Kind returns "fail-error".
 func (FailError) Kind() string { return "fail-error" }
 
-// Fields returns a structmap for accessing fields from Elvish.
-func (e FailError) Fields() vals.StructMap { return failFields{e} }
+// Fields returns a [vals.MethodMap] for accessing fields from Elvish.
+func (e FailError) Fields() vals.MethodMap { return failFields{e} }
 
 type failFields struct{ e FailError }
-
-func (failFields) IsStructMap() {}
 
 func (f failFields) Type() string { return "fail" }
 func (f failFields) Content() any { return f.e.Content }

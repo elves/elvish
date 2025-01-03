@@ -15,7 +15,11 @@ const (
 		windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING
 )
 
-func setup(in, out *os.File) (func() error, error) {
+func setupForTUIOnce(_, _ *os.File) func() {
+	return func() {}
+}
+
+func setupForTUI(in, out *os.File) (func() error, error) {
 	hIn := windows.Handle(in.Fd())
 	hOut := windows.Handle(out.Fd())
 
@@ -41,6 +45,9 @@ func setup(in, out *os.File) (func() error, error) {
 	}, errutil.Multi(errSetIn, errSetOut, errVT)
 }
 
+// We need ENABLE_VIRTUAL_TERMINAL_PROCESSING for styled text to function. This
+// includes texts created by the user (with the "styled" builtin) or by Elvish
+// itself (like exception stack traces).
 const outFlagForEval = windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING
 
 func setupForEval(_, out *os.File) func() {

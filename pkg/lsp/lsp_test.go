@@ -15,7 +15,6 @@ import (
 	"src.elv.sh/pkg/mods/doc"
 	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/prog"
-	"src.elv.sh/pkg/prog/progtest"
 	"src.elv.sh/pkg/testutil"
 )
 
@@ -226,13 +225,6 @@ func TestJSONRPCErrors(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestProgramErrors(t *testing.T) {
-	progtest.Test(t, &Program{},
-		progtest.ThatElvish("").
-			ExitsWith(2).
-			WritesStderr("internal error: no suitable subprogram\n"))
 }
 
 const testURI = "file:///foo"

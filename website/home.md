@@ -14,6 +14,8 @@
   <a href="get/" class="primary button">Download</a>
   <a href="learn/" class="button">Learn</a>
   <a href="https://github.com/elves/elvish" class="button" target="_blank">GitHub</a>
+  <a href="#community" class="community button">Community</a>
+  <a href="sponsor/" class="sponsor button">Sponsor</a>
 </div>
 </div>
 
@@ -49,6 +51,17 @@ Catch errors before code executes.
 ~> var project = ~/project
 ~> rm -rf $projetc/bin
 compilation error: variable $projetc not found
+```
+
+Command failures abort execution by default. No more silent failures, no more
+`&&` everywhere.
+
+```elvish-transcript Terminal: elvish [(explainer)](learn/scripting-case-studies.html#command-failures)
+~> gm convert a.jpg a.png; rm a.jpg
+gm convert: Failed to convert a.jpg
+Exception: gm exited with 1
+  [tty 1]:1:1-22: gm convert a.jpg a.png; rm a.jpg
+# "rm a.jpg" is NOT executed
 ```
 
 </div>
@@ -121,24 +134,27 @@ home/file-manager
 <section>
 <div class="columns content">
 <div class="column">
-<header>
+<header id="community">
 
-Chat with the community
+Talk with the community
 
 </header>
 
-Join any of the following channels -- they are all bridged together thanks to
-[Matrix](https://matrix.org)!
+-   Join the [Forum](https://bbs.elv.sh) to ask questions, share your
+    experience, and show off your projects!
 
--   Telegram: [Elvish user group](https://t.me/+Pv5ZYgTXD-YaKwcP)
+-   Join the chatroom to talk to fellow users in real time! The following
+    channels are all bridged together thanks to [Matrix](https://matrix.org):
 
--   Discord: [Elvish Shell](https://discord.gg/jrmuzRBU8D)
+    -   Telegram: [Elvish user group](https://t.me/+Pv5ZYgTXD-YaKwcP)
 
--   Matrix: [#users:elv.sh](https://matrix.to/#/#users:elv.sh)
+    -   Discord: [Elvish Shell](https://discord.gg/jrmuzRBU8D)
 
--   IRC: [#elvish](https://web.libera.chat/#elvish) on Libera Chat
+    -   Matrix: [#users:elv.sh](https://matrix.to/#/#users:elv.sh)
 
--   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
+    -   IRC: [#elvish](https://web.libera.chat/#elvish) on Libera Chat
+
+    -   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
 
 </div>
 <div class="column">
@@ -154,6 +170,8 @@ More resources
     unofficial Elvish modules
 
 -   [@ElvishShell](https://twitter.com/elvishshell) on Twitter
+
+-   [Elvish TV](https://www.youtube.com/@ElvishShell) on YouTube
 
 </div>
 </div>

@@ -10,7 +10,6 @@ import (
 	"src.elv.sh/pkg/diag"
 	"src.elv.sh/pkg/eval/errs"
 	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/parse"
 	"src.elv.sh/pkg/parse/cmpd"
@@ -19,17 +18,17 @@ import (
 // An operation with some side effects.
 type effectOp interface{ exec(*Frame) Exception }
 
-func (cp *compiler) chunkOp(n *parse.Chunk) effectOp {
-	return chunkOp{n.Range(), cp.pipelineOps(n.Pipelines)}
-}
-
 type chunkOp struct {
 	diag.Ranging
-	subops []effectOp
+	pipelines []*pipelineOp
 }
 
-func (op chunkOp) exec(fm *Frame) Exception {
-	for _, subop := range op.subops {
+func (cp *compiler) chunkOp(n *parse.Chunk) *chunkOp {
+	return &chunkOp{n.Range(), cp.pipelineOps(n.Pipelines)}
+}
+
+func (op *chunkOp) exec(fm *Frame) Exception {
+	for _, subop := range op.pipelines {
 		exc := subop.exec(fm)
 		if exc != nil {
 			return exc
@@ -44,28 +43,44 @@ func (op chunkOp) exec(fm *Frame) Exception {
 	return nil
 }
 
-func (cp *compiler) pipelineOp(n *parse.Pipeline) effectOp {
-	formOps := cp.formOps(n.Forms)
-
-	return &pipelineOp{n.Range(), n.Background, parse.SourceText(n), formOps}
+type pipelineOp struct {
+	diag.Ranging
+	bg     bool
+	source string
+	forms  []*formOp
 }
 
-func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []effectOp {
-	ops := make([]effectOp, len(ns))
+func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []*pipelineOp {
+	ops := make([]*pipelineOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.pipelineOp(n)
 	}
 	return ops
 }
 
-type pipelineOp struct {
-	diag.Ranging
-	bg     bool
-	source string
-	subops []effectOp
+func (cp *compiler) pipelineOp(n *parse.Pipeline) *pipelineOp {
+	formOps := cp.formOps(n.Forms)
+
+	return &pipelineOp{n.Range(), n.Background, parse.SourceText(n), formOps}
 }
 
 const pipelineChanBufferSize = 32
+
+// Keeps track of whether the File and Port parts of a port are owned by a form
+// and should be closed when the form finishes execution.
+type formOwnedPort struct {
+	File bool
+	Chan bool
+}
+
+func (fop formOwnedPort) close(p *Port) {
+	if fop.File {
+		p.File.Close()
+	}
+	if fop.Chan {
+		close(p.Chan)
+	}
+}
 
 func (op *pipelineOp) exec(fm *Frame) Exception {
 	if fm.Canceled() {
@@ -73,13 +88,13 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 	}
 
 	if op.bg {
-		fm = fm.Fork("background job" + op.source)
+		fm = fm.Fork()
 		fm.ctx = context.Background()
 		fm.background = true
 		fm.Evaler.addNumBgJobs(1)
 	}
 
-	nforms := len(op.subops)
+	nforms := len(op.forms)
 
 	var wg sync.WaitGroup
 	wg.Add(nforms)
@@ -88,12 +103,14 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 	var nextIn *Port
 
 	// For each form, create a dedicated evalCtx and run asynchronously
-	for i, formOp := range op.subops {
-		newFm := fm.Fork("[form op]")
+	for i, form := range op.forms {
+		newFm := fm.Fork()
+		var fops []formOwnedPort
 		inputIsPipe := i > 0
 		outputIsPipe := i < nforms-1
 		if inputIsPipe {
 			newFm.ports[0] = nextIn
+			growAccess(&fops, 0).File = true
 		}
 		if outputIsPipe {
 			// Each internal port pair consists of a (byte) pipe pair and a
@@ -109,16 +126,15 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 			readerGone := new(atomic.Bool)
 			newFm.ports[1] = &Port{
 				File: writer, Chan: ch,
-				closeFile: true, closeChan: true,
 				sendStop: sendStop, sendError: sendError, readerGone: readerGone}
+			*growAccess(&fops, 1) = formOwnedPort{File: true, Chan: true}
 			nextIn = &Port{
 				File: reader, Chan: ch,
-				closeFile: true, closeChan: false,
 				// Store in input port for ease of retrieval later
 				sendStop: sendStop, sendError: sendError, readerGone: readerGone}
 		}
-		f := func(formOp effectOp, pexc *Exception) {
-			exc := formOp.exec(newFm)
+		f := func(form *formOp, fops []formOwnedPort, pexc *Exception) {
+			exc := form.exec(newFm, &fops)
 			if exc != nil && !(outputIsPipe && isReaderGone(exc)) {
 				*pexc = exc
 			}
@@ -128,13 +144,15 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 				close(input.sendStop)
 				input.readerGone.Store(true)
 			}
-			newFm.Close()
+			for i, fop := range fops {
+				fop.close(newFm.ports[i])
+			}
 			wg.Done()
 		}
 		if i == nforms-1 && !op.bg {
-			f(formOp, &excs[i])
+			f(form, fops, &excs[i])
 		} else {
-			go f(formOp, &excs[i])
+			go f(form, fops, &excs[i])
 		}
 	}
 
@@ -165,30 +183,37 @@ func isReaderGone(exc Exception) bool {
 	return ok
 }
 
-func (cp *compiler) formOp(n *parse.Form) effectOp {
-	var tempLValues []lvalue
-	var assignmentOps []effectOp
-	if len(n.Assignments) > 0 {
-		if n.Head == nil {
-			cp.errorpf(n, `using the syntax of temporary assignment for non-temporary assignment is no longer supported; use "var" or "set" instead`)
-			return nopOp{}
-		} else {
-			as := n.Assignments
-			cp.deprecate(diag.MixedRanging(as[0], as[len(as)-1]),
-				`the legacy temporary assignment syntax is deprecated; use "tmp" instead`, 18)
-		}
-		assignmentOps = cp.assignmentOps(n.Assignments)
-		for _, a := range n.Assignments {
-			lvalues := cp.parseIndexingLValue(a.Left, setLValue|newLValue)
-			tempLValues = append(tempLValues, lvalues.lvalues...)
-		}
-		logger.Println("temporary assignment of", len(n.Assignments), "pairs")
-	}
+type formOp struct {
+	diag.Ranging
+	redirs []*redirOp
+	body   formBody
+}
 
+func (cp *compiler) formOps(ns []*parse.Form) []*formOp {
+	ops := make([]*formOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.formOp(n)
+	}
+	return ops
+}
+
+func (cp *compiler) formOp(n *parse.Form) *formOp {
 	redirOps := cp.redirOps(n.Redirs)
 	body := cp.formBody(n)
 
-	return &formOp{n.Range(), tempLValues, assignmentOps, redirOps, body}
+	return &formOp{n.Range(), redirOps, body}
+}
+
+type formBody struct {
+	// Exactly one field will be populated.
+	specialOp   effectOp
+	ordinaryCmd ordinaryCmd
+}
+
+type ordinaryCmd struct {
+	headOp valuesOp
+	argOps []valuesOp
+	optsOp *mapPairsOp
 }
 
 func (cp *compiler) formBody(n *parse.Form) formBody {
@@ -217,7 +242,7 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 			if cp.currentPragma().unknownCommandIsExternal || fsutil.DontSearch(head) {
 				headOp = literalValues(n.Head, NewExternalCmd(head))
 			} else {
-				cp.errorpf(n.Head, "unknown command disallowed by current pragma")
+				cp.errorpfPartial(n.Head, "unknown command disallowed by current pragma")
 			}
 		}
 	} else {
@@ -230,93 +255,13 @@ func (cp *compiler) formBody(n *parse.Form) formBody {
 	return formBody{ordinaryCmd: ordinaryCmd{headOp, argOps, optsOp}}
 }
 
-func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
-	ops := make([]effectOp, len(ns))
-	for i, n := range ns {
-		ops[i] = cp.formOp(n)
-	}
-	return ops
-}
-
-type formOp struct {
-	diag.Ranging
-	tempLValues   []lvalue
-	tempAssignOps []effectOp
-	redirOps      []effectOp
-	body          formBody
-}
-
-type formBody struct {
-	// Exactly one field will be populated.
-	specialOp   effectOp
-	assignOp    effectOp
-	ordinaryCmd ordinaryCmd
-}
-
-type ordinaryCmd struct {
-	headOp valuesOp
-	argOps []valuesOp
-	optsOp *mapPairsOp
-}
-
-func (op *formOp) exec(fm *Frame) (errRet Exception) {
+func (op *formOp) exec(fm *Frame, fops *[]formOwnedPort) (errRet Exception) {
 	// fm here is always a sub-frame created in compiler.pipeline, so it can
 	// be safely modified.
 
-	// Temporary assignment.
-	if len(op.tempLValues) > 0 {
-		// There is a temporary assignment.
-		// Save variables.
-		var saveVars []vars.Var
-		var saveVals []any
-		for _, lv := range op.tempLValues {
-			variable, err := derefLValue(fm, lv)
-			if err != nil {
-				return fm.errorp(op, err)
-			}
-			saveVars = append(saveVars, variable)
-		}
-		for i, v := range saveVars {
-			// TODO(xiaq): If the variable to save is a elemVariable, save
-			// the outermost variable instead.
-			if u := vars.HeadOfElement(v); u != nil {
-				v = u
-				saveVars[i] = v
-			}
-			val := v.Get()
-			saveVals = append(saveVals, val)
-			logger.Printf("saved %s = %s", v, val)
-		}
-		// Do assignment.
-		for _, subop := range op.tempAssignOps {
-			exc := subop.exec(fm)
-			if exc != nil {
-				return exc
-			}
-		}
-		// Defer variable restoration. Will be executed even if an error
-		// occurs when evaling other part of the form.
-		defer func() {
-			for i, v := range saveVars {
-				val := saveVals[i]
-				if val == nil {
-					// TODO(xiaq): Old value is nonexistent. We should delete
-					// the variable. However, since the compiler now doesn't
-					// delete it, we don't delete it in the evaler either.
-					val = ""
-				}
-				err := v.Set(val)
-				if err != nil {
-					errRet = fm.errorp(op, err)
-				}
-				logger.Printf("restored %s = %s", v, val)
-			}
-		}()
-	}
-
 	// Redirections.
-	for _, redirOp := range op.redirOps {
-		exc := redirOp.exec(fm)
+	for _, redirOp := range op.redirs {
+		exc := redirOp.exec(fm, fops)
 		if exc != nil {
 			return exc
 		}
@@ -324,9 +269,6 @@ func (op *formOp) exec(fm *Frame) (errRet Exception) {
 
 	if op.body.specialOp != nil {
 		return op.body.specialOp.exec(fm)
-	}
-	if op.body.assignOp != nil {
-		return op.body.assignOp.exec(fm)
 	}
 
 	// Ordinary command: evaluate head, arguments and options.
@@ -402,16 +344,19 @@ func allTrue(vs []any) bool {
 	return true
 }
 
-func (cp *compiler) assignmentOp(n *parse.Assignment) effectOp {
-	lhs := cp.parseIndexingLValue(n.Left, setLValue|newLValue)
-	rhs := cp.compoundOp(n.Right)
-	return &assignOp{n.Range(), lhs, rhs, false}
+type redirOp struct {
+	diag.Ranging
+	dstOp   valuesOp
+	srcOp   valuesOp
+	srcIsFd bool
+	mode    parse.RedirMode
+	flag    int
 }
 
-func (cp *compiler) assignmentOps(ns []*parse.Assignment) []effectOp {
-	ops := make([]effectOp, len(ns))
+func (cp *compiler) redirOps(ns []*parse.Redir) []*redirOp {
+	ops := make([]*redirOp, len(ns))
 	for i, n := range ns {
-		ops[i] = cp.assignmentOp(n)
+		ops[i] = cp.redirOp(n)
 	}
 	return ops
 }
@@ -419,7 +364,7 @@ func (cp *compiler) assignmentOps(ns []*parse.Assignment) []effectOp {
 const defaultFileRedirPerm = 0644
 
 // redir compiles a Redir into a op.
-func (cp *compiler) redirOp(n *parse.Redir) effectOp {
+func (cp *compiler) redirOp(n *parse.Redir) *redirOp {
 	var dstOp valuesOp
 	if n.Left != nil {
 		dstOp = cp.compoundOp(n.Left)
@@ -430,14 +375,6 @@ func (cp *compiler) redirOp(n *parse.Redir) effectOp {
 		cp.errorpf(n, "bad redirection sign")
 	}
 	return &redirOp{n.Range(), dstOp, cp.compoundOp(n.Right), n.RightIsFd, n.Mode, flag}
-}
-
-func (cp *compiler) redirOps(ns []*parse.Redir) []effectOp {
-	ops := make([]effectOp, len(ns))
-	for i, n := range ns {
-		ops[i] = cp.redirOp(n)
-	}
-	return ops
 }
 
 func makeFlag(m parse.RedirMode) int {
@@ -455,20 +392,11 @@ func makeFlag(m parse.RedirMode) int {
 	}
 }
 
-type redirOp struct {
-	diag.Ranging
-	dstOp   valuesOp
-	srcOp   valuesOp
-	srcIsFd bool
-	mode    parse.RedirMode
-	flag    int
-}
-
 type InvalidFD struct{ FD int }
 
 func (err InvalidFD) Error() string { return fmt.Sprintf("invalid fd: %d", err.FD) }
 
-func (op *redirOp) exec(fm *Frame) Exception {
+func (op *redirOp) exec(fm *Frame, fops *[]formOwnedPort) Exception {
 	var dst int
 	if op.dstOp == nil {
 		// No explicit FD destination specified; use default destinations
@@ -489,8 +417,12 @@ func (op *redirOp) exec(fm *Frame) Exception {
 		}
 	}
 
-	growPorts(&fm.ports, dst+1)
-	fm.ports[dst].close()
+	dstPort := growAccess(&fm.ports, dst)
+	dstFop := growAccess(fops, dst)
+	if *dstPort != nil {
+		dstFop.close(*dstPort)
+		*dstFop = formOwnedPort{File: false, Chan: false}
+	}
 
 	if op.srcIsFd {
 		src, err := evalForFd(fm, op.srcOp, true, "redirection source")
@@ -500,13 +432,13 @@ func (op *redirOp) exec(fm *Frame) Exception {
 		switch {
 		case src == -1:
 			// close
-			fm.ports[dst] = &Port{
+			*dstPort = &Port{
 				// Ensure that writing to value output throws an exception
 				sendStop: closedSendStop, sendError: &ErrPortDoesNotSupportValueOutput}
 		case src >= len(fm.ports) || fm.ports[src] == nil:
 			return fm.errorp(op, InvalidFD{FD: src})
 		default:
-			fm.ports[dst] = fm.ports[src].fork()
+			*dstPort = fm.ports[src]
 		}
 		return nil
 	}
@@ -520,10 +452,16 @@ func (op *redirOp) exec(fm *Frame) Exception {
 		if err != nil {
 			return fm.errorpf(op, "failed to open file %s: %s", vals.ReprPlain(src), err)
 		}
-		fm.ports[dst] = fileRedirPort(op.mode, f, true)
+		*dstPort = fileRedirPort(op.mode, f)
+		dstFop.File = true
 	case vals.File:
-		fm.ports[dst] = fileRedirPort(op.mode, src, false)
-	case vals.Map, vals.StructMap:
+		*dstPort = fileRedirPort(op.mode, src)
+	default:
+		if _, isMap := src.(vals.Map); !isMap && !vals.IsFieldMap(src) {
+			return fm.errorp(op.srcOp, errs.BadValue{
+				What:  "redirection source",
+				Valid: "string, file or map", Actual: vals.Kind(src)})
+		}
 		var srcFile *os.File
 		switch op.mode {
 		case parse.Read:
@@ -549,11 +487,7 @@ func (op *redirOp) exec(fm *Frame) Exception {
 		default:
 			return fm.errorpf(op, "can only use < or > with maps")
 		}
-		fm.ports[dst] = fileRedirPort(op.mode, srcFile, false)
-	default:
-		return fm.errorp(op.srcOp, errs.BadValue{
-			What:  "redirection source",
-			Valid: "string, file or map", Actual: vals.Kind(src)})
+		*dstPort = fileRedirPort(op.mode, srcFile)
 	}
 	return nil
 }
@@ -561,29 +495,19 @@ func (op *redirOp) exec(fm *Frame) Exception {
 // Creates a port that only have a file component, populating the
 // channel-related fields with suitable values depending on the redirection
 // mode.
-func fileRedirPort(mode parse.RedirMode, f *os.File, closeFile bool) *Port {
+func fileRedirPort(mode parse.RedirMode, f *os.File) *Port {
 	if mode == parse.Read {
 		return &Port{
-			File: f, closeFile: closeFile,
+			File: f,
 			// ClosedChan produces no values when reading.
 			Chan: ClosedChan,
 		}
 	}
 	return &Port{
-		File: f, closeFile: closeFile,
+		File: f,
 		// Throws errValueOutputIsClosed when writing.
 		Chan: nil, sendStop: closedSendStop, sendError: &ErrPortDoesNotSupportValueOutput,
 	}
-}
-
-// Makes the size of *ports at least n, adding nil's if necessary.
-func growPorts(ports *[]*Port, n int) {
-	if len(*ports) >= n {
-		return
-	}
-	oldPorts := *ports
-	*ports = make([]*Port, n)
-	copy(*ports, oldPorts)
 }
 
 func evalForFd(fm *Frame, op valuesOp, closeOK bool, what string) (int, error) {
@@ -628,3 +552,13 @@ func (op seqOp) exec(fm *Frame) Exception {
 type nopOp struct{}
 
 func (nopOp) exec(fm *Frame) Exception { return nil }
+
+// Accesses s[i], growing the slice with zero values if necessary.
+func growAccess[T any](s *[]T, i int) *T {
+	if i >= len(*s) {
+		old := *s
+		*s = make([]T, i+1)
+		copy(*s, old)
+	}
+	return &(*s)[i]
+}

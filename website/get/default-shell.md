@@ -172,16 +172,23 @@ You can change your login shell back to the system default with `chsh -s ''`.
 ## Dealing with incompatible programs
 
 Some programs invoke the user's login shell assuming that it is a traditional
-POSIX-like shell, so they may not work correctly if your login shell is Elvish.
-The following programs have been reported to have issues:
+POSIX-like shell, so they won't work correctly if your login shell is Elvish.
+This section lists programs known to have issues and possible workarounds.
 
--   GDB (see [#1795](https://b.elv.sh/1795))
+If you can't work around the issue, it may be easier to switch the login shell
+back to the system default and configure your terminal to launch Elvish instead.
 
--   The vscode-neovim extension (see [#1804](https://b.elv.sh/1804))
+### Vim / Neovim
 
-Such programs usually rely on the `$SHELL` environment variable to query the
-login shell. For CLI applications, you can create an alias in your `rc.elv` that
-forces it to a POSIX shell, like the following:
+Add the following to `.vimrc` or `.nvimrc`:
+
+```
+set shell=/bin/sh
+```
+
+### GDB
+
+Create an alias that sets the `SHELL` environment variable to `/bin/sh`:
 
 ```elvish
 fn gdb {|@a|
@@ -189,7 +196,14 @@ fn gdb {|@a|
 }
 ```
 
-There is no universal way to override environment variables for GUI
-applications; it depends on the GUI environment and possibly the application
-itself. It may be easier to switch the login shell back to the system default
-and configure your terminal to launch Elvish.
+(Reported in [#1795](https://b.elv.sh/1795).)
+
+### vscode-neovim
+
+No workaround has been tested yet. Launching VS Code with the `SHELL`
+environment variable set to `/bin/sh` may work.
+
+If you use vscode-neovim and have found and tested a workaround, please send a
+pull request updating this document.
+
+(Reported in [#1804](https://b.elv.sh/1804).)

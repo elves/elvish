@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>$title</title>
+  <style>
+    $common-css
+
+    * { box-sizing: border-box; }
+
+    h1 { font-size: 1.6em; margin: 1em 0; }
+    section:first-of-type h1:first-of-type, /* Presentation title */
+    h1:only-child /* Section title */ {
+      margin-top: 20vh; font-size: 2em; font-style: italic;
+    }
+    li { margin: 0.2em 0 0.2em 1em; }
+    p { margin: 0.2em 0; }
+    code { font-size: 0.86em; }
+    kbd {
+      display: inline-block;
+      border: 1px solid black;
+      border-radius: 3px;
+      padding: 0 3px;
+      margin: 1px;
+      font-size: 85%;
+      font-family: "Lucida Grande", Arial, sans-serif;
+    }
+    img { max-width: 100%; }
+
+    :root {
+      font-size: min(3.6vh, 2vw);
+    }
+    html, body {
+      height: 100%;
+    }
+    body {
+      line-height: 1.2;
+    }
+
+    .two-columns {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    }
+    .two-columns > .column {
+      width: 49%;
+    }
+
+    /* Fallback style with no JS */
+    footer {
+      display: none;
+    }
+    #raw-content {
+      padding: 0.5rem 2rem 0;
+    }
+
+    /* Style with JS */
+    .has-js #raw-content, .has-js section {
+      display: none;
+    }
+    .has-js footer {
+      display: block;
+      position: absolute;
+      bottom: 0.5rem;
+      left: 50%;
+      transform: translate(-50%, 0);
+      font-size: 0.5rem;
+      color: gray;
+    }
+    .has-js section.current {
+      display: block;
+      padding: 0.5rem 2rem 0;
+      height: 95%;
+      overflow-y: scroll;
+    }
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('has-js');
+      const slides = createSlides();
+      let current = 0;
+      switchToHash();
+      document.body.addEventListener('keydown', (event) => {
+        if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
+          return;
+        }
+        if (['ArrowLeft', 'ArrowUp', 'k', 'h'].includes(event.key)) {
+          switchToPrev();
+          event.preventDefault();
+        } else if (['ArrowRight', 'ArrowDown', 'j', 'l', ' '].includes(event.key)) {
+          switchToNext();
+          event.preventDefault();
+        }
+      });
+      document.body.addEventListener('click', (event) => {
+        if (!['BODY', 'SECTION'].includes(event.target.tagName)) {
+          return;
+        }
+        const width = event.target.getBoundingClientRect().width;
+        if (event.clientX < width / 2) {
+          switchToPrev();
+        } else {
+          switchToNext();
+        }
+      });
+
+      function createSlides() {
+        // Use <hr> tags to split the raw content into slides (which are
+        // <section> elements), and use the first element that has an id as the
+        // slide's id.
+        const slides = [];
+        let slide = {element: document.createElement('section'), id: undefined};
+        for (const child of [...document.getElementById('raw-content').childNodes]) {
+          if (child.tagName === 'HR') {
+            // Conclude the current slide, and create a new one.
+            //
+            // If there's no element with an id in the current slide, use the
+            // index as a fallback.
+            slide.id ||= String(slides.length);
+            slides.push(slide);
+            slide = {element: document.createElement('section'), id: undefined};
+            continue;
+          }
+          slide.element.appendChild(child);
+          if (!slide.id && child.id) {
+            // Use the ID of the first element inside a slide as its ID.
+            slide.id = child.id
+          }
+        }
+        if (slide.element.childNodes.length > 0) {
+          slide.id ||= String(slides.length);
+          slides.push(slide);
+        }
+
+        for (const slide of slides) {
+          document.body.appendChild(slide.element);
+        }
+        return slides;
+      }
+
+      function switchToHash() {
+        let num, id;
+        try {
+          [num, id] =
+            decodeURIComponent(document.location.hash.substring(1)).split('-', 2);
+        } catch {
+          switchTo(0);
+          return;
+        }
+        const i = slides.findIndex((slide) => slide.id === id);
+        if (i !== -1) {
+          switchTo(i);
+        } else {
+          switchTo(Number(num) || 0);
+        }
+      }
+
+      function switchToPrev() { switchTo(Math.max(0, current - 1)); }
+      function switchToNext() { switchTo(Math.min(slides.length - 1, current + 1)); }
+
+      function switchTo(i) {
+        slides[current].element.className = '';
+        slides[i].element.className = 'current';
+        current = i;
+        if (i === 0) {
+          // No hash for the presentation title page
+          history.pushState(null, null, ' ');
+        } else {
+          document.location.hash = i + '-' + slides[i].id.replace('%', '%23').replace('#', '%25');
+        }
+        document.querySelector('footer').innerText = (i + 1) + ' / ' + slides.length;
+      }
+    });
+  </script>
+</head>
+<body>
+  <footer>? / ?</footer>
+  <div id="raw-content">
+    $content
+  </div>
+</body>
+</html>

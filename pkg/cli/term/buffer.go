@@ -19,8 +19,8 @@ type Pos struct {
 	Line, Col int
 }
 
-// CellsWidth returns the total width of a Cell slice.
-func CellsWidth(cs []Cell) int {
+// Returns the total width of a Cell slice.
+func cellsWidth(cs []Cell) int {
 	w := 0
 	for _, c := range cs {
 		w += wcwidth.Of(c.Text)
@@ -28,9 +28,9 @@ func CellsWidth(cs []Cell) int {
 	return w
 }
 
-// CompareCells returns whether two Cell slices are equal, and when they are
-// not, the first index at which they differ.
-func CompareCells(r1, r2 []Cell) (bool, int) {
+// Returns whether two Cell slices are equal, and when they are not, the first
+// index at which they differ.
+func compareCells(r1, r2 []Cell) (bool, int) {
 	for i, c := range r1 {
 		if i >= len(r2) || c != r2[i] {
 			return false, i
@@ -42,7 +42,8 @@ func CompareCells(r1, r2 []Cell) (bool, int) {
 	return true, 0
 }
 
-// Buffer reflects a continuous range of lines on the terminal.
+// Buffer reflects a rectangle area in the terminal, along with a cursor (called
+// a "dot" here).
 //
 // The Unix terminal API provides only awkward ways of querying the terminal
 // Buffer, so we keep an internal reflection and do one-way synchronizations
@@ -52,40 +53,14 @@ func CompareCells(r1, r2 []Cell) (bool, int) {
 type Buffer struct {
 	Width int
 	// Lines the content of the buffer.
-	Lines Lines
+	Lines [][]Cell
 	// Dot is what the user perceives as the cursor.
 	Dot Pos
 }
 
-// Lines stores multiple lines.
-type Lines [][]Cell
-
-// Line stores a single line.
-type Line []Cell
-
-// NewBuffer builds a new buffer, with one empty line.
-func NewBuffer(width int) *Buffer {
-	return &Buffer{Width: width, Lines: [][]Cell{make([]Cell, 0, width)}}
-}
-
-// Col returns the column the cursor is in.
-func (b *Buffer) Col() int {
-	return CellsWidth(b.Lines[len(b.Lines)-1])
-}
-
-// Cursor returns the current position of the cursor.
-func (b *Buffer) Cursor() Pos {
-	return Pos{len(b.Lines) - 1, b.Col()}
-}
-
-// BuffersHeight computes the combined height of a number of buffers.
-func BuffersHeight(bufs ...*Buffer) (l int) {
-	for _, buf := range bufs {
-		if buf != nil {
-			l += len(buf.Lines)
-		}
-	}
-	return
+// Returns the position of the cursor after writing the entire buffer.
+func endPos(b *Buffer) Pos {
+	return Pos{len(b.Lines) - 1, cellsWidth(b.Lines[len(b.Lines)-1])}
 }
 
 // TrimToLines trims a buffer to the lines [low, high).
@@ -109,41 +84,53 @@ func (b *Buffer) TrimToLines(low, high int) {
 	}
 }
 
-// Extend adds all lines from b2 to the bottom of this buffer. If moveDot is
-// true, the dot is updated to match the dot of b2.
-func (b *Buffer) Extend(b2 *Buffer, moveDot bool) {
-	if b2 != nil && b2.Lines != nil {
-		if moveDot {
-			b.Dot.Line = b2.Dot.Line + len(b.Lines)
-			b.Dot.Col = b2.Dot.Col
-		}
-		b.Lines = append(b.Lines, b2.Lines...)
+// ExtendDown extends b downwards, by adding all lines from b2 to the bottom of
+// this buffer and setting b.Width to the larger of b.Width and b2.Width. If
+// moveDot is true, it also updates b.Dot to match the dot of b2. It returns b
+// itself.
+func (b *Buffer) ExtendDown(b2 *Buffer, moveDot bool) *Buffer {
+	if b2 == nil || b2.Lines == nil {
+		return b
 	}
+	if moveDot {
+		b.Dot = Pos{Line: len(b.Lines) + b2.Dot.Line, Col: b2.Dot.Col}
+	}
+	b.Lines = append(b.Lines, b2.Lines...)
+	b.Width = max(b.Width, b2.Width)
+	return b
 }
 
-// ExtendRight extends bb to the right. It pads each line in b to be b.Width and
-// appends the corresponding line in b2 to it, making new lines when b2 has more
-// lines than bb.
-func (b *Buffer) ExtendRight(b2 *Buffer) {
+// ExtendRight extends b to the right, by padding each line in b to be b.Width
+// and appends the corresponding line in b2 to it, making new lines when b2 has
+// more lines than bb. If moveDot is true, it also updates b.Dot to match the
+// dot of b2. It returns b itself.
+func (b *Buffer) ExtendRight(b2 *Buffer, moveDot bool) *Buffer {
 	i := 0
-	w := b.Width
-	b.Width += b2.Width
 	for ; i < len(b.Lines) && i < len(b2.Lines); i++ {
-		if w0 := CellsWidth(b.Lines[i]); w0 < w {
-			b.Lines[i] = append(b.Lines[i], makeSpacing(w-w0)...)
+		if w0 := cellsWidth(b.Lines[i]); w0 < b.Width {
+			b.Lines[i] = append(b.Lines[i], makeSpacing(b.Width-w0)...)
 		}
 		b.Lines[i] = append(b.Lines[i], b2.Lines[i]...)
 	}
 	for ; i < len(b2.Lines); i++ {
-		row := append(makeSpacing(w), b2.Lines[i]...)
+		row := append(makeSpacing(b.Width), b2.Lines[i]...)
 		b.Lines = append(b.Lines, row)
 	}
+
+	if moveDot {
+		b.Dot = Pos{Line: b2.Dot.Line, Col: b.Width + b2.Dot.Col}
+	}
+	b.Width += b2.Width
+	return b
 }
 
-// Buffer returns itself.
+// Buffer returns itself. This is implemented in analogy with [BufferBuilder],
+// so that places that accept either can accept an interface.
 func (b *Buffer) Buffer() *Buffer { return b }
 
-// TTYString returns a string for representing the buffer on the terminal.
+// TTYString returns a text representation of the buffer. It uses box drawing
+// characters to represent the border of the buffer, and embeds SGR sequences to
+// represent the style of the text.
 func (b *Buffer) TTYString() string {
 	if b == nil {
 		return "nil"

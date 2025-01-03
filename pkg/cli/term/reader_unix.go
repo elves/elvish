@@ -176,7 +176,7 @@ func readEvent(rd byteReaderWithTimeout) (event Event, err error) {
 				b := nums[0] == 200
 				event = PasteSetting(b)
 			} else {
-				k := parseCSI(nums, r, currentSeq)
+				k := parseCSI(nums, r)
 				if k == (ui.Key{}) {
 					badSeq("bad CSI")
 				} else {
@@ -340,14 +340,14 @@ var csiSeqTilde27 = map[int]rune{
 
 // parseCSI parses a CSI-style key sequence. See comments above for all the 3
 // variants this function handles.
-func parseCSI(nums []int, last rune, seq string) ui.Key {
+func parseCSI(nums []int, last rune) ui.Key {
 	if k, ok := csiSeqByLast[last]; ok {
 		if len(nums) == 0 {
 			// Unmodified: \e[A (Up)
 			return k
 		} else if len(nums) == 2 && nums[0] == 1 {
 			// Modified: \e[1;5A (Ctrl-Up)
-			return xtermModify(k, nums[1], seq)
+			return xtermModify(k, nums[1])
 		} else {
 			return ui.Key{}
 		}
@@ -363,12 +363,12 @@ func parseCSI(nums []int, last rune, seq string) ui.Key {
 					return k
 				}
 				// Modified: \e[5;5~ (e.g. Ctrl-PageUp)
-				return xtermModify(k, nums[1], seq)
+				return xtermModify(k, nums[1])
 			}
 		} else if len(nums) == 3 && nums[0] == 27 {
 			if r, ok := csiSeqTilde27[nums[2]]; ok {
 				k := ui.K(r)
-				return xtermModify(k, nums[1], seq)
+				return xtermModify(k, nums[1])
 			}
 		}
 	case '$', '^', '@':
@@ -392,7 +392,7 @@ func parseCSI(nums []int, last rune, seq string) ui.Key {
 	return ui.Key{}
 }
 
-func xtermModify(k ui.Key, mod int, seq string) ui.Key {
+func xtermModify(k ui.Key, mod int) ui.Key {
 	if mod < 0 || mod > 16 {
 		// Out of range
 		return ui.Key{}

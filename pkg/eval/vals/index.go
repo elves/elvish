@@ -3,6 +3,7 @@ package vals
 import (
 	"errors"
 	"os"
+	"reflect"
 )
 
 // Indexer wraps the Index method.
@@ -35,7 +36,7 @@ func (err noSuchKeyError) Error() string {
 }
 
 // Index indexes a value with the given key. It is implemented for the builtin
-// type string, *os.File, List, StructMap and PseudoStructMap types, and types
+// type string, *os.File, List, field map and pseudo map types, and types
 // satisfying the ErrIndexer or Indexer interface (the Map type satisfies
 // Indexer). For other types, it returns a nil value and a non-nil error.
 func Index(a, k any) (any, error) {
@@ -56,12 +57,14 @@ func Index(a, k any) (any, error) {
 		return convertResult(a.Index(k))
 	case List:
 		return indexList(a, k)
-	case StructMap:
-		return convertResult(indexStructMap(a, k))
 	case PseudoMap:
-		return convertResult(indexStructMap(a.Fields(), k))
+		return convertResult(indexMethodMap(a.Fields(), k))
 	default:
-		return nil, errNotIndexable
+		if keys := GetFieldMapKeys(a); keys != nil {
+			return convertResult(indexFieldMap(a, k, keys))
+		} else {
+			return nil, errNotIndexable
+		}
 	}
 }
 
@@ -75,15 +78,27 @@ func indexFile(f *os.File, k any) (any, error) {
 	return nil, NoSuchKey(k)
 }
 
-func indexStructMap(a StructMap, k any) (any, bool) {
-	fieldName, ok := k.(string)
-	if !ok || fieldName == "" {
+func indexMethodMap(m MethodMap, k any) (any, bool) {
+	kstring, ok := k.(string)
+	if !ok {
 		return nil, false
 	}
-	for it := iterateStructMap(a); it.HasElem(); it.Next() {
-		k, v := it.elem()
-		if k == fieldName {
-			return FromGo(v), true
+	for i, key := range getMethodMapKeys(m) {
+		if kstring == key {
+			return reflect.ValueOf(m).Method(i).Call(nil)[0].Interface(), true
+		}
+	}
+	return nil, false
+}
+
+func indexFieldMap(m, k any, keys FieldMapKeys) (any, bool) {
+	kstring, ok := k.(string)
+	if !ok {
+		return nil, false
+	}
+	for i, key := range keys {
+		if kstring == key {
+			return reflect.ValueOf(m).Field(i).Interface(), true
 		}
 	}
 	return nil, false

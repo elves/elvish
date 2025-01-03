@@ -16,15 +16,19 @@ import (
 	"src.elv.sh/pkg/eval/vars"
 	"src.elv.sh/pkg/fsutil"
 	"src.elv.sh/pkg/must"
-	"src.elv.sh/pkg/prog"
 	"src.elv.sh/pkg/testutil"
+	"src.elv.sh/pkg/transcript"
 )
 
-//go:embed *.elvts *.elv
-var transcripts embed.FS
+var (
+	//go:embed *.elvts *.elv
+	transcripts     embed.FS
+	transcriptNodes = must.OK1(transcript.ParseFromFS(transcripts))
+	transcriptCodes = extractAllCodes(transcriptNodes)
+)
 
 func TestTranscripts(t *testing.T) {
-	evaltest.TestTranscriptsInFS(t, transcripts,
+	evaltest.TestTranscriptNodes(t, transcriptNodes,
 		"args", func(ev *eval.Evaler, arg string) {
 			ev.Args = vals.MakeListSlice(strings.Fields(arg))
 		},
@@ -102,9 +106,6 @@ func TestTranscripts(t *testing.T) {
 		"force-eval-source-count", func(t *testing.T, arg string) {
 			c := must.OK1(strconv.Atoi(arg))
 			testutil.Set(t, eval.NextEvalCount, func() int { return c })
-		},
-		"with-deprecation-level", func(t *testing.T, arg string) {
-			testutil.Set(t, &prog.DeprecationLevel, must.OK1(strconv.Atoi(arg)))
 		},
 		"mock-time-after", func(t *testing.T) {
 			testutil.Set(t, eval.TimeAfter,
@@ -189,4 +190,20 @@ func (v *badVar) Set(any) error {
 	}
 	v.allowedSets--
 	return nil
+}
+
+func extractAllCodes(nodes []*transcript.Node) []string {
+	var codes []string
+	for _, node := range nodes {
+		var codeBuf strings.Builder
+		for i, interaction := range node.Interactions {
+			if i > 0 {
+				codeBuf.WriteByte('\n')
+			}
+			codeBuf.WriteString(interaction.Code)
+		}
+		codes = append(codes, codeBuf.String())
+		codes = append(codes, extractAllCodes(node.Children)...)
+	}
+	return codes
 }

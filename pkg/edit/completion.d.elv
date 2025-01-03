@@ -8,34 +8,53 @@ var completion:binding
 # [Matcher](#matcher) section.
 var completion:matcher
 
-# Produces a list of filenames found in the directory of the last argument. All
-# other arguments are ignored. If the last argument does not contain a path
-# (either absolute or relative to the current directory), then the current
-# directory is used. Relevant files are output as `edit:complex-candidate`
-# objects.
+# Produces a list of filenames that are suitable for completing the last
+# argument, ignoring all other arguments. The last argument is used in the
+# following ways:
 #
-# This function is the default handler for any commands without
-# explicit handlers in `$edit:completion:arg-completer`. See [Argument
+# - The directory determines which directory to complete.
+#
+# - If the base name starts with `.`, it completes all files whose names start
+#   with `.` (hidden files); otherwise it completes filenames that don't start
+#   with `.` (non-hidden files).
+#
+#   The rest of the base name is ignored; filtering is left to the
+#   [matcher](#matcher).
+#
+# The outputs are [`edit:complex-candidate`]() objects, with styles determined
+# by `$E:LSCOLOR`. Directories have a trailing `/` in the stem; non-directory
+# files have a space as their code suffix.
+#
+# This function is the default handler for any commands without explicit
+# handlers in `$edit:completion:arg-completer`. See [Argument
 # Completer](#argument-completer).
 #
 # Example:
 #
 # ```elvish-transcript
-# ~> edit:complete-filename ''
-# ▶ (edit:complex-candidate Applications &code-suffix=/ &style='01;34')
-# ▶ (edit:complex-candidate Books &code-suffix=/ &style='01;34')
-# ▶ (edit:complex-candidate Desktop &code-suffix=/ &style='01;34')
-# ▶ (edit:complex-candidate Docsafe &code-suffix=/ &style='01;34')
-# ▶ (edit:complex-candidate Documents &code-suffix=/ &style='01;34')
-# ...
-# ~> edit:complete-filename .elvish/
-# ▶ (edit:complex-candidate .elvish/aliases &code-suffix=/ &style='01;34')
-# ▶ (edit:complex-candidate .elvish/db &code-suffix=' ' &style='')
-# ▶ (edit:complex-candidate .elvish/epm-installed &code-suffix=' ' &style='')
-# ▶ (edit:complex-candidate .elvish/lib &code-suffix=/ &style='01;34')
-# ▶ (edit:complex-candidate .elvish/rc.elv &code-suffix=' ' &style='')
+# ~> ls -AR
+# ~/tmp/example> ls -AR
+# .ipsum .lorem bar    d      foo
+#
+# ./d:
+# bar    foo
+# ~> edit:complete-filename '' # non-hidden files in working directory
+# ▶ (edit:complex-candidate bar &code-suffix=' ' &display=[^styled bar])
+# ▶ (edit:complex-candidate d/ &code-suffix='' &display=[^styled (styled-segment d/ &fg-color=blue &bold)])
+# ▶ (edit:complex-candidate foo &code-suffix=' ' &display=[^styled foo])
+# ~> edit:complete-filename '.f' # hidden files in working directory
+# ▶ (edit:complex-candidate .ipsum &code-suffix=' ' &display=[^styled .ipsum])
+# ▶ (edit:complex-candidate .lorem &code-suffix=' ' &display=[^styled .lorem])
+# ~> edit:complete-filename ./d/f # non-hidden files in ./d
+# ▶ (edit:complex-candidate ./d/bar &code-suffix=' ' &display=[^styled ./d/bar])
+# ▶ (edit:complex-candidate ./d/foo &code-suffix=' ' &display=[^styled ./d/foo])
 # ```
 fn complete-filename {|@args| }
+
+#doc:added-in 0.21
+#
+# Like [`edit:complete-filename`](), but only generates directories.
+fn complete-dirname {|@args| }
 
 # Builds a complex candidate. This is mainly useful in [argument
 # completers](#argument-completer).

@@ -1,0 +1,25 @@
+.action {
+  display: flex;
+  column-gap: 16px;
+}
+
+.action a {
+  width: fit-content;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid;
+  border-radius: 5px;
+  font-family: var(--sans-font);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.action a.github {
+  background: #333;
+}
+
+.action a.patreon {
+  background: var(--deep-orange-700);
+}

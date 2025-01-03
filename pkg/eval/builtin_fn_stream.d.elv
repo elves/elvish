@@ -156,21 +156,24 @@ fn drop {|n inputs?| }
 # ```
 fn compact {|inputs?| }
 
-# Count the number of inputs.
+# Count the number of elements in a container (also known as its _length_), or
+# the number of inputs when when argument is given.
 #
 # Examples:
 #
 # ```elvish-transcript
-# ~> count lorem # count bytes in a string
-# ▶ (num 5)
 # ~> count [lorem ipsum]
 # ▶ (num 2)
-# ~> range 100 | count
+# ~> count [&foo=bar &lorem=ipsum] # count pairs in a map
+# ▶ (num 2)
+# ~> count lorem # count bytes in a string
+# ▶ (num 5)
+# ~> range 100 | count # count inputs
 # ▶ (num 100)
 # ~> seq 100 | count
 # ▶ (num 100)
 # ```
-fn count {|input-list?| }
+fn count {|inputs?| }
 
 # Outputs the [value inputs](#value-inputs) after sorting. The sorting process
 # is
@@ -286,3 +289,22 @@ fn count {|input-list?| }
 #
 # See also [`compare`]().
 fn order {|&less-than=$nil &total=$false &key=$nil &reverse=$false inputs?| }
+
+#doc:added-in 0.21
+# Calls `$predicate` for each input, outputting those where `$predicate` outputs
+# `$true`. Similar to `filter` in some other languages.
+#
+# The `$predicate` must output a single boolean value.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> use str
+# ~> put foo bar foobar | keep-if {|s| str:has-prefix $s f }
+# ▶ foo
+# ▶ foobar
+# ~> keep-if {|s| == 3 (count $s) } [foo bar foobar]
+# ▶ foo
+# ▶ bar
+# ```
+fn keep-if {|predicate inputs?| }

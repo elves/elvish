@@ -2,6 +2,11 @@ prelude = "prelude"
 autoIndex = true
 
 [[articles]]
+name = "0.21.0-release-notes"
+title = "Elvish 0.21.0 release notes"
+timestamp = "2024-08-14"
+
+[[articles]]
 name = "0.20.1-release-notes"
 title = "Elvish 0.20.1 release notes"
 timestamp = "2024-02-14"

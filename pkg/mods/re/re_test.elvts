@@ -27,7 +27,7 @@ Exception: error parsing regexp: missing closing ): `(`
 ▶ [&end=(num 2) &groups=[[&end=(num 2) &start=(num 0) &text=A1] [&end=(num 2) &start=(num 1) &text=1]] &start=(num 0) &text=A1]
 ▶ [&end=(num 5) &groups=[[&end=(num 5) &start=(num 3) &text=B2] [&end=(num 5) &start=(num 4) &text=2]] &start=(num 3) &text=B2]
 
-## access to fields in the match StructMap ##
+## access to fields in the match field map ##
 ~> put (re:find . a)[text start end groups]
 ▶ a
 ▶ (num 0)
@@ -125,3 +125,76 @@ Exception: port does not support value output
 ▶ a\.txt
 ~> re:quote '(*)'
 ▶ '\(\*\)'
+
+//////////
+# re:awk #
+//////////
+
+~> echo "  ax  by cz  \n11\t22 33" | re:awk {|@a| put $a[-1] }
+▶ cz
+▶ 33
+
+## bad input type ##
+~> num 42 | re:awk {|@a| fail "this should not run" }
+Exception: input of re:awk must be string
+  [tty]:1:10-50: num 42 | re:awk {|@a| fail "this should not run" }
+
+## propagating exception ##
+~> to-lines [1 2 3 4] | re:awk {|@a|
+       if (==s 3 $a[1]) {
+           fail "stop re:awk"
+       }
+       put $a[1]
+   }
+▶ 1
+▶ 2
+Exception: stop re:awk
+  [tty]:3:9-26:         fail "stop re:awk"
+  [tty]:1:22-6:1:
+    to-lines [1 2 3 4] | re:awk {|@a|
+        if (==s 3 $a[1]) {
+            fail "stop re:awk"
+        }
+        put $a[1]
+    }
+
+## break ##
+~> to-lines [" a" "b\tc " "d" "e"] | re:awk {|@a|
+       if (==s d $a[1]) {
+           break
+       } else {
+           put $a[-1]
+       }
+   }
+▶ a
+▶ c
+
+## continue ##
+~> to-lines [" a" "b\tc " "d" "e"] | re:awk {|@a|
+       if (==s d $a[1]) {
+           continue
+       } else {
+           put $a[-1]
+       }
+   }
+▶ a
+▶ c
+▶ e
+
+## parsing docker image ls output with custom separator ##
+~> to-lines [
+       'REPOSITORY                TAG          IMAGE ID      CREATED         SIZE'
+       '<none>                    <none>       265c2d25a944  16 minutes ago  67.5 MB'
+       '<none>                    <none>       26408a88b236  16 minutes ago  389 MB'
+       'localhost/elvish_re:awk     latest       0570db4e3eaa  32 hours ago    67.5 MB'
+       'localhost/elvish          latest       59b1eec93ab7  33 hours ago    67.5 MB'
+       'docker.io/library/golang  latest       015e6b7f599b  46 hours ago    838 MB'
+       'docker.io/library/golang  1.20-alpine  93db368a0a9e  3 days ago      266 MB'
+   ] | re:awk &sep=" [ ]+" {|0 1 2 3 4 5| put $5 }
+▶ SIZE
+▶ '67.5 MB'
+▶ '389 MB'
+▶ '67.5 MB'
+▶ '67.5 MB'
+▶ '838 MB'
+▶ '266 MB'

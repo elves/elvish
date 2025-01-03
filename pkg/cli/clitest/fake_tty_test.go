@@ -7,6 +7,7 @@ import (
 
 	"src.elv.sh/pkg/cli"
 	"src.elv.sh/pkg/cli/term"
+	"src.elv.sh/pkg/ui"
 )
 
 func TestFakeTTY_Setup(t *testing.T) {
@@ -67,54 +68,54 @@ func TestFakeTTY_Signals(t *testing.T) {
 }
 
 func TestFakeTTY_Buffer(t *testing.T) {
-	bufNotes1 := term.NewBufferBuilder(10).Write("notes 1").Buffer()
+	msg1 := ui.T("msg 1")
 	buf1 := term.NewBufferBuilder(10).Write("buf 1").Buffer()
-	bufNotes2 := term.NewBufferBuilder(10).Write("notes 2").Buffer()
+	msg2 := ui.T("msg 2")
 	buf2 := term.NewBufferBuilder(10).Write("buf 2").Buffer()
-	bufNotes3 := term.NewBufferBuilder(10).Write("notes 3").Buffer()
+	msg3 := ui.T("msg 3")
 	buf3 := term.NewBufferBuilder(10).Write("buf 3").Buffer()
 
 	tty, ttyCtrl := NewFakeTTY()
 
-	if ttyCtrl.LastNotesBuffer() != nil {
-		t.Errorf("LastNotesBuffer -> %v, want nil", ttyCtrl.LastNotesBuffer())
+	if ttyCtrl.LastMsg() != nil {
+		t.Errorf("LastNotesBuffer -> %v, want nil", ttyCtrl.LastMsg())
 	}
 	if ttyCtrl.LastBuffer() != nil {
 		t.Errorf("LastBuffer -> %v, want nil", ttyCtrl.LastBuffer())
 	}
 
-	tty.UpdateBuffer(bufNotes1, buf1, true)
-	if ttyCtrl.LastNotesBuffer() != bufNotes1 {
-		t.Errorf("LastBuffer -> %v, want %v", ttyCtrl.LastNotesBuffer(), bufNotes1)
+	tty.UpdateBuffer(msg1, buf1, true)
+	if !reflect.DeepEqual(ttyCtrl.LastMsg(), msg1) {
+		t.Errorf("LastBuffer -> %v, want %v", ttyCtrl.LastMsg(), msg1)
 	}
 	if ttyCtrl.LastBuffer() != buf1 {
 		t.Errorf("LastBuffer -> %v, want %v", ttyCtrl.LastBuffer(), buf1)
 	}
 	ttyCtrl.TestBuffer(t, buf1)
-	ttyCtrl.TestNotesBuffer(t, bufNotes1)
+	ttyCtrl.TestMsg(t, msg1)
 
-	tty.UpdateBuffer(bufNotes2, buf2, true)
-	if ttyCtrl.LastNotesBuffer() != bufNotes2 {
-		t.Errorf("LastBuffer -> %v, want %v", ttyCtrl.LastNotesBuffer(), bufNotes2)
+	tty.UpdateBuffer(msg2, buf2, true)
+	if !reflect.DeepEqual(ttyCtrl.LastMsg(), msg2) {
+		t.Errorf("LastBuffer -> %v, want %v", ttyCtrl.LastMsg(), msg2)
 	}
 	if ttyCtrl.LastBuffer() != buf2 {
 		t.Errorf("LastBuffer -> %v, want %v", ttyCtrl.LastBuffer(), buf2)
 	}
 	ttyCtrl.TestBuffer(t, buf2)
-	ttyCtrl.TestNotesBuffer(t, bufNotes2)
+	ttyCtrl.TestMsg(t, msg2)
 
 	// Test Test{,Notes}Buffer
-	tty.UpdateBuffer(bufNotes3, buf3, true)
+	tty.UpdateBuffer(msg3, buf3, true)
 	ttyCtrl.TestBuffer(t, buf3)
-	ttyCtrl.TestNotesBuffer(t, bufNotes3)
+	ttyCtrl.TestMsg(t, msg3)
 	// Cannot test the failure branch as that will fail the test
 
 	wantBufs := []*term.Buffer{buf1, buf2, buf3}
-	wantNotesBufs := []*term.Buffer{bufNotes1, bufNotes2, bufNotes3}
+	wantMsgs := []ui.Text{msg1, msg2, msg3}
 	if !reflect.DeepEqual(ttyCtrl.BufferHistory(), wantBufs) {
 		t.Errorf("BufferHistory did not return {buf1, buf2}")
 	}
-	if !reflect.DeepEqual(ttyCtrl.NotesBufferHistory(), wantNotesBufs) {
+	if !reflect.DeepEqual(ttyCtrl.MsgHistory(), wantMsgs) {
 		t.Errorf("NotesBufferHistory did not return {bufNotes1, bufNotes2}")
 	}
 }

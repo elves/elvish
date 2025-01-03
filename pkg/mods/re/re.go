@@ -2,7 +2,9 @@
 package re
 
 import (
+	"errors"
 	"regexp"
+	"strings"
 
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/errs"
@@ -17,7 +19,7 @@ var Ns = eval.BuildNsNamed("re").
 		"find":    find,
 		"replace": replace,
 		"split":   split,
-		"awk":     eval.Eawk,
+		"awk":     awk,
 	}).Ns()
 
 type matchOpts struct{ Posix bool }
@@ -146,6 +148,60 @@ func split(fm *eval.Frame, opts findOpts, argPattern, source string) error {
 		}
 	}
 	return nil
+}
+
+// ErrInputOfAwkMustBeString is thrown when re:awk gets a non-string input.
+var ErrInputOfAwkMustBeString = errors.New("input of re:awk must be string")
+
+type awkOpt struct {
+	Sep        string
+	SepPosix   bool
+	SepLongest bool
+}
+
+func (o *awkOpt) SetDefaultOptions() {
+	o.Sep = "[ \t]+"
+}
+
+func awk(fm *eval.Frame, opts awkOpt, f eval.Callable, inputs eval.Inputs) error {
+	wordSep, err := makePattern(opts.Sep, opts.SepPosix, opts.SepLongest)
+	if err != nil {
+		return err
+	}
+
+	broken := false
+	inputs(func(v any) {
+		if broken {
+			return
+		}
+		line, ok := v.(string)
+		if !ok {
+			broken = true
+			err = ErrInputOfAwkMustBeString
+			return
+		}
+		args := []any{line}
+		for _, field := range wordSep.Split(strings.Trim(line, " \t"), -1) {
+			args = append(args, field)
+		}
+
+		newFm := fm.Fork()
+		// TODO: Close port 0 of newFm.
+		ex := f.Call(newFm, args, eval.NoOpts)
+
+		if ex != nil {
+			switch eval.Reason(ex) {
+			case nil, eval.Continue:
+				// nop
+			case eval.Break:
+				broken = true
+			default:
+				broken = true
+				err = ex
+			}
+		}
+	})
+	return err
 }
 
 func makePattern(p string, posix, longest bool) (*regexp.Regexp, error) {

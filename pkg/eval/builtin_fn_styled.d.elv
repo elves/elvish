@@ -71,7 +71,7 @@ fn styled-segment {|object &fg-color=default &bg-color=default &bold=$false &dim
 # - A color name prefixed by `bg-` to set the background color.
 #
 # - A function that receives a styled segment as the only argument and outputs
-#   a single styled segment, which will be applied to all the segments.
+#   a single styled segment: this function will be applied to all the segments.
 #
 # When a styled text is converted to a string the corresponding
 # [ANSI SGR code](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_.28Select_Graphic_Rendition.29_parameters)
@@ -123,8 +123,10 @@ fn styled-segment {|object &fg-color=default &bg-color=default &bold=$false &dim
 fn styled {|object @style-transformer| }
 
 #doc:added-in 0.21
-# Renders "styledown" markup into a styled text. For the styledown markup
-# format, see <https://pkg.go.dev/src.elv.sh@master/pkg/ui/styledown>.
+# Renders Styledown markup into a styled text.
+#
+# For the styledown markup format, see
+# <https://pkg.go.dev/src.elv.sh@master/pkg/ui/styledown>.
 #
 # Examples:
 #
@@ -139,5 +141,32 @@ fn styled {|object @style-transformer| }
 # To see the rendered text in the terminal, pass it to [`print`](), like
 # `render-styledown ... | print (one)`.
 #
-# See also [`styled`]().
+# See also [`styled`]() and [`derender-styledown`].
 fn render-styledown {|s| }
+
+#doc:added-in 0.22
+# Converts styled text to Styledown markup.
+#
+# The `&style-defs` options may be used to supply definition for additional
+# style characters, following the same syntax as that in the Styledown format
+# itself.
+#
+# For the Styledown markup format, see
+# <https://pkg.go.dev/src.elv.sh@master/pkg/ui/styledown>.
+#
+# Examples:
+#
+# ```elvish-transcript
+# ~> derender-styledown (styled "foo\n" bold) | print (one)
+# foo
+# ***
+# ~> derender-styledown (styled "foo\n" red) &style-defs='R red' |
+#      print (one)
+# foo
+# RRR
+#
+# R red
+# ```
+#
+# See also [`render-styledown`]().
+fn derender-styledown {|s &style-defs=''| }
