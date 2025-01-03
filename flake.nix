@@ -48,7 +48,10 @@
           };
         });
 
-      # `nix develop` provides a shell containing development tools.
+      # "nix develop" provides a shell containing development tools.
+      #
+      # "nix develop --command gomod2nix" should be run to update gomod2nix.toml
+      # after updating Go module dependencies.
       devShell = forAllSystems ({ system, pkgs }:
         pkgs.mkShell {
           buildInputs = with pkgs; [
