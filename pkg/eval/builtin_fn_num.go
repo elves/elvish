@@ -348,43 +348,39 @@ func randint(args ...vals.Num) (vals.Num, error) {
 		return -1, errs.ArityMismatch{What: "arguments",
 			ValidLow: 1, ValidHigh: 2, Actual: len(args)}
 	}
-	allInt := true
 	for _, arg := range args {
 		if err := checkExactIntArg(arg); err != nil {
 			return nil, err
 		}
-		if _, ok := arg.(*big.Int); ok {
-			allInt = false
-		}
 	}
-	if allInt {
-		var low, high int
-		if len(args) == 1 {
-			low, high = 0, args[0].(int)
-		} else {
-			low, high = args[0].(int), args[1].(int)
-		}
-		if high <= low {
-			return 0, errs.BadValue{What: "high value",
-				Valid: fmt.Sprint("larger than ", low), Actual: strconv.Itoa(high)}
-		}
-		x := withRand(func(r *rand.Rand) int { return r.Intn(high - low) })
-		return low + x, nil
-	}
-	var low, high *big.Int
 	if len(args) == 1 {
-		low, high = big.NewInt(0), args[0].(*big.Int)
-	} else {
-		var casted_args [2]*big.Int
-		for i, arg := range args {
-			if casted_arg, ok := arg.(*big.Int); ok {
-				casted_args[i] = casted_arg
-			} else {
-				casted_args[i] = big.NewInt(int64(arg.(int)))
+		if high, ok := args[0].(int); ok {
+			return randIntSmallInt(0, high)
+		} else { // *big.Int
+			return randIntBigInt(&big.Int{}, args[0].(*big.Int))
+		}
+	} else { // len(args) == 2
+		if low, ok := args[0].(int); ok {
+			if high, ok := args[1].(int); ok {
+				return randIntSmallInt(low, high)
 			}
 		}
-		low, high = casted_args[0], casted_args[1]
+		// One or both of low and high is *big.Int
+		return randIntBigInt(
+			vals.PromoteToBigInt(args[0]), vals.PromoteToBigInt(args[1]))
 	}
+}
+
+func randIntSmallInt(low, high int) (vals.Num, error) {
+	if high <= low {
+		return 0, errs.BadValue{What: "high value",
+			Valid: fmt.Sprint("larger than ", low), Actual: strconv.Itoa(high)}
+	}
+	x := withRand(func(r *rand.Rand) int { return r.Intn(high - low) })
+	return low + x, nil
+}
+
+func randIntBigInt(low, high *big.Int) (vals.Num, error) {
 	if high.Cmp(low) <= 0 {
 		return 0, errs.BadValue{What: "high value",
 			Valid: fmt.Sprint("larger than ", low), Actual: high.String()}
