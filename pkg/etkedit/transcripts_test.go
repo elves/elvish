@@ -9,6 +9,7 @@ import (
 	edit "src.elv.sh/pkg/etkedit"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/evaltest"
+	"src.elv.sh/pkg/store"
 	"src.elv.sh/pkg/testutil"
 	"src.elv.sh/pkg/ui"
 )
@@ -17,6 +18,7 @@ import (
 var transcripts embed.FS
 
 func TestTranscripts(t *testing.T) {
+	st := store.MustTempStore(t)
 	evaltest.TestTranscriptsInFS(t, transcripts,
 		"edit-fixture", func(t *testing.T, ev *eval.Evaler) {
 			// The default prompt and rprompt depends on environment factors
@@ -32,7 +34,7 @@ func TestTranscripts(t *testing.T) {
 			testutil.Set(t, edit.HasCommandPtr, hasBuiltinCmd)
 			testutil.Set(t, edit.HasCommandMaxBlockPtr, func() time.Duration { return time.Hour })
 
-			ed := edit.NewEditor(ev)
+			ed := edit.NewEditor(ev, st)
 			ev.ExtendBuiltin(eval.BuildNs().AddNs("edit", ed))
 			etktest.Setup(t, ev, ed.Comp())
 		},

@@ -1,3 +1,3 @@
 [codespell]
-ignore-words-list = ro,upto,nd,doas,fo,shouldbe,iterm,lates,testof
+ignore-words-list = ro,upto,nd,doas,fo,shouldbe,iterm,lates,testof,golab
 skip = ./.git,./vscode/node_modules,./vscode/dist,./website/_dst,./website/*.html

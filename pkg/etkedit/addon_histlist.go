@@ -43,6 +43,7 @@ type histlistItems struct {
 	last    map[string]int
 }
 
+/*
 func (it histlistItems) filter(p func(string) bool, dedup bool) histlistItems {
 	var filtered []storedefs.Cmd
 	for i, entry := range it.entries {
@@ -56,6 +57,7 @@ func (it histlistItems) filter(p func(string) bool, dedup bool) histlistItems {
 	}
 	return histlistItems{filtered, nil}
 }
+*/
 
 func (it histlistItems) Len() int      { return len(it.entries) }
 func (it histlistItems) Get(i int) any { return it.entries[i] }

@@ -168,7 +168,7 @@ Exception: cannot concatenate fn and ui:text-segment
 
 ## text + unsupported ##
 ~> to-string (styled abc){ }
-Exception: cannot concatenate ui:text and fn
+Exception: cannot concatenate styled and fn
   [tty]:1:11-25: to-string (styled abc){ }
 
 ## string + text ##
@@ -183,7 +183,7 @@ Exception: cannot concatenate ui:text and fn
 
 ## unsupported + text ##
 ~> to-string { }(styled abc)
-Exception: cannot concatenate fn and ui:text
+Exception: cannot concatenate fn and styled
   [tty]:1:11-25: to-string { }(styled abc)
 
 ## introspecting concatenated text ##

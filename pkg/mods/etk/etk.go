@@ -14,10 +14,6 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-type textViewOpts struct{ DotBefore int }
-
-func (*textViewOpts) SetDefaultOptions() {}
-
 var Ns = eval.BuildNsNamed("etk").
 	AddVars(map[string]vars.Var{
 		// etk.Reaction values
@@ -89,10 +85,6 @@ type viewReact struct {
 	View  etk.View
 	React etk.React
 }
-
-type vboxOpts struct{ Focus int }
-
-func (*vboxOpts) SetDefaultOptions() {}
 
 func scanCompFromFn(fm *eval.Frame, fn eval.Callable) etk.Comp {
 	return func(c etk.Context) (etk.View, etk.React) {

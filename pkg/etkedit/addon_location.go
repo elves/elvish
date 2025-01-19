@@ -30,6 +30,7 @@ type locationItems struct {
 	dirs []storedefs.Dir
 }
 
+/*
 func (l locationItems) filter(p func(string) bool) locationItems {
 	var filteredDirs []storedefs.Dir
 	for _, dir := range l.dirs {
@@ -39,6 +40,7 @@ func (l locationItems) filter(p func(string) bool) locationItems {
 	}
 	return locationItems{filteredDirs}
 }
+*/
 
 func (l locationItems) Len() int      { return len(l.dirs) }
 func (l locationItems) Get(i int) any { return l.dirs[i] }
