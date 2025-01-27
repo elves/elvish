@@ -2,6 +2,7 @@ package fsutil
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -38,4 +39,15 @@ func isExecutableExt(ext string) bool {
 	}
 
 	return validExts[strings.ToLower(ext)]
+}
+
+func searchExecutable(name string) (string, error) {
+	if !isExecutableExt(filepath.Ext(name)) {
+		ps1, err := exec.LookPath(name + ".ps1")
+		if err == nil {
+			return ps1, nil
+		}
+	}
+
+	return exec.LookPath(name)
 }

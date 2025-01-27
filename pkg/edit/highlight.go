@@ -2,7 +2,6 @@ package edit
 
 import (
 	"os"
-	"os/exec"
 	"strings"
 
 	"src.elv.sh/pkg/cli"
@@ -122,6 +121,6 @@ func isDirOrExecutable(fname string) bool {
 }
 
 func hasExternalCommand(cmd string) bool {
-	_, err := exec.LookPath(cmd)
+	_, err := fsutil.SearchExecutable(cmd)
 	return err == nil
 }
