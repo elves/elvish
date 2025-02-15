@@ -27,6 +27,7 @@
       font-family: "Lucida Grande", Arial, sans-serif;
     }
     img { max-width: 100%; }
+    a { color: #0645ad;; }
 
     :root {
       font-size: min(3.6vh, 2vw);
@@ -56,23 +57,35 @@
     }
 
     /* Style with JS */
-    .has-js #raw-content, .has-js section {
+    .has-js #raw-content {
       display: none;
     }
-    .has-js footer {
-      display: block;
-      position: absolute;
-      bottom: 0.5rem;
-      left: 50%;
-      transform: translate(-50%, 0);
-      font-size: 0.5rem;
-      color: gray;
+    @media screen {
+      .has-js footer {
+        display: block;
+        position: absolute;
+        bottom: 0.5rem;
+        left: 50%;
+        transform: translate(-50%, 0);
+        font-size: 0.5rem;
+        color: gray;
+      }
+      section {
+        display: none;
+      }
+      section.current {
+        display: block;
+        padding: 0.5rem 2rem 0;
+        height: 95%;
+        overflow-y: scroll;
+      }
     }
-    .has-js section.current {
-      display: block;
-      padding: 0.5rem 2rem 0;
-      height: 95%;
-      overflow-y: scroll;
+
+    @media print {
+      section {
+        break-inside: avoid;
+        break-after: page;
+      }
     }
   </style>
   <script>
