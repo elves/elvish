@@ -92,7 +92,7 @@ The checks depend on some external programs, which can be installed as follows:
 
 ```sh
 go install golang.org/x/tools/cmd/goimports@latest
-go install honnef.co/go/tools/cmd/staticcheck@v0.5.1
+go install honnef.co/go/tools/cmd/staticcheck@v0.6.0
 pip install --user codespell==2.3.0
 ```
 
