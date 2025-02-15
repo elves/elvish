@@ -19,8 +19,9 @@ test_bsd_task:
   matrix:
     - name: Test on FreeBSD
       freebsd_instance:
-        # Find latest version on https://www.freebsd.org/releases/
-        image_family: freebsd-14-0
+        # List images with: https://cloud.google.com/compute/docs/images#freebsd
+        # Or find use the latest stable release on https://www.freebsd.org/releases/
+        image_family: freebsd-14-2
       setup_script:
         # go test -race is not compatible with ASLR, which has been enabled by
         # default since FreeBSD 13
