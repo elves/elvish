@@ -442,3 +442,32 @@ Exception: arity mismatch: arguments must be 0 values, but is 1 value
 ~> count 1 2 3
 Exception: arity mismatch: arguments must be 0 to 1 values, but is 3 values
   [tty]:1:1-11: count 1 2 3
+
+## defer in a loop ##
+~> for x [a b c] {
+     defer {
+       put "I am deferred"
+     }
+     put $x
+   }
+▶ a
+▶ 'I am deferred'
+▶ b
+▶ 'I am deferred'
+▶ c
+▶ 'I am deferred'
+~> var lst = [a b c]
+   var i = 0
+   while (< $i (count $lst)) {
+     defer {
+       put "I am deferred"
+     }
+     put $lst[$i]
+     set i = (+ $i 1)
+   }
+▶ a
+▶ 'I am deferred'
+▶ b
+▶ 'I am deferred'
+▶ c
+▶ 'I am deferred'

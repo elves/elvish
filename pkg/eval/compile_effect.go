@@ -135,7 +135,7 @@ func (op *pipelineOp) exec(fm *Frame) Exception {
 		}
 		f := func(form *formOp, fops []formOwnedPort, pexc *Exception) {
 			exc := form.exec(newFm, &fops)
-			if exc != nil && !(outputIsPipe && isReaderGone(exc)) {
+			if exc != nil && !(outputIsPipe && isReaderGone(exc)) && exc.Reason() != nil {
 				*pexc = exc
 			}
 			if inputIsPipe {
