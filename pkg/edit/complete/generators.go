@@ -35,7 +35,22 @@ func GenerateDirNames(args []string) ([]RawItem, error) {
 	if len(args) == 0 {
 		return nil, nil
 	}
-	return generateFileNames(args[len(args)-1], fs.FileInfo.IsDir)
+	seed := args[len(args)-1]
+	dir := filepath.Dir(seed)
+	return generateFileNames(seed, func(fi fs.FileInfo) bool {
+		if fi.IsDir() {
+			return true
+		}
+		evaluated, err := filepath.EvalSymlinks(filepath.Join(dir, fi.Name()))
+		if err != nil {
+			return false
+		}
+		info, err := os.Stat(evaluated)
+		if err != nil {
+			return false
+		}
+		return info.IsDir()
+	})
 }
 
 // GenerateForSudo generates candidates for sudo.
