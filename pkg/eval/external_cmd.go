@@ -105,13 +105,9 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 
 	args[0] = path
 
-	if filepath.Ext(path) == ".ps1" {
-		powershell, err := exec.LookPath("powershell.exe")
-		if err != nil {
-			return err
-		}
-
-		args = append([]string{powershell, "-noprofile", "-ex", "unrestricted", "-file"}, args...)
+	iargs := getInterpreterArgs(strings.ToLower(filepath.Ext(path)))
+	if iargs != nil {
+		args = append(iargs, args...)
 	}
 
 	sys := makeSysProcAttr(fm.background)
@@ -136,4 +132,22 @@ func (e externalCmd) Call(fm *Frame, argVals []any, opts map[string]any) error {
 		}
 	}
 	return NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid)
+}
+
+func getInterpreterArgs(ext string) []string {
+	// if ext == ".elv"
+
+	if runtime.GOOS == "windows" && ext == ".ps1" {
+		pwsh, err := exec.LookPath("pwsh.exe")
+		if err != nil {
+			pwsh, err = exec.LookPath("powershell.exe")
+		}
+		if err != nil {
+			return nil
+		}
+
+		return []string{pwsh, "-NoProfile", "-ExecutionPolicy", "unrestricted", "-File"}
+	}
+
+	return nil
 }
