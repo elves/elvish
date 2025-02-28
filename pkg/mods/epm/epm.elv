@@ -30,6 +30,11 @@ var -default-domain-config = [
     &protocol= https
     &levels= 2
   ]
+  &"git.sr.ht"= [
+    &method= git
+    &protocol= https
+    &levels= 2
+  ]
 ]
 
 # The path of the `epm`-managed directory.
