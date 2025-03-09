@@ -23,6 +23,13 @@ func IsExecutable(stat os.FileInfo) bool {
 	return isExecutable(stat)
 }
 
+// SearchExecutable returns the path for an executable file in the $E:PATH.
+//
+// This is determined by permission bits on Unix, and by file name on Windows.
+func SearchExecutable(exe string) (string, error) {
+	return searchExecutable(exe)
+}
+
 // EachExternal calls f for each executable file found while scanning the directories of $E:PATH.
 //
 // NOTE: EachExternal may generate the same command multiple times; once for each time it appears in
