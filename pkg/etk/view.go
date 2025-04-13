@@ -285,7 +285,6 @@ func (v BoxView) Render(width, height int) *term.Buffer {
 	for i, child := range v.Children {
 		if child.Flex > 0 {
 			childBufs[i] = render(child.View, child.Flex)
-			flexWeightSum--
 		}
 	}
 
