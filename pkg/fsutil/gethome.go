@@ -19,7 +19,6 @@ func GetHome(uname string) (string, error) {
 		if runtime.GOOS == "windows" {
 			home := os.Getenv(env.USERPROFILE)
 			if home != "" {
-				fmt.Println("Returning USERPROFILE")
 				return strings.TrimRight(home, "/\\"), nil
 			}
 		} else {
