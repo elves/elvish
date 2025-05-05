@@ -22,8 +22,6 @@ func HierNav(c etk.Context) (etk.View, etk.React) {
 
 	var parent etk.View = etk.EmptyView{}
 	if len(path) > 0 {
-		// TODO: When creating preview, select the item that leads to the
-		// current path
 		np := len(path)
 		parent, _ = hierNavPanel(c, hier, path[:np-1], path[np-1])
 	}
@@ -35,10 +33,10 @@ func HierNav(c etk.Context) (etk.View, etk.React) {
 		previewPath []string
 	)
 	// TODO: This will work not if path itself contains "/"
-	selectedPath := pathToName(path) + "/selected"
+	selectedPath := pathToName(path) + "/list/selected"
 	if c.Get(selectedPath) != nil {
-		items := etk.BindState(c, pathToName(path)+"/items", ListItems(nil)).Get()
-		selected := etk.BindState(c, pathToName(path)+"/selected", 0).Get()
+		items := etk.BindState(c, pathToName(path)+"/list/items", ListItems(nil)).Get()
+		selected := etk.BindState(c, pathToName(path)+"/list/selected", 0).Get()
 		if 0 <= selected && selected < items.Len() {
 			previewPath = slices.Concat(path, []string{items.Get(selected).(string)})
 			preview, _ = hierNavPanel(c, hier, previewPath, "")
@@ -85,9 +83,11 @@ func hierNavPanel(c etk.Context, h Hier, path []string, toSelect string) (etk.Vi
 			}
 		}
 		return c.Subcomp(name,
-			etk.WithInit(ListBox,
-				"items", items, "selected", selected,
-				"left-padding", 1, "right-padding", 1))
+			etk.WithInit(ComboBox,
+				"gen-list", func(query string) (ListItems, int) {
+					return items, selected
+				},
+				"list/left-padding", 1, "list/right-padding", 1))
 	} else {
 		buffer := TextBuffer{Content: s}
 		return c.Subcomp(name, etk.WithInit(TextArea, "buffer", buffer))

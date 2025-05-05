@@ -64,10 +64,14 @@ func (hi dataHierItems) Len() int { return len(hi) }
 func (hi dataHierItems) Get(i int) any { return hi[i].name }
 
 func (hi dataHierItems) Show(i int) ui.Text {
+	return ui.T(hi[i].name)
+}
+
+func (hi dataHierItems) StyleLine(i int) ui.Styling {
 	if hi[i].isMap {
-		return ui.T(hi[i].name, ui.FgGreen, ui.Bold)
+		return ui.Stylings(ui.FgGreen, ui.Bold)
 	} else {
-		return ui.T(hi[i].name)
+		return ui.Nop
 	}
 }
 
