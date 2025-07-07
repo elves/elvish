@@ -1,55 +1,3 @@
-// Package etk implements an [immediate mode] TUI framework with managed states.
-//
-// Each component in the TUI is implemented by a [Comp]: a function taking a
-// [Context] and returning a [View] and a [React]:
-//
-//   - The [Context] provides access to states associated with the component and
-//     supports creating sub-components.
-//
-//   - The [View] is a snapshot of the UI that reflects the current state.
-//
-//   - The [React] is a function that will be called to react to an event.
-//
-// Whenever there is an update in the states, the function is called again to
-// generate a pair of [View] and [React].
-//
-// The state is organized into a tree, with individual state variables as leaf
-// nodes and components as inner nodes. The [Context] provides access to the
-// current level and all descendant levels, allowing a component to manipulate
-// not just its own state, but also that of any descendant. This is the only way
-// of passing information between components: if a component has any
-// customizable property, it is modelled as a state that its parent can modify.
-//
-// # Design notes
-//
-// Immediate mode is an alternative to the more common [retained mode] style of
-// graphics API. Some GUI frameworks using this style are [Dear ImGui] and [Gio
-// UI]. [React], [SwiftUI] and [Jetpack Compose] also provide immediate mode
-// APIs above an underlying [retained mode] API.
-//
-// Immediate mode libraries differ a lot in how component structure and state
-// are managed. Etk is used to implement Elvish's terminal UI, so the choices
-// made by etk is driven largely by how easy it is to create an Elvish binding
-// for the framework that is maximally programmable:
-//
-//   - The open nature of the state tree makes it easy to inspect and mutate the
-//     terminal UI as it is running.
-//
-//   - The managed nature of the state tree gives us concurrency safety and
-//     undo/redo almost for free.
-//
-//   - The use of [vals.Map] to back the state tree sacrifices type safety in
-//     the Go version of the framework, but makes Elvish integration much
-//     easier.
-//
-// [immediate mode]: https://en.wikipedia.org/wiki/Immediate_mode_(computer_graphics)
-// [retained mode]: https://en.wikipedia.org/wiki/Retained_mode
-// [Dear ImGui]: https://github.com/ocornut/imgui
-// [Gio UI]: https://gioui.org
-// [React]: https://react.dev
-// [SwiftUI]: https://developer.apple.com/xcode/swiftui/
-// [Jetpack Compose]: https://developer.android.com/compose
-//
 //go:generate stringer -type=Reaction -output=zstring.go
 package etk
 
@@ -149,8 +97,19 @@ func (g *globalContext) PopMsgs() []ui.Text {
 	return msgs
 }
 
-// Context provides access to the state tree at the current level and all
-// descendant levels.
+// Context provides two kinds of context:
+//
+//   - The state subtree,
+//     used for storing all the persistent state of a component.
+//
+//     The state subtree is just an Elvish map on the low level,
+//     but Etk components should use [StateVar] to access it.
+//     (The functions returning StateVar's are ideally methods of Context,
+//     but since they have type parameters,
+//     they have to be free functions rather than methods.)
+//
+//   - Some global ephemeral states and coordination mechanisms,
+//     like the message buffer and channels for the rendering lifecycle.
 type Context struct {
 	g    *globalContext
 	path []string
@@ -171,6 +130,13 @@ func (c Context) descPath(path ...string) []string {
 	return slices.Concat(c.path, path)
 }
 
+// AddMsg adds a new message to the message buffer.
+// When rendering finishes,
+// all the messages in the buffer will get shown to the user,
+// and the buffer gets cleared.
+//
+// This method always triggers a refresh.
+// TODO: Don't refresh if we're currently in a rendering cycle.
 func (c Context) AddMsg(msg ui.Text) {
 	c.g.stateMutex.Lock()
 	defer c.g.stateMutex.Unlock()
@@ -178,10 +144,8 @@ func (c Context) AddMsg(msg ui.Text) {
 	c.Refresh()
 }
 
-func (c Context) PopMsgs() []ui.Text {
-	return c.g.PopMsgs()
-}
-
+// Context requests a re-render.
+// This is typically useful from asynchronous tasks.
 func (c Context) Refresh() {
 	select {
 	case c.g.refreshCh <- struct{}{}:
@@ -189,10 +153,22 @@ func (c Context) Refresh() {
 	}
 }
 
+// FinishChan returns a channel that is closed when the event loop finishes.
+//
+// This is useful for asynchronous tasks:
+// Goroutines spawned by components should listen on this channel,
+// and terminate when it is closed.
+// ([Context.Finished] provides an alternative.)
 func (c Context) FinishChan() <-chan struct{} {
 	return c.g.finishCh
 }
 
+// Finished returns whether the event loop has finished.
+//
+// This is an alternative to [Context.FinishChan]:
+// If it's impractical for a goroutine to listen to FinishChan,
+// it can call this function regularly,
+// and terminate when it returns true.
 func (c Context) Finished() bool {
 	select {
 	case <-c.g.finishCh:
@@ -244,7 +220,7 @@ func (c Context) Set(key string, value any) {
 // State returns a state variable with the given path from the current level,
 // initializing it to a given value if it doesn't exist yet.
 func State[T any](c Context, key string, initial T) StateVar[T] {
-	sv := BindState[T](c, key, initial)
+	sv := BindState(c, key, initial)
 	if sv.getAny() == nil {
 		sv.Set(initial)
 	}
@@ -262,7 +238,8 @@ func BindState[T any](c Context, key string, fallback T) StateVar[T] {
 	return StateVar[T]{&c.g.state, &c.g.stateMutex, c.g.fm, path, fallback}
 }
 
-// StateVar provides access to a state variable, a node in the state tree.
+// StateVar provides access to a "state variable",
+// which is just a fancy name for an entry in the state map.
 type StateVar[T any] struct {
 	state    *vals.Map
 	mutex    *sync.RWMutex
