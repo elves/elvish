@@ -33,17 +33,17 @@ func startCompletion(ed *Editor, c etk.Context) {
 		updatePending(items[0])
 	}
 	pushAddonWithDismiss(c, withAfterReact(
-		etk.WithInit(comps.ComboBox,
-			"query/prompt", addonPromptText(" COMPLETE "),
-			"list/multi-column", true,
-			"gen-list", func(f string) (comps.ListItems, int) {
+		etk.ModComp(comps.ComboBox,
+			etk.InitState("query/prompt", addonPromptText(" COMPLETE ")),
+			etk.InitState("list/multi-column", true),
+			etk.InitState("gen-list", func(f string) (comps.ListItems, int) {
 				// TODO: Implement actual filtering
 				if len(items) > 0 {
 					updatePending(items[0])
 				}
 				return items, 0
-			},
-			"binding", etkBindingFromBindingMap(ed, &ed.completionBinding),
+			}),
+			etk.InitState("binding", etkBindingFromBindingMap(ed, &ed.completionBinding)),
 		),
 		func(c etk.Context, r etk.Reaction) etk.Reaction {
 			if r == etk.Finish {

@@ -217,28 +217,27 @@ func (ed *Editor) Ns() *eval.Ns {
 }
 
 func (ed *Editor) Comp() etk.Comp {
-	return etk.WithBefore(
-		etk.WithInit(
-			app,
-			// Note: we don't use etkBindingFromBindingMap here because this
-			// also handles the showing of the "unbound" message.
-			"binding", etkBindingFromBindingMap(ed, &ed.globalBinding),
-			"code/binding", func(c etk.Context, ev term.Event) etk.Reaction {
-				switch ev {
-				case term.K('D', ui.Ctrl):
-					// TODO: Move this to binding map and use
-					// etkBindingFromBindingMap
-					return etk.FinishEOF
-				default:
-					handled := ed.callBinding(&ed.insertBinding, ev)
-					if handled {
-						return etk.Consumed
-					}
+	return etk.ModComp(
+		app,
+		// Note: we don't use etkBindingFromBindingMap here because this
+		// also handles the showing of the "unbound" message.
+		etk.InitState("binding", etkBindingFromBindingMap(ed, &ed.globalBinding)),
+		etk.InitState("code/binding", func(c etk.Context, ev term.Event) etk.Reaction {
+			switch ev {
+			case term.K('D', ui.Ctrl):
+				// TODO: Move this to binding map and use
+				// etkBindingFromBindingMap
+				return etk.FinishEOF
+			default:
+				handled := ed.callBinding(&ed.insertBinding, ev)
+				if handled {
+					return etk.Consumed
 				}
-				return etk.Unused
-			},
-		),
-		func(c etk.Context) {
+			}
+			return etk.Unused
+		}),
+		// TODO: Break up this into smaller hooks.
+		etk.BeforeHook("various", func(c etk.Context) {
 			ed.mutex.RLock()
 			defer ed.mutex.RUnlock()
 
@@ -251,7 +250,8 @@ func (ed *Editor) Comp() etk.Comp {
 			c.Set("code/abbr", convertAbbr(ed.simpleAbbr))
 			c.Set("code/command-abbr", convertAbbr(ed.commandAbbr))
 			c.Set("code/small-word-abbr", convertAbbr(ed.smallWordAbbr))
-		})
+		}),
+	)
 }
 
 func (ed *Editor) ReadCode(tty cli.TTY) (string, error) {

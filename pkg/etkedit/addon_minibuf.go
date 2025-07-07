@@ -12,7 +12,7 @@ import (
 // TODO: Binding
 func startMinibuf(c etk.Context) {
 	pushAddon(c, withFinish(
-		etk.WithInit(comps.TextArea, "prompt", addonPromptText(" MINIBUF ")),
+		etk.ModComp(comps.TextArea, etk.InitState("prompt", addonPromptText(" MINIBUF "))),
 		func(c etk.Context) {
 			code := etk.BindState(c, "buffer", comps.TextBuffer{}).Get().Content
 			src := parse.Source{Name: "[minibuf]", Code: code}

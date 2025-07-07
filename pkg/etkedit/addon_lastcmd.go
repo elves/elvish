@@ -20,12 +20,12 @@ func startLastcmd(ed *Editor, c etk.Context) {
 	}
 
 	items := makeLastCmdItems(cmd.Text)
-	pushAddon(c, etk.WithInit(comps.ComboBox,
-		"query/prompt", addonPromptText(" LASTCMD "),
-		"gen-list", func(f string) (comps.ListItems, int) {
+	pushAddon(c, etk.ModComp(comps.ComboBox,
+		etk.InitState("query/prompt", addonPromptText(" LASTCMD ")),
+		etk.InitState("gen-list", func(f string) (comps.ListItems, int) {
 			return items, 0
-		},
-		"binding", etkBindingFromBindingMap(ed, &ed.lastcmdBinding),
+		}),
+		etk.InitState("binding", etkBindingFromBindingMap(ed, &ed.lastcmdBinding)),
 	), 1)
 }
 

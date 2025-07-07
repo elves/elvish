@@ -10,30 +10,30 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
-var TextArea = etk.WithInit(comps.TextArea,
-	"prompt", ui.T("~> "),
-	"abbr", func(y func(a, f string)) { y("foo", "lorem") },
-	"binding",
-	func(ev term.Event, c etk.Context, tag string, f etk.React) etk.Reaction {
-		reaction := f(ev)
-		if reaction != etk.Unused {
-			return reaction
-		}
-		bufferVar := etk.BindState(c, "buffer", comps.TextBuffer{})
-		switch ev {
-		case term.K(ui.Left):
-			bufferVar.Swap(makeMove(moveDotLeft))
-		case term.K(ui.Right):
-			bufferVar.Swap(makeMove(moveDotRight))
-		case term.K(ui.Home):
-			bufferVar.Swap(makeMove(moveDotSOL))
-		case term.K(ui.End):
-			bufferVar.Swap(makeMove(moveDotEOL))
-		default:
-			return etk.Unused
-		}
-		return etk.Consumed
-	})
+var TextArea = etk.ModComp(comps.TextArea,
+	etk.InitState("prompt", ui.T("~> ")),
+	etk.InitState("abbr", func(y func(a, f string)) { y("foo", "lorem") }),
+	etk.InitState("binding",
+		func(ev term.Event, c etk.Context, tag string, f etk.React) etk.Reaction {
+			reaction := f(ev)
+			if reaction != etk.Unused {
+				return reaction
+			}
+			bufferVar := etk.BindState(c, "buffer", comps.TextBuffer{})
+			switch ev {
+			case term.K(ui.Left):
+				bufferVar.Swap(makeMove(moveDotLeft))
+			case term.K(ui.Right):
+				bufferVar.Swap(makeMove(moveDotRight))
+			case term.K(ui.Home):
+				bufferVar.Swap(makeMove(moveDotSOL))
+			case term.K(ui.End):
+				bufferVar.Swap(makeMove(moveDotEOL))
+			default:
+				return etk.Unused
+			}
+			return etk.Consumed
+		}))
 
 func makeMove(m func(string, int) int) func(comps.TextBuffer) comps.TextBuffer {
 	return func(buf comps.TextBuffer) comps.TextBuffer {

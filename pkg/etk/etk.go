@@ -21,25 +21,45 @@ import (
 // new pair of [View] and [React].
 type Comp = func(Context) (View, React)
 
-// WithBefore returns a variation of the [Comp] that runs a function every time
-// before it is called.
-func WithBefore(f Comp, before func(Context)) Comp {
-	return func(c Context) (View, React) {
-		before(c)
-		return f(c)
+// CompMod is a function that modifies a [Comp].
+// It is used in [ModComp].
+type CompMod = func(Comp) Comp
+
+// ModComp returns a modified [Comp] by applying a series of [CompMod]'s.
+func ModComp(f Comp, mods ...CompMod) Comp {
+	for _, mod := range mods {
+		f = mod(f)
+	}
+	return f
+}
+
+// InitState returns a CompMod that initializes a state variable.
+// Use it like this:
+//
+//	ModComp(f, InitState("foo", 1))
+func InitState[T any](key string, value T) CompMod {
+	return func(f Comp) Comp {
+		return func(c Context) (View, React) {
+			State(c, key, value)
+			return f(c)
+		}
 	}
 }
 
-// WithInit returns a variation of the [Comp] that overrides the initial value
-// of some state variables. The variadic arguments must come in (key, value)
-// pairs, and the keys must be strings.
-func WithInit(f Comp, pairs ...any) Comp {
-	return func(c Context) (View, React) {
-		for i := 0; i < len(pairs); i += 2 {
-			key, value := pairs[i].(string), pairs[i+1]
-			State(c, key, value)
+// BeforeHook returns a CompMod that runs h before the component code.
+// Use it like this:
+//
+//	ModComp(f, BeforeHook("do-something", func(c Context) { ... }))
+//
+// The hook function is saved as a state variable,
+// with the given name plus "-hook";
+// this allows the hook to be overridden.
+func BeforeHook(name string, h func(Context)) CompMod {
+	return func(f Comp) Comp {
+		return func(c Context) (View, React) {
+			State(c, name+"-hook", h).Get()(c)
+			return f(c)
 		}
-		return f(c)
 	}
 }
 
@@ -103,13 +123,15 @@ func (g *globalContext) PopMsgs() []ui.Text {
 //     used for storing all the persistent state of a component.
 //
 //     The state subtree is just an Elvish map on the low level,
-//     but Etk components should use [StateVar] to access it.
-//     (The functions returning StateVar's are ideally methods of Context,
-//     but since they have type parameters,
-//     they have to be free functions rather than methods.)
+//     but its access should be mediated by [StateVar],
+//     using either [State] or [BindState].
+//     (The latter functions should ideally be methods of Context,
+//     but they can't since they have type parameters.)
 //
-//   - Some global ephemeral states and coordination mechanisms,
-//     like the message buffer and channels for the rendering lifecycle.
+//     Another important operation is creating a subcomponent with [Context.Subcomp].
+//
+//   - Global ephemeral states and hooks into the event loop,
+//     like [Context.AddMsg] and [Context.Refresh].
 type Context struct {
 	g    *globalContext
 	path []string

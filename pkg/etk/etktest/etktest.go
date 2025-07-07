@@ -59,7 +59,7 @@ func Setup(t *testing.T, ev *eval.Evaler, f etk.Comp) {
 		"setup": func(m vals.Map) {
 			sc.Finish()
 			sc = etk.Stateful(ev.CallFrame("etktest"),
-				etk.WithInit(f, must.OK1(convertSetStates(m))...))
+				etk.ModComp(f, must.OK1(convertInitStateMods(m))...))
 		},
 		"send": func(fm *eval.Frame, opts sendOpts, args ...any) error {
 			events, err := parseEvents(args)
@@ -218,16 +218,16 @@ func newStylesheet(stringStyling map[rune]string) stylesheet {
 	return stylesheet{stringStyling, charForStyle}
 }
 
-// Same as convertSetStates from pkg/etk, copied to avoid the need to export it.
-func convertSetStates(m vals.Map) ([]any, error) {
-	var setStates []any
+// Copied from pkg/mods/etk.
+func convertInitStateMods(m vals.Map) ([]etk.CompMod, error) {
+	var mods []etk.CompMod
 	for it := m.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		name, ok := k.(string)
 		if !ok {
 			return nil, fmt.Errorf("key should be string")
 		}
-		setStates = append(setStates, name, v)
+		mods = append(mods, etk.InitState(name, v))
 	}
-	return setStates, nil
+	return mods, nil
 }

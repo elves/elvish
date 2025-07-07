@@ -27,11 +27,11 @@ func (ti todoItems) Show(i int) ui.Text {
 
 func Todo(c etk.Context) (etk.View, etk.React) {
 	// TODO: API to combine init and bind
-	listView, listReact := c.Subcomp("list", etk.WithInit(comps.ListBox, "items", todoItems{}))
+	listView, listReact := c.Subcomp("list", etk.ModComp(comps.ListBox, etk.InitState("items", todoItems{})))
 	itemsVar := etk.BindState(c, "list/items", todoItems(nil))
 	selectedVar := etk.BindState(c, "list/selected", 0)
 
-	newItemView, newItemReact := c.Subcomp("new-item", etk.WithInit(comps.TextArea, "prompt", ui.T("new item: ")))
+	newItemView, newItemReact := c.Subcomp("new-item", etk.ModComp(comps.TextArea, etk.InitState("prompt", ui.T("new item: "))))
 	bufferVar := etk.BindState(c, "new-item/buffer", comps.TextBuffer{})
 
 	focusVar := etk.State(c, "focus", 1)

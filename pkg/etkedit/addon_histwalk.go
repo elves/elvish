@@ -25,7 +25,7 @@ func startHistwalk(ed *Editor, c etk.Context) {
 	})
 
 	pushAddonWithDismiss(c, withAfterReact(
-		etk.WithInit(comps.TextArea, "buffer", comps.TextBuffer{Content: "walk"}),
+		etk.ModComp(comps.TextArea, etk.InitState("buffer", comps.TextBuffer{Content: "walk"})),
 		func(c etk.Context, r etk.Reaction) etk.Reaction {
 			// TODO: Handle up/down
 			return r

@@ -9,9 +9,9 @@ import (
 
 func Flight(c etk.Context) (etk.View, etk.React) {
 	typeView, typeReact := c.Subcomp("type",
-		etk.WithInit(comps.ListBox,
-			"items", comps.StringItems("one-way", "return"),
-			"multi-column", true))
+		etk.ModComp(comps.ListBox,
+			etk.InitState("items", comps.StringItems("one-way", "return")),
+			etk.InitState("multi-column", true)))
 	outboundView, outboundReact := c.Subcomp("outbound", comps.TextArea)
 	inboundView, inboundReact := c.Subcomp("inbound", comps.TextArea)
 	_, bookReact := c.Subcomp("book", Button)

@@ -26,9 +26,9 @@ func Counter(c etk.Context) (etk.View, etk.React) {
 
 func CounterWithButton(c etk.Context) (etk.View, etk.React) {
 	valueVar := etk.State(c, "value", 0)
-	buttonView, buttonReact := c.Subcomp("button", etk.WithInit(Button,
-		"label", "Count",
-		"submit", func() { valueVar.Swap(func(i int) int { return i + 1 }) },
+	buttonView, buttonReact := c.Subcomp("button", etk.ModComp(Button,
+		etk.InitState("label", "Count"),
+		etk.InitState("submit", func() { valueVar.Swap(func(i int) int { return i + 1 }) }),
 	))
 
 	return etk.Box("count= 1 [btn=]",

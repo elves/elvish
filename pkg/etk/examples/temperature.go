@@ -11,10 +11,10 @@ import (
 )
 
 func Temperature(c etk.Context) (etk.View, etk.React) {
-	celsiusView, celsiusReact := c.Subcomp("celsius", etk.WithInit(comps.TextArea, "prompt", ui.T("Celsius: ")))
+	celsiusView, celsiusReact := c.Subcomp("celsius", etk.ModComp(comps.TextArea, etk.InitState("prompt", ui.T("Celsius: "))))
 	celsiusBufferVar := etk.BindState(c, "celsius/buffer", comps.TextBuffer{})
 
-	fahrenheitView, fahrenheitReact := c.Subcomp("fahrenheit", etk.WithInit(comps.TextArea, "prompt", ui.T("Fahrenheit: ")))
+	fahrenheitView, fahrenheitReact := c.Subcomp("fahrenheit", etk.ModComp(comps.TextArea, etk.InitState("prompt", ui.T("Fahrenheit: "))))
 	fahrenheitBufferVar := etk.BindState(c, "fahrenheit/buffer", comps.TextBuffer{})
 
 	focusVar := etk.State(c, "focus", 0)

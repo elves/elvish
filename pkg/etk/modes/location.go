@@ -83,13 +83,13 @@ func NewLocation(cfg LocationCfg) (etk.Comp, error) {
 
 	l := locationList{dirs}
 
-	return etk.WithInit(comps.ComboBox,
-		"gen-list", func(p string) (comps.ListItems, int) {
+	return etk.ModComp(comps.ComboBox,
+		etk.InitState("gen-list", func(p string) (comps.ListItems, int) {
 			return l.filter(cfg.Filter.makePredicate(p)), 0
-		},
-		"filter/prompt", modeLine(" LOCATION ", true),
-		"filter/highlight", cfg.Filter.Highlighter,
-		"list/submit", func(it comps.ListItems, i int) {
+		}),
+		etk.InitState("filter/prompt", modeLine(" LOCATION ", true)),
+		etk.InitState("filter/highlight", cfg.Filter.Highlighter),
+		etk.InitState("list/submit", func(it comps.ListItems, i int) {
 			path := it.(locationList).dirs[i].Path
 			if strings.HasPrefix(path, wsKind) {
 				path = wsRoot + path[len(wsKind):]
@@ -102,7 +102,7 @@ func NewLocation(cfg LocationCfg) (etk.Comp, error) {
 				}
 				app.PopAddon()
 			*/
-		},
+		}),
 	), nil
 }
 

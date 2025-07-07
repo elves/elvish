@@ -14,9 +14,11 @@ func Timer(c etk.Context) (etk.View, etk.React) {
 	durationView, durationReact := c.Subcomp("duration", comps.TextArea)
 	durationBufferVar := etk.BindState(c, "duration/buffer", comps.TextBuffer{})
 	resetView, resetReact := c.Subcomp("reset",
-		etk.WithInit(Button, "label", "Reset", "submit", func() {
-			startTimeVar.Set(time.Now())
-		}))
+		etk.ModComp(Button,
+			etk.InitState("label", "Reset"),
+			etk.InitState("submit", func() {
+				startTimeVar.Set(time.Now())
+			})))
 	formView, formReact := Form(c,
 		FormComp{"Duration: ", durationView, durationReact, false},
 		FormComp{"", resetView, resetReact, false},

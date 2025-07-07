@@ -70,15 +70,17 @@ func main() {
 	case "preso":
 		content := must.OK1(os.ReadFile(flag.Args()[1]))
 		pages := parsePreso(string(content))
-		f = etk.WithInit(Preso, "pages", pages)
+		f = etk.ModComp(Preso, etk.InitState("pages", pages))
 	case "datanav":
-		f = etk.WithInit(comps.HierNav, "hier", dataHier{hierData}, "path", []string{"bin"})
+		f = etk.ModComp(comps.HierNav,
+			etk.InitState("hier", dataHier{hierData}),
+			etk.InitState("path", []string{"bin"}))
 	case "fsnav":
-		f = etk.WithInit(comps.HierNav, "hier", fsHier{})
+		f = etk.ModComp(comps.HierNav, etk.InitState("hier", fsHier{}))
 	case "life":
-		f = etk.WithInit(Life,
-			"name", "pentadecathlon",
-			"history", []Board{pentadecathlon})
+		f = etk.ModComp(Life,
+			etk.InitState("name", "pentadecathlon"),
+			etk.InitState("history", []Board{pentadecathlon}))
 	case "styledown":
 		f = Styledown
 	default:
@@ -87,7 +89,7 @@ func main() {
 	}
 	f = QuitWithEsc(f)
 	if *showState {
-		f = etk.WithInit(ShowState, "inner-comp", f)
+		f = etk.ModComp(ShowState, etk.InitState("inner-comp", f))
 	}
 	etk.Run(f, etk.RunCfg{
 		TTY:       cli.NewTTY(os.Stdin, os.Stdout),

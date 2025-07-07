@@ -28,7 +28,9 @@ func CRUD(c etk.Context) (etk.View, etk.React) {
 		})
 	}
 	createView, createReact := c.Subcomp("create",
-		etk.WithInit(Button, "label", "Create", "submit", createFn))
+		etk.ModComp(Button,
+			etk.InitState("label", "Create"),
+			etk.InitState("submit", createFn)))
 
 	updateFn := func() {
 		personsVar.Swap(func(p persons) persons {
@@ -38,7 +40,9 @@ func CRUD(c etk.Context) (etk.View, etk.React) {
 		})
 	}
 	updateView, updateReact := c.Subcomp("update",
-		etk.WithInit(Button, "label", "Update", "submit", updateFn))
+		etk.ModComp(Button,
+			etk.InitState("label", "Update"),
+			etk.InitState("submit", updateFn)))
 
 	deleteFn := func() {
 		personsVar.Swap(func(p persons) persons {
@@ -50,7 +54,9 @@ func CRUD(c etk.Context) (etk.View, etk.React) {
 		})
 	}
 	deleteView, deleteReact := c.Subcomp("delete",
-		etk.WithInit(Button, "label", "Delete", "submit", deleteFn))
+		etk.ModComp(Button,
+			etk.InitState("label", "Delete"),
+			etk.InitState("submit", deleteFn)))
 
 	return Form(c,
 		FormComp{"Filter prefix: ", prefixView, prefixReact, false},

@@ -27,8 +27,8 @@ func TestTranscripts(t *testing.T) {
 	evaltest.TestTranscriptsInFS(t, transcripts,
 		"text-area-fixture", etktest.MakeFixture(comps.TextArea),
 		"text-area-demo-fixture", etktest.MakeFixture(
-			etk.WithInit(comps.TextArea,
-				"binding", func(ev term.Event, c etk.Context, r etk.React) etk.Reaction {
+			etk.ModComp(comps.TextArea,
+				etk.InitState("binding", func(ev term.Event, c etk.Context, r etk.React) etk.Reaction {
 					reaction := r(ev)
 					if reaction != etk.Unused {
 						return reaction
@@ -47,8 +47,8 @@ func TestTranscripts(t *testing.T) {
 						return etk.Unused
 					}
 					return etk.Consumed
-				},
-				"highlighter", hl.Get,
+				}),
+				etk.InitState("highlighter", hl.Get),
 			)),
 		"abbr-table-in-global", evaltest.GoFnInGlobal("abbr-table",
 			func(m vals.Map) func(f func(a, f string)) {

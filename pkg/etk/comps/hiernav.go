@@ -83,14 +83,15 @@ func hierNavPanel(c etk.Context, h Hier, path []string, toSelect string) (etk.Vi
 			}
 		}
 		return c.Subcomp(name,
-			etk.WithInit(ComboBox,
-				"gen-list", func(query string) (ListItems, int) {
+			etk.ModComp(ComboBox,
+				etk.InitState("gen-list", func(query string) (ListItems, int) {
 					return items, selected
-				},
-				"list/left-padding", 1, "list/right-padding", 1))
+				}),
+				etk.InitState("list/left-padding", 1),
+				etk.InitState("list/right-padding", 1)))
 	} else {
 		buffer := TextBuffer{Content: s}
-		return c.Subcomp(name, etk.WithInit(TextArea, "buffer", buffer))
+		return c.Subcomp(name, etk.ModComp(TextArea, etk.InitState("buffer", buffer)))
 	}
 }
 

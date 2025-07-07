@@ -41,7 +41,7 @@ func app(c etk.Context) (etk.View, etk.React) {
 		}()
 	}
 	codeView, codeReact := c.Subcomp("code",
-		etk.WithInit(comps.TextArea, "highlighter", hlVar.Get().Get))
+		etk.ModComp(comps.TextArea, etk.InitState("highlighter", hlVar.Get().Get)))
 
 	addonsVar := etk.State(c, "addons", addons{})
 	addons := addonsVar.Get().Addons

@@ -9,7 +9,7 @@ import (
 
 func Styledown(c etk.Context) (etk.View, etk.React) {
 	codeView, codeReact := c.Subcomp("code",
-		etk.WithInit(comps.TextArea, "prompt", ui.T("Styledown:\n")))
+		etk.ModComp(comps.TextArea, etk.InitState("prompt", ui.T("Styledown:\n"))))
 	content := etk.BindState(c, "code/buffer", comps.TextBuffer{}).Get().Content
 	rendered, err := styledown.Render(content)
 	if err == nil {

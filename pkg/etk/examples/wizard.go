@@ -25,7 +25,7 @@ var tasks = Tasks{
 }
 
 func Wizard(c etk.Context) (etk.View, etk.React) {
-	listView, listReact := c.Subcomp("list", etk.WithInit(comps.ListBox, "items", tasks))
+	listView, listReact := c.Subcomp("list", etk.ModComp(comps.ListBox, etk.InitState("items", tasks)))
 	selectedVar := etk.BindState(c, "list/selected", 0)
 	selected := selectedVar.Get()
 	description := etk.Text(ui.T(tasks[selected].Description))

@@ -23,13 +23,13 @@ func startHistlist(ed *Editor, c etk.Context) {
 	cmdItems := histlistItems{cmds, last}
 
 	pushAddon(c, withAfterReact(
-		etk.WithInit(comps.ComboBox,
-			"query/prompt", addonPromptText(" HISTORY "),
-			"gen-list", func(f string) (comps.ListItems, int) {
+		etk.ModComp(comps.ComboBox,
+			etk.InitState("query/prompt", addonPromptText(" HISTORY ")),
+			etk.InitState("gen-list", func(f string) (comps.ListItems, int) {
 				// TODO: Implement filtering
 				return cmdItems, len(cmdItems.entries) - 1
-			},
-			"binding", etkBindingFromBindingMap(ed, &ed.histlistBinding),
+			}),
+			etk.InitState("binding", etkBindingFromBindingMap(ed, &ed.histlistBinding)),
 		),
 		func(c etk.Context, r etk.Reaction) etk.Reaction {
 			// TODO: Implement insertion of selected item

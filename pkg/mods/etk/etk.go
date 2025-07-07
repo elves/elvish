@@ -43,11 +43,11 @@ var Ns = eval.BuildNsNamed("etk").
 			if err != nil {
 				return nil, err
 			}
-			initArgs, err := convertInits(inits)
+			mods, err := convertInitStateMods(inits)
 			if err != nil {
 				return nil, err
 			}
-			return etk.WithInit(comp, initArgs...), nil
+			return etk.ModComp(comp, mods...), nil
 		},
 		"run": func(fm *eval.Frame, compAny any) error {
 			// TODO: Integrate the parsing into vals.ScanToGo
@@ -143,17 +143,17 @@ func scanCompFromFn(fm *eval.Frame, fn eval.Callable) etk.Comp {
 	}
 }
 
-func convertInits(m vals.Map) ([]any, error) {
-	var args []any
+func convertInitStateMods(m vals.Map) ([]etk.CompMod, error) {
+	var mods []etk.CompMod
 	for it := m.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		name, ok := k.(string)
 		if !ok {
 			return nil, fmt.Errorf("key should be string")
 		}
-		args = append(args, name, v)
+		mods = append(mods, etk.InitState(name, v))
 	}
-	return args, nil
+	return mods, nil
 }
 
 func errElement(err error) (etk.View, etk.React) {
