@@ -74,7 +74,11 @@ func main() {
 	case "datanav":
 		f = etk.ModComp(comps.HierNav,
 			etk.InitState("hier", dataHier{hierData}),
-			etk.InitState("path", []string{"bin"}))
+			etk.InitState("path", []string{"bin"}),
+			etk.InitState("inner-node-comp",
+				etk.ModComp(comps.ComboBox,
+					etk.InitState("query/prompt", ui.T("filter: ")),
+					etk.InitState("hide-empty-query", true))))
 	case "fsnav":
 		f = etk.ModComp(comps.HierNav, etk.InitState("hier", fsHier{}))
 	case "life":

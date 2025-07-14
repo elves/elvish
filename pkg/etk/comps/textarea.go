@@ -11,6 +11,14 @@ import (
 	"src.elv.sh/pkg/ui"
 )
 
+// TextArea stores text and supports editing it.
+//
+// State variables:
+//   - prompt and rprompt: both [ui.Text]
+//   - buffer: a [TextBuffer]
+//   - pending: a [PendingText]
+//   - highlighter: a function taking a string and returning a [ui.Text]
+//     (the highlighted text) and a slice of [ui.Text] (any "tips")
 func TextArea(c etk.Context) (etk.View, etk.React) {
 	quotePasteVar := etk.State(c, "quote-paste", false)
 

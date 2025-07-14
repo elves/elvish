@@ -7,7 +7,7 @@ import (
 	"src.elv.sh/pkg/wcwidth"
 )
 
-// ListItems is an interface for accessing multiple items.
+// ListItems stores the items to show in a [ListBox].
 type ListItems interface {
 	// Len returns the number of items.
 	Len() int
@@ -32,6 +32,12 @@ func (si stringItems) Len() int             { return len(si) }
 func (si stringItems) Get(i int) any        { return si[i] }
 func (si stringItems) Show(i int) ui.Text   { return ui.T(si[i]) }
 
+// ListBox shows a list of items and supports choosing one of them.
+//
+// State variables:
+//
+//   - items: a [ListItems]
+//   - selected: an int storing the index of the selected item
 func ListBox(c etk.Context) (etk.View, etk.React) {
 	// Essential state variables.
 	itemsVar := etk.State(c, "items", ListItems(nil))
