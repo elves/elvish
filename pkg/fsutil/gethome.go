@@ -16,11 +16,14 @@ func GetHome(uname string) (string, error) {
 	if uname == "" {
 		// Use $HOME as override if we are looking for the home of the current
 		// variable.
-		home := os.Getenv(env.HOME)
-		if home != "" {
-			if runtime.GOOS == "windows" {
+		if runtime.GOOS == "windows" {
+			home := os.Getenv(env.USERPROFILE)
+			if home != "" {
 				return strings.TrimRight(home, "/\\"), nil
-			} else {
+			}
+		} else {
+			home := os.Getenv(env.HOME)
+			if home != "" {
 				return strings.TrimRight(home, "/"), nil
 			}
 		}

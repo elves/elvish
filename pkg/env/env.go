@@ -21,6 +21,7 @@ const (
 
 	// Only used on Windows
 	PATHEXT = "PATHEXT"
+	USERPROFILE = "USERPROFILE"
 
 	// Only used in tests
 	ELVISH_TEST_TIME_SCALE = "ELVISH_TEST_TIME_SCALE"
