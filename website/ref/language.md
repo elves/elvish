@@ -383,6 +383,23 @@ Examples:
 ▶ [lorem ipsum]
 ```
 
+Common operations with lists can be achieved using the patterns below:
+
+```elvish-transcript
+~> var li = [lorem ipsum]
+~> var new-li = (conj $li foo bar)  # This emulates concatenating or appending.
+~> put $new-li
+▶ [lorem ipsum foo bar]
+~> var newer-li = [foo bar $@li]    # This emulates prepending.
+~> put $newer-li
+▶ [foo bar lorem ipsum]
+```
+
+See also:
+
+* [`conj`](builtin.html#conj) builtin
+* [`$@`](#variable-use) for variable exploding
+
 ## Map
 
 A map is a value containing unordered key-value pairs.
