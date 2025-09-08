@@ -19,6 +19,16 @@ It has two prominent features:
     implemented as an Elvish map,
     with the state of each subcomponent as a nested map.
 
+    The state tree is not type-safe,
+    but the Go APIs provide an illusion of type safety,
+    using a custom implementation of ScanToGo when exposing values to Go code.
+
+    Note 1: The lack of type safety in the data structure is a source of tension;
+    the Go API can return zero values that the caller may not handle correctly.
+
+    Note 2: The custom variant of ScanToGo will eventually be "upstreamed" to
+    vals.ScanToGo.
+
     Each component can freely manipulate its subtree -
     that is, the nested map storing its own states and those of its descendants.
 

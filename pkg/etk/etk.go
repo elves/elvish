@@ -343,7 +343,7 @@ func (sv StateVar[T]) setAny(v any) {
 }
 
 func (sv StateVar[T]) get() any  { return getPath(*sv.state, sv.path) }
-func (sv StateVar[T]) set(v any) { *sv.state = assocPath(*sv.state, sv.path, v) }
+func (sv StateVar[T]) set(v any) { *sv.state = assocPath(*sv.state, sv.path, vals.FromGo(v)) }
 
 type StateSubTreeVar Context
 

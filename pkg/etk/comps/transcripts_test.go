@@ -26,6 +26,7 @@ func TestTranscripts(t *testing.T) {
 
 	evaltest.TestTranscriptsInFS(t, transcripts,
 		"text-area-fixture", etktest.MakeFixture(comps.TextArea),
+		"combo-box-fixture", etktest.MakeFixture(comps.ComboBox),
 		"text-area-demo-fixture", etktest.MakeFixture(
 			etk.ModComp(comps.TextArea,
 				etk.InitState("binding", func(ev term.Event, c etk.Context, r etk.React) etk.Reaction {
