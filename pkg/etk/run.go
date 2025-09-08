@@ -195,4 +195,9 @@ func (sc *StatefulComp) MergeAndPopMsgs(width int) ui.Text {
 	return tb.Text()
 }
 
-func (sc *StatefulComp) Finish() { close(sc.g.finishCh) }
+func (sc *StatefulComp) Finish() {
+	if sc.g.finishCh != nil {
+		close(sc.g.finishCh)
+		sc.g.finishCh = nil
+	}
+}

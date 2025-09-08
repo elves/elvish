@@ -35,7 +35,7 @@ func (opts *renderOpts) SetDefaultOptions() {
 //   - refresh: refresh the component.
 func Setup(t *testing.T, ev *eval.Evaler, f etk.Comp) {
 	sc := etk.Stateful(ev.CallFrame("etktest"), f)
-	// We can't pass w.Finish here because w might be reassigned by the setup
+	// We can't pass w.Finish here because sc might be reassigned by the setup
 	// function below.
 	t.Cleanup(func() { sc.Finish() })
 	// A note on the nature of the test fixture:
