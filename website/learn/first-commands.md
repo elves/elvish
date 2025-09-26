@@ -134,7 +134,7 @@ limit on what they can do. Here are just a few examples:
     document formats
 
 -   [GraphicsMagick](http://www.graphicsmagick.org) provides the `gm` command,
-    and [ImageImagick](https://www.imagemagick.org/script/index.php) provides
+    and [ImageMagick](https://www.imagemagick.org/script/index.php) provides
     the `magick` command to process images
 
 -   [FFmpeg](http://ffmpeg.org) provides the `ffmpeg` command to process and
