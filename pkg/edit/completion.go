@@ -80,7 +80,13 @@ func completionStart(ed *Editor, bindings tk.Bindings, ev *eval.Evaler, cfg comp
 			insertedPrefix := false
 			codeArea.MutateState(func(s *tk.CodeAreaState) {
 				rep := s.Buffer.Content[result.Replace.From:result.Replace.To]
-				if len(prefix) > len(rep) && strings.HasPrefix(prefix, rep) {
+				if strings.HasPrefix(rep, "~/") {
+					if dir, err := os.UserHomeDir(); err == nil {
+						rep = strings.Replace(rep, "~", dir, 1)
+					}
+				}
+
+				if len(prefix) > len(rep) && strings.HasPrefix(strings.ToLower(prefix), strings.ToLower(rep)) {
 					s.Pending = tk.PendingCode{
 						Content: prefix,
 						From:    result.Replace.From, To: result.Replace.To}
