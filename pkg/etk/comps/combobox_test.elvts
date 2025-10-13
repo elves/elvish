@@ -1,0 +1,15 @@
+//each:combo-box-fixture
+
+/////////////
+# rendering #
+/////////////
+
+## empty query and empty list ##
+~> setup [&gen-list={|q| put [&len={ put 1 } &get={|i| put foo } &show={|i| styled foo}] 0}]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│ ̅̂                                       │
+│foo                                     │
+│########################################│
+└────────────────────────────────────────┘

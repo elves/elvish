@@ -28,3 +28,5 @@ cover
 /_*
 /elvish
 /branding/*.png
+*.stash
+stash.*

@@ -149,7 +149,7 @@ func ScanToGoOpts(src, ptr any, opt ScanOpt) error {
 		// Try to scan a field map.
 		if keys := getFieldMapKeysT(dstType); keys != nil {
 			if _, ok := src.(Map); ok || IsFieldMap(src) {
-				return scanFieldMapFromMap(src, ptr, keys, opt)
+				return ScanFieldMapFromMap(src, ptr, keys, opt, ScanToGoOpts)
 			}
 		}
 		// Try to scan a slice.
@@ -242,7 +242,9 @@ func elvToRune(arg any) (rune, error) {
 	return r, nil
 }
 
-func scanFieldMapFromMap(src any, ptr any, dstKeys FieldMapKeys, opt ScanOpt) error {
+// TODO: Un-export this when the custom ScanToGo impl in pkg/etk is integrated.
+
+func ScanFieldMapFromMap(src any, ptr any, dstKeys FieldMapKeys, opt ScanOpt, scan func(src, ptr any, opt ScanOpt) error) error {
 	makeErr := func(keysDescription string) error {
 		return errs.BadValue{
 			// TODO: Add path information in error messages.
@@ -276,7 +278,7 @@ func scanFieldMapFromMap(src any, ptr any, dstKeys FieldMapKeys, opt ScanOpt) er
 			}
 			continue
 		}
-		err = ScanToGoOpts(srcValue, dst.Field(i).Addr().Interface(), opt)
+		err = scan(srcValue, dst.Field(i).Addr().Interface(), opt)
 		if err != nil {
 			return err
 		}

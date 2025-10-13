@@ -3,7 +3,6 @@ package etk
 
 import (
 	"fmt"
-	"reflect"
 	"slices"
 	"strings"
 	"sync"
@@ -11,7 +10,6 @@ import (
 	"src.elv.sh/pkg/cli/term"
 	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/vals"
-	"src.elv.sh/pkg/must"
 	"src.elv.sh/pkg/ui"
 )
 
@@ -296,38 +294,6 @@ func (sv StateVar[T]) Swap(f func(T) T) {
 		val = sv.fallback
 	}
 	sv.set(f(val))
-}
-
-// A variant of vals.ScanToGo, with additional support for adapting an Elvish
-// function to a Go function.
-func ScanToGo[T any](val any, fm *eval.Frame) (T, error) {
-	var dst T
-	err := vals.ScanToGo(val, &dst)
-	if err == nil {
-		return dst, nil
-	}
-	dstType := reflect.TypeFor[T]()
-	if fn, ok := val.(eval.Callable); ok && dstType.Kind() == reflect.Func {
-		// Adapt an Elvish function to a Go function
-		return reflect.MakeFunc(dstType, func(args []reflect.Value) []reflect.Value {
-			// TODO: Handle errors properly
-			// TODO: Add intermediate "internal" entry to the traceback
-			outs := must.OK1(fm.CaptureOutput(func(fm *eval.Frame) error {
-				return fn.Call(fm, each(args, reflect.Value.Interface), eval.NoOpts)
-			}))
-			goOuts := make([]reflect.Value, dstType.NumOut())
-			if len(outs) != len(goOuts) {
-				panic("wrong number of outputs")
-			}
-			for i, out := range outs {
-				goOutPtr := reflect.New(dstType.Out(i))
-				must.OK(vals.ScanToGo(out, goOutPtr.Interface()))
-				goOuts[i] = reflect.Indirect(goOutPtr)
-			}
-			return goOuts
-		}).Interface().(T), nil
-	}
-	return zero[T](), err
 }
 
 func (sv StateVar[T]) getAny() any {

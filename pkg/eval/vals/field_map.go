@@ -61,7 +61,11 @@ func makeFieldMapKeys(t reflect.Type) FieldMapKeys {
 		if field.PkgPath != "" || field.Anonymous {
 			return nil
 		}
-		keys[i] = strutil.CamelToDashed(field.Name)
+		if tag, ok := field.Tag.Lookup("elvish"); ok && tag != "" {
+			keys[i] = tag
+		} else {
+			keys[i] = strutil.CamelToDashed(field.Name)
+		}
 	}
 	return keys
 }
