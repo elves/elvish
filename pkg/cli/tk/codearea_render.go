@@ -16,6 +16,8 @@ type view struct {
 }
 
 var stylingForPending = ui.Underlined
+var stylingForAutoSuggestion = ui.FgBrightBlack
+// var stylingForAutoSuggestion = ui
 
 func getView(w *codeArea) *view {
 	s := w.CopyState()
@@ -26,8 +28,13 @@ func getView(w *codeArea) *view {
 	}
 	if pFrom < pTo {
 		// Apply stylingForPending to [pFrom, pTo)
+		styling := stylingForPending
+		if s.Pending.AutoSuggestion {
+			styling = stylingForAutoSuggestion
+		}
+		// Apply styling to [pFrom, pTo)
 		parts := styledCode.Partition(pFrom, pTo)
-		pending := ui.StyleText(parts[1], stylingForPending)
+		pending := ui.StyleText(parts[1], styling)
 		styledCode = ui.Concat(parts[0], pending, parts[2])
 	}
 

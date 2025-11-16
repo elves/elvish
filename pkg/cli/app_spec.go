@@ -25,6 +25,8 @@ type AppSpec struct {
 	CommandAbbreviations   func(f func(abbr, full string))
 	SmallWordAbbreviations func(f func(abbr, full string))
 
+	AutoSuggestionProvider func(code string) string
+
 	CodeAreaState tk.CodeAreaState
 	State         State
 }

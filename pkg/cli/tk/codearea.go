@@ -48,6 +48,8 @@ type CodeAreaSpec struct {
 	QuotePaste func() bool
 	// A function that is called on the submit event.
 	OnSubmit func()
+	// A function that returns an autosuggestion for the given code.
+	AutoSuggestionProvider func(code string) string
 
 	// State. When used in New, this field specifies the initial state.
 	State CodeAreaState
@@ -80,6 +82,8 @@ type PendingCode struct {
 	To int
 	// The content of the pending code.
 	Content string
+	// Whether this pending code is an autosuggestion (affects styling).
+	AutoSuggestion bool
 }
 
 // ApplyPending applies pending code to the code buffer, and resets pending code.
@@ -141,6 +145,9 @@ func NewCodeArea(spec CodeAreaSpec) CodeArea {
 	if spec.OnSubmit == nil {
 		spec.OnSubmit = func() {}
 	}
+	if spec.AutoSuggestionProvider == nil {
+		spec.AutoSuggestionProvider = func(s string) string { return "" }
+	}
 	return &codeArea{CodeAreaSpec: spec}
 }
 
@@ -195,6 +202,41 @@ func (w *codeArea) CopyState() CodeAreaState {
 func (w *codeArea) resetInserts() {
 	w.inserts = ""
 	w.lastCodeBuffer = CodeBuffer{}
+}
+
+// updateAutoSuggestion updates the pending code with an autosuggestion.
+// This function assumes the state mutex is held.
+func (w *codeArea) updateAutoSuggestion() {
+	// Don't override non-autosuggestion pending code (e.g., from completion)
+	if w.State.Pending.Content != "" && !w.State.Pending.AutoSuggestion {
+		return
+	}
+
+	buf := &w.State.Buffer
+	// Only suggest when cursor is at the end
+	if buf.Dot != len(buf.Content) {
+		// Clear autosuggestion if cursor is not at the end
+		if w.State.Pending.AutoSuggestion {
+			w.State.Pending = PendingCode{}
+		}
+		return
+	}
+
+	suggestion := w.AutoSuggestionProvider(buf.Content)
+	if suggestion == "" {
+		// Clear autosuggestion if there's no suggestion
+		if w.State.Pending.AutoSuggestion {
+			w.State.Pending = PendingCode{}
+		}
+		return
+	}
+
+	w.State.Pending = PendingCode{
+		From:           buf.Dot,
+		To:             buf.Dot,
+		Content:        suggestion,
+		AutoSuggestion: true,
+	}
 }
 
 func (w *codeArea) handlePasteSetting(start bool) bool {
@@ -357,15 +399,17 @@ func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 		return true
 	case ui.K(ui.Backspace), ui.K('H', ui.Ctrl):
 		w.resetInserts()
-		w.MutateState(func(s *CodeAreaState) {
-			c := &s.Buffer
-			// Remove the last rune.
-			_, chop := utf8.DecodeLastRuneInString(c.Content[:c.Dot])
-			*c = CodeBuffer{
-				Content: c.Content[:c.Dot-chop] + c.Content[c.Dot:],
-				Dot:     c.Dot - chop,
-			}
-		})
+		w.StateMutex.Lock()
+		defer w.StateMutex.Unlock()
+		c := &w.State.Buffer
+		// Remove the last rune.
+		_, chop := utf8.DecodeLastRuneInString(c.Content[:c.Dot])
+		*c = CodeBuffer{
+			Content: c.Content[:c.Dot-chop] + c.Content[c.Dot:],
+			Dot:     c.Dot - chop,
+		}
+		// Update autosuggestion after backspace
+		w.updateAutoSuggestion()
 		return true
 	default:
 		if isFuncKey || !unicode.IsGraphic(key.Rune) {
@@ -388,6 +432,7 @@ func (w *codeArea) handleKeyEvent(key ui.Key) bool {
 		}
 		w.expandSimpleAbbr()
 		w.expandSmallWordAbbr(key.Rune, CategorizeSmallWord)
+		w.updateAutoSuggestion()
 		return true
 	}
 }

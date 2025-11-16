@@ -141,6 +141,7 @@ func NewApp(spec AppSpec) App {
 		SimpleAbbreviations:    spec.SimpleAbbreviations,
 		CommandAbbreviations:   spec.CommandAbbreviations,
 		SmallWordAbbreviations: spec.SmallWordAbbreviations,
+		AutoSuggestionProvider: spec.AutoSuggestionProvider,
 	})
 
 	return &a
@@ -267,6 +268,10 @@ func (a *app) redraw(flag redrawFlag) {
 		a.codeArea.MutateState(func(s *tk.CodeAreaState) {
 			s.HideTips = true
 			s.HideRPrompt = hideRPrompt
+			// Clear autosuggestion on final redraw
+			if s.Pending.AutoSuggestion {
+				s.Pending = tk.PendingCode{}
+			}
 		})
 		bufMain := renderApp([]tk.Widget{a.codeArea /* no addon */}, width, height)
 		a.codeArea.MutateState(func(s *tk.CodeAreaState) {
