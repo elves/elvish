@@ -60,6 +60,18 @@ var Ns = eval.BuildNsNamed("etk").
 				TTY: cli.NewTTY(fm.InputFile(), fm.Port(1).File), Frame: fm})
 			return err
 		},
+
+		// Just for manual testing for now.
+		"run-combobox": func(fm *eval.Frame, props vals.Map) (vals.Map, error) {
+			// Pass props to ComboBox via init state mods.
+			mods, err := convertInitStateMods(props)
+			if err != nil {
+				return nil, err
+			}
+			comboBox := etk.ModComp(comps.ComboBox, mods...)
+			return etk.Run(comboBox, etk.RunCfg{
+				TTY: cli.NewTTY(fm.InputFile(), fm.Port(1).File), Frame: fm})
+		},
 	}).
 	Ns()
 

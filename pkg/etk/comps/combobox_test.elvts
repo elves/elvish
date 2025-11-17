@@ -1,15 +1,25 @@
 //each:combo-box-fixture
+//each:eval var just-foo = [&len={ put 1 } &get={|i| put foo } &show={|i| styled foo}]
+//each:eval var gen-just-foo = {|q| put $just-foo 0}
 
 /////////////
 # rendering #
 /////////////
 
 ## empty query and empty list ##
-~> setup [&gen-list={|q| put [&len={ put 1 } &get={|i| put foo } &show={|i| styled foo}] 0}]
+~> setup [&gen-list=$gen-just-foo]
    render
 ┌────────────────────────────────────────┐
 │                                        │
 │ ̅̂                                       │
 │foo                                     │
 │########################################│
+└────────────────────────────────────────┘
+
+## hide empty query ##
+~> setup [&gen-list=$gen-just-foo &hide-empty-query]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│#̅̂#######################################│
 └────────────────────────────────────────┘
