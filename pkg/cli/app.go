@@ -142,6 +142,7 @@ func NewApp(spec AppSpec) App {
 		CommandAbbreviations:   spec.CommandAbbreviations,
 		SmallWordAbbreviations: spec.SmallWordAbbreviations,
 		AutoSuggestionProvider: spec.AutoSuggestionProvider,
+		OnAsyncSuggestion:      a.Redraw,
 	})
 
 	return &a

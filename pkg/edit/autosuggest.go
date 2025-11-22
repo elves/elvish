@@ -32,10 +32,11 @@ func defaultHistoryProvider(hs *histStore, code string) string {
 		text := cmds[i].Text
 		// Match commands that start with current input
 		// Also handle multiline commands - only match against the first line
-		if strings.HasPrefix(text, code) && len(text) > len(code) {
+		if strings.HasPrefix(text, code) {
 			text = TrimSpaceRight(text)
-			// Return the remaining part after the current input
-			return text[len(code):]
+			if len(text) > len(code) {
+				return text[len(code):]
+			}
 		}
 	}
 
