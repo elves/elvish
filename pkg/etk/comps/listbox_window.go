@@ -33,7 +33,11 @@ func getVerticalWindow(items ListItems, selected int, lastFirst int, height int)
 	} else if selected >= n {
 		selected = n - 1
 	}
-	selectedHeight := items.Show(selected).CountLines()
+	countLines := func(i int) int {
+		t, _ := items.Show(i)
+		return t.CountLines()
+	}
+	selectedHeight := countLines(selected)
 
 	if height <= selectedHeight {
 		// The height is not big enough (or just big enough) to fit the selected
@@ -58,7 +62,7 @@ func getVerticalWindow(items ListItems, selected int, lastFirst int, height int)
 	// upward later.
 	useDown := 0
 	for i := selected + 1; i < n; i++ {
-		useDown += items.Show(i).CountLines()
+		useDown += countLines(i)
 		if useDown >= budget {
 			break
 		}
@@ -85,7 +89,7 @@ func getVerticalWindow(items ListItems, selected int, lastFirst int, height int)
 	//   distance, and will be able to use up the entire budget when expanding
 	//   downwards later.
 	for i := selected - 1; i >= 0; i-- {
-		useUp += items.Show(i).CountLines()
+		useUp += countLines(i)
 		if useUp >= budgetUp {
 			return i, useUp - budgetUp
 		}
@@ -140,7 +144,8 @@ func maxWidth(items ListItems, padding, low, high int) int {
 	width := 0
 	for i := low; i < high && i < n; i++ {
 		w := 0
-		for _, seg := range items.Show(i) {
+		t, _ := items.Show(i)
+		for _, seg := range t {
 			w += wcwidth.Of(seg.Text)
 		}
 		if width < w {

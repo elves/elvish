@@ -63,16 +63,12 @@ func (hi dataHierItems) Len() int { return len(hi) }
 
 func (hi dataHierItems) Get(i int) any { return hi[i].name }
 
-func (hi dataHierItems) Show(i int) ui.Text {
-	return ui.T(hi[i].name)
-}
-
-func (hi dataHierItems) StyleLine(i int) ui.Styling {
+func (hi dataHierItems) Show(i int) (ui.Text, ui.Styling) {
+	areaStyling := ui.Nop
 	if hi[i].isMap {
-		return ui.Stylings(ui.FgGreen, ui.Bold)
-	} else {
-		return ui.Nop
+		areaStyling = ui.Stylings(ui.FgGreen, ui.Bold)
 	}
+	return ui.T(hi[i].name), areaStyling
 }
 
 var hierData = map[string]any{
@@ -143,14 +139,10 @@ func (hi fsHierItems) Len() int { return len(hi) }
 
 func (hi fsHierItems) Get(i int) any { return hi[i].name }
 
-func (hi fsHierItems) Show(i int) ui.Text {
-	return ui.T(hi[i].name)
-}
-
-func (hi fsHierItems) StyleLine(i int) ui.Styling {
+func (hi fsHierItems) Show(i int) (ui.Text, ui.Styling) {
+	areaStyling := ui.Nop
 	if hi[i].isDir {
-		return ui.Stylings(ui.FgGreen, ui.Bold)
-	} else {
-		return ui.Nop
+		areaStyling = ui.Stylings(ui.FgGreen, ui.Bold)
 	}
+	return ui.T(hi[i].name), areaStyling
 }

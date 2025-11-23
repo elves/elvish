@@ -134,7 +134,7 @@ func textAreaCore(c etk.Context) (etk.View, etk.React) {
 		func(code string) (ui.Text, []ui.Text) { return ui.T(code), nil })
 
 	buffer := bufferVar.Get()
-	code, pFrom, pTo := patchPending(buffer, pendingVar.Get())
+	code, pFrom, pTo := PatchPending(buffer, pendingVar.Get())
 	styledCode, tips := highlighterVar.Get()(code.Content)
 	if pFrom < pTo {
 		// Apply stylingForPending to [pFrom, pTo)
@@ -213,6 +213,8 @@ func isFuncKey(key ui.Key) bool {
 
 // Duplicate with pkg/cli/tk/codearea_render.go
 
+// PatchPending applies the PendingText to the given TextBuffer,
+// returning the patched TextBuffer and the range in it from PendingText.
 func PatchPending(buf TextBuffer, p PendingText) (TextBuffer, int, int) {
 	if p.From > p.To || p.From < 0 || p.To > len(buf.Content) {
 		// Invalid Pending.

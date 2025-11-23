@@ -90,6 +90,7 @@ const etktestDecorationTypeForChar = mapValues([
     ['R', 'red'],
     ['G', 'green'],
     ['M', 'magenta'],
+    ['W', 'magenta inverse'],
 ], compileStyling);
 
 function updateDecorations(editor: vscode.TextEditor) {

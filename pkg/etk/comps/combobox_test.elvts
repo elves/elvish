@@ -1,6 +1,7 @@
 //each:combo-box-fixture
-//each:eval var just-foo = [&len={ put 1 } &get={|i| put foo } &show={|i| styled foo}]
-//each:eval var gen-just-foo = {|q| put $just-foo 0}
+//each:extra-bindings
+//each:eval fn list-items {|xs| put [&len={ count $xs } &get={|i| put $xs[$i] } &show={|i| styled $xs[$i]; -extra:styling ''}] }
+//each:eval var gen-just-foo = {|q| list-items [foo]; put 0}
 
 /////////////
 # rendering #
@@ -22,4 +23,50 @@
 ┌────────────────────────────────────────┐
 │foo                                     │
 │#̅̂#######################################│
+└────────────────────────────────────────┘
+
+////////////
+# reacting #
+////////////
+
+## query event and regeneration ##
+~> setup [&gen-list={|q| list-items [$q]; put 0}]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│ ̅̂                                       │
+└────────────────────────────────────────┘
+~> send f
+   render
+┌────────────────────────────────────────┐
+│f                                       │
+│  ̅̂                                      │
+│f                                       │
+│########################################│
+└────────────────────────────────────────┘
+
+## list event ##
+~> setup [&gen-list={|q| list-items [foo bar baz]; put 0}]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│ ̅̂                                       │
+│foo                                     │
+│########################################│
+│bar                                     │
+│                                        │
+│baz                                     │
+│                                        │
+└────────────────────────────────────────┘
+~> send [Down]
+   render
+┌────────────────────────────────────────┐
+│                                        │
+│ ̅̂                                       │
+│foo                                     │
+│                                        │
+│bar                                     │
+│########################################│
+│baz                                     │
+│                                        │
 └────────────────────────────────────────┘

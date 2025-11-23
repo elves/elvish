@@ -155,9 +155,10 @@ func (l locationList) filter(p func(string) bool) locationList {
 
 func (l locationList) Len() int { return len(l.dirs) }
 
-func (l locationList) Show(i int) ui.Text {
-	return ui.T(fmt.Sprintf("%s %s",
+func (l locationList) Show(i int) (ui.Text, ui.Styling) {
+	t := ui.T(fmt.Sprintf("%s %s",
 		showScore(l.dirs[i].Score), fsutil.TildeAbbr(l.dirs[i].Path)))
+	return t, ui.Nop
 }
 
 func (l locationList) Get(i int) any { return l.dirs[i] }

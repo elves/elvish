@@ -62,8 +62,8 @@ func (it histlistItems) filter(p func(string) bool, dedup bool) histlistItems {
 func (it histlistItems) Len() int      { return len(it.entries) }
 func (it histlistItems) Get(i int) any { return it.entries[i] }
 
-func (it histlistItems) Show(i int) ui.Text {
+func (it histlistItems) Show(i int) (ui.Text, ui.Styling) {
 	entry := it.entries[i]
 	// TODO: The alignment of the index works up to 10000 entries.
-	return ui.T(fmt.Sprintf("%4d %s", entry.Seq, entry.Text))
+	return ui.T(fmt.Sprintf("%4d %s", entry.Seq, entry.Text)), ui.Nop
 }

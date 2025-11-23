@@ -50,7 +50,7 @@ func startCompletion(ed *Editor, c etk.Context) {
 				// TODO: This should just be a call to comps.ApplyPending with a
 				// child Context
 				bufferVar.Swap(func(buf comps.TextBuffer) comps.TextBuffer {
-					buf, _, _ = comps.PatchPending(buf, pendingVar.Get())
+					buf = comps.PatchPending(buf, pendingVar.Get())
 					return buf
 				})
 				return etk.Finish
@@ -76,6 +76,6 @@ func startCompletion(ed *Editor, c etk.Context) {
 
 type completionItems []modes.CompletionItem
 
-func (ci completionItems) Len() int           { return len(ci) }
-func (ci completionItems) Get(i int) any      { return ci[i] }
-func (ci completionItems) Show(i int) ui.Text { return ci[i].ToShow }
+func (ci completionItems) Len() int                         { return len(ci) }
+func (ci completionItems) Get(i int) any                    { return ci[i] }
+func (ci completionItems) Show(i int) (ui.Text, ui.Styling) { return ci[i].ToShow, ui.Nop }

@@ -159,6 +159,9 @@ func (t jointStyling) transform(s *Style) {
 //
 // If the given string is invalid, ParseStyling returns nil.
 func ParseStyling(s string) Styling {
+	if s == "" {
+		return Nop
+	}
 	if !strings.ContainsRune(s, ' ') {
 		return parseOneStyling(s)
 	}

@@ -10,6 +10,7 @@ import (
 	"src.elv.sh/pkg/etk"
 	"src.elv.sh/pkg/etk/comps"
 	"src.elv.sh/pkg/etk/etktest"
+	"src.elv.sh/pkg/eval"
 	"src.elv.sh/pkg/eval/evaltest"
 	"src.elv.sh/pkg/eval/vals"
 	"src.elv.sh/pkg/strutil"
@@ -19,13 +20,25 @@ import (
 //go:embed *.elvts
 var transcripts embed.FS
 
+// Extra bindings for testing.
+// TODO: Make them actual bindings after I'm happy about the Elvish API.
+var extraBindings = eval.BuildNs().AddGoFns(map[string]any{
+	"styling": func(s string) ui.Styling {
+		return ui.ParseStyling(s)
+	},
+})
+
 func TestTranscripts(t *testing.T) {
 	hl := highlight.NewHighlighter(highlight.Config{
 		HasCommand: func(cmd string) bool { return cmd == "echo" },
 	})
 
 	evaltest.TestTranscriptsInFS(t, transcripts,
+		"extra-bindings", func(ev *eval.Evaler) {
+			ev.ExtendGlobal(eval.BuildNs().AddNs("-extra", extraBindings))
+		},
 		"text-area-fixture", etktest.MakeFixture(comps.TextArea),
+		"list-box-fixture", etktest.MakeFixture(comps.ListBox),
 		"combo-box-fixture", etktest.MakeFixture(comps.ComboBox),
 		"text-area-demo-fixture", etktest.MakeFixture(
 			etk.ModComp(comps.TextArea,

@@ -16,31 +16,6 @@ type textAreaView struct {
 
 var stylingForPending = ui.Underlined
 
-func patchPending(c TextBuffer, p PendingText) (TextBuffer, int, int) {
-	if p.From > p.To || p.From < 0 || p.To > len(c.Content) {
-		// Invalid Pending.
-		return c, 0, 0
-	}
-	if p.From == p.To && p.Content == "" {
-		return c, 0, 0
-	}
-	newContent := c.Content[:p.From] + p.Content + c.Content[p.To:]
-	newDot := 0
-	switch {
-	case c.Dot < p.From:
-		// Dot is before the replaced region. Keep it.
-		newDot = c.Dot
-	case c.Dot >= p.From && c.Dot < p.To:
-		// Dot is within the replaced region. Place the dot at the end.
-		newDot = p.From + len(p.Content)
-	case c.Dot >= p.To:
-		// Dot is after the replaced region. Maintain the relative position of
-		// the dot.
-		newDot = c.Dot - (p.To - p.From) + len(p.Content)
-	}
-	return TextBuffer{Content: newContent, Dot: newDot}, p.From, p.From + len(p.Content)
-}
-
 func (v *textAreaView) Render(width, height int) *term.Buffer {
 	bb := term.NewBufferBuilder(width)
 	bb.EagerWrap = true

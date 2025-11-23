@@ -13,24 +13,19 @@ type ListItems interface {
 	Len() int
 	// Get accesses the underlying item.
 	Get(i int) any
-	// Show renders the item at the given zero-based index.
-	Show(i int) ui.Text
-}
-
-// StyleLiner is an optional interface that [ListItems] can implement.
-type StyleLiner interface {
-	// StyleLine returns a "line styling" for item i, which gets applied to
-	// whole lines occupied by the item, including empty spaces.
-	StyleLine(i int) ui.Styling
+	// Show renders the item at the given zero-based index,
+	// also returning the "area styling" for the item,
+	// which is applied to the entire area occupied by the item in the listbox.
+	Show(i int) (ui.Text, ui.Styling)
 }
 
 type stringItems []string
 
 // StringItems returns a [ListItems] backed up a slice of strings.
-func StringItems(items ...string) ListItems { return stringItems(items) }
-func (si stringItems) Len() int             { return len(si) }
-func (si stringItems) Get(i int) any        { return si[i] }
-func (si stringItems) Show(i int) ui.Text   { return ui.T(si[i]) }
+func StringItems(items ...string) ListItems             { return stringItems(items) }
+func (si stringItems) Len() int                         { return len(si) }
+func (si stringItems) Get(i int) any                    { return si[i] }
+func (si stringItems) Show(i int) (ui.Text, ui.Styling) { return ui.T(si[i]), ui.Nop }
 
 // ListBox shows a list of items and supports choosing one of them.
 //
@@ -138,14 +133,10 @@ func (v *listBoxView) renderSingleColumn(width, height int) *term.Buffer {
 	n := v.items.Len()
 	var i int
 	for i = first; i < n && len(lv.Lines) < height; i++ {
-		text := v.items.Show(i)
-		lineStyling := ui.Nop
-		if styleLiner, ok := v.items.(StyleLiner); ok {
-			lineStyling = styleLiner.StyleLine(i)
-		}
+		text, areaStyling := v.items.Show(i)
 		if i == v.selected {
 			lv.DotAtLine = len(lv.Lines)
-			lineStyling = ui.Stylings(lineStyling, ui.Inverse)
+			areaStyling = ui.Stylings(areaStyling, ui.Inverse)
 		}
 
 		lines := text.SplitByRune('\n')
@@ -153,8 +144,11 @@ func (v *listBoxView) renderSingleColumn(width, height int) *term.Buffer {
 			lines = lines[firstCrop:]
 		}
 		for _, line := range lines {
+			if len(lv.Lines) == height {
+				break
+			}
 			lv.Lines = append(lv.Lines, line)
-			lv.LineStylings = append(lv.LineStylings, lineStyling)
+			lv.LineStylings = append(lv.LineStylings, areaStyling)
 		}
 	}
 	if first == 0 && i == n && firstCrop == 0 && len(lv.Lines) < height {
@@ -187,19 +181,15 @@ func (w *listBoxView) renderMultiColumn(width, height int) *term.Buffer {
 		// Render the column starting from i.
 		for j := i; j < i+colHeight && j < n; j++ {
 			last = j
-			text := items.Show(j)
-			lineStyling := ui.Nop
-			if styleLiner, ok := w.items.(StyleLiner); ok {
-				lineStyling = styleLiner.StyleLine(i)
-			}
+			text, areaStyling := items.Show(j)
 			if j == selected {
 				col.DotAtLine = len(col.Lines)
-				lineStyling = ui.Stylings(lineStyling, ui.Inverse)
+				areaStyling = ui.Stylings(areaStyling, ui.Inverse)
 			}
 
 			// TODO: Complain about multi-line items more loudly.
 			col.Lines = append(col.Lines, text.SplitByRune('\n')[0])
-			col.LineStylings = append(col.LineStylings, lineStyling)
+			col.LineStylings = append(col.LineStylings, areaStyling)
 		}
 
 		colWidth := maxWidth(items, padding, i, i+colHeight)

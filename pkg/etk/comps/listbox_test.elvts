@@ -1,0 +1,97 @@
+//each:list-box-fixture
+//each:extra-bindings
+//each:eval fn list-items {|xs| put [&len={ count $xs } &get={|i| put $xs[$i] } &show={|i| styled $xs[$i]; -extra:styling ''}] }
+
+///////////////////////////
+# single-column rendering #
+///////////////////////////
+
+## empty items ##
+~> setup [&items=(list-items [])]
+   render
+┌────────────────────────────────────────┐
+│(no item)                               │
+│ ̅̂                                       │
+└────────────────────────────────────────┘
+
+## rendering all items ##
+~> setup [&items=(list-items [foo bar baz])]
+   render &height=10
+┌────────────────────────────────────────┐
+│foo                                     │
+│#̅̂#######################################│
+│bar                                     │
+│                                        │
+│baz                                     │
+│                                        │
+└────────────────────────────────────────┘
+
+## area styling ##
+~> fn area-style {|i|
+     if (== $i 1) {
+       -extra:styling "inverse"
+     } else {
+       -extra:styling ""
+     }
+   }
+~> setup [&items=(assoc (list-items [foo "bar\nbaz"]) area-style $area-style~)]
+   render
+┌────────────────────────────────────────┐
+│foo                                     │
+│#̅̂#######################################│
+│bar                                     │
+│                                        │
+│baz                                     │
+│                                        │
+└────────────────────────────────────────┘
+
+## cropping long lines ##
+~> setup [&items=(list-items [foo this-is-a-very-long-item baz])]
+   render &width=10 &height=10
+┌──────────┐
+│foo       │
+│#̅̂#########│
+│this-is-a-│
+│          │
+│baz       │
+│          │
+└──────────┘
+
+## rendering a subset of items, with scrollbar, when viewport is short ##
+~> setup [&items=(list-items [(range 10 | each $to-string~)])]
+   render &height=5
+┌────────────────────────────────────────┐
+│0                                       │
+│#̅̂######################################W│
+│1                                       │
+│                                       W│
+│2                                       │
+│                                       W│
+│3                                      ││
+│                                       M│
+│4                                      ││
+│                                       M│
+└────────────────────────────────────────┘
+
+## also showing scrollbar when the last item has lines outside the viewport ##
+~> setup [&items=(list-items [foo "bar\nbaz"])]
+   render &height=2
+┌────────────────────────────────────────┐
+│foo                                     │
+│#̅̂######################################W│
+│bar                                     │
+│                                       W│
+└────────────────────────────────────────┘
+
+## left and right padding ##
+~> setup [&items=(list-items [foo bar rather-long]) &left-padding=1 &right-padding=2]
+   render &width=10
+┌──────────┐
+│ foo      │
+│#̅̂#########│
+│ bar      │
+│          │
+│ rather-  │
+│          │
+└──────────┘
+

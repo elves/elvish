@@ -78,7 +78,7 @@ func Setup(t *testing.T, ev *eval.Evaler, f etk.Comp) {
 		"render": func(fm *eval.Frame, opts renderOpts) error {
 			sc.RefreshIfRequested()
 			buf := sc.Render(opts.Width, opts.Height)
-			sd, err := bufferToStyleDown(buf, globalStylesheet)
+			sd, err := bufferToStyleDown(buf)
 			if err != nil {
 				return err
 			}
@@ -132,19 +132,28 @@ func parseEvents(args []any) ([]term.Event, error) {
 	return events, nil
 }
 
-// TODO: This duplicates part of styledown pkg.
+// This must be synchronized with the VS Code extension's styledown rendering.
 var builtinStyleDownChars = map[ui.Style]rune{
+	// These are the actual builtin styles of styledown.
 	{}:                 ' ',
 	{Bold: true}:       '*',
 	{Underlined: true}: '_',
 	{Inverse: true}:    '#',
-	{Fg: ui.Red}:       'R',
-	{Fg: ui.Green}:     'G',
-	{Fg: ui.Magenta}:   'M',
+	// These are some additional styles we use in Etk tests.
+	{Fg: ui.Red}:                    'R',
+	{Fg: ui.Green}:                  'G',
+	{Fg: ui.Magenta}:                'M',
+	{Fg: ui.Magenta, Inverse: true}: 'W',
 }
 
+// Convert a term.Buffer to a "styledown" string,
+// but note that this is actually a "dialect" of styledown:
+//   - it uses a fixed stylesheet (see globalStylesheet below),
+//     and there's no configuration stanza
+//   - it surrounds the content with a box
+//
 // TODO: This duplicates much of (*term.Buffer).TTYString.
-func bufferToStyleDown(b *term.Buffer, ss stylesheet) (string, error) {
+func bufferToStyleDown(b *term.Buffer) (string, error) {
 	var sb strings.Builder
 	// Top border
 	sb.WriteString("┌" + strings.Repeat("─", b.Width) + "┐\n")
@@ -172,8 +181,6 @@ func bufferToStyleDown(b *term.Buffer, ss stylesheet) (string, error) {
 			var styleChar rune
 			if char, ok := builtinStyleDownChars[style]; ok {
 				styleChar = char
-			} else if char, ok := ss.charForStyle[style]; ok {
-				styleChar = char
 			} else {
 				return "", fmt.Errorf("no char for style: %v", style)
 			}
@@ -199,6 +206,10 @@ func bufferToStyleDown(b *term.Buffer, ss stylesheet) (string, error) {
 	return sb.String(), nil
 }
 
+// Not sure why we had these;
+// we are already defining some custom styles in styledownChars above.
+
+/*
 var globalStylesheet = newStylesheet(map[rune]string{
 	'r': "red",
 })
@@ -217,6 +228,7 @@ func newStylesheet(stringStyling map[rune]string) stylesheet {
 	}
 	return stylesheet{stringStyling, charForStyle}
 }
+*/
 
 // Copied from pkg/mods/etk.
 func convertInitStateMods(m vals.Map) ([]etk.CompMod, error) {

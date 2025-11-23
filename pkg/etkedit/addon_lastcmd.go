@@ -70,7 +70,7 @@ func filterLastcmdItems(allEntries []lastcmdItem, p string) lastcmdItems {
 func (it lastcmdItems) Len() int      { return len(it.entries) }
 func (it lastcmdItems) Get(i int) any { return it.entries[i] }
 
-func (it lastcmdItems) Show(i int) ui.Text {
+func (it lastcmdItems) Show(i int) (ui.Text, ui.Styling) {
 	index := ""
 	entry := it.entries[i]
 	if it.negFilter {
@@ -81,5 +81,5 @@ func (it lastcmdItems) Show(i int) ui.Text {
 	// NOTE: We now use a hardcoded width of 3 for the index, which will work as
 	// long as the command has less than 1000 words (when filter is positive) or
 	// 100 words (when filter is negative).
-	return ui.T(fmt.Sprintf("%3s %s", index, entry.content))
+	return ui.T(fmt.Sprintf("%3s %s", index, entry.content)), ui.Nop
 }
